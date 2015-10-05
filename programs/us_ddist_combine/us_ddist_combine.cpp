@@ -45,13 +45,20 @@ US_DDistr_Combine::US_DDistr_Combine() : US_Widgets()
 
    QBoxLayout*  mainLayout   = new QHBoxLayout( this );
                 leftLayout   = new QGridLayout;
+   QVBoxLayout* lfullLayout  = new QVBoxLayout;
    QVBoxLayout* rightLayout  = new QVBoxLayout;
    mainLayout ->setSpacing        ( 2 );
    mainLayout ->setContentsMargins( 2, 2, 2, 2 );
    leftLayout ->setSpacing        ( 0 );
    leftLayout ->setContentsMargins( 0, 1, 0, 1 );
+   lfullLayout->setSpacing        ( 0 );
+   lfullLayout->setContentsMargins( 0, 1, 0, 1 );
    rightLayout->setSpacing        ( 0 );
    rightLayout->setContentsMargins( 0, 1, 0, 1 );
+   QFrame* frMidLeft         = new QFrame( this );
+   QFrame* frBotLeft         = new QFrame( this );
+   QVBoxLayout*  frmlLayout  = new QVBoxLayout( frMidLeft );
+   QVBoxLayout*  frblLayout  = new QVBoxLayout( frBotLeft );
 
    dkdb_cntrls             = new US_Disk_DB_Controls(
          US_Settings::default_data_location() );
@@ -150,10 +157,6 @@ US_DDistr_Combine::US_DDistr_Combine() : US_Widgets()
    ck_pcsa2omc->setFont( cfont );
    ck_pcsa2otr->setFont( cfont );
    ck_dtall   ->setFont( cfont );
-   //ck_2dsagl  ->setVisible( false );
-   //ck_2dsaglmc->setVisible( false );
-   //ck_2dsamw  ->setVisible( false );
-   //ck_2dsamcmw->setVisible( false );
 
    QButtonGroup* sel_plt  = new QButtonGroup( this );
    QGridLayout* lo_pltsw  = us_radiobutton( tr( "s20,W" ), rb_pltsw,    true  );
@@ -266,16 +269,20 @@ US_DDistr_Combine::US_DDistr_Combine() : US_Widgets()
    leftLayout->addWidget( le_runid,     row++, 3, 1, 5 );
    leftLayout->addWidget( lb_svproj,    row,   0, 1, 3 );
    leftLayout->addWidget( cmb_svproj,   row++, 3, 1, 5 );
-   leftLayout->addWidget( lb_runids,    row++, 0, 1, 8 );
-   leftLayout->addWidget( lw_runids,    row,   0, 1, 8 );
-   row    += 2;
-   leftLayout->addLayout( lo_mdltype,   row++, 0, 1, 8 );
-   leftLayout->addWidget( lb_models,    row++, 0, 1, 8 );
-   //leftLayout->setRowStretch( row, 0 );
-   leftLayout->addWidget( lw_models,    row,   0, 5, 8 );
-   row    += 5;
-   leftLayout->setRowStretch( row, 1 );
-   leftLayout->addWidget( te_status,    row++, 0, 1, 8 );
+
+   frmlLayout ->addWidget( lb_runids  );
+   frmlLayout ->addWidget( lw_runids  );
+   frblLayout ->addLayout( lo_mdltype );
+   frblLayout ->addWidget( lb_models  );
+   frblLayout ->addWidget( lw_models  );
+
+   QSplitter* spl1      = new QSplitter( Qt::Vertical, this );
+   spl1->addWidget( frMidLeft );
+   spl1->addWidget( frBotLeft );
+
+   lfullLayout->addLayout( leftLayout );
+   lfullLayout->addWidget( spl1       );
+   lfullLayout->addWidget( te_status  );
 
    connect( dkdb_cntrls, SIGNAL( changed( bool ) ),
             this,    SLOT( update_disk_db( bool ) ) );
@@ -395,8 +402,8 @@ US_DDistr_Combine::US_DDistr_Combine() : US_Widgets()
    data_grid = us_grid( data_plot1 );
    data_grid->enableXMin( true );
    data_grid->enableYMin( true );
-   data_grid->setMajPen( QPen( US_GuiSettings::plotMajGrid(), 0, Qt::DashLine ) );
-   data_grid->setMinPen( QPen( US_GuiSettings::plotMinGrid(), 0, Qt::DotLine  ) );
+   data_grid->setMajPen( QPen(US_GuiSettings::plotMajGrid(), 0, Qt::DashLine) );
+   data_grid->setMinPen( QPen(US_GuiSettings::plotMinGrid(), 0, Qt::DotLine ) );
 
    QwtLegend *legend = new QwtLegend;
    legend->setFrameStyle( QFrame::Box | QFrame::Sunken );
@@ -405,9 +412,9 @@ US_DDistr_Combine::US_DDistr_Combine() : US_Widgets()
 
    rightLayout->addLayout( plot );
 
-   mainLayout ->addLayout( leftLayout     );
-   mainLayout ->addLayout( rightLayout    );
-   mainLayout ->setStretchFactor( leftLayout,  2 );
+   mainLayout ->addLayout( lfullLayout );
+   mainLayout ->addLayout( rightLayout );
+   mainLayout ->setStretchFactor( lfullLayout, 2 );
    mainLayout ->setStretchFactor( rightLayout, 3 );
 
    le_runid   ->setText( "(current run ID)" );
@@ -421,9 +428,10 @@ US_DDistr_Combine::US_DDistr_Combine() : US_Widgets()
    lw_models  ->setMinimumHeight( hh * 5 );
    cmb_svproj ->setMinimumWidth ( ww * 2 );
    for ( int ii = 0; ii < 8; ii++ )
+   {
       leftLayout ->setColumnMinimumWidth( ii, ww );
-   leftLayout ->setColumnStretch     ( 0, 1  );
-   leftLayout ->setColumnStretch     ( 1, 1  );
+      leftLayout ->setColumnStretch     ( ii, 1  );
+   }
    te_status  ->setMaximumHeight( ( hh * 3 ) / 2 );
 
    adjustSize();
