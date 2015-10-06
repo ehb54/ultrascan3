@@ -2959,12 +2959,15 @@ void US_ConvertGui::saveUS3( void )
    int nitrips  = allData.count();
    int kotrips  = nitrips * nspeeds;
    bool is_buoy = ExpData.expType.contains( "buoyancy", Qt::CaseInsensitive );
-DbgLv(1) << "SV: ExpData.expType" << ExpData.expType << "is_buoy" << is_buoy;
+   bool is_cali = ExpData.expType.contains( "calibrat", Qt::CaseInsensitive );
+DbgLv(1) << "SV: ExpData.expType" << ExpData.expType << "is_buoy" << is_buoy
+ << "is_cali" << is_cali;
 DbgLv(1) << "SV: nspeeds,itrips,otrips" << nspeeds << nitrips << notrips;
 DbgLv(1) << "SV:  speeds" << speeds;
 
-   if ( nspeeds < 2  ||  notrips != kotrips  ||  is_buoy )
+   if ( nspeeds < 2  ||  notrips != kotrips  ||  is_buoy  ||  is_cali )
    {  // For single-speed data, save current triples
+      //  and also save single run if Buoyancy or Calibration experiment type
       if ( disk_controls->db() )
          saveUS3DB();          // Save AUCs to disk then DB
 
