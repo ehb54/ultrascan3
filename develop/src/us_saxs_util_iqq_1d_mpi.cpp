@@ -40,7 +40,7 @@ bool US_Saxs_Util::run_1d_mpi( QString controlfile )
    outputData = QString( "%1" ).arg( getenv( "outputData" ) );
    if ( outputData.isEmpty() )
    {
-      outputData = "../outputData";
+      outputData = "outputData";
    }
    if ( !myrank )
    {

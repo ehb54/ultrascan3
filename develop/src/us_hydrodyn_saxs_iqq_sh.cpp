@@ -771,17 +771,13 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_sh()
       QwtPlotCurve *curve = new QwtPlotCurve( plot_name );
 #endif
 
-#ifndef QT4
       plotted_iq_names_to_pos[plot_name] = plotted_Iq.size();
-#else
-      plotted_iq_names_to_pos[plot_name] = plotted_Iq_curves.size();
-#endif
 
 #ifndef QT4
       plotted_Iq.push_back(Iq);
       plot_saxs->setCurveStyle(Iq, QwtCurve::Lines);
 #else
-      plotted_Iq_curves.push_back( curve );
+      plotted_Iq.push_back( curve );
       curve->setStyle( QwtPlotCurve::Lines );
 #endif
       plotted_q.push_back(q);
@@ -1423,17 +1419,13 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_sh_bead_model()
       QwtPlotCurve *curve = new QwtPlotCurve( plot_name );
 #endif
 
-#ifndef QT4
       plotted_iq_names_to_pos[plot_name] = plotted_Iq.size();
-#else
-      plotted_iq_names_to_pos[plot_name] = plotted_Iq_curves.size();
-#endif
 
 #ifndef QT4
       plotted_Iq.push_back(Iq);
       plot_saxs->setCurveStyle(Iq, QwtCurve::Lines);
 #else
-      plotted_Iq_curves.push_back( curve );
+      plotted_Iq.push_back( curve );
       curve->setStyle( QwtPlotCurve::Lines );
 #endif
       plotted_q.push_back(q);

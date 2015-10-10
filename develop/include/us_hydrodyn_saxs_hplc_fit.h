@@ -33,6 +33,13 @@
 
 using namespace std;
 
+#ifdef WIN32
+# if !defined( QT4 )
+  #pragma warning ( disable: 4251 )
+# endif
+#endif
+
+
 class US_EXTERN US_Hydrodyn_Saxs_Hplc_Fit : public QDialog
 {
    Q_OBJECT
@@ -85,17 +92,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Fit : public QDialog
       
       QLabel        *lbl_fix_curves;
       // QLineEdit     *le_fix_curves;
-#ifdef WIN32
-# if !defined( QT4 )
-  #pragma warning ( disable: 4251 )
-# endif
-#endif
       vector < QCheckBox * > cb_fix_curves;
-#ifdef WIN32
-# if !defined( QT4 )
-  #pragma warning ( default: 4251 )
-# endif
-#endif
+      QCheckBox     *cb_conc_test;
+      vector        < double > conc_ratios;
 
       QLabel        *lbl_epsilon;
       QLineEdit     *le_epsilon;
@@ -129,22 +128,13 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Fit : public QDialog
       bool          setup_run();
 
       bool          update_hplc;
-#ifdef WIN32
-# if !defined( QT4 )
-  #pragma warning ( disable: 4251 )
-# endif
-#endif
+
       static vector < double > gsm_t;
       static vector < double > gsm_y;
       static vector < double > gsm_yp;
 
       vector < vector < double > > gaussians_undo;
 
-#ifdef WIN32
-# if !defined( QT4 )
-  #pragma warning ( default: 4251 )
-# endif
-#endif
       void gsm_setup();
       long global_iter;
       long this_iterations;
@@ -231,12 +221,6 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Fit : public QDialog
    
 };
 
-#ifdef WIN32
-# if !defined( QT4 )
-  #pragma warning ( disable: 4251 )
-# endif
-#endif
-
 namespace HFIT 
 {
    extern vector < double       > init_params;    // variable param initial values
@@ -249,6 +233,8 @@ namespace HFIT
    extern vector < double       > param_max;      // maximum values for variable params
 
    extern map < unsigned int, unsigned int > comm_backref; // back reference to variable param position of 1st usage
+
+   extern map < unsigned int,  double >  conc_ratios_map;
 
    extern bool                    use_errors;
 

@@ -36,6 +36,17 @@ US_Hydrodyn_Saxs_Hplc_Ciq::~US_Hydrodyn_Saxs_Hplc_Ciq()
 
 void US_Hydrodyn_Saxs_Hplc_Ciq::setupGUI()
 {
+
+   QColorGroup qcg_normal_redtext = USglobal->global_colors.cg_normal;
+   qcg_normal_redtext.setColor( QColorGroup::Foreground, Qt::red );
+
+   // qcg_normal_redtext.setColor( QColorGroup::Background, Qt::yellow );
+   //   qcg_normal_redtext.setColor( QColorGroup::Foreground, Qt::dRed );
+   // qcg_normal_redtext.setColor( QColorGroup::Base      , Qt::cyan );
+   qcg_normal_redtext.setColor( QColorGroup::Text      , Qt::red );
+   // qcg_normal_redtext.setColor( QColorGroup::Button    , Qt::red );
+   // qcg_normal_redtext.setColor( QColorGroup::ButtonText, Qt::magenta );
+
    int minHeight1  = 30;
    int minHeight2  = 25;
 
@@ -68,6 +79,10 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::setupGUI()
    cb_save_as_pct_iq->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
    cb_save_as_pct_iq->setPalette( PALET_NORMAL );
    AUTFBACK( cb_save_as_pct_iq );
+   if ( !parameters->count( "expert_mode" ) )
+   {
+      cb_save_as_pct_iq->hide();
+   }
 
    cb_save_sum = new QCheckBox(this);
    cb_save_sum->setText(tr( "Create sum of peaks curves" ) );
@@ -77,6 +92,18 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::setupGUI()
    cb_save_sum->setPalette( PALET_NORMAL );
    AUTFBACK( cb_save_sum );
 
+   QLabel * lbl_save_sum_bi = (QLabel *)0;
+   if ( parameters->count( "integralbaseline" ) ) {
+      lbl_save_sum_bi = new QLabel(
+                 tr( "     Warning: If you have changed the starting time/frame since integral baseline correction, creation of the\n"
+                     "      sum of peaks curves with integral baseline will differ due to missing time/frame scattering intensity." ),
+                 this );
+      lbl_save_sum_bi->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+      lbl_save_sum_bi->setPalette( PALET_NORMAL );
+      AUTFBACK( lbl_save_sum_bi );
+      lbl_save_sum_bi->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold ));
+   }
+                                              
    cb_sd_source = new QCheckBox(this);
    cb_sd_source->setText( tr (
                               // "Compute standard deviations as a difference between the sum of Gaussians and original I(q)"
@@ -93,14 +120,14 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::setupGUI()
    cb_sd_source->setChecked( false );
    cb_save_as_pct_iq->setChecked( true );
 
-   QLabel * lbl_sd_zeros_found = new QLabel( tr( "If zeros are produced when computing S.D.'s:  " ), this );
+   QLabel * lbl_sd_zeros_found = new QLabel( tr( "If zeros are produced when computing SDs:  " ), this );
    lbl_sd_zeros_found->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_sd_zeros_found->setPalette( PALET_NORMAL );
    AUTFBACK( lbl_sd_zeros_found );
    lbl_sd_zeros_found->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold ));
 
    cb_sd_zero_avg_local_sd = new QCheckBox(this);
-   cb_sd_zero_avg_local_sd->setText( tr( "Average adjacent S.D.'s  " ) );
+   cb_sd_zero_avg_local_sd->setText( tr( "Average adjacent SDs  " ) );
    cb_sd_zero_avg_local_sd->setEnabled( true );
    connect( cb_sd_zero_avg_local_sd, SIGNAL( clicked() ), SLOT( set_sd_zero_avg_local_sd() ) );
    cb_sd_zero_avg_local_sd->setChecked( true );
@@ -116,6 +143,7 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::setupGUI()
    cb_sd_zero_keep_as_zeros->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
    cb_sd_zero_keep_as_zeros->setPalette( PALET_NORMAL );
    AUTFBACK( cb_sd_zero_keep_as_zeros );
+   cb_sd_zero_keep_as_zeros->hide();
 
    cb_sd_zero_set_to_pt1pct = new QCheckBox(this);
    cb_sd_zero_set_to_pt1pct->setText( tr( "Set to 0.1 % of peak's I(q)  " ) );
@@ -128,10 +156,10 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::setupGUI()
 
    ws_sd_zeros.push_back( lbl_sd_zeros_found );
    ws_sd_zeros.push_back( cb_sd_zero_avg_local_sd );
-   ws_sd_zeros.push_back( cb_sd_zero_keep_as_zeros );
+   // ws_sd_zeros.push_back( cb_sd_zero_keep_as_zeros );
    ws_sd_zeros.push_back( cb_sd_zero_set_to_pt1pct );
 
-   QLabel * lbl_zeros_found = new mQLabel( tr( "I(t) contains S.D.'s of zeros. When computing I(q) S.D.'s : " ), this );
+   QLabel * lbl_zeros_found = new mQLabel( tr( "I(t) is missing SDs at some points. When computing I(q) SDs : " ), this );
    lbl_zeros_found->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_zeros_found->setPalette( PALET_NORMAL );
    AUTFBACK( lbl_zeros_found );
@@ -148,7 +176,7 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::setupGUI()
    AUTFBACK( cb_zero_drop_points );
 
    cb_zero_avg_local_sd = new QCheckBox(this);
-   cb_zero_avg_local_sd->setText( tr( "Average adjacent S.D.'s  " ) );
+   cb_zero_avg_local_sd->setText( tr( "Average adjacent SDs  " ) );
    cb_zero_avg_local_sd->setEnabled( true );
    connect( cb_zero_avg_local_sd, SIGNAL( clicked() ), SLOT( set_zero_avg_local_sd() ) );
    cb_zero_avg_local_sd->setChecked( true );
@@ -164,11 +192,12 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::setupGUI()
    cb_zero_keep_as_zeros->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
    cb_zero_keep_as_zeros->setPalette( PALET_NORMAL );
    AUTFBACK( cb_zero_keep_as_zeros );
+   cb_zero_keep_as_zeros->hide();
 
    ws_zeros.push_back( lbl_zeros_found );
    ws_zeros.push_back( cb_zero_drop_points );
    ws_zeros.push_back( cb_zero_avg_local_sd );
-   ws_zeros.push_back( cb_zero_keep_as_zeros );
+   //   ws_zeros.push_back( cb_zero_keep_as_zeros );
 
    cb_normalize = new QCheckBox(this);
    cb_normalize->setText( tr( "Normalize resulting I(q) by concentration" ) );
@@ -210,6 +239,43 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::setupGUI()
    AUTFBACK( lbl_error );
    lbl_error->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold ));
 
+   cb_conc_to_saxs = new QCheckBox(this);
+   cb_conc_to_saxs->setText( tr( 
+                                "Do you want to set the concentration file Gaussians centers, widths and skewness to the SAXS-optimized values,\nadjusting the amplitudes and keeping the areas constant?\n"
+                                 ) );
+   cb_conc_to_saxs->setEnabled( true );
+   connect( cb_conc_to_saxs, SIGNAL( clicked() ), SLOT( update_enables() ) );
+   cb_conc_to_saxs->setChecked( true );
+   cb_conc_to_saxs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
+   cb_conc_to_saxs->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_conc_to_saxs );
+
+   lbl_conc_to_saxs_info1 = new QLabel( tr(
+                                           "       This implies that all the species that were defined as Gaussians contributing to the SAXS signal also contribute to the concentration signal."
+                                           ), this );
+   lbl_conc_to_saxs_info1->setAlignment(Qt::AlignJustify|Qt::AlignVCenter);
+   lbl_conc_to_saxs_info1->setPalette( PALET_NORMAL );
+   AUTFBACK( lbl_conc_to_saxs_info1 );
+   lbl_conc_to_saxs_info1->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
+
+   lbl_conc_to_saxs_info2 = new QLabel( tr( 
+                                           "       Be aware that this option will result in an apparent mass artificially approximately constant along each of the deconvoluted Gaussian peaks,\n"
+                                           "       reflecting just the oscillations in the original SAXS data." 
+                                            ), this );
+   lbl_conc_to_saxs_info2->setAlignment(Qt::AlignJustify|Qt::AlignVCenter);
+   lbl_conc_to_saxs_info2->setPalette( QPalette( qcg_normal_redtext, qcg_normal_redtext, qcg_normal_redtext ) );
+   lbl_conc_to_saxs_info2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
+
+   lbl_conc_to_saxs_info3 = new QLabel( tr(
+                                           "       However, the apparent average mass for each peak should be a closer approximation to the real value when significant band broadening occurs\n"
+                                           "       between the concentration and the SAXS detectors."
+                                           ), this );
+   lbl_conc_to_saxs_info3->setAlignment(Qt::AlignJustify|Qt::AlignVCenter);
+   lbl_conc_to_saxs_info3->setPalette( PALET_NORMAL );
+   AUTFBACK( lbl_conc_to_saxs_info3 );
+   lbl_conc_to_saxs_info3->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
+
+
    lbl_conc = new QLabel( tr( "Concentrations will be computed and will be written along with PSVs to the output I(q) curves" ), this );
    lbl_conc->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_conc->setPalette( PALET_NORMAL );
@@ -239,7 +305,6 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::setupGUI()
    lbl_psv->setPalette( PALET_NORMAL );
    AUTFBACK( lbl_psv );
    lbl_psv->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
-
 
    for ( unsigned int i = 0; i < (* parameters)[ "gaussians" ].toUInt(); i++ )
    {
@@ -317,6 +382,9 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::setupGUI()
    vbl->addWidget( cb_add_bl );
    vbl->addWidget( cb_save_as_pct_iq );
    vbl->addWidget( cb_save_sum );
+   if ( lbl_save_sum_bi ) {
+      vbl->addWidget( lbl_save_sum_bi );
+   }
 
    vbl->addWidget( cb_sd_source );
 
@@ -336,21 +404,31 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::setupGUI()
 
    vbl->addWidget( cb_normalize );
 
-   Q3HBoxLayout * hbl_I0se =  new Q3HBoxLayout( 0 );
-   hbl_I0se->addWidget( cb_I0se );
-   hbl_I0se->addWidget( le_I0se );
 
-   vbl->addLayout( hbl_I0se );
-   
    Q3GridLayout * gl = new Q3GridLayout( 0 );
 
    int j = 0;
    gl->addMultiCellWidget( lbl_error, j, j, 0, 2 );
    j++;
 
-   gl->addMultiCellWidget( lbl_conc, j, j, 0, 2 );
+   gl->addMultiCellWidget( cb_conc_to_saxs, j, j, 0, 2 );
+   j++;
+   gl->addMultiCellWidget( lbl_conc_to_saxs_info1, j, j, 0, 2 );
+   j++;
+   gl->addMultiCellWidget( lbl_conc_to_saxs_info2, j, j, 0, 2 );
+   j++;
+   gl->addMultiCellWidget( lbl_conc_to_saxs_info3, j, j, 0, 2 );
    j++;
    
+   Q3HBoxLayout * hbl_I0se =  new Q3HBoxLayout( 0 );
+   hbl_I0se->addWidget( cb_I0se );
+   hbl_I0se->addWidget( le_I0se );
+   gl->addMultiCellLayout( hbl_I0se, j, j, 0, 2 );
+   j++;
+
+   gl->addMultiCellWidget( lbl_conc, j, j, 0, 2 );
+   j++;
+
    gl->addWidget( lbl_gaussian, j, 0 );
    gl->addWidget( lbl_conv    , j, 1 );
    gl->addWidget( lbl_psv     , j, 2 );
@@ -366,10 +444,15 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::setupGUI()
 
    if ( parameters->count( "error" ) )
    {
-      lbl_conc    ->hide();
-      lbl_gaussian->hide();
-      lbl_conv    ->hide();
-      lbl_psv     ->hide();
+      cb_conc_to_saxs        ->hide();
+      lbl_conc_to_saxs_info1 ->hide();
+      lbl_conc_to_saxs_info2 ->hide();
+      lbl_conc_to_saxs_info3 ->hide();
+
+      lbl_conc               ->hide();
+      lbl_gaussian           ->hide();
+      lbl_conv               ->hide();
+      lbl_psv                ->hide();
       for ( unsigned int i = 0; i < ( unsigned int ) lbl_gaussian_id.size(); i++ )
       {
          lbl_gaussian_id[ i ]->hide();
@@ -377,6 +460,10 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::setupGUI()
          le_psv         [ i ]->hide();
       }
       pb_global   ->hide();
+
+      cb_I0se->hide();
+      le_I0se->hide();
+
       // cb_normalize->hide();
    } else {
       lbl_error    ->hide();
@@ -427,6 +514,8 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::go()
    (*parameters)[ "zero_drop_points"   ] = cb_zero_drop_points  ->isChecked() ? "true" : "false";
    (*parameters)[ "zero_avg_local_sd"  ] = cb_zero_avg_local_sd ->isChecked() ? "true" : "false";
    (*parameters)[ "zero_keep_as_zeros" ] = cb_zero_keep_as_zeros->isChecked() ? "true" : "false";
+
+   (*parameters)[ "conc_to_saxs" ] = cb_conc_to_saxs->isChecked() ? "true" : "false";
 
    for ( unsigned int i = 0; i < ( unsigned int ) lbl_gaussian_id.size(); i++ )
    {
@@ -603,7 +692,7 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::ws_hide( vector < QWidget * > ws, bool hide )
 void US_Hydrodyn_Saxs_Hplc_Ciq::zeros_found()
 {
    QMessageBox::information( this,
-                             caption() + tr( ": S.D. Zeros" ),
+                             caption() + tr( ": SD Zeros" ),
                              QString( tr( "Please note:\n\n"
                                           "%1"
                                           "%2"
@@ -611,7 +700,7 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::zeros_found()
                              .arg( (*parameters)[ "no_errors" ].isEmpty() ?
                                    "" : QString( tr( "These files have no associated errors:\n%1\n\n" ) ).arg( (*parameters)[ "no_errors" ] ) )
                              .arg( (*parameters)[ "zero_points" ].isEmpty() ?
-                                   "" : QString( tr( "These files have zero points:\n%1\n\n" ) ).arg( (*parameters)[ "zero_points" ] ) ),
+                                   "" : QString( tr( "These files have points with missing SDs:\n%1\n\n" ) ).arg( (*parameters)[ "zero_points" ] ) ),
                              QMessageBox::Ok
                              );
 }                             

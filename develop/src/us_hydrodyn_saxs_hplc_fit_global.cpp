@@ -166,6 +166,8 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::restore()
       hplc_win->update_gauss_pos();
       hplc_win->lbl_gauss_fit->setText( "?" );
       hplc_win->pb_ggauss_rmsd->setEnabled( true );
+      hplc_win->ggqfit_plot->clear();
+      hplc_win->ggqfit_plot->replot();
    }
    update_enables();
 }
@@ -184,6 +186,8 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::undo()
       hplc_win->update_gauss_pos();
       hplc_win->lbl_gauss_fit->setText( "?" );
       hplc_win->pb_ggauss_rmsd->setEnabled( true );
+      hplc_win->ggqfit_plot->clear();
+      hplc_win->ggqfit_plot->replot();
    }
    update_enables();
    if ( cb_test_mode->isChecked() &&
@@ -841,6 +845,12 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::setupGUI()
 
 void US_Hydrodyn_Saxs_Hplc_Fit_Global::cancel()
 {
+   if ( hplc_win->lbl_gauss_fit->text() == "?" &&
+        !hplc_win->pb_ggauss_rmsd->isEnabled() )
+   {
+      hplc_win->pb_ggauss_rmsd->setEnabled( true );
+   }
+
    close();
 }
 
@@ -883,6 +893,8 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::update_common()
    if ( save_unified_ggaussians != hplc_win->unified_ggaussian_params )
    {
       hplc_win->lbl_gauss_fit->setText( "?" );
+      hplc_win->ggqfit_plot->clear();
+      hplc_win->ggqfit_plot->replot();
       hplc_win->pb_ggauss_rmsd->setEnabled( true );
       gaussians_undo.push_back( hplc_win->unified_ggaussian_params );
       hplc_win->gauss_init_markers();
@@ -2915,6 +2927,8 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::test()
    update_test_info();
 
    hplc_win->lbl_gauss_fit->setText( "?" );
+   hplc_win->ggqfit_plot->clear();
+   hplc_win->ggqfit_plot->replot();
    hplc_win->pb_ggauss_rmsd->setEnabled( true );
    hplc_win->gauss_init_markers();
    hplc_win->update_gauss_pos();
@@ -2979,7 +2993,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::lm()
    hplc_win->update_gauss_pos();
    */
 
-   double org_rmsd = hplc_win->ggaussian_rmsd();
+   double org_rmsd = hplc_win->ggaussian_rmsd( false );
 
    vector < double > gsum  = hplc_win->compute_ggaussian_gaussian_sum();
    vector < double > gsumf( t.size() );

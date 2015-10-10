@@ -74,6 +74,23 @@ US_Hydrodyn_Saxs::US_Hydrodyn_Saxs(
                                    const char                     *name
                                    ) : Q3Frame(p, name)
 {
+   if ( !( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "guinier_mwt_k" ) )
+   {
+      ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "guinier_mwt_k" ] = "1";
+   }
+   if ( !( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "guinier_mwt_c" ) )
+   {
+      ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "guinier_mwt_c" ] = "-2.095";
+   }
+   if ( !( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "guinier_mwt_qmax" ) )
+   {
+      ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "guinier_mwt_qmax" ] = "0.2";
+   }
+   if ( !( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "guinier_mwc_mw_per_N" ) )
+   {
+      ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "guinier_mwc_mw_per_N" ] = "112";
+   }
+
    rasmol = NULL;
    this->saxs_widget = saxs_widget;
    *saxs_widget = true;
@@ -176,6 +193,7 @@ US_Hydrodyn_Saxs::US_Hydrodyn_Saxs(
    for ( int i = 0; i < (int) model_vector.size(); i++ )
    {
       cout << QString( "summary info for model %1\n" ).arg( i + 1 );
+
       cout << US_Saxs_Util::list_atom_summary_counts( &model_vector[ i ],
                                                       residue_atom_hybrid_map,
                                                       our_saxs_options
@@ -855,6 +873,24 @@ void US_Hydrodyn_Saxs::setupGUI()
    connect(pb_clear_plot_saxs, SIGNAL(clicked()), SLOT(clear_plot_saxs()));
    iq_widgets.push_back( pb_clear_plot_saxs );
 
+   cb_eb = new QCheckBox(this);
+   cb_eb->setText(tr("Err "));
+   cb_eb->setMaximumWidth ( minHeight1 * 2 );
+   cb_eb->setChecked( false );
+   cb_eb->setMinimumHeight( minHeight1 );
+   cb_eb->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 2 ) );
+   cb_eb->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_eb );
+   connect( cb_eb, SIGNAL( clicked() ), SLOT( set_eb() ) );
+   iq_widgets.push_back( cb_eb );
+
+   pb_pp = new QPushButton(" Save plots", this);
+   pb_pp->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   pb_pp->setMinimumHeight(minHeight1);
+   pb_pp->setPalette( PALET_PUSHB );
+   connect(pb_pp, SIGNAL(clicked()), SLOT(pp()));
+   iq_widgets.push_back( pb_pp );
+
    pb_saxs_legend = new QPushButton( "Legend", this);
    pb_saxs_legend->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_saxs_legend->setMinimumHeight(minHeight1);
@@ -1301,6 +1337,8 @@ void US_Hydrodyn_Saxs::setupGUI()
    connect(pb_cancel, SIGNAL(clicked()), SLOT(cancel()));
 
    plot_saxs = new QwtPlot(this);
+   plot_info[ "US-SOMO SAXS Main" ] = plot_saxs;
+
    iq_widgets.push_back( plot_saxs );
 #ifndef QT4
    // plot_saxs->enableOutline(true);
@@ -1368,6 +1406,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    plot_saxs->setAxisScale( QwtPlot::xBottom, 0e0, 1e0 );
 
    plot_pr = new QwtPlot(this);
+   plot_info[ "US-SOMO SAXS p(r)" ] = plot_pr;
    pr_widgets.push_back( plot_pr );
 #ifndef QT4
    // plot_pr->enableOutline(true);
@@ -1416,6 +1455,7 @@ void US_Hydrodyn_Saxs::setupGUI()
 #endif
 
    plot_resid = new QwtPlot(this);
+   plot_info[ "US-SOMO SAXS resid" ] = plot_resid;
 #ifndef QT4
    // plot_resid->enableOutline(true);
    // plot_resid->setOutlinePen(Qt::white);
@@ -1664,6 +1704,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    hbl_load_saxs->addWidget(pb_load_plot_saxs);
    hbl_load_saxs->addWidget(pb_set_grid);
    hbl_load_saxs->addWidget(pb_clear_plot_saxs);
+   hbl_load_saxs->addWidget(cb_eb);
    background->addMultiCellLayout(hbl_load_saxs, j, j, 0, 1);
    j++;
 
@@ -1688,6 +1729,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    hbl_various_0->addWidget(pb_guinier_analysis);
    hbl_various_0->addWidget(pb_guinier_cs);
    hbl_various_0->addWidget(pb_saxs_legend);
+   hbl_various_0->addWidget(pb_pp);
    background->addMultiCellLayout(hbl_various_0, j, j, 0, 1);
    j++;
 
@@ -4182,17 +4224,13 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
       qsl_plotted_iq_names << plot_name;
       dup_plotted_iq_name_check[plot_name] = true;
 
-#ifndef QT4
       plotted_iq_names_to_pos[plot_name] = plotted_Iq.size();
-#else
-      plotted_iq_names_to_pos[plot_name] = plotted_Iq_curves.size();
-#endif
 
 #ifndef QT4
       plotted_Iq.push_back(Iq);
       plot_saxs->setCurveStyle(Iq, QwtCurve::Lines);
 #else
-      plotted_Iq_curves.push_back( curve );
+      plotted_Iq.push_back( curve );
       curve->setStyle( QwtPlotCurve::Lines );
 #endif
       plotted_q.push_back(q);
@@ -4410,11 +4448,7 @@ void US_Hydrodyn_Saxs::clear_plot_saxs_data()
    qsl_plotted_iq_names.clear();
    dup_plotted_iq_name_check.clear();
    plotted_iq_names_to_pos.clear();
-#ifndef QT4
    plotted_Iq.clear();
-#else
-   plotted_Iq_curves.clear();
-#endif
    plotted_q.clear();
    plotted_q2.clear();
    plotted_I.clear();
@@ -5455,7 +5489,7 @@ void US_Hydrodyn_Saxs::saxs_buffer()
 
    for ( unsigned int i = 0; i < plotted_q.size(); i++ )
    {
-      if ( plotted_I_error[ i ].size() == plotted_I.size() )
+      if ( plotted_I_error[ i ].size() == plotted_I[ i ].size() )
       {
          ((US_Hydrodyn *)us_hydrodyn)->saxs_buffer_window->add_plot( qsl_plotted_iq_names[ i ],
                                                                      plotted_q[ i ],
@@ -5495,7 +5529,7 @@ void US_Hydrodyn_Saxs::saxs_hplc()
 
    for ( unsigned int i = 0; i < plotted_q.size(); i++ )
    {
-      if ( plotted_I_error[ i ].size() == plotted_I.size() )
+      if ( plotted_I_error[ i ].size() == plotted_I[ i ].size() )
       {
          ((US_Hydrodyn *)us_hydrodyn)->saxs_hplc_window->add_plot( qsl_plotted_iq_names[ i ],
                                                                    plotted_q[ i ],
@@ -6218,11 +6252,7 @@ void US_Hydrodyn_Saxs::plot_domain(
          // this could be calculated once upon adding curves
 
          for ( unsigned int i = 0; 
-#ifndef QT4
                i < plotted_Iq.size();
-#else
-               i < plotted_Iq_curves.size();
-#endif
                i++ )
          {
             if ( plotted_cs_guinier_valid.count(i) &&
@@ -6271,11 +6301,7 @@ void US_Hydrodyn_Saxs::plot_domain(
             // this could be calculated once upon adding curves
 
             for ( unsigned int i = 0; 
-#ifndef QT4
                   i < plotted_Iq.size();
-#else
-                  i < plotted_Iq_curves.size();
-#endif
                   i++ )
             {
                if ( plotted_Rt_guinier_valid.count(i) &&
@@ -6321,11 +6347,7 @@ void US_Hydrodyn_Saxs::plot_domain(
             // this could be calculated once upon adding curves
 
             for ( unsigned int i = 0; 
-#ifndef QT4
                   i < plotted_Iq.size();
-#else
-                  i < plotted_Iq_curves.size();
-#endif
                   i++ )
             {
                if ( plotted_guinier_valid.count(i) &&
@@ -6382,11 +6404,7 @@ void US_Hydrodyn_Saxs::plot_domain(
 
    bool any_plots = false;
    for ( unsigned int i = 0; 
-#ifndef QT4
          i < plotted_Iq.size();
-#else
-         i < plotted_Iq_curves.size();
-#endif
          i++ )
    {
       if ( !any_plots )
@@ -6446,18 +6464,15 @@ void US_Hydrodyn_Saxs::plot_range(
       {
          // for each plot
          for ( unsigned int i = 0;
-#ifndef QT4
                i < plotted_Iq.size();
-#else
-               i < plotted_Iq_curves.size();
-#endif
                i++ )      
          {
             // scan the q range
             for ( unsigned int j = 0; j < plotted_q2[i].size(); j++ )
             {
                if ( plotted_q2[i][j] >= lowq &&
-                    plotted_q2[i][j] <= highq )
+                    plotted_q2[i][j] <= highq && 
+                    plotted_I[i][j] > 0e0 )
                {
                   if ( !any_plots )
                   {
@@ -6482,18 +6497,15 @@ void US_Hydrodyn_Saxs::plot_range(
          {
             // for each plot
             for ( unsigned int i = 0;
-#ifndef QT4
                   i < plotted_Iq.size();
-#else
-                  i < plotted_Iq_curves.size();
-#endif
                   i++ )      
             {
                // scan the q range
                for ( unsigned int j = 0; j < plotted_q2[i].size(); j++ )
                {
                   if ( plotted_q2[i][j] >= lowq &&
-                       plotted_q2[i][j] <= highq )
+                       plotted_q2[i][j] <= highq && 
+                       plotted_I[i][j] > 0e0 )
                   {
                      if ( !any_plots )
                      {
@@ -6516,18 +6528,15 @@ void US_Hydrodyn_Saxs::plot_range(
          } else {
             // for each plot
             for ( unsigned int i = 0;
-#ifndef QT4
                   i < plotted_Iq.size();
-#else
-                  i < plotted_Iq_curves.size();
-#endif
                   i++ )      
             {
                // scan the q range
                for ( unsigned int j = 0; j < plotted_q2[i].size(); j++ )
                {
                   if ( plotted_q2[i][j] >= lowq &&
-                       plotted_q2[i][j] <= highq )
+                       plotted_q2[i][j] <= highq &&
+                       plotted_I[i][j] > 0e0 )
                   {
                      if ( !any_plots )
                      {
@@ -6549,21 +6558,18 @@ void US_Hydrodyn_Saxs::plot_range(
             }
          }
       }
-   } else {
+   } else { // !guinier
       // for each plot
       for ( unsigned int i = 0; 
-#ifndef QT4
             i < plotted_Iq.size();
-#else
-            i < plotted_Iq_curves.size();
-#endif
             i++ )      
       {
          // scan the q range
          for ( unsigned int j = 0; j < plotted_q[i].size(); j++ )
          {
             if ( plotted_q[i][j] >= lowq &&
-                 plotted_q[i][j] <= highq )
+                 plotted_q[i][j] <= highq &&
+                 ( plotted_I[i][j] > 0e0 || cb_kratky->isChecked() ) )
             {
                if ( !any_plots )
                {
@@ -7741,4 +7747,32 @@ void US_Hydrodyn_Saxs::hide_settings()
 {
    hide_widgets( settings_widgets, settings_widgets[ 0 ]->isVisible() );
    ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "saxs_settings" ] = settings_widgets[ 0 ]->isVisible() ? "visible" : "hidden";
+}
+
+void US_Hydrodyn_Saxs::check_mwt_constants( bool force ) 
+{
+   if ( !force && ldata.count( "check_mwt_msg_shown" ) ) {
+      return;
+   }
+
+   if ( ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "guinier_mwt_k"    ].toDouble() != 1 ||
+        ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "guinier_mwt_c"    ].toDouble() != -2.095 ||
+        ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "guinier_mwt_qmax" ].toDouble() != 0.2 ) {
+      QString msg = 
+         tr( "The MW calculations by the Rambo & Tainer method [Nature 496:477-81] appear to\n"
+             "provide consistent results for proteins when using the default values for k, c and qmax.\n"
+             "See the Options Help for further details." );
+
+      switch( QMessageBox::warning( this, 
+                                    caption(),
+                                    msg,
+                                    tr( "OK" ),
+                                    tr( "Do not show this warning again" ) )
+              ) {
+      case 1 : ldata[ "check_mwt_msg_shown" ] = "true";
+         break;
+      default :
+         break;
+      }
+   }
 }

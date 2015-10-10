@@ -631,11 +631,7 @@ void US_Hydrodyn_Saxs::sync_conc_csv() // removes deleted curves, adds non-extan
    map < QString, bool > csv_files;
    
    for ( unsigned int i = 0; 
-#ifndef QT4
          i < ( unsigned int ) plotted_Iq.size();
-#else
-         i < ( unsigned int ) plotted_Iq_curves.size();
-#endif
          i++ )
    {
       current_files[ qsl_plotted_iq_names[ i ] ] = true;
@@ -657,11 +653,7 @@ void US_Hydrodyn_Saxs::sync_conc_csv() // removes deleted curves, adds non-extan
 
    // add new ones
    for ( unsigned int i = 0; 
-#ifndef QT4
          i < ( unsigned int ) plotted_Iq.size();
-#else
-         i < ( unsigned int ) plotted_Iq_curves.size();
-#endif
          i++ )
    {
       if ( !csv_files.count( qsl_plotted_iq_names[ i ] ) )

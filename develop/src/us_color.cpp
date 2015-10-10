@@ -917,7 +917,7 @@ void US_Color::selected_item(int item)
       temp_color3 = temp_colors.cg_pushb_disabled.light();
       temp_color4 = temp_colors.cg_pushb_disabled.dark();
       lbl_color1->setText(tr(" Text Color:"));
-      color_field1->setBackgroundColor(temp_colors.cg_pushb_disabled.buttonText());
+      color_field1->setBackgroundColor(temp_colors.cg_pushb_disabled.text());
       lbl_color2->setText(tr(" Background Color:"));
       color_field2->setBackgroundColor(temp_colors.cg_pushb_disabled.button());
       lbl_color3->setText(tr(" Highlight Color:"));
@@ -1176,6 +1176,7 @@ void US_Color::pick_color1()
     }
     case 2:
     {
+      temp_colors.cg_pushb_disabled.setColor(QColorGroup::ButtonText, color1);
       temp_colors.cg_pushb_disabled.setColor(QColorGroup::Text, color1);
       pb_disabled->setPalette(QPalette(temp_colors.cg_pushb_disabled, temp_colors.cg_pushb_disabled, temp_colors.cg_pushb_disabled));
       break;

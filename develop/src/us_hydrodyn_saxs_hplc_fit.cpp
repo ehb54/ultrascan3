@@ -75,6 +75,26 @@ US_Hydrodyn_Saxs_Hplc_Fit::US_Hydrodyn_Saxs_Hplc_Fit(
    set_comm_dist ? update_common() : update_enables();
    // qDebug( "hf4" );
    // update_enables();
+
+   if ( hplc_win->conc_files.count( hplc_win->wheel_file ) )
+   {
+      cb_pct_center          ->setChecked( dist1_active );
+      cb_pct_center_from_init->setChecked( true );
+      le_pct_center          ->setText   ( "2"  );
+      if ( gaussian_type != US_Hydrodyn_Saxs_Hplc::EMGGMG )
+      {
+         cb_conc_test->hide();
+      } else {
+         for ( int i = gaussian_type_size; i < (int) hplc_win->gaussians.size(); i += gaussian_type_size )
+         {
+            conc_ratios.push_back( hplc_win->gaussians[ 2 + i ] / hplc_win->gaussians[ 2 ] );
+         }
+         qDebug( US_Vector::qs_vector( "gaussians", hplc_win->gaussians ) );
+         qDebug( US_Vector::qs_vector( "width ratios", conc_ratios ) );
+      }
+   } else {
+      cb_conc_test->hide();
+   }
 }
 
 US_Hydrodyn_Saxs_Hplc_Fit::~US_Hydrodyn_Saxs_Hplc_Fit()
@@ -415,6 +435,15 @@ void US_Hydrodyn_Saxs_Hplc_Fit::setupGUI()
       cb_fix_curves.push_back( cb_tmp );
    }
 
+   cb_conc_test = new QCheckBox(this);
+   cb_conc_test->setText(tr(" Fix width ratios" ) );
+   cb_conc_test->setEnabled( true );
+   cb_conc_test->setChecked( false );
+   cb_conc_test->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_conc_test->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_conc_test );
+   connect(cb_conc_test, SIGNAL( clicked() ), SLOT( update_enables() ) );
+
    lbl_epsilon = new QLabel(tr(" Epsilon: "), this);
    lbl_epsilon->setAlignment(Qt::AlignRight|Qt::AlignVCenter);
    // lbl_epsilon->setMinimumHeight(minHeight1);
@@ -591,7 +620,9 @@ void US_Hydrodyn_Saxs_Hplc_Fit::setupGUI()
       hbl_fix_curves->addWidget( cb_fix_curves[ i ] );
    }
    gl_main->addMultiCellLayout( hbl_fix_curves , row, row, 1, 3 );
+   row++;
 
+   gl_main->addMultiCellWidget( cb_conc_test, row, row, 0, 3 );
    row++;
 
    gl_main->addWidget         ( lbl_epsilon, row, 0 );
@@ -715,6 +746,10 @@ void US_Hydrodyn_Saxs_Hplc_Fit::update_common()
                                                       HFIT::comm_backref[ i ] :
                                                       HFIT::param_pos[ i ] 
                                                        ];
+         if ( HFIT::conc_ratios_map.count( i ) )
+         {
+            hplc_win->gaussians[ i ] *= HFIT::conc_ratios_map[ i ];
+         }
       }
    }
    if ( save_gaussians != hplc_win->gaussians )
@@ -748,10 +783,23 @@ void US_Hydrodyn_Saxs_Hplc_Fit::update_enables()
    le_pct_center                ->setEnabled( !running && !cb_fix_center->isChecked() && cb_pct_center->isChecked() );
    cb_pct_center_from_init      ->setEnabled( !running && !cb_fix_center->isChecked() );
 
-   cb_fix_width                 ->setEnabled( !running );
-   cb_pct_width                 ->setEnabled( !running && !cb_fix_width->isChecked() );
-   le_pct_width                 ->setEnabled( !running && !cb_fix_width->isChecked()  && cb_pct_width->isChecked() );
-   cb_pct_width_from_init       ->setEnabled( !running && !cb_fix_width->isChecked() );
+   if ( cb_conc_test->isChecked() )
+      // && 
+      //        ( cb_fix_width->isChecked() ||
+      //          cb_pct_width->isChecked() ) )
+   {
+      cb_fix_width->setChecked( false );
+      cb_pct_width->setChecked( false );
+      for ( unsigned int i = 0; i < ( unsigned int ) cb_fix_curves.size(); i++ )
+      {
+         cb_fix_curves[ i ]      ->setChecked( false );
+      }
+   }      
+
+   cb_fix_width                 ->setEnabled( !cb_conc_test->isChecked() && !running );
+   cb_pct_width                 ->setEnabled( !cb_conc_test->isChecked() && !running && !cb_fix_width->isChecked() );
+   le_pct_width                 ->setEnabled( !cb_conc_test->isChecked() && !running && !cb_fix_width->isChecked()  && cb_pct_width->isChecked() );
+   cb_pct_width_from_init       ->setEnabled( !cb_conc_test->isChecked() && !running && !cb_fix_width->isChecked() );
 
    cb_fix_amplitude             ->setEnabled( !running );
    cb_pct_amplitude             ->setEnabled( !running && !cb_fix_amplitude->isChecked() );
@@ -770,7 +818,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit::update_enables()
 
    for ( unsigned int i = 0; i < ( unsigned int ) cb_fix_curves.size(); i++ )
    {
-      cb_fix_curves[ i ]      ->setEnabled( !running );
+      cb_fix_curves[ i ]           ->setEnabled( !cb_conc_test->isChecked() && !running );
    }
 
    cb_comm_dist1                ->setEnabled( !running && !cb_fix_dist1->isChecked() );
@@ -824,6 +872,10 @@ namespace HFIT
    vector < double       > param_max;      // maximum values for variable params
 
    map < unsigned int, unsigned int > comm_backref; // back reference to variable param position of 1st usage
+
+   bool                    conc_test;
+   vector < double >       conc_ratios;
+   map < unsigned int,  double >  conc_ratios_map;
 
    vector < double       > errors;
    vector < unsigned int > errors_index;
@@ -1160,7 +1212,12 @@ namespace HFIT
 
          if ( param_fixed[ i ] )
          {
-            width = fixed_params[ param_pos[ i ] ];
+            if ( comm_backref.count( i ) )
+            {
+               width = par[ comm_backref[ i ] ] * conc_ratios_map[ i ];
+            } else {
+               width = fixed_params[ param_pos[ i ] ];
+            }
          } else {
             width = par         [ param_pos[ i ] ];
             if ( width < param_min[ param_pos[ i ] ] ||
@@ -1373,12 +1430,15 @@ bool US_Hydrodyn_Saxs_Hplc_Fit::setup_run()
 
    map < unsigned int, bool > fixed_curves;
 
+   HFIT::conc_test        = false;
+   HFIT::conc_ratios_map .clear();
 
    switch ( gaussian_type )
    {
    case US_Hydrodyn_Saxs_Hplc::EMGGMG :
       HFIT::compute_gaussian_f = &HFIT::compute_gaussian_f_EMGGMG;
       gsm_f = &gsm_f_EMGGMG;
+      HFIT::conc_test   = cb_conc_test->isChecked();
       break;
    case US_Hydrodyn_Saxs_Hplc::EMG :
       HFIT::compute_gaussian_f = &HFIT::compute_gaussian_f_EMG;
@@ -1426,6 +1486,7 @@ bool US_Hydrodyn_Saxs_Hplc_Fit::setup_run()
 
    unsigned int comm_dist_1_var_pos = 0;
    unsigned int comm_dist_2_var_pos = 0;
+   unsigned int conc_width_var_pos  = 0;
 
    for ( unsigned int i = 0; i < ( unsigned int ) hplc_win->gaussians.size(); i+= gaussian_type_size )
    {
@@ -1513,12 +1574,22 @@ bool US_Hydrodyn_Saxs_Hplc_Fit::setup_run()
       }
 
       if ( cb_fix_width->isChecked() ||
-           fixed_curves.count( pos + 1 ) )
+           fixed_curves.count( pos + 1 ) ||
+           ( cb_conc_test->isChecked() && i ) // for the conc_test, the widths of gaussians 1 will be fixed ratios of the 1st param
+           )
       {
          HFIT::param_pos   .push_back( HFIT::fixed_params.size() );
-         HFIT::fixed_params.push_back( hplc_win->gaussians[ 2 + i ] );
+         if ( i && cb_conc_test->isChecked() && !fixed_curves.count( pos + 1 ) )
+         {
+            HFIT::fixed_params.push_back( hplc_win->gaussians[ 2 + 0 ] );
+            HFIT::comm_backref   [ HFIT::param_fixed.size() ] = conc_width_var_pos;
+            HFIT::conc_ratios_map[ HFIT::param_fixed.size() ] = conc_ratios[ pos - 1 ];
+         } else {
+            HFIT::fixed_params.push_back( hplc_win->gaussians[ 2 + i ] );
+         }
          HFIT::param_fixed .push_back( true );
       } else {
+         conc_width_var_pos = HFIT::init_params.size();
          HFIT::param_pos   .push_back( HFIT::init_params.size() );
 
          if ( cb_pct_width_from_init->isChecked() )
@@ -1801,6 +1872,10 @@ void US_Hydrodyn_Saxs_Hplc_Fit::lm()
                                            HFIT::comm_backref[ i ] :
                                            HFIT::param_pos[ i ] 
                                             ];
+            if ( HFIT::conc_ratios_map.count( i ) )
+            {
+               hplc_win->gaussians[ i ] *= HFIT::conc_ratios_map[ i ];
+            }
          }
       }
       gaussians_undo.push_back( hplc_win->gaussians );
@@ -1864,6 +1939,10 @@ void US_Hydrodyn_Saxs_Hplc_Fit::gsm_sd()
                                             HFIT::comm_backref[ i ] :
                                             HFIT::param_pos[ i ] 
                                              ];
+            if ( HFIT::conc_ratios_map.count( i ) )
+            {
+               hplc_win->gaussians[ i ] *= HFIT::conc_ratios_map[ i ];
+            }
          }
       }
       gaussians_undo.push_back( hplc_win->gaussians );
@@ -1930,6 +2009,10 @@ void US_Hydrodyn_Saxs_Hplc_Fit::gsm_ih()
                                             HFIT::comm_backref[ i ] :
                                             HFIT::param_pos[ i ] 
                                              ];
+            if ( HFIT::conc_ratios_map.count( i ) )
+            {
+               hplc_win->gaussians[ i ] *= HFIT::conc_ratios_map[ i ];
+            }
          }
       }
       gaussians_undo.push_back( hplc_win->gaussians );
@@ -1996,6 +2079,10 @@ void US_Hydrodyn_Saxs_Hplc_Fit::gsm_cg()
                                             HFIT::comm_backref[ i ] :
                                             HFIT::param_pos[ i ] 
                                              ];
+            if ( HFIT::conc_ratios_map.count( i ) )
+            {
+               hplc_win->gaussians[ i ] *= HFIT::conc_ratios_map[ i ];
+            }
          }
       }
       gaussians_undo.push_back( hplc_win->gaussians );
@@ -2059,6 +2146,10 @@ void US_Hydrodyn_Saxs_Hplc_Fit::ga()
                                            HFIT::comm_backref[ i ] :
                                            HFIT::param_pos[ i ] 
                                             ];
+            if ( HFIT::conc_ratios_map.count( i ) )
+            {
+               hplc_win->gaussians[ i ] *= HFIT::conc_ratios_map[ i ];
+            }
          }
       }
       gaussians_undo.push_back( hplc_win->gaussians );
@@ -2209,6 +2300,10 @@ void US_Hydrodyn_Saxs_Hplc_Fit::grid()
                                            HFIT::comm_backref[ i ] :
                                            HFIT::param_pos[ i ] 
                                             ];
+            if ( HFIT::conc_ratios_map.count( i ) )
+            {
+               hplc_win->gaussians[ i ] *= HFIT::conc_ratios_map[ i ];
+            }
          }
       }
       gaussians_undo.push_back( hplc_win->gaussians );
@@ -2352,6 +2447,10 @@ void US_Hydrodyn_Saxs_Hplc_Fit::ga()
                                            HFIT::comm_backref[ i ] :
                                            HFIT::param_pos[ i ] 
                                             ];
+            if ( HFIT::conc_ratios_map.count( i ) )
+            {
+               hplc_win->gaussians[ i ] *= HFIT::conc_ratios_map[ i ];
+            }
          }
       }
       gaussians_undo.push_back( hplc_win->gaussians );

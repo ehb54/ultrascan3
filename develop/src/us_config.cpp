@@ -469,7 +469,7 @@ void US_Config::setDefault()
       config_list.system_dir = QDir::convertSeparators( ultrascan );
    else
    {
-      QString base = qApp->applicationDirPath().remove( QRegExp( "/bin$" ) );
+      QString base = qApp->applicationDirPath().remove( QRegExp( "/bin(|64)$" ) );
       if ( base.contains( ".app/Contents" ) )
       {
          int jj = base.lastIndexOf( "/bin/" );

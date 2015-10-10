@@ -13,7 +13,7 @@ US_Hydrodyn_Saxs_Hplc_Options::US_Hydrodyn_Saxs_Hplc_Options(
                                                              const char *               name
                                                              ) : QDialog( p, name )
 {
-   this->hplc_win   = hplc_win;
+   this->hplc_win   = p;
    this->parameters = parameters;
 
    USglobal = new US_Config();
@@ -26,6 +26,8 @@ US_Hydrodyn_Saxs_Hplc_Options::US_Hydrodyn_Saxs_Hplc_Options(
    global_Ypos += 30;
 
    setGeometry( global_Xpos, global_Ypos, 0, 0 );
+
+   update_enables();
 }
 
 US_Hydrodyn_Saxs_Hplc_Options::~US_Hydrodyn_Saxs_Hplc_Options()
@@ -175,6 +177,12 @@ void US_Hydrodyn_Saxs_Hplc_Options::setupGUI()
    bg_gaussian_type->addButton( rb_emg, bg_pos++ );
    bg_gaussian_type->addButton( rb_emggmg, bg_pos++ );
 
+   pb_clear_gauss =  new QPushButton ( tr( "Clear cached Gaussian values" ), this );
+   pb_clear_gauss -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1) );
+   pb_clear_gauss -> setMinimumHeight( minHeight1 );
+   pb_clear_gauss -> setPalette      ( PALET_PUSHB );
+   connect( pb_clear_gauss, SIGNAL( clicked() ), SLOT( clear_gauss() ) );
+
    lbl_other_options = new QLabel ( tr( "Miscellaneous options" ), this);
    lbl_other_options->setAlignment( Qt::AlignCenter | Qt::AlignVCenter);
    lbl_other_options->setPalette  ( PALET_FRAME );
@@ -250,6 +258,64 @@ void US_Hydrodyn_Saxs_Hplc_Options::setupGUI()
    connect( le_guinier_qrgmax, SIGNAL( textChanged( const QString & ) ), SLOT( update_enables() ) );
    le_guinier_qrgmax->setMinimumWidth( 60 );
 
+   lbl_mwt_k = new QLabel(tr(" MW[RT] k : "), this);
+   lbl_mwt_k -> setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
+   lbl_mwt_k -> setPalette( PALET_LABEL );
+   AUTFBACK( lbl_mwt_k );
+   lbl_mwt_k -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold ) );
+
+   le_mwt_k = new QLineEdit(this, "le_mwt_k Line Edit");
+   le_mwt_k->setText( parameters->count( "guinier_mwt_k" ) ? (*parameters)[ "guinier_mwt_k" ] : "0.973" );
+   le_mwt_k->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_mwt_k->setPalette( PALET_NORMAL );
+   AUTFBACK( le_mwt_k );
+   le_mwt_k->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
+   {
+      QDoubleValidator *qdv = new QDoubleValidator( 0.001, 3, 6, le_mwt_k );
+      le_mwt_k->setValidator( qdv );
+   }
+   connect( le_mwt_k, SIGNAL( textChanged( const QString & ) ), SLOT( update_enables() ) );
+   le_mwt_k->setMinimumWidth( 60 );
+
+   lbl_mwt_c = new QLabel(tr(" MW[RT] c : "), this);
+   lbl_mwt_c -> setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
+   lbl_mwt_c -> setPalette( PALET_LABEL );
+   AUTFBACK( lbl_mwt_c );
+   lbl_mwt_c -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold ) );
+
+   le_mwt_c = new QLineEdit(this, "le_mwt_c Line Edit");
+   le_mwt_c->setText( parameters->count( "guinier_mwt_c" ) ? (*parameters)[ "guinier_mwt_c" ] : "-1.878" );
+   le_mwt_c->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_mwt_c->setPalette( PALET_NORMAL );
+   AUTFBACK( le_mwt_c );
+   le_mwt_c->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
+   {
+      QDoubleValidator *qdv = new QDoubleValidator( -3, 0, 6, le_mwt_c );
+      le_mwt_c->setValidator( qdv );
+   }
+   connect( le_mwt_c, SIGNAL( textChanged( const QString & ) ), SLOT( update_enables() ) );
+   le_mwt_c->setMinimumWidth( 60 );
+
+   lbl_mwt_qmax = new QLabel(tr(" MW[RT] qmax cut-off : "), this);
+   lbl_mwt_qmax -> setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
+   lbl_mwt_qmax -> setPalette( PALET_LABEL );
+   AUTFBACK( lbl_mwt_qmax );
+   lbl_mwt_qmax -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold ) );
+
+   le_mwt_qmax = new QLineEdit(this, "le_mwt_qmax Line Edit");
+   le_mwt_qmax->setText( parameters->count( "guinier_mwt_qmax" ) ? (*parameters)[ "guinier_mwt_qmax" ] : "0.5" );
+   le_mwt_qmax->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_mwt_qmax->setPalette( PALET_NORMAL );
+   AUTFBACK( le_mwt_qmax );
+   le_mwt_qmax->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
+   {
+      QDoubleValidator *qdv = new QDoubleValidator( 0.05, 1.0, 3, le_mwt_qmax );
+      le_mwt_qmax->setValidator( qdv );
+   }
+   connect( le_mwt_qmax, SIGNAL( textChanged( const QString & ) ), SLOT( update_enables() ) );
+   le_mwt_qmax->setMinimumWidth( 60 );
+
+
    lbl_dist_max =  new QLabel      ( tr( "Maximum absolute value of EMG and GMG distortions:" ), this );
    lbl_dist_max -> setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_dist_max -> setPalette( PALET_LABEL );
@@ -319,6 +385,7 @@ void US_Hydrodyn_Saxs_Hplc_Options::setupGUI()
       background->addLayout( gl_other );
    }
 
+   background->addWidget( pb_clear_gauss );
 
    background->addWidget( lbl_other_options );
    background->addWidget( cb_csv_transposed );
@@ -334,6 +401,15 @@ void US_Hydrodyn_Saxs_Hplc_Options::setupGUI()
 
       gl_other->addWidget         ( cb_guinier_qrgmax , 2, 0 );
       gl_other->addWidget         ( le_guinier_qrgmax , 2, 1 );
+
+      gl_other->addWidget         ( lbl_mwt_k , 3, 0 );
+      gl_other->addWidget         ( le_mwt_k  , 3, 1 );
+
+      gl_other->addWidget         ( lbl_mwt_c , 4, 0 );
+      gl_other->addWidget         ( le_mwt_c  , 4, 1 );
+
+      gl_other->addWidget         ( lbl_mwt_qmax , 5, 0 );
+      gl_other->addWidget         ( le_mwt_qmax  , 5, 1 );
 
       background->addLayout( gl_other );
    }
@@ -409,6 +485,9 @@ void US_Hydrodyn_Saxs_Hplc_Options::ok()
    (*parameters)[ "hplc_cb_guinier_qrgmax"       ] = cb_guinier_qrgmax      ->isChecked() ? "true" : "false";
    (*parameters)[ "hplc_guinier_qrgmax"          ] = le_guinier_qrgmax      ->text();
    (*parameters)[ "hplc_dist_max"                ] = le_dist_max            ->text();
+   (*parameters)[ "guinier_mwt_k"                ] = le_mwt_k               ->text();
+   (*parameters)[ "guinier_mwt_c"                ] = le_mwt_c               ->text();
+   (*parameters)[ "guinier_mwt_qmax"             ] = le_mwt_qmax            ->text();
 
    if ( rb_gauss->isChecked() )
    {
@@ -449,8 +528,24 @@ void US_Hydrodyn_Saxs_Hplc_Options::closeEvent( QCloseEvent *e )
 
 void US_Hydrodyn_Saxs_Hplc_Options::update_enables()
 {
-   le_smooth ->setEnabled( rb_integral->isChecked() );
-   le_reps   ->setEnabled( rb_integral->isChecked() );
-   cb_save_bl->setEnabled( rb_integral->isChecked() );
+   le_smooth     ->setEnabled( rb_integral->isChecked() );
+   le_reps       ->setEnabled( rb_integral->isChecked() );
+   cb_save_bl    ->setEnabled( rb_integral->isChecked() );
+   pb_clear_gauss->setEnabled( ((US_Hydrodyn_Saxs_Hplc *)hplc_win)->any_gaussians() );
+}
+
+void US_Hydrodyn_Saxs_Hplc_Options::clear_gauss()
+{
+   if ( QMessageBox::Yes == QMessageBox::question(
+                                                  this,
+                                                  caption() + tr( ": Clear cached Gaussian values" ),
+                                                  tr("Are you sure you want to clear all cached Gaussian values?" ),
+                                                  QMessageBox::Yes, 
+                                                  QMessageBox::No | QMessageBox::Default
+                                                  ) )
+   {
+      ((US_Hydrodyn_Saxs_Hplc *)hplc_win)->clear_gaussians();
+   }
+   update_enables();
 }
 

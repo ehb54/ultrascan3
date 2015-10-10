@@ -235,7 +235,9 @@ void US_Tar::write_file( const QString& file )
    //char magic[6];      /* 257 */
    //char version[2];    /* 263 */
 
-   sprintf ( tar_header.header.magic, "ustar  " );
+   // sprintf ( tar_header.header.magic, "ustar  " );
+   memcpy( (void *)tar_header.header.magic, (const void *)"ustar ", 6 );
+   sprintf( tar_header.header.version, " " ); 
 
 #ifndef WIN32
    // uid and gid are always zero on WIN32 systems
@@ -371,7 +373,9 @@ void US_Tar::write_long_filename( const QString& filename )
    //char magic[6];      /* 257 */
    //char version[2];    /* 263 */
 
-   sprintf ( tar_header.header.magic, "ustar  " );
+   // sprintf ( tar_header.header.magic, "ustar  " );
+   memcpy( (void *)tar_header.header.magic, (const void *)"ustar ", 6 );
+   sprintf( tar_header.header.version, " " ); 
 
    //char uname[32];     /* 265 */
    //char gname[32];     /* 297 */
@@ -877,7 +881,7 @@ bool US_Tar::validate_header( void )
 
    // And check the magic string
    QString magic = tar_header.header.magic;
-   if ( magic != "ustar  " ) 
+   if ( magic.left(5) != "ustar" ) 
    {
       throw TAR_ARCHIVEERROR;
    }

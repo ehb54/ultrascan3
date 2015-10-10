@@ -412,6 +412,9 @@ SOURCES += \
   qwt/scrollbar.cpp \
   qwt/scrollzoomer.cpp \
   us_gui_settings.cpp \
+  us_hydrodyn_saxs_guinier_frames.cpp \
+  us_hydrodyn_saxs_hplc_scale_trend.cpp \
+  us_plot_util.cpp \
   shd_mpi/shs_use.cpp
 #  us_db_rst_channel.cpp \
 #  us_db_rst_equil.cpp \
@@ -703,6 +706,9 @@ HEADERS += \
   us_gui_settings.h \
   qwt/scrollbar.h \
   qwt/scrollzoomer.h \
+  us_hydrodyn_saxs_guinier_frames.h \
+  us_hydrodyn_saxs_hplc_scale_trend.h \
+  us_plot_util.h \
   shd_mpi/shs_data.h
 
 IMAGES = \

@@ -2012,7 +2012,12 @@ double US_Hydrodyn_Saxs_Hplc_Fit::gsm_f_EMGGMG( our_vector *v )
 
       if ( HFIT::param_fixed[ i ] )
       {
-         width = HFIT::fixed_params[ HFIT::param_pos[ i ] ];
+         if ( HFIT::comm_backref.count( i ) )
+         {
+            width = v->d              [ HFIT::comm_backref[ i ] ] * HFIT::conc_ratios_map[ i ];
+         } else {
+            width = HFIT::fixed_params[ HFIT::param_pos[ i ] ];
+         }
       } else {
          width = v->d[ HFIT::param_pos[ i ] ];
          if ( width < HFIT::param_min[ HFIT::param_pos[ i ] ] ||

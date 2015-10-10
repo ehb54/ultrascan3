@@ -342,7 +342,7 @@ bool US_Saxs_Util::run_pm( QString controlfile )
    QString outputData = QString( "%1" ).arg( getenv( "outputData" ) );
    if ( outputData.isEmpty() )
    {
-      outputData = "../outputData";
+      outputData = "outputData";
    }
 
    int errorno = -1;

@@ -11,11 +11,11 @@
 #endif
 #include <qpalette.h>
 //Added by qt3to4:
+#include <Q3Frame>
 #include <QLabel>
+#include <Q3TextStream>
 #include <QMouseEvent>
 #include <QCloseEvent>
-#include <Q3TextStream>
-#include <Q3Frame>
 
 // #define JAC_VERSION
 
@@ -127,6 +127,22 @@ US_Hydrodyn_Saxs_Hplc::US_Hydrodyn_Saxs_Hplc(
    {
       ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_dist_max" ] = "50.0";
    }
+   if ( !( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "guinier_mwt_k" ) )
+   {
+      ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "guinier_mwt_k" ] = "1";
+   }
+   if ( !( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "guinier_mwt_c" ) )
+   {
+      ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "guinier_mwt_c" ] = "-2.095";
+   }
+   if ( !( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "guinier_mwt_qmax" ) )
+   {
+      ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "guinier_mwt_qmax" ] = "0.2";
+   }
+   if ( !( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "guinier_mwc_mw_per_N" ) )
+   {
+      ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "guinier_mwc_mw_per_N" ] = "112";
+   }
 
    gaussian_type = 
       ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_gaussian_type" ) ?
@@ -156,6 +172,9 @@ US_Hydrodyn_Saxs_Hplc::US_Hydrodyn_Saxs_Hplc(
    guinier_plot_zoomer        = (ScrollZoomer *) 0;
    guinier_plot_errors_zoomer = (ScrollZoomer *) 0;
    guinier_plot_rg_zoomer     = (ScrollZoomer *) 0;
+   guinier_plot_mw_zoomer     = (ScrollZoomer *) 0;
+
+   ggqfit_plot_zoomer         = (ScrollZoomer *) 0;
 
    le_last_focus      = (mQLineEdit *) 0;
    
@@ -209,7 +228,7 @@ US_Hydrodyn_Saxs_Hplc::US_Hydrodyn_Saxs_Hplc(
    // lb_files        ->setMaximumWidth( 2 * csv_width / 5 );
    // lb_created_files->setMaximumWidth( csv_width / 3 );
    // editor          ->setMaximumWidth( csv_width / 3 );
-   // lbl_created_dir    ->setMaximumWidth( csv_width / 3 );
+   // le_created_dir    ->setMaximumWidth( csv_width / 3 );
 
    int percharwidth = 1 + ( 7 * ( USglobal->config_list.fontSize - 1 ) / 10 );
    {
@@ -278,7 +297,7 @@ US_Hydrodyn_Saxs_Hplc::US_Hydrodyn_Saxs_Hplc(
    }
 
    // lbl_dir        ->setMaximumWidth( lb_files->width() - cb_lock_dir->width() );
-   // lbl_created_dir->setMaximumWidth( lb_files->width() );
+   // le_created_dir->setMaximumWidth( lb_files->width() );
    
    // int left_over = ( csv_width / 3 ) - pb_regex_load->maximumWidth();
    // le_regex->setMaximumWidth( left_over / 3 );
@@ -846,6 +865,7 @@ void US_Hydrodyn_Saxs_Hplc::clear_files( QStringList files, bool quiet )
          {
             editor_msg( "black", QString( tr( "Removed %1" ) ).arg( lb_files->text( i ) ) );
          }
+         conc_files.erase( lb_files->text( i ) );
          if ( lbl_conc_file->text() == lb_files->text( i ) )
          {
             lbl_conc_file->setText( "" );
@@ -871,6 +891,7 @@ void US_Hydrodyn_Saxs_Hplc::clear_files( QStringList files, bool quiet )
          f_is_time  .erase( lb_files->text( i ) );
          f_gaussians.erase( lb_files->text( i ) );
          f_psv      .erase( lb_files->text( i ) );
+         f_header   .erase( lb_files->text( i ) );
          f_I0se     .erase( lb_files->text( i ) );
          f_conc     .erase( lb_files->text( i ) );
          f_extc     .erase( lb_files->text( i ) );
@@ -909,7 +930,12 @@ public:
    }
 };
 
-void US_Hydrodyn_Saxs_Hplc::add_files()
+void US_Hydrodyn_Saxs_Hplc::load_conc()
+{
+   add_files( true );
+}
+
+void US_Hydrodyn_Saxs_Hplc::add_files( bool load_conc )
 {
    disable_all();
    map < QString, bool > existing_items;
@@ -920,7 +946,7 @@ void US_Hydrodyn_Saxs_Hplc::add_files()
 
    if ( cb_lock_dir->isChecked() )
    {
-      QDir::setCurrent( lbl_dir->text() );
+      QDir::setCurrent( le_dir->text() );
    }
 
    QString use_dir = QDir::currentDirPath();
@@ -936,20 +962,46 @@ void US_Hydrodyn_Saxs_Hplc::add_files()
    // {
    if ( cb_lock_dir->isChecked() )
    {
-      ((US_Hydrodyn  *)us_hydrodyn)->add_to_directory_history( lbl_dir->text() );
+      ((US_Hydrodyn  *)us_hydrodyn)->add_to_directory_history( le_dir->text() );
    }
    ((US_Hydrodyn  *)us_hydrodyn)->select_from_directory_history( use_dir, this );
    raise();
    // }
 
-   QStringList filenames = QFileDialog::getOpenFileNames( this , "Add files" , use_dir , "dat files [foxs / other] (*.dat);;"
-                                                         "All files (*);;"
-                                                         "ssaxs files (*.ssaxs);;"
-                                                         
-                                                         
-                                                         
-                                                         "txt files [specify q, I, sigma columns] (*.txt)" );
+   QStringList filenames;
 
+   if ( load_conc )
+   {
+      filenames = QFileDialog::getOpenFileNames( this , "Load concentration files" , use_dir , "txt files [specify q, I, sigma columns] (*.txt);;"
+                                                "dat files [foxs / other] (*.dat);;"
+                                                "All files (*);;"
+                                                "ssaxs files (*.ssaxs)" );
+
+      // QString filename = 
+      //    QFileDialog::getOpenFileName(
+      //                                  use_dir
+      //                                  , "txt files [specify q, I, sigma columns] (*.txt);;"
+      //                                  "dat files [foxs / other] (*.dat);;"
+      //                                  "ssaxs files (*.ssaxs);;"
+      //                                  "All files (*);;"
+      //                                  , this
+      //                                  , "open file dialog"
+      //                                  , "Load concfiles" // ? "Set files for grid files"
+      //                                  );
+      // if ( !filename.isEmpty() )
+      // {
+      //    filenames << filename;
+      // }
+   } else {
+      filenames = QFileDialog::getOpenFileNames( this , "Add files" , use_dir , "dat files [foxs / other] (*.dat);;"
+                                                "All files (*);;"
+                                                "ssaxs files (*.ssaxs);;"
+                                                
+                                                
+                                                
+                                                "txt files [specify q, I, sigma columns] (*.txt)" );
+
+   }
    
    QStringList add_filenames;
    
@@ -959,8 +1011,8 @@ void US_Hydrodyn_Saxs_Hplc::add_files()
       if ( !cb_lock_dir->isChecked() )
       {
          QDir::setCurrent( last_load_dir );
-         lbl_dir        ->setText( QDir::currentDirPath() );
-         lbl_created_dir->setText( QDir::currentDirPath() + "/produced" ); 
+         le_dir        ->setText( QDir::currentDirPath() );
+         le_created_dir->setText( QDir::currentDirPath() + "/produced" ); 
       }
       editor_msg( "black", QString( tr( "loaded from %1:" ) ).arg( last_load_dir ) );
    }
@@ -1095,6 +1147,11 @@ void US_Hydrodyn_Saxs_Hplc::add_files()
             editor_msg( "black", QString( tr( "%1" ) ).arg( basename ) );
             add_filenames << basename;
             f_time[ basename ] = found_times[ filenames[ i ] ];
+            if ( load_conc )
+            {
+               f_is_time[ basename ] = true;
+               conc_files.insert( basename );
+            }
          }
          qApp->processEvents();
       } else {
@@ -1182,8 +1239,8 @@ void US_Hydrodyn_Saxs_Hplc::add_files( QStringList filenames )
       if ( !cb_lock_dir->isChecked() )
       {
          QDir::setCurrent( last_load_dir );
-         lbl_dir        ->setText( QDir::currentDirPath() );
-         lbl_created_dir->setText( QDir::currentDirPath() + "/produced" ); 
+         le_dir        ->setText( QDir::currentDirPath() );
+         le_created_dir->setText( QDir::currentDirPath() + "/produced" ); 
       }
       editor_msg( "black", QString( tr( "loaded from %1:" ) ).arg( last_load_dir ) );
    }
@@ -1427,7 +1484,7 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename )
    int I_offset   = 1;
    int e_offset   = 2;
    int row_offset = 1;
-   if ( ext == "dat" && qv[ 0 ].lower().contains( QRegExp( "frame\\s*data" ) ) )
+   if ( ( ext == "dat" || ext == "txt" ) && qv[ 0 ].lower().contains( QRegExp( "frame\\s*data" ) ) )
    {
       is_time = true;
    }
@@ -1564,6 +1621,7 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename )
       QRegExp rx_lock_dir        ( "^# __lock_dir\\s*$" );
       QRegExp rx_created_dir     ( "^# __created_dir: (\\S+)\\s*$" );
       QRegExp rx_files           ( "^# __files\\s*$" );
+      QRegExp rx_conc_files      ( "^# __conc_files\\s*$" );
       QRegExp rx_end             ( "^# __end\\s*$" );
       QRegExp rx_gaussians       ( "^# __gaussians\\s*$" );
       QRegExp rx_f_gaussians     ( "^# __f_gaussians: (\\S+)\\s*$" );
@@ -1605,11 +1663,7 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename )
             if ( gaussian_type != new_g )
             {
                gaussian_type = new_g;
-               unified_ggaussian_ok = false;
-               f_gaussians.clear();
-               gaussians.clear();
-               org_gaussians.clear();
-               org_f_gaussians.clear();
+               clear_gaussians();
                update_gauss_mode();
                ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_gaussian_type" ] = QString( "%1" ).arg( gaussian_type );
             }
@@ -1626,11 +1680,7 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename )
             if ( gaussian_type != new_g )
             {
                gaussian_type = new_g;
-               unified_ggaussian_ok = false;
-               f_gaussians.clear();
-               gaussians.clear();
-               org_gaussians.clear();
-               org_f_gaussians.clear();
+               clear_gaussians();
                update_gauss_mode();
                ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_gaussian_type" ] = QString( "%1" ).arg( gaussian_type );
             }
@@ -1661,7 +1711,7 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename )
          }
          if ( rx_dir.search( qv[ i ] ) != -1 )
          {
-            lbl_dir->setText( rx_dir.cap( 1 ) );
+            le_dir->setText( rx_dir.cap( 1 ) );
             continue;
          }
          if ( rx_lock_dir.search( qv[ i ] ) != -1 )
@@ -1671,7 +1721,7 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename )
          }
          if ( rx_created_dir.search( qv[ i ] ) != -1 )
          {
-            lbl_created_dir->setText( rx_created_dir.cap( 1 ) );
+            le_created_dir->setText( rx_created_dir.cap( 1 ) );
             continue;
          }
          if ( rx_files.search( qv[ i ] ) != -1 )
@@ -1699,6 +1749,27 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename )
             errormsg = QString( tr( "Error: loading %1 line %2 unterminated file list" ) ).arg( filename ).arg( i + 1 );
             return false;
          }
+         if ( rx_conc_files.search( qv[ i ] ) != -1 )
+         {
+            i++;
+            QStringList files;
+            for ( ; i < ( int ) qv.size(); i++ )
+            {
+               if ( rx_end.search( qv[ i ] ) == -1 )
+               {
+                  conc_files.insert( qv[ i ] );
+               } else {
+                  break;
+               }
+            }
+            if ( i < ( int ) qv.size() && rx_end.search( qv[ i ] ) != -1 )
+            {
+               continue;
+            }
+            errormsg = QString( tr( "Error: loading %1 line %2 unterminated concentration file list" ) ).arg( filename ).arg( i + 1 );
+            return false;
+         }
+
          if ( rx_gaussians.search( qv[ i ] ) != -1 )
          {
             i++;
@@ -2045,7 +2116,7 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename )
             cout << QString(" breaking %1 %2\n").arg( this_q ).arg( q[ q.size() - 1 ] );
             break;
          }
-         if ( is_time || this_I != 0e0 )
+         if ( is_time || !isnan( this_I ) )
          {
             q_string.push_back( this_q_string );
             q       .push_back( this_q );
@@ -2105,15 +2176,21 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename )
    return true;
 }
 
-void US_Hydrodyn_Saxs_Hplc::set_conc_file()
+void US_Hydrodyn_Saxs_Hplc::set_conc_file( QString file )
 {
-   for ( int i = 0; i < lb_files->numRows(); i++ )
+   if ( file.isEmpty() )
    {
-      if ( lb_files->isSelected( i ) )
+      for ( int i = 0; i < lb_files->numRows(); i++ )
       {
-         lbl_conc_file->setText( lb_files->text( i ) );
+         if ( lb_files->isSelected( i ) )
+         {
+            lbl_conc_file->setText( lb_files->text( i ) );
+         }
       }
+   } else {
+      lbl_conc_file->setText( file );
    }
+      
    update_csv_conc();
    if ( conc_widget )
    {
@@ -2363,22 +2440,22 @@ bool US_Hydrodyn_Saxs_Hplc::save_files_csv( QStringList files )
    }
 
    {
-      QDir dir1( lbl_created_dir->text() );
+      QDir dir1( le_created_dir->text() );
       if ( !dir1.exists() )
       {
-         if ( dir1.mkdir( lbl_created_dir->text() ) )
+         if ( dir1.mkdir( le_created_dir->text() ) )
          {
-            editor_msg( "black", QString( tr( "Created directory %1" ) ).arg( lbl_created_dir->text() ) );
+            editor_msg( "black", QString( tr( "Created directory %1" ) ).arg( le_created_dir->text() ) );
          } else {
-            editor_msg( "red", QString( tr( "Error: Can not create directory %1 Check permissions." ) ).arg( lbl_created_dir->text() ) );
+            editor_msg( "red", QString( tr( "Error: Can not create directory %1 Check permissions." ) ).arg( le_created_dir->text() ) );
             return false;
          }
       }
    }         
 
-   if ( !QDir::setCurrent( lbl_created_dir->text() ) )
+   if ( !QDir::setCurrent( le_created_dir->text() ) )
    {
-      editor_msg( "red", QString( tr( "Error: can not set directory %1" ) ).arg( lbl_created_dir->text() ) );
+      editor_msg( "red", QString( tr( "Error: can not set directory %1" ) ).arg( le_created_dir->text() ) );
       return false;
    }
 
@@ -2395,8 +2472,23 @@ bool US_Hydrodyn_Saxs_Hplc::save_files_csv( QStringList files )
 
    QString head = qstring_common_head( files, true );
 
-   QString use_filename = head + ".csv";
+   // QString use_filename = head + ".csv";
 
+
+   QString use_dir = QDir::current().canonicalPath();
+
+   QString use_filename = QFileDialog::getSaveFileName( this , tr( "Select a file name for saving" ) , use_dir , "*.csv" );
+
+   if ( use_filename.isEmpty() )
+   {
+      return false;
+   }
+
+   if ( QFileInfo( use_filename ).extension( false ).lower() != ".csv" )
+   {
+      use_filename += ".csv";
+   }
+   
    if ( QFile::exists( use_filename ) )
    {
       use_filename = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( use_filename, 0, this );
@@ -2623,22 +2715,22 @@ bool US_Hydrodyn_Saxs_Hplc::save_file( QString file, bool &cancel, bool &overwri
    } 
 
    {
-      QDir dir1( lbl_created_dir->text() );
+      QDir dir1( le_created_dir->text() );
       if ( !dir1.exists() )
       {
-         if ( dir1.mkdir( lbl_created_dir->text() ) )
+         if ( dir1.mkdir( le_created_dir->text() ) )
          {
-            editor_msg( "black", QString( tr( "Created directory %1" ) ).arg( lbl_created_dir->text() ) );
+            editor_msg( "black", QString( tr( "Created directory %1" ) ).arg( le_created_dir->text() ) );
          } else {
-            editor_msg( "red", QString( tr( "Error: Can not create directory %1 Check permissions." ) ).arg( lbl_created_dir->text() ) );
+            editor_msg( "red", QString( tr( "Error: Can not create directory %1 Check permissions." ) ).arg( le_created_dir->text() ) );
             return false;
          }
       }
    }         
 
-   if ( !QDir::setCurrent( lbl_created_dir->text() ) )
+   if ( !QDir::setCurrent( le_created_dir->text() ) )
    {
-      editor_msg( "red", QString( tr( "Error: can not set directory %1" ) ).arg( lbl_created_dir->text() ) );
+      editor_msg( "red", QString( tr( "Error: can not set directory %1" ) ).arg( le_created_dir->text() ) );
       return false;
    }
 
@@ -2647,7 +2739,7 @@ bool US_Hydrodyn_Saxs_Hplc::save_file( QString file, bool &cancel, bool &overwri
    {
       use_filename = QFileInfo( f_name[ file ] ).fileName();
    } else {
-      use_filename = file + ".dat";
+      use_filename = file + ( conc_files.count( file ) ? ".txt" : ".dat" );
    }
 
    if ( !overwrite_all && QFile::exists( use_filename ) )
@@ -2686,7 +2778,7 @@ bool US_Hydrodyn_Saxs_Hplc::save_file( QString file, bool &cancel, bool &overwri
       }
    }
 
-   ts << QString( caption() + tr( " %1data: %2%3%4%5%6\n" ) )
+   ts << QString( caption() + tr( " %1data: %2%3%4%5%6%7%8\n" ) )
       .arg( ( f_is_time.count( file ) && f_is_time[ file ] ? "Frame " : "" ) )
       .arg( file )
       .arg( f_psv .count( file ) ? QString( " PSV:%1"  ).arg( f_psv [ file ] ) : QString( "" ) )
@@ -2694,6 +2786,7 @@ bool US_Hydrodyn_Saxs_Hplc::save_file( QString file, bool &cancel, bool &overwri
       .arg( use_conc ) // f_conc.count( file ) ? QString( " Conc:%1" ).arg( f_conc[ file ] ) : QString( "" ) )
       .arg( f_extc.count( file ) ? QString( " ExtC_or_DRIinc:%1" ).arg( f_extc[ file ] ) : QString( "" ) )
       .arg( f_time.count( file ) ? QString( " Time:%1" ).arg( f_time[ file ] ) : QString( "" ) )
+      .arg( f_header.count( file ) ? f_header[ file ] : QString( "" ) )
       ;
 
    bool use_errors = ( f_errors.count( file ) && 
@@ -2702,11 +2795,20 @@ bool US_Hydrodyn_Saxs_Hplc::save_file( QString file, bool &cancel, bool &overwri
 
    if ( f_is_time.count( file ) && f_is_time[ file ] )
    {
-      if ( use_errors )
-      {
-         ts << "t                 \tI(t)         \tsd\n";
+      if ( conc_files.count( file ) ) {
+         if ( use_errors )
+         {
+            ts << "t                 \tc(t)         \tsd\n";
+         } else {
+            ts << "t                 \tc(t)\n";
+         }
       } else {
-         ts << "t                 \tI(t)\n";
+         if ( use_errors )
+         {
+            ts << "t                 \tI(t)         \tsd\n";
+         } else {
+            ts << "t                 \tI(t)\n";
+         }
       }
    } else {
       if ( use_errors )
@@ -2739,7 +2841,7 @@ bool US_Hydrodyn_Saxs_Hplc::save_file( QString file, bool &cancel, bool &overwri
                .arg( use_filename ) );
    created_files_not_saved.erase( file );
    f_name[ file ] = QDir::current().path() + QDir::separator() + use_filename;
-   cout << QString( "file <%1> path <%2>\n" ).arg( file ).arg( f_name[ file ] );
+   //   cout << QString( "file <%1> path <%2>\n" ).arg( file ).arg( f_name[ file ] );
    return true;
 }
 
@@ -2965,6 +3067,33 @@ void US_Hydrodyn_Saxs_Hplc::smooth()
 
 bool US_Hydrodyn_Saxs_Hplc::get_peak( QString file, double &peak )
 {
+   double pos;
+   return get_peak( file, peak, pos );
+   // if ( !f_Is.count( file ) )
+   // {
+   //    editor_msg( "red", QString( tr( "Internal error: get_peak requested on %1 but no data available" ) ).arg( file ) );
+   //    return false;
+   // }
+
+   // if ( !f_Is[ file ].size() )
+   // {
+   //    editor_msg( "red", QString( tr( "Internal error: get_peak requested on %1 but data empty" ) ).arg( file ) );
+   //    return false;
+   // }
+      
+   // peak = f_Is[ file ][ 0 ];
+   // for ( unsigned int i = 1; i < ( unsigned int ) f_Is[ file ].size(); i++ )
+   // {
+   //    if ( peak < f_Is[ file ][ i ] )
+   //    {
+   //       peak = f_Is[ file ][ i ];
+   //    }
+   // }
+   // return true;
+}
+
+bool US_Hydrodyn_Saxs_Hplc::get_peak( QString file, double &peak, double &pos )
+{
    if ( !f_Is.count( file ) )
    {
       editor_msg( "red", QString( tr( "Internal error: get_peak requested on %1 but no data available" ) ).arg( file ) );
@@ -2978,16 +3107,17 @@ bool US_Hydrodyn_Saxs_Hplc::get_peak( QString file, double &peak )
    }
       
    peak = f_Is[ file ][ 0 ];
+   pos = f_qs[ file ][ 0 ];
    for ( unsigned int i = 1; i < ( unsigned int ) f_Is[ file ].size(); i++ )
    {
       if ( peak < f_Is[ file ][ i ] )
       {
          peak = f_Is[ file ][ i ];
+         pos = f_qs[ file ][ i ];
       }
    }
    return true;
 }
-
 
 void US_Hydrodyn_Saxs_Hplc::smooth( QStringList files )
 {
@@ -3081,6 +3211,8 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_t()
    update_enables();
 }
 
+// #define USHC_TIMERS
+
 void US_Hydrodyn_Saxs_Hplc::create_i_of_t( QStringList files )
 {
    // find common q 
@@ -3099,6 +3231,20 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_t( QStringList files )
    QRegExp rx_clear_nonnumeric( "^(\\d?.?\\d+)\\D" );
    // rx_cap.setMinimal( true );
 
+#ifdef USHC_TIMERS
+   US_Timer           us_timers;
+   us_timers          .clear_timers();
+   us_timers.init_timer( "get qs" );
+   us_timers.init_timer( "ql.sort" );
+   us_timers.init_timer( "ql.sort post" );
+   us_timers.init_timer( "build up q" );
+   us_timers.init_timer( "check_discard_it_sd_mult" );
+   us_timers.init_timer( "check_zi_window" );
+
+   us_timers.start_timer( "get qs" );
+#endif
+
+#ifdef OLDWAY
    for ( unsigned int i = 0; i < ( unsigned int ) files.size(); i++ )
    {
       if ( !f_qs.count( files[ i ] ) )
@@ -3135,8 +3281,91 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_t( QStringList files )
          }
       }
    }
+#endif
 
+   {
+      QString     * qs;
+      double      * q;
+      double      * I;
+      double      * e;
+      unsigned int size;
+      double        qv;
+
+      map < double , double > * Ivp;
+      map < double , double > * evp;
+
+      for ( unsigned int i = 0; i < ( unsigned int ) files.size(); ++i )
+      {
+      
+         qs = &( files[ i ] );
+
+         if ( !f_qs.count( *qs ) )
+         {
+            editor_msg( "red", QString( tr( "Internal error: request to use %1, but not found in data" ) ).arg( *qs ) );
+         } else {
+            QString tmp = qs->mid( head.length() );
+            tmp = tmp.mid( 0, tmp.length() - tail.length() );
+            if ( rx_clear_nonnumeric.search( tmp ) != -1 )
+            {
+               tmp = rx_clear_nonnumeric.cap( 1 );
+            }
+
+            if ( rx_cap.search( tmp ) != -1 )
+            {
+               tmp = rx_cap.cap( 1 ) + "." + rx_cap.cap( 2 );
+            }
+            double timestamp = tmp.toDouble();
+#ifdef DEBUG_LOAD_REORDER
+            qDebug( QString( "%1 tmp %2 value %3" ).arg( *qs ).arg( tmp ).arg( timestamp ) );
+#endif
+
+            Ivp = &(I_values[ timestamp ]);
+            evp = &(e_values[ timestamp ]);
+
+            q = &(f_qs[ *qs ][ 0 ]);
+            I = &(f_Is[ *qs ][ 0 ]);
+            size =  ( unsigned int ) f_qs[ *qs ].size();
+
+            if ( f_errors[ *qs ].size() )
+            {
+               e = &(f_errors[ *qs ][ 0 ]);
+               for ( unsigned int j = 0; j < size; j++ )
+               {
+                  qv = q[ j ];
+                  (*Ivp)[ qv ] = I[ j ];
+                  (*evp)[ qv ] = e[ j ];
+                  if ( !used_q.count( qv ) )
+                  {
+                     ql.push_back( qv );
+                     used_q[ qv ] = true;
+                  }
+               }
+            } else {
+               for ( unsigned int j = 0; j < size; j++ )
+               {
+                  qv = q[ j ];
+                  (*Ivp)[ qv ] = I[ j ];
+                  if ( !used_q.count( qv ) )
+                  {
+                     ql.push_back( qv );
+                     used_q[ qv ] = true;
+                  }
+               }
+            }
+         }
+      }
+   }
+
+#ifdef USHC_TIMERS
+   us_timers.end_timer( "get qs" );
+   us_timers.start_timer( "ql.sort" );
+#endif
    ql.sort();
+
+#ifdef USHC_TIMERS
+   us_timers.end_timer( "ql.sort" );
+   us_timers.start_timer( "ql.sort post" );
+#endif
 
    vector < double > q;
    vector < QString > q_qs;
@@ -3148,75 +3377,104 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_t( QStringList files )
    }
 
    map < QString, bool > current_files;
-   for ( int i = 0; i < lb_files->numRows(); i++ )
+   for ( int i = 0; i < lb_files->numRows(); ++i )
    {
       current_files[ lb_files->text( i ) ] = true;
    }
 
+#ifdef USHC_TIMERS
+   us_timers.end_timer( "ql.sort post" );
+   us_timers.start_timer        ( "build up q" );
+#endif
+
    QStringList created_files;
-
-   for ( unsigned int i = 0; i < ( unsigned int )q.size(); i++ )
-   {
-      QString basename = QString( "%1_It_q%2" ).arg( head ).arg( q[ i ] );
-      basename.replace( ".", "_" );
-      
-      unsigned int ext = 0;
-      QString fname = basename + tail;
-      while ( current_files.count( fname ) )
-      {
-         fname = basename + QString( "-%1" ).arg( ++ext ) + tail;
-      }
-      editor_msg( "gray", fname );
-
-      vector < double  > t;
-      vector < QString > t_qs;
-      vector < double  > I;
-      vector < double  > e;
-
-      for ( map < double, map < double , double > >::iterator it = I_values.begin();
-            it != I_values.end();
-            it++ )
-      {
-         t   .push_back( it->first );
-         t_qs.push_back( QString( "" ).sprintf( "%.8f", it->first ) );
-         if ( it->second.count( q[ i ] ) )
-         {
-            I.push_back( it->second[ q[ i ] ] );
-         } else {
-            I.push_back( 0e0 );
-         }
-         if ( e_values.count( it->first ) &&
-              e_values[ it->first ].count( q[ i ] ) )
-         {
-            e.push_back( e_values[ it->first ][ q[ i ] ] );
-         } else {
-            e.push_back( 0e0 );
-         }
-      }
-
-      lb_created_files->insertItem( fname );
-      lb_created_files->setBottomItem( lb_created_files->numRows() - 1 );
-      lb_files->insertItem( fname );
-      lb_files->setBottomItem( lb_files->numRows() - 1 );
-      created_files_not_saved[ fname ] = true;
    
-      f_pos       [ fname ] = f_qs.size();
-      f_qs_string [ fname ] = t_qs;
-      f_qs        [ fname ] = t;
-      f_Is        [ fname ] = I;
-      f_errors    [ fname ] = e;
-      f_is_time   [ fname ] = true;
-      f_conc      [ fname ] = 0e0;
-      f_psv       [ fname ] = 0e0;
-      f_I0se      [ fname ] = 0e0;
+   {
+      unsigned int size = ( unsigned int )q.size();
+
+      for ( unsigned int i = 0; i < size; ++i )
       {
-         vector < double > tmp;
-         f_gaussians  [ fname ] = tmp;
-      }
-      created_files << fname;
-   }      
+         double qv = q[ i ];
+         QString basename = QString( "%1_It_q%2" ).arg( head ).arg( qv );
+         basename.replace( ".", "_" );
+      
+         unsigned int ext = 0;
+         QString fname = basename + tail;
+         while ( current_files.count( fname ) )
+         {
+            fname = basename + QString( "-%1" ).arg( ++ext ) + tail;
+         }
+         editor_msg( "gray", fname );
+
+         vector < double  > t;
+         vector < QString > t_qs;
+         vector < double  > I;
+         vector < double  > e;
+
+         for ( map < double, map < double , double > >::iterator it = I_values.begin();
+               it != I_values.end();
+               it++ )
+         {
+            t   .push_back( it->first );
+            t_qs.push_back( QString( "" ).sprintf( "%.8f", it->first ) );
+            if ( it->second.count( qv ) )
+            {
+               I.push_back( it->second[ qv ] );
+            } else {
+               I.push_back( 0e0 );
+            }
+            if ( e_values.count( it->first ) &&
+                 e_values[ it->first ].count( qv ) )
+            {
+               e.push_back( e_values[ it->first ][ qv ] );
+            } else {
+               e.push_back( 0e0 );
+            }
+         }
+
+         created_files_not_saved[ fname ] = true;
+   
+         f_pos       [ fname ] = f_qs.size();
+         f_qs_string [ fname ] = t_qs;
+         f_qs        [ fname ] = t;
+         f_Is        [ fname ] = I;
+         f_errors    [ fname ] = e;
+         f_is_time   [ fname ] = true;
+         f_conc      [ fname ] = 0e0;
+         f_psv       [ fname ] = 0e0;
+         f_I0se      [ fname ] = 0e0;
+         {
+            vector < double > tmp;
+            f_gaussians  [ fname ] = tmp;
+         }
+         created_files << fname;
+      }      
+      lb_created_files->insertStringList( created_files );
+      lb_files->insertStringList        ( created_files );
+      lb_created_files->setBottomItem   ( lb_created_files->numRows() - 1 );
+      lb_files->setBottomItem           ( lb_files->numRows() - 1 );
+   }
+
+#ifdef USHC_TIMERS
+   us_timers.end_timer        ( "build up q" );
+   us_timers.start_timer      ( "check_discard_it_sd_mult" );
+#endif
+
    check_discard_it_sd_mult( created_files );
+
+#ifdef USHC_TIMERS
+   us_timers.end_timer        ( "check_discard_it_sd_mult" );
+   us_timers.start_timer      ( "check_zi_window" );
+#endif
+
    (void) check_zi_window( created_files );
+
+#ifdef USHC_TIMERS
+   us_timers.end_timer        ( "check_zi_window" );
+
+   qDebug( us_timers.list_times() );
+#endif
+
    update_enables();
 }
 
@@ -3232,7 +3490,7 @@ void US_Hydrodyn_Saxs_Hplc::test_i_of_t()
    update_enables();
 }
 
-bool US_Hydrodyn_Saxs_Hplc::check_zi_window( QStringList & files )
+bool US_Hydrodyn_Saxs_Hplc::check_zi_window( QStringList & files, const QString & extra_text )
 {
    int window = ((US_Hydrodyn *)us_hydrodyn)->gparams[ "hplc_zi_window" ].toInt();
 
@@ -3250,7 +3508,8 @@ bool US_Hydrodyn_Saxs_Hplc::check_zi_window( QStringList & files )
                                        "The created I(t) curves have fewer time points (%1) than the negative integral window size (%2)\n"
                                        "The negative integral window test will not be performed.\n"
                                        "You may wish to decrease this value in 'Options'.\n"
-                                       "Having a negative region likely means problems with buffer subtraction which should be corrected before *any* analysis is done.\n"
+                                       "Typically this might occur at large q values where the detector instabilities surpass the associated errors.\n"
+                                       "It could also arise from problems with buffer subtraction.\n"
                                        ) )
                            .arg( f_qs[ files[ 0 ] ].size() )
                            .arg( window ),
@@ -3262,14 +3521,20 @@ bool US_Hydrodyn_Saxs_Hplc::check_zi_window( QStringList & files )
 
    QStringList messages;
 
+   double      * I;
+   double      * e;
+
    for ( int i = 0; i < (int) files.size(); ++i )
    {
       QString this_file = files[ i ];
       int pts = (int) f_qs[ this_file ].size();
       bool use_errors = ( f_errors.count( this_file ) && f_qs[ this_file ].size() == f_errors[ this_file ].size() );
 
+      I = &(f_Is[ this_file ][ 0 ]);
+
       if ( use_errors )
       {
+         e = &(f_errors[ this_file ][ 0 ]);
          for ( int j = 0; j < pts; ++j )
          {
             if ( j + window < pts )
@@ -3278,8 +3543,8 @@ bool US_Hydrodyn_Saxs_Hplc::check_zi_window( QStringList & files )
                double sdsum    = 0e0;
                for ( int k = 0; k < window; ++k )
                {
-                  integral += f_Is    [ this_file ][ j + k ];
-                  sdsum    += f_errors[ this_file ][ j + k ];
+                  integral += I[ j + k ];
+                  sdsum    += e[ j + k ];
                }
                if ( integral < -sdsum )
                {
@@ -3299,7 +3564,7 @@ bool US_Hydrodyn_Saxs_Hplc::check_zi_window( QStringList & files )
                double integral = 0e0;
                for ( int k = 0; k < window; ++k )
                {
-                  integral += f_Is[ this_file ][ j + k ];
+                  integral += I[ j + k ];
                }
                if ( integral < 0e0 )
                {
@@ -3329,10 +3594,12 @@ bool US_Hydrodyn_Saxs_Hplc::check_zi_window( QStringList & files )
       QMessageBox::warning(
                            this,
                            this->caption() + tr(": I(t) negative integral window test" ),
-                           QString( tr( "Please note:\n\n"
+                           QString( extra_text +
+                                    tr( "Please note:\n\n"
                                         "These files have failed the negative integral window test of size %1\n"
                                         "%2\n\n"
-                                        "Having a negative region likely means problems with buffer subtraction which should be corrected before *any* analysis is done.\n"                                             
+                                        "Typically this might occur at large q values where the detector instabilities surpass the associated errors.\n"
+                                        "It could also arise from problems with buffer subtraction.\n"
                                         ) )
                            .arg( window )
                            .arg( qsl.join( "\n" ) ),
@@ -3476,7 +3743,7 @@ bool US_Hydrodyn_Saxs_Hplc::all_selected_have_nonzero_conc()
       }
    }
 
-   return selected_count > 1;
+   return selected_count > 0;
 }
 
 void US_Hydrodyn_Saxs_Hplc::delete_zoomer_if_ranges_changed()
@@ -4856,7 +5123,7 @@ void US_Hydrodyn_Saxs_Hplc::similar_files()
    QDir::setCurrent( dir );
    if ( !cb_lock_dir->isChecked() )
    {
-      lbl_dir->setText( QDir::currentDirPath() );
+      le_dir->setText( QDir::currentDirPath() );
    }
    QDir qd;
    add_files( qd.entryList( "*" ).grep( QRegExp( match ) ) );
@@ -4864,12 +5131,12 @@ void US_Hydrodyn_Saxs_Hplc::similar_files()
 
 void US_Hydrodyn_Saxs_Hplc::regex_load()
 {
-   // make list of lbl_dir all files
+   // make list of le_dir all files
    // filter with regex for each # in list
-   QString dir     = lbl_dir->text();
+   QString dir     = le_dir->text();
 
    QDir::setCurrent( dir );
-   lbl_dir->setText( QDir::currentDirPath() );
+   le_dir->setText( QDir::currentDirPath() );
    QDir qd;
 
 
@@ -4953,6 +5220,7 @@ void US_Hydrodyn_Saxs_Hplc::rename_created( Q3ListBoxItem *lbi, const QPoint & )
    f_psv       [ text ] = f_psv.count( lbi->text() ) ? f_psv[ lbi->text() ] : 0e0;
    f_I0se      [ text ] = f_I0se.count( lbi->text() ) ? f_I0se[ lbi->text() ] : 0e0;
    f_conc      [ text ] = f_conc.count( lbi->text() ) ? f_conc[ lbi->text() ] : 0e0;
+   f_header    [ text ] = f_header.count( lbi->text() ) ? f_header[ lbi->text() ] : "";
 
    update_csv_conc();
    map < QString, double > concs = current_concs();
@@ -5046,6 +5314,11 @@ void US_Hydrodyn_Saxs_Hplc::normalize()
       f_is_time  [ norm_name ] = false;
       f_psv      [ norm_name ] = f_psv.count( files[ i ] ) ? f_psv[ files[ i ] ] : 0;
       f_I0se     [ norm_name ] = f_I0se.count( files[ i ] ) ? f_I0se[ files[ i ] ] : 0;
+      f_header   [ norm_name ] = f_header.count( files[ i ] ) ? f_header[ files[ i ] ] : "";
+
+      if ( f_extc.count( files[ i ] ) ) {
+         f_extc     [ norm_name ] = f_extc[ files[ i ] ];
+      }
       f_conc     [ norm_name ] = 1e0;
       {
          vector < double > tmp;
@@ -5263,58 +5536,6 @@ bool US_Hydrodyn_Saxs_Hplc::type_files( QStringList files )
 
    return f_is_time[ files[ 0 ] ];
 }
-
-
-
-void US_Hydrodyn_Saxs_Hplc::wheel_start()
-{
-   QStringList selected_files;
-   lbl_wheel_pos->setText( QString( "%1" ).arg( 0 ) );
-
-   selected_files = all_selected_files();
-
-   bool ok;
-
-   wheel_file = QInputDialog::getItem(
-                                      tr( "SOMO: HPLC timeshift: select file" ),
-                                      tr("Select the curve to timeshift:\n" ),
-                                      selected_files, 
-                                      0, 
-                                      FALSE, 
-                                      &ok,
-                                      this );
-   if ( !ok ) {
-      return;
-   }
-
-   // gaussian_mode  = false;
-   // ggaussian_mode = false;
-   // baseline_mode  = false;
-
-   if ( !plotted_curves.count( wheel_file ) )
-   {
-      editor_msg( "red", QString( tr( "Internal error: request to timeshift %1, but not found in data" ) ).arg( wheel_file ) );
-      return;
-   }
-
-   wheel_curve           = plotted_curves[ wheel_file ];
-
-   running               = true;
-
-   disable_all();
-   // timeshift_mode = true;
-   mode_select( MODE_TIMESHIFT );
-
-   plot_errors->clear();
-   
-   pb_rescale            ->setEnabled( true );
-   pb_wheel_start        ->setEnabled( false );
-   pb_wheel_cancel       ->setEnabled( true );
-   qwtw_wheel            ->setEnabled( true );
-   qwtw_wheel            ->setRange  ( -100, 100, .1 );
-   qwtw_wheel            ->setValue  ( 0 );
-}
-
 
 void US_Hydrodyn_Saxs_Hplc::gaussian_enables()
 {
@@ -5758,22 +5979,22 @@ void US_Hydrodyn_Saxs_Hplc::gauss_next()
 void US_Hydrodyn_Saxs_Hplc::gauss_save()
 {
    {
-      QDir dir1( lbl_created_dir->text() );
+      QDir dir1( le_created_dir->text() );
       if ( !dir1.exists() )
       {
-         if ( dir1.mkdir( lbl_created_dir->text() ) )
+         if ( dir1.mkdir( le_created_dir->text() ) )
          {
-            editor_msg( "black", QString( tr( "Created directory %1" ) ).arg( lbl_created_dir->text() ) );
+            editor_msg( "black", QString( tr( "Created directory %1" ) ).arg( le_created_dir->text() ) );
          } else {
-            editor_msg( "red", QString( tr( "Error: Can not create directory %1 Check permissions." ) ).arg( lbl_created_dir->text() ) );
+            editor_msg( "red", QString( tr( "Error: Can not create directory %1 Check permissions." ) ).arg( le_created_dir->text() ) );
             return;
          }
       }
    }         
 
-   if ( !QDir::setCurrent( lbl_created_dir->text() ) )
+   if ( !QDir::setCurrent( le_created_dir->text() ) )
    {
-      editor_msg( "red", QString( tr( "Error: can not set directory %1" ) ).arg( lbl_created_dir->text() ) );
+      editor_msg( "red", QString( tr( "Error: can not set directory %1" ) ).arg( le_created_dir->text() ) );
       return;
    }
 
@@ -6832,14 +7053,26 @@ void US_Hydrodyn_Saxs_Hplc::replot_gaussian_sum()
    double end   = le_gauss_fit_end  ->text().toDouble();
    if ( wheel_errors_ok && cb_sd_weight->isChecked() )
    {
+      int used_pts = 0;
       for ( unsigned int j = 0; j < x.size(); j++ )
       {
          if ( x[ j ] >= start && x[ j ] <= end )
          {
             double tmp = ( y[ j ] - f_Is[ wheel_file ][ j ] ) / f_errors[ wheel_file ][ j ];
             rmsd += tmp * tmp;
+            ++used_pts;
          }
       }
+      double nu = (double)( used_pts - (int) gaussians.size() - 1 );
+      if ( nu <= 0e0 )
+      {
+         nu = (double) used_pts;
+         if ( nu <= 0e0 )
+         {
+            nu = 1e0;
+         }
+      }
+      rmsd /= nu;
    } else {
 
       for ( unsigned int j = 0; j < x.size(); j++ )
@@ -6849,9 +7082,10 @@ void US_Hydrodyn_Saxs_Hplc::replot_gaussian_sum()
             rmsd += ( y[ j ] - f_Is[ wheel_file ][ j ] ) * ( y[ j ] - f_Is[ wheel_file ][ j ] );
          }
       }
+      rmsd = sqrt( rmsd );
    }
 
-   lbl_gauss_fit->setText( QString( " %1 " ).arg( sqrt( rmsd ), 0, 'g', 5 ) );
+   lbl_gauss_fit->setText( QString( " %1 " ).arg( rmsd, 0, 'g', 5 ) );
    vector < double > empty;
    update_plot_errors( x, y, f_Is[ wheel_file ], f_errors.count( wheel_file ) ? f_errors[ wheel_file ] : empty );
 }
@@ -7324,8 +7558,16 @@ void US_Hydrodyn_Saxs_Hplc::ggauss_start()
       plot_errors_zoomer = (ScrollZoomer *) 0;
    }
 
+   ggqfit_plot->clear();
+   if ( ggqfit_plot_zoomer )
+   {
+      delete ggqfit_plot_zoomer;
+      ggqfit_plot_zoomer = (ScrollZoomer *) 0;
+   }
+
    le_last_focus = (mQLineEdit *) 0;
    pb_gauss_fit->setText( tr( "Global Fit" ) );
+   pb_ggauss_rmsd->setText   ( tr( cb_sd_weight->isChecked() ? "nChi^2" : "RMSD" ) );
 
    disable_all();
 
@@ -7350,6 +7592,25 @@ void US_Hydrodyn_Saxs_Hplc::ggauss_start()
       editor_msg( "dark red", msg );
    }
 
+   if ( !cb_sd_weight->isChecked() )
+   {
+      switch ( QMessageBox::question(this, 
+                                     caption() + tr( ": Global Gaussians" ),
+                                     QString( tr( "Note: SD weighting is currently turned off.\n" ) ),
+                                     tr( "&Turn on" ), 
+                                     tr( "&Leave off" ),
+                                     QString::null,
+                                     0, // Stop == button 0
+                                     0 // Escape == button 0
+                                     ) ) {
+      case 0 : // Turn on
+         cb_sd_weight->setChecked( true );
+         break;
+      case 1 : // Leave off
+         break;
+      }       
+   }      
+
    if ( !create_unified_ggaussian_target() )
    {
       update_enables();
@@ -7361,6 +7622,7 @@ void US_Hydrodyn_Saxs_Hplc::ggauss_start()
 
    // ggaussian_mode = true;
    mode_select( MODE_GGAUSSIAN );
+   ggqfit_plot->hide();
 
    lbl_gauss_fit->setText( QString( "%1" ).arg( ggaussian_rmsd(), 0, 'g', 5 ) );
    wheel_file = unified_ggaussian_files[ 0 ];
@@ -7427,6 +7689,7 @@ void US_Hydrodyn_Saxs_Hplc::ggaussian_enables()
    pb_rescale          ->setEnabled( true );
    pb_view             ->setEnabled( unified_ggaussian_curves <= 10 );
    pb_errors           ->setEnabled( true );
+   pb_ggqfit           ->setEnabled( true );
 }
 
 QStringList US_Hydrodyn_Saxs_Hplc::all_selected_files()
@@ -7757,27 +8020,27 @@ void US_Hydrodyn_Saxs_Hplc::ggauss_results()
 
 void US_Hydrodyn_Saxs_Hplc::dir_pressed()
 {
-   QString use_dir = lbl_dir->text();
+   QString use_dir = le_dir->text();
    ((US_Hydrodyn  *)us_hydrodyn)->select_from_directory_history( use_dir, this );
    QString s = QFileDialog::getExistingDirectory( this , tr( "Choose a new base directory" ) , use_dir , QFileDialog::ShowDirsOnly );
 
    if ( !s.isEmpty() )
    {
       QDir::setCurrent( s );
-      lbl_dir->setText(  QDir::currentDirPath() );
+      le_dir->setText(  QDir::currentDirPath() );
       ((US_Hydrodyn *)us_hydrodyn)->add_to_directory_history( s );
    }
 }
 
 void US_Hydrodyn_Saxs_Hplc::created_dir_pressed()
 {
-   QString use_dir = lbl_dir->text();
+   QString use_dir = le_dir->text();
    ((US_Hydrodyn  *)us_hydrodyn)->select_from_directory_history( use_dir, this );
    QString s = QFileDialog::getExistingDirectory( this , tr( "Choose a new base directory for saving files" ) , use_dir , QFileDialog::ShowDirsOnly );
 
    if ( !s.isEmpty() )
    {
-      lbl_created_dir->setText( s );
+      le_created_dir->setText( s );
       ((US_Hydrodyn *)us_hydrodyn)->add_to_directory_history( s );
    }
 }
@@ -7856,6 +8119,7 @@ void US_Hydrodyn_Saxs_Hplc::set_sd_weight()
       if ( current_mode == MODE_GGAUSSIAN )
       {
          pb_ggauss_rmsd->setEnabled( true );
+         pb_ggauss_rmsd->setText   ( tr( cb_sd_weight->isChecked() ? "nChi^2" : "RMSD" ) );
          plot_errors      ->clear();
          if ( !suppress_replot )
          {
@@ -7865,6 +8129,8 @@ void US_Hydrodyn_Saxs_Hplc::set_sd_weight()
          plot_errors_target.clear();
          plot_errors_fit   .clear();
          plot_errors_errors.clear();
+         ggqfit_plot->clear();
+         ggqfit_plot->replot();
       }
    }
 }
@@ -7938,7 +8204,7 @@ void US_Hydrodyn_Saxs_Hplc::save_state()
    // {
    if ( cb_lock_dir->isChecked() )
    {
-      ((US_Hydrodyn  *)us_hydrodyn)->add_to_directory_history( lbl_dir->text() );
+      ((US_Hydrodyn  *)us_hydrodyn)->add_to_directory_history( le_dir->text() );
    }
    ((US_Hydrodyn  *)us_hydrodyn)->select_from_directory_history( use_dir, this );
    raise();
@@ -8010,6 +8276,19 @@ void US_Hydrodyn_Saxs_Hplc::save_state()
 
          ts << "# __end\n";
    
+
+         ts << "# __end\n";
+
+         ts << "# __conc_files\n";
+
+         for ( set < QString >::iterator it = stack_data[ j ].conc_files.begin();
+               it != stack_data[ j ].conc_files.end();
+               it++ )
+         {
+            ts << *it << endl;
+         }
+
+         ts << "# __end\n";
          
          if ( stack_data[ j ].gaussians.size() )
          {
@@ -8065,6 +8344,17 @@ void US_Hydrodyn_Saxs_Hplc::save_state()
    }
 
    ts << "# __end\n";
+
+   ts << "# __conc_files\n";
+
+   for ( set < QString >::iterator it = conc_files.begin();
+         it != conc_files.end();
+         it++ )
+   {
+      ts << *it << endl;
+   }
+
+   ts << "# __end\n";
    
    if ( gaussians.size() )
    {
@@ -8101,13 +8391,13 @@ void US_Hydrodyn_Saxs_Hplc::save_state()
       ts << "# __end\n";
    }      
 
-   ts << "# __dir: " << lbl_dir->text() << endl;
+   ts << "# __dir: " << le_dir->text() << endl;
    if ( cb_lock_dir->isChecked() )
    {
       ts << "# __lock_dir\n";
    }
 
-   ts << "# __created_dir: " << lbl_created_dir->text() << endl;
+   ts << "# __created_dir: " << le_created_dir->text() << endl;
 
    f.close();
    editor_msg( "blue", QString( tr( "State saved in file %1" ) ).arg( fn ) );

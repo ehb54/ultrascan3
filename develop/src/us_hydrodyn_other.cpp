@@ -69,6 +69,7 @@ void US_Hydrodyn::read_residue_file()
    residue_list_no_pbr.clear();
    multi_residue_map.clear();
    residue_atom_hybrid_map.clear();
+   residue_atom_abb_hybrid_map.clear();
    new_residues.clear();
    map < QString, int > dup_residue_map;
    map < QString, bool > pbr_override_map; // maps positioner for overwrite
@@ -197,6 +198,7 @@ void US_Hydrodyn::read_residue_file()
                                        QString("%1|%2")
                                        .arg(new_residue.name).arg(new_atom.name)] 
                   = new_atom.hybrid.name;
+               residue_atom_abb_hybrid_map[ new_atom.name ] = new_atom.hybrid.name;
                new_residue.r_atom.push_back(new_atom);
                new_atoms[new_atom.bead_assignment].push_back(new_atom);
                if ( new_residue.name.contains(QRegExp("^PBR-")) )
@@ -986,7 +988,8 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
 {
    last_read_bead_model = filename;
    lb_model->clear();
-   lbl_pdb_file->setText(tr(" not selected "));
+   le_pdb_file_save_text = "not selected";
+   le_pdb_file->setText(tr( "not selected" ));
    project = filename;
    //   project.replace(QRegExp(".*(/|\\\\)"), "");
    //   project.replace(QRegExp("\\.(somo|SOMO)\\.(bead_model|BEAD_MODEL)$"), "");
@@ -1009,6 +1012,8 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
    {
       if ( f.open( QIODevice::ReadOnly ) )
       {
+         bool so_ovlp = QFileInfo( f ).baseName( true ).contains( "so_ovlp" );
+         qDebug( QString( "so_ovlp %1" ).arg( so_ovlp ? "true" : "false" ) );
          Q3TextStream ts(&f);
          if (!ts.atEnd()) {
             ts >> bead_count;
@@ -1411,10 +1416,15 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
          somo_processed[0] = 1;
          bead_models_as_loaded = bead_models;
          editor->append( QString( "Volume of bead model %1\n" ).arg( total_volume_of_bead_model( bead_model ) ) );
-         int overlap_check_results = overlap_check( true, true, true,
-                                                     hydro.overlap_cutoff ? hydro.overlap : overlap_tolerance);
-         only_overlap = true;
-         return( misc.hydro_zeno ? 0 : overlap_check_results );
+         if ( so_ovlp ) {
+            only_overlap = true;
+            return 0;
+         } else {
+            int overlap_check_results = overlap_check( true, true, true,
+                                                       hydro.overlap_cutoff ? hydro.overlap : overlap_tolerance, 20 );
+            only_overlap = true;
+            return( misc.hydro_zeno ? 0 : overlap_check_results );
+         }
       }
    }
 
@@ -1558,6 +1568,7 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
          lb_model->setEnabled(false);
          model_vector.resize(1);
          model_vector[0].vbar = results.vbar;
+         model_vector[0].Rg = results.rg;
          somo_processed.resize(lb_model->numRows());
          bead_models.resize(lb_model->numRows());
          current_model = 0;
@@ -1567,7 +1578,7 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
          editor->append(QString("\nMolecular weight: %1 Daltons\n\n").arg(tmp_mw));
          editor->append( QString( "Volume of bead model %1\n" ).arg( total_volume_of_bead_model( bead_model ) ) );
          int overlap_check_results = overlap_check( true, true, true,
-                                                    hydro.overlap_cutoff ? hydro.overlap : overlap_tolerance);
+                                                    hydro.overlap_cutoff ? hydro.overlap : overlap_tolerance, 20 );
          only_overlap = true;
          return( misc.hydro_zeno ? 0 : overlap_check_results );
       }
@@ -2157,7 +2168,7 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
             editor_msg( "gray", QString( tr( "checking overlap for Model %1" ) ).arg( model_names[ i ] ) );
             bead_model = bead_models[ i ];
             overlap_check_results += overlap_check( true, true, true,
-                                                    hydro.overlap_cutoff ? hydro.overlap : overlap_tolerance );
+                                                    hydro.overlap_cutoff ? hydro.overlap : overlap_tolerance, 20 );
          }
          bead_model = bead_models[ 0 ];
          only_overlap = true;
@@ -3466,6 +3477,18 @@ int US_Hydrodyn::read_config(const QString& fname)
 
 void US_Hydrodyn::write_config(const QString& fname)
 {
+   if ( misc.restore_pb_rule ) {
+      // qDebug( "write_config() restoring pb rule" );
+      if ( misc_widget ) {
+         misc_window->close();
+         delete misc_window;
+         misc_widget = false;
+      }
+         
+      misc.pb_rule_on      = true;
+      misc.restore_pb_rule = false;
+   }
+
    QFile f;
    QString str;
    f.setName( fname );
@@ -5036,8 +5059,8 @@ void US_Hydrodyn::hard_coded_defaults()
    pdb_parse.skip_water = true;
    pdb_parse.alternate = true;
    pdb_parse.find_sh = false;
-   pdb_parse.missing_residues = 0;
-   pdb_parse.missing_atoms = 0;
+   pdb_parse.missing_residues = 2;
+   pdb_parse.missing_atoms = 2;
 
    saxs_options.water_e_density = 0.334f; // water electron density in e/A^3
 
@@ -5182,11 +5205,12 @@ void US_Hydrodyn::hard_coded_defaults()
    anaflex_options.run_mode_3_14_iii = 1;
    anaflex_options.run_mode_3_14_jjj = 99999;
       
-   batch.missing_atoms = 0;
-   batch.missing_residues = 0;
+   batch.missing_atoms = 2;
+   batch.missing_residues = 2;
    batch.somo = true;
    batch.grid = false;
    batch.hydro = true;
+   batch.zeno = false;
    batch.avg_hydro = false;
    batch.avg_hydro_name = "results";
    batch.height = 0;
@@ -5303,8 +5327,8 @@ void US_Hydrodyn::hard_coded_defaults()
    saxs_options.xsr_temperature           = 1e-3;
 
    hydro.zeno_zeno              = true;
-   hydro.zeno_interior          = true;
-   hydro.zeno_surface           = true;
+   hydro.zeno_interior          = false;
+   hydro.zeno_surface           = false;
    hydro.zeno_zeno_steps        = 1000;
    hydro.zeno_interior_steps    = 1000;
    hydro.zeno_surface_steps     = 1000;
@@ -5393,6 +5417,10 @@ void US_Hydrodyn::hard_coded_defaults()
    gparams[ "perdeuteration" ]                     = "0";
    gparams[ "guinier_qRtmax" ]                     = "1";
    gparams[ "guinier_electron_nucleon_ratio" ]     = "1.87e0";
+
+   gparams[ "guinier_mwt_k" ]                      = "1";
+   gparams[ "guinier_mwt_c" ]                      = "-2.095";
+   gparams[ "guinier_mwt_qmax" ]                   = "0.2";
 
    gparams[ "hplc_bl_linear"             ]         = "false";
    gparams[ "hplc_bl_integral"           ]         = "true";
@@ -6407,6 +6435,58 @@ void US_Hydrodyn::append_options_log_somo()
    options_log += s;
 }
 
+void US_Hydrodyn::append_options_log_somo_ovlp()
+{
+   QString s;
+
+   s.sprintf("Bead model built with the following options:\n");
+   options_log += s;
+
+   s.sprintf(
+             "ASA Calculation:\n"
+             "  Perform ASA Calculation:    %s\n"
+             "  ASA Method:                 %s\n"
+             "  ASA Probe Radius (A):       %.2f\n"
+             "  SOMO ASA Threshold (A^2):   %.1f\n"
+             "  SOMO Bead ASA Threshold %%:  %.1f\n"
+             "  ASAB1 Step Size (A):        %.1f\n"
+             "\n"
+
+             ,asa.calculation ? "On" : "Off"
+             ,asa.method ? "Rolling Sphere" : "Voronoi Tesselation"
+             ,asa.probe_radius
+             ,asa.threshold
+             ,asa.threshold_percent
+             ,asa.asab1_step
+             );
+   options_log += s;
+
+   s.sprintf(
+             "Miscellaneous options:\n"
+             "  Calculate vbar                 %s\n"
+             ,misc.compute_vbar ? "On" : "Off"
+             );
+   options_log += s;
+
+   if ( !misc.compute_vbar )
+   {
+      s.sprintf(
+                "  Entered vbar value             %.3f\n"
+                "  Vbar measured/computed at T=   %.2f\n"
+                ,misc.vbar
+                ,misc.vbar_temperature
+                );
+      options_log += s;
+   }
+
+   s.sprintf(
+             "  Enable Peptide Bond Rule       %s\n"
+             ,misc.pb_rule_on ? "On" : "Off"
+             );
+   options_log += s;
+}
+
+
 void US_Hydrodyn::append_options_log_atob()
 {
    QString s;
@@ -7076,7 +7156,7 @@ QString US_Hydrodyn::default_differences_misc()
    {
       str += QString(base + "Vbar measured/computed at T= %1\n").arg(misc.vbar_temperature);
    }
-   if ( misc.pb_rule_on != default_misc.pb_rule_on )
+   if ( ( misc.pb_rule_on || misc.restore_pb_rule ) != default_misc.pb_rule_on )
    {
       str += QString(base + "Peptide bond rule: %1\n")
          .arg(misc.pb_rule_on ? "On" : "Off");
@@ -7187,6 +7267,32 @@ QString US_Hydrodyn::default_differences_saxs_options()
    //      str += QString(base + "SAXS or SANS mode: %1\n")
    //         .arg(saxs_options.saxs_sans ? "SANS" : "SAXS");
    //   }
+
+   QString sub = "Guinier options -> ";
+   {
+      QStringList options;
+      options 
+         << "guinier_mwt_k"
+         << "guinier_mwt_c"
+         << "guinier_mwt_qmax"
+         ;
+
+      QStringList options_desc;
+      options_desc
+         << "MW[RT] k"
+         << "MW[RT] c"
+         << "MW[RT] qmax cut-off"
+         ;
+         
+      for ( int i = 0; i < (int) options.size(); ++i ) {
+         if ( gparams[ options[ i ] ] != default_gparams[ options[ i ] ] ) {
+            str += QString(base + sub + "%1: %2\n")
+               .arg( options_desc[ i ] )
+               .arg( gparams[ options[ i ] ] );
+         }
+      }
+   }
+
    return str;
 }
 
@@ -7206,6 +7312,7 @@ void US_Hydrodyn::display_default_differences()
       editor->setColor("dark red");
       editor->append("\nNon-default options:\n" + str );
       editor->setColor(save_color);
+      editor->append( "\nTo reset to default: Menu bar -> Configuration -> Reset to Default Configuration\n" );
    }
    else
    {
@@ -7216,7 +7323,8 @@ void US_Hydrodyn::display_default_differences()
    }
    le_bead_model_suffix->setText(
                                  setSuffix ? (getExtendedSuffix(true, true) + " / " +
-                                              getExtendedSuffix(true, false)) : "");
+                                              getExtendedSuffix(true, false) + " / " + 
+                                              getExtendedSuffix(true, true, true)) : "");
 }
 
 
@@ -7588,6 +7696,7 @@ void US_Hydrodyn::save_state()
    state_multi_residue_map = multi_residue_map;
    state_valid_atom_map = valid_atom_map;
    state_residue_atom_hybrid_map = residue_atom_hybrid_map;
+   state_residue_atom_abb_hybrid_map = residue_atom_abb_hybrid_map;
    state_atom_counts = atom_counts;
    state_has_OXT = has_OXT;
    state_bead_exceptions = bead_exceptions;
@@ -7612,13 +7721,14 @@ void US_Hydrodyn::save_state()
    state_last_abb_msgs = last_abb_msgs;
    state_model_vector = model_vector;
    state_model_vector_as_loaded = model_vector_as_loaded;
+   state_pdb_info = pdb_info;
    state_somo_processed = somo_processed;
    state_options_log = options_log;
    state_pdb_file = pdb_file;
    state_project = project;
    state_current_model = current_model;
 
-   state_lbl_pdb_file = lbl_pdb_file->text();
+   state_lbl_pdb_file = le_pdb_file->text();
 
    state_lb_model_rows.clear();
    for ( unsigned int i = 0; i < (unsigned int)lb_model->numRows(); i++ )
@@ -7639,6 +7749,7 @@ void US_Hydrodyn::restore_state()
    multi_residue_map = state_multi_residue_map;
    valid_atom_map = state_valid_atom_map;
    residue_atom_hybrid_map = state_residue_atom_hybrid_map;
+   residue_atom_abb_hybrid_map = state_residue_atom_abb_hybrid_map;
    atom_counts = state_atom_counts;
    has_OXT = state_has_OXT;
    bead_exceptions = state_bead_exceptions;
@@ -7663,13 +7774,15 @@ void US_Hydrodyn::restore_state()
    last_abb_msgs = state_last_abb_msgs;
    model_vector = state_model_vector;
    model_vector_as_loaded = state_model_vector_as_loaded;
+   pdb_info = state_pdb_info;
    somo_processed = state_somo_processed;
    options_log = state_options_log;
    pdb_file = state_pdb_file;
    project = state_project;
    current_model = state_current_model;
 
-   lbl_pdb_file->setText( state_lbl_pdb_file );
+   le_pdb_file_save_text = state_lbl_pdb_file;
+   le_pdb_file->setText( state_lbl_pdb_file );
 
    lb_model->clear();
    for ( unsigned int i = 0; i < state_lb_model_rows.size(); i++ )
@@ -7694,6 +7807,7 @@ void US_Hydrodyn::clear_state()
    state_multi_residue_map.clear();
    state_valid_atom_map.clear();
    state_residue_atom_hybrid_map.clear();
+   state_residue_atom_abb_hybrid_map.clear();
    state_atom_counts.clear();
    state_has_OXT.clear();
    state_bead_exceptions.clear();

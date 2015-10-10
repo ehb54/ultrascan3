@@ -160,7 +160,7 @@ class US_EXTERN US_Hydrodyn : public Q3Frame
       comparative_info comparative;
       QString somo_dir;
       QString somo_pdb_dir;
-      bool screen_pdb(QString, bool display_pdb = false);
+      bool screen_pdb( QString, bool display_pdb = false, bool skip_clear_issue = false );
       bool screen_bead_model(QString);
       QPushButton *pb_stop_calc;
       struct hydro_options hydro;
@@ -315,7 +315,7 @@ class US_EXTERN US_Hydrodyn : public Q3Frame
       QLabel *lbl_info1;
       QLabel *lbl_info2;
       QLabel *lbl_info3;
-      QLabel *lbl_pdb_file;
+      mQLineEdit *le_pdb_file;
       QLabel *lbl_model;
       QLabel *lbl_somo;
       QLabel *lbl_bead_model_prefix;
@@ -348,11 +348,13 @@ class US_EXTERN US_Hydrodyn : public Q3Frame
       QPushButton *pb_config;
       QPushButton *pb_cancel;
       QPushButton *pb_somo;
+      QPushButton *pb_somo_o;
       QPushButton *pb_visualize;
       QPushButton *pb_view_pdb;
       QPushButton *pb_pdb_tool;
       QPushButton *pb_load_bead_model;
       QPushButton *pb_calc_hydro;
+      QPushButton *pb_calc_zeno;
       QPushButton *pb_show_hydro_results;
       QPushButton *pb_open_hydro_results;
       QPushButton *pb_select_save_params;
@@ -418,7 +420,7 @@ class US_EXTERN US_Hydrodyn : public Q3Frame
       US_Hydrodyn_Save *save_window;
       Q3Process *rasmol;
 
-      QString getExtendedSuffix(bool prerun = true, bool somo = true); 
+      QString getExtendedSuffix(bool prerun = true, bool somo = true, bool no_ovlp_removal = false ); 
       
       vector < QString >              batch_file;
       vector < PDB_atom >             bead_model;
@@ -432,6 +434,8 @@ class US_EXTERN US_Hydrodyn : public Q3Frame
       //                                                  in multi_residue_map to index of atoms
       map < QString, QString >        residue_atom_hybrid_map;
       //                                       maps resName|atomName to hybrid_name
+      map < QString, QString >        residue_atom_abb_hybrid_map;
+      //                                       maps atomName to hybrid_name for abb and nc usage
       map < QString, int > atom_counts;     // maps molecule #|resName|resSeq to count
       //                                       counts how many atoms are in each residue
       map < QString, int > has_OXT;         // maps molecule #|resName|resSeq to {0,1}
@@ -546,6 +550,27 @@ class US_EXTERN US_Hydrodyn : public Q3Frame
       enum load_state { NOTHING_LOADED, PDB_LOADED, BEAD_MODEL_LOADED };
       load_state state;
       void update_enables();
+
+      enum issue_msg 
+      { 
+         ISSUE_RESPONSE_STOP
+         ,ISSUE_RESPONSE_NC_SKIP
+         ,ISSUE_RESPONSE_NC_REPLACE
+         ,ISSUE_RESPONSE_MA_SKIP
+         ,ISSUE_RESPONSE_MA_MODEL
+      };
+
+      int issue_non_coded   ( bool quiet = false );
+      int issue_missing_atom( bool quiet = false );
+      set < QString > issue_info; 
+
+      bool restore_pb_rule;
+      set < QString > pdb_info;
+      set < QString > state_pdb_info;
+
+      void clear_pdb_info( QString msg );
+      void set_pdb_info  ( QString msg );
+      void sync_pdb_info ( QString msg );
 
       void dna_rna_resolve();  // often DNA is encoded without the D, check each chain and ask about & adding it
 
@@ -673,6 +698,7 @@ class US_EXTERN US_Hydrodyn : public Q3Frame
       map < QString, vector < int > >                     state_multi_residue_map;
       map < QString, vector < int > >                     state_valid_atom_map;
       map < QString, QString >                            state_residue_atom_hybrid_map;
+      map < QString, QString >                            state_residue_atom_abb_hybrid_map;
       map < QString, int >                                state_atom_counts;
       map < QString, int >                                state_has_OXT;
       map < QString, int >                                state_bead_exceptions;
@@ -766,6 +792,8 @@ class US_EXTERN US_Hydrodyn : public Q3Frame
       QStringList msroll_radii;
       QStringList msroll_names;
 
+      QString le_pdb_file_save_text;
+
    public:
 
       void set_expert( bool );
@@ -796,10 +824,12 @@ class US_EXTERN US_Hydrodyn : public Q3Frame
       void display_default_differences();
       void clear_display();
       void reload_pdb();
-      int calc_somo();     // compute asa and then refine bead_model
-      int calc_grid_pdb(); // compute grid model from pdb
-      int calc_grid();     // compute grid model from bead model
-      int calc_hydro();
+      int  calc_somo( bool no_ovlp_removal = false );     // compute asa and then refine bead_model
+      bool calc_somo_o();   // somo model with overlaps
+      int  calc_grid_pdb(); // compute grid model from pdb
+      int  calc_grid();     // compute grid model from bead model
+      int  calc_hydro();
+      bool calc_zeno_hydro();
 
       int calc_iqq( bool bead_model, bool create_native_saxs = true, bool do_raise = true );      // bring up saxs window if needed and compute iqq curve
       int calc_prr( bool bead_model, bool create_native_saxs = true, bool do_raise = true );      // bring up saxs window if needed and compute prr curve
@@ -835,6 +865,9 @@ class US_EXTERN US_Hydrodyn : public Q3Frame
       int pdb_hydrate_for_saxs( bool quiet = false );
       
    private slots:
+      void le_pdb_file_changed( const QString & );
+      void le_pdb_file_focus( bool );
+
       void         make_test_set();
 
       void rescale_bead_model();
@@ -875,8 +908,8 @@ class US_EXTERN US_Hydrodyn : public Q3Frame
       void get_atom_map(PDB_model *);
       int check_for_missing_atoms(QString *error_string, PDB_model *);
       void build_molecule_maps(PDB_model *model); // sets up maps for molecule
-      int overlap_check(bool sc, bool mc, bool buried, double tolerance); // check for overlaps
-      int compute_asa(bool bd_mode = false); // calculate maximum accessible surface area
+      int overlap_check(bool sc, bool mc, bool buried, double tolerance, int limit = 0); // check for overlaps
+      int compute_asa(bool bd_mode = false, bool no_ovlp_removal = false); // calculate maximum accessible surface area
       void show_asa();
       void show_bd();
       void show_overlap();
@@ -915,6 +948,7 @@ class US_EXTERN US_Hydrodyn : public Q3Frame
       void calc_vbar(struct PDB_model *);
       void update_vbar(); // update the results.vbar everytime something changes the vbar in options or calculation
       void append_options_log_somo(); // append somo options to options_log
+      void append_options_log_somo_ovlp(); // append somo options to options_log
       void append_options_log_atob(); // append atob options to options_log
       void list_model_vector(vector < PDB_model > *);
       QString default_differences_load_pdb();

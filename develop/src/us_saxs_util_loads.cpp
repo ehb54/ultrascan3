@@ -1331,3 +1331,69 @@ bool US_Saxs_Util::load_vdw_json( QString filename )
    }
    return true;
 }
+
+#include "../include/us_vector.h"
+
+bool US_Saxs_Util::load_vcm_json( QString filename )
+{
+   QFile f( filename );
+   if ( !f.open( QIODevice::ReadOnly ) )
+   {
+      errormsg = QString( "US_Saxs_Util::load_vcm_json could not open file %1" ).arg( filename );
+      return false;
+   }
+   QString qs;
+   Q3TextStream ts( &f );
+   while ( !ts.atEnd() )
+   {
+      qs += ts.readLine();
+   }
+   f.close();
+
+   set < QString > to_spline;
+
+   map < QString, QString > parameters = US_Json::split( qs );
+   for ( map < QString, QString >::iterator it = parameters.begin();
+         it != parameters.end();
+         it++ )
+   {
+      // split it->second to double
+      //      qDebug( QString( "vcm json first <%1>\n second <%2>\n" ).arg( it->first ).arg( it->second ) );
+      QStringList qsl = QStringList::split( ",", it->second );
+      if ( vcm.count( it->first ) )
+      {
+         vcm[ it->first ].clear();
+      }
+      for ( int i = 0; i < (int) qsl.size(); ++i )
+      {
+         vcm[ it->first ].push_back( qsl[ i ].toDouble() );
+      }
+      if ( it->first != "q" )
+      {
+         to_spline.insert( it->first );
+      }
+
+      // qDebug( US_Vector::qs_vector( "vcm[" + it->first + "]", vcm[ it->first ] ) );
+   }
+
+   // compute minimum point ?
+
+   
+   // 
+
+
+   // build natural splines of each
+
+   for ( set < QString >::iterator it = to_spline.begin();
+         it != to_spline.end();
+         it++ )
+   {
+      natural_spline( vcm[ "q" ],
+                      vcm[ *it ],
+                      vcm[ *it + ":y2" ]  );
+
+      // qDebug( US_Vector::qs_vector( "vcm[" + *it + ":y2]", vcm[ *it + ":y2" ] ) );
+   }
+
+   return true;
+}

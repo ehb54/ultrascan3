@@ -81,6 +81,9 @@ class US_EXTERN US_Hydrodyn_SasOptionsMisc : public Q3Frame
       QLineEdit   *le_iqq_scale_maxq;
       QLineEdit   *le_iqq_scale_minq;
 
+      QLabel      *lbl_guinier_mwc_mw_per_N;
+      QLineEdit   *le_guinier_mwc_mw_per_N;
+
       QPushButton *pb_clear_mw_cache;
 
       QPushButton *pb_help;
@@ -114,6 +117,8 @@ class US_EXTERN US_Hydrodyn_SasOptionsMisc : public Q3Frame
       void update_iq_target_ev(const QString &);
       void update_iqq_scale_minq(const QString &);
       void update_iqq_scale_maxq(const QString &);
+
+      void update_guinier_mwc_mw_per_N(const QString &);
 
       void clear_mw_cache();
 

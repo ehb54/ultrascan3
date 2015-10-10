@@ -301,6 +301,7 @@ void US_Hydrodyn::get_atom_map(PDB_model *model)
               lastResName != this_atom->resName )
          {
             if ( multi_residue_map.count(this_atom->resName) &&
+                 multi_residue_map[this_atom->resName].size() && 
                  multi_residue_map[this_atom->resName][0] >= 0 &&
                  multi_residue_map[this_atom->resName][0] < (int)residue_list.size() &&
                  residue_list[multi_residue_map[this_atom->resName][0]].type == 0 )
@@ -669,7 +670,14 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
         (broken_chain_head.size() || broken_chain_end.size()) )
    {
       misc.pb_rule_on = false;
+      misc.restore_pb_rule = true;
+      // qDebug( "check_for_missing_atoms() setting restore_pb_rule" );
       editor->append("Broken chain turns off Peptide Bond Rule.\n");
+      if ( misc_widget ) {
+         misc_window->close();
+         delete misc_window;
+         misc_widget = false;
+      }
       if ( advanced_config.debug_1 )
       {
          printf("Broken chain turns off Peptide Bond Rule.\n");
@@ -678,7 +686,7 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
       reload_pdb();
       get_atom_map(model);
    }
-         
+
    int failure_errors = 0;
    bead_exceptions.clear();
 
@@ -968,65 +976,102 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
                         puts("case 1.1");
                         msg_tag = "Missing atom";
                      }
-                     if (pdb_parse.missing_atoms == 0)
-                     {
+                     
+                     switch( issue_missing_atom() ) {
+                     case ISSUE_RESPONSE_STOP :
                         failure_errors++;
-                     }
-                     if (pdb_parse.missing_atoms == 1)
-                     {
+                        break;
+                        
+                     case ISSUE_RESPONSE_MA_SKIP :
                         bead_exceptions[count_idx] = 2;
-                     }
-                     if (pdb_parse.missing_atoms == 2)
-                     {
-                        if ( molecules_residue_min_missing[QString("%1|%2").arg(j).arg(this_atom->resSeq)] == -1 )
-                        {
-                           // fall back to non-coded residue 
-                           switch ( pdb_parse.missing_residues )
-                           {
-                           case 0 :
-                              failure_errors++;
-                              break;
-                           case 1 :
-                              bead_exceptions[count_idx] = 2;
-                              break;
-                           case 2 :
-                              bead_exceptions[count_idx] = 3;
-                              break;
-                           default :
-                              failure_errors++;
-                              QMessageBox::message(tr("Internal error:"), 
-                                                   tr("Unexpected pdb_parse.missing residues type ") +
-                                                   QString("%1\n").arg(pdb_parse.missing_residues));
-                              exit(-1);
-                              break;
-                           }
-                        } 
-                        else
-                        {
+                        break;
+
+                     case ISSUE_RESPONSE_MA_MODEL :
+                        if ( molecules_residue_min_missing[QString("%1|%2").arg(j).arg(this_atom->resSeq)] == -1 ) {
+                           bead_exceptions[count_idx] = 3;
+                        } else {
                            if ( bead_exceptions[count_idx] == 1 ) 
                            {
                               bead_exceptions[count_idx] = 4;
                            }
                         }
+                        break;
                      }
+
+                     // if (pdb_parse.missing_atoms == 0)
+                     // {
+                     //    failure_errors++;
+                     // }
+                     // if (pdb_parse.missing_atoms == 1)
+                     // {
+                     //    bead_exceptions[count_idx] = 2;
+                     // }
+                     // if (pdb_parse.missing_atoms == 2)
+                     // {
+                     //    if ( molecules_residue_min_missing[QString("%1|%2").arg(j).arg(this_atom->resSeq)] == -1 )
+                     //    {
+                     //       // fall back to non-coded residue 
+                     //       switch ( pdb_parse.missing_residues )
+                     //       {
+                     //       case 0 :
+                     //          failure_errors++;
+                     //          break;
+                     //       case 1 :
+                     //          bead_exceptions[count_idx] = 2;
+                     //          break;
+                     //       case 2 :
+                     //          bead_exceptions[count_idx] = 3;
+                     //          break;
+                     //       default :
+                     //          failure_errors++;
+                     //          QMessageBox::message(tr("Internal error:"), 
+                     //                               tr("Unexpected pdb_parse.missing residues type ") +
+                     //                               QString("%1\n").arg(pdb_parse.missing_residues));
+                     //          exit(-1);
+                     //          break;
+                     //       }
+                     //    } 
+                     //    else
+                     //    {
+                     //       if ( bead_exceptions[count_idx] == 1 ) 
+                     //       {
+                     //          bead_exceptions[count_idx] = 4;
+                     //       }
+                     //    }
+                     // }
                   } 
                   else 
                   {
                      // residue does not exist, skip missing residue controls
                      puts("case 3.1");
                      msg_tag = "Non-coded residue";
-                     if (pdb_parse.missing_residues == 0)
-                     {
+                     switch( issue_non_coded() ) {
+                     case ISSUE_RESPONSE_STOP :
                         failure_errors++;
-                     }
-                     if (pdb_parse.missing_residues == 1)
-                     {
+                        break;
+                        
+                     case ISSUE_RESPONSE_NC_SKIP :
                         bead_exceptions[count_idx] = 2;
-                     }
-                     if (pdb_parse.missing_residues == 2)
-                     {
+                        break;
+
+                     case ISSUE_RESPONSE_NC_REPLACE :
                         bead_exceptions[count_idx] = 3;
+                        break;
+                        
                      }
+
+                     // if (pdb_parse.missing_residues == 0)
+                     // {
+                     //    failure_errors++;
+                     // }
+                     // if (pdb_parse.missing_residues == 1)
+                     // {
+                     //    bead_exceptions[count_idx] = 2;
+                     // }
+                     // if (pdb_parse.missing_residues == 2)
+                     // {
+                     //    bead_exceptions[count_idx] = 3;
+                     // }
                   }
                }
                if (do_error_msg) {
@@ -1552,6 +1597,18 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
                      }
                      tmp_chain.atom.push_back(atom_to_add);
                      model->residue[model->residue.size() - 1] = residue_list[residue_list.size() - 1];
+                     {
+                        QString mapkey = QString("%1|%2").arg(atom_to_add.resName).arg(atom_to_add.name);
+                        if ( atom_to_add.name == "OXT" )
+                        {
+                           mapkey = "OXT|OXT";
+                        }
+                        if ( !residue_atom_hybrid_map.count( mapkey ) &&
+                             residue_atom_abb_hybrid_map.count( atom_to_add.name ) ) {
+                           residue_atom_hybrid_map[ mapkey ] = residue_atom_abb_hybrid_map[ atom_to_add.name ];
+                           // qDebug( QString( "hybrid map created for %1 created as %2" ).arg( mapkey ).arg( residue_atom_abb_hybrid_map[atom_to_add.name ] ) );
+                        }
+                     }
                   }
                   break;
                case 4: // missing atoms
@@ -1902,6 +1959,18 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
                      }
                      tmp_chain.atom.push_back(atom_to_add);
                      model->residue[model->residue.size() - 1] = residue_list[residue_list.size() - 1];
+                     {
+                        QString mapkey = QString("%1|%2").arg(atom_to_add.resName).arg(atom_to_add.name);
+                        if ( atom_to_add.name == "OXT" )
+                        {
+                           mapkey = "OXT|OXT";
+                        }
+                        if ( !residue_atom_hybrid_map.count( mapkey ) &&
+                             residue_atom_abb_hybrid_map.count( atom_to_add.name ) ) {
+                           residue_atom_hybrid_map[ mapkey ] = residue_atom_abb_hybrid_map[ atom_to_add.name ];
+                           // qDebug( QString( "hybrid map created for %1 created as %2" ).arg( mapkey ).arg( residue_atom_abb_hybrid_map[atom_to_add.name ] ) );
+                        }
+                     }
                   }
                   break;
                      
@@ -2045,7 +2114,7 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
 // # define TOLERANCE 0.001       // this is used to place a limit on the allowed radial overlap
 #define TOLERANCE overlap_tolerance
 
-int US_Hydrodyn::overlap_check(bool sc, bool mc, bool buried, double tolerance)
+int US_Hydrodyn::overlap_check(bool sc, bool mc, bool buried, double tolerance, int limit )
 {
    int retval = 0;
 #if defined(DEBUG_OVERLAP)
@@ -2147,6 +2216,10 @@ int US_Hydrodyn::overlap_check(bool sc, bool mc, bool buried, double tolerance)
                  bead_model[j].bead_computed_radius > tolerance * 1.001 )
             {
                retval++;
+               if ( limit && retval > limit ) {
+                  editor_msg( "red", tr( "There are more than %1 overlaps greater than tolernace of %2\nWe suggest you use ZENO to calculate hydrodynamics for this model" ).arg( limit ).arg( tolerance ) );
+                  return retval;
+               }
                QColor save_color = editor->color();
                editor->setColor("red");
                editor->append(QString(tr("WARNING: Bead model has an overlap violation on beads %1 %2 overlap %3 A\n"))
@@ -2221,6 +2294,16 @@ public:
 
 int US_Hydrodyn::create_beads(QString *error_string, bool quiet)
 {
+   // qDebug( "create_beads"
+   //         "\nresidue_atom_hybrid_map" );
+   
+   // for ( map<QString,QString>::iterator it = residue_atom_hybrid_map.begin();
+   //       it != residue_atom_hybrid_map.end();
+   //       ++it ) {
+   //    qDebug( QString( "%1 -> %2" ).arg( it->first ).arg( it->second ) );
+   // }
+
+   // qDebug( "end of residue_atom_hybrid_map" );
 
    if ( !quiet ) 
    {
@@ -2480,10 +2563,11 @@ int US_Hydrodyn::create_beads(QString *error_string, bool quiet)
                      cout << "error: hybrid name missing for " << this_atom->resName << "|" << this_atom->name << endl; 
                      QColor save_color = editor->color();
                      editor->setColor("red");
-                     editor->append(QString("%1Molecule %2 Residue %3 %4 Hybrid name missing. Atom skipped.\n")
+                     editor->append(QString("%1Molecule %2 Residue %3|%4 %5 Hybrid name missing. Atom skipped for SAS.\n")
                                     .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
                                     .arg(j+1)
                                     .arg(this_atom->resName)
+                                    .arg(this_atom->name)
                                     .arg(this_atom->resSeq));
                      editor->setColor(save_color);
                   } else {
@@ -2494,10 +2578,11 @@ int US_Hydrodyn::create_beads(QString *error_string, bool quiet)
                         cout << "error: hybrid name empty for " << this_atom->resName << "|" << this_atom->name << endl; 
                         QColor save_color = editor->color();
                         editor->setColor("red");
-                        editor->append(QString("%1Molecule %2 Residue %3 %4 Hybrid name missing. Atom skipped.\n")
+                        editor->append(QString("%1Molecule %2 Residue %3|%4 %5 Hybrid name missing. Atom skipped for SAS.\n")
                                        .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
                                        .arg(j+1)
                                        .arg(this_atom->resName)
+                                       .arg(this_atom->name)
                                        .arg(this_atom->resSeq));
                         editor->setColor(save_color);
                      } else {
@@ -2506,7 +2591,7 @@ int US_Hydrodyn::create_beads(QString *error_string, bool quiet)
                            cout << "error: hybrid_map name missing for hybrid_name " << hybrid_name << endl;
                            QColor save_color = editor->color();
                            editor->setColor("red");
-                           editor->append(QString("%1Molecule %2 Residue %3 %4 Hybrid %5 name missing from Hybrid file. Atom skipped.\n")
+                           editor->append(QString("%1Molecule %2 Residue %3 %4 Hybrid %5 name missing from Hybrid file. Atom skipped for SAS.\n")
                                           .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
                                           .arg(j+1)
                                           .arg(this_atom->resName)
@@ -2524,7 +2609,7 @@ int US_Hydrodyn::create_beads(QString *error_string, bool quiet)
                                    << endl;
                               QColor save_color = editor->color();
                               editor->setColor("red");
-                              editor->append(QString("%1Molecule %2 Atom %3 Residue %4 %5 Hybrid %6 name missing from Atom file. Atom skipped.\n")
+                              editor->append(QString("%1Molecule %2 Atom %3 Residue %4 %5 Hybrid %6 name missing from Atom file. Atom skipped for SAS.\n")
                                              .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
                                              .arg(j+1)
                                              .arg(this_atom->name)
@@ -3187,6 +3272,7 @@ void US_Hydrodyn::radial_reduction( bool from_grid )
    stage_loop:
 
       qApp->processEvents();
+
       if (stopFlag)
       {
          return;
@@ -4417,7 +4503,7 @@ void US_Hydrodyn::radial_reduction( bool from_grid )
 
 //------------------------------ end of radial reduction ------------------------------------------------------
 
-int US_Hydrodyn::compute_asa( bool bd_mode )
+int US_Hydrodyn::compute_asa( bool bd_mode, bool no_ovlp_removal )
 {
    QString error_string = "";
    progress->reset();
@@ -5787,8 +5873,9 @@ int US_Hydrodyn::compute_asa( bool bd_mode )
       methods[2] = 0;
    }
 
-   if ( bd_mode && 
-        !bd_options.do_rr ) {
+   if ( no_ovlp_removal ||
+        ( bd_mode && 
+          !bd_options.do_rr ) ) {
       methods[0] = 0;
       methods[1] = 0;
       methods[2] = 0;
@@ -5859,7 +5946,7 @@ int US_Hydrodyn::compute_asa( bool bd_mode )
 #if defined(TIMING)
       gettimeofday(&start_tv, NULL);
 #endif
-      if ( !bd_mode )
+      if ( !bd_mode && !no_ovlp_removal )
       {
          editor->append(QString("Begin popping stage %1\n").arg(k + 1));
       }
@@ -5877,7 +5964,9 @@ int US_Hydrodyn::compute_asa( bool bd_mode )
 #if defined(DEBUG1) || defined(DEBUG)
          printf("popping iteration %d\n", iter++);
 #endif
-         lbl_core_progress->setText(QString("Stage %1 popping iteration %2").arg(k+1).arg(iter));
+         if ( !no_ovlp_removal ) {
+            lbl_core_progress->setText(QString("Stage %1 popping iteration %2").arg(k+1).arg(iter));
+         }
          qApp->processEvents();
          max_intersection_volume = -1;
          overlaps_exist = false;
@@ -5966,7 +6055,9 @@ int US_Hydrodyn::compute_asa( bool bd_mode )
             bool back_to_zero = false;
             if (overlaps_exist) {
                beads_popped++;
-               lbl_core_progress->setText(QString("Stage %1 popping iteration %2 beads popped %3").arg(k+1).arg(iter).arg(beads_popped));
+               if ( !no_ovlp_removal ) {
+                  lbl_core_progress->setText(QString("Stage %1 popping iteration %2 beads popped %3").arg(k+1).arg(iter).arg(beads_popped));
+               }
                qApp->processEvents();
                //#define DEBUG_FUSED
 #if defined(DEBUG1) || defined(DEBUG) || defined(DEBUG_FUSED)
@@ -6064,7 +6155,7 @@ int US_Hydrodyn::compute_asa( bool bd_mode )
 #endif
       printf("stage %d beads popped %d\n", k, beads_popped);
       progress->setProgress(ppos++); // 12,13,14
-      if ( !bd_mode || bd_options.do_rr )
+      if ( !no_ovlp_removal && ( !bd_mode || bd_options.do_rr  ) )
       {
          editor->append(QString("Beads popped %1.\nBegin radial reduction stage %2\n").arg(beads_popped).arg(k + 1));
       }
@@ -6997,12 +7088,12 @@ int US_Hydrodyn::compute_asa( bool bd_mode )
    write_bead_model(somo_dir + SLASH + filename  +
                     QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "") + DOTSOMO
                     , &bead_model);
-   if ( bd_options.do_rr || !bd_mode  )
+   if ( !no_ovlp_removal && ( !bd_mode  ||  bd_options.do_rr  ) )
    {
       editor->append("Finished with popping and radial reduction\n");
    }
    progress->setProgress(mppos - (asa.recheck_beads ? 1 : 0));
-   if ( bd_mode )
+   if ( bd_mode || no_ovlp_removal )
    {
       progress->setProgress(1,1);
       lbl_core_progress->setText("");
@@ -7213,6 +7304,8 @@ void US_Hydrodyn::calc_mw()
 
       create_beads(&error_string, true);
 
+      double model_mw            = 0e0;
+
       if( !error_string.length() ) 
       {
 
@@ -7248,6 +7341,7 @@ void US_Hydrodyn::calc_mw()
             model_vector[i].molecule[j].mw = 0.0;
             unsigned int chain_total_e     = 0;
             unsigned int chain_total_e_noh = 0;
+            double molecule_mw             = 0e0;
 
             for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++) 
             {
@@ -7283,13 +7377,15 @@ void US_Hydrodyn::calc_mw()
                   if ( this_atom->resName != "WAT" )
                   {
                      model_vector[i].mw += this_atom->mw;
+                     molecule_mw        += this_atom->mw;
+                     model_mw           += this_atom->mw;
                      cm.axis[ 0 ] += this_atom->mw * this_atom->coordinate.axis[ 0 ];
                      cm.axis[ 1 ] += this_atom->mw * this_atom->coordinate.axis[ 1 ];
                      cm.axis[ 2 ] += this_atom->mw * this_atom->coordinate.axis[ 2 ];
                      total_cm_mw += this_atom->mw;
+                     model_vector[i].molecule[j].mw += this_atom->mw;
                   }
 
-                  model_vector[i].molecule[j].mw += this_atom->mw;
                   if ( do_excl_vol )
                   {
                      double excl_vol;
@@ -7325,6 +7421,9 @@ void US_Hydrodyn::calc_mw()
                   }
                }
             }
+            
+            model_vector[i].molecule[j].mw = molecule_mw;
+
             // printf("model %u chain %u mw %g\n",
             //i, j, model_vector[i].molecule[j].mw);
             if (model_vector[i].molecule[j].mw != 0.0 )
@@ -7390,6 +7489,8 @@ void US_Hydrodyn::calc_mw()
             .arg( model_vector[ i ].model_id )
             .arg( Rg / 10.0, 0, 'f', 2 );
 
+         model_vector[i].Rg = Rg;
+
          editor->append( qs );
          last_pdb_load_calc_mw_msg << qs;
          if ( do_vvv )
@@ -7420,6 +7521,8 @@ void US_Hydrodyn::calc_mw()
          }
       }
 
+      model_vector[ i ].mw = model_mw;
+
       if ( model_vector_as_loaded.size() > i )
       {
          model_vector_as_loaded[ i ].mw     = model_vector[i].mw;
@@ -7444,6 +7547,20 @@ void US_Hydrodyn::calc_mw()
                   :
                   ""
                   );
+#if defined(U_EXPT)
+         {
+            double Rg = model_vector[i].Rg;
+            qs += QString( "\n%1 model %2 %3 kD, Rg %4 A,  (Rg/6.5)^3: %5 %6 %" )
+               .arg( project )
+               .arg( model_vector[i].model_id )
+               .arg( model_vector[i].mw / 1000e0, 0, 'f', 2 )
+               .arg( Rg, 0, 'f', 2 )
+               .arg( pow( Rg / 6.5e0, 3e0 ), 0, 'f', 2 )
+               .arg( 100.0 * ( ( model_vector[i].mw / 1000e0 ) - pow( Rg / 6.5e0, 3e0 ) ) / ( model_vector[i].mw / 1000e0 ), 0, 'f', 1 )
+               ;
+         }
+#endif
+
          editor->append( qs );
          last_pdb_load_calc_mw_msg << qs;
       }
@@ -7456,7 +7573,25 @@ void US_Hydrodyn::calc_mw()
       }
 
       // printf("model %u  mw %g\n",
-      //       i, model_vector[i].mw);
+      //        i, model_vector[i].mw);
+
+      // {
+      //    double tmp_mw = 0e0;
+      //    for ( int j = 0; j < (int) model_vector[ i ].molecule.size(); ++j )
+      //    {
+      //       tmp_mw += model_vector[ i ].molecule[ j ].mw;
+      //       qDebug( QString( "model %1 molecule %2 mw %3" ).arg( i ).arg( j ).arg( model_vector[ i ].molecule[ j ].mw ) );
+      //    }
+      //    qDebug( QString( "" ).sprintf( 
+      //                                  "model %d total from molecules mw %.2f as model mw %.2f cm mw %.2f model_mw  %.2f", 
+      //                                  i,
+      //                                  tmp_mw, 
+      //                                  model_vector[ i ].mw,
+      //                                  total_cm_mw,
+      //                                  model_mw
+      //                                   ) );
+      // }
+
    }
    editor->append("\n");
    current_model = save_current_model;

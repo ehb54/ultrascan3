@@ -25,6 +25,7 @@
 #include "us_json.h"
 #include "us_timer.h"
 #include "us_file_util.h"
+#include "us_vector.h"
 
 #if defined( WIN32 ) && !defined( MINGW )
 typedef _int16 int16_t;
@@ -386,6 +387,19 @@ class US_EXTERN US_Saxs_Util
                              double &chi2
                               );
 
+      static bool pearsonpmcc(
+                              const vector < double > & x, 
+                              const vector < double > & y,
+                              double & r
+                              );
+
+      static bool pearsonpmcc(
+                              const vector < double > & x, 
+                              const vector < double > & y, 
+                              double & r,
+                              QString & error_msg
+                              );
+
       // linear fit code, solves  y = kx, returing chi2
       bool scaling_fit( 
                        vector < double > x, 
@@ -507,8 +521,11 @@ class US_EXTERN US_Saxs_Util
       map < QString, double >        atom_mw;
       map < QString, double >        atom_vdw;
 
+      map < QString, vector < double > > vcm;
+
       bool                           load_mw_json( QString filename );
       bool                           load_vdw_json( QString filename );
+      bool                           load_vcm_json( QString filename );
 
       bool iqq_sphere( 
                       QString tag,          // creates iqq for a sphere based on Rayleigh (1911)
@@ -844,6 +861,36 @@ class US_EXTERN US_Saxs_Util
       bool                pdb_mw( QStringList & qsl, double & mw );
 
       static bool         pdb2fasta( QString outfile, QStringList &files, int max_line_size = 120 );
+
+      static bool         mwt( 
+                              const vector < double > & q,
+                              const vector < double > & I,
+                              double                    Rg,
+                              double                    I0,
+                              double                    k,
+                              double                    c,
+                              double                    qmax,
+                              double                  & Vc,
+                              double                  & Qr,
+                              double                  & mwt,
+                              QString                 & messages,
+                              QString                 & notes,
+                              QString                 & warning
+                               );
+
+      bool                mwc( 
+                              const vector < double > & q,
+                              const vector < double > & I,
+                              double                    Rg,
+                              double                    I0,
+                              double                    mw_per_N,
+                              double                  & qm,
+                              double                  & Vc,
+                              double                  & Qr,
+                              double                  & mwc,
+                              QString                 & messages,
+                              QString                 & notes
+                               );
 
    private:
 

@@ -223,7 +223,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public Q3Frame
       US_Hydrodyn_Saxs *saxs_window;
       bool             *saxs_widget;
       bool             activate_saxs_window();
-      void             run_one();
+      void             run_one( bool do_plot = true );
       void             run_one_divide();
 
       void             do_replot_saxs();

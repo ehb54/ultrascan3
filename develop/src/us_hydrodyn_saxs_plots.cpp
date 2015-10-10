@@ -629,13 +629,12 @@ void US_Hydrodyn_Saxs::plot_one_iqq( vector < double > q,
    qsl_plotted_iq_names << plot_name;
    dup_plotted_iq_name_check[plot_name] = true;
       
-#ifndef QT4
    plotted_iq_names_to_pos[plot_name] = plotted_Iq.size();
 
+#ifndef QT4
    long Iq = plot_saxs->insertCurve( name );
    plot_saxs->setCurveStyle(Iq, QwtCurve::Lines);
 #else
-   plotted_iq_names_to_pos[plot_name] = plotted_Iq_curves.size();
 
    QwtPlotCurve *curve = new QwtPlotCurve( name );
    curve->setStyle( QwtPlotCurve::Lines );
@@ -645,7 +644,7 @@ void US_Hydrodyn_Saxs::plot_one_iqq( vector < double > q,
 #ifndef QT4
    plotted_Iq.push_back(Iq);
 #else
-   plotted_Iq_curves.push_back( curve );
+   plotted_Iq.push_back( curve );
 #endif
    {
       vector < double > q2 ( q.size() );
@@ -661,34 +660,44 @@ void US_Hydrodyn_Saxs::plot_one_iqq( vector < double > q,
    unsigned int q_points = q.size();
    unsigned int p = plotted_q.size() - 1;
 
-   vector < double > q2I;
-   if ( cb_kratky->isChecked() )
    {
-      for ( unsigned int i = 0; i < plotted_q[ p ].size(); i++ )
-      {
-         q2I.push_back( plotted_q2[ p ][ i ] * plotted_I[ p ][ i ] );
-      }
-   }
+      vector < double > q;
+      vector < double > q2;
+      vector < double > I;
 
+      if ( cb_kratky->isChecked() ) {
+         q  = plotted_q[ p ];
+         q2 = plotted_q2[ p ];
+         for ( unsigned int i = 0; i < q_points; ++i ) {
+            I.push_back( plotted_q2[ p ][ i ] * plotted_I[ p ][ i ] );
+         }
+      } else {
+         for ( unsigned int i = 0; i < q_points; ++i ) {
+            if ( plotted_I[ p ][ i ] > 0e0 ) {
+               q .push_back( plotted_q [ p ][ i ] );
+               q2.push_back( plotted_q2[ p ][ i ] );
+               I .push_back( plotted_I [ p ][ i ] );
+            }
+         }
+      }
+         
 #ifndef QT4
-   plot_saxs->setCurveData(Iq, 
-                           cb_guinier->isChecked() ?
-                           (double *)&(plotted_q2[p][0])  : (double *)&(plotted_q[p][0]), 
-                           cb_kratky ->isChecked() ?
-                           (double *)&(q2I[0])            : (double *)&(plotted_I[p][0]),
-                           q_points);
-   plot_saxs->setCurvePen(Iq, QPen(plot_colors[p % plot_colors.size()], pen_width, SolidLine));
+      plot_saxs->setCurveData(Iq, 
+                              cb_guinier->isChecked() ? (double *)&(q2[0]) : (double *)&(q[0]), 
+                              (double *)&(I[0]),
+                              q.size() 
+                              );
+      plot_saxs->setCurvePen(Iq, QPen(plot_colors[p % plot_colors.size()], pen_width, SolidLine));
 #else
-   curve->setData(
-                  cb_guinier->isChecked() ?
-                  (double *)&(plotted_q2[p][0])  : (double *)&(plotted_q[p][0]), 
-                  cb_kratky ->isChecked() ?
-                  (double *)&(q2I[0])            : (double *)&(plotted_I[p][0]),
-                  q_points
-                  );
-   curve->setPen( QPen( plot_colors[ p % plot_colors.size() ], pen_width, Qt::SolidLine ) );
-   curve->attach( plot_saxs );
+      curve->setData(
+                     cb_guinier->isChecked() ? (double *)&(q2[0]) : (double *)&(q[0]), 
+                     (double *)&(I[0]),
+                     q.size() 
+                     );
+      curve->setPen( QPen( plot_colors[ p % plot_colors.size() ], pen_width, Qt::SolidLine ) );
+      curve->attach( plot_saxs );
 #endif
+   }
 
    if ( plot_saxs_zoomer )
    {
@@ -828,11 +837,8 @@ void US_Hydrodyn_Saxs::do_plot_resid()
       plot_resid_zoomer = (ScrollZoomer *) 0;
    }
 
-#ifndef QT4
    int niqsize = (int)plotted_Iq.size();
-#else
-   int niqsize = (int)plotted_Iq_curves.size();
-#endif
+
    bool any_plotted = false;
 
    bool first     = true;
@@ -1628,3 +1634,48 @@ void US_Hydrodyn_Saxs::do_plot_resid( vector < double > & x,
       }
    }
 }   
+
+void US_Hydrodyn_Saxs::pp() 
+{
+   QString use_dir = QDir::currentDirPath();
+   ((US_Hydrodyn  *)us_hydrodyn)->select_from_directory_history( use_dir, this );
+   QString fn = 
+      QFileDialog::getSaveFileName( this , tr( "Select a prefix name to save the plot data" ) , use_dir , "*.csv" );
+
+   if ( fn.isEmpty() )
+   {
+      return;
+   }
+
+   fn = QFileInfo( fn ).dirPath() + QDir::separator() + QFileInfo( fn ).baseName( true );
+
+   QString errors;
+   QString messages;
+
+   map < QString, QwtPlot *>  use_plot_info = plot_info;
+
+   for ( map < QString, US_Hydrodyn_Saxs_Iqq_Residuals *>::iterator it = saxs_iqq_residuals_windows.begin();
+         it != saxs_iqq_residuals_windows.end();
+         ++it ) {
+      if ( it->second &&
+           saxs_iqq_residuals_widgets.count( it->first ) &&
+           saxs_iqq_residuals_widgets[ it->first ] &&
+           it->second->plot ) {
+         plot_info[ "US-SOMO SAXS Residuals " + it->first ] = it->second->plot;
+      }
+   }
+
+   if ( !US_Plot_Util::printtofile( fn, plot_info, errors, messages ) )
+   {
+      editor_msg( "red", errors );
+   } else {
+      editor_msg( "blue", messages );
+   }
+}
+
+void US_Hydrodyn_Saxs::set_eb() 
+{
+   // qDebug( "set_eb(), calling set_guinier()" );
+   set_guinier();
+}
+

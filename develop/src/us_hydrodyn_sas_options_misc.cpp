@@ -302,6 +302,25 @@ void US_Hydrodyn_SasOptionsMisc::setupGUI()
    pb_clear_mw_cache->setPalette( PALET_PUSHB );
    connect(pb_clear_mw_cache, SIGNAL(clicked()), SLOT(clear_mw_cache()));
 
+   lbl_guinier_mwc_mw_per_N = new QLabel(tr(" Protein average MW per residue (for MW[C])): "), this);
+   lbl_guinier_mwc_mw_per_N->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   lbl_guinier_mwc_mw_per_N->setMinimumHeight(minHeight1);
+   lbl_guinier_mwc_mw_per_N->setPalette( PALET_LABEL );
+   AUTFBACK( lbl_guinier_mwc_mw_per_N );
+   lbl_guinier_mwc_mw_per_N->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   le_guinier_mwc_mw_per_N = new QLineEdit(this, "guinier_mwc_mw_per_N Line Edit");
+   le_guinier_mwc_mw_per_N->setValidator( new QDoubleValidator( le_guinier_mwc_mw_per_N) );
+   ( (QDoubleValidator *)le_guinier_mwc_mw_per_N->validator() )->setRange( 10, 250, 3 );
+   le_guinier_mwc_mw_per_N->setText(
+                                    ((US_Hydrodyn *)us_hydrodyn)->gparams.count( "guinier_mwc_mw_per_N" ) ?
+                                    ((US_Hydrodyn *)us_hydrodyn)->gparams[ "guinier_mwc_mw_per_N" ] : "112" );
+   le_guinier_mwc_mw_per_N->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_guinier_mwc_mw_per_N->setPalette( PALET_NORMAL );
+   AUTFBACK( le_guinier_mwc_mw_per_N );
+   le_guinier_mwc_mw_per_N->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   connect(le_guinier_mwc_mw_per_N, SIGNAL(textChanged(const QString &)), SLOT(update_guinier_mwc_mw_per_N(const QString &)));
+
    pb_cancel = new QPushButton(tr("Close"), this);
    pb_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_cancel->setMinimumHeight(minHeight1);
@@ -394,6 +413,14 @@ void US_Hydrodyn_SasOptionsMisc::setupGUI()
    background->addMultiCellLayout(hbl_iqq_scaling, j, j, 0, 1);
    j++;
 
+   {
+      Q3HBoxLayout *hbl = new Q3HBoxLayout;
+      hbl->addWidget( lbl_guinier_mwc_mw_per_N );
+      hbl->addWidget( le_guinier_mwc_mw_per_N );
+      background->addMultiCellLayout(hbl, j, j, 0, 1);
+   }
+   j++;
+
    background->addWidget( pb_help  , j, 0 );
    background->addWidget( pb_cancel, j, 1 );
 
@@ -401,6 +428,8 @@ void US_Hydrodyn_SasOptionsMisc::setupGUI()
    {
       pb_default_ff_filename->hide();
       le_default_ff_filename->hide();
+      lbl_guinier_mwc_mw_per_N->hide();
+      le_guinier_mwc_mw_per_N->hide();
    }
 }
 
@@ -609,6 +638,11 @@ void US_Hydrodyn_SasOptionsMisc::update_swh_excl_vol( const QString &str )
    {
       ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_window->update_iqq_suffix();
    }
+}
+
+void US_Hydrodyn_SasOptionsMisc::update_guinier_mwc_mw_per_N( const QString &str )
+{
+   ((US_Hydrodyn *)us_hydrodyn)->gparams[ "guinier_mwc_mw_per_N" ] = QString( "%1" ).arg( str.toDouble() );
 }
 
 void US_Hydrodyn_SasOptionsMisc::set_use_iq_target_ev()

@@ -20,10 +20,10 @@
 #include <q3dragobject.h>
 #include <q3widgetstack.h>
 //Added by qt3to4:
-#include <QCloseEvent>
+#include <QDragEnterEvent>
 #include <QDropEvent>
 #include <QResizeEvent>
-#include <QDragEnterEvent>
+#include <QCloseEvent>
 
 #include "us_util.h"
 #include "us_hydrodyn_comparative.h"
@@ -53,6 +53,7 @@ struct batch_info
    bool mm_all;
    bool dmd;
    bool somo;
+   bool somo_o;
    bool grid;
    bool iqq;
    bool prr;
@@ -138,6 +139,7 @@ class US_EXTERN US_Hydrodyn_Batch : public Q3Frame
       QCheckBox     *cb_grid;
       QCheckBox     *cb_equi_grid;
       QCheckBox     *cb_somo;
+      QCheckBox     *cb_somo_o;
       QCheckBox     *cb_iqq;
       QCheckBox     *cb_saxs_search;
       QCheckBox     *cb_prr;
@@ -242,6 +244,8 @@ class US_EXTERN US_Hydrodyn_Batch : public Q3Frame
       csv          cluster_csv_advanced;
       csv          cluster_csv_dmd;
 
+      void         set_issue_info( bool as_batch = true );
+
    public :
       void add_file( QString filename );
       void add_files( vector < QString > filenames );
@@ -267,6 +271,7 @@ class US_EXTERN US_Hydrodyn_Batch : public Q3Frame
       void set_mm_all();
       void set_dmd();
       void set_somo();
+      void set_somo_o();
       void set_grid();
       void set_equi_grid();
       void set_hydro();

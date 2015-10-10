@@ -177,6 +177,7 @@ struct PDB_model
    float vbar;
    float mw;                                // mw of model
    float volume;
+   double Rg;
    QString  model_id;
 };
 

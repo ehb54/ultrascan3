@@ -28,6 +28,7 @@ using namespace std;
 struct hydro_results
 {
    QString name;
+   QString method;
    unsigned int num_models;
    float total_beads;
    float total_beads_sd;
@@ -77,6 +78,8 @@ class US_EXTERN US_Hydrodyn_Results : public Q3Frame
       QLabel *lbl_info;
       QLabel *lbl_name;
       QLineEdit *le_name;
+      QLabel *lbl_method;
+      QLineEdit *le_method;
       QLabel *lbl_total_beads;
       QLineEdit *le_total_beads;
       QLabel *lbl_used_beads;

@@ -54,6 +54,12 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Ciq : public QDialog
       QCheckBox *                             cb_normalize;
 
       QLabel *                                lbl_error;
+      
+      QCheckBox *                             cb_conc_to_saxs;
+      QLabel *                                lbl_conc_to_saxs_info1;
+      QLabel *                                lbl_conc_to_saxs_info2;
+      QLabel *                                lbl_conc_to_saxs_info3;
+
       QLabel *                                lbl_conc;
       QLabel *                                lbl_gaussian;
       QLabel *                                lbl_conv;

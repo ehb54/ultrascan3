@@ -41,6 +41,7 @@
 #include "us_hydrodyn_saxs_iqq_residuals.h"
 // #endif
 #include "us_hydrodyn_saxs_residuals.h"
+#include "us_hydrodyn_saxs_guinier_frames.h"
 #include "us_hydrodyn_comparative.h"
 #include "us_vector.h"
 
@@ -93,13 +94,14 @@ struct shd_data
 
 #include "us_mqt.h"
 
-struct crop_undo_data
-{
 #ifdef WIN32
 # if !defined( QT4 )
-  #pragma warning ( disable: 4251 )
+     #pragma warning ( disable: 4251 )
 # endif
-#endif
+#endif      
+
+struct crop_undo_data
+{
    bool               is_left;
    vector < QString > files;
    vector < QString > q_string;
@@ -114,11 +116,6 @@ struct crop_undo_data
    map < QString, vector < double > >  f_qs;
    map < QString, vector < double > >  f_Is;
    map < QString, vector < double > >  f_errors;
-#ifdef WIN32
-# if !defined( QT4 )
-  #pragma warning ( default: 4251 )
-# endif
-#endif
 };
 
 class US_EXTERN US_Hydrodyn_Saxs : public Q3Frame
@@ -149,6 +146,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public Q3Frame
       friend class US_Hydrodyn_Saxs_1d;
       friend class US_Hydrodyn_Saxs_2d;
       friend class US_Hydrodyn_Saxs_Conc;
+      friend class US_Hydrodyn_Saxs_Guinier_Frames;
 
       friend class US_Hydrodyn_Xsr;
 
@@ -264,6 +262,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public Q3Frame
       QPushButton *pb_options;
       QPushButton *pb_help;
       QPushButton *pb_cancel;
+      QPushButton *pb_pp;
 
       QwtCounter *cnt_bin_size;
       QwtCounter *cnt_smooth;
@@ -321,6 +320,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public Q3Frame
       QCheckBox   *cb_resid_sd;
       QCheckBox   *cb_resid_show_errorbars;
       QCheckBox   *cb_resid_show;
+      QCheckBox   *cb_eb;
 
       mQLineEdit  * le_manual_guinier_fit_start;
       mQLineEdit  * le_manual_guinier_fit_end;
@@ -336,11 +336,6 @@ class US_EXTERN US_Hydrodyn_Saxs : public Q3Frame
       saxs_options *our_saxs_options;
       QStringList  qsl_plotted_iq_names;
       QStringList  qsl_plotted_pr_names;
-#ifdef WIN32
-# if !defined( QT4 )
-     #pragma warning ( disable: 4251 )
-# endif
-#endif
       map    < QString, bool >                        dup_plotted_iq_name_check;
       map    < QString, unsigned int >                plotted_iq_names_to_pos;
       map    < QString, bool >                        dup_plotted_pr_name_check;
@@ -355,7 +350,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public Q3Frame
 #ifndef QT4
       vector < long >                                 plotted_Iq;  // curve keys
 #else
-      vector < QwtPlotCurve * >                       plotted_Iq_curves;
+      vector < QwtPlotCurve * >                       plotted_Iq;
 #endif
       vector < double >                               exact_q;
       vector < vector < double > >                    plotted_q;
@@ -412,6 +407,8 @@ class US_EXTERN US_Hydrodyn_Saxs : public Q3Frame
       map    < unsigned int, vector < double > >      plotted_Rt_guinier_y;
       map    < unsigned int, map < double, double > > plotted_Rt_guinier_pts_removed;
 
+      map    < QString, double >                      guinier_scratch;
+
       vector < vector < double > >                    plotted_pr;
       vector < vector < double > >                    plotted_pr_not_normalized;
       vector < vector < double > >                    plotted_r;
@@ -432,11 +429,6 @@ class US_EXTERN US_Hydrodyn_Saxs : public Q3Frame
       vector < double >                  nnls_q;
       double                             nnls_rmsd;
 
-#ifdef WIN32
-# if !defined( QT4 )
-     #pragma warning ( default: 4251 )
-# endif
-#endif      
       QString nnls_B_name;
       QString nnls_header_tag;
 
@@ -505,11 +497,9 @@ class US_EXTERN US_Hydrodyn_Saxs : public Q3Frame
       US_Hydrodyn_Saxs_Residuals     *saxs_residuals_window;
 
 
-#ifdef WIN32
-# if !defined( QT4 )
-     #pragma warning ( disable: 4251 )
-# endif
-#endif
+      // map < QString, bool >                             saxs_guinier_frames_widgets;
+      // map < QString, US_Hydrodyn_Saxs_Guinier_Frames *> saxs_guinier_frames_windows;
+
       // #ifndef WIN32
       // target indexed iqq residuals windows
       map < QString, bool >                            saxs_iqq_residuals_widgets;
@@ -529,11 +519,6 @@ class US_EXTERN US_Hydrodyn_Saxs : public Q3Frame
       vector < double >               ff_ev;
       map < QString, bool >           ff_sent_msg1;
 
-#ifdef WIN32
-# if !defined( QT4 )
-     #pragma warning ( default: 4251 )
-# endif
-#endif      
       bool                 ff_table_loaded;
       bool                 load_ff_table( QString filename );
       QString              ff_info();
@@ -617,22 +602,12 @@ class US_EXTERN US_Hydrodyn_Saxs : public Q3Frame
       QString load_pr_selected_filter;
       QString load_saxs_sans_selected_filter;
 
-#ifdef WIN32
-# if !defined( QT4 )
-     #pragma warning ( disable: 4251 )
-# endif
-#endif      
       void display_iqq_residuals( QString title,
                                   vector < double > q,
                                   vector < double > I1,
                                   vector < double > I2,
                                   QColor            plot_color,
                                   vector < double > I_errors );
-#ifdef WIN32
-# if !defined( QT4 )
-     #pragma warning ( default: 4251 )
-# endif
-#endif      
       double last_rescaling_multiplier;
       double last_rescaling_offset;
       double last_rescaling_chi2;
@@ -767,15 +742,12 @@ class US_EXTERN US_Hydrodyn_Saxs : public Q3Frame
 
    private:
 
+      map < QString, QwtPlot *>    plot_info;
+
       bool mw_from_I0 ( QString name, double I0_exp, double &MW, double &internal_contrast );
       bool ml_from_qI0( QString name, double I0_exp, double &ML, double &internal_contrast );
       bool ma_from_q2I0( QString name, double I0_exp, double &MA, double &internal_contrast );
       
-#ifdef WIN32
-# if !defined( QT4 )
-     #pragma warning ( disable: 4251 )
-# endif
-#endif      
       vector < QWidget * > iq_widgets;
       vector < QWidget * > pr_widgets;
       vector < QWidget * > settings_widgets;
@@ -784,25 +756,9 @@ class US_EXTERN US_Hydrodyn_Saxs : public Q3Frame
 
       void hide_widgets( vector < QWidget * >, bool do_hide = true );
 
-#ifdef WIN32
-# if !defined( QT4 )
-     #pragma warning ( default: 4251 )
-# endif
-#endif      
-
-#ifdef WIN32
-# if !defined( QT4 )
-     #pragma warning ( disable: 4251 )
-# endif
-#endif      
       map < QString, vector < point > >                                   hybrid_coords;
       map < QString, map < unsigned int, map < unsigned int, double > > > hybrid_r;
 
-#ifdef WIN32
-# if !defined( QT4 )
-     #pragma warning ( default: 4251 )
-# endif
-#endif      
 
 #if defined( UHSE_APP_RESPONSE_WAY )
       QStringList    crysol_app_text;
@@ -818,6 +774,13 @@ class US_EXTERN US_Hydrodyn_Saxs : public Q3Frame
 
       void           set_saxs_legend();
       void           set_pr_legend();
+
+      void           set_guinier_eb();
+
+      void           guinier_frame_plot( const QString & title, const QStringList & toplot );
+
+      void check_mwt_constants      ( bool force = false );
+      map < QString, QString >      ldata;
 
    private slots:
 
@@ -913,10 +876,12 @@ class US_EXTERN US_Hydrodyn_Saxs : public Q3Frame
       void load_plot_pr();
       void clear_plot_pr();
       void cancel();
+      void pp();
       void help();
       void options();
       void stop();
       void clear_display();
+      void set_eb();
       void print();
       void update_font();
       void save();
@@ -1004,12 +969,6 @@ class saxs_Iq_thr_t : public QThread
 
  private:
 
-#ifdef WIN32
-# if !defined( QT4 )
-  #pragma warning ( disable: 4251 )
-# endif
-#endif
-
   vector < saxs_atom > *atoms;
   vector < vector < double > > *f;
   vector < vector < double > > *fc;
@@ -1019,11 +978,6 @@ class saxs_Iq_thr_t : public QThread
   vector < double > *Ic;
   vector < double > *q;
 
-#ifdef WIN32
-# if !defined( QT4 )
-  #pragma warning ( default: 4251 )
-# endif
-#endif
   unsigned int threads;
   Q3ProgressBar *progress;
   QLabel *lbl_core_progress;
@@ -1060,20 +1014,10 @@ class saxs_pr_thr_t : public QThread
 
  private:
 
-#ifdef WIN32
-# if !defined( QT4 )
-  #pragma warning ( disable: 4251 )
-# endif
-#endif
 
   vector < saxs_atom > *atoms;
   vector < float > *hist;
 
-#ifdef WIN32
-# if !defined( QT4 )
-  #pragma warning ( default: 4251 )
-# endif
-#endif
   double delta;
   unsigned int threads;
   Q3ProgressBar *progress;
@@ -1090,5 +1034,11 @@ class saxs_pr_thr_t : public QThread
   int work_to_do_waiters;
   int work_done_waiters;
 };
+
+#ifdef WIN32
+# if !defined( QT4 )
+  #pragma warning ( default: 4251 )
+# endif
+#endif
 
 #endif

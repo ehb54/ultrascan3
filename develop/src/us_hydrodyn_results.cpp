@@ -67,6 +67,23 @@ void US_Hydrodyn_Results::setupGUI()
    AUTFBACK( le_name );
    le_name->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 
+   lbl_method = new QLabel(tr(" Method: "), this);
+   Q_CHECK_PTR(lbl_method);
+   lbl_method->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   lbl_method->setMinimumWidth(200);
+   lbl_method->setPalette( PALET_LABEL );
+   AUTFBACK( lbl_method );
+   lbl_method->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   le_method = new QLineEdit(this, "method Line Edit");
+   le_method->setText(results->method);
+   le_method->setReadOnly(true);
+   le_method->setMinimumWidth(200);
+   //   le_method->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   le_method->setPalette( PALET_NORMAL );
+   AUTFBACK( le_method );
+   le_method->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+
    lbl_total_beads = new QLabel(tr(" Total Beads in Model: "), this);
    Q_CHECK_PTR(lbl_total_beads);
    lbl_total_beads->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
@@ -201,13 +218,15 @@ void US_Hydrodyn_Results::setupGUI()
    lbl_tau->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_tau = new QLineEdit(this, "tau Line Edit");
-   if (fabs((*results).tau_sd) <= 1e-100)
-   {
-      le_tau->setText(str.sprintf("%4.2e ns", (*results).tau));
-   }
-   else
-   {
-      le_tau->setText(str.sprintf("%4.2e ns (%4.2e)", (*results).tau, (*results).tau_sd));
+   if ( le_method->text() == "Zeno" ) {
+      le_tau->setText( "n/a" ); 
+   } else {
+      if (fabs((*results).tau_sd) <= 1e-100)
+      {
+         le_tau->setText(str.sprintf("%4.2e ns", (*results).tau));
+      } else {
+         le_tau->setText(str.sprintf("%4.2e ns (%4.2e)", (*results).tau, (*results).tau_sd));
+      }
    }
    le_tau->setReadOnly(true);
    le_tau->setAlignment(Qt::AlignVCenter);
@@ -346,6 +365,9 @@ void US_Hydrodyn_Results::setupGUI()
    background->addWidget(lbl_name, j, 0);
    background->addWidget(le_name, j, 1);
    j++;
+   background->addWidget(lbl_method, j, 0);
+   background->addWidget(le_method, j, 1);
+   j++;
    background->addWidget(lbl_total_beads, j, 0);
    background->addWidget(le_total_beads, j, 1);
    j++;
@@ -402,7 +424,7 @@ void US_Hydrodyn_Results::help()
 
 void US_Hydrodyn_Results::load_results()
 {
-   QString filename = QFileDialog::getOpenFileName( this , caption() , somo_dir , "*.hydro_res *.HYDRO_RES" );
+   QString filename = QFileDialog::getOpenFileName( this , caption() , somo_dir , le_method->text() == "Zeno" ? "*.zno *.ZNO" : "*.hydro_res *.HYDRO_RES" );
    if (!filename.isEmpty())
    {
       view_file(filename);

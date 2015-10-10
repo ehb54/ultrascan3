@@ -217,18 +217,18 @@ void US_Hydrodyn_PDB_Parsing::save_csv_on_load()
 void US_Hydrodyn_PDB_Parsing::residue(int val)
 {
    (*pdb).missing_residues = val;
-   if ( val ) {
-      ((US_Hydrodyn *)us_hydrodyn)->misc.pb_rule_on = false;
-   }
+   // if ( val ) {
+   //    ((US_Hydrodyn *)us_hydrodyn)->misc.pb_rule_on = false;
+   // }
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 void US_Hydrodyn_PDB_Parsing::atom(int val)
 {
    (*pdb).missing_atoms = val;
-   if ( val ) {
-      ((US_Hydrodyn *)us_hydrodyn)->misc.pb_rule_on = false;
-   }
+   // if ( val ) {
+   //    ((US_Hydrodyn *)us_hydrodyn)->misc.pb_rule_on = false;
+   // }
    ((US_Hydrodyn *)us_hydrodyn)->set_disabled();
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }

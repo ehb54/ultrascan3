@@ -309,31 +309,28 @@ void US_Hydrodyn_Misc::setupGUI()
    AUTFBACK( cb_equalize_radii );
    connect(cb_equalize_radii, SIGNAL(clicked()), SLOT(set_equalize_radii()));
 
-   lbl_hydro_method = new QLabel(tr("Hydrodynamic Method:"), this);
-   lbl_hydro_method->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Raised);
-   lbl_hydro_method->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
-   lbl_hydro_method->setMinimumHeight(minHeight1);
-   lbl_hydro_method->setPalette( PALET_FRAME );
-   AUTFBACK( lbl_hydro_method );
-   lbl_hydro_method->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
+   // lbl_hydro_method = new QLabel(tr("Hydrodynamic Method:"), this);
+   // lbl_hydro_method->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
+   // lbl_hydro_method->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   // lbl_hydro_method->setMinimumHeight(minHeight1);
+   // lbl_hydro_method->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
+   // lbl_hydro_method->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
 
-   cb_hydro_supc = new QCheckBox(this);
-   cb_hydro_supc->setText(tr(" Standard matrix inversion"));
-   cb_hydro_supc->setChecked((*misc).hydro_supc);
-   cb_hydro_supc->setMinimumHeight(minHeight1);
-   cb_hydro_supc->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_hydro_supc->setPalette( PALET_NORMAL );
-   AUTFBACK( cb_hydro_supc );
-   connect(cb_hydro_supc, SIGNAL(clicked()), SLOT(set_hydro_supc()));
+   // cb_hydro_supc = new QCheckBox(this);
+   // cb_hydro_supc->setText(tr(" Standard matrix inversion"));
+   // cb_hydro_supc->setChecked((*misc).hydro_supc);
+   // cb_hydro_supc->setMinimumHeight(minHeight1);
+   // cb_hydro_supc->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   // cb_hydro_supc->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   // connect(cb_hydro_supc, SIGNAL(clicked()), SLOT(set_hydro_supc()));
 
-   cb_hydro_zeno = new QCheckBox(this);
-   cb_hydro_zeno->setText(tr(" Zeno method"));
-   cb_hydro_zeno->setChecked((*misc).hydro_zeno);
-   cb_hydro_zeno->setMinimumHeight(minHeight1);
-   cb_hydro_zeno->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_hydro_zeno->setPalette( PALET_NORMAL );
-   AUTFBACK( cb_hydro_zeno );
-   connect(cb_hydro_zeno, SIGNAL(clicked()), SLOT(set_hydro_zeno()));
+   // cb_hydro_zeno = new QCheckBox(this);
+   // cb_hydro_zeno->setText(tr(" Zeno method"));
+   // cb_hydro_zeno->setChecked((*misc).hydro_zeno);
+   // cb_hydro_zeno->setMinimumHeight(minHeight1);
+   // cb_hydro_zeno->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   // cb_hydro_zeno->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   // connect(cb_hydro_zeno, SIGNAL(clicked()), SLOT(set_hydro_zeno()));
 
    lbl_other = new QLabel(tr("Other options:"), this);
    lbl_other->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Raised);
@@ -414,11 +411,11 @@ void US_Hydrodyn_Misc::setupGUI()
    background->addWidget(cb_equalize_radii, j, 1);
    j++;
 
-   background->addMultiCellWidget(lbl_hydro_method, j, j, 0, 1);
-   j++;
-   background->addWidget(cb_hydro_supc, j, 0);
-   background->addWidget(cb_hydro_zeno, j, 1);
-   j++;
+   // background->addMultiCellWidget(lbl_hydro_method, j, j, 0, 1);
+   // j++;
+   // background->addWidget(cb_hydro_supc, j, 0);
+   // background->addWidget(cb_hydro_zeno, j, 1);
+   // j++;
 
    background->addMultiCellWidget( lbl_other, j, j, 0, 1);
    j++;
@@ -479,13 +476,14 @@ void US_Hydrodyn_Misc::set_vbar()
 
 void US_Hydrodyn_Misc::set_pb_rule_on()
 {
-   if( cb_pb_rule_on->isChecked() )
-   {
-      ((US_Hydrodyn *)us_hydrodyn)->pdb_parse.missing_atoms = 0;
-      ((US_Hydrodyn *)us_hydrodyn)->pdb_parse.missing_residues = 0;
-   }
+   // if( cb_pb_rule_on->isChecked() )
+   // {
+   //    ((US_Hydrodyn *)us_hydrodyn)->pdb_parse.missing_atoms = 0;
+   //    ((US_Hydrodyn *)us_hydrodyn)->pdb_parse.missing_residues = 0;
+   // }
 
    (*misc).pb_rule_on = cb_pb_rule_on->isChecked();
+   (*misc).restore_pb_rule = false;
 
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
    ((US_Hydrodyn *)us_hydrodyn)->set_disabled();
@@ -522,23 +520,23 @@ void US_Hydrodyn_Misc::set_equalize_radii()
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
-void US_Hydrodyn_Misc::set_hydro_supc()
-{
-   (*misc).hydro_supc = cb_hydro_supc->isChecked();
-   (*misc).hydro_zeno = !cb_hydro_supc->isChecked();
-   cb_hydro_zeno->setChecked( (*misc).hydro_zeno );
+// void US_Hydrodyn_Misc::set_hydro_supc()
+// {
+//    (*misc).hydro_supc = cb_hydro_supc->isChecked();
+//    (*misc).hydro_zeno = !cb_hydro_supc->isChecked();
+//    cb_hydro_zeno->setChecked( (*misc).hydro_zeno );
 
-   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
-}
+//    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+// }
 
-void US_Hydrodyn_Misc::set_hydro_zeno()
-{
-   (*misc).hydro_zeno = cb_hydro_zeno->isChecked();
-   (*misc).hydro_supc = !cb_hydro_zeno->isChecked();
-   cb_hydro_supc->setChecked( (*misc).hydro_supc );
+// void US_Hydrodyn_Misc::set_hydro_zeno()
+// {
+//    (*misc).hydro_zeno = cb_hydro_zeno->isChecked();
+//    (*misc).hydro_supc = !cb_hydro_zeno->isChecked();
+//    cb_hydro_supc->setChecked( (*misc).hydro_supc );
       
-   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
-}
+//    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+// }
 
 void US_Hydrodyn_Misc::set_export_msroll()
 {

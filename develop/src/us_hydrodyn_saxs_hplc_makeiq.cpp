@@ -428,8 +428,14 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files, double t_min, doub
    bool         any_bl = false;
    bool         any_bi = false;
    unsigned int bl_count = 0;
+   unsigned int bi_count = 0;
 
    // get q and bl
+
+   // map: bi_{delta|alpha}[ q_value ] = value
+
+   map < double, double > bi_delta;
+   map < double, double > bi_alpha;
 
    // map: [ timestamp ][ q_value ] = intensity
 
@@ -486,8 +492,19 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files, double t_min, doub
          any_bl = true;
       }
 
-      if ( rx_bl.search( files[ i ] ) != -1 )
+      if ( rx_bi.search( files[ i ] ) == -1 )
       {
+         // bi_delta    .push_back( 0e0 );
+         // bi_alpha.push_back( 0e0 );
+      } else {
+         // cout << QString( "bi_cap 1 <%1>\n" ).arg( rx_bi.cap( 1 ) );
+         // cout << QString( "bi_cap 2 <%1>\n" ).arg( rx_bi.cap( 3 ) );
+         // bi_delta .push_back( rx_bi.cap( 1 ).replace( "_", "." ).toDouble() );
+         // bi_alpha .push_back( rx_bi.cap( 3 ).replace( "_", "." ).toDouble() );
+         // cout << QString( "bi for file %1 delta  %2 alpha %3\n" ).arg( i ).arg( bi_delta.back(), 0, 'g', 8 ).arg( bi_alpha.back(), 0, 'g', 8 ).ascii();
+         bi_delta[ ql.back() ] = rx_bi.cap( 1 ).replace( "_", "." ).toDouble();
+         bi_alpha[ ql.back() ] = rx_bi.cap( 3 ).replace( "_", "." ).toDouble();
+         bi_count++;
          any_bi = true;
       }
 
@@ -618,6 +635,8 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files, double t_min, doub
 
    bool sd_from_difference = false;
 
+   bool conc_to_saxs  = false;
+
    if ( mode_testiq )
    { 
       save_gaussians = cb_testiq_from_gaussian->isChecked();
@@ -633,6 +652,19 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files, double t_min, doub
             QString( tr( "Add back the baselines when making I(q).  Baselines were found for %1 of the %2 curves" ) )
             .arg( bl_count )
             .arg( files.size() );
+      }
+
+      if ( bl_count )
+      {
+         parameters[ "baseline" ] = 
+            QString( tr( "Add back the baselines when making I(q).  Baselines were found for %1 of the %2 curves" ) )
+            .arg( bl_count )
+            .arg( files.size() );
+      }
+
+      if ( bi_count )
+      {
+         parameters[ "integralbaseline" ] = QString( "%1" ).arg( bi_count );
       }
 
       parameters[ "gaussians" ] = QString( "%1" ).arg( f_gaussians[ files[ 0 ] ].size() / gaussian_type_size );
@@ -817,6 +849,12 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files, double t_min, doub
          .arg( sd_set_pt1pct ? "true" : "false" )
          .arg( sd_keep_zeros ? "true" : "false" )
          ;
+
+
+      if ( conc_ok && parameters[ "conc_to_saxs" ] == "true" )
+      {
+         conc_to_saxs = true;
+      }
    }
 
    //    if ( bl_count &&
@@ -851,12 +889,85 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files, double t_min, doub
 
    vector < vector < double > > concs;
 
+   vector < double > conc_gaussians;
+   vector < double > ref_gaussians = f_gaussians[ files[ 0 ] ];
+
+   if ( conc_ok )
+   {
+      conc_gaussians = f_gaussians[ lbl_conc_file->text() ];
+   }
+
+   if ( conc_ok && conc_to_saxs )
+   {
+      vector < double > new_conc_gaussians;
+
+      vector < double > tmp_gc( gaussian_type_size );
+      vector < double > tmp_gr( gaussian_type_size );
+      vector < double > tmp_gn( gaussian_type_size );
+
+      double conc_area;
+
+      for ( unsigned int i = 0; i < ( unsigned int )conv.size(); i++ )
+      {
+         tmp_gc[ 0 ] = conc_gaussians[ 0 + i * gaussian_type_size ];
+         tmp_gr[ 0 ] = ref_gaussians [ 0 + i * gaussian_type_size ];
+
+         tmp_gc[ 1 ] = conc_gaussians[ 1 + i * gaussian_type_size ];
+         tmp_gr[ 1 ] = ref_gaussians [ 1 + i * gaussian_type_size ];
+
+         tmp_gc[ 2 ] = conc_gaussians[ 2 + i * gaussian_type_size ];
+         tmp_gr[ 2 ] = ref_gaussians [ 2 + i * gaussian_type_size ];
+
+         if ( dist1_active )
+         {
+            tmp_gc[ 3 ] = conc_gaussians[ 3 + i * gaussian_type_size ];
+            tmp_gr[ 3 ] = ref_gaussians [ 3 + i * gaussian_type_size ];
+            if ( dist2_active )
+            {
+               tmp_gc[ 4 ] = conc_gaussians[ 4 + i * gaussian_type_size ];
+               tmp_gr[ 4 ] = ref_gaussians [ 4 + i * gaussian_type_size ];
+            }
+         }
+         
+         conc_area = tmp_gc[ 0 ] * tmp_gc[ 2 ] * M_SQRT2PI;
+
+         // keep center, width, distortions:
+         tmp_gn = tmp_gr; 
+
+         // compute new amplitude
+         tmp_gn[ 0 ] = conc_area / ( M_SQRT2PI * tmp_gn[ 2 ] );
+
+         QString qs = QString( tr( "Concentration Gaussian %1: center %2 area %3" ) )
+            .arg( i + 1 )
+            .arg( tmp_gc[ 1 ] )
+            .arg( conc_area );
+         editor_msg( "dark blue", qs );
+         for ( int j = 0; j < (int) gaussian_type_size; ++j )
+         {
+            new_conc_gaussians.push_back( tmp_gn[ j ] );
+         }
+         add_plot( QString( lbl_conc_file->text() + "_sas_adjusted_pk%1" ).arg( i + 1 ), tv, compute_gaussian( tv, tmp_gn ), true, false );
+      }
+      // qDebug( US_Vector::qs_vector3( "conc, ref, new conc", conc_gaussians, ref_gaussians, new_conc_gaussians ) );
+      conc_gaussians = new_conc_gaussians;
+      add_plot( lbl_conc_file->text() + "_sas_adjusted" , tv, compute_gaussian_sum( tv, conc_gaussians), true, false );
+   }
+
+   // if ( conc_ok && conc_to_saxs )
+   // {
+   //    editor_msg( "red", "Adjusting concentration curve to SAXS optimized values is not yet enabled" );
+   //    running = false;
+   //    progress->reset();
+   //    update_enables();
+   //    return false;
+   // }
+
    if ( normalize_by_conc || conc_ok )
    {
       // test, produce conc curves for each gaussian
       for ( unsigned int i = 0; i < ( unsigned int )conv.size(); i++ )
       {
-         // add_plot( QString( "conc_g_per_ml_peak%1" ).arg( i + 1 ), tv, conc_curve( tv, i, conv[ i ] ), true, false );
+         // add_plot( QString( "conc_mg_per_ml_peak%1" ).arg( i + 1 ), tv, conc_curve( tv, i, conv[ i ] ), true, false );
          // alt method
          {
             double detector_conv = 0e0;
@@ -869,20 +980,19 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files, double t_min, doub
                detector_conv = detector_ri_conv;
             }
             vector < double > tmp_g( gaussian_type_size );
-            QString conc_file = lbl_conc_file->text();
-            tmp_g[ 0 ] = f_gaussians[ conc_file ][ 0 + i * gaussian_type_size ] * detector_conv / ( conc_repeak * conv[ i ] );
-            tmp_g[ 1 ] = f_gaussians[ conc_file ][ 1 + i * gaussian_type_size ];
-            tmp_g[ 2 ] = f_gaussians[ conc_file ][ 2 + i * gaussian_type_size ];
+            tmp_g[ 0 ] = conc_gaussians[ 0 + i * gaussian_type_size ] * detector_conv / ( conc_repeak * conv[ i ] );
+            tmp_g[ 1 ] = conc_gaussians[ 1 + i * gaussian_type_size ];
+            tmp_g[ 2 ] = conc_gaussians[ 2 + i * gaussian_type_size ];
             if ( dist1_active )
             {
-               tmp_g[ 3 ] = f_gaussians[ files[ i ] ][ 3 + i * gaussian_type_size ];
+               tmp_g[ 3 ] = conc_gaussians[ 3 + i * gaussian_type_size ];
                if ( dist2_active )
                {
-                  tmp_g[ 4 ] = f_gaussians[ files[ i ] ][ 4 + i * gaussian_type_size ];
+                  tmp_g[ 4 ] = conc_gaussians[ 4 + i * gaussian_type_size ];
                }
             }
             concs.push_back( compute_gaussian( tv, tmp_g ) );
-            add_plot( QString( "conc_g_per_ml_peak%1" ).arg( i + 1 ), tv, concs.back(), true, false );
+            add_plot( QString( "conc_mg_per_ml_peak%1" ).arg( i + 1 ), tv, concs.back(), true, false );
          }
       }
    }
@@ -1003,6 +1113,53 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files, double t_min, doub
 
    // build up resulting curves
 
+   map < double, map < double , double > > bi_recon;
+   // qDebug( QString( "here build up resulting curves save sum %1 any_bi %2" )
+   //         .arg( save_sum ? "yes" : "no" )
+   //         .arg( any_bi ? "yes" : "no" )
+   //         );
+
+   if ( save_sum && any_bi ) {
+
+      // qDebug( "qv delta alpha" );
+      // for ( int i = 0; i < (int) qv.size(); ++i ) {
+      //    qDebug( QString( "%1 %2 %3" )
+      //            .arg( qv[ i ] )
+      //            .arg( QString( bi_delta.count( qv[ i ] ) ? QString( "%1" ).arg( bi_delta[ qv[ i ] ] ) : QString( "na" ) ) )
+      //            .arg( QString( bi_alpha.count( qv[ i ] ) ? QString( "%1" ).arg( bi_alpha[ qv[ i ] ] ) : QString( "na" ) ) )
+      //            );
+      // }
+
+      for ( int q = 0; q < (int) qv.size(); ++q ) {
+         double bl = 0e0;
+         if ( !bi_alpha.count( qv[ q ] ) ) {
+            // qDebug( QString( "bi_alpha missing for qv %1" ).arg( qv[ q ] ) );
+            editor_msg( "red", 
+                        QString( tr( "Warning: could not find alpha value for integral baseline reconstruction for q %1 A^-1" ) )
+                        .arg( qv[ q ] ) );
+            bi_alpha[ qv[ q ] ] = 0e0;
+         }
+
+         for ( int t = 0; t < (int) tv.size(); ++t ) {
+            if ( !I_values.count( tv[ t ] ) ) {
+               // qDebug( QString( "I_values[%1] missing" ).arg( tv[ t ] ) );
+               continue;
+            }
+            if ( !I_values[ tv[ t ] ].count( qv[ q ] ) ) {
+               // // qDebug( QString( "I_values[%1][%2] missing" ).arg( tv[ t ] ).arg( qv[ q ] ) );
+               continue;
+            }
+            bl += I_values[ tv[ t ] ][ qv[ q ] ] * bi_alpha[ qv[ q ] ];
+            bi_recon[ tv[ t ] ][ qv[ q ] ] += bl;
+         }
+         // qDebug( QString( "bl recomputed %1 delta %2 absdiff %3" )
+         //         .arg( bl )
+         //         .arg( QString( bi_delta.count( qv[ q ] ) ? QString( "%1" ).arg( bi_delta[ qv[ q ] ] ) : QString( "na" ) ) )
+         //         .arg( bi_delta.count( qv[ q ] ) ? fabs( bi_delta[ qv[ q ] ] - bl ) : 1e99 ) 
+         //         );
+      }
+   }      
+
    // for each time, tv[ t ] 
 
    // cout << QString( "num of gauss %1\n" ).arg( num_of_gauss );
@@ -1060,16 +1217,15 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files, double t_min, doub
             }
 
             vector < double > tmp_g( gaussian_type_size );
-            QString conc_file = lbl_conc_file->text();
-            tmp_g[ 0 ] = f_gaussians[ conc_file ][ 0 + g * gaussian_type_size ] * detector_conv / ( conc_repeak * conv[ g ] );
-            tmp_g[ 1 ] = f_gaussians[ conc_file ][ 1 + g * gaussian_type_size ];
-            tmp_g[ 2 ] = f_gaussians[ conc_file ][ 2 + g * gaussian_type_size ];
+            tmp_g[ 0 ] = conc_gaussians[ 0 + g * gaussian_type_size ] * detector_conv / ( conc_repeak * conv[ g ] );
+            tmp_g[ 1 ] = conc_gaussians[ 1 + g * gaussian_type_size ];
+            tmp_g[ 2 ] = conc_gaussians[ 2 + g * gaussian_type_size ];
             if ( dist1_active )
             {
-               tmp_g[ 3 ] = f_gaussians[ conc_file ][ 3 + g * gaussian_type_size ];
+               tmp_g[ 3 ] = conc_gaussians[ 3 + g * gaussian_type_size ];
                if ( dist2_active )
                {
-                  tmp_g[ 4 ] = f_gaussians[ conc_file ][ 4 + g * gaussian_type_size ];
+                  tmp_g[ 4 ] = conc_gaussians[ 4 + g * gaussian_type_size ];
                }
             }
 
@@ -1209,6 +1365,7 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files, double t_min, doub
             double tmp_I_recon = tmp_I;
             double tmp_G_recon = tmp_G;
 
+            // add back baseline linear
             if ( any_bl )
             {
                double pct_area = 1e0; // 1e0 / ( double ) num_of_gauss; // g_area[ i ][ g ];
@@ -1561,12 +1718,32 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files, double t_min, doub
             {
                add_plot( QString( "sumG_bsba_T%1" ).arg( pad_zeros( tv[ t ], (int) tv.size() ) ), qv, gsG_recon, gse, false, false );
             }
+            if ( any_bi )
+            {
+               vector < double > gsG_bi_recon = gsG_recon;
+               if ( bi_recon.count( tv[ t ] ) ) {
+                  for ( int q = 0; q < (int) qv.size(); ++q ) {
+                     gsG_bi_recon[ q ] += bi_recon[ tv[ t ] ].count( qv[ q ] ) ? bi_recon[ tv[ t ] ][ qv[ q ] ] : 0e0;
+                  }
+               }
+               add_plot( QString( "sumG_bsbai_T%1" ).arg( pad_zeros( tv[ t ], (int) tv.size() ) ), qv, gsG_bi_recon, gse, false, false );
+            }               
          } else {
             add_plot( QString( "sumI%1_T%2" ).arg( (any_bl || any_bi) ? "_bs" : "" ).arg( pad_zeros( tv[ t ], (int) tv.size() ) ), qv, gsI, gse, false, false );
             if ( any_bl )
             {
                add_plot( QString( "sumI_bsba_T%1" ).arg( pad_zeros( tv[ t ], (int) tv.size() ) ), qv, gsI_recon, gse, false, false );
             }
+            if ( any_bi )
+            {
+               vector < double > gsI_bi_recon = gsI_recon;
+               if ( bi_recon.count( tv[ t ] ) ) {
+                  for ( int q = 0; q < (int) qv.size(); ++q ) {
+                     gsI_bi_recon[ q ] += bi_recon[ tv[ t ] ].count( qv[ q ] ) ? bi_recon[ tv[ t ] ][ qv[ q ] ] : 0e0;
+                  }
+               }
+               add_plot( QString( "sumI_bsbai_T%1" ).arg( pad_zeros( tv[ t ], (int) tv.size() ) ), qv, gsI_bi_recon, gse, false, false );
+            }               
          }
       }
 
@@ -1601,6 +1778,7 @@ bool US_Hydrodyn_Saxs_Hplc::create_unified_ggaussian_target( QStringList & files
 
    unified_ggaussian_files           = files;
    unified_ggaussian_curves          = files.size();
+   unified_ggaussian_qvals           .clear();
 
    unified_ggaussian_use_errors      = true;
 
@@ -1618,6 +1796,8 @@ bool US_Hydrodyn_Saxs_Hplc::create_unified_ggaussian_target( QStringList & files
          return false;
       }
    }
+
+   QRegExp rx_q     ( "_q(\\d+_\\d+)" );
 
    common_size   = 0;
    per_file_size = 0;
@@ -1714,6 +1894,15 @@ bool US_Hydrodyn_Saxs_Hplc::create_unified_ggaussian_target( QStringList & files
          return false;
       }
       
+      if ( rx_q.search( files[ i ] ) == -1 )
+      {
+         editor_msg( "red", QString( tr( "Error: Can not find q value in file name for %1" ) ).arg( files[ i ] ) );
+         return false;
+      }
+
+      unified_ggaussian_qvals.push_back( rx_q.cap( 1 ).replace( "_", "." ).toDouble() );
+      
+
       for ( unsigned int j = 0; j < ( unsigned int ) f_gaussians[ files[ i ] ].size(); j += gaussian_type_size )
       {
          unified_ggaussian_params.push_back( f_gaussians[ files[ i ] ][ 0 + j ] ); // height
@@ -1798,11 +1987,11 @@ bool US_Hydrodyn_Saxs_Hplc::create_unified_ggaussian_target( QStringList & files
                                     .arg( qsl_list_no_errors.size() ?
                                           QString( tr( "These files have no associated errors:\n%1\n\n" ) ).arg( qsl_list_no_errors.join( "\n" ) ) : "" )
                                     .arg( qsl_list_zero_points.size() ?
-                                          QString( tr( "These files have zero points:\n%1\n\n" ) ).arg( qsl_list_zero_points.join( "\n" ) ) : "" )
+                                          QString( tr( "These files have points with missing SDs:\n%1\n\n" ) ).arg( qsl_list_zero_points.join( "\n" ) ) : "" )
                                     ,
                                     tr( "&Turn off SD weighting" ), 
-                                    tr( "Drop &full curves with zero SDs" ), 
-                                    qsl_zero_points.size() ? tr( "Drop &points with zero SDs" ) : QString::null, 
+                                    tr( "Drop &full curves with missing SDs" ), 
+                                    qsl_zero_points.size() ? tr( "Drop &points with missing SDs" ) : QString::null, 
                                     0, // Stop == button 0
                                     0 // Escape == button 0
                                     ) )
@@ -1810,6 +1999,7 @@ bool US_Hydrodyn_Saxs_Hplc::create_unified_ggaussian_target( QStringList & files
       case 0 : // turn off sd weighting
          {
             cb_sd_weight->setChecked( false );
+            pb_ggauss_rmsd->setText   ( tr( "RMSD" ) );
             return create_unified_ggaussian_target( files, false );
          }
          break;
@@ -1848,8 +2038,9 @@ bool US_Hydrodyn_Saxs_Hplc::create_unified_ggaussian_target( QStringList & files
       return false;
    }
 
-   //    US_Vector::printvector( "unified q:", unified_ggaussian_q );
-   //    US_Vector::printvector( "unified t:", unified_ggaussian_t );
+   // US_Vector::printvector( "unified qvals:", unified_ggaussian_qvals );
+   // US_Vector::printvector( "unified q:", unified_ggaussian_q );
+   // US_Vector::printvector( "unified t:", unified_ggaussian_t );
    //    US_Vector::printvector( "unified I:", unified_ggaussian_I );
    // US_Vector::printvector( "unified params:", unified_ggaussian_params );
    // US_Vector::printvector( "unified param index:", unified_ggaussian_param_index );
@@ -1968,6 +2159,7 @@ bool US_Hydrodyn_Saxs_Hplc::ggauss_recompute()
    // US_Vector::printvector( "q_end"  , unified_ggaussian_q_end   );
 
    // pb_ggauss_rmsd->setEnabled( false );
+   
    return true;
 }
 

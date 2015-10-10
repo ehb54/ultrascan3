@@ -41,10 +41,12 @@ class mQLineEdit : public QLineEdit
 
    signals:
       void focussed(bool hasFocus);
+      void pressed();
 
    protected:
       virtual void focusInEvent ( QFocusEvent *e );
       virtual void focusOutEvent ( QFocusEvent *e );
+      virtual void mousePressEvent ( QMouseEvent *e );
 };
 
 class mQPushButton : public QPushButton
@@ -75,7 +77,17 @@ class mQThread : public QThread
 class ShowHide
 {
  public:
-   static void hide_widgets( std::vector < QWidget *> widgets, bool hide = true, QWidget * do_resize = (QWidget *) 0 );
+   static void hide_widgets( const std::vector < QWidget *> & widgets, 
+                             bool hide = true, 
+                             QWidget * do_resize = (QWidget *) 0 );
+   static void hide_widgets( const std::vector < std::vector < QWidget *> > & widgets, 
+                             int row,
+                             bool hide = true, 
+                             QWidget * do_resize = (QWidget *) 0 );
+   static void only_widgets( const std::vector < std::vector < QWidget *> > & widgets, 
+                             int row,
+                             bool hide = true, 
+                             QWidget * do_resize = (QWidget *) 0 );
 };
 
 class MQT

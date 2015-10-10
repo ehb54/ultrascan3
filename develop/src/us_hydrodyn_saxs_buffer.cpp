@@ -1559,7 +1559,7 @@ void US_Hydrodyn_Saxs_Buffer::run_current()
          }
          lbl_signal->setText( it->first );
          qApp->processEvents();
-         run_one();
+         run_one( false );
          if ( !last_created_file.isEmpty() )
          {
             created_files << last_created_file;
@@ -1579,12 +1579,20 @@ void US_Hydrodyn_Saxs_Buffer::run_current()
       {
          conc_avg( created_files );
       }
+      if ( plot_dist_zoomer )
+      {
+         delete plot_dist_zoomer;
+         plot_dist_zoomer = (ScrollZoomer *) 0;
+      }
+      plot_files();
+
       if ( !is_running )
       {
          running = false;
          update_enables();
          progress->setProgress(1, 1);
       }
+
    } else {
       run_one();
    }
@@ -1657,7 +1665,7 @@ void US_Hydrodyn_Saxs_Buffer::run_divide()
    }
 }
 
-void US_Hydrodyn_Saxs_Buffer::run_one()
+void US_Hydrodyn_Saxs_Buffer::run_one( bool do_plot )
 {
    // subtract buffer
    QString buffer   = lbl_buffer  ->text();
@@ -1925,12 +1933,15 @@ void US_Hydrodyn_Saxs_Buffer::run_one()
    f_errors    [ bsub_name ] = bsub_error;
    
    // we could check if it has changed and then delete
-   if ( plot_dist_zoomer )
+   if ( do_plot )
    {
-      delete plot_dist_zoomer;
-      plot_dist_zoomer = (ScrollZoomer *) 0;
+      if ( plot_dist_zoomer )
+      {
+         delete plot_dist_zoomer;
+         plot_dist_zoomer = (ScrollZoomer *) 0;
+      }
+      plot_files();
    }
-   plot_files();
 
    update_csv_conc();
    for ( unsigned int i = 0; i < csv_conc.data.size(); i++ )
@@ -5210,6 +5221,7 @@ void US_Hydrodyn_Saxs_Buffer::to_saxs()
          }
       }
    }
+   saxs_window->rescale_plot();
 }
 
 void US_Hydrodyn_Saxs_Buffer::plot_zoomed( const QwtDoubleRect & /* rect */ )

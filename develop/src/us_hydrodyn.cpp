@@ -203,7 +203,7 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    save_widget = false;
    comparative_widget = false;
    calcAutoHydro = false;
-   setSuffix = false;
+   setSuffix = true;
    overwrite = false;
    saveParams = false;
    guiFlag = true;
@@ -215,6 +215,8 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    last_saxs_screen_csv.name = "__empty__";
    last_saxs_buffer_csv.name = "__empty__";
    last_saxs_hplc_csv.name = "__empty__";
+
+   misc.restore_pb_rule = false;
 
    read_residue_file();
 
@@ -340,9 +342,10 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
       }
    }
    play_sounds(1);
-   editor->append(QString(tr("\n\nWelcome to SOMO UltraScan %1 %2\n"))
+   editor->append(QString(tr("\n\nWelcome to SOMO UltraScan %1 %2\nProduced on: %3\n"))
 		  .arg(US_Version)
 		  .arg(REVISION)
+		  .arg(REVISION_DATE)
 		  );
    if ( numThreads > 1 )
    {
@@ -428,6 +431,14 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
       editor_msg( "red", tr( "Warning: vdw.json not read" ) );
    }
 
+   if ( 
+       !saxs_util->load_vcm_json( USglobal->config_list.system_dir + 
+                                  QDir::separator() + "etc" +
+                                  QDir::separator() + "vcm.json" ) )
+   {
+      editor_msg( "red", tr( "Warning: vcm.json not read" ) );
+   }
+
    if ( saxs_options.wavelength == 0 )
    {
       saxs_options.start_q = 
@@ -460,7 +471,7 @@ US_Hydrodyn::~US_Hydrodyn()
 
 void US_Hydrodyn::setupGUI()
 {
-   int minHeight1 = 27;
+   int minHeight1 = 24;
    bead_model_file = "";
 
    lookup_tables = new Q3PopupMenu;
@@ -592,13 +603,16 @@ void US_Hydrodyn::setupGUI()
    pb_load_pdb->setPalette( PALET_PUSHB );
    connect(pb_load_pdb, SIGNAL(clicked()), SLOT(load_pdb()));
 
-   lbl_pdb_file = new QLabel(tr(" not selected"),this);
-   lbl_pdb_file->setFrameStyle(Q3Frame::WinPanel|Sunken);
-   lbl_pdb_file->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
-   lbl_pdb_file->setMinimumHeight(minHeight1);
-   lbl_pdb_file->setPalette( PALET_EDIT );
-   AUTFBACK( lbl_pdb_file );
-   lbl_pdb_file->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_pdb_file = new mQLineEdit( this );
+   le_pdb_file->setText( tr( "not selected" ) );
+   le_pdb_file->setFrameStyle(Q3Frame::WinPanel|Sunken);
+   le_pdb_file->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_pdb_file->setMinimumHeight(minHeight1);
+   le_pdb_file->setPalette( PALET_EDIT );
+   AUTFBACK( le_pdb_file );
+   le_pdb_file->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   connect( le_pdb_file, SIGNAL( focussed( bool ) ), SLOT( le_pdb_file_focus( bool ) ) );
+   connect( le_pdb_file, SIGNAL( textChanged( const QString & ) ), SLOT( le_pdb_file_changed( const QString & ) ) );
 
    lbl_model = new QLabel(tr(" Please select a PDB Structure:"), this);
    Q_CHECK_PTR(lbl_model);
@@ -698,6 +712,14 @@ void US_Hydrodyn::setupGUI()
    pb_somo->setPalette( PALET_PUSHB );
    connect(pb_somo, SIGNAL(clicked()), SLOT(calc_somo()));
 
+   pb_somo_o = new QPushButton(tr("Build SoMo Overlap Bead Model"), this);
+   Q_CHECK_PTR(pb_somo_o);
+   pb_somo_o->setMinimumHeight(minHeight1);
+   pb_somo_o->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   pb_somo_o->setEnabled(false);
+   pb_somo_o->setPalette( PALET_PUSHB );
+   connect(pb_somo_o, SIGNAL(clicked()), SLOT(calc_somo_o()));
+
 #if defined(USE_H)
    pb_pdb_hydrate_for_saxs = new QPushButton(tr("Hydrate"), this);
    pb_pdb_hydrate_for_saxs->setMinimumHeight(minHeight1);
@@ -783,13 +805,21 @@ void US_Hydrodyn::setupGUI()
    pb_batch2->setPalette( PALET_PUSHB );
    connect(pb_batch2, SIGNAL(clicked()), SLOT(show_batch()));
 
-   pb_calc_hydro = new QPushButton(tr("Calculate RB Hydrodynamics"), this);
+   pb_calc_hydro = new QPushButton(tr("Calculate RB Hydrodynamics SMI"), this);
    Q_CHECK_PTR(pb_calc_hydro);
    pb_calc_hydro->setEnabled(false);
    pb_calc_hydro->setMinimumHeight(minHeight1);
    pb_calc_hydro->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_calc_hydro->setPalette( PALET_PUSHB );
    connect(pb_calc_hydro, SIGNAL(clicked()), SLOT(calc_hydro()));
+
+   pb_calc_zeno = new QPushButton(tr("Calculate RB Hydrodynamics ZENO"), this);
+   Q_CHECK_PTR(pb_calc_zeno);
+   pb_calc_zeno->setEnabled(false);
+   pb_calc_zeno->setMinimumHeight(minHeight1);
+   pb_calc_zeno->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   pb_calc_zeno->setPalette( PALET_PUSHB );
+   connect(pb_calc_zeno, SIGNAL(clicked()), SLOT(calc_zeno_hydro()));
 
    pb_show_hydro_results = new QPushButton(tr("Show Hydrodynamic Calculations"), this);
    Q_CHECK_PTR(pb_show_hydro_results);
@@ -998,7 +1028,7 @@ void US_Hydrodyn::setupGUI()
    Q3GridLayout *background = new Q3GridLayout(this, rows, columns, margin, spacing);
 
    background->addMultiCellWidget(frame, j, j, 0, 1);
-   background->addMultiCellWidget(editor, j, j+23, 2, 2);
+   background->addMultiCellWidget(editor, j, j+24, 2, 2);
    j++;
    background->addMultiCellWidget(lbl_info1, j, j, 0, 1);
    j++;
@@ -1008,7 +1038,7 @@ void US_Hydrodyn::setupGUI()
    background->addWidget(pb_batch, j, 0);
    j++;
    background->addWidget(pb_load_pdb, j, 0);
-   background->addWidget(lbl_pdb_file, j, 1);
+   background->addWidget(le_pdb_file, j, 1);
    j++;
    background->addWidget(lbl_model, j, 0);
    background->addMultiCellWidget(lb_model, j, j+4, 1, 1);
@@ -1049,9 +1079,12 @@ void US_Hydrodyn::setupGUI()
    background->addWidget(pb_somo, j, 0);
    background->addWidget(pb_grid_pdb, j, 1);
    j++;
-   background->addWidget(pb_grid, j, 0);
-   background->addWidget(cb_calcAutoHydro, j, 1);
+
+   background->addWidget(pb_somo_o, j, 0);
+   background->addWidget(pb_grid, j, 1);
    j++;
+
+
    //   background->addWidget(pb_bd_prepare, j, 0);
    //   QHBoxLayout *qhl_bd_1 = new QHBoxLayout;
    //   qhl_bd_1->addWidget(pb_bd_load);
@@ -1064,54 +1097,51 @@ void US_Hydrodyn::setupGUI()
    background->addWidget(pb_view_asa, j, 0);
    background->addWidget(pb_visualize, j, 1);
    j++;
+
    background->addWidget(pb_batch2, j, 0);
    background->addWidget(pb_view_bead_model, j, 1);
    j++;
+
    background->addWidget(pb_load_bead_model, j, 0);
    background->addWidget(le_bead_model_file, j, 1);
    j++;
+
    background->addWidget(pb_bead_saxs, j, 0);
-   // background->addWidget(pb_rescale_bead_model, j, 1);
-   Q3BoxLayout *hbl_rescale_equi = new Q3HBoxLayout( 0 );
-   hbl_rescale_equi->addWidget( pb_rescale_bead_model );
-   hbl_rescale_equi->addWidget( pb_equi_grid_bead_model );
-   background->addLayout(hbl_rescale_equi, j, 1);
+   background->addWidget(cb_calcAutoHydro, j, 1);
    j++;
+
+   background->addWidget(pb_rescale_bead_model, j, 0);
+   background->addWidget(pb_equi_grid_bead_model, j, 1);
+   j++;
+
    background->addMultiCellWidget(lbl_info3, j, j, 0, 1);
    j++;
 
-   Q3BoxLayout *hbl_calc_hydros = new Q3HBoxLayout( 0 );
-   hbl_calc_hydros->addWidget( pb_calc_hydro );
-   background->addLayout(hbl_calc_hydros, j, 0);
-
-   Q3BoxLayout *hbl_show_hydros = new Q3HBoxLayout( 0 );
-   hbl_show_hydros->addWidget( pb_show_hydro_results );
-   background->addLayout( hbl_show_hydros, j, 1);
+   background->addWidget(pb_calc_hydro, j, 0);
+   background->addWidget(pb_calc_zeno, j, 1);
    j++;
-   //   background->addWidget(pb_anaflex_prepare, j, 0);
-   //   QHBoxLayout *qhl_anaflex_1 = new QHBoxLayout;
-   //   qhl_anaflex_1->addWidget(pb_anaflex_load);
-   //   qhl_anaflex_1->addWidget(pb_anaflex_edit);
-   //   background->addLayout(qhl_anaflex_1, j, 1);
-   //   j++;
-   //   background->addWidget(pb_anaflex_run, j, 0);
-   //   background->addWidget(pb_anaflex_load_results, j, 1);
-   //   j++;
-   {
-      Q3BoxLayout * hbl = new Q3HBoxLayout( 0 );
-      hbl->addWidget( pb_comparative );
-      hbl->addWidget( pb_best );
-      background->addLayout( hbl, j, 0 );
-   }
-   // background->addWidget(pb_comparative, j, 0);
+
+
+   background->addWidget(pb_show_hydro_results, j, 0);
    background->addWidget(pb_open_hydro_results, j, 1);
    j++;
+
    background->addWidget(pb_select_save_params, j, 0);
    background->addWidget(cb_saveParams, j, 1);
    j++;
-   background->addWidget(pb_stop_calc, j, 0);
-   background->addWidget(pb_cancel, j, 1);
-// background->addMultiCellWidget(progress, j, j, 0, 1);
+
+   {
+      Q3BoxLayout * hbl = new Q3HBoxLayout( 0 );
+      hbl->addWidget( pb_best );
+      hbl->addWidget( pb_comparative );
+      background->addLayout( hbl, j, 0 );
+   }
+   {
+      Q3BoxLayout * hbl = new Q3HBoxLayout( 0 );
+      hbl->addWidget( pb_stop_calc );
+      hbl->addWidget( pb_cancel );
+      background->addLayout( hbl, j, 1 );
+   }
    j++;
    Q3BoxLayout *bl_help_config = new Q3HBoxLayout;
    bl_help_config->addWidget( pb_help );
@@ -1138,10 +1168,12 @@ void US_Hydrodyn::set_expert( bool expert )
 void US_Hydrodyn::set_disabled()
 {
    pb_somo->setEnabled(false);
+   pb_somo_o->setEnabled(false);
    pb_grid_pdb->setEnabled(false);
    pb_grid->setEnabled(false);
    pb_show_hydro_results->setEnabled(false);
    pb_calc_hydro->setEnabled(false);
+   pb_calc_zeno->setEnabled(false);
    pb_visualize->setEnabled(false);
    //   pb_pdb_saxs->setEnabled(false);
 
@@ -1329,6 +1361,12 @@ void US_Hydrodyn::show_misc()
    }
    else
    {
+      if ( misc.restore_pb_rule ) {
+         // qDebug( "show_misc() restoring pb rule" );
+         misc.pb_rule_on      = true;
+         misc.restore_pb_rule = false;
+      }
+
       misc_window = new US_Hydrodyn_Misc(&misc, &misc_widget, this);
       fixWinButtons( misc_window );
       connect(misc_window, SIGNAL(vbar_changed()), this, SLOT(update_vbar()));
@@ -1653,6 +1691,7 @@ void US_Hydrodyn::do_reset()
    bd_options = default_bd_options;
    dmd_options = default_dmd_options;
    anaflex_options = default_anaflex_options;
+   gparams = default_gparams;
    //  save = default_save;
 }
 
@@ -1695,7 +1734,6 @@ void US_Hydrodyn::select_residue_file()
    lbl_table->setText( QDir::convertSeparators( residue_filename ) );
 }
 
-
 void US_Hydrodyn::reload_pdb()
 {
    if ( advanced_config.debug_1 )
@@ -1725,6 +1763,7 @@ void US_Hydrodyn::reload_pdb()
    QString error_string = "";
    for(unsigned int i = 0; i < model_vector.size(); i++)
    {
+      multi_residue_map = save_multi_residue_map;
       editor->append(QString("Checking the pdb structure for model %1\n").arg( model_name( i ) ) );
       if (check_for_missing_atoms(&error_string, &model_vector[i]))
       {
@@ -1737,6 +1776,7 @@ void US_Hydrodyn::reload_pdb()
       reset_chain_residues( &model_vector[ i ] );
    }
    model_vector_as_loaded = model_vector;
+   set_pdb_info( "reload pdb" );
    editor->append(QString("Loaded pdb file : %1\n").arg(errors_found ? "ERRORS PRESENT" : "ok"));
    if ( errors_found )
    {
@@ -1748,10 +1788,12 @@ void US_Hydrodyn::reload_pdb()
    somo_processed.clear();
    update_vbar();
    pb_somo->setEnabled(true);
+   pb_somo_o->setEnabled(true);
    pb_grid_pdb->setEnabled(true);
    pb_grid->setEnabled(false);
    pb_show_hydro_results->setEnabled(false);
    pb_calc_hydro->setEnabled(false);
+   pb_calc_zeno->setEnabled(false);
    pb_bead_saxs->setEnabled(false);
    pb_rescale_bead_model->setEnabled(false);
    pb_pdb_saxs->setEnabled(true);
@@ -1761,10 +1803,325 @@ void US_Hydrodyn::reload_pdb()
    bead_models_as_loaded = bead_models;
 }
 
+void US_Hydrodyn::clear_pdb_info( QString /* msg */ ) {
+   // qDebug( QString( "clear_pdb_info() %1" ). arg( msg ) );
+   pdb_info.clear();
+}
+
+void US_Hydrodyn::set_pdb_info( QString /* msg */ ) {
+   if ( misc.pb_rule_on ) {
+      // qDebug( QString( "set_pdb_info() %1 setting pb_rule ON" ). arg( msg ) );
+      pdb_info.insert( "pb_rule" );
+   } else {
+      // qDebug( QString( "set_pdb_info() %1 setting pb_rule OFF" ). arg( msg ) );
+      pdb_info.erase( "pb_rule" );
+   }
+}
+
+void US_Hydrodyn::sync_pdb_info( QString /* msg */ ) {
+   // qDebug( QString( "sync_pdb_info() %1 called misc.pb_rule_on %2 pdb_info.count( 'pb_rule' ) %3" )
+   //         .arg( msg )
+   //         .arg( misc.pb_rule_on ? "true" : "false" )
+   //         .arg( pdb_info.count( "pb_rule" ) ? "true" : "false" )
+   //         );
+   
+   if ( (  misc.pb_rule_on && !pdb_info.count( "pb_rule" ) ) ||
+        ( !misc.pb_rule_on && pdb_info.count( "pb_rule" ) ) ) {
+      if ( misc_widget ) {
+         misc_window->close();
+         delete misc_window;
+         misc_widget = false;
+      }
+           
+      if ( misc.pb_rule_on && !pdb_info.count( "pb_rule" ) ) {
+         // qDebug( QString( "sync_pdb_info() %1 misc.pb_rule was ON, now OFF" ). arg( msg ) );
+         misc.pb_rule_on      = false;
+         misc.restore_pb_rule = true;
+      } else {
+         // qDebug( QString( "sync_pdb_info() %1 misc.pb_rule was OFF, now ON" ). arg( msg ) );
+         misc.pb_rule_on      = true;
+         misc.restore_pb_rule = false;
+      }
+   }
+}
+
+// add store & reset code for these in state_info ?
+
+int US_Hydrodyn::issue_non_coded( bool quiet ) {
+   qDebug( "issue_non_coded()" );
+   if ( quiet || advanced_config.expert_mode ) {
+      qDebug( "issue_non_coded() returning quiet or expert" );
+      switch ( pdb_parse.missing_residues ) {
+      case 0 : // list & stop op
+         return ISSUE_RESPONSE_STOP;
+         break;
+      case 1 : // list and skip
+         return ISSUE_RESPONSE_NC_SKIP;
+         break;
+      case 2 : // abb
+      default :
+         return ISSUE_RESPONSE_NC_REPLACE;
+         break;
+      }
+   }
+
+   if ( issue_info.count( "stop" ) ) {
+      qDebug( "issue_non_coded() auto return stop" );
+      return ISSUE_RESPONSE_STOP;
+   }
+   if ( issue_info.count( "nc_skip" ) ) {
+      qDebug( "issue_non_coded() auto return skip" );
+      return ISSUE_RESPONSE_NC_SKIP;
+   }
+   if ( issue_info.count( "nc_replace" ) ) {
+      qDebug( "issue_non_coded() auto return replace" );
+      return ISSUE_RESPONSE_NC_REPLACE;
+   }
+
+   switch ( pdb_parse.missing_residues ) {
+   case 0 :
+      qDebug( "issue_non_coded() return stop" );
+      return ISSUE_RESPONSE_STOP;
+      break;
+   case 1 :
+      {
+         qDebug( "issue_non_coded() setting skip q" );
+         switch( QMessageBox::question(
+                                       this
+                                       ,tr( "US-SOMO: Non coded residue" )
+                                       ,tr("A non-coded residue was encountered\n"
+                                           "It can be skipped or you can stop processing.\n"
+                                           "This choice will be maintained for all remaining non coded residues encountered in this PDB file.\n"
+                                           "For specific residue details, please review the main panel text area after making your selection.\n"
+                                           "\n"
+                                           "If your model contains non-coded residues, the calculated molecular weight\n"
+                                           "and vbar may be incorrect. Therefore, you could manually enter a global\n"
+                                           "value for the molecular weight in the SOMO hydrodynamic options, and a\n"
+                                           "global value for the vbar in the SOMO Miscellaneous options.\n"
+                                           "\n"
+                                           "Please select your option below"
+                                           )
+                                       ,tr( "Skip non-coded residues" )
+                                       ,tr( "Stop processing" )
+                                       ,QString::null
+                                       ,1
+                                       ,1
+                                       ) ) {
+         case 0 : 
+            issue_info.insert( "nc_skip" );
+            return ISSUE_RESPONSE_NC_SKIP;
+            break;
+
+         case 1 : 
+         default :
+            issue_info.insert( "stop" );
+            return ISSUE_RESPONSE_STOP;
+            break;
+         }
+      }
+      break;
+   case 2 :
+      {
+         qDebug( "issue_non_coded() setting abb q" );
+         switch( QMessageBox::question(
+                                       this
+                                       ,tr( "US-SOMO: Non coded residue" )
+                                       ,tr("A non-coded residue was encountered\n"
+                                           "It can be replaced with an average residue, skipped or you can stop processing.\n"
+                                           "This choice will be maintained for all remaining non coded residues encountered in this PDB file.\n"
+                                           "For specific residue details, please review the main panel text area after making your selection.\n"
+                                           "\n"
+                                           "If your model contains non-coded residues, the calculated molecular weight\n"
+                                           "and vbar may be incorrect. Therefore, you could manually enter a global\n"
+                                           "value for the molecular weight in the SOMO hydrodynamic options, and a\n"
+                                           "global value for the vbar in the SOMO Miscellaneous options. You can also\n"
+                                           "review the average residue settings in the SOMO Miscellaneous options.\n"
+                                           "\n"
+                                           "Please select your option below"
+                                           )
+                                       ,tr( "Replace non-coded with average residues" )
+                                       ,tr( "Skip non-coded residues" )
+                                       ,tr( "Stop processing" )
+                                       ,2
+                                       ,2
+                                       ) ) {
+         case 0 : 
+            issue_info.insert( "nc_replace" );
+            return ISSUE_RESPONSE_NC_REPLACE;
+            break;
+
+         case 1 : 
+            issue_info.insert( "nc_skip" );
+            return ISSUE_RESPONSE_NC_SKIP;
+            break;
+
+         case 2 : 
+         default :
+            issue_info.insert( "stop" );
+            return ISSUE_RESPONSE_STOP;
+            break;
+         }
+      }
+      break;
+   default :
+      break;
+
+   }
+
+   qDebug( "issue_non_coded() fall thru" );
+
+   return ISSUE_RESPONSE_STOP;
+}
+
+int US_Hydrodyn::issue_missing_atom( bool quiet ) {
+
+   qDebug( "issue_missing_atom()" );
+   if ( quiet || advanced_config.expert_mode ) {
+      qDebug( "issue_missing_atom() returning quiet or expert" );
+      switch ( pdb_parse.missing_atoms ) {
+      case 0 : // list & stop op
+         return ISSUE_RESPONSE_STOP;
+         break;
+      case 1 : // list and skip
+         return ISSUE_RESPONSE_MA_SKIP;
+         break;
+      case 2 : // approx
+      default :
+         return ISSUE_RESPONSE_MA_MODEL;
+         break;
+      }
+   }
+
+   if ( issue_info.count( "stop" ) ) {
+      qDebug( "issue_missing_atom() auto return stop" );
+      return ISSUE_RESPONSE_STOP;
+   }
+   if ( issue_info.count( "ma_skip" ) ) {
+      qDebug( "issue_missing_atom() auto return skip" );
+      return ISSUE_RESPONSE_MA_SKIP;
+   }
+   if ( issue_info.count( "ma_model" ) ) {
+      qDebug( "issue_missing_atom() auto return model" );
+      return ISSUE_RESPONSE_MA_MODEL;
+   }
+
+   switch ( pdb_parse.missing_atoms ) {
+   case 0 :
+      qDebug( "issue_missing_atom() return stop" );
+      return ISSUE_RESPONSE_STOP;
+      break;
+   case 1 :
+      {
+         qDebug( "issue_missing_atom() setting skip q" );
+         switch( QMessageBox::question(
+                                       this
+                                       ,tr( "US-SOMO: Missing or extra atoms" )
+                                       ,tr("A missing or extra atom was encountered when comparing with the residue table\n"
+                                           "It can be skipped or you can stop processing.\n"
+                                           "This choice will be maintained for all remaining missing atoms encountered in this PDB file.\n"
+                                           "For specific residue details, please review the main panel text area after making your selection.\n"
+                                           "\n"
+                                           "If your model contains missing atoms, the calculated molecular\n"
+                                           "weight and vbar may be incorrect, and you should manually enter\n"
+                                           "a global value for the molecular weight in the SOMO hydrodynamic\n"
+                                           "options, and a global value for the vbar in the SOMO Miscellaneous\n"
+                                           "options.\n"
+                                           "\n"
+                                           "Please select your option below"
+                                           )
+                                       ,tr( "Skip residues with missing atoms" )
+                                       ,tr( "Stop processing" )
+                                       ,QString::null
+                                       ,1
+                                       ,1
+                                       ) ) {
+         case 0 : 
+            issue_info.insert( "ma_skip" );
+            return ISSUE_RESPONSE_MA_SKIP;
+            break;
+
+         case 1 : 
+         default :
+            issue_info.insert( "stop" );
+            return ISSUE_RESPONSE_STOP;
+            break;
+         }
+      }
+      break;
+   case 2 :
+      {
+         qDebug( "issue_missing_atom() setting approx q" );
+         switch( QMessageBox::question(
+                                       this
+                                       ,tr( "US-SOMO: Missing or extra atoms" )
+                                       ,tr("A missing or extra atom was encountered when comparing with the residue table\n"
+                                           "It can be modeled with an approximate method, skipped or you can stop processing.\n"
+                                           "This choice will be maintained for all remaining missing atoms encountered in this PDB file.\n"
+                                           "For specific residue details, please review the main panel text area after making your selection.\n"
+                                           "\n"
+                                           "If you model with an approximate method, the shape of this residue will\n"
+                                           "be different from an exact residue which can effect the hydrodynamic computations\n"
+                                           "\n"
+                                           "If you skip missing atoms, the calculated molecular\n"
+                                           "weight and vbar may be incorrect, and you should manually enter\n"
+                                           "a global value for the molecular weight in the SOMO hydrodynamic\n"
+                                           "options, and a global value for the vbar in the SOMO Miscellaneous\n"
+                                           "options.\n"
+                                           "\n"
+                                           "Please select your option below"
+                                           )
+                                       ,tr( "Model with the approximate method" )
+                                       ,tr( "Skip residues with missing atoms" )
+                                       ,tr( "Stop processing" )
+                                       ,2
+                                       ,2
+                                       ) ) {
+         case 0 : 
+            issue_info.insert( "ma_model" );
+            return ISSUE_RESPONSE_MA_MODEL;
+            break;
+
+         case 1 : 
+            issue_info.insert( "ma_skip" );
+            return ISSUE_RESPONSE_MA_SKIP;
+            break;
+
+         case 2 : 
+         default :
+            issue_info.insert( "stop" );
+            return ISSUE_RESPONSE_STOP;
+            break;
+         }
+      }
+      break;
+   default :
+      break;
+
+   }
+
+   qDebug( "issue_missing_atom() fall thru" );
+
+   return ISSUE_RESPONSE_STOP;
+}
+
 void US_Hydrodyn::load_pdb()
 {
+   issue_info.clear();
+   clear_pdb_info( "load_pdb" );
+   if ( misc.restore_pb_rule ) {
+      qDebug( "load_pdb() restoring pb rule" );
+      if ( misc_widget ) {
+         misc_window->close();
+         delete misc_window;
+         misc_widget = false;
+      }
+         
+      misc.pb_rule_on      = true;
+      misc.restore_pb_rule = false;
+   }
+
    QString message = "";
-   if ( pdb_parse.missing_residues == 1 &&
+   if ( 0 && pdb_parse.missing_residues == 1 &&
         !advanced_config.expert_mode )
    {
       message += tr("You have selected to skip missing residues. If your model contains missing\n"
@@ -1773,7 +2130,7 @@ void US_Hydrodyn::load_pdb()
                     "SOMO hydrodynamic options, and a global value for the vbar in the SOMO\n"
                     "Miscellaneous options.\n\nAre you sure you want to proceed?");
    }
-   if ( pdb_parse.missing_residues == 2 &&
+   if ( 0 && pdb_parse.missing_residues == 2 &&
         !advanced_config.expert_mode )
    {
       message += tr("You have selected to replace non-coded residues with an average residue.\n"
@@ -1802,7 +2159,7 @@ void US_Hydrodyn::load_pdb()
       }
    }
    message = "";
-   if ( pdb_parse.missing_atoms == 1 &&
+   if ( 0 && pdb_parse.missing_atoms == 1 &&
         !advanced_config.expert_mode )
    {
       message += tr("You have selected to skip coded residues containing missing atoms.\n"
@@ -1812,7 +2169,7 @@ void US_Hydrodyn::load_pdb()
                     "options, and a global value for the vbar in the SOMO Miscellaneous\n"
                     "options.\n\nAre you sure you want to proceed?");
    }
-   if ( pdb_parse.missing_atoms == 2 &&
+   if ( 0 && pdb_parse.missing_atoms == 2 &&
         !advanced_config.expert_mode )
    {
       message += tr("You have selected to model coded residues with missing atoms\n"
@@ -1902,7 +2259,8 @@ void US_Hydrodyn::load_pdb()
       options_log = "";
       last_abb_msgs = "";
       bead_model_from_file = false;
-      lbl_pdb_file->setText( QDir::convertSeparators( filename ) );
+      le_pdb_file_save_text = QDir::convertSeparators( filename );
+      le_pdb_file->setText( QDir::convertSeparators( filename ) );
       clear_display();
 
 #if defined(START_RASMOL)
@@ -1949,6 +2307,7 @@ void US_Hydrodyn::load_pdb()
       QString error_string = "";
       for(unsigned int i = 0; i < model_vector.size(); i++)
       {
+         multi_residue_map = save_multi_residue_map;
          editor->append(QString("Checking the pdb structure for model %1\n").arg( model_name( i ) ) );
          if (check_for_missing_atoms(&error_string, &model_vector[i]))
          {
@@ -1961,6 +2320,9 @@ void US_Hydrodyn::load_pdb()
          reset_chain_residues( &model_vector[ i ] );
       }
       model_vector_as_loaded = model_vector;
+      set_pdb_info( "load_pdb" );
+         
+
       editor->append(QString("Loaded pdb file : %1\n").arg(errors_found ? "ERRORS PRESENT" : "ok"));
       bead_models.clear();
       somo_processed.clear();
@@ -1985,11 +2347,13 @@ void US_Hydrodyn::load_pdb()
    }
    // bead_model_prefix = "";
    pb_somo->setEnabled(true);
+   pb_somo_o->setEnabled(true);
    pb_grid_pdb->setEnabled(true);
    pb_grid->setEnabled(false);
    bd_anaflex_enables(true);
    pb_show_hydro_results->setEnabled(false);
    pb_calc_hydro->setEnabled(false);
+   pb_calc_zeno->setEnabled(false);
    pb_pdb_saxs->setEnabled(true);
    pb_bead_saxs->setEnabled(false);
    pb_rescale_bead_model->setEnabled(false);
@@ -2014,8 +2378,24 @@ void US_Hydrodyn::load_pdb()
    }
 }
 
-bool US_Hydrodyn::screen_pdb(QString filename, bool display_pdb)
+bool US_Hydrodyn::screen_pdb(QString filename, bool display_pdb, bool skipclearissue )
 {
+   if ( !skipclearissue ) {
+      issue_info.clear();
+   }
+   clear_pdb_info( "screen_pdb" );
+
+   if ( misc.restore_pb_rule ) {
+      // qDebug( "screen_pdb() restoring pb rule" );
+      if ( misc_widget ) {
+         misc_window->close();
+         delete misc_window;
+         misc_widget = false;
+      }
+      misc.pb_rule_on      = true;
+      misc.restore_pb_rule = false;
+   }
+
    cout << QString( "screen pdb display is %1\n" ).arg( display_pdb ? "true" : "false" );
    pdb_file = filename;
 
@@ -2035,7 +2415,8 @@ bool US_Hydrodyn::screen_pdb(QString filename, bool display_pdb)
    last_abb_msgs = "";
    bead_model_from_file = false;
    int errors_found = 0;
-   lbl_pdb_file->setText( QDir::convertSeparators( filename ) );
+   le_pdb_file_save_text = QDir::convertSeparators( filename );
+   le_pdb_file->setText( QDir::convertSeparators( filename ) );
 
    bead_model_suffix = "";
    le_bead_model_suffix->setText( bead_model_suffix );
@@ -2082,9 +2463,11 @@ bool US_Hydrodyn::screen_pdb(QString filename, bool display_pdb)
    {
       return false;
    }
+
    QString error_string = "";
    for(unsigned int i = 0; i < model_vector.size(); i++)
    {
+      multi_residue_map = save_multi_residue_map;
       editor->append(QString("Checking the pdb structure for model %1\n").arg( model_name( i ) ) );
       if (check_for_missing_atoms(&error_string, &model_vector[i]))
       {
@@ -2103,6 +2486,7 @@ bool US_Hydrodyn::screen_pdb(QString filename, bool display_pdb)
       calc_mw();
    }
    model_vector_as_loaded = model_vector;
+   set_pdb_info( "screen_pdb" );
    if ( !model_vector.size() ||
         !model_vector[0].molecule.size() )
    {
@@ -2125,10 +2509,12 @@ bool US_Hydrodyn::screen_pdb(QString filename, bool display_pdb)
    }
    // bead_model_prefix = "";
    pb_somo->setEnabled(errors_found ? false : true);
+   pb_somo_o->setEnabled(errors_found ? false : true);
    pb_grid_pdb->setEnabled(errors_found ? false : true);
    pb_grid->setEnabled(false);
    pb_show_hydro_results->setEnabled(false);
    pb_calc_hydro->setEnabled(false);
+   pb_calc_zeno->setEnabled(false);
    pb_bead_saxs->setEnabled(false);
    pb_rescale_bead_model->setEnabled(false);
    pb_visualize->setEnabled(false);
@@ -2152,9 +2538,11 @@ bool US_Hydrodyn::screen_bead_model( QString filename )
    }
    options_log = "";
    pb_somo->setEnabled(false);
+   pb_somo_o->setEnabled(false);
    pb_visualize->setEnabled(false);
    pb_equi_grid_bead_model->setEnabled(false);
    pb_calc_hydro->setEnabled(false);
+   pb_calc_zeno->setEnabled(false);
    pb_show_hydro_results->setEnabled(false);
    pb_grid_pdb->setEnabled(false);
    pb_grid->setEnabled(false);
@@ -2175,10 +2563,13 @@ bool US_Hydrodyn::screen_bead_model( QString filename )
    bool only_overlap = false;
    if ( !read_bead_model(filename, only_overlap ))
    {
+      bool so_ovlp = QFileInfo( filename ).baseName( true ).contains( "so_ovlp" );
+      qDebug( QString( "screen bead model so_ovlp %1" ).arg( so_ovlp ? "true" : "false" ) );
       state = BEAD_MODEL_LOADED;
       pb_visualize->setEnabled(true);
       pb_equi_grid_bead_model->setEnabled(true);
-      pb_calc_hydro->setEnabled(true);
+      pb_calc_hydro->setEnabled( !so_ovlp );
+      pb_calc_zeno->setEnabled( true );
       pb_grid->setEnabled(true);
       pb_bead_saxs->setEnabled(true);
       pb_rescale_bead_model->setEnabled( misc.target_volume != 0e0 || misc.equalize_radii );
@@ -2194,6 +2585,7 @@ bool US_Hydrodyn::screen_bead_model( QString filename )
          pb_visualize->setEnabled(true);
          pb_equi_grid_bead_model->setEnabled(true);
          pb_calc_hydro->setEnabled( false );
+         pb_calc_zeno->setEnabled( true );
          pb_grid->setEnabled(true);
          pb_bead_saxs->setEnabled(true);
          pb_rescale_bead_model->setEnabled( misc.target_volume != 0e0 || misc.equalize_radii );
@@ -2259,8 +2651,10 @@ void US_Hydrodyn::select_model( int val )
       results_widget = false;
    }
    pb_somo->setEnabled(true);
+   pb_somo_o->setEnabled(true);
    pb_show_hydro_results->setEnabled(false);
    pb_calc_hydro->setEnabled(false);
+   pb_calc_zeno->setEnabled(false);
    pb_visualize->setEnabled(false);
    pb_equi_grid_bead_model->setEnabled(false);
    //   pb_pdb_saxs->setEnabled(true);
@@ -2337,9 +2731,11 @@ void US_Hydrodyn::load_bead_model()
 
       options_log = "";
       pb_somo->setEnabled(false);
+      pb_somo_o->setEnabled(false);
       pb_visualize->setEnabled(false);
       pb_equi_grid_bead_model->setEnabled(false);
       pb_calc_hydro->setEnabled(false);
+      pb_calc_zeno->setEnabled(false);
       pb_show_hydro_results->setEnabled(false);
       pb_grid_pdb->setEnabled(false);
       pb_grid->setEnabled(false);
@@ -2392,10 +2788,13 @@ void US_Hydrodyn::load_bead_model()
       bool only_overlap = false;
       if (!read_bead_model(filename, only_overlap ))
       {
+         bool so_ovlp = QFileInfo( filename ).baseName( true ).contains( "so_ovlp" );
+         qDebug( QString( "load bead model so_ovlp %1" ).arg( so_ovlp ? "true" : "false" ) );
          state = BEAD_MODEL_LOADED;
          pb_visualize->setEnabled(true);
          pb_equi_grid_bead_model->setEnabled(true);
-         pb_calc_hydro->setEnabled(true);
+         pb_calc_hydro->setEnabled( !so_ovlp );
+         pb_calc_zeno->setEnabled(true);
          pb_grid->setEnabled(true);
          pb_bead_saxs->setEnabled(true);
          pb_rescale_bead_model->setEnabled( misc.target_volume != 0e0 || misc.equalize_radii );
@@ -2410,6 +2809,7 @@ void US_Hydrodyn::load_bead_model()
             pb_visualize->setEnabled(true);
             pb_equi_grid_bead_model->setEnabled(true);
             pb_calc_hydro->setEnabled( false );
+            pb_calc_zeno->setEnabled( true );
             pb_grid->setEnabled(true);
             pb_bead_saxs->setEnabled(true);
             pb_rescale_bead_model->setEnabled( misc.target_volume != 0e0 || misc.equalize_radii );
@@ -2437,7 +2837,7 @@ void US_Hydrodyn::update_bead_model_prefix(const QString &str)
    bead_model_prefix = str;
 }
 
-int US_Hydrodyn::calc_somo()
+int US_Hydrodyn::calc_somo( bool no_ovlp_removal )
 {
    if ( selected_models_contain( "WAT" ) )
    {
@@ -2466,17 +2866,19 @@ int US_Hydrodyn::calc_somo()
    stopFlag = false;
    pb_stop_calc->setEnabled(true);
    pb_somo->setEnabled(false);
+   pb_somo_o->setEnabled(false);
 
    bd_anaflex_enables(false);
 
    pb_grid_pdb->setEnabled(false);
    pb_grid->setEnabled(false);
-   options_log = "";
-   append_options_log_somo();
-   display_default_differences();
    model_vector = model_vector_as_loaded;
-
-   bead_model_suffix = getExtendedSuffix(false, true);
+   sync_pdb_info( "calc_somo" );
+   editor_msg( "dark blue", QString( tr( "Peptide Bond Rule is %1 for this PDB" ) ).arg( misc.pb_rule_on ? "on" : "off" ) );
+   options_log = "";
+   no_ovlp_removal ? append_options_log_somo_ovlp() : append_options_log_somo();
+   display_default_differences();
+   bead_model_suffix = getExtendedSuffix(false, true, no_ovlp_removal );
    le_bead_model_suffix->setText(bead_model_suffix);
    if ( !overwrite )
    {
@@ -2489,6 +2891,7 @@ int US_Hydrodyn::calc_somo()
       bd_anaflex_enables( ( ( browflex && browflex->isRunning() ) ||
                             ( anaflex && anaflex->isRunning() ) ) ? false : true );
       pb_somo->setEnabled(true);
+      pb_somo_o->setEnabled(true);
       pb_grid_pdb->setEnabled(true);
       progress->reset();
       return -1;
@@ -2505,6 +2908,7 @@ int US_Hydrodyn::calc_somo()
    pb_equi_grid_bead_model->setEnabled(false);
    pb_show_hydro_results->setEnabled(false);
    pb_calc_hydro->setEnabled(false);
+   pb_calc_zeno->setEnabled(false);
    if (results_widget)
    {
       results_window->close();
@@ -2532,10 +2936,10 @@ int US_Hydrodyn::calc_somo()
       if (!any_errors && lb_model->isSelected(current_model))
       {
          any_models = true;
-         if(!compute_asa())
+         if(!compute_asa( false, no_ovlp_removal ))
          {
             somo_processed[current_model] = 1;
-            if (asa.recheck_beads)
+            if ( asa.recheck_beads && !no_ovlp_removal )
             {
                // puts("recheck beads disabled");
                editor->append("Rechecking beads\n");
@@ -2561,6 +2965,7 @@ int US_Hydrodyn::calc_somo()
       {
          editor->append("Stopped by user\n\n");
          pb_somo->setEnabled(true);
+         pb_somo_o->setEnabled(true);
          bd_anaflex_enables( ( ( browflex && browflex->isRunning() ) ||
                                ( anaflex && anaflex->isRunning() ) ) ? false : true );
          pb_grid_pdb->setEnabled(true);
@@ -2577,7 +2982,8 @@ int US_Hydrodyn::calc_somo()
       qApp->processEvents();
       pb_visualize->setEnabled(true);
       pb_equi_grid_bead_model->setEnabled(true);
-      pb_calc_hydro->setEnabled(true);
+      pb_calc_hydro->setEnabled( !no_ovlp_removal );
+      pb_calc_zeno->setEnabled(true);
       pb_bead_saxs->setEnabled(true);
       pb_rescale_bead_model->setEnabled( misc.target_volume != 0e0 || misc.equalize_radii );
    }
@@ -2587,12 +2993,13 @@ int US_Hydrodyn::calc_somo()
    }
 
    pb_somo->setEnabled(true);
+   pb_somo_o->setEnabled(true);
    pb_grid_pdb->setEnabled(true);
    pb_grid->setEnabled(true);
    pb_stop_calc->setEnabled(false);
    if (calcAutoHydro)
    {
-      calc_hydro();
+      no_ovlp_removal ? calc_zeno_hydro() : calc_hydro();
    } 
    else
    {
@@ -2667,20 +3074,24 @@ int US_Hydrodyn::calc_grid_pdb()
 
    stopFlag = false;
    pb_stop_calc->setEnabled(true);
+   model_vector = model_vector_as_loaded;
+   sync_pdb_info( "calc_grid_pdb" );
+   editor_msg( "dark blue", QString( tr( "Peptide Bond Rule is %1 for this PDB" ) ).arg( misc.pb_rule_on ? "on" : "off" ) );
    options_log = "";
    append_options_log_atob();
    display_default_differences();
-   model_vector = model_vector_as_loaded;
    int flag = 0;
    bool any_errors = false;
    bool any_models = false;
    pb_grid->setEnabled(false);
    pb_grid_pdb->setEnabled(false);
    pb_somo->setEnabled(false);
+   pb_somo_o->setEnabled(false);
    pb_visualize->setEnabled(false);
    pb_equi_grid_bead_model->setEnabled(false);
    pb_show_hydro_results->setEnabled(false);
    pb_calc_hydro->setEnabled(false);
+   pb_calc_zeno->setEnabled(false);
 
    if (results_widget)
    {
@@ -2710,6 +3121,7 @@ int US_Hydrodyn::calc_grid_pdb()
                editor->append("Stopped by user\n\n");
                pb_grid_pdb->setEnabled(true);
                pb_somo->setEnabled(true);
+               pb_somo_o->setEnabled(true);
                progress->reset();
                grid_exposed_overlap = org_grid_exposed_overlap;
                grid_overlap         = org_grid_overlap;
@@ -2745,6 +3157,7 @@ int US_Hydrodyn::calc_grid_pdb()
                editor->append("Stopped by user\n\n");
                pb_grid_pdb->setEnabled(true);
                pb_somo->setEnabled(true);
+               pb_somo_o->setEnabled(true);
                progress->reset();
                grid_exposed_overlap = org_grid_exposed_overlap;
                grid_overlap         = org_grid_overlap;
@@ -2846,6 +3259,7 @@ int US_Hydrodyn::calc_grid_pdb()
                      editor_msg( "red", "Center of scattering requested, but zero scattering intensities are present" );
                      pb_grid_pdb->setEnabled(true);
                      pb_somo->setEnabled(true);
+                     pb_somo_o->setEnabled(true);
                      progress->reset();
                      grid_exposed_overlap = org_grid_exposed_overlap;
                      grid_overlap         = org_grid_overlap;
@@ -2867,6 +3281,7 @@ int US_Hydrodyn::calc_grid_pdb()
                      editor->append("Stopped by user\n\n");
                      pb_grid_pdb->setEnabled(true);
                      pb_somo->setEnabled(true);
+                     pb_somo_o->setEnabled(true);
                      progress->reset();
                      grid_exposed_overlap = org_grid_exposed_overlap;
                      grid_overlap         = org_grid_overlap;
@@ -2879,6 +3294,7 @@ int US_Hydrodyn::calc_grid_pdb()
                      editor->append("Error occured\n\n");
                      pb_grid_pdb->setEnabled(true);
                      pb_somo->setEnabled(true);
+                     pb_somo_o->setEnabled(true);
                      progress->reset();
                      grid_exposed_overlap = org_grid_exposed_overlap;
                      grid_overlap         = org_grid_overlap;
@@ -2985,6 +3401,7 @@ int US_Hydrodyn::calc_grid_pdb()
                         editor->append("Stopped by user\n\n");
                         pb_grid_pdb->setEnabled(true);
                         pb_somo->setEnabled(true);
+                        pb_somo_o->setEnabled(true);
                         progress->reset();
                         grid_exposed_overlap = org_grid_exposed_overlap;
                         grid_overlap         = org_grid_overlap;
@@ -3026,6 +3443,7 @@ int US_Hydrodyn::calc_grid_pdb()
                         editor->append("Stopped by user\n\n");
                         pb_grid_pdb->setEnabled(true);
                         pb_somo->setEnabled(true);
+                        pb_somo_o->setEnabled(true);
                         progress->reset();
                         grid_exposed_overlap = org_grid_exposed_overlap;
                         grid_overlap         = org_grid_overlap;
@@ -3216,6 +3634,7 @@ int US_Hydrodyn::calc_grid_pdb()
       editor->append("Stopped by user\n\n");
       pb_grid_pdb->setEnabled(true);
       pb_somo->setEnabled(true);
+      pb_somo_o->setEnabled(true);
       progress->reset();
       return -1;
    }
@@ -3227,6 +3646,7 @@ int US_Hydrodyn::calc_grid_pdb()
       pb_visualize->setEnabled(true);
       pb_equi_grid_bead_model->setEnabled(true);
       pb_calc_hydro->setEnabled(true);
+      pb_calc_zeno->setEnabled(true);
       pb_bead_saxs->setEnabled(true);
       pb_rescale_bead_model->setEnabled( misc.target_volume != 0e0 || misc.equalize_radii );
    }
@@ -3238,6 +3658,7 @@ int US_Hydrodyn::calc_grid_pdb()
    pb_grid_pdb->setEnabled(true);
    pb_grid->setEnabled(true);
    pb_somo->setEnabled(true);
+   pb_somo_o->setEnabled(true);
    pb_stop_calc->setEnabled(false);
    if (calcAutoHydro)
    {
@@ -3265,10 +3686,12 @@ int US_Hydrodyn::calc_grid()
    pb_grid_pdb->setEnabled(false);
    pb_grid->setEnabled(false);
    pb_somo->setEnabled(false);
+   pb_somo_o->setEnabled(false);
    pb_visualize->setEnabled(false);
    pb_equi_grid_bead_model->setEnabled(false);
    pb_show_hydro_results->setEnabled(false);
    pb_calc_hydro->setEnabled(false);
+   pb_calc_zeno->setEnabled(false);
    if (results_widget)
    {
       results_window->close();
@@ -3327,6 +3750,7 @@ int US_Hydrodyn::calc_grid()
                   editor_msg( "red", "Center of scattering requested, but zero scattering intensities are present" );
                   pb_grid_pdb->setEnabled(true);
                   pb_somo->setEnabled(true);
+                  pb_somo_o->setEnabled(true);
                   progress->reset();
                   return -1;
                }
@@ -3345,6 +3769,7 @@ int US_Hydrodyn::calc_grid()
                editor->append("Stopped by user\n\n");
                pb_grid_pdb->setEnabled(true);
                pb_somo->setEnabled(true);
+               pb_somo_o->setEnabled(true);
                progress->reset();
                return -1;
             }
@@ -3353,6 +3778,7 @@ int US_Hydrodyn::calc_grid()
                editor->append("Error occured\n\n");
                pb_grid_pdb->setEnabled(true);
                pb_somo->setEnabled(true);
+               pb_somo_o->setEnabled(true);
                progress->reset();
                return -1;
             }
@@ -3447,6 +3873,7 @@ int US_Hydrodyn::calc_grid()
                      editor->append("Stopped by user\n\n");
                      pb_grid_pdb->setEnabled(true);
                      pb_somo->setEnabled(true);
+                     pb_somo_o->setEnabled(true);
                      progress->reset();
                      return -1;
                   }
@@ -3461,6 +3888,7 @@ int US_Hydrodyn::calc_grid()
                      editor->append("Stopped by user\n\n");
                      pb_grid_pdb->setEnabled(true);
                      pb_somo->setEnabled(true);
+                     pb_somo_o->setEnabled(true);
                      progress->reset();
                      return -1;
                   }
@@ -3483,6 +3911,7 @@ int US_Hydrodyn::calc_grid()
                      editor->append("Stopped by user\n\n");
                      pb_grid_pdb->setEnabled(true);
                      pb_somo->setEnabled(true);
+                     pb_somo_o->setEnabled(true);
                      progress->reset();
                      return -1;
                   }
@@ -3525,6 +3954,7 @@ int US_Hydrodyn::calc_grid()
       editor->append("Stopped by user\n\n");
       pb_grid_pdb->setEnabled(true);
       pb_somo->setEnabled(true);
+      pb_somo_o->setEnabled(true);
       progress->reset();
       return -1;
    }
@@ -3536,6 +3966,7 @@ int US_Hydrodyn::calc_grid()
       pb_visualize->setEnabled(true);
       pb_equi_grid_bead_model->setEnabled(true);
       pb_calc_hydro->setEnabled(true);
+      pb_calc_zeno->setEnabled(true);
       pb_bead_saxs->setEnabled(true);
       pb_rescale_bead_model->setEnabled( misc.target_volume != 0e0 || misc.equalize_radii );
    }
@@ -3547,6 +3978,7 @@ int US_Hydrodyn::calc_grid()
    pb_grid_pdb->setEnabled(grid_pdb_state);
    pb_grid->setEnabled(true);
    pb_somo->setEnabled(somo_state);
+   pb_somo_o->setEnabled(somo_state);
    pb_stop_calc->setEnabled(false);
    if (calcAutoHydro)
    {
@@ -3759,15 +4191,7 @@ void US_Hydrodyn::visualize( bool movie_frame,
 
 int US_Hydrodyn::calc_hydro()
 {
-   if ( misc.hydro_supc )
-   {
-      return do_calc_hydro();
-   }
-   if ( misc.hydro_zeno )
-   {
-      return (int)(!calc_zeno());
-   }
-   return -1;
+   return do_calc_hydro();
 }
 
 int US_Hydrodyn::do_calc_hydro()
@@ -3780,6 +4204,7 @@ int US_Hydrodyn::do_calc_hydro()
    stopFlag = false;
    pb_stop_calc->setEnabled(true);
    pb_calc_hydro->setEnabled(false);
+   pb_calc_zeno->setEnabled(false);
    //   puts("calc hydro (supc)");
    display_default_differences();
    editor->append("\nBegin hydrodynamic calculations\n\n");
@@ -3829,6 +4254,7 @@ int US_Hydrodyn::do_calc_hydro()
    {
       editor->append("Stopped by user\n\n");
       pb_calc_hydro->setEnabled(true);
+      pb_calc_zeno->setEnabled(true);
       pb_bead_saxs->setEnabled(true);
       pb_rescale_bead_model->setEnabled( misc.target_volume != 0e0 || misc.equalize_radii );
       pb_show_hydro_results->setEnabled(false);
@@ -3862,6 +4288,7 @@ int US_Hydrodyn::do_calc_hydro()
    {
       editor->append("Stopped by user\n\n");
       pb_calc_hydro->setEnabled(true);
+      pb_calc_zeno->setEnabled(true);
       pb_bead_saxs->setEnabled(true);
       pb_rescale_bead_model->setEnabled( misc.target_volume != 0e0 || misc.equalize_radii );
       pb_show_hydro_results->setEnabled(false);
@@ -3872,6 +4299,7 @@ int US_Hydrodyn::do_calc_hydro()
    printf("back from supc retval %d\n", retval);
    pb_show_hydro_results->setEnabled(retval ? false : true);
    pb_calc_hydro->setEnabled(true);
+   pb_calc_zeno->setEnabled(true);
    pb_bead_saxs->setEnabled(true);
    pb_rescale_bead_model->setEnabled( misc.target_volume != 0e0 || misc.equalize_radii );
    if ( retval )
@@ -3882,25 +4310,25 @@ int US_Hydrodyn::do_calc_hydro()
       {
       case US_HYDRODYN_SUPC_FILE_NOT_FOUND:
          {
-            printError("US_HYDRODYN_SUPC encountered a file not found error");
+            printError("Calculate RB Hydrodynamics SMI encountered a file not found error");
             return retval;
             break;
          }
       case US_HYDRODYN_SUPC_OVERLAPS_EXIST:
          {
-            printError("US_HYDRODYN_SUPC encountered an overlaps in the bead model error");
+            printError("Calculate RB Hydrodynamics SMI encountered overlaps in the bead model\nPerhaps you should Calculate RB Hydrodynamics ZENO which supports bead models with overlaps");
             return retval;
             break;
          }
       case US_HYDRODYN_SUPC_ERR_MEMORY_ALLOC:
          {
-            printError("US_HYDRODYN_SUPC encountered a memory allocation error");
+            printError("Calculate RB Hydrodynamics SMI encountered a memory allocation error");
             return retval;
             break;
          }
       case US_HYDRODYN_SUPC_NO_SEL_MODELS:
          {
-            printError("US_HYDRODYN_SUPC was called with no processed models selected");
+            printError("Calculate RB Hydrodynamics SMI was called with no processed models selected");
             return retval;
             break;
          }
@@ -3912,7 +4340,7 @@ int US_Hydrodyn::do_calc_hydro()
          }
       default:
          {
-            printError("US_HYDRODYN_SUPC encountered an unknown error");
+            printError("Calculate RB Hydrodynamics SMI encountered an unknown error");
             // unknown error
             return retval;
             break;
@@ -4055,7 +4483,7 @@ void US_Hydrodyn::open_hydro_results()
 
       select_from_directory_history( use_dir, this );
 
-      filename = QFileDialog::getOpenFileName( this , caption() , use_dir , "*.hydro_res *.HYDRO_RES" );
+      filename = QFileDialog::getOpenFileName( this , caption() , use_dir , "*.hydro_res *.HYDRO_RES *.zno *.ZNO" );
 
       if ( !filename.isEmpty() )
       {
@@ -4492,7 +4920,7 @@ void US_Hydrodyn::bead_saxs( bool create_native_saxs, bool do_raise )
    }
 }
 
-QString US_Hydrodyn::getExtendedSuffix(bool prerun, bool somo)
+QString US_Hydrodyn::getExtendedSuffix(bool prerun, bool somo, bool no_ovlp_removal )
 {
    // produce a suffix based upon settings
    // e.g.
@@ -4523,25 +4951,28 @@ QString US_Hydrodyn::getExtendedSuffix(bool prerun, bool somo)
       
       if ( somo ) 
       {
-         if ( sidechain_overlap.remove_overlap &&
-              mainchain_overlap.remove_overlap &&
-              buried_overlap.remove_overlap &&
-              (sidechain_overlap.remove_sync == 
-               mainchain_overlap.remove_sync) && 
-              (mainchain_overlap.remove_sync == 
-               buried_overlap.remove_sync ) &&
-              (sidechain_overlap.remove_hierarch == 
-               mainchain_overlap.remove_hierarch) &&
-              (mainchain_overlap.remove_hierarch == 
-               buried_overlap.remove_hierarch ) )
+         if ( !no_ovlp_removal ) 
          {
-            result += QString("%1").arg(sidechain_overlap.remove_sync ? "sy" : "hi");
-         }
+            if ( sidechain_overlap.remove_overlap &&
+                 mainchain_overlap.remove_overlap &&
+                 buried_overlap.remove_overlap &&
+                 (sidechain_overlap.remove_sync == 
+                  mainchain_overlap.remove_sync) && 
+                 (mainchain_overlap.remove_sync == 
+                  buried_overlap.remove_sync ) &&
+                 (sidechain_overlap.remove_hierarch == 
+                  mainchain_overlap.remove_hierarch) &&
+                 (mainchain_overlap.remove_hierarch == 
+                  buried_overlap.remove_hierarch ) )
+            {
+               result += QString("%1").arg(sidechain_overlap.remove_sync ? "sy" : "hi");
+            }
          
-         if ( sidechain_overlap.remove_overlap &&
-              sidechain_overlap.translate_out )
-         {
-            result += "OT";
+            if ( sidechain_overlap.remove_overlap &&
+                 sidechain_overlap.translate_out )
+            {
+               result += "OT";
+            }
          }
       }
       if ( !somo ) 
@@ -4581,6 +5012,10 @@ QString US_Hydrodyn::getExtendedSuffix(bool prerun, bool somo)
    if ( !prerun )
    { 
       result += QString(result.length() ? "-" : "") + QString(somo ? "so" : "a2b");
+      if ( somo && no_ovlp_removal )
+      {
+         result += "_ovlp";
+      }
    }
    //   editor->append(result);
    result.replace( ".", "_" );
@@ -5079,10 +5514,12 @@ bool US_Hydrodyn::equi_grid_bead_model( double dR )
    pb_grid_pdb->setEnabled(false);
    pb_grid->setEnabled(false);
    pb_somo->setEnabled(false);
+   pb_somo_o->setEnabled(false);
    pb_visualize->setEnabled(false);
    pb_equi_grid_bead_model->setEnabled(false);
    pb_show_hydro_results->setEnabled(false);
    pb_calc_hydro->setEnabled(false);
+   pb_calc_zeno->setEnabled(false);
    if (results_widget)
    {
       results_window->close();
@@ -5113,6 +5550,7 @@ bool US_Hydrodyn::equi_grid_bead_model( double dR )
             pb_grid_pdb->setEnabled(true);
             pb_equi_grid_bead_model->setEnabled(true);
             pb_somo->setEnabled(true);
+            pb_somo_o->setEnabled(true);
             progress->reset();
             return false;
          }
@@ -5145,6 +5583,7 @@ bool US_Hydrodyn::equi_grid_bead_model( double dR )
                pb_grid_pdb->setEnabled(true);
                pb_equi_grid_bead_model->setEnabled(true);
                pb_somo->setEnabled(true);
+               pb_somo_o->setEnabled(true);
                progress->reset();
                return false;
             }
@@ -5155,6 +5594,7 @@ bool US_Hydrodyn::equi_grid_bead_model( double dR )
                pb_grid_pdb->setEnabled(true);
                pb_equi_grid_bead_model->setEnabled(true);
                pb_somo->setEnabled(true);
+               pb_somo_o->setEnabled(true);
                progress->reset();
                return false;
             }
@@ -5194,6 +5634,7 @@ bool US_Hydrodyn::equi_grid_bead_model( double dR )
       editor->append("Stopped by user\n\n");
       pb_grid_pdb->setEnabled(true);
       pb_somo->setEnabled(true);
+      pb_somo_o->setEnabled(true);
       progress->reset();
       return false;
    }
@@ -5205,6 +5646,7 @@ bool US_Hydrodyn::equi_grid_bead_model( double dR )
       pb_visualize->setEnabled(true);
       pb_equi_grid_bead_model->setEnabled(true);
       pb_calc_hydro->setEnabled(true);
+      pb_calc_zeno->setEnabled(true);
       pb_bead_saxs->setEnabled(true);
       pb_rescale_bead_model->setEnabled( misc.target_volume != 0e0 || misc.equalize_radii );
    }
@@ -5217,6 +5659,7 @@ bool US_Hydrodyn::equi_grid_bead_model( double dR )
    pb_grid_pdb->setEnabled(grid_pdb_state);
    pb_grid->setEnabled(true);
    pb_somo->setEnabled(somo_state);
+   pb_somo_o->setEnabled(somo_state);
    pb_stop_calc->setEnabled(false);
    if (calcAutoHydro)
    {
@@ -5228,4 +5671,26 @@ bool US_Hydrodyn::equi_grid_bead_model( double dR )
    }
 
    return true;
+}
+
+bool US_Hydrodyn::calc_somo_o()
+{
+   return calc_somo( true );
+}
+
+bool US_Hydrodyn::calc_zeno_hydro()
+{
+    return (int)(!calc_zeno());
+}
+
+void US_Hydrodyn::le_pdb_file_focus( bool )
+{
+   // qDebug( "focused" );
+   le_pdb_file_save_text = le_pdb_file->text();
+}
+
+void US_Hydrodyn::le_pdb_file_changed( const QString & )
+{
+   // qDebug( "changed" );
+   le_pdb_file->setText( le_pdb_file_save_text );
 }

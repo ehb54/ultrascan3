@@ -72,7 +72,7 @@ bool US_Saxs_Util::run_iq_mpi( QString controlfile )
    outputData = QString( "%1" ).arg( getenv( "outputData" ) );
    if ( outputData.isEmpty() )
    {
-      outputData = "../outputData";
+      outputData = "outputData";
    }
    if ( !myrank )
    {
@@ -633,7 +633,7 @@ bool US_Saxs_Util::run_nsa_mpi( QString controlfile )
    outputData = QString( "%1" ).arg( getenv( "outputData" ) );
    if ( outputData.isEmpty() )
    {
-      outputData = "../outputData";
+      outputData = "outputData";
    }
    if ( !myrank )
    {

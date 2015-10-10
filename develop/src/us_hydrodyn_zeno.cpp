@@ -13421,7 +13421,6 @@ zeno_main(
    {
       printf( "zeno_main: arg %d <%s>\n", i, argv[ i ] );
    }
-   zeno_progress->setTotalSteps( 108 * 3 );
    return zeno::main( argc, argv );
 }
 
@@ -13456,6 +13455,7 @@ bool US_Hydrodyn_Zeno::test()
          .arg( QString( "%1.bod" ).arg( argv1 ) ).ascii();
       return false;
    }
+   zeno_progress->setTotalSteps( 108 * 3 );
    zeno_main( argc, argv );
    return true;
 }
@@ -13630,8 +13630,10 @@ bool US_Hydrodyn::calc_zeno()
    US_Hydrodyn_Zeno uhz( &hydro, &results, this );
 
    stopFlag = false;
+   bool was_hydro_enabled = pb_calc_hydro->isEnabled();
    pb_stop_calc->setEnabled(true);
    pb_calc_hydro->setEnabled(false);
+   pb_calc_zeno->setEnabled(false);
    display_default_differences();
    editor->append("\nBegin hydrodynamic calculations (Zeno) \n\n");
    qApp->processEvents();
@@ -13661,7 +13663,8 @@ bool US_Hydrodyn::calc_zeno()
    if (stopFlag)
    {
       editor->append("Stopped by user\n\n");
-      pb_calc_hydro->setEnabled(true);
+      pb_calc_hydro->setEnabled( was_hydro_enabled );
+      pb_calc_zeno->setEnabled(true);
       pb_bead_saxs->setEnabled(true);
       pb_rescale_bead_model->setEnabled( misc.target_volume != 0e0 || misc.equalize_radii );
       pb_show_hydro_results->setEnabled(false);
@@ -13669,6 +13672,45 @@ bool US_Hydrodyn::calc_zeno()
       return false;
    }
    le_bead_model_suffix->setText(bead_model_suffix);
+
+   hydro_results zeno_results;
+   hydro_results zeno_results2;
+
+   zeno_results.mass                  = 0e0;
+   zeno_results.s20w                  = 0e0;
+   zeno_results.s20w_sd               = 0e0;
+   zeno_results.D20w                  = 0e0;
+   zeno_results.D20w_sd               = 0e0;
+   zeno_results.viscosity             = 0e0;
+   zeno_results.viscosity_sd          = 0e0;
+   zeno_results.rs                    = 0e0;
+   zeno_results.rs_sd                 = 0e0;
+   zeno_results.rg                    = 0e0;
+   zeno_results.rg_sd                 = 0e0;
+   zeno_results.tau                   = 0e0;
+   zeno_results.tau_sd                = 0e0;
+   zeno_results.vbar                  = 0e0;
+   zeno_results.asa_rg_pos            = 0e0;
+   zeno_results.asa_rg_neg            = 0e0;
+   zeno_results.ff0                   = 0e0;
+   zeno_results.ff0_sd                = 0e0;
+
+   zeno_results.solvent_name          = hydro.solvent_name;
+   zeno_results.solvent_acronym       = hydro.solvent_acronym;
+   zeno_results.solvent_viscosity     = hydro.solvent_viscosity;
+   zeno_results.solvent_density       = hydro.solvent_density;
+   zeno_results.temperature           = hydro.temperature;
+   zeno_results.name                  = project;
+   zeno_results.used_beads            = 0;
+   zeno_results.used_beads_sd         = 0e0;
+   zeno_results.total_beads           = 0;
+   zeno_results.total_beads_sd        = 0e0;
+   zeno_results.vbar                  = 0;
+
+   zeno_results.num_models            = 0;
+
+   zeno_results2 = zeno_results;
+   QString zeno_model_list            = "";
 
    for (current_model = 0; current_model < (unsigned int)lb_model->numRows(); current_model++) {
       if (lb_model->isSelected(current_model)) {
@@ -13689,7 +13731,8 @@ bool US_Hydrodyn::calc_zeno()
             if (stopFlag)
             {
                editor->append("Stopped by user\n\n");
-               pb_calc_hydro->setEnabled(true);
+               pb_calc_hydro->setEnabled( was_hydro_enabled );
+               pb_calc_zeno->setEnabled(true);
                pb_bead_saxs->setEnabled(true);
                pb_rescale_bead_model->setEnabled( misc.target_volume != 0e0 || misc.equalize_radii );
                pb_show_hydro_results->setEnabled(false);
@@ -13700,7 +13743,8 @@ bool US_Hydrodyn::calc_zeno()
             {
                editor_msg( "red", "ZENO computation failed" );
                editor_msg( "red", tr( uhz.error_msg ) );
-               pb_calc_hydro->setEnabled(true);
+               pb_calc_hydro->setEnabled( was_hydro_enabled );
+               pb_calc_zeno->setEnabled(true);
                pb_bead_saxs->setEnabled(true);
                pb_rescale_bead_model->setEnabled( misc.target_volume != 0e0 || misc.equalize_radii );
                pb_show_hydro_results->setEnabled(false);
@@ -13784,20 +13828,25 @@ bool US_Hydrodyn::calc_zeno()
                this_data.results.solvent_viscosity     = 0e0;
                this_data.results.solvent_density       = 0e0;
 
-               this_data.hydro                 = hydro;
-               this_data.model_idx             = model_vector[ current_model ].model_id;
-               this_data.results.num_models    = 1;
-               this_data.results.name          = QFileInfo( last_hydro_res ).baseName( true );
-               this_data.results.used_beads    = bead_models [ current_model ].size();
-               this_data.results.total_beads   = bead_models [ current_model ].size();
-
+               this_data.hydro                         = hydro;
+               this_data.model_idx                     = model_vector[ current_model ].model_id;
+               this_data.results.num_models            = 1;
+               this_data.results.name                  = QFileInfo( last_hydro_res ).baseName( true );
+               this_data.results.used_beads            = bead_models [ current_model ].size();
+               this_data.results.used_beads_sd         = 0e0;
+               this_data.results.total_beads           = bead_models [ current_model ].size();
+               this_data.results.total_beads_sd        = 0e0;
+               this_data.results.vbar                  = model_vector[ current_model ].vbar;
+               // need to get rg
+               // this_data.results.rg            = model_vector[ current_model ].Rg;
 
                QFile f( last_hydro_res );
                if ( !f.exists() || !f.open( QIODevice::ReadOnly ) )
                {
                   
                   editor_msg( "red", "ZENO computation failed to produce output file" );
-                  pb_calc_hydro->setEnabled(true);
+                  pb_calc_hydro->setEnabled( was_hydro_enabled );
+                  pb_calc_zeno->setEnabled(true);
                   pb_bead_saxs->setEnabled(true);
                   pb_rescale_bead_model->setEnabled( misc.target_volume != 0e0 || misc.equalize_radii );
                   pb_show_hydro_results->setEnabled(false);
@@ -13816,12 +13865,12 @@ bool US_Hydrodyn::calc_zeno()
                }
                f.close();
 
-               editor_msg( "dark blue", 
-                           QString( "ZENO computation output file %1 opened %2 lines" )
-                           .arg( last_hydro_res )
-                           .arg( qsl.size() ) );
+               // editor_msg( "dark blue", 
+               //             QString( "ZENO computation output file %1 opened %2 lines" )
+               //             .arg( last_hydro_res )
+               //             .arg( qsl.size() ) );
 
-               vector < QRegExp    > param_rx;
+               vector < QRegExp     > param_rx;
                vector < QString     > param_name;
                vector < int         > param_cap_pos;
                vector < QStringList > param_qsl;
@@ -13850,6 +13899,14 @@ bool US_Hydrodyn::calc_zeno()
                param_name   .push_back( "used_beads_vol" );
                param_cap_pos.push_back( 1 );
 
+               param_rx     .push_back( QRegExp( "^Rh . . . . . . . . . . . . . .\\s+(\\S+)\\s+" ) );
+               param_name   .push_back( "results.rs" );
+               param_cap_pos.push_back( 1 );
+
+               param_rx     .push_back( QRegExp( "^f  . . . . . . . . . . . . . .\\s+(\\S+)\\s+" ) );
+               param_name   .push_back( "tra_fric_coef" );
+               param_cap_pos.push_back( 1 );
+
                for ( unsigned int i = 0; i < ( unsigned int ) param_rx.size(); i++ )
                {
                   param_qsl.push_back( qsl.grep( param_rx[ i ] ) );
@@ -13870,9 +13927,9 @@ bool US_Hydrodyn::calc_zeno()
 
                         qs.replace( QRegExp( "\\(\\d+\\)" ), "" );
                         double qd = qs.toDouble();
-                        cout << QString( "zeno cap %1 as %2\n" ).arg( param_name[ i ] ).arg( qd );
+                        // cout << QString( "zeno cap %1 as %2\n" ).arg( param_name[ i ] ).arg( qd );
 
-                        editor_msg( "dark blue", QString( "ZENO produced parameter: %1 value %2\n" ).arg( param_name[ i ] ).arg( qs ) );
+                        // editor_msg( "dark blue", QString( "ZENO produced parameter: %1 value %2\n" ).arg( param_name[ i ] ).arg( qs ) );
 
                         if ( param_name[ i ] == "results.viscosity" )
                         {
@@ -13895,6 +13952,11 @@ bool US_Hydrodyn::calc_zeno()
                            this_data.results.rg        = qd;
                            break;
                         }
+                        if ( param_name[ i ] == "results.rs" )
+                        {
+                           this_data.results.rs        = qd * 0.1;
+                           break;
+                        }
                         if ( param_name[ i ] == "tot_surf_area" )
                         {
                            this_data.tot_surf_area     = qd;
@@ -13906,11 +13968,16 @@ bool US_Hydrodyn::calc_zeno()
                            this_data.use_beads_vol     = qd;
                            break;
                         }
+                        if ( param_name[ i ] == "tra_fric_coef" )
+                        {
+                           this_data.tra_fric_coef     = qd * 1e8;
+                           break;
+                        }
                      } 
                      break;
                   case 0:
                      {
-                        editor_msg( "red", QString( "ZENO did not produce expected parameter: %1\n" ).arg( param_name[ i ] ) );
+                        // editor_msg( "red", QString( "ZENO did not produce expected parameter: %1\n" ).arg( param_name[ i ] ) );
                      }
                      break;
                   default :
@@ -13918,6 +13985,135 @@ bool US_Hydrodyn::calc_zeno()
                         editor_msg( "red", QString( "ZENO produced multiple values for parameter: %1\n" ).arg( param_name[ i ] ) );
                      }
                      break;
+                  }
+               }
+
+               // computed
+
+               {
+                  double fconv = pow(10.0, this_data.hydro.unit + 9);
+                  // qDebug( QString( "fconv %1" ).arg( fconv ) );
+
+                  // frictional ratio
+
+                  // qDebug(
+                  //        QString( "tra_fric_coeff %1\nrs             %2\nvisc           %3\n" )
+                  //        .arg( this_data.tra_fric_coef )
+                  //        .arg( this_data.results.rs )
+                  //        .arg( this_data.results.viscosity )
+                  //        );
+
+
+                  if ( 
+                      this_data.results.viscosity &&
+                      this_data.results.mass &&
+                      this_data.results.vbar
+                       ) {
+                     //                  this_data.results.ff0 = this_data.tra_fric_coef / ( 6e0 * M_PI *  this_data.results.viscosity * this_data.results.rs );
+
+                     // qDebug( 
+                     //        QString( "f is %1 ETAo %2 partvol %3 fconv %4 mass %5" )
+                     //        .arg( this_data.tra_fric_coef )
+                     //        .arg( this_data.hydro.solvent_viscosity * 1e-2 )
+                     //        .arg( this_data.results.vbar )
+                     //        .arg( 1 )
+                     //        .arg( this_data.results.mass )
+                     //         );
+
+                     this_data.results.ff0 = 
+                        this_data.tra_fric_coef * 1e-7 * fconv / 
+                        ( 6e0 * M_PI *  this_data.hydro.solvent_viscosity * 1e-2 * 
+                          pow( 3.0 * this_data.results.mass * this_data.results.vbar / (4.0 * M_PI * AVOGADRO), 1.0/3.0 ) );
+
+                     qDebug( QString( "computed ff0 %1" ).arg( this_data.results.ff0 ) );
+                  }
+
+                  // s20w
+
+                  if (this_data.tra_fric_coef ) {
+                     // qDebug( 
+                     //        QString( "s20w mass is %1 partvol %2 DENS %3 f %4" )
+                     //        .arg( this_data.results.mass )
+                     //        .arg( this_data.results.vbar )
+                     //        .arg( this_data.hydro.solvent_density )
+                     //        .arg( this_data.tra_fric_coef ) 
+                     //         );
+                     this_data.results.s20w = 
+                        ( this_data.results.mass * 1e20 * 
+                          ( 1e0 - this_data.results.vbar * this_data.hydro.solvent_density ) / 
+                          ( this_data.tra_fric_coef * fconv * AVOGADRO ) );
+                  }
+                  
+                  // bead model rg
+
+                  if ( this_data.results.mass ) {
+                     // compute center of mass
+                     point cm;
+                     cm.axis[ 0 ] = 0.0;
+                     cm.axis[ 1 ] = 0.0;
+                     cm.axis[ 2 ] = 0.0;
+                     double total_cm_mw = 0e0;
+
+                     for ( unsigned int i = 0; i < bead_model.size(); ++i )
+                     {
+                        PDB_atom *this_atom = &(bead_model[i]);
+                        cm.axis[ 0 ] += this_atom->mw * this_atom->bead_coordinate.axis[ 0 ];
+                        cm.axis[ 1 ] += this_atom->mw * this_atom->bead_coordinate.axis[ 1 ];
+                        cm.axis[ 2 ] += this_atom->mw * this_atom->bead_coordinate.axis[ 2 ];
+                        total_cm_mw += this_atom->mw;
+                     }
+
+                     cm.axis[ 0 ] /= total_cm_mw;
+                     cm.axis[ 1 ] /= total_cm_mw;
+                     cm.axis[ 2 ] /= total_cm_mw;
+
+                     // now compute Rg
+                     double Rg2 = 0e0;
+
+                     for ( unsigned int i = 0; i < bead_model.size(); ++i )
+                     {
+                        PDB_atom *this_atom = &(bead_model[i]);
+                        Rg2 += this_atom->mw * 
+                           ( 
+                            ( this_atom->bead_coordinate.axis[ 0 ] - cm.axis[ 0 ] ) *
+                            ( this_atom->bead_coordinate.axis[ 0 ] - cm.axis[ 0 ] ) +
+                            ( this_atom->bead_coordinate.axis[ 1 ] - cm.axis[ 1 ] ) *
+                            ( this_atom->bead_coordinate.axis[ 1 ] - cm.axis[ 1 ] ) +
+                            ( this_atom->bead_coordinate.axis[ 2 ] - cm.axis[ 2 ] ) *
+                            ( this_atom->bead_coordinate.axis[ 2 ] - cm.axis[ 2 ] ) 
+                             );
+                     }
+
+                     double Rg = sqrt( Rg2 / total_cm_mw );
+
+                     this_data.results.rg = Rg * fconv;
+                     qDebug( QString( "rg %1 fconv %2 rg2 %3 total_cm_mw %4" ).arg( Rg ).arg( fconv ).arg( Rg2 ).arg( total_cm_mw ) );
+                  }
+               }
+
+               // append to zno file
+               {
+                  QString add_to_zeno = 
+                     QString( 
+                             tr( 
+                                "\n"
+                                "Additional US-SOMO Computed Parameters:\n"
+                                "\n"
+                                " Sedimentation Coefficient s: %1\n"
+                                " Frictional Ratio           : %2\n"
+                                " Radius of Gyration         : %3\n"
+                                 ) )
+                     .arg( QString( "" ).sprintf( "%4.2e S" , this_data.results.s20w ) )
+                     .arg( QString( "" ).sprintf( "%3.2f"   , this_data.results.ff0  ) )
+                     .arg( QString( "" ).sprintf( "%4.2e nm", this_data.results.rg   ) )
+                     ;
+
+                  QFile f( last_hydro_res );
+                  if ( f.exists() && f.open( QIODevice::WriteOnly | QIODevice::Append ) )
+                  {
+                     Q3TextStream ts( &f );
+                     ts << add_to_zeno;
+                     f.close();
                   }
                }
 
@@ -13950,6 +14146,39 @@ bool US_Hydrodyn::calc_zeno()
                   printf("batch save on, push back info into save_params!\n");
                }
 
+               // this needs to be averaged for multiple runs
+
+               if ( !zeno_results.num_models ) {
+                  zeno_results.method  = "Zeno";
+                  zeno_model_list = QString( "%1" ).arg( current_model + 1 );
+               } else {
+                  zeno_model_list += QString( ",%1" ).arg( current_model + 1 );
+               }                   
+
+               zeno_results.num_models++;
+
+               zeno_results.mass                  += this_data.results.mass;
+               zeno_results.s20w                  += this_data.results.s20w;
+               zeno_results.D20w                  += this_data.results.D20w;
+               zeno_results.viscosity             += this_data.results.viscosity;
+               zeno_results.rs                    += this_data.results.rs;
+               zeno_results.rg                    += this_data.results.rg;
+               zeno_results.vbar                  += this_data.results.vbar;
+               zeno_results.ff0                   += this_data.results.ff0;
+               zeno_results.used_beads            += this_data.results.used_beads;
+               zeno_results.total_beads           += this_data.results.total_beads;
+
+               // no sd: zeno_results2.mass                 += this_data.results.mass        * this_data.results.mass;
+               zeno_results2.s20w                 += this_data.results.s20w        * this_data.results.s20w;
+               zeno_results2.D20w                 += this_data.results.D20w        * this_data.results.D20w;
+               zeno_results2.viscosity            += this_data.results.viscosity   * this_data.results.viscosity;
+               zeno_results2.rs                   += this_data.results.rs          * this_data.results.rs;
+               zeno_results2.rg                   += this_data.results.rg          * this_data.results.rg;
+               // no sd: zeno_results2.vbar                 += this_data.results.vbar        * this_data.results.vbar;
+               zeno_results2.ff0                  += this_data.results.ff0         * this_data.results.ff0;
+               zeno_results2.used_beads           += this_data.results.used_beads  * this_data.results.used_beads;
+               zeno_results2.total_beads          += this_data.results.total_beads * this_data.results.total_beads;
+
                bool create_hydro_res = !(batch_widget &&
                                          batch_window->save_batch_active);
                if ( saveParams && create_hydro_res )
@@ -13972,10 +14201,47 @@ bool US_Hydrodyn::calc_zeno()
       }
    }
 
+   {
+      double num = (double) zeno_results.num_models;
+      if ( num <= 1 ) {
+         results = zeno_results;
+      } else {
+         zeno_results.name += " models:" + zeno_model_list;
+         double numinv = 1e0 / num;
+         zeno_results.mass          *= numinv;
+         zeno_results.s20w          *= numinv;
+         zeno_results.D20w          *= numinv;
+         zeno_results.viscosity     *= numinv;
+         zeno_results.rs            *= numinv;
+         zeno_results.rg            *= numinv;
+         zeno_results.vbar          *= numinv;
+         zeno_results.ff0           *= numinv;
+         zeno_results.used_beads    *= numinv;
+         zeno_results.total_beads   *= numinv;
+         if ( num <= 1 ) {
+            results = zeno_results;
+         } else {
+            double numdecinv = 1e0 / ( num - 1e0 );
+         
+            zeno_results.s20w_sd           = sqrt( fabs( ( zeno_results2.s20w        - zeno_results.s20w        * zeno_results.s20w        * num ) * numdecinv ) );
+            zeno_results.D20w_sd           = sqrt( fabs( ( zeno_results2.D20w        - zeno_results.D20w        * zeno_results.D20w        * num ) * numdecinv ) );
+            zeno_results.viscosity_sd      = sqrt( fabs( ( zeno_results2.viscosity   - zeno_results.viscosity   * zeno_results.viscosity   * num ) * numdecinv ) );
+            zeno_results.rs_sd             = sqrt( fabs( ( zeno_results2.rs          - zeno_results.rs          * zeno_results.rs          * num ) * numdecinv ) );
+            zeno_results.rg_sd             = sqrt( fabs( ( zeno_results2.rg          - zeno_results.rg          * zeno_results.rg          * num ) * numdecinv ) );
+            zeno_results.ff0_sd            = sqrt( fabs( ( zeno_results2.ff0         - zeno_results.ff0         * zeno_results.ff0         * num ) * numdecinv ) );
+            zeno_results.used_beads_sd     = sqrt( fabs( ( zeno_results2.used_beads  - zeno_results.used_beads  * zeno_results.used_beads  * num ) * numdecinv ) );
+            zeno_results.total_beads_sd    = sqrt( fabs( ( zeno_results2.total_beads - zeno_results.total_beads * zeno_results.total_beads * num ) * numdecinv ) );
+            
+            results = zeno_results;
+         }
+      }
+   }      
+
    QDir::setCurrent(somo_tmp_dir);
 
    pb_show_hydro_results->setEnabled( true );
-   pb_calc_hydro->setEnabled(true);
+   pb_calc_hydro->setEnabled( was_hydro_enabled );
+   pb_calc_zeno->setEnabled(true);
    pb_bead_saxs->setEnabled(true);
    pb_rescale_bead_model->setEnabled( misc.target_volume != 0e0 || misc.equalize_radii );
 

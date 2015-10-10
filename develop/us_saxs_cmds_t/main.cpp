@@ -123,7 +123,7 @@ int main (int argc, char **argv)
              "fasta         \tmax_line_length outfile pdb1 {pdb2 ... }\n"
              "              \tconvert listed .pdb's to a fasta formatted outputfile\n"
              "json          \tjson\n"
-             "              \tprocess commands form json provided as command line argument\n"
+             "              \tprocess commands from json provided as command line argument\n"
              , argv[0]
              );
       exit(-1);

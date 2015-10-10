@@ -44,6 +44,7 @@ hplc_stack_data US_Hydrodyn_Saxs_Hplc::current_data( bool selected_only )
          tmp_stack.f_is_time               [ files[ i ] ] = f_is_time[ files[ i ] ];
          tmp_stack.f_conc                  [ files[ i ] ] = f_conc.count( files[ i ] ) ? f_conc[ files[ i ] ] : 0e0;
          tmp_stack.f_psv                   [ files[ i ] ] = f_psv .count( files[ i ] ) ? f_psv [ files[ i ] ] : 0e0;
+         tmp_stack.f_header                [ files[ i ] ] = f_header .count( files[ i ] ) ? f_header [ files[ i ] ] : "";
          tmp_stack.f_I0se                  [ files[ i ] ] = f_I0se .count( files[ i ] ) ? f_I0se [ files[ i ] ] : 0e0;
          if ( f_extc.count( files[ i ] ) )
          {
@@ -56,6 +57,10 @@ hplc_stack_data US_Hydrodyn_Saxs_Hplc::current_data( bool selected_only )
          if ( created_files_not_saved.count( files[ i ] ) )
          {
             tmp_stack.created_files_not_saved [ files[ i ] ] = created_files_not_saved[ files[ i ] ];
+         }
+         if ( conc_files.count( files[ i ] ) )
+         {
+            tmp_stack.conc_files.insert( files[ i ] );
          }
       }
       tmp_stack.gaussians               = gaussians;
@@ -86,12 +91,14 @@ hplc_stack_data US_Hydrodyn_Saxs_Hplc::current_data( bool selected_only )
       tmp_stack.f_name                  = f_name;
       tmp_stack.f_is_time               = f_is_time;
       tmp_stack.f_psv                   = f_psv;
+      tmp_stack.f_header                = f_header;
       tmp_stack.f_I0se                  = f_I0se;
       tmp_stack.f_extc                  = f_extc;
       tmp_stack.f_time                  = f_time;
       tmp_stack.f_conc                  = f_conc;
       tmp_stack.created_files_not_saved = created_files_not_saved;
       tmp_stack.gaussians               = gaussians;
+      tmp_stack.conc_files              = conc_files;
 
       for ( int i = 0; i < lb_files->numRows(); i++ )
       {
@@ -142,12 +149,14 @@ void US_Hydrodyn_Saxs_Hplc::set_current_data( hplc_stack_data & tmp_stack )
    f_name                  = tmp_stack.f_name;
    f_is_time               = tmp_stack.f_is_time;
    f_psv                   = tmp_stack.f_psv;
+   f_header                = tmp_stack.f_header;
    f_I0se                  = tmp_stack.f_I0se;
    f_extc                  = tmp_stack.f_extc;
    f_time                  = tmp_stack.f_time;
    f_conc                  = tmp_stack.f_conc;
    created_files_not_saved = tmp_stack.created_files_not_saved;
    gaussians               = tmp_stack.gaussians;
+   conc_files              = tmp_stack.conc_files;
 
    lb_files        ->insertStringList( tmp_stack.files );
    lb_created_files->insertStringList( tmp_stack.created_files );
@@ -327,6 +336,9 @@ void US_Hydrodyn_Saxs_Hplc::stack_join( hplc_stack_data & tmp_stack )
          f_psv[ name ] = 
             tmp_stack.f_psv.count( name ) ?
             tmp_stack.f_psv[ name ] : 0e0;
+         f_header[ name ] = 
+            tmp_stack.f_header.count( name ) ?
+            tmp_stack.f_header[ name ] : "";
          f_I0se[ name ] = 
             tmp_stack.f_I0se.count( name ) ?
             tmp_stack.f_I0se[ name ] : 0e0;
@@ -361,6 +373,10 @@ void US_Hydrodyn_Saxs_Hplc::stack_join( hplc_stack_data & tmp_stack )
             {
                lb_created_files->setSelected( lb_created_files->numRows() - 1, true );
             }
+         }
+         if ( tmp_stack.conc_files.count( name ) )
+         {
+            conc_files.insert( name );
          }
       }                      
    }   
@@ -407,6 +423,9 @@ void US_Hydrodyn_Saxs_Hplc::stack_pcopy()
          clipboard.f_psv[ name ] = 
             adds.f_psv.count( name ) ?
             adds.f_psv[ name ] : 0e0;
+         clipboard.f_header[ name ] = 
+            adds.f_header.count( name ) ?
+            adds.f_header[ name ] : "";
          clipboard.f_I0se[ name ] = 
             adds.f_I0se.count( name ) ?
             adds.f_I0se[ name ] : 0e0;
@@ -442,12 +461,15 @@ void US_Hydrodyn_Saxs_Hplc::stack_pcopy()
                clipboard.created_selected_files[ name ] = adds.created_selected_files[ name ];
             }
          }
+         if ( adds.conc_files.count( name ) )
+         {
+            clipboard.conc_files.insert( name );
+         }
       }                      
    }   
 
    update_enables();
 }
-
 
 void US_Hydrodyn_Saxs_Hplc::stack_paste()
 {

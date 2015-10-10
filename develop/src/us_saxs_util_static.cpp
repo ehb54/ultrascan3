@@ -1,5 +1,4 @@
 #include "../include/us_saxs_util.h"
-#include "../include/us_vector.h"
 //Added by qt3to4:
 #include <Q3TextStream>
 
@@ -11070,3 +11069,189 @@ bool US_Saxs_Util::write_iq( QString & name, QString &msg, vector < double > &q,
    f.close();
    return true;
 }
+
+bool US_Saxs_Util::mwt( 
+                       const vector < double > & q_in,
+                       const vector < double > & I_in,
+                       double                    Rg,
+                       double                    I0,
+                       double                    k,
+                       double                    c,
+                       double                    qmax,
+                       double                  & Vc,
+                       double                  & Qr,
+                       double                  & mwt,
+                       QString                 & messages,
+                       QString                 & notes,
+                       QString                 & warning
+                        )
+{
+   messages = "";
+   warning = "";
+
+   if ( q_in.size() != I_in.size() )
+   {
+      messages = QString( "I, q different length %1 %2" ).arg( q_in.size() ).arg( I_in.size() );
+      return false;
+   }
+
+   vector < double > q = q_in;
+   vector < double > I = I_in;
+   
+   {
+      int i = q.size() - 1;
+      int osize = i;
+      while ( q[ i ] > qmax && i ) {
+         --i;
+      }
+      if ( osize != i ) {
+         q.resize( i + 1 );
+         I.resize( i + 1 );
+         // qDebug( QString( "mwt q resized from %1 to %2" ).arg( osize + 1 ).arg( i + 1 ) );
+      }
+   }
+
+   if ( q.size() < 5 )
+   {
+      messages = QString( "too few points %1 < 5" ).arg( q.size() );
+      return false;
+   }
+
+   
+   if ( !Rg )
+   {
+      messages += "Rg is zero ";
+   }
+
+   if ( !k )
+   {
+      messages += "k is zero ";
+   }
+
+
+   if ( fabs( q.back() - qmax ) > .01 )
+   {
+      notes = QString( "" ).sprintf( "MW[RT] is calibrated for qmax %.2f and this qmax is %.3f", qmax, q.back() );
+   }
+
+   vector < double > dq ( q.size(), -1e0 );
+   vector < double > sqs( q.size(), -1e0 );
+
+   // first point
+
+   double sqiqdq = q[ 0 ] * I[ 0 ] * ( q[ 1 ] - q[ 0 ] );
+
+   dq[ 0 ]  = q[ 1 ] - q[ 0 ];
+   sqs[ 0 ] = sqiqdq;
+   
+   // middle points
+
+   for ( int i = 1; i < (int) q.size() - 1; ++i )
+   {
+      sqiqdq += q[ i ] * I[ i ] * ( q[ i + 1 ] - q[ i - 1 ] ) * 5e-1;
+      dq[ i ] = ( q[ i + 1 ] - q[ i - 1 ] ) * 5e-1;
+      sqs[ i ] = sqiqdq;
+   }
+
+   // last point
+   
+   int i = q.size() - 1;
+
+   sqiqdq += q[ i ] * I[ i ] * ( q[ i ] - q[ i - 1 ] );
+   dq[ i ] = q[ i ] - q[ i - 1 ];
+   sqs[ i ] = sqiqdq;
+   //   cout << US_Vector::qs_vector4( QString( "q(%1), I, dq, sqiqdq" ).arg( q.size() ).arg( sqiqdq ), q, I, dq, sqs );
+
+   if ( !sqiqdq )
+   {
+      messages += "sum(q * I(q) * dq ) is zero ";
+   }
+
+   if ( !messages.isEmpty() )
+   {
+      return false;
+   }
+
+   Vc = I0 / sqiqdq;
+
+   Qr = Vc * Vc / Rg;
+   
+   mwt = pow( ( Qr / exp( c ) ), 1e0 / k );
+
+   return true;
+}
+
+bool US_Saxs_Util::pearsonpmcc(
+                               const vector < double > & x, 
+                               const vector < double > & y,
+                               double & r
+                               )
+{
+   QString error_msg;
+   return pearsonpmcc( x, y, r, error_msg );
+}
+
+bool US_Saxs_Util::pearsonpmcc(
+                               const vector < double > & x, 
+                               const vector < double > & y, 
+                               double & r,
+                               QString & error_msg
+                               )
+{
+   error_msg = "";
+   r = 0e0;
+
+   int    pts = x.size();;
+   double sx  = 0e0;
+   double sxx = 0e0;
+   double sy  = 0e0;
+   double syy = 0e0;
+   double sxy = 0e0;
+
+   double xbar;
+   double ybar;
+
+   if ( !pts ) {
+      error_msg = "no points specified";
+      return false;
+   }
+
+   if ( pts < 2 ) {
+      error_msg = "too few points specified";
+      return false;
+   }
+      
+   if ( x.size() != y.size() ) {
+      error_msg = "vector size mismatch";
+      return false;
+   }
+
+   for ( int i = 0; i < pts; ++i ) {
+      sx  += x[ i ];
+      sy  += y[ i ];
+      sxx += x[ i ] * x[ i ];
+      sxy += x[ i ] * y[ i ];
+      syy += y[ i ] * y[ i ];
+   }
+
+   xbar = sx / (double) pts;
+   ybar = sy / (double) pts;
+
+   double ssxx = sxx - (double) pts * xbar * xbar;
+   double ssxy = sxy - (double) pts * xbar * ybar;
+   double ssyy = syy - (double) pts * ybar * ybar;
+
+   if ( ssyy == 0e0 ) {
+      error_msg = "zero variance in y";
+      return false;
+   }
+
+   if ( ssxx == 0e0 ) {
+      error_msg = "zero variance in x";
+      return false;
+   }
+
+   r = sqrt( ssxy * ssxy / ( ssxx * ssyy ) );
+   return true;
+}
+

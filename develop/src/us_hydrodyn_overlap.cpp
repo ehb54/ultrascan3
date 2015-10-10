@@ -210,7 +210,7 @@ void US_Hydrodyn_Overlap::help()
 {
    US_Help *online_help;
    online_help = new US_Help(this);
-   online_help->show_help(show_grid_only ? "manual/somo/somo_grid_overlap.html" : "manual/somo_overlap.html");
+   online_help->show_help(show_grid_only ? "manual/somo/somo_grid_overlap.html" : "manual/somo/somo_overlap.html");
 }
 
 void US_Hydrodyn_Overlap::closeEvent(QCloseEvent *e)

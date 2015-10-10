@@ -69,6 +69,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Options : public QDialog
       QLabel *                                lbl_dist_max;
       QLineEdit *                             le_dist_max;
 
+      QPushButton  *                          pb_clear_gauss;
 
       QLabel       *                          lbl_other_options;
       QCheckBox    *                          cb_csv_transposed;
@@ -82,6 +83,15 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Options : public QDialog
       QCheckBox *                             cb_guinier_qrgmax;
       QLineEdit *                             le_guinier_qrgmax;
 
+      QLabel     *                            lbl_mwt_k;
+      QLineEdit  *                            le_mwt_k;
+
+      QLabel     *                            lbl_mwt_c;
+      QLineEdit  *                            le_mwt_c;
+
+      QLabel     *                            lbl_mwt_qmax;
+      QLineEdit  *                            le_mwt_qmax;
+
       QPushButton  *                          pb_quit;
       QPushButton  *                          pb_help;
       QPushButton  *                          pb_ok;
@@ -93,6 +103,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Options : public QDialog
       void                                    quit();
       void                                    help();
       void                                    ok();
+
+      void                                    clear_gauss();
 
       void                                    update_enables();
 

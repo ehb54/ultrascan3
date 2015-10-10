@@ -20,9 +20,9 @@
 #include <qwt_wheel.h>
 //Added by qt3to4:
 #include <Q3BoxLayout>
+#include <Q3HBoxLayout>
 #include <QMouseEvent>
 #include <QCloseEvent>
-#include <Q3HBoxLayout>
 #include "../3dplot/mesh2mainwindow.h"
 
 #ifdef QT4
@@ -31,6 +31,7 @@
 #endif
 
 #include "us_util.h"
+#include "us_plot_util.h"
 
 //standard C and C++ defs:
 
@@ -106,6 +107,7 @@ struct hplc_stack_data
    map < QString, unsigned int >       f_pos;
 
    map < QString, QString >            f_name;
+   map < QString, QString >            f_header;
    map < QString, bool >               f_is_time;
    map < QString, double >             f_psv;
    map < QString, double >             f_I0se;
@@ -119,6 +121,8 @@ struct hplc_stack_data
    QStringList                         created_files;
    map < QString, bool >               created_selected_files;
    vector < double >                   gaussians;
+
+   set < QString >                     conc_files;
 };
 
 class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
@@ -173,7 +177,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
 
       mQLabel       *lbl_files;
       QCheckBox     *cb_lock_dir;
-      mQLabel       *lbl_dir;
+      mQLineEdit    *le_dir;
       QPushButton   *pb_add_files;
       QPushButton   *pb_similar_files;
       QPushButton   *pb_conc;
@@ -224,6 +228,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       QPushButton   *pb_create_i_of_q;
 
 
+      QPushButton   *pb_load_conc;
       QPushButton   *pb_conc_file;
       QLabel        *lbl_conc_file;
 
@@ -239,7 +244,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       QLabel        *lbl_signal;
 
       QLabel        *lbl_created_files;
-      mQLabel       *lbl_created_dir;
+      mQLineEdit    *le_created_dir;
       Q3ListBox      *lb_created_files;
       QLabel        *lbl_selected_created;
 
@@ -306,13 +311,16 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
 
       Q3BoxLayout    *l_plot_errors;
 
-      QPushButton   *pb_wheel_start;
+      QPushButton   *pb_timeshift;
+      QPushButton   *pb_timescale;
       QPushButton   *pb_p3d;
       QLabel        *lbl_blank1;
       QLabel        *lbl_wheel_pos;
       QwtWheel      *qwtw_wheel;
       QPushButton   *pb_ref;
       QPushButton   *pb_errors;
+      QPushButton   *pb_ggqfit;
+      QPushButton   *pb_pp;
       QPushButton   *pb_wheel_cancel;
       QPushButton   *pb_wheel_save;
 
@@ -373,6 +381,26 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       QPushButton   *pb_axis_y;
 
       QLabel        *lbl_mode_title;
+
+      // wyatt errors
+
+      QPushButton   *pb_wyatt_start;
+
+      QCheckBox     *cb_wyatt_2;
+      mQLineEdit    *le_wyatt_start;
+      mQLineEdit    *le_wyatt_end;
+      mQLineEdit    *le_wyatt_start2;
+      mQLineEdit    *le_wyatt_end2;
+      QPushButton   *pb_wyatt_apply;
+
+      void           wyatt_enables();
+      void           wyatt_init_markers();
+      void           replot_wyatt();
+      bool           org_wyatt_2;
+      double         org_wyatt_start;
+      double         org_wyatt_end;
+      double         org_wyatt_start2;
+      double         org_wyatt_end2;
 
       // scale
 
@@ -457,6 +485,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       QButtonGroup * bg_guinier_resid_type;
 
       QPushButton  * pb_guinier_plot_rg;
+      QPushButton  * pb_guinier_plot_mw;
 
       QLabel       * lbl_guinier_rg_t_range;
       mQLineEdit   * le_guinier_rg_t_start;
@@ -468,6 +497,17 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
 
       QCheckBox    * cb_guinier_lock_rg_range;
       QPushButton  * pb_guinier_replot;
+
+      QLabel       * lbl_guinier_mw_t_range;
+      mQLineEdit   * le_guinier_mw_t_start;
+      mQLineEdit   * le_guinier_mw_t_end;
+
+      QLabel       * lbl_guinier_mw_mw_range;
+      mQLineEdit   * le_guinier_mw_mw_start;
+      mQLineEdit   * le_guinier_mw_mw_end;
+
+      QCheckBox    * cb_guinier_lock_mw_range;
+      QPushButton  * pb_guinier_mw_replot;
 
       // QCheckBox    * cb_guinier_repeat;
       // QLineEdit    * le_guinier_repeat_sd_limit;
@@ -491,6 +531,12 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       QwtPlotGrid  * guinier_plot_rg_grid;
 #endif
 
+      QwtPlot      * guinier_plot_mw;
+      ScrollZoomer * guinier_plot_mw_zoomer;
+#ifdef QT4
+      QwtPlotGrid  * guinier_plot_mw_grid;
+#endif
+
       int                                 guinier_scroll_pos;
       void                                guinier_scroll_highlight( int pos );
 
@@ -506,6 +552,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       map < QString, double >             guinier_t;
       vector < double >                   guinier_it_t;
       vector < double >                   guinier_it_I;
+      vector < double >                   guinier_it_pg_t;
+      vector < double >                   guinier_it_pg_I;
       double                              guinier_it_Imin;
       double                              guinier_it_Imax;
       double                              guinier_it_Irange;
@@ -518,6 +566,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       map < QString, QwtPlotCurve * >     guinier_error_curves;
       map < QString, vector < QwtPlotCurve * > >  guinier_errorbar_curves;
       map < QString, QwtPlotCurve * >     guinier_rg_curves;
+      map < QString, QwtPlotCurve * >     guinier_mw_curves;
+      map < QString, QwtPlotMarker * >    guinier_mwt_markers;
+      map < QString, QwtPlotMarker * >    guinier_mwc_markers;
 #else
       map < QString, long >               guinier_curves;
       vector < long >                     guinier_markers;
@@ -525,6 +576,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       map < QString, long >               guinier_error_curves;
       map < QString, vector < long > >    guinier_errorbar_curves;
       map < QString, long >               guinier_rg_curves;
+      map < QString, long >               guinier_mw_curves;
+      map < QString, long >               guinier_mwt_markers;
+      map < QString, long >               guinier_mwc_markers;
 #endif
       map < QString, QColor >             guinier_colors;
 
@@ -553,6 +607,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       void           guinier_delete_markers();
       vector < QWidget * > guinier_errors_widgets;
       vector < QWidget * > guinier_rg_widgets;
+      vector < QWidget * > guinier_mw_widgets;
 
       double         guinier_minq;
       double         guinier_maxq;
@@ -644,6 +699,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       vector < hplc_stack_data >         stack_data;
 
       vector < QColor >                  plot_colors;
+      set < QString >                    conc_files;
 
       map < QString, vector < QString > > f_qs_string;
       map < QString, vector < double > >  f_qs;
@@ -653,6 +709,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       map < QString, unsigned int >       f_pos;
 
       map < QString, QString >            f_name;
+      map < QString, QString >            f_header;
       map < QString, bool >               f_is_time;
       map < QString, double >             f_psv;
       map < QString, double >             f_I0se;
@@ -678,6 +735,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       vector < QwtPlotCurve * >           plotted_gaussians;
       vector < QwtPlotCurve * >           plotted_gaussian_sum;
       vector < QwtPlotCurve * >           plotted_baseline;
+      vector < QwtPlotCurve * >           plotted_wyatt;
       vector < QwtPlotCurve * >           plotted_hlines;
       QwtPlotMarker *                     ref_marker;
 #else
@@ -686,6 +744,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       vector < long >                     plotted_gaussians;
       vector < long >                     plotted_gaussian_sum;
       vector < long >                     plotted_baseline;
+      vector < long >                     plotted_wyatt;
       vector < long >                     plotted_hlines;
       long                                ref_marker;
 #endif
@@ -705,6 +764,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       vector < double >                   unified_ggaussian_I;
       vector < double >                   unified_ggaussian_e;
       vector < double >                   unified_ggaussian_t;
+      vector < double >                   unified_ggaussian_qvals;
 
       vector < unsigned int >             unified_ggaussian_q_start;        // the start q pos - one for each curve
       vector < unsigned int >             unified_ggaussian_q_end;          // the end q pos   - one for each curve
@@ -715,6 +775,10 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       vector < double >                   compute_ggaussian_gaussian_sum();
       void                                add_ggaussian_curve( QString name, vector < double > y );
       void                                gauss_add_hline( double center, double width );
+
+      bool                                gg_fit_vector( 
+                                                        vector < double > & fit
+                                                         );  // returns a vector of the chi^2 or rmsd and their q values
 
       map < QString, bool >               all_files_map();
 
@@ -734,6 +798,12 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       vector < QWidget * >                editor_widgets;
       vector < QWidget * >                model_widgets;
 
+      QwtPlot                           * ggqfit_plot;
+      ScrollZoomer                      * ggqfit_plot_zoomer;
+#ifdef QT4
+      QwtPlotGrid                       * ggqfit_plot_grid;
+#endif
+
       // "mode" widgets
 
       vector < QWidget * >                gaussian_widgets;
@@ -742,6 +812,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       vector < QWidget * >                ggaussian_widgets;
       vector < QWidget * >                ggaussian_4var_widgets;
       vector < QWidget * >                ggaussian_5var_widgets;
+      vector < QWidget * >                ggqfit_widgets;
+
+      vector < QWidget * >                wyatt_widgets;
       vector < QWidget * >                baseline_widgets;
       vector < QWidget * >                scale_widgets;
       vector < QWidget * >                timeshift_widgets;
@@ -750,6 +823,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       vector < QWidget * >                pm_widgets;
       vector < QWidget * >                guinier_widgets;
       vector < QWidget * >                testiq_widgets;
+      vector < vector < QWidget * > >     pb_row_widgets;
 
       vector < double >                   conc_curve( vector < double > &t,
                                                       unsigned int peak,
@@ -764,7 +838,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       bool                                initial_ggaussian_fit( QStringList & files );
       bool                                create_unified_ggaussian_target( bool do_init = true );
       bool                                create_unified_ggaussian_target( QStringList & files, bool do_init = true );
-      double                              ggaussian_rmsd();
+      double                              ggaussian_rmsd( bool normchi = true );
       bool                                ggaussian_compatible( bool check_against_global = true );
       bool                                ggaussian_compatible( QStringList & files, bool check_against_global = true );
       bool                                ggaussian_compatible( set < QString > & selected, bool check_against_global = true );
@@ -856,6 +930,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       bool                         compatible_files( QStringList files );
       bool                         type_files( QStringList files );
       bool                         get_peak( QString file, double &peak );
+      bool                         get_peak( QString file, double &peak, double &pos );
 
       QString                      wheel_file;
 #ifdef QT4
@@ -882,6 +957,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
          ,MODE_PM
          ,MODE_GUINIER
          ,MODE_TESTIQ
+         ,MODE_WYATT
       };
 
       modes                        current_mode;
@@ -1032,7 +1108,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       map < QString, long >               scale_plotted_errors;
 #endif
 
-      bool                         check_zi_window         ( QStringList & files );
+      bool                         check_zi_window         ( QStringList & files, const QString & extra_text = "" );
       void                         check_discard_it_sd_mult( QStringList & files, bool optionally_discard = false );
 
       bool                         started_in_expert_mode;
@@ -1049,6 +1125,51 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       void                         ggauss_msg_common( vector < map < int, set < double > > > & check_common );
       QStringList                  gaussian_param_text;
 
+      QString                      select_conc_file( QString tag );
+
+      void                         clear_gaussians();
+      bool                         any_gaussians();
+
+      double                       wyatt_errors( QString file,
+                                                 double start_q,
+                                                 double end_q );
+
+      double                       wyatt_errors( QString file,
+                                                 double start_q,
+                                                 double end_q,
+                                                 vector < double > & new_q,
+                                                 vector < double > & new_I,
+                                                 vector < double > & new_y );
+
+      double                       wyatt_errors( const vector < double > & q,
+                                                 const vector < double > & I,
+                                                 double start_q,
+                                                 double end_q );
+      double                       wyatt_errors( const vector < double > & q,
+                                                 const vector < double > & I,
+                                                 double start_q,
+                                                 double end_q,
+                                                 vector < double > & new_q,
+                                                 vector < double > & new_I,
+                                                 vector < double > & new_y
+                                                 );
+      bool                         constant_e( QString file, double e );
+      int                          slice( const vector < double > & q,
+                                          const vector < double > & I,
+                                          double start_q,
+                                          double end_q,
+                                          vector < double > & new_q,
+                                          vector < double > & new_I
+                                          );
+      void                         wyatt_apply( const QStringList & files );
+
+      void                         timescale  ( const QStringList & files );
+
+      map < QString, QwtPlot *>    plot_info;
+
+      QStringList                  get_frames( QStringList files, QString head, QString tail );
+      map < QString, QString >     ldata;
+
    private slots:
 
       void setupGUI();
@@ -1064,7 +1185,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       void update_enables();
       void update_files();
       void update_created_files();
-      void add_files();
+      void add_files( bool load_conc = false );
       void similar_files();
       void conc();
       void clear_files();
@@ -1090,7 +1211,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       void create_i_of_t();
       void test_i_of_t();
       void create_i_of_q();
-      void set_conc_file();
+      void load_conc();
+      void set_conc_file( QString file = "" );
       void set_detector();
       void set_hplc();
       void set_empty();
@@ -1116,10 +1238,13 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       void stack_rot_down();
       void stack_swap();
 
-      void wheel_start();
+      void timeshift();
+      void timescale();
       void p3d();
       void ref();
       void errors();
+      void ggqfit();
+      void pp();
       void wheel_cancel();
       void wheel_save();
 
@@ -1164,19 +1289,31 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       void gauss_fit_start_focus       ( bool );
       void gauss_fit_end_focus         ( bool );
 
-      void ggauss_start();
-      void ggauss_rmsd();
-      void ggauss_results();
+      void ggauss_start                ();
+      void ggauss_rmsd                 ();
+      void ggauss_results              ();
 
-      void set_sd_weight();
-      void set_fix_width();
-      void set_fix_dist1();
-      void set_fix_dist2();
+      void set_sd_weight               ();
+      void set_fix_width               ();
+      void set_fix_dist1               ();
+      void set_fix_dist2               ();
 
-      void gauss_as_curves();
+      void gauss_as_curves             ();
 
-      void baseline_start();
-      void baseline_apply();
+      void wyatt_start                 ();
+      void wyatt_apply                 ();
+      void wyatt_2                     ();
+      void wyatt_start_text            ( const QString & );
+      void wyatt_start_focus           ( bool );
+      void wyatt_end_text              ( const QString & );
+      void wyatt_end_focus             ( bool );
+      void wyatt_start2_text           ( const QString & );
+      void wyatt_start2_focus          ( bool );
+      void wyatt_end2_text             ( const QString & );
+      void wyatt_end2_focus            ( bool );
+
+      void baseline_start              ();
+      void baseline_apply              ();
 
       void set_baseline_start_zero     ();
 
@@ -1225,6 +1362,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       void guinier_enables             ();
       void guinier_residuals_update    ();
       void guinier_plot_rg_toggle      ();
+      void guinier_plot_mw_toggle      ();
       void guinier_rg_t_start_text     ( const QString & );
       void guinier_rg_t_start_focus    ( bool );
       void guinier_rg_t_end_text       ( const QString & );
@@ -1233,8 +1371,17 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       void guinier_rg_rg_start_focus   ( bool );
       void guinier_rg_rg_end_text      ( const QString & );
       void guinier_rg_rg_end_focus     ( bool );
+      void guinier_mw_t_start_text     ( const QString & );
+      void guinier_mw_t_start_focus    ( bool );
+      void guinier_mw_t_end_text       ( const QString & );
+      void guinier_mw_t_end_focus      ( bool );
+      void guinier_mw_mw_start_text    ( const QString & );
+      void guinier_mw_mw_start_focus   ( bool );
+      void guinier_mw_mw_end_text      ( const QString & );
+      void guinier_mw_mw_end_focus     ( bool );
       void guinier_scroll              ();
-
+      bool guinier_check_qmax          ( QString & report, bool show_message = true );
+      bool guinier_check_qmax          ( bool show_message = true );
 
       void testiq                       ();
       void testiq_q_start_text         ( const QString & );
@@ -1256,7 +1403,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       void crop_right                  ();
       void legend                      ();
       void axis_x                      ( bool nochange = false, bool no_replot = false );
-      void axis_y                      ();
+      void axis_y                      ( bool nochange = false, bool no_replot = false );
       void legend_set                  ();
 
       void rename_created( Q3ListBoxItem *, const QPoint & );
@@ -1300,6 +1447,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       void model_remove             ();
 
       void artificial_gaussians     ();
+
+      void check_mwt_constants      ( bool force = false );
 
    protected slots:
 

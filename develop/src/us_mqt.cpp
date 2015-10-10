@@ -20,6 +20,12 @@ void mQLineEdit::focusOutEvent ( QFocusEvent *e )
    emit( focussed( false ) );
 }
 
+void mQLineEdit::mousePressEvent ( QMouseEvent *e )
+{
+   QLineEdit::mousePressEvent( e );
+   emit( pressed() );
+}
+
 mQLabel::mQLabel( QWidget *parent, const char * name ) : QLabel( parent, name ) {}
 mQLabel::mQLabel( const QString & text, QWidget *parent, const char * name ) : QLabel( text, parent, name ) {}
 
@@ -57,9 +63,9 @@ void mQThread::usleep( unsigned long usecs )
    QThread::usleep( usecs );
 }
 
-void ShowHide::hide_widgets( std::vector < QWidget *> widgets, bool hide, QWidget * do_resize )
+void ShowHide::hide_widgets( const std::vector < QWidget *> & widgets, bool hide, QWidget * do_resize )
 {
-   for ( unsigned int i = 0; i < ( unsigned int )widgets.size(); i++ )
+   for ( unsigned int i = 0; i < ( unsigned int )widgets.size(); ++i )
    {
       hide ? widgets[ i ]->hide() : widgets[ i ]->show();
    }
@@ -68,6 +74,41 @@ void ShowHide::hide_widgets( std::vector < QWidget *> widgets, bool hide, QWidge
        do_resize->resize( 0, 0 );
    }
 }
+
+void ShowHide::hide_widgets( const std::vector < std::vector < QWidget *> > & widgets, int row, bool hide, QWidget * do_resize )
+{
+   if ( ( int )widgets.size() >= row )
+   {
+      return;
+   }
+   for ( unsigned int i = 0; i < ( unsigned int )widgets[ row ].size(); ++i )
+   {
+      hide ? widgets[ row ][ i ]->hide() : widgets[ row ][ i ]->show();
+   }
+   if ( do_resize )
+   {
+       do_resize->resize( 0, 0 );
+   }
+}
+
+void ShowHide::only_widgets( const std::vector < std::vector < QWidget *> > & widgets, int row, bool hide, QWidget * do_resize )
+{
+   for ( int j = 0; j < (int) widgets.size(); ++j )
+   {
+      if ( j != row )
+      {
+         for ( int i = 0; i < (int) widgets[ j ].size(); ++i )
+         {
+            hide ? widgets[ j ][ i ]->hide() : widgets[ j ][ i ]->show();
+         }
+      }
+   }
+   if ( do_resize )
+   {
+       do_resize->resize( 0, 0 );
+   }
+}
+
 
 QStringList MQT::get_lb_qsl( Q3ListBox * lb, bool only_selected )
 {

@@ -659,6 +659,7 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
    ETAo = hydro->solvent_viscosity / 100;
    DENS = hydro->solvent_density;
    TE = K0 + hydro->temperature;
+   hydro_results->method = "SMI";
    hydro_results->solvent_name = hydro->solvent_name;
    hydro_results->solvent_acronym = hydro->solvent_acronym;
    hydro_results->solvent_viscosity = hydro->solvent_viscosity;
@@ -2382,6 +2383,11 @@ stampa_ris()
    {
       printf("%s%.2f\t%s (%s)\n", "- SED. COEFF. (psv from unhydrated radii) = ",
              (mascor1 * 1.0E20 * (1.0 - partvolc * DENS)) / (f * fconv * AVO), "[S] ", tag2.ascii());
+      // qDebug( QString( "ra -1 mascor1 is %1 partvolc %2 DENS %3 f %4" )
+      //         .arg( mascor1 )
+      //         .arg( partvolc )
+      //         .arg( DENS )
+      //         .arg( f ) );
       supc_results->s20w = (mascor1 * 1.0E20 * (1.0 - partvolc * DENS)) / (f * fconv * AVO);
    }
 
@@ -2394,6 +2400,11 @@ stampa_ris()
              (mascor1 * 1.0E20 * (1.0 - partvol * DENS)) / (f * fconv * AVO), "[S] ", 
              tag2.ascii()
              );
+      // qDebug( QString( "ra -2 or -5 mascor1 is %1 partvol %2 DENS %3 f %4" )
+      //         .arg( mascor1 )
+      //         .arg( partvol )
+      //         .arg( DENS )
+      //         .arg( f ) );
       supc_results->s20w = (mascor1 * 1.0E20 * (1.0 - partvol * DENS)) / (f * fconv * AVO);
       if ((nat + colorzero + colorsix) < numero_sfere)
          printf
@@ -2409,6 +2420,11 @@ stampa_ris()
              (mascor1 * 1.0E20 * (1.0 - partvol * DENS)) / (f * fconv * AVO), "[S] ", 
              tag2.ascii()
              );
+      // qDebug( QString( "ra -3 mascor1 is %1 partvol %2 DENS %3 f %4" )
+      //         .arg( mascor1 )
+      //         .arg( partvol )
+      //         .arg( DENS )
+      //         .arg( f ) );
       supc_results->s20w = (mascor1 * 1.0E20 * (1.0 - partvol * DENS)) / (f * fconv * AVO);
       if ((nat + colorzero + colorsix) < numero_sfere)
          printf
@@ -2418,6 +2434,7 @@ stampa_ris()
              (mascor1 * 1.0E20 * (1.0 - partvolc * DENS)) / (f * fconv * AVO), "[S] ", tag2.ascii());
    }
 
+   //   qDebug( QString( "f is %1 ETAo %2 partvol %3 fconv %4 mass %5" ).arg( f ).arg( ETAo ).arg( partvol ).arg( fconv ).arg( supc_results->mass ) );
    supc_results->ff0 = 
       f * 1.0E-07 * fconv / ( 6.0 * M_PI * ETAo *
       pow( 3.0 * supc_results->mass * partvol / (4.0 * M_PI * AVOGADRO), 1.0/3.0));
@@ -2481,12 +2498,14 @@ stampa_ris()
 
    if ((raflag == -1.0) || (raflag == -3.0))
    {
+      qDebug( QString( "ra -1 or -3 ro %1" ).arg( ro ) );
       printf("\n%s%.2f\t%s\n", "- RADIUS OF GYRATION (Hydrated Beads)   = ", ro * fconv, "[nm]");
       supc_results->rg = ro * fconv;
       printf("%s%.2f\t%s\n", "- RADIUS OF GYRATION (Unhydrated Beads) = ", rou * fconv, "[nm]");
    }
    else
    {
+      qDebug( QString( "ra !(-1 or -3) ro %1" ).arg( ro ) );
       printf("\n%s%.2f\t%s\n", "- RADIUS OF GYRATION              = ", ro * fconv, "[nm]");
       supc_results->rg = ro * fconv;
    }

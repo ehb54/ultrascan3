@@ -37,6 +37,7 @@ struct misc_options
    bool compute_vbar;      // true = compute
                                 // false = use user specified value
    bool pb_rule_on;      // true = move N back etc, false = do not
+   bool restore_pb_rule; // true = pb rule was on and now turned off
 
    double avg_hydration;
    double avg_mass;
@@ -105,9 +106,9 @@ class US_EXTERN US_Hydrodyn_Misc : public Q3Frame
       QLineEdit *le_target_volume;
       QCheckBox *cb_set_target_on_load_pdb;
       QCheckBox *cb_equalize_radii;
-      QLabel    *lbl_hydro_method;
-      QCheckBox *cb_hydro_supc;
-      QCheckBox *cb_hydro_zeno;
+      // QLabel    *lbl_hydro_method;
+      // QCheckBox *cb_hydro_supc;
+      // QCheckBox *cb_hydro_zeno;
       QLabel    *lbl_other;
       QCheckBox *cb_export_msroll;
 
@@ -132,8 +133,8 @@ class US_EXTERN US_Hydrodyn_Misc : public Q3Frame
       void set_set_target_on_load_pdb();
       void set_equalize_radii();
 
-      void set_hydro_supc();
-      void set_hydro_zeno();
+      // void set_hydro_supc();
+      // void set_hydro_zeno();
 
       void set_export_msroll();
 

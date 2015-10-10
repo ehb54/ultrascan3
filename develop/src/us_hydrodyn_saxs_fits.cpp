@@ -401,8 +401,6 @@ void US_Hydrodyn_Saxs::calc_iqq_best_fit( QString /* title */, QString csv_filen
    editor->append("Running best fit\n");
    clear_plot_saxs( true );
 
-
-
    if ( is_nonzero_vector( nnls_errors ) )
    {
       plot_one_iqq(nnls_r, nnls_B, nnls_errors, csv_filename + " Target");
@@ -411,11 +409,14 @@ void US_Hydrodyn_Saxs::calc_iqq_best_fit( QString /* title */, QString csv_filen
    }
    QString use_target = qsl_plotted_iq_names[ qsl_plotted_iq_names.size() - 1 ];
 
+   map < double, vector < QString > > map_sorted_fits;
+
    for ( unsigned int i = 0; i < best_fit_models.size(); i++ )
    {
       editor->append(model_names[i] + " :");
       rescale_iqq_curve( use_target, nnls_r, best_fit_models[model_names[i]] );
       chi2s[i] = last_rescaling_chi2;
+      map_sorted_fits[ chi2s[i] ].push_back( model_names[i] );
       if ( !i )
       {
          lowest_chi2 = chi2s[i];
@@ -429,6 +430,18 @@ void US_Hydrodyn_Saxs::calc_iqq_best_fit( QString /* title */, QString csv_filen
             model = best_fit_models[model_names[i]];
          }
       }
+   }
+
+   {
+      QString msg;
+      for ( map < double, vector < QString > >::iterator it = map_sorted_fits.begin();
+            it != map_sorted_fits.end();
+            ++it ) {
+         for ( int i = 0; i < (int) it->second.size(); ++i ) {
+            msg += QString( "%1 : %2\n" ).arg( it->first ).arg( it->second[ i ] );
+         }
+      }
+      editor_msg( "black", tr( "Sorted best fit results\n" ) + msg );
    }
 
    // clear residuals window

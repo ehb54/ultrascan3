@@ -120,6 +120,19 @@ void US_Hydrodyn_Batch::setupGUI()
    int minHeight1 = 20;
    int minWidth1 = 200;
 
+   QPalette qp_cg = QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal);
+
+   QColorGroup qcg_cb_disabled = USglobal->global_colors.cg_normal;
+
+   // qcg_cb_disabled.setColor( QColorGroup::Background, Qt::yellow );
+   qcg_cb_disabled.setColor( QColorGroup::Foreground, Qt::darkRed );
+   // qcg_cb_disabled.setColor( QColorGroup::Base      , Qt::cyan );
+   qcg_cb_disabled.setColor( QColorGroup::Text      , Qt::darkRed );
+   // qcg_cb_disabled.setColor( QColorGroup::Button    , Qt::red );
+   // qcg_cb_disabled.setColor( QColorGroup::ButtonText, Qt::magenta );
+
+   QPalette qp_cb = QPalette(USglobal->global_colors.cg_normal, qcg_cb_disabled, USglobal->global_colors.cg_normal);
+
    lbl_selection = new QLabel(tr("Select files:"), this);
    Q_CHECK_PTR(lbl_selection);
    lbl_selection->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Raised);
@@ -200,7 +213,7 @@ void US_Hydrodyn_Batch::setupGUI()
    pb_load_somo->setPalette( PALET_PUSHB );
    connect(pb_load_somo, SIGNAL(clicked()), SLOT(load_somo()));
 
-   pb_load_saxs = new QPushButton(tr("Load into SAXS"), this);
+   pb_load_saxs = new QPushButton(tr("Load into SAS"), this);
    Q_CHECK_PTR(pb_load_saxs);
    pb_load_saxs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_load_saxs->setMinimumHeight(minHeight1);
@@ -368,6 +381,14 @@ void US_Hydrodyn_Batch::setupGUI()
    AUTFBACK( cb_somo );
    connect(cb_somo, SIGNAL(clicked()), this, SLOT(set_somo()));
 
+   cb_somo_o = new QCheckBox(this);
+   cb_somo_o->setText(tr(" Build SoMo Overlap Bead Model "));
+   cb_somo_o->setChecked(batch->somo_o);
+   cb_somo_o->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_somo_o->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_somo_o );
+   connect(cb_somo_o, SIGNAL(clicked()), this, SLOT(set_somo_o()));
+
    cb_grid = new QCheckBox(this);
    cb_grid->setText(tr(" Build AtoB (Grid) Bead Model"));
    cb_grid->setChecked(batch->grid);
@@ -383,6 +404,11 @@ void US_Hydrodyn_Batch::setupGUI()
    cb_equi_grid->setPalette( PALET_NORMAL );
    AUTFBACK( cb_equi_grid );
    connect(cb_equi_grid, SIGNAL(clicked()), this, SLOT(set_equi_grid()));
+
+   if ( !U_EXPT )
+   {
+      cb_equi_grid->hide();
+   }
 
    cb_iqq = new QCheckBox(this);
    cb_iqq->setText(tr("Compute SAXS I(q) "));
@@ -430,7 +456,7 @@ void US_Hydrodyn_Batch::setupGUI()
    le_csv_saxs_name->setText(batch->csv_saxs_name);
    le_csv_saxs_name->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_csv_saxs_name->setMinimumWidth(150);
-   le_csv_saxs_name->setPalette( PALET_NORMAL );
+   le_csv_saxs_name->setPalette( PALET_EDIT );
    AUTFBACK( le_csv_saxs_name );
    le_csv_saxs_name->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    connect(le_csv_saxs_name, SIGNAL(textChanged(const QString &)), SLOT(update_csv_saxs_name(const QString &)));
@@ -484,7 +510,7 @@ void US_Hydrodyn_Batch::setupGUI()
    connect(cb_compute_prr_std_dev, SIGNAL(clicked()), this, SLOT(set_compute_prr_std_dev()));
 
    cb_hydro = new QCheckBox(this);
-   cb_hydro->setText(tr(" Calculate Hydrodynamics "));
+   cb_hydro->setText(tr(" Calculate RB Hydrodynamics SMI"));
    cb_hydro->setChecked(batch->hydro);
    cb_hydro->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_hydro->setPalette( PALET_NORMAL );
@@ -492,7 +518,7 @@ void US_Hydrodyn_Batch::setupGUI()
    connect(cb_hydro, SIGNAL(clicked()), this, SLOT(set_hydro()));
 
    cb_zeno = new QCheckBox(this);
-   cb_zeno->setText( " Zeno" );
+   cb_zeno->setText( " Calculate RB Hydrodynamics Zeno" );
    cb_zeno->setChecked(batch->zeno);
    cb_zeno->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_zeno->setPalette( PALET_NORMAL );
@@ -511,7 +537,7 @@ void US_Hydrodyn_Batch::setupGUI()
    le_avg_hydro_name->setText(batch->avg_hydro_name);
    le_avg_hydro_name->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_avg_hydro_name->setMinimumWidth(100);
-   le_avg_hydro_name->setPalette( PALET_NORMAL );
+   le_avg_hydro_name->setPalette( PALET_EDIT );
    AUTFBACK( le_avg_hydro_name );
    le_avg_hydro_name->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    connect(le_avg_hydro_name, SIGNAL(textChanged(const QString &)), SLOT(update_avg_hydro_name(const QString &)));
@@ -519,7 +545,7 @@ void US_Hydrodyn_Batch::setupGUI()
    pb_select_save_params = new QPushButton(tr("Select Parameters to be Saved"), this);
    Q_CHECK_PTR(pb_select_save_params);
    //   pb_select_save_params->setMinimumHeight(minHeight1);
-   pb_select_save_params->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   pb_select_save_params->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
    pb_select_save_params->setEnabled(true);
    pb_select_save_params->setPalette( PALET_PUSHB );
    connect(pb_select_save_params, SIGNAL(clicked()), SLOT(select_save_params()));
@@ -670,12 +696,13 @@ void US_Hydrodyn_Batch::setupGUI()
    Q3HBoxLayout *hbl_somo_grid = new Q3HBoxLayout;
    hbl_somo_grid->addWidget(cb_somo);
    hbl_somo_grid->addWidget(cb_grid);
-   hbl_somo_grid->addWidget(cb_equi_grid);
+   hbl_somo_grid->addWidget(cb_somo_o);
 
    Q3HBoxLayout *hbl_iqq_prr = new Q3HBoxLayout;
    hbl_iqq_prr->addWidget(cb_iqq);
    hbl_iqq_prr->addWidget(cb_saxs_search);
    hbl_iqq_prr->addWidget(cb_prr);
+   hbl_iqq_prr->addWidget(cb_equi_grid);
 #if defined(USE_H)
    hbl_iqq_prr->addWidget(cb_hydrate);
 #endif
@@ -980,6 +1007,7 @@ void US_Hydrodyn_Batch::remove_files()
 void US_Hydrodyn_Batch::load_somo()
 {
    disable_updates = true;
+   set_issue_info( false );
    for ( int i = 0; i < lb_files->numRows(); i++ )
    {
       if ( lb_files->isSelected(i) )
@@ -1020,7 +1048,7 @@ void US_Hydrodyn_Batch::load_somo()
                   break;
                }
             }
-            result = ((US_Hydrodyn *)us_hydrodyn)->screen_pdb(file, true);
+            result = ((US_Hydrodyn *)us_hydrodyn)->screen_pdb(file, true );
          } else {
             result = screen_bead_model(file);
          }
@@ -1044,6 +1072,7 @@ void US_Hydrodyn_Batch::load_somo()
 void US_Hydrodyn_Batch::load_saxs()
 {
    disable_updates = true;
+   set_issue_info( false );
    for ( int i = 0; i < lb_files->numRows(); i++ )
    {
       if ( lb_files->isSelected(i) )
@@ -1059,7 +1088,7 @@ void US_Hydrodyn_Batch::load_saxs()
          if ( file.contains(QRegExp(".(pdb|PDB)$")) &&
               !((US_Hydrodyn *)us_hydrodyn)->is_dammin_dammif(file) )
          {
-            result = screen_pdb(file, false);
+            result = screen_pdb(file, false );
          } else {
             result = screen_bead_model(file);
          }
@@ -1094,8 +1123,11 @@ void US_Hydrodyn_Batch::update_enables()
       return;
    }
    int count_selected = 0;
-   any_pdb_in_list = false;
-   bool all_selected_bead_models = true;
+   any_pdb_in_list    = false;
+   bool any_so_ovlp_selected     = false;
+   bool any_pdb_selected         = false;
+   bool any_bead_model_selected  = false;
+
    for ( int i = 0; i < lb_files->numRows(); i++ )
    {
       if ( lb_files->isSelected(i) )
@@ -1103,8 +1135,14 @@ void US_Hydrodyn_Batch::update_enables()
          count_selected++;
          if ( get_file_name(i).contains(QRegExp("(pdb|PDB)$")) )
          {
-            any_pdb_in_list = true;
-            all_selected_bead_models = false;
+            any_pdb_in_list  = true;
+            any_pdb_selected = true;
+         } else {
+            any_bead_model_selected = true;
+         }
+         if ( get_file_name(i).contains( "so_ovlp" ) )
+         {
+            any_so_ovlp_selected    = true;
          }
       } else {
          if ( get_file_name(i).contains(QRegExp("(pdb|PDB)$")) )
@@ -1113,32 +1151,9 @@ void US_Hydrodyn_Batch::update_enables()
          }
       }
    }
+   // the globals
+
    pb_select_all->setEnabled(lb_files->numRows());
-
-   bg_atoms->setEnabled(any_pdb_in_list);
-   bg_residues->setEnabled(any_pdb_in_list);
-
-   cb_mm_first->setEnabled(any_pdb_in_list);
-   cb_mm_all->setEnabled(any_pdb_in_list);
-   cb_dmd->setEnabled(any_pdb_in_list);
-   cb_somo->setEnabled(any_pdb_in_list);
-   cb_grid->setEnabled(any_pdb_in_list);
-   cb_equi_grid->setEnabled(lb_files->numRows());
-   cb_prr->setEnabled(lb_files->numRows());
-   cb_iqq->setEnabled(lb_files->numRows());
-   cb_saxs_search->setEnabled(lb_files->numRows() && batch->iqq);
-   cb_csv_saxs->setEnabled(lb_files->numRows() && (batch->iqq || batch->prr));
-   le_csv_saxs_name->setEnabled(lb_files->numRows() && (batch->iqq || batch->prr) && batch->csv_saxs);
-   cb_create_native_saxs->setEnabled(lb_files->numRows() && (batch->iqq || batch->prr) && batch->csv_saxs);
-#if defined(USE_H)
-   cb_hydrate->setEnabled(lb_files->numRows() && (batch->iqq || batch->prr));
-#endif
-   cb_compute_iq_avg->setEnabled(lb_files->numRows() && batch->iqq && batch->csv_saxs);
-   cb_compute_iq_only_avg->setEnabled(lb_files->numRows() && batch->iqq && batch->csv_saxs);
-   cb_compute_iq_std_dev->setEnabled(lb_files->numRows() && batch->iqq && batch->csv_saxs && batch->compute_iq_avg);
-   cb_compute_prr_avg->setEnabled(lb_files->numRows() && batch->prr && batch->csv_saxs);
-   cb_compute_prr_std_dev->setEnabled(lb_files->numRows() && batch->prr && batch->csv_saxs && batch->compute_prr_avg);
-
    pb_remove_files->setEnabled(count_selected);
    pb_screen->setEnabled(count_selected);
    pb_load_somo->setEnabled(count_selected == 1);
@@ -1147,25 +1162,273 @@ void US_Hydrodyn_Batch::update_enables()
    {
       pb_make_movie->setEnabled(count_selected > 1);
    }
+   pb_cluster           ->setEnabled( true );
+   pb_select_save_params->setEnabled( true );
+   cb_saveParams        ->setEnabled( true );
 
-   cb_hydro->setEnabled(lb_files->numRows() && ( batch->somo || batch->grid || all_selected_bead_models ) );
-   cb_zeno ->setEnabled(lb_files->numRows() && ( batch->somo || batch->grid || all_selected_bead_models ) );
-   cb_avg_hydro->setEnabled(lb_files->numRows() && ( batch->hydro || batch->zeno ) );
-   le_avg_hydro_name->setEnabled(lb_files->numRows() && ( batch->hydro || batch->zeno ) && batch->avg_hydro);
-   pb_select_save_params->setEnabled(lb_files->numRows() && ( batch->hydro || batch->zeno ) );
-   cb_saveParams->setEnabled(lb_files->numRows() && ( batch->hydro || batch->zeno ) );
-   pb_cluster->setEnabled( true );
+   if ( !count_selected ) {
+      cb_somo                  ->setChecked( false );
+      cb_somo_o                ->setChecked( false );
+      cb_grid                  ->setChecked( false );
+      cb_equi_grid             ->setChecked( false );
+      cb_hydro                 ->setChecked( false );
+      cb_zeno                  ->setChecked( false );
+      cb_dmd                   ->setChecked( false );
+      cb_prr                   ->setChecked( false ); 
+      cb_iqq                   ->setChecked( false ); 
+      cb_saxs_search           ->setChecked( false );
+      cb_csv_saxs              ->setChecked( false );
+      cb_create_native_saxs    ->setChecked( false );
+      cb_compute_iq_avg        ->setChecked( false );
+      cb_compute_iq_only_avg   ->setChecked( false );
+      cb_compute_iq_std_dev    ->setChecked( false );
+      cb_compute_prr_avg       ->setChecked( false );
+      cb_compute_prr_std_dev   ->setChecked( false );
+      cb_avg_hydro             ->setChecked( false );
 
-   bool anything_to_do =
-      ( cb_somo->isEnabled()  && cb_somo->isChecked()  ) ||
-      ( cb_grid->isEnabled()  && cb_grid->isChecked()  ) ||
-      ( cb_equi_grid->isEnabled()  && cb_equi_grid->isChecked()  ) ||
-      ( cb_prr->isEnabled()   && cb_prr->isChecked()   ) ||
-      ( cb_iqq->isEnabled()   && cb_iqq->isChecked()   ) ||
-      ( cb_hydro->isEnabled() && cb_hydro->isChecked() ) ||
-      ( cb_zeno->isEnabled()  && cb_zeno->isChecked()  )
-      ;
-   pb_start->setEnabled(count_selected && !cb_dmd->isChecked() && anything_to_do );
+      cb_somo                  ->setEnabled( false );
+      cb_somo_o                ->setEnabled( false );
+      cb_grid                  ->setEnabled( false );
+      cb_equi_grid             ->setEnabled( false );
+      cb_hydro                 ->setEnabled( false );
+      cb_zeno                  ->setEnabled( false );
+      cb_dmd                   ->setEnabled( false );
+      cb_prr                   ->setEnabled( false ); 
+      cb_iqq                   ->setEnabled( false ); 
+      cb_saxs_search           ->setEnabled( false );
+      cb_csv_saxs              ->setEnabled( false );
+      cb_create_native_saxs    ->setEnabled( false );
+      cb_compute_iq_avg        ->setEnabled( false );
+      cb_compute_iq_only_avg   ->setEnabled( false );
+      cb_compute_iq_std_dev    ->setEnabled( false );
+      cb_compute_prr_avg       ->setEnabled( false );
+      cb_compute_prr_std_dev   ->setEnabled( false );
+      cb_avg_hydro             ->setEnabled( false );
+      le_avg_hydro_name        ->setEnabled( false );
+      le_csv_saxs_name         ->setEnabled( false );
+
+      batch->somo                  = false;
+      batch->somo_o                = false;
+      batch->grid                  = false;
+      batch->equi_grid             = false;
+      batch->hydro                 = false;
+      batch->zeno                  = false;
+      batch->dmd                   = false;
+      batch->prr                   = false;
+      batch->iqq                   = false;
+      batch->saxs_search           = false;
+      batch->csv_saxs              = false;
+      batch->create_native_saxs    = false;
+      batch->hydrate               = false;
+      batch->compute_iq_avg        = false;
+      batch->compute_iq_only_avg   = false;
+      batch->compute_iq_std_dev    = false;
+      batch->compute_prr_avg       = false;
+      batch->compute_prr_std_dev   = false;
+      batch->avg_hydro             = false;
+   } else {
+      if ( any_pdb_selected ) {
+         bg_atoms    ->setEnabled( true );
+         bg_residues ->setEnabled( true );
+         cb_mm_first ->setEnabled( true );
+         cb_somo     ->setEnabled( true );
+         cb_grid     ->setEnabled( true );
+         cb_somo_o   ->setEnabled( true );
+
+         if ( !any_bead_model_selected ) {
+            cb_dmd    ->setEnabled( true );
+            cb_prr    ->setEnabled( true );
+            cb_iqq    ->setEnabled( true );
+
+            if ( batch->iqq ) {
+               cb_saxs_search         ->setEnabled( true );
+               if ( batch->csv_saxs ) {
+                  cb_compute_iq_only_avg ->setEnabled( true );
+
+                  cb_compute_iq_avg      ->setEnabled( true );
+                  if ( batch->compute_iq_avg ) {
+                     cb_compute_iq_std_dev  ->setEnabled( true );
+                  } else {
+                     cb_compute_iq_std_dev  ->setEnabled( false );
+                     cb_compute_iq_std_dev  ->setChecked( false );
+                     batch->compute_iq_std_dev    = false;
+                  }
+               } else {
+                  cb_compute_iq_avg      ->setEnabled( false );
+                  cb_compute_iq_only_avg ->setEnabled( false );
+                  cb_compute_iq_std_dev  ->setEnabled( false );
+
+                  cb_compute_iq_avg      ->setChecked( false );
+                  cb_compute_iq_only_avg ->setChecked( false );
+                  cb_compute_iq_std_dev  ->setChecked( false );
+
+                  batch->compute_iq_avg        = false;
+                  batch->compute_iq_only_avg   = false;
+                  batch->compute_iq_std_dev    = false;
+               }
+            } else {
+               cb_saxs_search         ->setEnabled( false );
+               cb_compute_iq_avg      ->setEnabled( false );
+               cb_compute_iq_only_avg ->setEnabled( false );
+               cb_compute_iq_std_dev  ->setEnabled( false );
+
+               cb_saxs_search         ->setChecked( false );
+               cb_compute_iq_avg      ->setChecked( false );
+               cb_compute_iq_only_avg ->setChecked( false );
+               cb_compute_iq_std_dev  ->setChecked( false );
+
+               batch->saxs_search           = false;
+               batch->compute_iq_avg        = false;
+               batch->compute_iq_only_avg   = false;
+               batch->compute_iq_std_dev    = false;
+            }
+               
+            if ( batch->prr ) {
+               if ( batch->csv_saxs ) {
+                  cb_compute_prr_avg    ->setEnabled( true );
+                  if ( batch->compute_prr_avg ) {
+                     cb_compute_prr_std_dev->setEnabled( true );
+                  } else {
+                     cb_compute_prr_std_dev->setEnabled( false );
+                     cb_compute_prr_std_dev->setChecked( false );
+                     batch->compute_prr_std_dev   = false;
+                  }
+               } else {
+                  cb_compute_prr_avg    ->setEnabled( false );
+                  cb_compute_prr_std_dev->setEnabled( false );
+
+                  cb_compute_prr_avg    ->setChecked( false );
+                  cb_compute_prr_std_dev->setChecked( false );
+
+                  batch->compute_prr_avg       = false;
+                  batch->compute_prr_std_dev   = false;
+               }                     
+            } else {
+               cb_compute_prr_avg    ->setEnabled( false );
+               cb_compute_prr_std_dev->setEnabled( false );
+
+               cb_compute_prr_avg    ->setChecked( false );
+               cb_compute_prr_std_dev->setChecked( false );
+
+               batch->compute_prr_avg       = false;
+               batch->compute_prr_std_dev   = false;
+            }
+
+            if ( batch->iqq || batch->prr  ) {
+#if defined(USE_H)
+               cb_hydrate            ->setEnabled( true );
+#endif
+               cb_csv_saxs           ->setEnabled( true );
+               if ( batch->csv_saxs ) {
+                  le_csv_saxs_name      ->setEnabled( true );
+                  cb_create_native_saxs ->setEnabled( true );
+               } else {
+                  le_csv_saxs_name      ->setEnabled( false );
+                  cb_create_native_saxs ->setEnabled( false );
+                  cb_create_native_saxs ->setChecked( false );
+                  batch->create_native_saxs    = false;
+               }
+            } else {
+               cb_csv_saxs           ->setEnabled( false );
+               le_csv_saxs_name      ->setEnabled( false );
+               cb_create_native_saxs ->setEnabled( false );
+
+               cb_csv_saxs           ->setChecked( false );
+               cb_create_native_saxs ->setChecked( false );
+
+               batch->csv_saxs              = false;
+               batch->create_native_saxs    = false;
+            }
+         } else {
+            // bead models selected also restricts to bead model computations
+            cb_dmd                   ->setChecked( false );
+            cb_prr                   ->setChecked( false ); 
+            cb_iqq                   ->setChecked( false ); 
+            cb_saxs_search           ->setChecked( false );
+            cb_csv_saxs              ->setChecked( false );
+            cb_create_native_saxs    ->setChecked( false );
+            cb_compute_iq_avg        ->setChecked( false );
+            cb_compute_iq_only_avg   ->setChecked( false );
+            cb_compute_iq_std_dev    ->setChecked( false );
+            cb_compute_prr_avg       ->setChecked( false );
+            cb_compute_prr_std_dev   ->setChecked( false );
+
+            cb_dmd                   ->setEnabled( false );
+            cb_prr                   ->setEnabled( false ); 
+            cb_iqq                   ->setEnabled( false ); 
+            cb_saxs_search           ->setEnabled( false );
+            cb_csv_saxs              ->setEnabled( false );
+            cb_create_native_saxs    ->setEnabled( false );
+            cb_compute_iq_avg        ->setEnabled( false );
+            cb_compute_iq_only_avg   ->setEnabled( false );
+            cb_compute_iq_std_dev    ->setEnabled( false );
+            cb_compute_prr_avg       ->setEnabled( false );
+            cb_compute_prr_std_dev   ->setEnabled( false );
+
+            batch->dmd                   = false;
+            batch->prr                   = false;
+            batch->iqq                   = false;
+            batch->saxs_search           = false;
+            batch->csv_saxs              = false;
+            batch->create_native_saxs    = false;
+            batch->hydrate               = false;
+            batch->compute_iq_avg        = false;
+            batch->compute_iq_only_avg   = false;
+            batch->compute_iq_std_dev    = false;
+            batch->compute_prr_avg       = false;
+            batch->compute_prr_std_dev   = false;
+         }
+      }
+      if ( any_bead_model_selected ||  batch->somo || batch->grid || batch->somo_o ) {
+         if ( !any_so_ovlp_selected && !batch->somo_o ) {
+            cb_hydro             ->setEnabled( true );
+         } else {
+            cb_hydro             ->setEnabled( false );
+            cb_hydro             ->setChecked( false );
+            batch->hydro         = false;
+         }
+         cb_zeno              ->setEnabled( true );
+         if ( batch->hydro || batch->zeno ) {
+            cb_avg_hydro         ->setEnabled( true );
+         } else {
+            cb_avg_hydro         ->setEnabled( false );
+            cb_avg_hydro         ->setChecked( false );
+            batch->avg_hydro             = false;
+         }
+         if ( batch->avg_hydro ) {
+            le_avg_hydro_name    ->setEnabled( true );
+         } else {
+            le_avg_hydro_name    ->setEnabled( false );
+         }
+      } else {
+         cb_hydro             ->setEnabled( false );
+         cb_zeno              ->setEnabled( false );
+         cb_avg_hydro         ->setEnabled( false );
+         le_avg_hydro_name    ->setEnabled( false );
+
+         cb_hydro             ->setChecked( false );
+         cb_zeno              ->setChecked( false );
+         cb_avg_hydro         ->setChecked( false );
+
+         batch->hydro                 = false;
+         batch->zeno                  = false;
+         batch->avg_hydro             = false;
+      }
+   }
+
+   bool 
+      anything_to_do =
+      cb_somo              ->isChecked() || 
+      cb_grid              ->isChecked() || 
+      cb_somo_o            ->isChecked() || 
+      cb_iqq               ->isChecked() || 
+      cb_prr               ->isChecked() || 
+      cb_hydro             ->isChecked() || 
+      cb_zeno              ->isChecked() ||
+      cb_dmd               ->isChecked() || 
+      0;
+      
+   pb_start->setEnabled( anything_to_do );
 
    set_counts();
 }
@@ -1183,7 +1446,7 @@ void US_Hydrodyn_Batch::atom(int val)
 bool US_Hydrodyn_Batch::screen_pdb(QString file, bool display_pdb)
 {
    save_us_hydrodyn_settings();
-   bool result = ((US_Hydrodyn *)us_hydrodyn)->screen_pdb(file, display_pdb);
+   bool result = ((US_Hydrodyn *)us_hydrodyn)->screen_pdb(file, display_pdb, true);
    restore_us_hydrodyn_settings();
    return result;
 }
@@ -1234,6 +1497,41 @@ void US_Hydrodyn_Batch::restore_us_hydrodyn_settings()
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
+void US_Hydrodyn_Batch::set_issue_info( bool as_batch ) 
+{
+   set < QString > *issue_info = &(((US_Hydrodyn *)us_hydrodyn)->issue_info);
+
+   issue_info->clear();
+
+   if ( as_batch ) {
+      switch( batch->missing_atoms ) {
+      case 1 :
+         issue_info->insert( "ma_skip" );
+         break;
+      case 2 :
+         issue_info->insert( "ma_model" );
+         break;
+      case 0 :
+      default :
+         issue_info->insert( "stop" );
+         break;
+      }
+
+      switch( batch->missing_residues ) {
+      case 1 :
+         issue_info->insert( "nc_skip" );
+         break;
+      case 2 :
+         issue_info->insert( "nc_replace" );
+         break;
+      case 0 :
+      default :
+         issue_info->insert( "stop" );
+         break;
+      }
+   }
+}
+
 void US_Hydrodyn_Batch::screen()
 {
    disable_updates = true;
@@ -1244,6 +1542,8 @@ void US_Hydrodyn_Batch::screen()
    bool result;
    progress->reset();
    progress->setTotalSteps(lb_files->numRows());
+
+   set_issue_info( false );
 
    for ( int i = 0; i < lb_files->numRows(); i++ )
    {
@@ -1268,7 +1568,6 @@ void US_Hydrodyn_Batch::screen()
          qApp->processEvents();
          if ( file.contains(QRegExp(".(pdb|PDB)$")) ) 
          {
-            
             result = screen_pdb(file);
          } else {
             result = screen_bead_model(file);
@@ -1316,10 +1615,39 @@ void US_Hydrodyn_Batch::set_dmd()
 void US_Hydrodyn_Batch::set_somo()
 {
    batch->somo = cb_somo->isChecked();
-   if ( cb_grid->isChecked() )
-   {
-      cb_grid->setChecked( false );
-      batch->grid = cb_grid->isChecked();
+   if ( batch->somo ) {
+      if ( cb_grid->isChecked() )
+      {
+         cb_grid->setChecked( false );
+         batch->grid = cb_grid->isChecked();
+      }
+      if ( cb_somo_o->isChecked() )
+      {
+         cb_somo_o->setChecked( false );
+         batch->somo_o = cb_somo_o->isChecked();
+      }
+   }
+   update_enables();
+}
+
+void US_Hydrodyn_Batch::set_somo_o()
+{
+   batch->somo_o = cb_somo_o->isChecked();
+   if ( batch->somo_o ) {
+      if ( cb_grid->isChecked() )
+      {
+         cb_grid->setChecked( false );
+         batch->grid = cb_grid->isChecked();
+      }
+      if ( cb_somo->isChecked() )
+      {
+         cb_somo->setChecked( false );
+         batch->somo = cb_somo->isChecked();
+      }
+      if ( cb_hydro->isChecked() ) {
+         cb_zeno->setChecked( true );
+         set_zeno();
+      }
    }
    update_enables();
 }
@@ -1327,10 +1655,17 @@ void US_Hydrodyn_Batch::set_somo()
 void US_Hydrodyn_Batch::set_grid()
 {
    batch->grid = cb_grid->isChecked();
-   if ( cb_somo->isChecked() )
-   {
-      cb_somo->setChecked( false );
-      batch->somo = cb_somo->isChecked();
+   if ( batch->grid ) {
+      if ( cb_somo->isChecked() )
+      {
+         cb_somo->setChecked( false );
+         batch->somo = cb_somo->isChecked();
+      }
+      if ( cb_somo_o->isChecked() )
+      {
+         cb_somo_o->setChecked( false );
+         batch->somo_o = cb_somo_o->isChecked();
+      }
    }
    update_enables();
 }
@@ -1411,7 +1746,7 @@ void US_Hydrodyn_Batch::set_compute_iq_avg()
 
 void US_Hydrodyn_Batch::set_compute_iq_only_avg()
 {
-   batch->compute_iq_avg = cb_compute_iq_only_avg->isChecked();
+   batch->compute_iq_only_avg = cb_compute_iq_only_avg->isChecked();
    update_enables();
 }
 
@@ -1439,6 +1774,7 @@ void US_Hydrodyn_Batch::set_hydro()
    if ( batch->hydro )
    {
       cb_zeno->setChecked( false );
+      batch->zeno = cb_zeno->isChecked();
    }
    update_enables();
 }
@@ -1449,6 +1785,7 @@ void US_Hydrodyn_Batch::set_zeno()
    if ( batch->zeno )
    {
       cb_hydro->setChecked( false );
+      batch->hydro = cb_hydro->isChecked();
    }
    update_enables();
 }
@@ -1622,7 +1959,12 @@ void US_Hydrodyn_Batch::start( bool quiet )
       ( batch->iqq || batch->prr ) &&
       !batch->somo &&
       !batch->grid &&
-      !batch->hydro;
+      !batch->somo_o &&
+      !batch->hydro &&
+      !batch->zeno
+      ;
+
+   set_issue_info();
 
    for ( int i = 0; i < lb_files->numRows(); i++ )
    {
@@ -1715,6 +2057,13 @@ void US_Hydrodyn_Batch::start( bool quiet )
                   job_timer.init_timer ( QString( "%1 atob" ).arg( get_file_name( i ) ) );
                   job_timer.start_timer( QString( "%1 atob" ).arg( get_file_name( i ) ) );
                   result = ((US_Hydrodyn *)us_hydrodyn)->calc_grid_pdb() ? false : true;
+                  job_timer.end_timer  ( QString( "%1 atob" ).arg( get_file_name( i ) ) );
+               }
+               if ( batch->somo_o )
+               {
+                  job_timer.init_timer ( QString( "%1 atob" ).arg( get_file_name( i ) ) );
+                  job_timer.start_timer( QString( "%1 atob" ).arg( get_file_name( i ) ) );
+                  result = ((US_Hydrodyn *)us_hydrodyn)->calc_somo_o() ? false : true;
                   job_timer.end_timer  ( QString( "%1 atob" ).arg( get_file_name( i ) ) );
                }
                restore_us_hydrodyn_settings();
@@ -2263,7 +2612,7 @@ void US_Hydrodyn_Batch::start( bool quiet )
                return;
             }
             if ( result && ( batch->hydro || batch->zeno ) &&
-                 ( !pdb_mode || batch->somo || batch->grid ) )
+                 ( !pdb_mode || batch->somo || batch->grid || batch->somo_o) )
             {
                save_us_hydrodyn_settings();
                job_timer.init_timer  ( QString( "%1 hydrodynamics" ).arg( get_file_name( i ) ) );
@@ -2272,7 +2621,13 @@ void US_Hydrodyn_Batch::start( bool quiet )
                {
                   ((US_Hydrodyn *)us_hydrodyn)->lb_model->selectAll(true);
                }
-               result = ((US_Hydrodyn *)us_hydrodyn)->calc_hydro() ? false : true;
+               if ( batch->hydro ) {
+                  result = ((US_Hydrodyn *)us_hydrodyn)->calc_hydro() ? false : true;
+               }
+               if ( batch->zeno ) {
+                  result = ((US_Hydrodyn *)us_hydrodyn)->calc_zeno_hydro() ? false : true;
+               }
+               
                job_timer.end_timer   ( QString( "%1 hydrodynamics" ).arg( get_file_name( i ) ) );
                restore_us_hydrodyn_settings();
             }

@@ -2225,3 +2225,179 @@ bool US_Saxs_Util::write_timings( QString file, QString msg )
    return false;
 }
 
+bool US_Saxs_Util::mwc( 
+                       const vector < double > & q_org,
+                       const vector < double > & I,
+                       double                    Rg,
+                       double                    I0,
+                       double                    mw_per_N,
+                       double                  & qm,
+                       double                  & Vc,
+                       double                  & Qr,
+                       double                  & mwc,
+                       QString                 & messages,
+                       QString                 & notes
+                        )
+{
+   // use vcm.json
+
+   messages = "";
+   notes    = "";
+   
+   if ( q_org.size() != I.size() )
+   {
+      messages = QString( "I, q different length %1 %2" ).arg( q_org.size() ).arg( I.size() );
+      return false;
+   }
+
+   if ( 
+       !vcm.count( "q" ) ||
+       !vcm.count( "a" ) ||
+       !vcm.count( "b" ) ||
+       !vcm.count( "c" ) ||
+       !vcm.count( "a:y2" ) ||
+       !vcm.count( "b:y2" ) ||
+       !vcm.count( "c:y2" )
+        )
+   {
+      messages = "MW[C] vcm.json not loaded";
+      return false;
+   }
+
+   double maxq = vcm[ "q" ].back();
+
+   // crop to maxq from vcm arrays (see us_saxs_util_loads.cpp::load_vcm_json() )
+
+   vector < double > q = q_org;
+
+   if ( q.back() > maxq )
+   {
+      for ( int i = (int) q.size() - 1; i >= 4; --i )
+      {
+         if ( q[ i ] <= maxq )
+         {
+            q.resize( i + 1 );
+            break;
+         }
+      }
+      notes = QString( "MW[C] note: q cropped to %1" ).arg( q.back() );
+   }
+
+   if ( q.size() < 5 )
+   {
+      messages = QString( "too few point %1 < 5" ).arg( q.size() );
+      return false;
+   }
+   qm = q.back();
+
+   vector < double > dq ( q.size(), -1e0 );
+   vector < double > sqs( q.size(), -1e0 );
+
+   // first point
+
+   double sqiqdq = q[ 0 ] * I[ 0 ] * ( q[ 1 ] - q[ 0 ] );
+
+   dq[ 0 ]  = q[ 1 ] - q[ 0 ];
+   sqs[ 0 ] = sqiqdq;
+   
+   // middle points
+
+   for ( int i = 1; i < (int) q.size() - 1; ++i )
+   {
+      sqiqdq += q[ i ] * I[ i ] * ( q[ i + 1 ] - q[ i - 1 ] ) * 5e-1;
+      dq[ i ] = ( q[ i + 1 ] - q[ i - 1 ] ) * 5e-1;
+      sqs[ i ] = sqiqdq;
+   }
+
+   // last point
+   
+   int i = q.size() - 1;
+
+   sqiqdq += q[ i ] * I[ i ] * ( q[ i ] - q[ i - 1 ] );
+   dq[ i ] = q[ i ] - q[ i - 1 ];
+   sqs[ i ] = sqiqdq;
+
+   if ( !sqiqdq )
+   {
+      messages += "sum(q * I(q) * dq ) is zero ";
+   }
+
+   if ( !messages.isEmpty() )
+   {
+      return false;
+   }
+
+   // sqiqdq computed, log, invert with splined a,b,c, check limits use gparams
+
+   double a;
+   double b;
+   double c;
+   QString messagesa;
+   QString messagesb;
+   QString messagesc;
+
+   if ( !static_apply_natural_spline( vcm[ "q" ],
+                                      vcm[ "a" ],
+                                      vcm[ "a:y2" ],
+                                      qm,
+                                      a,
+                                      messagesa ) ||
+        
+        !static_apply_natural_spline( vcm[ "q" ],
+                                      vcm[ "b" ],
+                                      vcm[ "b:y2" ],
+                                      qm,
+                                      b,
+                                      messagesb ) ||
+        
+        !static_apply_natural_spline( vcm[ "q" ],
+                                      vcm[ "c" ],
+                                      vcm[ "c:y2" ],
+                                      qm,
+                                      c,
+                                      messagesc )
+        )
+   {
+      messages += messagesa + messagesb + messagesc;
+      return false;
+   }
+
+   Vc = I0 / sqiqdq;
+   double lVc = log( Vc );
+
+   // compute descriminant
+
+   double disc = ( b * b ) - ( 4e0 * c * ( a - lVc ) );
+   if ( disc < 0e0 )
+   {
+      messages += " Vc[c] during inversion: discriminant is negative!";
+      return false;
+   }
+
+   if ( c == 0e0 )
+   {
+      messages += " Vc[c] during inversion: c is zero!";
+      return false;
+   }
+      
+   double lN = ( -b + sqrt( disc ) ) / ( 2e0 * c );
+
+   double N = exp( lN );
+
+   mwc = N * mw_per_N;
+
+   Qr = Vc * Vc / Rg;
+
+   // qDebug( QString( "splined a %1 b %2 c %3 Vc %4 lVc %5 lN %6 N %7 mwc %8" )
+   //         .arg( a )
+   //         .arg( b )
+   //         .arg( c )
+   //         .arg( Vc )
+   //         .arg( lVc )
+   //         .arg( lN )
+   //         .arg( N )
+   //         .arg( mwc )
+   //         );
+
+   return true;
+}

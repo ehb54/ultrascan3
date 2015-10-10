@@ -207,12 +207,20 @@ void US_Hydrodyn_Saxs_Hplc::update_plot_errors_group()
    if ( !plot_errors_zoomer )
    {
       cout << "upeg: recreating axis\n";
-      plot_errors->setAxisTitle(QwtPlot::yLeft, tr( cb_plot_errors_pct->isChecked() ?
-                                                    "% difference" :
-                                                    ( cb_plot_errors_sd->isChecked() ?
-                                                      "delta I(q)/sd" : "delta I(q)" 
-                                                      ) ) );
-
+      if ( current_mode == MODE_GGAUSSIAN ||
+           current_mode == MODE_GAUSSIAN ) {
+         plot_errors->setAxisTitle(QwtPlot::yLeft, tr( cb_plot_errors_pct->isChecked() ?
+                                                       "% difference" :
+                                                       ( cb_plot_errors_sd->isChecked() ?
+                                                         "delta I(t)/sd" : "delta I(t)" 
+                                                         ) ) );
+      } else {
+         plot_errors->setAxisTitle(QwtPlot::yLeft, tr( cb_plot_errors_pct->isChecked() ?
+                                                       "% difference" :
+                                                       ( cb_plot_errors_sd->isChecked() ?
+                                                         "delta I(q)/sd" : "delta I(q)" 
+                                                         ) ) );
+      }
       plot_errors->setAxisScale( QwtPlot::xBottom, minx, maxx );
       plot_errors->setAxisScale( QwtPlot::yLeft  , -maxy * 1.2e0 , maxy * 1.2e0 );
 
@@ -415,11 +423,20 @@ void US_Hydrodyn_Saxs_Hplc::update_plot_errors( vector < double > &grid,
          }
       }            
 
-      plot_errors->setAxisTitle(QwtPlot::yLeft, tr( cb_plot_errors_pct->isChecked() ?
-                                                    "% difference" :
-                                                    ( cb_plot_errors_sd->isChecked() ?
-                                                      "delta I(q)/sd" : "delta I(q)" 
-                                                      ) ) );
+      if ( current_mode == MODE_GGAUSSIAN ||
+           current_mode == MODE_GAUSSIAN ) {
+         plot_errors->setAxisTitle(QwtPlot::yLeft, tr( cb_plot_errors_pct->isChecked() ?
+                                                       "% difference" :
+                                                       ( cb_plot_errors_sd->isChecked() ?
+                                                         "delta I(t)/sd" : "delta I(t)" 
+                                                         ) ) );
+      } else {
+         plot_errors->setAxisTitle(QwtPlot::yLeft, tr( cb_plot_errors_pct->isChecked() ?
+                                                       "% difference" :
+                                                       ( cb_plot_errors_sd->isChecked() ?
+                                                         "delta I(q)/sd" : "delta I(q)" 
+                                                         ) ) );
+      }         
 
       plot_errors->setAxisScale( QwtPlot::xBottom, x[ 0 ], x.back() );
       plot_errors->setAxisScale( QwtPlot::yLeft  , -maxy * 1.2e0 , maxy * 1.2e0 );
@@ -440,8 +457,21 @@ void US_Hydrodyn_Saxs_Hplc::update_plot_errors( vector < double > &grid,
 
 void US_Hydrodyn_Saxs_Hplc::redo_plot_errors()
 {
-   plot_errors->setAxisTitle(QwtPlot::yLeft, tr( cb_plot_errors_pct->isChecked() ?
-                                                 "%" : "delta I(q)" ) );
+   if ( current_mode == MODE_GGAUSSIAN ||
+        current_mode == MODE_GAUSSIAN ) {
+      plot_errors->setAxisTitle(QwtPlot::yLeft, tr( cb_plot_errors_pct->isChecked() ?
+                                                    "% difference" :
+                                                    ( cb_plot_errors_sd->isChecked() ?
+                                                      "delta I(t)/sd" : "delta I(t)" 
+                                                      ) ) );
+   } else {
+      plot_errors->setAxisTitle(QwtPlot::yLeft, tr( cb_plot_errors_pct->isChecked() ?
+                                                    "% difference" :
+                                                    ( cb_plot_errors_sd->isChecked() ?
+                                                      "delta I(q)/sd" : "delta I(q)" 
+                                                      ) ) );
+
+   }
    if ( plot_errors_zoomer )
    {
       delete plot_errors_zoomer;
@@ -1081,7 +1111,7 @@ bool US_Hydrodyn_Saxs_Hplc::plot_file( QString file,
                                   (double *)&( I[ 0 ] ),
                                   q_points
                                   );
-         plot_dist->setCurvePen( Iq, QPen( plot_colors[ f_pos[ file ] % plot_colors.size()], use_line_width, SolidLine));
+         plot_dist->setCurvePen( Iq, QPen( plot_colors[ f_pos[ file ] % plot_colors.size()], use_line_width, Qt::SolidLine));
          plot_dist->setCurveStyle( Iq, QwtCurve::NoCurve );
          symbol.setPen  ( QPen( plot_colors[ f_pos[ file ] % plot_colors.size() ], use_line_width, Qt::SolidLine ) );
          // symbol.setBrush( plot_colors[ f_pos[ file ] % plot_colors.size() ] );

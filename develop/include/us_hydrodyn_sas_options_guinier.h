@@ -43,7 +43,7 @@ class US_EXTERN US_Hydrodyn_SasOptionsGuinier : public Q3Frame
       void       *us_hydrodyn;
       US_Config  *USglobal;
 
-      QLabel     *lbl_guinier;
+      QLabel     *lbl_guinier_and_cs_guinier;
 
       QLabel     *lbl_qRgmax;
       QLineEdit  *le_qRgmax;
@@ -67,8 +67,6 @@ class US_EXTERN US_Hydrodyn_SasOptionsGuinier : public Q3Frame
 
       QLabel     *lbl_cs_qend;
       QLineEdit  *le_cs_qend;
-
-      QLabel     *lbl_guinier_and_cs_guinier;
 
       QCheckBox  *cb_guinier_auto_fit;
 
@@ -120,6 +118,15 @@ class US_EXTERN US_Hydrodyn_SasOptionsGuinier : public Q3Frame
       QLabel     *lbl_nucleon_mass;
       QLineEdit  *le_nucleon_mass;
 
+      QLabel     *lbl_mwt_k;
+      QLineEdit  *le_mwt_k;
+
+      QLabel     *lbl_mwt_c;
+      QLineEdit  *le_mwt_c;
+
+      QLabel     *lbl_mwt_qmax;
+      QLineEdit  *le_mwt_qmax;
+
       QPushButton *pb_guinier;
       QPushButton *pb_cs_guinier;
       QPushButton *pb_Rt_guinier;
@@ -161,6 +168,10 @@ class US_EXTERN US_Hydrodyn_SasOptionsGuinier : public Q3Frame
       void update_diffusion_len                 ( const QString & );
       void update_electron_nucleon_ratio        ( const QString & );
       void update_nucleon_mass                  ( const QString & );
+
+      void update_mwt_k                         ( const QString & );
+      void update_mwt_c                         ( const QString & );
+      void update_mwt_qmax                      ( const QString & );
 
       void set_guinier_outlier_reject           ();
       void update_guinier_outlier_reject_dist   ( const QString & );
