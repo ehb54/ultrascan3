@@ -21,6 +21,8 @@
 #include "us_get_edit.h"
 #include "us_constants.h"
 #include "us_images.h"
+#include "us_editor.h"
+#include "us_report.h"
 
 #ifndef DbgLv
 #define DbgLv(a) if(dbg_level>=a)qDebug()
@@ -99,6 +101,7 @@ US_Edit::US_Edit() : US_Widgets()
    QPushButton*
       pb_load      = us_pushbutton( tr( "Load Data" ) );
    pb_details      = us_pushbutton( tr( "Run Details" ), false );
+      pb_report    = us_pushbutton( tr( "View Report" ), false );
 
    // Triple and Speed Step
    lb_triple       = us_label( tr( "Cell / Channel / Wavelength" ), -1 );
@@ -268,6 +271,7 @@ lambdas << "250" << "350" << "450" << "550" << "580" << "583" << "650";
 
    connect( pb_excludeRange, SIGNAL( clicked() ), SLOT( exclude_range() ) );
    connect( pb_details,      SIGNAL( clicked() ), SLOT( details()       ) );
+   connect( pb_report,       SIGNAL( clicked() ), SLOT( view_report()   ) );
    connect( pb_investigator, SIGNAL( clicked() ),
                              SLOT  ( sel_investigator()         ) );
    connect( pb_load,         SIGNAL( clicked() ), SLOT( load()  ) );
@@ -296,71 +300,72 @@ lambdas << "250" << "350" << "450" << "550" << "580" << "583" << "650";
 
    // Lay out specs widgets and layouts
    int s_row = 0;
-   specs->addWidget( pb_investigator, s_row,   0, 1, 1 );
-   specs->addWidget( le_investigator, s_row++, 1, 1, 3 );
-   specs->addLayout( disk_controls,   s_row++, 0, 1, 4 );
+   specs->addWidget( pb_investigator, s_row,   0, 1, 2 );
+   specs->addWidget( le_investigator, s_row++, 2, 1, 4 );
+   specs->addLayout( disk_controls,   s_row++, 0, 1, 6 );
    specs->addWidget( pb_load,         s_row,   0, 1, 2 );
-   specs->addWidget( pb_details,      s_row++, 2, 1, 2 );
-   specs->addWidget( lb_triple,       s_row,   0, 1, 2 );
-   specs->addWidget( cb_triple,       s_row++, 2, 1, 2 );
-   specs->addWidget( lb_rpms,         s_row,   0, 1, 2 );
-   specs->addWidget( cb_rpms,         s_row++, 2, 1, 2 );
-   specs->addWidget( lb_gaps,         s_row,   0, 1, 2 );
-   specs->addWidget( ct_gaps,         s_row++, 2, 1, 2 );
-   specs->addWidget( le_lxrng,        s_row++, 0, 1, 4 );
-   specs->addWidget( lb_mwlctl,       s_row++, 0, 1, 4 );
-   specs->addLayout( lo_lrange,       s_row,   0, 1, 2 );
-   specs->addLayout( lo_custom,       s_row++, 2, 1, 2 );
-   specs->addWidget( lb_ldelta,       s_row,   0, 1, 1 );
-   specs->addWidget( ct_ldelta,       s_row,   1, 1, 1 );
-   specs->addWidget( le_ltrng,        s_row++, 2, 1, 2 );
-   specs->addWidget( lb_lstart,       s_row,   0, 1, 1 );
-   specs->addWidget( cb_lstart,       s_row,   1, 1, 1 );
-   specs->addWidget( lb_lend,         s_row,   2, 1, 1 );
-   specs->addWidget( cb_lend,         s_row++, 3, 1, 1 );
-   specs->addWidget( pb_custom,       s_row,   0, 1, 2 );
-   specs->addWidget( pb_incall,       s_row++, 2, 1, 2 );
-   specs->addLayout( lo_radius,       s_row,   0, 1, 2 );
-   specs->addLayout( lo_waveln,       s_row++, 2, 1, 2 );
-   specs->addWidget( lb_lplot,        s_row,   0, 1, 1 );
-   specs->addWidget( cb_lplot,        s_row,   1, 1, 1 );
-   specs->addWidget( pb_larrow,       s_row,   2, 1, 1 );
-   specs->addWidget( pb_rarrow,       s_row++, 3, 1, 1 );
-   specs->addWidget( lb_scan,         s_row++, 0, 1, 4 );
-   specs->addWidget( lb_from,         s_row,   0, 1, 2 );
-   specs->addWidget( ct_from,         s_row++, 2, 1, 2 );
-   specs->addWidget( lb_to,           s_row,   0, 1, 2 );
-   specs->addWidget( ct_to,           s_row++, 2, 1, 2 );
-   specs->addWidget( pb_excludeRange, s_row,   0, 1, 2 );
-   specs->addWidget( pb_exclusion,    s_row++, 2, 1, 2 );
-   specs->addWidget( pb_edit1,        s_row,   0, 1, 2 );
-   specs->addWidget( pb_include,      s_row++, 2, 1, 2 );
-   specs->addWidget( lb_edit,         s_row++, 0, 1, 4 );
-   specs->addWidget( lb_edtrsp,       s_row,   0, 1, 2 );
-   specs->addWidget( le_edtrsp,       s_row++, 2, 1, 2 );
-   specs->addWidget( pb_meniscus,     s_row,   0, 1, 2 );
-   specs->addWidget( le_meniscus,     s_row++, 2, 1, 2 );
-   specs->addWidget( pb_airGap,       s_row,   0, 1, 2 );
-   specs->addWidget( le_airGap,       s_row++, 2, 1, 2 );
-   specs->addWidget( pb_dataRange,    s_row,   0, 1, 2 );
-   specs->addWidget( le_dataRange,    s_row++, 2, 1, 2 );
-   specs->addWidget( pb_plateau,      s_row,   0, 1, 2 );
-   specs->addWidget( le_plateau,      s_row++, 2, 1, 2 );
-   specs->addWidget( lb_baseline,     s_row,   0, 1, 2 );
-   specs->addWidget( le_baseline,     s_row++, 2, 1, 2 );
-   specs->addWidget( lb_odlim,        s_row,   0, 1, 2 );
-   specs->addWidget( ct_odlim,        s_row++, 2, 1, 2 );
-   specs->addWidget( pb_noise,        s_row,   0, 1, 2 );
-   specs->addWidget( pb_residuals,    s_row++, 2, 1, 2 );
-   specs->addWidget( pb_invert,       s_row,   0, 1, 2 );
-   specs->addWidget( pb_spikes,       s_row++, 2, 1, 2 );
-   specs->addWidget( pb_priorEdits,   s_row,   0, 1, 2 );
-   specs->addWidget( pb_undo,         s_row++, 2, 1, 2 );
-   specs->addWidget( pb_reviewep,     s_row,   0, 1, 2 );
-   specs->addWidget( pb_nexttrip,     s_row++, 2, 1, 2 );
-   specs->addWidget( pb_float,        s_row,   0, 1, 2 );
-   specs->addWidget( pb_write,        s_row++, 2, 1, 2 );
-   specs->addLayout( lo_writemwl,     s_row++, 2, 1, 2 );
+   specs->addWidget( pb_details,      s_row,   2, 1, 2 );
+   specs->addWidget( pb_report,       s_row++, 4, 1, 2 );
+   specs->addWidget( lb_triple,       s_row,   0, 1, 3 );
+   specs->addWidget( cb_triple,       s_row++, 3, 1, 3 );
+   specs->addWidget( lb_rpms,         s_row,   0, 1, 3 );
+   specs->addWidget( cb_rpms,         s_row++, 3, 1, 3 );
+   specs->addWidget( lb_gaps,         s_row,   0, 1, 3 );
+   specs->addWidget( ct_gaps,         s_row++, 3, 1, 3 );
+   specs->addWidget( le_lxrng,        s_row++, 0, 1, 6 );
+   specs->addWidget( lb_mwlctl,       s_row++, 0, 1, 6 );
+   specs->addLayout( lo_lrange,       s_row,   0, 1, 3 );
+   specs->addLayout( lo_custom,       s_row++, 3, 1, 3 );
+   specs->addWidget( lb_ldelta,       s_row,   0, 1, 2 );
+   specs->addWidget( ct_ldelta,       s_row,   2, 1, 1 );
+   specs->addWidget( le_ltrng,        s_row++, 3, 1, 3 );
+   specs->addWidget( lb_lstart,       s_row,   0, 1, 2 );
+   specs->addWidget( cb_lstart,       s_row,   2, 1, 1 );
+   specs->addWidget( lb_lend,         s_row,   3, 1, 2 );
+   specs->addWidget( cb_lend,         s_row++, 5, 1, 1 );
+   specs->addWidget( pb_custom,       s_row,   0, 1, 3 );
+   specs->addWidget( pb_incall,       s_row++, 3, 1, 3 );
+   specs->addLayout( lo_radius,       s_row,   0, 1, 3 );
+   specs->addLayout( lo_waveln,       s_row++, 3, 1, 3 );
+   specs->addWidget( lb_lplot,        s_row,   0, 1, 2 );
+   specs->addWidget( cb_lplot,        s_row,   2, 1, 1 );
+   specs->addWidget( pb_larrow,       s_row,   3, 1, 2 );
+   specs->addWidget( pb_rarrow,       s_row++, 5, 1, 1 );
+   specs->addWidget( lb_scan,         s_row++, 0, 1, 6 );
+   specs->addWidget( lb_from,         s_row,   0, 1, 3 );
+   specs->addWidget( ct_from,         s_row++, 3, 1, 3 );
+   specs->addWidget( lb_to,           s_row,   0, 1, 3 );
+   specs->addWidget( ct_to,           s_row++, 3, 1, 3 );
+   specs->addWidget( pb_excludeRange, s_row,   0, 1, 3 );
+   specs->addWidget( pb_exclusion,    s_row++, 3, 1, 3 );
+   specs->addWidget( pb_edit1,        s_row,   0, 1, 3 );
+   specs->addWidget( pb_include,      s_row++, 3, 1, 3 );
+   specs->addWidget( lb_edit,         s_row++, 0, 1, 6 );
+   specs->addWidget( lb_edtrsp,       s_row,   0, 1, 3 );
+   specs->addWidget( le_edtrsp,       s_row++, 3, 1, 3 );
+   specs->addWidget( pb_meniscus,     s_row,   0, 1, 3 );
+   specs->addWidget( le_meniscus,     s_row++, 3, 1, 3 );
+   specs->addWidget( pb_airGap,       s_row,   0, 1, 3 );
+   specs->addWidget( le_airGap,       s_row++, 3, 1, 3 );
+   specs->addWidget( pb_dataRange,    s_row,   0, 1, 3 );
+   specs->addWidget( le_dataRange,    s_row++, 3, 1, 3 );
+   specs->addWidget( pb_plateau,      s_row,   0, 1, 3 );
+   specs->addWidget( le_plateau,      s_row++, 3, 1, 3 );
+   specs->addWidget( lb_baseline,     s_row,   0, 1, 3 );
+   specs->addWidget( le_baseline,     s_row++, 3, 1, 3 );
+   specs->addWidget( lb_odlim,        s_row,   0, 1, 3 );
+   specs->addWidget( ct_odlim,        s_row++, 3, 1, 3 );
+   specs->addWidget( pb_noise,        s_row,   0, 1, 3 );
+   specs->addWidget( pb_residuals,    s_row++, 3, 1, 3 );
+   specs->addWidget( pb_invert,       s_row,   0, 1, 3 );
+   specs->addWidget( pb_spikes,       s_row++, 3, 1, 3 );
+   specs->addWidget( pb_priorEdits,   s_row,   0, 1, 3 );
+   specs->addWidget( pb_undo,         s_row++, 3, 1, 3 );
+   specs->addWidget( pb_reviewep,     s_row,   0, 1, 3 );
+   specs->addWidget( pb_nexttrip,     s_row++, 3, 1, 3 );
+   specs->addWidget( pb_float,        s_row,   0, 1, 3 );
+   specs->addWidget( pb_write,        s_row++, 3, 1, 3 );
+   specs->addLayout( lo_writemwl,     s_row++, 3, 1, 3 );
 
    // Button rows
    QBoxLayout*  buttons   = new QHBoxLayout;
@@ -498,6 +503,7 @@ void US_Edit::reset( void )
    pb_nexttrip    ->setEnabled( false );
    pb_undo        ->setEnabled( false );
    
+   pb_report      ->setEnabled( false );
    pb_float       ->setEnabled( false );
    pb_write       ->setEnabled( false );
    ck_writemwl    ->setEnabled( false );
@@ -1714,6 +1720,7 @@ DbgLv(1) << "AGap:  plot_range()";
 
                   else
                   {
+                     pb_report  ->setEnabled( true );
                      pb_write   ->setEnabled( true );
                      ck_writemwl->setEnabled( true );
                      pb_reviewep->setEnabled( true );
@@ -1768,6 +1775,7 @@ DbgLv(1) << "AGap:  plot_range()";
          plot_range();
          pb_plateau ->setIcon( check );
          ct_to->setValue( 0.0 );  // Uncolor all scans
+         pb_report     ->setEnabled( true );
          pb_write      ->setEnabled( true );
          ck_writemwl   ->setEnabled( isMwl );
          changes_made = true;
@@ -1805,6 +1813,7 @@ DbgLv(1) << "AGap:  plot_range()";
             plot_range();
          }
 
+         pb_report     ->setEnabled( true );
          pb_write      ->setEnabled( true );
          ck_writemwl   ->setEnabled( isMwl );
          changes_made = true;
@@ -1914,6 +1923,7 @@ void US_Edit::set_meniscus( void )
    set_pbColors( pb_meniscus );
    pb_meniscus->setIcon( QIcon() );
 
+   pb_report   ->setEnabled( false );
    pb_airGap   ->setEnabled( false );
    pb_airGap   ->setIcon( QIcon() );
    pb_dataRange->setEnabled( false );
@@ -1961,6 +1971,7 @@ void US_Edit::set_airGap( void )
    set_pbColors( pb_airGap );
    pb_airGap   ->setIcon( QIcon() );
 
+   pb_report   ->setEnabled( all_edits );
    pb_dataRange->setIcon( QIcon() );
    pb_plateau  ->setEnabled( false );
    pb_plateau  ->setIcon( QIcon() );
@@ -1991,6 +2002,7 @@ void US_Edit::set_dataRange( void )
    step        = RANGE;
    set_pbColors( pb_dataRange );
 
+   pb_report   ->setEnabled( all_edits );
    pb_dataRange->setIcon( QIcon() );
    pb_plateau  ->setEnabled( false );
    pb_plateau  ->setIcon( QIcon() );
@@ -2023,6 +2035,7 @@ void US_Edit::set_plateau( void )
    step = PLATEAU;
    set_pbColors( pb_plateau );
 
+   pb_report   ->setEnabled( false );
    pb_plateau  ->setIcon( QIcon() );
    pb_write    ->setEnabled( all_edits );
    ck_writemwl ->setEnabled( all_edits && isMwl );
@@ -3092,6 +3105,7 @@ DbgLv(1) << "EDT:NewTr:   sw tri dx" << swavl << triple << idax;
 
    // Enable pushbuttons
    pb_details  ->setEnabled( true );
+   pb_report   ->setEnabled( all_edits );
    pb_include  ->setEnabled( true );
    pb_exclusion->setEnabled( true );
    pb_meniscus ->setEnabled( true );
@@ -3287,7 +3301,11 @@ void US_Edit::write( void )
 // Save edits for a triple
 void US_Edit::write_triple( void )
 {
-   QString s;
+   QString editGUID;
+   QString editID;
+   QString rawGUID;
+   QString triple;
+   QString ss;
 
    meniscus       = le_meniscus->text().toDouble();
    baseline       = data.xvalues[ data.xindex( range_left ) + 5 ];
@@ -3298,7 +3316,7 @@ void US_Edit::write_triple( void )
    {  // For MultiWavelength, data index needs to be recomputed
       int     wvx    = cb_lplot ->currentIndex();
       QString swavl  = expc_wvlns[ wvx ];
-      QString triple = cb_triple->currentText() + " / " + swavl;
+      triple         = cb_triple->currentText() + " / " + swavl;
       idax           = triples.indexOf( triple );
       odax           = index_data( wvx );
    }
@@ -3315,21 +3333,21 @@ void US_Edit::write_triple( void )
 
    // Check if complete
    if ( meniscus == 0.0 )
-      s = tr( "meniscus" );
+      ss = tr( "meniscus" );
    else if ( dataType == "IP" && ( airGap_left == 0.0 || airGap_right == 9.0 ) )
-      s = tr( "air gap" );
+      ss = tr( "air gap" );
    else if ( range_left == 0.0 || range_right == 9.0 )
-      s = tr( "data range" );
+      ss = tr( "data range" );
    else if ( plateau == 0.0 )
-      s = tr( "plateau" );
+      ss = tr( "plateau" );
    else if ( baseline == 0.0 )
-      s = tr( "baseline" );
+      ss = tr( "baseline" );
 
-   if ( ! s.isEmpty() )
+   if ( ! ss.isEmpty() )
    {
       QMessageBox::information( this,
             tr( "Data missing" ),
-            tr( "You must define the " ) + s 
+            tr( "You must define the " ) + ss
             + tr( " before writing the edit profile." ) );
       return;
    }
@@ -3360,6 +3378,7 @@ void US_Edit::write_triple( void )
    // Ask for editLabel if not yet defined
    while ( editLabel.isEmpty() )
    {
+      editGUIDs[ idax ].clear();
       QString now  =  QDateTime::currentDateTime()
                       .toUTC().toString( "yyMMddhhmm" );
 
@@ -3410,7 +3429,7 @@ DbgLv(1) << "EDT:WrTripl:  filename" << filename;
         expType.compare( "other", Qt::CaseInsensitive ) == 0 )
       expType = "Velocity";
 
-   QString editGUID = editGUIDs[ idax ];
+   editGUID         = editGUIDs[ idax ];
 
    if ( editGUID.isEmpty() )
    {
@@ -3418,8 +3437,8 @@ DbgLv(1) << "EDT:WrTripl:  filename" << filename;
       editGUIDs.replace( idax, editGUID );
    }
 
-   QString rawGUID  = US_Util::uuid_unparse( (unsigned char*)data.rawGUID );
-   QString triple   = triples.at( idax );
+   rawGUID          = US_Util::uuid_unparse( (unsigned char*)data.rawGUID );
+   triple           = triples.at( idax );
 DbgLv(1) << "EDT:WrTripl:   triple" << triple;
 
    // Output the edit XML file
@@ -3444,7 +3463,7 @@ DbgLv(1) << "EDT:WrTripl:   triple" << triple;
          }
       }
 
-      QString editID   = editIDs[ idax ];
+      editID           = editIDs[ idax ];
 
       // Output the edit database record
       wrstat     = write_edit_db( dbP, filename, editGUID, editID, rawGUID );
@@ -3452,6 +3471,18 @@ DbgLv(1) << "EDT:WrTripl:   triple" << triple;
       if ( wrstat != 0 )
          return;
    }
+
+   // Output the Data Set Information report
+   QString rtext;
+   tpart            = filename.section( ".", -4, -2 ).replace( ".", "" );
+   QString rptfname = "dsinfo." + tpart + ".dataset_info.html";
+   QString rptfpath = QString( workingDir ).replace( "/results", "/reports" )
+                      + rptfname;
+   int     idEdit   = editID.toInt();
+
+   create_report( rtext );
+
+   save_report( rtext, rptfpath, idEdit );
 }
 
 // Apply a prior edit profile for Velocity and like data
@@ -3655,11 +3686,14 @@ DbgLv(1) << "parsGUID rawGUID" << parameters.dataGUID << uuid;
    // Apply the edits with specified parameters
    apply_edits( parameters );
 
+   pb_report  ->setEnabled( true  );
    pb_undo    ->setEnabled( true  );
    pb_write   ->setEnabled( true  );
    ck_writemwl->setEnabled( isMwl );
 
-   changes_made= false;
+   changes_made      = false;
+   //editLabel         = filename.section( ".", -6, -6 );
+   editLabel.clear();
    plot_range();
 }
 
@@ -3738,7 +3772,7 @@ void US_Edit::prior_equil( void )
       filename          = filenames[ index ];
       int     dataID    = editDataIDs[ index ].toInt();
 
-      QString editLabel = filename.section( ".", -6, -6 );
+      editLabel         = filename.section( ".", -6, -6 );
       filename          = workingDir + filename;
       db.readBlobFromDB( filename, "download_editData", dataID );
 
@@ -3797,16 +3831,16 @@ void US_Edit::prior_equil( void )
 
       if ( filename.isEmpty() ) return; 
 
-      filename          = filename.replace( "\\", "/" );
-      QString editLabel = filename.section( "/", -1, -1 ).section( ".", -6, -6 );
-      QString runID     = filename.section( "/", -1, -1 ).section( ".",  0, -7 );
+      filename         = filename.replace( "\\", "/" );
+      editLabel        = filename.section( "/", -1, -1 ).section( ".", -6, -6 );
+      QString runID    = filename.section( "/", -1, -1 ).section( ".",  0, -7 );
 
       for ( int ii = 0; ii < files.size(); ii++ )
       {
-         filename          = files[ ii ];
-         filename          = runID + "." + editLabel + "."
-                             + filename.section( ".", -5, -2 ) + ".xml";
-         filename          = workingDir + filename;
+         filename         = files[ ii ];
+         filename         = runID + "." + editLabel + "."
+                            + filename.section( ".", -5, -2 ) + ".xml";
+         filename         = workingDir + filename;
 
          if ( QFile( filename ).exists() )
             cefnames << filename;
@@ -3958,6 +3992,7 @@ void US_Edit::prior_equil( void )
    step        = FINISHED;
    set_pbColors( NULL );
 
+   pb_report  ->setEnabled( true );
    pb_undo    ->setEnabled( true );
    pb_write   ->setEnabled( true );
    ck_writemwl->setEnabled( isMwl );
@@ -3974,6 +4009,7 @@ void US_Edit::prior_equil( void )
    pb_nexttrip->setEnabled( true );
 
    all_edits    = all_edits_done();
+   pb_report  ->setEnabled( all_edits );
    pb_write   ->setEnabled( all_edits );
    ck_writemwl->setEnabled( all_edits && isMwl );
    changes_made = all_edits;
@@ -4496,6 +4532,7 @@ DbgLv(1) << "od_radius_limit  value" << value;
    plot_mwl();
 
    all_edits    = all_edits_done();
+   pb_report  ->setEnabled( all_edits );
    pb_write   ->setEnabled( all_edits );
    ck_writemwl->setEnabled( all_edits && isMwl );
    changes_made = true;
@@ -4691,6 +4728,7 @@ DbgLv(1) << "EDT:WrMwl:  dax fname" << idax << filename << "wrstat" << wrstat;
 
    QApplication::restoreOverrideCursor();
    changes_made = false;
+   pb_report   ->setEnabled( false );
    pb_write    ->setEnabled( false );
    ck_writemwl ->setEnabled( false );
    le_info->setText( saved_info );
@@ -5341,5 +5379,293 @@ int US_Edit::lambdas_by_cell( int trx )
 double US_Edit::radius_indexed( const double radi )
 {
    return data.radius( data.xindex( radi ) );
+}
+
+// Create general data set information report file
+void US_Edit::create_report( QString& ss )
+{
+   QString title = "US_Edit";
+   QString head1 = tr( "General Data Set Information" );
+
+   ss  = html_header( title, head1 );
+   ss += run_details();
+   ss += scan_info();
+   ss += indent( 2 ) + "</body>\n</html>\n";
+}
+
+// View data set report
+void US_Edit::view_report( void )
+{
+   QString rtext;
+
+   // Create the General Data Info report text
+   create_report( rtext );
+
+   // Display the text in a text edit dialog
+   US_Editor* tedit = new US_Editor( US_Editor::LOAD, true );
+   tedit->setWindowTitle( tr( "Edit : General Data Information" ) );
+   tedit->move( this->pos() + QPoint( 100, 100 ) );
+   tedit->resize( 700, 600 );
+   tedit->e->setFont( QFont( US_GuiSettings::fontFamily(),
+                             US_GuiSettings::fontSize() ) );
+   tedit->e->setText( rtext );
+   tedit->show();
+}
+
+// Save data set report
+void US_Edit::save_report( const QString rtext, const QString rptfpath,
+                           const int idEdit )
+{
+
+   // Write report text to the report file
+   QFile f_rep( rptfpath );
+
+   bool is_ok = f_rep.open( QIODevice::WriteOnly | QIODevice::Truncate );
+
+   if ( ! is_ok )
+   {
+      qDebug() << "*ERROR* write open:" << rptfpath;
+      return;
+   }
+
+   QTextStream ts( &f_rep );
+   ts << rtext;
+   f_rep.close();
+
+   // Copy report to the database if required
+   if ( dbP != NULL )
+   {
+      QStringList rfiles;
+      QString pfdir    = QString( rptfpath ).section( "/",  0, -2 );
+      QString tripdesc = outData[ index_data() ]->description;
+      rfiles << rptfpath;
+
+      // Set the runID for the report
+      US_Report freport;
+      freport.runID    = runID;
+
+      // Write the report record to the database
+      int st = freport.saveFileDocuments( pfdir,  rfiles, dbP,
+                                          idEdit, tripdesc );
+
+      if ( st != US_DB2::OK )
+      {
+         qDebug() << "*ERROR* saveFileDocuments, status" << st;
+      }
+   }
+}
+
+// String to accomplish line identation
+QString US_Edit::indent( const int spaces )
+{
+   return QString( " " ).leftJustified( spaces, ' ' );
+}
+
+// Table row HTML with 2 columns
+QString US_Edit::table_row( const QString s1, const QString s2 )
+{
+   return ( indent( 6 ) + "<tr><td>" + s1 + "</td><td>" + s2 + "</td></tr>\n" );
+}
+
+// Table row HTML with 3 columns
+QString US_Edit::table_row( const QString s1, const QString s2, 
+                            const QString s3 )
+{
+   return ( indent( 6 ) + "<tr><td>" + s1 + "</td><td>" + s2 + "</td><td>"
+            + s3 + "</td></tr>\n" );
+}
+
+// Table row HTML with 5 columns
+QString US_Edit::table_row( const QString s1, const QString s2, 
+                            const QString s3, const QString s4, 
+                            const QString s5 )
+{
+   return ( indent( 6 ) + "<tr><td>" + s1 + "</td><td>" + s2 + "</td><td>"
+            + s3 + "</td><td>" + s4 + "</td><td>" + s5 + "</td></tr>\n" );
+}
+
+// Table row HTML with 7 columns
+QString US_Edit::table_row( const QString s1, const QString s2, 
+                            const QString s3, const QString s4, 
+                            const QString s5, const QString s6, 
+                            const QString s7 )
+{
+   return ( indent( 6 ) + "<tr><td>" + s1 + "</td><td>" + s2 + "</td><td>"
+            + s3 + "</td><td>" + s4 + "</td><td>" + s5 + "</td><td>"
+            + s6 + "</td><td>" + s7 + "</td></tr>\n" );
+}
+
+// Compose HTML header string
+QString US_Edit::html_header( const QString title, const QString head1 )
+{ 
+   int         trx     = index_data();
+   QString     triple  = triples.at( trx );
+   QStringList parts   = triple.split( " / " );
+   QString     cell    = parts[ 0 ];
+   QString     channel = parts[ 1 ];
+   QString     wvlen   = parts[ 2 ];
+   QString     editID  = editIDs[ trx ];
+   QString     editLbl = editLabel.isEmpty() ?
+                         editFnames[ trx ].section( ".", -6, -6 ) : 
+                         editLabel;
+
+   QString ss = QString( "<?xml version=\"1.0\"?>\n" );
+   ss  += "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\"\n";
+   ss  += "                      \"http://www.w3.org/TR/xhtml1/DTD"
+          "/xhtml1-strict.dtd\">\n";
+   ss  += "<html xmlns=\"http://www.w3.org/1999/xhtml\""
+          " xml:lang=\"en\" lang=\"en\">\n";
+   ss  += "  <head>\n";
+   ss  += "    <title> " + title + " </title>\n";
+   ss  += "    <meta http-equiv=\"Content-Type\" content="
+          "\"text/html; charset=iso-8859-1\"/>\n";
+   ss  += "    <style type=\"text/css\" >\n";
+   ss  += "      td { padding-right: 1em; }\n";
+   ss  += "      body { background-color: white; }\n";
+   ss  += "    </style>\n";
+   ss  += "  </head>\n  <body>\n";
+   ss  += "    <h1>" + head1 + "</h1>\n";
+   ss  += indent( 4 ) + tr( "<h2>Data Report for Run \"" ) + runID;
+   ss  += "\",<br/>\n" + indent( 4 ) + "&nbsp;" + tr( " Cell " ) + cell;
+   ss  += tr( ", Channel " ) + channel;
+   ss  += tr( ", Wavelength " ) + wvlen;
+   ss  += ",<br/>\n" + indent( 4 ) + "&nbsp;" + tr( " Edited Dataset " );
+   ss  += editLbl + "</h2>\n";
+ 
+   return ss;
+}
+
+QString US_Edit::run_details( void )
+{
+  US_DataIO::RawData* dd = outData[ index_data() ];
+
+   QString ss = "\n" + indent( 4 )
+        + tr( "<h3>Detailed Run Information:</h3>\n" )
+        + indent( 4 ) + "<table>\n"
+        + table_row( tr( "Cell Description:" ), dd->description )
+        + table_row( tr( "Data Directory:"   ), workingDir )
+        + table_row( tr( "Rotor Speed:"      ),  
+            QString::number( (int)dd->scanData[ 0 ].rpm ) + " rpm" );
+
+   // Temperature data
+   double sum     =  0.0;
+   double maxTemp = -1.0e99;
+   double minTemp =  1.0e99;
+
+   for ( int ii = 0; ii < dd->scanData.size(); ii++ )
+   {
+      double tt = dd->scanData[ ii ].temperature;
+      sum      += tt;
+      maxTemp   = qMax( maxTemp, tt );
+      minTemp   = qMin( minTemp, tt );
+   }
+
+   QString average = QString::number( sum / dd->scanData.size(), 'f', 1 );
+
+   ss += table_row( tr( "Average Temperature:" ), average + " " + MLDEGC );
+
+   if ( maxTemp - minTemp <= US_Settings::tempTolerance() )
+      ss += table_row( tr( "Temperature Variation:" ),
+                       tr( "Within tolerance" ) );
+   else 
+      ss += table_row( tr( "Temperature Variation:" ), 
+                       tr( "(!) OUTSIDE TOLERANCE (!)" ) );
+
+   // Time data
+   double time_correction = US_Math2::time_correction( allData );
+   int minutes = (int)time_correction / 60;
+   int seconds = (int)time_correction % 60;
+
+   QString mm  = ( minutes == 1 ) ? tr( " minute " ) : tr( " minutes " );
+   QString sec = ( seconds == 1 ) ? tr( " second"  ) : tr( " seconds"  );
+
+   ss += table_row( tr( "Time Correction:" ), 
+                    QString::number( minutes ) + mm +
+                    QString::number( seconds ) + sec );
+
+   double duration = allData.last().scanData.last().seconds;
+
+   int hours = (int) duration / 3600;
+   minutes   = (int) duration / 60 - hours * 60;
+   seconds   = (int) duration % 60;
+   QString ddType = QString( dd->type ).left( 2 );
+   QString                   dataType = tr( "Absorbance:" );
+   if ( ddType == "RI" )     dataType = tr( "Intensity:" );
+   if ( ddType == "WI" )     dataType = tr( "Intensity:" );
+   if ( ddType == "IP" )     dataType = tr( "Interference:" );
+   if ( ddType == "FI" )     dataType = tr( "Fluorescence:" );
+
+   QString hh;
+   hh  = ( hours   == 1 ) ? tr( " hour "   ) : tr( " hours " );
+   mm  = ( minutes == 1 ) ? tr( " minute " ) : tr( " minutes " );
+   sec = ( seconds == 1 ) ? tr( " second"  ) : tr( " seconds" );
+
+   ss += table_row( tr( "Run Duration:" ),
+                   QString::number( hours   ) + hh + 
+                   QString::number( minutes ) + mm + 
+                   QString::number( seconds ) + sec );
+
+   // Wavelength, baseline, meniscus, range
+   int    iwvln    = qRound( dd->scanData.last().wavelength );
+   QString bln_od  = QString( le_baseline->text() ).section( "(", 1, 1 )
+                     .section( ")", 0, 0 ) + " OD";
+   QString left    = QString( le_dataRange->text() ).section( " ", 0, 0 );
+   QString right   = QString( le_dataRange->text() ).section( " ", 2, 2 );
+   QString plat    = le_plateau->text();
+
+   ss += table_row( tr( "Wavelength:" ),
+                    QString::number( iwvln ) + " nm" ) + 
+         table_row( tr( "Baseline " ) + dataType, bln_od );
+         table_row( tr( "Meniscus Position:" ),
+                    le_meniscus->text() + " cm" );
+
+
+   ss += table_row( tr( "Edited Data starts at:"  ), left + " cm" ) +
+         table_row( tr( "Edited Data stops at:"   ), right + " cm " ) +
+         table_row( tr( "Plateau Position:"   ), plat + " cm" ); 
+
+   ss += indent( 4 ) + "</table>\n";
+
+   return ss;
+}
+
+QString US_Edit::scan_info( void )
+{
+   US_DataIO::RawData* dd  = outData[ index_data() ];
+   double time_correction  = US_Math2::time_correction( allData );
+
+   QString ss = "\n" + indent( 4 ) + tr( "<h3>Scan Information:</h3>\n" )
+               + indent( 4 ) + "<table>\n"; 
+         
+   ss += table_row( tr( "Scan" ), tr( "Corrected Time" ), 
+                   tr( "Plateau Concentration" ),
+                   tr( "Seconds" ), tr( "Omega^2T" ) );
+
+   for ( int ii = 0; ii < dd->scanData.size(); ii++ )
+   {
+      QString s1;
+      QString s2;
+      QString s3;
+      QString s4;
+      QString s5;
+
+      double time  = dd->scanData[ ii ].seconds;
+      double omg2t = dd->scanData[ ii ].omega2t;
+      int    ctime = (int)( dd->scanData[ ii ].seconds - time_correction ); 
+      int    platx = US_DataIO::index( dd->xvalues, plateau );
+      double od    = dd->scanData[ ii ].rvalues[ platx ];
+
+      s1 = s1.sprintf( "%4d",             ii + 1 );
+      s2 = s2.sprintf( "%4d min %2d sec", ctime / 60, ctime % 60 );
+      s3 = s3.sprintf( "%.6f OD",         od ); 
+      s4 = s4.sprintf( "%5d",             (int)time );
+      s5 = s5.sprintf( "%.5e",            omg2t );
+
+      ss += table_row( s1, s2, s3, s4, s5 );
+   }
+
+   ss += indent( 4 ) + "</table>\n";
+   
+   return ss;
 }
 
