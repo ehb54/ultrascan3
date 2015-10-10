@@ -120,6 +120,7 @@ class US_Edit : public US_Widgets
       QLineEdit*         le_edtrsp;
                         
       QPushButton*       pb_details;
+      QPushButton*       pb_report;
       QPushButton*       pb_exclude;
       QPushButton*       pb_excludeRange;
       QPushButton*       pb_exclusion;
@@ -304,6 +305,24 @@ class US_Edit : public US_Widgets
       int  lambdas_by_cell   ( int = -1 );
       double radius_indexed  ( const double );
                              
+      QString      indent       ( int );
+      QString      html_header  ( const QString, const QString );
+      QString      run_details  ( void );
+      QString      scan_info    ( void );
+      QString      table_row    ( const QString, const QString );
+      QString      table_row    ( const QString, const QString,
+                                  const QString );
+      QString      table_row    ( const QString, const QString,
+                                  const QString, const QString,
+                                  const QString );
+      QString      table_row    ( const QString, const QString,
+                                  const QString, const QString,
+                                  const QString, const QString,
+                                  const QString );
+
+      void create_report     ( QString& );
+      void view_report       ( void );
+      void save_report       ( const QString, const QString, const int );
       void reset             ( void );
       void reset_triple      ( void );
       void reset_outData     ( void );

@@ -636,26 +636,60 @@ double US_Math2::time_correction(
 
    QVector< double > vecx( size );
    QVector< double > vecy( size );
-   double* x = vecx.data();
-   double* y = vecy.data();
+   double* xx = vecx.data();
+   double* yy = vecy.data();
    
-   double c[ 2 ];  // Looking for a linear fit
+   double cc[ 2 ];  // Looking for a linear fit
 
-   for ( int i = 0; i < dataList.size(); i++ )
+   for ( int ii = 0; ii < dataList.size(); ii++ )
    {
-      const US_DataIO::EditedData* e = &dataList[ i ];
+      const US_DataIO::EditedData* ee = &dataList[ ii ];
 
-      for ( int j = 0; j < e->scanData.size(); j++ )
+      for ( int jj = 0; jj < ee->scanData.size(); jj++ )
       {
-        x[ count ] = e->scanData[ j ].omega2t;
-        y[ count ] = e->scanData[ j ].seconds;
+        xx[ count ] = ee->scanData[ jj ].omega2t;
+        yy[ count ] = ee->scanData[ jj ].seconds;
         count++;
       }
    }
 
-   US_Matrix::lsfit( c, x, y, count, 2 );
+   US_Matrix::lsfit( cc, xx, yy, count, 2 );
 
-   return c[ 0 ]; // Return the time value corresponding to zero omega2t
+   return cc[ 0 ]; // Return the time value corresponding to zero omega2t
+}
+
+double US_Math2::time_correction(
+      const QVector< US_DataIO::RawData >& dataList )
+{
+   int size  = dataList[ 0 ].scanData.size();
+
+   for ( int ii = 1; ii < dataList.size(); ii++ )
+      size += dataList[ ii ].scanData.size();
+
+   int count = 0;
+
+   QVector< double > vecx( size );
+   QVector< double > vecy( size );
+   double* xx = vecx.data();
+   double* yy = vecy.data();
+   
+   double cc[ 2 ];  // Looking for a linear fit
+
+   for ( int ii = 0; ii < dataList.size(); ii++ )
+   {
+      const US_DataIO::RawData* ee = &dataList[ ii ];
+
+      for ( int jj = 0; jj < ee->scanData.size(); jj++ )
+      {
+        xx[ count ] = ee->scanData[ jj ].omega2t;
+        yy[ count ] = ee->scanData[ jj ].seconds;
+        count++;
+      }
+   }
+
+   US_Matrix::lsfit( cc, xx, yy, count, 2 );
+
+   return cc[ 0 ]; // Return the time value corresponding to zero omega2t
 }
 
 uint US_Math2::randomize( void )

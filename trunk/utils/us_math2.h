@@ -193,8 +193,12 @@ class US_UTIL_EXTERN US_Math2
       //! \brief Calculate the time correction in a run due to acceleration
       //!        of the rotor.
       //! \param dataList The list of editedData for the run
-
       static double time_correction( const QVector< US_DataIO::EditedData >& );
+
+      //! \brief Calculate the time correction in a run due to acceleration
+      //!        of the rotor.
+      //! \param dataList The list of rawData for the run
+      static double time_correction( const QVector< US_DataIO::RawData >& );
 
       //! \brief Set the sysem random sequence.
       //! \return The seed used to set the system time

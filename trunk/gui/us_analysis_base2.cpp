@@ -1198,24 +1198,31 @@ QString US_AnalysisBase2::scan_info( void ) const
                + indent( 4 ) + "<table>\n"; 
          
    s += table_row( tr( "Scan" ), tr( "Corrected Time" ), 
-                   tr( "Plateau Concentration" ) );
+                   tr( "Plateau Concentration" ),
+                   tr( "Seconds" ), tr( "Omega^2T" ) );
 
-   for ( int i = 0; i < d->scanData.size(); i++ )
+   for ( int ii = 0; ii < d->scanData.size(); ii++ )
    {
-      if ( excludedScans.contains( i ) ) continue;
+      if ( excludedScans.contains( ii ) ) continue;
 
       QString s1;
       QString s2;
       QString s3;
+      QString s4;
+      QString s5;
 
-      double od   = d->scanData[ i ].plateau;
-      int    time = (int)( d->scanData[ i ].seconds - time_correction ); 
+      double od    = d->scanData[ ii ].plateau;
+      double time  = d->scanData[ ii ].seconds;
+      double omg2t = d->scanData[ ii ].omega2t;
+      int    ctime = (int)( time - time_correction ); 
 
-      s1 = s1.sprintf( "%4d",             i + 1 );
-      s2 = s2.sprintf( "%4d min %2d sec", time / 60, time % 60 );
+      s1 = s1.sprintf( "%4d",             ii + 1 );
+      s2 = s2.sprintf( "%4d min %2d sec", ctime / 60, ctime % 60 );
       s3 = s3.sprintf( "%.6f OD",         od ); 
+      s4 = s4.sprintf( "%5d",             (int)time ); 
+      s5 = s5.sprintf( "%.5e",            omg2t ); 
 
-      s += table_row( s1, s2, s3 );
+      s += table_row( s1, s2, s3, s4, s5 );
    }
 
    s += indent( 4 ) + "</table>\n";
