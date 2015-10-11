@@ -204,6 +204,7 @@ class US_FeMatch : public US_Widgets
       void    load_noise(       void );
       double  interp_sval( double, double*, double*,  int );
       void    write_report(   QTextStream& );
+      void    write_dset_report( QString& );
       QString indent    (     int  )  const;
       QString text_model(     US_Model, int );
       double  calc_baseline(  int  )  const;
@@ -220,7 +221,7 @@ class US_FeMatch : public US_Widgets
                          const QString&, const QString&,
                          const QString& )                 const;
       QString html_header   ( QString, QString, US_DataIO::EditedData* );
-      QString data_details  ( void )                      const;
+      QString run_details   ( void )                      const;
       QString hydrodynamics ( void )                      const;
       QString scan_info     ( void )                      const;
       QString distrib_info  ( void );

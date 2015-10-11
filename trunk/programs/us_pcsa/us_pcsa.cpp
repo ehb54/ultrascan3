@@ -782,6 +782,9 @@ DbgLv(1) << "SV:  Post-write tno rno" << tino << rino;
    QString ptmp4File = tmppath  + "PCSA" + dext + ".mlines."
                        + QString::number( getpid() ) + ".png";
 DbgLv(1) << "mlines ptmp4File" << ptmp4File;
+   QString analynode = "/" + analysisType + ".";
+   QString dsinfFile = QString( filebase ).replace( analynode, "/dsinfo." )
+                       + "dataset_info.html";
 
    // Write HTML report file
    QFile rep_f( htmlFile );
@@ -792,6 +795,9 @@ DbgLv(1) << "mlines ptmp4File" << ptmp4File;
    QTextStream ts( &rep_f );
    write_report( ts );
    rep_f.close();
+
+   // Write a general dataset information html file
+   write_dset_report( dsinfFile );
 
    // Write plots
    write_plot( plot1File, data_plot2 );
@@ -820,12 +826,14 @@ DbgLv(1) << "mlines ptmp4File" << ptmp4File;
 
    // list report and plot files
    wmsg = wmsg + htmlFile  + "\n"
+               + dsinfFile + "\n"
                + plot1File + "\n"
                + plot2File + "\n"
                + plot3File + "\n"
                + plot4File + "\n";
    QStringList repfiles;
    update_filelist( repfiles, htmlFile  );
+   update_filelist( repfiles, dsinfFile );
    update_filelist( repfiles, plot1File );
    update_filelist( repfiles, plot2File );
    update_filelist( repfiles, plot3File );
