@@ -1584,7 +1584,8 @@ DbgLv(1) << "CGui: (5)referDef=" << referenceDefined;
    if ( ! init_output_data() )
       return;
 
-DbgLv(1) << "CGui: ldUS3Dk: fromIOD: sz(trinfo)" << all_tripinfo.count();
+DbgLv(1) << "CGui: ldUS3Dk: fromIOD: sz(trinfo)" << all_tripinfo.count()
+ << "sz(chinfo)" << all_chaninfo.size();
 
    // Copy solution and centerpiece info to channel vectors
    int         cCenterpiece = all_tripinfo[ 0 ].centerpiece;
@@ -4552,7 +4553,10 @@ DbgLv(1) << "CGui:IOD:  isMwl" << isMwl << "c.count t.count"
       isMwl            = false;
       all_chaninfo     = all_tripinfo;
       out_chaninfo     = out_tripinfo;
-DbgLv(1) << "CGui:IOD:    isMwl" << isMwl << "c.count t.count"
+      out_chandatx.clear();
+      for ( int jj = 0; jj < out_tripinfo.count(); jj++ )
+         out_chandatx << jj;
+DbgLv(1) << "CGui:IOD:    isMwl" << isMwl << "ac.count at.count oc.count"
  << all_chaninfo.count() << all_tripinfo.count() << out_chaninfo.count();
    }
 
