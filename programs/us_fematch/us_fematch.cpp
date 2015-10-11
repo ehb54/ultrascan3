@@ -1055,21 +1055,27 @@ QDateTime time0=QDateTime::currentDateTime();
    QStringList files;
    int drow = lw_triples->currentRow();
    mkdir( US_Settings::reportDir(), edata->runID );
-   QString tripnode = QString( triples.at( drow ) ).replace( " / ", "" );
-   QString basename = US_Settings::reportDir() + "/" + edata->runID + "/"
+   QString tripnode  = QString( triples.at( drow ) ).replace( " / ", "" );
+   QString basename  = US_Settings::reportDir() + "/" + edata->runID + "/"
       + text_model( model, 0 ) + "." + tripnode + ".";
-   QString htmlFile = basename + "report.html";
+   QString htmlFile  = basename + "report.html";
+   QString dsinfFile = basename.section( "/", 0, -2 ) + "/dsinfo."
+                       + tripnode + ".dataset_info.html";
+
+   // Write the main report file
    QFile rep_f( htmlFile );
    if ( ! rep_f.open( QIODevice::WriteOnly | QIODevice::Text ) )
       return;
 
    QTextStream ts( &rep_f );
-
-   // save the report to a file
    write_report( ts );
 
    rep_f.close();
    update_filelist( files, htmlFile );
+
+   // Write a general dataset info report file
+   write_dset_report( dsinfFile );
+   update_filelist( files, dsinfFile );
 
    const QString svgext( ".svgz" );
    const QString pngext( ".png" );
@@ -2365,11 +2371,37 @@ double US_FeMatch::interp_sval( double xv, double* sx, double* sy, int ssize )
 void US_FeMatch::write_report( QTextStream& ts )
 {
    ts << html_header( "US_Fematch", text_model( model, 2 ), edata );
-//   ts << data_details();
+//   ts << run_details();
 //   ts << hydrodynamics();
 //   ts << scan_info();
    ts << distrib_info();
    ts << "  </body>\n</html>\n";
+}
+
+// Write a general dataset information HTML report file
+void US_FeMatch::write_dset_report( QString& dsfname )
+{
+   QFile f_rep( dsfname );
+
+   if ( ! f_rep.open( QIODevice::WriteOnly | QIODevice::Truncate ) )
+      return;
+
+   QTextStream ts( &f_rep );
+
+   int drow      = lw_triples->currentRow();
+   US_DataIO::EditedData* edata = &dataList[ drow ];
+
+   QString title = "US_Fematch";
+   QString head1 = tr( "General Data Set Information" );
+
+   ts << html_header( title, head1, edata );
+   ts << run_details();
+   ts << hydrodynamics();
+   ts << scan_info();
+   ts << indent( 2 ) + "</body>/n</html>\n";
+
+   f_rep.close();
+   return;
 }
 
 // Calculate average baseline absorbance
@@ -2639,7 +2671,7 @@ QString US_FeMatch::html_header( QString title, QString head1,
 }
 
 // Compose data details text
-QString US_FeMatch::data_details( void ) const
+QString US_FeMatch::run_details( void ) const
 {
    int    drow     = lw_triples->currentRow();
    const US_DataIO::EditedData* d      = &dataList[ drow ];
@@ -2780,22 +2812,29 @@ QString US_FeMatch::scan_info( void ) const
                + indent( 4 ) + "<table>\n"; 
          
    s += table_row( tr( "Scan" ), tr( "Corrected Time" ), 
-                   tr( "Plateau Concentration" ) );
+                   tr( "Plateau Concentration" ),
+                   tr( "Seconds" ), tr( "Omega^2T" ) );
 
    for ( int i = 0; i < d->scanData.size(); i++ )
    {
       QString s1;
       QString s2;
       QString s3;
+      QString s4;
+      QString s5;
 
-      double od   = d->scanData[ i ].plateau;
-      int    time = (int)( d->scanData[ i ].seconds - time_correction ); 
+      double od    = d->scanData[ i ].plateau;
+      double time  = d->scanData[ i ].seconds;
+      double omg2t = d->scanData[ i ].omega2t;
+      int    ctime = (int)( time - time_correction ); 
 
       s1 = s1.sprintf( "%4d",             i + 1 );
-      s2 = s2.sprintf( "%4d min %2d sec", time / 60, time % 60 );
+      s2 = s2.sprintf( "%4d min %2d sec", ctime / 60, ctime % 60 );
       s3 = s3.sprintf( "%.6f OD",         od ); 
+      s4 = s4.sprintf( "%5d",             (int)time ); 
+      s5 = s5.sprintf( "%.5e",            omg2t );
 
-      s += table_row( s1, s2, s3 );
+      s += table_row( s1, s2, s3, s4, s5 );
    }
 
    s += indent( 4 ) + "</table>\n";
