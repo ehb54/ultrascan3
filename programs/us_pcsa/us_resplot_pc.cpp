@@ -20,7 +20,7 @@ US_ResidPlotPc::US_ResidPlotPc( QWidget* parent )
                        "Data/Residuals Viewer" ) );
    setPalette( US_GuiSettings::frameColor() );
 
-   QSize p1size( 560, 240 );
+   QSize p1size( 560, 360 );
    QSize p2size( 560, 240 );
 
    dbg_level       = US_Settings::us_debug();
@@ -817,5 +817,17 @@ DbgLv(1) << "Resids BitMap Closed!!!";
    resbmap = 0;
    have_bm = false;
    ck_shorbm->setChecked( false );
+}
+
+// Return a pointer to the QwtPlot for the upper plot
+QwtPlot* US_ResidPlotPc::rp_data_plot1()
+{
+   return data_plot1;
+}
+
+// Return a pointer to the QwtPlot for the lower plot
+QwtPlot* US_ResidPlotPc::rp_data_plot2()
+{
+   return data_plot2;
 }
 

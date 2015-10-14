@@ -750,6 +750,7 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
    QString plot1File = filebase + "velocity.svgz";
    QString plot2File = filebase + "residuals.png";
    QString plot3File = filebase + "rbitmap.png";
+   QString plot4File = filebase + "es_overlay.svgz";
    QString fitFile   = filebase + "fitmen.dat";
    QString fresFile  = respath  + "2dsa-fm" + dext2 + ".fitmen.dat";
    QString dsinfFile = QString( filebase ).replace( analynode, "/dsinfo." )
@@ -768,10 +769,19 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
    write_report( ts );
    rep_f.close();
 
+   if ( resplotd == NULL )
+   {
+      resplotd = new US_ResidPlot2D( this );
+      resplotd->move( rbd_pos );
+      resplotd->setVisible( true );
+      connect( resplotd, SIGNAL( destroyed() ), this, SLOT( resplot_done() ) );
+   }
+
    // Write plots
    write_plot( plot1File, data_plot2 );
-   write_plot( plot2File, data_plot1 );
+   write_plot( plot2File, resplotd->rp_data_plot2() );
    write_bmap( plot3File );
+   write_plot( plot4File, resplotd->rp_data_plot1() );
    
    // use a dialog to tell the user what we've output
    QString wmsg = tr( "Wrote:\n" );
@@ -818,12 +828,14 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
    wmsg = wmsg + htmlFile  + "\n"
                + plot1File + "\n"
                + plot2File + "\n"
-               + plot3File + "\n";
+               + plot3File + "\n"
+               + plot4File + "\n";
    QStringList repfiles;
    update_filelist( repfiles, htmlFile  );
    update_filelist( repfiles, plot1File );
    update_filelist( repfiles, plot2File );
    update_filelist( repfiles, plot3File );
+   update_filelist( repfiles, plot4File );
 
    // Add fit files if fit-meniscus
    if ( fitMeni )
@@ -900,6 +912,7 @@ void US_2dsa::open_resplot()
    resplotd = new US_ResidPlot2D( this );
    resplotd->move( rbd_pos );
    resplotd->setVisible( true );
+   connect( resplotd, SIGNAL( destroyed() ), this, SLOT( resplot_done() ) );
 }
 
 // Open 3-D plot control window
@@ -1337,5 +1350,11 @@ QString US_2dsa::fit_meniscus_data()
    }
    
    return mstr;
+}
+
+// Public slot to mark residual plot dialog closed
+void US_2dsa::resplot_done()
+{
+   resplotd     = 0;
 }
 

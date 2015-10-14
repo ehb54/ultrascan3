@@ -211,7 +211,13 @@ void US_ResidPlotFem::set_plot( int plotf )
    }
 }
 
-// return a pointer to the QwtPlot for the lower plot
+// Return a pointer to the QwtPlot for the upper plot
+QwtPlot* US_ResidPlotFem::rp_data_plot1()
+{
+   return data_plot1;
+}
+
+// Return a pointer to the QwtPlot for the lower plot
 QwtPlot* US_ResidPlotFem::rp_data_plot2()
 {
    return data_plot2;

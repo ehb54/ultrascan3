@@ -931,18 +931,25 @@ US_Report::Status US_Report::saveFileDocuments( const QString& dir,
       {
          tdnames << filename;
          tdNdxs  << ii;
+//qDebug() << "RPT: trip docs filename" << filename << "ii" << ii;
       }
+//else
+//qDebug() << "RPT:  MISS: trip docs filename" << filename << "ii" << ii
+// << "tidEdit" << tidEdit << "idEdit" << idEdit;
    }
+//qDebug() << "RPT: tdNdxs.count()" << tdNdxs.count() << "nfiles" << nfiles;
 
    // Add any new documents to the triple's list
-   if ( tdNdxs.count() < nfiles )
+   //if ( tdNdxs.count() < nfiles )
    {
       for ( int ii = 0; ii < nfiles; ii++ )
       {  // Examine each specified file name
          filename           = filenames[ ii ];
+//qDebug() << "RPT:  fnames filename" << filename << "ii" << ii;
 
          if ( !tdnames.contains( filename ) )
          {  // This document is new and needs to be added to the triple's list
+//qDebug() << "RPT:    NEW to triple doc";
             US_Report::ReportDocument rdoc;
             QString newAnal    = filename.section( ".", -4, -4 );
             QString newSubanal = filename.section( ".", -2, -2 );
@@ -982,6 +989,7 @@ US_Report::Status US_Report::saveFileDocuments( const QString& dir,
             rdoc.documentID    = db->lastInsertID();  // Save doc DB Id
 
             trip->docs << rdoc;                       // Add to triple's docs
+//qDebug() << "RPT:    new_reportDoc (no error) docID" << rdoc.documentID;
 
             tdnames << filename;                      // Save doc file name
             tdNdxs  << ntdocs;                        // Save index in doc list
