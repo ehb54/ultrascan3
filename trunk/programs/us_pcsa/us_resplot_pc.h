@@ -24,6 +24,12 @@ class US_ResidPlotPc : public US_WidgetsDialog
       //! \param parent  A pointer to the parent widget of this one
       US_ResidPlotPc( QWidget* );
 
+      //! \brief Return a QwtPlot pointer for the upper plot
+      QwtPlot* rp_data_plot1();
+
+      //! \brief Return a QwtPlot pointer for the lower plot
+      QwtPlot* rp_data_plot2();
+
    private:
       QHBoxLayout*  mainLayout;
       QVBoxLayout*  leftLayout;

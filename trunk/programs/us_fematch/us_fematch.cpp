@@ -1093,6 +1093,7 @@ QDateTime time0=QDateTime::currentDateTime();
    QString img11File = basename + "rbitmap"    + pngext;
    QString img12File = basename + "tinoise"    + svgext;
    QString img13File = basename + "rinoise"    + svgext;
+   QString img14File = basename + "es_overlay" + svgext;
    QString mdistFile = basename + "mdistr_tab" + csvext;
 
    if ( !cnstvb )
@@ -1195,16 +1196,21 @@ DbgLv(1) << "(9)p1type" << p1type;
    write_plot( img11File, NULL );
    update_filelist( files, img11File );
 
+   // Save the upper experiment-simulation overlay plot
+   if ( resplotd == 0 )
+   {
+      resplotd = new US_ResidPlotFem( this );
+      resplotd->move( rpd_pos );
+      resplotd->show();
+      connect( resplotd, SIGNAL( destroyed() ), this, SLOT( resplot_done() ) );
+   }
+
+   write_plot( img14File, resplotd->rp_data_plot1() );
+   update_filelist( files, img14File );
+
    // save any noise plots
    if ( ti_noise.count > 0 )
    {
-      if ( resplotd == 0 )
-      {
-         resplotd = new US_ResidPlotFem( this );
-         resplotd->move( rpd_pos );
-         resplotd->show();
-      }
-
       resplotd->set_plot( 1 );
       QwtPlot* nois_plot = resplotd->rp_data_plot2();
       write_plot( img12File, nois_plot );
@@ -1213,13 +1219,6 @@ DbgLv(1) << "(9)p1type" << p1type;
 
    if ( ri_noise.count > 0 )
    {
-      if ( resplotd == 0 )
-      {
-         resplotd = new US_ResidPlotFem( this );
-         resplotd->move( rpd_pos );
-         resplotd->show();
-      }
-
       resplotd->set_plot( 2 );
       QwtPlot* nois_plot = resplotd->rp_data_plot2();
       write_plot( img13File, nois_plot );
@@ -1762,6 +1761,7 @@ void US_FeMatch::plotres( )
    resplotd = new US_ResidPlotFem( this );
    resplotd->move( rpd_pos );
    resplotd->show();
+   connect( resplotd, SIGNAL( destroyed() ), this, SLOT( resplot_done() ) );
 }
 
 // Load the model data and detect if it is RA
@@ -3837,5 +3837,11 @@ void US_FeMatch::update_mc_model()
 void US_FeMatch::simulate()
 {
    simulate_model();
+}
+
+// Public slot to mark residuals plot dialog closed
+void US_FeMatch::resplot_done()
+{
+   resplotd   = 0;
 }
 

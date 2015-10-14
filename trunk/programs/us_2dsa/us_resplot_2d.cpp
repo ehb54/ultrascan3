@@ -17,7 +17,7 @@ US_ResidPlot2D::US_ResidPlot2D( QWidget* parent = 0 )
    setWindowTitle( tr( "2-D Spectrum Analysis Data/Residuals Viewer" ) );
    setPalette( US_GuiSettings::frameColor() );
 
-   QSize p1size( 560, 240 );
+   QSize p1size( 560, 360 );
    QSize p2size( 560, 240 );
 
    dbg_level       = US_Settings::us_debug();
@@ -803,5 +803,17 @@ DbgLv(1) << "Resids BitMap Closed!!!";
    resbmap = 0;
    have_bm = false;
    ck_shorbm->setChecked( false );
+}
+
+// Return a QwtPlot pointer to the upper plot
+QwtPlot* US_ResidPlot2D::rp_data_plot1()
+{
+   return data_plot1;
+}
+
+// Return a QwtPlot pointer to the lower plot
+QwtPlot* US_ResidPlot2D::rp_data_plot2()
+{
+   return data_plot2;
 }
 

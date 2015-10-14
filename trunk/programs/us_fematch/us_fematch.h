@@ -48,6 +48,7 @@ class US_FeMatch : public US_Widgets
       void    thread_progress( int, int );
       void    thread_complete( int );
       void    simulate( void );
+      void    resplot_done( void );
 
    private:
 

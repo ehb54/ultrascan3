@@ -89,6 +89,7 @@
     <extension name="csv" label="Comma Separated Values" mimetype="text/csv" />
     <report name="report" label="Analysis Report" />
     <report name="velocity" label="Velocity Data Scans" />
+    <report name="es_overlay" label="Experiment-Simulation Overlay" />
     <report name="residuals" label="Experiment-Simulation Residuals" />
     <report name="rbitmap" label="Residuals Bit Map" />
     <report name="rinoise" label="Radially-Invariant Noise" />

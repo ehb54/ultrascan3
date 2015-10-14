@@ -779,6 +779,7 @@ DbgLv(1) << "SV:  Post-write tno rno" << tino << rino;
    QString plot2File = filebase + "residuals.png";
    QString plot3File = filebase + "rbitmap.png";
    QString plot4File = filebase + "mlines.png";
+   QString plot5File = filebase + "es_overlay.svgz";
    QString ptmp4File = tmppath  + "PCSA" + dext + ".mlines."
                        + QString::number( getpid() ) + ".png";
 DbgLv(1) << "mlines ptmp4File" << ptmp4File;
@@ -800,9 +801,19 @@ DbgLv(1) << "mlines ptmp4File" << ptmp4File;
    write_dset_report( dsinfFile );
 
    // Write plots
+   if ( resplotd == 0 )
+   {
+      resplotd = new US_ResidPlotPc( this );
+      resplotd->move( rbd_pos );
+      resplotd->setVisible( true );
+      connect( resplotd, SIGNAL( destroyed   ( QObject *) ),
+               this,     SLOT(   child_closed( QObject* ) ) );
+   }
+
    write_plot( plot1File, data_plot2 );
-   write_plot( plot2File, data_plot1 );
+   write_plot( plot2File, resplotd->rp_data_plot2() );
    write_bmap( plot3File );
+   write_plot( plot5File, resplotd->rp_data_plot1() );
 
    QFile::remove( plot4File );
    if ( QFile::copy  ( ptmp4File, plot4File ) )
@@ -830,7 +841,8 @@ DbgLv(1) << "mlines ptmp4File" << ptmp4File;
                + plot1File + "\n"
                + plot2File + "\n"
                + plot3File + "\n"
-               + plot4File + "\n";
+               + plot4File + "\n"
+               + plot5File + "\n";
    QStringList repfiles;
    update_filelist( repfiles, htmlFile  );
    update_filelist( repfiles, dsinfFile );
@@ -838,6 +850,7 @@ DbgLv(1) << "mlines ptmp4File" << ptmp4File;
    update_filelist( repfiles, plot2File );
    update_filelist( repfiles, plot3File );
    update_filelist( repfiles, plot4File );
+   update_filelist( repfiles, plot5File );
 
    if ( disk_controls->db() )
    {  // Write report files to the database

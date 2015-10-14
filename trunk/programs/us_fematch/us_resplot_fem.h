@@ -27,6 +27,9 @@ class US_ResidPlotFem : public US_WidgetsDialog
       //! \param plotf Flag plot to force: 1,2 == ti_noise,ri_noise
       void set_plot( int );
 
+      //! \brief Return a QwtPlot pointer for the upper plot
+      QwtPlot* rp_data_plot1();
+
       //! \brief Return a QwtPlot pointer for the lower plot
       QwtPlot* rp_data_plot2();
 
