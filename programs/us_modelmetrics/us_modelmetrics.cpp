@@ -197,6 +197,12 @@ US_ModelMetrics::US_ModelMetrics() : US_Widgets()
 
    data_plot->setCanvasBackground( Qt::black );
 
+	pick = new US_PlotPicker( data_plot );
+	// Set rubber band to display for Control+Left Mouse Button
+	pick->setRubberBand  ( QwtPicker::VLineRubberBand );
+	pick->setMousePattern( QwtEventPattern::MouseSelect1,
+			Qt::LeftButton, Qt::ControlModifier );
+
    QGridLayout* gl0;
    gl0 = new QGridLayout();
 

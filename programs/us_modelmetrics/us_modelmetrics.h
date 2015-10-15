@@ -112,6 +112,7 @@ class US_ModelMetrics : public US_Widgets
       US_Help            showHelp;
       US_Editor*         te;
       US_Model*          model;
+		US_PlotPicker*     pick;
       QPushButton*       pb_load_model;
       QPushButton*       pb_prefilter;
       QPushButton*       pb_report;
