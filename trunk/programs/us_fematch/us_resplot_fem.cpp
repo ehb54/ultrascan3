@@ -17,7 +17,7 @@ US_ResidPlotFem::US_ResidPlotFem( QWidget* parent = 0 )
    setWindowTitle( tr( "Finite Element Data/Residuals Viewer" ) );
    setPalette( US_GuiSettings::frameColor() );
 
-   QSize p1size( 560, 240 );
+   QSize p1size( 560, 360 );
    QSize p2size( 560, 240 );
 
    dbg_level       = US_Settings::us_debug();

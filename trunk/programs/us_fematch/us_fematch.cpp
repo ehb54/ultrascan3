@@ -1093,7 +1093,7 @@ QDateTime time0=QDateTime::currentDateTime();
    QString img11File = basename + "rbitmap"    + pngext;
    QString img12File = basename + "tinoise"    + svgext;
    QString img13File = basename + "rinoise"    + svgext;
-   QString img14File = basename + "es_overlay" + svgext;
+   QString img14File = basename + "velocity_nc" + svgext;
    QString mdistFile = basename + "mdistr_tab" + csvext;
 
    if ( !cnstvb )
