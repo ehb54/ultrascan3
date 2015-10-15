@@ -750,7 +750,7 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
    QString plot1File = filebase + "velocity.svgz";
    QString plot2File = filebase + "residuals.png";
    QString plot3File = filebase + "rbitmap.png";
-   QString plot4File = filebase + "es_overlay.svgz";
+   QString plot4File = filebase + "velocity_nc.svgz";
    QString fitFile   = filebase + "fitmen.dat";
    QString fresFile  = respath  + "2dsa-fm" + dext2 + ".fitmen.dat";
    QString dsinfFile = QString( filebase ).replace( analynode, "/dsinfo." )

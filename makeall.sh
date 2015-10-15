@@ -24,6 +24,11 @@ if [ `uname -s|grep -ci "cygwin"` -ne 0 ]; then
   exit 1
 fi
 
+ISL64=0
+if [ `uname -p|grep -ci "x86_64"` -ne 0 ]; then
+  ISL64=1
+fi
+
 DIR=$(pwd)
 rm -f build.log
 NBERR=0
@@ -71,7 +76,7 @@ if [ $ISWIN -eq 0 ]; then
 fi
 
 if [ $ISMAC -eq 0 ]; then
-  if [ $ISWIN -eq 0 ]; then
+  if [ $ISWIN -eq 0 -a $ISL64 -eq 0 ]; then
     if [ -d somo ]; then
       # insure doxygen skips somo source
       if [ ! -d tcltk ]; then
@@ -83,6 +88,8 @@ if [ $ISMAC -eq 0 ]; then
     else
       doxygen >> $DIR/build.log
     fi
+  else
+    echo "NO Doxygen used"
   fi
 else
   $DIR/libnames.sh >> $DIR/build.log

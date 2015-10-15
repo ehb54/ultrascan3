@@ -779,7 +779,7 @@ DbgLv(1) << "SV:  Post-write tno rno" << tino << rino;
    QString plot2File = filebase + "residuals.png";
    QString plot3File = filebase + "rbitmap.png";
    QString plot4File = filebase + "mlines.png";
-   QString plot5File = filebase + "es_overlay.svgz";
+   QString plot5File = filebase + "velocity_nc.svgz";
    QString ptmp4File = tmppath  + "PCSA" + dext + ".mlines."
                        + QString::number( getpid() ) + ".png";
 DbgLv(1) << "mlines ptmp4File" << ptmp4File;
