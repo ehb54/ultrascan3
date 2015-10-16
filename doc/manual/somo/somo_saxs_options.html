@@ -23,7 +23,7 @@
 <h2>
 SOMO - SAXS/SANS Simulation Options:</h2></center>
 
-<h3><center>Last updated: November 2013</center></h3><p>
+<h3><center>Last updated: May 2015</center></h3><p>
 <center><span style="color:#CC0000">NOTICE: portions of this help file are taken from the Supplementary Materials of "Brookes et al. Fibrinogen species as resolved by HPLC-SAXS data processing within the UltraScan SOlution MOdeler (US SOMO) enhanced SAS module",<br> J. Appl. Cryst., 46:1823-1833 (2013).</span>
 </center>
 <p><center>
@@ -202,13 +202,13 @@ The <b><i>Minimum number of points:</i></b> to be included in the analysis (defa
 The <b><i>Maximum number of points:</i></b> to be included in the analysis (default: <b>100</b>).<p>
 </ul><p>
 
-The <b><i>MW and M/L computation options</i></b> section deals with the parameters that are necessary to perform a correct calculation of <i>&lt;M&gt;<sub>w</sub></i> or <i>&lt;M/L&gt;<sub>w/z</sub></i> or <i>&lt;M/A&gt;<sub>w/z</sub></i>. The conversion from the corresponding experimental <i>&lt;I<sub>exp</sub>(0)&gt;<sub>w</sub></i> value is done by first putting the data on an absolute scale by normalizing for the intensity extrapolated to 0 scattering angle of a known standard, <sub><sub><sub><sub><sub><sub><sub><img SRC="somo-SAXS_I0_exp_std.png" ALT="I(0)std expt for SAXS"></sub></sub></sub></sub></sub></sub></sub>, according to:<p>
+The <b><i>MW and M/L computation options</i></b> section deals with the parameters that are necessary to perform a correct calculation of <i>&lt;M&gt;<sub>w</sub></i> or <i>&lt;M/L&gt;<sub>w/z</sub></i> or <i>&lt;M/A&gt;<sub>w/z</sub></i>. The conversion from the corresponding experimental <i>&lt;I<sub>exp</sub>(0)&gt;<sub>w</sub></i> value is done by first putting the data on an absolute scale by normalizing for the intensity extrapolated to 0 scattering angle of a known standard, <sub><sub><sub><sub><sub><img SRC="somo-SAXS_I0_exp_std.png" ALT="I(0)std expt for SAXS"></sub></sub></sub></sub></sub>, according to:<p>
 
 <img SRC="somo-SAXS_norm_eq1.png" ALT="Normalization for SAXS"> <p>
 
-Then the reduced <sub><sub><sub><sub><sub><img SRC="somo-SAXS_I0_star.png" ALT="I(0)* for SAXS"></sub></sub></sub></sub></sub> in g mol<sup>-1</sup> are obtained as:<p>
+Then the reduced <sub><sub><sub><img SRC="somo-SAXS_I0_star.png" ALT="I(0)* for SAXS"></sub></sub></sub> in g mol<sup>-1</sup> are obtained as:<p>
 
-<img SRC="somo-SAXS_norm_eq2.png" ALT="I(0)* calculation for SAXS"> <p>
+<img SRC="somo-SAXS_norm_eq2corr.png" ALT="I(0)* calculation for SAXS"> <p>
 
 where <i>N</i><sub>A</sub> is Avogadro's number, <i>c</i> is the sample concentration [mg ml<sup>-1</sup>], <i>R<sub>e</sub></i> is the diffusion length of the electron [cm], <i>m<sub>n</sub></i> is the nucleon mass [g], <sub><sub><sub><sub><img SRC="vbar_symbol.png" ALT="vbar symbol"></sub></sub></sub></sub> is the partial specific volume of the particle [cm<sup>3</sup> g<sup>-1</sup>], &rho;<i><sub>e</sub></i> is the solvent electron density [e/cm<sup>3</sup>], and Z and A are the number of electrons and of nucleons, respectively, in the particle, whose ratio is usually taken as a constant specific for each class of biomacromolecules. <p>
 <p>
@@ -287,7 +287,7 @@ distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> Th
 </font>
 <p>
 <font face="helvetica" size="-1">
-Last modified on November 15, 2013.
+Last modified on May 5, 2015.
 </font>
 </body>
 </html>

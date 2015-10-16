@@ -73,7 +73,8 @@ SOMO uses only the first ("A") alternate conformation by default. In the future,
 provide the choice between the alternate conformations.
 
 <li>
-<b><i>Find free SH, change residue coding</i></b>. In the <i>somo.residue</i> file, cysteine
+<b><i>Find free SH, change residue coding</i></b>. <span style="color:#CC0000">Warning: not active! </span><br>
+In the <i>somo.residue</i> file, cysteine
 (CYS) is treated as if it's always engaged in a S-S bond with another cysteine (cystine). This
 is because currently there's no distinction in PDB files between cysteines and cystines. Since
 this involves slightly different physico-chemical parameters (e.g., two H atoms are lost when
@@ -111,7 +112,7 @@ options:
 <b><i>List them and stop operation</i></b>. This is the most rigorous option, and calls for
 properly define the "new" residue in the <i>somo.residue</i> (and in the <i>somo.atom</i>, if
 "new" atoms are also present) file(s). The program is therefore halted, waiting for proper action
-to be taken. Presently, this is the <b>default</b> option for this subpanel.
+to be taken.
 
 <li>
 <b><i>List them, skip residue and proceed</i></b>. This is the least rigorous option, as skipping
@@ -141,7 +142,7 @@ also provided for the ASA routines (see <a href=somo_asa.html>here</a>). The bea
 <a href=somo_misc.html><b><i>Miscellaneous Options</i></b></a> panel. However, the program will first
 perform a check to recognize if the non-coded residue has the structure of an amino acid (i.e., if the N, CA, C, and O atoms are
 <b>all</b> present). In this case, it will generate a standard "peptide bond" bead for these atoms, and a second bead for the non-coded side chain using the approximate method. In any case, as with the previous option, the approximations introduced in the molecular weight and partial specific volume can be bypassed by entering global values in the appropriate fields (respectively in the <a href=somo_hydro.html><b><i>SOMO Hydrodynamic Calculation Options</i></b></a> and in the 
-<a href=somo_misc.html><b><i>Miscellaneous Options</i></b></a> panels. As for the previous option, if this option is selected a pop-up window will appear asking for entering appropriate values for the global molecular weight and partial specific volume, and prompting to check the approximate method parameters.
+<a href=somo_misc.html><b><i>Miscellaneous Options</i></b></a> panels.This is now (May 2015) the <b>default</b> option for this subpanel. If non-coded residues are found in the uploaded file, a pop-up window will appear offering the alternative options to <b>continue</b> using the approximate method, suggesting to enter appropriate values for the global molecular weight and partial specific volume, and prompting to check the approximate method parameters, <b>skip</b> the whole residue, or <b>stop</b> the program execution, waiting for corrective action to be taken..
 </ul>
 </tr>
 
@@ -175,7 +176,7 @@ options:
 <ul>
 <li>
 <b><i>List them and stop operation (fix it with WHATIF)</i></b>. This is the most rigorous option, and calls for either manually build the missing atoms in the PDB file, or, for proteins, to use an automatic missing atom(s) builder such as WHATIF (<a href="http://swift.cmbi.ru.nl/servers/html/index.html">http://swift.cmbi.ru.nl/servers/html/index.html</a>; WARNING: WHATIF will <b>not</b> build missing <b>main chain </b> atoms, only
-<b>side chain</b> atoms). The program is therefore halted, waiting for proper action to be taken. Presently, this is the <b>default</b> option for this subpanel.
+<b>side chain</b> atoms). The program is therefore halted, waiting for proper action to be taken.
 
 <li>
 <b><i>List them, skip entire residue and proceed</i></b>. This is the least rigorous option, as skipping residues will affect the computations on two levels. First, if the skipped residues are exposed, their contribution to the hydrodynamics will be missed. Second, their contribution to the molecular weight and partial specific volume of the structure will be also missed, although this can be bypassed by entering global values in the appropriate fields (respectively in the <a href=somo_hydro.html><b><i>SOMO Hydrodynamic Calculation Options</i></b></a> and
@@ -198,9 +199,8 @@ In any case, if this option is selected, the pop-up window shown below will appe
 <li>
 <b><i>Use approximate method to generate bead</i></b>.
 This is a "patch" option, allowing to keep the original bead definitions. It is based on the assumption that the missing atoms were present in the original macromolecule, but could not be located experimentally. If the missing atoms are <b>not</b> among those defining the position of the bead, nothing is really affected. When one or more (but not all) the atoms determining the position are missing, the remaining ones are used to position the bead. If <b>all</b> the position-determining atoms are missing, then the bead will be positioned at the cog of all the atoms present. If <b>all</b> the atoms of a bead are missing, their parameters
-(mass, volume, hydration) will be added to those of the next bead, creating a single bead positioned on the cog of all atoms present. For instance, for an amino acid completely missing the side-chain, the peptide bond size and mass will be that of the original peptide bond <b>plus</b> that of the missing side chain, positioned as a regular peptide bond bead. For amino acids, if the missing atoms
-belong to the peptide bond segment, then the peptide bond rule (see <a href=somo_misc.html>here</a>) will be disallowed.<br>
-If coded residues contains extra or non-coded <i>atoms</i>, they will be treated as non-coded residues with the <i>automatic bead builder</i>. As for the previous option, if this option is selected a pop-up window will appear asking if it's OK to proceed.<br>
+(mass, volume, hydration) will be added to those of the next bead, creating a single bead positioned on the cog of all atoms present. For instance, for an amino acid completely missing the side-chain, the peptide bond size and mass will be that of the original peptide bond <b>plus</b> that of the missing side chain, positioned as a regular peptide bond bead. For amino acids, if the missing atoms belong to the peptide bond segment, then the peptide bond rule (see <a href=somo_misc.html>here</a>) will be disallowed.<br>
+If coded residues contains extra or non-coded <i>atoms</i>, they will be treated as non-coded residues with the <i>automatic bead builder</i>. This is now (May 2015) the <b>default</b> option for this subpanel. If missing atoms within coded residues are found, a pop-up window will appear asking if it's OK to proceed.<br>
 
 
 </ul>
@@ -231,7 +231,7 @@ distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> Th
 </font>
 <p>
 <font face="helvetica" size="-1">
-Last modified on January 31, 2010.
+Last modified on April 15, 2015.
 </font>
 </body>
 </html>

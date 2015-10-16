@@ -22,7 +22,7 @@
 <center>
 <h2>
 SOMO HPLC-SAXS Module: Gaussians with distorsion(s) operations</h2></center>
-<h3><center>Last updated: May 2014 </center></h3><p>
+<h3><center>Last updated: July 2015 </center></h3><p>
 
 This manual part describes the Gaussian analysis and decomposition operations using non symmetrical (skewed, distorted) Gaussians. The dataset we will use as an example is the same HPLC-SAXS analysis of Aldolase that is used to demonstrate the linear baseline operations (see <a href=somo_saxs_hplc_linear_baselines.html>here</a>):<p>
 
@@ -82,12 +82,7 @@ Bringing in the SD and releasing all constraints but the <i>Common distorsion</i
 </center>
 <p>
 
-Releasing also the <i>Common distorsion</i> will produce a further small improvement in the fit, but at the cost of a highly unlikely situation with EMG Gaussian #1 extending for a long range:<p>
-
-<p><center>
-<img SRC="somo-HPLC-SAXS_skewedGaussian7.png" ALT="SOMO HPLC-SAXS Skewed Gaussians 7">
-</center>
-<p>
+However, the cost paid to achieve this apparently quite satisfactory fit is that the contribution of peak #1 appears to be exaggerated.<p>
 
 We can perform the same analysis using the <b><i>Half-Gaussian modified Gaussian</i></b> function:<p>
 
@@ -96,42 +91,36 @@ We can perform the same analysis using the <b><i>Half-Gaussian modified Gaussian
 </center>
 <p>
 
-As can be seen from the fit &chi;<sup>2</sup> (next to the <b><i>Fit</i></b> button), this function performs worse for this dataset. A function combining the EMG and GMG Gaussians (<b><i>EMG+GMG</i></b>) can be also tested. The correstonding <b><i>Fit</i></b> module will present extra fields:<p>
+As can be seen from the fit &chi;<sup>2</sup> (next to the <b><i>Fit</i></b> button), this function performs worse for this dataset. A function combining the EMG and GMG Gaussians (<b><i>EMG+GMG</i></b>) can be also tested. The corresponding <b><i>Fit</i></b> module will present extra fields:<p>
 
 <p><center>
 <img SRC="somo-HPLC-SAXS_GaussFit1.png" ALT="SOMO HPLC-SAXS Gaussian Fit with distorsions panel">
 </center>
 <p>
 
-see <a href=somo_saxs_hplc_fit.html>here</a> for a complete description description of the <b><i>Fit</b></i> module. The results of the EMG+GMG fitting are shown below:<p>
+see <a href=somo_saxs_hplc_fit.html>here</a> for a complete description description of the <b><i>Fit</b></i> module. In addition, we will also restrict the fitting region, to help improve the fitting. The results of this EMG+GMG fitting are shown below:<p>
 
 <p><center>
-<img SRC="somo-HPLC-SAXS_skewedGaussian9.jpg" ALT="SOMO HPLC-SAXS Skewed Gaussians 9">
+<img SRC="somo-HPLC-SAXS_skewedGaussian9a.png" ALT="SOMO HPLC-SAXS Skewed Gaussians 9">
 </center>
 <p>
 
-As can be seen, there is a small improvement versus using the EMG Gaussians alone. We will then proceed with this set, first by doing <b><i>Global Gaussians</i></b> on a subset:<p>
 
-<p><center>
-<img SRC="somo-HPLC-SAXS_skewedGaussian10.png" ALT="SOMO HPLC-SAXS Skewed Gaussians 10">
-</center>
-<p>
-
-And then proceeding with <b><i>Global fit</i></b>:<p>
+As can be seen, there is an improvement, mainly due to the exclusion of the small bump before the first peak. We will then proceed with this set, first by doing <b><i>Global Gaussians</i></b> on a subset, and then proceeding with <b><i>Global fit</i></b>:<p>
 
 <p><center>
 <img SRC="somo-HPLC-SAXS_skewedGaussian11.png" ALT="SOMO HPLC-SAXS Skewed Gaussians global fit">
 </center>
 <p>
 
-Here, by looking at the <b><i>Residuals</i></b>, the fit appears to be not optimal, but the apparently large residuals especially around the main peak are due to the very low SD associated with the data, amplifying the discrepancies. After propagating the EMG+GMG Gaussians to all chromatogram with <b><i>Global Gaussians</i></b>, we can check the results on a single chromatogram:<p>
+Here, by looking at the <b><i>Residuals</i></b>, the fit appears to be somewhat improved, and the apparently larger residuals especially around the main peak are due to the very low SD associated with the data, amplifying the discrepancies. After propagating the EMG+GMG Gaussians to all chromatogram with <b><i>Global Gaussians</i></b>, we can check the results on a single chromatogram:<p>
 
 <p><center>
 <img SRC="somo-HPLC-SAXS_skewedGaussian12.png" ALT="SOMO HPLC-SAXS Skewed Gaussians final gaussian">
 </center>
 <p>
 
-where the goodness of the reconstructed curve (yellow) superimposed to the original data (cyan) can be appreciated notwithstanding the not optimal residuals plot.<p>
+where the goodness of the reconstructed curve (yellow) superimposed to the original data (cyan) can be appreciated, with the residuals evenly distributed.<p>
 
 
 <p>
@@ -150,7 +139,7 @@ distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> Th
 </font>
 <p>
 <font face="helvetica" size="-1">
-Last modified on May 15, 2014.
+Last modified on July 2, 2015.
 </font>
 </body>
 </html>

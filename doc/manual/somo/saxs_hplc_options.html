@@ -22,7 +22,7 @@
 <center>
 <h2>
 SOMO HPLC-SAXS Module Options Module</h2></center>
-<h3><center>Last updated: May 2014 </center></h3><p>
+<h3><center>Last updated: August 2015 </center></h3><p>
 
 <center>
 <img SRC="somo-HPLC-SAXS_options.png" ALT="SOMO HPLC-SAXS options">
@@ -65,7 +65,7 @@ The next set of options deals with the <b><i>Gaussian mode</b></i> available. Fo
 <b><i>GMG (Half-Gaussian modified Gaussian)</i></b>. This will generate skewed Gaussians according to this equation:.
 
 <p><center>
-<img SRC="GMG.png" ALT="SOMO HPLC-SAXS commands">
+<img SRC="GMG.png" ALT="GMG equation">
 </center>
 <p>
 
@@ -75,7 +75,7 @@ where <i>a<sub>0</sub></i>, <i>a<sub>1</sub></i>, <i>a<sub>2</sub></i>, and <i>a
 <b><i>EMC (Exponentially modified Gaussian)</i></b>. This will generate skewed Gaussians according to this equation:.
 
 <p><center>
-<img SRC="EMG.png" ALT="SOMO HPLC-SAXS commands">
+<img SRC="EMG.png" ALT="EMG equation">
 </center>
 <p>
 
@@ -85,31 +85,37 @@ where <i>a<sub>0</sub></i>, <i>a<sub>1</sub></i>, <i>a<sub>2</sub></i>, and <i>a
 <b><i>EMG+GMG</i></b>. This will generate skewed Gaussians according to this equation:.
 
 <p><center>
-<img SRC="EMG_GMG.png" ALT="SOMO HPLC-SAXS commands">
+<img SRC="EMG_GMG.png" ALT="EMG+GMG equation">
 </center>
 <p>
 
 where <i>a<sub>0</sub></i>, <i>a<sub>1</sub></i>, <i>a<sub>2</sub></i>, <i>a<sub>3</sub></i>, and <i>a<sub>4</sub></i> are the <i>area</i>, <i>center</i>, <i>width</i>, <i>distorsion 1</i>, and <i>distorsion 2</i>, respectively, of the exponentially + half-Gaussian modified Gaussian(s).<p>
 </ul>
 
-In the <i><b>Miscellaneous options</i></b> section there is the option of saving the °.csv files in transposed format, by selecting the <b><i>Save CSV transposed</b></i> checkbox.<p>
+The <b><i>Maximum absolute value of EMG and GMG distortions:</b></i> field sets limits to the distortions to avoid unreasonably skewed Gaussians (<b><i>default: 50</i></b>).<p>
 
+The <i><b>Clear cached Gaussian values</i></b> button allows to clear all Gaussian data produced during the current session.<p>
 
-It is followed by the <i><b>I(t) negative integral check
-window</i></b> field, where the sliding window size for the negative
-integral test can be set (<b>default: 25</b>).  As described
-previously, this is the size of a sliding window over adjacent
-frames. If the sum of <i>I</i>(<i>t</i>) values within the window is less than the
-negative of sum of the corresponding SD values, the <i>I</i>(<i>t</i>)  curve will be
-identified and dropped during the <b><i>Make I(t)</i></b> and optionally
-dropped during the <b><i>Test I(t)</i></b> procedures.
+In the <i><b>Miscellaneous options</i></b> section there is the option of saving the *.csv files in transposed format, by selecting the <b><i>Save CSV transposed</b></i> checkbox.<p>
+
+It is followed by the <i><b>I(t) negative integral check window</i></b> field, where the sliding window size for the negative
+integral test can be set (<b><i>default: 25</b></i>).  As described previously, this is the size of a sliding window over adjacent
+frames. If the sum of <i>I</i>(<i>t</i>) values within the window is less than the negative of sum of the corresponding SD values, the <i>I</i>(<i>t</i>)  curve will be
+identified and a warning will be issued. Such regions can be indicative of not optimal buffer subtraction, and might cause problems with the integral baseline correction.<p>
+
+The next line contains the checkbox for the <b><i>On Make I(t), discard I(t) with no signal above std. dev. multiplied by:</b></i> and
+its associated field (<b><i>default: checked</b></i> with <b><i>3</b></i> as the multiplier value). This tests whether or not there is any point in the <i>I</i>(<i>t</i>) curve where the <i>I</i>(<i>t</i>) value is greater than the SD of the point of <i>I</i>(<i>t</i>) multiplied by this field. If the test fails, the <i>I</i>(<i>t</i>) curve is assumed to contain no signal and is dropped with an appropriate messagebox.<p>
+
+The <b><i>Limit Guinier Maximum q*Rg</b></i> allows to set this limit to a specified value (<b><i>default: 1.1</b></i>) when performing the linear regression in the Guinier analysis to calculate the <i>R<sub>g</sub></i> and <i>I</i>(0) from the <i>I</i>(<i>q</i>) vs <i>q</i> datasets in the <b><i>Test I(q)</i></b> module (see the corresponding section in the main Help). <p>
+
+Finally, the last three fields allow modifying the constants for the approximate calculation of the molecular weight as described by Rambo and Tainer (Accurate assesment of mass, models and resolution by small-angle scattering. Nature 496:477-481, 2013). The first two fields contain the constants <b><i>MW[RT]k</b></i> (<b><i>default: 1</b></i>) and <b><i>MW[RT]c</b></i> (<b><i>default: -2.095</b></i>), which are the linear fit power law constants as described in eq. (2) of the aforementioned reference and whose default values are taken from Fig. 3, where they were reported for <i>I</i>(<i>q</i>) vs. <i>q</i> data limited to <i>q</i> = 0.3 &Aring;<sup>-1</sup>. The third field contains the actual <i>q<sub>max</sub></i> cut-off value to which the available <i>I</i>(<i>q</i>) vs. <i>q</i> data will be limited (<b><i>default: 0.2 &Aring;<sup>-1</sup></b></i>). The constants default values are for globular proteins, and the cut-off value was found empirically to provide better results. If any of these values is changed, a warning will pop-up:
+
+<p><center>
+<img SRC="somo-HPLC-SAXS_options_RT_warning.png" ALT="Rambo & Tainer constants changed warning">
+</center>
 <p>
 
-
-The last line contains the checkbox for the <b><i>On Make I(t),
-discard I(t) with no signal above std. dev. multiplied by:</b></i> and
-its associated field (<b>default: checked</b> with <b>4</b> as the
-multiplier value). This tests whether or not there is any point in the <i>I</i>(<i>t</i>) curve where the <i>I</i>(<i>t</i>) value is greater than the SD of the point of <i>I</i>(<i>t</i>) multiplied by this field. If the test fails, the <i>I</i>(<i>t</i>) curve is assumed to contain no signal and is dropped with an appropriate messagebox.<p>
+If the values are not reverted to the default values, this pop-up will keep showing up during the current <i><b>US-SOMO</b></i> session every time a molecular weight calculation with the Rambo-Tainer approach is performed, unless the <i>Do not show this warning again</i> button is pressed, avoiding the nuisance when using different values for different kind of biomacromolecules (e.g., RNA) or for testing purposes.
 
 <p>
 <hr>
@@ -127,7 +133,7 @@ distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> Th
 </font>
 <p>
 <font face="helvetica" size="-1">
-Last modified on May 19, 2014.
+Last modified on August 21, 2015.
 </font>
 </body>
 </html>
