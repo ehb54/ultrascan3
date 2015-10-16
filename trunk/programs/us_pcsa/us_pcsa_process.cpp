@@ -983,7 +983,7 @@ void US_pcsaProcess::model_statistics( QVector< US_ModelRecord >& mrecs,
 
    // Accumulate the statistics
    int    nbmods    = nmtasks / 5;
-          nbmods    = qMin( nmtasks - 1, qMax( 3, nbmods ) );
+          nbmods    = qMax( 1, qMin( nmtasks - 1, qMax( 3, nbmods ) ) );
    int    nlpts     = cresolu;
    int    nblpts    = mrecs[ 0 ].isolutes.size();
    int    soltype   = dsets[ 0 ]->solute_type;
@@ -1045,7 +1045,7 @@ DbgLv(1) << "PC:MS: nmtasks mrssiz nbmods" << nmtasks << mrecs.size() << nbmods;
    if ( curvtype == CTYPE_SL  ||  curvtype == CTYPE_HL )
    {
       double slope  = ( end_y - str_y ) / ( xuplim - xlolim );
-      double yincr  = ( yuplim - ylolim ) / (double)( nypts - 1 );
+      double yincr  = ( yuplim - ylolim ) / (double)( qMax( 1, (nypts - 1) ) );
       modstats << tr( "Y Range + delta:" )
                << QString().sprintf( "%10.4f  %10.4f  %10.4f",
                      ylolim, yuplim, yincr );
