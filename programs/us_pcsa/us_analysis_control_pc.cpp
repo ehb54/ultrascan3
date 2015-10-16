@@ -154,7 +154,7 @@ DbgLv(1) << "idealThrCout" << nthr;
    ct_uplimitx  = us_counter( 3, -10000, 10000,   10 );
    ct_lolimity  = us_counter( 2,      1,     8,    1 );
    ct_uplimity  = us_counter( 3,      1,   100,    5 );
-   ct_varcount  = us_counter( 2,      3,   200,    6 );
+   ct_varcount  = us_counter( 2,      1,   200,    6 );
    ct_gfiters   = us_counter( 2,      1,    20,    3 );
    ct_gfthresh  = us_counter( 3,  1.e-6, 1.e-2, 1e-4 );
    ct_lmmxcall  = us_counter( 2,      0,   200,    0 );
@@ -366,6 +366,14 @@ void US_AnalysisControlPc::start()
       return;
    }
 
+   // Adjust some other parameters if Variations Count is 1.
+   int    nvar   = (int)ct_varcount->value();
+   if ( nvar == 1 )
+   {
+      ct_thrdcnt->setValue( 1.0 );
+      ct_gfiters->setValue( 1.0 );
+   }
+
    // Start a processing object if need be
    if ( processor == 0 )
    {
@@ -427,7 +435,6 @@ DbgLv(1) << "AnaC: (A)zcoeff0" << dsets[0]->zcoeffs[0];
    double klo    = ct_lolimity->value();
    double kup    = ct_uplimity->value();
    int    nthr   = (int)ct_thrdcnt ->value();
-   int    nvar   = (int)ct_varcount->value();
    int    noif   = ( ck_tinoise->isChecked() ? 1 : 0 ) +
                    ( ck_rinoise->isChecked() ? 2 : 0 );
    int    res    = (int)ct_cresolu ->value();

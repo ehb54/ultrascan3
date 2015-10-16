@@ -656,7 +656,7 @@ void US_AnalysisControl2D::load_model()
       int     nsubg  = cusmodel.subGrids;
       int     sgsize = nsol / nsubg;
 
-      if ( sgsize > 150 )
+      if ( nsubg > 1  &&  sgsize > 150 )
       {  // Implied subgrid size too large:  change subgrid count
          int ksubg      = nsubg;
          int kssiz      = sgsize;

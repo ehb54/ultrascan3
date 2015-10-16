@@ -67,6 +67,7 @@ US_MLinesPlot::US_MLinesPlot( double& ylo, double& yhi, double& xlo,
    nmodel       = ( ctype != CTYPE_ALL ) ? nmodel : nmodel * 3;
    nmodel       = ( ctype != CTYPE_2O  ) ? nmodel : nmodel * nkpts;
    neline       = qMax( 2, nmodel / 10 );
+   neline       = ( nkpts > 1 ) ? neline : 1;
    nsline       = qMax( 1, neline / 4  );
    nvline       = nmodel;
 DbgLv(1) << "RP:  nkpts nmodel" << nkpts << nmodel;
@@ -285,6 +286,12 @@ DbgLv(1) << "RP:PD stype" << stype << "attr_x attr_y attr_z"
       //double yrng   = ymax - ymin;
       //double yinc   = yrng < 15.0 ? 1.0 : ( yrng < 50.0 ? 2.0 : 5.0 );
       //data_plot1->setAxisScale( QwtPlot::yLeft,   ymin, ymax, yinc );
+DbgLv(1) << "RP:PD   ymin ymax" << ymin << ymax;
+      if ( ymin == ymax )
+      {
+         ymin         *= 0.98;
+         ymax         *= 1.02;
+      }
       data_plot1->setAxisScale( QwtPlot::yLeft,   ymin, ymax );
    }
    else
