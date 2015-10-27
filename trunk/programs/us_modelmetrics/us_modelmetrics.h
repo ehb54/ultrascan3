@@ -82,6 +82,9 @@ class US_ModelMetrics : public US_Widgets
       int                model_count;
       bool               monte_carlo;
       bool               saved;
+		bool					 xautoscale;
+		double 				 plotxmin;
+		double 				 plotxmax;
       double*            xx;
       double*            yy;
       double             sigma;
@@ -131,12 +134,15 @@ class US_ModelMetrics : public US_Widgets
       QLabel*            lbl_sigma;
       QLabel*            lbl_integral;
       QLabel*            lbl_name;
+      QLabel*            lbl_plotxmin;
+      QLabel*            lbl_plotxmax;
 
       QwtCounter*        ct_dval1;
       QwtCounter*        ct_dval2;
       QwtCounter*        ct_dval3;
       QwtCounter*        ct_sigma;
       QButtonGroup*      bg_hp;
+      QButtonGroup*      bg_plotlimits;
       QRadioButton*      rb_s;
       QRadioButton*      rb_d;
       QRadioButton*      rb_f;
@@ -167,6 +173,9 @@ class US_ModelMetrics : public US_Widgets
       QLineEdit*         le_skew;
       QLineEdit*         le_integral;
       QLineEdit*         le_name;
+      QLineEdit*         le_plotxmin;
+      QLineEdit*         le_plotxmax;
+
       QwtPlot*           data_plot;
 
       QList< S_Solute >  sk_distro;
@@ -201,6 +210,8 @@ private slots:
 	void set_dval1            ( double );
 	void set_dval2            ( double );
 	void set_dval3            ( double );
+	void set_plotxmin         ( const QString & );
+	void set_plotxmax         ( const QString & );
    void set_dval_labels      ( bool update=false );
 	void set_sigma            ( double );
 	void help                 ( void )

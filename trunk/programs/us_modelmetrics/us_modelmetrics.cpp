@@ -77,9 +77,19 @@ US_ModelMetrics::US_ModelMetrics() : US_Widgets()
 
    le_experiment= us_lineedit( "", 1, true );
 
+   QLabel* lbl_plotxmin = us_label( tr( "Plot min: " ), -1 );
+   QLabel* lbl_plotxmax = us_label( tr( "Plot max: " ), -1 );
+   le_plotxmin = us_lineedit( "", 1, false );
+   le_plotxmax = us_lineedit( "", 1, false );
+   connect (le_plotxmin, SIGNAL( textChanged(const QString &)), this,
+                     SLOT (set_plotxmin(const QString &)));
+   connect (le_plotxmax, SIGNAL( textChanged(const QString &)), this,
+                     SLOT (set_plotxmax(const QString &)));
 
    QLabel* lbl_param = us_label( tr( "Select\nParameter: " ), -1 );
    QLabel* lbl_sigma = us_label( tr( "Sigma: " ), -1 );
+
+	xautoscale=true;
 
    ct_sigma= us_counter( 2, 0.0, 1.0, 1.0 );
    ct_sigma->setStep( 0.001 );
@@ -214,6 +224,13 @@ US_ModelMetrics::US_ModelMetrics() : US_Widgets()
    gl0->addLayout(gl_v, 1, 1, 1, 1);
    gl0->addLayout(gl_r, 1, 2, 1, 1);
 
+	QGridLayout* gl_plot;
+   gl_plot = new QGridLayout();
+	gl_plot->addWidget(lbl_plotxmin, 0, 0);
+	gl_plot->addWidget(le_plotxmin, 0, 1);
+	gl_plot->addWidget(lbl_plotxmax, 0, 2);
+	gl_plot->addWidget(le_plotxmax, 0, 3);
+
    QGridLayout* gl1;
    gl1 = new QGridLayout();
    gl1->setColumnStretch(0, 0);
@@ -222,18 +239,19 @@ US_ModelMetrics::US_ModelMetrics() : US_Widgets()
 
    gl1->addWidget(lbl_param, 0, 0, 2, 1);
    gl1->addLayout(gl0,       0, 1, 2, 2);
-   gl1->addWidget(lbl_sigma, 2, 0, 1, 1);
-   gl1->addWidget(ct_sigma,  2, 1, 1, 1);
-   gl1->addWidget(pb_report, 2, 2, 1, 1);
-   gl1->addWidget(lbl_dval1, 3, 0, 1, 1);
-   gl1->addWidget(ct_dval1,  3, 1, 1, 1);
-   gl1->addWidget(le_dval1,  3, 2, 1, 1);
-   gl1->addWidget(lbl_dval2, 4, 0, 1, 1);
-   gl1->addWidget(ct_dval2,  4, 1, 1, 1);
-   gl1->addWidget(le_dval2,  4, 2, 1, 1);
-   gl1->addWidget(lbl_dval3, 5, 0, 1, 1);
-   gl1->addWidget(ct_dval3,  5, 1, 1, 1);
-   gl1->addWidget(le_dval3,  5, 2, 1, 1);
+	gl1->addLayout(gl_plot,   2, 0, 1, 3);
+   gl1->addWidget(lbl_sigma, 3, 0, 1, 1);
+   gl1->addWidget(ct_sigma,  3, 1, 1, 1);
+   gl1->addWidget(pb_report, 3, 2, 1, 1);
+   gl1->addWidget(lbl_dval1, 4, 0, 1, 1);
+   gl1->addWidget(ct_dval1,  4, 1, 1, 1);
+   gl1->addWidget(le_dval1,  4, 2, 1, 1);
+   gl1->addWidget(lbl_dval2, 5, 0, 1, 1);
+   gl1->addWidget(ct_dval2,  5, 1, 1, 1);
+   gl1->addWidget(le_dval2,  5, 2, 1, 1);
+   gl1->addWidget(lbl_dval3, 6, 0, 1, 1);
+   gl1->addWidget(ct_dval3,  6, 1, 1, 1);
+   gl1->addWidget(le_dval3,  6, 2, 1, 1);
 
    QGridLayout* gl2;
    gl2 = new QGridLayout();
@@ -696,6 +714,7 @@ bool US_ModelMetrics::equivalent( double a, double b, double eps )
 
 void US_ModelMetrics::select_hp( int button )
 {
+	xautoscale=true;
    calc_val = button;
    calc();
 }
@@ -996,8 +1015,6 @@ void US_ModelMetrics::plot_data()
    y2[1] = mxc;
    y3[1] = mxc;
    data_plot->clear();
-   data_plot->setAxisAutoScale( QwtPlot::yLeft );
-   data_plot->setAxisAutoScale( QwtPlot::xBottom );
 
    QFont sfont( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() - 1 );
    QFontMetrics fmet( sfont );
@@ -1034,6 +1051,20 @@ void US_ModelMetrics::plot_data()
    curve2->setData( x1, y1, 2);
    curve3->setData( x2, y2, 2);
    curve4->setData( x3, y3, 2);
+   data_plot->setAxisAutoScale( QwtPlot::yLeft );
+	if (xautoscale)
+	{
+		data_plot->setAxisAutoScale( QwtPlot::xBottom );
+		plotxmin = curve1->minXValue();
+		plotxmax = curve1->maxXValue();
+		le_plotxmin->setText(str1.setNum(plotxmin));
+		le_plotxmax->setText(str1.setNum(plotxmax));
+	}
+	else
+	{
+		data_plot->setAxisScale( QwtPlot::xBottom, plotxmin, 
+							 plotxmax );
+	}
    data_plot->replot();
 }
 
@@ -1233,4 +1264,18 @@ QString US_ModelMetrics::indent( const int spaces ) const
       return QString( " " ).leftJustified( spaces, ' ' );
 }
 
+void US_ModelMetrics::set_plotxmin ( const QString & val )
+{
+	plotxmin = val.toDouble();
+   data_plot->setAxisScale( QwtPlot::xBottom, plotxmin, plotxmax );
+	xautoscale = false;
+	data_plot->replot();
+}
 
+void US_ModelMetrics::set_plotxmax ( const QString & val )
+{
+	plotxmax = val.toDouble();
+   data_plot->setAxisScale( QwtPlot::xBottom, plotxmin, plotxmax );
+	xautoscale = false;
+	data_plot->replot();
+}
