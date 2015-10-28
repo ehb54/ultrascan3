@@ -7,7 +7,7 @@
 
 #include "us_extern.h"
 
-#ifdef Q_WS_WIN
+#ifdef Q_OS_WIN
 #ifdef FILE_OPEN
 #undef FILE_OPEN
 #endif

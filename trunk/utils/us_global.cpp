@@ -3,7 +3,7 @@
 #include <QtCore>
 #include <QTextStream>
 
-#ifdef Q_WS_X11
+#ifdef Q_OS_LINUX
 #include <unistd.h>
 #endif
 

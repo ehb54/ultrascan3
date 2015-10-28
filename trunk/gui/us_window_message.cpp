@@ -5,17 +5,17 @@
 
 
 // Platform-specific C function definitions
-#ifdef Q_WS_X11
+#ifdef Q_OS_LINUX
 extern "C" {
 #include "us_x11_utils.h"
 }
 #endif
-#ifdef Q_WS_MAC
+#ifdef Q_OS_MAC
 extern "C" {
 #include "us_mac_utils.h"
 }
 #endif
-#ifdef Q_WS_WIN
+#ifdef Q_OS_WIN
 extern "C" {
 #include "us_win_utils.h"
 }

@@ -759,7 +759,7 @@ void US_Reporter::view()
 {
    if ( write_report() )                 // Write the report file
    {  // Open the PDF file for viewing with system's "open-with" app
-#ifdef Q_WS_WIN
+#ifdef Q_OS_WIN
       QString file_url = QString( "file:///" ) + ppdfpath;
 #else
       QString file_url = QString( "file://" ) + ppdfpath;

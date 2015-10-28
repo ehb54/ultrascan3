@@ -20,7 +20,7 @@
 #include "us_zsolute.h"
 #include "qwt_plot_marker.h"
 #include "us_analysis_base2.h"
-#ifdef Q_WS_WIN         // Include headers so getpid() works on Windows
+#ifdef Q_OS_WIN         // Include headers so getpid() works on Windows
 #include <windows.h>
 #include <psapi.h>
 #include <process.h>

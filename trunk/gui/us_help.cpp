@@ -48,7 +48,7 @@ void US_Help::show_help( const QString& helpFile )
   // This us_helpdaemon will check if an instance is already running and
   // exit immediately if it is.
 
-#ifndef Q_WS_MAC
+#ifndef Q_OS_MAC
   assistant->start( "us_helpdaemon", args );
 #else
   QString helpbin = US_Settings::appBaseDir() + "/bin/us_helpdaemon";
@@ -80,7 +80,7 @@ void US_Help::openBrowser( const QString& location )
    QString     program = US_Settings::browser();
    QStringList args;
 
-#ifndef Q_WS_MAC
+#ifndef Q_OS_MAC
    args << location;
 #else
    args << "-a" << program << location;
