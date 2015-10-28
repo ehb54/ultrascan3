@@ -28,7 +28,7 @@ US_Editor::US_Editor( int menu, bool readonly, const QString& extension,
 
    filename = "";
 
-#ifndef Q_WS_MAC
+#ifndef Q_OS_MAC
    edMenuBar       = menuBar();
 #else
    edMenuBar       = new QMenuBar( 0 );

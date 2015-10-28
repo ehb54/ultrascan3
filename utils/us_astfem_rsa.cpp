@@ -2845,6 +2845,9 @@ DbgLv(2) << "RSA:  decompose k_min time_max timeStepSize"
    {
       for ( int j = 0; j < Npts; j++ )
           C0[ i ].concentration[ j ] = C1[ i ][ j ];
+DbgLv(2) << "TMS:RSA:Deco: comp:" << i << "C1[i]:" << C1[i][0] << C1[i][1]
+ << C1[i][Npts-4] << C1[i][Npts-3] << C1[i][Npts-2] << C1[i][Npts-1]
+ << "Npts" << Npts;
    }
 
    US_AstfemMath::clear_2d( num_comp, C1 );
@@ -3067,8 +3070,8 @@ void US_Astfem_RSA::Reaction_dydt( double* y0, double* yt )
          // extinction coefficient of n'th component
          double extn   = af_params.kext[ rgp->GroupComponent[ ind_cn ] ];
 //if(m==0)
-//DbgLv(2) << "RSA:ReDydt: n ind_cn rstoi react extn" << n << ind_cn << rstoi
-// << react << extn;
+DbgLv(2) << "RSA:ReDydt:   m n ind_cn" << m << n << ind_cn
+ << "rstoi react extn" << rstoi << react << extn;
 
          if ( react > 0 ) // comp[n] here is reactant
          {
@@ -3708,6 +3711,7 @@ DbgLv(2) << "TMS:RSA:ra(2):   C1[10] C1[11] C1[1k] C1[1n]"
    qApp->processEvents();
 #endif
 
+DbgLv(2) << "TMS:RSA:ra2: Nx" << Nx;
    for ( int i = 0; i < Mcomp; i++ )
    {
      C_init[ i ].radius       .clear();
@@ -3720,6 +3724,8 @@ DbgLv(2) << "TMS:RSA:ra(2):   C1[10] C1[11] C1[1k] C1[1n]"
         C_init[ i ].radius        .append( xA[ j ] );
         C_init[ i ].concentration .append( C1[ i ][ j ] );
      }
+DbgLv(2) << "TMS:RSA:ra2: comp:" << i << "C1[i]:" << C1[i][0] << C1[i][1]
+ << C1[i][Nx/2] << C1[i][Nx-3] << C1[i][Nx-2] << C1[i][Nx-1];
    }
 
    US_AstfemMath::clear_2d(Mcomp, C0);

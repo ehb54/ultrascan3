@@ -237,7 +237,7 @@ void US_Plot::print( void )
    if ( ! dir.exists( reportDir ) ) dir.mkpath( reportDir );
 
    QPrinter printer( QPrinter::HighResolution );
-#ifdef Q_WS_X11
+#ifdef Q_OS_LINUX
    printer.setOutputFileName( reportDir + "/ultrascan-plot.pdf" );
 #endif
 
@@ -746,7 +746,7 @@ void US_PlotConfig::updateCurve( void )
    qApp->processEvents();
    delete curveWidget;
    curveWidget = NULL;
-#ifdef Q_WS_MAC
+#ifdef Q_OS_MAC
    QMessageBox::information( this, tr( "Curve Config" ),
       tr( "Curve Update Complete" ) );
 #endif
@@ -770,7 +770,7 @@ void US_PlotConfig::updateGrid( void )
    qApp->processEvents();
    delete gridWidget;
    gridWidget = NULL;
-#ifdef Q_WS_MAC
+#ifdef Q_OS_MAC
    QMessageBox::information( this, tr( "Grid Config" ),
       tr( "Grid Update Complete" ) );
    qApp->processEvents();

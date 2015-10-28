@@ -581,7 +581,7 @@ float US_MwlData::fword( char* cbuf )
    int    ival  = iword( cbuf );
    int*   iptr  = &ival;
    float* fptr  = (float*)iptr;
-#ifdef Q_WS_X11
+#ifdef Q_OS_LINUX
 // The following code is necessary to counter a compiler bug on 64-bit Linux
 if(sizeof(long)==8)
 {

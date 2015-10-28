@@ -23,7 +23,7 @@ US_Plot3D::US_Plot3D( QWidget* p = 0, US_Model* m = 0 )
    // lay out the GUI
    setWindowTitle( tr( "Model Solute 3-Dimensional Viewer" ) );
    setPalette( US_GuiSettings::frameColor() );
-#ifndef Q_WS_MAC
+#ifndef Q_OS_MAC
    setAttribute( Qt::WA_DeleteOnClose, true );
 #endif
 
@@ -1448,7 +1448,7 @@ void US_Plot3D::pick_data_co()
       + tr( "Any XML files (*.xml);;" )
       + tr( "Any files (*)" );
 
-#ifndef Q_WS_MAC
+#ifndef Q_OS_MAC
    QString mapfname = QFileDialog::getOpenFileName( this,
       tr( "Load Color Map File" ),
       US_Settings::etcDir(), filter, 0, 0 );

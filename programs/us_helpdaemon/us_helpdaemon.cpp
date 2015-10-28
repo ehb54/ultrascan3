@@ -21,7 +21,7 @@ US_HelpDaemon::US_HelpDaemon( const QString& page, QObject* o ) : QObject( o )
        << url;
 
   debug( args.join( " " ) );
-#ifndef Q_WS_MAC
+#ifndef Q_OS_MAC
   daemon.start( QLatin1String( "assistant" ), args );
 #else
   QString assisloc  = US_Settings::appBaseDir() + "/Developer/Applications/Qt/Assistant.app";

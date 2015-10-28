@@ -23,7 +23,7 @@ US_Plot3Dxyz::US_Plot3Dxyz( QWidget* p = 0, QVector< QVector3D >* d = 0 )
    // lay out the GUI
    setWindowTitle( tr( "XYZ Data 3-Dimensional Viewer" ) );
    setPalette( US_GuiSettings::frameColor() );
-#ifndef Q_WS_MAC
+#ifndef Q_OS_MAC
    setAttribute( Qt::WA_DeleteOnClose, true );
 #endif
 

@@ -299,7 +299,7 @@ QwtCounter* US_Widgets::us_counter( int buttons, double low, double high,
                                     double value )
 {
   QwtCounter* counter = new QwtCounter;
-#ifdef Q_WS_MAC
+#ifdef Q_OS_MAC
   QList< QObject* > children = counter->children();
   QStyle *btnstyle = new QPlastiqueStyle();
 

@@ -225,7 +225,7 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
   addMenu( HELP_CREDITS, tr("&Credits"           ), help );
   addMenu( HELP_NOTICES, tr("Show &Notices"      ), help );
   
-#ifndef Q_WS_MAC
+#ifndef Q_OS_MAC
   QFont bfont = QFont( US_GuiSettings::fontFamily(),
                        US_GuiSettings::fontSize() - 1,
                        QFont::Bold );
@@ -243,7 +243,7 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
   menuBar()->addMenu( database    );
   menuBar()->addMenu( help        );
 
-#ifndef Q_WS_MAC
+#ifndef Q_OS_MAC
   QFont mfont = QFont( US_GuiSettings::fontFamily(),
                        US_GuiSettings::fontSize() - 1,
                        QFont::Normal );
@@ -276,7 +276,7 @@ void US_Win::addMenu( int index, const QString& label, QMenu* menu )
 {
   US_Action* action = new US_Action( index, label, menu );
 
-#ifndef Q_WS_MAC
+#ifndef Q_OS_MAC
   QFont      font   = QFont( US_GuiSettings::fontFamily(),
                              US_GuiSettings::fontSize() - 1,
                              QFont::Normal );
@@ -411,7 +411,7 @@ void US_Win::launch( int index )
   connect ( process, SIGNAL( finished  ( int, QProcess::ExitStatus ) ),
             this   , SLOT  ( terminated( int, QProcess::ExitStatus ) ) );
 
-#ifndef Q_WS_MAC
+#ifndef Q_OS_MAC
   process->start( pname );
 #else
    QString procbin = US_Settings::appBaseDir() + "/bin/" + pname;
@@ -665,7 +665,7 @@ void US_Win::help( int index )
 // apply font and base frame color preferences
 void US_Win::apply_prefs()
 {
-#ifndef Q_WS_MAC
+#ifndef Q_OS_MAC
    // reset the menu bar font
    QFont bfont = QFont( US_GuiSettings::fontFamily(),
                         US_GuiSettings::fontSize() - 1,

@@ -231,7 +231,7 @@ void US_AstfemMath::tridiag( double* a, double* b, double* c,
 
 //////////////////////////////////////////////////////////////////
 //
-// cub_root: find the positive cubic-root of a cubic polynomial
+// cube_root: find the positive cube-root of a cubic polynomial
 //       p(x)=a0+a1*x+a2*x^2+x^3
 //
 // with: a0<=0,  and  a1, a2>=0;
@@ -277,11 +277,11 @@ double US_AstfemMath::cube_root( double a0, double a1, double a2 )
    return x;
 }
 
-////////////////////////////////////////
+//////////////////////////////////////////////////////////////////
 //
 // find_C1_mono_Nmer:   find C1 from    C1 + K * C1^n = CT
 //
-////////////////////////////////////////
+//////////////////////////////////////////////////////////////////
 double US_AstfemMath::find_C1_mono_Nmer( int n, double K, double CT )
 {
    // use Newton's method for f(x) = x + K*x^n - CT
@@ -290,6 +290,7 @@ double US_AstfemMath::find_C1_mono_Nmer( int n, double K, double CT )
    double    x1;
    double    x0       = 0.0;
    const int MaxNumIt = 1000;
+#if 0
    int       i;
 
    if ( CT <= 0.0     ) return 0.0 ;
@@ -306,17 +307,46 @@ double US_AstfemMath::find_C1_mono_Nmer( int n, double K, double CT )
 
    if ( i == MaxNumIt )
    {
-      qDebug() << "warning: Newton's method did not coonverges "
-                  "in find_C1_mono_Nmer";
+      qDebug() << "WARNING: Newton's method did not converge "
+                  "in find_C1_mono_Nmer()";
       return -1.0;
    }
+#endif
+#if 1
+   double    zn       = (double)n;
+   double    zn1      = zn - 1.0;
+   double    zKn      = K * zn;
+   double    zKn1     = K * zn1;
+   int       ii;
+
+   if ( CT <= 1.0e-12 )
+      return qMax( 0.0, CT );
+
+   for ( ii = 1; ii < MaxNumIt; ii++ )
+   {
+      x1 = ( CT  + zKn1 * pow( x0, zn  ) ) / 
+           ( 1.0 + zKn  * pow( x0, zn1 ) );
+
+      if ( ( qAbs( x1 - x0 ) / ( 1.0 + qAbs( x1 ) ) ) < 1.e-12 )
+         break;
+
+      x0 = x1;
+   }
+
+   if ( ii == MaxNumIt )
+   {
+      qDebug() << "WARNING: Newton's method did not converge "
+                  "in find_C1_mono_Nmer()";
+      return -1.0;
+   }
+#endif
 
    return 0.5 * ( x0 + x1 );
 }
 
 /////////////////////////////////////////////////////////////////
 //
-// Gass Elimination for n X n system: Ax=b
+// Gaussian Elimination for n X n system: Ax=b
 //
 // return value: -1: A singular, no solution,
 //                1: successful
@@ -1908,7 +1938,7 @@ void US_AstfemMath::DefineGaussian( int nGauss, double** Gs2 )
    delete [] Gs1;
 }
 
-// initialize a simulation RawData object to have sizes,ranges,controls
+// Initialize a simulation RawData object to have sizes,ranges,controls
 //   that mirror those of an experimental EditedData object
 void US_AstfemMath::initSimData( US_DataIO::RawData& simdata,
       US_DataIO::EditedData& editdata, double concval1=0.0 )

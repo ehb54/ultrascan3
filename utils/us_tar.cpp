@@ -14,11 +14,11 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
-#ifdef Q_WS_X11
+#ifdef Q_OS_LINUX
 #include <unistd.h>
 #endif
 
-#ifdef WIN32
+#ifdef Q_OS_WIN
 #   include <io.h>
 #   include <sys/utime.h>
 #   include <sys/timeb.h>

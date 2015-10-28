@@ -1,12 +1,12 @@
 //! \file us_memory.cpp
 #include "us_memory.h"
 
-#ifdef Q_WS_X11
+#ifdef Q_OS_LINUX
 #include <sys/sysinfo.h>
 #include <unistd.h>
 #endif
 
-#ifdef Q_WS_MAC                          // Mac includes
+#ifdef Q_OS_MAC                          // Mac includes
 #include <sys/types.h>
 #include <sys/sysctl.h>
 #include <mach/mach.h>
@@ -15,7 +15,7 @@
 #include <mach/mach_init.h>
 #include <mach/mach_host.h>
 #endif
-#ifndef Q_WS_WIN                         // Unix and Mac includes
+#ifndef Q_OS_WIN                         // Unix and Mac includes
 #include <sys/user.h>
 #else                                    // Windows includes
 #include <windows.h>
@@ -28,7 +28,7 @@ long int US_Memory::rss_now( void )
 {
    long int rssnow = 0L;
 
-#ifdef Q_WS_X11         // Unix: based on /proc/$PID/stat
+#ifdef Q_OS_LINUX       // Unix: based on /proc/$PID/stat
    // Read /proc/$pid/stat
    QFile f( "/proc/" + QString::number( getpid() ) + "/stat" );
    f.open( QIODevice::ReadOnly );
@@ -40,7 +40,7 @@ long int US_Memory::rss_now( void )
    rssnow = QString( ba ).section( " ", 23, 23 ).toLong() * kk;
 #endif
 
-#ifdef Q_WS_MAC         // Mac : use task_info call
+#ifdef Q_OS_MAC         // Mac : use task_info call
    struct task_basic_info task_stats;
    mach_msg_type_number_t inf_count = TASK_BASIC_INFO_COUNT;
    task_t   task    = current_task();
@@ -52,7 +52,7 @@ long int US_Memory::rss_now( void )
    }
 #endif
 
-#ifdef Q_WS_WIN         // Windows: direct use of GetProcessMemoryInfo
+#ifdef Q_OS_WIN         // Windows: direct use of GetProcessMemoryInfo
    HANDLE hProcess;
    DWORD processID;
    PROCESS_MEMORY_COUNTERS pmc;
@@ -90,7 +90,7 @@ int US_Memory::memory_profile( int* pMemA, int* pMemT, int* pMemU )
    int memtotal;
    int memused;
    int memavpc;
-#ifdef Q_WS_X11         // Unix: use free command
+#ifdef Q_OS_LINUX       // Unix: use free command
    QProcess qproc;
    qproc.start( "free", QStringList() << "-m" );
    qproc.waitForFinished( -1 );
@@ -109,7 +109,7 @@ qDebug() << "  UsMEM:X11: fmtotal,used,free,buffer,cache" << fmtotal << fmused
    memused          = qMax( fmused, ( fmtotal - fmfree - fmcache ) );
    memavail         = memtotal - memused;
 #endif
-#ifdef Q_WS_MAC         // Mac: use sysctl and rss_now()
+#ifdef Q_OS_MAC         // Mac: use sysctl and rss_now()
    const double mb_bytes = ( 1024. * 1024. );
    const double kb_bytes = 1024.;
    QProcess qproc;
@@ -121,7 +121,7 @@ qDebug() << "  UsMEM:X11: fmtotal,used,free,buffer,cache" << fmtotal << fmused
    memavail         = memtotal - memused;
 qDebug() << "  UsMEM:Mac:  totmem" << totmem << "memtotal" << memtotal;
 #endif
-#ifdef Q_WS_WIN         // Windows: direct use of GlobalMemoryStatusEx
+#ifdef Q_OS_WIN         // Windows: direct use of GlobalMemoryStatusEx
    const double mb_bytes = ( 1024. * 1024. );
    MEMORYSTATUSEX mstatx;
    mstatx.dwLength  = sizeof( mstatx );
