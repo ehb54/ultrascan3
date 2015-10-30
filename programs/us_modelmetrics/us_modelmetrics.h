@@ -53,7 +53,7 @@ struct reportItem
 {
    QString investigator, runID, triple, analysis, iterations, edit, parameter;
    QString sigma, d[3], x[3], span, minimum, maximum, mean, mode;
-   QString median, skew, kurtosis, span_label, filename, integral, totalc, name;
+   QString median, skew, kurtosis, span_label, filename, integral, totalc, name, csv;
    QPixmap pixmap;
 };
 
@@ -72,7 +72,7 @@ class US_ModelMetrics : public US_Widgets
 	private:
 
       reportItem         report_entry;
-      QString            report;
+      QString            report, xtitle;
       QTextStream        report_ts;
       QFile              report_file;
       int                dbg_level;
