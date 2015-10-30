@@ -141,19 +141,19 @@ US_ModelMetrics::US_ModelMetrics() : US_Widgets()
    le_span = us_lineedit( "", 1, true );
 
    ct_dval1 = us_counter( 2, 0.0, 100.0, 10.0 );
-   ct_dval1->setStep( 1 );
+   ct_dval1->setStep( 0.1 );
    ct_dval1->setEnabled( false );
    ct_dval1->setFixedSize(130, 25);
    connect (ct_dval1, SIGNAL(valueChanged(double)), this, SLOT(set_dval1(double)));
 
    ct_dval2 = us_counter( 2, 0.0, 100.0, 50.0 );
-   ct_dval2->setStep( 1 );
+   ct_dval2->setStep( 0.1 );
    ct_dval2->setEnabled( false );
    ct_dval2->setFixedSize(130, 25);
    connect (ct_dval2, SIGNAL(valueChanged(double)), this, SLOT(set_dval2(double)));
 
    ct_dval3 = us_counter( 2, 0.0, 100.0, 90.0 );
-   ct_dval3->setStep( 1 );
+   ct_dval3->setStep( 0.1 );
    ct_dval3->setEnabled( false );
    ct_dval3->setFixedSize(130, 25);
    connect (ct_dval3, SIGNAL(valueChanged(double)), this, SLOT(set_dval3(double)));
@@ -583,11 +583,12 @@ void US_ModelMetrics::reset( void )
    set_dval_labels(true);
 
    report_entry.sigma = "0.0";
-   report_entry.sigma = str.setNum(sigma, 'f', 3);
-   report_entry.d[0] = str.setNum(dval1, 'f', 0);
-   report_entry.d[1] = str.setNum(dval2, 'f', 0);
-   report_entry.d[2] = str.setNum(dval3, 'f', 0);
+   report_entry.sigma = str.setNum(sigma, 'g', 3);
+   report_entry.d[0] = str.setNum(dval1, 'g', 4);
+   report_entry.d[1] = str.setNum(dval2, 'g', 4);
+   report_entry.d[2] = str.setNum(dval3, 'g', 4);
 
+DbgLv(1) << "Dsettings: " << report_entry.d[0] <<report_entry.d[1] << report_entry.d[2] << endl;
    pb_report->setEnabled( false );
    pb_write ->setEnabled( false );
    ct_dval1 ->setEnabled( false );
@@ -733,6 +734,7 @@ void US_ModelMetrics::calc()
    if (calc_val == HPs)
    {
       report_entry.parameter = "Sedimentation Coefficient Distribution";
+		xtitle = "Sedimentation Coefficient";
       for (i=0; i<sk_distro.size(); i++)
       {
          val1.parm = sk_distro[i].s;
@@ -745,6 +747,7 @@ void US_ModelMetrics::calc()
    else if (calc_val == HPd)
    {
       report_entry.parameter = "Diffusion Coefficient Distribution";
+		xtitle = "Diffusion Coefficient";
       for (i=0; i<sk_distro.size(); i++)
       {
          val1.parm = sk_distro[i].d;
@@ -757,6 +760,7 @@ void US_ModelMetrics::calc()
    else if (calc_val == HPm)
    {
       report_entry.parameter = "Moleclular Weight Distribution";
+		xtitle = "Molecular Weight";
       for (i=0; i<sk_distro.size(); i++)
       {
          val1.parm = sk_distro[i].w;
@@ -769,6 +773,7 @@ void US_ModelMetrics::calc()
    else if (calc_val == HPk)
    {
       report_entry.parameter = "Frictional Ratio Distribution";
+		xtitle = "Frictional Ratio";
       for (i=0; i<sk_distro.size(); i++)
       {
          val1.parm = sk_distro[i].k;
@@ -781,6 +786,7 @@ void US_ModelMetrics::calc()
    else if (calc_val == HPf)
    {
       report_entry.parameter = "Frictional Coefficient Distribution";
+		xtitle = "Frictional Coefficient";
       for (i=0; i<sk_distro.size(); i++)
       {
          val1.parm = sk_distro[i].f;
@@ -793,6 +799,7 @@ void US_ModelMetrics::calc()
    else if (calc_val == HPv)
    {
       report_entry.parameter = "Partial Specific Volume Distribution";
+		xtitle = "Partial Specific Volume";
       for (i=0; i<sk_distro.size(); i++)
       {
          val1.parm = sk_distro[i].v;
@@ -805,6 +812,7 @@ void US_ModelMetrics::calc()
    else if (calc_val == HPr)
    {
       report_entry.parameter = "Hydrodynamic Radius Distribution (m)";
+		xtitle = "Hydrodynamic Radius";
       for (i=0; i<sk_distro.size(); i++)
       {
          val1.parm = sk_distro[i].f/(6.0*M_PI*1.00194);
@@ -856,14 +864,14 @@ void US_ModelMetrics::calc()
 void US_ModelMetrics::set_dval_labels( bool update )
 {
    QString str1, str2, str3;
-   lbl_dval1->setText( "D" + str1.setNum((int) dval1) + " value: ");
-   lbl_dval2->setText( "D" + str1.setNum((int) dval2) + " value: ");
-   lbl_dval3->setText( "D" + str1.setNum((int) dval3) + " value: ");
-   lbl_span->setText( "(D" + str1.setNum((int) dval3) + "-D" 
-                           + str2.setNum((int) dval1) + ")/D" 
-                           + str3.setNum((int) dval2) + ": ");
-   lbl_integral->setText( "D" + str1.setNum((int) dval1) + ", D" 
-                           + str2.setNum((int) dval3) + " Integral: ");
+   lbl_dval1->setText( "D" + str1.setNum((float) dval1, 'g', 4) + " value: ");
+   lbl_dval2->setText( "D" + str1.setNum((float) dval2, 'g', 4) + " value: ");
+   lbl_dval3->setText( "D" + str1.setNum((float) dval3, 'g', 4) + " value: ");
+   lbl_span->setText( "(D" + str1.setNum((float) dval3, 'g', 4) + "-D" 
+                           + str2.setNum((float) dval1, 'g', 4) + ")/D" 
+                           + str3.setNum((float) dval2, 'g', 4) + ": ");
+   lbl_integral->setText( "D" + str1.setNum((float) dval1, 'g', 4) + ", D" 
+                           + str2.setNum((float) dval3, 'g', 4) + " Integral: ");
    if (update)
    {
       disconnect(ct_dval1);
@@ -888,10 +896,13 @@ void US_ModelMetrics::plot_data()
    double sum1=0.0, sum2, sum3, mode, median, skew, kurtosis, percentage, integral;
    set_dval_labels();
    i=0;
+	//qDebug() << "Points: " << points;
+
    while (sum1 <= tc * dval1/100.0 && i < points)
    {
       sum1 += hp_distro[i].conc;
       i++; 
+		//qDebug() << sum1 << tc * dval1/100.0 << points;
    }
    xval1 = hp_distro[i-1].parm;
    sum2 = sum1;
@@ -1028,9 +1039,9 @@ void US_ModelMetrics::plot_data()
    QwtPlotCurve* curve3;
    QwtPlotCurve* curve4;
    curve1  = us_curve( data_plot, tr( "Distribution" ) );
-   curve2  = us_curve( data_plot, "D" + str1.setNum((int) dval1));
-   curve3  = us_curve( data_plot, "D" + str1.setNum((int) dval2));
-   curve4  = us_curve( data_plot, "D" + str1.setNum((int) dval3));
+   curve2  = us_curve( data_plot, "D" + str1.setNum((float) dval1, 'g', 4));
+   curve3  = us_curve( data_plot, "D" + str1.setNum((float) dval2, 'g', 4));
+   curve4  = us_curve( data_plot, "D" + str1.setNum((float) dval3, 'g', 4));
    if (ct_sigma->value() > 0.0)
    {
       curve1->setPen( QPen( QBrush( Qt::yellow ), 2.0 ) );
@@ -1065,6 +1076,7 @@ void US_ModelMetrics::plot_data()
 		data_plot->setAxisScale( QwtPlot::xBottom, plotxmin, 
 							 plotxmax );
 	}
+	data_plot->setAxisTitle( QwtPlot::xBottom, xtitle);
    data_plot->replot();
 }
 
@@ -1077,7 +1089,7 @@ void US_ModelMetrics::update_sigma( void )
 {
    QList <HydroParm> tmp_hplist;
    HydroParm hp;
-   int points=500, i, j;
+   int points=10000, i, j;
    double t_xmin, t_xmax, range, inc, tmp_tc=0.0, tmp_sigma;
    t_xmin = xmin;
    t_xmax = xmax;
@@ -1166,8 +1178,12 @@ void US_ModelMetrics::addReportItem( void )
    QString str;
    QString timestamp = QDateTime::currentDateTime().toUTC().toString("MMddyyhhmmss");
    saved = false;
+   report_entry.d[0] = str.setNum(dval1, 'g', 4);
+   report_entry.d[1] = str.setNum(dval2, 'g', 4);
+   report_entry.d[2] = str.setNum(dval3, 'g', 4);
    //report_entry.filename = US_Settings::tmpDir() + "/" + timestamp + ".png";
    report_entry.filename = timestamp + ".png";
+   report_entry.csv = timestamp + ".csv";
    if (!pb_write->isEnabled()) // open a new report file in ultrascan's tmp dir
    {
       report_file.setFileName(US_Settings::tmpDir() + "/ModelStatistics.html" );
@@ -1227,7 +1243,7 @@ void US_ModelMetrics::addReportItem( void )
                        "Maximum:", report_entry.maximum);
    report += table_row( 10, "D" + report_entry.d[0] + ", " + "D" + report_entry.d[2] +
                        " Integral:", report_entry.integral, "Total Concentration:", 
-                       report_entry.totalc, "", "");
+                       report_entry.totalc, "<a href=\"" + report_entry.csv + "\">CSV File</a>", "");
    report += table_row( 10, "Mean:", report_entry.mean, 
                        "Mode:",   report_entry.mode,
                        "Median:", report_entry.median); 
@@ -1237,6 +1253,16 @@ void US_ModelMetrics::addReportItem( void )
    report += indent(8) + "</table>\n" + indent(6) + "</td></tr>\n";
    report += "    </table>\n  </center>\n  <p class=\"break\">\n";
    write_plot( US_Settings::tmpDir() + "/" + report_entry.filename, data_plot ); // write current image to tmp dir
+	QFile csv(US_Settings::tmpDir() + "/" + report_entry.csv);
+	if ( csv.open( QIODevice::WriteOnly | QIODevice::Text ) )
+	{
+		QTextStream ts( &csv );
+		for ( int i = 0; i < hp_distro.size(); i++ )
+		{		
+			ts << hp_distro[i].parm << ", " << hp_distro[i].conc << endl;
+		}
+	}	
+	csv.close();
 }
 
 QString US_ModelMetrics::table_row( const int spaces, const QString& s1, const QString& s2, 
