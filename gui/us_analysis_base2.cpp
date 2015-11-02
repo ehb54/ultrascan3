@@ -16,6 +16,11 @@
 #include "us_solution_vals.h"
 #include "us_solution_gui.h"
 #include "us_report.h"
+#if QT_VERSION < 0x050000
+#define setSamples(a,b,c) setData(a,b,c)
+#define setMinimum(a)  setMinValue(a)
+#define setMaximum(a)  setMaxValue(a)
+#endif
 
 US_AnalysisBase2::US_AnalysisBase2() : US_Widgets()
 {
@@ -187,14 +192,14 @@ US_AnalysisBase2::US_AnalysisBase2() : US_Widgets()
    connect( pb_reset_exclude, SIGNAL( clicked() ), SLOT( reset_excludes() ) );
 
    ct_smoothing = us_counter( 2,  1,  50,  1 );
-   ct_smoothing->setStep( 1.0 );
+   ct_smoothing->setSingleStep( 1.0 );
    connect( ct_smoothing, SIGNAL( valueChanged( double ) ),
                           SLOT  ( smoothing   ( double ) ) );
 
    ct_boundaryPercent = us_counter( 3, 10, 100, 90 );
    ct_boundaryPos     = us_counter( 3,  0,  10,  5 );
-   ct_boundaryPercent->setStep( 0.1 );
-   ct_boundaryPos    ->setStep( 0.1 );
+   ct_boundaryPercent->setSingleStep( 0.1 );
+   ct_boundaryPos    ->setSingleStep( 0.1 );
    connect( ct_boundaryPercent, SIGNAL( valueChanged( double ) ),
                                 SLOT  ( boundary_pct( double ) ) );
    connect( ct_boundaryPos,     SIGNAL( valueChanged( double ) ),
@@ -327,10 +332,10 @@ void US_AnalysisBase2::update( int selection )
 
    excludedScans = allExcls[ selection ];
 
-   ct_from->setMaxValue( scanCount - excludedScans.size() );
-   ct_from->setStep( 1.0 );
-   ct_to  ->setMaxValue( scanCount - excludedScans.size() );
-   ct_to  ->setStep( 1.0 );
+   ct_from->setMaximum( scanCount - excludedScans.size() );
+   ct_from->setSingleStep( 1.0 );
+   ct_to  ->setMaximum( scanCount - excludedScans.size() );
+   ct_to  ->setSingleStep( 1.0 );
 
    // Set up solution/buffer values implied from experimental data
    QString solID;
@@ -502,7 +507,7 @@ void US_AnalysisBase2::data_plot( void )
          else
             c->setPen( QPen( Qt::cyan ) );
          
-         c->setData( r, v, count );
+         c->setSamples( r, v, count );
       }
 
       count = 0;
@@ -525,7 +530,7 @@ void US_AnalysisBase2::data_plot( void )
          else
             c->setPen( QPen( US_GuiSettings::plotCurve() ) );
          
-         c->setData( r, v, count );
+         c->setSamples( r, v, count );
       }
 
       count = 0;
@@ -548,7 +553,7 @@ void US_AnalysisBase2::data_plot( void )
          else
             c->setPen( QPen( Qt::cyan ) );
         
-         c->setData( r, v, count );
+         c->setSamples( r, v, count );
       }
    }
 
@@ -560,7 +565,7 @@ void US_AnalysisBase2::data_plot( void )
 void US_AnalysisBase2::boundary_pct( double percent )
 {
    ct_boundaryPos->disconnect();
-   ct_boundaryPos->setMaxValue( 100.0 - percent );
+   ct_boundaryPos->setMaximum( 100.0 - percent );
 
    ct_boundaryPos->setValue( ( 100.0 - percent ) / 2.0 );
 
@@ -572,7 +577,7 @@ void US_AnalysisBase2::boundary_pct( double percent )
 void US_AnalysisBase2::boundary_pos( double percent )
 {
    ct_boundaryPercent->disconnect();
-   ct_boundaryPercent->setMaxValue( 100.0 - percent );
+   ct_boundaryPercent->setMaximum( 100.0 - percent );
 
    connect( ct_boundaryPercent, SIGNAL( valueChanged( double ) ),
                                 SLOT  ( boundary_pct( double ) ) );
@@ -632,8 +637,8 @@ void US_AnalysisBase2::exclude( void )
 
    ct_to->setValue( 0 );  // Resets both counters and replots
 
-   ct_from->setMaxValue( totalScans - excludedScans.size() );
-   ct_to  ->setMaxValue( totalScans - excludedScans.size() );
+   ct_from->setMaximum( totalScans - excludedScans.size() );
+   ct_to  ->setMaximum( totalScans - excludedScans.size() );
 
    allExcls[ index ] = excludedScans;
    pb_reset_exclude->setEnabled( true );
@@ -648,8 +653,8 @@ void US_AnalysisBase2::reset_excludes( void )
    excludedScans.clear();
    le_skipped->setText( "0" );
 
-   ct_from->setMaxValue( totalScans );
-   ct_to  ->setMaxValue( totalScans );
+   ct_from->setMaximum( totalScans );
+   ct_to  ->setMaximum( totalScans );
 
    if ( ct_to->value() != 0 )
       ct_to ->setValue( 0 );

@@ -99,7 +99,7 @@ US_Properties::US_Properties( US_Model& mod, int access )
    us_setReadOnly( le_mw, true );
 
    ct_oligomer              = us_counter( 1, 1.0, 9.0, 1.0 );
-   ct_oligomer->setStep( 1.0 );
+   ct_oligomer->setSingleStep( 1.0 );
    QFontMetrics fmet( font() );
    int fwid    = fmet.maxWidth();
    int rhgt    = ct_oligomer->height();

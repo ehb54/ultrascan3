@@ -2,8 +2,6 @@
 #ifndef US_RUN_DETAILS_H
 #define US_RUN_DETAILS_H
 
-#include <QtGui>
-
 #include "us_extern.h"
 #include "us_widgets_dialog.h"
 #include "us_dataIO.h"

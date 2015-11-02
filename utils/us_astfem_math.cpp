@@ -1955,7 +1955,7 @@ void US_AstfemMath::initSimData( US_DataIO::RawData& simdata,
       simdata.rawGUID[ jj ] = ' ';
 
    simdata.cell          = editdata.cell.toInt();
-   simdata.channel       = editdata.channel.at( 0 ).toAscii();
+   simdata.channel       = editdata.channel.at( 0 ).toLatin1();
    simdata.description   = editdata.description;
    simdata.xvalues       = editdata.xvalues;
 

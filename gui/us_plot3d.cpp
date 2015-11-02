@@ -1,13 +1,12 @@
 //! \file us_plot3d.cpp
 
-#include "us_widgets.h"
+#include <qwt_legend.h>
 #include "us_plot3d.h"
+#include "us_widgets.h"
+#include "us_gui_settings.h"
 #include "us_math2.h"
 #include "us_settings.h"
-#include "us_gui_settings.h"
 #include "us_colorgradIO.h"
-#include <qwt_legend.h>
-#include <qwt3d_plot.h>
 
 using namespace Qwt3D;
 //using namespace std;

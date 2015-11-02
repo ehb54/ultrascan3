@@ -17,13 +17,13 @@ int US_ColorGradIO::read_color_gradient( QString          xmlfilename,
    {
       int nvals   = cparams.size();
 
-      int sred;		// start RGB of step
-      int sgrn;
-      int sblu;
-      int ered;		// end RGB of step
-      int egrn;
-      int eblu;
-      int npts;
+      int sred    = 0;   // start RGB of step
+      int sgrn    = 0;
+      int sblu    = 0;
+      int ered    = 0;   // end RGB of step
+      int egrn    = 0;
+      int eblu    = 0;
+      int npts    = 0;
 
       for ( int jj = 0; jj < nvals; jj+= 4 )
       {	// read each quadruple as obtained from the XML

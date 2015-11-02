@@ -2,8 +2,6 @@
 #ifndef US_MODEL_GUI_H
 #define US_MODEL_GUI_H
 
-#include <QtGui>
-
 #include "us_widgets.h"
 #include "us_model.h"
 #include "us_help.h"

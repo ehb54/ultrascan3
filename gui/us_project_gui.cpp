@@ -1,7 +1,5 @@
 //! \file us_project_gui.cpp
 
-#include <QtGui>
-
 #include "us_settings.h"
 #include "us_gui_settings.h"
 #include "us_passwd.h"

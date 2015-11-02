@@ -3,6 +3,9 @@
 #include "us_gui_settings.h"
 #include "us_settings.h"
 #include "us_constants.h"
+#if QT_VERSION < 0x050000
+#define setSamples(a,b,c) setData(a,b,c)
+#endif
 
 #include "qwt_scale_engine.h"
 
@@ -69,7 +72,7 @@ US_Sassoc::US_Sassoc( double eq0, double eq1, double stoich1, double stoich2,
    params->addWidget( le_equil1, row++, 1 );
 
    c_equil1 = us_counter( 3, -100.0, 100.0, eq0 );
-   c_equil1->setStep( 0.01 );
+   c_equil1->setSingleStep( 0.01 );
    connect( c_equil1, SIGNAL( valueChanged   ( double ) ), 
                       SLOT  ( update_eq1Count( double ) ) );
    params->addWidget( c_equil1, row++, 0, 1, 2 );
@@ -83,7 +86,7 @@ US_Sassoc::US_Sassoc( double eq0, double eq1, double stoich1, double stoich2,
    params->addWidget( le_equil2, row++, 1 );
 
    c_equil2 = us_counter( 3, -100.0, 100.0, eq1 );
-   c_equil2->setStep( 0.01 );
+   c_equil2->setSingleStep( 0.01 );
    connect( c_equil2, SIGNAL( valueChanged   ( double ) ), 
                       SLOT  ( update_eq2Count( double ) ) );
    params->addWidget( c_equil2, row++, 0, 1, 2 );
@@ -231,9 +234,9 @@ void US_Sassoc::recalc( void )
       species3[ i ] *= 100 / x[ i ];
    }
 
-   curve1->setData( x, species1, ARRAY_SIZE );
-   curve2->setData( x, species2, ARRAY_SIZE );
-   curve3->setData( x, species3, ARRAY_SIZE );
+   curve1->setSamples( x, species1, ARRAY_SIZE );
+   curve2->setSamples( x, species2, ARRAY_SIZE );
+   curve3->setSamples( x, species3, ARRAY_SIZE );
    plot->replot();
 
 }

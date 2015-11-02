@@ -2,10 +2,7 @@
 #ifndef US_NOISE_LOADER_H
 #define US_NOISE_LOADER_H
 
-#include <QtGui>
-
 #include "us_extern.h"
-
 #include "us_widgets_dialog.h"
 #include "us_db2.h"
 #include "us_noise.h"

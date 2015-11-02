@@ -1,7 +1,5 @@
 //! \file us_loadable_noise.cpp
 
-#include <QtGui>
-
 #include "us_loadable_noise.h"
 #include "us_license_t.h"
 #include "us_license.h"

@@ -292,14 +292,14 @@ QString US_WindowMessage::interpFileName( const QString iname )
 int US_WindowMessage::sendMessage( const ulong id, const QString wmsg )
 {
    QString iname   = interpName( id );
-   return SendCommand( id, iname.toAscii().data(), wmsg.toAscii().data() );
+   return SendCommand( id, iname.toLatin1().data(), wmsg.toLatin1().data() );
 }
 
 // Function to send a message to an interpreter as identified by interp name.
 int US_WindowMessage::sendMessage( const QString iname, const QString wmsg )
 {
    ulong id        = interpIdByName( iname );
-   return SendCommand( id, iname.toAscii().data(), wmsg.toAscii().data() );
+   return SendCommand( id, iname.toLatin1().data(), wmsg.toLatin1().data() );
 }
 
 // Function to query an interpreter by interp ID and return the response.
@@ -307,7 +307,7 @@ QString US_WindowMessage::sendQuery( const ulong id, const QString wmsg )
 {
    char resp[ 1024 ];
    QString iname   = interpName( id );
-   SendQuery( id, iname.toAscii().data(), wmsg.toAscii().data(), resp, 1024 );
+   SendQuery( id, iname.toLatin1().data(), wmsg.toLatin1().data(), resp, 1024 );
    return QString( resp );
 }
 
@@ -316,7 +316,7 @@ QString US_WindowMessage::sendQuery( const QString iname, const QString wmsg )
 {
    char resp[ 1024 ];
    ulong id        = interpIdByName( iname );
-   SendQuery( id, iname.toAscii().data(), wmsg.toAscii().data(), resp, 1024 );
+   SendQuery( id, iname.toLatin1().data(), wmsg.toLatin1().data(), resp, 1024 );
    return QString( resp );
 }
 
@@ -324,7 +324,7 @@ QString US_WindowMessage::sendQuery( const QString iname, const QString wmsg )
 bool US_WindowMessage::isLive( Interpreter& interp )
 {
    char  ctest[ 64 ] = "echo hello ";
-   char* iname   = interp.interp_name.toAscii().data();
+   char* iname   = interp.interp_name.toLatin1().data();
    strcat( ctest, iname );
 
    return ( SendCommand( interp.interp_id, iname, ctest ) == 0 );

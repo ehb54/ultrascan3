@@ -1,7 +1,11 @@
 #ifndef US_EDITOR_H
 #define US_EDITOR_H
 
+#if QT_VERSION > 0x050000
+#include <QtWidgets>
+#else
 #include <QtGui>
+#endif
 #include "us_extern.h"
 
 /*! Class for edit and/or display of text in a main window. The text may be

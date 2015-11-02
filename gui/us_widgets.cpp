@@ -90,7 +90,7 @@ QLabel* US_Widgets::us_banner( const QString& labelString, int fontAdjust,
 QPushButton* US_Widgets::us_pushbutton( const QString& labelString, bool enabled,
                                         int fontAdjust )
 {
-  QPushButton* button =  new QPushButton( tr( labelString.toAscii() ), this );
+  QPushButton* button =  new QPushButton( tr( labelString.toLatin1() ), this );
 
   button->setFont( QFont( US_GuiSettings::fontFamily(), 
                           US_GuiSettings::fontSize  () + fontAdjust ) );
@@ -199,7 +199,7 @@ QGridLayout* US_Widgets::us_checkbox(
   lb_spacer->setAutoFillBackground( true );
   lb_spacer->setPalette           ( p );
 
-  cb = new QCheckBox( text.toAscii(), this );
+  cb = new QCheckBox( text.toLatin1(), this );
   cb->setFont              ( font  ); 
   cb->setPalette           ( p     );
   cb->setChecked           ( state );
@@ -231,7 +231,7 @@ QGridLayout* US_Widgets::us_radiobutton(
   lb_spacer->setAutoFillBackground( true );
   lb_spacer->setPalette           ( p );
 
-  rb = new QRadioButton( text.toAscii(), this );
+  rb = new QRadioButton( text.toLatin1(), this );
   rb->setAutoFillBackground( true  );
   rb->setFont              ( font  );
   rb->setPalette           ( p     );
@@ -360,10 +360,10 @@ QwtPlot* US_Widgets::us_plot( const QString& title, const QString& x_axis,
 QwtPlotGrid* US_Widgets::us_grid( QwtPlot* plot )
 {
   QwtPlotGrid* grid = new QwtPlotGrid;
-  grid->enableXMin    ( true );
-  grid->setMajPen(QPen( US_GuiSettings::plotMajGrid(), 0, Qt::DotLine ) );
-  grid->setMinPen(QPen( US_GuiSettings::plotMinGrid(), 0, Qt::DotLine ) );
-  grid->attach        ( plot );
+  grid->enableXMin ( true );
+  grid->setMajorPen( QPen( US_GuiSettings::plotMajGrid(), 0, Qt::DotLine ) );
+  grid->setMinorPen( QPen( US_GuiSettings::plotMinGrid(), 0, Qt::DotLine ) );
+  grid->attach     ( plot );
 
   return grid;
 }
@@ -750,7 +750,7 @@ QGridLayout* US_Disk_DB_Controls::us_radiobutton(
   lb_spacer->setAutoFillBackground( true );
   lb_spacer->setPalette           ( p );
 
-  rb = new QRadioButton( text.toAscii() );
+  rb = new QRadioButton( text.toLatin1() );
   rb->setAutoFillBackground( true  );
   rb->setFont              ( font  );
   rb->setPalette           ( p     );

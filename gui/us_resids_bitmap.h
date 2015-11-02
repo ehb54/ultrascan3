@@ -2,8 +2,6 @@
 #ifndef US_RESIDS_BITMAP_H
 #define US_RESIDS_BITMAP_H
 
-#include <QtGui>
-
 #include "us_extern.h"
 #include "us_widgets_dialog.h"
 #include "us_dataIO.h"

@@ -3,6 +3,14 @@
 #define US_SPECDATA_H
 
 #include <QtCore>
+#if QT_VERSION > 0x050000
+#include <QtWidgets>
+#else
+#include <QtGui>
+#define setSingleStep(a) setStep(a)
+#define setMinorPen(a) setMinPen(a)
+#define setMajorPen(a) setMajPen(a)
+#endif
 
 #include <us_extern.h>
 #include <qwt_color_map.h>

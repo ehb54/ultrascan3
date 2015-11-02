@@ -200,7 +200,7 @@ void US_AssociationsGui::changed( int row, int col )
       L->setSpacing        ( 0 );
 
       QwtCounter*  c = us_counter( 1, 1.0, 20.0 );
-      c->setStep( 1.0 );
+      c->setSingleStep( 1.0 );
       L->addWidget( c );
 
       QString text = item->text().left( 1 );

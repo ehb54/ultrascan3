@@ -1,7 +1,6 @@
 //! \file us_solution_gui.cpp
 
-#include <QtGui>
-
+#include "us_solution_gui.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"
 #include "us_passwd.h"
@@ -10,7 +9,6 @@
 #include "us_buffer_gui.h"
 #include "us_analyte_gui.h"
 #include "us_solution.h"
-#include "us_solution_gui.h"
 
 US_SolutionGui::US_SolutionGui( 
       int   expID,
@@ -81,7 +79,7 @@ US_SolutionGui::US_SolutionGui(
    lo_amount->addWidget( lb_amount );
 
    ct_amount = us_counter ( 2, 0, 100, 1 ); // #buttons, low, high, start_value
-   ct_amount->setStep( 1 );
+   ct_amount->setSingleStep( 1 );
    ct_amount->setFont( QFont( US_GuiSettings::fontFamily(),
                               US_GuiSettings::fontSize() ) );
    lo_amount->addWidget( ct_amount );

@@ -8,6 +8,9 @@
 #include "us_constants.h"
 #include "us_images.h"
 #include "us_editor.h"
+#if QT_VERSION < 0x050000
+#define setSamples(a,b,c) setData(a,b,c)
+#endif
 
 #include <qwt_legend.h>
 
@@ -189,7 +192,7 @@ void US_TmstPlot::plot_kdata()
 
    QwtPlotCurve* curv = us_curve( data_plot1, pkey );  // Create a single curve
    curv->setPen ( QPen( US_GuiSettings::plotCurve(), 2 ) );
-   curv->setData( xx, yy, ntimes );
+   curv->setSamples( xx, yy, ntimes );
 
    data_plot1->replot();
 }
@@ -288,7 +291,7 @@ DbgLv(1) << "TP:plcd:       yy0 yyn" << yy[0] << yy[ntimes-1];
       // Create the colored curve for the current key value type; add to legend
       QwtPlotCurve* curv = us_curve( data_plot2, pkey );
       curv->setPen ( QPen( ccolr, 2 ) );
-      curv->setData( xx, yy, ntimes );
+      curv->setSamples( xx, yy, ntimes );
       curv->setItemAttribute( QwtPlotItem::Legend, true );
    }
 

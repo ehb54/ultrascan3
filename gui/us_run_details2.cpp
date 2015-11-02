@@ -7,6 +7,9 @@
 #include "us_constants.h"
 #include "us_util.h"
 #include "us_gui_util.h"
+#if QT_VERSION < 0x050000
+#define setSamples(a,b,c) setData(a,b,c)
+#endif
 
 #include <qwt_legend.h>
 
@@ -225,7 +228,7 @@ void US_RunDetails2::setup( void )
    QString h = ( hours == 1 ) ? tr( "hour" ) : tr( "hours" );
  
    le_runLen->setText( 
-         s.sprintf( "%d %s %02d min", hours, h.toAscii().data(), mins ) );
+         s.sprintf( "%d %s %02d min", hours, h.toLatin1().data(), mins ) );
 
    // Set Time Correction
    double correction = 0.0;
@@ -451,9 +454,9 @@ void US_RunDetails2::draw_plot( const double* x, const double* t,
    if ( plotType == TEMPERATURE  || plotType == COMBINED )
    {
       QwtPlotCurve* c1 = us_curve( data_plot, tr( "Temperature" ) );
-      c1->setPen   ( QPen( QBrush( Qt::yellow ), 2 ) );
-      c1->setSymbol( sym );
-      c1->setData  ( x, t, count );
+      c1->setPen    ( QPen( QBrush( Qt::yellow ), 2 ) );
+      c1->setSymbol ( sym );
+      c1->setSamples( x, t, count );
    }
 
    sym.setPen( QColor( Qt::green ) );
@@ -461,9 +464,9 @@ void US_RunDetails2::draw_plot( const double* x, const double* t,
    if ( plotType == RPM  || plotType == COMBINED )
    {
       QwtPlotCurve* c2 = us_curve( data_plot, tr( "RPM" ) );
-      c2->setPen       ( QPen( QBrush( Qt::green ), 2 ) );
-      c2->setSymbol    ( sym );
-      c2->setData      ( x, r, count );
+      c2->setPen    ( QPen( QBrush( Qt::green ), 2 ) );
+      c2->setSymbol ( sym );
+      c2->setSamples( x, r, count );
    }
 
    sym.setPen( QColor( Qt::red ) );
@@ -472,9 +475,9 @@ void US_RunDetails2::draw_plot( const double* x, const double* t,
    {
       QwtPlotCurve* c3 = us_curve( data_plot, tr( "Scan Time Deltas" ) );
       if ( plotType == COMBINED ) c3->setYAxis( QwtPlot::yRight );
-      c3->setPen       ( QPen( QBrush( Qt::red ), 2 ) );
-      c3->setSymbol    ( sym );
-      c3->setData      ( &x[ 1 ], &m[ 1 ], count - 1 );
+      c3->setPen    ( QPen( QBrush( Qt::red ), 2 ) );
+      c3->setSymbol ( sym );
+      c3->setSamples( &x[ 1 ], &m[ 1 ], count - 1 );
    }
 
    if ( data_plot->legend() == NULL )

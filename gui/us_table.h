@@ -1,8 +1,6 @@
 #ifndef US_TABLE_H
 #define US_TABLE_H
 
-#include <QtGui>
-
 #include "us_widgets_dialog.h"
 #include "us_extern.h"
 

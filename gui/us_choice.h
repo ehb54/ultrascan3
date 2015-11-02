@@ -1,8 +1,6 @@
 #ifndef US_CHOICE_H
 #define US_CHOICE_H
 
-#include <QtGui>
-
 #include "us_widgets_dialog.h"
 #include "us_extern.h"
 #include "us_solution.h"

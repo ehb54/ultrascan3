@@ -2,8 +2,6 @@
 #ifndef US_PLOT3D_H
 #define US_PLOT3D_H
 
-#include <QtGui>
-
 #include "us_extern.h"
 #include "us_model.h"
 #include "us_dataIO.h"

@@ -207,7 +207,7 @@ bool US_DataIO::readLegacyFile( const QString&  file,
 
    if ( pp.size() < 8 ) return false;
 
-   data.type          = pp[ 0 ].toAscii()[ 0 ];  // I P R W F
+   data.type          = pp[ 0 ].toLatin1()[ 0 ];  // I P R W F
    data.cell          = pp[ 1 ].toInt();
    data.temperature   = pp[ 2 ].toDouble();
    data.rpm           = pp[ 3 ].toDouble();

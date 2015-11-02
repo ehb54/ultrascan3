@@ -38,7 +38,7 @@ QString US_Passwd::getPasswd( void  )
     
     // Check the hash
     QByteArray hash =
-          QCryptographicHash::hash( pw.toAscii(), QCryptographicHash::Sha1 );
+          QCryptographicHash::hash( pw.toLatin1(), QCryptographicHash::Sha1 );
 
     if ( hash == currentHash ) break;
     

@@ -2,8 +2,6 @@
 #ifndef US_ANALYSIS_BASE_H
 #define US_ANALYSIS_BASE_H
 
-#include <QtGui>
-
 #include "us_extern.h"
 #include "us_widgets.h"
 #include "us_dataIO.h"

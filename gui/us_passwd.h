@@ -2,8 +2,6 @@
 #ifndef US_PASSWD_H
 #define US_PASSWD_H
 
-#include <QtGui>
-
 #include "us_widgets.h"
 #include "us_extern.h"
 
