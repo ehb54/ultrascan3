@@ -2,7 +2,11 @@
 #define US_LOADABLENOISE_H
 
 #include <QtCore>
+#if QT_VERSION > 0x050000
+#include <QtWidgets>
+#else
 #include <QtGui>
+#endif
 #include "us_extern.h"
 #include "us_dataIO.h"
 #include "us_model.h"

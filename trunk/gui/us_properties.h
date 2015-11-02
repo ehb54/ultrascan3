@@ -2,8 +2,6 @@
 #ifndef US_PROPERTIES_H
 #define US_PROPERTIES_H
 
-#include <QtGui>
-
 #include "us_widgets_dialog.h"
 #include "us_widgets.h"
 #include "us_model.h"

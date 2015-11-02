@@ -1,7 +1,6 @@
 #ifndef US_EDITOR_GUI_H
 #define US_EDITOR_GUI_H
 
-#include <QtGui>
 #include "us_extern.h"
 #include "us_editor.h"
 #include "us_widgets_dialog.h"

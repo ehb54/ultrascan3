@@ -2,8 +2,6 @@
 #ifndef US_MODEL_EDITOR_H
 #define US_MODEL_EDITOR_H
 
-#include <QtGui>
-
 #include "us_widgets_dialog.h"
 #include "us_help.h"
 #include "us_predict1.h"

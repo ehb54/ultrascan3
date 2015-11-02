@@ -2,7 +2,8 @@
 #ifndef US_PLOT_H
 #define US_PLOT_H
 
-#include <QtGui>
+#include "us_widgets_dialog.h"
+#include "us_extern.h"
 
 #include "qwt_plot.h"
 #include "qwt_plot_grid.h"
@@ -11,9 +12,6 @@
 #include "qwt_plot_zoomer.h"
 #include "qwt_plot_curve.h"
 #include "qwt_symbol.h"
-
-#include "us_widgets_dialog.h"
-#include "us_extern.h"
 
 
 //! \brief A class to implement plot zooming

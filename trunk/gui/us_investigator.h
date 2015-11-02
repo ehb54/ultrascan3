@@ -2,8 +2,6 @@
 #ifndef US_INVESTIGATOR_H
 #define US_INVESTIGATOR_H
 
-#include <QtGui>
-
 #include "us_extern.h"
 #include "us_widgets_dialog.h"
 #include "us_help.h"

@@ -325,7 +325,7 @@ US_AnalyteGui::US_AnalyteGui( bool            signal,
    ratios->addWidget( lb_sodium, 1, 0 );
 
    ct_sodium = us_counter( 2, 0.0, 1.0, 0.0 );
-   ct_sodium->setStep( 0.01 );
+   ct_sodium->setSingleStep( 0.01 );
    connect( ct_sodium, SIGNAL( valueChanged     ( double ) ),
                        SLOT  ( update_nucleotide( double ) ) );
    ratios->addWidget( ct_sodium, 1, 1, 1, 2 );
@@ -334,7 +334,7 @@ US_AnalyteGui::US_AnalyteGui( bool            signal,
    ratios->addWidget( lb_potassium, 2, 0 );
 
    ct_potassium = us_counter( 2, 0.0, 1.0, 0.0 );
-   ct_potassium->setStep( 0.01 );
+   ct_potassium->setSingleStep( 0.01 );
    connect( ct_potassium, SIGNAL( valueChanged     ( double ) ),
                           SLOT  ( update_nucleotide( double ) ) );
    ratios->addWidget( ct_potassium, 2, 1, 1, 2 );
@@ -343,7 +343,7 @@ US_AnalyteGui::US_AnalyteGui( bool            signal,
    ratios->addWidget( lb_lithium, 3, 0 );
 
    ct_lithium = us_counter( 2, 0.0, 1.0, 0.0 );
-   ct_lithium->setStep( 0.01 );
+   ct_lithium->setSingleStep( 0.01 );
    connect( ct_lithium, SIGNAL( valueChanged     ( double ) ),
                         SLOT  ( update_nucleotide( double ) ) );
    ratios->addWidget( ct_lithium, 3, 1, 1, 2 );
@@ -352,7 +352,7 @@ US_AnalyteGui::US_AnalyteGui( bool            signal,
    ratios->addWidget( lb_magnesium, 4, 0 );
 
    ct_magnesium = us_counter( 2, 0.0, 1.0, 0.0 );
-   ct_magnesium->setStep( 0.01 );
+   ct_magnesium->setSingleStep( 0.01 );
    connect( ct_magnesium, SIGNAL( valueChanged     ( double ) ),
                           SLOT  ( update_nucleotide( double ) ) );
    ratios->addWidget( ct_magnesium, 4, 1, 1, 2 );
@@ -361,7 +361,7 @@ US_AnalyteGui::US_AnalyteGui( bool            signal,
    ratios->addWidget( lb_calcium, 5, 0 );
 
    ct_calcium = us_counter( 2, 0.0, 1.0, 0.0 );
-   ct_calcium->setStep( 0.01 );
+   ct_calcium->setSingleStep( 0.01 );
    connect( ct_calcium, SIGNAL( valueChanged     ( double ) ),
                         SLOT  ( update_nucleotide( double ) ) );
    ratios->addWidget( ct_calcium, 5, 1 );

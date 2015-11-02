@@ -302,7 +302,7 @@ void US_Plot::quit( void )
 ////////////////////////////////////////
 
 US_PlotPushbutton::US_PlotPushbutton( const QString& labelString, 
-      QWidget* w, int index ) : QPushButton( labelString.toAscii(), w )
+      QWidget* w, int index ) : QPushButton( labelString.toLatin1(), w )
 {
    setFont( QFont( US_GuiSettings::fontFamily(),
                    US_GuiSettings::fontSize() ) );
@@ -1925,7 +1925,7 @@ void US_PlotGridConfig::apply( void )
    style = cmbb_majorStyle->itemData( cmbb_majorStyle->currentIndex() ).toInt();
    pen.setStyle( static_cast< Qt::PenStyle >( style ) );
    
-   grid->setMajPen( pen );
+   grid->setMajorPen( pen );
 
    // Set the minor pen
    pen = grid->minPen();
@@ -1936,7 +1936,7 @@ void US_PlotGridConfig::apply( void )
    style = cmbb_minorStyle->itemData( cmbb_minorStyle->currentIndex() ).toInt();
    pen.setStyle( static_cast< Qt::PenStyle >( style ) );
 
-   grid->setMinPen( pen );
+   grid->setMinorPen( pen );
 
    // Enable/disable grid lines and re-plot
    grid->enableX   ( cb_enableX     ->isChecked() );   

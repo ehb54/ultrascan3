@@ -2,15 +2,13 @@
 #ifndef US_SASSOC_H
 #define US_SASSOC_H
 
-#include <QtGui>
-
-#include <qwt_counter.h>
-#include <qwt_plot_curve.h>
-
 #include "us_extern.h"
 #include "us_widgets.h"
 #include "us_plot.h"
 #include "us_help.h"
+
+#include <qwt_counter.h>
+#include <qwt_plot_curve.h>
 
 //! Define the number of points in a plot
 #define ARRAY_SIZE 555

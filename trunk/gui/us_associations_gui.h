@@ -2,8 +2,6 @@
 #ifndef US_ASSOCIATIONS_GUI_H
 #define US_ASSOCIATIONS_GUI_H
 
-#include <QtGui>
-
 #include "us_widgets_dialog.h"
 #include "us_widgets.h"
 #include "us_model.h"

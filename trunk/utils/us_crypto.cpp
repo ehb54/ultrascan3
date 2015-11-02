@@ -34,7 +34,7 @@ QStringList US_Crypto::encrypt( const QString& plain_text, const QString& pw )
       key[ i ] = pw[ i ].cell();
 
    QString    plaintext  = plain_text;
-   QByteArray plain_ba   = plaintext.toAscii();
+   QByteArray plain_ba   = plaintext.toLatin1();
    uchar*     plain_ptr  = (uchar*)plain_ba.data();
 
    EVP_CIPHER_CTX ctx;
@@ -66,10 +66,10 @@ QString US_Crypto::decrypt( const QString& ciphertext, const QString& pw,
    for ( int i = 0; i < pw.size(); i++ ) // Copy the password
       key[ i ] = pw[ i ].cell();
             
-   QByteArray     iv_ba    = QByteArray::fromHex( initVector.toAscii() );
+   QByteArray     iv_ba    = QByteArray::fromHex( initVector.toLatin1() );
    uchar*         iv_ptr   = (uchar*)iv_ba.data();
 
-   QByteArray     cipher_ba  = QByteArray::fromHex( ciphertext.toAscii() );
+   QByteArray     cipher_ba  = QByteArray::fromHex( ciphertext.toLatin1() );
    uchar*         cipher_ptr = (uchar*)cipher_ba.data();
 
    uchar          out   [ 100 ];   // Assume the plaintext is < 99 characters

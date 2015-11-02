@@ -2,8 +2,6 @@
 #ifndef US_LICENSE_H
 #define US_LICENSE_H
 
-#include <QtGui>
-
 #include "us_widgets.h"
 #include "us_help.h"
 #include "us_extern.h"

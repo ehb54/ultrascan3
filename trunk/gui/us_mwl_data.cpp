@@ -1,6 +1,5 @@
 //! \file us_mwl_data.cpp
 
-#include <QtGui>
 #include "us_mwl_data.h"
 #include "us_util.h"
 #include "us_settings.h"
@@ -860,7 +859,7 @@ DbgLv(1) << "BldRawD     trx" << trx << " building scans... ccx" << ccx;
       rdata.type[ 0 ]   = dtype0;
       rdata.type[ 1 ]   = dtype1;
       rdata.cell        = QString( headers[ hdx ].cell ).toInt();
-      rdata.channel     = headers[ hdx ].channel.toAscii();
+      rdata.channel     = headers[ hdx ].channel.toLatin1();
       rdata.xvalues     = xout;
       int jhx           = hdx; 
       int rdx           = 0;

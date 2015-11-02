@@ -2,7 +2,6 @@
 #ifndef US_ROTOR_GUI_H
 #define US_ROTOR_GUI_H
 
-#include <QtGui>
 #include <QApplication>
 #include <QDomDocument>
 

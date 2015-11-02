@@ -7,6 +7,9 @@
 #include "us_choice.h"
 #include "us_solution_gui.h"
 #include "us_math2.h"
+#if QT_VERSION < 0x050000
+#define setSamples(a,b,c) setData(a,b,c)
+#endif
 
 #include "qwt_legend.h"
 
@@ -214,15 +217,15 @@ US_Predict1::US_Predict1( US_Hydrosim&     parm,
 
    prolate_curve = us_curve( plot, tr( "Prolate Ellipsoid" ) );
    prolate_curve->setPen ( QPen( QBrush( Qt::magenta  ), 2.0 ) );
-   prolate_curve->setData( ratio_x, prolate, ARRAYSIZE );
+   prolate_curve->setSamples( ratio_x, prolate, ARRAYSIZE );
    
    oblate_curve  = us_curve( plot, tr( "Oblate Ellipsoid" ) );
    oblate_curve ->setPen ( QPen( QBrush( Qt::yellow ), 2.0 ) );
-   oblate_curve ->setData( ratio_x, oblate, ARRAYSIZE );
+   oblate_curve ->setSamples( ratio_x, oblate, ARRAYSIZE );
 
    rod_curve = us_curve( plot, tr( "Long Rod" ) );
    rod_curve->setPen( QPen( QBrush( Qt::cyan ), 2.0 ) );
-   rod_curve->setData( ratio_x, rod, ARRAYSIZE );
+   rod_curve->setSamples( ratio_x, rod, ARRAYSIZE );
 
    vline_x[ 0 ] = ratio;
    vline_x[ 1 ] = ratio;
@@ -231,7 +234,7 @@ US_Predict1::US_Predict1( US_Hydrosim&     parm,
 
    vline_curve = us_curve( plot, tr( "Axial Ratio" ) );
    vline_curve->setPen ( QPen( QBrush( Qt::white  ), 1.5 ) );
-   vline_curve->setData( vline_x, vline_y, 2 );
+   vline_curve->setSamples( vline_x, vline_y, 2 );
 
    QwtLegend* legend = new QwtLegend();
    plot->insertLegend( legend, QwtPlot::BottomLegend, 0.1 );
@@ -449,7 +452,7 @@ void US_Predict1::mouseU( const QwtDoublePoint& p )
 
    vline_x[ 0 ] = ratio;
    vline_x[ 1 ] = ratio;
-   vline_curve->setData( vline_x, vline_y, 2 );
+   vline_curve->setSamples( vline_x, vline_y, 2 );
    plot->replot();
 
    le_axial ->disconnect();

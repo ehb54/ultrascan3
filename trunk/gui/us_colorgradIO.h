@@ -1,7 +1,15 @@
 #ifndef US_COLORGRIO_H
 #define US_COLORGRIO_H
 
+#if QT_VERSION > 0x050000
+#include <QtWidgets>
+#else
 #include <QtGui>
+#define setSingleStep(a) setStep(a)
+#define setMinorPen(a) setMinPen(a)
+#define setMajorPen(a) setMajPen(a)
+#define setMajorPen(a) setMajPen(a)
+#endif
 #include <QtXml>
 
 #include "us_extern.h"

@@ -1,5 +1,9 @@
 //! \file us.h
+#if QT_VERSION > 0x050000
+#include <QtWidgets>
+#else
 #include <QtGui>
+#endif
 
 #include "us_global.h"
 #include "us_help.h"

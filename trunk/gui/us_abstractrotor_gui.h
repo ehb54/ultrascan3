@@ -2,8 +2,6 @@
 #ifndef US_ABSTRACTROTOR_GUI_H
 #define US_ABSTRACTROTOR_GUI_H
 
-#include <QtGui>
-
 #include "us_extern.h"
 #include "us_rotor.h"
 #include "us_widgets.h"
