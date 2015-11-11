@@ -8,7 +8,6 @@
 #define setSingleStep(a) setStep(a)
 #define setMinorPen(a) setMinPen(a)
 #define setMajorPen(a) setMajPen(a)
-#define setMajorPen(a) setMajPen(a)
 #endif
 #include "us_extern.h"
 

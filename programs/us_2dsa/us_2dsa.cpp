@@ -21,6 +21,9 @@
 #include "us_investigator.h"
 #include "us_noise_loader.h"
 #include "us_loadable_noise.h"
+#if QT_VERSION > 0x050000
+#include "qwt_point_data.h"
+#endif
 
 //! \brief Main program for us_2dsa. Loads translators and starts
 //         the class US_2dsa.
@@ -89,11 +92,13 @@ US_2dsa::US_2dsa() : US_AnalysisBase2()
    pb_reset_exclude->setVisible(true);
    // Effectively disable boundaries to turn off cyan portion of plot2
    ct_boundaryPercent->disconnect();
-   ct_boundaryPercent->setRange  ( 0.0, 300.0, 1.0 );
+   ct_boundaryPercent->setRange  ( 0.0, 300.0 );
+   ct_boundaryPercent->setSingleStep( 1.0 );
    ct_boundaryPercent->setValue  ( 300.0 );
    ct_boundaryPercent->setEnabled( false );
    ct_boundaryPos    ->disconnect();
-   ct_boundaryPos    ->setRange  ( -50.0, 300.0, 1.0 );
+   ct_boundaryPos    ->setRange  ( -50.0, 300.0 );
+   ct_boundaryPos    ->setSingleStep( 1.0 );
    ct_boundaryPos    ->setValue  ( -50.0 );
    ct_boundaryPos    ->setEnabled( false );
 
@@ -302,41 +307,23 @@ DbgLv(1) << "LD:  sp: rotspeed" << sp.rotorspeed << "t1" << sp.time_first;
       }
    }
 
-   int nssp      = speed_steps.count();
-   int nssc      = ( nssp < 1 ) ? 0 : speed_steps[ nssp - 1 ].scans;
-DbgLv(1) << "LD:sp: nssp nssc" << nssp << nssc;
-   for ( int ds = 0; ds < lw_triples->count(); ds++ )
-   {
-      edata         = &dataList[ ds ];
-      int nesc      = edata->scanData.size();
-      int etm1      = edata->scanData[        0 ].seconds;
-      int etm2      = edata->scanData[ nesc - 1 ].seconds;
-      double eom1   = edata->scanData[        0 ].omega2t;
-      double eom2   = edata->scanData[ nesc - 1 ].omega2t;
-DbgLv(1) << "LD:sp:  etm1 etm2 eom1 eom2" << etm1 << etm2 << eom1 << eom2
- << "nesc" << nesc << "ds" << ds;
+   exp_steps  = ( speed_steps.count() > 0 );  // Flag any multi-step experiment
+int nesc=edata->scanData.size();
+int etm1=edata->scanData[0].seconds;
+double eom1=edata->scanData[0].omega2t;
+int etm2=edata->scanData[nesc-1].seconds;
+double eom2=edata->scanData[nesc-1].omega2t;
+int nssp=speed_steps.count();
+int nssc=(nssp<1)?0:speed_steps[nssp-1].scans;
+DbgLv(1) << "LD:sp: nesc nssp nssc" << nesc << nssp << nssc;
+DbgLv(1) << "LD:sp:  etm1 etm2 eom1 eom2" << etm1 << etm2 << eom1 << eom2;
+if(nssp>0) {
+ int stm1=speed_steps[nssp-1].time_first;
+ double som1=speed_steps[nssp-1].w2t_first;
+ int stm2=speed_steps[nssp-1].time_last;
+ double som2=speed_steps[nssp-1].w2t_last;
+ DbgLv(1) << "LD:sp:  stm1 stm2 som1 som2" << stm1 << stm2 << som1 << som2; }
 
-      if ( nssp > 0 )
-      {
-         int stm1      = speed_steps[ nssp - 1 ].time_first;
-         int stm2      = speed_steps[ nssp - 1 ].time_last;
-         double som1   = speed_steps[ nssp - 1 ].w2t_first;
-         double som2   = speed_steps[ nssp - 1 ].w2t_last;
-
-         if ( etm1 < stm1  ||  etm2 > stm2 )
-         {
-            nssp          = 0;
-            speed_steps.clear();
-            break;
-         }
-DbgLv(1) << "LD:sp:  stm1 stm2 som1 som2" << stm1 << stm2 << som1 << som2
- << "nssp" << nssp;
-      }
-   }
-
-   exp_steps     = ( nssp > 0 );      // Flag use of experiment speed steps
-   edata         = &dataList[ 0 ];    // Point to first loaded data
-DbgLv(1) << "LD:sp:    exp_steps" << exp_steps;
 }
 
 // plot the data
@@ -404,13 +391,17 @@ DbgLv(1) << "Data Plot from Base";
       title = "SimCurve " + QString::number( ii );
       cc    = us_curve( data_plot2, title );
       cc->setPen( pen_red );
+#if QT_VERSION > 0x050000
+      cc->setData( new QwtPointArrayData( ra, va, kk ) );
+#else
       cc->setData( ra, va, kk );
+#endif
    }
 
    data_plot2->replot();           // replot combined exper,simul data
 
    data_plot1->detachItems();
-   data_plot1->clear();
+   //data_plot1->clear();
 
    us_grid( data_plot1 );
    data_plot1->setAxisTitle( QwtPlot::xBottom, tr( "Radius (cm)" ) );
@@ -439,9 +430,13 @@ DbgLv(1) << "Data Plot from Base";
       // plot dots of residuals at current scan
       title    = "resids " + QString::number( ii );
       cc       = us_curve( data_plot1, title );
-      cc->setPen(   pen_plot );
+      cc->setPen  (   pen_plot );
       cc->setStyle( QwtPlotCurve::Dots );
-      cc->setData(  ra, va, npoints );
+#if QT_VERSION > 0x050000
+      cc->setData ( new QwtPointArrayData( ra, va, npoints ) );
+#else
+      cc->setData ( ra, va, npoints );
+#endif
    }
 
    data_plot1->setAxisAutoScale( QwtPlot::xBottom );
@@ -457,7 +452,11 @@ DbgLv(1) << "Data Plot from Base";
    va[ 1 ]    = 0.0;
    cc         = us_curve( data_plot1, "zero-line" );
    cc->setPen( QPen( QBrush( Qt::red ), 2 ) );
+#if QT_VERSION > 0x050000
+   cc->setData( new QwtPointArrayData( ra, va, 2 ) );
+#else
    cc->setData( ra, va, 2 );
+#endif
 
    // draw the plot
    data_plot1->setAxisScale( QwtPlot::xBottom, xlo, xhi );
@@ -750,7 +749,6 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
    QString plot1File = filebase + "velocity.svgz";
    QString plot2File = filebase + "residuals.png";
    QString plot3File = filebase + "rbitmap.png";
-   QString plot4File = filebase + "velocity_nc.svgz";
    QString fitFile   = filebase + "fitmen.dat";
    QString fresFile  = respath  + "2dsa-fm" + dext2 + ".fitmen.dat";
    QString dsinfFile = QString( filebase ).replace( analynode, "/dsinfo." )
@@ -769,19 +767,10 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
    write_report( ts );
    rep_f.close();
 
-   if ( resplotd == NULL )
-   {
-      resplotd = new US_ResidPlot2D( this );
-      resplotd->move( rbd_pos );
-      resplotd->setVisible( true );
-      connect( resplotd, SIGNAL( destroyed() ), this, SLOT( resplot_done() ) );
-   }
-
    // Write plots
    write_plot( plot1File, data_plot2 );
-   write_plot( plot2File, resplotd->rp_data_plot2() );
+   write_plot( plot2File, data_plot1 );
    write_bmap( plot3File );
-   write_plot( plot4File, resplotd->rp_data_plot1() );
    
    // use a dialog to tell the user what we've output
    QString wmsg = tr( "Wrote:\n" );
@@ -828,14 +817,12 @@ DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
    wmsg = wmsg + htmlFile  + "\n"
                + plot1File + "\n"
                + plot2File + "\n"
-               + plot3File + "\n"
-               + plot4File + "\n";
+               + plot3File + "\n";
    QStringList repfiles;
    update_filelist( repfiles, htmlFile  );
    update_filelist( repfiles, plot1File );
    update_filelist( repfiles, plot2File );
    update_filelist( repfiles, plot3File );
-   update_filelist( repfiles, plot4File );
 
    // Add fit files if fit-meniscus
    if ( fitMeni )
@@ -912,7 +899,6 @@ void US_2dsa::open_resplot()
    resplotd = new US_ResidPlot2D( this );
    resplotd->move( rbd_pos );
    resplotd->setVisible( true );
-   connect( resplotd, SIGNAL( destroyed() ), this, SLOT( resplot_done() ) );
 }
 
 // Open 3-D plot control window
@@ -1303,7 +1289,7 @@ void US_2dsa::new_triple( int index )
 
    sdata.scanData.clear();                 // Clear simulation and upper plot
    data_plot1->detachItems();
-   data_plot1->clear();
+   //data_plot1->clear();
    models     .clear();
    ti_noises  .clear();
    ri_noises  .clear();
@@ -1350,11 +1336,5 @@ QString US_2dsa::fit_meniscus_data()
    }
    
    return mstr;
-}
-
-// Public slot to mark residual plot dialog closed
-void US_2dsa::resplot_done()
-{
-   resplotd     = 0;
 }
 

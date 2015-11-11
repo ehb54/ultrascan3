@@ -91,19 +91,20 @@ bool US_SolveSim::checkGridSize( QList< DataSet* >& data_sets,
 {
    const long tstep_max = 10000L;
    bool   too_large = false;
+   double s_show    = s_max * 1.0e13;
    smsg             = QString( "" );
-   US_SimulationParameters* sparams = &data_sets[ 0 ]->simparams;
-   double meniscus  = sparams->meniscus;
-   double bottom    = sparams->bottom;
-   int    rpm_max   = sparams->speed_step[ 0 ].rotorspeed;
-   int    time_max  = 0;
-   int    rsimpts   = sparams->simpoints - 1;
 
    for ( int dd = 0; dd < data_sets.size(); dd++ )
    {
-      sparams          = &data_sets[ dd ]->simparams;
+      US_SimulationParameters* sparams
+                       = &data_sets[ dd ]->simparams;
       QVector< US_SimulationParameters::SpeedProfile > speed_step
                        = sparams->speed_step;
+      double meniscus  = sparams->meniscus;
+      double bottom    = sparams->bottom;
+      int    rpm_max   = sparams->speed_step[ 0 ].rotorspeed;
+      int    time_max  = 0;
+      int    rsimpts   = sparams->simpoints - 1;
 
       for ( int ss = 0; ss < speed_step.size(); ss++ )
       {
@@ -112,31 +113,33 @@ bool US_SolveSim::checkGridSize( QList< DataSet* >& data_sets,
          time_max         = qMax( time_max, duration );
          rpm_max          = qMax( rpm_max, speed_step[ ss ].rotorspeed );
       }
-   }
 
-   double s_show   = s_max * 1.0e13;
-   double omega_s  = sq( rpm_max * M_PI / 30.0 );
-   double lgbmrat  = log( bottom / meniscus );
-   double somgfac  = s_max * omega_s;
-   double dt       = lgbmrat / ( somgfac * rsimpts );
-   long   tsteps   = (long)( time_max / dt ) + 1L;
+      double omega_s  = sq( rpm_max * M_PI / 30.0 );
+      double lgbmrat  = log( bottom / meniscus );
+      double somgfac  = s_max * omega_s;
+      double dt       = lgbmrat / ( somgfac * rsimpts );
+      long   tsteps   = (long)( time_max / dt ) + 1L;
 //if(thrnrank==1) DbgLv(1) << "CK: tsteps" << tsteps << "dt omg rpm" << dt << omega_s << rpm_max
-// << "bot men rat sfac spts" << bottom << meniscus << lgbmrat << somgfac << rsimpts;
+// << "bot men rat sfac spts tmax" << bottom << meniscus << lgbmrat << somgfac << rsimpts << time_max;
 
-   if ( tsteps > tstep_max )
-   {
-      too_large       = true;
-      smsg = tr( "The combination of rotor speed, the ratio of sedimentation\n"
-                 "over diffusion coefficient, and length of experiment\n"
-                 "caused the program to exceed available memory.\n"
-                 "Please sufficiently reduce any of these to bring\n"
-                 "the program into a feasible range.\n\n"
-                 "Related data and simulation parameters include:\n"
-                 "   Maximum speed = %1 RPM ;\n"
-                 "   Maximum S value = %2 x 1e-13 ;\n"
-                 "   Computed grid time steps and radius points  = %3 ;\n"
-                 "   Program-imposed grid time steps upper limit = %4 ." )
-              .arg( rpm_max ).arg( s_show ).arg( tsteps ).arg( tstep_max );
+      if ( tsteps > tstep_max )
+      {
+qDebug() << "CK: tsteps" << tsteps << "dt omg rpm" << dt << omega_s << rpm_max
+ << "bot men rat sfac spts tmax" << bottom << meniscus << lgbmrat
+ << somgfac << rsimpts << time_max;
+         too_large       = true;
+         smsg += tr( "The combination of rotor speed, the ratio of sedimentation\n"
+                     "over diffusion coefficient, and length of experiment\n"
+                     "caused the program to exceed available memory.\n"
+                     "Please sufficiently reduce any of these to bring\n"
+                     "the program into a feasible range.\n\n"
+                     "Related data and simulation parameters include:\n"
+                     "   Maximum speed = %1 RPM ;\n"
+                     "   Maximum S value = %2 x 1e-13 ;\n"
+                     "   Computed grid time steps and radius points  = %3 ;\n"
+                     "   Program-imposed grid time steps upper limit = %4 .\n" )
+                  .arg( rpm_max ).arg( s_show ).arg( tsteps ).arg( tstep_max );
+      }
    }
 
    return too_large;

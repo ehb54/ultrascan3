@@ -2,8 +2,6 @@
 #ifndef US_RESID_PLOT_H
 #define US_RESID_PLOT_H
 
-#include <QtGui>
-
 #include "us_extern.h"
 #include "us_widgets_dialog.h"
 #include "us_dataIO.h"
@@ -20,15 +18,8 @@ class US_ResidPlot2D : public US_WidgetsDialog
    Q_OBJECT
 
    public:
-      //! \brief Residuals plot dialog constructor
       //! \param parent  A pointer to the parent widget of this one
       US_ResidPlot2D( QWidget* );
-
-      //! \brief Return a QwtPlot pointer for the upper plot
-      QwtPlot* rp_data_plot1();
-
-      //! \brief Return a QwtPlot pointer for the lower plot
-      QwtPlot* rp_data_plot2();
 
    private:
       QHBoxLayout*  mainLayout;
