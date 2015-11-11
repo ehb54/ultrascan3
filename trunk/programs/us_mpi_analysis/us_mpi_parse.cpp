@@ -103,6 +103,32 @@ if (my_rank==0) DbgLv(0) << "PF: solute_type" << d->solute_type
    }
 
    file.close();
+
+   if ( parameters.contains( "debug_text" ) )
+   {
+      QString dbgtxt_str     = parameters[ "debug_text" ];
+      QStringList dbgtxt_sls = dbgtxt_str.split( ',' );
+      int ndtln              = dbgtxt_sls.count();
+
+      for ( int ii = 0; ii < ndtln; ii++ )
+      {
+         dbgtxt_sls[ ii ] = dbgtxt_sls[ ii ].simplified();
+      }
+
+      US_Settings::set_debug_text( dbgtxt_sls );
+//*DEBUG*
+if (my_rank==0) {
+DbgLv(0) << "DBGTXT: dt string: " << dbgtxt_str;
+DbgLv(0) << "DBGTXT: dt sl_count" << ndtln;
+DbgLv(0) << "DBGTXT: dt strlst: " << dbgtxt_sls;
+dbgtxt_sls = US_Settings::debug_text();
+ndtln = dbgtxt_sls.count();
+DbgLv(0) << "DBGTXT: dt sl_count(2)" << ndtln;
+DbgLv(0) << "DBGTXT: dt strlst(2): " << dbgtxt_sls;
+DbgLv(0) << "DBGTXT: match nnls:" << US_Settings::debug_match("use_nnls_lib");
+}
+//*DEBUG*
+   }
 }
 
 void US_MPI_Analysis::parse_job( QXmlStreamReader& xml )

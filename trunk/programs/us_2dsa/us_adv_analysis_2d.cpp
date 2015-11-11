@@ -62,9 +62,9 @@ US_AdvAnalysis2D::US_AdvAnalysis2D( US_SimulationParameters* sim_par,
    ct_bandload  = us_counter( 3,    1,    20,   1 );
    ct_spoints   = us_counter( 3,   50, 10000,  10 );
 
-   ct_bandload->setStep(  0.1 );
+   ct_bandload->setSingleStep(  0.1 );
    ct_bandload->setValue( sparms->band_volume * 1000.0 );
-   ct_spoints ->setStep(   10 );
+   ct_spoints ->setSingleStep(   10 );
    ct_spoints ->setValue( sparms->simpoints );
    ct_bandload->setEnabled( rb_bandcp->isChecked() );
 
@@ -101,17 +101,17 @@ US_AdvAnalysis2D::US_AdvAnalysis2D( US_SimulationParameters* sim_par,
    //ct_mciters   = us_counter( 3,    1, 2000,   20 );
    ct_regufact  = us_counter( 3, 0.01, 10.0,  0.9 );
 
-   ct_repetloc ->setStep(    1 );
-   ct_scfactor ->setStep( 0.01 );
-   ct_scfact2  ->setStep( 0.01 );
-   ct_repetran ->setStep(    1 );
-   ct_stddevia ->setStep( 0.01 );
-   ct_coaldist ->setStep( 0.01 );
-   ct_nbrclips ->setStep(    1 );
-   //ct_menisrng ->setStep( 0.01 );
-   //ct_menispts ->setStep(    1 );
-   //ct_mciters  ->setStep(    1 );
-   ct_regufact ->setStep( 0.01 );
+   ct_repetloc ->setSingleStep(    1 );
+   ct_scfactor ->setSingleStep( 0.01 );
+   ct_scfact2  ->setSingleStep( 0.01 );
+   ct_repetran ->setSingleStep(    1 );
+   ct_stddevia ->setSingleStep( 0.01 );
+   ct_coaldist ->setSingleStep( 0.01 );
+   ct_nbrclips ->setSingleStep(    1 );
+   //ct_menisrng ->setSingleStep( 0.01 );
+   //ct_menispts ->setSingleStep(    1 );
+   //ct_mciters  ->setSingleStep(    1 );
+   ct_regufact ->setSingleStep( 0.01 );
 
    cmb_mesh     = us_comboBox();
    cmb_mesh->setMaxVisibleItems( 5 );

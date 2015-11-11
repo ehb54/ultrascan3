@@ -8,6 +8,11 @@
 #include "us_db2.h"
 #include "us_gui_settings.h"
 #include "us_memory.h"
+#if QT_VERSION < 0x050000
+#define setMinimum(a)     setMinValue(a)
+#define setMaximum(a)     setMaxValue(a)
+#endif
+#define setPBMaximum(a)   setRange(1,a)
 
 #include <qwt_legend.h>
 
@@ -95,14 +100,14 @@ DbgLv(1) << "idealThrCout" << nthr;
    ct_nstepsk   = us_counter( 3,      1,  1000,  64 );
    ct_thrdcnt   = us_counter( 2,      1,    64, nthr );
    ct_constff0  = us_counter( 3,      1,    10,   1  );
-   ct_lolimits->setStep(  0.1 );
-   ct_uplimits->setStep(  0.1 );
-   ct_nstepss ->setStep(    1 );
-   ct_lolimitk->setStep( 0.01 );
-   ct_uplimitk->setStep( 0.01 );
-   ct_nstepsk ->setStep(    1 );
-   ct_thrdcnt ->setStep(    1 );
-   ct_constff0->setStep( 0.01 );
+   ct_lolimits->setSingleStep(  0.1 );
+   ct_uplimits->setSingleStep(  0.1 );
+   ct_nstepss ->setSingleStep(    1 );
+   ct_lolimitk->setSingleStep( 0.01 );
+   ct_uplimitk->setSingleStep( 0.01 );
+   ct_nstepsk ->setSingleStep(    1 );
+   ct_thrdcnt ->setSingleStep(    1 );
+   ct_constff0->setSingleStep( 0.01 );
 
    le_estmemory = us_lineedit( tr( "100 MB" ), -1, true );
    le_iteration = us_lineedit( "0",            -1, true );
@@ -130,10 +135,10 @@ DbgLv(1) << "idealThrCout" << nthr;
    ct_menisrng  = us_counter( 3, 0.01, 0.65, 0.03 );
    ct_menispts  = us_counter( 2,    3,   21,   10 );
    ct_mciters   = us_counter( 3,    3, 2000,   20 );
-   ct_menisrng ->setStep( 0.01 );
-   ct_menispts ->setStep(    1 );
-   ct_mciters  ->setStep(    1 );
-   ct_iters    ->setStep(    1 );
+   ct_menisrng ->setSingleStep( 0.01 );
+   ct_menispts ->setSingleStep(    1 );
+   ct_mciters  ->setSingleStep(    1 );
+   ct_iters    ->setSingleStep(    1 );
 
    int row       = 0;
    controlsLayout->addWidget( lb_fitting,    row++, 0, 1, 4 );
@@ -419,13 +424,13 @@ void US_AnalysisControl2D::checkVaryVbar(  bool checked )
       lb_lolimitk->setText( tr( "Lower Limit (vbar):" ) );
       lb_uplimitk->setText( tr( "Upper Limit (vbar):" ) );
       lb_nstepsk ->setText( tr( "Number Grid Points (vbar):" ) );
-      ct_lolimitk->setMinValue( 0.025 );
-      ct_lolimitk->setMaxValue( 1.500 );
-      ct_lolimitk->setStep    ( 0.001 );
+      ct_lolimitk->setMinimum( 0.025 );
+      ct_lolimitk->setMaximum( 1.500 );
+      ct_lolimitk->setSingleStep    ( 0.001 );
       ct_lolimitk->setValue   ( vblo  );
-      ct_uplimitk->setMinValue( 0.025 );
-      ct_uplimitk->setMaxValue( 1.500 );
-      ct_uplimitk->setStep    ( 0.001 );
+      ct_uplimitk->setMinimum( 0.025 );
+      ct_uplimitk->setMaximum( 1.500 );
+      ct_uplimitk->setSingleStep    ( 0.001 );
       ct_uplimitk->setValue   ( vbhi  );
       ct_constff0->setValue   ( 2.000 );
    }
@@ -435,13 +440,13 @@ void US_AnalysisControl2D::checkVaryVbar(  bool checked )
       lb_lolimitk->setText( tr( "Lower Limit (f/f0):" ) );
       lb_uplimitk->setText( tr( "Upper Limit (f/f0):" ) );
       lb_nstepsk ->setText( tr( "Number Grid Points (f/f0):" ) );
-      ct_lolimitk->setMinValue( 1.0  );
-      ct_lolimitk->setMaxValue( 8.0  );
-      ct_lolimitk->setStep    ( 0.01 );
+      ct_lolimitk->setMinimum( 1.0  );
+      ct_lolimitk->setMaximum( 8.0  );
+      ct_lolimitk->setSingleStep    ( 0.01 );
       ct_lolimitk->setValue   ( 1.0  );
-      ct_uplimitk->setMinValue( 1.0  );
-      ct_uplimitk->setMaxValue( 20.0 );
-      ct_uplimitk->setStep    ( 0.01 );
+      ct_uplimitk->setMinimum( 1.0  );
+      ct_uplimitk->setMaximum( 20.0 );
+      ct_uplimitk->setSingleStep    ( 0.01 );
       ct_uplimitk->setValue   ( 4.0  );
    }
 }
@@ -656,7 +661,7 @@ void US_AnalysisControl2D::load_model()
       int     nsubg  = cusmodel.subGrids;
       int     sgsize = nsol / nsubg;
 
-      if ( nsubg > 1  &&  sgsize > 150 )
+      if ( sgsize > 150 )
       {  // Implied subgrid size too large:  change subgrid count
          int ksubg      = nsubg;
          int kssiz      = sgsize;
@@ -808,8 +813,8 @@ void US_AnalysisControl2D::slim_change()
 
    ct_lolimits->setRange( limlo, upval );
    ct_uplimits->setRange( loval, limup );
-   ct_lolimits->setStep( 0.1 );
-   ct_uplimits->setStep( 0.1 );
+   ct_lolimits->setSingleStep( 0.1 );
+   ct_uplimits->setSingleStep( 0.1 );
 }
 
 // Set k-upper-limit to lower when k grid points == 1
@@ -851,7 +856,7 @@ void US_AnalysisControl2D::update_progress( int ksteps )
    if ( ncsteps > nctotal )
    {
       nctotal  = ( nctotal * 11 ) / 10;
-      b_progress->setMaximum( nctotal );
+      b_progress->setPBMaximum( nctotal );
    }
 
    b_progress->setValue( ncsteps );
@@ -886,7 +891,7 @@ DbgLv(1) << "AC:cs: prmx nct kcs" << b_progress->maximum() << nct << kcs;
    ncsteps      = kcs;
    nctotal      = nct;
 
-   b_progress->setMaximum( nctotal );
+   b_progress->setPBMaximum( nctotal );
    b_progress->setValue(   ncsteps );
 
    qApp->processEvents();

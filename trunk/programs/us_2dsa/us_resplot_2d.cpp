@@ -8,6 +8,10 @@
 #include "us_constants.h"
 
 #include <qwt_legend.h>
+#if QT_VERSION > 0x050000
+#include <qwt_point_data.h>
+#define setData(a,b,c) setData(new QwtPointArrayData(a,b,c));
+#endif
 
 // constructor:  residuals plot widget
 US_ResidPlot2D::US_ResidPlot2D( QWidget* parent = 0 )
@@ -17,7 +21,7 @@ US_ResidPlot2D::US_ResidPlot2D( QWidget* parent = 0 )
    setWindowTitle( tr( "2-D Spectrum Analysis Data/Residuals Viewer" ) );
    setPalette( US_GuiSettings::frameColor() );
 
-   QSize p1size( 560, 360 );
+   QSize p1size( 560, 240 );
    QSize p2size( 560, 240 );
 
    dbg_level       = US_Settings::us_debug();
@@ -364,7 +368,7 @@ void US_ResidPlot2D::plot_data()
 void US_ResidPlot2D::plot_edata()
 {
    data_plot1->detachItems();
-   data_plot1->clear();
+   //data_plot1->clear();
 
    bool   do_plteda = have_ed  &&  ck_plteda->isChecked();
    bool   do_pltsda = have_sd  &&  ck_pltsda->isChecked();
@@ -467,7 +471,7 @@ void US_ResidPlot2D::plot_edata()
          title   = tr( "Curve " ) + QString::number( ii );
          curv    = us_curve( data_plot1, title );
 
-         curv->setPen( pen_plot );
+         curv->setPen ( pen_plot );
          curv->setData( rr, vv, points );
       }
    }
@@ -511,7 +515,7 @@ void US_ResidPlot2D::plot_edata()
          title   = tr( "S-Curve " ) + QString::number( ii );
          curv    = us_curve( data_plot1, title );
 
-         curv->setPen( pen_red );
+         curv->setPen ( pen_red );
          curv->setData( rr, vv, points );
       }
    }
@@ -523,7 +527,7 @@ void US_ResidPlot2D::plot_edata()
 void US_ResidPlot2D::plot_rdata()
 {
    data_plot2->detachItems();
-   data_plot2->clear();
+   //data_plot2->clear();
 
    bool   do_pltres = have_ed  &&  ck_pltres->isChecked()  &&  have_sd;
    bool   do_plttin = have_ti  &&  ck_plttin->isChecked();
@@ -571,7 +575,7 @@ void US_ResidPlot2D::plot_rdata()
    vv[ 0 ]    = 0.0;
    vv[ 1 ]    = 0.0;
    curv       = us_curve( data_plot2, "zero-line" );
-   curv->setPen( QPen( QBrush( Qt::red ), 2 ) );
+   curv->setPen ( QPen( QBrush( Qt::red ), 2 ) );
    curv->setData( rr, vv, 2 );
 
    if ( do_pltres )
@@ -708,9 +712,9 @@ void US_ResidPlot2D::plot_rdata()
          title   = tr( "random noise " ) + QString::number( ii );
          curv    = us_curve( data_plot2, title );
 
-         curv->setPen(   pen_plot );
+         curv->setPen  ( pen_plot );
          curv->setStyle( QwtPlotCurve::Dots );
-         curv->setData(   rr, vv, points );
+         curv->setData ( rr, vv, points );
       }
 
       // display variance and RMSD
@@ -803,17 +807,5 @@ DbgLv(1) << "Resids BitMap Closed!!!";
    resbmap = 0;
    have_bm = false;
    ck_shorbm->setChecked( false );
-}
-
-// Return a QwtPlot pointer to the upper plot
-QwtPlot* US_ResidPlot2D::rp_data_plot1()
-{
-   return data_plot1;
-}
-
-// Return a QwtPlot pointer to the lower plot
-QwtPlot* US_ResidPlot2D::rp_data_plot2()
-{
-   return data_plot2;
 }
 
