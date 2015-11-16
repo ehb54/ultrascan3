@@ -641,6 +641,8 @@ DbgLv(1) << "AC:SF: processor deleted";
 // Load Model button clicked
 void US_AnalysisControl2D::load_model()
 {
+   const int minsgsz = 10;
+   const int maxsgsz = 800;
    QString  mdesc( "" );
    QString  mfilter( "" );
    US_Model cusmodel;
@@ -661,11 +663,12 @@ void US_AnalysisControl2D::load_model()
       int     nsubg  = cusmodel.subGrids;
       int     sgsize = nsol / nsubg;
 
-      if ( sgsize > 150 )
+      if ( sgsize < minsgsz  ||  sgsize > maxsgsz )
       {  // Implied subgrid size too large:  change subgrid count
          int ksubg      = nsubg;
          int kssiz      = sgsize;
-         nsubg          = ( nsol / 100 + 1 ) | 1;
+         sgsize         = qMax( minsgsz, qMin( maxsgsz, sgsize ) );
+         nsubg          = ( nsol / sgsize + 1 ) | 1;
          sgsize         = nsol / nsubg;
          DbgLv(0) << "Subgrid count adjusted from" << ksubg << "to" << nsubg;
          DbgLv(0) << "Subgrid size adjusted from" << kssiz << "to" << sgsize;
