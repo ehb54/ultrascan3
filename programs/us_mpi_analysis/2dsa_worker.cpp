@@ -175,6 +175,7 @@ DbgLv(1) << "w:" << my_rank << ":   result sols size" << size[0]
                      ff0_pts = parameters[ "ff0_resolution"  ].toDouble() * grid_reps;
                   int  nsstep     = (int)( s_pts );
                   int  nkstep     = (int)( ff0_pts );
+                  grid_reps       = US_Math2::best_grid_reps( nsstep, nkstep );
                   int  maxsols    = nsstep * nkstep;
                   long memamatr   = memdata * maxsols;
                   long membmatr   = memdata;

@@ -3,10 +3,13 @@
 #include <QApplication>
 #include "us_grid_editor.h"
 
-const double MPISQ  = M_PI * M_PI;
-const double THIRD  = 1.0 / 3.0;
+const double MPISQ   = M_PI * M_PI;
+const double THIRD   = 1.0 / 3.0;
 const double VOL_FAC = 0.75 / M_PI;
 const double SPH_FAC = 0.06 * M_PI * VISC_20W;
+const int MINSSZ = 10;
+const int MAXSSZ = 800;
+const int DEFSSZ = 100;
 
 // main program
 int main( int argc, char* argv[] )
@@ -149,7 +152,7 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    lb_xRes->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
 
    ct_xRes      = us_counter( 3, 10.0, 1000.0, 60.0 );
-   ct_xRes->setStep( 1 );
+   ct_xRes->setSingleStep( 1 );
    connect( ct_xRes,  SIGNAL( valueChanged( double ) ),
             this,     SLOT  ( update_xRes ( double ) ) );
 
@@ -157,7 +160,7 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    lb_yRes->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
 
    ct_yRes      = us_counter( 3, 10.0, 1000.0, 60.0 );
-   ct_yRes->setStep( 1 );
+   ct_yRes->setSingleStep( 1 );
    connect( ct_yRes,  SIGNAL( valueChanged( double ) ),
             this,     SLOT  ( update_yRes ( double ) ) );
 
@@ -165,7 +168,7 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    lb_xMin->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
 
    ct_xMin     = us_counter( 3, -10000.0, 10000.0, 0.1 );
-   ct_xMin->setStep( 1 );
+   ct_xMin->setSingleStep( 1 );
    connect( ct_xMin, SIGNAL( valueChanged( double ) ),
             this,    SLOT  ( update_xMin ( double ) ) );
 
@@ -173,7 +176,7 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    lb_xMax->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
 
    ct_xMax     = us_counter( 3, -10000.0, 10000.0, 0.1 );
-   ct_xMax->setStep( 1 );
+   ct_xMax->setSingleStep( 1 );
    connect( ct_xMax, SIGNAL( valueChanged( double ) ),
             this,    SLOT  ( update_xMax ( double ) ) );
 
@@ -181,7 +184,7 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    lb_yMin->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
 
    ct_yMin     = us_counter( 3, 1.0, 50.0, 0.1 );
-   ct_yMin->setStep( 1 );
+   ct_yMin->setSingleStep( 1 );
    connect( ct_yMin, SIGNAL( valueChanged( double ) ),
             this,    SLOT(   update_yMin ( double ) ) );
 
@@ -189,7 +192,7 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    lb_yMax->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
 
    ct_yMax     = us_counter( 3, 1.0, 50.0, 0.1 );
-   ct_yMax->setStep( 1 );
+   ct_yMax->setSingleStep( 1 );
    connect( ct_yMax, SIGNAL( valueChanged( double ) ),
          this,       SLOT(   update_yMax ( double ) ) );
 
@@ -197,7 +200,7 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    lb_zVal->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
 
    ct_zVal     = us_counter( 3, 0.01, 3.0, 0.001 );
-   ct_zVal->setStep ( 1 );
+   ct_zVal->setSingleStep ( 1 );
    ct_zVal->setValue( 0.72 );
    connect( ct_zVal, SIGNAL( valueChanged( double ) ),
          this,       SLOT(   update_zVal ( double ) ) );
@@ -241,7 +244,7 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    lb_partialGrid->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
 
    ct_partialGrid     = us_counter( 3, 0, 1000, 0.0 );
-   ct_partialGrid->setStep( 1 );
+   ct_partialGrid->setSingleStep( 1 );
    ct_partialGrid->setEnabled( false );
    connect( ct_partialGrid, SIGNAL( valueChanged( double ) ),
             this,        SLOT( update_partialGrid( double ) ) );
@@ -250,10 +253,13 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    lb_subGrid->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
 
    ct_subGrids     = us_counter( 3, 1, 500, 13.0 );
-   ct_subGrids->setStep( 1 );
+   ct_subGrids->setSingleStep( 1 );
    ct_subGrids->setEnabled( false );
    connect( ct_subGrids, SIGNAL( valueChanged( double ) ),
             this,        SLOT( update_subGrids( double ) ) );
+
+   QLabel* lb_counts = us_label( tr( "Number of Grid Points:" ) );
+   le_counts     = us_lineedit( tr( "0 total, 0 per subgrid" ), 0, true );
 
    pb_reset      = us_pushbutton( tr( "Reset" ) );
    pb_reset->setEnabled( true );
@@ -336,6 +342,8 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    left->addWidget( ct_partialGrid,        s_row++, 2, 1, 2 );
    left->addWidget( lb_subGrid,            s_row,   0, 1, 2 );
    left->addWidget( ct_subGrids,           s_row++, 2, 1, 2 );
+   left->addWidget( lb_counts,             s_row,   0, 1, 2 );
+   left->addWidget( le_counts,             s_row++, 2, 1, 2 );
    left->addWidget( pb_reset,              s_row,   0, 1, 1 );
    left->addWidget( pb_save,               s_row,   1, 1, 1 );
    left->addWidget( pb_help,               s_row,   2, 1, 1 );
@@ -378,17 +386,27 @@ qDebug() << "reset yRes" << yRes;
    subGrids      = 13;
    final_grid.clear();
 
+   ct_xRes->disconnect();
+   ct_yRes->disconnect();
+   ct_xRes->setValue( xRes );
+   ct_yRes->setValue( yRes );
+   connect( ct_xRes,  SIGNAL( valueChanged( double ) ),
+            this,     SLOT  ( update_xRes ( double ) ) );
+   connect( ct_yRes,  SIGNAL( valueChanged( double ) ),
+            this,     SLOT  ( update_yRes ( double ) ) );
 qDebug() << "1)set yRes" << yRes;
-   ct_xRes->setRange( 10.0, 1000.0, 1.0 );
+   ct_xRes->setRange( 10.0, 1000.0 );
+   ct_xRes->setSingleStep( 1.0 );
 qDebug() << "2)set yRes" << yRes;
    ct_xRes->setValue( xRes );
 qDebug() << "3)set yRes" << yRes;
-   ct_yRes->setRange( 10.0, 1000.0, 1.0 );
+   ct_yRes->setRange( 10.0, 1000.0 );
+   ct_yRes->setSingleStep( 1.0 );
 qDebug() << "set yRes" << yRes;
    ct_yRes->setValue( yRes );
    ct_partialGrid    ->setEnabled( false );
    ct_subGrids       ->setEnabled( false );
-   ct_partialGrid    ->setRange( 0, 0, 0);
+   ct_partialGrid    ->setRange( 0, 0 );
    ct_partialGrid    ->setValue( 0 );
    ck_show_final_grid->setEnabled( false );
    ck_show_final_grid->setChecked( false );
@@ -687,8 +705,12 @@ void US_Grid_Editor::update_partialGrid( double dval )
 // Select a subgrid from the final grid for highlighting:
 void US_Grid_Editor::update_subGrids( double dval )
 {
-   subGrids = (int) dval;
-   ct_partialGrid->setRange( 1, subGrids, 1);
+   int ntotg       = final_grid.size();
+   subGrids        = (int) dval;
+   ct_partialGrid->setRange( 1, subGrids );
+   ct_partialGrid->setSingleStep( 1 );
+   le_counts->setText( tr( "%1 total, %2 per subgrid" )
+         .arg( ntotg ).arg( ntotg / subGrids ) );
    update_plot();
 }
 
@@ -1988,6 +2010,20 @@ void US_Grid_Editor::add_partialGrid( void )
    ck_show_final_grid->setEnabled( true );
    pb_delete_partialGrid->setEnabled( true );
    ct_partialGrid->setEnabled( true );
+
+   int ntotg       = final_grid.size();
+   int minsubg     = ntotg / MAXSSZ;
+   int maxsubg     = ntotg / MINSSZ + 1;
+   subGrids        = ntotg / DEFSSZ + 1;
+   ct_subGrids->disconnect();
+   ct_subGrids->setRange  ( minsubg, maxsubg );
+   ct_subGrids->setSingleStep( 1 );
+   ct_subGrids->setValue  ( subGrids );
+   connect( ct_subGrids, SIGNAL( valueChanged( double ) ),
+            this,        SLOT( update_subGrids( double ) ) );
+
+   le_counts->setText( tr( "%1 total, %2 per subgrid" )
+         .arg( ntotg ).arg( ntotg / subGrids ) );
 }
 
 // delete current grid
@@ -2009,12 +2045,14 @@ void US_Grid_Editor::delete_partialGrid( void )
       }
    }
    grid_index--;
-   ct_partialGrid->setRange( 1, grid_index, 1 );
+   ct_partialGrid->setRange( 1, grid_index );
+   ct_partialGrid->setSingleStep( 1 );
    if (grid_index == 0)
    {
       ck_show_final_grid->setChecked (false);
       ck_show_final_grid->setEnabled (false);
-      ct_partialGrid->setRange (0, 0, 1);
+      ct_partialGrid->setRange     ( 0, 0 );
+      ct_partialGrid->setSingleStep( 1 );
       ct_partialGrid->setEnabled( false );
       show_final_grid( false );
    }
@@ -2091,10 +2129,12 @@ void US_Grid_Editor::select_x_axis( int ival )
    ct_xMax->disconnect();
    xMin   = xvmns[ plot_x ];
    xMax   = xvmxs[ plot_x ];
-   ct_xMin->setRange( xmins[ plot_x ], xmaxs[ plot_x ], xincs[ plot_x ] );
-   ct_xMax->setRange( xmins[ plot_x ], xmaxs[ plot_x ], xincs[ plot_x ] );
-   ct_xMin->setValue( xMin );
-   ct_xMax->setValue( xMax );
+   ct_xMin->setRange     ( xmins[ plot_x ], xmaxs[ plot_x ] );
+   ct_xMin->setSingleStep( xincs[ plot_x ] );
+   ct_xMax->setRange     ( xmins[ plot_x ], xmaxs[ plot_x ] );
+   ct_xMax->setSingleStep( xincs[ plot_x ] );
+   ct_xMin->setValue     ( xMin );
+   ct_xMax->setValue     ( xMax );
 
    connect( ct_xMin, SIGNAL( valueChanged( double ) ),
             this,    SLOT  ( update_xMin ( double ) ) );
@@ -2162,10 +2202,12 @@ void US_Grid_Editor::select_y_axis( int ival )
    ct_yMax->disconnect();
    yMin   = yvmns[ plot_y ];
    yMax   = yvmxs[ plot_y ];
-   ct_yMin->setRange( ymins[ plot_y ], ymaxs[ plot_y ], yincs[ plot_y ] );
-   ct_yMax->setRange( ymins[ plot_y ], ymaxs[ plot_y ], yincs[ plot_y ] );
-   ct_yMin->setValue( yMin );
-   ct_yMax->setValue( yMax );
+   ct_yMin->setRange     ( ymins[ plot_y ], ymaxs[ plot_y ] );
+   ct_yMin->setSingleStep( yincs[ plot_y ] );
+   ct_yMax->setRange     ( ymins[ plot_y ], ymaxs[ plot_y ] );
+   ct_yMax->setSingleStep( yincs[ plot_y ] );
+   ct_yMin->setValue     ( yMin );
+   ct_yMax->setValue     ( yMax );
 
    connect( ct_yMin, SIGNAL( valueChanged( double ) ),
             this,    SLOT  ( update_yMin ( double ) ) );
@@ -2226,7 +2268,8 @@ void US_Grid_Editor::select_fixed( const QString& fixstr )
    plot_z   = fixstr.contains( tr( "nal Coeff" ) ) ? ATTR_F : plot_z;
 qDebug() << "SelFix: " << fixstr << "plot_z" << plot_z;
 
-   ct_zVal->setRange( zmins[ plot_z ], zmaxs[ plot_z ], zincs[ plot_z ] );
+   ct_zVal->setRange     ( zmins[ plot_z ], zmaxs[ plot_z ] );
+   ct_zVal->setSingleStep( zincs[ plot_z ] );
    //ct_zVal->setValue( zvals[ plot_z ] );
    lb_zVal->setText( fixstr );
 
@@ -2238,7 +2281,8 @@ void US_Grid_Editor::show_final_grid( bool flag )
 {
    if (flag)
    {
-      ct_partialGrid       ->setRange(1, grid_index, 1);
+      ct_partialGrid       ->setRange     ( 1, grid_index );
+      ct_partialGrid       ->setSingleStep( 1 );
       ct_partialGrid       ->setEnabled( true );
       pb_delete_partialGrid->setEnabled( true );
       pb_add_partialGrid   ->setEnabled( false );
@@ -2262,22 +2306,27 @@ void US_Grid_Editor::show_sub_grid( bool flag )
 {
    if (flag)
    {
-      int maxsubgrids = (int) final_grid.size()/50;
-      int defsubgrids = ( maxsubgrids / 2 ) | 1;
-DbgLv(1) << "finalsize" << final_grid.size() << "maxsubgs" << maxsubgrids;
+      int ntotg       = final_grid.size();
+      int minsubg     = ntotg / MAXSSZ;
+      int maxsubg     = ntotg / MINSSZ + 1;
+      subGrids        = ntotg / DEFSSZ + 1;
+DbgLv(1) << "finalsize" << ntotg << "maxsubg" << maxsubg;
       lb_partialGrid       ->setText   ( tr( "Highlight Subgrid #:" ) );
       ct_subGrids          ->setEnabled( true );
-      ct_subGrids          ->setRange  ( 1, maxsubgrids, 1 );
-      ct_subGrids          ->setValue  ( defsubgrids );
-      ct_partialGrid       ->setRange  ( 1, subGrids, 1 );
+      ct_subGrids          ->setRange  ( minsubg, maxsubg );
+      ct_subGrids          ->setSingleStep( 1 );
+      ct_subGrids          ->setValue  ( subGrids );
       pb_delete_partialGrid->setEnabled( false );
+      le_counts->setText( tr( "%1 total, %2 per subgrid" )
+            .arg( ntotg ).arg( ntotg / subGrids ) );
    }
    else
    {
       lb_partialGrid       ->setText   ( tr( "Highlight Partial Grid #:" ) );
       ct_subGrids          ->setEnabled( false );
-      ct_partialGrid       ->setRange  ( 1, grid_index, 1 );
-      ct_partialGrid       ->setValue  ( 1 );
+      ct_partialGrid       ->setRange     ( 1, grid_index );
+      ct_partialGrid       ->setSingleStep( 1 );
+      ct_partialGrid       ->setValue     ( 1 );
       pb_delete_partialGrid->setEnabled( true );
    }
 
