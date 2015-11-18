@@ -14,6 +14,16 @@
 #include "us_constants.h"
 #include "us_passwd.h"
 #include "us_report.h"
+#if QT_VERSION < 0x050000
+#define setSamples(a,b,c)  setData(a,b,c)
+#define setMinimum(a)      setMinValue(a)
+#define setMaximum(a)      setMaxValue(a)
+#define setSymbol(a)       setSymbol(*a)
+#define setStateMachine(a) setSelectionFlags(QwtPicker::RectSelection|QwtPicker::DragSelection)
+#else
+#include "qwt_picker_machine.h"
+#define canvasBackground() canvasBackground().color();
+#endif
 
 // main program
 int main( int argc, char* argv[] )
@@ -72,7 +82,7 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
    lb_nisols->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
 
    ct_nisols     = us_counter( 3, 0.0, 1000.0, 0.0 );
-   ct_nisols->setStep( 1 );
+   ct_nisols->setSingleStep( 1 );
    ct_nisols->setEnabled( true );
    connect( ct_nisols, SIGNAL( valueChanged(  double ) ),
             this,      SLOT(   update_nisols( double ) ) );
@@ -81,7 +91,7 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
    lb_wxbuck->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
 
    ct_wxbuck     = us_counter( 3, 0.0, 10.0, 0.0 );
-   ct_wxbuck->setStep( 1 );
+   ct_wxbuck->setSingleStep( 1 );
    connect( ct_wxbuck, SIGNAL( valueChanged(  double ) ),
             this,      SLOT(   update_wxbuck( double ) ) );
 
@@ -89,7 +99,7 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
    lb_hybuck->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
 
    ct_hybuck     = us_counter( 3, 0.0, 1.0, 0.0 );
-   ct_hybuck->setStep( 1 );
+   ct_hybuck->setSingleStep( 1 );
    connect( ct_hybuck, SIGNAL( valueChanged(  double ) ),
             this,      SLOT(   update_hybuck( double ) ) );
 
@@ -99,7 +109,7 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
    lb_resolu->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
 
    ct_resolu     = us_counter( 3, 0.0, 100.0, 90.0 );
-   ct_resolu->setStep( 1 );
+   ct_resolu->setSingleStep( 1 );
    connect( ct_resolu, SIGNAL( valueChanged( double ) ),
             this,      SLOT( update_resolu( double ) ) );
 
@@ -107,7 +117,7 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
    lb_xreso->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
 
    ct_xreso      = us_counter( 3, 10.0, 1000.0, 0.0 );
-   ct_xreso->setStep( 1 );
+   ct_xreso->setSingleStep( 1 );
    connect( ct_xreso,  SIGNAL( valueChanged( double ) ),
             this,      SLOT( update_xreso( double ) ) );
 
@@ -115,7 +125,7 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
    lb_yreso->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
 
    ct_yreso      = us_counter( 3, 10.0, 1000.0, 0.0 );
-   ct_yreso->setStep( 1 );
+   ct_yreso->setSingleStep( 1 );
    connect( ct_yreso,  SIGNAL( valueChanged( double ) ),
             this,      SLOT( update_yreso( double ) ) );
 
@@ -123,7 +133,7 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
    lb_zfloor->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
 
    ct_zfloor     = us_counter( 3, 0.0, 50.0, 1.0 );
-   ct_zfloor->setStep( 1 );
+   ct_zfloor->setSingleStep( 1 );
    connect( ct_zfloor, SIGNAL( valueChanged( double ) ),
             this,      SLOT( update_zfloor( double ) ) );
 
@@ -138,13 +148,13 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
    lb_plxmin->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
 
    ct_plxmin     = us_counter( 3, -10000.0, 10000.0, 0.0 );
-   ct_plxmin->setStep( 1 );
+   ct_plxmin->setSingleStep( 1 );
    connect( ct_plxmin, SIGNAL( valueChanged( double ) ),
             this,        SLOT( update_plxmin( double ) ) );
 
    lb_plxmax     = us_label( tr( "Plot Limit s Max:" ) );
    ct_plxmax     = us_counter( 3, 0.0, 10000.0, 0.0 );
-   ct_plxmax->setStep( 1 );
+   ct_plxmax->setSingleStep( 1 );
    connect( ct_plxmax, SIGNAL( valueChanged( double ) ),
             this,        SLOT( update_plxmax( double ) ) );
 
@@ -152,7 +162,7 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
    lb_plymin->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
 
    ct_plymin     = us_counter( 3, 0.5, 50.0, 0.0 );
-   ct_plymin->setStep( 1 );
+   ct_plymin->setSingleStep( 1 );
    connect( ct_plymin, SIGNAL( valueChanged( double ) ),
             this,        SLOT( update_plymin( double ) ) );
    
@@ -160,7 +170,7 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
    lb_plymax->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
    
    ct_plymax     = us_counter( 3, 1.0, 50.0, 1.0 );
-   ct_plymax->setStep( 1 );
+   ct_plymax->setSingleStep( 1 );
    ct_plymax->setValue( 1.34567e+01 );
    connect( ct_plymax, SIGNAL( valueChanged( double ) ),
          this,         SLOT( update_plymax( double ) ) );
@@ -469,24 +479,30 @@ void US_GA_Initialize::reset( void )
    wxbuck     = 0.0;
    hybuck     = 0.0;
    ct_nisols->setValue( (double)nisols );
-   ct_wxbuck->setRange( 0, 200, 0.1 );
-   ct_hybuck->setRange( 0, 50, 0.01 );
+   ct_wxbuck->setRange( 0, 200 );
+   ct_hybuck->setRange( 0,  50 );
+   ct_wxbuck->setSingleStep( 0.1 );
+   ct_hybuck->setSingleStep( 0.01 );
    ct_wxbuck->setValue( wxbuck );
    ct_hybuck->setValue( hybuck );
 
    resolu     = 90.0;
-   ct_resolu->setRange( 1, 100, 1 );
+   ct_resolu->setRange( 1, 100 );
+   ct_resolu->setSingleStep( 1 );
    ct_resolu->setValue( resolu );  
 
    xreso      = 300.0;
    yreso      = 300.0;
-   ct_xreso->setRange( 10.0, 1000.0, 1.0 );
+   ct_xreso->setRange( 10.0, 1000.0 );
+   ct_xreso->setSingleStep( 1.0 );
    ct_xreso->setValue( (double)xreso );
-   ct_yreso->setRange( 10, 1000, 1 );
+   ct_yreso->setRange( 10, 1000 );
+   ct_yreso->setSingleStep( 1.0 );
    ct_yreso->setValue( (double)yreso );
 
    zfloor     = 0.0;
-   ct_zfloor->setRange( 0, 50, 1 );
+   ct_zfloor->setRange( 0, 50 );
+   ct_zfloor->setSingleStep( 1.0 );
    ct_zfloor->setValue( (double)zfloor );
 
    auto_lim   = true;
@@ -494,19 +510,23 @@ void US_GA_Initialize::reset( void )
 
    plymin     = 1.0;
    plymax     = 4.0;
-   ct_plymin->setRange( 0.5, 50, 0.01 );
+   ct_plymin->setRange( 0.5, 50 );
+   ct_plymin->setSingleStep( 0.01 );
    ct_plymin->setValue( plymin );
    ct_plymin->setEnabled( false );
-   ct_plymax->setRange( 1.0, 50, 0.01 );
+   ct_plymax->setRange( 1.0, 50 );
+   ct_plymax->setSingleStep( 0.01 );
    ct_plymax->setValue( plymax );
    ct_plymax->setEnabled( false );
 
    plxmin     = 1.0;
    plxmax     = 10.0;
-   ct_plxmin->setRange( -10.0, 10000.0, 0.01 );
+   ct_plxmin->setRange( -10.0, 10000.0 );
+   ct_plxmin->setSingleStep( 0.01 );
    ct_plxmin->setValue( plxmin );
    ct_plxmin->setEnabled( false );
-   ct_plxmax->setRange( 0.0, 10000.0, 0.01 );
+   ct_plxmax->setRange( 0.0, 10000.0 );
+   ct_plxmax->setSingleStep( 0.01 );
    ct_plxmax->setValue( plxmax );
    ct_plxmax->setEnabled( false );
 
@@ -665,8 +685,7 @@ void US_GA_Initialize::manDrawSb( void )
    pick->setRubberBandPen( *pickpen );
    pick->setTrackerPen(    *pickpen );
    pick->setRubberBand(     QwtPicker::RectRubberBand );
-   pick->setSelectionFlags( QwtPicker::RectSelection
-                          | QwtPicker::DragSelection );
+   pick->setStateMachine( new QwtPickerClickPointMachine() );
 
    // set up to capture position and dimensions of solute bin
    connect( pick, SIGNAL(  mouseDown( const QwtDoublePoint& ) ),
@@ -684,7 +703,8 @@ void US_GA_Initialize::manDrawSb( void )
    double rmax  = pow( 10.0, rpwr + 3 );
    double rinc  = pow( 10.0, rpwr - 3 );
    wxbuck       = qRound( wxbuck / rinc ) * rinc;
-   ct_wxbuck->setRange( 0.0, rmax, rinc );
+   ct_wxbuck->setRange( 0.0, rmax );
+   ct_wxbuck->setSingleStep( rinc );
    ct_wxbuck->setValue( wxbuck );
           rpwr  = qRound( log10( hybuck ) );
           rmax  = pow( 10.0, rpwr + 3 );
@@ -882,12 +902,12 @@ void US_GA_Initialize::plot_1dim( void )
    QwtPlotGrid* data_grid = us_grid( data_plot );
    data_grid->enableYMin( true );
    data_grid->enableY( true );
-   data_grid->setMajPen( QPen( US_GuiSettings::plotMajGrid(),
+   data_grid->setMajorPen( QPen( US_GuiSettings::plotMajGrid(),
       0, Qt::DashLine ) );
    data_grid->attach( data_plot );
 
    QwtPlotCurve *data_curv = us_curve( data_plot, "distro" );
-   data_curv->setData( x, y, nn );
+   data_curv->setSamples( x, y, nn );
    data_curv->setPen( QPen( Qt::yellow, 3, Qt::SolidLine ) );
    data_curv->setStyle( QwtPlotCurve::Sticks );
 
@@ -954,28 +974,28 @@ void US_GA_Initialize::plot_2dim( void )
    QwtPlotGrid* data_grid = us_grid( data_plot );
    data_grid->enableYMin( true );
    data_grid->enableY( true );
-   data_grid->setMajPen( QPen( US_GuiSettings::plotMajGrid(),
+   data_grid->setMajorPen( QPen( US_GuiSettings::plotMajGrid(),
       0, Qt::DashLine ) );
    data_grid->attach( data_plot );
 
    QwtPlotCurve *data_curv = us_curve( data_plot, "distro" );
-   QwtSymbol symbol;
+   QwtSymbol* symbol       = new QwtSymbol;
 
-   symbol.setStyle( QwtSymbol::Ellipse );
-   symbol.setPen( QPen( Qt::red ) );
-   symbol.setBrush( QBrush( Qt::yellow ) );
+   symbol->setStyle( QwtSymbol::Ellipse );
+   symbol->setPen( QPen( Qt::red ) );
+   symbol->setBrush( QBrush( Qt::yellow ) );
    if ( dsize < 100  &&  dsize > 50 )
-      symbol.setSize( 8 );
+      symbol->setSize( 8 );
    else if ( dsize < 50  &&  dsize > 20 )
-      symbol.setSize( 10 );
+      symbol->setSize( 10 );
    else if ( dsize < 21 )
-      symbol.setSize( 12 );
+      symbol->setSize( 12 );
    else if ( dsize > 100 )
-      symbol.setSize( 6 );
+      symbol->setSize( 6 );
 
    data_curv->setStyle( QwtPlotCurve::NoCurve );
    data_curv->setSymbol( symbol );
-   data_curv->setData( x, y, dsize );
+   data_curv->setSamples( x, y, dsize );
 
    delete [] x;
    delete [] y;
@@ -1013,10 +1033,16 @@ void US_GA_Initialize::plot_3dim( void )
 
    // set up spectrogram data
    d_spectrogram = new QwtPlotSpectrogram();
+#if QT_VERSION < 0x050000
    d_spectrogram->setData( US_SpectrogramData() );
    d_spectrogram->setColorMap( *colormap );
-
    US_SpectrogramData& spec_dat = (US_SpectrogramData&)d_spectrogram->data();
+#else
+   US_SpectrogramData* rdata = new US_SpectrogramData();
+   d_spectrogram->setData( rdata );
+   d_spectrogram->setColorMap( (QwtColorMap*)colormap );
+   US_SpectrogramData& spec_dat = (US_SpectrogramData&)*(d_spectrogram->data());
+#endif
 
    QwtDoubleRect drect;
 
@@ -1046,7 +1072,12 @@ void US_GA_Initialize::plot_3dim( void )
    // set color map and axis settings
    QwtScaleWidget *rightAxis = data_plot->axisWidget( QwtPlot::yRight );
    rightAxis->setColorBarEnabled( true );
+#if QT_VERSION < 0x050000
    rightAxis->setColorMap( spec_dat.range(), d_spectrogram->colorMap() );
+#else
+   rightAxis->setColorMap( spec_dat.range(),
+         (QwtColorMap*)d_spectrogram->colorMap() );
+#endif
    data_plot->setAxisTitle( QwtPlot::xBottom, xa_title );
    data_plot->setAxisTitle( QwtPlot::yLeft,   ya_title );
    data_plot->setAxisTitle( QwtPlot::yRight,  tr( "Partial Concentration" ) );
@@ -1129,9 +1160,8 @@ void US_GA_Initialize::update_plxmax( double dval )
    if ( attr_x == ATTR_W )
    {  // For MW, use logarithmic steps
       double rinc = pow( 10.0, qRound( log10( dval ) ) - 2.0 );
-      ct_plxmin->setStep( rinc );
-      ct_plxmax->setStep( rinc );
-//      ct_plxmax->setRange(   0.0, 1.0E+8, rinc );
+      ct_plxmin->setSingleStep( rinc );
+      ct_plxmax->setSingleStep( rinc );
    }
 }
 
@@ -1149,9 +1179,8 @@ void US_GA_Initialize::update_plymax( double dval )
    if ( attr_y == ATTR_W )
    {  // For MW, use logarithmic steps
       double rinc = pow( 10.0, qRound( log10( dval ) ) - 2.0 );
-      ct_plymin->setStep( rinc );
-      ct_plymax->setStep( rinc );
-//      ct_plymax->setRange(   0.0, 1.0E+8, rinc );
+      ct_plymin->setSingleStep( rinc );
+      ct_plymax->setSingleStep( rinc );
    }
 }
 
@@ -1173,7 +1202,8 @@ void US_GA_Initialize::select_autolim()
    double rmax  = wxbuck * 10.0;
    double rinc  = pow( 10.0, (double)( (int)( log10( rmax ) - 3.0 ) ) );
    ct_wxbuck->disconnect( );
-   ct_wxbuck->setRange( 0.0, rmax, rinc );
+   ct_wxbuck->setRange( 0.0, rmax );
+   ct_wxbuck->setSingleStep( rinc );
    ct_wxbuck->setValue( wxbuck );
    ct_hybuck->setValue( hybuck );
    connect( ct_wxbuck, SIGNAL( valueChanged(  double ) ),
@@ -1636,10 +1666,12 @@ DbgLv(1) << "SL: auto smin,max,inc" << smin << smax << sinc
    sinc         = pow( 10.0, spwr - 3 );
    kinc         = pow( 10.0, kpwr - 3 );
    wxbuck       = qRound( wxbuck / sinc ) * sinc;
-   ct_wxbuck->setRange( 0.0, smax, sinc );
+   ct_wxbuck->setRange( 0.0, smax );
+   ct_wxbuck->setSingleStep( sinc );
    ct_wxbuck->setValue( wxbuck );
    hybuck       = qRound( hybuck / kinc ) * kinc;
-   ct_wxbuck->setRange( 0.0, kmax, kinc );
+   ct_hybuck->setRange( 0.0, kmax );
+   ct_hybuck->setSingleStep( kinc );
    ct_hybuck->setValue( hybuck );
    connect( ct_wxbuck, SIGNAL( valueChanged(  double ) ),
             this,      SLOT(   update_wxbuck( double ) ) );
@@ -1880,7 +1912,7 @@ QwtPlotCurve* US_GA_Initialize::drawBucketRect( int sx,
    bc1    = us_curve( data_plot, QString( "bucket border %1" ).arg( sx ) );
    bc1->setPen(   pbukpen );
    bc1->setStyle( QwtPlotCurve::Lines );
-   bc1->setData(  tx, ty, 5 );
+   bc1->setSamples(  tx, ty, 5 );
 
    return bc1;
 }
@@ -2229,8 +2261,10 @@ void US_GA_Initialize::select_x_axis( int ival )
    lb_plxmin->setText( tr( "Plot Limit " ) + xlab + tr( " Minimum:" ) );
    lb_plxmax->setText( tr( "Plot Limit " ) + xlab + tr( " Maximum:" ) );
    lb_wxbuck->setText( tr( "Width of "   ) + xlab + tr( " Bucket:" ) );
-   ct_plxmin->setRange( xmin, xmax, xinc );
-   ct_plxmax->setRange( xmin, xmax, xinc );
+   ct_plxmin->setRange( xmin, xmax );
+   ct_plxmax->setRange( xmin, xmax );
+   ct_plxmin->setSingleStep( xinc );
+   ct_plxmax->setSingleStep( xinc );
    ct_plxmin->setValue( xvlos[ attr_x ]  );
    ct_plxmax->setValue( xvhis[ attr_x ]  );
 
@@ -2267,8 +2301,10 @@ void US_GA_Initialize::select_y_axis( int ival )
    lb_plymin->setText( tr( "Plot Limit " ) + ylab + tr( " Minimum:" ) );
    lb_plymax->setText( tr( "Plot Limit " ) + ylab + tr( " Maximum:" ) );
    lb_hybuck->setText( tr( "Height of "  ) + ylab + tr( " Bucket:" ) );
-   ct_plymin->setRange( ymin, ymax, yinc );
-   ct_plymax->setRange( ymin, ymax, yinc );
+   ct_plymin->setRange( ymin, ymax );
+   ct_plymax->setRange( ymin, ymax );
+   ct_plymin->setSingleStep( yinc );
+   ct_plymax->setSingleStep( yinc );
    ct_plymin->setValue( yvlos[ attr_y ]  );
    ct_plymax->setValue( yvhis[ attr_y ]  );
 

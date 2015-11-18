@@ -17,6 +17,11 @@
 #include "us_passwd.h"
 #include "us_report.h"
 #include "us_constants.h"
+#if QT_VERSION < 0x050000
+#define setSamples(a,b,c) setData(a,b,c)
+#define setMinimum(a)     setMinValue(a)
+#define setMaximum(a)     setMaxValue(a)
+#endif
 
 #define PA_TMDIS_MS 0   // default Plotall time per distro in milliseconds
 
@@ -72,7 +77,7 @@ US_Pseudo3D_Combine::US_Pseudo3D_Combine() : US_Widgets()
    lb_resolu->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
 
    ct_resolu     = us_counter( 3, 0.0, 100.0, 90.0 );
-   ct_resolu->setStep( 1 );
+   ct_resolu->setSingleStep( 1 );
    connect( ct_resolu, SIGNAL( valueChanged( double ) ),
             this,      SLOT( update_resolu( double ) ) );
 
@@ -80,7 +85,7 @@ US_Pseudo3D_Combine::US_Pseudo3D_Combine() : US_Widgets()
    lb_xreso->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
 
    ct_xreso      = us_counter( 3, 10.0, 1000.0, 0.0 );
-   ct_xreso->setStep( 1 );
+   ct_xreso->setSingleStep( 1 );
    connect( ct_xreso,  SIGNAL( valueChanged( double ) ),
             this,      SLOT( update_xreso( double ) ) );
 
@@ -88,7 +93,7 @@ US_Pseudo3D_Combine::US_Pseudo3D_Combine() : US_Widgets()
    lb_yreso->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
 
    ct_yreso      = us_counter( 3, 10.0, 1000.0, 0.0 );
-   ct_yreso->setStep( 1 );
+   ct_yreso->setSingleStep( 1 );
    connect( ct_yreso,  SIGNAL( valueChanged( double ) ),
             this,      SLOT( update_yreso( double ) ) );
 
@@ -96,7 +101,7 @@ US_Pseudo3D_Combine::US_Pseudo3D_Combine() : US_Widgets()
    lb_zfloor->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
 
    ct_zfloor     = us_counter( 3, 0.0, 50.0, 1.0 );
-   ct_zfloor->setStep( 1 );
+   ct_zfloor->setSingleStep( 1 );
    connect( ct_zfloor, SIGNAL( valueChanged( double ) ),
             this,      SLOT( update_zfloor( double ) ) );
 
@@ -121,7 +126,7 @@ US_Pseudo3D_Combine::US_Pseudo3D_Combine() : US_Widgets()
    lb_plt_kmin->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
 
    ct_plt_kmin   = us_counter( 3, 0.5, 50.0, 1.0 );
-   ct_plt_kmin->setStep( 1 );
+   ct_plt_kmin->setSingleStep( 1 );
    connect( ct_plt_kmin, SIGNAL( valueChanged( double ) ),
             this,        SLOT( update_plot_kmin( double ) ) );
 
@@ -129,7 +134,7 @@ US_Pseudo3D_Combine::US_Pseudo3D_Combine() : US_Widgets()
    lb_plt_kmax->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
 
    ct_plt_kmax   = us_counter( 3, 1.0, 50.0, 4.0 );
-   ct_plt_kmax->setStep( 1 );
+   ct_plt_kmax->setSingleStep( 1 );
    connect( ct_plt_kmax, SIGNAL( valueChanged( double ) ),
             this,        SLOT( update_plot_kmax( double ) ) );
 
@@ -137,7 +142,7 @@ US_Pseudo3D_Combine::US_Pseudo3D_Combine() : US_Widgets()
    lb_plt_smin->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
 
    ct_plt_smin   = us_counter( 3, -10.0, 10000.0, 1.0 );
-   ct_plt_smin->setStep( 1 );
+   ct_plt_smin->setSingleStep( 1 );
    connect( ct_plt_smin, SIGNAL( valueChanged( double ) ),
             this,        SLOT( update_plot_smin( double ) ) );
 
@@ -145,7 +150,7 @@ US_Pseudo3D_Combine::US_Pseudo3D_Combine() : US_Widgets()
    lb_plt_smax->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
 
    ct_plt_smax   = us_counter( 3, 0.0, 10000.0, 10.0 );
-   ct_plt_smax->setStep( 1 );
+   ct_plt_smax->setSingleStep( 1 );
    connect( ct_plt_smax, SIGNAL( valueChanged( double ) ),
             this,        SLOT( update_plot_smax( double ) ) );
 
@@ -153,7 +158,7 @@ US_Pseudo3D_Combine::US_Pseudo3D_Combine() : US_Widgets()
    lb_plt_dlay->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
 
    ct_plt_dlay   = us_counter( 3, 0.0, 30.0, 0.0 );
-   ct_plt_dlay->setStep( 0.1 );
+   ct_plt_dlay->setSingleStep( 0.1 );
 //   QSettings settings( "UltraScan3", "UltraScan" );
 //   patm_dlay     = settings.value( "slideDelay", PA_TMDIS_MS ).toInt();
    patm_dlay     = PA_TMDIS_MS;
@@ -163,7 +168,7 @@ US_Pseudo3D_Combine::US_Pseudo3D_Combine() : US_Widgets()
    lb_curr_distr->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
 
    ct_curr_distr = us_counter( 3, 0.0, 10.0, 0.0 );
-   ct_curr_distr->setStep( 1 );
+   ct_curr_distr->setSingleStep( 1 );
    connect( ct_curr_distr, SIGNAL( valueChanged     ( double ) ),
             this,          SLOT(   update_curr_distr( double ) ) );
 
@@ -397,18 +402,22 @@ void US_Pseudo3D_Combine::reset( void )
    plot_x     = ATTR_S;
    plot_y     = ATTR_K;
    resolu     = 90.0;
-   ct_resolu->setRange( 1, 100, 1 );
+   ct_resolu->setRange( 1.0, 100.0 );
+   ct_resolu->setSingleStep( 1.0 );
    ct_resolu->setValue( resolu );  
 
    xreso      = 300.0;
    yreso      = 300.0;
-   ct_xreso->setRange( 10.0, 1000.0, 1.0 );
+   ct_xreso->setRange( 10.0, 1000.0 );
+   ct_xreso->setSingleStep( 1.0 );
    ct_xreso->setValue( (double)xreso );
-   ct_yreso->setRange( 10, 1000, 1 );
+   ct_yreso->setRange( 10.0, 1000.0 );
+   ct_yreso->setSingleStep( 1.0 );
    ct_yreso->setValue( (double)yreso );
 
    zfloor     = 0.0;
-   ct_zfloor->setRange( 0, 50, 1 );
+   ct_zfloor->setRange( 0.0, 50.0 );
+   ct_zfloor->setSingleStep( 1.0 );
    ct_zfloor->setValue( (double)zfloor );
 
    auto_sxy   = true;
@@ -422,24 +431,29 @@ void US_Pseudo3D_Combine::reset( void )
 
    plt_kmin   = 0.8;
    plt_kmax   = 4.2;
-   ct_plt_kmin->setRange( 0.0, 50, 0.01 );
+   ct_plt_kmin->setRange( 0.0, 50.0 );
+   ct_plt_kmin->setSingleStep( 0.01 );
    ct_plt_kmin->setValue( plt_kmin );
    ct_plt_kmin->setEnabled( false );
-   ct_plt_kmax->setRange( 1, 50, 0.01 );
+   ct_plt_kmax->setRange( 1.0, 50.0 );
+   ct_plt_kmax->setSingleStep( 0.01 );
    ct_plt_kmax->setValue( plt_kmax );
    ct_plt_kmax->setEnabled( false );
 
    plt_smin   = 1.0;
    plt_smax   = 10.0;
-   ct_plt_smin->setRange( -10.0, 10000.0, 0.01 );
+   ct_plt_smin->setRange( -10.0, 10000.0 );
+   ct_plt_smin->setSingleStep( 0.01 );
    ct_plt_smin->setValue( plt_smin );
    ct_plt_smin->setEnabled( false );
-   ct_plt_smax->setRange( 0.0, 10000.0, 0.01 );
+   ct_plt_smax->setRange(   0.0, 10000.0 );
+   ct_plt_smax->setSingleStep( 0.01 );
    ct_plt_smax->setValue( plt_smax );
    ct_plt_smax->setEnabled( false );
 
    curr_distr = 0;
-   ct_curr_distr->setRange( 1.0, 1.0, 1.0 );
+   ct_curr_distr->setRange( 1.0, 1.0 );
+   ct_curr_distr->setSingleStep( 1.0 );
    ct_curr_distr->setValue( curr_distr + 1 );
    ct_curr_distr->setEnabled( false );
 
@@ -510,10 +524,18 @@ void US_Pseudo3D_Combine::plot_data( void )
    pick->setTrackerPen( QPen( csum > 600 ? QColor( Qt::black ) :
                                            QColor( Qt::white ) ) );
 
-   // set up spectrogram data
-   QwtPlotSpectrogram *d_spectrogram = new QwtPlotSpectrogram();
+   // Set up spectrogram data
+   QwtPlotSpectrogram* d_spectrogram = new QwtPlotSpectrogram();
+#if QT_VERSION < 0x050000
    d_spectrogram->setData( US_SpectrogramData() );
    d_spectrogram->setColorMap( *colormap );
+   US_SpectrogramData& spec_dat = (US_SpectrogramData&)d_spectrogram->data();
+#else
+   US_SpectrogramData* rdata = new US_SpectrogramData();
+   d_spectrogram->setData( rdata );
+   d_spectrogram->setColorMap( (QwtColorMap*)colormap );
+   US_SpectrogramData& spec_dat = (US_SpectrogramData&)*(d_spectrogram->data());
+#endif
    QwtDoubleRect drect;
 
    if ( auto_sxy )
@@ -554,8 +576,6 @@ void US_Pseudo3D_Combine::plot_data( void )
       }
    }
 
-   US_SpectrogramData& spec_dat = (US_SpectrogramData&)d_spectrogram->data();
-
    spec_dat.setRastRanges( xreso, yreso, resolu, zfloor, drect );
    spec_dat.setZRange( plt_zmin, plt_zmax );
    spec_dat.setRaster( sol_d );
@@ -584,8 +604,13 @@ void US_Pseudo3D_Combine::plot_data( void )
       data_plot->setAxisScale( QwtPlot::yLeft,   plt_kmin, plt_kmax, lStep );
    }
 
+#if QT_VERSION < 0x050000
    rightAxis->setColorMap( QwtDoubleInterval( plt_zmin, plt_zmax ),
       d_spectrogram->colorMap() );
+#else
+   rightAxis->setColorMap( QwtInterval( plt_zmin, plt_zmax ),
+      (QwtColorMap*)d_spectrogram->colorMap() );
+#endif
    data_plot->setAxisScale( QwtPlot::yRight,  plt_zmin, plt_zmax );
 
    data_plot->replot();
@@ -603,22 +628,22 @@ DbgLv(2) << "(3)   need_save sv_plot" << need_save << sv_plot;
    if ( sv_plot )
    {  // Automatically save plot image in a PNG file
       const QString s_attrs[] = { "s", "ff0", "MW", "vbar", "D", "f" };
-      QPixmap plotmap( data_plot->size() );
-      plotmap.fill( US_GuiSettings::plotColor().color( QPalette::Background ) );
+      QSize pmsize    = data_plot->size();
+      QPixmap plotmap = QPixmap::grabWidget( data_plot, 0, 0,
+                                             pmsize.width(), pmsize.height() );
 
-      QString runid  = tsys->run_name.section( ".",  0, -2 );
-      QString triple = tsys->run_name.section( ".", -1, -1 );
-      QString report = QString( "pseudo3d_" ) + s_attrs[ plot_x ]
+      QString runid   = tsys->run_name.section( ".",  0, -2 );
+      QString triple  = tsys->run_name.section( ".", -1, -1 );
+      QString report  = QString( "pseudo3d_" ) + s_attrs[ plot_x ]
          + "_" + s_attrs[ plot_y ];
 
-      QString ofdir  = US_Settings::reportDir() + "/" + runid;
+      QString ofdir   = US_Settings::reportDir() + "/" + runid;
       QDir dirof( ofdir );
       if ( !dirof.exists( ) )
          QDir( US_Settings::reportDir() ).mkdir( runid );
       QString ofname = tsys->method + "." + triple + "." + report + ".png";
       QString ofpath = ofdir + "/" + ofname;
 
-      data_plot->print( plotmap );
       plotmap.save( ofpath );
       dtext          = dtext + tr( "\nPLOT %1 SAVED to local" )
          .arg( curr_distr + 1 );
@@ -931,7 +956,8 @@ DbgLv(1) << "LD: zminzp zmaxzp" << plt_zmin_zp << plt_zmax_zp;
    system.append( tsys );
    int jd     = system.size();
    curr_distr = jd - 1;
-   ct_curr_distr->setRange( 1, jd, 1 );
+   ct_curr_distr->setRange( 1.0, jd );
+   ct_curr_distr->setSingleStep( 1.0 );
    ct_curr_distr->setValue( jd );
    ct_curr_distr->setEnabled( true );
 
@@ -1289,7 +1315,8 @@ qDebug() << "Remove Distros";
       }
 
       curr_distr = 0;
-      ct_curr_distr->setRange( 1, jd, 1 );
+      ct_curr_distr->setRange( 1, jd );
+      ct_curr_distr->setSingleStep( 1.0 );
       ct_curr_distr->setValue( 1 );
       ct_curr_distr->setEnabled( true );
    }
@@ -1313,8 +1340,10 @@ void US_Pseudo3D_Combine::select_x_axis( int ival )
                        + tr( " Minimum:" ) );
    lb_plt_smax->setText( tr( "Plot Limit " ) + xlabs[ plot_x ]
                        + tr( " Maximum:" ) );
-   ct_plt_smin->setRange( xmins[ plot_x ], xmaxs[ plot_x ], xincs[ plot_x ] );
-   ct_plt_smax->setRange( xmins[ plot_x ], xmaxs[ plot_x ], xincs[ plot_x ] );
+   ct_plt_smin->setRange( xmins[ plot_x ], xmaxs[ plot_x ] );
+   ct_plt_smax->setRange( xmins[ plot_x ], xmaxs[ plot_x ] );
+   ct_plt_smin->setSingleStep( xincs[ plot_x ] );
+   ct_plt_smax->setSingleStep( xincs[ plot_x ] );
    ct_plt_smin->setValue( xvlos[ plot_x ] );
    ct_plt_smax->setValue( xvhis[ plot_x ] );
 
@@ -1350,8 +1379,10 @@ qDebug() << "select-y: plot_y" << plot_y;
    lb_plt_kmax->setText( tr( "Plot Limit " ) + ylabs[ plot_y ]
                        + tr( " Maximum:" ) );
 qDebug() << "  ylab" << ylabs[plot_y];
-   ct_plt_kmin->setRange( 0.0, 50, 0.1 );
-   ct_plt_kmax->setRange( ymins[ plot_y ], ymaxs[ plot_y ], yincs[ plot_y ] );
+   ct_plt_kmin->setRange( ymins[ plot_y ], ymaxs[ plot_y ] );
+   ct_plt_kmax->setRange( ymins[ plot_y ], ymaxs[ plot_y ] );
+   ct_plt_kmin->setSingleStep( yincs[ plot_y ] );
+   ct_plt_kmax->setSingleStep( yincs[ plot_y ] );
    ct_plt_kmin->setValue( yvlos[ plot_y ] );
    ct_plt_kmax->setValue( yvhis[ plot_y ] );
 qDebug() << "  yval-lo val-hi" << yvlos[plot_y] << yvhis[plot_y];
