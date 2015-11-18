@@ -485,7 +485,7 @@ void US_GA_Initialize::reset( void )
    ct_yreso->setRange( 10, 1000, 1 );
    ct_yreso->setValue( (double)yreso );
 
-   zfloor     = 5.0;
+   zfloor     = 0.0;
    ct_zfloor->setRange( 0, 50, 1 );
    ct_zfloor->setValue( (double)zfloor );
 
