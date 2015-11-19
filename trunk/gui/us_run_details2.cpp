@@ -9,9 +9,16 @@
 #include "us_gui_util.h"
 #if QT_VERSION < 0x050000
 #define setSamples(a,b,c) setData(a,b,c)
+#else
+#define setSymbol(a)      setSymbol(&a)
+#include <qwt_legend_label.h>
+#include <qwt_point_data.h>
 #endif
 
 #include <qwt_legend.h>
+#include <qwt_plot_layout.h>
+#include <qwt_plot_curve.h>
+#include <qwt_scale_widget.h>
 
 //! Define a function especially for Windows
 #define round(x) floor( (x) + 0.5 )
@@ -485,8 +492,13 @@ void US_RunDetails2::draw_plot( const double* x, const double* t,
       QwtLegend* legend = new QwtLegend;
       data_plot->insertLegend( legend, QwtPlot::BottomLegend );
       legend->setFrameStyle( QFrame::Box | QFrame::Sunken );
-      
+
+#if QT_VERSION < 0x050000
       QList< QWidget* > items = legend->legendItems();
+#else
+      QwtPlotCurve* c0 = NULL;
+      QList< QWidget* > items = legend->legendWidgets( data_plot->itemToInfo( c0 ) );
+#endif
 
       QFont font = items[ 0 ]->font();
       font.setPointSize( US_GuiSettings::fontSize() );

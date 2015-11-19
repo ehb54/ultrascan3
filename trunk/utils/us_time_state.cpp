@@ -318,7 +318,7 @@ DbgLv(1) << "DtsF: ssval: key sval" << key << svalue;
                   wstr  += QString( " " );
             }
 
-            memcpy( cdata + roff, wstr.toAscii().constData(), rlen );
+            memcpy( cdata + roff, wstr.toLatin1().constData(), rlen );
             break;
          default:                                // UNKNOWN
             break;

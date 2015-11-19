@@ -81,10 +81,10 @@ bool US_DB2::test_db_connection(
 
    bool status = mysql_real_connect( 
                  conn,
-                 uhost   .toAscii(), 
-                 user    .toAscii(), 
-                 password.toAscii(), 
-                 dbname  .toAscii(), 
+                 uhost   .toLatin1(), 
+                 user    .toLatin1(), 
+                 password.toLatin1(), 
+                 dbname  .toLatin1(), 
                  uport, NULL, CLIENT_MULTI_STATEMENTS );
  
    if ( ! status )
@@ -120,9 +120,9 @@ bool US_DB2::test_secure_connection(
 
    // Set connection to use ssl encryption
    mysql_ssl_set( db,
-                  keyFile .toAscii(),
-                  certFile.toAscii(),
-                  caFile  .toAscii(),
+                  keyFile .toLatin1(),
+                  certFile.toLatin1(),
+                  caFile  .toLatin1(),
                   NULL,
                   "AES128-SHA" );
 
@@ -131,10 +131,10 @@ bool US_DB2::test_secure_connection(
 
    bool status = mysql_real_connect( 
                  db,
-                 uhost   .toAscii(), 
-                 user    .toAscii(), 
-                 password.toAscii(), 
-                 dbname  .toAscii(), 
+                 uhost   .toLatin1(), 
+                 user    .toLatin1(), 
+                 password.toLatin1(), 
+                 dbname  .toLatin1(), 
                  uport, NULL, CLIENT_MULTI_STATEMENTS );
  
    if ( ! status )
@@ -191,9 +191,9 @@ bool US_DB2::connect( const QString& masterPW, QString& err )
    {
       // Set connection to use ssl encryption
       mysql_ssl_set( db,
-                     keyFile .toAscii(),
-                     certFile.toAscii(),
-                     caFile  .toAscii(),
+                     keyFile .toLatin1(),
+                     certFile.toLatin1(),
+                     caFile  .toLatin1(),
                      NULL,
                      "AES128-SHA" );
 
@@ -206,10 +206,10 @@ bool US_DB2::connect( const QString& masterPW, QString& err )
 
       connected = mysql_real_connect( 
                   db,
-                  uhost   .toAscii(), 
-                  user    .toAscii(), 
-                  password.toAscii(), 
-                  dbname  .toAscii(), 
+                  uhost   .toLatin1(), 
+                  user    .toLatin1(), 
+                  password.toLatin1(), 
+                  dbname  .toLatin1(), 
                   uport, NULL, CLIENT_MULTI_STATEMENTS );
  
    }
@@ -294,9 +294,9 @@ bool US_DB2::connect(
    {
       // Set connection to use ssl encryption
       mysql_ssl_set( db,
-                     keyFile .toAscii(),
-                     certFile.toAscii(),
-                     caFile  .toAscii(),
+                     keyFile .toLatin1(),
+                     certFile.toLatin1(),
+                     caFile  .toLatin1(),
                      NULL,
                      "AES128-SHA" );
 
@@ -308,10 +308,10 @@ bool US_DB2::connect(
 
       connected = mysql_real_connect( 
                   db,
-                  uhost   .toAscii(), 
-                  user    .toAscii(), 
-                  password.toAscii(), 
-                  dbname  .toAscii(), 
+                  uhost   .toLatin1(), 
+                  user    .toLatin1(), 
+                  password.toLatin1(), 
+                  dbname  .toLatin1(), 
                   uport, NULL, CLIENT_MULTI_STATEMENTS );
    }
 
@@ -349,7 +349,7 @@ void US_DB2::rawQuery( const QString& sqlQuery )
    }
    result = NULL;
 
-   if ( mysql_query( db, sqlQuery.toAscii() ) != 0 )
+   if ( mysql_query( db, sqlQuery.toLatin1() ) != 0 )
       error = QString( "MySQL error: " ) + mysql_error( db );
 
    else
@@ -580,7 +580,7 @@ int US_DB2::writeBlobToDB( const QString& filename,
    QByteArray sqlQuery( escaped_length 
                       + queryPart1.size()
                       + checksum.size() + 7, '\0' );
-   strcpy( sqlQuery.data(), queryPart1.toAscii() );
+   strcpy( sqlQuery.data(), queryPart1.toLatin1() );
    char* queryPtr = sqlQuery.data() + queryPart1.size();
    memcpy( queryPtr, blobData_escaped.data(), escaped_length );
    queryPtr += escaped_length;
@@ -594,7 +594,7 @@ int US_DB2::writeBlobToDB( const QString& filename,
    QByteArray sqlQuery2( escaped_length 
                        + queryPart1.size()
                        + checksum.size() + 7, '\0' );
-   sqlQuery2 = queryPart1.toAscii()
+   sqlQuery2 = queryPart1.toLatin1()
              + blobData_escaped + "', '"
              + checksum + "')\0";
 
@@ -677,7 +677,7 @@ int US_DB2::readBlobFromDB( const QString& filename,
    }
    result = NULL;
 
-   if ( mysql_query( db, sqlQuery.toAscii() ) != OK )
+   if ( mysql_query( db, sqlQuery.toLatin1() ) != OK )
    {
       error = QString( "MySQL error: " ) + mysql_error( db );
       db_errno = ERROR;

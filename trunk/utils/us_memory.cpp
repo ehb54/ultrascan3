@@ -97,13 +97,13 @@ int US_Memory::memory_profile( int* pMemA, int* pMemT, int* pMemU )
    QString totmem   = QString( qproc.readAllStandardOutput() ).trimmed();
    totmem           = totmem.section( "\n", 1, 1 );
    totmem.replace( QRegExp( "\\s+" ), " " );
-qDebug() << "  UsMEM:X11: totmem" << totmem;
+qDebug() << "  UsMEM:LINUX: totmem" << totmem;
    int fmtotal      = totmem.section( " ", 1, 1 ).toInt();
    int fmused       = totmem.section( " ", 2, 2 ).toInt();
    int fmfree       = totmem.section( " ", 3, 3 ).toInt();
    int fmbuffer     = totmem.section( " ", 5, 5 ).toInt();
    int fmcache      = totmem.section( " ", 6, 6 ).toInt();
-qDebug() << "  UsMEM:X11: fmtotal,used,free,buffer,cache" << fmtotal << fmused
+qDebug() << "  UsMEM:LINUX: fmtotal,used,free,buffer,cache" << fmtotal << fmused
  << fmfree << fmbuffer << fmcache;
    memtotal         = fmtotal;
    memused          = qMax( fmused, ( fmtotal - fmfree - fmcache ) );

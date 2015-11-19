@@ -656,7 +656,7 @@ int US_Tar::extract( const QString& archive, QStringList* list )
 
          // Update owner/group
          if ( geteuid() != 0 ) uid = (uid_t) -1;
-         int choerr = chown( filename.toAscii(), uid, gid );
+         int choerr = chown( filename.toLatin1(), uid, gid );
          if ( choerr != 0 )    uid = (uid_t) -1;
 #endif
       }  // while ( true )

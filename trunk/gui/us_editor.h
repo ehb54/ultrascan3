@@ -1,8 +1,10 @@
 #ifndef US_EDITOR_H
 #define US_EDITOR_H
 
+#include <QtCore>
 #if QT_VERSION > 0x050000
 #include <QtWidgets>
+#include <QtPrintSupport>
 #else
 #include <QtGui>
 #endif

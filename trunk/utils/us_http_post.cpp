@@ -10,7 +10,7 @@ US_HttpPost::US_HttpPost( const QString& url, const QString& request ) : QObject
                       QString( "application/x-www-form-urlencoded" ) );
   httpPost.setUrl( QUrl( url ) );
 
-  reply = manager->post( httpPost, request.toAscii().data() );
+  reply = manager->post( httpPost, request.toLatin1().data() );
     
   connect( reply, SIGNAL( finished    ( void ) ), 
            this,  SLOT  ( postFinished( void ) ) );

@@ -4,6 +4,9 @@
 #include "us_gui_util.h"
 #include "us_gzip.h"
 #include "us_settings.h"
+#if QT_VERSION > 0x050000
+#include "qwt_plot_renderer.h"
+#endif
 
 // Save SVG+PNG or PNG file
 int US_GuiUtil::save_plot( const QString& filename, const QwtPlot* plot )
@@ -38,23 +41,29 @@ int US_GuiUtil::save_svg( const QString& filename, const QwtPlot* plot )
 
    if ( filename.contains( ".svg" ) )
    {  // Save the file as SVG
-      QSvgGenerator generator;
       QString fnsvg   = QString( filename ).section( ".", 0, -2 ) + ".svg";
 
       // Set resolution to screen resolution
       double px  = (double)qApp->desktop()->width();
       double in  = (double)qApp->desktop()->widthMM() / 25.4;
       int    res = qRound( px / in );
-      int    pw  = plot->width()  + res;
-      int    ph  = plot->height() + res;
 
       // Generate the SVG file
+#if QT_VERSION < 0x050000
+      int    pw  = plot->width()  + res;
+      int    ph  = plot->height() + res;
+      QSvgGenerator generator;
       generator.setResolution( res );
       generator.setFileName  ( fnsvg );
       generator.setSize      ( plot->size() );
       generator.setViewBox   ( QRect( QPoint( 0, 0 ), QPoint( pw, ph ) ) );
 
       plot->print( generator );
+#else
+      QwtPlotRenderer pltrend;
+      QSizeF psize   = plot->size();
+      pltrend.exportTo( (QwtPlot*)plot, fnsvg, psize, res );
+#endif
 
       // Compress it and save SVGZ file
       US_Gzip gz;

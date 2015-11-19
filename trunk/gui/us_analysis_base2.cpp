@@ -436,7 +436,9 @@ void US_AnalysisBase2::data_plot( void )
    header = tr( "Radius (cm) " );
    data_plot2->setAxisTitle( QwtPlot::xBottom, header );
 
+#if QT_VERSION < 0x050000
    data_plot2->clear();
+#endif
    us_grid( data_plot2 );
 
    int     scan_number = 0;

@@ -384,7 +384,11 @@ QwtPlotPicker* US_Widgets::us_picker( QwtPlot* plot )
   QwtPlotPicker* pick = new QwtPlotPicker( QwtPlot::xBottom, QwtPlot::yLeft,
                                            plot->canvas() ); 
 
+#if QT_VERSION < 0x050000
   pick->setSelectionFlags( QwtPicker::PointSelection );
+#else
+  pick->setStateMachine( new QwtPickerClickPointMachine() );
+#endif
   pick->setTrackerMode   ( QwtPicker::AlwaysOn );
   pick->setRubberBand    ( QwtPicker::CrossRubberBand );
 

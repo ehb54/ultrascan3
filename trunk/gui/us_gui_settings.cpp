@@ -1,6 +1,18 @@
 #include "us_gui_settings.h"
 #include "us_defines.h"
 
+#define c_bluegreen  QColor( 0x00, 0xe0, 0xe0 )
+#define c_black      QColor( Qt::black        )
+#define c_white      QColor( Qt::white        )
+#define c_darkGray   QColor( Qt::darkGray     )
+#define c_lightGray  QColor( Qt::lightGray    )
+#define c_red        QColor( Qt::red          )
+#define c_darkBlue   QColor( Qt::darkBlue     )
+#define c_yellow     QColor( Qt::yellow       )
+#define c_green      QColor( Qt::green        )
+#define c_cyan       QColor( Qt::cyan         )
+#define c_darkCyan   QColor( Qt::darkCyan     )
+
 // Fonts
 QString US_GuiSettings::fontFamily( void )
 {
@@ -34,26 +46,36 @@ void US_GuiSettings::set_fontSize( int fontSize )
 
 QString US_GuiSettings::guiStyle( void )
 {
+#ifdef Q_OS_LINUX
+#if QT_VERSION < 0x050000
+  const QString defaultStyle( "Plastique" );
+#else
+  const QString defaultStyle( "Fusion" );
+#endif
+#endif
+#ifdef Q_OS_MAC
+  const QString defaultStyle( "Macintosh" );
+#endif
+#ifdef Q_OS_WIN
+  const QString defaultStyle( "Windows" );
+#endif
   QSettings settings( US3, "UltraScan" );
-  QString defaultStyle;
-  QString os = OS;
-  
-  if      ( os == "osx" )   defaultStyle = "Macintosh";
-  else if ( os == "win32" ) defaultStyle = "Windows";
-  else                      defaultStyle = "Plastique";
 
   return settings.value( "guiStyle", defaultStyle ).toString();
 }
 
 void US_GuiSettings::set_guiStyle( const QString& style )
 {
+#ifdef Q_OS_LINUX
+  const QString defaultStyle( "Fusion" );
+#endif
+#ifdef Q_OS_MAC
+  const QString defaultStyle( "Macintosh" );
+#endif
+#ifdef Q_OS_WIN
+  const QString defaultStyle( "Windows" );
+#endif
   QSettings settings( US3, "UltraScan" );
-  QString defaultStyle;
-  QString os = OS;
-  
-  if      ( os == "osx" )   defaultStyle = "Macintosh";
-  else if ( os == "win32" ) defaultStyle = "Windows";
-  else                      defaultStyle = "Plastique";
 
   if ( style == defaultStyle ) 
     settings.remove( "guiStyle" );
@@ -91,26 +113,26 @@ QPalette US_GuiSettings::labelColor( void )
 QPalette US_GuiSettings::labelColorDefault( void )
 {
   QPalette p;
-  p.setColor( QPalette::Active, QPalette::WindowText, Qt::white ); // windowText/foreground
-  p.setColor( QPalette::Active, QPalette::Window,     Qt::black ); // background
-  p.setColor( QPalette::Active, QPalette::Light,      Qt::black ); // border
-  p.setColor( QPalette::Active, QPalette::Dark,       Qt::black ); // border
-  p.setColor( QPalette::Active, QPalette::Text,       Qt::white ); // text w/ Base
-  p.setColor( QPalette::Active, QPalette::Base,       Qt::black ); // bg for text entry
+  p.setColor( QPalette::Active, QPalette::WindowText, c_white ); // windowText/foreground
+  p.setColor( QPalette::Active, QPalette::Window,     c_black ); // background
+  p.setColor( QPalette::Active, QPalette::Light,      c_black ); // border
+  p.setColor( QPalette::Active, QPalette::Dark,       c_black ); // border
+  p.setColor( QPalette::Active, QPalette::Text,       c_white ); // text w/ Base
+  p.setColor( QPalette::Active, QPalette::Base,       c_black ); // bg for text entry
 
-  p.setColor( QPalette::Disabled, QPalette::WindowText, Qt::white ); // windowText/foreground
-  p.setColor( QPalette::Disabled, QPalette::Window,     Qt::black ); // background
-  p.setColor( QPalette::Disabled, QPalette::Light,      Qt::black ); // border
-  p.setColor( QPalette::Disabled, QPalette::Dark,       Qt::black ); // border
-  p.setColor( QPalette::Disabled, QPalette::Text,       Qt::white ); // text w/ Base
-  p.setColor( QPalette::Disabled, QPalette::Base,       Qt::black ); // bg for text entry
+  p.setColor( QPalette::Disabled, QPalette::WindowText, c_white ); // windowText/foreground
+  p.setColor( QPalette::Disabled, QPalette::Window,     c_black ); // background
+  p.setColor( QPalette::Disabled, QPalette::Light,      c_black ); // border
+  p.setColor( QPalette::Disabled, QPalette::Dark,       c_black ); // border
+  p.setColor( QPalette::Disabled, QPalette::Text,       c_white ); // text w/ Base
+  p.setColor( QPalette::Disabled, QPalette::Base,       c_black ); // bg for text entry
 
-  p.setColor( QPalette::Inactive, QPalette::WindowText, Qt::white ); // windowText/foreground
-  p.setColor( QPalette::Inactive, QPalette::Window,     Qt::black ); // background
-  p.setColor( QPalette::Inactive, QPalette::Light,      Qt::black ); // border
-  p.setColor( QPalette::Inactive, QPalette::Dark,       Qt::black ); // border
-  p.setColor( QPalette::Inactive, QPalette::Text,       Qt::white ); // text w/ Base
-  p.setColor( QPalette::Inactive, QPalette::Base,       Qt::black ); // bg for text entry
+  p.setColor( QPalette::Inactive, QPalette::WindowText, c_white ); // windowText/foreground
+  p.setColor( QPalette::Inactive, QPalette::Window,     c_black ); // background
+  p.setColor( QPalette::Inactive, QPalette::Light,      c_black ); // border
+  p.setColor( QPalette::Inactive, QPalette::Dark,       c_black ); // border
+  p.setColor( QPalette::Inactive, QPalette::Text,       c_white ); // text w/ Base
+  p.setColor( QPalette::Inactive, QPalette::Base,       c_black ); // bg for text entry
 
   return p; 
 }
@@ -133,50 +155,50 @@ QPalette US_GuiSettings::editColor( void )
 QPalette US_GuiSettings::editColorDefault( void )
 {
   QPalette p;
-  p.setColor( QPalette::Active, QPalette::WindowText, Qt::black ); // windowText/foreground
-  p.setColor( QPalette::Active, QPalette::Window,     Qt::white ); // background
-  p.setColor( QPalette::Active, QPalette::Light,      Qt::white ); // border
-  p.setColor( QPalette::Active, QPalette::Dark,       Qt::darkGray ); // border
-  p.setColor( QPalette::Active, QPalette::Mid,        Qt::black ); // Between light and dark
-  p.setColor( QPalette::Active, QPalette::Text,       Qt::black ); // text w/ Base
-  p.setColor( QPalette::Active, QPalette::Base,       Qt::white ); // bg for text entry
-  p.setColor( QPalette::Active, QPalette::HighlightedText, Qt::white ); // bg for selected text
-  p.setColor( QPalette::Active, QPalette::Highlight,  Qt::darkBlue ); // selected text
-  p.setColor( QPalette::Active, QPalette::Button,     Qt::lightGray ); // bg for button
-  p.setColor( QPalette::Active, QPalette::Midlight,   Qt::lightGray ); // bg for text entry
-  p.setColor( QPalette::Active, QPalette::BrightText, Qt::red   ); // contrast to WindowText
-  p.setColor( QPalette::Active, QPalette::ButtonText, Qt::black ); // fg for button
-  p.setColor( QPalette::Active, QPalette::Shadow,     Qt::black ); // very dark
+  p.setColor( QPalette::Active, QPalette::WindowText, c_black ); // windowText/foreground
+  p.setColor( QPalette::Active, QPalette::Window,     c_white ); // background
+  p.setColor( QPalette::Active, QPalette::Light,      c_white ); // border
+  p.setColor( QPalette::Active, QPalette::Dark,       c_darkGray ); // border
+  p.setColor( QPalette::Active, QPalette::Mid,        c_black ); // Between light and dark
+  p.setColor( QPalette::Active, QPalette::Text,       c_black ); // text w/ Base
+  p.setColor( QPalette::Active, QPalette::Base,       c_white ); // bg for text entry
+  p.setColor( QPalette::Active, QPalette::HighlightedText, c_white ); // bg for selected text
+  p.setColor( QPalette::Active, QPalette::Highlight,  c_darkBlue ); // selected text
+  p.setColor( QPalette::Active, QPalette::Button,     c_lightGray ); // bg for button
+  p.setColor( QPalette::Active, QPalette::Midlight,   c_lightGray ); // bg for text entry
+  p.setColor( QPalette::Active, QPalette::BrightText, c_red   ); // contrast to WindowText
+  p.setColor( QPalette::Active, QPalette::ButtonText, c_black ); // fg for button
+  p.setColor( QPalette::Active, QPalette::Shadow,     c_black ); // very dark
 
-  p.setColor( QPalette::Disabled, QPalette::WindowText, Qt::black ); // windowText/foreground
-  p.setColor( QPalette::Disabled, QPalette::Window,     Qt::lightGray ); // background
-  p.setColor( QPalette::Disabled, QPalette::Light,      Qt::white ); // border
-  p.setColor( QPalette::Disabled, QPalette::Dark,       Qt::darkGray ); // border
-  p.setColor( QPalette::Disabled, QPalette::Mid,        Qt::black ); // Between light and dark
-  p.setColor( QPalette::Disabled, QPalette::Text,       Qt::black ); // text w/ Base
-  p.setColor( QPalette::Disabled, QPalette::Base,       Qt::lightGray ); // bg for text entry
-  p.setColor( QPalette::Disabled, QPalette::HighlightedText, Qt::white ); // bg for selected text
-  p.setColor( QPalette::Disabled, QPalette::Highlight,  Qt::darkBlue ); // selected text
-  p.setColor( QPalette::Disabled, QPalette::Button,     Qt::darkGray ); // bg for button
-  p.setColor( QPalette::Disabled, QPalette::Midlight,   Qt::darkGray ); // bg for text entry
-  p.setColor( QPalette::Disabled, QPalette::BrightText, Qt::red   ); // contrast to WindowText
-  p.setColor( QPalette::Disabled, QPalette::ButtonText, Qt::black ); // fg for button
-  p.setColor( QPalette::Disabled, QPalette::Shadow,     Qt::black ); // very dark
+  p.setColor( QPalette::Disabled, QPalette::WindowText, c_black ); // windowText/foreground
+  p.setColor( QPalette::Disabled, QPalette::Window,     c_lightGray ); // background
+  p.setColor( QPalette::Disabled, QPalette::Light,      c_white ); // border
+  p.setColor( QPalette::Disabled, QPalette::Dark,       c_darkGray ); // border
+  p.setColor( QPalette::Disabled, QPalette::Mid,        c_black ); // Between light and dark
+  p.setColor( QPalette::Disabled, QPalette::Text,       c_black ); // text w/ Base
+  p.setColor( QPalette::Disabled, QPalette::Base,       c_lightGray ); // bg for text entry
+  p.setColor( QPalette::Disabled, QPalette::HighlightedText, c_white ); // bg for selected text
+  p.setColor( QPalette::Disabled, QPalette::Highlight,  c_darkBlue ); // selected text
+  p.setColor( QPalette::Disabled, QPalette::Button,     c_darkGray ); // bg for button
+  p.setColor( QPalette::Disabled, QPalette::Midlight,   c_darkGray ); // bg for text entry
+  p.setColor( QPalette::Disabled, QPalette::BrightText, c_red   ); // contrast to WindowText
+  p.setColor( QPalette::Disabled, QPalette::ButtonText, c_black ); // fg for button
+  p.setColor( QPalette::Disabled, QPalette::Shadow,     c_black ); // very dark
 
-  p.setColor( QPalette::Inactive, QPalette::WindowText, Qt::black ); // windowText/foreground
-  p.setColor( QPalette::Inactive, QPalette::Window,     Qt::white ); // background
-  p.setColor( QPalette::Inactive, QPalette::Light,      Qt::white ); // border
-  p.setColor( QPalette::Inactive, QPalette::Dark,       Qt::darkBlue ); // border
-  p.setColor( QPalette::Inactive, QPalette::Mid,        Qt::black ); // Between light and dark
-  p.setColor( QPalette::Inactive, QPalette::Text,       Qt::black ); // text w/ Base
-  p.setColor( QPalette::Inactive, QPalette::Base,       Qt::white ); // bg for text entry
-  p.setColor( QPalette::Inactive, QPalette::HighlightedText, Qt::white ); // bg for selected text
-  p.setColor( QPalette::Inactive, QPalette::Highlight,  Qt::darkBlue ); // selected text
-  p.setColor( QPalette::Inactive, QPalette::Button,     Qt::lightGray ); // bg for button
-  p.setColor( QPalette::Inactive, QPalette::Midlight,   Qt::lightGray ); // bg for text entry
-  p.setColor( QPalette::Inactive, QPalette::BrightText, Qt::red   ); // contrast to WindowText
-  p.setColor( QPalette::Inactive, QPalette::ButtonText, Qt::black ); // fg for button
-  p.setColor( QPalette::Inactive, QPalette::Shadow,     Qt::black ); // very dark
+  p.setColor( QPalette::Inactive, QPalette::WindowText, c_black ); // windowText/foreground
+  p.setColor( QPalette::Inactive, QPalette::Window,     c_white ); // background
+  p.setColor( QPalette::Inactive, QPalette::Light,      c_white ); // border
+  p.setColor( QPalette::Inactive, QPalette::Dark,       c_darkBlue ); // border
+  p.setColor( QPalette::Inactive, QPalette::Mid,        c_black ); // Between light and dark
+  p.setColor( QPalette::Inactive, QPalette::Text,       c_black ); // text w/ Base
+  p.setColor( QPalette::Inactive, QPalette::Base,       c_white ); // bg for text entry
+  p.setColor( QPalette::Inactive, QPalette::HighlightedText, c_white ); // bg for selected text
+  p.setColor( QPalette::Inactive, QPalette::Highlight,  c_darkBlue ); // selected text
+  p.setColor( QPalette::Inactive, QPalette::Button,     c_lightGray ); // bg for button
+  p.setColor( QPalette::Inactive, QPalette::Midlight,   c_lightGray ); // bg for text entry
+  p.setColor( QPalette::Inactive, QPalette::BrightText, c_red   ); // contrast to WindowText
+  p.setColor( QPalette::Inactive, QPalette::ButtonText, c_black ); // fg for button
+  p.setColor( QPalette::Inactive, QPalette::Shadow,     c_black ); // very dark
 
   return p; 
 }
@@ -200,29 +222,29 @@ QPalette US_GuiSettings::frameColor( void )
 QPalette US_GuiSettings::frameColorDefault( void )
 {
   QPalette p;
-  p.setColor( QPalette::Active, QPalette::WindowText, Qt::white      ); // windowText/foreground
-  p.setColor( QPalette::Active, QPalette::Window,     Qt::darkCyan   ); // background
-  p.setColor( QPalette::Active, QPalette::Light,      Qt::lightGray  ); // border
-  p.setColor( QPalette::Active, QPalette::Dark,       Qt::darkGray   ); // border
-  p.setColor( QPalette::Active, QPalette::Mid,        Qt::cyan       ); // Between light and dark
-  p.setColor( QPalette::Active, QPalette::Midlight,   Qt::white      ); // 
-  p.setColor( QPalette::Active, QPalette::Base,       Qt::darkGray   ); // bg for text entry
+  p.setColor( QPalette::Active, QPalette::WindowText, c_white      ); // windowText/foreground
+  p.setColor( QPalette::Active, QPalette::Window,     c_darkCyan   ); // background
+  p.setColor( QPalette::Active, QPalette::Light,      c_lightGray  ); // border
+  p.setColor( QPalette::Active, QPalette::Dark,       c_darkGray   ); // border
+  p.setColor( QPalette::Active, QPalette::Mid,        c_cyan       ); // Between light and dark
+  p.setColor( QPalette::Active, QPalette::Midlight,   c_white      ); // 
+  p.setColor( QPalette::Active, QPalette::Base,       c_darkGray   ); // bg for text entry
 
-  p.setColor( QPalette::Disabled, QPalette::WindowText, Qt::white    ); // windowText/foreground
-  p.setColor( QPalette::Disabled, QPalette::Window,     Qt::darkCyan ); // background
-  p.setColor( QPalette::Disabled, QPalette::Light,      Qt::lightGray); // border
-  p.setColor( QPalette::Disabled, QPalette::Dark,       Qt::darkGray ); // border
-  p.setColor( QPalette::Disabled, QPalette::Mid,        Qt::cyan     ); // Between light and dark
-  p.setColor( QPalette::Disabled, QPalette::Midlight,   Qt::white    ); // 
-  p.setColor( QPalette::Disabled, QPalette::Base,       Qt::darkGray ); // bg for text entry
+  p.setColor( QPalette::Disabled, QPalette::WindowText, c_white    ); // windowText/foreground
+  p.setColor( QPalette::Disabled, QPalette::Window,     c_darkCyan ); // background
+  p.setColor( QPalette::Disabled, QPalette::Light,      c_lightGray); // border
+  p.setColor( QPalette::Disabled, QPalette::Dark,       c_darkGray ); // border
+  p.setColor( QPalette::Disabled, QPalette::Mid,        c_cyan     ); // Between light and dark
+  p.setColor( QPalette::Disabled, QPalette::Midlight,   c_white    ); // 
+  p.setColor( QPalette::Disabled, QPalette::Base,       c_darkGray ); // bg for text entry
 
-  p.setColor( QPalette::Inactive, QPalette::WindowText, Qt::white    ); // windowText/foreground
-  p.setColor( QPalette::Inactive, QPalette::Window,     Qt::darkCyan ); // background
-  p.setColor( QPalette::Inactive, QPalette::Light,      Qt::lightGray); // border
-  p.setColor( QPalette::Inactive, QPalette::Dark,       Qt::darkGray ); // border
-  p.setColor( QPalette::Inactive, QPalette::Mid,        Qt::cyan     ); // Between light and dark
-  p.setColor( QPalette::Inactive, QPalette::Midlight,   Qt::white    ); // 
-  p.setColor( QPalette::Inactive, QPalette::Base,       Qt::darkGray ); // bg for text entry
+  p.setColor( QPalette::Inactive, QPalette::WindowText, c_white    ); // windowText/foreground
+  p.setColor( QPalette::Inactive, QPalette::Window,     c_darkCyan ); // background
+  p.setColor( QPalette::Inactive, QPalette::Light,      c_lightGray); // border
+  p.setColor( QPalette::Inactive, QPalette::Dark,       c_darkGray ); // border
+  p.setColor( QPalette::Inactive, QPalette::Mid,        c_cyan     ); // Between light and dark
+  p.setColor( QPalette::Inactive, QPalette::Midlight,   c_white    ); // 
+  p.setColor( QPalette::Inactive, QPalette::Base,       c_darkGray ); // bg for text entry
 
   return p; 
 }
@@ -243,28 +265,26 @@ QPalette US_GuiSettings::pushbColor( void )
   return pushbColorDefault();
 }
 
-#define bluegreen QColor( 0x00, 0xe0, 0xe0 )
-
 QPalette US_GuiSettings::pushbColorDefault( void )
 {
   QPalette p;
-  p.setColor( QPalette::Active, QPalette::ButtonText, Qt::black      ); // windowText/foreground
-  p.setColor( QPalette::Active, QPalette::Button,     bluegreen      ); // background
-  p.setColor( QPalette::Active, QPalette::Light,      Qt::white      ); // border
-  p.setColor( QPalette::Active, QPalette::Dark,       Qt::darkGray   ); // border
-  p.setColor( QPalette::Active, QPalette::Shadow,     Qt::black      ); // Between light and dark
+  p.setColor( QPalette::Active, QPalette::ButtonText, c_black      ); // windowText/foreground
+  p.setColor( QPalette::Active, QPalette::Button,     c_bluegreen  ); // background
+  p.setColor( QPalette::Active, QPalette::Light,      c_white      ); // border
+  p.setColor( QPalette::Active, QPalette::Dark,       c_darkGray   ); // border
+  p.setColor( QPalette::Active, QPalette::Shadow,     c_black      ); // Between light and dark
 
-  p.setColor( QPalette::Disabled, QPalette::ButtonText, Qt::white    ); // windowText/foreground
-  p.setColor( QPalette::Disabled, QPalette::Button,     bluegreen    ); // background
-  p.setColor( QPalette::Disabled, QPalette::Light,      Qt::white    ); // border
-  p.setColor( QPalette::Disabled, QPalette::Dark,       Qt::darkGray ); // border
-  p.setColor( QPalette::Disabled, QPalette::Shadow,     Qt::black    ); // Between light and dark
+  p.setColor( QPalette::Disabled, QPalette::ButtonText, c_white    ); // windowText/foreground
+  p.setColor( QPalette::Disabled, QPalette::Button,     c_bluegreen  ); // background
+  p.setColor( QPalette::Disabled, QPalette::Light,      c_white    ); // border
+  p.setColor( QPalette::Disabled, QPalette::Dark,       c_darkGray ); // border
+  p.setColor( QPalette::Disabled, QPalette::Shadow,     c_black    ); // Between light and dark
 
-  p.setColor( QPalette::Inactive, QPalette::ButtonText, Qt::black    ); // windowText/foreground
-  p.setColor( QPalette::Inactive, QPalette::Button,     bluegreen    ); // background
-  p.setColor( QPalette::Inactive, QPalette::Light,      Qt::white    ); // border
-  p.setColor( QPalette::Inactive, QPalette::Dark,       Qt::darkGray ); // border
-  p.setColor( QPalette::Inactive, QPalette::Shadow,     Qt::black    ); // Between light and dark
+  p.setColor( QPalette::Inactive, QPalette::ButtonText, c_black    ); // windowText/foreground
+  p.setColor( QPalette::Inactive, QPalette::Button,     c_bluegreen    ); // background
+  p.setColor( QPalette::Inactive, QPalette::Light,      c_white    ); // border
+  p.setColor( QPalette::Inactive, QPalette::Dark,       c_darkGray ); // border
+  p.setColor( QPalette::Inactive, QPalette::Shadow,     c_black    ); // Between light and dark
 
   return p; 
 }
@@ -288,50 +308,50 @@ QPalette US_GuiSettings::normalColor( void )
 QPalette US_GuiSettings::normalColorDefault( void )
 {
   QPalette p;
-  p.setColor( QPalette::Active, QPalette::WindowText, Qt::black      ); // windowText/foreground
-  p.setColor( QPalette::Active, QPalette::Window,     Qt::lightGray  ); // background
-  p.setColor( QPalette::Active, QPalette::Light,      Qt::white      ); // border
-  p.setColor( QPalette::Active, QPalette::Dark,       Qt::darkGray   ); // border
-  p.setColor( QPalette::Active, QPalette::Mid,        Qt::lightGray  );
-  p.setColor( QPalette::Active, QPalette::Text,       Qt::black      );
-  p.setColor( QPalette::Active, QPalette::Base,       Qt::white      );
-  p.setColor( QPalette::Active, QPalette::HighlightedText,  Qt::white  );
-  p.setColor( QPalette::Active, QPalette::Highlight,  Qt::darkBlue   );
-  p.setColor( QPalette::Active, QPalette::Button,     Qt::lightGray  );
-  p.setColor( QPalette::Active, QPalette::Midlight,   Qt::lightGray  );
-  p.setColor( QPalette::Active, QPalette::BrightText, Qt::red        );
-  p.setColor( QPalette::Active, QPalette::ButtonText, Qt::black      );
-  p.setColor( QPalette::Active, QPalette::Shadow,     Qt::black      ); // Between light and dark
+  p.setColor( QPalette::Active, QPalette::WindowText, c_black      ); // windowText/foreground
+  p.setColor( QPalette::Active, QPalette::Window,     c_lightGray  ); // background
+  p.setColor( QPalette::Active, QPalette::Light,      c_white      ); // border
+  p.setColor( QPalette::Active, QPalette::Dark,       c_darkGray   ); // border
+  p.setColor( QPalette::Active, QPalette::Mid,        c_lightGray  );
+  p.setColor( QPalette::Active, QPalette::Text,       c_black      );
+  p.setColor( QPalette::Active, QPalette::Base,       c_white      );
+  p.setColor( QPalette::Active, QPalette::HighlightedText,  c_white  );
+  p.setColor( QPalette::Active, QPalette::Highlight,  c_darkBlue   );
+  p.setColor( QPalette::Active, QPalette::Button,     c_lightGray  );
+  p.setColor( QPalette::Active, QPalette::Midlight,   c_lightGray  );
+  p.setColor( QPalette::Active, QPalette::BrightText, c_red        );
+  p.setColor( QPalette::Active, QPalette::ButtonText, c_black      );
+  p.setColor( QPalette::Active, QPalette::Shadow,     c_black      ); // Between light and dark
 
-  p.setColor( QPalette::Disabled, QPalette::WindowText, Qt::black      ); // windowText/foreground
-  p.setColor( QPalette::Disabled, QPalette::Window,     Qt::lightGray  ); // background
-  p.setColor( QPalette::Disabled, QPalette::Light,      Qt::white      ); // border
-  p.setColor( QPalette::Disabled, QPalette::Dark,       Qt::darkGray   ); // border
-  p.setColor( QPalette::Disabled, QPalette::Mid,        Qt::lightGray  );
-  p.setColor( QPalette::Disabled, QPalette::Text,       Qt::black      );
-  p.setColor( QPalette::Disabled, QPalette::Base,       Qt::lightGray  );
-  p.setColor( QPalette::Disabled, QPalette::HighlightedText,  Qt::white );
-  p.setColor( QPalette::Disabled, QPalette::Highlight,  Qt::darkBlue   );
-  p.setColor( QPalette::Disabled, QPalette::Button,     Qt::lightGray  );
-  p.setColor( QPalette::Disabled, QPalette::Midlight,   Qt::lightGray  );
-  p.setColor( QPalette::Disabled, QPalette::BrightText, Qt::red        );
-  p.setColor( QPalette::Disabled, QPalette::ButtonText, Qt::black      );
-  p.setColor( QPalette::Disabled, QPalette::Shadow,     Qt::black      ); // Between light and dark
+  p.setColor( QPalette::Disabled, QPalette::WindowText, c_black      ); // windowText/foreground
+  p.setColor( QPalette::Disabled, QPalette::Window,     c_lightGray  ); // background
+  p.setColor( QPalette::Disabled, QPalette::Light,      c_white      ); // border
+  p.setColor( QPalette::Disabled, QPalette::Dark,       c_darkGray   ); // border
+  p.setColor( QPalette::Disabled, QPalette::Mid,        c_lightGray  );
+  p.setColor( QPalette::Disabled, QPalette::Text,       c_black      );
+  p.setColor( QPalette::Disabled, QPalette::Base,       c_lightGray  );
+  p.setColor( QPalette::Disabled, QPalette::HighlightedText,  c_white );
+  p.setColor( QPalette::Disabled, QPalette::Highlight,  c_darkBlue   );
+  p.setColor( QPalette::Disabled, QPalette::Button,     c_lightGray  );
+  p.setColor( QPalette::Disabled, QPalette::Midlight,   c_lightGray  );
+  p.setColor( QPalette::Disabled, QPalette::BrightText, c_red        );
+  p.setColor( QPalette::Disabled, QPalette::ButtonText, c_black      );
+  p.setColor( QPalette::Disabled, QPalette::Shadow,     c_black      ); // Between light and dark
 
-  p.setColor( QPalette::Inactive, QPalette::WindowText, Qt::black      ); // windowText/foreground
-  p.setColor( QPalette::Inactive, QPalette::Window,     Qt::lightGray  ); // background
-  p.setColor( QPalette::Inactive, QPalette::Light,      Qt::white      ); // border
-  p.setColor( QPalette::Inactive, QPalette::Dark,       Qt::darkGray   ); // border
-  p.setColor( QPalette::Inactive, QPalette::Mid,        Qt::lightGray  );
-  p.setColor( QPalette::Inactive, QPalette::Text,       Qt::black      );
-  p.setColor( QPalette::Inactive, QPalette::Base,       Qt::white      );
-  p.setColor( QPalette::Inactive, QPalette::HighlightedText,  Qt::white  );
-  p.setColor( QPalette::Inactive, QPalette::Highlight,  Qt::darkBlue   );
-  p.setColor( QPalette::Inactive, QPalette::Button,     Qt::lightGray  );
-  p.setColor( QPalette::Inactive, QPalette::Midlight,   Qt::lightGray  );
-  p.setColor( QPalette::Inactive, QPalette::BrightText, Qt::red        );
-  p.setColor( QPalette::Inactive, QPalette::ButtonText, Qt::black      );
-  p.setColor( QPalette::Inactive, QPalette::Shadow,     Qt::black      ); // Between light and dark
+  p.setColor( QPalette::Inactive, QPalette::WindowText, c_black      ); // windowText/foreground
+  p.setColor( QPalette::Inactive, QPalette::Window,     c_lightGray  ); // background
+  p.setColor( QPalette::Inactive, QPalette::Light,      c_white      ); // border
+  p.setColor( QPalette::Inactive, QPalette::Dark,       c_darkGray   ); // border
+  p.setColor( QPalette::Inactive, QPalette::Mid,        c_lightGray  );
+  p.setColor( QPalette::Inactive, QPalette::Text,       c_black      );
+  p.setColor( QPalette::Inactive, QPalette::Base,       c_white      );
+  p.setColor( QPalette::Inactive, QPalette::HighlightedText,  c_white  );
+  p.setColor( QPalette::Inactive, QPalette::Highlight,  c_darkBlue   );
+  p.setColor( QPalette::Inactive, QPalette::Button,     c_lightGray  );
+  p.setColor( QPalette::Inactive, QPalette::Midlight,   c_lightGray  );
+  p.setColor( QPalette::Inactive, QPalette::BrightText, c_red        );
+  p.setColor( QPalette::Inactive, QPalette::ButtonText, c_black      );
+  p.setColor( QPalette::Inactive, QPalette::Shadow,     c_black      ); // Between light and dark
 
   return p; 
 }
@@ -354,15 +374,15 @@ QPalette US_GuiSettings::lcdColor( void )
 QPalette US_GuiSettings::lcdColorDefault( void )
 {
   QPalette p;
-  p.setColor( QPalette::Active,   QPalette::WindowText, Qt::green    ); // foreground
-  p.setColor( QPalette::Active,   QPalette::Window,     Qt::black    ); // background
-  p.setColor( QPalette::Active,   QPalette::Light,      Qt::green    ); // highlight1
-  p.setColor( QPalette::Active,   QPalette::Shadow,     Qt::darkCyan ); // highlight2
+  p.setColor( QPalette::Active,   QPalette::WindowText, c_green    ); // foreground
+  p.setColor( QPalette::Active,   QPalette::Window,     c_black    ); // background
+  p.setColor( QPalette::Active,   QPalette::Light,      c_green    ); // highlight1
+  p.setColor( QPalette::Active,   QPalette::Shadow,     c_darkCyan ); // highlight2
 
-  p.setColor( QPalette::Inactive, QPalette::WindowText, Qt::green    ); // foreground
-  p.setColor( QPalette::Inactive, QPalette::Window,     Qt::black    ); // background
-  p.setColor( QPalette::Inactive, QPalette::Light,      Qt::green    ); // highlight1
-  p.setColor( QPalette::Inactive, QPalette::Shadow,     Qt::darkCyan ); // highlight2
+  p.setColor( QPalette::Inactive, QPalette::WindowText, c_green    ); // foreground
+  p.setColor( QPalette::Inactive, QPalette::Window,     c_black    ); // background
+  p.setColor( QPalette::Inactive, QPalette::Light,      c_green    ); // highlight1
+  p.setColor( QPalette::Inactive, QPalette::Shadow,     c_darkCyan ); // highlight2
 
   return p; 
 }
@@ -385,13 +405,13 @@ QPalette US_GuiSettings::plotColor( void )
 QPalette US_GuiSettings::plotColorDefault( void )
 {
   QPalette p;
-  p.setColor( QPalette::Active,   QPalette::WindowText, Qt::black     ); // foreground
-  p.setColor( QPalette::Active,   QPalette::Window,     Qt::lightGray ); // background
-  p.setColor( QPalette::Active,   QPalette::Shadow,     Qt::black     ); // highlights
+  p.setColor( QPalette::Active,   QPalette::WindowText, c_black     ); // foreground
+  p.setColor( QPalette::Active,   QPalette::Window,     c_lightGray ); // background
+  p.setColor( QPalette::Active,   QPalette::Shadow,     c_black     ); // highlights
 
-  p.setColor( QPalette::Inactive, QPalette::WindowText, Qt::black     ); // foreground
-  p.setColor( QPalette::Inactive, QPalette::Window,     Qt::lightGray ); // background
-  p.setColor( QPalette::Inactive, QPalette::Shadow,     Qt::black     ); // highlights
+  p.setColor( QPalette::Inactive, QPalette::WindowText, c_black     ); // foreground
+  p.setColor( QPalette::Inactive, QPalette::Window,     c_lightGray ); // background
+  p.setColor( QPalette::Inactive, QPalette::Shadow,     c_black     ); // highlights
 
   return p; 
 }
@@ -407,7 +427,7 @@ void US_GuiSettings::set_plotColor( const QPalette& palette )
 QColor US_GuiSettings::plotCurve( void )
 {
   QSettings settings( US3, "UltraScan" );
-  return settings.value( "palettes/plotCurve", Qt::yellow ).value<QColor>();
+  return settings.value( "palettes/plotCurve", c_yellow ).value<QColor>();
 }
 
 void US_GuiSettings::set_plotCurve( const QColor& color )
@@ -423,7 +443,7 @@ void US_GuiSettings::set_plotCurve( const QColor& color )
 QColor US_GuiSettings::plotCanvasBG( void )
 {
   QSettings settings( US3, "UltraScan" );
-  return settings.value( "palettes/normalColor", Qt::darkBlue ).value<QColor>();
+  return settings.value( "palettes/normalColor", c_darkBlue ).value<QColor>();
 }
 
 void US_GuiSettings::set_plotCanvasBG( const QColor& color )
@@ -439,13 +459,13 @@ void US_GuiSettings::set_plotCanvasBG( const QColor& color )
 QColor US_GuiSettings::plotMajGrid( void )
 {
   QSettings settings( US3, "UltraScan" );
-  return settings.value( "palettes/plotMajGrid", Qt::white ).value<QColor>();
+  return settings.value( "palettes/plotMajGrid", c_white ).value<QColor>();
 }
 
 void US_GuiSettings::set_plotMajGrid( const QColor& color )
 {
   QSettings settings( US3, "UltraScan" );
-  if ( color == Qt::white )
+  if ( color == c_white )
     settings.remove( "palettes/plotMajGrid" );
   else
     settings.setValue( "palettes/plotMajGrid", color );
@@ -455,7 +475,7 @@ void US_GuiSettings::set_plotMajGrid( const QColor& color )
 QColor US_GuiSettings::plotMinGrid( void )
 {
   QSettings settings( US3, "UltraScan" );
-  return settings.value( "palettes/plotMinGrid", Qt::lightGray ).value<QColor>();
+  return settings.value( "palettes/plotMinGrid", c_lightGray ).value<QColor>();
 }
 
 void US_GuiSettings::set_plotMinGrid( const QColor& color )
@@ -471,13 +491,13 @@ void US_GuiSettings::set_plotMinGrid( const QColor& color )
 QColor US_GuiSettings::plotPicker( void )
 {
   QSettings settings( US3, "UltraScan" );
-  return settings.value( "palettes/plotPicker", Qt::white ).value<QColor>();
+  return settings.value( "palettes/plotPicker", c_white ).value<QColor>();
 }
 
 void US_GuiSettings::set_plotPicker( const QColor& color )
 {
   QSettings settings( US3, "UltraScan" );
-  if ( color == Qt::white )
+  if ( color == c_white )
     settings.remove( "palettes/plotPicker" );
   else
     settings.setValue( "palettes/plotPicker", color );

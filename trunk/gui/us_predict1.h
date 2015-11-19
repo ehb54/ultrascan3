@@ -1,6 +1,7 @@
 #ifndef US_PREDICT1_H
 #define US_PREDICT1_H
 
+#include <QtCore>
 #include "us_extern.h"
 #include "us_widgets_dialog.h"
 #include "us_plot.h"

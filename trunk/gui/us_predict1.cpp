@@ -7,10 +7,11 @@
 #include "us_choice.h"
 #include "us_solution_gui.h"
 #include "us_math2.h"
-#if QT_VERSION < 0x050000
+#if QT_VERSION > 0x050000
+#include "qwt_point_data.h"
+#else
 #define setSamples(a,b,c) setData(a,b,c)
 #endif
-
 #include "qwt_legend.h"
 
 US_Predict1::US_Predict1( US_Hydrosim&     parm, 
