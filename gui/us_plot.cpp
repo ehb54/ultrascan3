@@ -1,8 +1,20 @@
 //! \file us_plot.cpp
 
 #include <QtSvg>
-
 #include "us_plot.h"
+#if QT_VERSION > 0x050000
+#include <QtPrintSupport>
+#include "qwt_picker_machine.h"
+#include "qwt_picker.h"
+#define setSymbol(a)   setSymbol(&a)
+#define canvasBackground() canvasBackground().color()
+#else
+#define majorPen(a)    majPen(a)
+#define minorPen(a)    minPen(a)
+#define drawSymbol(a,b) draw(a,b)
+#define QwtLogScaleEngine QwtLog10ScaleEngine
+#endif
+
 #include "us_gui_settings.h"
 #include "us_gui_util.h"
 #include "us_pixmaps.h"
@@ -20,9 +32,15 @@
 US_Zoomer::US_Zoomer( int xAxis, int yAxis, QwtPlotCanvas* canvas )
    : QwtPlotZoomer( xAxis, yAxis, canvas )
 {
+#if QT_VERSION < 0x050000
    setSelectionFlags( QwtPicker::DragSelection | QwtPicker::CornerToCorner );
    setTrackerMode   ( QwtPicker::AlwaysOff );
    setRubberBand    ( QwtPicker::NoRubberBand );
+#else
+   setStateMachine  ( new QwtPickerDragRectMachine() );
+   setTrackerMode   ( QwtPicker::ActiveOnly );
+   setRubberBand    ( QwtPicker::RectRubberBand );
+#endif
 
    // RightButton: zoom out by 1
    // Ctrl+RightButton: zoom out to full size
@@ -54,7 +72,7 @@ US_Plot::US_Plot( QwtPlot*& parent_plot, const QString& title,
 
    btnZoom = new QToolButton( toolBar );
    btnZoom->setText( "Zoom" );
-   btnZoom->setIcon(QIcon( zoom_xpm ) );
+   btnZoom->setIcon(QIcon( QPixmap( zoom_xpm ) ) );
    btnZoom->setCheckable( true );
    btnZoom->setToolButtonStyle( Qt::ToolButtonTextUnderIcon );
    btnZoom->setFont( buttonFont );
@@ -62,28 +80,28 @@ US_Plot::US_Plot( QwtPlot*& parent_plot, const QString& title,
 
    QToolButton* btnPrint = new QToolButton( toolBar );
    btnPrint->setText( "Print" );
-   btnPrint->setIcon( QIcon( print_xpm ) );
+   btnPrint->setIcon( QIcon( QPixmap( print_xpm ) ) );
    btnPrint->setToolButtonStyle( Qt::ToolButtonTextUnderIcon );
    btnPrint->setFont( buttonFont );
    connect( btnPrint, SIGNAL( clicked() ), SLOT( print() ) );
 
    QToolButton* btnSVG = new QToolButton( toolBar );
    btnSVG->setText( "SVG" );
-   btnSVG->setIcon( QIcon( vec_xpm ) );
+   btnSVG->setIcon( QIcon( QPixmap( vec_xpm ) ) );
    btnSVG->setToolButtonStyle( Qt::ToolButtonTextUnderIcon );
    btnSVG->setFont( buttonFont );
    connect( btnSVG, SIGNAL( clicked() ), SLOT( svg() ) );
 
    QToolButton* btnPNG = new QToolButton( toolBar );
    btnPNG->setText( "PNG" );
-   btnPNG->setIcon( QIcon( ras_xpm ) );
+   btnPNG->setIcon( QIcon( QPixmap( ras_xpm ) ) );
    btnPNG->setToolButtonStyle( Qt::ToolButtonTextUnderIcon );
    btnPNG->setFont( buttonFont );
    connect( btnPNG, SIGNAL( clicked() ), SLOT( png() ) );
 
    QToolButton* btnConfig = new QToolButton( toolBar );
    btnConfig->setText( "Config" );
-   btnConfig->setIcon(QIcon( configure_32_xpm ) );
+   btnConfig->setIcon(QIcon( QPixmap( configure_32_xpm ) ) );
    btnConfig->setToolButtonStyle( Qt::ToolButtonTextUnderIcon );
    btnConfig->setFont( buttonFont );
    connect( btnConfig, SIGNAL( clicked() ), SLOT( config() ) );
@@ -124,7 +142,9 @@ US_Plot::US_Plot( QwtPlot*& parent_plot, const QString& title,
    qwtTitle.setFont( font );
    plot->setTitle( qwtTitle );
   
-   plot->setMargin( US_GuiSettings::plotMargin() );
+   //plot->setMargin( US_GuiSettings::plotMargin() );
+   plot->setStyleSheet( QString( "QwtPlot{ padding: %1px }" )
+         .arg( US_GuiSettings::plotMargin() ) );
 
    font.setPointSizeF( US_GuiSettings::fontSize() * 1.0 );
    qwtTitle.setFont( font );
@@ -155,7 +175,7 @@ void US_Plot::zoom( bool on )
    {
       // Set up for zooming
       zoomer = new US_Zoomer( QwtPlot::xBottom, QwtPlot::yLeft,
-                              plot->canvas() );
+                              (QwtPlotCanvas*)plot->canvas() );
       
       zoomer->setRubberBand   ( QwtPicker::RectRubberBand );
       zoomer->setRubberBandPen( QColor( Qt::green ) );
@@ -168,10 +188,17 @@ void US_Plot::zoom( bool on )
       panner = new QwtPlotPanner( plot->canvas() );
       panner->setMouseButton( Qt::MidButton );
 
+#if QT_VERSION > 0x050000
+      picker = new QwtPlotPicker( QwtPlot::xBottom, QwtPlot::yLeft,
+                     QwtPlotPicker::CrossRubberBand, QwtPicker::AlwaysOn,
+                     plot->canvas() );
+      picker->setStateMachine ( new QwtPickerDragRectMachine() );
+#else
       picker = new QwtPlotPicker( QwtPlot::xBottom, QwtPlot::yLeft,
                      QwtPicker::PointSelection | QwtPicker::DragSelection,
                      QwtPlotPicker::CrossRubberBand, QwtPicker::AlwaysOn,
                      plot->canvas() );
+#endif
 
       picker->setRubberBandPen( QColor( Qt::green ) );
       picker->setRubberBand   ( QwtPicker::CrossRubberBand );
@@ -256,6 +283,7 @@ void US_Plot::print( void )
 
    if ( dialog.exec() == QDialog::Accepted )
    {
+#if 0
        QwtPlotPrintFilter filter;
        if ( printer.colorMode() == QPrinter::GrayScale )
        {
@@ -265,6 +293,10 @@ void US_Plot::print( void )
            filter.setOptions( options );
        }
        plot->print( printer, filter );
+#endif
+#if 1
+       plot->drawCanvas( new QPainter( &printer ) );
+#endif
    }
 }
 
@@ -422,7 +454,18 @@ US_PlotConfig::US_PlotConfig( QwtPlot* current_plot, QWidget* p,
       cmbb_margin->addItem( QString::number( i ) + " pixels" );
    }
    
-   cmbb_margin->setCurrentIndex( plot->margin() / 2 - 1 );
+   QString style = plot->styleSheet();
+   int     kk    = style.indexOf( "padding:" );
+   if ( kk < 0 )
+   {
+      kk            = 0;
+   }
+   else
+   {
+      kk            = style.mid( kk ).toInt();
+      kk            = qMax( 0, ( kk / 2 - 1 ) );
+   }
+   cmbb_margin->setCurrentIndex( kk );
    connect( cmbb_margin, SIGNAL( activated   ( int ) ), 
                          SLOT  ( selectMargin( int ) ) );
 
@@ -448,7 +491,7 @@ US_PlotConfig::US_PlotConfig( QwtPlot* current_plot, QWidget* p,
       case QwtPlot::RightLegend    : position = 2; break;
       case QwtPlot::TopLegend      : position = 3; break;
       case QwtPlot::BottomLegend   : position = 4; break;
-      case QwtPlot::ExternalLegend : break; // Shouldn't happen
+      default                      : break; // Shouldn't happen
    }
 
    // Check to see it there is actually a legend in the plot
@@ -621,7 +664,9 @@ void US_PlotConfig::selectFrameColor( void )
 */
 void US_PlotConfig::selectMargin( int index )
 {
-   plot->setMargin( ( index + 1 ) * 2 );
+   //plot->setMargin( ( index + 1 ) * 2 );
+   plot->setStyleSheet( QString( "QwtPlot{ padding: %1px }" )
+         .arg( ( index + 1 ) * 2 ) );
 }
 
 /*!  \brief Change the plot legend position
@@ -849,6 +894,12 @@ US_PlotCurveConfig::US_PlotCurveConfig( QwtPlot* currentPlot,
       return;
    }
 
+#if QT_VERSION > 0x050000
+   QwtSymbol *selSymbol  = (QwtSymbol*)firstSelectedCurve->symbol();
+#else
+   QwtSymbol *selSymbol  = (QwtSymbol*)&firstSelectedCurve->symbol();
+#endif
+
    // Set up the dialog
    int row = 0;
 
@@ -861,7 +912,7 @@ US_PlotCurveConfig::US_PlotCurveConfig( QwtPlot* currentPlot,
    
    lb_sample2 = new US_PlotLabel( this );
    QPalette p = lb_sample2->palette();
-   p.setColor(  QPalette::Window, plot->canvasBackground() );
+   p.setColor(  QPalette::Active, QPalette::Window, plot->canvasBackground() );
    lb_sample2->setPalette( p );
    
    main->addWidget( lb_sample1, row  , 0 );
@@ -975,7 +1026,7 @@ US_PlotCurveConfig::US_PlotCurveConfig( QwtPlot* currentPlot,
       << QwtSymbol::XCross    << QwtSymbol::HLine     << QwtSymbol::VLine    
       << QwtSymbol::Star1     << QwtSymbol::Star2     << QwtSymbol::Hexagon;
 
-   symbolStyle = firstSelectedCurve->symbol().style();
+   symbolStyle = selSymbol->style();
 
    for ( int i = 0; i < symbolStyles.size(); i++ )
       if ( symbolStyles [ i ] == symbolStyle )
@@ -995,7 +1046,7 @@ US_PlotCurveConfig::US_PlotCurveConfig( QwtPlot* currentPlot,
 
    sb_symbolWidth = new QSpinBox;
    sb_symbolWidth->setRange( 1, 30 );
-   sb_symbolWidth->setValue( firstSelectedCurve->symbol().size().width() );
+   sb_symbolWidth->setValue( selSymbol->size().width() );
    connect( sb_symbolWidth, SIGNAL( valueChanged( int ) ), 
                             SLOT  ( updateSample( int ) ) );
 
@@ -1003,7 +1054,7 @@ US_PlotCurveConfig::US_PlotCurveConfig( QwtPlot* currentPlot,
 
    sb_symbolHeight = new QSpinBox;
    sb_symbolHeight->setRange( 1, 30 );
-   sb_symbolHeight->setValue( firstSelectedCurve->symbol().size().height() );
+   sb_symbolHeight->setValue( selSymbol->size().height() );
    connect( sb_symbolWidth, SIGNAL( valueChanged( int ) ), 
                             SLOT  ( updateSample( int ) ) );
 
@@ -1020,7 +1071,7 @@ US_PlotCurveConfig::US_PlotCurveConfig( QwtPlot* currentPlot,
 
    lb_showSymbolOutlineColor = us_label( "" , 1 );
    p = lb_showSymbolOutlineColor->palette();
-   p.setColor( QPalette::Window, firstSelectedCurve->symbol().pen().color() );
+   p.setColor( QPalette::Window, selSymbol->pen().color() );
    lb_showSymbolOutlineColor->setPalette( p );
 
    QPushButton* pb_symOutlineColor = us_pushbutton ( tr( "Update Color" ) );
@@ -1031,7 +1082,7 @@ US_PlotCurveConfig::US_PlotCurveConfig( QwtPlot* currentPlot,
 
    lb_showSymbolInteriorColor = us_label( "" , 1 );
    p = lb_showSymbolInteriorColor->palette();
-   p.setColor( QPalette::Window, firstSelectedCurve->symbol().brush().color() );
+   p.setColor( QPalette::Window, selSymbol->brush().color() );
    lb_showSymbolInteriorColor->setPalette( p );
 
    QPushButton* pb_symInteriorColor = us_pushbutton ( tr( "Update Color" ) );
@@ -1134,9 +1185,13 @@ void US_PlotCurveConfig::selectSymbolOutlineColor( void )
 
 void US_PlotCurveConfig::apply( void )
 {
-   QwtSymbol oldSymbol   = firstSelectedCurve->symbol();
-   QPen      symbolPen   = oldSymbol.pen();
-   QBrush    symbolBrush = oldSymbol.brush();
+#if QT_VERSION > 0x050000
+   QwtSymbol *oldSymbol  = (QwtSymbol*)firstSelectedCurve->symbol();
+#else
+   QwtSymbol *oldSymbol  = (QwtSymbol*)&firstSelectedCurve->symbol();
+#endif
+   QPen      symbolPen   = oldSymbol->pen();
+   QBrush    symbolBrush = oldSymbol->brush();
    
    QPalette  palette     = lb_showSymbolOutlineColor->palette();
    symbolPen.setColor( palette.color( QPalette::Window ) );
@@ -1177,7 +1232,7 @@ void US_PlotCurveConfig::apply( void )
             if ( selectedItems.size() == 1 ) 
                curve->setTitle( le_curveTitle->text() );
  
-            curve->setSymbol( newSymbol);
+            curve->setSymbol( newSymbol );
             curve->setPen   ( curvePen );
             curve->setStyle ( curveStyle );
             break;
@@ -1279,9 +1334,9 @@ void US_PlotLabel::paintEvent( QPaintEvent* e )
       
       QwtSymbol s( data->symbolStyle, brush, pen, size );
 
-      s.draw( &p, p2 );
-      s.draw( &p, p3 );
-      s.draw( &p, p4 );
+      s.drawSymbol( &p, p2 );
+      s.drawSymbol( &p, p3 );
+      s.drawSymbol( &p, p4 );
    }
 
    p.restore();
@@ -1428,11 +1483,19 @@ US_PlotAxisConfig::US_PlotAxisConfig( int currentAxis, QwtPlot* currentPlot,
    QLabel* lb_scaleTo   = us_label( tr( "To:" ) );
    QLabel* lb_scaleStep = us_label( tr( "Step:" ) );
 
+#if QT_VERSION > 0x050000
+   le_scaleFrom = us_lineedit( 
+         QString::number( plot->axisScaleDiv( axis ).lowerBound() ), 1 );
+   
+   le_scaleTo   = us_lineedit( 
+         QString::number( plot->axisScaleDiv( axis ).upperBound() ), 1 );
+#else
    le_scaleFrom = us_lineedit( 
          QString::number( plot->axisScaleDiv( axis )->lowerBound() ), 1 );
    
    le_scaleTo   = us_lineedit( 
          QString::number( plot->axisScaleDiv( axis )->upperBound() ), 1 );
+#endif
    
    le_scaleStep = us_lineedit( 
          QString::number( plot->axisStepSize( axis )           ), 1 );
@@ -1456,8 +1519,8 @@ US_PlotAxisConfig::US_PlotAxisConfig( int currentAxis, QwtPlot* currentPlot,
    QGridLayout* rb1 = us_radiobutton( tr( "Linear"      ), rb_linear, true  );
    QGridLayout* rb2 = us_radiobutton( tr( "Logarithmic" ), rb_log   , false );
 
-   if ( plot->axisScaleEngine( axis )->transformation()->type() == 
-         QwtScaleTransformation::Log10 ) rb_log->setChecked( true );
+   //if ( plot->axisScaleEngine( axis )->transformation()->type() == 
+   //      QwtScaleTransformation::Log10 ) rb_log->setChecked( true );
 
    scaleRadio->addLayout( rb1 );
    scaleRadio->addLayout( rb2 );
@@ -1485,7 +1548,7 @@ US_PlotAxisConfig::US_PlotAxisConfig( int currentAxis, QwtPlot* currentPlot,
    // Row 9
    QLabel* lb_options = us_label( tr( "Scale Options:" ) );
 
-   int attributes = plot->axisScaleEngine( axis )->attributes();
+   int attributes = (int)plot->axisScaleEngine( axis )->attributes();
    
    checked = ( attributes & QwtScaleEngine::Floating  ) 
       ? Qt::Checked : Qt::Unchecked;
@@ -1644,14 +1707,14 @@ void US_PlotAxisConfig::apply( void )
      plot->setAxisScale( axis, from, to, step );
 
    // Scale type - Linear or Log  -- Do nothing if unchanged
-   int plotType = plot->axisScaleEngine( axis )->transformation()->type();
-   if ( ( plotType == QwtScaleTransformation::Log10  && rb_linear->isChecked() ) 
-     || ( plotType == QwtScaleTransformation::Linear && rb_log   ->isChecked() ) )
+   //int plotType = plot->axisScaleEngine( axis )->transformation()->type();
+   //if ( ( plotType == QwtScaleTransformation::Log10  && rb_linear->isChecked() ) 
+   //  || ( plotType == QwtScaleTransformation::Linear && rb_log   ->isChecked() ) )
    {
       if ( rb_linear->isChecked() ) 
          plot->setAxisScaleEngine( axis, new QwtLinearScaleEngine );
       else  
-         plot->setAxisScaleEngine( axis, new QwtLog10ScaleEngine );
+         plot->setAxisScaleEngine( axis, new QwtLogScaleEngine );
    }
 
    // Set scale reference
@@ -1659,14 +1722,14 @@ void US_PlotAxisConfig::apply( void )
    plot->axisScaleEngine( axis )->setReference( reference );
 
    int attributes = 0;
-   if ( cb_refValue ->isChecked() ) attributes |= QwtScaleEngine::IncludeReference; 
-   if ( cb_symmetric->isChecked() ) attributes |= QwtScaleEngine::Symmetric; 
+   if ( cb_refValue ->isChecked() ) attributes |= (int)QwtScaleEngine::IncludeReference; 
+   if ( cb_symmetric->isChecked() ) attributes |= (int)QwtScaleEngine::Symmetric; 
 
    // Set other attributes
 
-   if ( cb_floating->isChecked()  ) attributes |= QwtScaleEngine::Floating; 
-   if ( cb_inverted->isChecked()  ) attributes |= QwtScaleEngine::Inverted;
-   plot->axisScaleEngine( axis )->setAttributes( attributes );
+   if ( cb_floating->isChecked()  ) attributes |= (int)QwtScaleEngine::Floating; 
+   if ( cb_inverted->isChecked()  ) attributes |= (int)QwtScaleEngine::Inverted;
+   plot->axisScaleEngine( axis )->setAttributes( (QwtScaleEngine::Attribute)attributes );
 
    if ( cb_autoscale->isChecked()  ) plot->setAxisAutoScale( axis );
 
@@ -1753,7 +1816,7 @@ qDebug() << "GRID COUNT" << ngrid;
 
    lb_showMajorColor = us_label( "" , 1 );
 
-   QPen     majorPen = grid->majPen();
+   QPen     majorPen = grid->majorPen();
    QPalette p;
    p.setColor( QPalette::Window, majorPen.color() );
    lb_showMajorColor->setPalette( p ); 
@@ -1832,7 +1895,7 @@ qDebug() << "GRID COUNT" << ngrid;
 
    lb_showMinorColor = us_label( "" , 1 );
 
-   QPen     minorPen = grid->minPen();
+   QPen     minorPen = grid->minorPen();
    p.setColor( QPalette::Window, minorPen.color() );
    lb_showMinorColor->setPalette( p ); 
    
@@ -1916,7 +1979,7 @@ void US_PlotGridConfig::selectMinorColor( void )
 void US_PlotGridConfig::apply( void )
 {
    // Set the major pen
-   QPen pen = grid->majPen();
+   QPen pen = grid->majorPen();
 
    pen.setColor( lb_showMajorColor->palette().color( QPalette::Window ) );
    pen.setWidth( sb_majorWidth->value() );
@@ -1928,7 +1991,7 @@ void US_PlotGridConfig::apply( void )
    grid->setMajorPen( pen );
 
    // Set the minor pen
-   pen = grid->minPen();
+   pen = grid->minorPen();
 
    pen.setColor( lb_showMinorColor->palette().color( QPalette::Window ) );
    pen.setWidth( sb_minorWidth->value() );
@@ -1956,13 +2019,17 @@ void US_PlotGridConfig::apply( void )
 US_PlotPicker::US_PlotPicker( QwtPlot* plot ) 
   : QwtPlotPicker( QwtPlot::xBottom, QwtPlot::yLeft, plot->canvas() )
 {
+#if QT_VERSION < 0x050000
    setSelectionFlags( QwtPicker::PointSelection );
-   setTrackerMode   ( QwtPicker::AlwaysOn );
-   setRubberBand    ( QwtPicker::CrossRubberBand );
+#else
+   setStateMachine ( new QwtPickerDragPointMachine() );
+#endif
+   setTrackerMode  ( QwtPicker::AlwaysOn );
+   setRubberBand   ( QwtPicker::CrossRubberBand );
 
    QColor c = US_GuiSettings::plotPicker();
-   setRubberBandPen ( c );
-   setTrackerPen    ( c );
+   setRubberBandPen( c );
+   setTrackerPen   ( c );
 }
 
 void US_PlotPicker::widgetMousePressEvent( QMouseEvent* e )

@@ -2,13 +2,13 @@
 #ifndef US_WINDOW_MSG_H
 #define US_WINDOW_MSG_H
 
-#if QT_VERSION > 0x050000
-#include <QtWidgets>
-#else
+#if QT_VERSION < 0x050000
 #include <QtGui>
 #define setSingleStep(a) setStep(a)
 #define setMinorPen(a) setMinPen(a)
 #define setMajorPen(a) setMajPen(a)
+#else
+#include <QtWidgets>
 #endif
 #include "us_extern.h"
 

@@ -965,7 +965,7 @@ int US_Model::load( const QString& id, US_DB2* db )
    if ( db->lastErrno() != US_DB2::OK ) return db->lastErrno();
 
    db->next();
-   QByteArray contents = db->value( 2 ).toString().toAscii();
+   QByteArray contents = db->value( 2 ).toString().toLatin1();
 
    // Read the model file into an array in memory
    QXmlStreamReader xml( contents );

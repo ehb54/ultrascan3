@@ -10,6 +10,7 @@
 #define setSingleStep(a) setStep(a)
 #define setMinorPen(a) setMinPen(a)
 #define setMajorPen(a) setMajPen(a)
+#define QwtInterval    QwtDoubleInterval
 #endif
 
 #include <us_extern.h>
@@ -45,61 +46,58 @@ public:
    //! \brief SpectroGram Data constructor
    US_SpectrogramData();
    //! \brief SpectroGram Data constructor
-   US_SpectrogramData( QwtDoubleRect& );
+   US_SpectrogramData( QRectF& );
 
    //! \brief Return a copy of SpectroGram Data
    virtual QwtRasterData *copy() const;
 
    //! \brief Return the Z range (minimum,maximum pair)
-   virtual QwtDoubleInterval range() const;
+   virtual QwtInterval range() const;
 
-   /*! \brief Called to get data ranges and raster size in pixels
-       \param drect Data rectangle (x-min,y-min,x-range,y-range)
-       \param rsiz  Raster size (nbr-x-per-scan,nbr-y-scans)
-   */
-   virtual void initRaster( QwtDoubleRect&, QSize& );
+   //! \brief Called to get data ranges and raster size in pixels
+   //! \param drect Data rectangle (x-min,y-min,x-range,y-range)
+   //! \param rsiz  Raster size (nbr-x-per-scan,nbr-y-scans)
+   virtual void initRaster( QRectF&, QSize& );
 
-   /*! \brief Fetch the X data range
-       \return Interval( x-min, x-max )
-   */
-   QwtDoubleInterval xrange();
+   //! \brief Fetch the X data range
+   //! \return Interval( x-min, x-max )
+   QwtInterval xrange();
 
-   /*! \brief Fetch the Y data range
-       \return Interval( y-min, y-max )
-   */
-   QwtDoubleInterval yrange();
+   //! \brief Fetch the Y data range
+   //! \return Interval( y-min, y-max )
+   QwtInterval yrange();
 
-   /*! \brief Sets up ranges and controls for the raster data to come
-       \param a_xres   X resolution, the real X extent in pixels.
-       \param a_yres   Y resolution, the real Y extent in pixels.
-       \param a_reso   Resolution, the factor used in Gaussian (default=90.0).
-       \param a_zfloor Floor percent of Z-range to add below Z-minimum.
-       \param a_drecti Data plot value ranges
-   */
-   void setRastRanges( double, double, double, double, QwtDoubleRect );
+   //! \brief Sets up ranges and controls for the raster data to come
+   //! \param a_xres   X resolution, the real X extent in pixels.
+   //! \param a_yres   Y resolution, the real Y extent in pixels.
+   //! \param a_reso   Resolution, the factor used in Gaussian (default=90.0).
+   //! \param a_zfloor Floor percent of Z-range to add below Z-minimum.
+   //! \param a_drecti Data plot value ranges
+   void setRastRanges( double, double, double, double, QRectF );
 
-   /*! \brief Set constant Z range for manual scale
-       \param a_zmin   Z minimum constant value.
-       \param a_zmax   Z maximum constant value.
-   */
+   //! \brief Set constant Z range for manual scale
+   //! \param a_zmin   Z minimum constant value.
+   //! \param a_zmax   Z maximum constant value.
    void setZRange( double, double );
 
-   /*! \brief Called by QwtPlot to get the Z-value at each X,Y pixel location
-       \param x  The real X pixel location for which to fetch Z.
-       \param y  The real Y pixel location for which to fetch Z.
-       \return   The real Z value for raster location X,Y.
-   */
+   //! \brief Called by QwtPlot to get the Z-value at each X,Y pixel location
+   //! \param x  The real X pixel location for which to fetch Z.
+   //! \param y  The real Y pixel location for which to fetch Z.
+   //! \return   The real Z value for raster location X,Y.
    virtual double value( double, double ) const;
 
-   /*! \brief Sets up the internal raster, based on a set of Solute points.
-       \param solu  Pointer to list of solution points for the current distribution.
-   */
+   //! \brief Sets up the internal raster, based on a set of Solute points.
+   //! \param solu  Pointer to list of solution points for the current distribution.
    void setRaster( QList< S_Solute >* );
+
+   //! \brief Sets the bounding rectangle for data
+   //  \param brect Bounding rectangle
+   void setBoundingRect( const QRectF );
 
 private:
 
    QList< double > rdata;        //!< Raster data: z-values at each pixel
-   QwtDoubleRect   drecti;       //!< Data rectangle for x,y plot ranges
+   QRectF          drecti;       //!< Data rectangle for x,y plot ranges
 
    double          xmin;         //!< X minimum
    double          xmax;         //!< X maximum

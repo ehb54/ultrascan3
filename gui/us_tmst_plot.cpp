@@ -141,7 +141,9 @@ void US_TmstPlot::plot_data()
 void US_TmstPlot::plot_kdata()
 {
    data_plot1->detachItems();
+#if QT_VERSION < 0x050000
    data_plot1->clear();
+#endif
 
    QString pkey   = cb_pltkey->currentText();  // Current key
    data_plot1->setTitle( tr( " Time State Data:  " ) + pkey );
@@ -223,7 +225,9 @@ void US_TmstPlot::plot_cdata()
       QColor( 122, 122, 122 ) };
 
    data_plot2->detachItems();
+#if QT_VERSION < 0x050000
    data_plot2->clear();
+#endif
    us_grid( data_plot2 );                                     // Grid
 
    US_PlotPicker* pick = new US_PlotPicker( data_plot2 );     // Annotate cursor

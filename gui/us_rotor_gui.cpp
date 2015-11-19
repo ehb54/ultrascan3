@@ -86,11 +86,13 @@ US_RotorGui::US_RotorGui(
    {
       // Then this information was passed; fill in with our own data
       status = readRotor      ( select_db_disk, rotorID );
-      status = readCalibration( select_db_disk, calibrationID );
+      if ( status == US_Rotor::ROTOR_OK )
+         status = readCalibration( select_db_disk, calibrationID );
 
       // Now select the current rotor
-      QList< QListWidgetItem* > items 
-         = lw_rotors->findItems( QString::number( rotorID ), Qt::MatchStartsWith );
+      QList< QListWidgetItem* > items;
+      if ( status == US_Rotor::ROTOR_OK )
+         items = lw_rotors->findItems( QString::number( rotorID ), Qt::MatchStartsWith );
       if ( items.count() == 1 )                    // should be exactly 1
          lw_rotors->setCurrentItem( items[ 0 ] );
    

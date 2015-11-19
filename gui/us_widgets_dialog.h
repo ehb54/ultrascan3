@@ -2,8 +2,10 @@
 #ifndef US_WIDGETS_DIALOG_H
 #define US_WIDGETS_DIALOG_H
 
+#include <QtCore>
 #if QT_VERSION > 0x050000
 #include <QtWidgets>
+#include "qwt_picker_machine.h"
 #else
 #include <QtGui>
 #define setSingleStep(a) setStep(a)
