@@ -23,6 +23,11 @@
 #include "us_lamm_astfvm.h"
 #include "us_report.h"
 #include "us_sleep.h"
+#if QT_VERSION < 0x050000
+#define setSamples(a,b,c)  setData(a,b,c)
+#define setMaximum(a)      setMaxValue(a)
+#define setSymbol(a)       setSymbol(*a)
+#endif
 
 #define MIN_NTC   25
 
@@ -337,7 +342,7 @@ us_setReadOnly( le_compress, true );
    gb_msim    ->setAutoFillBackground( true );
                pb_nextm      = us_pushbutton( tr( "Next Model" ) );
                ct_model      = us_counter( 2, 1, 200, 1 );
-   ct_model->setStep( 1 );
+   ct_model->setSingleStep( 1 );
    ct_model->setFixedWidth( pwid );
    gb_msim->setLayout( mosbox );
    mosbox ->addLayout( rl_curmod );
@@ -632,10 +637,10 @@ void US_FeMatch::update( int drow )
 
    excludedScans  = allExcls[ drow ];
 
-   ct_from->setMaxValue( scanCount - excludedScans.size() );
-   ct_to  ->setMaxValue( scanCount - excludedScans.size() );
-   ct_from->setStep( 1.0 );
-   ct_to  ->setStep( 1.0 );
+   ct_from->setMaximum( scanCount - excludedScans.size() );
+   ct_to  ->setMaximum( scanCount - excludedScans.size() );
+   ct_from->setSingleStep( 1.0 );
+   ct_to  ->setSingleStep( 1.0 );
 
    // Set up solution values implied from experimental data
    QString solID;
@@ -774,7 +779,6 @@ void US_FeMatch::data_plot( void )
    data_plot2->setAxisTitle( QwtPlot::xBottom,
       tr( "Radius (cm)" ) );
 
-   data_plot2->clear();
    us_grid( data_plot2 );
 
    int     scan_nbr  = 0;
@@ -845,7 +849,7 @@ void US_FeMatch::data_plot( void )
       else
          cc->setPen( pen_plot );
          
-      cc->setData( rr, vv, points );
+      cc->setSamples( rr, vv, points );
    }
 
    // Plot simulation
@@ -902,8 +906,8 @@ DbgLv(3) << "       JJ rr vv" << jj << rr << vv;
          }
          title   = "SimCurve " + QString::number( ii );
          cc      = us_curve( data_plot2, title );
-         cc->setPen( pen_red );
-         cc->setData( rr, vv, count );
+         cc->setPen    ( pen_red );
+         cc->setSamples( rr, vv, count );
 DbgLv(1) << "Sim plot scan count" << ii << count
  << "  r0 v0 rN vN" << rr[0] << vv[0 ] << rr[count-1] << vv[count-1];
       }
@@ -993,7 +997,6 @@ DbgLv(1) << "STEP0 speed accel accelf"
    else
    {  // No simulation exists yet
       data_plot1->detachItems();
-      data_plot1->clear();
       data_plot1->setTitle( tr( "Residuals" ) );
       data_plot1->replot();
    }
@@ -1338,8 +1341,8 @@ void US_FeMatch::exclude( void )
 
    ct_to->setValue( 0 );   // resets both counters and replots
 
-   ct_from->setMaxValue( totalScans - excludedScans.size() );
-   ct_to  ->setMaxValue( totalScans - excludedScans.size() );
+   ct_from->setMaximum( totalScans - excludedScans.size() );
+   ct_to  ->setMaximum( totalScans - excludedScans.size() );
 
    allExcls[ drow ]     = excludedScans;
 
@@ -1430,7 +1433,6 @@ void US_FeMatch::distrib_plot_stick( int type )
    data_plot1->setTitle(                       pltitle );
    data_plot1->setAxisTitle( QwtPlot::yLeft,   yatitle );
    data_plot1->setAxisTitle( QwtPlot::xBottom, xatitle );
-   data_plot1->clear();
 
    QwtPlotGrid*  data_grid = us_grid(  data_plot1 );
    QwtPlotCurve* data_curv = us_curve( data_plot1, "distro" );
@@ -1471,14 +1473,14 @@ void US_FeMatch::distrib_plot_stick( int type )
    xmin   = ( type == 0 ) ? xmin : max( xmin, 0.0 );
    ymin   = max( ymin, 0.0 );
 
-   data_grid->enableYMin( true );
-   data_grid->enableY(    true );
-   data_grid->setMajPen(
+   data_grid->enableYMin ( true );
+   data_grid->enableY    ( true );
+   data_grid->setMajorPen(
       QPen( US_GuiSettings::plotMajGrid(), 0, Qt::DashLine ) );
 
-   data_curv->setData(  xx, yy, dsize );
-   data_curv->setPen(   QPen( Qt::yellow, 3, Qt::SolidLine ) );
-   data_curv->setStyle( QwtPlotCurve::Sticks );
+   data_curv->setSamples( xx, yy, dsize );
+   data_curv->setPen    ( QPen( Qt::yellow, 3, Qt::SolidLine ) );
+   data_curv->setStyle  ( QwtPlotCurve::Sticks );
 
    data_plot1->setAxisAutoScale( QwtPlot::xBottom );
    data_plot1->setAxisAutoScale( QwtPlot::yLeft   );
@@ -1542,12 +1544,11 @@ void US_FeMatch::distrib_plot_2d( int type )
    data_plot1->setAxisTitle( QwtPlot::yLeft,   yatitle );
    data_plot1->setAxisTitle( QwtPlot::xBottom, xatitle );
 
-   data_plot1->clear();
    data_plot1->detachItems();
 
    QwtPlotGrid*  data_grid = us_grid(  data_plot1 );
    QwtPlotCurve* data_curv = us_curve( data_plot1, "distro" );
-   QwtSymbol     symbol;
+   QwtSymbol*    symbol    = new QwtSymbol;
 
    int     dsize  = model_used.components.size();
    QVector< double > vecx( dsize );
@@ -1588,26 +1589,26 @@ void US_FeMatch::distrib_plot_2d( int type )
    xmin   = ( type & 1 ) == 1 ? xmin : max( xmin, 0.0 );
    ymin   = max( ymin, 0.0 );
 
-   data_grid->enableYMin( true );
-   data_grid->enableY(    true );
-   data_grid->setMajPen(
+   data_grid->enableYMin ( true );
+   data_grid->enableY    ( true );
+   data_grid->setMajorPen(
       QPen( US_GuiSettings::plotMajGrid(), 0, Qt::DashLine ) );
 
-   symbol.setStyle( QwtSymbol::Ellipse );
-   symbol.setPen(   QPen(   Qt::red    ) );
-   symbol.setBrush( QBrush( Qt::yellow ) );
+   symbol->setStyle( QwtSymbol::Ellipse );
+   symbol->setPen(   QPen(   Qt::red    ) );
+   symbol->setBrush( QBrush( Qt::yellow ) );
    if ( dsize > 100 )
-      symbol.setSize(  5 );
+      symbol->setSize(  5 );
    else if ( dsize > 50 )
-      symbol.setSize(  8 );
+      symbol->setSize(  8 );
    else if ( dsize > 20 )
-      symbol.setSize( 10 );
+      symbol->setSize( 10 );
    else
-      symbol.setSize( 12 );
+      symbol->setSize( 12 );
 
-   data_curv->setStyle(  QwtPlotCurve::NoCurve );
-   data_curv->setSymbol( symbol );
-   data_curv->setData(   xx, yy, dsize );
+   data_curv->setStyle  ( QwtPlotCurve::NoCurve );
+   data_curv->setSymbol ( symbol );
+   data_curv->setSamples( xx, yy, dsize );
 
    data_plot1->setAxisAutoScale( QwtPlot::xBottom );
    data_plot1->setAxisAutoScale( QwtPlot::yLeft   );
@@ -1629,7 +1630,6 @@ void US_FeMatch::distrib_plot_resids( )
    data_plot1->setAxisTitle( QwtPlot::yLeft,   yatitle );
    data_plot1->setAxisTitle( QwtPlot::xBottom, xatitle );
 
-   data_plot1->clear();
    data_plot1->detachItems();
 
    QwtPlotGrid*  data_grid = us_grid( data_plot1 );
@@ -1678,9 +1678,9 @@ void US_FeMatch::distrib_plot_resids( )
    ymin  -= rdif;
    ymax  += rdif;
 
-   data_grid->enableYMin( true );
-   data_grid->enableY(    true );
-   data_grid->setMajPen(
+   data_grid->enableYMin ( true );
+   data_grid->enableY    (    true );
+   data_grid->setMajorPen(
       QPen( US_GuiSettings::plotMajGrid(), 0, Qt::DashLine ) );
 
    data_plot1->setAxisAutoScale( QwtPlot::xBottom );
@@ -1693,8 +1693,8 @@ void US_FeMatch::distrib_plot_resids( )
    zx[ 1 ] = xmax;
    zy[ 0 ] = 0.0;
    zy[ 1 ] = 0.0;
-   line_curv->setPen( QPen( Qt::red ) );
-   line_curv->setData( zx, zy, 2 );
+   line_curv->setPen    ( QPen( Qt::red ) );
+   line_curv->setSamples( zx, zy, 2 );
 
    for ( int ii = 0; ii < scanCount; ii++ )
    {  // draw residual dots a scan at a time
@@ -1706,9 +1706,9 @@ void US_FeMatch::distrib_plot_resids( )
 
       // plot the residual scatter for this scan
       data_curv = us_curve( data_plot1, "resids " +  QString::number( ii ) );
-      data_curv->setPen(    QPen( Qt::yellow ) );
-      data_curv->setStyle(  QwtPlotCurve::Dots );
-      data_curv->setData(   xx, yy, dsize );
+      data_curv->setPen    ( QPen( Qt::yellow ) );
+      data_curv->setStyle  ( QwtPlotCurve::Dots );
+      data_curv->setSamples( xx, yy, dsize );
    }
 
    data_plot1->replot();
@@ -2113,7 +2113,7 @@ if ( dbg_level > 1 )
    start_time = QDateTime::currentDateTime();
    int ncomp  = model.components.size();
    compress   = le_compress->text().toDouble();
-   progress->setMaximum( ncomp );
+   progress->setRange( 1, ncomp );
    progress->reset();
 
    nthread    = US_Settings::threads();
@@ -3513,8 +3513,8 @@ void US_FeMatch::reset_excludes( void )
 
    excludedScans.clear();
 
-   ct_from->setMaxValue( totalScans );
-   ct_to  ->setMaxValue( totalScans );
+   ct_from->setMaximum( totalScans );
+   ct_to  ->setMaximum( totalScans );
 
    if ( ct_to->value() != 0 )
       ct_to ->setValue( 0 );
@@ -3567,8 +3567,6 @@ void US_FeMatch::reset( void )
 
    data_plot1->detachItems();
    data_plot2->detachItems();
-   data_plot1->clear();
-   data_plot2->clear();
    data_plot1->replot();
    data_plot2->replot();
 

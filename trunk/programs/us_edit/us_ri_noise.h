@@ -1,13 +1,12 @@
 #ifndef US_RI_NOISE_H
 #define US_RI_NOISE_H
 
-#include <QtGui>
-#include <qwt_counter.h>
-
 #include "us_extern.h"
 #include "us_widgets_dialog.h"
 #include "us_dataIO.h"
 #include "us_plot.h"
+
+#include <qwt_counter.h>
 
 class US_RiNoise : public US_WidgetsDialog
 {

@@ -1,8 +1,6 @@
 #ifndef US_GET_EDIT_H
 #define US_GET_EDIT_H
 
-#include <QtGui>
-
 #include "us_extern.h"
 #include "us_widgets_dialog.h"
 

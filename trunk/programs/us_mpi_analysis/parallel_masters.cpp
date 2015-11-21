@@ -173,7 +173,7 @@ void US_MPI_Analysis::pmasters_supervisor()
       master = ( ii == 0 ) ? 1 : ( ii * gcores_count );   // Master world rank
 
 DbgLv(1) << "SUPER: master msgs" << master << "analysisDate" << analysisDate;
-      msg    = analysisDate.toAscii();
+      msg    = analysisDate.toLatin1();
       iwork  = msg.size();
       MPI_Send( &iwork,
                 1,

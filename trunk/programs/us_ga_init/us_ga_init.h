@@ -1,7 +1,14 @@
 #ifndef US_GA_INIT_H
 #define US_GA_INIT_H
 
-#include <QtGui>
+#include "us_extern.h"
+#include "us_widgets.h"
+#include "us_editor.h"
+#include "us_help.h"
+#include "us_plot.h"
+#include "us_colorgradIO.h"
+#include "us_spectrodata.h"
+#include "us_solutedata.h"
 
 #include "qwt_plot_marker.h"
 #include "qwt_plot_spectrogram.h"
@@ -11,15 +18,6 @@
 #include "qwt_scale_widget.h"
 #include "qwt_scale_draw.h"
 #include "qwt_color_map.h"
-
-#include "us_extern.h"
-#include "us_widgets.h"
-#include "us_help.h"
-#include "us_editor.h"
-#include "us_plot.h"
-#include "us_colorgradIO.h"
-#include "us_spectrodata.h"
-#include "us_solutedata.h"
 
 //! \brief Less-than function for sorting S_Solute values
 bool distro_lessthan( const S_Solute&, const S_Solute& );

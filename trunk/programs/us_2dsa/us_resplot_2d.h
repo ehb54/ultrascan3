@@ -18,8 +18,15 @@ class US_ResidPlot2D : public US_WidgetsDialog
    Q_OBJECT
 
    public:
+      //! \brief Residuals plot dialog constructor
       //! \param parent  A pointer to the parent widget of this one
       US_ResidPlot2D( QWidget* );
+
+      //! \brief Return a QwtPlot pointer for the upper plot
+      QwtPlot* rp_data_plot1();
+
+      //! \brief Return a QwtPlot pointer for the lower plot
+      QwtPlot* rp_data_plot2();
 
    private:
       QHBoxLayout*  mainLayout;

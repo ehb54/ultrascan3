@@ -2,8 +2,6 @@
 #ifndef US_THREAD_WORKER_H
 #define US_THREAD_WORKER_H
 
-#include <QtCore>
-
 #include "us_extern.h"
 #include "us_dataIO.h"
 #include "us_simparms.h"

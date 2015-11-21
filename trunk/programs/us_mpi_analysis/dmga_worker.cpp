@@ -264,14 +264,14 @@ DbTimMsg("Worker after get_fitness loop + sort");
 DbgLv(DL) << "Deme" << grp_nbr << deme_nbr
          << ": At last generation minimize.";
 DbTimMsg("Worker before gsm rank/generation/elapsed");
-         in_gsm        = TRUE;
+         in_gsm        = true;
 
          fitness[ 0 ].fitness = minimize_dmga( dgenes[ fitness[ 0 ].index ], 
                                                fitness[ 0 ].fitness );
 DbgLv(DL) << "Deme" << grp_nbr << deme_nbr
          << ":   last generation minimize fitness=" << fitness[0].fitness;
 DbTimMsg("Worker after gsm rank/generation/elapsed");
-         in_gsm        = FALSE;
+         in_gsm        = false;
       }
 
       max_rss();

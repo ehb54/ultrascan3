@@ -1,8 +1,13 @@
 include( ../../gui.pri )
+lessThan( QT_VERSION, 5.00 ) {
 include( $${SINGLEDIR}/qtsingleapplication.pri )
+}
 
 TARGET        = us
 TRANSLATIONS += $${TARGET}_de_DE.ts
+greaterThan( QT_VERSION, 4.99 ) {
+QT           += widgets
+}
 
 revision.target           = us_revision.h
 revision.commands         = sh revision.sh

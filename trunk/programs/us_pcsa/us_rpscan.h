@@ -2,7 +2,6 @@
 #ifndef US_RP_SCAN_H
 #define US_RP_SCAN_H
 
-#include <QtGui>
 #include <QTimer>
 
 #include "us_extern.h"
@@ -13,6 +12,7 @@
 #include "us_pcsa_modelrec.h"
 #include "us_worker_pc.h"
 #include "us_help.h"
+
 #include "qwt_plot_marker.h"
 
 //! \brief A dialog class for Tikhonov regularization parameter scan/plot

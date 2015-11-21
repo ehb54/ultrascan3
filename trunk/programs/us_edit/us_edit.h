@@ -1,10 +1,6 @@
 #ifndef US_EDIT_H
 #define US_EDIT_H
 
-#include <QtGui>
-
-#include "qwt_plot_marker.h"
-
 #include "us_extern.h"
 #include "us_widgets.h"
 #include "us_help.h"
@@ -12,6 +8,7 @@
 #include "us_dataIO.h"
 #include "us_db2.h"
 #include "us_mwl_data.h"
+#include "qwt_plot_marker.h"
 
 class US_Edit : public US_Widgets
 {

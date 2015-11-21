@@ -2,8 +2,6 @@
 #ifndef US_ADMIN_H
 #define US_ADMIN_H
 
-#include <QtGui>
-
 #include "us_widgets.h"
 
 //! A class to allow the user to set or change the user's Master Password

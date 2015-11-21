@@ -39,10 +39,10 @@ US_MPI_Analysis::US_MPI_Analysis( int nargs, QStringList& cmdargs ) : QObject()
    MPI_Comm_rank( MPI_COMM_WORLD, &my_rank );
 
    dbg_level    = 0;
-   dbg_timing   = FALSE;
+   dbg_timing   = false;
    maxrss       = 0L;
    minimize_opt = 2;
-   in_gsm       = FALSE;
+   in_gsm       = false;
    QString tarfile;
    QString jxmlfili;
    task_params[ "walltime"    ] = "1440";
@@ -801,7 +801,7 @@ void US_MPI_Analysis::send_udp( const QString& message )
 //if(mgroup_count>1) return;   //*DEBUG*
 ///////////////////////////////*DEBUG*
       QString jobid = db_name + "-" + requestID + ": ";
-      msg           = QString( jobid + message ).toAscii();
+      msg           = QString( jobid + message ).toLatin1();
       socket->writeDatagram( msg.data(), msg.size(), server, port );
    }
 
@@ -809,7 +809,7 @@ void US_MPI_Analysis::send_udp( const QString& message )
    {  // For pm group master, forward message to supervisor
       int     super = 0;
       QString gpfix = QString( "(pmg %1) " ).arg( my_group );
-      msg           = QString( gpfix + message ).toAscii();
+      msg           = QString( gpfix + message ).toLatin1();
       int     size  = msg.size();
 
       MPI_Send( &size,
@@ -838,7 +838,7 @@ void US_MPI_Analysis::abort( const QString& message, int error )
    if ( my_rank == 0 )
    { // Send abort message to both stdout and udp
       US_Sleep::msleep( 1100 );       // Delay a bit so rank 0 completes first
-      printf( "\n  ***ABORTED***:  %s\n\n", message.toAscii().data() );
+      printf( "\n  ***ABORTED***:  %s\n\n", message.toLatin1().data() );
       fflush( stdout );
       send_udp( "Abort.  " + message );
    }

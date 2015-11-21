@@ -233,7 +233,7 @@ QString s;
             for ( int i = 1; i <= my_workers; i++ ) 
                sum += v_generations[ i ];
 
-            avg = qRound( sum / my_workers ) + 1;
+            avg = qRound( (double)sum / (double)my_workers ) + 1;
 
             if ( avg > avg_generation )
             {

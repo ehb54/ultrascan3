@@ -16,6 +16,9 @@
 #include "us_license_t.h"
 #include "us_sleep.h"
 #include "us_matrix.h"
+#if QT_VERSION < 0x050000
+#define setSamples(a,b,c)  setData(a,b,c)
+#endif
 
 #define MIN_NTC   25
 
@@ -346,7 +349,6 @@ void US_ExportLegacy::data_plot( void )
    data_plot2->setAxisTitle( QwtPlot::xBottom,
       tr( "Radius (cm)" ) );
 
-   data_plot2->clear();
    us_grid( data_plot2 );
 
    valueCount        = rdata->pointCount();
@@ -373,9 +375,8 @@ void US_ExportLegacy::data_plot( void )
       title = tr( "Curve " ) + QString::number( ii );
       curve = us_curve( data_plot2, title );
 
-      curve->setPen( pen_plot );
-         
-      curve->setData( rr, vv, valueCount );
+      curve->setPen    ( pen_plot );
+      curve->setSamples( rr, vv, valueCount );
    }
 
    data_plot2->replot();
@@ -945,7 +946,6 @@ void US_ExportLegacy::reset( void )
    dataLoaded = false;
 
    data_plot2->detachItems();
-   data_plot2->clear();
    data_plot2->replot();
 
    pb_details  ->setEnabled( false );

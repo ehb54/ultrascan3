@@ -2,7 +2,11 @@
 #ifndef US_SELECTBOX_H
 #define US_SELECTBOX_H
 
+#if QT_VERSION > 0x050000
+#include <QtWidgets>
+#else
 #include <QtGui>
+#endif
 
 #include "us_extern.h"
 

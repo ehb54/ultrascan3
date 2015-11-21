@@ -2,6 +2,9 @@
 #include "us_color.h"
 #include "us_gui_settings.h"
 #include "us_plot.h"
+#if QT_VERSION < 0x050000
+#define setSamples(a,b,c)  setData(a,b,c)
+#endif
 
 US_Color::US_Color( QWidget* w, Qt::WindowFlags flags ) 
    : US_Widgets( true, w, flags )
@@ -42,7 +45,7 @@ US_Color::US_Color( QWidget* w, Qt::WindowFlags flags )
      y[ i ] = 1.0 + (double) i / ( ArraySize - 1 );  // 1.0 to 2.0
   }
    
-  curve->setData( x, y, ArraySize );
+  curve->setSamples( x, y, ArraySize );
 
   leftColumn->addLayout( us_plot, row++, 0, 3, 2 );
 
@@ -381,8 +384,8 @@ void US_Color::updateScreen( void )
 
   plot ->setPalette         ( current.plotColor );
   plot ->setCanvasBackground( current.plotBg );
-  grid ->setMajPen          ( QPen( current.plotMajorGrid ) );
-  grid ->setMinPen          ( QPen( current.plotMinorGrid ) );
+  grid ->setMajorPen        ( QPen( current.plotMajorGrid ) );
+  grid ->setMinorPen        ( QPen( current.plotMinorGrid ) );
   curve->setPen             ( QPen( current.plotCurve     ) );
   pick ->setRubberBandPen   ( QPen( current.plotPicker    ) );
   pick ->setTrackerPen      ( QPen( current.plotPicker    ) );
@@ -1042,7 +1045,7 @@ void US_Color::pick_color3( void )
    
     case PLOT_CANVAS:
       current.plotMajorGrid = c;
-      grid->setMajPen( QPen( c ) );
+      grid->setMajorPen( QPen( c ) );
       plot->replot();
       break;
    
@@ -1111,7 +1114,7 @@ void US_Color::pick_color4( void )
    
     case PLOT_CANVAS:
       current.plotMajorGrid = c;
-      grid->setMajPen( QPen( c ) );
+      grid->setMajorPen( QPen( c ) );
       plot->replot();
       break;
    
@@ -1230,7 +1233,9 @@ void US_Color::updateWidgets( double newval )
 void US_Color:: selMargin( int index )
 {
   current.plotMargin = ( index + 1 ) * 2;
-  plot->setMargin( current.plotMargin ); 
+  //plot->setMargin( current.plotMargin ); 
+  plot->setStyleSheet( QString( "QwtPlot{ padding: %1px }" )
+        .arg( current.plotMargin ) );
 }
 
 void US_Color::apply( void )

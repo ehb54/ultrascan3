@@ -161,17 +161,17 @@ DbgLv(1) << "idealThrCout" << nthr;
    ct_cresolu   = us_counter( 2,     20,   501,  100 );
    ct_thrdcnt   = us_counter( 2,      1,    64, nthr );
    ct_tralpha   = us_counter( 3,      0,   100,    0 );
-   ct_lolimitx->setStep(  0.1 );
-   ct_uplimitx->setStep(  0.1 );
-   ct_lolimity->setStep( 0.01 );
-   ct_uplimity->setStep( 0.01 );
-   ct_varcount->setStep(    1 );
-   ct_gfiters ->setStep(    1 );
-   ct_gfthresh->setStep( 1.e-6 );
-   ct_lmmxcall->setStep(    1 );
-   ct_cresolu ->setStep(    1 );
-   ct_tralpha ->setStep( 0.001 );
-   ct_thrdcnt ->setStep(    1 );
+   ct_lolimitx->setSingleStep(  0.1 );
+   ct_uplimitx->setSingleStep(  0.1 );
+   ct_lolimity->setSingleStep( 0.01 );
+   ct_uplimity->setSingleStep( 0.01 );
+   ct_varcount->setSingleStep(    1 );
+   ct_gfiters ->setSingleStep(    1 );
+   ct_gfthresh->setSingleStep( 1.e-6 );
+   ct_lmmxcall->setSingleStep(    1 );
+   ct_cresolu ->setSingleStep(    1 );
+   ct_tralpha ->setSingleStep( 0.001 );
+   ct_thrdcnt ->setSingleStep(    1 );
    cb_curvtype = us_comboBox();
    cb_curvtype->addItem( "Straight Line" );
    cb_curvtype->addItem( "Increasing Sigmoid" );
@@ -784,8 +784,8 @@ void US_AnalysisControlPc::xlim_change()
 
    ct_lolimitx->setRange( limlo, upval );
    ct_uplimitx->setRange( loval, limup );
-   ct_lolimitx->setStep( 0.1 );
-   ct_uplimitx->setStep( 0.1 );
+   ct_lolimitx->setSingleStep( 0.1 );
+   ct_uplimitx->setSingleStep( 0.1 );
 }
 
 // Set k-upper-limit to lower when y grid points == 1
@@ -841,9 +841,9 @@ void US_AnalysisControlPc::set_alpha()
    }
 
    if ( ct_tralpha->value() >= 10.0 )
-      ct_tralpha->setStep( 0.01 );
+      ct_tralpha->setSingleStep( 0.01 );
    else
-      ct_tralpha->setStep( 0.001 );
+      ct_tralpha->setSingleStep( 0.001 );
 }
 
 // Slot to handle progress update
@@ -1571,10 +1571,14 @@ void US_AnalysisControlPc::adjust_xyz( const int chg_ndx )
    bmndx          = -1;
 
    // Set ranges and values in GUI elements
-   ct_lolimitx->setRange( xmin, xmax, xinc );
-   ct_uplimitx->setRange( xmin, xmax, xinc );
-   ct_lolimity->setRange( ymin, ymax, yinc );
-   ct_uplimity->setRange( ymin, ymax, yinc );
+   ct_lolimitx->setRange( xmin, xmax );
+   ct_uplimitx->setRange( xmin, xmax );
+   ct_lolimity->setRange( ymin, ymax );
+   ct_uplimity->setRange( ymin, ymax );
+   ct_lolimitx->setSingleStep( xinc );
+   ct_uplimitx->setSingleStep( xinc );
+   ct_lolimity->setSingleStep( yinc );
+   ct_uplimity->setSingleStep( yinc );
 
    if ( chg_ndx == 1 )
    {  // X has just changed

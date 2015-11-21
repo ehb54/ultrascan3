@@ -223,7 +223,7 @@ DbgLv(1) << "GaMast: EOML: fitness sorted  bfx" << best_fitness[0].index
       if ( minimize_opt == 2 )
       {  // If gradient search method for all terminations, minimize now
          double aval;
-         in_gsm         = TRUE;
+         in_gsm         = true;
          double fitness = bfit->fitness;
          dgene          = best_dgenes[ bfit->index ];
          int nlim       = 0;
@@ -254,7 +254,7 @@ DbgLv(1) << "GaMast: EOML: fitness sorted  bfx" << best_fitness[0].index
 
          DbgLv(0) << "Post-minimization RMSD" << sqrt( bfit->fitness );
          best_dgenes[ bfit->index ] = dgene;
-         in_gsm         = FALSE;
+         in_gsm         = false;
       }
 
       // Compute the variance (fitness) for the final best-fit model
@@ -551,7 +551,7 @@ DbgLv(0) << "dmga_master start loop:  nfloatc max_same_count"
             for ( int i = 1; i <= my_workers; i++ ) 
                sum += v_generations[ i ];
 
-            avg = qRound( sum / my_workers ) + 1;
+            avg = qRound( (double)sum / (double)my_workers ) + 1;
 
             if ( avg > avg_generation )
             {

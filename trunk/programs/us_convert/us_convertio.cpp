@@ -479,7 +479,7 @@ qDebug() << " rRDD: build TripleInfo";
       
    // Get runType
    QStringList part = triples[ 0 ].tripleFilename.split( "." );
-   ExpData.opticalSystem = part[ 1 ].toAscii();
+   ExpData.opticalSystem = part[ 1 ].toUtf8();
 
    if ( error != QString( "" ) )
       return( error );
