@@ -7,9 +7,12 @@
 #include "us_math2.h"
 #include "us_sleep.h"
 
-#include <qwt_double_interval.h>
 #include <qwt_scale_widget.h>
 #include <qwt_scale_draw.h>
+#if QT_VERSION < 0x050000
+#define setSamples(a,b,c)  setData(a,b,c)
+#define setSymbol(a)       setSymbol(*a)
+#endif
 
 // Constructor:  Regularization Parameter Scan widget
 US_RpScan::US_RpScan( QList< US_SolveSim::DataSet* >&dsets,
@@ -70,9 +73,9 @@ DbgLv(1) << "TRP:  nppln" << nppln;
    ct_endalpha  = us_counter( 3, 0.000, 1000.0, 0.800 );
    ct_incalpha  = us_counter( 3, 0.000, 1000.0, 0.020 );
    le_selalpha  = us_lineedit( QString::number( alpha ), -1, false );
-   ct_stralpha->setStep( 0.001 );
-   ct_endalpha->setStep( 0.001 );
-   ct_incalpha->setStep( 0.001 );
+   ct_stralpha->setSingleStep( 0.001 );
+   ct_endalpha->setSingleStep( 0.001 );
+   ct_incalpha->setSingleStep( 0.001 );
 
    b_progress   = us_progressBar( 0, 100, 0 );
    le_stattext  = us_lineedit( "", -1, true );
@@ -217,7 +220,7 @@ void US_RpScan::scan()
    varias.clear();
    xnorms.clear();
    b_progress->reset();
-   b_progress->setMaximum( nalpha );
+   b_progress->setRange( 1, nalpha );
    double varmx  = 0.0;
    double xnomx  = 0.0;
    double v_vari = 0.0;
@@ -466,19 +469,19 @@ void US_RpScan::plot_data()
 
    // Draw the variance,xnorm line
    curvln        = us_curve( data_plot1, tr( "Curve V-X" ) );
-   curvln->setPen( pen_plot );
-   curvln->setData( xx, yy, nalpha );
+   curvln->setPen    ( pen_plot );
+   curvln->setSamples( xx, yy, nalpha );
 
    // Show the variance,xnorm points
    curvpt        = us_curve( data_plot1, tr( "Alpha Points" ) );
-   QwtSymbol sym;
-   sym.setStyle( QwtSymbol::Ellipse );
-   sym.setPen  ( QPen( Qt::blue ) );
-   sym.setBrush( QBrush( Qt::white ) );
-   sym.setSize ( 8 );
-   curvpt->setStyle( QwtPlotCurve::NoCurve );
-   curvpt->setSymbol( sym );
-   curvpt->setData( xx, yy, nalpha );
+   QwtSymbol* sym = new QwtSymbol;
+   sym->setStyle( QwtSymbol::Ellipse );
+   sym->setPen  ( QPen( Qt::blue ) );
+   sym->setBrush( QBrush( Qt::white ) );
+   sym->setSize ( 8 );
+   curvpt->setStyle  ( QwtPlotCurve::NoCurve );
+   curvpt->setSymbol ( sym );
+   curvpt->setSamples( xx, yy, nalpha );
 
    // Compute and show lines that hint at the elbow point of the curve
    if ( nalpha > 6 )
@@ -570,7 +573,7 @@ DbgLv(1) << "TRP:T4:   cv: x1,y1" << xcvp1 << ycvp1
          yh[ 0 ]   = yl1p1;
          xh[ 1 ]   = xl3p1;
          yh[ 1 ]   = yl3p1;
-         curvh1->setData( xh, yh, 2 );
+         curvh1->setSamples( xh, yh, 2 );
 
          curvh2        = us_curve( data_plot1, tr( "Curve Hint 2" ) );
          curvh2->setPen( pen_red );
@@ -578,7 +581,7 @@ DbgLv(1) << "TRP:T4:   cv: x1,y1" << xcvp1 << ycvp1
          yh[ 0 ]   = yl2p1;
          xh[ 1 ]   = xl3p1;
          yh[ 1 ]   = yl3p1;
-         curvh2->setData( xh, yh, 2 );
+         curvh2->setSamples( xh, yh, 2 );
 
          curvh3        = us_curve( data_plot1, tr( "Curve Hint 3" ) );
          curvh3->setPen( pen_cyan );
@@ -587,7 +590,7 @@ DbgLv(1) << "TRP:T4:   cv: x1,y1" << xcvp1 << ycvp1
          xh[ 1 ]   = xl3p2;
          yh[ 1 ]   = yl3p2;
 DbgLv(1) << "TRP:H3: x1,y1,x2,y2" << xl3p1 << yl3p1 << yl3p2 << yl3p2;
-         curvh3->setData( xh, yh, 2 );
+         curvh3->setSamples( xh, yh, 2 );
       }
 
       else   // If no good intersection point, default the half-way alpha
@@ -628,9 +631,9 @@ void US_RpScan::mouse( const QwtDoublePoint& p )
    QwtPlotMarker* msymbo = new QwtPlotMarker;
    QBrush sbrush( Qt::cyan );
    QPen   spen  ( sbrush, 2.0 );
+   QwtSymbol* sym = new QwtSymbol( QwtSymbol::Cross, sbrush, spen, QSize( 8, 8 ) );
    msymbo->setValue( xcurv, ycurv );
-   msymbo->setSymbol(
-         QwtSymbol( QwtSymbol::Cross, sbrush, spen, QSize( 8, 8 ) ) );
+   msymbo->setSymbol( sym );
    msymbo->attach  ( data_plot1 );
    QwtPlotMarker* marker = new QwtPlotMarker;
    QwtText label;

@@ -95,7 +95,7 @@ void US_Convert::readLegacyData(
       // Add channel
       QChar c = fileList[ i ].at( 0 );  // Get 1st character
 
-      data.channel = ( c.isDigit() ) ? 'A' : c.toAscii();
+      data.channel = ( c.isDigit() ) ? 'A' : (uchar)c.unicode();
 
       if ( runType == "RI" )          // Split out the two readings in RI data
       {
@@ -362,7 +362,7 @@ qDebug() << "Cvt:cnvt: IN";
    QStringList parts      = triple.split(" / ");
 
    int         cell       = parts[ 0 ].toInt();
-   char        channel    = parts[ 1 ].toAscii()[ 0 ];
+   char        channel    = parts[ 1 ].toLatin1()[ 0 ];
    double      wavelength = parts[ 2 ].toDouble();
 
    QList< US_DataIO::BeckmanRawScan > ccwLegacyData;
@@ -393,7 +393,7 @@ qDebug() << "Cvt:cnvt: IN";
 
    if ( ccwLegacyData.isEmpty() ) return ; 
 
-   strncpy( newRawData.type, runType.toAscii().constData(), 2 );
+   strncpy( newRawData.type, runType.toLatin1().constData(), 2 );
    memset( newRawData.rawGUID, 0, 16 );           // Initialize to 0's
    newRawData.cell        = cell;
    newRawData.channel     = channel;
@@ -424,7 +424,7 @@ qDebug() << "Cvt:  runType" << runType;
       // Get the actual delta out of the header lines
       QStringList descriptionParts = rawLegacyData[ 0 ]
             .description.split( " ", QString::SkipEmptyParts );
-      QString proto = descriptionParts[ 1 ].toAscii();
+      QString proto = descriptionParts[ 1 ].toLatin1();
       proto.remove( "," );
    
       // Some IP data doesn't have this

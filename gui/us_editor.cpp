@@ -1,6 +1,9 @@
 #include "us_editor.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"
+#if QT_VERSION > 0x050000
+#include <QtPrintSupport>
+#endif
 
 US_Editor::US_Editor( int menu, bool readonly, const QString& extension, 
       QWidget* parent,  Qt::WindowFlags flags ) : QMainWindow( parent, flags )                                                             

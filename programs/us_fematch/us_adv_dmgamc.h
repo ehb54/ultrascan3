@@ -2,13 +2,12 @@
 #ifndef US_ADV_DMGA_H
 #define US_ADV_DMGA_H
 
-#include <QtGui>
-
 #include "us_extern.h"
 #include "us_widgets_dialog.h"
 #include "us_model.h"
 #include "us_plot.h"
 #include "us_help.h"
+
 #include <qwt_plot.h>
 
 //! \brief A class to provide a window for advanced DMGA-MC analysis controls

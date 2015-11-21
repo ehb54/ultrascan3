@@ -4,6 +4,9 @@
 #include "us_settings.h"
 #include "us_gui_settings.h"
 #include "us_matrix.h"
+#if QT_VERSION < 0x050000
+#define setSamples(a,b,c)  setData(a,b,c)
+#endif
 
 US_RiNoise::US_RiNoise( const US_DataIO::RawData& raw, 
                         const QList< int >&       Includes,
@@ -37,7 +40,7 @@ US_RiNoise::US_RiNoise( const US_DataIO::RawData& raw,
    spin->addWidget( lb_spin );
 
    ct_order = us_counter( 1, 4.0, 9.0, (double)order );
-   ct_order->setStep( 1.0 );
+   ct_order->setSingleStep( 1.0 );
    connect( ct_order, SIGNAL( valueChanged ( double ) ),
                       SLOT  ( draw_fit     ( double ) ) );
    spin->addWidget( ct_order );
@@ -170,12 +173,12 @@ void US_RiNoise::draw_fit( double new_order )
    }
 
    QwtPlotCurve* integrals = us_curve( data_plot, tr( "Integrals" ) );
-   integrals->setData( scan_time, absorbance_integral, scan );
-   integrals->setPen( QPen( Qt::yellow ) );
+   integrals->setSamples( scan_time, absorbance_integral, scan );
+   integrals->setPen    ( QPen( Qt::yellow ) );
 
    QwtPlotCurve* polyfit = us_curve( data_plot, tr( "Polynomial Fit" ) );
-   polyfit->setData( scan_time, fit, scan );
-   integrals->setPen( QPen( Qt::magenta ) );
+   polyfit  ->setSamples( scan_time, fit, scan );
+   polyfit  ->setPen    ( QPen( Qt::magenta ) );
 
    data_plot->replot();
 

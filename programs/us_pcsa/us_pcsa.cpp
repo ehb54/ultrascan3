@@ -5,8 +5,6 @@
 
 #include "us_pcsa.h"
 #include "us_resids_bitmap.h"
-#include "us_plot_control_pc.h"
-#include "us_analysis_control_pc.h"
 #include "us_license_t.h"
 #include "us_license.h"
 #include "us_settings.h"
@@ -15,12 +13,13 @@
 #include "us_constants.h"
 #include "us_analyte_gui.h"
 #include "us_passwd.h"
-#include "us_db2.h"
 #include "us_data_loader.h"
 #include "us_util.h"
 #include "us_investigator.h"
-#include "us_noise_loader.h"
 #include "us_loadable_noise.h"
+#if QT_VERSION < 0x050000
+#define setSamples(a,b,c)  setData(a,b,c)
+#endif
 
 //! \brief Main program for us_pcsa. Loads translators and starts
 //         the class US_pcsa.
@@ -64,13 +63,15 @@ US_pcsa::US_pcsa() : US_AnalysisBase2()
 
    // Effectively disable boundaries to turn off cyan portion of plot2
    ct_boundaryPercent->disconnect();
-   ct_boundaryPercent->setRange  ( 0.0, 300.0, 1.0 );
-   ct_boundaryPercent->setValue  ( 300.0 );
-   ct_boundaryPercent->setEnabled( false );
-   ct_boundaryPos    ->disconnect();
-   ct_boundaryPos    ->setRange  ( -50.0, 300.0, 1.0 );
-   ct_boundaryPos    ->setValue  ( -50.0 );
-   ct_boundaryPos    ->setEnabled( false );
+   ct_boundaryPercent->setRange     ( 0.0, 300.0 );
+   ct_boundaryPercent->setSingleStep( 1.0 );
+   ct_boundaryPercent->setValue     ( 300.0 );
+   ct_boundaryPercent->setEnabled   ( false );
+   ct_boundaryPos    ->disconnect   ();
+   ct_boundaryPos    ->setRange     ( -50.0, 300.0 );
+   ct_boundaryPos    ->setSingleStep( 1.0 );
+   ct_boundaryPos    ->setValue     ( -50.0 );
+   ct_boundaryPos    ->setEnabled   ( false );
 
    connect( ct_from, SIGNAL( valueChanged( double ) ),
                      SLOT  ( exclude_from( double ) ) );
@@ -381,14 +382,13 @@ DbgLv(1) << "Data Plot from Base";
       }
       title = "SimCurve " + QString::number( ii );
       cc    = us_curve( data_plot2, title );
-      cc->setPen( pen_red );
-      cc->setData( ra, va, kk );
+      cc->setPen    ( pen_red );
+      cc->setSamples( ra, va, kk );
    }
 
    data_plot2->replot();           // replot combined exper,simul data
 
    data_plot1->detachItems();
-   data_plot1->clear();
 
    us_grid( data_plot1 );
    data_plot1->setAxisTitle( QwtPlot::xBottom, tr( "Radius (cm)" ) );
@@ -416,9 +416,9 @@ DbgLv(1) << "Data Plot from Base";
       // plot dots of residuals at current scan
       title    = "resids " + QString::number( ii );
       cc       = us_curve( data_plot1, title );
-      cc->setPen(   pen_plot );
-      cc->setStyle( QwtPlotCurve::Dots );
-      cc->setData(  ra, va, npoints );
+      cc->setPen    ( pen_plot );
+      cc->setStyle  ( QwtPlotCurve::Dots );
+      cc->setSamples( ra, va, npoints );
    }
 
    data_plot1->setAxisAutoScale( QwtPlot::xBottom );
@@ -433,8 +433,8 @@ DbgLv(1) << "Data Plot from Base";
    va[ 0 ]    = 0.0;
    va[ 1 ]    = 0.0;
    cc         = us_curve( data_plot1, "zero-line" );
-   cc->setPen( QPen( QBrush( Qt::red ), 2 ) );
-   cc->setData( ra, va, 2 );
+   cc->setPen    ( QPen( QBrush( Qt::red ), 2 ) );
+   cc->setSamples( ra, va, 2 );
 
    // draw the plot
    data_plot1->setAxisScale( QwtPlot::xBottom, xlo, xhi );
@@ -1222,7 +1222,6 @@ void US_pcsa::new_triple( int index )
 
    sdata.scanData.clear();                 // Clear simulation and upper plot
    data_plot1->detachItems();
-   data_plot1->clear();
 
    // Temporarily restore loaded noise vectors from triples vectors
    ti_noise           = tinoises[ index ];

@@ -32,7 +32,7 @@ US_ExcludeProfile::US_ExcludeProfile( QList< int > includes )
    main->addWidget( lb_start, row, 0 );
 
    ct_start = us_counter( 3, 1.0, scanCount, 1.0 );
-   ct_start->setStep( 1.0 );
+   ct_start->setSingleStep( 1.0 );
    QFontMetrics fm( ct_start->font() );
    ct_start->setMinimumWidth( fm.maxWidth() * 10 );
 
@@ -45,7 +45,7 @@ US_ExcludeProfile::US_ExcludeProfile( QList< int > includes )
    main->addWidget( lb_stop, row, 0 );
 
    ct_stop = us_counter( 3, 1.0, scanCount, scanCount );
-   ct_stop->setStep( 1.0 );
+   ct_stop->setSingleStep( 1.0 );
    connect( ct_stop, SIGNAL( valueChanged ( double ) ),
                      SLOT  ( update_stop  ( double ) ) );
    main->addWidget( ct_stop, row++, 1 );
@@ -55,7 +55,7 @@ US_ExcludeProfile::US_ExcludeProfile( QList< int > includes )
    main->addWidget( lb_nth, row, 0 );
 
    ct_nth = us_counter( 2, 1.0, scanCount, 1.0 );
-   ct_nth->setStep( 1.0 );
+   ct_nth->setSingleStep( 1.0 );
    connect( ct_nth, SIGNAL( valueChanged ( double ) ),
                     SLOT  ( update       ( double ) ) );
    main->addWidget( ct_nth, row++, 1 );

@@ -1,12 +1,11 @@
 #ifndef US_EXCLUDE_PROFILE_H
 #define US_EXCLUDE_PROFILE_H
 
-#include <QtGui>
-#include <qwt_counter.h>
-
 #include "us_extern.h"
 #include "us_widgets_dialog.h"
 #include "us_help.h"
+
+#include <qwt_counter.h>
 
 #ifndef DbgLv
 #define DbgLv(a) if(dbg_level>=a)qDebug()

@@ -2,8 +2,6 @@
 #ifndef US_FONT_H
 #define US_FONT_H
 
-#include <QtGui>
-
 #include "us_widgets.h"
 #include "us_help.h"
 

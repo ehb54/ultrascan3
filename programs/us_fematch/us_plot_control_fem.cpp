@@ -156,12 +156,12 @@ US_PlotControlFem::US_PlotControlFem( QWidget* p, US_Model* amodel )
    ct_peakwidth->setValue( pkwidth  );
    ct_rxscale  ->setValue( xscl );
    ct_ryscale  ->setValue( yscl );
-   ct_zscalefac->setStep(  0.01 );
-   ct_gridreso ->setStep(  10   );
-   ct_peaksmoo ->setStep(  1    );
-   ct_peakwidth->setStep(  0.01 );
-   ct_rxscale  ->setStep(  0.01 );
-   ct_ryscale  ->setStep(  0.01 );
+   ct_zscalefac->setSingleStep(  0.01 );
+   ct_gridreso ->setSingleStep(  10   );
+   ct_peaksmoo ->setSingleStep(  1    );
+   ct_peakwidth->setSingleStep(  0.01 );
+   ct_rxscale  ->setSingleStep(  0.01 );
+   ct_ryscale  ->setSingleStep(  0.01 );
 
    connect( ck_xmwt, SIGNAL( toggled( bool ) ),
             this,    SLOT( xmwtCheck( bool ) ) );

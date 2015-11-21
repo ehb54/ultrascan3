@@ -5,6 +5,10 @@
 #include "us_settings.h"
 #include "us_gui_settings.h"
 #include "qwt_legend.h"
+#if QT_VERSION < 0x050000
+#define setSamples(a,b,c)  setData(a,b,c)
+#define setSymbol(a)       setSymbol(*a)
+#endif
 
 // constructor:  advanced analysis control widget
 US_AdvDmgaMc::US_AdvDmgaMc( US_Model* amodel,
@@ -115,11 +119,11 @@ US_AdvDmgaMc::US_AdvDmgaMc( US_Model* amodel,
    paramLayout->addWidget( pb_simulate,  row,    4, 1,  4 );
    paramLayout->addWidget( pb_close,     row++,  8, 1,  4 );
 
-   mainLayout    ->addLayout( plotLayout  );
-   mainLayout    ->addLayout( paramLayout );
+   mainLayout  ->addLayout( plotLayout  );
+   mainLayout  ->addLayout( paramLayout );
 
-   ct_modelnbr ->setValue( 0     );
-   ct_modelnbr ->setStep(     1 );
+   ct_modelnbr ->setValue     ( 0 );
+   ct_modelnbr ->setSingleStep( 1 );
 
    pb_nextmodel->setEnabled( false );
    ct_modelnbr ->setEnabled( false );
@@ -405,9 +409,9 @@ void US_AdvDmgaMc::plot_distrib()
    data_plot->setAxisAutoScale( QwtPlot::xBottom );
    us_grid( data_plot );
    QwtPlotCurve* curve  = us_curve( data_plot, tr( "Curve " ) + xtitle );
-   curve->setPen  ( QPen( US_GuiSettings::plotCurve(), 2 ) );
-   curve->setStyle( QwtPlotCurve::Sticks );
-   curve->setData ( xvp, yvp, nxyp );
+   curve->setPen    ( QPen( US_GuiSettings::plotCurve(), 2 ) );
+   curve->setStyle  ( QwtPlotCurve::Sticks );
+   curve->setSamples( xvp, yvp, nxyp );
 
    // Fill in the model statistics summary for the attribute
    QVector< QVector< double > >  mstats;
@@ -467,42 +471,42 @@ void US_AdvDmgaMc::plot_distrib()
    QwtPlotCurve* curv_medi  = us_curve( data_plot, cl_medi );
    QwtPlotCurve* curv_mode  = us_curve( data_plot, cl_mode );
    QwtPlotCurve* curv_iter  = us_curve( data_plot, cl_iter );
-   QwtSymbol     sym_mean;
-   QwtSymbol     sym_medi;
-   QwtSymbol     sym_mode;
-   QwtSymbol     sym_iter;
-   sym_mean.setStyle( QwtSymbol::Ellipse   );
-   sym_mean.setPen  ( QPen  (  co_bord   ) );
-   sym_mean.setBrush( QBrush(  co_mean   ) );
-   sym_mean.setSize ( 6 );
+   QwtSymbol*    sym_mean   = new QwtSymbol;
+   QwtSymbol*    sym_medi   = new QwtSymbol;
+   QwtSymbol*    sym_mode   = new QwtSymbol;
+   QwtSymbol*    sym_iter   = new QwtSymbol;
+   sym_mean->setStyle( QwtSymbol::Ellipse   );
+   sym_mean->setPen  ( QPen  (  co_bord   ) );
+   sym_mean->setBrush( QBrush(  co_mean   ) );
+   sym_mean->setSize ( 6 );
    curv_mean->setStyle( QwtPlotCurve::NoCurve );
    curv_mean->setSymbol( sym_mean );
    curv_mean->setItemAttribute( QwtPlotItem::Legend, true );
-   sym_medi.setStyle( QwtSymbol::Rect      );
-   sym_medi.setPen  ( QPen  (  co_bord   ) );
-   sym_medi.setBrush( QBrush(  co_medi   ) );
-   sym_medi.setSize ( 6 );
+   sym_medi->setStyle( QwtSymbol::Rect      );
+   sym_medi->setPen  ( QPen  (  co_bord   ) );
+   sym_medi->setBrush( QBrush(  co_medi   ) );
+   sym_medi->setSize ( 6 );
    curv_medi->setStyle( QwtPlotCurve::NoCurve );
    curv_medi->setSymbol( sym_medi );
    curv_medi->setItemAttribute( QwtPlotItem::Legend, true );
-   sym_mode.setStyle( QwtSymbol::DTriangle );
-   sym_mode.setPen  ( QPen  (  co_bord   ) );
-   sym_mode.setBrush( QBrush(  co_mode   ) );
-   sym_mode.setSize ( 8 );
+   sym_mode->setStyle( QwtSymbol::DTriangle );
+   sym_mode->setPen  ( QPen  (  co_bord   ) );
+   sym_mode->setBrush( QBrush(  co_mode   ) );
+   sym_mode->setSize ( 8 );
    curv_mode->setStyle( QwtPlotCurve::NoCurve );
    curv_mode->setSymbol( sym_mode );
    curv_mode->setItemAttribute( QwtPlotItem::Legend, true );
-   sym_iter.setStyle( QwtSymbol::Cross     );
-   sym_iter.setPen  ( QPen  (  co_iter   ) );
-   sym_iter.setBrush( QBrush(  co_iter   ) );
-   sym_iter.setSize ( 8 );
+   sym_iter->setStyle( QwtSymbol::Cross     );
+   sym_iter->setPen  ( QPen  (  co_iter   ) );
+   sym_iter->setBrush( QBrush(  co_iter   ) );
+   sym_iter->setSize ( 8 );
    curv_iter->setStyle( QwtPlotCurve::NoCurve );
    curv_iter->setSymbol( sym_iter );
    curv_iter->setItemAttribute( QwtPlotItem::Legend, true );
-   curv_mean->setData  ( xm    , ym    , 1 );
-   curv_medi->setData  ( xm + 1, ym + 1, 1 );
-   curv_mode->setData  ( xm + 2, ym + 2, 1 );
-   curv_iter->setData  ( xm + 3, ym + 3, 1 );
+   curv_mean->setSamples( xm    , ym    , 1 );
+   curv_medi->setSamples( xm + 1, ym + 1, 1 );
+   curv_mode->setSamples( xm + 2, ym + 2, 1 );
+   curv_iter->setSamples( xm + 3, ym + 3, 1 );
 
    // Show the plot
    data_plot->replot();

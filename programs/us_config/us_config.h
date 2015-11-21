@@ -1,7 +1,5 @@
 //! \file us_config.h
 
-#include <QtGui>
-
 #include "us_widgets.h"
 #include "us_help.h"
 #include "us_database.h"

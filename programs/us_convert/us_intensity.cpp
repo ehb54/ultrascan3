@@ -5,6 +5,10 @@
 #include "us_gui_settings.h"
 #include "us_util.h"
 #include "us_gui_util.h"
+#if QT_VERSION < 0x050000
+#define setSamples(a,b,c)  setData(a,b,c)
+#define setSymbol(a)       setSymbol(*a)
+#endif
 
 US_Intensity::US_Intensity( 
       const QString runID, 
@@ -86,12 +90,12 @@ void US_Intensity::draw_plot( const QVector< double >& scanData,
    data_plot->setAxisMaxMinor ( QwtPlot::xBottom, 0 );
    data_plot->setAxisTitle    ( QwtPlot::yLeft, "Intensity" );
 
-   QwtSymbol sym;
+   QwtSymbol* sym    = new QwtSymbol;
 
-   sym.setStyle( QwtSymbol::Ellipse );
-   sym.setPen  ( QPen( Qt::yellow ) );
-   sym.setBrush( Qt::white );
-   sym.setSize ( 6 );
+   sym->setStyle( QwtSymbol::Ellipse );
+   sym->setPen  ( QPen( Qt::yellow ) );
+   sym->setBrush( Qt::white );
+   sym->setSize ( 6 );
 
    // Get the scan data in the right format
    QVector< double > xvec( szdata );
@@ -107,9 +111,9 @@ void US_Intensity::draw_plot( const QVector< double >& scanData,
 qDebug() << "Ints:dr_pl: xx0 xxn" << xx[0] << xx[scanData.size()-1];
 
    QwtPlotCurve* c1 = us_curve( data_plot, tr( "Intensity" ) );
-   c1->setPen   ( QPen( QBrush( Qt::yellow ), 2 ) );
-   c1->setSymbol( sym );
-   c1->setData  ( xx, yy, szdata );
+   c1->setPen    ( QPen( QBrush( Qt::yellow ), 2 ) );
+   c1->setSymbol ( sym );
+   c1->setSamples( xx, yy, szdata );
 
    data_plot->replot();
 }

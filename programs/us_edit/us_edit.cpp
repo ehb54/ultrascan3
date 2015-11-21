@@ -23,6 +23,12 @@
 #include "us_images.h"
 #include "us_editor.h"
 #include "us_report.h"
+#if QT_VERSION < 0x050000
+#define setSamples(a,b,c)  setData(a,b,c)
+#define setMinimum(a)      setMinValue(a)
+#define setMaximum(a)      setMaxValue(a)
+#define setSymbol(a)       setSymbol(*a)
+#endif
 
 #ifndef DbgLv
 #define DbgLv(a) if(dbg_level>=a)qDebug()
@@ -115,7 +121,7 @@ US_Edit::US_Edit() : US_Widgets()
    QFont font( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() - 1 );
    lb_gaps         = us_label( tr( "Threshold for Scan Gaps" ), -1 );
    ct_gaps         = us_counter( 1, 10.0, 100.0 );
-   ct_gaps->setStep ( 10.0 );
+   ct_gaps->setSingleStep ( 10.0 );
    ct_gaps->setValue( 50.0 );
 
    // MWL Control
@@ -138,7 +144,7 @@ US_Edit::US_Edit() : US_Widgets()
    lb_ldelta       = us_label( tr( "%1 Index Increment:" ).arg( chlamb ), -1 );
    ct_ldelta       = us_counter( 1, 1, 100, 1 );
    ct_ldelta->setFont( font );
-   ct_ldelta->setStep( 1 );
+   ct_ldelta->setSingleStep( 1 );
    ct_ldelta->setMinimumWidth( lwid );
    ct_ldelta->resize( rhgt, swid );
    lb_lstart       = us_label( tr( "%1 Start:" ).arg( chlamb ), -1 );
@@ -199,13 +205,13 @@ lambdas << "250" << "350" << "450" << "550" << "580" << "583" << "650";
    lb_from->setAlignment( Qt::AlignVCenter | Qt::AlignRight );
 
    ct_from        = us_counter( 3, 0.0, 0.0 ); // Update range upon load
-   ct_from->setStep( 1 );
+   ct_from->setSingleStep( 1 );
 
    QLabel* lb_to  = us_label( tr( "to:" ), -1 );
    lb_to->setAlignment( Qt::AlignVCenter | Qt::AlignRight );
 
    ct_to          = us_counter( 3, 0.0, 0.0 ); // Update range upon load
-   ct_to->setStep( 1 );
+   ct_to->setSingleStep( 1 );
    
    // Exclude and Include pushbuttons
    pb_excludeRange = us_pushbutton( tr( "Exclude Scan Range" ), false );
@@ -247,7 +253,7 @@ lambdas << "250" << "350" << "450" << "550" << "580" << "583" << "650";
    odlimit        = 1.8;
    ct_odlim       = us_counter( 3, 0.1, 50000.0, odlimit );
    ct_odlim ->setFont( font );
-   ct_odlim ->setStep( 0.01 );
+   ct_odlim ->setSingleStep( 0.01 );
    ct_odlim ->setMinimumWidth( lwid );
    ct_odlim ->resize( rhgt, swid );
 
@@ -460,14 +466,14 @@ void US_Edit::reset( void )
    ct_gaps->setValue( 50.0 );
 
    ct_from->disconnect();
-   ct_from->setMinValue( 0 );
-   ct_from->setMaxValue( 0 );
-   ct_from->setValue   ( 0 );
+   ct_from->setMinimum( 0 );
+   ct_from->setMaximum( 0 );
+   ct_from->setValue  ( 0 );
 
    ct_to->disconnect();
-   ct_to->setMinValue( 0 );
-   ct_to->setMaxValue( 0 );
-   ct_to->setValue   ( 0 );
+   ct_to->setMinimum( 0 );
+   ct_to->setMaximum( 0 );
+   ct_to->setValue  ( 0 );
 
    cb_triple->disconnect();
 
@@ -587,14 +593,14 @@ void US_Edit::reset_triple( void )
       ct_gaps->setValue( 50.0 );
 
    ct_from->disconnect();
-   ct_from->setMinValue( 0 );
-   ct_from->setMaxValue( 0 );
-   ct_from->setValue   ( 0 );
+   ct_from->setMinimum( 0 );
+   ct_from->setMaximum( 0 );
+   ct_from->setValue  ( 0 );
 
    ct_to->disconnect();
-   ct_to->setMinValue( 0 );
-   ct_to->setMaxValue( 0 );
-   ct_to->setValue   ( 0 );
+   ct_to->setMinimum( 0 );
+   ct_to->setMaximum( 0 );
+   ct_to->setValue  ( 0 );
 
    data.scanData .clear();
    includes      .clear();
@@ -768,8 +774,8 @@ void US_Edit::gap_check( void )
             includes.removeOne( scanNumber );
             replot();
 
-            ct_to  ->setMaxValue( includes.size() );
-            ct_from->setMaxValue( includes.size() );
+            ct_to  ->setMaximum( includes.size() );
+            ct_from->setMaximum( includes.size() );
          }
       }
                              
@@ -827,7 +833,8 @@ DbgLv(1) << "Ld: runID" << runID << "wdir" << workingDir;
    {
       lb_gaps->setText( tr( "Fringe Tolerance" ) );
 
-      ct_gaps->setRange     ( 0.0, 20.0, 0.001 );
+      ct_gaps->setRange     ( 0.0, 20.0 );
+      ct_gaps->setSingleStep( 0.001 );
       ct_gaps->setValue     ( 0.4 );
       ct_gaps->setNumButtons( 3 );
 
@@ -839,7 +846,8 @@ DbgLv(1) << "Ld: runID" << runID << "wdir" << workingDir;
       lb_gaps->setText( tr( "Threshold for Scan Gaps" ) );
       
       ct_gaps->disconnect   ();
-      ct_gaps->setRange     ( 10.0, 100.0, 10.0 );
+      ct_gaps->setRange     ( 10.0, 100.0 );
+      ct_gaps->setSingleStep( 10.0 );
       ct_gaps->setValue     ( 50.0 );
       ct_gaps->setNumButtons( 1 );
    }
@@ -1408,13 +1416,13 @@ void US_Edit::plot_current( int index )
    plot_all();
 
    // Set the Scan spin boxes
-   ct_from->setMinValue( 0.0 );
-   ct_from->setMaxValue(  data.scanData.size() );
+   ct_from->setMinimum( 0.0 );
+   ct_from->setMaximum( data.scanData.size() );
 
-   ct_to  ->setMinValue( 0.0 );
-   ct_to  ->setMaxValue(  data.scanData.size() );
+   ct_to  ->setMinimum( 0.0 );
+   ct_to  ->setMaximum( data.scanData.size() );
 
-   pick     ->disconnect();
+   pick   ->disconnect();
    connect( pick, SIGNAL( cMouseUp( const QwtDoublePoint& ) ),
                   SLOT  ( mouse   ( const QwtDoublePoint& ) ) );
 }
@@ -1532,15 +1540,11 @@ void US_Edit::mouse( const QwtDoublePoint& p )
             marker = new QwtPlotMarker;
             QBrush brush( Qt::white );
             QPen   pen  ( brush, 2.0 );
-            
-            marker->setValue( meniscus, maximum );
-            marker->setSymbol( QwtSymbol( 
-                        QwtSymbol::Cross, 
-                        brush,
-                        pen,
-                        QSize ( 8, 8 ) ) );
-
-            marker->attach( data_plot );
+            QwtSymbol * symb = new QwtSymbol( QwtSymbol::Cross, 
+                                              brush, pen, QSize ( 8, 8 ) );
+            marker->setValue ( meniscus, maximum );
+            marker->setSymbol( symb );
+            marker->attach   ( data_plot );
          }
 
          data_plot->replot();
@@ -1833,7 +1837,11 @@ void US_Edit::draw_vline( double radius )
    r[ 0 ] = radius;
    r[ 1 ] = radius;
 
+#if QT_VERSION < 0x050000
    QwtScaleDiv* y_axis = data_plot->axisScaleDiv( QwtPlot::yLeft );
+#else
+   QwtScaleDiv* y_axis = (QwtScaleDiv*)&data_plot->axisScaleDiv( QwtPlot::yLeft );
+#endif
 
    double padding = ( y_axis->upperBound() - y_axis->lowerBound() ) / 30.0;
 
@@ -1842,7 +1850,7 @@ void US_Edit::draw_vline( double radius )
    v [ 1 ] = y_axis->lowerBound() + padding;
 
    v_line = us_curve( data_plot, "V-Line" );
-   v_line->setData( r, v, 2 );
+   v_line->setSamples( r, v, 2 );
 
    QPen pen = QPen( QBrush( Qt::white ), 2.0 );
    v_line->setPen( pen );
@@ -2127,7 +2135,7 @@ void US_Edit::plot_all( void )
 
       QwtPlotCurve* c = us_curve( data_plot, title );
       c->setPaintAttribute( QwtPlotCurve::ClipPolygons, true );
-      c->setData( r, v, size );
+      c->setSamples( r, v, size );
    }
 
    // Reset the scan curves within the new limits
@@ -2226,7 +2234,7 @@ DbgLv(1) << "plot_range(): ccx wvx indext" << ccx << wvx << indext;
                   QString::number( tScan ) );
          c->setBrush( QBrush( Qt::cyan ) );
          c->setPen(   QPen(   Qt::cyan ) );
-         c->setData( r, v, 5 );
+         c->setSamples( r, v, 5 );
          minR       = qMin( minR, r[ 0 ] );
          minV       = qMin( minV, v[ 0 ] );
       }
@@ -2251,7 +2259,7 @@ DbgLv(1) << "plot_range(): ccx wvx indext" << ccx << wvx << indext;
          + " #" + QString::number( i );
 
       QwtPlotCurve* c = us_curve( data_plot, title );
-      c->setData( r, v, count );
+      c->setSamples( r, v, count );
    }
 
    // Reset the scan curves within the new limits
@@ -2312,7 +2320,7 @@ void US_Edit::plot_last( void )
       + " #" + QString::number( includes.last() );
 
    QwtPlotCurve* c = us_curve( data_plot, title );
-   c->setData( r, v, count );
+   c->setSamples( r, v, count );
 
    // Reset the scan curves within the new limits
    double padR = ( maxR - minR ) / 30.0;
@@ -2377,7 +2385,7 @@ void US_Edit::plot_scan( void )
          + " #" + QString::number( ii );
 
       QwtPlotCurve* c = us_curve( data_plot, title );
-      c->setData( r, v, count );
+      c->setSamples( r, v, count );
 
       // Reset the scan curves within the new limits
       double padR = ( maxR - minR ) / 30.0;
@@ -2516,7 +2524,7 @@ DbgLv(1) << "PlMwl:     ii" << ii << "NOT INCLUDED";
 
          QwtPlotCurve* cc = us_curve( data_plot, ctitle );
          cc->setPaintAttribute( QwtPlotCurve::ClipPolygons, true );
-         cc->setData( rr, vv, npoint );
+         cc->setSamples( rr, vv, npoint );
       }
       pick     ->disconnect();
       connect( pick, SIGNAL( cMouseUp( const QwtDoublePoint& ) ),
@@ -2557,7 +2565,7 @@ DbgLv(1) << "PlMwl:    START xa_WAV";
 
          QwtPlotCurve* cc = us_curve( data_plot, ctitle );
          cc->setPaintAttribute( QwtPlotCurve::ClipPolygons, true );
-         cc->setData( rr, vv, npoint );
+         cc->setSamples( rr, vv, npoint );
       }
 DbgLv(1) << "PlMwl:      END xa_WAV  kodlim odlimit" << kodlim << odlimit;
    }
@@ -2575,11 +2583,11 @@ DbgLv(1) << "PlMwl: call replot()";
 DbgLv(1) << "PlMwl:  retn fr replot()";
 
    // Set the Scan spin boxes
-   ct_from->setMinValue( 0.0 );
-   ct_from->setMaxValue(  data.scanData.size() );
+   ct_from->setMinimum( 0.0 );
+   ct_from->setMaximum( data.scanData.size() );
 
-   ct_to  ->setMinValue( 0.0 );
-   ct_to  ->setMaxValue(  data.scanData.size() );
+   ct_to  ->setMinimum( 0.0 );
+   ct_to  ->setMaximum( data.scanData.size() );
 
    pick   ->disconnect();
    connect( pick, SIGNAL( cMouseUp( const QwtDoublePoint& ) ),
@@ -2699,14 +2707,14 @@ void US_Edit::init_includes( void )
 void US_Edit::reset_excludes( void )
 {
    ct_from->disconnect();
-   ct_from->setValue   ( 0 );
-   ct_from->setMaxValue( includes.size() );
+   ct_from->setValue  ( 0 );
+   ct_from->setMaximum( includes.size() );
    connect( ct_from, SIGNAL( valueChanged ( double ) ),
                      SLOT  ( focus_from   ( double ) ) );
 
    ct_to->disconnect();
-   ct_to->setValue   ( 0 );
-   ct_to->setMaxValue( includes.size() );
+   ct_to->setValue  ( 0 );
+   ct_to->setMaximum( includes.size() );
    connect( ct_to, SIGNAL( valueChanged ( double ) ),
                    SLOT  ( focus_to   ( double ) ) );
 
@@ -2862,7 +2870,7 @@ void US_Edit::update_scan( QList< QPointF > changes )
    if ( found ) 
    {
       // Update the curve
-      c->setData( r, v, count );
+      c->setSamples( r, v, count );
       data_plot->replot();
    }
    else

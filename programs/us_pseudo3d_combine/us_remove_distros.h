@@ -2,13 +2,12 @@
 #ifndef US_RMVDISTR_H
 #define US_RMVDISTR_H
 
-#include <QtGui>
-
 #include "us_extern.h"
 #include "us_widgets_dialog.h"
 #include "us_pseudo3d_combine.h"
 #include "us_spectrodata.h"
 #include "us_help.h"
+
 #include <qwt_plot.h>
 
 //! \brief A class to provide a window for remove_distros analysis controls

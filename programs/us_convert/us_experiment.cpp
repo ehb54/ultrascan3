@@ -189,8 +189,8 @@ int US_Experiment::readFromDB( QString runID, US_DB2* db,
       centrifugeProtocol = db->value( 12 ).toString();
       date               = db->value( 13 ).toString();
       invID              = db->value( 14 ).toInt();
-      opticalSystem      = db->value( 15 ).toString().toAscii();
-      xmlFile            = db->value( 16 ).toString().toAscii();
+      opticalSystem      = db->value( 15 ).toString().toLatin1();
+      xmlFile            = db->value( 16 ).toString().toLatin1();
 qDebug() << "Exp:rdDB: ExpInfRun: xmlFile size" << xmlFile.size();
    }
 
@@ -664,7 +664,7 @@ void US_Experiment::readExperiment(
          else if ( xml.name() == "opticalSystem" )
          {
             QXmlStreamAttributes a = xml.attributes();
-            this->opticalSystem  = a.value( "value" ).toString().toAscii();
+            this->opticalSystem  = a.value( "value" ).toString().toLatin1();
          }
 
          else if ( xml.name() == "date" )

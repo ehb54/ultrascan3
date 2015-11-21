@@ -12,7 +12,7 @@ void US_MPI_Analysis::parse( const QString& xmlfile )
    {
       // Fail quietly - can't use udp yet
       if ( my_rank == 0 ) DbgLv(0) << "Cannot open file " << xmlfile;
-      printf( "Cannot open file %s\n", xmlfile.toAscii().data() );
+      printf( "Cannot open file %s\n", xmlfile.toLatin1().data() );
       printf( "Aborted" );
       MPI_Finalize();
       qApp->exit();

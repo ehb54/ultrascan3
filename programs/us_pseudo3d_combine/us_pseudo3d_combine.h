@@ -1,7 +1,14 @@
 #ifndef US_PSE3D_COMBINE_H
 #define US_PSE3D_COMBINE_H
 
-#include <QtGui>
+#include "us_extern.h"
+#include "us_widgets.h"
+#include "us_help.h"
+#include "us_editor.h"
+#include "us_model_loader.h"
+#include "us_plot.h"
+#include "us_colorgradIO.h"
+#include "us_spectrodata.h"
 
 #include "qwt_plot_marker.h"
 #include "qwt_plot_spectrogram.h"
@@ -11,15 +18,6 @@
 #include "qwt_scale_widget.h"
 #include "qwt_scale_draw.h"
 #include "qwt_color_map.h"
-
-#include "us_extern.h"
-#include "us_widgets.h"
-#include "us_help.h"
-#include "us_editor.h"
-#include "us_model_loader.h"
-#include "us_plot.h"
-#include "us_colorgradIO.h"
-#include "us_spectrodata.h"
 
 //!< \brief Distribution structure
 typedef struct distro_sys
@@ -201,6 +199,7 @@ class US_Pseudo3D_Combine : public US_Widgets
       void select_y_axis( int  );
       void build_xy_distro( void );
       QString anno_title  ( int );
+      //QwtLinearColorMap* color_map_copy( QwtLinearColorMap* );
 
       void help       ( void )
       { showHelp.show_help( "pseudo3d_combine.html" ); };

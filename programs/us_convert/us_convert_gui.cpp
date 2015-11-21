@@ -25,8 +25,13 @@
 #include "us_util.h"
 #include "us_images.h"
 #include "us_tmst_plot.h"
+#if QT_VERSION < 0x050000
+#define setSamples(a,b,c)  setData(a,b,c)
+#define setMinimum(a)      setMinValue(a)
+#define setMaximum(a)      setMaxValue(a)
+#endif
 
-#ifdef WIN32
+#ifdef Q_OS_WIN
 #include <float.h>
 #ifndef isnan
 #define isnan _isnan
@@ -142,7 +147,7 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
    // Set the wavelength tolerance for c/c/w determination
    QLabel* lb_tolerance = us_label(   tr( "Separation Tolerance:" ) );
    ct_tolerance      = us_counter ( 2, 0.0, 100.0, 5.0 );
-   ct_tolerance->setStep( 1 );
+   ct_tolerance->setSingleStep( 1 );
 
    // Set up MWL controls
    QFont font( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() - 1 );
@@ -219,12 +224,12 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
    lb_from             = us_label(      tr( "Scan Focus from:" ), 0 );
    lb_from->setAlignment( Qt::AlignVCenter | Qt::AlignRight );
    ct_from             = us_counter ( 3, 0.0, 0.0 ); // Update range upon load
-   ct_from->setStep( 1 );
+   ct_from->setSingleStep( 1 );
    // Scan focus to
    lb_to               = us_label(      tr( "Scan Focus to:"   ), 0 );
    lb_to->setAlignment( Qt::AlignVCenter | Qt::AlignRight );
    ct_to = us_counter ( 3, 0.0, 0.0 ); // Update range upon load
-   ct_to->setStep( 1 );
+   ct_to->setSingleStep( 1 );
 
    // Exclude and Include pushbuttons
    pb_exclude          = us_pushbutton( tr( "Exclude Scan(s)" ), false );
@@ -445,13 +450,13 @@ void US_ConvertGui::reset( void )
    cb_centerpiece->setEnabled( false );
 
    ct_from       ->disconnect();
-   ct_from       ->setMinValue( 0 );
-   ct_from       ->setMaxValue( 0 );
+   ct_from       ->setMinimum ( 0 );
+   ct_from       ->setMaximum ( 0 );
    ct_from       ->setValue   ( 0 );
 
    ct_to         ->disconnect();
-   ct_to         ->setMinValue( 0 );
-   ct_to         ->setMaxValue( 0 );
+   ct_to         ->setMinimum ( 0 );
+   ct_to         ->setMaximum ( 0 );
    ct_to         ->setValue   ( 0 );
 
    // Clear any data structures
@@ -535,10 +540,10 @@ void US_ConvertGui::resetAll( void )
    reference_end   = 0;
 
    connectTolerance( false );
-   ct_tolerance    ->setMinValue(   0.0 );
-   ct_tolerance    ->setMaxValue( 100.0 );
+   ct_tolerance    ->setMinimum (   0.0 );
+   ct_tolerance    ->setMaximum ( 100.0 );
    ct_tolerance    ->setValue   (   5.0 );
-   ct_tolerance    ->setStep( 1 );
+   ct_tolerance    ->setSingleStep( 1 );
    connectTolerance( true );
    scanTolerance   = 5.0;
    runID           = "";
@@ -634,7 +639,6 @@ DbgLv(1) << "CGui:IMP: IN";
    le_status->setText( tr( "Importing experimental data ..." ) );
 
    success = read();                // Read the legacy data
-DbgLv(1) << "CGui:IMP:  read() success" << success;
 
    if ( ! success ) return;
 
@@ -646,13 +650,11 @@ DbgLv(1) << "CGui:IMP:  read() success" << success;
 
    // Figure out all the triple combinations and convert data
    success = convert();
-DbgLv(1) << "CGui:IMP:  convert() success" << success;
 
    if ( ! success ) return;
 
    // Initialize export data pointers vector
    success = init_output_data();
-DbgLv(1) << "CGui:IMP:  init_output_data() success" << success;
 
    if ( ! success ) return;
 
@@ -1019,7 +1021,7 @@ DbgLv(1) << "CGui: enabCtl: have-data" << allData.size() << all_tripinfo.size();
       connectTolerance( false );
       ct_tolerance->setNumButtons  ( 2 );
       ct_tolerance->setRange       ( 0.0, 100.0 );
-      ct_tolerance->setStep        ( 1.0 );
+      ct_tolerance->setSingleStep  ( 1.0 );
       ct_tolerance->setValue       ( scanTolerance );
 
       // Default tolerances are different for wavelength data
@@ -1029,7 +1031,7 @@ DbgLv(1) << "CGui: enabCtl: have-data" << allData.size() << all_tripinfo.size();
          lb_triple   ->setText( tr( "Cell / Channel / Radius" ) );
          ct_tolerance->setNumButtons  ( 3 );
          ct_tolerance->setRange       ( 0.0, 10.0 );
-         ct_tolerance->setStep        ( 0.001 );
+         ct_tolerance->setSingleStep  ( 0.001 );
          ct_tolerance->setValue       ( scanTolerance );
       }
 
@@ -1084,14 +1086,14 @@ DbgLv(1) << "CGui:enabScContr: isMwl" << isMwl;
 DbgLv(1) << "CGui:enabScContr: trx dax" << tripListx << tripDatax;
 
    ct_from->disconnect();
-   ct_from->setMinValue( 0.0 );
-   ct_from->setMaxValue(  outData[ tripDatax ]->scanData.size()
+   ct_from->setMinimum ( 0.0 );
+   ct_from->setMaximum (  outData[ tripDatax ]->scanData.size()
                         - allExcludes[ tripDatax ].size() );
    ct_from->setValue   ( 0 );
 
    ct_to  ->disconnect();
-   ct_to  ->setMinValue( 0.0 );
-   ct_to  ->setMaxValue(  outData[ tripDatax ]->scanData.size()
+   ct_to  ->setMinimum ( 0.0 );
+   ct_to  ->setMaximum (  outData[ tripDatax ]->scanData.size()
                         - allExcludes[ tripDatax ].size() );
    ct_to  ->setValue   ( 0 );
 
@@ -2022,7 +2024,6 @@ DbgLv(1) << "shTmSt: TS fpath" << tmst_fnamei;
    tsdiag->exec();
 }
 
-// Slot to handle click of Run Details
 void US_ConvertGui::runDetails( void )
 {
    // Create data structures for US_RunDetails2
@@ -2664,8 +2665,8 @@ void US_ConvertGui::PseudoCalcAvg( void )
             if ( rvalue < 1.0 ) rvalue = 1.0;
 
             // Check for boundary condition
-            int ndx       = qMin( ss, ndxmax );
-            double prval  = ExpData.RIProfile[ ndx ];
+            int ndx        = qMin( ss, ndxmax );
+            double prval   = ExpData.RIProfile[ ndx ];
             scan->rvalues[ rr ] = ( prval != 0.0 ) ?
                                   log10( prval / rvalue ) : 0.0;
          }
@@ -3969,7 +3970,6 @@ DbgLv(1) << "  PlTit: dataType" << dataType;
 
 void US_ConvertGui::plot_all( void )
 {
-DbgLv(1) << "PlAll: tripDx" << tripDatax << "oD size" << outData.count();
    US_DataIO::RawData* currentData = outData[ tripDatax ];
 
    data_plot->detachItems();
@@ -4019,7 +4019,7 @@ DbgLv(1) << "PlAll: tripDx" << tripDatax << "oD size" << outData.count();
          + QString::number( scan->seconds ) + tr( " seconds" );
 
       QwtPlotCurve* curv = us_curve( data_plot, title );
-      curv->setData( rr, vv, kcpoint );
+      curv->setSamples( rr, vv, kcpoint );
 
    }
 
@@ -4081,7 +4081,11 @@ void US_ConvertGui::draw_vline( double radius )
 
    r[ 0 ] = radius;
    r[ 1 ] = radius;
+#if QT_VERSION > 0x050000
+   QwtScaleDiv* y_axis = (QwtScaleDiv*)&data_plot->axisScaleDiv( QwtPlot::yLeft );
+#else
    QwtScaleDiv* y_axis = data_plot->axisScaleDiv( QwtPlot::yLeft );
+#endif
 
    double padding = ( y_axis->upperBound() - y_axis->lowerBound() ) / 30.0;
 
@@ -4090,7 +4094,7 @@ void US_ConvertGui::draw_vline( double radius )
    v [ 1 ] = y_axis->lowerBound() + padding;
 
    QwtPlotCurve* v_line = us_curve( data_plot, "V-Line" );
-   v_line->setData( r, v, 2 );
+   v_line->setSamples( r, v, 2 );
 
    QPen pen = QPen( QBrush( Qt::white ), 2.0 );
    v_line->setPen( pen );
@@ -4546,14 +4550,13 @@ DbgLv(1) << "CGui:IOD:   cSS nspeed" << speedsteps.size();
 
    // MultiWaveLength if channels and triples counts differ
    isMwl            = ( all_chaninfo.count() != all_tripinfo.count() );
-DbgLv(1) << "CGui:IOD:  isMwl" << isMwl << "c.count t.count"
- << all_chaninfo.count() << all_tripinfo.count();
    if ( isMwl  &&  ( all_tripinfo.count() / all_chaninfo.count() ) < 4 )
    {  // If less than 4 wavelengths, treat as non-MWL
       isMwl            = false;
       all_chaninfo     = all_tripinfo;
       out_chaninfo     = out_tripinfo;
       out_chandatx.clear();
+
       for ( int jj = 0; jj < out_tripinfo.count(); jj++ )
          out_chandatx << jj;
 DbgLv(1) << "CGui:IOD:    isMwl" << isMwl << "ac.count at.count oc.count"
@@ -4598,8 +4601,8 @@ DbgLv(1) << "CGui:IOD:   nspeed" << nspeed << "sp0.rspeed sp0.avspeed"
  << nspeed << speedsteps[0].rotorspeed << speedsteps[0].avg_speed;
    }
 
-   return success;
 DbgLv(1) << "CGui:IOD: RETURN";
+   return success;
 }
 
 // Build output data pointers and lists after new exclusions

@@ -2,6 +2,7 @@
 #define US_PCSA_H
 
 #include <unistd.h>
+#include "us_analysis_base2.h"
 #include "us_plot_control_pc.h"
 #include "us_analysis_control_pc.h"
 #include "us_noise_loader.h"
@@ -19,7 +20,6 @@
 #include "us_analyte.h"
 #include "us_zsolute.h"
 #include "qwt_plot_marker.h"
-#include "us_analysis_base2.h"
 #ifdef Q_OS_WIN         // Include headers so getpid() works on Windows
 #include <windows.h>
 #include <psapi.h>

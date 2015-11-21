@@ -66,9 +66,9 @@ US_AdvancedFem::US_AdvancedFem( US_Model* amodel,
    ct_simpoints->setValue( 200   );
    ct_bldvolume->setValue( 0.015 );
    ct_parameter->setValue( 0     );
-   ct_simpoints->setStep (     5 );
-   ct_bldvolume->setStep ( 0.001 );
-   ct_parameter->setStep (     1 );
+   ct_simpoints->setSingleStep(     5 );
+   ct_bldvolume->setSingleStep( 0.001 );
+   ct_parameter->setSingleStep(     1 );
 
    connect( pb_help,    SIGNAL( clicked() ),
             this,       SLOT(   help()    ) );

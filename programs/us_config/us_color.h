@@ -2,16 +2,15 @@
 #ifndef US_COLOR_H
 #define US_COLOR_H
 
-#include <QtGui>
+#include "us_widgets.h"
+#include "us_help.h"
+#include "us_plot.h"
+
 #include "qwt_plot.h"
 #include "qwt_plot_grid.h"
 #include "qwt_plot_curve.h"
 #include "qwt_plot_picker.h"
 #include "qwt_counter.h"
-
-#include "us_widgets.h"
-#include "us_help.h"
-#include "us_plot.h"
 
 //! \brief Allow the user to set or change the colors used in UltraScan
 

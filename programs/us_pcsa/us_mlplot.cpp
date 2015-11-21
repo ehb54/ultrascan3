@@ -9,10 +9,14 @@
 #include "us_colorgradIO.h"
 
 #include <qwt_legend.h>
-#include <qwt_double_interval.h>
 #include <qwt_scale_widget.h>
 #include <qwt_color_map.h>
 #include <qwt_scale_draw.h>
+#if QT_VERSION < 0x050000
+#define setSamples(a,b,c)  setData(a,b,c)
+#define setSymbol(a)       setSymbol(*a)
+#include <qwt_double_interval.h>
+#endif
 
 // constructor:  model lines plot widget
 US_MLinesPlot::US_MLinesPlot( double& ylo, double& yhi, double& xlo,
@@ -83,9 +87,9 @@ DbgLv(1) << "RP:  nkpts nmodel" << nkpts << nmodel;
    ct_neline    = us_counter( 2, 1, nmodel, neline );
    ct_nsline    = us_counter( 2, 1, nmodel, nsline );
    ct_nvline    = us_counter( 2, 1, nmodel, nvline );
-   ct_neline->setStep( 1 );
-   ct_nsline->setStep( 1 );
-   ct_nvline->setStep( 1 );
+   ct_neline->setSingleStep( 1 );
+   ct_nsline->setSingleStep( 1 );
+   ct_nvline->setSingleStep( 1 );
    le_colmap    = us_lineedit( cmapname,                       -1, true );
 
    // Set the default color map (rainbow)
@@ -214,7 +218,6 @@ void US_MLinesPlot::close_all()
 void US_MLinesPlot::plot_data()
 {
    data_plot1->detachItems();
-   data_plot1->clear();
 
    bool   got_best  = ( model != 0  &&  bmndx >= 0 );   // Got best model?
 DbgLv(1) << "RP:PD got_best" << got_best << "bmndx" << bmndx;
@@ -319,13 +322,18 @@ DbgLv(1) << "RP:PD mrecs size" << mrecs.size() << nmodl;
       le_rmsdv->setText( QString::number( rmsd_visib ) );
 
       QFont             afont = data_plot1->axisTitle( QwtPlot::yLeft ).font();
-      QwtDoubleInterval cdrange( rmsd_best, rmsd_elite );
       QwtScaleWidget*   rightAxis = data_plot1->axisWidget( QwtPlot::yRight );
-      QwtLinearColorMap revcmap   = reverseColorMap();
+      QwtLinearColorMap* revcmap  = reverseColorMap();
 
       // Set up the right-side axis with the color map
       rightAxis->setColorBarEnabled( true );
+#if QT_VERSION < 0x050000
+      QwtDoubleInterval cdrange( rmsd_best, rmsd_elite );
+      rightAxis->setColorMap       ( cdrange, *revcmap );
+#else
+      QwtInterval       cdrange( rmsd_best, rmsd_elite );
       rightAxis->setColorMap       ( cdrange, revcmap );
+#endif
       data_plot1->enableAxis  ( QwtPlot::yRight, true );
       data_plot1->axisTitle   ( QwtPlot::yRight ).setFont( afont );
       data_plot1->setAxisTitle( QwtPlot::yRight, tr( "RMSD" ) );
@@ -417,7 +425,7 @@ DbgLv(1) << "RP:PD (4)xmin xmax" << xmin << xmax;
 
 //DbgLv(1) << "RP:PD   klpts" << klpts;
          if ( do_curv )
-            curv->setData ( xx, yy, klpts );
+            curv->setSamples( xx, yy, klpts );
 
          if ( ii < nsline )
          { // If within solutes-lines count, plot the solute points
@@ -445,15 +453,15 @@ DbgLv(1) << "RP:PD (4)xmin xmax" << xmin << xmax;
                title       = tr( "Solute Curve " ) + QString::number( ii )
                              + " Point " + QString::number( kk );
                curv        = us_curve( data_plot1, title );
-               QwtSymbol symbol;
-               symbol.setPen  ( c_symb );
-               symbol.setSize ( szd );
-               symbol.setStyle( QwtSymbol::Ellipse );
-               symbol.setBrush( c_symb );
+               QwtSymbol* symbol = new QwtSymbol;
+               symbol->setPen  ( c_symb );
+               symbol->setSize ( szd );
+               symbol->setStyle( QwtSymbol::Ellipse );
+               symbol->setBrush( c_symb );
 
-               curv->setStyle ( QwtPlotCurve::NoCurve );
-               curv->setSymbol( symbol );
-               curv->setData  ( &xv, &yv, 1 );
+               curv->setStyle  ( QwtPlotCurve::NoCurve );
+               curv->setSymbol ( symbol );
+               curv->setSamples( &xv, &yv, 1 );
             }
 DbgLv(1) << "RP:PD       ncomp" << ncomp << "x0 y0 xn yn"
  << xx[0] << yy[0] << xx[ncomp-1] << yy[ncomp-1];
@@ -474,8 +482,8 @@ DbgLv(1) << "RP:PD (5)xmin xmax" << xmin << xmax;
 
          title   = tr( "Curve " ) + QString::number( ii );
          curv    = us_curve( data_plot1, title );
-         curv->setPen  ( pen_plot );    // Default color (yellow)
-         curv->setData ( xx, yy, nlpts );
+         curv->setPen    ( pen_plot );    // Default color (yellow)
+         curv->setSamples( xx, yy, nlpts );
       } // END: model lines loop
    } // END: pre-fit lines
 
@@ -558,11 +566,15 @@ QColor US_MLinesPlot::positionColor( double pos )
 }
 
 // Produce a copy of the color map in reverse order for right-side axis
-QwtLinearColorMap US_MLinesPlot::reverseColorMap()
+QwtLinearColorMap* US_MLinesPlot::reverseColorMap()
 {
-   QwtLinearColorMap rcolmap( colormap->color2(), colormap->color1() );
+   QwtLinearColorMap* rcolmap = new QwtLinearColorMap( colormap->color2(), colormap->color1() );
 
+#if QT_VERSION < 0x050000
    QwtDoubleInterval cinterv( 0.0, 1.0 );
+#else
+   QwtInterval cinterv( 0.0, 1.0 );
+#endif
    QVector< double > cstops = colormap->colorStops();
    int kstops = cstops.size() - 1;
 
@@ -571,13 +583,13 @@ QwtLinearColorMap US_MLinesPlot::reverseColorMap()
       double csvalue  = cstops[ ii ];
       QColor mcolor( colormap->rgb( cinterv, csvalue ) );
 DbgLv(1) << "rCM: pos" << csvalue << "color" << mcolor;
-      rcolmap.addColorStop( 1.0 - csvalue, mcolor );
+      rcolmap->addColorStop( 1.0 - csvalue, mcolor );
    }
-DbgLv(1) << "rCM:   color1" << rcolmap.color1() << "color2" << rcolmap.color2();
+DbgLv(1) << "rCM:   color1" << rcolmap->color1() << "color2" << rcolmap->color2();
 
 for ( double pos=0.0; pos<=1.0; pos+=0.2 ) {
 DbgLv(1) << "  CM position" << pos << "InColor" << positionColor( pos )
-   << "RevColor" << QColor(rcolmap.rgb(cinterv,pos)); }
+   << "RevColor" << QColor(rcolmap->rgb(cinterv,pos)); }
    return rcolmap;
 }
 

@@ -3,6 +3,10 @@
 #include "us_edit_scan.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"
+#if QT_VERSION < 0x050000
+#define setSamples(a,b,c)  setData(a,b,c)
+#define setSymbol(a)       setSymbol(*a)
+#endif
 
 US_EditScan::US_EditScan( US_DataIO::Scan&         s, 
                           const QVector< double >& r,
@@ -50,15 +54,16 @@ US_EditScan::US_EditScan( US_DataIO::Scan&         s,
    fgSym.setSize ( 6 );
 
 
-   bgSym = fgSym;
+//   bgSym = fgSym;
+   bgSym.setStyle( QwtSymbol::Ellipse );
    bgSym.setBrush( US_GuiSettings::plotCanvasBG() );
    bgSym.setPen  ( bgPen );
+   bgSym.setSize ( 6 );
+   QwtSymbol* fgSymP = &fgSym;
 
-   //curve->setRawData( radii, values, count );
-   curve->setSymbol ( fgSym );
+   curve->setSymbol ( fgSymP );
    curve->attach    ( data_plot );
 
-   //data_plot->replot();
    redraw();
 
    // Instructions
@@ -174,6 +179,6 @@ void US_EditScan::redraw( void )
       count++;
    }
 
-   curve->setRawData( radii, values, count );
+   curve->setSamples( radii, values, count );
    data_plot->replot();
 }

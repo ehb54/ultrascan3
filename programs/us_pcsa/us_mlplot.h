@@ -2,8 +2,6 @@
 #ifndef US_MLINES_PLOT_H
 #define US_MLINES_PLOT_H
 
-#include <QtGui>
-
 #include "us_extern.h"
 #include "us_widgets_dialog.h"
 #include "us_plot.h"
@@ -13,6 +11,7 @@
 #include "us_model.h"
 #include "us_pcsa_modelrec.h"
 #include "us_help.h"
+
 #include "qwt_color_map.h"
 
 //! \brief A class to provide a window with a model lines plot
@@ -115,7 +114,7 @@ class US_MLinesPlot : public US_WidgetsDialog
       void selectColorMap ( void   );
       void showColorItems ( bool   );
       QColor positionColor( double );
-      QwtLinearColorMap reverseColorMap( void );
+      QwtLinearColorMap* reverseColorMap( void );
 
       void help     ( void )
       { showHelp.show_help( "pcsa_mlines.html" ); };

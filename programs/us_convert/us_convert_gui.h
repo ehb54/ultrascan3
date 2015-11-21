@@ -2,8 +2,6 @@
 #ifndef US_CONVERT_GUI_H
 #define US_CONVERT_GUI_H
 
-#include <QtGui>
-
 #include "us_extern.h"
 #include "us_widgets.h"
 #include "us_help.h"
@@ -15,6 +13,7 @@
 #include "us_simparms.h"
 #include "us_selectbox.h"
 #include "us_mwl_data.h"
+
 #ifndef DbgLv
 #define DbgLv(a) if(dbg_level>=a)qDebug()  //!< debug-level-conditioned qDebug()
 #endif

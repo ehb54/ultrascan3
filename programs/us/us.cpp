@@ -1,5 +1,10 @@
 //! \file us.cpp
+#include <QtCore>
+#if QT_VERSION < 0x050000
 #include <QtSingleApplication>
+#else
+#include <QtWidgets/QApplication>
+#endif
 
 #include "us.h"
 #include "us_license_t.h"
@@ -16,9 +21,6 @@
 
 #if 0
 #define EQUI_MENU
-#endif
-#if 1
-#define PCSA_MENU
 #endif
 
 using namespace US_WinData;
@@ -37,10 +39,11 @@ using namespace US_WinData;
 */
 int main( int argc, char* argv[] )
 {
+  QString options( getenv( "ULTRASCAN_OPTIONS" ) );
+#if QT_VERSION < 0x050000
   QtSingleApplication application( "UltraScan III", argc, argv );
-  QString             options( getenv( "ULTRASCAN_OPTIONS" ) );
   
-  // If environment variable ULTRASCAN_OPTIONS contians the 
+  // If environment variable ULTRASCAN_OPTIONS contains the 
   // word 'multiple', then we don't try to limit to one instance
   if ( ! options.contains( "multiple" ) )
   {
@@ -48,6 +51,10 @@ int main( int argc, char* argv[] )
   }
 
   application.initialize();
+#else
+  QApplication application( argc, argv );
+  application.setApplicationDisplayName( "UltraScan III" );
+#endif
 
   // Set up language localization
   QString locale = QLocale::system().name();
@@ -78,14 +85,18 @@ int main( int argc, char* argv[] )
     
     US_License* license = new US_License();
     license->show();
+#if QT_VERSION < 0x050000
     application.setActivationWindow( license );
+#endif
     return application.exec();
   }
 
   // License is OK.  Start up.
   US_Win w;
   w.show();
+#if QT_VERSION < 0x050000
   application.setActivationWindow( &w );
+#endif
   return application.exec();
 }
 
@@ -152,10 +163,8 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
   addMenu(  P_VHWE     , tr( "&Enhanced van Holde - Weischet" ),   velocity );
   addMenu(  P_GRIDEDIT , tr( "C&ustom 2-D Grid Editor" ),          velocity );
   addMenu(  P_2DSA     , tr( "&2-D Spectrum Analysis" ),           velocity );
-#ifdef PCSA_MENU
   addMenu(  P_PCSA     , tr( "&Parametrically Constrained Spectrum Analysis" ),
                                                                    velocity );
-#endif
   addMenu(  P_GAINIT   , tr( "&Initialize Genetic Algorithm" ),    velocity );
   addMenu(  P_DMGAINIT , tr( "Initialize Discrete Model &Genetic Algorithm" ),
                                                                    velocity );
@@ -584,7 +593,7 @@ void US_Win::help( int index )
 {
   int i = index - HELP;
 
-  statusBar()->showMessage( tr( h[i].loadMsg.toAscii() ) );
+  statusBar()->showMessage( h[i].loadMsg );
   switch ( index )
   {
     case HELP_CREDITS:
@@ -657,7 +666,7 @@ void US_Win::help( int index )
         showhelp.show_help( h[i].url );
       }
 
-      statusBar()->showMessage( tr( "Loaded " ) + h[i].loadMsg.toAscii() );
+      statusBar()->showMessage( tr( "Loaded " ) + h[i].loadMsg );
       break;
   }
 }
@@ -830,12 +839,13 @@ qDebug() << " n_dif" << n_dif << "time_d" << time_d << "pn_time" << pn_time;
    }
 
    // Display notices at level of highest level currently set
+   QWidget* wthis    = (QWidget*)this;
    if (      level == 0 )
-      QMessageBox::information( this, tr( "US3 Notices" ), msg_note );
+      QMessageBox::information( wthis, tr( "US3 Notices" ), msg_note );
    else if ( level == 1 )
-      QMessageBox::warning    ( this, tr( "US3 Notices" ), msg_note );
+      QMessageBox::warning    ( wthis, tr( "US3 Notices" ), msg_note );
    else if ( level == 2 )
-      QMessageBox::critical   ( this, tr( "US3 Notices" ), msg_note );
+      QMessageBox::critical   ( wthis, tr( "US3 Notices" ), msg_note );
 
    // Abort if that is indicated
    if ( do_abort )

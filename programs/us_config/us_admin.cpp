@@ -97,7 +97,7 @@ void US_Admin::save( void )
   if ( ! oldPW.isEmpty() ) 
   {
     QByteArray calcsha1 = 
-      QCryptographicHash::hash( le_oldPasswd->text().toAscii(), 
+      QCryptographicHash::hash( le_oldPasswd->text().toLatin1(), 
           QCryptographicHash::Sha1 );
 
     if ( calcsha1 != oldPW )
@@ -133,7 +133,7 @@ void US_Admin::save( void )
   /// Use settings
 
   QByteArray sha1string = 
-    QCryptographicHash::hash( newPW.toAscii(), QCryptographicHash::Sha1 );
+    QCryptographicHash::hash( newPW.toLatin1(), QCryptographicHash::Sha1 );
 
   US_Settings::set_UltraScanPW( sha1string );
 
