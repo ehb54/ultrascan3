@@ -1,0 +1,3 @@
+This is a copy of the qwtplot3d library for Ultrascan3 and Qt4.  The only change 
+from the standard version is the name of the library (qwtplot3d-qt4) and 
+a change to reflect the actual library version (0.2.7).
