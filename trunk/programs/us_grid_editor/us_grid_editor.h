@@ -1,12 +1,6 @@
 #ifndef US_GRID_EDITOR_H
 #define US_GRID_EDITOR_H
 
-#include <QtGui>
-
-#include "qwt_plot_zoomer.h"
-#include "qwt_plot_panner.h"
-#include "qwt_color_map.h"
-
 #include "us_constants.h"
 #include "us_editor.h"
 #include "us_extern.h"
@@ -24,6 +18,10 @@
 #include "us_util.h"
 #include "us_widgets.h"
 #include "us_investigator.h"
+
+#include "qwt_plot_zoomer.h"
+#include "qwt_plot_panner.h"
+#include "qwt_color_map.h"
 
 #ifndef DbgLv
 #define DbgLv(a) if(dbg_level>=a)qDebug()
@@ -76,7 +74,6 @@ class US_Grid_Editor : public US_Widgets
       QLineEdit    *le_density;
       QLineEdit    *le_viscosity;
       QLineEdit    *le_investigator;
-      QLineEdit    *le_counts;
 
       QComboBox    *cb_fixed;
 

@@ -35,9 +35,61 @@ class US_vHW_Combine : public US_Widgets
             QVector< double >  bfracs;   // Boundary fractions
             QVector< double >  esedcs;   // Envelope sedimentation coeffs.
             QVector< double >  efreqs;   // Envelope frequencies
-            QwtSymbol          symbol;   // Curve symbol
+            QwtSymbol*         symbol;   // Curve symbol pointer
             QColor             color;    // Curve color
             double             totconc;  // Total concentration
+
+            // Constructor, copy constructor and copy operator
+            DistrDesc()
+            {
+               runID    = "";
+               triple   = "";
+               tdescr   = "";
+               dsedcs.clear();
+               bfracs.clear();
+               esedcs.clear();
+               efreqs.clear();
+               color    = QColor( Qt::white );
+               symbol   = new QwtSymbol();
+               totconc  = 0.0;
+            };
+
+            DistrDesc( const DistrDesc& dd )
+            {
+               runID    = dd.runID;
+               triple   = dd.triple;
+               tdescr   = dd.tdescr;
+               dsedcs   = dd.dsedcs;
+               bfracs   = dd.bfracs;
+               esedcs   = dd.esedcs;
+               efreqs   = dd.efreqs;
+               color    = dd.color;
+               totconc  = dd.totconc;
+               symbol   = new QwtSymbol( 
+                                         dd.symbol->style(),
+                                         dd.symbol->brush(),
+                                         dd.symbol->pen(),
+                                         dd.symbol->size() );
+            };
+
+            DistrDesc &operator=( const DistrDesc& dd )
+            {
+               runID    = dd.runID;
+               triple   = dd.triple;
+               tdescr   = dd.tdescr;
+               dsedcs   = dd.dsedcs;
+               bfracs   = dd.bfracs;
+               esedcs   = dd.esedcs;
+               efreqs   = dd.efreqs;
+               color    = dd.color;
+               totconc  = dd.totconc;
+               symbol   = new QwtSymbol( 
+                                         dd.symbol->style(),
+                                         dd.symbol->brush(),
+                                         dd.symbol->pen(),
+                                         dd.symbol->size() );
+               return *this;
+            };
       };
 
       QList< DistrDesc >  distros;     // All distributions
@@ -96,7 +148,7 @@ class US_vHW_Combine : public US_Widgets
       void plot_distr     ( DistrDesc, QString );
       void runid_select   ( int );
       void triple_select  ( int );
-      void setSymbol      ( DistrDesc&, int );
+      void setDSymbol     ( DistrDesc&, int );
       int  envel_data     ( DistrDesc& );
       void possibleSymbols( void );
       void control_closed ( void );

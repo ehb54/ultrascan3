@@ -12,6 +12,11 @@
 #include "us_passwd.h"
 #include "us_constants.h"
 #include "us_astfem_rsa.h"
+#if QT_VERSION < 0x050000
+#define setSamples(a,b,c)  setData(a,b,c)
+#define setSymbol(a)       setSymbol(*a)
+#define setStateMachine(a) setSelectionFlags(QwtPicker::RectSelection|QwtPicker::DragSelection)
+#endif
 
 #define SEDC_NOVAL   -9999.0
 
@@ -89,7 +94,7 @@ US_vHW_Enhanced::US_vHW_Enhanced() : US_AnalysisBase2()
 
    ct_tolerance  = us_counter( 3, 0.001, 1.0, 0.001 );
    bdtoler       = 0.001;
-   ct_tolerance->setStep( 0.001 );
+   ct_tolerance->setSingleStep( 0.001 );
    ct_tolerance->setEnabled( true );
    connect( ct_tolerance, SIGNAL( valueChanged(   double ) ),
             this,          SLOT(  update_bdtoler( double ) ) );
@@ -98,7 +103,7 @@ US_vHW_Enhanced::US_vHW_Enhanced() : US_AnalysisBase2()
    lb_division->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
 
    ct_division   = us_counter( 3, 0.0, 1000.0, 50.0 );
-   ct_division->setStep( 1 );
+   ct_division->setSingleStep( 1 );
    ct_division->setEnabled( true );
    connect( ct_division, SIGNAL( valueChanged(  double ) ),
             this,         SLOT(  update_divis(  double ) ) );
@@ -167,8 +172,8 @@ void US_vHW_Enhanced::load( void )
       le_temp   ->clear();
       te_desc   ->clear();
 
-      data_plot1->clear();
-      data_plot2->clear();
+//      data_plot1->clear();
+//      data_plot2->clear();
 
       dataList.clear();
       rawList .clear();
@@ -192,8 +197,7 @@ DbgLv(1) << "vhw: mxht p1ht p2ht" << mxht << p1ht << p2ht;
    data_plot2->setAxisAutoScale( QwtPlot::xBottom );
 
    gpick      = new US_PlotPicker( data_plot1 );
-   gpick->setSelectionFlags( QwtPicker::PointSelection
-                           | QwtPicker::ClickSelection );
+   gpick->setStateMachine( new QwtPickerClickPointMachine() );
    connect( gpick,    SIGNAL( mouseDown(  const QwtDoublePoint& ) ),
             this,       SLOT( groupClick( const QwtDoublePoint& ) ) );
    groupstep   = NONE;
@@ -381,7 +385,7 @@ DbgLv(1) << "  lscnCount" << lscnCount;
    }
 
    // Draw the vHW extrapolation plot
-   data_plot1->clear();
+//   data_plot1->clear();
    us_grid( data_plot1 );
 
    QString ttrip = edata->cell + "/" + edata->channel
@@ -401,11 +405,11 @@ DbgLv(1) << "  lscnCount" << lscnCount;
    double* y  = yvec.data();
    
    QwtPlotCurve* curve;
-   QwtSymbol     sym;
-   sym.setStyle( QwtSymbol::Ellipse );
-   sym.setPen  ( QPen( Qt::blue ) );
-   sym.setBrush( QBrush( Qt::white ) );
-   sym.setSize ( 8 );
+   QwtSymbol*    sym = new QwtSymbol;
+   sym->setStyle( QwtSymbol::Ellipse );
+   sym->setPen  ( QPen( Qt::blue ) );
+   sym->setBrush( QBrush( Qt::white ) );
+   sym->setSize ( 8 );
  
    int kk     = 0;                    // Index to sed. coeff. values
 
@@ -433,9 +437,9 @@ DbgLv(1) << "  lscnCount" << lscnCount;
          curve = us_curve( data_plot1,
                tr( "Sed Coeff Points, scan %1" ).arg( ii+1 ) );
 
-         curve->setStyle ( QwtPlotCurve::NoCurve );
-         curve->setSymbol( sym );
-         curve->setData  ( x, y, count );
+         curve->setStyle  ( QwtPlotCurve::NoCurve );
+         curve->setSymbol ( sym );
+         curve->setSamples( x, y, count );
       }
    }
 
@@ -485,8 +489,8 @@ if(jj<3||jj>(divsCount-9))
 DbgLv(1) << "plot2 jj" << jj << "x0 y0 x1 y1" << x[0] << y[0] << x[1] << y[1];
 
          curve  = us_curve( data_plot1, tr( "Fitted Line %1" ).arg( jj ) );
-         curve->setPen( QPen( Qt::yellow ) );
-         curve->setData( x, y, 2 );
+         curve->setPen    ( QPen( Qt::yellow ) );
+         curve->setSamples( x, y, 2 );
       }
    }
 
@@ -515,8 +519,8 @@ DbgLv(2) << "   bd x y k " << x[count] << y[count] << count+1;
 
    // Plot the red back-diffusion cutoff line
    dcurve  = us_curve( data_plot2, tr( "Fitted Line BD" ) );
-   dcurve->setPen( QPen( QBrush( Qt::red ), 3.0 ) );
-   dcurve->setData( x, y, count );
+   dcurve->setPen    ( QPen( QBrush( Qt::red ), 3.0 ) );
+   dcurve->setSamples( x, y, count );
 DbgLv(1) << " DP: xr0 yr0 " << x[0]       << y[0];
 DbgLv(1) << " DP: xrN yrN " << x[count-1] << y[count-1] << count;
    data_plot2->replot();
@@ -2381,8 +2385,8 @@ void US_vHW_Enhanced::vert_exclude_lines()
       xx[ 1 ]  = xx[ 0 ];
       curve    = us_curve( data_plot1,
          tr( "Scan %1 Exclude Marker" ).arg( ixsc ) );
-      curve->setPen( QPen( QBrush( Qt::red ), 1.0 ) );
-      curve->setData( xx, yy, 2 );
+      curve->setPen    ( QPen( QBrush( Qt::red ), 1.0 ) );
+      curve->setSamples( xx, yy, 2 );
    }
 }
 
@@ -2649,7 +2653,7 @@ void US_vHW_Enhanced::plot_data2()
    header = tr( "Radius (cm) " );
    data_plot2->setAxisTitle( QwtPlot::xBottom, header );
 
-   data_plot2->clear();
+//   data_plot2->clear();
    us_grid( data_plot2 );
 
    int     scan_number = 0;
@@ -2719,7 +2723,7 @@ void US_vHW_Enhanced::plot_data2()
          else
             cc->setPen( QPen( Qt::cyan ) );
          
-         cc->setData( rr, vv, count );
+         cc->setSamples( rr, vv, count );
       }
 
       count = 0;
@@ -2742,7 +2746,7 @@ void US_vHW_Enhanced::plot_data2()
          else
             cc->setPen( QPen( US_GuiSettings::plotCurve() ) );
          
-         cc->setData( rr, vv, count );
+         cc->setSamples( rr, vv, count );
       }
 
       count = 0;
@@ -2765,7 +2769,7 @@ void US_vHW_Enhanced::plot_data2()
          else
             cc->setPen( QPen( Qt::cyan ) );
         
-         cc->setData( rr, vv, count );
+         cc->setSamples( rr, vv, count );
       }
    }
 

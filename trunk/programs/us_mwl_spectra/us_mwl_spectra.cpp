@@ -21,8 +21,11 @@
 #include "us_sleep.h"
 #include "us_editor.h"
 #include "us_images.h"
+#if QT_VERSION < 0x050000
+#define setSamples(a,b,c)  setData(a,b,c)
+#endif
 
-#ifdef WIN32
+#ifdef Q_OS_WIN
 #include <float.h>
 #define isnan _isnan
 #endif
@@ -80,7 +83,7 @@ US_MwlSpectra::US_MwlSpectra() : US_Widgets()
                                         .arg( chlamb),
                                         -1 );
                 ct_smooth   = us_counter( 1, 1, 100, 1 );
-   ct_smooth->setStep( 1.0 );
+   ct_smooth->setSingleStep( 1.0 );
    ct_smooth->setFont( sfont );
    ct_smooth->setMinimumWidth( fwid );
    ct_smooth->resize( rhgt, lwid );
@@ -118,7 +121,7 @@ US_MwlSpectra::US_MwlSpectra() : US_Widgets()
                 pb_svmovie  = us_pushbutton( tr( "Save Movie"      ) );
    QLabel*      lb_delay    = us_label( tr( "Delay" ) );
                 ct_delay    = us_counter( 1, 0.1, 10.0, 0.1 );
-   ct_delay ->setStep( 0.1 );
+   ct_delay ->setSingleStep( 0.1 );
    ct_delay ->setFont( sfont );
    ct_delay ->setMinimumWidth( fwid );
    ct_delay ->resize( rhgt, lwid );
@@ -992,7 +995,7 @@ DbgLv(1) << "PltA: kpoint" << kpoint << "knz" << knz << "cmx" << cmx;
 
    curv->setPen( pen_plot );            // Normal pen
 
-   curv->setData( rr, vv, kpoint );     // Build a sed.coeff. curve
+   curv->setSamples( rr, vv, kpoint );  // Build a sed.coeff. curve
 //DbgLv(1) << "PltA:   scx" << scx << "rr0 vv0 rrn vvn"
 // << rr[0] << rr[kpoint-1] << vv[0] << vv[kpoint-1];
 
@@ -1022,8 +1025,13 @@ DbgLv(1) << "PltA: last_xmin" << last_xmin;
    data_plot->replot();
 
    // Pick up the actual bounds plotted (including any Config changes)
+#if QT_VERSION < 0x050000
    QwtScaleDiv* sdx = data_plot->axisScaleDiv( QwtPlot::xBottom );
    QwtScaleDiv* sdy = data_plot->axisScaleDiv( QwtPlot::yLeft   );
+#else
+   QwtScaleDiv* sdx = (QwtScaleDiv*)&data_plot->axisScaleDiv( QwtPlot::xBottom );
+   QwtScaleDiv* sdy = (QwtScaleDiv*)&data_plot->axisScaleDiv( QwtPlot::yLeft   );
+#endif
    last_xmin      = sdx->lowerBound();
    last_xmax      = sdx->upperBound();
    last_ymin      = sdy->lowerBound();
@@ -1104,8 +1112,13 @@ void US_MwlSpectra::prevPlot( void )
       pb_prev->setEnabled( false );
    }
 
+#if QT_VERSION < 0x050000
    QwtScaleDiv* sdx = data_plot->axisScaleDiv( QwtPlot::xBottom );
    QwtScaleDiv* sdy = data_plot->axisScaleDiv( QwtPlot::yLeft   );
+#else
+   QwtScaleDiv* sdx = (QwtScaleDiv*)&data_plot->axisScaleDiv( QwtPlot::xBottom );
+   QwtScaleDiv* sdy = (QwtScaleDiv*)&data_plot->axisScaleDiv( QwtPlot::yLeft   );
+#endif
    last_xmin      = sdx->lowerBound();
    last_xmax      = sdx->upperBound();
    last_ymin      = sdy->lowerBound();
@@ -1126,8 +1139,13 @@ void US_MwlSpectra::nextPlot( void )
       pb_next->setEnabled( false );
    }
 
+#if QT_VERSION < 0x050000
    QwtScaleDiv* sdx = data_plot->axisScaleDiv( QwtPlot::xBottom );
    QwtScaleDiv* sdy = data_plot->axisScaleDiv( QwtPlot::yLeft   );
+#else
+   QwtScaleDiv* sdx = (QwtScaleDiv*)&data_plot->axisScaleDiv( QwtPlot::xBottom );
+   QwtScaleDiv* sdy = (QwtScaleDiv*)&data_plot->axisScaleDiv( QwtPlot::yLeft   );
+#endif
    last_xmin      = sdx->lowerBound();
    last_xmax      = sdx->upperBound();
    last_ymin      = sdy->lowerBound();

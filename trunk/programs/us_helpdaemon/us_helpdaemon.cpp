@@ -1,8 +1,12 @@
 //! \file us_helpdaemon.cpp
-#include <QtSingleApplication>
-
 #include "us_helpdaemon.h"
 #include "us_settings.h"
+
+#if QT_VERSION > 0x050000
+#include <QtWidgets/QApplication>
+#else
+#include <QtSingleApplication>
+#endif
 
 US_HelpDaemon::US_HelpDaemon( const QString& page, QObject* o ) : QObject( o )
 {
@@ -58,7 +62,7 @@ void US_HelpDaemon::show( const QString& helpPage )
 
   QByteArray ba;
   ba.append( "setSource qthelp://ultrascaniii/" );
-  ba.append( page.toAscii() );
+  ba.append( page.toLatin1() );
   ba.append( '\0' );
 
   daemon.write( ba );
@@ -81,16 +85,20 @@ void US_HelpDaemon::debug( const QString& message )
 */
 int main( int argc, char* argv[] )
 {
+   QString message = QString( argv[ 1 ] );
   //  Need to add uid to identifier ????
   //note: for doc files to show properly after an update, it may be necessary 
   //      to remove  ~/.local/share/data/Trolltech/Assistant/manual.qhc
-  QtSingleApplication application( "UltraScan Help Daemon", argc, argv );
+#if QT_VERSION > 0x050000
+   QApplication application( argc, argv );
+   application.setApplicationDisplayName( "UltraScan Help Daemon" );
+#else
+   QtSingleApplication application( "UltraScan Help Daemon", argc, argv );
   
-  QString message = QString( argv[ 1 ] );
+   if ( application.sendMessage( message ) ) return 0;
 
-  if ( application.sendMessage( message ) ) return 0;
-
-  application.initialize();
+   application.initialize();
+#endif
   US_HelpDaemon* daemon = new US_HelpDaemon( message );
  
   QObject::connect( &application, SIGNAL( messageReceived( const QString& ) ),

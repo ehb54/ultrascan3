@@ -15,6 +15,10 @@
 #include "us_report.h"
 #include "us_util.h"
 #include "qwt_legend.h"
+#if QT_VERSION < 0x050000
+#define setSamples(a,b,c)  setData(a,b,c)
+#define setSymbol(a)       setSymbol(*a)
+#endif
 
 // main program
 int main( int argc, char* argv[] )
@@ -175,8 +179,8 @@ US_vHW_Combine::US_vHW_Combine() : US_Widgets()
    QwtPlotGrid* grid = us_grid( data_plot1 );
    grid->enableXMin( true );
    grid->enableYMin( true );
-   grid->setMajPen( QPen( US_GuiSettings::plotMajGrid(), 0, Qt::DashLine ) );
-   grid->setMinPen( QPen( US_GuiSettings::plotMinGrid(), 0, Qt::DotLine  ) );
+   grid->setMajorPen( QPen( US_GuiSettings::plotMajGrid(), 0, Qt::DashLine ) );
+   grid->setMinorPen( QPen( US_GuiSettings::plotMinGrid(), 0, Qt::DotLine  ) );
 
    QwtLegend *legend = new QwtLegend;
    legend->setFrameStyle( QFrame::Box | QFrame::Sunken );
@@ -456,7 +460,6 @@ void US_vHW_Combine::reset_data( void )
 void US_vHW_Combine::reset_plot( void )
 {
    data_plot1->detachItems();
-   data_plot1->clear();
    data_plot1->replot();
 
    pdistrs.clear();
@@ -473,8 +476,8 @@ void US_vHW_Combine::plot_data( void )
    QwtPlotGrid* grid = us_grid( data_plot1 );
    grid->enableXMin( true );
    grid->enableYMin( true );
-   grid->setMajPen( QPen( US_GuiSettings::plotMajGrid(), 0, Qt::DashLine ) );
-   grid->setMinPen( QPen( US_GuiSettings::plotMinGrid(), 0, Qt::DotLine  ) );
+   grid->setMajorPen( QPen( US_GuiSettings::plotMajGrid(), 0, Qt::DashLine ) );
+   grid->setMinorPen( QPen( US_GuiSettings::plotMinGrid(), 0, Qt::DotLine  ) );
 
    bool dplot       = ck_distrib ->isChecked();
    bool eplot       = ck_envelope->isChecked();
@@ -514,6 +517,7 @@ void US_vHW_Combine::plot_distr( DistrDesc ddesc, QString distrID )
    double* xs  = ddesc.esedcs.data();
    double* yf  = ddesc.efreqs.data();
    double fscl = dconc ? ( ddesc.totconc * 0.01 ) : 1.0;
+   QwtSymbol* dsym = ddesc.symbol;
 
    QString dcID = distrID + tr( " (integ.)" );
    QString ecID = distrID + tr( " (diff.)" );
@@ -525,11 +529,11 @@ void US_vHW_Combine::plot_distr( DistrDesc ddesc, QString distrID )
    if ( dplot  &&  !dconc )
    {  // Build curves for distribution plot
       dcurve        = us_curve( data_plot1, dcID );
-      dcurve->setStyle ( QwtPlotCurve::Lines );
-      dcurve->setSymbol( ddesc.symbol );
-      dcurve->setPen   ( dlpen );
-      dcurve->setData  ( xx, yy, ndispt );
-      dcurve->setYAxis ( QwtPlot::yLeft );
+      dcurve->setStyle  ( QwtPlotCurve::Lines );
+      dcurve->setSymbol ( dsym );
+      dcurve->setPen    ( dlpen );
+      dcurve->setSamples( xx, yy, ndispt );
+      dcurve->setYAxis  ( QwtPlot::yLeft );
    }
 
    if ( dplot  &&  dconc )
@@ -542,11 +546,11 @@ void US_vHW_Combine::plot_distr( DistrDesc ddesc, QString distrID )
 
       double* yc    = dconcs.data();
       dcurve        = us_curve( data_plot1, dcID );
-      dcurve->setStyle ( QwtPlotCurve::Lines );
-      dcurve->setSymbol( ddesc.symbol );
-      dcurve->setPen   ( dlpen );
-      dcurve->setData  ( xx, yc, ndispt );
-      dcurve->setYAxis ( QwtPlot::yRight );
+      dcurve->setStyle  ( QwtPlotCurve::Lines );
+      dcurve->setSymbol ( dsym );
+      dcurve->setPen    ( dlpen );
+      dcurve->setSamples( xx, yc, ndispt );
+      dcurve->setYAxis  ( QwtPlot::yRight );
    }
 
    if ( eplot )
@@ -557,10 +561,10 @@ DbgLv(2) << "   xs1 yf1" << xs[1] << yf[1];
 DbgLv(2) << "   xsm yfm" << xs[kk-2] << yf[kk-2];
 DbgLv(2) << "   xsn yfn" << xs[kk-1] << yf[kk-1];
       ecurve        = us_curve( data_plot1, ecID );
-      ecurve->setStyle ( QwtPlotCurve::Lines );
-      ecurve->setPen   ( elpen );
-      ecurve->setData  ( xs, yf, nenvpt );
-      ecurve->setYAxis ( QwtPlot::yRight );
+      ecurve->setStyle  ( QwtPlotCurve::Lines );
+      ecurve->setPen    ( elpen );
+      ecurve->setSamples( xs, yf, nenvpt );
+      ecurve->setYAxis  ( QwtPlot::yRight );
    }
 
    data_plot1->setAxisAutoScale( QwtPlot::xBottom );
@@ -816,9 +820,9 @@ DbgLv(1) << "TripleSel:distrID ALREADY IN LIST";
 }
 
 // Assign symbol and color for a distribution
-void US_vHW_Combine::setSymbol( DistrDesc& ddesc, int distx )
+void US_vHW_Combine::setDSymbol( DistrDesc& ddesc, int distx )
 {
-   QwtSymbol dsymbol;
+   QwtSymbol* dsymbol = new QwtSymbol;
 
    possibleSymbols();             // Make sure possible symbols,colors exist
 
@@ -834,10 +838,10 @@ void US_vHW_Combine::setSymbol( DistrDesc& ddesc, int distx )
       jc -= ncolors;
 
    ddesc.color  = colors [ jc ];
-   dsymbol.setPen( QColor( Qt::white ) );
-   dsymbol.setSize( 8 );
-   dsymbol.setStyle( (QwtSymbol::Style)symbols[ js ] );
-   dsymbol.setBrush( ddesc.color );
+   dsymbol->setPen( QColor( Qt::white ) );
+   dsymbol->setSize( 8 );
+   dsymbol->setStyle( (QwtSymbol::Style)symbols[ js ] );
+   dsymbol->setBrush( ddesc.color );
    ddesc.symbol = dsymbol;
 
    return;
@@ -1077,7 +1081,7 @@ int kk = ddesc.dsedcs.size()-1;
 DbgLv(1) << "Distro runid" << ddesc.runID << " triple" << ddesc.triple << kk;
 DbgLv(1) << "  0 sed frac" << ddesc.dsedcs[0] << ddesc.bfracs[0];
 DbgLv(1) << "  kk sed frac" << ddesc.dsedcs[kk] << ddesc.bfracs[kk];
-   setSymbol( ddesc, distx );
+   setDSymbol( ddesc, distx );
 
    if ( haveenv )
    {  // Read in envelope data

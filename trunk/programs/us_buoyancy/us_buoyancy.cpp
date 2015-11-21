@@ -18,6 +18,12 @@
 #include "us_constants.h"
 #include "us_simparms.h"
 #include "us_constants.h"
+#if QT_VERSION < 0x050000
+#define setSamples(a,b,c)  setData(a,b,c)
+#define setMinimum(a)      setMinValue(a)
+#define setMaximum(a)      setMaxValue(a)
+#define setSymbol(a)       setSymbol(*a)
+#endif
 
 #ifndef DbgLv
 #define DbgLv(a) if(dbg_level>=a)qDebug()
@@ -141,7 +147,7 @@ US_Buoyancy::US_Buoyancy() : US_Widgets()
    specs->addWidget( lbl_scan, s_row, 0, 1, 2 );
 
    ct_selectScan = us_counter ( 3, 0.0, 0.0 ); // Update range upon load
-   ct_selectScan->setStep( 1 );
+   ct_selectScan->setSingleStep( 1 );
    ct_selectScan->setValue   ( current_scan );
    specs->addWidget( ct_selectScan, s_row++, 2, 1, 2 );
    connect( ct_selectScan, SIGNAL( valueChanged( double ) ),
@@ -601,11 +607,9 @@ void US_Buoyancy::mouse( const QwtDoublePoint& p )
     QPen   pen  ( brush, 2.0 );
 
     marker->setValue( p.x(), maximum );
-    marker->setSymbol( QwtSymbol(
-                        QwtSymbol::Cross,
-                        brush,
-                        pen,
-                        QSize ( 8, 8 ) ) );
+    QwtSymbol* sym = new QwtSymbol( QwtSymbol::Cross,
+                        brush, pen, QSize ( 8, 8 ) );
+    marker->setSymbol( sym );
 
     marker->attach( data_plot );
     data_plot->replot();
@@ -646,8 +650,8 @@ void US_Buoyancy::reset( void )
    le_info     ->setText( "" );
 
    ct_selectScan->disconnect();
-   ct_selectScan->setMinValue( 0 );
-   ct_selectScan->setMaxValue( 0 );
+   ct_selectScan->setMinimum( 0 );
+   ct_selectScan->setMaximum( 0 );
    ct_selectScan->setValue   ( 0 );
    connect( ct_selectScan, SIGNAL( valueChanged( double ) ),
             SLOT  ( plot_scan( double ) ) );
@@ -753,7 +757,7 @@ void US_Buoyancy::plot_scan( double scan_number )
          + " #" + QString::number( ii );
 
       QwtPlotCurve* c = us_curve( data_plot, title );
-      c->setData( r, v, count );
+      c->setSamples( r, v, count );
       if (ii == current_scan - 1 )
       { // set the temperature to the currently highlighted scan:
          tmp_dpoint.temperature = s->temperature;
@@ -768,8 +772,8 @@ void US_Buoyancy::plot_scan( double scan_number )
       data_plot->setAxisScale( QwtPlot::xBottom, minR - padR, maxR + padR );
 
    }
-   ct_selectScan->setMinValue( 1 );
-   ct_selectScan->setMaxValue( maxscan );
+   ct_selectScan->setMinimum( 1 );
+   ct_selectScan->setMaximum( maxscan );
 
    data_plot->replot();
    update_fields();
@@ -783,7 +787,11 @@ void US_Buoyancy::draw_vline( double radius )
    r[ 0 ] = radius;
    r[ 1 ] = radius;
 
+#if QT_VERSION < 0x050000
    QwtScaleDiv* y_axis = data_plot->axisScaleDiv( QwtPlot::yLeft );
+#else
+   QwtScaleDiv* y_axis = (QwtScaleDiv*)&(data_plot->axisScaleDiv( QwtPlot::yLeft ));
+#endif
 
    double padding = ( y_axis->upperBound() - y_axis->lowerBound() ) / 30.0;
 
@@ -792,7 +800,7 @@ void US_Buoyancy::draw_vline( double radius )
    v [ 1 ] = y_axis->lowerBound() + padding;
 
    v_line = us_curve( data_plot, "V-Line" );
-   v_line->setData( r, v, 2 );
+   v_line->setSamples( r, v, 2 );
 
    QPen pen = QPen( QBrush( Qt::white ), 2.0 );
    v_line->setPen( pen );
@@ -985,3 +993,4 @@ double US_Buoyancy::calc_stretch( )
 		   * current_rpm + simparams[current_triple].rotorcoeffs[ 1 ]
 		   * pow( current_rpm, 2.0 ) );
 }
+

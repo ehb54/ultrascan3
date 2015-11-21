@@ -3,6 +3,9 @@
 #include "us_modelmetrics.h"
 #include <iostream>
 using namespace std;
+#if QT_VERSION < 0x050000
+#define setSamples(a,b,c)  setData(a,b,c)
+#endif
 
 #ifndef DbgLv
 #define DbgLv(a) if(dbg_level>=a)qDebug()
@@ -92,7 +95,7 @@ US_ModelMetrics::US_ModelMetrics() : US_Widgets()
 	xautoscale=true;
 
    ct_sigma= us_counter( 2, 0.0, 1.0, 1.0 );
-   ct_sigma->setStep( 0.001 );
+   ct_sigma->setSingleStep( 0.001 );
    ct_sigma->setValue( 0.0 );
    ct_sigma->setEnabled( false );
    ct_sigma->setFixedSize(130, 25);
@@ -141,19 +144,19 @@ US_ModelMetrics::US_ModelMetrics() : US_Widgets()
    le_span = us_lineedit( "", 1, true );
 
    ct_dval1 = us_counter( 2, 0.0, 100.0, 10.0 );
-   ct_dval1->setStep( 0.1 );
+   ct_dval1->setSingleStep( 0.1 );
    ct_dval1->setEnabled( false );
    ct_dval1->setFixedSize(130, 25);
    connect (ct_dval1, SIGNAL(valueChanged(double)), this, SLOT(set_dval1(double)));
 
    ct_dval2 = us_counter( 2, 0.0, 100.0, 50.0 );
-   ct_dval2->setStep( 0.1 );
+   ct_dval2->setSingleStep( 0.1 );
    ct_dval2->setEnabled( false );
    ct_dval2->setFixedSize(130, 25);
    connect (ct_dval2, SIGNAL(valueChanged(double)), this, SLOT(set_dval2(double)));
 
    ct_dval3 = us_counter( 2, 0.0, 100.0, 90.0 );
-   ct_dval3->setStep( 0.1 );
+   ct_dval3->setSingleStep( 0.1 );
    ct_dval3->setEnabled( false );
    ct_dval3->setFixedSize(130, 25);
    connect (ct_dval3, SIGNAL(valueChanged(double)), this, SLOT(set_dval3(double)));
@@ -622,7 +625,7 @@ DbgLv(1) << "Dsettings: " << report_entry.d[0] <<report_entry.d[1] << report_ent
    le_name->      setText("");
    if (report != "" && !saved) write_report(); //write any unsaved report items to disk
    report = "";
-   data_plot->clear();
+   data_plot->detachItems();
    data_plot->replot();
    saved = false;
 }
@@ -1025,7 +1028,7 @@ void US_ModelMetrics::plot_data()
    y1[1] = mxc;
    y2[1] = mxc;
    y3[1] = mxc;
-   data_plot->clear();
+   data_plot->detachItems();
 
    QFont sfont( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() - 1 );
    QFontMetrics fmet( sfont );
@@ -1058,10 +1061,10 @@ void US_ModelMetrics::plot_data()
    curve2->setPen( QPen( QBrush( Qt::red), 2.0 ) );
    curve3->setPen( QPen( QBrush( Qt::cyan ), 2.0 ) );
    curve4->setPen( QPen( QBrush( Qt::green ), 2.0 ) );
-   curve1->setData( xx, yy, points );
-   curve2->setData( x1, y1, 2);
-   curve3->setData( x2, y2, 2);
-   curve4->setData( x3, y3, 2);
+   curve1->setSamples( xx, yy, points );
+   curve2->setSamples( x1, y1, 2);
+   curve3->setSamples( x2, y2, 2);
+   curve4->setSamples( x3, y3, 2);
    data_plot->setAxisAutoScale( QwtPlot::yLeft );
 	if (xautoscale)
 	{
