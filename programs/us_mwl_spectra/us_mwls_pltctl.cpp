@@ -75,9 +75,9 @@ qDebug() << "PCtrl: xyzdat count" << xyzdat->count();
    ct_zscalefac->setValue( zscale   );
    ct_rxscale  ->setValue( rxscale  );
    ct_ryscale  ->setValue( ryscale  );
-   ct_zscalefac->setStep(  0.01 );
-   ct_rxscale  ->setStep(  0.01 );
-   ct_ryscale  ->setStep(  0.01 );
+   ct_zscalefac->setSingleStep(  0.01 );
+   ct_rxscale  ->setSingleStep(  0.01 );
+   ct_ryscale  ->setSingleStep(  0.01 );
 
    connect( pb_plot3d, SIGNAL( clicked()   ),
             this,      SLOT  ( plot3_btn() ) );

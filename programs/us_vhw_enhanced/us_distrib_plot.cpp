@@ -7,6 +7,10 @@
 #include "us_math2.h"
 
 #include <qwt_legend.h>
+#if QT_VERSION < 0x050000
+#define setSamples(a,b,c)  setData(a,b,c)
+#define setSymbol(a)       setSymbol(*a)
+#endif
 
 US_DistribPlot::US_DistribPlot( QVector< double >& divfracs,
    QVector< double >& divsedcs, const double tconc )
@@ -52,8 +56,8 @@ DbgLv(1) << "DisPl: sed2 sed-" << dsedcs[2] << dsedcs[divsCount-3];
    QwtPlotGrid* grid = us_grid( data_plot );
    grid->enableXMin( true );
    grid->enableYMin( true );
-   grid->setMajPen( QPen( US_GuiSettings::plotMajGrid(), 0, Qt::DashLine ) );
-   grid->setMinPen( QPen( US_GuiSettings::plotMinGrid(), 0, Qt::DotLine ) );
+   grid->setMajorPen( QPen( US_GuiSettings::plotMajGrid(), 0, Qt::DashLine ) );
+   grid->setMinorPen( QPen( US_GuiSettings::plotMinGrid(), 0, Qt::DotLine ) );
    US_PlotPicker* pick = new US_PlotPicker( data_plot );
    pick->setTrackerPen( QColor( Qt::white ) );
 
@@ -74,7 +78,7 @@ DbgLv(1) << "DisPl: sed2 sed-" << dsedcs[2] << dsedcs[divsCount-3];
    ct_sensitivity = us_counter( 2, 10, 100, 1 );
    pb_histogram->  setEnabled( false );
    ct_sensitivity->setEnabled( false );
-   ct_sensitivity->setStep( 1.0 );
+   ct_sensitivity->setSingleStep( 1.0 );
    ct_sensitivity->setValue( nSensit );
    main->addWidget( pb_histogram,   row,   0, 1, 1 );
    main->addWidget( lb_sensitivity, row,   1, 1, 1 );
@@ -86,7 +90,7 @@ DbgLv(1) << "DisPl: sed2 sed-" << dsedcs[2] << dsedcs[divsCount-3];
    ct_smoothing   = us_counter( 2, 10, 100, 1 );
    pb_envelope-> setEnabled( false );
    ct_smoothing->setEnabled( false );
-   ct_smoothing->setStep( 1.0 );
+   ct_smoothing->setSingleStep( 1.0 );
    ct_smoothing->setValue( nSmooth );
    main->addWidget( pb_envelope,    row,   0, 1, 1 );
    main->addWidget( lb_smoothing,   row,   1, 1, 1 );
@@ -118,8 +122,8 @@ void US_DistribPlot::save_plots( QString& plot1File, QString& plot2File )
    QwtPlotGrid* grid = us_grid( data_plot );
    grid->enableXMin( true );
    grid->enableYMin( true );
-   grid->setMajPen( QPen( US_GuiSettings::plotMajGrid(), 0, Qt::DashLine ) );
-   grid->setMinPen( QPen( US_GuiSettings::plotMinGrid(), 0, Qt::DotLine ) );
+   grid->setMajorPen( QPen( US_GuiSettings::plotMajGrid(), 0, Qt::DashLine ) );
+   grid->setMinorPen( QPen( US_GuiSettings::plotMinGrid(), 0, Qt::DotLine ) );
    plotType = DISTR;
 
    plot_distrib();
@@ -131,8 +135,8 @@ void US_DistribPlot::save_plots( QString& plot1File, QString& plot2File )
    grid = us_grid( data_plot );
    grid->enableXMin( true );
    grid->enableYMin( true );
-   grid->setMajPen( QPen( US_GuiSettings::plotMajGrid(), 0, Qt::DashLine ) );
-   grid->setMinPen( QPen( US_GuiSettings::plotMinGrid(), 0, Qt::DotLine ) );
+   grid->setMajorPen( QPen( US_GuiSettings::plotMajGrid(), 0, Qt::DashLine ) );
+   grid->setMinorPen( QPen( US_GuiSettings::plotMinGrid(), 0, Qt::DotLine ) );
    plotType = COMBO;
 
    plot_combined();
@@ -160,8 +164,8 @@ void US_DistribPlot::show_plot( void )
    QwtPlotGrid* grid = us_grid( data_plot );
    grid->enableXMin( true );
    grid->enableYMin( true );
-   grid->setMajPen( QPen( US_GuiSettings::plotMajGrid(), 0, Qt::DashLine ) );
-   grid->setMinPen( QPen( US_GuiSettings::plotMinGrid(), 0, Qt::DotLine ) );
+   grid->setMajorPen( QPen( US_GuiSettings::plotMajGrid(), 0, Qt::DashLine ) );
+   grid->setMinorPen( QPen( US_GuiSettings::plotMinGrid(), 0, Qt::DotLine ) );
 
 
    if ( plotType == DISTR )
@@ -313,19 +317,19 @@ void US_DistribPlot::plot_distrib( void )
 
    // first draw the yellow line through points
    dcurve  = us_curve( data_plot, tr( "Distrib Line" ) );
-   dcurve->setPen( QPen( QBrush( Qt::yellow ), 1.0 ) );
-   dcurve->setData( xx, yy, divsCount );
+   dcurve->setPen    ( QPen( QBrush( Qt::yellow ), 1.0 ) );
+   dcurve->setSamples( xx, yy, divsCount );
 
    // then draw the symbols at each point
    dcurve  = us_curve( data_plot, tr( "Distrib Points" ) );
-   QwtSymbol  sym;
-   sym.setStyle( QwtSymbol::Ellipse );
-   sym.setPen  ( QPen( Qt::blue ) );
-   sym.setBrush( QBrush( Qt::white ) );
-   sym.setSize ( 8 );
-   dcurve->setStyle( QwtPlotCurve::NoCurve );
-   dcurve->setSymbol( sym );
-   dcurve->setData  ( xx, yy, divsCount );
+   QwtSymbol* sym = new QwtSymbol;
+   sym->setStyle( QwtSymbol::Ellipse );
+   sym->setPen  ( QPen( Qt::blue ) );
+   sym->setBrush( QBrush( Qt::white ) );
+   sym->setSize ( 8 );
+   dcurve->setStyle  ( QwtPlotCurve::NoCurve );
+   dcurve->setSymbol ( sym );
+   dcurve->setSamples( xx, yy, divsCount );
 
    data_plot->replot();
 }
@@ -394,9 +398,9 @@ for(int jj=0;jj<npoints;jj++) DbgLv(2) << jj << xx[jj] << yy[jj];
 
    // Draw curve of histogram sticks
    hcurve  = us_curve( data_plot, tr( "Histogram Bar" ) );
-   hcurve->setPen( QPen( QBrush( Qt::red ), 5.0 ) );
-   hcurve->setStyle( QwtPlotCurve::Sticks );
-   hcurve->setData( xx, yy, npoints );
+   hcurve->setPen    ( QPen( QBrush( Qt::red ), 5.0 ) );
+   hcurve->setStyle  ( QwtPlotCurve::Sticks );
+   hcurve->setSamples( xx, yy, npoints );
 
 
    if ( plotType == HISTO  ||  plotType == NONE )
@@ -466,8 +470,8 @@ void US_DistribPlot::plot_envelope( void )
 
    // Draw a cyan line through points
    ecurve  = us_curve( data_plot, tr( "Envelope Line" ) );
-   ecurve->setPen( QPen( QBrush( Qt::cyan ), 3.0 ) );
-   ecurve->setData( xx, yy, npoints );
+   ecurve->setPen    ( QPen( QBrush( Qt::cyan ), 3.0 ) );
+   ecurve->setSamples( xx, yy, npoints );
 
    data_plot->replot();
 }
@@ -660,6 +664,15 @@ void US_DistribPlot::save_data_file( QString data2File )
 
    int nhpts  = histo_data( hseds, hfrqs );
    int nepts  = envel_data( eseds, efrqs );
+   double tconc = tot_conc;
+
+   if ( tconc < 0.01 )
+   {  // If concentration too small, bump it to 1.0e0 range
+      double tcpwr = qFloor( log10( tconc ) );
+      tconc        = tconc * pow( 10.0, -tcpwr );
+DbgLv(1) << "SaveDat: tot_conc tconc" << tot_conc << tconc
+ << "tcpwr" << tcpwr;
+   }
 DbgLv(1) << "SaveDat: file" << data2File << "nhpts nepts" << nhpts << nepts;
 
    QFile datf( data2File );
@@ -680,7 +693,7 @@ DbgLv(1) << "SaveDat: file" << data2File << "nhpts nepts" << nhpts << nepts;
          line = QString().sprintf(
                    "\"%.6f\",\"%.6f\",\"%.6f\",\"%9.2f\",\"%9.4e\"\n",
                    eseds[ ii ], efrqs[ ii ], hseds[ ii ], hfrqs[ ii ],
-                   tot_conc );
+                   tconc );
       else
          line = QString().sprintf(
                    "\"%.6f\",\"%.6f\",\"\",\"\",\"\"\n",

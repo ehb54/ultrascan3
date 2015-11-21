@@ -2,14 +2,17 @@
 
 #include <QApplication>
 #include "us_grid_editor.h"
+#if QT_VERSION < 0x050000
+#define setSamples(a,b,c)  setData(a,b,c)
+#define setMinimum(a)      setMinValue(a)
+#define setMaximum(a)      setMaxValue(a)
+#define setSymbol(a)       setSymbol(*a)
+#endif
 
-const double MPISQ   = M_PI * M_PI;
-const double THIRD   = 1.0 / 3.0;
+const double MPISQ  = M_PI * M_PI;
+const double THIRD  = 1.0 / 3.0;
 const double VOL_FAC = 0.75 / M_PI;
 const double SPH_FAC = 0.06 * M_PI * VISC_20W;
-const int MINSSZ = 10;
-const int MAXSSZ = 800;
-const int DEFSSZ = 100;
 
 // main program
 int main( int argc, char* argv[] )
@@ -258,9 +261,6 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    connect( ct_subGrids, SIGNAL( valueChanged( double ) ),
             this,        SLOT( update_subGrids( double ) ) );
 
-   QLabel* lb_counts = us_label( tr( "Number of Grid Points:" ) );
-   le_counts     = us_lineedit( tr( "0 total, 0 per subgrid" ), 0, true );
-
    pb_reset      = us_pushbutton( tr( "Reset" ) );
    pb_reset->setEnabled( true );
    connect( pb_reset,   SIGNAL( clicked() ),
@@ -342,8 +342,6 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    left->addWidget( ct_partialGrid,        s_row++, 2, 1, 2 );
    left->addWidget( lb_subGrid,            s_row,   0, 1, 2 );
    left->addWidget( ct_subGrids,           s_row++, 2, 1, 2 );
-   left->addWidget( lb_counts,             s_row,   0, 1, 2 );
-   left->addWidget( le_counts,             s_row++, 2, 1, 2 );
    left->addWidget( pb_reset,              s_row,   0, 1, 1 );
    left->addWidget( pb_save,               s_row,   1, 1, 1 );
    left->addWidget( pb_help,               s_row,   2, 1, 1 );
@@ -386,27 +384,20 @@ qDebug() << "reset yRes" << yRes;
    subGrids      = 13;
    final_grid.clear();
 
-   ct_xRes->disconnect();
-   ct_yRes->disconnect();
-   ct_xRes->setValue( xRes );
-   ct_yRes->setValue( yRes );
-   connect( ct_xRes,  SIGNAL( valueChanged( double ) ),
-            this,     SLOT  ( update_xRes ( double ) ) );
-   connect( ct_yRes,  SIGNAL( valueChanged( double ) ),
-            this,     SLOT  ( update_yRes ( double ) ) );
 qDebug() << "1)set yRes" << yRes;
-   ct_xRes->setRange( 10.0, 1000.0 );
+   ct_xRes->setRange     ( 10.0, 1000.0 );
    ct_xRes->setSingleStep( 1.0 );
 qDebug() << "2)set yRes" << yRes;
    ct_xRes->setValue( xRes );
 qDebug() << "3)set yRes" << yRes;
-   ct_yRes->setRange( 10.0, 1000.0 );
+   ct_yRes->setRange     ( 10.0, 1000.0 );
    ct_yRes->setSingleStep( 1.0 );
 qDebug() << "set yRes" << yRes;
    ct_yRes->setValue( yRes );
    ct_partialGrid    ->setEnabled( false );
    ct_subGrids       ->setEnabled( false );
-   ct_partialGrid    ->setRange( 0, 0 );
+   ct_partialGrid    ->setRange( 0, 0);
+   ct_partialGrid    ->setSingleStep( 0 );
    ct_partialGrid    ->setValue( 0 );
    ck_show_final_grid->setEnabled( false );
    ck_show_final_grid->setChecked( false );
@@ -626,7 +617,7 @@ void US_Grid_Editor::update_xMin( double dval )
 {
    xMin    = dval;
    ct_xMax->disconnect();
-   ct_xMax->setMinValue( xMin );
+   ct_xMax->setMinimum( xMin );
 
    connect( ct_xMax, SIGNAL( valueChanged( double ) ),
             this,    SLOT  ( update_xMax ( double ) ) );
@@ -641,7 +632,7 @@ void US_Grid_Editor::update_xMax( double dval )
 {
    xMax    = dval;
    ct_xMin->disconnect();
-   ct_xMin->setMaxValue( xMax );
+   ct_xMin->setMaximum( xMax );
 
    connect( ct_xMin, SIGNAL( valueChanged( double ) ),
             this,    SLOT  ( update_xMin ( double ) ) );
@@ -657,7 +648,7 @@ void US_Grid_Editor::update_yMin( double dval )
    yMin    = dval;
 qDebug() << "update_yMin" << yMin;
    ct_yMax->disconnect();
-   ct_yMax->setMinValue( yMin );
+   ct_yMax->setMinimum( yMin );
 
    connect( ct_yMax, SIGNAL( valueChanged( double ) ),
             this,    SLOT  ( update_yMax ( double ) ) );
@@ -673,7 +664,7 @@ void US_Grid_Editor::update_yMax( double dval )
    yMax    = dval;
 qDebug() << "update_yMax" << yMax;
    ct_yMin->disconnect();
-   ct_yMin->setMaxValue( yMax );
+   ct_yMin->setMaximum( yMax );
 
    connect( ct_yMin, SIGNAL( valueChanged( double ) ),
             this,    SLOT  ( update_yMin ( double ) ) );
@@ -705,12 +696,9 @@ void US_Grid_Editor::update_partialGrid( double dval )
 // Select a subgrid from the final grid for highlighting:
 void US_Grid_Editor::update_subGrids( double dval )
 {
-   int ntotg       = final_grid.size();
-   subGrids        = (int) dval;
-   ct_partialGrid->setRange( 1, subGrids );
+   subGrids = (int) dval;
+   ct_partialGrid->setRange     ( 1, subGrids);
    ct_partialGrid->setSingleStep( 1 );
-   le_counts->setText( tr( "%1 total, %2 per subgrid" )
-         .arg( ntotg ).arg( ntotg / subGrids ) );
    update_plot();
 }
 
@@ -742,7 +730,7 @@ void US_Grid_Editor::update_plot( void )
 qDebug() << "update_plot:  call calc_gridpoints()";
    calc_gridpoints();
 
-   data_plot1->clear();
+//   data_plot1->clear();
    QString xatitle = tr( "Sedimentation Coefficient" );
    QString yatitle = tr( "Frictional Ratio" );
 qDebug() << "  up0)yRes" << yRes;
@@ -834,28 +822,28 @@ qDebug() << "  up0)yRes" << yRes;
       }
 
       QwtPlotCurve *c1;
-      QwtSymbol sym1;
-      sym1.setStyle( QwtSymbol::Ellipse );
-      sym1.setBrush( QColor( Qt::red ) );
-      sym1.setPen  ( QColor( Qt::red ) );
-      sym1.setSize( 3 );
+      QwtSymbol*   sym1 = new QwtSymbol;
+      sym1->setStyle( QwtSymbol::Ellipse );
+      sym1->setBrush( QColor( Qt::red ) );
+      sym1->setPen  ( QColor( Qt::red ) );
+      sym1->setSize ( 3 );
 
       c1 = us_curve( data_plot1, "highlighted Grid points" );
-      c1->setData  ( xData1.data(), yData1.data(), xData1.size());
-      c1->setSymbol( sym1 );
-      c1->setStyle ( QwtPlotCurve::NoCurve );
+      c1->setSymbol ( sym1 );
+      c1->setStyle  ( QwtPlotCurve::NoCurve );
+      c1->setSamples( xData1.data(), yData1.data(), xData1.size() );
 
       QwtPlotCurve *c2;
-      QwtSymbol sym2;
-      sym2.setStyle( QwtSymbol::Ellipse );
-      sym2.setBrush( QColor( Qt::yellow ) );
-      sym2.setPen  ( QColor( Qt::yellow ) );
-      sym2.setSize( 3 );
+      QwtSymbol*   sym2 = new QwtSymbol;
+      sym2->setStyle( QwtSymbol::Ellipse );
+      sym2->setBrush( QColor( Qt::yellow ) );
+      sym2->setPen  ( QColor( Qt::yellow ) );
+      sym2->setSize ( 3 );
 
       c2 = us_curve( data_plot1, "Other Grid points" );
-      c2->setData  ( xData2.data(), yData2.data(), xData2.size());
-      c2->setSymbol( sym2 );
-      c2->setStyle ( QwtPlotCurve::NoCurve );
+      c2->setSymbol ( sym2 );
+      c2->setStyle  ( QwtPlotCurve::NoCurve );
+      c2->setSamples( xData2.data(), yData2.data(), xData2.size() );
    }
 
    else if ( ck_show_final_grid->isChecked()  &&
@@ -885,28 +873,28 @@ qDebug() << "  up0)yRes" << yRes;
       }
 
       QwtPlotCurve *c1;
-      QwtSymbol sym1;
-      sym1.setStyle( QwtSymbol::Ellipse );
-      sym1.setBrush( QColor( Qt::red ) );
-      sym1.setPen  ( QColor( Qt::red ) );
-      sym1.setSize( 3 );
+      QwtSymbol*   sym1 = new QwtSymbol;
+      sym1->setStyle( QwtSymbol::Ellipse );
+      sym1->setBrush( QColor( Qt::red ) );
+      sym1->setPen  ( QColor( Qt::red ) );
+      sym1->setSize( 3 );
 
       c1 = us_curve( data_plot1, "highlighted Grid points" );
-      c1->setData  ( xData1.data(), yData1.data(), xData1.size());
-      c1->setSymbol( sym1 );
-      c1->setStyle ( QwtPlotCurve::NoCurve );
+      c1->setSymbol ( sym1 );
+      c1->setStyle  ( QwtPlotCurve::NoCurve );
+      c1->setSamples( xData1.data(), yData1.data(), xData1.size() );
 
       QwtPlotCurve *c2;
-      QwtSymbol sym2;
-      sym2.setStyle( QwtSymbol::Ellipse );
-      sym2.setBrush( QColor( Qt::yellow ) );
-      sym2.setPen  ( QColor( Qt::yellow ) );
-      sym2.setSize( 3 );
+      QwtSymbol*   sym2 = new QwtSymbol;
+      sym2->setStyle( QwtSymbol::Ellipse );
+      sym2->setBrush( QColor( Qt::yellow ) );
+      sym2->setPen  ( QColor( Qt::yellow ) );
+      sym2->setSize( 3 );
 
       c2 = us_curve( data_plot1, "Other Grid points" );
-      c2->setData  ( xData2.data(), yData2.data(), xData2.size());
-      c2->setSymbol( sym2 );
-      c2->setStyle ( QwtPlotCurve::NoCurve );
+      c2->setSymbol ( sym2 );
+      c2->setStyle  ( QwtPlotCurve::NoCurve );
+      c2->setSamples( xData2.data(), yData2.data(), xData2.size() );
    }
 
    else
@@ -923,16 +911,16 @@ qDebug() << "  updplt: gridsize" << gridsize;
       }
 
       QwtPlotCurve *c1;
-      QwtSymbol sym;
-      sym.setStyle( QwtSymbol::Ellipse );
-      sym.setBrush( QColor( Qt::yellow ) );
-      sym.setPen  ( QColor( Qt::yellow ) );
-      sym.setSize( 3 );
+      QwtSymbol*   sym1 = new QwtSymbol;
+      sym1->setStyle( QwtSymbol::Ellipse );
+      sym1->setBrush( QColor( Qt::yellow ) );
+      sym1->setPen  ( QColor( Qt::yellow ) );
+      sym1->setSize( 3 );
 
       c1 = us_curve( data_plot1, "Grid points 1" );
-      c1->setData  ( xData1.data(), yData1.data(), gridsize );
-      c1->setSymbol( sym );
-      c1->setStyle ( QwtPlotCurve::NoCurve );
+      c1->setSymbol ( sym1 );
+      c1->setStyle  ( QwtPlotCurve::NoCurve );
+      c1->setSamples( xData1.data(), yData1.data(), gridsize );
    }
 
 qDebug() << "  up9)yRes" << yRes;
@@ -2010,20 +1998,6 @@ void US_Grid_Editor::add_partialGrid( void )
    ck_show_final_grid->setEnabled( true );
    pb_delete_partialGrid->setEnabled( true );
    ct_partialGrid->setEnabled( true );
-
-   int ntotg       = final_grid.size();
-   int minsubg     = ntotg / MAXSSZ;
-   int maxsubg     = ntotg / MINSSZ + 1;
-   subGrids        = ntotg / DEFSSZ + 1;
-   ct_subGrids->disconnect();
-   ct_subGrids->setRange  ( minsubg, maxsubg );
-   ct_subGrids->setSingleStep( 1 );
-   ct_subGrids->setValue  ( subGrids );
-   connect( ct_subGrids, SIGNAL( valueChanged( double ) ),
-            this,        SLOT( update_subGrids( double ) ) );
-
-   le_counts->setText( tr( "%1 total, %2 per subgrid" )
-         .arg( ntotg ).arg( ntotg / subGrids ) );
 }
 
 // delete current grid
@@ -2045,14 +2019,14 @@ void US_Grid_Editor::delete_partialGrid( void )
       }
    }
    grid_index--;
-   ct_partialGrid->setRange( 1, grid_index );
+   ct_partialGrid->setRange     ( 1, grid_index );
    ct_partialGrid->setSingleStep( 1 );
    if (grid_index == 0)
    {
       ck_show_final_grid->setChecked (false);
       ck_show_final_grid->setEnabled (false);
-      ct_partialGrid->setRange     ( 0, 0 );
-      ct_partialGrid->setSingleStep( 1 );
+      ct_partialGrid->setRange      ( 0, 0 );
+      ct_partialGrid->setSingleStep ( 1 );
       ct_partialGrid->setEnabled( false );
       show_final_grid( false );
    }
@@ -2133,8 +2107,8 @@ void US_Grid_Editor::select_x_axis( int ival )
    ct_xMin->setSingleStep( xincs[ plot_x ] );
    ct_xMax->setRange     ( xmins[ plot_x ], xmaxs[ plot_x ] );
    ct_xMax->setSingleStep( xincs[ plot_x ] );
-   ct_xMin->setValue     ( xMin );
-   ct_xMax->setValue     ( xMax );
+   ct_xMin->setValue( xMin );
+   ct_xMax->setValue( xMax );
 
    connect( ct_xMin, SIGNAL( valueChanged( double ) ),
             this,    SLOT  ( update_xMin ( double ) ) );
@@ -2206,8 +2180,8 @@ void US_Grid_Editor::select_y_axis( int ival )
    ct_yMin->setSingleStep( yincs[ plot_y ] );
    ct_yMax->setRange     ( ymins[ plot_y ], ymaxs[ plot_y ] );
    ct_yMax->setSingleStep( yincs[ plot_y ] );
-   ct_yMin->setValue     ( yMin );
-   ct_yMax->setValue     ( yMax );
+   ct_yMin->setValue( yMin );
+   ct_yMax->setValue( yMax );
 
    connect( ct_yMin, SIGNAL( valueChanged( double ) ),
             this,    SLOT  ( update_yMin ( double ) ) );
@@ -2306,28 +2280,26 @@ void US_Grid_Editor::show_sub_grid( bool flag )
 {
    if (flag)
    {
-      int ntotg       = final_grid.size();
-      int minsubg     = ntotg / MAXSSZ;
-      int maxsubg     = ntotg / MINSSZ + 1;
-      subGrids        = ntotg / DEFSSZ + 1;
-DbgLv(1) << "finalsize" << ntotg << "maxsubg" << maxsubg;
+      int maxsubgrids = (int) final_grid.size()/50;
+      int defsubgrids = ( maxsubgrids / 2 ) | 1;
+DbgLv(1) << "finalsize" << final_grid.size() << "maxsubgs" << maxsubgrids;
       lb_partialGrid       ->setText   ( tr( "Highlight Subgrid #:" ) );
-      ct_subGrids          ->setEnabled( true );
-      ct_subGrids          ->setRange  ( minsubg, maxsubg );
+      ct_subGrids          ->setEnabled   ( true );
+      ct_subGrids          ->setRange     ( 1, maxsubgrids );
       ct_subGrids          ->setSingleStep( 1 );
-      ct_subGrids          ->setValue  ( subGrids );
-      pb_delete_partialGrid->setEnabled( false );
-      le_counts->setText( tr( "%1 total, %2 per subgrid" )
-            .arg( ntotg ).arg( ntotg / subGrids ) );
+      ct_subGrids          ->setValue     ( defsubgrids );
+      ct_partialGrid       ->setRange     ( 1, subGrids );
+      ct_partialGrid       ->setSingleStep( 1 );
+      pb_delete_partialGrid->setEnabled   ( false );
    }
    else
    {
       lb_partialGrid       ->setText   ( tr( "Highlight Partial Grid #:" ) );
-      ct_subGrids          ->setEnabled( false );
+      ct_subGrids          ->setEnabled   ( false );
       ct_partialGrid       ->setRange     ( 1, grid_index );
       ct_partialGrid       ->setSingleStep( 1 );
       ct_partialGrid       ->setValue     ( 1 );
-      pb_delete_partialGrid->setEnabled( true );
+      pb_delete_partialGrid->setEnabled   ( true );
    }
 
    update_plot();
@@ -2732,15 +2704,15 @@ qDebug() << "valFF0:      xMax yMax ff0   " << xMax << yMax << ffx2y2;
             if ( ffx1y1 < ffx2y1 )
             {  // Increasing X means increasing f/f0, so set lower limit
 qDebug() << "valFF0:  (1xMin)xVal" << xVal;
-               ct_xMin->setMinValue( xVal );
-               ct_xMax->setMinValue( xVal );
+               ct_xMin->setMinimum( xVal );
+               ct_xMax->setMinimum( xVal );
             }
 
             else
             {  // Increasing X means decreasing f/f0, so set upper limit
 qDebug() << "valFF0:  (2xMin)xVal" << xVal;
-               ct_xMin->setMaxValue( xVal );
-               ct_xMax->setMaxValue( xVal );
+               ct_xMin->setMaximum( xVal );
+               ct_xMax->setMaximum( xVal );
             }
          }
 
@@ -2753,15 +2725,15 @@ qDebug() << "valFF0:  (2xMin)xVal" << xVal;
             if ( ffx1y1 < ffx2y1 )
             {  // Increasing X means increasing f/f0, so set lower limit
 qDebug() << "valFF0:  (3xMin)xVal" << xVal;
-               ct_xMin->setMinValue( xVal );
-               ct_xMax->setMinValue( xVal );
+               ct_xMin->setMinimum( xVal );
+               ct_xMax->setMinimum( xVal );
             }
 
             else
             {  // Increasing X means decreasing f/f0, so set upper limit
 qDebug() << "valFF0:  (4xMin)xVal" << xVal;
-               ct_xMin->setMaxValue( xVal );
-               ct_xMax->setMaxValue( xVal );
+               ct_xMin->setMaximum( xVal );
+               ct_xMax->setMaximum( xVal );
             }
          }
 
@@ -2787,15 +2759,15 @@ qDebug() << "valFF0:  (4xMin)xVal" << xVal;
             if ( ffx1y1 < ffx1y2 )
             {  // Increasing Y means increasing f/f0, so set lower limit
 qDebug() << "valFF0:  (5yMin)yVal" << yVal;
-               ct_yMin->setMinValue( yVal );
-               ct_yMax->setMinValue( yVal );
+               ct_yMin->setMinimum( yVal );
+               ct_yMax->setMinimum( yVal );
             }
 
             else
             {  // Increasing Y means decreasing f/f0, so set upper limit
 qDebug() << "valFF0:  (6yMax)yVal" << yVal;
-               ct_yMin->setMaxValue( yVal );
-               ct_yMax->setMaxValue( yVal );
+               ct_yMin->setMaximum( yVal );
+               ct_yMax->setMaximum( yVal );
             }
          }
 
@@ -2808,15 +2780,15 @@ qDebug() << "valFF0:  (6yMax)yVal" << yVal;
             if ( ffx1y1 < ffx1y2 )
             {  // Increasing Y means increasing f/f0, so set lower limit
 qDebug() << "valFF0:  (7yMin)yVal" << yVal;
-               ct_yMin->setMinValue( yVal );
-               ct_yMax->setMinValue( yVal );
+               ct_yMin->setMinimum( yVal );
+               ct_yMax->setMinimum( yVal );
             }
 
             else
             {  // Increasing Y means decreasing f/f0, so set upper limit
 qDebug() << "valFF0:  (8yMax)yVal" << yVal;
-               ct_yMin->setMaxValue( yVal );
-               ct_yMax->setMaxValue( yVal );
+               ct_yMin->setMaximum( yVal );
+               ct_yMax->setMaximum( yVal );
             }
          }
 

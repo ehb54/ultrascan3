@@ -1,8 +1,6 @@
 #ifndef US_EXPORT_LEGACY_H
 #define US_EXPORT_LEGACY_H
 
-#include <QtGui>
-
 #include "us_widgets.h"
 #include "us_plot.h"
 #include "us_dataIO.h"

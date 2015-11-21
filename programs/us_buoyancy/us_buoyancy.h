@@ -1,10 +1,6 @@
 #ifndef US_BUOYANCY_H
 #define US_BUOYANCY_H
 
-#include <QtGui>
-
-#include "qwt_plot_marker.h"
-
 #include "us_extern.h"
 #include "us_widgets.h"
 #include "us_help.h"
@@ -12,6 +8,8 @@
 #include "us_dataIO.h"
 #include "us_simparms.h"
 #include "us_editor.h"
+
+#include "qwt_plot_marker.h"
 
 struct DataPoint
 {

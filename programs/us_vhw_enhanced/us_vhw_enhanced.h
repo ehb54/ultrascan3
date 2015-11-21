@@ -9,6 +9,7 @@
 #include "us_model.h"
 #include "us_run_details2.h"
 #include "us_buffer_gui.h"
+
 #include "qwt_plot_marker.h"
 
 #define PA_POINTS 20     // plateau average points to left and right

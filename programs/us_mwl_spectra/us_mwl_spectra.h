@@ -2,8 +2,6 @@
 #ifndef US_MWL_SPECTRA_H
 #define US_MWL_SPECTRA_H
 
-#include <QtGui>
-
 #include "us_extern.h"
 #include "us_mwls_pltctl.h"
 #include "us_widgets.h"

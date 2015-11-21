@@ -3,12 +3,11 @@
 
 #include <QApplication>
 #include <QDomDocument>
-#include <QtGui>
 
+#include "us_analysis_base2.h"
 #include "us_spectrodata.h"
 #include "us_extern.h"
 #include "us_widgets.h"
-#include "us_analysis_base2.h"
 #include "us_help.h"
 #include "us_editor.h"
 #include "us_settings.h"

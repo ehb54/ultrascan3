@@ -2,8 +2,6 @@
 #ifndef US_MWL_S_PLTCTL_H
 #define US_MWL_S_PLTCTL_H
 
-#include <QtGui>
-
 #include "us_extern.h"
 #include "us_widgets_dialog.h"
 #include "us_plot3d_xyz.h"

@@ -17,6 +17,9 @@
 #include "us_model.h"
 #include "us_math2.h"
 #include "qwt_legend.h"
+#if QT_VERSION < 0x050000
+#define setSamples(a,b,c)  setData(a,b,c)
+#endif
 
 // Main program
 int main( int argc, char* argv[] )
@@ -180,7 +183,7 @@ US_DDistr_Combine::US_DDistr_Combine() : US_Widgets()
    int fwid      = fmet.maxWidth();
    lb_sigma      = us_label( tr( "Envelope Gaussian Sigma:" ) );
    ct_sigma      = us_counter( 3,  0,  5, 1 );
-   ct_sigma->setStep( 0.001 );
+   ct_sigma->setSingleStep( 0.001 );
    ct_sigma->setFont( sfont );
    ct_sigma->setValue( 0.05 );
    int rhgt      = ct_sigma ->height();
@@ -402,8 +405,10 @@ US_DDistr_Combine::US_DDistr_Combine() : US_Widgets()
    data_grid = us_grid( data_plot1 );
    data_grid->enableXMin( true );
    data_grid->enableYMin( true );
-   data_grid->setMajPen( QPen(US_GuiSettings::plotMajGrid(), 0, Qt::DashLine) );
-   data_grid->setMinPen( QPen(US_GuiSettings::plotMinGrid(), 0, Qt::DotLine ) );
+   data_grid->setMajorPen( QPen( US_GuiSettings::plotMajGrid(),
+                                 0, Qt::DashLine ) );
+   data_grid->setMinorPen( QPen( US_GuiSettings::plotMinGrid(),
+                                 0, Qt::DotLine  ) );
 
    QwtLegend *legend = new QwtLegend;
    legend->setFrameStyle( QFrame::Box | QFrame::Sunken );
@@ -704,7 +709,7 @@ DbgLv(1) << "main size" << size();
 // Reset plot:  Clear plots and lists of plotted data
 void US_DDistr_Combine::reset_plot( void )
 {
-   data_plot1->clear();
+   data_plot1->detachItems();
    data_plot1->replot();
    pdistrs.clear();
    pdisIDs.clear();
@@ -728,7 +733,7 @@ void US_DDistr_Combine::reset_plot( void )
 void US_DDistr_Combine::plot_data( void )
 {
 DbgLv(1) << "pDa:  xtype" << xtype;
-   data_plot1->clear();
+   data_plot1->detachItems();
    QString titleY = tr( "Signal Concentration" );
 DbgLv(1) << "pDa:  titleY" << titleY;
    QString titleP;
@@ -833,7 +838,7 @@ DbgLv(1) << "pDi:  ndispt" << ndispt << "ID" << distrID.left(20);
       }
    }
 
-   data_curv->setData ( xx, yy, ndispt );
+   data_curv->setSamples( xx, yy, ndispt );
    data_curv->setItemAttribute( QwtPlotItem::Legend, true );
    if (le_plxmin->text().toDouble() < minx) 
    {
