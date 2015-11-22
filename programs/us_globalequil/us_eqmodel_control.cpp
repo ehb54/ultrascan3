@@ -179,8 +179,8 @@ US_EqModelControl::US_EqModelControl(
    us_setReadOnly( le_l3bound, true );
    us_setReadOnly( le_l4bound, true );
 
-   ct_grunpar->setRange( 1, runfit.nbr_comps, 1 );
-   ct_grunpar->setStep( 1 );
+   ct_grunpar->setRange( 1, runfit.nbr_comps );
+   ct_grunpar->setSingleStep( 1 );
    ct_grunpar->setValue( 1 );
 
    connect( ct_grunpar, SIGNAL( valueChanged( double ) ),
@@ -362,10 +362,10 @@ US_EqModelControl::US_EqModelControl(
             this,       SLOT( density_applyto() ) );
    connect( pb_extiapp, SIGNAL( clicked()       ),
             this,       SLOT( extinct_applyto() ) );
-   ct_lrunpar->setRange( 1, runfit.nbr_comps, 1 );
-   ct_lrunpar->setStep( 1 );
-   ct_scansel->setRange( 1, scanfits.size(), 1 );
-   ct_scansel->setStep( 1 );
+   ct_lrunpar->setRange( 1, runfit.nbr_comps );
+   ct_lrunpar->setSingleStep( 1 );
+   ct_scansel->setRange( 1, scanfits.size() );
+   ct_scansel->setSingleStep( 1 );
    send_signal = false;
    ct_scansel->setValue( selscan );
    send_signal = true;

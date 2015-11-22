@@ -19,8 +19,13 @@
 #include "us_util.h"
 #include "us_editor.h"
 #include "us_images.h"
+#if QT_VERSION < 0x050000
+#define setSamples(a,b,c)  setData(a,b,c)
+#define setMinimum(a)      setMinValue(a)
+#define setMaximum(a)      setMaxValue(a)
+#endif
 
-#ifdef WIN32
+#ifdef Q_OS_WIN
 #include <float.h>
 #define isnan _isnan
 #endif
@@ -81,7 +86,7 @@ US_MwlRawViewer::US_MwlRawViewer() : US_Widgets()
    int rhgt     = le_runID->height();
    QLabel*      lb_recavg   = us_label( tr( "Record Average:" ), -1 );
                 ct_recavg   = us_counter( 1, 1, 100, 1 );
-   ct_recavg->setStep( 1.0 );
+   ct_recavg->setSingleStep( 1.0 );
    ct_recavg->setFont( sfont );
    ct_recavg->setMinimumWidth( lwid );
    ct_recavg->resize( rhgt, swid );
@@ -122,8 +127,8 @@ US_MwlRawViewer::US_MwlRawViewer() : US_Widgets()
    ct_to    ->resize( rhgt, swid );
    ct_from  ->setValue( 0 );
    ct_to    ->setValue( 0 );
-   ct_from  ->setStep ( 1 );
-   ct_to    ->setStep ( 1 );
+   ct_from  ->setSingleStep( 1 );
+   ct_to    ->setSingleStep( 1 );
 
    // Advanced Plotting controls
    QLabel*      lb_advplot  = us_banner( tr( "Advanced Plotting Control" ) );
@@ -452,8 +457,8 @@ void US_MwlRawViewer::enableControls( void )
    have_rngs  = false;
    compute_ranges( );
 
-   ct_from   ->setMaxValue( nscan );
-   ct_to     ->setMaxValue( nscan );
+   ct_from   ->setMaximum( nscan );
+   ct_to     ->setMaximum( nscan );
    cb_cellchn->setCurrentIndex( 0 );
    cb_pltrec ->setCurrentIndex( nlambda / 2 );
    qApp->processEvents();
@@ -667,8 +672,8 @@ DbgLv(1) << "RD:   rvS rvE" << radii[0] << radii[npoint-1];
    QApplication::restoreOverrideCursor();
    qApp->processEvents();
 
-   ct_from->setMaxValue( nscan );
-   ct_to  ->setMaxValue( nscan );
+   ct_from->setMaximum( nscan );
+   ct_to  ->setMaximum( nscan );
 
    // Ok to enable some buttons now
    enableControls();
@@ -1045,8 +1050,13 @@ DbgLv(1) << "chgCC: trxs trxe" << trxs << trxe;
 
    else
    {  // After first time, detect what has been already set
+#if QT_VERSION < 0x050000
       QwtScaleDiv* sdx = data_plot->axisScaleDiv( QwtPlot::xBottom );
       QwtScaleDiv* sdy = data_plot->axisScaleDiv( QwtPlot::yLeft   );
+#else
+      QwtScaleDiv* sdx = (QwtScaleDiv*)&data_plot->axisScaleDiv( QwtPlot::xBottom );
+      QwtScaleDiv* sdy = (QwtScaleDiv*)&data_plot->axisScaleDiv( QwtPlot::yLeft   );
+#endif
       last_xmin      = sdx->lowerBound();
       last_xmax      = sdx->upperBound();
       last_ymin      = sdy->lowerBound();
@@ -1156,7 +1166,7 @@ DbgLv(1) << "PltA: kpoint" << kpoint << "datsize" << curr_adata.size();
       else
          curv->setPen( pen_red  );            // Scan-focus pen
 
-      curv->setData( rr, vv, kpoint );        // Build a scan curve
+      curv->setSamples( rr, vv, kpoint );     // Build a scan curve
 //DbgLv(1) << "PltA:   scx" << scx << "rr0 vv0 rrn vvn"
 // << rr[0] << rr[kpoint-1] << vv[0] << vv[kpoint-1];
    }
@@ -1178,8 +1188,13 @@ DbgLv(1) << "PltA: last_xmin" << last_xmin;
    data_plot->replot();
 
    // Pick up the actual bounds plotted (including any Config changes)
+#if QT_VERSION < 0x050000
    QwtScaleDiv* sdx = data_plot->axisScaleDiv( QwtPlot::xBottom );
    QwtScaleDiv* sdy = data_plot->axisScaleDiv( QwtPlot::yLeft   );
+#else
+   QwtScaleDiv* sdx = (QwtScaleDiv*)&data_plot->axisScaleDiv( QwtPlot::xBottom );
+   QwtScaleDiv* sdy = (QwtScaleDiv*)&data_plot->axisScaleDiv( QwtPlot::yLeft   );
+#endif
    last_xmin      = sdx->lowerBound();
    last_xmax      = sdx->upperBound();
    last_ymin      = sdy->lowerBound();
@@ -1310,8 +1325,13 @@ void US_MwlRawViewer::prevPlot( void )
       pb_prev->setEnabled( false );
    }
 
+#if QT_VERSION < 0x050000
    QwtScaleDiv* sdx = data_plot->axisScaleDiv( QwtPlot::xBottom );
    QwtScaleDiv* sdy = data_plot->axisScaleDiv( QwtPlot::yLeft   );
+#else
+   QwtScaleDiv* sdx = (QwtScaleDiv*)&data_plot->axisScaleDiv( QwtPlot::xBottom );
+   QwtScaleDiv* sdy = (QwtScaleDiv*)&data_plot->axisScaleDiv( QwtPlot::yLeft   );
+#endif
    last_xmin      = sdx->lowerBound();
    last_xmax      = sdx->upperBound();
    last_ymin      = sdy->lowerBound();
@@ -1332,8 +1352,13 @@ void US_MwlRawViewer::nextPlot( void )
       pb_next->setEnabled( false );
    }
 
+#if QT_VERSION < 0x050000
    QwtScaleDiv* sdx = data_plot->axisScaleDiv( QwtPlot::xBottom );
    QwtScaleDiv* sdy = data_plot->axisScaleDiv( QwtPlot::yLeft   );
+#else
+   QwtScaleDiv* sdx = (QwtScaleDiv*)&data_plot->axisScaleDiv( QwtPlot::xBottom );
+   QwtScaleDiv* sdy = (QwtScaleDiv*)&data_plot->axisScaleDiv( QwtPlot::yLeft   );
+#endif
    last_xmin      = sdx->lowerBound();
    last_xmax      = sdx->upperBound();
    last_ymin      = sdy->lowerBound();
@@ -1623,8 +1648,8 @@ void US_MwlRawViewer::exclude_scans()
 DbgLv(1) << "Excl: kscan" << kscan;
    ct_from   ->disconnect();
    ct_to     ->disconnect();
-   ct_from   ->setMaxValue( kscan );
-   ct_to     ->setMaxValue( kscan );
+   ct_from   ->setMaximum( kscan );
+   ct_to     ->setMaximum( kscan );
    connect( ct_from,      SIGNAL( valueChanged( double ) ),
             this,         SLOT  ( exclude_from( double ) ) );
    connect( ct_to,        SIGNAL( valueChanged( double ) ),
@@ -1650,8 +1675,8 @@ DbgLv(1) << "Incl: nscan" << nscan << "kscn ecnt" << kscan << excludes.count();
 
    ct_from   ->disconnect();
    ct_to     ->disconnect();
-   ct_from   ->setMaxValue( kscan );
-   ct_to     ->setMaxValue( kscan );
+   ct_from   ->setMaximum( kscan );
+   ct_to     ->setMaximum( kscan );
    connect( ct_from,      SIGNAL( valueChanged( double ) ),
             this,         SLOT  ( exclude_from( double ) ) );
    connect( ct_to,        SIGNAL( valueChanged( double ) ),

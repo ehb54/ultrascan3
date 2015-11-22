@@ -5,6 +5,7 @@
 #include "us_gui_settings.h"
 #include "us_util.h"
 #include "us_gui_util.h"
+#include "qwt_point_data.h"
 
 US_IntensityRa::US_IntensityRa( 
       const QString runID, 
@@ -108,8 +109,8 @@ qDebug() << "Ints:dr_pl: xx0 xxn" << xx[0] << xx[scanData.size()-1];
 
    QwtPlotCurve* c1 = us_curve( data_plot, tr( "Intensity" ) );
    c1->setPen   ( QPen( QBrush( Qt::yellow ), 2 ) );
-   c1->setSymbol( sym );
-   c1->setData  ( xx, yy, szdata );
+   c1->setSymbol( &sym );
+   c1->setData  ( new QwtPointArrayData( xx, yy, szdata ) );
 
    data_plot->replot();
 }

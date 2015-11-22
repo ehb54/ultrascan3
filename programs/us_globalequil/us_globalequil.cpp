@@ -17,6 +17,10 @@
 #include "us_globalequil.h"
 #include "us_model_select.h"
 #include "us_eqreporter.h"
+#if QT_VERSION < 0x050000
+#define setSamples(a,b,c)  setData(a,b,c)
+#define setSymbol(a)       setSymbol(*a)
+#endif
 
 // main program
 int main( int argc, char* argv[] )
@@ -186,8 +190,8 @@ DbgLv(1) << " RedArrowIcon isNull" << red_arrow.isNull();
    pb_floatPar->setEnabled( false );
    pb_floatPar->setVisible( false );
    pb_initPars->setEnabled( false );
-   ct_scselect->setStep(  1.0 );
-   ct_scselect->setValue( 0.0 );
+   ct_scselect->setSingleStep(  1.0 );
+   ct_scselect->setValue     ( 0.0 );
 
    connect( pb_floatPar, SIGNAL( clicked()              ),
                          SLOT(   float_params()         ) );
@@ -488,7 +492,8 @@ DbgLv(1) << " LD: update_limit";
    update_limit( 0.9 );  // Possibly modify data ranges by OD limit
 
    // Reset the range of the scan counter to scans available
-   ct_scselect->setRange( 1.0, (double)jsscn, 1.0 );
+   ct_scselect->setRange( 1.0, (double)jsscn );
+   ct_scselect->setSingleStep( 1.0 );
 
    connect( tw_equiscns, SIGNAL( itemDoubleClicked( QTableWidgetItem* ) ),
             this,        SLOT(   doubleClickedItem( QTableWidgetItem* ) ) );
@@ -1002,8 +1007,8 @@ DbgLv(1) << "EdataPlot: radl radr" << radl << radr;
    QwtPlotGrid* grid = us_grid( equil_plot );
    grid->enableYMin( true );
    grid->enableY   ( true );
-   grid->setMajPen( QPen( US_GuiSettings::plotMajGrid(), 0, Qt::DashLine ) );
-   grid->setMinPen( QPen( US_GuiSettings::plotMinGrid(), 0, Qt::DotLine  ) );
+   grid->setMajorPen( QPen( US_GuiSettings::plotMajGrid(), 0, Qt::DashLine ) );
+   grid->setMinorPen( QPen( US_GuiSettings::plotMinGrid(), 0, Qt::DotLine  ) );
 
    // Set up the picker for mouse down, moves and up
    QwtPlotPicker* pick = new US_PlotPicker( equil_plot );
@@ -1082,16 +1087,16 @@ DbgLv(1) << "EdataPlot:   count" << count;
    equil_plot->setAxisScale( QwtPlot::xBottom, rlo, rhi );
    equil_plot->setAxisScale( QwtPlot::yLeft,   vlo, vhi );
 
-   QwtSymbol sym;
-   sym.setStyle( QwtSymbol::Ellipse );
-   sym.setPen  ( QPen( Qt::blue ) );
-   sym.setBrush( QBrush( Qt::yellow ) );
-   sym.setSize ( 10 );
+   QwtSymbol* sym = new QwtSymbol;
+   sym->setStyle( QwtSymbol::Ellipse );
+   sym->setPen  ( QPen( Qt::blue ) );
+   sym->setBrush( QBrush( Qt::yellow ) );
+   sym->setSize ( 10 );
 
    QwtPlotCurve* curve = us_curve( equil_plot, "Equil Data" );
    curve->setStyle( QwtPlotCurve::NoCurve );
-   curve->setSymbol( sym );
-   curve->setData( ra, va, count );
+   curve->setSymbol ( sym );
+   curve->setSamples( ra, va, count );
 
    equil_plot->replot();
 }
@@ -1124,22 +1129,22 @@ void US_GlobalEquil::edited_plot( void )
    equil_plot->detachItems( QwtPlotItem::Rtti_PlotCurve );
 
    // Set up symbols and curves for unedited and edited arrays
-   QwtSymbol symu;
-   symu.setStyle( QwtSymbol::Ellipse );
-   symu.setPen  ( QPen( Qt::blue ) );
-   symu.setBrush( QBrush( Qt::yellow ) );  // Unedited yellow
-   symu.setSize ( 10 );
-   QwtSymbol syme;
-   syme.setStyle( QwtSymbol::Ellipse );
-   syme.setPen  ( QPen( Qt::white ) );
-   syme.setBrush( QBrush( Qt::red ) );     // Edited red
-   syme.setSize ( 10 );
+   QwtSymbol* symu = new QwtSymbol;
+   symu->setStyle( QwtSymbol::Ellipse );
+   symu->setPen  ( QPen( Qt::blue ) );
+   symu->setBrush( QBrush( Qt::yellow ) );  // Unedited yellow
+   symu->setSize ( 10 );
+   QwtSymbol* syme = new QwtSymbol;
+   syme->setStyle( QwtSymbol::Ellipse );
+   syme->setPen  ( QPen( Qt::white ) );
+   syme->setBrush( QBrush( Qt::red ) );     // Edited red
+   syme->setSize ( 10 );
 
    QwtPlotCurve* curvu = us_curve( equil_plot, "Equil Data" );
-   curvu->setStyle( QwtPlotCurve::NoCurve );
+   curvu->setStyle ( QwtPlotCurve::NoCurve );
    curvu->setSymbol( symu );
    QwtPlotCurve* curve = us_curve( equil_plot, "Edited Data" );
-   curve->setStyle( QwtPlotCurve::NoCurve );
+   curve->setStyle ( QwtPlotCurve::NoCurve );
    curve->setSymbol( syme );
 
    // Set edited/unedited division based on lower/upper half mouse position
@@ -1158,8 +1163,8 @@ void US_GlobalEquil::edited_plot( void )
       ve       = vu + countu; 
    }
 
-   curvu->setData( ru, vu, countu );
-   curve->setData( re, ve, counte );
+   curvu->setSamples( ru, vu, countu );
+   curve->setSamples( re, ve, counte );
 
    equil_plot->replot();
 }

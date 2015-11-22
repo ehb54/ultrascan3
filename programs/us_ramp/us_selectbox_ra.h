@@ -2,9 +2,8 @@
 #ifndef US_SELECTBOX_H
 #define US_SELECTBOX_H
 
-#include <QtGui>
-
 #include "us_extern.h"
+#include "us_mwl_data.h"
 
 struct listInfo
 {

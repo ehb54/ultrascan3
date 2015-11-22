@@ -719,6 +719,7 @@ EXCLUDE                = ./doc/ \
                          ./utils/moc/ \
                          ./db/moc/ \
                          ./qwtplot3d-qt4/ \
+                         ./qwtplot3d/ \
                          ./tcltk/ \
                          ./somo/
 

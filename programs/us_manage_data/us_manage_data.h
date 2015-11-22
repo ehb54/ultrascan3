@@ -1,8 +1,6 @@
 #ifndef US_MANAGE_DATA_H
 #define US_MANAGE_DATA_H
 
-#include <QtGui>
-
 #include "us_extern.h"
 #include "us_data_model.h"
 #include "us_data_process.h"

@@ -1,11 +1,8 @@
 #ifndef US_MWLRAMP_H
 #define US_MWLRAMP_H
 
-#include <QtCore>
-#include <QtGui>
-
 #include "us_extern.h"
-#include "us_dataIO.h"
+#include "us_mwl_data.h"
 
 #ifndef DbgLv
 #define DbgLv(a) if(dbg_level>=a)qDebug()  //!< debug-level-conditioned qDebug()
@@ -43,17 +40,17 @@ public:
     };
     
     QString  		cur_dir;  	//!< Currently selected i/p data directory
-    QLineEdit* 		le_status;	//!< Status report LineEdit
-    int       		dbg_level;	//!< Debug level
-    int			nfile;		//! #  files to read
+    QLineEdit*    le_status;  //!< Status report LineEdit
+    int       		dbg_level;  //!< Debug level
+    int           nfile;      //! #  files to read
 
     // xml-data read by read_runxml()
-    QString   		runID;          //!< Run ID
-    double		radius;		//! measured radius position as double
-    QStringList		cellchans;	//! vector: cell and channel
-    QStringList		samplenames;	//! vector: sample name in corresponding channel
-    QVector<double>	menisci;	//! vector: solution meniscus
-    QVector<double>	bottoms;	//! vector: cell bottom
+    QString   		runID;      //!< Run ID
+    double        radius;     //! measured radius position as double
+    QStringList		cellchans;   //! vector: cell and channel
+    QStringList		samplenames; //! vector: sample name in corresponding channel
+    QVector<double>	menisci;	    //! vector: solution meniscus
+    QVector<double>	bottoms;	    //! vector: cell bottom
 
     double 		Temperature;	//! measurement temperature
 

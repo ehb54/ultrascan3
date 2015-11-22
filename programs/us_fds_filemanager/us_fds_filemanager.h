@@ -1,12 +1,12 @@
 #ifndef US_FDS_FILEMANAGER_H
 #define US_FDS_FILEMANAGER_H
 
-#include <QtGui>
-#include "qwt_plot_marker.h"
 #include "us_extern.h"
 #include "us_widgets.h"
 #include "us_help.h"
 #include "us_plot.h"
+
+#include "qwt_plot_marker.h"
 
 struct ScanInfo
 {

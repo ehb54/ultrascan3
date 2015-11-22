@@ -1,8 +1,6 @@
 #ifndef US_RASMOL_CTRL_H
 #define US_RASMOL_CTRL_H
 
-#include <QtGui>
-
 #include "us_extern.h"
 #include "us_widgets.h"
 #include "us_window_message.h"

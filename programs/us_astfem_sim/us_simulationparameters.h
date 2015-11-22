@@ -2,13 +2,11 @@
 #ifndef US_SIMULATIONPARAMETERS_GUI_H
 #define US_SIMULATIONPARAMETERS_GUI_H
 
-#include <QtGui>
-
-#include <qwt_counter.h>
-
 #include "us_widgets_dialog.h"
 #include "us_simparms.h"
 #include "us_help.h"
+
+#include <qwt_counter.h>
 
 //! \brief A window for editing simulation parameters
 class US_SimulationParametersGui : public US_WidgetsDialog

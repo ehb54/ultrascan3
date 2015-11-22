@@ -1,8 +1,6 @@
 #ifndef US_DATA_MODEL_H
 #define US_DATA_MODEL_H
 
-#include <QtGui>
-
 #include "us_extern.h"
 #include "us_widgets.h"
 #include "us_db2.h"

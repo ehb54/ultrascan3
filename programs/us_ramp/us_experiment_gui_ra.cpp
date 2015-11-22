@@ -1,7 +1,5 @@
 //! \file us_experiment_gui_ra.cpp
 
-#include <QtGui>
-
 #include "us_experiment_gui_ra.h"
 #include "us_passwd.h"
 #include "us_settings.h"

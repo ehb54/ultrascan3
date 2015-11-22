@@ -1546,7 +1546,7 @@ void US_DataModel::exclude_trees( )
 
          if ( isDba && isLoc )
          {  // If both, tree should not be excluded
-            exctr        = FALSE;
+            exctr        = false;
          }
 
          else if ( isDba )

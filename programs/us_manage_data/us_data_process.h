@@ -1,8 +1,6 @@
 #ifndef US_DATA_PROCESS_H
 #define US_DATA_PROCESS_H
 
-#include <QtGui>
-
 #include "us_extern.h"
 #include "us_data_model.h"
 #include "us_sync_exper.h"

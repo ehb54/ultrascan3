@@ -8,6 +8,11 @@
 #include "us_license.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"
+#if QT_VERSION < 0x050000
+#define setSamples(a,b,c)  setData(a,b,c)
+#define setMinimum(a)      setMinValue(a)
+#define setMaximum(a)      setMaxValue(a)
+#endif
 
 //! \brief Main program for us_dcdt. Loads translators and starts
 //         the class US_Dcdt.
@@ -35,7 +40,7 @@ US_Dcdt::US_Dcdt() : US_AnalysisBase2()
    //QLabel*       lb_aux    = us_banner( tr( "dC/dt Auxiliary Controls" ) );
    QLabel*       lb_sValue = us_label( tr( "S-value Cutoff:" ) );
    ct_sValue               = us_counter( 3, 0, 20, 20 );
-   ct_sValue->setStep( 0.1 );
+   ct_sValue->setSingleStep( 0.1 );
    connect( ct_sValue, SIGNAL( valueChanged ( double ) ), 
                        SLOT  ( sMaxChanged  ( double ) ) );
    
@@ -76,7 +81,7 @@ US_Dcdt::US_Dcdt() : US_AnalysisBase2()
    connect( pb_save,  SIGNAL( clicked() ), SLOT( save() ) );
 
    ct_boundaryPos    ->disconnect();
-   ct_boundaryPos    ->setMaxValue( 90.0 );
+   ct_boundaryPos    ->setMaximum ( 90.0 );
    ct_boundaryPos    ->setValue   ( 0.0  );
    ct_boundaryPercent->disconnect();
    ct_boundaryPercent->setValue   ( 100.0 );
@@ -142,16 +147,16 @@ void US_Dcdt::data_plot( void )
    // Set upper limit so plot marks plateaus
    ct_boundaryPos    ->disconnect();
    ct_boundaryPercent->disconnect();
-   ct_boundaryPercent->setMaxValue( 100.0 );
+   ct_boundaryPercent->setMaximum ( 100.0 );
    ct_boundaryPercent->setValue   ( 100.0 - ct_boundaryPos->value() );
 
    // Do scans plot
    US_AnalysisBase2::data_plot();
 
    // Restore boundary limits
-   ct_boundaryPercent->setMaxValue( 100.0 );
+   ct_boundaryPercent->setMaximum ( 100.0 );
    ct_boundaryPercent->setValue   ( 100.0 - ct_boundaryPos->value() );
-   ct_boundaryPos    ->setMaxValue( 100.0 );
+   ct_boundaryPos    ->setMaximum ( 100.0 );
    connect( ct_boundaryPos, SIGNAL ( valueChanged ( double ) ),
 			                   SLOT   ( boundary_pos ( double ) ) );
 
@@ -253,7 +258,7 @@ void US_Dcdt::data_plot( void )
       previous = i;
    }
 
-   ct_sValue->setMaxValue( ceil( s_max ) );
+   ct_sValue->setMaximum ( ceil( s_max ) );
 
    if ( s_max < sMax )
    {
@@ -320,7 +325,7 @@ next: avgDcdt[ j ] /= ( count - 1 );
    }
 
    // Draw plot
-   data_plot1->clear();
+//   data_plot1->clear();
    us_grid( data_plot1 );
 
    data_plot1->setTitle( tr( "Time Derivative (dC/dt)\n" ) +
@@ -353,7 +358,7 @@ next: avgDcdt[ j ] /= ( count - 1 );
             curve = us_curve( data_plot1, 
                   tr( "Scan " ) + QString::number( i + 1 ) );
 
-            curve->setData( x.data(), dcdt[ i ].data(), arraySizes[ i ] );
+            curve->setSamples( x.data(), dcdt[ i ].data(), arraySizes[ i ] );
          }
 
          data_plot1->setAxisAutoScale( QwtPlot::xBottom );
@@ -365,8 +370,8 @@ next: avgDcdt[ j ] /= ( count - 1 );
             curve = us_curve( data_plot1, 
                   tr( "Scan " ) + QString::number( i + 1 ) );
 
-            curve->setData( sValues[ i ].data(), dcdt[ i ].data(), 
-                            arraySizes[ i ] );
+            curve->setSamples( sValues[ i ].data(), dcdt[ i ].data(), 
+                               arraySizes[ i ] );
          }
          
          data_plot1->setAxisScale( QwtPlot::xBottom, 0.0, ct_sValue->value() );
@@ -377,7 +382,7 @@ next: avgDcdt[ j ] /= ( count - 1 );
                                    tr( "Average g<sup>*</sup>(s)" ) );
 
          curve = us_curve( data_plot1, tr( "Average g*(s)" ) );
-         curve->setData( avgS.data(), avgDcdt.data(), arrayLength );
+         curve->setSamples( avgS.data(), avgDcdt.data(), arrayLength );
 
          data_plot1->setAxisScale( QwtPlot::xBottom, 0.0, ct_sValue->value() );
          break;

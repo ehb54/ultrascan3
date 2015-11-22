@@ -6,7 +6,6 @@
 #include "us_dataIO.h"
 #include "us_solution.h"
 #include "us_mwlramp.h"
-#include <QtCore>
 
 
 //! \class US_Ramp
@@ -76,22 +75,14 @@ class US_Ramp
       //! \param all_chaninfo      A reference to a structure provided by the
       //!           calling function that already contains all the different
       //!           cell/channel/wavelength combinations in the data. 
-      //! \param runType           A reference to a variable that already
-      //!           contains the type of data ( "RA", "IP", "RI", "FI", "WA",
-      //!           or "WI"). This information will affect how the data is
-      //!           written.
       //! \param runID             The run ID of the experiment.
       //! \param dirname           Directory in which files are to be written.
-      //! \param saveGUIDs         Boolean value that indicates whether data
-      //!           has been saved to disk before and doesn't require new GUIDs
       //! \returns      One of the ioError status codes, above
       static int    saveToDisk(
                     QVector< US_mwlRamp::RampRawData* >& ,
                     QList< TripleInfo >& ,
                     QString ,
-                    QString ,
-                    QString,
-                    bool );
+                    QString );
 
      //! \brief Writes one cellchan combo to one .ramp file
      static int writeRawData(QString file,
@@ -101,8 +92,7 @@ class US_Ramp
     static int  readUS3Disk(
      QString dir,
      QVector< US_mwlRamp::RampRawData >& rawConvertedData,
-     QList< TripleInfo >& cellchans,
-     QString& runType 
+     QList< TripleInfo >& cellchans
      );
      
      //! \brief Reads one cellchan combo from a .ramp file

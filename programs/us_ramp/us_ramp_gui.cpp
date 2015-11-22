@@ -24,14 +24,16 @@
 #include "us_images.h"
 #include "us_rotor_gui.h"
 #include "qwt_scale_engine.h"
+#if QT_VERSION < 0x050000
+#define setSamples(a,b,c) setData(a,b,c)
+#endif
 
-#ifdef WIN32
+#ifdef Q_OS_WIN
 #include <float.h>
 #ifndef isnan
 #define isnan _isnan
 #endif
 #endif
-
 
 
 int main( int argc, char* argv[] )
@@ -986,7 +988,7 @@ void US_RampGui::loadUS3Disk( QString dir )
    qApp->processEvents();
 DbgLv(1) << "CGui: ldUS3Dk: call read";
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
-   int status = US_Ramp::readUS3Disk( dir, allData, all_chaninfo, runType );
+   int status = US_Ramp::readUS3Disk( dir, allData, all_chaninfo );
    QApplication::restoreOverrideCursor();
 //    return;
 
@@ -1994,7 +1996,7 @@ int US_RampGui::saveUS3Disk( void )
    }
    qDebug()<<"i size_allchaninfo size_alldata"<<all_chaninfo.size()<<allData.size();
  
-  US_Ramp::saveToDisk(outData,all_chaninfo,runType,runID,dirname,true);
+  US_Ramp::saveToDisk( outData, all_chaninfo, runID, dirname );
   
   // Now try to write the xml file
   int status;
@@ -2054,9 +2056,11 @@ DbgLv(1) << "SV:   fileCount" << fileCount;
    le_status->setText( tr( "%1 %2 files were written to disk." )
                        .arg( fileCount ).arg( runID ) );
    qApp->processEvents();
-  
+
    if ( saveStatus == NOT_SAVED )
       saveStatus = HD_ONLY;
+
+   return( US_Ramp::OK );
 }
 
 //////////////////////////////// Maybe useful to check db-sync works
@@ -2521,8 +2525,8 @@ void US_RampGui::plot_current( void )
    data_plot->detachItems();
    grid = us_grid( data_plot );
    
-   int n_wl = currentData.intarray.size();
    int n = currentData.intarray[0].size();
+// int n_wl = currentData.intarray.size();
 //    qDebug() << "_________________________________n_n_wl"<<n<<n_wl;
    
    QVector< double > w2tv( currentData.intarray[0].size() );		// initialize plot vectors
@@ -2549,7 +2553,7 @@ void US_RampGui::plot_current( void )
      
    QwtPlotCurve *c = us_curve (data_plot, "RawData at fist WaveLength");
    
-   c->setData( w2t, intarray, (int)n );
+   c->setSamples( w2t, intarray, (int)n );
    double minw2t = w2t[0];
    double maxw2t = w2t[n-1];
    // min and max indexes for the meas data change after
@@ -2568,7 +2572,11 @@ void US_RampGui::plot_current( void )
    qDebug() << minw2t << maxw2t << padw2t << minw2t-padw2t<<maxw2t+padw2t;
    
    qDebug()<<QwtPlot::xBottom<<QwtPlot::yLeft;
+#if QT_VERSION < 0x050000
    data_plot->setAxisScaleEngine(QwtPlot::xBottom, new QwtLog10ScaleEngine);
+#else
+   data_plot->setAxisScaleEngine(QwtPlot::xBottom, new QwtLogScaleEngine);
+#endif
    data_plot->setAxisScale( QwtPlot::xBottom  , 100, maxw2t + padw2t );
    data_plot->setAxisScale( QwtPlot::yLeft, minint - padint, maxint + padint );
 //    data_plot->setAxisTitle( 2, "w2t");

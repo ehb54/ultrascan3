@@ -1,8 +1,6 @@
 #ifndef US_DMGA_INIT_H
 #define US_DMGA_INIT_H
 
-#include <QtGui>
-
 #include "us_extern.h"
 #include "us_dmga_constr.h"
 #include "us_widgets.h"

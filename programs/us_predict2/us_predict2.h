@@ -1,8 +1,6 @@
 #ifndef US_PREDICT2_H
 #define US_PREDICT2_H
 
-#include <QtGui>
-
 #include "us_extern.h"
 #include "us_widgets.h"
 #include "us_help.h"

@@ -27,12 +27,12 @@ US_ClipData::US_ClipData( double& concentration, double& radius,
                         + QString().sprintf( "%4.2f" , loading ) + " )" );
 
    ct_conc = us_counter( 2, loading, conc, loading * 2 );
-   ct_conc->setStep( 0.1 );
+   ct_conc->setSingleStep( 0.1 );
 
    QLabel* lb_rad     = us_label( tr( "Maximum Radius:" ) );
 
    ct_rad = us_counter( 2, meniscus, rad, rad ); 
-   ct_rad->setStep( 0.01 );
+   ct_rad->setSingleStep( 0.01 );
 
    QBoxLayout* buttons    = new QHBoxLayout();
    QPushButton* pb_help   = us_pushbutton( tr( "Help" ) );

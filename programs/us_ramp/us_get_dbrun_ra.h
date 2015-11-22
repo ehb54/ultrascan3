@@ -2,8 +2,6 @@
 #ifndef US_GET_DBRUN_H
 #define US_GET_DBRUN_H
 
-#include <QtGui>
-
 #include "us_extern.h"
 #include "us_widgets_dialog.h"
 

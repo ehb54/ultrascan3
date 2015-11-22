@@ -2,8 +2,6 @@
 #ifndef US_RAMP_GUI_H
 #define US_RAMP_GUI_H
 
-#include <QtGui>
-
 #include "us_extern.h"
 #include "us_widgets.h"
 #include "us_help.h"
@@ -14,6 +12,7 @@
 #include "us_dataIO.h"
 #include "us_solution.h"
 #include "us_selectbox_ra.h"
+
 #ifndef DbgLv
 #define DbgLv(a) if(dbg_level>=a)qDebug()  //!< debug-level-conditioned qDebug()
 #endif

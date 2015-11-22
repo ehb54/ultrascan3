@@ -70,7 +70,7 @@ qDebug() << "CG: nefmods" << nefmods;
 
    lb_nsteps   = us_label( tr( "Number of Color Steps:" ) );
    ct_nsteps   = us_counter( 2, 1.0, 10.0, 1.0 );
-   ct_nsteps->setStep( 1.0 );
+   ct_nsteps->setSingleStep( 1.0 );
 
    connect( ct_nsteps, SIGNAL( valueChanged( double ) ),
             this,      SLOT( update_steps( double ) ) );
@@ -84,12 +84,19 @@ qDebug() << "CG: nefmods" << nefmods;
 
    QGridLayout* colors = new QGridLayout();
 
-   // check need to change style of buttons so that they can be colored
-   QStyle* btnsty  = new QPlastiqueStyle();   // style sure to be colorable
+   // Check need to change style of buttons so that they can be colored
    QString stynam  = qApp->style()->objectName();
+#if QT_VERSION > 0x050000
+   QStyle* btnsty  = QStyleFactory::create( "fusion" );
+   bool needbsty   = stynam.startsWith( "windows", Qt::CaseInsensitive ) ||
+                     stynam.startsWith( "mac"    , Qt::CaseInsensitive );
+#else
+   QStyle* btnsty  = new QPlastiqueStyle();   // style sure to be colorable
    bool needbsty   = stynam.startsWith( "windowsv", Qt::CaseInsensitive ) ||
                      stynam.startsWith( "windowsx", Qt::CaseInsensitive ) ||
                      stynam.startsWith( "mac"     , Qt::CaseInsensitive );
+#endif
+qDebug() << "stynam" << stynam << "needbsty" << needbsty;
    int c_row = 0;
 
    for ( int ii = 0; ii < 11; ii++ )
@@ -100,7 +107,7 @@ qDebug() << "CG: nefmods" << nefmods;
          pb_c[ ii ]->setStyle( btnsty );
 
       ct_c[ ii ] = us_counter( 2, 1.0, 101.0, 10.0 );
-      ct_c[ ii ]->setStep( 1.0 );
+      ct_c[ ii ]->setSingleStep( 1.0 );
 
       colors->addWidget( pb_c[ ii ], c_row,   0 );
       colors->addWidget( ct_c[ ii ], c_row++, 1 );

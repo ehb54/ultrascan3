@@ -7,6 +7,10 @@
 #include "us_license.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"
+#if QT_VERSION < 0x050000
+#define setSamples(a,b,c)  setData(a,b,c)
+#define setSymbol(a)       setSymbol(*a)
+#endif
 
 //! \brief Main program. Loads translators and starts
 //         the class US_Convert.
@@ -66,7 +70,7 @@ void US_SecondMoment::data_plot( void )
    le_skipped->setText( QString::number( exclude ) );
 
    // Draw plot
-   data_plot1->clear();
+//   data_plot1->clear();
    us_grid( data_plot1 );
 
    data_plot1->setTitle( tr( "Run " ) + d->runID + tr( ": Cell " ) + d->cell
@@ -134,7 +138,7 @@ void US_SecondMoment::data_plot( void )
    // be included in the line fit:
     
    QwtPlotCurve* curve;
-   QwtSymbol     sym;
+   QwtSymbol*    sym = new QwtSymbol;
    
    int count = 0;
 
@@ -150,14 +154,14 @@ void US_SecondMoment::data_plot( void )
 
    curve = us_curve( data_plot1, tr( "Non-cleared Sedimentation Coefficients" ) );
 
-   sym.setStyle( QwtSymbol::Ellipse );
-   sym.setPen  ( QPen( Qt::white ) );
-   sym.setBrush( QBrush( Qt::red ) );
-   sym.setSize ( 8 );
+   sym->setStyle( QwtSymbol::Ellipse );
+   sym->setPen  ( QPen( Qt::white ) );
+   sym->setBrush( QBrush( Qt::red ) );
+   sym->setSize ( 8 );
    
-   curve->setStyle ( QwtPlotCurve::NoCurve );
-   curve->setSymbol( sym );
-   curve->setData  ( x.data(), y.data(), count );
+   curve->setStyle  ( QwtPlotCurve::NoCurve );
+   curve->setSymbol ( sym );
+   curve->setSamples( x.data(), y.data(), count );
 
    // Curve 2
    count          = 0;
@@ -175,12 +179,12 @@ void US_SecondMoment::data_plot( void )
 
    average_2nd = (count > 0 ) ? average / count : 0.0;
 
-   sym.setPen  ( QPen  ( Qt::blue  ) );
-   sym.setBrush( QBrush( Qt::white ) );
+   sym->setPen  ( QPen  ( Qt::blue  ) );
+   sym->setBrush( QBrush( Qt::white ) );
    
-   curve = us_curve( data_plot1, tr( "Cleared Sedimentation Coefficients" ) );
-   curve->setSymbol( sym );
-   curve->setData( x.data(), y.data(), count );
+   curve  = us_curve( data_plot1, tr( "Cleared Sedimentation Coefficients" ) );
+   curve->setSymbol ( sym );
+   curve->setSamples( x.data(), y.data(), count );
    
    // Curve 3
    x[ 0 ] = 0.0;
@@ -192,7 +196,7 @@ void US_SecondMoment::data_plot( void )
    {
       curve = us_curve( data_plot1, tr( "Average" ) );
       curve->setPen( QPen( Qt::green ) );
-      curve->setData( x.data(), y.data(), 2 );
+      curve->setSamples( x.data(), y.data(), 2 );
    }
 
    data_plot1->setAxisScale   ( QwtPlot::xBottom, 0.0, x[ 1 ] + 0.25, 0.0 );
@@ -222,8 +226,8 @@ void US_SecondMoment::data_plot( void )
          curve = us_curve( data_plot1, 
                tr( "Scan %1 Exclude Marker" ).arg( index + 1 ) );
 
-         curve->setPen( QPen( QBrush( Qt::red ), 1.0 ) );
-         curve->setData( x.data(), y.data(), 2 );
+         curve->setPen    ( QPen( QBrush( Qt::red ), 1.0 ) );
+         curve->setSamples( x.data(), y.data(), 2 );
       }
    }
 
