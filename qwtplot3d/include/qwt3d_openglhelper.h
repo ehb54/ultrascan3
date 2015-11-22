@@ -11,6 +11,9 @@
 #if QT_VERSION < 0x047999
 #include <GL/glu.h>
 #endif
+#if QT_VERSION > 0x050000
+#include <GL/glu.h>
+#endif
 
 namespace Qwt3D
 {
