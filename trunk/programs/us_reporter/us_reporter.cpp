@@ -2,8 +2,6 @@
 
 #include <QApplication>
 #include <QtSvg>
-#include <QWebView>
-#include <QWebSettings>
 
 #include "us_reporter.h"
 #include "us_sync_db.h"
@@ -39,7 +37,6 @@ US_Reporter::US_Reporter() : US_Widgets()
    setWindowTitle( tr( "Report Chooser/Generator" ) );
    setPalette( US_GuiSettings::frameColor() );
    dbg_level   = US_Settings::us_debug();
-   websetting  = NULL;
    archdir     = US_Settings::archiveDir() + "/";
    clean_etc_dir();
 
@@ -1139,7 +1136,7 @@ DbgLv(1) << " size" << pixmap.size() << " fileimg" << fileimg;
       QFile::copy( idesc->filepath, pagedir + "/" + idesc->filename );
    }
 
-   write_pdf();                 // Create the PDF version of the web view
+   write_pdf();                 // Create the PDF version of the report
 
    changed = false;
    QApplication::restoreOverrideCursor();

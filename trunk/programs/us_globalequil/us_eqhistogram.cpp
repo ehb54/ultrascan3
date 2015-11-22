@@ -4,6 +4,10 @@
 #include "us_gui_settings.h"
 #include "us_settings.h"
 #include "us_math2.h"
+#if QT_VERSION < 0x050000
+#define setSamples(a,b,c)  setData(a,b,c)
+#define setSymbol(a)       setSymbol(*a)
+#endif
 
 #ifdef ARRAY_SIZE
 #undef ARRAY_SIZE
@@ -194,18 +198,18 @@ qDebug() << "UH: wtitle" << wtitle;
    hcurve->setStyle( QwtPlotCurve::Sticks );
 qDebug() << "UH: x0 x1 xm xn" << xplot[0] << xplot[1] << xplot[48] << xplot[49];
 qDebug() << "UH: y0 y1 ym yn" << yplot[0] << yplot[1] << yplot[48] << yplot[49];
-   hcurve->setData( xplot, yplot, points );
+   hcurve->setSamples( xplot, yplot, points );
 
    // Add a "curve" of circles at the max point of each bar
    QwtPlotCurve* pcurve = us_curve( hist_plot, "Histogram MaxPoints" );
    pcurve->setStyle( QwtPlotCurve::NoCurve );
-   QwtSymbol sym;
-   sym.setStyle( QwtSymbol::Ellipse );
-   sym.setPen  ( QPen( Qt::blue ) );
-   sym.setBrush( QBrush( Qt::yellow ) );
-   sym.setSize ( 12 );
-   pcurve->setSymbol( sym );
-   pcurve->setData( xplot, yplot, points );
+   QwtSymbol* sym = new QwtSymbol;
+   sym->setStyle( QwtSymbol::Ellipse );
+   sym->setPen  ( QPen( Qt::blue ) );
+   sym->setBrush( QBrush( Qt::yellow ) );
+   sym->setSize ( 12 );
+   pcurve->setSymbol ( sym );
+   pcurve->setSamples( xplot, yplot, points );
 
    // Display the plot
    hist_plot->replot();

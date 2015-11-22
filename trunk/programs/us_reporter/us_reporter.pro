@@ -1,6 +1,9 @@
 include( ../../gui.pri )
 
-QT           += xml svg webkit
+QT           += xml svg
+greaterThan( QT_VERSION, 4.99 ) {
+QT           += printsupport
+}
 
 TARGET        = us_reporter
 

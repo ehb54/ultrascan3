@@ -1,11 +1,10 @@
 //! \file us_ramp.cpp
 
+#include "us_ramp.h"
 #include "us_gui_settings.h"
 #include "us_math2.h"
 #include "us_util.h"
-#include "us_ramp.h"
 #include "us_settings.h"
-// #include "us_convertio.h"
 #include "stdio.h"
 
 #include <QDomDocument>
@@ -28,18 +27,13 @@ US_Ramp::US_Ramp( )
 int US_Ramp::saveToDisk(
     QVector< US_mwlRamp::RampRawData* >& rawConvertedData,
     QList< TripleInfo >& all_chaninfo,
-    QString runType,
     QString runID,
-    QString dirname,
-    bool saveGUIDs
+    QString dirname
     )
 {
   //qDebug() << "description"<<rawConvertedData[0]->description;
    if ( rawConvertedData[ 0 ]->intarray.empty() ) 
       return NODATA;
-
-   // Write the data
-   int status;
 
    // Make sure directory is empty
    QDir d( dirname );
@@ -124,12 +118,12 @@ int US_Ramp::writeRawData( QString file, US_mwlRamp::RampRawData& data )
 //    write( ds, data.type, 2, crc );
 
    // Write cell
-   char c = data.cell.toAscii();
+   char c = data.cell.toLatin1();
    int ic = c - '0';
    write( ds, (const char*) &ic, 1, crc );
 
    // Write channel
-   c = data.chan.toAscii();
+   c = data.chan.toLatin1();
    write( ds, (const char*)&c, 1, crc );
 
 //    // Create and write a guid
@@ -277,8 +271,7 @@ int US_Ramp::writeRawData( QString file, US_mwlRamp::RampRawData& data )
 int  US_Ramp::readUS3Disk(
      QString dir,
      QVector< US_mwlRamp::RampRawData >& rawConvertedData,
-     QList< TripleInfo >& all_chaninfo,
-     QString& runType 
+     QList< TripleInfo >& all_chaninfo
      )
 {
    rawConvertedData.clear();
@@ -293,9 +286,7 @@ int  US_Ramp::readUS3Disk(
    if ( files.size() == 0 )
       return NODATA;
 
-//    // Get runType
    QStringList part = files[ 0 ].split( "." );
-//    runType = part[ 1 ];
 
    // Set up cell / channel combinations
    all_chaninfo.clear();
@@ -303,11 +294,6 @@ int  US_Ramp::readUS3Disk(
    {
       part.clear();
       part = files[ i ].split( "." );
-//       QString wl;
-//       if ( runType == "WA" )
-//          wl = QString::number( part[ 4 ].toDouble() / 1000.0 );
-//       else
-//          wl = part[ 4 ];
 
       TripleInfo t;
 
@@ -359,18 +345,7 @@ int US_Ramp::readRawData( const QString file, US_mwlRamp::RampRawData& data )
       quint32 version = ( ( ver[ 0 ] & 0x0f ) << 8 ) | ( ver[ 1 ] & 0x0f );
       //qDebug() <<"readmagic"<<version;
       if ( version != format_version ) qDebug() <<"this ramp data version is bad!"<<version; // throw BAD_VERSION;
-// 
-//       // Read and get the file type
-//       char type[ 3 ];
-//       read( ds, type, 2, crc );
-//       type[ 2 ] = '\0';
-//     
-//       QStringList types = QStringList() << "RA" << "IP" << "RI" << "FI" 
-//                                         << "WA" << "WI";
-//     
-//       if ( ! types.contains( QString( type ) ) ) throw BADTYPE;
-//       strncpy( data.type, type, 2 );
-// 
+
       // Get the cell
       union 
       { char c[ 4 ];
@@ -408,12 +383,12 @@ int US_Ramp::readRawData( const QString file, US_mwlRamp::RampRawData& data )
       qDebug()<<"readchan" << data.chan << data.description;
       
       
-// Get the parameters to expand the values
-      union
-      {
-         char    c[ 2 ];
-         quint16 I;
-      } si;
+      // Get the parameters to expand the values
+//      union
+//      {
+//         char    c[ 2 ];
+//         quint16 I;
+//      } si;
 
       union
       {
@@ -525,204 +500,6 @@ int US_Ramp::readRawData( const QString file, US_mwlRamp::RampRawData& data )
    ff.close();
    return err;
 }
-
-
-// void US_Ramp::setTriples( 
-//      QList< US_DataIO::BeckmanRawScan >& rawLegacyData,
-//      QList< TripleInfo >&     triples,
-//      QString                              runType,
-//      double                               tolerance )
-// {
-//    // Wavelength data is handled differently here
-//    if ( runType == "WA" )
-//       setCcrTriples( rawLegacyData, triples, tolerance );
-//    else
-//       setCcwTriples( rawLegacyData, triples, tolerance );
-// 
-// }
-// 
-// void US_Ramp::setCcwTriples( 
-//      QList< US_DataIO::BeckmanRawScan >& rawLegacyData,
-//      QList< TripleInfo >&     triples,
-//      double                               tolerance )
-// {
-//    // Most triples are ccw
-//    triples.clear();
-// 
-//    // Get wavelengths
-//    QStringList wavelengths;
-// 
-//    for ( int i = 0; i < rawLegacyData.size(); i++ )
-//    {
-//       QString wl = QString::number( rawLegacyData[ i ].rpoint, 'f', 1 );
-//       wavelengths << wl;
-//    }
-// 
-//    // Merge wavelengths
-//    wavelengths.sort();
-// 
-//    QList< QList< double > > modes;
-//    QList< double >          mode;
-//    
-//    for ( int i = 0; i < wavelengths.size(); i++ )
-//    {
-//       double wl = wavelengths[ i ].toDouble();
-// 
-//       if ( ! mode.empty()  &&  fabs( mode.last() - wl ) > tolerance )
-//       {
-//          modes << mode;
-//          mode.clear();
-//       }
-// 
-//       mode << wl;   
-//    }
-// 
-//    if ( mode.size() > 0 ) modes << mode;
-// 
-//    // Now we have a list of modes.  
-//    // Average each list and round to the closest integer.
-//    QList< double > wl_average;
-// 
-//    for ( int i = 0; i < modes.size(); i++ )
-//    {
-//       double sum = 0.0;
-// 
-//       for ( int j = 0; j < modes[ i ].size(); j++ ) sum += modes[ i ][ j ]; 
-// 
-//       wl_average << (double) round( 10.0 * sum / modes[ i ].size() ) / 10.0;
-//    }
-// 
-//    // Now that we have a more reliable list of wavelengths, let's
-//    // find out the possible cell, channel, and wavelength combinations
-//    for ( int i = 0; i < rawLegacyData.size(); i++ )
-//    {
-//       QString cell       = QString::number( rawLegacyData[ i ].cell );
-//       QString channel    = QString( rawLegacyData[ i ].channel );
-//       double wl          = rawLegacyData[ i ].rpoint;
-//       QString wavelength = "0";
-// 
-//       // find the average wavelength
-//       for ( int j = 0; j < wl_average.size(); j++ )
-//       {
-//          if ( fabs( wl_average[ j ] - wl ) < tolerance )
-//          {
-//             wavelength = QString::number( (int) round( wl_average[ j ] ) );
-//             break;
-//          }
-//       }
-// 
-//       QString t = cell + " / " + channel + " / " + wavelength;
-//       bool found = false;
-//       for ( int j = 0; j < triples.size(); j++ )
-//       {
-//          if ( triples[ j ].tripleDesc == t )
-//             found = true;
-//       }
-//       if ( ! found )
-//       {
-//          TripleInfo triple;
-//          triple.tripleDesc = t;
-//          triple.tripleID   = triples.size();    // The next number
-//          triples << triple;
-//       }
-//    }
-// }
-// 
-// void US_Ramp::setCcrTriples( 
-//      QList< US_DataIO::BeckmanRawScan >& rawLegacyData,
-//      QList< TripleInfo >&     triples,
-//      double                               tolerance )
-// {
-//    // First of all, wavelength triples are ccr.
-//    triples.clear();
-// 
-//    // Now get the radius values
-//    QStringList radii;
-// 
-//    for ( int i = 0; i < rawLegacyData.size(); i++ )
-//    {
-//       QString r = QString::number( rawLegacyData[ i ].rpoint, 'f', 1 );
-//       radii << r;
-//    }
-// 
-//    // Merge radii
-// 
-//    radii.sort();
-// 
-//    QList< QList< double > > modes;
-//    QList< double >          mode;
-//    
-//    for ( int i = 0; i < radii.size(); i++ )
-//    {
-//       double r = radii[ i ].toDouble();
-// 
-//       if ( ! mode.empty()  &&  fabs( mode.last() - r ) > tolerance )
-//       {
-//          modes << mode;
-//          mode.clear();
-//       }
-// 
-//       mode << r;   
-//    }
-// 
-//    if ( mode.size() > 0 ) modes << mode;
-// 
-//    // Now we have a list of modes.  
-//    // Average each list and round to the closest integer.
-//    QList< double > r_average;
-// 
-//    for ( int i = 0; i < modes.size(); i++ )
-//    {
-//       double sum = 0.0;
-// 
-//       for ( int j = 0; j < modes[ i ].size(); j++ ) sum += modes[ i ][ j ]; 
-// 
-//       r_average << (double) round( 10.0 * sum / modes[ i ].size() ) / 10.0;
-//    }
-// 
-//    // Now that we have a more reliable list of radii, let's
-//    // find out the possible cell, channel, and radius combinations
-//    for ( int i = 0; i < rawLegacyData.size(); i++ )
-//    {
-//       QString cell       = QString::number( rawLegacyData[ i ].cell );
-//       QString channel    = QString( rawLegacyData[ i ].channel );
-//       double r           = rawLegacyData[ i ].rpoint;
-//       QString radius     = "0";
-// 
-//       // find the average radius
-//       for ( int j = 0; j < r_average.size(); j++ )
-//       {
-//          if ( fabs( r_average[ j ] - r ) < tolerance )
-//          {
-//             radius = QString::number( r_average[ j ] );
-//             break;
-//          }
-//       }
-// 
-//       QString t = cell + " / " + channel + " / " + radius;
-//       bool found = false;
-//       for ( int j = 0; j < triples.size(); j++ )
-//       {
-//          if ( triples[ j ].tripleDesc == t )
-//             found = true;
-//       }
-//       if ( ! found )
-//       {
-//          TripleInfo triple;
-//          triple.tripleID   = triples.size();    // The next number
-//          triple.tripleDesc = t;
-//          triples << triple;
-//       }
-//    }
-// }
-// 
-// void US_Ramp::setInterpolated ( unsigned char* bitmap, int location )
-// {
-//    int byte = location / 8;
-//    int bit  = location % 8;
-// 
-//    bitmap[ byte ] |= 1 << ( 7 - bit );
-// }
 
 // Initializations
 US_Ramp::TripleInfo::TripleInfo()

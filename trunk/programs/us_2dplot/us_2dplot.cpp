@@ -10,6 +10,11 @@
 #include "us_run_details2.h"
 #include "us_passwd.h"
 
+#include "qwt_scale_engine.h"
+#if QT_VERSION < 0x050000
+#define setSamples(a,b,c)  setData(a,b,c)
+#endif
+
 //! \brief program for plotting an arbitrary function
 
 int main( int argc, char* argv[] )
@@ -51,7 +56,8 @@ US_2dPlot::US_2dPlot() : US_Widgets()
    top->addWidget( lbl_par1, row++, 0 );
 
    ct_par1 = new QwtCounter(this); // set parameter 1
-   ct_par1->setRange( -50, 50, 0.01 );
+   ct_par1->setRange( -50, 50 );
+   ct_par1->setSingleStep( 0.01 );
    ct_par1->setValue( par1 );
    ct_par1->setNumButtons( 3 );
    connect (ct_par1, SIGNAL(valueChanged (double)), this, SLOT(update_par1(double)));
@@ -61,7 +67,8 @@ US_2dPlot::US_2dPlot() : US_Widgets()
    top->addWidget( lbl_par2, row++, 0 );
 
    ct_par2 = new QwtCounter(this); // set parameter 2
-   ct_par2->setRange( -50, 50, 0.01 );
+   ct_par2->setRange( -50, 50 );
+   ct_par2->setSingleStep( 0.01 );
    ct_par2->setValue( par2 );
    ct_par2->setNumButtons( 3 );
    connect (ct_par2, SIGNAL(valueChanged (double)), this, SLOT(update_par2(double)));
@@ -71,7 +78,8 @@ US_2dPlot::US_2dPlot() : US_Widgets()
    top->addWidget( lbl_par3, row++, 0 );
 
    ct_par3 = new QwtCounter(this); // set parameter 3
-   ct_par3->setRange( -50, 50, 0.01 );
+   ct_par3->setRange( -50, 50 );
+   ct_par3->setSingleStep( 0.01 );
    ct_par3->setValue( par3 );
    ct_par3->setNumButtons( 3 );
    connect (ct_par3, SIGNAL(valueChanged (double)), this, SLOT(update_par3(double)));
@@ -81,7 +89,8 @@ US_2dPlot::US_2dPlot() : US_Widgets()
    top->addWidget( lbl_par4, row++, 0 );
 
    ct_par4 = new QwtCounter(this); // set parameter 4
-   ct_par4->setRange( -50, 50, 0.01 );
+   ct_par4->setRange( -50, 50 );
+   ct_par4->setSingleStep( 0.01 );
    ct_par4->setValue( par4 );
    ct_par4->setNumButtons( 3 );
    connect (ct_par4, SIGNAL(valueChanged (double)), this, SLOT(update_par4(double)));
@@ -91,7 +100,8 @@ US_2dPlot::US_2dPlot() : US_Widgets()
    top->addWidget( lbl_resolution, row++, 0 );
 
    ct_resolution = new QwtCounter(this); // set s-value resolution
-   ct_resolution->setRange( -50, 50, 0.1 );
+   ct_resolution->setRange( -50, 50 );
+   ct_resolution->setSingleStep( 0.1 );
    ct_resolution->setValue( resolution );
    ct_resolution->setNumButtons( 3 );
    connect (ct_resolution, SIGNAL(valueChanged (double)), this, SLOT(update_resolution(double)));
@@ -101,7 +111,8 @@ US_2dPlot::US_2dPlot() : US_Widgets()
    top->addWidget( lbl_model, row++, 0 );
 
    ct_model = new QwtCounter(this); // set s-value model
-   ct_model->setRange( 1, 3, 1 );
+   ct_model->setRange( 1, 3 );
+   ct_model->setSingleStep( 1 );
    ct_model->setValue( model );
    ct_model->setNumButtons( 1 );
    connect (ct_model, SIGNAL(valueChanged (double)), this, SLOT(update_model(double)));
@@ -173,14 +184,14 @@ void US_2dPlot::calculate()
 		}
  	}		
    plot->btnZoom->setChecked( false );
-   data_plot->clear();
+//   data_plot->clear();
    data_plot->replot();
    QwtPlotCurve* c1;
    
    c1 = us_curve( data_plot, "1DSA Curve" );
-   c1->setData  ( x.data(), y.data(), resolution);
-   c1->setStyle ( QwtPlotCurve::Lines );
-   c1->setPen   ( QColor( Qt::yellow ) );
+   c1->setStyle  ( QwtPlotCurve::Lines );
+   c1->setPen    ( QColor( Qt::yellow ) );
+   c1->setSamples( x.data(), y.data(), resolution );
 
    data_plot->setAxisAutoScale( QwtPlot::xBottom );
    data_plot->setAxisAutoScale( QwtPlot::yLeft );
@@ -221,26 +232,34 @@ void US_2dPlot::update_model( double val )
    		par1 = 4;
    		par2 = -3;
    		par3 = 1;
-   		ct_par1->setRange( -50, 50, 0.01 );
-   		ct_par2->setRange( -50, 50, 0.01 );
-   		ct_par3->setRange( -50, 50, 0.01 );
-   		ct_par4->setRange( -50, 50, 0.01 );
+   		ct_par1->setRange( -50, 50 );
+   		ct_par2->setRange( -50, 50 );
+   		ct_par3->setRange( -50, 50 );
+   		ct_par4->setRange( -50, 50 );
+         ct_par1->setSingleStep( 0.01 );
+         ct_par2->setSingleStep( 0.01 );
+         ct_par3->setSingleStep( 0.01 );
+         ct_par4->setSingleStep( 0.01 );
 			break;
 		}
 		case 2: // error function
 		{
    		par1 = 0.001;
    		par2 = 0.5;
-   		ct_par1->setRange( 0.001, 50, 0.001 );
-   		ct_par2->setRange( 0.0, 1.0, 0.001 );
+   		ct_par1->setRange( 0.001, 50 );
+   		ct_par2->setRange( 0.0,  1.0 );
+         ct_par1->setSingleStep( 0.001 );
+         ct_par2->setSingleStep( 0.001 );
 			break;
 		}
 		case 3: // error function
 		{
    		par1 = 0.001;
    		par2 = 0.5;
-   		ct_par1->setRange( 0.001, 50, 0.001 );
-   		ct_par2->setRange( 0.0, 1.0, 0.001 );
+   		ct_par1->setRange( 0.001, 50 );
+   		ct_par2->setRange( 0.0, 1.0 );
+         ct_par1->setSingleStep( 0.001 );
+         ct_par2->setSingleStep( 0.001 );
 			break;
 		}
 	}

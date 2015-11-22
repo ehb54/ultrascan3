@@ -14,6 +14,10 @@
 #include "us_run_details2.h"
 #include "us_passwd.h"
 #include "us_get_dbexp.h"
+#if QT_VERSION < 0x050000
+#define setSamples(a,b,c)  setData(a,b,c)
+#define setSymbol(a)       setSymbol(*a)
+#endif
 
 //! \brief Main program for US_RotorCalibration. Loads translators and starts
 //         the class US_FitMeniscus.
@@ -73,7 +77,7 @@ US_RotorCalibration::US_RotorCalibration() : US_Widgets()
    
    ct_cell = new QwtCounter(this); // Update range upon load
    //ct_cell = us_counter ( 2, 0, 0 );
-   ct_cell->setStep( 1 );
+   ct_cell->setSingleStep( 1 );
    top->addWidget( ct_cell, row++, 0 );
    
    QLabel* lb_channel = us_label( tr("Current Channel:"), -1 );
@@ -82,7 +86,7 @@ US_RotorCalibration::US_RotorCalibration() : US_Widgets()
    
    ct_channel = new QwtCounter (this); // Update range upon load
    //ct_channel = us_counter ( 2, 0, 0 ); // Update range upon load
-   ct_channel->setStep( 1 );
+   ct_channel->setSingleStep( 1 );
    top->addWidget( ct_channel, row++, 0);
 
    QGridLayout* lo_top = us_radiobutton( tr( "Top of channel" ), rb_top );
@@ -167,19 +171,19 @@ void US_RotorCalibration::reset()
    data.scanData.clear();
    allData.clear();
 
-   data_plot      ->detachItems( QwtPlotItem::Rtti_PlotCurve );
-   data_plot      ->clear();
-   data_plot      ->replot();
-   plot->btnZoom  ->setChecked( false );
+   data_plot    ->detachItems( QwtPlotItem::Rtti_PlotCurve );
+//   data_plot    ->clear();
+   data_plot    ->replot();
+   plot->btnZoom->setChecked( false );
 
-   pb_load        ->setEnabled( true  );
-   pb_reset       ->setEnabled( false );
-   pb_accept      ->setEnabled( false );
-   pb_calculate   ->setEnabled( false );
-   pb_save        ->setEnabled( false );
-   pb_view        ->setEnabled( false );
+   pb_load      ->setEnabled( true  );
+   pb_reset     ->setEnabled( false );
+   pb_accept    ->setEnabled( false );
+   pb_calculate ->setEnabled( false );
+   pb_save      ->setEnabled( false );
+   pb_view      ->setEnabled( false );
 
-   cb_assigned    ->setChecked( false );
+   cb_assigned  ->setChecked( false );
 
    QPalette p     = US_GuiSettings::pushbColor();
 
@@ -289,8 +293,10 @@ void US_RotorCalibration::loadDisk( void )
       }
       if ( ! triples.contains( t ) ) triples << t;
    }
-   ct_cell->setRange(1, maxcell, 1);
-   ct_channel->setRange(1, maxchannel, 1);
+   ct_cell   ->setRange( 1, maxcell );
+   ct_channel->setRange( 1, maxchannel );
+   ct_cell   ->setSingleStep( 1 );
+   ct_channel->setSingleStep( 1 );
 
    // Read all data
    if ( workingDir.right( 1 ) != "/" ) workingDir += "/"; // Ensure trailing /
@@ -426,8 +432,10 @@ void US_RotorCalibration::loadDB( void )
       }
       if ( ! triples.contains( t ) ) triples << t;
    }
-   ct_cell->setRange(1, maxcell, 1);
-   ct_channel->setRange(1, maxchannel, 1);
+   ct_cell   ->setRange( 1, maxcell );
+   ct_channel->setRange( 1, maxchannel );
+   ct_cell   ->setSingleStep( 1 );
+   ct_channel->setSingleStep( 1 );
 
    // Load the data
    QDir dir;
@@ -506,7 +514,7 @@ void US_RotorCalibration::loadDB( void )
 void US_RotorCalibration::plotAll( void )
 {
    data_plot->detachItems( QwtPlotItem::Rtti_PlotCurve );
-   data_plot->clear();
+//   data_plot->clear();
    data_plot->setTitle(tr( "Intensity Data" ));
    data_plot->setAxisTitle( QwtPlot::xBottom, tr( "Radius (in cm)" ) );
    data_plot->setAxisTitle( QwtPlot::yLeft, tr( "Intensity" ) );
@@ -558,8 +566,8 @@ void US_RotorCalibration::plotAll( void )
       if ((QString) allData[current_triple].channel == "G") ct_channel->setValue(7);
       if ((QString) allData[current_triple].channel == "H") ct_channel->setValue(8);
       connect (ct_channel, SIGNAL(valueChanged (double)), this, SLOT(update_channel(double)));
-      c1->setData( x1, y1, size);
-      c2->setData( x2, y2, size);
+      c1->setSamples( x1, y1, size );
+      c2->setSamples( x2, y2, size );
       if (top_of_cell)
       {
          c1->setPen(channelAPen);
@@ -951,40 +959,40 @@ void US_RotorCalibration::calculate()
    }
    
    plot->btnZoom->setChecked( false );
-   data_plot->clear();
+//   data_plot->clear();
    data_plot->replot();
    QwtPlotCurve* c1;
    QwtPlotCurve* c2;
    QwtPlotCurve* c3;
    QwtPlotCurve* c4;
 
-   QwtSymbol sym1;
-   QwtSymbol sym2;
+   QwtSymbol* sym1 = new QwtSymbol;
+   QwtSymbol* sym2 = new QwtSymbol;
    
-   sym1.setStyle( QwtSymbol::Ellipse );
-   sym1.setBrush( QColor( Qt::cyan ) );
-   sym1.setPen  ( QColor( Qt::white ) );
-   sym1.setSize( 10 );
+   sym1->setStyle( QwtSymbol::Ellipse );
+   sym1->setBrush( QColor( Qt::cyan ) );
+   sym1->setPen  ( QColor( Qt::white ) );
+   sym1->setSize( 10 );
    
-   sym2.setStyle( QwtSymbol::Cross );
-   sym2.setBrush( QColor( Qt::white ) );
-   sym2.setPen  ( QColor( Qt::white ) );
-   sym2.setSize( 10 );
+   sym2->setStyle( QwtSymbol::Cross );
+   sym2->setBrush( QColor( Qt::white ) );
+   sym2->setPen  ( QColor( Qt::white ) );
+   sym2->setSize( 10 );
    
-   c1 = us_curve( data_plot, "Rotor Stretch" );
-   c1->setData  ( x.data(), y.data(), size );
-   c1->setSymbol( sym1 );
-   c1->setStyle ( QwtPlotCurve::NoCurve );
+   c1  = us_curve( data_plot, "Rotor Stretch" );
+   c1->setSymbol ( sym1 );
+   c1->setStyle  ( QwtPlotCurve::NoCurve );
+   c1->setSamples( x.data(), y.data(), size );
    
-   c2 = us_curve( data_plot, "+std Dev" );
-   c2->setData  ( x.data(), sd1.data(), size );
-   c2->setSymbol( sym2 );
-   c2->setStyle ( QwtPlotCurve::NoCurve );
+   c2  = us_curve( data_plot, "+std Dev" );
+   c2->setSymbol ( sym2 );
+   c2->setStyle  ( QwtPlotCurve::NoCurve );
+   c2->setSamples( x.data(), sd1.data(), size );
 
-   c3 = us_curve( data_plot, "+std Dev" );
-   c3->setData  ( x.data(), sd2.data(), size );
-   c3->setSymbol( sym2 );
-   c3->setStyle ( QwtPlotCurve::NoCurve );
+   c3  = us_curve( data_plot, "+std Dev" );
+   c3->setSymbol ( sym2 );
+   c3->setStyle  ( QwtPlotCurve::NoCurve );
+   c3->setSamples( x.data(), sd2.data(), size );
    
    if ( ! US_Matrix::lsfit( coef, x.data(), y.data(), size, 3 ) )
    {
@@ -1002,10 +1010,10 @@ void US_RotorCalibration::calculate()
       yfit[ i ] = coef[ 0 ] + coef[ 1 ] * xfit[ i ] + coef[ 2 ] *  sq( xfit[ i ] );
    }
       
-   c4 = us_curve( data_plot, "fit" );
-   c4->setData  ( xfit.data(), yfit.data(), 501 );
-   c4->setStyle ( QwtPlotCurve::Lines );
-   c4->setPen   ( QColor( Qt::yellow ) );
+   c4  = us_curve( data_plot, "fit" );
+   c4->setStyle  ( QwtPlotCurve::Lines );
+   c4->setPen    ( QColor( Qt::yellow ) );
+   c4->setSamples( xfit.data(), yfit.data(), 501 );
 
    data_plot->setTitle(tr( "Rotor Stretch\n"
                "(Error bars = 1 standard deviation)" ) );

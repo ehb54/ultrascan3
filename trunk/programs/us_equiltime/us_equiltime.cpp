@@ -7,7 +7,9 @@
 #include "us_license_t.h"
 #include "us_license.h"
 #include "us_model_gui.h"
-//#include "us_model_editor.h"
+#if QT_VERSION < 0x050000
+#define setSamples(a,b,c)  setData(a,b,c)
+#endif
 
 //! \brief Main program for US_Equilspeed. Loads translators and starts
 //         the class US_Equilspeed.
@@ -118,7 +120,7 @@ US_EquilTime::US_EquilTime() : US_Widgets( true )
    left->addWidget( lb_top, row, 0 );
 
    cnt_top = us_counter( 3, 5.8, 7.3, 5.9 );
-   cnt_top->setStep    ( 0.01 );
+   cnt_top->setSingleStep( 0.01 );
    cnt_top->setEnabled ( false );
    left->addWidget( cnt_top, row++, 1 );
 
@@ -127,7 +129,7 @@ US_EquilTime::US_EquilTime() : US_Widgets( true )
    left->addWidget( lb_bottom, row, 0 );
 
    cnt_bottom = us_counter( 3, 5.8, 7.3, 6.2 );
-   cnt_bottom->setStep    ( 0.01 );
+   cnt_bottom->setSingleStep    ( 0.01 );
    cnt_bottom->setEnabled ( false );
    left->addWidget( cnt_bottom, row++, 1 );
 
@@ -177,7 +179,7 @@ US_EquilTime::US_EquilTime() : US_Widgets( true )
    left->addWidget( lb_lowspeed, row, 0 );
    
    cnt_lowspeed = us_counter( 3, 0.01, 10.0, sigma_start );
-   cnt_lowspeed->setStep( 0.01 );
+   cnt_lowspeed->setSingleStep( 0.01 );
    left->addWidget( cnt_lowspeed, row++, 1 );
    connect( cnt_lowspeed, SIGNAL( valueChanged( double ) ),
                           SLOT  ( new_lowspeed( double ) ) );
@@ -187,7 +189,7 @@ US_EquilTime::US_EquilTime() : US_Widgets( true )
    left->addWidget( lb_highspeed, row, 0 );
    
    cnt_highspeed = us_counter( 3, 0.01, 10.0, sigma_stop );
-   cnt_highspeed->setStep( 0.01 );
+   cnt_highspeed->setSingleStep( 0.01 );
    left->addWidget( cnt_highspeed, row++, 1 );
    connect( cnt_highspeed, SIGNAL( valueChanged ( double ) ),
                            SLOT  ( new_highspeed( double ) ) );
@@ -196,7 +198,7 @@ US_EquilTime::US_EquilTime() : US_Widgets( true )
    left->addWidget( lb_speedsteps, row, 0 );
    
    cnt_speedsteps = us_counter( 3, 1.0, 100.0, speed_count );
-   cnt_speedsteps->setStep( 1.0 );
+   cnt_speedsteps->setSingleStep( 1.0 );
    left->addWidget( cnt_speedsteps, row++, 1 );
    connect( cnt_speedsteps, SIGNAL( valueChanged ( double ) ),
                             SLOT  ( new_speedstep( double ) ) );
@@ -221,7 +223,7 @@ US_EquilTime::US_EquilTime() : US_Widgets( true )
    left->addWidget( lb_tolerance, row, 0 );
    
    cnt_tolerance = us_counter( 3, 1.0e-5, 0.01, 0.0005 );
-   cnt_tolerance->setStep( 1.0e-5 );
+   cnt_tolerance->setSingleStep( 1.0e-5 );
    left->addWidget( cnt_tolerance, row++, 1 );
 
    // Time increment
@@ -229,7 +231,7 @@ US_EquilTime::US_EquilTime() : US_Widgets( true )
    left->addWidget( lb_time, row, 0 );
    
    cnt_timeIncrement = us_counter( 3, 1.0, 1000.0, 15.0 );
-   cnt_timeIncrement->setStep( 1.0 );
+   cnt_timeIncrement->setSingleStep( 1.0 );
    left->addWidget( cnt_timeIncrement, row++, 1 );
 
    QGridLayout* buttons2 = new QGridLayout;
@@ -441,7 +443,7 @@ double US_EquilTime::sigmaFromRpm( double rpm )
 
 void US_EquilTime::update_speeds( int type )
 {
-   speed_steps.clear();
+   speed_steps  .clear();
    te_speedlist->clear();
 
    if ( type == SIGMA )
@@ -471,9 +473,11 @@ void US_EquilTime::update_speeds( int type )
       // Reset counters
       cnt_lowspeed ->disconnect();
       cnt_highspeed->disconnect();
-      cnt_lowspeed ->setRange( 0.1, max_sigma, 0.01 );
+      cnt_lowspeed ->setRange( 0.1, max_sigma );
+      cnt_lowspeed ->setSingleStep( 0.01 );
       cnt_lowspeed ->setValue( sigma_start );
-      cnt_highspeed->setRange( 0.1, max_sigma, 0.01 );
+      cnt_highspeed->setRange( 0.1, max_sigma );
+      cnt_highspeed->setSingleStep( 0.01 );
       cnt_highspeed->setValue( sigma_stop );
       
       connect( cnt_lowspeed, SIGNAL( valueChanged( double ) ),
@@ -518,9 +522,11 @@ void US_EquilTime::update_speeds( int type )
       cnt_lowspeed ->disconnect();
       cnt_highspeed->disconnect();
 
-      cnt_lowspeed  ->setRange( 100, 60000, 100 );
+      cnt_lowspeed  ->setRange( 100, 60000 );
+      cnt_lowspeed  ->setSingleStep( 100 );
       cnt_lowspeed  ->setValue( rpm_start );
-      cnt_highspeed ->setRange( 100, 60000, 100 );
+      cnt_highspeed ->setRange( 100, 60000 );
+      cnt_highspeed ->setSingleStep( 100 );
       cnt_highspeed ->setValue( rpm_stop );
       
       connect( cnt_lowspeed, SIGNAL( valueChanged( double ) ),
@@ -623,7 +629,7 @@ void US_EquilTime::simulate( void )
    equilibrium_plot->setAxisScale( QwtPlot::xBottom, 
          simparams.meniscus, simparams.bottom );
 
-   equilibrium_plot->clear();
+//   equilibrium_plot->clear();
    equilibrium_plot->replot();
    current_time   = 0.0;
    concentration.clear();
@@ -726,8 +732,8 @@ void US_EquilTime::check_equil( QVector< double >* x, double* c )
    {
       astfem_rsa->setStopFlag( true );
 
-      current_curve->setData( sim_radius.data(), concentration.data(), 
-                              radius_points );
+      current_curve->setSamples( sim_radius.data(), concentration.data(),
+                                 radius_points );
       equilibrium_plot->replot();
    }
    else

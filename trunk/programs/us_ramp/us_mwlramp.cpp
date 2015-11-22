@@ -1,6 +1,5 @@
 //! \file us_ramp.cpp
 
-#include <QtGui>
 #include "us_mwlramp.h"
 #include "us_util.h"
 #include "us_settings.h"

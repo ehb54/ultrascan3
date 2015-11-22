@@ -1,7 +1,5 @@
 //! \file us_experiment_ra.cpp
 
-#include <QtCore>
-
 #include "us_settings.h"
 #include "us_db2.h"
 #include "us_passwd.h"
@@ -157,8 +155,8 @@ int US_ExperimentRa::readFromDB( QString runID,
       centrifugeProtocol = db->value( 12 ).toString();
       date               = db->value( 13 ).toString();
       invID              = db->value( 14 ).toInt();
-      opticalSystem      = db->value( 15 ).toString().toAscii();
-      xmlFile            = db->value( 16 ).toString().toAscii();
+      opticalSystem      = db->value( 15 ).toString().toLatin1();
+      xmlFile            = db->value( 16 ).toString().toLatin1();
    }
 
    else if ( db->lastErrno() == US_DB2::NOROWS )
@@ -252,7 +250,7 @@ int US_ExperimentRa::saveToDisk(
    if ( !file.open( QIODevice::WriteOnly | QIODevice::Text) )
       return( US_Ramp::CANTOPEN );
 
-qDebug() << "  EsTD: writeFile" << writeFile;
+qDebug() << "  EsTD: writeFile" << writeFile << "runType" << runType;
    QXmlStreamWriter xml;
    xml.setDevice( &file );
    xml.setAutoFormatting( true );
@@ -448,6 +446,9 @@ void US_ExperimentRa::readExperiment(
      QString runType,
      QString runID )
 {
+if(runType!="WA")
+ qDebug() << "irregular runType" << runType;
+
    while ( ! xml.atEnd() )
    {
       xml.readNext();
@@ -521,7 +522,7 @@ void US_ExperimentRa::readExperiment(
          else if ( xml.name() == "dataset" )
          {
             QXmlStreamAttributes a = xml.attributes();
-	    QString qid            = a.value( "id" ).toString();
+            QString qid            = a.value( "id" ).toString();
             QString cell           = a.value( "cell" ).toString();
             QString channel        = a.value( "channel" ).toString();
 
@@ -568,7 +569,7 @@ void US_ExperimentRa::readExperiment(
 //          else if ( xml.name() == "opticalSystem" )
 //          {
 //             QXmlStreamAttributes a = xml.attributes();
-//             this->opticalSystem  = a.value( "value" ).toString().toAscii();
+//             this->opticalSystem  = a.value( "value" ).toString().toLatin1();
 //          }
 
          else if ( xml.name() == "date" )
@@ -634,7 +635,7 @@ void US_ExperimentRa::readDataset( QXmlStreamReader& xml,
          else if ( xml.name() == "subset" )
          {
             QXmlStreamAttributes a = xml.attributes();
-            int tempwl         = a.value( "wavelength"   ).toString().toInt();
+//            int tempwl         = a.value( "wavelength"   ).toString().toInt();
             QString tripleGUID = a.value( "guid" ).toString();
          }
 

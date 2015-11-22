@@ -1,12 +1,12 @@
 //! \file us_eqreporter.cpp
 
 #include "us_eqreporter.h"
+#include "us_widgets.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"
 #include "us_math2.h"
 #include "us_editor.h"
 #include "us_constants.h"
-#include "us_widgets.h"
 
 // Main constructor
 US_EqReporter::US_EqReporter(

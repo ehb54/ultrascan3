@@ -1,15 +1,13 @@
 #ifndef US_FIT_MENISCUS_H
 #define US_FIT_MENISCUS_H
 
-#include <QtGui>
-
-#include "qwt_plot_marker.h"
-
 #include "us_extern.h"
 #include "us_widgets.h"
 #include "us_help.h"
 #include "us_editor.h"
 #include "us_plot.h"
+
+#include "qwt_plot_marker.h"
 
 #define DbgLv(a) if(dbg_level>=a)qDebug()  //!< dbg_level-conditioned qDebug()
 

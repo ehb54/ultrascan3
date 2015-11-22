@@ -2,8 +2,6 @@
 #ifndef US_MWLR_VIEWER_H
 #define US_MWLR_VIEWER_H
 
-#include <QtGui>
-
 #include "us_extern.h"
 #include "us_widgets.h"
 #include "us_help.h"

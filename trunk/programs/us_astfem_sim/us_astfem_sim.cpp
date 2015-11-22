@@ -16,6 +16,9 @@
 #include "us_buffer_gui.h"
 #include "us_util.h"
 #include "us_lamm_astfvm.h"
+#if QT_VERSION < 0x050000
+#define setSamples(a,b,c)  setData(a,b,c)
+#endif
 
 /*! \brief Main program for US_Astfem_Sim.  Loads translators and starts
     the class US_Astfem_Sim.
@@ -348,13 +351,13 @@ void US_Astfem_Sim::stop_simulation( void )
 void US_Astfem_Sim::start_simulation( void )
 {
 
-   moviePlot->clear();
+   //moviePlot->clear();
    moviePlot->replot();
    curve_count = 0;
    image_count = 0;
    double rpm  = simparams.speed_step[ 0 ].rotorspeed;
 
-   scanPlot->clear();
+   //scanPlot->clear();
 	scanPlot->setAxisAutoScale( QwtPlot::xBottom );
    scanPlot->replot();
 
@@ -459,7 +462,7 @@ DbgLv(2) << "SIM   scan time omega2t" << scan_number << scan->seconds
    }
 
    lb_progress->setText( tr( "% Completed:" ) );
-   progress->setMaximum( system.components.size() ); 
+   progress->setRange( 1, system.components.size() ); 
    progress->reset();
    lcd_component->display( 0 );
 
@@ -781,9 +784,9 @@ void US_Astfem_Sim::plot( void )
          QString title = "Concentration" + QString::number( j );
          QwtPlotCurve* plotCurve = new QwtPlotCurve( title );
          
-         plotCurve->setData( x, y[ j ], points );
-         plotCurve->setPen( QPen( Qt::yellow ) );
-         plotCurve->attach( scanPlot );
+         plotCurve->setPen    ( QPen( Qt::yellow ) );
+         plotCurve->attach    ( scanPlot );
+         plotCurve->setSamples( x, y[ j ], points );
       }
 
       delete [] x;
@@ -923,7 +926,7 @@ DbgLv(1) << "Sim:SV: OD-Limit nchange nmodscn" << nchange << nmodscn
 
    points             = (int)( ( maxrad - mrad ) / grid_res ) + 31;
 
-   progress->setMaximum( total_scans );
+   progress->setRange( 1, total_scans );
    progress->reset();
  
    QVector< double > tconc_v( points );
@@ -1002,7 +1005,7 @@ void US_Astfem_Sim::update_progress( int component )
 
    else if ( component < 0 )
    {  // other negative component flags set maximum
-      progress->setMaximum( -component );
+      progress->setRange( 1, -component );
       lcd_component->setMode( QLCDNumber::Dec );
       lcd_component->display( 0 );
    }
@@ -1035,7 +1038,7 @@ void US_Astfem_Sim::start_calc( int steps )
    progress_maximum = progress->maximum();
    progress_value   = progress->value();
 
-   progress   ->setMaximum( steps );
+   progress   ->setRange( 1, steps );
    progress   ->reset();
    lb_progress->setText( tr( "Calculating..." ) );
 }
@@ -1043,7 +1046,7 @@ void US_Astfem_Sim::start_calc( int steps )
 // slot to set progress to maximum
 void US_Astfem_Sim::calc_over( void )
 {
-   progress   ->setMaximum( progress_maximum );
+   progress   ->setRange( 1, progress_maximum );
    progress   ->setValue  ( progress_value );
    lb_progress->setText( progress_text );
 }
@@ -1051,7 +1054,7 @@ void US_Astfem_Sim::calc_over( void )
 // slot to update movie plot
 void US_Astfem_Sim::update_movie_plot( QVector< double >* x, double* c )
 {
-   moviePlot->clear();
+   //moviePlot->clear();
    double total_c = 0.0;
    double yscale  = 0.0;
 
@@ -1085,9 +1088,9 @@ void US_Astfem_Sim::update_movie_plot( QVector< double >* x, double* c )
    QwtPlotCurve* curve = 
       new QwtPlotCurve( "Scan Number " + QString::number( curve_count++ ) );
 
-   curve->setPen( QPen( Qt::yellow, 3 ) );
-   curve->setData( r, c, x->size() );
-   curve->attach( moviePlot );
+   curve->setPen    ( QPen( Qt::yellow, 3 ) );
+   curve->setSamples(r, c, x->size() );
+   curve->attach ( moviePlot );
    
    moviePlot->replot();
 

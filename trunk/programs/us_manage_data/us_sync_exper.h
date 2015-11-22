@@ -2,7 +2,6 @@
 #ifndef US_SYNC_EXPER_H
 #define US_SYNC_EXPER_H
 
-#include <QtGui>
 #include <QtXml>
 
 #include "us_extern.h"

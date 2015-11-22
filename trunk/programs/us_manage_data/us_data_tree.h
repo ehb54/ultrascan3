@@ -1,8 +1,6 @@
 #ifndef US_DATA_TREE_H
 #define US_DATA_TREE_H
 
-#include <QtGui>
-
 #include "us_extern.h"
 #include "us_sync_exper.h"
 #include "us_data_model.h"

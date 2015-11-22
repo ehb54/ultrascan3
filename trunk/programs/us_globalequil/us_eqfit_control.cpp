@@ -7,6 +7,10 @@
 #include "us_constants.h"
 #include "us_math2.h"
 #include "qwt_plot_marker.h"
+#if QT_VERSION < 0x050000
+#define setSamples(a,b,c)  setData(a,b,c)
+#define setSymbol(a)       setSymbol(*a)
+#endif
 
 // Main constructor with references to parameters from main GlobalEquil class
 US_EqFitControl::US_EqFitControl(
@@ -309,8 +313,8 @@ qDebug() << "EFC: init_fit return";
    le_nbrpars->setText( QString::number( nfpars ) );
    le_nbrsets->setText( QString::number( ndsets ) );
    le_nbrdpts->setText( QString::number( ntpts  ) );
-   ct_plotscn->setRange( 1, ndsets, 1 );
-   ct_plotscn->setStep(  1 );
+   ct_plotscn->setRange( 1, ndsets );
+   ct_plotscn->setSingleStep(  1 );
    ct_plotscn->setValue( 1 );
 }
 
@@ -377,7 +381,7 @@ qDebug() << "START_FIT";
             this,    SLOT(   new_progress ( int ) ) );
    connect( fitwork, SIGNAL( work_complete()      ),
             this,    SLOT(   fit_completed()      ) );
-   progress->setMaximum( mxiters );
+   progress->setRange( 1, mxiters );
    progress->reset();
 
    fitwork->start();
@@ -457,14 +461,14 @@ qDebug() << "  ydelta0" << ydelta[0] << " ydeltan" << ydelta[ntpts-1];
    QwtPlotGrid* grid = us_grid( data_plot );
    grid->enableYMin( true );
    grid->enableY   ( true );
-   grid->setMajPen( QPen( US_GuiSettings::plotMajGrid(), 0, Qt::DashLine ) );
-   grid->setMinPen( QPen( US_GuiSettings::plotMinGrid(), 0, Qt::DotLine  ) );
+   grid->setMajorPen( QPen( US_GuiSettings::plotMajGrid(), 0, Qt::DashLine ) );
+   grid->setMinorPen( QPen( US_GuiSettings::plotMinGrid(), 0, Qt::DotLine  ) );
 
-   QwtSymbol sym;
-   sym.setStyle( QwtSymbol::Ellipse );
-   sym.setPen  ( QPen  ( Qt::blue   ) );
-   sym.setBrush( QBrush( Qt::yellow ) );
-   sym.setSize ( plotgrpf < 0 ? 8 : 5 );
+   QwtSymbol* sym = new QwtSymbol;
+   sym->setStyle( QwtSymbol::Ellipse );
+   sym->setPen  ( QPen  ( Qt::blue   ) );
+   sym->setBrush( QBrush( Qt::yellow ) );
+   sym->setSize ( plotgrpf < 0 ? 8 : 5 );
 
    QPen lnpen( QBrush( Qt::green ), 1 );
    QPen zlpen( QBrush( Qt::red   ), 2 );
@@ -506,15 +510,15 @@ qDebug() << "  ydelta0" << ydelta[0] << " ydeltan" << ydelta[ntpts-1];
       QwtPlotCurve* lcurve = us_curve( data_plot,
             QString( "RLine-%1" ).arg( scnn ) );
 
-      lcurve->setStyle ( QwtPlotCurve::Lines );
-      lcurve->setPen   ( lnpen );
-      lcurve->setData  ( xplot, yplot, nspts );
+      lcurve->setStyle  ( QwtPlotCurve::Lines );
+      lcurve->setPen    ( lnpen );
+      lcurve->setSamples( xplot, yplot, nspts );
 
       QwtPlotCurve* scurve = us_curve( data_plot,
             QString( "RSymb-%1" ).arg( scnn ) );
-      scurve->setStyle ( QwtPlotCurve::NoCurve );
-      scurve->setSymbol( sym );
-      scurve->setData  ( xplot, yplot, nspts );
+      scurve->setStyle  ( QwtPlotCurve::NoCurve );
+      scurve->setSymbol ( sym );
+      scurve->setSamples( xplot, yplot, nspts );
 
       yoffs        += yoffi;
 
@@ -543,9 +547,9 @@ qDebug() << "  ydelta0" << ydelta[0] << " ydeltan" << ydelta[ntpts-1];
                QString( "RZero-%1" ).arg( scnn ) );
          ypzero[ 0 ] = yoffs;
          ypzero[ 1 ] = yoffs;
-         zcurve->setStyle ( QwtPlotCurve::Lines );
-         zcurve->setPen   ( zlpen );
-         zcurve->setData  ( xpzero, ypzero, 2 );
+         zcurve->setStyle  ( QwtPlotCurve::Lines );
+         zcurve->setPen    ( zlpen );
+         zcurve->setSamples( xpzero, ypzero, 2 );
          QwtPlotMarker* marker = new QwtPlotMarker;
          QwtText        mlabel;
          mlabel.setText( QString::number( scnn ) );
@@ -568,9 +572,9 @@ qDebug() << "  ydelta0" << ydelta[0] << " ydeltan" << ydelta[ntpts-1];
       xpzero[ 1 ] = xmax;
       ypzero[ 0 ] = 0.0;
       ypzero[ 1 ] = 0.0;
-      zcurve->setStyle ( QwtPlotCurve::Lines );
-      zcurve->setPen   ( zlpen );
-      zcurve->setData  ( xpzero, ypzero, 2 );
+      zcurve->setStyle  ( QwtPlotCurve::Lines );
+      zcurve->setPen    ( zlpen );
+      zcurve->setSamples( xpzero, ypzero, 2 );
    }
 
    data_plot->replot();
@@ -607,14 +611,14 @@ qDebug() << "  yguess0" << yguess[0] << " yguessn" << yguess[ntpts-1];
    QwtPlotGrid* grid = us_grid( data_plot );
    grid->enableYMin( true );
    grid->enableY   ( true );
-   grid->setMajPen( QPen( US_GuiSettings::plotMajGrid(), 0, Qt::DashLine ) );
-   grid->setMinPen( QPen( US_GuiSettings::plotMinGrid(), 0, Qt::DotLine  ) );
+   grid->setMajorPen( QPen( US_GuiSettings::plotMajGrid(), 0, Qt::DashLine ) );
+   grid->setMinorPen( QPen( US_GuiSettings::plotMinGrid(), 0, Qt::DotLine  ) );
 
-   QwtSymbol sym;
-   sym.setStyle( QwtSymbol::Ellipse );
-   sym.setPen  ( QPen  ( Qt::blue   ) );
-   sym.setBrush( QBrush( Qt::yellow ) );
-   sym.setSize ( 4 );
+   QwtSymbol* sym = new QwtSymbol;
+   sym->setStyle( QwtSymbol::Ellipse );
+   sym->setPen  ( QPen  ( Qt::blue   ) );
+   sym->setBrush( QBrush( Qt::yellow ) );
+   sym->setSize ( 4 );
 
    QPen lnpen( QBrush( Qt::red ), 1 );
    double xmin = 0.0;
@@ -651,15 +655,15 @@ qDebug() << "  yguess0" << yguess[0] << " yguessn" << yguess[ntpts-1];
 
       QwtPlotCurve* scurve = us_curve( data_plot,
             QString( "RSymb-%1" ).arg( scnn ) );
-      scurve->setStyle ( QwtPlotCurve::NoCurve );
-      scurve->setSymbol( sym );
-      scurve->setData  ( xplot, ypraw, nspts );  // Plot raw symbols
+      scurve->setStyle  ( QwtPlotCurve::NoCurve );
+      scurve->setSymbol ( sym );
+      scurve->setSamples( xplot, ypraw, nspts );  // Plot raw symbols
 
       QwtPlotCurve* lcurve = us_curve( data_plot,
             QString( "RLine-%1" ).arg( scnn ) );
-      lcurve->setStyle ( QwtPlotCurve::Lines );
-      lcurve->setPen   ( lnpen );
-      lcurve->setData  ( xplot, ypfit, nspts );  // Plot fitted line
+      lcurve->setStyle  ( QwtPlotCurve::Lines );
+      lcurve->setPen    ( lnpen );
+      lcurve->setSamples( xplot, ypfit, nspts );  // Plot fitted line
    }
 
    xmax  += xpad;
@@ -821,8 +825,8 @@ void US_EqFitControl::prepare_data()
       jpscnn     = 1;
    }
 
-   ct_plotscn->setRange( 1, liscnn, 1 );
-   ct_plotscn->setStep(  jpscnn );
+   ct_plotscn->setRange( 1, liscnn );
+   ct_plotscn->setSingleStep(  jpscnn );
    ct_plotscn->disconnect();
    ct_plotscn->setValue( ipscnn );
    connect( ct_plotscn, SIGNAL( valueChanged( double ) ), SLOT( new_pscan() ) );

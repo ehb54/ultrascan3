@@ -2,11 +2,11 @@
 #define US_EQFITCTRL_H
 
 #include "us_extern.h"
+#include "us_widgets_dialog.h"
 #include "us_globeq_data.h"
 #include "us_eqmath.h"
 #include "us_eqreporter.h"
 #include "us_fit_worker.h"
-#include "us_widgets_dialog.h"
 #include "us_dataIO.h"
 #include "us_plot.h"
 #include "us_help.h"

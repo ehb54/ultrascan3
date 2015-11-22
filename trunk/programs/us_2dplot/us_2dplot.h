@@ -1,12 +1,15 @@
 #ifndef US_2DPLOT_H
 #define US_2DPLOT_H
 
-#include <QtGui>
-#include <QApplication>
-
 #include "us_extern.h"
 #include "us_widgets.h"
 #include "us_plot.h"
+
+#if QT_VERSION < 0x050000
+#include <QApplication>
+#else
+#include <QtWidgets/QApplication>
+#endif
 
 class US_2dPlot : public US_Widgets
 {

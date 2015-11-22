@@ -77,21 +77,13 @@ fi
 
 if [ $ISMAC -eq 0 ]; then
   if [ $ISWIN -eq 0 -a $ISL64 -eq 0 ]; then
-    if [ -d somo ]; then
-      # insure doxygen skips somo source
-      if [ ! -d tcltk ]; then
-        mkdir tcltk
-      fi
-      mv somo tcltk ../
-      doxygen >> $DIR/build.log
-      mv ../somo ../tcltk .
-    else
-      doxygen >> $DIR/build.log
-    fi
+    echo "Running doxygen ..."
+    doxygen >> $DIR/build.log
   else
     echo "NO Doxygen used"
   fi
 else
+  echo "Running libnames and appnames ..."
   $DIR/libnames.sh >> $DIR/build.log
   $DIR/appnames.sh >> $DIR/build.log
 fi

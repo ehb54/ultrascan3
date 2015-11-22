@@ -2,6 +2,10 @@
 #include "us_constants.h"
 #include "us_gui_settings.h"
 #include "us_settings.h"
+#if QT_VERSION < 0x050000
+#define setMinimum(a)      setMinValue(a)
+#define setMaximum(a)      setMaxValue(a)
+#endif
 
 US_SimulationParametersGui::US_SimulationParametersGui(
       US_SimulationParameters& params )
@@ -29,7 +33,7 @@ US_SimulationParametersGui::US_SimulationParametersGui(
    main->addWidget( lb_speeds, row, 0, 1, 3 );
 
    cnt_speeds = us_counter( 2, 1, 100, 1 );
-   cnt_speeds->setStep    ( 1 );
+   cnt_speeds->setSingleStep  ( 1 );
    
    main->addWidget( cnt_speeds, row++, 3, 1, 1 );
    connect( cnt_speeds, SIGNAL( valueChanged ( double ) ), 
@@ -59,7 +63,7 @@ US_SimulationParametersGui::US_SimulationParametersGui(
    main->addWidget( lb_hours, row, 0, 1, 3 );
 
    cnt_duration_hours = us_counter( 3, 0, 5000, sp->duration_hours );
-   cnt_duration_hours->setStep    ( 1 );
+   cnt_duration_hours->setSingleStep    ( 1 );
    cnt_duration_hours->setIncSteps( QwtCounter::Button1,   1 );
    cnt_duration_hours->setIncSteps( QwtCounter::Button2,  10 );
    cnt_duration_hours->setIncSteps( QwtCounter::Button3, 100 );
@@ -73,7 +77,7 @@ US_SimulationParametersGui::US_SimulationParametersGui(
    main->addWidget( lb_mins, row, 0, 1, 3 );
 
    cnt_duration_mins = us_counter( 3, 0, 59, sp->duration_minutes );
-   cnt_duration_mins->setStep    ( 1 );
+   cnt_duration_mins->setSingleStep    ( 1 );
    cnt_duration_mins->setIncSteps( QwtCounter::Button1,   1 );
    cnt_duration_mins->setIncSteps( QwtCounter::Button2,  10 );
    cnt_duration_mins->setIncSteps( QwtCounter::Button3,  10 );
@@ -87,7 +91,7 @@ US_SimulationParametersGui::US_SimulationParametersGui(
    main->addWidget( lb_delay_hours, row, 0, 1, 3 );
 
    cnt_delay_hours = us_counter( 3, 0, 5000, sp->delay_hours );
-   cnt_delay_hours->setStep    ( 1 );
+   cnt_delay_hours->setSingleStep    ( 1 );
    cnt_delay_hours->setIncSteps( QwtCounter::Button1,   1 );
    cnt_delay_hours->setIncSteps( QwtCounter::Button2,  10 );
    cnt_delay_hours->setIncSteps( QwtCounter::Button3, 100 );
@@ -101,7 +105,7 @@ US_SimulationParametersGui::US_SimulationParametersGui(
    main->addWidget( lb_delay_mins, row, 0, 1, 3 );
 
    cnt_delay_mins = us_counter( 3, 0, 59, sp->delay_minutes );
-   cnt_delay_mins->setStep    ( 0.1 );
+   cnt_delay_mins->setSingleStep    ( 0.1 );
    cnt_delay_mins->setIncSteps( QwtCounter::Button1,   1 );
    cnt_delay_mins->setIncSteps( QwtCounter::Button2,  10 );
    cnt_delay_mins->setIncSteps( QwtCounter::Button3, 100 );
@@ -115,7 +119,7 @@ US_SimulationParametersGui::US_SimulationParametersGui(
    main->addWidget( lb_rotor, row, 0, 1, 3 );
 
    cnt_rotorspeed = us_counter( 3, 1000, 100000, sp->rotorspeed );
-   cnt_rotorspeed->setStep    ( 100 );
+   cnt_rotorspeed->setSingleStep    ( 100 );
    cnt_rotorspeed->setIncSteps( QwtCounter::Button1,   1 );
    cnt_rotorspeed->setIncSteps( QwtCounter::Button2,  10 );
    cnt_rotorspeed->setIncSteps( QwtCounter::Button3, 100 );
@@ -144,7 +148,7 @@ US_SimulationParametersGui::US_SimulationParametersGui(
    main->addWidget( lb_accelProfile, row, 0, 1, 3 );
 
    cnt_acceleration = us_counter( 3, 5, 400 );
-   cnt_acceleration->setStep    ( 5 );
+   cnt_acceleration->setSingleStep    ( 5 );
    cnt_acceleration->setIncSteps( QwtCounter::Button1,   1 );
    cnt_acceleration->setIncSteps( QwtCounter::Button2,  10 );
    cnt_acceleration->setIncSteps( QwtCounter::Button3, 100 );
@@ -160,7 +164,7 @@ US_SimulationParametersGui::US_SimulationParametersGui(
    main->addWidget( lb_scans, row, 0, 1, 3 );
 
    cnt_scans = us_counter( 3, 2, 5000, sp->scans );
-   cnt_scans->setStep    ( 1 );
+   cnt_scans->setSingleStep    ( 1 );
    cnt_scans->setIncSteps( QwtCounter::Button1,   1 );
    cnt_scans->setIncSteps( QwtCounter::Button2,  10 );
    cnt_scans->setIncSteps( QwtCounter::Button3, 100 );
@@ -175,7 +179,7 @@ US_SimulationParametersGui::US_SimulationParametersGui(
 
    current_speed_step = 0;
    cnt_selected_speed = us_counter( 3, 1, simparams.speed_step.size(), 0 );
-   cnt_selected_speed->setStep    ( 1 );
+   cnt_selected_speed->setSingleStep    ( 1 );
    cnt_selected_speed->setIncSteps( QwtCounter::Button1, 1 );
    cnt_selected_speed->setIncSteps( QwtCounter::Button2, 1 );
    cnt_selected_speed->setIncSteps( QwtCounter::Button3, 1 );
@@ -205,7 +209,7 @@ US_SimulationParametersGui::US_SimulationParametersGui(
    main->addWidget( lb_lamella, row, 4, 1, 3 );
 
    cnt_lamella = us_counter( 3, 1, 20, 15 );
-   cnt_lamella->setStep    ( 0.1 );
+   cnt_lamella->setSingleStep    ( 0.1 );
    cnt_lamella->setIncSteps( QwtCounter::Button1,   1 );
    cnt_lamella->setIncSteps( QwtCounter::Button2,  10 );
    cnt_lamella->setEnabled( false );
@@ -219,7 +223,7 @@ US_SimulationParametersGui::US_SimulationParametersGui(
    main->addWidget( lb_meniscus, row, 4, 1, 3 );
 
    cnt_meniscus = us_counter( 3, 1.0, 10.0, simparams.meniscus );
-   cnt_meniscus->setStep    ( 0.001 );
+   cnt_meniscus->setSingleStep    ( 0.001 );
    cnt_meniscus->setValue   ( simparams.meniscus );
    cnt_meniscus->setIncSteps( QwtCounter::Button1,   1 );
    cnt_meniscus->setIncSteps( QwtCounter::Button2,  10 );
@@ -234,7 +238,7 @@ US_SimulationParametersGui::US_SimulationParametersGui(
    main->addWidget( lb_bottom, row, 4, 1, 3 );
 
    cnt_bottom = us_counter( 3, 3.8, 30.0, simparams.bottom_position );
-   cnt_bottom->setStep    ( 0.001 );
+   cnt_bottom->setSingleStep    ( 0.001 );
    cnt_bottom->setValue   ( simparams.bottom_position );
    cnt_bottom->setIncSteps( QwtCounter::Button1,   1 );
    cnt_bottom->setIncSteps( QwtCounter::Button2,  10 );
@@ -249,7 +253,7 @@ US_SimulationParametersGui::US_SimulationParametersGui(
    main->addWidget( lb_simpoints, row, 4, 1, 3 );
 
    cnt_simpoints = us_counter( 3, 50, 10000, 200 );
-   cnt_simpoints->setStep    ( 10 );
+   cnt_simpoints->setSingleStep    ( 10 );
    cnt_simpoints->setValue( simparams.simpoints );
 
    main->addWidget( cnt_simpoints, row++, 7, 1, 1 );
@@ -261,7 +265,7 @@ US_SimulationParametersGui::US_SimulationParametersGui(
    main->addWidget( lb_radial_res, row, 4, 1, 3 );
 
    cnt_radial_res = us_counter( 3, 1e-5, 0.1, simparams.radial_resolution );
-   cnt_radial_res->setStep    ( 1e-5 );
+   cnt_radial_res->setSingleStep    ( 1e-5 );
    cnt_radial_res->setIncSteps( QwtCounter::Button1,   1 );
    cnt_radial_res->setIncSteps( QwtCounter::Button2,  10 );
    cnt_radial_res->setIncSteps( QwtCounter::Button3, 100 );
@@ -275,7 +279,7 @@ US_SimulationParametersGui::US_SimulationParametersGui(
    main->addWidget( lb_rnoise, row, 4, 1, 3 );
 
    cnt_rnoise = us_counter( 3, 0, 10, simparams.rnoise );
-   cnt_rnoise->setStep    ( 0.01 );
+   cnt_rnoise->setSingleStep    ( 0.01 );
    cnt_rnoise->setIncSteps( QwtCounter::Button1,   1 );
    cnt_rnoise->setIncSteps( QwtCounter::Button2,  10 );
    cnt_rnoise->setIncSteps( QwtCounter::Button3, 100 );
@@ -292,7 +296,7 @@ US_SimulationParametersGui::US_SimulationParametersGui(
    main->addWidget( lb_tinoise, row, 4, 1, 3 );
 
    cnt_tinoise = us_counter( 3, 0, 10, simparams.tinoise );
-   cnt_tinoise->setStep    ( 0.01 );
+   cnt_tinoise->setSingleStep    ( 0.01 );
    cnt_tinoise->setIncSteps( QwtCounter::Button1,   1 );
    cnt_tinoise->setIncSteps( QwtCounter::Button2,  10 );
    cnt_tinoise->setIncSteps( QwtCounter::Button3, 100 );
@@ -306,7 +310,7 @@ US_SimulationParametersGui::US_SimulationParametersGui(
    main->addWidget( lb_rinoise, row, 4, 1, 3 );
 
    cnt_rinoise = us_counter( 3, 0, 10, simparams.rinoise );
-   cnt_rinoise->setStep    ( 0.01 );
+   cnt_rinoise->setSingleStep    ( 0.01 );
    cnt_rinoise->setIncSteps( QwtCounter::Button1,   1 );
    cnt_rinoise->setIncSteps( QwtCounter::Button2,  10 );
    cnt_rinoise->setIncSteps( QwtCounter::Button3, 100 );
@@ -321,7 +325,7 @@ US_SimulationParametersGui::US_SimulationParametersGui(
    main->addWidget( lb_temperature,  row, 4, 1, 3 );
 
    cnt_temperature    = us_counter( 3, 10.0, 40.0, NORMAL_TEMP );
-   cnt_temperature->setStep    ( 0.1 );
+   cnt_temperature->setSingleStep    ( 0.1 );
    cnt_temperature->setIncSteps( QwtCounter::Button1,   1 );
    cnt_temperature->setIncSteps( QwtCounter::Button2,  10 );
    cnt_temperature->setIncSteps( QwtCounter::Button3, 100 );
@@ -482,7 +486,7 @@ void US_SimulationParametersGui::update_speeds( double value )
       ss->acceleration_flag = ss_old->acceleration_flag;
    }
 
-   cnt_selected_speed->setMaxValue( simparams.speed_step.size() );
+   cnt_selected_speed->setMaximum( simparams.speed_step.size() );
    update_combobox();
 }
 
@@ -575,8 +579,8 @@ void US_SimulationParametersGui::check_delay( void )
       minutes[ i ] = (double)mins;
    }
 
-   //cnt_delay_mins ->setMinValue( minutes[ current_speed_step ] );
-   cnt_delay_hours->setMinValue( hours  [ current_speed_step ] );
+   //cnt_delay_mins ->setMinimum( minutes[ current_speed_step ] );
+   cnt_delay_hours->setMinimum( hours  [ current_speed_step ] );
    
    US_SimulationParameters::SpeedProfile* sp = &simparams.speed_step[ current_speed_step ];
 
@@ -599,17 +603,17 @@ void US_SimulationParametersGui::check_delay( void )
       
       cnt_duration_mins->setValue( sp->duration_minutes);
       
-      cnt_duration_mins->setMinValue( sp->delay_minutes + 1 );
+      cnt_duration_mins->setMinimum( sp->delay_minutes + 1 );
    }
    else if ( sp->duration_hours > 0)
    {
-      cnt_duration_mins->setMinValue( 0 );
+      cnt_duration_mins->setMinimum( 0 );
    }
    else if ( sp->duration_hours == 0 && 
              sp->duration_minutes > sp->delay_minutes + 1 )
    {
       cnt_duration_mins->disconnect();
-      cnt_duration_mins->setMinValue( sp->delay_minutes + 1 );
+      cnt_duration_mins->setMinimum( sp->delay_minutes + 1 );
       connect( cnt_duration_mins, SIGNAL( valueChanged        ( double ) ), 
                                   SLOT  ( update_duration_mins( double ) ) );
    }

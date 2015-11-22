@@ -2,8 +2,6 @@
 #ifndef US_COLORGRAD_H
 #define US_COLORGRAD_H
 
-#include <QtGui>
-
 #include "us_extern.h"
 #include "us_widgets.h"
 #include "us_help.h"

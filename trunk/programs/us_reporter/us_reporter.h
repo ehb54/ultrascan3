@@ -1,15 +1,14 @@
 #ifndef US_REPORTER_H
 #define US_REPORTER_H
 
-#include <QtGui>
-#include <QWebView>
-#include <QWebSettings>
-
 #include "us_extern.h"
 #include "us_widgets.h"
 #include "us_db2.h"
 #include "us_help.h"
 #include "us_settings.h"
+#if QT_VERSION > 0x050000
+#include <QtPrintSupport/QPrinter>
+#endif
 
 #ifndef DbgLv
 #define DbgLv(a) if(dbg_level>=a)qDebug()
@@ -60,9 +59,6 @@ class US_Reporter : public US_Widgets
       US_Help       showHelp;
 
       US_DB2*       db;
-
-      QWebView*     prevwidg;
-      QWebSettings* websetting;
 
       QComboBox*    cb_runids;
 

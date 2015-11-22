@@ -1,8 +1,6 @@
 #ifndef US_COMBMODEL_H
 #define US_COMBMODEL_H
 
-#include <QtGui>
-
 #include "us_extern.h"
 #include "us_widgets.h"
 #include "us_db2.h"

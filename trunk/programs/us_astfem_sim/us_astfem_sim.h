@@ -2,11 +2,6 @@
 #ifndef US_ASTFEM_SIM_H
 #define US_ASTFEM_SIM_H
 
-#include <QtGui>
-
-#include <qwt_plot.h>
-#include <qwt_counter.h>
-
 #include "us_widgets.h"
 #include "us_plot.h"
 #include "us_model.h"
@@ -16,6 +11,9 @@
 #include "us_lamm_astfvm.h"
 #include "us_buffer.h"
 #include "us_dataIO.h"
+
+#include <qwt_plot.h>
+#include <qwt_counter.h>
 
 #ifndef DbgLv
 #define DbgLv(a) if(dbg_level>=a)qDebug()

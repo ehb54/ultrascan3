@@ -13,6 +13,10 @@
 #include "us_matrix.h"
 #include "us_model.h"
 #include "us_noise.h"
+#if QT_VERSION < 0x050000
+#define setSamples(a,b,c)  setData(a,b,c)
+#define setSymbol(a)       setSymbol(*a)
+#endif
 
 //! \brief Main program for US_FitMeniscus. Loads translators and starts
 //         the class US_FitMeniscus.
@@ -190,7 +194,7 @@ US_FitMeniscus::US_FitMeniscus() : US_Widgets()
 // Clear the plot, m-r table text, and other elements
 void US_FitMeniscus::reset( void )
 {
-   meniscus_plot->clear();
+//   meniscus_plot->clear();
    meniscus_plot->replot();
    
    te_data->e   ->setPlainText( "" );
@@ -208,7 +212,7 @@ void US_FitMeniscus::plot_data( int )
 // Plot the data
 void US_FitMeniscus::plot_data( void )
 {
-   meniscus_plot->clear();
+//   meniscus_plot->clear();
 
    QString contents = te_data->e->toPlainText();
    contents.replace( QRegExp( "[^0-9eE\\.\\n\\+\\-]+" ), " " );
@@ -277,9 +281,8 @@ void US_FitMeniscus::plot_data( void )
    meniscus_plot->setAxisScale( QwtPlot::yLeft, miny - dy, maxy + dy );
 
    raw_curve = us_curve( meniscus_plot, tr( "Raw Data" ) ); 
-   raw_curve->setPen( QPen( Qt::yellow ) );
-
-   raw_curve->setData( radius_values, rmsd_values, count );
+   raw_curve->setPen    ( QPen( Qt::yellow ) );
+   raw_curve->setSamples( radius_values, rmsd_values, count );
 
    // Do the fit and get the minimum
 
@@ -388,8 +391,8 @@ void US_FitMeniscus::plot_data( void )
    }
 
    fit_curve = us_curve( meniscus_plot, tr( "Fitted Data" ) ); 
-   fit_curve->setPen( QPen( Qt::red ) );
-   fit_curve->setData( fit_x, fit_y, fit_count );
+   fit_curve->setPen    ( QPen( Qt::red ) );
+   fit_curve->setSamples( fit_x, fit_y, fit_count );
    
    // Plot the minimum
 
@@ -405,7 +408,7 @@ void US_FitMeniscus::plot_data( void )
    rmsd_min  [ 0 ] = miny - 1.0 * dy;
    rmsd_min  [ 1 ] = miny + 2.0 * dy;
 
-   minimum_curve->setData( radius_min, rmsd_min, 2 );
+   minimum_curve->setSamples( radius_min, rmsd_min, 2 );
 
    // Put the minimum in the line edit box also
    le_fit->setText( QString::number( minimum, 'f', 5 ) );
@@ -414,18 +417,19 @@ void US_FitMeniscus::plot_data( void )
    QPen markerPen( QBrush( Qt::white ), 3.0 );
    markerPen.setWidth( 3 );
    
-   QwtPlotMarker* pm = new QwtPlotMarker();
+   QwtPlotMarker* pm  = new QwtPlotMarker();
    QwtText        label( QString::number( minimum, 'f', 5 ) );
    QFont          font( pm->label().font() );
+   QwtSymbol*     sym = new QwtSymbol( QwtSymbol::Cross, QBrush( Qt::white ),
+                                       markerPen, QSize( 9, 9 ) );
 
    font.setBold( true );
    font.setPointSize( font.pointSize() + 1 );
    label.setFont( font );
 
-   pm->setValue( minimum, miny + 3.0 * dy );
-   pm->setSymbol( QwtSymbol( QwtSymbol::Cross, 
-            QBrush( Qt::white ), markerPen, QSize( 9, 9 ) ) );
-   pm->setLabel( label );
+   pm->setValue         ( minimum, miny + 3.0 * dy );
+   pm->setSymbol        ( sym ); 
+   pm->setLabel         ( label );
    pm->setLabelAlignment( Qt::AlignTop );
 
    pm->attach( meniscus_plot );
