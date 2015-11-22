@@ -1,7 +1,7 @@
 # pro file for building the makefile for qwtplot3d
 #
 
-TARGET            = qwtplot3d-qt4
+TARGET            = qwtplot3d
 TEMPLATE          = lib
 CONFIG           += qt warn_on opengl thread zlib release
 MOC_DIR           = tmp
