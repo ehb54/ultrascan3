@@ -199,7 +199,7 @@ class US_Pseudo3D_Combine : public US_Widgets
       void select_y_axis( int  );
       void build_xy_distro( void );
       QString anno_title  ( int );
-      //QwtLinearColorMap* color_map_copy( QwtLinearColorMap* );
+      QwtLinearColorMap* ColorMapCopy( QwtLinearColorMap* );
 
       void help       ( void )
       { showHelp.show_help( "pseudo3d_combine.html" ); };

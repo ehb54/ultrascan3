@@ -533,7 +533,8 @@ void US_Pseudo3D_Combine::plot_data( void )
 #else
    US_SpectrogramData* rdata = new US_SpectrogramData();
    d_spectrogram->setData( rdata );
-   d_spectrogram->setColorMap( (QwtColorMap*)colormap );
+//   d_spectrogram->setColorMap( (QwtColorMap*)colormap );
+   d_spectrogram->setColorMap( ColorMapCopy( colormap ) );
    US_SpectrogramData& spec_dat = (US_SpectrogramData&)*(d_spectrogram->data());
 #endif
    QwtDoubleRect drect;
@@ -608,8 +609,10 @@ void US_Pseudo3D_Combine::plot_data( void )
    rightAxis->setColorMap( QwtDoubleInterval( plt_zmin, plt_zmax ),
       d_spectrogram->colorMap() );
 #else
+//   rightAxis->setColorMap( QwtInterval( plt_zmin, plt_zmax ),
+//      (QwtColorMap*)d_spectrogram->colorMap() );
    rightAxis->setColorMap( QwtInterval( plt_zmin, plt_zmax ),
-      (QwtColorMap*)d_spectrogram->colorMap() );
+                           ColorMapCopy( colormap ) );
 #endif
    data_plot->setAxisScale( QwtPlot::yRight,  plt_zmin, plt_zmax );
 
@@ -1478,5 +1481,23 @@ QString US_Pseudo3D_Combine::anno_title( int pltndx )
       a_title  = tr( "Frictional Coefficient" );
 
    return a_title;
+}
+
+// Make a ColorMap copy and return a pointer to the new ColorMap
+QwtLinearColorMap* US_Pseudo3D_Combine::ColorMapCopy( QwtLinearColorMap* colormap )
+{
+   QVector< double >  cstops   = colormap->colorStops();
+   int                lstop    = cstops.count() - 1;
+   QwtInterval        csvals( 0.0, 1.0 );
+   QwtLinearColorMap* cmapcopy = new QwtLinearColorMap( colormap->color1(),
+                                                        colormap->color2() );
+
+   for ( int jj = 1; jj < lstop; jj++ )
+   {
+      QColor scolor = colormap->color( csvals, cstops[ jj ] );
+      cmapcopy->addColorStop( cstops[ jj ], scolor );
+   }
+
+   return cmapcopy;
 }
 

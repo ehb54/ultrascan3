@@ -1,20 +1,22 @@
 # Profile include file for applications
 
-!include( local.pri ) error( "local.pri is missing.  Copy from local.pri.template and update variables as appropriate" )
+include( local.pri )
 
 TEMPLATE     = app
 DESTDIR      = ../../bin
 MOC_DIR      = ./moc
 OBJECTS_DIR  = ./obj
 VER          = 10
+QT          += widgets
 
-CONFIG       += $$DEBUGORRELEASE qt thread warn
+CONFIG       += $$DEBUGORRELEASE qt thread warn widgets
 
 unix {
   LIBS       += -L../../lib -lus_gui -lus_utils
   LIBS       += -lcrypto
   LIBS       += $$QWTLIB
-  LIBS       += -lqwtplot3d-qt4 -lGLU
+  ##LIBS       += -lqwtplot3d-qt4 -lGLU
+  LIBS       += -lqwtplot3d -lGLU
   LIBS       += -L$$MYSQLDIR -lmysqlclient
   DEFINES    += INTEL LINUX
 

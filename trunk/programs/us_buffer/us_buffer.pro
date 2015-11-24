@@ -2,7 +2,7 @@ include( ../../gui.pri )
 
 TARGET        = us_buffer
 
-HEADERS       = us_buffer.h
+HEADERS       = ../../utils/us_buffer.h
 
 SOURCES       = us_buffer_main.cpp    
 

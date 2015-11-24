@@ -70,14 +70,15 @@ class US_GA_Initialize : public US_Widgets
       QwtCounter*   ct_plymin;     
       QwtCounter*   ct_plymax;     
 
-      QwtPlot*            data_plot;
-      QwtPlotSpectrogram* d_spectrogram;
-      QwtPlotCurve*       pc1;
-      QwtLinearColorMap*  colormap;
-      US_PlotPicker*      pick;
+      QwtPlot*             data_plot;
+      QwtPlotSpectrogram*  d_spectrogram;
+      US_SpectrogramData*  spec_dat;
+      QwtPlotCurve*        pc1;
+      QwtLinearColorMap*   colormap;
+      US_PlotPicker*       pick;
       US_Disk_DB_Controls* dkdb_cntrls;
 
-      US_SoluteData*      soludata;
+      US_SoluteData*       soludata;
 
       QPushButton*  pb_prefilt;
       QPushButton*  pb_lddistr;
@@ -240,6 +241,7 @@ class US_GA_Initialize : public US_Widgets
       void select_y_axis   ( int );
       void build_xy_distro ( void );
       QString anno_title   ( int  );
+      QwtLinearColorMap* ColorMapCopy( QwtLinearColorMap* );
 
       void help     ( void )
       { showHelp.show_help( "ga_initialize.html" ); };
