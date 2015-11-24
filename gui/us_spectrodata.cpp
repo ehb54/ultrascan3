@@ -20,21 +20,39 @@ US_SpectrogramData::US_SpectrogramData() : QwtRasterData()
    dbg_level = US_Settings::us_debug();
 }
 
+#if QT_VERSION < 0x050000
 QwtRasterData* US_SpectrogramData::copy() const
 {
-   return new US_SpectrogramData();
+   US_SpectrogramData* newdat = new US_SpectrogramData;
+   newdat->xreso  = xreso;
+   newdat->yreso  = yreso;
+   newdat->resol  = resol;
+   newdat->zfloor = zfloor;
+   newdat->nxpsc  = nxpsc;
+   newdat->nyscn  = nyscn;
+   newdat->nxypt  = nxypt;
+   newdat->rdata  = rdata;
+   return newdat;
 }
 
+QwtDoubleInterval US_SpectrogramData::range() const
+{
+   return QwtDoubleInterval( zmin, zmax );
+}
+#else
 QwtInterval US_SpectrogramData::range() const
 {
    return QwtInterval( zmin, zmax );
 }
+#endif
 
 // Initialize raster: get x,y ranges and image pixel size
 void US_SpectrogramData::initRaster( QRectF& drect, QSize& rsiz )
 {
    drect = QRectF( xmin, ymin, xrng, yrng );
    rsiz  = QSize( nxpsc, nyscn );
+qDebug() << "specDat: initRas: drect" << drect;
+qDebug() << "specDat: initRas: rsiz" << rsiz;
 }
 
 // Get x range
@@ -47,6 +65,27 @@ QwtInterval US_SpectrogramData::xrange()
 QwtInterval US_SpectrogramData::yrange()
 {
    return QwtInterval( ymin, ymax );
+}
+
+// Get x or y or z interval
+QwtInterval US_SpectrogramData::interval( Qt::Axis axis )
+{
+   QwtInterval arange = QwtInterval( zmin, zmax );
+
+   switch ( axis )
+   {
+      case Qt::XAxis:
+         arange = xrange();
+         break;
+      case Qt::YAxis:
+         arange = yrange();
+         break;
+      case Qt::ZAxis:
+      default:
+         break;
+   }
+
+   return arange;
 }
 
 // Necessary method to set up raster ranges: resolutions, floor fraction
@@ -69,6 +108,7 @@ void US_SpectrogramData::setZRange( double a_zmin, double a_zmax )
 {
    zmin     = a_zmin;
    zmax     = a_zmax;
+   zminr    = zmin - ( ( zmax - zmin ) * zfloor );
 #if QT_VERSION > 0x050000
    setInterval( Qt::ZAxis, QwtInterval( zmin, zmax ) );
 #endif
@@ -192,15 +232,19 @@ void US_SpectrogramData::setRaster( QList< S_Solute >* solu )
    yinc    = ( yreso - 1.0 ) / yrng;
    zminr   = zmin - ( ( zmax - zmin ) * zfloor );
 
-   // set bounding rectangle for raster plot
+   // Set bounding rectangle for raster plot
 #if QT_VERSION < 0x050000
    setBoundingRect( QRectF( xmin, ymin, xrng, yrng ) );
 #else
+qDebug() << "sRaDa: setBounding... xmin xmax" << xmin << xmax;
+qDebug() << "sRaDa: setBounding... ymin ymax" << ymin << ymax;
+qDebug() << "sRaDa: setBounding... zminr zmax" << zminr << zmax;
    setInterval( Qt::XAxis, QwtInterval( xmin, xmax ) );
    setInterval( Qt::YAxis, QwtInterval( ymin, ymax ) );
+   setInterval( Qt::ZAxis, QwtInterval( zmin, zmax ) );
 #endif
 
-   // initialize raster to zmin
+   // Initialize raster to zmin
    rdata.clear();
 
    for ( int ii = 0; ii < nxypt; ii++ )
@@ -322,18 +366,6 @@ void US_SpectrogramData::setRaster( QList< S_Solute >* solu )
          }
       }
    }
-}
-
-// Set up the bounding rectangle for the data
-void US_SpectrogramData::setBoundingRect( const QRectF brect )
-{
-#if QT_VERSION > 0x050000
-   setInterval( Qt::XAxis, QwtInterval( brect.left(), brect.right() ) );
-   setInterval( Qt::YAxis, QwtInterval( brect.top(), brect.bottom() ) );
-#else
-   setBoundingRect( QwtDoubleRect( brect.left(), brect.bottom(),
-                                   ( brect.right() - brect.left() ),
-                                   ( brect.bottom() - brect.top() ) ) );
-#endif
+qDebug() << "SD:sRaDa: RETURN:";
 }
 

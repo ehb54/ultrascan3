@@ -2,7 +2,7 @@
 #  Copy file to library.pri and change QWTPATH, SINGLEDIR to match your installation
 #  Also see gui.pri.template
 
-!include( local.pri ) error( "local.pri is missing.  Copy from local.pri.template and update variables as appropriate" )
+include( local.pri )
 
 TEMPLATE     = lib
 CONFIG      += $$DEBUGORRELEASE qt thread warn
@@ -34,7 +34,8 @@ win32 {
   INCLUDEPATH            += $$QWTPATH/src 
   INCLUDEPATH            += $$MYSQLPATH/include
   INCLUDEPATH            += $$OPENSSL/include
-  INCLUDEPATH            += ../qwtplot3d-qt4/include
+  ##INCLUDEPATH            += ../qwtplot3d-qt4/include
+  INCLUDEPATH            += ../qwtplot3d/include
 
   LIBS                   += $$QWTLIB
   LIBS                   += $$MYSQLLIB

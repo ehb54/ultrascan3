@@ -48,11 +48,16 @@ public:
    //! \brief SpectroGram Data constructor
    US_SpectrogramData( QRectF& );
 
+#if QT_VERSION < 0x050000
    //! \brief Return a copy of SpectroGram Data
    virtual QwtRasterData *copy() const;
 
    //! \brief Return the Z range (minimum,maximum pair)
+   virtual QwtDoubleInterval range() const;
+#else
+   //! \brief Return the Z range (minimum,maximum pair)
    virtual QwtInterval range() const;
+#endif
 
    //! \brief Called to get data ranges and raster size in pixels
    //! \param drect Data rectangle (x-min,y-min,x-range,y-range)
@@ -66,6 +71,10 @@ public:
    //! \brief Fetch the Y data range
    //! \return Interval( y-min, y-max )
    QwtInterval yrange();
+
+   //! \brief Fetch the X/Y/Z range
+   //~ \return Interval( min, max )
+   virtual QwtInterval interval( Qt::Axis );
 
    //! \brief Sets up ranges and controls for the raster data to come
    //! \param a_xres   X resolution, the real X extent in pixels.
@@ -89,10 +98,6 @@ public:
    //! \brief Sets up the internal raster, based on a set of Solute points.
    //! \param solu  Pointer to list of solution points for the current distribution.
    void setRaster( QList< S_Solute >* );
-
-   //! \brief Sets the bounding rectangle for data
-   //  \param brect Bounding rectangle
-   void setBoundingRect( const QRectF );
 
 private:
 

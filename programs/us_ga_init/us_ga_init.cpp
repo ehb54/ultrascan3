@@ -685,7 +685,7 @@ void US_GA_Initialize::manDrawSb( void )
    pick->setRubberBandPen( *pickpen );
    pick->setTrackerPen(    *pickpen );
    pick->setRubberBand(     QwtPicker::RectRubberBand );
-   pick->setStateMachine( new QwtPickerClickPointMachine() );
+   pick->setStateMachine( new QwtPickerDragRectMachine() );
 
    // set up to capture position and dimensions of solute bin
    connect( pick, SIGNAL(  mouseDown( const QwtDoublePoint& ) ),
@@ -837,6 +837,8 @@ void US_GA_Initialize::replot_data()
 void US_GA_Initialize::plot_1dim( void )
 {
    data_plot->detachItems();
+   data_plot->replot();
+   pick          = new US_PlotPicker( data_plot );
 
    data_plot->setCanvasBackground( Qt::black );
    pick->setTrackerPen( QColor( Qt::white ) );
@@ -930,6 +932,8 @@ void US_GA_Initialize::plot_1dim( void )
 void US_GA_Initialize::plot_2dim( void )
 {
    data_plot->detachItems();
+   data_plot->replot();
+   pick          = new US_PlotPicker( data_plot );
 
    data_plot->setCanvasBackground( Qt::black );
    pick->setTrackerPen( QColor( Qt::white ) );
@@ -1020,34 +1024,38 @@ void US_GA_Initialize::plot_2dim( void )
 void US_GA_Initialize::plot_3dim( void )
 {
    data_plot->detachItems();
-   QColor bg = colormap->color1();
+   data_plot->replot();
+   pick          = new US_PlotPicker( data_plot );
+   QColor bg     = colormap->color1();
 
    data_plot->setCanvasBackground( bg );
 
-   int csum  = bg.red() + bg.green() + bg.blue();
+   int csum      = bg.red() + bg.green() + bg.blue();
    pick->setTrackerPen( QPen( ( csum > 600 ) ? QColor( Qt::black ) :
                                                QColor( Qt::white ) ) );
 
-   QString tstr = run_name + "\n" + analys_name + "\n (" + method + ")";
+   QString tstr  = run_name + "\n" + analys_name + "\n (" + method + ")";
    data_plot->setTitle( tstr );
 
    // set up spectrogram data
    d_spectrogram = new QwtPlotSpectrogram();
 #if QT_VERSION < 0x050000
    d_spectrogram->setData( US_SpectrogramData() );
+   spec_dat      = (US_SpectrogramData*)&d_spectrogram->data();
    d_spectrogram->setColorMap( *colormap );
-   US_SpectrogramData& spec_dat = (US_SpectrogramData&)d_spectrogram->data();
 #else
-   US_SpectrogramData* rdata = new US_SpectrogramData();
-   d_spectrogram->setData( rdata );
-   d_spectrogram->setColorMap( (QwtColorMap*)colormap );
-   US_SpectrogramData& spec_dat = (US_SpectrogramData&)*(d_spectrogram->data());
+   spec_dat      = new US_SpectrogramData();
+   d_spectrogram->setColorMap( ColorMapCopy( colormap ) );
+   d_spectrogram->setData    ( spec_dat );
 #endif
+   d_spectrogram->attach( data_plot );
 
    QwtDoubleRect drect;
 
    if ( auto_lim )
+   {
       drect = QwtDoubleRect( 0.0, 0.0, 0.0, 0.0 );
+   }
    else
    {
       double zmin = sdistro->at( 0 ).c;
@@ -1061,22 +1069,21 @@ void US_GA_Initialize::plot_3dim( void )
          zmax  = qMax( zmax, sdistro->at( jj ).c );
       }
 
-      spec_dat.setZRange( zmin, zmax );
+      spec_dat->setZRange( zmin, zmax );
    }
 
-   spec_dat.setRastRanges( xreso, yreso, resolu, zfloor, drect );
-   spec_dat.setRaster( sdistro );
+   spec_dat->setRastRanges( xreso, yreso, resolu, zfloor, drect );
+   spec_dat->setRaster( sdistro );
 
-   d_spectrogram->attach( data_plot );
-
-   // set color map and axis settings
+   // Set color map and axis settings
    QwtScaleWidget *rightAxis = data_plot->axisWidget( QwtPlot::yRight );
-   rightAxis->setColorBarEnabled( true );
+   rightAxis    ->setColorBarEnabled( true );
 #if QT_VERSION < 0x050000
-   rightAxis->setColorMap( spec_dat.range(), d_spectrogram->colorMap() );
+   rightAxis    ->setColorMap( spec_dat->range(), d_spectrogram->colorMap() );
 #else
-   rightAxis->setColorMap( spec_dat.range(),
-         (QwtColorMap*)d_spectrogram->colorMap() );
+   rightAxis    ->setColorMap( spec_dat->range(),
+                               ColorMapCopy( colormap ) );
+   d_spectrogram->setColorMap( ColorMapCopy( colormap ) );
 #endif
    data_plot->setAxisTitle( QwtPlot::xBottom, xa_title );
    data_plot->setAxisTitle( QwtPlot::yLeft,   ya_title );
@@ -1084,7 +1091,7 @@ void US_GA_Initialize::plot_3dim( void )
    data_plot->axisTitle( QwtPlot::yRight ).setFont(
          data_plot->axisTitle( QwtPlot::yLeft ).font() );
    data_plot->setAxisScale( QwtPlot::yRight,
-      spec_dat.range().minValue(), spec_dat.range().maxValue() );
+      spec_dat->range().minValue(), spec_dat->range().maxValue() );
    data_plot->enableAxis( QwtPlot::yRight );
 
    if ( auto_lim )
@@ -2375,5 +2382,23 @@ QString US_GA_Initialize::anno_title( int pltndx )
       a_title  = tr( "Frictional Coefficient" );
 
    return a_title;
+}
+
+// Make a ColorMap copy and return a pointer to the new ColorMap
+QwtLinearColorMap* US_GA_Initialize::ColorMapCopy( QwtLinearColorMap* colormap )
+{
+   QVector< double >  cstops   = colormap->colorStops();
+   int                lstop    = cstops.count() - 1;
+   QwtInterval        csvals( 0.0, 1.0 );
+   QwtLinearColorMap* cmapcopy = new QwtLinearColorMap( colormap->color1(),
+                                                        colormap->color2() );
+
+   for ( int jj = 1; jj < lstop; jj++ )
+   {
+      QColor scolor = colormap->color( csvals, cstops[ jj ] );
+      cmapcopy->addColorStop( cstops[ jj ], scolor );
+   }
+
+   return cmapcopy;
 }
 

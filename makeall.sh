@@ -1,8 +1,12 @@
 #!/bin/bash
 
-QMAKEVER=`qmake --version|grep version|grep 4`
-if [ "x$QMAKEVER" == "x" ]; then
+QTVERS=`qmake --version|sed -n 2,2p|awk '{print $4}'`
+echo "Make All for Qt Version ${QTVERS} ..."
+QTMAJV=`echo ${QTVERS}|cut -d. -f1`
+if [ `echo "45"|grep -ci "${QTMAJV}"` -eq 0 ]; then
   echo "Wrong qmake, check environment"
+  echo " QT Major version must be 4 or 5; is ${QTMAJV}"
+  qmake --version
   exit
 fi
 
@@ -33,7 +37,7 @@ DIR=$(pwd)
 rm -f build.log
 NBERR=0
 
-for d in qwtplot3d-qt4 utils gui programs/*
+for d in qwtplot3d utils gui programs/*
 do
   if [ ! -d $d                          ]; then continue; fi
   if [ $d == "programs/config2"         ]; then continue; fi

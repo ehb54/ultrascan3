@@ -716,6 +716,7 @@ RECURSIVE              = YES
 EXCLUDE                = ./doc/ \
                          ./testing/ \
                          ./gui/moc/ \
+                         ./gui/qrc_images.cpp \
                          ./utils/moc/ \
                          ./db/moc/ \
                          ./qwtplot3d-qt4/ \
