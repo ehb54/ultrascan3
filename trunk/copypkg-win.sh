@@ -31,6 +31,7 @@ done
 echo "Copy bin,etc directories"
 cp -rp ${SRCDIR}/bin ${DESTDIR}/
 cp -rp ${SRCDIR}/etc ${DESTDIR}/
+cp -p ${SRCDIR}/LICENSE.txt ${DESTDIR}/
 chmod -R a+rw ${DESTDIR}/etc
 
 # Remove any somo*prev* files in etc/
@@ -50,7 +51,7 @@ echo "Copy somo doc,demo,test directories"
 cp -rp ${SOMOBASE}/doc ${DESTDIR}/somo/
 cp -rp ${SOMOBASE}/somo/demo ${DESTDIR}/somo/
 cp -rp ${SOMOBASE}/somo/test ${DESTDIR}/somo/
-cp -p ${SOMOBASE}/LICENSE.txt ${DESTDIR}/
+##cp -p ${SOMOBASE}/LICENSE.txt ${DESTDIR}/
 # Remove somo/doc/manual/attic directory
 rm -rf ${DESTDIR}/somo/doc/manual/attic
 
