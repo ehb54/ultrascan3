@@ -8,10 +8,14 @@
 #include <QtOpenGL/qgl.h>
 #endif
 
+#ifndef Q_OS_MAC
 #if QT_VERSION < 0x047999
 #include <GL/glu.h>
 #endif
 #if QT_VERSION > 0x050000
+#include <GL/glu.h>
+#endif
+#else
 #include <GL/glu.h>
 #endif
 

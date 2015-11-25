@@ -22,6 +22,9 @@ win32:CONFIG -= zlib
 linux-g++:TMAKE_CXXFLAGS += -fno-exceptions
 unix:VERSION = 0.2.7
 
+mac:CONFIG += x86_64
+mac:INCLUDEPATH += /usr/X11R6/include
+
 # Input
 SOURCES += src/qwt3d_axis.cpp \
            src/qwt3d_color.cpp \

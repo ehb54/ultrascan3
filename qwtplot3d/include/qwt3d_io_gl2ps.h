@@ -6,7 +6,9 @@
 #if QT_VERSION < 0x040000
 #include <qgl.h>
 #else
+#ifndef Q_OS_MAC
 #include <QtOpenGL/qgl.h>
+#endif
 #endif
 
 #include "qwt3d_types.h"
