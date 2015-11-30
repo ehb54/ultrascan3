@@ -79,12 +79,12 @@ bool US_DB2::test_db_connection(
    QString uhost  = host.section( ":", 0, 0 ).simplified();
    int     uport  = host.section( ":", 1, 1 ).simplified().toInt();
 
-   bool status = mysql_real_connect( 
+   bool status = mysql_real_connect(
                  conn,
-                 uhost   .toLatin1(), 
-                 user    .toLatin1(), 
-                 password.toLatin1(), 
-                 dbname  .toLatin1(), 
+                 uhost   .toLatin1().constData(),
+                 user    .toLatin1().constData(),
+                 password.toLatin1().constData(),
+                 dbname  .toLatin1().constData(),
                  uport, NULL, CLIENT_MULTI_STATEMENTS );
  
    if ( ! status )
@@ -129,12 +129,12 @@ bool US_DB2::test_secure_connection(
    QString uhost  = host.section( ":", 0, 0 ).simplified();
    int     uport  = host.section( ":", 1, 1 ).simplified().toInt();
 
-   bool status = mysql_real_connect( 
+   bool status = mysql_real_connect(
                  db,
-                 uhost   .toLatin1(), 
-                 user    .toLatin1(), 
-                 password.toLatin1(), 
-                 dbname  .toLatin1(), 
+                 uhost   .toLatin1().constData(),
+                 user    .toLatin1().constData(),
+                 password.toLatin1().constData(),
+                 dbname  .toLatin1().constData(),
                  uport, NULL, CLIENT_MULTI_STATEMENTS );
  
    if ( ! status )
@@ -204,12 +204,12 @@ bool US_DB2::connect( const QString& masterPW, QString& err )
       int     uport  = host.section( ":", 1, 1 ).simplified().toInt();
 //qDebug() << "DB: connect uport" << uport << "uhost" << uhost;
 
-      connected = mysql_real_connect( 
+      connected = mysql_real_connect(
                   db,
-                  uhost   .toLatin1(), 
-                  user    .toLatin1(), 
-                  password.toLatin1(), 
-                  dbname  .toLatin1(), 
+                  uhost   .toLatin1().constData(),
+                  user    .toLatin1().constData(),
+                  password.toLatin1().constData(),
+                  dbname  .toLatin1().constData(),
                   uport, NULL, CLIENT_MULTI_STATEMENTS );
  
    }
@@ -306,12 +306,12 @@ bool US_DB2::connect(
       QString uhost  = host.section( ":", 0, 0 ).simplified();
       int     uport  = host.section( ":", 1, 1 ).simplified().toInt();
 
-      connected = mysql_real_connect( 
+      connected = mysql_real_connect(
                   db,
-                  uhost   .toLatin1(), 
-                  user    .toLatin1(), 
-                  password.toLatin1(), 
-                  dbname  .toLatin1(), 
+                  uhost   .toLatin1().constData(),
+                  user    .toLatin1().constData(),
+                  password.toLatin1().constData(),
+                  dbname  .toLatin1().constData(),
                   uport, NULL, CLIENT_MULTI_STATEMENTS );
    }
 
@@ -580,7 +580,7 @@ int US_DB2::writeBlobToDB( const QString& filename,
    QByteArray sqlQuery( escaped_length 
                       + queryPart1.size()
                       + checksum.size() + 7, '\0' );
-   strcpy( sqlQuery.data(), queryPart1.toLatin1() );
+   strcpy( sqlQuery.data(), queryPart1.toLatin1().constData() );
    char* queryPtr = sqlQuery.data() + queryPart1.size();
    memcpy( queryPtr, blobData_escaped.data(), escaped_length );
    queryPtr += escaped_length;

@@ -9,10 +9,13 @@
 #define setSymbol(a)       setSymbol(*a)
 #endif
 
-const double MPISQ  = M_PI * M_PI;
-const double THIRD  = 1.0 / 3.0;
+const double MPISQ   = M_PI * M_PI;
+const double THIRD   = 1.0 / 3.0;
 const double VOL_FAC = 0.75 / M_PI;
 const double SPH_FAC = 0.06 * M_PI * VISC_20W;
+const int    MINSSZ  = 10;
+const int    MAXSSZ  = 800;
+const int    DEFSSZ  = 100;
 
 // main program
 int main( int argc, char* argv[] )
@@ -261,6 +264,9 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    connect( ct_subGrids, SIGNAL( valueChanged( double ) ),
             this,        SLOT( update_subGrids( double ) ) );
 
+   QLabel* lb_counts = us_label( tr( "Number of Grid Points:" ) );
+   le_counts     = us_lineedit( tr( "0 total, 0 per subgrid" ), 0, true );
+
    pb_reset      = us_pushbutton( tr( "Reset" ) );
    pb_reset->setEnabled( true );
    connect( pb_reset,   SIGNAL( clicked() ),
@@ -342,6 +348,8 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
    left->addWidget( ct_partialGrid,        s_row++, 2, 1, 2 );
    left->addWidget( lb_subGrid,            s_row,   0, 1, 2 );
    left->addWidget( ct_subGrids,           s_row++, 2, 1, 2 );
+   left->addWidget( lb_counts,             s_row,   0, 1, 2 );
+   left->addWidget( le_counts,             s_row++, 2, 1, 2 );
    left->addWidget( pb_reset,              s_row,   0, 1, 1 );
    left->addWidget( pb_save,               s_row,   1, 1, 1 );
    left->addWidget( pb_help,               s_row,   2, 1, 1 );
@@ -696,9 +704,12 @@ void US_Grid_Editor::update_partialGrid( double dval )
 // Select a subgrid from the final grid for highlighting:
 void US_Grid_Editor::update_subGrids( double dval )
 {
-   subGrids = (int) dval;
-   ct_partialGrid->setRange     ( 1, subGrids);
+   int ntotg       = final_grid.size();
+   subGrids        = (int)dval;
+   ct_partialGrid->setRange     ( 1, subGrids );
    ct_partialGrid->setSingleStep( 1 );
+   le_counts->setText( tr( "%1 total, %2 per subgrid" )
+         .arg( ntotg ).arg( ntotg / subGrids ) );
    update_plot();
 }
 
@@ -730,7 +741,6 @@ void US_Grid_Editor::update_plot( void )
 qDebug() << "update_plot:  call calc_gridpoints()";
    calc_gridpoints();
 
-//   data_plot1->clear();
    QString xatitle = tr( "Sedimentation Coefficient" );
    QString yatitle = tr( "Frictional Ratio" );
 qDebug() << "  up0)yRes" << yRes;
@@ -784,6 +794,7 @@ qDebug() << "  up0)yRes" << yRes;
    if ( selected_plot == 1 )
       xatitle         = tr( "Molecular Weight" );
 
+   data_plot1->detachItems( );
    data_plot1->setAxisTitle( QwtPlot::xBottom, xatitle );
    data_plot1->setAxisTitle( QwtPlot::yLeft,   yatitle );
 
@@ -1998,6 +2009,21 @@ void US_Grid_Editor::add_partialGrid( void )
    ck_show_final_grid->setEnabled( true );
    pb_delete_partialGrid->setEnabled( true );
    ct_partialGrid->setEnabled( true );
+
+   int ntotg       = final_grid.size();
+   int minsubg     = ntotg / MAXSSZ;
+   int maxsubg     = ntotg / MINSSZ + 1;
+   subGrids        = ntotg / DEFSSZ + 1;
+   ct_subGrids->disconnect   ();
+   ct_subGrids->setRange     ( minsubg, maxsubg );
+   ct_subGrids->setSingleStep( 1 );
+   ct_subGrids->setValue     ( subGrids );
+   connect( ct_subGrids, SIGNAL( valueChanged   ( double ) ),
+            this,        SLOT  ( update_subGrids( double ) ) );
+
+   le_counts->setText( tr( "%1 total, %2 per subgrid" )
+         .arg( ntotg ).arg( ntotg / subGrids ) );
+
 }
 
 // delete current grid
@@ -2278,19 +2304,21 @@ void US_Grid_Editor::show_final_grid( bool flag )
 // activated when the "Show Subgrids" Checkbox is set
 void US_Grid_Editor::show_sub_grid( bool flag )
 {
-   if (flag)
+   if ( flag )
    {
-      int maxsubgrids = (int) final_grid.size()/50;
-      int defsubgrids = ( maxsubgrids / 2 ) | 1;
-DbgLv(1) << "finalsize" << final_grid.size() << "maxsubgs" << maxsubgrids;
+      int ntotg       = final_grid.size();
+      int minsubg     = ntotg / MAXSSZ;
+      int maxsubg     = ntotg / MINSSZ + 1;
+      subGrids        = ntotg / DEFSSZ + 1;
+DbgLv(1) << "finalsize" << ntotg << "maxsubg" << maxsubg;
       lb_partialGrid       ->setText   ( tr( "Highlight Subgrid #:" ) );
       ct_subGrids          ->setEnabled   ( true );
-      ct_subGrids          ->setRange     ( 1, maxsubgrids );
+      ct_subGrids          ->setRange     ( minsubg, maxsubg );
       ct_subGrids          ->setSingleStep( 1 );
-      ct_subGrids          ->setValue     ( defsubgrids );
-      ct_partialGrid       ->setRange     ( 1, subGrids );
-      ct_partialGrid       ->setSingleStep( 1 );
+      ct_subGrids          ->setValue     ( subGrids );
       pb_delete_partialGrid->setEnabled   ( false );
+      le_counts->setText( tr( "%1 total, %2 per subgrid" )
+            .arg( ntotg ).arg( ntotg / subGrids ) );
    }
    else
    {
