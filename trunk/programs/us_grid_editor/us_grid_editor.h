@@ -74,6 +74,7 @@ class US_Grid_Editor : public US_Widgets
       QLineEdit    *le_density;
       QLineEdit    *le_viscosity;
       QLineEdit    *le_investigator;
+      QLineEdit    *le_counts;
 
       QComboBox    *cb_fixed;
 
