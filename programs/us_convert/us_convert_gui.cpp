@@ -190,8 +190,6 @@ DbgLv(0) << "CGui: dbg_level" << dbg_level;
    lb_triple           = us_banner(
                             tr( "Cell / Channel / Wavelength" ), -1 );
    lw_triple           = us_listwidget();
-   lw_triple->setSizePolicy( QSizePolicy::Minimum, QSizePolicy::Fixed );
-   lw_triple->setMaximumWidth ( 150 );
    QLabel* lb_ccwinfo  = us_label(
                             tr( "Enter Associated Triple (c/c/w) Info:" ) );
 
