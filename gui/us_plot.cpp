@@ -6,11 +6,11 @@
 #include <QtPrintSupport>
 #include "qwt_picker_machine.h"
 #include "qwt_picker.h"
-#define setSymbol(a)   setSymbol(&a)
 #define canvasBackground() canvasBackground().color()
 #else
 #define majorPen(a)    majPen(a)
 #define minorPen(a)    minPen(a)
+#define setSymbol(a)   setSymbol(*a)
 #define drawSymbol(a,b) draw(a,b)
 #define QwtLogScaleEngine QwtLog10ScaleEngine
 #endif
@@ -141,10 +141,13 @@ US_Plot::US_Plot( QwtPlot*& parent_plot, const QString& title,
    QwtText qwtTitle( title );
    qwtTitle.setFont( font );
    plot->setTitle( qwtTitle );
-  
-   //plot->setMargin( US_GuiSettings::plotMargin() );
+
+#if QT_VERSION > 0x050000
    plot->setStyleSheet( QString( "QwtPlot{ padding: %1px }" )
          .arg( US_GuiSettings::plotMargin() ) );
+#else
+   plot->setMargin( US_GuiSettings::plotMargin() );
+#endif
 
    font.setPointSizeF( US_GuiSettings::fontSize() * 1.0 );
    qwtTitle.setFont( font );
@@ -283,7 +286,9 @@ void US_Plot::print( void )
 
    if ( dialog.exec() == QDialog::Accepted )
    {
-#if 0
+#if QT_VERSION > 0x050000
+       plot->drawCanvas( new QPainter( &printer ) );
+#else
        QwtPlotPrintFilter filter;
        if ( printer.colorMode() == QPrinter::GrayScale )
        {
@@ -293,9 +298,6 @@ void US_Plot::print( void )
            filter.setOptions( options );
        }
        plot->print( printer, filter );
-#endif
-#if 1
-       plot->drawCanvas( new QPainter( &printer ) );
 #endif
    }
 }
@@ -732,9 +734,12 @@ void US_PlotConfig::updateLegendFont( void )
    QFont newFont = QFontDialog::getFont( &ok, font, this,
                        tr( "Set Legend Font" ), 0 );
 
-   plot->legend()->setFont( newFont );
-   setLegendFontString();
-   plot->replot();
+   if ( ok )
+   {
+      plot->legend()->setFont( newFont );
+      setLegendFontString();
+      plot->replot();
+   }
 }
 
 void US_PlotConfig::updateAxis( int axis )
@@ -1201,7 +1206,8 @@ void US_PlotCurveConfig::apply( void )
 
    QSize symbolSize( sb_symbolWidth->value(), sb_symbolHeight->value() );
    
-   QwtSymbol newSymbol( symbolStyle, symbolBrush, symbolPen, symbolSize );
+   QwtSymbol* newSymbol = new QwtSymbol( symbolStyle, symbolBrush,
+                                         symbolPen,   symbolSize );
 
    palette = lb_showCurveColor->palette();
    QPen      curvePen( palette.color( QPalette::Window ) );
@@ -1519,8 +1525,8 @@ US_PlotAxisConfig::US_PlotAxisConfig( int currentAxis, QwtPlot* currentPlot,
    QGridLayout* rb1 = us_radiobutton( tr( "Linear"      ), rb_linear, true  );
    QGridLayout* rb2 = us_radiobutton( tr( "Logarithmic" ), rb_log   , false );
 
-   //if ( plot->axisScaleEngine( axis )->transformation()->type() == 
-   //      QwtScaleTransformation::Log10 ) rb_log->setChecked( true );
+   if ( plot->axisScaleEngine( axis )->transformation()->type() == 
+         QwtScaleTransformation::Log10 ) rb_log->setChecked( true );
 
    scaleRadio->addLayout( rb1 );
    scaleRadio->addLayout( rb2 );
@@ -1707,9 +1713,9 @@ void US_PlotAxisConfig::apply( void )
      plot->setAxisScale( axis, from, to, step );
 
    // Scale type - Linear or Log  -- Do nothing if unchanged
-   //int plotType = plot->axisScaleEngine( axis )->transformation()->type();
-   //if ( ( plotType == QwtScaleTransformation::Log10  && rb_linear->isChecked() ) 
-   //  || ( plotType == QwtScaleTransformation::Linear && rb_log   ->isChecked() ) )
+   int plotType = plot->axisScaleEngine( axis )->transformation()->type();
+   if ( ( plotType == QwtScaleTransformation::Log10  && rb_linear->isChecked() ) 
+     || ( plotType == QwtScaleTransformation::Linear && rb_log   ->isChecked() ) )
    {
       if ( rb_linear->isChecked() ) 
          plot->setAxisScaleEngine( axis, new QwtLinearScaleEngine );
@@ -1816,9 +1822,9 @@ qDebug() << "GRID COUNT" << ngrid;
 
    lb_showMajorColor = us_label( "" , 1 );
 
-   QPen     majorPen = grid->majorPen();
+   QPen     gmajorPen = grid->majorPen();
    QPalette p;
-   p.setColor( QPalette::Window, majorPen.color() );
+   p.setColor( QPalette::Window, gmajorPen.color() );
    lb_showMajorColor->setPalette( p ); 
    
    QPushButton* pb_majorColor = us_pushbutton ( tr( "Update Color" ) );
@@ -1842,7 +1848,7 @@ qDebug() << "GRID COUNT" << ngrid;
             << Qt::DashDotDotLine;
 
    cmbb_majorStyle  = us_comboBox();
-   int currentStyle = majorPen.style();
+   int currentStyle = gmajorPen.style();
    
    for ( int i = 0; i < styles.size(); i++ )
    {
@@ -1859,7 +1865,7 @@ qDebug() << "GRID COUNT" << ngrid;
 
    sb_majorWidth = new QSpinBox;
    sb_majorWidth->setRange( 1, 5 );
-   sb_majorWidth->setValue( majorPen.width() );
+   sb_majorWidth->setValue( gmajorPen.width() );
 
    majorStyle->addWidget( sb_majorWidth );
 
@@ -1895,8 +1901,8 @@ qDebug() << "GRID COUNT" << ngrid;
 
    lb_showMinorColor = us_label( "" , 1 );
 
-   QPen     minorPen = grid->minorPen();
-   p.setColor( QPalette::Window, minorPen.color() );
+   QPen     gminorPen = grid->minorPen();
+   p.setColor( QPalette::Window, gminorPen.color() );
    lb_showMinorColor->setPalette( p ); 
    
    QPushButton* pb_minorColor = us_pushbutton ( tr( "Update Color" ) );
@@ -1912,7 +1918,7 @@ qDebug() << "GRID COUNT" << ngrid;
    QBoxLayout* minorStyle = new QHBoxLayout;
 
    cmbb_minorStyle = us_comboBox();
-   currentStyle    = minorPen.style();
+   currentStyle    = gminorPen.style();
 
    for ( int i = 0; i < styles.size(); i++ )
    {
@@ -1929,7 +1935,7 @@ qDebug() << "GRID COUNT" << ngrid;
 
    sb_minorWidth = new QSpinBox;
    sb_minorWidth->setRange( 1, 5 ); 
-   sb_minorWidth->setValue( minorPen.width() );
+   sb_minorWidth->setValue( gminorPen.width() );
 
    minorStyle->addWidget( sb_minorWidth );
 
