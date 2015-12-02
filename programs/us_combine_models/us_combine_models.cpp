@@ -179,6 +179,7 @@ qDebug() << "SAVE:  nmodels" << nmodels;
    // Initialize output combo model from first input
    US_Model cmodel  = models[ 0 ];
    int      ncomps  = cmodel.components.size();
+qDebug() << "SAVE:   m0 ncomps" << ncomps;
    QString  runID   = mdescs[ 0 ].section( ".", 0, -4 );
    runIDs << runID;
    cmodel.update_coefficients();
@@ -190,6 +191,9 @@ qDebug() << "SAVE:  nmodels" << nmodels;
       imodel->update_coefficients();
       int kcomps = imodel->components.size();
       runID      = mdescs[ ii ].section( ".", 0, -4 );
+      bool cnstv = imodel->constant_vbar();
+      bool cnstk = imodel->constant_ff0 ();
+qDebug() << "SAVE:   im" << ii << "kcomps" << kcomps;
 
       if ( !runIDs.contains( runID ) )
          runIDs << runID;       // Build the list of unique run IDs
@@ -199,13 +203,41 @@ qDebug() << "SAVE:  nmodels" << nmodels;
          bool dupc = false;
          US_Model::SimulationComponent sc = imodel->components[ jj ];
 
-         for ( int kk = 0; kk < ncomps; kk++ )
-         {  // See if this component already exists
-            if ( sc.s    == cmodel.components[ kk ].s  &&
-                 sc.f_f0 == cmodel.components[ kk ].f_f0 )
-            {  // This component is a duplicate, so break
-               dupc = true;
-               break;
+         if ( cnstv )
+         {  // Test for duplicate where vbar20 is constant
+            for ( int kk = 0; kk < ncomps; kk++ )
+            {  // See if this component already exists
+               if ( sc.s    == cmodel.components[ kk ].s  &&
+                    sc.f_f0 == cmodel.components[ kk ].f_f0 )
+               {  // This component is a duplicate, so break
+                  dupc = true;
+                  break;
+               }
+            }
+         }
+         else if ( cnstk )
+         {  // Test for duplicate where f/f0 is constant
+            for ( int kk = 0; kk < ncomps; kk++ )
+            {  // See if this component already exists
+               if ( sc.s      == cmodel.components[ kk ].s  &&
+                    sc.vbar20 == cmodel.components[ kk ].vbar20 )
+               {  // This component is a duplicate, so break
+                  dupc = true;
+                  break;
+               }
+            }
+         }
+         else
+         {  // Test for duplicate where neither f/f0 nor vbar20 is constant
+            for ( int kk = 0; kk < ncomps; kk++ )
+            {  // See if this component already exists
+               if ( sc.s      == cmodel.components[ kk ].s     &&
+                    sc.f_f0   == cmodel.components[ kk ].f_f0  &&
+                    sc.vbar20 == cmodel.components[ kk ].vbar20 )
+               {  // This component is a duplicate, so break
+                  dupc = true;
+                  break;
+               }
             }
          }
 
@@ -214,7 +246,9 @@ qDebug() << "SAVE:  nmodels" << nmodels;
          ncomps++;
          sc.name = QString().sprintf( "SC%04d", ncomps );
          cmodel.components << sc;   // Add a component and bump count
+qDebug() << "SAVE:      NEW comp: ncomps" << ncomps;
       }
+qDebug() << "SAVE:       ncomps" << ncomps;
    }
 qDebug() << "SAVE:    ncomps" << ncomps << cmodel.components.size();
 qDebug() << "SAVE:    nrunIDs" << runIDs.size();
