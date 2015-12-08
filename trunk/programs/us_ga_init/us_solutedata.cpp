@@ -848,8 +848,9 @@ int US_SoluteData::reportDataMC( QString& fname, int mc_iters )
             ts << ( vsum / tconc ) << endl;
 
             ts << tr( "Partial concentration:      " );
-            vsum     = tconc;
-            ts << ( vsum / vsiz ) << endl;
+//            vsum     = tconc;
+//            ts << ( vsum / vsiz ) << endl;
+            ts << tconc << endl;
             csums.append( vsum );
          }
 
