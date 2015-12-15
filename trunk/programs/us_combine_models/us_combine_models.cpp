@@ -179,6 +179,7 @@ qDebug() << "SAVE:  nmodels" << nmodels;
    // Initialize output combo model from first input
    US_Model cmodel  = models[ 0 ];
    int      ncomps  = cmodel.components.size();
+   int      ndupc   = 0;
 qDebug() << "SAVE:   m0 ncomps" << ncomps;
    QString  runID   = mdescs[ 0 ].section( ".", 0, -4 );
    runIDs << runID;
@@ -200,8 +201,10 @@ qDebug() << "SAVE:   im" << ii << "kcomps" << kcomps;
 
       for ( int jj = 0; jj < kcomps; jj++ )
       {  // Add model components to the combo model
-         bool dupc = false;
+         bool dupc    = false;
          US_Model::SimulationComponent sc = imodel->components[ jj ];
+         double conc  = sc.signal_concentration;
+         int kksv     = 0;
 
          if ( cnstv )
          {  // Test for duplicate where vbar20 is constant
@@ -210,7 +213,8 @@ qDebug() << "SAVE:   im" << ii << "kcomps" << kcomps;
                if ( sc.s    == cmodel.components[ kk ].s  &&
                     sc.f_f0 == cmodel.components[ kk ].f_f0 )
                {  // This component is a duplicate, so break
-                  dupc = true;
+                  kksv   = kk;
+                  dupc   = true;
                   break;
                }
             }
@@ -222,7 +226,8 @@ qDebug() << "SAVE:   im" << ii << "kcomps" << kcomps;
                if ( sc.s      == cmodel.components[ kk ].s  &&
                     sc.vbar20 == cmodel.components[ kk ].vbar20 )
                {  // This component is a duplicate, so break
-                  dupc = true;
+                  kksv   = kk;
+                  dupc   = true;
                   break;
                }
             }
@@ -235,31 +240,44 @@ qDebug() << "SAVE:   im" << ii << "kcomps" << kcomps;
                     sc.f_f0   == cmodel.components[ kk ].f_f0  &&
                     sc.vbar20 == cmodel.components[ kk ].vbar20 )
                {  // This component is a duplicate, so break
-                  dupc = true;
+                  kksv   = kk;
+                  dupc   = true;
                   break;
                }
             }
          }
 
-         if ( dupc )  continue;     // Skip adding a duplicate component
-
+         if ( dupc )
+         {  // Update concentration sum if duplicate component
+            cmodel.components[ kksv ].signal_concentration += conc;
+            ndupc++;
+            continue;
+         }
+            
+         // Add in any new unique component and bump count
          ncomps++;
          sc.name = QString().sprintf( "SC%04d", ncomps );
-         cmodel.components << sc;   // Add a component and bump count
+         cmodel.components << sc;
 qDebug() << "SAVE:      NEW comp: ncomps" << ncomps;
       }
 qDebug() << "SAVE:       ncomps" << ncomps;
    }
-qDebug() << "SAVE:    ncomps" << ncomps << cmodel.components.size();
-qDebug() << "SAVE:    nrunIDs" << runIDs.size();
+qDebug() << "SAVE:    ncomps" << ncomps << cmodel.components.size()
+ << "ndupc" << ndupc << "nrunIDs" << runIDs.size();
+   // Loop to scale concentrations by dividing by number of input models
+   double cscale      = 1.0 / (double)nmodels;
+   for ( int jj = 0; jj < ncomps; jj++ )
+      cmodel.components[ jj ].signal_concentration *= cscale;
 
    // Default output name derives from the name of the first input
    cmodel_name        = "global-" + mdescs[ 0 ];
    QString mdlbnam    = cmodel_name.section( ".",  0, -3 ) + ".";
    QString mdlanno    = cmodel_name.section( ".", -2, -2 );
    QString mdlaedt    = mdlanno.section( "_", 0, 0 ) + "_";
-   QString mdlaanl    = "a" + QDateTime::currentDateTime().toString( "yyMMddhhmm" ) + "_";
-   QString mdlatyp    = mdlanno.section( "_", 2, 2 ).section( "-", 0, 0 ) + "-GL";
+   QString mdlaanl    = "a" + QDateTime::currentDateTime()
+                        .toString( "yyMMddhhmm" ) + "_";
+   QString mdlatyp    = mdlanno.section( "_", 2, 2 ).section( "-", 0, 0 )
+                        + "-GL";
    QString mdliter    = "_local_i01.model";
    cmodel_name        = mdlbnam + mdlaedt + mdlaanl + mdlatyp + mdliter;
 qDebug() << "SAVE:     cmodel_name" << cmodel_name;
@@ -277,7 +295,7 @@ qDebug() << "SAVE:     cmodel_name" << cmodel_name;
    QString msg1    = tr( "An output combined model has been created. "
                          "It's description is:<br/><b>" )
       + cmodel_name + "</b>.<br/><br/>"
-      + tr( "It combines %1 models with a total of %2 components. "
+      + tr( "It combines %1 models with a total of %2 unique components. "
             "Click:<br/><br/>" )
       .arg( nmodels ).arg( ncomps )
       + tr( "  <b>OK</b>     to output the model as is;<br/>"

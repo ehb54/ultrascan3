@@ -174,6 +174,8 @@ void US_vHW_Enhanced::load( void )
 
 //      data_plot1->clear();
 //      data_plot2->clear();
+      data_plot1->detachItems();
+      data_plot2->detachItems();
 
       dataList.clear();
       rawList .clear();
@@ -386,6 +388,7 @@ DbgLv(1) << "  lscnCount" << lscnCount;
 
    // Draw the vHW extrapolation plot
 //   data_plot1->clear();
+   data_plot1->detachItems();
    us_grid( data_plot1 );
 
    QString ttrip = edata->cell + "/" + edata->channel
@@ -2654,6 +2657,7 @@ void US_vHW_Enhanced::plot_data2()
    data_plot2->setAxisTitle( QwtPlot::xBottom, header );
 
 //   data_plot2->clear();
+   data_plot2->detachItems();
    us_grid( data_plot2 );
 
    int     scan_number = 0;

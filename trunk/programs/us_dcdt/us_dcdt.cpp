@@ -326,6 +326,7 @@ next: avgDcdt[ j ] /= ( count - 1 );
 
    // Draw plot
 //   data_plot1->clear();
+   data_plot1->detachItems();
    us_grid( data_plot1 );
 
    data_plot1->setTitle( tr( "Time Derivative (dC/dt)\n" ) +

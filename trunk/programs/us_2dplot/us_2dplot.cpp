@@ -185,6 +185,7 @@ void US_2dPlot::calculate()
  	}		
    plot->btnZoom->setChecked( false );
 //   data_plot->clear();
+   data_plot->detachItems();
    data_plot->replot();
    QwtPlotCurve* c1;
    
