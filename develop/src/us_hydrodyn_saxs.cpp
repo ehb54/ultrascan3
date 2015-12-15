@@ -35,7 +35,7 @@
 #  include <float.h>
 #  undef SLASH
 #  define SLASH "\\"
-#  define isnan _isnan
+// #  define isnan _isnan
 #endif
 
 // note: this program uses cout and/or cerr and this should be replaced
@@ -6951,11 +6951,11 @@ void US_Hydrodyn_Saxs::display_iqq_residuals( QString title,
       }
       log_I1[ i ] = log10( I1[ i ] );
       log_I2[ i ] = log10( I2[ i ] );
-      if ( isnan( log_I1[ i ] ) )
+      if ( us_isnan( log_I1[ i ] ) )
       {
          log_I1[ i ] = 1e-34;
       }
-      if ( isnan( log_I2[ i ] ) )
+      if ( us_isnan( log_I2[ i ] ) )
       {
          log_I2[ i ] = 1e-34;
       }

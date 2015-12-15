@@ -12,7 +12,7 @@
 #  include <float.h>
 #  undef SLASH
 #  define SLASH "\\"
-#  define isnan _isnan
+// #  define isnan _isnan
 #endif
 
 void US_Hydrodyn_Saxs::calc_iqq_nnls_fit( QString /* title */, QString csv_filename )

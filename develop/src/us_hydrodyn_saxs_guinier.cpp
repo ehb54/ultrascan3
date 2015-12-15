@@ -29,7 +29,7 @@
 #  include <float.h>
 #  undef SLASH
 #  define SLASH "\\"
-#  define isnan _isnan
+// #  define isnan _isnan
 #endif
 
 // note: this program uses cout and/or cerr and this should be replaced
@@ -256,6 +256,7 @@ void US_Hydrodyn_Saxs::guinier_frame_plot( const QString & title, const QStringL
    }
 
    vector < double > time_value;
+   set < int > skip_curves;
 
    {
       // try to make time values
@@ -272,6 +273,10 @@ void US_Hydrodyn_Saxs::guinier_frame_plot( const QString & title, const QStringL
       {
          QString tmp = qsl_plotted_iq_names[ i ].mid( head.length() );
          tmp = tmp.mid( 0, tmp.length() - tail.length() );
+         if ( tmp.contains( "_avg" ) ) {
+            skip_curves.insert( i );
+         }
+         // qDebug( QString( "filename %1 tmp is %2" ).arg( qsl_plotted_iq_names[ i ] ).arg( tmp ) );
          if ( rx_clear_nonnumeric.search( tmp ) != -1 )
          {
             tmp = rx_clear_nonnumeric.cap( 1 );
@@ -281,6 +286,7 @@ void US_Hydrodyn_Saxs::guinier_frame_plot( const QString & title, const QStringL
          {
             tmp = rx_cap.cap( 1 ) + "." + rx_cap.cap( 2 );
          }
+         // qDebug( QString( "final tmp is %1" ).arg( tmp ) );
          double timestamp = tmp.toDouble();
          uniq_times.insert( timestamp );
          time_value.push_back( timestamp );
@@ -311,15 +317,17 @@ void US_Hydrodyn_Saxs::guinier_frame_plot( const QString & title, const QStringL
                i < plotted_Iq.size();
                i++ )
          {
-            QString key    = QString( "%1-%2"    ).arg( i ).arg( toplot[ k + 2 ] );
-            QString key_sd = QString( "%1-%2-sd" ).arg( i ).arg( toplot[ k + 2 ] );
+            if ( !skip_curves.count( i ) ) {
+               QString key    = QString( "%1-%2"    ).arg( i ).arg( toplot[ k + 2 ] );
+               QString key_sd = QString( "%1-%2-sd" ).arg( i ).arg( toplot[ k + 2 ] );
 
-            if ( guinier_scratch.count( key ) )
-            {
-               color.push_back( color_index[ i ] );
-               x    .push_back( time_value [ i ] );
-               y    .push_back( guinier_scratch[ key ] );
-               sd   .push_back( guinier_scratch.count( key_sd ) ? guinier_scratch[ key_sd ] : 0e0 );
+               if ( guinier_scratch.count( key ) )
+               {
+                  color.push_back( color_index[ i ] );
+                  x    .push_back( time_value [ i ] );
+                  y    .push_back( guinier_scratch[ key ] );
+                  sd   .push_back( guinier_scratch.count( key_sd ) ? guinier_scratch[ key_sd ] : 0e0 );
+               }
             }
          }
          plots[ toplot[ k ] ].push_back( color );
@@ -329,10 +337,12 @@ void US_Hydrodyn_Saxs::guinier_frame_plot( const QString & title, const QStringL
       }
    }
 
-   US_Hydrodyn_Saxs_Guinier_Frames * uhsgf = new US_Hydrodyn_Saxs_Guinier_Frames( us_hydrodyn,
-                                                                                  parameters,
-                                                                                  plots );
-   uhsgf->show();
+   if ( plots.size() ) {
+      US_Hydrodyn_Saxs_Guinier_Frames * uhsgf = new US_Hydrodyn_Saxs_Guinier_Frames( us_hydrodyn,
+                                                                                     parameters,
+                                                                                     plots );
+      uhsgf->show();
+   }
 }
 
 void US_Hydrodyn_Saxs::run_guinier_cs()
@@ -811,7 +821,7 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
             if ( use_guinier_outlier_reject )
             {
                // puts( "outlier reject" );
-               US_Vector::printvector( "'data'.q orig", usu.wave[ "data" ].q ); 
+               // US_Vector::printvector( "'data'.q orig", usu.wave[ "data" ].q ); 
                map < double, double > removed;
                if ( 
                    !usu.guinier_plot(
@@ -992,10 +1002,10 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
          }
       }
    } else {
-      if ( isnan(Rg) ||
+      if ( us_isnan(Rg) ||
            b >= 0e0 )
       {
-         //          if ( isnan( Rg ) )
+         //          if ( us_isnan( Rg ) )
          //          {
          //             cout << "rg isnan\n";
          //          }
@@ -1715,7 +1725,7 @@ bool US_Hydrodyn_Saxs::cs_guinier_analysis( unsigned int i, QString &csvlog )
          }
       }
    } else {
-      if ( isnan(Rg) ||
+      if ( us_isnan(Rg) ||
            b >= 0e0 )
       {
          plotted_cs_guinier_valid[ i ] = false;
@@ -2313,7 +2323,7 @@ bool US_Hydrodyn_Saxs::Rt_guinier_analysis( unsigned int i, QString &csvlog )
          }
       }
    } else {
-      if ( isnan(Rg) ||
+      if ( us_isnan(Rg) ||
            b >= 0e0 )
       {
          plotted_Rt_guinier_valid[ i ] = false;
@@ -2677,7 +2687,9 @@ void US_Hydrodyn_Saxs::set_guinier()
          plot_saxs->setAutoLegend( false );
          plot_saxs->enableLegend ( false, -1 );
 #else 
-         plot_saxs->legend()->setVisible( false );
+         if ( plot_saxs->legend() ) {
+            plot_saxs->legend()->setVisible( false );
+         }
 #endif
       } else {
          pb_saxs_legend->setEnabled( true );
@@ -3209,7 +3221,9 @@ void US_Hydrodyn_Saxs::set_guinier_eb()
          plot_saxs->setAutoLegend( false );
          plot_saxs->enableLegend ( false, -1 );
 #else 
-         plot_saxs->legend()->setVisible( false );
+         if ( plot_saxs->legend() ) {
+            plot_saxs->legend()->setVisible( false );
+         }
 #endif
       } else {
          pb_saxs_legend->setEnabled( true );
@@ -4115,7 +4129,7 @@ void US_Hydrodyn_Saxs::clear_guinier_error_bars()
 #ifndef QT4
       plot_saxs->removeCurve(plotted_guinier_error_bars[g]);
 #else
-      plotted_guinier_error_bars[g]->detach();
+      // plotted_guinier_error_bars[g]->detach();
 #endif
    }
    plotted_guinier_error_bars.clear();

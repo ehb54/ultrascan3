@@ -6584,7 +6584,7 @@ void US_Hydrodyn_Pdb_Tool::do_bm( Q3ListView *lv )
          //item1->text( 3 ).toFloat();
          //item1->text( 4 ).toFloat();
          //item1->text( 5 ).toFloat();
-         QString atom = item1->text( 7 ).stripWhiteSpace();
+         QString atom = item1->text( 7 ).stripWhiteSpace().upper();
          if ( !usu->atom_mw.count( atom ) )
          {
             QString msg = QString( tr( "Atom '%1' not found in loaded molecular weights (mw.json)" ) ).arg( atom );

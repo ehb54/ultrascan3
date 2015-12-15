@@ -23,7 +23,7 @@
 
 // #include "num.h"
 
-#include "../include/us_hydrodyn_asab1.h"
+#include "../include/us_hydrodyn_asab1_hydro.h"
 #include <float.h>
 // #if defined(WIN32)
 // #  define isnan _isnan
@@ -185,7 +185,8 @@ static asa_options *asa_opts;
 static hydro_results *results;
 static bool recheck;
 static vector <PDB_atom *> active_atoms;
-static US_Hydrodyn *us_hydrodyn;
+
+//static US_Hydrodyn *us_hydrodyn;
 
 static void
 em(const char *s)
@@ -237,7 +238,7 @@ asab1_free_alloced()
       free(asa);
       asa = 0;
    }
-   us_hydrodyn->lbl_core_progress->setText("");
+   //us_hydrodyn->lbl_core_progress->setText("");
 }
 
 static int
@@ -319,28 +320,28 @@ asab1_alloc()
 }
 
 int
-us_hydrodyn_asab1_main(vector <PDB_atom *> use_active_atoms, 
+us_hydrodyn_asab1_main_hydro(vector <PDB_atom *> use_active_atoms, 
                        asa_options *use_asa_opts,
                        hydro_results *use_results,
-                       bool use_recheck,
-                       Q3ProgressBar *use_progress,
-                       Q3TextEdit *use_editor,
-                       US_Hydrodyn *use_us_hydrodyn
-                       )
+			     bool use_recheck ) // ,
+                       // QProgressBar *use_progress,
+                       // QTextEdit *use_editor,
+                       // US_Hydrodyn *use_us_hydrodyn
+                       // )
 {
 
-   em("asab1_main");
-   em("asab1_main 1");
+   //em("asab1_main");
+   //em("asab1_main 1");
    //  nmax1 = 4000;
-   em("asab1_main 2");
-   progress = use_progress;
-   editor = use_editor;
+   //em("asab1_main 2");
+   // progress = use_progress;
+   // editor = use_editor;
    asa_opts = use_asa_opts;
    results = use_results;
    recheck = use_recheck;
    active_atoms = use_active_atoms;
    nmax = nmax1 = active_atoms.size();
-   us_hydrodyn = use_us_hydrodyn;
+   // us_hydrodyn = use_us_hydrodyn;
    if (int retval = asab1_alloc())
    {
       return retval;
@@ -364,7 +365,7 @@ us_hydrodyn_asab1_main(vector <PDB_atom *> use_active_atoms,
    trans = inter;
 
    flag1 = 0;
-
+   /*
    printf("########################################################\n");
    printf("#    National Institute for Cancer Research (IST)      #\n");
    printf("#          Advanced Biotechnologies Center (CBA)       #\n");
@@ -376,11 +377,12 @@ us_hydrodyn_asab1_main(vector <PDB_atom *> use_active_atoms,
    printf("#                Version 3.5, August 2006              #\n");
    printf("#                Compiled for 30000 beads              #\n");
    printf("########################################################\n");
+   */
 
-   printf("\n\n\n\n To process a PBD file, enter 2\n ");
-   printf("To re-check a bead model, enter 3\n\n ");
-   printf("--> ");
-   //    scanf("%d", &ini);
+   // printf("\n\n\n\n To process a PBD file, enter 2\n ");
+   // printf("To re-check a bead model, enter 3\n\n ");
+   // printf("--> ");
+   // //    scanf("%d", &ini);
    ini = 3;
 
    /* printf("\n\n%s%d\t%d\n","Valore flag all'inizio, valore ini: ",flag1,ini);
@@ -427,31 +429,31 @@ us_hydrodyn_asab1_main(vector <PDB_atom *> use_active_atoms,
    if (ini == 2)
 
    {
-      printf("\n\n- Insert the ASA threshold level in Angstroms^2 [usually 10] : ");
+     // printf("\n\n- Insert the ASA threshold level in Angstroms^2 [usually 10] : ");
       scanf("%f", &asalevel);
-      em("s1");
+      //em("s1");
       initarray();
-      em("s2");
+      //em("s2");
    }
 
    else if (ini == 3)
    {
-      em("s3");
+      //em("s3");
       flag1 = 1;
       init2();
-      qApp->processEvents();
-      if (us_hydrodyn->stopFlag)
-      {
-         asab1_free_alloced();
-         return -1;
-      }
-      em("s4");
+      // qApp->processEvents();
+      // if (us_hydrodyn->stopFlag)
+      // {
+      //    asab1_free_alloced();
+      //    return -1;
+      // }
+      //em("s4");
       ini = 2;
       check_asa = 1;
       min_asa = asa_opts->threshold_percent;
       while (min_asa < 0.0)
       {
-         printf("\n\nASA RE-CHECK  - Insert the minimum ASA %% threshold level [0-99] : ");
+	//printf("\n\nASA RE-CHECK  - Insert the minimum ASA %% threshold level [0-99] : ");
          scanf("%f", &min_asa);
          if ((min_asa < 0.0) | (min_asa > 99.0))
             min_asa = (float) -1.0;
@@ -460,11 +462,11 @@ us_hydrodyn_asab1_main(vector <PDB_atom *> use_active_atoms,
    else
    {
 
-      em("s5");
+      //em("s5");
       init();
-      em("s6");
+      //em("s6");
    }
-   em("s7");
+   //em("s7");
 
    // cout << QString(" rprobe %1\n" ).arg( rprobe );
    // cout << QString(" min_asa %1\n" ).arg( min_asa );
@@ -472,27 +474,27 @@ us_hydrodyn_asab1_main(vector <PDB_atom *> use_active_atoms,
    if (check_asa != 1)
       dt[nat - 1].m = 17;   /* 17 is assigned as mass for OXT - WARNING, good for single-chain structures only!!  */
 
-   qApp->processEvents();
-   if (us_hydrodyn->stopFlag)
-   {
-      asab1_free_alloced();
-      return -1;
-   }
-   em("s8");
+   // qApp->processEvents();
+   // if (us_hydrodyn->stopFlag)
+   // {
+   //    asab1_free_alloced();
+   //    return -1;
+   // }
+   //em("s8");
    ragir();
-   em("s9");
+   //em("s9");
    if ( !recheck )
    {
       results->asa_rg_pos = ro;
       results->asa_rg_neg = ro1;
    }
 
-   qApp->processEvents();
-   if (us_hydrodyn->stopFlag)
-   {
-      asab1_free_alloced();
-      return -1;
-   }
+   // qApp->processEvents();
+   // if (us_hydrodyn->stopFlag)
+   // {
+   //    asab1_free_alloced();
+   //    return -1;
+   // }
 
    mol1 = fopen("controll", "w");
    for (l = 0; l < nat; l++)
@@ -524,28 +526,28 @@ us_hydrodyn_asab1_main(vector <PDB_atom *> use_active_atoms,
    mami1();
    formato();
 
-   qApp->processEvents();
-   if (us_hydrodyn->stopFlag)
-   {
-      asab1_free_alloced();
-      return -1;
-   }
+   // qApp->processEvents();
+   // if (us_hydrodyn->stopFlag)
+   // {
+   //    asab1_free_alloced();
+   //    return -1;
+   // }
 
    /*
      ord_d();
    */
 
    Dz = ((float) fabs(maxz - minz)) / passi;
-   printf("\n\n\n");
+   // printf("\n\n\n");
 
    for (i = 1; i < passi; i++)   /* iteration for the number of steps */
    {
-      qApp->processEvents();
-      if (us_hydrodyn->stopFlag)
-      {
-         asab1_free_alloced();
-         return -1;
-      }
+      // qApp->processEvents();
+      // if (us_hydrodyn->stopFlag)
+      // {
+      //    asab1_free_alloced();
+      //    return -1;
+      // }
       
       zz = maxz - (Dz * i);   /* slab to be examined */
       kk = 0;
@@ -577,22 +579,22 @@ us_hydrodyn_asab1_main(vector <PDB_atom *> use_active_atoms,
          plotinit();
       }
 
-      us_hydrodyn->lbl_core_progress->setText(QString("Iteration %1 of %2 with %3 %4")
-                                              .arg(i+1)
-                                              .arg(passi)
-                                              .arg(cont1)
-                                              .arg(recheck ? "beads" : "atoms"));
-      qApp->processEvents();
+      // us_hydrodyn->lbl_core_progress->setText(QString("Iteration %1 of %2 with %3 %4")
+      //                                         .arg(i+1)
+      //                                         .arg(passi)
+      //                                         .arg(cont1)
+      //                                         .arg(recheck ? "beads" : "atoms"));
+      // qApp->processEvents();
 
       nc = 0;
-      printf("%s%d\t", "Iteration number  = ", i + 1);
+      // printf("%s%d\t", "Iteration number  = ", i + 1);
       if (flag1 == 0)
       {
-         printf("%s%d  ", "Number of atoms in this iteration = ", cont1);
+	///printf("%s%d  ", "Number of atoms in this iteration = ", cont1);
       }
       else
       {
-         printf("%s%d  ", "Number of beads in this iteration = ", cont1);
+	//printf("%s%d  ", "Number of beads in this iteration = ", cont1);
       }
       fflush(stdout);
 
@@ -679,7 +681,7 @@ us_hydrodyn_asab1_main(vector <PDB_atom *> use_active_atoms,
          /* closing initial while */
       }
 
-      printf("\r");
+      // printf("\r");
 
       /* closing for of the number of steps */
    }
@@ -776,12 +778,12 @@ us_hydrodyn_asab1_main(vector <PDB_atom *> use_active_atoms,
 
    }
 
-   qApp->processEvents();
-   if (us_hydrodyn->stopFlag)
-   {
-      asab1_free_alloced();
-      return -1;
-   }
+   // qApp->processEvents();
+   // if (us_hydrodyn->stopFlag)
+   // {
+   //    asab1_free_alloced();
+   //    return -1;
+   // }
 
    asatot += asamin;
 
@@ -903,12 +905,12 @@ us_hydrodyn_asab1_main(vector <PDB_atom *> use_active_atoms,
    }
 
 
-   qApp->processEvents();
-   if (us_hydrodyn->stopFlag)
-   {
-      asab1_free_alloced();
-      return -1;
-   }
+   // qApp->processEvents();
+   // if (us_hydrodyn->stopFlag)
+   // {
+   //    asab1_free_alloced();
+   //    return -1;
+   // }
 
    /*****************************************************/
 
@@ -1060,12 +1062,12 @@ us_hydrodyn_asab1_main(vector <PDB_atom *> use_active_atoms,
    }
 
 
-   qApp->processEvents();
-   if (us_hydrodyn->stopFlag)
-   {
-      asab1_free_alloced();
-      return -1;
-   }
+   // qApp->processEvents();
+   // if (us_hydrodyn->stopFlag)
+   // {
+   //    asab1_free_alloced();
+   //    return -1;
+   // }
 
    for (i = 0; i < contatom; i++)
    {
@@ -1106,40 +1108,40 @@ us_hydrodyn_asab1_main(vector <PDB_atom *> use_active_atoms,
 
    if (check_asa == 1)
    {
-      printf("\n\nRE-CHECK\n");
+     //printf("\n\nRE-CHECK\n");
       /*   pippa=fopen(outfile1,"w");   */
       dd2 = dt;
       countb = 0;
 
       for (l = 0; l < nat; l++)
       {
-         printf("%d %.2f\n", l, asa[l]);
+	//printf("%d %.2f\n", l, asa[l]);
          float sa = 4.0f * M_PI * active_atoms[l]->radius * active_atoms[l]->radius;
          float sapp = 4.0f * M_PI * (rprobe + active_atoms[l]->radius) * (rprobe + active_atoms[l]->radius);
 
-         if ( us_isnan(asa[l]) )
+         if ( isnan(asa[l]) )
          {
-            printf("ASA WARNING NAN begin replaced by zero: atom %u asa %f > sa+p %f (sa %f)\n",
-                   l,
-                   asa[l],
-                   sapp,
-                   sa);
+            // printf("ASA WARNING NAN begin replaced by zero: atom %u asa %f > sa+p %f (sa %f)\n",
+            //        l,
+            //        asa[l],
+            //        sapp,
+            //        sa);
             asa[l] = 0;
          }
 
          if ( asa[l] > sapp )
          {
-            printf("ASA WARNING: atom %u asa %f > sa+p %f (sa %f)\n",
-                   l,
-                   asa[l],
-                   sapp,
-                   sa);
+            // printf("ASA WARNING: atom %u asa %f > sa+p %f (sa %f)\n",
+            //        l,
+            //        asa[l],
+            //        sapp,
+            //        sa);
          } else {
-            printf("ASA: atom %u asa %f sapp %f sa %f\n",
-                   l,
-                   asa[l],
-                   sapp,
-                   sa);
+            // printf("ASA: atom %u asa %f sapp %f sa %f\n",
+            //        l,
+            //        asa[l],
+            //        sapp,
+            //        sa);
          }            
 
          if (!recheck) 
@@ -1158,8 +1160,8 @@ us_hydrodyn_asab1_main(vector <PDB_atom *> use_active_atoms,
             {
                countb = countb + 1;
                dt[l].col = 8;
-               printf("\n #%d [bead %4d] - Surf_%6.2f - ASA_%6.2f o/oASA_%6.2f - Threshold_%6.2f", countb, l + 1, zz,
-                      asa[l], asa[l] * 100 / zz, min_asa);
+               // printf("\n #%d [bead %4d] - Surf_%6.2f - ASA_%6.2f o/oASA_%6.2f - Threshold_%6.2f", countb, l + 1, zz,
+               //        asa[l], asa[l] * 100 / zz, min_asa);
             }
          }
 
@@ -1195,17 +1197,17 @@ us_hydrodyn_asab1_main(vector <PDB_atom *> use_active_atoms,
       fclose(mol1);
       fclose(mol);
    }
-   printf("\n\n\n");
+   //   printf("\n\n\n");
    asab1_free_alloced();
    unlink("controll");
    unlink("plotter");
    unlink("plotter1");
 
-   qApp->processEvents();
-   if (us_hydrodyn->stopFlag)
-   {
-      return -1;
-   }
+   // qApp->processEvents();
+   // if (us_hydrodyn->stopFlag)
+   // {
+   //    return -1;
+   // }
    return 0;
 }
 
@@ -1698,7 +1700,7 @@ init2()
    while (init2_mol == NULL)
    {
       /*   pulisci();  */
-      printf("\n\n\t%s", "Insert the bead model filename: ");
+      //printf("\n\n\t%s", "Insert the bead model filename: ");
       scanf("%s", nome);
       init2_mol = fopen(nome, "r");
 
@@ -1708,17 +1710,17 @@ init2()
      { */
    /*   pulisci(); */
  a50:
-   printf("\n\n\t%s", "Insert the re-checked bead model filename: ");
+   //printf("\n\n\t%s", "Insert the re-checked bead model filename: ");
    scanf("%s", ridotto);
    init2_mol1 = fopen(ridotto, "r");
    if (init2_mol1 != NULL)
    {
-      printf("\n");
-      printf("\t*** CAUTION : File already exists ! ***\n\n");
-      printf("\t  Select one option:\n\n");
-      printf("\t 1) Overwrite existing file\n");
-      printf("\t 2) Create new file\n\n");
-      printf("\t** Select (1/2) :___ ");
+      //printf("\n");
+      //printf("\t*** CAUTION : File already exists ! ***\n\n");
+      //printf("\t  Select one option:\n\n");
+      //printf("\t 1) Overwrite existing file\n");
+      //printf("\t 2) Create new file\n\n");
+      //printf("\t** Select (1/2) :___ ");
       scanf("%d", &fe);
       getchar();
       fclose(init2_mol1);
@@ -1742,26 +1744,26 @@ init2()
 
    strcpy(ridotto_rmc, ridotto);
    strcat(ridotto_rmc, ".rmc");
-   printf("\n");
-   printf("\t Creating file %s for radii, masses and colors\n", ridotto_rmc);
+   // printf("\n");
+   // printf("\t Creating file %s for radii, masses and colors\n", ridotto_rmc);
 
-   qApp->processEvents();
-   if (us_hydrodyn->stopFlag)
-   {
-      return;
-   }
+   // qApp->processEvents();
+   // if (us_hydrodyn->stopFlag)
+   // {
+   //    return;
+   // }
 
 #if defined(NOT_USED)
  a55:
    init2_mol1 = fopen(ridotto_rmc, "r");
    if (init2_mol1 != NULL)
    {
-      printf("\n");
-      printf("\t*** CAUTION : File %s already exists ! ***\n\n", ridotto_rmc);
-      printf("\t  Select one option:\n\n");
-      printf("\t 1) Overwrite existing .rmc file\n");
-      printf("\t 2) Create new .rmc file\n\n");
-      printf("\t** Select (1/2) :___ ");
+      //printf("\n");
+      //printf("\t*** CAUTION : File %s already exists ! ***\n\n", ridotto_rmc);
+      //printf("\t  Select one option:\n\n");
+      //printf("\t 1) Overwrite existing .rmc file\n");
+      //printf("\t 2) Create new .rmc file\n\n");
+      //printf("\t** Select (1/2) :___ ");
       scanf("%d", &fe1);
       getchar();
       fclose(init2_mol1);
@@ -1771,7 +1773,7 @@ init2()
       }
       if (fe1 == 2)
       {
-         printf("\n\n\t%s", "Insert the filename for the rmc file of the re-checked bead model: ");
+         //printf("\n\n\t%s", "Insert the filename for the rmc file of the re-checked bead model: ");
          scanf("%s", ridotto_rmc);
          goto a55;
       }
@@ -1921,18 +1923,18 @@ initarray()
    char nome[30];
    char filename[100];
    char *tmp;
-   em("i3_1");
+   //em("i3_1");
    tmp = (char *) malloc(100 * sizeof(char *));
    tmp = (char *) getenv("SOMO_PATH");
-   em("i3_2");
+   //em("i3_2");
    strcpy(filename, tmp);
-   em("i3_3");
+   //em("i3_3");
    strcat(filename, "/bin/tabella1.cor");
    fprintf(stderr, "\nInput tabella: %s", filename);
-   em("i3_4");
+   //em("i3_4");
 
    init3_pippa = fopen(filename, "r");
-   em("i3_5");
+   //em("i3_5");
 
    /*init3_pippa=fopen("tabella1.cor","r");*/
 
@@ -1941,14 +1943,14 @@ initarray()
    /* THE VALUES IN ROWS 29-48 ARE ASA FROM TRIPEPTIDES GLY-XXX-GLY TAKEN FROM TABLE 4.4 OF CREIGHTON */
    /* IN ROWS 21-26 AND 49-54 ARE THE VALUES FOR GAL, NAG, FUC, MAN, SIA AND GLUC (OG1) DEDUCED FROM KALIANNAN 2001 */
    /* IN ROWS 27-28 AND 55-56 ARE THE SUPPOSED VALUES FOR OG2 AND OG3 (TAIL OF OCTYL GLUCOSIDE) */
-   em("i3_6");
+   //em("i3_6");
    for (i = 0; i < 56; i++)
    {
       fscanf(init3_pippa, "%d", &nat);
       arr1[i] = (float) nat;
    }
    fclose(init3_pippa);
-   em("i3_7");
+   //em("i3_7");
 
    nat = 0;
    flagr1 = 0;
@@ -1958,21 +1960,21 @@ initarray()
    init3_mol1 = fopen("contrall", "w");
    //fprintf(init3_mol1, "");
    fclose(init3_mol1);
-   em("i3_8");
+   //em("i3_8");
 
    init3_mol1 = fopen("contrall", "ab");
 
-   em("i3_9");
+   //em("i3_9");
    while (init3_brook == NULL)
    {
       pulisci();
-      printf("\n\n\tInsert the PDB filename : ");
+      //printf("\n\n\tInsert the PDB filename : ");
       scanf("%s", nome);
       init3_brook = fopen(nome, "r");
    }
 
-   printf("\n\n\t%s", "Output files: Enter '0' for default (provaly, provaly1, provaly2, asaris)");
-   printf("\n\t%s", "                    '1' for new filenames\n\n\t\t\t-->");
+   //printf("\n\n\t%s", "Output files: Enter '0' for default (provaly, provaly1, provaly2, asaris)");
+   //printf("\n\t%s", "                    '1' for new filenames\n\n\t\t\t-->");
    scanf("%d", &fe2);
    getchar();
    if (fe2 == 0)
@@ -2007,7 +2009,7 @@ initarray()
    if (fe2 == 1)
    {
    a10:
-      printf("\n\t** Insert the root output filename :___ ");
+      //printf("\n\t** Insert the root output filename :___ ");
       scanf("%s", outfile);
       getchar();
 
@@ -2027,30 +2029,30 @@ initarray()
 
       if (new_mol != NULL)
       {
-         printf("\n");
-         printf("\t*** CAUTION : Root file %s already exists ! ***\n\n", outfile);
+         //printf("\n");
+         //printf("\t*** CAUTION : Root file %s already exists ! ***\n\n", outfile);
          new_mol1 = fopen(outfile1, "r");
 
          if (new_mol1 != NULL)
          {
-            printf("\t*** File %s also already exists ! ***\n", outfile1);
+            //printf("\t*** File %s also already exists ! ***\n", outfile1);
          }
          new_mol2 = fopen(outfile2, "r");
 
          if (new_mol2 != NULL)
          {
-            printf("\t*** File %s also already exists ! ***\n", outfile2);
+            //printf("\t*** File %s also already exists ! ***\n", outfile2);
          }
          new_mol3 = fopen(outris, "r");
 
          if (new_mol3 != NULL)
          {
-            printf("\t*** File %s also already exists ! ***\n", outris);
+            //printf("\t*** File %s also already exists ! ***\n", outris);
          }
-         printf("\n\t   Do you want:\n\n");
-         printf("\t 1) Overwrite existing file(s)\n");
-         printf("\t 2) Create new files\n\n");
-         printf("\t** Select (1/2) :___ ");
+         //printf("\n\t   Do you want:\n\n");
+         //printf("\t 1) Overwrite existing file(s)\n");
+         //printf("\t 2) Create new files\n\n");
+         //printf("\t** Select (1/2) :___ ");
          scanf("%d", &fe3);
          getchar();
          fclose(new_mol);
@@ -3834,25 +3836,25 @@ formato()
    float passo;
 
    pulisci();
-   printf("\n\n%s%f%s", "Molecule's extension along the z-axis = ", fabs(maxz - minz), " [angstrom]");
+   //   printf("\n\n%s%f%s", "Molecule's extension along the z-axis = ", fabs(maxz - minz), " [angstrom]");
 
    conferma = 0;
    while (conferma == 0)
    {
-      printf("\n\nInsert the integration step in angstroms : ");
+     //printf("\n\nInsert the integration step in angstroms : ");
       // scanf("%f", &passo);
       passo = asa_opts->asab1_step;
-      printf("%.2f\n", passo);
+      //printf("%.2f\n", passo);
 
       while (passo <= 0)
       {
-         printf("\n");
-         printf("Wrong number!\n");
-         printf("Re-insert the step: ");
+         // printf("\n");
+         // printf("Wrong number!\n");
+         // printf("Re-insert the step: ");
          scanf("%f", &passo);
       }
 
-      printf("\n\n%s%.0f\n\n", "Number of resulting iterations: ", ceil(fabs(maxz - minz) / passo));
+      // printf("\n\n%s%.0f\n\n", "Number of resulting iterations: ", ceil(fabs(maxz - minz) / passo));
       // printf("%s", "Confirm ? [yes=1;no=0] ");
       // scanf("%d", &conferma);
       conferma = 1;

@@ -409,6 +409,8 @@ SOURCES += \
 #  us_widgets.cpp \
 #  us_win.cpp \
   us_write_config.cpp \
+  us_zeno_cxx.cpp \
+  us_zeno_cxx_nf.cpp \
   qwt/scrollbar.cpp \
   qwt/scrollzoomer.cpp \
   us_gui_settings.cpp \
@@ -701,6 +703,8 @@ HEADERS += \
 #  us_widgets.h \
 #  us_win.h \
   us_write_config.h \
+  us_zeno_cxx.h \
+  us_zeno_cxx_nf.h \
   us3_extern.h \
   us3_defines.h \
   us_gui_settings.h \

@@ -23,9 +23,9 @@
 
 #include "../include/us_saxs_util_asab1.h"
 #include <float.h>
-#if defined(WIN32)
-#  define isnan _isnan
-#endif
+// #if defined(WIN32)
+// // #  define isnan _isnan
+// #endif
 
 #define  PI   ((float) 3.141592654)
 #define  SMAX   20
@@ -928,7 +928,7 @@ us_saxs_util_asab1_main(vector <PDB_atom *> use_active_atoms,
          float sa = 4.0f * M_PI * active_atoms[l]->radius * active_atoms[l]->radius;
          float sapp = 4.0f * M_PI * (rprobe + active_atoms[l]->radius) * (rprobe + active_atoms[l]->radius);
 
-         if ( isnan(asa[l]) )
+         if ( us_isnan(asa[l]) )
          {
             printf("ASA WARNING NAN begin replaced by zero: atom %u asa %f > sa+p %f (sa %f)\n",
                    l,

@@ -253,13 +253,16 @@ void US_Saxs_Util::calc_vbar( PDB_model *model )
    float mw;
    for (unsigned int i=0; i<(*model).residue.size(); i++)
    {
-      mw = 0.0;
-      for (unsigned int j=0; j<(*model).residue[i].r_atom.size(); j++)
-      {
-         mw += (*model).residue[i].r_atom[j].hybrid.mw;
-      }
-      mw_sum += mw;
-      mw_vbar_sum += mw * (*model).residue[i].vbar;
+     if ( model->residue[ i ].name != "WAT" )
+       {
+	 mw = 0.0;
+	 for (unsigned int j=0; j<(*model).residue[i].r_atom.size(); j++)
+	   {
+	     mw += (*model).residue[i].r_atom[j].hybrid.mw;
+	   }
+	 mw_sum += mw;
+	 mw_vbar_sum += mw * (*model).residue[i].vbar;
+       }
    }
    (*model).vbar = (mw_vbar_sum/mw_sum); //  - 0.002125;
    //cout << "VBAR: " << (*model).vbar << endl;
@@ -641,7 +644,7 @@ bool US_Saxs_Util::read_pdb( QString filename )
 {
    errormsg = "";
    noticemsg = "";
-   cout << QString( "read pdb <%1>\n" ).arg( filename );
+   //cout << QString( "read pdb <%1>\n" ).arg( filename );
 
    if ( misc_pb_rule_on )
    {
@@ -849,8 +852,17 @@ bool US_Saxs_Util::read_pdb( QString filename )
       return false;
    }
    model_vector_as_loaded = model_vector;
+
+   // /* IF THE 1st MODEL DEFINED ***************/
+   // if (parameters_set_first_model)
+   //   {
+   //     model_vector.resize(1);
+   //     model_vector_as_loaded.resize(1);
+   //   }
+   // /* IF THE 1st MODEL DEFINED ***************/ 
+
    // cout << list_chainIDs(model_vector);
-   // cout << list_chainIDs(model_vector_as_loaded);
+   //cout << list_chainIDs(model_vector_as_loaded);
    if ( !calc_mw() )
    {
       return false;
@@ -1083,6 +1095,7 @@ bool US_Saxs_Util::calc_mw()
       return false;
    }
 
+
    for (unsigned int i = 0; i < model_vector.size(); i++)
    {
       //       editor->append( QString( "\nModel: %1 vbar %2 cm^3/g\n" )
@@ -1189,7 +1202,7 @@ bool US_Saxs_Util::calc_mw()
                                 ""
                                 )
                   ;
-               cout << qs << endl << flush;
+               //cout << qs << endl << flush;
                last_pdb_load_calc_mw_msg << qs.replace( "\n", "\nREMARK " ) + QString("\n");
             }
          }

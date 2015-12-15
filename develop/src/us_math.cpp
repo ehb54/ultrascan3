@@ -1233,7 +1233,7 @@ float int_vol_2sphere(float r1, float r2, float d) {
    float cy = (d + (r1*r1 - r2*r2)/d) * .5;
 
    if (d - r2 > cy || r1 < cy) {
-      fprintf(stderr, "error: range inconsistancy! %f %f %f\n", d - r2, cy, r1);
+     // fprintf(stderr, "error: range inconsistancy! %f %f %f\n", d - r2, cy, r1);
       //    exit(-1);
    }
 

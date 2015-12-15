@@ -2256,7 +2256,7 @@ bool US_Hydrodyn_Saxs_Screen::get_guinier_rg( QString name, double &Rg )
       Rg = 0e0;
       return false;
    } else {
-      if ( isnan(Rg) ||
+      if ( us_isnan(Rg) ||
            b >= 0e0 )
       {
          editor_msg("red", 

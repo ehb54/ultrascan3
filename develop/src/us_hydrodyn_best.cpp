@@ -16,7 +16,7 @@
 #include <Q3VBoxLayout>
 #include <Q3BoxLayout>
 #include <QCloseEvent>
-#  define isnan _isnan
+// #  define isnan _isnan
 #endif
 
 namespace BFIT
@@ -1787,16 +1787,16 @@ void US_Hydrodyn_Best::save_results()
       additions[ lb_data->text( i ) ] = 
          QString( "=%1,%2%3,%4%5" )
          .arg( last_a,    0, 'g', 8 )
-         .arg( isnan( last_siga ) ? "=" : "" )
+         .arg( us_isnan( last_siga ) ? "=" : "" )
          .arg( last_siga, 0, 'g', 8 )
-         .arg( isnan( last_siga ) ? "=" : "" )
+         .arg( us_isnan( last_siga ) ? "=" : "" )
          .arg( last_a != 0 ? fabs( 100.0 * last_siga / last_a ) : (double) 0, 0, 'g', 8 )
          +
          QString( ",=%1,%2%3,%4%5" )
          .arg( last_b,    0, 'g', 8 )
-         .arg( isnan( last_sigb ) ? "=" : "" )
+         .arg( us_isnan( last_sigb ) ? "=" : "" )
          .arg( last_sigb, 0, 'g', 8 )
-         .arg( isnan( last_sigb ) ? "=" : "" )
+         .arg( us_isnan( last_sigb ) ? "=" : "" )
          .arg( last_b != 0 ? fabs( 100.0 * last_sigb / last_b ) : (double) 0, 0, 'g', 8 )
          +
          QString( ",=%1,%2" )
@@ -1810,16 +1810,16 @@ void US_Hydrodyn_Best::save_results()
          additions[ lb_data->text( i ) ] += 
             QString( ",=%1,%2%3,%4%5" )
             .arg( exp( last_a_ln ),    0, 'g', 8 )
-            .arg( ( isnan( last_siga_ln ) || isnan( last_a_ln ) || isnan( exp( last_a_ln ) ) )  ? "=" : "" )
+            .arg( ( us_isnan( last_siga_ln ) || us_isnan( last_a_ln ) || us_isnan( exp( last_a_ln ) ) )  ? "=" : "" )
             .arg( exp( last_a_ln ) * last_siga_ln, 0, 'g', 8 )
-            .arg( ( isnan( last_siga_ln ) || isnan( last_a_ln ) )? "=" : "" )
+            .arg( ( us_isnan( last_siga_ln ) || us_isnan( last_a_ln ) )? "=" : "" )
             .arg( exp( last_a_ln ) != 0 ? fabs( 100.0 * exp( last_a_ln ) * last_siga_ln / exp( last_a_ln ) ) : (double) 0, 0, 'g', 8 )
             +
             QString( ",=%1,%2%3,%4%5" )
             .arg( last_b_ln,    0, 'g', 8 )
-            .arg( isnan( last_sigb_ln ) ? "=" : "" )
+            .arg( us_isnan( last_sigb_ln ) ? "=" : "" )
             .arg( last_sigb_ln, 0, 'g', 8 )
-            .arg( isnan( last_sigb_ln ) ? "=" : "" )
+            .arg( us_isnan( last_sigb_ln ) ? "=" : "" )
             .arg( last_b_ln != 0 ? fabs( 100.0 * last_sigb_ln / last_b_ln ) : (double) 0, 0, 'g', 8 )
             +
             QString( ",=%1,%2" )
@@ -1834,16 +1834,16 @@ void US_Hydrodyn_Best::save_results()
          additions[ lb_data->text( i ) ] += 
             QString( ",=%1,%2%3,%4%5" )
             .arg( last_a_exp,    0, 'g', 8 )
-            .arg( isnan( last_siga_exp ) ? "=" : "" )
+            .arg( us_isnan( last_siga_exp ) ? "=" : "" )
             .arg( last_siga_exp, 0, 'g', 8 )
-            .arg( isnan( last_siga_exp ) ? "=" : "" )
+            .arg( us_isnan( last_siga_exp ) ? "=" : "" )
             .arg( last_a_exp != 0 ? fabs( 100.0 * last_siga_exp / last_a_exp ) : (double) 0, 0, 'g', 8 )
             +
             QString( ",=%1,%2%3,%4%5" )
             .arg( last_b_exp,    0, 'g', 8 )
-            .arg( isnan( last_sigb_exp ) ? "=" : "" )
+            .arg( us_isnan( last_sigb_exp ) ? "=" : "" )
             .arg( last_sigb_exp, 0, 'g', 8 )
-            .arg( isnan( last_sigb_exp ) ? "=" : "" )
+            .arg( us_isnan( last_sigb_exp ) ? "=" : "" )
             .arg( last_b_exp != 0 ? fabs( 100.0 * last_sigb_exp / last_b_exp ) : (double) 0, 0, 'g', 8 )
             +
             QString( ",=%1,%2" )

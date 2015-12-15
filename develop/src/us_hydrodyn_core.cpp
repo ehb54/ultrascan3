@@ -4135,7 +4135,7 @@ void US_Hydrodyn::radial_reduction( bool from_grid )
                         count++;
                      }
                   }
-               }
+	       }
 #else // !defined(USE_THREADS)
                for (unsigned int i = 0; i < bead_model.size() - 1; i++) {
                   reduced[i] = false;
@@ -4208,7 +4208,7 @@ void US_Hydrodyn::radial_reduction( bool from_grid )
                            count++;
                         }
                      }
-                  } // if last_reduced[i]
+                  }// if last_reduced[i]
                }
 #endif // !defined(USE_THERADS)
 
@@ -4389,7 +4389,7 @@ void US_Hydrodyn::radial_reduction( bool from_grid )
                            }
                         }
                      }
-                  }
+		  }
                }
                last_reduced = reduced;
                // write_bead_tsv(somo_tmp_dir + SLASH + QString("bead_model_ar-%1-%2").arg(k).arg(iter) + DOTSOMO + ".tsv", &bead_model);
@@ -4443,6 +4443,7 @@ void US_Hydrodyn::radial_reduction( bool from_grid )
             }
 #endif
          }
+
 #if defined(TIMING)
          gettimeofday(&end_tv, NULL);
          printf("radial reduction %d time %lu\n",

@@ -2116,7 +2116,7 @@ bool US_Hydrodyn_Saxs_Hplc::load_file( QString filename )
             cout << QString(" breaking %1 %2\n").arg( this_q ).arg( q[ q.size() - 1 ] );
             break;
          }
-         if ( is_time || !isnan( this_I ) )
+         if ( is_time || !us_isnan( this_I ) )
          {
             q_string.push_back( this_q_string );
             q       .push_back( this_q );

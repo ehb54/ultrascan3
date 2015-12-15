@@ -20,7 +20,7 @@
 #   include <float.h>
 //Added by qt3to4:
 #include <Q3TextStream>
-#   define isnan _isnan
+// #   define isnan _isnan
 #   undef SHOW_TIMING
 #endif
 

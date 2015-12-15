@@ -6,33 +6,31 @@ zeno_main(
   int argc,
   char const* argv[]);
 
-int zeno_cxx_main(int argc, char **argv, const char * fname );
-
 #include "qstring.h"
 #include "qdatetime.h"
 #include "qfile.h"
 #include "qdir.h"
 
 #include "../include/us_hydrodyn.h"
+#include "../include/us_file_util.h"
+#include "../include/us_json.h"
 
 class US_Hydrodyn_Zeno
 {
- public:
-   US_Hydrodyn_Zeno( 
-                    hydro_options *         options,
-                    hydro_results *         results,
-                    US_Hydrodyn *           us_hydrodyn
-                    );
+  public:
+       US_Hydrodyn_Zeno( 
+         hydro_options *         options,
+	 hydro_results *         results,
+	 US_Log *                us_log,
+	 US_Udp_Msg *            us_udp_msg);
+/* US_Hydrodyn *           us_hydrodyn */
+/* ); */
 
    static bool    test();
    bool    run(
                QString                 filename,
                vector < PDB_atom > *   bead_model,
-               double              &   sum_mass,
-               double              &   sum_volume,
-               bool                    keep_files = false,
-               bool                    zeno_cxx = false,
-               int                     threads = 1
+               bool                    keep_files = false
                );
    QString error_msg;
 
@@ -41,7 +39,9 @@ class US_Hydrodyn_Zeno
    hydro_options *         options;
    hydro_results *         results;
    vector < PDB_atom > *   bead_model;
-   US_Hydrodyn *           us_hydrodyn;
+   //   US_Hydrodyn *           us_hydrodyn;
+   US_Log *                us_log;
+   US_Udp_Msg *            us_udp_msg;
    bool                    keep_files;
 };
 

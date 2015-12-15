@@ -390,6 +390,8 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    
    save_util = new US_Hydrodyn_Save(&save_params, this);
    fixWinButtons( save_util );
+ 
+
    saxs_util = new US_Saxs_Util();
    if ( 
        !saxs_util->setup_saxs_maps( 
@@ -3593,7 +3595,7 @@ int US_Hydrodyn::calc_grid_pdb()
                         }
                      }
                      bead_models[current_model] = bead_model;
-                  }                     
+                  }                    
 
                   editor->append( QString( "Volume of bead model %1\n" ).arg( total_volume_of_bead_model( bead_model ) ) );
                   progress->setProgress(progress->progress() + 1);

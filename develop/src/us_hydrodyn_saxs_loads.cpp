@@ -952,15 +952,15 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
          {
             sum_iq[i] += I[i];
             sum_iq2[i] += I[i] * I[i];
-            if ( isnan(I[i]) ) 
+            if ( us_isnan(I[i]) ) 
             {
                cout << QString("WARNING: isnan I[%1] for %2\n").arg(i).arg(qsl_tmp[0]);
             }
-            if ( isnan(sum_iq[i]) ) 
+            if ( us_isnan(sum_iq[i]) ) 
             {
                cout << QString("WARNING: isnan sum_iq[%1] for %2\n").arg(i).arg(qsl_tmp[0]);
             }
-            if ( isnan(sum_iq2[i]) ) 
+            if ( us_isnan(sum_iq2[i]) ) 
             {
                cout << QString("WARNING: isnan sum_iq2[%1] for %2\n").arg(i).arg(qsl_tmp[0]);
             }
@@ -1057,15 +1057,15 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
             std_dev[i] = 
                tmp_std_dev > 0e0 ?
                sqrt( ( 1e0 / ((double)sum_count - 1e0) ) * tmp_std_dev ) : 0e0;
-            if ( isnan(sum_iq[i]) ) 
+            if ( us_isnan(sum_iq[i]) ) 
             {
                cout << QString("WARNING when calc'ing std dev: isnan sum_iq[%1]\n").arg(i);
             }
-            if ( isnan(sum_iq2[i]) ) 
+            if ( us_isnan(sum_iq2[i]) ) 
             {
                cout << QString("WARNING when calc'ing std dev: isnan sum_iq2[%1]\n").arg(i);
             }
-            if ( isnan(std_dev[i]) ) 
+            if ( us_isnan(std_dev[i]) ) 
             {
                cout << 
                   QString("WARNING when calc'ing std dev: isnan std_dev[%1]:\n"
@@ -2451,15 +2451,15 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves )
                {
                   sum_pr[i] += pr[i];
                   sum_pr2[i] += pr[i] * pr[i];
-                  if ( isnan(pr[i]) ) 
+                  if ( us_isnan(pr[i]) ) 
                   {
                      cout << QString("WARNING: isnan pr[%1] for %2\n").arg(i).arg(qsl_tmp[0]);
                   }
-                  if ( isnan(sum_pr[i]) ) 
+                  if ( us_isnan(sum_pr[i]) ) 
                   {
                      cout << QString("WARNING: isnan sum_pr[%1] for %2\n").arg(i).arg(qsl_tmp[0]);
                   }
-                  if ( isnan(sum_pr2[i]) ) 
+                  if ( us_isnan(sum_pr2[i]) ) 
                   {
                      cout << QString("WARNING: isnan sum_pr2[%1] for %2\n").arg(i).arg(qsl_tmp[0]);
                   }
@@ -2541,15 +2541,15 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves )
                   std_dev[i] = 
                      tmp_std_dev > 0e0 ?
                      sqrt( ( 1e0 / ((double)sum_count - 1e0) ) * tmp_std_dev ) : 0e0;
-                  if ( isnan(sum_pr[i]) ) 
+                  if ( us_isnan(sum_pr[i]) ) 
                   {
                      cout << QString("WARNING when calc'ing std dev: isnan sum_pr[%1]\n").arg(i);
                   }
-                  if ( isnan(sum_pr2[i]) ) 
+                  if ( us_isnan(sum_pr2[i]) ) 
                   {
                      cout << QString("WARNING when calc'ing std dev: isnan sum_pr2[%1]\n").arg(i);
                   }
-                  if ( isnan(std_dev[i]) ) 
+                  if ( us_isnan(std_dev[i]) ) 
                   {
                      cout << 
                         QString("WARNING when calc'ing std dev: isnan std_dev[%1]:\n"

@@ -17,7 +17,7 @@ struct dati1_pat
 
 };
 
-int us_hydrodyn_pat_main(
+int us_hydrodyn_pat_main_hydro(
                          int         use_nmax, 
                          int         in_nat, 
                          dati1_supc  *in_dt, 

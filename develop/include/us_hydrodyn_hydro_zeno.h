@@ -66,6 +66,8 @@ class US_EXTERN US_Hydrodyn_Hydro_Zeno : public Q3Frame
       QLabel    *lbl_zeno_surface_thickness;
       QLineEdit *le_zeno_surface_thickness;
 
+      QCheckBox *cb_zeno_cxx;
+
       QPushButton *pb_help;
       QPushButton *pb_cancel;
 
@@ -85,6 +87,8 @@ class US_EXTERN US_Hydrodyn_Hydro_Zeno : public Q3Frame
       void update_zeno_surface_steps ( const QString &str );
 
       void update_zeno_surface_thickness ( const QString &str );
+
+      void set_zeno_cxx();
 
       void cancel();
       void help();

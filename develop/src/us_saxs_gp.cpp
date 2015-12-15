@@ -551,9 +551,9 @@ sgp_node* sgp_node::random( unsigned int size )
    } while ( ( fabs ( n.axis[ 0 ] ) < 1e-5 &&
                fabs ( n.axis[ 1 ] ) < 1e-5 &&
                fabs ( n.axis[ 2 ] ) < 1e-5 )
-             || isnan( nn.axis[ 0 ] )
-             || isnan( nn.axis[ 1 ] )
-             || isnan( nn.axis[ 2 ] )
+             || us_isnan( nn.axis[ 0 ] )
+             || us_isnan( nn.axis[ 1 ] )
+             || us_isnan( nn.axis[ 2 ] )
              );
 
    unsigned int dist = ( unsigned int )( sgp_params[ "distancemin" ] + drand48() * ( sgp_params[ "distancemax" ] - sgp_params[ "distancemin" ] ) );

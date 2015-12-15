@@ -2186,7 +2186,7 @@ void US_Hydrodyn_Saxs_Hplc::guinier_analysis()
          //             .arg( I0 )
          //             .arg( sRgmax ) 
          //             );
-         if ( !isnan( Rg ) )
+         if ( !us_isnan( Rg ) )
          {
             if ( !count )
             {
@@ -2223,7 +2223,7 @@ void US_Hydrodyn_Saxs_Hplc::guinier_analysis()
                {
                   i0_max = I0;
                }
-               if ( isnan( siga ) || (unsigned int) usu->wave[ "hplc" ].q.size() < 3 )
+               if ( us_isnan( siga ) || (unsigned int) usu->wave[ "hplc" ].q.size() < 3 )
                {
                   if ( rg_sd_min > Rg )
                   {
@@ -2289,7 +2289,7 @@ void US_Hydrodyn_Saxs_Hplc::guinier_analysis()
                                 notest,
                                 warningt
                                  ) &&
-              !isnan( mwt ) )
+              !us_isnan( mwt ) )
          {
             report += 
                QString("")
@@ -2343,7 +2343,7 @@ void US_Hydrodyn_Saxs_Hplc::guinier_analysis()
                           messagesc,
                           notesc
                            ) &&
-                 !isnan( mwc ) )
+                 !us_isnan( mwc ) )
             {
                report += 
                   QString("")
@@ -2398,7 +2398,7 @@ void US_Hydrodyn_Saxs_Hplc::guinier_analysis()
          guinier_y[ this_name ].push_back( exp( a + b * use_q2endvis ) );
 
 
-         if ( !isnan( Rg ) )
+         if ( !us_isnan( Rg ) )
          {
             if ( !guinier_fit_lines.count( this_name ) )
             {

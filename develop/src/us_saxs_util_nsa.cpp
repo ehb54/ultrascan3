@@ -338,7 +338,7 @@ double US_Saxs_Util::nsa_fitness()
    }
 #endif
 
-   if ( !fit_ok || isnan( chi2 ) )
+   if ( !fit_ok || us_isnan( chi2 ) )
    {
       QFile f( "nan_fitness_model.bead_model" );
       if ( f.open( QIODevice::WriteOnly ) )

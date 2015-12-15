@@ -132,6 +132,19 @@ void US_Hydrodyn_Hydro_Zeno::setupGUI()
    le_zeno_surface_thickness->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_zeno_surface_thickness, SIGNAL(textChanged(const QString &)), SLOT(update_zeno_surface_thickness(const QString &)));
 
+   cb_zeno_cxx = new QCheckBox( this );
+   cb_zeno_cxx->setText( tr( "Test experimental new Zeno version") );
+   cb_zeno_cxx->setEnabled( true );
+   cb_zeno_cxx->setChecked( ((US_Hydrodyn *)us_hydrodyn)->gparams.count( "zeno_cxx" ) &&
+                            ((US_Hydrodyn *)us_hydrodyn)->gparams[ "zeno_cxx" ] == "true" );
+   cb_zeno_cxx->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
+   cb_zeno_cxx->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_zeno_cxx );
+   connect( cb_zeno_cxx, SIGNAL( clicked() ), this, SLOT( set_zeno_cxx() ) );
+   if ( !U_EXPT ) {
+      cb_zeno_cxx->hide();
+   }
+
    pb_cancel = new QPushButton(tr("Close"), this);
    pb_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_cancel->setMinimumHeight(minHeight1);
@@ -169,6 +182,9 @@ void US_Hydrodyn_Hydro_Zeno::setupGUI()
    background->addWidget( le_zeno_surface_thickness , j, 2 );
    j++;
 
+   background->addMultiCellWidget( cb_zeno_cxx, j, j, 0, 2 );
+   j++;
+
    Q3BoxLayout *hbl_help_cancel = new Q3HBoxLayout( 0 );
 
    hbl_help_cancel->addWidget( pb_help );
@@ -194,6 +210,9 @@ void US_Hydrodyn_Hydro_Zeno::set_zeno_interior()
 {
    (*hydro).zeno_interior = cb_zeno_interior->isChecked();
    // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+   if ( cb_zeno_cxx->isChecked() ) {
+      cb_zeno_cxx->setChecked( false );
+   }
    update_enables();
 }
 
@@ -207,6 +226,9 @@ void US_Hydrodyn_Hydro_Zeno::set_zeno_surface()
 {
    (*hydro).zeno_surface = cb_zeno_surface->isChecked();
    // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+   if ( cb_zeno_cxx->isChecked() ) {
+      cb_zeno_cxx->setChecked( false );
+   }
    update_enables();
 }
 
@@ -220,6 +242,17 @@ void US_Hydrodyn_Hydro_Zeno::update_zeno_surface_thickness(const QString &str)
 {
    (*hydro).zeno_surface_thickness = str.toFloat();
    // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_Hydro_Zeno::set_zeno_cxx()
+{
+   ((US_Hydrodyn *)us_hydrodyn)->gparams[ "zeno_cxx" ] = cb_zeno_cxx->isChecked() ? "true" : "false";
+   // should set surface & interior off ?
+   if ( cb_zeno_cxx->isChecked() ) {
+      cb_zeno_interior->setChecked( false );
+      cb_zeno_surface ->setChecked( false );
+   }      
+   update_enables();
 }
 
 void US_Hydrodyn_Hydro_Zeno::cancel()

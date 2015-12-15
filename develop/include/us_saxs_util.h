@@ -27,6 +27,23 @@
 #include "us_file_util.h"
 #include "us_vector.h"
 
+#include "us_hydrodyn_misc.h"
+#include "us_hydrodyn_results.h"
+//#include "us_hydrodyn_asa.h"
+#include "us_hydrodyn_overlap_reduction.h"
+#include "us_hydrodyn_hydro.h"
+#include "us_hydrodyn_grid.h"
+#include "us_hydrodyn_batch.h"
+#include "us_hydrodyn_save.h"
+#include "us_hydrodyn_bead_output.h"
+#include "us_hydrodyn_pdb_parsing.h"
+#include "us_hydrodyn_pdb_visualization.h"
+#include "us_hydrodyn_anaflex_options.h"
+#include "us_hydrodyn_bd_options.h"
+#include "us_hydrodyn_dmd_options.h"
+//#include "us_hydrodyn_supc_hydro.h"
+
+
 #if defined( WIN32 ) && !defined( MINGW )
 typedef _int16 int16_t;
 typedef _int32 int32_t;
@@ -48,10 +65,12 @@ typedef unsigned _int32 uint32_t;
 #   include <dos.h>
 #   include <stdlib.h>
 #   include <float.h>
-#   define isnan _isnan
+#   define us_isnan _isnan
 #   undef SHOW_TIMING
 #   define drand48() ((double)rand()/RAND_MAX)
 #   define srand48(x) srand(x)
+#else
+#   define us_isnan std::isnan
 #endif
 
 #ifdef WIN32
@@ -82,6 +101,9 @@ typedef struct _our_matrix {
    int rows, cols;
    double *d;
 } our_matrix;
+
+
+
 
 class US_Saxs_Scan
 {
@@ -348,7 +370,8 @@ class US_EXTERN US_Saxs_Util
       int debug;
       QString errormsg;
       QString noticemsg;
-
+      QString noticemsg_udp;
+      
       map < QString, US_Saxs_Scan > wave;
 
       // project utilities
@@ -729,10 +752,12 @@ class US_EXTERN US_Saxs_Util
       US_Udp_Msg       * us_udp_msg;
 
       QString run_json ( QString & json );
+      
       bool run_pm      (
                         map < QString, QString >           & parameters,
                         map < QString, QString >           & results
                         );
+
       bool run_pm      ( QString controlfile );
       bool run_pm      ( QStringList qsl );
       bool run_pm      ( 
@@ -892,13 +917,120 @@ class US_EXTERN US_Saxs_Util
                               QString                 & notes
                                );
 
+//FOR us_hydro: Methods plus PUBLIC Variables ///////////////////////////////////////
+      
+      double overlap_tolerance;
+      QString residue_filename;
+
+      map < QString, bool > connection_active;
+
+// struct misc_options misc_1;
+
+      struct hydro_options  hydro;
+      struct pdb_parsing pdb_parse;
+      struct BD_Options bd_options;
+      struct Anaflex_Options anaflex_options;
+      struct Anaflex_Options default_anaflex_options;
+      struct batch_info batch;
+      struct misc_options misc;    
+      struct misc_options default_misc;    
+      double default_overlap_tolerance;
+      
+
+      QString paths;
+      QString path_load_pdb;
+      QString path_view_pdb;
+      QString path_load_bead_model;
+      QString path_view_asa_res;
+      QString path_view_bead_model;
+      QString path_open_hydro_res;
+      struct BD_Options default_bd_options;
+      
+      bool rotamer_changed;
+
+      struct save_info save_params;
+
+      map < QString, QString >            gparams;
+
+      struct DMD_Options dmd_options;
+
+      QString pdb_file;
+
+      bool run_hydro   (
+                        map < QString, QString >           & parameters,
+                        map < QString, QString >           & results
+                       );
+
+      //bool screen_pdb( QString, bool display_pdb = false, bool skip_clear_issue = false );
+      void read_residue_file();
+      bool screen_pdb(QString filename, bool  parameters_set_first_model); //, bool display_pdb, bool skipclearissue );
+      int  check_for_missing_atoms_hydro(QString *error_string, PDB_model *model, bool parameters_set_first_model);
+      void reload_pdb(bool parameters_set_first_model);
+
+      void hard_coded_defaults();
+      void set_default(map < QString, QString >  & results);
+
+      void update_vbar();
+
+      bool calc_grid_pdb(bool parameters_set_first_model);
+      
+      QString getExtendedSuffix(bool prerun, bool somo);
+      QString getExtendedSuffix_somo(bool prerun = true, bool somo = true, bool no_ovlp_removal = false ); 
+
+      void bead_check( bool use_threshold = false, bool message_type = false ); // recheck beads
+      int radial_reduction( bool from_grid = false, int use_ppos = 0, int mppos = 0 );
+      int overlap_check(bool sc, bool mc, bool buried, double tolerance, int limit );
+      int calc_hydro();
+      int do_calc_hydro();
+
+      int get_color_util_saxs(PDB_atom *);
+      QString bead_model_suffix;
+      QString project;   // name of the current project - derived from the prefix of the pdb filename
+      
+      QStringList list_of_models;
+
+
+      int  calc_somo( bool no_ovlp_removal = false, bool parameters_set_first_model = false); 
+      bool calc_somo_o(bool  parameters_set_first_model);   // somo model with overlaps  
+      
+      int write_pdb_hydro( QString fname, vector < PDB_atom > *model);
+      bool calc_zeno_hydro();
+      
+      QString pdb_jsmol_script(vector < PDB_atom > *model);
+      bool bead_model_from_file;
+
    private:
 
       // double       minusoneoverfourpisq;
       // unsigned int exponential_terms;
       // double       compute_exponential_f( double t, const double *par );
+
+      QString options_log;
+      void append_options_log_somo(); // append somo options to options_log
+      void append_options_log_somo_ovlp(); // append somo options to options_log
+      void append_options_log_atob(); // append atob options to options_log
+      int compute_asa(bool bd_mode = false, bool no_ovlp_removal = false, bool parameters_set_first_model = false); // calculate maximum accessible surface area
+      double total_volume_of_bead_model( vector < PDB_atom > &bead_model );
+
+
+      enum issue_msg 
+      { 
+         ISSUE_RESPONSE_STOP
+         ,ISSUE_RESPONSE_NC_SKIP
+         ,ISSUE_RESPONSE_NC_REPLACE
+         ,ISSUE_RESPONSE_MA_SKIP
+         ,ISSUE_RESPONSE_MA_MODEL
+      };
+
+      
+      set < QString > issue_info;
+      int issue_missing_atom_hydro( bool quiet = false );
+      int issue_non_coded_hydro   ( bool quiet = false );
+
       bool run_best();
       QStringList best_output_column( QString fname );
+
+      void write_bead_model(QString, vector <PDB_atom> *, QString extra_text = "" );
 
       bool run_crysol();
       bool run_dammin();
@@ -1095,6 +1227,8 @@ class US_EXTERN US_Saxs_Util
       void calc_vbar( PDB_model *);
       void reset_chain_residues( PDB_model *model );
       bool read_pdb( QString filename );
+      bool read_pdb_hydro( QString filename, bool parameters_set_first_model );
+
       bool read_pdb( QStringList &qsl );
       bool dna_rna_resolve();
       bool assign_atom( const QString &str1, PDB_chain *temp_chain, QString *last_resSeq );
@@ -1189,6 +1323,8 @@ class US_EXTERN US_Saxs_Util
       QStringList  last_steric_clash_log;
       residue      current_residue;
       bool         calc_mw();
+      bool         calc_mw_hydro(); 
+      
 
       bool set_control_parameters_from_experiment_file( QString filename, bool load_without_interp = false );
       bool validate_control_parameters( bool for_sgp = false );
@@ -1285,6 +1421,7 @@ class US_EXTERN US_Saxs_Util
       double       misc_hydrovol;
       void         build_molecule_maps( PDB_model *model );
       bool         create_beads();
+      int create_beads_hydro(QString *error_string, bool quiet = false);
       point        last_molecular_cog;
       bool         create_beads_normally;
       asa_options  asa;
@@ -1552,7 +1689,64 @@ class US_EXTERN US_Saxs_Util
 
       double                                          probe_radius;
       double                                          threshold;
+
+
+// From (private) US_Hydrodyn:: in an order as it goes in 'read_residue_file()' //////// */
+
+      void calc_vol_for_saxs(); 
+
+      map < QString, QString > residue_atom_abb_hybrid_map;
+      QStringList msroll_radii;
+      QStringList msroll_names;
+      vector <int> somo_processed;
+      struct residue new_residue;
+      struct atom new_atom;
+      struct bead new_bead;
+      map < QString, QChar > residue_short_names;
+      struct hydro_results results_hydro;
+      
+      /* Defaults */
+      bool replicate_o_r_method_somo;
+      bool replicate_o_r_method_grid;
+      struct overlap_reduction sidechain_overlap;
+      struct overlap_reduction mainchain_overlap;
+      struct overlap_reduction buried_overlap;
+      struct overlap_reduction grid_exposed_overlap;
+      struct overlap_reduction grid_buried_overlap;
+      struct overlap_reduction grid_overlap;
+
+      struct overlap_reduction default_sidechain_overlap;
+      struct overlap_reduction default_mainchain_overlap;
+      struct overlap_reduction default_buried_overlap;
+      struct overlap_reduction default_grid_exposed_overlap;
+      struct overlap_reduction default_grid_buried_overlap;
+      struct overlap_reduction default_grid_overlap;
+      struct bead_output_options default_bead_output;
+    
+      struct asa_options default_asa;
+      struct hydro_options default_hydro;
+
+      struct pdb_visuzalization *pdb_vis;         
+      struct pdb_visuzalization *default_pdb_vis;
+
+      struct pdb_parsing default_pdb_parse;
+
+      struct grid_options default_grid_hydro;
+      struct saxs_options default_saxs_options;
+      struct batch_info default_batch;
+      struct save_info default_save_params;
+
+      struct bead_output_options bead_output;
+      struct asa_options asa_hydro;
+      struct grid_options grid_hydro;
+      struct saxs_options saxs_options_hydro;
+
+      map < QString, QString >            default_gparams;
+
+
+
 };
+
 
 # if defined( USE_MPI )
    extern void debug_mpi( QString );
@@ -1565,3 +1759,4 @@ class US_EXTERN US_Saxs_Util
 #endif
 
 #endif
+

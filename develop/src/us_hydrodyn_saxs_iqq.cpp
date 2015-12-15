@@ -18,7 +18,7 @@ static std::basic_ostream<char>& operator<<(std::basic_ostream<char>& os, const 
 #include <Q3TextStream>
 #  undef SLASH
 #  define SLASH "\\"
-#  define isnan _isnan
+// #  define isnan _isnan
 #endif
 
 #define SAXS_MIN_Q 0e0

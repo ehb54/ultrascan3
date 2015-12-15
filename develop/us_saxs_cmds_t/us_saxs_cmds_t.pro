@@ -13,6 +13,14 @@ SOURCES		+= ../src/us_saxs_util_extern.cpp
 SOURCES		+= ../src/us_saxs_util_guinier.cpp
 SOURCES		+= ../src/us_saxs_util_hydrate.cpp
 SOURCES		+= ../src/us_saxs_util_hydrate_align.cpp
+
+SOURCES		+= ../src/us_saxs_util_hydro.cpp
+SOURCES		+= ../src/us_saxs_util_hydro_grid_atob_hydro.cpp
+SOURCES		+= ../src/us_saxs_util_hydro_asab1_hydro.cpp
+SOURCES		+= ../src/us_saxs_util_hydro_supc_hydro.cpp
+SOURCES		+= ../src/us_saxs_util_hydro_pat_hydro.cpp
+SOURCES		+= ../src/us_saxs_util_hydro_zeno_hydro.cpp
+
 SOURCES		+= ../src/us_saxs_util_ift.cpp
 SOURCES		+= ../src/us_saxs_util_loads.cpp
 SOURCES		+= ../src/us_saxs_util_nsa.cpp

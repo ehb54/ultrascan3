@@ -5,7 +5,7 @@
 #   include <dos.h>
 #   include <stdlib.h>
 #   include <float.h>
-#   define isnan _isnan
+// #   define isnan _isnan
 #   undef SHOW_TIMING
 #endif
 
@@ -322,7 +322,7 @@ bool US_Saxs_Util::guinier_fit2(
             // cout << "sRg violation\n";
             break;
          }
-         if ( isnan(Rg) )  // positive slope
+         if ( us_isnan(Rg) )  // positive slope
          {
             continue;
          }

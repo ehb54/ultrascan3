@@ -38,8 +38,10 @@ static std::basic_ostream<char>& operator<<(std::basic_ostream<char>& os, const 
 #endif
 #include <string.h>
 
-#include "../include/us_hydrodyn_supc.h"
-#include "../include/us_hydrodyn_pat.h"
+#include "../include/us_hydrodyn_supc_hydro.h"
+#include "../include/us_hydrodyn_pat_hydro.h"
+//#include "../include/us_file_util.h"
+
 
 // #define USE_THREADS
 // only define exactly one of MODE_1 & MODE_2 below
@@ -360,6 +362,9 @@ static void relax_rigid_calc();
 static void ragir();
 static void maxest();
 
+int get_color(PDB_atom *a);
+
+
 // #define DEBUG_WW
 #if defined(DEBUG_WW)
 static int log_cnt = 0;
@@ -399,13 +404,20 @@ static vector < vector <PDB_atom> > *bead_models;
 static vector < vector <int> > active_idx;  // maps into bead_model
 static vector <int> bead_count;  // counts # of active beads
 static int active_model;
-static US_Hydrodyn *us_hydrodyn;
+
+//static US_Hydrodyn *us_hydrodyn;
+static US_Log *us_log;
+static US_Udp_Msg *us_udp_msg;
+
 static vector < float > total_asa;
 static vector < float > used_asa;
 static vector < float > total_s_a;
 static vector < float > used_s_a;
 static vector < float > total_vol;
 static vector < float > used_vol;
+
+struct misc_options misc_int;
+bool bead_model_from_file_int;
 
 static void
 supc_free_alloced()
@@ -455,7 +467,7 @@ supc_free_alloced()
       free(q);
       q = 0;
    }
-   us_hydrodyn->lbl_core_progress->setText("");
+   //us_hydrodyn->lbl_core_progress->setText("");
 }
 
 static void
@@ -573,7 +585,7 @@ print_time(int seconds)
    div_t min_sec;
 
    min_sec = div(seconds, 60);
-   printf("Time used for computing: %d minutes and %d seconds\n", min_sec.quot, min_sec.rem);
+   //printf("Time used for computing: %d minutes and %d seconds\n", min_sec.quot, min_sec.rem);
 }
 
 #if defined(CREATE_EXE_TIME)
@@ -621,19 +633,23 @@ Gets_date(char *day, char *month, int *year, int *numday, char *hour)
 /**************************************************************************/
 
 int
-us_hydrodyn_supc_main(hydro_results *hydro_results, 
-                      hydro_options *hydro, 
-                      double use_overlap_tolerance,
-                      vector < vector <PDB_atom> > *use_bead_models, 
-                      vector <int> *somo_processed,
-                      vector <PDB_model> *use_model_vector,
-                      Q3ListBox *lb_model,
-                      const char *filename,
-                      const char *res_filename,
-                      vector < QString > model_names,
-                      Q3ProgressBar *use_progress,
-                      Q3TextEdit *use_editor,
-                      US_Hydrodyn *use_us_hydrodyn)
+us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
+			    misc_options misc, 
+			    hydro_results *hydro_results, 
+			    hydro_options *hydro, 
+			    double use_overlap_tolerance,
+			    vector < vector <PDB_atom> > *use_bead_models, 
+			    vector <int> *somo_processed,
+			    vector <PDB_model> *use_model_vector,
+			    // QListBox *lb_model),
+			    const char *filename,
+			    const char *res_filename,
+			    vector < QString > model_names,
+			    // QProgressBar *use_progress,
+			    // QTextEdit *use_editor,
+			    // US_Hydrodyn *use_us_hydrodyn,
+			    US_Log *use_us_log,
+			    US_Udp_Msg *use_us_udp_msg)
 {
    dt = 0;
    dtn = 0;
@@ -646,8 +662,8 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
    a = 0;   
    tot_partvol = 0.0;
 
-   cout << "supc:filename    : " << filename << endl;
-   cout << "supc:res_filename: " << res_filename << endl;
+   //cout << "supc:filename    : " << filename << endl;
+   //cout << "supc:res_filename: " << res_filename << endl;
 #if !defined(CREATE_TOT_MOL)
    molecola_v.clear();
    nat_v.clear();
@@ -655,6 +671,9 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
    ultima_v.clear();
    raggio_v.clear();
 #endif
+
+   misc_int = misc;
+   
 
    ETAo = hydro->solvent_viscosity / 100;
    DENS = hydro->solvent_density;
@@ -674,12 +693,18 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
    tot_used_beads = 0;
    tot_used_beads2 = 0;
 
-   progress = use_progress;
-   editor = use_editor;
+   // progress = use_progress;
+   // editor = use_editor;
+
    overlap_tolerance = use_overlap_tolerance;
+   bead_model_from_file_int = use_bead_model_from_file;
    model_vector = use_model_vector;
    bead_models = use_bead_models;
-   us_hydrodyn = use_us_hydrodyn;
+
+   // us_hydrodyn = use_us_hydrodyn;
+   us_log = use_us_log;
+   us_udp_msg = use_us_udp_msg;
+
 #if defined(DEBUG_WW)
    cks = 0e0;
    {
@@ -704,14 +729,18 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
    float lconv = pow(10.0,9 + hydro->unit);
    float lconv2 = lconv * lconv;
    float lconv3 = lconv2 * lconv;
-   printf("lconv %e lconv2 %e lconv3 %e\n",
-          lconv,
-          lconv2,
-          lconv3);
+   // printf("lconv %e lconv2 %e lconv3 %e\n",
+   //        lconv,
+   //        lconv2,
+   //        lconv3);
 
 
-   for (int current_model = 0; current_model < (int)lb_model->numRows(); current_model++) {
-      if (lb_model->isSelected(current_model)) {
+   // for (int current_model = 0; current_model < (int)lb_model->numRows(); current_model++) {
+   //    if (lb_model->isSelected(current_model)) {
+ 
+
+   for ( unsigned int current_model = 0; current_model < model_vector->size(); current_model++  )
+     {
          if ((*somo_processed)[current_model]) {
             model_idx.push_back(current_model);
             vector < int > tmp_active_idx;
@@ -722,9 +751,11 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
             float this_used_s_a = 0.0f;
             float this_total_vol = 0.0f;
             float this_used_vol = 0.0f;
-            for(int i = 0; i < (int)(*bead_models)[current_model].size(); i++) {
+	    
+	    
+	    for(int i = 0; i < (int)(*bead_models)[current_model].size(); i++) {
                if((*bead_models)[current_model][i].active) {
-                  tmp_active_idx.push_back(i);
+		 tmp_active_idx.push_back(i);
                   tmp_count++;
                   this_total_asa += (*bead_models)[current_model][i].bead_recheck_asa * lconv2;
                   float bead_total_s_a = 4.0f * M_PI * lconv2 *
@@ -736,13 +767,14 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
                      (*bead_models)[current_model][i].bead_computed_radius *
                      (*bead_models)[current_model][i].bead_computed_radius;
                   this_total_vol += bead_total_vol;
-                  if ( us_hydrodyn->get_color(&(*bead_models)[current_model][i]) != 6 ) {
-                     this_used_asa += (*bead_models)[current_model][i].bead_recheck_asa * lconv2;
+		  if ( get_color(&(*bead_models)[current_model][i]) != 6 ) {
+		    this_used_asa += (*bead_models)[current_model][i].bead_recheck_asa * lconv2;
                      this_used_s_a += bead_total_s_a;
                      this_used_vol += bead_total_vol;
                   }
                }
             }
+	    
             bead_count.push_back(tmp_count);
             active_idx.push_back(tmp_active_idx);
             total_asa.push_back(this_total_asa);
@@ -756,13 +788,21 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
                nmax = (int) (*bead_models)[current_model].size();
             }
          }
-      }
-   }
+     }
+   // }
 
 
    if(!models_to_proc) {
-      editor->append("\nNo selected models ready to compute hydrodynamics.\n");
-      return US_HYDRODYN_SUPC_NO_SEL_MODELS;
+     us_log->log("\nNo selected models ready to compute hydrodynamics.\n");
+     if ( us_udp_msg )
+       {
+	 map < QString, QString > msging;
+	 msging[ "_textarea" ] = "\\nNo selected models ready to compute hydrodynamics.\\n";
+	 
+	 us_udp_msg->send_json( msging );
+	  //sleep(1);
+       }   
+     return US_HYDRODYN_SUPC_NO_SEL_MODELS;
    }
     
       
@@ -772,7 +812,9 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
    supc_results->name = use_filename;
    supc_results->name.replace(QRegExp("\\.beams$"),"");
    supc_results->name.replace(QRegExp("_%1"),"");
-   if ( lb_model->numRows() > 1 && model_idx.size() ) 
+
+   //   if ( lb_model->numRows() > 1 && model_idx.size() ) 
+   if ( model_vector->size() > 1 && model_idx.size() ) 
    {
       supc_results->name += 
          QString(" model%1: ")
@@ -796,7 +838,7 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
         } 
       }
    }
-   printf("model result name <%s>\n", supc_results->name.ascii());
+   //printf("model result name <%s>\n", supc_results->name.ascii());
 
    if (int retval = supc_alloc())
    {
@@ -822,20 +864,20 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
    char hour[9];
    int numday, year;
 
-   printf("\n\n ** REMOVING RESERVED FILES, IF PRESENT ** \n\n");
+   //printf("\n\n ** REMOVING RESERVED FILES, IF PRESENT ** \n\n");
 
 #if defined(CREATE_TOT_MOL)
-   printf("Removing tot_mol\n");
+   //printf("Removing tot_mol\n");
    unlink("tot_mol");
 #endif
 #if defined(OLD_WAY)
-   printf("Removing ifraxon\n");
+   //printf("Removing ifraxon\n");
    unlink("ifraxon");
-   printf("Removing ofraxon\n");
+   //printf("Removing ofraxon\n");
    unlink("ofraxon");
-   printf("Removing ifraxon1\n");
+   //printf("Removing ifraxon1\n");
    unlink("ifraxon1");
-   printf("Removing ofraxon1\n");
+   //printf("Removing ofraxon1\n");
    unlink("ofraxon1");
 #endif
 
@@ -861,24 +903,24 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
    while ((num < 1) || (num > 100))
    {
       intestazione();
-      printf("\n\n** Compiled for %d beads **\n\n", nmax);
-      printf("\n\n\n** Insert number of models to analyze (max=100) :___ ");
+      //printf("\n\n** Compiled for %d beads **\n\n", nmax);
+      //printf("\n\n\n** Insert number of models to analyze (max=100) :___ ");
       scanf("%d", &num);
       getchar();
    }
 
    if (num != 1)
    {
-      printf("\n - Sequential files?\n");
-      printf(" 1) Yes\n 2) No\n\n");
-      printf(" Your choice ? (1/2) :__ ");
+      //printf("\n - Sequential files?\n");
+      //printf(" 1) Yes\n 2) No\n\n");
+      //printf(" Your choice ? (1/2) :__ ");
       scanf("%d", &cdmolix);
       if (cdmolix == 1)
       {
-         printf("\n-Enter filename prefix  ");
+         //printf("\n-Enter filename prefix  ");
          scanf("%s", fil001);
          getchar();
-         printf("\n-Enter first file number   ");
+         //printf("\n-Enter first file number   ");
          scanf("%d", &num001);
          numor = 1;
       }
@@ -924,8 +966,8 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
       while ((r1 != 'n') && (r1 != 'N') && (r1 != 'y') && (r1 != 'S'))
       {
          intestazione();
-         printf("\n\n\n** Number of models to analyze:___ %d", num);
-         printf("\n** Do you want the results printed to a file ? (y/n) :___ ");
+         //printf("\n\n\n** Number of models to analyze:___ %d", num);
+         //printf("\n** Do you want the results printed to a file ? (y/n) :___ ");
          scanf("%s", &r1);
          getchar();
       }
@@ -935,7 +977,7 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
    {
    a50:
       flag_mem = 1;
-      printf("\n** Insert the name of results' file :___ ");
+      //printf("\n** Insert the name of results' file :___ ");
       scanf("%s", risultati);
       getchar();
    }
@@ -945,13 +987,13 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
 
    if (new_mol != NULL)
    {
-      printf("\n");
-      printf("*** CAUTION : File already exists ! ***\n\n");
-      printf("   Do you want:\n\n");
-      printf(" 1) Append to existing file\n");
-      printf(" 2) Overwrite existing file\n");
-      printf(" 3) Create new file\n\n");
-      printf("** Select (1/2/3) :___ ");
+      //printf("\n");
+      //printf("*** CAUTION : File already exists ! ***\n\n");
+      //printf("   Do you want:\n\n");
+      //printf(" 1) Append to existing file\n");
+      //printf(" 2) Overwrite existing file\n");
+      //printf(" 3) Create new file\n\n");
+      //printf("** Select (1/2/3) :___ ");
       scanf("%d", &fe);
       getchar();
       fclose(new_mol);
@@ -960,7 +1002,7 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
          strcpy(command, RM_COMMAND);
          strcat(command, risultati);
          if (system(command) != 0)
-            printf("Error writing file");
+            //printf("Error writing file");
       }
       if (fe == 3)
       {
@@ -971,16 +1013,16 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
       }
    }
 
-   printf("\n\t\tWARNING !\n");
-   printf("If the coordinates and the radius of the beads are expressed \n");
-   printf("in units other than nanometers, insert the correct conversion\n");
-   printf("factor to turn them into nanometers [else insert 1].\n");
-   printf("The following table shows some examples of conversions:\n\n");
+   //printf("\n\t\tWARNING !\n");
+   //printf("If the coordinates and the radius of the beads are expressed \n");
+   //printf("in units other than nanometers, insert the correct conversion\n");
+   //printf("factor to turn them into nanometers [else insert 1].\n");
+   //printf("The following table shows some examples of conversions:\n\n");
 
-   printf("- - )   micrometers => nanometers [ Conversion factor = 1000 ]\n");
-   printf("- - )   nanometers  => nanometers [ Conversion factor = 1    ]\n");
-   printf("- - )   angstroms   => nanometers [ Conversion factor = 0.1  ]\n\n");
-   printf("\n** Insert the conversion factor :___ ");
+   //printf("- - )   micrometers => nanometers [ Conversion factor = 1000 ]\n");
+   //printf("- - )   nanometers  => nanometers [ Conversion factor = 1    ]\n");
+   //printf("- - )   angstroms   => nanometers [ Conversion factor = 0.1  ]\n\n");
+   //printf("\n** Insert the conversion factor :___ ");
 
    scanf("%f", &fconv);
    fconv1 = 1.0 / fconv;
@@ -988,9 +1030,9 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
    while ((cd != 1) && (cd != 2))
    {
       intestazione();
-      printf("\n- Reference System :\n\n");
-      printf(" 1) Cartesian Origin \n 2) Diffusion Center\n\n");
-      printf(" Select (1/2) :___ ");
+      //printf("\n- Reference System :\n\n");
+      //printf(" 1) Cartesian Origin \n 2) Diffusion Center\n\n");
+      //printf(" Select (1/2) :___ ");
       scanf("%d", &cd);
       getchar();
    }
@@ -998,10 +1040,10 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
    while ((cc != 1) && (cc != 2))
    {
       intestazione();
-      printf("\n- Boundary Conditions :\n\n");
-      printf(" 1) STICK boundary condition (6*M_PI*ETAo)\n");
-      printf(" 2) SLIP boundary condition (4*M_PI*ETAo)\n\n");
-      printf(" Select (1/2) :___ ");
+      //printf("\n- Boundary Conditions :\n\n");
+      //printf(" 1) STICK boundary condition (6*M_PI*ETAo)\n");
+      //printf(" 2) SLIP boundary condition (4*M_PI*ETAo)\n\n");
+      //printf(" Select (1/2) :___ ");
       scanf("%d", &cc);
       getchar();
    }
@@ -1009,58 +1051,58 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
    while ((volcor != 1) && (volcor != 2))
    {
       intestazione();
-      printf("\n- Volume correction:\n\n");
-      printf(" 1) Automatic (Total volume of the beads)\n");
-      printf(" 2) Manual    (From keyboard)\n\n");
-      printf(" Select (1/2) :___ ");
+      //printf("\n- Volume correction:\n\n");
+      //printf(" 1) Automatic (Total volume of the beads)\n");
+      //printf(" 2) Manual    (From keyboard)\n\n");
+      //printf(" Select (1/2) :___ ");
       scanf("%d", &volcor);
       getchar();
    }
 
    if (volcor == 2)
    {
-      printf("\n\n\n- Insert value of the volume : ");
+      //printf("\n\n\n- Insert value of the volume : ");
       scanf("%f", &volcor1);
    }
 
    while ((mascor != 1) && (mascor != 2))
    {
       intestazione();
-      printf("\n- Mass correction:\n\n");
-      printf(" 1) Automatic (Masses from file) \n");
-      printf(" 2) Manual    (Total Mass from Keyboard)\n\n");
-      printf(" Select (1/2) :___ ");
+      //printf("\n- Mass correction:\n\n");
+      //printf(" 1) Automatic (Masses from file) \n");
+      //printf(" 2) Manual    (Total Mass from Keyboard)\n\n");
+      //printf(" Select (1/2) :___ ");
       scanf("%d", &mascor);
       getchar();
    }
 
    if (mascor == 2)
    {
-      printf("\n\n\n- Insert value of mass : ");
+      //printf("\n\n\n- Insert value of mass : ");
       scanf("%f", &mascor1);
    }
 
    while ((sfecalc != 1) && (sfecalc != 2))
    {
       intestazione();
-      printf("\n- Beads to be included in the computation:\n\n");
-      printf(" 1) ALL beads\n");
-      printf(" 2) Color Code Selection (Beads Color Coded \"6\" will be excluded)\n\n");
-      printf(" Select (1/2) :___ ");
+      //printf("\n- Beads to be included in the computation:\n\n");
+      //printf(" 1) ALL beads\n");
+      //printf(" 2) Color Code Selection (Beads Color Coded \"6\" will be excluded)\n\n");
+      //printf(" Select (1/2) :___ ");
       scanf("%d", &sfecalc);
       getchar();
       if ((sfecalc == 2) && (volcor == 1))
       {
-         printf("\n YOU HAVE SELECTED TO EXCLUDE BEADS COLOR CODED \"6\"\n\n");
-         printf("\n HOWEVER, THEIR VOLUME MAY BE IMPORTANT FOR THE\n");
-         printf("\n ROTATIONAL DIFFUSION AND INTRINSIC VISCOSITY CORRECTIONS\n");
-         printf("\n You may choose to include their volume in:\n\n");
+         //printf("\n YOU HAVE SELECTED TO EXCLUDE BEADS COLOR CODED \"6\"\n\n");
+         //printf("\n HOWEVER, THEIR VOLUME MAY BE IMPORTANT FOR THE\n");
+         //printf("\n ROTATIONAL DIFFUSION AND INTRINSIC VISCOSITY CORRECTIONS\n");
+         //printf("\n You may choose to include their volume in:\n\n");
 
-         printf(" 0) Neither correction\n");
-         printf(" 1) The rotational diffusion correction only\n");
-         printf(" 2) The intrinsic viscosity correction only\n");
-         printf(" 3) Both corrections\n\n");
-         printf(" Select (0/1/2/3) :___ ");
+         //printf(" 0) Neither correction\n");
+         //printf(" 1) The rotational diffusion correction only\n");
+         //printf(" 2) The intrinsic viscosity correction only\n");
+         //printf(" 3) Both corrections\n\n");
+         //printf(" Select (0/1/2/3) :___ ");
          scanf("%d", &colorsixf);
          getchar();
 
@@ -1108,14 +1150,14 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
    intestazione();
    num = models_to_proc;
    strncpy(risultati, res_filename, SMAX);
-   printf("risultati (as res_filename): %s\n", risultati);
+   //printf("risultati (as res_filename): %s\n", risultati);
    risultati[SMAX-1] = 0;
    if(strlen(risultati) > 6) {
       risultati[strlen(risultati) - 5] = 0; // remove .beams
    }
    strncat(risultati, "hydro_res", SMAX - strlen(risultati));
    risultati[SMAX-1] = 0;
-   printf("risultati: %s\n", risultati);
+   //printf("risultati: %s\n", risultati);
    unlink(risultati);
    flag_mem = 1;
     
@@ -1137,7 +1179,7 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
    fclose(mol);
 #endif
    fconv = pow(10.0,hydro->unit + 9);
-   printf("fconv = %f\n", fconv);
+   //printf("fconv = %f\n", fconv);
    fconv1 = 1.0 / fconv;
    cd = hydro->reference_system ? 1 : 2;
    cc = hydro->boundary_cond ? 2 : 1;
@@ -1161,11 +1203,11 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
    //    init_da_a();
 #endif
 
-   printf("- Computational Method : SUPERMATRIX INVERSION\n\n");
+   //printf("- Computational Method : SUPERMATRIX INVERSION\n\n");
 
-   if (flag_mem == 1 &&
-       !(us_hydrodyn->batch_widget &&
-         us_hydrodyn->batch_window->save_batch_active))
+   if (flag_mem == 1 )//  &&
+       // !(us_hydrodyn->batch_widget &&
+       //   us_hydrodyn->batch_window->save_batch_active))
    {
       ris = fopen(risultati, "wb");
       fprintf(ris, "\n%s", "BEAMS -           IST. CBA                - COEFF/SUPCW v. 5.0\n");
@@ -1191,9 +1233,9 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
          mol = fopen(molecola, "r");
          while (mol == NULL)
          {
-            printf("\n");
-            printf("The Model(s) do not exist!!!\n");
-            printf("Insert the models' correct prefix :___");
+            //printf("\n");
+            //printf("The Model(s) do not exist!!!\n");
+            //printf("Insert the models' correct prefix :___");
             scanf("%s", molecola);
             mol = fopen(molecola, "r");
          }
@@ -1201,22 +1243,22 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
          fclose(mol);
          if (k == 0)
          {
-            printf("\n%s%d%s", "** TOTAL Number of BEADS in the MODELS :___", nat, " **\n\n");
+            //printf("\n%s%d%s", "** TOTAL Number of BEADS in the MODELS :___", nat, " **\n\n");
             prima = (-1);
             while ((prima < 0) || (prima > (nat - 1)))
             {
-               printf("%s", "** Insert FIRST BEAD # to be included:___");
+               //printf("%s", "** Insert FIRST BEAD # to be included:___");
                scanf("%d", &prima);
                getchar();
-               printf("\n");
+               //printf("\n");
             }
             ultima = nat + 1;
             while ((ultima < prima) || (ultima > nat))
             {
-               printf("%s", "** Insert LAST BEAD # to be included:___");
+               //printf("%s", "** Insert LAST BEAD # to be included:___");
                scanf("%d", &ultima);
                getchar();
-               printf("\n");
+               //printf("\n");
             }
          }
 
@@ -1244,21 +1286,21 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
 #if defined(USE_MAIN)
          if (num != 1)
          {
-            printf("\n%s%d%s", "** Insert file name of model #", k + 1, " to be analyzed :___ ");
+            //printf("\n%s%d%s", "** Insert file name of model #", k + 1, " to be analyzed :___ ");
          }
          else
          {
-            printf("\n** Insert file name of the model to be analyzed :___ ");
+            //printf("\n** Insert file name of the model to be analyzed :___ ");
          }
          scanf("%s", molecola);
          getchar();
 
          init_da_a();
 #endif
-         printf( "opening file: %s\n", 
-                 use_filename.contains( "%1" ) ? 
-                 QString( use_filename ).arg( model_names[ k ] ).ascii() :
-                 use_filename.ascii() );
+         // printf( "opening file: %s\n", 
+         //         use_filename.contains( "%1" ) ? 
+         //         QString( use_filename ).arg( model_names[ k ] ).ascii() :
+         //         use_filename.ascii() );
          strncpy( molecola, 
                   use_filename.contains( "%1" ) ? 
                   QString( use_filename ).arg( model_names[ k ] ).ascii() :
@@ -1283,50 +1325,100 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
    {
       active_model = k;
 
-      QColor save_color = editor->color();
-      editor->setColor("dark blue");
-      editor->append(QString("\nProcessing model %1 bead count %2 vbar %3%4%5%6\n")
-                     .arg(k+1)
-                     .arg(bead_count[k])
-                     .arg(us_hydrodyn->misc.compute_vbar ?
-                          (int)(((*model_vector)[model_idx[active_model]].vbar * 1000) + 0.5) / 1000.0 :
-                          us_hydrodyn->misc.vbar)
-                     .arg(us_hydrodyn->misc.compute_vbar ? "" : " (User Entered)")
-                     .arg(hydro->mass_correction ? 
-                          QString(" MW %1 (User Entered)").arg(hydro->mass) : "")
-                     .arg(hydro->volume_correction ? 
-                          QString(" Volume %1 (User Entered)").arg(hydro->volume) : "")
-                     );
-      editor->setColor(save_color);
+      // QColor save_color = editor->color();
+      // editor->setColor("dark blue");
+      
+      us_log->log(QString("\nProcessing model %1 bead count %2 vbar %3%4%5%6\n")
+		  .arg(k+1)
+		  .arg(bead_count[k])
+		  .arg(misc_int.compute_vbar ?
+		       (int)(((*model_vector)[model_idx[active_model]].vbar * 1000) + 0.5) / 1000.0 :
+           misc_int.vbar)
+		  .arg(misc_int.compute_vbar ? "" : " (User Entered)")
+		  .arg(hydro->mass_correction ? 
+           QString(" MW %1 (User Entered)").arg(hydro->mass) : "")
+		  .arg(hydro->volume_correction ? 
+		       QString(" Volume %1 (User Entered)").arg(hydro->volume) : "")
+      );
+      if ( us_udp_msg )
+       {
+	 map < QString, QString > msging;
+	 msging[ "_textarea" ] = QString("\\nProcessing model %1 bead count %2 vbar %3%4%5%6\\n")
+		  .arg(k+1)
+		  .arg(bead_count[k])
+		  .arg(misc_int.compute_vbar ?
+		       (int)(((*model_vector)[model_idx[active_model]].vbar * 1000) + 0.5) / 1000.0 :
+           misc_int.vbar)
+		  .arg(misc_int.compute_vbar ? "" : " (User Entered)")
+		  .arg(hydro->mass_correction ? 
+           QString(" MW %1 (User Entered)").arg(hydro->mass) : "")
+		  .arg(hydro->volume_correction ? 
+		       QString(" Volume %1 (User Entered)").arg(hydro->volume) : "");
+	 
+	 us_udp_msg->send_json( msging );
+	  //sleep(1);
+       }   
+      
+      // editor->setColor(save_color);
 
       supc_free_alloced_2();
 
       initarray(k);
-      editor->append(QString("Using %1 beads for the matrix\n").arg(nat));
-      qApp->processEvents();
-      if (us_hydrodyn->stopFlag)
-      {
-         supc_free_alloced();
-         return -1;
-      }
+      us_log->log(QString("Using %1 beads for the matrix\n").arg(nat));
+      if ( us_udp_msg )
+	{
+	  map < QString, QString > msging;
+	  msging[ "_textarea" ] = QString("Using %1 beads for the matrix\\n").arg(nat);
+	 
+	    us_udp_msg->send_json( msging );
+	  //sleep(1);
+       }   
+      // qApp->processEvents();
+      // if (us_hydrodyn->stopFlag)
+      // {
+      //    supc_free_alloced();
+      //    return -1;
+      // }
 
-      printf("nat = %d\n", nat);
+      //printf("nat = %d\n", nat);
       if (int retval = supc_alloc_2())
       {
          supc_free_alloced();
          return retval;
       }
    
+
+      /* Reset Progress bar */
+      if ( us_udp_msg )
+	{
+	  map < QString, QString > msging;
+	  msging[ "progress_output" ] = QString("");
+	  msging[ "progress1" ] = QString::number(0.0);
+       
+	  us_udp_msg->send_json( msging );
+	}   
+
       ppos = 1;
       mppos = (1 + 3 + 3) * nat + 17;
-      progress->setTotalSteps(mppos);
-      progress->setProgress(ppos++); // 1
-      qApp->processEvents();
-      if (us_hydrodyn->stopFlag)
-      {
-         supc_free_alloced();
-         return -1;
-      }
+      // progress->setTotalSteps(mppos);
+      // progress->setProgress(ppos++); // 1
+      ppos++;      
+      if ( us_udp_msg )
+	{
+	  map < QString, QString > msging;
+	  msging[ "progress_output" ] = QString("Hydro (SMI) calculation: %1\% of %2\%").arg(QString::number( (int(double(ppos)/double(mppos))*100.0) ) ).arg(100); // arg(ppos).arg(mppos);
+	  msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
+	  
+	  us_udp_msg->send_json( msging );
+	  //sleep(1);
+	}         
+      
+      // qApp->processEvents();
+      // if (us_hydrodyn->stopFlag)
+      // {
+      //    supc_free_alloced();
+      //    return -1;
+      // }
 
 #if defined(CREATE_TOT_MOL)
       fscanf(tot_mol, "%f", &raflag);
@@ -1353,14 +1445,14 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
          memset(out_dt, 0, nmax * sizeof(struct dati1_pat));
 
          int out_nat;
-         printf("\n\n- Starting PAT ...\n");
+         //printf("\n\n- Starting PAT ...\n");
          {
-            int retval = us_hydrodyn_pat_main(nmax,
+            int retval = us_hydrodyn_pat_main_hydro(nmax,
                                               nat,
                                               dt,
                                               &out_nat,
                                               out_dt);
-            printf("pat returns %d\n", retval);
+            //printf("pat returns %d\n", retval);
             if ( retval )
             {
                if ( out_dt )
@@ -1372,30 +1464,41 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
                return -1;
             }
          }
-         printf("\n\n- End of PAT ...\n\n");
-         progress->setProgress(ppos++); // 2
-         qApp->processEvents();
-         if (us_hydrodyn->stopFlag)
-         {
-            supc_free_alloced();
-            return -1;
-         }
+         //printf("\n\n- End of PAT ...\n\n");
+         // progress->setProgress(ppos); // 2
+	 ppos++;
+	 if ( us_udp_msg )
+	   {
+	     map < QString, QString > msging;
+	     msging[ "progress_output" ] = QString("Hydro (SMI) calculation: %1\% of %2\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100);
+	     msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
+      
+	     us_udp_msg->send_json( msging );
+	     //sleep(1);
+	   }       
+
+         // qApp->processEvents();
+         // if (us_hydrodyn->stopFlag)
+         // {
+         //    supc_free_alloced();
+         //    return -1;
+         // }
          
 #if defined(OLD_WAY)
          out_inter();
          
-         printf("Removing ifraxon\n");
+         //printf("Removing ifraxon\n");
          unlink("ifraxon");
-         printf("Removing ofraxon\n");
+         //printf("Removing ofraxon\n");
          unlink("ofraxon");
-         printf("Removing ifraxon1\n");
+         //printf("Removing ifraxon1\n");
          unlink("ifraxon1");
-         printf("Removing ofraxon1\n");
+         //printf("Removing ofraxon1\n");
          unlink("ofraxon1");
 #endif
          
-         printf("out_nat %d\n", out_nat); fflush(stdout);
-         printf("nat %d\n", nat); fflush(stdout);
+         //printf("out_nat %d\n", out_nat); fflush(stdout);
+         //printf("nat %d\n", nat); fflush(stdout);
 
          for (i = 0; i < out_nat; i++)
          {
@@ -1410,8 +1513,8 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
 #endif
             if ( i < 3 ) 
             {
-               printf("after out_dt bead %d @ %f %f %f\n", i, out_dt[i].x,out_dt[i].y,out_dt[i].z);
-               printf("after bead %d @ %f %f %f\n", i, dtn[i].x,dtn[i].y,dtn[i].z);
+               //printf("after out_dt bead %d @ %f %f %f\n", i, out_dt[i].x,out_dt[i].y,out_dt[i].z);
+               //printf("after bead %d @ %f %f %f\n", i, dtn[i].x,dtn[i].y,dtn[i].z);
             }
          }
       }
@@ -1444,22 +1547,22 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
       if (overlap() == 1)
       {
 #if defined(USE_MAIN)
-         printf("\n\n Hit any key to exit");
+         //printf("\n\n Hit any key to exit");
          getchar();
 #else
 # if defined(DEBUG_WW)
          dww("final/overlaps");
          fclose(logfx);
 # endif
-         printf("overlaps detected\n");
+         //printf("overlaps detected\n");
          supc_free_alloced();
-         progress->setProgress(mppos); 
-         qApp->processEvents();
-         if (us_hydrodyn->stopFlag)
-         {
-            supc_free_alloced();
-            return -1;
-         }
+         // progress->setProgress(mppos); 
+         // qApp->processEvents();
+         // if (us_hydrodyn->stopFlag)
+         // {
+         //    supc_free_alloced();
+         //    return -1;
+         // }
          return US_HYDRODYN_SUPC_OVERLAPS_EXIST;
 #endif
          break;
@@ -1469,13 +1572,25 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
               ragir(); 
               printf("\n End of function: ragir()\n"); */
 
-      progress->setProgress(ppos++); //3
-      qApp->processEvents();
-      if (us_hydrodyn->stopFlag)
-      {
-         supc_free_alloced();
-         return -1;
-      }
+      // progress->setProgress(ppos); //3
+      // qApp->processEvents();
+      ppos++;
+      if ( us_udp_msg )
+	{
+	  map < QString, QString > msging;
+	  msging[ "progress_output" ] = QString("Hydro (SMI) calculation: %1\% of %2\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100);
+	  msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
+      
+	  us_udp_msg->send_json( msging );
+	  //sleep(1);
+	}    
+      
+
+      // if (us_hydrodyn->stopFlag)
+      // {
+      //    supc_free_alloced();
+      //    return -1;
+      // }
       /* RECOMPUTING THE CENTER OF MASS */
 
       mtx = 0.0;
@@ -1498,43 +1613,76 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
       zm = zm / mtx;
 
 #if defined(TSUDA_DOUBLESUM)
-      printf("\n\n Starting function: tsuda()\n");
+      //printf("\n\n Starting function: tsuda()\n");
       tsuda();
-      printf("\n End of function: tsuda()\n");
+      //printf("\n End of function: tsuda()\n");
 #endif
-      progress->setProgress(ppos++); // 4
-      qApp->processEvents();
-      if (us_hydrodyn->stopFlag)
-      {
-         supc_free_alloced();
-         return -1;
-      }
-#if defined(TSUDA_DOUBLESUM)
-      printf("\n Starting function: doublesum()\n");
-      doublesum();
-      printf("\n End of function: doublesum()\n");
-#endif
-      progress->setProgress(ppos++); // 5
-      qApp->processEvents();
-      if (us_hydrodyn->stopFlag)
-      {
-         supc_free_alloced();
-         return -1;
-      }
+      // progress->setProgress(ppos); // 4
+      // qApp->processEvents();
+      ppos++;
+      if ( us_udp_msg )
+	{
+	  map < QString, QString > msging;
+	  msging[ "progress_output" ] = QString("Hydro (SMI) calculation: %1\% of %2\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100);
+	  msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
+	  
+	  us_udp_msg->send_json( msging );
+	  //sleep(1);
+	}    
+      
 
-      printf("\n Starting function: calcqij()\n");
+      // if (us_hydrodyn->stopFlag)
+      // {
+      //    supc_free_alloced();
+      //    return -1;
+      // }
+#if defined(TSUDA_DOUBLESUM)
+      //printf("\n Starting function: doublesum()\n");
+      doublesum();
+      //printf("\n End of function: doublesum()\n");
+#endif
+      // progress->setProgress(ppos); // 5
+      // qApp->processEvents();
+      ppos++;
+      if ( us_udp_msg )
+	{
+	  map < QString, QString > msging;
+	  msging[ "progress_output" ] = QString("Hydro (SMI) calculation: %1\% of %2\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100);
+	  msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
+	  
+	  us_udp_msg->send_json( msging );
+	  //sleep(1);
+	}    
+      
+      // if (us_hydrodyn->stopFlag)
+      // {
+      //    supc_free_alloced();
+      //    return -1;
+      // }
+
+      //printf("\n Starting function: calcqij()\n");
       calcqij();
-      printf("\n\n End of function: calcqij()\n");
-      progress->setProgress(ppos++); // 6
-      qApp->processEvents();
-      if (us_hydrodyn->stopFlag)
-      {
-         supc_free_alloced();
-         return -1;
-      }
+      //printf("\n\n End of function: calcqij()\n");
+      // progress->setProgress(ppos); // 6
+      // qApp->processEvents();
+      ppos++;
+      if ( us_udp_msg )
+	{
+	  map < QString, QString > msging;
+	  msging[ "progress_output" ] = QString("Hydro (SMI) calculation: %1\% of %2\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100);
+	  msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
+	  
+	  us_udp_msg->send_json( msging );
+	  //sleep(1);
+	}    
+      // if (us_hydrodyn->stopFlag)
+      // {
+      //    supc_free_alloced();
+      //    return -1;
+      // }
 
       presentazione();
-      printf("- Computational Method : SUPERMATRIX INVERSION\n\n");
+      //printf("- Computational Method : SUPERMATRIX INVERSION\n\n");
 #if defined(CREATE_EXE_TIME)
       if (flag_mem == 1)
       {
@@ -1558,13 +1706,24 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
 #endif
 
       primo = time(NULL);   /* Gets system time */
-      progress->setProgress(ppos++); // 7
-      qApp->processEvents();
-      if (us_hydrodyn->stopFlag)
-      {
-         supc_free_alloced();
-         return -1;
-      }
+      // progress->setProgress(ppos); // 7
+      // qApp->processEvents();
+      ppos++;
+      if ( us_udp_msg )
+	{
+	  map < QString, QString > msging;
+	  msging[ "progress_output" ] = QString("Hydro (SMI) calculation: %1\% of %2\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100);
+	  msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
+	  
+	  us_udp_msg->send_json( msging );
+	  //sleep(1);
+	}
+    
+      // if (us_hydrodyn->stopFlag)
+      // {
+      //    supc_free_alloced();
+      //    return -1;
+      // }
 
 #if defined(SHOW_TIMING)
       cholsl_s1 = 0l;
@@ -1578,180 +1737,278 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
 
       supc_tot = 0l;
 #endif
-#if defined(USE_THREADS)
-      US_Config *USglobal = new US_Config();
-      threads = USglobal->config_list.numThreads;
-      if ( threads > 1 )
-      {
-         // create threads
 
-         cout << QString("Using %1 threads for matrix inversion.\n").arg(threads);
-         // editor->append(QString("Using %1 threads for matrix inversion.\n").arg(threads));
+
+      /* THREADS !! */
+// #if defined(USE_THREADS)
+//       US_Config *USglobal = new US_Config();
+//       threads = USglobal->config_list.numThreads;
+//       if ( threads > 1 )
+//       {
+//          // create threads
+
+//          cout << QString("Using %1 threads for matrix inversion.\n").arg(threads);
+//          // us_log->log(QString("Using %1 threads for matrix inversion.\n").arg(threads));
          
-         supc_thr_threads.resize(threads);
-         for ( int j = 0; j < threads; j++ )
-         {
-            supc_thr_threads[j] = new supc_thr_t(j);
-            supc_thr_threads[j]->start();
-         }
-      }
-      delete USglobal;
-#endif
+//          supc_thr_threads.resize(threads);
+//          for ( int j = 0; j < threads; j++ )
+//          {
+//             supc_thr_threads[j] = new supc_thr_t(j);
+//             supc_thr_threads[j]->start();
+//          }
+//       }
+//       delete USglobal;
+// #endif
          
       riempimatrice();
 
-      progress->setProgress(ppos++); // 8
-      qApp->processEvents();
-      if (us_hydrodyn->stopFlag)
-      {
-         supc_free_alloced();
-         return -1;
-      }
+      // progress->setProgress(ppos); // 8
+      // qApp->processEvents();
+      ppos++;
+      if ( us_udp_msg )
+	{
+	  map < QString, QString > msging;
+	  msging[ "progress_output" ] = QString("Hydro (SMI) calculation: %1\% of %2\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100);
+	  msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
+	  
+	  us_udp_msg->send_json( msging );
+	  //sleep(1);
+	}    
+
+      // if (us_hydrodyn->stopFlag)
+      // {
+      //    supc_free_alloced();
+      //    return -1;
+      // }
 
       inverti(nat);
 
-      printf("- Matrix S_ij     : ");
-      printf("calculated\n");
+      //printf("- Matrix S_ij     : ");
+      //printf("calculated\n");
 
 #if defined(SHOW_TIMING)
       supc_tot = supc1_tot + supc2_tot + supc3_tot;
-      printf("supc timing:\n"
-             "supc1 tot      %lu %.2g\n"
-             "supc2 tot      %lu %.2g\n"
-             "supc3 s1       %lu %.2g\n"
-             "cholsl loop 1  %lu %.2g\n"
-             "cholsl loop 2  %lu %.2g\n"
-             "supc3 s2       %lu %.2g\n"
-             "supc3 tot      %lu %.2g\n"
-             "supc tot       %lu\n"
-             , supc1_tot, (double) supc1_tot / (double) supc_tot
-             , supc2_tot, (double) supc2_tot / (double) supc_tot
-             , supc3_s1, (double) supc3_s1 / (double) supc_tot
-             , cholsl_s1, (double) cholsl_s1 / (double) supc_tot
-             , cholsl_s2, (double) cholsl_s2 / (double) supc_tot
-             , supc3_s2, (double) supc3_s2 / (double) supc_tot
-             , supc3_tot, (double) supc3_s1 / (double) supc_tot
-             , supc_tot
-             );
+      // printf("supc timing:\n"
+      //        "supc1 tot      %lu %.2g\n"
+      //        "supc2 tot      %lu %.2g\n"
+      //        "supc3 s1       %lu %.2g\n"
+      //        "cholsl loop 1  %lu %.2g\n"
+      //        "cholsl loop 2  %lu %.2g\n"
+      //        "supc3 s2       %lu %.2g\n"
+      //        "supc3 tot      %lu %.2g\n"
+      //        "supc tot       %lu\n"
+      //        , supc1_tot, (double) supc1_tot / (double) supc_tot
+      //        , supc2_tot, (double) supc2_tot / (double) supc_tot
+      //        , supc3_s1, (double) supc3_s1 / (double) supc_tot
+      //        , cholsl_s1, (double) cholsl_s1 / (double) supc_tot
+      //        , cholsl_s2, (double) cholsl_s2 / (double) supc_tot
+      //        , supc3_s2, (double) supc3_s2 / (double) supc_tot
+      //        , supc3_tot, (double) supc3_s1 / (double) supc_tot
+      //        , supc_tot
+      //        );
 #endif
 
-#if defined(USE_THREADS)
-      if ( threads > 1 ) 
-      {
-         // destroy threads
+// #if defined(USE_THREADS)
+//       if ( threads > 1 ) 
+//       {
+//          // destroy threads
 
-         int j;
+//          int j;
     
-         for ( j = 0; j < threads; j++ )
-         {
-            supc_thr_threads[j]->supc_thr_shutdown();
-         }
+//          for ( j = 0; j < threads; j++ )
+//          {
+//             supc_thr_threads[j]->supc_thr_shutdown();
+//          }
          
-         for ( j = 0; j < threads; j++ )
-         {
-            supc_thr_threads[j]->wait();
-         }
+//          for ( j = 0; j < threads; j++ )
+//          {
+//             supc_thr_threads[j]->wait();
+//          }
          
-         for ( j = 0; j < threads; j++ )
-         {
-            delete supc_thr_threads[j];
-         }
-      }
-#endif
+//          for ( j = 0; j < threads; j++ )
+//          {
+//             delete supc_thr_threads[j];
+//          }
+//       }
+// #endif
 
 
-      qApp->processEvents();
-      if (us_hydrodyn->stopFlag)
-      {
-         supc_free_alloced();
-         return -1;
-      }
+      // qApp->processEvents();
+      // if (us_hydrodyn->stopFlag)
+      // {
+      //    supc_free_alloced();
+      //    return -1;
+      // }
 
       visco();
 #if defined(TSUDA_DOUBLESUM)
       tsuda1();
 #endif
-      progress->setProgress(ppos++); // 9
-      qApp->processEvents();
-      if (us_hydrodyn->stopFlag)
-      {
-         supc_free_alloced();
-         return -1;
-      }
+      // progress->setProgress(ppos); // 9
+      // qApp->processEvents();
+      ppos++;
+      if ( us_udp_msg )
+	{
+	  map < QString, QString > msging;
+	  msging[ "progress_output" ] = QString("Hydro (SMI) calculation: %1\% of %2\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100);
+	  msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
+	  
+	  us_udp_msg->send_json( msging );
+	  //sleep(1);
+	}    
+      // if (us_hydrodyn->stopFlag)
+      // {
+      //    supc_free_alloced();
+      //    return -1;
+      // }
 
-      printf("- Matrix KSI_T  : ");
+      //printf("- Matrix KSI_T  : ");
       sigmatcalc2();
-      printf("calculated\n");
+      //printf("calculated\n");
 
-      progress->setProgress(ppos++); // 10
-      qApp->processEvents();
-      if (us_hydrodyn->stopFlag)
-      {
-         supc_free_alloced();
-         return -1;
-      }
+      // progress->setProgress(ppos); // 10
+      // qApp->processEvents();
+      ppos++;
+      if ( us_udp_msg )
+	{
+	  map < QString, QString > msging;
+	  msging[ "progress_output" ] = QString("Hydro (SMI) calculation: %1\% of %2\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100);
+	  msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
+	  
+	  us_udp_msg->send_json( msging );
+	  //sleep(1);
+	}    
+      // if (us_hydrodyn->stopFlag)
+      // {
+      //    supc_free_alloced();
+      //    return -1;
+      // }
 
-      printf("- Matrix KSI_OC : ");
+      //printf("- Matrix KSI_OC : ");
       sigmaocalc1();
-      printf("calculated\n");
-      progress->setProgress(ppos++); // 11
-      qApp->processEvents();
-      if (us_hydrodyn->stopFlag)
-      {
-         supc_free_alloced();
-         return -1;
-      }
+      //printf("calculated\n");
+      // progress->setProgress(ppos); // 11
+      // qApp->processEvents();
+      ppos++;
+      if ( us_udp_msg )
+	{
+	  map < QString, QString > msging;
+	  msging[ "progress_output" ] = QString("Hydro (SMI) calculation: %1\% of %2\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100);
+	  msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
+	  
+	     us_udp_msg->send_json( msging );
+	     //sleep(1);
+	}    
+      // if (us_hydrodyn->stopFlag)
+      // {
+      //    supc_free_alloced();
+      //    return -1;
+      // }
 
       calcR();
 
-      progress->setProgress(ppos++); // 12
-      qApp->processEvents();
-      if (us_hydrodyn->stopFlag)
-      {
-         supc_free_alloced();
-         return -1;
-      }
-      printf("- Matrix KSI_Rr  : ");
-      sigmarRcalc1();
-      printf("calculated\n");
+      // progress->setProgress(ppos); // 12
+      // qApp->processEvents();
+      ppos++;
+      if ( us_udp_msg )
+	{
+	  map < QString, QString > msging;
+	  msging[ "progress_output" ] = QString("Hydro (SMI) calculation: %1\% of %2\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100);
+	  msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
+	  
+	  us_udp_msg->send_json( msging );
+	  //sleep(1);
+	}    
 
-      progress->setProgress(ppos++); // 13
-      qApp->processEvents();
-      if (us_hydrodyn->stopFlag)
-      {
-         supc_free_alloced();
-         return -1;
-      }
-      printf("- Matrix KSI_OR: ");
+      // if (us_hydrodyn->stopFlag)
+      // {
+      //    supc_free_alloced();
+      //    return -1;
+      // }
+      //printf("- Matrix KSI_Rr  : ");
+      sigmarRcalc1();
+      //printf("calculated\n");
+
+      // progress->setProgress(ppos); // 13
+      // qApp->processEvents();
+      ppos++;
+      if ( us_udp_msg )
+	{
+	  map < QString, QString > msging;
+	  msging[ "progress_output" ] = QString("Hydro (SMI) calculation: %1\% of %2\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100);
+	  msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
+	  
+	  us_udp_msg->send_json( msging );
+	     //sleep(1);
+	}    
+
+      // if (us_hydrodyn->stopFlag)
+      // {
+      //    supc_free_alloced();
+      //    return -1;
+      // }
+      //printf("- Matrix KSI_OR: ");
       sigmaoRcalc();
-      printf("calculated\n");
-      progress->setProgress(ppos++); // 14
-      qApp->processEvents();
-      if (us_hydrodyn->stopFlag)
-      {
-         supc_free_alloced();
-         return -1;
-      }
+      //printf("calculated\n");
+      // progress->setProgress(ppos); // 14
+      // qApp->processEvents();
+      ppos++;
+      if ( us_udp_msg )
+	{
+	  map < QString, QString > msging;
+	  msging[ "progress_output" ] = QString("Hydro (SMI) calculation: %1\% of %2\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100);
+	  msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
+	  
+	  us_udp_msg->send_json( msging );
+	  //sleep(1);
+	}    
+      
+      // if (us_hydrodyn->stopFlag)
+      // {
+      //    supc_free_alloced();
+      //    return -1;
+      // }
 
       diffcalc();
 
-      progress->setProgress(ppos++); // 15
-      qApp->processEvents();
-      if (us_hydrodyn->stopFlag)
-      {
-         supc_free_alloced();
-         return -1;
-      }
+      // progress->setProgress(ppos); // 15
+      // qApp->processEvents();
+      ppos++;
+      if ( us_udp_msg )
+	{
+	  map < QString, QString > msging;
+	  msging[ "progress_output" ] = QString("Hydro (SMI) calculation: %1\% of %2\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100);
+	  msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
+	  
+	  us_udp_msg->send_json( msging );
+	  //sleep(1);
+	}    
+      
+      // if (us_hydrodyn->stopFlag)
+      // {
+      //    supc_free_alloced();
+      //    return -1;
+      // }
 
       relax_rigid_calc();
 
-      progress->setProgress(ppos++); // 16
-      qApp->processEvents();
-      if (us_hydrodyn->stopFlag)
-      {
-         supc_free_alloced();
-         return -1;
-      }
+      // progress->setProgress(ppos); // 16
+      // qApp->processEvents();
+      ppos++;
+      if ( us_udp_msg )
+	{
+	  map < QString, QString > msging;
+	  msging[ "progress_output" ] = QString("Hydro (SMI) calculation: %1\% of %2\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100);
+	  msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
+	  
+	  us_udp_msg->send_json( msging );
+	  //sleep(1);
+	}    
+      // if (us_hydrodyn->stopFlag)
+      // {
+      //    supc_free_alloced();
+      //    return -1;
+      // }
 
       if (cd == 2)
       {
@@ -1759,10 +2016,10 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
          DDtcalc();
       }
 
-      printf("- Matrix Doc      : calculated\n");
-      printf("- Matrix Doct     : calculated\n");
-      printf("- Matrix Dot      : calculated\n");
-      printf("- Matrix Dr       : calculated\n");
+      //printf("- Matrix Doc      : calculated\n");
+      //printf("- Matrix Doct     : calculated\n");
+      //printf("- Matrix Dot      : calculated\n");
+      //printf("- Matrix Dr       : calculated\n");
       secondo = time(NULL);   /* Gets system time again */
 
 #if defined(CREATE_EXE_TIME)
@@ -1780,7 +2037,7 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
 #endif
 
       presentazione();
-      printf("- Computational Method : SUPERMATRIX INVERSION\n\n\n");
+      //printf("- Computational Method : SUPERMATRIX INVERSION\n\n\n");
       totvol = 0.0;
       totsup = 0.0;
       totvolb = 0.0;
@@ -1974,19 +2231,19 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
               print_time(secondo-primo);
             */
 #if defined(USE_MAIN)
-            printf("\n\n- Options :       \n\n");
-            printf("  0) EXIT\n");
-            printf("  1) VIEW MATRICES\n");
+            //printf("\n\n- Options :       \n\n");
+            //printf("  0) EXIT\n");
+            //printf("  1) VIEW MATRICES\n");
 
             if (flag_norm == 1)
             {
-               printf("  2) STORE Bead Model\n\n");
-               printf("  Select (0/1/2) : ");
+               //printf("  2) STORE Bead Model\n\n");
+               //printf("  Select (0/1/2) : ");
             }
             else
             {
-               printf("\n");
-               printf("  Select (0/1) : ");
+               //printf("\n");
+               //printf("  Select (0/1) : ");
             }
 
             scanf("%d", &scelta);
@@ -2015,8 +2272,11 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
             }
          }
       }
+      
 
    }
+
+ 
 
    supc_results->num_models = num;
    
@@ -2045,15 +2305,31 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
 #endif
 
    supc_free_alloced();
-   progress->setProgress(mppos); 
-   qApp->processEvents();
-   if (us_hydrodyn->stopFlag)
-   {
-      return -1;
-   }
+   // progress->setProgress(mppos); 
+   // qApp->processEvents();
+
+
+   //cout << ppos << " " << mppos << endl;
+
+   if ( us_udp_msg )
+     {
+       map < QString, QString > msging;
+       msging[ "progress_output" ] = QString("Hydro (SMI) calculation: %1\% of %2\%").arg(QString::number( (int(double(mppos)/double(mppos))*100.0) ) ).arg(100); // arg(ppos).arg(mppos);
+       msging[ "progress1" ] = QString::number(1.0);
+		      
+       us_udp_msg->send_json( msging );
+       //sleep(1);
+     } 
+
+   
+   // if (us_hydrodyn->stopFlag)
+   // {
+   //    return -1;
+   // }
 
    return 0;
 }
+
 
 /**************************************************************************/
 /**************************************************************************/
@@ -2062,6 +2338,7 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
 static void
 intestazione()
 {
+  /*
    printf("####################################################\n");
    printf("#   National Institute for Cancer Research (IST)   #\n");
    printf("#         Advanced Biotechnologies Center (CBA)    #\n");
@@ -2070,7 +2347,9 @@ intestazione()
    printf("#  SUPC - HYDRODYNAMIC PROPERTIES COMPUTATION      #\n");
    printf("#            Version 5.0  Februaury 2010           #\n");
    printf("####################################################\n\n");
+  */
 }
+
 
 /**************************************************************************/
 /**************************************************************************/
@@ -2079,6 +2358,7 @@ intestazione()
 static void
 presentazione()
 {
+  /*
    printf("####################################################\n");
    printf("#   National Institute for Cancer Research (IST)   #\n");
    printf("#         Advanced Biotechnologies Center (CBA)    #\n");
@@ -2089,27 +2369,28 @@ presentazione()
    printf("####################################################\n\n");
    printf("- Model        : %s\n", molecola);
    printf("- TOTAL Beads in the MODEL : %d\n", numero_sfere);
+  */
 
    // printf("%s%d\n", "- FIRST Bead Included  : ", prima);
    // printf("%s%d\n", "- LAST Bead Included : ", ultima);
-   if (colorzero == 1)
-   {
-      printf("\n%s%d%s\n", "- WARNING: THERE IS ", colorzero, " BEAD COLOR CODED '0' [RADIUS < 0.005 NM]");
-      printf("%s\n", "- THIS BEAD IS NOT USED IN THE HYDRODYNAMIC COMPUTATIONS\n");
-   }
-   if (colorzero > 1)
-   {
-      printf("\n%s%d%s\n", "- WARNING: THERE ARE ", colorzero, " BEADS COLOR CODED '0' [RADIUS < 0.005 NM]");
-      printf("%s\n", "- THOSE BEADS ARE NOT USED IN THE HYDRODYNAMIC COMPUTATIONS\n");
-   }
+   // if (colorzero == 1)
+   // {
+   //    printf("\n%s%d%s\n", "- WARNING: THERE IS ", colorzero, " BEAD COLOR CODED '0' [RADIUS < 0.005 NM]");
+   //    printf("%s\n", "- THIS BEAD IS NOT USED IN THE HYDRODYNAMIC COMPUTATIONS\n");
+   // }
+   // if (colorzero > 1)
+   // {
+   //    printf("\n%s%d%s\n", "- WARNING: THERE ARE ", colorzero, " BEADS COLOR CODED '0' [RADIUS < 0.005 NM]");
+   //    printf("%s\n", "- THOSE BEADS ARE NOT USED IN THE HYDRODYNAMIC COMPUTATIONS\n");
+   // }
 
-   if (flag_norm == 1)
-      printf("%s\n", "- Model     : NORMALIZED");
+   // if (flag_norm == 1)
+   //    printf("%s\n", "- Model     : NORMALIZED");
 
-   if (cc == 1)
-      printf("\n- STICK boundary condition (6*M_PI*ETAo)\n");
-   else
-      printf("- SLIP boundary condition (4*M_PI*ETAo)\n\n");
+   // if (cc == 1)
+   //    printf("\n- STICK boundary condition (6*M_PI*ETAo)\n");
+   // else
+   //    printf("- SLIP boundary condition (4*M_PI*ETAo)\n\n");
 }
 
 /**************************************************************************/
@@ -2226,13 +2507,13 @@ stampamatrice(float *n)
          ss = 4.0 * M_PI * ETAo;
    }
 
-   for (i = 0; i < 3; i++)
-   {
-      printf("\t%f\t%f\t%f", ss * n[3 * i], ss * n[3 * i + 1], ss * n[3 * i + 2]);
-      printf("\n");
-   }
+   // for (i = 0; i < 3; i++)
+   // {
+   //    printf("\t%f\t%f\t%f", ss * n[3 * i], ss * n[3 * i + 1], ss * n[3 * i + 2]);
+   //    printf("\n");
+   // }
 
-   printf("\n\n  Hit RETURN to go back");
+   // printf("\n\n  Hit RETURN to go back");
    getchar();
 
 }
@@ -2257,13 +2538,13 @@ stampamatrice1(float *n)
          ss = 4.0 * M_PI * ETAo;
    }
 
-   for (i = 0; i < 3; i++)
-   {
-      printf("\t%f\t%f\t%f", n[3 * i] / ss, n[3 * i + 1] / ss, n[3 * i + 2] / ss);
-      printf("\n");
-   }
+   // for (i = 0; i < 3; i++)
+   // {
+   //    printf("\t%f\t%f\t%f", n[3 * i] / ss, n[3 * i + 1] / ss, n[3 * i + 2] / ss);
+   //    printf("\n");
+   // }
 
-   printf("\n\n  Hit RETURN to go back");
+   // printf("\n\n  Hit RETURN to go back");
    getchar();
 
 }
@@ -2284,13 +2565,13 @@ stampamatrice1l(long double *n)
          ss = 4.0 * M_PI * ETAo;
    }
 
-   for (i = 0; i < 3; i++)
-   {
-      printf("\t%f\t%f\t%f", (double) (n[3 * i] / ss), (double) (n[3 * i + 1] / ss), (double) (n[3 * i + 2] / ss));
-      printf("\n");
-   }
+   // for (i = 0; i < 3; i++)
+   // {
+   //    printf("\t%f\t%f\t%f", (double) (n[3 * i] / ss), (double) (n[3 * i + 1] / ss), (double) (n[3 * i + 2] / ss));
+   //    printf("\n");
+   // }
 
-   printf("\n\n  Hit RETURN to go back");
+   // printf("\n\n  Hit RETURN to go back");
    getchar();
 
 }
@@ -2310,31 +2591,32 @@ stampa_ris()
    else
       bc = 4;
 
-   // solvent area
-   printf("Solvent:                %s\n", supc_results->solvent_name.ascii());
-   printf("Temperature:            %5.2f\n", supc_results->temperature);
-   printf("Solvent viscosity (cP): %f\n", supc_results->solvent_viscosity);
-   printf("Solvent density (g/ml): %f\n", supc_results->solvent_density);
-   printf("\n");
+   // // solvent area
+   // printf("Solvent:                %s\n", supc_results->solvent_name.ascii());
+   // printf("Temperature:            %5.2f\n", supc_results->temperature);
+   // printf("Solvent viscosity (cP): %f\n", supc_results->solvent_viscosity);
+   // printf("Solvent density (g/ml): %f\n", supc_results->solvent_density);
+   // printf("\n");
 
-   // temporary vbar area
-   printf("Original vbar:          %5.3f (%s)\n", 
-          org_vbar, 
-          us_hydrodyn->misc.compute_vbar ?
-          ( us_hydrodyn->bead_model_from_file ?
-            "from file" : "computed" ) : "user entered");
-   if ( !us_hydrodyn->misc.compute_vbar )
-   {
-      printf("Original vbar temp (C): %5.2f\n", us_hydrodyn->misc.vbar_temperature);
-   }
-   printf("Temp corrected vbar:    %5.3f\n", tc_vbar);
+   // // temporary vbar area
+   // printf("Original vbar:          %5.3f (%s)\n", 
+   //        org_vbar, 
+   //        misc_int.compute_vbar ?
+   //        ( us_hydrodyn->bead_model_from_file ?
+   //          "from file" : "computed" ) : "user entered");
+   // if ( !misc_int.compute_vbar )
+   // {
+   //    printf("Original vbar temp (C): %5.2f\n", misc_int.vbar_temperature);
+   // }
 
-   printf("\n\n%s%d\n", "- Used BEADS Number  = ", nat);
+   // printf("Temp corrected vbar:    %5.3f\n", tc_vbar);
+
+   // printf("\n\n%s%d\n", "- Used BEADS Number  = ", nat);
    supc_results->used_beads = nat;
    tot_used_beads += (float)nat;
    tot_used_beads2 += (float)nat * (float)nat;
 
-   if (volcor == 1)
+   /*   if (volcor == 1)
    {
       if ((colorsixf == 0) && (sfecalc == 2))
          printf("%s%.2f%s\n", "- Used BEADS Volume = ", volcor1 * pow(fconv, 3.0f),
@@ -2358,16 +2640,17 @@ stampa_ris()
    }
    if (volcor == 2)
       printf("%s%.2f%s\n", "- Used BEADS Volume  = ", volcor1 * pow(fconv, 3.0f), "  [nm^3]");
+   */
 
    if (mascor == 1)
       mascor1 = (float) pesmol;
 
-   printf("%s%.2f%s\n", "- Used BEADS Mass    = ", mascor1, "  [Da]");
+   //printf("%s%.2f%s\n", "- Used BEADS Mass    = ", mascor1, "  [Da]");
    supc_results->mass = mascor1;
-   printf("\n\n%s%.3e\t%s (%s)\n", "- TRANS. FRICT. COEFF.  = ", f * 1.0E-07 * fconv, "[g/s] ", tag1.ascii());
+   //printf("\n\n%s%.3e\t%s (%s)\n", "- TRANS. FRICT. COEFF.  = ", f * 1.0E-07 * fconv, "[g/s] ", tag1.ascii());
    // supc_results->s20w = f * 1.0E-07 * fconv;
 
-   printf("%s%.2e\t%s (%s)\n", "- TRANS. DIFF. COEFF.   = ", (KB * TE * 1.0E7) / f * fconv1, "[cm^2/s] ", tag2.ascii());
+   //printf("%s%.2e\t%s (%s)\n", "- TRANS. DIFF. COEFF.   = ", (KB * TE * 1.0E7) / f * fconv1, "[cm^2/s] ", tag2.ascii());
    supc_results->D20w = (KB * TE * 1.0E7) / f * fconv1;
 
 
@@ -2381,8 +2664,8 @@ stampa_ris()
 
    if (raflag == -1.0) 
    {
-      printf("%s%.2f\t%s (%s)\n", "- SED. COEFF. (psv from unhydrated radii) = ",
-             (mascor1 * 1.0E20 * (1.0 - partvolc * DENS)) / (f * fconv * AVO), "[S] ", tag2.ascii());
+      // printf("%s%.2f\t%s (%s)\n", "- SED. COEFF. (psv from unhydrated radii) = ",
+      //        (mascor1 * 1.0E20 * (1.0 - partvolc * DENS)) / (f * fconv * AVO), "[S] ", tag2.ascii());
       // qDebug( QString( "ra -1 mascor1 is %1 partvolc %2 DENS %3 f %4" )
       //         .arg( mascor1 )
       //         .arg( partvolc )
@@ -2393,45 +2676,45 @@ stampa_ris()
 
    if ((raflag == -2.0) || (raflag == -5.0))
    {
-      printf("- SED. COEFF. (psv %s) = %.2f\t%s (%s)\n", 
-             us_hydrodyn->misc.compute_vbar ?
-             ( us_hydrodyn->bead_model_from_file ?
-               "from file" : "computed" ) : "user entered",
-             (mascor1 * 1.0E20 * (1.0 - partvol * DENS)) / (f * fconv * AVO), "[S] ", 
-             tag2.ascii()
-             );
+      // printf("- SED. COEFF. (psv %s) = %.2f\t%s (%s)\n", 
+      //        misc_int.compute_vbar ?
+      //        ( bead_model_from_file_int ?
+      //          "from file" : "computed" ) : "user entered",
+      //        (mascor1 * 1.0E20 * (1.0 - partvol * DENS)) / (f * fconv * AVO), "[S] ", 
+      //        tag2.ascii()
+      //        );
       // qDebug( QString( "ra -2 or -5 mascor1 is %1 partvol %2 DENS %3 f %4" )
       //         .arg( mascor1 )
       //         .arg( partvol )
       //         .arg( DENS )
       //         .arg( f ) );
       supc_results->s20w = (mascor1 * 1.0E20 * (1.0 - partvol * DENS)) / (f * fconv * AVO);
-      if ((nat + colorzero + colorsix) < numero_sfere)
-         printf
-            ("- !!WARNING: ONLY PART OF THE MODEL HAS BEEN ANALYZED, BUT THE PSV UTILIZED         IS THAT OF THE ENTIRE MODEL!! - \n");
+      if ((nat + colorzero + colorsix) < numero_sfere){}
+          // printf
+          //    ("- !!WARNING: ONLY PART OF THE MODEL HAS BEEN ANALYZED, BUT THE PSV UTILIZED         IS THAT OF THE ENTIRE MODEL!! - \n");
    }
 
    if (raflag == -3.0)
    {
-      printf("- SED. COEFF. (psv %s) = %.2f\t%s (%s)\n",
-             us_hydrodyn->misc.compute_vbar ?
-             ( us_hydrodyn->bead_model_from_file ?
-               "from file" : "computed" ) : "user entered",
-             (mascor1 * 1.0E20 * (1.0 - partvol * DENS)) / (f * fconv * AVO), "[S] ", 
-             tag2.ascii()
-             );
+      // printf("- SED. COEFF. (psv %s) = %.2f\t%s (%s)\n",
+      //        misc_int.compute_vbar ?
+      //        ( bead_model_from_file_int ?
+      //          "from file" : "computed" ) : "user entered",
+      //        (mascor1 * 1.0E20 * (1.0 - partvol * DENS)) / (f * fconv * AVO), "[S] ", 
+      //        tag2.ascii()
+      //        );
       // qDebug( QString( "ra -3 mascor1 is %1 partvol %2 DENS %3 f %4" )
       //         .arg( mascor1 )
       //         .arg( partvol )
       //         .arg( DENS )
       //         .arg( f ) );
       supc_results->s20w = (mascor1 * 1.0E20 * (1.0 - partvol * DENS)) / (f * fconv * AVO);
-      if ((nat + colorzero + colorsix) < numero_sfere)
-         printf
-            ("- !!WARNING: ONLY PART OF THE MODEL HAS BEEN ANALYZED, BUT THE PSV UTILIZED         IS THAT OF THE ENTIRE MODEL!! - \n");
+      if ((nat + colorzero + colorsix) < numero_sfere){}
+      //    printf
+      //       ("- !!WARNING: ONLY PART OF THE MODEL HAS BEEN ANALYZED, BUT THE PSV UTILIZED         IS THAT OF THE ENTIRE MODEL!! - \n");
 
-      printf("%s%.2f\t%s (%s)\n", "- SED. COEFF. (psv from unhydrated radii) = ",
-             (mascor1 * 1.0E20 * (1.0 - partvolc * DENS)) / (f * fconv * AVO), "[S] ", tag2.ascii());
+      // printf("%s%.2f\t%s (%s)\n", "- SED. COEFF. (psv from unhydrated radii) = ",
+      //        (mascor1 * 1.0E20 * (1.0 - partvolc * DENS)) / (f * fconv * AVO), "[S] ", tag2.ascii());
    }
 
    //   qDebug( QString( "f is %1 ETAo %2 partvol %3 fconv %4 mass %5" ).arg( f ).arg( ETAo ).arg( partvol ).arg( fconv ).arg( supc_results->mass ) );
@@ -2439,95 +2722,95 @@ stampa_ris()
       f * 1.0E-07 * fconv / ( 6.0 * M_PI * ETAo *
       pow( 3.0 * supc_results->mass * partvol / (4.0 * M_PI * AVOGADRO), 1.0/3.0));
 
-   printf("%s%.2f\n", "- FRICTIONAL RATIO                = ", supc_results->ff0);
+   // printf("%s%.2f\n", "- FRICTIONAL RATIO                = ", supc_results->ff0);
 
    temp = 0.0;
    for (i = 0; i < 3; i++)
       temp += 1.0E-21 / Dr[i * 4] * pow(fconv, 3);
-   printf("\n%s%.3e\t%s (%s)\n", "- ROT. FRICT. COEFF.    = ", temp / 3.0, "[g*cm^2/s] ", tag1.ascii());
+   //   printf("\n%s%.3e\t%s (%s)\n", "- ROT. FRICT. COEFF.    = ", temp / 3.0, "[g*cm^2/s] ", tag1.ascii());
    temp = 0.0;
    for (i = 0; i < 3; i++)
       temp += (KB * TE * Dr[i * 4] / 1.0E-21) * pow(fconv1, 3);
-   printf("%s%.0f\t%s (%s)\n\n", "- ROT. DIFF. COEFF.     = ", temp / 3.0, "[1/s] ", tag2.ascii());
+   //   printf("%s%.0f\t%s (%s)\n\n", "- ROT. DIFF. COEFF.     = ", temp / 3.0, "[1/s] ", tag2.ascii());
 
-#if !defined( MINGW )
-   printf("%s%.3Le\t%s (%s)\n", "- ROT. FRICT. COEFF. [ X ] = ", 1.0E-21 / Dr[0] * pow(fconv, 3), "[g*cm^2/s] ", tag1.ascii());
-   printf("%s%.3Le\t%s (%s)\n", "- ROT. FRICT. COEFF. [ Y ] = ", 1.0E-21 / Dr[4] * pow(fconv, 3), "[g*cm^2/s] ", tag1.ascii());
-   printf("%s%.3Le\t%s (%s)\n", "- ROT. FRICT. COEFF. [ Z ] = ", 1.0E-21 / Dr[8] * pow(fconv, 3), "[g*cm^2/s] ", tag1.ascii());
-   printf("%s%.0Lf\t%s (%s)\n", "- ROT. DIFF. COEFF.  [ X ] = ", (KB * TE / 1.0E-21 * Dr[0]) * pow(fconv1, 3), "[1/s] ", tag2.ascii());
-   printf("%s%.0Lf\t%s (%s)\n", "- ROT. DIFF. COEFF.  [ Y ] = ", (KB * TE / 1.0E-21 * Dr[4]) * pow(fconv1, 3), "[1/s] ", tag2.ascii());
-   printf("%s%.0Lf\t%s (%s)\n\n", "- ROT. DIFF. COEFF.  [ Z ] = ", (KB * TE / 1.0E-21 * Dr[8]) * pow(fconv1, 3), "[1/s] ", tag2.ascii());
-#else
-   printf("%s%.3e\t%s (%s)\n", "- ROT. FRICT. COEFF. [ X ] = ", (double)(1.0E-21 / Dr[0] * pow(fconv, 3)), "[g*cm^2/s] ", tag1.ascii());
-   printf("%s%.3e\t%s (%s)\n", "- ROT. FRICT. COEFF. [ Y ] = ", (double)(1.0E-21 / Dr[4] * pow(fconv, 3)), "[g*cm^2/s] ", tag1.ascii());
-   printf("%s%.3e\t%s (%s)\n", "- ROT. FRICT. COEFF. [ Z ] = ", (double)(1.0E-21 / Dr[8] * pow(fconv, 3)), "[g*cm^2/s] ", tag1.ascii());
-   printf("%s%.0f\t%s (%s)\n", "- ROT. DIFF. COEFF.  [ X ] = ", (double)((KB * TE / 1.0E-21 * Dr[0]) * pow(fconv1, 3)), "[1/s] ", tag2.ascii());
-   printf("%s%.0f\t%s (%s)\n", "- ROT. DIFF. COEFF.  [ Y ] = ", (double)((KB * TE / 1.0E-21 * Dr[4]) * pow(fconv1, 3)), "[1/s] ", tag2.ascii());
-   printf("%s%.0f\t%s (%s)\n\n", "- ROT. DIFF. COEFF.  [ Z ] = ", (double)((KB * TE / 1.0E-21 * Dr[8]) * pow(fconv1, 3)), "[1/s] ", tag2.ascii());
-#endif
+// #if !defined( MINGW )
+//    printf("%s%.3Le\t%s (%s)\n", "- ROT. FRICT. COEFF. [ X ] = ", 1.0E-21 / Dr[0] * pow(fconv, 3), "[g*cm^2/s] ", tag1.ascii());
+//    printf("%s%.3Le\t%s (%s)\n", "- ROT. FRICT. COEFF. [ Y ] = ", 1.0E-21 / Dr[4] * pow(fconv, 3), "[g*cm^2/s] ", tag1.ascii());
+//    printf("%s%.3Le\t%s (%s)\n", "- ROT. FRICT. COEFF. [ Z ] = ", 1.0E-21 / Dr[8] * pow(fconv, 3), "[g*cm^2/s] ", tag1.ascii());
+//    printf("%s%.0Lf\t%s (%s)\n", "- ROT. DIFF. COEFF.  [ X ] = ", (KB * TE / 1.0E-21 * Dr[0]) * pow(fconv1, 3), "[1/s] ", tag2.ascii());
+//    printf("%s%.0Lf\t%s (%s)\n", "- ROT. DIFF. COEFF.  [ Y ] = ", (KB * TE / 1.0E-21 * Dr[4]) * pow(fconv1, 3), "[1/s] ", tag2.ascii());
+//    printf("%s%.0Lf\t%s (%s)\n\n", "- ROT. DIFF. COEFF.  [ Z ] = ", (KB * TE / 1.0E-21 * Dr[8]) * pow(fconv1, 3), "[1/s] ", tag2.ascii());
+// #else
+//    printf("%s%.3e\t%s (%s)\n", "- ROT. FRICT. COEFF. [ X ] = ", (double)(1.0E-21 / Dr[0] * pow(fconv, 3)), "[g*cm^2/s] ", tag1.ascii());
+//    printf("%s%.3e\t%s (%s)\n", "- ROT. FRICT. COEFF. [ Y ] = ", (double)(1.0E-21 / Dr[4] * pow(fconv, 3)), "[g*cm^2/s] ", tag1.ascii());
+//    printf("%s%.3e\t%s (%s)\n", "- ROT. FRICT. COEFF. [ Z ] = ", (double)(1.0E-21 / Dr[8] * pow(fconv, 3)), "[g*cm^2/s] ", tag1.ascii());
+//    printf("%s%.0f\t%s (%s)\n", "- ROT. DIFF. COEFF.  [ X ] = ", (double)((KB * TE / 1.0E-21 * Dr[0]) * pow(fconv1, 3)), "[1/s] ", tag2.ascii());
+//    printf("%s%.0f\t%s (%s)\n", "- ROT. DIFF. COEFF.  [ Y ] = ", (double)((KB * TE / 1.0E-21 * Dr[4]) * pow(fconv1, 3)), "[1/s] ", tag2.ascii());
+//    printf("%s%.0f\t%s (%s)\n\n", "- ROT. DIFF. COEFF.  [ Z ] = ", (double)((KB * TE / 1.0E-21 * Dr[8]) * pow(fconv1, 3)), "[1/s] ", tag2.ascii());
+// #endif
 
-   printf("%s%.2f\t%s\n", "- MOLECULAR WEIGHT   (from file)         = ", pesmol, "[Da]");
-   if (sfecalc == 2)
-      printf("%s%.2f\t%s\n", "- BEADS TOTAL VOLUME (from file) = ", interm1 / (6.0 * ETAo) * pow(fconv, 3.0f), "[nm^3]");
-   else
-      printf("%s%.2f\t%s\n", "- BEADS TOTAL VOLUME (from file) = ", totvol * pow(fconv, 3), "[nm^3]");
-   printf("%s%.2f\t%s\n", "- BEADS TOTAL SURFACE AREA       = ", totsup * pow(fconv, 3), "[nm^2]");
+   // printf("%s%.2f\t%s\n", "- MOLECULAR WEIGHT   (from file)         = ", pesmol, "[Da]");
+   // if (sfecalc == 2)
+   //    printf("%s%.2f\t%s\n", "- BEADS TOTAL VOLUME (from file) = ", interm1 / (6.0 * ETAo) * pow(fconv, 3.0f), "[nm^3]");
+   // else
+   //    printf("%s%.2f\t%s\n", "- BEADS TOTAL VOLUME (from file) = ", totvol * pow(fconv, 3), "[nm^3]");
+   // printf("%s%.2f\t%s\n", "- BEADS TOTAL SURFACE AREA       = ", totsup * pow(fconv, 3), "[nm^2]");
 
-   if (raflag == -1.0)
-      printf("%s%.3f\t%s\n", "- PARTIAL SPECIFIC VOLUME (from unhydrated radii) = ", partvolc, "[cm^3/g]");
+   // if (raflag == -1.0)
+   //    printf("%s%.3f\t%s\n", "- PARTIAL SPECIFIC VOLUME (from unhydrated radii) = ", partvolc, "[cm^3/g]");
 
-   if ((raflag == -2.0) || (raflag == -5.0))
-      printf("- PARTIAL SPECIFIC VOLUME %s = %.3f\t%s\n", 
-             us_hydrodyn->misc.compute_vbar ?
-             ( us_hydrodyn->bead_model_from_file ?
-               "(from file)   " : "(computed)    " ) : "(user entered)",
-             partvol, 
-             "[cm^3/g]"
-             );
+   // if ((raflag == -2.0) || (raflag == -5.0))
+   //    printf("- PARTIAL SPECIFIC VOLUME %s = %.3f\t%s\n", 
+   //           misc_int.compute_vbar ?
+   //           ( bead_model_from_file_int ?
+   //             "(from file)   " : "(computed)    " ) : "(user entered)",
+   //           partvol, 
+   //           "[cm^3/g]"
+   //           );
 
    if (raflag == -3.0)
    {
-      printf("- PARTIAL SPECIFIC VOLUME %s          = %.3f\t%s\n", 
-             us_hydrodyn->misc.compute_vbar ?
-             ( us_hydrodyn->bead_model_from_file ?
-               "(from file)   " : "(computed)    " ) : "(user entered)", 
-             partvol, "[cm^3/g]");
-      printf("%s%.3f\t%s\n", 
-             "- PARTIAL SPECIFIC VOLUME (from unhydrated radii) = ", partvolc, "[cm^3/g]");
+      // // printf("- PARTIAL SPECIFIC VOLUME %s          = %.3f\t%s\n", 
+      // // 	     misc_int.compute_vbar ?
+      // //        ( bead_model_from_file_int ?
+      // //          "(from file)   " : "(computed)    " ) : "(user entered)", 
+      // //        partvol, "[cm^3/g]");
+      // printf("%s%.3f\t%s\n", 
+      //        "- PARTIAL SPECIFIC VOLUME (from unhydrated radii) = ", partvolc, "[cm^3/g]");
    }
 
    if ((raflag == -1.0) || (raflag == -3.0))
    {
-      qDebug( QString( "ra -1 or -3 ro %1" ).arg( ro ) );
-      printf("\n%s%.2f\t%s\n", "- RADIUS OF GYRATION (Hydrated Beads)   = ", ro * fconv, "[nm]");
+     //qDebug( QString( "ra -1 or -3 ro %1" ).arg( ro ) );
+      // printf("\n%s%.2f\t%s\n", "- RADIUS OF GYRATION (Hydrated Beads)   = ", ro * fconv, "[nm]");
       supc_results->rg = ro * fconv;
-      printf("%s%.2f\t%s\n", "- RADIUS OF GYRATION (Unhydrated Beads) = ", rou * fconv, "[nm]");
+      // printf("%s%.2f\t%s\n", "- RADIUS OF GYRATION (Unhydrated Beads) = ", rou * fconv, "[nm]");
    }
    else
    {
-      qDebug( QString( "ra !(-1 or -3) ro %1" ).arg( ro ) );
-      printf("\n%s%.2f\t%s\n", "- RADIUS OF GYRATION              = ", ro * fconv, "[nm]");
+     //qDebug( QString( "ra !(-1 or -3) ro %1" ).arg( ro ) );
+      // printf("\n%s%.2f\t%s\n", "- RADIUS OF GYRATION              = ", ro * fconv, "[nm]");
       supc_results->rg = ro * fconv;
    }
 
-   printf("%s%.2f\t%s\n", "- TRANSLATIONAL STOKES' RADIUS    = ", f * fconv / (bc * M_PI * ETAo), "[nm]");
+   //  printf("%s%.2f\t%s\n", "- TRANSLATIONAL STOKES' RADIUS    = ", f * fconv / (bc * M_PI * ETAo), "[nm]");
    supc_results->rs = f * fconv / (bc * M_PI * ETAo);
 
-   printf("%s%.2f\t%s\n", "- ROTATIONAL STOKES' RADIUS [ X ] = ", (double)( pow((3.0 / Dr[0] / bc / 4.0 / M_PI / ETAo), (0.33333L)) * fconv ),
-          "[nm]");
-   printf("%s%.2f\t%s\n", "- ROTATIONAL STOKES' RADIUS [ Y ] = ", (double)( pow((3.0 / Dr[4] / bc / 4.0 / M_PI / ETAo), (0.33333L)) * fconv ),
-          "[nm]");
-   printf("%s%.2f\t%s\n\n", "- ROTATIONAL STOKES' RADIUS [ Z ] = ",
-          ( double )( pow((3.0 / Dr[8] / bc / 4.0 / M_PI / ETAo), (0.33333L)) * fconv ), "[nm]");
+   // printf("%s%.2f\t%s\n", "- ROTATIONAL STOKES' RADIUS [ X ] = ", (double)( pow((3.0 / Dr[0] / bc / 4.0 / M_PI / ETAo), (0.33333L)) * fconv ),
+   //        "[nm]");
+   // printf("%s%.2f\t%s\n", "- ROTATIONAL STOKES' RADIUS [ Y ] = ", (double)( pow((3.0 / Dr[4] / bc / 4.0 / M_PI / ETAo), (0.33333L)) * fconv ),
+   //        "[nm]");
+   // printf("%s%.2f\t%s\n\n", "- ROTATIONAL STOKES' RADIUS [ Z ] = ",
+   //        ( double )( pow((3.0 / Dr[8] / bc / 4.0 / M_PI / ETAo), (0.33333L)) * fconv ), "[nm]");
 
-   printf("%s%5.2f\t%5.2f\t%5.2f\t%s\n", "- CENTRE OF RESISTANCE  :  ", roR[0] * fconv, roR[1] * fconv, roR[2] * fconv,
-          "[nm]");
-   printf("%s%5.2f\t%5.2f\t%5.2f\t%s\n", "- CENTRE OF MASS        :  ", xm * fconv, ym * fconv, zm * fconv, "[nm]");
-   if (cd == 2)
-      printf("%s%5.2f\t%5.2f\t%5.2f\t%s\n", "- CENTRE OF DIFFUSION   :  ", roD[0] * fconv, roD[1] * fconv, roD[2] * fconv,
-             "[nm]");
+   // printf("%s%5.2f\t%5.2f\t%5.2f\t%s\n", "- CENTRE OF RESISTANCE  :  ", roR[0] * fconv, roR[1] * fconv, roR[2] * fconv,
+   //        "[nm]");
+   // printf("%s%5.2f\t%5.2f\t%5.2f\t%s\n", "- CENTRE OF MASS        :  ", xm * fconv, ym * fconv, zm * fconv, "[nm]");
+   // if (cd == 2)
+   //    printf("%s%5.2f\t%5.2f\t%5.2f\t%s\n", "- CENTRE OF DIFFUSION   :  ", roD[0] * fconv, roD[1] * fconv, roD[2] * fconv,
+   //           "[nm]");
 
-   printf("%s%5.2f\t%5.2f\t%5.2f\t%s\n\n", "- CENTRE OF VISCOSITY   :  ", vc[0] * fconv, vc[1] * fconv, vc[2] * fconv, "[nm]");
+   // printf("%s%5.2f\t%5.2f\t%5.2f\t%s\n\n", "- CENTRE OF VISCOSITY   :  ", vc[0] * fconv, vc[1] * fconv, vc[2] * fconv, "[nm]");
 
    if (mascor == 2)
    {
@@ -2540,32 +2823,24 @@ stampa_ris()
       vol_mas = pesmol;
    }
 
-   printf("%s%.2f\t%s\n", "- UNCORRECTED INTRINSIC VISCOSITY     = ", vis * correz * pow(fconv, 3), "[cm^3/g]");
+   //printf("%s%.2f\t%s\n", "- UNCORRECTED INTRINSIC VISCOSITY     = ", vis * correz * pow(fconv, 3), "[cm^3/g]");
 
    einst = pow(0.3 * pesmol * vis / ( M_PI * AVO), 0.33333);
    einst = 1E7 * einst;
-   printf("%s%.2f\t%s\n", "- UNCORRECTED EINSTEIN'S RADIUS       = ", einst * fconv, "[nm]");
-   printf( "vis %f correz %f vis3 %f totvol %f vol_mas %f\n",
-           vis,
-           correz,
-           vis3,
-           totvol,
-           vol_mas );
+   //printf("%s%.2f\t%s\n", "- UNCORRECTED EINSTEIN'S RADIUS       = ", einst * fconv, "[nm]");
    if ((volcor == 1) && ((colorsixf == 0) || (colorsixf == 1) || (colorsixf == 2)))
    {
-      puts( "method 1" );
-      // printf("%s%.2f\t%s\n", "- INTRINSIC VISCOSITY(GDLT corrected) = ",
-      printf("%s%.2f\t%s\n", "- CORRECTED INTRINSIC VISCOSITY       = ",
-             (vis * correz + vis3 * totvol / vol_mas) * pow(fconv, 3), "[cm^3/g]");
+      // // printf("%s%.2f\t%s\n", "- INTRINSIC VISCOSITY(GDLT corrected) = ",
+      // printf("%s%.2f\t%s\n", "- CORRECTED INTRINSIC VISCOSITY       = ",
+      //        (vis * correz + vis3 * totvol / vol_mas) * pow(fconv, 3), "[cm^3/g]");
       supc_results->viscosity = (vis * correz + vis3 * totvol / vol_mas) * pow(fconv, 3);
       einst = pow(0.3 * vol_mas * (vis * correz + vis3 * totvol / vol_mas) / ( M_PI * AVO), 0.33333);
       einst = 1E7 * einst;
-      // printf("%s%.2f\t%s\n", "- EINSTEIN'S RADIUS (GDLT corrected)  = ", einst * fconv, "[nm]");
-      printf("%s%.2f\t%s\n", "- CORRECTED EINSTEIN'S RADIUS         = ", einst * fconv, "[nm]");
+      // // printf("%s%.2f\t%s\n", "- EINSTEIN'S RADIUS (GDLT corrected)  = ", einst * fconv, "[nm]");
+      // printf("%s%.2f\t%s\n", "- CORRECTED EINSTEIN'S RADIUS         = ", einst * fconv, "[nm]");
    }
    else
    {
-      puts( "method 2" );
       // printf("%s%.2f\t%s\n", "- INTRINSIC VISCOSITY (GDLT corrected) = ",
       printf("%s%.2f\t%s\n", "- CORRECTED INTRINSIC VISCOSITY       = ",
              (vis * correz + vis3 * volcor1 / vol_mas) * pow(fconv, 3), "[cm^3/g]");
@@ -2591,7 +2866,7 @@ stampa_ris()
    printf("%s%.2f\t%s\n", "- EINSTEIN'S RADIUS (Tsuda CV)        = ", einst * fconv, "[nm]");
 #endif
 
-   printf("\nRELAXATION TIMES\n\n");
+   /*   printf("\nRELAXATION TIMES\n\n");
 
 #if !defined( MINGW )
    if (taoflag == 1.0)
@@ -2644,19 +2919,21 @@ stampa_ris()
       printf("%s\t%.2f\t%s (%s)\n", " Tau(5) ", (double)(tao[4] * pow(fconv, 3.0f)), "[ns] ", tag2.ascii());
    }
 #endif
+   */
 
-   printf("\n%s\t%.2f\t%s (%s)\n", " Tau(m) ", taom * pow(fconv, 3.0f), "[ns] ", tag2.ascii());
-   printf("%s\t%.2f\t%s (%s)\n\n", " Tau(h) ", taoh * 1.0E+09 * pow(fconv, 3.0f), "[ns] ", tag2.ascii());
+   // printf("\n%s\t%.2f\t%s (%s)\n", " Tau(m) ", taom * pow(fconv, 3.0f), "[ns] ", tag2.ascii());
+   // printf("%s\t%.2f\t%s (%s)\n\n", " Tau(h) ", taoh * 1.0E+09 * pow(fconv, 3.0f), "[ns] ", tag2.ascii());
    supc_results->tau = taoh * 1.0E+09 * pow(fconv, 3.0f);
 
-   printf("\n%s", "- MAX EXTENSIONS:");
-   printf("\n%s%.2f%s%s%.2f%s%s%.2f%s\n", "[X axis] = ", (maxx * fconv), " [nm];  ", "[Y axis] = ", (maxy * fconv), " [nm];  ",
-          "[Z axis] = ", (maxz * fconv), " [nm]");
-   printf("%s%.1f%s%.1f%s%.1f%s\n\n", "- AXIAL RATIOS : [X:Z] = ", (maxx / maxz), "; [X:Y] = ", (maxx / maxy), "; [Y:Z] = ",
-          (maxy / maxz), "");
+   // printf("\n%s", "- MAX EXTENSIONS:");
+   // printf("\n%s%.2f%s%s%.2f%s%s%.2f%s\n", "[X axis] = ", (maxx * fconv), " [nm];  ", "[Y axis] = ", (maxy * fconv), " [nm];  ",
+   //        "[Z axis] = ", (maxz * fconv), " [nm]");
+   // printf("%s%.1f%s%.1f%s%.1f%s\n\n", "- AXIAL RATIOS : [X:Z] = ", (maxx / maxz), "; [X:Y] = ", (maxx / maxy), "; [Y:Z] = ",
+   //        (maxy / maxz), "");
 
    //    system("sleep 3");
 
+  
 }
 
 /**************************************************************************/
@@ -2666,7 +2943,6 @@ stampa_ris()
 static void
 mem_ris(int model)
 {
-
    float einst, bc, temp;
    int i;
 
@@ -2677,7 +2953,7 @@ mem_ris(int model)
 
    save_data this_data;
    // may have to zero this
-   this_data.hydro = us_hydrodyn->hydro;
+   //this_data.hydro = us_hydrodyn->hydro;
    this_data.model_idx = QString("%1").arg(model);
    this_data.results.num_models = 1;
    this_data.results.asa_rg_pos = supc_results->asa_rg_pos;
@@ -2687,21 +2963,24 @@ mem_ris(int model)
    QString hydro_res;
    QString hydro_format_string;
 
-   bool create_hydro_res = !(us_hydrodyn->batch_widget &&
-                             us_hydrodyn->batch_window->save_batch_active);
+   // bool create_hydro_res = !(us_hydrodyn->batch_widget &&
+   //                         us_hydrodyn->batch_window->save_batch_active);
+
+   bool create_hydro_res = true;
 
    // printf("create hydrores %s\n", create_hydro_res ? "true" : "false");
 
    create_hydro_res && (ris = fopen(risultati, "ab"));
-   if ( create_hydro_res )
-   {
-      us_hydrodyn->last_hydro_res = QString("%1").arg(risultati);
-      cout << "last_hydro_res " << us_hydrodyn->last_hydro_res << endl;
-   }
+   // if ( create_hydro_res )
+   // {
+   //    us_hydrodyn->last_hydro_res = QString("%1").arg(risultati);
+   //    cout << "last_hydro_res " << us_hydrodyn->last_hydro_res << endl;
+   // }
 
    hydro_res.sprintf("%s", "MODEL File Name  :___ ");
    create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
    this_data.hydro_res += hydro_res;
+
 
    strncpy(molecola_nb, molecola, SMAX);
    molecola_nb[SMAX-1] = 0;
@@ -2709,6 +2988,7 @@ mem_ris(int model)
       molecola_nb[strlen(molecola_nb) - 6] = 0; // remove .beams
    }
    this_data.results.name = QString("%1").arg(molecola_nb);
+
 
    hydro_res.sprintf("%s\n", molecola_nb);
    create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
@@ -2774,16 +3054,16 @@ mem_ris(int model)
 
    // temporary vbar area
    hydro_res.sprintf("Original vbar:          %5.3f %s\t[cm^3/g]\n", 
-                     org_vbar, 
-                     us_hydrodyn->misc.compute_vbar ?
-                     ( us_hydrodyn->bead_model_from_file ?
-                       "(from file)" : "(computed) " ) : "user entered");
+                      org_vbar, 
+		     misc_int.compute_vbar ?  "(computed) "  : "user entered");
+
    create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+
    this_data.hydro_res += hydro_res;
 
-   if ( !us_hydrodyn->misc.compute_vbar )
+   if ( !misc_int.compute_vbar )
    {
-      hydro_res.sprintf("Original vbar temp (C): %5.2f\n", us_hydrodyn->misc.vbar_temperature);
+      hydro_res.sprintf("Original vbar temp (C): %5.2f\n", misc_int.vbar_temperature);
       create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
       this_data.hydro_res += hydro_res;
    }
@@ -2959,10 +3239,11 @@ mem_ris(int model)
    if (raflag == -3.0)
    {
       hydro_res.sprintf("- SED. COEFF. (psv %s) = %.2f\t%s (%s)\n", 
-              us_hydrodyn->misc.compute_vbar ?
-              ( us_hydrodyn->bead_model_from_file ?
-                "from file" : "computed" ) : "user entered",
+              misc_int.compute_vbar ?  "computed"  : "user entered",
               (mascor1 * 1.0E20 * (1.0 - partvol * DENS)) / (f * fconv * AVO), "[S] ", tag2.ascii());
+
+
+
       create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
       this_data.hydro_res += hydro_res;
       this_data.results.s20w = (mascor1 * 1.0E20 * (1.0 - partvol * DENS)) / (f * fconv * AVO);
@@ -3007,6 +3288,8 @@ mem_ris(int model)
    this_data.hydro_res += hydro_res;
    this_data.rot_diff_coef = temp / 3.0;
 
+
+
 #if !defined( MINGW )
    hydro_res.sprintf("%s%.3Le\t%s (%s)\n", "- ROT. FRICT. COEFF. [ X ] = ", 1.0E-21 / Dr[0] * pow(fconv, 3), "[g*cm^2/s] ", tag1.ascii());
 #else
@@ -3016,6 +3299,7 @@ mem_ris(int model)
    this_data.hydro_res += hydro_res;
    this_data.rot_fric_coef_x = 1.0E-21 / Dr[0] * pow(fconv, 3);
 
+   /* WORKS */
 #if !defined( MINGW )
    hydro_res.sprintf("%s%.3Le\t%s (%s)\n", "- ROT. FRICT. COEFF. [ Y ] = ", 1.0E-21 / Dr[4] * pow(fconv, 3), "[g*cm^2/s] ", tag1.ascii());
 #else
@@ -3072,6 +3356,8 @@ mem_ris(int model)
    this_data.hydro_res += hydro_res;
    this_data.results.mass = pesmol;
 
+
+
    //   if (sfecalc == 2)
    //   {
    //      hydro_res.sprintf("%s%.2f\t%s\n", "- BEADS TOTAL VOLUME (from file) = ", interm1 / (6.0 * ETAo) * pow(fconv, 3), "[nm^3]");
@@ -3084,6 +3370,9 @@ mem_ris(int model)
    //      hydro_res.sprintf("%s%.2f\t%s\n", "- BEADS TOTAL VOLUME (from file) = ", totvol * pow(fconv, 3), "[nm^3]");
    //   hydro_res.sprintf("%s%.2f\t%s\n", "- BEADS TOTAL SURFACE AREA       = ", totsup * pow(fconv, 2), "[nm^2]");
 
+
+   /* WORKS */
+
    if (raflag == -1.0)
    {
       hydro_res.sprintf("%s%.3f\t%s\n", "- PARTIAL SPECIFIC VOLUME (from unhydrated radii) = ", partvolc, "[cm^3/g]");
@@ -3093,22 +3382,22 @@ mem_ris(int model)
 
    if ((raflag == -2.0) || (raflag == -5.0))
    {
-      hydro_res.sprintf("- PARTIAL SPECIFIC VOLUME %s = %.3f\t%s\n", 
-              us_hydrodyn->misc.compute_vbar ?
-              ( us_hydrodyn->bead_model_from_file ?
-                "(from file)   " : "(computed)    " ) : "(user entered)",
-              partvol, "[cm^3/g]");
+       hydro_res.sprintf("- PARTIAL SPECIFIC VOLUME %s = %.3f\t%s\n", 
+               misc_int.compute_vbar ? "(computed)    " : "(user entered)",
+               partvol, "[cm^3/g]");
+
+      
       create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
       this_data.hydro_res += hydro_res;      
    }
 
+
    if (raflag == -3.0)
    {
-      hydro_res.sprintf("- PARTIAL SPECIFIC VOLUME %s          = %.3f\t%s\n",
-              us_hydrodyn->misc.compute_vbar ?
-              ( us_hydrodyn->bead_model_from_file ?
-               "(from file)   " : "(computed)    " ) : "(user entered)", 
-              partvol, "[cm^3/g]");
+     hydro_res.sprintf("- PARTIAL SPECIFIC VOLUME %s          = %.3f\t%s\n",
+               misc_int.compute_vbar ? "(computed)    ": "(user entered)", 
+               partvol, "[cm^3/g]");
+
       create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
       this_data.hydro_res += hydro_res;
       
@@ -3301,6 +3590,8 @@ mem_ris(int model)
    hydro_res.sprintf("\nRELAXATION TIMES\n\n");
    create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
    this_data.hydro_res += hydro_res;   
+
+
 
 #if !defined( MINGW )
    if (taoflag == 1.0)
@@ -3503,42 +3794,47 @@ mem_ris(int model)
    create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
    this_data.hydro_res += hydro_res;
 
+  
    create_hydro_res && fclose(ris);
-   // add text output also
-   if ( us_hydrodyn->batch_widget &&
-        us_hydrodyn->batch_window->save_batch_active )
-   {
-      //      if ( us_hydrodyn->save_params.data_vector.size() &&
-      //           ( us_hydrodyn->save_params.raflag != raflag ||
-      //             us_hydrodyn->save_params.taoflag != taoflag ) )
-      //      {
-      //         printf("WARNING: ******* differing raflag (%f != %f) or taofalg (%f != %f)\n",
-      //                us_hydrodyn->save_params.raflag, raflag,
-      //                us_hydrodyn->save_params.taoflag, taoflag);
-      //      } else {
-      //         us_hydrodyn->save_params.raflag = raflag;
-      //         us_hydrodyn->save_params.taoflag = taoflag;
-      //      }
-      us_hydrodyn->save_params.data_vector.push_back(this_data);
-      printf("batch save on, push back info into save_params!\n");
-   }
+ 
 
-   if ( us_hydrodyn->saveParams &&
-        create_hydro_res )
-   {
-      QString fname = this_data.results.name + ".csv";
-      FILE *of = fopen(fname, "wb");
-      if ( of )
-      {
-         fprintf(of, "%s", us_hydrodyn->save_util->header().ascii());
-         fprintf(of, "%s", us_hydrodyn->save_util->dataString(&this_data).ascii());
-         fclose(of);
-      }
-   }
-   // print out results:
-   us_hydrodyn->save_util->header();
-   us_hydrodyn->save_util->dataString(&this_data);
-   // printf("end of mem_ris\n");
+
+
+  // // add text output also
+  //  if ( us_hydrodyn->batch_widget &&
+  //       us_hydrodyn->batch_window->save_batch_active )
+  //  {
+  //     //      if ( us_hydrodyn->save_params.data_vector.size() &&
+  //     //           ( us_hydrodyn->save_params.raflag != raflag ||
+  //     //             us_hydrodyn->save_params.taoflag != taoflag ) )
+  //     //      {
+  //     //         printf("WARNING: ******* differing raflag (%f != %f) or taofalg (%f != %f)\n",
+  //     //                us_hydrodyn->save_params.raflag, raflag,
+  //     //                us_hydrodyn->save_params.taoflag, taoflag);
+  //     //      } else {
+  //     //         us_hydrodyn->save_params.raflag = raflag;
+  //     //         us_hydrodyn->save_params.taoflag = taoflag;
+  //     //      }
+  //     us_hydrodyn->save_params.data_vector.push_back(this_data);
+  //     printf("batch save on, push back info into save_params!\n");
+  //  }
+
+  //  if ( us_hydrodyn->saveParams &&
+  //       create_hydro_res )
+  //  {
+  //     QString fname = this_data.results.name + ".csv";
+  //     FILE *of = fopen(fname, "wb");
+  //     if ( of )
+  //     {
+  //        fprintf(of, "%s", us_hydrodyn->save_util->header().ascii());
+  //        fprintf(of, "%s", us_hydrodyn->save_util->dataString(&this_data).ascii());
+  //        fclose(of);
+  //     }
+  //  }
+  //  // print out results:
+  //  us_hydrodyn->save_util->header();
+  //  us_hydrodyn->save_util->dataString(&this_data);
+  //  // printf("end of mem_ris\n");
 }
 
 /**************************************************************************/
@@ -3552,8 +3848,8 @@ val_med()
    float temp;
 
    ris = fopen(risultati, "ab");
-   us_hydrodyn->last_hydro_res = QString("%1").arg(risultati);
-   cout << "last_hydro_res " << us_hydrodyn->last_hydro_res << endl;
+   // us_hydrodyn->last_hydro_res = QString("%1").arg(risultati);
+   //cout << "last_hydro_res " << us_hydrodyn->last_hydro_res << endl;
 
    fprintf(ris, "\n\t AVERAGE PARAMETERS \n");
    fprintf(ris, "\n\t\t\t\t Mean value\tSt. Dev.\n");
@@ -3583,8 +3879,8 @@ val_med()
    {
       temp = fabs((CSTF2 - pow(CSTF, 2) / num) / (num - 1));
       fprintf(ris, "- SED. COEFF. (psv %s) \t%.2f\t\t%.2f\t\t%s\n", 
-              us_hydrodyn->misc.compute_vbar ?
-              ( us_hydrodyn->bead_model_from_file ?
+              misc_int.compute_vbar ?
+              ( bead_model_from_file_int ?
                 "from file" : "computed" ) : "user entered",
               CSTF / num, sqrt(temp), "[S]");
       if ((nat + colorzero + colorsix) < numero_sfere)
@@ -3598,10 +3894,10 @@ val_med()
    {
       temp = fabs((CSTF2 - pow(CSTF, 2) / num) / (num - 1));
       fprintf(ris, "- SED. COEFF. (psv %s) \t%.2f\t\t%.2f\t\t%s\n", 
-              us_hydrodyn->misc.compute_vbar ?
-              ( us_hydrodyn->bead_model_from_file ?
-                "from file" : "computed" ) : "user entered",
-              CSTF / num, sqrt(temp), "[S]");
+	      misc_int.compute_vbar ?
+	      ( bead_model_from_file_int ?
+		"from file" : "computed" ) : "user entered",
+	      CSTF / num, sqrt(temp), "[S]");
       supc_results->s20w = CSTF / num;
       supc_results->s20w_sd = sqrt(temp);
       if ((nat + colorzero + colorsix) < numero_sfere)
@@ -3931,7 +4227,7 @@ mem_mol()
    char nmolecola[SMAX], nragcol[SMAX];
    char risp1, risp2, risp3;
  a100:
-   printf("\n\n** Insert file name for coordinates :___ ");
+   //   printf("\n\n** Insert file name for coordinates :___ ");
    scanf("%s", nmolecola);
    getchar();
 
@@ -3939,9 +4235,9 @@ mem_mol()
 
    if (new_mol1 != NULL)
    {
-      printf("\n");
-      printf("*** CAUTION : File already exists ! ***\n");
-      printf("** Do you want change the file name ? (y/n) :___ ");
+      // printf("\n");
+      // printf("*** CAUTION : File already exists ! ***\n");
+      // printf("** Do you want change the file name ? (y/n) :___ ");
       scanf("%s", &risp2);
       getchar();
       fclose(new_mol1);
@@ -3951,7 +4247,7 @@ mem_mol()
 
    if (nat == numero_sfere)
    {
-      printf("** Same File Name r_m_c ? (y/n) :___ ");
+     //printf("** Same File Name r_m_c ? (y/n) :___ ");
       scanf("%s", &risp1);
       getchar();
    }
@@ -3962,16 +4258,16 @@ mem_mol()
    if ((risp1 == 'n') || (risp1 == 'N'))
    {
    a150:
-      printf("** Insert file name r_m_c :___ ");
+     //printf("** Insert file name r_m_c :___ ");
       scanf("%s", nragcol);
       getchar();
       new_mol1 = fopen(nragcol, "r");
 
       if (new_mol1 != NULL)
       {
-         printf("\n");
-         printf("*** CAUTION : File already exists ! ***\n");
-         printf("** Do you want change the file name ? (y/n) :___ ");
+         // printf("\n");
+         // printf("*** CAUTION : File already exists ! ***\n");
+         // printf("** Do you want change the file name ? (y/n) :___ ");
          scanf("%s", &risp3);
          getchar();
          fclose(new_mol1);
@@ -4164,31 +4460,63 @@ riempimatrice()
 
    int i, j, k, l;
 
-   printf("SUPERMATRIX INVERSION\n\n");
+   // printf("SUPERMATRIX INVERSION\n\n");
 
-   printf("Cycle 1 of 3; model %d of %d\n\n", kkk, num);
+   // printf("Cycle 1 of 3; model %d of %d\n\n", kkk, num);
 
-   editor->append("Supermatrix inversion Cycle 1 of 3\n");
-   qApp->processEvents();
+   us_log->log("Supermatrix inversion Cycle 1 of 3\n");
+   if ( us_udp_msg )
+     {
+       map < QString, QString > msging;
+       msging[ "_textarea" ] = "Supermatrix inversion Cycle 1 of 3\\n";
+       
+       us_udp_msg->send_json( msging );
+       //sleep(1);
+     }
+   
+   // qApp->processEvents();
 #if defined(SHOW_TIMING)
    gettimeofday(&s1tv0, NULL);
 #endif
    for (i = 0; i < nat; i++)
    {
 
-      progress->setProgress(ppos++);
-      qApp->processEvents();
-      us_hydrodyn->lbl_core_progress->setText(QString("Iteration %1 of %2")
-                                              .arg(i+1)
-                                              .arg(nat));
-      if (us_hydrodyn->stopFlag)
-      {
-         return;
-      }
+      // progress->setProgress(ppos);
+      // qApp->processEvents();
+ 
+    ppos++;
+     if ( us_udp_msg )
+       {
+    	 map < QString, QString > msging;
+    	 msging[ "progress_output" ] = QString("Hydro (SMI) calculation: %1\% of %2\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100);
+    	 msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
+    	 
+    	 us_udp_msg->send_json( msging );
+    	 //sleep(1);
+       }    
 
-      printf("%s%d%s%d", "Iteration  ", i + 1, " of ", nat);
+     // if ( us_udp_msg )
+     //   {
+     // 	 map < QString, QString > msging;
+     // 	 msging[ "progress_output" ] = QString("Iteration %1 of %2").arg(i+1).arg(nat);
+     // 	 msging[ "progress1" ] = QString::number(double(i+1)/double(nat));
+      	 
+     // 	 us_udp_msg->send_json( msging );
+     // 	 //sleep(1);
+     //   }
+
+      // us_hydrodyn->lbl_core_progress->setText(QString("Iteration %1 of %2")
+      //                                         .arg(i+1)
+      //                                         .arg(nat));
+
+      // if (us_hydrodyn->stopFlag)
+      // {
+      //    return;
+      // }
+
+      // printf("%s%d%s%d", "Iteration  ", i + 1, " of ", nat);
       
-      fflush(stdout);
+      //fflush(stdout);
 
       for (j = 0; j < nat; j++)
       {
@@ -4201,7 +4529,7 @@ riempimatrice()
          }
       }
 
-      printf("%c", '\r');
+      //  printf("%c", '\r');
 
    }
 
@@ -4210,7 +4538,7 @@ riempimatrice()
    supc1_tot = 1000000l * (s1tv9.tv_sec - s1tv0.tv_sec) + s1tv9.tv_usec - s1tv0.tv_usec;
 #endif
 
-   printf("\n\n");
+   // printf("\n\n");
 
 }
 
@@ -4222,25 +4550,57 @@ choldc(int N)
    int i, j, k;
    float sum;
 
-   printf("Cycle 2 of 3; model %d of %d\n\n", kkk, num);
-   editor->append("Supermatrix inversion Cycle 2 of 3\n");
-   qApp->processEvents();
+   // printf("Cycle 2 of 3; model %d of %d\n\n", kkk, num);
+   us_log->log("Supermatrix inversion Cycle 2 of 3\n");
+   if ( us_udp_msg )
+     {
+       map < QString, QString > msging;
+       msging[ "_textarea" ] = "Supermatrix inversion Cycle 2 of 3\\n";
+       
+       us_udp_msg->send_json( msging );
+       //sleep(1);
+     }
+   // qApp->processEvents();
 
    for (i = 0; i < 3 * N; i++)
    {
 
-      progress->setProgress(ppos++);
-      qApp->processEvents();
-      if (us_hydrodyn->stopFlag)
-      {
-         return;
-      }
+      // progress->setProgress(ppos);
+      // qApp->processEvents();
 
-      printf("%s%d%s%d", "Iteration  ", i + 1, " of ", 3 * N);
-      fflush(stdout);
-      us_hydrodyn->lbl_core_progress->setText(QString("Iteration %1 of %2")
-                                              .arg(i+1)
-                                              .arg(3 * N));
+     ppos++;
+     if ( us_udp_msg )
+       {
+     	 map < QString, QString > msging;
+     	 msging[ "progress_output" ] = QString("Hydro (SMI) calculation: %1\% of %2\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100);
+     	 msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
+      
+     	 us_udp_msg->send_json( msging );
+     	     //sleep(1);
+       }    
+
+      // if (us_hydrodyn->stopFlag)
+      // {
+      //    return;
+      // }
+
+      // printf("%s%d%s%d", "Iteration  ", i + 1, " of ", 3 * N);
+      //fflush(stdout);
+
+     // if ( us_udp_msg )
+     //   {
+     // 	 map < QString, QString > msging;
+     // 	 msging[ "progress_output" ] = QString("Iteration %1 of %2").arg(i+1).arg(3 * N);
+     // 	 msging[ "progress1" ] = QString::number(double(i+1)/double(3*N));
+     // 	 //msging[ "_progress" ] = QString::number(double(i+1)/double(npoints_x));
+      
+     // 	 us_udp_msg->send_json( msging );
+     // 	 //sleep(1);
+     //   }
+
+      // us_hydrodyn->lbl_core_progress->setText(QString("Iteration %1 of %2")
+      //                                         .arg(i+1)
+      //                                         .arg(3 * N));
 
       for (j = i; j < 3 * N; j++)
       {
@@ -4313,7 +4673,7 @@ cholsl(int N)
             for ( j = 0; j < threads; j++ )
             {
 # if defined(DEBUG_THREAD)
-               cout << "thread " << j << endl;
+               //cout << "thread " << j << endl;
 # endif            
                psum[j] = 0.0;
                supc_thr_threads[j]->supc_thr_setup(
@@ -4344,7 +4704,7 @@ cholsl(int N)
       for ( j = 0; j < threads; j++ )
       {
 # if defined(DEBUG_THREAD)
-         cout << "thread " << j << endl;
+         //cout << "thread " << j << endl;
 # endif            
          supc_thr_threads[j]->supc_thr_setup(
                                              threads,
@@ -4458,13 +4818,13 @@ relax_rigid_calc()
    ddr[1] = dl2;
    ddr[2] = dl3;
 
-#if !defined( MINGW )
-   printf("\nsupc compute_tau: ddr[0] ddr[1] ddr[2] : %Lf\t%Lf\t%Lf\n",dl1,dl2,dl3);
-   printf("\nsupc compute_tau: ddr[0] ddr[1] ddr[2] : %Lf\t%Lf\t%Lf\n",ddr[0],ddr[1],ddr[2]);
-#else
-   printf("\nsupc compute_tau: ddr[0] ddr[1] ddr[2] : %f\t%f\t%f\n",(double)dl1,(double)dl2,(double)dl3);
-   printf("\nsupc compute_tau: ddr[0] ddr[1] ddr[2] : %f\t%f\t%f\n",(double)ddr[0],(double)ddr[1],(double)ddr[2]);
-#endif
+// #if !defined( MINGW )
+//    printf("\nsupc compute_tau: ddr[0] ddr[1] ddr[2] : %Lf\t%Lf\t%Lf\n",dl1,dl2,dl3);
+//    printf("\nsupc compute_tau: ddr[0] ddr[1] ddr[2] : %Lf\t%Lf\t%Lf\n",ddr[0],ddr[1],ddr[2]);
+// #else
+//    printf("\nsupc compute_tau: ddr[0] ddr[1] ddr[2] : %f\t%f\t%f\n",(double)dl1,(double)dl2,(double)dl3);
+//    printf("\nsupc compute_tau: ddr[0] ddr[1] ddr[2] : %f\t%f\t%f\n",(double)ddr[0],(double)ddr[1],(double)ddr[2]);
+// #endif
 
    /*      printf("\nValori ddr[0] ddr[1] ddr[2] : %Lf\t%Lf\t%Lf\n",ddr[0],ddr[1],ddr[2]);
            scanf("%s",&pluto1);
@@ -4836,9 +5196,9 @@ init_da_a()
 
    while (mol == NULL)
    {
-      printf("\n");
-      printf("** The Model does NOT exist !!\n");
-      printf("** Insert the correct name :___");
+      // printf("\n");
+      // printf("** The Model does NOT exist !!\n");
+      // printf("** Insert the correct name :___");
       scanf("%s", molecola);
       mol = fopen(molecola, "r");
    }
@@ -4849,39 +5209,39 @@ init_da_a()
    fclose(mol);
 #endif
 
-   printf("!!!nat %d %d active_model %d\n", nat, bead_count[active_model], active_model);
+   // printf("!!!nat %d %d active_model %d\n", nat, bead_count[active_model], active_model);
 
    nat = bead_count[active_model];
    raggio = -2.000000;
 
    /* Selects for whole or part of the model(s) to be analyzed */
 
-   printf("\n%s%d%s", "** TOTAL Number of BEADS in the MODEL :___ ", nat, " **\n\n");
+   //  printf("\n%s%d%s", "** TOTAL Number of BEADS in the MODEL :___ ", nat, " **\n\n");
 
 #if defined(USE_MAIN)
    prima = (-1);
    while ((prima < 0) || (prima > (nat - 1)))
    {
-      printf("%s", "** Insert FIRST BEAD # to be included  :___ ");
+     //    printf("%s", "** Insert FIRST BEAD # to be included  :___ ");
       scanf("%d", &prima);
       getchar();
-      printf("\n");
+      //   printf("\n");
    }
 
    ultima = nat + 1;
    while ((ultima < prima) || (ultima > nat))
    {
-      printf("%s", "** Insert LAST BEAD # to be included :___ ");
+     //   printf("%s", "** Insert LAST BEAD # to be included :___ ");
       scanf("%d", &ultima);
       getchar();
-      printf("\n");
+      //   printf("\n");
    }
 #else
    prima = 1;
    ultima = nat;
 #endif
 
-   printf("adding file: %s to tot_mol\n",  molecola);
+   //  printf("adding file: %s to tot_mol\n",  molecola);
 #if defined(CREATE_TOT_MOL)
    tot_mol = fopen("tot_mol", "ab");
    fprintf(tot_mol, "%s\n", molecola);
@@ -4920,12 +5280,20 @@ initarray(int k)
    ultima = ultima_v[k];
 #endif
 
-   //    editor->append(QString("initarray - 0 From file: %1 beads\n").arg(nat));
-
+   us_log->log(QString("initarray - 0 From file: %1 beads\n").arg(nat));
+   if ( us_udp_msg )
+     {
+       map < QString, QString > msging;
+       msging[ "_textarea" ] = QString("initarray - 0 From file: %1 beads\\n").arg(nat);
+       
+       us_udp_msg->send_json( msging );
+       //sleep(1);
+     }
+   
    for (i = 0; i < nat; i++)
       dt[i].cor = temp;
 
-   //    int count6 = 0;
+   int count6 = 0;
 #if defined(DEBUG_WW)
    for (i = 0; i < nat; i++) {
       if(i < 5 || i > nat - 5) {
@@ -5016,8 +5384,8 @@ initarray(int k)
       fscanf(mol, "%f", &partvol);
       printf("!! partvol %f vbar %f %s %f\n", 
              partvol, (*model_vector)[model_idx[active_model]].vbar,
-             us_hydrodyn->misc.compute_vbar ? "computed-vbar" : "user vbar",
-             us_hydrodyn->misc.vbar
+             misc_int.compute_vbar ? "computed-vbar" : "user vbar",
+             misc_int.vbar
              );
       rmc = fopen(ragcol, "r");
 #endif
@@ -5030,28 +5398,41 @@ initarray(int k)
                         )
                        * 1000) + 0.5) / 1000.0;
 
-      if (!us_hydrodyn->misc.compute_vbar) {
-         org_vbar = us_hydrodyn->misc.vbar;
-         partvol = (int)((
-                          (
-                           us_hydrodyn->misc.vbar -
-                           (4.25e-4 * (K0 + us_hydrodyn->misc.vbar_temperature - K20)) +
-                           (4.25e-4 * (TE - K20))
-                           )
-                          * 1000) + 0.5) / 1000.0;
+      // if (!misc_int.compute_vbar) {
+      // 	org_vbar = misc_int.vbar;
+      // 	partvol = (int)((
+      // 			 (
+      // 			  misc_int.vbar -
+      // 			  (4.25e-4 * (K0 + misc_int.vbar_temperature - K20)) +
+      // 			  (4.25e-4 * (TE - K20))
+      // 			  )
+      // 			 * 1000) + 0.5) / 1000.0;
+      // }
+
+      if (!misc_int.compute_vbar) {
+      	org_vbar = misc_int.vbar;
+      	partvol = (int)((
+      			 (
+      			  misc_int.vbar -
+      			  (4.25e-4 * (K0 + misc_int.vbar_temperature - K20)) +
+      			  (4.25e-4 * (TE - K20))
+      			  )
+      			 * 1000) + 0.5) / 1000.0;
       }
+      
       tc_vbar = partvol;
       tot_partvol += partvol;
 
-      printf("psv = %f\n", partvol);
+      // printf("psv = %f\n", partvol);
 
 
-      int decpts = -(int)log10(us_hydrodyn->overlap_tolerance/9.9999) + 1;
+      //      int decpts = -(int)log10(us_hydrodyn->overlap_tolerance/9.9999) + 1;
+      int decpts = -(int)log10(overlap_tolerance/9.9999) + 1;
       if (decpts < 4) {
          decpts = 4;
       }
       int decpow = (int)pow(10.0, (decpts));
-      printf("!!rounding to %d digits (%d)\n", decpts, decpow);
+      // printf("!!rounding to %d digits (%d)\n", decpts, decpow);
 
       int mw_c = 0;
       float pre_mw = 0.0;
@@ -5066,23 +5447,23 @@ initarray(int k)
          dt[i].z = (*bead_models)[model_idx[active_model]][active_idx[active_model][i]].bead_coordinate.axis[2];
          dt[i].r = (*bead_models)[model_idx[active_model]][active_idx[active_model][i]].bead_computed_radius;
          dt[i].m = (*bead_models)[model_idx[active_model]][active_idx[active_model][i]].bead_ref_mw;
-         dt[i].col = us_hydrodyn->get_color(&((*bead_models)[model_idx[active_model]][active_idx[active_model][i]]));
+         dt[i].col = get_color(&((*bead_models)[model_idx[active_model]][active_idx[active_model][i]]));
          dt[i].x = ((int)((dt[i].x * decpow) + (dt[i].x > 0 ? 0.5 : -0.5))) / (float)decpow;
          dt[i].y = ((int)((dt[i].y * decpow) + (dt[i].y > 0 ? 0.5 : -0.5))) / (float)decpow;
          dt[i].z = ((int)((dt[i].z * decpow) + (dt[i].z > 0 ? 0.5 : -0.5))) / (float)decpow;
          dt[i].r = ((int)((dt[i].r * decpow) + (dt[i].r > 0 ? 0.5 : -0.5))) / (float)decpow;
-         if ( us_hydrodyn->advanced_config.debug_1 )
-         {
-            pre_mw += dt[i].m;
-            dpre_mw += dt[i].m;
-         }
+         // if ( us_hydrodyn->advanced_config.debug_1 )
+         // {
+         //    pre_mw += dt[i].m;
+         //    dpre_mw += dt[i].m;
+         // }
          dt[i].m = (float)((int)((double)dt[i].m * 100e0 + 5e-1)) / 1e2;
          post_mw += dt[i].m;
-         if ( us_hydrodyn->advanced_config.debug_1 )
-         {
-            dpost_mw += ((int)((double)dt[i].m * 100e0 + 5e-1)) / 1e2;
-            mw_c++;
-         }
+         // if ( us_hydrodyn->advanced_config.debug_1 )
+         // {
+         //    dpost_mw += ((int)((double)dt[i].m * 100e0 + 5e-1)) / 1e2;
+         //    mw_c++;
+         // }
 #if defined(DEBUG_FILES)
          {
             float fx, fy, fz, fr, fm;
@@ -5102,15 +5483,15 @@ initarray(int k)
                    dt[i].r - fr,
                    dt[i].m - fm,
                    dt[i].col - fc
-                   ); fflush(stdout);
+                   ); //fflush(stdout);
          }
 #endif
       }
-      if ( us_hydrodyn->advanced_config.debug_1 )
-      {
-         printf("hydro pre mw %.6f (%d), post mw %.6f (%d), diff %.6f\n", pre_mw, mw_c, post_mw, mw_c, pre_mw - post_mw);
-         printf("as d hydro pre mw %.6f (%d), post mw %.6f (%d), diff %.6f\n", dpre_mw, mw_c, dpost_mw, mw_c, dpre_mw - dpost_mw);
-      }
+      // if ( us_hydrodyn->advanced_config.debug_1 )
+      // {
+      //    printf("hydro pre mw %.6f (%d), post mw %.6f (%d), diff %.6f\n", pre_mw, mw_c, post_mw, mw_c, pre_mw - post_mw);
+      //    printf("as d hydro pre mw %.6f (%d), post mw %.6f (%d), diff %.6f\n", dpre_mw, mw_c, dpost_mw, mw_c, dpre_mw - dpost_mw);
+      // }
 #if defined(DEBUG_FILES)
       fclose(rmc);
 #endif
@@ -5262,21 +5643,29 @@ initarray(int k)
    strcpy(molecola, ricorda);
    numero_sfere = nat;
    nat = ultima - prima + 1;
-   //    editor->append(QString("initarray - 1 (ultima - prima): %1 beads\n").arg(nat));
-
-   printf("\n\n Starting function: ragir()\n");
+   us_log->log(QString("initarray - 1 (ultima - prima): %1 beads\n").arg(nat));
+   if ( us_udp_msg )
+     {
+       map < QString, QString > msging;
+       msging[ "_textarea" ] = QString("initarray - 1 (ultima - prima): %1 beads\\n").arg(nat);
+       
+       us_udp_msg->send_json( msging );
+       //sleep(1);
+     }
+   
+   //  printf("\n\n Starting function: ragir()\n");
    ragir();
-   printf("\n End of function: ragir()\n");
+   // printf("\n End of function: ragir()\n");
 
    /* removing from the hydrodynamic computations the beads color-coded '0' */
 
-   // for (i = 0; i < nat; i++) {
-   //      printf("bead %d col %d\n", i, dt[i].col);
-   // if(dt[i].col == 6) {
-   //   count6++;
-   //      }
-   //    }
-
+   for (i = 0; i < nat; i++) {
+     // printf("bead %d col %d\n", i, dt[i].col);
+     if(dt[i].col == 6) {
+       count6++;
+     }
+   }
+   
    {
       j = 0;
       for (i = 0; i < nat; i++)
@@ -5295,8 +5684,16 @@ initarray(int k)
       nat = j;
    }
 
-   //    editor->append(QString("initarray - 2 (remove cc 0): %1 beads\n").arg(nat));
-
+   us_log->log(QString("initarray - 2 (remove cc 0): %1 beads\n").arg(nat));
+   if ( us_udp_msg )
+     {
+       map < QString, QString > msging;
+       msging[ "_textarea" ] = QString("initarray - 2 (remove cc 0): %1 beads\\n").arg(nat);
+       
+       us_udp_msg->send_json( msging );
+       //sleep(1);
+     }
+   
    if (sfecalc == 2)      /* computation with all beads or with only the 'exposed'                           beads */
 
    {
@@ -5321,11 +5718,19 @@ initarray(int k)
       nat = j;
    }
 
-   //    editor->append(QString("initarray - 3 (only exposed): %1 beads (count6 == %2)\n").arg(nat).arg(count6));
-
+   us_log->log(QString("initarray - 3 (only exposed): %1 beads (count6 == %2)\n").arg(nat).arg(count6));
+   if ( us_udp_msg )
+     {
+       map < QString, QString > msging;
+       msging[ "_textarea" ] = QString("initarray - 3 (only exposed): %1 beads (count6 == %2)\\n").arg(nat).arg(count6); 
+       
+       us_udp_msg->send_json( msging );
+       //sleep(1);
+     }
+   
    if (nat > nmax)
    {
-      printf("\n%s%d%s", " TOO MANY BEADS to COMPUTE ! (max: ", nmax, ")\n");
+     //printf("\n%s%d%s", " TOO MANY BEADS to COMPUTE ! (max: ", nmax, ")\n");
       exit(0);
    }
 #if defined(DEBUG_WW)
@@ -5474,7 +5879,7 @@ inverti(int N)
 
    int i, j, k1, k2, k3, k4, k5;
 
-   printf("MATRIX DECOMPOSITION (Chol.Dec.)\n\n");
+   // printf("MATRIX DECOMPOSITION (Chol.Dec.)\n\n");
 
 #if defined(SHOW_TIMING)
    gettimeofday(&s2tv0, NULL);
@@ -5487,18 +5892,27 @@ inverti(int N)
    supc2_tot = 1000000l * (s2tv9.tv_sec - s2tv0.tv_sec) + s2tv9.tv_usec - s2tv0.tv_usec;
 #endif
 
-   if (us_hydrodyn->stopFlag)
-   {
-      return;
-   }
-   printf("\n\nINVERSION BY COLUMNS\n\n");
+   // if (us_hydrodyn->stopFlag)
+   // {
+   //    return;
+   // }
+   // printf("\n\nINVERSION BY COLUMNS\n\n");
 
    inizializza_b1();
    b1[0] = 1.0;
 
-   printf("Cycle 3 of 3; model %d of %d\n\n", kkk, num);
-   editor->append("Supermatrix inversion Cycle 3 of 3\n");
-   qApp->processEvents();
+   // printf("Cycle 3 of 3; model %d of %d\n\n", kkk, num);
+   us_log->log("Supermatrix inversion Cycle 3 of 3\n");
+   if ( us_udp_msg )
+     {
+       map < QString, QString > msging;
+       msging[ "_textarea" ] = "Supermatrix inversion Cycle 3 of 3\\n";
+       
+       us_udp_msg->send_json( msging );
+       //sleep(1);
+     }
+   
+   // qApp->processEvents();
 
 #if defined(SHOW_TIMING)
       gettimeofday(&s3tv0, NULL);
@@ -5506,18 +5920,43 @@ inverti(int N)
       
    for (j = 1; j <= 3 * N; j++)
    {
-      progress->setProgress(ppos++);
-      qApp->processEvents();
-      if (us_hydrodyn->stopFlag)
-      {
-         return;
-      }
+      // progress->setProgress(ppos);
+      // qApp->processEvents();
 
-      printf("%s%d%s%d", "Iteration  ", j, " of ", 3 * N);
-      fflush(stdout);
-      us_hydrodyn->lbl_core_progress->setText(QString("Iteration %1 of %2")
-                                              .arg(j)
-                                              .arg(3 * N));
+
+     ppos++;
+     if ( us_udp_msg )
+       {
+     	 map < QString, QString > msging;
+     	 msging[ "progress_output" ] = QString("Hydro (SMI) calculation: %1\% of %2\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100);
+     	 msging[ "progress1" ] = QString::number(double(ppos-2)/double(mppos));
+     
+     	 us_udp_msg->send_json( msging );
+     	 //sleep(1);
+       }    
+
+
+     // if (us_hydrodyn->stopFlag)
+      // {
+      //    return;
+      // }
+
+      // printf("%s%d%s%d", "Iteration  ", j, " of ", 3 * N);
+      //fflush(stdout);
+
+      // if ( us_udp_msg )
+      //   {
+      // 	 map < QString, QString > msging;
+      // 	 msging[ "progress_output" ] = QString("Iteration %1 of %2").arg(j).arg(3 * N);
+      // 	 msging[ "progress1" ] = QString::number(double(j)/double(3*N));
+     	 
+      // 	 us_udp_msg->send_json( msging );
+      // 	 //sleep(1);
+      //   }
+
+      // us_hydrodyn->lbl_core_progress->setText(QString("Iteration %1 of %2")
+      //                                         .arg(j)
+      //                                         .arg(3 * N));
 
       k1 = (int) (floor((j - 1) / 3.0));
       k2 = (j - 1) % 3;
@@ -5565,7 +6004,7 @@ inverti(int N)
           );
 #endif
 
-   printf("\n");
+   //  printf("\n");
 }
 
 /**************************************************************************/
@@ -5874,10 +6313,11 @@ overlap()
 
    flag = 0;
 
-   printf("\n** Performing overlap test **\n");
-   printf("\n** WARNING: Overlaps can lead to wrong results! Detection cutoff > %f **\n", overlap_tolerance);
+   // printf("\n** Performing overlap test **\n");
+   // printf("\n** WARNING: Overlaps can lead to wrong results! Detection cutoff > %f **\n", overlap_tolerance);
 
-   int decpts = -(int)log10(us_hydrodyn->overlap_tolerance/9.9999) + 1;
+   //   int decpts = -(int)log10(us_hydrodyn->overlap_tolerance/9.9999) + 1;
+   int decpts = -(int)log10(overlap_tolerance/9.9999) + 1;
    if (decpts < 4) {
       decpts = 4;
    }
@@ -5894,17 +6334,26 @@ overlap()
          diff = ((int)((diff * decpow) + (diff > 0 ? 0.5 : -0.5))) / (float)decpow;
          if ( diff < - overlap_tolerance * 1.04 ) 
          {
-            printf("\n%s%d%s%d%s%.6f\n", "Notice: Overlap among bead ", i + 1, " and bead ", j + 1, ". Value = ",
-                   -(sqrt(dist) - (dt[i].r + dt[j].r)));
+            // printf("\n%s%d%s%d%s%.6f\n", "Notice: Overlap among bead ", i + 1, " and bead ", j + 1, ". Value = ",
+            //        -(sqrt(dist) - (dt[i].r + dt[j].r)));
          }
          if ( diff < -( ( 0.001 + overlap_tolerance ) * 1.04) )
          {
-            editor->append(QString("").sprintf("\n%s%d%s%d%s%.6f\n", "ERROR: Overlap among bead ", i + 1, " and bead ", j + 1, ". Value = ",
+            us_log->log(QString("").sprintf("\n%s%d%s%d%s%.6f\n", "ERROR: Overlap among bead ", i + 1, " and bead ", j + 1, ". Value = ",
                                                -(sqrt(dist) - (dt[i].r + dt[j].r))));
-            printf("\n%s%d%s%d%s%.6f\n", "OVERLAP AMONG BEAD ", i + 1, " and BEAD ", j + 1, " | Value = ",
-                   (sqrt(dist) - (dt[i].r + dt[j].r)));
+	    if ( us_udp_msg )
+	      {
+		map < QString, QString > msging;
+		msging[ "_textarea" ] = QString("").sprintf("\\n%s%d%s%d%s%.6f\\n", "ERROR: Overlap among bead ", i + 1, " and bead ", j + 1, ". Value = ",
+                                               -(sqrt(dist) - (dt[i].r + dt[j].r)));
+	   		
+		us_udp_msg->send_json( msging );
+		//sleep(1);
+	      }
+           // printf("\n%s%d%s%d%s%.6f\n", "OVERLAP AMONG BEAD ", i + 1, " and BEAD ", j + 1, " | Value = ",
+            //        (sqrt(dist) - (dt[i].r + dt[j].r)));
 #if defined(USE_MAIN)
-            printf("\n** Do you want to proceed anyway? (y/n) ");
+            // printf("\n** Do you want to proceed anyway? (y/n) ");
             scanf("%s", &r5);
             getchar();
             if ((r5 == 'y') || (r5 == 'Y'))
@@ -5923,7 +6372,7 @@ overlap()
 
       }
    }
-   printf("\n** Overlap test completed **\n");
+   //  printf("\n** Overlap test completed **\n");
 #if defined(USE_MAIN)
  a99:
 #endif
@@ -6688,7 +7137,7 @@ main()
    int use_nmax;
    do
    {
-      printf("\n\n\n** Insert number of beads to use? :  ");
+     //  printf("\n\n\n** Insert number of beads to use? :  ");
       scanf("%d", &use_nmax);
    }
    while (use_nmax < 1);
@@ -6858,3 +7307,34 @@ void supc_thr_t::run()
 
 //--------- end thread for supc --------------
 
+
+int get_color(PDB_atom *a) {
+   int color = a->bead_color;
+   if (a->all_beads.size()) {
+      color = 7;
+   }
+   if (a->exposed_code != 1) {
+      color = 6;
+   }
+   if (a->bead_computed_radius <= overlap_tolerance) {
+      color = 0;
+   }
+   //  color = a->bead_number % 15;
+#if defined DEBUG_COLOR
+   color = 0;
+   if (a->chain == 1) {
+      color = 4;
+      if (a->exposed_code != 1) {
+         color = 6;
+      }
+   }
+   else
+   {
+      color = 1;
+      if (a->exposed_code != 1) {
+         color = 10;
+      }
+   }
+#endif
+   return color;
+}

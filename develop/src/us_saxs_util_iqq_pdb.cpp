@@ -1751,7 +1751,7 @@ QString US_Saxs_Util::iqq_suffix()
 
 void US_Saxs_Util::setup_saxs_options()
 {
-   cout << "setup saxs options\n";
+  //cout << "setup saxs options\n";
 
    hybrid_coords.clear();
    point p;

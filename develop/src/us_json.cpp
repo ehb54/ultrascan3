@@ -19,6 +19,8 @@ map < QString, QString > US_Json::split( QString qs )
    bool in_quote = false;
    bool in_bracket = false;
    bool in_brace = false;
+   
+   bool in_bracket_quote = false;
 
    QString tok1;
    QString tok2;
@@ -86,6 +88,33 @@ map < QString, QString > US_Json::split( QString qs )
          in_bracket = false;
          continue;
       }
+
+// //       /* add:  [" and "] scenarios  */
+
+//       if ( qc == '"' && in_json && in_bracket && !in_brace )
+// 	{
+// 	 if ( in_quote )
+//          {
+//             in_quote = false;
+//             continue;
+//          }
+//          if ( !in_quote )
+//          {
+//             in_quote = true;
+//             continue;
+//          }
+//       }      
+
+//       if ( qc == ']' && in_json && in_quote && in_tok2 && in_bracket && !in_brace )
+//       {
+// 	 in_bracket = false;
+//          continue;
+//       }  
+
+
+// //       /* end add */
+
+
 
       if ( qc == '{' && in_json && !in_quote && in_tok2 && !in_bracket && !in_brace && !tok2.length() )
       {

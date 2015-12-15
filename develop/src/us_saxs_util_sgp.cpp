@@ -494,7 +494,7 @@ double US_Saxs_Util::sgp_fitness( sgp_node *node )
       scaling_fit( sgp_last_I, sgp_exp_I, k, chi2 );
    }
 
-   if ( isnan( chi2 ) )
+   if ( us_isnan( chi2 ) )
    {
       QFile f( "nan_fitness_model.bead_model" );
       if ( f.open( QIODevice::WriteOnly ) )

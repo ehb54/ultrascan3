@@ -17,8 +17,8 @@ QString US_Saxs_Util::run_json( QString & json )
    if ( !us_log )
    {
       us_log = new US_Log( "runlog.txt" );
-      us_log->log( "initial json" );
-      us_log->log( json );
+      // us_log->log( "initial json" );
+      // us_log->log( json );
    }
 
    us_log->datetime( "start run_json" );
@@ -37,12 +37,14 @@ QString US_Saxs_Util::run_json( QString & json )
       }
    }
 
+    
    if ( parameters.count( "_udphost" ) &&
         parameters.count( "_udpport" ) &&
-        parameters.count( "_uuid" ) )
+	parameters.count( "_uuid" ) )
    {
-      map < QString, QString > msging;
+     map < QString, QString > msging;
       msging[ "_uuid" ] = results[ "_uuid" ];
+      //msging[ "status" ] = results[ "_textarea" ];
       us_udp_msg = new US_Udp_Msg( parameters[ "_udphost" ], (Q_UINT16) parameters[ "_udpport" ].toUInt() );
       us_udp_msg->set_default_json( msging );
    }
@@ -50,48 +52,67 @@ QString US_Saxs_Util::run_json( QString & json )
    {
       QStringList supported;
       supported
-         << "pmrun";
+         << "pmrun"
+	 << "hydro"
+	;
       
       int count = 0;
       for ( int i = 0; i < (int) supported.size(); ++i )
-      {
-         if ( parameters.count( supported[ i ] ) )
-         {
-            count++;
-         }
-      }
-
+	{
+          if ( parameters.count( supported[ i ] ) )
+	    {
+	      count++;
+	    }
+	}
+      
       if ( !count )
-      {
-         results[ "errors" ] = "no supported runtype found in input json";
-         return US_Json::compose( results );
-      }
+	{
+          results[ "errors" ] = "no supported runtype found in input json";
+          return US_Json::compose( results );
+	}
       if ( count > 1 )
-      {
-         results[ "errors" ] = "only one run type currently allowed per input json";
-         return US_Json::compose( results );
-      }
+	{
+	  results[ "errors" ] = "only one run type currently allowed per input json";
+	  return US_Json::compose( results );
+	}
+       
    }
-
-   if ( us_udp_msg )
-   {
-      map < QString, QString > msging;
-      msging[ "status" ] = "started";
-      us_udp_msg->send_json( msging );
-   }
-
-   if ( !run_pm( parameters, results ) )
-   {
-      results[ "errors" ] += " run_pm failed:" + errormsg;
-   }
-   if ( us_log )
-   {
-      us_log->log( "final json" );
-      us_log->log( US_Json::compose( results ) );
-      us_log->datetime( "end run_json" );
-   }
+   
+   if ( parameters.count( "pmrun" ) )
+     {
+       if ( !run_pm( parameters, results ) )
+	 {
+	   results[ "errors" ] += " run_pm failed:" + errormsg;
+	 }
+     }
+ 
+   if ( parameters.count( "hydro" ) )
+     {
+       if ( !run_hydro( parameters, results ) )
+	 {
+	   results[ "errors" ] += " run_hydro failed:" + errormsg;
+	 }
+     }
+   
+   
+   // if ( us_log )
+   // {
+   //    us_log->log( "final json" );
+   //    us_log->log( US_Json::compose( results ) );
+   //    us_log->datetime( "end run_json" );
+   // }
    return US_Json::compose( results );
 }
+
+#if !defined(CMDLINE) 
+bool US_Saxs_Util::run_hydro(
+			     map < QString, QString >           & ,
+			     map < QString, QString >           & 
+			     )
+{
+   return false;
+}
+#endif
 
 bool US_Saxs_Util::run_pm(
                           map < QString, QString >           & parameters,
@@ -246,7 +267,7 @@ bool US_Saxs_Util::run_pm(
       }
       if ( us_udp_msg )
       {
-         map < QString, QString > msging;
+	map < QString, QString > msging;
          msging[ "status" ] = QString( "finished %1" ).arg( QFileInfo( files[ i ] ).fileName() );
          msging[ "models" ] = "[\"" + models_written.join( "\",\"" ) + "\"]";
          msging[ "dats"   ] = "[\"" + dats_written  .join( "\",\"" ) + "\"]";

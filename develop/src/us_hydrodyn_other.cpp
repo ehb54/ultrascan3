@@ -41,7 +41,7 @@
 #   define SLASH "\\"
 #   define STDOUT_FILENO 1
 #   define STDERR_FILENO 2
-#   define isnan _isnan
+// #   define isnan _isnan
 #endif
 
 // note: this program uses cout and/or cerr and this should be replaced
@@ -7567,7 +7567,7 @@ bool US_Hydrodyn::check_bead_model_for_nan()
    {
       for ( int j = 0; j < 3; j++ )
       {
-         if ( isnan(bead_model[i].bead_coordinate.axis[j]) )
+         if ( us_isnan(bead_model[i].bead_coordinate.axis[j]) )
          {
             issues = true;
             editor_msg("red", 
