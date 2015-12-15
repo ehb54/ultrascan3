@@ -71,6 +71,7 @@ void US_SecondMoment::data_plot( void )
 
    // Draw plot
 //   data_plot1->clear();
+   data_plot1->detachItems();
    us_grid( data_plot1 );
 
    data_plot1->setTitle( tr( "Run " ) + d->runID + tr( ": Cell " ) + d->cell

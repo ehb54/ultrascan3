@@ -171,8 +171,9 @@ void US_RotorCalibration::reset()
    data.scanData.clear();
    allData.clear();
 
-   data_plot    ->detachItems( QwtPlotItem::Rtti_PlotCurve );
+//   data_plot    ->detachItems( QwtPlotItem::Rtti_PlotCurve );
 //   data_plot    ->clear();
+   data_plot    ->detachItems();
    data_plot    ->replot();
    plot->btnZoom->setChecked( false );
 
@@ -513,8 +514,9 @@ void US_RotorCalibration::loadDB( void )
 // filter out desired cells only, and show only upper or lower regions
 void US_RotorCalibration::plotAll( void )
 {
-   data_plot->detachItems( QwtPlotItem::Rtti_PlotCurve );
+//   data_plot->detachItems( QwtPlotItem::Rtti_PlotCurve );
 //   data_plot->clear();
+   data_plot->detachItems();
    data_plot->setTitle(tr( "Intensity Data" ));
    data_plot->setAxisTitle( QwtPlot::xBottom, tr( "Radius (in cm)" ) );
    data_plot->setAxisTitle( QwtPlot::yLeft, tr( "Intensity" ) );
@@ -960,6 +962,7 @@ void US_RotorCalibration::calculate()
    
    plot->btnZoom->setChecked( false );
 //   data_plot->clear();
+   data_plot->detachItems();
    data_plot->replot();
    QwtPlotCurve* c1;
    QwtPlotCurve* c2;

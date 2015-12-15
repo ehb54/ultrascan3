@@ -412,6 +412,7 @@ void US_FDS_FileManager::plot_scans( void )
    c.clear();
    scanindex.clear();
 //   data_plot->clear();
+   data_plot->detachItems();
    for (int i=0; i<scaninfo.size(); i++)
    {
       if (  scaninfo[i].triple  == cb_triple->currentText()
@@ -497,6 +498,7 @@ void US_FDS_FileManager::reset( void )
    data_plot->setAxisScale( QwtPlot::xBottom, 5.7, 7.3 );
    data_plot->setAxisScale( QwtPlot::yLeft  , 0.0, 1.5 );
 //   data_plot->clear();
+   data_plot->detachItems();
    data_plot->replot();
 
    ct_from  ->setMinimum ( 0 );
