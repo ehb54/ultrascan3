@@ -6,7 +6,9 @@ zeno_main(
   int argc,
   char const* argv[]);
 
+#if __cplusplus >= 201103L
 int zeno_cxx_main(int argc, char **argv, const char * fname );
+#endif
 
 #include "qstring.h"
 #include "qdatetime.h"

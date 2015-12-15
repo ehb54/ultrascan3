@@ -13570,7 +13570,9 @@ bool US_Hydrodyn_Zeno::run(
       int progress_steps = 100;
 
       zeno_progress->setProgress( 0, progress_steps );
+#if __cplusplus >= 201103L
       zeno_cxx_main( argc, argv, QString( "%1.zno" ).arg( filename ).ascii() );
+#endif
       zeno_progress->setProgress( 1, 1 );
 
       if ( !us_hydrodyn->stopFlag )
@@ -13750,6 +13752,14 @@ bool US_Hydrodyn::calc_zeno()
    QString zeno_model_list            = "";
 
    bool zeno_cxx                      = gparams.count( "zeno_cxx" ) && gparams[ "zeno_cxx" ] == "true" && advanced_config.expert_mode;
+#if __cplusplus < 201103L
+   if ( zeno_cxx ) {
+      editor_msg( "darkRed", "Notice: ZENO experimental method is not currently not available for this platform" );
+      qApp->processEvents();
+      zeno_cxx = false;
+   }
+#endif
+
    if ( zeno_cxx ) {
       editor_msg( "darkRed", "Notice: ZENO experimental method is active" );
       qApp->processEvents();

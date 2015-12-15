@@ -1,6 +1,8 @@
 #define USE_RAND_RNG
 #define USE_SPHERE_CENTERS_MODEL 
 #define USE_NANOFLANN_SORT_SCM
+#if __cplusplus >= 201103L
+
 #include <fstream>
 class zeno_fout {
 public:
@@ -136,3 +138,4 @@ const {
 
 // *** END *** PointModel/NanoFLANNPoint.cc ***
 
+#endif
