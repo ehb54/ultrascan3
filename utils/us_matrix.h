@@ -4,6 +4,9 @@
 
 #include <QtCore>
 #include "us_extern.h"
+#include <qthread.h>
+#include <qwaitcondition.h>
+#include <qmutex.h>
 
 /*! A class of general purpose static matrix functions. The elements of all
  *  matrices and vectors are doubles. The matrix arguments are arrays of
@@ -11,6 +14,45 @@
  *  of doubles.
  *  \brief A set of general purpose matrix functions. All functions are static.
  */
+struct dpairs
+{
+   int columnlocation;
+   double locationvalue;
+};
+
+class ata_d_thr_t : public QThread
+{
+ public:
+  ata_d_thr_t(int);
+  void ata_d_thr_setup(unsigned int,
+             unsigned int,
+             unsigned int,
+             double ***,
+             QVector <QVector <dpairs> > *);
+
+  void ata_d_thr_shutdown();
+  void ata_d_thr_wait();
+  virtual void run();
+
+ private:
+  unsigned int columns;
+  unsigned int c_start;
+  unsigned int c_end;
+  double ***product;
+  QVector <QVector <dpairs> > *dataarray;
+
+  int thread;
+  unsigned int i;
+  unsigned int j;
+  QMutex work_mutex;
+  int work_to_do;
+  QWaitCondition cond_work_to_do;
+  int work_done;
+  QWaitCondition cond_work_done;
+  int work_to_do_waiters;
+  int work_done_waiters;
+};
+
 class US_UTIL_EXTERN US_Matrix
 {
 public:
@@ -247,6 +289,16 @@ public:
     *  \returns       Dot product of vector with itself
     */
    static double dotproduct( double*, int );
+	static void vvt(float ***, float **, float **, int);	
+	static void mmv(float **, double **, float ***, int, int);
+	static void mmv(float **, float **, float ***, int, int);
+	static void mmv(float **, float **, double ***, int, int);
+	static void mmv(float **, double **, double ***, int, int);
+	static float dotproduct(float **, float **, int);
+	static void calc_A_transpose_A(double*** /*original matrix*/, double*** /*product matrix*/,
+         unsigned int /*rows*/, unsigned int /*columns*/, unsigned int /*threads*/);
+	static void calc_A_transpose_A(float*** /*original matrix*/, float*** /*product matrix*/,
+unsigned int /*rows*/, unsigned int /*columns*/);
 
 private:
    static void print_matrix( double**, int, int );

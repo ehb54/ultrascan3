@@ -590,3 +590,543 @@ void US_Matrix::LU_SolveSystem( double** A, double*& b, int n )
    LU_BackSubstitute( A, b, index, n );
 }
 
+void US_Matrix::mmv(float **result, double **vector, float ***matrix, int row, int column)
+{
+   int i, j;
+   for (i=0; i<row; i++)
+   {
+      (*result)[i] = 0;
+      for (j=0; j<column; j++)
+      {
+         (*result)[i] += (*matrix)[i][j] * (*vector)[j];
+      }
+   }
+}
+
+void US_Matrix::mmv(float **result, double **vector, double ***matrix, int row, int column)
+{
+   int i, j;
+   for (i=0; i<row; i++)
+   {
+      (*result)[i] = 0;
+      for (j=0; j<column; j++)
+      {
+         (*result)[i] += (*matrix)[i][j] * (*vector)[j];
+      }
+   }
+}
+
+void US_Matrix::mmv(float **result, float **vector, double ***matrix, int row, int column)
+{
+   int i, j;
+   for (i=0; i<row; i++)
+   {
+      (*result)[i] = 0;
+      for (j=0; j<column; j++)
+      {
+         (*result)[i] += (*matrix)[i][j] * (*vector)[j];
+      }
+   }
+}
+
+void US_Matrix::mmv(float **result, float **vector, float ***matrix, int row, int column)
+{
+   int i, j;
+   for (i=0; i<row; i++)
+   {
+      (*result)[i] = 0;
+      for (j=0; j<column; j++)
+      {
+         (*result)[i] += (*matrix)[i][j] * (*vector)[j];
+      }
+   }
+}
+
+float US_Matrix::dotproduct(float **v1, float **v2, int size)
+{
+   float result=0;
+   for (int i=0; i<size; i++)
+   {
+      result += (*v1)[i] * (*v2)[i];
+   }
+   return(result);
+}
+
+void US_Matrix::vvt(float ***result, float **v1, float **v2, int size)
+{
+   for (int i=0; i<size; i++)
+   {
+      for (int j=0; j<size; j++)
+      {
+         (*result)[i][j] = (*v1)[i] * (*v2)[j];
+      }
+   }
+}
+
+/*
+  #ifdef THREAD
+
+  void US_Matrix::calc_A_transpose_A(double ***A, double ***product, unsigned int rows, unsigned int columns, bool flag)
+  {
+  CATA_D_Thread *dt;
+  dt = new CATA_D_Thread [columns];
+  for ( unsigned int i=0; i<columns; i++)
+  {   
+  dt[i].i = i;
+  dt[i].product = product;
+  dt[i].A = A;
+  dt[i].end_k = rows;
+      
+  if (flag) // This version completes the entire matrix:
+  {   
+  dt[i].end_j = columns;
+  }
+  else // This version completes only the lower triangular matrix
+  {    //  that's all what's needed for the Cholesky decomposition:
+  dt[i].end_j = i+1;
+  }
+  dt[i].start();
+  }
+  unsigned int count = 0;
+  while(count < columns)
+  {
+  if(dt[count].wait())
+  {
+  count ++;
+  }
+  }
+  }
+
+  void US_Matrix::calc_A_transpose_A(double ***A, double ***product, unsigned int rows, unsigned int columns, bool flag)
+  {
+  CATA_D_Thread *dt;
+  dt = new CATA_D_Thread [2];
+  int f = 0;
+  for ( unsigned int i=0; i<columns; i++)
+  {   
+  dt[f].i = i;
+  dt[f].product = product;
+  dt[f].A = A;
+  dt[f].end_k = rows;
+      
+  if (flag) // This version completes the entire matrix:
+  {   
+  dt[f].end_j = columns;
+  }
+  else // This version completes only the lower triangular matrix
+  {    //  that's all what's needed for the Cholesky decomposition:
+  dt[f].end_j = i+1;
+  }
+  dt[f].start();
+  if (f == 0)
+  {
+  f = 1;
+  }
+  else
+  {
+  f = 0;
+  }
+  dt[f].wait();
+  }
+  }
+
+  #else
+*/
+ata_d_thr_t::ata_d_thr_t(int a_thread) : QThread() {
+   thread = a_thread;
+   work_to_do = 0;
+   work_done = 1;
+   work_to_do_waiters = 0;
+   work_done_waiters = 0;
+}
+
+void ata_d_thr_t::ata_d_thr_setup(unsigned int a_columns,
+                                  unsigned int a_c_start,
+                                  unsigned int a_c_end,
+                                  double ***a_product,
+                                  QVector <QVector <dpairs> > *a_dataarray
+                                  ) {
+   /* this starts up a new work load for the thread */
+   columns = a_columns;
+   c_start = a_c_start;
+   c_end = a_c_end;
+   product = a_product;
+   dataarray = a_dataarray;
+
+   work_mutex.lock();
+   work_to_do = 1;
+   work_done = 0;
+   work_mutex.unlock();
+   cond_work_to_do.wakeOne();
+
+   //  cerr << "thread " << thread << " has new work to do\n";
+}
+
+void ata_d_thr_t::ata_d_thr_shutdown() {
+   /* this signals the thread to exit the run method */
+   work_mutex.lock();
+   work_to_do = -1;
+   work_mutex.unlock();
+   cond_work_to_do.wakeOne();
+
+   //  cerr << "thread " << thread << " shutdown requested\n";
+}
+
+void ata_d_thr_t::ata_d_thr_wait() {
+   /* this is for the master thread to wait until the work is done */
+   work_mutex.lock();
+
+   //  cerr << "thread " << thread << " has a waiter\n";
+
+   while(!work_done) {
+      cond_work_done.wait(&work_mutex);
+   }
+   work_done = 0;
+   work_mutex.unlock();
+
+   //  cerr << "thread " << thread << " waiter released\n";
+}
+
+void ata_d_thr_t::run() {
+   while(1) {
+      work_mutex.lock();
+      //    cerr << "thread " << thread << " waiting for work\n";
+      work_to_do_waiters++;
+      while(!work_to_do) {
+         cond_work_to_do.wait(&work_mutex);
+      }
+      if(work_to_do == -1) {
+         //      cerr << "thread " << thread << " shutting down\n";
+         work_mutex.unlock();
+         return;
+      }
+
+      work_to_do_waiters = 0;
+      work_mutex.unlock();
+      //    cerr << "thread " << thread << " starting work\n";
+
+      QVector <dpairs> m, n;
+      unsigned int i, j, k, l;
+
+      for (i = c_start; i < c_end; i++) {
+         for (j = 0; j < columns; j++) {
+            if (i <= j) {
+               double sum=0;
+               k=0;
+               l=0;
+               m.clear();
+               n.clear();
+               m=(*dataarray)[i];
+               n=(*dataarray)[j];
+               while((k<m.size()) && (l<n.size())) {
+                  if (m[k].columnlocation == n[l].columnlocation) {
+                     sum += m[k].locationvalue * n[l].locationvalue;
+                     k++;
+                     l++;
+                  } else {
+                     if (m[k].columnlocation < n[l].columnlocation)  {
+                        k++;
+                     } else {
+                        l++;
+                     }
+                  }
+                  (*product)[i][j]=sum;
+                  (*product)[j][i]=sum;
+               }
+            }
+         }
+      }
+
+      //    cerr << "thread " << thread << " finished work\n";
+      work_mutex.lock();
+      work_done = 1;
+      work_to_do = 0;
+      work_mutex.unlock();
+      cond_work_done.wakeOne();
+   }
+}
+
+void US_Matrix::calc_A_transpose_A(double ***A, double ***product, unsigned int rows, unsigned int columns, unsigned int threads)
+{
+   QVector <dpairs> data_pairs, m, n;
+   QVector <QVector <dpairs> > dataarray;
+   dpairs temp_pair;
+   dataarray.clear();
+   data_pairs.clear();
+   m.clear();
+   n.clear();
+   for (unsigned int i=0; i<columns; i++)
+   {
+      for (unsigned int j=0; j<rows; j++)
+      {
+         if((*A)[j][i]!=0)
+         {
+            temp_pair.locationvalue = (*A)[j][i];
+            temp_pair.columnlocation = j;
+            data_pairs.push_back(temp_pair);
+         }
+      }
+      dataarray.push_back(data_pairs);
+      data_pairs.clear();
+   }
+   //   unsigned int threads = 4; // USglobal->config_list.numThreads
+   //   printf("calc ata threads %d\n", threads);
+   if(threads > 1) {
+     
+      // create threads
+      unsigned int j;
+     
+      ata_d_thr_t *ata_d_thr_threads[threads];
+      //QVector < ata_d_thr_t* > ata_d_thr_threads( threads );
+     
+      for(j = 0; j < threads; j++) {
+         ata_d_thr_threads[j] = new ata_d_thr_t(j);
+         ata_d_thr_threads[j]->start();
+      }
+     
+      unsigned int c_start = 0;
+      unsigned int c_startsq;
+      unsigned int c_end;
+      float c_per2 = columns * columns / threads;
+      //     printf("cols %u threads %u c_per2 %u\n", columns, threads, c_per2);
+      for(j = 0; j < threads; j++) {
+         c_startsq = (columns - c_start) * (columns - c_start);
+         if(j + 1 == threads) {
+            c_end = columns;
+         } else {
+            if(c_startsq <= c_per2) {
+               c_end = columns;
+            } else {
+               c_end = (columns - (int)sqrt(1.0 * c_startsq - c_per2));
+               if(c_end > columns) {
+                  c_end = columns;
+               }
+            }
+         }
+         //       cout << "thread " << j << " c range " << c_start << " - " << c_end << endl;
+         ata_d_thr_threads[j]->ata_d_thr_setup(columns, c_start, c_end, product, &dataarray);
+         c_start = c_end;
+      }
+     
+      for(j = 0; j < threads; j++) {
+         ata_d_thr_threads[j]->ata_d_thr_wait();
+      }
+     
+      // destroy
+      for(j = 0; j < threads; j++) {
+         ata_d_thr_threads[j]->ata_d_thr_shutdown();
+      }
+     
+      for(j = 0; j < threads; j++) {
+         ata_d_thr_threads[j]->wait();
+      }
+     
+      for(j = 0; j < threads; j++) {
+         delete ata_d_thr_threads[j];
+      }
+     
+   } else {
+     
+      for (unsigned int i=0; i<columns; i++)
+      {
+         for (unsigned int j=0; j<columns; j++)
+         {
+            if (i<=j)
+            {
+               double sum=0;
+               unsigned int k=0;
+               unsigned int l=0;
+               m.clear();
+               n.clear();
+               m=dataarray[i];
+               n=dataarray[j];
+               while((k<m.size()) && (l<n.size()))
+               {
+                  if (m[k].columnlocation == n[l].columnlocation) 
+                  {
+                     sum += m[k].locationvalue * n[l].locationvalue;
+                     k++;
+                     l++;
+                  }
+                  else if (m[k].columnlocation < n[l].columnlocation)
+                  {
+                     k++;
+                  }
+                  else
+                  {
+                     l++;
+                  }
+                  (*product)[i][j]=sum;
+                  (*product)[j][i]=sum;
+               }
+            }
+         }
+      }
+   }
+   /*
+   // This version completes only the lower triangular matrix - all that's needed for the Cholesky decomposition:
+   for (unsigned int i=0; i<columns; i++)
+   {
+   for (unsigned int j=0; j<=i; j++)
+   {
+   (*product)[i][j] = 0.0;
+   for (unsigned int k=0; k<rows; k++)
+   {
+   (*product)[i][j] += (*A)[k][i] * (*A)[k][j];
+   }
+   }
+   }
+   */
+}
+
+/*
+  #endif
+
+  #ifdef THREAD
+
+  void US_Matrix::calc_A_transpose_A(float ***A, float ***product, unsigned int rows, unsigned int columns, bool flag)
+  {
+  CATA_F_Thread *ft;
+  ft = new CATA_F_Thread [columns];
+  //cout<<columns<<endl;
+  for ( unsigned int i=0; i<columns; i++)
+  {   
+  ft[i].product = product;
+  ft[i].A = A;
+  ft[i].i = i;   
+  ft[i].end_k = rows;
+      
+  if (flag)
+  {   
+  // This version completes the entire matrix:
+  ft[i].end_j = columns;
+  }
+  else
+  {
+  // This version completes only the lower triangular matrix - all that's needed for the Cholesky decomposition:
+  ft[i].end_j = i+1;
+  }
+  ft[i].start();
+  }
+  unsigned int count = 0;
+  while(count < columns)
+  {
+  if(ft[count].wait())
+  {
+  count ++;
+  }
+  }
+  }
+
+
+  void US_Matrix::calc_A_transpose_A(float ***A, float ***product, unsigned int rows, unsigned int columns, bool flag)
+  {
+  CATA_F_Thread *dt;
+  dt = new CATA_F_Thread [2];
+  int f = 0;
+  for ( unsigned int i=0; i<columns; i++)
+  {   
+  dt[f].i = i;
+  dt[f].product = product;
+  dt[f].A = A;
+  dt[f].end_k = rows;
+      
+  if (flag) // This version completes the entire matrix:
+  {   
+  dt[f].end_j = columns;
+  }
+  else // This version completes only the lower triangular matrix
+  {    //  that's all what's needed for the Cholesky decomposition:
+  dt[f].end_j = i+1;
+  }
+  dt[f].start();
+  if (f == 0)
+  {
+  f = 1;
+  }
+  else
+  {
+  f = 0;
+  }
+  dt[f].wait();
+  }
+  }
+
+
+  #else
+*/
+void US_Matrix::calc_A_transpose_A(float ***A, float ***product, unsigned int rows, unsigned int columns)
+{
+   QVector <dpairs> data_pairs, m, n;
+   QVector <QVector <dpairs> > dataarray;
+   dpairs temp_pair;
+   dataarray.clear();
+   data_pairs.clear();
+   m.clear();
+   n.clear();
+   for (unsigned int i=0; i<columns; i++)
+   {
+      for (unsigned int j=0; j<rows; j++)
+      {
+         if((*A)[j][i]!=0)
+         {
+            temp_pair.locationvalue = (*A)[j][i];
+            temp_pair.columnlocation = j;
+            data_pairs.push_back(temp_pair);
+         }
+      }
+      dataarray.push_back(data_pairs);
+      data_pairs.clear();
+   }
+   for (unsigned int i=0; i<columns; i++)
+   {
+      for (unsigned int j=0; j<columns; j++)
+      {
+         if (i<=j)
+         {
+            double sum=0;
+            unsigned int k=0;
+            unsigned int l=0;
+            m.clear();
+            n.clear();
+            m=dataarray[i];
+            n=dataarray[j];
+            while((k<m.size()) && (l<n.size()))
+            {
+               if (m[k].columnlocation == n[l].columnlocation) 
+               {
+                  sum += m[k].locationvalue * n[l].locationvalue;
+                  k++;
+                  l++;
+               }
+               else if (m[k].columnlocation < n[l].columnlocation)
+               {
+                  k++;
+               }
+               else
+               {
+                  l++;
+               }
+               (*product)[i][j] = (float) sum;
+               (*product)[j][i] = (float) sum;
+            }
+         }
+      }
+   }
+   /*
+   // This version completes only the lower triangular matrix - all that's needed for the Cholesky decomposition:
+   for (unsigned int i=0; i<columns; i++)
+   {
+   for (unsigned int j=0; j<=i; j++)
+   {
+   (*product)[i][j] = 0.0;
+   for (unsigned int k=0; k<rows; k++)
+   {
+   (*product)[i][j] += (*A)[k][i] * (*A)[k][j];
+   }
+   }
+   }
+   */
+}
+
+//#endif
