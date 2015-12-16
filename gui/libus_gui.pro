@@ -44,6 +44,7 @@ HEADERS      = \
                us_license.h             \
                us_load_auc.h            \
                us_loadable_noise.h      \
+               us_minimize.h            \
                us_model_gui.h           \
                us_model_loader.h        \
                us_mwl_data.h            \
@@ -88,6 +89,7 @@ SOURCES      = \
                us_license.cpp             \
                us_load_auc.cpp            \
                us_loadable_noise.cpp      \
+               us_minimize.cpp            \
                us_model_gui.cpp           \
                us_model_loader.cpp        \
                us_mwl_data.cpp            \
