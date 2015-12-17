@@ -3734,37 +3734,43 @@ void US_Saxs_Util::get_atom_map( PDB_model *model )
                   //   multi_residue_map.count(lastResName) &&
                   //   residue_list[multi_residue_map[lastResName][0]].type == 0 )
                   {
-                     noticemsg += 
-                        lastResSeq != "" ? 
-                        QString( "Warning: break in residue sequence or unknown residue: %1Molecule %2 Residue %3 %4 & %5 %6.\n" )
-                        .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
-                        .arg(j + 1)
-                        .arg(lastResName)
-                        .arg(lastResSeq)
-                        .arg(this_atom->resName)
-                        .arg(this_atom->resSeq) 
-                        :
-                        QString( "Warning: break in residue sequence or unknown residue: %1Molecule %2 Residue %3 %4.\n")
-                        .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
-                        .arg(j + 1)
-                        .arg(this_atom->resName)
-                        .arg(this_atom->resSeq);
 
-		      noticemsg_udp += 
-                        lastResSeq != "" ? 
-                        QString( "Warning: break in residue sequence or unknown residue: %1Molecule %2 Residue %3 %4 & %5 %6.\\n" )
-                        .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
-                        .arg(j + 1)
-                        .arg(lastResName)
-                        .arg(lastResSeq)
-                        .arg(this_atom->resName)
-                        .arg(this_atom->resSeq) 
-                        :
-                        QString( "Warning: break in residue sequence or unknown residue: %1Molecule %2 Residue %3 %4.\\n")
-                        .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
-                        .arg(j + 1)
-                        .arg(this_atom->resName)
-                        .arg(this_atom->resSeq);
+		    us_log->log(lastResSeq != "" ? 
+				QString( "Warning: break in residue sequence or unknown residue: %1Molecule %2 Residue %3 %4 & %5 %6.\n" )
+				.arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
+				.arg(j + 1)
+				.arg(lastResName)
+				.arg(lastResSeq)
+				.arg(this_atom->resName)
+				.arg(this_atom->resSeq) 
+				:
+				QString( "Warning: break in residue sequence or unknown residue: %1Molecule %2 Residue %3 %4.\n")
+				.arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
+				.arg(j + 1)
+				.arg(this_atom->resName)
+				.arg(this_atom->resSeq));
+
+		    if ( us_udp_msg )
+		      {
+			map < QString, QString > msging;
+			msging[ "_textarea" ] = lastResSeq != "" ? 
+			  QString( "\\nWarning: break in residue sequence or unknown residue: %1Molecule %2 Residue %3 %4 & %5 %6.\\n" )
+			  .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
+			  .arg(j + 1)
+			  .arg(lastResName)
+			  .arg(lastResSeq)
+			  .arg(this_atom->resName)
+			  .arg(this_atom->resSeq) 
+			  :
+			  QString( "\\nWarning: break in residue sequence or unknown residue: %1Molecule %2 Residue %3 %4.\\n")
+			  .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
+			  .arg(j + 1)
+			  .arg(this_atom->resName)
+			  .arg(this_atom->resSeq);
+
+			us_udp_msg->send_json( msging );
+		    //sleep(1);
+		      }
                   }
                }
                lastChainID = this_atom->chainID;
@@ -3774,29 +3780,35 @@ void US_Saxs_Util::get_atom_map( PDB_model *model )
          }
       }
       if ( aa && non_aa )
-      {
-         noticemsg += 
-            QString( "Notice: %1found %2 non or unknown Amino Acids in a chain containing %3 AA Residues.\n")
-            .arg(lastChainID == " " ? "" : ("Chain " + lastChainID + " "))
-            .arg(non_aa)
-            .arg(aa);
-	 
-	 noticemsg_udp += 
-            QString( "Notice: %1found %2 non or unknown Amino Acids in a chain containing %3 AA Residues. \\n")
-            .arg(lastChainID == " " ? "" : ("Chain " + lastChainID + " "))
-            .arg(non_aa)
-            .arg(aa);
-      }
+	{	 
+	  us_log->log(QString( "Notice: %1found %2 non or unknown Amino Acids in a chain containing %3 AA Residues.\n")
+		      .arg(lastChainID == " " ? "" : ("Chain " + lastChainID + " "))
+		      .arg(non_aa)
+		      .arg(aa));
+	  if ( us_udp_msg )
+	    {
+	      map < QString, QString > msging;
+	      msging[ "_textarea" ] = QString( "Notice: %1found %2 non or unknown Amino Acids in a chain containing %3 AA Residues. \\n")
+		.arg(lastChainID == " " ? "" : ("Chain " + lastChainID + " "))
+		.arg(non_aa)
+		.arg(aa);
+	      us_udp_msg->send_json( msging );
+			  //sleep(1);
+	    }
+	  
+	  
+	}
    }
+   
 
-   us_log->log(noticemsg);
-   if ( us_udp_msg )
-     {
-       map < QString, QString > msging;
-       msging[ "_textarea" ] = noticemsg_udp;
-       us_udp_msg->send_json( msging );
-	     //sleep(1);
-     }
+   // us_log->log(noticemsg);
+   // if ( us_udp_msg )
+   //   {
+   //     map < QString, QString > msging;
+   //     msging[ "_textarea" ] = noticemsg_udp;
+   //     us_udp_msg->send_json( msging );
+   // 	     //sleep(1);
+   //   }
    
    // should be chain based
    if ( !total_aa ) // || !advanced_config.pbr_broken_logic )
@@ -5221,10 +5233,10 @@ void US_Saxs_Util::reset_chain_residues( PDB_model *model )
                   continue;
                }
                  
-	       qDebug (QString (" rp %1 sr %2 pr %3" ).arg(this_atom->model_residue_pos).arg(model->residue.size()).arg((long) this_atom->p_residue));
+	       //qDebug (QString (" rp %1 sr %2 pr %3" ).arg(this_atom->model_residue_pos).arg(model->residue.size()).arg((long) this_atom->p_residue));
 	       
 	       //qDebug (QString ( "%1  %2" ).arg(model->residue[ this_atom->model_residue_pos ].unique_name).arg(this_atom->p_residue->unique_name));
-	       qDebug (QString ( "%1 ").arg(model->residue[ this_atom->model_residue_pos ].unique_name));
+	       //qDebug (QString ( "%1 ").arg(model->residue[ this_atom->model_residue_pos ].unique_name));
 
 	       //cout << "Test3aa" << endl;
 

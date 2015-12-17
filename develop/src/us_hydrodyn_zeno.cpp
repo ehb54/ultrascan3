@@ -13552,7 +13552,7 @@ bool US_Hydrodyn_Zeno::run(
 
    if ( zeno_cxx ) {
       int argc = 0;
-      char *argv[ 7 ];
+      char *argv[ 8 ];
 
       argv[ argc++ ] = strdup( "us_zeno_cxx" );
 
@@ -13566,6 +13566,9 @@ bool US_Hydrodyn_Zeno::run(
 
       argv[ argc++ ] = strdup( "-t" );
       argv[ argc++ ] = strdup( QString( "%1" ).arg( threads ).ascii() );
+
+      argv[ argc++ ] = strdup( QString( "--seed=%1" ).arg( QDateTime::currentDateTime().toTime_t() ).ascii() );
+      qDebug( QString( "current datetime %1" ).arg( argv[ argc - 1 ] ) );
 
       int progress_steps = 100;
 
@@ -13946,6 +13949,10 @@ bool US_Hydrodyn::calc_zeno()
                   param_name   .push_back( "results.viscosity" );
                   param_cap_pos.push_back( 1 );
 
+                  param_rx     .push_back( QRegExp( "^Volume:\\s+(\\S+)\\s*$" ) );
+                  param_name   .push_back( "used_beads_vol" );
+                  param_cap_pos.push_back( 1 );
+
                } else {
 
                   param_rx     .push_back( QRegExp( "^.eta..M. . . . . . . . . . . .\\s+(\\S+)\\s+" ) );
@@ -14063,17 +14070,33 @@ bool US_Hydrodyn::calc_zeno()
                   }
                }
 
+               qDebug( QString( "volume %1" ).arg( this_data.use_beads_vol ) );
+
                // computed
 
                if ( zeno_cxx ) {
                   // must compute proper eta
-                  if ( sum_mass ) {
-                     double tmp = (4e0/3e0) * this_data.results.viscosity * AVOGADRO * 1e-24 * sum_volume;
-                     this_data.results.viscosity = tmp / sum_mass;
+                  double use_mass = hydro.mass_correction ? hydro.mass : sum_mass;
+                  this_data.results.mass = use_mass;
+                  this_data.use_bead_mass = use_mass;
+                  if ( use_mass ) {
+                     // double tmp = (4e0/3e0) * this_data.results.viscosity * AVOGADRO * 1e-24 * sum_volume;
+                     // this_data.results.viscosity = tmp / sum_mass;
+                     this_data.results.viscosity *= this_data.use_beads_vol / ( use_mass * 1.660538921 );
                   } else {
                      this_data.results.viscosity = 0e0;
                   }
+
+                  this_data.tra_fric_coef = 6 * M_PI * hydro.solvent_viscosity * this_data.results.rs * 1e-1;
+                  if ( this_data.tra_fric_coef ) {
+                     this_data.results.D20w = ( K0 + hydro.temperature ) * 1.38064852e-8 / this_data.tra_fric_coef;
+                  } else {
+                     this_data.results.D20w = 0e0;
+                  }
                }
+
+               
+               // qDebug( QString( "fric coeff %1" ).arg( this_data.tra_fric_coef ) );
 
 
                {
@@ -14193,6 +14216,19 @@ bool US_Hydrodyn::calc_zeno()
                      .arg( QString( "" ).sprintf( "%3.2f"   , this_data.results.ff0  ) )
                      .arg( QString( "" ).sprintf( "%4.2e nm", this_data.results.rg   ) )
                      ;
+
+                  if ( zeno_cxx ) {
+                     add_to_zeno +=
+                        QString( 
+                                " Intrinsic Viscosity M      : %1\n"
+                                " Tr. Frictional coefficient : %2\n"
+                                " Tr. Diffusion Coefficient D: %3\n"
+                                 )
+                        .arg( QString( "" ).sprintf( "%4.2e cm^3/g"  , this_data.results.viscosity ) )
+                        .arg( QString( "" ).sprintf( "%4.2e g/s"     , this_data.tra_fric_coef ) )
+                        .arg( QString( "" ).sprintf( "%4.2e cm/sec^2", this_data.results.D20w ) )
+                        ;
+                  }
 
                   QFile f( last_hydro_res );
                   if ( f.exists() && f.open( QIODevice::WriteOnly | QIODevice::Append ) )

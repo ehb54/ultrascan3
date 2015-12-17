@@ -46,7 +46,8 @@ typedef struct physical_properties
 vector <PDB_atom> us_hydrodyn_grid_atob_hydro(vector <PDB_atom> *bead_model, 
 						grid_options *our_grid_options,
 						US_Log * us_log,
-						US_Udp_Msg * us_udp_msg);
+					      US_Udp_Msg * us_udp_msg,
+					      QString * accumulated_msgs);
 					      /* QProgressBar *progress, */
 					      /* QTextEdit *editor, */
 					      /* US_Hydrodyn* us_hydrodyn */

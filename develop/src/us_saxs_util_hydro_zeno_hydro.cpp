@@ -8,6 +8,7 @@ static Q3ProgressBar * zeno_progress;
 
 static US_Log  * zeno_us_log;
 static US_Udp_Msg  * zeno_us_udp_msg;
+static QString * zeno_accumulated_msgs;
 
 static int ppos;
 static int mppos;
@@ -9054,7 +9055,7 @@ namespace zeno {
 	     if ( zeno_us_udp_msg )
 	       {
 		 map < QString, QString > msging;
-		 msging[ "progress_output" ] = QString("Hydro (Zeno) calculation: %1\% of %2\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100); // arg(ppos).arg(mppos);
+		 msging[ "progress_output" ] = QString("Hydro (Zeno) calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100); // arg(ppos).arg(mppos);
 		 msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
 		 
 		 zeno_us_udp_msg->send_json( msging );
@@ -9320,6 +9321,7 @@ namespace zeno {
 	     zeno_us_udp_msg->send_json( msging );
 	     //sleep(1);
 	   }   
+	 zeno_accumulated_msgs->append( "ZENO calculation start\\n") ; 
 	 
          //qApp->processEvents();
       }
@@ -9373,7 +9375,7 @@ namespace zeno {
 	     if ( zeno_us_udp_msg )
 	       {
 		 map < QString, QString > msging;
-		 msging[ "progress_output" ] = QString("Hydro (Zeno) calculation: %1\% of %2\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100); // arg(ppos).arg(mppos);
+		 msging[ "progress_output" ] = QString("Hydro (Zeno) calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100); // arg(ppos).arg(mppos);
 		 msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
 		 
 		 zeno_us_udp_msg->send_json( msging );
@@ -11063,6 +11065,7 @@ that is less than 1.
 	    zeno_us_udp_msg->send_json( msging );
 	    //sleep(1);
 	  }   
+	zeno_accumulated_msgs->append("ZENO interior calculation start\\n") ;
          //qApp->processEvents();
       }
 
@@ -11157,7 +11160,7 @@ that is less than 1.
 	     if ( zeno_us_udp_msg )
 	       {
 		 map < QString, QString > msging;
-		 msging[ "progress_output" ] = QString("Hydro (Zeno) calculation: %1\% of %2\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100); // arg(ppos).arg(mppos);
+		 msging[ "progress_output" ] = QString("Hydro (Zeno) calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100); // arg(ppos).arg(mppos);
 		 msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
 		 
 		 zeno_us_udp_msg->send_json( msging );
@@ -11715,6 +11718,7 @@ that is less than 1.
 	     zeno_us_udp_msg->send_json( msging );
 	     //sleep(1);
 	   }   
+	 zeno_accumulated_msgs->append( "ZENO interior calculation start\\n") ;
          //qApp->processEvents();
       }
       // mout = 0;
@@ -11824,7 +11828,7 @@ that is less than 1.
 	     if ( zeno_us_udp_msg )
 	       {
 		 map < QString, QString > msging;
-		 msging[ "progress_output" ] = QString("Hydro (Zeno) calculation: %1\% of %2\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100); // arg(ppos).arg(mppos);
+		 msging[ "progress_output" ] = QString("Hydro (Zeno) calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100); // arg(ppos).arg(mppos);
 		 msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
 		 
 		 zeno_us_udp_msg->send_json( msging );
@@ -12208,6 +12212,7 @@ that is less than 1.
 	     zeno_us_udp_msg->send_json( msging );
 	     //sleep(1);
 	   }  
+	 zeno_accumulated_msgs->append(  "ZENO surface calculation start\\n" );
          //qApp->processEvents();
       }
 
@@ -12260,7 +12265,7 @@ that is less than 1.
 	     if ( zeno_us_udp_msg )
 	       {
 		 map < QString, QString > msging;
-		 msging[ "progress_output" ] = QString("Hydro (Zeno) calculation: %1\% of %2\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100); // arg(ppos).arg(mppos);
+		 msging[ "progress_output" ] = QString("Hydro (Zeno) calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100); // arg(ppos).arg(mppos);
 		 msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
 		 
 		 zeno_us_udp_msg->send_json( msging );
@@ -13584,7 +13589,8 @@ US_Hydrodyn_Zeno::US_Hydrodyn_Zeno(
                                    hydro_options *         options,
                                    hydro_results *         results,
 				   US_Log * us_log,
-				   US_Udp_Msg * us_udp_msg)
+				   US_Udp_Msg * us_udp_msg,
+				   QString *  accumulated_msgs)
 				   // US_Hydrodyn *           us_hydrodyn
                                    // )
 {
@@ -13597,6 +13603,9 @@ US_Hydrodyn_Zeno::US_Hydrodyn_Zeno(
 
    this->us_udp_msg = us_udp_msg;
    zeno_us_udp_msg  = us_udp_msg;
+   
+   this-> accumulated_msgs = accumulated_msgs;
+   zeno_accumulated_msgs = accumulated_msgs;
     // zeno_progress     = us_hydrodyn->progress;
 }
 
@@ -13750,7 +13759,7 @@ bool US_Hydrodyn_Zeno::run(
    if ( zeno_us_udp_msg )
      {
        map < QString, QString > msging;
-       msging[ "progress_output" ] = QString("Hydro (Zeno) calculation: %1\% of %2\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100); // arg(ppos).arg(mppos);
+       msging[ "progress_output" ] = QString("Hydro (Zeno) calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100); // arg(ppos).arg(mppos);
        msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
        
        zeno_us_udp_msg->send_json( msging );
@@ -13762,7 +13771,7 @@ bool US_Hydrodyn_Zeno::run(
    if ( zeno_us_udp_msg )
      {
        map < QString, QString > msging;
-       msging[ "progress_output" ] = QString("Hydro (Zeno) calculation: %1\% of %2\%").arg(100).arg(100); // arg(ppos).arg(mppos);
+       msging[ "progress_output" ] = QString("Hydro (Zeno) calculation: %1\%").arg(100).arg(100); // arg(ppos).arg(mppos);
        msging[ "progress1" ] = QString::number(1);
        
        zeno_us_udp_msg->send_json( msging );
@@ -13800,7 +13809,8 @@ bool US_Saxs_Util::calc_zeno_hydro()
        
        us_udp_msg->send_json( msging );
        //sleep(1);
-     }  
+     } 
+   accumulated_msgs += "\\n";
 
    // if ( hydro.zeno_zeno )
    // {
@@ -13824,7 +13834,7 @@ bool US_Saxs_Util::calc_zeno_hydro()
    //                .arg( hydro.zeno_surface_steps ) );
    // }
 
-   US_Hydrodyn_Zeno uhz( &hydro, &results_hydro, us_log, us_udp_msg );
+   US_Hydrodyn_Zeno uhz( &hydro, &results_hydro, us_log, us_udp_msg, &accumulated_msgs );
 
    // stopFlag = false;
 
@@ -13843,6 +13853,7 @@ bool US_Saxs_Util::calc_zeno_hydro()
       us_udp_msg->send_json( msging );
       //sleep(1);
     }  
+  accumulated_msgs += "\\nBegin hydrodynamic calculations (Zeno) \\n\\n";
   
   // qApp->processEvents();
 
@@ -13866,6 +13877,7 @@ bool US_Saxs_Util::calc_zeno_hydro()
 		us_udp_msg->send_json( msging );
 		//sleep(1);
 	      }  
+	    accumulated_msgs += QString("Model %1 will be included\\n").arg(current_model + 1) ;
             bead_model = bead_models[current_model];
          }
          else
@@ -13879,6 +13891,7 @@ bool US_Saxs_Util::calc_zeno_hydro()
 		us_udp_msg->send_json( msging );
 		//sleep(1);
 	      }  
+	    accumulated_msgs +=  QString("Model %1 - selected but bead model not built\\n").arg(current_model + 1);
          }
 	 // }
    }
@@ -14501,6 +14514,7 @@ bool US_Saxs_Util::calc_zeno_hydro()
        us_udp_msg->send_json( msging );
        //sleep(1);
      }  
+   accumulated_msgs +=  "Calculate hydrodynamics (Zeno) completed\\n" ;
    // if ( advanced_config.auto_show_hydro ) 
    // {
    //    show_zeno();

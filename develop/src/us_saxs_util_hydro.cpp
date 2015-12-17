@@ -69,6 +69,8 @@ bool US_Saxs_Util::run_hydro(
       return false;
     }
   
+  accumulated_msgs = "";
+  
   read_residue_file();
   
   reset_hydro_res(results_hydro);
@@ -245,17 +247,20 @@ bool US_Saxs_Util::run_hydro(
 		method = QString();
 		calc_hydro();
 		method = "SMI";
+		results[ "progress_output" ] = "Hydro (SMI) calculation: 100%";
 	      }
 	    if( parameters[ "atob_list_box" ] == "zeno") 
 	      {
 		method = QString();
 		calc_zeno_hydro();
 		method = "Zeno";
+		results[ "progress_output" ] = "Hydro (Zeno) calculation: 100%";
 	      }
 	    if( parameters[ "atob_list_box" ] == "none") 
 	      {
 		method = QString();
 		method = "None";
+		results[ "progress_output" ] = "AtoB model calculation: 100%";
 	      }
 	  }
 	
@@ -270,17 +275,20 @@ bool US_Saxs_Util::run_hydro(
 		method = QString();
 		calc_hydro();
 		method = "SMI";
+		results[ "progress_output" ] = "Hydro (SMI) calculation: 100%";
 	      }
 	    if( parameters[ "somo_list_box" ] == "zeno") 
 	      {
 		method = QString();
 		calc_zeno_hydro();
 		method = "Zeno";
+		results[ "progress_output" ] = "Hydro (Zeno) calculation: 100%";
 	      }
 	    if( parameters[ "somo_list_box" ] == "none") 
 	      {
 		method = QString();
 		method = "None";
+		results[ "progress_output" ] = "SOMO model calculation: 100%";
 	      }
 	    
 	  }
@@ -301,6 +309,7 @@ bool US_Saxs_Util::run_hydro(
 	      {
 		method = QString();
 		method = "None";
+		results[ "progress_output" ] = "SOMO model calculation: 100%";
 	      }
 	  }
       }
@@ -339,8 +348,12 @@ bool US_Saxs_Util::run_hydro(
 	//qDebug(current);
     }
 
-    // results[ "progress1" ] = QString::number(1.0);
+    results[ "progress1" ] = QString::number(1.0);
+      
+    qDebug (accumulated_msgs);
 
+    //results[ "_textarea" ] = "__reset__\n" + accumulated_msgs;
+    
     results[ "model_name_file" ] = model_name_file;
     results[ "log_name_file" ] = log_name_file;
     results[ "bead_pdb" ] = 
@@ -966,7 +979,8 @@ bool US_Saxs_Util::screen_pdb(QString filename, bool parameters_set_first_model 
 	  us_udp_msg->send_json( msging );
        	  //sleep(2);
 	}
-
+      accumulated_msgs +=  QString("Checking the pdb structure for model %1\\n").arg(  i+1  );
+      
 
       if (check_for_missing_atoms_hydro(&error_string, &model_vector[i],  parameters_set_first_model) )
       	  {
@@ -988,6 +1002,8 @@ bool US_Saxs_Util::screen_pdb(QString filename, bool parameters_set_first_model 
 		us_udp_msg->send_json( msging );
 		//sleep(2);
 	      }
+	    accumulated_msgs += QString(QString("Encountered errors with your PDB structure for model %1:\\n").arg(  i  ) + error_string_udp);
+	    
 	    // printError(QString("Encountered errors with your PDB structure for model %1:\n").
 	    //            arg( model_name( i ) ) + "please check the text window");
 	    
@@ -1026,6 +1042,7 @@ bool US_Saxs_Util::screen_pdb(QString filename, bool parameters_set_first_model 
 	 us_udp_msg->send_json( msging );
 	 //sleep(1);
        }
+     accumulated_msgs += QObject::tr("ERROR : PDB file contains no atoms!");
      
      //editor->setColor(save_color);
      errors_found++;
@@ -1039,6 +1056,7 @@ bool US_Saxs_Util::screen_pdb(QString filename, bool parameters_set_first_model 
        us_udp_msg->send_json( msging );
        //sleep(1);
      }
+   accumulated_msgs += QString("\\nLoaded pdb file : %1\\n").arg(errors_found ? "ERRORS PRESENT" : "ok\\n");
 
    bead_models.clear();
    somo_processed.clear();
@@ -1102,6 +1120,7 @@ int US_Saxs_Util::check_for_missing_atoms_hydro(QString *error_string, PDB_model
 	    us_udp_msg->send_json( msging );
        //sleep(1);
 	  }
+	accumulated_msgs += "Broken chain turns off Peptide Bond Rule.\\n";
 
 
         // if ( misc_widget ) {
@@ -1821,6 +1840,8 @@ int US_Saxs_Util::check_for_missing_atoms_hydro(QString *error_string, PDB_model
 	    us_udp_msg->send_json( msging );
 	    //sleep(1);
 	  }
+	accumulated_msgs += "Encountered the following warnings with your PDB structure:\\n" + error_string_udp;
+	
 
          *error_string = "";
          // repair model...
@@ -2540,7 +2561,7 @@ int US_Saxs_Util::check_for_missing_atoms_hydro(QString *error_string, PDB_model
 	     us_udp_msg->send_json( msging );
 	     //sleep(1);
 	   }
-	 
+	 accumulated_msgs += "\\n" + abb_msgs_udp;
          //    editor->setColor(save_color);
          //    editor->setCurrentFont(save_font);
          last_abb_msgs = "\n\nAutomatic Bead Builder messages:\n" + abb_msgs.replace("ABB: ","  ");
@@ -2655,7 +2676,7 @@ int US_Saxs_Util::check_for_missing_atoms_hydro(QString *error_string, PDB_model
 	  us_udp_msg->send_json( msging );
 	  //sleep(1);
 	} 
-      
+      accumulated_msgs += str + "\\n";
       //editor->setColor(save_color);
    }
    return 0;
@@ -3412,7 +3433,10 @@ bool US_Saxs_Util::calc_mw_hydro()
 	 us_udp_msg->send_json( msging );
 	 //sleep(1);
        } 
-     
+     accumulated_msgs += QString( "\\nModel: %1 vbar %2 cm^3/g\\n" )
+       .arg( model_vector[i].model_id )
+       .arg( QString("").sprintf("%.3f", model_vector[i].vbar) );
+
       current_model = i;
 
       //cout << "Current_model! " << current_model << endl; 
@@ -3516,6 +3540,19 @@ bool US_Saxs_Util::calc_mw_hydro()
                                 )
                   ;
                //cout << qs << endl << flush;
+	       QString qs_udp = qs;
+	       qs_udp.replace("\n","\\n");
+	       us_log->log( qs );
+	       if ( us_udp_msg )
+		 {
+		   map < QString, QString > msging;
+		   msging[ "_textarea" ] = qs_udp;
+		   
+		   us_udp_msg->send_json( msging );
+		   //sleep(1);
+		 } 
+	       accumulated_msgs += qs_udp;
+	       
                last_pdb_load_calc_mw_msg << qs.replace( "\n", "\nREMARK " ) + QString("\n");
             }
          }
@@ -3567,7 +3604,9 @@ bool US_Saxs_Util::calc_mw_hydro()
 	     us_udp_msg->send_json( msging );
 	     //sleep(1);
 	   } 
-     
+	 accumulated_msgs += QString( "\\nModel %1 Rg: %2 nm" )
+            .arg( model_vector[ i ].model_id )
+            .arg( Rg / 10.0, 0, 'f', 2 );
 
          //cout << qs << endl << flush;
          last_pdb_load_calc_mw_msg << qs;
@@ -3621,6 +3660,23 @@ bool US_Saxs_Util::calc_mw_hydro()
 	     us_udp_msg->send_json( msging );
 	     //sleep(1);
 	   } 
+	 accumulated_msgs += QString( "\\nModel: %1 Molecular weight %2 Daltons, Volume (from vbar) %3 A^3%4" )
+            .arg(model_vector[i].model_id)
+            .arg(model_vector[i].mw )
+            .arg( mw_to_volume( model_vector[i].mw, model_vector[i].vbar ) )
+            .arg( do_excl_vol ?
+                  QString(", atomic volume %1 A^3%2 average electron density %3 A^-3")
+                  .arg( tot_excl_vol )
+                  .arg( tot_excl_vol != tot_scaled_excl_vol ?
+                        QString(", scaled atomic volume %1 A^2")
+                        .arg( tot_scaled_excl_vol )
+                        :
+                        ""
+                        )
+                  .arg( total_e / tot_excl_vol )
+                  :
+                  ""
+                  );
 	 
          //cout << qs << endl << flush;
          last_pdb_load_calc_mw_msg << qs;
@@ -3727,7 +3783,7 @@ bool US_Saxs_Util::calc_grid_pdb(bool parameters_set_first_model)
        us_udp_msg->send_json( msging );
        //sleep(1);
      } 
-
+   accumulated_msgs += QString( QObject::tr( "Peptide Bond Rule is %1 for this PDB\\n\\n" ) ).arg( misc.pb_rule_on ? "on" : "off" );
    
    options_log = "";
    append_options_log_atob();
@@ -3784,6 +3840,8 @@ bool US_Saxs_Util::calc_grid_pdb(bool parameters_set_first_model)
 	     //sleep(1);
 	   } 
 	 
+	 accumulated_msgs += QString("\\nGridding atom model %1\\n").arg(curr_m + 1);
+
 	 //    qApp->processEvents();
          //    if (stopFlag)
          //    {
@@ -3838,7 +3896,7 @@ bool US_Saxs_Util::calc_grid_pdb(bool parameters_set_first_model)
  	 if ( us_udp_msg )
 	   {
 	     map < QString, QString > msging;
-	     msging[ "progress_output" ] = QString("AtoB model calculation: %1\% of %2\%").arg(QString::number( (int(double(ppos)/double(mppos))*100.0) ) ).arg(100); // arg(ppos).arg(mppos);
+	     msging[ "progress_output" ] = QString("AtoB model calculation: %1\%").arg(QString::number( (int(double(ppos)/double(mppos))*100.0) ) ).arg(100); // arg(ppos).arg(mppos);
 	     msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
 	     
 	     us_udp_msg->send_json( msging );
@@ -3853,7 +3911,7 @@ bool US_Saxs_Util::calc_grid_pdb(bool parameters_set_first_model)
 	 if ( us_udp_msg )
 	   {
 	     map < QString, QString > msging;
-	     msging[ "progress_output" ] = QString("AtoB model calculation: %1\% of %2\%").arg(QString::number( int ((double(ppos)/double(mppos))*100.0) ) ).arg(100); // arg(ppos).arg(mppos);
+	     msging[ "progress_output" ] = QString("AtoB model calculation: %1\%").arg(QString::number( int ((double(ppos)/double(mppos))*100.0) ) ).arg(100); // arg(ppos).arg(mppos);
 	     msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
 	     
 	     us_udp_msg->send_json( msging );
@@ -3887,6 +3945,7 @@ bool US_Saxs_Util::calc_grid_pdb(bool parameters_set_first_model)
 		 us_udp_msg->send_json( msging );
 		 //sleep(1);
 	       } 
+	     accumulated_msgs += "Errors found during the initial creation of beads\\n";
 
              //qApp->processEvents();
              any_errors = true;
@@ -3984,7 +4043,7 @@ bool US_Saxs_Util::calc_grid_pdb(bool parameters_set_first_model)
 		  if ( us_udp_msg )
 		    {
 		      map < QString, QString > msging;
-		      msging[ "progress_output" ] = QString("AtoB model calculation: %1\% of %2\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100); // arg(ppos).arg(mppos);
+		      msging[ "progress_output" ] = QString("AtoB model calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100); // arg(ppos).arg(mppos);
 		      msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
 		      
 		      us_udp_msg->send_json( msging );
@@ -4034,7 +4093,8 @@ bool US_Saxs_Util::calc_grid_pdb(bool parameters_set_first_model)
 						 // editor,
 						 // this);
 						 us_log,
-						 us_udp_msg);
+						 us_udp_msg,
+						 &accumulated_msgs);
 		  /* ********************************** */
 
 		  
@@ -4045,7 +4105,7 @@ bool US_Saxs_Util::calc_grid_pdb(bool parameters_set_first_model)
 		  if ( us_udp_msg )
 		    {
 		      map < QString, QString > msging;
-		      msging[ "progress_output" ] = QString("AtoB model calculation: %1\% of %2\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100); // arg(ppos).arg(mppos);
+		      msging[ "progress_output" ] = QString("AtoB model calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100); // arg(ppos).arg(mppos);
 		      msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
 		      
 		      us_udp_msg->send_json( msging );
@@ -4117,6 +4177,7 @@ bool US_Saxs_Util::calc_grid_pdb(bool parameters_set_first_model)
 			 us_udp_msg->send_json( msging );
 			 //sleep(1);
 		       } 
+		     accumulated_msgs += "ASA check\\n";
 
                      // qApp->processEvents();
                      // set all beads buried
@@ -4135,7 +4196,7 @@ bool US_Saxs_Util::calc_grid_pdb(bool parameters_set_first_model)
 		     if ( us_udp_msg )
 		       {
 			 map < QString, QString > msging;
-			 msging[ "progress_output" ] = QString("AtoB model calculation: %1\% of %2\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100); // arg(ppos).arg(mppos);
+			 msging[ "progress_output" ] = QString("AtoB model calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100); // arg(ppos).arg(mppos);
 			 msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
 		      
 			 us_udp_msg->send_json( msging );
@@ -4153,7 +4214,7 @@ bool US_Saxs_Util::calc_grid_pdb(bool parameters_set_first_model)
 		     if ( us_udp_msg )
 		       {
 			 map < QString, QString > msging;
-			 msging[ "progress_output" ] = QString("AtoB model calculation: %1\% of %2\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100); // arg(ppos).arg(mppos);
+			 msging[ "progress_output" ] = QString("AtoB model calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100); // arg(ppos).arg(mppos);
 			 msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
 			 
 			 us_udp_msg->send_json( msging );
@@ -4197,7 +4258,7 @@ bool US_Saxs_Util::calc_grid_pdb(bool parameters_set_first_model)
 		     if ( us_udp_msg )
 		       {
 			 map < QString, QString > msging;
-			 msging[ "progress_output" ] = QString("AtoB model calculation: %1\% of %2\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100); // arg(ppos).arg(mppos);
+			 msging[ "progress_output" ] = QString("AtoB model calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100); // arg(ppos).arg(mppos);
 			 msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
 			 
 			 us_udp_msg->send_json( msging );
@@ -4232,7 +4293,7 @@ bool US_Saxs_Util::calc_grid_pdb(bool parameters_set_first_model)
 			    us_udp_msg->send_json( msging );
 			    //sleep(1);
 			  } 
-
+			accumulated_msgs += "Rechecking beads\\n";
 
                         // qApp->processEvents();
                         double save_threshold = asa_hydro.threshold;
@@ -4245,7 +4306,7 @@ bool US_Saxs_Util::calc_grid_pdb(bool parameters_set_first_model)
 			if ( us_udp_msg )
 			  {
 			    map < QString, QString > msging;
-			    msging[ "progress_output" ] = QString("AtoB model calculation: %1\% of %2\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100); // arg(ppos).arg(mppos);
+			    msging[ "progress_output" ] = QString("AtoB model calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100); // arg(ppos).arg(mppos);
 			    msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
 			    
 			    us_udp_msg->send_json( msging );
@@ -4259,7 +4320,7 @@ bool US_Saxs_Util::calc_grid_pdb(bool parameters_set_first_model)
 			if ( us_udp_msg )
 			  {
 			    map < QString, QString > msging;
-			    msging[ "progress_output" ] = QString("AtoB model calculation: %1\% of %2\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100); // arg(ppos).arg(mppos);
+			    msging[ "progress_output" ] = QString("AtoB model calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100); // arg(ppos).arg(mppos);
 			    msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
 			    
 			    us_udp_msg->send_json( msging );
@@ -4283,7 +4344,7 @@ bool US_Saxs_Util::calc_grid_pdb(bool parameters_set_first_model)
 		       if ( us_udp_msg )
 			 {
 			   map < QString, QString > msging;
-			   msging[ "progress_output" ] = QString("AtoB model calculation: %1\% of %2\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100); // arg(ppos).arg(mppos);
+			   msging[ "progress_output" ] = QString("AtoB model calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100); // arg(ppos).arg(mppos);
 			   msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
 			   
 			   us_udp_msg->send_json( msging );
@@ -4297,7 +4358,7 @@ bool US_Saxs_Util::calc_grid_pdb(bool parameters_set_first_model)
 		       if ( us_udp_msg )
 			 {
 			   map < QString, QString > msging;
-			   msging[ "progress_output" ] = QString("AtoB model calculation: %1\% of %2\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100); // arg(ppos).arg(mppos);
+			   msging[ "progress_output" ] = QString("AtoB model calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100); // arg(ppos).arg(mppos);
 			 msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
 			 
 			 us_udp_msg->send_json( msging );
@@ -4332,7 +4393,7 @@ bool US_Saxs_Util::calc_grid_pdb(bool parameters_set_first_model)
 			    us_udp_msg->send_json( msging );
 			    //sleep(1);
 			  } 
-
+			accumulated_msgs += "Rechecking beads\\n";
 
                         // qApp->processEvents();
                         // all buried
@@ -4350,7 +4411,7 @@ bool US_Saxs_Util::calc_grid_pdb(bool parameters_set_first_model)
 			if ( us_udp_msg )
 			  {
 			    map < QString, QString > msging;
-			    msging[ "progress_output" ] = QString("AtoB model calculation: %1\% of %2\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100); // arg(ppos).arg(mppos);
+			    msging[ "progress_output" ] = QString("AtoB model calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100); // arg(ppos).arg(mppos);
 			    msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
 			    
 			    us_udp_msg->send_json( msging );
@@ -4362,7 +4423,7 @@ bool US_Saxs_Util::calc_grid_pdb(bool parameters_set_first_model)
 			if ( us_udp_msg )
 			  {
 			    map < QString, QString > msging;
-			    msging[ "progress_output" ] = QString("AtoB model calculation: %1\% of %2\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100); // arg(ppos).arg(mppos);
+			    msging[ "progress_output" ] = QString("AtoB model calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100); // arg(ppos).arg(mppos);
 			    msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
 			    
 			    us_udp_msg->send_json( msging );
@@ -4556,7 +4617,7 @@ bool US_Saxs_Util::calc_grid_pdb(bool parameters_set_first_model)
 		      us_udp_msg->send_json( msging );
 		      //sleep(1);
 		    } 
-		  
+		  accumulated_msgs += QString( "Volume of bead model %1\\n" ).arg( total_volume_of_bead_model( bead_model ) );
 
                   // progress->setProgress(progress->progress() + 1);
 
@@ -4564,7 +4625,7 @@ bool US_Saxs_Util::calc_grid_pdb(bool parameters_set_first_model)
 		  if ( us_udp_msg )
 		    {
 		      map < QString, QString > msging;
-		      msging[ "progress_output" ] = QString("AtoB model calculation: %1\% of %2\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100); // arg(ppos).arg(mppos);
+		      msging[ "progress_output" ] = QString("AtoB model calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100); // arg(ppos).arg(mppos);
 		      msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
 		      
 		      us_udp_msg->send_json( msging );
@@ -4618,12 +4679,13 @@ bool US_Saxs_Util::calc_grid_pdb(bool parameters_set_first_model)
    if ( us_udp_msg )
      {
        map < QString, QString > msging;
-       msging[ "progress_output" ] = QString("AtoB model calculation: %1\% of %2\%").arg(QString::number(100)).arg(100); // arg(ppos).arg(mppos);
+       msging[ "progress_output" ] = QString("AtoB model calculation: %1\%").arg(QString::number(100)).arg(100); // arg(ppos).arg(mppos);
        msging[ "progress1" ] = QString::number(1.0);
 		      
        us_udp_msg->send_json( msging );
        //sleep(1);
      }
+   
    // }
    //}
    
@@ -4654,7 +4716,8 @@ bool US_Saxs_Util::calc_grid_pdb(bool parameters_set_first_model)
 	  us_udp_msg->send_json( msging );
 		      //sleep(1);
 	} 
-      
+      accumulated_msgs += "Build bead model completed\\n";
+
       // qApp->processEvents();
       // pb_visualize->setEnabled(true);
       // pb_equi_grid_bead_model->setEnabled(true);
@@ -4674,6 +4737,7 @@ bool US_Saxs_Util::calc_grid_pdb(bool parameters_set_first_model)
 	 us_udp_msg->send_json( msging );
 	 //sleep(1);
        } 
+     accumulated_msgs += "Errors encountered\\n";
    }
 
    // pb_grid_pdb->setEnabled(true);
@@ -4831,6 +4895,7 @@ void US_Saxs_Util::bead_check( bool use_threshold, bool message_type )
        us_udp_msg->send_json( msging );
        //sleep(1);
       } 
+    accumulated_msgs += QString("%1 exposed beads became buried\\n").arg(e2b); 
 #endif
     if ( message_type ) 
       {
@@ -4843,6 +4908,7 @@ void US_Saxs_Util::bead_check( bool use_threshold, bool message_type )
       us_udp_msg->send_json( msging );
       //sleep(1);
      } 
+    accumulated_msgs += QString(QObject::tr("%1 beads are exposed\\n")).arg(b2e);
 } 
     else
     {
@@ -4855,6 +4921,7 @@ void US_Saxs_Util::bead_check( bool use_threshold, bool message_type )
 	  us_udp_msg->send_json( msging );
 	  //sleep(1);
 	 } 
+       accumulated_msgs += QString(QObject::tr("%1 previously buried beads are exposed by rechecking\\n")).arg(b2e); 
     }
 }
 
@@ -5227,7 +5294,8 @@ int US_Saxs_Util::radial_reduction( bool from_grid, int use_ppos, int mppos )
 	  
 	  us_udp_msg->send_json( msging );
 	  //sleep(1);
-	}   
+	}  
+      accumulated_msgs += QString("Begin popping stage %1\\n").arg(k + 1);
 
 //       progress->setProgress(progress->progress() + 1); 
 //       qApp->processEvents();
@@ -5236,7 +5304,7 @@ int US_Saxs_Util::radial_reduction( bool from_grid, int use_ppos, int mppos )
       if ( us_udp_msg )
 	{
 	  map < QString, QString > msging;
-	  msging[ "progress_output" ] = QString("AtoB model calculation: %1\% of %2\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100); // arg(ppos).arg(mppos);
+	  msging[ "progress_output" ] = QString("AtoB model calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100); // arg(ppos).arg(mppos);
 	  msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
 	  
 	  us_udp_msg->send_json( msging );
@@ -5447,7 +5515,8 @@ int US_Saxs_Util::radial_reduction( bool from_grid, int use_ppos, int mppos )
 		     
 		     us_udp_msg->send_json( msging );
 		     //sleep(1);
-		   }   
+		   } 
+		 accumulated_msgs += QString("Beads popped %1, Go back to stage %2\\n").arg(beads_popped).arg(k);
 		 
 		 // printf("fused sc/mc bead in stage SC/MC, back to stage SC\n");
 		 k = 0;
@@ -5457,7 +5526,7 @@ int US_Saxs_Util::radial_reduction( bool from_grid, int use_ppos, int mppos )
 		 if ( us_udp_msg )
 		   {
 		     map < QString, QString > msging;
-		     msging[ "progress_output" ] = QString("AtoB model calculation: %1\% of %2\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100); // arg(ppos).arg(mppos);
+		     msging[ "progress_output" ] = QString("AtoB model calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100); // arg(ppos).arg(mppos);
 		     msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
 		     
 		     us_udp_msg->send_json( msging );
@@ -5499,7 +5568,7 @@ int US_Saxs_Util::radial_reduction( bool from_grid, int use_ppos, int mppos )
       if ( us_udp_msg )
 	{
 	  map < QString, QString > msging;
-	  msging[ "progress_output" ] = QString("AtoB model calculation: %1\% of %2\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100); // arg(ppos).arg(mppos);
+	  msging[ "progress_output" ] = QString("AtoB model calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100); // arg(ppos).arg(mppos);
 	  msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
 	  
 	  us_udp_msg->send_json( msging );
@@ -5516,6 +5585,7 @@ int US_Saxs_Util::radial_reduction( bool from_grid, int use_ppos, int mppos )
 	  us_udp_msg->send_json( msging );
 	  //sleep(1);
 	}   
+      accumulated_msgs += QString("Beads popped %1.\\nBegin radial reduction stage %2\\n").arg(beads_popped).arg(k + 1); 
 
 //       qApp->processEvents();
 
@@ -6104,6 +6174,7 @@ int US_Saxs_Util::radial_reduction( bool from_grid, int use_ppos, int mppos )
 		   us_udp_msg->send_json( msging );
 		   //sleep(1);
 		 }   
+	       accumulated_msgs += QString(" %1").arg(iter);
 #endif
                //   lbl_core_progress->setText(QString("Stage %1 synchronous radial reduction iteration %2").arg(k+1).arg(iter));
                //               qApp->processEvents();
@@ -6491,7 +6562,7 @@ int US_Saxs_Util::radial_reduction( bool from_grid, int use_ppos, int mppos )
 	 if ( us_udp_msg )
 	   {
 	     map < QString, QString > msging;
-	     msging[ "progress_output" ] = QString("AtoB model calculation: %1\% of %2\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100); // arg(ppos).arg(mppos);
+	     msging[ "progress_output" ] = QString("AtoB model calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100); // arg(ppos).arg(mppos);
 	     msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
 	     
 	     us_udp_msg->send_json( msging );
@@ -6555,13 +6626,14 @@ int US_Saxs_Util::radial_reduction( bool from_grid, int use_ppos, int mppos )
        us_udp_msg->send_json( msging );
        //sleep(1);
      }   
+    accumulated_msgs += "Finished with popping and radial reduction\\n"; 
 
 //    progress->setProgress(end_progress); 
    
    if ( us_udp_msg )
      {
        map < QString, QString > msging;
-       msging[ "progress_output" ] = QString("AtoB model calculation: %1\% of %2\%").arg(QString::number( int((double(end_progress)/double(mppos))*100.0) ) ).arg(100); // arg(ppos).arg(mppos);
+       msging[ "progress_output" ] = QString("AtoB model calculation: %1\%").arg(QString::number( int((double(end_progress)/double(mppos))*100.0) ) ).arg(100); // arg(ppos).arg(mppos);
        msging[ "progress1" ] = QString::number(double(end_progress)/double(mppos));
        
        us_udp_msg->send_json( msging );
@@ -6697,7 +6769,11 @@ int US_Saxs_Util::overlap_check(bool sc, bool mc, bool buried, double tolerance,
 		   
 		   us_udp_msg->send_json( msging );
 		   //sleep(1);
-		 }   
+		 } 
+	       accumulated_msgs += QString(QObject::tr("WARNING: Bead model has an overlap violation on beads %1 %2 overlap %3 A\\n"))
+		     .arg(i + 1)
+		     .arg(j + 1)
+		     .arg(separation);
 
                // editor->setColor(save_color);
 #if defined(DEBUG_OVERLAP)
@@ -6767,7 +6843,7 @@ int US_Saxs_Util::do_calc_hydro()
       us_udp_msg->send_json( msging );
       //sleep(1);
     }   
-
+  accumulated_msgs += "\\nBegin hydrodynamic calculations\\n\\n";
 
    results_hydro.s20w_sd = 0.0;
    results_hydro.D20w_sd = 0.0;
@@ -6804,7 +6880,7 @@ int US_Saxs_Util::do_calc_hydro()
 		  us_udp_msg->send_json( msging );
 		  //sleep(1);
 		}   
-	      
+	      accumulated_msgs += QString( "Model %1 will be included\\n").arg( curr_m + 1); 
 	      // model_names.push_back( model_name( current_model ) );
 	      // bead_model = bead_models[current_model];
 	      
@@ -6830,7 +6906,8 @@ int US_Saxs_Util::do_calc_hydro()
 		    
 		    us_udp_msg->send_json( msging );
 		    //sleep(1);
-		  }   
+		  } 
+		accumulated_msgs += QString("Model %1 - selected but bead model not built\\n").arg(  curr_m + 1 );
 	      }
      }
    // }
@@ -6853,7 +6930,12 @@ int US_Saxs_Util::do_calc_hydro()
        
        us_udp_msg->send_json( msging );
        //sleep(1);
-     }   
+     } 
+   accumulated_msgs += QString("%1")
+                   //       .arg(hydro.overlap_cutoff ? hydro.overlap : overlap_tolerance)
+                   .arg((fabs((hydro.overlap_cutoff ? hydro.overlap : overlap_tolerance) - overlap_tolerance) > 1e-5)
+                        ? QString("\nNotice: Overlap reduction bead overlap tolerance %1 does not equal the manually selected hydrodynamic calculations bead overlap cut-off %2\\n")
+                        .arg(overlap_tolerance).arg(hydro.overlap) : "");
    
 
    // qApp->processEvents();
@@ -6871,7 +6953,8 @@ int US_Saxs_Util::do_calc_hydro()
 
    //le_bead_model_suffix->setText(bead_model_suffix);
    
- 
+   //qDebug (accumulated_msgs);
+
    int retval = us_hydrodyn_supc_main_hydro(bead_model_from_file, 
 					    misc,
 					    &results_hydro,                                  
@@ -6898,9 +6981,12 @@ int US_Saxs_Util::do_calc_hydro()
 					    // editor,
 					    // this,
 					    us_log,
-					    us_udp_msg
+					    us_udp_msg,
+					    &accumulated_msgs
 					    );
 
+
+   //qDebug (accumulated_msgs);
 
    // chdir(somo_tmp_dir);
    // if (stopFlag)
@@ -6932,7 +7018,8 @@ int US_Saxs_Util::do_calc_hydro()
 	  
 	  us_udp_msg->send_json( msging );
 	  //sleep(1);
-	}   
+	} 
+      accumulated_msgs += "Calculate hydrodynamics failed\\n\\n";  
       //qApp->processEvents();
       switch ( retval )
       {
@@ -6986,6 +7073,7 @@ int US_Saxs_Util::do_calc_hydro()
        us_udp_msg->send_json( msging );
 	  //sleep(1);
      }   
+   accumulated_msgs += "Calculate hydrodynamics completed\\n";
    // if ( advanced_config.auto_show_hydro ) 
    // {
    //    show_hydro_results();
@@ -7094,7 +7182,8 @@ QString US_Saxs_Util::getExtendedSuffix(bool prerun, bool somo)
        
        us_udp_msg->send_json( msging );
        //sleep(1);
-     }   
+     } 
+   accumulated_msgs += result;
    result.replace( ".", "_" );
    return result;
 }
@@ -7207,7 +7296,7 @@ QString US_Saxs_Util::getExtendedSuffix_somo(bool prerun, bool somo, bool no_ovl
       us_udp_msg->send_json( msging );
       //sleep(1);
      }
-
+   accumulated_msgs += result;
    result.replace( ".", "_" );
    return result;
 }
@@ -7829,7 +7918,7 @@ void US_Saxs_Util::reload_pdb(bool parameters_set_first_model)
        us_udp_msg->send_json( msging );
        //sleep(1);
      }
-
+   accumulated_msgs += "\\nReloading PDB file.\\n";
 
    // if ( advanced_config.debug_1 )
    // {
@@ -7861,6 +7950,7 @@ void US_Saxs_Util::reload_pdb(bool parameters_set_first_model)
 	  us_udp_msg->send_json( msging );
 	  //sleep(1);
 	}
+      accumulated_msgs += QString("Checking the pdb structure for model %1\\n").arg(  i + 1  );
       
       if (check_for_missing_atoms_hydro(&error_string, &model_vector[i], parameters_set_first_model))
       {
@@ -7880,6 +7970,8 @@ void US_Saxs_Util::reload_pdb(bool parameters_set_first_model)
 	     us_udp_msg->send_json( msging );
 	     //sleep(1);
 	   }
+	 accumulated_msgs += QString("Encountered errors with your PDB structure for model %1:\\n").
+	       arg( i ) + error_string_udp;
          // printError(QString("Encountered errors with your PDB structure for model %1:\n").
          //            arg( model_name( i ) ) + "please check the text window");
       }
@@ -7899,12 +7991,13 @@ void US_Saxs_Util::reload_pdb(bool parameters_set_first_model)
        us_udp_msg->send_json( msging );
        //sleep(1); 
      }
-   
+   accumulated_msgs += QString("Loaded pdb file : %1\\n").arg(errors_found ? "ERRORS PRESENT" : "ok\\n");
+
    if ( errors_found )
    {
       calc_vol_for_saxs();
    } else {
-      calc_mw();
+      calc_mw_hydro();
    }
    bead_models.clear();
    somo_processed.clear();
@@ -7985,7 +8078,7 @@ int US_Saxs_Util::calc_somo( bool no_ovlp_removal, bool parameters_set_first_mod
        us_udp_msg->send_json( msging );
        //sleep(1);
      } 
-   
+   accumulated_msgs += QString( QObject::tr( "Peptide Bond Rule is %1 for this PDB\\n\\n" ) ).arg( misc.pb_rule_on ? "on" : "off" );
 
    options_log = "";
    no_ovlp_removal ? append_options_log_somo_ovlp() : append_options_log_somo();
@@ -8067,7 +8160,7 @@ int US_Saxs_Util::calc_somo( bool no_ovlp_removal, bool parameters_set_first_mod
       us_udp_msg->send_json( msging );
       //sleep(1); 
      }
-   
+   accumulated_msgs += msg_udp;
 
    //   for (current_model = 0; current_model < (unsigned int)lb_model->numRows(); current_model++)
   
@@ -8093,6 +8186,7 @@ int US_Saxs_Util::calc_somo( bool no_ovlp_removal, bool parameters_set_first_mod
 		     us_udp_msg->send_json( msging );
 		     //sleep(1); 
 		   }
+		 accumulated_msgs += "Rechecking beads\\n";
 		 // qApp->processEvents();
 		 
 		 bead_check(false, false);
@@ -8105,7 +8199,8 @@ int US_Saxs_Util::calc_somo( bool no_ovlp_removal, bool parameters_set_first_mod
 		      us_udp_msg->send_json( msging );
 		      //sleep(1); 
 		   }
-
+		 accumulated_msgs += "Finished rechecking beads\\n";
+		 
 		 // progress->setProgress(19);
 		 int ppos = 19;
 		 int mppos = 18 + (asa_hydro.recheck_beads ? 1 : 0);
@@ -8113,7 +8208,7 @@ int US_Saxs_Util::calc_somo( bool no_ovlp_removal, bool parameters_set_first_mod
 		 if ( us_udp_msg )
 		   {
 		     map < QString, QString > msging;
-		     msging[ "progress_output" ] = QString("SOMO model calculation: %1\% of %2\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100); // arg(ppos).arg(mppos);
+		     msging[ "progress_output" ] = QString("SOMO model calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100); // arg(ppos).arg(mppos);
 		     msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
 		     
 		     us_udp_msg->send_json( msging );
@@ -8131,6 +8226,7 @@ int US_Saxs_Util::calc_somo( bool no_ovlp_removal, bool parameters_set_first_mod
 		     us_udp_msg->send_json( msging );
 		     //sleep(1); 
 		   }
+		 accumulated_msgs += "No rechecking of beads\\n";
 		 //qApp->processEvents();
 	       }
 	     bead_models[current_model] = bead_model;
@@ -8196,6 +8292,7 @@ int US_Saxs_Util::calc_somo( bool no_ovlp_removal, bool parameters_set_first_mod
 	  us_udp_msg->send_json( msging );
 	  //sleep(1); 
 	}
+      accumulated_msgs += "Build bead model completed\\n"; 
       // qApp->processEvents();
       // pb_visualize->setEnabled(true);
       // pb_equi_grid_bead_model->setEnabled(true);
@@ -8215,6 +8312,7 @@ int US_Saxs_Util::calc_somo( bool no_ovlp_removal, bool parameters_set_first_mod
 	  us_udp_msg->send_json( msging );
 	  //sleep(1); 
 	}
+      accumulated_msgs += "Errors encountered\\n";
    }
 
    // pb_somo->setEnabled(true);
@@ -8261,6 +8359,8 @@ int US_Saxs_Util::compute_asa( bool bd_mode, bool no_ovlp_removal, bool paramete
        us_udp_msg->send_json( msging );
        //sleep(1); 
      }
+   accumulated_msgs += QString("\\nBuilding the bead model for %1 model %2\\n").arg(project).arg( current_model +1  );
+
    us_log->log("Checking the pdb structure\n");
    if ( us_udp_msg )
      {
@@ -8270,7 +8370,7 @@ int US_Saxs_Util::compute_asa( bool bd_mode, bool no_ovlp_removal, bool paramete
        us_udp_msg->send_json( msging );
        //sleep(1); 
      }
-
+   accumulated_msgs += "Checking the pdb structure\\n";
 
    bool use_parameters_set_first_model = parameters_set_first_model;
 
@@ -8290,6 +8390,8 @@ int US_Saxs_Util::compute_asa( bool bd_mode, bool no_ovlp_removal, bool paramete
 	  us_udp_msg->send_json( msging );
 	  //sleep(1); 
 	}
+      accumulated_msgs += "Encountered the following errors with your PDB structure:\\n" +
+	    error_string_udp; 
       // printError("Encountered errors with your PDB structure:\n"
       //            "please check the text window");
       return -1;
@@ -8306,7 +8408,8 @@ int US_Saxs_Util::compute_asa( bool bd_mode, bool no_ovlp_removal, bool paramete
        us_udp_msg->send_json( msging );
        //sleep(1); 
      }
-
+   accumulated_msgs += "PDB structure ok\\n";
+     
    int mppos = 18 + (asa_hydro.recheck_beads ? 1 : 0);
    //progress->setTotalSteps(mppos);
    int ppos = 1;
@@ -8317,7 +8420,7 @@ int US_Saxs_Util::compute_asa( bool bd_mode, bool no_ovlp_removal, bool paramete
    if ( us_udp_msg )
      {
        map < QString, QString > msging;
-       msging[ "progress_output" ] = QString("SOMO model calculation: %1\% of %2\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100); // arg(ppos).arg(mppos);
+       msging[ "progress_output" ] = QString("SOMO model calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100); // arg(ppos).arg(mppos);
        msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
        
        us_udp_msg->send_json( msging );
@@ -8341,6 +8444,7 @@ int US_Saxs_Util::compute_asa( bool bd_mode, bool no_ovlp_removal, bool paramete
 	  us_udp_msg->send_json( msging );
 	  //sleep(1); 
 	}
+      accumulated_msgs += QString("There are %1 atoms in %2 chain(s) in this model\\n").arg(no_of_atoms).arg(no_of_molecules);
    }
    // if (stopFlag)
    // {
@@ -8360,6 +8464,7 @@ int US_Saxs_Util::compute_asa( bool bd_mode, bool no_ovlp_removal, bool paramete
 	   us_udp_msg->send_json( msging );
 	   //sleep(1); 
 	 }
+       accumulated_msgs += "Errors found during the initial creation of beads\\n";
       // progress->setProgress(mppos);
       // qApp->processEvents();
       // if (stopFlag)
@@ -8493,7 +8598,8 @@ int US_Saxs_Util::compute_asa( bool bd_mode, bool no_ovlp_removal, bool paramete
 	 us_udp_msg->send_json( msging );
 	 //sleep(1); 
        }
-
+     accumulated_msgs += "Computing ASA via ASAB1\\n"; 
+     
       // qApp->processEvents();
       // if (stopFlag)
       // {
@@ -8517,7 +8623,7 @@ int US_Saxs_Util::compute_asa( bool bd_mode, bool no_ovlp_removal, bool paramete
       if ( us_udp_msg )
 	{
 	  map < QString, QString > msging;
-	  msging[ "progress_output" ] = QString("SOMO model calculation: %1\% of %2\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100); // arg(ppos).arg(mppos);
+	  msging[ "progress_output" ] = QString("SOMO model calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100); // arg(ppos).arg(mppos);
 	  msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
 	  
 	  us_udp_msg->send_json( msging );
@@ -8534,7 +8640,7 @@ int US_Saxs_Util::compute_asa( bool bd_mode, bool no_ovlp_removal, bool paramete
 	  us_udp_msg->send_json( msging );
 	  //sleep(1); 
 	}
-
+      accumulated_msgs += "Return from Computing ASA\\n"; 
       // if (stopFlag)
       // {
       //    return -1;
@@ -8554,6 +8660,7 @@ int US_Saxs_Util::compute_asa( bool bd_mode, bool no_ovlp_removal, bool paramete
 	    us_udp_msg->send_json( msging );
 	    //sleep(1); 
 	  }
+	accumulated_msgs += "Errors found during ASA calculation\\n";
       //    progress->setProgress(mppos);
       //    qApp->processEvents();
       //    if (stopFlag)
@@ -8627,7 +8734,7 @@ int US_Saxs_Util::compute_asa( bool bd_mode, bool no_ovlp_removal, bool paramete
    if ( us_udp_msg )
      {
        map < QString, QString > msging;
-       msging[ "progress_output" ] = QString("SOMO model calculation: %1\% of %2\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100); // arg(ppos).arg(mppos);
+       msging[ "progress_output" ] = QString("SOMO model calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100); // arg(ppos).arg(mppos);
        msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
        
        us_udp_msg->send_json( msging );
@@ -8924,7 +9031,7 @@ int US_Saxs_Util::compute_asa( bool bd_mode, bool no_ovlp_removal, bool paramete
    if ( us_udp_msg )
      {
        map < QString, QString > msging;
-       msging[ "progress_output" ] = QString("SOMO model calculation: %1\% of %2\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100); // arg(ppos).arg(mppos);
+       msging[ "progress_output" ] = QString("SOMO model calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100); // arg(ppos).arg(mppos);
        msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
        
        us_udp_msg->send_json( msging );
@@ -9195,6 +9302,7 @@ int US_Saxs_Util::compute_asa( bool bd_mode, bool no_ovlp_removal, bool paramete
 		       us_udp_msg->send_json( msging );
 		       //sleep(1); 
 		     }
+		   accumulated_msgs += "Chain has broken end and PBR-NO-OXT isn't uniquely defined in the residue file.";
 		   //    editor->setColor(save_color);
 		 }
             }
@@ -9243,6 +9351,7 @@ int US_Saxs_Util::compute_asa( bool bd_mode, bool no_ovlp_removal, bool paramete
 		    us_udp_msg->send_json( msging );
 		    //sleep(1); 
 		  }
+		accumulated_msgs += "Chain has no terminating OXT and PBR-NO-OXT isn't uniquely defined in the residue file.";
 		//    editor->setColor(save_color);
 	      }
          }
@@ -9255,7 +9364,7 @@ int US_Saxs_Util::compute_asa( bool bd_mode, bool no_ovlp_removal, bool paramete
    if ( us_udp_msg )
      {
        map < QString, QString > msging;
-       msging[ "progress_output" ] = QString("SOMO model calculation: %1\% of %2\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100); // arg(ppos).arg(mppos);
+       msging[ "progress_output" ] = QString("SOMO model calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100); // arg(ppos).arg(mppos);
        msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
        
        us_udp_msg->send_json( msging );
@@ -9302,7 +9411,7 @@ int US_Saxs_Util::compute_asa( bool bd_mode, bool no_ovlp_removal, bool paramete
    if ( us_udp_msg )
      {
        map < QString, QString > msging;
-       msging[ "progress_output" ] = QString("SOMO model calculation: %1\% of %2\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100); // arg(ppos).arg(mppos);
+       msging[ "progress_output" ] = QString("SOMO model calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100); // arg(ppos).arg(mppos);
        msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
        
        us_udp_msg->send_json( msging );
@@ -9503,7 +9612,7 @@ int US_Saxs_Util::compute_asa( bool bd_mode, bool no_ovlp_removal, bool paramete
    if ( us_udp_msg )
      {
        map < QString, QString > msging;
-       msging[ "progress_output" ] = QString("SOMO model calculation: %1\% of %2\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100); // arg(ppos).arg(mppos);
+       msging[ "progress_output" ] = QString("SOMO model calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100); // arg(ppos).arg(mppos);
        msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
        
        us_udp_msg->send_json( msging );
@@ -9695,6 +9804,10 @@ int US_Saxs_Util::compute_asa( bool bd_mode, bool no_ovlp_removal, bool paramete
        us_udp_msg->send_json( msging );
        //sleep(1); 
      }
+   accumulated_msgs +=  QString("There are %1 beads in this model%2\\n")
+	       .arg(bead_model.size())
+	       .arg(bd_mode ? "" : " before popping");
+
    
 //    progress->setProgress(ppos++); // 8
 //    qApp->processEvents();
@@ -9702,7 +9815,7 @@ int US_Saxs_Util::compute_asa( bool bd_mode, bool no_ovlp_removal, bool paramete
    if ( us_udp_msg )
      {
        map < QString, QString > msging;
-       msging[ "progress_output" ] = QString("SOMO model calculation: %1\% of %2\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100); // arg(ppos).arg(mppos);
+       msging[ "progress_output" ] = QString("SOMO model calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100); // arg(ppos).arg(mppos);
        msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
        
        us_udp_msg->send_json( msging );
@@ -9929,6 +10042,7 @@ int US_Saxs_Util::compute_asa( bool bd_mode, bool no_ovlp_removal, bool paramete
 	      us_udp_msg->send_json( msging );
 	      //sleep(1); 
 	    }
+	  accumulated_msgs +=  QString("Begin popping stage %1\\n").arg(k + 1); 
 	}
       
       // progress->setProgress(ppos++); // 9, 10, 11
@@ -9938,7 +10052,7 @@ int US_Saxs_Util::compute_asa( bool bd_mode, bool no_ovlp_removal, bool paramete
       if ( us_udp_msg )
 	{
 	  map < QString, QString > msging;
-	  msging[ "progress_output" ] = QString("SOMO model calculation: %1\% of %2\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100); // arg(ppos).arg(mppos);
+	  msging[ "progress_output" ] = QString("SOMO model calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100); // arg(ppos).arg(mppos);
 	  msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
 	  
 	  us_udp_msg->send_json( msging );
@@ -10146,6 +10260,7 @@ int US_Saxs_Util::compute_asa( bool bd_mode, bool no_ovlp_removal, bool paramete
 		     us_udp_msg->send_json( msging );
 		     //sleep(1); 
 		   }
+		 accumulated_msgs += QString("Beads popped %1, Go back to stage %2\\n").arg(beads_popped).arg(k); 
 		 // printf("fused sc/mc bead in stage SC/MC, back to stage SC\n");
                   k = 0;
                   ppos -= 4;
@@ -10178,7 +10293,7 @@ int US_Saxs_Util::compute_asa( bool bd_mode, bool no_ovlp_removal, bool paramete
       if ( us_udp_msg )
 	{
 	  map < QString, QString > msging;
-	  msging[ "progress_output" ] = QString("SOMO model calculation: %1\% of %2\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100); // arg(ppos).arg(mppos);
+	  msging[ "progress_output" ] = QString("SOMO model calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100); // arg(ppos).arg(mppos);
        msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
        
        us_udp_msg->send_json( msging );
@@ -10196,6 +10311,7 @@ int US_Saxs_Util::compute_asa( bool bd_mode, bool no_ovlp_removal, bool paramete
 	     us_udp_msg->send_json( msging );
 	     //sleep(1); 
 	   }
+	 accumulated_msgs += QString("Beads popped %1.\\nBegin radial reduction stage %2\\n").arg(beads_popped).arg(k + 1);
 
       }
       // qApp->processEvents();
@@ -11101,7 +11217,7 @@ int US_Saxs_Util::compute_asa( bool bd_mode, bool no_ovlp_removal, bool paramete
 	 if ( us_udp_msg )
 	   {
 	     map < QString, QString > msging;
-	     msging[ "progress_output" ] = QString("SOMO model calculation: %1\% of %2\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100); // arg(ppos).arg(mppos);
+	     msging[ "progress_output" ] = QString("SOMO model calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100); // arg(ppos).arg(mppos);
 	     msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
 	     
 	     us_udp_msg->send_json( msging );
@@ -11172,25 +11288,27 @@ int US_Saxs_Util::compute_asa( bool bd_mode, bool no_ovlp_removal, bool paramete
 	  us_udp_msg->send_json( msging );
 	  //sleep(1); 
 	}
+      accumulated_msgs += "Finished with popping and radial reduction\\n"; 
    }
    // progress->setProgress(mppos - (asa_hydro.recheck_beads ? 1 : 0));
 
    if ( us_udp_msg )
      {
        map < QString, QString > msging;
-       msging[ "progress_output" ] = QString("SOMO model calculation: %1\% of %2\%").arg(QString::number( int((double(mppos - (asa_hydro.recheck_beads ? 1 : 0))/double(mppos))*100.0) ) ).arg(100); // arg(ppos).arg(mppos);
+       msging[ "progress_output" ] = QString("SOMO model calculation: %1\%").arg(QString::number( int((double(mppos - (asa_hydro.recheck_beads ? 1 : 0))/double(mppos))*100.0) ) ).arg(100); // arg(ppos).arg(mppos);
        msging[ "progress1" ] = QString::number(double(mppos - (asa_hydro.recheck_beads ? 1 : 0))/double(mppos));
        
        us_udp_msg->send_json( msging );
        //sleep(1);
      }
    
+   
    if ( bd_mode || no_ovlp_removal )
      {
        if ( us_udp_msg )
 	 {
 	   map < QString, QString > msging;
-	   msging[ "progress_output" ] = QString("SOMO model calculation: %1\% of %2\%").arg(QString::number(100)).arg(100); // arg(ppos).arg(mppos);
+	   msging[ "progress_output" ] = QString("SOMO model calculation: %1\%").arg(QString::number(100)).arg(100); // arg(ppos).arg(mppos);
 	   msging[ "progress1" ] = QString::number(1);
 	   
 	   us_udp_msg->send_json( msging );
@@ -11283,6 +11401,7 @@ bool US_Saxs_Util::read_pdb_hydro( QString filename, bool parameters_set_first_m
 	     us_udp_msg->send_json( msging );
 	     //sleep(1);
 	   } 
+	  accumulated_msgs += QString("PDB %1: %2\\n").arg(str1.left(6)).arg(tmp_str);
 	 }   
          if (str1.left(5) == "MODEL" ||
              (str1.left(4) == "ATOM" && last_was_ENDMDL) ) // we have a new model in a multi-model file
@@ -11318,6 +11437,7 @@ bool US_Saxs_Util::read_pdb_hydro( QString filename, bool parameters_set_first_m
 		us_udp_msg->send_json( msging );
 		//sleep(1);
 	      }   
+	    accumulated_msgs +=  "\\nResidue sequence from " + project +".pdb model " + QString("%1").arg( temp_model.model_id ) + ": \\n";
 
 	    // editor->append("\nResidue sequence from " + project +".pdb model " +
 	    //    QString("%1").arg( temp_model.model_id ) + ": \n");
@@ -11375,6 +11495,7 @@ bool US_Saxs_Util::read_pdb_hydro( QString filename, bool parameters_set_first_m
 		us_udp_msg->send_json( msging );
 		//sleep(1);
 	      }   
+	    accumulated_msgs += str; 
 
 	    us_log->log(QObject::tr("\nSequence in one letter code:\n"));
 	    if ( us_udp_msg )
@@ -11384,6 +11505,7 @@ bool US_Saxs_Util::read_pdb_hydro( QString filename, bool parameters_set_first_m
 		us_udp_msg->send_json( msging );
 		//sleep(1);
 	      }   
+	     accumulated_msgs += QObject::tr("\\n\\nSequence in one letter code:\\n");  
 	    
 	    us_log->log(sstr + "\n\n");
 	    if ( us_udp_msg )
@@ -11393,6 +11515,7 @@ bool US_Saxs_Util::read_pdb_hydro( QString filename, bool parameters_set_first_m
 		us_udp_msg->send_json( msging );
 		//sleep(1);
 	      }   
+	    accumulated_msgs += sstr_udp + "\\n\\n";
 	    
 
             
@@ -11476,6 +11599,8 @@ bool US_Saxs_Util::read_pdb_hydro( QString filename, bool parameters_set_first_m
 	    us_udp_msg->send_json( msging );
 	  //sleep(1);
 	}   
+      accumulated_msgs += "\\nResidue sequence from " + project +".pdb model " + QString("%1").arg( temp_model.model_id ) + ": \\n";
+
       
       str = "";
       QString sstr = "";
@@ -11529,6 +11654,7 @@ bool US_Saxs_Util::read_pdb_hydro( QString filename, bool parameters_set_first_m
 	  us_udp_msg->send_json( msging );
 	  //sleep(1);
 	}   
+      accumulated_msgs += str;
       
       us_log->log(QObject::tr("\nSequence in one letter code:\n"));
       if ( us_udp_msg )
@@ -11538,6 +11664,7 @@ bool US_Saxs_Util::read_pdb_hydro( QString filename, bool parameters_set_first_m
 	  us_udp_msg->send_json( msging );
 	  //sleep(1);
 	}   
+      accumulated_msgs += QObject::tr("\\n\\nSequence in one letter code:\\n");
       
       us_log->log(sstr + "\n\n");
       if ( us_udp_msg )
@@ -11547,6 +11674,7 @@ bool US_Saxs_Util::read_pdb_hydro( QString filename, bool parameters_set_first_m
 	  us_udp_msg->send_json( msging );
 	  //sleep(1);
 	}   
+      accumulated_msgs += sstr_udp + "\\n\\n";
 	    
      
       //noticemsg += str;
@@ -11687,6 +11815,7 @@ int US_Saxs_Util::write_pdb_hydro( QString fname, vector < PDB_atom > *model )
 	       us_udp_msg->send_json( msging );
 	       //sleep(1); 
 	     }
+	   accumulated_msgs += "unexpected regexp extract failure (write_pdb)!\\n"; 
 	   return -1;
          }
          tmp_suint_i.x = rx.cap(1).toInt();
@@ -11831,6 +11960,7 @@ int US_Saxs_Util::create_beads_hydro(QString *error_string, bool quiet)
 	  us_udp_msg->send_json( msging );
 	  //sleep(1); 
 	}
+      accumulated_msgs += "Creating beads from atomic model\\n";
       //qApp->processEvents();
    }
    active_atoms.clear();
@@ -11854,6 +11984,7 @@ int US_Saxs_Util::create_beads_hydro(QString *error_string, bool quiet)
 	  us_udp_msg->send_json( msging );
 	  //sleep(1); 
 	}
+       accumulated_msgs += QString("There are %1 atoms in %2 molecule(s) in this model\\n").arg(no_of_atoms).arg(no_of_molecules); 
    }
 #endif
    get_atom_map(&model_vector[current_model]);

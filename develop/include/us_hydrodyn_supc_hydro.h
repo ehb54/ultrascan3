@@ -44,7 +44,8 @@ us_hydrodyn_supc_main_hydro(bool bead_model_from_file,
 			    /* QTextEdit *editor, */
 			    /* US_Hydrodyn *us_hydrodyn); */
 			      US_Log * us_log,
-			      US_Udp_Msg * us_udp_msg
+			    US_Udp_Msg * us_udp_msg,
+			    QString *  accumulated_msgs
 			      );
 
 #define US_HYDRODYN_SUPC_ERR_MEMORY_ALLOC   -1

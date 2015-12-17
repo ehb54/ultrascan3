@@ -24,6 +24,7 @@ static std::basic_ostream<char>& operator<<(std::basic_ostream<char>& os, const 
 static US_Log *us_log;
 static US_Udp_Msg * us_udp_msg;
 
+
 #define NR_END 1
 #define FREE_ARG char*
 #define VW_average_radius 1.5   /* Van der Walls average radius equal to 1.5 A */
@@ -683,7 +684,8 @@ AtoB(PDB * pdb,
 vector < PDB_atom > us_hydrodyn_grid_atob_hydro(vector < PDB_atom > *bead_model,
 						grid_options * use_grid_options , 
 						US_Log * use_us_log,
-						US_Udp_Msg * use_us_udp_msg)
+						US_Udp_Msg * use_us_udp_msg,
+						QString * accumulated_msgs)
 						// QProgressBar * use_progress, 
 						// QTextEdit * use_editor,
 						//US_Hydrodyn * use_us_hydrodyn) 
@@ -694,6 +696,7 @@ vector < PDB_atom > us_hydrodyn_grid_atob_hydro(vector < PDB_atom > *bead_model,
    // us_hydrodyn->errorFlag = false;
   us_log = use_us_log;
   us_udp_msg = use_us_udp_msg;
+
 
 #if defined(DEBUG)
    puts("grid_atob 0");
@@ -894,6 +897,9 @@ vector < PDB_atom > us_hydrodyn_grid_atob_hydro(vector < PDB_atom > *bead_model,
 	   us_udp_msg->send_json( msging );
 	   //sleep(1);
 	 } 
+       //accumulated_msgs += "ERROR: Memory allocation failure.  Please try a larger grid cube size and/or close all other applications";
+       accumulated_msgs->append("ERROR: Memory allocation failure.  Please try a larger grid cube size and/or close all other applications");
+       
        //    us_hydrodyn->editor->setColor(save_color);
    //    us_hydrodyn->errorFlag = true;
        vector < PDB_atom > empty_result;
@@ -1010,7 +1016,7 @@ vector < PDB_atom > us_hydrodyn_grid_atob_hydro(vector < PDB_atom > *bead_model,
 	  us_udp_msg->send_json( msging );
 	  //sleep(1);
 	} 
-      
+      accumulated_msgs->append("ERROR: Memory allocation failure.  Please try a larger grid cube size and/or close all other applications");
       // us_hydrodyn->editor->setColor(save_color);
       // us_hydrodyn->errorFlag = true;
       vector < PDB_atom > empty_result;
@@ -1101,6 +1107,7 @@ vector < PDB_atom > us_hydrodyn_grid_atob_hydro(vector < PDB_atom > *bead_model,
        us_udp_msg->send_json( msging );
        //sleep(1); 
      }
+   accumulated_msgs->append(QString("Grid contains %1 beads\\n").arg(result_bead_model.size())); 
 
    // printf("bead model size %d\n", (int)result_bead_model.size()); fflush(stdout);
    // if ( us_hydrodyn->advanced_config.debug_1 )

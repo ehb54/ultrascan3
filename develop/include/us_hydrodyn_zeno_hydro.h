@@ -22,7 +22,9 @@ class US_Hydrodyn_Zeno
          hydro_options *         options,
 	 hydro_results *         results,
 	 US_Log *                us_log,
-	 US_Udp_Msg *            us_udp_msg);
+	 US_Udp_Msg *            us_udp_msg,
+	 QString *               accumulated_msgs
+			 );
 /* US_Hydrodyn *           us_hydrodyn */
 /* ); */
 
@@ -42,6 +44,7 @@ class US_Hydrodyn_Zeno
    //   US_Hydrodyn *           us_hydrodyn;
    US_Log *                us_log;
    US_Udp_Msg *            us_udp_msg;
+   QString *               accumulated_msgs;
    bool                    keep_files;
 };
 

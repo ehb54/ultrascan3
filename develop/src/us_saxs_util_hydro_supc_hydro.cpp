@@ -408,6 +408,7 @@ static int active_model;
 //static US_Hydrodyn *us_hydrodyn;
 static US_Log *us_log;
 static US_Udp_Msg *us_udp_msg;
+static QString * accumulated_msgs;
 
 static vector < float > total_asa;
 static vector < float > used_asa;
@@ -649,7 +650,8 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
 			    // QTextEdit *use_editor,
 			    // US_Hydrodyn *use_us_hydrodyn,
 			    US_Log *use_us_log,
-			    US_Udp_Msg *use_us_udp_msg)
+			    US_Udp_Msg *use_us_udp_msg,
+			    QString *  use_accumulated_msgs)
 {
    dt = 0;
    dtn = 0;
@@ -704,6 +706,7 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
    // us_hydrodyn = use_us_hydrodyn;
    us_log = use_us_log;
    us_udp_msg = use_us_udp_msg;
+   accumulated_msgs = use_accumulated_msgs;
 
 #if defined(DEBUG_WW)
    cks = 0e0;
@@ -802,6 +805,7 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
 	 us_udp_msg->send_json( msging );
 	  //sleep(1);
        }   
+     accumulated_msgs->append("\\nNo selected models ready to compute hydrodynamics.\\n");
      return US_HYDRODYN_SUPC_NO_SEL_MODELS;
    }
     
@@ -1358,6 +1362,17 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
 	 us_udp_msg->send_json( msging );
 	  //sleep(1);
        }   
+      accumulated_msgs->append( QString("\\nProcessing model %1 bead count %2 vbar %3%4%5%6\\n")
+		  .arg(k+1)
+		  .arg(bead_count[k])
+		  .arg(misc_int.compute_vbar ?
+		       (int)(((*model_vector)[model_idx[active_model]].vbar * 1000) + 0.5) / 1000.0 :
+           misc_int.vbar)
+		  .arg(misc_int.compute_vbar ? "" : " (User Entered)")
+		  .arg(hydro->mass_correction ? 
+           QString(" MW %1 (User Entered)").arg(hydro->mass) : "")
+		  .arg(hydro->volume_correction ? 
+		       QString(" Volume %1 (User Entered)").arg(hydro->volume) : ""));
       
       // editor->setColor(save_color);
 
@@ -1373,6 +1388,7 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
 	    us_udp_msg->send_json( msging );
 	  //sleep(1);
        }   
+      accumulated_msgs->append( QString("Using %1 beads for the matrix\\n").arg(nat));
       // qApp->processEvents();
       // if (us_hydrodyn->stopFlag)
       // {
@@ -1397,7 +1413,7 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
        
 	  us_udp_msg->send_json( msging );
 	}   
-
+      
       ppos = 1;
       mppos = (1 + 3 + 3) * nat + 17;
       // progress->setTotalSteps(mppos);
@@ -1406,7 +1422,7 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
       if ( us_udp_msg )
 	{
 	  map < QString, QString > msging;
-	  msging[ "progress_output" ] = QString("Hydro (SMI) calculation: %1\% of %2\%").arg(QString::number( (int(double(ppos)/double(mppos))*100.0) ) ).arg(100); // arg(ppos).arg(mppos);
+	  msging[ "progress_output" ] = QString("Hydro (SMI) calculation: %1\%").arg(QString::number( (int(double(ppos)/double(mppos))*100.0) ) ).arg(100); // arg(ppos).arg(mppos);
 	  msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
 	  
 	  us_udp_msg->send_json( msging );
@@ -1470,7 +1486,7 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
 	 if ( us_udp_msg )
 	   {
 	     map < QString, QString > msging;
-	     msging[ "progress_output" ] = QString("Hydro (SMI) calculation: %1\% of %2\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100);
+	     msging[ "progress_output" ] = QString("Hydro (SMI) calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100);
 	     msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
       
 	     us_udp_msg->send_json( msging );
@@ -1578,7 +1594,7 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
       if ( us_udp_msg )
 	{
 	  map < QString, QString > msging;
-	  msging[ "progress_output" ] = QString("Hydro (SMI) calculation: %1\% of %2\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100);
+	  msging[ "progress_output" ] = QString("Hydro (SMI) calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100);
 	  msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
       
 	  us_udp_msg->send_json( msging );
@@ -1623,7 +1639,7 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
       if ( us_udp_msg )
 	{
 	  map < QString, QString > msging;
-	  msging[ "progress_output" ] = QString("Hydro (SMI) calculation: %1\% of %2\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100);
+	  msging[ "progress_output" ] = QString("Hydro (SMI) calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100);
 	  msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
 	  
 	  us_udp_msg->send_json( msging );
@@ -1647,7 +1663,7 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
       if ( us_udp_msg )
 	{
 	  map < QString, QString > msging;
-	  msging[ "progress_output" ] = QString("Hydro (SMI) calculation: %1\% of %2\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100);
+	  msging[ "progress_output" ] = QString("Hydro (SMI) calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100);
 	  msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
 	  
 	  us_udp_msg->send_json( msging );
@@ -1669,7 +1685,7 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
       if ( us_udp_msg )
 	{
 	  map < QString, QString > msging;
-	  msging[ "progress_output" ] = QString("Hydro (SMI) calculation: %1\% of %2\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100);
+	  msging[ "progress_output" ] = QString("Hydro (SMI) calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100);
 	  msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
 	  
 	  us_udp_msg->send_json( msging );
@@ -1712,7 +1728,7 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
       if ( us_udp_msg )
 	{
 	  map < QString, QString > msging;
-	  msging[ "progress_output" ] = QString("Hydro (SMI) calculation: %1\% of %2\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100);
+	  msging[ "progress_output" ] = QString("Hydro (SMI) calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100);
 	  msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
 	  
 	  us_udp_msg->send_json( msging );
@@ -1768,7 +1784,7 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
       if ( us_udp_msg )
 	{
 	  map < QString, QString > msging;
-	  msging[ "progress_output" ] = QString("Hydro (SMI) calculation: %1\% of %2\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100);
+	  msging[ "progress_output" ] = QString("Hydro (SMI) calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100);
 	  msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
 	  
 	  us_udp_msg->send_json( msging );
@@ -1850,7 +1866,7 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
       if ( us_udp_msg )
 	{
 	  map < QString, QString > msging;
-	  msging[ "progress_output" ] = QString("Hydro (SMI) calculation: %1\% of %2\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100);
+	  msging[ "progress_output" ] = QString("Hydro (SMI) calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100);
 	  msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
 	  
 	  us_udp_msg->send_json( msging );
@@ -1872,7 +1888,7 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
       if ( us_udp_msg )
 	{
 	  map < QString, QString > msging;
-	  msging[ "progress_output" ] = QString("Hydro (SMI) calculation: %1\% of %2\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100);
+	  msging[ "progress_output" ] = QString("Hydro (SMI) calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100);
 	  msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
 	  
 	  us_udp_msg->send_json( msging );
@@ -1893,7 +1909,7 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
       if ( us_udp_msg )
 	{
 	  map < QString, QString > msging;
-	  msging[ "progress_output" ] = QString("Hydro (SMI) calculation: %1\% of %2\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100);
+	  msging[ "progress_output" ] = QString("Hydro (SMI) calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100);
 	  msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
 	  
 	     us_udp_msg->send_json( msging );
@@ -1913,7 +1929,7 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
       if ( us_udp_msg )
 	{
 	  map < QString, QString > msging;
-	  msging[ "progress_output" ] = QString("Hydro (SMI) calculation: %1\% of %2\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100);
+	  msging[ "progress_output" ] = QString("Hydro (SMI) calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100);
 	  msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
 	  
 	  us_udp_msg->send_json( msging );
@@ -1935,7 +1951,7 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
       if ( us_udp_msg )
 	{
 	  map < QString, QString > msging;
-	  msging[ "progress_output" ] = QString("Hydro (SMI) calculation: %1\% of %2\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100);
+	  msging[ "progress_output" ] = QString("Hydro (SMI) calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100);
 	  msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
 	  
 	  us_udp_msg->send_json( msging );
@@ -1956,7 +1972,7 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
       if ( us_udp_msg )
 	{
 	  map < QString, QString > msging;
-	  msging[ "progress_output" ] = QString("Hydro (SMI) calculation: %1\% of %2\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100);
+	  msging[ "progress_output" ] = QString("Hydro (SMI) calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100);
 	  msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
 	  
 	  us_udp_msg->send_json( msging );
@@ -1977,7 +1993,7 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
       if ( us_udp_msg )
 	{
 	  map < QString, QString > msging;
-	  msging[ "progress_output" ] = QString("Hydro (SMI) calculation: %1\% of %2\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100);
+	  msging[ "progress_output" ] = QString("Hydro (SMI) calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100);
 	  msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
 	  
 	  us_udp_msg->send_json( msging );
@@ -1998,7 +2014,7 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
       if ( us_udp_msg )
 	{
 	  map < QString, QString > msging;
-	  msging[ "progress_output" ] = QString("Hydro (SMI) calculation: %1\% of %2\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100);
+	  msging[ "progress_output" ] = QString("Hydro (SMI) calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100);
 	  msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
 	  
 	  us_udp_msg->send_json( msging );
@@ -2314,13 +2330,13 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
    if ( us_udp_msg )
      {
        map < QString, QString > msging;
-       msging[ "progress_output" ] = QString("Hydro (SMI) calculation: %1\% of %2\%").arg(QString::number( (int(double(mppos)/double(mppos))*100.0) ) ).arg(100); // arg(ppos).arg(mppos);
+       msging[ "progress_output" ] = QString("Hydro (SMI) calculation: %1\%").arg(QString::number( (int(double(mppos)/double(mppos))*100.0) ) ).arg(100); // arg(ppos).arg(mppos);
        msging[ "progress1" ] = QString::number(1.0);
 		      
        us_udp_msg->send_json( msging );
        //sleep(1);
      } 
-
+   
    
    // if (us_hydrodyn->stopFlag)
    // {
@@ -4473,6 +4489,7 @@ riempimatrice()
        us_udp_msg->send_json( msging );
        //sleep(1);
      }
+   accumulated_msgs->append("Supermatrix inversion Cycle 1 of 3\\n");
    
    // qApp->processEvents();
 #if defined(SHOW_TIMING)
@@ -4488,7 +4505,7 @@ riempimatrice()
      if ( us_udp_msg )
        {
     	 map < QString, QString > msging;
-    	 msging[ "progress_output" ] = QString("Hydro (SMI) calculation: %1\% of %2\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100);
+    	 msging[ "progress_output" ] = QString("Hydro (SMI) calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100);
     	 msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
     	 
     	 us_udp_msg->send_json( msging );
@@ -4560,6 +4577,7 @@ choldc(int N)
        us_udp_msg->send_json( msging );
        //sleep(1);
      }
+   accumulated_msgs->append("Supermatrix inversion Cycle 2 of 3\\n");
    // qApp->processEvents();
 
    for (i = 0; i < 3 * N; i++)
@@ -4572,7 +4590,7 @@ choldc(int N)
      if ( us_udp_msg )
        {
      	 map < QString, QString > msging;
-     	 msging[ "progress_output" ] = QString("Hydro (SMI) calculation: %1\% of %2\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100);
+     	 msging[ "progress_output" ] = QString("Hydro (SMI) calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100);
      	 msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
       
      	 us_udp_msg->send_json( msging );
@@ -5289,7 +5307,8 @@ initarray(int k)
        us_udp_msg->send_json( msging );
        //sleep(1);
      }
-   
+   accumulated_msgs->append(QString("initarray - 0 From file: %1 beads\\n").arg(nat));
+
    for (i = 0; i < nat; i++)
       dt[i].cor = temp;
 
@@ -5652,7 +5671,7 @@ initarray(int k)
        us_udp_msg->send_json( msging );
        //sleep(1);
      }
-   
+   accumulated_msgs->append( QString("initarray - 1 (ultima - prima): %1 beads\\n").arg(nat));
    //  printf("\n\n Starting function: ragir()\n");
    ragir();
    // printf("\n End of function: ragir()\n");
@@ -5693,7 +5712,8 @@ initarray(int k)
        us_udp_msg->send_json( msging );
        //sleep(1);
      }
-   
+   accumulated_msgs->append( QString("initarray - 2 (remove cc 0): %1 beads\\n").arg(nat));
+
    if (sfecalc == 2)      /* computation with all beads or with only the 'exposed'                           beads */
 
    {
@@ -5727,6 +5747,7 @@ initarray(int k)
        us_udp_msg->send_json( msging );
        //sleep(1);
      }
+   accumulated_msgs->append( QString("initarray - 3 (only exposed): %1 beads (count6 == %2)\\n").arg(nat).arg(count6)); 
    
    if (nat > nmax)
    {
@@ -5911,7 +5932,8 @@ inverti(int N)
        us_udp_msg->send_json( msging );
        //sleep(1);
      }
-   
+   accumulated_msgs->append( "Supermatrix inversion Cycle 3 of 3\\n");
+
    // qApp->processEvents();
 
 #if defined(SHOW_TIMING)
@@ -5928,7 +5950,7 @@ inverti(int N)
      if ( us_udp_msg )
        {
      	 map < QString, QString > msging;
-     	 msging[ "progress_output" ] = QString("Hydro (SMI) calculation: %1\% of %2\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100);
+     	 msging[ "progress_output" ] = QString("Hydro (SMI) calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100);
      	 msging[ "progress1" ] = QString::number(double(ppos-2)/double(mppos));
      
      	 us_udp_msg->send_json( msging );
@@ -6350,6 +6372,9 @@ overlap()
 		us_udp_msg->send_json( msging );
 		//sleep(1);
 	      }
+	    accumulated_msgs->append( QString("").sprintf("\\n%s%d%s%d%s%.6f\\n", "ERROR: Overlap among bead ", i + 1, " and bead ", j + 1, ". Value = ",
+							  -(sqrt(dist) - (dt[i].r + dt[j].r))));
+
            // printf("\n%s%d%s%d%s%.6f\n", "OVERLAP AMONG BEAD ", i + 1, " and BEAD ", j + 1, " | Value = ",
             //        (sqrt(dist) - (dt[i].r + dt[j].r)));
 #if defined(USE_MAIN)

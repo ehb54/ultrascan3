@@ -370,6 +370,7 @@ class US_EXTERN US_Saxs_Util
       int debug;
       QString errormsg;
       QString noticemsg;
+      QString accumulated_msgs;
       QString noticemsg_udp;
       
       map < QString, US_Saxs_Scan > wave;
