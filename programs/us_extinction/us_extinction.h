@@ -1,7 +1,7 @@
 #ifndef US_EXTINCTION_H
 #define US_EXTINCTION_H
-#include <QApplication>
-#include <QtGui>
+//#include <QApplication>
+//#include <QtGui>
 
 #include "us_widgets.h"
 #include "us_plot.h"
@@ -18,6 +18,7 @@ class US_Extinction : public US_Widgets
 		US_ExtinctFitter* fitter;
 
 	private:
+   QVector <WavelengthScan> v_wavelength;
    QString projectName;
    unsigned int order, parameters; 
    double *fitparameters;

@@ -1,19 +1,24 @@
 //! \file us_extinction.cpp
 
+#include <QApplication>
 #include "us_extinction.h"
-#include <iostream>
-using namespace std;
+#include "us_license_t.h"
+#include "us_license.h"
+//#include <iostream>
+//using namespace std;
 
 //All wavelength scans
-QVector <WavelengthScan> v_wavelength;
+//QVector <WavelengthScan> v_wavelength;
 
-int row = 0;
+//int row = 0;
 //! \brief Main program for US_EXTINCTION. Loads translators and starts
 //         the class US_EXTINCTION
 
 int main( int argc, char* argv[] )
 {
    QApplication application( argc, argv );
+
+   #include "main1.inc"
 
    // License is OK.  Start up.
 
@@ -217,6 +222,7 @@ bool US_Extinction::loadScan(const QString &fileName)
 	wls.fileName = fi.fileName();
 	if(f.open(QIODevice::ReadOnly | QIODevice::Text))
 	{		
+      int row = 0;
 		QTextStream ts(&f);
 		while(!ts.atEnd())
 		{
