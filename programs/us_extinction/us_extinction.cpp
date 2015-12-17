@@ -239,7 +239,6 @@ bool US_Extinction::loadScan(const QString &fileName)
 			temp_y = strl.at(1).toFloat();
 			if(temp_x >= lambdaLimitLeft && temp_y <= odCutoff && temp_x <= lambdaLimitRight)
 			{	
-				qDebug()<<temp_x;
 				Reading r = {temp_x, temp_y};
 				wls.v_readings.push_back(r);
 				lambda_max = max(temp_x, lambda_max);
@@ -309,7 +308,7 @@ void US_Extinction::plot()
 		QVector<double> ytemp;
 		xtemp.clear();
 		ytemp.clear();
-		for(int i = 0; i < v_wavelength.size(); i++)
+		for(int i = 0; i < v_wavelength.at(j).v_readings.size(); i++)
 		{
 			xtemp.push_back((double)v_wavelength.at(j).v_readings.at(i).lambda);
 			ytemp.push_back((double)v_wavelength.at(j).v_readings.at(i).od);
@@ -330,7 +329,9 @@ void US_Extinction::plot()
 }
 void US_Extinction::reset_scanlist(void)
 {
-
+	v_wavelength.clear();
+	//data_plot.delete();
+	//lw_file_names.clear();
 }
 void US_Extinction::update_data(void)
 {
