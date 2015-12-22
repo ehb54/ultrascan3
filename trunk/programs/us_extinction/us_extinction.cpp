@@ -1,24 +1,19 @@
 //! \file us_extinction.cpp
 
-#include <QApplication>
 #include "us_extinction.h"
-#include "us_license_t.h"
-#include "us_license.h"
-//#include <iostream>
-//using namespace std;
+#include <iostream>
+using namespace std;
 
 //All wavelength scans
-//QVector <WavelengthScan> v_wavelength;
-
-//int row = 0;
+QVector <WavelengthScan> v_wavelength;
+QVector<QwtPlotCurve*> v_curve;
+int row = 0;
 //! \brief Main program for US_EXTINCTION. Loads translators and starts
 //         the class US_EXTINCTION
 
 int main( int argc, char* argv[] )
 {
    QApplication application( argc, argv );
-
-   #include "main1.inc"
 
    // License is OK.  Start up.
 
@@ -63,12 +58,13 @@ US_Extinction::US_Extinction() : US_Widgets()
 	lbl_associate = us_label(tr("Associate with Run:"));
 	lbl_gaussians = us_label(tr("# of Gaussians: "));
 	lbl_cutoff = us_label(tr("OD Cutoff:"));
-        lbl_lambda1 = us_label(tr("Lower Lambda Limit"));
-        lbl_lambda2 = us_label(tr("Upper Lambda Limit "));
+   lbl_lambda1 = us_label(tr("Lower Lambda Limit"));
+   lbl_lambda2 = us_label(tr("Upper Lambda Limit "));
 	lbl_pathlength = us_label(tr("Pathlength:"));
 	lbl_coefficient = us_label(tr("Extinction Coeff.:"));
 	lw_file_names = us_listwidget();
-	
+	connect(lw_file_names, SIGNAL(itemSelectionChanged()), SLOT(listToCurve()));
+	connect(lw_file_names, SIGNAL(itemDoubleClicked(QListWidgetItem*)), SLOT(deleteCurve()));
 	
 	le_associate = us_lineedit("Simulation",1, false);
 	le_odCutoff = us_lineedit("3.000", 1, false);
@@ -85,12 +81,13 @@ US_Extinction::US_Extinction() : US_Widgets()
 	ct_coefficient->setEnabled(true);
 
 	data_plot = new QwtPlot();
+	changedCurve = NULL;
 	plotLayout = new US_Plot(data_plot, tr(""), tr("Wavelength(nm)"), tr("Optical Density"));
 	data_plot->setCanvasBackground(Qt::black);
 	data_plot->setMinimumSize(560, 240);
 	data_plot->enableAxis(1, true);
 	data_plot->setAxisTitle(1, "Extinction OD/(mol*cm)");
-
+	
 	QGridLayout* gl1;
 	gl1 = new QGridLayout();
 	gl1->addWidget(lbl_associate, 0, 0);
@@ -196,7 +193,7 @@ bool US_Extinction::isComment(const QString &str)
 	QStringList holder;
 	teststr = teststr.simplified();
 	teststr = teststr.replace("\"", " ");
-   	teststr = teststr.replace(",", " ");
+   teststr = teststr.replace(",", " ");
 	holder = teststr.split(" ");
 	str1 = holder.at(0);
 	str2 = holder.at(1);
@@ -222,8 +219,8 @@ bool US_Extinction::loadScan(const QString &fileName)
 	wls.fileName = fi.fileName();
 	if(f.open(QIODevice::ReadOnly | QIODevice::Text))
 	{		
-      int row = 0;
 		QTextStream ts(&f);
+		wls.description = ts.readLine();
 		while(!ts.atEnd())
 		{
 			bool flag1 = true;
@@ -291,6 +288,7 @@ void US_Extinction::plot()
 	QVector<QVector<double> > x_plot, y_plot;
 	x_plot.clear();
 	y_plot.clear();
+	v_curve.clear();
 	QString str, title;
 	double xmax = 0.0;
 	double xmin = 10000.0;
@@ -325,10 +323,17 @@ void US_Extinction::plot()
 	for(int m = 0; m < x_plot.size(); m++)
 	{
 		QwtPlotCurve* c;
-		title = tr("Scan: ") + (m + 1);
+		QwtSymbol s;
+		s.setStyle(QwtSymbol::Ellipse);
+		s.setPen(QPen(Qt::blue));
+		s.setBrush(QBrush(Qt::yellow));
+		s.setSize(10);
+		title = v_wavelength.at(m).fileName;
 		c = us_curve(data_plot, title);
+		c->setSymbol(s);
 		c->setPen(QPen(Qt::green));
 		c->setData(x_plot.at(m), y_plot.at(m));
+		v_curve.push_back(c);
 	}
 	data_plot->replot();
 	return;
@@ -336,8 +341,12 @@ void US_Extinction::plot()
 void US_Extinction::reset_scanlist(void)
 {
 	v_wavelength.clear();
-	//data_plot.delete();
-	//lw_file_names.clear();
+	lw_file_names->clear();
+	filenames.clear();
+	changedCurve = NULL;
+	v_curve.clear();
+	data_plot->clear();
+	data_plot->replot();
 }
 void US_Extinction::update_data(void)
 {
@@ -345,10 +354,71 @@ void US_Extinction::update_data(void)
 
 void US_Extinction::listToCurve(void)
 {
+	QString selectedName = lw_file_names->currentItem()->text();
+	QwtPlotCurve* c_select;
+	c_select = NULL;
+	QwtSymbol s_old;
+   s_old.setStyle(QwtSymbol::Ellipse);
+   s_old.setPen(QPen(Qt::blue));
+   s_old.setBrush(QBrush(Qt::yellow));
+   s_old.setSize(10);
+	QwtSymbol s_new;
+   s_new.setStyle(QwtSymbol::Triangle);
+   s_new.setPen(QPen(Qt::black));
+   s_new.setBrush(QBrush(Qt::red));
+   s_new.setSize(10);
+
+	foreach(QwtPlotCurve* c, v_curve)
+	{
+		if(selectedName.contains(c->title().text()))
+		{
+			c_select = c;
+		}
+	}
+	if(c_select == NULL)
+	{
+		return;
+	}
+	c_select->setSymbol(s_new);
+	c_select->setPen(QPen(Qt::cyan));
+	if(changedCurve != NULL)	
+	{
+		changedCurve->setPen(QPen(Qt::green));
+		changedCurve->setSymbol(s_old);
+	}
+	changedCurve = c_select;
+	data_plot->replot();
 }
 
 bool US_Extinction::deleteCurve(void)
 {
+	QMessageBox mBox;
+	mBox.setText(tr("Are you sure you want to delete the curve you double-clicked?"));
+	mBox.addButton(tr("Yes"), QMessageBox::AcceptRole);
+	QPushButton *cancelButton = mBox.addButton(tr("Cancel"), QMessageBox::RejectRole);
+
+	mBox.exec();
+
+	if (mBox.clickedButton() == cancelButton)
+	{
+		return(false);
+	}
+	if(v_wavelength.size() <= 1)
+	{	
+		reset_scanlist();
+		return(true);
+	}
+	QString selectedName = lw_file_names->currentItem()->text();
+	for(int k = 0; k < v_wavelength.size(); k++)
+	{
+		if(selectedName.contains(v_wavelength.at(k).description))
+		{
+			v_wavelength.remove(k);
+		}
+	}
+	changedCurve = NULL;
+	plot();
+	delete lw_file_names->currentItem();
 	return(true);
 }
 
