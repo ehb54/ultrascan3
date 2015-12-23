@@ -19,6 +19,7 @@ class US_Extinction : public US_Widgets
 
 	private:
    QVector <WavelengthScan> v_wavelength;
+   QVector <QwtPlotCurve*>  v_curve;
    QString projectName;
    unsigned int order, parameters; 
    double *fitparameters;
