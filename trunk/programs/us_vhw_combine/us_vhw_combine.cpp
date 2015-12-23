@@ -588,6 +588,37 @@ void US_vHW_Combine::save( void )
    QString fnamdat  = "vHW.0Z9999.combo-sb-distrib.csv";
    QString fnamenv  = "vHW.0Z9999.combo-s-envelope.csv";
    QString fnamlst  = "vHW.0Z9999.combo-list-include.rpt";
+   bool diplot = ck_distrib ->isChecked();
+   bool edplot = ck_envelope->isChecked();
+   bool dconc  = ck_intconc ->isChecked();
+
+   // Change report file names according to plot options currently in effect
+   if      ( !diplot  &&   edplot )
+   {  // Envelope (Differential) only
+      fnamsvg     = fnamsvg.replace( "combo-distrib", "combdistr-diff" );
+      fnampng     = fnampng.replace( "combo-distrib", "combdistr-diff" );
+   }
+   else if (  diplot  &&  !edplot  &&  !dconc )
+   {  // Distribution (Integral) only and Y=boundary
+      fnamsvg     = fnamsvg.replace( "combo-distrib", "combdistr-integ" );
+      fnampng     = fnampng.replace( "combo-distrib", "combdistr-integ" );
+   }
+   else if (  diplot  &&  !edplot  &&   dconc )
+   {  // Distribution (Integral) only and Y=concentration
+      fnamsvg     = fnamsvg.replace( "combo-distrib", "combdistr-integscl" );
+      fnampng     = fnampng.replace( "combo-distrib", "combdistr-integscl" );
+   }
+   else if (  diplot  &&   edplot  &&  !dconc )
+   {  // Combined and Y=boundary
+      fnamsvg     = fnamsvg.replace( "combo-distrib", "combdistr-comb" );
+      fnampng     = fnampng.replace( "combo-distrib", "combdistr-comb" );
+   }
+   else if (  diplot  &&   edplot  &&   dconc )
+   {  // Combined and Y=concentration
+      fnamsvg     = fnamsvg.replace( "combo-distrib", "combdistr-combscl" );
+      fnampng     = fnampng.replace( "combo-distrib", "combdistr-combscl" );
+   }
+
    QString plotFile = fdir + "/" + fnamsvg;
    QString dataFile = fdir + "/" + fnamdat;
    QString denvFile = fdir + "/" + fnamenv;
@@ -1186,7 +1217,6 @@ void US_vHW_Combine::write_data( QString& dataFile, QString& listFile,
    QString line;
    dat1File = dataFile;
    lis1File = listFile;
-   bool dconc  = ck_intconc ->isChecked();
 
    QFile dfile( dataFile );
 
@@ -1209,7 +1239,8 @@ void US_vHW_Combine::write_data( QString& dataFile, QString& listFile,
       QString pd = pdisIDs[ ii ];
       pdlong << pd;
       pd         = pd.section( ":", 0, 0 ).simplified();
-      line      += "\"" + pd + ".X\",\"" + pd + ".Y\""; // X,Y header entries for contributor
+      // X,Y header entries for contributor
+      line      += "\"" + pd + ".X\",\"" + pd + ".Y\"" + pd + ".C\"";
 
       if ( ii < lastp )
          line     += ",";
@@ -1223,15 +1254,17 @@ void US_vHW_Combine::write_data( QString& dataFile, QString& listFile,
       line       = "";
       for ( int ii = 0; ii < nplots; ii++ )
       {  // Add each X,Y data pair
-         double bscl = dconc ? ( pdistrs[ ii ].totconc * 0.01 ) : 1.0;
+         double bscl = pdistrs[ ii ].totconc * 0.01;
          int nvals   = pdistrs[ ii ].dsedcs.size();
          double* xx  = pdistrs[ ii ].dsedcs.data();
          double* yy  = pdistrs[ ii ].bfracs.data();
          int kk      = qMin( jj, ( nvals - 1 ) );
          double sval = xx[ kk ];
-         double boun = yy[ kk ] * bscl;
+         double boun = yy[ kk ];
+         double conc = boun * bscl;
 
-         QString dat = QString().sprintf( "\"%12.5f\",\"%10.5f\"", sval, boun );
+         QString dat = QString().sprintf( "\"%12.5f\",\"%10.5f\",\"%12.4e\"",
+                                          sval, boun, conc );
          dat.replace( " ", "" );
          line       += dat;
 
@@ -1300,7 +1333,8 @@ void US_vHW_Combine::write_denv( QString& denvFile, int& irun )
       QString pd = pdisIDs[ ii ];
       pdlong << pd;
       pd         = pd.section( ":", 0, 0 ).simplified();
-      line      += "\"" + pd + ".X\",\"" + pd + ".Y\""; // X,Y header entries for contributor
+      // X,Y header entries for contributor
+      line      += "\"" + pd + ".X\",\"" + pd + ".Y\"";
 
       if ( ii < lastp )
          line     += ",";

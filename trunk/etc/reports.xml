@@ -119,6 +119,11 @@
     <report name="ga_stats" label="Genetic Algorithm Statistics" />
     <report name="statistics" label="Solute Integration Statistics" />
     <report name="combo-distrib" label="Sedimentation Coefficient Combo Distribution" />
+    <report name="combdistr-diff" label="Sed.Coefficient Differential Distribution" />
+    <report name="combdistr-integ" label="Sed.Coefficient Integral Distribution" />
+    <report name="combdistr-comb" label="Sed.Coefficient Combined Distribution" />
+    <report name="combdistr-integscl" label="Sed.Coefficient Integral Distribution, scaled" />
+    <report name="combdistr-combscl" label="Sed.Coefficient Combined Distribution, scaled" />
     <report name="combo-sb-distrib" label="Combo Svalue-Boundary Data Table" />
     <report name="combo-s-envelope" label="Combo Svalue-Envelope Data Table" />
     <report name="combo-list-include" label="Combo List of Included Sets" />
