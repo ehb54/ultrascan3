@@ -78,47 +78,56 @@ QObject* US_DataModel::treeobj()
 }
 
 // Scan the database and local for run IDs then return to caller
-void US_DataModel::getRunIDs( QStringList& runIDs )
+void US_DataModel::getRunIDs( QStringList& runIDs, int& source )
 {
    runIDs.clear();
 
-   // Get a list of runIDs from the database
-   QStringList query;
-   query << "get_experiment_desc" << invID;
-   db->query( query );
-
-   while ( db->next() )
+   // Get a list of runIDs from the database (unless Source==Local)
+   if ( source != 2 )
    {
-      QString runID = db->value( 1 ).toString();
+      QStringList query;
+      query << "get_experiment_desc" << invID;
+      db->query( query );
 
-      if ( ! runIDs.contains( runID ) )
-         runIDs << runID;
+      while ( db->next() )
+      {
+         QString runID = db->value( 1 ).toString();
+
+         if ( ! runIDs.contains( runID ) )
+            runIDs << runID;
+      }
    }
 DbgLv(1) << "gRI: db runs" << runIDs.size();
 
-   // Add any local runIDs not already represented
-//   QString     rdir     = US_Settings::resultDir();
-   QString     rdir     = US_Settings::resultDir() + "/";
-   QStringList aucdirs  = QDir( rdir )
-      .entryList( QDir::AllDirs | QDir::NoDotAndDotDot, QDir::Name );
-//               rdir    += "/";
-   QStringList aucfilt;
-   aucfilt << "*.auc";
+   // Add any local runIDs not already represented (unless Source==DB)
+   if ( source != 1 )
+   {
+      QString     rdir     = US_Settings::resultDir() + "/";
+      QStringList aucdirs  = QDir( rdir )
+         .entryList( QDir::AllDirs | QDir::NoDotAndDotDot, QDir::Name );
+      QStringList aucfilt;
+      aucfilt << "*.auc";
 DbgLv(1) << "gRI: aucdirs" << aucdirs.size();
 
-   for ( int ii = 0; ii < aucdirs.size(); ii++ )
-   {  // Loop thru potential data directories; add any new that have AUC content
-      QString     aucdir   = aucdirs.at( ii );
-      QString     subdir   = rdir + aucdir;
-      QStringList aucfiles = QDir( subdir )
-         .entryList( aucfilt, QDir::Files, QDir::Name );
-      int         naucf    = aucfiles.size();
-      QString     runID    = aucdir.section( ".", 0, 0 );
+      for ( int ii = 0; ii < aucdirs.size(); ii++ )
+      {  // Loop thru potential data directories; add any new with AUC content
+         QString     aucdir   = aucdirs.at( ii );
+         QString     subdir   = rdir + aucdir;
+         QStringList aucfiles = QDir( subdir )
+            .entryList( aucfilt, QDir::Files, QDir::Name );
+         int         naucf    = aucfiles.size();
+         QString     runID    = aucdir.section( ".", 0, 0 );
 
-      if ( naucf > 0  &&  ! runIDs.contains( runID ) )
-         runIDs << runID;
-   }
+         if ( naucf > 0 )
+         {  // Possibly add if run has AUC content
+            if ( !runIDs.contains( runID )  &&  source != 4 )
+            {  // This run not in local and exclude-DB-only not specified
+               runIDs << runID;
+            }
+         }
+      }
 DbgLv(1) << "gRI: db+local runs" << runIDs.size();
+   }
 
    runIDs.sort();
 }

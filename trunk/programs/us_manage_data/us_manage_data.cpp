@@ -150,6 +150,8 @@ DbgLv(1) << "GUI setup begun";
    cb_source ->addItem( "Exclude DB-Only Trees" );
    dctlLayout->addWidget( lb_source, row,   0, 1, 2 );
    dctlLayout->addWidget( cb_source, row++, 2, 1, 6 );
+   connect( cb_source,  SIGNAL( currentIndexChanged( QString ) ),
+            this,       SLOT(   reset              (         ) ) );
 
    pb_invtor->setToolTip( 
       tr( "Use an Investigator dialog to set the database person ID" ) );
@@ -328,7 +330,8 @@ void US_ManageData::reset( void )
 
    reportDataStatus();
 
-   da_model->getRunIDs( runIDs );
+   int src_flg = cb_source->currentIndex();
+   da_model->getRunIDs( runIDs, src_flg );
 
    cb_runid ->clear();
    cb_runid ->addItem ( "ALL" );
