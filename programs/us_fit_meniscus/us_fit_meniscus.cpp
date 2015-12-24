@@ -194,7 +194,7 @@ US_FitMeniscus::US_FitMeniscus() : US_Widgets()
 // Clear the plot, m-r table text, and other elements
 void US_FitMeniscus::reset( void )
 {
-//   meniscus_plot->clear();
+   meniscus_plot->detachItems();
    meniscus_plot->replot();
    
    te_data->e   ->setPlainText( "" );
@@ -212,7 +212,7 @@ void US_FitMeniscus::plot_data( int )
 // Plot the data
 void US_FitMeniscus::plot_data( void )
 {
-//   meniscus_plot->clear();
+   meniscus_plot->detachItems();
 
    QString contents = te_data->e->toPlainText();
    contents.replace( QRegExp( "[^0-9eE\\.\\n\\+\\-]+" ), " " );

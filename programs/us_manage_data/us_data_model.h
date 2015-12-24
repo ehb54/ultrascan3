@@ -46,7 +46,7 @@ class US_DataModel : public QObject
       void      setDatabase( US_DB2*                 );
       void      setProgress( QProgressBar*, QLabel*  );
       void      setSiblings( QObject*,      QObject* );
-      void      getRunIDs  ( QStringList&            );
+      void      getRunIDs  ( QStringList&,  int&     );
       void      getTriples ( QStringList&,  QString  );
       void      setFilters ( QString,       QString, QString );
       US_DB2*       dbase   (      void );
