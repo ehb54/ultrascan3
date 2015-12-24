@@ -629,7 +629,7 @@ void US_EquilTime::simulate( void )
    equilibrium_plot->setAxisScale( QwtPlot::xBottom, 
          simparams.meniscus, simparams.bottom );
 
-//   equilibrium_plot->clear();
+   equilibrium_plot->detachItems();
    equilibrium_plot->replot();
    current_time   = 0.0;
    concentration.clear();
