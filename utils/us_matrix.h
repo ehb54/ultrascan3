@@ -20,7 +20,7 @@ struct dpairs
    double locationvalue;
 };
 
-class ata_d_thr_t : public QThread
+class US_UTIL_EXTERN ata_d_thr_t : public QThread
 {
  public:
   ata_d_thr_t(int);
@@ -440,7 +440,7 @@ void conc_dep_d(adouble, adouble **, adouble **, double ***, double ***, double 
 #include <qwaitcondition.h>
 #include <qmutex.h>
 
-class ata_d_thr_t : public QThread
+class US_UTIL_EXTERN ata_d_thr_t : public QThread
 {
  public:
   ata_d_thr_t(int);

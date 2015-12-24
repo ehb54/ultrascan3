@@ -1,7 +1,5 @@
 #ifndef US_MINIMIZE_H
 #define US_MINIMIZE_H
-//#include <QApplication>
-//#include <QtGui>
 
 #include "us_settings.h"
 #include "us_widgets.h"
@@ -10,7 +8,7 @@
 #include "us_math2.h"
 #include "us_matrix.h"
 
-class US_Minimize : public US_Widgets
+class US_GUI_EXTERN US_Minimize : public US_Widgets
 {
 	Q_OBJECT
 	
