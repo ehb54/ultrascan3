@@ -30,6 +30,7 @@ unix {
   # To avoid needing libmysqlclient and libqca, define the following 
 
   # DEFINES += NO_DB
+  # DEFINES += _BF_NNLS_
   MPIPATH  = /share/apps64/openmpi
   MPILIBS  = -L$${MPIPATH}/lib -lmpi -lopen-pal
   QMAKE_CXXFLAGS_RELEASE = -O3
