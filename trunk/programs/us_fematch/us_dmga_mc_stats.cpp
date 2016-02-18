@@ -239,6 +239,7 @@ bool US_DmgaMcStats::compute_statistics( const int nvals,
    if ( is_fixed )
    {  // Values are the same, special statistics for fixed attribute
       vmedi     = vmean;
+qDebug() << "DmS:cSt:     FIXED  medi mean" << vmedi;
       mode_cen  = vmean;
       skew      = 0.0;
       kurto     = 0.0;
@@ -282,11 +283,13 @@ bool US_DmgaMcStats::compute_statistics( const int nvals,
       US_Math2::linefit( &xplot, &yplot, &slope, &vicep, &sigma, &corr, nvals );
 
       // Sort Y values and determine median
-      qSort( ypvec );
+      QVector< double > wkvls = vals;
+      qSort( wkvls );
       int hx    = nvals / 2;
-      vmedi     = ypvec[ hx ];
+      vmedi     = wkvls[ hx ];
       if ( ( hx * 2 ) == nvals )
-         vmedi     = ( vmedi + ypvec[ hx - 1 ] ) * 0.5;
+         vmedi     = ( vmedi + wkvls[ hx - 1 ] ) * 0.5;
+qDebug() << "DmS:cSt:     FLT  hx vmedi vhx" << hx << vmedi << wkvls[hx];
 
       // Standard deviation and error
       sdevi     = pow( vm2, 0.5 );

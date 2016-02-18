@@ -2,12 +2,55 @@
 
 #include <stdlib.h>
 #include <math.h>
+#include <dlfcn.h>
 
 #include "us_math2.h"
 #include "us_constants.h"
 #include "us_dataIO.h"
 #include "us_matrix.h"
 #include "us_settings.h"
+
+class libnnls
+{
+public:
+   typedef int (*nnls_fn) ( double *, int, int, int, double *, double *,
+                            double *, double *, double *, int * );
+
+   nnls_fn nnls = NULL;
+
+   libnnls ()
+   {
+      qDebug() << "BF-NNLS: Trying to load libnnls";
+
+      lib = dlopen( "libnnls.so", RTLD_NOW );
+      if ( lib == NULL ) {
+         qDebug() << "BF-NNLS: Unable to load libnnls";
+         return;
+      }
+
+      nnls = (nnls_fn) dlsym( lib, "nnls" );
+      if ( nnls == NULL ) {
+         qDebug() << "BF-NNLS: Unable to find nnls symbol inside libnnls";
+         return;
+      }
+
+      qDebug() << "BF-NNLS: libnnls successfully loaded";
+   }
+
+   ~libnnls ()
+   {
+      if ( lib != NULL )
+         dlclose( lib );
+   }
+
+private:
+   void *lib = NULL;
+
+};
+
+#ifdef _BF_NNLS_
+static libnnls libnnls0;
+#endif
 
 /*  The function implements the Box-Muller algorithm for generating
  *  pairs of independent standard normally distributed (zero expectation, 
@@ -760,6 +803,16 @@ int US_Math2::nnls( double* a, int a_dim1, int m, int n,
                     int*    indexp 
                   ) 
 {
+#ifdef _BF_NNLS_
+   /* If there is an external NNLS algorithm implementation, execute it */
+   qDebug() << "BF-NNLS: NNLS size (m, n) = (" << m << ", " << n << ")";
+   if ( libnnls0.nnls != NULL ) {
+      qDebug() << "BF-NNLS: Using libnnls";
+      return libnnls0.nnls( a, a_dim1, m, n, b, x, rnorm, wp, zzp, indexp );
+   }
+   qDebug() << "BF-NNLS: Using regular nnls";
+#endif
+
    int pfeas, ret = 0, iz, jz;
    double d1, d2, sm, up, ss;
    int k, j=0, l, izmax=0, ii, jj=0, ip;
@@ -1090,7 +1143,7 @@ int US_Math2::nnls( double* a, int a_dim1, int m, int n,
  *    the same location as A or B.
  */
 void US_Math2::_nnls_g1( double  a,     double  b, double* cterm, 
-                          double* sterm, double* sig )
+                         double* sterm, double* sig )
 {
    double d1;
    double xr;

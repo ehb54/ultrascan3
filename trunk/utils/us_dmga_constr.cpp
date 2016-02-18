@@ -821,6 +821,7 @@ DbgLv(1) << "dgC:modfrcn:  bmodel compsz assosz"
    sc1.D          = 0.0;
    sc1.f          = 0.0;
    sc1.f_f0       = 0.0;
+   sc1.vbar20     = 0.0;
    US_Model::SimulationComponent sc2 = sc1;
    US_Model::Association         as1;
    if ( bmodel.associations.size() > 0 )
@@ -873,6 +874,7 @@ DbgLv(1) << "dgC:modfrcn:cre:    ii" << ii << "sc2.name" << sc2.name;
             sc1.D          = 0.0;
             sc1.f          = 0.0;
             sc1.f_f0       = 0.0;
+            sc1.vbar20     = 0.0;
             sc2            = sc1;
             pname          = pname_fix;
          }

@@ -156,6 +156,7 @@ DbgLv(1) << "dGA:load_model";
       le_status->setText( tr( "A base model has been loaded." ) );
       constraints.load_base_model( &bmodel );
       pb_savemodel->setEnabled( true );
+      cmodel.components.clear();
    }
    else
    {
@@ -224,6 +225,7 @@ DbgLv(1) << "dGA:load_constraints model comps" << cmodel.components.size();
    else
    {
       le_status->setText( tr( "No constraints model was loaded." ) );
+      cmodel.components.clear();
    }
 
    qApp->processEvents();
