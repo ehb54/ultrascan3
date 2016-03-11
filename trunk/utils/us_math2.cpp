@@ -10,7 +10,7 @@
 #include "us_matrix.h"
 #include "us_settings.h"
 
-/*
+#ifdef _BF_NNLS_
 class libnnls
 {
 public:
@@ -49,10 +49,8 @@ private:
 
 };
 
-#ifdef _BF_NNLS_
 static libnnls libnnls0;
 #endif
-*/
 /*  The function implements the Box-Muller algorithm for generating
  *  pairs of independent standard normally distributed (zero expectation, 
  *  unit variance) random numbers, given a source of uniformly distributed 
