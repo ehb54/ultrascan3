@@ -3204,7 +3204,10 @@ DbgLv(1) << "SV:   NO saveRIDisk : runType" << runType;
 
    // Insure that we have a TimeState record locally for this run
    le_status->setText( tr( "Writing Time State to disk..." ) );
-   writeTimeStateDisk();
+   if ( writeTimeStateDisk() == 0 )
+   {  // Abort if unable to open TimeState file
+      return US_Convert::CANTOPEN;
+   }
    fileCount   += 2;
 
    // Status is OK
@@ -4795,7 +4798,17 @@ else
 DbgLv(1) << "wTS: EMPTY: tmst_fnamei";
  
    // Create a new TMST
-   timestate.open_write_data( tmst_fname, 0.0, 0.0 );
+   if ( timestate.open_write_data( tmst_fname, 0.0, 0.0 ) != 0 )
+   {
+      QMessageBox::critical( this,
+         tr( "Unwritable TimeState File" ),
+         tr( "   Unable to write the Time State file\n\"%1\"\n"
+             "   in directory\n\"%2\".\n\nCheck directory permissions." )
+         .arg( tmst_fbase ).arg( tmst_fdir ) );
+      resetAll();
+      return 0;
+   }
+
    timestate.set_key( "Time",        "F4" );
    timestate.set_key( "RawSpeed",    "I4" );
    timestate.set_key( "SetSpeed",    "I4" );
