@@ -56,6 +56,15 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Options : public QDialog
       QLabel *                                lbl_alpha;
       QLineEdit *                             le_alpha;
 
+      QLabel *                                lbl_cormap_maxq;
+      QLineEdit *                             le_cormap_maxq;
+
+      QLabel *                                lbl_start_region;
+      QLineEdit *                             le_start_region;
+
+      QLabel *                                lbl_i_power;
+      QLineEdit *                             le_i_power;
+
       QCheckBox *                             cb_save_bl;
 
       QLabel *                                lbl_gaussian_type;
@@ -68,6 +77,16 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Options : public QDialog
       
       QLabel *                                lbl_dist_max;
       QLineEdit *                             le_dist_max;
+
+      QLabel *                                lbl_ampl_width_min;
+      QLineEdit *                             le_ampl_width_min;
+
+      QCheckBox *                             cb_lock_min_retry;
+      QLineEdit *                             le_lock_min_retry_mult;
+
+      QCheckBox *                             cb_maxfpk_restart;
+      QLineEdit *                             le_maxfpk_restart_tries;
+      QLineEdit *                             le_maxfpk_restart_pct;
 
       QPushButton  *                          pb_clear_gauss;
 

@@ -75,7 +75,8 @@ void US_Hydrodyn_Saxs_Hplc_Options::setupGUI()
    // connect( bg_bl_type, SIGNAL( buttonClicked( int id ) ), SLOT( update_enables() ) );
 
    cb_save_bl = new QCheckBox(this);
-   cb_save_bl->setText( tr( "Produce separate baseline curves " ) );
+   // cb_save_bl->setText( tr( "Produce separate baseline curves " ) );
+   cb_save_bl->setText( tr( "Test alt integral baseline " ) );
    cb_save_bl->setEnabled( true );
    cb_save_bl->setChecked( parameters->count( "hplc_bl_save" ) && (*parameters)[ "hplc_bl_save" ] == "true" );
    cb_save_bl->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
@@ -100,6 +101,45 @@ void US_Hydrodyn_Saxs_Hplc_Options::setupGUI()
    }
    connect( le_smooth, SIGNAL( textChanged( const QString & ) ), SLOT( update_enables() ) );
    le_smooth->setMinimumWidth( 60 );
+
+   lbl_start_region =  new QLabel      ( tr( "Start frames for test integral offset:" ), this );
+   lbl_start_region -> setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
+   lbl_start_region -> setPalette      ( PALET_LABEL );
+   AUTFBACK( lbl_start_region );
+   lbl_start_region -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold ) );
+
+   le_start_region = new QLineEdit(this, "le_start_region Line Edit");
+   le_start_region->setText( parameters->count( "hplc_bl_start_region" ) ? (*parameters)[ "hplc_bl_start_region" ] : "10" );
+   le_start_region->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_start_region->setPalette( PALET_NORMAL );
+   AUTFBACK( le_start_region );
+   le_start_region->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
+   {
+      QIntValidator *qdv = new QIntValidator( 0, 99, le_start_region );
+      le_start_region->setValidator( qdv );
+   }
+   connect( le_start_region, SIGNAL( textChanged( const QString & ) ), SLOT( update_enables() ) );
+   le_start_region->setMinimumWidth( 60 );
+
+
+   lbl_i_power =  new QLabel      ( tr( "Intensity exponent:" ), this );
+   lbl_i_power -> setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
+   lbl_i_power -> setPalette      ( PALET_LABEL );
+   AUTFBACK( lbl_i_power );
+   lbl_i_power -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold ) );
+
+   le_i_power = new QLineEdit(this, "le_i_power Line Edit");
+   le_i_power->setText( parameters->count( "hplc_bl_i_power" ) ? (*parameters)[ "hplc_bl_i_power" ] : "1" );
+   le_i_power->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_i_power->setPalette( PALET_NORMAL );
+   AUTFBACK( le_i_power );
+   le_i_power->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
+   {
+      QDoubleValidator *qdv = new QDoubleValidator( 0, 3, 3, le_i_power );
+      le_i_power->setValidator( qdv );
+   }
+   connect( le_i_power, SIGNAL( textChanged( const QString & ) ), SLOT( update_enables() ) );
+   le_i_power->setMinimumWidth( 60 );
 
    lbl_reps =  new QLabel      ( tr( "Maximum iterations:" ), this );
    lbl_reps -> setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
@@ -138,6 +178,25 @@ void US_Hydrodyn_Saxs_Hplc_Options::setupGUI()
    }
    connect( le_alpha, SIGNAL( textChanged( const QString & ) ), SLOT( update_enables() ) );
    le_alpha->setMinimumWidth( 60 );
+
+   lbl_cormap_maxq =  new QLabel      ( tr( "Global CorMap Analysis maximum q [A^-1]:" ), this );
+   lbl_cormap_maxq -> setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
+   lbl_cormap_maxq -> setPalette( PALET_LABEL );
+   AUTFBACK( lbl_cormap_maxq );
+   lbl_cormap_maxq -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold ) );
+
+   le_cormap_maxq = new QLineEdit(this, "le_cormap_maxq Line Edit");
+   le_cormap_maxq->setText( parameters->count( "hplc_cormap_maxq" ) ? (*parameters)[ "hplc_cormap_maxq" ] : "0.05" );
+   le_cormap_maxq->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_cormap_maxq->setPalette( PALET_NORMAL );
+   AUTFBACK( le_cormap_maxq );
+   le_cormap_maxq->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
+   {
+      QDoubleValidator *qdv = new QDoubleValidator( 0, 3, 3, le_cormap_maxq );
+      le_cormap_maxq->setValidator( qdv );
+   }
+   connect( le_cormap_maxq, SIGNAL( textChanged( const QString & ) ), SLOT( update_enables() ) );
+   le_cormap_maxq->setMinimumWidth( 60 );
 
    lbl_gaussian_type = new QLabel ( tr( "Gaussian Mode" ), this);
    lbl_gaussian_type->setAlignment( Qt::AlignCenter | Qt::AlignVCenter);
@@ -335,6 +394,79 @@ void US_Hydrodyn_Saxs_Hplc_Options::setupGUI()
    connect( le_dist_max, SIGNAL( textChanged( const QString & ) ), SLOT( update_enables() ) );
    le_dist_max->setMinimumWidth( 60 );
 
+   lbl_ampl_width_min =  new QLabel      ( tr( "Global minimum value for amplitude and width:" ), this );
+   lbl_ampl_width_min -> setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
+   lbl_ampl_width_min -> setPalette( PALET_LABEL );
+   AUTFBACK( lbl_ampl_width_min );
+   lbl_ampl_width_min -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold ) );
+
+   le_ampl_width_min = new QLineEdit(this, "le_ampl_width_min Line Edit");
+   le_ampl_width_min->setText( (*parameters)[ "hplc_ampl_width_min" ] );
+   le_ampl_width_min->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_ampl_width_min->setPalette( PALET_NORMAL );
+   AUTFBACK( le_ampl_width_min );
+   le_ampl_width_min->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
+   {
+      QDoubleValidator *qdv = new QDoubleValidator( 1e-50, 1e-3, 1, le_ampl_width_min );
+      le_ampl_width_min->setValidator( qdv );
+   }
+   connect( le_ampl_width_min, SIGNAL( textChanged( const QString & ) ), SLOT( update_enables() ) );
+   le_ampl_width_min->setMinimumWidth( 60 );
+
+   cb_lock_min_retry = new QCheckBox(this);
+   cb_lock_min_retry->setText( tr( "Lock curves and retry when minimum amplitude or width is pegged\nby the global minimum times this value:" ) );
+   cb_lock_min_retry->setEnabled( true );
+   cb_lock_min_retry->setChecked( (*parameters)[ "hplc_lock_min_retry" ] == "true" );
+   cb_lock_min_retry->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
+   cb_lock_min_retry->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_lock_min_retry );
+
+   le_lock_min_retry_mult = new QLineEdit(this, "le_lock_min_retry_mult Line Edit");
+   le_lock_min_retry_mult->setText( (*parameters)[ "hplc_lock_min_retry_mult" ] );
+   le_lock_min_retry_mult->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_lock_min_retry_mult->setPalette( PALET_NORMAL );
+   AUTFBACK( le_lock_min_retry_mult );
+   le_lock_min_retry_mult->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
+   {
+      QDoubleValidator *qdv = new QDoubleValidator( 1, 2, 3, le_lock_min_retry_mult );
+      le_lock_min_retry_mult->setValidator( qdv );
+   }
+   connect( le_lock_min_retry_mult, SIGNAL( textChanged( const QString & ) ), SLOT( update_enables() ) );
+   le_lock_min_retry_mult->setMinimumWidth( 60 );
+
+   cb_maxfpk_restart = new QCheckBox(this);
+   cb_maxfpk_restart->setText( tr( "Retry fits by increasing largest free peak amplitude by percent:" ) );
+   cb_maxfpk_restart->setEnabled( true );
+   cb_maxfpk_restart->setChecked( (*parameters)[ "hplc_maxfpk_restart" ] == "true" );
+   cb_maxfpk_restart->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
+   cb_maxfpk_restart->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_maxfpk_restart );
+
+   // le_maxfpk_restart_tries = new QLineEdit(this, "le_maxfpk_restart_tries Line Edit");
+   // le_maxfpk_restart_tries->setText( (*parameters)[ "hplc_maxfpk_restart_tries" ] );
+   // le_maxfpk_restart_tries->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   // le_maxfpk_restart_tries->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   // le_maxfpk_restart_tries->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
+   // {
+   //    QIntValidator *qiv = new QIntValidator( 1, 10, le_maxfpk_restart_tries );
+   //    le_maxfpk_restart_tries->setValidator( qiv );
+   // }
+   // connect( le_maxfpk_restart_tries, SIGNAL( textChanged( const QString & ) ), SLOT( update_enables() ) );
+   // le_maxfpk_restart_tries->setMinimumWidth( 60 );
+
+   le_maxfpk_restart_pct = new QLineEdit(this, "le_maxfpk_restart_pct Line Edit");
+   le_maxfpk_restart_pct->setText( (*parameters)[ "hplc_maxfpk_restart_pct" ] );
+   le_maxfpk_restart_pct->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_maxfpk_restart_pct->setPalette( PALET_NORMAL );
+   AUTFBACK( le_maxfpk_restart_pct );
+   le_maxfpk_restart_pct->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
+   {
+      QDoubleValidator *qdv = new QDoubleValidator( 1, 20, 1, le_maxfpk_restart_pct );
+      le_maxfpk_restart_pct->setValidator( qdv );
+   }
+   connect( le_maxfpk_restart_pct, SIGNAL( textChanged( const QString & ) ), SLOT( update_enables() ) );
+   le_maxfpk_restart_pct->setMinimumWidth( 60 );
+
    pb_quit =  new QPushButton ( tr( "Quit" ), this );
    pb_quit -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1) );
    pb_quit -> setMinimumHeight( minHeight1 );
@@ -369,6 +501,12 @@ void US_Hydrodyn_Saxs_Hplc_Options::setupGUI()
    gl_bl->addWidget         ( le_reps    , 1, 1 );
    gl_bl->addWidget         ( lbl_alpha  , 2, 0 );
    gl_bl->addWidget         ( le_alpha   , 2, 1 );
+   gl_bl->addWidget         ( lbl_cormap_maxq  , 3, 0 );
+   gl_bl->addWidget         ( le_cormap_maxq   , 3, 1 );
+   gl_bl->addWidget         ( lbl_start_region , 4, 0 );
+   gl_bl->addWidget         ( le_start_region  , 4, 1 );
+   gl_bl->addWidget         ( lbl_i_power , 4, 0 );
+   gl_bl->addWidget         ( le_i_power  , 4, 1 );
 
    background->addLayout( gl_bl );
    background->addWidget( cb_save_bl );
@@ -382,6 +520,20 @@ void US_Hydrodyn_Saxs_Hplc_Options::setupGUI()
       Q3GridLayout *gl_other = new Q3GridLayout( 0 );
       gl_other->addWidget         ( lbl_dist_max , 0, 0 );
       gl_other->addWidget         ( le_dist_max  , 0, 1 );
+
+      gl_other->addWidget         ( lbl_ampl_width_min , 1, 0 );
+      gl_other->addWidget         ( le_ampl_width_min  , 1, 1 );
+
+      gl_other->addWidget         ( cb_lock_min_retry       , 2, 0 );
+      gl_other->addWidget         ( le_lock_min_retry_mult  , 2, 1 );
+
+      gl_other->addWidget         ( cb_maxfpk_restart       , 3, 0 );
+      {
+         Q3HBoxLayout *hbl = new Q3HBoxLayout( 0 );
+         // hbl->addWidget     ( le_maxfpk_restart_tries );
+         hbl->addWidget     ( le_maxfpk_restart_pct );
+         gl_other->addLayout( hbl , 3, 1 );
+      }
       background->addLayout( gl_other );
    }
 
@@ -448,20 +600,34 @@ void US_Hydrodyn_Saxs_Hplc_Options::setupGUI()
       // lbl_baseline     ->hide();
       // rb_linear        ->hide();
       // rb_integral      ->hide();
-      lbl_smooth       ->hide();
-      le_smooth        ->hide();
+      // lbl_smooth       ->hide();
+      // le_smooth        ->hide();
       // lbl_reps         ->hide();
       // le_reps          ->hide();
       // lbl_alpha        ->hide();
       // le_alpha         ->hide();
-      // cb_save_bl       ->hide();
 
       // lbl_gaussian_type->hide();
       // rb_gauss         ->hide();
       // rb_gmg           ->hide();
       // rb_emg           ->hide();
       // rb_emggmg        ->hide();
+
+      lbl_ampl_width_min        ->hide();
+      le_ampl_width_min         ->hide();
+      cb_lock_min_retry         ->hide();
+      le_lock_min_retry_mult    ->hide();
+      cb_maxfpk_restart         ->hide();
+      // le_maxfpk_restart_tries   ->hide();
+      le_maxfpk_restart_pct     ->hide();
+
+      lbl_i_power         ->hide();
+      le_i_power          ->hide();
    }
+
+   cb_save_bl       ->hide();
+   lbl_start_region ->hide();
+   le_start_region  ->hide();
 }
 
 void US_Hydrodyn_Saxs_Hplc_Options::quit()
@@ -477,8 +643,11 @@ void US_Hydrodyn_Saxs_Hplc_Options::ok()
    (*parameters)[ "hplc_bl_integral"             ] = rb_integral            ->isChecked() ? "true" : "false";
    (*parameters)[ "hplc_bl_save"                 ] = cb_save_bl             ->isChecked() ? "true" : "false";
    (*parameters)[ "hplc_bl_smooth"               ] = le_smooth              ->text();
+   (*parameters)[ "hplc_bl_start_region"         ] = le_start_region        ->text();
+   (*parameters)[ "hplc_bl_i_power"              ] = le_i_power             ->text();
    (*parameters)[ "hplc_bl_reps"                 ] = le_reps                ->text();
    (*parameters)[ "hplc_bl_alpha"                ] = le_alpha               ->text();
+   (*parameters)[ "hplc_cormap_maxq"             ] = le_cormap_maxq         ->text();
    (*parameters)[ "hplc_zi_window"               ] = le_zi_window           ->text();
    (*parameters)[ "hplc_cb_discard_it_sd_mult"   ] = cb_discard_it_sd_mult  ->isChecked() ? "true" : "false";
    (*parameters)[ "hplc_discard_it_sd_mult"      ] = le_discard_it_sd_mult  ->text();
@@ -508,6 +677,15 @@ void US_Hydrodyn_Saxs_Hplc_Options::ok()
 
    (*parameters)[ "hplc_csv_transposed" ] = cb_csv_transposed->isChecked() ? "true" : "false";
    
+   (*parameters)[ "hplc_ampl_width_min"       ] = le_ampl_width_min      ->text();
+
+   (*parameters)[ "hplc_lock_min_retry"       ] = cb_lock_min_retry->isChecked() ? "true" : "false";
+   (*parameters)[ "hplc_lock_min_retry_mult"  ] = le_lock_min_retry_mult ->text();
+
+   (*parameters)[ "hplc_maxfpk_restart"       ] = cb_maxfpk_restart->isChecked() ? "true" : "false";
+   // (*parameters)[ "hplc_maxfpk_restart_tries" ] = le_maxfpk_restart_tries->text();
+   (*parameters)[ "hplc_maxfpk_restart_pct"   ] = le_maxfpk_restart_pct  ->text();
+
    close();
 }
 
@@ -531,6 +709,7 @@ void US_Hydrodyn_Saxs_Hplc_Options::update_enables()
    le_smooth     ->setEnabled( rb_integral->isChecked() );
    le_reps       ->setEnabled( rb_integral->isChecked() );
    cb_save_bl    ->setEnabled( rb_integral->isChecked() );
+   le_alpha      ->setEnabled( rb_integral->isChecked() );
    pb_clear_gauss->setEnabled( ((US_Hydrodyn_Saxs_Hplc *)hplc_win)->any_gaussians() );
 }
 

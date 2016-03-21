@@ -38,6 +38,13 @@ US_Hydrodyn_Saxs_Hplc_Fit_Global::US_Hydrodyn_Saxs_Hplc_Fit_Global(
    gaussian_type      = hplc_win->gaussian_type;
    gaussian_type_size = hplc_win->gaussian_type_size;
 
+   hplc_ampl_width_min       = ( ( US_Hydrodyn * ) ( hplc_win->us_hydrodyn ) )->gparams[ "hplc_ampl_width_min"        ].toDouble();
+   hplc_lock_min_retry       = ( ( US_Hydrodyn * ) ( hplc_win->us_hydrodyn ) )->gparams[ "hplc_lock_min_retry"        ] == "true" ? true : false;
+   hplc_lock_min_retry_mult  = ( ( US_Hydrodyn * ) ( hplc_win->us_hydrodyn ) )->gparams[ "hplc_lock_min_retry_mult"   ].toDouble();
+   hplc_maxfpk_restart       = ( ( US_Hydrodyn * ) ( hplc_win->us_hydrodyn ) )->gparams[ "hplc_maxfpk_restart"        ] == "true" ? true : false;
+   hplc_maxfpk_restart_tries = ( ( US_Hydrodyn * ) ( hplc_win->us_hydrodyn ) )->gparams[ "hplc_maxfpk_restart_tries"  ].toUInt();
+   hplc_maxfpk_restart_pct   = ( ( US_Hydrodyn * ) ( hplc_win->us_hydrodyn ) )->gparams[ "hplc_maxfpk_restart_pct"    ].toDouble();
+
    plot_test_zoomer      = (ScrollZoomer *) 0;
 
    switch ( gaussian_type )
@@ -168,6 +175,9 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::restore()
       hplc_win->pb_ggauss_rmsd->setEnabled( true );
       hplc_win->ggqfit_plot->clear();
       hplc_win->ggqfit_plot->replot();
+      double new_rmsd = hplc_win->ggaussian_rmsd();
+      hplc_win->lbl_gauss_fit->setText( QString( "%1" ).arg( new_rmsd, 0, 'g', 5 ) );
+      hplc_win->pb_ggauss_rmsd->setEnabled( false );
    }
    update_enables();
 }
@@ -188,6 +198,9 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::undo()
       hplc_win->pb_ggauss_rmsd->setEnabled( true );
       hplc_win->ggqfit_plot->clear();
       hplc_win->ggqfit_plot->replot();
+      double new_rmsd = hplc_win->ggaussian_rmsd();
+      hplc_win->lbl_gauss_fit->setText( QString( "%1" ).arg( new_rmsd, 0, 'g', 5 ) );
+      hplc_win->pb_ggauss_rmsd->setEnabled( false );
    }
    update_enables();
    if ( cb_test_mode->isChecked() &&
@@ -203,17 +216,51 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::undo()
 
 void US_Hydrodyn_Saxs_Hplc_Fit_Global::update_test_info()
 {
+   QString qs_uggs = "";
+
+   {
+      // create uggs
+      unsigned int p = 0;
+
+      // build up common first
+      qs_uggs += "common data: " + hplc_win->describe_unified_common  + "\n";
+
+      for ( unsigned int i = 0; i < hplc_win->unified_ggaussian_gaussians_size; ++i ) {
+         qs_uggs += QString( " gaussian %1: " ).arg( i + 1 );
+         for ( unsigned int j = 0; j < hplc_win->common_size; ++j ) {
+            qs_uggs += QString( "%1 " ).arg(  hplc_win->unified_ggaussian_params[ p++ ], 0, 'g', 6 );
+         } 
+         qs_uggs += "\n";
+      }
+
+      // now the file specific
+      qs_uggs += "file specific: " + hplc_win->describe_unified_per_file + "\n";
+      for ( unsigned int i = 0; i < hplc_win->unified_ggaussian_curves; ++i ) {
+         qs_uggs += QString( " curve %1: " ).arg( i + 1) + "\n";
+         for ( unsigned int k = 0; k < hplc_win->unified_ggaussian_gaussians_size; ++k ) {
+            qs_uggs += QString( "  gaussian %1: " ).arg( k + 1 );
+            for ( unsigned int j = 0; j < hplc_win->per_file_size; ++j ) {
+               qs_uggs += QString( "%1 " ).arg(  hplc_win->unified_ggaussian_params[ p++ ], 0, 'g', 6 );
+            } 
+            qs_uggs += "\n";
+         }
+      }
+   }      
+
+                                         
    lbl_test_info->setText( 
                           QString( 
                                   "Per gaussian: common_size: %1 %2 per_file_size: %3 %4\n"
                                   "%5"
                                   "%6"
+                                  "%7"
                                    )
                           .arg( hplc_win->common_size )
                           .arg( hplc_win->describe_unified_common )
                           .arg( hplc_win->per_file_size )
                           .arg( hplc_win->describe_unified_per_file )
-                          .arg( US_Vector::qs_vector( "unified ggaussians",hplc_win->unified_ggaussian_params ) )
+                          .arg( US_Vector::qs_vector( "unified ggaussians",hplc_win->unified_ggaussian_params, 6, 20 ) )
+                          .arg( qs_uggs )
                           .arg( HFIT_GLOBAL::qs_params() )
                            );
 }
@@ -938,8 +985,16 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::update_enables()
       cb_fix_curves[ i ]      ->setEnabled( !running );
    }
 
-   cb_comm_dist1                ->setEnabled( !running );
-   cb_comm_dist2                ->setEnabled( !running );
+   cb_comm_dist1                ->setEnabled( !running && !cb_fix_dist1->isChecked() );
+   cb_comm_dist2                ->setEnabled( !running && !cb_fix_dist2->isChecked() );
+   if ( !running && cb_fix_dist1->isChecked() )
+   {
+      cb_comm_dist1                ->setChecked( false );
+   }
+   if ( !running && cb_fix_dist2->isChecked() )
+   {
+      cb_comm_dist2                ->setChecked( false );
+   }
 
    // le_fix_curves             ->setEnabled( !running );
    le_epsilon                   ->setEnabled( !running );
@@ -1906,12 +1961,12 @@ namespace HFIT_GLOBAL
    QString qs_params()
    {
       QString qs = 
-      // US_Vector::qs_vector( "init_params ", init_params  ) +
-         US_Vector::qs_vector( "fixed_params", fixed_params ) + 
-         US_Vector::qs_vector( "param_pos   ", param_pos    ) +
-         US_Vector::qs_vector( "param_fixed ", param_fixed  ) +
-         US_Vector::qs_vector( "param_min   ", param_min    ) +
-         US_Vector::qs_vector( "param_max   ", param_max    );
+         // US_Vector::qs_vector( "init_params ", init_params  ) +
+         US_Vector::qs_vector( "fixed_params", fixed_params, 4 ) + 
+         US_Vector::qs_vector( "param_pos   ", param_pos   ) +
+         US_Vector::qs_vector( "param_fixed ", param_fixed ) +
+         US_Vector::qs_vector( "param_min   ", param_min   , 4 ) +
+         US_Vector::qs_vector( "param_max   ", param_max   , 4 );
 
       if ( comm_backref.size() )
       {
@@ -2071,6 +2126,13 @@ bool US_Hydrodyn_Saxs_Hplc_Fit_Global::setup_run()
             max = base_val + ofs;
          }
 
+         if ( HFIT_GLOBAL::init_params.back() < min ) {
+            HFIT_GLOBAL::init_params.back() = min;
+         }
+         if ( HFIT_GLOBAL::init_params.back() > max ) {
+            HFIT_GLOBAL::init_params.back() = max;
+         }
+
          HFIT_GLOBAL::param_min   .push_back( min );
          HFIT_GLOBAL::param_max   .push_back( max );
       }
@@ -2100,7 +2162,7 @@ bool US_Hydrodyn_Saxs_Hplc_Fit_Global::setup_run()
             HFIT_GLOBAL::param_fixed .push_back( false );
 
             double ofs;
-            double min = 1e-10;
+            double min = hplc_ampl_width_min;
             double max = 1e99;
             if ( cb_pct_width->isChecked() )
             {
@@ -2108,13 +2170,20 @@ bool US_Hydrodyn_Saxs_Hplc_Fit_Global::setup_run()
                min = base_val - ofs;
                max = base_val + ofs;
             }
-            if ( min < 1e-10 )
+            if ( min < hplc_ampl_width_min )
             {
-               min = 1e-10;
+               min = hplc_ampl_width_min;
             }
             if ( min > max )
             {
                min = max * 1e-15;
+            }
+
+            if ( HFIT_GLOBAL::init_params.back() < min ) {
+               HFIT_GLOBAL::init_params.back() = min;
+            }
+            if ( HFIT_GLOBAL::init_params.back() > max ) {
+               HFIT_GLOBAL::init_params.back() = max;
             }
 
             HFIT_GLOBAL::param_min   .push_back( min );
@@ -2131,7 +2200,7 @@ bool US_Hydrodyn_Saxs_Hplc_Fit_Global::setup_run()
               ( cb_comm_dist1->isChecked() && i ) )
          {
             HFIT_GLOBAL::param_pos   .push_back( HFIT_GLOBAL::fixed_params.size() );
-            if ( i && cb_comm_dist1->isChecked() && !fixed_curves.count( i ) )
+            if ( i && cb_comm_dist1->isChecked() && !fixed_curves.count( i ) && !fixed_curves.count( 0 ) )
             {
                HFIT_GLOBAL::fixed_params.push_back( hplc_win->unified_ggaussian_params[ this_ofs ] );
                HFIT_GLOBAL::comm_backref[ HFIT_GLOBAL::param_fixed.size() ] = comm_dist_1_var_pos;
@@ -2182,6 +2251,13 @@ bool US_Hydrodyn_Saxs_Hplc_Fit_Global::setup_run()
                max = avg + 1e-1;
             }
 
+            if ( HFIT_GLOBAL::init_params.back() < min ) {
+               HFIT_GLOBAL::init_params.back() = min;
+            }
+            if ( HFIT_GLOBAL::init_params.back() > max ) {
+               HFIT_GLOBAL::init_params.back() = max;
+            }
+
             HFIT_GLOBAL::param_min   .push_back( min );
             HFIT_GLOBAL::param_max   .push_back( max );
 
@@ -2197,7 +2273,7 @@ bool US_Hydrodyn_Saxs_Hplc_Fit_Global::setup_run()
                  ( cb_comm_dist2->isChecked() && i ) )
             {
                HFIT_GLOBAL::param_pos   .push_back( HFIT_GLOBAL::fixed_params.size() );
-               if ( i && cb_comm_dist2->isChecked() && !fixed_curves.count( i ) )
+               if ( i && cb_comm_dist2->isChecked() && !fixed_curves.count( i ) && !fixed_curves.count( 0 ) )
                {
                   HFIT_GLOBAL::fixed_params.push_back( hplc_win->unified_ggaussian_params[ this_ofs ] );
                   HFIT_GLOBAL::comm_backref[ HFIT_GLOBAL::param_fixed.size() ] = comm_dist_2_var_pos;
@@ -2248,6 +2324,13 @@ bool US_Hydrodyn_Saxs_Hplc_Fit_Global::setup_run()
                   max = avg + 1e-1;
                }
 
+               if ( HFIT_GLOBAL::init_params.back() < min ) {
+                  HFIT_GLOBAL::init_params.back() = min;
+               }
+               if ( HFIT_GLOBAL::init_params.back() > max ) {
+                  HFIT_GLOBAL::init_params.back() = max;
+               }
+
                HFIT_GLOBAL::param_min   .push_back( min );
                HFIT_GLOBAL::param_max   .push_back( max );
             }
@@ -2292,7 +2375,7 @@ bool US_Hydrodyn_Saxs_Hplc_Fit_Global::setup_run()
             HFIT_GLOBAL::param_fixed .push_back( false );
 
             double ofs;
-            double min = 1e-10;
+            double min = hplc_ampl_width_min;
             double max = hplc_win->gauss_max_height;
             if ( cb_pct_amplitude->isChecked() )
             {
@@ -2300,9 +2383,9 @@ bool US_Hydrodyn_Saxs_Hplc_Fit_Global::setup_run()
                min = base_val - ofs;
                max = base_val + ofs;
             }
-            if ( min < 1e-10 )
+            if ( min < hplc_ampl_width_min )
             {
-               min = 1e-10;
+               min = hplc_ampl_width_min;
             }
             if ( max > hplc_win->gauss_max_height )
             {
@@ -2311,6 +2394,13 @@ bool US_Hydrodyn_Saxs_Hplc_Fit_Global::setup_run()
             if ( min > max )
             {
                min = max * 1e-15;
+            }
+
+            if ( HFIT_GLOBAL::init_params.back() < min ) {
+               HFIT_GLOBAL::init_params.back() = min;
+            }
+            if ( HFIT_GLOBAL::init_params.back() > max ) {
+               HFIT_GLOBAL::init_params.back() = max;
             }
 
             HFIT_GLOBAL::param_min   .push_back( min );
@@ -2342,7 +2432,7 @@ bool US_Hydrodyn_Saxs_Hplc_Fit_Global::setup_run()
                HFIT_GLOBAL::param_fixed .push_back( false );
 
                double ofs;
-               double min = 1e-10;
+               double min = hplc_ampl_width_min;
                double max = 1e99;
                if ( cb_pct_width->isChecked() )
                {
@@ -2350,13 +2440,20 @@ bool US_Hydrodyn_Saxs_Hplc_Fit_Global::setup_run()
                   min = base_val - ofs;
                   max = base_val + ofs;
                }
-               if ( min < 1e-10 )
+               if ( min < hplc_ampl_width_min )
                {
-                  min = 1e-10;
+                  min = hplc_ampl_width_min;
                }
                if ( min > max )
                {
                   min = max * 1e-15;
+               }
+
+               if ( HFIT_GLOBAL::init_params.back() < min ) {
+                  HFIT_GLOBAL::init_params.back() = min;
+               }
+               if ( HFIT_GLOBAL::init_params.back() > max ) {
+                  HFIT_GLOBAL::init_params.back() = max;
                }
 
                HFIT_GLOBAL::param_min   .push_back( min );
@@ -2373,7 +2470,7 @@ bool US_Hydrodyn_Saxs_Hplc_Fit_Global::setup_run()
                  ( cb_comm_dist1->isChecked() && i ) )
             {
                HFIT_GLOBAL::param_pos   .push_back( HFIT_GLOBAL::fixed_params.size() );
-               if ( i && cb_comm_dist1->isChecked() && !fixed_curves.count( i ) )
+               if ( i && cb_comm_dist1->isChecked() && !fixed_curves.count( i ) && !fixed_curves.count( 0 ) )
                {
                   HFIT_GLOBAL::fixed_params.push_back( hplc_win->unified_ggaussian_params[ this_ofs ] );
                   HFIT_GLOBAL::comm_backref[ HFIT_GLOBAL::param_fixed.size() ] = comm_dist_1_var_pos;
@@ -2416,6 +2513,13 @@ bool US_Hydrodyn_Saxs_Hplc_Fit_Global::setup_run()
                   max = avg + 1e-1;
                }
 
+               if ( HFIT_GLOBAL::init_params.back() < min ) {
+                  HFIT_GLOBAL::init_params.back() = min;
+               }
+               if ( HFIT_GLOBAL::init_params.back() > max ) {
+                  HFIT_GLOBAL::init_params.back() = max;
+               }
+
                HFIT_GLOBAL::param_min   .push_back( min );
                HFIT_GLOBAL::param_max   .push_back( max );
             }
@@ -2428,7 +2532,7 @@ bool US_Hydrodyn_Saxs_Hplc_Fit_Global::setup_run()
                  ( cb_comm_dist2->isChecked() && i ) )
                {
                   HFIT_GLOBAL::param_pos   .push_back( HFIT_GLOBAL::fixed_params.size() );
-                  if ( i && cb_comm_dist2->isChecked() && !fixed_curves.count( i ) )
+                  if ( i && cb_comm_dist2->isChecked() && !fixed_curves.count( i ) && !fixed_curves.count( 0 ) )
                   {
                      HFIT_GLOBAL::fixed_params.push_back( hplc_win->unified_ggaussian_params[ this_ofs ] );
                      HFIT_GLOBAL::comm_backref[ HFIT_GLOBAL::param_fixed.size() ] = comm_dist_2_var_pos;
@@ -2477,6 +2581,13 @@ bool US_Hydrodyn_Saxs_Hplc_Fit_Global::setup_run()
                      double avg = 5e-1 * ( max + min );
                      min = avg - 1e-1;
                      max = avg + 1e-1;
+                  }
+
+                  if ( HFIT_GLOBAL::init_params.back() < min ) {
+                     HFIT_GLOBAL::init_params.back() = min;
+                  }
+                  if ( HFIT_GLOBAL::init_params.back() > max ) {
+                     HFIT_GLOBAL::init_params.back() = max;
                   }
 
                   HFIT_GLOBAL::param_min   .push_back( min );
@@ -2558,7 +2669,7 @@ bool US_Hydrodyn_Saxs_Hplc_Fit_Global::setup_run()
             HFIT_GLOBAL::param_fixed .push_back( false );
 
             double ofs;
-            double min = 1e-10;
+            double min = hplc_ampl_width_min;
             double max = 1e99;
             if ( cb_pct_width->isChecked() )
             {
@@ -2566,13 +2677,20 @@ bool US_Hydrodyn_Saxs_Hplc_Fit_Global::setup_run()
                min = base_val - ofs;
                max = base_val + ofs;
             }
-            if ( min < 1e-10 )
+            if ( min < hplc_ampl_width_min )
             {
-               min = 1e-10;
+               min = hplc_ampl_width_min;
             }
             if ( min > max )
             {
                min = max * 1e-15;
+            }
+
+            if ( HFIT_GLOBAL::init_params.back() < min ) {
+            HFIT_GLOBAL::init_params.back() = min;
+            }
+            if ( HFIT_GLOBAL::init_params.back() > max ) {
+            HFIT_GLOBAL::init_params.back() = max;
             }
 
             HFIT_GLOBAL::param_min   .push_back( min );
@@ -2607,7 +2725,7 @@ bool US_Hydrodyn_Saxs_Hplc_Fit_Global::setup_run()
             HFIT_GLOBAL::param_fixed .push_back( false );
 
             double ofs;
-            double min = 1e-10;
+            double min = hplc_ampl_width_min;
             double max = hplc_win->gauss_max_height;
             if ( cb_pct_amplitude->isChecked() )
             {
@@ -2615,9 +2733,9 @@ bool US_Hydrodyn_Saxs_Hplc_Fit_Global::setup_run()
                min = base_val - ofs;
                max = base_val + ofs;
             }
-            if ( min < 1e-10 )
+            if ( min < hplc_ampl_width_min )
             {
-               min = 1e-10;
+               min = hplc_ampl_width_min;
             }
             if ( max > hplc_win->gauss_max_height )
             {
@@ -2626,6 +2744,13 @@ bool US_Hydrodyn_Saxs_Hplc_Fit_Global::setup_run()
             if ( min > max )
             {
                min = max * 1e-15;
+            }
+
+            if ( HFIT_GLOBAL::init_params.back() < min ) {
+            HFIT_GLOBAL::init_params.back() = min;
+            }
+            if ( HFIT_GLOBAL::init_params.back() > max ) {
+            HFIT_GLOBAL::init_params.back() = max;
             }
 
             HFIT_GLOBAL::param_min   .push_back( min );
@@ -2673,6 +2798,13 @@ bool US_Hydrodyn_Saxs_Hplc_Fit_Global::setup_run()
                max = base_val + ofs;
             }
 
+            if ( HFIT_GLOBAL::init_params.back() < min ) {
+            HFIT_GLOBAL::init_params.back() = min;
+            }
+            if ( HFIT_GLOBAL::init_params.back() > max ) {
+            HFIT_GLOBAL::init_params.back() = max;
+            }
+
             HFIT_GLOBAL::param_min   .push_back( min );
             HFIT_GLOBAL::param_max   .push_back( max );
          }
@@ -2706,7 +2838,7 @@ bool US_Hydrodyn_Saxs_Hplc_Fit_Global::setup_run()
             HFIT_GLOBAL::param_fixed .push_back( false );
 
             double ofs;
-            double min = 1e-10;
+            double min = hplc_ampl_width_min;
             double max = hplc_win->gauss_max_height;
             if ( cb_pct_amplitude->isChecked() )
             {
@@ -2714,9 +2846,9 @@ bool US_Hydrodyn_Saxs_Hplc_Fit_Global::setup_run()
                min = base_val - ofs;
                max = base_val + ofs;
             }
-            if ( min < 1e-10 )
+            if ( min < hplc_ampl_width_min )
             {
-               min = 1e-10;
+               min = hplc_ampl_width_min;
             }
             if ( max > hplc_win->gauss_max_height )
             {
@@ -2725,6 +2857,13 @@ bool US_Hydrodyn_Saxs_Hplc_Fit_Global::setup_run()
             if ( min > max )
             {
                min = max * 1e-15;
+            }
+
+            if ( HFIT_GLOBAL::init_params.back() < min ) {
+            HFIT_GLOBAL::init_params.back() = min;
+            }
+            if ( HFIT_GLOBAL::init_params.back() > max ) {
+            HFIT_GLOBAL::init_params.back() = max;
             }
 
             HFIT_GLOBAL::param_min   .push_back( min );
@@ -2752,7 +2891,7 @@ bool US_Hydrodyn_Saxs_Hplc_Fit_Global::setup_run()
             HFIT_GLOBAL::param_fixed .push_back( false );
 
             double ofs;
-            double min = 1e-10;
+            double min = hplc_ampl_width_min;
             double max = 1e99;
             if ( cb_pct_width->isChecked() )
             {
@@ -2760,13 +2899,20 @@ bool US_Hydrodyn_Saxs_Hplc_Fit_Global::setup_run()
                min = base_val - ofs;
                max = base_val + ofs;
             }
-            if ( min < 1e-10 )
+            if ( min < hplc_ampl_width_min )
             {
-               min = 1e-10;
+               min = hplc_ampl_width_min;
             }
             if ( min > max )
             {
                min = max * 1e-15;
+            }
+
+            if ( HFIT_GLOBAL::init_params.back() < min ) {
+            HFIT_GLOBAL::init_params.back() = min;
+            }
+            if ( HFIT_GLOBAL::init_params.back() > max ) {
+            HFIT_GLOBAL::init_params.back() = max;
             }
 
             HFIT_GLOBAL::param_min   .push_back( min );
@@ -2869,7 +3015,20 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::test()
                                                                             HFIT_GLOBAL::comm_backref[ i ] :
                                                                             HFIT_GLOBAL::param_pos[ i ]  
                                                                             ];
+         qDebug( 
+                QString( "param %1 taken from init params pos %2 %3" )
+                .arg( i ) 
+                .arg( 
+                     HFIT_GLOBAL::comm_backref.count( i ) ?
+                     HFIT_GLOBAL::comm_backref[ i ] :
+                     HFIT_GLOBAL::param_pos[ i ]  
+                      ) 
+                .arg( HFIT_GLOBAL::comm_backref.count( i ) ? "backref used" : "direct pos" ) 
+                 );
+      } else {
+         qDebug( QString( "param %1 left alone" ).arg( i ) );
       }
+
    }
    gaussians_undo.push_back( hplc_win->unified_ggaussian_params );
 

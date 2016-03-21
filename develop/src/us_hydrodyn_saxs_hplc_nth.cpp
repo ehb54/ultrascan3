@@ -17,10 +17,14 @@ US_Hydrodyn_Saxs_Hplc_Nth::US_Hydrodyn_Saxs_Hplc_Nth(
 {
    this->us_hydrodyn_saxs_hplc                = us_hydrodyn_saxs_hplc;
    this->parameters                           = parameters;
+   this->ggaussian_last_pfit_map              = &((US_Hydrodyn_Saxs_Hplc*)us_hydrodyn_saxs_hplc)->ggaussian_last_pfit_map;
 
    USglobal = new US_Config();
    setPalette( PALET_FRAME );
    setCaption( tr( "US-SOMO: SAXS HPLC : Select curves" ) );
+
+   alpha        = parameters->count( "alpha" ) ? (*parameters)[ "alpha" ].toDouble() : 0.05;
+   alpha_over_5 = 0.2 * alpha;
 
    setupGUI();
    update_enables();
@@ -38,6 +42,8 @@ US_Hydrodyn_Saxs_Hplc_Nth::~US_Hydrodyn_Saxs_Hplc_Nth()
 
 void US_Hydrodyn_Saxs_Hplc_Nth::setupGUI()
 {
+   bool started_in_expert_mode = ((US_Hydrodyn_Saxs_Hplc*)us_hydrodyn_saxs_hplc)->started_in_expert_mode;
+
    int minHeight1  = 24;
 
    lbl_title =  new QLabel      ( caption(), this );
@@ -213,6 +219,48 @@ void US_Hydrodyn_Saxs_Hplc_Nth::setupGUI()
    pb_contains_add -> setPalette      ( PALET_PUSHB );
    connect( pb_contains_add, SIGNAL( clicked() ), SLOT( contains_add() ) );
 
+   lbl_pvalue = new QLabel ( tr( "Select by P-value" ), this);
+   lbl_pvalue->setAlignment( Qt::AlignCenter | Qt::AlignVCenter);
+   lbl_pvalue->setPalette  ( PALET_FRAME );
+   AUTFBACK( lbl_pvalue );
+   lbl_pvalue->setFont     ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold ) );
+
+   cb_pvalues_green = new QCheckBox(this);
+   cb_pvalues_green->setText( tr("Green P values" ) );
+   cb_pvalues_green->setChecked( true );
+   cb_pvalues_green->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
+   cb_pvalues_green->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_pvalues_green );
+   connect( cb_pvalues_green, SIGNAL( clicked() ), SLOT( update_enables() ) );
+
+   cb_pvalues_yellow = new QCheckBox(this);
+   cb_pvalues_yellow->setText( tr("Yellow P values" ) );
+   cb_pvalues_yellow->setChecked( true );
+   cb_pvalues_yellow->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
+   cb_pvalues_yellow->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_pvalues_yellow );
+   connect( cb_pvalues_yellow, SIGNAL( clicked() ), SLOT( update_enables() ) );
+
+   cb_pvalues_red = new QCheckBox(this);
+   cb_pvalues_red->setText( tr("Red P values" ) );
+   cb_pvalues_red->setChecked( true );
+   cb_pvalues_red->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
+   cb_pvalues_red->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_pvalues_red );
+   connect( cb_pvalues_red, SIGNAL( clicked() ), SLOT( update_enables() ) );
+
+   pb_pvalues_only =  new QPushButton ( tr( "Select Only" ), this );
+   pb_pvalues_only -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
+   pb_pvalues_only -> setMinimumHeight( minHeight1 );
+   pb_pvalues_only -> setPalette      ( PALET_PUSHB );
+   connect( pb_pvalues_only, SIGNAL( clicked() ), SLOT( pvalues_only() ) );
+
+   pb_pvalues_add =  new QPushButton ( tr( "Select Additionally" ), this );
+   pb_pvalues_add -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
+   pb_pvalues_add -> setMinimumHeight( minHeight1 );
+   pb_pvalues_add -> setPalette      ( PALET_PUSHB );
+   connect( pb_pvalues_add, SIGNAL( clicked() ), SLOT( pvalues_add() ) );
+
    pb_help =  new QPushButton ( tr( "Help" ), this );
    pb_help -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
    pb_help -> setMinimumHeight( minHeight1 );
@@ -225,7 +273,7 @@ void US_Hydrodyn_Saxs_Hplc_Nth::setupGUI()
    pb_quit -> setPalette      ( PALET_PUSHB );
    connect( pb_quit, SIGNAL( clicked() ), SLOT( quit() ) );
 
-   pb_go =  new QPushButton ( tr( "Select in main window" ), this );
+   pb_go =  new QPushButton ( tr( "Transfer selections to main window" ), this );
    pb_go -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
    pb_go -> setMinimumHeight( minHeight1 );
    pb_go -> setPalette      ( PALET_PUSHB );
@@ -287,6 +335,21 @@ void US_Hydrodyn_Saxs_Hplc_Nth::setupGUI()
       background->addLayout ( hbl_sel );
    }
 
+   background->addWidget( lbl_pvalue );
+   {
+      Q3HBoxLayout *hbl = new Q3HBoxLayout( 0 );
+      hbl->addWidget ( cb_pvalues_green );
+      hbl->addWidget ( cb_pvalues_yellow );
+      hbl->addWidget ( cb_pvalues_red );
+      background->addLayout ( hbl );
+   }
+   {
+      Q3HBoxLayout *hbl = new Q3HBoxLayout( 0 );
+      hbl->addWidget ( pb_pvalues_only );
+      hbl->addWidget ( pb_pvalues_add );
+      background->addLayout ( hbl );
+   }
+
    Q3HBoxLayout *hbl_bottom = new Q3HBoxLayout( 0 );
    hbl_bottom->addWidget ( pb_help );
    hbl_bottom->addWidget ( pb_quit );
@@ -294,6 +357,16 @@ void US_Hydrodyn_Saxs_Hplc_Nth::setupGUI()
 
    background->addSpacing( 4 );
    background->addLayout ( hbl_bottom );
+
+   if ( !ggaussian_last_pfit_map->size() ||
+        !started_in_expert_mode ) {
+      lbl_pvalue        ->hide();
+      cb_pvalues_green  ->hide();
+      cb_pvalues_yellow ->hide();
+      cb_pvalues_red    ->hide();
+      pb_pvalues_only   ->hide();
+      pb_pvalues_add    ->hide();
+   }
 }
 
 void US_Hydrodyn_Saxs_Hplc_Nth::quit()
@@ -344,6 +417,7 @@ void US_Hydrodyn_Saxs_Hplc_Nth::update_enables()
 
    set < int > selected;
    set < int > contains;
+   set < int > pvalues;
 
    for ( int i = 0; i < lb_files->numRows(); ++i )
    {
@@ -354,6 +428,18 @@ void US_Hydrodyn_Saxs_Hplc_Nth::update_enables()
       if ( ((US_Hydrodyn_Saxs_Hplc*)us_hydrodyn_saxs_hplc)->lb_files->text( i ).contains( le_contains->text() ) )
       {
          contains.insert( i );
+      }
+      {
+         QString qs = ((US_Hydrodyn_Saxs_Hplc*)us_hydrodyn_saxs_hplc)->lb_files->text( i );
+         if ( ggaussian_last_pfit_map->count( qs ) ) {
+            double pv = (*ggaussian_last_pfit_map)[ qs ];
+            if ( ( cb_pvalues_green ->isChecked() && pv >= alpha ) ||
+                 ( cb_pvalues_yellow->isChecked() && pv >= alpha_over_5 && pv < alpha ) ||
+                 ( cb_pvalues_red->isChecked() && pv < alpha_over_5 ) )
+            {
+               pvalues.insert( i );
+            }
+         }
       }
    }
 
@@ -419,6 +505,35 @@ void US_Hydrodyn_Saxs_Hplc_Nth::update_enables()
    pb_contains_only->setEnabled( any_contains_not_selected || any_selected_not_contains );
    pb_contains_add ->setEnabled( any_contains_not_selected && any_selected_not_contains );
 
+   bool any_selected_not_pvalues = false;
+
+   for ( set < int >::iterator it = selected.begin();
+         it != selected.end();
+         it++ )
+   {
+      if ( !pvalues.count( *it ) )
+      {
+         any_selected_not_pvalues = true;
+         break;
+      }
+   }
+
+   bool any_pvalues_not_selected = false;
+
+   for ( set < int >::iterator it = pvalues.begin();
+         it != pvalues.end();
+         it++ )
+   {
+      if ( !selected.count( *it ) )
+      {
+         any_pvalues_not_selected = true;
+         break;
+      }
+   }
+
+   pb_pvalues_only->setEnabled( any_pvalues_not_selected || any_selected_not_pvalues );
+   pb_pvalues_add ->setEnabled( any_pvalues_not_selected && any_selected_not_pvalues );
+
    lbl_files_selected->setText( QString( "%1 of %2 selected" ).arg( files_selected ).arg( lb_files->numRows() ) );
 }
 
@@ -480,6 +595,47 @@ void US_Hydrodyn_Saxs_Hplc_Nth::contains_add()
       if ( ((US_Hydrodyn_Saxs_Hplc*)us_hydrodyn_saxs_hplc)->lb_files->text( i ).contains( le_contains->text() ) )
       {
          lb_files->setSelected( i, true );
+      }
+   }
+   connect( lb_files, SIGNAL( selectionChanged() ), SLOT( update_files_selected() ) );
+   update_files_selected();
+}
+
+void US_Hydrodyn_Saxs_Hplc_Nth::pvalues_only()
+{
+   disconnect( lb_files, SIGNAL( selectionChanged() ), 0, 0 );
+   lb_files->clearSelection();
+   for ( int i = 0; i < lb_files->numRows(); ++i )
+   {
+      QString qs = ((US_Hydrodyn_Saxs_Hplc*)us_hydrodyn_saxs_hplc)->lb_files->text( i );
+      if ( ggaussian_last_pfit_map->count( qs ) ) {
+         double pv = (*ggaussian_last_pfit_map)[ qs ];
+         if ( ( cb_pvalues_green ->isChecked() && pv >= alpha ) ||
+              ( cb_pvalues_yellow->isChecked() && pv >= alpha_over_5 && pv < alpha ) ||
+              ( cb_pvalues_red->isChecked() && pv < alpha_over_5 ) )
+         {
+            lb_files->setSelected( i, true );
+         }
+      }
+   }
+   connect( lb_files, SIGNAL( selectionChanged() ), SLOT( update_files_selected() ) );
+   update_files_selected();
+}
+
+void US_Hydrodyn_Saxs_Hplc_Nth::pvalues_add()
+{
+   disconnect( lb_files, SIGNAL( selectionChanged() ), 0, 0 );
+   for ( int i = 0; i < lb_files->numRows(); ++i )
+   {
+      QString qs = ((US_Hydrodyn_Saxs_Hplc*)us_hydrodyn_saxs_hplc)->lb_files->text( i );
+      if ( ggaussian_last_pfit_map->count( qs ) ) {
+         double pv = (*ggaussian_last_pfit_map)[ qs ];
+         if ( ( cb_pvalues_green ->isChecked() && pv >= alpha ) ||
+              ( cb_pvalues_yellow->isChecked() && pv >= alpha_over_5 && pv < alpha ) ||
+              ( cb_pvalues_red->isChecked() && pv < alpha_over_5 ) )
+         {
+            lb_files->setSelected( i, true );
+         }
       }
    }
    connect( lb_files, SIGNAL( selectionChanged() ), SLOT( update_files_selected() ) );

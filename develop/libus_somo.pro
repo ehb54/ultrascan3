@@ -253,6 +253,7 @@ SOURCES += \
   us_hydrodyn_save.cpp \
   us_hydrodyn_saxs.cpp \
   us_hydrodyn_saxs_conc.cpp \
+  us_hydrodyn_saxs_cormap.cpp \
   us_hydrodyn_saxs_external.cpp \
   us_hydrodyn_saxs_guinier.cpp \
   us_hydrodyn_saxs_fits.cpp \
@@ -276,9 +277,12 @@ SOURCES += \
   us_hydrodyn_saxs_buffer_conc_load.cpp \
   us_hydrodyn_saxs_buffer_nth.cpp \
   us_hydrodyn_saxs_hplc.cpp \
+  us_hydrodyn_saxs_hplc_baseline_best.cpp \
   us_hydrodyn_saxs_hplc_gui.cpp \
   us_hydrodyn_saxs_hplc_stack.cpp \
   us_hydrodyn_saxs_hplc_modes.cpp \
+  us_hydrodyn_saxs_hplc_modes_bb.cpp \
+  us_hydrodyn_saxs_hplc_modes_wheel.cpp \
   us_hydrodyn_saxs_hplc_makeiq.cpp \
   us_hydrodyn_saxs_hplc_plots.cpp \
   us_hydrodyn_saxs_hplc_ciq.cpp \
@@ -295,6 +299,7 @@ SOURCES += \
   us_hydrodyn_saxs_hplc_fit_ga.cpp \
   us_hydrodyn_saxs_hplc_nth.cpp \
   us_hydrodyn_saxs_hplc_options.cpp \
+  us_hydrodyn_saxs_hplc_simulate.cpp \
   us_hydrodyn_saxs_hplc_svd.cpp \
   us_hydrodyn_saxs_1d.cpp \
   us_hydrodyn_saxs_2d.cpp \
@@ -712,6 +717,9 @@ HEADERS += \
   qwt/scrollzoomer.h \
   us_hydrodyn_saxs_guinier_frames.h \
   us_hydrodyn_saxs_hplc_scale_trend.h \
+  us_hydrodyn_saxs_cormap.h \
+  us_hydrodyn_saxs_hplc_baseline_best.h \
+  us_hydrodyn_saxs_hplc_simulate.h \
   us_plot_util.h \
   shd_mpi/shs_data.h
 

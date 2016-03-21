@@ -83,6 +83,8 @@ QString US_Saxs_Util::run_json( QString & json )
        if ( !run_pm( parameters, results ) )
 	 {
 	   results[ "errors" ] += " run_pm failed:" + errormsg;
+	   //return US_Json::compose( results );
+
 	 }
      }
  
@@ -91,6 +93,7 @@ QString US_Saxs_Util::run_json( QString & json )
        if ( !run_hydro( parameters, results ) )
 	 {
 	   results[ "errors" ] += " run_hydro failed:" + errormsg;
+	   //return US_Json::compose( results );
 	 }
      }
    

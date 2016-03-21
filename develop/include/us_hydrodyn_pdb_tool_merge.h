@@ -21,6 +21,7 @@
 
 #include "us_util.h"
 #include "us_hydrodyn_comparative.h"
+#include "us_saxs_util.h"
 
 //standard C and C++ defs:
 
@@ -75,6 +76,8 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool_Merge : public Q3Frame
       void                 *us_hydrodyn;
       void                 *pdb_tool_window;
 
+      US_Saxs_Util         *usu;
+
       US_Config            *USglobal;
 
       QLabel               *lbl_title;
@@ -113,6 +116,8 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool_Merge : public Q3Frame
       QPushButton          *pb_target;
       QLineEdit            *le_target;
 
+      QCheckBox            *cb_filter;
+
       Q3ProgressBar         *progress;
 
       QPushButton          *pb_start;
@@ -130,6 +135,7 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool_Merge : public Q3Frame
       void                 editor_msg( QString color, QString msg );
 
       bool                 running;
+      bool                 filtered;
 
       csv                  csv_commands;
       csv                  csv_from;

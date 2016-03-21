@@ -2401,3 +2401,325 @@ bool US_Saxs_Util::mwc(
 
    return true;
 }
+
+double US_Saxs_Util::prob_of_streak( int n, int c ) {
+   if ( prob_of_streak_cache.count( n ) &&
+        prob_of_streak_cache[ n ].count( c ) ) {
+      return prob_of_streak_cache[ n ][ c ];
+   }
+   if  ( c > n || n <= 0e0 ) {
+      return 0e0;
+   }
+
+   double res = pow( 0.5e0, c );
+
+   for ( int i = 1; i <= c; ++i ) {
+        double pr = prob_of_streak( n - i, c );
+        res += pow( 0.5e0, i - 1 ) * 0.5e0 * pr;
+   }
+
+   prob_of_streak_cache[ n ][ c ] = res;
+   return res;
+}
+
+float US_Saxs_Util::prob_of_streak_f( int n, int c ) {
+   if ( prob_of_streak_cache_f.count( n ) &&
+        prob_of_streak_cache_f[ n ].count( c ) ) {
+      return prob_of_streak_cache_f[ n ][ c ];
+   }
+   if  ( c > n || n <= 0e0 ) {
+      return 0e0;
+   }
+
+   float res = pow( 0.5e0, c );
+
+   for ( int i = 1; i <= c; ++i ) {
+        float pr = prob_of_streak_f( n - i, c );
+        res += pow( 0.5e0, i - 1 ) * 0.5e0 * pr;
+   }
+
+   prob_of_streak_cache_f[ n ][ c ] = res;
+   return res;
+}
+
+bool US_Saxs_Util::cormap( 
+                          const vector < double >            & q,
+                          const vector < vector < double > > & I,
+                          vector < vector < double > >       & rkl,
+                          int                                & N,
+                          int                                & S,
+                          int                                & C,
+                          double                             & P
+                           ) {
+
+   // US_Timer ust;
+   // ust.init_timer( "prob_of_streak" );
+   // ust.start_timer( "prob_of_streak" );
+   // double ps = prob_of_streak( 25000, 100 );
+   // ust.end_timer( "prob_of_streak" );
+   // ust.init_timer( "prob_of_streak_f" );
+   // ust.start_timer( "prob_of_streak_f" );
+   // float psf = prob_of_streak_f( 25000, 100 );
+   // ust.end_timer( "prob_of_streak_f" );
+   // qDebug( ust.list_times() );
+   // qDebug( QString( "p %1 pf %2" ).arg( ps ).arg( psf ) );
+   // errormsg = "";
+
+   int m  = (int) I.size();
+
+   if ( m < 2 ) {
+         errormsg = 
+            QString( QObject::tr( "Error in cormap: a minimum of 2 intensity vectors are required and only %1 were given" ) )
+            .arg( m );
+         return false;
+   }
+
+   int qp = (int) q.size();
+   double mm1r = 1e0 / ( (double) m - 1e0 );
+   double mr   = 1e0 / ( (double) m );
+
+   for ( int i = 0; i < m; ++i ) {
+      if ( (int) I[ i ].size() != qp ) {
+         errormsg = 
+            QString( QObject::tr( "Error in cormap: the intensity vectors are of different size (%1)  than the q vector size (%2)" ) )
+            .arg( I[ i ].size() )
+            .arg( q     .size() )
+            ;
+         return false;
+      }
+   }
+
+   vector < double > Ibar = I[ 0 ];
+
+   for ( int k = 0; k < qp; ++k ) {
+      for ( int i = 1; i < m; ++i ) {
+         Ibar[ k ] += I[ i ][ k ];
+      }
+      Ibar[ k ] *= mr;
+   }
+
+   vector < vector < double > > sigma( qp );
+
+   for ( int k = 0; k < qp; ++k ) {
+      sigma[ k ].resize( qp );
+      for ( int l = 0; l < qp; ++l ) {
+         sigma[ k ][ l ] = 0e0;
+         for ( int i = 0; i < m; ++i ) {
+            sigma[ k ][ l ] += ( I[ i ][ k ] - Ibar[ k ] ) * ( I[ i ][ l ] - Ibar[ l ] );
+         }
+         sigma[ k ][ l ] *= mm1r;
+      }
+   }
+
+   // for ( int i = 0; i < (int) sigma.size(); ++i ) {
+   //    US_Vector::printvector( QString( "sigma[%1]" ).arg( i ), sigma[ i ] );
+   // }   
+
+   rkl.resize( qp );
+
+   for ( int k = 0; k < qp; ++k ) {
+      rkl[ k ].resize( qp );
+      for ( int l = 0; l < qp; ++l ) {
+         bool altsigma = false;
+         if ( sigma[ k ][ k ] == 0e0 ) {
+            // qDebug( QString( QObject::tr( "Notice in cormap: found zero sigma at %1 %2" ) ).arg( k ).arg( k ) );
+            altsigma = true;
+         }
+         if ( sigma[ l ][ l ] == 0e0 ) {
+            // qDebug( QString( QObject::tr( "Notice in cormap: found zero sigma at %1 %2" ) ).arg( l ).arg( l ) );
+            altsigma = true;
+         }
+         if ( altsigma ) {
+            rkl[ k ][ l ] = -1e0;
+         } else {
+            rkl[ k ][ l ] = sigma[ k ][ l ] / ( sqrt( sigma[ k ][ k ] ) * sqrt( sigma[ l ][ l ] ) );
+         }            
+      }
+   }
+
+   double min = rkl[ 0 ][ 0 ];
+   double max = rkl[ 0 ][ 0 ];
+
+   for ( int k = 0; k < qp; ++k ) {
+      rkl[ k ].resize( qp );
+      for ( int l = 0; l < qp; ++l ) {
+         if ( min > rkl[ k ][ l ] ) {
+            min = rkl[ k ][ l ];
+         }
+         if ( max < rkl[ k ][ l ] ) {
+            max = rkl[ k ][ l ];
+         }
+      }
+   }
+
+   // qDebug( QString( "min %1 max %2" ).arg( min ).arg( max ) );
+
+   // for ( int k = 0; k < qp; ++k ) {
+   //    QString summary;
+   //    summary += QString( "k = %1:" ).arg( k );
+   //    for ( int l = 0; l < qp; ++l ) {
+   //       summary += QString( " %1" ).arg( rkl[ k ][ l ] );
+   //    }
+   //    summary += "\n";
+   //    cout << summary;
+   // }
+   
+   // qDebug( "trace:" );
+   
+   // {
+   //    QString summary;
+   //    for ( int k = 0; k < qp; ++k ) {
+   //       summary += QString( "k = %1:" ).arg( k );
+   //       summary += QString( " %1" ).arg( rkl[ k ][ k ] );
+   //       summary += "\n";
+   //    }
+   //    cout << summary;
+   // }
+
+   // find largest patch ... going to have to check 2 dimensions
+   // go down diagonal and check 1/2 block
+
+   {
+      int longest_start_q     = 0;
+      int contiguous_pts      = 1;
+      bool pos_region         = rkl[ 0 ][ 0 ] > 0;
+
+      int this_start_q        = longest_start_q;
+      int this_contiguous_pts = contiguous_pts;
+
+      for ( int k = 1; k < qp; ++k ) {
+         bool new_region = false;
+         if ( ( rkl[ k ][ k ] > 0 ) != pos_region ) {
+            new_region = true;
+         } else {
+            // check 1/2 block
+            for ( int k2 = this_start_q; !new_region && k2 <= k; ++k2 ) {
+               for ( int l2 = k2; !new_region && l2 <= k; ++l2 ) {
+                  if ( ( rkl[ k2 ][ l2 ] > 0 ) != pos_region ) {
+                     new_region = true;
+                  }
+               }
+            }
+         }
+
+         if ( !new_region ) {
+            this_contiguous_pts++;
+         } else {
+            if ( contiguous_pts < this_contiguous_pts ) {
+               contiguous_pts      = this_contiguous_pts;
+               longest_start_q     = this_start_q;
+            }
+            this_start_q        = k;
+            this_contiguous_pts = 1;
+            pos_region          = rkl[ k ][ k ] > 0;
+         }
+      }
+
+      if ( contiguous_pts < this_contiguous_pts ) {
+         contiguous_pts      = this_contiguous_pts;
+         longest_start_q     = this_start_q;
+      }
+
+      N = qp;
+      S = longest_start_q + 1;
+      C = contiguous_pts;
+      P = (double) prob_of_streak_f( N, C );
+      // qDebug( QString( "N %1 Loc %2 Size %3" ).arg( qp ).arg( longest_start_q + 1 ).arg( contiguous_pts ) );
+      // qDebug( QString( "N %1 Loc %2 Size %3 PV %4" ).arg( qp ).arg( longest_start_q + 1 ).arg( contiguous_pts ).arg( prob_of_streak( qp, contiguous_pts ) ) );
+   }
+
+
+   return true;
+}
+
+bool US_Saxs_Util::average( 
+                           vector < double > &q,
+                           vector < double > &I,
+                           vector < double > &e,
+                           double &avg_q,
+                           double &avg_I,
+                           double &avg_e
+                            ) {
+
+   // cout << US_Vector::qs_vector3( "average q,i,e input", q, I, e ) << endl;
+
+   errormsg = "";
+   if ( !q.size() || 
+        q.size() != I.size() || 
+        q.size() != e.size() ) {
+      errormsg = "US_Saxs_Util::average Error: incompatible input vector sizes. they must be equal and at least length 1";
+      return false;
+   }
+
+   avg_q = q[ 0 ];
+   avg_I = I[ 0 ];
+   avg_e = e[ 0 ];
+
+   for ( int j = 1; j < (int) q.size(); ++j ) {
+      avg_q += q[ j ];
+      avg_I += I[ j ];
+      avg_e += e[ j ];
+   }
+
+   avg_q /= (double) q.size();
+   avg_I /= (double) q.size();
+   avg_e /= (double) q.size();
+
+   // cout << QString( "averages %1 %2 %3\n" ).arg( avg_q ).arg( avg_I ).arg( avg_e );
+
+   return true;
+}   
+                           
+bool US_Saxs_Util::bin(
+                       vector < double > &q,
+                       vector < double > &I,
+                       vector < double > &e,
+                       vector < double > &new_q,
+                       vector < double > &new_I,
+                       vector < double > &new_e,
+                       unsigned int      points
+                       ) 
+{
+   // cout << US_Vector::qs_vector3( "bin q,i,e input", q, I, e ) << endl;
+
+   errormsg = "";
+   if ( !q.size() || 
+        q.size() != I.size() || 
+        q.size() != e.size() ) {
+      errormsg = "US_Saxs_Util::bin Error: incompatible input vector sizes. they must be equal and at least length 1";
+      return false;
+   }
+
+   if ( points <= 1 ) {
+      errormsg = "US_Saxs_Util::bin Error: binning points must be at least 2";
+      return false;
+   }
+
+   new_q.clear();
+   new_I.clear();
+   new_e.clear();
+
+   for ( int i = 0; i < (int) q.size(); i += points ) {
+      vector < double > this_q;
+      vector < double > this_I;
+      vector < double > this_e;
+      double this_new_q;
+      double this_new_I;
+      double this_new_e;
+      for ( int j = 0; j < (int) points && i + j < (int) q.size(); ++j ) {
+         this_q.push_back( q[ i + j ] );
+         this_I.push_back( I[ i + j ] );
+         this_e.push_back( e[ i + j ] );
+      }
+      if ( !average( this_q, this_I, this_e, this_new_q, this_new_I, this_new_e ) ) {
+         return false;
+      }
+      new_q.push_back( this_new_q );
+      new_I.push_back( this_new_I );
+      new_e.push_back( this_new_e );
+   }
+      
+   // cout << US_Vector::qs_vector3( "final new vectors", new_q, new_I, new_e ) << endl;
+
+   return true;
+}

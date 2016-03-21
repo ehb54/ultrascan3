@@ -13,32 +13,30 @@
 #include <Q3Frame>
 #include <Q3PopupMenu>
 
-#define UHSH_VAL_DEC 8
+// #define UHSH_VAL_DEC 8
 
 void US_Hydrodyn_Saxs_Hplc::setupGUI()
 {
    int minHeight1 = 22;
    int minHeight3 = 24;
 
-   started_in_expert_mode = ((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode;
-
    QColorGroup cg_magenta = USglobal->global_colors.cg_normal;
    cg_magenta.setBrush( QColorGroup::Base, QBrush( QColor( "magenta" ), Qt::SolidPattern ) );
 
    /*
-   cg_magenta.setBrush( QColorGroup::Foreground, QBrush( QColor( "magenta" ), Qt::SolidPattern ) );
-   cg_magenta.setBrush( QColorGroup::Button, QBrush( QColor( "blue" ), Qt::SolidPattern ) );
-   cg_magenta.setBrush( QColorGroup::Light, QBrush( QColor( "darkcyan" ), Qt::SolidPattern ) );
-   cg_magenta.setBrush( QColorGroup::Midlight, QBrush( QColor( "darkblue" ), Qt::SolidPattern ) );
-   cg_magenta.setBrush( QColorGroup::Dark, QBrush( QColor( "yellow" ), Qt::SolidPattern ) );
-   cg_magenta.setBrush( QColorGroup::Mid, QBrush( QColor( "darkred" ), Qt::SolidPattern ) );
-   cg_magenta.setBrush( QColorGroup::Text, QBrush( QColor( "green" ), Qt::SolidPattern ) );
-   cg_magenta.setBrush( QColorGroup::BrightText, QBrush( QColor( "darkgreen" ), Qt::SolidPattern ) );
-   cg_magenta.setBrush( QColorGroup::ButtonText, QBrush( QColor( "cyan" ), Qt::SolidPattern ) );
-   cg_magenta.setBrush( QColorGroup::Base, QBrush( QColor( "gray" ), Qt::SolidPattern ) );
-   cg_magenta.setBrush( QColorGroup::Shadow, QBrush( QColor( "magenta" ), Qt::SolidPattern ) );
-   cg_magenta.setBrush( QColorGroup::Highlight, QBrush( QColor( "darkyellow" ), Qt::SolidPattern ) );
-   cg_magenta.setBrush( QColorGroup::HighlightedText, QBrush( QColor( "darkred" ), Qt::SolidPattern ) );
+     cg_magenta.setBrush( QColorGroup::Foreground, QBrush( QColor( "magenta" ), Qt::SolidPattern ) );
+     cg_magenta.setBrush( QColorGroup::Button, QBrush( QColor( "blue" ), Qt::SolidPattern ) );
+     cg_magenta.setBrush( QColorGroup::Light, QBrush( QColor( "darkcyan" ), Qt::SolidPattern ) );
+     cg_magenta.setBrush( QColorGroup::Midlight, QBrush( QColor( "darkblue" ), Qt::SolidPattern ) );
+     cg_magenta.setBrush( QColorGroup::Dark, QBrush( QColor( "yellow" ), Qt::SolidPattern ) );
+     cg_magenta.setBrush( QColorGroup::Mid, QBrush( QColor( "darkred" ), Qt::SolidPattern ) );
+     cg_magenta.setBrush( QColorGroup::Text, QBrush( QColor( "green" ), Qt::SolidPattern ) );
+     cg_magenta.setBrush( QColorGroup::BrightText, QBrush( QColor( "darkgreen" ), Qt::SolidPattern ) );
+     cg_magenta.setBrush( QColorGroup::ButtonText, QBrush( QColor( "cyan" ), Qt::SolidPattern ) );
+     cg_magenta.setBrush( QColorGroup::Base, QBrush( QColor( "gray" ), Qt::SolidPattern ) );
+     cg_magenta.setBrush( QColorGroup::Shadow, QBrush( QColor( "magenta" ), Qt::SolidPattern ) );
+     cg_magenta.setBrush( QColorGroup::Highlight, QBrush( QColor( "darkyellow" ), Qt::SolidPattern ) );
+     cg_magenta.setBrush( QColorGroup::HighlightedText, QBrush( QColor( "darkred" ), Qt::SolidPattern ) );
    */
 
    QColorGroup cg_red = cg_magenta;
@@ -149,19 +147,19 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    AUTFBACK( lbl_selected );
    lbl_selected->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 2));
 
-   pb_select_all = new mQPushButton(tr("Select all"), this);
+   pb_select_all = new mQPushButton(tr("Sel. all"), this);
    pb_select_all->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_select_all->setMinimumHeight(minHeight1);
    pb_select_all->setPalette( PALET_PUSHB );
    connect(pb_select_all, SIGNAL(clicked()), SLOT(select_all()));
 
-   pb_invert = new QPushButton(tr("Invert"), this);
+   pb_invert = new QPushButton(tr("Sel. Unsel."), this);
    pb_invert->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_invert->setMinimumHeight(minHeight1);
    pb_invert->setPalette( PALET_PUSHB );
    connect(pb_invert, SIGNAL(clicked()), SLOT(invert()));
 
-   pb_select_nth = new mQPushButton(tr("Select"), this);
+   pb_select_nth = new mQPushButton(tr("Adv. Sel."), this);
    pb_select_nth->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_select_nth->setMinimumHeight(minHeight1);
    pb_select_nth->setPalette( PALET_PUSHB );
@@ -331,6 +329,12 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    pb_avg->setMinimumHeight(minHeight1);
    pb_avg->setPalette( PALET_PUSHB );
    connect(pb_avg, SIGNAL(clicked()), SLOT(avg()));
+
+   pb_bin = new QPushButton(tr("Bin"), this);
+   pb_bin->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_bin->setMinimumHeight(minHeight1);
+   pb_bin->setPalette( PALET_PUSHB );
+   connect(pb_bin, SIGNAL(clicked()), SLOT(bin()));
 
    pb_smooth = new QPushButton(tr("Smooth"), this);
    pb_smooth->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
@@ -888,13 +892,54 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    AUTFBACK( lbl_wheel_pos );
    lbl_wheel_pos->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
 
+   lbl_blank2 = new QLabel( "", this );
+   lbl_blank2->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   lbl_blank2->setPalette( PALET_NORMAL );
+   AUTFBACK( lbl_blank2 );
+   lbl_blank2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+
+   lbl_wheel_pos_below = new QLabel( "", this );
+   lbl_wheel_pos_below->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   lbl_wheel_pos_below->setPalette( PALET_NORMAL );
+   AUTFBACK( lbl_wheel_pos_below );
+   lbl_wheel_pos_below->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+
+   lbl_wheel_Pcolor = new QLabel( "", this );
+   lbl_wheel_Pcolor->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   lbl_wheel_Pcolor->setPalette( PALET_NORMAL );
+   AUTFBACK( lbl_wheel_Pcolor );
+   lbl_wheel_Pcolor->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+
+   qi_green = new QImage( 1, 1, 32 );
+   qi_green->setPixel( 0, 0, qRgb( 0, 255, 0 ) );
+
+   qi_yellow = new QImage( 1, 1, 32 );
+   qi_yellow->setPixel( 0, 0, qRgb( 255, 255, 0 ) );
+
+   qi_red = new QImage( 1, 1, 32 );
+   qi_red->setPixel( 0, 0, qRgb( 255, 0, 0 ) );
+
+   pb_wheel_dec = new QPushButton(tr("<"), this);
+   pb_wheel_dec->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_wheel_dec->setEnabled( false );
+   pb_wheel_dec->setMinimumHeight(minHeight1);
+   pb_wheel_dec->setPalette( PALET_PUSHB );
+   connect(pb_wheel_dec, SIGNAL(clicked()), SLOT( wheel_dec() ));
+   
    qwtw_wheel = new QwtWheel( this );
-   qwtw_wheel->setMass         ( 0.5 );
+   // qwtw_wheel->setMass         ( 0.5 );
    // qwtw_wheel->setRange        ( -1000, 1000, 1 );
    qwtw_wheel->setMinimumHeight( minHeight1 );
    // qwtw_wheel->setTotalAngle( 3600.0 );
    qwtw_wheel->setEnabled      ( false );
    connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
+
+   pb_wheel_inc = new QPushButton(tr(">"), this);
+   pb_wheel_inc->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_wheel_inc->setEnabled( false );
+   pb_wheel_inc->setMinimumHeight(minHeight1);
+   pb_wheel_inc->setPalette( PALET_PUSHB );
+   connect(pb_wheel_inc, SIGNAL(clicked()), SLOT( wheel_inc() ));
 
    pb_ref = new QPushButton(tr("Concentration reference"), this);
    pb_ref->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
@@ -917,12 +962,22 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    pb_ggqfit->setEnabled(false);
    connect(pb_ggqfit, SIGNAL(clicked()), SLOT(ggqfit()));
 
+   pb_cormap = new QPushButton(tr("CorMap Analysis"), this);
+   pb_cormap->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_cormap->setMinimumHeight(minHeight1);
+   pb_cormap->setPalette( PALET_PUSHB );
+   pb_cormap->setEnabled( true );
+   connect(pb_cormap, SIGNAL(clicked()), SLOT(cormap()));
+
    pb_pp = new QPushButton(tr("Save Plots"), this);
    pb_pp->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_pp->setMinimumHeight(minHeight1);
    pb_pp->setPalette( PALET_PUSHB );
    pb_pp->setEnabled( true );
    connect(pb_pp, SIGNAL(clicked()), SLOT(pp()));
+#ifdef QT4
+   pb_pp->hide();
+#endif
 
    pb_wheel_cancel = new QPushButton(tr("Cancel"), this);
    pb_wheel_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
@@ -1165,7 +1220,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    pb_ggauss_start->setPalette( PALET_PUSHB );
    connect(pb_ggauss_start, SIGNAL(clicked()), SLOT(ggauss_start()));
 
-   pb_ggauss_rmsd = new QPushButton(tr("RMSD"), this);
+   pb_ggauss_rmsd = new QPushButton(tr("Recompute RMSD"), this);
    pb_ggauss_rmsd->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_ggauss_rmsd->setMinimumHeight(minHeight1);
    pb_ggauss_rmsd->setPalette( PALET_PUSHB );
@@ -1186,6 +1241,13 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    pb_gauss_as_curves->setPalette( PALET_PUSHB );
    pb_gauss_as_curves->setEnabled( false );
    connect(pb_gauss_as_curves, SIGNAL(clicked()), SLOT(gauss_as_curves()));
+
+   pb_ggauss_as_curves = new QPushButton(tr("To produced data"), this);
+   pb_ggauss_as_curves->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_ggauss_as_curves->setMinimumHeight(minHeight1);
+   pb_ggauss_as_curves->setPalette( PALET_PUSHB );
+   pb_ggauss_as_curves->setEnabled( false );
+   connect(pb_ggauss_as_curves, SIGNAL(clicked()), SLOT(gauss_as_curves()));
 
    // wyatt
 
@@ -1249,6 +1311,30 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    AUTFBACK( cb_wyatt_2 );
    connect( cb_wyatt_2, SIGNAL( clicked() ), SLOT( wyatt_2() ) );
 
+   // blanks
+
+   pb_blanks_start = new QPushButton(tr("Blanks analysis"), this);
+   pb_blanks_start->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_blanks_start->setMinimumHeight(minHeight1);
+   pb_blanks_start->setPalette( PALET_PUSHB );
+   connect(pb_blanks_start, SIGNAL(clicked()), SLOT(blanks_start()));
+
+   pb_blanks_params = new QPushButton(tr("Analyze"), this);
+   pb_blanks_params->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_blanks_params->setMinimumHeight(minHeight1);
+   pb_blanks_params->setPalette( PALET_PUSHB );
+   connect(pb_blanks_params, SIGNAL(clicked()), SLOT(blanks_params()));
+   pb_blanks_params->hide();
+
+   // blanks & baseline auto increment
+
+   pb_bb_cm_inc = new QPushButton(tr("Auto inc+coremap"), this);
+   pb_bb_cm_inc->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_bb_cm_inc->setMinimumHeight(minHeight1);
+   pb_bb_cm_inc->setPalette( PALET_PUSHB );
+   connect(pb_bb_cm_inc, SIGNAL(clicked()), SLOT(bb_cm_inc()));
+   pb_bb_cm_inc->hide();
+
    // baseline
 
    pb_baseline_start = new QPushButton(tr("Baseline"), this);
@@ -1262,6 +1348,12 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    pb_baseline_apply->setMinimumHeight(minHeight1);
    pb_baseline_apply->setPalette( PALET_PUSHB );
    connect(pb_baseline_apply, SIGNAL(clicked()), SLOT(baseline_apply()));
+
+   pb_baseline_test = new QPushButton(tr("Test baseline"), this);
+   pb_baseline_test->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_baseline_test->setMinimumHeight(minHeight1);
+   pb_baseline_test->setPalette( PALET_PUSHB );
+   connect(pb_baseline_test, SIGNAL(clicked()), SLOT(baseline_test()));
 
    cb_baseline_start_zero = new QCheckBox(this);
    cb_baseline_start_zero->setText(tr("Zero base  "));
@@ -1331,6 +1423,29 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    connect( le_baseline_end_e, SIGNAL( textChanged( const QString & ) ), SLOT( baseline_end_e_text( const QString & ) ) );
    connect( le_baseline_end_e, SIGNAL( focussed ( bool ) )             , SLOT( baseline_end_e_focus( bool ) ) );
 
+   cb_baseline_fix_width = new QCheckBox(this);
+   cb_baseline_fix_width->setText(tr(" Fix window width: "));
+   cb_baseline_fix_width->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
+   cb_baseline_fix_width->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_baseline_fix_width );
+   connect( cb_baseline_fix_width, SIGNAL( clicked() ), SLOT( set_baseline_fix_width() ) );
+
+   le_baseline_width = new mQLineEdit(this, "le_baseline_width Line Edit");
+   le_baseline_width->setText( "" );
+   le_baseline_width->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_baseline_width->setPalette(QPalette( cg_magenta, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_baseline_width->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   le_baseline_width->setEnabled( false );
+   le_baseline_width->setValidator( new QIntValidator( le_baseline_width ) );
+   connect( le_baseline_width, SIGNAL( textChanged( const QString & ) ), SLOT( baseline_width_text( const QString & ) ) );
+   connect( le_baseline_width, SIGNAL( focussed ( bool ) )             , SLOT( baseline_width_focus( bool ) ) );
+
+   pb_baseline_best = new QPushButton(tr("Find best region"), this);
+   pb_baseline_best->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_baseline_best->setMinimumHeight(minHeight1);
+   pb_baseline_best->setPalette( PALET_PUSHB );
+   connect(pb_baseline_best, SIGNAL(clicked()), SLOT(baseline_best()));
+
    // select
 
    pb_select_vis = new QPushButton(tr("Select Visible"), this);
@@ -1387,13 +1502,13 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    pb_legend->setPalette( PALET_PUSHB );
    connect(pb_legend, SIGNAL(clicked()), SLOT(legend()));
 
-   pb_axis_x = new QPushButton(tr("X"), this);
+   pb_axis_x = new QPushButton(tr("Log X"), this);
    pb_axis_x->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_axis_x->setMinimumHeight(minHeight1);
    pb_axis_x->setPalette( PALET_PUSHB );
    connect(pb_axis_x, SIGNAL(clicked()), SLOT(axis_x()));
 
-   pb_axis_y = new QPushButton(tr("Y"), this);
+   pb_axis_y = new QPushButton(tr("Log Y"), this);
    pb_axis_y->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_axis_y->setMinimumHeight(minHeight1);
    pb_axis_y->setPalette( PALET_PUSHB );
@@ -1462,9 +1577,76 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
 #endif
    //   connect( ggqfit_plot->canvas(), SIGNAL( mouseReleased( const QMouseEvent & ) ), SLOT( plot_mouse(  const QMouseEvent & ) ) );
 
+   ggqfit_plot->enableAxis    ( QwtPlot::yRight , true );
+#ifndef QT4
+   ggqfit_plot->setAxisOptions( QwtPlot::yRight, QwtAutoScale::Logarithmic );
+#else
+   ggqfit_plot->setAxisScaleEngine( QwtPlot::yRight, new QwtLog10ScaleEngine );
+#endif
+
+   cb_ggq_plot_chi2 = new QCheckBox(this);
+   cb_ggq_plot_chi2->setText( tr("Plot Chi^2/RMSD" ) );
+   cb_ggq_plot_chi2->setEnabled( true );
+   cb_ggq_plot_chi2->setChecked( true );
+   cb_ggq_plot_chi2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
+   cb_ggq_plot_chi2->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_ggq_plot_chi2 );
+   connect( cb_ggq_plot_chi2, SIGNAL( clicked() ), SLOT( gg_fit_replot() ) );
+
+   cb_ggq_plot_P = new QCheckBox( this );
+   cb_ggq_plot_P->setText( tr("Plot CorMap P values" ) );
+   cb_ggq_plot_P->setEnabled( true );
+   cb_ggq_plot_P->setChecked( true );
+   cb_ggq_plot_P->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
+   cb_ggq_plot_P->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_ggq_plot_P );
+   connect( cb_ggq_plot_P, SIGNAL( clicked() ), SLOT( gg_fit_replot() ) );
+
+   // ggauss scroll
+
+   cb_ggauss_scroll = new QCheckBox(this);
+   cb_ggauss_scroll->setText( tr("Scroll" ) );
+   cb_ggauss_scroll->setEnabled( true );
+   cb_ggauss_scroll->setChecked( false );
+   cb_ggauss_scroll->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
+   cb_ggauss_scroll->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_ggauss_scroll );
+   connect( cb_ggauss_scroll, SIGNAL( clicked() ), SLOT( ggauss_scroll() ) );
+
+   {
+      double alpha        = (( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "alpha" ) ? (( US_Hydrodyn * ) us_hydrodyn )->gparams[ "alpha" ].toDouble() : 0.05;
+      double alpha_over_5 = 0.2 * alpha;
+
+      cb_ggauss_scroll_p_green = new QCheckBox(this);
+      cb_ggauss_scroll_p_green->setText( QString( tr("P >= %1 " ) ).arg( alpha ) );
+      cb_ggauss_scroll_p_green->setEnabled( false );
+      cb_ggauss_scroll_p_green->setChecked( true );
+      cb_ggauss_scroll_p_green->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
+      cb_ggauss_scroll_p_green->setPalette( PALET_NORMAL );
+      AUTFBACK( cb_ggauss_scroll_p_green );
+      connect( cb_ggauss_scroll_p_green, SIGNAL( clicked() ), SLOT( ggauss_scroll_p_green() ) );
+
+      cb_ggauss_scroll_p_yellow = new QCheckBox(this);
+      cb_ggauss_scroll_p_yellow->setText( QString( tr("%1 > P >= %2 " ) ).arg( alpha ).arg( alpha_over_5 ) );
+      cb_ggauss_scroll_p_yellow->setEnabled( false );
+      cb_ggauss_scroll_p_yellow->setChecked( true );
+      cb_ggauss_scroll_p_yellow->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
+      cb_ggauss_scroll_p_yellow->setPalette( PALET_NORMAL );
+      AUTFBACK( cb_ggauss_scroll_p_yellow );
+      connect( cb_ggauss_scroll_p_yellow, SIGNAL( clicked() ), SLOT( ggauss_scroll_p_yellow() ) );
+
+      cb_ggauss_scroll_p_red = new QCheckBox(this);
+      cb_ggauss_scroll_p_red->setText( QString( tr( "P < %1 " ) ).arg( alpha_over_5 ) );
+      cb_ggauss_scroll_p_red->setEnabled( false );
+      cb_ggauss_scroll_p_red->setChecked( true );
+      cb_ggauss_scroll_p_red->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
+      cb_ggauss_scroll_p_red->setPalette( PALET_NORMAL );
+      AUTFBACK( cb_ggauss_scroll_p_red );
+      connect( cb_ggauss_scroll_p_red, SIGNAL( clicked() ), SLOT( ggauss_scroll_p_red() ) );
+   }
    // scale mode
 
-   pb_scale = new QPushButton(tr("Scale"), this);
+   pb_scale = new QPushButton(tr("Scale Analysis"), this);
    pb_scale->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_scale->setMinimumHeight(minHeight1);
    pb_scale->setPalette( PALET_PUSHB );
@@ -1494,7 +1676,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    bg_scale_low_high->setExclusive(true);
    bg_scale_low_high->addButton( rb_scale_low, bg_pos++ );
    bg_scale_low_high->addButton( rb_scale_high, bg_pos++ );
-   rb_scale_high->setChecked( true );
+   rb_scale_low->setChecked( true );
    
    cb_scale_scroll = new QCheckBox(this);
    cb_scale_scroll->setText(tr("Scroll "));
@@ -1577,7 +1759,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
 
    // testiq mode
 
-   pb_testiq = new QPushButton(tr("Test I(q)"), this);
+   pb_testiq = new QPushButton(tr("Trial make I(q)"), this);
    pb_testiq->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_testiq->setMinimumHeight(minHeight1);
    pb_testiq->setPalette( PALET_PUSHB );
@@ -2360,6 +2542,15 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    le_rgc_g_qrange->setEnabled( false );
    le_rgc_g_qrange->setReadOnly( true );
 
+   // simulate
+
+   pb_simulate = new QPushButton(tr("Simulate"), this);
+   pb_simulate->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
+   pb_simulate->setMinimumHeight(minHeight1);
+   pb_simulate->setPalette( PALET_PUSHB );
+   connect(pb_simulate, SIGNAL(clicked()), SLOT(simulate()));
+   pb_simulate->setEnabled( false );
+
    // pm mode
 
    pb_pm = new QPushButton(tr("PM"), this);
@@ -2648,6 +2839,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
       pb_add->hide();
 
       pb_rgc->hide();
+      pb_simulate->hide();
       pb_pm->hide();
 
       pb_ag->hide();
@@ -2655,6 +2847,8 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
       // pb_conc->hide();
       // pb_normalize->hide();
       pb_timescale->hide();
+
+      // pb_cormap->hide();
    }
    pb_conc_avg->hide();
 
@@ -2684,12 +2878,14 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    files_expert_widgets.push_back ( pb_ag );
 
    Q3BoxLayout *hbl_file_buttons_4 = new Q3HBoxLayout( 0 );
+   hbl_file_buttons_4->addWidget ( pb_bin );
    hbl_file_buttons_4->addWidget ( pb_smooth );
    hbl_file_buttons_4->addWidget ( pb_svd );
    hbl_file_buttons_4->addWidget ( pb_create_i_of_t );
    hbl_file_buttons_4->addWidget ( pb_test_i_of_t );
    hbl_file_buttons_4->addWidget ( pb_create_i_of_q );
 
+   files_widgets.push_back ( pb_bin );
    files_widgets.push_back ( pb_smooth );
    files_widgets.push_back ( pb_svd );
    files_widgets.push_back ( pb_create_i_of_t );
@@ -2816,9 +3012,17 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    hbl_plot_buttons->addWidget( pb_legend );
 
    Q3GridLayout *gl_wheel = new Q3GridLayout(0);
-   gl_wheel->addWidget         ( lbl_blank1     , 0, 0 );
-   gl_wheel->addMultiCellWidget( qwtw_wheel     , 0, 0, 1, 9 );
-   gl_wheel->addWidget         ( lbl_wheel_pos  , 0, 10 );
+   gl_wheel->addWidget         ( lbl_blank1          , 0, 0 );
+   gl_wheel->addWidget         ( pb_wheel_dec        , 0, 1 );
+   gl_wheel->addMultiCellWidget( qwtw_wheel          , 0, 0, 2, 8 );
+   gl_wheel->addWidget         ( pb_wheel_inc        , 0, 9 );
+   gl_wheel->addWidget         ( lbl_wheel_pos       , 0, 10 );
+   
+   Q3GridLayout *gl_wheel_extra = new Q3GridLayout( 0 );
+
+   gl_wheel_extra->addWidget( lbl_blank2         , 0, 0 );
+   gl_wheel_extra->addWidget( lbl_wheel_pos_below, 0, 1 );
+   gl_wheel_extra->addWidget( lbl_wheel_Pcolor   , 0, 2 );
 
    // gl_wheel->addMultiCellWidget( pb_timeshift , 0, 0, 0, 1 );
    // gl_wheel->addWidget         ( lbl_wheel_pos  , 0, 2 );
@@ -2834,6 +3038,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    hbl_top->addWidget( pb_guinier_plot_rg );
    hbl_top->addWidget( pb_guinier_plot_mw );
    hbl_top->addWidget( pb_errors );
+   hbl_top->addWidget( pb_cormap );
    hbl_top->addWidget( pb_pp );
    hbl_top->addWidget( pb_ggqfit );
    hbl_top->addWidget( pb_wheel_cancel );
@@ -2854,7 +3059,9 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    // hbl_mode->addWidget( pb_wyatt_apply );
 
    Q3BoxLayout *hbl_mode0 = new Q3HBoxLayout( 0 );
+   hbl_mode0->addWidget( pb_blanks_start );
    hbl_mode0->addWidget( pb_baseline_start );
+   hbl_mode0->addWidget( pb_baseline_test );
    hbl_mode0->addWidget( pb_baseline_apply );
    hbl_mode0->addWidget( pb_timeshift );
    hbl_mode0->addWidget( pb_timescale );
@@ -2868,6 +3075,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    if ( U_EXPT )
    {
       hbl_mode->addWidget( pb_rgc );
+      hbl_mode->addWidget( pb_simulate );
       hbl_mode->addWidget( pb_pm );
    }
    hbl_mode->addWidget( pb_testiq );
@@ -3047,6 +3255,16 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
       vbl_rgc->addLayout( hbl );
    }      
 
+   Q3BoxLayout *hbl_ggauss_scroll = new Q3HBoxLayout( 0 );
+   {
+      hbl_ggauss_scroll->addWidget( cb_ggauss_scroll );
+      hbl_ggauss_scroll->addWidget( cb_ggauss_scroll_p_green );
+      hbl_ggauss_scroll->addWidget( cb_ggauss_scroll_p_yellow );
+      hbl_ggauss_scroll->addWidget( cb_ggauss_scroll_p_red );
+      hbl_ggauss_scroll->addWidget( pb_ggauss_results );
+      hbl_ggauss_scroll->addWidget( pb_ggauss_as_curves );
+   }
+      
    Q3GridLayout *gl_gauss = new Q3GridLayout(0);
    { 
       int ofs = 1;
@@ -3077,12 +3295,13 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
       gl_gauss2->addWidget         ( lbl_gauss_fit       , 0, ofs++ );
       gl_gauss2->addWidget         ( le_gauss_fit_start  , 0, ofs++ );
       gl_gauss2->addWidget         ( le_gauss_fit_end    , 0, ofs++ );
-      gl_gauss2->addWidget         ( pb_ggauss_results   , 0, ofs++ );
       gl_gauss2->addWidget         ( pb_gauss_as_curves  , 0, ofs++ );
    }
 
    Q3HBoxLayout *hbl_baseline = new Q3HBoxLayout( 0 );
    // hbl_baseline->addWidget( pb_baseline_start   );
+   hbl_baseline->addWidget( pb_bb_cm_inc );
+   // hbl_baseline->addWidget( pb_blanks_params );
    hbl_baseline->addWidget( cb_baseline_start_zero );
    hbl_baseline->addWidget( le_baseline_start_s );
    hbl_baseline->addWidget( le_baseline_start   );
@@ -3090,6 +3309,9 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    hbl_baseline->addWidget( le_baseline_end_s   );
    hbl_baseline->addWidget( le_baseline_end     );
    hbl_baseline->addWidget( le_baseline_end_e   );
+   hbl_baseline->addWidget( cb_baseline_fix_width  );
+   hbl_baseline->addWidget( le_baseline_width  );
+   hbl_baseline->addWidget( pb_baseline_best );
    //   hbl_baseline->addWidget( pb_baseline_apply   );
 
    Q3HBoxLayout *hbl_wyatt = new Q3HBoxLayout( 0 );
@@ -3099,6 +3321,10 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    hbl_baseline->addWidget( le_wyatt_end2    );
    hbl_baseline->addWidget( cb_wyatt_2       );
 
+   Q3BoxLayout *hbl_ggqfit_plot_ctls = new Q3HBoxLayout(0);
+   hbl_ggqfit_plot_ctls->addWidget( cb_ggq_plot_chi2 );
+   hbl_ggqfit_plot_ctls->addWidget( cb_ggq_plot_P );
+
    Q3BoxLayout *vbl_plot_group = new Q3VBoxLayout(0);
    // vbl_plot_group->addWidget ( plot_dist );
    // vbl_plot_group->addWidget ( plot_ref );
@@ -3106,8 +3332,10 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    vbl_plot_group->addWidget ( qs );
    vbl_plot_group->addLayout ( l_plot_errors );
    vbl_plot_group->addWidget ( ggqfit_plot );
+   vbl_plot_group->addLayout ( hbl_ggqfit_plot_ctls );
    vbl_plot_group->addLayout ( hbl_guinier_resid );
    vbl_plot_group->addLayout ( gl_wheel );
+   vbl_plot_group->addLayout ( gl_wheel_extra );
    vbl_plot_group->addWidget ( lbl_mode_title );
    vbl_plot_group->addLayout ( hbl_top );
    vbl_plot_group->addLayout ( hbl_mode0 );
@@ -3117,6 +3345,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    vbl_plot_group->addLayout ( vbl_guinier );
    vbl_plot_group->addLayout ( vbl_rgc );
    vbl_plot_group->addLayout ( vbl_pm );
+   vbl_plot_group->addLayout ( hbl_ggauss_scroll );
    vbl_plot_group->addLayout ( gl_gauss );
    // vbl_plot_group->addLayout ( hbl_gauss2 );
    vbl_plot_group->addLayout ( gl_gauss2  );
@@ -3169,6 +3398,7 @@ void US_Hydrodyn_Saxs_Hplc::mode_setup_widgets()
    // pb_row_widgets;
    {
       vector < QWidget * > tmp_widgets;
+      tmp_widgets.push_back( pb_blanks_start );
       tmp_widgets.push_back( pb_baseline_start );
       tmp_widgets.push_back( pb_baseline_apply );
       tmp_widgets.push_back( pb_timeshift );
@@ -3187,6 +3417,7 @@ void US_Hydrodyn_Saxs_Hplc::mode_setup_widgets()
       if ( U_EXPT )
       {
          tmp_widgets.push_back( pb_rgc );
+         tmp_widgets.push_back( pb_simulate );
          tmp_widgets.push_back( pb_pm );
       }
       tmp_widgets.push_back( pb_testiq );
@@ -3229,13 +3460,21 @@ void US_Hydrodyn_Saxs_Hplc::mode_setup_widgets()
    gaussian_widgets.push_back( pb_gauss_save );
    gaussian_widgets.push_back( pb_gauss_as_curves );
    gaussian_widgets.push_back( lbl_blank1 );
+   gaussian_widgets.push_back( pb_wheel_dec );
    gaussian_widgets.push_back( qwtw_wheel );
+   gaussian_widgets.push_back( pb_wheel_inc );
    gaussian_widgets.push_back( lbl_wheel_pos );
 
    // ggaussian_widgets;
 
+   ggaussian_widgets.push_back( cb_ggauss_scroll );
+   ggaussian_widgets.push_back( cb_ggauss_scroll_p_green );
+   ggaussian_widgets.push_back( cb_ggauss_scroll_p_yellow );
+   ggaussian_widgets.push_back( cb_ggauss_scroll_p_red );
    ggaussian_widgets.push_back( pb_ggqfit );
    ggaussian_widgets.push_back( ggqfit_plot );
+   ggaussian_widgets.push_back( cb_ggq_plot_chi2 );
+   ggaussian_widgets.push_back( cb_ggq_plot_P );
    ggaussian_widgets.push_back( pb_gauss_prev );
    ggaussian_widgets.push_back( lbl_gauss_pos );
    ggaussian_widgets.push_back( pb_gauss_next );
@@ -3250,10 +3489,15 @@ void US_Hydrodyn_Saxs_Hplc::mode_setup_widgets()
    ggaussian_widgets.push_back( lbl_gauss_fit );
    ggaussian_widgets.push_back( pb_ggauss_results );
    ggaussian_widgets.push_back( pb_gauss_save );
-   ggaussian_widgets.push_back( pb_gauss_as_curves );
+   ggaussian_widgets.push_back( pb_ggauss_as_curves );
    ggaussian_widgets.push_back( lbl_blank1 );
+   ggaussian_widgets.push_back( pb_wheel_dec );
    ggaussian_widgets.push_back( qwtw_wheel );
+   ggaussian_widgets.push_back( pb_wheel_inc );
    ggaussian_widgets.push_back( lbl_wheel_pos );
+   ggaussian_widgets.push_back( lbl_blank2 );
+   ggaussian_widgets.push_back( lbl_wheel_Pcolor );
+   ggaussian_widgets.push_back( lbl_wheel_pos_below );
 
    // gaussian_4var_widgets;
    gaussian_4var_widgets.push_back( le_gauss_pos_dist1 );
@@ -3274,6 +3518,13 @@ void US_Hydrodyn_Saxs_Hplc::mode_setup_widgets()
 
    // ggqfit_widgets;
    ggqfit_widgets.push_back( ggqfit_plot );
+   ggqfit_widgets.push_back( cb_ggq_plot_chi2 );
+   ggqfit_widgets.push_back( cb_ggq_plot_P );
+
+   // wheel_below_widgets;
+   wheel_below_widgets.push_back( lbl_blank2 );
+   wheel_below_widgets.push_back( lbl_wheel_pos_below );
+   wheel_below_widgets.push_back( lbl_wheel_Pcolor );
 
    // wyatt_widgets;
 
@@ -3283,11 +3534,31 @@ void US_Hydrodyn_Saxs_Hplc::mode_setup_widgets()
    wyatt_widgets.push_back( le_wyatt_end2 );
    wyatt_widgets.push_back( cb_wyatt_2 );
    wyatt_widgets.push_back( lbl_blank1 );
+   wyatt_widgets.push_back( pb_wheel_dec );
    wyatt_widgets.push_back( qwtw_wheel );
+   wyatt_widgets.push_back( pb_wheel_inc );
    wyatt_widgets.push_back( lbl_wheel_pos );
+
+   // blanks_widgets;
+
+   if ( started_in_expert_mode ) {
+      blanks_widgets.push_back( pb_bb_cm_inc );
+   }
+   // blanks_widgets.push_back( pb_blanks_params );
+   blanks_widgets.push_back( le_baseline_end_s );
+   blanks_widgets.push_back( le_baseline_end_e );
+   blanks_widgets.push_back( lbl_blank1 );
+   blanks_widgets.push_back( pb_wheel_dec );
+   blanks_widgets.push_back( qwtw_wheel );
+   blanks_widgets.push_back( pb_wheel_inc );
+   blanks_widgets.push_back( lbl_wheel_pos );
 
    // baseline_widgets;
 
+   if ( started_in_expert_mode ) {
+      baseline_widgets.push_back( pb_bb_cm_inc );
+   }
+   baseline_widgets.push_back( pb_baseline_test );
    baseline_widgets.push_back( cb_baseline_start_zero );
    baseline_widgets.push_back( le_baseline_start_s );
    baseline_widgets.push_back( le_baseline_start );
@@ -3295,10 +3566,19 @@ void US_Hydrodyn_Saxs_Hplc::mode_setup_widgets()
    baseline_widgets.push_back( le_baseline_end_s );
    baseline_widgets.push_back( le_baseline_end );
    baseline_widgets.push_back( le_baseline_end_e );
+   baseline_widgets.push_back( cb_baseline_fix_width );
+   baseline_widgets.push_back( le_baseline_width );
+   baseline_widgets.push_back( pb_baseline_best );
    // baseline_widgets.push_back( pb_baseline_apply );
+   baseline_widgets.push_back( pb_baseline_test );
    baseline_widgets.push_back( lbl_blank1 );
+   baseline_widgets.push_back( pb_wheel_dec );
    baseline_widgets.push_back( qwtw_wheel );
+   baseline_widgets.push_back( pb_wheel_inc );
    baseline_widgets.push_back( lbl_wheel_pos );
+   baseline_widgets.push_back( lbl_blank2 );
+   baseline_widgets.push_back( lbl_wheel_Pcolor );
+   baseline_widgets.push_back( lbl_wheel_pos_below );
 
    // scale_widgets;
 
@@ -3316,13 +3596,20 @@ void US_Hydrodyn_Saxs_Hplc::mode_setup_widgets()
    scale_widgets.push_back( pb_scale_reset );
    scale_widgets.push_back( pb_scale_create );
    scale_widgets.push_back( lbl_blank1 );
+   scale_widgets.push_back( pb_wheel_dec );
    scale_widgets.push_back( qwtw_wheel );
+   scale_widgets.push_back( pb_wheel_inc );
    scale_widgets.push_back( lbl_wheel_pos );
+   scale_widgets.push_back( lbl_blank2 );
+   scale_widgets.push_back( lbl_wheel_Pcolor );
+   scale_widgets.push_back( lbl_wheel_pos_below );
 
    // timeshift_widgets;
 
    timeshift_widgets.push_back( lbl_blank1 );
+   timeshift_widgets.push_back( pb_wheel_dec );
    timeshift_widgets.push_back( qwtw_wheel );
+   timeshift_widgets.push_back( pb_wheel_inc );
    timeshift_widgets.push_back( lbl_wheel_pos );
    timeshift_widgets.push_back( le_dummy );
    // timeshift_widgets.push_back( pb_select_vis );
@@ -3346,7 +3633,9 @@ void US_Hydrodyn_Saxs_Hplc::mode_setup_widgets()
    testiq_widgets.push_back( pb_testiq_visrange );
    testiq_widgets.push_back( pb_testiq_testset );
    testiq_widgets.push_back( lbl_blank1 );
+   testiq_widgets.push_back( pb_wheel_dec );
    testiq_widgets.push_back( qwtw_wheel );
+   testiq_widgets.push_back( pb_wheel_inc );
    testiq_widgets.push_back( lbl_wheel_pos );
 
    // guinier_widgets;
@@ -3373,7 +3662,9 @@ void US_Hydrodyn_Saxs_Hplc::mode_setup_widgets()
    guinier_widgets.push_back( rb_guinier_resid_pct );
    guinier_widgets.push_back( lbl_guinier_stats );
    guinier_widgets.push_back( lbl_blank1 );
+   guinier_widgets.push_back( pb_wheel_dec );
    guinier_widgets.push_back( qwtw_wheel );
+   guinier_widgets.push_back( pb_wheel_inc );
    guinier_widgets.push_back( lbl_wheel_pos );
    guinier_widgets.push_back( pb_guinier_plot_rg );
    guinier_widgets.push_back( pb_guinier_plot_mw );
@@ -3394,6 +3685,9 @@ void US_Hydrodyn_Saxs_Hplc::mode_setup_widgets()
    guinier_widgets.push_back( le_guinier_mw_mw_end );
    guinier_widgets.push_back( cb_guinier_lock_mw_range );
    guinier_widgets.push_back( pb_guinier_mw_replot );
+   guinier_widgets.push_back( lbl_blank2 );
+   guinier_widgets.push_back( lbl_wheel_Pcolor );
+   guinier_widgets.push_back( lbl_wheel_pos_below );
 
    // not a "mode"
    guinier_errors_widgets.push_back( guinier_plot_errors );
@@ -3466,7 +3760,9 @@ void US_Hydrodyn_Saxs_Hplc::mode_setup_widgets()
    pm_widgets.push_back( le_pm_grid_size );
    pm_widgets.push_back( pb_pm_run );
    pm_widgets.push_back( lbl_blank1 );
+   pm_widgets.push_back( pb_wheel_dec );
    pm_widgets.push_back( qwtw_wheel );
+   pm_widgets.push_back( pb_wheel_inc );
    pm_widgets.push_back( lbl_wheel_pos );
    pm_widgets.push_back( le_dummy );
 }   
@@ -3483,6 +3779,7 @@ void US_Hydrodyn_Saxs_Hplc::mode_select()
    ShowHide::hide_widgets( ggaussian_4var_widgets );
    ShowHide::hide_widgets( ggaussian_5var_widgets );
    ShowHide::hide_widgets( wyatt_widgets );
+   ShowHide::hide_widgets( blanks_widgets );
    ShowHide::hide_widgets( baseline_widgets );
    ShowHide::hide_widgets( scale_widgets );
    ShowHide::hide_widgets( timeshift_widgets );
@@ -3490,6 +3787,8 @@ void US_Hydrodyn_Saxs_Hplc::mode_select()
    ShowHide::hide_widgets( guinier_widgets );
    ShowHide::hide_widgets( rgc_widgets );
    ShowHide::hide_widgets( pm_widgets );
+   ShowHide::hide_widgets( ggqfit_widgets );
+   ShowHide::hide_widgets( wheel_below_widgets );
 
    switch ( current_mode )
    {
@@ -3534,6 +3833,7 @@ void US_Hydrodyn_Saxs_Hplc::mode_select()
       break;
 
    case MODE_WYATT     : mode_title( pb_wyatt_start->text() );    ShowHide::hide_widgets( wyatt_widgets     , false ); ShowHide::only_widgets( pb_row_widgets, 0 );break;
+   case MODE_BLANKS    : mode_title( pb_blanks_start->text() );   ShowHide::hide_widgets( blanks_widgets    , false ); ShowHide::only_widgets( pb_row_widgets, 0 );break;
    case MODE_BASELINE  : mode_title( pb_baseline_start->text() ); ShowHide::hide_widgets( baseline_widgets  , false ); ShowHide::only_widgets( pb_row_widgets, 0 );break;
    case MODE_TIMESHIFT : mode_title( pb_timeshift->text() );      ShowHide::hide_widgets( timeshift_widgets , false ); ShowHide::only_widgets( pb_row_widgets, 0 );break;
    case MODE_SCALE     : mode_title( pb_scale->text() );          ShowHide::hide_widgets( scale_widgets     , false ); ShowHide::only_widgets( pb_row_widgets, 1 );break;
@@ -3679,6 +3979,8 @@ void US_Hydrodyn_Saxs_Hplc::update_enables()
       }
    }
 
+   baseline_integral = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_integral" ] == "true";
+
    // pb_timeshift        ->setEnabled( files_selected_count > 0 && files_compatible && files_are_time );
    pb_timeshift          ->setEnabled( files_selected_count - conc_selected_count > 0 && files_compatible && files_are_time && conc_files.size() );
    pb_timescale          ->setEnabled( files_selected_count && files_are_time && conc_selected_count == files_selected_count );
@@ -3688,11 +3990,15 @@ void US_Hydrodyn_Saxs_Hplc::update_enables()
    cb_fix_width          ->setEnabled( files_selected_count && files_are_time && gaussians.size() && U_EXPT );
    cb_fix_dist1          ->setEnabled( files_selected_count && files_are_time && gaussians.size() && U_EXPT );
    cb_fix_dist2          ->setEnabled( files_selected_count && files_are_time && gaussians.size() && U_EXPT );
-   pb_baseline_start     ->setEnabled( files_selected_count == 1 && files_are_time );
+   pb_blanks_start       ->setEnabled( default_blanks.size() || ( files_selected_count > 1 && !files_are_time && files_compatible ) );
+   pb_baseline_start     ->setEnabled( files_are_time && files_compatible &&
+                                       ( ( baseline_integral && files_selected_count > 1 ) || ( !baseline_integral && files_selected_count == 1 ) ) );
    pb_baseline_apply     ->setEnabled( files_selected_count && 
                                        files_are_time && 
-                                       le_baseline_start->text().toDouble() < le_baseline_end->text().toDouble() );
-
+                                       le_baseline_start->text().toDouble() < le_baseline_end->text().toDouble() &&
+                                       !baseline_integral
+                                       // ( !baseline_integral || baseline_ready_to_apply ) 
+                                       );
    pb_wyatt_start        ->setEnabled( files_selected_count == 1 && files_are_time );
    pb_wyatt_apply        ->setEnabled( files_selected_count && 
                                        files_are_time && 
@@ -3705,6 +4011,7 @@ void US_Hydrodyn_Saxs_Hplc::update_enables()
    pb_normalize          ->setEnabled( all_selected_have_nonzero_conc() && files_compatible && !files_are_time );
    pb_add                ->setEnabled( files_selected_count > 1 && files_compatible );
    pb_avg                ->setEnabled( files_selected_count > 1 && files_compatible && !files_are_time );
+   pb_bin                ->setEnabled( files_selected_count && files_compatible && !files_are_time );
    pb_smooth             ->setEnabled( files_selected_count );
    pb_svd                ->setEnabled( files_selected_count > 1 && files_compatible ); // && !files_are_time );
    pb_create_i_of_t      ->setEnabled( files_selected_count > 1 && files_compatible && !files_are_time );
@@ -3795,6 +4102,7 @@ void US_Hydrodyn_Saxs_Hplc::update_enables()
 
    pb_scale            ->setEnabled( files_selected_count > 1 && files_compatible );
    pb_rgc              ->setEnabled( true );
+   pb_simulate         ->setEnabled( files_selected_count && files_compatible && !files_are_time );
    pb_pm               ->setEnabled( files_selected_count == 1 && files_compatible && !files_are_time );
    pb_testiq           ->setEnabled( files_selected_count > 4 && files_compatible && files_are_time );
    pb_guinier          ->setEnabled( files_selected_count && files_compatible && !files_are_time );
@@ -3813,6 +4121,8 @@ void US_Hydrodyn_Saxs_Hplc::update_enables()
    pb_stack_rot_down   ->setEnabled( stack_data.size() > 1 );
    pb_stack_swap       ->setEnabled( stack_data.size() );
 
+   pb_pp               ->setEnabled( true );
+
    pb_ref              ->setEnabled( files_selected_count == 1 && !files_are_time && !lbl_conc_file->text().isEmpty() );
    if ( !suppress_replot && plot_ref->isVisible() && !pb_ref->isEnabled() )
    {
@@ -3825,6 +4135,13 @@ void US_Hydrodyn_Saxs_Hplc::update_enables()
    } else {
       pb_errors           ->setEnabled( false );
       hide_widgets( plot_errors_widgets, true );
+   }
+
+   if ( files_selected_count > 1 && files_compatible )
+   {
+      pb_cormap           ->setEnabled( true );
+   } else {
+      pb_cormap           ->setEnabled( false );
    }
 
    pb_ggqfit           ->setEnabled( false );
@@ -3882,6 +4199,9 @@ void US_Hydrodyn_Saxs_Hplc::update_enables()
       cb_eb->setChecked( false );
       set_eb();
    }
+   if ( le_last_focus ) {
+      le_last_focus->setFocus();
+   }
 }
 
 void US_Hydrodyn_Saxs_Hplc::model_enables()
@@ -3917,12 +4237,18 @@ void US_Hydrodyn_Saxs_Hplc::model_enables()
 void US_Hydrodyn_Saxs_Hplc::disable_all()
 {
    // cout << "disable all\n";
+   // qwtw_wheel            ->setEnabled( false );
+   pb_wheel_inc          ->setEnabled( false );
+   pb_wheel_dec          ->setEnabled( false );
+   pb_wheel_save         ->setEnabled( false );
+
    pb_similar_files      ->setEnabled( false );
    pb_conc               ->setEnabled( false );
    pb_clear_files        ->setEnabled( false );
    pb_avg                ->setEnabled( false );
    pb_normalize          ->setEnabled( false );
    pb_conc_avg           ->setEnabled( false );
+   pb_bin                ->setEnabled( false );
    pb_smooth             ->setEnabled( false );
    pb_repeak             ->setEnabled( false );
    pb_svd                ->setEnabled( false );
@@ -3984,6 +4310,14 @@ void US_Hydrodyn_Saxs_Hplc::disable_all()
    pb_gauss_save         ->setEnabled( false );
    pb_wheel_cancel       ->setEnabled( false );
 
+   le_gauss_pos          ->clearFocus();
+   le_gauss_pos_width    ->clearFocus();
+   le_gauss_pos_height   ->clearFocus();
+   le_gauss_pos_dist1    ->clearFocus();
+   le_gauss_pos_dist2    ->clearFocus();
+   le_gauss_fit_start    ->clearFocus();
+   le_gauss_fit_end      ->clearFocus();
+
    le_gauss_pos          ->setEnabled( false );
    le_gauss_pos_width    ->setEnabled( false );
    le_gauss_pos_height   ->setEnabled( false );
@@ -3993,24 +4327,43 @@ void US_Hydrodyn_Saxs_Hplc::disable_all()
    le_gauss_fit_end      ->setEnabled( false );
 
    pb_wyatt_start        ->setEnabled( false );
+   le_wyatt_start        ->clearFocus();
+   le_wyatt_end          ->clearFocus();
    le_wyatt_start        ->setEnabled( false );
    le_wyatt_end          ->setEnabled( false );
    pb_wyatt_apply        ->setEnabled( false );
 
+   pb_blanks_start       ->setEnabled( false );
+   // pb_blanks_params      ->setEnabled( false );
+   pb_bb_cm_inc          ->setEnabled( false );
+
    pb_baseline_start     ->setEnabled( false );
+
+   le_baseline_start_s   ->clearFocus();
+   le_baseline_start     ->clearFocus();
+   le_baseline_start_e   ->clearFocus();
+   le_baseline_end_s     ->clearFocus();
+   le_baseline_end       ->clearFocus();
+   le_baseline_end_e     ->clearFocus();
+   le_baseline_width     ->clearFocus();
+
    le_baseline_start_s   ->setEnabled( false );
    le_baseline_start     ->setEnabled( false );
    le_baseline_start_e   ->setEnabled( false );
    le_baseline_end_s     ->setEnabled( false );
    le_baseline_end       ->setEnabled( false );
    le_baseline_end_e     ->setEnabled( false );
+   le_baseline_width     ->setEnabled( false );
    pb_baseline_apply     ->setEnabled( false );
+   pb_baseline_test      ->setEnabled( false );
+   pb_baseline_best      ->setEnabled( false );
 
    pb_ggauss_start       ->setEnabled( false );
    pb_ggauss_rmsd        ->setEnabled( false );
    pb_ggauss_results     ->setEnabled( false );
 
    pb_gauss_as_curves    ->setEnabled( false );
+   pb_ggauss_as_curves   ->setEnabled( false );
    cb_sd_weight          ->setEnabled( false );
    cb_fix_width          ->setEnabled( false );
    cb_fix_dist1          ->setEnabled( false );
@@ -4018,7 +4371,11 @@ void US_Hydrodyn_Saxs_Hplc::disable_all()
 
    pb_ref                ->setEnabled( false );
    pb_errors             ->setEnabled( false );
+   pb_cormap             ->setEnabled( false );
    pb_ggqfit             ->setEnabled( false );
+
+   cb_ggq_plot_chi2      ->setEnabled( false );
+   cb_ggq_plot_P         ->setEnabled( false );
 
    pb_stack_push_all     ->setEnabled( false );
    pb_stack_push_sel     ->setEnabled( false );
@@ -4039,11 +4396,21 @@ void US_Hydrodyn_Saxs_Hplc::disable_all()
    pb_p3d                ->setEnabled( false );
    pb_options            ->setEnabled( false );
 
+   pb_pp                 ->setEnabled( false );
+
    pb_scale              ->setEnabled( false );
    pb_rgc                ->setEnabled( false );
+   pb_simulate           ->setEnabled( false );
    pb_pm                 ->setEnabled( false );
    pb_testiq             ->setEnabled( false );
    pb_guinier            ->setEnabled( false );
+
+   le_pm_q_start         ->clearFocus();
+   le_pm_q_end           ->clearFocus();
+   le_pm_q_pts           ->clearFocus();
+   le_pm_grid_size       ->clearFocus();
+   le_pm_samp_e_dens     ->clearFocus();
+   le_pm_buff_e_dens     ->clearFocus();
 
    le_pm_q_start         ->setEnabled( false );
    le_pm_q_end           ->setEnabled( false );

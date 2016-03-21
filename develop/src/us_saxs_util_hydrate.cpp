@@ -3771,6 +3771,21 @@ void US_Saxs_Util::get_atom_map( PDB_model *model )
 			us_udp_msg->send_json( msging );
 		    //sleep(1);
 		      }
+		    accumulated_msgs += lastResSeq != "" ? 
+			  QString( "\\nWarning: break in residue sequence or unknown residue: %1Molecule %2 Residue %3 %4 & %5 %6.\\n" )
+			  .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
+			  .arg(j + 1)
+			  .arg(lastResName)
+			  .arg(lastResSeq)
+			  .arg(this_atom->resName)
+			  .arg(this_atom->resSeq) 
+			  :
+			  QString( "\\nWarning: break in residue sequence or unknown residue: %1Molecule %2 Residue %3 %4.\\n")
+			  .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
+			  .arg(j + 1)
+			  .arg(this_atom->resName)
+			  .arg(this_atom->resSeq);
+
                   }
                }
                lastChainID = this_atom->chainID;
@@ -3795,7 +3810,11 @@ void US_Saxs_Util::get_atom_map( PDB_model *model )
 	      us_udp_msg->send_json( msging );
 			  //sleep(1);
 	    }
-	  
+	  accumulated_msgs += QString( "Notice: %1found %2 non or unknown Amino Acids in a chain containing %3 AA Residues. \\n")
+		.arg(lastChainID == " " ? "" : ("Chain " + lastChainID + " "))
+		.arg(non_aa)
+		.arg(aa);
+	    
 	  
 	}
    }

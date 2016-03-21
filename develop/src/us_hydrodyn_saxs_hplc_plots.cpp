@@ -19,7 +19,7 @@ static std::basic_ostream<char>& operator<<(std::basic_ostream<char>& os, const 
 
 #define SLASH QDir::separator()
 #define Q_VAL_TOL 5e-6
-#define UHSH_VAL_DEC 8
+// #define UHSH_VAL_DEC 8
 #define UHSH_UV_CONC_FACTOR 1e0
 
 void US_Hydrodyn_Saxs_Hplc::update_plot_errors_group()
@@ -241,7 +241,8 @@ void US_Hydrodyn_Saxs_Hplc::update_plot_errors_group()
 void US_Hydrodyn_Saxs_Hplc::update_plot_errors( vector < double > &grid, 
                                                 vector < double > &target, 
                                                 vector < double > &fit, 
-                                                vector < double > &errors )
+                                                vector < double > &errors,
+                                                QColor             use_color )
 {
    if ( current_mode == MODE_SCALE )
    {
@@ -254,6 +255,7 @@ void US_Hydrodyn_Saxs_Hplc::update_plot_errors( vector < double > &grid,
    plot_errors_target = target;
    plot_errors_fit    = fit;
    plot_errors_errors = errors;
+   plot_errors_color  = use_color;
 
    if ( !target.size() )
    {
@@ -371,7 +373,7 @@ void US_Hydrodyn_Saxs_Hplc::update_plot_errors( vector < double > &grid,
                                  x.size()
                                  );
 #else
-      curve->setPen( QPen( Qt::red, use_line_width, Qt::SolidLine ) );
+      curve->setPen( QPen( Qt::green, use_line_width, Qt::SolidLine ) );
       curve->setData(
                      (double *)&x[ 0 ],
                      (double *)&y[ 0 ],
@@ -392,7 +394,7 @@ void US_Hydrodyn_Saxs_Hplc::update_plot_errors( vector < double > &grid,
 #endif
 
 #ifndef QT4
-      plot_errors->setCurvePen( curve, QPen( Qt::red, use_line_width, Qt::SolidLine ) );
+      plot_errors->setCurvePen( curve, QPen( plot_errors_color, use_line_width, Qt::SolidLine ) );
       plot_errors->setCurveData( curve,
                                  (double *)&x[ 0 ],
                                  (double *)&e[ 0 ],
@@ -400,7 +402,7 @@ void US_Hydrodyn_Saxs_Hplc::update_plot_errors( vector < double > &grid,
                                  );
       plot_errors->curve( curve )->setStyle( QwtCurve::Sticks );
 #else
-      curve->setPen( QPen( Qt::red, use_line_width, Qt::SolidLine ) );
+      curve->setPen( QPen( plot_errors_color, use_line_width, Qt::SolidLine ) );
       curve->setData(
                      (double *)&x[ 0 ],
                      (double *)&e[ 0 ],
@@ -482,8 +484,8 @@ void US_Hydrodyn_Saxs_Hplc::redo_plot_errors()
    vector < double > target = plot_errors_target;
    vector < double > errors = plot_errors_errors;
 
-   update_plot_errors( grid, target, fit, errors );
-   if ( current_mode == MODE_GGAUSSIAN )
+   update_plot_errors( grid, target, fit, errors, plot_errors_color );
+   if ( current_mode == MODE_GGAUSSIAN && !cb_ggauss_scroll->isChecked() )
    {
       plot_errors_jump_markers();
    }
@@ -671,7 +673,8 @@ void US_Hydrodyn_Saxs_Hplc::errors()
                                 f_Is[ files[ 0 ] ], 
                                 f_Is[ files[ 1 ] ],
                                 use_errors_0 ? f_errors[ files[ 0 ] ] :
-                                ( use_errors_1 ? f_errors[ files[ 1 ] ] : errors ) );
+                                ( use_errors_1 ? f_errors[ files[ 1 ] ] : errors )
+                                );
 
             hide_widgets( plot_errors_widgets, false );
             cb_plot_errors_group->hide();
@@ -718,11 +721,40 @@ void US_Hydrodyn_Saxs_Hplc::errors_multi_file( QStringList files )
    }
 }
 
+// void US_Hydrodyn_Saxs_Hplc::set_eb()
+// {
+//    if ( current_mode == MODE_GGAUSSIAN ) {
+//       if ( cb_ggauss_scroll->isChecked() && unified_ggaussian_ok ) {
+//          ggaussian_rmsd();
+//          ggauss_scroll_highlight( qwtw_wheel->value() );
+//       }
+//    } else {
+//       plot_files();
+//       update_enables();
+//    }
+// }
+
 void US_Hydrodyn_Saxs_Hplc::set_eb()
 {
-   plot_files();
-   update_enables();
+   if ( current_mode == MODE_GGAUSSIAN ) {
+      if ( cb_ggauss_scroll->isChecked() && unified_ggaussian_ok ) {
+         ggaussian_rmsd();
+         ggauss_scroll_highlight( qwtw_wheel->value() );
+      }
+   } else {
+      plot_files();
+      if ( current_mode == MODE_BASELINE ) {
+         if ( baseline_test_mode ) {
+         } else {
+            baseline_init_markers();
+            replot_baseline( "set_eb" );
+         }
+      } else {
+         update_enables();
+      }
+   }
 }
+
 
 void US_Hydrodyn_Saxs_Hplc::plot_files()
 {
@@ -745,8 +777,8 @@ void US_Hydrodyn_Saxs_Hplc::plot_files()
 
    int asfs = (int) all_selected_files().size();
 
-
-   if ( cb_eb->isChecked() && asfs > 9 )
+   if ( ( !baseline_test_mode && cb_eb->isChecked() && asfs > 9 ) 
+        || ( baseline_test_mode && cb_eb->isChecked() && asfs > 15 ) )
    {
       cb_eb->setChecked( false );
    }

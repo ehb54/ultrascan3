@@ -69,6 +69,19 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Nth : public QDialog
       QPushButton *                           pb_contains_only;
       QPushButton *                           pb_contains_add;
 
+      QLabel *                                lbl_pvalue;
+
+      QCheckBox     *                         cb_pvalues_green;
+      QCheckBox     *                         cb_pvalues_yellow;
+      QCheckBox     *                         cb_pvalues_red;
+
+      map < QString, double >  *              ggaussian_last_pfit_map;
+      double                                  alpha;
+      double                                  alpha_over_5;
+
+      QPushButton *                           pb_pvalues_only;
+      QPushButton *                           pb_pvalues_add;
+
       QPushButton *                           pb_help;
       QPushButton *                           pb_quit;
       QPushButton *                           pb_go;
@@ -85,6 +98,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Nth : public QDialog
 
       void                                    contains_only();
       void                                    contains_add();
+
+      void                                    pvalues_only();
+      void                                    pvalues_add();
 
       void                                    update_files_selected();
 

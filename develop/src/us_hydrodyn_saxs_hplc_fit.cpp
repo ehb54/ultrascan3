@@ -20,6 +20,7 @@ static std::basic_ostream<char>& operator<<(std::basic_ostream<char>& os, const 
 }
 
 #define UHHSF_DEBUG_PLOT
+// #define UHHSF_FULL_DEBUG
 
 US_Hydrodyn_Saxs_Hplc_Fit::US_Hydrodyn_Saxs_Hplc_Fit(
                                                      US_Hydrodyn_Saxs_Hplc *hplc_win,
@@ -40,6 +41,13 @@ US_Hydrodyn_Saxs_Hplc_Fit::US_Hydrodyn_Saxs_Hplc_Fit(
    running = false;
    gaussian_type      = hplc_win->gaussian_type;
    gaussian_type_size = hplc_win->gaussian_type_size;
+
+   hplc_ampl_width_min       = ( ( US_Hydrodyn * ) ( hplc_win->us_hydrodyn ) )->gparams[ "hplc_ampl_width_min"        ].toDouble();
+   hplc_lock_min_retry       = ( ( US_Hydrodyn * ) ( hplc_win->us_hydrodyn ) )->gparams[ "hplc_lock_min_retry"        ] == "true" ? true : false;
+   hplc_lock_min_retry_mult  = ( ( US_Hydrodyn * ) ( hplc_win->us_hydrodyn ) )->gparams[ "hplc_lock_min_retry_mult"   ].toDouble();
+   hplc_maxfpk_restart       = ( ( US_Hydrodyn * ) ( hplc_win->us_hydrodyn ) )->gparams[ "hplc_maxfpk_restart"        ] == "true" ? true : false;
+   hplc_maxfpk_restart_tries = ( ( US_Hydrodyn * ) ( hplc_win->us_hydrodyn ) )->gparams[ "hplc_maxfpk_restart_tries"  ].toUInt();
+   hplc_maxfpk_restart_pct   = ( ( US_Hydrodyn * ) ( hplc_win->us_hydrodyn ) )->gparams[ "hplc_maxfpk_restart_pct"    ].toDouble();
 
    switch ( gaussian_type )
    {
@@ -145,6 +153,9 @@ void US_Hydrodyn_Saxs_Hplc_Fit::redo_settings()
             break;
          }
       }
+   }
+   for ( int i = 0; i < (int) cb_fix_curves.size(); ++i ) {
+      cb_fix_curves[ i ]->setChecked( false );
    }
 }
 
@@ -752,7 +763,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit::update_common()
          }
       }
    }
-   if ( save_gaussians != hplc_win->gaussians )
+   if ( update_hplc && save_gaussians != hplc_win->gaussians )
    {
       gaussians_undo.push_back( hplc_win->gaussians );
       hplc_win->gauss_init_markers();
@@ -764,6 +775,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit::update_common()
 
 void US_Hydrodyn_Saxs_Hplc_Fit::update_enables()
 {
+   qDebug( "update_enables()" );
    // puts( "hf: ue()" );
    bool run_ok = setup_run();
    // cout << QString( "fit::fix center %1\n"
@@ -1412,13 +1424,14 @@ namespace HFIT
             it != comm_backref.end();
             ++it )
       {
-         cout << QString( "backref pos %1 to %2\n" ).arg( it->first ).arg( it->second );
+         qDebug( QString( "backref pos %1 to %2\n" ).arg( it->first ).arg( it->second ) );
       }
    }
 };
 
 bool US_Hydrodyn_Saxs_Hplc_Fit::setup_run()
 {
+   qDebug( "setup_run()" );
    HFIT::init_params .clear();
    HFIT::base_params .clear();
    HFIT::fixed_params.clear();
@@ -1508,12 +1521,14 @@ bool US_Hydrodyn_Saxs_Hplc_Fit::setup_run()
             base_val = hplc_win->gaussians[ 0 + i ];
          }            
 
+         // qDebug( QString( "in setup_run, pos %1 base_val is %2" ).arg( pos ).arg( base_val ) );
+
          HFIT::init_params .push_back( base_val );
          HFIT::base_params .push_back( hplc_win->gaussians[ 0 + i ] );
          HFIT::param_fixed .push_back( false );
 
          double ofs;
-         double min = 1e-10;
+         double min = hplc_ampl_width_min;
          double max = hplc_win->gauss_max_height;
          if ( cb_pct_amplitude->isChecked() )
          {
@@ -1521,9 +1536,9 @@ bool US_Hydrodyn_Saxs_Hplc_Fit::setup_run()
             min = base_val - ofs;
             max = base_val + ofs;
          }
-         if ( min < 1e-10 )
+         if ( min < hplc_ampl_width_min )
          {
-            min = 1e-10;
+            min = hplc_ampl_width_min;
          }
          if ( max > hplc_win->gauss_max_height )
          {
@@ -1534,10 +1549,17 @@ bool US_Hydrodyn_Saxs_Hplc_Fit::setup_run()
             min = max * 1e-15;
          }
 
+         if ( HFIT::init_params.back() < min ) {
+            // qDebug( QString( "min set amp init_params.size() %1 val %2" ).arg( HFIT::init_params.size() ).arg( HFIT::init_params.back() ) );
+            HFIT::init_params.back() = min;
+         }
+         if ( HFIT::init_params.back() > max ) {
+            HFIT::init_params.back() = max;
+         }
+
          HFIT::param_min   .push_back( min );
          HFIT::param_max   .push_back( max );
       }
-         
 
       if ( cb_fix_center->isChecked() ||
            fixed_curves.count( pos + 1 ) )
@@ -1569,6 +1591,13 @@ bool US_Hydrodyn_Saxs_Hplc_Fit::setup_run()
             max = base_val + ofs;
          }
 
+         if ( HFIT::init_params.back() < min ) {
+            HFIT::init_params.back() = min;
+         }
+         if ( HFIT::init_params.back() > max ) {
+            HFIT::init_params.back() = max;
+         }
+
          HFIT::param_min   .push_back( min );
          HFIT::param_max   .push_back( max );
       }
@@ -1579,7 +1608,7 @@ bool US_Hydrodyn_Saxs_Hplc_Fit::setup_run()
            )
       {
          HFIT::param_pos   .push_back( HFIT::fixed_params.size() );
-         if ( i && cb_conc_test->isChecked() && !fixed_curves.count( pos + 1 ) )
+         if ( i && cb_conc_test->isChecked() && !fixed_curves.count( pos + 1 ) && !fixed_curves.count( 1 ) )
          {
             HFIT::fixed_params.push_back( hplc_win->gaussians[ 2 + 0 ] );
             HFIT::comm_backref   [ HFIT::param_fixed.size() ] = conc_width_var_pos;
@@ -1604,7 +1633,7 @@ bool US_Hydrodyn_Saxs_Hplc_Fit::setup_run()
          HFIT::param_fixed .push_back( false );
 
          double ofs;
-         double min = 1e-10;
+         double min = hplc_ampl_width_min;
          double max = 1e99;
          if ( cb_pct_width->isChecked() )
          {
@@ -1612,13 +1641,20 @@ bool US_Hydrodyn_Saxs_Hplc_Fit::setup_run()
             min = base_val - ofs;
             max = base_val + ofs;
          }
-         if ( min < 1e-10 )
+         if ( min <  hplc_ampl_width_min )
          {
-            min = 1e-10;
+            min = hplc_ampl_width_min;
          }
          if ( min > max )
          {
             min = max * 1e-15;
+         }
+
+         if ( HFIT::init_params.back() < min ) {
+            HFIT::init_params.back() = min;
+         }
+         if ( HFIT::init_params.back() > max ) {
+            HFIT::init_params.back() = max;
          }
 
          HFIT::param_min   .push_back( min );
@@ -1632,7 +1668,7 @@ bool US_Hydrodyn_Saxs_Hplc_Fit::setup_run()
               ( cb_comm_dist1->isChecked() && i ) )
          {
             HFIT::param_pos   .push_back( HFIT::fixed_params.size() );
-            if ( i && cb_comm_dist1->isChecked() && !fixed_curves.count( pos + 1 ) )
+            if ( i && cb_comm_dist1->isChecked() && !fixed_curves.count( pos + 1 ) && !fixed_curves.count( 1 ) )
             {
                HFIT::fixed_params.push_back( hplc_win->gaussians[ 3 + 0 ] );
                HFIT::comm_backref[ HFIT::param_fixed.size() ] = comm_dist_1_var_pos;
@@ -1681,6 +1717,13 @@ bool US_Hydrodyn_Saxs_Hplc_Fit::setup_run()
                min = avg - 1e-1;
                max = avg + 1e-1;
             }
+            
+            if ( HFIT::init_params.back() < min ) {
+               HFIT::init_params.back() = min;
+            }
+            if ( HFIT::init_params.back() > max ) {
+               HFIT::init_params.back() = max;
+            }
 
             HFIT::param_min   .push_back( min );
             HFIT::param_max   .push_back( max );
@@ -1693,7 +1736,7 @@ bool US_Hydrodyn_Saxs_Hplc_Fit::setup_run()
                  ( cb_comm_dist2->isChecked() && i ) )
             {
                HFIT::param_pos   .push_back( HFIT::fixed_params.size() );
-               if ( i && cb_comm_dist2->isChecked() && !fixed_curves.count( pos + 1 ) )
+               if ( i && cb_comm_dist2->isChecked() && !fixed_curves.count( pos + 1 ) && !fixed_curves.count( 1 ) )
                {
                   HFIT::fixed_params.push_back( hplc_win->gaussians[ 4 + 0 ] );
                   HFIT::comm_backref[ HFIT::param_fixed.size() ] = comm_dist_2_var_pos;
@@ -1743,6 +1786,14 @@ bool US_Hydrodyn_Saxs_Hplc_Fit::setup_run()
                   min = avg - 1e-1;
                   max = avg + 1e-1;
                }
+
+               if ( HFIT::init_params.back() < min ) {
+                  HFIT::init_params.back() = min;
+               }
+               if ( HFIT::init_params.back() > max ) {
+                  HFIT::init_params.back() = max;
+               }
+
                HFIT::param_min   .push_back( min );
                HFIT::param_max   .push_back( max );
             }
@@ -1750,7 +1801,9 @@ bool US_Hydrodyn_Saxs_Hplc_Fit::setup_run()
       }
    }
 
-   // HFIT::list_params();
+#if defined( UHHSF_FULL_DEBUG )
+   HFIT::list_params();
+#endif
 
    if ( !HFIT::init_params.size() )
    {
@@ -1760,7 +1813,162 @@ bool US_Hydrodyn_Saxs_Hplc_Fit::setup_run()
    }
 }
 
-void US_Hydrodyn_Saxs_Hplc_Fit::lm()
+bool US_Hydrodyn_Saxs_Hplc_Fit::lock_zeros( vector < double > & par )
+{
+   // find all gaussians with zero amplitudes and/or weights and set "fixed"
+   // return true if changes are made
+
+   // if amplitude & width are fixed, nothing to do
+   qDebug( "lock_zeros() start" );
+
+   if ( !hplc_lock_min_retry ) {
+      qDebug( "lock_zeros() not enabled" );
+      return false;
+   }
+
+   if ( cb_fix_amplitude->isChecked() &&
+        cb_fix_width->isChecked() ) {
+      qDebug( "lock_zeros() fixed width & amplitude checked, skipping" );
+      return false;
+   }
+
+   // make a temporary copy to check more easily
+   vector < double > tmp_gaussians = hplc_win->gaussians;
+
+   for ( unsigned int i = 0; i < HFIT::param_fixed.size(); i++ )
+   {
+      if ( !HFIT::param_fixed[ i ] ||
+           HFIT::comm_backref.count( i ) )
+      {
+         tmp_gaussians[ i ] = par[ 
+                                  HFIT::comm_backref.count( i ) ?
+                                  HFIT::comm_backref[ i ] :
+                                  HFIT::param_pos[ i ] 
+                                   ];
+         if ( HFIT::conc_ratios_map.count( i ) )
+         {
+            tmp_gaussians[ i ] *= HFIT::conc_ratios_map[ i ];
+         }
+      }
+   }
+   
+   set < unsigned int > to_lock;
+   
+   for ( unsigned int i = 0; i < ( unsigned int ) tmp_gaussians.size(); i+= gaussian_type_size )
+   {
+      unsigned int pos = i / gaussian_type_size;
+
+      if ( !cb_fix_curves[ pos ]->isChecked() ) {
+
+         if ( !cb_fix_amplitude->isChecked() ) {
+            if ( tmp_gaussians[ 0 + i ] <= hplc_ampl_width_min * hplc_lock_min_retry_mult ) {
+               to_lock.insert( pos + 1 );
+               continue;
+            }
+         }
+
+         if ( !cb_fix_width->isChecked() ) {
+            if ( tmp_gaussians[ 2 + i ] <= hplc_ampl_width_min * hplc_lock_min_retry_mult ) {
+               to_lock.insert( pos + 1 );
+               continue;
+            }
+         }
+      }
+   }
+
+   if ( !to_lock.size() ) {
+      qDebug( "lock_zeros() nothing to lock" );
+      return false;
+   }
+
+   qDebug( "check lock" );
+   for ( set < unsigned int >::iterator it = to_lock.begin();
+         it != to_lock.end();
+         ++it ) {
+      qDebug( QString( "new lock %1" ).arg( *it ) );
+      cb_fix_curves[ *it - 1 ]->setChecked( true );
+   }
+   qDebug( "done check lock" );
+   qDebug( "lock_zeros() end" );
+   return true;
+}
+
+bool US_Hydrodyn_Saxs_Hplc_Fit::max_free_peak_delta( vector < double > & par ) {
+   qDebug( "max_free_peak_delta_zeros() start" );
+
+   if ( !hplc_maxfpk_restart ) {
+      qDebug( "max_free_peak_delta() not enabled" );
+      return false;
+   }
+
+   // if amplitude is fixed, skip
+   if ( cb_fix_amplitude->isChecked() ) {
+      qDebug( "max_free_peak_delta() fixed amplitude checked, skipping" );
+      return false;
+   }
+
+   // make a temporary copy to check more easily
+   vector < double > tmp_gaussians = hplc_win->gaussians;
+
+   for ( unsigned int i = 0; i < HFIT::param_fixed.size(); i++ )
+   {
+      if ( !HFIT::param_fixed[ i ] ||
+           HFIT::comm_backref.count( i ) )
+      {
+         tmp_gaussians[ i ] = par[ 
+                                  HFIT::comm_backref.count( i ) ?
+                                  HFIT::comm_backref[ i ] :
+                                  HFIT::param_pos[ i ] 
+                                   ];
+         if ( HFIT::conc_ratios_map.count( i ) )
+         {
+            tmp_gaussians[ i ] *= HFIT::conc_ratios_map[ i ];
+         }
+      }
+   }
+   
+   bool         any_found = false;
+   unsigned int max_pos   = 0;
+   unsigned int max_i     = 0;
+   double       max_val   = 0e0;
+
+   for ( unsigned int i = 0; i < ( unsigned int ) tmp_gaussians.size(); i+= gaussian_type_size )
+   {
+      unsigned int pos = i / gaussian_type_size;
+
+      if ( !cb_fix_curves[ pos ]->isChecked() ) {
+         if ( !cb_fix_amplitude->isChecked() ) {
+            
+            if ( !any_found || tmp_gaussians[ 0 + i ] > max_val ) {
+               any_found = true;
+               max_val = tmp_gaussians[ 0 + i ];
+               max_pos = pos;
+               max_i   = i;
+               continue;
+            }
+         }
+      }         
+   }
+
+   if ( !any_found ) {
+      return false;
+   }
+
+   qDebug( QString( "max_free_peak_delta() found max peak pos %1" ).arg( max_pos + 1 ) );
+
+   tmp_gaussians[ 0 + max_i ] *= 1e0 + hplc_maxfpk_restart_pct * 0.01;
+   // gaussians_undo.push_back( hplc_win->gaussians );
+   hplc_win->gaussians = tmp_gaussians;
+   if ( update_hplc )
+   {
+      hplc_win->gauss_init_markers();
+      hplc_win->gauss_init_gaussians();
+      hplc_win->update_gauss_pos();
+   }
+   return true;
+}      
+
+void US_Hydrodyn_Saxs_Hplc_Fit::lm( bool max_free_peak_delta_run, double prev_rmsd )
 {
    update_common();
    setup_run();
@@ -1820,10 +2028,19 @@ void US_Hydrodyn_Saxs_Hplc_Fit::lm()
 
       for ( unsigned int j = 0; j < t.size(); j++ )
       {
-         yp[ j ]  = (*HFIT::compute_gaussian_f)( t[ j ], (double *)(&HFIT::base_params[ 0 ] ) ) / HFIT::errors[ j ] ;
+         yp[ j ]  = (*HFIT::compute_gaussian_f)( t[ j ], (double *)(&HFIT::base_params[ 0 ] ) );
          org_rmsd += ( y[ j ] - yp[ j ] ) * ( y[ j ] - yp[ j ] );
       }
-      org_rmsd = sqrt( org_rmsd );
+#if defined( UHHSF_FULL_DEBUG )
+      US_Vector::printvector3( "sd y, yp, e", y, yp, HFIT::errors );
+#endif
+      double nu = (double)( t.size() - (int) hplc_win->gaussians.size() - 1 );
+      if ( nu <= 0e0 )
+      {
+         nu = 1e0;
+      }
+      org_rmsd /= nu;
+      // org_rmsd = sqrt( org_rmsd );
    } else {
       vector < double >    yp( x.size() );
 
@@ -1833,14 +2050,21 @@ void US_Hydrodyn_Saxs_Hplc_Fit::lm()
          org_rmsd += ( y[ j ] - yp[ j ] ) * ( y[ j ] - yp[ j ] );
       }
       org_rmsd = sqrt( org_rmsd );
+#if defined( UHHSF_FULL_DEBUG )
+      US_Vector::printvector3( "no sd y, yp, t", y, yp, t );
+#endif
    } 
 
    vector < double > par = HFIT::init_params;
    // US_Vector::printvector( QString( "par start (rmsd %1)" ).arg( org_rmsd ), par );
-   // cout << QString( "par start (rmsd %1)\n" ).arg( org_rmsd ).ascii();
+   qDebug( QString( "par start (rmsd %1)\n" ).arg( org_rmsd ) );
 
    // LM::qpb  = ( QProgressBar * )0;
    // LM::qApp = ( QApplication * )0;
+
+#if defined( UHHSF_FULL_DEBUG )
+   US_Vector::printvector2( "start lmcurvefit t, y", t, y );
+#endif
 
    LM::lmcurve_fit_rmsd( ( int )      par.size(),
                          ( double * ) &( par[ 0 ] ),
@@ -1851,38 +2075,130 @@ void US_Hydrodyn_Saxs_Hplc_Fit::lm()
                          (const LM::lm_control_struct *)&control,
                          &status );
    
+
+   // recompute fnorm for sd values
+
+   if ( use_errors ) 
+   {
+      double new_fnorm = 0e0;
+      vector < double >    yp( x.size() );
+      for ( unsigned int j = 0; j < t.size(); j++ )
+      {
+         yp[ j ]  = (*HFIT::compute_gaussian_f)( t[ j ], (double *)(&par[ 0 ] ) );
+         new_fnorm += ( y[ j ] - yp[ j ] ) * ( y[ j ] - yp[ j ] );
+      }
+      // US_Vector::printvector3( "sd y, yp, e", y, yp, HFIT::errors );
+      double nu = (double)( t.size() - (int) hplc_win->gaussians.size() - 1 );
+      if ( nu <= 0e0 )
+      {
+         nu = 1e0;
+      }
+      new_fnorm /= nu;
+      qDebug( QString( "recomputing fnorm for sd's ... should match display field %1" ).arg( new_fnorm ) );
+      // org_rmsd = sqrt( org_rmsd );
+      status.fnorm = new_fnorm;
+   }
+
    if ( status.fnorm < 0e0 )
    {
       status.fnorm = 1e99;
       cout << "WARNING: lm() returned negative rmsd\n";
    }
 
-   // US_Vector::printvector( QString( "par after fit (norm %1)" ).arg( status.fnorm ), par );
-   // cout << QString( "par fit (rmsd %1)\n" ).arg( status.fnorm ).ascii();
+#if defined( UHHSF_FULL_DEBUG )
+   US_Vector::printvector( QString( "par after fit (norm %1)" ).arg( status.fnorm ), par );
+#endif
+   qDebug(QString( "par fit (rmsd %1)\n" ).arg( status.fnorm ) );
 
-   if ( org_rmsd > status.fnorm )
-   {
-      for ( unsigned int i = 0; i < HFIT::param_fixed.size(); i++ )
-      {
-         if ( !HFIT::param_fixed[ i ] ||
-              HFIT::comm_backref.count( i ) )
+   double best_rmsd = org_rmsd;
+
+   if ( max_free_peak_delta_run ) {
+      qDebug( QString( "max free peak delta run results org_rmsd %1 prev_rmsd %2 status.fnorm %3" )
+              .arg( org_rmsd )
+              .arg( prev_rmsd )
+              .arg( status.fnorm )
+              );
+      if ( org_rmsd > status.fnorm &&
+           prev_rmsd > status.fnorm ) {
+         qDebug( "max free peak delta run improvement found" );
+         for ( unsigned int i = 0; i < HFIT::param_fixed.size(); i++ )
          {
-            hplc_win->gaussians[ i ] = par[ 
-                                           HFIT::comm_backref.count( i ) ?
-                                           HFIT::comm_backref[ i ] :
-                                           HFIT::param_pos[ i ] 
-                                            ];
-            if ( HFIT::conc_ratios_map.count( i ) )
+            if ( !HFIT::param_fixed[ i ] ||
+                 HFIT::comm_backref.count( i ) )
             {
-               hplc_win->gaussians[ i ] *= HFIT::conc_ratios_map[ i ];
+               hplc_win->gaussians[ i ] = par[ 
+                                              HFIT::comm_backref.count( i ) ?
+                                              HFIT::comm_backref[ i ] :
+                                              HFIT::param_pos[ i ] 
+                                               ];
+               if ( HFIT::conc_ratios_map.count( i ) )
+               {
+                  hplc_win->gaussians[ i ] *= HFIT::conc_ratios_map[ i ];
+               }
+            }
+         }
+         gaussians_undo.push_back( hplc_win->gaussians );
+      } else {
+         // we need to pop back the old ones
+         qDebug( "max free peak delta run worse then before" );
+         qDebug( "undoing old gaussians" );
+         return undo();
+      }
+   } else {
+      if ( org_rmsd > status.fnorm )
+      {
+         best_rmsd = status.fnorm;
+         qDebug( "improvement found" );
+         for ( unsigned int i = 0; i < HFIT::param_fixed.size(); i++ )
+         {
+            if ( !HFIT::param_fixed[ i ] ||
+                 HFIT::comm_backref.count( i ) )
+            {
+               hplc_win->gaussians[ i ] = par[ 
+                                              HFIT::comm_backref.count( i ) ?
+                                              HFIT::comm_backref[ i ] :
+                                              HFIT::param_pos[ i ] 
+                                               ];
+               if ( HFIT::conc_ratios_map.count( i ) )
+               {
+                  hplc_win->gaussians[ i ] *= HFIT::conc_ratios_map[ i ];
+               }
+            }
+         }
+         gaussians_undo.push_back( hplc_win->gaussians );
+         // check for further improvement if more can be done
+         if ( lock_zeros( par ) ) {
+            update_enables();
+            if ( pb_lm->isEnabled() ) {
+               qDebug( "retrying with more fixed curves" );
+               // pb_lm->animateClick();
+               return lm( max_free_peak_delta_run );
+            } else {
+               qDebug( "all curves locked" );
+            }
+         }
+      } else {
+         cout << "no improvement, reverting to original values\n";
+         if ( lock_zeros( par ) ) {
+            update_enables();
+            if ( pb_lm->isEnabled() ) {
+               qDebug( "retrying with more fixed curves" );
+               // pb_lm->animateClick();
+               return lm( max_free_peak_delta_run );
+            } else {
+               qDebug( "all curves locked" );
             }
          }
       }
-      gaussians_undo.push_back( hplc_win->gaussians );
-   } else {
-      cout << "no improvement, reverting to original values\n";
+
+      if ( hplc_maxfpk_restart &&
+           max_free_peak_delta( par ) ) {
+         qDebug( "max free peak delta retry" );
+         gaussians_undo.push_back( hplc_win->gaussians );
+         return lm( true, best_rmsd );
+      }
    }
-      
+
    if ( update_hplc )
    {
       hplc_win->gauss_init_markers();

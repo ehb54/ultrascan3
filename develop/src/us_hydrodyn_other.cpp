@@ -5429,7 +5429,7 @@ void US_Hydrodyn::hard_coded_defaults()
    gparams[ "hplc_bl_reps"               ]         = "5";
    gparams[ "hplc_zi_window"             ]         = "25";
    gparams[ "hplc_discard_it_sd_mult"    ]         = "2";
-   gparams[ "hplc_cb_discard_it_sd_mult" ]         = "false";
+   gparams[ "hplc_cb_discard_it_sd_mult" ]         = "true";
    gparams[ "hplc_dist_max"              ]         = "50.0";
 
    gparams[ "save_csv_on_load_pdb"       ]         = "false";

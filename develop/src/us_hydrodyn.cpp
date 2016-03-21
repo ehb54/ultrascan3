@@ -5339,7 +5339,7 @@ void US_Hydrodyn::dmd_run()
    }
    batch_window->cb_mm_first->setChecked( !batch.mm_all );
    batch_window->cb_mm_all  ->setChecked( batch.mm_all );
-   batch_window->cb_dmd     ->setChecked( batch.dmd );
+   batch_window->cb_dmd     ->setChecked( true ); // batch.dmd );
    batch_window->cb_somo    ->setChecked( batch.somo );
    batch_window->cb_grid    ->setChecked( batch.grid );
    batch_window->cb_iqq     ->setChecked( batch.iqq );

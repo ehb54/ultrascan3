@@ -1350,6 +1350,7 @@ void US_Hydrodyn_Pdb_Tool::save_csv( Q3ListView *lv )
    } else {
       csv2_msg("black", QString("File %1 written\n").arg( filename ) );
    }
+   ((US_Hydrodyn *)us_hydrodyn)->add_to_directory_history( filename );
 }
 
 void US_Hydrodyn_Pdb_Tool::csv2_undo()
@@ -2371,20 +2372,20 @@ void US_Hydrodyn_Pdb_Tool::load( Q3ListView *lv, QString &filename, bool only_fi
       
       vector < QString > data;
 
-      data.push_back( QString("%1").arg( model ) );
-      data.push_back( qs.mid( 21 , 1 ) );
-      data.push_back( qs.mid( 17 , 3 ) );
-      data.push_back( qs.mid( 22 , 4 ) );
-      data.push_back( qs.mid( 12 , 4 ) );
-      data.push_back( qs.mid( 6  , 5 ) );
-      data.push_back( qs.mid( 16 , 1 ) );
-      data.push_back( qs.mid( 26 , 1 ) );
-      data.push_back( qs.mid( 30 , 8 ) );
-      data.push_back( qs.mid( 38 , 8 ) );
-      data.push_back( qs.mid( 46 , 8 ) );
-      data.push_back( qs.mid( 54 , 6 ) );
-      data.push_back( qs.mid( 60 , 6 ) );
-      data.push_back( qs.mid( 76 , 2 ).stripWhiteSpace() );
+      data.push_back( QString("%1").arg( model ) ); // 0 model
+      data.push_back( qs.mid( 21 , 1 ) );           // 1 chain
+      data.push_back( qs.mid( 17 , 3 ) );           // 2 residue name
+      data.push_back( qs.mid( 22 , 4 ) );           // 3 residue #
+      data.push_back( qs.mid( 12 , 4 ) );           // 4 atom name
+      data.push_back( qs.mid( 6  , 5 ) );           // 5 atom number
+      data.push_back( qs.mid( 16 , 1 ) );           // 6 alt loc
+      data.push_back( qs.mid( 26 , 1 ) );           // 7 code for insertion of residues?
+      data.push_back( qs.mid( 30 , 8 ) );           // 8 X
+      data.push_back( qs.mid( 38 , 8 ) );           // 9 Y
+      data.push_back( qs.mid( 46 , 8 ) );           // 10 Z
+      data.push_back( qs.mid( 54 , 6 ) );           // 11 occupancy
+      data.push_back( qs.mid( 60 , 6 ) );           // 12 temperature factor
+      data.push_back( qs.mid( 76 , 2 ).stripWhiteSpace() ); // 13 element symbol
       // data.push_back( qs.mid( 78 , 2 ) );
 
       new_csv.data.push_back( data );

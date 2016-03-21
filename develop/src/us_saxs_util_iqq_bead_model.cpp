@@ -1667,7 +1667,7 @@ bool US_Saxs_Util::smooth(
 
    vector < double > dist;
    points++;
-   for ( unsigned int i = 0; i < points; i++ ) 
+   for ( unsigned int i = 0; i <= points; i++ ) 
    {
       double x0 = ( 2e0 / points ) * ( double ) i;
       dist.push_back( exp( -( x0 * x0 ) ) / sqrt( 2e0 * 3.14159265358978323e0 ) );

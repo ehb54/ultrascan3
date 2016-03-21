@@ -3,6 +3,8 @@
 #include "../include/us_hydrodyn_saxs_hplc.h"
 #include "../include/us_hydrodyn_saxs_hplc_scale_trend.h"
 #include "../include/us_pm.h"
+//Added by qt3to4:
+#include <QPixmap>
 
 // --- PM ----
 
@@ -328,7 +330,7 @@ void US_Hydrodyn_Saxs_Hplc::pm_q_start_focus( bool hasFocus )
                             ( f_qs[ wheel_file ].back() - f_qs[ wheel_file ][ 0 ] ) / UHSH_WHEEL_RES );
       connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
       qwtw_wheel->setValue( le_pm_q_start->text().toDouble() );
-      qwtw_wheel->setEnabled( true );
+      wheel_enables();
    }
 }
 
@@ -341,7 +343,7 @@ void US_Hydrodyn_Saxs_Hplc::pm_q_end_focus( bool hasFocus )
                             ( f_qs[ wheel_file ].back() - f_qs[ wheel_file ][ 0 ] ) / UHSH_WHEEL_RES );
       connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
       qwtw_wheel->setValue( le_pm_q_end->text().toDouble() );
-      qwtw_wheel->setEnabled( true );
+      wheel_enables();
    }
 }
 
@@ -535,7 +537,6 @@ public:
    }
 };
 
-
 void US_Hydrodyn_Saxs_Hplc::testiq()
 {
    le_last_focus = (mQLineEdit *) 0;
@@ -633,7 +634,6 @@ void US_Hydrodyn_Saxs_Hplc::testiq()
         current_mode == MODE_SCALE )
    {
       gauss_delete_markers();
-      plotted_markers.clear();
       plot_dist->show();
    } else {
       testiq_it_selected = "";
@@ -759,10 +759,6 @@ void US_Hydrodyn_Saxs_Hplc::testiq()
       testiq_gauss_line();
    }         
 
-   pb_rescale     ->setEnabled( true );
-   pb_axis_x      ->setEnabled( true );
-   pb_axis_y      ->setEnabled( true );
-
    running       = true;
    testiq_active = true;
 
@@ -813,6 +809,9 @@ void US_Hydrodyn_Saxs_Hplc::testiq_enables()
    } else {
       cb_testiq_from_gaussian->show();
    }
+   pb_rescale     ->setEnabled( true );
+   pb_axis_x      ->setEnabled( true );
+   pb_axis_y      ->setEnabled( true );
 }
 
 bool US_Hydrodyn_Saxs_Hplc::testiq_make()
@@ -944,7 +943,7 @@ void US_Hydrodyn_Saxs_Hplc::testiq_q_start_focus( bool hasFocus )
                             ( f_qs[ wheel_file ].back() - f_qs[ wheel_file ][ 0 ] ) / UHSH_WHEEL_RES );
       connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
       qwtw_wheel->setValue( le_testiq_q_start->text().toDouble() );
-      qwtw_wheel->setEnabled( true );
+      wheel_enables();
    }
 }
 
@@ -961,7 +960,7 @@ void US_Hydrodyn_Saxs_Hplc::testiq_q_end_focus( bool hasFocus )
                             ( f_qs[ wheel_file ].back() - f_qs[ wheel_file ][ 0 ] ) / UHSH_WHEEL_RES );
       connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
       qwtw_wheel->setValue( le_testiq_q_end->text().toDouble() );
-      qwtw_wheel->setEnabled( true );
+      wheel_enables();
    }
 }
 
@@ -1264,6 +1263,10 @@ void US_Hydrodyn_Saxs_Hplc::guinier()
    guinier_enables();
    check_mwt_constants();
    guinier_check_qmax();
+   {
+      QPixmap pm;
+      lbl_wheel_Pcolor->setPixmap( pm );
+   }
 }
 
 void US_Hydrodyn_Saxs_Hplc::guinier_scroll_highlight( int pos )
@@ -1275,6 +1278,9 @@ void US_Hydrodyn_Saxs_Hplc::guinier_scroll_highlight( int pos )
 
    QString showname = guinier_names[ pos ];
    QString hidename = guinier_names[ guinier_scroll_pos ];
+
+   lbl_wheel_pos      ->setText( "" );
+   lbl_wheel_pos_below->setText( QString( "%1" ).arg( showname ) );
 
 #ifndef QT4
    //   guinier_plot->setCurveStyle( guinier_curves[ hidename ], QwtCurve::NoCurve );
@@ -1474,9 +1480,10 @@ void US_Hydrodyn_Saxs_Hplc::guinier_scroll()
 
    if ( cb_guinier_scroll->isChecked() )
    {
+      ShowHide::hide_widgets( wheel_below_widgets, false );
       //      qDebug( "--- guinier_scroll():isChecked ---" );
       le_last_focus = ( mQLineEdit * )0;
-      qwtw_wheel->setEnabled( false );
+      wheel_enables( false );
       disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
 
       for ( int i = 0; i < (int) guinier_names.size(); ++i )
@@ -1533,12 +1540,13 @@ void US_Hydrodyn_Saxs_Hplc::guinier_scroll()
       qwtw_wheel->setValue( guinier_scroll_pos );
       lbl_wheel_pos->setText( QString( "%1" ).arg( guinier_names[ guinier_scroll_pos ] ) );
       connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
-      qwtw_wheel->setEnabled( true );
+      wheel_enables();
       guinier_scroll_highlight( guinier_scroll_pos );
    } else {
+      ShowHide::hide_widgets( wheel_below_widgets );
       // go thru all displayed curves, turn on
       le_last_focus = ( mQLineEdit * )0;
-      qwtw_wheel->setEnabled( false );
+      wheel_enables( false );
       lbl_wheel_pos->setText( "" );
 
       for ( int i = 0; i < (int) guinier_names.size(); ++i )
@@ -3437,6 +3445,8 @@ void US_Hydrodyn_Saxs_Hplc::guinier_enables()
    {
       pb_testiq->setEnabled( true );
    }
+
+   ShowHide::hide_widgets( wheel_below_widgets, !cb_guinier_scroll->isChecked() );
 }
 
 bool US_Hydrodyn_Saxs_Hplc::guinier_check_qmax( bool show_message )
@@ -3642,7 +3652,7 @@ void US_Hydrodyn_Saxs_Hplc::guinier_q_start_focus( bool hasFocus )
                             ( guinier_maxq - guinier_minq ) / UHSH_G_WHEEL_RES );
       connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
       qwtw_wheel->setValue( le_guinier_q_start->text().toDouble() );
-      qwtw_wheel->setEnabled( true );
+      wheel_enables();
    }
 }
 
@@ -3660,7 +3670,7 @@ void US_Hydrodyn_Saxs_Hplc::guinier_q_end_focus( bool hasFocus )
                             ( guinier_maxq - guinier_minq ) / UHSH_G_WHEEL_RES );
       connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
       qwtw_wheel->setValue( le_guinier_q_end->text().toDouble() );
-      qwtw_wheel->setEnabled( true );
+      wheel_enables();
    }
 }
 
@@ -3744,7 +3754,7 @@ void US_Hydrodyn_Saxs_Hplc::guinier_q2_start_focus( bool hasFocus )
                             ( guinier_maxq2 - guinier_minq2 ) / UHSH_G_WHEEL_RES );
       connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
       qwtw_wheel->setValue( le_guinier_q2_start->text().toDouble() );
-      qwtw_wheel->setEnabled( true );
+      wheel_enables();
    }
 }
 
@@ -3762,7 +3772,7 @@ void US_Hydrodyn_Saxs_Hplc::guinier_q2_end_focus( bool hasFocus )
                             ( guinier_maxq2 - guinier_minq2 ) / UHSH_G_WHEEL_RES );
       connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
       qwtw_wheel->setValue( le_guinier_q2_end->text().toDouble() );
-      qwtw_wheel->setEnabled( true );
+      wheel_enables();
    }
 }
 
@@ -3815,7 +3825,7 @@ void US_Hydrodyn_Saxs_Hplc::guinier_delta_start_focus( bool hasFocus )
       qwtw_wheel->setRange( 0e0, guinier_maxq2, guinier_maxq2 / UHSH_G_WHEEL_RES );
       connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
       qwtw_wheel->setValue( le_guinier_delta_start->text().toDouble() );
-      qwtw_wheel->setEnabled( true );
+      wheel_enables();
    }
 }
 
@@ -3832,7 +3842,7 @@ void US_Hydrodyn_Saxs_Hplc::guinier_delta_end_focus( bool hasFocus )
       qwtw_wheel->setRange( 0e0, guinier_maxq2, guinier_maxq2 / UHSH_G_WHEEL_RES );
       connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
       qwtw_wheel->setValue( le_guinier_delta_end->text().toDouble() );
-      qwtw_wheel->setEnabled( true );
+      wheel_enables();
    }
 }
 
@@ -3888,7 +3898,7 @@ void US_Hydrodyn_Saxs_Hplc::guinier_rg_t_start_focus( bool hasFocus )
                             ( guinier_maxt - guinier_mint ) / UHSH_G_WHEEL_RES );
       connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
       qwtw_wheel->setValue( le_guinier_rg_t_start->text().toDouble() );
-      qwtw_wheel->setEnabled( true );
+      wheel_enables();
    }
 }
 
@@ -3906,7 +3916,7 @@ void US_Hydrodyn_Saxs_Hplc::guinier_rg_t_end_focus( bool hasFocus )
                             ( guinier_maxt - guinier_mint ) / UHSH_G_WHEEL_RES );
       connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
       qwtw_wheel->setValue( le_guinier_rg_t_end->text().toDouble() );
-      qwtw_wheel->setEnabled( true );
+      wheel_enables();
    }
 }
 
@@ -3964,7 +3974,7 @@ void US_Hydrodyn_Saxs_Hplc::guinier_rg_rg_start_focus( bool hasFocus )
                             UHSH_MAX_RG  / UHSH_G_WHEEL_RES );
       connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
       qwtw_wheel->setValue( le_guinier_rg_rg_start->text().toDouble() );
-      qwtw_wheel->setEnabled( true );
+      wheel_enables();
    }
 }
 
@@ -3982,7 +3992,7 @@ void US_Hydrodyn_Saxs_Hplc::guinier_rg_rg_end_focus( bool hasFocus )
                             UHSH_MAX_RG  / UHSH_G_WHEEL_RES );
       connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
       qwtw_wheel->setValue( le_guinier_rg_rg_end->text().toDouble() );
-      qwtw_wheel->setEnabled( true );
+      wheel_enables();
    }
 }
 
@@ -4038,7 +4048,7 @@ void US_Hydrodyn_Saxs_Hplc::guinier_mw_t_start_focus( bool hasFocus )
                             ( guinier_maxt - guinier_mint ) / UHSH_G_WHEEL_RES );
       connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
       qwtw_wheel->setValue( le_guinier_mw_t_start->text().toDouble() );
-      qwtw_wheel->setEnabled( true );
+      wheel_enables();
    }
 }
 
@@ -4056,7 +4066,7 @@ void US_Hydrodyn_Saxs_Hplc::guinier_mw_t_end_focus( bool hasFocus )
                             ( guinier_maxt - guinier_mint ) / UHSH_G_WHEEL_RES );
       connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
       qwtw_wheel->setValue( le_guinier_mw_t_end->text().toDouble() );
-      qwtw_wheel->setEnabled( true );
+      wheel_enables();
    }
 }
 
@@ -4114,7 +4124,7 @@ void US_Hydrodyn_Saxs_Hplc::guinier_mw_mw_start_focus( bool hasFocus )
                             UHSH_MAX_MW  / UHSH_G_WHEEL_RES );
       connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
       qwtw_wheel->setValue( le_guinier_mw_mw_start->text().toDouble() );
-      qwtw_wheel->setEnabled( true );
+      wheel_enables();
    }
 }
 
@@ -4132,7 +4142,7 @@ void US_Hydrodyn_Saxs_Hplc::guinier_mw_mw_end_focus( bool hasFocus )
                             UHSH_MAX_MW  / UHSH_G_WHEEL_RES );
       connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
       qwtw_wheel->setValue( le_guinier_mw_mw_end->text().toDouble() );
-      qwtw_wheel->setEnabled( true );
+      wheel_enables();
    }
 }
 
@@ -4281,12 +4291,12 @@ void US_Hydrodyn_Saxs_Hplc::wyatt_enables()
    cb_wyatt_2             ->setEnabled( true );
    le_wyatt_start2        ->setEnabled( cb_wyatt_2->isChecked() );
    le_wyatt_end2          ->setEnabled( cb_wyatt_2->isChecked() );
-   qwtw_wheel             ->setEnabled( 
-                                       le_wyatt_start  ->hasFocus() || 
-                                       le_wyatt_end    ->hasFocus() ||
-                                       le_wyatt_start2 ->hasFocus() || 
-                                       le_wyatt_end2   ->hasFocus()
-                                        );
+   wheel_enables          (
+                           le_wyatt_start  ->hasFocus() || 
+                           le_wyatt_end    ->hasFocus() ||
+                           le_wyatt_start2 ->hasFocus() || 
+                           le_wyatt_end2   ->hasFocus()
+                           );
    pb_rescale             ->setEnabled( true );
    pb_view                ->setEnabled( true );
    if ( cb_wyatt_2->isChecked() )
@@ -4303,7 +4313,6 @@ void US_Hydrodyn_Saxs_Hplc::wyatt_init_markers()
 {
    gauss_delete_markers();
 
-   plotted_markers.clear();
    plotted_wyatt.clear();
 
    gauss_add_marker( le_wyatt_start  ->text().toDouble(), Qt::red,     tr( "Start"          ) );
@@ -4444,7 +4453,7 @@ void US_Hydrodyn_Saxs_Hplc::wyatt_start_focus( bool hasFocus )
                             ( f_qs[ wheel_file ].back() - f_qs[ wheel_file ][ 0 ] ) / UHSH_WHEEL_RES );
       connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
       qwtw_wheel->setValue( le_wyatt_start->text().toDouble() );
-      qwtw_wheel->setEnabled( true );
+      wheel_enables();
    }
 }
 
@@ -4459,7 +4468,7 @@ void US_Hydrodyn_Saxs_Hplc::wyatt_end_focus( bool hasFocus )
                             ( f_qs[ wheel_file ].back() - f_qs[ wheel_file ][ 0 ] ) / UHSH_WHEEL_RES );
       connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
       qwtw_wheel->setValue( le_wyatt_end->text().toDouble() );
-      qwtw_wheel->setEnabled( true );
+      wheel_enables();
    }
 }
 
@@ -4513,7 +4522,7 @@ void US_Hydrodyn_Saxs_Hplc::wyatt_start2_focus( bool hasFocus )
                             ( f_qs[ wheel_file ].back() - f_qs[ wheel_file ][ 0 ] ) / UHSH_WHEEL_RES );
       connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
       qwtw_wheel->setValue( le_wyatt_start2->text().toDouble() );
-      qwtw_wheel->setEnabled( true );
+      wheel_enables();
    }
 }
 
@@ -4528,7 +4537,7 @@ void US_Hydrodyn_Saxs_Hplc::wyatt_end2_focus( bool hasFocus )
                             ( f_qs[ wheel_file ].back() - f_qs[ wheel_file ][ 0 ] ) / UHSH_WHEEL_RES );
       connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
       qwtw_wheel->setValue( le_wyatt_end2->text().toDouble() );
-      qwtw_wheel->setEnabled( true );
+      wheel_enables();
    }
 }
 
@@ -4679,1283 +4688,6 @@ void US_Hydrodyn_Saxs_Hplc::replot_wyatt()
    }
 }
 
-// --- baseline ---
-void US_Hydrodyn_Saxs_Hplc::baseline_start()
-{
-   if ( axis_y_log )
-   {
-      axis_y();
-   }
-
-   org_baseline_start_s     = le_baseline_start_s    ->text().toDouble();
-   org_baseline_start       = le_baseline_start      ->text().toDouble();
-   org_baseline_start_e     = le_baseline_start_e    ->text().toDouble();
-   org_baseline_end_s       = le_baseline_end_s      ->text().toDouble();
-   org_baseline_end         = le_baseline_end        ->text().toDouble();
-   org_baseline_end_e       = le_baseline_end_e      ->text().toDouble();
-   org_baseline_start_zero  = cb_baseline_start_zero ->isChecked();
-
-   le_last_focus = (mQLineEdit *) 0;
-   for ( int i = 0; i < lb_files->numRows(); i++ )
-   {
-      if ( lb_files->isSelected( i ) )
-      {
-         wheel_file = lb_files->text( i );
-         break;
-      }
-   }
-   if ( !f_qs.count( wheel_file ) )
-   {
-      editor_msg( "red", QString( tr( "Internal error: %1 not found in data" ) ).arg( wheel_file ) );
-      return;
-   }
-
-   if ( f_qs[ wheel_file ].size() < 2 )
-   {
-      editor_msg( "red", QString( tr( "Internal error: %1 almost empty data" ) ).arg( wheel_file ) );
-      return;
-   }
-
-   if ( !f_Is.count( wheel_file ) )
-   {
-      editor_msg( "red", QString( tr( "Internal error: %1 not found in y data" ) ).arg( wheel_file ) );
-      return;
-   }
-
-   if ( !f_Is[ wheel_file ].size() )
-   {
-      editor_msg( "red", QString( tr( "Internal error: %1 empty y data" ) ).arg( wheel_file ) );
-      return;
-   }
-
-#ifndef QT4
-   plot_dist->setCurvePen( plotted_curves[ wheel_file ], QPen( Qt::cyan, use_line_width, SolidLine));
-#else
-   plotted_curves[ wheel_file ]->setPen( QPen( Qt::cyan, use_line_width, Qt::SolidLine ) );
-#endif
-
-   // baseline_mode = true;
-   mode_select( MODE_BASELINE );
-   running       = true;
-   qwtw_wheel->setRange( f_qs[ wheel_file ][ 0 ], 
-                         f_qs[ wheel_file ].back(), 
-                         ( f_qs[ wheel_file ].back() - f_qs[ wheel_file ][ 0 ] ) / UHSH_WHEEL_RES );
-
-   double q_len       = f_qs[ wheel_file ].back() - f_qs[ wheel_file ][ 0 ];
-   double q_len_delta = q_len * 0.05;
-
-   if ( le_baseline_start_s->text().isEmpty() ||
-        le_baseline_start_s->text() == "0" ||
-        le_baseline_start_s->text().toDouble() < f_qs[ wheel_file ][ 0 ] )
-   {
-      disconnect( le_baseline_start_s, SIGNAL( textChanged( const QString & ) ), 0, 0 );
-      le_baseline_start_s->setText( QString( "%1" ).arg( f_qs[ wheel_file ][ 0 ] ) );
-      connect( le_baseline_start_s, SIGNAL( textChanged( const QString & ) ), SLOT( baseline_start_s_text( const QString & ) ) );
-   }
-
-   if ( le_baseline_start->text().isEmpty() ||
-        le_baseline_start->text() == "0" ||
-        le_baseline_start->text().toDouble() < f_qs[ wheel_file ][ 0 ] )
-   {
-      disconnect( le_baseline_start, SIGNAL( textChanged( const QString & ) ), 0, 0 );
-      le_baseline_start->setText( QString( "%1" ).arg( f_qs[ wheel_file ][ 0 ] + q_len_delta ) );
-      connect( le_baseline_start, SIGNAL( textChanged( const QString & ) ), SLOT( baseline_start_text( const QString & ) ) );
-   }
-
-   if ( le_baseline_start_e->text().isEmpty() ||
-        le_baseline_start_e->text() == "0" ||
-        le_baseline_start_e->text().toDouble() < f_qs[ wheel_file ][ 0 ] )
-   {
-      disconnect( le_baseline_start_e, SIGNAL( textChanged( const QString & ) ), 0, 0 );
-      le_baseline_start_e->setText( QString( "%1" ).arg( f_qs[ wheel_file ][ 0 ] + 2e0 * q_len_delta) );
-      connect( le_baseline_start_e, SIGNAL( textChanged( const QString & ) ), SLOT( baseline_start_e_text( const QString & ) ) );
-   }
-
-   if ( le_baseline_end_s->text().isEmpty() ||
-        le_baseline_end_s->text() == "0" ||
-        le_baseline_end_s->text().toDouble() > f_qs[ wheel_file ].back() )
-   {
-      disconnect( le_baseline_end_s, SIGNAL( textChanged( const QString & ) ), 0, 0 );
-      le_baseline_end_s->setText( QString( "%1" ).arg( f_qs[ wheel_file ].back() - 2e0 * q_len_delta ) );
-      connect( le_baseline_end_s, SIGNAL( textChanged( const QString & ) ), SLOT( baseline_end_s_text( const QString & ) ) );
-   }
-
-   if ( le_baseline_end->text().isEmpty() ||
-        le_baseline_end->text() == "0" ||
-        le_baseline_end->text().toDouble() > f_qs[ wheel_file ].back() )
-   {
-      disconnect( le_baseline_end, SIGNAL( textChanged( const QString & ) ), 0, 0 );
-      le_baseline_end->setText( QString( "%1" ).arg( f_qs[ wheel_file ].back() - q_len_delta ) );
-      connect( le_baseline_end, SIGNAL( textChanged( const QString & ) ), SLOT( baseline_end_text( const QString & ) ) );
-   }
-
-   if ( le_baseline_end_e->text().isEmpty() ||
-        le_baseline_end_e->text() == "0" ||
-        le_baseline_end_e->text().toDouble() > f_qs[ wheel_file ].back() )
-   {
-      disconnect( le_baseline_end_e, SIGNAL( textChanged( const QString & ) ), 0, 0 );
-      le_baseline_end_e->setText( QString( "%1" ).arg( f_qs[ wheel_file ].back() ) );
-      connect( le_baseline_end_e, SIGNAL( textChanged( const QString & ) ), SLOT( baseline_end_e_text( const QString & ) ) );
-   }
-
-   if ( ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_integral" ] == "true" )
-   {
-      cb_baseline_start_zero->setChecked( true );
-      cb_baseline_start_zero->hide();
-   } else {
-      cb_baseline_start_zero->setChecked( false );
-      cb_baseline_start_zero->show();
-      QMessageBox::warning(this, 
-                           caption(),
-                           QString( tr( "Please note:\n\n"
-                                        "You are utilizing the linear baseline method.\n"
-                                        "This method compensates for a systematic drift and can distort/hide the effects of capillary fouling.\n"
-                                        "The linear baseline correction does not have an explicit physical basis and should be applied with care\n"
-                                        "and only in the case of \"small-amplitude\" corrections as compared to the experimental uncertainty.\n" ) ),
-                           QMessageBox::Ok | QMessageBox::Default,
-                           QMessageBox::NoButton
-                           );
-   }
-   baseline_init_markers();
-   replot_baseline();
-   disable_all();
-   baseline_enables();
-}
-
-void US_Hydrodyn_Saxs_Hplc::baseline_enables()
-{
-   pb_baseline_start      ->setEnabled( false );
-   pb_wheel_cancel        ->setEnabled( true );
-   pb_wheel_save          ->setEnabled( 
-                                    le_baseline_start_s->text().toDouble() != org_baseline_start_s ||
-                                    le_baseline_start  ->text().toDouble() != org_baseline_start   ||
-                                    le_baseline_start_e->text().toDouble() != org_baseline_start_e ||
-                                    le_baseline_end_s  ->text().toDouble() != org_baseline_end_s   ||
-                                    le_baseline_end    ->text().toDouble() != org_baseline_end     ||   
-                                    le_baseline_end_e  ->text().toDouble() != org_baseline_end_e   ||
-                                    cb_baseline_start_zero->isChecked()    != org_baseline_start_zero
-                                    );
-   cb_baseline_start_zero ->setEnabled( true );
-   if ( cb_baseline_start_zero->isChecked() )
-   {
-      le_baseline_start_s->hide();
-      le_baseline_start  ->hide();
-      le_baseline_start_e->hide();
-   } else {
-      le_baseline_start_s->show();
-      le_baseline_start  ->show();
-      le_baseline_start_e->show();
-   }
-
-   le_baseline_start_s    ->setEnabled( !cb_baseline_start_zero->isChecked() );
-   le_baseline_start      ->setEnabled( !cb_baseline_start_zero->isChecked() );
-   le_baseline_start_e    ->setEnabled( !cb_baseline_start_zero->isChecked() );
-   le_baseline_end_s      ->setEnabled( true );
-   le_baseline_end        ->setEnabled( true );
-   le_baseline_end_e      ->setEnabled( true );
-   qwtw_wheel             ->setEnabled( 
-                                    le_baseline_start_s->hasFocus() || 
-                                    le_baseline_start  ->hasFocus() || 
-                                    le_baseline_start_e->hasFocus() || 
-                                    le_baseline_end_s  ->hasFocus() ||
-                                    le_baseline_end    ->hasFocus() ||
-                                    le_baseline_end_e  ->hasFocus()
-                                    );
-   pb_rescale             ->setEnabled( true );
-   pb_view                ->setEnabled( true );
-}
-
-void US_Hydrodyn_Saxs_Hplc::set_baseline_start_zero()
-{
-   if ( !cb_baseline_start_zero->isChecked() )
-   {
-      // QMessageBox::warning(
-      //                      this,
-      //                      this->caption() + tr(": Baseline setup: nonzero starting offset" ),
-      //                      tr(
-      //                         "Having a non zero starting offset likely means problems with buffer subtraction which should be corrected before *any* analysis is done.\n"
-      //                         ),
-      //                      QMessageBox::Ok | QMessageBox::Default,
-      //                      QMessageBox::NoButton
-      //                      );
-   }      
-
-   if ( cb_baseline_start_zero->isChecked() &&
-        ( le_baseline_start_s->hasFocus() ||
-          le_baseline_start  ->hasFocus() ||
-          le_baseline_start_e->hasFocus() ) )
-   {
-      le_last_focus = (mQLineEdit *)0;
-   }
-
-   for ( unsigned int i = 0; i < ( unsigned int ) plotted_baseline.size(); i++ )
-   {
-#ifndef QT4
-      plot_dist->removeCurve( plotted_baseline[ i ] );
-#else
-      plotted_baseline[ i ]->detach();
-#endif
-   }
-
-   baseline_init_markers();
-   replot_baseline();
-   plot_dist->replot();
-   baseline_enables();
-}
-
-static QColor start_color( 255, 165, 0 );
-static QColor end_color  ( 255, 160, 122 );
-
-void US_Hydrodyn_Saxs_Hplc::baseline_init_markers()
-{
-   gauss_delete_markers();
-
-   plotted_markers.clear();
-   plotted_baseline.clear();
-
-   if ( !cb_baseline_start_zero->isChecked() )
-   {
-      gauss_add_marker( le_baseline_start_s->text().toDouble(), Qt::magenta, tr( "\nLFS\nStart"   ) );
-      gauss_add_marker( le_baseline_start  ->text().toDouble(), Qt::red,     tr( "Start"          ) );
-      gauss_add_marker( le_baseline_start_e->text().toDouble(), Qt::magenta, tr( "\n\n\nLFS\nEnd" ) );
-   }
-   gauss_add_marker( le_baseline_end_s  ->text().toDouble(), Qt::magenta, tr( "\nLFE\nStart"   ), Qt::AlignLeft | Qt::AlignTop );
-   gauss_add_marker( le_baseline_end    ->text().toDouble(), Qt::red,     tr( "End"            ), Qt::AlignLeft | Qt::AlignTop );
-   gauss_add_marker( le_baseline_end_e  ->text().toDouble(), Qt::magenta, tr( "\n\n\nLFE\nEnd" ), Qt::AlignLeft | Qt::AlignTop );
-
-   if ( !suppress_replot )
-   {
-      plot_dist->replot();
-   }
-}
-
-void US_Hydrodyn_Saxs_Hplc::replot_baseline()
-{
-   // cout << "replot baseline\n";
-   // compute & plot baseline
-   // baseline_slope =
-   // baseline_intercept =
-   // plot over range from start to end
-   // also find closest f_qs[ wheel_file ] to start/end
-   unsigned int before_start = 0;
-   unsigned int after_start  = 1;
-   unsigned int before_end   = 0;
-   unsigned int after_end    = 1;
-
-   double start_s = le_baseline_start_s->text().toDouble();
-   double start   = le_baseline_start  ->text().toDouble();
-   double start_e = le_baseline_start_e->text().toDouble();
-   double end_s   = le_baseline_end_s  ->text().toDouble();
-   double end     = le_baseline_end    ->text().toDouble();
-   double end_e   = le_baseline_end_e  ->text().toDouble();
-
-   vector < double > start_q;
-   vector < double > start_I;
-
-   vector < double > end_q;
-   vector < double > end_I;
-
-   {
-      unsigned int i = 0;
-      if ( cb_baseline_start_zero->isChecked() )
-      {
-         start_q.push_back( f_qs[ wheel_file ][ i ] );
-         start = start_q[ 0 ];
-         start_I.push_back( 0e0 );
-      } else {
-         if ( f_qs[ wheel_file ][ i ] >= start_s &&
-              f_qs[ wheel_file ][ i ] <= start_e )
-         {
-            start_q.push_back( f_qs[ wheel_file ][ i ] );
-            start_I.push_back( f_Is[ wheel_file ][ i ] );
-         }
-      }
-      if ( f_qs[ wheel_file ][ i ] >= end_s &&
-           f_qs[ wheel_file ][ i ] <= end_e )
-      {
-         end_q.push_back( f_qs[ wheel_file ][ i ] );
-         end_I.push_back( f_Is[ wheel_file ][ i ] );
-      }
-   }
-
-   for ( unsigned int i = 1; i < f_qs[ wheel_file ].size(); i++ )
-   {
-      if ( !cb_baseline_start_zero->isChecked() &&
-           f_qs[ wheel_file ][ i ] >= start_s &&
-           f_qs[ wheel_file ][ i ] <= start_e )
-      {
-         start_q.push_back( f_qs[ wheel_file ][ i ] );
-         start_I.push_back( f_Is[ wheel_file ][ i ] );
-      }
-      if ( f_qs[ wheel_file ][ i ] >= end_s &&
-           f_qs[ wheel_file ][ i ] <= end_e )
-      {
-         end_q.push_back( f_qs[ wheel_file ][ i ] );
-         end_I.push_back( f_Is[ wheel_file ][ i ] );
-      }
-
-      if ( f_qs[ wheel_file ][ i - 1 ] <= start &&
-           f_qs[ wheel_file ][ i     ] >= start )
-      {
-         before_start = i - 1;
-         after_start  = i;
-      }
-      if ( f_qs[ wheel_file ][ i - 1 ] <= end &&
-           f_qs[ wheel_file ][ i     ] >= end )
-      {
-         before_end = i - 1;
-         after_end  = i;
-      }
-   }
-
-   bool   set_start = ( start_q.size() > 1 );
-   bool   set_end   = ( end_q  .size() > 1 );
-   double start_intercept = 0e0;
-   double start_slope     = 0e0;
-   double end_intercept   = 0e0;
-   double end_slope       = 0e0;
-
-   double start_y;
-   double end_y;
-
-   double siga;
-   double sigb;
-   double chi2;
-
-   if ( set_start && set_end )
-   {
-      // linear fit on each
-      usu->linear_fit( start_q, start_I, start_intercept, start_slope, siga, sigb, chi2 );
-      usu->linear_fit( end_q  , end_I  , end_intercept  , end_slope  , siga, sigb, chi2 );
-
-      // find intercepts for baseline
-
-      start_y = start_intercept + start_slope * start;
-      end_y   = end_intercept   + end_slope   * end;
-   } else {
-      if ( set_start )
-      {
-         usu->linear_fit( start_q, start_I, start_intercept, start_slope, siga, sigb, chi2 );
-
-         start_y = start_intercept + start_slope * start;
-
-         double end_t;
-
-         if ( f_qs[ wheel_file ][ after_end  ] != f_qs[ wheel_file ][ before_end ] )
-         {
-            end_t = ( f_qs[ wheel_file ][ after_end ] - end )
-               / ( f_qs[ wheel_file ][ after_end  ] -
-                   f_qs[ wheel_file ][ before_end ] );
-         } else {
-            end_t = 0.5e0;
-         }
-
-         end_y = 
-            ( end_t ) * f_Is[ wheel_file ][ before_end ] +
-            ( 1e0 - end_t ) * f_Is[ wheel_file ][ after_end ];
-      } else {
-         if ( set_end )
-         {
-            usu->linear_fit( end_q, end_I, end_intercept, end_slope, siga, sigb, chi2 );
-
-            end_y = end_intercept + end_slope * end;
-
-            double start_t;
-            if ( f_qs[ wheel_file ][ after_start  ] != f_qs[ wheel_file ][ before_start ] )
-            {
-               start_t = 
-                  ( f_qs[ wheel_file ][ after_start ] - start )
-                  / ( f_qs[ wheel_file ][ after_start  ] -
-                      f_qs[ wheel_file ][ before_start ] );
-            } else {
-               start_t = 0.5e0;
-            }
-
-            start_y = 
-               ( start_t ) * f_Is[ wheel_file ][ before_start ] +
-               ( 1e0 - start_t ) * f_Is[ wheel_file ][ after_start ];
-            
-         } else {
-            // for now, we are going to do this way for all conditions
-
-            double start_t;
-            double end_t;
-
-            if ( f_qs[ wheel_file ][ after_start  ] != f_qs[ wheel_file ][ before_start ] )
-            {
-               start_t = 
-                  ( f_qs[ wheel_file ][ after_start ] - start )
-                  / ( f_qs[ wheel_file ][ after_start  ] -
-                      f_qs[ wheel_file ][ before_start ] );
-            } else {
-               start_t = 0.5e0;
-            }
-      
-            if ( f_qs[ wheel_file ][ after_end  ] != f_qs[ wheel_file ][ before_end ] )
-            {
-               end_t = ( f_qs[ wheel_file ][ after_end ] - end )
-                  / ( f_qs[ wheel_file ][ after_end  ] -
-                      f_qs[ wheel_file ][ before_end ] );
-            } else {
-               end_t = 0.5e0;
-            }
-
-            start_y = 
-               ( start_t ) * f_Is[ wheel_file ][ before_start ] +
-               ( 1e0 - start_t ) * f_Is[ wheel_file ][ after_start ];
-
-            end_y = 
-               ( end_t ) * f_Is[ wheel_file ][ before_end ] +
-               ( 1e0 - end_t ) * f_Is[ wheel_file ][ after_end ];
-         }
-      }
-   }
-
-   if ( cb_baseline_start_zero->isChecked() )
-   {
-      start_y = 0e0;
-   }
-
-   baseline_slope     = ( end_y - start_y ) / ( end - start );
-   baseline_intercept = 
-      ( ( start_y + end_y ) -
-        baseline_slope * ( start + end ) ) * 5e-1;
-
-   vector < double > x( 2 );
-   vector < double > y( 2 );
-
-   x[ 0 ] = f_qs[ wheel_file ][ 0 ];
-   x[ 1 ] = f_qs[ wheel_file ].back();
-
-   y[ 0 ] = baseline_slope * x[ 0 ] + baseline_intercept;
-   y[ 1 ] = baseline_slope * x[ 1 ] + baseline_intercept;
-
-   // remove any baseline curves
-
-   for ( unsigned int i = 0; i < ( unsigned int ) plotted_baseline.size(); i++ )
-   {
-#ifndef QT4
-      plot_dist->removeCurve( plotted_baseline[ i ] );
-#else
-      plotted_baseline[ i ]->detach();
-#endif
-   }
-   plotted_baseline.clear();
-
-   // the baseline
-   {
-      // cout << QString( "baseline slope %1 intercept %2\n" ).arg( baseline_slope ).arg( baseline_intercept );
-      // printvector( "baseline x", x );
-      // printvector( "baseline y", y );
-
-#ifndef QT4
-      long curve;
-      curve = plot_dist->insertCurve( "baseline" );
-      plot_dist->setCurveStyle( curve, QwtCurve::Lines );
-#else
-      QwtPlotCurve *curve = new QwtPlotCurve( "baseline" );
-      curve->setStyle( QwtPlotCurve::Lines );
-#endif
-
-      plotted_baseline.push_back( curve );
-
-#ifndef QT4
-      plot_dist->setCurvePen( curve, QPen( Qt::green , use_line_width, Qt::DashLine ) );
-      plot_dist->setCurveData( plotted_baseline[ 0 ],
-                               (double *)&x[ 0 ],
-                               (double *)&y[ 0 ],
-                               2
-                               );
-#else
-      curve->setPen( QPen( Qt::green, use_line_width, Qt::DashLine ) );
-      plotted_baseline[ 0 ]->setData(
-                                     (double *)&x[ 0 ],
-                                     (double *)&y[ 0 ],
-                                     2
-                                     );
-      curve->attach( plot_dist );
-#endif
-   }
-   if ( set_start )
-   {
-      y[ 0 ] = start_slope * f_qs[ wheel_file ][ 0 ] + start_intercept;
-      y[ 1 ] = start_slope * f_qs[ wheel_file ].back() + start_intercept;
-
-      // cout << QString( "start slope %1 intercept %2\n" ).arg( start_slope ).arg( start_intercept );
-      // printvector( "start x", x );
-      // printvector( "start y", y );
-
-#ifndef QT4
-      long curve;
-      curve = plot_dist->insertCurve( "baseline s" );
-      plot_dist->setCurveStyle( curve, QwtCurve::Lines );
-#else
-      QwtPlotCurve *curve = new QwtPlotCurve( "baseline s" );
-      curve->setStyle( QwtPlotCurve::Lines );
-#endif
-
-      plotted_baseline.push_back( curve );
-
-#ifndef QT4
-      plot_dist->setCurvePen( curve, QPen( start_color, use_line_width, Qt::DashLine ) );
-      plot_dist->setCurveData( plotted_baseline.back(),
-                               (double *)&x[ 0 ],
-                               (double *)&y[ 0 ],
-                               2
-                               );
-#else
-      curve->setPen( QPen( start_color, use_line_width, Qt::DashLine ) );
-      plotted_baseline.back()->setData(
-                                       (double *)&x[ 0 ],
-                                       (double *)&y[ 0 ],
-                                       2
-                                     );
-      curve->attach( plot_dist );
-#endif
-   }
-
-   if ( set_end )
-   {
-      y[ 0 ] = end_slope * f_qs[ wheel_file ][ 0 ] + end_intercept;
-      y[ 1 ] = end_slope * f_qs[ wheel_file ].back() + end_intercept;
-
-      // cout << QString( "end slope %1 intercept %2\n" ).arg( end_slope ).arg( end_intercept );
-      // printvector( "end x", x );
-      // printvector( "end y", y );
-
-#ifndef QT4
-      long curve;
-      curve = plot_dist->insertCurve( "baseline e" );
-      plot_dist->setCurveStyle( curve, QwtCurve::Lines );
-#else
-      QwtPlotCurve *curve = new QwtPlotCurve( "baseline e" );
-      curve->setStyle( QwtPlotCurve::Lines );
-#endif
-
-      plotted_baseline.push_back( curve );
-
-#ifndef QT4
-      plot_dist->setCurvePen( curve, QPen( end_color, use_line_width, Qt::DashLine ) );
-      plot_dist->setCurveData( plotted_baseline.back(),
-                               (double *)&x[ 0 ],
-                               (double *)&y[ 0 ],
-                               2
-                               );
-#else
-      curve->setPen( QPen( end_color, use_line_width, Qt::DashLine ) );
-      plotted_baseline.back()->setData(
-                                       (double *)&x[ 0 ],
-                                       (double *)&y[ 0 ],
-                                       2
-                                     );
-      curve->attach( plot_dist );
-#endif
-   }
-
-   if ( !suppress_replot )
-   {
-      plot_dist->replot();
-   }
-}
-
-void US_Hydrodyn_Saxs_Hplc::baseline_apply()
-{
-   int smoothing = 0;
-   bool integral = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_integral" ] == "true";
-   if ( integral && U_EXPT )
-   {
-      smoothing = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_smooth" ].toInt();
-   }
-   bool save_bl = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_save" ] == "true";
-   unsigned int reps = 0;
-   if ( integral )
-   {
-      reps = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_reps" ].toInt();
-   }
-   
-   baseline_apply( all_selected_files(), integral, smoothing, save_bl, reps );
-}
-
-void US_Hydrodyn_Saxs_Hplc::baseline_apply( QStringList files, bool integral, int smoothing, bool save_bl, unsigned int reps )
-{
-   map < QString, bool > current_files;
-   for ( int i = 0; i < (int)lb_files->numRows(); i++ )
-   {
-      current_files[ lb_files->text( i ) ] = true;
-   }
-
-   map < QString, bool > select_files;
-
-   if ( integral ) {
-      check_zi_window( files, tr( "You may have already noticed this message when making I(t).\n\n" ) );
-   }
-      
-   if ( integral && save_bl && files.size() > 3 )
-   {
-      switch ( QMessageBox::warning(this, 
-                                    caption(),
-                                    QString( tr( "Please note:\n\n"
-                                                 "You have selected to produce separate baseline curves and have %1 files selected\n"
-                                                 "This will generate upto %2 separate baseline curves in addition to your %3 baseline subtracted files\n"
-                                                 "What would you like to do?\n" ) )
-                                    .arg( files.size() )
-                                    .arg( (int) reps * (int)  files.size() )
-                                    .arg( files.size() ),
-                                    tr( "&Generate them anyway" ), 
-                                    tr( "&Temporarily turn off production of separate baseline curves" ), 
-                                    tr( "&Quit" ), 
-                                    0, // Stop == button 0
-                                    0 // Escape == button 0
-                                    ) )
-      {
-      case 0 : // generate them anyway
-         break;
-      case 1 : // turn off production
-         save_bl = false;
-         break;
-      case 2 : // quit
-         return;
-         break;
-      }
-   }
-
-   if ( integral && reps < 5 )
-   {
-      switch ( QMessageBox::warning(this, 
-                                    caption(),
-                                    QString( tr( "Please note:\n\n"
-                                                 "You have selected the integral baseline method with maximum iterations of %1\n"
-                                                 "It is recommended that a minimum of 5 iterations be used to approach convergence\n"
-                                                 "What would you like to do?\n" ) )
-                                    .arg( reps ),
-                                    tr( "&Continue anyway" ), 
-                                    tr( "&Quit" )
-                                    ) )
-      {
-      case 0 : // continue
-         break;
-      case 1 : // quit
-         return;
-         break;
-      }
-   }
-
-   double start_s = le_baseline_start_s->text().toDouble();
-   double start   = le_baseline_start  ->text().toDouble();
-   double start_e = le_baseline_start_e->text().toDouble();
-   double end_s   = le_baseline_end_s  ->text().toDouble();
-   double end     = le_baseline_end    ->text().toDouble();
-   double end_e   = le_baseline_end_e  ->text().toDouble();
-
-   // redo this to compute from best linear fit over ranges
-   QStringList messages;
-
-   for ( unsigned int i = 0; i < ( unsigned int ) files.size(); i++ )
-   {
-
-      unsigned int before_start = 0;
-      unsigned int after_start  = 1;
-      unsigned int before_end   = 0;
-      unsigned int after_end    = 1;
-
-      vector < double > start_q;
-      vector < double > start_I;
-
-      vector < double > end_q;
-      vector < double > end_I;
-
-
-      {
-         unsigned int j = 0;
-         if ( cb_baseline_start_zero->isChecked() )
-         {
-            start_q.push_back( f_qs[ files[ i ] ][ j ] );
-            start = start_q[ 0 ];
-            start_I.push_back( 0e0 );
-         } else {
-            if ( f_qs[ files[ i ] ][ j ] >= start_s &&
-                 f_qs[ files[ i ] ][ j ] <= start_e )
-            {
-               start_q.push_back( f_qs[ files[ i ] ][ j ] );
-               start_I.push_back( f_Is[ files[ i ] ][ j ] );
-            }
-         }
-         if ( f_qs[ files[ i ] ][ j ] >= end_s &&
-              f_qs[ files[ i ] ][ j ] <= end_e )
-         {
-            end_q.push_back( f_qs[ files[ i ] ][ j ] );
-            end_I.push_back( f_Is[ files[ i ] ][ j ] );
-         }
-      }
-
-      for ( unsigned int j = 1; j < f_qs[ files[ i ] ].size(); j++ )
-      {
-         if ( !cb_baseline_start_zero->isChecked() &&
-              f_qs[ files[ i ] ][ j ] >= start_s &&
-              f_qs[ files[ i ] ][ j ] <= start_e )
-         {
-            start_q.push_back( f_qs[ files[ i ] ][ j ] );
-            start_I.push_back( f_Is[ files[ i ] ][ j ] );
-         }
-         if ( f_qs[ files[ i ] ][ j ] >= end_s &&
-              f_qs[ files[ i ] ][ j ] <= end_e )
-         {
-            end_q.push_back( f_qs[ files[ i ] ][ j ] );
-            end_I.push_back( f_Is[ files[ i ] ][ j ] );
-         }
-
-         if ( f_qs[ files[ i ] ][ j - 1 ] <= start &&
-              f_qs[ files[ i ] ][ j     ] >= start )
-         {
-            before_start = j - 1;
-            after_start  = j;
-         }
-         if ( f_qs[ files[ i ] ][ j - 1 ] <= end &&
-              f_qs[ files[ i ] ][ j     ] >= end )
-         {
-            before_end = j - 1;
-            after_end  = j;
-         }
-      }
-
-      bool   set_start = ( start_q.size() > 1 );
-      bool   set_end   = ( end_q  .size() > 1 );
-      double start_intercept = 0e0;
-      double start_slope     = 0e0;
-      double end_intercept   = 0e0;
-      double end_slope       = 0e0;
-
-      double start_y;
-      double end_y;
-
-      double siga;
-      double sigb;
-      double chi2;
-
-      if ( set_start && set_end )
-      {
-         // linear fit on each
-         usu->linear_fit( start_q, start_I, start_intercept, start_slope, siga, sigb, chi2 );
-         usu->linear_fit( end_q  , end_I  , end_intercept  , end_slope  , siga, sigb, chi2 );
-
-         // find intercepts for baseline
-
-         start_y = start_intercept + start_slope * start;
-         end_y   = end_intercept   + end_slope   * end;
-      } else {
-         if ( set_start )
-         {
-            usu->linear_fit( start_q, start_I, start_intercept, start_slope, siga, sigb, chi2 );
-
-            start_y = start_intercept + start_slope * start;
-
-            double end_t;
-
-            if ( f_qs[ files[ i ] ][ after_end  ] != f_qs[ files[ i ] ][ before_end ] )
-            {
-               end_t = ( f_qs[ files[ i ] ][ after_end ] - end )
-                  / ( f_qs[ files[ i ] ][ after_end  ] -
-                      f_qs[ files[ i ] ][ before_end ] );
-            } else {
-               end_t = 0.5e0;
-            }
-
-            end_y = 
-               ( end_t ) * f_Is[ files[ i ] ][ before_end ] +
-               ( 1e0 - end_t ) * f_Is[ files[ i ] ][ after_end ];
-         } else {
-            if ( set_end )
-            {
-               usu->linear_fit( end_q, end_I, end_intercept, end_slope, siga, sigb, chi2 );
-
-               end_y = end_intercept + end_slope * end;
-
-               double start_t;
-               if ( f_qs[ files[ i ] ][ after_start  ] != f_qs[ files[ i ] ][ before_start ] )
-               {
-                  start_t = 
-                     ( f_qs[ files[ i ] ][ after_start ] - start )
-                     / ( f_qs[ files[ i ] ][ after_start  ] -
-                         f_qs[ files[ i ] ][ before_start ] );
-               } else {
-                  start_t = 0.5e0;
-               }
-
-               start_y = 
-                  ( start_t ) * f_Is[ files[ i ] ][ before_start ] +
-                  ( 1e0 - start_t ) * f_Is[ files[ i ] ][ after_start ];
-            
-            } else {
-               // for now, we are going to do this way for all conditions
-
-               double start_t;
-               double end_t;
-
-               if ( f_qs[ files[ i ] ][ after_start  ] != f_qs[ files[ i ] ][ before_start ] )
-               {
-                  start_t = 
-                     ( f_qs[ files[ i ] ][ after_start ] - start )
-                     / ( f_qs[ files[ i ] ][ after_start  ] -
-                         f_qs[ files[ i ] ][ before_start ] );
-               } else {
-                  start_t = 0.5e0;
-               }
-      
-               if ( f_qs[ files[ i ] ][ after_end  ] != f_qs[ files[ i ] ][ before_end ] )
-               {
-                  end_t = ( f_qs[ files[ i ] ][ after_end ] - end )
-                     / ( f_qs[ files[ i ] ][ after_end  ] -
-                         f_qs[ files[ i ] ][ before_end ] );
-               } else {
-                  end_t = 0.5e0;
-               }
-
-               start_y = 
-                  ( start_t ) * f_Is[ files[ i ] ][ before_start ] +
-                  ( 1e0 - start_t ) * f_Is[ files[ i ] ][ after_start ];
-
-               end_y = 
-                  ( end_t ) * f_Is[ files[ i ] ][ before_end ] +
-                  ( 1e0 - end_t ) * f_Is[ files[ i ] ][ after_end ];
-            }
-         }
-      }
-
-      if ( cb_baseline_start_zero->isChecked() )
-      {
-         start_y = 0e0;
-      }
-
-      vector < double > bl_I = f_Is[ files[ i ] ];
-      int ext = 0;
-      QString bl_name = files[ i ];
-
-
-      if ( integral )
-      {
-         double delta_bl = end_y - start_y;
-
-         if ( smoothing )
-         {
-            US_Saxs_Util usu;
-            if ( !usu.smooth( f_Is[ files[ i ] ], bl_I, smoothing ) )
-            {
-               bl_I = f_Is[ files[ i ] ];
-               messages << QString( tr( "Error: smoothing error on %1" ) ).arg( files[ i ] );
-               editor_msg( "red", messages.back() );
-            }
-         }
-         vector < double > new_I = f_Is[ files[ i ] ];
-         vector < double > last_bl( new_I.size() );
-         for ( unsigned int j = 0; j < ( unsigned int ) bl_I.size(); j++ )
-         {
-            last_bl[ j ] = start_y;
-         }
-
-         unsigned int this_reps = 0;
-         double I_tot;
-
-         double alpha = 0e0;
-         double alpha_epsilon = 
-            ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_bl_alpha" ) ?
-            ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_alpha" ].toDouble() : 5e-3;
-
-         double last_alpha = 0e0;
-         vector < double > bl = last_bl;
-
-         do {
-            last_alpha = alpha;
-            this_reps++;
-            I_tot = 0e0;
-
-            // note: this "if" could be separated into 2 loops
-            // removing one of the condition checks
-
-            for ( unsigned int j = 0; j < ( unsigned int ) bl_I.size(); j++ )
-            {
-               if ( f_qs[ files[ i ] ][ j ] >= start &&
-                    f_qs[ files[ i ] ][ j ] <= end )
-               {
-                  I_tot += bl_I[ j ] - bl[ j ];
-               }
-            }
-
-            if ( I_tot > 0e0 && delta_bl > 0e0 )
-            {
-               alpha = delta_bl / I_tot;
-
-               editor_msg( "dark blue", QString( tr( "iteration %1 delta_Bl %2 Itot %3 alpha %4" ) )
-                           .arg( this_reps )
-                           .arg( delta_bl ).arg( I_tot ).arg( alpha ) );
-
-               vector < double > D( bl.size() );
-
-               for ( unsigned int j = 0; j < bl_I.size(); j++ )
-               {
-                  if ( f_qs[ files[ i ] ][ j ] >= start &&
-                       f_qs[ files[ i ] ][ j ] <= end )
-                  {
-                     D[ j ] = alpha * ( f_Is[ files[ i ] ][ j ] - bl[ j ] );
-                  }
-               }
-                  
-               for ( unsigned int j = 0; j < bl_I.size(); j++ )
-               {
-                  if ( f_qs[ files[ i ] ][ j ] < start )
-                  {
-                     bl[ j ] = start_y;
-                  } else {
-                     if ( f_qs[ files[ i ] ][ j ] <= end )
-                     {
-                        bl[ j ] = start_y;
-                        for ( unsigned int k = 0; k <= j ; ++k )
-                        {
-                           bl[ j ] += D[ k ];
-                        }
-                     } else {
-                        bl[ j ] = end_y;
-                     }
-                  }
-                  new_I[ j ] = f_Is[ files[ i ] ][ j ] - bl[ j ];
-               }
-            } else {
-               for ( unsigned int j = 0; j < bl_I.size(); j++ )
-               {
-                  new_I[ j ] = f_Is[ files[ i ] ][ j ] - bl[ j ];
-               }
-               if ( I_tot < 0e0 && delta_bl < 0e0 )
-               {
-                  messages << QString( tr( "Warning: the overall change in baseline of %1 is negative (%2) and the integral is less than zero => constant baseline" ) ).arg( files[ i ] ).arg( delta_bl );
-                  editor_msg( "dark red", messages.back() );
-               } else {
-                  if ( I_tot <= 0e0 && delta_bl > 0e0 )
-                  {
-                     messages << QString( tr( "Warning: the integral of %1 was less than or equal to zero => constant baseline" ) ).arg( files[ i ] );
-                     editor_msg( "dark red", messages.back() );
-                  } else {
-                     if ( delta_bl < 0e0 && I_tot > 0e0 )
-                     {
-                        messages << QString( tr( "Warning: the overall change in baseline of %1 is negative (%2) => constant baseline" ) ).arg( files[ i ] ).arg( delta_bl );
-                        editor_msg( "dark red", messages.back() );
-                     }
-                  }
-               }
-            }
-
-            if ( save_bl )
-            {
-               add_plot( QString( "BI_%1-%2" ).arg( files[ i ] ).arg( this_reps ), f_qs[ files[ i ] ], bl, true, false );
-            }
-
-         } while ( this_reps < reps && alpha > 0e0 && ( fabs( alpha - last_alpha ) / alpha ) > alpha_epsilon );
-
-         bl_I = new_I;
-
-         //          cout << QString( 
-         //                          "delta_bl   %1\n"
-         //                          "integral_I %2\n"
-         //                           )
-         //             .arg( delta_bl )
-         //             .arg( integral_I )
-         //             ;
-
-         bl_name += QString( "-bi%1-%2s" ).arg( delta_bl, 0, 'g', 6 ).arg( alpha, 0, 'g', 6 ).replace( ".", "_" );
-         while ( current_files.count( bl_name ) )
-         {
-            bl_name = files[ i ] + QString( "-bi%1-%2s-%3" ).arg( delta_bl, 0, 'g', 6 ).arg( alpha, 0, 'g', 6 ).arg( ++ext ).replace( ".", "_" );
-         }
-
-      } else {
-
-         baseline_slope     = ( end_y - start_y ) / ( end - start );
-         baseline_intercept = 
-            ( ( start_y + end_y ) -
-              baseline_slope * ( start + end ) ) * 5e-1;
-
-         for ( unsigned int j = 0; j < bl_I.size(); j++ )
-         {
-            bl_I[ j ] -= baseline_slope * f_qs[ files[ i ] ][ j ] + baseline_intercept;
-         }
-         bl_name += QString( "-bl%1-%2s" ).arg( baseline_slope, 0, 'g', 8 ).arg( baseline_intercept, 0, 'g', 8 ).replace( ".", "_" );
-         while ( current_files.count( bl_name ) )
-         {
-            bl_name = files[ i ] + QString( "-bl%1-%2s-%3" ).arg( baseline_slope, 0, 'g', 8 ).arg( baseline_intercept, 0, 'g', 8 ).arg( ++ext ).replace( ".", "_" );
-         }
-      }
-
-      select_files[ bl_name ] = true;
-
-      lb_created_files->insertItem( bl_name );
-      lb_created_files->setBottomItem( lb_created_files->numRows() - 1 );
-      lb_files->insertItem( bl_name );
-      lb_files->setBottomItem( lb_files->numRows() - 1 );
-      created_files_not_saved[ bl_name ] = true;
-   
-      f_pos       [ bl_name ] = f_qs.size();
-      f_qs_string [ bl_name ] = f_qs_string[ files[ i ] ];
-      f_qs        [ bl_name ] = f_qs       [ files[ i ] ];
-      f_Is        [ bl_name ] = bl_I;
-      f_errors    [ bl_name ] = f_errors   [ files[ i ] ];
-      f_is_time   [ bl_name ] = f_is_time  [ files[ i ] ];
-      f_psv       [ bl_name ] = f_psv.count( files[ i ] ) ? f_psv[ files[ i ] ] : 0e0;
-      f_I0se      [ bl_name ] = f_I0se.count( files[ i ] ) ? f_I0se[ files[ i ] ] : 0e0;
-      f_conc      [ bl_name ] = f_conc.count( files[ i ] ) ? f_conc[ files[ i ] ] : 0e0;
-      {
-         vector < double > tmp;
-         f_gaussians  [ bl_name ] = tmp;
-      }
-      editor_msg( "dark gray", QString( "Created %1\n" ).arg( bl_name ) );
-   }
-
-   if ( messages.size() )
-   {
-      QStringList qsl;
-      for ( int i = 0; i < (int)messages.size() && i < 15; i++ )
-      {
-         qsl << messages[ i ];
-      }
-
-      if ( qsl.size() < messages.size() )
-      {
-         qsl << QString( tr( "... and %1 more not listed" ) ).arg( messages.size() - qsl.size() );
-      }
-
-      QMessageBox::warning(
-                           this,
-                           this->caption() + tr(": Baseline apply" ),
-                           QString( tr( "Please note:\n\n"
-                                        "These errors were produced when performing the baseline correction\n"
-                                        "%1\n"
-                                        ) )
-                           .arg( qsl.join( "\n" ) ),
-                           QMessageBox::Ok | QMessageBox::Default,
-                           QMessageBox::NoButton
-                           );
-   }
-
-   disable_updates = true;
-
-   if ( select_files.size() != 1 )
-   {
-      lb_files->clearSelection();
-   }
-
-   for ( int i = 0; i < (int)lb_files->numRows(); i++ )
-   {
-      if ( select_files.count( lb_files->text( i ) ) )
-      {
-         lb_files->setSelected( i, true );
-      }
-   }
-
-   disable_updates = false;
-   rescale();
-   plot_files();
-   update_enables();
-}
-
-void US_Hydrodyn_Saxs_Hplc::baseline_start_s_text( const QString & text )
-{
-#ifndef QT4
-   plot_dist->setMarkerPos( plotted_markers[ 0 ], text.toDouble(), 0e0 );
-#else
-   plotted_markers[ 0 ]->setXValue( text.toDouble() );
-#endif
-   if ( qwtw_wheel->value() != text.toDouble() )
-   {
-      qwtw_wheel->setValue( text.toDouble() );
-   }
-   replot_baseline();
-   if ( !suppress_replot )
-   {
-      plot_dist->replot();
-   }
-   baseline_enables();
-}
-
-void US_Hydrodyn_Saxs_Hplc::baseline_start_text( const QString & text )
-{
-#ifndef QT4
-   plot_dist->setMarkerPos( plotted_markers[ 1 ], text.toDouble(), 0e0 );
-#else
-   plotted_markers[ 1 ]->setXValue( text.toDouble() );
-#endif
-   if ( qwtw_wheel->value() != text.toDouble() )
-   {
-      qwtw_wheel->setValue( text.toDouble() );
-   }
-   replot_baseline();
-   if ( !suppress_replot )
-   {
-      plot_dist->replot();
-   }
-   baseline_enables();
-}
-
-void US_Hydrodyn_Saxs_Hplc::baseline_start_e_text( const QString & text )
-{
-#ifndef QT4
-   plot_dist->setMarkerPos( plotted_markers[ 2 ], text.toDouble(), 0e0 );
-#else
-   plotted_markers[ 2 ]->setXValue( text.toDouble() );
-#endif
-   if ( qwtw_wheel->value() != text.toDouble() )
-   {
-      qwtw_wheel->setValue( text.toDouble() );
-   }
-   replot_baseline();
-   plot_dist->replot();
-   baseline_enables();
-}
-
-void US_Hydrodyn_Saxs_Hplc::baseline_end_s_text( const QString & text )
-{
-   int pos = cb_baseline_start_zero->isChecked() ? 0 : 3;
-#ifndef QT4
-   plot_dist->setMarkerPos( plotted_markers[ pos ], text.toDouble(), 0e0 );
-#else
-   plotted_markers[ pos ]->setXValue( text.toDouble() );
-#endif
-   if ( qwtw_wheel->value() != text.toDouble() )
-   {
-      qwtw_wheel->setValue( text.toDouble() );
-   }
-   replot_baseline();
-   if ( !suppress_replot )
-   {
-      plot_dist->replot();
-   }
-   baseline_enables();
-}
-
-void US_Hydrodyn_Saxs_Hplc::baseline_end_text( const QString & text )
-{
-   int pos = cb_baseline_start_zero->isChecked() ? 1 : 4;
-#ifndef QT4
-   plot_dist->setMarkerPos( plotted_markers[ pos ], text.toDouble(), 0e0 );
-#else
-   plotted_markers[ pos ]->setXValue( text.toDouble() );
-#endif
-   if ( qwtw_wheel->value() != text.toDouble() )
-   {
-      qwtw_wheel->setValue( text.toDouble() );
-   }
-   replot_baseline();
-   if ( !suppress_replot )
-   {
-      plot_dist->replot();
-   }
-   baseline_enables();
-}
-
-void US_Hydrodyn_Saxs_Hplc::baseline_end_e_text( const QString & text )
-{
-   int pos = cb_baseline_start_zero->isChecked() ? 2 : 5;
-#ifndef QT4
-   plot_dist->setMarkerPos( plotted_markers[ pos ], text.toDouble(), 0e0 );
-#else
-   plotted_markers[ pos ]->setXValue( text.toDouble() );
-#endif
-   if ( qwtw_wheel->value() != text.toDouble() )
-   {
-      qwtw_wheel->setValue( text.toDouble() );
-   }
-   replot_baseline();
-   if ( !suppress_replot )
-   {
-      plot_dist->replot();
-   }
-   baseline_enables();
-}
-
-
-void US_Hydrodyn_Saxs_Hplc::baseline_start_s_focus( bool hasFocus )
-{
-   // cout << QString( "baseline_start_s_focus %1\n" ).arg( hasFocus ? "true" : "false" );
-   if ( hasFocus )
-   {
-      disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
-      qwtw_wheel->setRange( f_qs[ wheel_file ][ 0 ], f_qs[ wheel_file ].back(), 
-                            ( f_qs[ wheel_file ].back() - f_qs[ wheel_file ][ 0 ] ) / UHSH_WHEEL_RES );
-      connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
-      qwtw_wheel->setValue( le_baseline_start_s->text().toDouble() );
-      qwtw_wheel->setEnabled( true );
-   }
-}
-
-void US_Hydrodyn_Saxs_Hplc::baseline_start_focus( bool hasFocus )
-{
-   // cout << QString( "baseline_start_focus %1\n" ).arg( hasFocus ? "true" : "false" );
-   if ( hasFocus )
-   {
-      disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
-      qwtw_wheel->setRange( f_qs[ wheel_file ][ 0 ], f_qs[ wheel_file ].back(), 
-                            ( f_qs[ wheel_file ].back() - f_qs[ wheel_file ][ 0 ] ) / UHSH_WHEEL_RES );
-      connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
-      qwtw_wheel->setValue( le_baseline_start->text().toDouble() );
-      qwtw_wheel->setEnabled( true );
-   }
-}
-
-void US_Hydrodyn_Saxs_Hplc::baseline_start_e_focus( bool hasFocus )
-{
-   // cout << QString( "baseline_start_e_focus %1\n" ).arg( hasFocus ? "true" : "false" );
-   if ( hasFocus )
-   {
-      disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
-      qwtw_wheel->setRange( f_qs[ wheel_file ][ 0 ], f_qs[ wheel_file ].back(), 
-                            ( f_qs[ wheel_file ].back() - f_qs[ wheel_file ][ 0 ] ) / UHSH_WHEEL_RES );
-      connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
-      qwtw_wheel->setValue( le_baseline_start_e->text().toDouble() );
-      qwtw_wheel->setEnabled( true );
-   }
-}
-
-void US_Hydrodyn_Saxs_Hplc::baseline_end_s_focus( bool hasFocus )
-{
-   // cout << QString( "baseline_end_s_focus %1\n" ).arg( hasFocus ? "true" : "false" );
-   if ( hasFocus )
-   {
-      disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
-      qwtw_wheel->setRange( f_qs[ wheel_file ][ 0 ], 
-                            f_qs[ wheel_file ].back(), 
-                            ( f_qs[ wheel_file ].back() - f_qs[ wheel_file ][ 0 ] ) / UHSH_WHEEL_RES );
-      connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
-      qwtw_wheel->setValue( le_baseline_end_s->text().toDouble() );
-      qwtw_wheel->setEnabled( true );
-   }
-}
-
-void US_Hydrodyn_Saxs_Hplc::baseline_end_focus( bool hasFocus )
-{
-   // cout << QString( "baseline_end_focus %1\n" ).arg( hasFocus ? "true" : "false" );
-   if ( hasFocus )
-   {
-      disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
-      qwtw_wheel->setRange( f_qs[ wheel_file ][ 0 ], 
-                            f_qs[ wheel_file ].back(), 
-                            ( f_qs[ wheel_file ].back() - f_qs[ wheel_file ][ 0 ] ) / UHSH_WHEEL_RES );
-      connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
-      qwtw_wheel->setValue( le_baseline_end->text().toDouble() );
-      qwtw_wheel->setEnabled( true );
-   }
-}
-
-void US_Hydrodyn_Saxs_Hplc::baseline_end_e_focus( bool hasFocus )
-{
-   // cout << QString( "baseline_end_e_focus %1\n" ).arg( hasFocus ? "true" : "false" );
-   if ( hasFocus )
-   {
-      disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
-      qwtw_wheel->setRange( f_qs[ wheel_file ][ 0 ], 
-                            f_qs[ wheel_file ].back(), 
-                            ( f_qs[ wheel_file ].back() - f_qs[ wheel_file ][ 0 ] ) / UHSH_WHEEL_RES );
-      connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
-      qwtw_wheel->setValue( le_baseline_end_e->text().toDouble() );
-      qwtw_wheel->setEnabled( true );
-   }
-}
-
 // --- SCALE ----
 
 void US_Hydrodyn_Saxs_Hplc::scale()
@@ -5964,14 +4696,15 @@ void US_Hydrodyn_Saxs_Hplc::scale()
 
    bool any_selected = false;
 
-   scale_selected    .clear();
-   scale_q           .clear();
-   scale_I           .clear();
-   scale_e           .clear();
-   scale_last_created.clear();
-   scale_spline_x    .clear();
-   scale_spline_y    .clear();
-   scale_spline_y2   .clear();
+   scale_selected      .clear();
+   scale_selected_names.clear();
+   scale_q             .clear();
+   scale_I             .clear();
+   scale_e             .clear();
+   scale_last_created  .clear();
+   scale_spline_x      .clear();
+   scale_spline_y      .clear();
+   scale_spline_y2     .clear();
 
    if ( current_mode == MODE_TESTIQ )
    {
@@ -5987,7 +4720,6 @@ void US_Hydrodyn_Saxs_Hplc::scale()
       testiq_original_selection = all_selected_files_set();
       testiq_created_scale_names.clear();
       gauss_delete_markers();
-      plotted_markers.clear();
       for ( int i = 0; i < (int) testiq_created_names.size(); ++i )
       {
          QString this_file = testiq_created_names[ i ];
@@ -6016,6 +4748,7 @@ void US_Hydrodyn_Saxs_Hplc::scale()
             wheel_file = lb_files->text( i );
          }
          scale_selected.insert( lb_files->text( i ) );
+         scale_selected_names.push_back( lb_files->text( i ) );
          any_selected = true;
          scale_q[ lb_files->text( i ) ] = f_qs[ lb_files->text( i ) ];
          scale_I[ lb_files->text( i ) ] = f_Is[ lb_files->text( i ) ];
@@ -6097,9 +4830,6 @@ void US_Hydrodyn_Saxs_Hplc::scale()
    {
       pb_testiq->setEnabled( true );
    }
-   pb_rescale     ->setEnabled( true );
-   pb_axis_x      ->setEnabled( true );
-   pb_axis_y      ->setEnabled( true );
 
    scale_applied = false;
 
@@ -6121,6 +4851,10 @@ void US_Hydrodyn_Saxs_Hplc::scale()
    scale_plotted_errors.clear();
    plot_errors->clear();
    plot_errors->replot();
+   {
+      QPixmap pm;
+      lbl_wheel_Pcolor->setPixmap( pm );
+   }
 }
 
 void US_Hydrodyn_Saxs_Hplc::scale_scroll_highlight( int pos )
@@ -6129,6 +4863,10 @@ void US_Hydrodyn_Saxs_Hplc::scale_scroll_highlight( int pos )
    // {
    //    pos = (int) scale_scroll_selected.size() - 1;
    // }
+
+   lbl_wheel_pos->setText( "" );
+   lbl_wheel_pos_below->setText( scale_scroll_selected[ pos ] );
+
 #ifndef QT4
    plot_dist->setCurveStyle( plotted_curves[ scale_scroll_selected[ scale_scroll_pos ] ], QwtCurve::NoCurve );
    plot_dist->setCurveStyle( plotted_curves[ scale_scroll_selected[ pos ] ], QwtCurve::Lines );
@@ -6168,6 +4906,7 @@ void US_Hydrodyn_Saxs_Hplc::scale_scroll()
 
    if ( cb_scale_scroll->isChecked() )
    {
+      ShowHide::hide_widgets( wheel_below_widgets, false );
       le_last_focus = ( mQLineEdit * )0;
       scale_scroll_selected.clear();
       for ( set < QString >::iterator it = scale_selected.begin();
@@ -6177,10 +4916,14 @@ void US_Hydrodyn_Saxs_Hplc::scale_scroll()
          scale_scroll_selected.push_back( *it );
 #ifndef QT4
          plot_dist->setCurveStyle( plotted_curves[ *it ], QwtCurve::NoCurve );
-         plot_errors->setCurveStyle( scale_plotted_errors[ *it ], QwtCurve::NoCurve );
+         if ( scale_plotted_errors.count( *it ) ) {
+            plot_errors->setCurveStyle( scale_plotted_errors[ *it ], QwtCurve::NoCurve );
+         }
 #else
          plotted_curves[ *it ]->setStyle( QwtPlotCurve::NoCurve );
-         scale_plotted_errors[ *it ]->setStyle( QwtPlotCurve::NoCurve );
+         if ( scale_plotted_errors.count( *it ) ) {
+            scale_plotted_errors[ *it ]->setStyle( QwtPlotCurve::NoCurve );
+         }
 #endif
       }
       if ( scale_scroll_pos < 0 )
@@ -6192,14 +4935,15 @@ void US_Hydrodyn_Saxs_Hplc::scale_scroll()
          scale_scroll_pos = (int) scale_scroll_selected.size() - 1;
       }
 
-      qwtw_wheel->setEnabled( false );
+      wheel_enables( false );
       qwtw_wheel->setRange( 0, scale_scroll_selected.size() - 1, 1 );
       qwtw_wheel->setValue( scale_scroll_pos );
       lbl_wheel_pos->setText( QString( "%1" ).arg( scale_scroll_selected[ scale_scroll_pos ] ) );
       connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
-      qwtw_wheel->setEnabled( true );
+      wheel_enables();
       scale_scroll_highlight( scale_scroll_pos );
    } else {
+      ShowHide::hide_widgets( wheel_below_widgets );
       // go thru all displayed curves, turn on
       for ( set < QString >::iterator it = scale_selected.begin();
             it != scale_selected.end();
@@ -6221,7 +4965,7 @@ void US_Hydrodyn_Saxs_Hplc::scale_scroll()
       }
       lbl_wheel_pos->setText( "" );
       le_last_focus = ( mQLineEdit * )0;
-      qwtw_wheel->setEnabled( false );
+      wheel_enables( false );
       plot_dist->replot();
       plot_errors->replot();
    }
@@ -6359,6 +5103,7 @@ void US_Hydrodyn_Saxs_Hplc::scale_update_plot_errors()
 void US_Hydrodyn_Saxs_Hplc::scale_enables()
 {
    pb_errors             ->setEnabled( true );
+   pb_cormap             ->setEnabled( true );
    pb_timeshift          ->setEnabled( false );
    pb_wheel_cancel       ->setEnabled( true );
    rb_scale_high         ->setEnabled( true );
@@ -6370,6 +5115,11 @@ void US_Hydrodyn_Saxs_Hplc::scale_enables()
    pb_scale_apply        ->setEnabled( true );
    pb_scale_create       ->setEnabled( scale_applied );
    cb_scale_scroll       ->setEnabled( true );
+   pb_rescale            ->setEnabled( true );
+   pb_axis_x             ->setEnabled( true );
+   pb_axis_y             ->setEnabled( true );
+
+   ShowHide::hide_widgets( wheel_below_widgets, !cb_scale_scroll->isChecked() );
 }
 
 QString US_Hydrodyn_Saxs_Hplc::scale_get_target( bool do_msg )
@@ -7002,7 +5752,7 @@ void US_Hydrodyn_Saxs_Hplc::scale_q_start_focus( bool hasFocus )
                             ( scale_q[ wheel_file ].back() - scale_q[ wheel_file ][ 0 ] ) / UHSH_WHEEL_RES );
       connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
       qwtw_wheel->setValue( le_scale_q_start->text().toDouble() );
-      qwtw_wheel->setEnabled( true );
+      wheel_enables();
    }
 }
 
@@ -7020,9 +5770,650 @@ void US_Hydrodyn_Saxs_Hplc::scale_q_end_focus( bool hasFocus )
                             ( scale_q[ wheel_file ].back() - scale_q[ wheel_file ][ 0 ] ) / UHSH_WHEEL_RES );
       connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
       qwtw_wheel->setValue( le_scale_q_end->text().toDouble() );
-      qwtw_wheel->setEnabled( true );
+      wheel_enables();
    }
 }
+
+// --- ggaussian (partial ... move more from saxs_hplc.cpp
+
+void US_Hydrodyn_Saxs_Hplc::ggauss_start()
+{
+   plot_errors->clear();
+   if ( plot_errors_zoomer )
+   {
+      delete plot_errors_zoomer;
+      plot_errors_zoomer = (ScrollZoomer *) 0;
+   }
+
+   ggaussian_last_pfit_P    .clear();
+   ggaussian_last_pfit_N    .clear();
+   ggaussian_last_pfit_C    .clear();
+   ggaussian_last_pfit_S    .clear();
+   ggaussian_last_gg        .clear();
+   ggaussian_last_gg_t      .clear();
+   ggaussian_last_ggig      .clear();
+   ggaussian_last_I         .clear();
+   ggaussian_last_e         .clear();
+   ggaussian_pts_chi2       .clear();
+   ggaussian_pts_pfit       .clear();
+   ggaussian_pts_chi2_marked.clear();
+   ggaussian_pts_pfit_marked.clear();
+
+   ggqfit_plot->clear();
+   if ( ggqfit_plot_zoomer )
+   {
+      delete ggqfit_plot_zoomer;
+      ggqfit_plot_zoomer = (ScrollZoomer *) 0;
+   }
+
+   le_last_focus = (mQLineEdit *) 0;
+   pb_gauss_fit->setText( tr( "Global Fit" ) );
+   pb_cormap     ->setText( tr( "Show CorMap" ) );
+   ggauss_scroll_save_group = cb_plot_errors_group->isChecked();
+      
+   disable_all();
+
+   ggaussian_selected_file_index.clear();
+
+   for ( int i = 0; i < lb_files->numRows(); i++ )
+   {
+      if ( lb_files->isSelected( i ) )
+      {
+         ggaussian_selected_file_index.push_back( i );
+      }
+   }
+
+   if ( !ggaussian_compatible() )
+   {
+      QString msg_addendum = "";
+      if ( cb_fix_width->isChecked() )
+      {
+         msg_addendum += " or widths";
+      }
+      if ( dist1_active && cb_fix_dist1->isChecked() )
+      {
+         msg_addendum += " or distortion-1s";
+      }
+      if ( dist2_active && cb_fix_dist2->isChecked() )
+      {
+         msg_addendum += " or distortion-2s";
+      }
+      QString msg = QString( tr( "NOTICE: Some files selected have Gaussians with varying centers%1 or a different number of Gaussians or centers that do not match the last Gaussians, these will be reset to the last Gaussian settings" ) )
+         .arg( msg_addendum );
+
+      editor_msg( "dark red", msg );
+   }
+
+   if ( !cb_sd_weight->isChecked() )
+   {
+      switch ( QMessageBox::question(this, 
+                                     caption() + tr( ": Global Gaussians" ),
+                                     QString( tr( "Note: SD weighting is currently turned off.\n" ) ),
+                                     tr( "&Turn on" ), 
+                                     tr( "&Leave off" ),
+                                     QString::null,
+                                     0, // Stop == button 0
+                                     0 // Escape == button 0
+                                     ) ) {
+      case 0 : // Turn on
+         cb_sd_weight->setChecked( true );
+         break;
+      case 1 : // Leave off
+         break;
+      }       
+   }      
+
+   pb_ggauss_rmsd->setText( QString( tr( "Recompute %1" ).arg( cb_sd_weight->isChecked() ? "nChi^2" : "RMSD" ) ) );
+
+   if ( !create_unified_ggaussian_target() )
+   {
+      update_enables();
+      return;
+   }
+
+   // add_ggaussian_curve( "unified_ggaussian_target", unified_ggaussian_I );
+   // add_ggaussian_curve( "unified_ggaussian_sum",    compute_ggaussian_gaussian_sum() );
+
+   // ggaussian_mode = true;
+   mode_select( MODE_GGAUSSIAN );
+   ShowHide::hide_widgets( ggqfit_widgets );
+   cb_ggauss_scroll->setChecked( false );
+
+   lbl_gauss_fit->setText( QString( "%1" ).arg( ggaussian_rmsd(), 0, 'g', 5 ) );
+   wheel_file = unified_ggaussian_files[ 0 ];
+
+   get_peak( wheel_file, gauss_max_height );
+   gauss_max_height *= 1.2;
+   if ( gaussian_type != GAUSS )
+   {
+      gauss_max_height *= 20e0;
+   }
+      
+   org_f_gaussians = f_gaussians;
+
+   running        = true;
+
+   if ( gaussian_pos && gaussian_pos >= unified_ggaussian_gaussians_size )
+   {
+      gaussian_pos = unified_ggaussian_gaussians_size - 1;
+   }
+   
+   gauss_init_markers();
+   disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
+   qwtw_wheel->setRange( f_qs[ wheel_file ][ 0 ],
+                         f_qs[ wheel_file ].back(),
+                         ( f_qs[ wheel_file ].back() - f_qs[ wheel_file ][ 0 ] ) / UHSH_WHEEL_RES );
+   // qwtw_wheel->setValue( unified_ggaussian_params[ gaussian_pos ] );
+   // qDebug( QString( "setting wheel pos to %1 gaussian pos %2" ).arg( unified_ggaussian_params[ gaussian_pos ] ).arg( gaussian_pos ) );
+   update_gauss_pos();
+   qwtw_wheel->setValue( le_gauss_pos->text().toDouble() );
+   qDebug( QString( "setting wheel pos to %1 gaussian pos %2" ).arg( le_gauss_pos->text() ).arg( gaussian_pos ) );
+   le_gauss_pos->setFocus();
+   connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
+
+   check_fit_range();
+
+   if ( errors_were_on )
+   {
+      hide_widgets( plot_errors_widgets, false );
+      if ( !unified_ggaussian_use_errors )
+      {
+         cb_plot_errors_sd->setChecked( false );
+         cb_plot_errors_sd->hide();
+      }
+   }
+
+   ggaussian_enables();
+}
+
+void US_Hydrodyn_Saxs_Hplc::ggauss_scroll()
+{
+   if ( cb_ggauss_scroll->isChecked() ) {
+      // le_last_focus = (mQLineEdit *) 0;
+      cb_ggauss_scroll_p_green ->setEnabled( true );
+      cb_ggauss_scroll_p_yellow->setEnabled( true );
+      cb_ggauss_scroll_p_red   ->setEnabled( true );
+      disable_updates = true;
+      gauss_delete_markers();
+      lb_files->clearSelection();
+      disable_updates = false;
+      // plot_files();
+      ggauss_scroll_save_group = cb_plot_errors_group->isChecked();
+      cb_plot_errors_group->setChecked( false );
+      ggauss_scroll_set_selected();
+
+      // // clear plot & leave markers
+      // gauss_delete_markers();
+      // plot_dist->clear();
+      // gauss_init_markers();
+      // plot_dist->replot();
+   } else {
+      cb_ggauss_scroll_p_green ->setEnabled( false );
+      cb_ggauss_scroll_p_yellow->setEnabled( false );
+      cb_ggauss_scroll_p_red   ->setEnabled( false );
+      // restore to ggaussian plot mode
+      disable_updates = true;
+      gauss_delete_markers();
+      lb_files->clearSelection();
+      for ( int i = 0; i < (int) ggaussian_selected_file_index.size(); ++i ) {
+         lb_files->setSelected( ggaussian_selected_file_index[ i ], true );
+      }
+      disable_updates = false;
+      suppress_replot = true;
+      plot_files();
+      suppress_replot = false;
+      gauss_init_markers();
+      plot_dist->replot();
+
+      if ( plot_errors_zoomer )
+      {
+         delete plot_errors_zoomer;
+         plot_errors_zoomer = (ScrollZoomer *) 0;
+      }
+      if ( plot_errors->isVisible() ) {
+         cb_plot_errors_group->show();
+      }
+      cb_plot_errors_group->setChecked( ggauss_scroll_save_group );
+      ggaussian_rmsd();
+   }
+   ggaussian_enables();
+}
+   
+void US_Hydrodyn_Saxs_Hplc::ggauss_scroll_p_green() 
+{
+   qDebug( "ggauss_scroll_p_green()" );
+   ggauss_scroll_set_selected();
+}
+
+void US_Hydrodyn_Saxs_Hplc::ggauss_scroll_p_red() 
+{
+   qDebug( "ggauss_scroll_p_yellow()" );
+   ggauss_scroll_set_selected();
+}
+
+void US_Hydrodyn_Saxs_Hplc::ggauss_scroll_p_yellow() 
+{
+   qDebug( "ggauss_scroll_p_yellow()" );
+   ggauss_scroll_set_selected();
+}
+
+void US_Hydrodyn_Saxs_Hplc::ggauss_scroll_set_selected()
+{
+   qDebug( "ggauss_scroll_set_selected()" );
+   // build up set by pvalue 
+   ggauss_scroll_set.clear();
+
+   if ( !unified_ggaussian_ok ) {
+      editor_msg( "red", tr( "Internal error (ggauss_scroll_set_selected): Global Gaussian mode, but unified Global Gaussians are not ok." ) );
+      ggaussian_enables();
+      return;
+   }
+            
+   if ( 
+       (int) unified_ggaussian_files.size() != (int) ggaussian_last_pfit_P.size() ||
+       (int) unified_ggaussian_files.size() != (int) ggaussian_last_pfit_N.size() ||
+       (int) unified_ggaussian_files.size() != (int) ggaussian_last_pfit_C.size() ||
+       (int) unified_ggaussian_files.size() != (int) ggaussian_last_pfit_S.size() ||
+       (int) unified_ggaussian_files.size() != (int) ggaussian_last_chi2.size() ||
+       lbl_gauss_fit->text() == "?" ||
+       pb_ggauss_rmsd->isEnabled()
+        ){
+      if ( ggauss_recompute() ) {
+         lbl_gauss_fit->setText( QString( "%1" ).arg( ggaussian_rmsd(), 0, 'g', 5 ) );
+         pb_ggauss_rmsd->setEnabled( false );
+      } else {
+         editor_msg( "red", tr( "Internal error (ggausm_scroll_set_selected): building global Gaussians" ) );
+         ggaussian_enables();
+         return;
+      }
+   }
+   
+   if ( (int) unified_ggaussian_files.size() != (int) ggaussian_last_pfit_P.size() ) {
+      editor_msg( "red", tr( "Internal error (ggausm_scroll_set_selected): P set does not match Gaussian size" ) );
+      ggaussian_enables();
+      return;
+   }
+
+   if ( (int) unified_ggaussian_files.size() != (int) ggaussian_last_chi2.size() ) {
+      editor_msg( "red", tr( "Internal error (ggausm_scroll_set_selected): chi2 set does not match Gaussian size" ) );
+      ggaussian_enables();
+      return;
+   }
+
+   int fcount = (int) unified_ggaussian_files.size();
+
+   for ( int i = 0; i < fcount; ++i ) {
+      if ( ggaussian_last_pfit_P[ i ] >= 0.05 ) {
+         if ( cb_ggauss_scroll_p_green->isChecked() ) {
+            ggauss_scroll_set.push_back( i );
+         }
+      } else {
+         if ( ggaussian_last_pfit_P[ i ] >= 0.01 ) {
+            if ( cb_ggauss_scroll_p_yellow->isChecked() ) {
+               ggauss_scroll_set.push_back( i );
+            }
+         } else {
+            if ( cb_ggauss_scroll_p_red->isChecked() ) {
+               ggauss_scroll_set.push_back( i );
+            }
+         }
+      }
+   }
+
+   // for ( int i = 0; i < (int) ggauss_scroll_set.size(); ++i ) {
+   //    qDebug( QString( "active %1 file %2" ).arg( ggauss_scroll_set[ i ] ).arg( unified_ggaussian_files[ ggauss_scroll_set [ i ] ] ) );
+   // }
+
+   if ( ggauss_scroll_set.size() ) {
+      disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
+      qwtw_wheel->setRange( 0, ggauss_scroll_set.size() - 1, 1 );
+      connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
+      qwtw_wheel->setValue( 0 );
+      ggauss_scroll_highlight( 0 );
+   } else {
+      QPixmap pm;
+      lbl_wheel_Pcolor->setPixmap( pm );
+      lbl_wheel_pos_below->setText( tr( "-- no curves match current selection --" ) );
+      disable_updates = true;
+      gauss_delete_markers();
+      lb_files->clearSelection();
+      disable_updates = false;
+      suppress_replot = true;
+      plot_files();
+      gauss_init_markers();
+      suppress_replot = false;
+      plot_dist->replot();
+
+      // clear highlighted ggqfit_plot for chi2 and pfit
+      {
+         QwtSymbol sym;
+         // clear any highlighted symbols
+#ifdef QT4
+         for ( set < QwtPlotMarker * >::iterator it = ggaussian_pts_chi2_marked.begin();
+               it != ggaussian_pts_chi2_marked.end();
+               it++ ) {
+            sym = (*it)->symbol();
+            sym.setSize( use_line_width * 3 + 1 );
+            (*it)->setSymbol( sym );
+         }
+         for ( set < QwtPlotMarker * >::iterator it = ggaussian_pts_pfit_marked.begin();
+               it != ggaussian_pts_pfit_marked.end();
+               it++ ) {
+            sym = (*it)->symbol();
+            sym.setSize( use_line_width * 2 + 1 );
+            (*it)->setSymbol( sym );
+         }
+#else
+         for ( set < long >::iterator it = ggaussian_pts_chi2_marked.begin();
+               it != ggaussian_pts_chi2_marked.end();
+               it++ ) {
+            sym = ggqfit_plot->markerSymbol( *it );
+            sym.setSize( use_line_width * 3 + 1 );
+            ggqfit_plot->setMarkerSymbol( *it, sym );
+         }
+         for ( set < long >::iterator it = ggaussian_pts_pfit_marked.begin();
+               it != ggaussian_pts_pfit_marked.end();
+               it++ ) {
+            sym = ggqfit_plot->markerSymbol( *it );
+            sym.setSize( use_line_width * 2 + 1 );
+            ggqfit_plot->setMarkerSymbol( *it, sym );
+         }
+#endif
+         ggaussian_pts_chi2_marked.clear();
+         ggaussian_pts_pfit_marked.clear();
+      }
+      ggqfit_plot->replot();
+   }
+   ggaussian_enables();
+}
+
+void US_Hydrodyn_Saxs_Hplc::ggauss_scroll_highlight( int pos )
+{
+   // qDebug( QString( "ggauss_scroll_highlight %1 " ).arg( pos ) );
+   lbl_wheel_pos->setText( "" );
+   if ( pos >= (int) ggauss_scroll_set.size()  || pos < 0 ) {
+      editor_msg( "red", tr( "Internal error ggauss_scroll_highlight: pos >= size or < 0" ) );
+      lbl_wheel_pos_below->setText( "" );
+      {
+         QPixmap pm;
+         lbl_wheel_Pcolor->setPixmap( pm );
+      }
+      disable_updates = true;
+      gauss_delete_markers();
+      lb_files->clearSelection();
+      disable_updates = false;
+      suppress_replot = true;
+      plot_files();
+      gauss_init_markers();
+      suppress_replot = false;
+      plot_dist->replot();
+      return;
+   }
+      
+   QPixmap pm;
+
+   if ( ggaussian_last_pfit_P[ ggauss_scroll_set [ pos ] ] >= 0.05 ) {
+      pm.convertFromImage( 
+                          qi_green->smoothScale( 
+                                                lbl_wheel_Pcolor->width() / 2
+                                                ,lbl_wheel_Pcolor->height() / 2
+                                                ,Qt::KeepAspectRatio 
+                                                 ) );
+   } else {
+      if ( ggaussian_last_pfit_P[ ggauss_scroll_set [ pos ] ] >= 0.01 ) {
+         pm.convertFromImage( 
+                             qi_yellow->smoothScale( 
+                                                    lbl_wheel_Pcolor->width() / 2
+                                                    ,lbl_wheel_Pcolor->height() / 2
+                                                    ,Qt::KeepAspectRatio 
+                                                     ) );
+      } else {
+         pm.convertFromImage( 
+                             qi_red->smoothScale( 
+                                                 lbl_wheel_Pcolor->width() / 2
+                                                 ,lbl_wheel_Pcolor->height() / 2
+                                                 ,Qt::KeepAspectRatio 
+                                                  ) );
+      }
+   }
+   lbl_wheel_Pcolor->setPixmap( pm );
+
+   lbl_wheel_pos_below->setText( 
+                                QString( "%1 %2 %3 P %4" )
+                                .arg( unified_ggaussian_files[ ggauss_scroll_set [ pos ] ] )
+                                .arg( unified_ggaussian_use_errors && cb_sd_weight->isChecked() ? "nChi^2" : "RMSD" )
+                                .arg( ggaussian_last_chi2[ ggauss_scroll_set [ pos ] ], 0, 'g', 4 )
+                                .arg( ggaussian_last_pfit_P[ ggauss_scroll_set [ pos ] ], 0, 'f', 4 )
+                                 );
+
+   disable_updates = true;
+   gauss_delete_markers();
+   lb_files->clearSelection();
+   gauss_delete_markers();
+   lb_files->setSelected( ggaussian_selected_file_index[ ggauss_scroll_set [ pos ] ], true );
+   lb_files->setCurrentItem( ggaussian_selected_file_index[ ggauss_scroll_set [ pos ] ] );
+   lb_files->ensureCurrentVisible();
+   disable_updates = false;
+   suppress_replot = true;
+   plot_files();
+   // add gaussian curve ...
+
+   {
+      QPen use_pen = QPen( Qt::yellow, use_line_width, Qt::DashDotLine );
+
+#ifdef QT4
+      QwtPlotCurve * curve = new QwtPlotCurve( "gg_scroll_gaussian" );
+      curve->setStyle( QwtPlotCurve::Lines );
+      curve->setData(
+                     (double *)&(ggaussian_last_gg_t[ ggauss_scroll_set [ pos ] ][ 0 ]),
+                     (double *)&(ggaussian_last_gg[ ggauss_scroll_set [ pos ] ][ 0 ]),
+                     ggaussian_last_gg[ ggauss_scroll_set [ pos ] ].size() );
+      curve->setPen( use_pen );
+      curve->attach( plot_dist );
+#else
+      long curve = plot_dist->insertCurve( "gg_scroll_gaussian" );
+      plot_dist->setCurveStyle( curve, QwtCurve::Lines );
+      plot_dist->setCurveData( curve,
+                               (double *)&(ggaussian_last_gg_t[ ggauss_scroll_set [ pos ] ][ 0 ]),
+                               (double *)&(ggaussian_last_gg[ ggauss_scroll_set [ pos ] ][ 0 ]),
+                               ggaussian_last_gg[ ggauss_scroll_set [ pos ] ].size() );
+      plot_dist->setCurvePen( curve, use_pen );
+#endif
+   }
+   
+   // and individual gaussians
+
+   {
+      QPen use_pen = QPen( Qt::green, use_line_width, Qt::DashDotLine );
+      for ( int i = 0; i < (int) ggaussian_last_ggig[ ggauss_scroll_set [ pos ] ].size(); ++i ) {
+         
+#ifdef QT4
+         QwtPlotCurve * curve = new QwtPlotCurve( "gg_scroll_gaussian_individual" );
+         curve->setStyle( QwtPlotCurve::Lines );
+         curve->setData(
+                        (double *)&(ggaussian_last_gg_t[ ggauss_scroll_set [ pos ] ][ 0 ]),
+                        (double *)&(ggaussian_last_ggig[ ggauss_scroll_set [ pos ] ][ i ][ 0 ]),
+                        ggaussian_last_gg_t[ ggauss_scroll_set [ pos ] ].size() );
+         curve->setPen( use_pen );
+         curve->attach( plot_dist );
+#else
+         long curve = plot_dist->insertCurve( "gg_scroll_gaussian_individual" );
+         plot_dist->setCurveStyle( curve, QwtCurve::Lines );
+         plot_dist->setCurveData( curve,
+                                  (double *)&(ggaussian_last_gg_t[ ggauss_scroll_set [ pos ] ][ 0 ]),
+                                  (double *)&(ggaussian_last_ggig[ ggauss_scroll_set [ pos ] ][ i ][ 0 ]),
+                                  ggaussian_last_gg_t[ ggauss_scroll_set [ pos ] ].size() );
+         plot_dist->setCurvePen( curve, use_pen );
+#endif
+      }
+   }         
+
+   suppress_replot = false;
+   gauss_init_markers();
+   // #ifdef QT4
+   //    legend_set();
+   // #endif
+   //    plot_dist->replot();
+    
+   // update plot errors
+   {
+      vector < double > errors;
+      bool use_errors = is_nonzero_vector( ggaussian_last_e[ ggauss_scroll_set [ pos ] ] );
+      if ( plot_errors->isVisible() ) {
+         hide_widgets( plot_errors_widgets, false );
+         cb_plot_errors_group->hide();
+         if ( !use_errors ) {
+            disconnect( cb_plot_errors_sd, SIGNAL( clicked() ), 0, 0 );
+            cb_plot_errors_sd->setChecked( false );
+            connect( cb_plot_errors_sd, SIGNAL( clicked() ), SLOT( set_plot_errors_sd() ) );
+            cb_plot_errors_sd->hide();
+         }
+      }
+         
+      if ( plot_errors_zoomer )
+      {
+         delete plot_errors_zoomer;
+         plot_errors_zoomer = (ScrollZoomer *) 0;
+      }
+      
+      update_plot_errors(
+                         ggaussian_last_gg_t[ ggauss_scroll_set [ pos ] ],
+                         ggaussian_last_I[ ggauss_scroll_set [ pos ] ],
+                         ggaussian_last_gg[ ggauss_scroll_set [ pos ] ],
+                         use_errors ? ggaussian_last_e[ ggauss_scroll_set [ pos ] ] : errors,
+                         plot_colors[ ggaussian_selected_file_index[ ggauss_scroll_set [ pos ] ] % plot_colors.size() ]
+                         );
+      // redo_plot_errors();
+   }
+
+   // clear highlighted ggqfit_plot for chi2 and pfit
+   {
+      QwtSymbol sym;
+      // clear any highlighted symbols
+#ifdef QT4
+      for ( set < QwtPlotMarker * >::iterator it = ggaussian_pts_chi2_marked.begin();
+            it != ggaussian_pts_chi2_marked.end();
+            it++ ) {
+         sym = (*it)->symbol();
+         sym.setSize( use_line_width * 3 + 1 );
+         (*it)->setSymbol( sym );
+      }
+      for ( set < QwtPlotMarker * >::iterator it = ggaussian_pts_pfit_marked.begin();
+            it != ggaussian_pts_pfit_marked.end();
+            it++ ) {
+         sym = (*it)->symbol();
+         sym.setSize( use_line_width * 2 + 1 );
+         (*it)->setSymbol( sym );
+      }
+#else
+      for ( set < long >::iterator it = ggaussian_pts_chi2_marked.begin();
+            it != ggaussian_pts_chi2_marked.end();
+            it++ ) {
+         sym = ggqfit_plot->markerSymbol( *it );
+         sym.setSize( use_line_width * 3 + 1 );
+         ggqfit_plot->setMarkerSymbol( *it, sym );
+      }
+      for ( set < long >::iterator it = ggaussian_pts_pfit_marked.begin();
+            it != ggaussian_pts_pfit_marked.end();
+            it++ ) {
+         sym = ggqfit_plot->markerSymbol( *it );
+         sym.setSize( use_line_width * 2 + 1 );
+         ggqfit_plot->setMarkerSymbol( *it, sym );
+      }
+#endif
+      ggaussian_pts_chi2_marked.clear();
+      ggaussian_pts_pfit_marked.clear();
+   }
+
+   // update ggqfit_plot for chi2 and pfit
+   {
+      // highlight selected
+
+      QwtSymbol sym;
+#ifdef QT4
+      if ( ggaussian_pts_chi2.size() ) {
+         QwtPlotMarker * marker = ggaussian_pts_chi2[ ggauss_scroll_set [ pos ] ];
+         sym = marker->symbol();
+         sym.setSize( use_line_width * 7 + 1 );
+         marker->setSymbol( sym );
+         ggaussian_pts_chi2_marked.insert( marker );
+      }
+
+      if ( ggaussian_pts_pfit.size() ) {
+         QwtPlotMarker * marker = ggaussian_pts_pfit[ ggauss_scroll_set [ pos ] ];
+         sym = marker->symbol();
+         sym.setSize( use_line_width * 6 + 1 );
+         marker->setSymbol( sym );
+         ggaussian_pts_pfit_marked.insert( marker );
+      }
+#else
+      if ( ggaussian_pts_chi2.size() ) {
+         long marker = ggaussian_pts_chi2[ ggauss_scroll_set [ pos ] ];
+         sym = ggqfit_plot->markerSymbol( marker );
+         sym.setSize( use_line_width * 7 + 1 );
+         ggqfit_plot->setMarkerSymbol( marker, sym );
+         ggaussian_pts_chi2_marked.insert( marker );
+      }
+
+      if ( ggaussian_pts_pfit.size() ) {
+         long marker = ggaussian_pts_pfit[ ggauss_scroll_set [ pos ] ];
+         sym = ggqfit_plot->markerSymbol( marker );
+         sym.setSize( use_line_width * 6 + 1 );
+         ggqfit_plot->setMarkerSymbol( marker, sym );
+         ggaussian_pts_pfit_marked.insert( marker );
+      }
+#endif
+      ggqfit_plot->replot();
+   }               
+}
+
+void US_Hydrodyn_Saxs_Hplc::ggaussian_enables()
+{
+   if ( cb_ggauss_scroll->isChecked() ) {
+      disable_all();
+      wheel_enables       ( ggauss_scroll_set.size() );
+      cb_eb               ->setEnabled( true );
+      pb_line_width       ->setEnabled( true );
+      pb_color_rotate     ->setEnabled( true );
+      ShowHide::hide_widgets( wheel_below_widgets, false );
+   } else {
+      cb_eb               ->setEnabled( false );
+      pb_line_width       ->setEnabled( false );
+      pb_color_rotate     ->setEnabled( false );
+      pb_gauss_prev       ->setEnabled( unified_ggaussian_gaussians_size > 1 && gaussian_pos > 0 );
+      pb_gauss_next       ->setEnabled( unified_ggaussian_gaussians_size > 1 && gaussian_pos < unified_ggaussian_gaussians_size - 1 );
+      cb_sd_weight        ->setEnabled( unified_ggaussian_gaussians_size && le_gauss_fit_start->text().toDouble() < le_gauss_fit_end->text().toDouble() );
+      pb_gauss_fit        ->setEnabled( unified_ggaussian_gaussians_size && le_gauss_fit_start->text().toDouble() < le_gauss_fit_end->text().toDouble() );
+      le_gauss_pos        ->setEnabled( unified_ggaussian_gaussians_size && gaussian_pos < unified_ggaussian_gaussians_size );
+      le_gauss_pos_width  ->setEnabled( cb_fix_width->isChecked() && unified_ggaussian_gaussians_size && gaussian_pos < unified_ggaussian_gaussians_size );
+      le_gauss_pos_dist1  ->setEnabled( cb_fix_dist1->isChecked() && unified_ggaussian_gaussians_size && gaussian_pos < unified_ggaussian_gaussians_size );
+      le_gauss_pos_dist2  ->setEnabled( cb_fix_dist2->isChecked() && unified_ggaussian_gaussians_size && gaussian_pos < unified_ggaussian_gaussians_size );
+      le_gauss_fit_start  ->setEnabled( unified_ggaussian_gaussians_size && gaussian_pos < unified_ggaussian_gaussians_size );
+      le_gauss_fit_end    ->setEnabled( unified_ggaussian_gaussians_size && gaussian_pos < unified_ggaussian_gaussians_size );
+      wheel_enables       ( unified_ggaussian_gaussians_size && gaussian_pos < unified_ggaussian_gaussians_size );
+      pb_ggauss_results   ->setEnabled( unified_ggaussian_ok );
+      pb_gauss_save       ->setEnabled( unified_ggaussian_ok );
+      pb_ggauss_as_curves ->setEnabled( unified_ggaussian_ok );
+      pb_view             ->setEnabled( unified_ggaussian_curves <= 10 );
+      pb_cormap           ->setEnabled( unified_ggaussian_ok );
+      ShowHide::hide_widgets( wheel_below_widgets );
+      // if ( le_last_focus && qwtw_wheel->isEnabled() ) {
+      //    le_last_focus->setFocus();
+      // }
+   }
+
+   pb_ggauss_start     ->setEnabled( false );
+   pb_wheel_cancel     ->setEnabled( true );
+   pb_rescale          ->setEnabled( true );
+   pb_wheel_save       ->setEnabled( unified_ggaussian_gaussians_size );
+   pb_errors           ->setEnabled( true );
+   pb_ggqfit           ->setEnabled( true );
+   cb_ggq_plot_chi2    ->setEnabled( true );
+   cb_ggq_plot_P       ->setEnabled( true );
+   pb_rescale          ->setEnabled( true );
+}
+
+// --- timeshift ---
 
 void US_Hydrodyn_Saxs_Hplc::timeshift()
 {
@@ -7082,7 +6473,7 @@ void US_Hydrodyn_Saxs_Hplc::timeshift()
    pb_rescale            ->setEnabled( true );
    pb_timeshift          ->setEnabled( false );
    pb_wheel_cancel       ->setEnabled( true );
-   qwtw_wheel            ->setEnabled( true );
+   wheel_enables();
    // compute a good range
    {
       // double minq_conc = f_qs[ wheel_file ][ 0 ];
@@ -7168,900 +6559,4 @@ void US_Hydrodyn_Saxs_Hplc::timescale( const QStringList & files )
 void US_Hydrodyn_Saxs_Hplc::ggqfit()
 {
    ShowHide::hide_widgets( ggqfit_widgets, ggqfit_widgets[ 0 ]->isVisible() );
-}
-
-void US_Hydrodyn_Saxs_Hplc::adjust_wheel( double pos )
-{
-   // cout << QString("pos is now %1 wheel step is %2\n").arg(pos, 0, 'f', 8 ).arg( qwtw_wheel->step() );
-   switch ( current_mode )
-   {
-
-   case MODE_TESTIQ :
-      {
-         if ( le_testiq_q_start->hasFocus() )
-         {
-            le_last_focus = le_testiq_q_start;
-         }
-         if ( le_testiq_q_end->hasFocus() )
-         {
-            le_last_focus = le_testiq_q_end;
-         }
-
-         if ( !le_last_focus )
-         {
-            // cout << "aw: no last focus in testiq mode\n";
-            return;
-         }
-
-         le_last_focus->setText( QString( "%1" ).arg( pos ) );
-
-         lbl_wheel_pos->setText( QString( "%1" ).arg( pos ) );
-      }
-      break;
-
-   case MODE_GUINIER :
-      {
-         if ( !le_last_focus && cb_guinier_scroll->isChecked() )
-         {
-         // qDebug( QString( "guinier scroll is checked value %1" ).arg( pos ) );
-            lbl_wheel_pos->setText( QString( "%1" ).arg( guinier_names[ pos ] ) );
-            guinier_scroll_highlight( pos );
-         } else {
-
-            if ( le_guinier_q_start->hasFocus() )
-            {
-               le_last_focus = le_guinier_q_start;
-            }
-            if ( le_guinier_q_end->hasFocus() )
-            {
-               le_last_focus = le_guinier_q_end;
-            }
-            if ( le_guinier_q2_start->hasFocus() )
-            {
-               le_last_focus = le_guinier_q2_start;
-            }
-            if ( le_guinier_q2_end->hasFocus() )
-            {
-               le_last_focus = le_guinier_q2_end;
-            }
-            if ( le_guinier_delta_start->hasFocus() )
-            {
-               le_last_focus = le_guinier_delta_start;
-            }
-            if ( le_guinier_delta_end->hasFocus() )
-            {
-               le_last_focus = le_guinier_delta_end;
-            }
-            if ( le_guinier_rg_t_start->hasFocus() )
-            {
-               le_last_focus = le_guinier_rg_t_start;
-            }
-            if ( le_guinier_rg_t_end->hasFocus() )
-            {
-               le_last_focus = le_guinier_rg_t_end;
-            }
-            if ( le_guinier_rg_rg_start->hasFocus() )
-            {
-               le_last_focus = le_guinier_rg_rg_start;
-            }
-            if ( le_guinier_rg_rg_end->hasFocus() )
-            {
-               le_last_focus = le_guinier_rg_rg_end;
-            }
-            if ( le_guinier_mw_t_start->hasFocus() )
-            {
-               le_last_focus = le_guinier_mw_t_start;
-            }
-            if ( le_guinier_mw_t_end->hasFocus() )
-            {
-               le_last_focus = le_guinier_mw_t_end;
-            }
-            if ( le_guinier_mw_mw_start->hasFocus() )
-            {
-               le_last_focus = le_guinier_mw_mw_start;
-            }
-            if ( le_guinier_mw_mw_end->hasFocus() )
-            {
-               le_last_focus = le_guinier_mw_mw_end;
-            }
-
-            if ( !le_last_focus )
-            {
-               // qDebug( "aw: no last focus in guinier mode\n" );
-               return;
-            }
-
-            le_last_focus->setText( QString( "%1" ).arg( pos ) );
-
-            lbl_wheel_pos->setText( QString( "%1" ).arg( pos ) );
-         }
-      }
-      break;
-
-   case MODE_SCALE :
-      {
-         if ( !le_last_focus && cb_scale_scroll->isChecked() )
-         {
-            // qDebug( QString( "scale scroll is checked value %1" ).arg( pos ) );
-            lbl_wheel_pos->setText( QString( "%1" ).arg( scale_scroll_selected[ pos ] ) );
-            scale_scroll_highlight( pos );
-         } else {
-
-            if ( le_scale_q_start->hasFocus() )
-            {
-               le_last_focus = le_scale_q_start;
-            }
-            if ( le_scale_q_end->hasFocus() )
-            {
-               le_last_focus = le_scale_q_end;
-            }
-
-            if ( !le_last_focus )
-            {
-               // cout << "aw: no last focus in scale mode\n";
-               return;
-            }
-
-            le_last_focus->setText( QString( "%1" ).arg( pos ) );
-
-            lbl_wheel_pos->setText( QString( "%1" ).arg( pos ) );
-         }
-      }
-      break;
-
-   case MODE_PM :
-      {
-         if ( le_pm_q_start->hasFocus() )
-         {
-            le_last_focus = le_pm_q_start;
-         }
-         if ( le_pm_q_end->hasFocus() )
-         {
-            le_last_focus = le_pm_q_end;
-         }
-
-         if ( !le_last_focus )
-         {
-            // cout << "aw: no last focus in pm mode\n";
-            return;
-         }
-
-         le_last_focus->setText( QString( "%1" ).arg( pos ) );
-
-         lbl_wheel_pos->setText( QString( "%1" ).arg( pos ) );
-      }
-      break;
-
-   case MODE_GAUSSIAN :
-      {
-         if ( le_gauss_pos->hasFocus() )
-         {
-            // cout << "aw: pos focus\n";
-            le_last_focus = le_gauss_pos;
-         }
-         if ( le_gauss_pos_width->hasFocus() )
-         {
-            // cout << "aw: pos width focus\n";
-            le_last_focus = le_gauss_pos_width;
-         }
-         if ( le_gauss_pos_height->hasFocus() )
-         {
-            // cout << "aw: pos height focus\n";
-            le_last_focus = le_gauss_pos_height;
-         }
-         if ( le_gauss_pos_dist1->hasFocus() )
-         {
-            // cout << "aw: pos dist1 focus\n";
-            le_last_focus = le_gauss_pos_dist1;
-         }
-         if ( le_gauss_pos_dist2->hasFocus() )
-         {
-            // cout << "aw: pos dist2 focus\n";
-            le_last_focus = le_gauss_pos_dist2;
-         }
-         if ( le_gauss_fit_start->hasFocus() )
-         {
-            // cout << "aw: fit start focus\n";
-            le_last_focus = le_gauss_fit_start;
-         }
-         if ( le_gauss_fit_end->hasFocus() )
-         {
-            // cout << "aw: fit end focus\n";
-            le_last_focus = le_gauss_fit_end;
-         }
-
-         if ( !le_last_focus )
-         {
-            le_last_focus = le_gauss_pos;
-            // cout << "aw: pos focus, since no last\n";
-            disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
-            qwtw_wheel->setRange( f_qs[ wheel_file ][ 0 ], 
-                                  f_qs[ wheel_file ].back(), 
-                                  ( f_qs[ wheel_file ].back() - f_qs[ wheel_file ][ 0 ] ) / UHSH_WHEEL_RES );
-            connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
-            return;
-         }
-
-         le_last_focus->setText( QString( "%1" ).arg( pos ) );
-
-         lbl_wheel_pos->setText( QString( "%1" ).arg( pos ) );
-
-      }
-      break;
-
-   case MODE_WYATT :
-      {
-         if ( le_wyatt_start->hasFocus() )
-         {
-            // cout << "aw: wyatt start focus\n";
-            le_last_focus = le_wyatt_start;
-         }
-         if ( le_wyatt_end->hasFocus() )
-         {
-            // cout << "aw: wyatt end focus\n";
-            le_last_focus = le_wyatt_end;
-         }
-         if ( cb_wyatt_2->isChecked() )
-         {
-            if ( le_wyatt_start2->hasFocus() )
-            {
-               // cout << "aw: wyatt start focus\n";
-               le_last_focus = le_wyatt_start2;
-            }
-            if ( le_wyatt_end2->hasFocus() )
-            {
-               // cout << "aw: wyatt end focus\n";
-               le_last_focus = le_wyatt_end2;
-            }
-         }
-         if ( !le_last_focus )
-         {
-            // cout << "aw: no last focus in wyatt mode\n";
-            return;
-         }
-
-         le_last_focus->setText( QString( "%1" ).arg( pos ) );
-
-         lbl_wheel_pos->setText( QString( "%1" ).arg( pos ) );
-      }
-      break;
-
-   case MODE_BASELINE :
-      {
-         if ( le_baseline_start_s->hasFocus() )
-         {
-            // cout << "aw: baseline start_s focus\n";
-            le_last_focus = le_baseline_start_s;
-         }
-         if ( le_baseline_start->hasFocus() )
-         {
-            // cout << "aw: baseline start focus\n";
-            le_last_focus = le_baseline_start;
-         }
-         if ( le_baseline_start_e->hasFocus() )
-         {
-            // cout << "aw: baseline start_e focus\n";
-            le_last_focus = le_baseline_start_e;
-         }
-
-         if ( le_baseline_end_s->hasFocus() )
-         {
-            // cout << "aw: baseline end_s focus\n";
-            le_last_focus = le_baseline_end_s;
-         }
-         if ( le_baseline_end->hasFocus() )
-         {
-            // cout << "aw: baseline end focus\n";
-            le_last_focus = le_baseline_end;
-         }
-         if ( le_baseline_end_e->hasFocus() )
-         {
-            // cout << "aw: baseline end_e focus\n";
-            le_last_focus = le_baseline_end_e;
-         }
-
-         if ( !le_last_focus )
-         {
-            // cout << "aw: no last focus in baseline mode\n";
-            return;
-         }
-
-         le_last_focus->setText( QString( "%1" ).arg( pos ) );
-
-         lbl_wheel_pos->setText( QString( "%1" ).arg( pos ) );
-      }
-      break;
-
-   case MODE_GGAUSSIAN :
-      {
-         if ( current_mode == MODE_GGAUSSIAN )
-         {
-            // qDebug( QString( "gg adjust_wheel value %1" ).arg( pos ) );
-            lbl_gauss_fit ->setText( "?" );
-            ggqfit_plot   ->clear();
-            ggqfit_plot   ->replot();
-            plot_errors   ->clear();
-            if ( !suppress_replot )
-            {
-               plot_errors      ->replot();
-            }
-            plot_errors_grid  .clear();
-            plot_errors_target.clear();
-            plot_errors_fit   .clear();
-            plot_errors_errors.clear();
-            pb_ggauss_rmsd->setEnabled( true );
-
-            if ( le_gauss_pos->hasFocus() )
-            {
-               // cout << "aw: pos focus\n";
-               le_last_focus = le_gauss_pos;
-            }
-            if ( cb_fix_width->isChecked() &&
-                 le_gauss_pos_width->hasFocus() )
-            {
-               // cout << "aw: pos width focus\n";
-               le_last_focus = le_gauss_pos_width;
-            }
-            if ( cb_fix_dist1->isChecked() &&
-                 le_gauss_pos_dist1->hasFocus() )
-            {
-               // cout << "aw: pos dist1 focus\n";
-               le_last_focus = le_gauss_pos_dist1;
-            }
-            if ( cb_fix_dist2->isChecked() &&
-                 le_gauss_pos_dist2->hasFocus() )
-            {
-               // cout << "aw: pos dist2 focus\n";
-               le_last_focus = le_gauss_pos_dist2;
-            }
-            if ( le_gauss_fit_start->hasFocus() )
-            {
-               // cout << "aw: fit start focus\n";
-               le_last_focus = le_gauss_fit_start;
-            }
-            if ( le_gauss_fit_end->hasFocus() )
-            {
-               // cout << "aw: fit end focus\n";
-               le_last_focus = le_gauss_fit_end;
-            }
-
-            if ( !le_last_focus )
-            {
-               // cout << "aw: pos focus, since no last\n";
-               le_last_focus = le_gauss_pos;
-            }
-
-            le_last_focus->setText( QString( "%1" ).arg( pos ) );
-
-            lbl_wheel_pos->setText( QString( "%1" ).arg( pos ) );
-            
-         } 
-      }
-      break;
-
-   case MODE_TIMESHIFT :
-      {
-         // timeshift mode
-         // adjust selected time
-         pb_wheel_save->setEnabled( pos != 0e0 );
-
-         lbl_wheel_pos->setText( QString( "%1" ).arg( pos ) );
-
-         vector < double > offset_q = f_qs[ wheel_file ];
-         for ( unsigned int i = 0; i < ( unsigned int ) offset_q.size(); i++ )
-         {
-            offset_q[ i ] += pos;
-         }
-#ifndef QT4
-         plot_dist->setCurveData( wheel_curve, 
-                                  /* cb_guinier->isChecked() ? (double *)&(plotted_q2[p][0]) : */
-                                  (double *)&( offset_q[ 0 ] ),
-                                  (double *)&( f_Is[ wheel_file ][ 0 ] ),
-                                  offset_q.size()
-                                  );
-#else
-         wheel_curve->setData(
-                              /* cb_guinier->isChecked() ?
-                                 (double *)&(plotted_q2[p][0]) : */
-                              (double *)&( offset_q[ 0 ] ),
-                              (double *)&( f_Is[ wheel_file ][ 0 ] ),
-                              offset_q.size()
-                              );
-#endif
-         if ( !suppress_replot )
-         {
-            plot_dist->replot();
-         }
-      }
-      break;
-   default : qDebug( "adjust wheel called in invalid mode" ); break;
-   }
-}
-
-void US_Hydrodyn_Saxs_Hplc::wheel_cancel()
-{
-   errors_were_on = plot_errors->isVisible();
-   hide_widgets( plot_errors_widgets, true );
-
-   disable_all();
-   switch ( current_mode )
-   {
-   case MODE_GGAUSSIAN :
-      {
-         f_gaussians = org_f_gaussians;
-         gaussians = org_gaussians;
-         gauss_delete_markers();
-         plotted_markers.clear();
-
-         if ( !suppress_replot )
-         {
-            plot_dist->replot();
-         }
-      } 
-      break;
-
-   case MODE_GAUSSIAN :
-      {
-         gaussians = org_gaussians;
-         gauss_delete_markers();
-         plotted_markers.clear();
-         gauss_delete_gaussians();
-         plotted_gaussians.clear();
-         plotted_gaussian_sum.clear();
-         if ( plotted_curves.count( wheel_file ) &&
-              f_pos.count( wheel_file ) )
-         {
-#ifndef QT4
-            plot_dist->setCurvePen( plotted_curves[ wheel_file ], QPen( plot_colors[ f_pos[ wheel_file ] % plot_colors.size()], use_line_width, SolidLine));
-#else
-            plotted_curves[ wheel_file ]->setPen( QPen( plot_colors[ f_pos[ wheel_file ] % plot_colors.size() ], use_line_width, Qt::SolidLine ) );
-#endif
-         }
-      } 
-      break;
-
-   case MODE_WYATT :
-      {
-         le_wyatt_start  ->setText( QString( "%1" ).arg( org_wyatt_start   ) );
-         le_wyatt_end    ->setText( QString( "%1" ).arg( org_wyatt_end     ) );
-         le_wyatt_start2 ->setText( QString( "%1" ).arg( org_wyatt_start2  ) );
-         le_wyatt_end2   ->setText( QString( "%1" ).arg( org_wyatt_end2    ) );
-         cb_wyatt_2      ->setChecked( org_wyatt_2 );
-         gauss_delete_markers();
-         plotted_markers.clear();
-         for ( unsigned int i = 0; i < ( unsigned int ) plotted_wyatt.size(); i++ )
-         {
-#ifndef QT4
-            plot_dist->removeCurve( plotted_wyatt[ i ] );
-#else
-            plotted_wyatt[ i ]->detach();
-#endif
-         }
-//          if ( plotted_curves.count( wheel_file ) &&
-//               f_pos.count( wheel_file ) )
-//          {
-//             QwtSymbol symbol;
-//             symbol.setStyle( QwtSymbol::None );
-
-// #ifndef QT4
-//             plot_dist->setCurvePen( plotted_curves[ wheel_file ], QPen( plot_colors[ f_pos[ wheel_file ] % plot_colors.size()], use_line_width, Qt::SolidLine));
-//             plot_dist->setCurveSymbol( plotted_curves[ wheel_file ], symbol );
-// #else
-//             plotted_curves[ wheel_file ]->setPen( QPen( plot_colors[ f_pos[ wheel_file ] % plot_colors.size() ], use_line_width, Qt::SolidLine ) );
-//             plotted_curves[ wheel_file ]->setSymbol( symbol );
-// #endif
-//          }
-         plot_files();
-      }
-      break;
-
-   case MODE_BASELINE :
-      {
-         le_baseline_start_s->setText( QString( "%1" ).arg( org_baseline_start_s ) );
-         le_baseline_start  ->setText( QString( "%1" ).arg( org_baseline_start   ) );
-         le_baseline_start_e->setText( QString( "%1" ).arg( org_baseline_start_e ) );
-         le_baseline_end_s  ->setText( QString( "%1" ).arg( org_baseline_end_s   ) );
-         le_baseline_end    ->setText( QString( "%1" ).arg( org_baseline_end     ) );
-         le_baseline_end_e  ->setText( QString( "%1" ).arg( org_baseline_end_e   ) );
-         gauss_delete_markers();
-         plotted_markers.clear();
-         for ( unsigned int i = 0; i < ( unsigned int ) plotted_baseline.size(); i++ )
-         {
-#ifndef QT4
-            plot_dist->removeCurve( plotted_baseline[ i ] );
-#else
-            plotted_baseline[ i ]->detach();
-#endif
-         }
-         if ( plotted_curves.count( wheel_file ) &&
-              f_pos.count( wheel_file ) )
-         {
-#ifndef QT4
-            plot_dist->setCurvePen( plotted_curves[ wheel_file ], QPen( plot_colors[ f_pos[ wheel_file ] % plot_colors.size()], use_line_width, SolidLine));
-#else
-            plotted_curves[ wheel_file ]->setPen( QPen( plot_colors[ f_pos[ wheel_file ] % plot_colors.size() ], use_line_width, Qt::SolidLine ) );
-#endif
-         }
-      }
-      break;
-
-   case MODE_TIMESHIFT :
-      {
-         lbl_wheel_pos->setText( QString( "%1" ).arg( 0 ) );
-#ifndef QT4
-         plot_dist->setCurveData( wheel_curve, 
-                                  /* cb_guinier->isChecked() ? (double *)&(plotted_q2[p][0]) : */
-                                  (double *)&( f_qs[ wheel_file ][ 0 ] ),
-                                  (double *)&( f_Is[ wheel_file ][ 0 ] ),
-                                  f_qs[ wheel_file ].size()
-                                  );
-#else
-         wheel_curve->setData(
-                              /* cb_guinier->isChecked() ?
-                                 (double *)&(plotted_q2[p][0]) : */
-                              (double *)&( f_qs[ wheel_file ][ 0 ] ),
-                              (double *)&( f_Is[ wheel_file ][ 0 ] ),
-                              f_qs[ wheel_file ].size()
-                              );
-#endif
-      }
-      break;
-
-   case MODE_SCALE :
-      {
-         scale_q.clear();
-         scale_I.clear();
-         scale_e.clear();
-         gauss_delete_markers();
-         plotted_markers.clear();
-         if ( scale_last_created.size() )
-         {
-            set_selected        ( scale_last_created );
-            set_created_selected( scale_last_created );
-         }
-         plot_files();
-         if ( testiq_active )
-         {
-            remove_files( testiq_created_scale_names );
-            set_selected( testiq_original_selection );
-            testiq_created_scale_names.clear();
-            testiq_original_selection.clear();
-            mode_select( MODE_TESTIQ );
-            return wheel_cancel();
-         }
-         mode_select( MODE_NORMAL );
-         rescale();
-      }
-      break;
-
-   case MODE_TESTIQ :
-      {
-         testiq_created_names.clear();
-         testiq_created_q    .clear();
-         testiq_created_I    .clear();
-         testiq_created_e    .clear();
-
-         for ( int i = 0; i < (int) rb_testiq_gaussians.size(); ++i )
-         {
-            hbl_testiq_gaussians->remove( rb_testiq_gaussians[ i ] );
-            delete rb_testiq_gaussians[ i ];
-         }
-         rb_testiq_gaussians.clear();
-
-         gauss_delete_markers();
-         plotted_markers.clear();
-         mode_select( MODE_NORMAL );
-         plot_files();
-         rescale();
-         testiq_active = false;
-      }
-      break;
-
-   case MODE_GUINIER :
-      {
-         guinier_q           .clear();
-         guinier_q2          .clear();
-         guinier_I           .clear();
-         guinier_e           .clear();
-         guinier_x           .clear();
-         guinier_y           .clear();
-         guinier_a           .clear();
-         guinier_b           .clear();
-         guinier_colors      .clear();
-
-         guinier_report      .clear();
-         guinier_delete_markers();
-         guinier_markers.clear();
-         guinier_curves.clear();
-         guinier_errorbar_curves.clear();
-         plot_dist->show();
-         if ( testiq_active )
-         {
-            mode_select( MODE_TESTIQ );
-            return wheel_cancel();
-         }
-         mode_select( MODE_NORMAL );
-
-         // plot_files();
-         // rescale();
-      }
-      break;
-
-   case MODE_PM :
-      {
-         gauss_delete_markers();
-         plotted_markers.clear();
-         mode_select( MODE_NORMAL );
-         plot_files();
-         rescale();
-      }
-      break;
-
-   case MODE_RGC :
-      break;
-
-   default : qDebug( "wheel cancel called in invalid mode" ); break;
-   }
-
-   if ( !suppress_replot )
-   {
-      plot_dist->replot();
-   }
-
-   // gaussian_mode         = false;
-   // ggaussian_mode        = false;
-   // baseline_mode         = false;
-   // timeshift_mode        = false;
-   mode_select( MODE_NORMAL );
-
-   qwtw_wheel            ->setEnabled( false );
-   pb_wheel_save         ->setEnabled( false );
-   pb_wheel_cancel       ->setEnabled( false );
-
-   running               = false;
-
-   disable_all();
-   update_enables();
-}
-
-void US_Hydrodyn_Saxs_Hplc::wheel_save()
-{
-   switch ( current_mode )
-   {
-   case MODE_SCALE :
-      {
-         // qDebug( "wheel save mode scale not yet" );
-         wheel_cancel();
-         return;
-      }
-      break;
-
-   case MODE_TESTIQ :
-      {
-         // qDebug( "wheel save mode testiq not yet" );
-         wheel_cancel();
-         return;
-      }
-      break;
-
-   case MODE_GUINIER :
-      {
-         // qDebug( "wheel save mode scale not yet" );
-         wheel_cancel();
-         return;
-      }
-      break;
-
-   case MODE_PM :
-      {
-         qDebug( "wheel save mode pm not yet" );
-         wheel_cancel();
-         return;
-      }
-      break;
-
-   case  MODE_GGAUSSIAN :
-      {
-         // org_gaussians = gaussians;
-         // ? f_gaussians[ wheel_file ] = gaussians;
-         if ( unified_ggaussian_ok )
-         {
-            unified_ggaussian_to_f_gaussians();
-            /*
-              if ( cb_fix_width->isChecked() )
-              {
-              for ( unsigned int i = 0; i < ( unsigned int ) unified_ggaussian_files.size(); i++ )
-              {
-              vector < double > g;
-              unsigned int  index = 2 * unified_ggaussian_gaussians_size + i * unified_ggaussian_gaussians_size;
-
-              for ( unsigned int j = 0; j < unified_ggaussian_gaussians_size; j++ )
-              {
-              g.push_back( unified_ggaussian_params[ index + j + 0 ] );
-              g.push_back( unified_ggaussian_params[ 2 * j + 0 ] );
-              g.push_back( unified_ggaussian_params[ 2 * j + 1 ] );
-              }
-              f_gaussians[ unified_ggaussian_files[ i ] ] = g;
-              }
-              } else {
-              for ( unsigned int i = 0; i < ( unsigned int ) unified_ggaussian_files.size(); i++ )
-              {
-              vector < double > g;
-              unsigned int  index = unified_ggaussian_gaussians_size + i * 2 * unified_ggaussian_gaussians_size;
-
-              for ( unsigned int j = 0; j < unified_ggaussian_gaussians_size; j++ )
-              {
-              g.push_back( unified_ggaussian_params[ index + 2 * j + 0 ] );
-              g.push_back( unified_ggaussian_params[ j ] );
-              g.push_back( unified_ggaussian_params[ index + 2 * j + 1 ] );
-              }
-              f_gaussians[ unified_ggaussian_files[ i ] ] = g;
-              }
-              } 
-            */           
-
-            org_f_gaussians = f_gaussians;
-            org_gaussians   = f_gaussians[ wheel_file ];
-         }               
-
-         wheel_cancel();
-         return;
-      }
-      break;
-
-   case MODE_GAUSSIAN :
-      {
-         org_gaussians = gaussians;
-         if ( f_gaussians.count( wheel_file ) )
-         {
-            f_gaussians[ wheel_file ] = gaussians;
-         }
-         double tot_area = 0e0;
-         vector < double > g_area;
-         for ( unsigned int g = 0; g < (unsigned int) gaussians.size(); g += gaussian_type_size )
-         {
-            g_area.push_back( gaussians[ g + 0 ] * gaussians[ g + 2 ] * M_SQRT2PI );
-            tot_area += g_area.back();
-         }
-
-         for ( unsigned int g = 0; g < (unsigned int) gaussians.size(); g += gaussian_type_size )
-         {
-            editor_msg( "darkblue",
-                        QString( "Gaussian %1: center %2 height %3 width %4 area %5 % of total %6\n" ) 
-                        .arg( (g/ gaussian_type_size) + 1 )
-                        .arg( gaussians[ g + 1 ] )
-                        .arg( gaussians[ g + 0 ] )
-                        .arg( gaussians[ g + 2 ] )
-                        .arg( g_area[ g/gaussian_type_size ] )
-                        .arg( tot_area != 0e0 ? 100e0 * g_area[ g/gaussian_type_size ] / tot_area : 0e0 )
-                        );
-         }
-            
-         wheel_cancel();
-         return;
-      }
-      break;
-
-   case MODE_WYATT :
-      {
-         org_wyatt_start   = le_wyatt_start  ->text().toDouble();
-         org_wyatt_end     = le_wyatt_end    ->text().toDouble();
-         org_wyatt_start2  = le_wyatt_start2 ->text().toDouble();
-         org_wyatt_end2    = le_wyatt_end2   ->text().toDouble();
-         org_wyatt_2       = cb_wyatt_2      ->isChecked();
-         wheel_cancel();
-         return;
-      }
-      break;
-
-   case MODE_BASELINE :
-      {
-         org_baseline_start_s = le_baseline_start_s->text().toDouble();
-         org_baseline_start   = le_baseline_start  ->text().toDouble();
-         org_baseline_start_e = le_baseline_start_e->text().toDouble();
-         org_baseline_end_s   = le_baseline_end_s  ->text().toDouble();
-         org_baseline_end     = le_baseline_end    ->text().toDouble();
-         org_baseline_end_e   = le_baseline_end_e  ->text().toDouble();
-         wheel_cancel();
-         return;
-      }
-      break;
-
-   case MODE_TIMESHIFT :
-      {
-         qwtw_wheel            ->setEnabled( false );
-         pb_wheel_save         ->setEnabled( false );
-         pb_wheel_cancel       ->setEnabled( false );
-         lbl_wheel_pos->setText( QString( "%1" ).arg( qwtw_wheel->value() ) );
-
-         // save time adjusted selected as new
-         map < QString, bool > current_files;
-
-         int wheel_pos = -1;
-
-         for ( int i = 0; i < (int)lb_files->numRows(); i++ )
-         {
-            current_files[ lb_files->text( i ) ] = true;
-            if ( lb_files->text( i ) == wheel_file )
-            {
-               wheel_pos = i;
-            }
-         }
-
-         QString save_name = wheel_file + QString( "_ts%1" ).arg( qwtw_wheel->value() ).replace( ".", "_" );
-
-         int ext = 0;
-         while ( current_files.count( save_name ) )
-         {
-            save_name = wheel_file + QString( "_ts%1-%2" ).arg( qwtw_wheel->value() ).arg( ++ext ).replace( ".", "_" );
-         }
-   
-         // cout << QString( "new name is %1\n" ).arg( save_name );
-
-         lb_created_files->insertItem( save_name );
-         lb_created_files->setBottomItem( lb_created_files->numRows() - 1 );
-         lb_files->insertItem( save_name );
-         lb_files->setBottomItem( lb_files->numRows() - 1 );
-         created_files_not_saved[ save_name ] = true;
-
-         f_pos       [ save_name ] = f_qs.size();
-         f_qs        [ save_name ] = f_qs        [ wheel_file ];
-         f_qs_string [ save_name ] = f_qs_string [ wheel_file ];
-
-         for ( unsigned int i = 0; i < ( unsigned int ) f_qs[ save_name ].size(); i++ )
-         {
-            f_qs       [ save_name ][ i ] += qwtw_wheel->value();
-            f_qs_string[ save_name ][ i ] = QString( "%1" ).arg( f_qs[ save_name ][ i ] );
-         }
-
-         f_Is        [ save_name ] = f_Is        [ wheel_file ];
-         f_errors    [ save_name ] = f_errors    [ wheel_file ];
-         f_is_time   [ save_name ] = true;
-         f_conc      [ save_name ] = f_conc.count( wheel_file ) ? f_conc[ wheel_file ] : 0e0;
-         f_psv       [ save_name ] = f_psv .count( wheel_file ) ? f_psv [ wheel_file ] : 0e0;
-         f_I0se      [ save_name ] = f_I0se .count( wheel_file ) ? f_I0se [ wheel_file ] : 0e0;
-         {
-            vector < double > tmp;
-            f_gaussians  [ save_name ] = tmp;
-         }
-
-         conc_files.insert( save_name );
-         editor_msg( "gray", QString( "Created %1\n" ).arg( save_name ) );
-
-         lb_files->setSelected( f_pos[ save_name ], true );
-         if ( wheel_pos != -1 )
-         {
-            lb_files->setSelected( wheel_pos, false );
-         }
-
-         if ( !suppress_replot )
-         {
-            plot_dist->replot();
-         }
-
-         qwtw_wheel            ->setEnabled( false );
-         pb_wheel_save         ->setEnabled( false );
-         pb_wheel_cancel       ->setEnabled( false );
-
-         // timeshift_mode        = false;
-         mode_select( MODE_NORMAL );
-
-         running               = false;
-
-         disable_all();
-         if ( QMessageBox::Yes == QMessageBox::question(
-                                                        this,
-                                                        caption() + tr( ": Timeshift : set concentration file" ),
-                                                        tr("Would you like to *set* the timeshifted concentration file?" ),
-                                                        QMessageBox::Yes, 
-                                                        QMessageBox::No | QMessageBox::Default
-                                                        ) )
-         {
-            return set_conc_file( save_name );
-         }
-         update_enables();
-      }
-      break;
-   default : qDebug( "wheel save called in invalid mode" ); break;
-   }
 }

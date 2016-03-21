@@ -66,11 +66,13 @@ typedef unsigned _int32 uint32_t;
 #   include <stdlib.h>
 #   include <float.h>
 #   define us_isnan _isnan
+#   define us_isinf(x) (!_finite(x))
 #   undef SHOW_TIMING
 #   define drand48() ((double)rand()/RAND_MAX)
 #   define srand48(x) srand(x)
 #else
 #   define us_isnan std::isnan
+#   define us_isinf std::isinf
 #endif
 
 #ifdef WIN32
@@ -833,6 +835,26 @@ class US_EXTERN US_Saxs_Util
                                                              );
                                                              
 
+      bool                                            average( 
+                                                              vector < double > &q,
+                                                              vector < double > &I,
+                                                              vector < double > &e,
+                                                              double &avg_q,
+                                                              double &avg_I,
+                                                              double &avg_e
+                                                               );
+
+      bool                                            bin(
+                                                          vector < double > &q,
+                                                          vector < double > &I,
+                                                          vector < double > &e,
+                                                          vector < double > &new_q,
+                                                          vector < double > &new_I,
+                                                          vector < double > &new_e,
+                                                          unsigned int      points
+                                                          );
+                                                             
+
       bool         align_test();
 
       static bool  read_sas_data( 
@@ -918,6 +940,22 @@ class US_EXTERN US_Saxs_Util
                               QString                 & notes
                                );
 
+      map < int, map < int, double > > prob_of_streak_cache;
+      map < int, map < int, float > >  prob_of_streak_cache_f;
+
+      double              prob_of_streak( int n, int c );
+      float               prob_of_streak_f( int n, int c );
+
+      bool                cormap( 
+                                 const vector < double >            & q,
+                                 const vector < vector < double > > & I,
+                                 vector < vector < double > >       & rkl,
+                                 int                                & N,
+                                 int                                & S,
+                                 int                                & C,
+                                 double                             & P
+                                  );
+
 //FOR us_hydro: Methods plus PUBLIC Variables ///////////////////////////////////////
       
       double overlap_tolerance;
@@ -968,8 +1006,8 @@ class US_EXTERN US_Saxs_Util
       int  check_for_missing_atoms_hydro(QString *error_string, PDB_model *model, bool parameters_set_first_model);
       void reload_pdb(bool parameters_set_first_model);
 
-      void hard_coded_defaults();
-      void set_default(map < QString, QString >  & results);
+      bool hard_coded_defaults( map < QString, QString > &results, map < QString, QString > &parameters);
+      bool set_default(map < QString, QString >  & results, map < QString, QString > &parameters);
 
       void update_vbar();
 

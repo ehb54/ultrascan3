@@ -195,6 +195,16 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Fit : public QDialog
 
       bool          set_comm_dist;
 
+      bool          lock_zeros( vector < double > & par );
+      bool          max_free_peak_delta( vector < double > & par );
+
+      double        hplc_ampl_width_min;
+      bool          hplc_lock_min_retry;
+      double        hplc_lock_min_retry_mult;
+      bool          hplc_maxfpk_restart;
+      unsigned int  hplc_maxfpk_restart_tries;
+      double        hplc_maxfpk_restart_pct;
+
    private slots:
 
       void update_enables();
@@ -203,7 +213,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Fit : public QDialog
       void restore();
       void undo();
 
-      void lm();
+      void lm( bool max_free_peak_delta_run = false, double prev_rmsd = 0e0 );
       void gsm_sd();
       void gsm_ih();
       void gsm_cg();

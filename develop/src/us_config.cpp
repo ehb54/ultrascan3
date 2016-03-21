@@ -663,12 +663,45 @@ bool US_Config::read()
       {
          return ( false );  // We were not able to read everything
       }
-
+      f.close();
    }
    else // ! f.exists(  )
    {
       return ( false );
    }
+
+   // compare config_list.system_dir with applicationdirpath()
+#ifndef MAC
+   QString real_ultrascan = QDir::convertSeparators( qApp->applicationDirPath().remove( QRegExp( "/bin(|64)$" ) ) );
+   QString match = config_list.system_dir != real_ultrascan ? "different" : "the same";
+   
+   // QMessageBox::information( 0
+   //                           , "us_config::read()"
+   //                           , QString( "real_ultrascan is %1\n" ).arg( real_ultrascan ) 
+   //                           + QString( "system_dir is %1\n" ).arg( config_list.system_dir )
+   //                           + QString( "they are %1" ).arg( match )
+   //                           );
+
+   if ( config_list.system_dir != real_ultrascan ) {
+      config_list.system_dir = real_ultrascan;
+#ifndef QT4
+      config_list.help_dir =
+         QDir::convertSeparators( config_list.system_dir + "/doc" );
+#else
+      config_list.help_dir =
+         QDir::convertSeparators( config_list.system_dir + "/somo/doc" );
+#endif
+      US_Write_Config *w_config;
+      w_config = new US_Write_Config(this);
+      if ( ! w_config->write_config( config_list ) )
+      {
+         QMessageBox::warning( 0, "Write error", "Error attemption to write new configuration file!" );
+         delete w_config;
+         exit( 1 );
+      }
+      // QMessageBox::information( 0, "updated", "updated configuration to reflect new program directory" );
+   }
+#endif
    return ( true );
 }
 

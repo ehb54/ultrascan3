@@ -26,6 +26,17 @@ void US_Vector::printvector( QString qs, vector < int > x )
    cout << endl;
 }
 
+void US_Vector::printvector( QString qs, vector < QString > & x )
+{
+   cout << QString( "%1: size %2:" ).arg( qs ).arg( x.size() );
+   for ( unsigned int i = 0; i < x.size(); i++ )
+   {
+      cout << QString( " %1" ).arg( x[ i ] );
+   }
+   cout << endl;
+}
+
+
 void US_Vector::printvector( QString qs, vector < double > x, int digits )
 {
    cout << QString( "%1: size %2:" ).arg( qs ).arg( x.size() );
@@ -204,13 +215,16 @@ QString US_Vector::qs_vector( QString qs, vector < int > x )
    return result;
 }
 
-QString US_Vector::qs_vector( QString qs, vector < double > x, int digits )
+QString US_Vector::qs_vector( QString qs, vector < double > x, int digits, int newline )
 {
    QString result;
    result += QString( "%1: size %2:" ).arg( qs ).arg( x.size() );
    for ( unsigned int i = 0; i < x.size(); i++ )
    {
       result += QString( " %1" ).arg( x[ i ], 0, 'g', digits );
+      if ( newline && !( i % newline ) ) {
+         result += "\n";
+      }
    }
    result += "\n";
    return result;

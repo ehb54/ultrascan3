@@ -11,6 +11,7 @@
 #include "../include/us_hydrodyn_saxs_hplc_options.h"
 #include "../include/us_hydrodyn_saxs_hplc_svd.h"
 #include "../include/us_hydrodyn_saxs_hplc_movie.h"
+#include "../include/us_hydrodyn_saxs_hplc_simulate.h"
 #include "../include/us_lm.h"
 #include "../include/us_svd.h"
 #ifdef QT4
@@ -25,7 +26,7 @@ static std::basic_ostream<char>& operator<<(std::basic_ostream<char>& os, const 
 
 #define SLASH QDir::separator()
 #define Q_VAL_TOL 5e-6
-#define UHSH_VAL_DEC 8
+// #define UHSH_VAL_DEC 8
 #define UHSH_UV_CONC_FACTOR 1e0
 
 void US_Hydrodyn_Saxs_Hplc::invert_all_created()
@@ -1554,7 +1555,7 @@ void US_Hydrodyn_Saxs_Hplc::avg( QStringList files )
 
       selected_count++;
       selected_files << this_file;
-      if ( all_nonzero_errors )
+      if ( false && all_nonzero_errors )
       {
          for ( int j = 0; j < (int)t_Is[ this_file ].size(); j++ )
          {
@@ -1622,25 +1623,28 @@ void US_Hydrodyn_Saxs_Hplc::avg( QStringList files )
    vector < double > avg_sd( avg_qs.size() );
    for ( int i = 0; i < (int)avg_qs.size(); i++ )
    {
-      avg_Is[ i ] /= sum_weight[ i ];
+      // avg_Is[ i ] /= sum_weight[ i ];
+      avg_Is[ i ] /= (double) selected_count;
 
-      double sum = 0e0;
-      for ( int j = 0; j < (int)files.size(); j++ )
+      // double sum = 0e0;
+      double sse = 0e0;
+      for ( int j = 0; j < (int) selected_count; j++ )
       {
          QString this_file = files[ j ];
-         double weight  = all_nonzero_errors ? 1e0 / ( t_errors[ this_file ][ i ] * t_errors[ this_file ][ i ] ) : 1e0;
+         double se  = all_nonzero_errors ? ( t_errors[ this_file ][ i ] * t_errors[ this_file ][ i ] ) : 0e0;
+         // double weight  = all_nonzero_errors ? 1e0 / ( t_errors[ this_file ][ i ] * t_errors[ this_file ][ i ] ) : 1e0;
          // double invweight  = all_nonzero_errors ? ( t_errors[ this_file ][ i ] * t_errors[ this_file ][ i ] ) : 1e0;
          // sum += weight * ( invweight * t_Is[ this_file ][ i ] - avg_Is[ i ] ) * ( invweight *  t_Is[ this_file ][ i ] - avg_Is[ i ] );
-         sum += weight;
+         sse += se;
       }
       // sum *= sum_weight[ i ] / ( sum_weight[ i ] * sum_weight[ i ] - sum_weight2[ i ] );
       // avg_sd[ i ] = sqrt( sum / ( ( (double) files.size() - 1e0 ) * ( sum_weight[ i ]  / (double) files.size() ) ) );
-      avg_sd[ i ] = sqrt( 1 / sum );
+      avg_sd[ i ] = sqrt( sse ) / (double) selected_count;
    }
 
-   avg_conc /= files.size();
-   avg_psv  /= files.size();
-   avg_I0se /= files.size();
+   avg_conc /= (double) selected_count;
+   avg_psv  /= (double) selected_count;
+   avg_I0se /= (double) selected_count;
 
    // determine name
    // find common header & tail substrings
@@ -2113,6 +2117,8 @@ void US_Hydrodyn_Saxs_Hplc::axis_y( bool nochange, bool no_replot )
       axis_y_log = !axis_y_log;
    }
 
+   pb_axis_y->setText( axis_y_log ? "Lin Y" : "Log Y" );
+
    if ( axis_y_log )
    {
       plot_dist->setAxisTitle(QwtPlot::yLeft, title + tr( " (log scale)") );
@@ -2143,7 +2149,6 @@ void US_Hydrodyn_Saxs_Hplc::axis_y( bool nochange, bool no_replot )
       {
          plot_files();
          gauss_delete_markers();
-         plotted_markers.clear();
          gauss_add_marker( le_pm_q_start  ->text().toDouble(), Qt::red, tr( "Start" ) );
          gauss_add_marker( le_pm_q_end    ->text().toDouble(), Qt::red, tr( "End"   ), Qt::AlignLeft | Qt::AlignTop );
          plot_dist->replot();
@@ -2154,7 +2159,6 @@ void US_Hydrodyn_Saxs_Hplc::axis_y( bool nochange, bool no_replot )
    case MODE_SCALE :
       {
          gauss_delete_markers();
-         plotted_markers.clear();
          gauss_add_marker( le_scale_q_start  ->text().toDouble(), Qt::red, tr( "Start") );
          gauss_add_marker( le_scale_q_end    ->text().toDouble(), Qt::red, tr( "End"  ), Qt::AlignLeft | Qt::AlignTop );
          scale_replot();
@@ -2168,7 +2172,6 @@ void US_Hydrodyn_Saxs_Hplc::axis_y( bool nochange, bool no_replot )
       {
          plot_files();
          gauss_delete_markers();
-         plotted_markers.clear();
          gauss_add_marker( le_testiq_q_start  ->text().toDouble(), Qt::red, tr( "Start") );
          gauss_add_marker( le_testiq_q_end    ->text().toDouble(), Qt::red, tr( "End"  ), Qt::AlignLeft | Qt::AlignTop  );
          
@@ -2227,6 +2230,8 @@ void US_Hydrodyn_Saxs_Hplc::axis_x( bool nochange, bool no_replot )
       axis_x_log = !axis_x_log;
    }
 
+   pb_axis_x->setText( axis_x_log ? "Lin X" : "Log X" );
+
    if ( axis_x_log )
    {
       plot_dist->setAxisTitle(QwtPlot::xBottom,  title + tr(" (log scale)") );
@@ -2266,8 +2271,11 @@ void US_Hydrodyn_Saxs_Hplc::options()
    parameters[ "hplc_bl_integral"           ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_integral"              ];
    parameters[ "hplc_bl_save"               ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_save"                  ];
    parameters[ "hplc_bl_smooth"             ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_smooth"                ];
+   parameters[ "hplc_bl_start_region"       ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_start_region"          ];
+   parameters[ "hplc_bl_i_power"            ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_i_power"               ];
    parameters[ "hplc_bl_reps"               ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_reps"                  ];
    parameters[ "hplc_bl_alpha"              ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_alpha"                 ];
+   parameters[ "hplc_cormap_maxq"           ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_cormap_maxq"              ];
    parameters[ "hplc_zi_window"             ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_zi_window"                ];
    parameters[ "hplc_discard_it_sd_mult"    ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_discard_it_sd_mult"       ];
    parameters[ "hplc_cb_discard_it_sd_mult" ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_cb_discard_it_sd_mult"    ];
@@ -2277,6 +2285,15 @@ void US_Hydrodyn_Saxs_Hplc::options()
    parameters[ "guinier_mwt_k"              ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "guinier_mwt_k"                 ];
    parameters[ "guinier_mwt_c"              ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "guinier_mwt_c"                 ];
    parameters[ "guinier_mwt_qmax"           ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "guinier_mwt_qmax"              ];
+
+   parameters[ "hplc_csv_transposed"        ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_csv_transposed" ];
+
+   parameters[ "hplc_ampl_width_min"        ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_ampl_width_min"           ];
+   parameters[ "hplc_lock_min_retry"        ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_lock_min_retry"           ];
+   parameters[ "hplc_lock_min_retry_mult"   ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_lock_min_retry_mult"      ];
+   parameters[ "hplc_maxfpk_restart"        ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_maxfpk_restart"           ];
+   parameters[ "hplc_maxfpk_restart_tries"  ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_maxfpk_restart_tries"     ];
+   parameters[ "hplc_maxfpk_restart_pct"    ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_maxfpk_restart_pct"       ];
 
    parameters[ "hplc_csv_transposed" ] = 
       (( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_csv_transposed" ) ?
@@ -2294,12 +2311,23 @@ void US_Hydrodyn_Saxs_Hplc::options()
       return;
    }
 
+   if (
+       ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_linear"   ] != parameters[ "hplc_bl_linear"   ] ||
+       ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_integral" ] != parameters[ "hplc_bl_integral" ] ||
+       ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_cormap_maxq" ] != parameters[ "hplc_cormap_maxq" ] 
+       ) {
+      baseline_ready_to_apply = false;
+   }
+
    ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_linear"             ] = parameters[ "hplc_bl_linear"                ];
    ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_integral"           ] = parameters[ "hplc_bl_integral"              ];
    ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_save"               ] = parameters[ "hplc_bl_save"                  ];
    ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_smooth"             ] = parameters[ "hplc_bl_smooth"                ];
+   ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_start_region"       ] = parameters[ "hplc_bl_start_region"          ];
+   ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_i_power"            ] = parameters[ "hplc_bl_i_power"               ];
    ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_reps"               ] = parameters[ "hplc_bl_reps"                  ];
    ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_alpha"              ] = parameters[ "hplc_bl_alpha"                 ];
+   ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_cormap_maxq"           ] = parameters[ "hplc_cormap_maxq"              ];
    ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_zi_window"             ] = parameters[ "hplc_zi_window"                ];
    ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_discard_it_sd_mult"    ] = parameters[ "hplc_discard_it_sd_mult"       ];
    ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_cb_discard_it_sd_mult" ] = parameters[ "hplc_cb_discard_it_sd_mult"    ];
@@ -2310,6 +2338,13 @@ void US_Hydrodyn_Saxs_Hplc::options()
    ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "guinier_mwt_c"              ] = parameters[ "guinier_mwt_c"                 ];
    ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "guinier_mwt_qmax"           ] = parameters[ "guinier_mwt_qmax"              ];
    ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_csv_transposed"        ] = parameters[ "hplc_csv_transposed"           ];
+
+   ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_ampl_width_min"        ] = parameters[ "hplc_ampl_width_min"           ];
+   ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_lock_min_retry"        ] = parameters[ "hplc_lock_min_retry"           ];
+   ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_lock_min_retry_mult"   ] = parameters[ "hplc_lock_min_retry_mult"      ];
+   ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_maxfpk_restart"        ] = parameters[ "hplc_maxfpk_restart"           ];
+   ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_maxfpk_restart_tries"  ] = parameters[ "hplc_maxfpk_restart_tries"     ];
+   ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_maxfpk_restart_pct"    ] = parameters[ "hplc_maxfpk_restart_pct"       ];
 
    // maybe ask (warn) here if gaussian data structures have data
 
@@ -2454,7 +2489,42 @@ void US_Hydrodyn_Saxs_Hplc::line_width()
       use_line_width = 1;
    }
    ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_line_width" ] = QString( "%1" ).arg( use_line_width );
-   plot_files();
+   if ( current_mode == MODE_GGAUSSIAN ) {
+      if ( cb_ggauss_scroll->isChecked() && unified_ggaussian_ok ) {
+         ggaussian_rmsd();
+         ggauss_scroll_highlight( qwtw_wheel->value() );
+      }
+   } else {
+      plot_files();
+      if ( current_mode == MODE_BASELINE && !baseline_test_mode ) {
+         baseline_init_markers();
+         replot_baseline( "color rotate" );
+      }
+   }
+}
+
+void US_Hydrodyn_Saxs_Hplc::color_rotate()
+{
+   vector < QColor >  new_plot_colors;
+
+   for ( unsigned int i = 1; i < ( unsigned int )plot_colors.size(); i++ )
+   {
+      new_plot_colors.push_back( plot_colors[ i ] );
+   }
+   new_plot_colors.push_back( plot_colors[ 0 ] );
+   plot_colors = new_plot_colors;
+   if ( current_mode == MODE_GGAUSSIAN ) {
+      if ( cb_ggauss_scroll->isChecked() && unified_ggaussian_ok ) {
+         ggaussian_rmsd();
+         ggauss_scroll_highlight( qwtw_wheel->value() );
+      }
+   } else {
+      plot_files();
+      if ( current_mode == MODE_BASELINE && !baseline_test_mode ) {
+         baseline_init_markers();
+         replot_baseline( "color rotate" );
+      }
+   }
 }
 
 void US_Hydrodyn_Saxs_Hplc::movie()
@@ -2970,4 +3040,2030 @@ void US_Hydrodyn_Saxs_Hplc::pp()
    } else {
       editor_msg( "blue", messages );
    }
+}
+
+bool US_Hydrodyn_Saxs_Hplc::ask_to_decimate( map < QString, QString > & parameters ) 
+{
+   switch ( QMessageBox::warning(this, 
+                                 caption() + tr( " : Optional CorMap Analysis Correlation Correction" )
+                                 ,tr( 
+                                    "Warning: datasets having finely spaced q-values might exhibit cross-correlation issues.\n"
+                                    "Sampling one every few q points will alleviate this problem.\n"
+                                    "Would you like to?"
+                                     )
+                                 ,tr( "&Sample alternate q points" )
+                                 ,tr( "&Specify a larger gap in q points" )
+                                 ,tr( "&Continue" )
+                                 ,2 // Default continue
+                                 ,-1 // 
+                                 ) )
+   {
+   case -1 : // escape
+      return false;
+      break;
+   case 0 : // select alternates
+      parameters[ "decimate" ] = "2";
+      return ask_cormap_minq( parameters );
+      break;
+   case 1 : // specify alternates
+      break;
+   case 2 : // continue
+      return ask_cormap_minq( parameters );
+      break;
+   }
+
+   // arrival here here must be to specify alternates
+
+   bool ok;
+   int result = QInputDialog::getInteger(
+                                         caption() + tr( " : Optional CorMap Analysis Correlation Correction" )
+                                         ,tr( "Sample one q point out of every:" )
+                                         ,3
+                                         ,3
+                                         ,10
+                                         ,1 
+                                         ,&ok
+                                         ,this 
+                                         );
+   if ( !ok ) {
+      return false;
+   }
+   parameters[ "decimate" ] = QString( "%1" ).arg( result );
+   return ask_cormap_minq( parameters );
+}
+
+bool US_Hydrodyn_Saxs_Hplc::ask_cormap_minq( map < QString, QString > & parameters ) 
+{
+   bool ok;
+   double result = QInputDialog::getDouble(
+                                           caption() + tr( " : Optional CorMap Analysis Correlation Correction" )
+                                           ,tr( "If you have noisy low q data, you may wish to eliminate these points\n"
+                                                "from CorMap analysis by setting a non-zero minimum q value here:" )
+                                           ,0
+                                           ,0
+                                           ,parameters.count( "cormap_maxq" ) ? parameters[ "cormap_maxq" ].toDouble() - 0.01 : 0.04
+                                           ,4
+                                           ,&ok
+                                           ,this 
+                                           );
+   if ( !ok ) {
+      return false;
+   }
+   parameters[ "cormap_minq" ] = QString( "%1" ).arg( result );
+   return true;
+}
+
+void US_Hydrodyn_Saxs_Hplc::cormap() 
+{
+   map < QString, QString > parameters;
+   cormap( parameters );
+}
+
+void US_Hydrodyn_Saxs_Hplc::cormap( map < QString, QString > & parameters )
+{
+   disable_all();
+
+   // build up all pairs
+
+   parameters[ "msg" ] = "";
+   parameters[ "linewidth" ] = QString( "%1" ).arg( use_line_width );
+   parameters[ "hide_adjpvalues" ] = "true";
+   
+   double cormap_maxq = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_cormap_maxq" ) ?
+      ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_cormap_maxq" ].toDouble() : 0.05;
+
+   if ( parameters.count( "cormap_maxq" ) ) {
+      cormap_maxq = parameters[ "cormap_maxq" ].toDouble();
+   }
+
+   // qDebug( QString( "cormap maxq %1" ).arg( cormap_maxq ) );
+
+   switch( current_mode ) {
+   case MODE_SCALE :
+      {
+         if ( !scale_selected.size() ||
+              !scale_selected_names.size() ) {
+            editor_msg( "red", tr( "CorMap in scale mode has no files" ) );
+            scale_enables();
+            return;
+         }
+
+         if ( !parameters.count( "decimate" ) ) {
+            if ( !ask_to_decimate( parameters ) ) {
+               scale_enables();
+               return;
+            }
+         }
+
+         int decimate = parameters.count( "decimate" ) ? parameters[ "decimate" ].toInt() : 0;
+         double cormap_minq = parameters.count( "cormap_minq" ) ? parameters[ "cormap_minq" ].toDouble() : 0e0;
+
+         // if files are time, then grab alternates, otherwise grab alternate q points
+         if ( !f_is_time.count( scale_selected_names[ 0 ] ) ) {
+            editor_msg( "red", tr( "Internal error: CorMap in scale mode files not in global files" ) );
+            scale_enables();
+            return;
+         }
+
+         bool files_are_time = f_is_time[ scale_selected_names[ 0 ] ];
+
+         vector < QString > use_preq_scale_selected_names;
+
+         if ( files_are_time && decimate ) {
+            for ( int i = 0; i < (int) scale_selected_names.size(); i += decimate ) {
+               use_preq_scale_selected_names.push_back( scale_selected_names[ i ] );
+            }
+         } else {
+            use_preq_scale_selected_names = scale_selected_names;
+         }
+
+         vector < QString > use_scale_selected_names;
+
+         if ( files_are_time ) {
+            QRegExp rx_cap( "_It_q(\\d+_\\d+)" );
+            for ( int i = 0; i < (int) use_preq_scale_selected_names.size(); ++i ) {
+               if ( rx_cap.search( use_preq_scale_selected_names[ i ] ) == -1 ) {
+                  // QMessageBox::warning( this
+                  //                       , caption() + tr( " : CorMap Analysis" )
+                  //                       , QString( tr( "Could not extract q value from file name %1" ) )
+                  //                       .arg( use_preq_scale_selected_names[ i ] )
+                  //                       ,QMessageBox::Ok | QMessageBox::Default
+                  //                       ,QMessageBox::NoButton
+                  //                       );
+                  editor_msg( "red", 
+                              QString( tr( "CorMap Analysis: Could not extract q value from file name %1" ) )
+                              .arg( use_preq_scale_selected_names[ i ] ) );
+                  baseline_enables();
+                  return;
+               }                  
+               double qv = rx_cap.cap( 1 ).replace( "_", "." ).toDouble();
+               // qDebug( QString( "baseline cormap captured %1 from %2" ).arg( qv ).arg( use_preq_scale_selected_names[ i ] ) );
+               if ( qv <= cormap_maxq && qv >= cormap_minq ) {
+                  use_scale_selected_names.push_back( use_preq_scale_selected_names[ i ] );
+               }
+            }
+         } else {
+            use_scale_selected_names = use_preq_scale_selected_names;
+         }
+            
+         if ( use_scale_selected_names.size() < 2 ) {
+            editor_msg( "red", tr( "Insufficient curves remaining for CorMap Analysis" ) );
+            baseline_enables();
+            return;
+         }            
+
+         // and once for the full range
+         if ( !files_are_time ) {
+            vector < double >            q = scale_q[ use_scale_selected_names[ 0 ] ];
+            vector < vector < double > > I( 2 );
+            vector < vector < double > > rkl;
+
+            // for ( set < QString >::iterator it = scale_selected.begin();
+            //       it != scale_selected.end();
+            //       ++it )
+            // {
+            //    q = scale_q[ *it ];
+            //    break;
+            // }
+
+            int    N;
+            int    S;
+            int    C;
+            double P;
+
+            int    fcount = (int) use_scale_selected_names.size();
+            int    m      = 0;
+
+            for ( int i = 0; i < fcount - 1; ++i ) {
+               for ( int j = i + 1; j < fcount; ++j ) {
+                  ++m;
+               }
+            }
+
+            vector < vector < double > > pvaluepairs( fcount );
+            vector < vector < double > > adjpvaluepairs( fcount );
+
+            int use_names_max_len = 10;
+
+            for ( int i = 0; i < fcount; ++i ) {
+               pvaluepairs   [ i ].resize( fcount );
+               pvaluepairs   [ i ][ i ] = 1;
+               adjpvaluepairs[ i ].resize( fcount );
+               adjpvaluepairs[ i ][ i ] = 1;
+               if ( use_names_max_len < (int) use_scale_selected_names[ i ].length() ) {
+                  use_names_max_len = (int) use_scale_selected_names[ i ].length();
+               }
+            }
+
+            parameters[ "msg" ] = QString( "%1\t%2\t    N  Start point  C   P-value\n" )
+               .arg( "File", -use_names_max_len )
+               .arg( "File", -use_names_max_len )
+               // + "\tAdj P-Value"            
+               ;
+
+            progress->reset();
+            int pp = 0;
+
+            vector < double > undecimated_q = q;
+            int q_points = (int) q.size();
+            bool do_q_decimate = decimate;
+            if ( do_q_decimate ) {
+               vector < double > new_q;
+               for ( int k = 0; k < q_points; k += decimate ) {
+                  if ( q[ k ] >= cormap_minq ) {
+                     new_q.push_back( q[ k ] );
+                  }
+               }
+               q = new_q;
+            }
+
+            for ( int i = 0; i < fcount - 1; ++i ) {
+               I[ 0 ] = scale_I[ use_scale_selected_names[ i ] ];
+
+               if ( do_q_decimate ) {
+                  vector < double > new_I;
+                  for ( int k = 0; k < q_points; k += decimate ) {
+                     if ( undecimated_q[ k ] >= cormap_minq ) {
+                        new_I.push_back( I[ 0 ][ k ] );
+                     }
+                  }
+                  I[ 0 ] = new_I;
+               }
+
+               for ( int j = i + 1; j < fcount; ++j ) {
+                  progress->setProgress( pp++, m );
+                  qApp->processEvents();
+
+                  I[ 1 ] = scale_I[ use_scale_selected_names[ j ] ];
+
+                  if ( do_q_decimate ) {
+                     vector < double > new_I;
+                     for ( int k = 0; k < q_points; k += decimate ) {
+                        if ( undecimated_q[ k ] >= cormap_minq ) {
+                           new_I.push_back( I[ 1 ][ k ] );
+                        }
+                     }
+                     I[ 1 ] = new_I;
+                  }
+
+                  if ( !usu->cormap( q, I, rkl, N, S, C, P ) ) {
+                     editor_msg( "red", usu->errormsg );
+                  }
+                  double adjP = (double) m * P;
+                  if ( adjP > 1e0 ) {
+                     adjP = 1e0;
+                  }
+                  pvaluepairs[ i ][ j ] = P;
+                  pvaluepairs[ j ][ i ] = P;
+                  adjpvaluepairs[ i ][ j ] = adjP;
+                  adjpvaluepairs[ j ][ i ] = adjP;
+
+                  parameters[ "msg" ] += 
+                     QString( "%1\t%2\t%3\t%4\t%5\t%6"
+                              // "\t%7"
+                              "\n" )
+                     .arg( use_scale_selected_names[ i ], -use_names_max_len )
+                     .arg( use_scale_selected_names[ j ], -use_names_max_len )
+                     .arg( N, 6 )
+                     .arg( S, 6 )
+                     .arg( C, 6 )
+                     .arg( QString( "" ).sprintf( "%.4g", P ).leftJustify( 12 ) )
+                     // .arg( adjP ) 
+                     ;
+               }
+            }
+
+            progress->reset();
+
+            {
+               parameters[ "title" ] = 
+                  QString(
+                          tr( "Scale mode %1: Full q range used for analysis." )
+                          )
+                  .arg( scale_applied ?
+                        QString( "scaled on %1 range %2 to %3" )
+                        .arg( files_are_time ? "frame" : "q" ) 
+                        .arg( scale_applied_q_min )
+                        .arg( scale_applied_q_max ) 
+                        :
+                        QString( "(no scaling applied)" ) )
+                  ;
+
+               parameters[ "ppvm_title"     ] = tr( "Pairwise P value map" );
+               parameters[ "ppvm_title_adj" ] = tr( "Pairwise adjusted P value map" );
+
+               parameters[ "title_adj" ] = 
+                  QString(
+                          tr( "Scale mode %1: Full q range used for analysis." )
+                          )
+                  .arg( scale_applied ?
+                        QString( "scaled on %1 range %2 to %3" )
+                        .arg( files_are_time ? "frame" : "q" ) 
+                        .arg( scale_applied_q_min )
+                        .arg( scale_applied_q_max ) 
+                        :
+                        QString( "(no scaling applied)" ) )
+                  ;
+
+               if ( cormap_minq > 0e0 ) {
+                  parameters[ "title"     ] += QString( " Minimum q limit is %1 [A^-1]." ).arg( cormap_minq );
+                  parameters[ "title_adj" ] += QString( " Minimum q limit is %1 [A^-1]." ).arg( cormap_minq );
+               }
+
+               if ( parameters.count( "decimate" ) ) {
+                  int decimate = parameters[ "decimate" ].toInt();
+                  QString nth_tag;
+                  switch ( decimate ) {
+                  case 2 : nth_tag = "nd"; break;
+                  case 3 : nth_tag = "rd"; break;
+                  default : nth_tag = "th"; break;
+                  }
+               
+                  parameters[ "title" ] += QString( tr( " Only every %1%2 q value selected." ) )
+                     .arg( decimate ).arg( nth_tag );
+                  parameters[ "title_adj" ] += QString( tr( " Only every %1%2 q value selected." ) )
+                     .arg( decimate ).arg( nth_tag );
+               }
+
+               // parameters[ "adjusted" ] = "true";
+
+               parameters[ "linewisesummary" ] = "true";
+               parameters[ "clusteranalysis"   ] = "true";
+
+               parameters[ "global_width" ] = "1000";
+               parameters[ "global_height" ] = "700";
+               parameters[ "image_height" ] = "500";
+
+               // parameters[ "name"              ] = use_scale_selected_names.front();
+               {
+                  QStringList qsl = vector_qstring_to_qstringlist( use_scale_selected_names );
+                  QString head = qstring_common_head( qsl, true );
+                  QString tail = qstring_common_tail( qsl, true );
+                  parameters[ "name" ] = QString( "%1_%2%3_%4%5_cqmn%6_mx%7" )
+                     .arg( head )
+                     .arg( tail )
+                     .arg( parameters.count( "decimate" ) ? QString( "_s%1" ).arg( parameters[ "decimate" ] ) : QString( "" ) )
+                     .arg( files_are_time ? "q" : "f" )
+                     .arg( pvaluepairs.size() )
+                     .arg( cormap_minq )
+                     .arg( cormap_maxq )
+                     .replace( ".", "_" )
+                     ;
+               }
+
+               US_Hydrodyn_Saxs_Cormap * uhcm = new US_Hydrodyn_Saxs_Cormap( us_hydrodyn,
+                                                                             parameters,
+                                                                             pvaluepairs,
+                                                                             adjpvaluepairs,
+                                                                             use_scale_selected_names );
+               if ( parameters.count( "close" ) ) {
+                  delete uhcm;
+               } else {
+                  uhcm->show();
+               }
+            }
+         }
+
+         // once for maxq cutoff
+         {
+            vector < double >            q = scale_q[ use_scale_selected_names[ 0 ] ];
+            vector < vector < double > > I( 2 );
+            vector < vector < double > > rkl;
+
+            // for ( set < QString >::iterator it = scale_selected.begin();
+            //       it != scale_selected.end();
+            //       ++it )
+            // {
+            //    q = scale_q[ *it ];
+            //    break;
+            // }
+
+            {
+               vector < vector < double > > grids;
+
+               for ( int i = 0; i < (int) use_scale_selected_names.size(); ++i )
+               {
+                  QString this_file = use_scale_selected_names[ i ];
+                  if ( scale_q.count( this_file ) &&
+                       scale_I.count( this_file ) &&
+                       scale_q[ this_file ].size() &&
+                       scale_I[ this_file ].size() )
+                  {
+                     grids.push_back( scale_q[ this_file ] );
+                  }
+               }
+
+               vector < double > v_union = US_Vector::vunion( grids );
+               vector < double > v_int   = US_Vector::intersection( grids );
+
+               bool any_differences = v_union != v_int;
+
+               if ( any_differences )
+               {
+                  editor_msg( "red", tr( "CorMap: curves must be on the same grid, try 'Crop Common' first." ) );
+                  scale_enables();
+                  return;
+               }
+            }
+
+            int    N;
+            int    S;
+            int    C;
+            double P;
+
+            int    fcount = (int) use_scale_selected_names.size();
+            int    m      = 0;
+
+            for ( int i = 0; i < fcount - 1; ++i ) {
+               for ( int j = i + 1; j < fcount; ++j ) {
+                  ++m;
+               }
+            }
+
+            vector < vector < double > > pvaluepairs( fcount );
+            vector < vector < double > > adjpvaluepairs( fcount );
+
+            int use_names_max_len = 10;
+
+            for ( int i = 0; i < fcount; ++i ) {
+               pvaluepairs   [ i ].resize( fcount );
+               pvaluepairs   [ i ][ i ] = 1;
+               adjpvaluepairs[ i ].resize( fcount );
+               adjpvaluepairs[ i ][ i ] = 1;
+               if ( use_names_max_len < (int) use_scale_selected_names[ i ].length() ) {
+                  use_names_max_len = (int) use_scale_selected_names[ i ].length();
+               }
+            }
+
+            parameters[ "msg" ] = QString( "%1\t%2\t    N  Start point  C   P-value\n" )
+               .arg( "File", -use_names_max_len )
+               .arg( "File", -use_names_max_len )
+               // + "\tAdj P-Value"            
+               ;
+
+            progress->reset();
+            int pp = 0;
+
+            vector < double > undecimated_q = q;
+            int q_points = (int) q.size();
+            bool do_q_decimate = !files_are_time;
+            int use_decimate = decimate ? decimate : 1;
+            if ( do_q_decimate ) {
+               vector < double > new_q;
+               for ( int k = 0; k < q_points; k += use_decimate ) {
+                  if ( q[ k ] <= cormap_maxq &&
+                       q[ k ] >= cormap_minq ) {
+                     new_q.push_back( q[ k ] );
+                  }
+               }
+               q = new_q;
+            }
+
+            for ( int i = 0; i < fcount - 1; ++i ) {
+               I[ 0 ] = scale_I[ use_scale_selected_names[ i ] ];
+
+               if ( do_q_decimate ) {
+                  vector < double > new_I;
+                  for ( int k = 0; k < q_points; k += use_decimate ) {
+                     if ( undecimated_q[ k ] <= cormap_maxq &&
+                          undecimated_q[ k ] >= cormap_minq ) {
+                        new_I.push_back( I[ 0 ][ k ] );
+                     }
+                  }
+                  I[ 0 ] = new_I;
+               }
+
+               for ( int j = i + 1; j < fcount; ++j ) {
+                  progress->setProgress( pp++, m );
+                  qApp->processEvents();
+
+                  I[ 1 ] = scale_I[ use_scale_selected_names[ j ] ];
+
+                  if ( do_q_decimate ) {
+                     vector < double > new_I;
+                     for ( int k = 0; k < q_points; k += use_decimate ) {
+                        if ( undecimated_q[ k ] <= cormap_maxq &&
+                             undecimated_q[ k ] >= cormap_minq ) {
+                           new_I.push_back( I[ 1 ][ k ] );
+                        }
+                     }
+                     I[ 1 ] = new_I;
+                  }
+
+                  if ( !usu->cormap( q, I, rkl, N, S, C, P ) ) {
+                     editor_msg( "red", usu->errormsg );
+                  }
+                  double adjP = (double) m * P;
+                  if ( adjP > 1e0 ) {
+                     adjP = 1e0;
+                  }
+                  pvaluepairs[ i ][ j ] = P;
+                  pvaluepairs[ j ][ i ] = P;
+                  adjpvaluepairs[ i ][ j ] = adjP;
+                  adjpvaluepairs[ j ][ i ] = adjP;
+
+                  parameters[ "msg" ] += 
+                     QString( "%1\t%2\t%3\t%4\t%5\t%6"
+                              // "\t%7"
+                              "\n" )
+                     .arg( use_scale_selected_names[ i ], -use_names_max_len )
+                     .arg( use_scale_selected_names[ j ], -use_names_max_len )
+                     .arg( N, 6 )
+                     .arg( S, 6 )
+                     .arg( C, 6 )
+                     .arg( QString( "" ).sprintf( "%.4g", P ).leftJustify( 12 ) )
+                     // .arg( adjP ) 
+                     ;
+               }
+            }
+
+            progress->reset();
+
+            {
+               parameters[ "title" ] = 
+                  QString(
+                          tr( "Scale mode %1: Maximum q limit is %2 [A^-1]." )
+                          )
+                  .arg( scale_applied ?
+                        QString( "scaled on %1 range %2 to %3" )
+                        .arg( files_are_time ? "frame" : "q" ) 
+                        .arg( scale_applied_q_min )
+                        .arg( scale_applied_q_max ) 
+                        :
+                        QString( "(no scaling applied)" ) )
+                  .arg( cormap_maxq )
+                  ;
+               parameters[ "ppvm_title"     ] = tr( "Pairwise P value map" );
+               parameters[ "ppvm_title_adj" ] = tr( "Pairwise adjusted P value map" );
+
+               parameters[ "title_adj" ] = 
+                  QString(
+                          tr( "Scale mode %1: Maximum q limit is %2 [A^-1]." )
+                          )
+                  .arg( scale_applied ?
+                        QString( "scaled on %1 range %2 to %3" )
+                        .arg( files_are_time ? "frame" : "q" ) 
+                        .arg( scale_applied_q_min )
+                        .arg( scale_applied_q_max ) 
+                        :
+                        QString( "(no scaling applied)" ) )
+                  .arg( cormap_maxq )
+                  ;
+
+               if ( cormap_minq > 0e0 ) {
+                  parameters[ "title"     ] += QString( " Minimum q limit is %1 [A^-1]." ).arg( cormap_minq );
+                  parameters[ "title_adj" ] += QString( " Minimum q limit is %1 [A^-1]." ).arg( cormap_minq );
+               }
+
+               if ( parameters.count( "decimate" ) ) {
+                  int decimate = parameters[ "decimate" ].toInt();
+                  QString nth_tag;
+                  switch ( decimate ) {
+                  case 2 : nth_tag = "nd"; break;
+                  case 3 : nth_tag = "rd"; break;
+                  default : nth_tag = "th"; break;
+                  }
+               
+                  parameters[ "title" ] += QString( tr( " Only every %1%2 q value selected." ) )
+                     .arg( decimate ).arg( nth_tag );
+                  parameters[ "title_adj" ] += QString( tr( " Only every %1%2 q value selected." ) )
+                     .arg( decimate ).arg( nth_tag );
+               }
+
+               parameters[ "adjusted" ] = "true";
+
+               parameters[ "linewisesummary" ] = "true";
+               parameters[ "clusteranalysis"   ] = "true";
+
+               parameters[ "global_width" ] = "1000";
+               parameters[ "global_height" ] = "700";
+               parameters[ "image_height" ] = "300";
+
+               US_Hydrodyn_Saxs_Cormap * uhcm = new US_Hydrodyn_Saxs_Cormap( us_hydrodyn,
+                                                                             parameters,
+                                                                             pvaluepairs,
+                                                                             adjpvaluepairs,
+                                                                             use_scale_selected_names );
+               if ( parameters.count( "close" ) ) {
+                  delete uhcm;
+               } else {
+                  uhcm->show();
+               }
+            }
+         }
+
+         scale_enables();
+         if ( testiq_active )
+         {
+            pb_testiq->setEnabled( true );
+         }
+      }
+      break;
+
+   case MODE_BLANKS :
+      {
+         blanks_last_cormap_parameters.clear();
+         blanks_last_cormap_pvaluepairs.clear();
+         blanks_last_brookesmap_sliding_results.clear();
+
+         {
+            vector < vector < double > > grids;
+
+            for ( int i = 0; i < (int) blanks_created.size(); ++i )
+            {
+               QString this_file = blanks_created[ i ];
+               if ( f_qs.count( this_file ) &&
+                    f_Is.count( this_file ) &&
+                    f_qs[ this_file ].size() &&
+                    f_Is[ this_file ].size() )
+               {
+                  grids.push_back( f_qs[ this_file ] );
+               }
+            }
+
+            vector < double > v_union = US_Vector::vunion( grids );
+            vector < double > v_int   = US_Vector::intersection( grids );
+
+            bool any_differences = v_union != v_int;
+
+            if ( any_differences )
+            {
+               editor_msg( "red", tr( "CorMap: curves must be on the same grid, try 'Crop Common' first." ) );
+               blanks_enables();
+               return;
+            }
+         }
+
+         if ( !parameters.count( "decimate" ) ) {
+            if ( !ask_to_decimate( parameters ) ) {
+               blanks_enables();
+               return;
+            }
+         }
+
+         double cormap_minq = parameters.count( "cormap_minq" ) ? parameters[ "cormap_minq" ].toDouble() : 0e0;
+
+         QStringList use_preq_blanks_created;
+
+         if ( parameters.count( "decimate" ) ) {
+            int decimate = parameters[ "decimate" ].toInt();
+            for ( int i = 0; i < (int) blanks_created.size(); i += decimate ) {
+               use_preq_blanks_created << blanks_created[ i ];
+            }
+         } else {
+            use_preq_blanks_created = blanks_created;
+         }
+
+         QStringList use_blanks_created;
+         // US_Vector::printvector( "blanks_created_q", blanks_created_q );
+         {
+            // QRegExp rx_cap( "_It_q(\\d+_\\d+)" );
+            int use_decimate = parameters.count( "decimate" ) ? parameters[ "decimate" ].toInt() : 1;
+            for ( int i = 0; i < (int) use_preq_blanks_created.size(); ++i ) {
+               // if ( rx_cap.search( use_preq_blanks_created[ i ] ) == -1 ) {
+               //    editor_msg( "red", 
+               //                QString( tr( "CorMap Analysis: Could not extract q value from file name %1" ) )
+               //                .arg( use_preq_blanks_created[ i ] ) );
+               //    baseline_enables();
+               //    return;
+               // }                  
+               // double qv = rx_cap.cap( 1 ).replace( "_", "." ).toDouble();
+               // qDebug( QString( "qv %1 blanks_created_q[ i ] %2" ).arg( qv ).arg( blanks_created_q[ i * use_decimate ] ) );
+               
+               // if ( qv <= cormap_maxq ) {
+               if ( blanks_created_q[ i * use_decimate ] <= cormap_maxq &&
+                    blanks_created_q[ i * use_decimate ] >= cormap_minq ) {
+                  use_blanks_created << use_preq_blanks_created[ i ];
+               }
+            }
+         }
+
+         if ( use_blanks_created.size() < 2 ) {
+            editor_msg( "red", tr( "Insufficient curves remaining for CorMap Analysis" ) );
+            blanks_enables();
+            return;
+         }            
+
+         // build up q vectors from le_baseline_end_s to le_baseline_end_e
+
+         double q_start     = le_baseline_end_s->text().toDouble();
+         double q_end       = le_baseline_end_e->text().toDouble();
+         vector < double > t;
+         vector < double > q;
+
+         vector < int > indicies;
+         vector < QString > use_names;
+         int use_names_max_len = 10;
+
+         for ( int i = 0; i < (int) f_qs[ wheel_file ].size(); ++i ) {
+            if ( f_qs[ wheel_file ][ i ] >= q_start &&
+                 f_qs[ wheel_file ][ i ] <= q_end ) {
+               indicies.push_back( i );
+               t.push_back( f_qs[ wheel_file ][ i ] );
+               use_names.push_back( QString( "%1" ).arg( t.back() ) );
+               if ( use_names_max_len < (int) use_names.back().length() ) {
+                  use_names_max_len = use_names.back().length();
+               }
+            }
+         }
+         
+         if ( !t.size() ) {
+            editor_msg( "red", tr( "CorMap in blanks mode has empty start / end range" ) );
+            baseline_enables();
+            return;
+         }
+
+         vector < vector < double > > I( 2 );
+         vector < vector < double > > rkl;
+
+         int blanks_size = (int) use_blanks_created.size();
+         // qDebug( QString( "cormap blanks blanks_size %1" ).arg( blanks_size ) );
+
+         q.resize( blanks_size );
+         I[ 0 ].resize( blanks_size );
+         I[ 1 ].resize( blanks_size );
+
+         int    N;
+         int    S;
+         int    C;
+         double P;
+
+         int    fcount = (int) indicies.size();
+         int    m      = 0;
+
+         for ( int i = 0; i < fcount - 1; ++i ) {
+            for ( int j = i + 1; j < fcount; ++j ) {
+               ++m;
+            }
+         }
+
+         vector < vector < double > > pvaluepairs   ( fcount );
+         vector < vector < double > > adjpvaluepairs( fcount );
+         for ( int i = 0; i < fcount; ++i ) {
+            pvaluepairs   [ i ].resize( fcount );
+            pvaluepairs   [ i ][ i ] = 1;
+            adjpvaluepairs[ i ].resize( fcount );
+            adjpvaluepairs[ i ][ i ] = 1;
+         }
+
+         // US_Vector::printvector( "q", q );
+
+         // qDebug( 
+         //        QString( "mb5 fcount %1 indicies.size %2 blanks.size %3 m %4 " )
+         //        .arg( fcount )
+         //        .arg( indicies.size() ) 
+         //        .arg( blanks_size ) 
+         //        .arg( m )
+         //         );
+         
+         parameters[ "msg" ] = QString( "%1\t%2\t    N  Start point  C   P-value\n" )
+            .arg( "Time/Frame", -use_names_max_len )
+            .arg( "Time/Frame", -use_names_max_len )
+            // + "\tAdj P-Value"            
+            ;
+
+         progress->reset();
+         int pp = 0;
+
+         // compute average sd's
+
+         {
+            set < int > skip_k;
+            for ( int k = 0; k < blanks_size; ++k ) {
+               if ( !f_errors.count( use_blanks_created[ k ] ) ||
+                    f_errors[ use_blanks_created[ k ] ].size() != f_Is[ use_blanks_created[ k ] ].size() ||
+                    !is_nonzero_vector( f_errors[ use_blanks_created[ k ] ] ) ) {
+                  skip_k.insert( k );
+               }
+            }
+
+            double gsum_sd2 = 0e0;
+
+            for ( int i = 0; i < fcount; ++i ) {
+               double sum_sd2 = 0e0;
+               for ( int k = 0; k < blanks_size; ++k ) {
+                  if ( !skip_k.count( k ) ) {
+                     sum_sd2 += 
+                        f_errors[ use_blanks_created[ k ] ][ indicies[ i ] ] 
+                        * f_errors[ use_blanks_created[ k ] ][ indicies[ i ] ];
+                     // qDebug( QString( "errors for %1 %2 %3\n" )
+                     //         .arg( use_blanks_created[ k ] )
+                     //         .arg( f_qs[ use_blanks_created[ k ] ][ indicies[ i ] ] )
+                     //         .arg( f_errors[ use_blanks_created[ k ] ][ indicies[ i ] ]  ) );
+                  }
+               }
+               gsum_sd2 += sqrt( sum_sd2 );
+            }
+
+            // double avg_sd = sqrt( sum_sd2 ) / (double) fcount;
+            double avg_sd = gsum_sd2 / (double) fcount;
+            parameters[ "blanks_avg_maxq_sd" ] = QString( "%1" ).arg( avg_sd );
+
+            // qDebug( QString( "avg blanks sd %1 fcount %2 skip_k.size() %3" )
+            //         .arg( avg_sd )
+            //         .arg( fcount )
+            //         .arg( skip_k.size() ) )
+            //    ;
+         }
+
+         for ( int i = 0; i < fcount - 1; ++i ) {
+            for ( int k = 0; k < blanks_size; ++k ) {
+               I[ 0 ][ k ] = f_Is[ use_blanks_created[ k ] ][ indicies[ i ] ];
+            }
+            for ( int j = i + 1; j < fcount; ++j ) {
+               progress->setProgress( pp++, m );
+               qApp->processEvents();
+
+               for ( int k = 0; k < blanks_size; ++k ) {
+                  I[ 1 ][ k ] = f_Is[ use_blanks_created[ k ] ][ indicies[ j ] ];
+               }
+               // US_Vector::printvector2( QString( "blanks for cormap i %1 j %2 I" ).arg( i ).arg( j ), I[ 0 ], I[ 1 ] );
+                                        
+               if ( !usu->cormap( q, I, rkl, N, S, C, P ) ) {
+                  editor_msg( "red", usu->errormsg );
+               }
+
+               double adjP = (double) m * P;
+               if ( adjP > 1e0 ) {
+                  adjP = 1e0;
+               }
+               pvaluepairs[ i ][ j ] = P;
+               pvaluepairs[ j ][ i ] = P;
+               adjpvaluepairs[ i ][ j ] = adjP;
+               adjpvaluepairs[ j ][ i ] = adjP;
+
+               parameters[ "msg" ] += 
+                  QString( "%1\t%2\t%3\t%4\t%5\t%6"
+                           // "\t%7"
+                           "\n" )
+                  .arg( use_names[ i ], -use_names_max_len )
+                  .arg( use_names[ j ], -use_names_max_len )
+                  .arg( N, 6 )
+                  .arg( S, 6 )
+                  .arg( C, 6 )
+                  .arg( QString( "" ).sprintf( "%.4g", P ).leftJustify( 12 ) )
+                  // .arg( adjP ) 
+                  ;
+            }
+         }
+
+         progress->reset();
+
+         {
+            parameters[ "title" ] = 
+               QString(
+                       tr( "Blanks mode t %1 to %2. Maximum q limit is %3 [A^-1]." )
+                       )
+               .arg( q_start )
+               .arg( q_end )
+               .arg( cormap_maxq )
+               ;
+
+            parameters[ "ppvm_title"     ] = tr( "Pairwise P value map" );
+            parameters[ "ppvm_title_adj" ] = tr( "Pairwise adjusted P value map" );
+
+            parameters[ "csv_id_header" ] = "t start\",\"t end\",\"frames";
+            parameters[ "csv_id_data" ]   = QString( "%1,%2,%3" ).arg( q_start ).arg( q_end ).arg( fcount );
+            parameters[ "global_width" ] = "1000";
+            parameters[ "global_height" ] = "700";
+            parameters[ "image_height" ] = "300";
+
+            parameters[ "title_adj" ] = 
+               QString(
+                       tr( "Blanks mode t %1 to %2." )
+                       )
+               .arg( q_start )
+               .arg( q_end )
+               ;
+
+            if ( cormap_minq > 0e0 ) {
+               parameters[ "title"     ] += QString( " Minimum q limit is %1 [A^-1]." ).arg( cormap_minq );
+               parameters[ "title_adj" ] += QString( " Minimum q limit is %1 [A^-1]." ).arg( cormap_minq );
+            }
+
+            if ( parameters.count( "decimate" ) ) {
+               int decimate = parameters[ "decimate" ].toInt();
+               QString nth_tag;
+               switch ( decimate ) {
+               case 2 : nth_tag = "nd"; break;
+               case 3 : nth_tag = "rd"; break;
+               default : nth_tag = "th"; break;
+               }
+               
+               parameters[ "title" ] += QString( tr( " Only every %1%2 q value selected." ) )
+                  .arg( decimate ).arg( nth_tag );
+               parameters[ "title_adj" ] += QString( tr( " Only every %1%2 q value selected." ) )
+                  .arg( decimate ).arg( nth_tag );
+            }
+
+            parameters[ "linewisesummary"   ] = "true";
+            parameters[ "fileheader"        ] = "Time/Frame";
+            parameters[ "cormap_of_brookes" ] = "true";
+            parameters[ "clusteranalysis"   ] = "true";
+            // parameters[ "name"              ] = blanks_created.front();
+            {
+               QString head = qstring_common_head( blanks_selected, true );
+               QString tail = qstring_common_tail( blanks_selected, true );
+               parameters[ "name" ] = QString( "%1_%2%3_f%4_cqmx%5" )
+                  .arg( head )
+                  .arg( tail )
+                  .arg( parameters.count( "decimate" ) ? QString( "_s%1" ).arg( parameters[ "decimate" ] ) : QString( "" ) )
+                  .arg( pvaluepairs.size() )
+                  .arg( cormap_maxq )
+                  .replace( ".", "_" )
+                  ;
+            }
+            parameters[ "frames" ] = QString( "%1" ).arg( blanks_selected.size() );
+            parameters[ "isblanks" ] = "true";
+
+            US_Hydrodyn_Saxs_Cormap * uhcm = new US_Hydrodyn_Saxs_Cormap( us_hydrodyn,
+                                                                          parameters,
+                                                                          pvaluepairs,
+                                                                          adjpvaluepairs,
+                                                                          use_names );
+            blanks_last_cormap_parameters  = parameters;
+            blanks_last_cormap_pvaluepairs = pvaluepairs;
+            blanks_last_cormap_run_end_s   = le_baseline_end_s->text().toDouble();
+            blanks_last_cormap_run_end_e   = le_baseline_end_e->text().toDouble();
+
+            if ( parameters.count( "close" ) ) {
+               delete uhcm;
+            } else {
+               uhcm->show();
+            }
+         }
+         blanks_enables();
+      }
+
+      break;
+
+   case MODE_BASELINE :
+      {
+         baseline_last_cormap_parameters.clear();
+         baseline_last_cormap_pvaluepairs.clear();
+         // baseline_last_brookesmap_sliding_results.clear();
+
+         if ( !baseline_multi ) {
+            editor_msg( "red", tr( "CorMap in baseline mode has no files" ) );
+            baseline_enables();
+            return;
+         }
+
+         {
+            vector < vector < double > > grids;
+
+            for ( int i = 0; i < (int) baseline_selected.size(); ++i )
+            {
+               QString this_file = baseline_selected[ i ];
+               if ( f_qs.count( this_file ) &&
+                    f_Is.count( this_file ) &&
+                    f_qs[ this_file ].size() &&
+                    f_Is[ this_file ].size() )
+               {
+                  grids.push_back( f_qs[ this_file ] );
+               }
+            }
+
+            vector < double > v_union = US_Vector::vunion( grids );
+            vector < double > v_int   = US_Vector::intersection( grids );
+
+            bool any_differences = v_union != v_int;
+
+            if ( any_differences )
+            {
+               editor_msg( "red", tr( "CorMap: curves must be on the same grid, try 'Crop Common' first." ) );
+               baseline_enables();
+               return;
+            }
+         }
+
+         if ( !parameters.count( "decimate" ) ) {
+            if ( !ask_to_decimate( parameters ) ) {
+               baseline_enables();
+               return;
+            }
+         }
+
+         double cormap_minq = parameters.count( "cormap_minq" ) ? parameters[ "cormap_minq" ].toDouble() : 0e0;
+
+         QStringList use_preq_baseline_selected;
+
+         if ( parameters.count( "decimate" ) ) {
+            int decimate = parameters[ "decimate" ].toInt();
+            for ( int i = 0; i < (int) baseline_selected.size(); i += decimate ) {
+               use_preq_baseline_selected << baseline_selected[ i ];
+            }
+         } else {
+            use_preq_baseline_selected = baseline_selected;
+         }
+
+         QStringList use_baseline_selected;
+         {
+            QRegExp rx_cap( "_It_q(\\d+_\\d+)" );
+            for ( int i = 0; i < (int) use_preq_baseline_selected.size(); ++i ) {
+               if ( rx_cap.search( use_preq_baseline_selected[ i ] ) == -1 ) {
+                  // QMessageBox::warning( this
+                  //                       , caption() + tr( " : Baseline CorMap Analysis" )
+                  //                       , QString( tr( "Could not extract q value from file name %1" ) )
+                  //                       .arg( use_preq_baseline_selected[ i ] )
+                  //                       ,QMessageBox::Ok | QMessageBox::Default
+                  //                       ,QMessageBox::NoButton
+                  //                       );
+                  editor_msg( "red", 
+                              QString( tr( "Baseline CorMap Analysis: Could not extract q value from file name %1" ) )
+                              .arg( use_preq_baseline_selected[ i ] ) );
+                  baseline_enables();
+                  return;
+               }                  
+               double qv = rx_cap.cap( 1 ).replace( "_", "." ).toDouble();
+               // qDebug( QString( "baseline cormap captured %1 from %2" ).arg( qv ).arg( use_preq_baseline_selected[ i ] ) );
+               if ( qv <= cormap_maxq &&
+                    qv >= cormap_minq ) {
+                  use_baseline_selected << use_preq_baseline_selected[ i ];
+               }
+            }
+         }
+         if ( use_baseline_selected.size() < 2 ) {
+            editor_msg( "red", tr( "Insufficient curves remaining for CorMap Analysis" ) );
+            baseline_enables();
+            return;
+         }            
+
+         // build up q vectors from le_baseline_end_s to le_baseline_end_e
+
+         double q_start     = le_baseline_end_s->text().toDouble();
+         double q_end       = parameters.count( "baseline_use_end" ) ? le_baseline_end->text().toDouble() : le_baseline_end_e->text().toDouble();
+
+         vector < double > t;
+         vector < double > q;
+
+         vector < int > indicies;
+         vector < QString > use_names;
+         int use_names_max_len = 10;
+
+         for ( int i = 0; i < (int) f_qs[ wheel_file ].size(); ++i ) {
+            if ( f_qs[ wheel_file ][ i ] >= q_start &&
+                 f_qs[ wheel_file ][ i ] <= q_end ) {
+               indicies.push_back( i );
+               t.push_back( f_qs[ wheel_file ][ i ] );
+               use_names.push_back( QString( "%1" ).arg( t.back() ) );
+               if ( use_names_max_len < (int) use_names.back().length() ) {
+                  use_names_max_len = use_names.back().length();
+               }
+            }
+         }
+         
+         if ( !t.size() ) {
+            editor_msg( "red", tr( "CorMap in baseline mode has empty start / end range" ) );
+            baseline_enables();
+            return;
+         }
+
+         vector < vector < double > > I( 2 );
+         vector < vector < double > > rkl;
+
+         int baseline_size = (int) use_baseline_selected.size();
+
+         q.resize( baseline_size );
+         I[ 0 ].resize( baseline_size );
+         I[ 1 ].resize( baseline_size );
+
+         int    N;
+         int    S;
+         int    C;
+         double P;
+
+         int    fcount = (int) indicies.size();
+         int    m      = 0;
+
+         for ( int i = 0; i < fcount - 1; ++i ) {
+            for ( int j = i + 1; j < fcount; ++j ) {
+               ++m;
+            }
+         }
+
+         vector < vector < double > > pvaluepairs   ( fcount );
+         vector < vector < double > > adjpvaluepairs( fcount );
+         for ( int i = 0; i < fcount; ++i ) {
+            pvaluepairs   [ i ].resize( fcount );
+            pvaluepairs   [ i ][ i ] = 1;
+            adjpvaluepairs[ i ].resize( fcount );
+            adjpvaluepairs[ i ][ i ] = 1;
+         }
+
+         // US_Vector::printvector( "q", q );
+
+         // qDebug( 
+         //        QString( "mb5 fcount %1 indicies.size %2 baseline.size %3 m %4 " )
+         //        .arg( fcount )
+         //        .arg( indicies.size() ) 
+         //        .arg( baseline_size ) 
+         //        .arg( m )
+         //         );
+         
+         parameters[ "msg" ] = QString( "%1\t%2\t    N  Start point  C   P-value\n" )
+            .arg( "Time/Frame", -use_names_max_len )
+            .arg( "Time/Frame", -use_names_max_len )
+            // + "\tAdj P-Value"            
+            ;
+
+         progress->reset();
+         int pp = 0;
+
+         for ( int i = 0; i < fcount - 1; ++i ) {
+            for ( int k = 0; k < baseline_size; ++k ) {
+               I[ 0 ][ k ] = f_Is[ use_baseline_selected[ k ] ][ indicies[ i ] ];
+            }
+            for ( int j = i + 1; j < fcount; ++j ) {
+               progress->setProgress( pp++, m );
+               qApp->processEvents();
+
+               for ( int k = 0; k < baseline_size; ++k ) {
+                  I[ 1 ][ k ] = f_Is[ use_baseline_selected[ k ] ][ indicies[ j ] ];
+               }
+               // US_Vector::printvector2( QString( "for cormap i %1 j %2 I" ).arg( i ).arg( j ), I[ 0 ], I[ 1 ] );
+                                        
+               if ( !usu->cormap( q, I, rkl, N, S, C, P ) ) {
+                  editor_msg( "red", usu->errormsg );
+               }
+
+               double adjP = (double) m * P;
+               if ( adjP > 1e0 ) {
+                  adjP = 1e0;
+               }
+               pvaluepairs[ i ][ j ] = P;
+               pvaluepairs[ j ][ i ] = P;
+               adjpvaluepairs[ i ][ j ] = adjP;
+               adjpvaluepairs[ j ][ i ] = adjP;
+
+               parameters[ "msg" ] += 
+                  QString( "%1\t%2\t%3\t%4\t%5\t%6"
+                           // "\t%7"
+                           "\n" )
+                  .arg( use_names[ i ], -use_names_max_len )
+                  .arg( use_names[ j ], -use_names_max_len )
+                  .arg( N, 6 )
+                  .arg( S, 6 )
+                  .arg( C, 6 )
+                  .arg( QString( "" ).sprintf( "%.4g", P ).leftJustify( 12 ) )
+                  // .arg( adjP ) 
+                  ;
+            }
+         }
+
+         progress->reset();
+
+         {
+            parameters[ "title" ] = 
+               QString(
+                       tr( "Baseline mode t %1 to %2. Maximum q limit is %3 [A^-1]." )
+                       )
+               .arg( q_start )
+               .arg( q_end )
+               .arg( cormap_maxq )
+               ;
+
+            parameters[ "ppvm_title"     ] = tr( "Pairwise P value map" );
+            parameters[ "ppvm_title_adj" ] = tr( "Pairwise adjusted P value map" );
+
+            parameters[ "csv_id_header" ] = "t start\",\"t end\",\"frames";
+            parameters[ "csv_id_data" ]   = QString( "%1,%2,%3" ).arg( q_start ).arg( q_end ).arg( fcount );
+            parameters[ "global_width" ] = "1000";
+            parameters[ "global_height" ] = "700";
+            parameters[ "image_height" ] = "300";
+
+            parameters[ "title_adj" ] = 
+               QString(
+                       tr( "Baseline mode t %1 to %2." )
+                       )
+               .arg( q_start )
+               .arg( q_end )
+               ;
+
+            if ( cormap_minq > 0e0 ) {
+               parameters[ "title"     ] += QString( " Minimum q limit is %1 [A^-1]." ).arg( cormap_minq );
+               parameters[ "title_adj" ] += QString( " Minimum q limit is %1 [A^-1]." ).arg( cormap_minq );
+            }
+
+            if ( parameters.count( "decimate" ) ) {
+               int decimate = parameters[ "decimate" ].toInt();
+               QString nth_tag;
+               switch ( decimate ) {
+               case 2 : nth_tag = "nd"; break;
+               case 3 : nth_tag = "rd"; break;
+               default : nth_tag = "th"; break;
+               }
+               
+               parameters[ "title" ] += QString( tr( " Only every %1%2 q value selected." ) )
+                  .arg( decimate ).arg( nth_tag );
+               parameters[ "title_adj" ] += QString( tr( " Only every %1%2 q value selected." ) )
+                  .arg( decimate ).arg( nth_tag );
+            }
+
+            parameters[ "linewisesummary"   ] = "true";
+            parameters[ "fileheader"        ] = "Time/Frame";
+            parameters[ "cormap_of_brookes" ] = "true";
+            parameters[ "clusteranalysis"   ] = "true";
+
+            parameters[ "name" ]             = use_names.front();
+            {
+               QStringList qsl = vector_qstring_to_qstringlist( use_names );
+               QString head = qstring_common_head( qsl, true );
+               QString tail = qstring_common_tail( qsl, true );
+               parameters[ "name" ] = QString( "%1_%2%3_f%4_cqmx%5" )
+                  .arg( head )
+                  .arg( tail )
+                  .arg( parameters.count( "decimate" ) ? QString( "_s%1" ).arg( parameters[ "decimate" ] ) : QString( "" ) )
+                  .arg( pvaluepairs.size() )
+                  .arg( cormap_maxq )
+                  .replace( ".", "_" )
+                  ;
+            }
+
+            US_Hydrodyn_Saxs_Cormap * uhcm = new US_Hydrodyn_Saxs_Cormap( us_hydrodyn,
+                                                                          parameters,
+                                                                          pvaluepairs,
+                                                                          adjpvaluepairs,
+                                                                          use_names );
+            baseline_last_cormap_parameters  = parameters;
+            baseline_last_cormap_pvaluepairs = pvaluepairs;
+            baseline_last_cormap_run_end_s   = q_start;
+            baseline_last_cormap_run_end_e   = q_end;
+
+            if ( parameters.count( "close" ) ) {
+               delete uhcm;
+            } else {
+               uhcm->show();
+            }
+         }
+         baseline_enables();
+      }
+      break;
+
+   case MODE_GGAUSSIAN :
+      {
+         if ( !unified_ggaussian_ok ) {
+            editor_msg( "red", tr( "Internal error (CorMap): Global Gaussian mode, but unified Global Gaussians are not ok." ) );
+            ggaussian_enables();
+            return;
+         }
+            
+         if ( 
+             unified_ggaussian_files.size() != ggaussian_last_pfit_P.size() ||
+             unified_ggaussian_files.size() != ggaussian_last_pfit_N.size() ||
+             unified_ggaussian_files.size() != ggaussian_last_pfit_C.size() ||
+             unified_ggaussian_files.size() != ggaussian_last_pfit_S.size() ||
+             unified_ggaussian_files.size() != ggaussian_last_chi2.size() ||
+             lbl_gauss_fit->text() == "?" ||
+             pb_ggauss_rmsd->isEnabled()
+              ){
+            if ( ggauss_recompute() ) {
+               lbl_gauss_fit->setText( QString( "%1" ).arg( ggaussian_rmsd(), 0, 'g', 5 ) );
+               pb_ggauss_rmsd->setEnabled( false );
+            } else {
+               editor_msg( "red", tr( "Internal error (CorMap) building global Gaussians" ) );
+               ggaussian_enables();
+               return;
+            }
+         }
+
+         if ( unified_ggaussian_files.size() != ggaussian_last_pfit_P.size() ||
+              unified_ggaussian_files.size() != ggaussian_last_pfit_N.size() ||
+              unified_ggaussian_files.size() != ggaussian_last_pfit_C.size() ||
+              unified_ggaussian_files.size() != ggaussian_last_pfit_S.size() ||
+              unified_ggaussian_files.size() != ggaussian_last_chi2.size() ) {
+            editor_msg( "red", 
+                        QString( tr( "Internal error (CorMap): Global Gaussian mode, last_pfit_* size (%1 %2 %3 %4 %5) does not match number number of Gaussians (%6)" ) )
+                        .arg( ggaussian_last_pfit_P.size() )
+                        .arg( ggaussian_last_pfit_N.size() )
+                        .arg( ggaussian_last_pfit_C.size() )
+                        .arg( ggaussian_last_pfit_S.size() )
+                        .arg( ggaussian_last_chi2.size() )
+                        .arg( unified_ggaussian_files.size() ) 
+                        );
+            ggaussian_enables();
+            return;
+         }            
+         
+         int    fcount = (int) unified_ggaussian_files.size();
+         vector < QString > selected_files;
+
+         vector < vector < double > > pvaluepairs( 1 );
+
+         pvaluepairs[ 0 ] = ggaussian_last_pfit_P;
+         int use_names_max_len = 10;
+
+
+         for ( int i = 0; i < fcount ; ++i ) {
+            if ( use_names_max_len < (int) unified_ggaussian_files[ i ].length() ) {
+               use_names_max_len = (int) unified_ggaussian_files[ i ].length();
+            }
+         }
+
+         parameters[ "msg" ] = QString( " Ref. : %1\t   N  Start point  C   P-value\n" )
+            .arg( "File", -use_names_max_len )
+            ;
+
+         for ( int i = 0; i < fcount ; ++i ) {
+            selected_files.push_back( unified_ggaussian_files[ i ] );
+            // parameters[ "msg" ] += 
+            //    QString( "%1\t%2\t%3\t%4\t%5\n" )
+            //    .arg( unified_ggaussian_files[ i ] )
+            //    .arg( ggaussian_last_pfit_N[ i ] )
+            //    .arg( ggaussian_last_pfit_S[ i ] )
+            //    .arg( ggaussian_last_pfit_C[ i ] )
+            //    .arg( ggaussian_last_pfit_P[ i ] )
+            //    ;
+               // qDebug( QString( "%1 %2 %3 %4 %5 %6 %7" )
+            parameters[ "msg" ] += 
+               QString( "%1 : %2\t%3\t%4\t%5\t%6"
+                        // "\t%7"
+                        "\n" )
+               .arg( i + 1, 5 )
+               .arg( unified_ggaussian_files[ i ], -use_names_max_len )
+               .arg( ggaussian_last_pfit_N[ i ], 6 )
+               .arg( ggaussian_last_pfit_S[ i ], 6 )
+               .arg( ggaussian_last_pfit_C[ i ], 6 )
+               .arg( QString( "" ).sprintf( "%.4g", ggaussian_last_pfit_P[ i ] ).leftJustify( 12 ) )
+               // .arg( adjP ) 
+               ;
+
+         }            
+
+         {
+            parameters[ "as_pairs"  ] = "true";
+            parameters[ "title"     ] = QString( tr( "Global Gaussian t range %1 to %2." ) )
+               .arg( le_gauss_fit_start->text() )
+               .arg( le_gauss_fit_end->text() )
+               ;
+
+            parameters[ "ppvm_title"     ] = tr( "q value comaprison" );
+            parameters[ "ppvm_title_adj" ] = tr( "q value comaprison" );
+
+            parameters[ "title_adj" ] = parameters[ "title" ];
+            
+            parameters[ "global_width" ] = "1000";
+            parameters[ "global_height" ] = "500";
+            // parameters[ "image_height" ] = "300";
+
+            parameters[ "name" ]         = selected_files.front();
+            {
+               QStringList qsl = vector_qstring_to_qstringlist( selected_files );
+               QString head = qstring_common_head( qsl, true );
+               QString tail = qstring_common_tail( qsl, true );
+               parameters[ "name" ] = QString( "%1_%2%3_qcnt%4_cqmx%5" )
+                  .arg( head )
+                  .arg( tail )
+                  .arg( parameters.count( "decimate" ) ? QString( "_s%1" ).arg( parameters[ "decimate" ] ) : QString( "" ) )
+                  .arg( pvaluepairs.size() )
+                  .arg( cormap_maxq )
+                  .replace( ".", "_" )
+                  ;
+            }
+
+            US_Hydrodyn_Saxs_Cormap * uhcm = new US_Hydrodyn_Saxs_Cormap( us_hydrodyn,
+                                                                          parameters,
+                                                                          pvaluepairs,
+                                                                          pvaluepairs,
+                                                                          selected_files );
+            if ( parameters.count( "close" ) ) {
+               delete uhcm;
+            } else {
+               uhcm->show();
+            }
+         }
+         ggaussian_enables();
+      }
+      break;
+
+   default :
+      {
+         vector < QString > selected_files;
+
+         {
+            vector < vector < double > > grids;
+
+            for ( int i = 0; i < lb_files->numRows(); ++i )
+            {
+               if ( lb_files->isSelected( i ) )
+               {
+                  QString this_file = lb_files->text( i );
+                  if ( f_qs.count( this_file ) &&
+                       f_Is.count( this_file ) &&
+                       f_qs[ this_file ].size() &&
+                       f_Is[ this_file ].size() )
+                  {
+                     selected_files    .push_back( this_file );
+                     grids.push_back( f_qs[ this_file ] );
+                  }
+               }
+            }
+
+            vector < double > v_union = US_Vector::vunion( grids );
+            vector < double > v_int   = US_Vector::intersection( grids );
+
+            bool any_differences = v_union != v_int;
+
+            if ( any_differences )
+            {
+               editor_msg( "red", tr( "CorMap: curves must be on the same grid, try 'Crop Common' first." ) );
+               update_enables();
+               return;
+            }
+         }
+
+         if ( !selected_files.size() ) {
+            editor_msg( "red", tr( "CorMap has no files" ) );
+            update_enables();
+            return;
+         }
+
+         if ( !parameters.count( "decimate" ) ) {
+            if ( !ask_to_decimate( parameters ) ) {
+               update_enables();
+               return;
+            }
+         }
+
+         double cormap_minq = parameters.count( "cormap_minq" ) ? parameters[ "cormap_minq" ].toDouble() : 0e0;
+
+         int decimate = parameters.count( "decimate" ) ? parameters[ "decimate" ].toInt() : 0;
+
+         // if files are time, then grab alternates, otherwise grab alternate q points
+         if ( !f_is_time.count( selected_files[ 0 ] ) ) {
+            editor_msg( "red", tr( "Internal error: CorMap files not in global files" ) );
+            update_enables();
+            return;
+         }
+
+         bool files_are_time = f_is_time[ selected_files[ 0 ] ];
+
+         vector < QString > use_preq_selected_files;
+
+         if ( files_are_time && decimate ) {
+            for ( int i = 0; i < (int) selected_files.size(); i += decimate ) {
+               use_preq_selected_files.push_back( selected_files[ i ] );
+            }
+         } else {
+            use_preq_selected_files = selected_files;
+         }
+
+         vector < QString > use_selected_files;
+
+         if ( files_are_time ) {
+            QRegExp rx_cap( "_It_q(\\d+_\\d+)" );
+            for ( int i = 0; i < (int) use_preq_selected_files.size(); ++i ) {
+               if ( rx_cap.search( use_preq_selected_files[ i ] ) == -1 ) {
+                  // QMessageBox::warning( this
+                  //                       , caption() + tr( " : CorMap Analysis" )
+                  //                       , QString( tr( "Could not extract q value from file name %1" ) )
+                  //                       .arg( use_preq_selected_files[ i ] )
+                  //                       ,QMessageBox::Ok | QMessageBox::Default
+                  //                       ,QMessageBox::NoButton
+                  //                       );
+                  editor_msg( "red", 
+                              QString( tr( "CorMap Analysis: Could not extract q value from file name %1" ) )
+                              .arg( use_preq_selected_files[ i ] ) );
+                  baseline_enables();
+                  return;
+               }                  
+               double qv = rx_cap.cap( 1 ).replace( "_", "." ).toDouble();
+               // qDebug( QString( "baseline cormap captured %1 from %2" ).arg( qv ).arg( use_preq_selected_files[ i ] ) );
+               if ( qv <= cormap_maxq && qv >= cormap_minq ) {
+                  use_selected_files.push_back( use_preq_selected_files[ i ] );
+               }
+            }
+         } else {
+            use_selected_files = use_preq_selected_files;
+         }
+            
+         if ( use_selected_files.size() < 2 ) {
+            editor_msg( "red", tr( "Insufficient curves remaining for CorMap Analysis" ) );
+            baseline_enables();
+            return;
+         }            
+
+         vector < double >            q = f_qs[ use_selected_files[ 0 ] ];
+         vector < vector < double > > I( 2 );
+         vector < vector < double > > rkl;
+
+         int    N;
+         int    S;
+         int    C;
+         double P;
+
+         int    fcount = (int) use_selected_files.size();
+         int    m      = 0;
+
+         for ( int i = 0; i < fcount - 1; ++i ) {
+            for ( int j = i + 1; j < fcount; ++j ) {
+               ++m;
+            }
+         }
+
+         vector < vector < double > > pvaluepairs( fcount );
+         vector < vector < double > > adjpvaluepairs( fcount );
+
+         int use_names_max_len = 10;
+
+         for ( int i = 0; i < fcount; ++i ) {
+            pvaluepairs   [ i ].resize( fcount );
+            pvaluepairs   [ i ][ i ] = 1;
+            adjpvaluepairs[ i ].resize( fcount );
+            adjpvaluepairs[ i ][ i ] = 1;
+            if ( use_names_max_len < (int) use_selected_files[ i ].length() ) {
+               use_names_max_len = (int) use_selected_files[ i ].length();
+            }
+         }
+
+         parameters[ "msg" ] = QString( "%1\t%2\t    N  Start point  C   P-value\n" )
+            .arg( "File", -use_names_max_len )
+            .arg( "File", -use_names_max_len )
+            // + "\tAdj P-Value"            
+            ;
+
+         progress->reset();
+         int pp = 0;
+
+         vector < double > undecimated_q = q;
+         int q_points = (int) q.size();
+         bool do_q_decimate = !files_are_time;
+         int use_decimate = decimate ? decimate : 1;
+         if ( do_q_decimate ) {
+            // qDebug( QString( "do_q_decimate use_decimate %1 q_points %2" ).arg( use_decimate ).arg( q_points ) );
+            vector < double > new_q;
+            for ( int k = 0; k < q_points; k += use_decimate ) {
+               if ( q[ k ] <= cormap_maxq &&
+                    q[ k ] >= cormap_minq ) {
+                  new_q.push_back( q[ k ] );
+               }
+            }
+            q = new_q;
+         }
+
+         // US_Vector::printvector2( QString( "cormap minq %1 maxq %2 q undecimated_q" ).arg( cormap_minq ).arg( cormap_maxq ), q, undecimated_q );
+
+         for ( int i = 0; i < fcount - 1; ++i ) {
+            I[ 0 ] = f_Is[ use_selected_files[ i ] ];
+
+            if ( do_q_decimate ) {
+               vector < double > new_I;
+               for ( int k = 0; k < q_points; k += use_decimate ) {
+                  if ( undecimated_q[ k ] <= cormap_maxq &&
+                       undecimated_q[ k ] >= cormap_minq ) {
+                     new_I.push_back( I[ 0 ][ k ] );
+                  }
+               }
+               I[ 0 ] = new_I;
+            }
+
+            // US_Vector::printvector2( QString( "i %1" ).arg( i ), q, I[0] );
+
+            for ( int j = i + 1; j < fcount; ++j ) {
+               progress->setProgress( pp++, m );
+               qApp->processEvents();
+
+               I[ 1 ] = f_Is[ use_selected_files[ j ] ];
+               if ( do_q_decimate ) {
+                  vector < double > new_I;
+                  for ( int k = 0; k < q_points; k += use_decimate ) {
+                     if ( undecimated_q[ k ] <= cormap_maxq &&
+                          undecimated_q[ k ] >= cormap_minq ) {
+                        new_I.push_back( I[ 1 ][ k ] );
+                     }
+                  }
+                  I[ 1 ] = new_I;
+               }
+
+               // US_Vector::printvector2( QString( "default for cormap i %1 j %2 I" ).arg( i ).arg( j ), I[ 0 ], I[ 1 ] );
+
+               if ( !usu->cormap( q, I, rkl, N, S, C, P ) ) {
+                  editor_msg( "red", usu->errormsg );
+               }
+               double adjP = (double) m * P;
+               if ( adjP > 1e0 ) {
+                  adjP = 1e0;
+               }
+               pvaluepairs[ i ][ j ] = P;
+               pvaluepairs[ j ][ i ] = P;
+               adjpvaluepairs[ i ][ j ] = adjP;
+               adjpvaluepairs[ j ][ i ] = adjP;
+
+               parameters[ "msg" ] += 
+                  QString( "%1\t%2\t%3\t%4\t%5\t%6"
+                           // "\t%7"
+                           "\n" )
+                  .arg( use_selected_files[ i ], -use_names_max_len )
+                  .arg( use_selected_files[ j ], -use_names_max_len )
+                  .arg( N, 6 )
+                  .arg( S, 6 )
+                  .arg( C, 6 )
+                  .arg( QString( "" ).sprintf( "%.4g", P ).leftJustify( 12 ) )
+                  // .arg( adjP ) 
+                  ;
+            }
+         }
+
+         progress->reset();
+
+         {
+            parameters[ "title" ]     = 
+               QString( tr( "Maximum q limit is %1 [A^-1]." ) )
+               .arg( cormap_maxq );
+
+            parameters[ "ppvm_title"     ] = tr( "Pairwise P value map" );
+            parameters[ "ppvm_title_adj" ] = tr( "Pairwise adjusted P value map" );
+
+            parameters[ "title_adj" ] = parameters[ "title" ];
+
+            if ( cormap_minq > 0e0 ) {
+               parameters[ "title"     ] += QString( " Minimum q limit is %1 [A^-1]." ).arg( cormap_minq );
+               parameters[ "title_adj" ] += QString( " Minimum q limit is %1 [A^-1]." ).arg( cormap_minq );
+            }
+
+            if ( parameters.count( "decimate" ) ) {
+               int decimate = parameters[ "decimate" ].toInt();
+               QString nth_tag;
+               switch ( decimate ) {
+               case 2 : nth_tag = "nd"; break;
+               case 3 : nth_tag = "rd"; break;
+               default : nth_tag = "th"; break;
+               }
+               
+               parameters[ "title" ] += QString( tr( " Only every %1%2 q value selected." ) )
+                  .arg( decimate ).arg( nth_tag );
+               parameters[ "title_adj" ] += QString( tr( " Only every %1%2 q value selected." ) )
+                  .arg( decimate ).arg( nth_tag );
+            }
+
+            parameters[ "adjusted" ] = "true";
+            parameters[ "linewisesummary" ] = "true";
+            parameters[ "clusteranalysis"   ] = "true";
+
+            parameters[ "global_width" ] = "1000";
+            parameters[ "global_height" ] = "700";
+            parameters[ "image_height" ] = "300";
+            // parameters[ "name" ]         = use_selected_files.front();
+            {
+               QStringList qsl = vector_qstring_to_qstringlist( use_selected_files );
+               QString head = qstring_common_head( qsl, true );
+               QString tail = qstring_common_tail( qsl, true );
+               parameters[ "name" ] = QString( "%1_%2%3_%4%5_cqmx%6" )
+                  .arg( head )
+                  .arg( tail )
+                  .arg( parameters.count( "decimate" ) ? QString( "_s%1" ).arg( parameters[ "decimate" ] ) : QString( "" ) )
+                  .arg( files_are_time ? "q" : "f" )
+                  .arg( pvaluepairs.size() )
+                  .arg( cormap_maxq )
+                  .replace( ".", "_" )
+                  ;
+            }
+
+            US_Hydrodyn_Saxs_Cormap * uhcm = new US_Hydrodyn_Saxs_Cormap( us_hydrodyn,
+                                                                          parameters,
+                                                                          pvaluepairs,
+                                                                          adjpvaluepairs,
+                                                                          use_selected_files );
+            if ( parameters.count( "close" ) ) {
+               delete uhcm;
+            } else {
+               uhcm->show();
+            }
+         }
+         update_enables();
+      }
+      break;
+   }
+}
+
+void US_Hydrodyn_Saxs_Hplc::bin()
+{
+   QStringList files = all_selected_files();
+   bin( files );
+}
+
+void US_Hydrodyn_Saxs_Hplc::bin( QStringList files )
+{
+   bool ok;
+   int binning = QInputDialog::getInteger(
+                                            tr( "SOMO: HPLC enter binning" ),
+                                            tr( "Enter the number of points of binning:" ),
+                                            2, 
+                                            2,
+                                            10,
+                                            1, 
+                                            &ok, 
+                                            this 
+                                            );
+   if ( !ok ) {
+      return;
+   }
+
+   map < QString, bool > current_files;
+   for ( int i = 0; i < (int)lb_files->numRows(); i++ )
+   {
+      current_files[ lb_files->text( i ) ] = true;
+   }
+
+   map < QString, bool > select_files;
+
+   US_Saxs_Util usu;
+   vector < double > binned_q;
+   vector < double > binned_I;
+   vector < double > binned_e;
+
+   for ( unsigned int i = 0; i < ( unsigned int ) files.size(); i++ )
+   {
+      int ext = 0;
+      QString binned_name = files[ i ] + QString( "-bin%1" ).arg( binning );
+      while ( current_files.count( binned_name ) )
+      {
+         binned_name = files[ i ] + QString( "-bin%1-%2" ).arg( binning ).arg( ++ext );
+      }
+
+      if ( usu.bin( f_qs[ files[ i ] ], 
+                    f_Is[ files[ i ] ], 
+                    f_errors[ files[ i ] ], 
+                    binned_q, 
+                    binned_I, 
+                    binned_e, 
+                    binning ) )
+      {
+         select_files[ binned_name ] = true;
+
+         lb_created_files->insertItem( binned_name );
+         lb_created_files->setBottomItem( lb_created_files->numRows() - 1 );
+         lb_files->insertItem( binned_name );
+         lb_files->setBottomItem( lb_files->numRows() - 1 );
+         created_files_not_saved[ binned_name ] = true;
+   
+         f_pos       [ binned_name ] = f_qs.size();
+
+         {
+            vector < QString > qs_string;
+            for ( int j = 0; j < (int) binned_q.size(); ++j ) {
+               qs_string.push_back( QString( "%1" ).arg( binned_q[ j ] ) );
+            }
+            f_qs_string [ binned_name ] = qs_string;
+         }
+
+         f_qs        [ binned_name ] = binned_q;
+         f_Is        [ binned_name ] = binned_I;
+         f_errors    [ binned_name ] = binned_e;
+         f_is_time   [ binned_name ] = f_is_time  [ files[ i ] ];
+         f_conc      [ binned_name ] = f_conc.count( files[ i ] ) ? f_conc[ files[ i ] ] : 0e0;
+         f_psv       [ binned_name ] = f_psv .count( files[ i ] ) ? f_psv [ files[ i ] ] : 0e0;
+         f_I0se      [ binned_name ] = f_I0se .count( files[ i ] ) ? f_I0se [ files[ i ] ] : 0e0;
+         {
+            vector < double > tmp;
+            f_gaussians  [ binned_name ] = tmp;
+         }
+         editor_msg( "gray", QString( "Created %1\n" ).arg( binned_name ) );
+      } else {
+         editor_msg( "red", QString( "Error: binning error trying to create %1\n" ).arg( binned_name ) );
+      }
+   }
+
+   disable_updates = true;
+
+   lb_files->clearSelection();
+   for ( int i = 0; i < (int)lb_files->numRows(); i++ )
+   {
+      if ( select_files.count( lb_files->text( i ) ) )
+      {
+         lb_files->setSelected( i, true );
+      }
+   }
+
+   disable_updates = false;
+   plot_files();
+
+   update_enables();
+}
+
+void US_Hydrodyn_Saxs_Hplc::bb_cm_inc()
+{
+   // qDebug( "bb_cm_inc" );
+
+   map < QString, QString > save_parameters;
+   map < QString, QString > parameters;
+
+   bool slide = false;
+   bool increment = false;
+
+   switch ( QMessageBox::question(this, 
+                                 caption() + tr( " : CorMap analysis auto increment" )
+                                 ,tr( 
+                                     "Choose your options for automatic running"
+                                     )
+                                 ,tr( "&Slide current window forward" )
+                                 ,tr( "&Increment window size" )
+                                 ,tr( "&Cancel" )
+                                 ,0 // 
+                                 ,-1 // 
+                                 ) )
+   {
+   case -1 : // escape
+      return;
+      break;
+   case 0 : // 
+      slide = true;
+      break;
+   case 1 : // 
+      increment = true;
+      break;
+   case 2 : // cancel
+      return;
+      break;
+   }
+
+   save_parameters[ "close" ] = "true";
+
+   QString fn = QFileDialog::getSaveFileName( this , tr( "Choose a file name for the images" ) , QString::null , "png (*.png *.PNG)" );
+
+   if ( !fn.isEmpty() ) {
+      fn = fn.replace( QRegExp( ".png$", false ), "" );
+   }
+   
+   save_parameters[ "decimate" ] = "0";
+   ask_to_decimate( save_parameters );
+
+   double start = le_baseline_end_s      ->text().toDouble();
+   double end   = le_baseline_end_e      ->text().toDouble();
+   double o_start = start;
+   double o_end   = end;
+
+   // double min   = f_qs[ wheel_file ].front();
+   double max   = f_qs[ wheel_file ].back();
+
+   // qDebug( QString( "start %1 end %2 min %3 max %4" ).arg( start ).arg( end ).arg( min ).arg( max ) );
+
+   while ( end <= max ) {
+      le_baseline_end_s->setText( QString( "%1" ).arg( start ) );
+      le_baseline_end_e->setText( QString( "%1" ).arg( end ) );
+      // qDebug( QString( "run test for start %1 end %2" ).arg( start ).arg( end ) );
+      parameters = save_parameters;
+      if ( !fn.isEmpty() ) {
+         parameters[ "save_png" ] = fn + QString( "_fr%1_%2" ).arg( start ).arg( end ) + ".png";
+         parameters[ "save_csv" ] = fn + ".csv";
+      }
+      cormap( parameters );
+      save_parameters[ "csv_skip_report_header" ] = "true";
+      if ( slide ) {
+         start++;
+         end++;
+      }
+      if ( increment ) {
+         end++;
+      }
+   }      
+
+   le_baseline_end_s->setText( QString( "%1" ).arg( o_start ) );
+   le_baseline_end_e->setText( QString( "%1" ).arg( o_end ) );
+}
+
+bool US_Hydrodyn_Saxs_Hplc::blanks_params()
+{
+   qDebug( "blanks_params" );
+   map < QString, QString > save_parameters;
+   map < QString, QString > parameters;
+
+   save_parameters[ "close"    ] = "true";
+
+   save_parameters[ "decimate" ] = "0";
+   ask_to_decimate( save_parameters );
+
+   double o_start = le_baseline_end_s      ->text().toDouble();
+   double o_end   = le_baseline_end_e      ->text().toDouble();
+
+   int points = (int) f_qs[ wheel_file ].size();
+
+   qDebug( QString( "blanks_params points %1" ).arg( points ) );
+
+   // int points_start = 10; 
+   // int points_end   = 50;
+   // int points_inc   = 1;
+
+   int points_start = 10; 
+   int points_end   = 50;
+   int points_inc   = 5;
+
+   if ( points < 10 ) {
+      QMessageBox::warning( this, 
+                            caption() + tr( " : Analyze blanks" ),
+                            QString( tr( "To properly analyze blanks requires a minimum of 10 blank frames.\n"
+                                         "Optimally, 80 blanks should be available for this analysis\n" ) ),
+                            QMessageBox::Ok,
+                            QMessageBox::NoButton );
+      return false;
+   }
+
+   for ( int pts = points_start; pts <= points && pts <= points_end; pts += points_inc ) {
+      double start = f_qs[ wheel_file ].front();
+      double end   = f_qs[ wheel_file ][ pts - 1 ];
+      int pos = 0;
+      qDebug( QString( "blanks_params pts %1 start %2 end %3" ).arg( pts ).arg( start ).arg( end ) );
+      
+      while ( pts + pos - 1 < points ) {
+         start = f_qs[ wheel_file ][ pos ];
+         end   = f_qs[ wheel_file ][ pos + pts - 1 ];
+         le_baseline_end_s->setText( QString( "%1" ).arg( start ) );
+         le_baseline_end_e->setText( QString( "%1" ).arg( end ) );
+         // qDebug( QString( "run test for start %1 end %2" ).arg( start ).arg( end ) );
+         parameters = save_parameters;
+         parameters[ "data_csv" ] = QString( "%1" ).arg( pts );
+         // if ( !fn.isEmpty() ) {
+         //    parameters[ "save_png" ] = fn + QString( "_fr%1_%2" ).arg( start ).arg( end ) + ".png";
+         //    parameters[ "save_csv" ] = fn + ".csv";
+         // }
+         cormap( parameters );
+         save_parameters[ "csv_skip_report_header" ] = "true";
+         pos += 10;
+      }      
+   }
+
+   le_baseline_end_s->setText( QString( "%1" ).arg( o_start ) );
+   le_baseline_end_e->setText( QString( "%1" ).arg( o_end ) );
+
+   map < QString, map < QString, vector < QString > > > data_csv         = ((US_Hydrodyn *)us_hydrodyn)->data_csv;
+   QStringList                                          data_csv_headers = ((US_Hydrodyn *)us_hydrodyn)->data_csv_headers;
+
+   cout << "data summary----------\n";
+
+   for ( int i = 0; i < (int) data_csv_headers.size(); ++i ) {
+      cout << data_csv_headers[ i ] << endl;
+      if ( data_csv.count( data_csv_headers[ i ] ) ) {
+         for ( map < QString, vector < QString > >::iterator it = data_csv[ data_csv_headers[ i ] ].begin();
+               it != data_csv[ data_csv_headers[ i ] ].end();
+               it++ ) {
+            cout << QString( "   %1:\n" ).arg( it->first );
+            for ( int j = 0; j < (int) it->second.size(); ++j ) {
+               cout << QString( "    %1\n" ).arg( it->second[ j ] );
+            }
+         }
+      }
+   }
+
+   return true;
+}
+
+QStringList US_Hydrodyn_Saxs_Hplc::vector_qstring_to_qstringlist( vector < QString > vqs ) {
+   QStringList qsl;
+   for ( int i = 0; i < (int) vqs.size(); ++i ) {
+      qsl << vqs[ i ];
+   }
+   return qsl;
+}
+
+void US_Hydrodyn_Saxs_Hplc::simulate() {
+   qDebug( "simulate" );
+
+   QStringList selected = all_selected_files();
+
+   map < QString, vector < double > > I;
+   map < QString, vector < double > > q;
+   map < QString, vector < double > > e;
+
+   {
+      vector < vector < double > > grids;
+
+      for ( int i = 0; i < (int) selected.size(); ++i ) {
+         QString this_file = selected[ i ];
+         if ( f_qs.count( this_file ) &&
+              f_Is.count( this_file ) &&
+              f_qs[ this_file ].size() &&
+              f_Is[ this_file ].size() ) {
+            grids.push_back( f_qs[ this_file ] );
+         }
+      }
+
+      vector < double > v_union = US_Vector::vunion( grids );
+      vector < double > v_int   = US_Vector::intersection( grids );
+
+      bool any_differences = v_union != v_int;
+
+      if ( any_differences )
+      {
+         editor_msg( "red", tr( "Simulate: curves must be on the same grid, try 'Crop Common' first." ) );
+         update_enables();
+         return;
+      }
+   }
+
+   for ( int i = 0; i < (int) selected.size(); ++i ) {
+      QString this_file = selected[ i ];
+      I[ this_file ] = f_Is[ this_file ];
+      q[ this_file ] = f_qs[ this_file ];
+      e[ this_file ] = f_errors[ this_file ];
+   }
+
+   US_Hydrodyn_Saxs_Hplc_Simulate * uhshs = new US_Hydrodyn_Saxs_Hplc_Simulate( 
+                                                                               us_hydrodyn,
+                                                                               this,
+                                                                               selected,
+                                                                               q,
+                                                                               I,
+                                                                               e
+                                                                                );
+   uhshs->show();
 }

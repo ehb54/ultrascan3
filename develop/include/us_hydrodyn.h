@@ -125,6 +125,8 @@ class US_EXTERN US_Hydrodyn : public Q3Frame
       friend class US_Hydrodyn_SasOptionsGuinier;
       friend class US_Hydrodyn_SasOptionsSans;
       friend class US_Hydrodyn_Hplc;
+      friend class US_Hydrodyn_Saxs_Cormap;
+      friend class US_Hydrodyn_Saxs_Hplc_Baseline_Best;
 
       US_Hydrodyn(vector < QString >,
                   QWidget *p = 0, 
@@ -793,6 +795,9 @@ class US_EXTERN US_Hydrodyn : public Q3Frame
       QStringList msroll_names;
 
       QString le_pdb_file_save_text;
+
+      map < QString, map < QString, vector < QString > > > data_csv;
+      QStringList                                          data_csv_headers;
 
    public:
 

@@ -138,6 +138,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       friend class US_Hydrodyn_Saxs_Hplc_Nth;
       friend class US_Hydrodyn_Saxs_Hplc_Svd;
       friend class US_Hydrodyn_Saxs_Hplc_Movie;
+      friend class US_Hydrodyn_Saxs_Hplc_Baseline_Best;
+      friend class US_Hydrodyn_Saxs_Hplc_Simulate;
 
    public:
       US_Hydrodyn_Saxs_Hplc(
@@ -220,6 +222,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       QPushButton   *pb_normalize;
       QPushButton   *pb_add;
       QPushButton   *pb_avg;
+      QPushButton   *pb_bin;
       QPushButton   *pb_smooth;
       QPushButton   *pb_repeak;
       QPushButton   *pb_svd;
@@ -316,9 +319,18 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       QPushButton   *pb_p3d;
       QLabel        *lbl_blank1;
       QLabel        *lbl_wheel_pos;
+      QLabel        *lbl_blank2;
+      QLabel        *lbl_wheel_pos_below;
+      QLabel        *lbl_wheel_Pcolor;
+      QImage        *qi_green;
+      QImage        *qi_yellow;
+      QImage        *qi_red;
+      QPushButton   *pb_wheel_inc;
+      QPushButton   *pb_wheel_dec;
       QwtWheel      *qwtw_wheel;
       QPushButton   *pb_ref;
       QPushButton   *pb_errors;
+      QPushButton   *pb_cormap;
       QPushButton   *pb_ggqfit;
       QPushButton   *pb_pp;
       QPushButton   *pb_wheel_cancel;
@@ -348,13 +360,24 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
 
       QCheckBox     *cb_gauss_match_amplitude;
 
+      QCheckBox     *cb_ggauss_scroll;
+      QCheckBox     *cb_ggauss_scroll_p_green;
+      QCheckBox     *cb_ggauss_scroll_p_yellow;
+      QCheckBox     *cb_ggauss_scroll_p_red;
+
       QPushButton   *pb_ggauss_start;
       QPushButton   *pb_ggauss_rmsd;
       QPushButton   *pb_ggauss_results;
 
       QPushButton   *pb_gauss_as_curves;
+      QPushButton   *pb_ggauss_as_curves;
 
+      QPushButton   *pb_blanks_start;
+      QPushButton   *pb_blanks_params;
+      QPushButton   *pb_baseline_blanks;
+      QPushButton   *pb_bb_cm_inc;
       QPushButton   *pb_baseline_start;
+      QPushButton   *pb_baseline_test;
 
       QCheckBox     *cb_baseline_start_zero;
       mQLineEdit    *le_baseline_start_s;
@@ -363,6 +386,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       mQLineEdit    *le_baseline_end_s;
       mQLineEdit    *le_baseline_end;
       mQLineEdit    *le_baseline_end_e;
+      QCheckBox     *cb_baseline_fix_width;
+      mQLineEdit    *le_baseline_width;
+      QPushButton   *pb_baseline_best;
       QPushButton   *pb_baseline_apply;
 
       QPushButton   *pb_line_width;
@@ -642,6 +668,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
 
       void           rgc_calc_rg();
 
+      // simulate
+      QPushButton  * pb_simulate;
+
       // pm
 
       QPushButton  * pb_pm;
@@ -670,6 +699,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       QLineEdit    * le_dummy;
 
       set < QString >     scale_selected;
+      vector < QString >  scale_selected_names;
       vector < QString >  scale_scroll_selected;
       int                 scale_scroll_pos;
       void                scale_scroll_highlight( int pos );
@@ -695,6 +725,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       vector < double >                  plot_errors_target;
       vector < double >                  plot_errors_fit;
       vector < double >                  plot_errors_errors;
+      QColor                             plot_errors_color;
 
       vector < hplc_stack_data >         stack_data;
 
@@ -777,15 +808,25 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       void                                gauss_add_hline( double center, double width );
 
       bool                                gg_fit_vector( 
-                                                        vector < double > & fit
-                                                         );  // returns a vector of the chi^2 or rmsd and their q values
+                                                        vector < double > & fit,
+                                                        vector < double > & pfit
+                                                         );  // returns a vector of the chi^2 or rmsd and their q values &
+      void                                ggauss_scroll_set_selected();
+      void                                ggauss_scroll_highlight( int pos );
+      vector < int >                      ggauss_scroll_set;
+      bool                                ggauss_scroll_save_group;
+
+      // the cormap p values from pairwise comparisons
 
       map < QString, bool >               all_files_map();
 
       void                                update_plot_errors( vector < double > &grid, 
                                                               vector < double > &target, 
                                                               vector < double > &fit,
-                                                              vector < double > &errors );
+                                                              vector < double > &errors,
+                                                              QColor            use_color = Qt::red
+                                                              );
+
       void                                update_plot_errors_group();
 
       void                                hide_widgets( vector < QWidget *> widgets, bool hide );
@@ -803,6 +844,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
 #ifdef QT4
       QwtPlotGrid                       * ggqfit_plot_grid;
 #endif
+      QCheckBox                         * cb_ggq_plot_chi2;
+      QCheckBox                         * cb_ggq_plot_P;
 
       // "mode" widgets
 
@@ -813,8 +856,10 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       vector < QWidget * >                ggaussian_4var_widgets;
       vector < QWidget * >                ggaussian_5var_widgets;
       vector < QWidget * >                ggqfit_widgets;
+      vector < QWidget * >                wheel_below_widgets;
 
       vector < QWidget * >                wyatt_widgets;
+      vector < QWidget * >                blanks_widgets;
       vector < QWidget * >                baseline_widgets;
       vector < QWidget * >                scale_widgets;
       vector < QWidget * >                timeshift_widgets;
@@ -842,6 +887,30 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       bool                                ggaussian_compatible( bool check_against_global = true );
       bool                                ggaussian_compatible( QStringList & files, bool check_against_global = true );
       bool                                ggaussian_compatible( set < QString > & selected, bool check_against_global = true );
+      vector < int >                      ggaussian_last_pfit_N;
+      vector < int >                      ggaussian_last_pfit_C;
+      vector < int >                      ggaussian_last_pfit_S;
+      vector < double >                   ggaussian_last_pfit_P;
+      vector < double >                   ggaussian_last_chi2;
+      vector < int >                      ggaussian_selected_file_index;
+      vector < vector < double > >        ggaussian_last_gg;
+      vector < vector < vector < double > > >       ggaussian_last_ggig;
+      vector < vector < double > >        compute_gaussian_sum_partials;
+      vector < vector < double > >        ggaussian_last_gg_t;
+      vector < vector < double > >        ggaussian_last_I;
+      vector < vector < double > >        ggaussian_last_e;
+      map < QString, double >             ggaussian_last_pfit_map;
+#ifdef QT4
+      vector < QwtPlotMarker * >          ggaussian_pts_chi2;
+      vector < QwtPlotMarker * >          ggaussian_pts_pfit;
+      set < QwtPlotMarker * >             ggaussian_pts_chi2_marked;
+      set < QwtPlotMarker * >             ggaussian_pts_pfit_marked;
+#else
+      vector < long >                     ggaussian_pts_chi2;
+      vector < long >                     ggaussian_pts_pfit;
+      set < long >                        ggaussian_pts_chi2_marked;
+      set < long >                        ggaussian_pts_pfit_marked;
+#endif
 
       unsigned int                        gaussian_pos;
       void                                update_gauss_pos();
@@ -900,11 +969,13 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
 
       void                         delete_zoomer_if_ranges_changed();
       QString                      vector_double_to_csv( vector < double > vd );
+      static QStringList           vector_qstring_to_qstringlist( vector < QString > vqs );
 
       bool                         adjacent_ok( QString name );
 
       void                         avg     ( QStringList files );
       void                         conc_avg( QStringList files );
+      void                         bin( QStringList files );
       void                         smooth( QStringList files );
       void                         repeak( QStringList files );
       void                         create_i_of_t( QStringList files );
@@ -950,6 +1021,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
          MODE_NORMAL
          ,MODE_GAUSSIAN
          ,MODE_GGAUSSIAN
+         ,MODE_BLANKS
          ,MODE_BASELINE
          ,MODE_TIMESHIFT
          ,MODE_SCALE
@@ -991,12 +1063,65 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
 
       mQLineEdit                   *le_last_focus;
 
+      void                         blanks_enables();
+      QStringList                  default_blanks;
+      QStringList                  default_blanks_files;
+      set < QString >              default_blanks_set;
+      set < QString >              blanks_temporary_load_set;
+
+      QStringList                  baseline_blanks;
+      bool                         blanks_in_baseline_mode;
+
+      QStringList                  blanks_save_selected;
+      set < QString >              blanks_save_selected_set;
+
+      QStringList                  blanks_selected;
+      QStringList                  blanks_created;
+      vector < double >            blanks_created_q;
+      set < QString >              blanks_created_set;
+      set < QString >              blanks_selected_set;
+      bool                         blanks_axis_y_was_log;
+
+      map < QString, QString >     blanks_last_cormap_parameters;
+      vector < vector < double > > blanks_last_cormap_pvaluepairs;
+      map < QString, double >      blanks_last_brookesmap_sliding_results;
+      double                       blanks_last_cormap_run_end_s;
+      double                       blanks_last_cormap_run_end_e;
+
+      vector < double >            blanks_last_q_range;
+
+      map < QString, QString >     blanks_cormap_parameters;
+      vector < vector < double > > blanks_cormap_pvaluepairs;
+      map < QString, double >      blanks_brookesmap_sliding_results;
+
+      int                          baseline_max_window_size;
+      int                          baseline_best_last_window_size;
+      bool                         baseline_best_ok;
+      bool                         baseline_ready_to_apply;
+
+      double                       blanks_end_s;
+      double                       blanks_end_e;
+
       void                         baseline_enables();
       void                         baseline_init_markers();
-      void                         replot_baseline();
+      void                         replot_baseline( QString qs = "" );
+      void                         replot_baseline_integral();
+      map < double, int >          wheel_double_to_pos;
+      int                          input_double_to_pos( double d );
 
+      bool                         ask_to_decimate( map < QString, QString > & parameters );
+      bool                         ask_cormap_minq( map < QString, QString > & parameters );
+
+      bool                         baseline_multi;
+      bool                         baseline_integral;
+      QStringList                  baseline_selected;
+      set < QString >              baseline_selected_set;
       double                       baseline_intercept;
       double                       baseline_slope;
+
+      set < QString >              baseline_test_added_set;
+      vector < QString >           baseline_apply_created;
+
       bool                         org_baseline_start_zero;
       double                       org_baseline_start_s;
       double                       org_baseline_start;
@@ -1008,7 +1133,24 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
                                                    bool integral = false, 
                                                    int smoothing = 0,
                                                    bool save_bl = false,
-                                                   unsigned int reps = 1 );
+                                                   unsigned int reps = 1,
+                                                   bool do_replot = true,
+                                                   bool quiet = false );
+
+      map < QString, QString >     baseline_last_cormap_parameters;
+      vector < vector < double > > baseline_last_cormap_pvaluepairs;
+      // map < QString, double >      baseline_last_brookesmap_sliding_results;
+      double                       baseline_last_cormap_run_end_s;
+      double                       baseline_last_cormap_run_end_e;
+
+      map < QString, QString >     baseline_cormap_parameters;
+      vector < vector < double > > baseline_cormap_pvaluepairs;
+      map < QString, double >      baseline_brookesmap_sliding_results;
+      double                       baseline_cormap_run_end_s;
+      double                       baseline_cormap_run_end_e;
+
+      bool                         baseline_test_mode;
+      void                         baseline_test_pos( int pos );
 
       bool                         compute_f_gaussians( QString file, QWidget *hplc_fit_widget );
 
@@ -1170,6 +1312,10 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       QStringList                  get_frames( QStringList files, QString head, QString tail );
       map < QString, QString >     ldata;
 
+      void                         wheel_enables( bool enabled = true );
+
+      void                         cormap( map < QString, QString > & parameters );
+
    private slots:
 
       void setupGUI();
@@ -1205,6 +1351,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       void normalize();
       void add();
       void avg();
+      void bin();
       void smooth();
       void svd();
       void repeak();
@@ -1244,8 +1391,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       void ref();
       void errors();
       void ggqfit();
+      void cormap();
       void pp();
-      void wheel_cancel();
+      void wheel_cancel( bool from_wheel_save = false );
       void wheel_save();
 
       void clear_display();
@@ -1293,6 +1441,13 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       void ggauss_rmsd                 ();
       void ggauss_results              ();
 
+      void ggauss_scroll               ();
+      void ggauss_scroll_p_green       ();
+      void ggauss_scroll_p_yellow      ();
+      void ggauss_scroll_p_red         ();
+
+      bool gg_fit_replot               ();
+
       void set_sd_weight               ();
       void set_fix_width               ();
       void set_fix_dist1               ();
@@ -1312,8 +1467,14 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       void wyatt_end2_text             ( const QString & );
       void wyatt_end2_focus            ( bool );
 
-      void baseline_start              ();
+      void blanks_start                ();
+      bool blanks_params               ();
+      void bb_cm_inc                   ();
+
+      void baseline_start              ( bool from_blanks_mode_save = false );
+      void baseline_test               ();
       void baseline_apply              ();
+      void baseline_best               ();
 
       void set_baseline_start_zero     ();
 
@@ -1323,12 +1484,15 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       void baseline_end_s_text         ( const QString & );
       void baseline_end_text           ( const QString & );
       void baseline_end_e_text         ( const QString & );
+      void set_baseline_fix_width      ();
+      void baseline_width_text         ( const QString & );
       void baseline_start_s_focus      ( bool );
       void baseline_start_focus        ( bool );
       void baseline_start_e_focus      ( bool );
       void baseline_end_s_focus        ( bool );
       void baseline_end_focus          ( bool );
       void baseline_end_e_focus        ( bool );
+      void baseline_width_focus        ( bool );
 
       void scale                       ();
       void scale_q_start_text          ( const QString & );
@@ -1423,6 +1587,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       void rgc_rg_text              ( const QString & );
       void rgc_shape                ();
 
+      void simulate                 ();
+
       void pm                       ();
       void pm_enables               ();
       void pm_q_start_text          ( const QString & );
@@ -1450,6 +1616,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
 
       void check_mwt_constants      ( bool force = false );
 
+      void wheel_inc                ();
+      void wheel_dec                ();
+
    protected slots:
 
       void closeEvent(QCloseEvent *);
@@ -1464,6 +1633,6 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
 
 #define UHSH_WHEEL_RES 10000000
 #define Q_VAL_TOL 5e-6
-#define UHSH_VAL_DEC 8
-
+#define UHSH_SHOW_DIGITS 6
+#define UHSH_VAL_DEC 20
 #endif

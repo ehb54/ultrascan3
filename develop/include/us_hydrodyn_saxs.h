@@ -42,6 +42,7 @@
 // #endif
 #include "us_hydrodyn_saxs_residuals.h"
 #include "us_hydrodyn_saxs_guinier_frames.h"
+#include "us_hydrodyn_saxs_cormap.h"
 #include "us_hydrodyn_comparative.h"
 #include "us_vector.h"
 

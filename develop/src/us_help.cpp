@@ -15,6 +15,13 @@ void US_Help::show_help( QString helpFile )
   QString help = QDir::convertSeparators( 
       USglobal->config_list.help_dir + "/" + helpFile );
 
+  if ( !QFileInfo( help ).exists() ) {
+     help =
+        QDir::convertSeparators( 
+                                USglobal->config_list.help_dir 
+                                + "/manual/somo/underconstruction.html"
+                                 );
+  }
   URL = "file://" + help;
   openBrowser();
 }

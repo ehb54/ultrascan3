@@ -60,6 +60,14 @@ US_Hydrodyn_Pdb_Tool_Merge::US_Hydrodyn_Pdb_Tool_Merge(
 {
    this->us_hydrodyn = us_hydrodyn;
    this->pdb_tool_window = pdb_tool_window;
+   usu = ((US_Hydrodyn *)us_hydrodyn)->saxs_util;
+
+   for ( map < QString, double >::iterator it = usu->atom_vdw.begin();
+         it != usu->atom_vdw.end();
+         ++it ) {
+      qDebug( QString( "vdw %1 -> %2" ).arg( it->first ).arg( it->second ) );
+   }
+
    USglobal = new US_Config();
    setPalette( PALET_FRAME );
    setCaption(tr("US-SOMO: PDB Editor Cut/Splice Control"));
@@ -71,6 +79,8 @@ US_Hydrodyn_Pdb_Tool_Merge::US_Hydrodyn_Pdb_Tool_Merge(
    reset_csv_commands();
 
    setupGUI();
+   ((US_Hydrodyn*)us_hydrodyn)->fixWinButtons( this );
+
    running             = false;
    cache_range_ok      = false;
    extra_chains_done   = false;
@@ -292,6 +302,12 @@ void US_Hydrodyn_Pdb_Tool_Merge::setupGUI()
    le_target->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    le_target->setReadOnly(true);
 
+   cb_filter = new QCheckBox( this );
+   cb_filter -> setText( tr( "Filter out steric clashes from results" ) );
+   cb_filter -> setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
+   cb_filter -> setPalette( PALET_NORMAL );
+   AUTFBACK( cb_filter );
+
    progress = new Q3ProgressBar(this, "Progress");
    progress->setMinimumHeight(minHeight1);
    progress->setPalette( PALET_NORMAL );
@@ -439,6 +455,8 @@ void US_Hydrodyn_Pdb_Tool_Merge::setupGUI()
    background->addLayout ( vbl_editor_group );
    background->addSpacing( 2 );
    background->addLayout ( gl_files );
+   background->addSpacing( 2 );
+   background->addWidget ( cb_filter );
    background->addSpacing( 2 );
    background->addWidget ( progress );
    background->addSpacing( 2 );
@@ -670,6 +688,17 @@ void US_Hydrodyn_Pdb_Tool_Merge::start()
       return;
    }
 
+   QFile ff( le_target->text().replace( QRegExp( ".pdb$", false ) , "" ) + "_filtered.pdb" );
+   if ( cb_filter->isChecked() && !ff.open( QIODevice::WriteOnly ) )
+   {
+      QMessageBox::warning( this, "US-SOMO: PDB Editor : Cut/Splice",
+                            QString(tr("Could not open %1 for writing!")).arg( ff.name() ) );
+
+      running = false;
+      update_enables();
+      return;
+   }
+
    if ( !f.open( QIODevice::ReadOnly ) )
    {
       QMessageBox::warning( this,
@@ -688,8 +717,15 @@ void US_Hydrodyn_Pdb_Tool_Merge::start()
 
    Q3TextStream ts( &f );
    Q3TextStream tso( &fn );
+   Q3TextStream tsof( &ff );
+
    tso << QString("HEADER    Processed by US-SOMO Cut/Splice\n");
    tso << model_header;
+
+   if ( cb_filter->isChecked() ) {
+      tsof << QString("HEADER    Processed by US-SOMO Cut/Splice and *filtered* due to steric clashes\n");
+      tsof << model_header;
+   }      
 
    QStringList   model_lines;
    unsigned int  pos = 0;
@@ -728,15 +764,31 @@ void US_Hydrodyn_Pdb_Tool_Merge::start()
                   return;
                }
                
-               if ( !no_model )
-               {
-                  tso << QString("").sprintf("MODEL  %7s\n", model_name_vector[ pos ].ascii() );
-                  tso << model_remarks[ model_name_vector[ pos ] ];
-               }
-               tso << ((US_Hydrodyn_Pdb_Tool *)pdb_tool_window)->csv_to_pdb( csv_to, true );
-               if ( !no_model )
-               {
-                  tso << "ENDMDL\n";
+               if ( filtered ) {
+                  editor_msg( "darkred", QString( "Model %1 filtered due to steric clashes\n" ).arg( model_name_vector[ pos ] ) );
+                  if ( cb_filter->isChecked() ) {
+                     if ( !no_model )
+                     {
+                        tsof << QString("").sprintf("MODEL  %7s\n", model_name_vector[ pos ].ascii() );
+                        tsof << model_remarks[ model_name_vector[ pos ] ];
+                     }
+                     tsof << ((US_Hydrodyn_Pdb_Tool *)pdb_tool_window)->csv_to_pdb( csv_to, true );
+                     if ( !no_model )
+                     {
+                        tsof << "ENDMDL\n";
+                     }
+                  }
+               } else {
+                  if ( !no_model )
+                  {
+                     tso << QString("").sprintf("MODEL  %7s\n", model_name_vector[ pos ].ascii() );
+                     tso << model_remarks[ model_name_vector[ pos ] ];
+                  }
+                  tso << ((US_Hydrodyn_Pdb_Tool *)pdb_tool_window)->csv_to_pdb( csv_to, true );
+                  if ( !no_model )
+                  {
+                     tso << "ENDMDL\n";
+                  }
                }
                in_model = false;
                model_lines.clear();
@@ -762,8 +814,15 @@ void US_Hydrodyn_Pdb_Tool_Merge::start()
    tso << "END\n";
    f.close();
    fn.close();
+   if ( cb_filter->isChecked() ) {
+      tsof << "END\n";
+      ff.close();
+   }
    progress->setProgress( 1, 1 );
    editor_msg( "black" , QString("File written: %1").arg( fn.name() ) );
+   if ( cb_filter->isChecked() ) {
+      editor_msg( "black" , QString("File written: %1").arg( ff.name() ) );
+   }
    running = false;
    update_enables();
 
@@ -1474,6 +1533,10 @@ void US_Hydrodyn_Pdb_Tool_Merge::stop()
 
 void US_Hydrodyn_Pdb_Tool_Merge::update_enables()
 {
+   if ( !running ) {
+      progress->reset();
+   }
+
    bool from_exists        = QFile::exists( le_chains_from->text() );
    bool to_exists          = QFile::exists( le_chains_to->text() );
    bool target_set         = !le_target->text().isEmpty();
@@ -1482,6 +1545,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::update_enables()
 
    // pdb_sel_count counts    = ((US_Hydrodyn_Pdb_Tool *)pdb_tool_window)->count_selected( lv_csv_to );
 
+   cb_filter           ->setEnabled( !running );
    pb_clear            ->setEnabled( !running && t_csv->numRows() );
    pb_load             ->setEnabled( !running );
    pb_validate         ->setEnabled( !running && from_exists && to_exists && t_csv->numRows() );
@@ -2521,6 +2585,9 @@ void US_Hydrodyn_Pdb_Tool_Merge::update_t_csv_data()
 
 void US_Hydrodyn_Pdb_Tool_Merge::run_one()
 {
+   qDebug( "run one" );
+   
+   filtered = false;
 
    // process trial
 
@@ -2942,6 +3009,10 @@ void US_Hydrodyn_Pdb_Tool_Merge::run_one()
       csv new_csv = csv_to;
       new_csv.data.clear();
 
+      map < unsigned int, int    > pos_type;  // for filter
+      map < unsigned int, point  > pos_coord; // for filter
+      map < unsigned int, double > pos_vdw;   // for filter
+
       for ( unsigned int i = 0; i < (unsigned int) csv_to.data.size(); i++ )
       {
          if ( csv_to.data[ i ].size() < 14 )
@@ -2989,6 +3060,13 @@ void US_Hydrodyn_Pdb_Tool_Merge::run_one()
                new_csv.data[ datapos ][ 8  ] = QString( "%1" ).arg( result[ 0 ].axis[ 0 ] );
                new_csv.data[ datapos ][ 9  ] = QString( "%1" ).arg( result[ 0 ].axis[ 1 ] );
                new_csv.data[ datapos ][ 10 ] = QString( "%1" ).arg( result[ 0 ].axis[ 2 ] );
+               pos_type [ datapos ] = 0;
+               pos_coord[ datapos ] = result[ 0 ];
+               qDebug( QString( "type 0 checking for vdw of %1 at datapos %2" ).arg( new_csv.data[ datapos ][ 13 ] ).arg( datapos ) );
+               pos_vdw  [ datapos ] = usu->atom_vdw.count( new_csv.data[ datapos ][ 13 ] ) ?
+                  usu->atom_vdw[ new_csv.data[ datapos ][ 13 ] ] : 
+                  ( usu->atom_vdw.count( "default" ) ? 
+                    usu->atom_vdw[ "default" ] : 1.8 );
             }
          }            
 
@@ -3027,6 +3105,14 @@ void US_Hydrodyn_Pdb_Tool_Merge::run_one()
                new_csv.data[ datapos ][ 8  ] = QString( "%1" ).arg( result[ 0 ].axis[ 0 ] );
                new_csv.data[ datapos ][ 9  ] = QString( "%1" ).arg( result[ 0 ].axis[ 1 ] );
                new_csv.data[ datapos ][ 10 ] = QString( "%1" ).arg( result[ 0 ].axis[ 2 ] );
+
+               pos_type [ datapos ] = 1;
+               pos_coord[ datapos ] = result[ 0 ];
+               qDebug( QString( "type 1 checking for vdw of %1 at datapos %2" ).arg( new_csv.data[ datapos ][ 13 ] ).arg( datapos ) );
+               pos_vdw  [ datapos ] = usu->atom_vdw.count( new_csv.data[ datapos ][ 13 ] ) ?
+                  usu->atom_vdw[ new_csv.data[ datapos ][ 13 ] ] : 
+                  ( usu->atom_vdw.count( "default" ) ? 
+                    usu->atom_vdw[ "default" ] : 1.8 );;
             }
          } 
          // cout << QString("pushing back chain %1 pos %2\n").arg(chain).arg(pos);
@@ -3069,6 +3155,13 @@ void US_Hydrodyn_Pdb_Tool_Merge::run_one()
             new_csv.data[ datapos ][ 8  ] = QString( "%1" ).arg( result[ 0 ].axis[ 0 ] );
             new_csv.data[ datapos ][ 9  ] = QString( "%1" ).arg( result[ 0 ].axis[ 1 ] );
             new_csv.data[ datapos ][ 10 ] = QString( "%1" ).arg( result[ 0 ].axis[ 2 ] );
+            pos_type [ datapos ] = 2;
+            pos_coord[ datapos ] = result[ 0 ];
+            qDebug( QString( "type 2 checking for vdw of %1 at datapos %2" ).arg( new_csv.data[ datapos ][ 13 ] ).arg( datapos ) );
+            pos_vdw  [ datapos ] = usu->atom_vdw.count( new_csv.data[ datapos ][ 13 ] ) ?
+               usu->atom_vdw[ new_csv.data[ datapos ][ 13 ] ] : 
+               ( usu->atom_vdw.count( "default" ) ? 
+                 usu->atom_vdw[ "default" ] : 1.8 );;
          }
       }            
       
@@ -3152,10 +3245,18 @@ void US_Hydrodyn_Pdb_Tool_Merge::run_one()
                new_csv.data[ datapos ][ 8  ] = QString( "%1" ).arg( result[ 0 ].axis[ 0 ] );
                new_csv.data[ datapos ][ 9  ] = QString( "%1" ).arg( result[ 0 ].axis[ 1 ] );
                new_csv.data[ datapos ][ 10 ] = QString( "%1" ).arg( result[ 0 ].axis[ 2 ] );
+               pos_type [ datapos ] = 3;
+               pos_coord[ datapos ] = result[ 0 ];
+               qDebug( QString( "type 3 checking for vdw of %1 at datapos %2" ).arg( new_csv.data[ datapos ][ 13 ] ).arg( datapos ) );
+               pos_vdw  [ datapos ] = usu->atom_vdw.count( new_csv.data[ datapos ][ 13 ] ) ?
+                  usu->atom_vdw[ new_csv.data[ datapos ][ 13 ] ] : 
+                  ( usu->atom_vdw.count( "default" ) ? 
+                    usu->atom_vdw[ "default" ] : 1.8 );;
             }
          }
       }            
 
+      qDebug( "run one 2" );
       last_chain = "__first__";
       unsigned atompos = 0;
       for ( unsigned int i = 0; i < (unsigned int) new_csv.data.size(); i++ )
@@ -3169,6 +3270,181 @@ void US_Hydrodyn_Pdb_Tool_Merge::run_one()
          }
          new_csv.data[ i ][ 5 ] = QString( "%1" ).arg( ++atompos );
       }
+
+      if ( cb_filter->isChecked() ) {
+         map < int, vector < unsigned int > > types_to_pos;
+
+         for ( unsigned int i = 0; i < (unsigned int) new_csv.data.size(); i++ ) {
+            if ( !pos_type.count( i ) ) {
+               point p;
+               p.axis[ 0 ] = new_csv.data[ i ][ 8  ].toDouble();
+               p.axis[ 1 ] = new_csv.data[ i ][ 9  ].toDouble();
+               p.axis[ 2 ] = new_csv.data[ i ][ 10 ].toDouble();
+               pos_type [ i ] = 4;
+               pos_coord[ i ] = p;
+               pos_vdw  [ i ] =
+                  usu->atom_vdw.count( new_csv.data[ i ][ 13 ] ) ?
+                  usu->atom_vdw[ new_csv.data[ i ][ 13 ] ] : 
+                  ( usu->atom_vdw.count( "default" ) ? 
+                    usu->atom_vdw[ "default" ] : 1.8 );;
+            }
+            types_to_pos[ pos_type[ i ] ].push_back( i );
+         }
+
+         for ( map < unsigned int, int >::iterator it = pos_type.begin();
+               it != pos_type.end();
+               ++it ) {
+            qDebug(
+                   QString( "pos %1 type %2 vdw %3 coord %4 %5 %6" )
+                   .arg( it->first )
+                   .arg( it->second )
+                   .arg( pos_vdw  [ it->first ] )
+                   .arg( pos_coord[ it->first ].axis[ 0 ] )
+                   .arg( pos_coord[ it->first ].axis[ 1 ] )
+                   .arg( pos_coord[ it->first ].axis[ 2 ] )
+                   );
+         }
+         
+         // compare type 4 to the others
+
+         {
+            double x2;
+            double y2;
+            double z2;
+            double vdw;
+
+            for ( map < int, vector < unsigned int > >::iterator it = types_to_pos.begin();
+                  it != types_to_pos.end() && !filtered;
+                  ++it ) {
+               if ( it->first == 4 ) {
+                  continue;
+               }
+
+               for ( int j = 0; j < (int) types_to_pos[ 4 ].size() && !filtered; ++j ) {
+                  for ( int k = 0; k < (int) it->second.size(); ++k ) {
+                     x2 = 
+                        pos_coord[ types_to_pos[ 4 ][ j ] ].axis[ 0 ] -
+                        pos_coord[ it->second       [ k ] ].axis[ 0 ];
+
+                     y2 = 
+                        pos_coord[ types_to_pos[ 4 ][ j ] ].axis[ 1 ] -
+                        pos_coord[ it->second       [ k ] ].axis[ 1 ];
+
+                     z2 = 
+                        pos_coord[ types_to_pos[ 4 ][ j ] ].axis[ 2 ] -
+                        pos_coord[ it->second       [ k ] ].axis[ 2 ];
+
+                     x2 *= x2;
+                     y2 *= y2;
+                     z2 *= z2;
+
+                     vdw = 
+                        pos_vdw[ types_to_pos[ 4 ][ j ] ] +
+                        pos_vdw[ it->second       [ k ] ];
+
+                     if ( x2 + y2 + z2 <= vdw * vdw ) {
+                        // exclude fit end
+                        bool excluded = false;
+                        QString chain4 = new_csv.data[ types_to_pos[ 4 ][ j ] ][ 1 ];
+                        QString chaina = new_csv.data[ it->second       [ k ] ][ 1 ];
+                        unsigned int res4no = new_csv.data[ types_to_pos[ 4 ][ j ] ][ 3 ].toUInt();
+                        unsigned int resano = new_csv.data[ it->second       [ k ] ][ 3 ].toUInt();
+                        
+                        qDebug( QString( "chain4 %1 resno %2 chainalt %3 resno %4" )
+                                .arg( chain4 )
+                                .arg( res4no )
+                                .arg( chaina )
+                                .arg( resano ) );
+
+                        // exclude fit range for now
+                        if (
+                            ( fit_map.count( chain4 ) &&
+                              fit_map[ chain4 ].start <= res4no &&
+                              fit_map[ chain4 ].end   >= res4no ) ||
+                            ( fit_map.count( chaina ) &&
+                              fit_map[ chaina ].start <= resano &&
+                              fit_map[ chaina ].end   >= resano ) ) {
+                           excluded = true;
+                        }
+                             
+                        // if ( chain4 == chaina &&
+                        //      fit_map.count( chain4 ) &&
+                        //      fit_map[ chain4 ].end == res4no &&
+                        //      resano == 1 + res4no ) {
+                        //    excluded = true;
+                        // }
+
+                        if ( excluded ) {
+                           qDebug( "excluded" );
+                        }
+
+                        if ( !excluded ) {
+                           QString msg = 
+                              QString( "first steric clash between types 4 %1 at pstns %2 %3 vdws %4 %5" )
+                              .arg( it->first )
+                              .arg( types_to_pos[ 4 ][ j ] )
+                              .arg( it->second[ k ] )
+                              .arg( pos_vdw[ types_to_pos[ 4 ][ j ] ] )
+                              .arg( pos_vdw[ it->second[ k ] ] )
+                              ;
+                           editor_msg( "dark red", msg );
+                           qDebug( msg );
+
+                           {
+                              int i = types_to_pos[ 4 ][ j ];
+                              qDebug( 
+                                     QString("")
+                                     .sprintf(     
+                                              "type 4 info:\n"
+                                              "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
+                                              new_csv.data[ i ][ 5  ].toUInt(),
+                                              new_csv.data[ i ][ 4  ].ascii(),
+                                              new_csv.data[ i ][ 2  ].ascii(),
+                                              new_csv.data[ i ][ 1  ].ascii(),
+                                              new_csv.data[ i ][ 3  ].toUInt(),
+                                              new_csv.data[ i ][ 8  ].toFloat(),
+                                              new_csv.data[ i ][ 9  ].toFloat(),
+                                              new_csv.data[ i ][ 10 ].toFloat(),
+                                              new_csv.data[ i ][ 11 ].toFloat(),
+                                              new_csv.data[ i ][ 12 ].toFloat(),
+                                              new_csv.data[ i ][ 13 ].ascii()
+                                                   )
+                                      );
+                           }
+                           {
+                              int i = it->second[ k ];
+                              qDebug( 
+                                     QString("")
+                                     .sprintf(     
+                                              "type %d info:\n"
+                                              "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
+                                              it->first,
+                                              new_csv.data[ i ][ 5  ].toUInt(),
+                                              new_csv.data[ i ][ 4  ].ascii(),
+                                              new_csv.data[ i ][ 2  ].ascii(),
+                                              new_csv.data[ i ][ 1  ].ascii(),
+                                              new_csv.data[ i ][ 3  ].toUInt(),
+                                              new_csv.data[ i ][ 8  ].toFloat(),
+                                              new_csv.data[ i ][ 9  ].toFloat(),
+                                              new_csv.data[ i ][ 10 ].toFloat(),
+                                              new_csv.data[ i ][ 11 ].toFloat(),
+                                              new_csv.data[ i ][ 12 ].toFloat(),
+                                              new_csv.data[ i ][ 13 ].ascii()
+                                                   )
+                                      );
+                           }
+                               
+                           filtered = true;
+                           break;
+                        }
+                     } 
+                  }
+               }
+            }
+         }
+      }
+
+      qDebug( "run one 3" );
 
       csv_to = new_csv;
       

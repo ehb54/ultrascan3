@@ -6,7 +6,9 @@
 #include <qpushbutton.h>
 #include <qthread.h>
 #include <q3listbox.h>
+#include <q3grid.h>
 //Added by qt3to4:
+#include <QResizeEvent>
 #include <QMouseEvent>
 #include <QFocusEvent>
 #include <vector>
@@ -25,9 +27,29 @@ class mQLabel : public QLabel
 
    signals:
       void pressed();
+      void resized();
 
    protected:
       virtual void mousePressEvent ( QMouseEvent *e );
+      virtual void resizeEvent ( QResizeEvent *e );
+};
+
+class mQGrid : public Q3Grid
+{
+   Q_OBJECT
+
+   public:
+
+      mQGrid( int n, QWidget* parent=0, const char* name=0, Qt::WFlags f = 0 );
+      mQGrid( int n, Qt::Orientation orient, QWidget* parent=0, const char* name=0, Qt::WFlags f = 0 );
+
+      ~mQGrid();
+
+   signals:
+      void resized();
+
+   protected:
+      virtual void resizeEvent ( QResizeEvent *e );
 };
 
 class mQLineEdit : public QLineEdit

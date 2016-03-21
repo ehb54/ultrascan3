@@ -39,25 +39,28 @@
 #undef DEBUG2
 #undef DEBUG3
 
-void reset_hydro_res(hydro_results results_hydro);
-
 // note: this program uses cout and/or cerr and this should be replaced
 
 static std::basic_ostream<char>& operator<<(std::basic_ostream<char>& os, const QString& str) { 
    return os << qPrintable(str);
 }
 
+void reset_hydro_res(hydro_results results_hydro);
+
 bool US_Saxs_Util::run_hydro(
 			     map < QString, QString >           & parameters,
 			     map < QString, QString >           & results
 			     )
 {
-  
+  //results[ "errors" ] = " ";
   //USglobal = new US_Config();
  
   paths += getenv("ULTRASCAN");
 
-  set_default(results);   // setup configuration defaults before reading initial config
+  if ( !set_default(results, parameters) )         // setup configuration defaults before reading initial config
+    return false;
+  
+  
   misc.restore_pb_rule = false;
 
   //residue_filename = "/src/ultrascan/etc/somo.residue";
@@ -211,25 +214,8 @@ bool US_Saxs_Util::run_hydro(
       parameters_set_first_model = true;
     } 
     
-    // cout << "test" << endl;
-    
-    // if ( us_udp_msg )
-    //   {
-    // 	map < QString, QString > msging;
-    // 	msging[ "_textarea" ] = QString("before pdb screen\\n");
-    // 	us_udp_msg->send_json( msging );
-    // 	//sleep(1);
-    //   }
-
+ 
     screen_pdb( file, parameters_set_first_model );
-   
-    // if ( us_udp_msg )
-    //   {
-    // 	map < QString, QString > msging;
-    // 	msging[ "_textarea" ] = "after pdb screen \\n";
-    // 	us_udp_msg->send_json( msging );
-    // 	//sleep(1);
-    //   }
  
       
     QString method = "";  
@@ -349,11 +335,10 @@ bool US_Saxs_Util::run_hydro(
     }
 
     results[ "progress1" ] = QString::number(1.0);
-      
-    qDebug (accumulated_msgs);
 
-    //results[ "_textarea" ] = "__reset__\n" + accumulated_msgs;
-    
+    results[ "_textarea" ] = "__reset__\\n" + accumulated_msgs;
+
+
     results[ "model_name_file" ] = model_name_file;
     results[ "log_name_file" ] = log_name_file;
     results[ "bead_pdb" ] = 
@@ -479,6 +464,7 @@ bool US_Saxs_Util::run_hydro(
 	results[ "tau" ] = "";
       }
    
+       
     // QString method = QString("%1").arg(((parameters.count( "atob" )) ? "AtoB model" : ( (parameters.count( "zeno" )) ? "Zeno model" : "AtoB model")) );
 
     // QString output = "Hydrodynamic Calculations";
@@ -982,7 +968,7 @@ bool US_Saxs_Util::screen_pdb(QString filename, bool parameters_set_first_model 
       accumulated_msgs +=  QString("Checking the pdb structure for model %1\\n").arg(  i+1  );
       
 
-      if (check_for_missing_atoms_hydro(&error_string, &model_vector[i],  parameters_set_first_model) )
+      if (check_for_missing_atoms_hydro(&error_string, &model_vector[i], parameters_set_first_model) )
       	  {
 
       // if ( !(check_for_missing_atoms( &model_vector[i]) ) )
@@ -2705,7 +2691,7 @@ void US_Saxs_Util::update_vbar()
   // cout << "VBAR: res " << results_hydro.vbar << endl;
 }
 
-void US_Saxs_Util::hard_coded_defaults()
+bool US_Saxs_Util::hard_coded_defaults( map < QString, QString > &results, map < QString, QString > & parameters)
 {
   
    // hard coded defaults
@@ -3218,11 +3204,105 @@ void US_Saxs_Util::hard_coded_defaults()
    gparams[ "hplc_dist_max"              ]         = "50.0";
 
    gparams[ "save_csv_on_load_pdb"       ]         = "false";
+
+   
+   /* ADVANCED OPTIONS IN GenApp *********************************************************/
+
+   if ( parameters.count( "cube_side" ) )
+     grid_hydro.cube_side    = parameters[ "cube_side" ].toDouble();
+   
+   if ( grid_hydro.cube_side <= 0 )
+     {
+       results[ "errors" ] += "Cube side cannot be negative or zero!";
+       return false;
+     }
+   
+ 
+   
+   if ( parameters[ "bead_model_list_box" ] == "atob" )
+     {
+       if( parameters[ "atob_list_box" ] == "zeno") 
+	 {
+	   if ( parameters[ "zeno_steps_atob" ].toInt() > 0 )
+	     hydro.zeno_zeno_steps   = parameters[ "zeno_steps_atob" ].toInt();
+	   else
+	     {
+	       results[ "errors" ] += "Number of steps cannot be negative or zero!";
+	       return false;
+	     }
+	 }
+     }
+
+
+   if ( parameters[ "bead_model_list_box" ] == "somo" )
+     {
+       if( parameters[ "somo_list_box" ] == "zeno") 
+	 {
+	   if ( parameters[ "zeno_steps_somo" ].toInt() > 0 )
+	     hydro.zeno_zeno_steps   = parameters[ "zeno_steps_somo" ].toInt();
+	   else
+	     {
+	       results[ "errors" ] += "Number of steps cannot be negative or zero!";
+	       return false;
+	     }
+	 }
+     }
+   
+   if ( parameters[ "bead_model_list_box" ] == "somo_o" )
+     {
+       if( parameters[ "somo_o_list_box" ] == "zeno") 
+	 {
+	   if ( parameters[ "zeno_steps_somo_o" ].toInt() > 0 )
+	     hydro.zeno_zeno_steps   = parameters[ "zeno_steps_somo_o" ].toInt();
+	   else
+	     {
+	       results[ "errors" ] += "Number of steps cannot be negative or zero!";
+	       return false;
+	     }
+	 }
+     }
+
+    
+   if ( parameters.count( "hydro_options" ) )
+     {
+       hydro.solvent_name      = parameters[ "solvent" ]; 
+       hydro.solvent_acronym   = parameters[ "solvent_acronym" ];
+       hydro.temperature       = parameters[ "solvent_temperature" ].toDouble(); //K20 - K0;
+       hydro.solvent_viscosity = parameters[ "solvent_viscosity" ].toDouble();   // VISC_20W * 100;
+       hydro.solvent_density   = parameters[ "solvent_density" ].toDouble();// DENS_20W; 
+     }
+   // else 
+   //   {
+   //     hydro.solvent_name = "Water";
+   //     hydro.solvent_acronym = "w";
+   //     hydro.temperature = K20 - K0;
+   //     hydro.solvent_viscosity = VISC_20W * 100;
+   //     hydro.solvent_density = DENS_20W;
+   //   }
+   
+   if ( parameters.count( "bead_model_options" ) )
+     overlap_tolerance = parameters[ "bead_overlap_tolerance" ].toDouble();
+
+   if ( parameters.count( "miscellaneous_options" ) ) 
+     {
+       misc.hydrovol = parameters [ "hydr_water_vol" ].toDouble();
+       // if (parameters[ "vbar_options" ] == "c1")
+       //    continue;
+       if (parameters[ "vbar_options" ] == "c2")
+	 {
+	   misc.compute_vbar = false;
+	   misc.vbar = parameters[ "entered_vbar_value" ].toDouble();
+	   misc.vbar_temperature = parameters[ "entered_temp_value" ].toDouble();
+	 }
+     }
+   
+   return true;
+
 }
 
 
 
-void US_Saxs_Util::set_default(map < QString, QString > &results)
+bool US_Saxs_Util::set_default(map < QString, QString > &results, map < QString, QString > &parameters)
 {
    // QFile f;
    // QString str;
@@ -3256,7 +3336,9 @@ void US_Saxs_Util::set_default(map < QString, QString > &results)
 
    //   if ( !config_read )
    //{
-      hard_coded_defaults();
+  
+  if( !hard_coded_defaults(results, parameters) )
+    return false;
 
       //}
 
@@ -3348,6 +3430,8 @@ void US_Saxs_Util::set_default(map < QString, QString > &results)
    default_bd_options = bd_options;
    default_anaflex_options = anaflex_options;
    default_gparams         = gparams;
+
+   return true;
 }
 
 

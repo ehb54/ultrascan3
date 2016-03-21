@@ -1,5 +1,6 @@
 #include "../include/us_mqt.h"
 //Added by qt3to4:
+#include <QResizeEvent>
 #include <QMouseEvent>
 #include <QLabel>
 #include <QFocusEvent>
@@ -35,6 +36,23 @@ void mQLabel::mousePressEvent ( QMouseEvent *e )
 {
    QLabel::mousePressEvent( e );
    emit( pressed() );
+}
+
+void mQLabel::resizeEvent ( QResizeEvent *e )
+{
+   QLabel::resizeEvent( e );
+   emit( resized() );
+}
+
+mQGrid::mQGrid( int n, QWidget* parent, const char* name, Qt::WFlags f ) : Q3Grid( n, parent, name, f ) {}
+mQGrid::mQGrid( int n, Qt::Orientation orient, QWidget* parent, const char* name, Qt::WFlags f) : Q3Grid( n, orient, parent, name, f ) {}
+
+mQGrid::~mQGrid() {}
+
+void mQGrid::resizeEvent ( QResizeEvent *e )
+{
+   Q3Grid::resizeEvent( e );
+   emit( resized() );
 }
 
 mQPushButton::mQPushButton( QWidget *parent, const char * name ) : QPushButton( parent, name ) {}

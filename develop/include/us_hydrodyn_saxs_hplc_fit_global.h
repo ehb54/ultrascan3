@@ -203,6 +203,14 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Fit_Global : public QDialog
       vector < bool >         is_common; // is common maps the offsets to layout of the regular file specific gaussians
       vector < unsigned int > offset;
 
+
+      double        hplc_ampl_width_min;
+      bool          hplc_lock_min_retry;
+      double        hplc_lock_min_retry_mult;
+      bool          hplc_maxfpk_restart;
+      unsigned int  hplc_maxfpk_restart_tries;
+      double        hplc_maxfpk_restart_pct;
+
    private slots:
 
       void update_enables();

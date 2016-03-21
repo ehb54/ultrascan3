@@ -13,7 +13,7 @@
 
 #define SLASH QDir::separator()
 #define Q_VAL_TOL 5e-6
-#define UHSH_VAL_DEC 8
+// #define UHSH_VAL_DEC 8
 #define UHSH_UV_CONC_FACTOR 1e0
 
 hplc_stack_data US_Hydrodyn_Saxs_Hplc::current_data( bool selected_only )

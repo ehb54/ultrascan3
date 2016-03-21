@@ -21,7 +21,7 @@ static std::basic_ostream<char>& operator<<(std::basic_ostream<char>& os, const 
 
 #define SLASH QDir::separator()
 #define Q_VAL_TOL 5e-6
-#define UHSH_VAL_DEC 8
+// #define UHSH_VAL_DEC 8
 #define UHSH_UV_CONC_FACTOR 1e0
 
 // no gaussians version
@@ -363,7 +363,7 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q_ng( QStringList files, double t_min, d
       editor_msg( "dark blue", tr( "Finished: Make I(q)" ) );
       running = false;
    }
-   progress->setProgress( 1, 1 );
+   progress->reset();
    update_enables();
    return true;
 }
@@ -1756,7 +1756,7 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files, double t_min, doub
       editor_msg( "dark blue", tr( "Finished: Make I(q)" ) );
       running = false;
    }
-   progress->setProgress( 1, 1 );
+   progress->reset();
    update_enables();
    return true;
 }
@@ -1999,7 +1999,7 @@ bool US_Hydrodyn_Saxs_Hplc::create_unified_ggaussian_target( QStringList & files
       case 0 : // turn off sd weighting
          {
             cb_sd_weight->setChecked( false );
-            pb_ggauss_rmsd->setText   ( tr( "RMSD" ) );
+            pb_ggauss_rmsd->setText   ( tr( "Recompute RMSD" ) );
             return create_unified_ggaussian_target( files, false );
          }
          break;
@@ -2046,7 +2046,7 @@ bool US_Hydrodyn_Saxs_Hplc::create_unified_ggaussian_target( QStringList & files
    // US_Vector::printvector( "unified param index:", unified_ggaussian_param_index );
 
    unified_ggaussian_ok = true;
-   progress->setProgress( 1, 1 );
+   progress->reset();
    return true;
 }
 
@@ -2165,6 +2165,7 @@ bool US_Hydrodyn_Saxs_Hplc::ggauss_recompute()
 
 bool US_Hydrodyn_Saxs_Hplc::compute_f_gaussians( QString file, QWidget *hplc_fit_widget )
 {
+   // qDebug( QString( "compute_f_gaussians %1" ).arg( file ) );
    // take current gaussians & compute for this curve
    // find peak of curve
    US_Hydrodyn_Saxs_Hplc_Fit *fit = (US_Hydrodyn_Saxs_Hplc_Fit *)hplc_fit_widget;
@@ -2240,8 +2241,8 @@ bool US_Hydrodyn_Saxs_Hplc::compute_f_gaussians( QString file, QWidget *hplc_fit
 
    // printvector( "cfg: org_gauss 2", org_gaussians );
    gaussians = org_gaussians;
-   for ( unsigned int i = 0; i < ( unsigned int ) gaussians.size(); i += gaussian_type_size )
-   {
+   
+   for ( unsigned int i = 0; i < ( unsigned int ) gaussians.size(); i += gaussian_type_size ) {
       gaussians[ 0 + i ] *= scale;
    }
 
@@ -2260,6 +2261,8 @@ bool US_Hydrodyn_Saxs_Hplc::compute_f_gaussians( QString file, QWidget *hplc_fit
    // now setup and fit
    wheel_file = file;
 
+   // vector < double > tmp_gs = gaussians;
+
    fit->redo_settings();
    fit->gaussians_undo.clear();
    fit->gaussians_undo.push_back( gaussians );
@@ -2271,7 +2274,10 @@ bool US_Hydrodyn_Saxs_Hplc::compute_f_gaussians( QString file, QWidget *hplc_fit
    fit->cb_fix_dist1     ->setChecked( true );
    fit->cb_fix_dist2     ->setChecked( true );
    // fit initial amplitudes
+   // qDebug( "call first lm fit in compute_f_gaussians" );
    fit->lm();
+   // qDebug( "return from first lm fit in compute_f_gaussians" );
+   // US_Vector::printvector2( "compute_f_gaussians: gaussians before, after", tmp_gs, gaussians );
    // printvector( "cfg: after fit gaussians", gaussians );
 
    // now run "open"
@@ -2280,10 +2286,12 @@ bool US_Hydrodyn_Saxs_Hplc::compute_f_gaussians( QString file, QWidget *hplc_fit
         ( dist1_active && !cb_fix_dist1->isChecked() ) ||
         ( dist2_active && !cb_fix_dist2->isChecked() ) )
    {
+      // qDebug( "call second lm fit in compute_f_gaussians" );
       fit->cb_fix_width     ->setChecked( cb_fix_width->isChecked() );
       fit->cb_fix_dist1     ->setChecked( cb_fix_dist1->isChecked() );
       fit->cb_fix_dist2     ->setChecked( cb_fix_dist2->isChecked() );
       fit->lm();
+      // qDebug( "return from second lm fit in compute_f_gaussians" );
       // printvector( "cfg: after fit2 gaussians", gaussians );
    }
 
@@ -2302,6 +2310,8 @@ bool US_Hydrodyn_Saxs_Hplc::initial_ggaussian_fit( QStringList & files )
 {
    wheel_file = files[ 0 ];
 
+   // qDebug( "creating fit window" );
+
    US_Hydrodyn_Saxs_Hplc_Fit *hplc_fit_window = 
       new US_Hydrodyn_Saxs_Hplc_Fit(
                                     this,
@@ -2316,6 +2326,8 @@ bool US_Hydrodyn_Saxs_Hplc::initial_ggaussian_fit( QStringList & files )
    {
       progress->setProgress( i, files.size() * 1.2 );
       qApp->processEvents();
+      qDebug( QString( "------ processing initial gaussian fit %1 ------" ).arg( files[ i ] ) );
+      
       if ( !compute_f_gaussians( files[ i ], (QWidget *) hplc_fit_window ) )
       {
          return false;

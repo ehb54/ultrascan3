@@ -56,6 +56,7 @@ US_Hydrodyn_Saxs_Hplc::US_Hydrodyn_Saxs_Hplc(
 {
    this->csv1 = csv1;
    this->us_hydrodyn = us_hydrodyn;
+   started_in_expert_mode = ((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode;
 
    gaussian_param_text
       << "amplitude"
@@ -90,9 +91,12 @@ US_Hydrodyn_Saxs_Hplc::US_Hydrodyn_Saxs_Hplc(
    {
       ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_save" ] = "false";
    }
-   if ( !( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_bl_smooth" ) )
+   if ( !( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_bl_smooth" ) ||
+        ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_smooth" ] == "0" ||
+        ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_smooth" ] == ""
+        )
    {
-      ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_smooth" ] = "0";
+      ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_smooth" ] = "3";
    }
    if ( !( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_bl_reps" ) )
    {
@@ -113,7 +117,7 @@ US_Hydrodyn_Saxs_Hplc::US_Hydrodyn_Saxs_Hplc(
    }
    if ( !( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_cb_discard_it_sd_mult" ) )
    {
-      ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_cb_discard_it_sd_mult" ] = "false";
+      ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_cb_discard_it_sd_mult" ] = "true";
    }
    if ( !( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_cb_guinier_qrgmax" ) )
    {
@@ -143,6 +147,40 @@ US_Hydrodyn_Saxs_Hplc::US_Hydrodyn_Saxs_Hplc(
    {
       ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "guinier_mwc_mw_per_N" ] = "112";
    }
+
+   if ( !( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_ampl_width_min"        ) ||
+        !started_in_expert_mode ) {
+      ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_ampl_width_min"        ] = "1e-12";
+   }
+   if ( !( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_lock_min_retry"        ) ||
+        !started_in_expert_mode ) {
+      ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_lock_min_retry"        ] = "false";
+   }
+   if ( !( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_lock_min_retry_mult"   ) ||
+        !started_in_expert_mode ) {
+      ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_lock_min_retry_mult"   ] = "2";
+   }
+   if ( !( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_maxfpk_restart"        ) ||
+        !started_in_expert_mode ) {
+      ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_maxfpk_restart"        ] = "false";
+   }
+   if ( !( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_maxfpk_restart_tries"  ) ||
+        !started_in_expert_mode ) {
+      ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_maxfpk_restart_tries"  ] = "3";
+   }
+   if ( !( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_maxfpk_restart_pct"    ) ||
+        !started_in_expert_mode ) {
+      ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_maxfpk_restart_pct"    ] = "10";
+   }
+   if ( !( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_cormap_maxq"    ) ) {
+      ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_cormap_maxq"    ] = "0.05";
+   }
+   if ( !( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_bl_i_power"    ) ||
+        !started_in_expert_mode ) {
+      ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_i_power"    ] = "1";
+   }
+
+   baseline_ready_to_apply = false;
 
    gaussian_type = 
       ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_gaussian_type" ) ?
@@ -287,6 +325,7 @@ US_Hydrodyn_Saxs_Hplc::US_Hydrodyn_Saxs_Hplc(
       pbs.push_back( pb_ggauss_start );
       pbs.push_back( pb_gauss_save );
       pbs.push_back( pb_gauss_as_curves );
+      pbs.push_back( pb_ggauss_as_curves );
       pbs.push_back( pb_baseline_start );
       pbs.push_back( pb_baseline_apply );
         
@@ -492,6 +531,9 @@ US_Hydrodyn_Saxs_Hplc::US_Hydrodyn_Saxs_Hplc(
    {
       load_file( dctr_file );
    }
+
+   blanks_end_s = 0e0;
+   blanks_end_e = 0e0;
 }
 
 US_Hydrodyn_Saxs_Hplc::~US_Hydrodyn_Saxs_Hplc()
@@ -525,19 +567,6 @@ void US_Hydrodyn_Saxs_Hplc::push_back_color_if_ok( QColor bg, QColor set )
    }
 }
 
-void US_Hydrodyn_Saxs_Hplc::color_rotate()
-{
-   vector < QColor >  new_plot_colors;
-
-   for ( unsigned int i = 1; i < ( unsigned int )plot_colors.size(); i++ )
-   {
-      new_plot_colors.push_back( plot_colors[ i ] );
-   }
-   new_plot_colors.push_back( plot_colors[ 0 ] );
-   plot_colors = new_plot_colors;
-   plot_files();
-}
-
 void US_Hydrodyn_Saxs_Hplc::cancel()
 {
    close();
@@ -552,6 +581,22 @@ void US_Hydrodyn_Saxs_Hplc::help()
 
 void US_Hydrodyn_Saxs_Hplc::closeEvent(QCloseEvent *e)
 {
+   QMessageBox mb( this->caption(), 
+                   tr("Attention:\nAre you sure you want to exit the HPLC SAXS window?"),
+                  QMessageBox::Information,
+                  QMessageBox::Yes | QMessageBox::Default,
+                  QMessageBox::Cancel | QMessageBox::Escape,
+                  QMessageBox::NoButton);
+   mb.setButtonText(QMessageBox::Yes, tr("Yes"));
+   mb.setButtonText(QMessageBox::Cancel, tr("Cancel"));
+   switch(mb.exec())
+   {
+   case QMessageBox::Cancel:
+      {
+         return;
+      }
+   }
+
    QStringList created_not_saved_list;
 
    for ( int i = 0; i < lb_files->numRows(); i++ )
@@ -1249,10 +1294,7 @@ void US_Hydrodyn_Saxs_Hplc::add_files( QStringList filenames )
 
    for ( int i = 0; i < (int)filenames.size(); i++ )
    {
-      if ( *saxs_widget )
-      {
-         saxs_window->add_to_directory_history( filenames[ i ] );
-      }
+      ((US_Hydrodyn *)us_hydrodyn)->add_to_directory_history( filenames[ i ] );;
 
       QString basename = QFileInfo( filenames[ i ] ).baseName( true );
       if ( !existing_items.count( basename ) )
@@ -3388,6 +3430,8 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_t( QStringList files )
 #endif
 
    QStringList created_files;
+
+   set < QString > to_select;
    
    {
       unsigned int size = ( unsigned int )q.size();
@@ -3448,6 +3492,7 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_t( QStringList files )
             f_gaussians  [ fname ] = tmp;
          }
          created_files << fname;
+         to_select.insert( fname );
       }      
       lb_created_files->insertStringList( created_files );
       lb_files->insertStringList        ( created_files );
@@ -3474,6 +3519,18 @@ void US_Hydrodyn_Saxs_Hplc::create_i_of_t( QStringList files )
 
    qDebug( us_timers.list_times() );
 #endif
+
+   set_selected( to_select );
+   
+   if ( axis_x_log ) {
+      axis_x();
+   }
+   
+   if ( axis_y_log ) {
+      axis_y();
+   }
+   
+   rescale();
 
    update_enables();
 }
@@ -5560,7 +5617,7 @@ void US_Hydrodyn_Saxs_Hplc::gaussian_enables()
    le_gauss_fit_end    ->setEnabled( g_size && gaussian_pos < g_size );
    pb_gauss_save       ->setEnabled( g_size );
    pb_gauss_as_curves  ->setEnabled( g_size );
-   qwtw_wheel          ->setEnabled( g_size && gaussian_pos < g_size );
+   wheel_enables       ( g_size && gaussian_pos < g_size );
    pb_rescale          ->setEnabled( true );
    pb_view             ->setEnabled( true );
    pb_errors           ->setEnabled( true );
@@ -5586,15 +5643,15 @@ void US_Hydrodyn_Saxs_Hplc::update_gauss_pos()
             }
          }
 
-         le_gauss_pos_height->setText( QString( "%1" ).arg( gaussians[ 0 + gaussian_type_size * gaussian_pos ], 0, 'f', 6 ) );
-         le_gauss_pos       ->setText( QString( "%1" ).arg( gaussians[ 1 + gaussian_type_size * gaussian_pos ], 0, 'f', 6 ) );
-         le_gauss_pos_width ->setText( QString( "%1" ).arg( gaussians[ 2 + gaussian_type_size * gaussian_pos ], 0, 'f', 6 ) );
+         le_gauss_pos_height->setText( QString( "%1" ).arg( gaussians[ 0 + gaussian_type_size * gaussian_pos ], 0, 'g', UHSH_SHOW_DIGITS ) );
+         le_gauss_pos       ->setText( QString( "%1" ).arg( gaussians[ 1 + gaussian_type_size * gaussian_pos ], 0, 'g', UHSH_SHOW_DIGITS ) );
+         le_gauss_pos_width ->setText( QString( "%1" ).arg( gaussians[ 2 + gaussian_type_size * gaussian_pos ], 0, 'g', UHSH_SHOW_DIGITS ) );
          if ( dist1_active )
          {
-            le_gauss_pos_dist1 ->setText( QString( "%1" ).arg( gaussians[ 3 + gaussian_type_size * gaussian_pos ], 0, 'f', 6 ) );
+            le_gauss_pos_dist1 ->setText( QString( "%1" ).arg( gaussians[ 3 + gaussian_type_size * gaussian_pos ], 0, 'g', UHSH_SHOW_DIGITS ) );
             if ( dist2_active )
             {
-               le_gauss_pos_dist2 ->setText( QString( "%1" ).arg( gaussians[ 4 + gaussian_type_size * gaussian_pos ], 0, 'f', 6 ) );
+               le_gauss_pos_dist2 ->setText( QString( "%1" ).arg( gaussians[ 4 + gaussian_type_size * gaussian_pos ], 0, 'g', UHSH_SHOW_DIGITS ) );
             }
          }
             
@@ -5675,6 +5732,13 @@ void US_Hydrodyn_Saxs_Hplc::update_gauss_pos()
          lbl_gauss_pos      ->setText( QString( " %1 of %2 " ).arg( gaussian_pos + 1 ).arg( gaussians.size() / gaussian_type_size ) );
 
          disconnect( le_gauss_pos       , SIGNAL( textChanged( const QString & ) ), 0, 0 );
+         // qDebug( QString( "uggp size %1 ofs %2 common_size %3 gaussian_pos %4 index %5" )
+         //         .arg( unified_ggaussian_params.size() )
+         //         .arg( ofs )
+         //         .arg( common_size )
+         //         .arg( gaussian_pos )
+         //         .arg( ofs + common_size * gaussian_pos ) );
+                 
          le_gauss_pos       ->setText( QString( "%1" ).arg( unified_ggaussian_params[ ofs + common_size * gaussian_pos ] ) );
          connect( le_gauss_pos       , SIGNAL( textChanged( const QString & ) ), SLOT( gauss_pos_text       ( const QString & ) ) );
          ofs++;
@@ -6532,7 +6596,7 @@ void US_Hydrodyn_Saxs_Hplc::gauss_add_marker( double pos,
    plot_dist->setMarkerPos       ( marker, pos, 0e0 );
    plot_dist->setMarkerLabelAlign( marker, align );
    plot_dist->setMarkerPen       ( marker, QPen( color, line_width, DashDotDotLine));
-   plot_dist->setMarkerFont      ( marker, QFont("Helvetica", 11, QFont::Bold));
+   plot_dist->setMarkerFont      ( marker, QFont("Courier", 11, QFont::Bold));
    plot_dist->setMarkerLabelText ( marker, text );
 #else
    QwtPlotMarker * marker = new QwtPlotMarker;
@@ -6543,7 +6607,7 @@ void US_Hydrodyn_Saxs_Hplc::gauss_add_marker( double pos,
    marker->setLabelAlignment  ( align );
    {
       QwtText qwtt( text );
-      qwtt.setFont( QFont("Helvetica", 11, QFont::Bold ) );
+      qwtt.setFont( QFont("Courier", 11, QFont::Bold ) );
       marker->setLabel           ( qwtt );
    }
    marker->attach             ( plot_dist );
@@ -6610,8 +6674,6 @@ void US_Hydrodyn_Saxs_Hplc::gauss_add_hline( double center, double width )
 void US_Hydrodyn_Saxs_Hplc::gauss_init_markers()
 {
    gauss_delete_markers();
-   plotted_markers.clear();
-   plotted_hlines.clear();
 
    gauss_add_marker( le_gauss_fit_start->text().toDouble(), Qt::red, tr( "Fit start" ) );
    gauss_add_marker( le_gauss_fit_end  ->text().toDouble(), Qt::red, tr( "Fit end"   ), Qt::AlignLeft | Qt::AlignTop );
@@ -6626,7 +6688,7 @@ void US_Hydrodyn_Saxs_Hplc::gauss_init_markers()
       // global gaussian
       if ( unified_ggaussian_ok )
       {
-         if ( cb_fix_width->isChecked() )
+         if ( cb_fix_width->isChecked() && !cb_ggauss_scroll->isChecked() )
          {
             for ( unsigned int i = 0; i < unified_ggaussian_gaussians_size; i++ )
             {
@@ -6644,6 +6706,9 @@ void US_Hydrodyn_Saxs_Hplc::gauss_init_markers()
       
    if ( !suppress_replot )
    {
+#ifdef QT4
+      legend_set();
+#endif
       plot_dist->replot();
    }
 }
@@ -6664,6 +6729,17 @@ void US_Hydrodyn_Saxs_Hplc::gauss_delete_markers()
       plotted_hlines[ i ]->detach();
 #endif
    }
+   plotted_markers.clear();
+   plotted_hlines.clear();
+   for ( unsigned int i = 0; i < ( unsigned int ) plotted_baseline.size(); i++ )
+   {
+#ifndef QT4
+      plot_dist->removeCurve( plotted_baseline[ i ] );
+#else
+      plotted_baseline[ i ]->detach();
+#endif
+   }
+   plotted_baseline.clear();
 }
 
 vector < double > US_Hydrodyn_Saxs_Hplc::gaussian( double * g ) // height, double center, double width )
@@ -6823,7 +6899,7 @@ void US_Hydrodyn_Saxs_Hplc::gauss_delete_gaussians()
 void US_Hydrodyn_Saxs_Hplc::gauss_pos_focus( bool hasFocus )
 {
    cout << QString( "gauss_pos_focus %1\n" ).arg( hasFocus ? "true" : "false" );
-   if ( hasFocus )
+   if ( hasFocus && !cb_ggauss_scroll->isChecked() )
    {
       disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
       update_gauss_pos();
@@ -6832,13 +6908,14 @@ void US_Hydrodyn_Saxs_Hplc::gauss_pos_focus( bool hasFocus )
                             ( f_qs[ wheel_file ].back() - f_qs[ wheel_file ][ 0 ] ) / UHSH_WHEEL_RES );
       qwtw_wheel->setValue( le_gauss_pos->text().toDouble() );
       connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
+      wheel_enables();
    }
 }
 
 void US_Hydrodyn_Saxs_Hplc::gauss_pos_width_focus( bool hasFocus )
 {
    cout << QString( "gauss_pos_width_focus %1\n" ).arg( hasFocus ? "true" : "false" );
-   if ( hasFocus )
+   if ( hasFocus && !cb_ggauss_scroll->isChecked() )
    {
       disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
       update_gauss_pos();
@@ -6847,13 +6924,14 @@ void US_Hydrodyn_Saxs_Hplc::gauss_pos_width_focus( bool hasFocus )
                             ( f_qs[ wheel_file ].back() / 3 ) / UHSH_WHEEL_RES ), 
       qwtw_wheel->setValue( le_gauss_pos_width->text().toDouble() );
       connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
+      wheel_enables();
    }
 }
 
 void US_Hydrodyn_Saxs_Hplc::gauss_pos_height_focus( bool hasFocus )
 {
    cout << QString( "gauss_pos_height_focus %1\n" ).arg( hasFocus ? "true" : "false" );
-   if ( hasFocus )
+   if ( hasFocus && !cb_ggauss_scroll->isChecked() )
    {
       disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
       update_gauss_pos();
@@ -6862,13 +6940,14 @@ void US_Hydrodyn_Saxs_Hplc::gauss_pos_height_focus( bool hasFocus )
                             gauss_max_height / UHSH_WHEEL_RES );
       qwtw_wheel->setValue( le_gauss_pos_height->text().toDouble() );
       connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
+      wheel_enables();
    }
 }
 
 void US_Hydrodyn_Saxs_Hplc::gauss_pos_dist1_focus( bool hasFocus )
 {
    cout << QString( "gauss_pos_dist1_focus %1\n" ).arg( hasFocus ? "true" : "false" );
-   if ( hasFocus )
+   if ( hasFocus && !cb_ggauss_scroll->isChecked() )
    {
       disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
       update_gauss_pos();
@@ -6878,13 +6957,14 @@ void US_Hydrodyn_Saxs_Hplc::gauss_pos_dist1_focus( bool hasFocus )
                             2e0*dist / UHSH_WHEEL_RES );
       qwtw_wheel->setValue( le_gauss_pos_dist1->text().toDouble() );
       connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
+      wheel_enables();
    }
 }
 
 void US_Hydrodyn_Saxs_Hplc::gauss_pos_dist2_focus( bool hasFocus )
 {
    cout << QString( "gauss_pos_dist2_focus %1\n" ).arg( hasFocus ? "true" : "false" );
-   if ( hasFocus )
+   if ( hasFocus && !cb_ggauss_scroll->isChecked() )
    {
       disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
       update_gauss_pos();
@@ -6894,13 +6974,14 @@ void US_Hydrodyn_Saxs_Hplc::gauss_pos_dist2_focus( bool hasFocus )
                             2e0*dist / UHSH_WHEEL_RES );
       qwtw_wheel->setValue( le_gauss_pos_dist2->text().toDouble() );
       connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
+      wheel_enables();
    }
 }
 
 void US_Hydrodyn_Saxs_Hplc::gauss_fit_start_focus( bool hasFocus )
 {
    cout << QString( "gauss_fit_start_focus %1\n" ).arg( hasFocus ? "true" : "false" );
-   if ( hasFocus )
+   if ( hasFocus && !cb_ggauss_scroll->isChecked() )
    {
       disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
       update_gauss_pos();
@@ -6909,13 +6990,14 @@ void US_Hydrodyn_Saxs_Hplc::gauss_fit_start_focus( bool hasFocus )
                             ( f_qs[ wheel_file ].back() - f_qs[ wheel_file ][ 0 ] ) / UHSH_WHEEL_RES );
       connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
       qwtw_wheel->setValue( le_gauss_fit_start->text().toDouble() );
+      wheel_enables();
    }
 }
 
 void US_Hydrodyn_Saxs_Hplc::gauss_fit_end_focus( bool hasFocus )
 {
    cout << QString( "gauss_fit_end_focus %1\n" ).arg( hasFocus ? "true" : "false" );
-   if ( hasFocus )
+   if ( hasFocus && !cb_ggauss_scroll->isChecked() )
    {
       disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
       update_gauss_pos();
@@ -6924,6 +7006,7 @@ void US_Hydrodyn_Saxs_Hplc::gauss_fit_end_focus( bool hasFocus )
                             ( f_qs[ wheel_file ].back() - f_qs[ wheel_file ][ 0 ] ) / UHSH_WHEEL_RES );
       connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
       qwtw_wheel->setValue( le_gauss_fit_end->text().toDouble() );
+      wheel_enables();
    }
 }
 
@@ -7106,7 +7189,7 @@ void US_Hydrodyn_Saxs_Hplc::gauss_fit()
          gauss_max_height *= 20e0;
       }
 
-      qwtw_wheel->setEnabled( false );
+      wheel_enables( false );
       disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
       US_Hydrodyn_Saxs_Hplc_Fit_Global *shfg = 
          new US_Hydrodyn_Saxs_Hplc_Fit_Global(
@@ -7116,7 +7199,7 @@ void US_Hydrodyn_Saxs_Hplc::gauss_fit()
       shfg->exec();
       delete shfg;
       
-      qwtw_wheel->setEnabled( true );
+      wheel_enables();
       connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
       ggaussian_enables();
       return;
@@ -7134,7 +7217,7 @@ void US_Hydrodyn_Saxs_Hplc::gauss_fit()
       return;
    }
 
-   qwtw_wheel->setEnabled( false );
+   wheel_enables( false );
    disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
    US_Hydrodyn_Saxs_Hplc_Fit *shf = 
       new US_Hydrodyn_Saxs_Hplc_Fit(
@@ -7146,7 +7229,7 @@ void US_Hydrodyn_Saxs_Hplc::gauss_fit()
    delete shf;
    
    cb_gauss_match_amplitude->setChecked( false );
-   qwtw_wheel->setEnabled( true );
+   wheel_enables();
    connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
    return;
    /*   
@@ -7232,6 +7315,7 @@ vector < double > US_Hydrodyn_Saxs_Hplc::compute_gaussian_sum( vector < double >
 
    vector < double > g_use( gaussian_type_size );
    vector < double > result_partial;
+   compute_gaussian_sum_partials.clear();
 
    for ( unsigned int j = 0; j < ( unsigned int ) g.size(); j += gaussian_type_size )
    {
@@ -7240,6 +7324,7 @@ vector < double > US_Hydrodyn_Saxs_Hplc::compute_gaussian_sum( vector < double >
          g_use[ i ] = g[ i + j ];
       }
       result_partial = compute_gaussian( t, g_use );
+      compute_gaussian_sum_partials.push_back( result_partial );
       for ( unsigned int i = 0; i < ( unsigned int ) t.size(); i++ )
       {
          result[ i ] += result_partial[ i ];
@@ -7549,149 +7634,6 @@ QString US_Hydrodyn_Saxs_Hplc::pad_zeros( int val, int max )
    return s;
 }
 
-void US_Hydrodyn_Saxs_Hplc::ggauss_start()
-{
-   plot_errors->clear();
-   if ( plot_errors_zoomer )
-   {
-      delete plot_errors_zoomer;
-      plot_errors_zoomer = (ScrollZoomer *) 0;
-   }
-
-   ggqfit_plot->clear();
-   if ( ggqfit_plot_zoomer )
-   {
-      delete ggqfit_plot_zoomer;
-      ggqfit_plot_zoomer = (ScrollZoomer *) 0;
-   }
-
-   le_last_focus = (mQLineEdit *) 0;
-   pb_gauss_fit->setText( tr( "Global Fit" ) );
-   pb_ggauss_rmsd->setText   ( tr( cb_sd_weight->isChecked() ? "nChi^2" : "RMSD" ) );
-
-   disable_all();
-
-   if ( !ggaussian_compatible() )
-   {
-      QString msg_addendum = "";
-      if ( cb_fix_width->isChecked() )
-      {
-         msg_addendum += " or widths";
-      }
-      if ( dist1_active && cb_fix_dist1->isChecked() )
-      {
-         msg_addendum += " or distortion-1s";
-      }
-      if ( dist2_active && cb_fix_dist2->isChecked() )
-      {
-         msg_addendum += " or distortion-2s";
-      }
-      QString msg = QString( tr( "NOTICE: Some files selected have Gaussians with varying centers%1 or a different number of Gaussians or centers that do not match the last Gaussians, these will be reset to the last Gaussian settings" ) )
-         .arg( msg_addendum );
-
-      editor_msg( "dark red", msg );
-   }
-
-   if ( !cb_sd_weight->isChecked() )
-   {
-      switch ( QMessageBox::question(this, 
-                                     caption() + tr( ": Global Gaussians" ),
-                                     QString( tr( "Note: SD weighting is currently turned off.\n" ) ),
-                                     tr( "&Turn on" ), 
-                                     tr( "&Leave off" ),
-                                     QString::null,
-                                     0, // Stop == button 0
-                                     0 // Escape == button 0
-                                     ) ) {
-      case 0 : // Turn on
-         cb_sd_weight->setChecked( true );
-         break;
-      case 1 : // Leave off
-         break;
-      }       
-   }      
-
-   if ( !create_unified_ggaussian_target() )
-   {
-      update_enables();
-      return;
-   }
-
-   // add_ggaussian_curve( "unified_ggaussian_target", unified_ggaussian_I );
-   // add_ggaussian_curve( "unified_ggaussian_sum",    compute_ggaussian_gaussian_sum() );
-
-   // ggaussian_mode = true;
-   mode_select( MODE_GGAUSSIAN );
-   ggqfit_plot->hide();
-
-   lbl_gauss_fit->setText( QString( "%1" ).arg( ggaussian_rmsd(), 0, 'g', 5 ) );
-   wheel_file = unified_ggaussian_files[ 0 ];
-
-   get_peak( wheel_file, gauss_max_height );
-   gauss_max_height *= 1.2;
-   if ( gaussian_type != GAUSS )
-   {
-      gauss_max_height *= 20e0;
-   }
-      
-   org_f_gaussians = f_gaussians;
-
-   running        = true;
-
-   if ( gaussian_pos && gaussian_pos >= unified_ggaussian_gaussians_size )
-   {
-      gaussian_pos = unified_ggaussian_gaussians_size - 1;
-   }
-   
-   gauss_init_markers();
-   disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
-   qwtw_wheel->setRange( f_qs[ wheel_file ][ 0 ],
-                         f_qs[ wheel_file ].back(),
-                         ( f_qs[ wheel_file ].back() - f_qs[ wheel_file ][ 0 ] ) / UHSH_WHEEL_RES );
-   qwtw_wheel->setValue( unified_ggaussian_params[ gaussian_pos ] );
-   update_gauss_pos();
-   connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
-
-   check_fit_range();
-
-   if ( errors_were_on )
-   {
-      hide_widgets( plot_errors_widgets, false );
-      if ( !unified_ggaussian_use_errors )
-      {
-         cb_plot_errors_sd->setChecked( false );
-         cb_plot_errors_sd->hide();
-      }
-   }
-
-   ggaussian_enables();
-}
-
-void US_Hydrodyn_Saxs_Hplc::ggaussian_enables()
-{
-   pb_ggauss_start     ->setEnabled( false );
-   pb_gauss_prev       ->setEnabled( unified_ggaussian_gaussians_size > 1 && gaussian_pos > 0 );
-   pb_gauss_next       ->setEnabled( unified_ggaussian_gaussians_size > 1 && gaussian_pos < unified_ggaussian_gaussians_size - 1 );
-   cb_sd_weight        ->setEnabled( unified_ggaussian_gaussians_size && le_gauss_fit_start->text().toDouble() < le_gauss_fit_end->text().toDouble() );
-   pb_gauss_fit        ->setEnabled( unified_ggaussian_gaussians_size && le_gauss_fit_start->text().toDouble() < le_gauss_fit_end->text().toDouble() );
-   pb_wheel_cancel     ->setEnabled( true );
-   le_gauss_pos        ->setEnabled( unified_ggaussian_gaussians_size && gaussian_pos < unified_ggaussian_gaussians_size );
-   le_gauss_pos_width  ->setEnabled( cb_fix_width->isChecked() && unified_ggaussian_gaussians_size && gaussian_pos < unified_ggaussian_gaussians_size );
-   le_gauss_pos_dist1  ->setEnabled( cb_fix_dist1->isChecked() && unified_ggaussian_gaussians_size && gaussian_pos < unified_ggaussian_gaussians_size );
-   le_gauss_pos_dist2  ->setEnabled( cb_fix_dist2->isChecked() && unified_ggaussian_gaussians_size && gaussian_pos < unified_ggaussian_gaussians_size );
-   le_gauss_fit_start  ->setEnabled( unified_ggaussian_gaussians_size && gaussian_pos < unified_ggaussian_gaussians_size );
-   le_gauss_fit_end    ->setEnabled( unified_ggaussian_gaussians_size && gaussian_pos < unified_ggaussian_gaussians_size );
-   pb_wheel_save       ->setEnabled( unified_ggaussian_gaussians_size );
-   qwtw_wheel          ->setEnabled( unified_ggaussian_gaussians_size && gaussian_pos < unified_ggaussian_gaussians_size );
-   pb_ggauss_results   ->setEnabled( unified_ggaussian_ok );
-   pb_gauss_save       ->setEnabled( unified_ggaussian_ok );
-   pb_gauss_as_curves  ->setEnabled( unified_ggaussian_ok );
-   pb_rescale          ->setEnabled( true );
-   pb_view             ->setEnabled( unified_ggaussian_curves <= 10 );
-   pb_errors           ->setEnabled( true );
-   pb_ggqfit           ->setEnabled( true );
-}
-
 QStringList US_Hydrodyn_Saxs_Hplc::all_selected_files()
 {
    QStringList files;
@@ -7957,7 +7899,6 @@ bool US_Hydrodyn_Saxs_Hplc::ggaussian_compatible( QStringList & files, bool chec
 }
 */
 
-
 void US_Hydrodyn_Saxs_Hplc::ggauss_rmsd()
 {
    if ( ggauss_recompute() )
@@ -8119,7 +8060,7 @@ void US_Hydrodyn_Saxs_Hplc::set_sd_weight()
       if ( current_mode == MODE_GGAUSSIAN )
       {
          pb_ggauss_rmsd->setEnabled( true );
-         pb_ggauss_rmsd->setText   ( tr( cb_sd_weight->isChecked() ? "nChi^2" : "RMSD" ) );
+         pb_ggauss_rmsd->setText( QString( tr( "Recompute %1" ).arg( cb_sd_weight->isChecked() ? "nChi^2" : "RMSD" ) ) );
          plot_errors      ->clear();
          if ( !suppress_replot )
          {
