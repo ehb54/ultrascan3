@@ -47,10 +47,6 @@ SDIR=${SBASE}/demo
 DDIR=${PKGDIR}/somo
 echo "${RSYNC} ${SDIR} ${DDIR}"
 ${RSYNC} ${SDIR} ${DDIR}
-# Copy somo test
-SDIR=${SBASE}/test
-echo "${RSYNC} ${SDIR} ${DDIR}"
-${RSYNC} ${SDIR} ${DDIR}
 # Copy somo doc
 SDIR=${SOMOBASE}/doc
 echo "${RSYNC} ${SDIR} ${DDIR}"
