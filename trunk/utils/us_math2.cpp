@@ -2,7 +2,9 @@
 
 #include <stdlib.h>
 #include <math.h>
+#ifdef _BF_NNLS_
 #include <dlfcn.h>
+#endif
 
 #include "us_math2.h"
 #include "us_constants.h"
