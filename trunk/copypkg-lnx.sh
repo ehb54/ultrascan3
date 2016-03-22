@@ -79,7 +79,7 @@ done
 rm -f ${PKGDIR}/etc/somo*prev*
 
 # Copy the SOMO directories
-(cd ${PKGDIR};mkdir somo somo/doc somo/demo somo/test);
+(cd ${PKGDIR};mkdir somo somo/doc somo/demo);
 SDIR=${SOMOBASE}/doc
 DDIR=${PKGDIR}/somo
 echo "${RSYNC} ${SDIR} ${DDIR}"
@@ -92,13 +92,11 @@ SOMODIR=$SOMOBASE/somo
 if [ -d ${SOMODIR} -a -d ${SOMODIR}/demo ]; then
   # Clear out somo/demo so only present contents are copied
   /bin/rm -rf ${PKGDIR}/somo/demo/*
-  # Copy somo demo,test contents
-  for D in demo test; do
-    SDIR=${SOMODIR}/${D}
-    DDIR=${PKGDIR}/somo
-    echo "${RSYNC} ${SDIR} ${DDIR}"
-    ${RSYNC} ${SDIR} ${DDIR}
-  done
+  # Copy somo demo contents
+  SDIR=${SOMODIR}/demo
+  DDIR=${PKGDIR}/somo
+  echo "${RSYNC} ${SDIR} ${DDIR}"
+  ${RSYNC} ${SDIR} ${DDIR}
 fi
 
 # Copy special library files
