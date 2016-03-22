@@ -32,10 +32,10 @@ if [ $ISWIN -eq 2 ]; then
   cp Makefile Makefile-lib
   cp Makefile.Release Makefile.R-lib
   cp Makefile.Debug Makefile.D-lib
+  cd $us3/../us3_somo/etc
+  cp -p *ico *.json somo*.new $us3/etc/
   ls -l Make*
   echo "QMAKE complete. Rerun $0 in MSYS (MINGW32) window"
-  cd $us3/../us3_somo/etc
-  cp -p *ico $us3/etc/
   exit 0
 fi
 
@@ -55,14 +55,19 @@ if [ $ISWIN -eq 1 ]; then
   cd ../
   ls -l ./bin
   cp -p bin/* ../ultrascan3/bin/
+  cp -p etc/*.json etc/*.new etc/*.ico ../ultrascan3/etc/
   exit 0
 fi
 
 # Do makes for Linux,Mac
 cd $us3/../us3_somo
 SOMO3=`pwd`
-echo "cp -p $SOMO3/etc/*ico $us3/etc/"
-cp -p $SOMO3/etc/*ico $us3/etc/
+echo "cp -p $SOMO3/etc/*ico  $us3/etc/"
+cp -p $SOMO3/etc/*ico  $us3/etc/
+echo "cp -p $SOMO3/etc/*json $us3/etc/"
+cp -p $SOMO3/etc/*json $us3/etc/
+echo "cp -p $SOMO3/etc/*new  $us3/etc/"
+cp -p $SOMO3/etc/*new  $us3/etc/
 cd develop
 sh version.sh
 qmake us_somo.pro
