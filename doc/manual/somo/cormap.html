@@ -1,0 +1,259 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta content="text/html;charset=ISO-8859-1" http-equiv="Content-Type">
+	<title>SOMO HPLC-SAXS Module</title>
+	<link href="mainstyle.css" rel="styleSheet" type="text/css">
+	<style type="text/css">
+		@page { margin: 0.79in }
+		p { margin-bottom: 0.1in; line-height: 120% }
+		p.sdfootnote { margin-left: 0.24in; text-indent: -0.24in; margin-bottom: 0in; font-size: 10pt; line-height: 100% }
+		a.sdfootnoteanc { font-size: 57% }
+	</style>
+</head>
+<body>
+<table BORDER=0 CELLPADDING=5 >
+<tr>
+<td><img SRC="USSOMO-banner.png" BORDER="0" ALT="UltraScan Version"> </td>
+<td>
+<center>
+<h1>
+<i>Manual</i></h1></center>
+</td>
+</tr>
+</table>
+
+<hr>
+<center>
+<h2>
+CorMap Analysis Module:</h2></center>
+<h3><center>Last updated: March 2016</center></h3><p>
+<center><span style="color:#CC0000">NOTICE: this module is being developed by E. Brookes, J. Pérez, P. Vachette, and M. Rocco.<br>
+Portions of this help file are taken from Brookes et al. "US-SOMO HPLC-SAXS Module: Dealing with Capillary Fouling, and Extraction of Pure Component Patterns from Poorly Resolved SEC-SAXS Data", under revison at J. Appl. Cryst., 2016.</span>
+</center>
+<h3><center>Synopsis</center></h3>
+
+<p class="iucr-body-text-western"><span lang="en-US">SEC-SAXS data
+analysis involves repeated curve comparisons and decisions regarding
+their similarity. This problem has recently been addressed by Franke
+</span><span lang="en-US"><i>et al.</i></span><span lang="en-US">
+(Franke D, Jeffries CM, Svergun DI. Correlation Map, a goodness-of-fit test for one-dimensional X-ray scattering spectra. Nature Methods, 12, 419-422, 2015) in a paper in which the authors propose a novel
+goodness-of-fit test for assessing differences between
+one-dimensional datasets using only data point correlations over the
+recorded </span><span lang="en-US"><i>q</i></span><span lang="en-US">&#8209;range
+or part of it, independently of error estimates, named Correlation
+Map (CorMap for short). We implemented a routine performing the
+calculations described in Franke </span><span lang="en-US"><i>et al.</i></span><span lang="en-US">
+(2015), in which we essentially perform pairwise comparison of two
+scattering patterns. In this case, the probability of similarity
+between the two curves (two different frames or experimental and
+calculated intensities) may be quantified by evaluating the
+probability (</span><span lang="en-US"><i>P</i></span><span lang="en-US">&#8209;value)
+that the largest observed stretch of constant sign correlations be
+observed by chance. If the </span><span lang="en-US"><i>P</i></span><span lang="en-US">&#8209;value
+is less than a given threshold, the two curves can be considered as
+statistically different. We refer the reader to the original article
+for more details on the method.</span></p>
+<p class="iucr-body-text-western" style="widows: 0; orphans: 0"><span lang="en-US">When
+comparing a set of scattering frames, we perform all pairwise
+comparisons. To present the results in a synthetic way we plot a
+square matrix in which the square (</span><span lang="en-US"><i>i</i></span><span lang="en-US">,</span><span lang="en-US"><i>j</i></span><span lang="en-US">)
+contains the </span><span lang="en-US"><i>P</i></span><span lang="en-US">&#8209;value
+resulting from the (</span><span lang="en-US"><i>i</i></span><span lang="en-US">,</span><span lang="en-US"><i>j</i></span><span lang="en-US">)
+pairwise CorMap analysis using a three color code</span><sup><span lang="en-US"><a class="sdfootnoteanc" name="sdfootnote1anc" href="#sdfootnote1sym"><sup>1</sup></a></span></sup><span lang="en-US">:
+green for </span><span lang="en-US"><i>P&nbsp;</i></span><font face="Symbol, serif"><span lang="en-US">&ge;</span></font><span lang="en-US">&nbsp;0.05,
+yellow for 0.01&nbsp;</span><font face="Symbol, serif"><span lang="en-US">&le;</span></font><span lang="en-US">&nbsp;</span><span lang="en-US"><i>P</i></span><span lang="en-US">&nbsp;&lt;&nbsp;0.05
+and red for </span><span lang="en-US"><i>P</i></span><span lang="en-US">&nbsp;&lt;&nbsp;0.01.
+This pairwise </span><span lang="en-US"><i>P</i></span><span lang="en-US">&#8209;value
+map is first analyzed in terms of the distribution of values between
+the three classes with an emphasis on the % of red squares. This is
+complemented by an evaluation of the average size of clusters of
+horizontally and/or vertically adjacent &ldquo;red&rdquo; squares.
+After careful examination of several indicators derived from the
+</span><span lang="en-US"><i>P</i></span><span lang="en-US">&#8209;value
+map analysis, this was chosen as the most reliable to determine the
+global similarity between all frames of the considered subset. We
+also provide a </span><span lang="en-US"><i>q</i></span><sub><span lang="en-US">max</span></sub><span lang="en-US">
+cutoff for all CorMap comparisons, which is by default 0.05&nbsp;&Aring;</span><sup><span lang="en-US">&#8209;1</span></sup><span lang="en-US">
+but can be changed by the user. The primary purpose of this cutoff is
+to reduce the number of points compared </span><span lang="en-US">and
+to focus the comparison </span><span lang="en-US">in the region of
+greatest signal information and thereby increase the sensitivity of
+the probability test.</span></p>
+
+<h3><center>Details</center></h3>
+<p>We start with an example. Suppose we select two <i>I</i>(<i>q</i>) curves (in this case taken near the peak of an SEC-SAXS Lysozyme dataset) as shown below.</p>
+<center><img src=cormap_1.png id="plot1" alt="SOMO HPLC-SAXS Lysozyme I(q) 2 curves near peak"></center>
+<p>We wish to know if these two curves are CorMap probabilistically identical.  This can be achieved by pressing the <b><i>CorMap Analysis</i></b> button in the first row under the plot.  This will result in the following pop-up window:</p>
+
+<center><img src=cormap_2.png alt="SOMO HPLC-SAXS CorMap Correlation Correction"></center>
+
+<p>This window is asking if you wish to sample alternate <i>q</i>-points. Generally, the need for this depends on the beamline/detector characteristics, and is best evaluated during the analysis of <b>Blanks</b> (the frames typically averaged for buffer subtraction).</p>
+<ul>
+<li><p>
+<b><i>Sample alternate q points</i></b> will sample alternate <i>q</i> points.
+</p></li>
+<li><p>
+<b><i>Specify a larger gap in q points</i></b> will bring up another window (not shown) which will allow entry of an integer of value 3 or greater, to sample every specified number of <i>q</i> points.
+</p></li>
+<li><p>
+<b><i>Continue</i></b> will not sample and include all <i>q</i> points.
+</p></li>
+</ul>
+<p>
+ In this case will will press <i><b>Continue</b></i> to not sample. The following question:</p>
+<center><img src=cormap_3.png alt="SOMO HPLC-SAXS CorMap q minimum cutoff"></center>
+<p>If you wish to remove noisy low <i>q</i> values from the CorMap analysis, you may enter a positive <i>q</i> value here.  In our example, we press <b><i>OK</i></b> without changing the default value of zero.  Finally, the CorMap Analysis window will be shown.</p>
+<center><img src=cormap_4.png alt="SOMO HPLC-SAXS CorMap Analysis"></center>
+<p>For clarity, we start with the bottom of the text area.  In dark blue, the details of the CorMap comparison test(s) are listed.  
+The two file names are first listed, then the number of <i>q</i> points compared <i>N</i>, followed by the <i>q</i> point position where the longest streak occurs (<i>Start point</i>), then the length of the longest streak (<i>C</i>) and finally the <i>P-value</i> of a streak of length <i>C</i> occurring in a sequence of <i>N</i> points.  </p>
+<p>In this case, we have long streak <i>C</i> of 20, starting at <i>Start point</i> 8.  You can see this streak in the residuals plot shown in <a href="#plot1">first image of this section</a>.
+</p>
+<p>The <i>P values</i> correspond to colors </span><span lang="en-US">:
+green for </span><span lang="en-US"><i>P&nbsp;</i></span><font face="Symbol, serif"><span lang="en-US">&ge;</span></font><span lang="en-US">&nbsp;0.05,
+yellow for 0.01&nbsp;</span><font face="Symbol, serif"><span lang="en-US">&le;</span></font><span lang="en-US">&nbsp;</span><span lang="en-US"><i>P</i></span><span lang="en-US">&nbsp;&lt;&nbsp;0.05
+and red for </span><span lang="en-US"><i>P</i></span><span lang="en-US">&nbsp;&lt;&nbsp;0.01, as listed in the top of the text area.
+</p>
+<p>In our example, this long <i>C</i> of 20 given an <i>N</i> of 78 points gives a <i>P value</i> &lt; 0.01 and therefore encodes as red. </p>
+<p>
+ At the top left is the <b><i>Pairwise P value map</i></b>.  This map
+ summarizes the <i>P value</i> colors.  The map is symmetric. The
+ first row corresponds to the first file as summarized in
+ the <i>Ref. : Name</i> section of the text area.  The axis on the map
+ are unfortunately not perfect, but the best we currently have (as in
+ this case it unfortunately reports fractional values and the numbers
+ are obviously not centered).  In this trivial example, the map is a
+ simple 2x2 since we are only comparing two <i>I</i>(<i>q</i>) data files.  The
+ diagonal is white, as it represents self-comparisons.  The
+ off-diagonal elements show the color of the <i>P value</i> comparison
+ of the <i>(i,j)</i> curves.
+</p>
+
+<p>
+ At the top center is the <b><i>Red pair % histogram</i></b>.  This
+ histogram reports the percentage of red pairs in each row (or
+ equivalently, column) as enumerated by <i>Ref.</i> of the map.  There
+ is a green horizontal line representing the overall average and also a yellow dotted lines at ± 1 S.D. (superimposed on the average in this trivial case, more informative examples are shown in the <a href="#scalemode">Scale mode</a> and <a href="#baselinemode">Baseline mode</a> examples below).
+</p>
+
+<p>
+ At the top right is the <b><i>Red cluster size histogram</i></b>.  A red cluster is defined as horizontally and/or vertically contiguous red points in the <b><i>Pairwise P value map</i></b>. In this case, we have simply a cluster size of one, and this is reported in the histogram.  More complicated cases are reported the <a href="#scalemode">Scale Mode</a> and <a href="#baselinemode"> Baseline Mode</a> analyses below.
+</p>
+
+<p>The text area contains in this order:</p>
+<ul>
+<li><p> 
+The color encoding information.
+</p></li>
+<li><p> 
+Summary values for overall percentage of green plus yellow and red pairs.
+</p></li>
+<li><p> 
+The overall average one-to-all average <i>P value</i> and red percentage of these pairwise comparisons.
+</p></li>
+<li><p> 
+Statistics regarding the red clusters including the number of red clusters (<i>red cluster count</i>), their average size, and as a percent of total area.
+</p></li>
+<li><p> 
+The <i>Ref.</i> to <i>Name</i> encoding, as well as the average and maximum <i>P value</i> for each entry compared to all other entries.
+</p></li>
+<li><p> 
+In dark blue, the detailed comparison of each pair including their names, the number of points <i>N</i>, the <i>Start point</i>, the length of streak <i>C</i> and the <i>P value</i>
+</p></li>
+</ul>
+
+<p>At the bottom of the window are four buttons</p>
+<ul>
+<li><p> 
+<b><i>Help</i></b> will open documentation for this module in a web browser.
+</p></li>
+<li><p> 
+<b><i>Save</i></b> will save the results in a <b>csv</b> file. This can be loaded in this module or in the <b><i>Baseline</b></i> utility of the <a href=somo_saxs_hplc.html>main HPLC-SAXS window</a> when in Integral Baseline mode of <a href=saxs_hplc_options.html>HPLC SAXS <b><i>Options</b></i></a>.
+</p></li>
+<li><p> 
+<b><i>Load</i></b> will load a previously <b><i>Save</i></b>d <b>csv</b> file.
+</p></li>
+<li><p> 
+<b><i>Close</i></b> will close the window.
+</p></li>
+</ul>
+
+<p>Note the title within the window (not the window caption at the very top) lists specific information about the current CorMap analysis. These include:</p>
+<ul>
+<li><p> 
+<b><i>(...) mode</i></b> will report the "mode" of the CorMap Analysis. This can have one of the following values:
+
+<ul>
+<li><p> 
+<b><i>Blanks mode</i></b> is reported if CorMap Analysis was done with in the <b><i>Blanks analysis</i></b> as described the <a href=somo_saxs_hplc.html>main HPLC-SAXS window documentation</a>.
+</p></li>
+
+<li><p> 
+<b><i>Baseline mode</i></b> is reported if CorMap Analysis was
+performed from the  <b><i>Baseline</b></i> utility of
+the <a href=somo_saxs_hplc.html>main HPLC-SAXS window</a> when in
+Integral Baseline mode of <a href=saxs_hplc_options.html>HPLC
+SAXS <b><i>Options</b></i></a>. This is also reported when the <b><i>Find best region</b></i> is selected within that utility, as it brings up a CorMap Analysis window automatically. Baseline mode will report the frame range in the title.
+</p></li>
+
+<li><p> 
+<b><i>Scale mode</i></b> is reported if CorMap Analysis was done with in the <b><i>Scale analysis</i></b> as described the <a href=somo_saxs_hplc.html>main HPLC-SAXS window documentation</a>. Scale mode will report the scaling range in the title.
+</p></li>
+
+<li><p> 
+<b><i>Global Gaussian mode</i></b> is reported if CorMap Analysis was done with in the <b><i>Scale analysis</i></b> as described the <a href=somo_saxs_hplc.html>main HPLC-SAXS window documentation</a>. Global Gaussian mode will report the frame range in the title.
+</p></li>
+</ul>
+
+</p></li>
+<li><p> 
+<b><i>Maximum q limit [A^-1]</i></b> reports the maximum <i>q</i> value that is used for comparisons.  This global value can be set in <a href=saxs_hplc_options.html>HPLC SAXS <b><i>Options</b></i></a>.  A value of 0.05 is the default value to focus the comparison on the region of maximum signal intensity and also increase the sensitivity of the test.
+</p></li>
+
+<li><p> 
+<b><i>Minimum q limit [A^-1].</i></b> reports the minimum <i>q</i> value that is used for comparisons.  This will only be displayed if an optional positive <i>q</i> value minimum limit has been specified for this CorMap analysis.
+</p></li>
+
+<li><p> 
+<b><i>Only every (...) q value sampled</i></b> will be reported if sampling was used to generate the CorMap Analysis along with the sampling interval selected.
+</p></li>
+</ul>
+
+<center><h4 id="scalemode">Example of 11 curves from <b><i>Scale mode</i></b></a></h4></center>
+<center><img src=cormap_5.png alt="SOMO HPLC-SAXS CorMap Analysis from scale mode"></center>
+<p>In this case, the CorMap analysis was performed on 13 curves from the top of a peak from the same Lysozyme data with alternate <i>q</i> point sampling.  This is indicated in the window title with the text <b>Only every 2nd q value sampled</b>
+
+<center><h4 id="baselinemode">Example from <b><i>Baseline mode</i></b></a></h4></center>
+<center><img src=cormap_7.png alt="SOMO HPLC-SAXS CorMap Analysis from baseline mode"></center>
+<p>In this case, the title also reports the frame range.  The range selected includes the eluting peak, so a lot of red occurs as <i>I</i>(<i>q</i>)'s change.  A stable region is observable in the lower right as large, predominantly green diagonal sub-blocks appear.</p>
+
+<center><h4>Example <b><i>Global Gaussian mode</i></b></a></h4></center>
+<center><img src=cormap_6.png alt="SOMO HPLC-SAXS CorMap Analysis from global Gaussian"></center>
+<p>In this case, the CorMap analysis is different from the standard CorMap analysis, and the button to access it changes from <b><i>CorMap Analysis</i></b> to <b><i>Show CorMap</i></b> to reflect this difference.  The CorMap comparison is done between I(t) curves and their Gaussian representation, resulting in a single row of colors in the map, one for each I(t) and is Gaussian representation.  There is also no red cluster information, as this is only applicable to a two dimensional map. (This mode does not currently support Load.)</p>
+
+<hr>
+<div id="sdfootnote1">
+	<p class="sdfootnote"><a class="sdfootnotesym" name="sdfootnote1sym" href="#sdfootnote1anc">1</a>T<span lang="en-US">he
+	same code is used by the authors in the CorMap implementation within
+	PrimusQt software (Atsas package v. 2.7.1)</span></p>
+</div>
+<hr>
+<font face="helvetica" size="-1">
+www contact: <a href="mailto:emre@biochem.uthscsa.edu">Emre Brookes</a>
+</font>
+<p>
+<font face="helvetica" size="-1">
+This document is part of the <i><b>UltraScan</b></i> Software Documentation
+distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> The latest version of this document can always be found at:
+</font>
+<p>
+<font face="helvetica" size="-1">
+<a href="http://somo.uthscsa.edu">http://somo.uthscsa.edu</a>
+</font>
+<p>
+<font face="helvetica" size="-1">
+Last modified on March 23, 2016.
+</font>
+</body>
+</html>

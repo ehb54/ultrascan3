@@ -6721,12 +6721,29 @@ void US_Hydrodyn_Saxs_Hplc::gauss_delete_markers()
 #else
    plot_dist->detachItems( QwtPlotItem::Rtti_PlotMarker );
 #endif
+
+#ifdef QT4
+   set < QwtPlotItem * > current_items;
+   {
+      const QwtPlotItemList &list = plot_dist->itemList();
+
+      for ( QwtPlotItemIterator it = list.begin(); it != list.end(); ++it ) {
+         current_items.insert( *it );
+         // QwtPlotItem *item = *it;
+         // qDebug( QString( "item name %1 addr %2" ).arg( item->title().text() ).arg( (unsigned long) item ) );
+      }
+   }
+#endif
+
+
    for ( unsigned int i = 0; i < ( unsigned int )plotted_hlines.size(); i++ )
    {
 #ifndef QT4
       plot_dist->removeCurve( plotted_hlines[ i ] );
 #else
-      plotted_hlines[ i ]->detach();
+      if ( current_items.count( plotted_hlines[ i ] ) ) {
+         plotted_hlines[ i ]->detach();
+      }
 #endif
    }
    plotted_markers.clear();
@@ -6736,7 +6753,9 @@ void US_Hydrodyn_Saxs_Hplc::gauss_delete_markers()
 #ifndef QT4
       plot_dist->removeCurve( plotted_baseline[ i ] );
 #else
-      plotted_baseline[ i ]->detach();
+      if ( current_items.count( plotted_baseline[ i ] ) ) {
+         plotted_baseline[ i ]->detach();
+      }
 #endif
    }
    plotted_baseline.clear();

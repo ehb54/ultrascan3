@@ -834,7 +834,7 @@ bool US_Hydrodyn_Saxs_Cormap_Cluster_Analysis::run(
    double sum2_cluster_size_pct = 0e0;
 
    double dpc = (double) pc;
-   double area = dpc * dpc * 0.5 - dpc;
+   double area = ( dpc * dpc - dpc ) * 0.5;
 
    for ( int i = 0; i < pc - 1; ++i ) {
       for ( int j = i + 1; j < pc; ++j ) {
@@ -1700,7 +1700,7 @@ void US_Hydrodyn_Saxs_Cormap::displayData() {
                }
             }
 
-            avgP /= (double) sfs;
+            avgP /= (double) (sfs - 1);
 
             double pct_red = 100e0 * (double) red_count / (double) ( sfs - 1 );
 

@@ -3096,7 +3096,7 @@ bool US_Hydrodyn_Saxs_Hplc::ask_cormap_minq( map < QString, QString > & paramete
 {
    bool ok;
    double result = QInputDialog::getDouble(
-                                           caption() + tr( " : Optional CorMap Analysis Correlation Correction" )
+                                           caption() + tr( " : Optional CorMap Analysis q minimum cutoff" )
                                            ,tr( "If you have noisy low q data, you may wish to eliminate these points\n"
                                                 "from CorMap analysis by setting a non-zero minimum q value here:" )
                                            ,0
@@ -3379,9 +3379,9 @@ void US_Hydrodyn_Saxs_Hplc::cormap( map < QString, QString > & parameters )
                   default : nth_tag = "th"; break;
                   }
                
-                  parameters[ "title" ] += QString( tr( " Only every %1%2 q value selected." ) )
+                  parameters[ "title" ] += QString( tr( " Only every %1%2 q value sampled." ) )
                      .arg( decimate ).arg( nth_tag );
-                  parameters[ "title_adj" ] += QString( tr( " Only every %1%2 q value selected." ) )
+                  parameters[ "title_adj" ] += QString( tr( " Only every %1%2 q value sampled." ) )
                      .arg( decimate ).arg( nth_tag );
                }
 
@@ -3624,9 +3624,9 @@ void US_Hydrodyn_Saxs_Hplc::cormap( map < QString, QString > & parameters )
                   default : nth_tag = "th"; break;
                   }
                
-                  parameters[ "title" ] += QString( tr( " Only every %1%2 q value selected." ) )
+                  parameters[ "title" ] += QString( tr( " Only every %1%2 q value sampled." ) )
                      .arg( decimate ).arg( nth_tag );
-                  parameters[ "title_adj" ] += QString( tr( " Only every %1%2 q value selected." ) )
+                  parameters[ "title_adj" ] += QString( tr( " Only every %1%2 q value sampled." ) )
                      .arg( decimate ).arg( nth_tag );
                }
 
@@ -3950,9 +3950,9 @@ void US_Hydrodyn_Saxs_Hplc::cormap( map < QString, QString > & parameters )
                default : nth_tag = "th"; break;
                }
                
-               parameters[ "title" ] += QString( tr( " Only every %1%2 q value selected." ) )
+               parameters[ "title" ] += QString( tr( " Only every %1%2 q value sampled." ) )
                   .arg( decimate ).arg( nth_tag );
-               parameters[ "title_adj" ] += QString( tr( " Only every %1%2 q value selected." ) )
+               parameters[ "title_adj" ] += QString( tr( " Only every %1%2 q value sampled." ) )
                   .arg( decimate ).arg( nth_tag );
             }
 
@@ -4254,9 +4254,9 @@ void US_Hydrodyn_Saxs_Hplc::cormap( map < QString, QString > & parameters )
                default : nth_tag = "th"; break;
                }
                
-               parameters[ "title" ] += QString( tr( " Only every %1%2 q value selected." ) )
+               parameters[ "title" ] += QString( tr( " Only every %1%2 q value sampled." ) )
                   .arg( decimate ).arg( nth_tag );
-               parameters[ "title_adj" ] += QString( tr( " Only every %1%2 q value selected." ) )
+               parameters[ "title_adj" ] += QString( tr( " Only every %1%2 q value sampled." ) )
                   .arg( decimate ).arg( nth_tag );
             }
 
@@ -4392,7 +4392,7 @@ void US_Hydrodyn_Saxs_Hplc::cormap( map < QString, QString > & parameters )
 
          {
             parameters[ "as_pairs"  ] = "true";
-            parameters[ "title"     ] = QString( tr( "Global Gaussian t range %1 to %2." ) )
+            parameters[ "title"     ] = QString( tr( "Global Gaussian mode t range %1 to %2." ) )
                .arg( le_gauss_fit_start->text() )
                .arg( le_gauss_fit_end->text() )
                ;
@@ -4690,9 +4690,9 @@ void US_Hydrodyn_Saxs_Hplc::cormap( map < QString, QString > & parameters )
                default : nth_tag = "th"; break;
                }
                
-               parameters[ "title" ] += QString( tr( " Only every %1%2 q value selected." ) )
+               parameters[ "title" ] += QString( tr( " Only every %1%2 q value sampled." ) )
                   .arg( decimate ).arg( nth_tag );
-               parameters[ "title_adj" ] += QString( tr( " Only every %1%2 q value selected." ) )
+               parameters[ "title_adj" ] += QString( tr( " Only every %1%2 q value sampled." ) )
                   .arg( decimate ).arg( nth_tag );
             }
 

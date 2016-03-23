@@ -593,6 +593,7 @@ void US_Hydrodyn_Saxs_Hplc::wheel_cancel( bool from_wheel_save )
 
    case MODE_BLANKS :
       {
+         // qDebug( "wheel cancel in blanks" );
          le_baseline_end_s  ->setText( QString( "%1" ).arg( org_baseline_end_s   ) );
          le_baseline_end_e  ->setText( QString( "%1" ).arg( org_baseline_end_e   ) );
          gauss_delete_markers();
@@ -618,6 +619,7 @@ void US_Hydrodyn_Saxs_Hplc::wheel_cancel( bool from_wheel_save )
 
    case MODE_BASELINE :
       {
+         // qDebug( "wheel cancel in baseline" );
          if ( baseline_test_mode ) {
             lbl_wheel_pos_below->setText( "" );
             baseline_test_mode = false;

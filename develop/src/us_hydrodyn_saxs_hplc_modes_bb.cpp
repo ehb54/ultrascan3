@@ -71,7 +71,7 @@ void US_Hydrodyn_Saxs_Hplc::blanks_start()
    }
 
    if ( use_default_blanks ) {
-      qDebug( "use default blanks" );
+      // qDebug( "use default blanks" );
       for ( int i = 0; i < (int) default_blanks.size(); ++i ) {
          if ( !f_qs.count( default_blanks[ i ] ) ) {
             // qDebug( QString( "loading %1" ).arg( default_blanks_files[ i ] ) );
@@ -89,7 +89,7 @@ void US_Hydrodyn_Saxs_Hplc::blanks_start()
       // now all blanks loaded
       set_selected( default_blanks_set );
    } else {
-      qDebug( "Not use default blanks" );
+      // qDebug( "Not use default blanks" );
       if ( blanks_in_baseline_mode ) {
          return baseline_start();
          // QMessageBox::warning( this, caption() + tr( " : Blanks analysis" ),
@@ -114,7 +114,13 @@ void US_Hydrodyn_Saxs_Hplc::blanks_start()
                             ,QMessageBox::Ok | QMessageBox::Default
                             ,QMessageBox::NoButton
                             );
-      return current_mode != MODE_NORMAL ? wheel_cancel() : update_enables();
+      // return current_mode != MODE_NORMAL ? wheel_cancel() : update_enables();
+      if ( current_mode != MODE_NORMAL ) {
+         current_mode = MODE_BLANKS;
+         blanks_axis_y_was_log = false;
+         return wheel_cancel();
+      }
+      return update_enables();
       // return blanks_in_baseline_mode ? baseline_enables() : update_enables();
    }
       
@@ -641,7 +647,6 @@ void US_Hydrodyn_Saxs_Hplc::baseline_start( bool from_blanks_mode_save )
             return current_mode != MODE_NORMAL ? wheel_cancel() : update_enables();
             break;
          case 0 : // load blanks
-            qDebug( "load blanks not yet" );
             {
                QStringList                  new_blanks;
                QStringList                  new_blanks_files;
