@@ -22,23 +22,23 @@
 <center>
 <h2>
 SOMO HPLC-SAXS Module:</h2></center>
-<h3><center>Last updated: October 2015 </center></h3><p>
+<h3><center>Last updated: March 2016 </center></h3><p>
 
 <center><span style="color:#CC0000">NOTICE: this module is being developed by E. Brookes, J. Pérez, P. Vachette, and M. Rocco.<br>
 Portions of this help file are taken from the Supplementary Materials of Brookes et al., "Fibrinogen species as resolved by HPLC-SAXS data processing within the UltraScan SOlution MOdeler (US-SOMO) enhanced SAS module", J. Appl. Cryst. 46:1823-1833 (2013), and of Brookes et al. "US-SOMO HPLC-SAXS Module: Dealing with Capillary Fouling, and Extraction of Pure Component Patterns from Poorly Resolved SEC-SAXS Data", under revison at J. Appl. Cryst., 2016.</span>
 </center>
 
 <p><center>
-<img SRC="somo-HPLC-SAXS_2.png" ALT="SOMO HPLC-SAXS Figure 1">
+<img SRC="somo-HPLC-SAXS_3.png" ALT="SOMO HPLC-SAXS Lysozyme I(q) data">
 </center>
 <p>
-This <b>US-SOMO</b> module was conceived for the analysis of HPLC-SAXS data. In the image above, the main panel of the <b><i>HPLC-SAXS</i></b> module is shown. The buttons with the black labels are the ones currently active, the ones with the red labels become active when allowed by the processing/visualization stage. The graphics panel shows a collection of HPLC-SAXS log<sub>10</sub>[<i>I(q)</i>] vs. <i>q</i> SAXS data frames (points with 0 or negative values are automatically omitted from the visualization only) for a BSA separation on two 7.8 &times; 300 mm ID columns packed with hydroxylated polymethacrylate particles (TSK G4000PWXL, 10 &mu;m size, 500 Å pore size, and G3000PWXL, 6 &mu;m size, 200 Å pore size, Tosoh Bioscience, Tokyo, Japan) connected in series, protected by a 6 &times; 40 mm guard column filled with G3000PW resin (Tosoh). Note the permanent upturn at very small <i>q</i>-values, most likely due to biological material aggregated in this case by the intense X-ray beam on the capillary cell walls. While this kind of problem should be (and has been) preferentially dealt with at the experimental level, we use this outdated dataset to demonstrate the potential for correcting data still presenting such an issue.<p>
+This <b>US-SOMO</b> module was conceived for the analysis of HPLC-SAXS data. In the image above, the main panel of the <b><i>HPLC-SAXS</i></b> module is shown. The buttons with the black labels are the ones currently active, the ones with the red labels become active when allowed by the processing/visualization stage. The graphics panel shows a collection of HPLC-SAXS log<sub>10</sub>[<i>I(q)</i>] vs. <i>q</i> SAXS data frames (points with 0 or negative values are automatically omitted from the visualization only) for a chicken egg-white lysozyme chromatographic separation   on a Agilent BioSec-3 (3 &mu;m particle size, 300 Å pore-size) 4.6 &times; 300 mm column, eluted with Hepes 50 mM, NaCl 100 mM, pH 7. Note the permanent upturn at very small <i>q</i>-values, due to biological material aggregated by the intense X-ray beam on the capillary cell walls under these far from optimal experimental conditions. While this kind of problem should be (and has been) preferentially dealt with at the experimental level, we use this dataset to demonstrate the potential for correcting data still presenting such an issue.<p>
 
 The left side of the window is divided in three sections, labeled "<b><i>Data files</i></b>", "<b><i>Produced Data</i></b>", and "<b><i>Messages</i></b>". By clicking on these labels, the corresponding panel below each label will disappear, allowing for an expansion of the remaining other panel(s). If every panel is made to disappear, the main graph will expand to cover the full size of the <b><i>HPLC-SAXS</i></b> window. By clicking again of the labels, the corresponding panels will be restored.<p>
 
 On the top left panel (<b><i>Data files</i></b>) there are four buttons:<p>
 
-The <b><i>Add files</i></b> button is used to load data into the module. An operating directory can be pre-selected by clicking on the path shown above it, and navigating in the file system (selecting the <i>Lock</i> checkbox will fix that directory). The file format for SAXS data recognized by the <b>US-SOMO</b> <b><i>HPLC-SAXS</i></b> module consist of .dat files with two or three TAB- or space-separated columns containing the <i>q</i>, <i>I(q)</i>, and optionally their associated standard deviation (SD) values, respectively. Each frame number (or time value) must be present somewhere in the filename with a common prefix and suffix. For example, data1saxs.dat, data2saxs.dat, data3saxs.dat will be recognized as frames 1,2,3, where "data" and "saxs" can be replaced by any common sequence of characters. Consequently, 1.dat, 2.dat, 3.dat would be acceptable, but abc1.dat, qrs2.dat, xyz3.dat would not, because the prefix characters are not common. Furthermore, the loader will also arrange the data files sequentially, in increasing frame number (or time value) order. Concentration-related data should be instead uploaded using the <b><i>Concentration load</i></b> button (see below). <i>I(q)</i> vs. <i>q</i> and concentration data frames are automatically recognized and the labels on the x- and y-axes are then properly set.<p>
+The <b><i>Add files</i></b> button is used to load data into the module. An operating directory can be pre-selected by clicking on the path shown above it, and navigating in the file system (selecting the <i>Lock</i> checkbox will fix that directory). The file format for SAXS data recognized by the <b>US-SOMO</b> <b><i>HPLC-SAXS</i></b> module consist of .dat files with two or three TAB- or space-separated columns containing the <i>q</i>, <i>I(q)</i>, and optionally their associated standard deviation (SD) values, respectively. Each frame number (or time value) must be present somewhere in the filename with a common prefix and suffix. For example, data1saxs.dat, data2saxs.dat, data3saxs.dat will be recognized as frames 1,2,3, where "data" and "saxs" can be replaced by any common sequence of characters. Consequently, 1.dat, 2.dat, 3.dat would be acceptable, but abc1.dat, qrs2.dat, xyz3.dat would not, because the prefix characters are not common. Furthermore, the loader will also arrange the data files sequentially, in increasing frame number (or time value) order. Concentration-related data should be instead uploaded using the <b><i>Concentration load</i></b> button (see below). <i>I(q)</i> vs. <i>q</i> and concentration data frames are automatically recognized and the labels on the <i>x</i>- and <i>y</i>-axes are then properly set.<p>
 
 <b><i>Similar</i></b> will select files with similar names and allow manual pattern matching entry if no new similar files are selected.<p> 
 
@@ -52,23 +52,23 @@ Several buttons are available in the panel below the loaded files window:
 </center>
 <p>
 
-<b><i>Select all</i></b> will select all files.<p>
+<b><i>Sel. all</i></b> will select all files.<p>
 
-<b><i>Invert</i></b> will allow toggling the selection between selected files and everything else not currently selected.<p>
+<b><i>Sel. Unsel.</i></b> will allow toggling the selection between selected files and everything else not currently selected.<p>
 
-<b><i>Select</i></b> will open up a panel in which several selection options can be utilized (see <a href=saxs_hplc_nth.html>here</a>).<p>
+<b><i>Adv. Sel.</i></b> will open up a panel in which several selection options can be utilized (see <a href=saxs_hplc_nth.html>here</a>).<p>
 
 <b><i>View</i></b>, active when up to ten datasets are selected, will show them in text format.<p>
 
 <b><i>Movie</i></b>: Pressing this button will open a pop-up window with the commands allowing to view in the main graphics window of the <b>US-SOMO <i>HPLC-SAXS</i></b> module a series of selected data files in a movie-like manner, and to optionally save each frame as an image for real movie-making operations (see <a href=somo_saxs_hplc_movie.html>here</a>).<p>
 
-The <b><i>X</i></b> and <b><i>Y</i></b> buttons allow to toggle between linear and log<sub>10</sub> scaling of the data on the <i>x</i>- and <i>y</i>-axes (if zero or negative values are present, they will be temporarily removed when the scale is set to log<sub>10</sub> mode, as they cannot be shown on the display in this mode).<p>
+The <b><i>Log X</i></b> (<b><i>Lin X</i></b>) and <b><i>Log Y</i></b> (<b><i>Lin Y</i></b>) buttons allow to toggle between linear and log<sub>10</sub> scaling of the data on the <i>x</i>- and <i>y</i>-axes, respectively (if zero or negative values are present, they will be temporarily removed when the scale is set to log<sub>10</sub> mode, as they cannot be shown on the display in this mode). The buttons will change their respective label once pressed, to underscore what is the action currently available.<p>
 
 Selecting the <b><i>Err</i></b> checkbox, active when up to 10 files are selected, will switch their representation from the dots connected with a line mode to symbols (diamonds) with their associated SDs represented as error bars mode.<p>
 
 <b><i>Rescale</i></b> adjusts the X-Y axes on the graphics window to maximize the display of selected datasets (no effect on the data themselves).<p>
 
-<b><i>Normalize</i></b> will divide the <i>I(q)</i> data by the stored/entered concentrations.<p>
+<b><i>Normalize</i></b> will divide the <i>I</i>(<i>q</i>)</i> data by the stored/entered concentrations.<p>
 
 <b><i>Average</i></b> will produce a weighted average with propagated SDs of selected data. The resulting datset filename will contain the number of frames averaged, and the initial and final frame numbers, followed by "_avg".<p>
 
@@ -78,7 +78,14 @@ Each time the <b><i>Width</i></b> button is pressed, it increments the data line
 
 <b><i>Color</i></b> shifts the colors used in the graphics window; the operation can be repeated until a better contrast with the background is achieved. Note that the background color can be changed by right-clicking on the plot borders, which will open up a pop-up dialogue panel where all plot characteristics can be modified.<p>
 
-<b><i>Smooth</i></b> performs a regularization of selected data using a moving window, whose dimension is defined in a pop-up menu (shown below), using a Gaussian smoothing kernel of 2n + 1 points.<p>
+<b><i>Bin</i></b> allows averaging adjacent points in <i>I</i>(<i>q</i>) datasets, starting with the first point in the file and using a binning size defined in a pop-up dialogue:<p>
+
+<center>
+<img SRC="somo-HPLC-SAXS_bin.png" ALT="SOMO HPLC-SAXS binning window panel">
+</center>
+<p>
+
+<b><i>Smooth</i></b> performs a regularization of selected data using a moving window, whose dimension is defined in a pop-up menu (shown below), using a Gaussian smoothing kernel of 2n+1 points.<p>
 <center>
 <img SRC="somo-HPLC-SAXS_smoothing.png" ALT="SOMO HPLC-SAXS smoothing window panel">
 </center>
@@ -98,16 +105,16 @@ Each time the <b><i>Width</i></b> button is pressed, it increments the data line
 
 <b><i>Set</i></b> will set an already uploaded and currently selected file containing the UV or refractive index profile vs. time or frame number as the source of the concentration-dependent signal.<p>
 
-<b><i>Concentration detector</i></b> will allow to select the type of detector and to enter its calibration constant in a pop-up window (see <a href=saxs_hplc_dctr.html>here</a>).<p>
+<b><i>Detector</i></b> will allow to select the type of detector and to enter its calibration constant in a pop-up window (see <a href=saxs_hplc_dctr.html>here</a>).<p>
 <hr>
 
 <p><center>
-<img SRC="somo-HPLC-SAXS_I_t.png" ALT="SOMO HPLC-SAXS BSA I(t)">
+<img SRC="somo-HPLC-SAXS_I_t.png" ALT="SOMO HPLC-SAXS Lysozyme I(t)">
 </center>
 <p>
 
 Since a typical HPLC-SAXS experiment produces a series of <i>I(q)</i> vs. <i>q</i> data collected at some time interval ("frames"), they can be inserted in a 2D matrix where each line corresponds to a frame number (or time value) and the columns contain the intensities <i>I(q)</i> and their associated SDs at the various scattering angles <i>q</i>. It is then a simple operation to generate another matrix where the lines correspond to the <i>q</i>-values and each column contains the intensities <i>I(t)</i> (and their associated SDs) corresponding to each frame number (or time value). A new data set consisting of <i>I(t)</i> vs. <i>t</i> "chromatograms" for each <i>q</i>-value can then be generated.<br>
-In the image above, the original <i>I(q)</i> vs. <i>q</i> data shown in the first image of this Help section have been transformed to <i>I(t)</i> vs. <i>t</i> data by pressing the <b><i>Make I(t)</i></b> button after selecting all files. The <i>q</i> values are now part of the resulting filenames. Since the <i><b>On Make I(t), discard I(t) with no signal above st. dev. multiplied by</i></b> "4" was selected in the <i><b>Options</i></b> menu (see <a href=saxs_hplc_options.html>here</a>), the following <i>Warning message</i> appeared:<p>
+In the image above, the original <i>I(q)</i> vs. <i>q</i> data shown in the first image of this Help section have been transformed to <i>I(t)</i> vs. <i>t</i> data by pressing the <b><i>Make I(t)</i></b> button after selecting all files. The  <i>I(t)</i> vs. <i>t</i> data are automatically displayed after the conversion, and the <i>q</i> values are now part of the resulting filenames. Since the <i><b>On Make I(t), discard I(t) with no signal above st. dev. multiplied by</i></b> "2.5" was selected in the <i><b>Options</i></b> menu (see <a href=saxs_hplc_options.html>here</a>), the following <i>Warning message</i> appeared:<p>
 
 <p><center>
 <img SRC="somo-HPLC-SAXS_discard_warning.png" ALT="SOMO HPLC-SAXS discard I(t) files warning">
@@ -119,17 +126,14 @@ within a sliding window (of 25 frames in this case) where the sum
 of the intensity is less than the negative of the sum of the
 corresponding SD values over the window.  Regions with negative
 values will cause problems with the integral baseline subtraction
-procedure (see more below). This test did not identify any such
-region, so no additional warning messages were produced. If the
-sliding window had been set at "5" (a <b>very</b> restrictive
-criterium), this message would have appeared:<p>
+procedure (see more below). This test identified just a single <i>I(t)</i> vs. <i>t</i>  chromatogram failing it, as shown in a pop-up window:<p>
 
 <p><center>
 <img SRC="somo-HPLC-SAXS_negative_integral_warning.png" ALT="SOMO HPLC-SAXS negative I(t) integral warning">
 </center>
 <p>
 
-Some cropping operations (see below) were also performed to remove very noisy low-<i>q</i> datasets and to truncate the right-side of the datasets to frame #200, followed by display rescaling. All operations are recorded in the bottom left panel.<p>
+Some cropping operations (see below) can be also performed to remove very noisy low-<i>q</i> datasets, such as the first three <i>q</i> values displayed in the Figure above (magenta, olive and greenblue) and/or to truncate the datasets if necessary. All operations are recorded in the bottom left panel.<p>
 The file names of produced data are shown in the <b><i>Produced Data</b></i> panel to the centre-left, and can be selected and saved to files using the appropriate buttons below it.<p>
 
 <b><i>Select all</i></b> will select all files in this panel.<p>
@@ -192,69 +196,300 @@ When a part of the graph is selected using the mouse/left button, the buttons in
 <li>
 <b><i>Legend</i></b> will turn on below the graphics window a display of the correspondence between colours and filenames (automatically disabled if the selected files are 20 or more).<p>
 </ul>
+
+Of the top-row commands, two deserve already a comment at this point:<p>
+<ul>
+<li>
+<b><i>CorMap Analysis</i></b> will launch a pairwise similarity comparison between all currently selected datasets, according to our implementation of the Correlation Map method developed by Franke
+</span><span lang="en-US"><i>et al.</i></span><span lang="en-US">
+(Franke D, Jeffries CM, Svergun DI. Correlation Map, a goodness-of-fit test for one-dimensional X-ray scattering spectra. Nature Methods, 12, 419-422, 2015). Specialized applications or the CorMap analysis are described at several points below. A general CorMap description with examples can be found <a href=cormap.html>here</a>.<p>
+
+<li>
+<b><i>Save plots</i></b> allows saving the data shown in any of the plots currently visualized in csv-formatted files. Pressing it will open a pop-up dialogue window where the location and the root filename for the cvs files can be set.<p>
+</ul>
+
+
 <hr>
+
+
+
+Visual inspection of the <i>I(t)</i> vs. <i>t</i> chromatograms can already hint at problems, such as in the lysozyme data here used as an example. In this case, it is evident that many <i>I(t)</i> vs. <i>t</i> chromatograms starting from the low-<i>q</i> region do not return to pre-peak elution baseline intensity values. Most likely, this is due to capillary fouling, and without proper correction these data would be mostly useless. For this, and for less evident cases, an Integral Baseline correction procedure has been devised<br>
+The <b>Integral Baseline</b> method is based upon the assumption that capillary fouling deposits are formed in proportion to the sample concentration while exposed to the beam, and that neither the buffer nor the instrumental background are contributing to this effect. That deposition on the capillary does occur is clearly proven by the fact that a steady SAXS signal is maintained even after completion of the protein elution. The theory underlying the Integral Baseline correction procedure can be found <a href=IntegralBaselineTheory.html>here.</a> <p>
+
+To help the user decide if a baseline correction is needed, and to find a proper region of SAXS steady state signal at the end of the chromatograms, the currently implemented Integral Baseline method requires an analysis on blank frames. These "Blanks" (<i>no less than <b>10 frames</b>, possibly at least <b>20 or more</b> must be available</i>) should have been collected well before the void volume, and should preferentially be the same ones that were then averaged and subtracted from all the data collected during the chromatogram development.<p>
+
+<p><center>
+<img SRC="BlanksLoaded.png" ALT="SOMO HPLC-SAXS Blanks loaded">
+</center>
+<p>
+
+After Blanks files have been loaded using the <b><i>Add files</b></i> button (see above), their analysis is launched by pressing the <b><i>Blanks analysis</b></i> button. The module will automatically convert the <i>I(q)</i> vs. <i>q</i>  frames into  <i>I(t)</i> vs. <i>t</i>  chromatograms:<p>
+
+<p><center>
+<img SRC="BlanksTransformed.png" ALT="SOMO HPLC-SAXS Blanks I(t)">
+</center>
+<p>
+
+The two vertical magenta lines and their corresponding fields at the bottom of the buttons' zone define the beginning and end regions for the Blanks analysis. By clicking on one of the fields and then moving the mouse on the grey-scale bar-wheel just below the graphics window, these limits can be changed. This can also be done in steps of a single frame by clicking on the "<b><i>&lt;</i></b>" and "<b><i>&gt;</i></b>" buttons placed at the extremities of the bar-wheel. Alternatively, the limits can be manually changed by entering a numerical value in their respective fields.<p>
+
+The Blanks analysis is performed by clicking on the <b><i>CorMap analysis</i></b> button. This will launch a pairwise Correlation Map analysis (see <a href=cormap.html>here</a> for a descrption of the CorMap implementation in the US-SOMO HPLC-SAXS module). Before the analysis is effectively launched, a pop-up panel will appear:<p>
+
+<p><center>
+<img SRC="CorMapSampling.png" ALT="SOMO HPLC-SAXS CorMap sampling pop-up">
+</center>
+<p>
+
+It was found during the implementation of the Blanks analysis that finely spaced <i>q</i> values might result in cross-correlation effects in the CorMap analysis (see also <a href=cormap.html>here</a>). Therefore, this pop-up panel will allow to chose a sampling in <i>q</i> space to eliminate or at least alleviate this problem. Since usually a one-every-two values sampling is sufficent, this can be directly done by pressing the <i>Sample alternate q points</i> button. Larger sampling intervals can be chosen by entering an integer value after pressing the <i>Specify a larger gap in q points</i> button. If no sampling is wanted, the <i>Continue</i> button should be pressed.<br>
+A second pop-up option will also allow to start the CorMap analysis above a chosen <i>q<sub>min</sub></i> value, to avoid including very noisy, low-<i>q</i> values in the analysis:<p>
+
+<p><center>
+<img SRC="CorMapSampling_minq.png" ALT="SOMO HPLC-SAXS CorMap minimun q value pop-up">
+</center>
+<p>
+
+After these choices are made, the analysis is effectively launched, and the results are shown in a new pop-up panel (see <a href=cormap.html>here</a> for a full description of the CorMap implementation):<p>
+
+<p><center>
+<img SRC="CorMapBlanksAlternatePoints.png" ALT="SOMO HPLC-SAXS CorMap of Blanks with alternate points">
+</center>
+<p>
+
+The pop-up panel begings by reporting on the top bar the type of analysis (here "Blanks mode t 1 - 89"), the max <i>q</i> limit used (here 0.05 &Aring;<sup>-1</sup>), and the sampling used (here "Only every 2<sup>nd</sup> <i>q</i> value selected").<p>
+Three plots are present on the top of the panel:
+<ul>
+<li>
+A <b>Pairwise P value map</b>, a square matrix in which the square (<i>i</i>,<i>j</i>) contains the <i>P</i>-value
+resulting from the (<i>i</i>,<i>j</i>) pairwise CorMap analysis using a three color code: green for <i>P</i> &ge; 0.05, yellow for 0.01 &le; <i>P</i> &le; 0.05, and red for <i>P</i> &lt; 0.01. The labels on the axes correspond to the reference numbers given to the analyzed frames (see below).<p>
+
+<li>
+A <b>Red pair % histogram</b> plot as a function of the time/frame number, derived from the analysis of the pairwise <i>P</i>-value map in terms of the distribution of values between the three classes with an emphasis on the % of red squares.<p>
+
+<li>
+A <b>Red cluster size histogram</b>, derived from an evaluation of the average size of clusters of horizontally and/or vertically adjacent "red" squares. After careful examination of several indicators derived from the <i>P</i>-value map analysis, this was chosen as the most reliable to determine the global similarity between all frames of the considered subset. <p>
+</ul>
+
+The text area reports first the the pairwise <i>P</i>-map color definition, and then where to look for the correspondence between the axis ticks and the actual data. Then follows a summary of the most relevant data:<p>
+
+<ul>
+<li>
+A summary of the resulting <i>P</i> values pairs in terms of the green+yellow sum % and red % values.<p>
+
+<li>
+The average one-to-all <i>P</i> value &#177; its SD (in parentheses the % SD value) and the % of red values &#177; their SD (in parentheses the % SD value.)<p>
+
+<li>
+The red cluster count, their average size &#177; their SD (in parentheses the % SD value) and their average  &#177; SD size as % of the total area.<p>
+
+<li>
+The red cluster maximum size (with its % in respect to the total area), the number of occurences of that cluster size, and the position of the first occurence.<p>
+</ul>
+
+Below these summaries, the first list reports the correspondence between the "Reference numbers" (<b>Ref</b>) assigned to each dataset (here frames) and its "real" name. This was introduced to avoid having to deal with complicated names in the axes legends on the plots (in this case, the frame numbers that were extracted from the <i>I(t)</i> vs. <i>t</i> filenames start at "1", so they are equal to the "Ref" numbers). The list also reports for each frame the <i>Avg. P value</i>, the <i>Min. P value</i>, and the <i>% Red</i> points.<br>
+At the end of the first list, a second list reports all the pairwise comparisons results, including the number of points compared (<i>N</i>), followed by the <i>q</i> point position where the longest streak occurs (<i>Start point</i>), then the length of the longest streak (<i>C</i>), and finally the <i>P-value</i> of a streak of length <i>C</i> occurring in a sequence of <i>N</i> points, as shown in the image below:<p> 
+
+<p><center>
+<img SRC="CorMapBlanksList.png" ALT="SOMO HPLC-SAXS CorMap Blanks list">
+</center>
+<p>
+
+All data listed in the CorMap analyis pop-up window can be saved in a csv-type file with the <b><i>Save</i></b> button. Previously analyzed datasets can be recalled with the <b><i>Load</i></b> button.<p>
+After closing the CorMap analysis window, the Blanks data can be accepted by pressing the <b><i>Keep</i></b> button. <b><i>Cancel</i></b> will instead discard the current CorMap analysis.<p>
+
+The Integral Baseline analysis of the actual sample frames can then begin. Contrary to what was required in our previously developed Integral Baseline method, the current version requires that <b>all</b>  <i>I(t)</i> vs. <i>t</i> chromatograms must be selected before hitting the <b><i>Baseline</i></b> button.<br>
+In any case, on pressing <b><i>Baseline</i></b> a pop-up warning message will always appear:<p>
+
+<p><center>
+<img SRC="IntegralBaselineBlanksWarning.png" ALT="SOMO HPLC-SAXS Int Bas Blanks Warning">
+</center>
+<p>
+
+alerting that a blanks analysis is needed to proceed any further, and offering up to three options:<p>
+
+<ul>
+<li>
+<i>Load blanks</i>, which will allow to load <i>I</i>(<i>q</i>) vs. <i>q</i> Blanks files  to be subjected to the analysis as described above;<p>
+
+<li>
+<i>Load previous analysis</i>, which will allow to select a previously saved Blanks analysis cvs file;<p>
+</ul>
+
+and, if Blanks were analyzed during the current session,<p>
+
+<ul>
+<li>
+<i>Accept currently analyzed blanks</i> (followed by the filename of the currently analyzed blanks).<p>
+</ul>
+
+Another pop-up will then appear, reminding that the first step in the Integral Baseline procedure is to find a final region of constant intensity:<p>
+
+<p><center>
+<img SRC="IntegralBaselinePrescription.png" ALT="SOMO HPLC-SAXS integral baseline prescription">
+</center>
+<p>
+
+After pressing <i>OK</i>, the graphics window will present all the selected <i>I(t)</i> vs. <i>t</i> chromatograms  and switch to the <i>Baseline</i> mode of analysis:<p>
 
 <p><center>
 <img SRC="somo-HPLC-SAXS_integral_baseline1a.png" ALT="SOMO HPLC-SAXS integral baseline setting 1">
 </center>
 <p>
 
-After visual inspection of the <i>I(t)</i> vs. <i>t</i> chromatograms, baselines can be defined, if needed, for instance if the data after the peak(s) do not return to the initial values. A single chromatogram is first selected; a compromise between high intensity and low noise works best.<br>
-The <b><i>Baseline</i></b> button is then pressed. As shown in the image above, this superimposes to the selected chromatogram three vertical lines on the right side, the last two lines of buttons under the graphics window are replaced by three colored fields (magenta-red-magenta), and two dashed lines are drawn horizontally (orange and green). The two magenta lines define the beginning and end, respectively, of the chromatogram region over which the data are averaged to set the end of a baseline,  while by default the baseline is set to be at zero at the beginning of the data on the left side. The horizontal dashed orange line indicates the trend of a linear regression done on this region. The vertical red line defines instead the end point of the data to be utilized during the integral baseline definition. The positions of the three vertical lines are indicated in the three background color-coded fields.<p>
+As shown in the image above, this superimposes to the selected chromatograms three vertical lines on the right side, the last two lines of buttons under the graphics window are replaced by three colored fields (magenta-red-magenta), and a dashed line is drawn horizontally (orange). In adfdition, a <i>Fix window width</i> checkbox with its associated magenta-colored field in now present (<b>default: 20 frames, unchecked</b>), as well as a new <b><i>Find best region</i></b> button.<br>
+The first vertical magenta line, which by default is positioned at 75% of the available frames, has multiple usages:<p>
+
+<ul>
+<li>
+It defines the starting frame of a sliding window over which a <b>CorMap</b> analysis will be carried out;<p>
+
+<li>
+It will also define the first frame where the <b>CorMap</b> analysis will start;<p>
+
+<li>
+When the Integral Baseline is calculated, it will be the end point of the computations (but the calculated baseline, which will be constant beyond this point, will be then subtracted up to the last frame).<p>
+</ul>
+
+The second vertical magenta line defines the end of the sliding window (<b>default: 20 frames</b> beyond the first magenta line).<p>
+
+The vertical red line defines the end for the sliding window analysis (<b>default position: 5 frames</b> from the end of the available frames).<p>
+
+The horizontal orange line represents the average intensity across the current window of the lowest <i>q</i>-value among the selected <i>I(t)</i> vs. <i>t</i> chromatograms.<p>
+
+It is important to remind that the baseline is set to be at zero at the beginning of the data on the left side.<p>
+
+The positions of the three vertical lines are indicated in the three background color-coded fields. By cliking on one of the fields, the corresponding vertical line position can be changed using either the grey-shades bar-wheel, or the "<b>&lt;</b>" and "<b>&gt;</b>" buttons at its sides. Manual values can be also entered.<p>
+
+If the <i>Fix window width</i> checkbox is not selected, moving either of the two vertical magenta lines will also change the width of the sliding window.<p>
+
+It is then best to first define a window width by moving either one of the vertical magenta lines, and then fix it by selecting the <i>Fix window width</i> checkbox. At this point, the entire window can by positioned by using either of the two vertical magenta lines. It is suggested to position it in a region where there is still some visible intensity decay, as shown below:
 
 <p><center>
 <img SRC="somo-HPLC-SAXS_integral_baseline2a.png" ALT="SOMO HPLC-SAXS integral baseline setting 2">
 </center>
 <p>
 
-By clicking on each field, the corresponding line can be moved across the chromatogram by left-clicking and moving the mouse over the gray-shades bar-wheel which has appeared just below the graph in this panel. The green dashed line will give the trend of a linear baseline between the chosen starting and end points. The orange line should be set to possibly match a flat baseline region at the end of the chromatogram, as shown in the example above. Be careful to identify and avoid potential late eluting peaks.<p>
+The baseline analysis is then completed by pressing the <b><i>Find best region</i></b> button.<p>
+This will launch a special <b>CorMap</b> analysis in which first a global CorMap calculation will be carried out between the entire range of frames from the first vertical magenta line to the vertical red line. Subsets of this CorMap analysis corresponding to the sliding window regions will then be extracted and compared with the average of all possible CorMap analysis results extracted from the pre-analyzed Blanks data for a sliding window of the same size.<p>
 
-Pressing <b><i>Keep</i></b> once a reasonable end region has been defined will keep its parameters for the further operations involved in the integral baseline removal tool.<p>
-
-<b><i>Cancel</i></b> will remove the settings and revert to no baseline.<p>
+In addition, the analysis will calculate the integrated average intensity at each frame of all the <i>I</i>(<i>q</i>) values from the minimum <i>q</i>-value selected up to the <i>q<sub>max</sub></i> defined in the <a href=saxs_hplc_options.html><b>Options</b></a> panel (<b>default: 0.05 &Aring;<sup>-1</sup></b>).<p>
+The results will appear in two pop-up panels. The first one is analogous to the one appearing after the Blanks analysis:<p>
 
 <p><center>
-<img SRC="somo-HPLC-SAXS_integral_baseline3a.png" ALT="SOMO HPLC-SAXS integral baseline setting 3">
+<img SRC="somo-HPLC-SAXS_integral_baseline3a.png" ALT="SOMO HPLC-SAXS integral baseline Sample CorMap">
 </center>
 <p>
 
-After pressing <b><i>Keep</i></b>, the <b><i>Baseline apply</i></b> button becomes available. Pressing it will apply the integral procedure to the selected chromatogram(s). Each resulting baseline-subtracted chromatogram will have a "-bi" added after the <i>q</i> value and an "-s" at the end of the filename to indicate that an integral baseline subtraction was applied (if a linear baseline option is used, the first label will be "-bl"). The numerical value of the overall change in baseline and the alpha value (for an explanation alpha see <a href=saxs_hplc_options.html>here</a>) are also added to the filename of the produced files, as shown in the <b><i>Data files</i></b> panel. 
-
-It is best to first check the results on the initial chromatogram used to set the baseline parameters, and to select the <b><i>Produce separate baseline
-curves</i></b> checkbox in the <b><i>Options</i></b> menu (see <a href=saxs_hplc_options.html>here</a>). In this way, the convergenge of the integral baseline removal procedure can be tested.<br>  In the example shown above, the original curve at <i>q</i>=0.00680487 &Aring;<sup>-1</sup> (green) is compared with the baseline subtracted curve (cyan), and superimposed are the five baseline curves produced by the iterative integral baseline subtraction procedure (from light blue to orange; see legend for all the colors). As can be seen, the convergence in this case is reached by the 2<sup>nd</sup> iteration. It is then best to check the integral baseline subtraction results on a few files at higher <i>q</i> values than the first selected, to verify that consistent results are obtained. Subsequently, the <b><i>Produce separate baseline curves</i></b> checkbox in the <b><i>Options</i></b> menu (see <a href=saxs_hplc_options.html>here</a>) should be deselected, and a set of <i>I</i>(<i>t</i>) curves starting from the lowest <i>q</i> value used to test the procedure up to an intermediate <i>q</i> value should be selected, and the <b><i>Baseline apply</i></b> button should be pressed again. This will produce a set of baseline subtracted curves still missing the lower <i>q</i>, more noisy <i>I</i>(<i>t</i>) datasets, and the higher <i>q</i>, less intense <i>I</i>(<i>t</i>) datasets, as shown in the image below, where the <i>q</i> range is from 0.00403252 to 0.0400725 &Aring;<sup>-1</sup>:<p>
+Here, it can be appreciated the almost completely red left and top sides of the <i>Pairwise P value map</i> plot, originating from the fact that regions on the descending side of the elution peak were included in the analysis. This also heavily affects the right-side <i>Red cluster size histogram</i>, with an almost invisible huge size (&asymp;5000) but extremely low count cluster greatly compressing the scale. If we zoom on the low red cluster size region, this is what becomes visible:<p>
 
 <p><center>
-<img SRC="somo-HPLC-SAXS_integral_baselines.png" ALT="SOMO HPLC-SAXS integral baseline applied">
+<img SRC="somo-HPLC-SAXS_integral_baseline3b.png" ALT="SOMO HPLC-SAXS integral baseline Sample CorMap zoom">
 </center>
 <p>
 
-Note how around frame 160 of the <i>I</i>(<i>t</i>) vs. <i>t</i> chromatograms the signal now oscillates around 0. The procedure can be repeated on the remaining <i>I</i>(<i>t</i>) curves at the higher <i>q</i> values:<p>
+But most relevant is the second pop-up panel that will appear on top of the first:
+
+<p><center>
+<img id="baselinebest" SRC="somo-HPLC-SAXS_integral_baseline3c.png" ALT="SOMO HPLC-SAXS integral baseline Sample CorMap analysis">
+</center>
+<p>
+
+The graph in this panel is composed of two plots, both as a function of the starting window position. The bottom histogram (left-side <i>y</i>-axis scale) reports the average red cluster size for each window in the sliding window ensemble. The horizontal cyan solid line defines the Blanks average red cluster size for all possible windows of the same size as the sliding window utilized for the Sample analysis (the dotted line represents + 1 SD). The bars in the histograms are colored red when they are above the Blanks + 1 SD value, while green and white when they are &le; the Blanks + 1 SD value, with the white being the lowest value(s) (equal values are possible).<p>
+
+The top plot (right-side <i>y</i>-axis scale) reports the averaged <i>I</i>(<i>q</i>) for <i>q</i> &le; the <i>q<sub>max</sub></i> value (0.05 &Aring;<sup>-1</sup> by default, as set in the <b>Options</b>), as the solid orange line, with the dotted orange lines representing &plusmn;1 SD. The solid magenta line defines the zero value expected for blanks-subtracted data when only buffer is present.<p>
+The goal of this combined analysis is twofold:<p>
+<ul>
+<li>
+To find region(s) of steady-state intensity;<p>
+<li>
+To compare the average integrated <i>I</i>(<i>q</i>) intensity with the zero value expected for pure buffer conditions.<p>
+</ul>
+
+The first message appearing in the text region concerns the second of the points listed above. If the average integrated <i>I</i>(<i>q</i>) &plusmn;1 SD vs. starting frame position plot is always above the zero reference line and the average red cluster size is less than the Blanks' average red cluster size +1 SD, the message <i>Integral baseline correction is possible</i> appears.<p>
+
+Below the summary sentence, a first report of the baseline analysis is printed. It contains:<p>
+<ul>
+<li>
+The root name of the files analyzed;<br>
+<li>
+The <i>q</i> sampling interval;<br>
+<li>
+The CorMap analysis <i>q<sub>max</sub></i>;<br>
+<li>
+A list of the best starting positions for end frames (that span a length equal to the chosen sliding window size) where the average red cluster size is within 1 SD similar to those of the Blanks (white bars in the histogram; if no white bars are present, green bars will be listed; if neither white of green bars are present, a single, lowest count bar will be listed, colored yellow in the histogram);<br>
+<li>
+In orange color, the frame position of the lowest average integrated intensity.<p>
+</ul>
+
+A second block of information is then printed further down, containing Blanks-related information:<p>
+<ul>
+<li>
+The root name of the Blanks frames files utilized in this analysis;<br>
+<li>
+Their <i>q</i> sampling interval;<br>
+<li>
+The maximum available sliding window width;<br>
+<li>
+The used sliding window width;<br>
+<li>
+The number of sliding windows averaged;<br>
+<li>
+The red cluster average size for the used sliding window;<br>
+<li>
+And its associated SD.<p>
+
+The user should then examine the information provided and consider the suggestion made at the top of the text window:<p>
+If the averaged integrated intensity -1 SD reaches at some point the zero line, then no Baseline correction is likely necessary.<p>
+
+If the averaged integrated intensity -1 SD at some point crosses and goes +1 SD below the zero line, then other issues might be present, such as incorrect Blanks subtraction, or drifting problems. In the latter case, a Linear Baseline correction might be indicated (see <a href=somo_saxs_hplc_linear_baselines.html>here</a>).<p>
+
+If the averaged integrated intensity is always above +1 SD of the zero line, then an Integral Baseline correction could be necessary. The second condition warranting it is that there is an end region where a sufficient number of Sample frames (equal to the sliding window size by definition) is judged by the average red cluster size of the Pairwise P value Map to be similar within +1 SD of the average Blanks frames. Those are the starting frames listed in the first block of summary information, but beware of the presence of a single yellow-colored starting frame: it means that no frames passed the stringent Pairwise P value Map average red cluster size test, and that the listed frame is only the one having the lowest average red cluster size (which can be much higher than the Blanks average red cluster size). The user could try repeating the analysis using a different (smaller) sliding window size. Check also the starting/ending positions to be sure to include an appropriate end region for this analysis.<p>
+
+When both the Integral Baseline applicability conditions are met, the user could automatically transfer the position of the window into the Baseline module, by clicking on the <b><i>Set region in the HPLC window</i></b> bar at the bottom of the an analysis window. This will open a pop-up panel:<p>
+
+<p><center>
+<img SRC="somo-HPLC-SAXS_integral_baseline_setwindow.png" ALT="SOMO HPLC-SAXS integral baseline setting window in Baseline module">
+</center>
+<p>
+
+listing all possible starting positions for the baseline window, beginning with the farthest one. The user should pick a position matching with the lowest average integrated intensity frame position (orange colored text). If more than a lowest average integrated intensity frame is available, it is advisable to pick an earlier one, to avoid a potential undercorrection when integral baseline subtraction is performed. Once a position is chosen, cliking on <i>OK</i> will transfer it to the Baseline module panel:<p>
 
 <p><center>
 <img SRC="somo-HPLC-SAXS_integral_baselines1.png" ALT="SOMO HPLC-SAXS integral baseline applied higher q">
 </center>
 <p>
 
-The <b><i>integral baseline subtraction</i></b> procedure always performs a test to verify that the integral is not negative, which would lead to an addition of signal rather than a subtraction. This usually originates at high <i>q</i> values and it's mainly due to detector instabilities, although a slightly excessive buffer subtraction could also contribute. In this case, the integral baseline is not subtracted, and the following message appears:<p>
+To verify what the Integral Baseline will effectively produce, <b><i>Test Baseline</i></b> should be launched. This will show in scroll mode every original <i>I(t)</i> vs. <i>t</i> chromatogram, a smoothed version using a Gaussian smoothing kernel of 2<i>n</i>+1 points (where <i>n</i> is set in the <a href=saxs_hplc_options.html>Options</a> panel, with <i>n</i> = 3 as default), the iterations in the Integral Baseline computation (whose number is also set in the <a href=saxs_hplc_options.html>Options</a> panel, with 5 as default), and the final, integral baseline-corrected chromatogram:<p>
 
 <p><center>
-<img SRC="somo-HPLC-SAXS_integral_baselines_constant_bas_warning.png" ALT="SOMO HPLC-SAXS integral baseline negative warning">
+<img SRC="somo-HPLC-SAXS_integral_baseline_test.png" ALT="SOMO HPLC-SAXS integral baseline test">
 </center>
 <p>
 
-The <i>q</i> <i>I</i>(<i>t</i>) datasets at very low <i>q</i> values can now be processed. If necessary, the settings can be adjusted for each chromatogram and then repeating the <b><i>Baseline apply</i></b> procedure. The image below illustrates the results obtained after individual adjustment of the right-side baseline start and end regions for the five <i>I</i>(<i>t</i>) datasets at the lowest <i>q</i> values:<p>
+In the example shown above, purple is an original <i>I(t)</i> vs. <i>t</i> chromatogram at <i>q</i> = 0.00848 &Aring;<sup>-1</sup>, gold its smoothed version with the default settings, cream, green, pink and cyan are integral baseline iterations 1, 2, 3 and 5, respectively (the 4<sup>th</sup> iteration is not visible, completely superimposed by the 5<sup>th</sup>), and violet is the final, integral baseline-corrected <i>I(t)</i> vs. <i>t</i> chromatogram. The Gaussian smoothing is applied to remove large oscillations in the original <i>I(t)</i> vs. <i>t</i> chromatogram, giving rise occasionally to values below the current integral baseline iteration, leading then to addition rather than subtraction in the computations. The final integral baseline is then subtracted from the original <i>I(t)</i> vs. <i>t</i> chromatogram, not the smoothed one.<p>
+As can be seen in the example above, the procedure appears to have produced a reasonable correction. All <i>I(t)</i> vs. <i>t</i> chromatograms can be checked in the <b><i>Test baseline</i></b> mode, which can be abandoned by pressing <b><i>Cancel</i></b>.<p>
+The Integral Baseline procedure can now be applied to all selected <i>I(t)</i> vs. <i>t</i> chromatograms by pressing <b><i>Baseline apply</i></b>. If files that failed the negative regions test within a sliding window (of 25 frames in this case) where the sum
+of the intensity is less than the negative of the sum of the corresponding SD values over the window are present, this message will again appear:<p>
 
 <p><center>
-<img SRC="somo-HPLC-SAXS_integral_baselines2.png" ALT="SOMO HPLC-SAXS integral baseline applied lowest q">
+<img SRC="somo-HPLC-SAXS_negative_integral_warning.png" ALT="SOMO HPLC-SAXS negative I(t) integral warning">
 </center>
 <p>
 
-A final, baseline-adjusted set is then obtained by visualizing all the curves produced and removing the noisier ones:<p>
+After pressing <i>Ok</i>, all the integral baselines will be computed and then subtracted from the <i>I(t)</i> vs. <i>t</i> chromatograms. When the overall computed change in baseline is found to be negative, no baseline correction is applied. A pop-up panel will alert the user listing the first 20 such occurences and giving the number of all the others found:<p>
+
+<p><center>
+<img SRC="somo-HPLC-SAXS_negative_integral_baseline_warning.png" ALT="SOMO HPLC-SAXS negative integral baseline warning">
+</center>
+<p>
+
+Each resulting baseline-subtracted chromatogram will have a "-bi" added after the <i>q</i> value and an "-s" at the end of the filename to indicate that an integral baseline subtraction was applied (if a linear baseline option is used, the first label will be "-bl"). The numerical value of the overall change in baseline and the alpha value (for an explanation alpha see <a href=saxs_hplc_options.html>here</a>) are also added to the filename of the produced files, as shown in the <b><i>Data files</i></b> panel. Files where no baseline was subtracted will have a "0s" at the end of the filename:<p> 
 
 <p><center>
 <img SRC="somo-HPLC-SAXS_integral_baseline_finalset.png" ALT="SOMO HPLC-SAXS integral baseline final set">
 </center>
 <p>
+
+<p><p><b>Still to be revised below here:</b><p>
+
 <hr>
 The quality of the baseline-subtracted data can be assessed by selecting with the mouse a region under a peak and then pressing <b><i>Test I(q)</b></i>:<p>
 
@@ -864,7 +1099,7 @@ distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> Th
 </font>
 <p>
 <font face="helvetica" size="-1">
-Last modified on October 7, 2015.
+Last modified on March 23, 2016.
 </font>
 </body>
 </html>
