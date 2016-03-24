@@ -2236,18 +2236,19 @@ void US_Hydrodyn_Saxs_Hplc::axis_x( bool nochange, bool no_replot )
    {
       plot_dist->setAxisTitle(QwtPlot::xBottom,  title + tr(" (log scale)") );
 #ifndef QT4
-      plot_dist->setAxisOptions(QwtPlot::xBottom, QwtAutoScale::Logarithmic);
+      plot_dist  ->setAxisOptions(QwtPlot::xBottom, QwtAutoScale::Logarithmic);
       plot_errors->setAxisOptions(QwtPlot::xBottom, QwtAutoScale::Logarithmic);
 #else
+      plot_dist  ->setAxisScaleEngine(QwtPlot::xBottom, new QwtLog10ScaleEngine);
       plot_errors->setAxisScaleEngine(QwtPlot::xBottom, new QwtLog10ScaleEngine);
 #endif
    } else {
       plot_dist->setAxisTitle(QwtPlot::xBottom,  title );
 #ifndef QT4
-      plot_dist->setAxisOptions(QwtPlot::xBottom, QwtAutoScale::None);
+      plot_dist  ->setAxisOptions(QwtPlot::xBottom, QwtAutoScale::None);
       plot_errors->setAxisOptions(QwtPlot::xBottom, QwtAutoScale::None);
 #else
-      // actually need to test this, not sure what the correct version is
+      plot_dist  ->setAxisScaleEngine(QwtPlot::xBottom, new QwtLinearScaleEngine );
       plot_errors->setAxisScaleEngine(QwtPlot::xBottom, new QwtLinearScaleEngine );
 #endif
    }
@@ -4309,11 +4310,11 @@ void US_Hydrodyn_Saxs_Hplc::cormap( map < QString, QString > & parameters )
          }
             
          if ( 
-             unified_ggaussian_files.size() != ggaussian_last_pfit_P.size() ||
-             unified_ggaussian_files.size() != ggaussian_last_pfit_N.size() ||
-             unified_ggaussian_files.size() != ggaussian_last_pfit_C.size() ||
-             unified_ggaussian_files.size() != ggaussian_last_pfit_S.size() ||
-             unified_ggaussian_files.size() != ggaussian_last_chi2.size() ||
+             (int) unified_ggaussian_files.size() != (int) ggaussian_last_pfit_P.size() ||
+             (int) unified_ggaussian_files.size() != (int) ggaussian_last_pfit_N.size() ||
+             (int) unified_ggaussian_files.size() != (int) ggaussian_last_pfit_C.size() ||
+             (int) unified_ggaussian_files.size() != (int) ggaussian_last_pfit_S.size() ||
+             (int) unified_ggaussian_files.size() != (int) ggaussian_last_chi2.size() ||
              lbl_gauss_fit->text() == "?" ||
              pb_ggauss_rmsd->isEnabled()
               ){
@@ -4327,11 +4328,11 @@ void US_Hydrodyn_Saxs_Hplc::cormap( map < QString, QString > & parameters )
             }
          }
 
-         if ( unified_ggaussian_files.size() != ggaussian_last_pfit_P.size() ||
-              unified_ggaussian_files.size() != ggaussian_last_pfit_N.size() ||
-              unified_ggaussian_files.size() != ggaussian_last_pfit_C.size() ||
-              unified_ggaussian_files.size() != ggaussian_last_pfit_S.size() ||
-              unified_ggaussian_files.size() != ggaussian_last_chi2.size() ) {
+         if ( (int) unified_ggaussian_files.size() != (int) ggaussian_last_pfit_P.size() ||
+              (int) unified_ggaussian_files.size() != (int) ggaussian_last_pfit_N.size() ||
+              (int) unified_ggaussian_files.size() != (int) ggaussian_last_pfit_C.size() ||
+              (int) unified_ggaussian_files.size() != (int) ggaussian_last_pfit_S.size() ||
+              (int) unified_ggaussian_files.size() != (int) ggaussian_last_chi2.size() ) {
             editor_msg( "red", 
                         QString( tr( "Internal error (CorMap): Global Gaussian mode, last_pfit_* size (%1 %2 %3 %4 %5) does not match number number of Gaussians (%6)" ) )
                         .arg( ggaussian_last_pfit_P.size() )
