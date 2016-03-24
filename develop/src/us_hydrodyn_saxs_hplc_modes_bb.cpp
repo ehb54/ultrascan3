@@ -1738,6 +1738,10 @@ void US_Hydrodyn_Saxs_Hplc::baseline_apply( QStringList files,
 
    for ( unsigned int i = 0; i < ( unsigned int ) files.size(); i++ )
    {
+      if ( !quiet ) {
+         progress->setProgress( i, files.size() );
+         qApp->processEvents();
+      }
 
       unsigned int before_start = 0;
       unsigned int after_start  = 1;
@@ -2384,6 +2388,10 @@ void US_Hydrodyn_Saxs_Hplc::baseline_apply( QStringList files,
    if ( current_mode == MODE_BASELINE &&
         !baseline_test_mode ) {
       wheel_save();
+   }
+
+   if ( !quiet ) {
+      progress->reset();
    }
 
    if ( do_replot ) {
@@ -3469,8 +3477,12 @@ void US_Hydrodyn_Saxs_Hplc::baseline_best() {
                         }
                      }
                   } else {
+                     // this is the only choice
                      if ( best_dparameters[ "minsumqmaxqy" ] > 0 ) {
                         best_parameters[ "msg" ] +=
+                           best_vdparameters.count( "yx" ) ?
+                           tr( "Integral baseline correction would be possible, but no steady state end region has been identified\n\n" ) 
+                           :
                            tr( "Integral baseline correction is possible\n\n" );
                      } else {
                         best_parameters[ "msg" ] += tr( "Integral baseline correction is not recommended\n\n" );
@@ -3527,7 +3539,7 @@ void US_Hydrodyn_Saxs_Hplc::baseline_best() {
                   best_parameters[ "msg" ] +=
                      QString(
                              "  Best start positions based on avg. red cluster size  %1"
-                          )
+                             )
                      .arg( best_vdparameters[ "bestpos" ].front() )
                      ;
                   for ( int i = 1; i < (int) best_vdparameters[ "bestpos" ].size(); ++i ) {
@@ -3537,6 +3549,9 @@ void US_Hydrodyn_Saxs_Hplc::baseline_best() {
                } else {
                   best_parameters[ "msg" ] +=
                      QString(
+                             best_vdparameters.count( "yx" ) ?
+                             "~~_darkyellow2_~~  Best start positions based on avg. red cluster size  %1~~_darkblue_~~"
+                             :
                              "  Best start position based on avg. red cluster size   %1\n"
                           )
                      .arg( best_vdparameters[ "bestpos" ].front() )

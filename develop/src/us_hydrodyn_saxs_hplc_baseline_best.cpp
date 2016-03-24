@@ -251,6 +251,10 @@ void US_Hydrodyn_Saxs_Hplc_Baseline_Best::editor_ec_msg( QString msg )
    colors[ "darkorange"  ] = QColor( 255, 140, 0 );
    colors[ "darkorange2" ] = QColor( 238, 118, 0 );
    colors[ "darkorange3" ] = QColor( 214, 106, 0 );
+   colors[ "darkyellow1" ] = QColor( 204, 204, 0 );
+   colors[ "darkyellow2" ] = QColor( 153, 153, 0 );
+   colors[ "darkyellow3" ] = QColor( 102, 102, 0 );
+   colors[ "darkyellow4" ] = QColor(  51,  51, 0 );
 
    for ( int i = 0; i < (int) qsl.size(); ++i ) {
       if ( rx_color.search( qsl[ i ] ) != -1 ) {
