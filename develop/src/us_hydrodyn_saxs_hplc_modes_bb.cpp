@@ -1601,7 +1601,9 @@ void US_Hydrodyn_Saxs_Hplc::baseline_apply()
       reps = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_reps" ].toInt();
    }
    
+   disable_all();
    baseline_apply( all_selected_files(), integral, smoothing, save_bl, reps );
+   current_mode == MODE_BASELINE ? baseline_enables() : update_enables();
 }
 
 void US_Hydrodyn_Saxs_Hplc::baseline_apply( QStringList files, 
