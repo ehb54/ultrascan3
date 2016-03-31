@@ -6,6 +6,7 @@
 #include "us_widgets.h"
 #include "us_plot.h"
 #include "us_extinctutils.h"
+#include "us_minimize.h"
 #include "../us_extinctfitter/us_extinctfitter.h"
 
 class US_Extinction : public US_Widgets
@@ -15,16 +16,19 @@ class US_Extinction : public US_Widgets
 	public:
 		US_Extinction();
 		QVector <QString> filenames;
-		US_ExtinctFitter* fitter;
+		US_ExtinctFitter *fitter;
+		QVector <double> lambda;
+		QVector <double> extinction;
+		float xmin, xmax;
+		unsigned int order, parameters;
+		double *fitparameters;
+	   bool fitted, fitting_widget;
 
 	private:
    QVector <WavelengthScan> v_wavelength;
    QVector <QwtPlotCurve*>  v_curve;
    QString projectName;
-   unsigned int order, parameters; 
-   double *fitparameters;
-   bool fitted, fitting_widget;
-
+	unsigned int maxrange;
 	float odCutoff, lambdaLimitLeft, lambdaLimitRight,lambda_min, lambda_max,
          pathlength, extinction_coefficient, factor, selected_wavelength;
 	QLabel* 			lbl_gaussians;
@@ -73,6 +77,8 @@ class US_Extinction : public US_Widgets
 	void 	print_plot(void);
 	void 	help(void);
 	void 	plot();
+	void  calc_extinction();
+	void	update_order(double);
 	void 	listToCurve();
 	bool 	deleteCurve();
 };

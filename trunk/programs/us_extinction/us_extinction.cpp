@@ -1,10 +1,9 @@
 //! \file us_extinction.cpp
-
 #include <QApplication>
 #include "us_extinction.h"
 #include "us_license_t.h"
 #include "us_license.h"
-
+//
 //! \brief Main program for US_EXTINCTION. Loads translators and starts
 //         the class US_EXTINCTION
 
@@ -30,6 +29,9 @@ US_Extinction::US_Extinction() : US_Widgets()
 	lambda_max = -1000;
 	pathlength = (float) 1.2;
 	odCutoff = 3.0;
+	order = 15;
+	fitted = false;
+
 	v_wavelength.clear();
 	pb_addWavelength = us_pushbutton( tr( "Add Wavelength Scanfile") );
 	connect( pb_addWavelength, SIGNAL( clicked()), SLOT(add_wavelength()));
@@ -72,10 +74,12 @@ US_Extinction::US_Extinction() : US_Widgets()
         le_pathlength = us_lineedit("1.2000", 1, false);
 	le_coefficient = us_lineedit("1.0000",1, false);
 
-	QwtCounter* ct_gaussian = us_counter(2, 1, 50, 15);
+	ct_gaussian = us_counter(2, 1, 50, 15);
 	ct_gaussian->setStep(1);
 	ct_gaussian->setEnabled(true);
-	QwtCounter* ct_coefficient = us_counter(2, 200, 1500, 280);
+	connect(ct_gaussian, SIGNAL(valueChanged(double)), SLOT(update_order(double)));
+
+	ct_coefficient = us_counter(2, 200, 1500, 280);
 	ct_coefficient->setStep(1);
 	ct_coefficient->setEnabled(true);
 
@@ -83,6 +87,7 @@ US_Extinction::US_Extinction() : US_Widgets()
 	changedCurve = NULL;
 	plotLayout = new US_Plot(data_plot, tr(""), tr("Wavelength(nm)"), tr("Optical Density"));
 	data_plot->setCanvasBackground(Qt::black);
+	data_plot->setTitle("Absorbance and Extinction Profile");
 	data_plot->setMinimumSize(560, 240);
 	data_plot->enableAxis(1, true);
 	data_plot->setAxisTitle(1, "Extinction OD/(mol*cm)");
@@ -216,6 +221,7 @@ bool US_Extinction::loadScan(const QString &fileName)
 	QFileInfo fi(fileName);
 	wls.filePath = fi.filePath();
 	wls.fileName = fi.fileName();
+	//reads in files until the end of the file
 	if(f.open(QIODevice::ReadOnly | QIODevice::Text))
 	{		
       int row = 0;
@@ -335,6 +341,16 @@ void US_Extinction::plot()
 		c->setData(x_plot.at(m), y_plot.at(m));
 		v_curve.push_back(c);
 	}
+	if(fitted)
+	{
+		calc_extinction();
+      QwtPlotCurve* fit_curve;
+		fit_curve = us_curve(data_plot, "Extinction");
+      fit_curve->setPen(QPen(Qt::red, 2, Qt::SolidLine));
+      fit_curve->setData(lambda, extinction);
+		fit_curve->setYAxis(QwtPlot::yRight);
+	}
+
 	data_plot->replot();
 	return;
 }
@@ -424,7 +440,90 @@ bool US_Extinction::deleteCurve(void)
 
 void US_Extinction::perform_global(void)
 {
+	if (v_wavelength.size() < 2)
+   {
+      QMessageBox message;
+		message.setWindowTitle(tr("Ultrascan Error:"));
+		message.setText(tr("You will need at least 2 scans\nto perform a global fit.\n\nPlease add more scans before attempting\na global fit."));
+		message.exec();
+      return;
+   }
+   fitting_widget = false;
+   parameters = order * 3 + v_wavelength.size();
+   fitparameters = new double [parameters];
+   for (unsigned int i=0; i<v_wavelength.size(); i++)
+   {
+      fitparameters[i] = 0.3;
+   }
+   float lambda_step = (lambda_max - lambda_min)/(order+1); // create "order" peaks evenly distributed over the range
+   for (unsigned int i=0; i<order; i++)
+	{
+		fitparameters[v_wavelength.size() + (i * 3) ] = 1;
+      // spread out the peaks
+      fitparameters[v_wavelength.size() + (i * 3) + 1] = lambda_min + lambda_step * i;
+      fitparameters[v_wavelength.size() + (i * 3) + 2] = 10;
+   }
+	//opens the fitting GUI
+   fitter = new US_ExtinctFitter(&v_wavelength, fitparameters, order, parameters,
+                                    projectName, fitting_widget, 0, "fitter");
+   fitter->show();
+	fitted = true;
+	//causes the program after the fitting widget is closed
+   connect(fitter, SIGNAL(fittingWidgetClosed()), SLOT(plot()));
+   //data_plot->enableOutline(true);
+}
+void US_Extinction::calc_extinction()
+{
+	//specified scale for the fitted curve
+	selected_wavelength = (float) ct_coefficient->value();
+	extinction_coefficient = le_coefficient->text().toDouble();
+   unsigned int i, j;
+   if (v_wavelength.empty())
+   {  
+      return;
+   }
+   if (!lambda.empty())
+   {  
+      lambda.clear();
+      extinction.clear();
+   }
+   float od_wavelength=0, od;
+   xmax = -1.0;
+   xmin = 1e6;
 
+   for (i=0; i< v_wavelength.size(); i++)
+   {
+      xmax = max(xmax, v_wavelength.at(i).v_readings.at(v_wavelength.at(i).v_readings.size()-1).lambda);
+      xmin = min(xmin, v_wavelength.at(i).v_readings.at(0).lambda);
+   }
+   maxrange = (unsigned int) (xmax - xmin + 0.5);
+   maxrange += 1;
+   for (i=0; i<maxrange; i++)
+   {
+      lambda.push_back(xmin + i);
+      od = 0.0;
+      for (j=0; j<order; j++)
+      {
+         od += exp(fitparameters[v_wavelength.size() + (3 * j)]
+                   - (pow((lambda[i] - fitparameters[v_wavelength.size() + (3 * j) + 1]), 2)
+                      / ( 2 * pow(fitparameters[v_wavelength.size() + (3 * j) + 2], 2))));
+      }
+      extinction.push_back(od);
+      if((unsigned int) lambda[i] == selected_wavelength)
+      {
+         od_wavelength = od;
+      }
+   }
+   for (i=0; i<extinction.size(); i++)
+   {
+      extinction[i] = extinction_coefficient * (extinction[i]/od_wavelength);
+   }
+}
+
+//Changes number of Gaussians used to create the best fit curve
+void US_Extinction::update_order(double new_order)
+{
+	order = (int) new_order;
 }
 void US_Extinction::calculateE280(void)
 {

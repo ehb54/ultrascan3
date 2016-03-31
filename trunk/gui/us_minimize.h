@@ -13,7 +13,8 @@ class US_GUI_EXTERN US_Minimize : public US_Widgets
 	Q_OBJECT
 	
 	public:
-		
+
+		QVector <unsigned int> points_per_dataset;	
 		US_Minimize(bool& temp_fitting_widget, bool temp_GUI, QWidget*&, const char*&);
 		~US_Minimize();
       unsigned int parameters, iteration, function_evaluations, decompositions;
@@ -101,9 +102,6 @@ class US_GUI_EXTERN US_Minimize : public US_Widgets
 		QButtonGroup	*bg3;		
 		QwtCounter	*ct_unlabeled;
 		QCheckBox	*ck_monitor;
-		QRadioButton	*rb_plot1;
-		QRadioButton	*rb_plot2;
-		QRadioButton	*rb_plot3;
 		QRadioButton	*rb_linearN;
 		QRadioButton	*rb_linearY;
 		QRadioButton	*rb_autoN;
@@ -117,6 +115,11 @@ class US_GUI_EXTERN US_Minimize : public US_Widgets
 	float linesearch(float**, float);
 	int calc_B();
 	void updateQN(float **, float**);
+	void closeEvent(QCloseEvent *);
+
+	public slots:
+	void update_nlsMethod(int);
+	void update_fitDialog();
 	int Fit();
 
 //Virtual functions:
