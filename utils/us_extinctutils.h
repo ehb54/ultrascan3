@@ -12,6 +12,7 @@ struct WavelengthScan
    QVector<Reading> v_readings;
    QString fileName, filePath;
    QString description;
+	int pos, neg, runs;
 };
 
 

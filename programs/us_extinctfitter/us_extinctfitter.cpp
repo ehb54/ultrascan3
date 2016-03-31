@@ -1,12 +1,7 @@
 #include "us_extinctfitter.h"
-//#include <iostream>
+#include <iostream>
 
-//using namespace std;
-
-int main( )
-{
-	return 0;
-}
+using namespace std;
 
 US_ExtinctFitter::US_ExtinctFitter(QVector <struct WavelengthScan> *temp_wls_v, double*& temp_guess, unsigned int& temp_order, unsigned int& temp_parameters, QString& temp_projectName, bool& temp_fitting_widget, QWidget *p, const char *name) : US_Minimize(temp_fitting_widget, true, p, name)
 {
@@ -32,7 +27,7 @@ void US_ExtinctFitter::startFit()
   if (autoconverge)
   {
     iteration = 1000;
-    while (iteration > 1) //
+    while (iteration > 1) 
     {
       return_value = Fit(); // don't bother checking return values...
       if (nlsMethod == 3)   // switch between Levenberg Marquardt and Quasi Newton
@@ -71,8 +66,8 @@ void US_ExtinctFitter::startFit()
 
 bool US_ExtinctFitter::fit_init()
 {
-/*
-   unsigned int i, j, point_counter;
+
+   int i, j, point_counter;
    //
    // Calculate how many points there are in each dataset, sum them up for "points" and
    // leave out datasets that aren't fitted to keep the vectors/matrices as small as possible.
@@ -82,8 +77,8 @@ bool US_ExtinctFitter::fit_init()
 
    for (i=0; i<(*wls_v).size(); i++)
    {
-      points_per_dataset.push_back((*wls_v)[i].lambda.size());
-      points += (*wls_v)[i].lambda.size();
+      points_per_dataset.push_back((*wls_v).at(i).v_readings.size());
+      points += (*wls_v).at(i).v_readings.size();
    }
    if ((*wls_v).size() == 0)
    {
@@ -116,19 +111,17 @@ bool US_ExtinctFitter::fit_init()
    {
       for (j=0; j<points_per_dataset[i]; j++)
       {
-         y_raw[point_counter] = (*wls_v)[i].od[j];
+         y_raw[point_counter] = (*wls_v).at(i).v_readings.at(j).od;
          point_counter++;
       }
    }
-*/
+
    return(true);
 }
 
 int US_ExtinctFitter::calc_model(double *guess_par)
 {
-qDebug() << guess_par[0];
-/*
-   QString str;
+	QString str;
    unsigned int i, j, k, point_counter=0;
    float gaussian;
    for (i=0; i<(*wls_v).size(); i++)
@@ -139,7 +132,7 @@ qDebug() << guess_par[0];
          for (k=0; k<order; k++)
          {
             gaussian += exp(guess_par[(*wls_v).size() + (3 * k)]
-                            - (pow(((*wls_v)[i].lambda[j] - guess_par[(*wls_v).size() + (3 * k) + 1]), 2)
+                            - (pow(((*wls_v).at(i).v_readings.at(j).lambda - guess_par[(*wls_v).size() + (3 * k) + 1]), 2)
                                / ( 2 * pow(guess_par[(*wls_v).size() + (3 * k) + 2], 2))));
          }
          y_guess[point_counter] = guess_par[i] * gaussian;
@@ -147,14 +140,14 @@ qDebug() << guess_par[0];
       }
    }
    function_evaluations++;
-   lbl_evaluations2->setText(str.sprintf(" %d", function_evaluations));
+   le_evaluations->setText(str.sprintf(" %d", function_evaluations));
    qApp->processEvents();
    if (aborted)
    {
       return(-1);
    }
    return(0);
-*/
+
    /* //Polynomial fit:
       QString str;
       unsigned int i, j, k, point_counter=0;
@@ -178,14 +171,14 @@ qDebug() << guess_par[0];
       if (aborted)
       {
       return(-1);
-      }
-   */
+      }  
    return(0);
+*/
 }
 
 int US_ExtinctFitter::calc_jacobian()
 {
-/*
+
    unsigned int i, j, k, point_counter=0;
    float *term;
    term = new float [order];
@@ -203,7 +196,7 @@ int US_ExtinctFitter::calc_jacobian()
          for (k=0; k<order; k++)
          {
             term[k] = exp(guess[(*wls_v).size() + (3 * k)]
-                          - (pow(((*wls_v)[i].lambda[j] - guess[(*wls_v).size() + (3 * k) + 1]), 2)
+                          - (pow(((*wls_v).at(i).v_readings.at(j).lambda - guess[(*wls_v).size() + (3 * k) + 1]), 2)
                              / ( 2 * pow(guess[(*wls_v).size() + (3 * k) + 2], 2))));
          }
          jacobian[point_counter][i] = 0.0;
@@ -214,14 +207,14 @@ int US_ExtinctFitter::calc_jacobian()
             jacobian[point_counter][(*wls_v).size() + (3 * k)]     = guess[i] * term[k];
 
             jacobian[point_counter][(*wls_v).size() + (3 * k) + 1] = guess[i] * term[k]
-               * (((*wls_v)[i].lambda[j] - guess[(*wls_v).size() + (3 * k) + 1])
+               * (((*wls_v).at(i).v_readings.at(j).lambda - guess[(*wls_v).size() + (3 * k) + 1])
                   / pow(guess[(*wls_v).size() + (3 * k) + 2], 2));
 
             jacobian[point_counter][(*wls_v).size() + (3 * k) + 2] = guess[i] * term[k]
                * (pow(guess[(*wls_v).size() + (3 * k) + 2], -3)
                   * (pow(guess[(*wls_v).size() + (3 * k) + 1], 2)
                      - 2 * guess[(*wls_v).size() + (3 * k) + 1]
-                     * (*wls_v)[i].lambda[j] + pow((*wls_v)[i].lambda[j], 2)));
+                     * (*wls_v).at(i).v_readings.at(j).lambda + pow((*wls_v).at(i).v_readings.at(j).lambda, 2)));
          }
          point_counter++;
       }
@@ -232,7 +225,7 @@ int US_ExtinctFitter::calc_jacobian()
       return(-1);
    }
    return(0);
-*/
+
    /* Jacobian for polynomial fit:
       unsigned int i, j, k, point_counter=0;
       float polynomial;
@@ -268,11 +261,10 @@ int US_ExtinctFitter::calc_jacobian()
       if (aborted)
       return(-1);
       }
-   */
    return(0);
-/*
-   delete [] term;
 */
+
+   delete [] term;
 }
 
 void US_ExtinctFitter::cleanup()
@@ -321,60 +313,69 @@ void US_ExtinctFitter::write_report()
 
 void US_ExtinctFitter::plot_overlays()
 {
-/*
-   double **xplot = 0, **yplot_fit = 0, **yplot_raw = 0;
-   unsigned int *curve_raw, *curve_fit, numScans = 0;
+   unsigned int numScans = 0;
+	QVector <QwtPlotCurve*> v_curve_raw, v_curve_fit;
    long unsigned int point_counter = 0;
    plotResiduals = false;
    QString s1, s2;
-   xplot = new double* [datasets];
-   yplot_fit = new double* [datasets];
-   yplot_raw = new double* [datasets];
-   curve_fit = new unsigned int [datasets];
-   curve_raw = new unsigned int [datasets];
-   if (plotGroup)
+	QVector <QVector<double> > v_all_xplot;
+	QVector <QVector<double> > v_all_yplot_fit;
+	QVector <QVector<double> > v_all_yplot_raw;
+   QVector <double> v_xplot;
+   QVector <double> v_yplot_fit;
+   QVector <double> v_yplot_raw;
+	v_all_xplot.clear();
+	v_all_yplot_fit.clear();
+	v_all_yplot_raw.clear();
+   v_curve_fit.clear();
+   v_curve_raw.clear();
+  	if (plotGroup)
    {
       if (datasets - firstScan == 0)
       {
          numScans = 1;
-         s1.sprintf(tr("Overlays for fitted Scan %ld"), firstScan);
+         s1.sprintf((tr("Overlays for fitted Scan %ld")).toLatin1().data(), firstScan);
       }
       else if (datasets - firstScan < 5)
       {
          numScans = datasets - firstScan + 1;
-         s1.sprintf(tr("Overlays for fitted Scans %ld - %ld"), firstScan, firstScan + numScans - 1);
+         s1.sprintf((tr("Overlays for fitted Scans %ld - %ld")).toLatin1().data(), firstScan, firstScan + numScans - 1);
       }
       else
       {
          numScans = 5;
-         s1.sprintf(tr("Overlays for fitted Scans %ld - %ld"),  firstScan, firstScan+4);
+         s1.sprintf((tr("Overlays for fitted Scans %ld - %ld")).toLatin1().data(),  firstScan, firstScan+4);
       }
    }
    else
    {
       s1 = tr("Overlays");
    }
-   s2.sprintf(tr("Optical Density"));
+   s2.sprintf((tr("Optical Density")).toLatin1().data());
    point_counter = 0;
    for (unsigned int i=0; i<(*wls_v).size(); i++)
    {
-      xplot[i] = new double [points_per_dataset[i]];
-      yplot_fit[i] = new double [points_per_dataset[i]];
-      yplot_raw[i] = new double [points_per_dataset[i]];
+		v_xplot.clear();
+      v_yplot_fit.clear();
+      v_yplot_raw.clear();
+
       for (unsigned int j=0; j<points_per_dataset[i]; j++)
       {
-         xplot[i][j] = (*wls_v)[i].lambda[j];
-         yplot_fit[i][j] = y_guess[point_counter];
-         yplot_raw[i][j] = y_raw[point_counter];
+         v_xplot.push_back((*wls_v).at(i).v_readings.at(j).lambda);
+         v_yplot_fit.push_back(y_guess[point_counter]);
+         v_yplot_raw.push_back(y_raw[point_counter]);
          point_counter++;
       }
+		v_all_xplot.push_back(v_xplot);
+		v_all_yplot_fit.push_back(v_yplot_fit);
+		v_all_yplot_raw.push_back(v_yplot_raw);
    }
    QwtSymbol symbol;
    QPen p;
    p.setColor(Qt::red);
    p.setWidth(2);
    symbol.setSize(10);
-   symbol.setPen(Qt::blue);
+   symbol.setPen(QPen(Qt::blue));
    symbol.setBrush(Qt::yellow);
    symbol.setStyle(QwtSymbol::Ellipse);
    data_plot->clear();
@@ -383,55 +384,50 @@ void US_ExtinctFitter::plot_overlays()
    data_plot->setAxisTitle(QwtPlot::yLeft, s2);
    if (plotGroup)
    {
-      for (unsigned int i = firstScan - 1; i< numScans + firstScan - 1; i++)
+      for (unsigned int i = 0; i < v_all_xplot.size(); i++)
       {
-         curve_raw[i] = data_plot->insertCurve("raw data");
-         curve_fit[i] = data_plot->insertCurve("fitted data");
-         data_plot->setCurveStyle(curve_raw[i], QwtCurve::NoCurve);
-         data_plot->setCurveData(curve_raw[i], xplot[i], yplot_raw[i], points_per_dataset[i]);
-         data_plot->setCurveSymbol(curve_raw[i], symbol);
-         data_plot->setCurveData(curve_fit[i], xplot[i], yplot_fit[i], points_per_dataset[i]);
-         data_plot->setCurveStyle(curve_fit[i], QwtCurve::Lines);
-         data_plot->setCurvePen(curve_fit[i], p);
+         QwtPlotCurve* c_raw;
+			c_raw = us_curve(data_plot, "raw data");
+         QwtPlotCurve* c_fit;
+			c_fit  = us_curve(data_plot, "fitted data");
+         c_raw->setStyle(QwtPlotCurve::NoCurve);
+         c_raw->setData(v_all_xplot.at(i), v_all_yplot_raw.at(i));
+         c_raw->setSymbol(symbol);
+         c_fit->setData(v_all_xplot.at(i), v_all_yplot_fit.at(i));
+         c_fit->setStyle(QwtPlotCurve::Lines);
+         c_fit->setPen(p);
+			v_curve_raw.push_back(c_raw);
+			v_curve_fit.push_back(c_fit);
       }
    }
    else
    {
       for (unsigned int i=0; i<datasets; i++)
       {
-         curve_raw[i] = data_plot->insertCurve("raw data");
-         curve_fit[i] = data_plot->insertCurve("fitted data");
-         data_plot->setCurveStyle(curve_raw[i], QwtCurve::NoCurve);
-         data_plot->setCurveData(curve_raw[i], xplot[i], yplot_raw[i], points_per_dataset[i]);
-         data_plot->setCurveSymbol(curve_raw[i], symbol);
-         data_plot->setCurveData(curve_fit[i], xplot[i], yplot_fit[i], points_per_dataset[i]);
-         data_plot->setCurveStyle(curve_fit[i], QwtCurve::Lines);
-         data_plot->setCurvePen(curve_fit[i], p);
+         QwtPlotCurve *c_raw;
+         c_raw = us_curve(data_plot, "raw data");
+         QwtPlotCurve *c_fit;
+         c_fit  = us_curve(data_plot, "fitted data");
+         c_raw->setStyle(QwtPlotCurve::NoCurve);
+         c_raw->setData(v_all_xplot.at(i), v_all_yplot_raw.at(i));
+         c_raw->setSymbol(symbol);
+         c_fit->setData(v_all_xplot.at(i), v_all_yplot_fit.at(i));
+         c_fit->setStyle(QwtPlotCurve::Lines);
+         c_fit->setPen(p);
+         v_curve_raw.push_back(c_raw);
+         v_curve_fit.push_back(c_fit);
       }
    }
    //   data_plot->setAxisScale(QwtPlot::xBottom, -xmax/30.0, xmax + xmax/30.0, 0);
    data_plot->replot();
    //data_plot->updatePlot();      //no updatePlot() in new version
-   for (unsigned int i=0; i<datasets; i++)
-   {
-      delete [] xplot[i];
-      delete [] yplot_raw[i];
-      delete [] yplot_fit[i];
-   }
-   delete [] xplot;
-   delete [] yplot_raw;
-   delete [] yplot_fit;
-   delete [] curve_fit;
-   delete [] curve_raw;
    pb_print->setEnabled(true);
-*/
 }
 
 void US_ExtinctFitter::plot_residuals()
 {
-/*
    double **xplot = 0, **yplot_res = 0, line_x[2], line_y[2];
-   unsigned int *curve_res, zeroLine[5], numScans = 0, l;
+   unsigned int numScans = 0, l;
    unsigned long point_counter = 0;
    QString s1, s2, s3;
    float offset = 0;
@@ -441,30 +437,32 @@ void US_ExtinctFitter::plot_residuals()
    plotResiduals = true;
    xplot = new double* [datasets];
    yplot_res = new double* [datasets];
-   curve_res = new unsigned int [datasets];
+   QVector <QwtPlotCurve*> v_curve_res, v_zeroLine;
+	v_curve_res.clear();
+	v_zeroLine.clear(); 
    if (plotGroup)
    {
       if (datasets - firstScan == 0)
       {
          numScans = 1;
-         s1.sprintf(tr("Residuals from fitted Scan %ld"), firstScan);
+         s1.sprintf((tr("Residuals from fitted Scan %ld")).toLatin1().data(), firstScan);
      }
       else if (datasets - firstScan < 5)
       {
          numScans = datasets - firstScan + 1;
-         s1.sprintf(tr("Residuals from fitted Scans %ld - %ld"), firstScan, firstScan + numScans - 1);
+         s1.sprintf((tr("Residuals from fitted Scans %ld - %ld")).toLatin1().data(), firstScan, firstScan + numScans - 1);
       }
       else
       {
          numScans = 5;
-         s1.sprintf(tr("Residuals from fitted Scans %ld - %ld"),  firstScan, firstScan+4);
+         s1.sprintf((tr("Residuals from fitted Scans %ld - %ld")).toLatin1().data(),  firstScan, firstScan+4);
       }
    }
    else
    {
       s1 = tr("Residuals");
    }
-   s2.sprintf(tr("Optical Density Difference\n"));
+   s2.sprintf((tr("Optical Density Difference\n")).toLatin1().data());
    point_counter = 0;
    for (unsigned int i=0; i<(*wls_v).size(); i++)
    {
@@ -475,7 +473,7 @@ void US_ExtinctFitter::plot_residuals()
       yplot_res[i] = new double [points_per_dataset[i]];
       for (unsigned int j=0; j<points_per_dataset[i]; j++)
       {
-         xplot[i][j] = (*wls_v)[i].lambda[j];
+         xplot[i][j] = (*wls_v).at(i).v_readings.at(j).lambda;
          yplot_res[i][j] = y_guess[point_counter] - y_raw[point_counter];
          if (yplot_res[i][j] > 0)
          {
@@ -517,8 +515,8 @@ void US_ExtinctFitter::plot_residuals()
    p_raw.setWidth(1);
    p_zero.setColor(Qt::red);
    p_zero.setWidth(2);
-   symbol.setPen(Qt::blue);
-   symbol.setBrush(Qt::yellow);
+   symbol.setPen(QPen(Qt::blue));
+   symbol.setBrush(QBrush(Qt::yellow));
    symbol.setStyle(QwtSymbol::Ellipse);
    data_plot->clear();
    data_plot->setTitle(s1);
@@ -534,8 +532,9 @@ void US_ExtinctFitter::plot_residuals()
       line_x[1] = xmax + 2;
       for (unsigned int i = firstScan - 1; i< numScans + firstScan - 1; i++)
       {
-         curve_res[i] = data_plot->insertCurve("residuals");
-         data_plot->setCurveStyle(curve_res[i], QwtCurve::Lines);
+			QwtPlotCurve* c;
+         c = us_curve(data_plot, "residuals");
+         c->setStyle(QwtPlotCurve::Lines);
          if (i != firstScan - 1)
          {
             for (unsigned int j=0; j<points_per_dataset[i]; j++)
@@ -545,19 +544,21 @@ void US_ExtinctFitter::plot_residuals()
             line_y[0] = offset;
             line_y[1] = offset;
          }
-         data_plot->setCurveData(curve_res[i], xplot[i], yplot_res[i], points_per_dataset[i]);
-         data_plot->setCurveData(curve_res[i], xplot[i], yplot_res[i], points_per_dataset[i]);
-         data_plot->setCurveSymbol(curve_res[i], symbol);
-         data_plot->setCurvePen(curve_res[i], p_raw);
-         zeroLine[l] = data_plot->insertCurve("Zero Line");
-         data_plot->setCurveData(zeroLine[l], line_x, line_y, 2);
-         data_plot->setCurveStyle(zeroLine[l], QwtCurve::Lines);
-         data_plot->setCurvePen(zeroLine[l], p_zero);
-         scanMarker[l] = data_plot->insertMarker();
+         c->setData(xplot[i], yplot_res[i], points_per_dataset[i]);
+         c->setSymbol(symbol);
+         c->setPen(p_raw);
+			v_curve_res.push_back(c);
+			QwtPlotCurve* c_two;
+			c_two = us_curve(data_plot, "Zero Line");
+         c_two->setData(line_x, line_y, 2);
+         c_two->setStyle(QwtPlotCurve::Lines);
+         c_two->setPen(p_zero);
+			v_zeroLine.push_back(c_two);
+         /*scanMarker[l] = data_plot->insertMarker();
          data_plot->setMarkerLabel(scanMarker[l], s3.sprintf("%d", i));
          data_plot->setMarkerPos(scanMarker[l], line_x[1] + 7, offset);
          data_plot->setMarkerPen(scanMarker[l], p_zero);
-         data_plot->setMarkerFont(scanMarker[l], QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
+         data_plot->setMarkerFont(scanMarker[l], QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));*/
          offset += (float) 0.03;
          l++;
       }
@@ -570,16 +571,18 @@ void US_ExtinctFitter::plot_residuals()
       line_x[1] = xmax + 2;
       for (unsigned int i=0; i<datasets; i++)
       {
-         curve_res[i] = data_plot->insertCurve("residuals");
-         data_plot->setCurveStyle(curve_res[i], QwtCurve::Lines);
-         data_plot->setCurveData(curve_res[i], xplot[i], yplot_res[i], points_per_dataset[i]);
-         data_plot->setCurveSymbol(curve_res[i], symbol);
-         data_plot->setCurvePen(curve_res[i], p_raw);
+			QwtPlotCurve* c;
+         c = us_curve(data_plot, "residuals");
+         c->setStyle(QwtPlotCurve::Lines);
+         c->setData(xplot[i], yplot_res[i], points_per_dataset[i]);
+         c->setSymbol(symbol);
+         c->setPen(p_raw);
       }
-      zeroLine[0] = data_plot->insertCurve("Zero Line");
-      data_plot->setCurveData(zeroLine[0], line_x, line_y, 2);
-      data_plot->setCurveStyle(zeroLine[0], QwtCurve::Lines);
-      data_plot->setCurvePen(zeroLine[0], p_zero);
+		QwtPlotCurve* c_two;
+      c_two = us_curve(data_plot, "Zero Line");
+      c_two->setData(line_x, line_y, 2);
+      c_two->setStyle(QwtPlotCurve::Lines);
+      c_two->setPen(p_zero);
       data_plot->setAxisScale(QwtPlot::xBottom, xmin - 10, xmax + 10, 0);
    }
    data_plot->replot();
@@ -602,20 +605,19 @@ void US_ExtinctFitter::plot_residuals()
    }
    delete [] xplot;
    delete [] yplot_res;
-   delete [] curve_res;
    write_report();
-*/
 }
 
 void US_ExtinctFitter::updateRange(double scan)
 {
+
    firstScan = (int) scan;
-/*
+
    if (firstScan > datasets)
    {
       firstScan = 1;
    }
-   unsigned int modulus = datasets % 5;
+   /*unsigned int modulus = datasets % 5;
    switch (modulus)
    {
    case 0:
@@ -644,7 +646,7 @@ void US_ExtinctFitter::updateRange(double scan)
          break;
       }
    }
-   cnt_scan->setValue(firstScan);
+   cnt_scan->setValue(firstScan);*/
    if (plotResiduals)
    {
       plot_residuals();
@@ -653,12 +655,10 @@ void US_ExtinctFitter::updateRange(double scan)
    {
       plot_overlays();
 	}
-*/
 }
 
 void US_ExtinctFitter::endFit()
 {
-/*
    emit currentStatus("Converged");
    emit hasConverged();
    converged = true;
@@ -670,5 +670,4 @@ void US_ExtinctFitter::endFit()
    pb_residuals->setEnabled(true);
    pb_overlays->setEnabled(true);
    pb_saveFit->setEnabled(true);
-*/
 }

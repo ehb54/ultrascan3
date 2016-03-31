@@ -13,15 +13,18 @@ US_Minimize::US_Minimize(bool& temp_fitting_widget, bool temp_GUI, QWidget*& p, 
    converged = false;
    aborted = false;
    completed = false;
+	plotGroup = 0;
    plotResiduals = false;
    autoconverge = false;
+	maxIterations = 1000;
+	suspend_flag = false;
 	lambdaStart = 1.0e5;
    lambdaStep = 10.0;
    tolerance =  (float) 1.0e-12;
    GUI = true;
    constrained = false;
+	nlsMethod = 0;
    showGuiFit = false; // show fitting process graphically
-	
 	if(GUI)
 	{
 		showGuiFit = true;
@@ -111,12 +114,12 @@ void US_Minimize::setup_GUI()
 	gl2 = new QGridLayout();
 	QGridLayout* monitor_layout = us_checkbox(tr("Monitor Fit Graphically"), ck_monitor, false);
 	bg1= new QButtonGroup();
-	QGridLayout* plot1_layout = us_radiobutton(tr("Plot All Data"), rb_plot1);
-	QGridLayout* plot2_layout = us_radiobutton(tr("Plot Groups of 5"), rb_plot2);
-	QGridLayout* plot3_layout = us_radiobutton(tr("Plot Single Scans"), rb_plot3);
-	bg1->addButton(rb_plot1);
-	bg1->addButton(rb_plot2);
-	bg1->addButton(rb_plot3);
+	QGridLayout* plot1_layout = us_radiobutton(tr("Plot All Data"), bt_plotAll);
+	QGridLayout* plot2_layout = us_radiobutton(tr("Plot Groups of 5"), bt_plotGroup);
+	QGridLayout* plot3_layout = us_radiobutton(tr("Plot Single Scans"), bt_plotSingle);
+	bg1->addButton(bt_plotAll);
+	bg1->addButton(bt_plotGroup);
+	bg1->addButton(bt_plotSingle);
 	ct_unlabeled = us_counter(3, 1, 50, 1);
 	gl2->addLayout(plot1_layout, 0, 0);
 	gl2->addLayout(monitor_layout, 0, 1);
@@ -635,14 +638,7 @@ int US_Minimize::Fit()
                   {
                      QMessageBox message;
 							message.setWindowTitle(tr("Attention:"));
-							message.setText( tr("The Cholesky Decomposition of the\n"
-                                                               "Information matrix failed due to a\n"
-                                                               "singularity in the matrix.\n\n"
-                                                               "You may achieve convergence by\n"
-                                                               "re-fitting the current data with\n"
-                                                               "the Levenberg-Marquardt method or\n"
-                                                               "by using different initial parameter\n"
-                                                               "estimates."));
+							message.setText( tr("The Cholesky Decomposition of the\nInformation matrix failed due to a\nsingularity in the matrix.\n\nYou may achieve convergence by\nre-fitting the current data with\nthe Levenberg-Marquardt method or\nby using different initial parameter\nestimates."));
 							message.exec();
                   }
                }
@@ -1147,13 +1143,12 @@ float US_Minimize::calc_residuals()
 {
 	float residual = 0.0;
   	errno = 0;
-
    for (unsigned int i=0; i<points; i++)
    {
       y_delta[i] = y_raw[i] - y_guess[i];
       //cout << "y_raw: " << y_raw[i] << ", y_guess: " << y_guess[i] << endl;
       residual += pow((double) y_delta[i], (double) 2.0);
-      if (errno != 0)
+	  	if (errno != 0)
       {
          cout << "Floating point exception in the residuals calculation!\n";
          if (GUI)
@@ -1186,6 +1181,11 @@ float US_Minimize::calc_residuals()
    }
    return residual;
 }
+void US_Minimize::closeEvent(QCloseEvent *e)
+{
+	emit fittingWidgetClosed();
+	e->accept();
+}
 bool US_Minimize::fit_init()
 {
 	emit fitStarted();
@@ -1210,6 +1210,98 @@ void US_Minimize::save_Fit()
 	mBox.setText(tr("Please use the save function from the main extinction calculation module. It will allow you to save the coefficients of the fit as well as a copy of the plot window"));
 	mBox.setIcon(QMessageBox::Information);
 	mBox.exec();
+}
+// if a fit was loaded, update all the dialogs and plot windows:
+void US_Minimize::update_fitDialog()
+{
+    if (!GUI)
+   {
+      return;
+   }
+   QString str;
+   str.sprintf("%1.4e", variance);
+   le_variance->setText(str);
+   str.sprintf("%d", function_evaluations);
+   le_evaluations->setText(str);
+   str.sprintf("%1.4e", pow((double) variance, (double) 0.5));
+   le_stddev->setText(str);
+   str.sprintf("%1.4e", 0.0);
+   le_improvement->setText(str);
+   //lbl_status2->setText(tr("Results from loaded fit are shown"));
+   str.sprintf(" %d", parameters);
+   le_parameters->setText(str);
+   str.sprintf(" %ld", datasets);
+   le_datasets->setText(str);
+   str.sprintf(" %ld", points);
+   le_points->setText(str);
+   str.sprintf((tr("%ld Runs (%2.2f")).toLatin1().data(), runs, runs_percent);
+   str += " %)";
+   //lbl_status4->setText(str);
+}
+
+void US_Minimize::update_nlsMethod(int item)
+{
+   nlsMethod = item;
+   switch (item)
+   {
+   case 0:
+      {
+         lambdaStart = 1.0e6;
+         lambdaStep = 10.0;
+         if (GUI)
+         {
+            //lbl_status4->setText(tr("Levenberg-Marquardt Method selected..."));
+            le_lambdaStart->setText(" 1.0e+06");
+            le_lambdaStep->setText(" 10.0");
+         }
+         break;
+      }
+   case 1:
+      {
+         lambdaStart =  (float) 1.0e-6;
+         lambdaStep = 2.0;
+         if (GUI)
+         {
+            //lbl_status4->setText(tr("Modified Gauss Newton Method selected..."));           
+            le_lambdaStart->setText(" 1.0e-6");
+            le_lambdaStep->setText(" 2.0");
+
+         }
+         break;
+      }
+   case 2:
+      {
+         lambdaStart = 1.0e6;
+         lambdaStep = 10.0;
+         if (GUI)
+         {
+            //lbl_status4->setText(tr("Hybrid Method selected..."));
+            le_lambdaStart->setText(" 1.0e6");
+            le_lambdaStep->setText(" 10.0");
+         }
+         break;
+      }
+   case 3:
+      {
+         if (GUI)
+         {
+            //lbl_status4->setText(tr("Quasi-Newton Method selected..."));
+         }
+         break;
+      }
+   case 4:
+      {
+         lambdaStart = 0.0;
+         lambdaStep = 0.0;
+         if (GUI)
+         {  
+            //lbl_status4->setText(tr("Generalized Linear Least Squares Method selected..."));
+            le_lambdaStart->setText(" 0.0");
+            le_lambdaStep->setText(" 0.0");
+         }
+         break;
+      }
+   }
 }
 
 // calculate the B matrix: 
@@ -1248,13 +1340,7 @@ void US_Minimize::endFit()
       pb_residuals->setEnabled(true);
       pb_overlays->setEnabled(true);
    }
-   //cout << "executing endFit()...\n";
-}
-void US_Minimize::updateQN(float **gamma, float **delta)
-{
-   unsigned int i, j;
-   /*
-   //cout << "Parameters in updateQN: " << parameters << endl;
+   ///cout << "Parameters in updateQN: " << parameters << endl;
    for (i=0; i<parameters; i++)
    {
    //cout << "Gamma[" << i << "]: " << (*gamma)[i] << ", Delta[" << i << "]: " << (*delta)[i] << endl;
