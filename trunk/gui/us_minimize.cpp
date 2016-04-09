@@ -209,6 +209,65 @@ void US_Minimize::setup_GUI()
    mainLayout->addLayout(subMain, 0, 0);
 	mainLayout->addLayout(plotLayout, 0, 1);
 }
+void US_Minimize::updateQN(float **gamma, float **delta)
+{
+	unsigned int i, j;
+   float *hgamma, lambda, deltagamma, *v, *temp, **vvtranspose, **ddtranspose, **hgammatranspose;
+   hgamma = new float [parameters];
+   v = new float [parameters];
+   temp = new float [parameters];
+   vvtranspose = new float *[parameters];
+   hgammatranspose = new float *[parameters];
+   ddtranspose = new float *[parameters];
+   for (i=0; i<parameters; i++)
+   {
+      vvtranspose[i] = new float [parameters];
+      hgammatranspose[i] = new float [parameters];
+      ddtranspose[i] = new float [parameters];
+   }
+
+   matrix->mmv(&hgamma, gamma, &information_matrix, parameters, parameters);
+   lambda = matrix->dotproduct(gamma, &hgamma, parameters);
+   deltagamma = matrix->dotproduct(delta, gamma, parameters);
+   //cout << "Deltagamma: " << deltagamma << endl;
+  	for (i=0; i<parameters; i++)
+   {
+ 
+      v[i] = (*delta)[i]/deltagamma - hgamma[i]/lambda;
+   }
+   matrix->vvt(&vvtranspose, &v, &v, parameters);
+   matrix->vvt(&ddtranspose, delta, delta, parameters);
+   matrix->vvt(&hgammatranspose, &hgamma, &hgamma, parameters);
+   for (i=0; i<parameters; i++)
+   {
+      for (j=0; j<parameters; j++)
+      {
+         information_matrix[i][j] = information_matrix[i][j] - hgammatranspose[i][j]/lambda
+            + ddtranspose[i][j]/deltagamma + lambda * vvtranspose[i][j];
+      }
+   }
+   matrix->mmv(&temp, gamma, &information_matrix, parameters, parameters);
+   /*
+ *      for (i=0; i<parameters; i++)
+ *           {
+ *                cout << "difference: " << temp[i] - (*delta)[i] << endl;
+ *                     }
+ *                        */
+   for (i=0; i<parameters; i++)
+   {
+      delete [] vvtranspose[i];
+      delete [] hgammatranspose[i];
+      delete [] ddtranspose[i];
+   }
+   delete [] hgamma;
+   delete [] v;
+   delete [] temp;
+   delete [] vvtranspose;
+   delete [] hgammatranspose;
+   delete [] ddtranspose;
+
+}
+
 int US_Minimize::Fit()
 {
    //cout << "converged: " << converged << ", completed: " << completed << ", aborted: " << aborted << endl;
@@ -1340,63 +1399,4 @@ void US_Minimize::endFit()
       pb_residuals->setEnabled(true);
       pb_overlays->setEnabled(true);
    }
-   ///cout << "Parameters in updateQN: " << parameters << endl;
-   for (i=0; i<parameters; i++)
-   {
-   //cout << "Gamma[" << i << "]: " << (*gamma)[i] << ", Delta[" << i << "]: " << (*delta)[i] << endl;
-   }
-   */
-   float *hgamma, lambda, deltagamma, *v, *temp, **vvtranspose, **ddtranspose, **hgammatranspose;
-   hgamma = new float [parameters];
-   v = new float [parameters];
-   temp = new float [parameters];
-   vvtranspose = new float *[parameters];
-   hgammatranspose = new float *[parameters];
-   ddtranspose = new float *[parameters];
-   for (i=0; i<parameters; i++)
-   {
-      vvtranspose[i] = new float [parameters];
-      hgammatranspose[i] = new float [parameters];
-      ddtranspose[i] = new float [parameters];
-   }
-
-   matrix->mmv(&hgamma, gamma, &information_matrix, parameters, parameters);
-   lambda = matrix->dotproduct(gamma, &hgamma, parameters);
-   deltagamma = matrix->dotproduct(delta, gamma, parameters);
-   //cout << "Deltagamma: " << deltagamma << endl;
-   for (i=0; i<parameters; i++)
-   {
-      //cout << "Gamma: " << (*gamma)[i] << endl;
-      v[i] = (*delta)[i]/deltagamma - hgamma[i]/lambda;
-   }
-   matrix->vvt(&vvtranspose, &v, &v, parameters);
-   matrix->vvt(&ddtranspose, delta, delta, parameters);
-   matrix->vvt(&hgammatranspose, &hgamma, &hgamma, parameters);
-   for (i=0; i<parameters; i++)
-   {
-      for (j=0; j<parameters; j++)
-      {
-         information_matrix[i][j] = information_matrix[i][j] - hgammatranspose[i][j]/lambda
-            + ddtranspose[i][j]/deltagamma + lambda * vvtranspose[i][j];
-      }
-   }
-   matrix->mmv(&temp, gamma, &information_matrix, parameters, parameters);
-   /*
-     for (i=0; i<parameters; i++)
-     {
-     cout << "difference: " << temp[i] - (*delta)[i] << endl;
-     }
-   */
-   for (i=0; i<parameters; i++)
-   {
-      delete [] vvtranspose[i];
-      delete [] hgammatranspose[i];
-      delete [] ddtranspose[i];
-   }
-   delete [] hgamma;
-   delete [] v;
-   delete [] temp;
-   delete [] vvtranspose;
-   delete [] hgammatranspose;
-   delete [] ddtranspose;
 }
