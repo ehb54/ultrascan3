@@ -7,10 +7,10 @@
 using namespace std;
 
 //Constructor
-US_Minimize::US_Minimize(bool& temp_fitting_widget, bool temp_GUI) : US_Widgets()
+US_Minimize::US_Minimize(bool *temp_fitting_widget, bool temp_GUI) : US_Widgets()
 {
    GUI = temp_GUI;
-	*fitting_widget = temp_fitting_widget;
+	fitting_widget = temp_fitting_widget;
    suspend_flag = false;
    converged = false;
    aborted = false;

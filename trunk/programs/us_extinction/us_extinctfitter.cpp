@@ -3,7 +3,7 @@
 
 using namespace std;
 
-US_ExtinctFitter::US_ExtinctFitter(QVector <struct WavelengthScan> *temp_wls_v, double*& temp_guess, unsigned int& temp_order, unsigned int& temp_parameters, QString& temp_projectName, bool& temp_fitting_widget) : US_Minimize(temp_fitting_widget, true)
+US_ExtinctFitter::US_ExtinctFitter(QVector <struct WavelengthScan> *temp_wls_v, double*& temp_guess, unsigned int& temp_order, unsigned int& temp_parameters, QString& temp_projectName, bool *temp_fitting_widget) : US_Minimize(temp_fitting_widget, true)
 {
    guess = temp_guess;
    parameters = temp_parameters;

@@ -466,7 +466,7 @@ void US_Extinction::perform_global(void)
    }
 	//opens the fitting GUI
    fitter = new US_ExtinctFitter(&v_wavelength, fitparameters, order, parameters,
-                                    projectName, fitting_widget);
+                                    projectName, &fitting_widget);
    fitter->show();
 	fitted = true;
 	//causes the program after the fitting widget is closed
