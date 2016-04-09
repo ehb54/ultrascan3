@@ -27,7 +27,7 @@ class US_ExtinctFitter : public US_Minimize
 	
 	public:
 
-	US_ExtinctFitter(QVector <struct WavelengthScan> *, double*&, unsigned int&, unsigned int&, QString&, bool&);
+	US_ExtinctFitter(QVector <struct WavelengthScan> *, double*&, unsigned int&, unsigned int&, QString&, bool *);
 	
 	private: 
 		QVector <struct WavelengthScan> *wls_v;
