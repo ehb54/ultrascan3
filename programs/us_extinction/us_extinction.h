@@ -5,9 +5,8 @@
 
 #include "us_widgets.h"
 #include "us_plot.h"
-#include "us_extinctutils.h"
 #include "us_minimize.h"
-#include "../us_extinctfitter/us_extinctfitter.h"
+#include "us_extinctfitter.h"
 
 class US_Extinction : public US_Widgets
 {

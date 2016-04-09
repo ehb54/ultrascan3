@@ -7,8 +7,10 @@
 using namespace std;
 
 //Constructor
-US_Minimize::US_Minimize(bool& temp_fitting_widget, bool temp_GUI, QWidget*& p, const char*& name) : US_Widgets()
+US_Minimize::US_Minimize(bool& temp_fitting_widget, bool temp_GUI) : US_Widgets()
 {
+   GUI = temp_GUI;
+	*fitting_widget = temp_fitting_widget;
    suspend_flag = false;
    converged = false;
    aborted = false;
@@ -21,14 +23,13 @@ US_Minimize::US_Minimize(bool& temp_fitting_widget, bool temp_GUI, QWidget*& p, 
 	lambdaStart = 1.0e5;
    lambdaStep = 10.0;
    tolerance =  (float) 1.0e-12;
-   GUI = true;
    constrained = false;
 	nlsMethod = 0;
    showGuiFit = false; // show fitting process graphically
 	if(GUI)
 	{
 		showGuiFit = true;
-	//	*fitting_widget = true; //widget is on screen now
+		*fitting_widget = true; //widget is on screen now
 		setup_GUI();
 	}
 }
@@ -966,14 +967,9 @@ int US_Minimize::Fit()
 float US_Minimize::linesearch(float **search, float f0)
 {
    bool check_flag=true;
-   double test_val, old_f0=0.0, old_f1=0.0, old_f2=0.0;
+   double old_f0=0.0, old_f1=0.0, old_f2=0.0;
    //cout << "before: " << errno << endl;
    errno = 0; //clear old error state
-   for (unsigned int i=0; i<parameters; i++)
-   {
-      test_val = (*search)[i];
-      //cout << "Error info: " << errno << ", parameter value: " << test_val << endl;
-   }
    // look for the minimum residual. Residual values are f0, f1, f2, evaluated at x0, x1, x2.
    // x0, x1, x2 are multipliers for incremental change of the parameter vector 'search'
    // `search` contains the vector of parameters we need to optimize

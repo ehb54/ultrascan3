@@ -1,4 +1,5 @@
 //! \file us_extinction.cpp
+//
 #include <QApplication>
 #include "us_extinction.h"
 #include "us_license_t.h"
@@ -451,7 +452,7 @@ void US_Extinction::perform_global(void)
    fitting_widget = false;
    parameters = order * 3 + v_wavelength.size();
    fitparameters = new double [parameters];
-   for (unsigned int i=0; i<v_wavelength.size(); i++)
+   for (int i=0; i<v_wavelength.size(); i++)
    {
       fitparameters[i] = 0.3;
    }
@@ -465,7 +466,7 @@ void US_Extinction::perform_global(void)
    }
 	//opens the fitting GUI
    fitter = new US_ExtinctFitter(&v_wavelength, fitparameters, order, parameters,
-                                    projectName, fitting_widget, 0, "fitter");
+                                    projectName, fitting_widget);
    fitter->show();
 	fitted = true;
 	//causes the program after the fitting widget is closed
@@ -491,7 +492,7 @@ void US_Extinction::calc_extinction()
    xmax = -1.0;
    xmin = 1e6;
 
-   for (i=0; i< v_wavelength.size(); i++)
+   for (int i=0; i< v_wavelength.size(); i++)
    {
       xmax = max(xmax, v_wavelength.at(i).v_readings.at(v_wavelength.at(i).v_readings.size()-1).lambda);
       xmin = min(xmin, v_wavelength.at(i).v_readings.at(0).lambda);
@@ -514,7 +515,7 @@ void US_Extinction::calc_extinction()
          od_wavelength = od;
       }
    }
-   for (i=0; i<extinction.size(); i++)
+   for (int i=0; i<extinction.size(); i++)
    {
       extinction[i] = extinction_coefficient * (extinction[i]/od_wavelength);
    }

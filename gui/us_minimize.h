@@ -15,7 +15,7 @@ class US_GUI_EXTERN US_Minimize : public US_Widgets
 	public:
 
 		QVector <unsigned int> points_per_dataset;	
-		US_Minimize(bool& temp_fitting_widget, bool temp_GUI, QWidget*&, const char*&);
+		US_Minimize(bool& temp_fitting_widget, bool temp_GUI);
 		~US_Minimize();
       unsigned int parameters, iteration, function_evaluations, decompositions;
       unsigned long int points, runs, datasets, firstScan, maxIterations;
