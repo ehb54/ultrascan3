@@ -187,10 +187,14 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
   //addMenu(  P_GLOBFITSP, tr( "Global &Spectrum Fit" ),        fit );
   
   QMenu* utilities   = new QMenu( tr( "&Utilities" ),   this );
+  QMenu* spectrum    = new QMenu( tr( "Spectral &Analysis" ),   this );
+  addMenu(  P_SPECFIT  , tr( "&Spectrum Fitter"                  ), spectrum);
+  addMenu(  P_SPECDEC  , tr( "Spectrum &Decomposition"           ), spectrum);
   addMenu(  P_CONVERT  , tr( "&Import Experimental Data"         ), utilities );
   addMenu(  P_EXPORT   , tr( "&Export OpenAUC Data"              ), utilities );
   addMenu(  P_FDSMAN   , tr( "FDS File &Manager"                 ), utilities );
   addMenu(  P_FITMEN   , tr( "&Fit Meniscus"                     ), utilities );
+  utilities->addMenu(spectrum);
   addMenu(  P_COLORGRAD, tr( "Color &Gradient Generator"         ), utilities );
   addMenu(  P_RPTGEN   , tr( "&Report Generator"                 ), utilities );
   addMenu(  P_ROTORCAL , tr( "R&otor Calibration"                ), utilities );
@@ -612,8 +616,11 @@ void US_Win::help( int index )
 
             " * Nikolay Dokholyan\n"
             " * Jose Garcia de la Torre\n"
+				" * Haram Kim\n"
+				" * Minji Kim\n"
             " * Brad Langford\n"
             " * Thomas Laue\n"
+				" * Konrad Löhr\n"
             " * Luitgard Nagel-Steger\n"
             " * Zach Ozer\n"
             " * Karel Planken\n"
