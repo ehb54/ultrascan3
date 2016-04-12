@@ -15,6 +15,8 @@ US_Spectrum::US_Spectrum() : US_Widgets()
 	//Vector for basis wavelength profiles
 	v_basis.clear();
 
+	solution_curve = NULL;
+
 	//Push Buttons for US_Spectrum GUI
 	pb_load_target = us_pushbutton(tr("Load Target Spectrum"));
 	connect(pb_load_target, SIGNAL(clicked()), SLOT(load_target()));
@@ -28,6 +30,7 @@ US_Spectrum::US_Spectrum() : US_Widgets()
 	pb_extrapolate = us_pushbutton(tr("Extrapolate Extinction Profile"));
 	pb_overlap = us_pushbutton(tr("Find Extinction Profile Overlap"));
 	pb_fit = us_pushbutton(tr("Fit Data"));
+	connect(pb_fit, SIGNAL(clicked()), SLOT(fit()));
 	pb_help = us_pushbutton(tr("Help"));
 	pb_reset_basis = us_pushbutton(tr("Reset Basis Spectra"));
 	pb_save= us_pushbutton(tr("Save Fit"));
@@ -109,6 +112,7 @@ US_Spectrum::US_Spectrum() : US_Widgets()
 	mainLayout->addLayout(plotGrid, 0, 1);
 }
 
+//loads basis spectra according to user specification
 void US_Spectrum::load_basis()
 {
    QStringList files;
@@ -129,11 +133,12 @@ void US_Spectrum::load_basis()
    }
    for (QStringList::const_iterator  it=files.begin(); it!=files.end(); ++it)
 	{
+      QFileInfo fi;
+      fi.setFile(*it);
 		basisIndex = 0;
 		load_gaussian_profile(temp_wp, *it);
+		temp_wp.filenameBasis = fi.baseName();
 		v_basis.push_back(temp_wp);
-		QFileInfo fi;
-		fi.setFile(*it);
 		lw_basis->insertItem(row,fi.baseName());	
    	v_x_values.clear();
    	v_y_values.clear();
@@ -163,6 +168,7 @@ void US_Spectrum::load_basis()
 	data_plot->replot();
 }
 
+//brings in the target spectrum according to user specification
 void US_Spectrum::load_target()
 {
    QFileDialog dialog (this);
@@ -213,7 +219,7 @@ void US_Spectrum::load_target()
    pb_load_basis->setEnabled(true);
 }
 
-
+//reads in gaussian information for each spectrum
 void US_Spectrum:: load_gaussian_profile(struct WavelengthProfile &profile, const QString &fileName)
 {
    QString line;
@@ -278,6 +284,8 @@ void US_Spectrum:: load_gaussian_profile(struct WavelengthProfile &profile, cons
 		mb.setText("Could not read the wavelength data file:\n" + fName);
 	}
 }
+
+//Find the appropriate amplitude to scale the spectrum's curve at
 void US_Spectrum::find_amplitude(struct WavelengthProfile &profile)
 {
    profile.amplitude = 0;
@@ -290,3 +298,166 @@ void US_Spectrum::find_amplitude(struct WavelengthProfile &profile)
    profile.amplitude = 1.0/profile.amplitude;
    profile.amplitude *= profile.scale;
 }
+
+void US_Spectrum::fit()
+{
+   unsigned int min_lambda = target.lambda_min;
+   unsigned int max_lambda = target.lambda_max;
+   unsigned int points, order, i, j, k, counter=0;
+   double *nnls_a, *nnls_b, *nnls_x, nnls_rnorm, *nnls_wp, *nnls_zzp, *x, *y;
+   float fval = 0.0;
+   QVector <float> residuals, solution, b;
+   QPen pen;
+   residuals.clear();
+   solution.clear();
+   b.clear();
+   int *nnls_indexp;
+   QString str = "Please note:\n\n" 
+      "The target and basic spectra have different limits.\n" 
+      "These vectors need to be congruent before you can fit\n" 
+      "the data. You can correct the problem by first running\n" 
+      "\"Find Extinction Profile Overlap\" (preferred), or by\n" 
+      "running \"Extrapolate Extinction Profile\" (possibly imprecise).";
+   
+	for (i=0; i< (unsigned int) v_basis.size(); i++)
+   {
+      if(v_basis[i].lambda_min != min_lambda || v_basis[i].lambda_max != max_lambda)
+      {
+         QMessageBox::warning(this, tr("UltraScan Warning"), str,
+    		QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
+         return;
+      }
+   }
+
+   points = target.lambda_max - target.lambda_min + 1;
+   x = new double [points];
+   y = new double [points];
+   order = v_basis.size(); // no baseline necessary with gaussians
+   nnls_a = new double [points * order]; // contains the model functions, end-to-end
+   nnls_b = new double [points]; // contains the experimental data
+   nnls_zzp = new double [points]; // pre-allocated working space for nnls
+   nnls_x = new double [order]; // the solution vector, pre-allocated for nnls
+   nnls_wp = new double [order]; // pre-allocated working space for nnls, On exit, wp[] will contain the dual solution vector, wp[i]=0.0 for all i in set p and wp[i]<=0.0 for all i in set z. 
+
+	nnls_indexp = new int [order];
+	//find_amplitude(target);
+   for (i=0; i<points; i++)
+   {
+      x[i] = target.lambda_min + i;
+      nnls_b[i] = 0.0;
+      for (j=0; j < (unsigned int)target.gaussians.size(); j++)
+      {
+         nnls_b[i] += target.gaussians[j].amplitude *
+            exp(-(pow(x[i] - target.gaussians[j].mean, 2.0)
+                  / (2.0 * pow(target.gaussians[j].sigma, 2.0))));
+      }
+      nnls_b[i] *= target.amplitude;
+      b.push_back((float) nnls_b[i]);
+   }
+   counter = 0;
+   for (k=0; k<order; k++)
+   {		
+		//find amplitude(basis[k])
+  		for(i = 0; i<points; i++)
+      {
+         x[i] = v_basis[k].lambda_min + i;
+         nnls_a[counter] = 0.0;
+         for (j=0; j< (unsigned int) v_basis[k].gaussians.size(); j++)
+         {
+            nnls_a[counter] += v_basis[k].gaussians[j].amplitude *
+               exp(-(pow(x[i] - v_basis[k].gaussians[j].mean, 2.0)
+                     / (2.0 * pow(v_basis[k].gaussians[j].sigma, 2.0))));
+         }
+         nnls_a[counter] *= v_basis[k].amplitude;
+         counter ++;
+      }
+   }
+   US_Math2::nnls(nnls_a, points, points, order, nnls_b, nnls_x, &nnls_rnorm, nnls_wp, nnls_zzp, nnls_indexp);
+	
+	QVector <float> results;
+   results.clear();
+   fval = 0.0;
+   for (i=0; i< (unsigned int) v_basis.size(); i++)
+   {
+      fval += nnls_x[i];
+   }
+   for (i=0; i< (unsigned int) v_basis.size(); i++)
+   {
+      results.push_back(100.0 * nnls_x[i]/fval);
+      str.sprintf((v_basis[i].filenameBasis +": %3.2f%% (%6.4e)").toLocal8Bit().data(), results[i], nnls_x[i]);
+		lw_basis->item((int)i)->setText(str);
+      v_basis[i].nnls_factor = nnls_x[i];
+      v_basis[i].nnls_percentage = results[i];
+   }
+
+   for (i=0; i<points; i++)
+   {
+      solution.push_back(0.0);
+   }
+   for (k=0; k<order; k++)
+   {
+      //find_amplitude(basis[k]);
+      for (i=0; i<points; i++)
+      {
+         x[i] = v_basis[k].lambda_min + i;
+      
+      	for (j=0; j< (unsigned int) v_basis[k].gaussians.size(); j++)
+         {
+      	   solution[i] += (v_basis[k].gaussians[j].amplitude *                                         exp(-(pow(x[i] - v_basis[k].gaussians[j].mean, 2.0) / (2.0 * pow(v_basis[k].gaussians[j].sigma, 2.0))))										) * v_basis[k].amplitude * nnls_x[k];
+         }
+      }
+    }
+   for (i=0; i<points; i++)
+   {
+      residuals.push_back(solution[i] - b[i]);
+      y[i] = solution[i];
+	}
+   
+	residuals_plot->clear();                                                 
+   QwtPlotCurve *resid_curve = us_curve(residuals_plot, "Residuals");
+   QwtPlotCurve *target_curve = us_curve(residuals_plot,"Mean");
+   if (solution_curve != NULL)
+   {
+      solution_curve->detach();
+   }
+   solution_curve = us_curve(data_plot, "Solution");
+
+   resid_curve->setStyle(QwtPlotCurve::Lines);
+   target_curve->setStyle(QwtPlotCurve::Lines);
+   solution_curve->setStyle(QwtPlotCurve::Lines);
+
+   solution_curve->setData(x, y, points);
+   pen.setColor(Qt::magenta);
+   pen.setWidth(3);
+   solution_curve->setPen(pen);
+   data_plot->replot();
+
+   fval = 0.0;
+   for (i=0; i<points; i++)
+   {
+      y[i] = residuals[i];
+      fval += pow(residuals[i], (float) 2.0);
+   }
+	fval /= points;
+   le_rmsd->setText(str.sprintf("RMSD: %3.2e", pow(fval, (float) 0.5)));
+   resid_curve->setData(x, y, points);
+   pen.setColor(Qt::yellow);
+   pen.setWidth(2);
+   resid_curve->setPen(pen);
+   residuals_plot->replot();
+
+   x[1] = x[points - 1];
+   y[0] = 0.0;
+   y[1] = 0.0;
+   target_curve->setData(x, y, 2);
+   pen.setColor(Qt::red);
+   pen.setWidth(3);
+   target_curve->setPen(pen);
+   residuals_plot->replot();
+   pb_save->setEnabled(true);
+   pb_print_residuals->setEnabled(true);
+   delete [] x;
+   delete [] y;
+	qDebug()<< "Finished fitting function";
+}
+

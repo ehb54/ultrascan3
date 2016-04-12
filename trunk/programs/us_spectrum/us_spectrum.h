@@ -3,6 +3,7 @@
 
 #include "us_widgets.h"
 #include "us_plot.h"
+#include "us_math2.h"
 
 struct Gaussian
 {
@@ -15,6 +16,7 @@ struct WavelengthProfile
 	unsigned int lambda_scale, lambda_min, lambda_max;
 	float scale, amplitude;
 	QString filename, filenameBasis;
+	float nnls_factor, nnls_percentage;
 };
 
 class US_Spectrum : public US_Widgets
@@ -29,7 +31,8 @@ class US_Spectrum : public US_Widgets
 		US_Plot		*plotLayout1, *plotLayout2;
 		struct WavelengthProfile target;
 		QVector <struct WavelengthProfile> v_basis;
-
+		QwtPlotCurve *solution_curve;
+	
 		QPushButton *pb_load_target;
 		QPushButton *pb_load_basis;
 		QPushButton *pb_load_fit;
@@ -60,6 +63,7 @@ class US_Spectrum : public US_Widgets
 		void	load_target();
 		void	load_gaussian_profile(struct WavelengthProfile&, const QString&);
 		void 	find_amplitude(struct WavelengthProfile&);
+		void	fit();
 };
 
 #endif
