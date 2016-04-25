@@ -4,6 +4,7 @@
 #include "us_widgets.h"
 #include "us_plot.h"
 #include "us_math2.h"
+#include <math.h>
 
 struct Gaussian
 {
@@ -13,6 +14,8 @@ struct Gaussian
 struct WavelengthProfile
 {
 	QVector <struct Gaussian> gaussians;
+	QVector <double> extinction;
+	QwtPlotCurve* matchingCurve;
 	unsigned int lambda_scale, lambda_min, lambda_max;
 	float scale, amplitude;
 	QString filename, filenameBasis;
@@ -37,6 +40,7 @@ class US_Spectrum : public US_Widgets
 		QPushButton *pb_load_basis;
 		QPushButton *pb_load_fit;
       QPushButton *pb_fit;
+		QPushButton	*pb_find_angles;
       QPushButton *pb_help;
       QPushButton *pb_save;
       QPushButton *pb_extrapolate;
@@ -48,15 +52,20 @@ class US_Spectrum : public US_Widgets
       QPushButton *pb_difference;
       QPushButton *pb_print_fit;
       QPushButton *pb_print_residuals;
+		QPushButton	*pb_find_angle;
 		
 		QListWidget *lw_target;
 		QListWidget *lw_basis;
 		QLabel		*lbl_wavelength;
 		QLabel		*lbl_extinction;
-		QLabel		*lbl_scaling;	
+		QLabel		*lbl_scaling;
+		QLineEdit	*le_angle;
 		QLineEdit	*le_wavelength;
 		QLineEdit	*le_extinction;
 		QLineEdit	*le_rmsd;
+	
+		QComboBox	*cb_angle_one;
+		QComboBox	*cb_angle_two;
 
 	private slots: 
 		void	load_basis();
@@ -64,6 +73,10 @@ class US_Spectrum : public US_Widgets
 		void	load_gaussian_profile(struct WavelengthProfile&, const QString&);
 		void 	find_amplitude(struct WavelengthProfile&);
 		void	fit();
+		void	deleteCurrent();
+		void	resetBasis();
+		void	findAngles();
+		void 	save();
 };
 
 #endif

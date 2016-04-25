@@ -1,6 +1,6 @@
 #include <QApplication>
 #include "us_spectrum.h"
-
+#include <math.h>
 int main (int argc, char* argv[])
 {
 	QApplication application (argc, argv);
@@ -31,12 +31,17 @@ US_Spectrum::US_Spectrum() : US_Widgets()
 	pb_overlap = us_pushbutton(tr("Find Extinction Profile Overlap"));
 	pb_fit = us_pushbutton(tr("Fit Data"));
 	connect(pb_fit, SIGNAL(clicked()), SLOT(fit()));
+	pb_find_angles = us_pushbutton(tr("Fit Angles"));
+	connect(pb_find_angles, SIGNAL(clicked()), SLOT(findAngles()));
 	pb_help = us_pushbutton(tr("Help"));
 	pb_reset_basis = us_pushbutton(tr("Reset Basis Spectra"));
+	connect(pb_reset_basis, SIGNAL(clicked()), SLOT(resetBasis()));
 	pb_save= us_pushbutton(tr("Save Fit"));
+	connect(pb_save, SIGNAL(clicked()), SLOT(save()));
 	pb_print_fit = us_pushbutton(tr("Print Fit"));
 	pb_print_residuals = us_pushbutton(tr("Print Residuals"));
 	pb_close = us_pushbutton(tr("Close"));
+	connect(pb_close, SIGNAL(clicked()), SLOT(close()));
 	
 	//List Widgets
 	lw_target = us_listwidget();
@@ -48,9 +53,13 @@ US_Spectrum::US_Spectrum() : US_Widgets()
 	lbl_extinction = us_label(tr("Extinction Coeff.:"));
 
 	//Line Edit Widgets
+	le_angle = us_lineedit("", 1, true);
 	le_wavelength = us_lineedit("", 1, true);
 	le_extinction = us_lineedit("", 1, true);
 	le_rmsd = us_lineedit("RMSD:", 1, false);
+
+	cb_angle_one = new QComboBox();
+	cb_angle_two = new QComboBox();
 
    data_plot = new QwtPlot();
    plotLayout1 = new US_Plot(data_plot, tr(""), tr("Wavelength(nm)"), tr("Extinction"));
@@ -70,6 +79,13 @@ US_Spectrum::US_Spectrum() : US_Widgets()
 	plotGrid->addLayout(plotLayout1, 0, 0);
 	plotGrid->addLayout(plotLayout2, 1, 0);
 	
+	QGridLayout* angles_layout;
+	angles_layout = new QGridLayout();
+	angles_layout->addWidget(cb_angle_one, 0, 0);
+	angles_layout->addWidget(cb_angle_two, 0, 1);
+	angles_layout->addWidget(le_angle, 1, 0);
+	angles_layout->addWidget(pb_find_angles, 1, 1);
+
 	QGridLayout* subgl1;
 	subgl1 = new QGridLayout();
 	subgl1->addWidget(lbl_wavelength, 0,0);
@@ -102,7 +118,8 @@ US_Spectrum::US_Spectrum() : US_Widgets()
    gl1->addWidget(pb_difference, 11, 0);
    gl1->addWidget(pb_fit, 12, 0);
    gl1->addWidget(le_rmsd, 13, 0);
-	gl1->addLayout(subgl2, 14, 0);
+	gl1->addLayout(angles_layout, 14, 0);
+	gl1->addLayout(subgl2, 15, 0);
 	
 	QGridLayout *mainLayout;
 	mainLayout = new QGridLayout(this);
@@ -116,11 +133,12 @@ US_Spectrum::US_Spectrum() : US_Widgets()
 void US_Spectrum::load_basis()
 {
    QStringList files;
+	QStringList names;
 	int row = 0;
    QVector  <double> v_x_values;
    QVector <double> v_y_values;
 	
-	int basisIndex = 0;
+	int basisIndex = v_basis.size();
 	struct WavelengthProfile temp_wp;
    QFileDialog dialog (this);
    dialog.setNameFilter(tr("Text (*.res)"));
@@ -135,11 +153,11 @@ void US_Spectrum::load_basis()
 	{
       QFileInfo fi;
       fi.setFile(*it);
-		basisIndex = 0;
 		load_gaussian_profile(temp_wp, *it);
 		temp_wp.filenameBasis = fi.baseName();
 		v_basis.push_back(temp_wp);
 		lw_basis->insertItem(row,fi.baseName());	
+		names.append(fi.baseName());	
    	v_x_values.clear();
    	v_y_values.clear();
 
@@ -163,8 +181,11 @@ void US_Spectrum::load_basis()
    	c = us_curve(data_plot, v_basis.at(basisIndex).filename);
    	c->setPen(p);
    	c->setData(v_x_values, v_y_values);
+		v_basis[basisIndex].matchingCurve = c;
 		basisIndex++;
 	}
+	cb_angle_one->addItems(names);
+	cb_angle_two->addItems(names);	
 	data_plot->replot();
 }
 
@@ -177,7 +198,14 @@ void US_Spectrum::load_target()
    dialog.setViewMode(QFileDialog::Detail);
    dialog.setDirectory("/home/minji/ultrascan/results");
 	us_grid(data_plot);
-
+	
+	//reset for a new target spectrum to be loaded
+	if(lw_target->count() > 0)
+	{
+		lw_target->clear();
+		target.gaussians.clear();
+		target.matchingCurve->detach();
+	}
 	if(dialog.exec())
 	{	
 		QString fileName = dialog.selectedFiles().first();
@@ -215,6 +243,7 @@ void US_Spectrum::load_target()
 	c = us_curve(data_plot, target.filename);
 	c->setPen(p);
 	c->setData(v_x_values, v_y_values);
+	target.matchingCurve = c;
 	data_plot->replot();
    pb_load_basis->setEnabled(true);
 }
@@ -272,8 +301,12 @@ void US_Spectrum:: load_gaussian_profile(struct WavelengthProfile &profile, cons
 		QTextStream ts2(&file);
 		ts2.readLine();
 		profile.lambda_min = ts2.readLine().split("\t")[0].toInt();
+		profile.extinction.push_back(ts2.readLine().split("\t")[1].toDouble());
 		while(!ts2.atEnd())
+		{
 			str1 = ts2.readLine();
+			profile.extinction.push_back(str1.split("\t")[1].toDouble());
+		}
 		profile.lambda_max = str1.split("\t")[0].toInt(); 
 		file.close();
 	}
@@ -458,6 +491,76 @@ void US_Spectrum::fit()
    pb_print_residuals->setEnabled(true);
    delete [] x;
    delete [] y;
-	qDebug()<< "Finished fitting function";
 }
 
+void US_Spectrum::deleteCurrent()
+{
+	int deleteIndex = 0;
+
+	for(int m = 0; m < v_basis.size(); m++)
+	{
+		if(v_basis.at(m).filenameBasis.compare(lw_basis->currentItem()->text()) == 0)
+			deleteIndex = m;
+	}	
+	v_basis[deleteIndex].matchingCurve->detach();
+	data_plot->replot();
+	v_basis.remove(deleteIndex);
+	delete lw_basis->currentItem();
+}
+void US_Spectrum::resetBasis()
+{
+	cb_angle_one->clear();
+	cb_angle_two->clear();
+	le_angle->clear();
+	for(int k = 0; k < v_basis.size(); k++)
+	{
+		v_basis[k].matchingCurve->detach();
+	}
+   v_basis.clear();
+	//delete the solution curve
+	if(solution_curve != NULL)
+	{	
+		solution_curve->detach();
+		solution_curve = NULL;
+	}
+	//clear the residuals plot
+	residuals_plot->clear();
+	residuals_plot->replot();
+	data_plot->replot();
+	lw_basis->clear();
+	le_rmsd->clear();
+}
+
+void US_Spectrum::findAngles()
+{
+	QString firstProf = cb_angle_one->currentText();
+	QString secondProf = cb_angle_two->currentText();
+	int indexOne = 0;
+	int indexTwo = 0;
+	double dotproduct = 0.0, vlength_one = 0.0, vlength_two = 0.0, angle;
+
+	//Find the two basis vectors that the user selected
+	for(int k = 0; k < v_basis.size(); k++)
+	{	
+		if(firstProf.compare(v_basis[k].filenameBasis) == 0)
+			indexOne = k;
+		if(secondProf.compare(v_basis[k].filenameBasis) == 0)
+			indexTwo = k;
+	}
+
+	//Calculate the angle measure between the two 
+	for(int i = 0; i < v_basis[indexOne].extinction.size(); i++)
+	{
+		dotproduct += v_basis[indexOne].extinction[i] * v_basis[indexTwo].extinction[i];
+		vlength_one += pow(v_basis[indexOne].extinction[i], 2);
+		vlength_two += pow(v_basis[indexTwo].extinction[i], 2);
+	}
+	angle = dotproduct/(pow(vlength_one, 0.5) * pow(vlength_two, 0.5));
+	angle =180 * ((acos(angle))/M_PI);
+	le_angle->setText(QString::number(angle));	
+}
+
+void US_Spectrum::save()
+{
+	
+}
