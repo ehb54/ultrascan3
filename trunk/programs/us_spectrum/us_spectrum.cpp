@@ -1,6 +1,7 @@
 #include <QApplication>
 #include "us_spectrum.h"
 #include <math.h>
+
 int main (int argc, char* argv[])
 {
 	QApplication application (argc, argv);
@@ -562,5 +563,55 @@ void US_Spectrum::findAngles()
 
 void US_Spectrum::save()
 {
+	QString filename = QFileDialog::getSaveFileName(this, "Save File", "/home/minji/ultrascan/results", "*.spectrum_fit");
+	if(filename.isEmpty())
+		return;
+
+	//Ensures that user did not add their own extension	
+	if(!(filename.lastIndexOf(".", -1) == -1))
+	{
+		filename = filename.left(1 + filename.lastIndexOf(".", -1));
+	}
 	
+	filename = filename + ".spectrum_fit";
+	QFile f (filename); 	
+	if(f.open(QIODevice::WriteOnly))
+	{
+		QDataStream ds(&f);
+		ds << target.amplitude;
+      ds << target.filename;
+      ds << target.lambda_min;
+      ds << target.lambda_max;
+      ds << target.lambda_scale;
+      ds << target.scale;
+      ds << target.gaussians.size();
+      for (int i=0; i<target.gaussians.size(); i++)
+      {
+         ds << target.gaussians[i].amplitude;
+         ds << target.gaussians[i].sigma;
+         ds << target.gaussians[i].mean;
+      }
+      ds << v_basis.size();
+      for (int j=0; j< v_basis.size(); j++)
+      {
+         ds << v_basis[j].amplitude;
+         ds << v_basis[j].filename;
+         ds << v_basis[j].lambda_min;
+         ds << v_basis[j].lambda_max;
+         ds << v_basis[j].lambda_scale;
+         ds << v_basis[j].scale;
+         ds << v_basis[j].nnls_factor;
+         ds << v_basis[j].nnls_percentage;
+         ds << v_basis[j].gaussians.size();
+         for (int i=0; i< v_basis[j].gaussians.size(); i++)
+         {
+            ds << v_basis[j].gaussians[i].amplitude;
+            ds << v_basis[j].gaussians[i].sigma;
+            ds << v_basis[j].gaussians[i].mean;
+         }
+		}
+		f.close();
+	}
 }
+	
+
