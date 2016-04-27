@@ -532,6 +532,107 @@ void US_Extinction::calculateE280(void)
 }
 void US_Extinction::save(void)
 {
+	if(!fitted)
+	{
+   	QMessageBox mBox;
+		mBox.setWindowTitle(tr("Ultrascan Error:"));
+   	mBox.setText(tr("You have not yet performed the global fit. There is no data to save."));
+   	mBox.exec();
+		return;
+	}
+
+   QString filename = QFileDialog::getSaveFileName(this, "Save File", "/home/minji/ultrascan/results/", "*.extinction.dat");
+   if(filename.isEmpty())
+      return;
+	
+	//Takes off any extension the user might have added
+	if(!(filename.lastIndexOf(".", -1) == -1))
+   {
+      filename = filename.left(1 + filename.lastIndexOf(".", -1));
+   }
+
+	QString filename_one =  filename + ".extinction.dat";
+   QFile f (filename_one);
+   if(f.open(QIODevice::WriteOnly | QIODevice::Text))
+	{
+		QTextStream ts(&f);
+		ts << tr("\"Wavelength\"\t\"Extinction\"\n");
+		for(int i = 0; i < lambda.size(); i++)
+		{
+			ts << lambda[i] << "\t";
+			ts << extinction[i] << "\n";
+		}
+		f.close();
+	}
+	
+   QString filename_two = filename + ".extinction.res";
+	QFile f2(filename_two);
+   if(f2.open(QIODevice::WriteOnly | QIODevice::Text))
+   {
+      QTextStream ts(&f2);
+      ts << tr("Results for global wavelength scan/extinction coefficient fit:\n\n");
+      ts << tr("Number of Gaussian terms: ") << order << "\n\n";
+      ts << tr("Extinction coeffcient at ") << selected_wavelength << tr(" nm used for normalization of Data: ") << extinction_coefficient << "\n\n";
+      ts << tr("Parameters for each Gaussian term:\n");
+      for (unsigned int i=0; i<order; i++)
+      {
+         ts << "\n" << (i+1) << tr(". Gaussian:\n");
+         ts << tr("Peak position: ") << fitparameters[v_wavelength.size() + (i * 3) + 1] << " nm\n";
+         ts << tr("Amplitude of peak: ") << exp(fitparameters[v_wavelength.size() + (i * 3)]) << tr(" extinction\n");
+         ts << tr("Peak width: ") << fitparameters[v_wavelength.size() + (i * 3) + 2] << " nm\n";
+      }
+      ts << "\n";
+      ts << "Equation to be multiplied by the relative concentration of each scan (printed below)\n";
+      ts << "to re-generate the curve for each scan:\n\n";
+      ts << "Concentration = Relative_Conc * SUM amplitude_i * exp((-(lambda - position_i)^2) / (2*width_i^2))\n";
+      ts << "\n";
+      for (int i=0; i< v_wavelength.size(); i++)
+      {
+         ts << tr("Relative Concentration of Scan ") << (i+1) << ": " << fitparameters[i] << "\n";
+      }
+      ts << "\n";
+      ts << "/* A small C++ program to calculate the concentration curve\n";
+      ts << "   compile with \"g++ myprog.cpp\"\n";
+      ts << "   run with \"./a.out relative_concentration wavelength_start wavelength_end\"\n";
+      ts << "*/\n";
+      ts << "#include <iostream>\n";
+      ts << "#include <math.h>\n";
+      ts << "#include <cstdlib>\n";
+      ts << "using namespace std;\n";
+      ts << "int main (int argc, char **argv)\n";
+      ts << "{\n";
+      ts << "  float p[" << order << "], w[" << order << "], a[" << order << "], c=0.0, rel_conc;\n";
+      ts << "  int start, end;\n";
+      for (unsigned int i=0; i<order; i++)
+      {
+         ts << "   a[" << i << "] = " << exp(fitparameters[v_wavelength.size() + (i * 3)]) << ";\n";
+         ts << "   p[" << i << "] = " << fitparameters[v_wavelength.size() + (i * 3) + 1] << ";\n";
+         ts << "   w[" << i << "] = " << fitparameters[v_wavelength.size() + (i * 3) + 2] << ";\n";
+      }
+      ts << "  if(argc < 4)\n";
+      ts << "  {\n";
+      ts << "     cout << \"\\nUsage: a,out relative_concentration wavelength_start wavelength_end\\n\";\n";
+      ts << "     return(-1);\n";
+      ts << "  }\n";
+      ts << "  else\n";
+      ts << "  {\n";
+      ts << "     rel_conc = atof(argv[1]);\n";
+      ts << "     start = atoi(argv[2]);\n";
+      ts << "     end = atoi(argv[3]);\n";
+      ts << "  }\n";
+      ts << "  for (int j=start; j<end; j++)\n";
+      ts << "  {\n";
+      ts << "     c = 0.0;\n";
+      ts << "     for (int i=0; i<" << order << "; i++)\n";
+      ts << "     {\n";
+      ts << "        c += rel_conc * a[i] * exp(-pow(j-p[i], 2.0)/(2.0*w[i]*w[i]));\n";
+      ts << "     }\n";
+      ts << "     cout << j << \", \" << c << endl;\n";
+      ts << "  }\n";
+      ts << "  return 0;\n";
+      ts << "}\n\n\n";
+      f2.close();
+   }
 
 }
 void US_Extinction::view_result(void)
