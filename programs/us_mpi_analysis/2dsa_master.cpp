@@ -826,6 +826,22 @@ DbgLv(1) << "WrGlob: mciter mxdepth" << mc_iteration+1 << max_depth
 DbgLv(1) << "WrGlob:  glob recompute nsols" << wksim_vals.solutes.size()
  << "globrec A,b sizes" << gl_nnls_a.size() << gl_nnls_b.size();
 
+      // Compute the average concentration and output superglobal model
+      double avg_conc      = 0.0;
+      for ( int ee = 0; ee < data_sets.size(); ee++ )
+      {
+         avg_conc            += concentrations[ ee ];
+      }
+      avg_conc            /= (double)( data_sets.size() );
+
+      for ( int cc = 0; cc < nsolutes; cc++ )
+      {
+         sim.solutes[ cc ].c   = gsim->solutes[ cc ].c * avg_conc;
+      }
+
+      write_superg( sim, mdl_type );
+
+      // Build and write scaled global models
       for ( int ee = 0; ee < data_sets.size(); ee++ )
       {
          US_DataIO::EditedData* edata = &data_sets[ ee ]->run_data;
@@ -838,6 +854,7 @@ DbgLv(1) << "WrGlob:   currds" << ee << "concen" << concentration;
          {
             sim.solutes[ cc ].c   = gsim->solutes[ cc ].c * concentration;
          }
+
 
 DbgLv(1) << "WrGlob:    call write_model(1)";
          // Output the model from global solute points
@@ -1367,8 +1384,9 @@ DbgLv(1) << "wrMo:  mc mciter mGUID" << model.monteCarlo << mc_iter
    else if ( is_global_fit )
    {
       model.global      = US_Model::GLOBAL;
-      if ( glob_sols )
-         runID             = "Global-" + runID;
+      //if ( glob_sols )
+      //   runID             = "Global-" + runID;
+      subtype           = glob_sols ? 256 : 512;
       model.modelGUID   = US_Util::new_guid();
       modelGUID         = model.modelGUID;
    }
@@ -1823,5 +1841,151 @@ US_Model::AnalysisType US_MPI_Analysis::model_type( const QString a_type )
       m_type      = US_Model::PCSA;
 
    return m_type;
+}
+
+// Write superglobal model output at the end of an iteration
+void US_MPI_Analysis::write_superg( const US_SolveSim::Simulation& sim, 
+                                    US_Model::AnalysisType         type )
+{
+   const QString uaGUID( "00000000-0000-0000-0000-000000000000" );
+   US_DataIO::EditedData* edata = &data_sets[ 0 ]->run_data;
+
+   // Fill in and write out the model file
+   US_Model model;
+   int subtype       = ( type == US_Model::PCSA ) ? mrecs[ 0 ].ctype : 0;
+
+DbgLv(1) << "wrMo: type" << type << "(DMGA=" << US_Model::DMGA << ") (PCSA="
+ << US_Model::PCSA << ") subtype=" << subtype;
+   if ( type == US_Model::DMGA )
+   {  // For discrete GA, get the already constructed model
+      model             = data_sets[ 0 ]->model;
+DbgLv(1) << "wrMo:  model comps" << model.components.size();
+   }
+
+   int mc_iter       = ( mgroup_count < 2  ||  is_composite_job ) 
+                       ? ( mc_iteration + 1 ) : mc_iteration;
+   model.monteCarlo  = mc_iterations > 1;
+   model.wavelength  = edata->wavelength.toDouble();
+   model.modelGUID   = ( ! model.monteCarlo  ||  mc_iter == 1 )
+                       ? US_Util::new_guid() : modelGUID;
+DbgLv(1) << "wrMo:  mc mciter mGUID" << model.monteCarlo << mc_iter
+ << model.modelGUID;
+   model.editGUID    = uaGUID;
+   model.requestGUID = requestGUID;
+   model.dataDescrip = edata->description;
+   model.analysis    = type;
+   model.global      = US_Model::SUPERGLOBAL;
+   QString runID     = edata->runID;
+
+   model.meniscus    = meniscus_value;
+   model.variance    = sim.variance;
+
+   QString tripleID  = edata->cell + edata->channel + edata->wavelength;
+   QString dates     = "e" + edata->editID + "_a" + analysisDate;
+DbgLv(1) << "wrMo: tripleID" << tripleID << "dates" << dates;
+   QString iterID;
+
+   if ( mc_iterations > 1 )
+      iterID.sprintf( "mc%04d", mc_iter );
+   else if (  meniscus_points > 1 )
+      iterID.sprintf( "i%02d-m%05d", 
+              meniscus_run + 1,
+              (int)(meniscus_value * 10000 ) );
+   else
+      iterID = "i01";
+
+   QString mdlid     = tripleID + "." + iterID;
+   QString id        = model.typeText( subtype );
+   if ( analysis_type.contains( "CG" ) )
+      id                = id.replace( "2DSA", "2DSA-CG" );
+   QString analyID   = dates + "_" + id + "_" + requestID + "_" + iterID;
+   int     stype     = data_sets[ current_dataset ]->solute_type;
+   double  vbar20    = data_sets[ current_dataset ]->vbar20;
+
+   model.description = runID + "." + tripleID + "." + analyID + ".model";
+DbgLv(1) << "wrMo: model descr" << model.description;
+
+   // Save as class variable for later reference
+   modelGUID         = model.modelGUID;
+
+   if ( type == US_Model::PCSA )
+   {  // For PCSA, construct the model from zsolutes
+      for ( int ii = 0; ii < sim.zsolutes.size(); ii++ )
+      {
+         US_ZSolute zsolute = sim.zsolutes[ ii ];
+
+         US_Model::SimulationComponent component;
+         US_ZSolute::set_mcomp_values( component, zsolute, stype, true );
+         component.name     = QString().sprintf( "SC%04d", ii + 1 );
+
+         US_Model::calc_coefficients( component );
+         model.components << component;
+      }
+   }
+
+   else if ( type != US_Model::DMGA )
+   {  // For other non-DMGA, construct the model from solutes
+      for ( int ii = 0; ii < sim.solutes.size(); ii++ )
+      {
+         const US_Solute* solute = &sim.solutes[ ii ];
+
+         US_Model::SimulationComponent component;
+         component.s       = solute->s;
+         component.f_f0    = solute->k;
+         component.name    = QString().sprintf( "SC%04d", ii + 1 );
+         component.vbar20  = (attr_z == ATTR_V) ? vbar20 : solute->v;
+         component.signal_concentration = solute->c;
+
+         US_Model::calc_coefficients( component );
+         model.components << component;
+      }
+   }
+DbgLv(1) << "wrMo: stype" << stype << QString().sprintf("0%o",stype)
+ << "attr_z vbar20 mco0.v" << attr_z << vbar20 << model.components[0].vbar20;
+
+   QString fext      = model.monteCarlo ? ".mdl.tmp" : ".model.xml";
+   QString fileid    = "." + id + "." + mdlid + fext;
+   QString fn        = runID + fileid;
+   int lenfn         = fn.length();
+
+   if ( lenfn > 99 )
+   { // Insure a model file name less than 100 characters in length (tar limit)
+      int lenri         = runID.length() + 99 - lenfn;
+      fn                = runID.left( lenri ) + fileid;
+   }
+
+   // Output the model to a file
+   model.write( fn );
+
+   // Add the file name of the model file to the output list
+   QFile fileo( "analysis_files.txt" );
+
+   if ( ! fileo.open( QIODevice::WriteOnly | QIODevice::Text
+                                           | QIODevice::Append ) )
+   {
+      abort( "Could not open 'analysis_files.txt' for writing" );
+      return;
+   }
+
+   QTextStream tsout( &fileo );
+
+   QString meniscus = QString::number( meniscus_value, 'e', 4 );
+   QString variance = QString::number( sim.variance,   'e', 4 );
+
+   int run     = 1;
+
+   if ( meniscus_run > 0 ) 
+       run        = meniscus_run + 1;
+   else if ( mc_iterations > 0 )
+       run        = mc_iter;
+
+   QString runstring = "Run: " + QString::number( run ) + " " + tripleID;
+
+   tsout << fn << ";meniscus_value=" << meniscus_value
+               << ";MC_iteration="   << mc_iter
+               << ";variance="       << sim.variance
+               << ";run="            << runstring
+               << "\n";
+   fileo.close();
 }
 

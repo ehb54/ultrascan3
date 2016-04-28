@@ -401,10 +401,16 @@ QString US_Model::typeText( int subtype )
             tdesc    = tdesc + "-FM";
 
          else if ( global == GLOBAL )       // Global subtype
+         {
             tdesc    = ( jj > 0 ) ? tdesc + "-GL" : "Global";
+            if (      subtype == 256 )
+               tdesc    = tdesc + "-SC";
+            else if ( subtype == 512 )
+               tdesc    = tdesc + "-VR";
+         }
 
          else if ( global == SUPERGLOBAL )  // SuperGlobal subtype
-            tdesc    = ( jj > 0 ) ? tdesc + "-SG" : "SuperGlobal";
+            tdesc    = ( jj > 0 ) ? tdesc + "-GL-SG" : "SuperGlobal";
 
          if ( analysis == PCSA )            // Add sub-type (SL,IS,DS,HL) to PCSA
          {
