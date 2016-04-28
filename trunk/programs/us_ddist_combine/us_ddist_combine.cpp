@@ -519,8 +519,15 @@ if(dbg_level>0)
    bool hv_2dsamc   = methods.contains( "2DSA-MC"    );
    bool hv_2dsamw   = methods.contains( "2DSA-MW"    );
    bool hv_2dsamcmw = methods.contains( "2DSA-MC-MW" );
-   bool hv_2dsagl   = methods.contains( "2DSA-GL"    );
-   bool hv_2dsaglmc = methods.contains( "2DSA-GL-MC" );
+   bool hv_2dsagl   = methods.contains( "2DSA-GL"    ) 
+                  ||  methods.contains( "2DSA-GL-SG" )
+                  ||  methods.contains( "2DSA-GL-SC" )
+                  ||  methods.contains( "2DSA-GL-VR" );
+   bool hv_2dsaglmc = methods.contains( "2DSA-GL-MC" )
+                  ||  methods.contains( "2DSA-GL-SG-MC" )
+                  ||  methods.contains( "2DSA-GL-SC-MC" )
+                  ||  methods.contains( "2DSA-GL-VR-MC" );
+
    bool hv_2dsacg   = methods.contains( "2DSA-CG"    );
    bool hv_2dsacgmc = methods.contains( "2DSA-CG-MC" );
    bool hv_2dsafm   = methods.contains( "2DSA-FM"    );
@@ -528,8 +535,14 @@ if(dbg_level>0)
    bool hv_gamc     = methods.contains( "GA-MC"      );
    bool hv_gamw     = methods.contains( "GA-MW"      );
    bool hv_gamcmw   = methods.contains( "GA-MC-MW"   );
-   bool hv_gagl     = methods.contains( "GA-GL"      );
-   bool hv_gaglmc   = methods.contains( "GA-GL-MC"   );
+   bool hv_gagl     = methods.contains( "GA-GL"      )
+                  ||  methods.contains( "GA-GL-SG"   )
+                  ||  methods.contains( "GA-GL-SC"   )
+                  ||  methods.contains( "GA-GL-VR"   );
+   bool hv_gaglmc   = methods.contains( "GA-GL-MC"   )
+                  ||  methods.contains( "GA-GL-SG-MC" )
+                  ||  methods.contains( "GA-GL-SC-MC" )
+                  ||  methods.contains( "GA-GL-VR-MC" );
    bool hv_pcsais   = methods.contains( "PCSA-IS"    );
    bool hv_pcsasl   = methods.contains( "PCSA-SL"    );
    bool hv_pcsads   = methods.contains( "PCSA-DS"    );
@@ -549,8 +562,14 @@ if(dbg_level>0)
    bool hv_dmgamc   = methods.contains( "DMGA-MC"    );
    bool hv_dmgara   = methods.contains( "DMGA-RA"    );
    bool hv_dmgaramc = methods.contains( "DMGA-RA-MC" );
-   bool hv_dmgagl   = methods.contains( "DMGA-GL"    );
-   bool hv_dmgaglmc = methods.contains( "DMGA-GL-MC" );
+   bool hv_dmgagl   = methods.contains( "DMGA-GL"    )
+                  ||  methods.contains( "DMGA-GL-SG" )
+                  ||  methods.contains( "DMGA-GL-SC" )
+                  ||  methods.contains( "DMGA-GL-VR" );
+   bool hv_dmgaglmc = methods.contains( "DMGA-GL-MC" )
+                  ||  methods.contains( "DMGA-GL-SG-MC" )
+                  ||  methods.contains( "DMGA-GL-SC-MC" )
+                  ||  methods.contains( "DMGA-GL-VR-MC" );
    bool hv_dtall    = methods.size() > 0;
 
    ck_2dsa    ->setEnabled( hv_2dsa     );
@@ -1080,8 +1099,14 @@ DbgLv(1) << "RunIDSel:runID" << runID << "distrsize" << distros.size();
       if ( ck_2dsamc  ->isChecked() )  methods << "2DSA-MC";
       if ( ck_2dsamw  ->isChecked() )  methods << "2DSA-MW";
       if ( ck_2dsamcmw->isChecked() )  methods << "2DSA-MC-MW";
-      if ( ck_2dsagl  ->isChecked() )  methods << "2DSA-GL";
-      if ( ck_2dsaglmc->isChecked() )  methods << "2DSA-GL-MC";
+      if ( ck_2dsagl  ->isChecked() )  methods << "2DSA-GL"
+                                               << "2DSA-GL-SG"
+                                               << "2DSA-GL-SC"
+                                               << "2DSA-GL-VR";
+      if ( ck_2dsaglmc->isChecked() )  methods << "2DSA-GL-MC"
+                                               << "2DSA-GL-SG-MC"
+                                               << "2DSA-GL-SC-MC"
+                                               << "2DSA-GL-VR-MC";
       if ( ck_2dsacg  ->isChecked() )  methods << "2DSA-CG";
       if ( ck_2dsacgmc->isChecked() )  methods << "2DSA-CG-MC";
       if ( ck_2dsafm  ->isChecked() )  methods << "2DSA-FM";
@@ -1115,7 +1140,7 @@ DbgLv(1) << "RunIDSel:runID" << runID << "distrsize" << distros.size();
    }
 
    lw_models ->clear();
-   QString grunID = "global-" + runID;
+   QString grunID = "Global-" + runID;
 
    for ( int ii = 0; ii < distros.size(); ii++ )
    {

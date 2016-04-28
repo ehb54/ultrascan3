@@ -563,7 +563,7 @@ timer.start();
 DbgLv(1) << "ScMd: runid" << runid << "nmodel" << nmodel;
 
       // Repeat the scan for "global-<run>%" variation
-      QString grunid   = "global-" + runid + "%";
+      QString grunid   = "Global-" + runid + "%";
       query.clear();
       query << "get_model_desc_by_runID" << invID << grunid;
       db.query( query );

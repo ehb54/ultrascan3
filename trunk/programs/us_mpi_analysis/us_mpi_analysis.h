@@ -327,6 +327,7 @@ class US_MPI_Analysis : public QObject
     void     global_fit        ( void );
     void     write_model       ( const SIMULATION&, US_Model::AnalysisType,
                                  bool = false );
+    void     write_superg      ( const SIMULATION&, US_Model::AnalysisType );
     void     stats_output      ( int, int, int,
                                  QDateTime, QDateTime, QDateTime );
     void     pm_2dsa_master    ( void );
