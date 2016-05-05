@@ -71,8 +71,8 @@ US_Extinction::US_Extinction() : US_Widgets()
 	le_associate = us_lineedit("Simulation",1, false);
 	le_odCutoff = us_lineedit("3.000", 1, false);
 	le_lambdaLimitLeft = us_lineedit("200.0", 1, false);
-        le_lambdaLimitRight = us_lineedit("1500.0",1, false);
-        le_pathlength = us_lineedit("1.2000", 1, false);
+   le_lambdaLimitRight = us_lineedit("1500.0",1, false);
+   le_pathlength = us_lineedit("1.2000", 1, false);
 	le_coefficient = us_lineedit("1.0000",1, false);
 
 	ct_gaussian = us_counter(2, 1, 50, 15);
@@ -367,6 +367,25 @@ void US_Extinction::reset_scanlist(void)
 }
 void US_Extinction::update_data(void)
 {
+	pathlength = le_pathlength->text().toFloat();
+	float minimum = le_lambdaLimitLeft->text().toFloat(), maximum = le_lambdaLimitRight->text().toFloat(), odLimit = le_odCutoff->text().toFloat();
+	//Deletes points that are over the cutoffs set by the user
+	for(int i = 0; i < v_wavelength.size(); i++)
+	{
+		for(int j = 0; j < v_wavelength.at(i).v_readings.size(); j++)
+		{
+			if(v_wavelength.at(i).v_readings.at(j).lambda > maximum)
+				v_wavelength[i].v_readings.remove(j, v_wavelength.at(i).v_readings.size() - j);					
+			if(v_wavelength.at(i).v_readings.at(j).lambda == minimum)
+				v_wavelength[i].v_readings.remove(0, j + 1);
+			if(v_wavelength.at(i).v_readings.at(j).od > odLimit)
+			{
+				v_wavelength[i].v_readings.remove(j);
+				j--;
+			}
+		}
+	}
+	plot();
 }
 
 void US_Extinction::listToCurve(void)
