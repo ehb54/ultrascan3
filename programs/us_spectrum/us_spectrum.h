@@ -28,6 +28,7 @@ class US_Spectrum : public US_Widgets
 
 	public:
 		US_Spectrum();
+		int basisIndex; 
 
 	private:
 		QwtPlot 		*data_plot, *residuals_plot;
@@ -43,15 +44,12 @@ class US_Spectrum : public US_Widgets
 		QPushButton	*pb_find_angles;
       QPushButton *pb_help;
       QPushButton *pb_save;
-      QPushButton *pb_extrapolate;
       QPushButton *pb_overlap;
       QPushButton *pb_close;
       QPushButton *pb_reset_basis;
       QPushButton *pb_delete;
       QPushButton *pb_update;
       QPushButton *pb_difference;
-      QPushButton *pb_print_fit;
-      QPushButton *pb_print_residuals;
 		QPushButton	*pb_find_angle;
 		
 		QListWidget *lw_target;
@@ -69,7 +67,9 @@ class US_Spectrum : public US_Widgets
 
 	private slots: 
 		void	load_basis();
+		void	plot_basis();
 		void	load_target();
+		void	plot_target();
 		void	load_gaussian_profile(struct WavelengthProfile&, const QString&);
 		void 	find_amplitude(struct WavelengthProfile&);
 		void	fit();
@@ -77,6 +77,8 @@ class US_Spectrum : public US_Widgets
 		void	resetBasis();
 		void	findAngles();
 		void 	save();
+		void	load();
+		void	overlap();
 };
 
 #endif
