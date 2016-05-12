@@ -152,9 +152,11 @@ void US_SelectRunDD::list_data()
    }
 DbgLv(1) << "LD:sel_db" << sel_db << "rlsize" << rlabels.size();
 
-   for ( int ii = 0; ii < rlabels.size(); ii++ )
+   sort_rlabels( rlabels );
+
+   for ( int ii = 0; ii < slabels.size(); ii++ )
    {  // Propagate list widget with labels
-      QString  clabel  = rlabels.at( ii );
+      QString  clabel  = slabels.at( ii );
 
       lw_data->addItem( new QListWidgetItem( clabel ) );
    }
@@ -165,7 +167,8 @@ DbgLv(1) << "LD:sel_db" << sel_db << "rlsize" << rlabels.size();
    te_status->setText(
       tr( "%1 scanned run IDs were used to derive the list. Of these,\n"
           "%2 (may) have associated distributions (models), and\n"
-          "%3 %4 currently selected for combination plot components." )
+          "%3 %4 currently selected for combination plot components.\n"
+          "List items are in recent-to-older order." )
       .arg( count_allr ).arg( count_list ).arg( count_seld )
       .arg( count_seld != 1 ? tr( "runs are" ) : tr( "run is" ) ) );
 }
@@ -248,6 +251,7 @@ void US_SelectRunDD::scan_dbase_runs()
    count_seld = 0;
    rlabels.clear();
    runIDs .clear();
+   mRDates.clear();
 
    if ( db.lastErrno() != US_DB2::OK )
    {
@@ -271,6 +275,7 @@ timer.start();
    while ( db.next() )
    {  // Get a list of all runs in the database
       QString runid    = db.value( 1 ).toString();
+      QString rdate    = db.value( 5 ).toDateTime().toString( "yyMMddhhmm" );
 DbgLv(1) << "ScDB:     runid" << runid;
 
       if ( ! runIDs.contains( runid ) )
@@ -278,6 +283,7 @@ DbgLv(1) << "ScDB:     runid" << runid;
          count_allr++;
          rlabels << runid;     // Save run ID to list of selectable runs
          runIDs  << runid;     // Save run ID to list of total runs
+         mRDates[ runid ] = rdate;    // Save mapping of date to runID
       }
    }
 DbgLv(1) << "ScDB:count_allr" << count_allr;
@@ -294,6 +300,7 @@ void US_SelectRunDD::scan_local_runs( void )
 {
 QTime timer;
 timer.start();
+   mRDates.clear();
    QMap< QString, QString > ddmap;
    QStringList mEdtIDs;
    QString     mdir    = US_Settings::dataDir() + "/models";
@@ -418,6 +425,8 @@ DbgLv(1) << "ScLo:  subdir" << subdir << "aucfiles count" << aucfiles.count();
 
       QString aucfbase  = aucfiles.at( 0 );
       QString runID     = aucfbase.section( ".",  0, -6 );
+      QString fdate     = QFileInfo( subdir ).lastModified()
+                          .toString( "yyMMddhhmm" );
       count_allr++;             // Bump the count of all runIDs examined
       runIDs << runID;
 
@@ -425,6 +434,7 @@ DbgLv(1) << "ScLo:  subdir" << subdir << "aucfiles count" << aucfiles.count();
       {  // If this runID is represented for models, it is selectable
          count_list++;          // Bump the count of runIDs to list
          rlabels << runID;      // Save selectable runID
+         mRDates[ runID ] = fdate;    // Save mapping of date to runID
       }
 DbgLv(1) << "ScLo:    count_allr" << count_allr << "count_list" << count_list
  << "   runID" << runID;
@@ -505,7 +515,8 @@ DbgLv(1) << "sChg: count_list" << count_list << "kseld" << kseld;
    te_status->setText(
       tr( "%1 scanned run IDs were used to derive the list. Of these,\n"
           "%2 have associated distributions (models), and\n"
-          "%3 %4 currently selected for combination plot components." )
+          "%3 %4 currently selected for combination plot components.\n"
+          "List items are in recent-to-older order." )
       .arg( count_allr ).arg( count_list ).arg( count_seld )
       .arg( count_seld != 1 ? tr( "runs are" ) : tr( "run is" ) ) );
 }
@@ -654,7 +665,7 @@ void US_SelectRunDD::scan_local_models()
    {
       QString mdesc   = aDescrs[ mm ];
       QString runid   = mdesc.section( "\t", 0, 0 );
-      QString grunid  = "global-" + runid;
+      QString grunid  = "Global-" + runid;
 
       if ( runIDs.contains( runid )  ||  runIDs.startsWith( grunid ) )
          wDescrs << mdesc;
@@ -685,7 +696,7 @@ timer.start();
       query.clear();
       query << "count_models_by_runID" << invID << runid;
       int nrmods       = db.functionQuery( query );
-      QString grunid   = "global-" + runid + "%";
+      QString grunid   = "Global-" + runid + "%";
       query.clear();
       query << "count_models_by_runID" << invID << grunid;
       nrmods          += db.functionQuery( query );
@@ -706,8 +717,15 @@ DbgLv(1) << "KntM:scan time(2)" << timer.elapsed();
       {
          QString  clabel  = runIDs[ rr ];
          rlabels << clabel;
-         lw_data->addItem( new QListWidgetItem( clabel ) );
+//         lw_data->addItem( new QListWidgetItem( clabel ) );
       }
+   }
+
+   sort_rlabels( rlabels );
+
+   for ( int rr = 0; rr < rlabels.count(); rr++ )
+   {
+      lw_data->addItem( new QListWidgetItem( slabels[ rr ] ) );
    }
 DbgLv(1) << "KntM:scan time(3)" << timer.elapsed();
 
@@ -718,9 +736,40 @@ DbgLv(1) << "KntM:scan time(3)" << timer.elapsed();
    te_status->setText(
       tr( "%1 scanned run IDs were used to derive the list. Of these,\n"
           "%2 have associated distributions (models), and\n"
-          "%3 %4 currently selected for combination plot components." )
+          "%3 %4 currently selected for combination plot components.\n"
+          "List items are in recent-to-older order." )
       .arg( count_allr ).arg( count_list ).arg( count_seld )
       .arg( count_seld != 1 ? tr( "runs are" ) : tr( "run is" ) ) );
    qApp->processEvents();
+}
+
+// Sort given runID labels into date order, newest to oldest
+void US_SelectRunDD::sort_rlabels( const QStringList rlabs )
+{
+   slabels.clear();
+   QStringList keys = mRDates.keys();
+   QStringList svals;
+
+   for ( int ii = 0; ii < keys.count(); ii++ )
+   {  // Create a list of concatenated date+label strings
+      QString rlabel   = keys[ ii ];
+
+      if ( rlabs.contains( rlabel ) )
+      {
+         QString rdate    = mRDates[ rlabel ];
+         QString sval     = rdate + "^" + rlabel;
+         svals << sval;
+      }
+   }
+
+   // Sort combined values into date order
+   qSort( svals );
+
+   for ( int ii = svals.count() - 1; ii >= 0; ii-- )
+   {  // Create the sorted labels list (reverse date order)
+      QString sval     = svals[ ii ];
+      QString rlabel   = sval.section( "^", 1, -1 );
+      slabels << rlabel;
+   }
 }
 
