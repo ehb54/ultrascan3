@@ -53,9 +53,12 @@ class US_SelectRunDD : public US_WidgetsDialog
       QString              dsearch;     // Current data search string
 
       QStringList          rlabels;     // Run ID labels
+      QStringList          slabels;     // Date-sorted run ID labels
       QStringList          wDescrs;     // Working model descriptions
 
       QList< int >         rmodKnts;    // Model counts for runs
+
+      QMap< QString, QString > mRDates; // Mapping of dates to runIDs
 
       int                  count_allr;  // Count of all user runs
       int                  count_list;  // Count of discrete distribution runs
@@ -78,5 +81,6 @@ class US_SelectRunDD : public US_WidgetsDialog
       void update_disk_db  ( bool );
       void selectionChanged( void );
       void count_models    ( void );
+      void sort_rlabels    ( const QStringList );
 };
 #endif
