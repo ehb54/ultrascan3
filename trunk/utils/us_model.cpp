@@ -403,9 +403,9 @@ QString US_Model::typeText( int subtype )
          else if ( global == GLOBAL )       // Global subtype
          {
             tdesc    = ( jj > 0 ) ? tdesc + "-GL" : "Global";
-            if (      subtype == 256 )
+            if (      subtype_match( subtype, SUBT_SC ) )
                tdesc    = tdesc + "-SC";
-            else if ( subtype == 512 )
+            else if ( subtype_match( subtype, SUBT_VR ) )
                tdesc    = tdesc + "-VR";
          }
 
@@ -416,15 +416,15 @@ QString US_Model::typeText( int subtype )
          {
             if ( subtype > 0 )
             {  // Append sub-type based on a given flag
-               if (      subtype == 1 )
+               if (      subtype_match( subtype, SUBT_SL ) )
                   tdesc    = tdesc + "-SL";
-               else if ( subtype == 2 )
+               else if ( subtype_match( subtype, SUBT_IS ) )
                   tdesc    = tdesc + "-IS";
-               else if ( subtype == 4 )
+               else if ( subtype_match( subtype, SUBT_DS ) )
                   tdesc    = tdesc + "-DS";
-               else if ( subtype == 8 )
+               else if ( subtype_match( subtype, SUBT_HL ) )
                   tdesc    = tdesc + "-HL";
-               else if ( subtype == 16 )
+               else if ( subtype_match( subtype, SUBT_2O ) )
                   tdesc    = tdesc + "-2O";
                else
                   tdesc    = tdesc + "-IS";
@@ -1598,6 +1598,12 @@ int US_Model::mc_iter_xmls( QStringList& mcixs )
    int kixmls   = mcixmls.size();
    mcixs        = mcixmls;
    return kixmls;
+}
+
+// Flag if subtype values matches a given flag
+bool US_Model::subtype_match( const int subtype, const int stflag )
+{
+   return ( ( subtype & stflag ) != 0 );
 }
 
 // Output debug print model details

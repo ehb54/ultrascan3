@@ -894,26 +894,81 @@ DbgLv(1) << "WrGlob:     building solutes from nnls_x";
 DbgLv(1) << "WrGlob:    currds" << ee << "nsol ksol" << nsolutes << ksolutes;
 
          // Output the model refitted to individual dataset
-         write_model( wksim_vals, mdl_type );
+         write_model( wksim_vals, mdl_type, false );
       }
    }
 
    else if ( mdl_type == US_Model::GA )
    {  // GA:  Compute and output each dataset model
-      int ksolutes         = 0;
+      wksim_vals           = simulation_values;
+      US_SolveSim solvesim( data_sets, my_rank, false );
+      solvesim.calc_residuals( 0, data_sets.size(), wksim_vals, false,
+                               &gl_nnls_a, &gl_nnls_b );
+DbgLv(1) << "WrGlob:  glob recompute nsols" << wksim_vals.solutes.size()
+ << "globrec A,b sizes" << gl_nnls_a.size() << gl_nnls_b.size();
 
+      // Compute the average concentration and output superglobal model
+      double avg_conc      = 0.0;
       for ( int ee = 0; ee < data_sets.size(); ee++ )
       {
-         wksim_vals           = simulation_values;
+         avg_conc            += concentrations[ ee ];
+      }
+      avg_conc            /= (double)( data_sets.size() );
+
+      for ( int cc = 0; cc < nsolutes; cc++ )
+      {
+         sim.solutes[ cc ].c   = gsim->solutes[ cc ].c * avg_conc;
+      }
+
+      write_superg( sim, mdl_type );
+
+      // Build and write scaled global models
+      for ( int ee = 0; ee < data_sets.size(); ee++ )
+      {
          US_DataIO::EditedData* edata = &data_sets[ ee ]->run_data;
          current_dataset      = ee;
          meniscus_value       = edata->meniscus;
-         US_SolveSim solvesim( data_sets, my_rank, false );
-         solvesim.calc_residuals( ee, 1, wksim_vals, false );
-         ksolutes             = wksim_vals.solutes.size();
+         double concentration = concentrations[ ee ];
 
-         // Output the model fitted to individual dataset
-         write_model( wksim_vals, mdl_type );
+         for ( int cc = 0; cc < nsolutes; cc++ )
+         {
+            sim.solutes[ cc ].c   = gsim->solutes[ cc ].c * concentration;
+         }
+
+         // Output the model from global solute points
+         write_model( sim, mdl_type, true );
+
+         // Grab dataset portion of A and b, then re-fit
+         wksim_vals           = sim;
+         wksim_vals.solutes.clear();
+         int kscans           = edata->scanCount();
+         int kpoints          = edata->pointCount();
+         int narows           = kscans * kpoints;
+         int navals           = narows * nsolutes;
+         int ksolutes         = 0;
+         QVector< double > nnls_a( navals,   0.0 );
+         QVector< double > nnls_b( narows,   0.0 );
+         QVector< double > nnls_x( nsolutes, 0.0 );
+
+         dset_matrices( ee, nsolutes, nnls_a, nnls_b );
+
+         US_Math2::nnls( nnls_a.data(), narows, narows, nsolutes,
+                         nnls_b.data(), nnls_x.data() );
+
+         for ( int cc = 0; cc < nsolutes; cc++ )
+         {
+            double soluval       = nnls_x[ cc ];
+            if ( soluval > 0.0 )
+            {
+               US_Solute solu       = sim.solutes[ cc ];
+               solu.c               = soluval;
+               wksim_vals.solutes << solu;
+               ksolutes++;
+            }
+         }
+
+         // Output the model refitted to the individual dataset
+         write_model( wksim_vals, mdl_type, false );
 DbgLv(1) << "WrGlob:    currds" << ee << "nsol ksol" << nsolutes << ksolutes;
       }
    }
@@ -1384,9 +1439,7 @@ DbgLv(1) << "wrMo:  mc mciter mGUID" << model.monteCarlo << mc_iter
    else if ( is_global_fit )
    {
       model.global      = US_Model::GLOBAL;
-      //if ( glob_sols )
-      //   runID             = "Global-" + runID;
-      subtype           = glob_sols ? 256 : 512;
+      subtype          += ( glob_sols ? SUBT_SC : SUBT_VR );
       model.modelGUID   = US_Util::new_guid();
       modelGUID         = model.modelGUID;
    }

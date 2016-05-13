@@ -5,6 +5,14 @@
 #include "us_extern.h"
 #include "us_db2.h"
 
+#define SUBT_SL   1
+#define SUBT_IS   2
+#define SUBT_DS   4
+#define SUBT_HL   8
+#define SUBT_2O   16
+#define SUBT_SC   1024
+#define SUBT_VR   2048
+
 //! A class to define a model and provide Disk/DB IO for models.
 class US_UTIL_EXTERN US_Model
 {
@@ -267,6 +275,7 @@ class US_UTIL_EXTERN US_Model
       void write_stream    ( QXmlStreamWriter& );
       //! \brief Write to a multiple model text stream
       void write_mm_stream ( QTextStream&      );
-
+      //! \brief Flag match of subtype to a given subtype flag
+      bool subtype_match   ( const int, const int );
 };
 #endif
