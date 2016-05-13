@@ -1114,8 +1114,14 @@ DbgLv(1) << "RunIDSel:runID" << runID << "distrsize" << distros.size();
       if ( ck_gamc    ->isChecked() )  methods << "GA-MC";
       if ( ck_gamw    ->isChecked() )  methods << "GA-MW";
       if ( ck_gamcmw  ->isChecked() )  methods << "GA-MC-MW";
-      if ( ck_gagl    ->isChecked() )  methods << "GA-GL";
-      if ( ck_gaglmc  ->isChecked() )  methods << "GA-GL-MC";
+      if ( ck_gagl    ->isChecked() )  methods << "GA-GL"
+                                               << "GA-GL-SG"
+                                               << "GA-GL-SC"
+                                               << "GA-GL-VR";
+      if ( ck_gaglmc  ->isChecked() )  methods << "GA-GL-MC"
+                                               << "GA-GL-SG-MC"
+                                               << "GA-GL-SC-MC"
+                                               << "GA-GL-VR-MC";
       if ( ck_pcsais  ->isChecked() )  methods << "PCSA-IS";
       if ( ck_pcsasl  ->isChecked() )  methods << "PCSA-SL";
       if ( ck_pcsads  ->isChecked() )  methods << "PCSA-DS";
