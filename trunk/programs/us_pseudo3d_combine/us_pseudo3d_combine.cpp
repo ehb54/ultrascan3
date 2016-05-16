@@ -97,10 +97,10 @@ US_Pseudo3D_Combine::US_Pseudo3D_Combine() : US_Widgets()
    connect( ct_yreso,  SIGNAL( valueChanged( double ) ),
             this,      SLOT( update_yreso( double ) ) );
 
-   QLabel* lb_zfloor     = us_label( tr( "Z Floor Percent:" ) );
+   QLabel* lb_zfloor     = us_label( tr( "Z Visibility Percent:" ) );
    lb_zfloor->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
 
-   ct_zfloor     = us_counter( 3, 0.0, 50.0, 1.0 );
+   ct_zfloor     = us_counter( 3, 50.0, 150.0, 1.0 );
    ct_zfloor->setSingleStep( 1 );
    connect( ct_zfloor, SIGNAL( valueChanged( double ) ),
             this,      SLOT( update_zfloor( double ) ) );
@@ -415,8 +415,8 @@ void US_Pseudo3D_Combine::reset( void )
    ct_yreso->setSingleStep( 1.0 );
    ct_yreso->setValue( (double)yreso );
 
-   zfloor     = 0.0;
-   ct_zfloor->setRange( 0.0, 50.0 );
+   zfloor     = 100.0;
+   ct_zfloor->setRange( 50.0, 150.0 );
    ct_zfloor->setSingleStep( 1.0 );
    ct_zfloor->setValue( (double)zfloor );
 
@@ -578,7 +578,7 @@ void US_Pseudo3D_Combine::plot_data( void )
    }
 
    spec_dat.setRastRanges( xreso, yreso, resolu, zfloor, drect );
-   spec_dat.setZRange( plt_zmin, plt_zmax );
+   spec_dat.setZRange( 0.0, plt_zmax );
    spec_dat.setRaster( sol_d );
 
    d_spectrogram->attach( data_plot );
@@ -606,15 +606,16 @@ void US_Pseudo3D_Combine::plot_data( void )
    }
 
 #if QT_VERSION < 0x050000
-   rightAxis->setColorMap( QwtDoubleInterval( plt_zmin, plt_zmax ),
+   rightAxis->setColorMap( QwtDoubleInterval( 0.0, plt_zmax ),
       d_spectrogram->colorMap() );
 #else
 //   rightAxis->setColorMap( QwtInterval( plt_zmin, plt_zmax ),
 //      (QwtColorMap*)d_spectrogram->colorMap() );
-   rightAxis->setColorMap( QwtInterval( plt_zmin, plt_zmax ),
+   rightAxis->setColorMap( QwtInterval( 0.0, plt_zmax ),
                            ColorMapCopy( colormap ) );
 #endif
-   data_plot->setAxisScale( QwtPlot::yRight,  plt_zmin, plt_zmax );
+//   data_plot->setAxisScale( QwtPlot::yRight,  plt_zmin, plt_zmax );
+   data_plot->setAxisScale( QwtPlot::yRight,  0.0, plt_zmax );
 
    data_plot->replot();
 
@@ -841,6 +842,11 @@ void US_Pseudo3D_Combine::load_distro( US_Model model, QString mdescr )
    tsys.method       = ( mdesc.contains( "-CG" ) )
                        ? tsys.method.replace( "2DSA", "2DSA-CG" )
                        : tsys.method;
+   if ( model.global == US_Model::GLOBAL )
+   {
+      tsys.method       = QString( mdesc ).section( '.', 2, 2 )
+                                          .section( '_', 2, 2 );
+   }
    tsys.editGUID     = model.editGUID;
    tsys.plot_x       = plot_x;
    tsys.plot_y       = plot_y;

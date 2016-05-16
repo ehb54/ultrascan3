@@ -18,7 +18,8 @@ QDateTime elapsed = QDateTime::currentDateTime();
 void US_MPI_Analysis::ga_worker( void )
 {
    current_dataset     = 0;
-   datasets_to_process = data_sets.size();
+   count_datasets      = data_sets.size();
+   datasets_to_process = is_global_fit ? 1 : count_datasets;
 
    // Initialize grid values
    QStringList keys = parameters.keys();
@@ -102,20 +103,24 @@ void US_MPI_Analysis::ga_worker( void )
                        MPI_Job::MASTER,
                        my_communicator );
 
-            for ( int e = dataset; e < dataset + count; e++ )
+            if ( is_global_fit  &&  count == 1 )
+            {  // For global update to scaled data, extra is new ODLimit
+               length--;
+               data_sets[ dataset ]->run_data.ODlimit = mc_data[ length ];
+            }
+
+            for ( int ee = dataset; ee < dataset + count; ee++ )
             {
-               US_DataIO::EditedData* data = &data_sets[ e ]->run_data;
+               US_DataIO::EditedData* edata = &data_sets[ ee ]->run_data;
 
-               int scan_count    = data->scanCount();
-               int radius_points = data->pointCount();
+               int scan_count    = edata->scanCount();
+               int radius_points = edata->pointCount();
 
-               for ( int s = 0; s < scan_count; s++ )
+               for ( int ss = 0; ss < scan_count; ss++ )
                {
-                  US_DataIO::Scan* scan = &data->scanData[ s ];
-
-                  for ( int r = 0; r < radius_points; r++ )
+                  for ( int rr = 0; rr < radius_points; rr++, index++ )
                   {
-                     scan->rvalues[ r ] = mc_data[ index++ ];
+                     edata->setValue( ss, rr, mc_data[ index ] );
                   }
                }
             }

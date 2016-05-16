@@ -6,7 +6,7 @@
 void US_MPI_Analysis::ga_master( void )
 {
    current_dataset     = 0;
-   datasets_to_process = count_datasets;
+   datasets_to_process = 1;  // Process 1 dataset at a time for now
    max_depth           = 0;
    calculated_solutes.clear();
 
@@ -98,10 +98,19 @@ DbgLv(1) << "GaMast:    csol0.s .k .v .d" << simulation_values.solutes[0].s
          
       calculated_solutes.clear();
       calculated_solutes << simulation_values.solutes;
+      int sv_ds_to_pr = datasets_to_process;
 
+      // Manage multiple data sets in global fit
       if ( is_global_fit )
       {
-         write_global();
+         if ( datasets_to_process == 1 )
+         {
+            ga_global_fit();
+         }
+         else
+         {
+            write_global();
+         }
       }
       else
       {
@@ -133,6 +142,7 @@ DbgLv(1) << "GaMast:    set_gaMC  return";
       }
       else
       {
+         mc_iteration = 0;
          qDebug() << "Final Fit RMSD" << sqrt( simulation_values.variance );
 
          if ( is_composite_job )
@@ -150,7 +160,16 @@ DbgLv(1) << "GaMast:    set_gaMC  return";
                continue;
             }
          }
-         break;
+
+         else if ( is_global_fit )
+         {
+            if ( datasets_to_process > 1  &&
+                 datasets_to_process == sv_ds_to_pr )
+               break;
+         }
+
+         else 
+            break;
       }
    }
 
@@ -434,24 +453,30 @@ void US_MPI_Analysis::ga_global_fit( void )
       concentration += simulation_values.solutes[ solute ].c;
    }
 
+   qDebug() << "   == Dataset" << current_dataset + 1
+            << "Total Concentration" << concentration << "==";
+
    // Point to current dataset
    US_DataIO::EditedData* data = &data_sets[ current_dataset ]->run_data;
 
+   concentrations[ current_dataset ] = concentration;
+   data->ODlimit    /= concentration;
    int scan_count    = data->scanCount();
    int radius_points = data->pointCount();
    int index         = 0;
 
-   QVector< double > scaled_data( scan_count * radius_points );
+   QVector< double > scaled_data( scan_count * radius_points + 1 );
 
    // Scale the data
-   for ( int s = 0; s < scan_count; s++ )
+   for ( int ss = 0; ss < scan_count; ss++ )
    {
-      for ( int r = 0; r < radius_points; r++ )
+      for ( int rr = 0; rr < radius_points; rr++ )
       {
-         scaled_data[ index++ ] = data->value( s, r ) / concentration;
+         scaled_data[ index++ ] = data->value( ss, rr ) / concentration;
       }
    }
 
+   scaled_data[ index ] = data->ODlimit;
    // Send the scaled data to the workers
    MPI_Job job;
    job.length         = scaled_data.size();
