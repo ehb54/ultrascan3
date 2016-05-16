@@ -13,7 +13,7 @@ US_SpectrogramData::US_SpectrogramData() : QwtRasterData()
    xreso    = 300.0;
    yreso    = 300.0;
    resol    = 90.0;
-   zfloor   = 0.20;
+   zfloor   = 100.0;
    nxpsc    = qRound( xreso );
    nyscn    = qRound( yreso );
    nxypt    = nxpsc * nyscn;
@@ -95,8 +95,7 @@ void US_SpectrogramData::setRastRanges( double a_xres, double a_yres,
    xreso    = a_xres;
    yreso    = a_yres;
    resol    = a_reso;
-   zfloor   = a_zfloor;
-   zfloor   = ( zfloor < 1.0 ) ? zfloor : ( zfloor / 100.0 );
+   zfloor   = ( a_zfloor - 100.0 ) / 100.0;
    nxpsc    = qRound( xreso );
    nyscn    = qRound( yreso );
    nxypt    = nxpsc * nyscn;
@@ -178,6 +177,7 @@ void US_SpectrogramData::setRaster( QList< S_Solute >* solu )
       xmax        = xmin;
       ymax        = ymin;
       zmax        = zmin;
+zmin=0.0;
 
       // scan solute distribution for ranges
 
@@ -244,12 +244,12 @@ qDebug() << "sRaDa: setBounding... zminr zmax" << zminr << zmax;
    setInterval( Qt::ZAxis, QwtInterval( zmin, zmax ) );
 #endif
 
-   // Initialize raster to zmin
+   // Initialize raster to zmin (zero)
    rdata.clear();
 
    for ( int ii = 0; ii < nxypt; ii++ )
    {
-      rdata.append( zminr );
+      rdata.append( 0.0 );
    }
 
    // Populate raster with z values derived from a Gaussian distribution
@@ -278,6 +278,7 @@ qDebug() << "sRaDa: setBounding... zminr zmax" << zminr << zmax;
          xval    = solu->at( kk ).s;                   // x,y,z
          yval    = solu->at( kk ).k;
          zval    = solu->at( kk ).c - zminr;           // use z in 0,zrng range
+         zval    = qMax( 0.0, zval );
 
          int rx  = (int)( ( xval - xmin ) * xinc );    // x index of this point
          int fx  = rx - nxd;                           // first reasonable x

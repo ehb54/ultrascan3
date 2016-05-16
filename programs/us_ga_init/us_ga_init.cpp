@@ -129,10 +129,10 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
    connect( ct_yreso,  SIGNAL( valueChanged( double ) ),
             this,      SLOT( update_yreso( double ) ) );
 
-   lb_zfloor     = us_label( tr( "Z Floor Percent:" ) );
+   lb_zfloor     = us_label( tr( "Z Visibility Percent:" ) );
    lb_zfloor->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
 
-   ct_zfloor     = us_counter( 3, 0.0, 50.0, 1.0 );
+   ct_zfloor     = us_counter( 3, 50.0, 150.0, 1.0 );
    ct_zfloor->setSingleStep( 1 );
    connect( ct_zfloor, SIGNAL( valueChanged( double ) ),
             this,      SLOT( update_zfloor( double ) ) );
@@ -500,8 +500,8 @@ void US_GA_Initialize::reset( void )
    ct_yreso->setSingleStep( 1.0 );
    ct_yreso->setValue( (double)yreso );
 
-   zfloor     = 0.0;
-   ct_zfloor->setRange( 0, 50 );
+   zfloor     = 100.0;
+   ct_zfloor->setRange( 50, 150 );
    ct_zfloor->setSingleStep( 1.0 );
    ct_zfloor->setValue( (double)zfloor );
 
@@ -695,8 +695,8 @@ void US_GA_Initialize::manDrawSb( void )
 
    pb_ckovrlp->setEnabled( false );
 
-   wxbuck       = ( plxmax - plxmin ) / 20.0;
-   hybuck       = ( plymax - plymin ) / 20.0;
+   wxbuck       = ( plxmax - plxmin ) / 10.0;
+   hybuck       = ( plymax - plymin ) / 10.0;
    ct_wxbuck->disconnect( );
    ct_hybuck->disconnect( );
    int    rpwr  = qRound( log10( wxbuck ) );
@@ -1056,23 +1056,24 @@ void US_GA_Initialize::plot_3dim( void )
    {
       drect = QwtDoubleRect( 0.0, 0.0, 0.0, 0.0 );
    }
+
    else
    {
-      double zmin = sdistro->at( 0 ).c;
-      double zmax = zmin;
       drect = QwtDoubleRect( plxmin, plymin,
             ( plxmax - plxmin ), ( plymax - plymin ) );
+   }
 
-      for ( int jj = 0; jj < sdistro->size(); jj++ )
-      {
-         zmin  = qMin( zmin, sdistro->at( jj ).c );
-         zmax  = qMax( zmax, sdistro->at( jj ).c );
-      }
+   double zmax = sdistro->at( 0 ).c;
+   double zmin = 0.0;
 
-      spec_dat->setZRange( zmin, zmax );
+   for ( int jj = 0; jj < sdistro->size(); jj++ )
+   {
+      zmin  = qMin( zmin, sdistro->at( jj ).c );
+      zmax  = qMax( zmax, sdistro->at( jj ).c );
    }
 
    spec_dat->setRastRanges( xreso, yreso, resolu, zfloor, drect );
+   spec_dat->setZRange( zmin, zmax );
    spec_dat->setRaster( sdistro );
 
    // Set color map and axis settings

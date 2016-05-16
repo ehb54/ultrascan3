@@ -39,6 +39,7 @@ red-black.map
 ultra.xpm
 us3_config.icns
 us3_config.iconset
+vcm.json
 vdw.json
 yellow-black.map
 # List of directories that belong in $ULTRASCAN/etc
