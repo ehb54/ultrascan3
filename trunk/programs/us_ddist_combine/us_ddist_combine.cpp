@@ -515,7 +515,8 @@ if(dbg_level>0)
          methods << method;
    }
 
-   bool hv_2dsa     = methods.contains( "2DSA"       );
+   bool hv_2dsa     = methods.contains( "2DSA"       ) 
+                  ||  methods.contains( "2DSA-IT"    );
    bool hv_2dsamc   = methods.contains( "2DSA-MC"    );
    bool hv_2dsamw   = methods.contains( "2DSA-MW"    );
    bool hv_2dsamcmw = methods.contains( "2DSA-MC-MW" );
@@ -528,7 +529,8 @@ if(dbg_level>0)
                   ||  methods.contains( "2DSA-GL-SC-MC" )
                   ||  methods.contains( "2DSA-GL-VR-MC" );
 
-   bool hv_2dsacg   = methods.contains( "2DSA-CG"    );
+   bool hv_2dsacg   = methods.contains( "2DSA-CG"    ) 
+                  ||  methods.contains( "2DSA-CG-IT" );
    bool hv_2dsacgmc = methods.contains( "2DSA-CG-MC" );
    bool hv_2dsafm   = methods.contains( "2DSA-FM"    );
    bool hv_ga       = methods.contains( "GA"         );
@@ -1095,7 +1097,8 @@ DbgLv(1) << "RunIDSel:runID" << runID << "distrsize" << distros.size();
 
    if ( mfilter )
    {
-      if ( ck_2dsa    ->isChecked() )  methods << "2DSA";
+      if ( ck_2dsa    ->isChecked() )  methods << "2DSA"
+                                               << "2DSA-IT";
       if ( ck_2dsamc  ->isChecked() )  methods << "2DSA-MC";
       if ( ck_2dsamw  ->isChecked() )  methods << "2DSA-MW";
       if ( ck_2dsamcmw->isChecked() )  methods << "2DSA-MC-MW";
@@ -1107,7 +1110,8 @@ DbgLv(1) << "RunIDSel:runID" << runID << "distrsize" << distros.size();
                                                << "2DSA-GL-SG-MC"
                                                << "2DSA-GL-SC-MC"
                                                << "2DSA-GL-VR-MC";
-      if ( ck_2dsacg  ->isChecked() )  methods << "2DSA-CG";
+      if ( ck_2dsacg  ->isChecked() )  methods << "2DSA-CG"
+                                               << "2DSA-CG-IT";
       if ( ck_2dsacgmc->isChecked() )  methods << "2DSA-CG-MC";
       if ( ck_2dsafm  ->isChecked() )  methods << "2DSA-FM";
       if ( ck_ga      ->isChecked() )  methods << "GA";

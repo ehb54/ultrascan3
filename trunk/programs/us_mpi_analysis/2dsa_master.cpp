@@ -801,7 +801,9 @@ DbgLv(1) << "WrO: wr_mrecs";
 void US_MPI_Analysis::write_global( void )
 {
    US_SolveSim::Simulation  sim      = simulation_values;
+                wksim_vals           = simulation_values;
    US_SolveSim::Simulation* gsim     = &simulation_values;
+   //US_SolveSim::Simulation* gsim     = &wksim_vals;
    US_Model::AnalysisType   mdl_type = model_type( analysis_type );
 
    int nsolutes = ( mdl_type != US_Model::DMGA ) ? sim.solutes.size() : -1;
@@ -812,19 +814,20 @@ void US_MPI_Analysis::write_global( void )
       return;
    }
 
-DbgLv(1) << "WrGlob: mciter mxdepth" << mc_iteration+1 << max_depth
+DbgLv(0) << "WrGlob: mciter mxdepth" << mc_iteration+1 << max_depth
  << "calcsols size" << calculated_solutes[max_depth].size()
  << "simvsols size" << nsolutes;
 
    if ( mdl_type == US_Model::TWODSA )
    {
       // 2DSA: Recompute the global fit and save A and b matrices for later use
-      wksim_vals           = simulation_values;
+//      wksim_vals           = simulation_values;
       US_SolveSim solvesim( data_sets, my_rank, false );
       solvesim.calc_residuals( 0, data_sets.size(), wksim_vals, false,
                                &gl_nnls_a, &gl_nnls_b );
-DbgLv(1) << "WrGlob:  glob recompute nsols" << wksim_vals.solutes.size()
+DbgLv(0) << "WrGlob:  glob recompute nsols" << wksim_vals.solutes.size()
  << "globrec A,b sizes" << gl_nnls_a.size() << gl_nnls_b.size();
+      nsolutes             = gsim->solutes.size();
 
       // Compute the average concentration and output superglobal model
       double avg_conc      = 0.0;
@@ -837,26 +840,33 @@ DbgLv(1) << "WrGlob:  glob recompute nsols" << wksim_vals.solutes.size()
       for ( int cc = 0; cc < nsolutes; cc++ )
       {
          sim.solutes[ cc ].c   = gsim->solutes[ cc ].c * avg_conc;
+DbgLv(0) << "WrGlob:     cc" << cc << "conc-in" << gsim->solutes[cc].c
+ << "SGconc-out" << sim.solutes[cc].c;
       }
 
       write_superg( sim, mdl_type );
 
+DbgLv(0) << "WrGlob: dssize" << data_sets.size() << "concsize" << concentrations.size()
+ << "simsolssz" << sim.solutes.size() << "gsimsolssz" << gsim->solutes.size() << nsolutes;
       // Build and write scaled global models
       for ( int ee = 0; ee < data_sets.size(); ee++ )
       {
          US_DataIO::EditedData* edata = &data_sets[ ee ]->run_data;
          current_dataset      = ee;
          meniscus_value       = edata->meniscus;
+         sim.variance         = sim.variances[ ee ];
          double concentration = concentrations[ ee ];
-DbgLv(1) << "WrGlob:   currds" << ee << "concen" << concentration;
+DbgLv(0) << "WrGlob:   currds" << ee << "concen" << concentration;
 
          for ( int cc = 0; cc < nsolutes; cc++ )
          {
             sim.solutes[ cc ].c   = gsim->solutes[ cc ].c * concentration;
+DbgLv(0) << "WrGlob:     cc" << cc << "conc-in" << gsim->solutes[cc].c
+ << "conc-out" << sim.solutes[cc].c;
          }
 
 
-DbgLv(1) << "WrGlob:    call write_model(1)";
+DbgLv(0) << "WrGlob:    call write_model(1)";
          // Output the model from global solute points
          write_model( sim, mdl_type, true );
 
@@ -871,15 +881,15 @@ DbgLv(1) << "WrGlob:    call write_model(1)";
          QVector< double > nnls_a( navals,   0.0 );
          QVector< double > nnls_b( narows,   0.0 );
          QVector< double > nnls_x( nsolutes, 0.0 );
-DbgLv(1) << "WrGlob:    ks kp nar nav" << kscans << kpoints << narows << navals;
+DbgLv(0) << "WrGlob:    ks kp nar nav" << kscans << kpoints << narows << navals;
 
          dset_matrices( ee, nsolutes, nnls_a, nnls_b );
 
-DbgLv(1) << "WrGlob:    mats built; calling NNLS";
+DbgLv(0) << "WrGlob:    mats built; calling NNLS";
          US_Math2::nnls( nnls_a.data(), narows, narows, nsolutes,
                          nnls_b.data(), nnls_x.data() );
 
-DbgLv(1) << "WrGlob:     building solutes from nnls_x";
+DbgLv(0) << "WrGlob:     building solutes from nnls_x";
          for ( int cc = 0; cc < nsolutes; cc++ )
          {
             double soluval       = nnls_x[ cc ];
@@ -891,7 +901,7 @@ DbgLv(1) << "WrGlob:     building solutes from nnls_x";
                ksolutes++;
             }
          }
-DbgLv(1) << "WrGlob:    currds" << ee << "nsol ksol" << nsolutes << ksolutes;
+DbgLv(0) << "WrGlob:    currds" << ee << "nsol ksol" << nsolutes << ksolutes;
 
          // Output the model refitted to individual dataset
          write_model( wksim_vals, mdl_type, false );
@@ -900,27 +910,35 @@ DbgLv(1) << "WrGlob:    currds" << ee << "nsol ksol" << nsolutes << ksolutes;
 
    else if ( mdl_type == US_Model::GA )
    {  // GA:  Compute and output each dataset model
-      wksim_vals           = simulation_values;
+//      wksim_vals           = simulation_values;
       US_SolveSim solvesim( data_sets, my_rank, false );
       solvesim.calc_residuals( 0, data_sets.size(), wksim_vals, false,
                                &gl_nnls_a, &gl_nnls_b );
-DbgLv(1) << "WrGlob:  glob recompute nsols" << wksim_vals.solutes.size()
+DbgLv(0) << "WrGlob:  glob recompute nsols" << wksim_vals.solutes.size()
  << "globrec A,b sizes" << gl_nnls_a.size() << gl_nnls_b.size();
 
       // Compute the average concentration and output superglobal model
+      nsolutes             = gsim->solutes.size();
+//      nsolutes             = wksim_vals.solutes.size();
+//      gsim->solutes        = wksim_vals.solutes;
       double avg_conc      = 0.0;
       for ( int ee = 0; ee < data_sets.size(); ee++ )
       {
          avg_conc            += concentrations[ ee ];
       }
       avg_conc            /= (double)( data_sets.size() );
+DbgLv(0) << "WrGlob:   avg_conc" << avg_conc;
 
       for ( int cc = 0; cc < nsolutes; cc++ )
       {
          sim.solutes[ cc ].c   = gsim->solutes[ cc ].c * avg_conc;
+DbgLv(0) << "WrGlob:     cc" << cc << "conc-in" << gsim->solutes[cc].c
+ << "SGconc-out" << sim.solutes[cc].c;
       }
 
       write_superg( sim, mdl_type );
+DbgLv(0) << "WrGlob: dssize" << data_sets.size() << "concsize" << concentrations.size()
+ << "simsolssz" << sim.solutes.size() << "gsimsolssz" << gsim->solutes.size() << nsolutes;
 
       // Build and write scaled global models
       for ( int ee = 0; ee < data_sets.size(); ee++ )
@@ -928,11 +946,15 @@ DbgLv(1) << "WrGlob:  glob recompute nsols" << wksim_vals.solutes.size()
          US_DataIO::EditedData* edata = &data_sets[ ee ]->run_data;
          current_dataset      = ee;
          meniscus_value       = edata->meniscus;
+         sim.variance         = sim.variances[ ee ];
          double concentration = concentrations[ ee ];
+DbgLv(0) << "WrGlob:   currds" << ee << "concen" << concentration;
 
          for ( int cc = 0; cc < nsolutes; cc++ )
          {
             sim.solutes[ cc ].c   = gsim->solutes[ cc ].c * concentration;
+DbgLv(0) << "WrGlob:     cc" << cc << "conc-in" << gsim->solutes[cc].c
+ << "conc-out" << sim.solutes[cc].c;
          }
 
          // Output the model from global solute points
@@ -969,7 +991,7 @@ DbgLv(1) << "WrGlob:  glob recompute nsols" << wksim_vals.solutes.size()
 
          // Output the model refitted to the individual dataset
          write_model( wksim_vals, mdl_type, false );
-DbgLv(1) << "WrGlob:    currds" << ee << "nsol ksol" << nsolutes << ksolutes;
+DbgLv(0) << "WrGlob:    currds" << ee << "nsol ksol" << nsolutes << ksolutes;
       }
    }
 
@@ -1482,6 +1504,8 @@ DbgLv(1) << "wrMo: tripleID" << tripleID << "dates" << dates;
    QString id        = model.typeText( subtype );
    if ( analysis_type.contains( "CG" ) )
       id                = id.replace( "2DSA", "2DSA-CG" );
+   if ( max_iterations > 1 )
+      id               += "-IT";
    QString analyID   = dates + "_" + id + "_" + requestID + "_" + iterID;
    int     stype     = data_sets[ current_dataset ]->solute_type;
    double  vbar20    = data_sets[ current_dataset ]->vbar20;

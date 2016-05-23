@@ -980,6 +980,9 @@ if (dbg_level>0)
    if ( ck_custgr->isChecked() )
       model->description = model->description + QString( " CUSTOMGRID" );
 
+   if ( ck_iters->isChecked() )
+      model->description = model->description + QString( " REFITERS" );
+
    US_2dsa* mainw = (US_2dsa*)parentw;
 
    if ( alldone )

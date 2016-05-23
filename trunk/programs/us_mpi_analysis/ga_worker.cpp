@@ -93,6 +93,7 @@ void US_MPI_Analysis::ga_worker( void )
             // Monte Carlo always comes as a sequence of all datasets
 
             mc_data.resize( length );
+DbgLv(1) << "Deme" << deme_nbr << "UPD ds cnt len" << dataset << count << length;
 
             MPI_Barrier( my_communicator );
 
@@ -115,14 +116,20 @@ void US_MPI_Analysis::ga_worker( void )
 
                int scan_count    = edata->scanCount();
                int radius_points = edata->pointCount();
+DbgLv(1) << "Deme" << deme_nbr << "  ee" << ee << "scnt rcnt" << scan_count << radius_points;
+double dsumi=0.0;
+double dsumo=0.0;
 
                for ( int ss = 0; ss < scan_count; ss++ )
                {
                   for ( int rr = 0; rr < radius_points; rr++, index++ )
                   {
+dsumi+=edata->value(ss,rr);
                      edata->setValue( ss, rr, mc_data[ index ] );
+dsumo+=mc_data[index];
                   }
                }
+DbgLv(1) << "Deme" << deme_nbr << "  dsumi" << dsumi << "dsumo" << dsumo;
             }
 
             if ( count == data_sets.size() ) // Next iteration will be global
