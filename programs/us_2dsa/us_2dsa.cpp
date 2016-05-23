@@ -510,10 +510,12 @@ void US_2dsa::save( void )
                           edata->editID;
    QString dates        = "e" + editID + "_a" + analysisDate;
    bool    cusGrid      = model.description.contains( "CUSTOMGRID" );
+   bool    refIter      = model.description.contains( "REFITERS" );
 DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
    bool    fitMeni      = ( model.global == US_Model::MENISCUS );
    bool    montCar      = model.monteCarlo;
    QString analysisType = QString( cusGrid ? "2DSA-CG" : "2DSA" )
+                        + QString( refIter ? "-IT" : "" )
                         + QString( fitMeni ? "-FM" : "" )
                         + QString( montCar ? "-MC" : "" );
    QString requestID    = "local";

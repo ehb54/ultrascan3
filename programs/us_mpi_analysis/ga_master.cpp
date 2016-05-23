@@ -58,7 +58,8 @@ DbgLv(1) << "GaMast:   osol0.s .k .v .d" << simulation_values.solutes[0].s
  << simulation_values.solutes[0].k << simulation_values.solutes[0].v
  << simulation_values.solutes[0].d;
 
-      calc_residuals( 0, data_sets.size(), simulation_values );
+//      calc_residuals( 0, data_sets.size(), simulation_values );
+      calc_residuals( current_dataset, datasets_to_process, simulation_values );
 DbgLv(1) << "GaMast:    calc_resids return - calcsize vari"
  << simulation_values.solutes.size() << simulation_values.variance;
 DbgLv(1) << "GaMast:    csol0.s .k .v .d" << simulation_values.solutes[0].s
@@ -68,7 +69,7 @@ DbgLv(1) << "GaMast:    csol0.s .k .v .d" << simulation_values.solutes[0].s
       qSort( simulation_values.solutes );
 
       // Convert given solute points to s,k for model output
-      double vbar20  = data_sets[ 0 ]->vbar20;
+      double vbar20  = data_sets[ current_dataset ]->vbar20;
       QList< int > attrxs;
       attrxs << attr_x << attr_y << attr_z;
       bool   have_s  = ( attrxs.indexOf( ATTR_S ) >= 0 );
@@ -457,12 +458,12 @@ void US_MPI_Analysis::ga_global_fit( void )
             << "Total Concentration" << concentration << "==";
 
    // Point to current dataset
-   US_DataIO::EditedData* data = &data_sets[ current_dataset ]->run_data;
+   US_DataIO::EditedData* edata = &data_sets[ current_dataset ]->run_data;
 
    concentrations[ current_dataset ] = concentration;
-   data->ODlimit    /= concentration;
-   int scan_count    = data->scanCount();
-   int radius_points = data->pointCount();
+   edata->ODlimit   /= concentration;
+   int scan_count    = edata->scanCount();
+   int radius_points = edata->pointCount();
    int index         = 0;
 
    QVector< double > scaled_data( scan_count * radius_points + 1 );
@@ -472,11 +473,13 @@ void US_MPI_Analysis::ga_global_fit( void )
    {
       for ( int rr = 0; rr < radius_points; rr++ )
       {
-         scaled_data[ index++ ] = data->value( ss, rr ) / concentration;
+         double scaled_value    = edata->value( ss, rr ) / concentration;
+         scaled_data[ index++ ] = scaled_value;
+         edata->setValue( ss, rr, scaled_value );
       }
    }
 
-   scaled_data[ index ] = data->ODlimit;
+   scaled_data[ index ] = edata->ODlimit;
    // Send the scaled data to the workers
    MPI_Job job;
    job.length         = scaled_data.size();

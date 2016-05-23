@@ -125,7 +125,6 @@ dbgtxt_sls = US_Settings::debug_text();
 ndtln = dbgtxt_sls.count();
 DbgLv(0) << "DBGTXT: dt sl_count(2)" << ndtln;
 DbgLv(0) << "DBGTXT: dt strlst(2): " << dbgtxt_sls;
-DbgLv(0) << "DBGTXT: match nnls:" << US_Settings::debug_match("use_nnls_lib");
 }
 //*DEBUG*
    }
