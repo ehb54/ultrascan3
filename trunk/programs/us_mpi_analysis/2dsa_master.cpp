@@ -1504,7 +1504,7 @@ DbgLv(1) << "wrMo: tripleID" << tripleID << "dates" << dates;
    QString id        = model.typeText( subtype );
    if ( analysis_type.contains( "CG" ) )
       id                = id.replace( "2DSA", "2DSA-CG" );
-   if ( max_iterations > 1 )
+   if ( max_iterations > 1  &&  mc_iterations == 1 )
       id               += "-IT";
    QString analyID   = dates + "_" + id + "_" + requestID + "_" + iterID;
    int     stype     = data_sets[ current_dataset ]->solute_type;
@@ -1789,6 +1789,7 @@ DbgLv(0) << my_rank << ": A single output file, the archive, already exists!!!";
       QStringList mfiles = odir.entryList( mfilt, QDir::Files );
       QStringList mtrips;
       mfiles.sort();
+DbgLv(0) << my_rank << ": MC : mfiles count" << mfiles.count();
 
       // Scan for unique triples
       for ( int ii = 0; ii < mfiles.size(); ii++ )
@@ -1798,6 +1799,11 @@ DbgLv(0) << my_rank << ": A single output file, the archive, already exists!!!";
             mtrips << mftrip;
       }
 
+int kmt=mtrips.count();
+DbgLv(0) << my_rank << ": MC : mtrips count" << kmt;
+DbgLv(0) << my_rank << ": MC : mtrips[0]" << mtrips[0];
+if(kmt>1)
+ DbgLv(0) << my_rank << ": MC : mtrips[n]" << mtrips[kmt-1];
       // Get a list of files in the text file
       QStringList tfiles;
       QFile filet( "analysis_files.txt" );
@@ -1812,6 +1818,7 @@ DbgLv(0) << my_rank << ": A single output file, the archive, already exists!!!";
          }
          filet.close();
       }
+DbgLv(0) << my_rank << ": MC : tfiles count" << tfiles.count();
 
       // Open text file for appending composite file names
       QFile fileo( "analysis_files.txt" );
@@ -1832,13 +1839,14 @@ DbgLv(0) << my_rank << ": A single output file, the archive, already exists!!!";
          QStringList mfilt;
          mfilt << mftrip + ".mc0*";
          QStringList mtfiles = odir.entryList( mfilt, QDir::Files );
+DbgLv(0) << my_rank << ": MC : ii" << ii << "mftrip" << mftrip << "mtf count" << mtfiles.count();
 
          // Skip composite build if not yet enough triple mc iteration models
          if ( mtfiles.count() < mc_iterations )  continue;
 
          // Build a composite model file and get its name
          QString cmfname  = US_Model::composite_mc_file( mtfiles, true );
-DbgLv(0) << my_rank << ": ii" << ii << "mftrip" << mftrip << "cmfname" << cmfname;
+DbgLv(0) << my_rank << ":  ii" << ii << "cmfname" << cmfname;
 
          if ( cmfname.isEmpty() )  continue;
 
