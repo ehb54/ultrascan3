@@ -94,7 +94,7 @@ DbgLv(1) << "dgC:upd_cns: ncompc" << ncompc << "fcx" << fcx;
          attribs[ kk ] = cnsv[ ii ];
 DbgLv(1) << "dgC:upd_cns:   att" << fcx << "flt" << attribs[fcx].floats; 
 DbgLv(1) << "dgC:upd_cns:   att" << fcx+1 << "flt" << attribs[fcx+1].floats; 
-DbgLv(1) << "dgC:upd_cns:   att" << fcx+2 << "flt" << attribs[fcx+2].floats; 
+//DbgLv(1) << "dgC:upd_cns:   att" << fcx+2 << "flt" << attribs[fcx+2].floats; 
    }
 
    else if ( nupdc < ncompc )
