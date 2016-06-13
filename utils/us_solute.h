@@ -29,7 +29,7 @@ class US_UTIL_EXTERN US_Solute
 
       //! A test for solute equality
       //! \param solute A value for comparison 
-      bool operator== ( const US_Solute& solute )
+      bool operator== ( const US_Solute& solute ) const
       {
          return ( s == solute.s  &&  k == solute.k  &&
                   v == solute.v  &&  d == solute.d );
@@ -37,7 +37,7 @@ class US_UTIL_EXTERN US_Solute
 
       //! A test for inequality.
       //! \param solute A value for comparison 
-      bool operator!= ( const US_Solute& solute )
+      bool operator!= ( const US_Solute& solute ) const
       {
          return ( s != solute.s  ||  k != solute.k  ||
                   v != solute.v  ||  d != solute.d );

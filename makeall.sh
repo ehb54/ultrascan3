@@ -29,7 +29,7 @@ if [ `uname -s|grep -ci "cygwin"` -ne 0 ]; then
 fi
 
 ISL64=0
-if [ `uname -p|grep -ci "x86_64"` -ne 0 ]; then
+if [ `uname -m|grep -ci "x86_64"` -ne 0 ]; then
   ISL64=1
 fi
 
@@ -65,7 +65,7 @@ do
   popd
 done
 
-if [ $ISWIN -eq 0 ]; then
+if [ $ISWIN -eq 0 -a $ISL64 -eq 0 ]; then
   d=doc/manual
   pushd $d
   sdir=`pwd`

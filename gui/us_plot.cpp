@@ -1525,8 +1525,11 @@ US_PlotAxisConfig::US_PlotAxisConfig( int currentAxis, QwtPlot* currentPlot,
    QGridLayout* rb1 = us_radiobutton( tr( "Linear"      ), rb_linear, true  );
    QGridLayout* rb2 = us_radiobutton( tr( "Logarithmic" ), rb_log   , false );
 
+#if QT_VERSION > 0x050000
+#else
    if ( plot->axisScaleEngine( axis )->transformation()->type() == 
          QwtScaleTransformation::Log10 ) rb_log->setChecked( true );
+#endif
 
    scaleRadio->addLayout( rb1 );
    scaleRadio->addLayout( rb2 );
@@ -1713,6 +1716,8 @@ void US_PlotAxisConfig::apply( void )
      plot->setAxisScale( axis, from, to, step );
 
    // Scale type - Linear or Log  -- Do nothing if unchanged
+#if QT_VERSION > 0x050000
+#else
    int plotType = plot->axisScaleEngine( axis )->transformation()->type();
    if ( ( plotType == QwtScaleTransformation::Log10  && rb_linear->isChecked() ) 
      || ( plotType == QwtScaleTransformation::Linear && rb_log   ->isChecked() ) )
@@ -1722,6 +1727,7 @@ void US_PlotAxisConfig::apply( void )
       else  
          plot->setAxisScaleEngine( axis, new QwtLogScaleEngine );
    }
+#endif
 
    // Set scale reference
    double reference = le_reference->text().toDouble();

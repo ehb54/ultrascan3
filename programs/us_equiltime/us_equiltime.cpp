@@ -412,7 +412,7 @@ double US_EquilTime::rpmFromSigma( double sigma )
    double rho   = DENS_20W; //model.density;
 
    double rpm   = 30.0 / M_PI * 
-                  sqrt( sigma * R * T * 2 / ( mw * ( 1 - vbar * rho ) ) );
+                  sqrt( sigma * R_GC * T * 2 / ( mw * ( 1 - vbar * rho ) ) );
    
    rpm = floor( rpm / 100.0 + 0.5 ) * 100.0;  // Round to closest 100
    
@@ -436,7 +436,7 @@ double US_EquilTime::sigmaFromRpm( double rpm )
    double rho   = DENS_20W; //model.density;
 
    double sigma = mw * ( 1 - vbar * rho ) * sq( M_PI / 30.0 * rpm ) / 
-                  ( 2 * R * T );
+                  ( 2 * R_GC * T );
 
    return sigma;
 }

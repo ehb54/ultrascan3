@@ -1259,7 +1259,7 @@ kmsecs[17]+=sttime.msecsTo(QDateTime::currentDateTime());
 double US_vHW_Enhanced::back_diff_coeff( double sedc )
 {
    double  tempera  = le_temp->text().section( " ", 0, 0 ).toDouble();
-   double  RT       = R * ( K0 + tempera );
+   double  RT       = R_GC * ( K0 + tempera );
    double  D1       = AVOGADRO * 0.06 * M_PI * viscosity;
    double  D2       = 0.045 * sedc * vbar * viscosity;
    double  D3       = 1.0 - vbar * density;
@@ -1267,7 +1267,7 @@ double US_vHW_Enhanced::back_diff_coeff( double sedc )
    double  bdcoef   = RT / ( D1 * sqrt( D2 / D3 ) );
 
 DbgLv(1) << "BackDiffusion:";
-DbgLv(1) << " RT " << RT << " R K0 tempera  " << R << K0 << tempera;
+DbgLv(1) << " RT " << RT << " R_GC K0 tempera  " << R_GC << K0 << tempera;
 DbgLv(1) << " D1 " << D1 << " viscosity AVO " << viscosity << AVOGADRO; 
 DbgLv(1) << " D2 " << D2 << " sedc vbar     " << sedc << vbar;
 DbgLv(1) << " D3 " << D3 << " density       " << density;

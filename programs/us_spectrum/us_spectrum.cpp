@@ -1,6 +1,10 @@
 #include <QApplication>
 #include "us_spectrum.h"
 #include <math.h>
+#if QT_VERSION < 0x050000
+#define setSamples(a,b,c) setData(a,b,c)
+#define setSymbol(a) setSymbol(*a)
+#endif
 
 int main (int argc, char* argv[])
 {
@@ -75,7 +79,7 @@ US_Spectrum::US_Spectrum() : US_Widgets()
    data_plot->setCanvasBackground(Qt::black);
    data_plot->setTitle("Wavelength Spectrum Fit");
 	data_plot->setMinimumSize(700,200);
-	data_plot->clear();
+	data_plot->detachItems();
 	
    residuals_plot = new QwtPlot();
    plotLayout2 = new US_Plot(residuals_plot, tr(""), tr("Wavelength(nm)"), tr("Extinction"));
@@ -189,13 +193,16 @@ void US_Spectrum::plot_basis()
      	   temp_y *= v_basis.at(m).amplitude;                      
      	   v_y_values.push_back(temp_y);
      	}
+      double* xx = (double*)v_x_values.data();
+      double* yy = (double*)v_y_values.data();
+      int     nn = v_x_values.size();
 		QwtPlotCurve* c;
    	QPen p;
   		p.setColor(Qt::green);
    	p.setWidth(3);
    	c = us_curve(data_plot, v_basis.at(m).filename);
    	c->setPen(p);
-   	c->setData(v_x_values, v_y_values);
+   	c->setSamples( xx, yy, nn );
 		v_basis[basisIndex].matchingCurve = c;
 		basisIndex++;
 	}
@@ -255,13 +262,16 @@ void US_Spectrum:: plot_target()
 		v_y_values.push_back(temp_y);
 	}
 	
+   double* xx = (double*)v_x_values.data();
+   double* yy = (double*)v_y_values.data();
+   int     nn = v_x_values.size();
 	QwtPlotCurve* c;
 	QPen p;
 	p.setColor(Qt::yellow);
 	p.setWidth(3);
 	c = us_curve(data_plot, target.filename);
 	c->setPen(p);
-	c->setData(v_x_values, v_y_values);
+	c->setSamples( xx, yy, nn );
 	target.matchingCurve = c;
 	data_plot->replot();
    lw_target->insertItem(0, target.filenameBasis);
@@ -466,7 +476,7 @@ void US_Spectrum::fit()
       y[i] = solution[i];
 	}
    
-	residuals_plot->clear();                                                 
+	residuals_plot->detachItems();                                                 
    QwtPlotCurve *resid_curve = us_curve(residuals_plot, "Residuals");
    QwtPlotCurve *target_curve = us_curve(residuals_plot,"Mean");
    if (solution_curve != NULL)
@@ -479,7 +489,7 @@ void US_Spectrum::fit()
    target_curve->setStyle(QwtPlotCurve::Lines);
    solution_curve->setStyle(QwtPlotCurve::Lines);
 
-   solution_curve->setData(x, y, points);
+   solution_curve->setSamples(x, y, points);
    pen.setColor(Qt::magenta);
    pen.setWidth(3);
    solution_curve->setPen(pen);
@@ -493,7 +503,7 @@ void US_Spectrum::fit()
    }
 	fval /= points;
    le_rmsd->setText(str.sprintf("RMSD: %3.2e", pow(fval, (float) 0.5)));
-   resid_curve->setData(x, y, points);
+   resid_curve->setSamples(x, y, points);
    pen.setColor(Qt::yellow);
    pen.setWidth(2);
    resid_curve->setPen(pen);
@@ -502,7 +512,7 @@ void US_Spectrum::fit()
    x[1] = x[points - 1];
    y[0] = 0.0;
    y[1] = 0.0;
-   target_curve->setData(x, y, 2);
+   target_curve->setSamples(x, y, 2);
    pen.setColor(Qt::red);
    pen.setWidth(3);
    target_curve->setPen(pen);
@@ -545,7 +555,7 @@ void US_Spectrum::resetBasis()
 		solution_curve = NULL;
 	}
 	//clear the residuals plot
-	residuals_plot->clear();
+	residuals_plot->detachItems();
 	residuals_plot->replot();
 	data_plot->replot();
 	lw_basis->clear();

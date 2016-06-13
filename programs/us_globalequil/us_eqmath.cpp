@@ -702,7 +702,7 @@ int US_EqMath::calc_jacobian()
             double omega_sq = sq( M_PI * scnf->rpm / 30.0 );
             double tempera  = scnf->tempera;
             double density  = scnf->density;
-            double dconst   = omega_sq / ( 2.0 * R * ( K0 + tempera ) );
+            double dconst   = omega_sq / ( 2.0 * R_GC * ( K0 + tempera ) );
 
             for ( int kk = 0; kk < ncomps; kk++ )
             {
@@ -767,7 +767,7 @@ int US_EqMath::calc_jacobian()
             double omega_sq = sq( M_PI * scnf->rpm / 30.0 );
             double tempera  = scnf->tempera;
             double density  = scnf->density;
-            double dconst   = omega_sq / ( 2.0 * R * ( K0 + tempera ) );
+            double dconst   = omega_sq / ( 2.0 * R_GC * ( K0 + tempera ) );
             double ODcorrec = log( stoich1 / pow( scnf->extincts[ 0 ]
                                    * scnf->pathlen , stoiexp ) );
             v_vbar[ 0 ]     = US_Math2::adjust_vbar20( runfit.vbar_vals[ 0 ],
@@ -836,7 +836,7 @@ int US_EqMath::calc_jacobian()
             double omega_sq = sq( M_PI * scnf->rpm / 30.0 );
             double tempera  = scnf->tempera;
             double density  = scnf->density;
-            double dconst   = omega_sq / ( 2.0 * R * ( K0 + tempera ) );
+            double dconst   = omega_sq / ( 2.0 * R_GC * ( K0 + tempera ) );
             double ODcorec1 = log( stoich1 / pow( scnf->extincts[ 0 ]
                                    * scnf->pathlen , stoiexp ) );
             double ODcorec2 = log( stoich2 / pow( scnf->extincts[ 0 ]
@@ -910,7 +910,7 @@ int US_EqMath::calc_jacobian()
             double omega_sq = sq( M_PI * scnf->rpm / 30.0 );
             double tempera  = scnf->tempera;
             double density  = scnf->density;
-            double dconst   = omega_sq / ( 2.0 * R * ( K0 + tempera ) );
+            double dconst   = omega_sq / ( 2.0 * R_GC * ( K0 + tempera ) );
             double extinc0  = scnf->extincts[ 0 ];
             double extinc1  = scnf->extincts[ 1 ];
             double ODcorrec = log( ( extinc0 + extinc1 ) /
@@ -989,7 +989,7 @@ int US_EqMath::calc_jacobian()
             double omega_sq = sq( M_PI * scnf->rpm / 30.0 );
             double tempera  = scnf->tempera;
             double density  = scnf->density;
-            double dconst   = omega_sq / ( 2.0 * R * ( K0 + tempera ) );
+            double dconst   = omega_sq / ( 2.0 * R_GC * ( K0 + tempera ) );
             double extinc0  = scnf->extincts[ 0 ];
             double extinc1  = scnf->extincts[ 1 ];
             double ODcorec1 = log( ( extinc0 + extinc0 ) /
@@ -1093,7 +1093,7 @@ int US_EqMath::calc_jacobian()
             double omega_sq = sq( M_PI * scnf->rpm / 30.0 );
             double tempera  = scnf->tempera;
             double density  = scnf->density;
-            double dconst   = omega_sq / ( 2.0 * R * ( K0 + tempera ) );
+            double dconst   = omega_sq / ( 2.0 * R_GC * ( K0 + tempera ) );
             double extinc0  = scnf->extincts[ 0 ];
             double ODcorec1 = log( stoich1 /
                                    pow( extinc0 * scnf->pathlen, stoiexp ) );
@@ -1166,7 +1166,7 @@ int US_EqMath::calc_jacobian()
             double omega_sq = sq( M_PI * scnf->rpm / 30.0 );
             double tempera  = scnf->tempera;
             double density  = scnf->density;
-            double dconst   = omega_sq / ( 2.0 * R * ( K0 + tempera ) );
+            double dconst   = omega_sq / ( 2.0 * R_GC * ( K0 + tempera ) );
             double extinc0  = scnf->extincts[ 0 ];
             double ODcorec1 = log( stoich1 /
                                    pow( scnf->pathlen * extinc0, stoiexp ) );
@@ -1238,7 +1238,7 @@ int US_EqMath::calc_jacobian()
             double omega_sq = sq( M_PI * scnf->rpm / 30.0 );
             double tempera  = scnf->tempera;
             double density  = scnf->density;
-            double dconst   = omega_sq / ( 2.0 * R * ( K0 + tempera ) );
+            double dconst   = omega_sq / ( 2.0 * R_GC * ( K0 + tempera ) );
             v_vbar[ 0 ]     = US_Math2::adjust_vbar20( runfit.vbar_vals[ 0 ],
                                                        tempera );
             v_buoy[ 0 ]     = ( 1.0 - v_vbar[ 0 ] * density );
@@ -1299,7 +1299,7 @@ int US_EqMath::calc_jacobian()
             double omega_sq = sq( M_PI * scnf->rpm / 30.0 );
             double tempera  = scnf->tempera;
             double density  = scnf->density;
-            double dconst   = omega_sq / ( 2.0 * R * ( K0 + tempera ) );
+            double dconst   = omega_sq / ( 2.0 * R_GC * ( K0 + tempera ) );
             double extinc0  = scnf->extincts[ 0 ];
             double ODcorec1 = log( stoich1 /
                                    pow( scnf->pathlen * extinc0, stoiexp ) );
@@ -1421,7 +1421,7 @@ DbgLv(1) << "ctPar: max points" << points;
       buoyancy_tb   = solution.buoyancyb;
 
       omega_s       = sq( fsrpm * M_PI / 30.0 );
-      dconst        = ( buoyancy_tb * omega_s ) / ( 2.0 * R * ( K0 + fstemp ) );
+      dconst        = ( buoyancy_tb * omega_s ) / ( 2.0 * R_GC * ( K0 + fstemp ) );
       x_temp        = scnf->xvs[ strtx ];
       x_temp        = sq( x_temp );
 //DbgLv(1) << "ctPar: xt x0 xN" << x_temp << scnf->xvs[strtx] << scnf->xvs[stopx];
@@ -1749,7 +1749,7 @@ int US_EqMath::calc_model( double* guess )
             double omega_sq = sq( M_PI * scnf->rpm / 30.0 );
             double tempera  = scnf->tempera;
             double density  = scnf->density;
-            double dconst   = omega_sq / ( 2.0 * R * ( K0 + tempera ) );
+            double dconst   = omega_sq / ( 2.0 * R_GC * ( K0 + tempera ) );
 
             for ( int kk = 0; kk < ncomps; kk++ )
             {
@@ -1811,7 +1811,7 @@ int US_EqMath::calc_model( double* guess )
             double omega_sq = sq( M_PI * scnf->rpm / 30.0 );
             double tempera  = scnf->tempera;
             double density  = scnf->density;
-            double dconst   = omega_sq / ( 2.0 * R * ( K0 + tempera ) );
+            double dconst   = omega_sq / ( 2.0 * R_GC * ( K0 + tempera ) );
             double ODcorrec = log( stoich1 / pow( scnf->extincts[ 0 ]
                                    * scnf->pathlen , stoiexp ) );
             v_vbar[ 0 ]     = US_Math2::adjust_vbar20( runfit.vbar_vals[ 0 ],
@@ -1866,7 +1866,7 @@ int US_EqMath::calc_model( double* guess )
             double omega_sq = sq( M_PI * scnf->rpm / 30.0 );
             double tempera  = scnf->tempera;
             double density  = scnf->density;
-            double dconst   = omega_sq / ( 2.0 * R * ( K0 + tempera ) );
+            double dconst   = omega_sq / ( 2.0 * R_GC * ( K0 + tempera ) );
             double ODcorec1 = log( stoich1 / pow( scnf->extincts[ 0 ]
                                    * scnf->pathlen , stoiexp ) );
             double ODcorec2 = log( stoich2 / pow( scnf->extincts[ 0 ]
@@ -1920,7 +1920,7 @@ int US_EqMath::calc_model( double* guess )
             double omega_sq = sq( M_PI * scnf->rpm / 30.0 );
             double tempera  = scnf->tempera;
             double density  = scnf->density;
-            double dconst   = omega_sq / ( 2.0 * R * ( K0 + tempera ) );
+            double dconst   = omega_sq / ( 2.0 * R_GC * ( K0 + tempera ) );
             double extinc0  = scnf->extincts[ 0 ];
             double extinc1  = scnf->extincts[ 1 ];
             double ODcorrec = log( ( extinc0 + extinc1 ) /
@@ -1982,7 +1982,7 @@ int US_EqMath::calc_model( double* guess )
             double omega_sq = sq( M_PI * scnf->rpm / 30.0 );
             double tempera  = scnf->tempera;
             double density  = scnf->density;
-            double dconst   = omega_sq / ( 2.0 * R * ( K0 + tempera ) );
+            double dconst   = omega_sq / ( 2.0 * R_GC * ( K0 + tempera ) );
             double extinc0  = scnf->extincts[ 0 ];
             double extinc1  = scnf->extincts[ 1 ];
             double ODcorec1 = log( ( extinc0 + extinc0 ) /
@@ -2045,7 +2045,7 @@ int US_EqMath::calc_model( double* guess )
             double omega_sq = sq( M_PI * scnf->rpm / 30.0 );
             double tempera  = scnf->tempera;
             double density  = scnf->density;
-            double dconst   = omega_sq / ( 2.0 * R * ( K0 + tempera ) );
+            double dconst   = omega_sq / ( 2.0 * R_GC * ( K0 + tempera ) );
             double extinc0  = scnf->extincts[ 0 ];
             double ODcorec1 = log( stoich1 /
                                    pow( extinc0 * scnf->pathlen, stoiexp ) );
@@ -2097,7 +2097,7 @@ int US_EqMath::calc_model( double* guess )
             double omega_sq = sq( M_PI * scnf->rpm / 30.0 );
             double tempera  = scnf->tempera;
             double density  = scnf->density;
-            double dconst   = omega_sq / ( 2.0 * R * ( K0 + tempera ) );
+            double dconst   = omega_sq / ( 2.0 * R_GC * ( K0 + tempera ) );
             double extinc0  = scnf->extincts[ 0 ];
             double ODcorec1 = log( stoich1 /
                                    pow( scnf->pathlen * extinc0, stoiexp ) );
@@ -2148,7 +2148,7 @@ int US_EqMath::calc_model( double* guess )
             double omega_sq = sq( M_PI * scnf->rpm / 30.0 );
             double tempera  = scnf->tempera;
             double density  = scnf->density;
-            double dconst   = omega_sq / ( 2.0 * R * ( K0 + tempera ) );
+            double dconst   = omega_sq / ( 2.0 * R_GC * ( K0 + tempera ) );
             v_vbar[ 0 ]     = US_Math2::adjust_vbar20( runfit.vbar_vals[ 0 ],
                                                        tempera );
             double buoy0    = ( 1.0 - v_vbar[ 0 ] * density );
@@ -2195,7 +2195,7 @@ int US_EqMath::calc_model( double* guess )
             double omega_sq = sq( M_PI * scnf->rpm / 30.0 );
             double tempera  = scnf->tempera;
             double density  = scnf->density;
-            double dconst   = omega_sq / ( 2.0 * R * ( K0 + tempera ) );
+            double dconst   = omega_sq / ( 2.0 * R_GC * ( K0 + tempera ) );
             double extinc0  = scnf->extincts[ 0 ];
             double ODcorec1 = log( stoich1 /
                                    pow( scnf->pathlen * extinc0, stoiexp ) );
@@ -2400,7 +2400,7 @@ void US_EqMath::calc_integral()
             double omega_sq = sq( M_PI * scnf->rpm / 30.0 );
             double tempera  = scnf->tempera;
             double density  = scnf->density;
-            double dconst   = omega_sq / ( 2.0 * R * ( K0 + tempera ) );
+            double dconst   = omega_sq / ( 2.0 * R_GC * ( K0 + tempera ) );
 
             for ( int kk = 0; kk < ncomps; kk++ )
             {
@@ -2440,7 +2440,7 @@ void US_EqMath::calc_integral()
             double omega_sq = sq( M_PI * scnf->rpm / 30.0 );
             double tempera  = scnf->tempera;
             double density  = scnf->density;
-            double dconst   = omega_sq / ( 2.0 * R * ( K0 + tempera ) );
+            double dconst   = omega_sq / ( 2.0 * R_GC * ( K0 + tempera ) );
 
             for ( int kk = 0; kk < ncomps; kk++ )
             {
@@ -2494,7 +2494,7 @@ void US_EqMath::calc_integral()
             double density  = scnf->density;
             double ODcorrec = log( stoich1 / pow( scnf->extincts[ 0 ]
                                    * scnf->pathlen , stoiexp ) ) + eqval0;
-            double dconst   = omega_sq / ( 2.0 * R * ( K0 + tempera ) );
+            double dconst   = omega_sq / ( 2.0 * R_GC * ( K0 + tempera ) );
 
             double vbar   = US_Math2::adjust_vbar20( runfit.vbar_vals[ 0 ],
                                                         tempera );
@@ -2567,7 +2567,7 @@ void US_EqMath::calc_integral()
                                    * scnf->pathlen , stoiexp ) ) + eqval0;
             double ODcorre2 = log( stoich2 / pow( scnf->extincts[ 0 ]
                                    * scnf->pathlen , stoiex2 ) ) + eqval1;
-            double dconst   = omega_sq / ( 2.0 * R * ( K0 + tempera ) );
+            double dconst   = omega_sq / ( 2.0 * R_GC * ( K0 + tempera ) );
 
             double vbar     = US_Math2::adjust_vbar20( runfit.vbar_vals[ 0 ],
                                                        tempera );
@@ -2647,7 +2647,7 @@ void US_EqMath::calc_integral()
             double omega_sq = sq( M_PI * scnf->rpm / 30.0 );
             double tempera  = scnf->tempera;
             double density  = scnf->density;
-            double dconst   = omega_sq / ( 2.0 * R * ( K0 + tempera ) );
+            double dconst   = omega_sq / ( 2.0 * R_GC * ( K0 + tempera ) );
 
             double vbar0    = US_Math2::adjust_vbar20( runfit.vbar_vals[ 0 ],
                                                        tempera );

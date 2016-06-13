@@ -701,7 +701,7 @@ qDebug() << "EMC: update_sigma";
    US_Math2::data_correction( tempa, solution );
 
    double sigma    = ( 1.0 - vbar * solution.density_tb ) * omega_s * molecwt
-                     / ( 2.0 * R * tempk );
+                     / ( 2.0 * R_GC * tempk );
    le_sigma->setText( QString::number( sigma ) );
 qDebug() << "EMC: u_s: scanx compx" << scanx << compx;
 qDebug() << "EMC: u_s:  mw vbar20 vbar" << molecwt << vbar20 << vbar;
