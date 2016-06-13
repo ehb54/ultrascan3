@@ -2385,7 +2385,7 @@ bool US_Grid_Editor::set_comp_skv( struct gridpoint& gpoint )
    double buoy   = 1.0 - vbar * density;
    double sval   = gpoint.s * 1.0e-13;
 
-   gpoint.D      = R * K20 / ( AVOGADRO * 18 * M_PI
+   gpoint.D      = R_GC * K20 / ( AVOGADRO * 18 * M_PI
                    * pow( ( viscosity * 0.01 * gpoint.ff0 ), (3.0/2.0) )
                    * pow( ( sval * vbar / ( 2.0 * buoy ) ), 0.5 ) );
 
@@ -2393,8 +2393,8 @@ bool US_Grid_Editor::set_comp_skv( struct gridpoint& gpoint )
 
    if ( is_ok )
    {
-      gpoint.mw     = sval * R * K20 / ( gpoint.D * buoy );
-      gpoint.f      = R * K20 / ( AVOGADRO * gpoint.D );
+      gpoint.mw     = sval * R_GC * K20 / ( gpoint.D * buoy );
+      gpoint.f      = R_GC * K20 / ( AVOGADRO * gpoint.D );
       gpoint.f0     = gpoint.f / gpoint.ff0;
    }
 
@@ -2426,7 +2426,7 @@ bool US_Grid_Editor::set_comp_swv( struct gridpoint& gpoint )
    double buoy   = 1.0 - vbar * density;
    double sval   = gpoint.s * 1.0e-13;
    double ssgn   = ( gpoint.s < 0.0 ) ? -1.0 : 1.0;
-   gpoint.D      = ssgn * sval * R * K20 / ( buoy * gpoint.mw );
+   gpoint.D      = ssgn * sval * R_GC * K20 / ( buoy * gpoint.mw );
    gpoint.f      = ssgn * gpoint.mw * buoy / ( sval * AVOGADRO );
    double volume = vbar * gpoint.mw / AVOGADRO;
    double sphere = pow( volume * VOL_FAC, THIRD );
@@ -2467,8 +2467,8 @@ bool US_Grid_Editor::set_comp_svd( struct gridpoint& gpoint )
    double buoy   = 1.0 - vbar * density;
    double ssgn   = ( gpoint.s < 0.0 ) ? -1.0 : 1.0;
    double sval   = gpoint.s * 1.0e-13;
-   gpoint.f      = R * K20 / ( AVOGADRO * gpoint.D );
-   gpoint.mw     = ssgn * sval * R * K20 / ( gpoint.D * buoy );
+   gpoint.f      = R_GC * K20 / ( AVOGADRO * gpoint.D );
+   gpoint.mw     = ssgn * sval * R_GC * K20 / ( gpoint.D * buoy );
    double volume = vbar * gpoint.mw / AVOGADRO;
    double sphere = pow( volume * VOL_FAC, THIRD );
    gpoint.ff0    = gpoint.f / ( sphere * SPH_FAC );
@@ -2484,8 +2484,8 @@ bool US_Grid_Editor::set_comp_svf( struct gridpoint& gpoint )
    double buoy   = 1.0 - vbar * density;
    double ssgn   = ( gpoint.s < 0.0 ) ? -1.0 : 1.0;
    double sval   = gpoint.s * 1.0e-13;
-   gpoint.D      = R * K20 / ( AVOGADRO * gpoint.f );
-   gpoint.mw     = ssgn * sval * R * K20 / ( gpoint.D * buoy );
+   gpoint.D      = R_GC * K20 / ( AVOGADRO * gpoint.f );
+   gpoint.mw     = ssgn * sval * R_GC * K20 / ( gpoint.D * buoy );
    double volume = vbar * gpoint.mw / AVOGADRO;
    double sphere = pow( volume * VOL_FAC, THIRD );
    gpoint.ff0    = gpoint.f / ( sphere * SPH_FAC );
@@ -2517,7 +2517,7 @@ bool US_Grid_Editor::set_comp_kwv( struct gridpoint& gpoint )
    gpoint.f0     = viscf * pow( ( 162.0 * gpoint.mw * MPISQ * vbrat ), THIRD );
    gpoint.f      = gpoint.ff0 * gpoint.f0;
    gpoint.s      = 1.0e13 * gpoint.mw * buoy / ( AVOGADRO * gpoint.f );
-   gpoint.D      = R * K20 / ( AVOGADRO * gpoint.f );
+   gpoint.D      = R_GC * K20 / ( AVOGADRO * gpoint.f );
    bool   is_ok  = check_grid_point( buoy, gpoint );
 
    return is_ok;
@@ -2548,7 +2548,7 @@ bool US_Grid_Editor::set_comp_kvd( struct gridpoint& gpoint )
    double vbar   = gpoint.vbar;
    double buoy   = 1.0 - vbar * density;
 qDebug() << "comp_kvd buoy" << buoy;
-   gpoint.f      = R * K20 / ( AVOGADRO * gpoint.D );
+   gpoint.f      = R_GC * K20 / ( AVOGADRO * gpoint.D );
    gpoint.f0     = gpoint.f / qMax( 1.0, gpoint.ff0 );
    double sphere = gpoint.f0 / ( 0.06 * M_PI * VISC_20W );
    double volume = ( 4.0 / 3.0 ) * M_PI * pow( sphere, 3.0 );
@@ -2567,7 +2567,7 @@ bool US_Grid_Editor::set_comp_kvf( struct gridpoint& gpoint )
    double buoy   = 1.0 - vbar * density;
 qDebug() << "comp_kvf buoy" << buoy;
    gpoint.f0     = gpoint.f / qMax( 1.0, gpoint.ff0 );
-   gpoint.D      = R * K20 / ( AVOGADRO * gpoint.f );
+   gpoint.D      = R_GC * K20 / ( AVOGADRO * gpoint.f );
    double sphere = gpoint.f0 / ( 0.06 * M_PI * VISC_20W );
    double volume = ( 4.0 / 3.0 ) * M_PI * pow( sphere, 3.0 );
    gpoint.mw     = volume * AVOGADRO / vbar;
@@ -2596,7 +2596,7 @@ qDebug() << "comp_wvd buoy" << buoy;
    double volume = vbar * gpoint.mw / AVOGADRO;
    double sphere = pow( volume * VOL_FAC, THIRD );
    gpoint.f0     = sphere * SPH_FAC;
-   double sval   = gpoint.D * buoy * gpoint.mw / ( R * K20 );
+   double sval   = gpoint.D * buoy * gpoint.mw / ( R_GC * K20 );
    gpoint.f      = gpoint.mw * buoy / ( sval * AVOGADRO );
    gpoint.ff0    = ( gpoint.f0 != 0.0 ) ? gpoint.f / gpoint.f0 : 1.0;
    gpoint.s      = sval * 1.0e+13;
@@ -2615,7 +2615,7 @@ qDebug() << "comp_wvf buoy" << buoy;
    gpoint.f0     = sphere * SPH_FAC;
    gpoint.ff0    = ( gpoint.f0 != 0.0 ) ? gpoint.f / gpoint.f0 : 1.0;
    double sval   = gpoint.mw * buoy / ( AVOGADRO * gpoint.f );
-   gpoint.D      = sval * R * K20 / ( buoy * gpoint.mw );
+   gpoint.D      = sval * R_GC * K20 / ( buoy * gpoint.mw );
    gpoint.s      = sval * 1.0e+13;
    bool   is_ok  = check_grid_point( buoy, gpoint );
 

@@ -91,10 +91,10 @@ DbgLv(1) << "dgC:upd_cns: ncompc" << ncompc << "fcx" << fcx;
 
       // Replace old constraint entries with the updates
       for ( int ii = 0; ii < nupdc; ii++, kk++ )
+      {
          attribs[ kk ] = cnsv[ ii ];
-DbgLv(1) << "dgC:upd_cns:   att" << fcx << "flt" << attribs[fcx].floats; 
-DbgLv(1) << "dgC:upd_cns:   att" << fcx+1 << "flt" << attribs[fcx+1].floats; 
-//DbgLv(1) << "dgC:upd_cns:   att" << fcx+2 << "flt" << attribs[fcx+2].floats; 
+DbgLv(1) << "dgC:upd_cns:   att" << kk << "flt" << attribs[kk].floats; 
+      }
    }
 
    else if ( nupdc < ncompc )

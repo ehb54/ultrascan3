@@ -7,7 +7,7 @@
 #include "us_extern.h"
 
 #define AVOGADRO     6.022045e+23 //!< Avogadro's number
-#define R            8.314472e+07 //!< Ideal gas constant
+#define R_GC         8.314472e+07 //!< Ideal gas constant
 #define K0           273.15       //!< 0 degrees C in Kelvin
 #define K20          293.15       //!< 20 degrees C in Kelvin
 #define VISC_20W     1.00194      //!< Viscosity of water at 20 degrees C

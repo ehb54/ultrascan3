@@ -353,7 +353,7 @@ void US_Buoyancy::calc_points( void )
       omega_s = pow( current_rpm * M_PI/30.0, 2.0 );
       C0 = tmp_dpoint.gradientC0 - tmp_dpoint.bufferDensity; //subtract buffer density from nycodenz density
       r2 = pow( tmp_dpoint.bottom, 2.0 ) - pow( tmp_dpoint.meniscus, 2.0);
-      k1 = tmp_dpoint.gradientMW * omega_s/( 2.0 * R * (tmp_dpoint.temperature + 273.15) );
+      k1 = tmp_dpoint.gradientMW * omega_s/( 2.0 * R_GC * (tmp_dpoint.temperature + 273.15) );
       k4 = 1.0 - tmp_dpoint.gradientVbar * tmp_dpoint.bufferDensity;
       k2 = exp( k1 * ( k4 ) * (pow( tmp_dpoint.peakPosition, 2.0 ) - pow( tmp_dpoint.meniscus, 2.0 ) ) );
       k3 = exp( k1 * ( k4 ) * r2);

@@ -55,7 +55,7 @@ int US_Noise::load( const QString& id, US_DB2* db )
    if ( db->lastErrno() != US_DB2::OK ) return db->lastErrno();
 
    db->next();
-   QByteArray contents = db->value( 5 ).toString().toAscii();
+   QByteArray contents = db->value( 5 ).toString().toLatin1();
 
    QXmlStreamReader     xml( contents );
 

@@ -4,6 +4,10 @@
 #include "us_extinction.h"
 #include "us_license_t.h"
 #include "us_license.h"
+#if QT_VERSION < 0x050000
+#define setSamples(a,b,c) setData(a,b,c)
+#define setSymbol(a) setSymbol(*a)
+#endif
 //
 //! \brief Main program for US_EXTINCTION. Loads translators and starts
 //         the class US_EXTINCTION
@@ -76,12 +80,12 @@ US_Extinction::US_Extinction() : US_Widgets()
 	le_coefficient = us_lineedit("1.0000",1, false);
 
 	ct_gaussian = us_counter(2, 1, 50, 15);
-	ct_gaussian->setStep(1);
+	ct_gaussian->setSingleStep(1);
 	ct_gaussian->setEnabled(true);
 	connect(ct_gaussian, SIGNAL(valueChanged(double)), SLOT(update_order(double)));
 
 	ct_coefficient = us_counter(2, 200, 1500, 280);
-	ct_coefficient->setStep(1);
+	ct_coefficient->setSingleStep(1);
 	ct_coefficient->setEnabled(true);
 
 	data_plot = new QwtPlot();
@@ -303,7 +307,7 @@ void US_Extinction::plot()
 	{	
 		return;
 	}
-	data_plot->clear();
+	data_plot->detachItems();
 	us_grid(data_plot);
 	
 	for(int i = 0; i < v_wavelength.size(); i++)
@@ -330,16 +334,18 @@ void US_Extinction::plot()
 	for(int m = 0; m < x_plot.size(); m++)
 	{
 		QwtPlotCurve* c;
-		QwtSymbol s;
-		s.setStyle(QwtSymbol::Ellipse);
-		s.setPen(QPen(Qt::blue));
-		s.setBrush(QBrush(Qt::yellow));
-		s.setSize(10);
+		QwtSymbol *s = new QwtSymbol;
+		s->setStyle(QwtSymbol::Ellipse);
+		s->setPen(QPen(Qt::blue));
+		s->setBrush(QBrush(Qt::yellow));
+		s->setSize(10);
 		title = v_wavelength.at(m).fileName;
 		c = us_curve(data_plot, title);
 		c->setSymbol(s);
 		c->setPen(QPen(Qt::green));
-		c->setData(x_plot.at(m), y_plot.at(m));
+      double* xx = (double*)x_plot.at(m).data();
+      double* yy = (double*)y_plot.at(m).data();
+      c->setSamples( xx, yy, x_plot.at(m).size() );
 		v_curve.push_back(c);
 	}
 	if(fitted)
@@ -348,7 +354,9 @@ void US_Extinction::plot()
       QwtPlotCurve* fit_curve;
 		fit_curve = us_curve(data_plot, "Extinction");
       fit_curve->setPen(QPen(Qt::red, 2, Qt::SolidLine));
-      fit_curve->setData(lambda, extinction);
+      double* ll = (double*)lambda.data();
+      double* ee = (double*)extinction.data();
+      fit_curve->setSamples( ll, ee, lambda.size() );
 		fit_curve->setYAxis(QwtPlot::yRight);
 	}
 
@@ -362,7 +370,7 @@ void US_Extinction::reset_scanlist(void)
 	filenames.clear();
 	changedCurve = NULL;
 	v_curve.clear();
-	data_plot->clear();
+	data_plot->detachItems();
 	data_plot->replot();
 }
 void US_Extinction::update_data(void)
@@ -393,16 +401,16 @@ void US_Extinction::listToCurve(void)
 	QString selectedName = lw_file_names->currentItem()->text();
 	QwtPlotCurve* c_select;
 	c_select = NULL;
-	QwtSymbol s_old;
-   s_old.setStyle(QwtSymbol::Ellipse);
-   s_old.setPen(QPen(Qt::blue));
-   s_old.setBrush(QBrush(Qt::yellow));
-   s_old.setSize(10);
-	QwtSymbol s_new;
-   s_new.setStyle(QwtSymbol::Triangle);
-   s_new.setPen(QPen(Qt::black));
-   s_new.setBrush(QBrush(Qt::red));
-   s_new.setSize(10);
+	QwtSymbol *s_old = new QwtSymbol;
+   s_old->setStyle(QwtSymbol::Ellipse);
+   s_old->setPen(QPen(Qt::blue));
+   s_old->setBrush(QBrush(Qt::yellow));
+   s_old->setSize(10);
+	QwtSymbol *s_new = new QwtSymbol;
+   s_new->setStyle(QwtSymbol::Triangle);
+   s_new->setPen(QPen(Qt::black));
+   s_new->setBrush(QBrush(Qt::red));
+   s_new->setSize(10);
 
 	foreach(QwtPlotCurve* c, v_curve)
 	{
