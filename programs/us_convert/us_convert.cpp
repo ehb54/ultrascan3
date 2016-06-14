@@ -36,6 +36,8 @@ void US_Convert::readLegacyData(
    QStringList fileList;
    QStringList channels;
    QString f;
+   QString arunType = runType;
+   bool mixed_type = false;
 
    foreach ( f, files )
    {
@@ -52,6 +54,70 @@ void US_Convert::readLegacyData(
          QChar c = f.at( 0 ).toUpper();
          if ( c.isLetter() && ! channels.contains( c ) )
             channels << c;
+
+         // Test to see if the directory holds mixed types
+         QString frunType = f.right( 3 ).left( 2 ).toUpper();
+         if ( frunType != runType )
+         {
+            mixed_type     = true;
+            arunType       = frunType;
+//qDebug() << "CVT: MIXED : runType frunType" << runType << frunType;
+         }
+      }
+   }
+
+   if ( mixed_type )
+   {  // If mixed type, have user select one type and rebuild appropriate lists
+      QString prType = QObject::tr( "Absorbance" );
+      QString arType = QObject::tr( "Absorbance" );
+
+      if ( runType == "RI"  ||  runType == "WI" )
+         prType      = QObject::tr( "Intensity" );
+      else if ( runType == "IP" )
+         prType      = QObject::tr( "Interference" );
+      else if ( runType == "FI"  )
+         prType      = QObject::tr( "Fluorensce" );
+
+      if ( arunType == "RI"  ||  arunType == "WI" )
+         arType      = QObject::tr( "Intensity" );
+      else if ( arunType == "IP" )
+         arType      = QObject::tr( "Interference" );
+      else if ( arunType == "FI"  )
+         arType      = QObject::tr( "Fluorensce" );
+
+      int status = QMessageBox::information( 0,
+            QObject::tr( "Mixed Import Data Types" ),
+            QObject::tr( "The Import directory holds multiple data types.\n"
+                         "Choose the type to import in this session." ),
+            prType, arType, 0, 0, 1 );
+qDebug() << "CVT: runType chosen: " << status;
+
+      if ( status != 0 )
+         runType        = arunType;
+
+      fileList.clear();
+      channels.clear();
+
+      foreach ( f, files )
+      {
+         // Look for a proper filename match:
+         // Optional channel + 4 to 6 digits + dot + file type + cell number
+
+         QRegExp rx( "^[A-J]?\\d{4,6}\\.(?:RA|RI|IP|FI|WA|WI)\\d$" );
+      
+         if ( rx.indexIn( f.toUpper() ) >= 0 )
+         {
+            QString frunType = f.right( 3 ).left( 2 ).toUpper();
+            if ( frunType != runType )
+               continue;
+
+            fileList << f;
+ 
+            // Parse the filtered file list to determine cells and channels
+            QChar c = f.at( 0 ).toUpper();
+            if ( c.isLetter() && ! channels.contains( c ) )
+               channels << c;
+         }
       }
    }
 
