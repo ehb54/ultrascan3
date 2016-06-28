@@ -7,6 +7,7 @@
 #include "us_plot.h"
 #include "us_minimize.h"
 #include "us_extinctfitter.h"
+#include "us_analyte_gui.h"
 
 class US_Extinction : public US_Widgets
 {
@@ -16,6 +17,8 @@ class US_Extinction : public US_Widgets
 		US_Extinction();
 		QVector <QString> filenames;
 		US_ExtinctFitter *fitter;
+		US_Disk_DB_Controls* disk_controls;
+		US_Analyte currentAnalyte;
 		QVector <double> lambda;
 		QVector <double> extinction;
 		float xmin, xmax;
@@ -47,7 +50,6 @@ class US_Extinction : public US_Widgets
 	QPushButton* 	pb_calculate;
 	QPushButton* 	pb_save;
 	QPushButton* 	pb_view;
-	QPushButton* 	pb_print;
 	QPushButton* 	pb_help;
 	QPushButton* 	pb_close;
 	QLineEdit*	 	le_associate;
@@ -62,6 +64,7 @@ class US_Extinction : public US_Widgets
 	US_Plot* 		plotLayout;
 	QwtPlot* 		data_plot;
 	QWidget*			p;
+
 	private slots:
 	bool 	loadScan(const QString&);
 	bool 	isComment(const QString&);	
@@ -73,12 +76,12 @@ class US_Extinction : public US_Widgets
 	void 	calculateE280(void);
 	void 	save(void);
 	void 	view_result(void);
-	void 	print_plot(void);
 	void 	help(void);
 	void 	plot();
 	void  calc_extinction();
 	void	update_order(double);
 	void 	listToCurve();
 	bool 	deleteCurve();
+	void	accessAnalyteExtinc(US_Analyte);
 };
 #endif	

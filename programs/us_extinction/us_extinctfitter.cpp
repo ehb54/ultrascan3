@@ -1,9 +1,5 @@
 #include "us_extinctfitter.h"
 #include <iostream>
-#if QT_VERSION < 0x050000
-#define setSamples(a,b,c) setData(a,b,c)
-#define setSymbol(a) setSymbol(*a)
-#endif
 
 using namespace std;
 
@@ -16,6 +12,8 @@ US_ExtinctFitter::US_ExtinctFitter(QVector <struct WavelengthScan> *temp_wls_v, 
    runs = 0;
    runs_percent = 0;
    projectName = temp_projectName;
+	connect(pb_overlays, SIGNAL(clicked()), SLOT(plot_overlays()));
+	connect(pb_residuals, SIGNAL(clicked()), SLOT(plot_residuals()));
 }
 
 void US_ExtinctFitter::saveFit()
@@ -355,8 +353,7 @@ void US_ExtinctFitter::plot_overlays()
    {
       s1 = tr("Overlays");
    }
-   //s2.sprintf((tr("Optical Density")).toLatin1().data());
-   s2 = tr("Optical Density");
+   s2.sprintf((tr("Optical Density")).toLatin1().data());
    point_counter = 0;
    for (int i=0; i<(*wls_v).size(); i++)
    {
@@ -375,15 +372,15 @@ void US_ExtinctFitter::plot_overlays()
 		v_all_yplot_fit.push_back(v_yplot_fit);
 		v_all_yplot_raw.push_back(v_yplot_raw);
    }
-   QwtSymbol* symbol = new QwtSymbol;
+   QwtSymbol symbol;
    QPen p;
    p.setColor(Qt::red);
    p.setWidth(2);
-   symbol->setSize(10);
-   symbol->setPen(QPen(Qt::blue));
-   symbol->setBrush(Qt::yellow);
-   symbol->setStyle(QwtSymbol::Ellipse);
-   data_plot->detachItems();
+   symbol.setSize(10);
+   symbol.setPen(QPen(Qt::blue));
+   symbol.setBrush(Qt::yellow);
+   symbol.setStyle(QwtSymbol::Ellipse);
+   data_plot->clear();
    data_plot->setTitle(s1);
    data_plot->setAxisTitle(QwtPlot::xBottom, tr("Wavelength (nm)"));
    data_plot->setAxisTitle(QwtPlot::yLeft, s2);
@@ -395,15 +392,12 @@ void US_ExtinctFitter::plot_overlays()
 			c_raw = us_curve(data_plot, "raw data");
          QwtPlotCurve* c_fit;
 			c_fit  = us_curve(data_plot, "fitted data");
-         double* xx = (double*)v_all_xplot.at(i).data();
-         double* yy = (double*)v_all_yplot_fit.at(i).data();
-         int     nn = v_all_xplot.size();
          c_raw->setStyle(QwtPlotCurve::NoCurve);
+         c_raw->setData(v_all_xplot.at(i), v_all_yplot_raw.at(i));
          c_raw->setSymbol(symbol);
-         c_raw->setSamples( xx, yy, nn );
+         c_fit->setData(v_all_xplot.at(i), v_all_yplot_fit.at(i));
          c_fit->setStyle(QwtPlotCurve::Lines);
          c_fit->setPen(p);
-         c_fit->setSamples( xx, yy, nn );
 			v_curve_raw.push_back(c_raw);
 			v_curve_fit.push_back(c_fit);
       }
@@ -416,15 +410,12 @@ void US_ExtinctFitter::plot_overlays()
          c_raw = us_curve(data_plot, "raw data");
          QwtPlotCurve *c_fit;
          c_fit  = us_curve(data_plot, "fitted data");
-         double* xx = (double*)v_all_xplot.at(i).data();
-         double* yy = (double*)v_all_yplot_fit.at(i).data();
-         int     nn = v_all_xplot.size();
          c_raw->setStyle(QwtPlotCurve::NoCurve);
+         c_raw->setData(v_all_xplot.at(i), v_all_yplot_raw.at(i));
          c_raw->setSymbol(symbol);
-         c_raw->setSamples( xx, yy, nn );
+         c_fit->setData(v_all_xplot.at(i), v_all_yplot_fit.at(i));
          c_fit->setStyle(QwtPlotCurve::Lines);
          c_fit->setPen(p);
-         c_fit->setSamples( xx, yy, nn );
          v_curve_raw.push_back(c_raw);
          v_curve_fit.push_back(c_fit);
       }
@@ -472,8 +463,7 @@ void US_ExtinctFitter::plot_residuals()
    {
       s1 = tr("Residuals");
    }
-   //s2.sprintf((tr("Optical Density Difference\n")).toLatin1().data());
-   s2 = tr("Optical Density Difference\n");
+   s2.sprintf((tr("Optical Density Difference\n")).toLatin1().data());
    point_counter = 0;
    for (int i=0; i<(*wls_v).size(); i++)
    {
@@ -520,16 +510,16 @@ void US_ExtinctFitter::plot_residuals()
       xmax = max(xplot[i][points_per_dataset[i] - 1], xmax);
       xmin = min(xplot[i][0], xmin);
    }
-   QwtSymbol* symbol = new QwtSymbol;
+   QwtSymbol symbol;
    QPen p_raw, p_zero;
    p_raw.setColor(Qt::green);
    p_raw.setWidth(1);
    p_zero.setColor(Qt::red);
    p_zero.setWidth(2);
-   symbol->setPen(QPen(Qt::blue));
-   symbol->setBrush(QBrush(Qt::yellow));
-   symbol->setStyle(QwtSymbol::Ellipse);
-   data_plot->detachItems();
+   symbol.setPen(QPen(Qt::blue));
+   symbol.setBrush(QBrush(Qt::yellow));
+   symbol.setStyle(QwtSymbol::Ellipse);
+   data_plot->clear();
    data_plot->setTitle(s1);
    data_plot->setAxisTitle(QwtPlot::xBottom, tr("Wavelength (nm)"));
    data_plot->setAxisTitle(QwtPlot::yLeft, s2);
@@ -538,7 +528,7 @@ void US_ExtinctFitter::plot_residuals()
    l = 0;
    if (plotGroup)
    {
-      symbol->setSize(8);
+      symbol.setSize(8);
       line_x[0] = xmin - 2;
       line_x[1] = xmax + 2;
       for (unsigned int i = firstScan - 1; i< numScans + firstScan - 1; i++)
@@ -555,13 +545,13 @@ void US_ExtinctFitter::plot_residuals()
             line_y[0] = offset;
             line_y[1] = offset;
          }
-         c->setSamples(xplot[i], yplot_res[i], points_per_dataset[i]);
+         c->setData(xplot[i], yplot_res[i], points_per_dataset[i]);
          c->setSymbol(symbol);
          c->setPen(p_raw);
 			v_curve_res.push_back(c);
 			QwtPlotCurve* c_two;
 			c_two = us_curve(data_plot, "Zero Line");
-         c_two->setSamples(line_x, line_y, 2);
+         c_two->setData(line_x, line_y, 2);
          c_two->setStyle(QwtPlotCurve::Lines);
          c_two->setPen(p_zero);
 			v_zeroLine.push_back(c_two);
@@ -572,7 +562,7 @@ void US_ExtinctFitter::plot_residuals()
    }
    else
    {
-      symbol->setSize(5);
+      symbol.setSize(5);
       line_x[0] = xmin - 2;
       line_x[1] = xmax + 2;
       for (unsigned int i=0; i<datasets; i++)
@@ -580,13 +570,13 @@ void US_ExtinctFitter::plot_residuals()
 			QwtPlotCurve* c;
          c = us_curve(data_plot, "residuals");
          c->setStyle(QwtPlotCurve::Lines);
-         c->setSamples(xplot[i], yplot_res[i], points_per_dataset[i]);
+         c->setData(xplot[i], yplot_res[i], points_per_dataset[i]);
          c->setSymbol(symbol);
          c->setPen(p_raw);
       }
 		QwtPlotCurve* c_two;
       c_two = us_curve(data_plot, "Zero Line");
-      c_two->setSamples(line_x, line_y, 2);
+      c_two->setData(line_x, line_y, 2);
       c_two->setStyle(QwtPlotCurve::Lines);
       c_two->setPen(p_zero);
       data_plot->setAxisScale(QwtPlot::xBottom, xmin - 10, xmax + 10, 0);
