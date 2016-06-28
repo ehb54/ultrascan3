@@ -28,15 +28,24 @@ int main( int argc, char* argv[] )
 // Constructor
 US_Extinction::US_Extinction() : US_Widgets()
 {
+	disk_controls = new US_Disk_DB_Controls(0);
+	//default values for limits on the graph
 	lambdaLimitLeft = 200.0;
    lambdaLimitRight = 1500.0;
  	lambda_min = 1000;
 	lambda_max = -1000;
-	pathlength = (float) 1.2;
 	odCutoff = 3.0;
+	
+	//length of cuvette
+	pathlength = (float) 1.2;
+	
+	//number of Gaussians to fit
 	order = 15;
+
+	//whether data has been fitted
 	fitted = false;
 
+	//Connect all the buttons on the GUI to their proper functions
 	v_wavelength.clear();
 	pb_addWavelength = us_pushbutton( tr( "Add Wavelength Scanfile") );
 	connect( pb_addWavelength, SIGNAL( clicked()), SLOT(add_wavelength()));
@@ -52,8 +61,6 @@ US_Extinction::US_Extinction() : US_Widgets()
 	connect( pb_save, SIGNAL( clicked()), SLOT(save()));
 	pb_view = us_pushbutton( tr( "View Result File") );
 	connect( pb_view, SIGNAL( clicked()), SLOT(view_result()));
-	pb_print = us_pushbutton( tr( "Print Plot Window"));
-	connect( pb_print, SIGNAL( clicked()), SLOT(print_plot()));
 	pb_help = us_pushbutton( tr( "Help") );
 	connect( pb_help, SIGNAL( clicked()), SLOT(help()));
 	pb_close = us_pushbutton( tr( "Close") );
@@ -141,7 +148,6 @@ US_Extinction::US_Extinction() : US_Widgets()
 	submain->addLayout(gl3, 10, 0);
    submain->addWidget(pb_save, 11, 0);
    submain->addWidget(pb_view, 12, 0);
-   submain->addWidget(pb_print, 13, 0);
    submain->addWidget(pb_help, 14, 0);
    submain->addWidget(pb_close, 15, 0);
 	
@@ -356,7 +362,7 @@ void US_Extinction::plot()
       fit_curve->setPen(QPen(Qt::red, 2, Qt::SolidLine));
       double* ll = (double*)lambda.data();
       double* ee = (double*)extinction.data();
-      fit_curve->setSamples( ll, ee, lambda.size() );
+      fit_curve->setSamples( ll, ee, lambda.size());
 		fit_curve->setYAxis(QwtPlot::yRight);
 	}
 
@@ -369,12 +375,14 @@ void US_Extinction::reset_scanlist(void)
 	lw_file_names->clear();
 	filenames.clear();
 	changedCurve = NULL;
+	fitted = false;
 	v_curve.clear();
 	data_plot->detachItems();
 	data_plot->replot();
 }
 void US_Extinction::update_data(void)
 {
+	fitted = false;
 	pathlength = le_pathlength->text().toFloat();
 	float minimum = le_lambdaLimitLeft->text().toFloat(), maximum = le_lambdaLimitRight->text().toFloat(), odLimit = le_odCutoff->text().toFloat();
 	//Deletes points that are over the cutoffs set by the user
@@ -496,7 +504,7 @@ void US_Extinction::perform_global(void)
                                     projectName, &fitting_widget);
    fitter->show();
 	fitted = true;
-	//causes the program after the fitting widget is closed
+	//causes the fitted line to plot after the fitting widget is closed
    connect(fitter, SIGNAL(fittingWidgetClosed()), SLOT(plot()));
    //data_plot->enableOutline(true);
 }
@@ -511,7 +519,7 @@ void US_Extinction::calc_extinction()
       return;
    }
    if (!lambda.empty())
-   {  
+   { 
       lambda.clear();
       extinction.clear();
    }
@@ -542,10 +550,14 @@ void US_Extinction::calc_extinction()
          od_wavelength = od;
       }
    }
-   for (int i=0; i<extinction.size(); i++)
-   {
-      extinction[i] = extinction_coefficient * (extinction[i]/od_wavelength);
-   }
+	if(od_wavelength != 0)
+	{
+   	for (int i=0; i<extinction.size(); i++)
+   	{
+      	extinction[i] = extinction_coefficient * (extinction[i]/od_wavelength);
+   	}
+	}
+	delete[] fitparameters;
 }
 
 //Changes number of Gaussians used to create the best fit curve
@@ -555,7 +567,24 @@ void US_Extinction::update_order(double new_order)
 }
 void US_Extinction::calculateE280(void)
 {
+   int dbdisk = ( disk_controls->db() ) ? US_Disk_DB_Controls::DB
+                                        : US_Disk_DB_Controls::Disk;
 
+   US_AnalyteGui* analyte_dialog = new US_AnalyteGui( true, QString(), dbdisk );
+
+   connect( analyte_dialog, SIGNAL( valueChanged  ( US_Analyte ) ),
+            this,           SLOT  ( accessAnalyteExtinc( US_Analyte ) ) );
+
+   analyte_dialog->exec();
+   qApp->processEvents();
+}
+
+//Access that analyte's extinction value at the specified wavelength
+void US_Extinction::accessAnalyteExtinc(US_Analyte data)
+{
+	int wavelengthNum = ct_coefficient->value();
+	le_coefficient->setText(QString::number(data.extinction[wavelengthNum]));	
+	currentAnalyte = data;
 }
 void US_Extinction::save(void)
 {
@@ -659,14 +688,11 @@ void US_Extinction::save(void)
       ts << "  return 0;\n";
       ts << "}\n\n\n";
       f2.close();
+		//currentAnalyte.setSpectrum(db);
    }
 
 }
 void US_Extinction::view_result(void)
-{
-
-}
-void US_Extinction::print_plot(void)
 {
 
 }
