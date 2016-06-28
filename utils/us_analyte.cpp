@@ -711,7 +711,7 @@ DEBUG_QUERY;
    q[ 3 ]     = "Refraction";
    int cntref = db->functionQuery( q );
 DEBUG_QUERY;
-   q[ 3 ]     = "Fluourescence";
+   q[ 3 ]     = "Fluorescence";
    int cntflu = db->functionQuery( q );
 DEBUG_QUERY;
 
