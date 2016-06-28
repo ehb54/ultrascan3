@@ -49,7 +49,6 @@ class US_Spectrum : public US_Widgets
       QPushButton *pb_reset_basis;
       QPushButton *pb_delete;
       QPushButton *pb_update;
-      QPushButton *pb_difference;
 		QPushButton	*pb_find_angle;
 		
 		QListWidget *lw_target;
