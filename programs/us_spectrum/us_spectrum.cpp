@@ -32,7 +32,6 @@ US_Spectrum::US_Spectrum() : US_Widgets()
    pb_load_basis->setEnabled(false);
 	connect(pb_load_basis, SIGNAL(clicked()), SLOT(load_basis()));
 	pb_update = us_pushbutton(tr("Update Extinction Scaling"));	
-	pb_difference = us_pushbutton(tr("Difference Spectrum"));
 	pb_delete = us_pushbutton(tr("Delete Current Basis Scan"));
 	connect(pb_delete, SIGNAL(clicked()), SLOT(deleteCurrent()));
 	pb_load_fit = us_pushbutton(tr("Load Fit"));
@@ -53,9 +52,6 @@ US_Spectrum::US_Spectrum() : US_Widgets()
 	pb_close = us_pushbutton(tr("Close"));
 	connect(pb_close, SIGNAL(clicked()), SLOT(close()));
 
-	//Buttons that don't do anything yet
-	pb_difference->setEnabled(false);
-	
 	//List Widgets
 	lw_target = us_listwidget();
 	lw_basis = us_listwidget();
@@ -125,7 +121,6 @@ US_Spectrum::US_Spectrum() : US_Widgets()
 	gl1->addWidget(pb_delete, 7, 0);
    gl1->addWidget(pb_reset_basis, 8, 0);
    gl1->addWidget(pb_overlap, 9, 0);
-   gl1->addWidget(pb_difference, 10, 0);
    gl1->addWidget(pb_fit, 11, 0);
    gl1->addWidget(le_rmsd, 12, 0);
 	gl1->addLayout(angles_layout, 13, 0);
@@ -215,6 +210,7 @@ void US_Spectrum::plot_basis()
 void US_Spectrum::load_target()
 {
    QFileDialog dialog (this);
+	QString fileName = "";
    dialog.setNameFilter(tr("Text (*.res)"));
    dialog.setFileMode(QFileDialog::ExistingFiles);
    dialog.setViewMode(QFileDialog::Detail);
@@ -229,14 +225,18 @@ void US_Spectrum::load_target()
 		target.matchingCurve->detach();
 	}
 	if(dialog.exec())
-	{	
-		QString fileName = dialog.selectedFiles().first();
-		load_gaussian_profile(target, fileName);
-		QFileInfo fi;
-		fi.setFile(fileName);
-      target.filenameBasis = fi.baseName();
+	{
+			fileName = dialog.selectedFiles().first();
+			load_gaussian_profile(target, fileName);
+			QFileInfo fi;
+			fi.setFile(fileName);
+      	target.filenameBasis = fi.baseName();
 	}
-	plot_target();	
+   if(fileName.contains(".res"))
+   {
+		plot_target();
+   }
+
 }
 
 void US_Spectrum:: plot_target()
