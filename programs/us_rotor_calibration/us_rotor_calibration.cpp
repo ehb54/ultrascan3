@@ -89,6 +89,10 @@ US_RotorCalibration::US_RotorCalibration() : US_Widgets()
    ct_channel->setSingleStep( 1 );
    top->addWidget( ct_channel, row++, 0);
 
+   QGridLayout* lo_6channel = us_checkbox( tr( "Use 6-Slot Cal. Mask" ), cb_6channel, false );
+   connect (cb_6channel, SIGNAL (clicked()), this, SLOT (use_6channel()));
+   top->addLayout( lo_6channel, row++, 0 );
+
    QGridLayout* lo_top = us_radiobutton( tr( "Top of channel" ), rb_top );
    connect( rb_top, SIGNAL( clicked() ), SLOT( update_position() ) );
    top->addLayout( lo_top, row++, 0 );
@@ -163,6 +167,16 @@ US_RotorCalibration::US_RotorCalibration() : US_Widgets()
    // Set rubber band to display for Control+Left Mouse Button
    pick->setRubberBand  ( QwtPicker::VLineRubberBand );
    pick->setMousePattern( QwtEventPattern::MouseSelect1, Qt::LeftButton, Qt::ControlModifier );
+}
+
+void US_RotorCalibration::use_6channel()
+{
+	rb_top->setEnabled(false);
+	rb_bottom->setEnabled(false);
+	cb_assigned->setEnabled(false);
+	ct_cell->setEnabled(false);
+	ct_channel->setEnabled(false);
+   le_instructions->setText( tr( "Please zoom all useful vertical regions..."));
 }
 
 void US_RotorCalibration::reset()
@@ -411,12 +425,12 @@ void US_RotorCalibration::loadDB( void )
    QStringList parts =  filenames[ 0 ].split( "." );  
    runID = parts[ 0 ];
 
-   // Look for cell / channel / wavelength combinations
-   maxcell=0;
+	// Look for cell / channel / wavelength combinations
+	maxcell=0;
 	maxchannel=0;
-   for ( int i = 0; i < filenames.size(); i++ )
-   {
-      QStringList part = filenames[ i ].split( "." );
+	for ( int i = 0; i < filenames.size(); i++ )
+	{
+  		QStringList part = filenames[ i ].split( "." );
 
       QString t = part[ 2 ] + " / " + part[ 3 ] + " / " + part[ 4 ];
 		if ((part[3] == "A") && (maxchannel < 1)) maxchannel = 1;
@@ -429,14 +443,14 @@ void US_RotorCalibration::loadDB( void )
 		if ((part[3] == "H") && (maxchannel < 8)) maxchannel = 8;
       if (maxcell < part[2].toInt())
       {
-         maxcell = part[2].toInt();
-      }
-      if ( ! triples.contains( t ) ) triples << t;
+	      maxcell = part[2].toInt();
+   	}
+   	if ( ! triples.contains( t ) ) triples << t;
    }
-   ct_cell   ->setRange( 1, maxcell );
-   ct_channel->setRange( 1, maxchannel );
-   ct_cell   ->setSingleStep( 1 );
-   ct_channel->setSingleStep( 1 );
+	ct_cell   ->setRange( 1, maxcell );
+	ct_channel->setRange( 1, maxchannel );
+	ct_cell   ->setSingleStep( 1 );
+	ct_channel->setSingleStep( 1 );
 
    // Load the data
    QDir dir;
@@ -607,25 +621,76 @@ void US_RotorCalibration::plotAll( void )
 // afterwards to prevent automatic zoom actions to override a zoom limit
 void US_RotorCalibration::currentRect (QwtDoubleRect rect)
 {
-   if (newlimit)
-   {
-      if (top_of_cell)
+   if (cb_6channel->isChecked()) 
+	{
+		divide(rect);
+	}
+	else
+	{
+      if (newlimit)
       {
-         limit[current_triple].rect[0] = rect;
-         limit[current_triple].used[0] = true;
-         cb_assigned->setChecked( true );
+         if (top_of_cell)
+         {
+            limit[current_triple].rect[0] = rect;
+            limit[current_triple].used[0] = true;
+            cb_assigned->setChecked( true );
+         }
+         else
+         {
+            limit[current_triple].rect[1] = rect;
+            limit[current_triple].used[1] = true;
+            cb_assigned->setChecked( true );
+         }
+         pb_calculate->setEnabled( true );
       }
-      else
-      {
-         limit[current_triple].rect[1] = rect;
-         limit[current_triple].used[1] = true;
-         cb_assigned->setChecked( true );
-      }
-      pb_calculate->setEnabled( true );
-   }
-   newlimit = false;
+      newlimit = false;
+	}
 }
 
+void US_RotorCalibration::divide(QwtDoubleRect rect)
+{
+	zoom_mask = rect;
+	QwtDoubleRect tmp_rect;
+   le_instructions->setText( tr( "Please control-left click between each vertical region, then click calculate..."));
+	pick->disconnect();
+	connect( pick, SIGNAL( cMouseUp( const QwtDoublePoint& )),
+					   SLOT  ( mouse   ( const QwtDoublePoint& )));
+	bounds.clear();
+	pb_accept->setEnabled(false);
+	pb_calculate->setEnabled(true);
+}
+
+// takes each separator line drawn for multi-channel calibration mask
+// and plots it into the graph, and saves the separator line's radius 
+// values to the array bounds. 
+void US_RotorCalibration::mouse (const QwtDoublePoint& p)
+{
+	bounds.push_back(p.x());
+   double r[ 2 ];
+
+   r[ 0 ] = p.x();
+   r[ 1 ] = p.x();
+
+#if QT_VERSION < 0x050000
+   QwtScaleDiv* y_axis = data_plot->axisScaleDiv( QwtPlot::yLeft );
+#else
+   QwtScaleDiv* y_axis = (QwtScaleDiv*)&data_plot->axisScaleDiv( QwtPlot::yLeft );
+#endif
+
+   //double padding = ( y_axis->upperBound() - y_axis->lowerBound() ) / 30.0;
+
+   double v[ 2 ];
+   v [ 0 ] = y_axis->upperBound();// - padding;
+   v [ 1 ] = y_axis->lowerBound();// + padding;
+
+   v_line = us_curve( data_plot, "V-Line" );
+   v_line->setSamples( r, v, 2 );
+
+   QPen pen = QPen( QBrush( Qt::white ), 2.0 );
+   v_line->setPen( pen );
+
+   data_plot->replot();
+}
 
 // Once a limit region has been zoomed the user will accept the limits and
 // the routine will automatically cycle to the next limit region. If all limit
@@ -665,7 +730,7 @@ void US_RotorCalibration::next()
    top_of_cell = !top_of_cell;
    pb_accept->setEnabled( true );
    le_instructions->setText( tr( "Please zoom the left vertical region and click "
-            "\"Accept\" when done zooming..." ) );
+   								      "\"Accept\" when done zooming..." ) );
    update_plot();
 }
 
@@ -682,7 +747,11 @@ void US_RotorCalibration::next()
 // values to assure that the zeroth-order coefficient is close to zero. 
 void US_RotorCalibration::calculate()
 {
-
+	if (cb_6channel->isChecked())
+	{
+		calc_6channel();
+ 		return;		
+	}
    QString str = "";
    avg.clear();
    Average tmp_avg;
@@ -697,14 +766,14 @@ void US_RotorCalibration::calculate()
    {
       for ( int j = 0; j < allData[ i ].scanData.size(); j++ ) //all scans in each triple
       {
-         if ( ( QString)allData[ i ].channel == "A" ) tmp_avg.channel = 0;
-         if ( ( QString)allData[ i ].channel == "B" ) tmp_avg.channel = 1;
+      	if ( ( QString)allData[ i ].channel == "A" ) tmp_avg.channel = 0;
+      	if ( ( QString)allData[ i ].channel == "B" ) tmp_avg.channel = 1;
          if ( ( QString)allData[ i ].channel == "C" ) tmp_avg.channel = 2;
-         if ( ( QString)allData[ i ].channel == "D" ) tmp_avg.channel = 3;
-         if ( ( QString)allData[ i ].channel == "E" ) tmp_avg.channel = 4;
-         if ( ( QString)allData[ i ].channel == "F" ) tmp_avg.channel = 5;
-         if ( ( QString)allData[ i ].channel == "G" ) tmp_avg.channel = 6;
-         if ( ( QString)allData[ i ].channel == "H" ) tmp_avg.channel = 7;
+	      if ( ( QString)allData[ i ].channel == "D" ) tmp_avg.channel = 3;
+       	if ( ( QString)allData[ i ].channel == "E" ) tmp_avg.channel = 4;
+       	if ( ( QString)allData[ i ].channel == "F" ) tmp_avg.channel = 5;
+       	if ( ( QString)allData[ i ].channel == "G" ) tmp_avg.channel = 6;
+       	if ( ( QString)allData[ i ].channel == "H" ) tmp_avg.channel = 7;
          
          tmp_avg.cell = allData[ i ].cell;
          tmp_avg.rpm = (int) allData[ i ].scanData[ j ].rpm;
@@ -1162,6 +1231,116 @@ void US_RotorCalibration::calculate()
    fileText += QString( "%1" ).arg( center_avg / center_count, 0, 'e', 5 ) + "\n\n";
 }
 
+
+void US_RotorCalibration::calc_6channel( void ) 
+{
+	QwtDoubleRect rect;
+	int i, j, k;
+	rect.setTop(zoom_mask.top());
+	rect.setBottom(zoom_mask.bottom());
+	rect.setLeft(zoom_mask.left()); // only for first set
+   avg_multi.clear();
+   Average_multi tmp_avg_multi;
+	QVector <Average_multi> avg_multi2;
+
+	for (k=0; k<bounds.size(); k++)
+	{
+		if (k > 0)
+		{	  
+			rect.setLeft(bounds[k-1]);
+		}	
+		rect.setRight(bounds[k]);
+		if (k == bounds.size() - 1)
+		{
+			rect.setRight(zoom_mask.right());
+		}
+   	for (i = 0; i < allData.size(); i++ ) // all the triples
+   	{
+     		for (j = 0; j < allData[ i ].scanData.size(); j++ ) //all scans in each triple
+      	{
+         	if ( ( QString)allData[i].channel == "A" ) tmp_avg_multi.channel = 0;
+         	if ( ( QString)allData[i].channel == "B" ) tmp_avg_multi.channel = 1;
+            if ( ( QString)allData[i].channel == "C" ) tmp_avg_multi.channel = 2;
+ 	         if ( ( QString)allData[i].channel == "D" ) tmp_avg_multi.channel = 3;
+          	if ( ( QString)allData[i].channel == "E" ) tmp_avg_multi.channel = 4;
+          	if ( ( QString)allData[i].channel == "F" ) tmp_avg_multi.channel = 5;
+          	if ( ( QString)allData[i].channel == "G" ) tmp_avg_multi.channel = 6;
+          	if ( ( QString)allData[i].channel == "H" ) tmp_avg_multi.channel = 7;
+
+				tmp_avg_multi.cell  = allData[i].cell;
+				tmp_avg_multi.rpm   = (int) allData[i].scanData[j].rpm;
+				tmp_avg_multi.index = k;
+				tmp_avg_multi.avg   = findAverage(rect, allData[i], j);
+//qDebug() << rect.left() << rect.right() << rect.top() << rect.bottom() << findAverage(rect, allData[i], j);
+				avg_multi.push_back(tmp_avg_multi);
+			}
+		}
+	}
+	QVector <int> speeds;
+	speeds.clear();
+   for (i=0; i<allData.size(); i++) // all the triples
+   {
+      for (j=0; j<allData[i].scanData.size(); j++) //all scans in each triple
+      {
+         if (!speeds.contains((int) allData[i].scanData[j].rpm ) )
+         {
+            speeds << (int) allData[i].scanData[j].rpm;
+         }
+      }
+   }
+   qSort(speeds); // sort the speeds with the slowest being the first element
+	double average;
+	int count = 0;
+
+   // Create a new vector avg_multi2 to hold the average of multiple
+	// scans performed at the same speed from each vertical region.
+	// Note: This routine only allows for 1 cell and 1 channel!
+
+	for (j=0; j<speeds.size(); j++)
+	{
+   	for (k=0; k<bounds.size(); k++)
+   	{
+         count = 0;
+         average = 0.0;
+			for (i=0; i<avg_multi.size(); i++)
+         {
+            if (avg_multi[i].rpm == speeds[j] && avg_multi[i].index == k)
+            {
+               count++;
+					average += avg_multi[i].avg;
+            }
+         }
+         tmp_avg_multi.avg   = average/count;
+         tmp_avg_multi.rpm   = speeds[j];
+         tmp_avg_multi.index = k;
+			avg_multi2.push_back(tmp_avg_multi);
+      }
+   }
+	double val1, val2;
+	QVector <SpeedEntry> SE_v;
+	SpeedEntry SE_tmp;
+	for (i=0; i<avg_multi2.size(); i++)
+	{
+		SE_tmp.diff.clear();
+		for (k=0; k<bounds.size(); k++)
+		{
+			for (j=1; j<speeds.size(); j++)
+			{
+				if (avg_multi2[i].rpm == speeds[j] && avg_multi2[i].index == k)
+				{
+					val1 = avg_multi2[i].avg;
+					SE_tmp.speed = (double) speeds[j];
+				}
+				if (avg_multi2[i].rpm == speeds[j-1] && avg_multi2[i].index == k)
+				{
+					val2 = avg_multi2[i].avg;
+				}
+			}
+			SE_tmp.diff.push_back(val1-val2);
+			qDebug() << SE_tmp.speed << val1-val2;
+		}
+	}
+}
 
 double US_RotorCalibration::findAverage( QwtDoubleRect rect,
       US_DataIO::RawData data, int i )

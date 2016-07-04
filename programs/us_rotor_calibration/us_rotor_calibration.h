@@ -25,6 +25,21 @@ struct Average
    int    bottom_count;
 };
 
+struct Average_multi
+{
+   double avg; // holds the radial average of all points belonging to this scan
+   int    cell;
+   int    rpm;
+   int    channel;
+   int    index; // holds the index of the division, zero is the first on the left
+};
+
+struct SpeedEntry
+{
+	QVector <double> diff;
+	double speed;
+};
+
 struct Limit
 {
    // this structure contains 2 limits:
@@ -105,14 +120,20 @@ class US_RotorCalibration : public US_Widgets
       QRadioButton*      rb_bottom;
 
       QCheckBox*         cb_assigned;
+      QCheckBox*         cb_6channel;
       QComboBox*         cb_lab;
       
       US_DataIO::RawData             data;
       QVector< US_DataIO::RawData >  allData;
       QVector< Average >             avg;
+      QVector< Average_multi >       avg_multi;
       QVector< QVector < double > >  reading;
       QVector< double >              stretch_factors, std_dev;
       QVector< Limit >               limit;
+		QVector< double >              bounds; // holds x-limits for multi-channel calibration mask
+		QVector< QwtDoubleRect >       bounds_rect; // holds limits for multi-channel calibration mask
+
+		QwtDoubleRect						 zoom_mask; // holds zoomed rectangle for multi-channel calibration mask
 
    private slots:
       void       reset          ( void );
@@ -123,13 +144,17 @@ class US_RotorCalibration : public US_Widgets
       void       loadDisk       ( void );
       void       plotAll        ( void );
       void       currentRect    ( QwtDoubleRect );
+      void       divide         ( QwtDoubleRect );
+      void       mouse          ( const QwtDoublePoint& );
       void       findTriple     ( void );
       void       next           ( void );
       void       calculate      ( void );
+      void       calc_6channel  ( void );
       double     findAverage    ( QwtDoubleRect, US_DataIO::RawData, int );
       void       save           ( void );
       void       view           ( void );
       void       update_used    ( void );
+      void       use_6channel   ( void );
       void       update_cell    ( double );
       void       update_channel ( double );
       void       update_position( void );
