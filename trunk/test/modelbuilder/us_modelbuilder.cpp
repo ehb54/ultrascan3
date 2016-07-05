@@ -3,36 +3,7 @@
 #include "us_modelbuilder.h"
 #include <QApplication>
 #include <QDomDocument>
-#include "us_license_t.h"
-#include "us_license.h"
-#include "us_settings.h"
-#include "us_gui_settings.h"
-#include "us_investigator.h"
-#include "us_run_details2.h"
 #include "us_math2.h"
-#include "us_util.h"
-#include "us_load_auc.h"
-#include "us_passwd.h"
-#include "us_db2.h"
-#include "us_constants.h"
-#include "us_simparms.h"
-#include "us_constants.h"
-#include "../us_astfem_sim/us_simulationparameters.h"
-#include "../us_astfem_sim/us_astfem_sim.h"
-#include "us_astfem_rsa.h"
-#include "us_model.h"
-#include "us_dataIO.h"
-//#include <cmath>
-#include <QVector>
-#include <QFile>
-#include <QFileInfo>
-#include <QDirIterator>
-#include <QTextStream>
-#include <qtconcurrentrun.h>
-#include <QThread>
-#include "us_plot3d_xyz.h"
-#include "points2.h"
-//#include "qmath.h"
 
 using namespace std;
 #ifndef DbgLv
@@ -44,9 +15,9 @@ using namespace std;
 
 int main(int argc, char* argv[]) {
     QApplication application(argc, argv);
-
-#include "main1.inc"
-
+    
+    #include "main1.inc"
+    
     // License is OK.  Start up.
 
     US_ModelBuilder w;
@@ -885,7 +856,7 @@ QVector2D* US_ModelBuilder::getNextPoint(QVector2D start, QVector2D end, double 
 
 double US_ModelBuilder::calculate_diffusion(double s_val, double k_val) {
 
-    //double R = 8.314e7; - already defined in US_Constans
+    double R = 8.314e7; // already defined in US_Constants
     double T = 293.15;
     double vbar = 0.72;
     double eta = 0.01;

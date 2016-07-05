@@ -8,7 +8,8 @@
 #include "us_widgets.h"
 #include "us_help.h"
 #include "us_plot.h"
-#include "us_simparms.h"
+#include "us_astfem_rsa.h"
+#include "us_model.h"
 #include "us_editor.h"
 #include "us_license_t.h"
 #include "us_license.h"
@@ -16,20 +17,27 @@
 #include "us_gui_settings.h"
 #include "us_investigator.h"
 #include "us_run_details2.h"
-//#include "us_math2.h"
 #include <cmath>
 #include "us_util.h"
 #include "us_load_auc.h"
 #include "us_passwd.h"
 #include "us_db2.h"
 #include "us_constants.h"
-#include "../us_astfem_sim/us_simulationparameters.h"
-#include "../us_astfem_sim/us_astfem_sim.h"
+#include "us_dataIO.h"
+#include "us_plot3d_xyz.h"
+#include "../../programs/us_astfem_sim/us_simulationparameters.h"
+#include "../../programs/us_astfem_sim/us_astfem_sim.h"
 #include <QVector>
+#include <QFile>
+#include <QFileInfo>
+#include <QDirIterator>
+#include <QTextStream>
+#include <qtconcurrentrun.h>
+#include <QThread>
+
 #include <qwt_legend.h>
 #include "RegularGrid.h"
 #include "points2.h"
-//#include "qmath.h"
 
 class US_ModelBuilder : public US_Widgets {
     Q_OBJECT
