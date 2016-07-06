@@ -38,6 +38,7 @@ struct SpeedEntry
 {
 	QVector <double> diff;
 	double speed;
+	int channel;
 };
 
 struct Limit
