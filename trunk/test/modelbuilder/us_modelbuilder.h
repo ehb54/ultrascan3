@@ -84,8 +84,8 @@ private slots:
     QVector<QVector2D*>* calculate_line
     (QVector<double>* params, QVector2D* initial, QVector2D* end);
 
-    QVector<QVector<QVector2D*> >* identify_boundaryPoints
-    (QVector2D* initial_QVector2D);
+    /*QVector<QVector<QVector2D*> >* identify_boundaryPoints
+    (QVector2D* initial_QVector2D);*/
 
     QVector<QVector<QVector2D*> *>* readAnalyticalPoints
     (QString filename);
