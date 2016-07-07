@@ -988,6 +988,9 @@ void grid::run(int steps, bool do_write, QwtPlot* grid_display) {
 		// Assign force, I think
                 Fi[ *it ] = F(*it);
                 
+		//print force for point
+		cout << "Force: " << Fi[ *it ] << endl;
+		
                 // cout << "F:" << *it << " = " << Fi[ *it ] << " mag2:" << point::mag2( Fi[ *it ] ) <<  endl;
                 totmag2 += point::mag2(Fi[ *it ]);
             }
@@ -1041,10 +1044,11 @@ double grid::charge(point p) {
     //get RMSD value
     double interpolated = calculatedGrid->interpolate(p);
 
+    return interpolated;
     //set charge to negative difference between RMSD and RMSD target TODO: scaling
-    double charge = -(interpolated - calculatedGrid->getRMSDTarget());
-
-    return charge;
+    //double charge = -(interpolated - calculatedGrid->getRMSDTarget());
+    
+    //return charge;
 }
 
 double* grid::get_dim_values(int dim) {
