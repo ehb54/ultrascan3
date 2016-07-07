@@ -878,10 +878,51 @@ double US_ModelBuilder::calculate_diffusion(double s_val, double k_val) {
 //this function initalizes the simparams variable
 
 void US_ModelBuilder::initalize_simulationParameters() {
-    if (simparams.load_simparms("Resources/sp_defaultProfle.xml") != 0) {
+    /*if (simparams.load_simparms("Resources/sp_defaultProfle.xml") != 0) {
         startButton->setEnabled(false);
         qDebug() << "Error: Simulation Parameters cannot be loaded. Manual selection required.";
-    }
+    }*/
+    
+    US_SimulationParameters::SpeedProfile sp;
+    QString rotor_calibr = "0";
+    double  rpm          = 45000.0;
+
+    // set up bottom start and rotor coefficients from hardware file
+    simparams.setHardware( NULL, rotor_calibr, 0, 0 );
+
+    // calculate bottom from rpm, channel bottom pos., rotor coefficients
+    double bottom = US_AstfemMath::calc_bottom( rpm,
+	  simparams.bottom_position, simparams.rotorcoeffs );
+    bottom        = (double)( qRound( bottom * 1000.0 ) ) * 0.001;
+
+    simparams.mesh_radius.clear();
+    simparams.speed_step .clear();
+
+    sp.duration_hours    = 5;
+    sp.duration_minutes  = 30.0;
+    sp.delay_hours       = 0;
+    sp.delay_minutes     = 20.0;
+    sp.rotorspeed        = (int)rpm;
+    sp.scans             = 30;
+    sp.acceleration      = 400;
+    sp.acceleration_flag = true;
+
+    simparams.speed_step << sp;
+
+    simparams.simpoints         = 200;
+    simparams.radial_resolution = 0.001;
+    simparams.meshType          = US_SimulationParameters::ASTFEM;
+    simparams.gridType          = US_SimulationParameters::MOVING;
+    simparams.meniscus          = 5.8;
+    simparams.bottom            = bottom;
+    simparams.rnoise            = 0.0;
+    simparams.tinoise           = 0.0;
+    simparams.rinoise           = 0.0;
+    simparams.band_volume       = 0.015;
+    simparams.rotorCalID        = rotor_calibr;
+    simparams.band_forming      = false;
+    
+    //set workingsimparams
     working_simparams = simparams;
 }
 
