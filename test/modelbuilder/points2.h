@@ -11,6 +11,7 @@
 #include <math.h>
 #include <QVector2D>
 #include "RegularGrid.h"
+#include "us_plot.h"
 
 // #define THREADS 8
 
@@ -63,11 +64,12 @@ public:
 
     grid(RegularGrid* rg, point pts, double deltat, int neighbour_points = 0, int neighbour_steps = 0);
     //grid( RegularGrid* rg ,double deltat ,int neighbour_points = 0,int neighbour_steps = 0 );
-    void run(int steps, bool do_write = false);
+    void run(int steps, bool do_write = false, QwtPlot* grid_display = NULL);
 
     bool write_pgrid(string file);
     bool in_bounds(point p);
     double charge(point p);
+    double* get_dim_values(int dim);
 
 private:
 

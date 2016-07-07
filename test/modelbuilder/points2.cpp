@@ -35,7 +35,7 @@ point::point(QVector2D *targetPoint, int id) //NOTE: only for use when DIM = 2
     this->id = id;
 }
 
-           /*static*/ point point::point_min(const point& x, const point& y) {
+/*static*/ point point::point_min(const point& x, const point& y) {
     point z = x;
     for (int i = 0; i < DIM; ++i) {
         if (z.x[ i ] > y.x[ i ]) {
@@ -45,7 +45,7 @@ point::point(QVector2D *targetPoint, int id) //NOTE: only for use when DIM = 2
     return z;
 }
 
-           /*static*/ point point::point_max(const point& x, const point& y) {
+/*static*/ point point::point_max(const point& x, const point& y) {
     point z = x;
     for (int i = 0; i < DIM; ++i) {
         if (z.x[ i ] < y.x[ i ]) {
@@ -55,7 +55,7 @@ point::point(QVector2D *targetPoint, int id) //NOTE: only for use when DIM = 2
     return z;
 }
 
-           /*static*/ double point::mag2(const point& x) {
+/*static*/ double point::mag2(const point& x) {
     double mag2 = 0e0;
     for (int i = 0; i < DIM; ++i) {
         mag2 += x.x[ i ] * x.x[ i ];
@@ -63,7 +63,7 @@ point::point(QVector2D *targetPoint, int id) //NOTE: only for use when DIM = 2
     return mag2;
 }
 
-           /*static*/ double point::r2(const point& x, const point& y) {
+/*static*/ double point::r2(const point& x, const point& y) {
     double r2 = 0;
     for (int i = 0; i < DIM; ++i) {
         double tmp = x.x[ i ] - y.x[ i ];
@@ -72,7 +72,7 @@ point::point(QVector2D *targetPoint, int id) //NOTE: only for use when DIM = 2
     return r2;
 }
 
-           /*static*/ double point::r3(const point& x, const point& y) {
+/*static*/ double point::r3(const point& x, const point& y) {
     double r3 = 0;
     for (int i = 0; i < DIM; ++i) {
         double tmp = fabs(x.x[ i ] - y.x[ i ]);
@@ -81,7 +81,7 @@ point::point(QVector2D *targetPoint, int id) //NOTE: only for use when DIM = 2
     return r3;
 }
 
-           /*static*/ double point::r6(const point& x, const point& y) {
+/*static*/ double point::r6(const point& x, const point& y) {
     double r6 = 0;
     for (int i = 0; i < DIM; ++i) {
         double tmp = x.x[ i ] - y.x[ i ];
@@ -698,6 +698,7 @@ point grid::F(point p) {
     return F;
 }
 
+/*
 bool grid::write_pgrid( string filename ) {
    ofstream file;
    file.open ( filename.c_str() );
@@ -717,9 +718,10 @@ bool grid::write_pgrid( string filename ) {
    file.close();
    return true;
 }
+*/
 
 //write only points that are not edges
-/*bool grid::write_pgrid(string filename) {
+bool grid::write_pgrid(string filename) {
     ofstream file;
     file.open(filename.c_str());
     if (!file.is_open()) {
@@ -740,7 +742,7 @@ bool grid::write_pgrid( string filename ) {
 
     file.close();
     return true;
-}*/
+}
 
 void grid::trim_edges_not_neighbours() {
     set < point > used_neighbours;
@@ -940,9 +942,22 @@ void grid::recompute_neighbours(double mult) {
 }
 #endif
 
-void grid::run(int steps, bool do_write) {
+void grid::run(int steps, bool do_write, QwtPlot* grid_display) {
+    //declare display point curve
+    QwtPlotCurve* curve = NULL;
+    if(grid_display != NULL) {
+      curve = new QwtPlotCurve("E-Min Points");
+      curve->setStyle(QwtPlotCurve::NoCurve);
+      
+      QwtSymbol sym;
+      sym.setStyle(QwtSymbol::XCross);
+      sym.setSize(QSize(3, 3));
+      curve->setSymbol(sym);
+      
+      curve->attach(grid_display);
+    }
+  
     // compute forces
-
     map < point, point > Fi;
 
     for (int i = 0; i < steps; ++i) {
@@ -970,7 +985,9 @@ void grid::run(int steps, bool do_write) {
                 it != pgrid.end();
                 ++it) {
             if (!edges.count(*it)) {
+		// Assign force, I think
                 Fi[ *it ] = F(*it);
+                
                 // cout << "F:" << *it << " = " << Fi[ *it ] << " mag2:" << point::mag2( Fi[ *it ] ) <<  endl;
                 totmag2 += point::mag2(Fi[ *it ]);
             }
@@ -985,15 +1002,26 @@ void grid::run(int steps, bool do_write) {
             for (set < point >::iterator it = pgrid.begin();
                     it != pgrid.end();
                     ++it) {
+		//case for points that are not the fixed repulsion edge
                 if (!edges.count(*it)) {
                     point porg = *it;
                     new_pgrid.insert(porg + Fi[ *it ] * deltat);
-                } else {
+                }
+                
+                //case for points that comprise the fixed edge 
+                else {
                     new_pgrid.insert(*it);
                 }
             }
             pgrid = new_pgrid;
         }
+        
+        //if needed, update plot
+	if(grid_display != NULL) {
+	  curve->setData(get_dim_values(0), get_dim_values(1), pgrid.size());
+	    
+	  grid_display->replot();
+	}
     }
 }
 
@@ -1017,4 +1045,21 @@ double grid::charge(point p) {
     double charge = -(interpolated - calculatedGrid->getRMSDTarget());
 
     return charge;
+}
+
+double* grid::get_dim_values(int dim) {
+  //create double vector with length of pgrid
+  double* values = new double[pgrid.size()];
+  int index = 0;
+  
+  //iterate over pgrid
+  for(set < point >::iterator it = pgrid.begin();
+                it != pgrid.end();
+                ++it) {
+    if (edges.find(*it) == edges.end()) {
+      values[index++] = it->x[dim];
+    }
+  }
+  
+  return values;
 }

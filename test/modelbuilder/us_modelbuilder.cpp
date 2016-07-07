@@ -97,9 +97,13 @@ US_ModelBuilder::US_ModelBuilder() : US_Widgets() {
     data_plot->setMinimumSize(400, 200);
     data_plot->setAutoReplot(true);
 
-    data_plot->setAxisTitle(0, "S-Value");
-    data_plot->setAxisTitle(2, "f/f0");
+    data_plot->setAxisTitle(0, "Frictional Ratio");
+    data_plot->setAxisTitle(2, "Sedimentation Coefficient");
 
+    data_plot->setAxisScale(0, 1, 3.5);
+    data_plot->setAxisScale(2, -7e-19, 1e16);
+    //data_plot->setAxisScale(2, 0, 15);
+    
     QwtLegend legend;
     legend.setFrameStyle(QFrame::Box | QFrame::Sunken);
     data_plot->insertLegend(&legend, QwtPlot::BottomLegend);
@@ -157,7 +161,7 @@ void US_ModelBuilder::startSimulation(void) {
     //QVector<QVector2D> faxenGrid = generateFaxenGrid(1e-13, 3.5e-13, 1, 4, 500);
 
     qDebug() << "Generating regular grid";
-    QVector<QVector<QVector2D*>* >* raw = generateRegularGrid(1e-13, 1e-12, 1, 4, 400);
+    QVector<QVector<QVector2D*>* >* raw = generateRegularGrid(1e-13, 1e-12, 1, 4, 100);
 
     qDebug() << "Calculating RMSDs for regular grid.";
     RegularGrid* rg = testRegularGrid(raw);
@@ -165,26 +169,26 @@ void US_ModelBuilder::startSimulation(void) {
     //set RMSD Target
     rg->setRMSDTarget(0.2);
 
-    QVector< QVector < QVector3D* >* >* gridPoints = rg->getGrid();
-
+    //QVector< QVector < QVector3D* >* >* gridPoints = rg->getGrid();
+  
+    /*
     //scale up s-values to whole number range
-    for(int y = 0; y < gridPoints->size(); y++)
-    {	
-            for(int x = 0; x < gridPoints->at(y)->size(); x++)
-            {
+    for(int y = 0; y < gridPoints->size(); y++) {
+            for(int x = 0; x < gridPoints->at(y)->size(); x++) {
                     //do upscalaing
                     gridPoints->at(y)->at(x)->setX(gridPoints->at(y)->at(x)->x() * 1e13);
             }
-    }
+    }*/
 
     qDebug() << "Grid generated. Creating annealing object...";
     //double pts[] = {rg->getGrid()->size() - 1, rg->getGrid()->at(0)->size() - 1}; //number of points to place on grid
     double pts[] = {35, 35};
+    
     //grid gr(rg, pts, 2e-7);
-    grid gr(rg, pts, 2e-7, 8);
-
+    grid gr(rg, pts, 2e-7, 8); //only consider 8 nearest neighbors
+    
     qDebug() << "Object created. Running annealing process..";
-    gr.run(25);
+    gr.run(25, false, data_plot);
 
     qDebug() << "Annealing finished. Writing to file...";
     gr.write_pgrid("annealedGrid.out");
@@ -1177,15 +1181,16 @@ QVector2D* US_ModelBuilder::calculateMidpoint(QVector2D* point1, QVector2D* poin
     return mdpt;
 }
 
+/*
 QVector<QVector<QVector2D*> >* US_ModelBuilder::identify_boundaryPoints(QVector2D* initial_point) {
 
     //variables for use in calculation loops
-    /*top_side->append(initial_point);
-    right_side->append(initial_point);
-    bottom_side->append(new QVector2D(initial_point->x(), gui_data->at(1)));
-    left_side->append(new QVector2D(gui_data->at(0), initial_point->y()));*/
+    //top_side->append(initial_point);
+    //right_side->append(initial_point);
+    //bottom_side->append(new QVector2D(initial_point->x(), gui_data->at(1)));
+    //left_side->append(new QVector2D(gui_data->at(0), initial_point->y()));
 
-    /*
+    
     //variables to store search parameters
     //TODO: fetch values from GUI - store in array
     QVector<double>* gui_data = new QVector <double>;
@@ -1237,6 +1242,6 @@ QVector<QVector<QVector2D*> >* US_ModelBuilder::identify_boundaryPoints(QVector2
     qDebug() << "Size of right side:" << sides->at(1).size();
     qDebug() << "Size of bottom side:" << sides->at(2).size();
     qDebug() << "Size of left side:" << sides->at(3).size();
-     */
+    
     return NULL;
-}
+}*/
