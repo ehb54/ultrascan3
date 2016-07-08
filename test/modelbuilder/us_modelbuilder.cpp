@@ -101,7 +101,7 @@ US_ModelBuilder::US_ModelBuilder() : US_Widgets() {
     data_plot->setAxisTitle(2, "Sedimentation Coefficient");
 
     data_plot->setAxisScale(0, 1, 3.5);
-    data_plot->setAxisScale(2, -7e-19, 1e16);
+    //data_plot->setAxisScale(2, -7e-19, 1e16);
     //data_plot->setAxisScale(2, 0, 15);
     
     QwtLegend legend;
@@ -169,23 +169,23 @@ void US_ModelBuilder::startSimulation(void) {
     //set RMSD Target
     rg->setRMSDTarget(0.2);
 
-    //QVector< QVector < QVector3D* >* >* gridPoints = rg->getGrid();
-  
-    /*
+    QVector< QVector < QVector3D* >* >* gridPoints = rg->getGrid();
+    
     //scale up s-values to whole number range
     for(int y = 0; y < gridPoints->size(); y++) {
             for(int x = 0; x < gridPoints->at(y)->size(); x++) {
                     //do upscalaing
                     gridPoints->at(y)->at(x)->setX(gridPoints->at(y)->at(x)->x() * 1e13);
             }
-    }*/
+    }
 
     qDebug() << "Grid generated. Creating annealing object...";
     //double pts[] = {rg->getGrid()->size() - 1, rg->getGrid()->at(0)->size() - 1}; //number of points to place on grid
     double pts[] = {35, 35};
     
     //grid gr(rg, pts, 2e-7);
-    grid gr(rg, pts, 2e-7, 8); //only consider 8 nearest neighbors
+    //grid gr(rg, pts, 2e-7, 8); //only consider 8 nearest neighbors
+    grid gr(rg, pts, 2e-7, 8);
     
     qDebug() << "Object created. Running annealing process..";
     gr.run(25, false, data_plot);
@@ -1086,7 +1086,6 @@ US_Model* US_ModelBuilder::get_model(double s_value, double d_value, double k_va
     current_model->components[0].s = s_value;
     current_model->components[0].D = d_value;
     current_model->components[0].f_f0 = k_value;
-
 
     //current_model->debug();
 
