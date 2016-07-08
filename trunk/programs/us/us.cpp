@@ -386,7 +386,6 @@ qDebug() << "PROCESS   status" << status << "e-stderr len" << estderr.length();
 void US_Win::launch( int index )
 {
    static const int trig_secs=3600;
-//   static const int trig_secs=3;
    index        -= P_CONFIG;
    QString pname = p[ index ].name;
 
