@@ -676,8 +676,8 @@ point grid::F(point p) {
     point F(0e0);
 
     double this_charge = charge(p);
-
-    // cout << "point:" << p << " charge: " << this_charge << endl;
+    
+    cout << "point:" << p << " charge: " << this_charge << endl;
 
     if (neighbour_points) {
         for (set < point >::iterator it = neighbours[ p ].begin();
@@ -1009,6 +1009,11 @@ void grid::run(int steps, bool do_write, QwtPlot* grid_display) {
                 if (!edges.count(*it)) {
                     point porg = *it;
                     new_pgrid.insert(porg + Fi[ *it ] * deltat);
+		    
+		    //check if new point is not in bounds
+		    /*if(!in_bounds(*(--new_pgrid.end()))) {
+		      cout << "Point out of bounds" << endl;
+		    }*/
                 }
                 
                 //case for points that comprise the fixed edge 
@@ -1041,14 +1046,12 @@ bool grid::in_bounds(point p) {
 }
 
 double grid::charge(point p) {
+    
+    return 1;
+    /*
     //get RMSD value
     double interpolated = calculatedGrid->interpolate(p);
-
-    return interpolated;
-    //set charge to negative difference between RMSD and RMSD target TODO: scaling
-    //double charge = -(interpolated - calculatedGrid->getRMSDTarget());
-    
-    //return charge;
+    return interpolated;*/
 }
 
 double* grid::get_dim_values(int dim) {
