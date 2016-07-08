@@ -1465,6 +1465,29 @@ void US_RotorCalibration::calc_6channel(void)
 
    pb_save->setEnabled(true);
    pb_view->setEnabled(true);
+   QDateTime now = QDateTime::currentDateTime();
+   fileText = "CALIBRATION REPORT FOR ROTOR: " + rotor + "\nPERFORMED ON: " + now.toString();
+   fileText += "\n\nCalibration is based on data from run: " + runID;
+   fileText += "\n\nThe following equation was fitted to the measured "
+               "stretch values for this rotor:\n\n";
+   
+   fileText += "Stretch = " + QString("%1").arg(coef[0], 0, 'e', 5 ) + " + "
+                            + QString("%1").arg(coef[1], 0, 'e', 5 ) + " rpm + "
+                            + QString("%1").arg(coef[2], 0, 'e', 5 ) + " rpm^2\n\n";
+   
+   fileText += "Below is a listing of the stretching values as a function of speed:\n\n";
+   fileText += "Speed: Stretch (cm): Standard Dev.:\n";
+   
+   fileText += QString( "%1" ).arg( 0, 5, 10 ) + "   "
+             + QString( "%1" ).arg( 0.0, 0, 'e', 5 ) + "   "
+             + QString( "%1" ).arg( 0.0, 0, 'e', 5 ) + "\n";
+   
+   for ( int i = 0; i < numspeeds; i++ )
+   {
+      fileText += QString( "%1" ).arg(speeds[i], 5, 10)             + "   "
+                + QString( "%1").arg(y[i], 0, 'e', 5 ) + "   "
+                + QString( "%1").arg((sd1[i] - y[i])/2.0, 0, 'e', 5 )         + "\n";
+   }
 }
 
 double US_RotorCalibration::findAverage(QwtDoubleRect rect,
