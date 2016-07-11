@@ -701,7 +701,7 @@ point grid::F(point p) {
 }
 
 
-bool grid::write_pgrid( string filename ) {
+/*bool grid::write_pgrid( string filename ) {
    ofstream file;
    file.open ( filename.c_str() );
    if ( !file.is_open() ) {
@@ -719,9 +719,9 @@ bool grid::write_pgrid( string filename ) {
 
    file.close();
    return true;
-}
+}*/
 
-/*
+
 //write only points that are not edges
 bool grid::write_pgrid(string filename) {
     ofstream file;
@@ -744,7 +744,7 @@ bool grid::write_pgrid(string filename) {
 
     file.close();
     return true;
-}*/
+}
 
 void grid::trim_edges_not_neighbours() {
     set < point > used_neighbours;
@@ -945,9 +945,15 @@ void grid::recompute_neighbours(double mult) {
 #endif
 
 void grid::run(int steps, bool do_write, QwtPlot* grid_display) {
-    //declare display point curve
+    //declare display point curve and data structures
     QwtPlotCurve* curve = NULL;
+    double* dim_0_values;
+    double* dim_1_values;
+    
     if(grid_display != NULL) {
+      //clear display
+      curve->setData(QwtArray<QwtDoublePoint>());
+      
       curve = new QwtPlotCurve("E-Min Points");
       curve->setStyle(QwtPlotCurve::NoCurve);
       
@@ -1007,7 +1013,7 @@ void grid::run(int steps, bool do_write, QwtPlot* grid_display) {
                     ++it) {
 		//case for points that are not the fixed repulsion edge
                 //if (!edges.count(*it)) {
-		if (edges.count(*it) == 0) {
+		if (edges.find(*it) == edges.end()) {
                     point porg = *it;
 		    
 		    //new_pgrid.insert(porg + Fi[ *it ] * deltat); //old insertion code
@@ -1045,10 +1051,14 @@ void grid::run(int steps, bool do_write, QwtPlot* grid_display) {
         
         //if needed, update plot
 	if(grid_display != NULL) {
-	  curve->setData(QwtArray<QwtDoublePoint>());
+	  //curve->setData(QwtArray<QwtDoublePoint>());
 	  
-	  curve->setData(get_dim_values(0), get_dim_values(1), pgrid.size());
-	    
+	  dim_0_values = get_dim_values(0);
+	  dim_1_values = get_dim_values(1);
+	  curve->setData(dim_0_values, dim_1_values, pgrid.size());
+	  delete dim_0_values;
+	  delete dim_1_values;
+	  
 	  grid_display->replot();
 	}
     }
@@ -1089,9 +1099,9 @@ point grid::do_reflect(point p, point vector, point dir){
   
   //do vector reflection math, reducing magnitude
   if(dir.x[0] != 0.0)
-    delta_x = -delta_x * 0.5;
+    delta_x = -delta_x * .5;
   if(dir.x[1] != 0.0)
-    delta_y = -delta_y * 0.5;
+    delta_y = -delta_y * .5;
   
   //fill vector
   new_vector.x[0] = delta_x;
@@ -1104,7 +1114,9 @@ point grid::do_reflect(point p, point vector, point dir){
   if(in_bounds(result))
       return result;
   else // not in bounds
-      return do_reflect(result, new_vector, check_bounds(result));
+  {
+      return do_reflect(p, new_vector, dir);
+  }
 }
 
 //n-dimensional boolean out of bounds detection function; disabled to allow for directional 2d check
@@ -1137,7 +1149,7 @@ double* grid::get_dim_values(int dim) {
   for(set < point >::iterator it = pgrid.begin();
                 it != pgrid.end();
                 ++it) {
-    if (edges.count(*it) == 0) {
+    if (edges.find(*it) == edges.end()) {
       values[index++] = it->x[dim];
     }
   }
