@@ -951,9 +951,6 @@ void grid::run(int steps, bool do_write, QwtPlot* grid_display) {
     double* dim_1_values;
     
     if(grid_display != NULL) {
-      //clear display
-      curve->setData(QwtArray<QwtDoublePoint>());
-      
       curve = new QwtPlotCurve("E-Min Points");
       curve->setStyle(QwtPlotCurve::NoCurve);
       
@@ -1061,6 +1058,13 @@ void grid::run(int steps, bool do_write, QwtPlot* grid_display) {
 	  
 	  grid_display->replot();
 	}
+    }
+    
+    //do display cleanup
+    if(grid_display != NULL) {
+	//clear display
+	curve->setData(QwtArray<QwtDoublePoint>());
+	delete curve;
     }
 }
 
