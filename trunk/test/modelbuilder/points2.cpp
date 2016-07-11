@@ -700,7 +700,7 @@ point grid::F(point p) {
     return F;
 }
 
-/*
+
 bool grid::write_pgrid( string filename ) {
    ofstream file;
    file.open ( filename.c_str() );
@@ -720,8 +720,8 @@ bool grid::write_pgrid( string filename ) {
    file.close();
    return true;
 }
-*/
 
+/*
 //write only points that are not edges
 bool grid::write_pgrid(string filename) {
     ofstream file;
@@ -744,7 +744,7 @@ bool grid::write_pgrid(string filename) {
 
     file.close();
     return true;
-}
+}*/
 
 void grid::trim_edges_not_neighbours() {
     set < point > used_neighbours;
@@ -952,8 +952,8 @@ void grid::run(int steps, bool do_write, QwtPlot* grid_display) {
       curve->setStyle(QwtPlotCurve::NoCurve);
       
       QwtSymbol sym;
-      sym.setStyle(QwtSymbol::XCross);
-      sym.setSize(QSize(3, 3));
+      sym.setStyle(QwtSymbol::Ellipse);
+      sym.setSize(QSize(5, 5));
       curve->setSymbol(sym);
       
       curve->attach(grid_display);
@@ -989,11 +989,9 @@ void grid::run(int steps, bool do_write, QwtPlot* grid_display) {
             if (!edges.count(*it)) {
 		// Assign force, I think
                 Fi[ *it ] = F(*it);
-                
-		//print force for point
-		//cout << "Force: " << Fi[ *it ] << endl;
 		
-                // cout << "F:" << *it << " = " << Fi[ *it ] << " mag2:" << point::mag2( Fi[ *it ] ) <<  endl;
+                //cout << "F:" << *it << " = " << Fi[ *it ] << " mag2:" << point::mag2( Fi[ *it ] ) <<  endl;
+		 
                 totmag2 += point::mag2(Fi[ *it ]);
             }
         }
@@ -1014,19 +1012,26 @@ void grid::run(int steps, bool do_write, QwtPlot* grid_display) {
 		    
 		    //new_pgrid.insert(porg + Fi[ *it ] * deltat); //old insertion code
 		    
-		    /*if(!in_bounds(porg))
-		      cout << porg << " is out of bounds!" << endl;*/
+		    if(!in_bounds(porg))
+		      cout << porg << " is out of bounds!" << endl;
 		    
 		    point vector = Fi[ *it ] * deltat; //precompute vector
 		    point direction = check_bounds(porg + vector);
+		    
+		    //cout << "Point: " << porg << " - Force vector: " << vector << endl;
 		    
 		    //check if new point is in bounds
 		    if(in_bounds(porg + vector)) {
 			new_pgrid.insert(porg + vector);
 		    }
-		    //otherwise, don't move; TODO: Reflect
+		    //otherwise, don't move TODO: Ensure that points cannot go out of bounds
 		    else {
-			new_pgrid.insert(do_reflect(porg, vector, direction));
+			point npt = do_reflect(porg, vector, direction);
+			
+			if(!in_bounds(npt))
+			  cout << "New point is not in bounds!" << endl;
+			
+			new_pgrid.insert(npt);
 		    }
                 }
                 
@@ -1082,18 +1087,24 @@ point grid::do_reflect(point p, point vector, point dir){
   
   point new_vector(0e0);
   
-  //do vector reflection math
+  //do vector reflection math, reducing magnitude
   if(dir.x[0] != 0.0)
-    delta_x = -delta_x;
+    delta_x = -delta_x * 0.5;
   if(dir.x[1] != 0.0)
-    delta_y = -delta_y;
+    delta_y = -delta_y * 0.5;
   
   //fill vector
   new_vector.x[0] = delta_x;
   new_vector.x[1] = delta_y;
   
-  //do final computation and return
-  return (p + vector);
+  //generate result point
+  point result = (p + new_vector);
+  
+  //check if in bounds
+  if(in_bounds(result))
+      return result;
+  else // not in bounds
+      return do_reflect(result, new_vector, check_bounds(result));
 }
 
 //n-dimensional boolean out of bounds detection function; disabled to allow for directional 2d check
@@ -1101,7 +1112,7 @@ bool grid::in_bounds(point p) {
     //check all dimensions
     for (int i = 0; i < DIM; ++i) {
         //if any values at any dimension exceed bounds, return false
-        if (p.x[i] < pmin.x[i] || p.x[i] > pmin.x[i])
+        if (p.x[i] < pmin.x[i] || p.x[i] > pmax.x[i])
             return false;
     }
 
@@ -1110,7 +1121,6 @@ bool grid::in_bounds(point p) {
 }
 
 double grid::charge(point p) {
-    
     //return 1;
     
     //get RMSD value
