@@ -29,7 +29,7 @@ class US_Extinction : public US_Widgets
 	private:
    QVector <WavelengthScan> v_wavelength;
    QVector <QwtPlotCurve*>  v_curve;
-   QString projectName;
+   QString projectName, filename_one, filename_two;
 	unsigned int maxrange;
 	float odCutoff, lambdaLimitLeft, lambdaLimitRight,lambda_min, lambda_max,
          pathlength, extinction_coefficient, factor, selected_wavelength;

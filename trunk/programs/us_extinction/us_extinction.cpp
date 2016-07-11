@@ -607,7 +607,7 @@ void US_Extinction::save(void)
       filename = filename.left(1 + filename.lastIndexOf(".", -1));
    }
 
-	QString filename_one =  filename + ".extinction.dat";
+	filename_one =  filename + ".extinction.dat";
    QFile f (filename_one);
    if(f.open(QIODevice::WriteOnly | QIODevice::Text))
 	{
@@ -621,7 +621,7 @@ void US_Extinction::save(void)
 		f.close();
 	}
 	
-   QString filename_two = filename + ".extinction.res";
+   filename_two = filename + ".extinction.res";
 	QFile f2(filename_two);
    if(f2.open(QIODevice::WriteOnly | QIODevice::Text))
    {
@@ -694,6 +694,13 @@ void US_Extinction::save(void)
 }
 void US_Extinction::view_result(void)
 {
+	save();
+   QTextEdit *e1;
+   e1 = new QTextEdit();
+   //e1->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   e1->setGeometry(30, 30, 685, 600);
+   //e1->load(filename_one);
+   e1->show();
 
 }
 void US_Extinction::help(void)
