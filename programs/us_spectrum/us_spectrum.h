@@ -33,9 +33,11 @@ class US_Spectrum : public US_Widgets
 	private:
 		QwtPlot 		*data_plot, *residuals_plot;
 		US_Plot		*plotLayout1, *plotLayout2;
-		struct WavelengthProfile target;
+		struct WavelengthProfile w_target;
 		QVector <struct WavelengthProfile> v_basis;
 		QwtPlotCurve *solution_curve;
+		QwtPlotPicker* pick;
+		struct WavelengthProfile w_solution;
 	
 		QPushButton *pb_load_target;
 		QPushButton *pb_load_basis;
@@ -48,14 +50,13 @@ class US_Spectrum : public US_Widgets
       QPushButton *pb_close;
       QPushButton *pb_reset_basis;
       QPushButton *pb_delete;
-      QPushButton *pb_update;
 		QPushButton	*pb_find_angle;
+		QPushButton *pb_find_extinction;
 		
 		QListWidget *lw_target;
 		QListWidget *lw_basis;
 		QLabel		*lbl_wavelength;
 		QLabel		*lbl_extinction;
-		QLabel		*lbl_scaling;
 		QLineEdit	*le_angle;
 		QLineEdit	*le_wavelength;
 		QLineEdit	*le_extinction;
@@ -63,13 +64,15 @@ class US_Spectrum : public US_Widgets
 	
 		QComboBox	*cb_angle_one;
 		QComboBox	*cb_angle_two;
-
+		QComboBox	*cb_spectrum_type;
 	private slots: 
 		void	load_basis();
 		void	plot_basis();
 		void	load_target();
 		void	plot_target();
 		void	load_gaussian_profile(struct WavelengthProfile&, const QString&);
+		void	new_value(const QwtDoublePoint&);
+		void	findExtinction();
 		void 	find_amplitude(struct WavelengthProfile&);
 		void	fit();
 		void	deleteCurrent();
