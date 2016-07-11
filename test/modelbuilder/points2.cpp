@@ -33,6 +33,8 @@ point::point(QVector2D *targetPoint, int id) //NOTE: only for use when DIM = 2
     this->x[0] = targetPoint->x();
     this->x[1] = targetPoint->y();
     this->id = id;
+    
+    delete targetPoint;
 }
 
 /*static*/ point point::point_min(const point& x, const point& y) {
@@ -677,7 +679,7 @@ point grid::F(point p) {
 
     double this_charge = charge(p);
     
-    cout << "point:" << p << " charge: " << this_charge << endl;
+    //cout << "point:" << p << " charge: " << this_charge << endl;
 
     if (neighbour_points) {
         for (set < point >::iterator it = neighbours[ p ].begin();
@@ -989,7 +991,7 @@ void grid::run(int steps, bool do_write, QwtPlot* grid_display) {
                 Fi[ *it ] = F(*it);
                 
 		//print force for point
-		cout << "Force: " << Fi[ *it ] << endl;
+		//cout << "Force: " << Fi[ *it ] << endl;
 		
                 // cout << "F:" << *it << " = " << Fi[ *it ] << " mag2:" << point::mag2( Fi[ *it ] ) <<  endl;
                 totmag2 += point::mag2(Fi[ *it ]);
@@ -998,7 +1000,7 @@ void grid::run(int steps, bool do_write, QwtPlot* grid_display) {
         cout << "total mag2 force: " << totmag2 << endl;
 
         // move points
-
+	
         {
             set < point > new_pgrid;
 
@@ -1006,14 +1008,26 @@ void grid::run(int steps, bool do_write, QwtPlot* grid_display) {
                     it != pgrid.end();
                     ++it) {
 		//case for points that are not the fixed repulsion edge
-                if (!edges.count(*it)) {
+                //if (!edges.count(*it)) {
+		if (edges.count(*it) == 0) {
                     point porg = *it;
-                    new_pgrid.insert(porg + Fi[ *it ] * deltat);
 		    
-		    //check if new point is not in bounds
-		    /*if(!in_bounds(*(--new_pgrid.end()))) {
-		      cout << "Point out of bounds" << endl;
-		    }*/
+		    //new_pgrid.insert(porg + Fi[ *it ] * deltat); //old insertion code
+		    
+		    /*if(!in_bounds(porg))
+		      cout << porg << " is out of bounds!" << endl;*/
+		    
+		    point vector = Fi[ *it ] * deltat; //precompute vector
+		    point direction = check_bounds(porg + vector);
+		    
+		    //check if new point is in bounds
+		    if(in_bounds(porg + vector)) {
+			new_pgrid.insert(porg + vector);
+		    }
+		    //otherwise, don't move; TODO: Reflect
+		    else {
+			new_pgrid.insert(do_reflect(porg, vector, direction));
+		    }
                 }
                 
                 //case for points that comprise the fixed edge 
@@ -1026,6 +1040,8 @@ void grid::run(int steps, bool do_write, QwtPlot* grid_display) {
         
         //if needed, update plot
 	if(grid_display != NULL) {
+	  curve->setData(QwtArray<QwtDoublePoint>());
+	  
 	  curve->setData(get_dim_values(0), get_dim_values(1), pgrid.size());
 	    
 	  grid_display->replot();
@@ -1033,6 +1049,54 @@ void grid::run(int steps, bool do_write, QwtPlot* grid_display) {
     }
 }
 
+//directional out of bounds detection; in-bounds = origin (0, 0)
+point grid::check_bounds(point p) {
+  int x = 0;
+  int y = 0;
+  point quadrant(0e0);
+  
+  //get direction for x-axis
+  if(p.x[0] > pmax.x[0])
+    x = 1;
+  else if(p.x[0] < pmin.x[0])
+    x = -1;
+  
+  //get direction for y-axis
+  if(p.x[1] > pmax.x[1])
+    y = 1;
+  else if(p.x[1] < pmin.x[1])
+    y = -1;
+  
+  //setup point for return
+  quadrant.x[0] = x;
+  quadrant.x[1] = y;
+  
+  //return
+  return quadrant;
+}
+
+point grid::do_reflect(point p, point vector, point dir){
+  //extract deltax and deltay
+  double delta_x = vector.x[0];
+  double delta_y = vector.x[1];
+  
+  point new_vector(0e0);
+  
+  //do vector reflection math
+  if(dir.x[0] != 0.0)
+    delta_x = -delta_x;
+  if(dir.x[1] != 0.0)
+    delta_y = -delta_y;
+  
+  //fill vector
+  new_vector.x[0] = delta_x;
+  new_vector.x[1] = delta_y;
+  
+  //do final computation and return
+  return (p + vector);
+}
+
+//n-dimensional boolean out of bounds detection function; disabled to allow for directional 2d check
 bool grid::in_bounds(point p) {
     //check all dimensions
     for (int i = 0; i < DIM; ++i) {
@@ -1047,11 +1111,11 @@ bool grid::in_bounds(point p) {
 
 double grid::charge(point p) {
     
-    return 1;
-    /*
+    //return 1;
+    
     //get RMSD value
     double interpolated = calculatedGrid->interpolate(p);
-    return interpolated;*/
+    return interpolated;
 }
 
 double* grid::get_dim_values(int dim) {
@@ -1063,7 +1127,7 @@ double* grid::get_dim_values(int dim) {
   for(set < point >::iterator it = pgrid.begin();
                 it != pgrid.end();
                 ++it) {
-    if (edges.find(*it) == edges.end()) {
+    if (edges.count(*it) == 0) {
       values[index++] = it->x[dim];
     }
   }
