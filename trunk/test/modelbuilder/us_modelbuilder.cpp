@@ -192,11 +192,11 @@ void US_ModelBuilder::startSimulation(void) {
     
     //grid gr(rg, pts, 2e-7);
     //grid gr(rg, pts, 2e-7, 8); //only consider 8 nearest neighbors
-    grid gr(rg, pts, 3.255e-6, 8, 4); //do 4 steps before recomputing neighbors
+    grid gr(rg, pts, 2.5e-6, 8, 4); //do 4 steps before recomputing neighbors
     //grid gr(rg, pts, 3e-6);
     
     qDebug() << "Object created. Running annealing process..";
-    gr.run(1500, false, data_plot);
+    gr.run(2500, false, data_plot);
     //gr.run(5, false, data_plot);
     
     qDebug() << "Annealing finished. Writing to file...";
