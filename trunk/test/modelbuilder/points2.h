@@ -70,6 +70,8 @@ public:
     bool in_bounds(point p);
     double charge(point p);
     double* get_dim_values(int dim);
+    point do_reflect(point p, point vector, point dir);
+    point check_bounds(point p);
 
 private:
 
