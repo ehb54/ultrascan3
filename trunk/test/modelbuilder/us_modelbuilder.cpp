@@ -158,7 +158,7 @@ void US_ModelBuilder::startSimulation(void) {
 
     qDebug() << "Generating regular grid";
     //QVector<QVector<QVector2D*>* >* raw = generateRegularGrid(1e-13, 1e-12, 1, 4, 100);
-    QVector<QVector<QVector2D*>* >* raw = generateRegularGrid(1e-13, 1e-12, 1, 4, 25);
+    QVector<QVector<QVector2D*>* >* raw = generateRegularGrid(1e-13, 1e-12, 1, 4, 100);
     
     qDebug() << "Calculating RMSDs for regular grid.";
     RegularGrid* rg = testRegularGrid(raw);
@@ -178,28 +178,33 @@ void US_ModelBuilder::startSimulation(void) {
     }
     
     //data_plot->setAxisScale(0, 1, 3.5);
-    data_plot->setAxisScale(0, 0, 1);
-    //data_plot->setAxisScale(0, .25, .75);
+    //data_plot->setAxisScale(0, 0, 1);
+    data_plot->setAxisScale(0, .4, .7);
     
     //data_plot->setAxisScale(2, 2e-13, 7.5e-13);
-    data_plot->setAxisScale(2, 0, 1);
-    //data_plot->setAxisScale(2, .25, .75);
+    //data_plot->setAxisScale(2, 0, 1);
+    data_plot->setAxisScale(2, .25, .7);
     
     qDebug() << "Grid generated. Creating annealing object...";
     //double pts[] = {rg->getGrid()->size() - 1, rg->getGrid()->at(0)->size() - 1}; //number of points to place on grid
-    double pts[] = {7, 7};
+    double pts[] = {30, 30};
+    //double pts[] = {4, 4};
     
     //grid gr(rg, pts, 2e-7);
     //grid gr(rg, pts, 2e-7, 8); //only consider 8 nearest neighbors
-    grid gr(rg, pts, 1e-5, 8);
-    //grid gr(rg, pts, 1e-5);
+    grid gr(rg, pts, 3.255e-6, 8, 4); //do 4 steps before recomputing neighbors
+    //grid gr(rg, pts, 3e-6);
     
     qDebug() << "Object created. Running annealing process..";
-    gr.run(250, false, data_plot);
-    //gr.run(2, false, data_plot);
+    gr.run(1500, false, data_plot);
+    //gr.run(5, false, data_plot);
     
     qDebug() << "Annealing finished. Writing to file...";
     gr.write_pgrid("annealedGrid.out");
+    
+    //clean up
+    delete raw;
+    delete rg;
 
     //QFile outfile("output/testFaxenGeneratorOutput.tsv");
     //QFile outfile("output/leftSideGrid_overall.tsv");
