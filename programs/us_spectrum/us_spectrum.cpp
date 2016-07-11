@@ -178,30 +178,20 @@ void US_Spectrum::plot_basis()
 {
 	QStringList names;
    QVector  <double> v_x_values;
-   QVector <double> v_y_values;
 
 	for(int m = basisIndex; m < v_basis.size(); m++)
 	{
 		names.append(v_basis.at(m).filenameBasis);   
    	v_x_values.clear();
-   	v_y_values.clear();
 		lw_basis->insertItem(0, v_basis.at(m).filenameBasis);
 
-   	double temp_y;
-   //plot the points for the target spectrum
+   	//plot the points for the target spectrum
       for(unsigned int k = 0; k < v_basis.at(m).lambda_max - v_basis.at(m).lambda_min; k++)
       {
-         temp_y = 0;
          v_x_values.push_back(v_basis.at(m).lambda_min + k);
-         for(int j = 0; j < v_basis.at(m).gaussians.size(); j++)
-         {
-            temp_y += v_basis.at(m).gaussians.at(j).amplitude * exp(-(pow(v_x_values.at(k) - v_basis.at(m).gaussians.at(j).mean, 2.0) / (2.0 * pow(v_basis.at(m).gaussians.at(j).sigma, 2.0))));
-  		   }
-     	   temp_y *= v_basis.at(m).amplitude;                      
-     	   v_y_values.push_back(temp_y);
      	}
       double* xx = (double*)v_x_values.data();
-      double* yy = (double*)v_y_values.data();
+      double* yy = (double*)v_basis.at(m).extinction.data();
       int     nn = v_x_values.size();
 		QwtPlotCurve* c;
    	QPen p;
@@ -234,6 +224,7 @@ void US_Spectrum::load_target()
 	{
 		lw_target->clear();
 		w_target.gaussians.clear();
+		w_target.extinction.clear();
 		w_target.matchingCurve->detach();
 	}
 	if(dialog.exec())
@@ -255,27 +246,15 @@ void US_Spectrum:: plot_target()
 {	
 	QVector	<double> v_x_values;
 	v_x_values.clear();
-	QVector <double> v_y_values;
-	v_y_values.clear();
 	
-	double temp_y;
 	//plot the points for the target spectrum
 	for(unsigned int k = 0; k < w_target.lambda_max - w_target.lambda_min; k++)
 	{
-		temp_y = 0;
 		v_x_values.push_back(w_target.lambda_min + k);
-      for(int j = 0; j < w_target.gaussians.size(); j++)
-		{
-			temp_y += w_target.gaussians.at(j).amplitude *
-           exp(-(pow(v_x_values.at(k) - w_target.gaussians.at(j).mean, 2.0)
-           / (2.0 * pow(w_target.gaussians.at(j).sigma, 2.0))));
-		}
-		temp_y *= w_target.amplitude;
-		v_y_values.push_back(temp_y);
 	}
 	
    double* xx = (double*)v_x_values.data();
-   double* yy = (double*)v_y_values.data();
+   double* yy = (double*)w_target.extinction.data();
    int     nn = v_x_values.size();
 	QwtPlotCurve* c;
 	QPen p;
@@ -386,6 +365,8 @@ void US_Spectrum::new_value(const QwtDoublePoint& p)
       int basisIndex = 0;
       for(int m = 0; m < v_basis.size(); m++)
       {
+			if(lw_basis->currentItem() == NULL)
+				return;
          if(v_basis.at(m).filenameBasis.compare(lw_basis->currentItem()->text()) == 0)
          {
             basisIndex = m;
@@ -425,7 +406,7 @@ void US_Spectrum::findExtinction()
 	}
 	else if (cb_spectrum_type->currentText().compare("target") == 0)
 	{
-		      if(specified_wavelength < w_target.lambda_max && specified_wavelength > w_target.lambda_min)
+		if(specified_wavelength < w_target.lambda_max && specified_wavelength > w_target.lambda_min)
          le_extinction->setText(QString::number( w_target.extinction.at(specified_wavelength - w_target.lambda_min)));
 	}
 	else

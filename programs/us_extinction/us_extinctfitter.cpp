@@ -365,7 +365,6 @@ void US_ExtinctFitter::plot_overlays()
 		v_xplot.clear();
       v_yplot_fit.clear();
       v_yplot_raw.clear();
-
       for (unsigned int j=0; j<points_per_dataset[i]; j++)
       {
          v_xplot.push_back((*wls_v).at(i).v_readings.at(j).lambda);
@@ -399,7 +398,7 @@ void US_ExtinctFitter::plot_overlays()
 			c_fit  = us_curve(data_plot, "fitted data");
          double* xx = (double*)v_all_xplot.at(i).data();
          double* yy = (double*)v_all_yplot_fit.at(i).data();
-         int     nn = v_all_xplot.size();
+         int     nn = v_all_xplot.at(i).size();
          c_raw->setStyle(QwtPlotCurve::NoCurve);
          c_raw->setSymbol(symbol);
          c_raw->setSamples( xx, yy, nn );
@@ -412,7 +411,7 @@ void US_ExtinctFitter::plot_overlays()
    }
    else
    {
-      for (unsigned int i=0; i<datasets; i++)
+      for (int i=0; i < v_all_xplot.size(); i++)
       {
          QwtPlotCurve *c_raw;
          c_raw = us_curve(data_plot, "raw data");
@@ -420,7 +419,7 @@ void US_ExtinctFitter::plot_overlays()
          c_fit  = us_curve(data_plot, "fitted data");
          double* xx = (double*)v_all_xplot.at(i).data();
          double* yy = (double*)v_all_yplot_fit.at(i).data();
-         int     nn = v_all_xplot.size();
+         int     nn = v_all_xplot.at(i).size();
          c_raw->setStyle(QwtPlotCurve::NoCurve);
          c_raw->setSymbol(symbol);
          c_raw->setSamples( xx, yy, nn );
@@ -433,7 +432,7 @@ void US_ExtinctFitter::plot_overlays()
    }
    //   data_plot->setAxisScale(QwtPlot::xBottom, -xmax/30.0, xmax + xmax/30.0, 0);
    data_plot->replot();
-   //data_plot->updatePlot();      //no updatePlot() in new version
+  // data_plot->updatePlot();      //no updatePlot() in new version
    pb_print->setEnabled(true);
 }
 
