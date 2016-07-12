@@ -83,6 +83,15 @@ point::point(QVector2D *targetPoint, int id) //NOTE: only for use when DIM = 2
     return r3;
 }
 
+/*static*/ double point::r4(const point& x, const point& y) {
+    double r4 = 0;
+    for (int i = 0; i < DIM; ++i) {
+        double tmp = fabs(x.x[ i ] - y.x[ i ]);
+        r4 += tmp * tmp * tmp * tmp;
+    }
+    return r4;
+}
+
 /*static*/ double point::r6(const point& x, const point& y) {
     double r6 = 0;
     for (int i = 0; i < DIM; ++i) {
@@ -685,14 +694,14 @@ point grid::F(point p) {
         for (set < point >::iterator it = neighbours[ p ].begin();
                 it != neighbours[ p ].end();
                 ++it) {
-            F = F + ((p - *it) * this_charge * charge(*it)) / point::r3(p, *it);
+            F = F + ((p - *it) * this_charge * charge(*it)) / point::r4(p, *it);
         }
     } else {
         for (set < point >::iterator it = pgrid.begin();
                 it != pgrid.end();
                 ++it) {
             if (*it != p) {
-                F = F + ((p - *it) * this_charge * charge(*it)) / point::r3(p, *it);
+                F = F + ((p - *it) * this_charge * charge(*it)) / point::r4(p, *it);
             }
         }
     }
@@ -951,8 +960,13 @@ void grid::run(int steps, bool do_write, QwtPlot* grid_display) {
     double* dim_1_values;
     
     if(grid_display != NULL) {
+      
+      if(curve != NULL) 
+	  delete curve;
+      
       curve = new QwtPlotCurve("E-Min Points");
       curve->setStyle(QwtPlotCurve::NoCurve);
+      curve->setData(QwtArray<QwtDoublePoint>());
       
       QwtSymbol sym;
       sym.setStyle(QwtSymbol::Ellipse);
@@ -1058,13 +1072,6 @@ void grid::run(int steps, bool do_write, QwtPlot* grid_display) {
 	  
 	  grid_display->replot();
 	}
-    }
-    
-    //do display cleanup
-    if(grid_display != NULL) {
-	//clear display
-	curve->setData(QwtArray<QwtDoublePoint>());
-	delete curve;
     }
 }
 

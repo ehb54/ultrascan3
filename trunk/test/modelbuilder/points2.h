@@ -38,6 +38,7 @@ public:
     static double mag2(const point&);
     static double r2(const point&, const point&);
     static double r3(const point&, const point&);
+    static double r4(const point&, const point&);
     static double r6(const point&, const point&);
     point operator+(const point&);
     point operator-(const point&);
