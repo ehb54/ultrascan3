@@ -697,8 +697,11 @@ void US_Extinction::view_result(void)
 	save();
    QTextEdit *e1;
    e1 = new QTextEdit();
-   //e1->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    e1->setGeometry(30, 30, 685, 600);
+	QFile file_one(filename_one);
+	file_one.open(QFile::ReadOnly | QFile::Text);
+	QTextStream readFile(&file_one);
+	e1->setText(readFile.readAll());
    //e1->load(filename_one);
    e1->show();
 
