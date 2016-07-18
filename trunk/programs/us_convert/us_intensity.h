@@ -22,6 +22,9 @@ class US_Intensity : public US_WidgetsDialog
 
    private:
       QwtPlot*     data_plot;
+		QLabel*      lbl_average;
+		QLineEdit*   le_average;
+
       const QVector< double >& dataIn;
       const QVector< double >& scanIn;
 
