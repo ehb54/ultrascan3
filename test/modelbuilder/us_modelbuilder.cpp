@@ -155,7 +155,8 @@ void US_ModelBuilder::startSimulation(void) {
     //QVector<QVector<QVector2D*>* >* grid = generateRegularGrid(1e-13, 1e-12, 1, 4, 8000);
     //QVector<QVector3D*>* grid = testRegularGrid(generateRegularGrid(1e-13, 1e-12, 1, 4, 8000));
     //QVector<QVector2D> faxenGrid = generateFaxenGrid(1e-13, 3.5e-13, 1, 4, 500);
-
+  
+    
     qDebug() << "Generating regular grid";
     //QVector<QVector<QVector2D*>* >* raw = generateRegularGrid(1e-13, 1e-12, 1, 4, 100);
     QVector<QVector<QVector2D*>* >* raw = generateRegularGrid(1e-13, 1e-12, 1, 4, 400);
@@ -189,17 +190,17 @@ void US_ModelBuilder::startSimulation(void) {
     
     qDebug() << "Grid generated. Creating annealing object...";
     //double pts[] = {rg->getGrid()->size() - 1, rg->getGrid()->at(0)->size() - 1}; //number of points to place on grid
-    double pts[] = {20, 20};
-    //double pts[] = {4, 4};
+    //double pts[] = {20, 20};
+    double pts[] = {30, 30};
     
     //grid gr(rg, pts, 2e-7);
     //grid gr(rg, pts, 2e-7, 8); //only consider 8 nearest neighbors
     //grid gr(rg, pts, 2e-6, 8, 4); //do 4 steps before recomputing neighbors
-    //grid gr(rg, pts, 4e-5, 24, 4);
-    grid gr(rg, pts, 4e-5);
+    grid gr(rg, pts, 5e-9, 35, 3);
+    //grid gr(rg, pts, 4e-5);
     
     qDebug() << "Object created. Running annealing process..";
-    gr.run(5000, false, data_plot);
+    gr.run(10000, false, data_plot);
     //gr.run(500, false, data_plot);
     
     qDebug() << "Annealing finished. Writing to file...";
@@ -208,17 +209,26 @@ void US_ModelBuilder::startSimulation(void) {
     //clean up
     delete raw;
     delete rg;
-
-    //QFile outfile("output/testFaxenGeneratorOutput.tsv");
-    //QFile outfile("output/leftSideGrid_overall.tsv");
-    //QFile outfile("output/regularGridRMSDs_comparitive.tsv");
-    //QFile outfile("output/localFaxenRMSDResultsAll.tsv");
-    //QFile outfile("output/newRegularGridSurface.tsv");
-    QFile outfile("output/interpolationSurface.tsv");
+    
+    
+    //read annealed grid
+    QVector<QVector2D*>* annealedGrid = readIrregularGrid("annealedGrid.out");
+    
+    //test grid
+    QVector<QVector3D*>* testedGrid = testIrregularGrid(annealedGrid);
+    
+    //create output file
+    QFile outfile("output/annealedGridSurface.tsv");
 
     outfile.open(QIODevice::ReadWrite);
     QTextStream outstream(&outfile);
-
+    
+    //print annealed grid surface
+    for(int i = 0; i < testedGrid->size(); i++) {
+	QVector3D* current = testedGrid->at(i);
+	outstream << current->x() << "\t" << current->y() << "\t" << current->z() << endl;
+    }
+    
     /*
     //interpolation validation code
     qDebug() << "Doing interpolation validation";
@@ -468,8 +478,126 @@ QVector<QVector<QVector2D*> *>* US_ModelBuilder::generateFaxenGrid(double sRange
     return faxenGrid;
 }
 
-//function to perform RMSD tests on a single dataset under globally set conditions
+QVector<QVector2D*>* US_ModelBuilder::readIrregularGrid(QString filename) {
+  
+    //declaration and init
+    QVector<QVector2D*>* points = new QVector<QVector2D*>();
+    
+    //create file object to read from
+    QFile input_file(filename);
+    
+    //open file, and proceed if successful
+    if (input_file.open(QIODevice::ReadOnly)) {
+        //internal iterative reader
+        QTextStream iterator(&input_file);
+        QString current_line;
+        QStringList current_line_contents;
 
+        //iterate over input file
+        while (!iterator.atEnd()) {
+            //get line from file
+            current_line = iterator.readLine();
+
+            //store current line as string array
+            current_line_contents = current_line.split(QRegExp("\\s"));
+
+            //check if current line is not a comment
+            if (QString::compare(current_line_contents.first(), "%") != 0 && !current_line.isEmpty()) {
+		//add to list
+		points->append(new QVector2D(current_line_contents.at(0).toDouble() / 1e12,
+					     current_line_contents.at(1).toDouble() / 0.25)); //undo scaling
+	    }
+	}
+    }
+    
+    //return
+    return points;
+}
+
+QVector<QVector3D*>* US_ModelBuilder::testIrregularGrid(QVector<QVector2D*>* input) {
+    //declare and init
+    QVector<QVector3D*>* surface = new QVector<QVector3D*>();
+    QVector<US_DataIO::RawData*>* simulations = new QVector<US_DataIO::RawData*>(); 
+    
+    //simulate all points
+    for(int i = 0; i < input->size(); i++) {
+	simulations->append(perform_calculation(input->at(i)));
+    }
+    
+    //iterate over every point in input again
+    for(int i = 0; i < input->size(); i++) {
+	//get point
+	double x = input->at(i)->x();
+	double y = input->at(i)->y();
+	double RMSD = 0.0;
+	US_DataIO::RawData* centerSim = simulations->at(i);
+	
+	//get nearest neighbors
+	QVector<QVector2D*>* neighbors = findNearestNeighbors(i, input, 4); // find 4 nearest neighbors
+	
+	//iterate over nearby points, taking sqrt of sum of squares of RMSDs
+	for(int nIndex = 0; nIndex < neighbors->size(); nIndex++) {
+	    //add RMSD to total
+	    //RMSD += calculate_RMSD(centerSim, simulations->at(nIndex));
+	    RMSD += pow(calculate_RMSD(centerSim, simulations->at(nIndex)), 2);
+	}
+	
+	//divide RMSD by size
+	RMSD /= neighbors->size();
+	
+	//store aggregate RMSD as z value 
+	surface->append(new QVector3D(x, y, sqrt(RMSD)));
+	//surface->append(new QVector3D(x, y, RMSD));
+	
+	//delete objects
+	delete neighbors;
+    }
+    
+    //more cleanup
+    delete simulations;
+    
+    //return
+    return surface;
+}
+
+QVector<QVector2D*>* US_ModelBuilder::findNearestNeighbors(int index, QVector<QVector2D*>* all, int numToFind) {
+  
+    //declaration & init
+    QVector<QVector2D*>* neighborList = new QVector<QVector2D*>();
+    QVector2D* target = all->at(index);
+    double smallest = DBL_MAX;
+    
+    //iterate over all points
+    for(int i = 0; i < all->size(); i++) {
+      
+	//calculate distance
+	double dist = calculateDistance(target, all->at(i));
+	
+	//check if distance is less than smallest
+	if(dist < smallest) { 
+	    //set smallest
+	    smallest = dist;
+	    
+	    //add point to list
+	    neighborList->prepend(all->at(i));
+	    
+	    //check if addition makes list too long
+	    if(neighborList->size() > numToFind) {
+		//remove last element
+		neighborList->remove(neighborList->size() - 1);
+	    }
+	}
+	
+	//if(dist<0.015)
+	//    neighborList->append(all->at(i));
+    }
+    
+    //qDebug() << "Neighbors found: " << neighborList->size();
+    
+    return neighborList; // should clone values
+}
+
+//function to perform RMSD tests on a single dataset under globally set conditions
 QVector<QVector<QVector3D>* >* US_ModelBuilder::testGrid(QVector<QVector<QVector2D*> *>* points) {
     //create qvector output
     QVector<QVector<QVector3D>* >* calculated_points = new QVector<QVector<QVector3D>* >();
@@ -595,7 +723,6 @@ US_DataIO::RawData* US_ModelBuilder::perform_calculation(QVector2D* p) {
     double D = calculate_diffusion(s, k);
 
     //qDebug() << "s, d, k" << s << D << k;
-
     US_Model* temp_model = get_model(s, D, k);
     US_DataIO::RawData* simulation = init_simData(temp_model);
 

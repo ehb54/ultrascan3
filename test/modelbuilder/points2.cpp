@@ -1043,7 +1043,8 @@ void grid::run(int steps, bool do_write, QwtPlot* grid_display) {
 		    }
 		    //otherwise, don't move TODO: Ensure that points cannot go out of bounds
 		    else {
-			point npt = do_reflect(porg, vector, direction);
+			vector = do_reflect(porg, vector, direction);
+			point npt = porg + vector;
 			
 			if(!in_bounds(npt))
 			  cout << "New point is not in bounds!" << endl;
@@ -1123,7 +1124,7 @@ point grid::do_reflect(point p, point vector, point dir){
   
   //check if in bounds
   if(in_bounds(result))
-      return result;
+      return new_vector;
   else // not in bounds
   {
       return do_reflect(p, new_vector, dir);
@@ -1148,7 +1149,7 @@ double grid::charge(point p) {
     
     //get RMSD value
     double interpolated = calculatedGrid->interpolate(p);
-    return interpolated;
+    return interpolated * 5; //TODO: Replace with proper constant
 }
 
 double* grid::get_dim_values(int dim) {
