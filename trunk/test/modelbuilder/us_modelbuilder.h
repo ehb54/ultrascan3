@@ -121,6 +121,12 @@ private slots:
     //QVector3D interpolateRepulsion(QVector3D point, QVector<QVector3D*> repulsors);
 
     double interpolatePoint(QVector3D target, QVector3D p11, QVector3D p12, QVector3D p21, QVector3D p22);
+    
+    QVector<QVector3D*>* testIrregularGrid(QVector<QVector2D*>* input);
+    
+    QVector<QVector2D*>* findNearestNeighbors(int index, QVector<QVector2D*>* all, int numToFind);
+    
+    QVector<QVector2D*>* readIrregularGrid(QString filename);
 };
 
 #endif
