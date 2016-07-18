@@ -47,10 +47,13 @@ US_Intensity::US_Intensity(
    pb_close->setFixedWidth( 100 );
    connect( pb_close, SIGNAL( clicked() ), SLOT( close() ) );
    buttons->insertStretch( 0, 10 );
+	QLabel* lbl_average = us_label( tr( "Average Intensity (counts):" ), -1 );
+	buttons->addWidget( lbl_average );
+	le_average = us_lineedit(  ""  );
+	buttons->addWidget( le_average );
    buttons->addWidget( pb_close );
-
-   main->addLayout( buttons, row++, 2, 1, 4 );
    QString ctriple = US_Util::compressed_triple( triple );
+   main->addLayout( buttons, row++, 2, 1, 4 );
 
    if ( triple.contains( "-" ) )
    {  // Handle special MWL triple with wavelength range
@@ -102,12 +105,19 @@ void US_Intensity::draw_plot( const QVector< double >& scanData,
    QVector< double > yvec( szdata );
    double* xx = xvec.data();
    double* yy = yvec.data();
+	double sum = 0.0;
 
    for ( int ii = 0; ii < szdata; ii++ )
    {
       xx[ ii ] = scanNbrs[ ii ];
       yy[ ii ] = scanData[ ii ];
+		sum += yy[ ii ];
    }
+	sum /= szdata;
+	QString str;
+	str.setNum( sum );
+	le_average->setText(str);
+
 qDebug() << "Ints:dr_pl: xx0 xxn" << xx[0] << xx[scanData.size()-1];
 
    QwtPlotCurve* c1 = us_curve( data_plot, tr( "Intensity" ) );
