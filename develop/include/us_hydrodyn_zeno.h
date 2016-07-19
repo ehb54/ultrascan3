@@ -6,16 +6,16 @@ zeno_main(
   int argc,
   char const* argv[]);
 
-#if __cplusplus >= 201103L
-int zeno_cxx_main(int argc, char **argv, const char * fname );
-#endif
-
 #include "qstring.h"
 #include "qdatetime.h"
 #include "qfile.h"
 #include "qdir.h"
+#include "qtimer.h"
 
 #include "../include/us_hydrodyn.h"
+#if __cplusplus >= 201103L
+int zeno_cxx_main(int argc, char **argv, const char * fname );
+#endif
 
 class US_Hydrodyn_Zeno
 {

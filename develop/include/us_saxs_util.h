@@ -65,8 +65,15 @@ typedef unsigned _int32 uint32_t;
 #   include <dos.h>
 #   include <stdlib.h>
 #   include <float.h>
+# if __GNUC__ == 5
+#   include <time.h>
+#   define us_isnan std::isnan
+#   define us_isinf std::isinf
+    extern int putenv(char*);
+# else
 #   define us_isnan _isnan
 #   define us_isinf(x) (!_finite(x))
+#endif
 #   undef SHOW_TIMING
 #   define drand48() ((double)rand()/RAND_MAX)
 #   define srand48(x) srand(x)
@@ -956,6 +963,8 @@ class US_EXTERN US_Saxs_Util
                                  double                             & P
                                   );
 
+      static double       holm_bonferroni( vector < double > P, double alpha );
+
 //FOR us_hydro: Methods plus PUBLIC Variables ///////////////////////////////////////
       
       double overlap_tolerance;
@@ -1037,6 +1046,8 @@ class US_EXTERN US_Saxs_Util
       
       QString pdb_jsmol_script(vector < PDB_atom > *model);
       bool bead_model_from_file;
+
+      static int us_usleep( unsigned int usec );
 
    private:
 

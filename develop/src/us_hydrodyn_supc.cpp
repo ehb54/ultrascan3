@@ -1414,6 +1414,9 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
                printf("after bead %d @ %f %f %f\n", i, dtn[i].x,dtn[i].y,dtn[i].z);
             }
          }
+         if ( out_dt ) {
+            free( out_dt );
+         }
       }
       
       for (i = 0; i < nat; i++)

@@ -160,24 +160,24 @@ void US_Hydrodyn_Saxs_Hplc_Options::setupGUI()
    connect( le_reps, SIGNAL( textChanged( const QString & ) ), SLOT( update_enables() ) );
    le_reps->setMinimumWidth( 60 );
 
-   lbl_alpha =  new QLabel      ( tr( "alpha early termination limit:" ), this );
-   lbl_alpha -> setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
-   lbl_alpha -> setPalette( PALET_LABEL );
-   AUTFBACK( lbl_alpha );
-   lbl_alpha -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold ) );
+   lbl_epsilon =  new QLabel      ( tr( "Epsilon early termination limit:" ), this );
+   lbl_epsilon -> setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
+   lbl_epsilon -> setPalette( PALET_LABEL );
+   AUTFBACK( lbl_epsilon );
+   lbl_epsilon -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold ) );
 
-   le_alpha = new QLineEdit(this, "le_alpha Line Edit");
-   le_alpha->setText( parameters->count( "hplc_bl_alpha" ) ? (*parameters)[ "hplc_bl_alpha" ] : "1" );
-   le_alpha->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
-   le_alpha->setPalette( PALET_NORMAL );
-   AUTFBACK( le_alpha );
-   le_alpha->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
+   le_epsilon = new QLineEdit(this, "le_epsilon Line Edit");
+   le_epsilon->setText( parameters->count( "hplc_bl_epsilon" ) ? (*parameters)[ "hplc_bl_epsilon" ] : "1" );
+   le_epsilon->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_epsilon->setPalette( PALET_NORMAL );
+   AUTFBACK( le_epsilon );
+   le_epsilon->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
    {
-      QDoubleValidator *qdv = new QDoubleValidator( 0, 1, 3, le_alpha );
-      le_alpha->setValidator( qdv );
+      QDoubleValidator *qdv = new QDoubleValidator( 0, 1, 3, le_epsilon );
+      le_epsilon->setValidator( qdv );
    }
-   connect( le_alpha, SIGNAL( textChanged( const QString & ) ), SLOT( update_enables() ) );
-   le_alpha->setMinimumWidth( 60 );
+   connect( le_epsilon, SIGNAL( textChanged( const QString & ) ), SLOT( update_enables() ) );
+   le_epsilon->setMinimumWidth( 60 );
 
    lbl_cormap_maxq =  new QLabel      ( tr( "Global CorMap Analysis maximum q [A^-1]:" ), this );
    lbl_cormap_maxq -> setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
@@ -197,6 +197,25 @@ void US_Hydrodyn_Saxs_Hplc_Options::setupGUI()
    }
    connect( le_cormap_maxq, SIGNAL( textChanged( const QString & ) ), SLOT( update_enables() ) );
    le_cormap_maxq->setMinimumWidth( 60 );
+
+   lbl_cormap_alpha =  new QLabel      ( tr( "Global CorMap Analysis alpha:" ), this );
+   lbl_cormap_alpha -> setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
+   lbl_cormap_alpha -> setPalette( PALET_LABEL );
+   AUTFBACK( lbl_cormap_alpha );
+   lbl_cormap_alpha -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold ) );
+
+   le_cormap_alpha = new QLineEdit(this, "le_cormap_alpha Line Edit");
+   le_cormap_alpha->setText( parameters->count( "hplc_cormap_alpha" ) ? (*parameters)[ "hplc_cormap_alpha" ] : "0.01" );
+   le_cormap_alpha->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
+   le_cormap_alpha->setPalette( PALET_NORMAL );
+   AUTFBACK( le_cormap_alpha );
+   le_cormap_alpha->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
+   {
+      QDoubleValidator *qdv = new QDoubleValidator( 0, 0.5, 3, le_cormap_alpha );
+      le_cormap_alpha->setValidator( qdv );
+   }
+   connect( le_cormap_alpha, SIGNAL( textChanged( const QString & ) ), SLOT( update_enables() ) );
+   le_cormap_alpha->setMinimumWidth( 60 );
 
    lbl_gaussian_type = new QLabel ( tr( "Gaussian Mode" ), this);
    lbl_gaussian_type->setAlignment( Qt::AlignCenter | Qt::AlignVCenter);
@@ -499,14 +518,16 @@ void US_Hydrodyn_Saxs_Hplc_Options::setupGUI()
    gl_bl->addWidget         ( le_smooth  , 0, 1 );
    gl_bl->addWidget         ( lbl_reps   , 1, 0 );
    gl_bl->addWidget         ( le_reps    , 1, 1 );
-   gl_bl->addWidget         ( lbl_alpha  , 2, 0 );
-   gl_bl->addWidget         ( le_alpha   , 2, 1 );
+   gl_bl->addWidget         ( lbl_epsilon, 2, 0 );
+   gl_bl->addWidget         ( le_epsilon , 2, 1 );
    gl_bl->addWidget         ( lbl_cormap_maxq  , 3, 0 );
    gl_bl->addWidget         ( le_cormap_maxq   , 3, 1 );
-   gl_bl->addWidget         ( lbl_start_region , 4, 0 );
-   gl_bl->addWidget         ( le_start_region  , 4, 1 );
-   gl_bl->addWidget         ( lbl_i_power , 4, 0 );
-   gl_bl->addWidget         ( le_i_power  , 4, 1 );
+   gl_bl->addWidget         ( lbl_cormap_alpha , 4, 0 );
+   gl_bl->addWidget         ( le_cormap_alpha  , 4, 1 );
+   gl_bl->addWidget         ( lbl_start_region , 5, 0 );
+   gl_bl->addWidget         ( le_start_region  , 5, 1 );
+   gl_bl->addWidget         ( lbl_i_power , 6, 0 );
+   gl_bl->addWidget         ( le_i_power  , 6, 1 );
 
    background->addLayout( gl_bl );
    background->addWidget( cb_save_bl );
@@ -604,8 +625,8 @@ void US_Hydrodyn_Saxs_Hplc_Options::setupGUI()
       // le_smooth        ->hide();
       // lbl_reps         ->hide();
       // le_reps          ->hide();
-      // lbl_alpha        ->hide();
-      // le_alpha         ->hide();
+      // lbl_epsilon      ->hide();
+      // le_epsilon       ->hide();
 
       // lbl_gaussian_type->hide();
       // rb_gauss         ->hide();
@@ -646,8 +667,9 @@ void US_Hydrodyn_Saxs_Hplc_Options::ok()
    (*parameters)[ "hplc_bl_start_region"         ] = le_start_region        ->text();
    (*parameters)[ "hplc_bl_i_power"              ] = le_i_power             ->text();
    (*parameters)[ "hplc_bl_reps"                 ] = le_reps                ->text();
-   (*parameters)[ "hplc_bl_alpha"                ] = le_alpha               ->text();
+   (*parameters)[ "hplc_bl_epsilon"              ] = le_epsilon             ->text();
    (*parameters)[ "hplc_cormap_maxq"             ] = le_cormap_maxq         ->text();
+   (*parameters)[ "hplc_cormap_alpha"            ] = le_cormap_alpha        ->text();
    (*parameters)[ "hplc_zi_window"               ] = le_zi_window           ->text();
    (*parameters)[ "hplc_cb_discard_it_sd_mult"   ] = cb_discard_it_sd_mult  ->isChecked() ? "true" : "false";
    (*parameters)[ "hplc_discard_it_sd_mult"      ] = le_discard_it_sd_mult  ->text();
@@ -709,7 +731,7 @@ void US_Hydrodyn_Saxs_Hplc_Options::update_enables()
    le_smooth     ->setEnabled( rb_integral->isChecked() );
    le_reps       ->setEnabled( rb_integral->isChecked() );
    cb_save_bl    ->setEnabled( rb_integral->isChecked() );
-   le_alpha      ->setEnabled( rb_integral->isChecked() );
+   le_epsilon    ->setEnabled( rb_integral->isChecked() );
    pb_clear_gauss->setEnabled( ((US_Hydrodyn_Saxs_Hplc *)hplc_win)->any_gaussians() );
 }
 

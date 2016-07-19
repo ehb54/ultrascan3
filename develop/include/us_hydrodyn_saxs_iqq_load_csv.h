@@ -36,6 +36,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Iqq_Load_Csv : public QDialog
                                 bool *run_nnls,
                                 bool *run_best_fit,
                                 QString *nnls_target,
+                                bool *clear_plot_first,
                                 bool expert_mode,
                                 void *us_hydrodyn,
                                 QWidget *p = 0, 
@@ -60,6 +61,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Iqq_Load_Csv : public QDialog
 
       QCheckBox   *cb_run_nnls;
       QCheckBox   *cb_run_best_fit;
+      QCheckBox   *cb_clear_plot_first;
       QLabel      *lbl_nnls_target;
 
       QPushButton *pb_select_all;
@@ -90,6 +92,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Iqq_Load_Csv : public QDialog
       bool *run_nnls;
       bool *run_best_fit;
       QString *nnls_target;
+      bool *clear_plot_first;
       bool expert_mode;
 
       void update_enables();
@@ -109,6 +112,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Iqq_Load_Csv : public QDialog
       void set_save_original_data();
       void set_run_nnls();
       void set_run_best_fit();
+      void set_clear_plot_first();
 
       void select_all();
       void select_target();

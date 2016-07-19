@@ -103,9 +103,10 @@ bool US_Plot_Util::printtofile( QString basename,
          {
             for ( int i = 0; i < curves; i++ )
             {
-               if ( j < (int) x[ i ].size() )
-               {
+               if ( j < (int) x[ i ].size() ) {
                   ts << x[ i ][ j ] << "," << y[ i ][ j ] << ",";
+               } else {
+                  ts << ",,";
                }
             }
             ts << "\n";

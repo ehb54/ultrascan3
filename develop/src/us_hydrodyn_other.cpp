@@ -559,6 +559,8 @@ bool US_Hydrodyn::assign_atom(const QString &str1, struct PDB_chain *temp_chain,
       temp_atom.charge = "  ";
    }
    temp_atom.saxs_data.saxs_name = "";
+   temp_atom.p_residue = 0;
+   temp_atom.p_atom    = 0;
    (*temp_chain).atom.push_back(temp_atom);
    bool found = false;
    for (unsigned int m = 0; m < residue_list.size(); m++)
@@ -5431,7 +5433,8 @@ void US_Hydrodyn::hard_coded_defaults()
    gparams[ "hplc_discard_it_sd_mult"    ]         = "2";
    gparams[ "hplc_cb_discard_it_sd_mult" ]         = "true";
    gparams[ "hplc_dist_max"              ]         = "50.0";
-
+   gparams[ "hplc_cormap_maxq"           ]         = "0.05";
+   gparams[ "hplc_cormap_alpha"          ]         = "0.01";
    gparams[ "save_csv_on_load_pdb"       ]         = "false";
 }
 
@@ -8253,6 +8256,9 @@ void US_Hydrodyn::reset_chain_residues( PDB_model *model )
          if ( !checked.count( idx ) )
          {
             checked[ idx ] = true;
+#if defined( DEBUG_TESTING_JML )
+            qDebug( QString( "rcr idx %1 p_r %2 %3 %4" ).arg( idx ).arg( (long) this_atom->p_residue ).arg( this_atom->model_residue_pos ).arg( model->residue.size() ) );
+#endif
             if ( this_atom->p_residue &&
                  this_atom->model_residue_pos != -1 &&
                  ( int ) model->residue.size() < this_atom->model_residue_pos )

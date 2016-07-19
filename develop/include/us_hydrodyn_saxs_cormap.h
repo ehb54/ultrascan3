@@ -74,6 +74,15 @@ class US_Hydrodyn_Saxs_Cormap_Cluster_Analysis {
                                    Q3ProgressBar                  * progress = 0
                                     );
 
+   bool                        sliding( 
+                                   vector < vector < double > >  & pvaluepairs,
+                                   map < QString, QString >      & parameters,
+                                   map < QString, double >       & sliding_results,
+                                   map < QString, double >       & hb_sliding_results,
+                                   QWidget                       * parent = 0,
+                                   Q3ProgressBar                  * progress = 0
+                                    );
+
    map < int, int >            cluster_size_histogram;
    QString                     errormsg;
    
@@ -114,6 +123,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Cormap : public Q3Frame
       US_Config *                             USglobal;
 
       QCheckBox *                             cb_adj;
+      QCheckBox *                             cb_hb;
 
       QPushButton *                           pb_sliding;
       QPushButton *                           pb_help;
@@ -141,9 +151,12 @@ class US_EXTERN US_Hydrodyn_Saxs_Cormap : public Q3Frame
 
       int                                     last_height;
       int                                     last_width;
+      int                                     last_mode;
 
       QImage                   *              qi;
       QImage                   *              qi_adj;
+      QImage                   *              qi_hb;
+
 
       QwtPlot       *plot;
       ScrollZoomer  *plot_zoomer;
@@ -162,6 +175,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Cormap : public Q3Frame
       vector < QString >                      selected_files;
       double                                  alpha;
       double                                  alpha_over_5;
+      double                                  hb_alpha;
+      double                                  hb_alpha_over_5;
 
 
       QFont         ft;
@@ -194,6 +209,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Cormap : public Q3Frame
       void save();
 
       void                                    imageResized();
+      void                                    forceImageResized();
       void                                    help();
       void                                    sliding();
       void                                    save_csv();

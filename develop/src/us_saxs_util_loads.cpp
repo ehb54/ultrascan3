@@ -1042,6 +1042,10 @@ bool US_Saxs_Util::assign_atom(const QString &str1, struct PDB_chain *temp_chain
       temp_atom.charge = "  ";
    }
    temp_atom.saxs_data.saxs_name = "";
+
+   temp_atom.p_residue = 0;
+   temp_atom.p_atom    = 0;
+
    (*temp_chain).atom.push_back(temp_atom);
    bool found = false;
    for (unsigned int m = 0; m < residue_list.size(); m++)

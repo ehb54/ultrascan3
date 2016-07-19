@@ -4,7 +4,7 @@
 <head>
 <meta content="text/html;charset=ISO-8859-1" http-equiv="Content-Type">
 	<title>SOMO HPLC-SAXS Module</title>
-	<link href="mainstyle.css" rel="styleSheet" type="text/css">
+	<link href="mainstyle3.css" rel="styleSheet" type="text/css">
 </head>
 <body>
 <table BORDER=0 CELLPADDING=5 >
@@ -22,9 +22,13 @@
 <center>
 <h2>
 SOMO HPLC-SAXS Module linear baseline tool:</h2></center>
-<h3><center>Last updated: May 2014 </center></h3><p>
-
-This portion of the manual describes the utilization of the original linear baseline subtraction tool (see Brookes et al. J. Appl. Cryst. 46:1823-1833, 2013). This tool should be now utilized <span style="color:#CC0000"><b>only</b></span> if there is just a minor drift between the initial and final baseline portions in the <i>I</i>(<i>t</i>) vs. <i>t</i> chromatograms, likely not due to capillary fouling but to other resaons such as incomplete column buffer equilibration. In a future release, we plan to implement a tool assessing the amount of drift and suggesting which kind of baseline subtraction would be more appropriate.<br>
+<h3><center>Last updated: July 2016 </center></h3><p>
+<center><span style="color:#CC0000">NOTICE: the HPLC-SAXS module is being developed by E. Brookes, J. Perez, P. Vachette, and M. Rocco.<br>
+Portions of this help file are taken from the Supplementary Materials of Brookes et al., "Fibrinogen species as resolved by HPLC-SAXS data processing within the UltraScan SOlution MOdeler (US-SOMO) enhanced SAS module", J. Appl. Cryst. 46:1823-1833 (2013), and from Brookes et al. "US-SOMO HPLC-SAXS Module: Dealing with Capillary Fouling, and Extraction of Pure Component Patterns from Poorly Resolved SEC-SAXS Data", J. Appl. Cryst., 2016, <i>in press</i>.</span>
+</center>
+<hr>
+<p>
+This portion of the manual describes the utilization of the original linear baseline subtraction tool (see Brookes et al. J. Appl. Cryst. 46:1823-1833, 2013). This tool should be now utilized <span style="color:#CC0000"><b>only</b></span> if there is just a minor drift between the initial and final baseline portions in the <i>I</i>(<i>t</i>) vs. <i>t</i> chromatograms, likely not due to capillary fouling but to other resaons such as incomplete column buffer equilibration. In this (May 2016) release, we have implemented a tool assessing the amount of drift and suggesting which kind of baseline subtraction would be more appropriate.<br>
 As an example, we utilize here a HPLC-SAXS dataset collected on an Aldolase sample, which, in addition of multiple, non-resolved peaks that will be the subject of Gaussian decomposition with distorted Gaussian functions (see <a href=somo_saxs_hplc_skewedGauss.html>here</a>), shows only a minor baseline drift:<p>
 
 <p><center>
@@ -32,8 +36,8 @@ As an example, we utilize here a HPLC-SAXS dataset collected on an Aldolase samp
 </center>
 <p>
 
-As with the integral baseline, a single chromatogram is first selected; a compromise between high intensity and low noise works best.<br>
-In the <b><i>Options</i></b> module, select the <i>Linear baseline removal</i> chackbox. The <b><i>Baseline</i></b> button is then pressed. A pop-up message will appear:<p>
+Contrary to what is required for the new Integral Baseline method, a single chromatogram is first selected; a compromise between high intensity and low noise works best.<br>
+In the <b><i>Options</i></b> module, select the <i>Linear baseline removal</i> checkbox. The <b><i>Baseline</i></b> button is then pressed. A pop-up message will appear:<p>
 
 <p><center>
 <img SRC="somo-HPLC-SAXS_linear_baseline_warning.png" ALT="SOMO HPLC-SAXS linear baseline warning">
@@ -48,7 +52,7 @@ Pressing "OK" will allow to proceed. As shown in the image below, this superimpo
 </center>
 <p>
 
-By clicking on each field, the corresponding line can be moved across the chromatogram using the <b><i>gray-shades bar-wheel</i></b> at the top of this panel. The actual baseline is shown as a green dashed line, while the two orange dashed lines show the trends of linear regression done on the regions delimited by the two couples of vertical magenta lines. Ideally, the orange lines should come as close as possible to the green line:<p>
+By clicking on each field, the corresponding line can be moved across the chromatogram using the <b><i>gray-shades bar-wheel</i></b> at the top of this panel or the "<b><i>&lt;</i></b>" and "<b><i>&gt;</i></b>" buttons placed at its sides. The actual baseline is shown as a green dashed line, while the two orange dashed lines show the trends of linear regression done on the regions delimited by the two couples of vertical magenta lines. Ideally, the orange lines should come as close as possible to the green line:<p>
 
 <p><center>
 <img SRC="somo-HPLC-SAXS_linbas3.png" ALT="SOMO HPLC-SAXS linear baseline setting 3">
@@ -95,7 +99,7 @@ distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> Th
 </font>
 <p>
 <font face="helvetica" size="-1">
-Last modified on May 15, 2014.
+Last modified on July 11, 2016.
 </font>
 </body>
 </html>

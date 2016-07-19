@@ -53,11 +53,14 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Options : public QDialog
       QLabel *                                lbl_reps;
       QLineEdit *                             le_reps;
 
-      QLabel *                                lbl_alpha;
-      QLineEdit *                             le_alpha;
+      QLabel *                                lbl_epsilon;
+      QLineEdit *                             le_epsilon;
 
       QLabel *                                lbl_cormap_maxq;
       QLineEdit *                             le_cormap_maxq;
+
+      QLabel *                                lbl_cormap_alpha;
+      QLineEdit *                             le_cormap_alpha;
 
       QLabel *                                lbl_start_region;
       QLineEdit *                             le_start_region;

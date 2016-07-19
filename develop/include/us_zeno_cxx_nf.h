@@ -63,6 +63,10 @@
 # endif
 #endif
 
+#if defined( WIN32 )
+#define M_PI       3.14159265358979323846
+#endif
+
 namespace nanoflann
 {
 /** @addtogroup nanoflann_grp nanoflann C++ library for ANN

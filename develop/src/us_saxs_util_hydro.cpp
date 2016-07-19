@@ -8083,8 +8083,8 @@ void US_Saxs_Util::reload_pdb(bool parameters_set_first_model)
    } else {
       calc_mw_hydro();
    }
-   bead_models.clear();
-   somo_processed.clear();
+   bead_models.resize( model_vector.size() );
+   somo_processed.resize( model_vector.size() );
    update_vbar();
    // pb_somo->setEnabled(true);
    // pb_somo_o->setEnabled(true);
@@ -8292,7 +8292,7 @@ int US_Saxs_Util::calc_somo( bool no_ovlp_removal, bool parameters_set_first_mod
 		 if ( us_udp_msg )
 		   {
 		     map < QString, QString > msging;
-		     msging[ "progress_output" ] = QString("SOMO model calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100); // arg(ppos).arg(mppos);
+		     msging[ "progress_output" ] = QString("SOMO model calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ); // arg(ppos).arg(mppos);
 		     msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
 		     
 		     us_udp_msg->send_json( msging );
@@ -8504,7 +8504,7 @@ int US_Saxs_Util::compute_asa( bool bd_mode, bool no_ovlp_removal, bool paramete
    if ( us_udp_msg )
      {
        map < QString, QString > msging;
-       msging[ "progress_output" ] = QString("SOMO model calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100); // arg(ppos).arg(mppos);
+       msging[ "progress_output" ] = QString("SOMO model calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ); // arg(ppos).arg(mppos);
        msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
        
        us_udp_msg->send_json( msging );
@@ -8707,7 +8707,7 @@ int US_Saxs_Util::compute_asa( bool bd_mode, bool no_ovlp_removal, bool paramete
       if ( us_udp_msg )
 	{
 	  map < QString, QString > msging;
-	  msging[ "progress_output" ] = QString("SOMO model calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100); // arg(ppos).arg(mppos);
+	  msging[ "progress_output" ] = QString("SOMO model calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ); // arg(ppos).arg(mppos);
 	  msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
 	  
 	  us_udp_msg->send_json( msging );
@@ -8818,7 +8818,7 @@ int US_Saxs_Util::compute_asa( bool bd_mode, bool no_ovlp_removal, bool paramete
    if ( us_udp_msg )
      {
        map < QString, QString > msging;
-       msging[ "progress_output" ] = QString("SOMO model calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100); // arg(ppos).arg(mppos);
+       msging[ "progress_output" ] = QString("SOMO model calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ); // arg(ppos).arg(mppos);
        msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
        
        us_udp_msg->send_json( msging );
@@ -9115,7 +9115,7 @@ int US_Saxs_Util::compute_asa( bool bd_mode, bool no_ovlp_removal, bool paramete
    if ( us_udp_msg )
      {
        map < QString, QString > msging;
-       msging[ "progress_output" ] = QString("SOMO model calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100); // arg(ppos).arg(mppos);
+       msging[ "progress_output" ] = QString("SOMO model calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ); // arg(ppos).arg(mppos);
        msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
        
        us_udp_msg->send_json( msging );
@@ -9448,7 +9448,7 @@ int US_Saxs_Util::compute_asa( bool bd_mode, bool no_ovlp_removal, bool paramete
    if ( us_udp_msg )
      {
        map < QString, QString > msging;
-       msging[ "progress_output" ] = QString("SOMO model calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100); // arg(ppos).arg(mppos);
+       msging[ "progress_output" ] = QString("SOMO model calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ); // arg(ppos).arg(mppos);
        msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
        
        us_udp_msg->send_json( msging );
@@ -9495,7 +9495,7 @@ int US_Saxs_Util::compute_asa( bool bd_mode, bool no_ovlp_removal, bool paramete
    if ( us_udp_msg )
      {
        map < QString, QString > msging;
-       msging[ "progress_output" ] = QString("SOMO model calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100); // arg(ppos).arg(mppos);
+       msging[ "progress_output" ] = QString("SOMO model calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ); // arg(ppos).arg(mppos);
        msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
        
        us_udp_msg->send_json( msging );
@@ -9696,7 +9696,7 @@ int US_Saxs_Util::compute_asa( bool bd_mode, bool no_ovlp_removal, bool paramete
    if ( us_udp_msg )
      {
        map < QString, QString > msging;
-       msging[ "progress_output" ] = QString("SOMO model calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100); // arg(ppos).arg(mppos);
+       msging[ "progress_output" ] = QString("SOMO model calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ); // arg(ppos).arg(mppos);
        msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
        
        us_udp_msg->send_json( msging );
@@ -9899,7 +9899,7 @@ int US_Saxs_Util::compute_asa( bool bd_mode, bool no_ovlp_removal, bool paramete
    if ( us_udp_msg )
      {
        map < QString, QString > msging;
-       msging[ "progress_output" ] = QString("SOMO model calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100); // arg(ppos).arg(mppos);
+       msging[ "progress_output" ] = QString("SOMO model calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ); // arg(ppos).arg(mppos);
        msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
        
        us_udp_msg->send_json( msging );
@@ -10136,7 +10136,7 @@ int US_Saxs_Util::compute_asa( bool bd_mode, bool no_ovlp_removal, bool paramete
       if ( us_udp_msg )
 	{
 	  map < QString, QString > msging;
-	  msging[ "progress_output" ] = QString("SOMO model calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100); // arg(ppos).arg(mppos);
+	  msging[ "progress_output" ] = QString("SOMO model calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ); // arg(ppos).arg(mppos);
 	  msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
 	  
 	  us_udp_msg->send_json( msging );
@@ -10377,7 +10377,7 @@ int US_Saxs_Util::compute_asa( bool bd_mode, bool no_ovlp_removal, bool paramete
       if ( us_udp_msg )
 	{
 	  map < QString, QString > msging;
-	  msging[ "progress_output" ] = QString("SOMO model calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100); // arg(ppos).arg(mppos);
+	  msging[ "progress_output" ] = QString("SOMO model calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ); // arg(ppos).arg(mppos);
        msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
        
        us_udp_msg->send_json( msging );
@@ -11301,7 +11301,7 @@ int US_Saxs_Util::compute_asa( bool bd_mode, bool no_ovlp_removal, bool paramete
 	 if ( us_udp_msg )
 	   {
 	     map < QString, QString > msging;
-	     msging[ "progress_output" ] = QString("SOMO model calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ).arg(100); // arg(ppos).arg(mppos);
+	     msging[ "progress_output" ] = QString("SOMO model calculation: %1\%").arg(QString::number( int((double(ppos)/double(mppos))*100.0) ) ); // arg(ppos).arg(mppos);
 	     msging[ "progress1" ] = QString::number(double(ppos)/double(mppos));
 	     
 	     us_udp_msg->send_json( msging );
@@ -11379,7 +11379,7 @@ int US_Saxs_Util::compute_asa( bool bd_mode, bool no_ovlp_removal, bool paramete
    if ( us_udp_msg )
      {
        map < QString, QString > msging;
-       msging[ "progress_output" ] = QString("SOMO model calculation: %1\%").arg(QString::number( int((double(mppos - (asa_hydro.recheck_beads ? 1 : 0))/double(mppos))*100.0) ) ).arg(100); // arg(ppos).arg(mppos);
+       msging[ "progress_output" ] = QString("SOMO model calculation: %1\%").arg(QString::number( int((double(mppos - (asa_hydro.recheck_beads ? 1 : 0))/double(mppos))*100.0) ) ); // arg(ppos).arg(mppos);
        msging[ "progress1" ] = QString::number(double(mppos - (asa_hydro.recheck_beads ? 1 : 0))/double(mppos));
        
        us_udp_msg->send_json( msging );
@@ -11392,7 +11392,7 @@ int US_Saxs_Util::compute_asa( bool bd_mode, bool no_ovlp_removal, bool paramete
        if ( us_udp_msg )
 	 {
 	   map < QString, QString > msging;
-	   msging[ "progress_output" ] = QString("SOMO model calculation: %1\%").arg(QString::number(100)).arg(100); // arg(ppos).arg(mppos);
+	   msging[ "progress_output" ] = QString("SOMO model calculation: %1\%").arg(QString::number(100)); // arg(ppos).arg(mppos);
 	   msging[ "progress1" ] = QString::number(1);
 	   
 	   us_udp_msg->send_json( msging );

@@ -4,8 +4,13 @@
 <head>
 <meta content="text/html;charset=ISO-8859-1" http-equiv="Content-Type">
 	<title>SOMO HPLC-SAXS Module - Gaussians with distorsion(s) Help</title>
-	<link href="mainstyle.css" rel="styleSheet" type="text/css">
-</head>
+	<link href="mainstyle3.css" rel="styleSheet" type="text/css">
+<style>
+img {
+    width:100%;
+}
+</style>
+	</head>
 <body>
 <table BORDER=0 CELLPADDING=5 >
 <tr>
@@ -22,7 +27,13 @@
 <center>
 <h2>
 SOMO HPLC-SAXS Module: Gaussians with distorsion(s) operations</h2></center>
-<h3><center>Last updated: July 2015 </center></h3><p>
+<h3><center>Last updated: July 2016 </center></h3><p>
+<p>
+<center><span style="color:#CC0000">NOTICE: the Gaussian decomposition method is being developed by E. Brookes, J. Perez, P. Vachette, and M. Rocco.<br>
+Portions of this help file are taken from the Supplementary Materials of Brookes et al., "Fibrinogen species as resolved by HPLC-SAXS data processing within the UltraScan SOlution MOdeler (US-SOMO) enhanced SAS module", J. Appl. Cryst. 46:1823-1833 (2013), and from Brookes et al. "US-SOMO HPLC-SAXS Module: Dealing with Capillary Fouling, and Extraction of Pure Component Patterns from Poorly Resolved SEC-SAXS Data", J. Appl. Cryst., 2016, <i>in press</i>.
+</center>
+<hr>
+<p>
 
 This manual part describes the Gaussian analysis and decomposition operations using non symmetrical (skewed, distorted) Gaussians. The dataset we will use as an example is the same HPLC-SAXS analysis of Aldolase that is used to demonstrate the linear baseline operations (see <a href=somo_saxs_hplc_linear_baselines.html>here</a>):<p>
 
@@ -30,13 +41,14 @@ This manual part describes the Gaussian analysis and decomposition operations us
 <img SRC="somo-HPLC-SAXS_skewedGaussian1.png" ALT="SOMO HPLC-SAXS Skewed Gaussians 1">
 </center>
 <p>
-
+</h7>
 The type of distorted Gaussian to be utilized is chosen in the Options panel accessed by pressing the <b><i>Options</b></i> button:<p>
 
 <p><center>
-<img SRC="somo-HPLC-SAXS_EMG_option.png" ALT="SOMO HPLC-SAXS HPLC-SAXS Options: EMG">
+<img SRC="somo-HPLC-SAXS_EMG_option.png" ALT="SOMO HPLC-SAXS HPLC-SAXS Options: EMG" style="width:40%">
 </center>
 <p>
+
 
 We will start with the Exponentially modified Gaussian (EMG) function. After selecting it and returning to the <b><i>HPLC-SAXS</i></b> main panel, a <b><i>EMG</b></i> button will replace the default <b><i>Gaussians</i></b> button. Pressing it will bring up the EMG settings:<p>
 
@@ -55,7 +67,7 @@ Since an <b><i>SVD</i></b> analysis (see <a href=somo_saxs_hplc_svd.html>here</a
 Note that four fields are now present in the third commands row. The first three are the center, width and amplitude of each Gaussian, as in normal Gaussian operation, while the fourth is the EMG Gaussian distorsion (set to 0 at the beginning). All other commands are identical as for normal Gaussian operations. Once the intial set of EMG Gaussians is positioned, pressing <b><i>Fit</i></b> will bring up again the <b><i>Gaussian Fit</b></i> module:<p>
 
 <p><center>
-<img SRC="somo-HPLC-SAXS_GaussFit2.png" ALT="SOMO HPLC-SAXS Skewed Gaussians Fit EMG">
+<img SRC="somo-HPLC-SAXS_GaussFit2.png" ALT="SOMO HPLC-SAXS Skewed Gaussians Fit EMG" style="width:40%">
 </center>
 <p>
 
@@ -94,7 +106,7 @@ We can perform the same analysis using the <b><i>Half-Gaussian modified Gaussian
 As can be seen from the fit &chi;<sup>2</sup> (next to the <b><i>Fit</i></b> button), this function performs worse for this dataset. A function combining the EMG and GMG Gaussians (<b><i>EMG+GMG</i></b>) can be also tested. The corresponding <b><i>Fit</i></b> module will present extra fields:<p>
 
 <p><center>
-<img SRC="somo-HPLC-SAXS_GaussFit1.png" ALT="SOMO HPLC-SAXS Gaussian Fit with distorsions panel">
+<img SRC="somo-HPLC-SAXS_GaussFit1.png" ALT="SOMO HPLC-SAXS Gaussian Fit with distorsions panel" style="width:40%">
 </center>
 <p>
 
@@ -106,23 +118,56 @@ see <a href=somo_saxs_hplc_fit.html>here</a> for a complete description descript
 <p>
 
 
-As can be seen, there is an improvement, mainly due to the exclusion of the small bump before the first peak. We will then proceed with this set, first by doing <b><i>Global Gaussians</i></b> on a subset, and then proceeding with <b><i>Global fit</i></b>:<p>
+As can be seen, there is a substantial improvement, mainly due to the exclusion of the small bump before the first peak. We will then proceed with this set, first by doing <b><i>Global Gaussians</i></b> on a subset:<p>
+
+<p><center>
+<img SRC="somo-HPLC-SAXS_skewedGaussian_adv_sel.png" ALT="SOMO HPLC-SAXS Skewed Gaussians advanced selection" style="width:60%">
+</center>
+<p>
+
+and then proceeding with <b><i>Global fit</i></b>:<p>
 
 <p><center>
 <img SRC="somo-HPLC-SAXS_skewedGaussian11.png" ALT="SOMO HPLC-SAXS Skewed Gaussians global fit">
 </center>
 <p>
 
-Here, by looking at the <b><i>Residuals</i></b>, the fit appears to be somewhat improved, and the apparently larger residuals especially around the main peak are due to the very low SD associated with the data, amplifying the discrepancies. After propagating the EMG+GMG Gaussians to all chromatogram with <b><i>Global Gaussians</i></b>, we can check the results on a single chromatogram:<p>
+Here, already by looking at the <b><i>Residuals</i></b>, the fit appears to be improved, and the apparently larger residuals especially around the main peak are due to the very low SD associated with the data, amplifying the discrepancies. The goodness of the fit can be further checked by first resticting again the fit limits, then recomputing the residuals by pressing <i><b>Recompute nChi^2</i></b>, and subsequentely pressing <b><i>Global fit by q</i></b>:<p>
 
 <p><center>
-<img SRC="somo-HPLC-SAXS_skewedGaussian12.png" ALT="SOMO HPLC-SAXS Skewed Gaussians final gaussian">
+<img SRC="somo-HPLC-SAXS_skewedGaussian11a.png" ALT="SOMO HPLC-SAXS Skewed Gaussians global fit plus global fit by q plot" style="width:80%">
 </center>
 <p>
 
-where the goodness of the reconstructed curve (yellow) superimposed to the original data (cyan) can be appreciated, with the residuals evenly distributed.<p>
+This will bring up an additional plot where the normalized &chi;<sup>2</sup> (diamonds connected by a line) and the pairwise CorMap <i>P</i>-values (squares) are plotted as a function of the <i>q</i>-value. In the <i>Global fit by q</i> graph it is possible to visualize either one of or both the two plots, by selecting/deselecting their respective checkboxes positioned just below it (<i>Plot Chi^2/RMSD</i> and <i>Plot CorMap P values</i>). Note that in the image above, where both plots are shown, their respective <i>y</i>-axis scales have been manually modified to allow a better visualization of each plot. The dashed green and yellow horizontal lines mark the usual cut-off <i>P</i>-values (<i>P</i> &ge; 0.05, above the green line; 0.05 &gt; <i>P</i> &gt; 0.01 between the green and yellow lines; <i>P</i> &lt; 0.01, below the yellow line).<p>
 
+The correlation between the goodness-of-fit indicators and the distribution of the residuals can be examined for each original/fit <i>I</i>(<i>t</i> vs. <i>t</i> pair by selecting the <i>Scroll</i> checkbox:<p>
 
+<p><center>
+<img SRC="somo-HPLC-SAXS_skewedGaussian11b.png" ALT="SOMO HPLC-SAXS Skewed Gaussians global fit plus global fit by q plot in scroll mode" style="width:60%">
+</center>
+<p>
+
+The current chromatograms pair is highlighted in both plots by an enlarged symbol (purple square in this case). Scrolling is performed by either using the grey-scale bar-wheel, or by clicking on the the "<b><i>&lt;</i></b>" and "<b><i>&gt;</i></b>" buttons placed at its sides. By selecting/deselecting the three checkboxes next to the <i>Scroll</i> checkbox (<i>P >= 0.05</i>, <i>0.05 > P >= 0.01</i>, <i>P < 0.01</i>), only the subset(s) whose <i>P</i>-values are within those of the selected chechbox(es) will by scrolled.<br>
+Note how here to a relatively "bad" &chi;<sup>2</sup> value (5.169) corresponds a "good" <i>CorMap</i> value (<i>P</i> = 0.0974). This indicates an essentially random residual distribution, while the high &chi;<sup>2</sup> value is mainly due to the very low SD associated with the data, since the fit appears also to be quite good (top graph).<p>
+
+Conversely, if we examine a <i>q</i>-value where the &chi;<sup>2</sup> is better (3.257) but the <i>P</i>-value is bad (0.0015), we can see by zooming on the inflexition between the 3<sup>rd</sup> and 4<sup>th</sup> peaks that the latter is mainly due to a stretch of <i>I</i>(<i>t</i>) experimental values (salmon diamonds) sligthly below the EMG+GMG fit curve:<p> 
+
+<p><center>
+<img SRC="somo-HPLC-SAXS_skewedGaussian11c.png" ALT="SOMO HPLC-SAXS Skewed Gaussians global fit plus global fit by q plot in scroll mode" style="width:60%">
+</center>
+<p>
+
+After accepting the Global Fit, the EMG+GMG Gaussians are then propagated to all chromatogram by first selecting all chromatograms amd then pressing <b><i>Global Gaussians</i></b>:<p>
+
+<p><center>
+<img SRC="somo-HPLC-SAXS_skewedGaussian12.png" ALT="SOMO HPLC-SAXS Skewed Gaussians final global gaussians" style="width:80%">
+</center>
+<p>
+
+where the goodness of the reconstruction can be appreciated in both the <i>Reduced Residuals</i> and the <i>Global fit by q </i> plots.<p>
+
+<b><i>Save</i></b> and <i><b>Keep</i></b> can then be sequentially pressed to store and accept the global Gaussian results. After non-symmetrical Gaussian decomposition, the <b><i>Trial make I(q)</b></i> procedure can be launched to further test the results, as described in the <a href="somo_saxs_hplc.html#trialmakeiq">main <i>Help</i> pages.</a><p>
 <p>
 <hr>
 <font face="helvetica" size="-1">
@@ -139,7 +184,7 @@ distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> Th
 </font>
 <p>
 <font face="helvetica" size="-1">
-Last modified on July 2, 2015.
+Last modified on July 11, 2016.
 </font>
 </body>
 </html>

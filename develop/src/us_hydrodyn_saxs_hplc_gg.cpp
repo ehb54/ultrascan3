@@ -163,7 +163,10 @@ bool US_Hydrodyn_Saxs_Hplc::gg_fit_vector(
    int cormap_yellow = 0;
    int cormap_red    = 0;
 
-   double alpha        = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "alpha" ) ? ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "alpha" ].toDouble() : 0.05;
+   double alpha        = 
+      ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_cormap_alpha" ) 
+      ? ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_cormap_alpha" ].toDouble() * 5e0 
+      : 0.05;
    double alpha_over_5 = 0.2 * alpha;
 
    for ( int i = 0; i < (int) unified_ggaussian_curves; ++i )
@@ -391,7 +394,7 @@ bool US_Hydrodyn_Saxs_Hplc::gg_fit_vector(
 
    if ( cb_ggq_plot_P->isChecked() ) {
       ggqfit_plot->enableAxis  ( QwtPlot::yRight , true );
-      ggqfit_plot->setAxisTitle( QwtPlot::yRight, tr( "CorMap P value (log scale)" ) );
+      ggqfit_plot->setAxisTitle( QwtPlot::yRight, tr( "P value (log scale)" ) );
 
 //    // pvalue
 //    {

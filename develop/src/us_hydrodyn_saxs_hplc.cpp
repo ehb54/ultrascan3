@@ -175,6 +175,9 @@ US_Hydrodyn_Saxs_Hplc::US_Hydrodyn_Saxs_Hplc(
    if ( !( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_cormap_maxq"    ) ) {
       ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_cormap_maxq"    ] = "0.05";
    }
+   if ( !( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_cormap_alpha"    ) ) {
+      ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_cormap_alpha"    ] = "0.01";
+   }
    if ( !( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_bl_i_power"    ) ||
         !started_in_expert_mode ) {
       ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_i_power"    ] = "1";

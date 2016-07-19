@@ -194,7 +194,7 @@ float standard_distribution(float x)
    return result;
 }
 
-float normal_distribution(float sigma, float mean, float x)
+float us_normal_distribution(float sigma, float mean, float x)
 {
    float result;
    result = exp(-(pow((double) ((x - mean)/sigma), (double) 2.0))) / sqrt((double) (2 * M_PI * sigma));
@@ -430,11 +430,11 @@ void gaussian_smoothing(float **array, unsigned int smooth, unsigned int points)
       x_weights       = new float [smooth];
       y_weights       = new float [smooth];
       x_weights[0] = 0.0;
-      y_weights[0] = normal_distribution(1.0, 0.0, x_weights[0]); // standard deviation = 1.0, Mean = 0;
+      y_weights[0] = us_normal_distribution(1.0, 0.0, x_weights[0]); // standard deviation = 1.0, Mean = 0;
       for (i=1; i<smooth; i++) //we only calculate half a Gaussian, since the other side is symmetric
       {
          x_weights[i] = x_weights[i-1] + increment;
-         y_weights[i] = normal_distribution(1, 0, x_weights[i]);
+         y_weights[i] = us_normal_distribution(1, 0, x_weights[i]);
       }
 
       // first, take care of the left border, using an "appearing frame" algorithm,

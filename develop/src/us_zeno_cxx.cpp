@@ -2,6 +2,13 @@
 #define USE_SPHERE_CENTERS_MODEL 
 #define USE_NANOFLANN_SORT_SCM
 #if __cplusplus >= 201103L
+#include <future>
+#include <chrono>
+#include "../include/us_hydrodyn_zeno.h"
+#undef R
+#include "q3progressbar.h"
+extern Q3ProgressBar *zeno_progress;
+extern bool *zeno_stop_flag;
 #include <fstream>
 class zeno_fout {
 public:
@@ -1617,7 +1624,9 @@ doWalkOnSpheresThread(Sphere<double> const * boundingSphere,
 		      double fracErrorBound,
 		      double shellThickness,
 		      int numWalks,
-		      Results<RandomNumberGenerator> * results);
+		      Results<RandomNumberGenerator> * results,
+                      std::promise<bool> * p0
+                      );
 
 template <class InsideOutsideTester>
 void
@@ -1681,7 +1690,6 @@ enum {SPHERE_PRIMITIVES, VOXEL_PRIMITIVES};
 // ================================================================
 
 int zeno_cxx_main(int argc, char **argv, const char * fname) { zeno_cxx_fout = new zeno_fout( fname );
-   std::cout << "zeno name is " << fname << std::endl;
 
   const double defaultShellThicknessFactor = 0.000001;
 
@@ -2175,6 +2183,8 @@ doWalkOnSpheres(int numThreads,
   walkTimer.start();
 
   std::thread * * threads = new std::thread *[numThreads];
+  std::promise < bool > p0;
+  auto future = p0.get_future();
 
   for (int threadNum = 0; threadNum < numThreads; threadNum++) {
 
@@ -2193,8 +2203,20 @@ doWalkOnSpheres(int numThreads,
 		      fracErrorBound,
 		      shellThickness,
 		      numWalksPerThread,
-		      &results);
+		      &results,
+                      &p0);
   }
+
+  {
+     bool join_now = false;
+     do {
+        auto status = future.wait_for(std::chrono::milliseconds(200));
+        qApp->processEvents();
+        if (status == std::future_status::ready) {
+           join_now = true;
+        }
+     } while (!join_now );
+  }           
 
   for (int threadNum = 0; threadNum < numThreads; threadNum++) {
     threads[threadNum]->join();
@@ -2220,7 +2242,9 @@ doWalkOnSpheresThread(Sphere<double> const * boundingSphere,
 		      double fracErrorBound,
 		      double shellThickness,
 		      int numWalks,
-		      Results<RandomNumberGenerator> * results) {
+		      Results<RandomNumberGenerator> * results,
+                      std::promise < bool > *p0
+                      ) {
 
   WalkerExterior<double, 
 		 RandomNumberGenerator,
@@ -2234,6 +2258,13 @@ doWalkOnSpheresThread(Sphere<double> const * boundingSphere,
 	   shellThickness);
 
   for (int walkNum = 0; walkNum < numWalks; walkNum++) {
+
+     if ( *zeno_stop_flag ) {
+        break;
+     }
+     if ( !threadNum && !( walkNum % 10000 ) ) {
+        zeno_progress->setProgress( walkNum, numWalks );
+     }
 
     bool hitObject = false;
     int numSteps   = 0;
@@ -2251,6 +2282,10 @@ doWalkOnSpheresThread(Sphere<double> const * boundingSphere,
     else {
       results->recordMiss(threadNum);
     }
+  }
+
+  if ( !threadNum ) {
+     p0->set_value( true );
   }
 }
 

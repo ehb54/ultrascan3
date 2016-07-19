@@ -776,6 +776,7 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
    {
       nnls_target = "\"" + grid_target + "\"";
    }
+   bool clear_plot_first = true;
 
    US_Hydrodyn_Saxs_Iqq_Load_Csv *hslc =
       new US_Hydrodyn_Saxs_Iqq_Load_Csv(
@@ -794,6 +795,7 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
                                         &run_nnls,
                                         &run_best_fit,
                                         &nnls_target,
+                                        &clear_plot_first,
                                         1 || U_EXPT,
                                         us_hydrodyn
                                         );
@@ -804,6 +806,10 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
    
    this->isVisible() ? this->raise() : this->show();
    
+   if ( qsl_sel_names.size() && clear_plot_first ) {
+      clear_plot_saxs_data();
+   }
+
    // make sure target is selected
    
    if ( ( run_nnls || run_best_fit ) &&
@@ -1677,7 +1683,9 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves )
       USglobal->config_list.root_dir + SLASH + "somo" + SLASH + "saxs" :
       our_saxs_options->path_load_prr;
 
-   select_from_directory_history( use_dir, this );
+   if ( !just_plotted_curves ) {
+      select_from_directory_history( use_dir, this );
+   }
 
    QStringList filenames;
    QString filename;
@@ -2269,6 +2277,7 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves )
          bool run_nnls = false;
          bool run_best_fit = false;
          QString nnls_target = "";
+         bool clear_plot_first = true;
          
          US_Hydrodyn_Saxs_Load_Csv *hslc =
             new US_Hydrodyn_Saxs_Load_Csv(
@@ -2287,6 +2296,7 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves )
                                           &run_nnls,
                                           &run_best_fit,
                                           &nnls_target,
+                                          &clear_plot_first,
                                           1 || U_EXPT,
                                           us_hydrodyn
                                           );
@@ -2296,6 +2306,10 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves )
          delete hslc;
          
          this->isVisible() ? this->raise() : this->show();
+
+         if ( qsl_sel_names.size() && clear_plot_first ) {
+            clear_plot_pr();
+         }
 
          // make sure target is selected
 

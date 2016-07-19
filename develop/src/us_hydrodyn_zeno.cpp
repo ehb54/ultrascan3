@@ -3,7 +3,8 @@
 #include <Q3TextStream>
 
 static US_Hydrodyn  * zeno_us_hydrodyn;
-static Q3ProgressBar * zeno_progress;
+Q3ProgressBar * zeno_progress;
+bool * zeno_stop_flag;
 
 // note: this program uses cout and/or cerr and this should be replaced
 
@@ -13435,6 +13436,7 @@ US_Hydrodyn_Zeno::US_Hydrodyn_Zeno(
    this->us_hydrodyn = us_hydrodyn;
    zeno_us_hydrodyn  = us_hydrodyn;
    zeno_progress     = us_hydrodyn->progress;
+   zeno_stop_flag    = & us_hydrodyn->stopFlag;
 }
 
 bool US_Hydrodyn_Zeno::test()
@@ -13576,7 +13578,7 @@ bool US_Hydrodyn_Zeno::run(
 #if __cplusplus >= 201103L
       zeno_cxx_main( argc, argv, QString( "%1.zno" ).arg( filename ).ascii() );
 #endif
-      zeno_progress->setProgress( 1, 1 );
+      zeno_progress->reset();
 
       if ( !us_hydrodyn->stopFlag )
       {
@@ -13622,7 +13624,7 @@ bool US_Hydrodyn_Zeno::run(
 
       zeno_progress->setProgress( 0, progress_steps );
       zeno_main( argc, argv );
-      zeno_progress->setProgress( 1, 1 );
+      zeno_progress->reset();
 
       if ( !us_hydrodyn->stopFlag )
       {
@@ -13941,7 +13943,7 @@ bool US_Hydrodyn::calc_zeno()
 
                if ( zeno_cxx ) {
 
-                  param_rx     .push_back( QRegExp( "^Viscometric radius:\\s+(\\S+)\\s*$" ) );
+                  param_rx     .push_back( QRegExp( "^Capacitance:\\s+(\\S+)\\s*$" ) );
                   param_name   .push_back( "results.rs" );
                   param_cap_pos.push_back( 1 );
 

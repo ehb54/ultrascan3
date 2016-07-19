@@ -4,7 +4,7 @@
 <head>
 <meta content="text/html;charset=ISO-8859-1" http-equiv="Content-Type">
 	<title>SOMO HPLC-SAXS Module</title>
-	<link href="mainstyle.css" rel="styleSheet" type="text/css">
+	<link href="mainstyle2.css" rel="styleSheet" type="text/css">
 </head>
 <body>
 <table BORDER=0 CELLPADDING=5 >
@@ -22,10 +22,10 @@
 <center>
 <h2>
 SOMO HPLC-SAXS Module:</h2></center>
-<h3><center>Last updated: March 2016 </center></h3><p>
+<h3><center>Last updated: July 2016 </center></h3><p>
 
 <center><span style="color:#CC0000">NOTICE: this module is being developed by E. Brookes, J. Pérez, P. Vachette, and M. Rocco.<br>
-Portions of this help file are taken from the Supplementary Materials of Brookes et al., "Fibrinogen species as resolved by HPLC-SAXS data processing within the UltraScan SOlution MOdeler (US-SOMO) enhanced SAS module", J. Appl. Cryst. 46:1823-1833 (2013), and of Brookes et al. "US-SOMO HPLC-SAXS Module: Dealing with Capillary Fouling, and Extraction of Pure Component Patterns from Poorly Resolved SEC-SAXS Data", under revison at J. Appl. Cryst., 2016.</span>
+Portions of this help file are taken from the Supplementary Materials of Brookes et al., "Fibrinogen species as resolved by HPLC-SAXS data processing within the UltraScan SOlution MOdeler (US-SOMO) enhanced SAS module", J. Appl. Cryst. 46:1823-1833 (2013), and from Brookes et al. "US-SOMO HPLC-SAXS Module: Dealing with Capillary Fouling, and Extraction of Pure Component Patterns from Poorly Resolved SEC-SAXS Data", J. Appl. Cryst., 2016, <i>in press</i>.</span>
 </center>
 
 <p><center>
@@ -64,13 +64,13 @@ Several buttons are available in the panel below the loaded files window:
 
 The <b><i>Log X</i></b> (<b><i>Lin X</i></b>) and <b><i>Log Y</i></b> (<b><i>Lin Y</i></b>) buttons allow to toggle between linear and log<sub>10</sub> scaling of the data on the <i>x</i>- and <i>y</i>-axes, respectively (if zero or negative values are present, they will be temporarily removed when the scale is set to log<sub>10</sub> mode, as they cannot be shown on the display in this mode). The buttons will change their respective label once pressed, to underscore what is the action currently available.<p>
 
-Selecting the <b><i>Err</i></b> checkbox, active when up to 10 files are selected, will switch their representation from the dots connected with a line mode to symbols (diamonds) with their associated SDs represented as error bars mode.<p>
+Selecting the <b><i>Err</i></b> checkbox, active when up to 10 files are selected, will switch their representation from the dots connected with a line mode, to symbols (diamonds) with their associated SDs represented as error bars mode.<p>
 
 <b><i>Rescale</i></b> adjusts the X-Y axes on the graphics window to maximize the display of selected datasets (no effect on the data themselves).<p>
 
 <b><i>Normalize</i></b> will divide the <i>I</i>(<i>q</i>)</i> data by the stored/entered concentrations.<p>
 
-<b><i>Average</i></b> will produce a weighted average with propagated SDs of selected data. The resulting datset filename will contain the number of frames averaged, and the initial and final frame numbers, followed by "_avg".<p>
+<b><i>Average</i></b> will produce an average with propagated SDs of selected data. The <i>I</i>(<i>q</i>) values from each frame will be averaged, and then a scaling factor will be determined for each frame against the average resulting frame. The scaling factor for each original frame multiplies the frames's SD. The average intensity SD's are computed as the square root of the sum of the squares of each curves scaled SD's, and this is divided by the number of curves. The resulting datset filename will contain the number of frames averaged, and the initial and final frame numbers, followed by "_avg".<p>
 
 <b><i>To SOMO/SAS</i></b> will transfer selected datasets back into the <b>US-SOMO <i>SAS</i></b> panel.<p>
 
@@ -85,7 +85,7 @@ Each time the <b><i>Width</i></b> button is pressed, it increments the data line
 </center>
 <p>
 
-<b><i>Smooth</i></b> performs a regularization of selected data using a moving window, whose dimension is defined in a pop-up menu (shown below), using a Gaussian smoothing kernel of 2n+1 points.<p>
+<b><i>Smooth</i></b> performs a regularization of selected data using a moving window, whose dimension is defined in a pop-up menu (shown below), using a Gaussian smoothing kernel of 2<i>n</i>+1 points.<p>
 <center>
 <img SRC="somo-HPLC-SAXS_smoothing.png" ALT="SOMO HPLC-SAXS smoothing window panel">
 </center>
@@ -95,13 +95,13 @@ Each time the <b><i>Width</i></b> button is pressed, it increments the data line
 
 <b><i>Make I(t)</i></b> is one of the crucial operations in the <b><i>HPLC-SAXS</i></b> module. It allows to generate a series of "chromatograms" (<i>I(t)</i> vs. <i>t</i>, where <i>t</i> can be real elution time or frame number) for each <i>q</i>-value present in the original data files (see below). A test could be automatically performed each time an  <i>I</i>(<i>q</i>) vs. <i>q</i> dataset is converted into an <i>I</i>(<i>t</i>) vs. <i>t</i> dataset to ascertain if any <i>I</i>(<i>t</i>) vs. <i>t</i> "chromatogram" contain useful data, on the basis of a comparison between the signal and its associated SDs, by selecting its relative checkbox and the SD factor in the <b><i>Options</i></b> menu accessible from the button provided at the bottom of this window (see <a href=saxs_hplc_options.html>here</a>).<p>
 
-<b><i>Test I(t)</i></b> produces a temporary regeneration of the <i>I</i>(<i>q</i>) vs. <i>q</i> frames allowing to test the results of data treatment (like baseline correction and/or Gaussian decomposition) using a series of tools for scaling and Guinier analysis, the latter producing <i>R<sub>g</sub></i> and <i>I</i>(0) values (see here ).<p>
+<b><i>Test I(t)</i></b> Checks the <i>I</i>(<i>t</i>) vs. <i>q</i> selected curves to see if any fail the negative region test as described above.<p>
 
 <b><i>Make I(q)</b></i> is the other crucial operation in the <b><i>HPLC-SAXS</i></b> module. It allows to re-generate <i>I</i>(<i>q</i>) vs. <i>q</i> files for each frame after data treatment in frame- (or time-) space.<p>
 
 <b><i>Concentration load</i></b> is used to upload any chromatographic data files containing a concentration-related elution profile, such as those produced by UV-VIS absorption or refractive index detectors (the program will then internally keep track of such datasets, distinguishing them from SAXS datasets). By default, the program will look for "*.txt" files, but the choice could be expanded to other extensions in the file upload dialogue. The currently recognized format for concentration data is similar to the SAXS data format with the addition of the string "Frame data" in any place on the first line. The two or three columns of data are the frame number, concentration-related data, and optionally an associated SD value.<p>
 
-<b><i>Repeak</i></b> is used to effectively scale data (usually a concentration-related chromatogram) on the <i>y</i>-axis to a pre-set target (usually a low-<i>q</i>, high-intensity <i>I</i>(<i>t</i> vs. <i>t</i> chromatogram), selectable in a pop-up window among the data subjected to this operation (this affects the data, a new file is generated with "rp" and the scaling factor added at the end of the filename). See more below on this subject.<p>
+<b><i>Repeak</i></b> is used to effectively scale data (usually a concentration-related chromatogram) on the <i>y</i>-axis to a pre-set target (usually a low-<i>q</i>, high-intensity <i>I</i>(<i>t</i>) vs. <i>t</i> chromatogram), selectable in a pop-up window among the data subjected to this operation (this affects the data, a new file is generated with "rp" and the scaling factor added at the end of the filename). See more below on this subject.<p>
 
 <b><i>Set</i></b> will set an already uploaded and currently selected file containing the UV or refractive index profile vs. time or frame number as the source of the concentration-dependent signal.<p>
 
@@ -125,7 +125,7 @@ In addition, a test is automatically performed to identify regions
 within a sliding window (of 25 frames in this case) where the sum
 of the intensity is less than the negative of the sum of the
 corresponding SD values over the window.  Regions with negative
-values will cause problems with the integral baseline subtraction
+values could cause problems with the integral baseline subtraction
 procedure (see more below). This test identified just a single <i>I(t)</i> vs. <i>t</i>  chromatogram failing it, as shown in a pop-up window:<p>
 
 <p><center>
@@ -200,9 +200,9 @@ When a part of the graph is selected using the mouse/left button, the buttons in
 Of the top-row commands, two deserve already a comment at this point:<p>
 <ul>
 <li>
-<b><i>CorMap Analysis</i></b> will launch a pairwise similarity comparison between all currently selected datasets, according to our implementation of the Correlation Map method developed by Franke
+<b><i>CorMap Analysis</i></b> will launch a pairwise similarity comparison between all currently selected datasets, according to our implementation of <i>P</i>-value computations and comparisons derived from the Correlation Map method developed by Franke
 </span><span lang="en-US"><i>et al.</i></span><span lang="en-US">
-(Franke D, Jeffries CM, Svergun DI. Correlation Map, a goodness-of-fit test for one-dimensional X-ray scattering spectra. Nature Methods, 12, 419-422, 2015). Specialized applications or the CorMap analysis are described at several points below. A general CorMap description with examples can be found <a href=cormap.html>here</a>.<p>
+(Franke D, Jeffries CM, Svergun DI. Correlation Map, a goodness-of-fit test for one-dimensional X-ray scattering spectra. Nature Methods, 12, 419-422, 2015). Specialized applications of the CorMap analysis are described at several points below. A general <i><b>CorMap Analysis</i></b> module description with examples can be found <a href=cormap.html>here</a>.<p>
 
 <li>
 <b><i>Save plots</i></b> allows saving the data shown in any of the plots currently visualized in csv-formatted files. Pressing it will open a pop-up dialogue window where the location and the root filename for the cvs files can be set.<p>
@@ -216,7 +216,7 @@ Of the top-row commands, two deserve already a comment at this point:<p>
 Visual inspection of the <i>I(t)</i> vs. <i>t</i> chromatograms can already hint at problems, such as in the lysozyme data here used as an example. In this case, it is evident that many <i>I(t)</i> vs. <i>t</i> chromatograms starting from the low-<i>q</i> region do not return to pre-peak elution baseline intensity values. Most likely, this is due to capillary fouling, and without proper correction these data would be mostly useless. For this, and for less evident cases, an Integral Baseline correction procedure has been devised<br>
 The <b>Integral Baseline</b> method is based upon the assumption that capillary fouling deposits are formed in proportion to the sample concentration while exposed to the beam, and that neither the buffer nor the instrumental background are contributing to this effect. That deposition on the capillary does occur is clearly proven by the fact that a steady SAXS signal is maintained even after completion of the protein elution. The theory underlying the Integral Baseline correction procedure can be found <a href=IntegralBaselineTheory.html>here.</a> <p>
 
-To help the user decide if a baseline correction is needed, and to find a proper region of SAXS steady state signal at the end of the chromatograms, the currently implemented Integral Baseline method requires an analysis on blank frames. These "Blanks" (<i>no less than <b>10 frames</b>, possibly at least <b>20 or more</b> must be available</i>) should have been collected well before the void volume, and should preferentially be the same ones that were then averaged and subtracted from all the data collected during the chromatogram development.<p>
+To help the user decide if a baseline correction is needed, and to find a proper region of SAXS steady state signal at the end of the chromatograms, the currently implemented Integral Baseline method requires an analysis on blank frames. These "Blanks" (<span style="color:#CC0000"><i>no less than <b>10 frames</b>, possibly at least <b>20 or more</b> must be available</i></span>) should have been collected well before the void volume, and should preferentially be the same ones that were then averaged and subtracted from all the data collected during the chromatogram development.<p>
 
 <p><center>
 <img SRC="BlanksLoaded.png" ALT="SOMO HPLC-SAXS Blanks loaded">
@@ -232,7 +232,7 @@ After Blanks files have been loaded using the <b><i>Add files</b></i> button (se
 
 The two vertical magenta lines and their corresponding fields at the bottom of the buttons' zone define the beginning and end regions for the Blanks analysis. By clicking on one of the fields and then moving the mouse on the grey-scale bar-wheel just below the graphics window, these limits can be changed. This can also be done in steps of a single frame by clicking on the "<b><i>&lt;</i></b>" and "<b><i>&gt;</i></b>" buttons placed at the extremities of the bar-wheel. Alternatively, the limits can be manually changed by entering a numerical value in their respective fields.<p>
 
-The Blanks analysis is performed by clicking on the <b><i>CorMap analysis</i></b> button. This will launch a pairwise Correlation Map analysis (see <a href=cormap.html>here</a> for a descrption of the CorMap implementation in the US-SOMO HPLC-SAXS module). Before the analysis is effectively launched, a pop-up panel will appear:<p>
+The Blanks analysis is performed by clicking on the <b><i>CorMap Analysis</i></b> button. This will launch a pairwise Correlation Map analysis (see <a href=cormap.html>here</a> for a descrption of the CorMap implementation in the US-SOMO HPLC-SAXS module). Before the analysis is effectively launched, a pop-up panel will appear:<p>
 
 <p><center>
 <img SRC="CorMapSampling.png" ALT="SOMO HPLC-SAXS CorMap sampling pop-up">
@@ -258,8 +258,8 @@ The pop-up panel begings by reporting on the top bar the type of analysis (here 
 Three plots are present on the top of the panel:
 <ul>
 <li>
-A <b>Pairwise P value map</b>, a square matrix in which the square (<i>i</i>,<i>j</i>) contains the <i>P</i>-value
-resulting from the (<i>i</i>,<i>j</i>) pairwise CorMap analysis using a three color code: green for <i>P</i> &ge; 0.05, yellow for 0.01 &le; <i>P</i> &le; 0.05, and red for <i>P</i> &lt; 0.01. The labels on the axes correspond to the reference numbers given to the analyzed frames (see below).<p>
+A <b>Pairwise P-value map</b>, a square matrix in which the square (<i>i</i>,<i>j</i>) contains the <i>P</i>-value
+resulting from the (<i>i</i>,<i>j</i>) curves represented by a three color code: green for <i>P</i> &ge; 0.05, yellow for 0.01 &le; <i>P</i> &le; 0.05, and red for <i>P</i> &lt; 0.01. The labels on the axes correspond to the reference numbers given to the analyzed frames (see below).<p>
 
 <li>
 A <b>Red pair % histogram</b> plot as a function of the time/frame number, derived from the analysis of the pairwise <i>P</i>-value map in terms of the distribution of values between the three classes with an emphasis on the % of red squares.<p>
@@ -292,11 +292,42 @@ At the end of the first list, a second list reports all the pairwise comparisons
 </center>
 <p>
 
+At the end of the text area, a checkbox is present. If selected, the paiwise analyses will be adjusted for multiple testing using the Holm-Bonferroni approach (Holm, S. A simple sequentially rejective multiple test procedure. Scandinavian Journal of Statistics 6:65-70, 1979; see <a href=cormap.html>here</a>):<p>
+
+<p><center>
+<img SRC="CorMapBlanksAlternatePointsHB.png" ALT="SOMO HPLC-SAXS CorMap of Blanks with alternate points using Holm-Bonferroni">
+</center>
+<p>
+
+Note that in this case the Holm-Bonferroni multiple testing adjustment on a dataset where a one-every-two <i>q</i>-values sampling was applied has produced a completely green pairwise <i>P</i>-values map. Without sampling, this is what is obtained without the Holm-Bonferroni adjustment:<p>
+
+<p><center>
+<img SRC="CorMapBlanksNoAlternatePoints.png" ALT="SOMO HPLC-SAXS CorMap of Blanks no alternate points">
+</center>
+<p>
+
+and with Holm-Bonferroni adjustment:<p>
+
+<p><center>
+<img SRC="CorMapBlanksNoAlternatePointsHB.png" ALT="SOMO HPLC-SAXS CorMap of Blanks no alternate points using Holm-Bonferroni">
+</center>
+<p>
+
+
 All data listed in the CorMap analyis pop-up window can be saved in a csv-type file with the <b><i>Save</i></b> button. Previously analyzed datasets can be recalled with the <b><i>Load</i></b> button.<p>
 After closing the CorMap analysis window, the Blanks data can be accepted by pressing the <b><i>Keep</i></b> button. <b><i>Cancel</i></b> will instead discard the current CorMap analysis.<p>
 
 The Integral Baseline analysis of the actual sample frames can then begin. Contrary to what was required in our previously developed Integral Baseline method, the current version requires that <b>all</b>  <i>I(t)</i> vs. <i>t</i> chromatograms must be selected before hitting the <b><i>Baseline</i></b> button.<br>
-In any case, on pressing <b><i>Baseline</i></b> a pop-up warning message will always appear:<p>
+In any case, on pressing <b><i>Baseline</i></b> a first pop-up warning message will always appear:<p>
+
+<p><center>
+<img SRC="Baseline_blanks_noblanks.png" ALT="SOMO HPLC-SAXS Int Bas Blanks/no Blanks question">
+</center>
+<p>
+
+This allows the user to proceed without using a Blanks reference set to judge if a stable baseline has been reached at the end of the chromatograms. In this case, only the Holm-Bonferroni adjusted pairwise comparison will be used.<p>
+
+If Blanks are to be used, a second pop-up warning message will appear:<p>
 
 <p><center>
 <img SRC="IntegralBaselineBlanksWarning.png" ALT="SOMO HPLC-SAXS Int Bas Blanks Warning">
@@ -334,7 +365,7 @@ After pressing <i>OK</i>, the graphics window will present all the selected <i>I
 </center>
 <p>
 
-As shown in the image above, this superimposes to the selected chromatograms three vertical lines on the right side, the last two lines of buttons under the graphics window are replaced by three colored fields (magenta-red-magenta), and a dashed line is drawn horizontally (orange). In adfdition, a <i>Fix window width</i> checkbox with its associated magenta-colored field in now present (<b>default: 20 frames, unchecked</b>), as well as a new <b><i>Find best region</i></b> button.<br>
+As shown in the image above, this superimposes to the selected chromatograms three vertical lines on the right side, the last two lines of buttons under the graphics window are replaced by three colored fields (magenta-red-magenta), and a dashed line is drawn horizontally (orange). In addition, a <i>Fix window width</i> checkbox with its associated magenta-colored field in now present (<b>default: 20 frames, unchecked</b>), as well as a new <b><i>Find best region</i></b> button.<br>
 The first vertical magenta line, which by default is positioned at 75% of the available frames, has multiple usages:<p>
 
 <ul>
@@ -392,7 +423,7 @@ But most relevant is the second pop-up panel that will appear on top of the firs
 </center>
 <p>
 
-The graph in this panel is composed of two plots, both as a function of the starting window position. The bottom histogram (left-side <i>y</i>-axis scale) reports the average red cluster size for each window in the sliding window ensemble. The horizontal cyan solid line defines the Blanks average red cluster size for all possible windows of the same size as the sliding window utilized for the Sample analysis (the dotted line represents + 1 SD). The bars in the histograms are colored red when they are above the Blanks + 1 SD value, while green and white when they are &le; the Blanks + 1 SD value, with the white being the lowest value(s) (equal values are possible).<p>
+The graph in this panel is composed of two plots, both as a function of the starting window position. The bottom histogram (left-side <i>y</i>-axis scale) reports the average red cluster size for each window in the sliding window ensemble. The horizontal green solid line defines the Blanks average red cluster size for all possible windows of the same size as the sliding window utilized for the Sample analysis (the dotted line represents + 1 SD). The bars in the histograms are colored red when they are above the Blanks + 1 SD value, while cyan and white when they are &le; the Blanks + 1 SD value, with the white being the lowest value(s) (equal values are possible).<p>
 
 The top plot (right-side <i>y</i>-axis scale) reports the averaged <i>I</i>(<i>q</i>) for <i>q</i> &le; the <i>q<sub>max</sub></i> value (0.05 &Aring;<sup>-1</sup> by default, as set in the <b>Options</b>), as the solid orange line, with the dotted orange lines representing &plusmn;1 SD. The solid magenta line defines the zero value expected for blanks-subtracted data when only buffer is present.<p>
 The goal of this combined analysis is twofold:<p>
@@ -403,7 +434,12 @@ To find region(s) of steady-state intensity;<p>
 To compare the average integrated <i>I</i>(<i>q</i>) intensity with the zero value expected for pure buffer conditions.<p>
 </ul>
 
-The first message appearing in the text region concerns the second of the points listed above. If the average integrated <i>I</i>(<i>q</i>) &plusmn;1 SD vs. starting frame position plot is always above the zero reference line and the average red cluster size is less than the Blanks' average red cluster size +1 SD, the message <i>Integral baseline correction is possible</i> appears.<p>
+The first message appearing in the text region concerns the second of the points listed above.<p>
+<ul>
+<li>If the average integrated <i>I</i>(<i>q</i>) &plusmn;1 SD vs. starting frame position plot is <b>always above</b> the zero reference line <b>and</b> there is at least one occurrence of an average red cluster size being <b>equal or less</b> than the Blanks' average red cluster size +1 SD, the message "<i>Integral baseline correction is possible</i>" appears.<p>
+<li>If the average integrated <i>I</i>(<i>q</i>) &plusmn;1 SD vs. starting frame position plot is <b>always above</b> the zero reference line <b>but</b> the average red cluster sizes are always <b>higher</b> than the Blanks' average red cluster size +1 SD, the message "<i>Integral baseline correction would be possible, but no steady-state end region has been identified</i>" appears.<p>
+<li>If the average integrated <i>I</i>(<i>q</i>) &plusmn;1 SD vs. starting frame position plot <b>crosses and goes below</b> the zero reference line, <b>irrespective</b> of the average red cluster size status, the message "<i>Integral baseline correction is not recommended</i>" appears.<p>
+</ul>
 
 Below the summary sentence, a first report of the baseline analysis is printed. It contains:<p>
 <ul>
@@ -435,6 +471,7 @@ The number of sliding windows averaged;<br>
 The red cluster average size for the used sliding window;<br>
 <li>
 And its associated SD.<p>
+</ul>
 
 The user should then examine the information provided and consider the suggestion made at the top of the text window:<p>
 If the averaged integrated intensity -1 SD reaches at some point the zero line, then no Baseline correction is likely necessary.<p>
@@ -450,7 +487,7 @@ When both the Integral Baseline applicability conditions are met, the user could
 </center>
 <p>
 
-listing all possible starting positions for the baseline window, beginning with the farthest one. The user should pick a position matching with the lowest average integrated intensity frame position (orange colored text). If more than a lowest average integrated intensity frame is available, it is advisable to pick an earlier one, to avoid a potential undercorrection when integral baseline subtraction is performed. Once a position is chosen, cliking on <i>OK</i> will transfer it to the Baseline module panel:<p>
+listing all possible starting positions for the baseline window, beginning with the farthest one. The user should pick a position matching with the lowest average integrated intensity frame position (orange colored text). If more than a lowest average integrated intensity frame is available, it is advisable to pick an earlier one, to avoid a potential undercorrection when integral baseline subtraction is performed. Once a position is chosen, clicking on <i>OK</i> will transfer it to the Baseline module panel:<p>
 
 <p><center>
 <img SRC="somo-HPLC-SAXS_integral_baselines1.png" ALT="SOMO HPLC-SAXS integral baseline applied higher q">
@@ -464,7 +501,7 @@ To verify what the Integral Baseline will effectively produce, <b><i>Test Baseli
 </center>
 <p>
 
-In the example shown above, purple is an original <i>I(t)</i> vs. <i>t</i> chromatogram at <i>q</i> = 0.00848 &Aring;<sup>-1</sup>, gold its smoothed version with the default settings, cream, green, pink and cyan are integral baseline iterations 1, 2, 3 and 5, respectively (the 4<sup>th</sup> iteration is not visible, completely superimposed by the 5<sup>th</sup>), and violet is the final, integral baseline-corrected <i>I(t)</i> vs. <i>t</i> chromatogram. The Gaussian smoothing is applied to remove large oscillations in the original <i>I(t)</i> vs. <i>t</i> chromatogram, giving rise occasionally to values below the current integral baseline iteration, leading then to addition rather than subtraction in the computations. The final integral baseline is then subtracted from the original <i>I(t)</i> vs. <i>t</i> chromatogram, not the smoothed one.<p>
+In the example shown above, blue is an original <i>I(t)</i> vs. <i>t</i> chromatogram at <i>q</i> = 0.00791 &Aring;<sup>-1</sup>, white its smoothed version with the default settings, cream, olive green, orange and pale yellow are integral baseline iterations 1, 2, 3 and 5, respectively (the 4<sup>th</sup> iteration is not visible, completely superimposed by the 5<sup>th</sup>), and light green is the final, integral baseline-corrected <i>I(t)</i> vs. <i>t</i> chromatogram. The Gaussian smoothing is applied to remove large oscillations in the original <i>I(t)</i> vs. <i>t</i> chromatogram, giving rise occasionally to values below the current integral baseline iteration, leading then to addition rather than subtraction in the computations. The final integral baseline is then subtracted from the original <i>I(t)</i> vs. <i>t</i> chromatogram, not the smoothed one.<p>
 As can be seen in the example above, the procedure appears to have produced a reasonable correction. All <i>I(t)</i> vs. <i>t</i> chromatograms can be checked in the <b><i>Test baseline</i></b> mode, which can be abandoned by pressing <b><i>Cancel</i></b>.<p>
 The Integral Baseline procedure can now be applied to all selected <i>I(t)</i> vs. <i>t</i> chromatograms by pressing <b><i>Baseline apply</i></b>. If files that failed the negative regions test within a sliding window (of 25 frames in this case) where the sum
 of the intensity is less than the negative of the sum of the corresponding SD values over the window are present, this message will again appear:<p>
@@ -488,34 +525,80 @@ Each resulting baseline-subtracted chromatogram will have a "-bi" added after th
 </center>
 <p>
 
-<p><p><b>Still to be revised below here:</b><p>
+<hr>
+If the baseline procedure without Blanks was selected, the Baseline module will proceed slightly differently.<p>
+
+First, the "sampling" pop-ups will appear, since in this case the sampling is not set by what was used for the Blanks:<p>
+
+<p><center>
+<img SRC="CorMapSampling.png" ALT="SOMO HPLC-SAXS CorMap sampling pop-up">
+</center>
+<p>
+
+<p><center>
+<img SRC="CorMapSampling_minq.png" ALT="SOMO HPLC-SAXS CorMap minimun q value pop-up">
+</center>
+<p>
+
+In the following example, no sampling was applied. The sliding window size and the beginning-end of the baseline analysis region are set as with the procedure with Blanks (see above), and the <i><b>Find best region</i></b> button is then pressed. The CorMap results will this time be displayed with the Holm-Bonferroni checkbox automatically selected:<p>
+
+<p><center>
+<img SRC="somo-HPLC-SAXS_integral_baselines_noblanksCM.png" ALT="SOMO HPLC-SAXS integral baseline Find best region CM no blanks">
+</center>
+<p>
+
+The second pop-up will also appear:<p>
+
+<p><center>
+<img SRC="somo-HPLC-SAXS_integral_baseline_HB.png" ALT="SOMO HPLC-SAXS integral baseline Sample CorMap HB analysis">
+</center>
+<p>
+
+In respect with the analysis including a comparison with the Blanks (see above), there are two differences:<p>
+
+<ul>
+<li>
+The histogram reports the Red pair % instead of the Average Red Cluster size. This is because with the Holm-Bonferroni adjustment the formation of red cluster is severely inhibited.<p>
+<li>
+The Blanks average line is obviously absent. The cut-off to mark the histogram bars white is set to 1%. If no window reaches this level, the lowest window will be marked with a yellow color in the histogram.<p>
+</ul>
+All other functionalities are as with the analysis including the Blanks comparison.<p> 
+
 
 <hr>
-The quality of the baseline-subtracted data can be assessed by selecting with the mouse a region under a peak and then pressing <b><i>Test I(q)</b></i>:<p>
+A first assessment of the results of the Integral Baseline subtraction can be done by comparing two identical subsets of <i>I</i>(<i>t</i>) vs. <i>t</i> chromatograms before and after correction. In the figure below, the subsets are from <i>q</i> = 0.00791 to <i>q</i> = 0.05029 &Aring;<sup>-1</sup> scaled on each other in a frame interval corresponding to the half-height of the peak, before (top panel) and after (bottom panel) baseline subtraction:<p>
+
+<p><center>
+<img SRC="IntegralBas_Scaling.png" ALT="SOMO HPLC-SAXS Integral Baseline results comparison by scaling">
+</center>
+<p>
+
+The fact that the right-hand sides of the peaks are nicely superimposed after baseline subtraction validates a posteriori the procedure used to build the baseline, since for a single species the elution peaks at different <i>q</i>-values should be strictly proportional to each other.<p>
+
+More checks of the Integral Baseline subtraction correctness can be performed using the <b><i>Trial make I(q)</b></i> mode. In this mode, the selected <i>I</i>(<i>t</i>) vs. <i>t</i> chromatograms are temporarily transposed back into <i>I</i>(<i>q</i>) vs. <i>q</i> frames and can be analyzed by either scaling or Guinier approximation utilities. In the example below, we have selected a subset of <i>q</i>-values from &asymp;0.008 to &asymp;0.21 &Aring;<sup>-1</sup>, and we have pressed the <b><i>Trial make I(q)</b></i> button:
 
 <p><center>
 <img SRC="somo-HPLC-SAXS_test_I_q_select.png" ALT="SOMO HPLC-SAXS test I(q) selection">
 </center>
 <p>
 
-This will bring up again the gray-shades wheel-bar and change the two lowermost bars with the buttons below the graphics window. At the bottom, a <i>Time range for I(q):</i> label will appear, followed by two fields with red background indicating the region subjected to the <b><i>Test I(q)</i></b> procedure. The limits can be changed by either clicking on each red-colored field and then using the gray-shades bar-wheel at the top, or, if a region was pre-selected with the mouse, by clicking on the <b><i>Vis. range</i></b> button.<br>
-Two operations can be then performed. Pressing the <b><i>Scale</i></b> button on the row above will change the layout in this way (note that, by pressing Y on the left-side commands panel, the left-axis has also been changed to log<sub>10</sub>):<p>
+This will bring up again the gray-shades wheel-bar and change the two lowermost bars with the buttons below the graphics window. At the bottom, a <i>Time range for I(q):</i> label will appear, followed by two fields with red background indicating the region subjected to the <b><i>Test I(q)</i></b> procedure. The limits can be changed by either clicking on each red-colored field and then using the gray-shades bar-wheel at the top, or on the "<b><i>&lt;</i></b>" and "<b><i>&gt;</i></b>" buttons placed at its sides. Alternatively, if a region was pre-selected with the mouse, it can be applied by clicking on the <b><i>Vis. range</i></b> button. In this example, we have set the <i>Time range for I(q)</i> limits from frame 1100 to 1130. <p>  
+
+Two operations can be then performed. Pressing the <b><i>Scale Analysis</i></b> button on the row above will change the layout in this way (note that, by pressing <b><i>Log X</i></b> and <b><i>Log Y</i></b> on the left-side commands panel, both axes have also been changed to log<sub>10</sub>):<p>
 
 <p><center>
 <img SRC="somo-HPLC-SAXS_test_I_q_scale.png" ALT="SOMO HPLC-SAXS test I(q) scale layout">
 </center>
 <p>
 
-The two lowermost rows now display the tools for scaling the back-generated temporary <i>I</i>(<i>q</i>) vs. <i>q</i> curves on top of each other. The two red-background fields now indicate the actual <i>q range for scaling</i>, which can be adjusted by clicking on each field and using the gray-shades bar-wheel at the top; two vertical red lines will mark the corresponding positions on the graph. The <b><i>Reset q range</b></i> button will re-expand the <i>q</i> range.<br>
+The two lowermost rows now display the tools for scaling the back-generated temporary <i>I</i>(<i>q</i>) vs. <i>q</i> curves on top of each other. The two red-background fields now indicate the actual <i>q range for scaling</i>, which can be adjusted by clicking on each field and using the gray-shades bar-wheel at the top or on the "<b><i>&lt;</i></b>" and "<b><i>&gt;</i></b>" buttons placed at its sides; two vertical red lines will mark the corresponding positions on the graph. The <b><i>Reset q range</b></i> button will re-expand the <i>q</i> range.<br>
 The last row contains the scaling settings/commands:<p>
 <ul>
 <li>
-The <i>Scale to:</i> round checkboxes will scale the curves to either the <i>Minimum</i> or the <i>Maximum</i> values among the selected curves.<p>
+The <i>Scale to:</i> round checkboxes will scale the curves to either the <i>Minimum</i> (<b><i>default</i></b>) or the <i>Maximum</i> values among the selected curves.<p>
 
 <li>
-The <i>Save interpolated to target</i> checkbox ensures all <i>q</i> or <i>T</i> grids of the data will be identical by
-interpolating each curve to the minimum or maximum intensity curve.  This is a convenience tool to allow
-curves generated on different grids to be put on a common grid.
+The <i>Save interpolated to target</i> checkbox ensures all <i>q</i> or <i>t</i> grids of the data will be identical by interpolating each curve to the minimum or maximum intensity curve.  This is a convenience tool to allow curves generated on different grids to be put on a common grid.
 <p>
 
 <li>
@@ -529,30 +612,67 @@ The <i><b>Create scaled set</b></i> will generated an actual set of scaled data 
 
 </ul><p>
 
-In the image below, the scaling has been performed on the indicated <i>q</i> range. The <i>Messages</i> panel reports the statistics of the scaling process as applied to each curve scaled on the one with the higher intensity:
+In the image below, the scaling has been performed on the indicated <i>q</i> range. The <i>Messages</i> panel reports the statistics of the scaling process as applied to each curve scaled on the one with the lowest intensity:
 
 <p><center>
 <img SRC="somo-HPLC-SAXS_test_I_q_scale1.png" ALT="SOMO HPLC-SAXS test I(q) scaled set">
 </center>
 <p>
 
-A blow-up of the scaled regions shows how the back-generated curves appear to scale well on each other:<p>
+By pressing <b><i>Residuals</i></b>, the residuals of the scaling operation are also shown. 
 
-<p><center>
-<img SRC="somo-HPLC-SAXS_test_I_q_scale2.png" ALT="SOMO HPLC-SAXS test I(q) scaled set blow-up">
-</center>
-<p>
-
-If the <b><i>Scroll</b></i> checkbox is selected, the scaled files can be examined one at a time, scrolling through them using the gray-shades wheel-bar. The file name of the data currently shown will appear to the right side of the gray-shades wheel-bar, as shown below:<p>
+If the <b><i>Scroll</b></i> checkbox is selected, the scaled files can be examined one at a time, scrolling through them using the gray-shades wheel-bar or the "<b><i>&lt;</i></b>" and "<b><i>&gt;</i></b>" buttons placed at its sides. The file name of the data currently shown will appear below the gray-shades wheel-bar, as shown here:<p>
 
 <p><center>
 <img SRC="somo-HPLC-SAXS_test_I_q_scale2a.png" ALT="SOMO HPLC-SAXS test I(q) scaled set blow-up">
 </center>
 <p>
 
-Presing <b><i>Cancel</i></b> will completely exit from the <b><i>Test I(q)</i></b> mode.<p>
+A <b>CorMap</b> analysis can be also performed on the scaled set by pressing <b><i>CorMap Analysis</i></b>. This will produce two pop-up outputs, one containg the CorMap analysis on the full <i>q</i>-range available:<p>
 
-Pressing <b><i>Test I(q)</i></b> will instead exit from the scaling mode only.<p>
+<p><center>
+<img SRC="somo-HPLC-SAXS_test_I_q_scale_cormap_full.png" ALT="SOMO HPLC-SAXS test I(q) scaled set CorMap full range">
+</center>
+<p>
+
+and the other limited to the <i>q<sub>max</sub></i> value presente in the <b><i>Options</i></b> (0.05 &Aring;<sup>-1</sup> in this case):<p>
+
+<p><center>
+<img SRC="somo-HPLC-SAXS_test_I_q_scale_cormap_0_05.png" ALT="SOMO HPLC-SAXS test I(q) scaled set CorMap q=0.05">
+</center>
+<p>
+
+Note that one-every-other <i>q</i>-value has been utilized in this analysis. As can be seen, both the pairwise <i>P</i>-value map and the red pair % histogram indicate that with the exception of three frames of the ensemble (#2, #9 and #31, corresponding to frames #1101, #1108 and #1130), most are similar to all the others, with an overall &asymp;8-9% of red pairs. Limiting the lower <i>q</i>-values to 0.015 &Aring;<sup>-1</sup> reduced this overall % red pairs count to 6% (not shown), with frames #1101 and #1130 still being substantially different from all others.<p>
+
+If the <i>Holm-Bonferroni adjusted P values</i> checkbox is selected, these will be the results:<p>
+
+<p><center>
+<img SRC="somo-HPLC-SAXS_test_I_q_scale_cormap_fullHB.png" ALT="SOMO HPLC-SAXS test I(q) scaled set CorMap full range HB adjusted">
+</center>
+<p>
+
+<p><center>
+<img SRC="somo-HPLC-SAXS_test_I_q_scale_cormap_0_05HB.png" ALT="SOMO HPLC-SAXS test I(q) scaled set CorMap q=0.05 HB adjusted">
+</center>
+<p>
+
+Clearly, the combination of the one-every-other <i>q</i>-value sampling and the Holm-Bonferroni adjustment is over-permissive for this dataset. If the analysis is repeated without the sampling, these are the results:<p>
+
+<p><center>
+<img SRC="somo-HPLC-SAXS_test_I_q_scale_cormap_fullHB_nosampl.png" ALT="SOMO HPLC-SAXS test I(q) scaled set CorMap full range HB adjusted no sampling">
+</center>
+<p>
+
+<p><center>
+<img SRC="somo-HPLC-SAXS_test_I_q_scale_cormap_0_05HB_nosampl.png" ALT="SOMO HPLC-SAXS test I(q) scaled set CorMap q=0.05 HB adjusted no sampling">
+</center>
+<p>
+
+In this case, similar results are obtained as with the one-every-other <i>q</i>-value sampling and no Holm-Bonferroni adjustment.<p>
+
+Pressing <b><i>Cancel</i></b> will completely exit from the <b><i>Test I(q)</i></b> mode.<p>
+
+Pressing <b><i>Trial make I(q)</i></b> will instead exit from the scaling mode only.<p>
 
 Pressing then the <b><i>Guinier</i></b> button will call the other test function available in the <b><i>Test I(q)</i></b> mode:<p>
 
@@ -564,7 +684,7 @@ If the maximum <i>q</i> value for the currently examined <i>I</i>(<i>q</i>) vs. 
 </center>
 <p>
 
-Pressing <i><b>Ok</i></i> will allow a unimpeded view of the <b><i>Test I(q)</i></b> panel:
+Pressing <i><b>Ok</i></b> will allow to proceed, showing the <i>Guinier</i> mode of the <b><i>Trial make I(q)</b></i> panel (in the case examined, the pop-up alert dit <b>not</b> appear, as the <i>q<sub>max</sub></i> utilized was &gt;0.2 &Aring;<sup>-1</sup>):
 
 <p>
 <p><center>
@@ -575,15 +695,13 @@ Pressing <i><b>Ok</i></i> will allow a unimpeded view of the <b><i>Test I(q)</i>
 The lowermost row now carries the tools necessary to perform a Guinier analysis on the back-generated temporary <i>I</i>(<i>q</i>) vs. <i>q</i> curves:<p>
 <ul>
 <li>
-The <i>q range:</i> fields (red background) indicate the <i>q</i> range currently selected. By clicking on each one and using the gray-shades bar-wheel at the top, the <i>q</i>-range can be changed.<br>
+The <i>q range:</i> fields (red background) indicate the <i>q</i> range currently selected. By clicking on each one and using the gray-shades bar-wheel at the top or the "<b><i>&lt;</i></b>" and "<b><i>&gt;</i></b>" buttons placed at its sides, the <i>q</i>-range can be changed.<br>
 <li>
-The <i>plot extension:</i> fields provide a <i>q</i> range extension of the Guinier and Residuals plots, allowing additional <i>q</i> range before (left
-box) and after (right) the Guinier range to be shown. By clicking on one and using the gray-shades bar-wheel at the top, the <i>q</i>-range extension can
-be changed.<br>
+The <i>plot extension:</i> fields provide a <i>q</i> range extension of the Guinier and Residuals plots, allowing additional <i>q</i> range before (left box) and after (right) the Guinier range to be shown. By clicking on one and using the gray-shades bar-wheel at the top or the "<b><i>&lt;</i></b>" and "<b><i>&gt;</i></b>" buttons placed at its sides, the <i>q</i>-range extension can be changed.<br>
 <li>
 The <i>SD</i> checkbox controls if the linear regressions for the Guinier analyses are carried out with SD weighting (<b><i>default: checked</b></i>).<br>
 <li>
-The <i>qmax*Rg</i> checkbox and its associated field enable a sequential routine which examines, starting from the higher <i>q</i> value utilized in the regression (<i>q<sub>max</sub></i>), if the product <i>q<sub>max</sub></i>*<i>R<sub>g</sub></i> is &le; the limit set in the apposite field (the <b><i>default</b></i> value is set in the <b><i>Options</b></i> panel). If the products exceeds the limit, that <i>q<sub>max</sub></i> value is dropped, and the regression is repeated utilizing the next lower <i>q</i> value. The test is repeated until a <i>q<sub>max</sub></i> value satisfying the <i>q<sub>max</sub></i>*<i>R<sub>g</sub></i> &le; set limit is found.<p>
+The <i>qmax*Rg</i> checkbox and its associated field enable a sequential routine which examines, starting from the higher <i>q</i> value utilized in the regression (<i>q<sub>max</sub></i>), if the product <i>q<sub>max</sub></i>*<i>R<sub>g</sub></i> is &le; the limit set in the apposite field (the <b><i>default</b></i> value is set in the <b><i>Options</b></i> panel). If the products exceeds the limit, that <i>q<sub>max</sub></i> value is dropped, and the regression is repeated utilizing the next lower <i>q</i> value. The test is repeated until a <i>q<sub>max</sub></i> value satisfying the <i>q<sub>max</sub></i>*<i>R<sub>g</sub></i> &le; set limit is found. It is highly advisable to <b>deselect</b> this checkbox before manually changing the <i>q range</i> fields, and to <b>re-select</b> it afterwards, otherwise the program will continuously repeat the <i>q<sub>max</sub></i>*<i>R<sub>g</sub></i> routine while the limits are manually moved.<p>
 </ul>
 At the bottom of this window region, the averages values for all the curves are reported, and they include:<br>
 <ul>
@@ -596,7 +714,7 @@ The average <i><b>Rg</i></b>, with the SD in round brackets and the range in squ
 <li>
 The average intensity extrapolated at 0 scattering angle <i><b>I0</i></b>, with the SD in round brackets and the range in square brackets.<br>
 <li>
-In the line below, an approximates molecular average molecular weight, <b><i>MW[RT]</b></i> is reported, together with its SD (in round brackets) and range [in square brackets], based on the method of Rambo and Tainer (Accurate assesment of mass, models and resolution by small-angle scattering. Nature 496:477-481, 2013). If, as it happens in this case, the available <i>q</i>-range is below that required by the method, a warning message appears in the <i>Messages</i> area.
+In the line below, an approximates molecular average molecular weight, <b><i>MW[RT]</b></i> is reported, together with its SD (in round brackets) and range [in square brackets], based on the method of Rambo and Tainer (Accurate assesment of mass, models and resolution by small-angle scattering. Nature 496:477-481, 2013). If the available <i>q</i>-range is below that required by the method, a warning message appears in the <i>Messages</i> area.
 <p>
 </ul>
 The regression data for each individual curve are reported in the <i>Messages</i> window.<p>
@@ -608,7 +726,7 @@ The residuals of each linear regression can be seen by pressing <b><i>Residuals<
 </center>
 <p>
 
-Note how the average <i>Rg</i> recovered, 28.3&plusmn;0.5 &Aring;, compares well with that calculated from the BSA crystal structure using Crysol, 27.7 &Aring; (Brookes et al., J. Appl. Cryst. 46:1823-1833, 2013).<p>
+Note how the average <i>Rg</i> recovered for this extended set, 14.8&plusmn;0.2 &Aring;, compares well with the 15.0 &Aring; that can be calculated from the lysozyme average NMR structure (1E8L.pdb) using the WAXSiS server (<a href="http://waxsis.uni-goettingen.de/">http://waxsis.uni-goettingen.de/</a>).<p>
 
 As with the scaling option, every individual Guinier plot can be visualized by selecting the <b><i>Scroll</b></i> checkbox and using the gray-shades wheel-bar:<p>
 
@@ -627,10 +745,10 @@ At this point, a plot of the <i>Rg</i> values across the chromatogram together w
 A new row will appear below the graphics window, with these fields:<p>
 <ul>
 <li>
-<i>Time range for Rg plot:</i> with its two fields. Clicking on each one and using the gray-scale bar-wheel at the top will allow to expand or restrict the Time axis (by default, the original time range is shown).<br>
+<i>Time range for Rg plot:</i> with its two fields. Clicking on each one and using the gray-scale bar-wheel at the top or the "<b><i>&lt;</i></b>" and "<b><i>&gt;</i></b>" buttons placed at its sides will allow to expand or restrict the Time axis (by default, the original time range is shown).<br>
 
 <li>
-<i>Rg range:</i> with its two fields. Clicking on each one and using the gray-scale bar-wheel at the top will allow to expand or restrict the <i>R<sub>g</sub></i> range. The default is governed by the actual <i>R<sub>g</sub></i> with error bars range with an additional empty space of 2.5% of the total range added to the lower and upper <i>R<sub>g</sub></i> limit. <br> 
+<i>Rg range:</i> with its two fields. Clicking on each one and using the gray-scale bar-wheel at the top or the "<b><i>&lt;</i></b>" and "<b><i>&gt;</i></b>" buttons placed at its sides will allow to expand or restrict the <i>R<sub>g</sub></i> range. The default is governed by the actual <i>R<sub>g</sub></i> with error bars range with an additional empty space of 2.5% of the total range added to the lower and upper <i>R<sub>g</sub></i> limit. <br> 
 
 
 <li>
@@ -653,16 +771,6 @@ Likewise, plots of the approximate molecular weight calculations can be shown by
 <p>
 
 
-The <b><i>Rg plot</i></b> utility can also be employed to verify the distribution of <i>Rg</i> values across the whole chromatogram:<p>
-
-<p><center>
-<img SRC="somo-HPLC-SAXS_test_I_q_Guinier_Rgplot_global.png" ALT="SOMO HPLC-SAXS test I(q) Guinier test Rg plot global">
-</center>
-<p>
-
-In the example shown above, one can appreciate that the distribution of the <i>Rg</i> values is almost linearly decreasing from the beginning of the chromatogram up to the top of the peak preceeding the main peak, fairly constant across the right-half of that peak, and just slightly decreasing across the main peak. This indicates that while the resolution between the main peak and the peak preceeding it is fairly good, this is not the case for the other peaks. A Gaussian analysis and decomposition, as also suggested by the <b><i>SVD</i></b> analysis (see <a href=somo_saxs_hplc_svd.html>here</a>), could be then useful to determine the actual <i>Rg</i> values in the not-resolved regions.<p>
-
-
 Pressing <i><b>Test I(q)</i></b> button will bring back the main options of this utility.<p>
 
 Pressing the <b><i>Cancel</i></b> button will exit the <b><i>Test I(q)</i></b> utility.<p>
@@ -672,8 +780,8 @@ If Gaussian analysis is not required, a series of <i>I(q)</i> vs. <i>q</i> frame
 <hr>
 <hr>
 
-Another new feature present in this release of the <b><i>US-SOMO HPLC-SAXS</i></b> module is an alternative way of estimating the errors associated with the SAXS data. This might become useful if no errors have been already asociated with the experimental data, or if their reliability is questionable.<br>
-The method is based on the assumption that the fluctuations of the signal at the baseline level are a good representation of the error associated with the data an any other point along each <i>I(t)</i> vs <i>t</i> chromatogram. Therefore, by estimating the average fluctuations in flat regions of the chromatogram, a <b>constant</b> SD value can be associated with <b>every</b> datapoint in that particular chromatogram. Obviously, different chromatograms will have different values for their respective constant SD.<p>
+Another new feature present in this release of the <b><i>US-SOMO HPLC-SAXS</i></b> module is an alternative way of estimating the errors associated with the SAXS data. This might become useful if no errors have been already associated with the experimental data, or if their reliability is questionable.<br>
+The method is based on the assumption that the fluctuations of the signal at the baseline level are a good representation of the error associated with the data an any other point along each <i>I(t)</i> vs. <i>t</i> chromatogram. Therefore, by estimating the average fluctuations in flat regions of the chromatogram, a <b>constant</b> SD value can be associated with <b>every</b> datapoint in that particular chromatogram. Obviously, different chromatograms will have different values for their respective constant SD.<p>
 
 Upon selecting a single <i>I(t)</i> vs <i>t</i> chromatogram, the actual SD associated with it can be visualized by selecting the <b><i>Err</i></b> checkbox in the <b><i>Data files</i></b> commands section, as shown in the image below:<p>
 
@@ -698,7 +806,7 @@ An additional checkbox, <i><b>2 regions</i></b>, if selected will duplicate the 
 
 The SD evaluation is carried out by fitting the data included between each zone with a 3<sup>rd</sup> degree polynomial, and taking the RMSD of the fit as the SD. If two regions are chosen, the final SD will be an average between the values computed from each region.<p>
 
-After adjusting the zone(s)  for the SD evaluation, pressing <b><i>Keep</i></b> will accept the values, and the <b><i>SD apply</i></b> button becomes available. Pressing it will apply the SD calculation to any selected chromatogram. In the example below, the same chromatogram is plotted twice, with the old (brown) and new (white) SDs:<p>
+After adjusting the zone(s)  for the SD evaluation, pressing <b><i>Keep</i></b> will accept the values, and the <b><i>SD apply</i></b> button becomes available. Pressing it will apply the SD calculation to any selected chromatogram. In the example below, the same chromatogram is plotted twice, with the old (salmon) and new (slate gray) SDs:<p>
 <p>
 
 <p><center>
@@ -706,7 +814,7 @@ After adjusting the zone(s)  for the SD evaluation, pressing <b><i>Keep</i></b> 
 </center>
 <p>
 
-A blow-up of the main peak region highlights how the two SDs are very close to each other, demonstrating that the assumptions taken for this alternative SD evaluation produce SDs which are very similar to the ones that have been associated to the original SAXS data using a Poisson distribution. The main difference is that the original SDs vary slightly with the intensity for each <i>I(t)</i> vs <i>t</i> chromatogram, while the baseline fluctuations method produces constant SD values for each <i>I(t)</i> vs <i>t</i> chromatogram.<p>
+A blow-up of the main peak region highlights how the two SDs are very close to each other, demonstrating that the assumptions taken for this alternative SD evaluation produce SDs which are very similar to the ones that have been associated to the original SAXS data using a Poisson distribution. The main difference is that the original SDs vary slightly with the intensity for each <i>I(t)</i> vs. <i>t</i> chromatogram, while the baseline fluctuations method produces constant SD values for each <i>I(t)</i> vs. <i>t</i> chromatogram.<p>
 <p>
 
 <p><center>
@@ -717,6 +825,13 @@ A blow-up of the main peak region highlights how the two SDs are very close to e
 <hr>
 <hr>
 <p>
+Gaussian decomposition of not baseline-resolved peaks is another utility present in the <b>US-SOMO <i>HPLC-SAXS</i></b> module. Decomposition with symmetrical Gaussian functions will be first described using a bovine serum albumin (BSA) SEC-SAXS run using two 7.8 × 300 mm ID columns packed with hydroxylated polymethacrylate particles (TSK G4000PWXL, 10 &micro;m size, 500 &Aring; pore size, and G3000PWXL, 6 &micro;m size, 200 &Aring; pore size, Tosoh Bioscience, Tokyo, Japan) connected in series, protected by a 6 × 40 mm guard column filled with G3000PW resin (Tosoh). The data presented capillary fouling evidence, and were thus subjected to Integral Baseline correction (not shown).<p>
+
+<p><center>
+<img SRC="somo-HPLC-SAXS_BSA_I_t.png" ALT="SOMO HPLC-SAXS BSA I(t) for symmetrical Gaussian decomposition">
+</center>
+<p>
+
 Before proceeding to Gaussian analysis (whose theory can be seen <a href=saxs_hplc_Gaussian_theory.html>here</a>), a SVD analysis could be useful. In SVD analysis, the number of significant singular values in the decomposition should be equal to the number of components in the data, and thus to the minimum number of Gaussians required to accurately reconstruct the data (see <a href=somo_saxs_hplc_svd.html>here</a>).<p>
 
 <p><center>
@@ -727,7 +842,7 @@ Before proceeding to Gaussian analysis (whose theory can be seen <a href=saxs_hp
 The baseline-subtracted data can be subjected to Gaussian analysis by first selecting a single chromatogram, and then pressing the <b><i>Gaussians</b></i> button. By default, the <b>US-SOMO <i>HPLC-SAXS</i></b> module will consider symmetrical Gaussians, but distorted Gaussian functions are also availble and can be selected from the <b><i>Options</b></i> menu (see <a href=saxs_hplc_options.html>here</a>). The choice must be done before starting the following procedure. An example of a data processing with non-symmetrical Gaussians is presented <a href=somo_saxs_hplc_skewedGauss.html><b>here</b></a>.<p>
 On pressing <b><i>Gaussians</i></b>, two new rows will appear at the bottom of the graphics window. If a previously-generated set of Gaussians was present or loaded from file, the Gaussians will show up under the peak(s) together with vertical lines indicating their centers.<p>
 
-<b><i>Clear</i></b> will remove them, and allow to start a new analysis.<p>
+<b><i>Clear</i></b> will remove currently-generated Gausssian, and allow to start a new analysis. If Gaussians had been loaded from file, the <i><b>Clear cached Gaussian values</i></b> button in the <a href=saxs_hplc_options.html><b><i>Options</i></b></a> menu should be used.<p>
 
 Each time the <b><i>New</i></b> button is pressed, a new Gaussian will be added (green colour), with pre-set center, width and amplitude shown in the three rightmost fields (additional fields will be present if distorted Gaussians functions are used; see <a href=somo_saxs_hplc_skewedGauss.html>here</a>). By clicking on each field, and then using the gray-shades bar-wheel, each Gaussian can be adjusted to initialize the process (usually, only the centers need to be positioned under the peaks). If the <i>Match</i> checkbox is selected, the height of each Gaussian will be automatically adjusted so to match the height of the experimental <i>I</i>(<i>t</i>) vs. <i>t</i> curve at the Gaussian current position.<p>
 
@@ -735,7 +850,7 @@ Each time the <b><i>New</i></b> button is pressed, a new Gaussian will be added 
 
 Clicking on the "<b>&lt;</b>" and "<b>&gt;</b>" buttons will toggle among the Gaussian present, whose identifying number is shown in the field between them. The active Gaussian is identified by a magenta vertical line positioned at its center, while blue lines are used for the others. The limits for the analysis of the chromatogram are shown with two vertical red bars, whose position is shown in the two red-background fields in the bottom row, before the <b><i>To produced data</i></b> button.<p>
 
-The <i>SD</i> checkbox controls whether the data associated std. dev. values will be used in the fitting procedure (<b><i>default: not selected</i></b>). It is recommended to select this checkbox only after a first round of fitting with the various algorithms provided has been performed, as the SD can only be used with the LM algorithm at the time of writing this Help section (July 2015).<p>
+The <i>SD</i> checkbox controls whether the data associated std. dev. values will be used in the fitting procedure (<b><i>default: not selected</i></b>). It is recommended to select this checkbox only after a first round of fitting with the various algorithms provided has been performed, as the SD can only be used with the LM algorithm at the time of writing this Help section (April 2016).<p>
 
 Once the initialization is completed, pressing the <b><i>Fit</i></b> button will bring up a window controlling the fit procedure, shown below:<p>
 
@@ -746,7 +861,7 @@ Once the initialization is completed, pressing the <b><i>Fit</i></b> button will
 
 See <a href=somo_saxs_hplc_fit.html>here</a> for a description of the <b><i>Fit</b></i> module.<p>
 
-In the first cycle of iteration, it is best to keep the original centers fixed:<p>
+In the first cycle of iterations, it is best to keep the original centers fixed:<p>
 
 <p><center>
 <img SRC="somo-HPLC-SAXS_Gauss1a.png" ALT="SOMO HPLC-SAXS Gaussian first round center fixed">
@@ -784,7 +899,7 @@ To select a subset of data, the <b><i>Select</i></b> button is pressed, which wi
 </center>
 <p>
 
-It is advisable to perform the global fitting avoiding the very first few low-<i>q</i>, very noisy, and the last high-<i>q</i>, very low signal <i>I</i>(<i>t</i>) vs. <i>t</i> chromatograms. In the example we are illustrating, we start from chromatogram # 13 (<i>q</i> = 0.007813 &Aring;<sup>-1</sup>) and select every 4 chromatograms up to # 457 (<i>q</i> = 0.119698 &Aring;<sup>-1</sup>). The <i>I</i>(<i>t</i>) vs. <i>t</i> chromatogram on which the initial set of Gaussians was optimized is also included (<i><b>Select Additionally</i></b> button). Pressing <b><i>Select in main window</i></b> will close the pop-up window and the selected files will be shown in the main <b><i>HPLC-SAXS</i></b> module graphics window:<p>
+It is advisable to perform the global fitting avoiding the very first few low-<i>q</i>, very noisy, and the last high-<i>q</i>, very low signal <i>I</i>(<i>t</i>) vs. <i>t</i> chromatograms. In the example we are illustrating, we start from chromatogram # 8 (<i>q</i> = 0.007813 &Aring;<sup>-1</sup>) and select every 4 chromatograms up to # 454 (<i>q</i> = 0.12020 &Aring;<sup>-1</sup>). The <i>I</i>(<i>t</i>) vs. <i>t</i> chromatogram on which the initial set of Gaussians was optimized is also included (<i><b>Select Additionally</i></b> button). Pressing <b><i>Transfer selection to main window</i></b> will close the pop-up window and the selected files will be shown in the main <b><i>HPLC-SAXS</i></b> module graphics window:<p>
 
 <p><center>
 <img SRC="somo-HPLC-SAXS_Gauss3a.png" ALT="SOMO HPLC-SAXS Global Gaussian on Nth">
@@ -807,30 +922,58 @@ When just a few problematic points are found for each file, the <i>Drop points w
 </center>
 <p>
 
-In the image above, the <b><i>Global Gaussians</i></b> results on the <b><i>Nth</i></b> selected files are shown, together with the grouped fit residuals. The common centers and widhts, <span style="color:#CC0000">not optimized but just based on the initial chromatogram fit</span>, are displayed in the graph as vertical and horizontal bars, respectively. <p>
+In the image above, the <b><i>Global Gaussians</i></b> results on the <b><i>Nth</i></b> selected files are shown, together with the grouped fit residuals. The common centers and widhts, <span style="color:#CC0000">not optimized but just based on the initial chromatogram fit</span>, are displayed in the graph as vertical and horizontal bars, respectively. Note that the <i>Residuals</i> plot <i>x</i>-axis scale was manually optimized (right-click on the scale) to make it comply with the fit limits in the top panel.<p>
 
 <b><i>Save</i></b> will save the resulting Gaussians to the current selected directory, with extension -gauss.dat for symmetrical Gaussians of single files and -mgauss.dat for Gaussians of multiple files. For distorted Gaussians, the extensions will be -mgmg.dat, -memg.dat, and -memggmg.dat for the GMG, EMG and EMG+GMG Gaussians, respectively.<p>
 
-<b><i>Global fit</i></b>, which becomes available instead of the <b><i>Fit</i></b> button once a series of chromatogram is selected and after at least an initial set of Gaussians is generated/loaded, can now be used to optimize all the centres and widths of each Gaussian along all the chromatograms to common values for each family of Gaussians. The operation is controlled by the same pop-up <b>Fit</b> panel as for the single chromatogram case (see <a href=somo_saxs_hplc_fit.html>here</a>), but only the LM method is currently (July 2015) available. In this example, it is best to first perform a global fit round keeping the Gaussians 1 and 2 fixed, and then perform a second round leaving all parameters free.<p>
+<b><i>Global fit</i></b>, which becomes available instead of the <b><i>Fit</i></b> button once a series of chromatogram is selected and after at least an initial set of Gaussians is generated/loaded, can now be used to optimize all the centres and widths of each Gaussian along all the chromatograms to common values for each family of Gaussians. The operation is controlled by the same pop-up <b>Fit</b> panel as for the single chromatogram case (see <a href=somo_saxs_hplc_fit.html>here</a>), but only the LM method is currently (April 2016) available. In this example, it is best to first perform a global fit round keeping the Gaussians 1, 2 and 4 fixed, and then perform a second round leaving all parameters free.<p>
 
 <p><center>
 <img SRC="somo-HPLC-SAXS_Gauss4.png" ALT="SOMO HPLC-SAXS Gaussian Global fit">
 </center>
 <p>
 
-In the image above, the results of the <b><i>Global fit</i></b> are shown together with the grouped fit residuals. Note how the global residuals appear to be evenly distributed up to the boundaries of the main peak, with a noticeable worse fitting and the end of the main peak. This could indicate either a slight non-pure Gaussian shape of the peak, or the presence of a small amount of some trailing material in this region.<p>
+In the image above, the results of the <b><i>Global fit</i></b> are shown together with the grouped fit residuals. Furthermore, a new set of tools is available to judge the goodness of the fit.<p>
+
+<ul>
+<li>
+A pairwise <b>CorMap</b> analysis in automatically performed between each original <i>I</i>(<i>t</i>) vs. <i>t</i> chromatogram and its reconstruction based on the sum of the fitting Gaussians, for each <i>q</i>- value.<p>
+
+<li>
+A new kind of plot becomes available, visualized by pressing <b><i>Global fit by q</i></b>. The normalized &chi;<sup>2</sup> (diamonds connected by a line) and the pairwise CorMap <i>P</i>-values (squares) are plotted as a function of the <i>q</i>-value, as shown below:<p>
+</ul>
+
+<p><center>
+<img SRC="somo-HPLC-SAXS_Gauss4b.png" ALT="SOMO HPLC-SAXS Gaussian Global fit with Global fit by q">
+</center>
+<p>
+
+In the <i>Global fit by q</i> graph it is possible to visualize either one of or both the two plots, by selecting/deselecting their respective checkboxes positioned just below it (<i>Plot Chi^2/RMSD</i> and <i>Plot CorMap P values</i>). Note that in the image above, where both plots are shown, their respective <i>y</i>-axis scales have been manually modified to allow a better visualization of each plot. The dashed green and yellow horizontal lines mark the usual cut-off <i>P</i>-values (<i>P</i> &ge; 0.05, above the green line; 0.05 &gt; <i>P</i> &gt; 0.01 between the green and yellow lines; <i>P</i> &lt; 0.01, below the yellow line).<p> 
+
+Note that the limits of the fit have been moved to exclude the first peak and the tail of the main peak. This was done to concentrate the goodness-of-fit indicators toward the most important part of the fit, including the top (2/3)<sup>rds</sup> of peaks 2, 3 and 4 (each time the limits are moved, the normalized &chi;<sup>2</sup> and <i>P</i>-values are recomputed by pressing the <b><i>Recompute nChi^2</i></b> button). With these limits, the normalized &chi;<sup>2</sup> values display "reasonable" values, &asymp;1.5 for the lowest <i>q</i> angles (up to <i>q</i> &asymp;0.035 &Aring;<sup>-1</sup>), then almost linearly decaying to &asymp;0.5 for <i>q</i> &asymp;0.8 &Aring;<sup>-1</sup>, being stable afterwards, for a global &chi;<sup>2</sup> &asymp;0.95. Likewise, the CorMap <i>P</i>-values show a slight trend toward better values as the <i>q</i> increases, but the distribution of really "bad" <i>P</i>-values appears to be substantially random.<p> 
+
+The correlation between the goodness-of-fit indicators and the distribution of the residuals can be examined for each original/fit <i>I</i>(<i>t</i> vs. <i>t</i> pair by selecting the <i>Scroll</i> checkbox:<p>
+
+<p><center>
+<img SRC="somo-HPLC-SAXS_Gauss4c.png" ALT="SOMO HPLC-SAXS Gaussian Global fit">
+</center>
+<p>
+
+In the image above, only the CorMap <i>P</i>-value are shown. The current chromatograms pair is highlighted in the CorMap <i>P</i>-values plot by an enlarged symbol (orange square in this case). Scrolling is performed by either using the grey-scale bar-wheel, or by clicking on the the "<b><i>&lt;</i></b>" and "<b><i>&gt;</i></b>" buttons placed at its sides. By selecting/deselecting the three checkboxes next to the <i>Scroll</i> checkbox
+(<i>P >= 0.05</i>, <i>0.05 > P >= 0.01</i>, <i>P < 0.01</i>), only the subset(s) whose <i>P</i>-values are within those of the selected chechbox(es) will by scrolled.<p>
+
+In the example shown above, by examining the residuals' plot it is clear that the "bad" <i>P</i>-value it is due to a poor fit in the inflection point betweern the 3<sup>rd</sup> and 4<sup>th</sup> peaks. If we examine a chromatograms pair just two <i>q</i> values above the first one examined in detail, we can see that oscillations in this zone produce an excellent <i>P</i>-value, although this still appears to be a difficult zone to fit with symmetric Gaussians:<p>
+
+<p><center>
+<img SRC="somo-HPLC-SAXS_Gauss4d.png" ALT="SOMO HPLC-SAXS Gaussian Global fit">
+</center>
+<p>
+
+The noticeable worse fitting and the end of the main peak could indicate either a slight non-pure Gaussian shape of the peak, or the presence of a small amount of some trailing material in this region.<p>
 
 It is best to first <b><i>Save</i></b> and then <i><b>Keep</i></b> the results, and then select all the available <i>I(t)</i> vs. <i>t</i> chromatograms (use <b><i>Select all</i></b> if only <i>I(t)</i> vs. <i>t</i> data are present in the <b>Data files</b> section).<p>
 
-<b><i>Global Gaussians</i></b> can now be applied to all the selected chromatograms.<p>
-
-Again, if datasets having points with missing or NaN std. dev. values are found, a pop-up panel will appear:<p>
-
-<p><center>
-<img SRC="somo-HPLC-SAXS_Drop0SD.png" ALT="SOMO HPLC-SAXS Drop 0 SD pop-up">
-</center>
-<p> 
-
+<b><i>Global Gaussians</i></b> can now be applied to all the selected chromatograms. Again, if datasets having points with missing or NaN std. dev. values are found, a pop-up panel will appear (not shown).<p>
 
 <p><center>
 <img SRC="somo-HPLC-SAXS_Gauss5.png" ALT="SOMO HPLC-SAXS Global Gaussian Global on all">
@@ -858,16 +1001,8 @@ More infos about this small module can be found <a href=saxs_hplc_p3d.html>here<
 
 This interactive plot can show any selected set of the Global Gaussians over any collection of curves. The interface is fully interactive for rotations, scaling and zooming along with multiple display and save controls. Its utilization is helpful for visualizing the quality of the global fit.<p>
 
-The goodness of the fit for each <i>I(t)</i> vs. <i>t</i> chromatogram can be checked by selecting a single chromatogram and then pressing <b><i>Gaussians</i></b>, as shown below:<p>
 
-<p><center>
-<img SRC="somo-HPLC-SAXS_Gauss7.png" ALT="SOMO HPLC-SAXS Global Gaussians results on a single chromatogram">
-</center>
-<p>
-
-<b><i>Cancel</i></b> will revert to no Gaussian visualization mode.<p>
-
-After Gaussian decomposition, the <b><i>Test I(q)</b></i> procedure can be repeated. First, all the available <i>I</i>(<i>t</i>) vs. <i>t</i> chromatograms for which Gaussians have been produced are selected, and the <b><i>Test I(q)</b></i> button is pressed. The third commands row under the graphics window will now show additional options:<p>
+<span id="trialmakeiq">After Gaussian decomposition, the <b><i>Trial make I(q)</b></i> procedure can be repeated. First, all the available <i>I</i>(<i>t</i>) vs. <i>t</i> chromatograms for which Gaussians have been produced are selected, and the <b><i>Trial make I(q)</b></i> button is pressed. The third commands row under the graphics window will now show additional options:<p></span>
 
 <p><center>
 <img SRC="somo-HPLC-SAXS_Gauss_test_I_q.png" ALT="SOMO HPLC-SAXS Test I(q) after Global Gaussians decomposition">
@@ -890,8 +1025,8 @@ The contribution of the 3<sup>rd</sup> Gaussian under the main peak can be now e
 </center>
 <p>
 
-As can be seen, there is a slight contribution (see the &#126;500-fold reduction in intensity in the Guinier plot) from the peak preceeding the main peak, evidenced by the fairly constant but considerably higher <i>R<sub>g</sub></i> values (&#8776; 45.6 &Aring;), likely identifying this material as a BSA dimer.<br>
-If we perform this analysis selecting the top region of the dimer peak (frames 72-90), we find similar <i>R<sub>g</sub></i> values, &#8776; 43.6 &Aring;, evenly distributed across the peak:<p>
+As can be seen, there is a slight contribution (see the &#126;500-fold reduction in intensity in the Guinier plot) from the peak preceeding the main peak, evidenced by the fairly constant but considerably higher <i>R<sub>g</sub></i> values (&#8776; 44.5 &Aring;), likely identifying this material as a BSA dimer (also confirmed by the average MW[RT] value).<br>
+If we perform this analysis selecting the top region of the dimer peak (frames 72-90), we find similar <i>R<sub>g</sub></i> values, &#8776; 43.7 &Aring;, almost evenly distributed across the peak:<p>
 
 <p><center>
 <img SRC="somo-HPLC-SAXS_Gauss_test_I_q3.png" ALT="SOMO HPLC-SAXS Test I(q) after Global Gaussians decomposition G3 dimer peak">
@@ -899,6 +1034,7 @@ If we perform this analysis selecting the top region of the dimer peak (frames 7
 <p>
 
 
+Note that some of the curves present an upward curvature at low <i>q</i>-values, likely indicating a non-ideal baseline correction for this sample.<br>
 Finally, the contribution of the 2<sup>nd</sup> Gaussian under the trimer peak is evaluated:<p>
 
 <p><center>
@@ -906,7 +1042,7 @@ Finally, the contribution of the 2<sup>nd</sup> Gaussian under the trimer peak i
 </center>
 <p>
 
-finding higher <i>R<sub>g</sub></i> values (&#8776; 58.6 &Aring;) and a reasonably flat distribution. <p>
+finding higher <i>R<sub>g</sub></i> values (&#8776; 60 &Aring;) and a reasonably flat distribution. <p>
 
 The <b><i>Scroll</b></i> feature is also available, allowing the examination of the individual Guinier plots. Likewise, the <b><i>Approx. MW plot</b></i> can show the approximate molecular weight values calculated with the Rambo and Tainer method (Accurate assessment of mass, models and resolution by small-angle scattering. Nature 496:477-481, 2013) . However, as it requires to produce meaningful results a more extended <i>q</i> range than that available for the HPLC-SAXS BSA study presented here, we will not present such plots here.<p> 
 
@@ -1012,7 +1148,7 @@ Another pop-up panel will appear, asking to associated the time-shifted concentr
 </center>
 <p>
 
-Answering "yes" will then associate the re-peaked, time-shifted concentration data to the <i>I(t)</i> vs. <i>t</i> SAXS dataset under analysis. This operation can be anyway performed at any time by selecting only a concentration chromatogram dataset, and pressing <b><i>Set</i></b>.<p>
+Answering "yes" will then associate the re-peaked, time-shifted concentration data to the <i>I(t)</i> vs. <i>t</i> SAXS dataset under analysis. This operation can be anyway performed at any time by selecting only a concentration chromatogram dataset, and pressing <b><i>Set</i></b>. The concentration chromatogram shown in this example is then cropped to have approximately the same frame number as the SAXS <i>I</i>(<i>t</i>) vs. <i>t</i> chromatograms.<p>
 
 The re-peaked, time-shifted concentration chromatogram can be now fitted with Gaussians, using for initialization the set derived from the <i>I(t)</i> vs. <i>t</i> chromatograms (note: it is mandatory that the same number of Gaussians be used for both the concentration and <i>I(t)</i> vs. <i>t</i> chromatograms).<p>
 
@@ -1030,7 +1166,7 @@ Pressing <b><i>Fit</i></b> will then bring up the <b>Fit</b> window (see <a href
 </center>
 <p>
 
-As evidenced in the image above, some band broadening has occurred between the UV-VIS and SAXS detectors. While the issue appears to be relatively minor here, it can be more serious. To at least partially mitigate this issue, we have implementing a re-shaping routine that re-aligns the shape of the concentration detector chromatogram to that of the SAXS detector chromatograms. It is based on determining first the area under each Gaussian peak in the concentration chromatogram after fitting it with the SAXS-derived Gaussians with minimal centers and widths changes, as described above. Then, when the <b><i>Make I(q)</i></b> routine is launched, the concentration chromatogram Gaussians can be optionally re-shaped on the SAXS-optimized Gaussians, keeping their areas fixed and adjusting the other parameters (see below).<p>
+As evidenced in the image above, some band broadening has occurred between the UV-VIS and SAXS detectors. While the issue appears to be relatively minor here, it can be more serious. To at least partially mitigate this issue, we have implemented a re-shaping routine that re-aligns the shape of the concentration detector chromatogram to that of the SAXS detector chromatograms. It is based on determining first the area under each Gaussian peak in the concentration chromatogram after fitting it with the SAXS-derived Gaussians with minimal centers and widths changes, as described above. Then, when the <b><i>Make I(q)</i></b> routine is launched, the concentration chromatogram Gaussians can be optionally re-shaped on the SAXS-optimized Gaussians, keeping their areas fixed and adjusting the other parameters (see below).<p>
 
 The <b><i>Save</i></b> and <b><i>Keep</i></b> buttons must be then pressed to store and associate the resulting Gaussians to the concentration chromatogram. On re-generating the <i>I(q)</i> vs. <i>q</i> frames (see below), each concentration Gaussian peak will be mapped onto the corresponding <i>I(t)</i> vs. <i>t</i> peaks.<p>
 
@@ -1050,7 +1186,7 @@ Once the <i>I(q)</i> vs. <i>q</i> files have been generated, it is possible to v
 </center>
 <p>
 
-Here the original and decomposed <i>I(q)</i> for frame #59, originally presenting an overlap between the trimers and dimers peaks, are shown, together with the reconstructed sum with baseline back-addition (see the legend for details). The drop of intensity at <i>q</i> values > 0.07 &Aring;<sup>-1</sup> for Gaussian peak #1 (purple) is due to its contribution vanishing in the high <i>q</i> range. Note how there is a contribution from Gaussians #1, #2 (green), and #3 (cyan) in this frame (peak #4, not contributing at all in this frame, is not shown). Note also how the reconstructed curve with baseline back-addition (whose color would be white) perfectly superimposes with the original frame data (brick red), and thus is almost not visible in this frame except at the very end of the <i>q</i> range.<p>
+Here the original and decomposed <i>I(q)</i> for frame #59 (cream), originally presenting an overlap between the trimers and dimers peaks, are shown, together with the reconstructed sum with baseline back-addition (see the legend for details). The drop of intensity at <i>q</i> values > 0.07 &Aring;<sup>-1</sup> for Gaussian peak #1 (purple) is due to its contribution vanishing in the high <i>q</i> range. Note how there is a contribution from Gaussians #1, #2 (orange), and #3 (olive green) in this frame (peak #4, not contributing at all in this frame, is not shown). Note also how the reconstructed curve with baseline back-addition (whose color would be cyan) perfectly superimposes with the original frame data (cream), and thus is almost not visible in this frame except at the very end of the <i>q</i> range.<p>
 
 A zoom into the low <i>q</i> region for frames #75-86 of the Gaussian peak #3 it is shown in the next two images, before and after concentration normalization (<b><i>Normalize</i></b> button):<p>
 
@@ -1078,10 +1214,7 @@ Pressing the <b><i>Concentration reference</i></b> button again will make this a
 <p>
 Finally, the data shown in any of the plots currently visualized can be saved in csv-formatted files by pressing the <b><i>Save plots</i></b> button. This will open a pop-up dialogue window where the location and the root filename for the cvs files can be set.<p>
 
-
 <p>
-
-
 
 <p>
 <hr>
@@ -1099,7 +1232,7 @@ distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> Th
 </font>
 <p>
 <font face="helvetica" size="-1">
-Last modified on March 23, 2016.
+Last modified on July 11, 2016.
 </font>
 </body>
 </html>

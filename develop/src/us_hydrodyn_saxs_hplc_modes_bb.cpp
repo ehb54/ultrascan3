@@ -520,7 +520,6 @@ void US_Hydrodyn_Saxs_Hplc::baseline_start( bool from_blanks_mode_save )
       }
    }
 
-
    org_baseline_start_s     = le_baseline_start_s    ->text().toDouble();
    org_baseline_start       = le_baseline_start      ->text().toDouble();
    org_baseline_start_e     = le_baseline_start_e    ->text().toDouble();
@@ -607,6 +606,8 @@ void US_Hydrodyn_Saxs_Hplc::baseline_start( bool from_blanks_mode_save )
    bool do_blanks_start         = false;
    bool force_endpoints_default = false;
 
+   baseline_hb_only_mode = false;
+
    if ( baseline_integral ) {
       bool show_determination_info = true;
       if ( q_size < IB_MIN_FRAMES ) {
@@ -622,141 +623,170 @@ void US_Hydrodyn_Saxs_Hplc::baseline_start( bool from_blanks_mode_save )
       }
       if ( !from_blanks_mode_save || !blanks_brookesmap_sliding_results.size() ) {
          switch ( QMessageBox::question( this
-                                         ,caption() + tr( " : Baseline mode blanks selection" )
-                                         ,QString( tr( "You must have blanks processed to proceed\n"
-                                                       "\n"
-                                                       "The blanks should be non-averaged buffer frames (whose average value was then subtracted from the elution frames)\n"
-                                                       "If you do not have the buffers corresponding to their present elution, then the preloaded blanks should have been chosen in a similar way:\n"
-                                                       "The blanks do not have to be *the* blanks used for the present elution, even if it is strongly recommended,\n"
-                                                       "but at least blanks collected on the same beamline with a similar set-up (distance, pixel size, energy).\n"
-                                                       "\n"
-                                                       "You have the following options" ) )
-                                         ,tr( "Load blanks" )
-                                         ,tr( "Load previous analysis" )
-                                         ,( blanks_brookesmap_sliding_results.size() &&
-                                            blanks_cormap_pvaluepairs.size() >= IB_MIN_FRAMES  ) ?
-                                         // maybe should be qstring with currently analyzed name
-                                         QString( tr( "Accept currently analyzed blanks%1" ) )
-                                         .arg( blanks_cormap_parameters.count( "name" ) ? 
-                                               QString( "\n%1" ).arg( blanks_cormap_parameters[ "name" ] ) : QString( "" ) )
-                                         : QString::null
-                                         ,( blanks_brookesmap_sliding_results.size() &&
-                                            blanks_cormap_pvaluepairs.size() >= IB_MIN_FRAMES ) ? 2 : 0
+                                         ,caption() + tr( " : Utilize blanks in baseline analysis" )
+                                         ,tr( "Do you wish to utilize reference blanks for baseline analysis?\n"
+                                              "Without reference blanks, only the adjusted Holm-Bonferroni method can be used." )
+                                         ,tr( "&Yes, utilize blanks" )
+                                         ,tr( "&No, proceed without blanks" )
+                                         ,QString::null
                                          ) ) {
          case -1 : // escape
             return current_mode != MODE_NORMAL ? wheel_cancel() : update_enables();
             break;
-         case 0 : // load blanks
+         case 0 : 
             {
-               QStringList                  new_blanks;
-               QStringList                  new_blanks_files;
-               set < QString >              new_blanks_set;
+               switch ( QMessageBox::question( this
+                                               ,caption() + tr( " : Baseline mode blanks selection" )
+                                               ,QString( tr( "You must have blanks processed to proceed\n"
+                                                             "\n"
+                                                             "The blanks should be non-averaged buffer frames (whose average value was then subtracted from the elution frames)\n"
+                                                             "If you do not have the buffers corresponding to their present elution, then the preloaded blanks should have been chosen in a similar way:\n"
+                                                             "The blanks do not have to be *the* blanks used for the present elution, even if it is strongly recommended,\n"
+                                                             "but at least blanks collected on the same beamline with a similar set-up (distance, pixel size, energy).\n"
+                                                             "\n"
+                                                             "You have the following options" ) )
+                                               ,tr( "Load blanks" )
+                                               ,tr( "Load previous analysis" )
+                                               ,( blanks_brookesmap_sliding_results.size() &&
+                                                  blanks_cormap_pvaluepairs.size() >= IB_MIN_FRAMES  ) ?
+                                               // maybe should be qstring with currently analyzed name
+                                               QString( tr( "Accept currently analyzed blanks%1" ) )
+                                               .arg( blanks_cormap_parameters.count( "name" ) ? 
+                                                     QString( "\n%1" ).arg( blanks_cormap_parameters[ "name" ] ) : QString( "" ) )
+                                               : QString::null
+                                               ,( blanks_brookesmap_sliding_results.size() &&
+                                                  blanks_cormap_pvaluepairs.size() >= IB_MIN_FRAMES ) ? 2 : 0
+                                               ) ) {
+               case -1 : // escape
+                  return current_mode != MODE_NORMAL ? wheel_cancel() : update_enables();
+                  break;
+               case 0 : // load blanks
+                  {
+                     QStringList                  new_blanks;
+                     QStringList                  new_blanks_files;
+                     set < QString >              new_blanks_set;
 
-               QString use_dir = QDir::current().canonicalPath();
-               ((US_Hydrodyn  *)us_hydrodyn)->select_from_directory_history( use_dir, this );
+                     QString use_dir = QDir::current().canonicalPath();
+                     ((US_Hydrodyn  *)us_hydrodyn)->select_from_directory_history( use_dir, this );
 
-               new_blanks_files = QFileDialog::getOpenFileNames( this , caption() + tr( " : Select blanks files" ) , use_dir , "dat files [foxs / other] (*.dat);;"
-                                                                "All files (*);;"
-                                                                "ssaxs files (*.ssaxs);;"
-                                                                "txt files [specify q, I, sigma columns] (*.txt)" );
+                     new_blanks_files = QFileDialog::getOpenFileNames( this , caption() + tr( " : Select blanks files" ) , use_dir , "dat files [foxs / other] (*.dat);;"
+                                                                      "All files (*);;"
+                                                                      "ssaxs files (*.ssaxs);;"
+                                                                      "txt files [specify q, I, sigma columns] (*.txt)" );
 
          
-               if ( !new_blanks_files.size() ) {
-                  return current_mode != MODE_NORMAL ? wheel_cancel() : update_enables();
-               }
+                     if ( !new_blanks_files.size() ) {
+                        return current_mode != MODE_NORMAL ? wheel_cancel() : update_enables();
+                     }
 
 
-               for ( int i = 0; i < (int) new_blanks_files.size(); ++i ) {
-                  QString basename = QFileInfo( new_blanks_files[ i ] ).baseName( true );
-                  new_blanks << basename;
-                  new_blanks_set.insert( basename );
-               }
+                     for ( int i = 0; i < (int) new_blanks_files.size(); ++i ) {
+                        QString basename = QFileInfo( new_blanks_files[ i ] ).baseName( true );
+                        new_blanks << basename;
+                        new_blanks_set.insert( basename );
+                     }
 
-               default_blanks       = new_blanks;
-               default_blanks_files = new_blanks_files;
-               default_blanks_set   = new_blanks_set;
+                     default_blanks       = new_blanks;
+                     default_blanks_files = new_blanks_files;
+                     default_blanks_set   = new_blanks_set;
 
-               do_blanks_start = true;
-               show_determination_info = false;
-            }
-            break;
-         case 1 : // load previous analysis
-            {
-               QString use_dir = QDir::current().canonicalPath();
-               ((US_Hydrodyn  *)us_hydrodyn)->select_from_directory_history( use_dir, this );
+                     do_blanks_start = true;
+                     show_determination_info = false;
+                  }
+                  break;
+               case 1 : // load previous analysis
+                  {
+                     QString use_dir = QDir::current().canonicalPath();
+                     ((US_Hydrodyn  *)us_hydrodyn)->select_from_directory_history( use_dir, this );
 
-               QString filename = QFileDialog::getOpenFileName( this , caption() , use_dir , "*.csv *.CSV" );
+                     QString filename = QFileDialog::getOpenFileName( this , caption() , use_dir , "*.csv *.CSV" );
 
    
-               if ( filename.isEmpty() ) {
-                  return current_mode != MODE_NORMAL ?  wheel_cancel() : update_enables();
-               }
-               ((US_Hydrodyn *)us_hydrodyn)->add_to_directory_history( filename );
+                     if ( filename.isEmpty() ) {
+                        return current_mode != MODE_NORMAL ?  wheel_cancel() : update_enables();
+                     }
+                     ((US_Hydrodyn *)us_hydrodyn)->add_to_directory_history( filename );
 
-               map < QString, QString >       load_parameters;
-               vector < vector < double > >   load_pvaluepairs;
-               vector < vector < double > >   load_adjpvaluepairs;
-               vector < QString >             load_selected_files;
+                     map < QString, QString >       load_parameters;
+                     vector < vector < double > >   load_pvaluepairs;
+                     vector < vector < double > >   load_adjpvaluepairs;
+                     vector < QString >             load_selected_files;
 
-               if (
-                   !US_Hydrodyn_Saxs_Cormap::load_csv(
-                                                      filename,
-                                                      load_parameters,
-                                                      load_pvaluepairs,
-                                                      load_adjpvaluepairs,
-                                                      load_selected_files,
-                                                      this
-                                                      ) 
-                   ) {
-                  return current_mode != MODE_NORMAL ?  wheel_cancel() : update_enables();
-               }
+                     if (
+                         !US_Hydrodyn_Saxs_Cormap::load_csv(
+                                                            filename,
+                                                            load_parameters,
+                                                            load_pvaluepairs,
+                                                            load_adjpvaluepairs,
+                                                            load_selected_files,
+                                                            this
+                                                            ) 
+                         ) {
+                        return current_mode != MODE_NORMAL ?  wheel_cancel() : update_enables();
+                     }
 
-               if ( !load_parameters.count( "isblanks" ) ) {
-                  QMessageBox::warning( this, caption() + tr( " : Baseline" ),
-                                        QString( tr( "The loaded analysis does not appear to be a blanks analysis" ) )
-                                        ,QMessageBox::Ok | QMessageBox::Default
-                                        ,QMessageBox::NoButton
-                                        );
-                  return current_mode != MODE_NORMAL ?  wheel_cancel() : update_enables();
-               }
+                     if ( !load_parameters.count( "isblanks" ) ) {
+                        QMessageBox::warning( this, caption() + tr( " : Baseline" ),
+                                              QString( tr( "The loaded analysis does not appear to be a blanks analysis" ) )
+                                              ,QMessageBox::Ok | QMessageBox::Default
+                                              ,QMessageBox::NoButton
+                                              );
+                        return current_mode != MODE_NORMAL ?  wheel_cancel() : update_enables();
+                     }
                   
 
-               blanks_cormap_parameters  = load_parameters;
-               blanks_cormap_pvaluepairs = load_pvaluepairs;
+                     blanks_cormap_parameters  = load_parameters;
+                     blanks_cormap_pvaluepairs = load_pvaluepairs;
 
-               // do sliding window analysis
-               blanks_brookesmap_sliding_results.clear();
-               if ( blanks_cormap_parameters.size() &&
-                    blanks_cormap_pvaluepairs.size() ) {
-                  US_Hydrodyn_Saxs_Cormap_Cluster_Analysis ca;
+                     // do sliding window analysis
+                     blanks_brookesmap_sliding_results.clear();
+                     if ( blanks_cormap_parameters.size() &&
+                          blanks_cormap_pvaluepairs.size() ) {
+                        US_Hydrodyn_Saxs_Cormap_Cluster_Analysis ca;
 
-                  if ( ca.sliding( 
-                                  blanks_cormap_pvaluepairs, 
-                                  blanks_cormap_parameters, 
-                                  blanks_brookesmap_sliding_results, 
-                                  this,
-                                  progress ) ) {
-                     // qDebug( "sliding_results" );
-                     // for ( map < QString, double >::iterator it = blanks_brookesmap_sliding_results.begin();
-                     //       it != blanks_brookesmap_sliding_results.end();
-                     //       ++it ) {
-                     //    cout << "\t" << it->first << " => " << it->second << endl;
-                     // }
-                  } else {
-                     blanks_cormap_parameters.clear();
-                     blanks_cormap_pvaluepairs.clear();
-                     return current_mode != MODE_NORMAL ?  wheel_cancel() : update_enables();
-                  }
+                        if ( ca.sliding( 
+                                        blanks_cormap_pvaluepairs, 
+                                        blanks_cormap_parameters, 
+                                        blanks_brookesmap_sliding_results, 
+                                        this,
+                                        progress ) ) {
+                           // qDebug( "sliding_results" );
+                           // for ( map < QString, double >::iterator it = blanks_brookesmap_sliding_results.begin();
+                           //       it != blanks_brookesmap_sliding_results.end();
+                           //       ++it ) {
+                           //    cout << "\t" << it->first << " => " << it->second << endl;
+                           // }
+                        } else {
+                           blanks_cormap_parameters.clear();
+                           blanks_cormap_pvaluepairs.clear();
+                           return current_mode != MODE_NORMAL ?  wheel_cancel() : update_enables();
+                        }
+                     }
+                  }            
+                  break;
+               case 2 : // accept currently analyzed blanks
+                  // qDebug( "accept currently analyzed blanks" );
+                  break;
                }
-            }            
+            }
             break;
-         case 2 : // accept currently analyzed blanks
-            // qDebug( "accept currently analyzed blanks" );
+         case 1 :
+            {
+               // without blanks
+               baseline_hb_only_mode = true;
+               blanks_cormap_parameters.clear();
+               blanks_cormap_pvaluepairs.clear();
+            }
             break;
          }
       }
+         
+      baseline_max_window_size = 
+         baseline_hb_only_mode
+         ? (int) f_qs[ wheel_file ].size()
+         : (int) blanks_cormap_pvaluepairs.size()
+         ;
 
-      baseline_max_window_size = (int) blanks_cormap_pvaluepairs.size();
       if ( baseline_max_window_size > (int) f_qs[ wheel_file ].size() ) {
          baseline_max_window_size = (int) f_qs[ wheel_file ].size();
       }
@@ -957,6 +987,8 @@ void US_Hydrodyn_Saxs_Hplc::baseline_start( bool from_blanks_mode_save )
 
 void US_Hydrodyn_Saxs_Hplc::baseline_enables()
 {
+   pb_pp->setEnabled( true );
+
    if ( current_mode == MODE_BLANKS ) {
       return blanks_enables();
    }
@@ -969,6 +1001,7 @@ void US_Hydrodyn_Saxs_Hplc::baseline_enables()
       pb_color_rotate        ->setEnabled( true );
       pb_rescale             ->setEnabled( true );
       cb_eb                  ->setEnabled( true );
+      pb_pp                  ->setEnabled( true );
       wheel_enables();
       return;
    }
@@ -2078,10 +2111,11 @@ void US_Hydrodyn_Saxs_Hplc::baseline_apply( QStringList files,
          unsigned int this_reps = 0;
          double I_tot;
 
+         // note: we have replaced alpha with gamma to avoid overloading with CorMap analysis alpha
          double alpha = 0e0;
          double alpha_epsilon = 
-            ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_bl_alpha" ) ?
-            ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_alpha" ].toDouble() : 5e-3;
+            ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_bl_epsilon" ) ?
+            ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_epsilon" ].toDouble() : 5e-3;
 
          double last_alpha = 0e0;
          vector < double > bl = last_bl;
@@ -2125,7 +2159,7 @@ void US_Hydrodyn_Saxs_Hplc::baseline_apply( QStringList files,
                         break;
                      }
                      editor_msg( "dark blue", 
-                                 QString( tr( "iteration %1 delta_Bl %2 Itot %3 alpha %4 %5%6" ) )
+                                 QString( tr( "iteration %1 delta_Bl %2 Itot %3 gamma %4 %5%6" ) )
                                  .arg( this_reps )
                                  .arg( delta_bl )
                                  .arg( I_tot )
@@ -2212,7 +2246,7 @@ void US_Hydrodyn_Saxs_Hplc::baseline_apply( QStringList files,
                      alpha = delta_bl / I_tot;
 
                      editor_msg( "dark blue", 
-                                 QString( tr( "iteration %1 delta_Bl %2 Itot %3 alpha %4%5" ) )
+                                 QString( tr( "iteration %1 delta_Bl %2 Itot %3 gamma %4%5" ) )
                                  .arg( this_reps )
                                  .arg( delta_bl )
                                  .arg( I_tot )
@@ -2939,15 +2973,35 @@ void US_Hydrodyn_Saxs_Hplc::baseline_best() {
 
    map < QString, QString > parameters;
 
-   if (
-       blanks_cormap_parameters.count( "decimate" ) &&
-       blanks_cormap_parameters[ "decimate" ] != "0" &&
-       blanks_cormap_parameters[ "decimate" ] != "1" 
-       ) {
-      parameters[ "decimate" ] = blanks_cormap_parameters[ "decimate" ];
+   if ( !baseline_hb_only_mode ) {
+      if (
+          blanks_cormap_parameters.count( "decimate" ) &&
+          blanks_cormap_parameters[ "decimate" ] != "0" &&
+          blanks_cormap_parameters[ "decimate" ] != "1" 
+          ) {
+         parameters[ "decimate" ] = blanks_cormap_parameters[ "decimate" ];
+      } else {
+         parameters[ "decimate" ] = "1";
+      }
    }
 
-   // ask_to_decimate( parameters );
+   bool hb_mode = false;
+
+   if ( blanks_cormap_parameters.count( "hb" ) ||
+        baseline_hb_only_mode ) {
+      parameters[ "hb" ] = "true";
+      hb_mode = true;
+   }
+
+   if ( blanks_cormap_parameters.count( "alpha" ) ) {
+      // qDebug( QString( "got alpha %1 from blanks" ).arg( blanks_cormap_parameters[ "alpha" ] ) );
+      parameters[ "alpha" ] = blanks_cormap_parameters[ "alpha" ];
+   }
+
+   // if ( baseline_hb_only_mode ) {
+   //    ask_to_decimate( parameters );
+   // }
+
    parameters[ "baseline_use_end" ] = "true";
    // parameters[ "close"            ] = "true";
 
@@ -2967,7 +3021,8 @@ void US_Hydrodyn_Saxs_Hplc::baseline_best() {
 
    // do sliding analysis of each region and from end_s to end with window and plot avg red cluster size
 
-   baseline_brookesmap_sliding_results.clear();
+   map < QString, double > baseline_hb_brookesmap_sliding_results;
+
    if ( baseline_cormap_parameters.size() &&
         baseline_cormap_pvaluepairs.size() ) {
       US_Hydrodyn_Saxs_Cormap_Cluster_Analysis ca;
@@ -2976,11 +3031,11 @@ void US_Hydrodyn_Saxs_Hplc::baseline_best() {
       baseline_cormap_parameters[ "sliding_baseline_mode"     ] = "true";
       baseline_cormap_parameters[ "sliding_baseline_pos_base" ] = QString( "%1" ).arg( input_double_to_pos ( baseline_last_cormap_run_end_s ) );
       
-
       if ( ca.sliding( 
                       baseline_cormap_pvaluepairs, 
                       baseline_cormap_parameters, 
                       baseline_brookesmap_sliding_results, 
+                      baseline_hb_brookesmap_sliding_results, 
                       this,
                       progress
                       ) ) {
@@ -2996,7 +3051,7 @@ void US_Hydrodyn_Saxs_Hplc::baseline_best() {
             map < QString, double >                 best_dparameters;
             map < QString, vector < double > >      best_vdparameters;
 
-            {
+            if ( !hb_mode ) {
                int     width = le_baseline_width->text().toInt();
                QString tag   = QString( "%1:Red cluster size average" ).arg( width );
                if ( blanks_brookesmap_sliding_results.count( tag ) ) {
@@ -3025,26 +3080,43 @@ void US_Hydrodyn_Saxs_Hplc::baseline_best() {
 
             best_dparameters[ "width"  ] = baseline_best_last_window_size;
             best_parameters[ "xlegend" ] = QString( tr( "Start Frame (window width %1 frames)" ) ).arg( baseline_best_last_window_size );
-            best_parameters[ "title"   ] = QString( tr( "Baseline avg. I(q) and average red cluster size by start frame (window width %1 frames)." ) ).arg( baseline_best_last_window_size );
+            best_parameters[ "title"   ] = QString( tr( 
+                                                       hb_mode 
+                                                       ? "Baseline avg. I(q) and red pair % by start frame (window width %1 frames)." 
+                                                       : "Baseline avg. I(q) and average red cluster size by start frame\n(window width %1 frames)." 
+                                                        ) ).arg( baseline_best_last_window_size );
+
+            if ( !hb_mode ) {
+               best_parameters[ "hb_title"   ] = QString( tr( "Baseline avg. I(q) and red pair % by start frame\n(window width %1 frames)." ) ).arg( baseline_best_last_window_size );
+            }
 
             if ( baseline_cormap_parameters.count( "decimate" ) ) {
                int decimate = baseline_cormap_parameters[ "decimate" ].toInt();
-               QString nth_tag;
-               switch ( decimate ) {
-               case 2 : nth_tag = "nd"; break;
-               case 3 : nth_tag = "rd"; break;
-               default : nth_tag = "th"; break;
-               }
+               if ( decimate > 1 ) {
+                  QString nth_tag;
+                  switch ( decimate ) {
+                  case 2 : nth_tag = "nd"; break;
+                  case 3 : nth_tag = "rd"; break;
+                  default : nth_tag = "th"; break;
+                  }
                
-               best_parameters[ "title" ] += QString( tr( " Only every %1%2 q value selected." ) )
-                  .arg( decimate ).arg( nth_tag );
+                  best_parameters[ "title" ] += QString( tr( " Only every %1%2 q value selected." ) )
+                     .arg( decimate ).arg( nth_tag );
+                  best_parameters[ "hb_title" ] += QString( tr( " Only every %1%2 q value selected." ) )
+                     .arg( decimate ).arg( nth_tag );
+               }
             }
             
-            QRegExp rx_cap( "^(\\d+):Red cluster size average$" );
+            QRegExp rx_cap( 
+                           hb_mode 
+                           ? "^(\\d+):% red pairs$"
+                           : "^(\\d+):Red cluster size average$"
+                            );
             
             int q_size = (int) f_qs[ wheel_file ].size();
 
             map < double, double > plotdata;
+            map < double, double > hb_plotdata;
 
             for ( map < QString, double >::iterator it = baseline_brookesmap_sliding_results.begin();
                   it != baseline_brookesmap_sliding_results.end();
@@ -3057,6 +3129,21 @@ void US_Hydrodyn_Saxs_Hplc::baseline_best() {
                }
             }
 
+            if ( !hb_mode ) {
+               QRegExp rx_cap( "^(\\d+):% red pairs$" );
+            
+               for ( map < QString, double >::iterator it = baseline_hb_brookesmap_sliding_results.begin();
+                     it != baseline_hb_brookesmap_sliding_results.end();
+                     ++it ) {
+                  if ( rx_cap.search( it->first ) != -1 ) {
+                     int pos = rx_cap.cap( 1 ).toInt();
+                     if ( pos > 0 && pos < q_size ) {
+                        hb_plotdata[ f_qs[ wheel_file ][ pos ] ] = it->second;
+                     }
+                  }
+               }
+            }
+               
             {
                vector < double > x;
                vector < double > y;
@@ -3066,10 +3153,19 @@ void US_Hydrodyn_Saxs_Hplc::baseline_best() {
                double ybest     = 1e99;
                double ybestposx = -1;
 
+               vector < double > hb_x;
+               vector < double > hb_y;
+
+               double hb_ybest     = 1e99;
+               double hb_ybestposx = -1;
+
                double green_limit = best_dparameters.count( "blanksaverage" ) ? 
                   best_dparameters[ "blanksaverage" ] : 1e0;
                if ( best_dparameters.count(  "blanksaveragesd" ) ) {
                   green_limit += best_dparameters[ "blanksaveragesd" ];
+               }
+               if ( hb_mode ) {
+                  green_limit = 0e0;
                }
                
                for ( map < double, double >::iterator it = plotdata.begin();
@@ -3107,7 +3203,8 @@ void US_Hydrodyn_Saxs_Hplc::baseline_best() {
                      ++it ) {
                   x.push_back( it->first );
                   y.push_back( it->second );
-                  if ( it->second <= green_limit ) {
+                  if ( it->second <= green_limit &&
+                       !hb_mode ) {
                      gx.push_back( it->first );
                      gy.push_back( it->second );
                   }
@@ -3115,8 +3212,8 @@ void US_Hydrodyn_Saxs_Hplc::baseline_best() {
 
                // qDebug( QString( "ybest %1 pos %2" ).arg( ybest ).arg( ybestposx ) );
 
-               // US_Vector::printvector2( "baseline results", x, y );
-               // US_Vector::printvector2( "baseline gy results", gx, gy );
+               // US_Vector::printvector2( "sliding analysis data", x, y );
+               // US_Vector::printvector2( "sliding analysis gy results", gx, gy );
 
                best_vdparameters[ "x" ] = x;
                best_vdparameters[ "y" ] = y;
@@ -3131,6 +3228,55 @@ void US_Hydrodyn_Saxs_Hplc::baseline_best() {
                //    best_dparameters[ "bestpos" ] = ybestposx;
                //    qDebug( "set as best_dparameters" );
                // }
+
+               if ( !hb_mode ) {
+                  for ( map < double, double >::iterator it = hb_plotdata.begin();
+                        it != hb_plotdata.end();
+                        ++it ) {
+                     if ( hb_ybest > it->second ) {
+                        hb_ybest     = it->second;
+                        hb_ybestposx = it->first;
+                     }
+                  }
+
+                  if ( hb_ybestposx != -1 ) {
+                     vector < double > hb_yx;
+                     vector < double > hb_yy;
+                     for ( map < double, double >::iterator it = hb_plotdata.begin();
+                           it != hb_plotdata.end();
+                           ++it ) {
+                        if ( hb_ybest == it->second ) {
+                           hb_yx.push_back( it->first );
+                           hb_yy.push_back( it->second );
+                           best_vdparameters[ "hb_bestpos" ].push_back( it->first );
+                        }
+                     }
+                     best_vdparameters[ "hb_wx" ] = hb_yx;
+                     best_vdparameters[ "hb_wy" ] = hb_yy;
+
+                  }
+
+                  for ( map < double, double >::iterator it = hb_plotdata.begin();
+                        it != hb_plotdata.end();
+                        ++it ) {
+                     hb_x.push_back( it->first );
+                     hb_y.push_back( it->second );
+                  }
+
+                  // qDebug( QString( "ybest %1 pos %2" ).arg( ybest ).arg( ybestposx ) );
+
+                  // US_Vector::printvector2( "sliding analysis data", x, y );
+                  // US_Vector::printvector2( "sliding analysis gy results", gx, gy );
+
+                  best_vdparameters[ "hb_x" ] = hb_x;
+                  best_vdparameters[ "hb_y" ] = hb_y;
+
+                  // qDebug( QString( "ybest %1 pos %2" ).arg( hb_ybest ).arg( hb_ybestposx ) );
+                  // if ( hb_ybestposx != -1 ) {
+                  //    best_dparameters[ "hb_bestpos" ] = hb_ybestposx;
+                  //    qDebug( "set as best_dparameters" );
+                  // }
+               }
             }
 
             if ( true ) { // new way
@@ -3342,187 +3488,62 @@ void US_Hydrodyn_Saxs_Hplc::baseline_best() {
                // US_Vector::printvector3( "sumqx, sumqy, sumqmaxqy", sumqx, sumqy, sumqmaxqy );
             }                        
 
-
-            if ( false ) { // previous way 
-               // compute sum I(q) average value for each frame group
-
-               // sum up q for each frame in anaysis range
-
-               map < int, double > msumq;
-               map < int, double > msum2q;
-               map < int, double > msumqmaxq;
-               map < int, double > msum2qmaxq;
-
-               double cormap_maxq = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_cormap_maxq" ) ?
-                  ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_cormap_maxq" ].toDouble() : 0.05;
-
-               QRegExp rx_capqv( "_It_q(\\d+_\\d+)" );
-
-               for ( int i = 0; i < (int) baseline_selected.size(); ++i ) {
-                  if ( rx_capqv.search( baseline_selected[ i ] ) == -1 ) {
-                     editor_msg( "red", 
-                                 QString( tr( "Baseline Find best region: Could not extract q value from file name %1" ) )
-                                 .arg( baseline_selected[ i ] ) );
-                     baseline_enables();
-                     return;
-                  }
-                  double qv = rx_capqv.cap( 1 ).replace( "_", "." ).toDouble();
-
-                  for ( int j = 0; j < (int) f_qs[ baseline_selected[ i ] ].size(); ++j ) {
-                     msumq [ j ] += f_Is[ baseline_selected[ i ] ][ j ];
-                     msum2q[ j ] += f_Is[ baseline_selected[ i ] ][ j ] * f_Is[ baseline_selected[ i ] ][ j ];
-                     if ( qv <= cormap_maxq ) {
-                        msumqmaxq [ j ] += f_Is[ baseline_selected[ i ] ][ j ];
-                        msum2qmaxq[ j ] += f_Is[ baseline_selected[ i ] ][ j ] * f_Is[ baseline_selected[ i ] ][ j ];
-                     }
-                  }
-               }
-               
-
-               // now sum groups
-
-               double minsumqmaxqy = 1e99;
-               map < int, double > msumqx;
-               map < int, double > msumqy;
-               map < int, double > msumqmaxqy;
-
-               for ( map < QString, double >::iterator it = baseline_brookesmap_sliding_results.begin();
-                     it != baseline_brookesmap_sliding_results.end();
-                     ++it ) {
-                  if ( rx_cap.search( it->first ) != -1 ) {
-                     int pos = rx_cap.cap( 1 ).toInt();
-                     msumqx    [ pos ] = f_qs[ wheel_file ][ pos ];
-                     msumqy    [ pos ] = 0e0;
-                     msumqmaxqy[ pos ] = 0e0;
-                     for ( int i = 0; i <  baseline_best_last_window_size ; ++i ) {
-                        int upos = i + pos;
-                        if ( upos < q_size ) {
-                           msumqy    [ pos ] += msumq    [ upos ];
-                           msumqmaxqy[ pos ] += msumqmaxq[ upos ];
-                        }
-                     }
-                     msumqy    [ pos ] /= (double) baseline_best_last_window_size;
-                     msumqmaxqy[ pos ] /= (double) baseline_best_last_window_size;
-                     if ( minsumqmaxqy > msumqmaxqy[ pos ] ) {
-                        minsumqmaxqy = msumqmaxqy[ pos ];
-                     }
-                  }
-               }
-
-               vector < double > sumqx;
-               vector < double > sumqy;
-               vector < double > sumqmaxqy;
-
-
-               for ( map < int, double >::iterator it = msumqx.begin();
-                     it != msumqx.end();
-                     ++it ) {
-                  sumqx    .push_back( it->second );
-                  sumqy    .push_back( msumqy    [ it->first ] );
-                  sumqmaxqy.push_back( msumqmaxqy[ it->first ] );
-               }
-
-               best_dparameters[ "minsumqmaxqy" ] = minsumqmaxqy;
-
-               for ( int i = 0; i < (int) sumqx.size(); ++i ) {
-                  if ( minsumqmaxqy == sumqmaxqy[ i ] ) {
-                     best_vdparameters[ "bestsumqmaxqypos" ].push_back( sumqx[ i ] );
-                  }
-               }
-
-               if ( blanks_cormap_parameters.count( "blanks_avg_maxq_sd" ) ) {
-                  best_dparameters[ "blanks_avg_maxq_sd" ] = blanks_cormap_parameters[ "blanks_avg_maxq_sd" ].toDouble();
-               }
-
-               best_vdparameters[ "sumqx"     ] = sumqx;
-               // best_vdparameters[ "sumqy"     ] = sumqy;
-               best_vdparameters[ "sumqmaxqy" ] = sumqmaxqy;
-
-               // for ( map < int, double >::iterator it = msumq.begin();
-               //       it != msumq.end();
-               //       ++it ) {
-               //    cout << QString( "msumq %1 %2" ).arg( f_qs[ wheel_file ][ it->first ] ).arg( it->second );
-               //    if ( msumqmaxq.count( it->first ) ) {
-               //       cout << QString( " msumqmaxq %1" ).arg( msumqmaxq[ it->first ] );
-               //    }
-               //    cout << endl;
-               // }
-               // US_Vector::printvector3( "sumqx, sumqy, sumqmaxqy", sumqx, sumqy, sumqmaxqy );
-            }                        
-
             best_parameters[ "msg" ] = "~~_darkblue_~~";
+            
+            if ( hb_mode ) {
+               best_parameters[ "msg" ] += "Holm-Bonferroni adjustment is active\n";
+               best_parameters[ "hb"  ] = "true";
+            }
+               
+            // store common strings in tmp_msg
+            QString tmp_msg;
+
+            if ( blanks_cormap_parameters.count( "alpha" ) ) {
+               tmp_msg += QString( "Alpha is %1\n\n" ).arg( blanks_cormap_parameters[ "alpha" ].toDouble() * 0.2 );
+            }
 
             if ( true ) {
                if ( best_dparameters.count( "minsumqmaxqy" ) ) {
                   if ( false && best_dparameters.count( "minsumqmaxqysd" ) ) {
                      if ( best_dparameters[ "minsumqmaxqy" ] > best_dparameters[ "minsumqmaxqysd" ] ) {
                         if ( best_dparameters[ "minsumqmaxqy" ] > 5 * best_dparameters[ "minsumqmaxqysd" ] ) {
-                           best_parameters[ "msg" ] +=
+                           tmp_msg +=
                               tr( "Integral baseline correction is recommended\n\n" );
                         } else {
                            if ( best_dparameters[ "minsumqmaxqy" ] > 3 * best_dparameters[ "minsumqmaxqysd" ] ) {
-                              best_parameters[ "msg" ] +=
+                              tmp_msg +=
                                  tr( "Integral baseline correction is of borderline need\n\n" );
                            } else {
-                              best_parameters[ "msg" ] +=
+                              tmp_msg +=
                                  tr( "Integral baseline correction is of questionable use\n\n" );
                            }
                         }
                      } else {
                         if ( best_dparameters[ "minsumqmaxqy" ] < -5 * best_dparameters[ "minsumqmaxqysd" ] ) {
-                           best_parameters[ "msg" ] +=
+                           tmp_msg +=
                               tr( "It appears there is an issue with buffer subtraction resulting in negative data\n" ) +
                               tr( "Integral baseline correction is not appropriate for this situation\n" ) +
                               tr( "Perhaps a linear baseline correction would help, but we recommend you first verify the buffer subtraction\n\n" );
                         } else {
-                           best_parameters[ "msg" ] += tr( "Integral baseline correction is not recommended\n\n" );
+                           tmp_msg += tr( "Integral baseline correction is not recommended\n\n" );
                         }
                      }
                   } else {
                      // this is the only choice
                      if ( best_dparameters[ "minsumqmaxqy" ] > 0 ) {
-                        best_parameters[ "msg" ] +=
+                        tmp_msg +=
                            best_vdparameters.count( "yx" ) ?
                            tr( "Integral baseline correction would be possible, but no steady state end region has been identified\n\n" ) 
                            :
                            tr( "Integral baseline correction is possible\n\n" );
                      } else {
-                        best_parameters[ "msg" ] += tr( "Integral baseline correction is not recommended\n\n" );
+                        tmp_msg += tr( "Integral baseline correction is not recommended\n\n" );
                      }
                   }                     
                }
             }
-
-            if ( false ) { // old way
-               if ( best_dparameters.count( "blanks_avg_maxq_sd" ) &&
-                    best_dparameters.count( "minsumqmaxqy" ) ) {
-                  if ( best_dparameters[ "minsumqmaxqy" ] > best_dparameters[ "blanks_avg_maxq_sd" ] ) {
-                     if ( best_dparameters[ "minsumqmaxqy" ] > 5 * best_dparameters[ "blanks_avg_maxq_sd" ] ) {
-                        best_parameters[ "msg" ] +=
-                           tr( "Integral baseline correction is recommended\n\n" );
-                     } else {
-                        if ( best_dparameters[ "minsumqmaxqy" ] > 3 * best_dparameters[ "blanks_avg_maxq_sd" ] ) {
-                           best_parameters[ "msg" ] +=
-                              tr( "Integral baseline correction is of borderline need\n\n" );
-                        } else {
-                           best_parameters[ "msg" ] +=
-                              tr( "Integral baseline correction is of questionable use\n\n" );
-                        }
-                     }
-                  } else {
-                     if ( best_dparameters[ "minsumqmaxqy" ] < -5 * best_dparameters[ "blanks_avg_maxq_sd" ] ) {
-                        best_parameters[ "msg" ] +=
-                           tr( "It appears there is an issue with buffer subtraction resulting in negative data\n" ) +
-                           tr( "Integral baseline correction is not appropriate for this situation\n" ) +
-                           tr( "Perhaps a linear baseline correction would help, but we recommend you first verify the buffer subtraction\n\n" );
-                     } else {
-                        best_parameters[ "msg" ] += tr( "Integral baseline correction is not recommended\n\n" );
-                     }
-                  }
-               }
-            }
                
-            best_parameters[ "msg" ] +=
+            tmp_msg +=
                QString( 
                        "Baseline Analysis:\n"
                        "  Name                                                 %1\n"
@@ -3536,11 +3557,17 @@ void US_Hydrodyn_Saxs_Hplc::baseline_best() {
 
             best_dparameters[ "cormap_maxq" ] = QString( "%1" ).arg( cormap_maxq ).toDouble();
 
+            // accumulate common strings 
+            best_parameters[ "hb_msg" ] += best_parameters[ "msg" ] + "Holm-Bonferroni adjustment values\n" + tmp_msg;
+            best_parameters[ "msg" ]    += tmp_msg;
+
             if( best_vdparameters.count( "bestpos" ) ) {
                if ( best_vdparameters[ "bestpos" ].size() > 1 ) {
                   best_parameters[ "msg" ] +=
                      QString(
-                             "  Best start positions based on avg. red cluster size  %1"
+                             hb_mode 
+                             ? "  Best start positions based on red pair %             %1"
+                             : "  Best start positions based on avg. red cluster size  %1"
                              )
                      .arg( best_vdparameters[ "bestpos" ].front() )
                      ;
@@ -3551,60 +3578,108 @@ void US_Hydrodyn_Saxs_Hplc::baseline_best() {
                } else {
                   best_parameters[ "msg" ] +=
                      QString(
-                             best_vdparameters.count( "yx" ) ?
-                             "~~_darkyellow2_~~  Best start positions based on avg. red cluster size  %1~~_darkblue_~~"
-                             :
-                             "  Best start position based on avg. red cluster size   %1\n"
-                          )
+                             best_vdparameters.count( "yx" )
+                             ? "~~_darkyellow2_~~  Best start positions based on avg. red cluster size  %1~~_darkblue_~~"
+                             : ( 
+                                hb_mode 
+                                ? "  Best start position based on red pair %              %1\n"
+                                : "  Best start position based on avg. red cluster size   %1\n"
+                                 )
+                             )
                      .arg( best_vdparameters[ "bestpos" ].front() )
                   ;
                }
             }
 
-            if( best_vdparameters.count( "bestsumqmaxqypos" ) ) {
-               if ( best_vdparameters[ "bestqmaxqypos" ].size() > 1 ) {
-                  best_parameters[ "msg" ] +=
+            if( best_vdparameters.count( "hb_bestpos" ) ) {
+               if ( best_vdparameters[ "hb_bestpos" ].size() > 1 ) {
+                  best_parameters[ "hb_msg" ] +=
                      QString(
-                             "~~_darkorange3_~~  Lowest average intensity positions                   %1~~_darkblue_~~"
-                          )
-                     .arg( best_vdparameters[ "bestsumqmaxqypos" ].front() )
+                             "  Best start positions based on red pair %             %1"
+                             )
+                     .arg( best_vdparameters[ "hb_bestpos" ].front() )
                      ;
-                  for ( int i = 1; i < (int) best_vdparameters[ "bestsumqmaxqypos" ].size(); ++i ) {
-                     best_parameters[ "msg" ] += QString( ",%1" ).arg( best_vdparameters[ "bestsumqmaxqypos" ][ i ] );
+                  for ( int i = 1; i < (int) best_vdparameters[ "hb_bestpos" ].size(); ++i ) {
+                     best_parameters[ "hb_msg" ] += QString( ",%1" ).arg( best_vdparameters[ "hb_bestpos" ][ i ] );
                   }
-                  best_parameters[ "msg" ] += "\n";
+                  best_parameters[ "hb_msg" ] += "\n";
                } else {
-                  best_parameters[ "msg" ] +=
+                  best_parameters[ "hb_msg" ] +=
                      QString(
-                             "~~_darkorange3_~~  Lowest average intensity position                    %1~~_darkblue_~~"
-                          )
-                     .arg( best_vdparameters[ "bestsumqmaxqypos" ].front() )
+                             ( 
+                              "  Best start position based on red pair %              %1\n"
+                               )
+                             )
+                     .arg( best_vdparameters[ "hb_bestpos" ].front() )
                   ;
                }
             }
 
-            best_parameters[ "msg" ] +=
-               QString(
-                       "\n"
-                       "\n"
-                       "Blanks frames:\n"
-                       "  Name                                                 %1\n"
-                       "  q sampling interval                                  %2\n"
-                       "  Maximum window width                                 %3\n"
-                       "  Used window width                                    %4\n"
-                       "  Number of sliding windows of this width averaged     %5\n"
-                       )
-               .arg( blanks_cormap_parameters.count( "name" ) ?
-                     blanks_cormap_parameters[ "name" ] : QString( tr( "unknown" ) ) )
-               .arg( blanks_cormap_parameters.count( "decimate" ) ?
-                     blanks_cormap_parameters[ "decimate" ] : QString( tr( "none" )) )
-               .arg( blanks_cormap_parameters.count( "frames" ) ?
-                     blanks_cormap_parameters[ "frames" ] : QString( tr( "unknown" ) ) )
-               .arg( baseline_best_last_window_size )
-               .arg( blanks_brookesmap_sliding_results.count( QString( "%1 count" ).arg( baseline_best_last_window_size ) ) ?
-                     QString( "%1" ).arg( blanks_brookesmap_sliding_results[ QString( "%1 count" ).arg( baseline_best_last_window_size ) ] ) :
-                     QString( "unknown" ) )
-               ;
+            { // common for both msg & hb_msg 
+               QString tmp_msg;
+
+               if( best_vdparameters.count( "bestsumqmaxqypos" ) ) {
+                  if ( best_vdparameters[ "bestqmaxqypos" ].size() > 1 ) {
+                     tmp_msg +=
+                        QString(
+                                "~~_darkorange3_~~  Lowest average intensity positions                   %1~~_darkblue_~~"
+                                )
+                        .arg( best_vdparameters[ "bestsumqmaxqypos" ].front() )
+                        ;
+                     for ( int i = 1; i < (int) best_vdparameters[ "bestsumqmaxqypos" ].size(); ++i ) {
+                        tmp_msg += QString( ",%1" ).arg( best_vdparameters[ "bestsumqmaxqypos" ][ i ] );
+                     }
+                     tmp_msg += "\n";
+                  } else {
+                     tmp_msg +=
+                        QString(
+                                "~~_darkorange3_~~  Lowest average intensity position                    %1~~_darkblue_~~"
+                                )
+                        .arg( best_vdparameters[ "bestsumqmaxqypos" ].front() )
+                        ;
+                  }
+               }
+               best_parameters[ "msg"    ] += tmp_msg;
+               best_parameters[ "hb_msg" ] += tmp_msg;
+            }
+
+            if ( hb_mode ) {
+               best_parameters[ "msg" ] +=
+                  QString(
+                          "  Used window width                                    %4\n"
+                          )
+                  .arg( baseline_best_last_window_size )
+                  ;
+            } else {
+               best_parameters[ "hb_msg" ] +=
+                  QString(
+                          "  Used window width                                    %4\n"
+                          )
+                  .arg( baseline_best_last_window_size )
+                  ;
+               best_parameters[ "msg" ] +=
+                  QString(
+                          "\n"
+                          "\n"
+                          "Blanks frames:\n"
+                          "  Name                                                 %1\n"
+                          "  q sampling interval                                  %2\n"
+                          "  Maximum window width                                 %3\n"
+                          "  Used window width                                    %4\n"
+                          "  Number of sliding windows of this width averaged     %5\n"
+                          )
+                  .arg( blanks_cormap_parameters.count( "name" ) ?
+                        blanks_cormap_parameters[ "name" ] : QString( tr( "unknown" ) ) )
+                  .arg( blanks_cormap_parameters.count( "decimate" ) ?
+                        blanks_cormap_parameters[ "decimate" ] : QString( tr( "none" )) )
+                  .arg( blanks_cormap_parameters.count( "frames" ) ?
+                        blanks_cormap_parameters[ "frames" ] : QString( tr( "unknown" ) ) )
+                  .arg( baseline_best_last_window_size )
+                  .arg( blanks_brookesmap_sliding_results.count( QString( "%1 count" ).arg( baseline_best_last_window_size ) ) ?
+                        QString( "%1" ).arg( blanks_brookesmap_sliding_results[ QString( "%1 count" ).arg( baseline_best_last_window_size ) ] ) :
+                        QString( "unknown" ) )
+                  ;
+            }
 
 
             if ( best_dparameters.count( "blanksaverage" ) ) {

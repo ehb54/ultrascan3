@@ -2,6 +2,8 @@
 //Added by qt3to4:
 #include <Q3TextStream>
 
+#define MAKE_MODEL    0
+
 #define RANDOM_TEST   0
 #define RANDOM_CYJ    0
 
@@ -51,6 +53,49 @@ QString US_PM::test( QString name, QString oname )
    vector < double > F;
 
    vector < double > params;
+
+   if ( MAKE_MODEL ) {
+      // special model
+      double gcf = 1;
+
+      US_PM test_pm( gcf,
+                     200,
+                     //                        drho, 
+                     //                        buffer_e_density, 
+                     //                        ev, 
+                     10,
+                     // fibonacci_grid,
+                     F, 
+                     q, 
+                     I, 
+                     e, 
+                     1024,
+                     0 );
+
+      cout << "testpm" << endl;
+
+      params.clear();
+
+      params.push_back( 0e0 );  // sphere 0
+      params.push_back( 8e0 / gcf );  // radius in grid coordinates
+
+      params.push_back( 1e0 );  // cylinder 1
+      params.push_back( 8e0 / gcf );  // radius in grid coordinates
+      params.push_back( 88e0 / gcf );  // -x
+      params.push_back( -37e0 / gcf ); // -y
+      params.push_back( 88e0 / gcf );  // +x
+      params.push_back( 37e0 / gcf ); // +y
+
+      qDebug( "mm0" );
+      set < pm_point > model;
+      qDebug( "mm1" );
+      test_pm.create_model( params, model );
+      qDebug( "mm2" );
+      test_pm.write_model( oname, model );
+      
+      cout << "testpm wrote model" << oname;
+      exit( 0 );
+   }
 
    QFile f( name );
 

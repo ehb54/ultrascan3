@@ -11255,3 +11255,50 @@ bool US_Saxs_Util::pearsonpmcc(
    return true;
 }
 
+# if __GNUC__ == 5 && defined( Q_OS_WIN )
+#include <chrono>
+#include <thread>
+
+int US_Saxs_Util::us_usleep( unsigned int usec ) {
+   std::this_thread::sleep_for(std::chrono::microseconds(usec));
+   return 1;
+}
+
+#else
+#  if defined( WIN32 )
+int US_Saxs_Util::us_usleep( unsigned int usec ) {
+   _sleep( usec / 1000 );
+   return 1;
+}
+#  else 
+int US_Saxs_Util::us_usleep( unsigned int usec ) {
+   timespec ns;
+   timespec ns_ret;
+   ns.tv_sec  = ( long ) ( usec / 1000000 );
+   ns.tv_nsec = ( long ) ( 1000 * ( usec % 1000000 ) );
+   return nanosleep(&ns, &ns_ret);
+}
+#  endif
+#endif
+
+#include <algorithm>
+
+double US_Saxs_Util::holm_bonferroni( vector < double > P, double alpha ) {
+   vector < double > Porg = P;
+
+   std::sort( P.begin(), P.end() );
+
+   // US_Vector::printvector2( QString( "holm_bonferonni P org, P sorted with alpha %1" ).arg( alpha ), Porg, P );
+
+   int m = (int) P.size();
+
+   for ( int k = 0; k < m; ++k ) {
+      double kalpha = alpha / ( m - k );
+      // qDebug( QString(  "kalpha %1 m %2 k %3 P[k] %4" ).arg( kalpha ).arg( m ).arg( k ).arg( P[k] ) );
+      if ( P[ k ] > kalpha ) {
+         return kalpha;
+      }
+   }
+
+   return 1e0;
+}

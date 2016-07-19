@@ -42,7 +42,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    QColorGroup cg_red = cg_magenta;
    cg_red.setBrush( QColorGroup::Base, QBrush( QColor( "red" ), Qt::SolidPattern ) );
 
-   lbl_title = new QLabel("Developed by Emre Brookes, Javier Pérez, Patrice Vachette and Mattia Rocco (see J. App. Cryst. 46:1823-1833, 2013)", this);
+   lbl_title = new QLabel("Developed by Emre Brookes, Javier Pérez, Patrice Vachette and Mattia Rocco (see J. App. Cryst. 46:1823-1833, 2013; J. App. Cryst. 2016 In press)", this);
    lbl_title->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_title->setMinimumHeight(minHeight1);
    lbl_title->setPalette( PALET_LABEL );
@@ -1594,7 +1594,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    connect( cb_ggq_plot_chi2, SIGNAL( clicked() ), SLOT( gg_fit_replot() ) );
 
    cb_ggq_plot_P = new QCheckBox( this );
-   cb_ggq_plot_P->setText( tr("Plot CorMap P values" ) );
+   cb_ggq_plot_P->setText( tr("Plot P values" ) );
    cb_ggq_plot_P->setEnabled( true );
    cb_ggq_plot_P->setChecked( true );
    cb_ggq_plot_P->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );

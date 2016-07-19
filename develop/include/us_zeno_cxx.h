@@ -43,6 +43,9 @@
   *   - <a href="https://github.com/jlblancoc/nanoflann" >Online README</a>
   */
 
+#ifndef US_ZENO_CXX_H
+#define US_ZENO_CXX_H
+
 #ifndef  NANOFLANN_HPP_
 #define  NANOFLANN_HPP_
 
@@ -7435,3 +7438,4 @@ private:
 
 // *** END *** Timer.h ***
 
+#endif

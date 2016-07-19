@@ -644,6 +644,10 @@ bool US_Saxs_Util::read_control( QString controlfile )
       if ( option == "sleep" )
       {
 #if !defined( Q_WS_WIN ) || defined( MINGW )
+# if __GNUC__ == 5
+         unsigned int usec = (unsigned int)( qsl[ 0 ].toDouble() * 1000 );
+         us_usleep( usec );
+# else
          // 999999999
          double secs = qsl[ 0 ].toDouble();
          secs *= 2e0;
@@ -656,6 +660,7 @@ bool US_Saxs_Util::read_control( QString controlfile )
          cout << QString( "sleep s %1\n" ).arg( ns.tv_sec ).ascii();
          cout << QString( "sleep ns %1\n" ).arg( ns.tv_nsec ).ascii();
          nanosleep(&ns, &ns_ret);
+# endif
 #else
          int secs = qsl[ 0 ].toInt();
          _sleep( secs );

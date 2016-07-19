@@ -1620,27 +1620,66 @@ void US_Hydrodyn_Saxs_Hplc::avg( QStringList files )
       return;
    }      
 
-   vector < double > avg_sd( avg_qs.size() );
+   vector < double > avg_sd( avg_qs.size(), 0e0 );
    for ( int i = 0; i < (int)avg_qs.size(); i++ )
    {
       // avg_Is[ i ] /= sum_weight[ i ];
       avg_Is[ i ] /= (double) selected_count;
 
-      // double sum = 0e0;
-      double sse = 0e0;
-      for ( int j = 0; j < (int) selected_count; j++ )
-      {
-         QString this_file = files[ j ];
-         double se  = all_nonzero_errors ? ( t_errors[ this_file ][ i ] * t_errors[ this_file ][ i ] ) : 0e0;
-         // double weight  = all_nonzero_errors ? 1e0 / ( t_errors[ this_file ][ i ] * t_errors[ this_file ][ i ] ) : 1e0;
-         // double invweight  = all_nonzero_errors ? ( t_errors[ this_file ][ i ] * t_errors[ this_file ][ i ] ) : 1e0;
-         // sum += weight * ( invweight * t_Is[ this_file ][ i ] - avg_Is[ i ] ) * ( invweight *  t_Is[ this_file ][ i ] - avg_Is[ i ] );
-         sse += se;
+      if ( false ) {
+         // double sum = 0e0;
+         double sse = 0e0;
+         for ( int j = 0; j < (int) selected_count; j++ )
+         {
+            QString this_file = files[ j ];
+            double se  = all_nonzero_errors ? ( t_errors[ this_file ][ i ] * t_errors[ this_file ][ i ] ) : 0e0;
+            // double weight  = all_nonzero_errors ? 1e0 / ( t_errors[ this_file ][ i ] * t_errors[ this_file ][ i ] ) : 1e0;
+            // double invweight  = all_nonzero_errors ? ( t_errors[ this_file ][ i ] * t_errors[ this_file ][ i ] ) : 1e0;
+            // sum += weight * ( invweight * t_Is[ this_file ][ i ] - avg_Is[ i ] ) * ( invweight *  t_Is[ this_file ][ i ] - avg_Is[ i ] );
+            sse += se;
+         }
+         // sum *= sum_weight[ i ] / ( sum_weight[ i ] * sum_weight[ i ] - sum_weight2[ i ] );
+         // avg_sd[ i ] = sqrt( sum / ( ( (double) files.size() - 1e0 ) * ( sum_weight[ i ]  / (double) files.size() ) ) );
+         avg_sd[ i ] = sqrt( sse ) / (double) selected_count;
       }
-      // sum *= sum_weight[ i ] / ( sum_weight[ i ] * sum_weight[ i ] - sum_weight2[ i ] );
-      // avg_sd[ i ] = sqrt( sum / ( ( (double) files.size() - 1e0 ) * ( sum_weight[ i ]  / (double) files.size() ) ) );
-      avg_sd[ i ] = sqrt( sse ) / (double) selected_count;
    }
+
+   // get scaling factor for each t_Is -> avg_Is, then scale the SD's by this multiplier for each curve
+   // What you can do is average the intensities WITHOUT scaling, but average the SD WITH scaling. The scaling factor for the SD being that which bring all curves to the final average one.
+
+   if ( all_nonzero_errors ) {
+      // source_I = each t_Is
+      // target_I = avg_Is;
+
+      for ( int i = 0; i < (int)selected_count; ++i ) {
+         QString this_file = files[ i ];
+         vector < double > org_error = t_errors[ this_file ];
+         double k;
+         double chi2;
+
+         usu->scaling_fit( 
+                          t_Is[ this_file ],
+                          avg_Is,
+                          k,
+                          chi2 );
+         
+         for ( int j = 0; j < (int)avg_qs.size(); ++j ) {
+            t_errors[ this_file ][ j ] *= k;
+         }
+
+         // cout << US_Vector::qs_vector4( QString( "curve %1 scaling %2" ).arg( this_file ).arg( k ), t_Is[ this_file ], avg_Is, org_error,  t_errors[ this_file ] );
+      }            
+
+      for ( int i = 0; i < (int)avg_qs.size(); ++i ) { 
+         double sse = 0e0;
+         for ( int j = 0; j < (int) selected_count; ++j ) {
+            QString this_file = files[ j ];
+            double se  = t_errors[ this_file ][ i ] * t_errors[ this_file ][ i ];
+            sse += se;
+         }
+         avg_sd[ i ] = sqrt( sse ) / (double) selected_count;
+      }
+   }         
 
    avg_conc /= (double) selected_count;
    avg_psv  /= (double) selected_count;
@@ -2275,8 +2314,9 @@ void US_Hydrodyn_Saxs_Hplc::options()
    parameters[ "hplc_bl_start_region"       ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_start_region"          ];
    parameters[ "hplc_bl_i_power"            ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_i_power"               ];
    parameters[ "hplc_bl_reps"               ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_reps"                  ];
-   parameters[ "hplc_bl_alpha"              ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_alpha"                 ];
+   parameters[ "hplc_bl_epsilon"            ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_epsilon"               ];
    parameters[ "hplc_cormap_maxq"           ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_cormap_maxq"              ];
+   parameters[ "hplc_cormap_alpha"          ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_cormap_alpha"             ];
    parameters[ "hplc_zi_window"             ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_zi_window"                ];
    parameters[ "hplc_discard_it_sd_mult"    ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_discard_it_sd_mult"       ];
    parameters[ "hplc_cb_discard_it_sd_mult" ] = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_cb_discard_it_sd_mult"    ];
@@ -2313,9 +2353,10 @@ void US_Hydrodyn_Saxs_Hplc::options()
    }
 
    if (
-       ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_linear"   ] != parameters[ "hplc_bl_linear"   ] ||
-       ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_integral" ] != parameters[ "hplc_bl_integral" ] ||
-       ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_cormap_maxq" ] != parameters[ "hplc_cormap_maxq" ] 
+       ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_linear"    ] != parameters[ "hplc_bl_linear"    ] ||
+       ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_integral"  ] != parameters[ "hplc_bl_integral"  ] ||
+       ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_cormap_maxq"  ] != parameters[ "hplc_cormap_maxq"  ] ||
+       ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_cormap_alpha" ] != parameters[ "hplc_cormap_alpha" ] 
        ) {
       baseline_ready_to_apply = false;
    }
@@ -2327,8 +2368,9 @@ void US_Hydrodyn_Saxs_Hplc::options()
    ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_start_region"       ] = parameters[ "hplc_bl_start_region"          ];
    ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_i_power"            ] = parameters[ "hplc_bl_i_power"               ];
    ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_reps"               ] = parameters[ "hplc_bl_reps"                  ];
-   ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_alpha"              ] = parameters[ "hplc_bl_alpha"                 ];
+   ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_epsilon"            ] = parameters[ "hplc_bl_epsilon"               ];
    ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_cormap_maxq"           ] = parameters[ "hplc_cormap_maxq"              ];
+   ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_cormap_alpha"          ] = parameters[ "hplc_cormap_alpha"             ];
    ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_zi_window"             ] = parameters[ "hplc_zi_window"                ];
    ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_discard_it_sd_mult"    ] = parameters[ "hplc_discard_it_sd_mult"       ];
    ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_cb_discard_it_sd_mult" ] = parameters[ "hplc_cb_discard_it_sd_mult"    ];
@@ -3129,6 +3171,12 @@ void US_Hydrodyn_Saxs_Hplc::cormap( map < QString, QString > & parameters )
    parameters[ "msg" ] = "";
    parameters[ "linewidth" ] = QString( "%1" ).arg( use_line_width );
    parameters[ "hide_adjpvalues" ] = "true";
+   if ( !parameters.count( "alpha" ) ) {
+      parameters[ "alpha" ] = 
+         QString( "%1" )
+         .arg( ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_cormap_alpha" ) ?
+               ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_cormap_alpha" ].toDouble() * 5 : 0.05 );
+   }
    
    double cormap_maxq = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "hplc_cormap_maxq" ) ?
       ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_cormap_maxq" ].toDouble() : 0.05;
@@ -3194,7 +3242,7 @@ void US_Hydrodyn_Saxs_Hplc::cormap( map < QString, QString > & parameters )
                   editor_msg( "red", 
                               QString( tr( "CorMap Analysis: Could not extract q value from file name %1" ) )
                               .arg( use_preq_scale_selected_names[ i ] ) );
-                  baseline_enables();
+                  scale_enables();
                   return;
                }                  
                double qv = rx_cap.cap( 1 ).replace( "_", "." ).toDouble();
@@ -3209,7 +3257,7 @@ void US_Hydrodyn_Saxs_Hplc::cormap( map < QString, QString > & parameters )
             
          if ( use_scale_selected_names.size() < 2 ) {
             editor_msg( "red", tr( "Insufficient curves remaining for CorMap Analysis" ) );
-            baseline_enables();
+            scale_enables();
             return;
          }            
 
@@ -3373,17 +3421,19 @@ void US_Hydrodyn_Saxs_Hplc::cormap( map < QString, QString > & parameters )
 
                if ( parameters.count( "decimate" ) ) {
                   int decimate = parameters[ "decimate" ].toInt();
-                  QString nth_tag;
-                  switch ( decimate ) {
-                  case 2 : nth_tag = "nd"; break;
-                  case 3 : nth_tag = "rd"; break;
-                  default : nth_tag = "th"; break;
-                  }
+                  if ( decimate > 1 ) {
+                     QString nth_tag;
+                     switch ( decimate ) {
+                     case 2 : nth_tag = "nd"; break;
+                     case 3 : nth_tag = "rd"; break;
+                     default : nth_tag = "th"; break;
+                     }
                
-                  parameters[ "title" ] += QString( tr( " Only every %1%2 q value sampled." ) )
-                     .arg( decimate ).arg( nth_tag );
-                  parameters[ "title_adj" ] += QString( tr( " Only every %1%2 q value sampled." ) )
-                     .arg( decimate ).arg( nth_tag );
+                     parameters[ "title" ] += QString( tr( " Only every %1%2 q value sampled." ) )
+                        .arg( decimate ).arg( nth_tag );
+                     parameters[ "title_adj" ] += QString( tr( " Only every %1%2 q value sampled." ) )
+                        .arg( decimate ).arg( nth_tag );
+                  }
                }
 
                // parameters[ "adjusted" ] = "true";
@@ -3618,17 +3668,19 @@ void US_Hydrodyn_Saxs_Hplc::cormap( map < QString, QString > & parameters )
 
                if ( parameters.count( "decimate" ) ) {
                   int decimate = parameters[ "decimate" ].toInt();
-                  QString nth_tag;
-                  switch ( decimate ) {
-                  case 2 : nth_tag = "nd"; break;
-                  case 3 : nth_tag = "rd"; break;
-                  default : nth_tag = "th"; break;
-                  }
+                  if ( decimate > 1 ) {
+                     QString nth_tag;
+                     switch ( decimate ) {
+                     case 2 : nth_tag = "nd"; break;
+                     case 3 : nth_tag = "rd"; break;
+                     default : nth_tag = "th"; break;
+                     }
                
-                  parameters[ "title" ] += QString( tr( " Only every %1%2 q value sampled." ) )
-                     .arg( decimate ).arg( nth_tag );
-                  parameters[ "title_adj" ] += QString( tr( " Only every %1%2 q value sampled." ) )
-                     .arg( decimate ).arg( nth_tag );
+                     parameters[ "title" ] += QString( tr( " Only every %1%2 q value sampled." ) )
+                        .arg( decimate ).arg( nth_tag );
+                     parameters[ "title_adj" ] += QString( tr( " Only every %1%2 q value sampled." ) )
+                        .arg( decimate ).arg( nth_tag );
+                  }
                }
 
                parameters[ "adjusted" ] = "true";
@@ -3770,7 +3822,7 @@ void US_Hydrodyn_Saxs_Hplc::cormap( map < QString, QString > & parameters )
          
          if ( !t.size() ) {
             editor_msg( "red", tr( "CorMap in blanks mode has empty start / end range" ) );
-            baseline_enables();
+            blanks_enables();
             return;
          }
 
@@ -3944,17 +3996,19 @@ void US_Hydrodyn_Saxs_Hplc::cormap( map < QString, QString > & parameters )
 
             if ( parameters.count( "decimate" ) ) {
                int decimate = parameters[ "decimate" ].toInt();
-               QString nth_tag;
-               switch ( decimate ) {
-               case 2 : nth_tag = "nd"; break;
-               case 3 : nth_tag = "rd"; break;
-               default : nth_tag = "th"; break;
-               }
+               if ( decimate > 1 ) {
+                  QString nth_tag;
+                  switch ( decimate ) {
+                  case 2 : nth_tag = "nd"; break;
+                  case 3 : nth_tag = "rd"; break;
+                  default : nth_tag = "th"; break;
+                  }
                
-               parameters[ "title" ] += QString( tr( " Only every %1%2 q value sampled." ) )
-                  .arg( decimate ).arg( nth_tag );
-               parameters[ "title_adj" ] += QString( tr( " Only every %1%2 q value sampled." ) )
-                  .arg( decimate ).arg( nth_tag );
+                  parameters[ "title" ] += QString( tr( " Only every %1%2 q value sampled." ) )
+                     .arg( decimate ).arg( nth_tag );
+                  parameters[ "title_adj" ] += QString( tr( " Only every %1%2 q value sampled." ) )
+                     .arg( decimate ).arg( nth_tag );
+               }
             }
 
             parameters[ "linewisesummary"   ] = "true";
@@ -4248,17 +4302,19 @@ void US_Hydrodyn_Saxs_Hplc::cormap( map < QString, QString > & parameters )
 
             if ( parameters.count( "decimate" ) ) {
                int decimate = parameters[ "decimate" ].toInt();
-               QString nth_tag;
-               switch ( decimate ) {
-               case 2 : nth_tag = "nd"; break;
-               case 3 : nth_tag = "rd"; break;
-               default : nth_tag = "th"; break;
-               }
+               if ( decimate > 1 ) {
+                  QString nth_tag;
+                  switch ( decimate ) {
+                  case 2 : nth_tag = "nd"; break;
+                  case 3 : nth_tag = "rd"; break;
+                  default : nth_tag = "th"; break;
+                  }
                
-               parameters[ "title" ] += QString( tr( " Only every %1%2 q value sampled." ) )
-                  .arg( decimate ).arg( nth_tag );
-               parameters[ "title_adj" ] += QString( tr( " Only every %1%2 q value sampled." ) )
-                  .arg( decimate ).arg( nth_tag );
+                  parameters[ "title" ] += QString( tr( " Only every %1%2 q value sampled." ) )
+                     .arg( decimate ).arg( nth_tag );
+                  parameters[ "title_adj" ] += QString( tr( " Only every %1%2 q value sampled." ) )
+                     .arg( decimate ).arg( nth_tag );
+               }
             }
 
             parameters[ "linewisesummary"   ] = "true";
@@ -4525,7 +4581,7 @@ void US_Hydrodyn_Saxs_Hplc::cormap( map < QString, QString > & parameters )
                   editor_msg( "red", 
                               QString( tr( "CorMap Analysis: Could not extract q value from file name %1" ) )
                               .arg( use_preq_selected_files[ i ] ) );
-                  baseline_enables();
+                  update_enables();
                   return;
                }                  
                double qv = rx_cap.cap( 1 ).replace( "_", "." ).toDouble();
@@ -4540,7 +4596,7 @@ void US_Hydrodyn_Saxs_Hplc::cormap( map < QString, QString > & parameters )
             
          if ( use_selected_files.size() < 2 ) {
             editor_msg( "red", tr( "Insufficient curves remaining for CorMap Analysis" ) );
-            baseline_enables();
+            update_enables();
             return;
          }            
 
@@ -4684,17 +4740,19 @@ void US_Hydrodyn_Saxs_Hplc::cormap( map < QString, QString > & parameters )
 
             if ( parameters.count( "decimate" ) ) {
                int decimate = parameters[ "decimate" ].toInt();
-               QString nth_tag;
-               switch ( decimate ) {
-               case 2 : nth_tag = "nd"; break;
-               case 3 : nth_tag = "rd"; break;
-               default : nth_tag = "th"; break;
-               }
+               if ( decimate > 1 ) {
+                  QString nth_tag;
+                  switch ( decimate ) {
+                  case 2 : nth_tag = "nd"; break;
+                  case 3 : nth_tag = "rd"; break;
+                  default : nth_tag = "th"; break;
+                  }
                
-               parameters[ "title" ] += QString( tr( " Only every %1%2 q value sampled." ) )
-                  .arg( decimate ).arg( nth_tag );
-               parameters[ "title_adj" ] += QString( tr( " Only every %1%2 q value sampled." ) )
-                  .arg( decimate ).arg( nth_tag );
+                  parameters[ "title" ] += QString( tr( " Only every %1%2 q value sampled." ) )
+                     .arg( decimate ).arg( nth_tag );
+                  parameters[ "title_adj" ] += QString( tr( " Only every %1%2 q value sampled." ) )
+                     .arg( decimate ).arg( nth_tag );
+               }
             }
 
             parameters[ "adjusted" ] = "true";

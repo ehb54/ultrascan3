@@ -1483,6 +1483,9 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
                         new_bead.mw = misc.avg_mass * atom_counts[count_idx];
                         new_residue.r_bead.push_back(new_bead);
                         multi_residue_map[new_residue.name].push_back(residue_list.size());
+#if defined( DEBUG_TESTING_JML )
+                        qDebug( QString( "residue list push back, residue_list.size() %1 residue_name %2" ).arg( residue_list.size() ).arg( new_residue.name ) );
+#endif
                         residue_list.push_back(new_residue);
                         lastResSeq = org_model.molecule[j].atom[k].resSeq;
                         lastResName = org_model.molecule[j].atom[k].resName;

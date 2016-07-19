@@ -10,6 +10,7 @@
 #include "qfiledialog.h"
 #include "q3textedit.h"
 #include "q3progressbar.h"
+#include "qsplitter.h"
 //Added by qt3to4:
 #include <Q3Frame>
 #include <QCloseEvent>
@@ -61,12 +62,20 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Baseline_Best : public Q3Frame
 
       US_Config *                             USglobal;
 
+      QSplitter *                             qs_left;
+      QSplitter *                             qs_right;
+
       QLabel *                                lbl_title;
+      QLabel *                                lbl_hb_title;
 
       QPushButton *                           pb_set_best;
+      QPushButton *                           pb_set_hb_best;
+
+      QCheckBox *                             cb_show_hb;
 
       QPushButton *                           pb_help;
       QPushButton *                           pb_close;
+
       void                     *              us_hydrodyn;
       map < QString, QString >                parameters;
       map < QString, double >                 dparameters;
@@ -81,11 +90,26 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Baseline_Best : public Q3Frame
       QwtPlotGrid   *plot_grid;
 #endif
 
+      QwtPlot       *hb_plot;
+      ScrollZoomer  *hb_plot_zoomer;
+#ifdef QT4
+      QwtPlotGrid   *hb_plot_grid;
+#endif
+
       QFont         ft;
       Q3TextEdit     *editor;
       QMenuBar      *m;
-      void          editor_msg( QString color, QString msg );
-      void          editor_ec_msg( QString msg );
+      void          editor_msg( QString color, QString msg, Q3TextEdit *e = (Q3TextEdit *)0 );
+      void          editor_ec_msg( QString msg, Q3TextEdit *e = (Q3TextEdit *)0 );
+
+      Q3TextEdit     *hb_editor;
+      QMenuBar      *hb_m;
+
+      void          editor_hb_msg( QString color, QString msg );
+      void          editor_hb_ec_msg( QString msg );
+
+      QString                                 plot_name;
+      QString                                 hb_plot_name;
 
    private slots:
 
@@ -93,7 +117,10 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Baseline_Best : public Q3Frame
       void                                    update_font();
       void                                    save();
 
+      void                                    update_enables();
+
       void                                    set_best();
+      void                                    set_hb_best();
 
       void                                    help();
       void                                    cancel();

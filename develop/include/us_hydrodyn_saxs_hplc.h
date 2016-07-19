@@ -1148,6 +1148,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       map < QString, double >      baseline_brookesmap_sliding_results;
       double                       baseline_cormap_run_end_s;
       double                       baseline_cormap_run_end_e;
+      bool                         baseline_hb_only_mode;
 
       bool                         baseline_test_mode;
       void                         baseline_test_pos( int pos );

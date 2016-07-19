@@ -464,6 +464,22 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    }         
    add_to_directory_history( somo_pdb_dir, false );
    add_to_directory_history( somo_saxs_dir, false );
+
+#if defined( HB_TEST )
+   // hb test
+
+   {
+      vector < double >  P;
+      P.push_back( .0007 );
+      P.push_back( .0003 );
+      P.push_back( .00001 );
+      P.push_back( .006 );
+      P.push_back( .006 );
+      P.push_back( .00002 );
+
+      qDebug( QString( "holm bonferroni returns %1" ).arg( US_Saxs_Util::holm_bonferroni( P, 0.01 ) ) );
+   }
+#endif
 }
 
 US_Hydrodyn::~US_Hydrodyn()
@@ -1786,8 +1802,8 @@ void US_Hydrodyn::reload_pdb()
    } else {
       calc_mw();
    }
-   bead_models.clear();
-   somo_processed.clear();
+   bead_models.resize( model_vector.size() );
+   somo_processed.resize( model_vector.size() );
    update_vbar();
    pb_somo->setEnabled(true);
    pb_somo_o->setEnabled(true);
@@ -2465,12 +2481,22 @@ bool US_Hydrodyn::screen_pdb(QString filename, bool display_pdb, bool skipcleari
    {
       return false;
    }
+#if defined( DEBUG_TESTING_JML )
+   qDebug( "extra reset0" );
+   reset_chain_residues( &model_vector[0]);
+   qDebug( "after extra reset0" );
+#endif
 
    QString error_string = "";
    for(unsigned int i = 0; i < model_vector.size(); i++)
    {
       multi_residue_map = save_multi_residue_map;
       editor->append(QString("Checking the pdb structure for model %1\n").arg( model_name( i ) ) );
+#if defined( DEBUG_TESTING_JML )
+      qDebug( "extra reset" );
+      reset_chain_residues( &model_vector[i]);
+      qDebug( "after extra reset" );
+#endif
       if (check_for_missing_atoms(&error_string, &model_vector[i]))
       {
          errors_found++;
@@ -4170,7 +4196,7 @@ void US_Hydrodyn::visualize( bool movie_frame,
 #if defined(WIN32) && !defined( MINGW )
                   _sleep(1);
 #else
-                  usleep(1000);
+                  US_Saxs_Util::us_usleep(1000);
 #endif
                   qApp->processEvents();
                }
