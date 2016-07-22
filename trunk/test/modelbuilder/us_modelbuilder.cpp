@@ -190,22 +190,23 @@ void US_ModelBuilder::startSimulation(void) {
     
     qDebug() << "Grid generated. Creating annealing object...";
     //double pts[] = {rg->getGrid()->size() - 1, rg->getGrid()->at(0)->size() - 1}; //number of points to place on grid
-    //double pts[] = {20, 20};
-    double pts[] = {30, 30};
+    double pts[] = {20, 20};
+    //double pts[] = {30, 30};
     
-    //grid gr(rg, pts, 2e-7);
     //grid gr(rg, pts, 2e-7, 8); //only consider 8 nearest neighbors
     //grid gr(rg, pts, 2e-6, 8, 4); //do 4 steps before recomputing neighbors
-    grid gr(rg, pts, 5e-9, 35, 3);
-    //grid gr(rg, pts, 4e-5);
+    //grid gr(rg, pts, 2e-6, 35, 3);
+    //grid gr(rg, pts, 1.7e-5); // working for r4, no charge scaling
+    grid gr(rg, pts, 2e-6); // working for r4, no scaling, old scaling function
+    //grid gr(rg, pts, 2e-9);
     
     qDebug() << "Object created. Running annealing process..";
-    gr.run(10000, false, data_plot);
+    gr.run(750, false, data_plot);
     //gr.run(500, false, data_plot);
     
     qDebug() << "Annealing finished. Writing to file...";
     gr.write_pgrid("annealedGrid.out");
-    
+   
     //clean up
     delete raw;
     delete rg;
