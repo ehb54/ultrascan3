@@ -8,7 +8,7 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
-#include <math.h>
+#include <cmath>
 #include <QVector2D>
 #include "RegularGrid.h"
 #include "us_plot.h"
@@ -39,6 +39,7 @@ public:
     static double r2(const point&, const point&);
     static double r3(const point&, const point&);
     static double r4(const point&, const point&);
+    static double r5(const point&, const point&);
     static double r6(const point&, const point&);
     point operator+(const point&);
     point operator-(const point&);

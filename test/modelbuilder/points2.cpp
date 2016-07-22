@@ -86,10 +86,19 @@ point::point(QVector2D *targetPoint, int id) //NOTE: only for use when DIM = 2
 /*static*/ double point::r4(const point& x, const point& y) {
     double r4 = 0;
     for (int i = 0; i < DIM; ++i) {
-        double tmp = fabs(x.x[ i ] - y.x[ i ]);
+        double tmp = x.x[ i ] - y.x[ i ];
         r4 += tmp * tmp * tmp * tmp;
     }
     return r4;
+}
+
+/*static*/ double point::r5(const point& x, const point& y) {
+    double r5 = 0;
+    for (int i = 0; i < DIM; ++i) {
+        double tmp = fabs(x.x[ i ] - y.x[ i ]);
+        r5 += tmp * tmp * tmp * tmp * tmp;
+    }
+    return r5;
 }
 
 /*static*/ double point::r6(const point& x, const point& y) {
@@ -959,6 +968,15 @@ void grid::run(int steps, bool do_write, QwtPlot* grid_display) {
     double* dim_0_values;
     double* dim_1_values;
     
+    double initialMag2 = 0.0;
+    double lastMag2 = 0.0;
+    double scaled_deltat = 0.0;
+    
+    string name = "annealingDebug.tsv";
+    ofstream file;
+    file.open ( name.c_str() );
+    file << "step \ttotalMag2 \tdifferenceMag2 \tdeltaT" << endl;
+    
     if(grid_display != NULL) {
       
       if(curve != NULL) 
@@ -1013,7 +1031,35 @@ void grid::run(int steps, bool do_write, QwtPlot* grid_display) {
             }
         }
         cout << "total mag2 force: " << totmag2 << endl;
-
+	cout << "last mag2 force: " << lastMag2 << endl;
+	cout << "force difference: " << (totmag2 - lastMag2) << endl;
+	
+	
+	
+	//calculate scaled deltat
+	/*if(totmag2 < 5000 && totmag2 > 3500) // special case TODO: non-arbitrary value
+	    scaled_deltat = deltat * 1e-2;
+	else if(totmag2 <= 3500 && totmag2 > 2000)
+	    scaled_deltat = deltat * 1e-4;
+	else if(totmag2 <= 2000)
+	    scaled_deltat = deltat * 1e-6;
+	else
+	    scaled_deltat = (deltat / (std::abs((totmag2 - lastMag2)/lastMag2)));*/
+	
+	scaled_deltat = (deltat / (std::abs((totmag2 - lastMag2)/lastMag2)));
+	//scaled_deltat = deltat * std::pow(0.5, (std::abs((totmag2 - lastMag2)/lastMag2)));
+	//scaled_deltat = deltat * std::log((std::abs((totmag2 - lastMag2)/lastMag2)));
+	
+	
+	file << i << " \t" << totmag2 << " \t" << (totmag2 - lastMag2) << " \t" << scaled_deltat << endl;
+	
+	cout << "scaled deltaT: " << scaled_deltat << endl;
+	
+	//store initial mag2 force
+	if(i == 0) {
+	    initialMag2 = totmag2;
+	}
+	
         // move points
 	
         {
@@ -1030,9 +1076,22 @@ void grid::run(int steps, bool do_write, QwtPlot* grid_display) {
 		    //new_pgrid.insert(porg + Fi[ *it ] * deltat); //old insertion code
 		    
 		    if(!in_bounds(porg))
-		      cout << porg << " is out of bounds!" << endl;
+			cout << porg << " is out of bounds!" << endl;
 		    
-		    point vector = Fi[ *it ] * deltat; //precompute vector
+		    //compute movement vector
+		    //point vector = Fi[ *it ] * deltat;  
+		    //point vector = Fi[ *it ] * (deltat * ((i + steps)/steps));
+		    
+		    
+		    point vector;
+		    
+		    if(lastMag2 == 0.0)
+			vector = Fi[ *it ] * deltat;
+		    else {
+			vector = Fi[ *it ] * scaled_deltat;
+		    }
+		    
+		    
 		    point direction = check_bounds(porg + vector);
 		    
 		    //cout << "Point: " << porg << " - Force vector: " << vector << endl;
@@ -1061,6 +1120,9 @@ void grid::run(int steps, bool do_write, QwtPlot* grid_display) {
             pgrid = new_pgrid;
         }
         
+        //save this step's mag2 force
+	lastMag2 = totmag2;
+        
         //if needed, update plot
 	if(grid_display != NULL) {
 	  //curve->setData(QwtArray<QwtDoublePoint>());
@@ -1074,6 +1136,9 @@ void grid::run(int steps, bool do_write, QwtPlot* grid_display) {
 	  grid_display->replot();
 	}
     }
+    
+    file.close();
+    cout << "Initial mag2 force: " << initialMag2 << endl;
 }
 
 //directional out of bounds detection; in-bounds = origin (0, 0)
@@ -1149,7 +1214,8 @@ double grid::charge(point p) {
     
     //get RMSD value
     double interpolated = calculatedGrid->interpolate(p);
-    return interpolated * 5; //TODO: Replace with proper constant
+    //double interpolated = calculatedGrid->interpolate(p) * 1e5; //TODO: Use proper constant
+    return interpolated;
 }
 
 double* grid::get_dim_values(int dim) {
