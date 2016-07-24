@@ -253,6 +253,10 @@ void US_SelectRunDD::scan_dbase_runs()
    runIDs .clear();
    mRDates.clear();
 
+   rlabels << "UNASSIGNED";
+   runIDs  << "UNASSIGNED";
+   mRDates[ "UNASSIGNED" ] = "all";
+
    if ( db.lastErrno() != US_DB2::OK )
    {
       QMessageBox::critical( this,
@@ -547,6 +551,27 @@ void US_SelectRunDD::scan_dbase_models()
    int          ntmodel = 0;
    int          nmodel  = 0;
 
+   // First accumulate model information for UNASSIGNED models
+   query.clear();
+   query << "get_model_desc_by_editID" << invID << "1";
+   db.query( query );
+
+   while ( db.next() )
+   {
+      QString mdlid    = db.value( 0 ).toString();
+      QString mdlGid   = db.value( 1 ).toString();
+      QString mdesc    = db.value( 2 ).toString();
+      QString edtid    = db.value( 6 ).toString();
+      int     kk       = mdesc.lastIndexOf( ".model" );
+      mdesc            = ( kk < 1 ) ? mdesc : mdesc.left( kk );
+      mmIDs   << mdlid;
+      mmGUIDs << mdlGid;
+      meIDs   << edtid;
+      mmDescs << mdesc;
+      nmodel++;
+   }
+DbgLv(1) << "ScMd: runid UNASGN editId 1   nmodel" << nmodel;
+
 QTime timer;
 timer.start();
    // Accumulate model information for runs present
@@ -645,6 +670,8 @@ DbgLv(1) << "ScMd:scan time(3)" << timer.elapsed();
       QString meID   = meIDs  [ mm ];
       QString ddesc  = ddmap.contains( meID ) ? ddmap[ meID ] : "";
       QString runid  = mdesc.section( ".", 0, -3 );
+      if ( meID == "1" )
+              runid  = "UNASSIGNED";
       QString odesc  = runid + "\t" + mGUID + "\t" + mdesc + "\t" + ddesc;
       wDescrs << odesc;
 DbgLv(1) << "ScMd:  mm meID" << mm << meID << "ddesc" << ddesc;
@@ -693,12 +720,22 @@ timer.start();
    for ( int rr = 0; rr < runIDs.count(); rr++ )
    {
       QString runid    = runIDs[ rr ];
+      int nrmods;
       query.clear();
-      query << "count_models_by_runID" << invID << runid;
-      int nrmods       = db.functionQuery( query );
-      QString grunid   = "Global-" + runid + "%";
-      query.clear();
-      query << "count_models_by_runID" << invID << grunid;
+
+      if ( runid != "UNASSIGNED" )
+      {
+         query << "count_models_by_runID" << invID << runid;
+         nrmods          += db.functionQuery( query );
+         QString grunid   = "Global-" + runid + "%";
+         query.clear();
+         query << "count_models_by_runID" << invID << grunid;
+      }
+
+      else
+      {
+         query << "count_models_by_editID" << invID << "1";
+      }
       nrmods          += db.functionQuery( query );
 
       rmodKnts << nrmods;
