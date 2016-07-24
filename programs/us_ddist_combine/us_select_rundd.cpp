@@ -571,6 +571,26 @@ void US_SelectRunDD::scan_dbase_models()
       nmodel++;
    }
 DbgLv(1) << "ScMd: runid UNASGN editId 1   nmodel" << nmodel;
+   QString grunid   = "Global-%";
+   query.clear();
+   query << "get_model_desc_by_runID" << invID << grunid;
+   db.query( query );
+   while ( db.next() )
+   {
+      QString mdlid    = db.value( 0 ).toString();
+      QString mdlGid   = db.value( 1 ).toString();
+      QString mdesc    = db.value( 2 ).toString();
+      QString edtid    = db.value( 6 ).toString();
+      int     kk       = mdesc.lastIndexOf( ".model" );
+      mdesc            = ( kk < 1 ) ? mdesc : mdesc.left( kk );
+      mmIDs   << mdlid;
+      mmGUIDs << mdlGid;
+      //meIDs   << edtid;
+      meIDs   << "1";
+      mmDescs << mdesc;
+      nmodel++;
+   }
+DbgLv(1) << "ScMd: runid glob% UNASGN editId 1   nmodel" << nmodel;
 
 QTime timer;
 timer.start();
@@ -735,6 +755,8 @@ timer.start();
       else
       {
          query << "count_models_by_editID" << invID << "1";
+         nrmods          += db.functionQuery( query );
+         query << "count_models_by_runID" << invID << "global%";
       }
       nrmods          += db.functionQuery( query );
 
