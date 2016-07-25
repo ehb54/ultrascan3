@@ -118,6 +118,10 @@ class US_GUI_EXTERN US_Minimize : public US_Widgets
 	void closeEvent(QCloseEvent *);
 
 	public slots:
+	void update_lambdaStep(const QString &);
+	void update_lambdaStart(const QString &);
+	void update_maxIterations(const QString &);
+	void update_tolerance(const QString &);
 	void update_nlsMethod(int);
 	void update_fitDialog();
 	int Fit();
