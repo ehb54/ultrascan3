@@ -167,24 +167,28 @@ void US_Minimize::setup_GUI()
 	lbl_lambdaStart = us_label(tr("Lambda Start:"));
 	gl3->addWidget(lbl_lambdaStart, 3, 0);
    le_lambdaStart = us_lineedit("1.0000e+05", 1, false);
+	connect(le_lambdaStart, SIGNAL(textChanged(const QString&)i), SLOT(update_lambdaStart(const Qstring &)));
 	gl3->addWidget(le_lambdaStart, 3, 1);
 	pb_plottwo = us_pushbutton(tr(""));
 	gl3->addWidget(pb_plottwo, 3, 2);	
 	lbl_lambdaStep = us_label(tr("Lambda Step Size:"));
 	gl3->addWidget(lbl_lambdaStep, 4, 0);
    le_lambdaStep = us_lineedit("1.0000e+01", 1, false);
+	connect(le_lambdaStep, SIGNAL(textChanged(const QString&)i), SLOT(update_lambdaStep(const Qstring &)));
 	gl3->addWidget(le_lambdaStep, 4, 1);
 	pb_plotthree = us_pushbutton(tr(""));
 	gl3->addWidget(pb_plotthree, 4, 2);
 	lbl_maxIterations = us_label(tr("Maximum Iterations:"));
 	gl3->addWidget(lbl_maxIterations, 5, 0);
    le_maxIterations = us_lineedit("1000", 1, false);
+	connect(le_maxIterations, SIGNAL(textChanged(const QString&)i), SLOT(update_maxIterations(const Qstring &)));
 	gl3->addWidget(le_maxIterations, 5, 1);
 	pb_plotfour = us_pushbutton(tr(""));
 	gl3->addWidget(pb_plotfour, 5, 2);
 	lbl_tolerance = us_label(tr("Fit Tolerance:"));
 	gl3->addWidget(lbl_tolerance, 6, 0);
    le_tolerance = us_lineedit("1.000e-12", 1, false);
+	connect(le_tolerance, SIGNAL(textChanged(const QString&)i), SLOT(update_tolerance(const Qstring &)));
 	gl3->addWidget(le_tolerance, 6, 1);
 	pb_plotfive = us_pushbutton(tr(""));
 	gl3->addWidget(pb_plotfive, 6, 2);
@@ -209,6 +213,22 @@ void US_Minimize::setup_GUI()
 	mainLayout->setContentsMargins(2, 2, 2, 2);
    mainLayout->addLayout(subMain, 0, 0);
 	mainLayout->addLayout(plotLayout, 0, 1);
+}
+void US_Minimize::update_lambdaStep(const QString &str)
+{
+	lambdaStep = str.toFloat();
+}
+void US_Minimize::update_lambdaStart(const QString &str)
+{
+   lambdaStart = str.toFloat();
+}
+void US_Minimize::update_maxIterations(const QString &str)
+{
+	maxIterations = str.toInt();
+}
+void US_Minimize::update_tolerance(const QString &str)
+{
+	tolerance = str.toFloat();
 }
 void US_Minimize::updateQN(float **gamma, float **delta)
 {

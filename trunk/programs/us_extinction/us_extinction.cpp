@@ -34,7 +34,7 @@ US_Extinction::US_Extinction() : US_Widgets()
    lambdaLimitRight = 1500.0;
  	lambda_min = 1000;
 	lambda_max = -1000;
-	odCutoff = 3.0;
+	odCutoff = 1.5;
 	
 	//length of cuvette
 	pathlength = (float) 1.2;
@@ -80,7 +80,7 @@ US_Extinction::US_Extinction() : US_Widgets()
 	connect(lw_file_names, SIGNAL(itemDoubleClicked(QListWidgetItem*)), SLOT(deleteCurve()));
 	
 	le_associate = us_lineedit("Simulation",1, false);
-	le_odCutoff = us_lineedit("3.000", 1, false);
+	le_odCutoff = us_lineedit("1.500", 1, false);
 	le_lambdaLimitLeft = us_lineedit("200.0", 1, false);
    le_lambdaLimitRight = us_lineedit("1500.0",1, false);
    le_pathlength = us_lineedit("1.2000", 1, false);
