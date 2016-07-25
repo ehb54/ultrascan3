@@ -983,10 +983,10 @@ void grid::run(int steps, bool do_write, QwtPlot* grid_display) {
     minimum_energy.stepsize = 0.0;
     minimum_energy.num_iterations = 0;
     
-    /*string name = "annealingDebug.tsv";
+    string name = "annealingDebug.tsv";
     ofstream file;
     file.open ( name.c_str() );
-    file << "step \ttotalMag2 \tdifferenceMag2 \tdeltaT" << endl;*/
+    file << "step \ttotalMag2 \tdifferenceMag2 \tdeltaT" << endl;
     
     if(grid_display != NULL) {
       
@@ -1052,7 +1052,7 @@ void grid::run(int steps, bool do_write, QwtPlot* grid_display) {
 	//scaled_deltat = deltat * std::pow(0.5, (std::abs((totmag2 - lastMag2)/lastMag2)));
 	//scaled_deltat = deltat * std::log((std::abs((totmag2 - lastMag2)/lastMag2)));
 	
-	//file << i << " \t" << totmag2 << " \t" << (totmag2 - lastMag2) << " \t" << scaled_deltat << endl;
+	file << i << " \t" << totmag2 << " \t" << (totmag2 - lastMag2) << " \t" << scaled_deltat << endl;
 	
 	cout << "scaled deltaT: " << scaled_deltat << endl;
 	
@@ -1151,7 +1151,7 @@ void grid::run(int steps, bool do_write, QwtPlot* grid_display) {
     cout << endl << "minimum force: " << minimum_energy.total_force << endl;
     cout << "step size: " << minimum_energy.stepsize << endl << endl;
     
-    //file.close();
+    file.close();
     cout << "Initial mag2 force: " << initialMag2 << endl;
 }
 
@@ -1229,7 +1229,7 @@ double grid::charge(point p) {
     //get RMSD value
     //double interpolated = calculatedGrid->interpolate(p);
     //double interpolated = pow(1e5, calculatedGrid->interpolate(p) * 0.3); //TODO: Use proper constant
-    double interpolated = 1e7 * pow(calculatedGrid->interpolate(p) * 0.3, 3);
+    double interpolated = 1e5 * pow(calculatedGrid->interpolate(p) * 0.3, 2);
     return interpolated;
 }
 

@@ -200,8 +200,8 @@ void US_ModelBuilder::startSimulation(void) {
     //grid gr(rg, pts, 2e-6, 35, 3);
     //grid gr(rg, pts, 1.7e-5); // working for r4, no charge scaling
     //grid gr(rg, pts, 2e-6); // working for r4, no scaling, old scaling function
-    grid gr(rg, pts, 1e-11, 24, 3);
-    //grid gr(rg, pts, 1e-11);
+    //grid gr(rg, pts, 1e-11, 24, 3);
+    grid gr(rg, pts, 1e-11);
     
     qDebug() << "Object created. Running annealing process..";
     gr.run(5000, false, data_plot);
