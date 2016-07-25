@@ -511,6 +511,7 @@ if(dbg_level>0)
    {  // Build a list of unique methods of distros
       QString method = distros[ ii ].mdescr.section( ".", -1, -1 )
                                            .section( "_", -3, -3 );
+DbgLv(1) << "ii method" << ii << method << "mdes" << distros[ii].mdescr;
       if ( ! methods.contains( method ) )
          methods << method;
    }
