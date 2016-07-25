@@ -17,7 +17,7 @@ SURL="//bcf2.uthscsa.edu/ultrascan3/trunk"
 REV=`svn info svn:${SURL}|grep Revision|awk '{print $2}'`
 RSYNC="rsync -av --exclude=.svn"
 REVL=`svn info ${SRCDIR}|grep Revision|awk '{print $2}'`
-VERS=`grep US_Version ${SRCDIR}/utils/us_defines.h|cut -d'"' -f2`
+VERS=`grep US_Version ${SRCDIR}/utils/us_defines.h|tail -n 1|cut -d'"' -f2`
 SREV=`grep Revision ${SOMORHDR}|cut -d \" -f2|awk '{print $2}'`
 
 if [ "${REV}" != "${REVL}" ]; then
