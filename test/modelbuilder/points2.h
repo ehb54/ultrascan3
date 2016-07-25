@@ -79,7 +79,7 @@ private:
 
     point F(point);
 
-    //double                         (*charge)(point);
+    //double (*charge)(point);
     double deltat;
     int neighbour_points;
     int neighbour_steps;
@@ -98,6 +98,13 @@ private:
 
     void recompute_neighbours(double mult = 0);
     void trim_edges_not_neighbours();
+};
+
+struct grid_state {
+    set < point > points;
+    double total_force;
+    double stepsize;
+    int num_iterations;
 };
 
 #endif

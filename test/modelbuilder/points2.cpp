@@ -977,10 +977,16 @@ void grid::run(int steps, bool do_write, QwtPlot* grid_display) {
     double lastMag2 = 0.0;
     double scaled_deltat = 0.0;
     
-    string name = "annealingDebug.tsv";
+    grid_state minimum_energy;
+    
+    minimum_energy.total_force = 1e300;
+    minimum_energy.stepsize = 0.0;
+    minimum_energy.num_iterations = 0;
+    
+    /*string name = "annealingDebug.tsv";
     ofstream file;
     file.open ( name.c_str() );
-    file << "step \ttotalMag2 \tdifferenceMag2 \tdeltaT" << endl;
+    file << "step \ttotalMag2 \tdifferenceMag2 \tdeltaT" << endl;*/
     
     if(grid_display != NULL) {
       
@@ -1002,7 +1008,8 @@ void grid::run(int steps, bool do_write, QwtPlot* grid_display) {
     // compute forces
     map < point, point > Fi;
 
-    for (int i = 0; i < steps; ++i) {
+    //for (int i = 0; i < steps; ++i) {
+    for (int i = 0; minimum_energy.num_iterations < steps; ++i) {
         // compute forces
 
         if (neighbour_points &&
@@ -1035,34 +1042,36 @@ void grid::run(int steps, bool do_write, QwtPlot* grid_display) {
                 totmag2 += point::mag2(Fi[ *it ]);
             }
         }
+        
         cout << "total mag2 force: " << totmag2 << endl;
 	cout << "last mag2 force: " << lastMag2 << endl;
 	cout << "force difference: " << (totmag2 - lastMag2) << endl;
 	
-	
-	
 	//calculate scaled deltat
-	/*if(totmag2 < 5000 && totmag2 > 3500) // special case TODO: non-arbitrary value
-	    scaled_deltat = deltat * 1e-2;
-	else if(totmag2 <= 3500 && totmag2 > 2000)
-	    scaled_deltat = deltat * 1e-4;
-	else if(totmag2 <= 2000)
-	    scaled_deltat = deltat * 1e-6;
-	else
-	    scaled_deltat = (deltat / (std::abs((totmag2 - lastMag2)/lastMag2)));*/
-	
-	scaled_deltat = (deltat / (std::abs((totmag2 - lastMag2)/lastMag2)));
+	scaled_deltat = (deltat / (std::abs((totmag2 - lastMag2)/lastMag2))); // "old" scaling function
 	//scaled_deltat = deltat * std::pow(0.5, (std::abs((totmag2 - lastMag2)/lastMag2)));
 	//scaled_deltat = deltat * std::log((std::abs((totmag2 - lastMag2)/lastMag2)));
 	
-	
-	file << i << " \t" << totmag2 << " \t" << (totmag2 - lastMag2) << " \t" << scaled_deltat << endl;
+	//file << i << " \t" << totmag2 << " \t" << (totmag2 - lastMag2) << " \t" << scaled_deltat << endl;
 	
 	cout << "scaled deltaT: " << scaled_deltat << endl;
 	
 	//store initial mag2 force
 	if(i == 0) {
 	    initialMag2 = totmag2;
+	}
+	
+	
+        //if grid state is of lower energy than stored minimum, overwrite
+        if(minimum_energy.total_force > totmag2) {
+	    //overwrite
+	    minimum_energy.points = pgrid;
+	    minimum_energy.total_force = totmag2;
+	    minimum_energy.stepsize = scaled_deltat;
+	}
+	//otherwise, increment iteration count
+	else {
+	    minimum_energy.num_iterations++;
 	}
 	
         // move points
@@ -1083,17 +1092,13 @@ void grid::run(int steps, bool do_write, QwtPlot* grid_display) {
 		    if(!in_bounds(porg))
 			cout << porg << " is out of bounds!" << endl;
 		    
-		    //compute movement vector
-		    //point vector = Fi[ *it ] * deltat;  
-		    //point vector = Fi[ *it ] * (deltat * ((i + steps)/steps));
-		    
-		    
 		    point vector;
 		    
 		    if(lastMag2 == 0.0)
 			vector = Fi[ *it ] * deltat;
 		    else {
 			vector = Fi[ *it ] * scaled_deltat;
+			//vector = Fi[ *it ] * deltat;
 		    }
 		    
 		    
@@ -1105,7 +1110,7 @@ void grid::run(int steps, bool do_write, QwtPlot* grid_display) {
 		    if(in_bounds(porg + vector)) {
 			new_pgrid.insert(porg + vector);
 		    }
-		    //otherwise, don't move TODO: Ensure that points cannot go out of bounds
+		    //otherwise, don't move
 		    else {
 			vector = do_reflect(porg, vector, direction);
 			point npt = porg + vector;
@@ -1130,8 +1135,6 @@ void grid::run(int steps, bool do_write, QwtPlot* grid_display) {
         
         //if needed, update plot
 	if(grid_display != NULL) {
-	  //curve->setSamples(QwtArray<QwtDoublePoint>());
-	  
 	  dim_0_values = get_dim_values(0);
 	  dim_1_values = get_dim_values(1);
 	  curve->setSamples(dim_0_values, dim_1_values, pgrid.size());
@@ -1142,7 +1145,13 @@ void grid::run(int steps, bool do_write, QwtPlot* grid_display) {
 	}
     }
     
-    file.close();
+    //overwrite pgrid with minimum state
+    pgrid = minimum_energy.points;
+    
+    cout << endl << "minimum force: " << minimum_energy.total_force << endl;
+    cout << "step size: " << minimum_energy.stepsize << endl << endl;
+    
+    //file.close();
     cout << "Initial mag2 force: " << initialMag2 << endl;
 }
 
@@ -1218,8 +1227,9 @@ double grid::charge(point p) {
     //return 1;
     
     //get RMSD value
-    double interpolated = calculatedGrid->interpolate(p);
-    //double interpolated = calculatedGrid->interpolate(p) * 1e5; //TODO: Use proper constant
+    //double interpolated = calculatedGrid->interpolate(p);
+    //double interpolated = pow(1e5, calculatedGrid->interpolate(p) * 0.3); //TODO: Use proper constant
+    double interpolated = 1e7 * pow(calculatedGrid->interpolate(p) * 0.3, 3);
     return interpolated;
 }
 

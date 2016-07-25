@@ -159,7 +159,7 @@ void US_ModelBuilder::startSimulation(void) {
     
     qDebug() << "Generating regular grid";
     //QVector<QVector<QVector2D*>* >* raw = generateRegularGrid(1e-13, 1e-12, 1, 4, 100);
-    QVector<QVector<QVector2D*>* >* raw = generateRegularGrid(1e-13, 1e-12, 1, 4, 400);
+    QVector<QVector<QVector2D*>* >* raw = generateRegularGrid(1e-13, 1e-12, 1, 4, 1000);
     
     qDebug() << "Calculating RMSDs for regular grid.";
     RegularGrid* rg = testRegularGrid(raw);
@@ -175,6 +175,8 @@ void US_ModelBuilder::startSimulation(void) {
                     //do upscalaing
                     gridPoints->at(y)->at(x)->setX(gridPoints->at(y)->at(x)->x() * 1e12); //TODO: Adaptive scaling
 		    gridPoints->at(y)->at(x)->setY(gridPoints->at(y)->at(x)->y() * 0.25); //TODO: Adaptive scaling
+		    //gridPoints->at(y)->at(x)->setX(gridPoints->at(y)->at(x)->x() * 1e13);
+		    //gridPoints->at(y)->at(x)->setY(gridPoints->at(y)->at(x)->y() * 2.5);
             }
     }
     
@@ -197,11 +199,12 @@ void US_ModelBuilder::startSimulation(void) {
     //grid gr(rg, pts, 2e-6, 8, 4); //do 4 steps before recomputing neighbors
     //grid gr(rg, pts, 2e-6, 35, 3);
     //grid gr(rg, pts, 1.7e-5); // working for r4, no charge scaling
-    grid gr(rg, pts, 2e-6); // working for r4, no scaling, old scaling function
-    //grid gr(rg, pts, 2e-9);
+    //grid gr(rg, pts, 2e-6); // working for r4, no scaling, old scaling function
+    grid gr(rg, pts, 1e-11, 24, 3);
+    //grid gr(rg, pts, 1e-11);
     
     qDebug() << "Object created. Running annealing process..";
-    gr.run(750, false, data_plot);
+    gr.run(5000, false, data_plot);
     //gr.run(500, false, data_plot);
     
     qDebug() << "Annealing finished. Writing to file...";
@@ -219,7 +222,7 @@ void US_ModelBuilder::startSimulation(void) {
     QVector<QVector3D*>* testedGrid = testIrregularGrid(annealedGrid);
     
     //create output file
-    QFile outfile("output/annealedGridSurface.tsv");
+    QFile outfile("annealedGridSurface.tsv");
 
     outfile.open(QIODevice::ReadWrite);
     QTextStream outstream(&outfile);
