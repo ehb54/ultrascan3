@@ -32,7 +32,11 @@
 #include <QFileInfo>
 #include <QDirIterator>
 #include <QTextStream>
+#if QT_VERSION > 0x050000
+#include <QtConcurrent/QtConcurrent>
+#else
 #include <qtconcurrentrun.h>
+#endif
 #include <QThread>
 
 #include <qwt_legend.h>
