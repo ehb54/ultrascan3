@@ -1,5 +1,10 @@
 #include "points2.h"
 #include "RegularGrid.h"
+#if QT_VERSION < 0x050000
+#define setSamples(a,b,c) setData(a,b,c)
+#define setSymbol(a)      setSymbol(*a)
+#include <qwt_double_interval.h>
+#endif
 
 point::point() {
     point(0e0);
@@ -984,11 +989,11 @@ void grid::run(int steps, bool do_write, QwtPlot* grid_display) {
       
       curve = new QwtPlotCurve("E-Min Points");
       curve->setStyle(QwtPlotCurve::NoCurve);
-      curve->setData(QwtArray<QwtDoublePoint>());
+      //curve->setSamples(QwtArray<QwtDoublePoint>());
       
-      QwtSymbol sym;
-      sym.setStyle(QwtSymbol::Ellipse);
-      sym.setSize(QSize(5, 5));
+      QwtSymbol* sym = new QwtSymbol;
+      sym->setStyle(QwtSymbol::Ellipse);
+      sym->setSize(QSize(5, 5));
       curve->setSymbol(sym);
       
       curve->attach(grid_display);
@@ -1125,11 +1130,11 @@ void grid::run(int steps, bool do_write, QwtPlot* grid_display) {
         
         //if needed, update plot
 	if(grid_display != NULL) {
-	  //curve->setData(QwtArray<QwtDoublePoint>());
+	  //curve->setSamples(QwtArray<QwtDoublePoint>());
 	  
 	  dim_0_values = get_dim_values(0);
 	  dim_1_values = get_dim_values(1);
-	  curve->setData(dim_0_values, dim_1_values, pgrid.size());
+	  curve->setSamples(dim_0_values, dim_1_values, pgrid.size());
 	  delete dim_0_values;
 	  delete dim_1_values;
 	  
