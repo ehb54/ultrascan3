@@ -1068,6 +1068,7 @@ void grid::run(int steps, bool do_write, QwtPlot* grid_display) {
 	    minimum_energy.points = pgrid;
 	    minimum_energy.total_force = totmag2;
 	    minimum_energy.stepsize = scaled_deltat;
+	    minimum_energy.num_iterations = 0;
 	}
 	//otherwise, increment iteration count
 	else {
