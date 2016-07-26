@@ -16,7 +16,7 @@ using namespace std;
 int main(int argc, char* argv[]) {
     QApplication application(argc, argv);
     
-    #include "main1.inc"
+    //#include "main1.inc" //breaks program
     
     // License is OK.  Start up.
 
@@ -204,7 +204,7 @@ void US_ModelBuilder::startSimulation(void) {
     grid gr(rg, pts, 1e-11);
     
     qDebug() << "Object created. Running annealing process..";
-    gr.run(5000, false, data_plot);
+    gr.run(10000, false, data_plot);
     //gr.run(500, false, data_plot);
     
     qDebug() << "Annealing finished. Writing to file...";
