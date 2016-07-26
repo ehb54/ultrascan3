@@ -189,9 +189,18 @@ DbgLv(1) << "2P: (1)maxrss" << maxrss << "jgrefine" << jgrefine;
                                klolim, kuplim, nksteps,
                                ngrefine, cnstff0, orig_sols );
 
-      for ( int ii = 0; ii < orig_sols.count(); ii++ )
-         for ( int jj = 0; jj < orig_sols[ ii ].count(); jj++ )
-            orig_sols[ ii ][ jj ].v  = vbar20;
+      if ( cnstff0 == 0.0 )
+      {
+         for ( int ii = 0; ii < orig_sols.count(); ii++ )
+            for ( int jj = 0; jj < orig_sols[ ii ].count(); jj++ )
+               orig_sols[ ii ][ jj ].v  = vbar20;
+      }
+      else
+      {
+         for ( int ii = 0; ii < orig_sols.count(); ii++ )
+            for ( int jj = 0; jj < orig_sols[ ii ].count(); jj++ )
+               orig_sols[ ii ][ jj ].k  = cnstff0;
+      }
    }
 
    else if ( jgrefine == (-1) )
@@ -520,7 +529,7 @@ DbgLv(1) << "FIN_FIN: s20w,D20w_corr" << dset->s20w_correction
 
          // Complete other coefficients in standard-space
          model.calc_coefficients( mcomp );
-DbgLv(1) << " Bcc comp D" << mcomp.D;
+DbgLv(1) << " Bcc comp D" << mcomp.D << "comp ff0" << mcomp.f_f0;
 
          // Convert to experiment-space for simulation below
          mcomp.s     *= sfactor;
@@ -554,7 +563,7 @@ DbgLv(1) << "  Bcc 20w comp D" << mcomp.D;
 
          // Complete other coefficients in standard-space
          model.calc_coefficients( mcomp );
-DbgLv(1) << " Bcc comp D" << mcomp.D;
+DbgLv(1) << " Bcc comp D" << mcomp.D << "comp vbar" << mcomp.vbar20;
 
          // Convert to experiment-space for simulation below
          sd.vbar20    = mcomp.vbar20;
