@@ -71,6 +71,7 @@ public:
     bool write_pgrid(string file);
     bool in_bounds(point p);
     double charge(point p);
+    //double distance_from_bound(point p)
     double* get_dim_values(int dim);
     point do_reflect(point p, point vector, point dir);
     point check_bounds(point p);

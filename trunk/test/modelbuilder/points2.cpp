@@ -1224,6 +1224,44 @@ bool grid::in_bounds(point p) {
     return true;
 }
 
+/*double grid::distance_from_bound(point p) {
+	//get the exterior region that p falls in
+	point dir = check_bounds(p);
+	
+	double distance = 0.0;
+	
+	//conditional code for various regions
+	if(dir.x[0] == -1 && dir.x[1] == -1) {
+		//corner
+	}
+	else if(dir.x[0] == -1 && dir.x[1] == 0) {
+		
+	}
+	else if(dir.x[0] == -1 && dir.x[1] == 1) {
+		//corner
+	}
+	
+	else if(dir.x[0] == 0 && dir.x[1] == -1) {
+		
+	}
+	else if(dir.x[0] == 0 && dir.x[1] == 0) {
+		
+	}
+	else if(dir.x[0] == 0 && dir.x[1] == 1) {
+		
+	}
+	
+	else if(dir.x[0] == 1 && dir.x[1] == -1) {
+		//corner
+	}
+	else if(dir.x[0] == 1 && dir.x[1] == 0) {
+		
+	}
+	else if(dir.x[0] == 1 && dir.x[1] == 1) {
+		//corner
+	}
+}*/
+
 double grid::charge(point p) {
     //return 1;
     

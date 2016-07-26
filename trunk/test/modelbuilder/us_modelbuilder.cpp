@@ -16,7 +16,7 @@ using namespace std;
 int main(int argc, char* argv[]) {
     QApplication application(argc, argv);
     
-    //#include "main1.inc" //breaks program
+    #include "main1.inc"
     
     // License is OK.  Start up.
 
