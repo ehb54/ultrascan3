@@ -251,7 +251,7 @@ if(thrnrank==1) DbgLv(1) << "CR:zthr lthr mxod mfac"
 
 DebugTime("BEG:calcres");
    // Populate b array with experiment data concentrations
-   int    kk     = 0;
+   int    kb     = 0;
    int    kodl   = 0;
 #if 0
    double s0max  = 0.0;
@@ -284,7 +284,7 @@ DebugTime("BEG:calcres");
             }
 #endif
 
-            nnls_b[ kk++ ] = evalue;
+            nnls_b[ kb++ ] = evalue;
          }
       }
    }
@@ -308,7 +308,7 @@ DbgLv(1) << "   CR:B fill kodl" << kodl;
    int    increp  = nsolutes / 10;                 // Progress report increment
           increp  = ( increp < 10 ) ? 10 : increp;
    int    kstep   = 0;                             // Progress step count
-          kk      = 0;                             // nnls_a output index
+   int    ka      = 0;                             // nnls_a output index
    int    ksols   = 0;
    int    stype   = data_sets[ offset ]->solute_type;
 DbgLv(1) << "   CR:BF STYPE" << stype;
@@ -423,16 +423,16 @@ DbgLv(2) << "   CR:115  rss now" << US_Memory::rss_now() << "cc" << cc;
 
             // Populate the A matrix for the NNLS routine with simulation
 DbgLv(1) << "   CR: A fill kodl" << kodl << "bndthr ksol" << banddthr << ksols;
-int ks=kk;
+int ks=ka;
             if ( kodl == 0 )
             {  // Normal case of no ODlimit substitutions
                for ( int ss = 0; ss < nscans; ss++ )
                   for ( int rr = 0; rr < npoints; rr++ )
-                     nnls_a[ kk++ ] = simdat.value( ss, rr );
+                     nnls_a[ ka++ ] = simdat.value( ss, rr );
 DbgLv(2) << "   CR:116  rss now" << US_Memory::rss_now() << "cc" << cc;
 //if(lim_offs>1&&(thrnrank==1||thrnrank==11))
-DbgLv(1) << "CR: ks kk" << ks << kk
- << "nnA s...k" << nnls_a[ks] << nnls_a[ks+1] << nnls_a[kk-2] << nnls_a[kk-1]
+DbgLv(1) << "CR: ks ka" << ks << ka
+ << "nnA s...k" << nnls_a[ks] << nnls_a[ks+1] << nnls_a[ka-2] << nnls_a[ka-1]
  << "cc ee" << cc << ee;
             }
             else
@@ -442,9 +442,9 @@ DbgLv(1) << "CR: ks kk" << ks << kk
                   for ( int rr = 0; rr < npoints; rr++ )
                   {  // Fill A with simulations (or zero where B has zero)
                      if ( nnls_b[ bx++ ] != 0.0 )
-                        nnls_a[ kk++ ] = simdat.value( ss, rr );
+                        nnls_a[ ka++ ] = simdat.value( ss, rr );
                      else
-                        nnls_a[ kk++ ] = 0.0;
+                        nnls_a[ ka++ ] = 0.0;
                   }
                }
             }
@@ -453,7 +453,7 @@ DbgLv(1) << "CR: ks kk" << ks << kk
             {  // For Tikhonov Regularization append to each column
                for ( int aa = 0; aa < nsolutes; aa++ )
                {
-                  nnls_a[ kk++ ] = ( aa == cc ) ? alphad : 0.0;
+                  nnls_a[ ka++ ] = ( aa == cc ) ? alphad : 0.0;
                }
             }
 
@@ -474,10 +474,10 @@ DbgLv(1) << "CR: NNLS A filled lo" << lim_offs;
 DbgLv(1) << "CR: NNLS A filled EMIT complete";
 
 #if 0
-         if ( kk >= iasize  &&  iasize < navals )
+         if ( ka >= iasize  &&  iasize < navals )
          {
 int npav = US_Memory::memory_profile();
-DbgLv(0) << "   CR:na  iasize navals" << iasize << navals << "kk narows npav" << kk << narows << npav;
+DbgLv(0) << "   CR:na  iasize navals" << iasize << navals << "ka narows npav" << ka << narows << npav;
             iasize       = qMin( navals, ( iasize + narows * 4 ) );
             nnls_a.resize( iasize );
 DbgLv(0) << "   CR:na  (3)size" << nnls_a.size() << "npav" << US_Memory::memory_profile();
@@ -542,6 +542,8 @@ DbgLv(1) << "CR: attr_ x,y,z" << attr_x << attr_y << attr_z << stype << smask
                               attr_x );
                set_comp_attr( model.components[ 0 ], sim_vals.solutes[ cc ],
                               attr_y );
+               set_comp_attr( model.components[ 0 ], sim_vals.solutes[ cc ],
+                              attr_z );
             }
 
             // Fill in the missing component values
@@ -605,12 +607,12 @@ DbgLv(1) << "CR: sdat:"
 
             // Populate the A matrix for the NNLS routine with simulation
 DbgLv(1) << "   CR: A fill kodl" << kodl << "bndthr ksol" << banddthr << ksols;
-//int ks=kk;
+//int ks=ka;
             if ( kodl == 0 )
             {  // Normal case of no ODlimit substitutions
                for ( int ss = 0; ss < nscans; ss++ )
                   for ( int rr = 0; rr < npoints; rr++ )
-                     nnls_a[ kk++ ] = simdat.value( ss, rr );
+                     nnls_a[ ka++ ] = simdat.value( ss, rr );
             }
             else
             {  // Special case where ODlimit substitutions are in B matrix
@@ -619,21 +621,21 @@ DbgLv(1) << "   CR: A fill kodl" << kodl << "bndthr ksol" << banddthr << ksols;
                   for ( int rr = 0; rr < npoints; rr++ )
                   {  // Fill A with simulations (or zero where B has zero)
                      if ( nnls_b[ bx++ ] != 0.0 )
-                        nnls_a[ kk++ ] = simdat.value( ss, rr );
+                        nnls_a[ ka++ ] = simdat.value( ss, rr );
                      else
-                        nnls_a[ kk++ ] = 0.0;
+                        nnls_a[ ka++ ] = 0.0;
                   }
                }
             }
-//DbgLv(1) << "CR: ks kk" << ks << kk
-// << "nnA s...k" << nnls_a[ks] << nnls_a[ks+1] << nnls_a[kk-2] << nnls_a[kk-1]
+//DbgLv(1) << "CR: ks ka" << ks << ka
+// << "nnA s...k" << nnls_a[ks] << nnls_a[ks+1] << nnls_a[ka-2] << nnls_a[ka-1]
 // << "cc ee" << cc << ee << "kodl" << kodl;
 
             if ( tikreg )
             {  // For Tikhonov Regularization append to each column
                for ( int aa = 0; aa < nsolutes; aa++ )
                {
-                  nnls_a[ kk++ ] = ( aa == cc ) ? alphad : 0.0;
+                  nnls_a[ ka++ ] = ( aa == cc ) ? alphad : 0.0;
                }
             }
 
@@ -668,7 +670,8 @@ DbgLv(1) << "   CR: A fill kodl" << kodl << "bndthr ksol" << banddthr << ksols;
             int npoints    = edata->pointCount();
             int nscans     = edata->scanCount();
             double avtemp  = dset->temperature;
-            model.components[ 0 ]        = zcomponent;
+            zcomponent.vbar20     = dset->vbar20;
+            model.components[ 0 ] = zcomponent;
 
             if ( use_zsol )
             {
@@ -715,7 +718,7 @@ if (dbg_level>1 && thrnrank==1 && cc==0) {
 
             if ( banddthr )
             {  // If band forming, hold data within thresholds; skip if all-zero
-               if ( data_threshold( &simdat, zerothr, linethr, maxod, mfactor ) )
+               if ( data_threshold(&simdat, zerothr, linethr, maxod, mfactor) )
                   continue;
 
                ksols++;
@@ -723,12 +726,13 @@ if (dbg_level>1 && thrnrank==1 && cc==0) {
 
             simulations << simdat;   // Save simulation (each datset,solute)
 
+int ks=ka;
             // Populate the A matrix for the NNLS routine with simulation
             if ( kodl == 0 )
             {  // Normal case of no ODlimit substitutions
                for ( int ss = 0; ss < nscans; ss++ )
                   for ( int rr = 0; rr < npoints; rr++ )
-                     nnls_a[ kk++ ] = simdat.value( ss, rr );
+                     nnls_a[ ka++ ] = simdat.value( ss, rr );
             }
             else
             {  // Special case where ODlimit substitutions are in B matrix
@@ -737,18 +741,21 @@ if (dbg_level>1 && thrnrank==1 && cc==0) {
                   for ( int rr = 0; rr < npoints; rr++ )
                   {  // Fill A with simulations (or zero where B has zero)
                      if ( nnls_b[ bx++ ] != 0.0 )
-                        nnls_a[ kk++ ] = simdat.value( ss, rr );
+                        nnls_a[ ka++ ] = simdat.value( ss, rr );
                      else
-                        nnls_a[ kk++ ] = 0.0;
+                        nnls_a[ ka++ ] = 0.0;
                   }
                }
             }
+DbgLv(1) << "CR: ks ka" << ks << ka
+ << "nnA s...k" << nnls_a[ks] << nnls_a[ks+1] << nnls_a[ka-2] << nnls_a[ka-1]
+ << "cc ee" << cc << ee << "kodl" << kodl;
 
             if ( tikreg )
             {  // For Tikhonov Regularization append to each column
                for ( int aa = 0; aa < nsolutes; aa++ )
                {
-                  nnls_a[ kk++ ] = ( aa == cc ) ? alphad : 0.0;
+                  nnls_a[ ka++ ] = ( aa == cc ) ? alphad : 0.0;
                }
             }
          }  // Each data set
@@ -759,9 +766,12 @@ if (dbg_level>1 && thrnrank==1 && cc==0) {
             kstep = 0;                     // Reset step count
          }
       }   // Each solute
-   }
+   }   // Custom grid
 
-   nsolutes   = banddthr ? ksols : nsolutes;
+   nsolutes     = banddthr ? ksols : nsolutes;
+   int ntotinoi = ntinois  * nsolutes;
+   int ntorinoi = nrinois  * nsolutes;
+   int nsolutsq = nsolutes * nsolutes;
 
    if ( signal_wanted  &&  kstep > 0 )  // If signals and steps done, report
       emit work_progress( kstep );
@@ -776,32 +786,33 @@ DebugTime("BEG:clcr-nn");
    if ( calc_ti )
    {  // Compute TI Noise (and, optionally, RI Noise)
       if ( abort ) return;
-      // Compute a_tilde, the average experiment signal at each time
-      QVector< double > a_tilde( nrinois, 0.0 );
+      QVector< double > a_tilde ( nrinois,  0.0 );
+      QVector< double > a_bar   ( ntinois,  0.0 );
+      QVector< double > L_tildes( ntorinoi, 0.0 );
+      QVector< double > L_bars  ( ntotinoi, 0.0 );
+      QVector< double > small_a ( nsolutsq, 0.0 );
+      QVector< double > small_b ( nsolutes, 0.0 );
+      QVector< double > L       ( ntotal,   0.0 );
+      QVector< double > L_tilde ( nrinois,  0.0 );
+      QVector< double > L_bar   ( ntinois,  0.0 );
 
+      // Compute a_tilde, the average experiment signal at each time
       if ( calc_ri )
          compute_a_tilde( a_tilde, nnls_b );
 
       // Compute a_bar, the average experiment signal at each radius
-      QVector< double > a_bar( ntinois, 0.0 );
       compute_a_bar( a_bar, a_tilde, nnls_b );
 
       // Compute L_tildes, the average signal at each radius (if RI noise)
-      QVector< double > L_tildes( nrinois * nsolutes, 0.0 );
-
       if ( calc_ri )
          compute_L_tildes( nrinois, nsolutes, L_tildes, nnls_a );
 
       // Compute L_bars
-      QVector< double > L_bars(   ntinois * nsolutes, 0.0 );
       compute_L_bars( nsolutes, nrinois, ntinois, ntotal,
                       L_bars, nnls_a, L_tildes );
 
       // Set up small_a, small_b for alternate nnls
 DbgLv(1) << "  set SMALL_A+B";
-      QVector< double > small_a( sq( nsolutes ), 0.0 );
-      QVector< double > small_b( nsolutes,       0.0 );
-
       ti_small_a_and_b( nsolutes, ntotal, ntinois,
                         small_a, small_b, a_bar, L_bars, nnls_a, nnls_b );
       if ( abort ) return;
@@ -813,18 +824,15 @@ DbgLv(1) << "  noise small NNLS";
       if ( abort ) return;
 
       // This is Sum( concentration * Lamm ) for the models after NNLS
-      QVector< double > L( ntotal, 0.0 );
       compute_L( ntotal, nsolutes, L, nnls_a, nnls_x );
 
       // Now L contains the best fit sum of L equations
       // Compute L_tilde, the average model signal at each radius
-      QVector< double > L_tilde( nrinois, 0.0 );
 
       if ( calc_ri )
          compute_L_tilde( L_tilde, L );
 
       // Compute L_bar, the average model signal at each radius
-      QVector< double > L_bar(   ntinois, 0.0 );
       compute_L_bar( L_bar, L, L_tilde );
 
       // Compute ti noise
@@ -844,17 +852,20 @@ DbgLv(1) << "  noise small NNLS";
    else if ( calc_ri )
    {  // Compute RI noise (when RI only)
       if ( abort ) return;
+      QVector< double > a_tilde ( nrinois,  0.0 );
+      QVector< double > L_tildes( ntorinoi, 0.0 );
+      QVector< double > small_a ( nsolutsq, 0.0 );
+      QVector< double > small_b ( nsolutes, 0.0 );
+      QVector< double > L       ( ntotal,   0.0 );
+      QVector< double > L_tilde ( nrinois,  0.0 );
+
       // Compute a_tilde, the average experiment signal at each time
-      QVector< double > a_tilde( nrinois, 0.0 );
       compute_a_tilde( a_tilde, nnls_b );
 
       // Compute L_tildes, the average signal at each radius
-      QVector< double > L_tildes( nrinois * nsolutes, 0.0 );
       compute_L_tildes( nrinois, nsolutes, L_tildes, nnls_a );
 
       // Set up small_a, small_b for the nnls
-      QVector< double > small_a( sq( nsolutes ), 0.0 );
-      QVector< double > small_b( nsolutes,       0.0 );
       if ( abort ) return;
 
       ri_small_a_and_b( nsolutes, ntotal, nrinois,
@@ -866,12 +877,10 @@ DbgLv(1) << "  noise small NNLS";
       if ( abort ) return;
 
       // This is sum( concentration * Lamm ) for the models after NNLS
-      QVector< double > L( ntotal, 0.0 );
       compute_L( ntotal, nsolutes, L, nnls_a, nnls_x );
 
       // Now L contains the best fit sum of L equations
       // Compute L_tilde, the average model signal at each radius
-      QVector< double > L_tilde( nrinois, 0.0 );
       compute_L_tilde( L_tilde, L );
 
       // Compute ri_noise  (Is this correct????)
@@ -1077,7 +1086,7 @@ DbgLv(1) << "CR: kdsx variance" << kdsx << varidset << variance;
    sim_vals.variances.resize( dataset_count );
    variance         /= (double)ktotal;    // Total sets variance
    sim_vals.variance = variance;
-   kk        = 0;
+   int kk    = 0;
 
    for ( int ee = offset; ee < lim_offs; ee++ )
    {  // Scale variances for each data set
@@ -1476,6 +1485,11 @@ DebugTime("BEG:ti-smab");
    incprg      = min( incprg, 10 );
    int jstprg  = ( kstodo * incprg ) / nsolutes;  // steps for each report
    int kstep   = 0;                               // progress counter
+DbgLv(1) << "ti_smab: np ns nn nso" << npoints << nscans << ntinois << nsolutes
+ << "szb sza" << nnls_b.size() << nnls_a.size() << "nto" << ntotal;
+int svsa=0;
+small_a.fill( 0.0 );
+small_b.fill( 0.0 );
 
    for ( int cc = 0; cc < nsolutes; cc++ )
    {
@@ -1535,6 +1549,7 @@ DebugTime("BEG:ti-smab");
          }
 
          small_a[ jjsa ] = sum_a;
+svsa=jjsa;
          jjsa     += nsolutes;  
       }
 
@@ -1547,6 +1562,9 @@ DebugTime("BEG:ti-smab");
 
       if ( abort ) return;
    }
+DbgLv(1) << "ti_smab:   nsb nsa" << small_b.size() << small_a.size()
+ << "jsb jsa" << nsolutes << svsa << "a0 an b0 bn"
+ << small_a[0] << small_a[svsa] << small_b[0] << small_b[nsolutes-1];
 
    if ( signal_wanted  &&  kstodo > 0 )
       emit work_progress( kstodo );

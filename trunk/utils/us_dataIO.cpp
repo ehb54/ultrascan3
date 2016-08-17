@@ -232,7 +232,9 @@ bool US_DataIO::readLegacyFile( const QString&  file,
 
       pp = sc.split( " ", QString::SkipEmptyParts );
 		if ( pp.size() == 1 )
-      	pp = sc.split( "\t", QString::SkipEmptyParts );
+         pp = sc.split( "\t", QString::SkipEmptyParts );
+      if ( pp.size() < 2 )
+         break;
 
       double xval = pp[ 0 ].toDouble();
       double rval = pp[ 1 ].toDouble();

@@ -421,10 +421,13 @@ void US_AnalysisBase2::data_plot( void )
    US_DataIO::EditedData* d     = &dataList[ row ];
 
    QString                        dataType = tr( "Absorbance" );
-   if ( d->dataType == "RI" )     dataType = tr( "Intensity" );
+   if ( d->dataType == "RI"  &&
+        !has_intensity_profile( d->runID, disk_controls->db() ) )
+                                  dataType = tr( "Intensity" );
    if ( d->dataType == "WI" )     dataType = tr( "Intensity" );
    if ( d->dataType == "IP" )     dataType = tr( "Interference" );
    if ( d->dataType == "FI" )     dataType = tr( "Fluorescence" );
+
 
    QString header = tr( "Velocity Data for\n") + d->runID + "  ("
          + d->cell + "/" + d->channel + "/" + d->wavelength + ")";
@@ -1579,5 +1582,42 @@ void US_AnalysisBase2::update_filelist( QStringList& flist,
 
    if ( fname.contains( ".svg" ) )
       flist << QString( fname ).section( ".", 0, -2 ) + ".png";
+}
+
+// Determine if a run has an intensity profile
+bool US_AnalysisBase2::has_intensity_profile( const QString& runID,
+                                              const bool in_db )
+{
+   QString ripxml;
+
+   if ( in_db )
+   {  // Data from DB:  get any RIProfile from experiment record
+      US_Passwd pw;
+      US_DB2 db( pw.getPasswd() );
+      QStringList query;
+      query << "get_experiment_info_by_runID" << runID
+            << QString::number( US_Settings::us_inv_ID() );
+      db.query( query );
+      if ( db.lastErrno() == US_DB2::NOROWS )
+         return false;                      // No DB records means no profile
+      db.next();
+      ripxml   = db.value( 16 ).toString(); // Otherwise get profile text
+   }
+
+   else
+   {  // Data local:  read in any RIProfile from an XML file
+      QString filename = US_Settings::resultDir() + "/" + runID + "/"
+                         + runID + ".RIProfile.xml";
+
+      QFile fi( filename );
+
+      if ( !fi.open( QIODevice::ReadOnly | QIODevice::Text ) )
+         return false;              // No file means no intensity profile
+
+      ripxml  = fi.readAll();       // Otherwise read profile text
+      fi.close();
+   }
+
+   return ! ripxml.isEmpty();
 }
 
