@@ -764,11 +764,14 @@ void US_FeMatch::data_plot( void )
    if ( !dataLoaded )
       return;
 
+   bool in_db        = dkdb_cntrls->db();
    int drow          = lw_triples->currentRow();
    edata             = &dataList[ drow ];
    QString triple    = QString( triples.at( drow ) ).replace( " / ", "/" );
    QString                            dataType = tr( "Absorbance" );
-   if ( edata->dataType == "RI" )     dataType = tr( "Intensity" );
+   if ( edata->dataType == "RI"  &&
+        ! has_intensity_profile( edata->runID, in_db ) )
+                                      dataType = tr( "Intensity" );
    if ( edata->dataType == "WI" )     dataType = tr( "Intensity" );
    if ( edata->dataType == "IP" )     dataType = tr( "Interference" );
    if ( edata->dataType == "FI" )     dataType = tr( "Fluourescence" );
@@ -2671,13 +2674,16 @@ QString US_FeMatch::html_header( QString title, QString head1,
 }
 
 // Compose data details text
-QString US_FeMatch::run_details( void ) const
+QString US_FeMatch::run_details( void )
 {
    int    drow     = lw_triples->currentRow();
    const US_DataIO::EditedData* d      = &dataList[ drow ];
+   bool in_db      = dkdb_cntrls->db();
    double baseline = calc_baseline( drow );
    QString                       dataType = tr( "Absorbance" );
-   if ( d->dataType == "RI" )    dataType = tr( "Intensity" );
+   if ( d->dataType == "RI"  &&
+        ! has_intensity_profile( d->runID, in_db ) )
+                                 dataType = tr( "Intensity" );
    if ( d->dataType == "WI" )    dataType = tr( "Intensity" );
    if ( d->dataType == "IP" )    dataType = tr( "Interference" );
    if ( d->dataType == "FI" )    dataType = tr( "Fluourescence" );
@@ -3841,5 +3847,41 @@ void US_FeMatch::simulate()
 void US_FeMatch::resplot_done()
 {
    resplotd   = 0;
+}
+
+// Determine if a run has an intensity profile
+bool US_FeMatch::has_intensity_profile( const QString& runID, const bool in_db )
+{
+   QString ripxml;
+
+   if ( in_db )
+   {  // Data from DB:  get any RIProfile from experiment record
+      US_Passwd pw;
+      US_DB2 db( pw.getPasswd() );
+      QStringList query;
+      query << "get_experiment_info_by_runID" << runID
+            << QString::number( US_Settings::us_inv_ID() );
+      db.query( query );
+      if ( db.lastErrno() == US_DB2::NOROWS )
+         return false;                      // No DB records means no profile
+      db.next();
+      ripxml   = db.value( 16 ).toString(); // Otherwise get profile text
+   }
+
+   else
+   {  // Data local:  read in any RIProfile from an XML file
+      QString filename = US_Settings::resultDir() + "/" + runID + "/"
+                         + runID + ".RIProfile.xml";
+
+      QFile fi( filename );
+
+      if ( !fi.open( QIODevice::ReadOnly | QIODevice::Text ) )
+         return false;              // No file means no intensity profile
+
+      ripxml  = fi.readAll();       // Otherwise read profile text
+      fi.close();
+   }
+
+   return ! ripxml.isEmpty();
 }
 

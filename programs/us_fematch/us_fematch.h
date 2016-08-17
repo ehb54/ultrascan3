@@ -222,7 +222,7 @@ class US_FeMatch : public US_Widgets
                          const QString&, const QString&,
                          const QString& )                 const;
       QString html_header   ( QString, QString, US_DataIO::EditedData* );
-      QString run_details   ( void )                      const;
+      QString run_details   ( void );
       QString hydrodynamics ( void )                      const;
       QString scan_info     ( void )                      const;
       QString distrib_info  ( void );
@@ -242,6 +242,7 @@ class US_FeMatch : public US_Widgets
       void    modbtn_clicked ( bool );
       void    next_model     ( void );
       void    update_mc_model( void );
+      bool    has_intensity_profile( const QString&, const bool );
 
       void help     ( void )
       { showHelp.show_help( "fe_match.html" ); };

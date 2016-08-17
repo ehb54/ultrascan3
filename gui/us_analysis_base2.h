@@ -208,6 +208,9 @@ class US_GUI_EXTERN US_AnalysisBase2 : public US_Widgets
       //! Update the list of report files
       void         update_filelist( QStringList&, const QString );
 
+      //! Flag if run has an intensity profile
+      bool         has_intensity_profile( const QString&, const bool );
+
    private:
       double* x_weights;
       double* y_weights;

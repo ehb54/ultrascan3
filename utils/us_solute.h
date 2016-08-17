@@ -75,7 +75,7 @@ class US_UTIL_EXTERN US_Solute
       //! \param ff0_res The number of ponts to evaluate between ff0_min and 
       //!                ff0_max
       //! \param grid_reps The number of grids used to partition the data
-      //! \param cnstff0   Constant f/f0 (or 0.0 if vbar is costant)
+      //! \param cnstff0   Constant f/f0 (or 0.0 if vbar is constant)
       //! \param solute_list A reference to the output values.  This is a 
       //!                    list of vectors.
       static void init_solutes( double, double, int,
