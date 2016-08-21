@@ -405,14 +405,16 @@ BEGIN
       SELECT @OK AS status;
   
       IF ( p_ID > 0 ) THEN
-        SELECT   j.projectID, description, status
+        SELECT   j.projectID, description, status,
+                 timestamp2UTC( lastUpdated ) AS UTC_lastUpdated
         FROM     project j, projectPerson p
         WHERE    j.projectID = p.projectID
         AND      p.personID = p_ID
         ORDER BY description;
    
       ELSE
-        SELECT   j.projectID, description, status
+        SELECT   j.projectID, description, status,
+                 timestamp2UTC( lastUpdated ) AS UTC_lastUpdated
         FROM     project j, projectPerson p
         WHERE    j.projectID = p.projectID
         ORDER BY description;
@@ -439,7 +441,8 @@ BEGIN
       -- Ok, user wants his own info
       SELECT @OK AS status;
 
-      SELECT   j.projectID, description, status
+      SELECT   j.projectID, description, status,
+               timestamp2UTC( lastUpdated ) AS UTC_lastUpdated
       FROM     project j, projectPerson p
       WHERE    j.projectID = p.projectID
       AND      p.personID = @US3_ID
@@ -481,7 +484,8 @@ BEGIN
       SELECT @OK AS status;
 
       SELECT   j.projectID, projectGUID, goals, molecules, purity, expense, bufferComponents,
-               saltInformation, AUC_questions, notes, description, status, personID, expDesign
+               saltInformation, AUC_questions, notes, description, status, personID, expDesign,
+               timestamp2UTC( lastUpdated ) AS UTC_lastUpdated
       FROM     project j, projectPerson p
       WHERE    j.projectID = p.projectID
       AND      j.projectID = p_projectID;

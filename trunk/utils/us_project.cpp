@@ -49,6 +49,7 @@ int US_Project::readFromDisk( QString& guid )
             QXmlStreamAttributes a = xml.attributes();
             projectID   = a.value( "id" ).toString().toInt();
             projectGUID = a.value( "guid" ).toString();
+            lastUpdated = QFileInfo( filename ).lastModified().toUTC();
 
             readProjectInfo( xml );
          }
@@ -166,6 +167,7 @@ int US_Project::readFromDB  ( int projectID, US_DB2* db )
       status           = db->value( 11 ).toString();
       // value 12 is personID
       expDesign        = db->value( 13 ).toString();
+      lastUpdated      = db->value( 14 ).toDateTime();
 
    }
 

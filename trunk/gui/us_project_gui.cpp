@@ -186,6 +186,8 @@ void US_ProjectGui::reset( void )
    auc_questionsTab    ->setAUC_questions    ( project.AUC_questions    );
    expDesignTab        ->setExpDesign        ( project.expDesign        );
    notesTab            ->setNotes            ( project.notes            );
+   generalTab          ->setLastUpd          ( "last updated: "
+                   + project.lastUpdated.toString( "yyyy/MM/dd hh:mm UTC" ) );
 
    text_changed = false;
 
@@ -232,6 +234,7 @@ void US_ProjectGui::resetAll( void )
    descriptions.clear();
    GUIDs.clear();
    filenames.clear();
+   lastUpds .clear();
 
    projectMap.clear();
 
@@ -335,6 +338,8 @@ void US_ProjectGui::loadDisk( void )
    descriptions.clear();
    GUIDs.clear();
    filenames.clear();
+   lastUpds .clear();
+   QDateTime lastUpd;
 
    QDir dir( path );
    QStringList filter( "P*.xml" );
@@ -344,10 +349,13 @@ void US_ProjectGui::loadDisk( void )
 
    for ( int i = 0; i < names.size(); i++ )
    {
-      a_file.setFileName( path + "/" + names[ i ] );
+      QString xfn = path + "/" + names[ i ];
+      a_file.setFileName( xfn );
 
       if ( ! a_file.open( QIODevice::ReadOnly | QIODevice::Text) ) continue;
 
+      lastUpd = QFileInfo( xfn ).lastModified().toUTC();
+qDebug() << "i" << i << "xfn" << xfn << "lastUpd" << lastUpd;
       QXmlStreamReader xml( &a_file );
 
       while ( ! xml.atEnd() )
@@ -362,7 +370,8 @@ void US_ProjectGui::loadDisk( void )
 
                IDs          << a.value( "id" ).toString();
                GUIDs        << a.value( "guid" ).toString();
-               filenames    << path + "/" + names[ i ];
+               filenames    << xfn;
+               lastUpds     << lastUpd;
 
             }
 
@@ -405,6 +414,7 @@ void US_ProjectGui::loadDB( void )
    descriptions.clear();
    GUIDs.clear();
    filenames.clear();
+   lastUpds .clear();
 
    while ( db.next() )
    {
@@ -413,6 +423,7 @@ void US_ProjectGui::loadDB( void )
       descriptions << db.value( 1 ).toString();
       GUIDs        << QString( "" );
       filenames    << QString( "" );
+      lastUpds     << db.value( 13 ).toDateTime();
    }
 
    loadProjects();
@@ -432,8 +443,10 @@ void US_ProjectGui::loadProjects( void )
       si.description = descriptions[ i ];
       si.GUID        = GUIDs       [ i ];
       si.filename    = filenames   [ i ];
+      si.lastUpdated = lastUpds    [ i ];
       si.index       = i;
       info << si;
+qDebug() << "index" << si.index << "lastUpd" << si.lastUpdated;
 
       // Create a map to account for automatic sorting of the list
       QListWidgetItem* item = new QListWidgetItem( descriptions[ i ], generalTab->lw_projects );
@@ -672,9 +685,9 @@ US_ProjectGuiGeneral::US_ProjectGuiGeneral( int* invID,
    QGridLayout* general      = new QGridLayout( this );
    general->setSpacing         ( 2 );
    general->setContentsMargins ( 2, 2, 2, 2 );
-   general->setColumnStretch(0, 0.0);
-   general->setColumnStretch(1, 0.5);
-   general->setColumnStretch(2, 0.5);
+   general->setColumnStretch( 0, 3.0 );
+   general->setColumnStretch( 1, 1.0 );
+   general->setColumnStretch( 2, 1.0 );
 
    int row = 0;
 
@@ -759,6 +772,12 @@ US_ProjectGuiGeneral::US_ProjectGuiGeneral( int* invID,
       le_guid->setVisible( false );
    }
 
+   // Row 10
+   le_lastupd = us_lineedit( "" );
+   le_lastupd->setPalette ( gray );
+   le_lastupd->setReadOnly( true );
+   general->addWidget( le_lastupd, row++, 1, 1, 2 );
+
    reset();       // This is the GeneralTab reset();
 }
 
@@ -804,6 +823,11 @@ void US_ProjectGuiGeneral::assign_investigator( int invID )
 void US_ProjectGuiGeneral::setGUID( QString newGUID )
 {
    le_guid->setText( newGUID );
+}
+
+void US_ProjectGuiGeneral::setLastUpd( QString lastupd )
+{
+   le_lastupd->setText( lastupd );
 }
 
 void US_ProjectGuiGeneral::setDesc( QString newDesc )
