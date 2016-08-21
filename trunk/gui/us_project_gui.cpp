@@ -186,8 +186,7 @@ void US_ProjectGui::reset( void )
    auc_questionsTab    ->setAUC_questions    ( project.AUC_questions    );
    expDesignTab        ->setExpDesign        ( project.expDesign        );
    notesTab            ->setNotes            ( project.notes            );
-   generalTab          ->setLastUpd          ( "last updated: "
-                   + project.lastUpdated.toString( "yyyy/MM/dd hh:mm UTC" ) );
+   generalTab          ->setLastUpd          ( project.lastUpdated.toString( "yyyy/MM/dd hh:mm UTC" ) );
 
    text_changed = false;
 
@@ -724,7 +723,7 @@ US_ProjectGuiGeneral::US_ProjectGuiGeneral( int* invID,
    connect( lw_projects, SIGNAL( itemClicked    ( QListWidgetItem* ) ),
                          SIGNAL( selectProject  ( QListWidgetItem* ) ) );
 
-   int add_rows = ( US_Settings::us_debug() == 0 ) ? 5 : 7;
+   int add_rows = ( US_Settings::us_debug() == 0 ) ? 6 : 8;
 
    general->addWidget( lw_projects, row, 0, add_rows, 1 );
 
@@ -757,6 +756,16 @@ US_ProjectGuiGeneral::US_ProjectGuiGeneral( int* invID,
    general->addWidget( le_projectDesc, row++, 1, 1, 2 );
 
    // Row 8
+   QLabel* lbl_lastupd = us_label( tr( "Last Updated:" ) );
+   general->addWidget( lbl_lastupd, row++, 1, 1, 2 );
+
+   // Row 9
+   le_lastupd = us_lineedit( "" );
+   le_lastupd->setPalette ( gray );
+   le_lastupd->setReadOnly( true );
+   general->addWidget( le_lastupd, row++, 1, 1, 2 );
+
+   // Row 8
    QLabel* lb_guid = us_label( tr( "Global Identifier:" ) );
    general->addWidget( lb_guid, row++, 1, 1, 2 );
 
@@ -765,18 +774,12 @@ US_ProjectGuiGeneral::US_ProjectGuiGeneral( int* invID,
    le_guid->setPalette ( gray );
    le_guid->setReadOnly( true );
    general->addWidget( le_guid, row++, 1, 1, 2 );
- 
+
    if ( US_Settings::us_debug() == 0 )
    {
-      lb_guid->setVisible( false );
-      le_guid->setVisible( false );
+     lb_guid->setVisible( false );
+     le_guid->setVisible( false );
    }
-
-   // Row 10
-   le_lastupd = us_lineedit( "" );
-   le_lastupd->setPalette ( gray );
-   le_lastupd->setReadOnly( true );
-   general->addWidget( le_lastupd, row++, 1, 1, 2 );
 
    reset();       // This is the GeneralTab reset();
 }
