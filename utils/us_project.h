@@ -39,6 +39,7 @@ class US_UTIL_EXTERN US_Project
       QString          status;             //!< Project status
 
       projectStatus    saveStatus;         //!< Most recent save status
+      QDateTime        lastUpdated;        //!< Last date-time updated
 
       //! \brief Generic constructor for the US_Project class.
       US_Project();

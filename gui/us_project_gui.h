@@ -34,6 +34,10 @@ class US_ProjectGuiGeneral : public US_Widgets
    //! \param newGUID The new GUID value to load into the form
    void          setGUID( QString );
 
+   //! \brief Sets the Last Updated line edit value
+   //! \param lastupd The Last Updated value to load into the form
+   void          setLastUpd( QString );
+
    //! \brief Sets the Description textbox value
    //! \param newDesc The new description to load into the text box
    void          setDesc( QString );
@@ -44,6 +48,7 @@ class US_ProjectGuiGeneral : public US_Widgets
    QLineEdit*    le_investigator;         //!< Stores the investigator information
    QLineEdit*    le_projectDesc;          //!< A description of the project
    QLineEdit*    le_guid;                 //!< The unique GUID of the project
+   QLineEdit*    le_lastupd;              //!< Last update time of the project
 
    int*          investigatorID;          //!< Stores the investiator ID locally
 
@@ -369,6 +374,7 @@ class US_GUI_EXTERN US_ProjectGui : public US_WidgetsDialog
          QString    description;  //!< The overall description of the project
          QString    filename;     //!< The filename if saved to disk
          int        index;        //!< Used when indexing the information
+         QDateTime  lastUpdated;  //!< Last update date-time of project
       };
    
       QList< ProjectInfo >  info;      //!< Information to populate the project list widget
@@ -379,6 +385,7 @@ class US_GUI_EXTERN US_ProjectGui : public US_WidgetsDialog
       QStringList   descriptions;      //!< The descriptions in the project list
       QStringList   GUIDs;             //!< The GUIDs of the items in the project list
       QStringList   filenames;         //!< The filenames associated with disk saves
+      QList< QDateTime > lastUpds;     //!< The last updates of projects
    
       QMap< QListWidgetItem*, int > projectMap; //!< Maps the IDs with the listwidget items
    
