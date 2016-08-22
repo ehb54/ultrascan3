@@ -546,21 +546,66 @@ DbgLv(1) << "ii method" << ii << method << "mdes" << distros[ii].mdescr;
                   ||  methods.contains( "GA-GL-SG-MC" )
                   ||  methods.contains( "GA-GL-SC-MC" )
                   ||  methods.contains( "GA-GL-VR-MC" );
-   bool hv_pcsais   = methods.contains( "PCSA-IS"    );
-   bool hv_pcsasl   = methods.contains( "PCSA-SL"    );
-   bool hv_pcsads   = methods.contains( "PCSA-DS"    );
-   bool hv_pcsahl   = methods.contains( "PCSA-HL"    );
-   bool hv_pcsaismc = methods.contains( "PCSA-IS-MC" );
-   bool hv_pcsaslmc = methods.contains( "PCSA-SL-MC" );
-   bool hv_pcsadsmc = methods.contains( "PCSA-DS-MC" );
-   bool hv_pcsahlmc = methods.contains( "PCSA-HL-MC" );
-   bool hv_pcsaistr = methods.contains( "PCSA-IS-TR" );
-   bool hv_pcsasltr = methods.contains( "PCSA-SL-TR" );
-   bool hv_pcsadstr = methods.contains( "PCSA-DS-TR" );
-   bool hv_pcsahltr = methods.contains( "PCSA-HL-TR" );
-   bool hv_pcsa2o   = methods.contains( "PCSA-2O"    );
-   bool hv_pcsa2omc = methods.contains( "PCSA-2O-MC" );
-   bool hv_pcsa2otr = methods.contains( "PCSA-2O-TR" );
+   bool hv_pcsais   = methods.contains( "PCSA-IS"    )
+                  ||  methods.contains( "PCSA-GL-SG-IS" )
+                  ||  methods.contains( "PCSA-GL-SC-IS" )
+                  ||  methods.contains( "PCSA-GL-VR-IS" );
+   bool hv_pcsasl   = methods.contains( "PCSA-SL"    )
+                  ||  methods.contains( "PCSA-GL-SG-SL" )
+                  ||  methods.contains( "PCSA-GL-SC-SL" )
+                  ||  methods.contains( "PCSA-GL-VR-SL" );
+   bool hv_pcsads   = methods.contains( "PCSA-DS"    )
+                  ||  methods.contains( "PCSA-GL-SG-DS" )
+                  ||  methods.contains( "PCSA-GL-SC-DS" )
+                  ||  methods.contains( "PCSA-GL-VR-DS" );
+   bool hv_pcsahl   = methods.contains( "PCSA-HL"    )
+                  ||  methods.contains( "PCSA-GL-SG-HL" )
+                  ||  methods.contains( "PCSA-GL-SC-HL" )
+                  ||  methods.contains( "PCSA-GL-VR-HL" );
+   bool hv_pcsaismc = methods.contains( "PCSA-IS-MC" )
+                  ||  methods.contains( "PCSA-GL-SG-IS-MC" )
+                  ||  methods.contains( "PCSA-GL-SC-IS-MC" )
+                  ||  methods.contains( "PCSA-GL-VR-IS-MC" );
+   bool hv_pcsaslmc = methods.contains( "PCSA-SL-MC" )
+                  ||  methods.contains( "PCSA-GL-SG-SL-MC" )
+                  ||  methods.contains( "PCSA-GL-SC-SL-MC" )
+                  ||  methods.contains( "PCSA-GL-VR-SL-MC" );
+   bool hv_pcsadsmc = methods.contains( "PCSA-DS-MC" )
+                  ||  methods.contains( "PCSA-GL-SG-DS-MC" )
+                  ||  methods.contains( "PCSA-GL-SC-DS-MC" )
+                  ||  methods.contains( "PCSA-GL-VR-DS-MC" );
+   bool hv_pcsahlmc = methods.contains( "PCSA-HL-MC" )
+                  ||  methods.contains( "PCSA-GL-SG-HL-MC" )
+                  ||  methods.contains( "PCSA-GL-SC-HL-MC" )
+                  ||  methods.contains( "PCSA-GL-VR-HL-MC" );
+   bool hv_pcsaistr = methods.contains( "PCSA-IS-TR" )
+                  ||  methods.contains( "PCSA-GL-SG-IS-TR" )
+                  ||  methods.contains( "PCSA-GL-SC-IS-TR" )
+                  ||  methods.contains( "PCSA-GL-VR-IS-TR" );
+   bool hv_pcsasltr = methods.contains( "PCSA-SL-TR" )
+                  ||  methods.contains( "PCSA-GL-SG-SL-TR" )
+                  ||  methods.contains( "PCSA-GL-SC-SL-TR" )
+                  ||  methods.contains( "PCSA-GL-VR-SL-TR" );
+   bool hv_pcsadstr = methods.contains( "PCSA-DS-TR" )
+                  ||  methods.contains( "PCSA-GL-SG-DS-TR" )
+                  ||  methods.contains( "PCSA-GL-SC-DS-TR" )
+                  ||  methods.contains( "PCSA-GL-VR-DS-TR" );
+   bool hv_pcsahltr = methods.contains( "PCSA-HL-TR" )
+                  ||  methods.contains( "PCSA-GL-SG-HL-TR" )
+                  ||  methods.contains( "PCSA-GL-SC-HL-TR" )
+                  ||  methods.contains( "PCSA-GL-VR-HL-TR" );
+   bool hv_pcsa2o   = methods.contains( "PCSA-2O"    )
+                  ||  methods.contains( "PCSA-GL-SG-2O-TR" )
+                  ||  methods.contains( "PCSA-GL-SC-2O-TR" )
+                  ||  methods.contains( "PCSA-GL-VR-2O-TR" );
+   bool hv_pcsa2omc = methods.contains( "PCSA-2O-MC" )
+                  ||  methods.contains( "PCSA-GL-SG-2O-MC" )
+                  ||  methods.contains( "PCSA-GL-SC-2O-MC" )
+                  ||  methods.contains( "PCSA-GL-VR-2O-MC" );
+   bool hv_pcsa2otr = methods.contains( "PCSA-2O-TR" )
+                  ||  methods.contains( "PCSA-GL-SG-2O-TR" )
+                  ||  methods.contains( "PCSA-GL-SC-2O-TR" )
+                  ||  methods.contains( "PCSA-GL-VR-2O-TR" );
    bool hv_dmga     = methods.contains( "DMGA"       );
    bool hv_dmgamc   = methods.contains( "DMGA-MC"    );
    bool hv_dmgara   = methods.contains( "DMGA-RA"    );
@@ -1127,21 +1172,66 @@ DbgLv(1) << "RunIDSel:runID" << runID << "distrsize" << distros.size();
                                                << "GA-GL-SG-MC"
                                                << "GA-GL-SC-MC"
                                                << "GA-GL-VR-MC";
-      if ( ck_pcsais  ->isChecked() )  methods << "PCSA-IS";
-      if ( ck_pcsasl  ->isChecked() )  methods << "PCSA-SL";
-      if ( ck_pcsads  ->isChecked() )  methods << "PCSA-DS";
-      if ( ck_pcsahl  ->isChecked() )  methods << "PCSA-HL";
-      if ( ck_pcsaismc->isChecked() )  methods << "PCSA-IS-MC";
-      if ( ck_pcsaslmc->isChecked() )  methods << "PCSA-SL-MC";
-      if ( ck_pcsadsmc->isChecked() )  methods << "PCSA-DS-MC";
-      if ( ck_pcsahlmc->isChecked() )  methods << "PCSA-HL-MC";
-      if ( ck_pcsaistr->isChecked() )  methods << "PCSA-IS-TR";
-      if ( ck_pcsasltr->isChecked() )  methods << "PCSA-SL-TR";
-      if ( ck_pcsadstr->isChecked() )  methods << "PCSA-DS-TR";
-      if ( ck_pcsahltr->isChecked() )  methods << "PCSA-HL-TR";
-      if ( ck_pcsa2o  ->isChecked() )  methods << "PCSA-2O";
-      if ( ck_pcsa2omc->isChecked() )  methods << "PCSA-2O-MC";
-      if ( ck_pcsa2otr->isChecked() )  methods << "PCSA-2O-TR";
+      if ( ck_pcsais  ->isChecked() )  methods << "PCSA-IS"
+                                               << "PCSA-GL-SG-IS"
+                                               << "PCSA-GL-SC-IS"
+                                               << "PCSA-GL-VR-IS";
+      if ( ck_pcsasl  ->isChecked() )  methods << "PCSA-SL"
+                                               << "PCSA-GL-SG-SL"
+                                               << "PCSA-GL-SC-SL"
+                                               << "PCSA-GL-VR-SL";
+      if ( ck_pcsads  ->isChecked() )  methods << "PCSA-DS"
+                                               << "PCSA-GL-SG-DS"
+                                               << "PCSA-GL-SC-DS"
+                                               << "PCSA-GL-VR-DS";
+      if ( ck_pcsahl  ->isChecked() )  methods << "PCSA-HL"
+                                               << "PCSA-GL-SG-HL"
+                                               << "PCSA-GL-SC-HL"
+                                               << "PCSA-GL-VR-HL";
+      if ( ck_pcsaismc->isChecked() )  methods << "PCSA-IS-MC"
+                                               << "PCSA-GL-SG-IS-MC"
+                                               << "PCSA-GL-SC-IS-MC"
+                                               << "PCSA-GL-VR-IS-MC";
+      if ( ck_pcsaslmc->isChecked() )  methods << "PCSA-SL-MC"
+                                               << "PCSA-GL-SG-SL-MC"
+                                               << "PCSA-GL-SC-SL-MC"
+                                               << "PCSA-GL-VR-SL-MC";
+      if ( ck_pcsadsmc->isChecked() )  methods << "PCSA-DS-MC"
+                                               << "PCSA-GL-SG-DS-MC"
+                                               << "PCSA-GL-SC-DS-MC"
+                                               << "PCSA-GL-VR-DS-MC";
+      if ( ck_pcsahlmc->isChecked() )  methods << "PCSA-HL-MC"
+                                               << "PCSA-GL-SG-HL-MC"
+                                               << "PCSA-GL-SC-HL-MC"
+                                               << "PCSA-GL-VR-HL-MC";
+      if ( ck_pcsaistr->isChecked() )  methods << "PCSA-IS-TR"
+                                               << "PCSA-GL-SG-IS-TR"
+                                               << "PCSA-GL-SC-IS-TR"
+                                               << "PCSA-GL-VR-IS-TR";
+      if ( ck_pcsasltr->isChecked() )  methods << "PCSA-SL-TR"
+                                               << "PCSA-GL-SG-IS-TR"
+                                               << "PCSA-GL-SC-IS-TR"
+                                               << "PCSA-GL-VR-IS-TR";
+      if ( ck_pcsadstr->isChecked() )  methods << "PCSA-DS-TR"
+                                               << "PCSA-GL-SG-IS-TR"
+                                               << "PCSA-GL-SC-IS-TR"
+                                               << "PCSA-GL-VR-IS-TR";
+      if ( ck_pcsahltr->isChecked() )  methods << "PCSA-HL-TR"
+                                               << "PCSA-GL-SG-IS-TR"
+                                               << "PCSA-GL-SC-IS-TR"
+                                               << "PCSA-GL-VR-IS-TR";
+      if ( ck_pcsa2o  ->isChecked() )  methods << "PCSA-2O"
+                                               << "PCSA-GL-SG-2O"
+                                               << "PCSA-GL-SC-2O"
+                                               << "PCSA-GL-VR-2O";
+      if ( ck_pcsa2omc->isChecked() )  methods << "PCSA-2O-MC"
+                                               << "PCSA-GL-SG-2O-MC"
+                                               << "PCSA-GL-SC-2O-MC"
+                                               << "PCSA-GL-VR-2O-MC";
+      if ( ck_pcsa2otr->isChecked() )  methods << "PCSA-2O-TR"
+                                               << "PCSA-GL-SG-2O-TR"
+                                               << "PCSA-GL-SC-2O-TR"
+                                               << "PCSA-GL-VR-2O-TR";
       if ( ck_dmga    ->isChecked() )  methods << "DMGA";
       if ( ck_dmgamc  ->isChecked() )  methods << "DMGA-MC";
       if ( ck_dmgara  ->isChecked() )  methods << "DMGA-RA";
