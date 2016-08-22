@@ -743,7 +743,7 @@ timer.start();
    for ( int rr = 0; rr < runIDs.count(); rr++ )
    {
       QString runid    = runIDs[ rr ];
-      int nrmods;
+      int nrmods       = 0;
       query.clear();
 
       if ( runid != "UNASSIGNED" )
@@ -759,9 +759,11 @@ timer.start();
       {
          query << "count_models_by_editID" << invID << "1";
          nrmods          += db.functionQuery( query );
+         query.clear();
          query << "count_models_by_runID" << invID << "global%";
       }
       nrmods          += db.functionQuery( query );
+//DbgLv(1) << "KntM:   rr" << rr << "nrmods" << nrmods << "runid" << runid;
 
       rmodKnts << nrmods;
    }
