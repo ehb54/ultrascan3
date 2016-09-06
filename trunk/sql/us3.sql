@@ -59,6 +59,7 @@ CREATE  TABLE IF NOT EXISTS project (
   notes TEXT NULL ,
   description TEXT NULL ,
   status ENUM('submitted', 'designed', 'scheduled','uploaded', 'anlyzed', 'invoiced', 'paid', 'other') NOT NULL ,
+  lastUpdated TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP ,
   PRIMARY KEY (projectID) )
 ENGINE = InnoDB;
 
