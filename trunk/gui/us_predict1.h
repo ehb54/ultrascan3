@@ -63,6 +63,7 @@ class US_GUI_EXTERN US_Predict1 : public US_WidgetsDialog
       US_Analyte              analyte;
 
       static const int ARRAYSIZE = 999;
+		double 			max_x;
 
       double         oblate [ ARRAYSIZE ];
       double         rod    [ ARRAYSIZE ];
@@ -81,6 +82,7 @@ class US_GUI_EXTERN US_Predict1 : public US_WidgetsDialog
       QLineEdit*     le_viscosity;
       QLineEdit*     le_vbar;
       QLineEdit*     le_axial;
+      QLineEdit*     le_max_x;
 
       QLabel*        lb_info;
       QLabel*        lb_sphere [ 8 ];
@@ -119,7 +121,9 @@ class US_GUI_EXTERN US_Predict1 : public US_WidgetsDialog
 
       void update_buffer  ( const US_Buffer         );
       void update_vbar    ( const US_Analyte        );
+      void update_max_x   ( const QString&          );
       void update_solution( const US_Solution       );
+      void update_plot    ( void                    );
       void choose         ( int                     );
 
       void help           ( void )

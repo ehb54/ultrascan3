@@ -14,6 +14,7 @@
 #endif
 #include "qwt_legend.h"
 
+
 US_Predict1::US_Predict1( US_Hydrosim&     parm, 
                           const US_Analyte a_data,
                           int              disk_access,
@@ -33,23 +34,7 @@ US_Predict1::US_Predict1( US_Hydrosim&     parm,
    solution.vbar20    = parm.vbar;
    solution.vbar      = parm.vbar + ( 4.25e-4 * ( temperature - 20.0 ) );
 
-   double x = 1.1;
-
-   // From: K.E. van Holde, Biophysical Chemistry, 2nd edition, chapter 4.1
-   // Calculate frictional ratio as a function of axial ratio
-   for ( int i = 0; i < ARRAYSIZE; i++, x += 0.1 )
-   {
-      prolate[ i ] = pow( x, -1.0 / 3.0 ) * sqrt( sq( x ) - 1.0 ) / 
-                     log( x + sqrt( sq( x ) - 1.0 ) );
-      
-      oblate[ i ]  = sqrt( sq( x ) - 1.0 ) / 
-                     ( pow( x, 2.0 / 3.0 ) * atan( sqrt( sq( x ) - 1.0 ) ) );
-      
-      rod[ i ]     = pow( 2.0 / 3.0, 1.0 / 3.0 ) * pow( x, 2.0 / 3.0 ) / 
-                     ( log( 2.0 * x ) - 0.3 );
-      
-      ratio_x[ i ] = x;
-   }
+	max_x = 100;
 
    setWindowTitle( tr( "Modeling s, D, and f from MW for 4 basic shapes" ) );
    setPalette( US_GuiSettings::frameColor() );
@@ -163,6 +148,16 @@ US_Predict1::US_Predict1( US_Hydrosim&     parm,
                       SLOT  ( update_ratio   ( void ) ) );
    controls->addWidget( le_axial, c_row++, 1 );
 
+   // Max x range
+   QLabel* lb_max_x = us_label( tr( "Maximum Ratio:" ) );
+   controls->addWidget( lb_max_x, c_row, 0 );
+
+   le_max_x = us_lineedit();
+   le_max_x->setText( QString::number( max_x, 'f', 3 ) );
+   connect( le_max_x, SIGNAL( textChanged ( const QString& ) ), 
+                      SLOT  ( update_max_x   ( const QString& ) ) );
+   controls->addWidget( le_max_x, c_row++, 1 );
+
    // Information
    QPalette p = US_GuiSettings::editColor();
 
@@ -199,8 +194,9 @@ US_Predict1::US_Predict1( US_Hydrosim&     parm,
          tr( "Axial Ratio" ),
          tr( "f / f0" ) );
 
-   plot->setAxisScale(QwtPlot::xBottom, 0.0, 100.0 );
-   plot->setAxisScale(QwtPlot::yLeft  , 1.0,   4.5 );
+   plot->setAxisScale(QwtPlot::xBottom, 0.0, max_x );
+//   plot->setAxisScale(QwtPlot::yLeft  , 1.0,   9.5 );
+	plot->setAxisAutoScale( QwtPlot::yLeft );
    plot->setMinimumSize( 650, 350 );
 
 
@@ -228,10 +224,11 @@ US_Predict1::US_Predict1( US_Hydrosim&     parm,
    rod_curve->setPen( QPen( QBrush( Qt::cyan ), 2.0 ) );
    rod_curve->setSamples( ratio_x, rod, ARRAYSIZE );
 
+	double maxy = max(prolate_curve->maxYValue(), rod_curve->maxYValue());
    vline_x[ 0 ] = ratio;
    vline_x[ 1 ] = ratio;
-   vline_y[ 0 ] = 1.1;
-   vline_y[ 1 ] = 4.3;
+   vline_y[ 0 ] = 0;
+   vline_y[ 1 ] = maxy;
 
    vline_curve = us_curve( plot, tr( "Axial Ratio" ) );
    vline_curve->setPen ( QPen( QBrush( Qt::white  ), 1.5 ) );
@@ -298,7 +295,45 @@ US_Predict1::US_Predict1( US_Hydrosim&     parm,
    }
 
    main->addLayout( values );
+	update_plot();
    update();
+}
+
+void US_Predict1::update_plot( void )
+{
+   double x = 1.1;
+   // From: K.E. van Holde, Biophysical Chemistry, 2nd edition, chapter 4.1
+   // Calculate frictional ratio as a function of axial ratio
+   for ( int i = 0; i < ARRAYSIZE; i++, x += max_x/ARRAYSIZE )
+   {
+      prolate[ i ] = pow( x, -1.0 / 3.0 ) * sqrt( sq( x ) - 1.0 ) / 
+                     log( x + sqrt( sq( x ) - 1.0 ) );
+      
+      oblate[ i ]  = sqrt( sq( x ) - 1.0 ) / 
+                     ( pow( x, 2.0 / 3.0 ) * atan( sqrt( sq( x ) - 1.0 ) ) );
+      
+      rod[ i ]     = pow( 2.0 / 3.0, 1.0 / 3.0 ) * pow( x, 2.0 / 3.0 ) / 
+                     ( log( 2.0 * x ) - 0.3 );
+      
+      ratio_x[ i ] = x;
+   }
+   prolate_curve->setSamples( ratio_x, prolate, ARRAYSIZE );
+   rod_curve->setSamples( ratio_x, rod, ARRAYSIZE );
+   oblate_curve ->setSamples( ratio_x, oblate, ARRAYSIZE );
+	double maxy = max(prolate_curve->maxYValue(), rod_curve->maxYValue());
+   vline_x[ 0 ] = ratio;
+   vline_x[ 1 ] = ratio;
+   vline_y[ 0 ] = 0;
+   vline_y[ 1 ] = maxy;
+
+   vline_curve->setPen ( QPen( QBrush( Qt::white  ), 1.5 ) );
+   vline_curve->setSamples( vline_x, vline_y, 2 );
+   plot->setAxisScale(QwtPlot::xBottom, 1.0, max_x );
+   plot->setAxisScale(QwtPlot::yLeft, 0.9, maxy );
+	//plot->setAxisAutoScale( QwtPlot::yLeft );
+   plot->setMinimumSize( 650, 350 );
+
+	plot->replot();
 }
 
 void US_Predict1::complete( void )
@@ -321,6 +356,13 @@ void US_Predict1::update_mw( const QString& s )
 {
    mw = s.toDouble();
    update();
+}
+
+void US_Predict1::update_max_x( const QString& s )
+{
+   max_x = s.toDouble();
+   update();
+   update_plot();
 }
 
 void US_Predict1::degC( const QString& s )
@@ -437,16 +479,16 @@ void US_Predict1::mouseU( const QwtDoublePoint& p )
                 "The rod model is unreliable\n"
                 "for axial ratios less than 6.0" );
    
-   else if ( ratio >= 6.0 && ratio <= 100.0 )
+   else if ( ratio >= 6.0 && ratio <= 10000.0 )
       msg = tr( "Please select an axial ratio by\n"
                 "dragging the white bar with the\n"
                 "mouse to change the axial ratio" );
 
-   else if ( ratio > 100 )
+   else if ( ratio > 10000 )
    {
       msg = tr( "Attention:\n\n"
-                "The upper axial ratio limit is 100!" );
-      ratio = 100.0;
+                "The upper axial ratio limit is 10000!" );
+      ratio = 10000.0;
    }
 
    lb_info->setText( msg );
