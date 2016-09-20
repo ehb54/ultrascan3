@@ -15,6 +15,7 @@ US_TimeState::US_TimeState() : QObject()
    filename    = QString( "" );
    filepath    = filename;
    fvers       = QString( _TMST_VERS_ );
+   imp_type    = QString( "XLA" );
    fileo       = NULL;
    filei       = NULL;
    dso         = NULL;
@@ -75,8 +76,8 @@ int US_TimeState::open_write_data( QString fpath,
    rec_size    = 0;
 
    strncpy( cdata,     _TMST_MAGI_, 4 );  // "USTS"
-   strncpy( cdata + 4, _TMST_VERS_, 3 );  // "1.0"
-   cdata[ 5 ]  = cdata[ 6 ];              // '1','0'
+   strncpy( cdata + 4, _TMST_VERS_, 3 );  // "2.0"
+   cdata[ 5 ]  = cdata[ 6 ];              // '2','0'
    fhdr_size   = 6;
 
    keys.clear();
@@ -356,10 +357,11 @@ int US_TimeState::close_write_data()
 }
 
 // Write the definitions (XML) file for the last opened output data file
-int US_TimeState::write_defs( double timeinc )
+int US_TimeState::write_defs( double timeinc, QString imptype )
 {
    int status  = 0;
    time_inc    = timeinc < 0.0 ? time_inc : timeinc;
+   imp_type    = imptype.isEmpty() ? imp_type : imptype;
 
    QString xfname = QString( filename ).section( ".", 0, -2 ) + ".xml";
    QString xfpath = QString( filepath ).section( ".", 0, -2 ) + ".xml";
@@ -379,6 +381,7 @@ int US_TimeState::write_defs( double timeinc )
    xml.writeDTD              ( "<!DOCTYPE US_TimeState>" );
    xml.writeStartElement( "TimeState" );    // <TimeState version=...>
    xml.writeAttribute   ( "version",        QString( _TMST_VERS_ ) );
+   xml.writeAttribute   ( "import_type",    imp_type               );
 
    xml.writeStartElement( "file" );         // <file time_count=...>
    xml.writeAttribute   ( "time_count",     QString::number( ntimes )     );
@@ -422,6 +425,7 @@ int US_TimeState::open_read_data( QString fpath )
    filename    = filepath.section( "/", -1, -1 );
    dsi         = new QDataStream( filei );
    fvers       = QString( _TMST_VERS_ );
+   imp_type    = QString( "XLA" );
 
    rd_open     = true;
    wr_open     = false;
@@ -443,21 +447,21 @@ int US_TimeState::open_read_data( QString fpath )
    cdata[ 7 ]  = '.';
    cdata[ 8 ]  = cdata[ 5 ];
    cdata[ 9 ]  = '\0';
-   if ( strncmp( cdata+6, _TMST_VERS_, 3 ) )
-   {  // Error in version of file
-      status     = 502;
-      set_error( status );
-      error_msg += fvers + " " + QString( cdata+6 ).left( 3 );
-      return status;
-   }
+//   if ( strncmp( cdata+6, _TMST_VERS_, 3 ) )
+//   {  // Error in version of file
+//      status     = 502;
+//      set_error( status );
+//      error_msg += fvers + " " + QString( cdata+6 ).left( 3 );
+//      return status;
+//   }
 
    ntimes      = 0;                     // Initialize counts and size
    nvalues     = 0;
    rec_size    = 0;
 
    strncpy( cdata,   _TMST_MAGI_, 4 );  // "USTS"
-   strncpy( cdata+4, _TMST_VERS_, 3 );  // "1.0"
-   cdata[ 5 ]  = cdata[ 6 ];            // '1','0'
+   strncpy( cdata+4, _TMST_VERS_, 3 );  // "2.0"
+   cdata[ 5 ]  = cdata[ 6 ];            // '2','0'
 
    keys.clear();                        // Initialize field attributes
    fmts.clear();
@@ -492,8 +496,9 @@ int US_TimeState::open_read_data( QString fpath )
          attr       = xml.attributes();
 
          if ( xname == "TimeState" )
-         {  // Parse file/object version
+         {  // Parse file/object version and import type
             fvers      = attr.value( "version" ).toString();
+            imp_type   = attr.value( "import_type" ).toString();
          }
 
          else if ( xname == "file" )
@@ -545,6 +550,28 @@ int US_TimeState::time_range( bool* constti, double* timeinc, double* ftime )
    if ( ftime   != NULL )  *ftime   = time_first;
 
    return ntimes;
+}
+
+// Get definitions version and import type
+bool US_TimeState::origin( QString* dversP, QString* itypeP )
+{
+   bool have_type = false;
+   double ddver   = fvers.toDouble();
+   QString itype( "(unknown)" );
+
+   if ( ddver > 1.0 )
+   {
+      itype       = imp_type;
+      have_type   = true;
+   }
+
+   if ( dversP != NULL )
+      *dversP     = fvers;
+
+   if ( itypeP != NULL )
+      *itypeP     = itype;
+
+   return have_type;
 }
 
 // Get record field keys and formats
