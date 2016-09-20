@@ -32,6 +32,8 @@ US_TmstPlot::US_TmstPlot( QWidget* parent, const QString tspath )
    nfkeys           = 0;
    ndkeys           = 0;
    ntimes           = 0;
+   defvers          = QString( "1.0" );
+   imptype          = QString( "(unknown)" );
 DbgLv(1) << "TP:mn: tmstpath" << tmstpath;
 DbgLv(1) << "TP:mn:   xdpath" << xdpath;
 
@@ -330,13 +332,15 @@ void US_TmstPlot::details()
    // Compose the details text
 
    QString dtext    = tr( "Time State Details:\n\n" );
-   dtext += tr( "Run ID:            %1\n"   ).arg( runID );
+   dtext += tr( "Run ID:            %1\n"   ).arg( runID   );
    dtext += tr( "TMST Directory:    %1\n"   ).arg( dat_dir );
    dtext += tr( "TMST File Name:    %1\n"   ).arg( tsfname );
    dtext += tr( "Def. File Name:    %1\n\n" ).arg( xdfname );
-   dtext += tr( "Field Key Count:   %1\n"   ).arg( nfkeys );
-   dtext += tr( "Data Key Count:    %1\n"   ).arg( ndkeys );
-   dtext += tr( "Time Value Count:  %1\n"   ).arg( ntimes );
+   dtext += tr( "Field Key Count:   %1\n"   ).arg( nfkeys  );
+   dtext += tr( "Data Key Count:    %1\n"   ).arg( ndkeys  );
+   dtext += tr( "Time Value Count:  %1\n"   ).arg( ntimes  );
+   dtext += tr( "Def. Version:      %1\n"   ).arg( defvers );
+   dtext += tr( "Import Type:       %1\n"   ).arg( imptype );
    int jl = ntimes - 1;
    int jm = ntimes / 2;
 
@@ -382,6 +386,7 @@ DbgLv(1) << "TP:rdda: *ERROR* openread :" << tsobj.last_error_message();
       return;
    }
 
+   tsobj.origin( &defvers, &imptype );    // Def version and import type
    tsobj.field_keys( &fkeys, &ffmts );    // Field keys and formats
    nfkeys         = fkeys.count();        // Field keys count
    ntimes         = tsobj.time_count();   // Time values count

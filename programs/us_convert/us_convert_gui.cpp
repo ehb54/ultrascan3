@@ -2124,6 +2124,13 @@ DbgLv(1) << " sTI: nch ntr" << nchans << ntrips << "trLSv" << trListSave;
    if ( isMwl )
    {  // For MWL, wavelength lists need rebuilding
 DbgLv(1) << " sTI: IS Mwl  outchan sz" << out_channels.count();
+      if ( mwl_data.countOf( "lambda" ) < 1 )
+      {
+DbgLv(1) << " sTI:   Creating MWL from AUC";
+         mwl_data.load_mwl( allData );
+         mwl_setup();
+      }
+
       for ( int ccx = 0; ccx < nchans; ccx++ )
       {  // Reformat the triples entries
          nlambda        = mwl_data.lambdas( exp_lambdas, ccx );
@@ -2434,11 +2441,13 @@ void US_ConvertGui::define_reference( void )
    {  // First insure that the full range of wavelengths are available
       //  for defining reference scans
       int kdiff       = 0;
+DbgLv(1) << "CGui: (1)dRef: isMwl=true";
 
       for ( int ccx = 0; ccx < out_channels.size(); ccx++ )
       {  // Review the wavelength ranges for each channel
          QVector< int > wvs;
          int klamb       = mwl_data.lambdas( wvs, ccx );
+DbgLv(1) << "CGui: (2)dRef:  kl nl kwvs" << klamb << nlamb_i << wvs.count();
 
          if ( klamb != nlamb_i )
          {  // Count of wavelengths differs from the full input range
@@ -2451,6 +2460,8 @@ void US_ConvertGui::define_reference( void )
             {  // Record any differences
                if ( wvs[ jj ] != all_lambdas[ jj ] )
                   kdiff++;
+DbgLv(1) << "CGui: (2)dRef:   jj wj aj kd" << jj << wvs[jj] << all_lambdas[jj]
+ << kdiff;
             }
          }
       }
@@ -4000,7 +4011,11 @@ void US_ConvertGui::plot_all( void )
          rr[ jj ]    = currentData->radius( jj );
          vv[ jj ]    = scan->rvalues[ jj ];
 
+#if QT_VERSION < 0x050000
          if ( vv[ jj ] > 1.0e99 || isnan( vv[ jj ] ) )
+#else
+         if ( vv[ jj ] > 1.0e99  ||  vv[ jj ] != vv[ jj ] )
+#endif
          {
             // For some reason vv[jj] is going off the scale
             // Don't know why, but filter out for now

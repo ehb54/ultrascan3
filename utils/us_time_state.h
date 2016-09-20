@@ -80,8 +80,9 @@ class US_UTIL_EXTERN US_TimeState : public QObject
 
       //! \brief Write the definitions XML file for the last opened data file.
       //! \param timeinc  Time increment (0.0 -> no time increment).
+      //! \param imptype  Import type ("XLA", "MWRS", "CFA", "XPN" ).
       //! \return         Status flag (0->OK).
-      int write_defs( double = 0.0 );
+      int write_defs( double = 0.0, QString = "" );
 
       //! \brief Flush any remaining records and close the output data file.
       //! \return         Status flag (0->OK).
@@ -102,6 +103,12 @@ class US_UTIL_EXTERN US_TimeState : public QObject
       //! \param ftime    Pointer for return of first time.
       //! \return         Number of value records (times) present in the data.
       int time_range( bool*, double*, double* );
+
+      //! \brief Get definition origin (version and import type)
+      //! \param dversP   Pointer for return of definition version.
+      //! \param itypeP   Pointer for return of import type.
+      //! \return         Flag if import type is known.
+      bool origin( QString*, QString* );
 
       //! \brief Get record field keys and formats.
       //! \param keysP    Pointer for return of record field keys.
@@ -198,6 +205,7 @@ class US_UTIL_EXTERN US_TimeState : public QObject
       QString      filename;        //!< TimeState binary base file name.
       QString      filepath;        //!< TimeState binary full file path.
       QString      fvers;           //!< File version string.
+      QString      imp_type;        //!< Import type ("XLA"|"MWRS"|"CFA"|"XPN").
       QString      error_msg;       //!< Current error message string.
 
       bool         lit_endian;      //!< Flag:  machine is little-endian.

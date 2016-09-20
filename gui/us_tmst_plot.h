@@ -39,6 +39,8 @@ class US_GUI_EXTERN US_TmstPlot : public US_WidgetsDialog
       QMap< QString, double >       davgs;  //!< Data averages
 
       QString       tmstpath;               //!< Full path to .tmst file
+      QString       defvers;                //!< Definitions file version
+      QString       imptype;                //!< Import type ("XLA"|"MWRS",...)
 
       int           dbg_level;              //!< Debug level
       int           nfkeys;                 //!< Number of file field keys
