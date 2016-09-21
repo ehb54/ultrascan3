@@ -2,6 +2,7 @@ include ( ../library.pri )
 
 QT          -= gui
 QT          += network
+QT          += sql
 unix: TARGET = us_utils
 
 macx {
@@ -25,6 +26,7 @@ HEADERS      = us_analyte.h       \
                us_astfem_math.h   \
                us_astfem_rsa.h    \
                us_buffer.h        \
+               us_cfa_data.h      \
                us_constants.h     \
                us_crc.h           \
                us_dataIO.h        \
@@ -59,12 +61,14 @@ HEADERS      = us_analyte.h       \
                us_time_state.h    \
                us_util.h          \
                us_vector.h        \
+               us_xpn_data.h      \
                us_zsolute.h
 
 SOURCES      = us_analyte.cpp       \
                us_astfem_math.cpp   \
                us_astfem_rsa.cpp    \
                us_buffer.cpp        \
+               us_cfa_data.cpp      \
                us_constants.cpp     \
                us_crc.cpp           \
                us_dataIO.cpp        \
@@ -99,6 +103,7 @@ SOURCES      = us_analyte.cpp       \
                us_time_state.cpp    \
                us_util.cpp          \
                us_vector.cpp        \
+               us_xpn_data.cpp      \
                us_zsolute.cpp
 
 # Only include us_crypto when not on a supercomputer
