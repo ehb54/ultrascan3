@@ -357,6 +357,13 @@ int US_XpnData::scan_xpndata( const int runId, const QChar scantype )
    sqry.next();
    count           = sqry.value( 0 ).toInt();
 DbgLv(1) << "XpDa:s_x: sRunId" << sRunId << "count" << count;
+   if ( count < 1 )
+   {
+      return count;
+   }
+
+   emit status_text( tr( " Scanning %1 rows of %2 table..." )
+                     .arg( count ).arg( tabname ) );
 
    // Get columns and determine indecies of fields
    qrytext         = "SELECT * from " + qrytab
@@ -411,7 +418,7 @@ DbgLv(1) << "XpDa:s_x:  isctyp scantype" << isctyp << scantype;
    while ( sqry.next() )
    {
       rows++;
-      emit status_text( tr( "Of %1 ScanData(%2) rows: row %3" )
+      emit status_text( tr( "Of %1 ScanData(%2) rows, queried row %3" )
                         .arg( count ).arg( scantype ).arg( rows ) );
 
       switch ( isctyp )
@@ -698,6 +705,13 @@ void US_XpnData::clear()
    wavelns    .clear();     // Raw input wavelengths
    stgnbrs    .clear();     // Stage Numbers, selected type
    scnnbrs    .clear();     // Scan Numbers, selected type
+   a_radii    .clear();
+   datrecs    .clear();
+   tExprun    .clear();
+   tAsdata    .clear();
+   tFsdata    .clear();
+   tIsdata    .clear();
+   tWsdata    .clear();
 
    fpaths     .clear();
    fnames     .clear();
@@ -706,7 +720,9 @@ void US_XpnData::clear()
    ccdescs    .clear();
    triples    .clear();
    trnodes    .clear();
-   datrecs    .clear();
+   r_rpms     .clear();
+   s_rpms     .clear();
+   a_rpms     .clear();
 
    nfile      = 0;
    nscan      = 0;
@@ -828,12 +844,13 @@ QDateTime time10=QDateTime::currentDateTime();
       for ( int sgx = 0; sgx < nstgn; sgx++ )
       {  // Set scan values
          stgnbr            = stgnbrs[ sgx ];
-         int stgnbr     = stgnbrs[sgx];
          for ( int scx = 0; scx < nscnn; scx++ )
          {  // Set scan values
             scnnbr            = scnnbrs[ scx ];
 
             int datx          = scan_data_index( trnode, stgnbr, scnnbr );
+
+            if ( datx < 0 )  continue;
 
             set_scan_data( datx );
 
@@ -1139,9 +1156,10 @@ void US_XpnData::run_values( QString& arunid, QString& aruntype )
 }
 
 // Set a common Scan Data table record
-void US_XpnData::set_scan_data( const int datx )
+void US_XpnData::set_scan_data( const int datx, const QString arType )
 {
-   if ( runType == "RI" )
+   QString rType    = arType.isEmpty() ? runType : arType;
+   if ( rType == "RI" )
    {
       tbAsData* asdrow = &tAsdata[ datx ];
       csdrec.dataId    = asdrow->dataId;
@@ -1159,14 +1177,13 @@ void US_XpnData::set_scan_data( const int datx )
       csdrec.omgSqT    = asdrow->omgSqT;
       csdrec.count     = asdrow->count;
       csdrec.expstart  = asdrow->expstart;
-      csdrec.samplName = asdrow->samplName;
       csdrec.scanTypeF = asdrow->scanTypeF;
       csdrec.radPath   = asdrow->radPath;
       csdrec.rads      = &asdrow->rads;
       csdrec.vals      = &asdrow->vals;
    }
 
-   else if ( runType == "FI" )
+   else if ( rType == "FI" )
    {
       tbFsData* fsdrow = &tFsdata[ datx ];
       csdrec.dataId    = fsdrow->dataId;
@@ -1184,14 +1201,13 @@ void US_XpnData::set_scan_data( const int datx )
       csdrec.omgSqT    = fsdrow->omgSqT;
       csdrec.count     = fsdrow->count;
       csdrec.expstart  = fsdrow->expstart;
-      csdrec.samplName = fsdrow->samplName;
       csdrec.scanTypeF = fsdrow->scanTypeF;
       csdrec.radPath   = fsdrow->radPath;
       csdrec.rads      = &fsdrow->rads;
       csdrec.vals      = &fsdrow->vals;
    }
 
-   else if ( runType == "IP" )
+   else if ( rType == "IP" )
    {
       tbIsData* isdrow = &tIsdata[ datx ];
       csdrec.dataId    = isdrow->dataId;
@@ -1209,14 +1225,13 @@ void US_XpnData::set_scan_data( const int datx )
       csdrec.omgSqT    = isdrow->omgSqT;
       csdrec.count     = isdrow->count;
       csdrec.expstart  = isdrow->expstart;
-      csdrec.samplName = isdrow->samplName;
       csdrec.scanTypeF = isdrow->scanTypeF;
       csdrec.radPath   = "A";
       csdrec.rads      = &isdrow->rads;
       csdrec.vals      = &isdrow->vals;
    }
 
-   else if ( runType == "WI" )
+   else if ( rType == "WI" )
    {
       tbWsData* wsdrow = &tWsdata[ datx ];
       csdrec.dataId    = wsdrow->dataId;
@@ -1234,7 +1249,6 @@ void US_XpnData::set_scan_data( const int datx )
       csdrec.omgSqT    = wsdrow->omgSqT;
       csdrec.count     = wsdrow->count;
       csdrec.expstart  = wsdrow->expstart;
-      csdrec.samplName = wsdrow->samplName;
       csdrec.scanTypeF = wsdrow->scanTypeF;
       csdrec.radPath   = wsdrow->radPath;
       csdrec.rads      = &wsdrow->wvls;
@@ -1373,22 +1387,21 @@ QString US_XpnData::runDetails( void )
 {
    // Create report string
    QString dbfn   = dbfile.section( "/", -1, -1 );
-   int kexrun     = tExprun.count();
 
    // Create report string
 
    QString msg = tr( "XPN Data Statistics for RunID \"%1\",\n" )
                                            .arg( runID );
-   msg += tr( " from Directory \"%1\",\n" ).arg( cur_dir );
-
    if ( is_raw )
    {
-      msg += tr( " using file \"%1\" .\n" ).arg( dbfn );
+      msg += tr( " from Database at Host:Port %1:%2 ." )
+               .arg( dbhost ).arg( dbport ) ;
       msg += tr( "\nData Summary.\n" );
    }
 
    else
    {
+      msg += tr( " from Directory \"%1\",\n" ).arg( cur_dir );
       msg += tr( " using files from \"%1\"\n" ) .arg( fnames[ 0 ] );
       msg += tr( "               to \"%1\".\n" ).arg( fnames[ nfile - 1 ] );
       msg += tr( "\nData Summary.\n" );
@@ -1401,92 +1414,114 @@ QString US_XpnData::runDetails( void )
    msg += tr( "    Scan Count (max.):        %1\n" ).arg( nscan );
    msg += tr( "    Wavelengths Count:        %1\n" ).arg( nlambda );
 
-   if ( is_raw )
-   {  // Input is raw XPN DB
-      msg += tr( "\nDatabase Tables.\n" );
-      msg += tr( "  Table Name:  'AbsMeta'\n" );
-      msg += tr( "    Count:                    %1\n" ).arg( kexrun );
-      msg += tr( "    First ScanID:             %1\n" )
-                .arg( tExprun[   0 ].runId );
-      msg += tr( "    Last ScanID:              %1\n" )
-                .arg( tExprun[   1 ].runId );
-   }  // END: input is raw XPN DB
+   // Report on *ScanData table statistics
+   QStringList rtyps;
+   rtyps << "RI" << "FI" << "IP" << "WI";
+   msg += tr( "\nScanData Tables.\n" );
 
-   else
-   {  // Input is AUC files
-      QDir tdir( cur_dir, "*", QDir::Name,
-                 QDir::Files | QDir::Readable );
-      QStringList tmfs = tdir.entryList( QStringList( "*.tmst" ),
-         QDir::Files, QDir::Name );
-      int ntfile     = tmfs.count();
-      int ltr        = ntriple - 1;
-      int lwv        = nlambda - 1;
-DbgLv(1) << "XpDa:Det: ltr" << ltr << triples.count();
-DbgLv(1) << "XpDa:Det: lwv" << lwv << wavelns.count();
-      msg += tr( "    First Triple:             %1\n" ).arg( triples[   0 ] );
-      msg += tr( "    Last  Triple:             %1\n" ).arg( triples[ ltr ] );
-      msg += tr( "    First Wavelength:         %1\n" ).arg( wavelns[   0 ] );
-      msg += tr( "    Last  Wavelength:         %1\n" ).arg( wavelns[ lwv ] );
-      msg += tr( "\nTime State Information.\n" );
-      msg += tr( "  Time State Files\n" );
-      msg += tr( "    TMST File Count:          %1\n" ).arg( ntfile );
+   for ( int ii = 0; ii < rtyps.count(); ii++ )
+   {
+      QString rtype = rtyps[ ii ];
+      QString tabname( "(unknown)" );
+      int sdknt     = 0;
 
-      if ( ntfile > 0 )
-      {  // TMST file exists, so report on it
-         QString tmfn   = tmfs[ 0 ];
-         QString xmfn   = QString( tmfn ).replace( ".tmst", ".xml" );
-         QString tpath  = cur_dir + tmfn;
-         QString xpath  = cur_dir + xmfn;
-DbgLv(1) << "XpDa:Det: tmfn" << tmfn;
-DbgLv(1) << "XpDa:Det: xmfn" << xmfn;
-         int nxfile     = QFile( xpath ).exists() ? 1 : 0;
-         msg += tr( "    TM XML File Count:        %1\n" ).arg( nxfile );
-         msg += tr( "    TMST File Name:           %1\n" ).arg( tmfn );
-         msg += tr( "    Definition File Name:     %1\n" ).arg( xmfn );
-      // msg += tr( "012345678901234567890123458789%1\n" )
-         const int flen = 30;
-         const QString spad( "                           " );
-         US_TimeState* tsobj = new US_TimeState();
-DbgLv(1) << "XpDa:Det: tpath" << tpath;
-         tsobj->open_read_data( tpath );
-DbgLv(1) << "XpDa:Det:  open:lemsg" << tsobj->last_error_message();
-         QStringList fkeys;
-         QStringList ffmts;
-         int nrec       = tsobj->time_count();
-         tsobj->field_keys( &fkeys, &ffmts );
-DbgLv(1) << "XpDa:Det:  fkey:lemsg" << tsobj->last_error_message();
-         int nkey       = fkeys.count();
-DbgLv(1) << "XpDa:Det: nrec nkey" << nrec << nkey;
-         msg += tr( "  Time State Values\n" );
-         msg += tr( "    Total Time Records:       %1\n" ).arg( nrec );
-
-         for ( int jj = 0; jj < 2; jj++ )
-         {
-            QString ixst( ( jj == 0 ) ? "First" : "Last" );
-            int rcx        = ( jj == 0 ) ? 0 : nrec - 1;
-            tsobj->read_record( rcx );
-
-            for ( int kk = 0; kk < nkey; kk++ )
-            {
-               QString ckey   = fkeys[ kk ];
-               QString cfmt   = ffmts[ kk ].left( 1 );
-               QString ctitl  = QString( "    " ) + ixst + " " + ckey + ":";
-               QString cval( "???" );
-
-               if ( cfmt == "I" )
-                  cval        = QString::number( tsobj->time_ivalue( ckey ) );
-               if ( cfmt == "F" )
-                  cval        = QString::number( tsobj->time_dvalue( ckey ) );
-               if ( cfmt == "C" )
-                  cval        = tsobj->time_svalue( ckey );
-
-               QString cmsg   = QString( ctitl + spad ).left( flen )
-                                + cval + "\n";
-               msg += cmsg;
-            }
-         }
+      if (      rtype == "RI" )
+      {
+         tabname  = "AbsorbanceScanData";
+         sdknt    = tAsdata.count();
       }
-   }
+      else if ( rtype == "FI" )
+      {
+         tabname  = "FluorescenceScanData";
+         sdknt    = tFsdata.count();
+      }
+      else if ( rtype == "IP" )
+      {
+         tabname  = "InterferenceScanData";
+         sdknt    = tIsdata.count();
+      }
+      else if ( rtype == "WI" )
+      {
+         tabname  = "WavelengthScanData";
+         sdknt    = tWsdata.count();
+      }
+
+      msg += tr( "\n  Table Name:  '" ) + tabname + "'  (" + rtype + ")\n";
+      msg += tr( "    Count of Data Records:    %1\n" ).arg( sdknt );
+
+      if ( sdknt < 1 )  continue;
+
+      int exptm1, exptm2, stage1, stage2, scann1, scann2;
+      int wavel1, wavel2, vlknt1, vlknt2;
+      double tempe1, tempe2, speed1, speed2, omgsq1, omgsq2;
+      double radvs1, radvs2, radve1, radve2;
+      double valus1, valus2, value1, value2;
+      QString sname1, sname2;
+
+      for ( int jj = 0; jj < sdknt; jj++ )
+      {
+         set_scan_data( jj, rtype );
+
+         exptm2        = csdrec.exptime;
+         stage2        = csdrec.stageNum;
+         scann2        = csdrec.scanSeqN;
+         wavel2        = csdrec.wavelen;
+         tempe2        = csdrec.tempera;
+         speed2        = csdrec.speed;
+         omgsq2        = csdrec.omgSqT;
+         vlknt2        = csdrec.count;
+         radvs2        = csdrec.rads->at( 0 );
+         radve2        = csdrec.rads->at( vlknt2 - 1 );
+         valus2        = csdrec.vals->at( 0 );
+         value2        = csdrec.vals->at( vlknt2 - 1 );
+         sname2        = csdrec.samplName;
+
+         if ( jj == 0 )
+         {
+            exptm1        = exptm2;
+            stage1        = stage2;
+            scann1        = scann2;
+            wavel1        = wavel2;
+            tempe1        = tempe2;
+            speed1        = speed2;
+            omgsq1        = omgsq2;
+            vlknt1        = vlknt2;
+            radvs1        = radvs2;
+            radve1        = radve2;
+            valus1        = valus2;
+            value1        = value2;
+            sname1        = sname2;
+         }
+      }  // END: table instance loop
+
+      msg += tr( "    First Seconds:            %1\n" ).arg( exptm1 );
+      msg += tr( "    Last  Seconds:            %1\n" ).arg( exptm2 );
+      msg += tr( "    First Stage:              %1\n" ).arg( stage1 );
+      msg += tr( "    Last  Stage:              %1\n" ).arg( stage2 );
+      msg += tr( "    First Scan Number:        %1\n" ).arg( scann1 );
+      msg += tr( "    Last  Scan Number:        %1\n" ).arg( scann2 );
+      msg += tr( "    First Wavelength:         %1\n" ).arg( wavel1 );
+      msg += tr( "    Last  Wavelength:         %1\n" ).arg( wavel2 );
+      msg += tr( "    First Temperature:        %1\n" ).arg( tempe1 );
+      msg += tr( "    Last  Temperature:        %1\n" ).arg( tempe2 );
+      msg += tr( "    First Speed (RPM):        %1\n" ).arg( speed1 );
+      msg += tr( "    Last  Speed (RPM):        %1\n" ).arg( speed2 );
+      msg += tr( "    First OmegaSquaredT:      %1\n" ).arg( omgsq1 );
+      msg += tr( "    Last  OmegaSquaredT:      %1\n" ).arg( omgsq2 );
+      msg += tr( "    First Value Count:        %1\n" ).arg( vlknt1 );
+      msg += tr( "    Last  Value Count:        %1\n" ).arg( vlknt2 );
+      msg += tr( "    First Start Radius:       %1\n" ).arg( radvs1 );
+      msg += tr( "    Last  Start Radius:       %1\n" ).arg( radvs2 );
+      msg += tr( "    First End Radius:         %1\n" ).arg( radve1 );
+      msg += tr( "    Last  End Radius:         %1\n" ).arg( radve2 );
+      msg += tr( "    First Start Reading:      %1\n" ).arg( valus1 );
+      msg += tr( "    Last  Start Reading:      %1\n" ).arg( valus2 );
+      msg += tr( "    First End Reading:        %1\n" ).arg( value1 );
+      msg += tr( "    Last  End Reading:        %1\n" ).arg( value2 );
+      msg += tr( "    First Sample Name:        %1\n" ).arg( sname1 );
+      msg += tr( "    Last  Sample Name:        %1\n" ).arg( sname2 );
+
+   }  // END: table type loop
 
    return msg;
 }

@@ -255,8 +255,9 @@ class US_UTIL_EXTERN US_XpnData : public QObject
       void    run_values    ( QString&, QString& );
 
       //! \brief Set the common-values Scan Data record by runType
-      //! \param datx Scan data array index for data fetch
-      void    set_scan_data ( const int );
+      //! \param datx   Scan data array index for data fetch
+      //! \param arType Run Type ("RI"|"FI"|"IP"|"WI")
+      void    set_scan_data ( const int, const QString="" );
 
       //! \brief Clear all the data structures
       void    clear         ( void  );

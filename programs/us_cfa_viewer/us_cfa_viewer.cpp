@@ -25,10 +25,10 @@
 #define setMinimum(a)      setMinValue(a)
 #define setMaximum(a)      setMaxValue(a)
 #define setSymbol(a)       setSymbol(*a)
-#define setStateMachine(a) setSelectionFlags(QwtPicker::RectSelection|QwtPicker::DragSelection)
+#define AXISSCALEDIV(a)    data_plot->axisScaleDiv(a)
 #else
 #include "qwt_picker_machine.h"
-#define canvasBackground() canvasBackground().color();
+#define AXISSCALEDIV(a)    (QwtScaleDiv*)&data_plot->axisScaleDiv(a)
 #endif
 
 #ifdef WIN32
@@ -868,8 +868,8 @@ DbgLv(1) << "PltA: last_xmin" << last_xmin;
    data_plot->replot();
 
    // Pick up the actual bounds plotted (including any Config changes)
-   QwtScaleDiv* sdx = (QwtScaleDiv*)&data_plot->axisScaleDiv( QwtPlot::xBottom);
-   QwtScaleDiv* sdy = (QwtScaleDiv*)&data_plot->axisScaleDiv( QwtPlot::yLeft  );
+   QwtScaleDiv* sdx = AXISSCALEDIV( QwtPlot::xBottom );
+   QwtScaleDiv* sdy = AXISSCALEDIV( QwtPlot::yLeft   );
    last_xmin      = sdx->lowerBound();
    last_xmax      = sdx->upperBound();
    last_ymin      = sdy->lowerBound();
@@ -937,8 +937,8 @@ DbgLv(1) << "chgCC: trxs trxe" << trxs << trxe;
 
    else
    {  // After first time, detect what has been already set
-      QwtScaleDiv* sdx=(QwtScaleDiv*)&data_plot->axisScaleDiv(QwtPlot::xBottom);
-      QwtScaleDiv* sdy=(QwtScaleDiv*)&data_plot->axisScaleDiv(QwtPlot::yLeft);
+      QwtScaleDiv* sdx = AXISSCALEDIV( QwtPlot::xBottom );
+      QwtScaleDiv* sdy = AXISSCALEDIV( QwtPlot::yLeft   );
       last_xmin      = sdx->lowerBound();
       last_xmax      = sdx->upperBound();
       last_ymin      = sdy->lowerBound();
@@ -1040,8 +1040,8 @@ void US_CfaDataViewer::prevPlot( void )
       pb_prev->setEnabled( false );
    }
 
-   QwtScaleDiv* sdx = (QwtScaleDiv*)&data_plot->axisScaleDiv( QwtPlot::xBottom);
-   QwtScaleDiv* sdy = (QwtScaleDiv*)&data_plot->axisScaleDiv( QwtPlot::yLeft  );
+   QwtScaleDiv* sdx = AXISSCALEDIV( QwtPlot::xBottom );
+   QwtScaleDiv* sdy = AXISSCALEDIV( QwtPlot::yLeft   );
    last_xmin      = sdx->lowerBound();
    last_xmax      = sdx->upperBound();
    last_ymin      = sdy->lowerBound();
@@ -1062,8 +1062,8 @@ void US_CfaDataViewer::nextPlot( void )
       pb_next->setEnabled( false );
    }
 
-   QwtScaleDiv* sdx = (QwtScaleDiv*)&data_plot->axisScaleDiv( QwtPlot::xBottom);
-   QwtScaleDiv* sdy = (QwtScaleDiv*)&data_plot->axisScaleDiv( QwtPlot::yLeft  );
+   QwtScaleDiv* sdx = AXISSCALEDIV( QwtPlot::xBottom );
+   QwtScaleDiv* sdy = AXISSCALEDIV( QwtPlot::yLeft   );
    last_xmin      = sdx->lowerBound();
    last_xmax      = sdx->upperBound();
    last_ymin      = sdy->lowerBound();
