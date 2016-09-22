@@ -361,6 +361,9 @@ DbgLv(1) << "MwDa:LdMw: nfile" << nfile << "nscan npoint" << nscan << npoint;
    {
       US_DataIO::RawData* edata = &allData[ trx ];
 
+      nscan               = edata->scanCount();
+      npoint              = edata->pointCount();
+      npointt             = npoint * nscan;
       int     icell       = edata->cell;
       QString cell        = QString::number( icell );
       QString chan        = QString( edata->channel );
@@ -387,6 +390,8 @@ DbgLv(1) << "MwDa:L  trx" << trx << "kwvl iwvl_p iwvl cech cech_p"
 #endif
       QString wavl        = QString::number( iwvl );
       QString triple      = celchn + " / " + wavl;
+DbgLv(1) << "MwDa:LdMw:  trx" << trx << "triple" << triple
+ << "nscan npoint npointt" << nscan << npoint << npointt;
 
       if ( ! cells.contains( cell ) )
          cells << cell;

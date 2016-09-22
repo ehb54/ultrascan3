@@ -7,21 +7,16 @@
 #include "us_constants.h"
 #include "us_util.h"
 #include "us_gui_util.h"
+
 #if QT_VERSION < 0x050000
 #define setSamples(a,b,c) setData(a,b,c)
-#else
-#define setSymbol(a)      setSymbol(&a)
-#include <qwt_legend_label.h>
-#include <qwt_point_data.h>
+#define setSymbol(a)      setSymbol(*a)
 #endif
 
 #include <qwt_legend.h>
 #include <qwt_plot_layout.h>
 #include <qwt_plot_curve.h>
 #include <qwt_scale_widget.h>
-
-//! Define a function especially for Windows
-#define round(x) floor( (x) + 0.5 )
 
 US_RunDetails2::US_RunDetails2( const QVector< US_DataIO::RawData >& data, 
                                 const QString&                       runID, 
@@ -227,9 +222,9 @@ void US_RunDetails2::setup( void )
    foreach( data, dataList )
       last = max( last, data.scanData.last().seconds );
    
-   last       = round( last );
+   last       = qRound( last );
    int  hours = (int)floor( last / 3600.0 );
-   int  mins  = (int) round( ( last - hours * 3600.0 ) / 60.0 );
+   int  mins  = (int) qRound( ( last - hours * 3600.0 ) / 60.0 );
 
    QString s; 
    QString h = ( hours == 1 ) ? tr( "hour" ) : tr( "hours" );
@@ -268,7 +263,7 @@ void US_RunDetails2::setup( void )
       foreach( scan, data.scanData )
       {
          // Round to closest 100 rpm
-         int rpm  = (int)round( scan.rpm / 100.0 ) * 100;
+         int rpm  = (int)qRound( scan.rpm / 100.0 ) * 100;
          map.insert( rpm, triples[ i ] + " / " + QString::number( scanNumber ) );
          scanNumber++;
       }
@@ -326,7 +321,7 @@ void US_RunDetails2::show_all_data( void )
 
    // Set average rpm
    rpm /= scanCount;             // Get average
-   rpm  = round( rpm / 100.0 );  // Round to closest 100 rpm
+   rpm  = qRound( rpm / 100.0 );  // Round to closest 100 rpm
    le_rotorSpeed->setText( QString::number( (int)rpm * 100 ) + " RPM" );
 
    // Determine temperature variation
@@ -451,39 +446,43 @@ void US_RunDetails2::draw_plot( const double* x, const double* t,
 
    data_plot->detachItems( QwtPlotItem::Rtti_PlotCurve );
 
-   QwtSymbol sym;
-
-   sym.setStyle( QwtSymbol::Ellipse );
-   sym.setPen  ( QPen( Qt::yellow ) );
-   sym.setBrush( Qt::white );
-   sym.setSize ( 6 );
-
    if ( plotType == TEMPERATURE  || plotType == COMBINED )
    {
       QwtPlotCurve* c1 = us_curve( data_plot, tr( "Temperature" ) );
+      QwtSymbol*  sym1 = new QwtSymbol;
+      sym1->setStyle( QwtSymbol::Ellipse );
+      sym1->setPen  ( QPen( Qt::yellow ) );
+      sym1->setBrush( Qt::white );
+      sym1->setSize ( 6 );
       c1->setPen    ( QPen( QBrush( Qt::yellow ), 2 ) );
-      c1->setSymbol ( sym );
+      c1->setSymbol ( sym1 );
       c1->setSamples( x, t, count );
    }
-
-   sym.setPen( QColor( Qt::green ) );
 
    if ( plotType == RPM  || plotType == COMBINED )
    {
       QwtPlotCurve* c2 = us_curve( data_plot, tr( "RPM" ) );
+      QwtSymbol*  sym2 = new QwtSymbol;
+      sym2->setStyle( QwtSymbol::Ellipse );
+      sym2->setPen  ( QPen( Qt::green  ) );
+      sym2->setBrush( Qt::white );
+      sym2->setSize ( 6 );
       c2->setPen    ( QPen( QBrush( Qt::green ), 2 ) );
-      c2->setSymbol ( sym );
+      c2->setSymbol ( sym2 );
       c2->setSamples( x, r, count );
    }
-
-   sym.setPen( QColor( Qt::red ) );
 
    if ( plotType == INTERVAL  || plotType == COMBINED )
    {
       QwtPlotCurve* c3 = us_curve( data_plot, tr( "Scan Time Deltas" ) );
+      QwtSymbol*  sym3 = new QwtSymbol;
+      sym3->setStyle( QwtSymbol::Ellipse );
+      sym3->setPen  ( QPen( Qt::red    ) );
+      sym3->setBrush( Qt::white );
+      sym3->setSize ( 6 );
       if ( plotType == COMBINED ) c3->setYAxis( QwtPlot::yRight );
       c3->setPen    ( QPen( QBrush( Qt::red ), 2 ) );
-      c3->setSymbol ( sym );
+      c3->setSymbol ( sym3 );
       c3->setSamples( &x[ 1 ], &m[ 1 ], count - 1 );
    }
 
@@ -495,10 +494,6 @@ void US_RunDetails2::draw_plot( const double* x, const double* t,
 
 #if QT_VERSION < 0x050000
       QList< QWidget* > items = legend->legendItems();
-#else
-      QwtPlotCurve* c0 = NULL;
-      QList< QWidget* > items = legend->legendWidgets( data_plot->itemToInfo( c0 ) );
-#endif
 
       QFont font = items[ 0 ]->font();
       font.setPointSize( US_GuiSettings::fontSize() );
@@ -507,6 +502,11 @@ void US_RunDetails2::draw_plot( const double* x, const double* t,
       foreach( item, items ) item->setFont( font );
 
       data_plot->insertLegend( legend, QwtPlot::BottomLegend );
+#else
+      QFont lfont( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() );
+      data_plot->setFont( lfont );
+      legend   ->setFont( lfont );
+#endif
    }
 
    data_plot->replot();
@@ -542,7 +542,7 @@ void US_RunDetails2::update( int index )
 
    // Set average rpm
    rpm /= scanCount;             // Get average
-   rpm  = round( rpm / 100.0 );  // Round to closest 100 rpm
+   rpm  = qRound( rpm / 100.0 );  // Round to closest 100 rpm
    le_rotorSpeed->setText( QString::number( (int)rpm * 100 ) + " RPM" );
 
    double maxTemp = -1.0e99;

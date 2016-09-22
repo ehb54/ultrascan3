@@ -2052,7 +2052,7 @@ void US_ConvertGui::runDetails( void )
                                                 tripleDescriptions );
    dialog->exec();
    qApp->processEvents();
-   delete dialog;
+//   delete dialog;
 }
 
 void US_ConvertGui::changeDescription( void )
@@ -2123,12 +2123,38 @@ DbgLv(1) << " sTI: nch ntr" << nchans << ntrips << "trLSv" << trListSave;
 
    if ( isMwl )
    {  // For MWL, wavelength lists need rebuilding
-DbgLv(1) << " sTI: IS Mwl  outchan sz" << out_channels.count();
       if ( mwl_data.countOf( "lambda" ) < 1 )
-      {
-DbgLv(1) << " sTI:   Creating MWL from AUC";
+      {  // If no lambdas yet, we need to build from scratch
+         // Load MWL data from AUCs
          mwl_data.load_mwl( allData );
-         mwl_setup();
+
+         // Build lambda lists and controls
+         mwl_connect( false );
+         nlamb_i         = mwl_data.lambdas_raw( all_lambdas );
+         cb_lambstrt->clear();
+         cb_lambstop->clear();
+         for ( int ii = 0; ii < nlamb_i; ii++ )
+         {
+            QString clamb = QString::number( all_lambdas[ ii ] );
+            cb_lambstrt->addItem( clamb );
+            cb_lambstop->addItem( clamb );
+         }
+
+         cb_lambstrt->setCurrentIndex( 0 );
+         cb_lambstop->setCurrentIndex( nlamb_i - 1 );
+         nlambda         = mwl_data.lambdas( exp_lambdas );
+         cb_lambplot->clear();
+
+         for ( int ii = 0; ii < nlambda; ii++ )
+         {
+            QString clamb = QString::number( exp_lambdas[ ii ] );
+            cb_lambplot->addItem( clamb );
+         }
+
+         cb_lambplot->setCurrentIndex( nlambda / 2 );
+
+         show_mwl_control( true );
+         mwl_connect( true );
       }
 
       for ( int ccx = 0; ccx < nchans; ccx++ )
@@ -2136,12 +2162,10 @@ DbgLv(1) << " sTI:   Creating MWL from AUC";
          nlambda        = mwl_data.lambdas( exp_lambdas, ccx );
          if ( nlambda < 1 )
          {
-DbgLv(1) << " sTI:  ccx nl" << ccx << nlambda;
             break;
          }
          slambda        = exp_lambdas[ 0 ];
          elambda        = exp_lambdas[ nlambda - 1 ];
-DbgLv(1) << " sTI:  ccx nl sl el" << ccx << nlambda << slambda << elambda;
          lw_triple->addItem( out_channels[ ccx ]
                            + QString( " / %1-%2 (%3)" )
                            .arg( slambda ).arg( elambda ).arg( nlambda ) );
@@ -2152,7 +2176,6 @@ DbgLv(1) << " sTI:  ccx nl sl el" << ccx << nlambda << slambda << elambda;
       nlambda        = mwl_data.lambdas( exp_lambdas, tripListx );
       if ( nlambda < 1 )
       {
-DbgLv(1) << " sTI:  tLx nlambda" << tripListx << nlambda;
          return;
       }
       slambda        = exp_lambdas[ 0 ];
@@ -2160,7 +2183,6 @@ DbgLv(1) << " sTI:  tLx nlambda" << tripListx << nlambda;
       int plambda    = cb_lambplot->currentText().toInt();
       int pltx       = nlambda / 2;
       tripDatax      = out_chandatx[ tripListx ] + pltx;
-DbgLv(1) << " sTI:  pltx" << pltx << "nlambda" << nlambda;
 
       mwl_connect( false );
       cb_lambplot->clear();
@@ -2178,12 +2200,10 @@ DbgLv(1) << " sTI:  pltx" << pltx << "nlambda" << nlambda;
       cb_lambstop->setCurrentIndex( all_lambdas.indexOf( elambda ) );
       cb_lambplot->setCurrentIndex( pltx );
       mwl_connect( true );
-DbgLv(1) << " sTI:  tLx tDx" << tripListx << tripDatax;
    }
 
    else
    {  // For non-MWL, just re-do triples
-DbgLv(1) << " sTI: NOT Mwl";
       for ( int trx = 0; trx < ntrips; trx++ )
       {  // Rebuild the triples list
          lw_triple->addItem( out_triples[ trx ] );
