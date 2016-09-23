@@ -6,6 +6,7 @@
 #include "us_math2.h"
 #include "us_memory.h"
 #include "us_time_state.h"
+#include "us_simparms.h"
 
 // Hold data read in and selected from a raw XPN data directory
 US_XpnData::US_XpnData( ) {
@@ -720,9 +721,6 @@ void US_XpnData::clear()
    ccdescs    .clear();
    triples    .clear();
    trnodes    .clear();
-   r_rpms     .clear();
-   s_rpms     .clear();
-   a_rpms     .clear();
 
    nfile      = 0;
    nscan      = 0;
@@ -778,15 +776,10 @@ DbgLv(1) << "BldRawD IN";
    // First build the internal arrays and variables
    build_internals();
 
-   const double signif_dif=100.0;
    const int    low_memApc=20;
    npoint          = a_radii.count();
 
    allData.clear();
-
-   r_rpms.clear();
-   s_rpms.clear();
-   a_rpms.clear();
 
    // Set up the interpolated byte array (all one bits)
    int    nbytei   = ( npoint + 7 ) / 8;
@@ -826,16 +819,6 @@ DbgLv(1) << "BldRawD        channel" << rdata.channel
       rdata.xvalues     = a_radii;
       int ndscan        = 0;
       int rdx           = 0;
-      int kspstep       = 1;
-      int kscx          = 0;
-      int nspstep       = 0;
-      int kscan         = 0;
-      double rpm_min    = 1e+9;
-      double rpm_max    = 1e-9;
-      double rpm_sum    = 0.0;
-      double rpm_set    = 60000;
-      double rpm_setp   = rpm_set;
-      double rpm_avg    = 0.0;
       rdata.description = ccdescs.at( ccx );
       QString triple    = triples[ trx ].replace( " / ", "/" );
       QString trnode    = trnodes[ trx ];
@@ -870,59 +853,16 @@ if(scx<3 || (scx+4)>nscnn)
 DbgLv(1) << "BldRawD       trx wvx scx scnnbr" << trx << wvx << scx << scnnbr
  << "wavl" << scan.wavelength;
 
-            rpm_setp          = rpm_set;
-
-            if ( scx > 0  &&  scan.rpm != r_rpms[ scx - 1 ] )
-               kspstep++;
-
-if(scx<3 || (scx+4)>nscnn)
-DbgLv(1) << "BldRawD        rpm_set rpm_setp" << rpm_set << rpm_setp;
-            if ( rpm_set != rpm_setp )
-            {  // For a new speed step, re-do speeds in the previous one
-               nspstep++;
-               rpm_avg           = rpm_sum / (double)kscan;
-               double rpmavr     = (double)qRound( rpm_avg );
-
-               for ( int jsx = kscx; jsx < scx; jsx++ )
-               {
-                  // Store the average over the speed step as the scan speed
-                  rdata.scanData[ jsx ].rpm    = rpmavr;
-               }
-
-               if ( trx == 0 )
-               {  // Save speeds at first triple
-                  a_rpms << rpm_avg;
-                  s_rpms << rpm_setp;
-               }
-
-               // Reinitialize for next speed step
-               kscx              = scx;
-               kscan             = 1;
-               rpm_sum           = 0.0;
-            }
-            else
-            {  // Bump scan count in a speed step
-               kscan++;
-            }
-
-            // Accumulate rpm min,max,sum
-            rpm_min           = qMin( rpm_min, scan.rpm );
-            rpm_max           = qMax( rpm_max, scan.rpm );
-            rpm_sum          += scan.rpm;
 //*DEBUG*
 if(trx==0) {
 DbgLv(1) << "BldRawD      scx" << scx << "trx" << trx
- << "seconds" << scan.seconds << "rpm" << scan.rpm << "ss" << rpm_set
- << "speed step" << kspstep << nspstep+1;
+ << "seconds" << scan.seconds << "rpm" << scan.rpm;
 }
 //*DEBUG*
-            if ( trx == 0 )
-               r_rpms << scan.rpm;
-
             int kpoint        = get_readings( scan.rvalues, trx, sgx, scx );
 
             if ( kpoint < 0 )
-               continue;
+               continue;                 // Skip output if no stage,scan match
 
 if(scx<3 || (scx+4)>nscnn)
 DbgLv(1) << "BldRawD        scx" << scx << "rvalues size" << scan.rvalues.size()
@@ -940,38 +880,6 @@ DbgLv(1) << "BldRawD trx" << trx << "TIMEMS:scan loop time"
       // Set the average speed for the final/only speed step
       mnscnn            = qMin( mnscnn, ndscan );
       mxscnn            = qMax( mxscnn, ndscan );
-      nspstep++;
-      rpm_avg           = rpm_sum / (double)kscan;
-      double rpmavr     = (double)qRound( rpm_avg );
-DbgLv(1) << "BldRawD        kscx" << kscx;
-
-      for ( int scx = kscx; scx < ndscan; scx++ )
-      {
-         // Store the average over the speed step as the scan speed
-         rdata.scanData[ scx ].rpm  = rpmavr;
-      }
-
-      if ( trx == 0 )
-      {  // Save speeds at first triple
-         a_rpms << rpm_avg;
-         s_rpms << rpm_set;
-
-         // Test if a set_speed differs significantly from the average
-         if ( qAbs( rpm_avg - rpm_set ) > signif_dif )
-         {
-            QString stat_text = tr( "The stored set_speed (%1) and"
-                                    " the average of recorded rotor"
-                                    "_speeds (%2) differ significantly!" )
-                                .arg( rpm_set ).arg( rpm_avg );
-            emit status_text( stat_text );
-         }
-      }
-//*DEBUG*
-if(trx==0) {
- DbgLv(1) << "BldRawD trx=" << trx << "rpm_min rpm_max rpm_avg rpm_set"
-    << rpm_min << rpm_max << rpm_avg << rpm_set << "speed steps" << nspstep;
-}
-//*DEBUG*
 
 DbgLv(1) << "BldRawD     trx" << trx << " saving allData... ndscan" << ndscan;
       allData << rdata;               // Append triple data to the array
@@ -998,6 +906,17 @@ DbgLv(1) << "BldRawD  memfree %: 1memAV" << memAv << "2memAV" << memAv2;
          }
       }
    } // END: triple loop
+//*DEBUG*
+for ( int trx = 0; trx < ntriple; trx++ )
+{
+ US_DataIO::RawData* rdata = &allData[trx];
+ for (int scx=0; scx<rdata->scanCount(); scx++ )
+ {
+  double speed=rdata->scanData[scx].rpm;
+DbgLv(1) << "BldRawD trx" << trx << "scx" << scx << "speed" << speed;
+ }
+}
+//*DEBUG*
 
    QString stat_text = tr( "All %1 raw AUCs have been build." ).arg( ntriple );
    emit status_text( stat_text );
@@ -1036,7 +955,9 @@ DbgLv(1) << "expA: ntrips ftype fbase" << ntrips << ftype << fbase
       }
    }
 
-   // Output AUC files
+   // Output AUC files and find first dataset with maximum scans
+   int mxscans       = 0;
+   int iiuse         = 0;
 
    for ( int ii = 0; ii < ntrips; ii++ )
    {  // Create a file for each triple
@@ -1052,11 +973,25 @@ DbgLv(1) << "expA: ntrips ftype fbase" << ntrips << ftype << fbase
 
       nfiles++;
 DbgLv(1) << "expA:  nf" << nfiles << "fname" << fname;
+
+      // Find index to first dataset with maximum scans
+      int kscans        = rdata->scanCount();
+
+      if ( kscans > mxscans )
+      {
+         mxscans           = kscans;
+         iiuse             = ii;
+      }
    }
+
+   // Create a speed step vector
+   QVector< US_SimulationParameters::SpeedProfile > speedsteps;
+   US_DataIO::RawData* udata = &allData[ iiuse ];
+
+   US_SimulationParameters::computeSpeedSteps( &udata->scanData, speedsteps );
 
    // Output time state files
 
-if(ntrips>1) return nfiles;
    QStringList fkeys;
    QStringList ffmts;
    fkeys << "Scan"     << "Stage"   << "Time"        << "RawSpeed"
@@ -1066,51 +1001,54 @@ if(ntrips>1) return nfiles;
    US_TimeState tsobj;
 
    QString tspath    = cur_dir + runID + ".time_state.tmst";
-   int ntimes        = scnnbrs.count();
+   int ntimes        = udata->scanCount();
+DbgLv(1) << "expA: ntimes" << ntimes << "tspath" << tspath;
 
    tsobj.open_write_data( tspath );      // Initialize TMST creation
 
    tsobj.set_keys( fkeys, ffmts );       // Define keys and formats
 
-   // Output time state files
-
    for ( int ii = 0;  ii < ntimes; ii++ )
    {  // Create a record for each scan
-      int scannbr    = scnnbrs[ ii ];    // Scan number
-      //int scanid     = stgnbrs[ ii ];    // Stage number
-      int jjc        = 0;                // Default match index in CFAMeta
-      int jjd        = 0;                // Default match index in DIOMeta
+      US_DataIO::Scan* uscan = &udata->scanData[ ii ];
+      int scannbr       = ii + 1;           // Scan number
+      double rawSpeed   = uscan->rpm;
+      double tempera    = uscan->temperature;
+      double omega2t    = uscan->omega2t;
+      double time       = uscan->seconds;
+      double setSpeed   = qRound( rawSpeed * 0.01 ) * 100.0;
 
-      for ( int jj = 0; jj < tExprun.count(); jj++ )
-      {  // Match scan ID in CFAMeta
-         if ( tExprun[ jj ].runId == scannbr )
+      // Find the speed step (stage) to which this scan belongs
+      int jstage        = 0;
+      double ssDiff     = 1e+99;
+
+      for( int jj = 0; jj < speedsteps.count(); jj++ )
+      {
+         double ssSpeed    = speedsteps[ jj ].set_speed;
+         double jjDiff     = qAbs( ssSpeed - setSpeed );
+
+         if ( jjDiff < ssDiff )
          {
-            jjc            = jj;         // Index to ID in CFAMeta values
-            break;
+            ssDiff            = jjDiff;
+            jstage            = jj;
          }
       }
 
-      for ( int jj = 0; jj < tExprun.count(); jj++ )
-      {  // Match scan ID in DIOMeta
-         if ( tExprun[ jj ].runId == scannbr )
-         {
-            jjd            = jj;         // Index to ID in DIOMeta values
-            break;
-         }
-      }
-DbgLv(1) << "expA:  ii" << ii << "scannbr" << scannbr
- << "jjc" << jjc << "jjd" << jjd;
+      int istagen       = jstage + 1;
+      setSpeed          = speedsteps[ jstage ].set_speed;
+      int irSpeed       = (int)qRound( rawSpeed );
+      int isSpeed       = (int)qRound( setSpeed );
+DbgLv(1) << "expA:   ii" << ii << "scan" << scannbr << "stage" << istagen
+ << "speed" << irSpeed << isSpeed << "time" << time;
 
       // Set values for this scan
-      tsobj.set_value( fkeys[ 0 ], scannbr );                  // Scan
-//      tsobj.set_value( fkeys[ 1 ], tExprun[ jjc ].time     );  // Time
-//      tsobj.set_value( fkeys[ 2 ], tExprun[ jjc ].rpm      );  // RawSpeed
-//      tsobj.set_value( fkeys[ 3 ], tExprun[ jjc ].drpm     );  // SetSpeed
-//      tsobj.set_value( fkeys[ 4 ], tExprun[ jjc ].w2t      );  // Omega2T
-//      tsobj.set_value( fkeys[ 5 ], tExprun[ jjc ].tempera  );  // Temperature
-//      tsobj.set_value( fkeys[ 6 ], tExprun[ jjc ].pressure );  // Pressure
-//      tsobj.set_value( fkeys[ 7 ], tExprun[ jjd ].period   );  // Period
-//      tsobj.set_value( fkeys[ 8 ], tExprun[ jjd ].jitter   );  // Jitter
+      tsobj.set_value( fkeys[ 0 ], scannbr );       // Scan
+      tsobj.set_value( fkeys[ 1 ], istagen );       // Stage (speed step)
+      tsobj.set_value( fkeys[ 2 ], time    );       // Time in seconds
+      tsobj.set_value( fkeys[ 3 ], irSpeed );       // Raw speed
+      tsobj.set_value( fkeys[ 4 ], isSpeed );       // Set (stage) speed
+      tsobj.set_value( fkeys[ 5 ], omega2t );       // Omega-Squared-T
+      tsobj.set_value( fkeys[ 6 ], tempera );       // Temperature
 
       // Write the scan record
       tsobj.flush_record();
@@ -1119,8 +1057,9 @@ DbgLv(1) << "expA:  ii" << ii << "scannbr" << scannbr
    // Complete write of TMST file and defining XML
    if ( tsobj.close_write_data() == 0 )
    {
-      tsobj.write_defs();
+      tsobj.write_defs( 0.0, "XPN" );
       nfiles        += 2;
+DbgLv(1) << "expA: TMST files written.";
    }
 
    return nfiles;

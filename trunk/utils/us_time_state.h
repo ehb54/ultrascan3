@@ -8,7 +8,7 @@
 #include "us_db2.h"
 
 #define _TMST_MAGI_ "USTS"
-#define _TMST_VERS_ "1.0"
+#define _TMST_VERS_ "2.0"
 #define _TMST_INOVAL_ ((1<<15)-1)
 #define _TMST_FNOVAL_ ((pow(2.0,19.0)-1.0)/4.0)
 
