@@ -497,8 +497,8 @@ int US_TimeState::open_read_data( QString fpath )
 
          if ( xname == "TimeState" )
          {  // Parse file/object version and import type
-            fvers      = attr.value( "version" ).toString();
-            imp_type   = attr.value( "import_type" ).toString();
+            fvers      = attr.value( "version"        ).toString();
+            imp_type   = attr.value( "import_type"    ).toString();
          }
 
          else if ( xname == "file" )

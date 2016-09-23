@@ -639,7 +639,8 @@ DbgLv(1) << "RDr: nwl wvlo wvhi" << nlambda << wvlo << wvhi
 
 DbgLv(1) << "RDr: allData size" << allData.size();
    QApplication::restoreOverrideCursor();
-   haveTmst     = QFile( currentDir + runID + ".time_state.tmst" ).exists();
+   QString tspath = currentDir + "/" + runID + ".time_state.tmst";
+   haveTmst       = QFile( tspath ).exists();
 
    // Ok to enable some buttons now
    enableControls();
@@ -797,8 +798,8 @@ DbgLv(1) << "RDa:   rvS rvE" << radii[0] << radii[npoint-1];
 
    xpn_data->load_auc( allData, ifpaths );
 
-   haveTmst     = QFile( currentDir + runID + ".time_state.tmst" ).exists();
-   ntpoint      = nscan * npoint;
+   QString tspath = currentDir + "/" + runID + ".time_state.tmst";
+   haveTmst       = QFile( tspath ).exists();
 DbgLv(1) << "RDa: load_auc complete";
 
    // Ok to enable some buttons now
@@ -1216,10 +1217,14 @@ void US_XpnDataViewer::export_auc()
    if ( ! isRaw  ||  allData.size() == 0 )
       return;
 
-   int nfiles    = xpn_data->export_auc( allData );
-   haveTmst     = QFile( currentDir + runID + ".time_state.tmst" ).exists();
+   int nfiles     = xpn_data->export_auc( allData );
+   QString tspath = currentDir + "/" + runID + ".time_state.tmst";
+   haveTmst       = QFile( tspath ).exists();
 
-   le_status->setText( tr( "%1 AUC/TMST files written ..." ).arg( nfiles ) );
+   le_status  ->setText( tr( "%1 AUC/TMST files written ..." ).arg( nfiles ) );
+   pb_showtmst->setEnabled( haveTmst );
+   qApp->processEvents();
+DbgLv(1) << "ExpAuc: haveTmst" << haveTmst << "tmst file" << tspath;
 }
 
 // Slot to handle a change in scan exclude "from" value
@@ -1348,7 +1353,7 @@ int US_XpnDataViewer::dvec_index( QVector< double >& dvec, const double dval )
 // Slot to pop up dialog to plot TMST values
 void US_XpnDataViewer::showTimeState()
 {
-   QString tspath      = currentDir + runID + ".time_state.tmst";
+   QString tspath = currentDir + "/" + runID + ".time_state.tmst";
    US_TmstPlot* tsdiag = new US_TmstPlot( this, tspath );
 
 DbgLv(1) << "sTS: tsdiag exec()";
