@@ -139,5 +139,15 @@ class US_UTIL_EXTERN US_Settings
     static QStringList defaultDB( void );
     //! \brief Set the current stored database connection description
     static void        set_defaultDB( const QStringList& );
+
+    //! \brief Get a list of stored database connection descriptions
+    static QList<QStringList> xpn_db_hosts( void );
+    //! \brief Set a list of stored database connection descriptions
+    static void        set_xpn_db_hosts( const QList<QStringList>& );
+
+    //! \brief Get the current stored database connection description
+    static QStringList defaultXpnHost( void );
+    //! \brief Set the current stored database connection description
+    static void        set_def_xpn_host( const QStringList& );
 };
 #endif

@@ -7,6 +7,7 @@
 #include "us_font.h"
 #include "us_admin.h"
 #include "us_advanced.h"
+#include "us_xpnhost.h"
 
 //! \brief Provide the top level window for user configuration
 
@@ -39,6 +40,7 @@ private:
   US_Color*       colors;
   US_Admin*       admin;
   US_Advanced*    advanced;
+  US_XpnHost*     xpnhost;
                  
   QPushButton*    pb_help;
   QPushButton*    pb_save;
@@ -69,6 +71,7 @@ private:
   QPushButton*    pb_db;
   QPushButton*    pb_password;
   QPushButton*    pb_advanced;
+  QPushButton*    pb_xpnh;
 
   US_Disk_DB_Controls* disk_db_control;
 
@@ -89,6 +92,7 @@ private slots:
   void update_workDir   ( void );
   void update_importDir ( void );
   void update_tmpDir    ( void );
+  void update_xpnhost   ( void );
   void save             ( void );
   void help             ( void );
   void set_data_location( bool );

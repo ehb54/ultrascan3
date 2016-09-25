@@ -262,9 +262,16 @@ class US_UTIL_EXTERN US_XpnData : public QObject
       //! \brief Clear all the data structures
       void    clear         ( void  );
 
+      //! \brief Close the database connection
+      void    close         ( void  );
+
       //! \brief Return string text of run data details
       //! \returns      Details text for use in text dialog
       QString runDetails    ( void );
+
+      //! \brief Return the last error string
+      //! \returns      DB Connection last error string
+      QString lastError     ( void );
 
    signals:
       //! \brief Emit a signal that includes status text
