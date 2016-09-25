@@ -175,6 +175,14 @@ US_Config::US_Config( QWidget* parent, Qt::WindowFlags flags )
   otherSettings->addWidget( pb_advanced, row++, 1 );
   connect( pb_advanced, SIGNAL( clicked() ), this, SLOT( update_advanced() ) );
 
+  // XPN Host
+  QLabel* lb_xpnhost = us_label( "XPN Host Preferences:" );
+  otherSettings->addWidget( lb_xpnhost, row, 0 );
+
+  pb_xpnh = us_pushbutton( tr( "Change" ) );
+  otherSettings->addWidget( pb_xpnh, row++, 1 );
+  connect( pb_xpnh, SIGNAL( clicked() ), this, SLOT( update_xpnhost() ) );
+
   topbox->addLayout( otherSettings );
 
   // Pushbuttons
@@ -253,6 +261,12 @@ void US_Config::update_advanced( void )
 {
    advanced = new US_Advanced;
    advanced->show();
+}
+
+void US_Config::update_xpnhost( void )
+{
+   xpnhost  = new US_XpnHost;
+   xpnhost ->show();
 }
 
 void US_Config::open_browser( void )

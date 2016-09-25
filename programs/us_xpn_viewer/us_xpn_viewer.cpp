@@ -76,13 +76,16 @@ US_XpnDataViewer::US_XpnDataViewer() : US_Widgets()
    haveTmst     = false;
    xpn_data     = NULL;
    runID        = "";
+   runType      = "RI";
    currentDir   = "";
+   QStringList xpnentr = US_Settings::defaultXpnHost();
+   xpndesc      = xpnentr.at( 0 );
+   xpnhost      = xpnentr.at( 1 );
+   xpnport      = xpnentr.at( 2 );
 
    // Load controls     
    QLabel*      lb_run      = us_banner( tr( "Load the Run" ) );
 
-   QLabel*      lb_scntype  = us_label( tr( "Type of Raw Scans to Load:" ) );
-                cb_scntype  = us_comboBox();
                 pb_loadXpn  = us_pushbutton( tr( "Load Raw XPN Data" ) );
                 pb_loadAUC  = us_pushbutton( tr( "Load US3 AUC Data" ) );
                 pb_reset    = us_pushbutton( tr( "Reset Data" ) );
@@ -107,9 +110,6 @@ US_XpnDataViewer::US_XpnDataViewer() : US_Widgets()
    ptype_mw     = tr( "Plot %1:"    ).arg( chlamb );
    ptype_tr     = tr( "Plot Triple:" );
    prectype     = ptype_tr;
-   cb_scntype->addItem( tr( "Intensity Data (type=1)" ) );
-   cb_scntype->addItem( tr( "Blank or Reference (type=2)" ) );
-   cb_scntype->addItem( tr( "No-Light (type=3)" ) );
 
    // Plot controls     
    QLabel*      lb_prcntls  = us_banner( tr( "Plot Controls" ) );
@@ -207,8 +207,6 @@ US_XpnDataViewer::US_XpnDataViewer() : US_Widgets()
    settings->addWidget( le_dbhost,     row++, 2, 1, 6 );
    settings->addWidget( lb_runID,      row,   0, 1, 2 );
    settings->addWidget( le_runID,      row++, 2, 1, 6 );
-   settings->addWidget( lb_scntype,    row,   0, 1, 4 );
-   settings->addWidget( cb_scntype,    row++, 4, 1, 4 );
    settings->addWidget( pb_loadXpn,    row,   0, 1, 4 );
    settings->addWidget( pb_loadAUC,    row++, 4, 1, 4 );
    settings->addWidget( pb_reset,      row,   0, 1, 4 );
@@ -287,13 +285,14 @@ US_XpnDataViewer::US_XpnDataViewer() : US_Widgets()
 
 void US_XpnDataViewer::reset( void )
 {
+   runID         = "";
+   currentDir    = US_Settings::importDir() + "/" + runID;
    cb_cellchn ->disconnect();
    cb_cellchn ->clear();
    le_dir     ->setText( currentDir );
    le_runID   ->setText( runID );
-   le_dbhost  ->setText( "bcf.uthscsa.edu" );
+   le_dbhost  ->setText( xpnhost + ":" + xpnport + "   (" + xpndesc + ")" );
 
-   cb_scntype ->setEnabled( true );
    pb_loadXpn ->setEnabled( true );
    pb_loadAUC ->setEnabled( true );
    pb_details ->setEnabled( false  );
@@ -325,7 +324,7 @@ void US_XpnDataViewer::reset( void )
    runInfo   .clear();
    cellchans .clear();
    triples   .clear();
-   haveData     = false;
+   haveData      = false;
 
    data_plot->detachItems();
    picker   ->disconnect();
@@ -336,11 +335,11 @@ void US_XpnDataViewer::reset( void )
    connect( cb_cellchn,   SIGNAL( currentIndexChanged( int ) ),
             this,         SLOT  ( changeCellCh(            ) ) );
 
-   last_xmin       = -1.0;
-   last_xmax       = -1.0;
-   last_ymin       = -1.0;
-   last_ymax       = -1.0;
-   xpn_data        = ( xpn_data == NULL ) ? new US_XpnData() : xpn_data;
+   last_xmin     = -1.0;
+   last_xmax     = -1.0;
+   last_ymin     = -1.0;
+   last_ymax     = -1.0;
+   xpn_data      = ( xpn_data == NULL ) ? new US_XpnData() : xpn_data;
 
    connect( xpn_data, SIGNAL( status_text  ( QString ) ),
             this,     SLOT  ( status_report( QString ) ) );
@@ -383,7 +382,6 @@ void US_XpnDataViewer::enableControls( void )
    }
 
    // Enable and disable controls now
-   cb_scntype ->setEnabled( false );
    pb_loadXpn ->setEnabled( false );
    pb_loadAUC ->setEnabled( false );
    pb_reset   ->setEnabled( true );
@@ -476,9 +474,9 @@ void US_XpnDataViewer::load_xpn_raw( )
 {
    // Ask for data directory
    QString dbname    = "AUC_DATA_DB";
-   QString dbhost    = "bcf.uthscsa.edu";
-   int     dbport    = 0;
-DbgLv(1) << "RDr: call connect_data  dbname" << dbname;
+   QString dbhost    = xpnhost;
+   int     dbport    = xpnport.toInt();
+DbgLv(1) << "RDr: call connect_data  dbname h p" << dbname << dbhost << dbport;
    xpn_data->connect_data( dbname, dbhost, dbport );
    xpn_data->scan_runs( runInfo );
    xpn_data->filter_runs( runInfo );
@@ -499,7 +497,7 @@ DbgLv(1) << "RDr:   drDesc" << drDesc;
    QString fRunId    = QString( drDesc ).section( delim, 1, 1 );
    QString fExpNm    = QString( drDesc ).section( delim, 5, 5 );
    QString new_runID = fExpNm + "-run" + fRunId;
-   QString runType   = "RI";
+   runType           = "RI";
    QRegExp rx( "[^A-Za-z0-9_-]" );
 
    int pos            = 0;
@@ -526,7 +524,6 @@ DbgLv(1) << "RDr:   drDesc" << drDesc;
    le_runID->setText( runID );
    currentDir  = US_Settings::importDir() + "/" + runID;
    le_dir  ->setText( currentDir );
-   sctype      = cb_scntype->currentIndex() + 1;
    qApp->processEvents();
 
    // Read the data
@@ -860,6 +857,29 @@ DbgLv(1) << "pTit: prec" << prec << "isMWL" << isMWL << "wvln" << wvln;
                       "  Wavelength: " + wvln;
    QString xLegend  = QString( "Radius (in cm)" );
    QString yLegend  = "Radial Intensity at " + wvln + " nm";
+
+   if ( runType == "IP" )
+   {
+      title            = "Interference Data\nRun ID: " + runID +
+                         "\n    Cell: " + cell + "  Channel: " + chan +
+                         "  Wavelength: " + wvln;
+      yLegend          = "Interference at " + wvln + " nm";
+   }
+   else if ( runType == "FI" )
+   {
+      title            = "Fluorescence Intensity Data\nRun ID: " + runID +
+                         "\n    Cell: " + cell + "  Channel: " + chan +
+                         "  Wavelength: " + wvln;
+      yLegend          = "Fluorescence at " + wvln + " nm";
+   }
+   else if ( runType == "WI" )
+   {
+      title            = "Wavelength Intensity Data\nRun ID: " + runID +
+                         "\n    Cell: " + cell + "  Channel: " + chan +
+                         "  Radius: " + wvln;
+      xLegend          = QString( "Wavelength (in nm)" );
+      yLegend          = "Radial Intensity at " + wvln;
+   }
 
    data_plot->setTitle( title );
    data_plot->setAxisTitle( QwtPlot::yLeft,   yLegend );
@@ -1216,6 +1236,36 @@ void US_XpnDataViewer::export_auc()
 {
    if ( ! isRaw  ||  allData.size() == 0 )
       return;
+
+   QString runIDt = le_runID->text();              // User given run ID text
+
+   if ( runIDt != runID )
+   {  // Set runID to new entry given by user
+      QRegExp rx( "[^A-Za-z0-9_-]" );              // Possibly modify entry
+      QString new_runID  = runIDt;
+      int pos            = 0;
+
+      while ( ( pos = rx.indexIn( new_runID ) ) != -1 )
+      {  // Loop thru any invalid characters given (not alphanum.,'_','-')
+         new_runID.replace( pos, 1, "_" );         // Replace 1 char at pos
+      }
+
+      // Let the user know that the runID name has changed
+      QMessageBox::warning( this,
+         tr( "RunId Name Changed" ),
+         tr( "The runId name has been changed."
+             "\nNew runId:\n  " ) + new_runID );
+
+      runID          = new_runID;                  // Show new run ID, dir.
+      le_runID->setText( runID );
+      currentDir     = US_Settings::importDir() + "/" + runID;
+      le_dir  ->setText( currentDir );
+      qApp->processEvents();
+
+      xpn_data->set_run_values( runID, runType );  // Set run ID for export
+   }
+
+   // Export the AUC data to a local directory and build TMST
 
    int nfiles     = xpn_data->export_auc( allData );
    QString tspath = currentDir + "/" + runID + ".time_state.tmst";

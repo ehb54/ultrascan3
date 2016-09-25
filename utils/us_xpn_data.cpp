@@ -48,7 +48,8 @@ bool US_XpnData::connect_data( QString& adbname,
    }
    else
    {
-      qDebug() << "Open Failure for db" << dbname << dbhost << dbport;
+      qDebug() << "Open Failure for db" << dbname << dbhost << dbport
+               << dbxpn.lastError().text();
       return false;
    }
 
@@ -58,12 +59,17 @@ DbgLv(1) << "XpDa:scn: drivers" << qdrvrs;
 DbgLv(1) << "XpDa:scn: sqtabs" << sqtabs;
 
    if ( qdrvrs.contains( "QPSQL" )  &&
-        sqtabs.contains( "\"AUC_schema\".\"ExperimentRun\"" ) )
+        ( sqtabs.contains( "\"AUC_schema\".\"ExperimentRun\"" )  ||
+          sqtabs.contains( "AUC_schema.ExperimentRun" ) ) )
    {
       status        = true;
+DbgLv(1) << "XpDa:scn: QPSQL-in-qdrvrs && ExpRun-in-sqtabs";
    }
    else
    {
+DbgLv(1) << "XpDa:scn: qdrvrs|sqtab content error:"
+ << (qdrvrs.contains("QPSQL"))
+ << (sqtabs.contains( "\"AUC_schema\".\"ExperimentRun\"" ));
       status        = false;
    }
    return status;
@@ -503,23 +509,28 @@ DbgLv(1) << "XpDa:scn:       cnames" << cnames;
             isdrow.modPos    = sqry.value( jmodpo ).toInt();
             isdrow.cellPos   = sqry.value( jcelpo ).toInt();
             isdrow.replic    = sqry.value( jrepli ).toInt();
-            isdrow.count     = sqry.value( jcount ).toInt();
+            isdrow.wavelen   = sqry.value( jwavel ).toInt();
+            isdrow.tempera   = sqry.value( jtempe ).toDouble();
+            isdrow.speed     = sqry.value( jspeed ).toDouble();
+            isdrow.omgSqT    = sqry.value( jomgsq ).toDouble();
             isdrow.startPos  = sqry.value( jstrpo ).toDouble();
             isdrow.resolu    = sqry.value( jresol ).toDouble();
+            isdrow.expstart  = sqry.value( jexpst ).toDateTime();
+            isdrow.samplName = sqry.value( jsname ).toString();
+            isdrow.scanTypeF = sqry.value( jsctyp ).toString();
+            isdrow.count     = sqry.value( jcount ).toInt();
             QString sPoss    = sqry.value( jposis ).toString();
             QString sVals    = sqry.value( jvalus ).toString();
             int pcount       = parse_doubles( sPoss, isdrow.rads );
             int vcount       = parse_doubles( sVals, isdrow.vals );
-            int pcount2      = 0;
-            int vcount2      = 0;
-               tIsdata << isdrow;
+
+            tIsdata << isdrow;
 //*DEBUG*
 if(rows<9 || (rows+9)>count) {
 DbgLv(1) << "XpDa:scn:      jstrpo jresol jposis jvalus"
  << jstrpo << jresol << jposis << jvalus;
 DbgLv(1) << "XpDa:scn:    row" << rows << "run" << isdrow.runId
- << "dat" << isdrow.dataId << "pc vc c pc2 vc2"
- << pcount << vcount << isdrow.count << pcount2 << vcount2
+ << "dat" << isdrow.dataId << "pc vc c" << pcount << vcount << isdrow.count
  << "modpos celpos" << isdrow.modPos << isdrow.cellPos;
 DbgLv(1) << "XpDa:scn:     rads0 rads1 vals0 vals1"
  << isdrow.rads[0] << isdrow.rads[1] << isdrow.vals[0] << isdrow.vals[1];
@@ -700,7 +711,7 @@ int US_XpnData::lambdas_raw( QVector< int >& wls )
    return nlambda;
 }
 
-// Private slot to clear arrays
+// Clear all data arrays
 void US_XpnData::clear()
 {
    wavelns    .clear();     // Raw input wavelengths
@@ -735,6 +746,13 @@ void US_XpnData::clear()
    elambda    = 0;
 
    mapCounts();
+}
+
+// Close the database connection
+void US_XpnData::close()
+{
+   if ( dbxpn.open() )
+      dbxpn.close();
 }
 
 // Find the index of a lambda value in the input raw list of lambdas
@@ -776,7 +794,7 @@ DbgLv(1) << "BldRawD IN";
    // First build the internal arrays and variables
    build_internals();
 
-   const int    low_memApc=20;
+   const int low_memApc = 20;
    npoint          = a_radii.count();
 
    allData.clear();
@@ -786,8 +804,8 @@ DbgLv(1) << "BldRawD IN";
    QByteArray interpo( nbytei, '\255' );
 
    // Build a raw data set for each triple
-   char   dtype0   = 'R';
-   char   dtype1   = 'I';
+   char   dtype0   = QString( runType ).toLatin1().constData()[ 0 ];
+   char   dtype1   = QString( runType ).toLatin1().constData()[ 1 ];
    int    ccx      = 0;
    int    wvx      = 0;
    int    scnnbr   = 0;
@@ -1463,6 +1481,12 @@ QString US_XpnData::runDetails( void )
    }  // END: table type loop
 
    return msg;
+}
+
+// Return the connection last error string
+QString US_XpnData::lastError( void )
+{
+   return dbxpn.lastError().text();
 }
 
 // Build the internal variables and arrays

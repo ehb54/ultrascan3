@@ -46,7 +46,6 @@ class US_XpnDataViewer : public US_Widgets
      QLineEdit*     le_lrange;
      QLineEdit*     le_status;
 
-     QComboBox*     cb_scntype;
      QComboBox*     cb_cellchn;
      QComboBox*     cb_rstart;
      QComboBox*     cb_rend;
@@ -76,11 +75,14 @@ class US_XpnDataViewer : public US_Widgets
 
      QString        currentDir;
      QString        runID;
+     QString        runType;
      QString        prectype;
      QString        ptype_mw;
      QString        ptype_tr;
+     QString        xpnhost;
+     QString        xpnport;
+     QString        xpndesc;
 
-     int            sctype;
      int            nscan;
      int            ncell;
      int            nchan;

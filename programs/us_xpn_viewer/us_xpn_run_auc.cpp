@@ -9,9 +9,7 @@
 US_XpnRunAuc::US_XpnRunAuc( QString& runID ) 
 : US_WidgetsDialog( 0, 0 ), runID( runID )
 {
-   setWindowTitle( doRawXpn ?
-         tr( "Raw XPN postgreSQL database runs" ) :
-         tr( "US3 Directories with XPN-derived .auc Files" ) );
+   setWindowTitle( tr( "US3 Directories with XPN-derived .auc Files" ) );
 
    setPalette( US_GuiSettings::frameColor() );
 
@@ -66,17 +64,13 @@ void US_XpnRunAuc::load_runs( void )
       impdir         = impdir + "/";           // Insure trailing slash
 
    // Set up to load either from a raw DB file or from openAUC files
-   QStringList efilt;
-   efilt << ( doRawXpn ? "*.postgres" : "*.auc" );
+   QStringList efilt( "*.auc" );
 
    QStringList runids;
    QStringList rdirs = QDir( impdir ).entryList(
          QDir::AllDirs | QDir::NoDotAndDotDot, QDir::Name );
-qDebug() << "LdDk:  rdirs count" << rdirs.count() << "impdir" << impdir;
-qDebug() << "LdDk:  RawXpn" << doRawXpn << "efilt" << efilt
- << "rdirscount" << rdirs.count();
-   const qint64 meg   = 1024 * 1024;
-   const qint64 hmeg  = meg / 2;
+qDebug() << "LdDk:  rdirs count" << rdirs.count() << "impdir" << impdir
+ << "efilt" << efilt;
 
    // Get the list of all Run IDs with data in their work directories
    for ( int ii = 0; ii < rdirs.count(); ii++ )
@@ -86,10 +80,8 @@ qDebug() << "LdDk:  RawXpn" << doRawXpn << "efilt" << efilt
       QStringList efiles = QDir( wdir ).entryList( efilt, QDir::Files,
                                                    QDir::Name );
       int nfiles     = efiles.count();
-      int fsize      = 0;
 qDebug() << "LdDk:   ii" << ii << "run" << rdirs[ii]
  << "count" << nfiles;
-
 
       if ( nfiles < 1 )              // Definitely not XPN
          continue;
@@ -100,13 +92,27 @@ qDebug() << "LdDk:   ii" << ii << "run" << rdirs[ii]
                           .toString( Qt::ISODate ), true )
                           .section( " ", 0, 0 ).simplified();
 
-      if ( doRawXpn )
-      {  // For Raw XPN, get the size of the .postgres file
-         qint64 fsbytes = QFileInfo( rfn ).size();
-         fsize          = (int)( ( fsbytes + hmeg ) / meg );
-qDebug() << "LdDk:   fsize" << fsize << "rfn" << rfn;
-      }
+      // Look for TMST definition file and test import origin
+      QString dfname = runID + ".time_state.xml";
+      QString dpath  = wdir + dfname;
+      QFile dfile( dpath );
 
+      if ( ! dfile.exists()  ||
+           ! dfile.open( QIODevice::ReadOnly ) )
+         continue;  // Skip if TMST def file does not exist or can't be opened
+qDebug() << "LdDk:    dfname -- exists/opened";
+
+      QTextStream fsi( &dfile );
+      QString pmatch( "import_type=\"XPN\"" );
+      QString xmli   = fsi.readAll();
+      dfile.close();
+qDebug() << "LdDk:     pmatch" << pmatch;
+
+      if ( ! xmli.contains( pmatch ) )
+         continue;  // Skip if TMST def has no import_type="XPN"
+
+
+      // Add an eligible run directory to the list
 //qDebug() << "LdDk:   ii" << ii << "  rfn" << rfn;
       RunInfo rr;
       rr.runID       = runID;

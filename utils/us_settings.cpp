@@ -371,3 +371,61 @@ void US_Settings::set_defaultDB( const QStringList& defaultDB )
   else
     settings.setValue( "defaultDB", defaultDB );
 }
+
+// XPN Database Host Entries
+QList<QStringList> US_Settings::xpn_db_hosts( void )
+{
+  QSettings settings( US3, "UltraScan" );
+  QList<QStringList> xhlist; 
+  int xhCount = settings.value( "xhCount", 0 ).toInt();
+
+  for ( int ii = 0; ii < xhCount; ii++ )
+  {
+    QString key = QString( "xhlist%1" ).arg( ii );
+    xhlist << settings.value( key ).toStringList();
+  }
+
+  return xhlist;
+}
+
+void US_Settings::set_xpn_db_hosts( const QList<QStringList>& xhlist )
+{
+  QSettings settings( US3, "UltraScan" );
+
+  // First remove any existing database entries
+  if ( settings.contains( "xhCount" ) )
+  {
+    int count = settings.value( "xhCount" ).toInt();
+    for ( int ii = 0; ii < count; ii++ )
+    {
+      QString key = QString( "xhlist%1" ).arg( ii );
+      settings.remove( key );
+    }
+  }
+
+  int xhCount = xhlist.size();
+
+  for ( int ii = 0; ii < xhCount; ii++ )
+  {
+    QString key = QString( "xhlist%1" ).arg( ii );
+    settings.setValue( key, xhlist.at( ii ) );
+  }
+
+  settings.setValue( "xhCount", xhCount );
+}
+
+QStringList US_Settings::defaultXpnHost( void )
+{
+  QSettings settings( US3, "UltraScan" );
+  return settings.value( "defXpnHost", QStringList() ).toStringList();
+}
+
+void US_Settings::set_def_xpn_host( const QStringList& defXpnHost )
+{
+  QSettings settings( US3, "UltraScan" );
+  if ( defXpnHost.isEmpty() )
+    settings.remove( "defXpnHost" );
+  else
+    settings.setValue( "defXpnHost", defXpnHost );
+}
+
