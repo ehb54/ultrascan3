@@ -150,31 +150,22 @@ DbgLv(1) << "XpDa:scn: tabname" << tabname << "rows" << rows
 
       tbExpRun exprow;
       exprow.runId     = sqry.value( jrunid ).toInt();
-//DbgLv(1) << "XpDa:    jrunid       " << jrunid;
       exprow.expId     = sqry.value( jexpid ).toInt();
       exprow.rotorSN   = sqry.value( jrotsn ).toInt();
       exprow.datapath  = sqry.value( jdatpa ).toString();
       exprow.expstart  = sqry.value( jexpst ).toDateTime();
-//DbgLv(1) << "XpDa:    jexpid jrotsn" << jexpid << jrotsn;
-//DbgLv(1) << "XpDa:    jdatpa jexpst" << jdatpa << jexpst;
       exprow.instrSN   = sqry.value( jinssn ).toString();
       exprow.scimo1sn  = sqry.value( jsmo1s ).toString();
       exprow.scimo2sn  = sqry.value( jsmo2s ).toString();
       exprow.scimo3sn  = sqry.value( jsmo3s ).toString();
-//DbgLv(1) << "XpDa:    jinssn jsmo1s" << jinssn << jsmo1s;
-//DbgLv(1) << "XpDa:    jsmo2s jsmo3s" << jsmo2s << jsmo3s;
       exprow.runstat   = sqry.value( jrunst ).toInt();
       exprow.expdef    = sqry.value( jexpde ).toString();
       exprow.expname   = sqry.value( jexpnm ).toString();
       exprow.resname   = sqry.value( jresnm ).toString();
-//DbgLv(1) << "XpDa:    jrunst jexpde" << jrunst << jexpde;
-//DbgLv(1) << "XpDa:    jexpnm jresnm" << jexpnm << jresnm;
       exprow.abscnf    = sqry.value( jascnf ).toBool();
       exprow.flscnf    = sqry.value( jfscnf ).toBool();
       exprow.inscnf    = sqry.value( jiscnf ).toBool();
       exprow.wlscnf    = sqry.value( jwscnf ).toBool();
-//DbgLv(1) << "XpDa:    jascnf jfscnf" << jascnf << jfscnf;
-//DbgLv(1) << "XpDa:    jiscnf jwscnf" << jiscnf << jwscnf;
 
       tExprun << exprow;
 
@@ -488,19 +479,54 @@ DbgLv(1) << "XpDa:scn:     rads0 rads1 vals0 vals1"
          case 2:
          {
             tbFsData fsdrow;
+            fsdrow.runId     = sqry.value( jrunid ).toInt();
+            fsdrow.dataId    = sqry.value( jdatid ).toInt();
+            fsdrow.exptime   = sqry.value( jexptm ).toInt();
+            fsdrow.stageNum  = sqry.value( jstage ).toInt();
+            fsdrow.scanSeqN  = sqry.value( jscanx ).toInt();
+            fsdrow.modPos    = sqry.value( jmodpo ).toInt();
+            fsdrow.cellPos   = sqry.value( jcelpo ).toInt();
+            fsdrow.replic    = sqry.value( jrepli ).toInt();
+            fsdrow.wavelen   = sqry.value( jwavel ).toInt();
+            fsdrow.tempera   = sqry.value( jtempe ).toDouble();
+            fsdrow.speed     = sqry.value( jspeed ).toDouble();
+            fsdrow.omgSqT    = sqry.value( jomgsq ).toDouble();
+            fsdrow.expstart  = sqry.value( jexpst ).toDateTime();
+            fsdrow.samplName = sqry.value( jsname ).toString();
+            fsdrow.scanTypeF = sqry.value( jsctyp ).toString();
+            fsdrow.radPath   = sqry.value( jradpa ).toString();
+            fsdrow.count     = sqry.value( jcount ).toInt();
+            QString sPoss    = sqry.value( jposis ).toString();
+            QString sVals    = sqry.value( jvalus ).toString();
+            int pcount       = parse_doubles( sPoss, fsdrow.rads );
+            int vcount       = parse_doubles( sVals, fsdrow.vals );
+            int pcount2      = 0;
+            int vcount2      = 0;
+            if ( fsdrow.radPath == " "  ||  fsdrow.radPath.isEmpty() )
+            {  // Store both an 'A' and 'B' channel record
+               fsdrow.radPath   = "A";
                tFsdata << fsdrow;
+               fsdrow.radPath   = "B";
+               sPoss            = sqry.value( jpos2s ).toString();
+               sVals            = sqry.value( jv2ary ).toString();
+               pcount2          = parse_doubles( sPoss, fsdrow.rads );
+               vcount2          = parse_doubles( sVals, fsdrow.vals );
+            }
+
+            tFsdata << fsdrow;
+//*DEBUG*
+if(rows<9 || (rows+9)>count) {
+DbgLv(1) << "XpDa:scn:    row" << rows << "run" << fsdrow.runId
+ << "dat" << fsdrow.dataId << "pc vc c pc2 vc2"
+ << pcount << vcount << fsdrow.count << pcount2 << vcount2;
+DbgLv(1) << "XpDa:scn:       cnames" << cnames;
+}
+//*DEBUG*
             break;
          }
          case 3:
          {
             tbIsData isdrow;
-//*DEBUG*
-if(rows<9 || (rows+9)>count) {
-DbgLv(1) << "XpDa:scn:      jstrpo jresol jposis jvalus"
- << jstrpo << jresol << jposis << jvalus;
-DbgLv(1) << "XpDa:scn:       cnames" << cnames;
-}
-//*DEBUG*
             isdrow.runId     = sqry.value( jrunid ).toInt();
             isdrow.dataId    = sqry.value( jdatid ).toInt();
             isdrow.exptime   = sqry.value( jexptm ).toInt();
@@ -541,16 +567,42 @@ DbgLv(1) << "XpDa:scn:     rads0 rads1 vals0 vals1"
          case 4:
          {
             tbWsData wsdrow;
-            wsdrow.scanPos   = sqry.value( jscnpo ).toDouble();
+            wsdrow.runId     = sqry.value( jrunid ).toInt();
+            wsdrow.dataId    = sqry.value( jdatid ).toInt();
+            wsdrow.exptime   = sqry.value( jexptm ).toInt();
+            wsdrow.stageNum  = sqry.value( jstage ).toInt();
+            wsdrow.scanSeqN  = sqry.value( jscanx ).toInt();
+            wsdrow.modPos    = sqry.value( jmodpo ).toInt();
+            wsdrow.cellPos   = sqry.value( jcelpo ).toInt();
+            wsdrow.replic    = sqry.value( jrepli ).toInt();
+            wsdrow.scanPos   = sqry.value( jscnpo ).toInt();
+            wsdrow.tempera   = sqry.value( jtempe ).toDouble();
+            wsdrow.speed     = sqry.value( jspeed ).toDouble();
+            wsdrow.omgSqT    = sqry.value( jomgsq ).toDouble();
+            wsdrow.expstart  = sqry.value( jexpst ).toDateTime();
+            wsdrow.samplName = sqry.value( jsname ).toString();
+            wsdrow.scanTypeF = sqry.value( jsctyp ).toString();
+            wsdrow.radPath   = sqry.value( jradpa ).toString();
+            wsdrow.count     = sqry.value( jcount ).toInt();
             QString sPoss    = sqry.value( jwavls ).toString();
             QString sVals    = sqry.value( jv1ary ).toString();
             int pcount       = parse_doubles( sPoss, wsdrow.wvls );
             int vcount       = parse_doubles( sVals, wsdrow.vals );
+            int vcount2      = 0;
+            if ( wsdrow.radPath == " "  ||  wsdrow.radPath.isEmpty() )
+            {  // Store both an 'A' and 'B' channel record
+               wsdrow.radPath   = "A";
                tWsdata << wsdrow;
+               wsdrow.radPath   = "B";
+               sVals            = sqry.value( jv2ary ).toString();
+               vcount2          = parse_doubles( sVals, wsdrow.vals );
+            }
+
+            tWsdata << wsdrow;
 //*DEBUG*
 if(rows<9 || (rows+9)>count) {
-DbgLv(1) << "XpDa:scn:    row" << rows << "run dat pc vc c"
- << wsdrow.runId << wsdrow.dataId << pcount << vcount << wsdrow.count;
+DbgLv(1) << "XpDa:scn:    row" << rows << "run dat pc vc vc2 c" << wsdrow.runId
+ << wsdrow.dataId << pcount << vcount << vcount2 << wsdrow.count;
 }
 //*DEBUG*
             break;

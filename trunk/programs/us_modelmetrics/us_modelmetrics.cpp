@@ -924,8 +924,11 @@ void US_ModelMetrics::plot_data()
    integral = sum3 - sum1;
    percentage = 100.0*integral/total_conc;
    xval3  = hp_distro[i-1].parm;
-   median = hp_distro[points-1].parm -
-           (hp_distro[points-1].parm - hp_distro[0].parm)/2.0;
+
+   int midx   = ( points + 1 ) / 2 - 1;
+   median     = ( midx == ( points / 2 ) ) ?
+                hp_distro[ midx ].parm :
+               ( hp_distro[ midx ].parm  + hp_distro[ midx + 1 ].parm ) * 0.5;
 
    sum1 = 0.0;
    double mode_conc=0.0, m2=0.0, m3=0.0, m4=0.0, tmp_val;
