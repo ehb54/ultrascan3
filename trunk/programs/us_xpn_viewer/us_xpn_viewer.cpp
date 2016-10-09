@@ -79,6 +79,22 @@ US_XpnDataViewer::US_XpnDataViewer() : US_Widgets()
    runType      = "RI";
    currentDir   = "";
    QStringList xpnentr = US_Settings::defaultXpnHost();
+DbgLv(1) << "xpnentr count" << xpnentr.count();
+
+   if ( xpnentr.count() == 0 )
+   {
+      xpnentr << "test-host" << "bcf.uthscsa.edu" << "5432";
+
+      QMessageBox::warning( this,
+            tr( "No XPN Host Entry" ),
+            tr( "A default XPN Host entry is being used.\n"
+                "You should add entries via Preferences:XPN Host Preferences\n"
+                "as soon as possible" ) );
+   }
+else
+ DbgLv(1) << "xpnentr ..." << xpnentr;
+
+
    xpndesc      = xpnentr.at( 0 );
    xpnhost      = xpnentr.at( 1 );
    xpnport      = xpnentr.at( 2 );
