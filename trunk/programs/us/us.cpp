@@ -204,6 +204,8 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
   addMenu(  P_GLOMODL ,  tr( "Create Global &Model"              ), utilities );
   addMenu(  P_VIEWMWL ,  tr( "&View Multiwavelength Data"        ), utilities );
   addMenu(  P_VIEWMSS ,  tr( "View Multiwavelength &S-Spectra"   ), utilities );
+  addMenu(  P_VIEWCFA ,  tr( "View Raw &CFA Data"                ), utilities );
+  addMenu(  P_VIEWXPN ,  tr( "View Raw &XPN Data"                ), utilities );
 
   QMenu* simulation  = new QMenu( tr( "S&imulation" ),  this );
   addMenu(  P_ASTFEM, tr( "&Finite Element Simulation (ASTFEM)" ), simulation );
