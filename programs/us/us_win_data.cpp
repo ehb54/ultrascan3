@@ -25,7 +25,7 @@ namespace US_WinData
     P_FITMEN,       P_COLORGRAD,    P_RPTGEN,
     P_ROTORCAL,     P_LICENSE,      P_VHWCOMB,
     P_DDCOMB,       P_GLOMODL,      P_VIEWMWL,
-    P_VIEWCFA,      P_VIEWXPN,      P_VIEWMSS,
+    P_VIEWMSS,      P_VIEWCFA,      P_VIEWXPN,
     P_SPECFIT,      P_SPECDEC,
     
     P_ASTFEM,       P_EQUILTIMESIM,        // Simulation Menu
@@ -211,12 +211,17 @@ namespace US_WinData
       QObject::tr( "Loading Create Global Model"          ),
       QObject::tr( "Combine Models into a Global Model"  )
     },
-    
+
     { P_VIEWMWL,   0, 0, "us_mwlr_viewer",
       QObject::tr( "Loading View Multiwavelength Data"    ),
       QObject::tr( "View Multiwavelength Data Program"    )
     },
-    
+
+    { P_VIEWMSS,   0, 0, "us_mwl_spectra",
+      QObject::tr( "Loading View Multiwavelength S-Spectra"  ),
+      QObject::tr( "View Multiwavelength S-Spectra Program"  )
+    },
+
     { P_VIEWCFA,   0, 0, "us_cfa_viewer", 
       QObject::tr( "Loading View Raw CFA Data" ),
       QObject::tr( "View/Import Raw CFA Data"  )
@@ -225,61 +230,6 @@ namespace US_WinData
     { P_VIEWXPN,   0, 0, "us_xpn_viewer", 
       QObject::tr( "Loading View Raw XPN Data" ),
       QObject::tr( "View/Import Raw XPN Data"  )
-    },
-    
-    { P_SPECFIT,   0, 0, "us_extinction",
-      QObject::tr( "Loading Extinction Spectrum Fitter"  ),
-      QObject::tr( "Fit Wavelength Scans to Extinction Spectrum"  )
-    },
-    
-    { P_SPECDEC,   0, 0, "us_spectrum",
-      QObject::tr( "Loading Spectral Decomposition Program"  ),
-      QObject::tr( "Decompose Wavelength Spectrum into Basis Spectra"  )
-    },
-    
-    { P_ASTFEM,    0, 0, "us_astfem_sim",
-       QObject::tr( "Loading Finite Element Sedimentation Simulator (ASTFEM)" ),
-       QObject::tr( "Finite Element Simulation Program (ASTFEM)" )
-    },
-
-    { P_EQUILTIMESIM, 0, 0, "us_equiltime",
-      QObject::tr( "Loading Equilibrium Time Estimation Simulator" ),
-      QObject::tr( "Equilibrium Time Estimation Program" )
-    },
-
-    { P_SASSOC, 0, 0, "us_sassoc",
-      QObject::tr( "Starting Self-Association Simulator )" ),
-      QObject::tr( "Self-Association Simulation Program" )
-    },
-
-    { P_MODEL1, 0, 0, "us_predict1",
-      QObject::tr( "Loading Molecular Modeling Simulator" ),
-      QObject::tr( "Molecular Modeling Simulation Program (1)" ) 
-    },
-
-    { P_MODEL2, 0, 0, "us_predict2",
-      QObject::tr( "Loading Molecular Modeling Simulator" ),
-      QObject::tr( "Molecular Modeling Simulation Program (2)" ) 
-    },
-
-    { P_SOMO, 0, 0, "us3_somo",
-      QObject::tr( "Loading SOMO Bead Modeling" ),
-      QObject::tr( "SOMO Rigid Body and Brownian Dynamics Bead Modeling" ) 
-    },
-
-    { P_SOMOCONFIG, 0, 0, "us3_config",
-      QObject::tr( "Loading SOMO Bead Modeling Configuration" ),
-      QObject::tr( "SOMO Path Configuration" ) 
-    },
-
-    { P_INVESTIGATOR,  1, 0, "us_investigator",
-      QObject::tr( "Loading Managing Investigator Data" ),
-      QObject::tr( "Managing Investigator Data Program" )
-    },
-    
-    { P_VIEWMSS,   0, 0, "us_mwl_spectra",
-      QObject::tr( "Loading View Multiwavelength S-Spectra"  ),
-      QObject::tr( "View Multiwavelength S-Spectra Program"  )
     },
     
     { P_SPECFIT,   0, 0, "us_extinction",

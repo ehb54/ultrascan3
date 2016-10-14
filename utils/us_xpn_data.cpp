@@ -1358,21 +1358,21 @@ void US_XpnData::interp_rvalues( QVector< double >& rads,
 
       for ( int jj = jjs; jj < radknt; jj++ )
       {
-         double rad1    = rads[ jj - 1];
-         double rad2    = rads[ jj ];
+         double radv1   = rads[ jj - 1];
+         double radv2   = rads[ jj ];
          valout         = vals[ jj ];
 
-         if ( radv < rad2  ||  jj == lstrx )
+         if ( radv < radv2  ||  jj == lstrx )
          {
-            double drad    = rad2 - rad1;
+            double drad    = radv2 - radv1;
             double val1    = vals[ jj - 1 ];
             double dval    = valout - val1;
-            valout         = val1 + ( radv - rad1 ) * dval / drad;
+            valout         = val1 + ( radv - radv1 ) * dval / drad;
             jjs            = jj;
             break;
          }
 
-         else if ( radv == rad2 )
+         else if ( radv == radv2 )
          {
             jjs            = jj;
             break;

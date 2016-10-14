@@ -293,9 +293,11 @@ void US_ResidPlotFem::presCheck( bool chkd )
 
    if ( chkd )
    {  // alternate residual plots unchecked
+      connect_pboxes( false );
       ck_plttin->setChecked( false );
       ck_pltrin->setChecked( false );
       ck_pltran->setChecked( false );
+      connect_pboxes( true  );
    }
 
    skip_plot = false;
@@ -310,9 +312,11 @@ void US_ResidPlotFem::ptinCheck( bool chkd )
 
    if ( chkd )
    {  // alternate residual plots unchecked
+      connect_pboxes( false );
       ck_pltres->setChecked( false );
       ck_pltrin->setChecked( false );
       ck_pltran->setChecked( false );
+      connect_pboxes( true  );
    }
 
    skip_plot = false;
@@ -327,9 +331,11 @@ void US_ResidPlotFem::prinCheck( bool chkd )
 
    if ( chkd )
    {  // alternate residual plots unchecked
+      connect_pboxes( false );
       ck_pltres->setChecked( false );
       ck_plttin->setChecked( false );
       ck_pltran->setChecked( false );
+      connect_pboxes( true  );
    }
 
    skip_plot = false;
@@ -344,9 +350,11 @@ void US_ResidPlotFem::pranCheck( bool chkd )
 
    if ( chkd )
    {  // alternate residual plots unchecked
+      connect_pboxes( false );
       ck_pltres->setChecked( false );
       ck_plttin->setChecked( false );
       ck_pltrin->setChecked( false );
+      connect_pboxes( true  );
    }
 
    skip_plot = false;
@@ -700,6 +708,8 @@ void US_ResidPlotFem::plot_rdata()
 
       title   = tr( "ri_noise" );
       curv    = us_curve( data_plot2, title );
+      rmin    = 1.0;
+      rmax    = (double)count;
 
       data_plot2->setAxisTitle( QwtPlot::xBottom, tr( "Scan Number" ) );
       curv->setPen    ( pen_plot );
@@ -837,5 +847,29 @@ DbgLv(1) << "Resids BitMap Closed!!!";
    resbmap = 0;
    have_bm = false;
    ck_shorbm->setChecked( false );
+}
+
+// Connect/Disconnect plot type boxes
+void US_ResidPlotFem::connect_pboxes( bool conn )
+{
+   if ( conn )
+   {  // Connect slots for plot boxes
+      connect( ck_pltres, SIGNAL( toggled( bool ) ),
+               this,      SLOT( presCheck( bool ) ) );
+      connect( ck_plttin, SIGNAL( toggled( bool ) ),
+               this,      SLOT( ptinCheck( bool ) ) );
+      connect( ck_pltrin, SIGNAL( toggled( bool ) ),
+               this,      SLOT( prinCheck( bool ) ) );
+      connect( ck_pltran, SIGNAL( toggled( bool ) ),
+               this,      SLOT( pranCheck( bool ) ) );
+   }
+
+   else
+   {  // Disconnect slots for plot boxes
+      ck_pltres->disconnect();
+      ck_plttin->disconnect();
+      ck_pltrin->disconnect();
+      ck_pltran->disconnect();
+   }
 }
 
