@@ -62,7 +62,7 @@ int US_GuiUtil::save_svg( const QString& filename, const QwtPlot* plot )
 #else
       QwtPlotRenderer pltrend;
       QSizeF psize   = plot->size();
-      pltrend.exportTo( (QwtPlot*)plot, fnsvg, psize, res );
+      pltrend.renderDocument( (QwtPlot*)plot, fnsvg, psize, res );
 #endif
 
       // Compress it and save SVGZ file
