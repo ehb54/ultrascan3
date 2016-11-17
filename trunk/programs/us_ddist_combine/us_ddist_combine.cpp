@@ -739,7 +739,15 @@ DbgLv(1) << "    widg" << widg1 << "enab" << enab;
 DbgLv(1) << "  HIDE ALL,  row" << ii;
          for ( int jj = 0; jj < rwidgs.count(); jj++ )
          {  // Hide each widget in the row
-            rwidgs[ jj ]->setVisible(false);
+            rwidgs[ jj ]->setVisible( false );
+         }
+      }
+
+      else
+      {  // If row had enabled checkboxes, show the entire row
+         for ( int jj = 0; jj < rwidgs.count(); jj++ )
+         {  // Show each widget in the row
+            rwidgs[ jj ]->setVisible( true );
          }
       }
    }  // END: checkboxes row loop
@@ -1979,7 +1987,8 @@ void US_DDistr_Combine::ltypeChanged()
    {
       list_distributions();
 
-      reset_plot();
+      //reset_plot();
+      plot_data();
    }
 }
 

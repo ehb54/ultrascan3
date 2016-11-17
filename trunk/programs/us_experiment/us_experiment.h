@@ -165,6 +165,7 @@ class US_Experiment : public US_Widgets
       QLineEdit*            le_stat;
 
       int                   dbg_level;
+      int                   curr_panx;
 
 private slots:
 
