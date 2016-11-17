@@ -29,6 +29,7 @@ int main( int argc, char* argv[] )
 US_Experiment::US_Experiment() : US_Widgets()
 {
    dbg_level    = US_Settings::us_debug();
+   curr_panx    = 0;
 
    setWindowTitle( tr( "Define An Experiment" ) );
    setPalette( US_GuiSettings::frameColor() );
@@ -100,7 +101,8 @@ US_Experiment::US_Experiment() : US_Widgets()
 // Slot to handle a new panel selected
 void US_Experiment::newPanel( int panx )
 {
-DbgLv(1) << "newPanel panx=" << panx;
+DbgLv(1) << "newPanel panx=" << panx << "prev.panx=" << curr_panx;
+   curr_panx        = panx;
    statUpdate();
 }
 
@@ -395,25 +397,43 @@ US_ExperGuiSpeeds::US_ExperGuiSpeeds()
    ct_dlymin->setValue(   30 );
    cb_prof->addItem( tr( "Speed Profile 1: 4500 rpm for 5 hr 30 min" ) );
 
-   int row=0;
-   genL->addWidget( lb_count,        row,   0, 1, 3 );
-   genL->addWidget( ct_count,        row++, 3, 1, 1 );
-   genL->addWidget( cb_prof,         row++, 0, 1, 4 );
-   genL->addWidget( lb_speed,        row,   0, 1, 3 );
-   genL->addWidget( ct_speed,        row++, 3, 1, 1 );
-   genL->addWidget( lb_accel,        row,   0, 1, 3 );
-   genL->addWidget( ct_accel,        row++, 3, 1, 1 );
-   genL->addWidget( lb_lenhr,        row,   0, 1, 3 );
-   genL->addWidget( ct_lenhr,        row++, 3, 1, 1 );
-   genL->addWidget( lb_lenmin,       row,   0, 1, 3 );
-   genL->addWidget( ct_lenmin,       row++, 3, 1, 1 );
-   genL->addWidget( lb_dlyhr,        row,   0, 1, 3 );
-   genL->addWidget( ct_dlyhr,        row++, 3, 1, 1 );
-   genL->addWidget( lb_dlymin,       row,   0, 1, 3 );
-   genL->addWidget( ct_dlymin,       row++, 3, 1, 1 );
+   lb_count->adjustSize();
+   QFont font( US_GuiSettings::fontFamily(),
+               US_GuiSettings::fontSize() );
+   QFontMetrics fmet( font );
+   int fwidth  = fmet.maxWidth();
+   int rheight = lb_count->height();
+   int csizw   = fwidth * 8;
+   ct_count ->resize( csizw, rheight );
+   ct_speed ->resize( csizw, rheight );
+   ct_accel ->resize( csizw, rheight );
+   ct_lenhr ->resize( csizw, rheight );
+   ct_lenmin->resize( csizw, rheight );
+   ct_dlyhr ->resize( csizw, rheight );
+   ct_dlymin->resize( csizw, rheight );
+
+   int row = 0;
+   genL->addWidget( lb_count,  row,   0, 1, 3 );
+   genL->addWidget( ct_count,  row++, 3, 1, 1 );
+   genL->addWidget( cb_prof,   row++, 0, 1, 4 );
+   genL->addWidget( lb_speed,  row,   0, 1, 3 );
+   genL->addWidget( ct_speed,  row++, 3, 1, 1 );
+   genL->addWidget( lb_accel,  row,   0, 1, 3 );
+   genL->addWidget( ct_accel,  row++, 3, 1, 1 );
+   genL->addWidget( lb_lenhr,  row,   0, 1, 3 );
+   genL->addWidget( ct_lenhr,  row++, 3, 1, 1 );
+   genL->addWidget( lb_lenmin, row,   0, 1, 3 );
+   genL->addWidget( ct_lenmin, row++, 3, 1, 1 );
+   genL->addWidget( lb_dlyhr,  row,   0, 1, 3 );
+   genL->addWidget( ct_dlyhr,  row++, 3, 1, 1 );
+   genL->addWidget( lb_dlymin, row,   0, 1, 3 );
+   genL->addWidget( ct_dlymin, row++, 3, 1, 1 );
+   genL->setColumnStretch( 0, 4 );
+   genL->setColumnStretch( 3, 0 );
 
    panel->addLayout( genL );
    panel->addStretch();
+   adjustSize();
 };
 
 // Set a specific panel value
