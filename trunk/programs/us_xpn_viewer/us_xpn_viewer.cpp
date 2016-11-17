@@ -58,7 +58,7 @@ US_XpnDataViewer::US_XpnDataViewer() : US_Widgets()
 {
    const QChar chlamb( 955 );
 
-   setWindowTitle( tr( "Beckman XPN Data Viewer" ) );
+   setWindowTitle( tr( "Beckman XPN (Optima XLA) Data Viewer" ) );
    setPalette( US_GuiSettings::frameColor() );
 
    QGridLayout* settings = new QGridLayout;
