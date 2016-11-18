@@ -3,6 +3,7 @@
 #include "us_experiment.h"
 #if QT_VERSION < 0x050000
 #define setSamples(a,b,c)  setData(a,b,c)
+#define QRegularExpression(a)  QRegExp(a)
 #endif
 
 #ifndef DbgLv
@@ -41,13 +42,13 @@ US_Experiment::US_Experiment() : US_Widgets()
    QHBoxLayout* buttL     = new QHBoxLayout();
 
    tabWidget           = us_tabwidget();
-   epanGeneral         = new US_ExperGuiGeneral();
-   epanRotor           = new US_ExperGuiRotor( );
-   epanSpeeds          = new US_ExperGuiSpeeds( );
-   epanCells           = new US_ExperGuiCells( );
-   epanSolutions       = new US_ExperGuiSolutions( );
-   epanPhotoMult       = new US_ExperGuiPhotoMult( );
-   epanUpload          = new US_ExperGuiUpload( );
+   epanGeneral         = new US_ExperGuiGeneral  ( this );
+   epanRotor           = new US_ExperGuiRotor    ( this );
+   epanSpeeds          = new US_ExperGuiSpeeds   ( this );
+   epanCells           = new US_ExperGuiCells    ( this );
+   epanSolutions       = new US_ExperGuiSolutions( this );
+   epanPhotoMult       = new US_ExperGuiPhotoMult( this );
+   epanUpload          = new US_ExperGuiUpload   ( this );
 
    tabWidget->addTab( epanGeneral,   tr( "1: General"          ) );
    tabWidget->addTab( epanRotor,     tr( "2: Lab/Rotor"        ) );
@@ -96,6 +97,37 @@ US_Experiment::US_Experiment() : US_Widgets()
    adjustSize();
 
    reset();
+}
+
+// Public function to return a parameter value
+//   from a US_Experiment child panel
+QString US_Experiment::childPValue( const QString child, const QString type )
+{
+   QString value( "" );
+
+   if      ( child == "general" )
+   {
+   }
+   else if ( child == "rotor" )
+   {
+      value = epanRotor    ->getPValue( type );
+   }
+
+   return value;
+}
+
+// Public function to return a parameter list value
+//   from a US_Experiment child panel
+QStringList US_Experiment::childPList( const QString child, const QString type )
+{
+   QStringList value( "" );
+
+   if ( child == "general" )
+   {
+      value  = epanGeneral   ->getPList( type );
+   }
+
+   return value;
 }
 
 // Slot to handle a new panel selected
@@ -152,15 +184,16 @@ void US_Experiment::reset( void )
 }
 
 // Panel for run and other general parameters
-US_ExperGuiGeneral::US_ExperGuiGeneral()
+US_ExperGuiGeneral::US_ExperGuiGeneral( QWidget* topw )
 {
-   QVBoxLayout* panel     = new QVBoxLayout( this );
+   mainw               = topw;
+   QVBoxLayout* panel  = new QVBoxLayout( this );
    panel->setSpacing        ( 2 );
    panel->setContentsMargins( 2, 2, 2, 2 );
-   QLabel* lb_panel = us_banner( tr( "1: Specify run and other general parameters" ) );
+   QLabel* lb_panel    = us_banner( tr( "1: Specify run and other general parameters" ) );
    panel->addWidget( lb_panel );
 
-   QGridLayout* genL      = new QGridLayout();
+   QGridLayout* genL   = new QGridLayout();
 
    QLabel*      lb_runid        = us_label( tr( "Run ID:" ) );
    QPushButton* pb_project      = us_pushbutton( tr( "Select Project" ) );
@@ -195,7 +228,7 @@ US_ExperGuiGeneral::US_ExperGuiGeneral()
             this,            SLOT( sel_project()      ) );
    connect( pb_investigator, SIGNAL( clicked()        ), 
             this,            SLOT( sel_investigator() ) );
-};
+}
 
 // Set a specific panel value
 void US_ExperGuiGeneral::setPValue( const QString type, QString& value )
@@ -227,6 +260,19 @@ QString US_ExperGuiGeneral::getPValue( const QString type )
    }
    else if ( type == "investigator" )
    {
+   }
+
+   return value;
+}
+
+// Get specific panel list values
+QStringList US_ExperGuiGeneral::getPList( const QString type )
+{
+   QStringList value( "" );
+
+   if ( type == "run" )
+   {
+      value << le_runid->text();
    }
 
    return value;
@@ -281,22 +327,23 @@ qDebug() << "projinfo: proj.guid" << project.projectGUID;
 
 
 // Panel for Lab/Rotor parameters
-US_ExperGuiRotor::US_ExperGuiRotor()
+US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
 {
-   QVBoxLayout* panel     = new QVBoxLayout( this );
+   mainw               = topw;
+   QVBoxLayout* panel  = new QVBoxLayout( this );
    panel->setSpacing        ( 2 );
    panel->setContentsMargins( 2, 2, 2, 2 );
-   QLabel* lb_panel = us_banner( tr( "2: Specify lab/rotor parameters" ) );
+   QLabel* lb_panel    = us_banner( tr( "2: Specify lab/rotor parameters" ) );
    panel->addWidget( lb_panel );
-   QGridLayout* genL      = new QGridLayout();
+   QGridLayout* genL   = new QGridLayout();
 
-   QLabel*      lb_lab          = us_label( tr( "Laboratory:" ) );
-   QLabel*      lb_rotor        = us_label( tr( "Rotor:" ) );
-   QLabel*      lb_calibr       = us_label( tr( "Calibration:" ) );
-   QPushButton* pb_advrotor     = us_pushbutton( tr( "Advanced Lab/Rotor/Calibration" ) );
-                cb_lab          = new QComboBox( this );
-                cb_rotor        = new QComboBox( this );
-                cb_calibr       = new QComboBox( this );
+   QLabel*      lb_lab      = us_label( tr( "Laboratory:" ) );
+   QLabel*      lb_rotor    = us_label( tr( "Rotor:" ) );
+   QLabel*      lb_calibr   = us_label( tr( "Calibration:" ) );
+   QPushButton* pb_advrotor = us_pushbutton( tr( "Advanced Lab/Rotor/Calibration" ) );
+                cb_lab      = new QComboBox( this );
+                cb_rotor    = new QComboBox( this );
+                cb_calibr   = new QComboBox( this );
 
    int row=0;
    genL->addWidget( lb_lab,          row,   0, 1, 1 );
@@ -317,6 +364,10 @@ void US_ExperGuiRotor::setPValue( const QString type, QString& value )
    if ( type == "lab" )
    {
       cb_lab->setCurrentIndex( cb_lab->findText( value ) );
+   }
+   else if ( type == "rotor" )
+   {
+      cb_rotor->setCurrentIndex( cb_rotor->findText( value ) );
    }
 }
 
@@ -342,6 +393,24 @@ QString US_ExperGuiRotor::getPValue( const QString type )
    {
       value = cb_lab->currentText();
    }
+   else if ( type == "rotor" )
+   {
+      value = cb_rotor->currentText();
+value=value.isEmpty()?"defaultRotor":value;
+   }
+
+   return value;
+}
+
+// Get a specific panel value from a sibling panel
+QString US_ExperGuiRotor::sibPValue( const QString sibling, const QString type )
+{
+   QString value( "" );
+
+   if ( mainw != NULL )
+   {
+      value = ((US_Experiment*)mainw)->childPValue( sibling, type );
+   }
 
    return value;
 }
@@ -357,14 +426,15 @@ bool is_done=false;
                    
 
 // Panel for Speed step parameters
-US_ExperGuiSpeeds::US_ExperGuiSpeeds()
+US_ExperGuiSpeeds::US_ExperGuiSpeeds( QWidget* topw )
 {
-   QVBoxLayout* panel     = new QVBoxLayout( this );
+   mainw               = topw;
+   QVBoxLayout* panel  = new QVBoxLayout( this );
    panel->setSpacing        ( 2 );
    panel->setContentsMargins( 2, 2, 2, 2 );
-   QLabel* lb_panel = us_banner( tr( "3: Specify speed steps" ) );
+   QLabel* lb_panel    = us_banner( tr( "3: Specify speed steps" ) );
    panel->addWidget( lb_panel );
-   QGridLayout* genL      = new QGridLayout();
+   QGridLayout* genL   = new QGridLayout();
 
    QLabel* lb_count       = us_label( tr( "Number of Speed Profiles:" ) );
    QLabel* lb_lenhr       = us_label( tr( "Length of Experiment (Hours):" ) );
@@ -470,13 +540,90 @@ bool is_done=false;
                    
 
 // Panel for Cells parameters
-US_ExperGuiCells::US_ExperGuiCells()
+US_ExperGuiCells::US_ExperGuiCells( QWidget* topw )
 {
-   QVBoxLayout* panel     = new QVBoxLayout( this );
+qDebug() << "EGC: IN";
+   mainw               = topw;
+   QVBoxLayout* panel  = new QVBoxLayout( this );
    panel->setSpacing        ( 2 );
    panel->setContentsMargins( 2, 2, 2, 2 );
-   QLabel* lb_panel = us_banner( tr( "4: Define cell usage" ) );
+   QLabel* lb_panel    = us_banner( tr( "4: Define cell usage" ) );
    panel->addWidget( lb_panel );
+   QGridLayout* genL   = new QGridLayout();
+
+   QPushButton* pb_advrotor = us_pushbutton( tr( "Fill from Rotor information" ) );
+   genL->addWidget( pb_advrotor, 0, 0, 1, 6 );
+
+   QLabel* lb_hdr1     = us_banner( tr( "Cell/Channel" ) );
+   QLabel* lb_hdr2     = us_banner( tr( "Usage" ) );
+   QLabel* lb_hdr3     = us_banner( tr( "Centerpiece" ) );
+   QLabel* lb_hdr4     = us_banner( tr( "Cell/Channel" ) );
+   QLabel* lb_hdr5     = us_banner( tr( "Usage" ) );
+   QLabel* lb_hdr6     = us_banner( tr( "Centerpiece" ) );
+   genL->addWidget( lb_hdr1,     1, 0, 1, 1 );
+   genL->addWidget( lb_hdr2,     1, 1, 1, 1 );
+   genL->addWidget( lb_hdr3,     1, 2, 1, 2 );
+   genL->addWidget( lb_hdr4,     1, 4, 1, 1 );
+   genL->addWidget( lb_hdr5,     1, 5, 1, 1 );
+   genL->addWidget( lb_hdr6,     1, 6, 1, 2 );
+
+   QList< QLabel* >    cc_labls;
+   QList< QComboBox* > cc_cmbbs;
+   QList< QCheckBox* > cc_chkbs;
+   QList< QWidget* >   cc_widgs;
+   int krow  = 2;
+   int ncels = 8;
+   int nchns = 8;
+   int mxcel = 4;
+   int mxchn = 2;
+
+   for ( int ii = 0; ii < ncels; ii++ )
+   {
+      QString scel = tr( "cell %1, " ).arg( ii + 1 );
+
+      for ( int jj = 0; jj < nchns; jj++ )
+      {
+         QString schn     = tr( "channel " ) + QString( "ABCDEFGH" ).mid( jj, 1 );
+         QString slab     = scel + schn;
+         QLabel* clabl    = us_label( slab );
+         QCheckBox* chkbx = new QCheckBox;
+         QComboBox* combx = us_comboBox();
+         QLayout* lochk   = us_checkbox( tr( "Scan" ), chkbx, false );
+         bool make_vis    = ( ( ii < mxcel )  &&  ( jj < mxchn ) );
+
+         combx->addItem( tr( "none" ) );
+
+         if ( ( jj & 1 ) == 0 )
+         {
+            genL->addWidget( clabl, krow,   0, 1, 1 );
+            genL->addLayout( lochk, krow,   1, 1, 1 );
+            genL->addWidget( combx, krow,   2, 1, 2 );
+         }
+         else
+         {
+            genL->addWidget( clabl, krow,   4, 1, 1 );
+            genL->addLayout( lochk, krow,   5, 1, 1 );
+            genL->addWidget( combx, krow++, 6, 1, 2 );
+         }
+
+         clabl->setVisible( make_vis );
+         chkbx->setVisible( make_vis );
+         combx->setVisible( make_vis );
+         lochk->itemAt( 0 )->widget()->setVisible( make_vis );
+         lochk->itemAt( 1 )->widget()->setVisible( make_vis );
+
+         cc_widgs << clabl << chkbx << combx;
+      }
+   }
+
+   connect( pb_advrotor,  SIGNAL( clicked()    ),
+            this,         SLOT  ( statUpdate() ) );
+
+   panel->addLayout( genL );
+   panel->addStretch();
+
+QString pval1 = sibPValue( "rotor", "rotor" );
+qDebug() << "EGC: rotor+rotor=" << pval1;
 };
 
 // Set a specific panel value
@@ -502,24 +649,53 @@ QString US_ExperGuiCells::getPValue( const QString type )
    return value;
 }
 
+// Get a specific panel value from a sibling panel
+QString US_ExperGuiCells::sibPValue( const QString sibling, const QString type )
+{
+   QString value( "" );
+qDebug() << "EGC:cPV: IN sibling" << sibling << "type" << type;
+qDebug() << "EGC:cPV: mainw" << mainw;
+   if ( mainw != NULL )
+   {
+      value = ((US_Experiment*)mainw)->childPValue( sibling, type );
+   }
+
+   return value;
+}
+
 // Return status string for the panel
 QString US_ExperGuiCells::status()
 {
 //   bool is_done  = ( ! le_runid->text().isEmpty() &&
 //                     ! le_project->text().isEmpty() );
+QString pval1 = sibPValue( "rotor", "rotor" );
+qDebug() << "EGC:st: rotor+rotor=" << pval1;
 bool is_done=false;
    return ( is_done ? QString( "4:X" ) : QString( "4:u" ) );
 }
                    
 
 // Panel for Solutions parameters
-US_ExperGuiSolutions::US_ExperGuiSolutions()
+US_ExperGuiSolutions::US_ExperGuiSolutions( QWidget* topw )
 {
-   QVBoxLayout* panel     = new QVBoxLayout( this );
+   mainw               = topw;
+   QVBoxLayout* panel  = new QVBoxLayout( this );
    panel->setSpacing        ( 2 );
    panel->setContentsMargins( 2, 2, 2, 2 );
-   QLabel* lb_panel = us_banner( tr( "5: Specify solutions for each cell" ) );
+   QLabel* lb_panel    = us_banner( tr( "5: Specify solutions for each cell" ) );
    panel->addWidget( lb_panel );
+   QGridLayout* genL   = new QGridLayout();
+
+   QPushButton* pb_advparam = us_pushbutton( tr( "Fill from other Panel information" ) );
+
+   int row=0;
+   genL->addWidget( pb_advparam,     row++, 0, 1, 4 );
+
+   connect( pb_advparam,  SIGNAL( clicked()    ),
+            this,         SLOT  ( statUpdate() ) );
+
+   panel->addLayout( genL );
+   panel->addStretch();
 };
 
 // Set a specific panel value
@@ -556,13 +732,26 @@ bool is_done=false;
                    
 
 // Panel for Photo Multiplier parameters
-US_ExperGuiPhotoMult::US_ExperGuiPhotoMult()
+US_ExperGuiPhotoMult::US_ExperGuiPhotoMult( QWidget* topw )
 {
-   QVBoxLayout* panel     = new QVBoxLayout( this );
+   mainw               = topw;
+   QVBoxLayout* panel  = new QVBoxLayout( this );
    panel->setSpacing        ( 2 );
    panel->setContentsMargins( 2, 2, 2, 2 );
-   QLabel* lb_panel = us_banner( tr( "6: Specify photo multiplier, voltage" ) );
+   QLabel* lb_panel    = us_banner( tr( "6: Specify photo multiplier, voltage" ) );
    panel->addWidget( lb_panel );
+   QGridLayout* genL   = new QGridLayout();
+
+   QPushButton* pb_advparam = us_pushbutton( tr( "Fill from other Panel information" ) );
+
+   int row=0;
+   genL->addWidget( pb_advparam,     row++, 0, 1, 4 );
+
+   connect( pb_advparam,  SIGNAL( clicked()    ),
+            this,         SLOT  ( statUpdate() ) );
+
+   panel->addLayout( genL );
+   panel->addStretch();
 };
 
 // Set a specific panel value
@@ -599,13 +788,26 @@ bool is_done=false;
                    
 
 // Panel for Uploading parameters to Optima XLA DB
-US_ExperGuiUpload::US_ExperGuiUpload()
+US_ExperGuiUpload::US_ExperGuiUpload( QWidget* topw )
 {
-   QVBoxLayout* panel     = new QVBoxLayout( this );
+   mainw               = topw;
+   QVBoxLayout* panel  = new QVBoxLayout( this );
    panel->setSpacing        ( 2 );
    panel->setContentsMargins( 2, 2, 2, 2 );
-   QLabel* lb_panel = us_banner( tr( "7: Upload experiment parameters to Optima XLA DB" ) );
+   QLabel* lb_panel    = us_banner( tr( "7: Upload experiment parameters to Optima XLA DB" ) );
    panel->addWidget( lb_panel );
+   QGridLayout* genL   = new QGridLayout();
+
+   QPushButton* pb_advparam = us_pushbutton( tr( "Fill from other Panel information" ) );
+
+   int row=0;
+   genL->addWidget( pb_advparam,     row++, 0, 1, 4 );
+
+   connect( pb_advparam,  SIGNAL( clicked()    ),
+            this,         SLOT  ( statUpdate() ) );
+
+   panel->addLayout( genL );
+   panel->addStretch();
 };
 
 // Set a specific panel value
