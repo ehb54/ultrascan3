@@ -21,14 +21,19 @@ class US_ExperGuiGeneral : public US_Widgets
 
 	public:
 
-      US_ExperGuiGeneral();
+      US_ExperGuiGeneral( QWidget* );
       ~US_ExperGuiGeneral() {};
 
-      void setPValue   ( const QString, QString& );
-      QString getPValue( const QString );
-      QString status   ( void );
+      void setPValue       ( const QString, QString& );
+      void setPValue       ( const QString, QStringList& );
+      QString getPValue    ( const QString );
+      QStringList getPList ( const QString );
+      QString sibPValue    ( const QString, const QString );
+      QStringList sibPList ( const QString, const QString );
+      QString status       ( void );
 
    private:
+      QWidget* mainw;
 
       US_Disk_DB_Controls*  disk_controls; //!< Radiobuttons for disk/db choice
 
@@ -50,16 +55,19 @@ class US_ExperGuiRotor : public US_Widgets
 
 	public:
 
-      US_ExperGuiRotor();
+      US_ExperGuiRotor( QWidget* );
       ~US_ExperGuiRotor() {};
 
-      void setPValue   ( const QString, QString& );
-      void setPValue   ( const QString, QStringList& );
-      QString getPValue( const QString );
-      QString status   ( void );
+      void setPValue       ( const QString, QString& );
+      void setPValue       ( const QString, QStringList& );
+      QString getPValue    ( const QString );
+      QString sibPValue    ( const QString, const QString );
+      QStringList sibPList ( const QString, const QString );
+      QString status       ( void );
 
    private:
 
+      QWidget* mainw;
       QComboBox* cb_lab;
       QComboBox* cb_rotor;
       QComboBox* cb_calibr;
@@ -71,13 +79,19 @@ class US_ExperGuiSpeeds : public US_Widgets
 
 	public:
 
-      US_ExperGuiSpeeds();
+      US_ExperGuiSpeeds( QWidget* );
       ~US_ExperGuiSpeeds() {};
 
-      void setPValue   ( const QString, QString& );
-      QString getPValue( const QString );
-      QString status   ( void );
+      void setPValue       ( const QString, QString& );
+      void setPValue       ( const QString, QStringList& );
+      QString getPValue    ( const QString );
+      QString sibPValue    ( const QString, const QString );
+      QStringList sibPList ( const QString, const QString );
+      QString status       ( void );
 
+   private:
+
+      QWidget* mainw;
 };
 
 class US_ExperGuiCells : public US_Widgets 
@@ -86,13 +100,19 @@ class US_ExperGuiCells : public US_Widgets
 
 	public:
 
-      US_ExperGuiCells();
+      US_ExperGuiCells( QWidget* );
       ~US_ExperGuiCells() {};
 
-      void setPValue   ( const QString, QString& );
-      QString getPValue( const QString );
-      QString status   ( void );
+      void setPValue       ( const QString, QString& );
+      void setPValue       ( const QString, QStringList& );
+      QString getPValue    ( const QString );
+      QString sibPValue    ( const QString, const QString );
+      QStringList sibPList ( const QString, const QString );
+      QString status       ( void );
 
+   private:
+
+      QWidget* mainw;
 };
 
 class US_ExperGuiSolutions : public US_Widgets 
@@ -101,13 +121,19 @@ class US_ExperGuiSolutions : public US_Widgets
 
 	public:
 
-      US_ExperGuiSolutions();
+      US_ExperGuiSolutions( QWidget* );
       ~US_ExperGuiSolutions() {};
 
-      void setPValue   ( const QString, QString& );
-      QString getPValue( const QString );
-      QString status   ( void );
+      void setPValue       ( const QString, QString& );
+      void setPValue       ( const QString, QStringList& );
+      QString getPValue    ( const QString );
+      QString sibPValue    ( const QString, const QString );
+      QStringList sibPList ( const QString, const QString );
+      QString status       ( void );
 
+   private:
+
+      QWidget* mainw;
 };
 
 class US_ExperGuiPhotoMult : public US_Widgets 
@@ -116,13 +142,19 @@ class US_ExperGuiPhotoMult : public US_Widgets
 
 	public:
 
-      US_ExperGuiPhotoMult();
+      US_ExperGuiPhotoMult( QWidget* );
       ~US_ExperGuiPhotoMult() {};
 
-      void setPValue   ( const QString, QString& );
-      QString getPValue( const QString );
-      QString status   ( void );
+      void setPValue       ( const QString, QString& );
+      void setPValue       ( const QString, QStringList& );
+      QString getPValue    ( const QString );
+      QString sibPValue    ( const QString, const QString );
+      QStringList sibPList ( const QString, const QString );
+      QString status       ( void );
 
+   private:
+
+      QWidget* mainw;
 };
 
 class US_ExperGuiUpload : public US_Widgets 
@@ -131,13 +163,19 @@ class US_ExperGuiUpload : public US_Widgets
 
 	public:
 
-      US_ExperGuiUpload();
+      US_ExperGuiUpload( QWidget* );
       ~US_ExperGuiUpload() {};
 
-      void setPValue   ( const QString, QString& );
-      QString getPValue( const QString );
-      QString status   ( void );
+      void setPValue       ( const QString, QString& );
+      void setPValue       ( const QString, QStringList& );
+      QString getPValue    ( const QString );
+      QString sibPValue    ( const QString, const QString );
+      QStringList sibPList ( const QString, const QString );
+      QString status       ( void );
 
+   private:
+
+      QWidget* mainw;
 };
 
 class US_Experiment : public US_Widgets 
@@ -147,6 +185,11 @@ class US_Experiment : public US_Widgets
 	public:
       US_Experiment();
 
+      void setPValue         ( const QString, QString& );
+      void setPValue         ( const QString, QStringList& );
+      QString getPValue      ( const QString );
+      QString childPValue    ( const QString, const QString );
+      QStringList childPList ( const QString, const QString );
 
 	private:
 
