@@ -897,7 +897,7 @@ DbgLv(1) << "LD:  analys_name" << tsys.analys_name;
          sol_sk.c  = model.components[ jj ].signal_concentration;
          sol_sk.w  = model.components[ jj ].mw;
          sol_sk.v  = model.components[ jj ].vbar20;
-         sol_sk.d  = model.components[ jj ].D;
+         sol_sk.d  = model.components[ jj ].D * 1.0e7;
          sol_sk.f  = model.components[ jj ].f;
 
          sol_xy    = sol_sk;
@@ -1482,7 +1482,7 @@ QString US_Pseudo3D_Combine::anno_title( int pltndx )
    else if ( pltndx == ATTR_V )
       a_title  = tr( "Vbar at 20" ) + DEGC;
    else if ( pltndx == ATTR_D )
-      a_title  = tr( "Diffusion Coefficient" );
+      a_title  = tr( "Diffusion Coefficient (1e-7)" );
    else if ( pltndx == ATTR_F )
       a_title  = tr( "Frictional Coefficient" );
 
