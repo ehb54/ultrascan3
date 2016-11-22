@@ -344,6 +344,8 @@ QDateTime time0=QDateTime::currentDateTime();
 QDateTime time1=QDateTime::currentDateTime();
 QDateTime time2=QDateTime::currentDateTime();
    const QString uaGUID( "00000000-0000-0000-0000-000000000000" );
+   QString mdesc;
+   QString lmdesc;
    QString mfilt = le_mfilter->text();
    le_mfilter->disconnect( SIGNAL( textChanged( const QString& ) ) );
    bool listdesc = !mfilt.isEmpty();         // description filtered?
@@ -760,14 +762,22 @@ qDebug() << " (4)m_d size" << model_descriptions.size();
    lw_models->disconnect( SIGNAL( currentRowChanged( int ) ) );
    lw_models->clear();
    int maxlch   = 0;
+   QString strmx;
 
    if ( model_descriptions.size() > 0 )
    {
       for ( int ii = 0; ii < model_descriptions.size(); ii++ )
       {  // propagate list widget with descriptions
-         lw_models->addItem( model_descriptions[ ii ].description );
-         maxlch    = qMax( maxlch,
-                           model_descriptions[ ii ].description.length() );
+         mdesc     = model_descriptions[ ii ].description;
+         lmdesc    = alt_description( mdesc, true );
+         lw_models->addItem( lmdesc );
+         int lndsc = mdesc.length();
+
+         if ( lndsc > maxlch )
+         {
+            maxlch    = lndsc;
+            strmx     = mdesc;
+         }
       }
 
       // Sort descriptions in ascending alphabetical order
@@ -788,14 +798,30 @@ qDebug() << "Timing: Time6" << time0.msecsTo(time6) << time2.msecsTo(time6);
    int olwid    = lw_models->width();
    int olhgt    = lw_models->height();
    int nlines   = qMin( model_descriptions.size(), 30 );
+#if 0
    int width    = qMin( 600, maxlch * fm.maxWidth()    );
    int height   = qMin( 800, nlines * fm.lineSpacing() );
+qDebug() << "LM: olwid olhgt" << olwid << olhgt << "width height" << width << height;
    width        = qMax( width,  olwid );
    height       = ( height > olhgt ) ? height : ( ( olhgt + height ) / 2 );
    width        = this->width()  + width  - olwid;
    height       = this->height() + height - olhgt;
+#endif
+#if 1
+   int width    = fm.width( strmx );
+   int height   = nlines * fm.lineSpacing();
+qDebug() << "LM: olwid olhgt" << olwid << olhgt << "width height" << width << height;
+   width        = qMax( width,  olwid );
+   height       = ( height > olhgt ) ? height : ( ( olhgt + height ) / 2 );
+qDebug() << "LM: nlines maxlch" << nlines << maxlch << "width height" << width << height;
+   width        = qMin( width,  qApp->desktop()->width()  - 100 );
+   height       = qMin( height, qApp->desktop()->height() - 100 );
+#endif
+qDebug() << "LM: width height" << width << height;
 
    resize( width, height );
+qDebug() << "LM:  sized:" << size();
+   //adjustSize();
 
    connect( le_mfilter,    SIGNAL( textChanged( const QString& ) ),
             this,          SLOT(   msearch(     const QString& ) ) );
@@ -823,8 +849,9 @@ void US_ModelLoader::accepted()
 
       for ( int ii = 0; ii < modelsCount; ii++ )
       {  // get row of selection then index in original descriptions list
-         QString mdesc = selmods[ ii ]->text();
-         int     mdx   = modelIndex( mdesc, allmods );
+         QString lmdesc = selmods[ ii ]->text();
+         QString mdesc  = alt_description( lmdesc, false );
+         int     mdx    = modelIndex( mdesc, allmods );
 
          // repopulate descriptions with only selected row(s)
          model_descriptions.append( allmods.at( mdx ) );
@@ -910,13 +937,15 @@ bool US_ModelLoader::eventFilter( QObject* obj, QEvent* e )
 // Get index in model description list of a model description
 int US_ModelLoader::modelIndex( QString mdesc, QList< ModelDesc > mds )
 {
-   int mdx = 0;
+   //int mdx = 0;
+   int mdx = -1;
 
    for ( int jj = 0; jj < mds.size(); jj++ )
    {  // search for matching description and save its index
       if ( mdesc.compare( mds[ jj ].description ) == 0 )
       {
          mdx        = jj;
+//qDebug() << "mIx: mdx" << mdx << "mdesc" << mdesc;
          break;
       }
    }
@@ -937,6 +966,7 @@ void US_ModelLoader::show_model_info( QPoint pos )
    QString lblid;
    QString mdlid;
    QString anlid;
+   QString lmdesc;
 
    int     row    = 0;
    int     mdx    = 0;
@@ -966,24 +996,28 @@ void US_ModelLoader::show_model_info( QPoint pos )
       if ( modelsCount == 1 )
       {  // info on selected model
          row      = lw_models->row( selmods[ 0 ] );
-         mdesc    = selmods[ 0 ]->text();
+         lmdesc   = selmods[ 0 ]->text();
       }
 
       else
       {  // info on model at right-click row
          row      = lw_models->row( lw_models->itemAt( pos ) );
-         mdesc    = lw_models->itemAt( pos )->text();
+         lmdesc   = lw_models->itemAt( pos )->text();
       }
 
+      mdesc    = alt_description( lmdesc, false );
       mdx      = modelIndex( mdesc, model_descriptions );  // find index
-//qDebug() << "  row" << row;
-//qDebug() << "   mdx" << mdx;
+//qDebug() << "shmi:  row" << row << "lmdesc" << lmdesc;
+//qDebug() << "shmi:   mdx" << mdx << "mdesc" << mdesc;
+      if ( mdx < 0 )  return;
 
       load_model( model, mdx );                            // load model
 
       mtype    = model.analysis;                           // model info
       mdesc    = mdesc.length() < 50 ? mdesc :
-                 mdesc.left( 23 ) + "..." + mdesc.right( 24 );
+                 ( mdesc.left( 50 )
+                   + "\n                         "
+                   + mdesc.mid( 50 ) );
       ncomp    = model.components.size();
       nassoc   = model.associations.size();
       tdesc    = model.typeText();
@@ -1026,7 +1060,8 @@ void US_ModelLoader::show_model_info( QPoint pos )
       QString eguid;
 
       row      = lw_models->row( selmods[ 0 ] );  // 1st model values
-      mdesc    = selmods[ 0 ]->text();
+      lmdesc   = selmods[ 0 ]->text();
+      mdesc    = alt_description( lmdesc, false );
       mdx      = modelIndex( mdesc, model_descriptions ); // 1st model index
 
       load_model( model, mdx );                           // load model
@@ -1047,12 +1082,13 @@ void US_ModelLoader::show_model_info( QPoint pos )
       for ( int jj = 1; jj < modelsCount; jj++ )
       {
          row      = lw_models->row( selmods[ jj ] );
-         mdesc    = selmods[ jj ]->text();
+         lmdesc   = selmods[ jj ]->text();
+         mdesc    = alt_description( lmdesc, false );
          mdx      = modelIndex( mdesc, model_descriptions ); // model index
 
          load_model( model, mdx );                           // load model
 
-         runid    = mdesc.section( ".", 0, 0 );
+         runid    = mdesc.section( ".", 0, -4 );
          tdesc    = model.typeText();
          eguid    = model.editGUID;
 
@@ -1088,14 +1124,17 @@ void US_ModelLoader::show_model_info( QPoint pos )
       for ( int jj = 0; jj < modelsCount; jj++ )
       {
          row      = lw_models->row( selmods[ jj ] );          // row selected
-         mdesc    = selmods[ jj ]->text();
+         lmdesc   = selmods[ jj ]->text();
+         mdesc    = alt_description( lmdesc, false );
          mdx      = modelIndex( mdesc, model_descriptions );  // model index
 
          load_model( model, mdx );                            // load model
 
          mtype    = model.analysis;                           // model info
          mdesc    = mdesc.length() < 50 ? mdesc :
-                    mdesc.left( 23 ) + "..." + mdesc.right( 24 );
+                   ( mdesc.left( 50 )
+                     + "\n                         "
+                     + mdesc.mid( 50 ) );
          ncomp    = model.components.size();
          nassoc   = model.associations.size();
          tdesc    = model.typeText();
@@ -1136,7 +1175,7 @@ void US_ModelLoader::show_model_info( QPoint pos )
    US_Editor* edit = new US_Editor( US_Editor::LOAD, true, "", this );
    edit->setWindowTitle( tr( "Model Information" ) );
    edit->move( this->pos() + pos + QPoint( 100, 100 ) );
-   edit->resize( 600, 400 );
+   edit->resize( 800, 400 );
    edit->e->setFont( QFont( "monospace", US_GuiSettings::fontSize() ) );
    edit->e->setText( dtext );
    edit->show();
@@ -1240,4 +1279,36 @@ void US_ModelLoader::change_unasgn( bool ckunasgn )
    list_models();
 }
 
+// Local function to create an alternate form of a model description
+QString US_ModelLoader::alt_description( QString& descr, const bool from_mdesc )
+{
+   QString odescr;
+
+   if ( from_mdesc )
+   {  // Input is the raw model description, output is list form
+      QString frun   = QString( descr ).section( ".",  0, -4 );
+      QString ftrip  = QString( descr ).section( ".", -3, -3 );
+      QString fanal  = QString( descr ).section( ".", -2, -2 );
+      QString fedan  = QString( fanal ).section( "_",  0,  1 );
+      QString ftype  = QString( fanal ).section( "_",  2,  2 );
+      QString fiter  = QString( fanal ).section( "_",  3, -1 );
+      odescr         = ftype + "." + ftrip + "." + fedan + "_"
+                     + fiter + "." + frun;
+   }
+
+   else
+   {  // Input is list form of description, output is the model description
+      QString frun   = QString( descr ).section( ".",  3, -1 );
+      QString ftrip  = QString( descr ).section( ".",  1,  1 );
+      QString fanal  = QString( descr ).section( ".",  2,  2 );
+      QString ftype  = QString( descr ).section( ".",  0,  0 );
+      QString fedan  = QString( fanal ).section( "_",  0,  1 );
+      QString fiter  = QString( fanal ).section( "_",  2, -1 );
+      odescr         = frun  + "." + ftrip + "." + fedan + "_"
+                     + ftype + "_" + fiter + ".model";
+
+   }
+
+   return odescr;
+}
 
