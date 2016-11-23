@@ -702,7 +702,8 @@ void US_Astfem_Sim::random_noise( void )
       for ( int k = 0; k < sim_data.pointCount(); k++ )
       {
          sim_data.scanData[ j ].rvalues[ k ] 
-            += US_Math2::box_muller( 0, total_conc * simparams.rnoise / 100 );
+         // += US_Math2::box_muller( 0, total_conc * simparams.rnoise / 100 ); // based on total concentration
+            += US_Math2::box_muller( 0, sim_data.scanData[ j ].rvalues[ k ] * simparams.rnoise / 100 ); // based on local concentration
       }
    }
 }
