@@ -47,6 +47,7 @@ class US_SimulationParametersGui : public US_WidgetsDialog
       QwtCounter*   cnt_simpoints;
       QwtCounter*   cnt_radial_res;
       QwtCounter*   cnt_rnoise;
+      QwtCounter*   cnt_lrnoise;
       QwtCounter*   cnt_tinoise;
       QwtCounter*   cnt_rinoise;
       QwtCounter*   cnt_temperature;
@@ -98,6 +99,9 @@ class US_SimulationParametersGui : public US_WidgetsDialog
 
       void update_rnoise        ( double rnoise )
          { simparams.rnoise      = rnoise; };
+
+      void update_lrnoise        ( double lrnoise )
+         { simparams.lrnoise      = lrnoise; };
 
       void update_tinoise       ( double tinoise )
          { simparams.tinoise     = tinoise; };

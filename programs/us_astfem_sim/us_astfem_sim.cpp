@@ -226,6 +226,7 @@ qDebug() << "ASim:InSP:  bottom" << bottom << simparams.bottom;
    simparams.meniscus          = 5.8;
    simparams.bottom            = bottom;
    simparams.rnoise            = 0.0;
+   simparams.lrnoise           = 0.0;
    simparams.tinoise           = 0.0;
    simparams.rinoise           = 0.0;
    simparams.band_volume       = 0.015;
@@ -694,16 +695,40 @@ void US_Astfem_Sim::ri_noise( void )
 
 void US_Astfem_Sim::random_noise( void )
 {
-   if ( simparams.rnoise == 0.0 ) return;
+   if ( simparams.rnoise == 0.0 && simparams.lrnoise == 0.0) return;
    // Add random noise
-
-   for ( int j = 0; j < sim_data.scanData.size(); j++ )
-   {
-      for ( int k = 0; k < sim_data.pointCount(); k++ )
-      {
-         sim_data.scanData[ j ].rvalues[ k ] 
-         // += US_Math2::box_muller( 0, total_conc * simparams.rnoise / 100 ); // based on total concentration
-            += US_Math2::box_muller( 0, sim_data.scanData[ j ].rvalues[ k ] * simparams.rnoise / 100 ); // based on local concentration
+	if ( simparams.rnoise != 0.0 && simparams.lrnoise != 0.0)
+	{
+   	for ( int j = 0; j < sim_data.scanData.size(); j++ )
+   	{
+      	for ( int k = 0; k < sim_data.pointCount(); k++ )
+      	{
+         	sim_data.scanData[ j ].rvalues[ k ] +=
+            US_Math2::box_muller( 0, total_conc * simparams.rnoise / 100 ) + // based on total concentration
+            US_Math2::box_muller( 0, sim_data.scanData[ j ].rvalues[ k ] * simparams.lrnoise / 100 ); // based on local concentration
+			}
+      }
+   }
+	if ( simparams.rnoise != 0.0 && simparams.lrnoise == 0.0)
+	{
+   	for ( int j = 0; j < sim_data.scanData.size(); j++ )
+   	{
+      	for ( int k = 0; k < sim_data.pointCount(); k++ )
+      	{
+         	sim_data.scanData[ j ].rvalues[ k ] +=
+            US_Math2::box_muller( 0, total_conc * simparams.rnoise / 100 ); // based on total concentration
+			}
+      }
+   }
+	if ( simparams.rnoise == 0.0 && simparams.lrnoise != 0.0)
+	{
+   	for ( int j = 0; j < sim_data.scanData.size(); j++ )
+   	{
+      	for ( int k = 0; k < sim_data.pointCount(); k++ )
+      	{
+         	sim_data.scanData[ j ].rvalues[ k ] +=
+            US_Math2::box_muller( 0, sim_data.scanData[ j ].rvalues[ k ] * simparams.lrnoise / 100 ); // based on local concentration
+			}
       }
    }
 }
@@ -1210,6 +1235,7 @@ void US_Astfem_Sim::dump_simparms( void )
    qDebug() << "meniscus " << simparams.meniscus;
    qDebug() << "bottom " << simparams.bottom;
    qDebug() << "rnoise " << simparams.rnoise;
+   qDebug() << "lrnoise " << simparams.lrnoise;
    qDebug() << "tinoise " << simparams.tinoise;
    qDebug() << "rinoise " << simparams.rinoise;
    qDebug() << "rotorCalID " << simparams.rotorCalID;

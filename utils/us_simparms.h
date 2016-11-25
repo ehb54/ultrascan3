@@ -145,7 +145,8 @@ class US_UTIL_EXTERN US_SimulationParameters
                                 //!< and use that to initialize the routine
    double    bottom;            //!< Bottom of cell position with rotor stretch
    double    temperature;       //!< Temperature in degrees centigrade
-   double    rnoise;            //!< Random noise
+   double    rnoise;            //!< Random noise, proportional to total concentration
+   double    lrnoise;           //!< Random noise, proportional to local concentration
    double    tinoise;           //!< Time invariant noise
    double    rinoise;           //!< Radially invariant noise
    bool      band_forming;      //!< True for band-forming centerpieces
