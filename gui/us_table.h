@@ -28,7 +28,7 @@ class US_GUI_EXTERN US_Table : public US_WidgetsDialog
 
    private:
       QMap< double, double >& values;
-      bool                    changed;
+      bool&                   changed;
       QMap< double, double >  local;
       QListWidget*            lw_table;
 

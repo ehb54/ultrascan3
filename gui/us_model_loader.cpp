@@ -1283,8 +1283,15 @@ void US_ModelLoader::change_unasgn( bool ckunasgn )
 QString US_ModelLoader::alt_description( QString& descr, const bool from_mdesc )
 {
    QString odescr;
+   QStringList dsects = descr.split( "." );
+   int ndsec      = dsects.count();
 
-   if ( from_mdesc )
+   if ( ndsec < 4 )
+   {  // Not standard analysis form, so input and output are the same
+      odescr         = descr;
+   }
+
+   else if ( from_mdesc )
    {  // Input is the raw model description, output is list form
       QString frun   = QString( descr ).section( ".",  0, -4 );
       QString ftrip  = QString( descr ).section( ".", -3, -3 );
