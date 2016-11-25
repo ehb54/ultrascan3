@@ -186,6 +186,24 @@ US_SimulationParametersGui::US_SimulationParametersGui(
    cnt_selected_speed->setValue( sp->rotorspeed );
    main->addWidget( cnt_selected_speed, row++, 3, 1, 1 );
 
+   connect( cnt_selected_speed, SIGNAL( valueChanged        ( double ) ), 
+                                SLOT  ( update_speed_profile( double ) ) );
+
+   // Mesh combo box
+   cmb_mesh = us_comboBox();
+   cmb_mesh->setMaxVisibleItems( 5 );
+   cmb_mesh->addItem( "Adaptive Space Time FE Mesh (ASTFEM)" );
+   cmb_mesh->addItem( "Claverie Fixed Mesh" );
+   cmb_mesh->addItem( "Moving Hat Mesh" );
+   cmb_mesh->addItem( "Specified file (mesh.dat)" );
+   cmb_mesh->addItem( "AST Finite Volume Method (ASTFVM)" );
+   cmb_mesh->setCurrentIndex( (int)simparams.meshType );
+   
+   main->addWidget( cmb_mesh, row++, 0, 1, 4 );
+
+   connect( cmb_mesh, SIGNAL( activated  ( int ) ), 
+                      SLOT  ( update_mesh( int ) ) );
+
    // Right Column
    row = 1;
    // Centerpiece
@@ -274,8 +292,8 @@ US_SimulationParametersGui::US_SimulationParametersGui(
    connect( cnt_radial_res, SIGNAL( valueChanged     ( double ) ), 
                             SLOT  ( update_radial_res( double ) ) );
    
-   // Random noise   
-   QLabel* lb_rnoise = us_label( tr( "Random Noise (% Conc.):" ) );
+   // Random noise, proportional to total concentration
+   QLabel* lb_rnoise = us_label( tr( "Random Noise (% total Conc.):" ) );
    main->addWidget( lb_rnoise, row, 4, 1, 3 );
 
    cnt_rnoise = us_counter( 3, 0, 10, simparams.rnoise );
@@ -288,8 +306,19 @@ US_SimulationParametersGui::US_SimulationParametersGui(
    connect( cnt_rnoise, SIGNAL( valueChanged ( double ) ), 
                         SLOT  ( update_rnoise( double ) ) );
 
-   connect( cnt_selected_speed, SIGNAL( valueChanged        ( double ) ), 
-                                SLOT  ( update_speed_profile( double ) ) );
+   // Random noise, proportional to local concentration
+   QLabel* lb_lrnoise = us_label( tr( "Random Noise (% local Conc.):" ) );
+   main->addWidget( lb_lrnoise, row, 4, 1, 3 );
+
+   cnt_lrnoise = us_counter( 3, 0, 10, simparams.lrnoise );
+   cnt_lrnoise->setSingleStep    ( 0.01 );
+   cnt_lrnoise->setIncSteps( QwtCounter::Button1,   1 );
+   cnt_lrnoise->setIncSteps( QwtCounter::Button2,  10 );
+   cnt_lrnoise->setIncSteps( QwtCounter::Button3, 100 );
+
+   main->addWidget( cnt_lrnoise, row++, 7, 1, 1 );
+   connect( cnt_lrnoise, SIGNAL( valueChanged ( double ) ), 
+                        SLOT  ( update_lrnoise( double ) ) );
 
    // Time invariant noise
    QLabel* lb_tinoise = us_label( tr( "Time Invariant Noise (% Conc.):" ) );
@@ -333,21 +362,6 @@ US_SimulationParametersGui::US_SimulationParametersGui(
    main->addWidget( cnt_temperature, row++, 7, 1, 1 );
    connect( cnt_temperature, SIGNAL( valueChanged( double ) ), 
                              SLOT  ( update_temp(  double ) ) );
-
-   // Mesh combo box
-   cmb_mesh = us_comboBox();
-   cmb_mesh->setMaxVisibleItems( 5 );
-   cmb_mesh->addItem( "Adaptive Space Time FE Mesh (ASTFEM)" );
-   cmb_mesh->addItem( "Claverie Fixed Mesh" );
-   cmb_mesh->addItem( "Moving Hat Mesh" );
-   cmb_mesh->addItem( "Specified file (mesh.dat)" );
-   cmb_mesh->addItem( "AST Finite Volume Method (ASTFVM)" );
-   cmb_mesh->setCurrentIndex( (int)simparams.meshType );
-   
-   main->addWidget( cmb_mesh, row++, 4, 1, 4 );
-
-   connect( cmb_mesh, SIGNAL( activated  ( int ) ), 
-                      SLOT  ( update_mesh( int ) ) );
 
    // Moving Grid Combo Box
    cmb_moving = us_comboBox();
@@ -452,6 +466,7 @@ void US_SimulationParametersGui::revert( void )
    simparams.meniscus          = simparams_backup.meniscus;
    simparams.bottom            = simparams_backup.bottom;
    simparams.rnoise            = simparams_backup.rnoise;
+   simparams.lrnoise           = simparams_backup.lrnoise;
    simparams.tinoise           = simparams_backup.tinoise;
    simparams.rinoise           = simparams_backup.rinoise;
    simparams.bottom_position   = simparams_backup.bottom_position;
@@ -819,6 +834,7 @@ void US_SimulationParametersGui::load( void )
       cnt_meniscus        ->setValue( simparams.meniscus          );
       cnt_bottom          ->setValue( simparams.bottom            );
       cnt_rnoise          ->setValue( simparams.rnoise            );
+      cnt_lrnoise         ->setValue( simparams.lrnoise           );
       cnt_tinoise         ->setValue( simparams.tinoise           );
       cnt_rinoise         ->setValue( simparams.rinoise           );
       cnt_temperature     ->setValue( simparams.temperature       );
@@ -956,6 +972,7 @@ void US_SimulationParametersGui::disconnect_all( )
    cnt_simpoints       ->disconnect();
    cnt_radial_res      ->disconnect();
    cnt_rnoise          ->disconnect();
+   cnt_lrnoise         ->disconnect();
    cnt_tinoise         ->disconnect();
    cnt_rinoise         ->disconnect();
    cmb_mesh            ->disconnect();
@@ -998,6 +1015,8 @@ void US_SimulationParametersGui::reconnect_all( )
                                   SLOT  ( update_radial_res(     double ) ) );
    connect( cnt_rnoise,           SIGNAL( valueChanged (         double ) ), 
                                   SLOT  ( update_rnoise(         double ) ) );
+   connect( cnt_lrnoise,          SIGNAL( valueChanged (         double ) ), 
+                                  SLOT  ( update_lrnoise(        double ) ) );
    connect( cnt_tinoise,          SIGNAL( valueChanged  (        double ) ), 
                                   SLOT  ( update_tinoise(        double ) ) );
    connect( cnt_rinoise,          SIGNAL( valueChanged  (        double ) ), 

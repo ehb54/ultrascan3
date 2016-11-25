@@ -24,6 +24,7 @@ US_SimulationParameters::US_SimulationParameters()
    meniscus          = 5.8;
    bottom            = 7.2;
    rnoise            = 0.0;
+   lrnoise           = 0.0;
    tinoise           = 0.0;
    rinoise           = 0.0;
    temperature       = NORMAL_TEMP;
@@ -657,6 +658,9 @@ int US_SimulationParameters::load_simparms( QString fname )
             astr  = a.value( "rnoise"      ).toString();
             if ( !astr.isEmpty() )
                rnoise       = astr.toDouble();
+            astr  = a.value( "lrnoise"      ).toString();
+            if ( !astr.isEmpty() )
+               lrnoise      = astr.toDouble();
             astr  = a.value( "tinoise"     ).toString();
             if ( !astr.isEmpty() )
                tinoise      = astr.toDouble();
@@ -754,6 +758,7 @@ int US_SimulationParameters::save_simparms( QString fname )
       xml.writeAttribute   ( "meniscus",    QString::number( meniscus ) );
       xml.writeAttribute   ( "bottom",      QString::number( bottom ) );
       xml.writeAttribute   ( "rnoise",      QString::number( rnoise ) );
+      xml.writeAttribute   ( "lrnoise",     QString::number( lrnoise ) );
       xml.writeAttribute   ( "tinoise",     QString::number( tinoise ) );
       xml.writeAttribute   ( "rinoise",     QString::number( rinoise ) );
       xml.writeAttribute   ( "temperature", QString::number( temperature ) );
@@ -1021,6 +1026,7 @@ void US_SimulationParameters::debug( void )
    qDebug() << "Bottom          :" << bottom;
    qDebug() << "Temperature     :" << temperature;
    qDebug() << "Random noise    :" << rnoise;
+   qDebug() << "Random noise (l):" << lrnoise;
    qDebug() << "Time Inv Noise  :" << tinoise;
    qDebug() << "Radial Inv Noise:" << rinoise;
    qDebug() << "Band Forming    :" << band_forming;
