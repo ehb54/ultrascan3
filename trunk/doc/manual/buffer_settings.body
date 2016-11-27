@@ -1,0 +1,62 @@
+[% INCLUDE header.us3
+   title = 'UltraScan III Buffer Settings Panel'
+%]
+    <h2> Manage Buffer Information - Settings Panel: </h2>
+    <p class='center'><img src="images/buffer_settings.png"
+    alt="Buffer Settings Panel"/></p>
+
+    <p> Using this window, you can manage settings that affect all
+    other buffer panels. The essential environment for buffer
+    management that you can change here involves the following.
+    <ul>
+      <li> The investigator for database access.</li>
+      <li> The choice of Database or Local Disk for input/output.</li>
+      <li> A local buffer components file synchronized with the
+      master list in the database.</li>
+    </ul>
+
+    <h3>Dialog Items:</h3>
+
+    <ul>
+      <li><b>Select Investigator</b> This button brings up a window that
+      allows selecting the current investigator for limiting buffer
+      descriptions.</li>
+
+      <li><b>Database</b> Check to select read or write of the buffer
+      definitions to or from the database.</li>
+
+      <li><b>Local Disk</b> Check to select read or write of the buffer
+      definition to or from a local disk file.</li>
+
+      <li><b>Synchronize buffer components with DB</b> Click to obtain
+      a local file listing of all buffer components downloaded from the
+      database. This action is rarely needed, most commonly for new users
+      who have no buffer components file whatsoever.</li>
+
+      <li><b>Help</b> Show this documentation.</li>
+    </ul>
+
+    <h3>Panel Tab Options:</h3>
+
+    <p>In each panel, tabs are visible at the top of the window to enable the
+    user to move to another panel, to perform specific buffer subtasks.
+
+    <ul>
+      <li><a href="buffer_select.html">Select Buffer</a> A panel whose primary
+      purpose is to select a buffer to return to the caller.</li>
+
+      <li><a href="buffer_new.html">Enter New Buffer</a> A panel whose primary
+      purpose is to enter a brand new buffer, defined mostly by specifying
+      components and each one's concentration.</li>
+
+      <li><a href="buffer_edit.html">Edit Existing Buffer</a> A panel whose
+      primary purpose is to change non-hydrodynamic characteristics of an
+      already existing buffer.</li>
+
+      <li><a href="buffer_settings.html">Settings</a> A panel whose primary
+      purpose is to set Database-or-Disk input, the investigator; or to
+      synchronize the local buffer components file from the database.</li>
+    </ul>
+
+[% INCLUDE footer.us3 %]
+

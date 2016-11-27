@@ -31,7 +31,7 @@
             <keyword id="a1" name="analyte"          ref="analytes.html"/>
             <keyword id="a2" name="associations"     ref="associations.html"/>
             <keyword id="a3" name="astfem_sim"       ref="astfem_sim.html"/>
-            <keyword id="b1" name="buffer"           ref="us_buffer.html"/>
+            <keyword id="b1" name="buffer"           ref="buffer_select.html"/>
             <keyword id="c1" name="CFA-viewer"       ref="cfa_viewer.html"/>
             <keyword id="c2" name="components"       ref="components.html"/>
             <keyword id="c3" name="configuration"    ref="config.html"/>
@@ -132,8 +132,15 @@
             <file>images/us_investigator.png</file>
             <file>images/us_investigator-2.png</file>
 
-            <file>us_buffer.html</file>
-            <file>images/us_buffer.png</file>
+            <file>buffer_select.html</file>
+            <file>buffer_new.html</file>
+            <file>buffer_edit.html</file>
+            <file>buffer_settings.html</file>
+            <file>images/buffer_select.png</file>
+            <file>images/buffer_new.png</file>
+            <file>images/buffer_edit.png</file>
+            <file>images/buffer_settings.png</file>
+            <file>images/buffer_info.png</file>
             <file>images/us_buffer_spect.png</file>
 
             <file>us_solution.html</file>

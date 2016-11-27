@@ -93,7 +93,7 @@
     <b><a name="database" id="database">Database Frontend</a>:</b>
     <ul>
       <li> <a href="us_investigator.html">Manage Investigator Data</a> </li>
-      <li> <a href="us_buffer.html">Manage Buffer Data</a> </li>
+      <li> <a href="buffer_select.html">Manage Buffer Data</a> </li>
       <li> <a href="analytes.html">Manage Analytes</a> </li>
       <li> <a href="model_editor.html">Manage Models</a> </li>
       <li> <a href="manage_data.html">Manage Data</a> </li>
