@@ -1,0 +1,78 @@
+[% INCLUDE header.us3
+   title = 'UltraScan III Buffer Edit Panel'
+%]
+    <h2> Manage Buffer Information - Edit Existing Buffer Panel: </h2>
+    <p class='center'><img src="images/buffer_edit.png"
+    alt="Edit Existing Buffer panel"/></p>
+
+    <p> Using this panel, you can change non-hydrodynamic
+    characteristics of a buffer previously selected in the
+    <a href="buffer_select.html">Select Buffer</a> panel.</p>
+
+    <p> Once any desired modifications have been made, clicking on the
+    <b> Accept</b> button will return you to the <b>Select Buffer</b>
+    panel with a modified buffer.</p>
+
+    <h3> Dialog Items: </h3>
+
+    <ul>
+      <li><b>Description</b> The description of the currently
+      selected buffer for which modification are to be made.</li>
+
+      <li><b>Cancel</b> Click this button to abandon any changes and
+      return to the <b>Select Buffer</b> panel with the original
+      unchanged buffer.</li>
+
+      <li><b>Accept</b> Click this button to save any changes and
+      return to the <b>Select Buffer</b> panel with a buffer as modified
+      in this panel.</li>
+
+      <li><b>pH:</b> Manually change pH to be associated with the current
+      buffer.</li>
+
+      <li><b>Manage Spectrum</b> This button brings up a
+      <a href="images/us_buffer_spect.png" type="image/png">
+      Manage Spectrum</a>
+      dialog to set a Wavelength / Extinction profile for the buffer.</li>
+
+      <li><b>Help</b> Show this documentation.</li>
+    </ul>
+
+    <h3> Important Note: </h3>
+
+    <p>No other parameters than those indicated in this panel may be
+    modified for an existing buffer. This is because existing buffers
+    may be already associated with solutions and runs. Changing
+    hydrodynamic characteristics already associated with models
+    will invalidate those models.</p>
+
+    <p>To create a buffer with most characteristics similar to an existing
+    one, the users should note those characteristics; then name and enter
+    a new buffer in the
+    <a href="buffer_new.html">Enter New Buffer</a> panel, with selected
+    parameters changed.</p>
+
+    <h3>Panel Tab Options:</h3>
+
+    <p>In each panel, tabs are visible at the top of the window to enable the
+    user to move to another panel, to perform specific buffer subtasks.
+
+    <ul>
+      <li><a href="buffer_select.html">Select Buffer</a> A panel whose primary
+      purpose is to select a buffer to return to the caller.</li>
+
+      <li><a href="buffer_new.html">Enter New Buffer</a> A panel whose primary
+      purpose is to enter a brand new buffer, defined mostly by specifying
+      components and each one's concentration.</li>
+
+      <li><a href="buffer_edit.html">Edit Existing Buffer</a> A panel whose
+      primary purpose is to change non-hydrodynamic characteristics of an
+      already existing buffer.</li>
+
+      <li><a href="buffer_settings.html">Settings</a> A panel whose primary
+      purpose is to set Database-or-Disk input, the investigator; or to
+      synchronize the local buffer components file from the database.</li>
+    </ul>
+
+[% INCLUDE footer.us3 %]
+

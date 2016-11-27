@@ -1,0 +1,108 @@
+[% INCLUDE header.us3
+   title = 'UltraScan III New Buffer Panel'
+%]
+    <h2> Manage Buffer Information - Enter New Buffer Panel: </h2>
+    <p class='center'><img src="images/buffer_new.png"
+    alt="Enter New Buffer panel"/></p>
+
+    <p> Using this panel, you can create a new buffer in the current
+    database or on the local disk. Most commonly, you select a
+    set of buffer components in the provided list. As each is selected,
+    you enter its concentration. After providing a description for the
+    new buffer, you can click on the <b>Accept</b> button to upload
+    the buffer to the DB or to local disk and to return to the
+    <b>Select Buffer</b> panel.</p>
+
+    <p> As with all panels, a set of tabs allow you to navigate to
+    other panels in order to perform specialized subtasks relating
+    to buffer management. Links to and summaries of the panels are
+    given in the final section of this page.</p>
+
+    <h3>Dialog Items:</h3>
+
+    <ul>
+      <li><b>Description</b> Enter a new and unique description for
+      a buffer to create.</li>
+
+      <li><b>(all components list, left-side)</b> The items listed on
+      the left are descriptions of all available buffer components.
+      Click on one to select it as a component to add to the new
+      buffer. Then enter its concentration in the box above.</li>
+
+      <li><b>Please enter the concentration of (component) in (unit):</b>
+      Enter a concentration for the currently selected component. Choose
+      a value within the component range, then hit the keyboard
+      <b>Return</b> key to add the component.</li>
+
+      <li><b>(buffer components list, right-side)</b> The items listed
+      on the right side are the components added so far to the buffer.
+      An item may be removed by double-clicking on it.</li>
+
+      <li><b>Manual unadjusted Density and Viscosity</b> Check
+      this box to allow entry of Density and Viscosity values
+      that override any values computed for the sum of
+      buffer components or that define the values for a buffer
+      with no components, such as water only.</li>
+
+      <li><b>Density</b> Density value set by components choice. It is
+      also editable here (if "Manual..." is checked).</li>
+
+      <li><b>Viscosity</b> Viscosity value set by components choice. It is
+      also editable here (if "Manual..." is checked).</li>
+
+      <li><b>pH</b> pH value for the new buffer.
+      It may be modified here.</li>
+
+      <li><b>Compressibility</b> The compressibility of the new buffer.
+      It may be modified here.</li>
+
+      <li><b>Cancel</b> Close the panel and return to the
+      <b>Select Buffer</b> panel with no new buffer created.</li>
+
+      <li><b>Accept</b> Close the panel and return to the
+      <b>Select Buffer</b> panel with the new buffer selected.</li>
+
+      <li><b>Manage Spectrum</b> This button brings up a
+      <a href="images/us_buffer_spect.png">Manage Spectrum</a> dialog
+      to set a Wavelength/Extinction profile.</li>
+
+      <li><b>Help</b> Show this documentation.</li>
+    </ul>
+
+    <h3>"Enter New Buffer" Panel Discussion:</h3>
+
+    <p>The purpose of this panel is to define a new buffer. A unique
+    description must be given. Density and viscosity must be
+    defined by adding components or by manually entering them.
+    Other buffer values are optional.</p>
+
+    <p>Once the new buffer has been sufficiently defined,
+    the <b>Accept</b> button becomes enabled. Clicking on it
+    causes the buffer to be added to the DB or the local disk
+    and causes a return to the <b>Select Buffer</b> panel with
+    the new buffer selected.</li>
+
+    <h3>Panel Tab Options:</h3>
+
+    <p>In each panel, tabs are visible at the top of the window to enable the
+    user to move to another panel, to perform specific buffer subtasks.
+
+    <ul>
+      <li><a href="buffer_select.html">Select Buffer</a> A panel whose primary
+      purpose is to select a buffer to return to the caller.</li>
+
+      <li><a href="buffer_new.html">Enter New Buffer</a> A panel whose primary
+      purpose is to enter a brand new buffer, defined mostly by specifying
+      components and each one's concentration.</li>
+
+      <li><a href="buffer_edit.html">Edit Existing Buffer</a> A panel whose
+      primary purpose is to change non-hydrodynamic characteristics of an
+      already existing buffer.</li>
+
+      <li><a href="buffer_settings.html">Settings</a> A panel whose primary
+      purpose is to set Database-or-Disk input, the investigator; or to
+      synchronize the local buffer components file from the database.</li>
+    </ul>
+
+[% INCLUDE footer.us3 %]
+

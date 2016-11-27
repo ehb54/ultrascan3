@@ -1,0 +1,116 @@
+[% INCLUDE header.us3
+   title = 'UltraScan III Select Buffer Panel'
+%]
+    <h2> Manage Buffer Information - Select Buffer: </h2>
+    <p class='center'><img src="images/buffer_select.png"
+    alt="Select Buffer panel"/></p>
+
+    <p> Using this panel, you can select a buffer in the current
+    database or on the local disk. Most commonly, you select a
+    buffer in the provided list and click the <b>Accept</b> button
+    to return it to the caller.</p>
+
+    <p> As with all panels, a set of tabs allow you to navigate to
+    other panels in order to perform specialized subtasks relating
+    to buffer management. Links to and summaries of the panels are
+    given in the final section of this page.</p>
+
+    <h3>Panel Items:</h3>
+
+    <ul>
+      <li><b>(buffer list, left-side)</b> The items listed on the
+      left side are all the descriptions (names) of buffers
+      available or the descriptions as limited by the <b>Search</b>
+      text. A single click on a list item selects a buffer.</li>
+
+      <li><b>(component list, right-side)</b> The items listed on
+      the right side are the components of the currently selected
+      buffer, along with each one's concentration. This list is
+      solely for information purposes.</li>
+
+      <li><b>Search:</b> Enter a partial description to search for
+      a specific buffer or set of buffers. Clear the text to expand
+      to the full list.</li>
+
+      <li><b>Density</b> The density of the currently selected
+      buffer.</li>
+
+      <li><b>Viscosity</b> The viscosity of the currently selected
+      buffer.</li>
+
+      <li><b>pH</b> The pH of the currently selected buffer.</li>
+
+      <li><b>Compressibility</b> The compressibility of the currently
+      selected buffer.</li>
+
+      <li><b>Cancel</b> Close the buffer dialog and return to the
+      caller with no change in buffer selection.</li>
+
+      <li><b>Accept</b> Close the buffer dialog and return to the
+      caller with the current buffer selection.</li>
+
+      <li><b>View Spectrum</b> Open a
+      <a href="images/us_buffer_spect.png">Manage Spectrum</a>
+      dialog showing the Wavelength/Extinction profile associated
+      with the currently selected buffer.
+
+      <li><b>Delete Buffer</b> Permanently delete the currently
+      selected buffer. A confirmation dialog will appear to allow
+      you to cancel the delete request or to proceed with it.
+      Upon confirmation, the removal will proceed regardless of any
+      further action ("Cancel" or "Accept").</li>
+
+      <li><b>Buffer Details</b> Open a
+      <a href="images/buffer_info.png">Buffer Information</a>
+      dialog showing detailed information about the currently selected
+      buffer.</li>
+
+      <li><b>Help</b> Show this documentation.</li>
+
+    </ul>
+
+    <h3>"Select Buffer" Panel Discussion:</h3>
+
+    <p>As mentioned above, the most common use of this panel is to select
+    a buffer in the provided list and click on the <b>Accept</b> button
+    to return the selected buffer to the caller, such as a
+    <a href="us_solution.html">Solution Management</a> dialog.</p>
+
+    <p>The panel allows actions beyond simple buffer selection, including
+    getting buffer information, deleting a buffer, or choosing the buffer
+    for which non-hydrodynamic modifications are to be made. In summary,
+    the most common actions for this panel are as follows.<p>
+    <ul>
+      <li>Select a buffer and <b>Accept</b> it for a caller.</li>
+      <li>Select a buffer and modify its non-hydrodynamic characteristics
+      by selecting the
+      <a href="buffer_edit.html">Edit Existing Buffer</a> panel.</li>
+      <li>Select a buffer to obtain information about it, including the
+      details shown with the <b>Buffer Details</b> button.</li>
+      <li>Select a buffer in order to remove it permanently from the
+      database or local disk, with the <b>Delete Buffer</b> button.</li>
+    </ul>
+
+    <h3>Panel Tab Options:</h3>
+
+    <p>In each panel, tabs are visible at the top of the window to enable the
+    user to move to another panel, to perform specific buffer subtasks.
+
+    <ul>
+      <li><a href="buffer_select.html">Select Buffer</a> A panel whose primary
+      purpose is to select a buffer to return to the caller.</li>
+
+      <li><a href="buffer_new.html">Enter New Buffer</a> A panel whose primary
+      purpose is to enter a brand new buffer, defined mostly by specifying
+      components and each one's concentration.</li>
+
+      <li><a href="buffer_edit.html">Edit Existing Buffer</a> A panel whose
+      primary purpose is to change non-hydrodynamic characteristics of an
+      already existing buffer.</li>
+
+      <li><a href="buffer_settings.html">Settings</a> A panel whose primary
+      purpose is to set Database-or-Disk input, the investigator; or to
+      synchronize the local buffer components file from the database.</li>
+    </ul>
+
+[% INCLUDE footer.us3 %]
