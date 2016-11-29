@@ -4,6 +4,7 @@
 #include <iostream>
 #include <cerrno> //for floating point errors
 #include <cfloat>
+
 using namespace std;
 
 //Constructor
@@ -35,7 +36,7 @@ US_Minimize::US_Minimize(bool *temp_fitting_widget, bool temp_GUI) : US_Widgets(
 }
 US_Minimize::~US_Minimize()
 {
-	//*fitting_widget = false;
+  //*fitting_widget = false;
 }
 void US_Minimize::setup_GUI()
 {
@@ -107,7 +108,7 @@ void US_Minimize::setup_GUI()
 
 	data_plot = new QwtPlot();
 	plotLayout = new US_Plot(data_plot, tr(""), tr(""), tr(""));
-   data_plot->setCanvasBackground(Qt::black);	
+	data_plot->setCanvasBackground(Qt::black);	
 	data_plot->setMinimumSize(560, 240);
 
 	lbl_controls1 = us_banner(tr("Graph Plotting Controls"));
@@ -167,28 +168,28 @@ void US_Minimize::setup_GUI()
 	lbl_lambdaStart = us_label(tr("Lambda Start:"));
 	gl3->addWidget(lbl_lambdaStart, 3, 0);
    le_lambdaStart = us_lineedit("1.0000e+05", 1, false);
-	connect(le_lambdaStart, SIGNAL(textChanged(const QString&)i), SLOT(update_lambdaStart(const Qstring &)));
+   connect(le_lambdaStart, SIGNAL(textChanged(const QString&)), SLOT(update_lambdaStart(const QString &)));
 	gl3->addWidget(le_lambdaStart, 3, 1);
 	pb_plottwo = us_pushbutton(tr(""));
 	gl3->addWidget(pb_plottwo, 3, 2);	
 	lbl_lambdaStep = us_label(tr("Lambda Step Size:"));
 	gl3->addWidget(lbl_lambdaStep, 4, 0);
    le_lambdaStep = us_lineedit("1.0000e+01", 1, false);
-	connect(le_lambdaStep, SIGNAL(textChanged(const QString&)i), SLOT(update_lambdaStep(const Qstring &)));
+   connect(le_lambdaStep, SIGNAL(textChanged(const QString&)), SLOT(update_lambdaStep(const QString &)));
 	gl3->addWidget(le_lambdaStep, 4, 1);
 	pb_plotthree = us_pushbutton(tr(""));
 	gl3->addWidget(pb_plotthree, 4, 2);
 	lbl_maxIterations = us_label(tr("Maximum Iterations:"));
 	gl3->addWidget(lbl_maxIterations, 5, 0);
    le_maxIterations = us_lineedit("1000", 1, false);
-	connect(le_maxIterations, SIGNAL(textChanged(const QString&)i), SLOT(update_maxIterations(const Qstring &)));
+	connect(le_maxIterations, SIGNAL(textChanged(const QString&)), SLOT(update_maxIterations(const QString &)));
 	gl3->addWidget(le_maxIterations, 5, 1);
 	pb_plotfour = us_pushbutton(tr(""));
 	gl3->addWidget(pb_plotfour, 5, 2);
 	lbl_tolerance = us_label(tr("Fit Tolerance:"));
 	gl3->addWidget(lbl_tolerance, 6, 0);
    le_tolerance = us_lineedit("1.000e-12", 1, false);
-	connect(le_tolerance, SIGNAL(textChanged(const QString&)i), SLOT(update_tolerance(const Qstring &)));
+	connect(le_tolerance, SIGNAL(textChanged(const QString&)), SLOT(update_tolerance(const QString &)));
 	gl3->addWidget(le_tolerance, 6, 1);
 	pb_plotfive = us_pushbutton(tr(""));
 	gl3->addWidget(pb_plotfive, 6, 2);
@@ -303,7 +304,7 @@ int US_Minimize::Fit()
    {
       cleanup();
    }
-   //cout << "starting fit\n";
+   cout << "starting fit\n";
    first_plot = true;      // reset first plot each time we do a new fit
    completed = false;
    aborted = false;
@@ -415,7 +416,9 @@ int US_Minimize::Fit()
       bt_plotSingle->setEnabled(true);
    }
    new_residuals = calc_residuals();
-   //cout << "returning from calc_residuals in CP1 with " << new_residuals << endl;
+   
+   cout << "returning from calc_residuals in CP1 with " << new_residuals << endl;
+  
    if (new_residuals < 0)
    {
       cout << "exited with -4, residuals: " << new_residuals << endl;
@@ -462,18 +465,26 @@ int US_Minimize::Fit()
    }
    count = 0;
 
-   //cout << "iter: " << iteration << ", maxiter: " << maxIterations << ", new_resid: " << new_residuals/points << ", tolerance: " << tolerance << endl;
+   cout << "iter: " << iteration << ", maxiter: " << maxIterations << ", new_resid: " << new_residuals/points << ", tolerance: " << tolerance << endl;
+
+   ////////// BEGINNING OF ITERATIONS //////////////////////////////////////////////////////////////////////////////////////////////////////////
    while((iteration < maxIterations) && (new_residuals/points > tolerance))
    {
+     cout << "current iteration: " << iteration << endl;
+
       if(GUI && showGuiFit)
       {
+	cout << "GUI: " << GUI << ", showGuiFit: " << showGuiFit << endl;
+	
          if(plotResiduals)
          {
-            plot_residuals();
+	   plot_residuals();
          }
          else
          {
-            plot_overlays();
+	   cout << "plot_overlays: 1" << endl;
+	   plot_overlays();                                   // BUG IN GUI QT-5.7.0 /////////////////////////////////////////////////////////////////////////////////////////
+	   cout << "plot_overlays: 2" << endl;
          }
          qApp->processEvents();
       }
@@ -505,7 +516,7 @@ int US_Minimize::Fit()
          //lbl_status2->setText(tr("Calculating the Information Matrix..."));
          qApp->processEvents();
       }
-      //cout << "current iteration: " << iteration << endl;
+      
       if ((nlsMethod < 3) || (nlsMethod == 3 && iteration == 1))
       {
          calc_jacobian();
@@ -635,6 +646,7 @@ int US_Minimize::Fit()
          }
          updateQN(&gamma, &delta);
       }
+      /// END OF QUASI-NEWTON //////////////////////////////////////////////////////////////////////////////////////////
 
       if (nlsMethod == 0 || nlsMethod == 2)
       {
@@ -642,12 +654,13 @@ int US_Minimize::Fit()
          // linearly independent:
          for (unsigned int i=0; i<parameters; i++)
          {
-			   information_matrix[i][i] += lambda;
+	   information_matrix[i][i] += lambda;
          }
       }
 
       while (new_residuals >= old_residuals && nlsMethod != 3)
       {
+	cout << "Going to Method: " << endl;
 
          //   Problem: J * R = y_delta, where R = (a[i] - guess[i]) and we want to find a[i], so solve for R:
          // (1)   J'J * R = J' * y_delta
@@ -704,6 +717,7 @@ int US_Minimize::Fit()
             {
                if (nlsMethod == 0)
                {
+		 cout << "Cholesky: " << endl;
                   if (showGuiFit)
                   {
                      QMessageBox message;
@@ -734,6 +748,8 @@ int US_Minimize::Fit()
             cleanup();
             return (-6);
          }
+	 
+	 cout << "Continue Method" << endl;
 
          // Now the information matrix actually contains the decomposed information matrix LL'
          // (4)   L(L'*R) = B
@@ -828,15 +844,18 @@ int US_Minimize::Fit()
                break;
             }
          }
-			if(calc_model(test_guess) < 0)
+	 if(calc_model(test_guess) < 0)
          {
-            cleanup();
+	   cleanup();
             return(-7);
          }
+
+	 cout << "Continue Method 1" << endl;
 
          new_residuals = calc_residuals();
          if (new_residuals < old_residuals)
          {
+	   cout << "new_residuals <  old_residuals" << endl;
             if (GUI)
             {
                qApp->processEvents();
@@ -846,6 +865,7 @@ int US_Minimize::Fit()
             case 0:
                {
                   lambda = lambda/lambdaStep;
+		  cout << "lambda = " << lambda << ", lambdaStep = " << lambdaStep << endl;
                   break;
                }
             case 1:
@@ -892,6 +912,7 @@ int US_Minimize::Fit()
          }
          else
          {
+	   cout << "new_residuals > old_residuals" << endl;
             if(GUI)
             {
                str.sprintf("%3.5e", (old_residuals - new_residuals)/points);
@@ -908,11 +929,14 @@ int US_Minimize::Fit()
                   }
                   lambda_loop ++;
                   lambda *= pow((double) lambdaStep, (double) lambda_loop);
+
+		  cout << "After new_res MORE: " << endl;
+
                   if (lambda > 1.0e10)
                   {
                      lambda = 1.0e6;
                      variance = new_residuals/points;
-                     //cout << "Calling endfit 7\n";
+                     cout << "Calling endfit 7\n";
                      endFit();
                      return(0);
                   }
@@ -969,18 +993,26 @@ int US_Minimize::Fit()
             }
             if(calc_model(guess) < 0)
             {
+	      cout << "After new_res MORE 1:" << endl;
                cleanup();
                return (-8);
             }
+	    cout << "After new_res MORE 11:" << endl;
             new_residuals = calc_residuals();
+	    cout << "After new_res MORE 12:" << endl;
          }
          if (GUI)
          {
             str.sprintf("%3.5e", lambda);
             le_currentLambda->setText(str);
+	    //return(0);
          }
       }
+      cout << "Continue Method 2" << endl;
+      cout << "new_residuals = " << new_residuals << ", points = " <<  points << ", tolerance = " << tolerance << endl;
+      cout << "GUI: " << GUI << endl;
    }
+   cout << "END ITER: " << endl;
    return(0);
 }
 
@@ -1208,7 +1240,7 @@ float US_Minimize::calc_testParameter(float **search, float step)
 }
 void US_Minimize::plot_overlays()
 {
-	plotResiduals = false;
+  plotResiduals = false;
 }
 void US_Minimize::plot_residuals()
 {
@@ -1246,7 +1278,7 @@ float US_Minimize::calc_residuals()
             pb_overlays->setEnabled(true);
          }
          cleanup();
-         //cout << "about to return with -1\n";
+         cout << "about to return with -1\n";
          return (-1);
       }
    }
@@ -1399,6 +1431,7 @@ int US_Minimize::calc_jacobian()
 	return(-1);
 }
 // called when fit has converged, can be overridden by derived class
+
 void US_Minimize::endFit()
 {
    emit currentStatus(tr("Converged"));
@@ -1414,5 +1447,7 @@ void US_Minimize::endFit()
       pb_report->setEnabled(true);
       pb_residuals->setEnabled(true);
       pb_overlays->setEnabled(true);
+      cout << "EndFit in US_minimize " << endl;
    }
 }
+

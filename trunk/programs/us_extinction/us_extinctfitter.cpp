@@ -319,6 +319,7 @@ void US_ExtinctFitter::write_report()
 
 void US_ExtinctFitter::plot_overlays()
 {
+  cout << "Starting plot overlay: " << endl;
    unsigned int numScans = 0;
 	QVector <QwtPlotCurve*> v_curve_raw, v_curve_fit;
    long unsigned int point_counter = 0;
@@ -357,6 +358,9 @@ void US_ExtinctFitter::plot_overlays()
    {
       s1 = tr("Overlays");
    }
+	
+	cout << "Starting plot overlay 1: " << endl;
+
    //s2.sprintf((tr("Optical Density")).toLatin1().data());
    s2 = tr("Optical Density");
    point_counter = 0;
@@ -376,60 +380,102 @@ void US_ExtinctFitter::plot_overlays()
 		v_all_yplot_fit.push_back(v_yplot_fit);
 		v_all_yplot_raw.push_back(v_yplot_raw);
    }
-   QwtSymbol* symbol = new QwtSymbol;
+
+   cout << "Starting plot overlay 2: " << endl; 
+
+   //QwtSymbol* symbol = new QwtSymbol(QwtSymbol::Diamond,QBrush(Qt::red),QPen(Qt::red),QSize(5,5));
+   
    QPen p;
    p.setColor(Qt::red);
    p.setWidth(2);
-   symbol->setSize(10);
-   symbol->setPen(QPen(Qt::blue));
-   symbol->setBrush(Qt::yellow);
-   symbol->setStyle(QwtSymbol::Ellipse);
+ 
+   //QwtSymbol* symbol = new QwtSymbol;
+   //symbol->setSize(10);
+   //symbol->setPen(QPen(Qt::blue));
+   //symbol->setBrush(Qt::yellow);
+   //symbol->setStyle(QwtSymbol::Ellipse);
+   
+   cout << "Starting plot overlay 2a: " << endl;
    data_plot->detachItems();
+   //data_plot->detachItems(QwtPlotItem::Rtti_PlotItem, true);
+      
+   cout << "Starting plot overlay 2b: " << endl;
+
    data_plot->setTitle(s1);
+
+   cout << "Starting plot overlay 2c: " << endl;
+
    data_plot->setAxisTitle(QwtPlot::xBottom, tr("Wavelength (nm)"));
+
+   cout << "Starting plot overlay 2d: " << endl;
+
    data_plot->setAxisTitle(QwtPlot::yLeft, s2);
+
+   cout << "Starting plot overlay 3: " << endl;
+
+   cout << "PlotGroup: " << plotGroup << endl;
+
    if (plotGroup)
    {
       for (int i = 0; i < v_all_xplot.size(); i++)
       {
-         QwtPlotCurve* c_raw;
-			c_raw = us_curve(data_plot, "raw data");
-         QwtPlotCurve* c_fit;
-			c_fit  = us_curve(data_plot, "fitted data");
-         double* xx = (double*)v_all_xplot.at(i).data();
-         double* yy = (double*)v_all_yplot_fit.at(i).data();
-         int     nn = v_all_xplot.at(i).size();
-         c_raw->setStyle(QwtPlotCurve::NoCurve);
-         c_raw->setSymbol(symbol);
-         c_raw->setSamples( xx, yy, nn );
-         c_fit->setStyle(QwtPlotCurve::Lines);
-         c_fit->setPen(p);
-         c_fit->setSamples( xx, yy, nn );
-			v_curve_raw.push_back(c_raw);
-			v_curve_fit.push_back(c_fit);
+	QwtSymbol* symbol = new QwtSymbol;
+	symbol->setSize(10);
+	symbol->setPen(QPen(Qt::blue));
+	symbol->setBrush(Qt::yellow);
+	symbol->setStyle(QwtSymbol::Ellipse);
+
+        QwtPlotCurve *c_raw;
+	c_raw = us_curve(data_plot, "raw data");
+	QwtPlotCurve *c_fit;
+	c_fit  = us_curve(data_plot, "fitted data");
+	double* xx = (double*)v_all_xplot.at(i).data();
+	double* yy_raw = (double*)v_all_yplot_raw.at(i).data();
+	double* yy = (double*)v_all_yplot_fit.at(i).data();
+	int     nn = v_all_xplot.at(i).size();
+	c_raw->setStyle(QwtPlotCurve::NoCurve);
+	//c_raw->setStyle(QwtPlotCurve::Lines);
+	
+	c_raw->setSymbol(symbol);    
+	c_raw->setSamples( xx, yy_raw, nn );
+	c_fit->setStyle(QwtPlotCurve::Lines);
+	c_fit->setPen(p);
+	c_fit->setSamples( xx, yy, nn );
+	//v_curve_raw.push_back(c_raw);
+	//v_curve_fit.push_back(c_fit);
       }
    }
    else
    {
       for (int i=0; i < v_all_xplot.size(); i++)
       {
-         QwtPlotCurve *c_raw;
-         c_raw = us_curve(data_plot, "raw data");
-         QwtPlotCurve *c_fit;
-         c_fit  = us_curve(data_plot, "fitted data");
-         double* xx = (double*)v_all_xplot.at(i).data();
-         double* yy = (double*)v_all_yplot_fit.at(i).data();
-         int     nn = v_all_xplot.at(i).size();
-         c_raw->setStyle(QwtPlotCurve::NoCurve);
-         c_raw->setSymbol(symbol);
-         c_raw->setSamples( xx, yy, nn );
-         c_fit->setStyle(QwtPlotCurve::Lines);
-         c_fit->setPen(p);
-         c_fit->setSamples( xx, yy, nn );
-         v_curve_raw.push_back(c_raw);
-         v_curve_fit.push_back(c_fit);
+	QwtSymbol* symbol = new QwtSymbol;
+	symbol->setSize(10);
+	symbol->setPen(QPen(Qt::blue));
+	symbol->setBrush(Qt::yellow);
+	symbol->setStyle(QwtSymbol::Ellipse);
+
+        QwtPlotCurve *c_raw;
+	c_raw = us_curve(data_plot, "raw data");
+	QwtPlotCurve *c_fit;
+	c_fit  = us_curve(data_plot, "fitted data");
+	double* xx = (double*)v_all_xplot.at(i).data();
+	double* yy_raw = (double*)v_all_yplot_raw.at(i).data();
+	double* yy = (double*)v_all_yplot_fit.at(i).data();
+	int     nn = v_all_xplot.at(i).size();
+	c_raw->setStyle(QwtPlotCurve::NoCurve);
+	//c_raw->setStyle(QwtPlotCurve::Lines);
+	
+	c_raw->setSymbol(symbol);    
+	c_raw->setSamples( xx, yy_raw, nn );
+	c_fit->setStyle(QwtPlotCurve::Lines);
+	c_fit->setPen(p);
+	c_fit->setSamples( xx, yy, nn );
+	//v_curve_raw.push_back(c_raw);
+	//v_curve_fit.push_back(c_fit);
       }
    }
+    cout << "Ending plot overlay: " << endl;
    //   data_plot->setAxisScale(QwtPlot::xBottom, -xmax/30.0, xmax + xmax/30.0, 0);
    data_plot->replot();
   // data_plot->updatePlot();      //no updatePlot() in new version
@@ -677,4 +723,5 @@ void US_ExtinctFitter::endFit()
    pb_residuals->setEnabled(true);
    pb_overlays->setEnabled(true);
    pb_saveFit->setEnabled(true);
+   cout << "EndFit in US_extinctfitter " << endl;
 }
