@@ -168,7 +168,7 @@ void US_Extinction::add_wavelength(void)
    dialog.setNameFilter(tr("Text (*.txt *.csv *.dat *.wa *.dsp)"));
 	dialog.setFileMode(QFileDialog::ExistingFiles);
    dialog.setViewMode(QFileDialog::Detail);
-	dialog.setDirectory("/home/minji/ultrascan/data/SpectralData");
+	dialog.setDirectory("/home/alexsav/ultrascan/data/spectra");
 	if(dialog.exec())
 	{
 		files = dialog.selectedFiles();
