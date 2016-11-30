@@ -264,6 +264,8 @@ DbgLv(1) << "   jj,ndocs" << jj << ndocs;
             qApp->processEvents();
             bool havedis   = false;
             bool haveenv   = false;
+            int edIDdis    = 0;
+            int edIDenv    = 0;
             US_Report::ReportDocument* ddoc = NULL;
             US_Report::ReportDocument* edoc = NULL;
             QString dpath;
@@ -273,16 +275,19 @@ DbgLv(1) << "   jj,ndocs" << jj << ndocs;
             {
                US_Report::ReportDocument* doc = &tripl->docs[ kk ];
                QString fname  = doc->filename;
-DbgLv(1) << "     kk,fname" << kk << fname;
+               int edIDdoc    = doc->editedDataID;
+DbgLv(1) << "     kk,fname" << kk << fname << "edID" << edIDdoc;
 
-               if ( fname.contains( "s-c-distrib.csv" ) )
+               if ( fname.contains( "s-c-distrib.csv" )  &&
+                    edIDdoc > edIDdis )
                {
+                  edIDdis  = edIDdoc;
                   ddoc     = doc;
                   dpath    = tmpdir + "/" + runid + "." + fname;
+DbgLv(1) << "      dpath" << dpath;
                   int stat = db.readBlobFromDB( dpath,
                      QString( "download_reportContents" ), ddoc->documentID );
-DbgLv(1) << "      readBlob stat" << stat;
-DbgLv(1) << "       dpath" << dpath;
+DbgLv(1) << "        readBlob stat" << stat << " edIDdis" << edIDdis;
 
                   if ( stat != US_DB2::OK )
                   {
@@ -294,14 +299,16 @@ DbgLv(1) << "       dpath" << dpath;
                      havedis  = true;
                }
 
-               else if ( fname.contains( "s-c-envelope.csv" ) )
+               else if ( fname.contains( "s-c-envelope.csv" )  &&
+                         edIDdoc > edIDenv )
                {
+                  edIDenv  = edIDdoc;
                   edoc     = doc;
                   epath    = tmpdir + "/" + runid + "." + fname;
-DbgLv(1) << "       epath" << epath;
+DbgLv(1) << "      epath" << epath;
                   int stat = db.readBlobFromDB( epath,
                      QString( "download_reportContents" ), edoc->documentID );
-DbgLv(1) << "      readBlob stat" << stat;
+DbgLv(1) << "        readBlob stat" << stat << " edIDenv" << edIDenv;
 
                   if ( stat != US_DB2::OK )
                   {

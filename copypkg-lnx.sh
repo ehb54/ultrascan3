@@ -1,9 +1,10 @@
 #!/bin/sh
 #		copypkg-lnx.sh  - copy ultrascan3 directories to us3pkg/PKGNAME
 
-SRCDIR=$HOME/ultrascan3
+SRCDIR=$us3
+HOMEQ=`cd $SRCDIR/../;pwd`
 SRCSOMO=$HOME/us3_somo
-DSTDIR=$HOME/us3pkg
+DSTDIR=$HOMEQ/us3pkg
 SOMOBASE=$HOME/us3_somo
 SOMORHDR=${SOMOBASE}/develop/include/us_revision.h
 ME=`whoami`
@@ -13,11 +14,19 @@ if [ "${SYSTYPE}" != "Linux" ]; then
   echo "  SYSTYPE=${SYSTYPE}"
   exit 1
 fi
+QTVER=`qmake --version|grep Qt|cut -d' ' -f4|cut -d'.' -f1`
+if [ ${QTVER} = "4" ];then
+  echo "Qt Version 4";
+  LNCMD="sed -n 2p"
+else
+  echo "Qt Version 5";
+  LNCMD="sed -n 1p"
+fi
 SURL="//bcf2.uthscsa.edu/ultrascan3/trunk"
 REV=`svn info svn:${SURL}|grep Revision|awk '{print $2}'`
 RSYNC="rsync -av --exclude=.svn"
 REVL=`svn info ${SRCDIR}|grep Revision|awk '{print $2}'`
-VERS=`grep US_Version ${SRCDIR}/utils/us_defines.h|tail -n 1|cut -d'"' -f2`
+MVERS=`grep US_Version ${SRCDIR}/utils/us_defines.h|${LNCMD}|cut -d'"' -f2`
 SREV=`grep Revision ${SOMORHDR}|cut -d \" -f2|awk '{print $2}'`
 
 if [ "${REV}" != "${REVL}" ]; then
@@ -28,35 +37,91 @@ if [ "${REV}" != "${REVL}" ]; then
   exit 1
 fi
 
-QTLIBS=" \
- libQtCore.so.4
- libQtDBus.so.4
- libQtGui.so.4
- libQtHelp.so.4
- libQtNetwork.so.4
- libQtOpenGL.so.4
- libQtSql.so.4
- libQtSvg.so.4
- libQtWebKit.so.4
- libQtXml.so.4
- libQtCLucene.so.4
- libQt3Support.so.4
- libphonon.so.4
+QTLIBS4=" \
+ libQtCore.so
+ libQtDBus.so
+ libQtGui.so
+ libQtHelp.so
+ libQtNetwork.so
+ libQtOpenGL.so
+ libQtSql.so
+ libQtSvg.so
+ libQtWebKit.so
+ libQtXml.so
+ libQtCLucene.so
+ libQt3Support.so
+ libphonon.so
  "
+QTLIBS5=" \
+libQt53DCore.so
+libQt53DInput.so
+libQt53DLogic.so
+libQt53DQuickInput.so
+libQt53DQuickRender.so
+libQt53DQuick.so
+libQt53DRender.so
+libQt5Bluetooth.so
+libQt5CLucene.so
+libQt5Concurrent.so
+libQt5Core.so
+libQt5DBus.so
+libQt5DesignerComponents.so
+libQt5Designer.so
+libQt5Gui.so
+libQt5Help.so
+libQt5LabsTemplates.so
+libQt5Location.so
+libQt5MultimediaQuick_p.so
+libQt5Multimedia.so
+libQt5MultimediaWidgets.so
+libQt5Network.so
+libQt5Nfc.so
+libQt5OpenGL.so
+libQt5Positioning.so
+libQt5PrintSupport.so
+libQt5Qml.so
+libQt5QuickParticles.so
+libQt5Quick.so
+libQt5QuickTest.so
+libQt5QuickWidgets.so
+libQt5Script.so
+libQt5ScriptTools.so
+libQt5Sensors.so
+libQt5SerialBus.so
+libQt5SerialPort.so
+libQt5Sql.so
+libQt5Svg.so
+libQt5Test.so
+libQt5WebChannel.so
+libQt5WebSockets.so
+libQt5Widgets.so
+libQt5X11Extras.so
+libQt5XcbQpa.so
+libQt5XmlPatterns.so
+libQt5Xml.so
+"
+if [ ${QTVER} = "4" ];then
+  QTLIBS=${QTLIBS4}
+else
+  QTLIBS=${QTLIBS5}
+  SREV=""
+fi
+##         echo "QTLIBS=${QTLIBS}"
+##         exit 1
 QTBINS="assistant"
 
 # Determine if this is 32-bit or 64-bit
 IS64=`which gcc`
 IS64=`file ${IS64} | egrep -ci '64-bit|x86-64'`
 if [ ${IS64} -ne 0 ]; then
-  PKGNAME=us3-Linux64-${VERS}.${REV}-s${SREV}
+  PKGNAME=us3-Linux64-${MVERS}.${REV}${SREV}
 else
-  PKGNAME=us3-Linux32-${VERS}.${REV}-s${SREV}
+  PKGNAME=us3-Linux32-${MVERS}.${REV}${SREV}
 fi
 PKGDIR=${DSTDIR}/${PKGNAME}
 
 # Insure we have a package base directory
-cd $HOME
+cd $HOMEQ
 if [ ! -d us3pkg ]; then
   mkdir us3pkg
 fi
@@ -181,3 +246,4 @@ ls -lF
 cd ${PKGDIR}
 pwd
 ls -lF
+
