@@ -1284,15 +1284,35 @@ QString US_ModelLoader::alt_description( QString& descr, const bool from_mdesc )
 {
    QString odescr;
    QStringList dsects = descr.split( "." );
+   // Native model description sample:
+   //   "YW_IAPP11-17_beta-sheets_111416_440V1"  +
+   //    ".2B345.e1611191640_a1611191848_2DSA-MC_021569_mcN050.model"
+   //      i.e., "RUN.TRIP.ETIME_ATIME_TYPE_HPCID_ITER.model"
+   // List model description sample:
+   //   "2DSA-MC.2B345.e1611191640_a1611191848_021569_mcN050"  +
+   //    ".YW_IAPP11-17_beta-sheets_111416_440V1"
+   //      i.e., "TYPE.TRIP.ETIME_ATIME_HPCID_ITER.RUN"
+   // Determine "ndsec", the number of sections separated by ".",
+   //           "asecx", the section index of analysis part,
+   //           "atimx", index in analysis part to "_aYYMMDDhhmmm".
+   // Usually, there are 4 sections; the analysis part is section 2;
+   //   and "_aYYMMMDDhhmm" is at index 11  (else, not standard).
+   // Have to be careful because RUN may contain "."; so there may
+   //   be more than 4 sections and index to analysis part may have
+   //   to be counted from the end backwards.
    int ndsec      = dsects.count();
+   int asecx      = ( from_mdesc ) ? ( ndsec - 2 ) : 2;
+   int atimx      = ( ndsec < 4 ) ? -1 : dsects[ asecx ].indexOf( "_a" );
+//qDebug() << "ALT_DESC:  ndsec" << ndsec << "anstx" << anstx << descr;
 
-   if ( ndsec < 4 )
+   if ( atimx != 11 )
    {  // Not standard analysis form, so input and output are the same
       odescr         = descr;
    }
 
    else if ( from_mdesc )
    {  // Input is the raw model description, output is list form
+      //   i.e., "TYPE.TRIP.ETIME_ATIME_HPCID_ITER.RUN"
       QString frun   = QString( descr ).section( ".",  0, -4 );
       QString ftrip  = QString( descr ).section( ".", -3, -3 );
       QString fanal  = QString( descr ).section( ".", -2, -2 );
@@ -1301,19 +1321,21 @@ QString US_ModelLoader::alt_description( QString& descr, const bool from_mdesc )
       QString fiter  = QString( fanal ).section( "_",  3, -1 );
       odescr         = ftype + "." + ftrip + "." + fedan + "_"
                      + fiter + "." + frun;
+//qDebug() << "ALT_DESC:Native-Form: " << descr;
+//qDebug() << "ALT_DESC:List-Form: " << odescr;
    }
 
    else
    {  // Input is list form of description, output is the model description
-      QString frun   = QString( descr ).section( ".",  3, -1 );
+      //   i.e., "RUN.TRIP.ETIME_ATIME_TYPE_HPCID_ITER.model"
+      QString ftype  = QString( descr ).section( ".",  0,  0 );
       QString ftrip  = QString( descr ).section( ".",  1,  1 );
       QString fanal  = QString( descr ).section( ".",  2,  2 );
-      QString ftype  = QString( descr ).section( ".",  0,  0 );
+      QString frun   = QString( descr ).section( ".",  3, -1 );
       QString fedan  = QString( fanal ).section( "_",  0,  1 );
       QString fiter  = QString( fanal ).section( "_",  2, -1 );
       odescr         = frun  + "." + ftrip + "." + fedan + "_"
                      + ftype + "_" + fiter + ".model";
-
    }
 
    return odescr;

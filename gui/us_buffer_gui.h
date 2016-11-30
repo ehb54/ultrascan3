@@ -7,8 +7,292 @@
 #include "us_widgets.h"
 #include "us_buffer.h"
 #include "us_help.h"
+#ifndef DbgLv
+#define DbgLv(a) if(dbg_level>=a)qDebug()  //!< debug-level-conditioned qDebug()
+#endif
 
 //! An application to manage buffer data.
+//! \class US_BufferGuiSelect
+//!      This class provides a tabbed entry for buffer selection
+class US_BufferGuiSelect: public US_Widgets
+{
+   Q_OBJECT
+
+   public:
+
+      /*! brief Buffer Selection Tab. To 
+      instantiate the class a calling function must
+      provide the ID of the investigator.
+
+      \param invID          A pointer to the current investigator ID
+      \param select_db_disk Indicates whether the default search
+         is on the local disk or in the DB
+      */
+
+      US_BufferGuiSelect( int*, int*, US_Buffer* );
+
+      //! A BufferComponent vector structure for all components in 
+      //! template list (stored in us_home/etc/buffer.xml). 
+      QMap< QString, US_BufferComponent > component_list;
+
+      US_Buffer*    buffer;
+      int*          personID;
+      int*          db_or_disk;
+      bool          from_db;
+
+   signals:
+      //! Currently selected buffer is accepted by User
+      void bufferAccepted( void );
+      void selectionCanceled( void );
+
+   private:
+
+      int           dbg_level;
+
+      QLineEdit*    le_search;
+      QLineEdit*    le_density;
+      QLineEdit*    le_viscosity;
+      QLineEdit*    le_ph;
+      QLineEdit*    le_compressib;
+
+      QPushButton*  pb_cancel;
+      QPushButton*  pb_accept;
+      QPushButton*  pb_spectrum;
+      QPushButton*  pb_delete;
+      QPushButton*  pb_info;
+      QPushButton*  pb_help;
+
+      QListWidget*  lw_buffer_list;
+      QListWidget*  lw_buffer_comps;
+
+      US_Help       showHelp;
+
+      // For list widget
+      class BufferInfo
+      {
+         public:
+         QString description;
+         QString bufferID;
+         QString guid;
+         int     index;
+      };
+
+      QList< BufferInfo > buffer_metadata;
+      QStringList   filenames;
+      QStringList   descriptions;
+      QStringList   GUIDs;
+      QStringList   bufferIDs;
+
+   private slots:
+
+      void query           ( void );
+      void spectrum        ( void );
+      void delete_buffer   ( void );
+      void delete_disk     ( void );
+      void delete_db       ( void );
+      bool buffer_in_use   ( QString& );
+      void info_buffer     ( void );
+      void accept_buffer   ( void );
+      void select_buffer   ( QListWidgetItem* );
+      void select_buffer   ( );
+      void read_from_disk  ( QListWidgetItem* );
+      void read_from_db    ( QListWidgetItem* );
+      void read_from_db    ( const QString&   );
+      void search          ( const QString& = QString() );
+      void show_component  ( const QString&, double );
+      void reject          ( void );
+      void accept          ( void );
+      void read_buffer     ( void );
+      void read_db         ( void );
+      void connect_error	( const QString& );
+      bool buffer_path     ( QString& );
+      void reset           ( void );
+
+      void help( void ) { showHelp.show_help( "buffer_select.html" ); };
+
+   public slots:
+      void init_buffer		( void );
+};
+
+//! \class US_BufferGuiNew
+//!      This class provides a tabbed entry for new buffer creation
+class US_BufferGuiNew : public US_Widgets
+{
+   Q_OBJECT
+
+   public:
+
+      /*! brief Tab for entering a new Buffer. To 
+         instantiate the class a calling function must
+         provide the ID of the investigator.
+
+         \param invID          The current investigator ID
+         \param select_db_disk Indicates whether the default search
+                                 is on the local disk or in the DB
+         \param buffer         Pointer to a US_Buffer object holding the active
+                                 buffer (for editing and adding new buffers)
+      */
+      US_BufferGuiNew( int*, int*, US_Buffer* );
+
+   signals:
+      void newBufAccepted( void );  //! New buffer accepted
+      void newBufCanceled( void );
+
+   private:
+
+      int*          personID;
+      int*          db_or_disk;
+      bool          from_db;
+      int           dbg_level;
+
+      US_Buffer*    buffer;
+
+      QPushButton*  pb_accept;
+      QLabel*       lb_bselect;
+
+      QLineEdit*    le_descrip;
+      QLineEdit*    le_concen;
+      QLineEdit*    le_density;
+      QLineEdit*    le_viscos;
+      QLineEdit*    le_ph;   
+      QLineEdit*    le_compress;
+
+      QCheckBox*    ck_manual;
+
+      QListWidget*  lw_allcomps;
+      QListWidget*  lw_bufcomps;
+
+      //! A BufferComponent map structure for all components in 
+      //!   template list (stored in us_home/etc/buffer.xml). 
+      QMap< QString, US_BufferComponent > component_list;
+
+      US_Help       showHelp;
+
+   private slots:
+
+      void new_description ();
+      void add_component   ();
+      void select_bcomp    ();
+      void remove_bcomp    ( QListWidgetItem* );
+      void recalc_density  ( void );
+      void recalc_viscosity( void );
+      void ph              ( void );
+      void compressibility ( void );
+      void density         ( void );
+      void viscosity       ( void );
+      void manual_flag     ( bool );
+      void spectrum        ( void );
+      void newAccepted     ( void );
+      void newCanceled     ( void );
+      void help( void ) { showHelp.show_help( "buffer_new.html" ); };
+
+   public slots:
+      void init_buffer		( void );
+};
+
+//! \class US_BufferGuiEdit
+//!      This class provides a tabbed entry for non-hydrodynamic buffer mods
+class US_BufferGuiEdit : public US_Widgets
+{
+   Q_OBJECT
+
+   public:
+
+      /*! brief Tab for entering a new Buffer. To 
+         instantiate the class a calling function must
+         provide the ID of the investigator.
+
+         \param invID          The current investigator ID
+         \param select_db_disk Indicates whether the default search
+                                 is on the local disk or in the DB
+         \param buffer         Pointer to a US_Buffer object holding the active
+                                 buffer (for editing and adding new buffers)
+      */
+      US_BufferGuiEdit( int*, int*, US_Buffer* );
+
+   signals:
+      void editBufAccepted( void );  //! Edited buffer accepted
+      void editBufCanceled( void );
+
+   private:
+
+      int*          personID;
+      int*          db_or_disk;
+      bool          from_db;
+      int           dbg_level;
+
+      US_Buffer*    buffer;
+      US_Buffer     orig_buffer;
+
+      QPushButton*  pb_accept;
+      QLineEdit*    le_descrip;
+      QLineEdit*    le_bguid;
+      QLineEdit*    le_ph;
+
+      US_Help       showHelp;
+
+   private slots:
+
+      void ph          ( void );
+      void spectrum    ( void );
+      void editAccepted( void );
+      void editCanceled( void );
+      void help( void ) { showHelp.show_help( "buffer_edit.html" ); };
+
+   public slots:
+      void init_buffer		( void );
+};
+
+//! \class US_BufferGuiSettings
+//!      This class provides a tabbed entry for general buffer settings
+class US_BufferGuiSettings: public US_Widgets
+{
+   Q_OBJECT
+
+   public:
+
+      //! \brief Selection tab for changing investigator and 
+      //!        choosing between db/disk access, as well as
+      //!        for synchronizing the buffer components local
+      //!        file with the database.
+      //!
+      //! \param invID          A pointer to the current investigator ID
+      //! \param select_db_disk A pointer to a flag that indicates whether 
+      //!                       the default search is on the local disk or
+      //!                       in the DB
+      US_BufferGuiSettings( int*, int* );
+
+   private:
+
+      int*          personID;
+      int*          db_or_disk;
+      int           dbg_level;
+      bool          from_db;
+
+      QLineEdit*    le_investigator;
+      QLineEdit*    le_syncstat;
+
+      US_Disk_DB_Controls* disk_controls;
+
+      US_Help       showHelp;
+
+   signals:
+      //! A signal to indicate that the current disk/db selection has changed. 
+      //! /param DB True if DB is the new selection
+      void use_db( bool DB );
+      //! A signal to indicate that the current investigator was changed. 
+      //! /param invID is the new selection
+      void investigator_changed( int invID );
+
+   private slots:
+      void sel_investigator   ( void );
+      void source_changed     ( bool );
+      void assign_investigator( int  );
+      void synch_components   ( void );
+
+      void help( void ) { showHelp.show_help( "buffer_settings.html" ); };
+};
+
 class US_GUI_EXTERN US_BufferGui : public US_WidgetsDialog
 {
    Q_OBJECT
@@ -18,11 +302,11 @@ class US_GUI_EXTERN US_BufferGui : public US_WidgetsDialog
       //! \param signal_wanted A flag to specify if one of the signals
       //!               should be emitted when terminating the dialog
       //! \param buf    The default buffer
-      //! \param select_db_disk An indicatior of whether to search the disk
+      //! \param select_db_disk An indicator of whether to search the disk
       //!               or DB for the default buffer
       US_BufferGui( bool             = false, 
-                    const US_Buffer& = US_Buffer(), 
-                    int              = US_Disk_DB_Controls::Default );
+                  const US_Buffer& = US_Buffer(), 
+                  int              = US_Disk_DB_Controls::Default );
    signals:
       //! Return the main values
       //! \param density of the buffer
@@ -44,112 +328,38 @@ class US_GUI_EXTERN US_BufferGui : public US_WidgetsDialog
       void use_db( bool DB );
 
    private:
+
+      int 			  disk_or_db;
+      int           personID;
+      int           dbg_level;
       bool          signal;
+      bool          from_db;
       bool          bufferCurrent;
       bool          manualUpdate;
       bool          view_shared;
-      int           personID;
-                   
+
+      QTabWidget*           tabWidget;
+      US_BufferGuiSelect*   selectTab;
+      US_BufferGuiNew*      newTab;
+      US_BufferGuiEdit*     editTab;
+      US_BufferGuiSettings* settingsTab;
+
       //!< The currently active buffer Data. 
-      US_Buffer buffer;    
-      
-      //! A BufferComponent vector structure for all components in 
-      //! template list (stored in us_home/etc/buffer.xml). 
-      QMap< QString, US_BufferComponent > component_list;   
+      US_Buffer buffer;
+      US_Buffer orig_buffer; // saves original buffer upon entry,
+                             //   is returned if cancel was pressed
 
-      // For list widget
-      class BufferInfo
-      {
-         public:
-         QString description;
-         QString bufferID;
-         QString guid;
-         int     index;
-      };
+   private slots:
+      void checkTab         ( int  );
+      void update_disk_or_db( bool );
+      void update_personID  ( int  );
+      void bufferAccepted   ( void );
+      void bufferRejected   ( void );
+      void newBufAccepted   ( void );
+      void newBufCanceled   ( void );
+      void editBufAccepted  ( void );
+      void editBufCanceled  ( void );
 
-      QList< BufferInfo > buffer_metadata;
-
-      QStringList   filenames;
-      QStringList   descriptions;
-      QStringList   GUIDs;
-      QStringList   bufferIDs;
-                   
-      QPushButton*  pb_save;
-      QPushButton*  pb_update;
-      QPushButton*  pb_del;
-      QPushButton*  pb_spectrum;
-                   
-      QComboBox*    cmb_optics;
-
-      US_Disk_DB_Controls* disk_controls; //!< Radiobuttons for disk/db choice
-
-      QListWidget*  lw_buffer_db;
-      QListWidget*  lw_ingredients;
-      QListWidget*  lw_buffer;
-
-      QCheckBox*    cb_shared;
-      QCheckBox*    cb_manual;
-                   
-      QLineEdit*    le_search;
-      QLineEdit*    le_density;
-      QLineEdit*    le_viscosity;
-      QLineEdit*    le_ph;
-      QLineEdit*    le_compressibility;
-      QLineEdit*    le_description;
-      QLineEdit*    le_investigator;
-      QLineEdit*    le_concentration;
-      QLineEdit*    le_guid;
-                   
-      QPalette      normal;
-      QPalette      gray;
-                   
-      QLabel*       lb_units;
-      QLabel*       lb_selected;
-                   
-      US_Help       showHelp;
-
-      void    read_db         ( void );
-      void    read_buffer     ( void );
-      void    recalc_density  ( void );
-      void    recalc_viscosity( void );
-      void    update_buffer   ( void );
-      void    connect_error   ( const QString& );
-      bool    buffer_path     ( QString& );
-      void    update_lw_buf   ( const QString&, double );
-      void    read_from_disk  ( QListWidgetItem* );
-      void    read_from_db    ( QListWidgetItem* );
-      void    read_from_db    ( const QString&   );
-      void    save_db         ( void );
-      void    save_disk       ( void );
-      void    delete_db       ( void );
-      void    delete_disk     ( void );
-      void    update_db       ( void );
-      bool    up_to_date      ( void );
-      void    init_buffer     ( void );
-      bool    buffer_in_use   ( QString& );
-      
-    private slots:
-      void synch_components   ( void );
-      void sel_investigator   ( void );
-      void save               ( void );
-      void update             ( void );
-      void delete_buffer      ( void );
-      void query              ( void );
-      void reset              ( void );
-      void spectrum           ( void );
-      void list_component     ( void );
-      void add_component      ( void );
-      void accept_buffer      ( void );
-      void check_db           ( void );
-      void new_description    ( void );
-      void density            ( const QString& );
-      void viscosity          ( const QString& );
-      void remove_component   ( QListWidgetItem* );
-      void select_buffer      ( QListWidgetItem* );
-      void search             ( const QString& = QString() );
-      void assign_investigator( int  );
-      void source_changed     ( bool );
-     
-      void help ( void ) { showHelp.show_help( "us_buffer.html" ); };
 };
 #endif
+
