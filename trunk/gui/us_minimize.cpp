@@ -2,7 +2,7 @@
 
 #include "us_minimize.h"
 //#include <iostream>
-//#include <cerrno> //for floating point errors
+#include <cerrno> //for floating point errors
 //#include <cfloat>
 
 #define FLT_MIN  1.17549e-38
