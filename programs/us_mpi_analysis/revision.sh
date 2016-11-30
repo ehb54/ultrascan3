@@ -1,5 +1,13 @@
 #  revision.sh  - fill us_revision.h with lastest revision string
-MVERS=`grep US_Version ../../utils/us_defines.h|cut -d'"' -f2`
+QTVER=`qmake --version|grep Qt|cut -d' ' -f4|cut -d'.' -f1`
+if [ ${QTVER} = "4" ];then
+  echo "Qt Version 4";
+  LNCMD="sed -n 2p"
+else
+  echo "Qt Version 5";
+  LNCMD="sed -n 1p"
+fi
+MVERS=`grep US_Version ../../utils/us_defines.h|${LNCMD}|cut -d'"' -f2`
 REV1=`svn info|grep 'Changed Rev'|cut -f4 -d' '`
 REV2=`(cd ../../utils;svn info|grep 'Changed Rev'|cut -f4 -d' ')`
 DATE1=`svn info|grep 'Changed Date'|cut -f4 -d' '`

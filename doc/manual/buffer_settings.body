@@ -15,6 +15,11 @@
       master list in the database.</li>
     </ul>
 
+    <p> As with all panels, a set of tabs allows you to navigate to
+    other panels in order to perform specialized subtasks relating
+    to buffer management. Links to and summaries of the panels are
+    given in the final section of this page.</p>
+
     <h3>Dialog Items:</h3>
 
     <ul>
@@ -32,6 +37,9 @@
       a local file listing of all buffer components downloaded from the
       database. This action is rarely needed, most commonly for new users
       who have no buffer components file whatsoever.</li>
+
+      <li><b>(status box)</b> Status of any action, such as synchronizing
+      buffer components.</li>
 
       <li><b>Help</b> Show this documentation.</li>
     </ul>

@@ -13,6 +13,11 @@
     <b> Accept</b> button will return you to the <b>Select Buffer</b>
     panel with a modified buffer.</p>
 
+    <p> As with all panels, a set of tabs allows you to navigate to
+    other panels in order to perform specialized subtasks relating
+    to buffer management. Links to and summaries of the panels are
+    given in the final section of this page.</p>
+
     <h3> Dialog Items: </h3>
 
     <ul>

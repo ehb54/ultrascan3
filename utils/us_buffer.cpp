@@ -238,8 +238,8 @@ void US_Buffer::getSpectrum( US_DB2* db, const QString& type )
 
    while ( db->next() )
    {
-      double lambda = db->value( 0 ).toDouble();
-      double value  = db->value( 1 ).toDouble();
+      double lambda = db->value( 1 ).toDouble();
+      double value  = db->value( 2 ).toDouble();
 
       if ( type == "Extinction" )
          extinction[ lambda ] = value;
