@@ -1,11 +1,14 @@
 //! \file us_minimize.cpp
 
 #include "us_minimize.h"
-#include <iostream>
-#include <cerrno> //for floating point errors
-#include <cfloat>
+//#include <iostream>
+//#include <cerrno> //for floating point errors
+//#include <cfloat>
 
-using namespace std;
+#define FLT_MIN  1.17549e-38
+#define FLT_MAX  3.40282e+38
+
+//using namespace std;
 
 //Constructor
 US_Minimize::US_Minimize(bool *temp_fitting_widget, bool temp_GUI) : US_Widgets()
@@ -251,7 +254,7 @@ void US_Minimize::updateQN(float **gamma, float **delta)
    matrix->mmv(&hgamma, gamma, &information_matrix, parameters, parameters);
    lambda = matrix->dotproduct(gamma, &hgamma, parameters);
    deltagamma = matrix->dotproduct(delta, gamma, parameters);
-   //cout << "Deltagamma: " << deltagamma << endl;
+   //qDebug() << "Deltagamma: " << deltagamma  ;
   	for (i=0; i<parameters; i++)
    {
  
@@ -272,7 +275,7 @@ void US_Minimize::updateQN(float **gamma, float **delta)
    /*
  *      for (i=0; i<parameters; i++)
  *           {
- *                cout << "difference: " << temp[i] - (*delta)[i] << endl;
+ *                qDebug() << "difference: " << temp[i] - (*delta)[i]  ;
  *                     }
  *                        */
    for (i=0; i<parameters; i++)
@@ -292,7 +295,7 @@ void US_Minimize::updateQN(float **gamma, float **delta)
 
 int US_Minimize::Fit()
 {
-   //cout << "converged: " << converged << ", completed: " << completed << ", aborted: " << aborted << endl;
+   //qDebug() << "converged: " << converged << ", completed: " << completed << ", aborted: " << aborted  ;
    float lambda = lambdaStart; // re-initialize Lambda
    float *search, alpha, *gamma, *delta;
    int step_counter = 0; // count how many times we try to shorten the step size in the hybrid method
@@ -304,7 +307,7 @@ int US_Minimize::Fit()
    {
       cleanup();
    }
-   cout << "starting fit\n";
+   qDebug() << "starting fit\n";
    first_plot = true;      // reset first plot each time we do a new fit
    completed = false;
    aborted = false;
@@ -399,12 +402,12 @@ int US_Minimize::Fit()
          pb_residuals->setEnabled(true);
          pb_overlays->setEnabled(true);
       }
-      cout << "The residuals from the initial guess are too large.\n"
+      qDebug() << "The residuals from the initial guess are too large.\n"
            << "Please manually adjust the fitting parameters and retry the fit.\n"
            << "Return code: -4 (using nls method" << nlsMethod << ").\n\nFailing Parameters:\n";
       for (unsigned int i=0; i<parameters; i++)
       {
-         cout << guess[i] << endl;
+         qDebug() << guess[i]  ;
       }
       cleanup();
       return (-4);
@@ -417,14 +420,14 @@ int US_Minimize::Fit()
    }
    new_residuals = calc_residuals();
    
-   cout << "returning from calc_residuals in CP1 with " << new_residuals << endl;
+   qDebug() << "returning from calc_residuals in CP1 with " << new_residuals  ;
   
    if (new_residuals < 0)
    {
-      cout << "exited with -4, residuals: " << new_residuals << endl;
+      qDebug() << "exited with -4, residuals: " << new_residuals  ;
       return(-4);
    }
-   //cout << "Residuals: " << new_residuals << endl;
+   //qDebug() << "Residuals: " << new_residuals  ;
    target = new_residuals/points;
    totalSteps = 0;
    if(target <= 0)
@@ -465,16 +468,16 @@ int US_Minimize::Fit()
    }
    count = 0;
 
-   cout << "iter: " << iteration << ", maxiter: " << maxIterations << ", new_resid: " << new_residuals/points << ", tolerance: " << tolerance << endl;
+   qDebug() << "iter: " << iteration << ", maxiter: " << maxIterations << ", new_resid: " << new_residuals/points << ", tolerance: " << tolerance  ;
 
    ////////// BEGINNING OF ITERATIONS //////////////////////////////////////////////////////////////////////////////////////////////////////////
    while((iteration < maxIterations) && (new_residuals/points > tolerance))
    {
-     cout << "current iteration: " << iteration << endl;
+     qDebug() << "current iteration: " << iteration  ;
 
       if(GUI && showGuiFit)
       {
-	cout << "GUI: " << GUI << ", showGuiFit: " << showGuiFit << endl;
+	qDebug() << "GUI: " << GUI << ", showGuiFit: " << showGuiFit  ;
 	
          if(plotResiduals)
          {
@@ -482,9 +485,9 @@ int US_Minimize::Fit()
          }
          else
          {
-	   cout << "plot_overlays: 1" << endl;
+	   qDebug() << "plot_overlays: 1"  ;
 	   plot_overlays();                                   // BUG IN GUI QT-5.7.0 /////////////////////////////////////////////////////////////////////////////////////////
-	   cout << "plot_overlays: 2" << endl;
+	   qDebug() << "plot_overlays: 2"  ;
          }
          qApp->processEvents();
       }
@@ -566,7 +569,7 @@ int US_Minimize::Fit()
          if (test < tolerance)
          {
             variance = new_residuals/points;
-            //cout << "Calling endfit 1\n";
+            //qDebug() << "Calling endfit 1\n";
             endFit();
             delete [] delta;
             delete [] gamma;
@@ -577,14 +580,14 @@ int US_Minimize::Fit()
            print_matrix(information_matrix, parameters, parameters);
            for (unsigned int i=0; i<parameters; i++)
            {
-           cout << "Search before: " << search[i] << endl;
+           qDebug() << "Search before: " << search[i]  ;
            }
          */
          matrix->mmv(&search, &B, &information_matrix, parameters, parameters);
          /*
            for (unsigned int i=0; i<parameters; i++)
            {
-           cout << "Search after: " << search[i] << endl;
+           qDebug() << "Search after: " << search[i]  ;
            }
          */
          for (unsigned int i=0; i<parameters; i++)
@@ -601,7 +604,7 @@ int US_Minimize::Fit()
             delete [] delta;
             delete [] gamma;
             delete [] search;
-            //cout << "Calling endfit 2, points: " << points << "\n";
+            //qDebug() << "Calling endfit 2, points: " << points << "\n";
             endFit();
             return(0);
          }
@@ -636,13 +639,13 @@ int US_Minimize::Fit()
          calc_jacobian();  // gives us jacobian matrix
          old_residuals = new_residuals;
          new_residuals = calc_residuals(); // gives us new y_delta
-         //cout << "returning from calc_residuals in CP2 with " << new_residuals << endl;
+         //qDebug() << "returning from calc_residuals in CP2 with " << new_residuals  ;
          calc_B();
          for (unsigned int i=0; i<parameters; i++)
          {
             gamma[i] = gamma[i] - (float) B[i];
             delta[i] = alpha * search[i];
-            //cout << "Paramter " << i << ": gamma:" << gamma[i] << ", delta: " << delta[i] << ", alpha: " << alpha << ", search: " << search[i] << ", B: " << B[i] << endl;
+            //qDebug() << "Paramter " << i << ": gamma:" << gamma[i] << ", delta: " << delta[i] << ", alpha: " << alpha << ", search: " << search[i] << ", B: " << B[i]  ;
          }
          updateQN(&gamma, &delta);
       }
@@ -660,7 +663,9 @@ int US_Minimize::Fit()
 
       while (new_residuals >= old_residuals && nlsMethod != 3)
       {
-	cout << "Going to Method: " << endl;
+	qDebug() << "Going to Method: "  ;
+	qDebug() << "FLT_MIN: " << FLT_MIN ;
+	qDebug() << "FLT_MAX: " << FLT_MAX ;
 
          //   Problem: J * R = y_delta, where R = (a[i] - guess[i]) and we want to find a[i], so solve for R:
          // (1)   J'J * R = J' * y_delta
@@ -685,20 +690,20 @@ int US_Minimize::Fit()
          // save information matrix in LL_transpose in case chi-2 is larger, in which case we would
          // need to reset Lambda
 
-         cout.precision(3);
-         cout.setf(ios::scientific|ios::showpos);
+         //cout.precision(3);
+         //cout.setf(ios::scientific|ios::showpos);
 
-         //cout << "\nLL_transpose (for " << parameters << " parameters): ";
+         //qDebug() << "\nLL_transpose (for " << parameters << " parameters): ";
          for (unsigned int i=0; i<parameters; i++)
          {
-            //cout << "\n";
+            //qDebug() << "\n";
             for (unsigned int j=0; j<parameters; j++)
             {
-               //               cout << i << ", " << j << ": " << information_matrix[i][j] << " ";
+               //               qDebug() << i << ", " << j << ": " << information_matrix[i][j] << " ";
                LL_transpose[i][j] = information_matrix[i][j];
             }
          }
-         //cout << "\n";
+         //qDebug() << "\n";
 
          // (3)   J'J -> Cholesky Decomposition -> LL'
 
@@ -717,7 +722,7 @@ int US_Minimize::Fit()
             {
                if (nlsMethod == 0)
                {
-		 cout << "Cholesky: " << endl;
+		 qDebug() << "Cholesky: "  ;
                   if (showGuiFit)
                   {
                      QMessageBox message;
@@ -743,13 +748,13 @@ int US_Minimize::Fit()
                pb_pause->setEnabled(false);
                pb_fit->setEnabled(true);
             }
-            //cout << "Aborting at 2...\n";
+            //qDebug() << "Aborting at 2...\n";
             aborted = true;
             cleanup();
             return (-6);
          }
 	 
-	 cout << "Continue Method" << endl;
+	 qDebug() << "Continue Method"  ;
 
          // Now the information matrix actually contains the decomposed information matrix LL'
          // (4)   L(L'*R) = B
@@ -785,13 +790,13 @@ int US_Minimize::Fit()
                {
                   t[i] = (float) B[i];
                }
-               //cout << "calling linesearch from lsp2\n";
+               //qDebug() << "calling linesearch from lsp2\n";
                st = linesearch(&t, new_residuals);
                delete [] t;
                if (st == 0)
                {
                   variance = new_residuals/points;
-                  //cout << "Calling endfit 3\n";
+                  //qDebug() << "Calling endfit 3\n";
                   endFit();
                   return(0);
                }
@@ -803,7 +808,7 @@ int US_Minimize::Fit()
 						message.exec();
                   return(-11);
                }
-               //               cout << "Alpha: " << st << endl;
+               //               qDebug() << "Alpha: " << st  ;
                for (unsigned int i=0; i<parameters; i++)
                {
                   test_guess[i] = guess[i] + st * (float) B[i];
@@ -819,13 +824,13 @@ int US_Minimize::Fit()
                {
                   t[i] = (float) B[i];
                }
-               //cout << "calling linesearch from lsp3\n";
+               //qDebug() << "calling linesearch from lsp3\n";
                st = linesearch(&t, new_residuals);
                delete [] t;
                if (st == 0)
                {
                   variance = new_residuals/points;
-                  //cout << "Calling endfit 4\n";
+                  //qDebug() << "Calling endfit 4\n";
                   endFit();
                   return(0);
                }
@@ -850,12 +855,12 @@ int US_Minimize::Fit()
             return(-7);
          }
 
-	 cout << "Continue Method 1" << endl;
+	 qDebug() << "Continue Method 1"  ;
 
          new_residuals = calc_residuals();
          if (new_residuals < old_residuals)
          {
-	   cout << "new_residuals <  old_residuals" << endl;
+	   qDebug() << "new_residuals <  old_residuals"  ;
             if (GUI)
             {
                qApp->processEvents();
@@ -865,7 +870,7 @@ int US_Minimize::Fit()
             case 0:
                {
                   lambda = lambda/lambdaStep;
-		  cout << "lambda = " << lambda << ", lambdaStep = " << lambdaStep << endl;
+		  qDebug() << "lambda = " << lambda << ", lambdaStep = " << lambdaStep  ;
                   break;
                }
             case 1:
@@ -912,7 +917,7 @@ int US_Minimize::Fit()
          }
          else
          {
-	   cout << "new_residuals > old_residuals" << endl;
+	   qDebug() << "new_residuals > old_residuals"  ;
             if(GUI)
             {
                str.sprintf("%3.5e", (old_residuals - new_residuals)/points);
@@ -930,13 +935,13 @@ int US_Minimize::Fit()
                   lambda_loop ++;
                   lambda *= pow((double) lambdaStep, (double) lambda_loop);
 
-		  cout << "After new_res MORE: " << endl;
+		  qDebug() << "After new_res MORE: "  ;
 
                   if (lambda > 1.0e10)
                   {
                      lambda = 1.0e6;
                      variance = new_residuals/points;
-                     cout << "Calling endfit 7\n";
+                     qDebug() << "Calling endfit 7\n";
                      endFit();
                      return(0);
                   }
@@ -993,13 +998,13 @@ int US_Minimize::Fit()
             }
             if(calc_model(guess) < 0)
             {
-	      cout << "After new_res MORE 1:" << endl;
+	      qDebug() << "After new_res MORE 1:"  ;
                cleanup();
                return (-8);
             }
-	    cout << "After new_res MORE 11:" << endl;
+	    qDebug() << "After new_res MORE 11:"  ;
             new_residuals = calc_residuals();
-	    cout << "After new_res MORE 12:" << endl;
+	    qDebug() << "After new_res MORE 12:"  ;
          }
          if (GUI)
          {
@@ -1008,11 +1013,11 @@ int US_Minimize::Fit()
 	    //return(0);
          }
       }
-      cout << "Continue Method 2" << endl;
-      cout << "new_residuals = " << new_residuals << ", points = " <<  points << ", tolerance = " << tolerance << endl;
-      cout << "GUI: " << GUI << endl;
+      qDebug() << "Continue Method 2"  ;
+      qDebug() << "new_residuals = " << new_residuals << ", points = " <<  points << ", tolerance = " << tolerance  ;
+      qDebug() << "GUI: " << GUI  ;
    }
-   cout << "END ITER: " << endl;
+   qDebug() << "END ITER: "  ;
    return(0);
 }
 
@@ -1020,7 +1025,7 @@ float US_Minimize::linesearch(float **search, float f0)
 {
    bool check_flag=true;
    double old_f0=0.0, old_f1=0.0, old_f2=0.0;
-   //cout << "before: " << errno << endl;
+   //qDebug() << "before: " << errno  ;
    errno = 0; //clear old error state
    // look for the minimum residual. Residual values are f0, f1, f2, evaluated at x0, x1, x2.
    // x0, x1, x2 are multipliers for incremental change of the parameter vector 'search'
@@ -1031,31 +1036,31 @@ float US_Minimize::linesearch(float **search, float f0)
    // f is the residual of the function.
    float x0 = 0.0, x1 =  (float) 0.5, x2 = 1.0, h =  (float) 0.01, xmin, fmin;
    unsigned int iter = 0;
-   //cout << "calling calc_testParameter from ctp1...\n";
+   //qDebug() << "calling calc_testParameter from ctp1...\n";
    float f1 = calc_testParameter(search, x1);
    if (f1 < 0) return(0.0);
-   //cout << "-1: " << errno << endl;
+   //qDebug() << "-1: " << errno  ;
 
-   //cout << "calling calc_testParameter from ctp2...\n";
+   //qDebug() << "calling calc_testParameter from ctp2...\n";
    float f2 = calc_testParameter(search, x2);
    if (f2 < 0) return(0.0);
-   //cout << "-2: " << errno << ", f0: " << f0 << ", f1: " << f1 << ", f2: " << f2 << endl;
+   //qDebug() << "-2: " << errno << ", f0: " << f0 << ", f1: " << f1 << ", f2: " << f2  ;
 
    while (errno != 0 || (f0 >= 10000 || f0 < 0 || f1 >= 10000 || f1 < 0 || f2 >= 10000 || f2 < 0)) //make the initial step size smaller if we have infinite residuals
    {
       x1 /= 10;
       x2 /= 10;
-      //cout << "Calling from 1. loop\n";
-      //cout << "calling calc_testParameter from Ctp3...\n";
+      //qDebug() << "Calling from 1. loop\n";
+      //qDebug() << "calling calc_testParameter from Ctp3...\n";
       f1 = calc_testParameter(search, x1);
       if (f1 < 0) return(0.0);
-      //cout << "calling calc_testParameter from ctp4...\n";
+      //qDebug() << "calling calc_testParameter from ctp4...\n";
       f2 = calc_testParameter(search, x2);
       if (f2 < 0) return(0.0);
       if (x1 < FLT_MIN)
       {
-         //cout << "abandoned with: " << "x0: " << x0 << ", x1: " << x1 << ", x2: " << x2 << ", f0: " << f0 << ", f1: " << f1 << ", f2: " << f2 << endl;
-         //cout << FLT_MIN << ", " << FLT_MAX << ", errno: " << errno << endl;
+         //qDebug() << "abandoned with: " << "x0: " << x0 << ", x1: " << x1 << ", x2: " << x2 << ", f0: " << f0 << ", f1: " << f1 << ", f2: " << f2  ;
+         //qDebug() << FLT_MIN << ", " << FLT_MAX << ", errno: " << errno  ;
          errno = 0;
          return (-1); //couldn't do anything for this search direction - fit didn't converge
       }
@@ -1063,12 +1068,12 @@ float US_Minimize::linesearch(float **search, float f0)
    check_flag=true;
    while(check_flag)
    {
-      //cout << "mathlib: "  << errno << ", x0: " << x0 << ", x1: " << x1 << ", x2: " << x2 << ", f0: " << f0 << ", f1: " << f1 << ", f2: " << f2 << ", d1: " << f1-f0 << ", d2: " << f2-f1 << ", d3: " << f2-f0 << endl;
+      //qDebug() << "mathlib: "  << errno << ", x0: " << x0 << ", x1: " << x1 << ", x2: " << x2 << ", f0: " << f0 << ", f1: " << f1 << ", f2: " << f2 << ", d1: " << f1-f0 << ", d2: " << f2-f1 << ", d3: " << f2-f0  ;
       if((qIsNaN(f0) && qIsNaN(f1))
          || (qIsNaN(f1) && qIsNaN(f2))
          || (qIsNaN(f0) || qIsNaN(f2))) // at least two values are screwed up, exit.
       {
-         //cout << "error1 " << "x0: " << x0 << ", x1: " << x1 << ", x2: " << x2 << ", f0: " << f0 << ", f1: " << f1 << ", f2: " << f2 << endl;
+         //qDebug() << "error1 " << "x0: " << x0 << ", x1: " << x1 << ", x2: " << x2 << ", f0: " << f0 << ", f1: " << f1 << ", f2: " << f2  ;
          errno = 0;
          return(-1);
       }
@@ -1090,58 +1095,58 @@ float US_Minimize::linesearch(float **search, float f0)
            )
          )   // is the solution horizontal?
       {
-         //cout << "error2 "  << "x0: " << x0 << ", x1: " << x1 << ", x2: " << x2 << ", f0: " << f0 << ", f1: " << f1 << ", f2: " << f2 << endl;
+         //qDebug() << "error2 "  << "x0: " << x0 << ", x1: " << x1 << ", x2: " << x2 << ", f0: " << f0 << ", f1: " << f1 << ", f2: " << f2  ;
          return(0);   // we found the minimum, return alpha=0
       }
       if ((fabs(x0) < FLT_MIN) && (fabs(x1) < FLT_MIN) && (fabs(x2) < FLT_MIN))   // is the solution horizontal?
       {
-         //cout << "error3 "  << "x0: " << x0 << ", x1: " << x1 << ", x2: " << x2 << ", f0: " << f0 << ", f1: " << f1 << ", f2: " << f2 << endl;
+         //qDebug() << "error3 "  << "x0: " << x0 << ", x1: " << x1 << ", x2: " << x2 << ", f0: " << f0 << ", f1: " << f1 << ", f2: " << f2  ;
          return(0);   // we found the minimum, return alpha=0
       }
       //      if ((f0 < f1) && (f1 == f2) || (f0 < f1) && (f1 > f2) || (fabs(f1 - f0) < FLT_MIN) && f2 > f1)   // some weird cases can happen near the minimum
       if (((fabs(f0 - f1) < FLT_MIN) && (fabs(f1 - f2) < FLT_MIN))
           || ((fabs(f0 - f1) < FLT_MIN) && (f2 > f1)))   // some weird cases can happen near the minimum
       {
-         //cout << "error4 "  << "x0: " << x0 << ", x1: " << x1 << ", x2: " << x2 << ", f0: " << f0 << ", f1: " << f1 << ", f2: " << f2 << endl;
+         //qDebug() << "error4 "  << "x0: " << x0 << ", x1: " << x1 << ", x2: " << x2 << ", f0: " << f0 << ", f1: " << f1 << ", f2: " << f2  ;
          return(0);   // we found the minimum, return alpha=0
       }
       if (f0 > f1 && f2 > f1) // we have a bracket
       {
-         //cout << "bracket " << "x0: " << x0 << ", x1: " << x1 << ", x2: " << x2 << ", f0: " << f0 << ", f1: " << f1 << ", f2: " << f2 << endl;
+         //qDebug() << "bracket " << "x0: " << x0 << ", x1: " << x1 << ", x2: " << x2 << ", f0: " << f0 << ", f1: " << f1 << ", f2: " << f2  ;
          check_flag = false;
          break;
       }
       else if ((f2 > f1 && f1 > f0) || (f1 > f0 && f1 > f2) || (f1 == f2 && f1 > f0)) // shift to the left
       {
-         //cout << "leftshift " << "x0: " << x0 << ", x1: " << x1 << ", x2: " << x2 << ", f0: " << f0 << ", f1: " << f1 << ", f2: " << f2 << endl;
+         //qDebug() << "leftshift " << "x0: " << x0 << ", x1: " << x1 << ", x2: " << x2 << ", f0: " << f0 << ", f1: " << f1 << ", f2: " << f2  ;
          x2 = x1;
          f2 = f1;
          x1 = (x2 + x0)/2.0;
-         //cout << "calling calc_testParameter from ctp5...\n";
+         //qDebug() << "calling calc_testParameter from ctp5...\n";
          f1 = calc_testParameter(search, x1);
          if (f1 < 0) return(0.0);
       }
       else if (f0 > f1 && f1 > f2) // shift to the right
       {
-         //cout << "rightshift " << "x0: " << x0 << ", x1: " << x1 << ", x2: " << x2 << ", f0: " << f0 << ", f1: " << f1 << ", f2: " << f2 << endl;
+         //qDebug() << "rightshift " << "x0: " << x0 << ", x1: " << x1 << ", x2: " << x2 << ", f0: " << f0 << ", f1: " << f1 << ", f2: " << f2  ;
          x0 = x1;
          f0 = f1;
          x1 = x2;
          f1 = f2;
          x2 = x2 + (pow((double) 2, (double) (iter+2))) * h;
-         //cout << "calling calc_testParameter from ctp6...\n";
+         //qDebug() << "calling calc_testParameter from ctp6...\n";
          f2 = calc_testParameter(search, x2);
          if (f2 < 0) return(0.0);
-         //cout << "rightshift #2" << "x0: " << x0 << ", x1: " << x1 << ", x2: " << x2 << ", f0: " << f0 << ", f1: " << f1 << ", f2: " << f2 << endl;
+         //qDebug() << "rightshift #2" << "x0: " << x0 << ", x1: " << x1 << ", x2: " << x2 << ", f0: " << f0 << ", f1: " << f1 << ", f2: " << f2  ;
       }
       iter++;
-      //cout << iter << endl;
+      //qDebug() << iter  ;
    } // get a bracket
    // search inside the bracket for the minimum and do a 2nd order polynomial fit
    x1 = (x0 + x2)/2.0;
    h = x1 - x0;
-   //cout << "Calling from 2. loop\n";
-   //cout << "calling calc_testParameter from ctp7...\n";
+   //qDebug() << "Calling from 2. loop\n";
+   //qDebug() << "calling calc_testParameter from ctp7...\n";
    f1 = calc_testParameter(search, x1);
    if (f1 < 0) return(0.0);
    while(true)
@@ -1153,8 +1158,8 @@ float US_Minimize::linesearch(float **search, float f0)
          x1 = x0;
          f1 = f0;
          x0 = x1 - h;
-         //cout << "Calling from 3. loop\n";
-         //cout << "calling calc_testParameter from ctp8...\n";
+         //qDebug() << "Calling from 3. loop\n";
+         //qDebug() << "calling calc_testParameter from ctp8...\n";
          f0 = calc_testParameter(search, x0);
          if (f0 < 0) return(0.0);
       }
@@ -1165,8 +1170,8 @@ float US_Minimize::linesearch(float **search, float f0)
          x1 = x2;
          f1 = f2;
          x2 = x1 + h;
-         //cout << "Calling from 4. loop\n";
-         //cout << "calling calc_testParameter from ctp9...\n";
+         //qDebug() << "Calling from 4. loop\n";
+         //qDebug() << "calling calc_testParameter from ctp9...\n";
          f2 = calc_testParameter(search, x2);
          if (f2 < 0) return(0.0);
       }
@@ -1176,9 +1181,9 @@ float US_Minimize::linesearch(float **search, float f0)
          return(0); //division by zero above
       }
       xmin = x1 + (h * (f0 - f2))/(2 * (f0 - 2 * f1 + f2));
-      //cout << "Calling from 5. loop\n";
-      //cout << "xmin: " << xmin << ", diff: " << (2 * (f0 - 2 * f1 + f2)) << ", h: " << h << ", f0: " << f0 << ", f1: " << f1 << ", f2: " << f2 << endl;
-      //cout << "calling calc_testParameter from ctp10...\n";
+      //qDebug() << "Calling from 5. loop\n";
+      //qDebug() << "xmin: " << xmin << ", diff: " << (2 * (f0 - 2 * f1 + f2)) << ", h: " << h << ", f0: " << f0 << ", f1: " << f1 << ", f2: " << f2  ;
+      //qDebug() << "calling calc_testParameter from ctp10...\n";
       fmin = calc_testParameter(search, xmin);
       if (fmin < 0) return(0.0);
 
@@ -1194,11 +1199,11 @@ float US_Minimize::linesearch(float **search, float f0)
       }
       x0 = x1 - h;
       x2 = x1 + h;
-      //cout << "Calling from 6. loop\n";
-      //cout << "calling calc_testParameter from ctp11...\n";
+      //qDebug() << "Calling from 6. loop\n";
+      //qDebug() << "calling calc_testParameter from ctp11...\n";
       f0 = calc_testParameter(search, x0);
       if (f0 < 0) return(0.0);
-      //cout << "calling calc_testParameter from ctp12...\n";
+      //qDebug() << "calling calc_testParameter from ctp12...\n";
       f2 = calc_testParameter(search, x2);
       if (f2 < 0) return(0.0);
    }
@@ -1209,7 +1214,7 @@ float US_Minimize::calc_testParameter(float **search, float step)
    for (unsigned int i=0; i<parameters; i++)
    {
       test_guess[i] = guess[i] + step * (*search)[i];
-      //cout << "Step: " << step << ", Test-guess(" << i << "): " << test_guess[i] << ", guess: " << guess[i] << ", search: " << (*search)[i] << endl;
+      //qDebug() << "Step: " << step << ", Test-guess(" << i << "): " << test_guess[i] << ", guess: " << guess[i] << ", search: " << (*search)[i]  ;
    }
    /*
      QString s="", format;
@@ -1224,18 +1229,18 @@ float US_Minimize::calc_testParameter(float **search, float step)
    */
    if(calc_model(test_guess) < 0)
    {
-      cout << "Attention: there was an error in the model calculation, resetting to original parameters...\n";
+      qDebug() << "Attention: there was an error in the model calculation, resetting to original parameters...\n";
       for (unsigned int i=0; i<parameters; i++)
       {
          test_guess[i] = guess[i];
-         //cout << "Step: " << step << ", Test-guess(" << i << "): " << test_guess[i] << ", guess: " << guess[i] << ", search: " << (*search)[i] << endl;
+         //qDebug() << "Step: " << step << ", Test-guess(" << i << "): " << test_guess[i] << ", guess: " << guess[i] << ", search: " << (*search)[i]  ;
          calc_model(guess); // reset model to
       }
    }
    if (errno > 0) return(-1.0);
-   //cout << "calling calc_residuals from calc_testParameter...\n";
+   //qDebug() << "calling calc_residuals from calc_testParameter...\n";
    res = calc_residuals();
-   //cout << "res: " << res << endl;
+   //qDebug() << "res: " << res  ;
    return (res);
 }
 void US_Minimize::plot_overlays()
@@ -1253,11 +1258,11 @@ float US_Minimize::calc_residuals()
    for (unsigned int i=0; i<points; i++)
    {
       y_delta[i] = y_raw[i] - y_guess[i];
-      //cout << "y_raw: " << y_raw[i] << ", y_guess: " << y_guess[i] << endl;
+      //qDebug() << "y_raw: " << y_raw[i] << ", y_guess: " << y_guess[i]  ;
       residual += pow((double) y_delta[i], (double) 2.0);
 	  	if (errno != 0)
       {
-         cout << "Floating point exception in the residuals calculation!\n";
+         qDebug() << "Floating point exception in the residuals calculation!\n";
          if (GUI)
          {
             QMessageBox message;
@@ -1278,7 +1283,7 @@ float US_Minimize::calc_residuals()
             pb_overlays->setEnabled(true);
          }
          cleanup();
-         cout << "about to return with -1\n";
+         qDebug() << "about to return with -1\n";
          return (-1);
       }
    }
@@ -1420,9 +1425,9 @@ int US_Minimize::calc_B()
       for (unsigned int j=0; j<points; j++)
       {
          B[i] += jacobian[j][i] * y_delta[j];
-         //         cout << "jac: " << jacobian[j][i] << ", y_delta: " << y_delta[j] << endl;
+         //         qDebug() << "jac: " << jacobian[j][i] << ", y_delta: " << y_delta[j]  ;
       }
-      //      cout << "B["<<i<<"]: " << B[i]<<endl;
+      //      qDebug() << "B["<<i<<"]: " << B[i]<<endl;
    }
    return (-1);
 }
@@ -1447,7 +1452,7 @@ void US_Minimize::endFit()
       pb_report->setEnabled(true);
       pb_residuals->setEnabled(true);
       pb_overlays->setEnabled(true);
-      cout << "EndFit in US_minimize " << endl;
+      qDebug() << "EndFit in US_minimize "  ;
    }
 }
 
