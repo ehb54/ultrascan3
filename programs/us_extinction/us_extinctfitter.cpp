@@ -1,11 +1,11 @@
 #include "us_extinctfitter.h"
-#include <iostream>
+//#include <iostream>
 #if QT_VERSION < 0x050000
 #define setSamples(a,b,c) setData(a,b,c)
 #define setSymbol(a) setSymbol(*a)
 #endif
 
-using namespace std;
+//using namespace std;
 
 US_ExtinctFitter::US_ExtinctFitter(QVector <struct WavelengthScan> *temp_wls_v, double*& temp_guess, unsigned int& temp_order, unsigned int& temp_parameters, QString& temp_projectName, bool *temp_fitting_widget) : US_Minimize(temp_fitting_widget, true)
 {
@@ -167,7 +167,7 @@ int US_ExtinctFitter::calc_model(double *guess_par)
       polynomial += guess_par[(*wls_v).size() + k] * pow((*wls_v)[i].lambda[j], k);
       }
       y_guess[point_counter] = guess_par[i] * polynomial;
-      //cout << "dataset: " << i << ", point: " << j << ", guessed y-value: " << y_guess[point_counter] << endl;
+      //qDebug() << "dataset: " << i << ", point: " << j << ", guessed y-value: " << y_guess[point_counter]  ;
       point_counter++;
       }
       }
@@ -319,7 +319,7 @@ void US_ExtinctFitter::write_report()
 
 void US_ExtinctFitter::plot_overlays()
 {
-  cout << "Starting plot overlay: " << endl;
+  qDebug() << "Starting plot overlay: "  ;
    unsigned int numScans = 0;
 	QVector <QwtPlotCurve*> v_curve_raw, v_curve_fit;
    long unsigned int point_counter = 0;
@@ -359,7 +359,7 @@ void US_ExtinctFitter::plot_overlays()
       s1 = tr("Overlays");
    }
 	
-	cout << "Starting plot overlay 1: " << endl;
+	qDebug() << "Starting plot overlay 1: "  ;
 
    //s2.sprintf((tr("Optical Density")).toLatin1().data());
    s2 = tr("Optical Density");
@@ -381,7 +381,7 @@ void US_ExtinctFitter::plot_overlays()
 		v_all_yplot_raw.push_back(v_yplot_raw);
    }
 
-   cout << "Starting plot overlay 2: " << endl; 
+   qDebug() << "Starting plot overlay 2: "  ; 
 
    //QwtSymbol* symbol = new QwtSymbol(QwtSymbol::Diamond,QBrush(Qt::red),QPen(Qt::red),QSize(5,5));
    
@@ -395,25 +395,25 @@ void US_ExtinctFitter::plot_overlays()
    //symbol->setBrush(Qt::yellow);
    //symbol->setStyle(QwtSymbol::Ellipse);
    
-   cout << "Starting plot overlay 2a: " << endl;
+   qDebug() << "Starting plot overlay 2a: "  ;
    data_plot->detachItems();
    //data_plot->detachItems(QwtPlotItem::Rtti_PlotItem, true);
       
-   cout << "Starting plot overlay 2b: " << endl;
+   qDebug() << "Starting plot overlay 2b: "  ;
 
    data_plot->setTitle(s1);
 
-   cout << "Starting plot overlay 2c: " << endl;
+   qDebug() << "Starting plot overlay 2c: "  ;
 
    data_plot->setAxisTitle(QwtPlot::xBottom, tr("Wavelength (nm)"));
 
-   cout << "Starting plot overlay 2d: " << endl;
+   qDebug() << "Starting plot overlay 2d: "  ;
 
    data_plot->setAxisTitle(QwtPlot::yLeft, s2);
 
-   cout << "Starting plot overlay 3: " << endl;
+   qDebug() << "Starting plot overlay 3: "  ;
 
-   cout << "PlotGroup: " << plotGroup << endl;
+   qDebug() << "PlotGroup: " << plotGroup  ;
 
    if (plotGroup)
    {
@@ -475,7 +475,7 @@ void US_ExtinctFitter::plot_overlays()
 	//v_curve_fit.push_back(c_fit);
       }
    }
-    cout << "Ending plot overlay: " << endl;
+   qDebug() << "Ending plot overlay:";
    //   data_plot->setAxisScale(QwtPlot::xBottom, -xmax/30.0, xmax + xmax/30.0, 0);
    data_plot->replot();
   // data_plot->updatePlot();      //no updatePlot() in new version
@@ -723,5 +723,5 @@ void US_ExtinctFitter::endFit()
    pb_residuals->setEnabled(true);
    pb_overlays->setEnabled(true);
    pb_saveFit->setEnabled(true);
-   cout << "EndFit in US_extinctfitter " << endl;
+   qDebug() << "EndFit in US_extinctfitter "  ;
 }
