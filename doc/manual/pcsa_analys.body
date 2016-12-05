@@ -241,7 +241,7 @@
        <li>
           <b>Plot Model Lines</b> Click on this button to open a dialog showing
           the Model Lines specified (such as
-          <a href="images/pcsa_mlines-sigm1.png">Sigmoid Models</a>). Note that
+          <a href="pcsa_mlines-sigm1.img.html">Sigmoid Models</a>). Note that
           the dialog is automatically opened upon analysis completion. But this
           button can be used to re-display completed model lines if the dialog
           has been closed by the user. The dialogs after analysis include

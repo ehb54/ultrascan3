@@ -30,7 +30,7 @@
              
         <li>
             <b>Select Run ID(s)</b> Click on this button to open a
-            <a href="images/ddist_combine-selrun.png">Run ID Select Dialog</a>
+            <a href="ddist_combine-selrun.img.html">Run ID Select Dialog</a>
             in which one or more run IDs may be selected from which
             distribution data files can be taken.
         </li>

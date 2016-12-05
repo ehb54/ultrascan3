@@ -189,14 +189,14 @@
        <li>
           <b>3-D Plot</b> Open a control window for a 3-dimensional plot of
           the final computed model. See
-          <a href="images/2dsa_3dplot.png">2DSA 3-D Plot Dialog</a> 
+          <a href="2dsa_3dplot.img.html">2DSA 3-D Plot Dialog</a> 
           for an example of a 3-D plot, along with its control dialog.
        </li>
 
        <li>
           <b>Residual Plot</b> Open a plot dialog for a far more detailed set
           of result plots. See
-          <a href="images/2dsa_resplot.png">2DSA Residual Plot Dialog</a> 
+          <a href="2dsa_resplot.img.html">2DSA Residual Plot Dialog</a> 
           for an example of the residual plot dialog.
        </li>
 
