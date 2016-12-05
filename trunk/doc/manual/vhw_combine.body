@@ -45,7 +45,7 @@
              
         <li>
             <b>Load Data</b> Click on this button to open a
-            <a href="images/vhw_combine-selrun.png">RunID Select Dialog</a>
+            <a href="vhw_combine-selrun.img.html">RunID Select Dialog</a>
             in which one or more run IDs may be selected from which
             distribution data files can be taken.
         </li>

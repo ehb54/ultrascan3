@@ -157,13 +157,13 @@
     or sigmoid.</p>
     <ul>
       <li>
-      <a href="images/pcsa_mlines-line1.png">Pre-fit Straight Lines</a>
+      <a href="pcsa_mlines-line1.img.html">Pre-fit Straight Lines</a>
       </li><li>
-      <a href="images/pcsa_mlines-sigm1.png">Pre-fit Sigmoid Curves</a>
+      <a href="pcsa_mlines-sigm1.img.html">Pre-fit Sigmoid Curves</a>
       </li><li>
-      <a href="images/pcsa_mlines-line2.png">Post-fit Straight Lines</a>
+      <a href="pcsa_mlines-line2.img.html">Post-fit Straight Lines</a>
       </li><li>
-      <a href="images/pcsa_mlines-sigm2.png">Post-fit Sigmoid Curves</a>
+      <a href="pcsa_mlines-sigm2.img.html">Post-fit Sigmoid Curves</a>
       </li>
     </ul>
 

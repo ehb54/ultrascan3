@@ -50,7 +50,7 @@
       caller with the current buffer selection.</li>
 
       <li><b>View Spectrum</b> Open a
-      <a href="images/us_buffer_spect.png">Manage Spectrum</a>
+      <a href="us_buffer_spect.img.html">Manage Spectrum</a>
       dialog showing the Wavelength/Extinction profile associated
       with the currently selected buffer.
 
@@ -61,7 +61,7 @@
       further action ("Cancel" or "Accept").</li>
 
       <li><b>Buffer Details</b> Open a
-      <a href="images/buffer_info.png">Buffer Information</a>
+      <a href="buffer_info.img.html">Buffer Information</a>
       dialog showing detailed information about the currently selected
       buffer.</li>
 

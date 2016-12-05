@@ -165,7 +165,7 @@
           <b>Plot 3D</b> Click to open a
           <a href="mwlr_view_pltctrl.html">3D Plot Control Dialog</a>,
           from which a
-          <a href="images/mwlr_view_3dplot.png">3D Plot Window</a>
+          <a href="mwlr_view_3dplot.img.html">3D Plot Window</a>
           may be opened or replotted. Note that if a 3D Plot Window is already
           opened and scan ranges have been changed, this button can be clicked
           to re-plot the 3D Plot for the new first scan.

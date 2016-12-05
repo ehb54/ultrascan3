@@ -209,14 +209,14 @@
        <li>
           <b>3-D Plot</b> Open a control window for a 3-dimensional plot of
           the final computed model. See
-          <a href="images/pcsa_3dplot.png">PCSA 3-D Plot Dialog</a> 
+          <a href="pcsa_3dplot.img.html">PCSA 3-D Plot Dialog</a> 
           for an example of a 3-D plot, along with its control dialog.
        </li>
 
        <li>
           <b>Residual Plot</b> Open a plot dialog for a far more detailed set
           of result plots. See
-          <a href="images/pcsa_resplot.png">PCSA Residual Plot Dialog</a> 
+          <a href="pcsa_resplot.img.html">PCSA Residual Plot Dialog</a> 
           for an example of the residual plot dialog.
        </li>
 

@@ -24,7 +24,7 @@
           <b>(meniscus-RMSD points)</b> The main left-side text box displays
           a list of meniscus-RMSD values from a selected fit output by 2DSA.
           The fit to display is chosen by a File->Load selection in a
-          <a href="images/fit_men-load.png">FitMen Load Dialog</a> that allows
+          <a href="fit_men-load.img.html">FitMen Load Dialog</a> that allows
           navigation to a */results/runID directory and choice of a
           *fitmen.dat file.
        </li>
@@ -67,7 +67,7 @@
        <li>
           <b>Update Edit</b> Click this button to update the associated Edited
           data with the currently selected meniscus value. After that update, a
-          <a href="images/fit_men-editupd.png">Edited File Update Dialog</a>
+          <a href="fit_men-editupd.img.html">Edited File Update Dialog</a>
           appears that also allows models and noises with meniscus values not
           the closest to the selected one to be removed.
        </li>

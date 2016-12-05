@@ -43,7 +43,7 @@
           <b>View</b> Once selections are as desired, click on this button to
           generate the composite report and view it in the configured browser.
           See a
-          <a href="images/reporter-view.png">Sample composite report view.</a>.
+          <a href="reporter-view.img.html">Sample composite report view.</a>.
           A print within the browser can be used to generate hardcopy or a PDF
           version. Component reports and plots will start on page boundaries.
        </li>
@@ -51,20 +51,20 @@
        <li>
           <b>Save</b> Click this button to generate the report, but without
           being immediately taken to a view of it. You will receive a
-          <a href="images/reporter-save.png">Notice of report save.</a>.
+          <a href="reporter-save.img.html">Notice of report save.</a>.
        </li>
 
        <li>
           <b>Load Profile</b> Make component report selections by means of
           a previously saved selection profile. Click this button to
           initiate a
-          <a href="images/reporter-loadprof.png">Profile Load Dialog</a>.
+          <a href="reporter-loadprof.img.html">Profile Load Dialog</a>.
        </li>
 
        <li>
           <b>Save Profile</b> Save component report selections for later
           use by clicking this button to initiate a
-          <a href="images/reporter-saveprof.png">Profile Save Dialog</a>.
+          <a href="reporter-saveprof.img.html">Profile Save Dialog</a>.
           Note that you need only specify the base name for the saved file.
           An "rs_" prefix and ".xml" extension will be automatically added.
        </li>
@@ -89,11 +89,11 @@
     <ul>
        <li>
           <b>Show Details</b> Release on this menu item to see an
-          <a href="images/reporter-details.png">Item Details Window</a>.
+          <a href="reporter-details.img.html">Item Details Window</a>.
        </li>
        <li>
           <b>View Item</b> Release on this menu item to view an
-          <a href="images/reporter-viewitem.png">Item View Window</a>. This is a
+          <a href="reporter-viewitem.img.html">Item View Window</a>. This is a
           way to preview individual items that are potential candidates for
           the composite report.
        </li>

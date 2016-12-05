@@ -50,17 +50,17 @@
       the database or hard disk.</li>
 
       <li><b>Manage Sequence</b> This button brings up a
-      <a href="images/sequence.png">Manage Sequence dialog</a>
+      <a href="sequence.img.html">Manage Sequence dialog</a>
       to enter sequences that define the analyte.</li>
 
       <li><b>Manage Spectrum</b> This button brings up a
-      <a href="images/us_buffer_spect.png">Manage Spectrum dialog</a>
+      <a href="us_buffer_spect.img.html">Manage Spectrum dialog</a>
       to set Wavelength and Extinction pairs. The type of spectrum must
       be specified from the Optics Type drop down list immediately
       below this button.</li>
 
       <li><b>More Info</b> Bring up an
-      <a href="images/analyte_details.png">Analyte Details text dialog</a>
+      <a href="analyte_details.img.html">Analyte Details text dialog</a>
       to list details about the current analyte.</li>
 
       <li><b>Optics Dropdown List</b> Select the type of optics for spectrum

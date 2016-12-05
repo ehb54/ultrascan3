@@ -344,12 +344,12 @@
             <file>images/fit_men-load.png</file>
             <file>images/fit_men-editupd.png</file>
 
-	    <file>us_fds_filemanager.html</file>
-	    <file>images/us_fds_filemanager-0.png</file>
-	    <file>images/us_fds_filemanager-1.png</file>
-	    <file>images/us_fds_filemanager-2.png</file>
-	    <file>images/us_fds_filemanager-3.png</file>
-	    <file>images/us_fds_filemanager-4.png</file>
+            <file>us_fds_filemanager.html</file>
+            <file>images/us_fds_filemanager-0.png</file>
+            <file>images/us_fds_filemanager-1.png</file>
+            <file>images/us_fds_filemanager-2.png</file>
+            <file>images/us_fds_filemanager-3.png</file>
+            <file>images/us_fds_filemanager-4.png</file>
 
             <file>load_auc.html</file>
             <file>images/load_auc.png</file>
@@ -378,6 +378,34 @@
             <file>images/cfa_view-loadraw.png</file>
             <file>images/cfa_view-loadauc.png</file>
 
+            <file>2dsa_3dplot.img.html</file>
+            <file>2dsa_resplot.img.html</file>
+            <file>analyte_details.img.html</file>
+            <file>buffer_info.img.html</file>
+            <file>ddist_combine-selrun.img.html</file>
+            <file>fit_men-editupd.img.html</file>
+            <file>fit_men-load.img.html</file>
+            <file>grid_editor.img.html</file>
+            <file>grid_editor_multi_grids.img.html</file>
+            <file>grid_editor_multi_grids_sed.img.html</file>
+            <file>grid_editor_mw_view.img.html</file>
+            <file>mwlr_view_3dplot.img.html</file>
+            <file>pcsa_3dplot.img.html</file>
+            <file>pcsa_mlines-line1.img.html</file>
+            <file>pcsa_mlines-line2.img.html</file>
+            <file>pcsa_mlines-sigm1.img.html</file>
+            <file>pcsa_mlines-sigm2.img.html</file>
+            <file>pcsa_resplot.img.html</file>
+            <file>reporter-details.img.html</file>
+            <file>reporter-loadprof.img.html</file>
+            <file>reporter-save.img.html</file>
+            <file>reporter-saveprof.img.html</file>
+            <file>reporter-view.img.html</file>
+            <file>reporter-viewitem.img.html</file>
+            <file>sequence.img.html</file>
+            <file>us_buffer_spect.img.html</file>
+            <file>vhw_combine-selrun.img.html</file>
+            <file>vhw_enh_groups.img.html</file>
         </files>
     </filterSection>
 </QtHelpProject> 

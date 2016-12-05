@@ -52,7 +52,7 @@
       Interference, or Flourescence.</li>
 
       <li><b>Manage Spectrum</b> This button brings up a
-      <a href="images/us_buffer_spect.png">Manage Spectrum dialog</a>
+      <a href="us_buffer_spect.img.html">Manage Spectrum dialog</a>
       to set Wavelength and Extinction pairs for the selected optics type.</li>
 
       <li><b>Buffer Description</b> Description set by buffer choice. It is

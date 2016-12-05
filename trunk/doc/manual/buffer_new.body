@@ -63,7 +63,7 @@
       <b>Select Buffer</b> panel with the new buffer selected.</li>
 
       <li><b>Manage Spectrum</b> This button brings up a
-      <a href="images/us_buffer_spect.png">Manage Spectrum</a> dialog
+      <a href="us_buffer_spect.img.html">Manage Spectrum</a> dialog
       to set a Wavelength/Extinction profile.</li>
 
       <li><b>Help</b> Show this documentation.</li>

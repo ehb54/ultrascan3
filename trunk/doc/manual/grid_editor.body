@@ -51,9 +51,9 @@
 
 		<li><b>Sedimentation or Molecular Weight view</b> - these controls are used to switch
 		between views of the defined grid. A rectangular grid may be defined in the 
-		<a href="images/grid_editor.png">sedimentation domain</a>, which looks like 
-		<a href="images/grid_editor_mw_view.png">this</a> when displayed with the 
-		<a href="images/grid_editor_mw_view.png">molecular weight view</a>.
+		<a href="grid_editor.img.html">sedimentation domain</a>, which looks like 
+		<a href="grid_editor_mw_view.img.html">this</a> when displayed with the 
+		<a href="grid_editor_mw_view.img.html">molecular weight view</a>.
 		</li>
 		<p/>
 
@@ -101,11 +101,11 @@
 		out before saving the overall model including each partial grid. By adding multiple grids 
 		together it is possible to define well-defined regions as a basis for the parameter search. For
 		example, if one were to fit a system containg monomers, dimers, and trimers, where 
-		each oligomer is increasingly anisotropic, a grid <a href="images/grid_editor_multi_grids.png">
+		each oligomer is increasingly anisotropic, a grid <a href="grid_editor_multi_grids.img.html">
 		like this one</a> could be defined. It specifies a rectangular molecular weight grid 
 		with increasing anisotropy for each oligomer. An error region should be defined that
 		usually ranges between +/-10 % of the oligomeric size. When transformed to the sedimentation
-		view, the <a href="images/grid_editor_multi_grids_sed.png">looks like this</a>.
+		view, the <a href="grid_editor_multi_grids_sed.img.html">looks like this</a>.
 		</li>
 		<p/>
 
