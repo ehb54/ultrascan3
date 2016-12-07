@@ -4,6 +4,8 @@
 #include "us_extinction.h"
 #include "us_license_t.h"
 #include "us_license.h"
+#include "us_settings.h"
+
 #if QT_VERSION < 0x050000
 #define setSamples(a,b,c) setData(a,b,c)
 #define setSymbol(a) setSymbol(*a)
@@ -168,8 +170,13 @@ void US_Extinction::add_wavelength(void)
    dialog.setNameFilter(tr("Text (*.txt *.csv *.dat *.wa *.dsp)"));
 	dialog.setFileMode(QFileDialog::ExistingFiles);
    dialog.setViewMode(QFileDialog::Detail);
-	dialog.setDirectory("/home/alexsav/ultrascan/data/spectra");
-	if(dialog.exec())
+   //dialog.setDirectory("/home/alexsav/ultrascan/data/spectra");
+   
+   QString work_dir_data  = US_Settings::dataDir();
+   qDebug() << work_dir_data;
+   dialog.setDirectory(work_dir_data);
+
+   if(dialog.exec())
 	{
 		files = dialog.selectedFiles();
 		reading(files);

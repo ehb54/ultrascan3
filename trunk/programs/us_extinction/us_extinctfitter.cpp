@@ -399,6 +399,8 @@ void US_ExtinctFitter::plot_overlays()
    data_plot->detachItems();
    //data_plot->detachItems(QwtPlotItem::Rtti_PlotItem, true);
       
+   us_grid(data_plot);
+   
    qDebug() << "Starting plot overlay 2b: "  ;
 
    data_plot->setTitle(s1);
@@ -567,16 +569,22 @@ void US_ExtinctFitter::plot_residuals()
       xmax = max(xplot[i][points_per_dataset[i] - 1], xmax);
       xmin = min(xplot[i][0], xmin);
    }
-   QwtSymbol* symbol = new QwtSymbol;
+   //QwtSymbol* symbol = new QwtSymbol;
    QPen p_raw, p_zero;
    p_raw.setColor(Qt::green);
    p_raw.setWidth(1);
    p_zero.setColor(Qt::red);
    p_zero.setWidth(2);
-   symbol->setPen(QPen(Qt::blue));
-   symbol->setBrush(QBrush(Qt::yellow));
-   symbol->setStyle(QwtSymbol::Ellipse);
+   //symbol->setPen(QPen(Qt::blue));
+   //symbol->setBrush(QBrush(Qt::yellow));
+   //symbol->setStyle(QwtSymbol::Ellipse);
+
+   qDebug() << "Plot_residuals: Detaching Items..: "  ;
    data_plot->detachItems();
+   qDebug() << "Plot_residuals: DETACHED.. "  ;
+   
+   us_grid(data_plot);
+   
    data_plot->setTitle(s1);
    data_plot->setAxisTitle(QwtPlot::xBottom, tr("Wavelength (nm)"));
    data_plot->setAxisTitle(QwtPlot::yLeft, s2);
@@ -585,13 +593,20 @@ void US_ExtinctFitter::plot_residuals()
    l = 0;
    if (plotGroup)
    {
-      symbol->setSize(8);
+    
       line_x[0] = xmin - 2;
       line_x[1] = xmax + 2;
       for (unsigned int i = firstScan - 1; i< numScans + firstScan - 1; i++)
       {
-			QwtPlotCurve* c;
-         c = us_curve(data_plot, "residuals");
+	
+	QwtSymbol* symbol = new QwtSymbol;
+	symbol->setPen(QPen(Qt::blue));
+	symbol->setBrush(QBrush(Qt::yellow));
+	symbol->setStyle(QwtSymbol::Ellipse);
+	symbol->setSize(8);
+
+	QwtPlotCurve* c;
+	c = us_curve(data_plot, "residuals");
          c->setStyle(QwtPlotCurve::Lines);
          if (i != firstScan - 1)
          {
@@ -619,12 +634,19 @@ void US_ExtinctFitter::plot_residuals()
    }
    else
    {
-      symbol->setSize(5);
-      line_x[0] = xmin - 2;
+
+     
+     line_x[0] = xmin - 2;
       line_x[1] = xmax + 2;
       for (unsigned int i=0; i<datasets; i++)
       {
-			QwtPlotCurve* c;
+	QwtSymbol* symbol = new QwtSymbol;
+	symbol->setPen(QPen(Qt::blue));
+	symbol->setBrush(QBrush(Qt::yellow));
+	symbol->setStyle(QwtSymbol::Ellipse);
+	symbol->setSize(5);
+	
+	QwtPlotCurve* c;
          c = us_curve(data_plot, "residuals");
          c->setStyle(QwtPlotCurve::Lines);
          c->setSamples(xplot[i], yplot_res[i], points_per_dataset[i]);
