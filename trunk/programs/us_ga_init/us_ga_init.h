@@ -89,6 +89,7 @@ class US_GA_Initialize : public US_Widgets
       QPushButton*  pb_ckovrlp;
       QPushButton*  pb_autassb;
       QPushButton*  pb_resetsb;
+      QPushButton*  pb_loadsb;
       QPushButton*  pb_help;
       QPushButton*  pb_close;
       QPushButton*  pb_save;
@@ -159,7 +160,6 @@ class US_GA_Initialize : public US_Widgets
       bool          zoom;
       bool          auto_lim;
       bool          monte_carlo;
-      bool          rbtn_click;
       bool          runsel;
       bool          latest;
       bool          manbuks;
@@ -183,6 +183,7 @@ class US_GA_Initialize : public US_Widgets
       QString       stfxline;
       QString       mfilter;
       QString       editGUID;
+      QString       binfpath;
 
       QStringList   pfilts;
 
@@ -240,13 +241,11 @@ class US_GA_Initialize : public US_Widgets
       void select_x_axis   ( int );
       void select_y_axis   ( int );
       void build_xy_distro ( void );
+      void load_bins       ( void );
       QString anno_title   ( int  );
       QwtLinearColorMap* ColorMapCopy( QwtLinearColorMap* );
 
       void help     ( void )
       { showHelp.show_help( "ga_initialize.html" ); };
-
-   protected:
-      bool eventFilter( QObject*, QEvent* );
 };
 #endif

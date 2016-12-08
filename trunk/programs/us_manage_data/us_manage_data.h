@@ -132,9 +132,5 @@ class US_ManageData : public US_Widgets
 
       void help     ( void )
       { showHelp.show_help( "manage_data.html" ); };
-
-      //quint32 crc32( quint32, const unsigned char*, int );
-   protected:
-      bool eventFilter( QObject*, QEvent* );
 };
 #endif

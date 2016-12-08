@@ -698,6 +698,57 @@ int US_SoluteData::saveGAdata( QString& fname, int xtype, int ytype,
    return rc;
 }
 
+// Read bucket information from file for use by GA
+int US_SoluteData::loadGAdata( QString& fname, int* xtype, int* ytype,
+      int* ztype, double* fixval )
+{
+   int rc       = 0;
+   int nbuk     = allbucks.size();
+   int xt, yt, zt;
+   double fxv   = 0.0;
+   QString line;
+   bucket  buk;
+
+   QFile filei( fname );
+
+   if ( filei.open( QIODevice::ReadOnly | QIODevice::Text ) )
+   {
+      QTextStream ts( &filei );
+
+      // Read the header line and get extents
+      line          = ts.readLine();
+      nbuk          = line.section( " ", 0, 0 ).toInt();
+      xt            = line.section( " ", 1, 1 ).toInt();
+      yt            = line.section( " ", 2, 2 ).toInt();
+      zt            = line.section( " ", 3, 3 ).toInt();
+      fxv           = line.section( " ", 4, 4 ).toDouble();
+      int kbuk      = 0;
+      allbucks.clear();
+
+      // Loop to read and save each bucket line
+      while ( ! ( line = ts.readLine() ).isEmpty() )
+      {
+         buk.x_min     = line.section( ",", 0, 0 ).simplified().toDouble();
+         buk.x_max     = line.section( ",", 1, 1 ).simplified().toDouble();
+         buk.y_min     = line.section( ",", 2, 2 ).simplified().toDouble();
+         buk.y_max     = line.section( ",", 3, 3 ).simplified().toDouble();
+
+         allbucks << buk;
+         kbuk++;
+      }
+
+      if ( xtype  != NULL )   *xtype  = xt;
+      if ( ytype  != NULL )   *ytype  = yt;
+      if ( ztype  != NULL )   *ztype  = zt;
+      if ( fixval != NULL )   *fixval = fxv;
+
+      filei.close();
+   }
+   else
+      rc    = 1;
+
+   return rc;
+}
 
 // build the data lists for Monte Carlo analysis
 int US_SoluteData::buildDataMC()

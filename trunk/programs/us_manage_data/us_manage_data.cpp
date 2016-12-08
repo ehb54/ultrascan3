@@ -239,7 +239,6 @@ DbgLv(1) << "te_status size" << te_status->size();
    statLayout->addWidget( lb_status, row,   0, 1, 8 );
 
    // set up data tree; populate with sample data
-   rbtn_click        = false;
    tw_recs           = new QTreeWidget();
    tw_recs->setPalette( te_status->palette() );
    treeLayout->addWidget( tw_recs );
@@ -254,10 +253,9 @@ DbgLv(1) << "te_status size" << te_status->size();
                         US_GuiSettings::fontSize() - 1 ) );
    tw_recs->setObjectName( QString( "tree-widget" ) );
    tw_recs->setAutoFillBackground( true );
-   tw_recs->installEventFilter( this );
    tw_recs->setSelectionMode( QAbstractItemView::ExtendedSelection );
 
-   connect( tw_recs, SIGNAL( itemClicked( QTreeWidgetItem*, int ) ),
+   connect( tw_recs, SIGNAL( itemPressed( QTreeWidgetItem*, int ) ),
             this,    SLOT(   clickedItem( QTreeWidgetItem* ) ) );
 
    reset_hsbuttons( false, true, true, true );  // hs button labels,tooltips
@@ -339,22 +337,6 @@ void US_ManageData::reset( void )
    cb_triple->clear();
    cb_triple->addItem ( "ALL" );
 
-}
-
-// filter events to catch right-mouse-button-click on tree widget
-bool US_ManageData::eventFilter( QObject *obj, QEvent *e )
-{
-   if ( obj->objectName() == "tree-widget"  &&
-        e->type() == QEvent::ContextMenu )
-   {  // catch tree row right-mouse click
-      rbtn_click = true;
-      return false;
-   }
-
-   else
-   {  // pass all others for normal handling
-      return US_Widgets::eventFilter( obj, e );
-   }
 }
 
 // toggle edits between hide/show
@@ -547,13 +529,12 @@ void US_ManageData::assign_investigator( int invID )
 // Handle a right-mouse click of a row cell
 void US_ManageData::clickedItem( QTreeWidgetItem* item )
 {
-//DbgLv(2) << "TABLE ITEM CLICKED rbtn_click" << rbtn_click;
+//DbgLv(2) << "TABLE ITEM CLICKED";
 
-   if ( rbtn_click )
+   if ( QApplication::mouseButtons() == Qt::RightButton )
    {  // only bring up context menu if right-mouse-button was clicked
       da_tree->row_context_menu( item );
    }
-   rbtn_click        = false;
 }
 
 // open a dialog and display data tree help
