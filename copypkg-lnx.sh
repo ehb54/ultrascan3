@@ -102,6 +102,7 @@ libQt5Xml.so
 "
 if [ ${QTVER} = "4" ];then
   QTLIBS=${QTLIBS4}
+  SREV="-s${SREV}"
 else
   QTLIBS=${QTLIBS5}
   SREV=""

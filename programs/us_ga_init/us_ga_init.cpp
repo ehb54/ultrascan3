@@ -2395,6 +2395,14 @@ DbgLv(1) << "gain:  ld_b : fname attr_x attr_y attr_z"
 
    soludata->sortBuckets();
    resetPlotAndList( hlx );
+
+   is_saved       = false;
+   nibuks         = soludata->bucketsCount();
+   pb_save   ->setEnabled( attr_x == ATTR_V  ||
+                           attr_y == ATTR_V  ||
+                           attr_z == ATTR_V );
+   pb_view   ->setEnabled( true );
+   pb_ckovrlp->setEnabled( nibuks > 1 );
 }
 
 // Make a ColorMap copy and return a pointer to the new ColorMap
