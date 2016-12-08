@@ -130,7 +130,6 @@ US_Reporter::US_Reporter() : US_Widgets()
    pb_save->setEnabled( false );
 
    // set up data tree; populate with sample data
-   rbtn_click        = false;
    change_tree       = true;
    tw_recs           = new QTreeWidget();
    QPalette tpal     = pb_help->palette();
@@ -149,7 +148,7 @@ US_Reporter::US_Reporter() : US_Widgets()
    tw_recs->setAutoFillBackground( true );
    tw_recs->installEventFilter   ( this );
 
-   connect( tw_recs, SIGNAL( itemClicked( QTreeWidgetItem*, int ) ),
+   connect( tw_recs, SIGNAL( itemPressed( QTreeWidgetItem*, int ) ),
             this,    SLOT(   clickedItem( QTreeWidgetItem*      ) ) );
    connect( tw_recs, SIGNAL( itemChanged( QTreeWidgetItem*, int ) ),
             this,    SLOT(   changedItem( QTreeWidgetItem*, int ) ) );
@@ -169,32 +168,14 @@ US_Reporter::US_Reporter() : US_Widgets()
    changed = false;
 }
 
-// Filter events to catch right-mouse-button-click on tree widget
-bool US_Reporter::eventFilter( QObject *obj, QEvent *e )
-{
-   if ( obj->objectName() == "tree-widget"  &&
-        e->type() == QEvent::ContextMenu )
-   {  // catch tree row right-mouse click
-      rbtn_click = true;
-DbgLv(1) << "eventFilter   rbtn_click" << rbtn_click;
-      return false;
-   }
-
-   else
-   {  // pass all others for normal handling
-      return US_Widgets::eventFilter( obj, e );
-   }
-}
-
 // Bring up a context menu when an item click is right-mouse-button
 void US_Reporter::clickedItem( QTreeWidgetItem* item )
 {
 DbgLv(1) << "clickedItem rbtn_click" << rbtn_click;
-   if ( rbtn_click )
+   if ( QApplication::mouseButtons() == Qt::RightButton )
    {
       row_context( item );
    }
-   rbtn_click = false;
 }
 
 // Propagate checked states when one item has its state changed

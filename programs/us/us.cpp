@@ -767,6 +767,9 @@ qDebug() << "US:NOTE: No DB notices" << db.lastError()
    typeMap[ "info" ] = tr( "Information" );
    typeMap[ "warn" ] = tr( "Warning"     );
    typeMap[ "crit" ] = tr( "Critical"    );
+   QString srev     = US_Version  + "."
+                    + QString( REVISION ).section( ":", 1, 1 ).simplified();
+qDebug() << "US:NOTE: srev" << srev;
    int    nnotice   = 0;
    int    nn_info   = 0;
    int    nn_warn   = 0;
@@ -781,6 +784,9 @@ qDebug() << "US:NOTE: No DB notices" << db.lastError()
       QString mrev     = db.value( 1 ).toString();
       QString msg      = db.value( 2 ).toString();
       QDateTime time_m = db.value( 3 ).toDateTime();
+qDebug() << "US:NOTE: mrev(1)" << mrev;
+      mrev             = srev.left( 3 ) + mrev.mid( 3 );
+qDebug() << "US:NOTE: mrev(2)" << mrev;
 
       if ( type == "info" )       nn_info++;
       else if ( type == "warn" )  nn_warn++;
@@ -806,8 +812,6 @@ qDebug() << "US:NOTE: No DB notices" << db.lastError()
    }
 
    // If current revision is at or beyond max in records, skip pop-up
-   QString srev     = US_Version  + "."
-                    + QString( REVISION ).section( ":", 1, 1 ).simplified();
    int    s_rev     = QString( srev ).replace( ".", "" ).toInt();
 
 qDebug() << "s_rev i_rev" << s_rev << i_rev << "srev" << srev;

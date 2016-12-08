@@ -105,6 +105,8 @@ class US_SoluteData : public QObject
     int      removeBucketAt( int );
     int      autoCalcBins( int, qreal, qreal );
     int      saveGAdata  ( QString&, int = 0, int = 1, int = 3, double = 0.0 );
+    int      loadGAdata  ( QString&, int* = NULL, int* = NULL, int* = NULL,
+                           double* = NULL );
     int      buildDataMC ( void );
     int      reportDataMC( QString&, int );
     void     outputStats( QTextStream&, QList< qreal >&, QList< qreal >&,

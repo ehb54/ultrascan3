@@ -163,8 +163,8 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
 
    ct_plymin     = us_counter( 3, 0.5, 50.0, 0.0 );
    ct_plymin->setSingleStep( 1 );
-   connect( ct_plymin, SIGNAL( valueChanged( double ) ),
-            this,        SLOT( update_plymin( double ) ) );
+   connect( ct_plymin, SIGNAL( valueChanged ( double ) ),
+            this,      SLOT(   update_plymin( double ) ) );
    
    lb_plymax     = us_label( tr( "Plot Limit f/f0 Max:" ) );
    lb_plymax->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
@@ -172,12 +172,11 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
    ct_plymax     = us_counter( 3, 1.0, 50.0, 1.0 );
    ct_plymax->setSingleStep( 1 );
    ct_plymax->setValue( 1.34567e+01 );
-   connect( ct_plymax, SIGNAL( valueChanged( double ) ),
-         this,         SLOT( update_plymax( double ) ) );
+   connect( ct_plymax, SIGNAL( valueChanged ( double ) ),
+            this,      SLOT(   update_plymax( double ) ) );
 
    lw_sbin_data = us_listwidget( );
-   lw_sbin_data->installEventFilter( this );
-   connect( lw_sbin_data, SIGNAL( clicked(       const QModelIndex& ) ),
+   connect( lw_sbin_data, SIGNAL( pressed(       const QModelIndex& ) ),
             this,         SLOT(   sclick_sbdata( const QModelIndex& ) ) );
    connect( lw_sbin_data, SIGNAL( doubleClicked( const QModelIndex& ) ),
             this,         SLOT(   dclick_sbdata( const QModelIndex& ) ) );
@@ -242,14 +241,12 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
             this,   SLOT( update_disk_db( bool ) ) );
 
    pb_prefilt    = us_pushbutton( tr( "Select PreFilter" ) );
-   pb_prefilt->setEnabled( true );
    connect( pb_prefilt, SIGNAL( clicked() ),
             this,       SLOT(   select_prefilt() ) );
 
    le_prefilt    = us_lineedit  ( "", -1, true );
 
    pb_lddistr    = us_pushbutton( tr( "Load Distribution" ) );
-   pb_lddistr->setEnabled( true );
    connect( pb_lddistr, SIGNAL( clicked() ),
             this,       SLOT(   load_distro() ) );
 
@@ -258,7 +255,6 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
             this,       SLOT(   select_plot1d() ) );
 
    pb_ldcolor    = us_pushbutton( tr( "Load Color File" ) );
-   pb_ldcolor->setEnabled( true );
    connect( pb_ldcolor, SIGNAL( clicked() ),
             this,       SLOT(   load_color() ) );
 
@@ -266,8 +262,7 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
    connect( ck_2dplot, SIGNAL( clicked() ),
             this,       SLOT(  select_plot2d() ) );
 
-   pb_refresh    = us_pushbutton( tr( "Refresh Plot" ) );
-   pb_refresh->setEnabled(  false );
+   pb_refresh    = us_pushbutton( tr( "Refresh Plot" ), false );
    connect( pb_refresh, SIGNAL( clicked() ),
             this,       SLOT(   replot_data() ) );
 
@@ -275,48 +270,46 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
    connect( ck_3dplot, SIGNAL( clicked() ),
             this,       SLOT(  select_plot3d() ) );
 
-   pb_mandrsb    = us_pushbutton( tr( "Manually Draw Bins" ) );
-   pb_mandrsb->setEnabled( false );
+   pb_mandrsb    = us_pushbutton( tr( "Manually Draw Bins" ),
+                                  false );
    connect( pb_mandrsb, SIGNAL( clicked() ),
             this,       SLOT(   manDrawSb() ) );
 
-   pb_ckovrlp    = us_pushbutton( tr( "Check for Bin Overlaps / Sort" ) );
-   pb_ckovrlp->setEnabled( false );
+   pb_ckovrlp    = us_pushbutton( tr( "Check for Bin Overlaps / Sort" ),
+                                  false );
    connect( pb_ckovrlp, SIGNAL( clicked()       ),
             this,       SLOT(   checkOverlaps() ) );
 
-   pb_autassb    = us_pushbutton( tr( "Autoassign Solute Bins" ) );
-   pb_autassb->setEnabled( false );
+   pb_autassb    = us_pushbutton( tr( "Autoassign Solute Bins" ),
+                                  false );
    connect( pb_autassb, SIGNAL( clicked() ),
             this,       SLOT(   autoAssignSb() ) );
 
-   pb_resetsb    = us_pushbutton( tr( "Reset Solute Bins" ) );
-   pb_resetsb->setEnabled( false );
+   pb_resetsb    = us_pushbutton( tr( "Reset Solute Bins" ), false );
    connect( pb_resetsb, SIGNAL( clicked() ),
             this,       SLOT( resetSb() ) );
 
-   pb_reset      = us_pushbutton( tr( "Reset" ) );
-   pb_reset->setEnabled( false );
+   pb_reset      = us_pushbutton( tr( "Reset" ), false );
    connect( pb_reset,   SIGNAL( clicked() ),
             this,       SLOT(   reset() ) );
 
-   pb_view       = us_pushbutton( tr( "View Statistics" ) );
-   pb_view ->setEnabled( false );
+   pb_view       = us_pushbutton( tr( "View Statistics" ), false );
    connect( pb_view,    SIGNAL( clicked() ),
             this,       SLOT(   view()  ) );
 
-   pb_save       = us_pushbutton( tr( "Save" ) );
-   pb_save->setEnabled( false );
+   pb_save       = us_pushbutton( tr( "Save" ), false );
    connect( pb_save,    SIGNAL( clicked() ),
             this,       SLOT(   save() ) );
 
+   pb_loadsb     = us_pushbutton( tr( "Load Solute Bins" ), false );
+   connect( pb_loadsb,  SIGNAL( clicked()   ),
+            this,       SLOT(   load_bins() ) );
+
    pb_help       = us_pushbutton( tr( "Help" ) );
-   pb_help->setEnabled( true );
    connect( pb_help,    SIGNAL( clicked() ),
             this,       SLOT(   help() ) );
 
    pb_close      = us_pushbutton( tr( "Close" ) );
-   pb_close->setEnabled( true );
    connect( pb_close,   SIGNAL( clicked() ),
             this,       SLOT(   close() ) );
 
@@ -387,8 +380,9 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
    spec->addWidget( pb_ckovrlp,   s_row++, 4, 1, 4 );
    spec->addWidget( pb_autassb,   s_row,   0, 1, 4 );
    spec->addWidget( pb_resetsb,   s_row++, 4, 1, 4 );
-   spec->addWidget( pb_reset,     s_row,   0, 1, 4 );
-   spec->addWidget( pb_save,      s_row++, 4, 1, 4 );
+   spec->addWidget( pb_loadsb,    s_row,   0, 1, 4 );
+   spec->addWidget( pb_reset,     s_row,   4, 1, 2 );
+   spec->addWidget( pb_save,      s_row++, 6, 1, 2 );
    spec->addWidget( pb_view,      s_row,   0, 1, 4 );
    spec->addWidget( pb_help,      s_row,   4, 1, 2 );
    spec->addWidget( pb_close,     s_row++, 6, 1, 2 );
@@ -447,12 +441,12 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
    attr_x     = 0;          // default X type: s
    attr_y     = 1;          // default Y type: f/f0
    attr_z     = 3;          // default Z (fixed) type:  vbar
-   rbtn_click = false;      // default right-button clicked
    mfilter    = "";         // default model list filter
    runsel     = true;       // default prefilter type
    latest     = true;       // default edit prefilter type
    is_saved   = false;      // files have been saved
    pfilts.clear();          // default prefilter edits list
+   binfpath   = US_Settings::resultDir();
 
    reset();
 }
@@ -1533,6 +1527,7 @@ for ( int jj=0;jj<sk_distro.size();jj++ ) {
    ct_hybuck->setEnabled(  true );
    pb_refresh->setEnabled( true );
    pb_mandrsb->setEnabled( plot_dim != 1 );
+   pb_loadsb ->setEnabled( true );
 }
 
 // load the color map from a file
@@ -1942,13 +1937,14 @@ void US_GA_Initialize::sclick_sbdata( const QModelIndex& mx )
 {
    int sx      = mx.row();
    bool global = monte_carlo || manbuks;
+   bool rtbtn  = ( QApplication::mouseButtons() == Qt::RightButton );
+DbgLv(1) << "gain: sclick_sbd: sx" << sx << "rtbtn" << rtbtn;
 
    highlight_solute( sx );
    data_plot->replot();
 
-   if ( rbtn_click )
-   {
-      rbtn_click   = false;
+   if ( rtbtn )
+   {  // Handle right-mouse-button click:  delete bin
       lw_sbin_data->disconnect();
       int binx    = sx + 1;
       QMessageBox msgBox;
@@ -1962,7 +1958,7 @@ void US_GA_Initialize::sclick_sbdata( const QModelIndex& mx )
       {
          removeSoluteBin( sx );
       }
-      connect( lw_sbin_data, SIGNAL( clicked(       const QModelIndex& ) ),
+      connect( lw_sbin_data, SIGNAL( pressed(       const QModelIndex& ) ),
                this,         SLOT(   sclick_sbdata( const QModelIndex& ) ) );
       connect( lw_sbin_data, SIGNAL( doubleClicked( const QModelIndex& ) ),
                this,         SLOT(   dclick_sbdata( const QModelIndex& ) ) );
@@ -2023,7 +2019,6 @@ void US_GA_Initialize::dclick_sbdata( const QModelIndex& mx )
    bc1         = drawBucketRect( sx, pt1, pt2 );  // draw a new rectangle
 
    pc1         = bc1;              // save previous bucket curve
-   rbtn_click  = false;
 
    data_plot->replot();
 
@@ -2100,21 +2095,6 @@ void US_GA_Initialize::erase_buckets( )
    return;
 }
 
-// filter events to catch right-mouse-button-click on list widget
-bool US_GA_Initialize::eventFilter( QObject *obj, QEvent *e )
-{
-   if ( obj == lw_sbin_data  &&
-        e->type() == QEvent::ContextMenu )
-   {
-      rbtn_click = true;
-      return false;
-   }
-   else
-   {
-      return US_Widgets::eventFilter( obj, e );
-   }
-}
-
 // Remove a solute bin from data, plot, and list
 void US_GA_Initialize::removeSoluteBin( int sx )
 {
@@ -2145,6 +2125,7 @@ DbgLv(1) << "rPAL:kibuks nibuks" << kibuks << nibuks;
       bc1->attach( data_plot );
 
       lw_sbin_data->addItem( soludata->bucketLine( jj ) );
+DbgLv(1) << "rPAL:  " << soludata->bucketLine(jj);
    }
 
    // Highlight a specified next bucket
@@ -2152,10 +2133,13 @@ DbgLv(1) << "rPAL:kibuks nibuks" << kibuks << nibuks;
 DbgLv(1) << "rPAL: hlx" << hlx;
    if ( hlx >= 0 )
    {
+DbgLv(1) << "rPAL:  set-row" << hlx << nibuks << lw_sbin_data->count();
       lw_sbin_data->setCurrentRow( hlx );
+DbgLv(1) << "rPAL:  highlight sol";
       highlight_solute( hlx );
    }
 
+DbgLv(1) << "rPAL:  replot sol";
    data_plot->replot();
    qApp->processEvents();
 
@@ -2383,6 +2367,34 @@ QString US_GA_Initialize::anno_title( int pltndx )
       a_title  = tr( "Frictional Coefficient" );
 
    return a_title;
+}
+
+// Load bins from a saved gadistro file
+void US_GA_Initialize::load_bins( void )
+{
+   int hlx        = 0;
+   pc1            = NULL;
+DbgLv(1) << "gain: load_bins()";
+
+   // Get a distro file
+   QString filter = tr( "Bin GaDistro files (*gadistro.dat);;" )
+         + tr( "Any DAT files (*.dat);;" )
+         + tr( "Any files (*)" );
+   QString fname  = QFileDialog::getOpenFileName( this,
+      tr( "Load Solute Bin (GaDistro) File" ),
+      binfpath, filter, 0, 0 );
+
+   if ( fname.isEmpty() )
+      return;
+
+   // Load the solute bins and plot them
+   binfpath       = QString( fname ).section( "/", 0, -2 );
+   soludata->loadGAdata( fname, &attr_x, &attr_y, &attr_z );
+DbgLv(1) << "gain:  ld_b : fname attr_x attr_y attr_z"
+ << fname << attr_x << attr_y << attr_z;
+
+   soludata->sortBuckets();
+   resetPlotAndList( hlx );
 }
 
 // Make a ColorMap copy and return a pointer to the new ColorMap

@@ -123,8 +123,5 @@ class US_Reporter : public US_Widgets
 
       void help          ( void )
       { showHelp.show_help( "reporter.html" ); };
-
-   protected:
-      bool eventFilter( QObject*, QEvent* );
 };
 #endif
