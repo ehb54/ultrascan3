@@ -13,7 +13,7 @@ using namespace Qwt3D;
 //using namespace std;
 
 // constructor:  3-d plot mainwindow widget
-US_Plot3Dxyz::US_Plot3Dxyz( QWidget* p = 0, QVector< QVector3D >* d = 0 )
+US_Plot3Dxyz::US_Plot3Dxyz( QWidget* p, QVector< QVector3D >* d )
    : QMainWindow( p, Qt::Dialog )
 {
    xyzdat    = d;

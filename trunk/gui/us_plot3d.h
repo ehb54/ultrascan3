@@ -26,7 +26,7 @@ class US_GUI_EXTERN US_Plot3D : public QMainWindow
       //! \brief Contructor for surface plot class
       //! \param p  A pointer to the parent widget of this one
       //! \param m  A pointer to the model whose data is to be plotted
-      US_Plot3D( QWidget*, US_Model* );
+      US_Plot3D( QWidget* = NULL, US_Model* = NULL );
 
       //! \brief Public function to set 3 coordinate type flags
       //! \param tx  The type flag for X (1=MW, 2=s, ...)

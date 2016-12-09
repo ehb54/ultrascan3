@@ -9,10 +9,9 @@
 #include "us_colorgradIO.h"
 
 using namespace Qwt3D;
-//using namespace std;
 
 // constructor:  3-d plot mainwindow widget
-US_Plot3D::US_Plot3D( QWidget* p = 0, US_Model* m = 0 )
+US_Plot3D::US_Plot3D( QWidget* p, US_Model* m )
    : QMainWindow( p, Qt::Dialog )
 {
    model     = m;
@@ -1452,11 +1451,18 @@ void US_Plot3D::pick_data_co()
       tr( "Load Color Map File" ),
       US_Settings::etcDir(), filter, 0, 0 );
 #else
+#if QT_VERSION < 0x050000
    QFileDialog fd( this, tr( "Load Color Map File" ) );
    fd.selectFile( US_Settings::etcDir() + "/myFile.txt" );
+   //fd.selectFile( US_Settings::etcDir() );
    fd.setFilter ( filter );
    fd.setOption ( QFileDialog::DontUseNativeDialog );
    QString mapfname = fd.getOpenFileName();
+#else
+   QString mapfname = QFileDialog::getOpenFileName( this,
+      tr( "Load Color Map File" ),
+      US_Settings::etcDir(), filter, 0, 0 );
+#endif
 #endif
 
    if ( mapfname.isEmpty() )

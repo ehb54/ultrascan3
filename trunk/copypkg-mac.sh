@@ -3,9 +3,9 @@
 
 ME=`whoami`
 RSYNC="rsync -av --exclude=.svn"
-SRCDIR=~/us3/ultrascan3
+SRCDIR=$us3
 SOMOBASE=~/us3/us3_somo
-PKGDIR=~/us3/pkg
+PKGDIR=`(cd $us3/../pkg;pwd)`
 PDIRS=""
 SYSTYPE=`uname -s`
 
@@ -48,15 +48,19 @@ DDIR=${PKGDIR}/somo
 echo "${RSYNC} ${SDIR} ${DDIR}"
 ${RSYNC} ${SDIR} ${DDIR}
 # Copy somo doc
-SDIR=${SOMOBASE}/doc
-echo "${RSYNC} ${SDIR} ${DDIR}"
-${RSYNC} ${SDIR} ${DDIR}
+##SDIR=${SOMOBASE}/doc
+##echo "${RSYNC} ${SDIR} ${DDIR}"
+##${RSYNC} ${SDIR} ${DDIR}
 /bin/rm -rf ${PKGDIR}/somo/doc/manual/attic
 
 SDIR=${SRCDIR}/Frameworks
 DDIR=${PKGDIR}
 echo "${RSYNC} ${SDIR} ${DDIR}"
 ${RSYNC} ${SDIR} ${DDIR}
+
+FRLIST=`(cd ${SRCDIR}/Frameworks;ls|grep framework)`
+cd ${PKGDIR}/ultrascan3/lib
+for F in ${FRLIST}; do ln -s ../Frameworks/$F .;done
 
 cd ${PKGDIR}
 /bin/rm -rf ultrascan3/somo/develop ultrascan3/somo/*.pl

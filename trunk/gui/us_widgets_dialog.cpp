@@ -281,7 +281,11 @@ QwtCounter* US_WidgetsDialog::us_counter( int buttons, double low, double high,
   QwtCounter* counter = new QwtCounter;
 #ifdef Q_OS_MAC
   QList< QObject* > children = counter->children();
+#if QT_VERSION < 0x050000
   QStyle *btnstyle = new QPlastiqueStyle();
+#else
+  QStyle *btnstyle = QApplication::setStyle( "fusion" );
+#endif
 
   for ( int jj = 0; jj < children.size(); jj++ )
   {

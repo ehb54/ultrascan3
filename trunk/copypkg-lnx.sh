@@ -3,7 +3,6 @@
 
 SRCDIR=$us3
 HOMEQ=`cd $SRCDIR/../;pwd`
-SRCSOMO=$HOME/us3_somo
 DSTDIR=$HOMEQ/us3pkg
 SOMOBASE=$HOME/us3_somo
 SOMORHDR=${SOMOBASE}/develop/include/us_revision.h

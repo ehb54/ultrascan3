@@ -35,6 +35,7 @@ bool US_XpnData::connect_data( QString& adbname,
    QString dbpasw( "auc_admin" );
 
    dbxpn           = QSqlDatabase::addDatabase( "QPSQL", "XpnData" );
+DbgLv(1) << "XpDa:scn: drivers" << dbxpn.drivers();
    dbxpn.setDatabaseName( "XpnData" );
    dbxpn.setHostName    ( dbhost );
    dbxpn.setPort        ( dbport );

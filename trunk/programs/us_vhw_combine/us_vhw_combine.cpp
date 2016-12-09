@@ -530,8 +530,8 @@ void US_vHW_Combine::plot_distr( DistrDesc ddesc, QString distrID )
    QString ecID = distrID + tr( " (diff.)" );
    QwtPlotCurve* dcurve;
    QwtPlotCurve* ecurve;
-   QPen    dlpen( QPen( Qt::yellow ) );
-   QPen    elpen( QPen( QBrush( ddesc.color ), 3.0 ) );
+   QPen    dlpen( Qt::yellow );
+   QPen    elpen( QBrush( ddesc.color ), 3.0 );
 
    if ( dplot  &&  !dconc )
    {  // Build curves for distribution plot

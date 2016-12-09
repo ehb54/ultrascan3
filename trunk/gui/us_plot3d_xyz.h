@@ -28,7 +28,7 @@ class US_GUI_EXTERN US_Plot3Dxyz : public QMainWindow
       //! \brief Contructor for surface plot class
       //! \param p  A pointer to the parent widget of this one
       //! \param d  A pointer to a vector of x,y,z data to be plotted
-      US_Plot3Dxyz( QWidget*, QVector< QVector3D >* );
+      US_Plot3Dxyz( QWidget* = NULL, QVector< QVector3D >* = NULL );
 
       //! \brief Public function to set plot titles
       //! \param wndt  Window title
