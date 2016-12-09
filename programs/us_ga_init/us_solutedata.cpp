@@ -859,7 +859,13 @@ int US_SoluteData::reportDataMC( QString& fname, int mc_iters )
          int ksol = bcomp.size();
          vsiz     = (double)ksol;
 
-         if ( ksol < 3 )
+         if ( ksol < 1 )
+         {  // Summary print for a bin with no solutes
+            ts << tr( "This solute bin has no solute points at all, "
+                      "\nso no statistics are available.\n" );
+         }
+
+         else if ( ksol < 3 )
          {  // Summary prints for a bin that has only a point or two
             ts << tr( "This solute bin does not have sufficient points to"
                       "\ncalculate meaningful statistics.\n" );
