@@ -13,7 +13,7 @@
 #endif
 
 // constructor:  residuals plot widget
-US_ResidPlotFem::US_ResidPlotFem( QWidget* parent = 0 )
+US_ResidPlotFem::US_ResidPlotFem( QWidget* parent )
    : US_WidgetsDialog( 0, 0 )
 {
    // lay out the GUI

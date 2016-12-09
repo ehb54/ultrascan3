@@ -13,7 +13,7 @@
 #include <qwt_legend.h>
 
 // constructor:  residuals plot widget
-US_ResidPlot2D::US_ResidPlot2D( QWidget* parent = 0 )
+US_ResidPlot2D::US_ResidPlot2D( QWidget* parent )
    : US_WidgetsDialog( 0, 0 )
 {
    // lay out the GUI

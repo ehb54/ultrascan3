@@ -7,18 +7,19 @@ if [ -z "${BDIR}" -o "${BDIR}" = "." ]; then
   BDIR=${CDIR}
 fi
 BDIR=`echo ${BDIR} | sed -e 's@/bin$@@'`
-BDIR=~/us3/ultrascan3
-#		work from the ~/ultrascan3/lib directory
+
+#		work from the ~/us3_somo/lib directory
 cd ${BDIR}/lib
+LIBQWT=`ls libqwt.*.*.*.dylib`
 
 LIBS="utils gui"
 FILES="\
- libqwt.5.2.3.dylib \
- libqwtplot3d-qt4.0.2.7.dylib \
+ libus_somo.10.0.0.dylib \
  libus_gui.10.0.0.dylib \
  libus_utils.10.0.0.dylib \
+ ${LIBQWT} \
+ libqwtplot3d.0.2.7.dylib \
 "
-
  
 #		fix each of the us3 libraries
 for FILE in ${FILES} ; do
@@ -31,7 +32,7 @@ for FILE in ${FILES} ; do
   ##  | grep -v ${FILE} \
   ##  | awk '{print $1}'`
   LIBL=`otool -L ${FILE} \
-    | egrep '_utils|_gui|qwt|qwtplot3d-qt4|mysql' \
+    | egrep '_utils|_gui|qwt|qwtplot3d|mysql' \
     | grep -v executable \
     | grep -v ${FILE} \
     | grep -v ${SHORTF} \

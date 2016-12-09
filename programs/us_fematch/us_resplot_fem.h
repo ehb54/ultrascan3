@@ -21,7 +21,7 @@ class US_ResidPlotFem : public US_WidgetsDialog
 
    public:
       //! \param parent A pointer to the parent widget of this one
-      US_ResidPlotFem( QWidget* );
+      US_ResidPlotFem( QWidget* = NULL );
 
       //! \brief Force a specific plot in the lower plot
       //! \param plotf Flag plot to force: 1,2 == ti_noise,ri_noise

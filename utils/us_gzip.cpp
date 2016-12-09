@@ -19,7 +19,7 @@
 #include <time.h>
 #include <fcntl.h>
 
-#ifdef Q_OS_LINUX
+#ifndef Q_OS_WIN
 #include <unistd.h>
 #endif
 

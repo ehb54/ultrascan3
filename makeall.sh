@@ -33,6 +33,15 @@ if [ `uname -m|grep -ci "x86_64"` -ne 0 ]; then
   ISL64=1
 fi
 
+DOMAN=1
+DODOX=1
+if [ -z "`which tpage`" ]; then
+  DOMAN=0
+fi
+if [ -z "`which doxygen`" ]; then
+  DODOX=0
+fi
+
 DIR=$(pwd)
 rm -f build.log
 NBERR=0
@@ -50,7 +59,6 @@ do
     qmake *.pro
   else
     qmake *.pro
-##    qmake -spec /usr/local/Qt4.7/mkspecs/macx-g++ *.pro
     if [ "$d" = "gui" ]; then
       ${FIXMAC}
     fi
@@ -65,7 +73,7 @@ do
   popd
 done
 
-if [ $ISWIN -eq 0 -a $ISL64 -eq 0 ]; then
+if [ $DOMAN -ne 0 ]; then
   d=doc/manual
   pushd $d
   sdir=`pwd`
@@ -79,14 +87,14 @@ if [ $ISWIN -eq 0 -a $ISL64 -eq 0 ]; then
   popd
 fi
 
-if [ $ISMAC -eq 0 ]; then
-  if [ $ISWIN -eq 0 -a $ISL64 -eq 0 ]; then
-    echo "Running doxygen ..."
-    doxygen >> $DIR/build.log
-  else
-    echo "NO Doxygen used"
-  fi
+if [ $DODOX -ne 0 ]; then
+  echo "Running doxygen ..."
+  doxygen >> $DIR/build.log
 else
+  echo "NO Doxygen used"
+fi
+
+if [ $ISMAC -ne 0 ]; then
   echo "Running libnames and appnames ..."
   $DIR/libnames.sh >> $DIR/build.log
   $DIR/appnames.sh >> $DIR/build.log
