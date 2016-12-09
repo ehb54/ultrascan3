@@ -226,6 +226,7 @@ class US_GA_Initialize : public US_Widgets
       void getMouseDown(     const QwtDoublePoint& );
       void getMouseUp(       const QwtDoublePoint& );
       void sclick_sbdata(    const QModelIndex& );
+      void sclick_sbdata(    const int          );
       void dclick_sbdata(    const QModelIndex& );
       void newrow_sbdata(    int );
       void changeBucketRect( int, QRectF& );
