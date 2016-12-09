@@ -447,6 +447,8 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
    is_saved   = false;      // files have been saved
    pfilts.clear();          // default prefilter edits list
    binfpath   = US_Settings::resultDir();
+   pick       = NULL;
+   pickpen    = NULL;
 
    reset();
 }
@@ -456,6 +458,7 @@ void US_GA_Initialize::reset( void )
 {
    data_plot->detachItems( );
    data_plot->replot();
+   if ( pick != NULL )  delete pick;
    pick       = new US_PlotPicker( data_plot );
  
    lw_sbin_data->clear();
@@ -668,18 +671,22 @@ void US_GA_Initialize::manDrawSb( void )
    QColor cwhite( Qt::white );
 
    // create a new plot picker to draw rectangles around solute points
-   delete pick;
-   pick      = new US_PlotPicker( data_plot );
+   if ( pick    != NULL )  delete pick;
+   if ( pickpen != NULL )  delete pickpen;
+   pick         = new US_PlotPicker( data_plot );
 
    // make sure rubber band and tracker show up against background
-   QColor bg = data_plot->canvasBackground();
-   int csum  = bg.red() + bg.green() + bg.blue();
-   pickpen   = new QPen( ( csum > 600 ) ? cblack : cwhite );
+   QColor bg    = data_plot->canvasBackground();
+   int csum     = bg.red() + bg.green() + bg.blue();
+   pickpen      = new QPen( ( csum > 600 ) ? cblack : cwhite );
+DbgLv(1) << "manDr: bg" << bg << "csum" << csum;
+DbgLv(1) << "manDr:   pickpen" << pickpen->brush().color();
+DbgLv(1) << "manDr:    cblack" << cblack << "cwhite" << cwhite;
 
+   pick->setStateMachine(  new QwtPickerDragRectMachine() );
    pick->setRubberBandPen( *pickpen );
    pick->setTrackerPen(    *pickpen );
-   pick->setRubberBand(     QwtPicker::RectRubberBand );
-   pick->setStateMachine( new QwtPickerDragRectMachine() );
+   pick->setRubberBand(    QwtPicker::RectRubberBand );
 
    // set up to capture position and dimensions of solute bin
    connect( pick, SIGNAL(  mouseDown( const QwtDoublePoint& ) ),
@@ -832,6 +839,7 @@ void US_GA_Initialize::plot_1dim( void )
 {
    data_plot->detachItems();
    data_plot->replot();
+   if ( pick != NULL )  delete pick;
    pick          = new US_PlotPicker( data_plot );
 
    data_plot->setCanvasBackground( Qt::black );
@@ -927,6 +935,7 @@ void US_GA_Initialize::plot_2dim( void )
 {
    data_plot->detachItems();
    data_plot->replot();
+   if ( pick != NULL )  delete pick;
    pick          = new US_PlotPicker( data_plot );
 
    data_plot->setCanvasBackground( Qt::black );
@@ -1017,16 +1026,21 @@ void US_GA_Initialize::plot_2dim( void )
 // plot data 3-D
 void US_GA_Initialize::plot_3dim( void )
 {
+   QColor cblack( Qt::black );
+   QColor cwhite( Qt::white );
    data_plot->detachItems();
    data_plot->replot();
+   if ( pick != NULL )  delete pick;
    pick          = new US_PlotPicker( data_plot );
    QColor bg     = colormap->color1();
 
    data_plot->setCanvasBackground( bg );
 
    int csum      = bg.red() + bg.green() + bg.blue();
-   pick->setTrackerPen( QPen( ( csum > 600 ) ? QColor( Qt::black ) :
-                                               QColor( Qt::white ) ) );
+   pick->setTrackerPen( QPen( ( csum > 600 ) ? cblack : cwhite ) );
+DbgLv(1) << "pl3d: bg" << bg << "csum" << csum;
+DbgLv(1) << "pl3d:   pickpen" << pick->trackerPen().brush().color();
+DbgLv(1) << "pl3d:    cblack" << cblack << "cwhite" << cwhite;
 
    QString tstr  = run_name + "\n" + analys_name + "\n (" + method + ")";
    data_plot->setTitle( tstr );
@@ -1528,6 +1542,11 @@ for ( int jj=0;jj<sk_distro.size();jj++ ) {
    pb_refresh->setEnabled( true );
    pb_mandrsb->setEnabled( plot_dim != 1 );
    pb_loadsb ->setEnabled( true );
+
+   if ( monte_carlo )
+   {
+      manDrawSb( );
+   }
 }
 
 // load the color map from a file
@@ -1696,12 +1715,16 @@ DbgLv(1) << "SL: auto smin,max,inc" << smin << smax << sinc
       " item and responding/defaulting Yes in the resulting dialog." );
 
    if ( attr_x != ATTR_V  &&  attr_y != ATTR_V  &&  attr_z != ATTR_V )
-      hmsg         = hmsg + tr(
-      "\n\nNO SAVE ENABLED:  None of X or Y or the fixed-attribute is VBAR." );
+   {
+      hmsg         = hmsg + tr( "\n\nNO SAVE ENABLED:  None of X "
+                                "or Y or the fixed-attribute is VBAR." );
+   }
 
    if ( monte_carlo )
-      hmsg         = hmsg + tr(
-      "\n\nNO AUTOASSIGN ENABLED:  Distribution is from a Monte-Carlo." );
+   {
+      hmsg         = hmsg + tr( "\n\nNO AUTOASSIGN ENABLED:  "
+                                "Distribution is from a Monte-Carlo." );
+   }
 
    te_pctl_help->setText( hmsg );
 
@@ -1714,6 +1737,7 @@ DbgLv(1) << "SL: autoassn xmin,xmax,ymin,ymax" << plxmin << plxmax
                   .arg( kisols );
    te_status->setText( stcmline + "\n" + stdiline + "\n"
          + stdfline + "\n" + stfxline + "\n" + stnpline );
+
 }
 
 // Sort distribution solute list by s,k values and optionally reduce
@@ -1935,7 +1959,13 @@ void US_GA_Initialize::newrow_sbdata( int /*row*/ )
 // solute bin list row clicked: highlight bucket
 void US_GA_Initialize::sclick_sbdata( const QModelIndex& mx )
 {
-   int sx      = mx.row();
+   sclick_sbdata( mx.row() );
+}
+
+// solute bin list row clicked: highlight bucket
+void US_GA_Initialize::sclick_sbdata( const int mrow )
+{
+   int sx      = mrow;
    bool global = monte_carlo || manbuks;
    bool rtbtn  = ( QApplication::mouseButtons() == Qt::RightButton );
 DbgLv(1) << "gain: sclick_sbd: sx" << sx << "rtbtn" << rtbtn;
@@ -1965,22 +1995,23 @@ DbgLv(1) << "gain: sclick_sbd: sx" << sx << "rtbtn" << rtbtn;
       connect( lw_sbin_data, SIGNAL( currentRowChanged( int )            ),
                this,         SLOT(   newrow_sbdata(     int )            ) );
 
-      int rx       = qMin( sx, ( nibuks - 1 ) );
+      int rx      = qMin( sx, ( nibuks - 1 ) );
       if ( rx >= 0 )
       {
          lw_sbin_data->setCurrentRow( rx );
          highlight_solute( rx );
          data_plot->replot();
+         sx          = rx;
       }
    }
 
    else if ( global  &&  sx != sxset )
    {
-      QRectF rect  = soludata->bucketRect( sx );
+      QRectF rect = soludata->bucketRect( sx );
       ct_wxbuck->setValue( rect.width() );
       ct_hybuck->setValue( rect.height() );
    }
-   sxset        = sx;
+   sxset       = sx;
 }
 
 // solute bin list row double-clicked:  change bucket values

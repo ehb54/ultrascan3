@@ -45,7 +45,6 @@ class US_CombineModels : public US_Widgets
       int           ntrows;
       int           dbg_level;
 
-      bool          rbtn_click;
       bool          changed;
       bool          runsel;
       bool          latest;
@@ -66,8 +65,5 @@ class US_CombineModels : public US_Widgets
 
       void help          ( void )
       { showHelp.show_help( "combine_models.html" ); };
-
-   protected:
-      bool eventFilter( QObject*, QEvent* );
 };
 #endif

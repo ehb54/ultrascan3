@@ -101,30 +101,12 @@ US_CombineModels::US_CombineModels() : US_Widgets()
    pb_reset->setEnabled( false );
    pb_save ->setEnabled( false );
 
-   rbtn_click = false;
    runsel     = true;
    latest     = true;
 
    setMinimumSize( 480, 200 );
    adjustSize();
    show();
-}
-
-// Filter events to catch right-mouse-button-click on tree widget
-bool US_CombineModels::eventFilter( QObject *obj, QEvent *e )
-{
-   if ( obj->objectName() == "tree-widget"  &&
-        e->type() == QEvent::ContextMenu )
-   {  // catch tree row right-mouse click
-      rbtn_click = true;
-DbgLv(1) << "eventFilter   rbtn_click" << rbtn_click;
-      return false;
-   }
-
-   else
-   {  // pass all others for normal handling
-      return US_Widgets::eventFilter( obj, e );
-   }
 }
 
 // Add selected model(s) to list of component models
