@@ -136,9 +136,17 @@ DbgLv(1) << " master loop-BOT: ds" << current_dataset+1 << "data l m h"
          clean_mrecs( mrecs );
 
          // Manage multiple data sets in global fit
-         if ( is_global_fit  &&  datasets_to_process == 1 )
+         if ( is_global_fit )
          {
-            global_fit();
+            mrec              = mrecs[ 0 ];
+            simulation_values.zsolutes  = mrec.isolutes;
+            simulation_values.ti_noise.clear();
+            simulation_values.ri_noise.clear();
+
+            calc_residuals( current_dataset, datasets_to_process, simulation_values );
+
+            if ( datasets_to_process == 1 )
+               global_fit();
          }
 DbgLv(1) << " master loop-BOT: GF job_queue empty" << job_queue.isEmpty();
 
@@ -227,7 +235,8 @@ DbgLv(1) << " master loop-BOTTOM:  READY  worker" << worker;
 
          case MPI_Job::RESULTS: // Return solute data
             worker                  = status.MPI_SOURCE;
-DbgLv(1) << " master loop-BOTTOM:  RESULTS  worker" << worker;
+DbgLv(1) << " master loop-BOTTOM:  RESULTS  worker" << worker << "sizes"
+ << sizes[0] << sizes[1] << sizes[2] << sizes[3];
             process_pcsa_results( worker, sizes );
             work_rss[ worker ]      = sizes[ 3 ];
             break;
@@ -439,8 +448,6 @@ void US_MPI_Analysis::process_pcsa_results( const int worker, const int* sizes )
              my_communicator,
              &status );
 
-DbgLv(1) << "Mast:  process_results:      worker" << worker
- << " solsize" << sizes[0];
    Result result;
    result.depth    = worker_depth[ worker ];
    result.worker   = worker;
@@ -455,8 +462,6 @@ void US_MPI_Analysis::process_pcsa_solutes( Result& result )
 {
    int jcurve     = result.depth;
    jcurve         = qMax( 0, qMin( ( mrecs.size() - 1 ), jcurve ) );
-DbgLv(1) << "Mast:    process_solutes:      worker" << result.worker
- << "jcurve" << jcurve << " solsize" << result.solutes.size();
 
    // Update the model record entry with calculated solutes and RMSD
    US_ModelRecord*
@@ -617,8 +622,8 @@ DbgLv(1) << "iter_p: parlims"
       QVector< US_ModelRecord > mrecs_is;
       QVector< US_ModelRecord > mrecs_ds;
       double* plims_sl  = parlims;
-      double* plims_is  = plims_sl + 12;
-      double* plims_ds  = plims_is + 24;
+      double* plims_is  = parlims + 12;
+      double* plims_ds  = parlims + 24;
 
       // Separate entries by curve type
       filter_mrecs( CTYPE_SL, mrecs, mrecs_sl );
@@ -953,17 +958,36 @@ DbgLv(1) << " masterMC loop-RECV RESULTS_MC  worker" << worker << "kci_recv" << 
 DbgLv(1) << " masterMC loop-RECV RESULTS_MC    mc_iter" << mc_iter << "of" << mc_iterations;
 
             // Send a status message
-            if ( datasets_to_process > 1 )
-               progress      = "Datasets: "
-                               + QString::number( datasets_to_process );
-            else
-               progress      = "Dataset: "
-                               + QString::number( current_dataset + 1 )
-                               + " (" + tripleID + ") of "
-                               + QString::number( count_datasets );
+            if ( count_datasets > 1 )
+            {
+               if ( datasets_to_process == 1 )
+               {
+                  progress  = "Dataset: "
+                             + QString::number( current_dataset + 1 )
+                             + " (" + tripleID + ") of "
+                             + QString::number( count_datasets );
+                  if ( is_global_fit )
+                  {
+                     progress += "; (pre-global pass)";
+                  }
+                  else
+                  {
+                     progress += "; MonteCarlo: " + QString::number( mc_iter );
+                  }
+               }
+               else
+               {
+                  progress  = "Datasets: "
+                             + QString::number( datasets_to_process )
+                             + "; MonteCarlo: " + QString::number( mc_iter );
 
-            progress        += "; MonteCarlo: "
-                               + QString::number( mc_iter );
+               }
+            }
+            else
+            {
+               progress  = "Dataset: 1 of 1; MonteCarlo: "
+                          + QString::number( mc_iter );
+            }
 
             send_udp( progress );
             break;
@@ -1310,6 +1334,25 @@ void US_MPI_Analysis::write_pcsa_aux_model( int iter )
    QString atype       = QString( asysID ).section( "_", 2, 2 );
    QString reqID       = QString( asysID ).section( "_", 3, 3 );
    QString iterID      = "i01" ;
+
+   if ( is_global_fit )
+   {  // For Global Fit, de-scale solute signal concentrations
+      double avg_conc     = 0.0;
+
+      for ( int ee = 0; ee < data_sets.size(); ee++ )
+      {  // Get average total concentration of data sets
+         avg_conc           += concentrations[ ee ];
+      }
+
+      avg_conc           /= (double)( data_sets.size() );
+      avg_conc            = ( avg_conc == 0.0 ) ? 1.0 : avg_conc;
+
+      for ( int ii = 0; ii < wksim_vals.zsolutes.size(); ii++ )
+      {  // Scale concentration of solute points
+         wksim_vals.zsolutes[ ii ].c *= avg_conc;
+      }
+   }
+
    if ( iter == 0 )
    {
       atype              += "-TR";

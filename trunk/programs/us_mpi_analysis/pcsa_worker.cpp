@@ -117,7 +117,7 @@ DbgLv(1) << "w:" << my_rank << ": sols size" << job.length;
                                   max_rss() };
 
 DbgLv(1) << "w:" << my_rank << ":   result sols size" << sizes[0]
- << "max_rss" << sizes[ 3 ];
+ << "max_rss" << sizes[ 3 ] << "sizes12" << sizes[1] << sizes[2];
 //*DEBUG*
 if(dbg_level==0 && my_rank==1) {
 DbgLv(1) << "w:" << my_rank << ":   result sols size" << sizes[0]
