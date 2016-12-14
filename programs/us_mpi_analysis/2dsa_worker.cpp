@@ -322,7 +322,7 @@ if ( dbg_level > 0 && ( group_rank == 1 || group_rank == 11 ) )
  double sm = sdat->value(nsc-1,nrp-2);
  double sn = sdat->value(nsc-1,nrp-1);
  DbgLv(1) << "w:" << my_rank << ": s(01hmn)" << s0 << s1 << sh << sm << sn;
- if ( dataset_count > 1 ) {
+ if ( dataset_count > 1  &&  (offset+1) < data_sets.size() ) {
   edat = &data_sets[offset+1]->run_data;
   int nxx = nsc;
   nsc = edat->scanCount();
@@ -357,7 +357,7 @@ if ( dbg_level > 0 && ( group_rank == 1 || group_rank == 11 ) )
  DbgLv(1) << "w:" << my_rank << ":  noisf alpha" << simu_values.noisflag
   << simu_values.alpha << "s20w_c D20w_c vbar" << dset->s20w_correction
   << dset->D20w_correction << dset->vbar20;
- if ( dataset_count > 1 ) {
+ if ( dataset_count > 1  &&  (offset+1) < data_sets.size() ) {
   dset = data_sets[offset+1];
   DbgLv(1) << "w:" << my_rank << ":  2)simpt men bott temp coef1"
    << dset->simparams.simpoints
