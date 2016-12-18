@@ -394,8 +394,8 @@ QString US_Model::typeText( int subtype )
          if ( associations.size() > 0 )     // Reversible Associations subtype
             tdesc    = tdesc + "-RA";
 
-         if ( alphaRP != 0.0 )
-            tdesc    = tdesc + "-TR";       // Tikhonov Regularization subtype
+         //if ( alphaRP != 0.0 )
+         //   tdesc    = tdesc + "-TR";       // Tikhonov Regularization subtype
 
          if ( global == MENISCUS )          // Fit Meniscus subtype
             tdesc    = tdesc + "-FM";
@@ -442,6 +442,9 @@ QString US_Model::typeText( int subtype )
 
          if ( monteCarlo )                  // Monte Carlo subtype
             tdesc    = tdesc + "-MC";
+
+         if ( alphaRP != 0.0 )
+            tdesc    = tdesc + "-TR";       // Tikhonov Regularization subtype
 
          break;
       }
