@@ -7,6 +7,7 @@
 #include "us_util.h"
 #include "us_math2.h"
 #include "us_matrix.h"
+#include "us_timer.h"
 
 class US_GUI_EXTERN US_Minimize : public US_Widgets
 {

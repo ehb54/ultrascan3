@@ -59,6 +59,7 @@ HEADERS      = us_analyte.h       \
                us_stiffbase.h     \
                us_tar.h           \
                us_time_state.h    \
+               us_timer.h         \
                us_util.h          \
                us_vector.h        \
                us_xpn_data.h      \
@@ -101,6 +102,7 @@ SOURCES      = us_analyte.cpp       \
                us_stiffbase.cpp     \
                us_tar.cpp           \
                us_time_state.cpp    \
+               us_timer.cpp         \
                us_util.cpp          \
                us_vector.cpp        \
                us_xpn_data.cpp      \

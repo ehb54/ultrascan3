@@ -5,6 +5,7 @@
 #include <cerrno> //for floating point errors
 //#include <cfloat>
 
+
 #define FLT_MIN  1.17549e-38
 #define FLT_MAX  3.40282e+38
 
@@ -464,7 +465,8 @@ int US_Minimize::Fit()
    if (GUI)
    {
       pgb_progress->reset();
-      pgb_progress->setValue(totalSteps);
+      //pgb_progress->setValue(totalSteps);
+      pgb_progress->setMaximum(totalSteps);
    }
    count = 0;
 
@@ -473,11 +475,19 @@ int US_Minimize::Fit()
    ////////// BEGINNING OF ITERATIONS //////////////////////////////////////////////////////////////////////////////////////////////////////////
    while((iteration < maxIterations) && (new_residuals/points > tolerance))
    {
+
+     US_Timer fit_timers; 
+     fit_timers.init_timer ( "jacobian calc" );
+     fit_timers.init_timer ( "A_transpose_A calc" );
+     fit_timers.init_timer ( "calc_B calc" );
+     fit_timers.init_timer( "Cholesky SolveSystem calc" );
+
+     
      qDebug() << "current iteration: " << iteration  ;
 
       if(GUI && showGuiFit)
       {
-	qDebug() << "GUI: " << GUI << ", showGuiFit: " << showGuiFit  ;
+	//qDebug() << "GUI: " << GUI << ", showGuiFit: " << showGuiFit  ;
 	
          if(plotResiduals)
          {
@@ -485,9 +495,9 @@ int US_Minimize::Fit()
          }
          else
          {
-	   qDebug() << "plot_overlays: 1"  ;
+	   //qDebug() << "plot_overlays: 1"  ;
 	   plot_overlays();                                   // BUG IN GUI QT-5.7.0 /////////////////////////////////////////////////////////////////////////////////////////
-	   qDebug() << "plot_overlays: 2"  ;
+	   //qDebug() << "plot_overlays: 2"  ;
          }
          qApp->processEvents();
       }
@@ -522,9 +532,24 @@ int US_Minimize::Fit()
       
       if ((nlsMethod < 3) || (nlsMethod == 3 && iteration == 1))
       {
+	 fit_timers.start_timer( "jacobian calc" );
          calc_jacobian();
-         //print_matrix(jacobian, points, parameters);
-       	matrix->calc_A_transpose_A(&jacobian, &information_matrix, points, parameters, settings->threads());
+	 fit_timers.end_timer( "jacobian calc" );
+	          
+	 //print_matrix(jacobian, points, parameters);
+	 
+	 // qDebug() << "Setting threads: " << settings->threads();
+	 //qDebug() << "Rows, Columns " <<  points << ", " <<  parameters; 
+	 
+	 //US_Matrix matrix_temp;
+	 fit_timers.start_timer( "A_transpose_A calc" );
+	 matrix->calc_A_transpose_A(&jacobian, &information_matrix, points, parameters, settings->threads()); // ATTENTION /////////
+
+	 //matrix->calc_A_transpose_A(&jacobian, &information_matrix, points, parameters, 20);
+
+	 //matrix_temp.calc_A_transpose_A(&jacobian, &information_matrix, points, parameters, 15);
+	 fit_timers.end_timer( "A_transpose_A calc" );
+	 //qDebug().noquote() << fit_timers.list_times();
       }
       //print_matrix(information_matrix, parameters, parameters);
       if (nlsMethod == 3)   // Quasi-Newton
@@ -663,9 +688,9 @@ int US_Minimize::Fit()
 
       while (new_residuals >= old_residuals && nlsMethod != 3)
       {
-	qDebug() << "Going to Method: "  ;
-	qDebug() << "FLT_MIN: " << FLT_MIN ;
-	qDebug() << "FLT_MAX: " << FLT_MAX ;
+	//qDebug() << "Going to Method: "  ;
+	//qDebug() << "FLT_MIN: " << FLT_MIN ;
+	//qDebug() << "FLT_MAX: " << FLT_MAX ;
 
          //   Problem: J * R = y_delta, where R = (a[i] - guess[i]) and we want to find a[i], so solve for R:
          // (1)   J'J * R = J' * y_delta
@@ -685,9 +710,14 @@ int US_Minimize::Fit()
             //lbl_status2->setText(tr("Calculating the Gradient..."));
             qApp->processEvents();
          }
-         calc_B();
+	 
+	 fit_timers.start_timer( "calc_B calc" );
+	 calc_B();
+	 fit_timers.end_timer( "calc_B calc" );
+	 //qDebug().noquote() << fit_timers.list_times();
+ 
 
-         // save information matrix in LL_transpose in case chi-2 is larger, in which case we would
+        // save information matrix in LL_transpose in case chi-2 is larger, in which case we would
          // need to reset Lambda
 
          //cout.precision(3);
@@ -754,7 +784,7 @@ int US_Minimize::Fit()
             return (-6);
          }
 	 
-	 qDebug() << "Continue Method"  ;
+	 //qDebug() << "Continue Method"  ;
 
          // Now the information matrix actually contains the decomposed information matrix LL'
          // (4)   L(L'*R) = B
@@ -767,8 +797,10 @@ int US_Minimize::Fit()
             //lbl_status2->setText(tr("Solving Cholesky System..."));
             qApp->processEvents();
          }
+	 fit_timers.start_timer( "Cholesky SolveSystem calc" );
          matrix->Cholesky_SolveSystem(LL_transpose, B, parameters);
-
+	 fit_timers.end_timer( "Cholesky SolveSystem calc" );
+	 qDebug().noquote() << fit_timers.list_times();
          // Now B is changed to R (the difference between the current parameter estimate with the "true" parameter)
 
          switch (nlsMethod)
@@ -855,22 +887,22 @@ int US_Minimize::Fit()
             return(-7);
          }
 
-	 qDebug() << "Continue Method 1"  ;
+	 // qDebug() << "Continue Method 1"  ;
 
          new_residuals = calc_residuals();
          if (new_residuals < old_residuals)
          {
-	   qDebug() << "new_residuals <  old_residuals"  ;
+	   //qDebug() << "new_residuals <  old_residuals"  ;
             if (GUI)
             {
-               qApp->processEvents();
+	      qApp->processEvents();
             }
             switch (nlsMethod)
             {
             case 0:
                {
                   lambda = lambda/lambdaStep;
-		  qDebug() << "lambda = " << lambda << ", lambdaStep = " << lambdaStep  ;
+		  //qDebug() << "lambda = " << lambda << ", lambdaStep = " << lambdaStep  ;
                   break;
                }
             case 1:
@@ -917,12 +949,12 @@ int US_Minimize::Fit()
          }
          else
          {
-	   qDebug() << "new_residuals > old_residuals"  ;
+	   //qDebug() << "new_residuals > old_residuals"  ;
             if(GUI)
             {
                str.sprintf("%3.5e", (old_residuals - new_residuals)/points);
                le_improvement->setText(str);
-               qApp->processEvents();
+	       qApp->processEvents();
             }
             switch (nlsMethod)
             {
@@ -935,13 +967,13 @@ int US_Minimize::Fit()
                   lambda_loop ++;
                   lambda *= pow((double) lambdaStep, (double) lambda_loop);
 
-		  qDebug() << "After new_res MORE: "  ;
+		  // qDebug() << "After new_res MORE: "  ;
 
                   if (lambda > 1.0e10)
                   {
                      lambda = 1.0e6;
                      variance = new_residuals/points;
-                     qDebug() << "Calling endfit 7\n";
+		     // qDebug() << "Calling endfit 7\n";
                      endFit();
                      return(0);
                   }
@@ -998,13 +1030,13 @@ int US_Minimize::Fit()
             }
             if(calc_model(guess) < 0)
             {
-	      qDebug() << "After new_res MORE 1:"  ;
+	      //qDebug() << "After new_res MORE 1:"  ;
                cleanup();
                return (-8);
             }
-	    qDebug() << "After new_res MORE 11:"  ;
+	    //qDebug() << "After new_res MORE 11:"  ;
             new_residuals = calc_residuals();
-	    qDebug() << "After new_res MORE 12:"  ;
+	    //qDebug() << "After new_res MORE 12:"  ;
          }
          if (GUI)
          {
@@ -1013,11 +1045,11 @@ int US_Minimize::Fit()
 	    //return(0);
          }
       }
-      qDebug() << "Continue Method 2"  ;
-      qDebug() << "new_residuals = " << new_residuals << ", points = " <<  points << ", tolerance = " << tolerance  ;
-      qDebug() << "GUI: " << GUI  ;
+      //qDebug() << "Continue Method 2"  ;
+      //qDebug() << "new_residuals = " << new_residuals << ", points = " <<  points << ", tolerance = " << tolerance  ;
+      //qDebug() << "GUI: " << GUI  ;
    }
-   qDebug() << "END ITER: "  ;
+   //qDebug() << "END ITER: "  ;
    return(0);
 }
 
@@ -1444,8 +1476,9 @@ void US_Minimize::endFit()
    converged = true; 
    if (GUI)
    {
-      pgb_progress->setValue(totalSteps);
-      pb_close->setText(tr("Close"));
+     pgb_progress->setValue(totalSteps);
+     //pgb_progress->setValue(100); 
+     pb_close->setText(tr("Close"));
       pb_fit->setEnabled(true);
       //lbl_status2->setText(tr("The fitting process converged..."));
       pb_saveFit->setEnabled(true);
