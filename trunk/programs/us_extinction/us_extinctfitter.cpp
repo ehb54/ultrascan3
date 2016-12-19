@@ -319,7 +319,7 @@ void US_ExtinctFitter::write_report()
 
 void US_ExtinctFitter::plot_overlays()
 {
-  qDebug() << "Starting plot overlay: "  ;
+  //qDebug() << "Starting plot overlay: "  ;
    unsigned int numScans = 0;
 	QVector <QwtPlotCurve*> v_curve_raw, v_curve_fit;
    long unsigned int point_counter = 0;
@@ -359,7 +359,7 @@ void US_ExtinctFitter::plot_overlays()
       s1 = tr("Overlays");
    }
 	
-	qDebug() << "Starting plot overlay 1: "  ;
+	//	qDebug() << "Starting plot overlay 1: "  ;
 
    //s2.sprintf((tr("Optical Density")).toLatin1().data());
    s2 = tr("Optical Density");
@@ -381,7 +381,7 @@ void US_ExtinctFitter::plot_overlays()
 		v_all_yplot_raw.push_back(v_yplot_raw);
    }
 
-   qDebug() << "Starting plot overlay 2: "  ; 
+   //qDebug() << "Starting plot overlay 2: "  ; 
 
    //QwtSymbol* symbol = new QwtSymbol(QwtSymbol::Diamond,QBrush(Qt::red),QPen(Qt::red),QSize(5,5));
    
@@ -395,27 +395,27 @@ void US_ExtinctFitter::plot_overlays()
    //symbol->setBrush(Qt::yellow);
    //symbol->setStyle(QwtSymbol::Ellipse);
    
-   qDebug() << "Starting plot overlay 2a: "  ;
+   //qDebug() << "Starting plot overlay 2a: "  ;
    data_plot->detachItems();
    //data_plot->detachItems(QwtPlotItem::Rtti_PlotItem, true);
       
    us_grid(data_plot);
    
-   qDebug() << "Starting plot overlay 2b: "  ;
+   //qDebug() << "Starting plot overlay 2b: "  ;
 
    data_plot->setTitle(s1);
 
-   qDebug() << "Starting plot overlay 2c: "  ;
+   //qDebug() << "Starting plot overlay 2c: "  ;
 
    data_plot->setAxisTitle(QwtPlot::xBottom, tr("Wavelength (nm)"));
 
-   qDebug() << "Starting plot overlay 2d: "  ;
+   //qDebug() << "Starting plot overlay 2d: "  ;
 
    data_plot->setAxisTitle(QwtPlot::yLeft, s2);
 
-   qDebug() << "Starting plot overlay 3: "  ;
+   //qDebug() << "Starting plot overlay 3: "  ;
 
-   qDebug() << "PlotGroup: " << plotGroup  ;
+   //qDebug() << "PlotGroup: " << plotGroup  ;
 
    if (plotGroup)
    {
@@ -477,7 +477,7 @@ void US_ExtinctFitter::plot_overlays()
 	//v_curve_fit.push_back(c_fit);
       }
    }
-   qDebug() << "Ending plot overlay:";
+   //qDebug() << "Ending plot overlay:";
    //   data_plot->setAxisScale(QwtPlot::xBottom, -xmax/30.0, xmax + xmax/30.0, 0);
    data_plot->replot();
   // data_plot->updatePlot();      //no updatePlot() in new version
@@ -742,6 +742,7 @@ void US_ExtinctFitter::endFit()
    //lbl_status2->setText(tr("The fitting process converged..."));
    plot_residuals();
    pgb_progress->setValue(totalSteps);
+   //pgb_progress->setValue(100);
    pb_residuals->setEnabled(true);
    pb_overlays->setEnabled(true);
    pb_saveFit->setEnabled(true);
