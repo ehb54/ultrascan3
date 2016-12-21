@@ -10,6 +10,9 @@ if [ `echo "45"|grep -ci "${QTMAJV}"` -eq 0 ]; then
   exit
 fi
 
+MKARGS="$@"
+MAKE="make ${MKARGS}"
+
 ISMAC=0
 FIXMAC=""
 if [ "`uname -s`" = "Darwin" ]; then
@@ -35,6 +38,7 @@ fi
 
 DOMAN=1
 DODOX=1
+
 if [ -z "`which tpage`" ]; then
   DOMAN=0
 fi
@@ -64,7 +68,7 @@ do
     fi
   fi
   echo "Making in $d"   >> $DIR/build.log
-  (cd $sdir;make 2>&1)  >> $DIR/build.log
+  (cd $sdir;${MAKE} 2>&1)  >> $DIR/build.log
   stat=$?
   if [ $stat -gt 0 ]; then
      echo "  ***ERROR*** building $d"
@@ -78,7 +82,7 @@ if [ $DOMAN -ne 0 ]; then
   pushd $d
   sdir=`pwd`
   echo "Making in $d"   >> $DIR/build.log
-  (cd $sdir;make 2>&1)  >> $DIR/build.log
+  (cd $sdir;${MAKE} 2>&1)  >> $DIR/build.log
   stat=$?
   if [ $stat -gt 0 ]; then
      echo "  ***ERROR*** building $d"

@@ -21,6 +21,7 @@ int US_LoadableNoise::count_noise( bool ondisk, US_DataIO::EditedData* edata,
    US_Model* model, QStringList& mieGUIDs, QStringList& nieGUIDs )
 {
    dbg_level   = US_Settings::us_debug();
+   int noidiag = US_Settings::noise_dialog();
 
    int nenois  = 0;       // number of edited-data-related noises
 
@@ -196,14 +197,18 @@ for (int jj=0;jj<nenois;jj++)
               + tr( "Do you want to load it?" );
       }
 
-      msgBox.setWindowTitle( tr( "Edit/Model Associated Noise" ) );
-      msgBox.setText( msg );
-      msgBox.setStandardButtons( QMessageBox::No | QMessageBox::Yes );
-      msgBox.setDefaultButton( QMessageBox::Yes );
+DbgLv(2) << "LaNoi:noidiag  " << noidiag;
+      if ( noidiag > 0 )
+      {
+         msgBox.setWindowTitle( tr( "Edit/Model Associated Noise" ) );
+         msgBox.setText( msg );
+         msgBox.setStandardButtons( QMessageBox::No | QMessageBox::Yes );
+         msgBox.setDefaultButton( QMessageBox::Yes );
 
-      if ( msgBox.exec() != QMessageBox::Yes )
-      {  // user did not say "yes":  return zero count
-         nenois  = 0;       // number of edited-data-related noises
+         if ( msgBox.exec() != QMessageBox::Yes )
+         {  // user did not say "yes":  return zero count
+            nenois  = 0;       // number of edited-data-related noises
+         }
       }
 
       if ( kk < nemods )

@@ -1166,7 +1166,7 @@ void US_pcsa::write_report( QTextStream& ts )
                       + "<br/>( " + curvtype + " )";
 
    if ( model.alphaRP > 0.0 )
-      hdr             += "<br/>- Tihhonov Regularization";
+      hdr             += "<br/>- Tikhonov Regularization";
 
    ts << html_header( QString( "US_pcsa" ), hdr, edata );
    ts << model_statistics();

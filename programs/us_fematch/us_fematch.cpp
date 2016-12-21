@@ -1916,30 +1916,65 @@ void US_FeMatch::load_noise( )
    QStringList nieGUIDs;  // list of GUIDS:type:index of noises-in-edit
    QString     editGUID  = edata->editGUID;         // loaded edit GUID
    QString     modelGUID = model.modelGUID;         // loaded model GUID
-DbgLv(1) << "editGUID  " << editGUID;
-DbgLv(1) << "modelGUID " << modelGUID;
+DbgLv(1) << "Fem:LN: editGUID  " << editGUID;
+DbgLv(1) << "Fem:LN: modelGUID " << modelGUID;
 
    te_desc->setText( tr( "<b>Scanning noise for %1 ...</b>" )
          .arg( triples[ lw_triples->currentRow() ] ) );
    qApp->processEvents();
    US_LoadableNoise lnoise;
    bool loadDB = dkdb_cntrls->db();
+   int noisdf  = US_Settings::noise_dialog();
    int nenois  = lnoise.count_noise( !loadDB, edata, &model,
          mieGUIDs, nieGUIDs );
+DbgLv(1) << "Fem:LN: nenois " << nenois << "noisdf" << noisdf;
 
 for (int jj=0;jj<nenois;jj++)
- DbgLv(1) << " jj nieG" << jj << nieGUIDs.at(jj);
+ DbgLv(1) << "Fem:LN:  jj nieG" << jj << nieGUIDs.at(jj);
 
    if ( nenois > 0 )
    {  // There is/are noise(s):  ask user if she wants to load
       US_Passwd pw;
       US_DB2* dbP  = loadDB ? new US_DB2( pw.getPasswd() ) : NULL;
 
-      if ( nenois > 1 )
+      if ( nenois > 1  &&  noisdf == 0 )
+      {  // Noise exists and noise-dialog flag set to "Auto-load"
+         QString descn = nieGUIDs.at( 0 );
+         QString noiID = descn.section( ":", 0, 0 );
+         QString typen = descn.section( ":", 1, 1 );
+         QString mdlx1 = descn.section( ":", 2, 2 );
+
+         if ( typen == "ti" )
+            ti_noise.load( loadDB, noiID, dbP );
+
+         else
+            ri_noise.load( loadDB, noiID, dbP );
+
+         descn         = nieGUIDs.at( 1 );
+         QString mdlx2 = descn.section( ":", 2, 2 );
+         int kenois    = ( mdlx1 == mdlx2 ) ? 2 : 1;
+ DbgLv(1) << "Fem:LN: kenois" << kenois << "mdlx1 mdlx2" << mdlx1 << mdlx2;
+
+         if ( kenois == 2 )
+         {  // Second noise from same model:  get it, too
+            noiID         = descn.section( ":", 0, 0 );
+            typen         = descn.section( ":", 1, 1 );
+ DbgLv(1) << "Fem:LN:  typen2" << typen << "noiID2" << noiID;
+
+            if ( typen == "ti" )
+               ti_noise.load( loadDB, noiID, dbP );
+
+            else
+               ri_noise.load( loadDB, noiID, dbP );
+         }
+         
+      }
+
+      else if ( nenois > 1  &&  noisdf > 0 )
       {  // more than 1:  get choice from noise loader dialog
          US_NoiseLoader* nldiag = new US_NoiseLoader( dbP,
             mieGUIDs, nieGUIDs, ti_noise, ri_noise, edata );
-         nldiag->move( this->pos() + QPoint( 200, 200 ) );
+         //nldiag->move( this->pos() + QPoint( 200, 200 ) );
          nldiag->exec();
          qApp->processEvents();
 
@@ -2599,6 +2634,9 @@ void US_FeMatch::close_all()
 
    if ( eplotcd )
       eplotcd->close();
+
+   if ( resplotd )
+      resplotd->close();
 
    close();
 }

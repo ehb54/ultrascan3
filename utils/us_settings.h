@@ -128,6 +128,11 @@ class US_UTIL_EXTERN US_Settings
     //!        the local computer.
     static void        set_threads( int );
 
+    //! \brief Get the noise dialog flag (0==Auto [def], 1==Dialog)
+    static int         noise_dialog( void );
+    //! \brief Set the noise dialog flag
+    static void        set_noise_dialog( int );
+
     // Database info
 
     //! \brief Get a list of stored database connection descriptions

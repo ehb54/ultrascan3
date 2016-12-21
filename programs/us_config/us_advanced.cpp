@@ -40,7 +40,7 @@ US_Advanced::US_Advanced( QWidget* w, Qt::WindowFlags flags )
   details->addWidget( lb_debug,    row,   0, 1, 3 );
 
   sb_debug            = new QSpinBox;
-  sb_debug->setRange( 0, 10 );
+  sb_debug->setRange( 0, 4 );
   sb_debug->setValue( 0 );
   sb_debug->setPalette( US_GuiSettings::editColor() );
   sb_debug->setFont( QFont( US_GuiSettings::fontFamily(),
@@ -52,7 +52,7 @@ US_Advanced::US_Advanced( QWidget* w, Qt::WindowFlags flags )
   details->addWidget( lb_advanced, row,   0, 1, 3 );
 
   sb_advanced         = new QSpinBox;
-  sb_advanced->setRange( 0, 10 );
+  sb_advanced->setRange( 0, 4 );
   sb_advanced->setValue( 0 );
   sb_advanced->setPalette( US_GuiSettings::editColor() );
   sb_advanced->setFont( QFont( US_GuiSettings::fontFamily(),
@@ -64,12 +64,26 @@ US_Advanced::US_Advanced( QWidget* w, Qt::WindowFlags flags )
   details->addWidget( lb_threads,  row,   0, 1, 3 );
 
   sb_threads          = new QSpinBox;
-  sb_threads->setRange( 1, 10 );
+  sb_threads->setRange( 1, 32 );
   sb_threads->setValue( 1 );
   sb_threads->setPalette( US_GuiSettings::editColor() );
   sb_threads->setFont( QFont( US_GuiSettings::fontFamily(),
                               US_GuiSettings::fontSize() ) );
   details->addWidget( sb_threads,  row++, 3, 1, 1 );
+
+  // Row 4
+  QLabel* lb_noisdiag  = us_label( "Noise Dialog Flag:" );
+  details->addWidget( lb_noisdiag,  row,   0, 1, 3 );
+
+  sb_noisdiag          = new QSpinBox;
+  sb_noisdiag->setRange( 0, 1 );
+  sb_noisdiag->setValue( 0 );
+  sb_noisdiag->setPalette( US_GuiSettings::editColor() );
+  sb_noisdiag->setFont( QFont( US_GuiSettings::fontFamily(),
+                               US_GuiSettings::fontSize() ) );
+  sb_noisdiag->setToolTip( tr( "Flag: 0 -> Auto-load noises;"
+                               " 1 -> Pop up noise load dialog" ) );
+  details->addWidget( sb_noisdiag,  row++, 3, 1, 1 );
 
   topbox->addLayout( details );
 
@@ -106,6 +120,7 @@ void US_Advanced::reset()
    int         dbg_level = US_Settings::us_debug();
    int         adv_level = US_Settings::advanced_level();
    int         threads   = US_Settings::threads();
+   int         noisdiag  = US_Settings::noise_dialog();
 
    QString dbg_str = "";
 
@@ -123,6 +138,7 @@ void US_Advanced::reset()
    sb_debug   ->setValue(      dbg_level );
    sb_advanced->setValue(      adv_level );
    sb_threads ->setValue(      threads   );
+   sb_noisdiag->setValue(      noisdiag  );
 }
 
 // save the values from the current GUI elements
@@ -140,6 +156,7 @@ void US_Advanced::save()
    US_Settings::set_us_debug(       sb_debug   ->value() );
    US_Settings::set_advanced_level( sb_advanced->value() );
    US_Settings::set_threads(        sb_threads ->value() );
+   US_Settings::set_noise_dialog(   sb_noisdiag->value() );
 
    QMessageBox::information( this,
          tr( "Settings Saved" ),
