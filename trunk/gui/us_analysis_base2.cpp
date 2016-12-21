@@ -1289,6 +1289,7 @@ void US_AnalysisBase2::load_noise( int index )
    US_LoadableNoise lnoise;
    bool loadDB = disk_controls->db();
    bool local  = ! loadDB;
+   int  noisdf = US_Settings::noise_dialog();
    int  nenois = lnoise.count_noise( local, edata, NULL, mieGUIDs, nieGUIDs );
    te_desc->setHtml( tr( "<b>%1 noise(s) found for %2</b>" )
       .arg( nenois ).arg( triples[ index ] ) );
@@ -1302,7 +1303,37 @@ void US_AnalysisBase2::load_noise( int index )
       US_Passwd pw;
       US_DB2* dbP  = local ? NULL : new US_DB2( pw.getPasswd() );
 
-      if ( nenois > 1 )
+      if ( nenois > 1  &&  noisdf == 0 )
+      {  // Noise exists and noise-dialog flag set to "Auto-load"
+         QString descn = nieGUIDs.at( 0 );
+         QString noiID = descn.section( ":", 0, 0 );
+         QString typen = descn.section( ":", 1, 1 );
+         QString mdlx1 = descn.section( ":", 2, 2 );
+
+         if ( typen == "ti" )
+            ti_noise.load( loadDB, noiID, dbP );
+
+         else
+            ri_noise.load( loadDB, noiID, dbP );
+
+         descn         = nieGUIDs.at( 1 );
+         QString mdlx2 = descn.section( ":", 2, 2 );
+         int kenois    = ( mdlx1 == mdlx2 ) ? 2 : 1;
+
+         if ( kenois == 2 )
+         {  // Second noise from same model:  get it, too
+            noiID         = descn.section( ":", 0, 0 );
+            typen         = descn.section( ":", 1, 1 );
+
+            if ( typen == "ti" )
+               ti_noise.load( loadDB, noiID, dbP );
+
+            else
+               ri_noise.load( loadDB, noiID, dbP );
+         }
+      }
+
+      else if ( nenois > 1  &&  noisdf > 0 )
       {  // more than 1:  get choice from noise loader dialog
          US_NoiseLoader* nldiag = new US_NoiseLoader( dbP,
             mieGUIDs, nieGUIDs, ti_noise, ri_noise, edata );

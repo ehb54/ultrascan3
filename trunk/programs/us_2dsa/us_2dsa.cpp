@@ -77,6 +77,7 @@ US_2dsa::US_2dsa() : US_AnalysisBase2()
    connect( pb_fitcntl, SIGNAL( clicked() ), SLOT( open_fitcntl() ) );
    connect( pb_plt3d,   SIGNAL( clicked() ), SLOT( open_3dplot()  ) );
    connect( pb_pltres,  SIGNAL( clicked() ), SLOT( open_resplot() ) );
+   connect( pb_close,   SIGNAL( clicked() ), SLOT( close_all()    ) );
 
    // To modify controls layout, first make Base elements invisible
    
@@ -907,7 +908,7 @@ int*                        US_2dsa::mw_base_rss()     { return &baserss;  }
 // Open residuals plot window
 void US_2dsa::open_resplot()
 {
-   if ( resplotd )
+   if ( resplotd != 0 )
    {
       rbd_pos  = resplotd->pos();
       resplotd->close();
@@ -1361,5 +1362,27 @@ QString US_2dsa::fit_meniscus_data()
 void US_2dsa::resplot_done()
 {
    resplotd     = 0;
+}
+
+// Close all opened subwindows, then close this one
+void US_2dsa::close_all()
+{
+   if ( resplotd != 0 )
+   {
+      resplotd->disconnect();
+      resplotd->close();
+   }
+   if ( eplotcd  != 0 )
+   {
+      eplotcd ->disconnect();
+      eplotcd ->close();
+   }
+   if ( analcd   != 0 )
+   {
+      analcd  ->disconnect();
+      analcd  ->close();
+   }
+
+   close();
 }
 

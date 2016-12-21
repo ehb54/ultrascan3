@@ -28,6 +28,7 @@ class US_Advanced : public US_Widgets
     QSpinBox*    sb_debug;
     QSpinBox*    sb_advanced;
     QSpinBox*    sb_threads;
+    QSpinBox*    sb_noisdiag;
 
     QTextEdit*   te_dbgtext;
 

@@ -1467,6 +1467,8 @@ QString US_XpnData::runDetails( void )
       double radvs1, radvs2, radve1, radve2;
       double valus1, valus2, value1, value2;
       QString sname1, sname2;
+      exptm1 = stage1 = scann1 = wavel1 = vlknt1 = 0;
+      tempe1 = speed1 = omgsq1 = radvs1 = radve1 = valus1 = value1 = 0.0;
 
       for ( int jj = 0; jj < sdknt; jj++ )
       {

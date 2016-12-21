@@ -314,6 +314,22 @@ void US_Settings::set_threads( int threads )
     settings.setValue( "threads", threads );
 }
 
+// Noise Dialog:  0 -> Auto, 1 -> Dialog
+int US_Settings::noise_dialog( void )
+{
+  QSettings settings( US3, "UltraScan" );
+  return settings.value( "noise_dialog", 0 ).toInt();
+}
+
+void US_Settings::set_noise_dialog( int diagflag )
+{
+  QSettings settings( US3, "UltraScan" );
+  if ( diagflag == 0 )
+    settings.remove( "noise_dialog" );
+  else
+    settings.setValue( "noise_dialog", diagflag );
+}
+
 // Database Entries
 
 QList<QStringList> US_Settings::databases( void )
