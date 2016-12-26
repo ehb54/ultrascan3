@@ -908,7 +908,8 @@ int US_SoluteData::reportDataMC( QString& fname, int mc_iters )
 //            vsum     = tconc;
 //            ts << ( vsum / vsiz ) << endl;
             ts << tconc << endl;
-            csums.append( vsum );
+            //csums.append( vsum );
+            csums.append( tconc );
          }
 
          else
