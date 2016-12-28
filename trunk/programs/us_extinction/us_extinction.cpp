@@ -163,25 +163,29 @@ US_Extinction::US_Extinction() : US_Widgets()
 
 void US_Extinction::add_wavelength(void)
 {
-	QStringList files;
-	QFile f;
+  QStringList files;
+  QFile f;
+  
+  QFileDialog dialog (this);
+  //dialog.setNameFilter(tr("Text (*.txt *.csv *.dat *.wa *.dsp)"));
 
-	QFileDialog dialog (this);
-   dialog.setNameFilter(tr("Text (*.txt *.csv *.dat *.wa *.dsp)"));
-	dialog.setFileMode(QFileDialog::ExistingFiles);
-   dialog.setViewMode(QFileDialog::Detail);
-   //dialog.setDirectory("/home/alexsav/ultrascan/data/spectra");
-   
-   QString work_dir_data  = US_Settings::dataDir();
-   qDebug() << work_dir_data;
-   dialog.setDirectory(work_dir_data);
-
-   if(dialog.exec())
-	{
-		files = dialog.selectedFiles();
-		reading(files);
-	}
+  dialog.setNameFilter(tr("Text files (*.[Tt][Xx][Tt] *.[Cc][Ss][Vv] *.[Dd][Aa][Tt] *.[Ww][Aa]* *.[Dd][Ss][Pp]);;All files (*)"));
+    
+  dialog.setFileMode(QFileDialog::ExistingFiles);
+  dialog.setViewMode(QFileDialog::Detail);
+  //dialog.setDirectory("/home/alexsav/ultrascan/data/spectra");
+  
+  QString work_dir_data  = US_Settings::dataDir();
+  qDebug() << work_dir_data;
+  dialog.setDirectory(work_dir_data);
+  
+  if(dialog.exec())
+    {
+      files = dialog.selectedFiles();
+      reading(files);
+    }
 }
+
 void US_Extinction::reading(QStringList sl)
 {
 	QString fileName, str, str1, extension;
