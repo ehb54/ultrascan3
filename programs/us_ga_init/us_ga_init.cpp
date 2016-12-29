@@ -696,8 +696,10 @@ DbgLv(1) << "manDr:    cblack" << cblack << "cwhite" << cwhite;
 
    pb_ckovrlp->setEnabled( false );
 
-   wxbuck       = ( plxmax - plxmin ) / 10.0;
-   hybuck       = ( plymax - plymin ) / 10.0;
+   //wxbuck       = ( plxmax - plxmin ) / 10.0;
+   //hybuck       = ( plymax - plymin ) / 10.0;
+   wxbuck       = ( plxmax - plxmin ) * 0.08;
+   hybuck       = ( plymax - plymin ) * 0.2;
    ct_wxbuck->disconnect( );
    ct_hybuck->disconnect( );
    int    rpwr  = qRound( log10( wxbuck ) );
@@ -1213,8 +1215,10 @@ void US_GA_Initialize::select_autolim()
       set_limits();
    }
 
-   wxbuck       = ( plxmax - plxmin ) / 20.0;
-   hybuck       = ( plymax - plymin ) / 20.0;
+   //wxbuck       = ( plxmax - plxmin ) / 20;
+   //hybuck       = ( plymax - plymin ) / 20;
+   wxbuck       = ( plxmax - plxmin ) * 0.08;
+   hybuck       = ( plymax - plymin ) * 0.2;
    double rmax  = wxbuck * 10.0;
    double rinc  = pow( 10.0, (double)( (int)( log10( rmax ) - 3.0 ) ) );
    ct_wxbuck->disconnect( );
@@ -1532,8 +1536,10 @@ for ( int jj=0;jj<sk_distro.size();jj++ ) {
    soludata->setDistro( sdistro, attr_x, attr_y, attr_z );
 
    nibuks       = 0;
-   wxbuck       = ( plxmax - plxmin ) / 20.0;
-   hybuck       = ( plymax - plymin ) / 20.0;
+   //wxbuck       = ( plxmax - plxmin ) / 20.0;
+   //hybuck       = ( plymax - plymin ) / 20.0;
+   wxbuck       = ( plxmax - plxmin ) * 0.08;
+   hybuck       = ( plymax - plymin ) * 0.2;
    ct_wxbuck->setValue( wxbuck );
    ct_hybuck->setValue( hybuck );
    ct_nisols->setValue( double( nisols ) );
@@ -1677,8 +1683,10 @@ DbgLv(1) << "SL: auto smin,max,inc" << smin << smax << sinc
    }
 
    // Set bucket width,height values
-   wxbuck       = ( plxmax - plxmin ) / 20.0;
-   hybuck       = ( plymax - plymin ) / 20.0;
+   //wxbuck       = ( plxmax - plxmin ) / 20.0;
+   //hybuck       = ( plymax - plymin ) / 20.0;
+   wxbuck       = ( plxmax - plxmin ) * 0.1;
+   hybuck       = ( plymax - plymin ) * 0.2;
    ct_wxbuck->disconnect( );
    ct_hybuck->disconnect( );
    int    spwr  = qRound( log10( wxbuck ) );
@@ -1687,11 +1695,11 @@ DbgLv(1) << "SL: auto smin,max,inc" << smin << smax << sinc
    kmax         = pow( 10.0, kpwr + 3 );
    sinc         = pow( 10.0, spwr - 3 );
    kinc         = pow( 10.0, kpwr - 3 );
-   wxbuck       = qRound( wxbuck / sinc ) * sinc;
+   //wxbuck       = qRound( wxbuck / sinc ) * sinc;
    ct_wxbuck->setRange( 0.0, smax );
    ct_wxbuck->setSingleStep( sinc );
    ct_wxbuck->setValue( wxbuck );
-   hybuck       = qRound( hybuck / kinc ) * kinc;
+   //hybuck       = qRound( hybuck / kinc ) * kinc;
    ct_hybuck->setRange( 0.0, kmax );
    ct_hybuck->setSingleStep( kinc );
    ct_hybuck->setValue( hybuck );
