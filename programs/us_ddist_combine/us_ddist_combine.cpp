@@ -524,7 +524,11 @@ DbgLv(1) << "ii method" << ii << method << "mdes" << distros[ii].mdescr;
    bool hv_2dsagl   = methods.contains( "2DSA-GL"    ) 
                   ||  methods.contains( "2DSA-GL-SG" )
                   ||  methods.contains( "2DSA-GL-SC" )
-                  ||  methods.contains( "2DSA-GL-VR" );
+                  ||  methods.contains( "2DSA-GL-VR" )
+                  ||  methods.contains( "2DSA-GL-IT" )
+                  ||  methods.contains( "2DSA-GL-SG-IT" )
+                  ||  methods.contains( "2DSA-GL-SC-IT" )
+                  ||  methods.contains( "2DSA-GL-VR-IT" );
    bool hv_2dsaglmc = methods.contains( "2DSA-GL-MC" )
                   ||  methods.contains( "2DSA-GL-SG-MC" )
                   ||  methods.contains( "2DSA-GL-SC-MC" )
@@ -1159,7 +1163,11 @@ DbgLv(1) << "RunIDSel:runID" << runID << "distrsize" << distros.size();
       if ( ck_2dsagl  ->isChecked() )  methods << "2DSA-GL"
                                                << "2DSA-GL-SG"
                                                << "2DSA-GL-SC"
-                                               << "2DSA-GL-VR";
+                                               << "2DSA-GL-VR"
+                                               << "2DSA-GL-IT"
+                                               << "2DSA-GL-SG-IT"
+                                               << "2DSA-GL-SC-IT"
+                                               << "2DSA-GL-VR-IT";
       if ( ck_2dsaglmc->isChecked() )  methods << "2DSA-GL-MC"
                                                << "2DSA-GL-SG-MC"
                                                << "2DSA-GL-SC-MC"

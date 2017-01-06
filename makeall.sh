@@ -93,6 +93,7 @@ fi
 
 if [ $DODOX -ne 0 ]; then
   echo "Running doxygen ..."
+  ##doxygen >> $DIR/build.log 2>$DIR/doxy.err
   doxygen >> $DIR/build.log
 else
   echo "NO Doxygen used"

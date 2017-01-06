@@ -32,6 +32,7 @@ class US_EditScan : public US_WidgetsDialog
       bool             dragging;
       int              point;
       int              offset;
+      int              count;
       QList< QPointF > changes;
 
       QwtPlot*         data_plot;
