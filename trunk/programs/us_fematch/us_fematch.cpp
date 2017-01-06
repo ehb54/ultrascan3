@@ -1821,6 +1821,8 @@ DbgLv(1) << "post-Load loadDB" << dkdb_cntrls->db();
 
    ti_noise.count = 0;
    ri_noise.count = 0;
+   ti_noise.values.clear();
+   ri_noise.values.clear();
 
    // see if there are any noise files to load
    if ( ! model_used.editGUID.isEmpty() )

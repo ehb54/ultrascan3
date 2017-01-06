@@ -185,8 +185,10 @@ void US_Plot::zoom( bool on )
       zoomer->setTrackerMode  ( QwtPicker::ActiveOnly );
       zoomer->setTrackerPen   ( QColor( Qt::white ) );
 
+#if QT_VERSION < 0x050000
       connect( zoomer, SIGNAL ( zoomed(        QwtDoubleRect ) ), 
                        SIGNAL ( zoomedCorners( QwtDoubleRect ) ) );
+#endif
       
       panner = new QwtPlotPanner( plot->canvas() );
       panner->setMouseButton( Qt::MidButton );

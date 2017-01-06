@@ -4,7 +4,7 @@
 #include "us_settings.h"
 #include "us_gui_settings.h"
 #if QT_VERSION < 0x050000
-#define setSamples(a,b,c)  setData(a,b,c)
+#define setSamples(a,b,c)  setRawData(a,b,c)
 #define setSymbol(a)       setSymbol(*a)
 #endif
 
@@ -46,22 +46,14 @@ US_EditScan::US_EditScan( US_DataIO::Scan&         s,
    curve = us_curve( data_plot, tr( "Scan Curve" ) );
 
    fgPen = QPen( US_GuiSettings::plotCurve()    );
-   bgPen = QPen( US_GuiSettings::plotCanvasBG() );
 
-   fgSym.setStyle( QwtSymbol::Ellipse );
-   fgSym.setBrush( US_GuiSettings::plotCurve() );
-   fgSym.setPen  ( fgPen );
-   fgSym.setSize ( 6 );
+   QwtSymbol* fgSym = new QwtSymbol;
+   fgSym->setStyle( QwtSymbol::Ellipse );
+   fgSym->setBrush( US_GuiSettings::plotCurve() );
+   fgSym->setPen  ( fgPen );
+   fgSym->setSize ( 6 );
 
-
-//   bgSym = fgSym;
-   bgSym.setStyle( QwtSymbol::Ellipse );
-   bgSym.setBrush( US_GuiSettings::plotCanvasBG() );
-   bgSym.setPen  ( bgPen );
-   bgSym.setSize ( 6 );
-   QwtSymbol* fgSymP = &fgSym;
-
-   curve->setSymbol ( fgSymP );
+   curve->setSymbol ( fgSym );
    curve->attach    ( data_plot );
 
    redraw();
@@ -127,10 +119,14 @@ void US_EditScan::done( void )
 
 void US_EditScan::drag( const QwtDoublePoint& p )
 {
+//qDebug() << "drag() dragging" << dragging;
    // Ignore drag events after Mouse Up
    if ( ! dragging ) return;
 
    values[ point ] = p.y();
+#if QT_VERSION > 0x050000
+   curve->setSamples( radii, values, count );
+#endif
    data_plot->replot();
 }
 
@@ -140,6 +136,7 @@ void US_EditScan::start_drag( QMouseEvent* e )
 
    // Find the nearest point
    point = curve->closestPoint( e->pos() );
+//qDebug() << " start_drag : point" << point << "v(p)" << values[point];
 }
 
 void US_EditScan::end_drag( const QwtDoublePoint& p )
@@ -151,6 +148,10 @@ void US_EditScan::end_drag( const QwtDoublePoint& p )
    // Use offset to provide an index to the full data set
    changes << QPointF( (double)( point + offset ), values[ point ] );
 
+//qDebug() << " end_drag() point" << point << "values[point]" << values[point];
+#if QT_VERSION > 0x050000
+   curve->setSamples( radii, values, count );
+#endif
    data_plot->replot();   
 }
 
@@ -165,7 +166,7 @@ void US_EditScan::reset( void )
 void US_EditScan::redraw( void )
 {
    offset     = 0;
-   int  count = 0;
+   count      = 0;
 
    int indexLeft  = US_DataIO::index( allRadii, range_left );
    int indexRight = US_DataIO::index( allRadii, range_right );
