@@ -490,11 +490,14 @@ DbgLv(1) << "BufS-info:  ii" << ii << "waveln extinc" << waveln << extinc;
 // Display a spectrum dialog for list/manage
 void US_BufferGuiSelect::spectrum( void )
 {
-DbgLv(1) << "BufS:SL: spectrum()  count" << buffer->extinction.count();
-QMessageBox::information( this,
- tr( "INCOMPLETE" ),
- tr( "A new Spectrum dialog is under development." ) );
+  DbgLv(1) << "BufS:SL: spectrum()  count" << buffer->extinction.count();
+  QMessageBox::information( this,
+  tr( "INCOMPLETE" ),
+  tr( "A new Spectrum dialog is under development." ) );
+
 }
+
+
 
 // Remove a selected buffer
 void US_BufferGuiSelect::delete_buffer( void )
@@ -810,7 +813,8 @@ US_BufferGuiNew::US_BufferGuiNew( int *invID, int *select_db_disk,
 
    QPushButton* pb_cancel   = us_pushbutton( tr( "Cancel" ) );
    pb_accept                = us_pushbutton( tr( "Accept" ) );
-   QPushButton* pb_spectrum = us_pushbutton( tr( "Enter Spectrum" ) );
+   pb_spectrum              = us_pushbutton( tr( "Enter Spectrum" ) );
+   //QPushButton* pb_spectrum = us_pushbutton( tr( "Enter Spectrum" ) );
    QPushButton* pb_help     = us_pushbutton( tr( "Help" ) );
 
    QGridLayout* lo_manual   = us_checkbox(
@@ -960,6 +964,7 @@ DbgLv(1) << "BufN:SL: init_buffer   lw_allcomps rebuilt";
    le_ph      ->setText( "7.0000" );
    le_compress->setText( "0.0000e+0" );
    pb_accept  ->setEnabled( false );
+   pb_spectrum->setEnabled( false );
 
    buffer->person       = "";
    buffer->bufferID     = "";
@@ -968,6 +973,7 @@ DbgLv(1) << "BufN:SL: init_buffer   lw_allcomps rebuilt";
    buffer->component    .clear();
    buffer->componentIDs .clear();
    buffer->concentration.clear();
+   buffer->extinction.clear();
 }
 
 // Slot to capture new buffer description
@@ -977,6 +983,31 @@ DbgLv(1) << "BufN:SL: new_description()";
    buffer->description = le_descrip->text();
 DbgLv(1) << "BufN:SL: new_desc:" << buffer->description;
 
+   bool can_accept = ( !le_descrip->text().isEmpty()  &&
+                       !le_density->text().isEmpty()  &&
+                       !le_viscos ->text().isEmpty() );
+   pb_accept  ->setEnabled( can_accept );
+   pb_spectrum  ->setEnabled( can_accept );
+}
+
+// Slot for getting Fitting results from calling US_Extinction routing 
+void US_BufferGuiNew::process_results(QMap < double, double > &xyz)
+{
+  buffer->extinction = xyz;
+  //DbgLv(1) << "BufN:SL: spectrum()  count" << buffer->extinction.count();
+
+  QMap<double, double>::iterator it;
+  QString output;
+
+  for (it = xyz.begin(); it != xyz.end(); ++it) {
+    // Format output here.
+    output += QString(" %1 : %2 /n").arg(it.key()).arg(it.value());
+  }
+
+  QMessageBox::information( this, tr( "Test: Data transmitted" ), tr("Number of keys in extinction QMAP: %1 . You may click 'Accept' from the main window to write new buffer into DB").arg(buffer->extinction.keys().count()) );  
+  //QMessageBox::information( this, tr( "Test: Data transmitted" ), tr("keys: %1").arg(buffer->extinction.keys()) );  
+  //QMessageBox::information( this, tr( "Test: Data transmitted" ), output );  
+  
    bool can_accept = ( !le_descrip->text().isEmpty()  &&
                        !le_density->text().isEmpty()  &&
                        !le_viscos ->text().isEmpty() );
@@ -1069,6 +1100,7 @@ DbgLv(1) << "BufN:SL: adco:   concen" << concen << "newitem" << entext;
                        !le_density->text().isEmpty()  &&
                        !le_viscos ->text().isEmpty() );
    pb_accept->setEnabled( can_accept );
+   pb_spectrum->setEnabled( can_accept );
 }
 
 // Slot for select of buffer component
@@ -1175,6 +1207,7 @@ DbgLv(1) << "BufN:SL: density()" << buffer->density;
                        !le_density->text().isEmpty()  &&
                        !le_viscos ->text().isEmpty() );
    pb_accept  ->setEnabled( can_accept );
+   pb_spectrum  ->setEnabled( can_accept );
 }
 
 // Slot for manually changed pH
@@ -1201,6 +1234,7 @@ DbgLv(1) << "BufN:SL: viscosity()" << buffer->viscosity;
                        !le_density->text().isEmpty()  &&
                        !le_viscos ->text().isEmpty() );
    pb_accept  ->setEnabled( can_accept );
+   pb_spectrum  ->setEnabled( can_accept );
 }
 
 // Slot for manually changed density
@@ -1214,15 +1248,28 @@ DbgLv(1) << "BufN:SL: manual_flag()" << is_on;
 // Display a spectrum dialog for list/manage
 void US_BufferGuiNew::spectrum()
 {
-DbgLv(1) << "BufN:SL: spectrum()  count" << buffer->extinction.count();
-QMessageBox::information( this,
- tr( "INCOMPLETE" ),
- tr( "A new Spectrum dialog is under development." ) );
+  //DbgLv(1) << "BufN:SL: spectrum()  count" << buffer->extinction.count();
+  //QMessageBox::information( this,
+  //tr( "INCOMPLETE" ),
+  //tr( "A new Spectrum dialog is under development." ) );
+
+/// MY ///////////////////////////////////////////////////////////////
+
+  // Call modified us_extinction /////
+
+  
+  //US_Extinction  *w = new US_Extinction("BUFFER", le_descrip->text(), (QWidget*)this); 
+  w = new US_Extinction("BUFFER", le_descrip->text(), (QWidget*)this); 
+  w->setParent(this, Qt::Window);
+  w->setAttribute(Qt::WA_DeleteOnClose);
+  w->show(); 
 }
 
 // Slot to cancel edited buffer
 void US_BufferGuiNew::newCanceled()
 {
+
+  
 DbgLv(1) << "BufN:SL: newCanceled()";
    buffer->person       = "";
    buffer->bufferID     = "-1";
@@ -1241,6 +1288,7 @@ void US_BufferGuiNew::newAccepted()
 DbgLv(1) << "BufN:SL: newAccepted()";
    buffer->GUID         = US_Util::new_guid();
 
+   
    if ( from_db )
    { // Add buffer to database
       write_db  ();

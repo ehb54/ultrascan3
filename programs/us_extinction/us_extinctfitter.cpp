@@ -7,7 +7,7 @@
 
 //using namespace std;
 
-US_ExtinctFitter::US_ExtinctFitter(QVector <struct WavelengthScan> *temp_wls_v, double*& temp_guess, unsigned int& temp_order, unsigned int& temp_parameters, QString& temp_projectName, bool *temp_fitting_widget) : US_Minimize(temp_fitting_widget, true)
+US_ExtinctFitter::US_ExtinctFitter(QVector <struct WavelengthScan> *temp_wls_v, double*& temp_guess, unsigned int& temp_order, unsigned int& temp_parameters, QString& temp_projectName, bool *temp_fitting_widget, bool bufferfit) : US_Minimize(temp_fitting_widget, true)
 {
    guess = temp_guess;
    parameters = temp_parameters;
@@ -15,6 +15,24 @@ US_ExtinctFitter::US_ExtinctFitter(QVector <struct WavelengthScan> *temp_wls_v, 
    wls_v = temp_wls_v;
    runs = 0;
    runs_percent = 0;
+
+   //pb_pause->hide();                // Test - edit what to show/hide, depending on the General/Buffer/Analyte Global Fit
+   //pb_resume->hide();
+   
+   projectName = temp_projectName;
+	connect(pb_overlays, SIGNAL(clicked()), SLOT(plot_overlays()));
+   connect(pb_residuals, SIGNAL(clicked()), SLOT(plot_residuals()));
+}
+
+US_ExtinctFitter::US_ExtinctFitter(QVector <struct WavelengthScan> *temp_wls_v, double*& temp_guess, unsigned int& temp_order, unsigned int& temp_parameters, QString& temp_projectName,  bool *temp_fitting_widget) : US_Minimize(temp_fitting_widget, true)
+{
+   guess = temp_guess;
+   parameters = temp_parameters;
+   order = temp_order;
+   wls_v = temp_wls_v;
+   runs = 0;
+   runs_percent = 0;
+   
    projectName = temp_projectName;
 	connect(pb_overlays, SIGNAL(clicked()), SLOT(plot_overlays()));
    connect(pb_residuals, SIGNAL(clicked()), SLOT(plot_residuals()));

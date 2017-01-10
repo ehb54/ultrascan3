@@ -5,6 +5,7 @@
 #include "us_license_t.h"
 #include "us_license.h"
 #include "us_settings.h"
+#include "us_buffer_gui.h"
 
 #if QT_VERSION < 0x050000
 #define setSamples(a,b,c) setData(a,b,c)
@@ -22,12 +23,50 @@ int main( int argc, char* argv[] )
 
    // License is OK.  Start up.
 
-   US_Extinction  w;
+   US_Extinction w;
    w.show();                   //!< \memberof QWidget
    return application.exec();  //!< \memberof QApplication
 }
 
+
 // Constructor
+
+US_Extinction::US_Extinction(QString buffer, const QString& text, QWidget* parent) : US_Extinction()  
+{
+    
+  //mode_select(buffer);
+  buffer_temp = buffer;
+  
+  this->parent = parent;
+
+  
+  
+  //( ( US_BufferGuiNew *) parent)->....; // check if parent is active OR 
+  
+  //connect(SIGNAL( get_results(vector < double > & )), SLOT( parent->proces_results( vector < double > & ) ) );
+  connect(this, SIGNAL( get_results(QMap < double, double > & )), parent, SLOT(process_results( QMap < double, double > & ) ) );
+
+  if (buffer_temp.toStdString() == "BUFFER")
+    {  
+      pb_perform->hide();              // Tell what to show/hide, or edit Layout
+      pb_perform_buffer->show();
+      
+      pb_calculate->hide();
+      lbl_peptide->hide();
+      lbl_coefficient->hide();
+      ct_coefficient->hide();
+      le_coefficient->hide();
+ 
+      le_associate->hide();
+      le_associate_buffer->setText(text);
+      le_associate_buffer->show();
+     
+      pb_save->hide();
+      pb_accept->show();
+    }
+  
+}
+ 
 US_Extinction::US_Extinction() : US_Widgets()
 {
 	disk_controls = new US_Disk_DB_Controls(0);
@@ -55,12 +94,24 @@ US_Extinction::US_Extinction() : US_Widgets()
         connect( pb_reset, SIGNAL( clicked()), SLOT(reset_scanlist()));
 	pb_update = us_pushbutton( tr( "Update Data Plot"));
 	connect( pb_update, SIGNAL( clicked()), SLOT(update_data()));
+	
 	pb_perform = us_pushbutton( tr( "Perform Global Fit") );
 	connect( pb_perform, SIGNAL( clicked()), SLOT(perform_global()));
+	
+	pb_perform_buffer = us_pushbutton( tr( "Perform Buffer Fit") );            // New button for 'Fit Buffer...'
+	connect( pb_perform_buffer, SIGNAL( clicked()), SLOT(perform_global_buffer()));
+	pb_perform_buffer->hide();
+	
 	pb_calculate = us_pushbutton( tr( "Calculate E280 from Peptide File") );
 	connect( pb_calculate, SIGNAL( clicked()), SLOT(calculateE280()));
+
 	pb_save = us_pushbutton( tr( "Save") );
 	connect( pb_save, SIGNAL( clicked()), SLOT(save()));
+	
+	pb_accept = us_pushbutton( tr( "Accept") );                                 // New button for 'Fit Buffer...' 
+	connect( pb_accept, SIGNAL( clicked()), SLOT(accept()));
+	pb_accept->hide();
+
 	pb_view = us_pushbutton( tr( "View Result File") );
 	connect( pb_view, SIGNAL( clicked()), SLOT(view_result()));
 	pb_help = us_pushbutton( tr( "Help") );
@@ -82,6 +133,9 @@ US_Extinction::US_Extinction() : US_Widgets()
 	connect(lw_file_names, SIGNAL(itemDoubleClicked(QListWidgetItem*)), SLOT(deleteCurve()));
 	
 	le_associate = us_lineedit("Simulation",1, false);
+	le_associate_buffer = us_lineedit("",1, true);
+	le_associate_buffer->hide();
+
 	le_odCutoff = us_lineedit("1.500", 1, false);
 	le_lambdaLimitLeft = us_lineedit("200.0", 1, false);
    le_lambdaLimitRight = us_lineedit("1500.0",1, false);
@@ -109,7 +163,8 @@ US_Extinction::US_Extinction() : US_Widgets()
 	QGridLayout* gl1;
 	gl1 = new QGridLayout();
 	gl1->addWidget(lbl_associate, 0, 0);
-	gl1->addWidget(le_associate, 0, 1);	
+	gl1->addWidget(le_associate, 0, 1);
+	gl1->addWidget(le_associate_buffer, 0, 1);
 		
 	QGridLayout* gl2;
 	gl2 = new QGridLayout();
@@ -144,11 +199,16 @@ US_Extinction::US_Extinction() : US_Widgets()
 	submain->addWidget(pb_reset, 4, 0);
    submain->addWidget(pb_update, 5, 0);
    submain->addWidget(pb_perform, 6, 0);
+   submain->addWidget(pb_perform_buffer, 6, 0);
+
 	submain->addLayout(gl2, 7, 0);
    submain->addWidget(lbl_peptide, 8, 0);
 	submain->addWidget(pb_calculate, 9, 0);
 	submain->addLayout(gl3, 10, 0);
+
    submain->addWidget(pb_save, 11, 0);
+   submain->addWidget(pb_accept, 11, 0); 
+
    submain->addWidget(pb_view, 12, 0);
    submain->addWidget(pb_help, 14, 0);
    submain->addWidget(pb_close, 15, 0);
@@ -485,9 +545,57 @@ bool US_Extinction::deleteCurve(void)
 	return(true);
 }
 
+///////////////////////////////////////////////////////////
+
+void US_Extinction::perform_global_buffer(void)
+{
+  if (v_wavelength.size() < 1)
+   {
+      QMessageBox message;
+		message.setWindowTitle(tr("Ultrascan Error:"));
+		message.setText(tr("You will need at least 1 scan \nto perform a global fit.\n\nPlease scan(s) before attempting\na global fit."));
+		message.exec();
+      return;
+   }
+  
+   fitting_widget = false;
+   parameters = order * 3 + v_wavelength.size();
+   fitparameters = new double [parameters];
+   for (int i=0; i<v_wavelength.size(); i++)
+   {
+      fitparameters[i] = 0.3;
+   }
+   float lambda_step = (lambda_max - lambda_min)/(order+1); // create "order" peaks evenly distributed over the range
+   for (unsigned int i=0; i<order; i++)
+	{
+		fitparameters[v_wavelength.size() + (i * 3) ] = 1;
+      // spread out the peaks
+      fitparameters[v_wavelength.size() + (i * 3) + 1] = lambda_min + lambda_step * i;
+      fitparameters[v_wavelength.size() + (i * 3) + 2] = 10;
+   }
+	//opens the fitting GUI
+
+   
+   fitter = new US_ExtinctFitter(&v_wavelength, fitparameters, order, parameters,
+				 projectName, &fitting_widget, true);
+ 
+   //fitter->setParent(this, Qt::Window);
+   fitter->setParent(this, Qt::Window);
+   
+   fitter->show();
+ 
+   
+	fitted = true;
+	//causes the fitted line to plot after the fitting widget is closed
+   connect(fitter, SIGNAL(fittingWidgetClosed()), SLOT(plot()));
+   //data_plot->enableOutline(true);
+}
+/////////////////////////////////////////////////////////////////////
+
+
 void US_Extinction::perform_global(void)
 {
-	if (v_wavelength.size() < 2)
+  if (v_wavelength.size() < 2)
    {
       QMessageBox message;
 		message.setWindowTitle(tr("Ultrascan Error:"));
@@ -511,9 +619,14 @@ void US_Extinction::perform_global(void)
       fitparameters[v_wavelength.size() + (i * 3) + 2] = 10;
    }
 	//opens the fitting GUI
+
+   
    fitter = new US_ExtinctFitter(&v_wavelength, fitparameters, order, parameters,
-                                    projectName, &fitting_widget);
+				 projectName, &fitting_widget);
+ 
+   fitter->setParent(this, Qt::Window);
    fitter->show();
+ 
 	fitted = true;
 	//causes the fitted line to plot after the fitting widget is closed
    connect(fitter, SIGNAL(fittingWidgetClosed()), SLOT(plot()));
@@ -561,14 +674,14 @@ void US_Extinction::calc_extinction()
          od_wavelength = od;
       }
    }
-	if(od_wavelength != 0)
-	{
-   	for (int i=0; i<extinction.size(); i++)
-   	{
-      	extinction[i] = extinction_coefficient * (extinction[i]/od_wavelength);
-   	}
-	}
-	delete[] fitparameters;
+   if(od_wavelength != 0 )
+     {
+       for (int i=0; i<extinction.size(); i++)
+	 {
+	   extinction[i] = extinction_coefficient * (extinction[i]/od_wavelength);
+	 }
+     }
+   delete[] fitparameters;
 }
 
 //Changes number of Gaussians used to create the best fit curve
@@ -597,6 +710,28 @@ void US_Extinction::accessAnalyteExtinc(US_Analyte data)
 	le_coefficient->setText(QString::number(data.extinction[wavelengthNum]));	
 	currentAnalyte = data;
 }
+
+void US_Extinction::accept(void)
+{  
+  if(!fitted)
+	{
+   	QMessageBox mBox;
+		mBox.setWindowTitle(tr("Ultrascan Error:"));
+   	mBox.setText(tr("You have not yet performed the Buffer fit. There is no data to save."));
+   	mBox.exec();
+	return;
+	}
+
+  QMap <double, double> to_send;
+  for (int i=0; i<lambda.size(); i++)
+    {
+      double curr_lambda = lambda[i];
+      to_send[ curr_lambda ] = extinction[i];
+    }
+  emit get_results( to_send );   // Send fitting data
+   
+}
+
 void US_Extinction::save(void)
 {
 	if(!fitted)
@@ -605,7 +740,7 @@ void US_Extinction::save(void)
 		mBox.setWindowTitle(tr("Ultrascan Error:"));
    	mBox.setText(tr("You have not yet performed the global fit. There is no data to save."));
    	mBox.exec();
-		return;
+	return;
 	}
 
    QString filename = QFileDialog::getSaveFileName(this, "Save File", "/home/minji/ultrascan/results/", "*.extinction.dat");
