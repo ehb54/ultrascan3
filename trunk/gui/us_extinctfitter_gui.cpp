@@ -1,4 +1,4 @@
-#include "us_extinctfitter.h"
+#include "us_extinctfitter_gui.h"
 //#include <iostream>
 #if QT_VERSION < 0x050000
 #define setSamples(a,b,c) setData(a,b,c)

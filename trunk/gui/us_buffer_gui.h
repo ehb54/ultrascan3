@@ -9,9 +9,9 @@
 #include "us_help.h"
 
 #include "us_minimize.h"
+#include "us_extinction_gui.h"
+#include "us_extinctfitter_gui.h"
 
-#include "../programs/us_extinction/us_extinction.h"
-#include "../programs/us_extinction/us_extinctfitter.h"
 
 #ifndef DbgLv
 #define DbgLv(a) if(dbg_level>=a)qDebug()  //!< debug-level-conditioned qDebug()

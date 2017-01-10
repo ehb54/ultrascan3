@@ -36,6 +36,8 @@ HEADERS      = \
                us_data_loader.h         \
                us_editor.h              \
                us_editor_gui.h          \
+               us_extinction_gui.h      \
+               us_extinctfitter_gui.h   \
                us_gui_settings.h        \
                us_gui_util.h            \
                us_help.h                \
@@ -68,14 +70,10 @@ HEADERS      = \
                us_tmst_plot.h           \
                us_widgets.h             \
                us_widgets_dialog.h      \
-               ../programs/us_extinction/us_extinction.h \
-               ../programs/us_extinction/us_extinctfitter.h \
                us_window_message.h
 
 SOURCES      = \
                us_abstractrotor_gui.cpp   \
-               ../programs/us_extinction/us_extinction.cpp \
-               ../programs/us_extinction/us_extinctfitter.cpp \
                us_analysis_base2.cpp      \
                us_analyte_gui.cpp         \
                us_associations_gui.cpp    \
@@ -85,6 +83,8 @@ SOURCES      = \
                us_data_loader.cpp         \
                us_editor.cpp              \
                us_editor_gui.cpp          \
+               us_extinction_gui.cpp      \
+               us_extinctfitter_gui.cpp   \
                us_gui_settings.cpp        \ 
                us_gui_util.cpp            \ 
                us_help.cpp                \

@@ -2,6 +2,6 @@ include( ../../gui.pri )
 
 TARGET        = us_extinction
 
-HEADERS       = us_extinction.h us_extinctfitter.h
+HEADERS       = ../../gui/us_extinction_gui.h 
 
-SOURCES       = us_extinction.cpp us_extinctfitter.cpp
+SOURCES       = us_extinction_main.cpp 

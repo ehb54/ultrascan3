@@ -1,12 +1,12 @@
-#ifndef US_EXTINCTION_H
-#define US_EXTINCTION_H
+#ifndef US_EXTINCTION_GUI_H
+#define US_EXTINCTION_GUI_H
 //#include <QApplication>
 //#include <QtGui>
 
 #include "us_widgets.h"
 #include "us_plot.h"
 #include "us_minimize.h"
-#include "us_extinctfitter.h"
+#include "us_extinctfitter_gui.h"
 #include "us_analyte_gui.h"
 
 class US_Extinction : public US_Widgets

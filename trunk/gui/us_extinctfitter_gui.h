@@ -1,5 +1,5 @@
-#ifndef US_EXTINCTFITTER_H
-#define US_EXTINCTFITTER_H
+#ifndef US_EXTINCTFITTER_GUI_H
+#define US_EXTINCTFITTER_GUI_H
 
 #include <QApplication>
 #include <QtGui>
