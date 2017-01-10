@@ -9,7 +9,7 @@
 #include "us_extinctfitter_gui.h"
 #include "us_analyte_gui.h"
 
-class US_Extinction : public US_Widgets
+class US_GUI_EXTERN US_Extinction : public US_Widgets
 {
 	Q_OBJECT
 
