@@ -21,7 +21,7 @@ struct WavelengthScan
 };
 
 
-class US_ExtinctFitter : public US_Minimize
+class US_GUI_EXTERN US_ExtinctFitter : public US_Minimize
 {
 	Q_OBJECT
 	

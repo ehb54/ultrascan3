@@ -13,7 +13,7 @@
 
 // Constructor
 
-US_Extinction::US_Extinction(QString buffer, const QString& text, QWidget* parent) : US_Extinction()  
+US_Extinction::US_Extinction(QString buffer, const QString& text, QWidget* parent) : US_Widgets()  
 {
     
   //mode_select(buffer);
@@ -560,6 +560,8 @@ void US_Extinction::perform_global_buffer(void)
    
    fitter = new US_ExtinctFitter(&v_wavelength, fitparameters, order, parameters,
 				 projectName, &fitting_widget, true);
+//   fitter = new US_ExtinctFitter(&v_wavelength, fitparameters, order, parameters,
+//				 projectName, &fitting_widget );
  
    //fitter->setParent(this, Qt::Window);
    fitter->setParent(this, Qt::Window);

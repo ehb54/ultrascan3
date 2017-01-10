@@ -38,10 +38,11 @@ win32 {
   INCLUDEPATH            += ../qwtplot3d/include
 
   LIBS                   += $$QWTLIB
+  ##LIBS                   += $$QTMYSQLPATH/libqsqlmysql.a
   LIBS                   += $$MYSQLLIB
-  LIBS                   += $$QTMYSQLPATH/libqsqlmysql4.a
+  LIBS                   += -L$$OPENSSL -lssl -lcrypto
   ##LIBS                   += $${OPENSSL}/lib/libeay32.a
-  LIBS                   += $${OPENSSL}/lib/libcrypto.a
+  ##LIBS                   += $${OPENSSL}/lib/libcrypto.a
   LIBS                   += $$MINGWDIR/lib/libws2_32.a $$MINGWDIR/lib/libadvapi32.a
   LIBS                   += $$MINGWDIR/lib/libgdi32.a $$MINGWDIR/lib/libuser32.a
   LIBS                   += $$MINGWDIR/lib/libkernel32.a $$MINGWDIR/lib/libpsapi.a
