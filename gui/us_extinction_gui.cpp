@@ -21,14 +21,184 @@ US_Extinction::US_Extinction(QString buffer, const QString& text, QWidget* paren
   
   this->parent = parent;
 
-  
-  
+    
   //( ( US_BufferGuiNew *) parent)->....; // check if parent is active OR 
   
   //connect(SIGNAL( get_results(vector < double > & )), SLOT( parent->proces_results( vector < double > & ) ) );
   connect(this, SIGNAL( get_results(QMap < double, double > & )), parent, SLOT(process_results( QMap < double, double > & ) ) );
 
-  if (buffer_temp.toStdString() == "BUFFER")
+  	disk_controls = new US_Disk_DB_Controls(0);
+	//default values for limits on the graph
+	lambdaLimitLeft = 200.0;
+   lambdaLimitRight = 1500.0;
+ 	lambda_min = 1000;
+	lambda_max = -1000;
+	odCutoff = 1.5;
+	
+	//length of cuvette
+	pathlength = (float) 1.2;
+	
+	//number of Gaussians to fit
+	order = 15;
+
+	//whether data has been fitted
+	fitted = false;
+
+	//Connect all the buttons on the GUI to their proper functions
+	v_wavelength.clear();
+	pb_addWavelength = us_pushbutton( tr( "Add Wavelength Scanfile") );
+	connect( pb_addWavelength, SIGNAL( clicked()), SLOT(add_wavelength()));
+  	pb_reset = us_pushbutton( tr( "Reset Scanlist") );
+        connect( pb_reset, SIGNAL( clicked()), SLOT(reset_scanlist()));
+	pb_update = us_pushbutton( tr( "Update Data Plot"));
+	connect( pb_update, SIGNAL( clicked()), SLOT(update_data()));
+	
+	pb_perform = us_pushbutton( tr( "Perform Global Fit") );
+	connect( pb_perform, SIGNAL( clicked()), SLOT(perform_global()));
+	pb_perform->hide();
+
+	
+	pb_perform_buffer = us_pushbutton( tr( "Perform Buffer Fit") );            // New button for 'Fit Buffer...'
+	connect( pb_perform_buffer, SIGNAL( clicked()), SLOT(perform_global_buffer()));
+	//pb_perform_buffer->hide();
+	
+	pb_calculate = us_pushbutton( tr( "Calculate E280 from Peptide File") );
+	connect( pb_calculate, SIGNAL( clicked()), SLOT(calculateE280()));
+	pb_calculate->hide();
+
+	pb_save = us_pushbutton( tr( "Save") );
+	connect( pb_save, SIGNAL( clicked()), SLOT(save()));
+	pb_save->hide();
+
+	pb_accept = us_pushbutton( tr( "Accept") );                                 // New button for 'Fit Buffer...' 
+	connect( pb_accept, SIGNAL( clicked()), SLOT(accept()));
+	//pb_accept->hide();
+
+	pb_view = us_pushbutton( tr( "View Result File") );
+	connect( pb_view, SIGNAL( clicked()), SLOT(view_result()));
+	pb_help = us_pushbutton( tr( "Help") );
+	connect( pb_help, SIGNAL( clicked()), SLOT(help()));
+	pb_close = us_pushbutton( tr( "Close") );
+	connect( pb_close, SIGNAL( clicked()), SLOT(close()));
+	
+	lbl_peptide = us_banner(tr("Peptide Information"));
+	lbl_peptide->hide();
+	
+
+
+	lbl_wvinfo = us_banner(tr("Wavelength Information:"));
+	lbl_associate = us_label(tr("Associate with Run:"));
+	lbl_gaussians = us_label(tr("# of Gaussians: "));
+	lbl_cutoff = us_label(tr("OD Cutoff:"));
+   lbl_lambda1 = us_label(tr("Lower Lambda Limit"));
+   lbl_lambda2 = us_label(tr("Upper Lambda Limit "));
+	lbl_pathlength = us_label(tr("Pathlength:"));
+
+	lbl_coefficient = us_label(tr("Extinction Coeff.:"));
+	lbl_coefficient->hide();
+
+
+	lw_file_names = us_listwidget();
+	connect(lw_file_names, SIGNAL(itemSelectionChanged()), SLOT(listToCurve()));
+	connect(lw_file_names, SIGNAL(itemDoubleClicked(QListWidgetItem*)), SLOT(deleteCurve()));
+	
+	le_associate = us_lineedit("Simulation",1, false);
+	le_associate->hide();
+
+	le_associate_buffer = us_lineedit("",1, true);
+	//le_associate_buffer->hide();
+
+	le_odCutoff = us_lineedit("1.500", 1, false);
+	le_lambdaLimitLeft = us_lineedit("200.0", 1, false);
+   le_lambdaLimitRight = us_lineedit("1500.0",1, false);
+   le_pathlength = us_lineedit("1.2000", 1, false);
+
+	le_coefficient = us_lineedit("1.0000",1, false);
+	le_coefficient->hide();
+
+	ct_gaussian = us_counter(2, 1, 50, 15);
+	ct_gaussian->setSingleStep(1);
+	ct_gaussian->setEnabled(true);
+	connect(ct_gaussian, SIGNAL(valueChanged(double)), SLOT(update_order(double)));
+
+	ct_coefficient = us_counter(2, 200, 1500, 280);
+	ct_coefficient->setSingleStep(1);
+	ct_coefficient->setEnabled(true);
+	ct_coefficient->hide();
+
+
+	data_plot = new QwtPlot();
+	changedCurve = NULL;
+	plotLayout = new US_Plot(data_plot, tr(""), tr("Wavelength(nm)"), tr("Optical Density"));
+	data_plot->setCanvasBackground(Qt::black);
+	data_plot->setTitle("Absorbance and Extinction Profile");
+	data_plot->setMinimumSize(560, 240);
+	data_plot->enableAxis(1, true);
+	data_plot->setAxisTitle(1, "Extinction OD/(mol*cm)");
+	
+	QGridLayout* gl1;
+	gl1 = new QGridLayout();
+	gl1->addWidget(lbl_associate, 0, 0);
+	gl1->addWidget(le_associate, 0, 1);
+	gl1->addWidget(le_associate_buffer, 0, 1);
+		
+	QGridLayout* gl2;
+	gl2 = new QGridLayout();
+	gl2->addWidget(lbl_gaussians, 0, 0);
+	gl2->addWidget(ct_gaussian, 0, 1);
+        gl2->addWidget(lbl_cutoff, 1, 0);
+        gl2->addWidget(le_odCutoff, 1, 1);
+        gl2->addWidget(lbl_lambda1, 2, 0);
+	gl2->addWidget(ct_gaussian, 0, 1);
+   gl2->addWidget(lbl_cutoff, 1, 0);
+   gl2->addWidget(le_odCutoff, 1, 1);
+   gl2->addWidget(lbl_lambda1, 2, 0);
+   gl2->addWidget(le_lambdaLimitLeft, 2, 1);
+   gl2->addWidget(lbl_lambda2, 3, 0);
+   gl2->addWidget(le_lambdaLimitRight, 3, 1);
+   gl2->addWidget(lbl_pathlength, 4, 0);
+   gl2->addWidget(le_pathlength, 4, 1);
+
+	QGridLayout* gl3;
+	gl3 = new QGridLayout();
+	gl3->addWidget(lbl_coefficient, 0, 0);
+	gl3->addWidget(ct_coefficient, 0, 1);
+	gl3->addWidget(le_coefficient, 1, 1);
+
+	QGridLayout* submain;
+	submain = new QGridLayout();
+	submain-> setColumnStretch(0,1);
+	submain->addWidget(lbl_wvinfo, 0,0);
+	submain->addWidget(pb_addWavelength, 1, 0);
+	submain->addWidget(lw_file_names, 2, 0);
+	submain->addLayout(gl1, 3, 0);
+	submain->addWidget(pb_reset, 4, 0);
+   submain->addWidget(pb_update, 5, 0);
+   submain->addWidget(pb_perform, 6, 0);
+   submain->addWidget(pb_perform_buffer, 6, 0);
+
+	submain->addLayout(gl2, 7, 0);
+   submain->addWidget(lbl_peptide, 8, 0);
+	submain->addWidget(pb_calculate, 9, 0);
+	submain->addLayout(gl3, 10, 0);
+
+   submain->addWidget(pb_save, 11, 0);
+   submain->addWidget(pb_accept, 11, 0); 
+
+   submain->addWidget(pb_view, 12, 0);
+   submain->addWidget(pb_help, 14, 0);
+   submain->addWidget(pb_close, 15, 0);
+	
+	QGridLayout* main;
+	main = new QGridLayout(this);
+   main->setSpacing(2);
+   main->setContentsMargins(2,2,2,2);
+	main->addLayout(submain, 0, 0);
+	main->addLayout(plotLayout, 0, 1);
+
+
+
+  /*  if (buffer_temp.toStdString() == "BUFFER")
     {  
       pb_perform->hide();              // Tell what to show/hide, or edit Layout
       pb_perform_buffer->show();
@@ -46,7 +216,7 @@ US_Extinction::US_Extinction(QString buffer, const QString& text, QWidget* paren
       pb_save->hide();
       pb_accept->show();
     }
-  
+  */
 }
  
 US_Extinction::US_Extinction() : US_Widgets()
