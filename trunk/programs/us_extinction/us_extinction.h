@@ -15,6 +15,9 @@ class US_Extinction : public US_Widgets
 
 	public:
 		US_Extinction();
+
+		US_Extinction(QString temp_mode, const QString &text, QWidget *parent);
+
 		QVector <QString> filenames;
 		US_ExtinctFitter *fitter;
 		US_Disk_DB_Controls* disk_controls;
@@ -25,10 +28,15 @@ class US_Extinction : public US_Widgets
 		unsigned int order, parameters;
 		double *fitparameters;
 	   bool fitted, fitting_widget;
+	   QString buffer_temp;
+	   
 
 	private:
    QVector <WavelengthScan> v_wavelength;
    QVector <QwtPlotCurve*>  v_curve;
+   
+   QWidget * parent;
+
    QString projectName, filename_one, filename_two;
 	unsigned int maxrange;
 	float odCutoff, lambdaLimitLeft, lambdaLimitRight,lambda_min, lambda_max,
@@ -46,13 +54,20 @@ class US_Extinction : public US_Widgets
 	QPushButton* 	pb_addWavelength;
 	QPushButton* 	pb_reset;
 	QPushButton* 	pb_update;
+
 	QPushButton* 	pb_perform;
+	QPushButton* 	pb_perform_buffer;
+	QPushButton* 	pb_accept;
+
 	QPushButton* 	pb_calculate;
 	QPushButton* 	pb_save;
 	QPushButton* 	pb_view;
 	QPushButton* 	pb_help;
 	QPushButton* 	pb_close;
+
 	QLineEdit*	 	le_associate;
+	QLineEdit*	 	le_associate_buffer;
+
 	QLineEdit* 		le_odCutoff;
 	QLineEdit* 		le_lambdaLimitLeft;
 	QLineEdit* 		le_lambdaLimitRight;
@@ -72,7 +87,11 @@ class US_Extinction : public US_Widgets
 	void 	reading(QStringList);
 	void	reset_scanlist (void);
 	void 	update_data(void);
+
 	void 	perform_global(void);
+	void 	perform_global_buffer(void);
+	void 	accept(void);
+
 	void 	calculateE280(void);
 	void 	save(void);
 	void 	view_result(void);
@@ -83,5 +102,9 @@ class US_Extinction : public US_Widgets
 	void 	listToCurve();
 	bool 	deleteCurve();
 	void	accessAnalyteExtinc(US_Analyte);
+
+ signals:
+	void get_results(QMap < double, double > &xyz);	
+
 };
 #endif	

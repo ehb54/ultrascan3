@@ -12,6 +12,7 @@
 //using namespace std;
 
 //Constructor
+
 US_Minimize::US_Minimize(bool *temp_fitting_widget, bool temp_GUI) : US_Widgets()
 {
    GUI = temp_GUI;
@@ -800,7 +801,7 @@ int US_Minimize::Fit()
 	 fit_timers.start_timer( "Cholesky SolveSystem calc" );
          matrix->Cholesky_SolveSystem(LL_transpose, B, parameters);
 	 fit_timers.end_timer( "Cholesky SolveSystem calc" );
-//	 qDebug().noquote() << fit_timers.list_times();
+ 	 qDebug().noquote() << fit_timers.list_times();
          // Now B is changed to R (the difference between the current parameter estimate with the "true" parameter)
 
          switch (nlsMethod)

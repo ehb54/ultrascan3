@@ -19,8 +19,8 @@ unix {
     INCLUDEPATH  += ../utils  
   }
   else {
-    DEPENDPATH   += ../gui ../utils $$QWTPATH/include
-    INCLUDEPATH  += ../gui ../utils $$QWTPATH/include $$QWT3D/include
+    DEPENDPATH   += ../programs ../gui ../utils  $$QWTPATH/include
+    INCLUDEPATH  += ../programs ../gui ../utils  $$QWTPATH/include $$QWT3D/include
     INCLUDEPATH  += $$MYSQLPATH
   }
   DEFINES      += INTEL LINUX

@@ -28,6 +28,7 @@ class US_ExtinctFitter : public US_Minimize
 	public:
 
 	US_ExtinctFitter(QVector <struct WavelengthScan> *, double*&, unsigned int&, unsigned int&, QString&, bool *);
+	US_ExtinctFitter(QVector <struct WavelengthScan> *, double*&, unsigned int&, unsigned int&, QString&, bool *, bool);
 	
 	private: 
 		QVector <struct WavelengthScan> *wls_v;
@@ -35,6 +36,7 @@ class US_ExtinctFitter : public US_Minimize
 		US_Editor *e;
 		QString htmlDir;
 		unsigned int order;
+	        
 	
 	private slots:
 		void cleanup();

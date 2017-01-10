@@ -7,6 +7,12 @@
 #include "us_widgets.h"
 #include "us_buffer.h"
 #include "us_help.h"
+
+#include "us_minimize.h"
+
+#include "../programs/us_extinction/us_extinction.h"
+#include "../programs/us_extinction/us_extinctfitter.h"
+
 #ifndef DbgLv
 #define DbgLv(a) if(dbg_level>=a)qDebug()  //!< debug-level-conditioned qDebug()
 #endif
@@ -133,7 +139,9 @@ class US_BufferGuiNew : public US_Widgets
                                  buffer (for editing and adding new buffers)
       */
       US_BufferGuiNew( int*, int*, US_Buffer* );
-
+      US_Extinction *w;
+      
+            
    signals:
       void newBufAccepted( void );  //! New buffer accepted
       void newBufCanceled( void );
@@ -145,9 +153,12 @@ class US_BufferGuiNew : public US_Widgets
       bool          from_db;
       int           dbg_level;
 
+            
       US_Buffer*    buffer;
 
       QPushButton*  pb_accept;
+      QPushButton*  pb_spectrum;
+
       QLabel*       lb_bselect;
 
       QLineEdit*    le_descrip;
@@ -190,6 +201,9 @@ class US_BufferGuiNew : public US_Widgets
 
    public slots:
       void init_buffer		( void );
+      
+      void process_results( QMap < double, double > &xyz );
+
 };
 
 //! \class US_BufferGuiEdit

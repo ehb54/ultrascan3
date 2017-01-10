@@ -134,7 +134,7 @@
         <viscosityCoefficients c0="0.99945" c1="51.50960" c2="31.61080" c3="480.64800" c4="-1093.27600" c5="0.00000"/>
     </component>
     <component id="4" name="Acetone" unit="mM" range="0-1.697 M" gradient_forming="0">
-        <densityCoefficients c0="0.99797" c1="1.14200" c2="-0.94445" c3="-0.02865" c4="6.56450" c5="-201.13000"/>
+        <densityCoefficients c0="0.99797" c1="1.14200" c2="-0.94445" c3="-0.02865" c4="6.56450" c5="-201.00000"/>
         <viscosityCoefficients c0="1.01832" c1="-95.42000" c2="25.01600" c3="-31.73000" c4="30.00000" c5="0.00000"/>
     </component>
     <component id="40" name="Methanol" unit="mM" range="0-19.901 M" gradient_forming="0">

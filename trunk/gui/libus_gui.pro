@@ -68,10 +68,14 @@ HEADERS      = \
                us_tmst_plot.h           \
                us_widgets.h             \
                us_widgets_dialog.h      \
+               ../programs/us_extinction/us_extinction.h \
+               ../programs/us_extinction/us_extinctfitter.h \
                us_window_message.h
 
 SOURCES      = \
                us_abstractrotor_gui.cpp   \
+               ../programs/us_extinction/us_extinction.cpp \
+               ../programs/us_extinction/us_extinctfitter.cpp \
                us_analysis_base2.cpp      \
                us_analyte_gui.cpp         \
                us_associations_gui.cpp    \
