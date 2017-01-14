@@ -4,6 +4,7 @@
 #include "us_pcsa.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"
+#include "us_gui_util.h"
 #include "us_math2.h"
 #include "us_sleep.h"
 
@@ -436,7 +437,7 @@ DbgLv(1) << "Log-varia Log-xnorm" << lgv << lgx << "vscl xscl" << vscl << xscl;
 // Plot the data
 void US_RpScan::plot_data()
 {
-   data_plot1->detachItems();
+   dataPlotClear( data_plot1 );
 
    if ( nalpha > 1 )
    {

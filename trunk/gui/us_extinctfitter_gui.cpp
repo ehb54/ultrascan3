@@ -1,5 +1,5 @@
 #include "us_extinctfitter_gui.h"
-//#include <iostream>
+#include "us_gui_util.h"
 #if QT_VERSION < 0x050000
 #define setSamples(a,b,c) setData(a,b,c)
 #define setSymbol(a) setSymbol(*a)
@@ -414,8 +414,7 @@ void US_ExtinctFitter::plot_overlays()
    //symbol->setStyle(QwtSymbol::Ellipse);
    
    //qDebug() << "Starting plot overlay 2a: "  ;
-   data_plot->detachItems();
-   //data_plot->detachItems(QwtPlotItem::Rtti_PlotItem, true);
+   dataPlotClear( data_plot );
       
    us_grid(data_plot);
    
@@ -598,7 +597,7 @@ void US_ExtinctFitter::plot_residuals()
    //symbol->setStyle(QwtSymbol::Ellipse);
 
    qDebug() << "Plot_residuals: Detaching Items..: "  ;
-   data_plot->detachItems();
+   dataPlotClear( data_plot );
    qDebug() << "Plot_residuals: DETACHED.. "  ;
    
    us_grid(data_plot);

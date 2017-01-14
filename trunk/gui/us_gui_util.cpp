@@ -86,10 +86,13 @@ int US_GuiUtil::save_png( const QString& filename, const QwtPlot* plot )
 
    if ( filename.endsWith( ".png" ) )
    {  // Save the file as a PNG version
+#if QT_VERSION > 0x050000
+      QPixmap pixmap = ((QWidget*)plot)->grab();
+#else
       int pw  = plot->width();
       int ph  = plot->height();
-
       QPixmap pixmap = QPixmap::grabWidget( (QWidget*)plot, 0, 0, pw, ph );
+#endif
       if ( ! pixmap.save( filename ) )
          status = 2;
    }

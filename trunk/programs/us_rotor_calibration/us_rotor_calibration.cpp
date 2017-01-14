@@ -11,6 +11,7 @@
 #include "us_db2.h"
 #include "us_license.h"
 #include "us_gui_settings.h"
+#include "us_gui_util.h"
 #include "us_run_details2.h"
 #include "us_passwd.h"
 #include "us_get_dbexp.h"
@@ -185,9 +186,7 @@ void US_RotorCalibration::reset()
    data.scanData.clear();
    allData.clear();
 
-//   data_plot    ->detachItems(QwtPlotItem::Rtti_PlotCurve);
-//   data_plot    ->clear();
-   data_plot    ->detachItems();
+   dataPlotClear( data_plot );
    data_plot    ->replot();
    plot->btnZoom->setChecked(false);
 
@@ -528,9 +527,7 @@ void US_RotorCalibration::loadDB(void)
 // filter out desired cells only, and show only upper or lower regions
 void US_RotorCalibration::plotAll(void)
 {
-//   data_plot->detachItems(QwtPlotItem::Rtti_PlotCurve);
-//   data_plot->clear();
-   data_plot->detachItems();
+   dataPlotClear( data_plot );
    data_plot->setTitle(tr("Intensity Data"));
    data_plot->setAxisTitle(QwtPlot::xBottom, tr("Radius (in cm)"));
    data_plot->setAxisTitle(QwtPlot::yLeft, tr("Intensity"));
@@ -1030,8 +1027,7 @@ void US_RotorCalibration::calculate()
    }
    
    plot->btnZoom->setChecked(false);
-//   data_plot->clear();
-   data_plot->detachItems();
+   dataPlotClear( data_plot );
    data_plot->replot();
    QwtPlotCurve* c1;
    QwtPlotCurve* c2;
@@ -1397,8 +1393,7 @@ void US_RotorCalibration::calc_6channel(void)
       sd2[i] += y[i];
    }
    plot->btnZoom->setChecked(false);
-//   data_plot->clear();
-   data_plot->detachItems();
+   dataPlotClear( data_plot );
    data_plot->replot();
    QwtPlotCurve* c1;
    QwtPlotCurve* c2;

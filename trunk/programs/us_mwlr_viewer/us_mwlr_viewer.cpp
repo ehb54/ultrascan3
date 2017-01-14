@@ -345,7 +345,7 @@ void US_MwlRawViewer::reset( void )
    curr_recxs.clear();
    prev_recxs.clear();
 
-   data_plot->detachItems();
+   dataPlotClear( data_plot );
    picker   ->disconnect();
    data_plot->setAxisScale( QwtPlot::xBottom, 5.8, 7.2 );
    data_plot->setAxisScale( QwtPlot::yLeft  , 0.0, 1.5 );
@@ -1122,7 +1122,7 @@ void US_MwlRawViewer::plot_titles( void )
 // Draw scan curves for the current plot record
 void US_MwlRawViewer::plot_all( void )
 {
-   data_plot->detachItems();
+   dataPlotClear( data_plot );
    grid           = us_grid( data_plot );
 
    // Make sure ranges are set up, then build an averaged data vector

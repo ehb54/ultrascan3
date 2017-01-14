@@ -17,6 +17,7 @@ class US_SecondMoment : public US_AnalysisBase2
       double*    smPoints;
       double*    smSeconds;
       US_Editor* te_results;
+      QwtPlotGrid*  grid;
 
       void data_plot ( void );
 

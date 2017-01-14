@@ -1,8 +1,7 @@
 //! \file us_modelmetrics.cpp
 
 #include "us_modelmetrics.h"
-#include <iostream>
-using namespace std;
+#include "us_gui_util.h"
 #if QT_VERSION < 0x050000
 #define setSamples(a,b,c)  setData(a,b,c)
 #endif
@@ -625,7 +624,7 @@ DbgLv(1) << "Dsettings: " << report_entry.d[0] <<report_entry.d[1] << report_ent
    le_name->      setText("");
    if (report != "" && !saved) write_report(); //write any unsaved report items to disk
    report = "";
-   data_plot->detachItems();
+   dataPlotClear( data_plot );
    data_plot->replot();
    saved = false;
 }
@@ -1031,7 +1030,7 @@ void US_ModelMetrics::plot_data()
    y1[1] = mxc;
    y2[1] = mxc;
    y3[1] = mxc;
-   data_plot->detachItems();
+   dataPlotClear( data_plot );
 
    QFont sfont( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() - 1 );
    QFontMetrics fmet( sfont );

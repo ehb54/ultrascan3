@@ -11,6 +11,7 @@
 #include "us_license.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"
+#include "us_gui_util.h"
 #include "us_matrix.h"
 #include "us_constants.h"
 #include "us_analyte_gui.h"
@@ -415,7 +416,7 @@ DbgLv(1) << "Data Plot from Base";
 
    data_plot2->replot();           // replot combined exper,simul data
 
-   data_plot1->detachItems();
+   dataPlotClear( data_plot1 );
 
    us_grid( data_plot1 );
    data_plot1->setAxisTitle( QwtPlot::xBottom, tr( "Radius (cm)" ) );
@@ -1290,8 +1291,12 @@ void US_2dsa::write_bmap( const QString plotFile )
 
    // Generate the residuals bitmap plot
    US_ResidsBitmap* resbmap = new US_ResidsBitmap( resids );
-   QPixmap          pixmap  = QPixmap::grabWidget( resbmap, 0, 0,
+#if QT_VERSION > 0x050000
+   QPixmap pixmap  = ((QWidget*)resbmap)->grab();
+#else
+   QPixmap pixmap  = QPixmap::grabWidget( resbmap, 0, 0,
                                  resbmap->width(), resbmap->height() );
+#endif
 
    // Save the pixmap to the specified file
    if ( ! pixmap.save( plotFile ) )
@@ -1309,7 +1314,7 @@ void US_2dsa::new_triple( int index )
    edata->dataType = edata->dataType.section( " ", 0, 0 );
 
    sdata.scanData.clear();                 // Clear simulation and upper plot
-   data_plot1->detachItems();
+   dataPlotClear( data_plot1 );
    models     .clear();
    ti_noises  .clear();
    ri_noises  .clear();

@@ -9,6 +9,7 @@
 #include "us_util.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"
+#include "us_gui_util.h"
 #include "us_plot.h"
 #include "us_math2.h"
 #include "us_db2.h"
@@ -315,7 +316,7 @@ void US_CfaDataViewer::reset( void )
    allData   .clear();
    haveData     = false;
 
-   data_plot->detachItems();
+   dataPlotClear( data_plot );
    picker   ->disconnect();
    data_plot->setAxisScale( QwtPlot::xBottom, 5.8,  7.2 );
    data_plot->setAxisScale( QwtPlot::yLeft  , 0.0, 5e+4 );
@@ -791,7 +792,7 @@ DbgLv(1) << "pTit: prec" << prec << "isMWL" << isMWL << "wvln" << wvln;
 // Draw scan curves for the current plot record
 void US_CfaDataViewer::plot_all( void )
 {
-   data_plot->detachItems();
+   dataPlotClear( data_plot );
    grid           = us_grid( data_plot );
 
    // Make sure ranges are set up, then build an averaged data vector

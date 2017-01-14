@@ -7,6 +7,7 @@
 #include "us_util.h"
 #include "us_license.h"
 #include "us_gui_settings.h"
+#include "us_gui_util.h"
 #include "us_run_details2.h"
 #include "us_passwd.h"
 
@@ -184,8 +185,7 @@ void US_2dPlot::calculate()
 		}
  	}		
    plot->btnZoom->setChecked( false );
-//   data_plot->clear();
-   data_plot->detachItems();
+   dataPlotClear( data_plot );
    data_plot->replot();
    QwtPlotCurve* c1;
    

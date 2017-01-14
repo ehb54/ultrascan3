@@ -8,6 +8,7 @@
 #include "us_license.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"
+#include "us_gui_util.h"
 #include "us_util.h"
 #include "us_passwd.h"
 #include "us_db2.h"
@@ -411,8 +412,8 @@ void US_FDS_FileManager::plot_scans( void )
    QList < QwtPlotCurve * > c;
    c.clear();
    scanindex.clear();
-//   data_plot->clear();
-   data_plot->detachItems();
+   dataPlotClear( data_plot );
+
    for (int i=0; i<scaninfo.size(); i++)
    {
       if (  scaninfo[i].triple  == cb_triple->currentText()
@@ -423,6 +424,7 @@ void US_FDS_FileManager::plot_scans( void )
          scanindex.append(i);
       }
    }
+
    ct_from->setMaximum( scanindex.size() );
    ct_to  ->setMaximum( scanindex.size() );
    int npts;
@@ -495,10 +497,11 @@ void US_FDS_FileManager::plot_scans( void )
 // Reset parameters to their defaults
 void US_FDS_FileManager::reset( void )
 {
+   dataPlotClear( data_plot );
+
    data_plot->setAxisScale( QwtPlot::xBottom, 5.7, 7.3 );
    data_plot->setAxisScale( QwtPlot::yLeft  , 0.0, 1.5 );
-//   data_plot->clear();
-   data_plot->detachItems();
+
    data_plot->replot();
 
    ct_from  ->setMinimum ( 0 );

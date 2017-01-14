@@ -287,7 +287,7 @@ void US_MwlSpectra::reset( void )
    lambdas   .clear();
    sedcoes   .clear();
 
-   data_plot->detachItems();
+   dataPlotClear( data_plot );
    picker   ->disconnect();
    data_plot->setAxisScale( QwtPlot::xBottom, 230, 450 );
    data_plot->setAxisScale( QwtPlot::yLeft  , 0.0, 1.5 );
@@ -971,7 +971,7 @@ void US_MwlSpectra::plot_titles( void )
 // Draw wavelength,concentration curves for the current sedcoeff plot record
 void US_MwlSpectra::plot_all( void )
 {
-   data_plot->detachItems();
+   dataPlotClear( data_plot );
    grid         = us_grid( data_plot );
 
    // Make sure ranges are set up, then build a smoothed data vector

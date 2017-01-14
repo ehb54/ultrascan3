@@ -4,6 +4,7 @@
 #include "us_pcsa.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"
+#include "us_gui_util.h"
 #include "us_math2.h"
 #include "us_zsolute.h"
 #include "us_colorgradIO.h"
@@ -217,7 +218,7 @@ void US_MLinesPlot::close_all()
 // Plot the data
 void US_MLinesPlot::plot_data()
 {
-   data_plot1->detachItems();
+   dataPlotClear( data_plot1 );
 
    bool   got_best  = ( model != 0  &&  bmndx >= 0 );   // Got best model?
 DbgLv(1) << "RP:PD got_best" << got_best << "bmndx" << bmndx;

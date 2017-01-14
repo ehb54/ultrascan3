@@ -1102,8 +1102,12 @@ DbgLv(1) << "PL:    mlp:  rtn fr plot_data";
                       + edata->cell + edata->channel + edata->wavelength
                       + ".mlines."
                       + QString::number( getpid() ) + ".png";
+#if QT_VERSION > 0x050000
+   QPixmap pixmap   = ((QWidget*)mlnplotd)->grab();
+#else
    QPixmap pixmap   = QPixmap::grabWidget( mlnplotd, 0, 0,
                          mlnplotd->width(), mlnplotd->height() );
+#endif
 DbgLv(0) << "PLOTLINE: mlines filepath" << filepath;
 DbgLv(0) << "PLOTLINE: mlines w h" << pixmap.width() << pixmap.height();
    pixmap.save( filepath );

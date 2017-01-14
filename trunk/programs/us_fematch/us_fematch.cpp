@@ -759,7 +759,7 @@ DbgLv(1) << "Fem:Upd: manual" << manual << solution_rec.buffer.manual;
 // Data plot
 void US_FeMatch::data_plot( void )
 {
-   data_plot2->detachItems();
+   dataPlotClear( data_plot2 );
 
    if ( !dataLoaded )
       return;
@@ -999,7 +999,7 @@ DbgLv(1) << "STEP0 speed accel accelf"
 
    else
    {  // No simulation exists yet
-      data_plot1->detachItems();
+      dataPlotClear( data_plot1 );
       data_plot1->setTitle( tr( "Residuals" ) );
       data_plot1->replot();
    }
@@ -1431,7 +1431,7 @@ void US_FeMatch::distrib_plot_stick( int type )
       xatitle = tr( "D20,W (cm^2/sec)" );
    }
 
-   data_plot1->detachItems();
+   dataPlotClear( data_plot1 );
 
    data_plot1->setTitle(                       pltitle );
    data_plot1->setAxisTitle( QwtPlot::yLeft,   yatitle );
@@ -1543,11 +1543,11 @@ void US_FeMatch::distrib_plot_2d( int type )
       xatitle = tr( "Molecular Weight" );
    }
 
+   dataPlotClear( data_plot1 );
+
    data_plot1->setTitle(                       pltitle );
    data_plot1->setAxisTitle( QwtPlot::yLeft,   yatitle );
    data_plot1->setAxisTitle( QwtPlot::xBottom, xatitle );
-
-   data_plot1->detachItems();
 
    QwtPlotGrid*  data_grid = us_grid(  data_plot1 );
    QwtPlotCurve* data_curv = us_curve( data_plot1, "distro" );
@@ -1629,11 +1629,11 @@ void US_FeMatch::distrib_plot_resids( )
    QString yatitle = tr( "OD Difference" );
    QString xatitle = tr( "Radius (cm)" );
 
+   dataPlotClear( data_plot1 );
+
    data_plot1->setTitle(     pltitle );
    data_plot1->setAxisTitle( QwtPlot::yLeft,   yatitle );
    data_plot1->setAxisTitle( QwtPlot::xBottom, xatitle );
-
-   data_plot1->detachItems();
 
    QwtPlotGrid*  data_grid = us_grid( data_plot1 );
    QwtPlotCurve* data_curv;
@@ -3387,8 +3387,12 @@ void US_FeMatch::write_plot( const QString& filename, const QwtPlot* plot )
          rbmapd->activateWindow();
       }
 
+#if QT_VERSION > 0x050000
+      QPixmap pixmap = ((QWidget*)rbmapd)->grab();
+#else
       QPixmap pixmap = QPixmap::grabWidget( rbmapd, 0, 0,
                                             rbmapd->width(), rbmapd->height() );
+#endif
 
       if ( ! pixmap.save( filename ) )
          QMessageBox::warning( this, tr( "File Write Error" ),
@@ -3611,8 +3615,8 @@ void US_FeMatch::reset( void )
    haveSim    = false;
    mfilter    = "";
 
-   data_plot1->detachItems();
-   data_plot2->detachItems();
+   dataPlotClear( data_plot1 );
+   dataPlotClear( data_plot2 );
    data_plot1->replot();
    data_plot2->replot();
 

@@ -8,6 +8,7 @@
 #include "us_license.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"
+#include "us_gui_util.h"
 #include "us_matrix.h"
 #include "us_passwd.h"
 #include "us_constants.h"
@@ -172,10 +173,8 @@ void US_vHW_Enhanced::load( void )
       le_temp   ->clear();
       te_desc   ->clear();
 
-//      data_plot1->clear();
-//      data_plot2->clear();
-      data_plot1->detachItems();
-      data_plot2->detachItems();
+      dataPlotClear( data_plot1 );
+      dataPlotClear( data_plot2 );
 
       dataList.clear();
       rawList .clear();
@@ -303,7 +302,7 @@ DbgLv(1) << " data_plot: dataLoaded" << dataLoaded << "vbar" << vbar;
       edata      = ck_use_fed->isChecked() ? &dsimList[ row ] : edata;
    }
 
-   data_plot2->detachItems();
+   dataPlotClear( data_plot2 );
    data_plot2->setAxisAutoScale( QwtPlot::yLeft );
    data_plot2->setAxisAutoScale( QwtPlot::xBottom );
    boundPct   = ct_boundaryPercent->value() / 100.0;
@@ -387,8 +386,7 @@ DbgLv(1) << "  lscnCount" << lscnCount;
    }
 
    // Draw the vHW extrapolation plot
-//   data_plot1->clear();
-   data_plot1->detachItems();
+   dataPlotClear( data_plot1 );
    us_grid( data_plot1 );
 
    QString ttrip = edata->cell + "/" + edata->channel
@@ -2656,8 +2654,7 @@ void US_vHW_Enhanced::plot_data2()
    header = tr( "Radius (cm) " );
    data_plot2->setAxisTitle( QwtPlot::xBottom, header );
 
-//   data_plot2->clear();
-   data_plot2->detachItems();
+   dataPlotClear( data_plot2 );
    us_grid( data_plot2 );
 
    int     scan_number = 0;

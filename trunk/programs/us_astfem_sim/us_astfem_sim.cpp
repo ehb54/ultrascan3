@@ -6,6 +6,7 @@
 #include "us_license_t.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"
+#include "us_gui_util.h"
 #include "us_astfem_sim.h"
 #include "us_simulationparameters.h"
 #include "us_math2.h"
@@ -759,7 +760,7 @@ void US_Astfem_Sim::ti_noise( void )
 
 void US_Astfem_Sim::plot( void )
 {
-   scanPlot->detachItems();
+   dataPlotClear( scanPlot );
 
    // Set plot scale
    if ( simparams.band_forming )

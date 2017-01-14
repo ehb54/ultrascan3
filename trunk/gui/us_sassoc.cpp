@@ -417,7 +417,11 @@ void US_Sassoc::save( void )
               QString::number( model ) + ".distribution.png";
 
    QRect   r = QRect( 2, 2, plot->width() - 4, plot->height() - 4 );
+#if QT_VERSION < 0x050000
    QPixmap p = QPixmap::grabWidget( plot, r );
+#else
+   QPixmap p = ((QWidget*)plot)->grab( r );
+#endif
    
    p.save( filename );
 }
