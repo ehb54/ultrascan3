@@ -466,7 +466,12 @@ void US_vHW_Combine::reset_data( void )
 // Reset plot:  Clear plots and lists of plotted data
 void US_vHW_Combine::reset_plot( void )
 {
-   data_plot1->detachItems();
+   dataPlotClear( data_plot1 );
+   QwtPlotGrid* grid = us_grid( data_plot1 );
+   grid->enableXMin( true );
+   grid->enableYMin( true );
+   grid->setMajorPen( QPen( US_GuiSettings::plotMajGrid(), 0, Qt::DashLine ) );
+   grid->setMinorPen( QPen( US_GuiSettings::plotMinGrid(), 0, Qt::DotLine  ) );
    data_plot1->replot();
 
    pdistrs.clear();
@@ -479,7 +484,7 @@ void US_vHW_Combine::reset_plot( void )
 // Plot all data
 void US_vHW_Combine::plot_data( void )
 {
-   data_plot1->detachItems();
+   dataPlotClear( data_plot1 );
    QwtPlotGrid* grid = us_grid( data_plot1 );
    grid->enableXMin( true );
    grid->enableYMin( true );

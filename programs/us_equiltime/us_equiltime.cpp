@@ -1,6 +1,7 @@
 //! file us_equiltime.cpp
 #include "us_equiltime.h"
 #include "us_gui_settings.h"
+#include "us_gui_util.h"
 #include "us_settings.h"
 #include "us_constants.h"
 #include "us_math2.h"
@@ -629,7 +630,7 @@ void US_EquilTime::simulate( void )
    equilibrium_plot->setAxisScale( QwtPlot::xBottom, 
          simparams.meniscus, simparams.bottom );
 
-   equilibrium_plot->detachItems();
+   dataPlotClear( equilibrium_plot );
    equilibrium_plot->replot();
    current_time   = 0.0;
    concentration.clear();

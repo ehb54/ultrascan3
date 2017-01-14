@@ -541,8 +541,8 @@ void US_RampGui::reset( void )
    // Erase the todo list
    lw_todoinfo->clear();
    lw_todoinfo->addItem( "Load or import some AUC data" );
-   
-   data_plot     ->detachItems();
+
+   dataPlotClear( data_plot );
    picker        ->disconnect();
    data_plot     ->setAxisScale( QwtPlot::xBottom, 0, 1e10 );
    data_plot     ->setAxisScale( QwtPlot::yLeft  , 0.0, 1.5 );
@@ -2521,8 +2521,8 @@ void US_RampGui::plot_current( void )
 //    
 //    // Set the Scan spin boxes
 //    enableScanControls();
-   
-   data_plot->detachItems();
+
+   dataPlotClear( data_plot );
    grid = us_grid( data_plot );
    
    int n = currentData.intarray[0].size();

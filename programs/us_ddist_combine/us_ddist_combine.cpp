@@ -788,7 +788,7 @@ DbgLv(1) << "main size" << size();
 // Reset plot:  Clear plots and lists of plotted data
 void US_DDistr_Combine::reset_plot( void )
 {
-   data_plot1->detachItems();
+   dataPlotClear( data_plot1 );
    data_plot1->replot();
    pdistrs.clear();
    pdisIDs.clear();
@@ -812,7 +812,7 @@ void US_DDistr_Combine::reset_plot( void )
 void US_DDistr_Combine::plot_data( void )
 {
 DbgLv(1) << "pDa:  xtype" << xtype;
-   data_plot1->detachItems();
+   dataPlotClear( data_plot1 );
    QString titleY = tr( "Signal Concentration" );
 DbgLv(1) << "pDa:  titleY" << titleY;
    QString titleP;

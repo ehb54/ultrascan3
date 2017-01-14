@@ -9,6 +9,7 @@
 #include "us_license.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"
+#include "us_gui_util.h"
 #include "us_math2.h"
 #include "us_matrix.h"
 #include "us_constants.h"
@@ -456,7 +457,7 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
 // reset the GUI
 void US_GA_Initialize::reset( void )
 {
-   data_plot->detachItems( );
+   dataPlotClear( data_plot );
    data_plot->replot();
    if ( pick != NULL )  delete pick;
    pick       = new US_PlotPicker( data_plot );
@@ -839,7 +840,7 @@ void US_GA_Initialize::replot_data()
 // plot data 1-D
 void US_GA_Initialize::plot_1dim( void )
 {
-   data_plot->detachItems();
+   dataPlotClear( data_plot );
    data_plot->replot();
    if ( pick != NULL )  delete pick;
    pick          = new US_PlotPicker( data_plot );
@@ -935,7 +936,7 @@ void US_GA_Initialize::plot_1dim( void )
 // plot data 2-D
 void US_GA_Initialize::plot_2dim( void )
 {
-   data_plot->detachItems();
+   dataPlotClear( data_plot );
    data_plot->replot();
    if ( pick != NULL )  delete pick;
    pick          = new US_PlotPicker( data_plot );
@@ -1030,7 +1031,7 @@ void US_GA_Initialize::plot_3dim( void )
 {
    QColor cblack( Qt::black );
    QColor cwhite( Qt::white );
-   data_plot->detachItems();
+   dataPlotClear( data_plot );
    data_plot->replot();
    if ( pick != NULL )  delete pick;
    pick          = new US_PlotPicker( data_plot );

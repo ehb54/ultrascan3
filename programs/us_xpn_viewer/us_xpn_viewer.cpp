@@ -342,7 +342,7 @@ void US_XpnDataViewer::reset( void )
    triples   .clear();
    haveData      = false;
 
-   data_plot->detachItems();
+   dataPlotClear( data_plot );
    picker   ->disconnect();
    data_plot->setAxisScale( QwtPlot::xBottom, 5.8,  7.2 );
    data_plot->setAxisScale( QwtPlot::yLeft  , 0.0, 5e+4 );
@@ -905,7 +905,7 @@ DbgLv(1) << "pTit: prec" << prec << "isMWL" << isMWL << "wvln" << wvln;
 // Draw scan curves for the current plot record
 void US_XpnDataViewer::plot_all( void )
 {
-   data_plot->detachItems();
+   dataPlotClear( data_plot );
    grid           = us_grid( data_plot );
 
    // Make sure ranges are set up, then build an averaged data vector

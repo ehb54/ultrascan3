@@ -8,6 +8,7 @@
 #include "us_license.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"
+#include "us_gui_util.h"
 #if QT_VERSION < 0x050000
 #define setSamples(a,b,c)  setData(a,b,c)
 #define setMinimum(a)      setMinValue(a)
@@ -325,8 +326,7 @@ next: avgDcdt[ j ] /= ( count - 1 );
    }
 
    // Draw plot
-//   data_plot1->clear();
-   data_plot1->detachItems();
+   dataPlotClear( data_plot1 );
    us_grid( data_plot1 );
 
    data_plot1->setTitle( tr( "Time Derivative (dC/dt)\n" ) +

@@ -4,6 +4,7 @@
 #include "us_2dsa.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"
+#include "us_gui_util.h"
 #include "us_math2.h"
 #include "us_constants.h"
 #if QT_VERSION < 0x050000
@@ -374,7 +375,7 @@ void US_ResidPlot2D::plot_data()
 // plot the experimental data
 void US_ResidPlot2D::plot_edata()
 {
-   data_plot1->detachItems();
+   dataPlotClear( data_plot1 );
 
    bool   do_plteda = have_ed  &&  ck_plteda->isChecked();
    bool   do_pltsda = have_sd  &&  ck_pltsda->isChecked();
@@ -532,7 +533,7 @@ void US_ResidPlot2D::plot_edata()
 // plot the residual data
 void US_ResidPlot2D::plot_rdata()
 {
-   data_plot2->detachItems();
+   dataPlotClear( data_plot2 );
 
    bool   do_pltres = have_ed  &&  ck_pltres->isChecked()  &&  have_sd;
    bool   do_plttin = have_ti  &&  ck_plttin->isChecked();

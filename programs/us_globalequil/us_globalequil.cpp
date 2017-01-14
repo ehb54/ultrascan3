@@ -5,6 +5,7 @@
 #include "us_license.h"
 #include "us_data_loader.h"
 #include "us_gui_settings.h"
+#include "us_gui_util.h"
 #include "us_run_details2.h"
 #include "us_settings.h"
 #include "us_constants.h"
@@ -538,7 +539,7 @@ void US_GlobalEquil::unload( void )
    tw_equiscns->disconnect();
    tw_equiscns->clear();
 
-   equil_plot->detachItems();
+   dataPlotClear( equil_plot );
    equil_plot->setTitle( tr( "Experiment Equilibrium Data" ) );
 
    setup_runfit();
@@ -994,7 +995,7 @@ DbgLv(1) << "EdataPlot: radl radr" << radl << radr;
    QString waveln  = edata->wavelength;
 
    // Initialize the plot and its titles
-   equil_plot->detachItems();
+   dataPlotClear( equil_plot );
    equil_plot->setTitle(
       tr( "Run: " ) + runID + tr( "  Edit: " ) + editID + "\n" +
       tr( "Cell " ) + cell + tr( ",  Channel " ) + chan +

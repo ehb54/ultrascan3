@@ -329,7 +329,7 @@ void US_ExportLegacy::update( int drow )
 // Data plot
 void US_ExportLegacy::data_plot( void )
 {
-   data_plot2->detachItems();
+   dataPlotClear( data_plot2 );
 
    if ( !dataLoaded )
       return;
@@ -945,7 +945,7 @@ void US_ExportLegacy::reset( void )
 
    dataLoaded = false;
 
-   data_plot2->detachItems();
+   dataPlotClear( data_plot2 );
    data_plot2->replot();
 
    pb_details  ->setEnabled( false );

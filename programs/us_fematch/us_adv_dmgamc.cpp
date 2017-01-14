@@ -4,6 +4,7 @@
 #include "us_fematch.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"
+#include "us_gui_util.h"
 #include "qwt_legend.h"
 #if QT_VERSION < 0x050000
 #define setSamples(a,b,c)  setData(a,b,c)
@@ -401,7 +402,7 @@ void US_AdvDmgaMc::plot_distrib()
    }
 
    // Do the plot
-   data_plot->detachItems();
+   dataPlotClear( data_plot );
    data_plot->setTitle        ( tr( "Distribution" ) );
    data_plot->setAxisTitle    ( QwtPlot::yLeft,   ytitle );
    data_plot->setAxisTitle    ( QwtPlot::xBottom, xtitle );

@@ -7,6 +7,7 @@
 #include "us_license.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"
+#include "us_gui_util.h"
 #if QT_VERSION < 0x050000
 #define setSamples(a,b,c)  setData(a,b,c)
 #define setSymbol(a)       setSymbol(*a)
@@ -70,9 +71,8 @@ void US_SecondMoment::data_plot( void )
    le_skipped->setText( QString::number( exclude ) );
 
    // Draw plot
-//   data_plot1->clear();
-   data_plot1->detachItems();
-   us_grid( data_plot1 );
+   dataPlotClear( data_plot1 );
+   grid      = us_grid( data_plot1 );
 
    data_plot1->setTitle( tr( "Run " ) + d->runID + tr( ": Cell " ) + d->cell
              + " (" + d->wavelength + tr( " nm)\nSecond Moment Plot" ) );
@@ -210,6 +210,7 @@ void US_SecondMoment::data_plot( void )
    if ( to > 0 )
    {
       int index = 0;
+      QPen redpen( QBrush( Qt::red ), 1.0 );
 
       for ( int i = 0; i < scanCount; i++ )
       {
@@ -227,7 +228,7 @@ void US_SecondMoment::data_plot( void )
          curve = us_curve( data_plot1, 
                tr( "Scan %1 Exclude Marker" ).arg( index + 1 ) );
 
-         curve->setPen    ( QPen( QBrush( Qt::red ), 1.0 ) );
+         curve->setPen    ( redpen );
          curve->setSamples( x.data(), y.data(), 2 );
       }
    }

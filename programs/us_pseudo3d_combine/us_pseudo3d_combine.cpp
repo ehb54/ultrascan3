@@ -11,6 +11,7 @@
 #include "us_license.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"
+#include "us_gui_util.h"
 #include "us_math2.h"
 #include "us_matrix.h"
 #include "us_sleep.h"
@@ -394,7 +395,7 @@ US_Pseudo3D_Combine::US_Pseudo3D_Combine() : US_Widgets()
 
 void US_Pseudo3D_Combine::reset( void )
 {
-   data_plot->detachItems( QwtPlotItem::Rtti_PlotSpectrogram );
+   dataPlotClear( data_plot );
    data_plot->replot();
  
    need_save  = false;
@@ -632,9 +633,13 @@ DbgLv(2) << "(3)   need_save sv_plot" << need_save << sv_plot;
    if ( sv_plot )
    {  // Automatically save plot image in a PNG file
       const QString s_attrs[] = { "s", "ff0", "MW", "vbar", "D", "f" };
+#if QT_VERSION > 0x050000
+      QPixmap plotmap = ((QWidget*)data_plot)->grab();
+#else
       QSize pmsize    = data_plot->size();
       QPixmap plotmap = QPixmap::grabWidget( data_plot, 0, 0,
                                              pmsize.width(), pmsize.height() );
+#endif
 
       QString runid   = tsys->run_name.section( ".",  0, -2 );
       QString triple  = tsys->run_name.section( ".", -1, -1 );

@@ -118,7 +118,7 @@ DbgLv(1) << "DisPl: sed2 sed-" << dsedcs[2] << dsedcs[divsCount-3];
 void US_DistribPlot::save_plots( QString& plot1File, QString& plot2File )
 {
    // Set up, generate distribution plot and save it to a file
-   data_plot->detachItems();
+   dataPlotClear( data_plot );
    QwtPlotGrid* grid = us_grid( data_plot );
    grid->enableXMin( true );
    grid->enableYMin( true );
@@ -131,7 +131,7 @@ void US_DistribPlot::save_plots( QString& plot1File, QString& plot2File )
    US_GuiUtil::save_plot( plot1File, data_plot );
 
    // Set up, generate combined histogram plot and save it to a file
-   data_plot->detachItems();
+   dataPlotClear( data_plot );
    grid = us_grid( data_plot );
    grid->enableXMin( true );
    grid->enableYMin( true );
@@ -158,8 +158,7 @@ void US_DistribPlot::save_plots( QString& plot1File, QString& plot2File )
 // clear plot and execute appropriate new plot
 void US_DistribPlot::show_plot( void )
 {
-
-   data_plot->detachItems();
+   dataPlotClear( data_plot );
 
    QwtPlotGrid* grid = us_grid( data_plot );
    grid->enableXMin( true );

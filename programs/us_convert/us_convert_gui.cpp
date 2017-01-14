@@ -5,6 +5,7 @@
 #include "us_util.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"
+#include "us_gui_util.h"
 #include "us_run_details2.h"
 #include "us_plot.h"
 #include "us_math2.h"
@@ -479,7 +480,7 @@ void US_ConvertGui::reset( void )
    lw_todoinfo->clear();
    lw_todoinfo->addItem( "Load or import some AUC data" );
 
-   data_plot     ->detachItems();
+   dataPlotClear( data_plot );
    picker        ->disconnect();
    data_plot     ->setAxisScale( QwtPlot::xBottom, 5.7, 7.3 );
    data_plot     ->setAxisScale( QwtPlot::yLeft  , 0.0, 1.5 );
@@ -4004,7 +4005,7 @@ void US_ConvertGui::plot_all( void )
 {
    US_DataIO::RawData* currentData = outData[ tripDatax ];
 
-   data_plot->detachItems();
+   dataPlotClear( data_plot );
    grid        = us_grid( data_plot );
    int kcpoint = currentData->pointCount();
    int kcscan  = currentData->scanCount();

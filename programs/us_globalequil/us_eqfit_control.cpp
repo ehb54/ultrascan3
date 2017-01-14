@@ -4,6 +4,7 @@
 #include "us_fit_worker.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"
+#include "us_gui_util.h"
 #include "us_constants.h"
 #include "us_math2.h"
 #include "qwt_plot_marker.h"
@@ -452,7 +453,7 @@ qDebug() << "PL_R: mxspts" << mxspts << "ipscnn" << ipscnn;
 qDebug() << " mxspts ntpts" << mxspts << ntpts;
 qDebug() << "  ydelta0" << ydelta[0] << " ydeltan" << ydelta[ntpts-1];
 
-   data_plot->detachItems();
+   dataPlotClear( data_plot );
    data_plot->setTitle( tr( "Residuals" ) );
    data_plot->setAxisTitle( QwtPlot::yLeft,
       tr( "Optical Density Difference" ) );
@@ -600,7 +601,7 @@ qDebug() << "PL_O: mxspts" << mxspts << "ipscnn" << ipscnn;
 qDebug() << " mxspts ntpts" << mxspts << ntpts;
 qDebug() << "  yguess0" << yguess[0] << " yguessn" << yguess[ntpts-1];
 
-   data_plot->detachItems();
+   dataPlotClear( data_plot );
    data_plot->setTitle( ( npscns == 1 ) ?
        tr( "Overlays for fitted Scan %1" ).arg( ipscnn ) :
        tr( "Overlays for fitted Scans %1 - %2" ).arg( ipscnn ).arg( lpscnn ) );

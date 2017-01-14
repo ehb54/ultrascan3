@@ -5,6 +5,7 @@
 #include "us_analysis_base2.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"
+#include "us_gui_util.h"
 #include "us_run_details2.h"
 #include "us_analyte_gui.h"
 #include "us_buffer_gui.h"
@@ -429,6 +430,7 @@ void US_AnalysisBase2::data_plot( void )
    if ( d->dataType == "FI" )     dataType = tr( "Fluorescence" );
 
 
+   dataPlotClear( data_plot2 );
    QString header = tr( "Velocity Data for\n") + d->runID + "  ("
          + d->cell + "/" + d->channel + "/" + d->wavelength + ")";
    data_plot2->setTitle( header );
@@ -439,9 +441,6 @@ void US_AnalysisBase2::data_plot( void )
    header = tr( "Radius (cm) " );
    data_plot2->setAxisTitle( QwtPlot::xBottom, header );
 
-#if QT_VERSION < 0x050000
-   data_plot2->clear();
-#endif
    us_grid( data_plot2 );
 
    int     scan_number = 0;

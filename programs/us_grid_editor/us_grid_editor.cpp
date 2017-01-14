@@ -2,6 +2,7 @@
 
 #include <QApplication>
 #include "us_grid_editor.h"
+#include "us_gui_util.h"
 #if QT_VERSION < 0x050000
 #define setSamples(a,b,c)  setData(a,b,c)
 #define setMinimum(a)      setMinValue(a)
@@ -368,7 +369,7 @@ US_Grid_Editor::US_Grid_Editor() : US_Widgets()
 // reset the GUI
 void US_Grid_Editor::reset( void )
 {
-   data_plot1->detachItems( );
+   dataPlotClear( data_plot1 );
    pick1 = new US_PlotPicker( data_plot1 );
 
    xRes          = 60.0;
@@ -794,7 +795,7 @@ qDebug() << "  up0)yRes" << yRes;
    if ( selected_plot == 1 )
       xatitle         = tr( "Molecular Weight" );
 
-   data_plot1->detachItems( );
+   dataPlotClear( data_plot1 );
    data_plot1->setAxisTitle( QwtPlot::xBottom, xatitle );
    data_plot1->setAxisTitle( QwtPlot::yLeft,   yatitle );
 
