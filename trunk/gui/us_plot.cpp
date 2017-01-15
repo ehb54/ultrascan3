@@ -131,6 +131,9 @@ US_Plot::US_Plot( QwtPlot*& parent_plot, const QString& title,
   
    plot->setSizePolicy( QSizePolicy::Expanding, QSizePolicy::Expanding );
    plot->setAutoReplot( false );
+#if QT_VERSION > 0x050000
+   plot->setAutoDelete( false );
+#endif
   
    QFont font( US_GuiSettings::fontFamily(),
                US_GuiSettings::fontSize(),
