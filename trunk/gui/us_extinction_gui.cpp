@@ -107,6 +107,7 @@ US_Extinction::US_Extinction(QString buffer, const QString& text, QWidget* paren
    le_associate->hide();
 
    le_associate_buffer = us_lineedit("",1, true);
+   le_associate_buffer->setText(text);
    //le_associate_buffer->hide();
 
    le_odCutoff = us_lineedit("1.500", 1, false);

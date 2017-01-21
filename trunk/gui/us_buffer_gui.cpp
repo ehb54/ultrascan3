@@ -377,6 +377,7 @@ void US_BufferGuiSelect::info_buffer( void )
    QString big_line( "" );
    int mxlch    = 0;
    int nspec    = buffer->extinction.keys().count();
+   qDebug() << "#NSPEC:  " << nspec;
    int ncomp    = buffer->component.count();
    QFont tfont( QFont( US_Widgets::fixedFont().family(),
                        US_GuiSettings::fontSize() - 1 ) );
@@ -994,8 +995,8 @@ DbgLv(1) << "BufN:SL: new_desc:" << buffer->description;
 void US_BufferGuiNew::process_results(QMap < double, double > &xyz)
 {
   buffer->extinction = xyz;
-  //DbgLv(1) << "BufN:SL: spectrum()  count" << buffer->extinction.count();
-
+  //buffer->description = "Changed_description";
+  
   QMap<double, double>::iterator it;
   QString output;
 
@@ -1292,7 +1293,8 @@ DbgLv(1) << "BufN:SL: newAccepted()";
    if ( from_db )
    { // Add buffer to database
       write_db  ();
-DbgLv(1) << "BufN:SL:  newAcc: DB  id" << buffer->bufferID;
+      DbgLv(1) << "BufN:SL:  newAcc: DB  id" << buffer->bufferID;
+      qDebug() << "BufferID: " << buffer->bufferID;
    }
 
    else
@@ -1323,6 +1325,9 @@ DbgLv(1) << "BufN:SL: write_db()  bufID" << buffer->bufferID;
           tr( "Error updating buffer in the database:\n" )
           + msg );
    }
+   
+   qDebug() << "BufferID: " << buffer->bufferID << ", Description: " << buffer->description << ", Extintcion key #: " << buffer->extinction.keys().count();
+   
 }
 
 // Write new buffer to local disk file
