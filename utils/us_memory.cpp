@@ -37,7 +37,7 @@ long int US_Memory::rss_now( void )
 
    const static int kk = PAGE_SIZE / 1024;
 
-   rssnow = QString( ba ).section( " ", 23, 23 ).toLong() * kk;
+   rssnow = QString( ba ).section( " ", 23, 23 ).toLong() * (long int)kk;
 #endif
 
 #ifdef Q_OS_MAC         // Mac : use task_info call

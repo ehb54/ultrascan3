@@ -98,7 +98,7 @@ class US_UTIL_EXTERN US_Buffer
       //! \param private_buffer An indication to mark the buffer 
       //!        public "0" or private "1";
       //! \return The bufferID of the new buffer
-      int saveToDB( US_DB2* = 0, const QString = "1" ) const;
+      int saveToDB( US_DB2* = 0, const QString = "1" );
 
       //! \brief Read a buffer from the DB
       //! \param db  An open database connection

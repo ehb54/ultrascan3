@@ -245,7 +245,7 @@ void US_Buffer::getSpectrum( US_DB2* db, const QString& type )
                   
       if ( type == "Extinction" ){
          extinction[ lambda ] = value;
-	 qDebug() << "Buffer->extinction details: " << lambda << " " << value;
+         qDebug() << "Buffer->extinction details: " << lambda << " " << value;
       }
       else if ( type == "Refraction" )
          refraction[ lambda ] = value;
@@ -269,7 +269,7 @@ void US_Buffer::putSpectrum( US_DB2* db, const QString& type ) const
          double wavelength = keys[ i ];
          q[ 4 ] = QString::number( wavelength, 'f', 1 );
          q[ 5 ] = QString::number( extinction[ wavelength ], 'e', 4 );
-	 qDebug() << "Buffer->extinction details: " << wavelength << " " << extinction[ wavelength ];
+         qDebug() << "Buffer->extinction details: " << wavelength << " " << extinction[ wavelength ];
          db->statusQuery( q );
       }
    }
@@ -444,7 +444,7 @@ bool US_Buffer::readFromDB( US_DB2* db, const QString& bufID )
    return true;
 }
 
-int US_Buffer::saveToDB( US_DB2* db, const QString private_buffer ) const
+int US_Buffer::saveToDB( US_DB2* db, const QString private_buffer )
 {
    int idBuffer = 0;
    QStringList q;
@@ -497,8 +497,9 @@ int US_Buffer::saveToDB( US_DB2* db, const QString private_buffer ) const
    else
    {  // The buffer exists, so update it
       db->next();            // Get the ID of the existing buffer record
-      QString bufID  = db->value( 0 ).toString();
-      idBuffer       = bufID.toInt();
+      QString bufID   = db->value( 0 ).toString();
+      idBuffer        = bufID.toInt();
+      bufferID        = bufID;
 //qDebug() << "old_buffer-idBuffer" << idBuffer;
       q.clear();
       q << "update_buffer"
