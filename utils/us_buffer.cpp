@@ -234,15 +234,19 @@ void US_Buffer::getSpectrum( US_DB2* db, const QString& type )
    QStringList q;
    q << "get_spectrum" << bufferID << "Buffer" << type;
 
+   qDebug() << "GetSpectrum: " << q;
+   
    db->query( q );
 
    while ( db->next() )
    {
-      double lambda = db->value( 1 ).toDouble();
-      double value  = db->value( 2 ).toDouble();
-
-      if ( type == "Extinction" )
+     double lambda = db->value( 1 ).toDouble();
+     double value  = db->value( 2 ).toDouble();
+                  
+      if ( type == "Extinction" ){
          extinction[ lambda ] = value;
+	 qDebug() << "Buffer->extinction details: " << lambda << " " << value;
+      }
       else if ( type == "Refraction" )
          refraction[ lambda ] = value;
       else
@@ -255,6 +259,7 @@ void US_Buffer::putSpectrum( US_DB2* db, const QString& type ) const
    QStringList q;
    q << "new_spectrum" << bufferID << "Buffer" << type << "" << "";
 
+   qDebug() << "WritingSpectrum to DB: " << q;
    if ( type == "Extinction" )
    {
       QList< double > keys = extinction.keys();
@@ -264,6 +269,7 @@ void US_Buffer::putSpectrum( US_DB2* db, const QString& type ) const
          double wavelength = keys[ i ];
          q[ 4 ] = QString::number( wavelength, 'f', 1 );
          q[ 5 ] = QString::number( extinction[ wavelength ], 'e', 4 );
+	 qDebug() << "Buffer->extinction details: " << wavelength << " " << extinction[ wavelength ];
          db->statusQuery( q );
       }
    }
@@ -378,6 +384,8 @@ bool US_Buffer::readFromDB( US_DB2* db, const QString& bufID )
 {
    QStringList q( "get_buffer_info" );
    q << bufID;   // bufferID from list widget entry
+
+   qDebug() << "Reading from DB, BufferID: " << q;
 
    db->query( q );
    if ( db->lastErrno() != 0 ) return false;
