@@ -206,6 +206,25 @@ class US_BufferGuiNew : public US_Widgets
 
 };
 
+// class to view buffer spectrum
+class US_BufferViewSpectrum : public US_Widgets
+{
+   Q_OBJECT
+
+   public:
+
+        US_BufferViewSpectrum(QMap<double,double>& buffer_temp);
+	
+	QMap <double, double> buffer;
+	US_Plot*	plotLayout;
+	QwtPlot	 	*data_plot;
+	
+	void plot_extinction();
+	
+   private:
+	
+};
+
 //! \class US_BufferGuiEdit
 //!      This class provides a tabbed entry for non-hydrodynamic buffer mods
 class US_BufferGuiEdit : public US_Widgets
