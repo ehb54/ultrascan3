@@ -491,7 +491,11 @@ int US_Buffer::saveToDB( US_DB2* db, const QString private_buffer )
       }
 
       idBuffer    = db->lastInsertID();
-//qDebug() << "new_buffer-idBuffer" << idBuffer;
+     //qDebug() << "new_buffer-idBuffer" << idBuffer;
+      
+      qDebug() << "bufferID for new buffer: " << idBuffer;
+      bufferID = QString::number(idBuffer);
+      
    }
 
    else
@@ -500,6 +504,7 @@ int US_Buffer::saveToDB( US_DB2* db, const QString private_buffer )
       QString bufID   = db->value( 0 ).toString();
       idBuffer        = bufID.toInt();
       bufferID        = bufID;
+      qDebug() << "BufferID in saveToDB(): " << bufferID;
 //qDebug() << "old_buffer-idBuffer" << idBuffer;
       q.clear();
       q << "update_buffer"
@@ -534,6 +539,8 @@ int US_Buffer::saveToDB( US_DB2* db, const QString private_buffer )
       }
    }
 
+   qDebug() << "bufferID before adding components called: " << idBuffer;
+
    for ( int i = 0; i < ncomp; i++ )
    {
       q.clear();
@@ -550,6 +557,8 @@ int US_Buffer::saveToDB( US_DB2* db, const QString private_buffer )
          return -4;
       }
    }
+   
+   qDebug() << "bufferID before putSpectrum() called: " << idBuffer;
 
    putSpectrum( db, "Extinction" );
    putSpectrum( db, "Refraction" );
@@ -560,6 +569,8 @@ int US_Buffer::saveToDB( US_DB2* db, const QString private_buffer )
    QString path     = US_Settings::dataDir() + "/buffers";
    QString filename = get_filename( path, GUID, newFile );
    writeToDisk( filename );
+
+   qDebug() << "bufferID upon saveToDB() completion: " << idBuffer;
 
    return idBuffer;
 }
