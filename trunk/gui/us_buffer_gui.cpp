@@ -11,6 +11,11 @@
 #include "us_util.h"
 #include "us_math2.h"
 
+#if QT_VERSION < 0x050000
+#define setSamples(a,b,c) setData(a,b,c)
+#define setSymbol(a) setSymbol(*a)
+#endif
+
 //! Tab for selection of a buffer
 US_BufferGuiSelect::US_BufferGuiSelect( int *invID, int *select_db_disk,
       US_Buffer *tmp_buffer ) : US_Widgets()
