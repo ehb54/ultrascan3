@@ -245,6 +245,7 @@ class US_BufferGuiEdit : public US_Widgets
       */
       US_BufferGuiEdit( int*, int*, US_Buffer* );
       QString edit_buffer_description;
+      US_Extinction *w;
 
    signals:
       void editBufAccepted( void );  //! Edited buffer accepted
@@ -279,6 +280,8 @@ class US_BufferGuiEdit : public US_Widgets
 
    public slots:
       void init_buffer		( void );
+
+      void process_results( QMap < double, double > &xyz );
 };
 
 //! \class US_BufferGuiSettings
