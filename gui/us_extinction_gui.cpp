@@ -830,13 +830,19 @@ void US_Extinction::calc_extinction()
          od_wavelength = od;
       }
    }
-   if(od_wavelength != 0 )
-     {
-       for (int i=0; i<extinction.size(); i++)
-    {
-      extinction[i] = extinction_coefficient * (extinction[i]/od_wavelength);
-    }
-     }
+   // Do not scale if buffer...
+   qDebug() << "Buffer_temp: " << buffer_temp;
+   
+   if (buffer_temp == "" or buffer_temp == "ANALYTE")
+   {
+       if(od_wavelength != 0 )
+	 {
+	   for (int i=0; i<extinction.size(); i++)
+	     {
+	       extinction[i] = extinction_coefficient * (extinction[i]/od_wavelength);
+	     }
+	 }
+   }
    delete[] fitparameters;
 }
 
