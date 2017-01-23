@@ -793,6 +793,8 @@ void US_Extinction::calc_extinction()
    //specified scale for the fitted curve
    selected_wavelength = (float) ct_coefficient->value();
    extinction_coefficient = le_coefficient->text().toDouble();
+   pathlength = le_pathlength->text().toDouble();
+
    unsigned int i, j;
    if (v_wavelength.empty())
    {  
@@ -831,7 +833,15 @@ void US_Extinction::calc_extinction()
       }
    }
    // Do not scale if buffer...
-   qDebug() << "Buffer_temp: " << buffer_temp;
+   qDebug() << "Buffer_temp: " << buffer_temp << ", Pathlength: " << pathlength;
+
+   if (buffer_temp == "BUFFER")
+   {
+     for (int i=0; i<extinction.size(); i++)
+       {
+	 extinction[i] /=  pathlength;
+       }
+   }
    
    if (buffer_temp == "" or buffer_temp == "ANALYTE")
    {
