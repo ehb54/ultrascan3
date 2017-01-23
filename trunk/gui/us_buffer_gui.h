@@ -244,6 +244,7 @@ class US_BufferGuiEdit : public US_Widgets
                                  buffer (for editing and adding new buffers)
       */
       US_BufferGuiEdit( int*, int*, US_Buffer* );
+      QString edit_buffer_description;
 
    signals:
       void editBufAccepted( void );  //! Edited buffer accepted
