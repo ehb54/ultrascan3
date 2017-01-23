@@ -1411,6 +1411,7 @@ DbgLv(1) << "BufN:SL: write_disk()    newFile" << newFile;
 US_BufferGuiEdit::US_BufferGuiEdit( int *invID, int *select_db_disk,
       US_Buffer *tmp_buffer ) : US_Widgets()
 {
+  
    buffer      = tmp_buffer;
    orig_buffer = *buffer;
    personID    = invID;
@@ -1474,6 +1475,8 @@ DbgLv(1) << "BufE: init: bufGUIDs" << buffer->GUID << orig_buffer.GUID;
    le_descrip ->setText( buffer->description );
    le_ph      ->setText( QString::number( buffer->pH ) );
    pb_accept  ->setEnabled( false );
+
+   edit_buffer_description = le_descrip->text();
 }
 
 // Slot for manually changed pH
@@ -1741,6 +1744,7 @@ US_BufferGui::US_BufferGui( bool signal_wanted, const US_Buffer& buf,
             this,        SLOT (  update_disk_or_db(    bool ) ) );
    connect( settingsTab, SIGNAL( investigator_changed( int  ) ),
             this,        SLOT (  update_personID(      int  ) ) );
+   
 }
 
 // React to a change in panel
@@ -1750,15 +1754,25 @@ void US_BufferGui::checkTab( int currentTab )
    // in case relevant changes were made elsewhere
    if ( currentTab == 0 )
    {
-      selectTab  ->init_buffer();
+     selectTab  ->init_buffer();
    }
    else if ( currentTab == 1 )
-   {
-      newTab     ->init_buffer();
+     {
+     newTab     ->init_buffer();
    }
    else if ( currentTab == 2 )
    {
-      editTab    ->init_buffer();
+     // Check if buffer is selected in the Select Buffer
+     editTab    ->init_buffer();
+     if (editTab->edit_buffer_description == "")
+       {
+	 QMessageBox::information( this,
+	 tr( "WARNING" ),
+	 tr( "No Buffer selected! Please select Buffer from the list" ) );
+ 
+	 emit editBufAccepted();
+	 
+       }
    }
 }
 

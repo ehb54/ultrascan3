@@ -832,7 +832,7 @@ void US_Extinction::calc_extinction()
          od_wavelength = od;
       }
    }
-   // Do not scale if buffer...
+   // Scale with pathlength if buffer...
    qDebug() << "Buffer_temp: " << buffer_temp << ", Pathlength: " << pathlength;
 
    if (buffer_temp == "BUFFER")
@@ -842,7 +842,7 @@ void US_Extinction::calc_extinction()
 	 extinction[i] /=  pathlength;
        }
    }
-   
+   // Do not scale if buffer...
    if (buffer_temp == "" or buffer_temp == "ANALYTE")
    {
        if(od_wavelength != 0 )
