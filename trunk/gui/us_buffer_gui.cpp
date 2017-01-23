@@ -1054,6 +1054,34 @@ DbgLv(1) << "BufN:SL: new_desc:" << buffer->description;
    pb_spectrum  ->setEnabled( can_accept );
 }
 
+
+// Slot for getting Fitting results from calling US_Extinction routing 
+void US_BufferGuiEdit::process_results(QMap < double, double > &xyz)
+{
+  buffer->extinction = xyz;
+  //buffer->description = "Changed_description";
+  
+  QMap<double, double>::iterator it;
+  QString output;
+
+  for (it = xyz.begin(); it != xyz.end(); ++it) {
+    // Format output here.
+    output += QString(" %1 : %2 /n").arg(it.key()).arg(it.value());
+  }
+
+  QMessageBox::information( this, tr( "Test: Data transmitted" ), tr("Number of keys in extinction QMAP: %1 . You may click 'Accept' from the main window to write new buffer into DB").arg(buffer->extinction.keys().count()) );  
+  //QMessageBox::information( this, tr( "Test: Data transmitted" ), tr("keys: %1").arg(buffer->extinction.keys()) );  
+  //QMessageBox::information( this, tr( "Test: Data transmitted" ), output );  
+  
+   // bool can_accept = ( !le_descrip->text().isEmpty()  &&
+   //                     !le_density->text().isEmpty()  &&
+   //                     !le_viscos ->text().isEmpty() );
+   // pb_accept  ->setEnabled( can_accept );
+  
+  pb_accept  ->setEnabled( true );
+  w->close(); 
+}
+
 // Slot for getting Fitting results from calling US_Extinction routing 
 void US_BufferGuiNew::process_results(QMap < double, double > &xyz)
 {
@@ -1076,6 +1104,8 @@ void US_BufferGuiNew::process_results(QMap < double, double > &xyz)
                        !le_density->text().isEmpty()  &&
                        !le_viscos ->text().isEmpty() );
    pb_accept  ->setEnabled( can_accept );
+
+   w->close(); 
 }
 
 // Slot for entry of concentration to complete add-component
@@ -1492,28 +1522,67 @@ DbgLv(1) << "BufE:SL:ph()" << buffer->pH;
 void US_BufferGuiEdit::spectrum()
 {
 DbgLv(1) << "BufE:SL: spectrum()  count" << buffer->extinction.count();
-QMessageBox::information( this,
- tr( "INCOMPLETE" ),
- tr( "A new Spectrum dialog is under development.\n\n"
-     "The dialog to follow will be replaced in\n"
-     "the near future." ) );
 
-   US_Table* sdiag;
-   QMap< double, double > loc_extinct = buffer->extinction;
-   QString stype( "Extinction" );
-   bool changed = false;
-   sdiag        = new US_Table( loc_extinct, stype, changed, this );
-   sdiag->setWindowTitle( "Manage Extinction Spectrum" );
-   sdiag->exec();
-DbgLv(1) << "BufE:SL: spectr  extincts" << loc_extinct
- << "changed" << changed;
-   if ( changed )
+ if (buffer->extinction.isEmpty())
    {
-      buffer->extinction = loc_extinct;
-DbgLv(1) << "BufE:SL: spectr   buf extincts CHANGED";
+     QMessageBox msgBox;
+     msgBox.setWindowTitle("Edit Existing Buffer");
+     msgBox.setText("Buffer does not have spectrum data!");
+     msgBox.setInformativeText("You can Upload and fit buffer spectrum, or Enter points manually");
+     
+     //msgBox.setText("Buffer does not have spectrum data!\n You can Upload and fit buffer spectrum, or Enter points manually");
+     msgBox.setStandardButtons(QMessageBox::Cancel);
+     QPushButton* pButtonUpload = msgBox.addButton(tr("Upload"), QMessageBox::YesRole);
+     QPushButton* pButtonManually = msgBox.addButton(tr("Enter Manually"), QMessageBox::YesRole);
+     
+     msgBox.setDefaultButton(pButtonUpload);
+     msgBox.exec();
+     
+     if (msgBox.clickedButton()==pButtonUpload) {
+       w = new US_Extinction("BUFFER", le_descrip->text(), (QWidget*)this); 
+       w->setParent(this, Qt::Window);
+       w->setAttribute(Qt::WA_DeleteOnClose);
+       w->show(); 
+     }
+     if (msgBox.clickedButton()==pButtonManually) {
+       US_Table* sdiag;
+       QMap< double, double > loc_extinct = buffer->extinction;
+       QString stype( "Extinction" );
+       bool changed = false;
+       sdiag        = new US_Table( loc_extinct, stype, changed, this );
+       sdiag->setWindowTitle( "Manage Extinction Spectrum" );
+       sdiag->exec();
+       DbgLv(1) << "BufE:SL: spectr  extincts" << loc_extinct
+		<< "changed" << changed;
+       if ( changed )
+	 {
+	   buffer->extinction = loc_extinct;
+	   DbgLv(1) << "BufE:SL: spectr   buf extincts CHANGED";
+	 }
+       
+       pb_accept->setEnabled( !le_descrip->text().isEmpty() );
+     }
+    
    }
-
-   pb_accept->setEnabled( !le_descrip->text().isEmpty() );
+ else 
+   {
+     US_Table* sdiag;
+     QMap< double, double > loc_extinct = buffer->extinction;
+     QString stype( "Extinction" );
+     bool changed = false;
+     sdiag        = new US_Table( loc_extinct, stype, changed, this );
+     sdiag->setWindowTitle( "Manage Extinction Spectrum" );
+     sdiag->exec();
+     DbgLv(1) << "BufE:SL: spectr  extincts" << loc_extinct
+	      << "changed" << changed;
+     if ( changed )
+       {
+	 buffer->extinction = loc_extinct;
+	 DbgLv(1) << "BufE:SL: spectr   buf extincts CHANGED";
+       }
+     
+     pb_accept->setEnabled( !le_descrip->text().isEmpty() );
+   }
 }
 
 // Slot to cancel edited buffer
