@@ -1056,33 +1056,6 @@ DbgLv(1) << "BufN:SL: new_desc:" << buffer->description;
 
 
 // Slot for getting Fitting results from calling US_Extinction routing 
-void US_BufferGuiEdit::process_results(QMap < double, double > &xyz)
-{
-  buffer->extinction = xyz;
-  //buffer->description = "Changed_description";
-  
-  QMap<double, double>::iterator it;
-  QString output;
-
-  for (it = xyz.begin(); it != xyz.end(); ++it) {
-    // Format output here.
-    output += QString(" %1 : %2 /n").arg(it.key()).arg(it.value());
-  }
-
-  QMessageBox::information( this, tr( "Test: Data transmitted" ), tr("Number of keys in extinction QMAP: %1 . You may click 'Accept' from the main window to write new buffer into DB").arg(buffer->extinction.keys().count()) );  
-  //QMessageBox::information( this, tr( "Test: Data transmitted" ), tr("keys: %1").arg(buffer->extinction.keys()) );  
-  //QMessageBox::information( this, tr( "Test: Data transmitted" ), output );  
-  
-   // bool can_accept = ( !le_descrip->text().isEmpty()  &&
-   //                     !le_density->text().isEmpty()  &&
-   //                     !le_viscos ->text().isEmpty() );
-   // pb_accept  ->setEnabled( can_accept );
-  
-  pb_accept  ->setEnabled( true );
-  w->close(); 
-}
-
-// Slot for getting Fitting results from calling US_Extinction routing 
 void US_BufferGuiNew::process_results(QMap < double, double > &xyz)
 {
   buffer->extinction = xyz;
@@ -1556,6 +1529,7 @@ DbgLv(1) << "BufE:SL: spectrum()  count" << buffer->extinction.count();
 		<< "changed" << changed;
        if ( changed )
 	 {
+	   qDebug() << "Manual: Inside Changed: ";  
 	   buffer->extinction = loc_extinct;
 	   DbgLv(1) << "BufE:SL: spectr   buf extincts CHANGED";
 	 }
@@ -1577,12 +1551,43 @@ DbgLv(1) << "BufE:SL: spectrum()  count" << buffer->extinction.count();
 	      << "changed" << changed;
      if ( changed )
        {
+	 qDebug() << "Existing: Inside Changed: "; 
+	 qDebug() << "#buff->extinc BEFORE: " << buffer->extinction.keys().count();
+	 buffer->extinction.clear();
 	 buffer->extinction = loc_extinct;
+	 qDebug() << "#buff->extinc AFTER: " << buffer->extinction.keys().count() << ", BufferID: " <<  buffer->bufferID;
 	 DbgLv(1) << "BufE:SL: spectr   buf extincts CHANGED";
        }
      
      pb_accept->setEnabled( !le_descrip->text().isEmpty() );
    }
+}
+
+// Slot for getting Fitting results from calling US_Extinction routing 
+void US_BufferGuiEdit::process_results(QMap < double, double > &xyz)
+{
+  buffer->extinction = xyz;
+  //buffer->description = "Changed_description";
+  
+  QMap<double, double>::iterator it;
+  QString output;
+
+  for (it = xyz.begin(); it != xyz.end(); ++it) {
+    // Format output here.
+    output += QString(" %1 : %2 /n").arg(it.key()).arg(it.value());
+  }
+
+  QMessageBox::information( this, tr( "Test: Data transmitted" ), tr("Number of keys in extinction QMAP: %1 . You may click 'Accept' from the main window to write new buffer into DB").arg(buffer->extinction.keys().count()) );  
+  //QMessageBox::information( this, tr( "Test: Data transmitted" ), tr("keys: %1").arg(buffer->extinction.keys()) );  
+  //QMessageBox::information( this, tr( "Test: Data transmitted" ), output );  
+  
+   // bool can_accept = ( !le_descrip->text().isEmpty()  &&
+   //                     !le_density->text().isEmpty()  &&
+   //                     !le_viscos ->text().isEmpty() );
+   // pb_accept  ->setEnabled( can_accept );
+  
+  pb_accept  ->setEnabled( true );
+  w->close(); 
 }
 
 // Slot to cancel edited buffer
