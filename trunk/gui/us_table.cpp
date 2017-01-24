@@ -139,9 +139,14 @@ void US_Table::delete_row( QListWidgetItem* item )
 
    if ( response == QMessageBox::Yes ) 
    {
-      QStringList v = item->text().split( " / " );
-      local.remove( v[ 0 ].toDouble() );
-      delete item;
+     qDebug() << "Delete_1";
+     QStringList v = item->text().split( " / " );
+     qDebug() << "Delete_1a";
+     local.remove( v[ 0 ].toDouble() );
+     qDebug() << "Delete_1b";
+     qDebug() << "item: " << item; 
+     delete item;
+     qDebug() << "Delete_2";
    }
 }
 
