@@ -336,16 +336,14 @@ DbgLv(2) << "RSA:PO: time0 time1 omeg0 omeg1"
                if ( current_speed == 0.0 )
                { // For the first (only?) speed step
                   double dt3   = ( omeg1 - dw2 ) / ddw3;
-                  dt1          = (double)qFloor( time1 - dt3 - accel_time );
+                  dt1          = time1 - dt3 - accel_time;
                   dt1          = ( dt1 < 0.0 ) ? 1.0 : dt1;
                   dw1          = wfac * sq( rpmi );
                }
 
                else
                { // For speed steps beyond the first
-                  dt1          = (double)qFloor(
-                                   ( omeg1 - omeg0 - dw2 - drtm * ddw3 )
-                                   / ( ddw1 - ddw3 ) );
+                  dt1          = ( omeg1 - omeg0 - dw2 - drtm * ddw3 ) / ( ddw1 - ddw3 );
                   dw1          = ddw1 * dt1;
                }
 DbgLv(2) << "RSA:PO:   ddw1 ddw3" << ddw1 << ddw3 << "dt2 dw2" << dt2 << dw2
