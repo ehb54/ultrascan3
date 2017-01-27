@@ -10,6 +10,7 @@
 #include "us_editor.h"
 #include "us_util.h"
 #include "us_math2.h"
+#include "us_eprofile.h"
 
 #if QT_VERSION < 0x050000
 #define setSamples(a,b,c) setData(a,b,c)
@@ -686,6 +687,9 @@ void US_BufferGuiSelect::delete_db( void )
       q[ 0 ] = "delete_buffer";
       q[ 1 ] = bufferID;
       status = db.statusQuery( q );
+
+      QString compType("Buffer");
+      US_ExtProfile::delete_eprofile( &db, bufferID.toInt(), compType );
    }
 
    if ( status == US_DB2::BUFFR_IN_USE )
@@ -1540,26 +1544,92 @@ DbgLv(1) << "BufE:SL: spectrum()  count" << buffer->extinction.count();
    }
  else 
    {
-     US_Table* sdiag;
-     QMap< double, double > loc_extinct = buffer->extinction;
-     QString stype( "Extinction" );
-     bool changed = false;
-     sdiag        = new US_Table( loc_extinct, stype, changed, this );
-     sdiag->setWindowTitle( "Manage Extinction Spectrum" );
-     sdiag->exec();
-     DbgLv(1) << "BufE:SL: spectr  extincts" << loc_extinct
-	      << "changed" << changed;
-     if ( changed )
-       {
-	 qDebug() << "Existing: Inside Changed: "; 
-	 qDebug() << "#buff->extinc BEFORE: " << buffer->extinction.keys().count();
-	 buffer->extinction.clear();
-	 buffer->extinction = loc_extinct;
-	 qDebug() << "#buff->extinc AFTER: " << buffer->extinction.keys().count() << ", BufferID: " <<  buffer->bufferID;
-	 DbgLv(1) << "BufE:SL: spectr   buf extincts CHANGED";
-       }
+     QMessageBox msg;
+     msg.setWindowTitle("Edit Existing Buffer");
+     msg.setText("Choose how do you want to modify existing buffer:");
+     msg.setInformativeText("If you choose to replace buffer, an old buffer will be deleted");
      
-     pb_accept->setEnabled( !le_descrip->text().isEmpty() );
+     //msgBox.setText("Buffer does not have spectrum data!\n You can Upload and fit buffer spectrum, or Enter points manually");
+     msg.setStandardButtons(QMessageBox::Cancel);
+     QPushButton* pButtonReplace = msg.addButton(tr("Replace Buffer"), QMessageBox::YesRole);
+     QPushButton* pButtonEdit = msg.addButton(tr("Edit Buffer"), QMessageBox::YesRole);
+     
+     msg.setDefaultButton(pButtonReplace);
+     msg.exec();
+     
+     if (msg.clickedButton()==pButtonReplace) {
+       
+       // DELETE extinction spectrum before 
+       US_Passwd pw;
+       US_DB2    db( pw.getPasswd() );
+
+       if ( db.lastErrno() != US_DB2::OK )
+	 {
+	   QMessageBox::warning( this, tr( "Connection Problem" ),
+                        tr( "Could not connect to database \n" ) + db.lastError() );
+	   return;
+	 }
+
+       QStringList q( "get_bufferID" );
+       q << buffer->GUID;
+       db.query( q );
+
+       int status = db.lastErrno();
+       
+       if (  status == US_DB2::OK )
+	 {
+	   db.next();
+	   QString bufferID = db.value( 0 ).toString();
+	   
+	   QString compType("Buffer");
+	   US_ExtProfile::delete_eprofile( &db, bufferID.toInt(), compType );
+	 }
+
+       if ( status == US_DB2::BUFFR_IN_USE )
+	 {
+	   QMessageBox::warning( this,
+				 tr( "Buffer Not Deleted" ),
+				 tr( "This buffer could not be deleted since\n"
+				     "it is in use in one or more solutions." ) );
+	   return;
+	 }
+       
+       if ( status != US_DB2::OK )
+	 {
+	   QMessageBox::warning( this,
+				 tr( "Attention" ),
+				 tr( "Delete failed.\n\n" ) + db.lastError() );
+	 }
+       
+       // upload and fit new spectrum
+       w = new US_Extinction("BUFFER", le_descrip->text(), (QWidget*)this); 
+       w->setParent(this, Qt::Window);
+       w->setAttribute(Qt::WA_DeleteOnClose);
+       w->show(); 
+     }
+     
+     if (msg.clickedButton()==pButtonEdit) {
+     
+       US_Table* sdiag;
+       QMap< double, double > loc_extinct = buffer->extinction;
+       QString stype( "Extinction" );
+       bool changed = false;
+       sdiag        = new US_Table( loc_extinct, stype, changed, this );
+       sdiag->setWindowTitle( "Manage Extinction Spectrum" );
+       sdiag->exec();
+       DbgLv(1) << "BufE:SL: spectr  extincts" << loc_extinct
+		<< "changed" << changed;
+       if ( changed )
+	 {
+	   qDebug() << "Existing: Inside Changed: "; 
+	   qDebug() << "#buff->extinc BEFORE: " << buffer->extinction.keys().count();
+	   buffer->extinction.clear();
+	   buffer->extinction = loc_extinct;
+	   qDebug() << "#buff->extinc AFTER: " << buffer->extinction.keys().count() << ", BufferID: " <<  buffer->bufferID;
+	   DbgLv(1) << "BufE:SL: spectr   buf extincts CHANGED";
+	 }
+       pb_accept->setEnabled( !le_descrip->text().isEmpty() );
+     }
    }
 }
 

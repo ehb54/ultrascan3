@@ -110,6 +110,8 @@ int US_ExtProfile::create_eprofile( US_DB2* dbP, const int compID,
       QString& compType, QString& valueType,
       QMap< double, double >& extinction )
 {
+  qDebug() << "compID: " << compID << ", compType: " << compType << ", valueType: " << valueType;
+
    int profileID    = -1;
    QString epxml;
 
@@ -169,6 +171,9 @@ bool US_ExtProfile::xml_eprofile( const int compID, QString& compType,
       double valu      = extinction[ wvln ];
       QString sWvln    = QString::number( wvln );
       QString sValu    = QString::number( valu );
+      
+      qDebug() << "Writing XML: " << wvln << ", " << valu;
+      
       xml.writeStartElement( "extinction" );
       xml.writeAttribute   ( "wavelength", sWvln );
       xml.writeAttribute   ( "value",      sValu );
