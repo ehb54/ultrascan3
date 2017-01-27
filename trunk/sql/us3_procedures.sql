@@ -526,5 +526,6 @@ SOURCE us3_mrecs_procs.sql
 SOURCE us3_noise_procs.sql
 SOURCE us3_report_procs.sql
 SOURCE us3_timestate_procs.sql
+SOURCE us3_eprofile_procs.sql
 
 DELIMITER ;

@@ -5,6 +5,7 @@
 #include "us_db2.h"
 #include "us_datafiles.h"
 #include "us_util.h"
+#include "us_eprofile.h"
 
 void US_BufferComponent::getAllFromDB( const QString& masterPW, 
          QMap< QString, US_BufferComponent >& componentList )
@@ -259,18 +260,21 @@ void US_Buffer::putSpectrum( US_DB2* db, const QString& type ) const
    QStringList q;
    q << "new_spectrum" << bufferID << "Buffer" << type << "" << "";
 
+   // We have to delete previous buffer->extinction from DB if spectrum updated from 'Edit Existing Buffer'
+
    qDebug() << "WritingSpectrum to DB: " << q;
    if ( type == "Extinction" )
    {
+     
       QList< double > keys = extinction.keys();
 
       for ( int i = 0; i < keys.size(); i++ )
       {
-         double wavelength = keys[ i ];
-         q[ 4 ] = QString::number( wavelength, 'f', 1 );
-         q[ 5 ] = QString::number( extinction[ wavelength ], 'e', 4 );
-         qDebug() << "Buffer->extinction details: " << wavelength << " " << extinction[ wavelength ];
-         db->statusQuery( q );
+	double wavelength = keys[ i ];
+	q[ 4 ] = QString::number( wavelength, 'f', 1 );
+	q[ 5 ] = QString::number( extinction[ wavelength ], 'e', 4 );
+	qDebug() << "Buffer->extinction details: " << wavelength << " " << extinction[ wavelength ];
+	db->statusQuery( q );
       }
    }
 
@@ -437,10 +441,14 @@ bool US_Buffer::readFromDB( US_DB2* db, const QString& bufID )
        component << bc;
    }
 
-   // Get spectrum data
-   getSpectrum( db, "Refraction" );
-   getSpectrum( db, "Extinction" );
-   getSpectrum( db, "Fluorescence" );
+   QString compType("Buffer");
+   QString valType("molarExtinction");
+   US_ExtProfile::fetch_eprofile( db, bufferID.toInt(), compType, valType, extinction );
+
+   // // Get spectrum data
+   // getSpectrum( db, "Refraction" );
+   // getSpectrum( db, "Extinction" );
+   // getSpectrum( db, "Fluorescence" );
    return true;
 }
 
@@ -503,6 +511,7 @@ int US_Buffer::saveToDB( US_DB2* db, const QString private_buffer )
       db->next();            // Get the ID of the existing buffer record
       QString bufID   = db->value( 0 ).toString();
       idBuffer        = bufID.toInt();
+      //bufferID        = QString::number(idBuffer);
       bufferID        = bufID;
       qDebug() << "BufferID in saveToDB(): " << bufferID;
 //qDebug() << "old_buffer-idBuffer" << idBuffer;
@@ -560,9 +569,16 @@ int US_Buffer::saveToDB( US_DB2* db, const QString private_buffer )
    
    qDebug() << "bufferID before putSpectrum() called: " << idBuffer;
 
-   putSpectrum( db, "Extinction" );
-   putSpectrum( db, "Refraction" );
-   putSpectrum( db, "Fluorescence" );
+   QString compType("Buffer");
+   QString valType("molarExtinction");
+   qDebug() << "bufferID for extProfile: " << bufferID.toInt();
+   
+   if (!extinction.isEmpty())
+     US_ExtProfile::create_eprofile( db, bufferID.toInt(), compType, valType, extinction);
+
+   //putSpectrum( db, "Extinction" );
+   //putSpectrum( db, "Refraction" );
+   //putSpectrum( db, "Fluorescence" );
 
    // Also write to to disk
    bool    newFile;
