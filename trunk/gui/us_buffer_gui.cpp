@@ -689,7 +689,6 @@ void US_BufferGuiSelect::delete_db( void )
       status = db.statusQuery( q );
 
       QString compType("Buffer");
-      US_ExtProfile::delete_eprofile( &db, bufferID.toInt(), compType );
    }
 
    if ( status == US_DB2::BUFFR_IN_USE )
@@ -1547,11 +1546,11 @@ DbgLv(1) << "BufE:SL: spectrum()  count" << buffer->extinction.count();
      QMessageBox msg;
      msg.setWindowTitle("Edit Existing Buffer");
      msg.setText("Choose how do you want to modify existing buffer:");
-     msg.setInformativeText("If you choose to replace buffer, an old buffer will be deleted");
+     msg.setInformativeText("If you choose to replace extinction profile, an old profile will be deleted");
      
      //msgBox.setText("Buffer does not have spectrum data!\n You can Upload and fit buffer spectrum, or Enter points manually");
      msg.setStandardButtons(QMessageBox::Cancel);
-     QPushButton* pButtonReplace = msg.addButton(tr("Replace Buffer"), QMessageBox::YesRole);
+     QPushButton* pButtonReplace = msg.addButton(tr("Replace Spectrum"), QMessageBox::YesRole);
      QPushButton* pButtonEdit = msg.addButton(tr("Edit Buffer"), QMessageBox::YesRole);
      
      msg.setDefaultButton(pButtonReplace);
