@@ -445,7 +445,7 @@ BEGIN
       DELETE FROM bufferPerson
       WHERE bufferID = p_bufferID;
 
-      DELETE FROM spectrum 
+      DELETE FROM extinctionProfile 
       WHERE componentID = p_bufferID
       AND   componentType = 'Buffer';
 
