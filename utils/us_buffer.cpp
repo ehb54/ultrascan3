@@ -574,8 +574,26 @@ int US_Buffer::saveToDB( US_DB2* db, const QString private_buffer )
    qDebug() << "bufferID for extProfile: " << bufferID.toInt();
    
    if (!extinction.isEmpty())
-     US_ExtProfile::create_eprofile( db, bufferID.toInt(), compType, valType, extinction);
-
+     {
+       if (!replace_spectrum)
+	 {
+	   qDebug() << "Creating Spectrum!!!";
+	   US_ExtProfile::create_eprofile( db, bufferID.toInt(), compType, valType, extinction);
+	 }
+       if (replace_spectrum)
+	 {
+	   qDebug() << "Updating Spectrum!!!";
+	   	   
+	   QMap<double, double> new_extinction = extinction;
+	   int profileID = US_ExtProfile::fetch_eprofile(  db, bufferID.toInt(), compType, valType, extinction);
+	   
+	   qDebug() << "Old Extinction keys: " << extinction.keys().count() << ", ProfileID: " << profileID;
+	   US_ExtProfile::update_eprofile( db, profileID, bufferID.toInt(), compType, valType, new_extinction);
+	   qDebug() << "New Extinction keys: " << new_extinction.keys().count() << ", ProfileID: " << profileID;
+	   
+	   replace_spectrum = false;
+	 }
+     }
    //putSpectrum( db, "Extinction" );
    //putSpectrum( db, "Refraction" );
    //putSpectrum( db, "Fluorescence" );
