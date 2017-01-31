@@ -56,6 +56,9 @@ class US_UTIL_EXTERN US_Buffer
       double  viscosity;   //!< The viscosity of the buffer. 
       bool    manual;      //!< Manual explicit unadjusted density & viscosity
 
+      bool replace_spectrum = false;
+      //static int profileID;
+
       //! An associative array of extinction coefficients indexed by wavelength.
       QMap< double, double > extinction;  
       //! An associative array of refraction coefficients indexed by wavelength.

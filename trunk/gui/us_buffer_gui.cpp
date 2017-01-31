@@ -1504,12 +1504,13 @@ DbgLv(1) << "BufE:SL: spectrum()  count" << buffer->extinction.count();
      QMessageBox msgBox;
      msgBox.setWindowTitle("Edit Existing Buffer");
      msgBox.setText("Buffer does not have spectrum data!");
-     msgBox.setInformativeText("You can Upload and fit buffer spectrum, or Enter points manually");
-     
+     //msgBox.setInformativeText("You can Upload and fit buffer spectrum, or Enter points manually");
+     msgBox.setInformativeText("You can upload and fit buffer spectrum by clicking 'Create an Absorbance Profile'");
+
      //msgBox.setText("Buffer does not have spectrum data!\n You can Upload and fit buffer spectrum, or Enter points manually");
      msgBox.setStandardButtons(QMessageBox::Cancel);
-     QPushButton* pButtonUpload = msgBox.addButton(tr("Upload"), QMessageBox::YesRole);
-     QPushButton* pButtonManually = msgBox.addButton(tr("Enter Manually"), QMessageBox::YesRole);
+     QPushButton* pButtonUpload = msgBox.addButton(tr("Create an Absorbance Profile"), QMessageBox::YesRole);
+     //QPushButton* pButtonManually = msgBox.addButton(tr("Enter Manually"), QMessageBox::YesRole);
      
      msgBox.setDefaultButton(pButtonUpload);
      msgBox.exec();
@@ -1520,6 +1521,8 @@ DbgLv(1) << "BufE:SL: spectrum()  count" << buffer->extinction.count();
        w->setAttribute(Qt::WA_DeleteOnClose);
        w->show(); 
      }
+     /*
+     // Enter Manually 
      if (msgBox.clickedButton()==pButtonManually) {
        US_Table* sdiag;
        QMap< double, double > loc_extinct = buffer->extinction;
@@ -1539,26 +1542,36 @@ DbgLv(1) << "BufE:SL: spectrum()  count" << buffer->extinction.count();
        
        pb_accept->setEnabled( !le_descrip->text().isEmpty() );
      }
+     */
     
    }
  else 
    {
      QMessageBox msg;
      msg.setWindowTitle("Edit Existing Buffer");
-     msg.setText("Choose how do you want to modify existing buffer:");
+     msg.setText("Choose how do you want to modify existing spectrum:");
      msg.setInformativeText("If you choose to replace extinction profile, an old profile will be deleted");
      
      //msgBox.setText("Buffer does not have spectrum data!\n You can Upload and fit buffer spectrum, or Enter points manually");
      msg.setStandardButtons(QMessageBox::Cancel);
      QPushButton* pButtonReplace = msg.addButton(tr("Replace Spectrum"), QMessageBox::YesRole);
-     QPushButton* pButtonEdit = msg.addButton(tr("Edit Buffer"), QMessageBox::YesRole);
-     
+     //QPushButton* pButtonEdit = msg.addButton(tr("Edit Spectrum"), QMessageBox::YesRole);
+     QPushButton* pButtonDelete = msg.addButton(tr("Delete Spectrum"), QMessageBox::YesRole);
+     QPushButton* pButtonView = msg.addButton(tr("View Spectrum"), QMessageBox::YesRole);
+
      msg.setDefaultButton(pButtonReplace);
      msg.exec();
      
-     if (msg.clickedButton()==pButtonReplace) {
-       
-       // DELETE extinction spectrum before 
+     
+     if (msg.clickedButton()==pButtonView) {
+       US_BufferViewSpectrum *s = new US_BufferViewSpectrum(buffer->extinction);
+       s->setParent(this, Qt::Window);
+       s->show();
+     }
+
+
+     if (msg.clickedButton()==pButtonDelete) {
+       // DELETE extinction spectrum 
        US_Passwd pw;
        US_DB2    db( pw.getPasswd() );
 
@@ -1582,31 +1595,46 @@ DbgLv(1) << "BufE:SL: spectrum()  count" << buffer->extinction.count();
 	   
 	   QString compType("Buffer");
 	   US_ExtProfile::delete_eprofile( &db, bufferID.toInt(), compType );
+
+	   QMessageBox::information( this,
+				 tr( "Deletion: Success" ),
+				 tr( "Spectrum was successfully deleted") );
+	   
+	   
+	   emit editBufAccepted();
+	   //pb_accept->setEnabled( true );
 	 }
 
        if ( status == US_DB2::BUFFR_IN_USE )
 	 {
 	   QMessageBox::warning( this,
-				 tr( "Buffer Not Deleted" ),
+				 tr( "Spectrum Not Deleted" ),
 				 tr( "This buffer could not be deleted since\n"
 				     "it is in use in one or more solutions." ) );
 	   return;
 	 }
-       
        if ( status != US_DB2::OK )
 	 {
 	   QMessageBox::warning( this,
 				 tr( "Attention" ),
 				 tr( "Delete failed.\n\n" ) + db.lastError() );
 	 }
+     }
+     
+     // REPLACE Spectrum
+     if (msg.clickedButton()==pButtonReplace) {
        
        // upload and fit new spectrum
+       buffer->replace_spectrum = true;
+
        w = new US_Extinction("BUFFER", le_descrip->text(), (QWidget*)this); 
        w->setParent(this, Qt::Window);
        w->setAttribute(Qt::WA_DeleteOnClose);
        w->show(); 
      }
      
+     /*
+     // EDIT spectrum
      if (msg.clickedButton()==pButtonEdit) {
      
        US_Table* sdiag;
@@ -1629,6 +1657,7 @@ DbgLv(1) << "BufE:SL: spectrum()  count" << buffer->extinction.count();
 	 }
        pb_accept->setEnabled( !le_descrip->text().isEmpty() );
      }
+     */
    }
 }
 
