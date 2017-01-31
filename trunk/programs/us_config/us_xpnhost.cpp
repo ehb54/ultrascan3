@@ -81,33 +81,31 @@ US_XpnHost::US_XpnHost( QWidget* w, Qt::WindowFlags flags )
 
    // Row 3
    QLabel* port        = us_label( "XPN DB Port:" );
-   le_port             = us_lineedit( "", 0 );
+   le_port             = us_lineedit( def_port, 0 );
    details->addWidget( port,           row,   0 );
    details->addWidget( le_port,        row++, 1 );
 
    // Row 4
    QLabel* name        = us_label( "XPN DB Name:" );
-   le_name             = us_lineedit( "", 0 );
+   le_name             = us_lineedit( def_name, 0 );
    details->addWidget( name,           row,   0 );
    details->addWidget( le_name,        row++, 1 );
 
    // Row 5
    QLabel* user        = us_label( "DB Username:" );
-   le_user             = us_lineedit( "", 0 );
+   le_user             = us_lineedit( def_user, 0 );
    details->addWidget( user,           row,   0 );
    details->addWidget( le_user,        row++, 1 );
 
    // Row 6
    QLabel* pasw        = us_label( "DB Password:" );
-   le_pasw             = us_lineedit( "", 0 );
+   le_pasw             = us_lineedit( def_pasw, 0 );
    details->addWidget( pasw,           row,   0 );
    details->addWidget( le_pasw,        row++, 1 );
 
    // Make the line edit entries wider
    QFontMetrics fm( le_host->font() );
    le_port->setMinimumWidth( fm.maxWidth() * 10 );
-
-   details->addWidget( le_port, row++, 1 );
 
    topbox->addLayout( details );
 
@@ -121,7 +119,7 @@ US_XpnHost::US_XpnHost( QWidget* w, Qt::WindowFlags flags )
    buttons->addWidget( pb_save, row, 0 );
 
    pb_delete = us_pushbutton( tr( "Delete Current Entry" ) );
-   pb_delete->setEnabled( false );
+   pb_delete->setEnabled( true );
    connect( pb_delete,      SIGNAL( clicked()  ),
             this,           SLOT  ( deleteDB() ) );
    buttons->addWidget( pb_delete, row++, 1 );
@@ -163,12 +161,16 @@ void US_XpnHost::select_db( QListWidgetItem* entry )
    {
       if ( item == dblist.at( ii ).at( 0 ) )
       {
+         int elen    = dblist.at( ii ).size();
          le_description->setText( item );
          le_host       ->setText( dblist.at( ii ).at( 1 ) );
          le_port       ->setText( dblist.at( ii ).at( 2 ) );
-         le_name       ->setText( dblist.at( ii ).at( 3 ) );
-         le_user       ->setText( dblist.at( ii ).at( 4 ) );
-         le_pasw       ->setText( dblist.at( ii ).at( 5 ) );
+         if ( elen > 3 )
+            le_name       ->setText( dblist.at( ii ).at( 3 ) );
+         if ( elen > 4 )
+            le_user       ->setText( dblist.at( ii ).at( 4 ) );
+         if ( elen > 5 )
+            le_pasw       ->setText( dblist.at( ii ).at( 5 ) );
 
          // Set the default DB and user for that DB
          US_Settings::set_def_xpn_host( dblist.at( ii ) );
@@ -297,12 +299,12 @@ void US_XpnHost::reset( void )
    if ( DB.size() > 0 ) defaultDB = US_Settings::defaultXpnHost().at( 0 );
    update_lw( defaultDB );
 
-   le_description->setText("");
-   le_host       ->setText("");
-   le_port       ->setText("");
-   le_name       ->setText("");
-   le_user       ->setText("");
-   le_pasw       ->setText("");
+   le_description->setText( "" );
+   le_host       ->setText( "" );
+   le_port       ->setText( def_port );
+   le_name       ->setText( def_name );
+   le_user       ->setText( def_user );
+   le_pasw       ->setText( def_pasw );
 
    pb_save       ->setEnabled( false );
    pb_delete     ->setEnabled( false );
@@ -353,7 +355,18 @@ void US_XpnHost::save_default( void )
 
 void US_XpnHost::deleteDB( void )
 {
-   QString item = le_description->text();
+   QListWidgetItem* entry = lw_entries->currentItem();
+   QString item = entry->text().remove( " (default)" );
+qDebug() << "deleteDB:  item" << item;
+
+   int response = QMessageBox::question( this,
+      tr( "Delete Entry?" ),
+      tr( "You have selected the following entry to delete:\n    \"" )
+      + item + tr( "\"\n\nProceed?" ),
+      QMessageBox::Yes, QMessageBox::Cancel );
+
+   if ( response != QMessageBox::Yes )
+      return;
 
    // Go through list and delete the one matching description
    for ( int ii = 0; ii < dblist.size(); ii++ )
