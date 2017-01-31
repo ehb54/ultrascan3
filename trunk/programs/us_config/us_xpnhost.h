@@ -21,6 +21,7 @@ class US_XpnHost : public US_Widgets
   private:
     QList<QStringList> dblist;
     QString            uuid;
+    QMap< QString, QString > conn_stat;
     
     QPushButton* pb_add;   
     QPushButton* pb_delete;
@@ -32,6 +33,9 @@ class US_XpnHost : public US_Widgets
     QLineEdit*   le_dbname; 
     QLineEdit*   le_host;  
     QLineEdit*   le_port;  
+    QLineEdit*   le_name;  
+    QLineEdit*   le_user;  
+    QLineEdit*   le_pasw;  
 
     QListWidget* lw_entries;
 

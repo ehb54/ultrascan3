@@ -82,6 +82,9 @@ class US_XpnDataViewer : public US_Widgets
      QString        xpnhost;
      QString        xpnport;
      QString        xpndesc;
+     QString        xpnname;
+     QString        xpnuser;
+     QString        xpnpasw;
 
      int            nscan;
      int            ncell;
