@@ -13,26 +13,35 @@ US_XpnData::US_XpnData( ) {
    clear();                // Clear internal vectors
 
    dbg_level    = US_Settings::us_debug();
-   dbname       = QString( "AUC_DATA_DB" );
    dbhost       = QString( "bcf.uthscsa.edu" );
    dbport       = 5432;
+   dbname       = QString( "AUC_DATA_DB" );
+   dbuser       = QString( "aucuser" );
+   dbpasw       = QString( "aucuser" );
    sctype       = 1;
    runType      = "RI";
 DbgLv(0) << "XpDa: dbg_level" << dbg_level;
 }
 
 // Connect to a selected database server with XPN data
-bool US_XpnData::connect_data( QString& adbname,
-                               QString& xpnhost, const int xpnport )
+bool US_XpnData::connect_data( const QString adbname,
+                               const QString xpnhost, const int xpnport )
+{
+   return connect_data( xpnhost, xpnport, adbname );
+}
+
+// Connect to a selected database server with XPN data
+bool US_XpnData::connect_data( const QString xpnhost, const int xpnport,
+   const QString adbname, const QString adbuser, const QString adbpasw )
 {
    bool status   = true;
-   dbname        = ( adbname.isEmpty() ) ? dbname : adbname;
    dbhost        = ( xpnhost.isEmpty() ) ? dbhost : xpnhost;
    dbport        = ( xpnport <= 0 )      ? 5432   : xpnport;
+   dbname        = ( adbname.isEmpty() ) ? dbname : adbname;
+   dbuser        = ( adbuser.isEmpty() ) ? dbuser : adbuser;
+   dbpasw        = ( adbpasw.isEmpty() ) ? dbpasw : adbpasw;
    is_absorb     = false;
    is_raw        = true;
-   QString dbuser( "auc_admin" );
-   QString dbpasw( "auc_admin" );
 
    dbxpn           = QSqlDatabase::addDatabase( "QPSQL", "XpnData" );
 DbgLv(1) << "XpDa:scn: drivers" << dbxpn.drivers();

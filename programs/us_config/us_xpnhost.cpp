@@ -8,7 +8,12 @@
 #include "us_crypto.h"
 #include "us_db2.h"
 
-US_XpnHost::US_XpnHost( QWidget* w, Qt::WindowFlags flags ) 
+#define def_port QString("5432")
+#define def_name QString("AUC_DATA_DB")
+#define def_user QString("aucuser")
+#define def_pasw QString("aucuser")
+
+US_XpnHost::US_XpnHost( QWidget* w, Qt::WindowFlags flags )
   : US_Widgets( true, w, flags )
 {
    // Frame layout
@@ -34,7 +39,7 @@ US_XpnHost::US_XpnHost( QWidget* w, Qt::WindowFlags flags )
    QLabel* banner = us_banner( tr( "XPN Host List" ) );
    topbox->addWidget( banner );
 
-   QLabel* banner2 = us_banner( 
+   QLabel* banner2 = us_banner(
         tr( "(Doubleclick for details and set the default)" ), -1 );
    topbox->addWidget( banner2 );
 
@@ -51,40 +56,53 @@ US_XpnHost::US_XpnHost( QWidget* w, Qt::WindowFlags flags )
    if ( XpnHosts.size() > 0 )
       defXpnHost = US_Settings::defaultXpnHost().at( 0 );
    update_lw( defXpnHost );
-//xpn_db_hosts()
-//set_xpn_db_hosts( const QList<QStringList>& );
-//defaultXpnHost()
-//set_def_xpn_host( const QStringList& );
 
-   connect( lw_entries, SIGNAL( itemDoubleClicked( QListWidgetItem* ) ), 
+   connect( lw_entries, SIGNAL( itemDoubleClicked( QListWidgetItem* ) ),
                         SLOT  ( select_db        ( QListWidgetItem* ) ) );
    // Detail info
    QLabel* info = us_banner( tr( "XPN Host Detailed Information" ) );
    topbox->addWidget( info );
 
+   // Row 0
    int row = 0;
    QGridLayout* details = new QGridLayout();
-  
-   // Row 1
-   QLabel* desc = us_label( "XPN Host Description:" );
-   details->addWidget( desc, row, 0 );
 
-   le_description = us_lineedit( "", 0 );
+   // Row 1
+   QLabel* desc         = us_label( "XPN Host Description:" );
+   le_description       = us_lineedit( "", 0 );
+   details->addWidget( desc,           row,   0 );
    details->addWidget( le_description, row++, 1 );
 
    // Row 2
-   QLabel* host = us_label( "XPN DB Host Address:" );
-   details->addWidget( host, row, 0 );
-
-   le_host = us_lineedit( "", 0 );
-   details->addWidget( le_host, row++, 1 );
+   QLabel* host        = us_label( "XPN DB Host Address:" );
+   le_host             = us_lineedit( "", 0 );
+   details->addWidget( host,           row,   0 );
+   details->addWidget( le_host,        row++, 1 );
 
    // Row 3
-   QLabel* port = us_label( "XPN DB Port:" );
-   details->addWidget( port, row, 0 );
+   QLabel* port        = us_label( "XPN DB Port:" );
+   le_port             = us_lineedit( "", 0 );
+   details->addWidget( port,           row,   0 );
+   details->addWidget( le_port,        row++, 1 );
 
-   le_port = us_lineedit( "", 0 );
-  
+   // Row 4
+   QLabel* name        = us_label( "XPN DB Name:" );
+   le_name             = us_lineedit( "", 0 );
+   details->addWidget( name,           row,   0 );
+   details->addWidget( le_name,        row++, 1 );
+
+   // Row 5
+   QLabel* user        = us_label( "DB Username:" );
+   le_user             = us_lineedit( "", 0 );
+   details->addWidget( user,           row,   0 );
+   details->addWidget( le_user,        row++, 1 );
+
+   // Row 6
+   QLabel* pasw        = us_label( "DB Password:" );
+   le_pasw             = us_lineedit( "", 0 );
+   details->addWidget( pasw,           row,   0 );
+   details->addWidget( le_pasw,        row++, 1 );
+
    // Make the line edit entries wider
    QFontMetrics fm( le_host->font() );
    le_port->setMinimumWidth( fm.maxWidth() * 10 );
@@ -148,6 +166,9 @@ void US_XpnHost::select_db( QListWidgetItem* entry )
          le_description->setText( item );
          le_host       ->setText( dblist.at( ii ).at( 1 ) );
          le_port       ->setText( dblist.at( ii ).at( 2 ) );
+         le_name       ->setText( dblist.at( ii ).at( 3 ) );
+         le_user       ->setText( dblist.at( ii ).at( 4 ) );
+         le_pasw       ->setText( dblist.at( ii ).at( 5 ) );
 
          // Set the default DB and user for that DB
          US_Settings::set_def_xpn_host( dblist.at( ii ) );
@@ -170,8 +191,8 @@ void US_XpnHost::check_add()
    // Check that all fields have at least something
    if ( le_description->text().isEmpty() )
    {
-      QMessageBox::information( this, 
-         tr( "Attention" ), 
+      QMessageBox::information( this,
+         tr( "Attention" ),
          tr( "Please enter a Description before saving..." ) );
       return;
    }
@@ -179,14 +200,23 @@ void US_XpnHost::check_add()
    if ( le_host->text().isEmpty() )
    {
       QMessageBox::information( this,
-         tr( "Attention" ), 
+         tr( "Attention" ),
          tr( "Please enter an XPN DB Host Address before saving..." ) );
       return;
    }
-  
+
    if ( le_port->text().isEmpty() )
-      le_port->setText( "5432" );
-  
+      le_port->setText( def_port );
+
+   if ( le_name->text().isEmpty() )
+      le_name->setText( def_name );
+
+   if ( le_user->text().isEmpty() )
+      le_user->setText( def_user );
+
+   if ( le_pasw->text().isEmpty() )
+      le_pasw->setText( def_pasw );
+
    // Save the DB entry
    dblist = US_Settings::xpn_db_hosts();
    bool updated = false;
@@ -198,6 +228,9 @@ void US_XpnHost::check_add()
       {
          db.replace( 1, le_host->text() );
          db.replace( 2, le_port->text() );
+         db.replace( 3, le_name->text() );
+         db.replace( 4, le_user->text() );
+         db.replace( 5, le_pasw->text() );
 
          dblist.replace( ii, db );
          updated = true;
@@ -210,7 +243,10 @@ void US_XpnHost::check_add()
       QStringList entry;
       entry << le_description->text()
             << le_host->text()
-            << le_port->text();
+            << le_port->text()
+            << le_name->text()
+            << le_user->text()
+            << le_pasw->text();
 
       dblist << entry;
    }
@@ -223,7 +259,7 @@ void US_XpnHost::check_add()
 
    pb_save  ->setEnabled( true );
    pb_delete->setEnabled( true );
-} 
+}
 
 void US_XpnHost::update_lw( const QString& current )
 {
@@ -245,11 +281,11 @@ void US_XpnHost::update_lw( const QString& current )
       QString display = desc;
 
       if ( desc == defaultDBname ) display.append( " (default)" );
-    
+
       QListWidgetItem* widget = new QListWidgetItem( display );
-      lw_entries->addItem( widget );  
-     
-      if ( desc == current ) 
+      lw_entries->addItem( widget );
+
+      if ( desc == current )
          lw_entries->setCurrentItem( widget, QItemSelectionModel::Select );
    }
 }
@@ -264,6 +300,9 @@ void US_XpnHost::reset( void )
    le_description->setText("");
    le_host       ->setText("");
    le_port       ->setText("");
+   le_name       ->setText("");
+   le_user       ->setText("");
+   le_pasw       ->setText("");
 
    pb_save       ->setEnabled( false );
    pb_delete     ->setEnabled( false );
@@ -274,22 +313,22 @@ void US_XpnHost::help( void )
    US_Help* showhelp = new US_Help(this);
    showhelp->show_help( "database_config.html" );
 }
-  
+
 void US_XpnHost::save_default( void )
 {
    for ( int ii = 0; ii < dblist.size(); ii++ )
    {
       QString desc = dblist.at( ii ).at( 0 );
-     
+
       // Look for the current description
-      if ( desc == le_description->text() ) 
+      if ( desc == le_description->text() )
       {
-         if ( dblist.at( ii ).at( 9 ) == "" )
+         if ( conn_stat[ desc ] != "connect_ok" )
          {
-            QMessageBox::information( this, 
+            QMessageBox::information( this,
                tr( "Default XpnHost Problem" ),
                tr( "The current database information has not been tested "
-                   "for connectivity.\n" 
+                   "for connectivity.\n"
                    "The default database has not been updated.") );
             return;
          }
@@ -298,15 +337,15 @@ void US_XpnHost::save_default( void )
 
          US_Settings::set_def_xpn_host( dblist.at( ii ) );
          reset();
-      
-         QMessageBox::information( this, 
+
+         QMessageBox::information( this,
             tr( "Default XpnHost" ),
             tr( "The default database has been updated." ) );
          return;
       }
    }
-     
-   QMessageBox::warning( this, 
+
+   QMessageBox::warning( this,
       tr( "Default XpnHost Problem" ),
       tr( "The description does not match any in the database list.\n"
           "The default database has not been updated." ) );
@@ -320,29 +359,29 @@ void US_XpnHost::deleteDB( void )
    for ( int ii = 0; ii < dblist.size(); ii++ )
    {
       QString desc = dblist.at( ii ).at( 0 );
-     
+
       // Look for the current description
-      if ( desc == item ) 
+      if ( desc == item )
       {
          dblist.removeAt( ii );
          US_Settings::set_xpn_db_hosts( dblist );
-      
+
          // Check if the default DB matches
          QStringList defaultDB = US_Settings::defaultXpnHost();
 
          if ( defaultDB.at( 0 ) == item )
             US_Settings::set_def_xpn_host( QStringList() );
-      
+
          reset();
 
-         QMessageBox::information( this, 
+         QMessageBox::information( this,
             tr( "XpnHost Removed" ),
             tr( "The database has been removed." ) );
          return;
       }
    }
-     
-   QMessageBox::warning( this, 
+
+   QMessageBox::warning( this,
       tr( "XpnHost Problem" ),
       tr( "The description does not match any in the database list.\n"
           "The database has not been removed." ) );
@@ -350,15 +389,35 @@ void US_XpnHost::deleteDB( void )
 
 bool US_XpnHost::test_connect( void )
 {
-   const QString defport( "5432" );
-   QString dbname( "AUC_DATA_DB" );
    QString xpnhost = le_host->text();
    QString xpnport = le_port->text();
+   QString dbname  = le_name->text();
+   QString dbuser  = le_user->text();
+   QString dbpasw  = le_pasw->text();
+   QString xpndesc = le_description->text();
 
    if ( xpnport.isEmpty() )
    {
-      xpnport         = defport;
+      xpnport         = def_port;
       le_port->setText( xpnport );
+   }
+
+   if ( dbname.isEmpty() )
+   {
+      dbname          = def_name;
+      le_name->setText( dbname );
+   }
+
+   if ( dbuser.isEmpty() )
+   {
+      dbuser          = def_user;
+      le_user->setText( dbuser );
+   }
+
+   if ( dbpasw.isEmpty() )
+   {
+      dbpasw          = def_pasw;
+      le_pasw->setText( dbpasw );
    }
 
    if ( xpnhost.isEmpty()  ||  xpnport.isEmpty() )
@@ -373,24 +432,28 @@ bool US_XpnHost::test_connect( void )
    US_XpnData* xpn_data = new US_XpnData();
    int ixpport     = xpnport.toInt();
 
-   bool ok         = xpn_data->connect_data( dbname, xpnhost, ixpport );
+   bool ok         = xpn_data->connect_data( xpnhost, ixpport, dbname,
+                                             dbuser, dbpasw );
 
    xpn_data->close();
    delete xpn_data;
 
-   if ( ok ) 
+   if ( ok )
    {
       QMessageBox::information( this,
         tr( "XpnHost Connection" ),
         tr( "The connection was successful." ) );
 
       pb_save->setEnabled( true );
+      conn_stat[ xpndesc ] = "connect_ok";
    }
    else
    {
       QMessageBox::warning( this,
         tr( "XpnHost Connection" ),
         tr( "The connection failed.\n" ) + xpn_data->lastError() );
+
+      conn_stat[ xpndesc ] = "connect_bad";
    }
 
    pb_save->setEnabled( true );

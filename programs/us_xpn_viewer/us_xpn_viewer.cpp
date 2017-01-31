@@ -98,6 +98,9 @@ else
    xpndesc      = xpnentr.at( 0 );
    xpnhost      = xpnentr.at( 1 );
    xpnport      = xpnentr.at( 2 );
+   xpnname      = xpnentr.at( 3 );
+   xpnuser      = xpnentr.at( 4 );
+   xpnpasw      = xpnentr.at( 5 );
 
    // Load controls     
    QLabel*      lb_run      = us_banner( tr( "Load the Run" ) );
@@ -489,11 +492,11 @@ DbgLv(1) << "ec: call changeCellCh";
 void US_XpnDataViewer::load_xpn_raw( )
 {
    // Ask for data directory
-   QString dbname    = "AUC_DATA_DB";
    QString dbhost    = xpnhost;
    int     dbport    = xpnport.toInt();
-DbgLv(1) << "RDr: call connect_data  dbname h p" << dbname << dbhost << dbport;
-   xpn_data->connect_data( dbname, dbhost, dbport );
+DbgLv(1) << "RDr: call connect_data  dbname h p u w"
+ << xpnname << dbhost << dbport << xpnuser << xpnpasw;
+   xpn_data->connect_data( dbhost, dbport, xpnname, xpnuser, xpnpasw );
    xpn_data->scan_runs( runInfo );
    xpn_data->filter_runs( runInfo );
 DbgLv(1) << "RDr:  rtn fr import_data";

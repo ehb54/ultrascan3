@@ -175,11 +175,23 @@ class US_UTIL_EXTERN US_XpnData : public QObject
       };
 
       //! \brief Connect for XPN data with remote host DB
+      //! \param xpnhost Host name of XPN database server
+      //! \param xpnport Port value of XPN database server
+      //! \param adbname Name of database to examine
+      //! \param adbuser Database user
+      //! \param adbpasw Database password
+      //! \returns       Status of connect (true->connected OK)
+      bool    connect_data( const QString, const int = 5432,
+                            const QString = QString( "AUC_DATA_DB" ),
+                            const QString = QString( "aucuser" ),
+                            const QString = QString( "aucuser" ) );
+
+      //! \brief Connect for XPN data with remote host DB
       //! \param adbname Name of database to examine
       //! \param xpnhost Host name of XPN database server
       //! \param xpnport Port value of XPN database server
       //! \returns       Status of connect (true->connected OK)
-      bool    connect_data( QString&, QString&, const int = 5432 );
+      bool    connect_data( const QString, const QString, const int = 5432 );
 
       //! \brief Scan the DB for Runs information
       //! \param runInfo Reference for returned run info strings
@@ -280,6 +292,8 @@ class US_UTIL_EXTERN US_XpnData : public QObject
    private:
       QString   dbname;              //!< XPN database name
       QString   dbhost;              //!< XPN db server host name
+      QString   dbuser;              //!< XPN db server user name
+      QString   dbpasw;              //!< XPN db server user password
       int       dbport;              //!< XPN server port number (def.=5432)
 
       QVector< int >       wavelns;  //!< Raw input wavelengths
