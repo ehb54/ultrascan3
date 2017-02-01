@@ -100,6 +100,7 @@ US_XpnHost::US_XpnHost( QWidget* w, Qt::WindowFlags flags )
    // Row 6
    QLabel* pasw        = us_label( "DB Password:" );
    le_pasw             = us_lineedit( def_pasw, 0 );
+   le_pasw->setEchoMode( QLineEdit::Password );
    details->addWidget( pasw,           row,   0 );
    details->addWidget( le_pasw,        row++, 1 );
 
@@ -228,11 +229,21 @@ void US_XpnHost::check_add()
       QStringList db = dblist.at( ii );
       if ( db.at( 0 ) == le_description->text() )
       {
+         int elen    = dblist.at( ii ).size();
          db.replace( 1, le_host->text() );
          db.replace( 2, le_port->text() );
-         db.replace( 3, le_name->text() );
-         db.replace( 4, le_user->text() );
-         db.replace( 5, le_pasw->text() );
+         if ( elen > 5 )
+         {
+            db.replace( 3, le_name->text() );
+            db.replace( 4, le_user->text() );
+            db.replace( 5, le_pasw->text() );
+         }
+         else if ( elen == 3 )
+         {
+            db << le_name->text();
+            db << le_user->text();
+            db << le_pasw->text();
+         }
 
          dblist.replace( ii, db );
          updated = true;
