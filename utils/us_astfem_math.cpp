@@ -2,6 +2,11 @@
 #include "us_astfem_math.h"
 #include "us_math2.h"
 #include "us_hardware.h"
+#if 0
+#ifdef NO_DB
+#include <mpi.h>
+#endif
+#endif
 
 void US_AstfemMath::interpolate_C0( MfemInitial& C0, double* C1, 
       QVector< double >& xvec )
@@ -575,15 +580,10 @@ int US_AstfemMath::interpolate( MfemData& expdata, MfemData& simdata,
                               "exiting...\n";
                }
 
-#if 0
-#if defined(USE_MPI)
-               MPI_Abort( MPI_COMM_WORLD, -1 );
+#ifdef NO_DB
+               //MPI_Abort( MPI_COMM_WORLD, -1 );
 #endif
                exit( -1 );
-#endif
-#if 1
-               break;
-#endif
             }
          }
 
@@ -663,12 +663,12 @@ int US_AstfemMath::interpolate( MfemData& expdata, MfemData& simdata,
 //e_omega=simdata.scan[lsc].omega_s_t;
 //e_time=simdata.scan[lsc].time;
 //qDebug() << "s-lsc e_omega e_time" << lsc << e_omega << e_time;
-#if defined(USE_MPI)
-//               MPI_Abort( MPI_COMM_WORLD, -1 );
-#endif
                qDebug() << "The simulated data does not cover the entire "
                            "experimental time range and ends too early!\n"
                            "exiting...";
+#ifdef NO_DB
+               //MPI_Abort( MPI_COMM_WORLD, -1 );
+#endif
 //               exit( -1 );
                simscan--;
                break;
@@ -738,8 +738,8 @@ int US_AstfemMath::interpolate( MfemData& expdata, MfemData& simdata,
                   "beginning of the experimental data's radii!\n"
                   "exiting...";
 
-#if defined(USE_MPI)
-      MPI_Abort( MPI_COMM_WORLD, -3 );
+#ifdef NO_DB
+      //MPI_Abort( MPI_COMM_WORLD, -3 );
 #endif
       exit( -3 );
    }
@@ -759,8 +759,8 @@ int US_AstfemMath::interpolate( MfemData& expdata, MfemData& simdata,
                         "exiting...";
 //qDebug() << "jj ii szerad trad erad" << jj << ii << expdata.radius.size()
 // << tmp_data.radius[jj-1] << expdata.radius[ii];
-#if defined(USE_MPI)
-            MPI_Abort( MPI_COMM_WORLD, -2 );
+#ifdef NO_DB
+            //MPI_Abort( MPI_COMM_WORLD, -2 );
 #endif
             exit( -2 );
          }
@@ -1941,7 +1941,7 @@ void US_AstfemMath::DefineGaussian( int nGauss, double** Gs2 )
 // Initialize a simulation RawData object to have sizes,ranges,controls
 //   that mirror those of an experimental EditedData object
 void US_AstfemMath::initSimData( US_DataIO::RawData& simdata,
-      US_DataIO::EditedData& editdata, double concval1=0.0 )
+      US_DataIO::EditedData& editdata, double concval1 )
 {
 
    int    nconc = editdata.pointCount();
@@ -1985,6 +1985,40 @@ void US_AstfemMath::initSimData( US_DataIO::RawData& simdata,
    }
 
    return;
+}
+
+// Initialize a simulation global-fit RawData object to have
+//   sizes,ranges,controls that mirror those of a list of EditedData objects
+void US_AstfemMath::initSimData( US_DataIO::RawData& simdata,
+      QList< US_DataIO::EditedData* >& edats, double concval1 )
+{
+   // Size simulation data and initialize concentrations to zero
+   int ndats   = edats.count();
+   int kscans  = 0;
+   int jscan   = 0;
+
+   for ( int ee = 0; ee < ndats; ee++ )
+   {
+      US_DataIO::RawData tdata;      // Init temp sim data with edata's grid
+      US_AstfemMath::initSimData( tdata, *edats[ ee ], concval1 );
+
+      int nscans  = tdata.scanData.size();
+      kscans     += nscans;
+      simdata.scanData.resize( kscans );
+
+      if ( ee == 0 )
+      {
+         simdata     = tdata;   // Init (first) dataset sim data
+         jscan      += nscans;
+      }
+      else
+      {
+         for ( int ss = 0; ss < nscans; ss++ )
+         {  // Append zeroed-scans sim_data for multiple data sets
+            simdata.scanData[ jscan++ ] = tdata.scanData[ ss ];
+         }
+      }
+   }
 }
 
 // Calculate variance (average difference squared) between simulated and

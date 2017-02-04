@@ -818,7 +818,7 @@ void ata_d_thr_t::run() {
                n.clear();
                m=(*dataarray)[i];
                n=(*dataarray)[j];
-               while((k<m.size()) && (l<n.size())) {
+               while((k<(unsigned int)m.size()) && (l<(unsigned int)n.size())) {
                   if (m[k].columnlocation == n[l].columnlocation) {
                      sum += m[k].locationvalue * n[l].locationvalue;
                      k++;
@@ -940,7 +940,7 @@ void US_Matrix::calc_A_transpose_A(double ***A, double ***product, unsigned int 
                n.clear();
                m=dataarray[i];
                n=dataarray[j];
-               while((k<m.size()) && (l<n.size()))
+               while((k<(unsigned int)m.size()) && (l<(unsigned int)n.size()))
                {
                   if (m[k].columnlocation == n[l].columnlocation) 
                   {
@@ -1091,7 +1091,7 @@ void US_Matrix::calc_A_transpose_A(float ***A, float ***product, unsigned int ro
             n.clear();
             m=dataarray[i];
             n=dataarray[j];
-            while((k<m.size()) && (l<n.size()))
+            while((k<(unsigned int)m.size()) && (l<(unsigned int)n.size()))
             {
                if (m[k].columnlocation == n[l].columnlocation) 
                {

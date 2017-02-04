@@ -413,6 +413,11 @@ void US_MPI_Analysis::parse_dataset( QXmlStreamReader& xml,
 
          dataset->simparams.speed_step << sp;
       }
+
+      if ( xml.name() == "total_concentration" )
+      {
+         concentrations << a.value( "value" ).toString().toDouble();
+      }
    }
 }
 

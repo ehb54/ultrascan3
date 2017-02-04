@@ -244,7 +244,15 @@ class US_UTIL_EXTERN US_AstfemMath
       //! \param editdata Reference to experimental Edited Data to mirror.
       //! \param concval1 Optional constant concentration value for first scan.
       static void   initSimData   ( US_DataIO::RawData&,
-                                    US_DataIO::EditedData&, double );
+                                    US_DataIO::EditedData&, double = 0.0 );
+
+      //! \brief Initialize global simulation data from experimental list
+      //! \param simdata  Reference to simulation Raw Data to initialize.
+      //! \param edats    Reference to experimental Edited Data list to mirror.
+      //! \param concval1 Optional constant concentration value for first scan.
+      static void   initSimData   ( US_DataIO::RawData&,
+                                    QList< US_DataIO::EditedData* >&,
+                                    double = 0.0 );
 
       //! \brief Calculate variance for Simulation-Experimental difference.
       //! \param simdata  Reference to simulation Raw Data.

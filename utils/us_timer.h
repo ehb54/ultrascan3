@@ -4,10 +4,11 @@
 #include <qstring.h>
 #include <qdatetime.h>
 #include <map>
+#include "us_extern.h"
 
 using namespace std;
 
-class US_Timer
+class US_UTIL_EXTERN US_Timer
 {
  public:
 

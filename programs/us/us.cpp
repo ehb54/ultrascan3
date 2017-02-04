@@ -805,6 +805,12 @@ qDebug() << "US:NOTE: mrev(2)" << mrev;
                            ? time_d : time_m;
       }
 
+#if QT_VERSION > 0x050000
+      if ( type == "warn"  &&  msg.contains( "revision 3.3" ) )
+      {
+        msg              = msg.replace( "revision 3.3", "revision 3.5" );
+      }
+#endif
       types << type;
       revs  << mrev;
       irevs << m_rev;

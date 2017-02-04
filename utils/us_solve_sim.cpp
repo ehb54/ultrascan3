@@ -174,6 +174,8 @@ void US_SolveSim::calc_residuals( int offset, int dataset_count,
    d_offs        = offset;                        // Initial data offset
    bool use_zsol = ( nzsol > 0 );                 // Flag use ZSolutes
    nsolutes      = use_zsol ? nzsol : nsolutes;   // Count of used solutes
+DbgLv(1) << "CR: offs dsknt" << offset << dataset_count << "use_zsol nsol"
+ << use_zsol << nsolutes;
 #if 0
 #ifdef NO_DB
    US_Settings::set_us_debug( dbg_level );
@@ -190,7 +192,7 @@ void US_SolveSim::calc_residuals( int offset, int dataset_count,
          linethr       = 0.0;
          maxod         = 1.0e+20;
       }
-if(thrnrank==1) DbgLv(1) << "CR:zthr lthr mxod mfac"
+if(thrnrank<2) DbgLv(1) << "CR:zthr lthr mxod mfac"
  << zerothr << linethr << maxod << mfactor;
    }
 
@@ -211,21 +213,10 @@ if(thrnrank==1) DbgLv(1) << "CR:zthr lthr mxod mfac"
 
    // Set up and clear work vectors
    int  navals      = narows * nsolutes;   // Size of "A" matrix
-//DbgLv(1) << "   CR:na nb nx" << navals << ntotal << nsolutes;
+DbgLv(1) << "   CR:na nb nx" << navals << narows << nsolutes
+ << "  nt ns" << ntotal << nsolutes;
 
-#if 1
    QVector< double > nnls_a( navals,   0.0 );
-#endif
-#if 0
-   QVector< double > nnls_a;
-   int  iasize      = navals;
-   if ( navals > 20000000 )
-   {
-      iasize           = narows * ( nsolutes / 2 );
-   }
-   nnls_a.reserve( iasize );
-   nnls_a.fill( 0.0, iasize );
-#endif
    QVector< double > nnls_b( narows,   0.0 );
    QVector< double > nnls_x( nsolutes, 0.0 );
    QVector< double > tinvec( ntinois,  0.0 );
@@ -422,8 +413,9 @@ DbgLv(2) << "   CR:114  rss now" << US_Memory::rss_now() << "cc" << cc;
 DbgLv(2) << "   CR:115  rss now" << US_Memory::rss_now() << "cc" << cc;
 
             // Populate the A matrix for the NNLS routine with simulation
-DbgLv(1) << "   CR: A fill kodl" << kodl << "bndthr ksol" << banddthr << ksols;
 int ks=ka;
+DbgLv(1) << "   CR: A fill kodl" << kodl << "bndthr ksol" << banddthr << ksols
+ << "  ks" << ks;
             if ( kodl == 0 )
             {  // Normal case of no ODlimit substitutions
                for ( int ss = 0; ss < nscans; ss++ )
@@ -449,14 +441,6 @@ DbgLv(1) << "CR: ks ka" << ks << ka
                }
             }
 
-            if ( tikreg )
-            {  // For Tikhonov Regularization append to each column
-               for ( int aa = 0; aa < nsolutes; aa++ )
-               {
-                  nnls_a[ ka++ ] = ( aa == cc ) ? alphad : 0.0;
-               }
-            }
-
 DbgLv(1) << "CR: NNLS A filled ee" << ee << lim_offs;
 DbgLv(1) << "CR: NNLS  &simdat" << &simdat;
 DbgLv(1) << "CR: NNLS  &model " << &model;
@@ -466,23 +450,19 @@ DbgLv(1) << "CR: NNLS  astfem_rsa" << &astfem_rsa;
          }  // Each data set
 DbgLv(1) << "CR: NNLS A filled lo" << lim_offs;
 
+         if ( tikreg )
+         {  // For Tikhonov Regularization append to each column
+            for ( int aa = 0; aa < nsolutes; aa++ )
+            {
+               nnls_a[ ka++ ] = ( aa == cc ) ? alphad : 0.0;
+            }
+         }
+
          if ( signal_wanted  &&  ++kstep == increp )
          {  // If asked for and step at increment, signal progress
             emit work_progress( increp );
             kstep = 0;                     // Reset step count
          }
-DbgLv(1) << "CR: NNLS A filled EMIT complete";
-
-#if 0
-         if ( ka >= iasize  &&  iasize < navals )
-         {
-int npav = US_Memory::memory_profile();
-DbgLv(0) << "   CR:na  iasize navals" << iasize << navals << "ka narows npav" << ka << narows << npav;
-            iasize       = qMin( navals, ( iasize + narows * 4 ) );
-            nnls_a.resize( iasize );
-DbgLv(0) << "   CR:na  (3)size" << nnls_a.size() << "npav" << US_Memory::memory_profile();
-         }
-#endif
 DbgLv(1) << "CR: NNLS A filled cc" << cc << nsolutes;
       }   // Each solute
 DbgLv(1) << "CR: NNLS A filled";
@@ -515,6 +495,7 @@ DbgLv(1) << "CR: attr_ x,y,z" << attr_x << attr_y << attr_z << stype << smask
       {  // Solve for each solute
          if ( abort ) return;
          int bx   = 0;
+DbgLv(1) << "CR: cc" << cc << " use_zsol" << use_zsol;
 
          for ( int ee = offset; ee < lim_offs; ee++ )
          {  // Solve for each data set
@@ -522,8 +503,8 @@ DbgLv(1) << "CR: attr_ x,y,z" << attr_x << attr_y << attr_z << stype << smask
             DataSet*               dset  = data_sets[ ee ];
             US_DataIO::EditedData* edata = banddthr ? &wdata : &dset->run_data;
             US_DataIO::RawData     simdat;
-            int npoints    = edata->pointCount();
             int nscans     = edata->scanCount();
+            int npoints    = edata->pointCount();
             model.components[ 0 ]  = zcomponent;
 
             // Set model with standard space s,k,v  (or other 3 attributes)
@@ -567,7 +548,7 @@ DbgLv(1) << "CR: attr_ x,y,z" << attr_x << attr_y << attr_z << stype << smask
 
             // Initialize simulation data with the experiment's grid
             US_AstfemMath::initSimData( simdat, *edata, 0.0 );
-if (dbg_level>1 && thrnrank==1 && cc==0) {
+if (dbg_level>1 && thrnrank<2 && cc==0) {
  model.debug(); dset->simparams.debug(); }
 DbgLv(1) << "CR:  simdat nsc npt" << simdat.scanCount() << simdat.pointCount();
 
@@ -606,8 +587,8 @@ DbgLv(1) << "CR: sdat:"
             simulations << simdat;   // Save simulation (each datset,solute)
 
             // Populate the A matrix for the NNLS routine with simulation
-DbgLv(1) << "   CR: A fill kodl" << kodl << "bndthr ksol" << banddthr << ksols;
-//int ks=ka;
+DbgLv(1) << "   CR: A-fill  bndthr" << banddthr << "kodl ksols" << kodl << ksols;
+int ks=ka;
             if ( kodl == 0 )
             {  // Normal case of no ODlimit substitutions
                for ( int ss = 0; ss < nscans; ss++ )
@@ -627,19 +608,24 @@ DbgLv(1) << "   CR: A fill kodl" << kodl << "bndthr ksol" << banddthr << ksols;
                   }
                }
             }
+
 //DbgLv(1) << "CR: ks ka" << ks << ka
 // << "nnA s...k" << nnls_a[ks] << nnls_a[ks+1] << nnls_a[ka-2] << nnls_a[ka-1]
 // << "cc ee" << cc << ee << "kodl" << kodl;
-
-            if ( tikreg )
-            {  // For Tikhonov Regularization append to each column
-               for ( int aa = 0; aa < nsolutes; aa++ )
-               {
-                  nnls_a[ ka++ ] = ( aa == cc ) ? alphad : 0.0;
-               }
-            }
-
+DbgLv(1) << "CR: cc ee" << cc << ee << "ks ka" << ks << ka << "nnls_a sz"
+ << nnls_a.count() << "  sz-kd" << (nnls_a.count()-ka);
          }  // Each data set
+
+         if ( tikreg )
+         {  // For Tikhonov Regularization append to each column
+DbgLv(1) << "CR: cc" << cc << " (PRE-tikreg)";
+            for ( int aa = 0; aa < nsolutes; aa++ )
+            {
+               nnls_a[ ka++ ] = ( aa == cc ) ? alphad : 0.0;
+            }
+         }
+DbgLv(1) << "CR:  cc" << cc << " ka" << ka << "nnls_a sz"
+ << nnls_a.count() << "  sz-kd" << (nnls_a.count()-ka);
 
          if ( signal_wanted  &&  ++kstep == increp )
          {  // If asked for and step at increment, signal progress
@@ -647,7 +633,7 @@ DbgLv(1) << "   CR: A fill kodl" << kodl << "bndthr ksol" << banddthr << ksols;
             kstep = 0;                     // Reset step count
          }
       }   // Each solute
-   }  // Constant f/f0
+   }  // Constant f/f0  (or other stype>9)
 
    else
    {  // Special case of custom grid
@@ -705,7 +691,7 @@ DbgLv(1) << "   CR: A fill kodl" << kodl << "bndthr ksol" << banddthr << ksols;
 
             // Initialize simulation data with the experiment's grid
             US_AstfemMath::initSimData( simdat, *edata, 0.0 );
-if (dbg_level>1 && thrnrank==1 && cc==0) {
+if (dbg_level>1 && thrnrank<2 && cc==0) {
  model.debug(); dset->simparams.debug(); }
 
             // Calculate Astfem_RSA solution (Lamm equations)
@@ -751,14 +737,15 @@ DbgLv(1) << "CR: ks ka" << ks << ka
  << "nnA s...k" << nnls_a[ks] << nnls_a[ks+1] << nnls_a[ka-2] << nnls_a[ka-1]
  << "cc ee" << cc << ee << "kodl" << kodl;
 
-            if ( tikreg )
-            {  // For Tikhonov Regularization append to each column
-               for ( int aa = 0; aa < nsolutes; aa++ )
-               {
-                  nnls_a[ ka++ ] = ( aa == cc ) ? alphad : 0.0;
-               }
-            }
          }  // Each data set
+
+         if ( tikreg )
+         {  // For Tikhonov Regularization append to each column
+            for ( int aa = 0; aa < nsolutes; aa++ )
+            {
+               nnls_a[ ka++ ] = ( aa == cc ) ? alphad : 0.0;
+            }
+         }
 
          if ( signal_wanted  &&  ++kstep == increp )
          {  // If asked for and step at increment, signal progress
@@ -986,8 +973,8 @@ DbgLv(1) << "CR: cc soluval" << cc << soluval;
             int sim_ix  = cc * dataset_count + ee - offset;
             US_DataIO::RawData*     idata = &simulations[ sim_ix ];
             US_DataIO::RawData*     sdata = &sim_vals.sim_data;
-            int npoints = idata->pointCount();
             int nscans  = idata->scanCount();
+            int npoints = idata->pointCount();
 if(lim_offs>1&&(thrnrank==1||thrnrank==11))
 DbgLv(1) << "CR:    ee sim_ix np ns scnx" << ee << sim_ix << npoints << nscans << scnx;
 
@@ -1042,7 +1029,7 @@ if( thrnrank==1 ) {
    int    kdsx       = 0;
    US_DataIO::RawData*     sdata = &sim_vals.sim_data;
    US_DataIO::RawData*     resid = &sim_vals.residuals;
-   sim_vals.residuals            = *sdata;
+   sim_vals.residuals            =  sim_vals.sim_data;
 DbgLv(2) << "   CR:301  rss now" << US_Memory::rss_now() << "thrn" << thrnrank;
 
    // Calculate residuals and rmsd values
@@ -1050,7 +1037,6 @@ DbgLv(2) << "   CR:301  rss now" << US_Memory::rss_now() << "thrn" << thrnrank;
    {
       DataSet*                dset  = data_sets[ ee ];
       US_DataIO::EditedData*  edata = banddthr ? &wdata : &dset->run_data;
-//      US_AstfemMath::initSimData( sim_vals.residuals, *edata, 0.0 );
       int    npoints   = edata->pointCount();
       int    nscans    = edata->scanCount();
       int    kntcs     = 0;
