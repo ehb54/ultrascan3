@@ -83,7 +83,11 @@ class US_MPI_Analysis : public QObject
 
     long int            maxrss;
     static const int    min_experiment_size      = 100;
+#if QT_VERSION > 0x050000
+    const double        min_variance_improvement = 1.0e-100;
+#else
     static const double min_variance_improvement = 1.0e-100;
+#endif
                         
     QVector< int >      worker_status;
     QVector< int >      worker_depth;
@@ -184,7 +188,11 @@ class US_MPI_Analysis : public QObject
 
     QList< Sa_Job >               job_queue;
 
+#if QT_VERSION > 0x050000
+    const double LARGE              = 1.e39;
+#else
     static const double LARGE       = 1.e39;
+#endif
     static const int solute_doubles = sizeof( US_Solute  ) / sizeof( double );
     static const int zsolut_doubles = sizeof( US_ZSolute ) / sizeof( double );
     QList< QVector< US_Solute  > > calculated_solutes;

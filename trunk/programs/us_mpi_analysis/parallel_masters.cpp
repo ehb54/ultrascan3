@@ -512,7 +512,7 @@ DbgLv(1) << "master start 2DSA" << startTime;
    work_rss.resize( gcores_count );
 
    current_dataset     = 0;
-   datasets_to_process = 1;  // Process one dataset at a time for now
+   datasets_to_process = data_sets.size();
 
    int iter     = 1;
    int super    = 0;
@@ -558,12 +558,6 @@ DbgLv(1) << "master start 2DSA" << startTime;
             "; MonteCarlo: " + QString::number( mc_iteration );
 
          send_udp( progress );
-
-         // Manage multiple data sets
-         if ( data_sets.size() > 1  &&  datasets_to_process == 1 )
-         {
-            global_fit();
-         }
 
          if ( ! job_queue.isEmpty() ) continue;
 

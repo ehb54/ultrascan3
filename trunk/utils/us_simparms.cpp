@@ -223,6 +223,7 @@ DbgLv(1) << "Sim parms:        cp_id" << cp_id << "sv" << cpIDsv;
    // For NO_DB (back end) the bottom needs to be set after this function
    bottom = bottom_position;
    db     = NULL; // Stop compiler warning
+DbgLv(2) << "SP:iFD: db" << db;
 #endif
 DbgLv(2) << "SP:iFD: bottom" << bottom;
 }
@@ -389,6 +390,7 @@ DbgLv(1) << "Sim parms:        cp_id" << cp_id << "sv" << cpIDsv;
    // For NO_DB (back end) the bottom needs to be set after this function
    bottom = bottom_position;
    db     = NULL; // Stop compiler warning
+DbgLv(2) << "SP:iFD: db" << db;
 #endif
 DbgLv(2) << "SP:iFD: bottom" << bottom;
 }

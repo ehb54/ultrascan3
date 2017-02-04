@@ -97,7 +97,7 @@ DbgLv(1) << "w:" << my_rank << ": sols size" << job.length;
                int size[ 4 ] = { simulation_values.solutes.size(),
                                  simulation_values.ti_noise.size(),
                                  simulation_values.ri_noise.size(),
-                                 max_rss() };
+                                 (int)max_rss() };
 
 DbgLv(1) << "w:" << my_rank << ":   result sols size" << size[0]
  << "max_rss" << size[ 3 ];
@@ -275,109 +275,5 @@ DbgLv(1) << "newD:" << my_rank << "  length index" << job_length << index
             break;
       }  // switch
    }  // repeat_loop
-}
-
-void US_MPI_Analysis::calc_residuals( int         offset,
-                                      int         dataset_count,
-                                      US_SolveSim::Simulation& simu_values )
-{
-   count_calc_residuals++;
-
-   US_SolveSim solvesim( data_sets, my_rank, false );
-
-//*DEBUG*
-int dbglvsv=simu_values.dbg_level;
-simu_values.dbg_level=(dbglvsv>1||my_rank==1)?dbglvsv:0;
-//simu_values.dbg_level=(dbglvsv>0)?dbglvsv:0;
-int nsoli=simu_values.solutes.size();
-QVector< US_Solute > isols = simu_values.solutes;
-//*DEBUG*
-
-   solvesim.calc_residuals( offset, dataset_count, simu_values );
-
-//*DEBUG*
-simu_values.dbg_level=dbglvsv;
-if ( dbg_level > 0 && ( group_rank == 1 || group_rank == 11 ) )
-//if ( group_rank == 1 || group_rank == 11 )
-{
- int nsolo=simu_values.solutes.size();
- US_DataIO::EditedData* edat = &data_sets[offset]->run_data;
- US_SolveSim::DataSet*  dset = data_sets[offset];
- US_DataIO::RawData*    sdat = &simu_values.sim_data;
- int nsc = edat->scanCount();
- int nrp = edat->pointCount();
- double d0 = edat->scanData[0].rvalues[0];
- double d1 = edat->scanData[0].rvalues[1];
- double dh = edat->scanData[nsc/2].rvalues[nrp/2];
- double dm = edat->scanData[nsc-1].rvalues[nrp-2];
- double dn = edat->scanData[nsc-1].rvalues[nrp-1];
- DbgLv(1) << "w:" << my_rank << ":d(01hmn)" << d0 << d1 << dh << dm << dn;
- double dt = 0.0;
- for ( int ss=0;ss<nsc;ss++ )
-  for ( int rr=0;rr<nrp;rr++ ) dt += edat->scanData[ss].rvalues[rr];
- DbgLv(1) << "w:" << my_rank << ":dtot" << dt;
- double s0 = sdat->value(0,0);
- double s1 = sdat->value(0,1);
- double sh = sdat->value(nsc/2,nrp/2);
- double sm = sdat->value(nsc-1,nrp-2);
- double sn = sdat->value(nsc-1,nrp-1);
- DbgLv(1) << "w:" << my_rank << ": s(01hmn)" << s0 << s1 << sh << sm << sn;
- if ( dataset_count > 1  &&  (offset+1) < data_sets.size() ) {
-  edat = &data_sets[offset+1]->run_data;
-  int nxx = nsc;
-  nsc = edat->scanCount();
-  nrp = edat->pointCount();
-  d0 = edat->scanData[0].rvalues[0];
-  d1 = edat->scanData[0].rvalues[1];
-  dh = edat->scanData[nsc/2].rvalues[nrp/2];
-  dm = edat->scanData[nsc-1].rvalues[nrp-2];
-  dn = edat->scanData[nsc-1].rvalues[nrp-1];
-  DbgLv(1) << "w:" << my_rank << ":d2(01hmn)" << d0 << d1 << dh << dm << dn;
-  dt = 0.0;
-  for ( int ss=0;ss<nsc;ss++ )
-   for ( int rr=0;rr<nrp;rr++ ) dt += edat->scanData[ss].rvalues[rr];
-  DbgLv(1) << "w:" << my_rank << ":dtot" << dt;
-  s0 = sdat->value(nxx+0,0);
-  s1 = sdat->value(nxx+0,1);
-  sh = sdat->value(nxx+nsc/2,nrp/2);
-  sm = sdat->value(nxx+nsc-1,nrp-2);
-  sn = sdat->value(nxx+nsc-1,nrp-1);
-  DbgLv(1) << "w:" << my_rank << ": s2(01hmn)" << s0 << s1 << sh << sm << sn;
- }
- DbgLv(1) << "w:" << my_rank << ":  nsoli nsolo" << nsoli << nsolo;
- DbgLv(1) << "w:" << my_rank << ":  simpt men bott temp coef1"
-  << dset->simparams.simpoints
-  << dset->simparams.meniscus
-  << dset->simparams.bottom
-  << dset->simparams.temperature
-  << dset->simparams.rotorcoeffs[ 0 ];
- DbgLv(1) << "w:" << my_rank << ":  vbar soltype manual visc dens"
-  << dset->vbar20 << dset->solute_type << dset->manual
-  << dset->viscosity << dset->density;
- DbgLv(1) << "w:" << my_rank << ":  noisf alpha" << simu_values.noisflag
-  << simu_values.alpha << "s20w_c D20w_c vbar" << dset->s20w_correction
-  << dset->D20w_correction << dset->vbar20;
- if ( dataset_count > 1  &&  (offset+1) < data_sets.size() ) {
-  dset = data_sets[offset+1];
-  DbgLv(1) << "w:" << my_rank << ":  2)simpt men bott temp coef1"
-   << dset->simparams.simpoints
-   << dset->simparams.meniscus
-   << dset->simparams.bottom
-   << dset->simparams.temperature
-   << dset->simparams.rotorcoeffs[ 0 ];
-  DbgLv(1) << "w:" << my_rank << ":  2)vbar soltype manual visc dens"
-   << dset->vbar20 << dset->solute_type << dset->manual
-   << dset->viscosity << dset->density;
-  DbgLv(1) << "w:" << my_rank << ":  2)noisf alpha" << simu_values.noisflag
-   << simu_values.alpha << "s20w_c D20w_c vbar" << dset->s20w_correction
-   << dset->D20w_correction << dset->vbar20;
- }
- int nn = isols.size() - 1;
- int mm = nn/2;
- DbgLv(1) << "w:" << my_rank << ": sol0 solm soln" << isols[0].s << isols[0].k
-  << isols[mm].s << isols[mm].k << isols[nn].s << isols[nn].k;
-}
-//*DEBUG*
- 
 }
 

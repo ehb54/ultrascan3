@@ -29,5 +29,7 @@ if [ "$REV1" != "$REV2" ]; then
   echo "REVISION WAS -- \"$REV2\""
   echo "REVISION NOW -- \"$REV1\""
   echo "#define REVISION \"$REV1\"" >us_revision.h
+else
+  echo "REVISION IS -- \"$REV2\""
 fi
 

@@ -19,7 +19,7 @@ void US_MPI_Analysis::ga_worker( void )
 {
    current_dataset     = 0;
    count_datasets      = data_sets.size();
-   datasets_to_process = is_global_fit ? 1 : count_datasets;
+   datasets_to_process = count_datasets;
 
    // Initialize grid values
    QStringList keys = parameters.keys();

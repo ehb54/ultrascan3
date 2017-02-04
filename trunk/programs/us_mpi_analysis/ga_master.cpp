@@ -6,7 +6,7 @@
 void US_MPI_Analysis::ga_master( void )
 {
    current_dataset     = 0;
-   datasets_to_process = 1;  // Process 1 dataset at a time for now
+   datasets_to_process = count_datasets;
    max_depth           = 0;
    calculated_solutes.clear();
 
@@ -99,19 +99,11 @@ DbgLv(1) << "GaMast:    csol0.s .k .v .d" << simulation_values.solutes[0].s
          
       calculated_solutes.clear();
       calculated_solutes << simulation_values.solutes;
-      int sv_ds_to_pr = datasets_to_process;
 
       // Manage multiple data sets in global fit
       if ( is_global_fit )
       {
-         if ( datasets_to_process == 1 )
-         {
-            ga_global_fit();
-         }
-         else
-         {
-            write_global();
-         }
+         write_global();
       }
       else
       {
@@ -160,13 +152,6 @@ DbgLv(1) << "GaMast:    set_gaMC  return";
             {
                continue;
             }
-         }
-
-         else if ( is_global_fit )
-         {
-            if ( datasets_to_process > 1  &&
-                 datasets_to_process == sv_ds_to_pr )
-               break;
          }
 
          else 
@@ -541,27 +526,31 @@ DbgLv(1) << "sgMC: gaussians set";
 
    mc_data.resize( total_points );
    int index = 0;
+   int ks    = 0;
+DbgLv(1) << "sgMC: totpts" << total_points << "sizes mc_data,sigmas"
+ << mc_data.count() << sigmas.count() << "scaled_data ns,nr"
+ << scaled_data.scanCount() << scaled_data.pointCount();
 
    // Get a randomized variation of the concentrations
    // Use a gaussian distribution with the residual as the standard deviation
-   for ( int e = 0; e < count_datasets; e++ )
+   for ( int ee = 0; ee < count_datasets; ee++ )
    {
-      US_DataIO::EditedData* data = &data_sets[ e ]->run_data;
+      US_DataIO::EditedData* edata = &data_sets[ ee ]->run_data;
 
-      int scan_count    = data->scanCount();
-      int radius_points = data->pointCount();
+      int scan_count    = edata->scanCount();
+      int radius_points = edata->pointCount();
 
-      for ( int s = 0; s < scan_count; s++ )
+      for ( int ss = 0; ss < scan_count; ss++, ks++ )
       {
-         for ( int r = 0; r < radius_points; r++ )
+         for ( int rr = 0; rr < radius_points; rr++ )
          {
             double variation = US_Math2::box_muller( 0.0, sigmas[ index ] );
-            mc_data[ index ] = scaled_data.value( s, r ) + variation;
+            mc_data[ index ] = scaled_data.value( ks, rr ) + variation;
             index++;
          }
       }
    }
-DbgLv(1) << "sgMC: mc_data set index" << index;
+DbgLv(1) << "sgMC: mc_data set index" << index << "ks" << ks;
 
    // Broadcast Monte Carlo data to all workers
    MPI_Job job;

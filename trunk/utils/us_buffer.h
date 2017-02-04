@@ -56,7 +56,7 @@ class US_UTIL_EXTERN US_Buffer
       double  viscosity;   //!< The viscosity of the buffer. 
       bool    manual;      //!< Manual explicit unadjusted density & viscosity
 
-      bool replace_spectrum = false;
+      bool    replace_spectrum;
       //static int profileID;
 
       //! An associative array of extinction coefficients indexed by wavelength.
