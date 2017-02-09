@@ -47,6 +47,10 @@ class US_GUI_EXTERN US_Help : public QObject
     */
     void show_html_file(  const QString& );
 
+    /*! \brief Register the QCH file path
+    */
+    void register_init( void );
+
   private:
     // Only needed because we don't want it to be deleted when 
     // show_help() returns.

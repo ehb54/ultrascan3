@@ -19,6 +19,7 @@ extern "C" {
 extern "C" {
 #include "us_win_utils.h"
 }
+#define GetLastError() LastErrorMsg()
 #endif
 
 // Constructor for subclass Interpreter

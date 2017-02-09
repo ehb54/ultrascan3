@@ -234,8 +234,12 @@ ls -lF
 
 # If 64-bit, create bin64, lib64 links
 if [ ${IS64} -ne 0 ]; then
-  ln -s bin bin64
-  ln -s lib lib64
+  if [ ! -d bin64 ]; then
+    ln -s bin bin64
+  fi
+  if [ ! -d lib64 ]; then
+    ln -s lib lib64
+  fi
 fi
 
 # Create the package archive and display it

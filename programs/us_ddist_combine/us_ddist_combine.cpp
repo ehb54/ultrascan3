@@ -85,6 +85,7 @@ US_DDistr_Combine::US_DDistr_Combine() : US_Widgets()
    QLabel* lb_models     = us_banner( tr( "Distributions:" ) );
 
    QLayout* lo_2dsa     = us_checkbox( tr( "2DSA" ),       ck_2dsa,     true  );
+   QLayout* lo_2dsait   = us_checkbox( tr( "2DSA-IT" ),    ck_2dsait,   false );
    QLayout* lo_2dsamc   = us_checkbox( tr( "2DSA-MC" ),    ck_2dsamc,   false );
    QLayout* lo_2dsamw   = us_checkbox( tr( "2DSA-MW" ),    ck_2dsamw,   false );
    QLayout* lo_2dsamcmw = us_checkbox( tr( "2DSA-MC-MW" ), ck_2dsamcmw, false );
@@ -124,6 +125,7 @@ US_DDistr_Combine::US_DDistr_Combine() : US_Widgets()
    QFont cfont( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() - 2,
                 QFont::Bold );
    ck_2dsa    ->setFont( cfont );
+   ck_2dsait  ->setFont( cfont );
    ck_2dsamc  ->setFont( cfont );
    ck_2dsamw  ->setFont( cfont );
    ck_2dsamcmw->setFont( cfont );
@@ -214,9 +216,9 @@ US_DDistr_Combine::US_DDistr_Combine() : US_Widgets()
    leftLayout->addWidget( lb_distrtype, row++, 0, 1, 8 );
    fckrow  = row;           // First checkbox row
    leftLayout->addLayout( lo_2dsa,      row,   0, 1, 2 );
-   leftLayout->addLayout( lo_2dsafm,    row,   2, 1, 2 );
-   leftLayout->addLayout( lo_2dsamc,    row,   4, 1, 2 );
-   leftLayout->addLayout( lo_2dsacg,    row++, 6, 1, 2 );
+   leftLayout->addLayout( lo_2dsait,    row,   2, 1, 2 );
+   leftLayout->addLayout( lo_2dsafm,    row,   4, 1, 2 );
+   leftLayout->addLayout( lo_2dsamc,    row++, 6, 1, 2 );
    leftLayout->addLayout( lo_ga,        row,   0, 1, 2 );
    leftLayout->addLayout( lo_gamc,      row,   2, 1, 4 );
    leftLayout->addLayout( lo_dtall,     row++, 6, 1, 2 );
@@ -232,9 +234,10 @@ US_DDistr_Combine::US_DDistr_Combine() : US_Widgets()
    leftLayout->addLayout( lo_dmgamc,    row,   2, 1, 2 );
    leftLayout->addLayout( lo_dmgara,    row,   4, 1, 2 );
    leftLayout->addLayout( lo_dmgaramc,  row++, 6, 1, 2 );
-   leftLayout->addLayout( lo_2dsacgmc,  row,   0, 1, 2 );
-   leftLayout->addLayout( lo_2dsamw,    row,   2, 1, 2 );
-   leftLayout->addLayout( lo_2dsamcmw,  row++, 4, 1, 4 );
+   leftLayout->addLayout( lo_2dsacg,    row,   0, 1, 2 );
+   leftLayout->addLayout( lo_2dsacgmc,  row,   2, 1, 2 );
+   leftLayout->addLayout( lo_2dsamw,    row,   4, 1, 2 );
+   leftLayout->addLayout( lo_2dsamcmw,  row++, 6, 1, 4 );
    leftLayout->addLayout( lo_2dsagl,    row,   0, 1, 2 );
    leftLayout->addLayout( lo_2dsaglmc,  row++, 2, 1, 6 );
    leftLayout->addLayout( lo_gamw,      row,   0, 1, 2 );
@@ -304,6 +307,8 @@ US_DDistr_Combine::US_DDistr_Combine() : US_Widgets()
             this,      SLOT(   close()      ) );
 
    connect( ck_2dsa,     SIGNAL( stateChanged    ( int ) ),
+            this,        SLOT(   methodChanged   ( int ) ) );
+   connect( ck_2dsait,   SIGNAL( stateChanged    ( int ) ),
             this,        SLOT(   methodChanged   ( int ) ) );
    connect( ck_2dsamc,   SIGNAL( stateChanged    ( int ) ),
             this,        SLOT(   methodChanged   ( int ) ) );
@@ -516,8 +521,8 @@ DbgLv(1) << "ii method" << ii << method << "mdes" << distros[ii].mdescr;
          methods << method;
    }
 
-   bool hv_2dsa     = methods.contains( "2DSA"       ) 
-                  ||  methods.contains( "2DSA-IT"    );
+   bool hv_2dsa     = methods.contains( "2DSA"       );
+   bool hv_2dsait   = methods.contains( "2DSA-IT"    );
    bool hv_2dsamc   = methods.contains( "2DSA-MC"    );
    bool hv_2dsamw   = methods.contains( "2DSA-MW"    );
    bool hv_2dsamcmw = methods.contains( "2DSA-MC-MW" );
@@ -625,6 +630,7 @@ DbgLv(1) << "ii method" << ii << method << "mdes" << distros[ii].mdescr;
    bool hv_dtall    = methods.size() > 0;
 
    ck_2dsa    ->setEnabled( hv_2dsa     );
+   ck_2dsait  ->setEnabled( hv_2dsait   );
    ck_2dsamc  ->setEnabled( hv_2dsamc   );
    ck_2dsamw  ->setEnabled( hv_2dsamw   );
    ck_2dsamcmw->setEnabled( hv_2dsamcmw );
@@ -663,6 +669,7 @@ DbgLv(1) << "ii method" << ii << method << "mdes" << distros[ii].mdescr;
    ck_dtall   ->setEnabled( hv_dtall    );
 
    ck_2dsa    ->setChecked( hv_2dsa     );
+   ck_2dsait  ->setChecked( hv_2dsait   );
    ck_2dsamc  ->setChecked( hv_2dsamc   );
    ck_2dsamw  ->setChecked( hv_2dsamw   );
    ck_2dsamcmw->setChecked( hv_2dsamcmw );
@@ -1155,8 +1162,8 @@ DbgLv(1) << "RunIDSel:runID" << runID << "distrsize" << distros.size();
 
    if ( mfilter )
    {
-      if ( ck_2dsa    ->isChecked() )  methods << "2DSA"
-                                               << "2DSA-IT";
+      if ( ck_2dsa    ->isChecked() )  methods << "2DSA";
+      if ( ck_2dsait  ->isChecked() )  methods << "2DSA-IT";
       if ( ck_2dsamc  ->isChecked() )  methods << "2DSA-MC";
       if ( ck_2dsamw  ->isChecked() )  methods << "2DSA-MW";
       if ( ck_2dsamcmw->isChecked() )  methods << "2DSA-MC-MW";
@@ -1846,6 +1853,7 @@ void US_DDistr_Combine::allMethodChanged( int state )
    if ( state == Qt::Checked )
    {
       ck_2dsa    ->setChecked( ck_2dsa    ->isEnabled() );
+      ck_2dsait  ->setChecked( ck_2dsait  ->isEnabled() );
       ck_2dsamc  ->setChecked( ck_2dsamc  ->isEnabled() );
       ck_2dsamw  ->setChecked( ck_2dsamw  ->isEnabled() );
       ck_2dsamcmw->setChecked( ck_2dsamcmw->isEnabled() );

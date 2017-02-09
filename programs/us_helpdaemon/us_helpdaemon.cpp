@@ -10,11 +10,18 @@
 
 US_HelpDaemon::US_HelpDaemon( const QString& page, QObject* o ) : QObject( o )
 {
+#ifdef Q_OS_WIN
+  QString location = US_Settings::appBaseDir() + "/bin/manual.qch";
+#else
   QString location = US_Settings::appBaseDir() + "/bin/manual.qhc";
+#endif
   QString url      = "qthelp://ultrascaniii/";
   if ( !page.contains( "manual/" ) )
      url.append( "manual/" );
   url.append( page );
+debug("page="+page);
+debug("url="+url);
+debug("location="+location);
 
   QStringList args;
 
@@ -26,15 +33,17 @@ US_HelpDaemon::US_HelpDaemon( const QString& page, QObject* o ) : QObject( o )
 
   debug( args.join( " " ) );
 #ifndef Q_OS_MAC
-  daemon.start( QLatin1String( "assistant" ), args );
+  QString assisloc  = US_Settings::appBaseDir() + "/bin/assistant";
 #else
   QString assisloc  = US_Settings::appBaseDir() + "/bin/Assistant.app";
-  daemon.start( assisloc, args );
 #endif
+  daemon.start( assisloc, args );
+//debug("assisloc="+assisloc);
   daemon.waitForStarted();
 
   connect( &daemon, SIGNAL( finished ( int, QProcess::ExitStatus ) ),
                     SLOT  ( close    ( int, QProcess::ExitStatus ) ) );
+//show(page);
 }
 
 void US_HelpDaemon::close( int /*exitCode*/, QProcess::ExitStatus /*status*/ ) 
@@ -44,6 +53,7 @@ void US_HelpDaemon::close( int /*exitCode*/, QProcess::ExitStatus /*status*/ )
 
 void US_HelpDaemon::show( const QString& helpPage )
 {
+debug("IN show()\n");
   if ( helpPage == "Quit" )
   {
     daemon.close();
@@ -62,15 +72,24 @@ void US_HelpDaemon::show( const QString& helpPage )
 
   QByteArray ba;
   ba.append( "setSource qthelp://ultrascaniii/" );
+#ifdef Q_OS_WIN
+  ba.append( page.toLocal8Bit() );
+  ba.append( '\n' );
+#else
   ba.append( page.toLatin1() );
   ba.append( '\0' );
+#endif
 
   daemon.write( ba );
 }
 
 void US_HelpDaemon::debug( const QString& message )
 {
+#ifdef Q_OS_WIN
+   QFile d( "c:/dist/helpdaemon.log" );
+#else
    QFile d( "/tmp/helpdaemon.log" );
+#endif
    d.open( QIODevice::WriteOnly | QIODevice::Text | QIODevice::Append );
    QTextStream out ( &d );
    out << message << endl;
@@ -88,7 +107,7 @@ int main( int argc, char* argv[] )
    QString message = QString( argv[ 1 ] );
   //  Need to add uid to identifier ????
   //note: for doc files to show properly after an update, it may be necessary 
-  //      to remove  ~/.local/share/data/Trolltech/Assistant/manual.qhc
+  //      to remove  ~/.local/share/data/Trolltech/Assistant/manual.qch
 #if QT_VERSION > 0x050000
    QApplication application( argc, argv );
    application.setApplicationDisplayName( "UltraScan Help Daemon" );
