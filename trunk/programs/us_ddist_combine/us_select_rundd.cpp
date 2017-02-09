@@ -550,6 +550,8 @@ void US_SelectRunDD::scan_dbase_models()
    QString     invID  = QString::number( US_Settings::us_inv_ID() );
    int          ntmodel = 0;
    int          nmodel  = 0;
+   bool         no_una  = ! runIDs.contains( "UNASSIGNED" );
+DbgLv(1) << "ScMd: UNASSGN: no-UNASSIGNED" << no_una;
 
    // First accumulate model information for UNASSIGNED models
    query.clear();
@@ -564,6 +566,11 @@ void US_SelectRunDD::scan_dbase_models()
       QString edtid    = db.value( 6 ).toString();
       int     kk       = mdesc.lastIndexOf( ".model" );
       mdesc            = ( kk < 1 ) ? mdesc : mdesc.left( kk );
+      QString mrunid   = mdesc.section( ".", -3, -3 );
+DbgLv(1) << "ScMd: UNASSGN: mid,eid,mdesc,mrun" << mdlid << edtid << mdesc << mrunid;
+      if ( ! runIDs.contains( mrunid )  &&  no_una )
+         continue;       // Skip any without a desired run prefix
+DbgLv(1) << "ScMd: UNASSGN:  ++USED++";
       mmIDs   << mdlid;
       mmGUIDs << mdlGid;
       meIDs   << edtid;

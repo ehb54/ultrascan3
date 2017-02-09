@@ -41,6 +41,8 @@ void US_Help::show_help( const QString& helpFile )
   //    }
   // }
 
+  register_init();     // Register the QCH file path
+
   assistant = new QProcess;
   QStringList args;
   args << helpFile;
@@ -49,7 +51,8 @@ void US_Help::show_help( const QString& helpFile )
   // exit immediately if it is.
 
 #ifndef Q_OS_MAC
-  assistant->start( "us_helpdaemon", args );
+  QString helpbin = US_Settings::appBaseDir() + "/bin/us_helpdaemon";
+  assistant->start( helpbin, args );
 #else
   QString helpbin = US_Settings::appBaseDir() + "/bin/us_helpdaemon";
   QString helpapp = helpbin + ".app";
@@ -98,5 +101,22 @@ void US_Help::openBrowser( const QString& location )
              "  Configured browser: %1\n"
              "  URL: %2" ).arg( program ).arg( location ) );
    }
+}
+
+// Register the QCH file path for Assistant
+void US_Help::register_init( )
+{
+  QString program = US_Settings::appBaseDir() + "/";
+#ifndef Q_OS_MAC
+  program += "bin/assistant";
+#else
+  program += "Developer/Applications/Qt/Assistant.app";
+#endif
+  QStringList args;
+  args << "-register" << US_Settings::appBaseDir() + "/bin/manual.qch";
+
+  QProcess* process = new QProcess;
+  process->start( program, args );
+  process->waitForStarted();
 }
 

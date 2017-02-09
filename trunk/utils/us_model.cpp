@@ -433,9 +433,13 @@ QString US_Model::typeText( int subtype )
             else
             {  // Append sub-type based on already-created description
                int kk   = description.indexOf( "_PCSA" );
-               if ( kk > 0 )  // Append "-SL"|"-IS"|"-DS"|"-HL"|"-2O"
-                  tdesc    = tdesc + description.mid( kk + 5, 3 );
-               else           // By default, assume "-IS"
+               if ( kk > 0 )  // Grab type string from within model description
+               {
+                  kk++;
+                  int mm   = description.indexOf( "_", kk ) - kk;
+                  tdesc    = description.mid( kk, mm );
+               }
+               else           // By default, assume "-IS" gets appended
                   tdesc    = tdesc + "-IS";
             }
          }

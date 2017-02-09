@@ -107,10 +107,31 @@ QString US_Experiment::childPValue( const QString child, const QString type )
 
    if      ( child == "general" )
    {
+      value = epanGeneral  ->getPValue( type );
    }
    else if ( child == "rotor" )
    {
       value = epanRotor    ->getPValue( type );
+   }
+   else if ( child == "speeds" )
+   {
+      value = epanSpeeds   ->getPValue( type );
+   }
+   else if ( child == "cells" )
+   {
+      value = epanCells    ->getPValue( type );
+   }
+   else if ( child == "solutions" )
+   {
+      value = epanSolutions->getPValue( type );
+   }
+   else if ( child == "photomult" )
+   {
+      value = epanPhotoMult->getPValue( type );
+   }
+   else if ( child == "upload" )
+   {
+      value = epanUpload   ->getPValue( type );
    }
 
    return value;
@@ -120,11 +141,35 @@ QString US_Experiment::childPValue( const QString child, const QString type )
 //   from a US_Experiment child panel
 QStringList US_Experiment::childPList( const QString child, const QString type )
 {
-   QStringList value( "" );
+   QStringList value;
 
    if ( child == "general" )
    {
-      value  = epanGeneral   ->getPList( type );
+      value  = epanGeneral ->getPList( type );
+   }
+   else if ( child == "rotor" )
+   {
+      value = epanRotor    ->getPList( type );
+   }
+   else if ( child == "speeds" )
+   {
+      value = epanSpeeds   ->getPList( type );
+   }
+   else if ( child == "cells" )
+   {
+      value = epanCells    ->getPList( type );
+   }
+   else if ( child == "solutions" )
+   {
+      value = epanSolutions->getPList( type );
+   }
+   else if ( child == "photomult" )
+   {
+      value = epanPhotoMult->getPList( type );
+   }
+   else if ( child == "upload" )
+   {
+      value = epanUpload   ->getPList( type );
    }
 
    return value;
@@ -228,6 +273,9 @@ US_ExperGuiGeneral::US_ExperGuiGeneral( QWidget* topw )
             this,            SLOT( sel_project()      ) );
    connect( pb_investigator, SIGNAL( clicked()        ), 
             this,            SLOT( sel_investigator() ) );
+
+   // Read in centerpiece information and populate names list
+   centerpieceInfo();
 }
 
 // Set a specific panel value
@@ -274,8 +322,28 @@ QStringList US_ExperGuiGeneral::getPList( const QString type )
    {
       value << le_runid->text();
    }
+   else if ( type == "cpnames" )
+   {
+      value = cp_names;
+   }
 
    return value;
+}
+
+// Get a specific panel value from a sibling panel
+QString US_ExperGuiGeneral::sibPValue( const QString sibling, const QString type )
+{
+   return ( mainw != NULL
+            ? ((US_Experiment*)mainw)->childPValue( sibling, type )
+            : QString("") );
+}
+
+// Get a specific panel list from a sibling panel
+QStringList US_ExperGuiGeneral::sibPList( const QString sibling, const QString type )
+{
+   return ( mainw != NULL
+            ? ((US_Experiment*)mainw)->childPList( sibling, type )
+            : QStringList() );
 }
 
 // Return status string for the panel
@@ -285,7 +353,33 @@ QString US_ExperGuiGeneral::status()
                      ! le_project->text().isEmpty() );
    return ( is_done ? QString( "1:X" ) : QString( "1:u" ) );
 }
-                   
+ 
+// Return centerpiece names list
+QStringList US_ExperGuiGeneral::cpNames( void )
+{
+    return cp_names;
+}
+
+// Return detail information for a specific centerpiece as named
+bool US_ExperGuiGeneral::cpInfo( const QString cpname,
+      US_AbstractCenterpiece& cpEntry )
+{
+   bool is_found   = false;
+
+   for ( int ii = 0; ii < acp_list.count(); ii++ )
+   {
+      US_AbstractCenterpiece cpiece = acp_list[ ii ];
+      if ( cpiece.name == cpname )
+      {  // Match found:  flag found and return entry
+         is_found        = true;
+         cpEntry         = cpiece;
+         break;
+      }
+   }
+
+   return is_found;
+}
+
 // Select DB investigator
 void US_ExperGuiGeneral::sel_investigator( void )
 {
@@ -325,6 +419,24 @@ qDebug() << "projinfo: proj.guid" << project.projectGUID;
    le_project->setText( project.projectDesc );
 }
 
+// Get centerpiece information (initially or after DB/Disk change
+void US_ExperGuiGeneral::centerpieceInfo( void )
+{
+   US_Passwd pw;
+   US_DB2* dbP          = ( disk_controls->db() )
+                          ? new US_DB2( pw.getPasswd() )
+                          : NULL;
+
+   // Read in the full centerpiece information from DB or Disk
+   US_AbstractCenterpiece::read_centerpieces( dbP, acp_list );
+   cp_names.clear();
+
+   // Populate the list of centerpiece names
+   for ( int ii = 0; ii < acp_list.count(); ii++ )
+   {
+      cp_names << acp_list[ ii ].name;
+   }
+}
 
 // Panel for Lab/Rotor parameters
 US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
@@ -402,17 +514,37 @@ value=value.isEmpty()?"defaultRotor":value;
    return value;
 }
 
-// Get a specific panel value from a sibling panel
-QString US_ExperGuiRotor::sibPValue( const QString sibling, const QString type )
+// Get specific panel list values
+QStringList US_ExperGuiRotor::getPList( const QString type )
 {
-   QString value( "" );
+   QStringList value( "" );
 
-   if ( mainw != NULL )
+   if ( type == "run" )
    {
-      value = ((US_Experiment*)mainw)->childPValue( sibling, type );
+      //value << le_runid->text();
+   }
+   else if ( type == "cpnames" )
+   {
+      //value = cp_names;
    }
 
    return value;
+}
+
+// Get a specific panel value from a sibling panel
+QString US_ExperGuiRotor::sibPValue( const QString sibling, const QString type )
+{
+   return ( mainw != NULL
+            ? ((US_Experiment*)mainw)->childPValue( sibling, type )
+            : QString("") );
+}
+
+// Get a specific panel list from a sibling panel
+QStringList US_ExperGuiRotor::sibPList( const QString sibling, const QString type )
+{
+   return ( mainw != NULL
+            ? ((US_Experiment*)mainw)->childPList( sibling, type )
+            : QStringList() );
 }
 
 // Return status string for the panel
@@ -529,6 +661,39 @@ QString US_ExperGuiSpeeds::getPValue( const QString type )
    return value;
 }
 
+// Get specific panel list values
+QStringList US_ExperGuiSpeeds::getPList( const QString type )
+{
+   QStringList value( "" );
+
+   if ( type == "run" )
+   {
+      //value << le_runid->text();
+   }
+   else if ( type == "cpnames" )
+   {
+      //value = cp_names;
+   }
+
+   return value;
+}
+
+// Get a specific panel value from a sibling panel
+QString US_ExperGuiSpeeds::sibPValue( const QString sibling, const QString type )
+{
+   return ( mainw != NULL
+            ? ((US_Experiment*)mainw)->childPValue( sibling, type )
+            : QString("") );
+}
+
+// Get a specific panel list from a sibling panel
+QStringList US_ExperGuiSpeeds::sibPList( const QString sibling, const QString type )
+{
+   return ( mainw != NULL
+            ? ((US_Experiment*)mainw)->childPList( sibling, type )
+            : QStringList() );
+}
+
 // Return status string for the panel
 QString US_ExperGuiSpeeds::status()
 {
@@ -552,68 +717,48 @@ qDebug() << "EGC: IN";
    QGridLayout* genL   = new QGridLayout();
 
    QPushButton* pb_advrotor = us_pushbutton( tr( "Fill from Rotor information" ) );
-   genL->addWidget( pb_advrotor, 0, 0, 1, 6 );
+   genL->addWidget( pb_advrotor, 0, 0, 1, 8 );
 
-   QLabel* lb_hdr1     = us_banner( tr( "Cell/Channel" ) );
-   QLabel* lb_hdr2     = us_banner( tr( "Usage" ) );
-   QLabel* lb_hdr3     = us_banner( tr( "Centerpiece" ) );
-   QLabel* lb_hdr4     = us_banner( tr( "Cell/Channel" ) );
-   QLabel* lb_hdr5     = us_banner( tr( "Usage" ) );
-   QLabel* lb_hdr6     = us_banner( tr( "Centerpiece" ) );
-   genL->addWidget( lb_hdr1,     1, 0, 1, 1 );
-   genL->addWidget( lb_hdr2,     1, 1, 1, 1 );
-   genL->addWidget( lb_hdr3,     1, 2, 1, 2 );
-   genL->addWidget( lb_hdr4,     1, 4, 1, 1 );
-   genL->addWidget( lb_hdr5,     1, 5, 1, 1 );
-   genL->addWidget( lb_hdr6,     1, 6, 1, 2 );
+   QLabel* lb_hdr1     = us_banner( tr( "Cell" ) );
+   QLabel* lb_hdr2     = us_banner( tr( "Centerpiece" ) );
+   QLabel* lb_hdr3     = us_banner( tr( "Windows" ) );
+   genL->addWidget( lb_hdr1,     1, 0, 1, 2 );
+   genL->addWidget( lb_hdr2,     1, 2, 1, 4 );
+   genL->addWidget( lb_hdr3,     1, 6, 1, 2 );
+//   genL->addWidget( lb_hdr6,     1, 7, 1, 1 );
 
    QList< QLabel* >    cc_labls;
    QList< QComboBox* > cc_cmbbs;
    QList< QCheckBox* > cc_chkbs;
    QList< QWidget* >   cc_widgs;
+   QStringList cpnames = sibPList( "general", "cpnames" );
    int krow  = 2;
    int ncels = 8;
-   int nchns = 8;
+   //int nchns = 8;
    int mxcel = 4;
-   int mxchn = 2;
+   //int mxchn = 2;
 
    for ( int ii = 0; ii < ncels; ii++ )
    {
-      QString scel = tr( "cell %1, " ).arg( ii + 1 );
+      QString scel     = tr( "cell %1" ).arg( ii + 1 );
+      QLabel* clabl    = us_label( scel );
+      QComboBox* cb_cp = us_comboBox();
+      QComboBox* cb_wi = us_comboBox();
 
-      for ( int jj = 0; jj < nchns; jj++ )
-      {
-         QString schn     = tr( "channel " ) + QString( "ABCDEFGH" ).mid( jj, 1 );
-         QString slab     = scel + schn;
-         QLabel* clabl    = us_label( slab );
-         QCheckBox* chkbx = new QCheckBox;
-         QComboBox* combx = us_comboBox();
-         QLayout* lochk   = us_checkbox( tr( "Scan" ), chkbx, false );
-         bool make_vis    = ( ( ii < mxcel )  &&  ( jj < mxchn ) );
+      genL->addWidget( clabl, krow,  0, 1, 2 );
+      genL->addWidget( cb_cp, krow,  2, 1, 4 );
+      genL->addWidget( cb_wi, krow,  6, 1, 2 );
 
-         combx->addItem( tr( "none" ) );
+      cb_cp->addItem( tr( "empty" ) );
+      cb_cp->addItems( cpnames );
+      cb_wi->addItem( tr( "quartz" ) );
+      cb_wi->addItem( tr( "sapphire" ) );
+      bool make_vis    = ( ii < mxcel );
+      clabl->setVisible( make_vis );
+      cb_cp->setVisible( make_vis );
+      cb_wi->setVisible( make_vis );
 
-         if ( ( jj & 1 ) == 0 )
-         {
-            genL->addWidget( clabl, krow,   0, 1, 1 );
-            genL->addLayout( lochk, krow,   1, 1, 1 );
-            genL->addWidget( combx, krow,   2, 1, 2 );
-         }
-         else
-         {
-            genL->addWidget( clabl, krow,   4, 1, 1 );
-            genL->addLayout( lochk, krow,   5, 1, 1 );
-            genL->addWidget( combx, krow++, 6, 1, 2 );
-         }
-
-         clabl->setVisible( make_vis );
-         chkbx->setVisible( make_vis );
-         combx->setVisible( make_vis );
-         lochk->itemAt( 0 )->widget()->setVisible( make_vis );
-         lochk->itemAt( 1 )->widget()->setVisible( make_vis );
-
-         cc_widgs << clabl << chkbx << combx;
-      }
+      krow++;
    }
 
    connect( pb_advrotor,  SIGNAL( clicked()    ),
@@ -649,6 +794,23 @@ QString US_ExperGuiCells::getPValue( const QString type )
    return value;
 }
 
+// Get specific panel list values
+QStringList US_ExperGuiCells::getPList( const QString type )
+{
+   QStringList value( "" );
+
+   if ( type == "run" )
+   {
+      //value << le_runid->text();
+   }
+   else if ( type == "cpnames" )
+   {
+      //value = cp_names;
+   }
+
+   return value;
+}
+
 // Get a specific panel value from a sibling panel
 QString US_ExperGuiCells::sibPValue( const QString sibling, const QString type )
 {
@@ -661,6 +823,14 @@ qDebug() << "EGC:cPV: mainw" << mainw;
    }
 
    return value;
+}
+
+// Get a specific panel list from a sibling panel
+QStringList US_ExperGuiCells::sibPList( const QString sibling, const QString type )
+{
+   return ( mainw != NULL
+            ? ((US_Experiment*)mainw)->childPList( sibling, type )
+            : QStringList() );
 }
 
 // Return status string for the panel
@@ -721,6 +891,39 @@ QString US_ExperGuiSolutions::getPValue( const QString type )
    return value;
 }
 
+// Get specific panel list values
+QStringList US_ExperGuiSolutions::getPList( const QString type )
+{
+   QStringList value( "" );
+
+   if ( type == "run" )
+   {
+      //value << le_runid->text();
+   }
+   else if ( type == "cpnames" )
+   {
+      //value = cp_names;
+   }
+
+   return value;
+}
+
+// Get a specific panel value from a sibling panel
+QString US_ExperGuiSolutions::sibPValue( const QString sibling, const QString type )
+{
+   return ( mainw != NULL
+            ? ((US_Experiment*)mainw)->childPValue( sibling, type )
+            : QString("") );
+}
+
+// Get a specific panel list from a sibling panel
+QStringList US_ExperGuiSolutions::sibPList( const QString sibling, const QString type )
+{
+   return ( mainw != NULL
+            ? ((US_Experiment*)mainw)->childPList( sibling, type )
+            : QStringList() );
+}
+
 // Return status string for the panel
 QString US_ExperGuiSolutions::status()
 {
@@ -775,6 +978,39 @@ QString US_ExperGuiPhotoMult::getPValue( const QString type )
    }
 
    return value;
+}
+
+// Get specific panel list values
+QStringList US_ExperGuiPhotoMult::getPList( const QString type )
+{
+   QStringList value( "" );
+
+   if ( type == "run" )
+   {
+      //value << le_runid->text();
+   }
+   else if ( type == "cpnames" )
+   {
+      //value = cp_names;
+   }
+
+   return value;
+}
+
+// Get a specific panel value from a sibling panel
+QString US_ExperGuiPhotoMult::sibPValue( const QString sibling, const QString type )
+{
+   return ( mainw != NULL
+            ? ((US_Experiment*)mainw)->childPValue( sibling, type )
+            : QString("") );
+}
+
+// Get a specific panel list from a sibling panel
+QStringList US_ExperGuiPhotoMult::sibPList( const QString sibling, const QString type )
+{
+   return ( mainw != NULL
+            ? ((US_Experiment*)mainw)->childPList( sibling, type )
+            : QStringList() );
 }
 
 // Return status string for the panel
@@ -833,6 +1069,39 @@ QString US_ExperGuiUpload::getPValue( const QString type )
    return value;
 }
 
+// Get specific panel list values
+QStringList US_ExperGuiUpload::getPList( const QString type )
+{
+   QStringList value( "" );
+
+   if ( type == "run" )
+   {
+      //value << le_runid->text();
+   }
+   else if ( type == "cpnames" )
+   {
+      //value = cp_names;
+   }
+
+   return value;
+}
+
+// Get a specific panel value from a sibling panel
+QString US_ExperGuiUpload::sibPValue( const QString sibling, const QString type )
+{
+   return ( mainw != NULL
+            ? ((US_Experiment*)mainw)->childPValue( sibling, type )
+            : QString("") );
+}
+
+// Get a specific panel list from a sibling panel
+QStringList US_ExperGuiUpload::sibPList( const QString sibling, const QString type )
+{
+   return ( mainw != NULL
+            ? ((US_Experiment*)mainw)->childPList( sibling, type )
+            : QStringList() );
+}
+
 // Return status string for the panel
 QString US_ExperGuiUpload::status()
 {
@@ -841,4 +1110,4 @@ QString US_ExperGuiUpload::status()
 bool is_done=false;
    return ( is_done ? QString( "7:X" ) : QString( "7:u" ) );
 }
-                   
+

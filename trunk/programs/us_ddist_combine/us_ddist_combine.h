@@ -86,6 +86,7 @@ class US_DDistr_Combine : public US_Widgets
       QwtCounter*    ct_sigma;
 
       QCheckBox*     ck_2dsa;
+      QCheckBox*     ck_2dsait;
       QCheckBox*     ck_2dsamc;
       QCheckBox*     ck_2dsamw;
       QCheckBox*     ck_2dsamcmw;

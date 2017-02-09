@@ -13,6 +13,7 @@ macx {
 
 win32 {
       TARGET   = us_utils
+      LIBS  += -L$${OPENSSL}/lib -lssl -lcrypto -lgdi32
       DEFINES += US_MAKE_UTIL_DLL
 }
 

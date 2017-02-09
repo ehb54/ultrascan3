@@ -3,14 +3,24 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <math.h>
+#include <windows.h>
+#include "us_win_utils.h"
 
-char* GetLastError( void )
+char* LastErrorMsg( void )
 {
-   return "";
+   char* bufPtr = NULL;
+   DWORD err = GetLastError();
+   FormatMessageA( FORMAT_MESSAGE_ALLOCATE_BUFFER | 
+                   FORMAT_MESSAGE_FROM_SYSTEM |
+                   FORMAT_MESSAGE_IGNORE_INSERTS,
+                   NULL, err, 0, (LPSTR)&bufPtr, 0, NULL );
+   
+   return bufPtr;
 }
 int GetErrorCode( void )
 {
-   return 0;
+   DWORD err = GetLastError();
+   return (int)err;
 }
 int ShowInterpNames( char* inames, int mxchar )
 {
