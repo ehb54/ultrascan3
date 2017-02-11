@@ -919,6 +919,115 @@ qDebug() << "importRIxml() error" << error;
    return US_Convert::OK ;
 }
 
+// Delete pcsa_modelrecs for the current experiment run
+bool US_Experiment::deleteRunPcsaMrecs( US_DB2* db, const QString invID,
+                                                    const QString runID )
+{
+   bool is_ok         = true;
+
+   if ( db != NULL )
+   {  // Delete modelrecs from the database
+      QStringList mrcIDs;
+      QStringList edtIDs;
+      QStringList qry;
+
+      // Build a list of edit IDs for the run
+      qry.clear();
+      qry << "get_edit_desc_by_runID" << invID << runID;
+      db->query( qry );
+      int status          = db->lastErrno();
+qDebug() << "Exp:delMR: runID" << runID << "invID" << invID << "qry:" << qry << status << db->lastError();
+      if ( status == US_DB2::NOROWS )
+      {  // If no edits for run, no modelrecs, so return
+         return is_ok;
+      }
+      else if ( status != US_DB2::OK )
+      {  // Return if query had an error
+qDebug() << qry << status << db->lastError();
+         return false;
+      }
+      while( db->next() )
+      {
+         edtIDs << db->value( 0 ).toString();
+      }
+qDebug() << "Exp:delMR:  n(edtIDs)" << edtIDs.count();
+
+      // Build a list of pcsa_modelrec IDs for run's edits
+      qry.clear();
+      qry << "get_mrecs_desc" << invID;
+      db->query( qry );
+      status              = db->lastErrno();
+qDebug() << "Exp:delMR: qry:" << qry << status << db->lastError();
+      if ( status != US_DB2::OK )
+      {
+qDebug() << qry << status << db->lastError();
+         return false;
+      }
+      while( db->next() )
+      {
+         QString mrecID      = db->value( 0 ).toString();
+         QString editID      = db->value( 2 ).toString();
+         if ( edtIDs.contains( editID ) )
+         {  // For an edit in the list, add this mrecID to the list
+            mrcIDs << mrecID;
+         }
+      }
+
+      // Delete all pcsa_modelrec entries in our run list
+      int nredts          = edtIDs.count();
+      int nrmrcs          = mrcIDs.count();
+qDebug() << "Exp:delMR:  nredts nrmrcs" << nredts << nrmrcs;
+if(nredts>0)
+qDebug() << "Exp:delMR:   edtIDs[0]" << edtIDs[0];
+if(nrmrcs>0)
+qDebug() << "Exp:delMR:   mrcIDs[0]" << mrcIDs[0];
+      int kmrdel          = 0;
+      for ( int ii = 0; ii < nrmrcs; ii++ )
+      {
+         QString mrecID      = mrcIDs[ ii ];
+         qry.clear();
+         qry << "delete_mrecs" << mrecID;
+         status              = db->statusQuery( qry );
+qDebug() << "Exp:delMR:    ii" << ii << "mrecID" << mrecID << "stat" << status;
+         if ( status == US_DB2::OK )
+         {
+            kmrdel++;
+         }
+         else
+         {
+qDebug() << "Exp:delMR:" << qry << status << db->lastError();
+         }
+      }
+qDebug() << "Exp:delMR: nredts nrmrcs kmrdel" << nredts << nrmrcs << kmrdel;
+      is_ok               = ( kmrdel == nrmrcs );
+   }
+
+   else
+   {  // Delete modelrecs from local disk
+      QStringList mrPaths;
+      QString rpath       = US_Settings::resultDir() + "/" + runID + "/";
+      QDir rdir( rpath );
+      QStringList filter( "pcsa-mrs*.xml" );
+      QStringList mrNames = rdir.entryList( filter, QDir::Files, QDir::Name );
+      for ( int ii = 0; ii < mrNames.count(); ii++ )
+      {
+         QString mrPath      = rpath + mrNames[ ii ];
+         QFile filemr( mrPath );
+         if ( filemr.exists() )
+         {
+            if ( ! filemr.remove() )
+            {
+qDebug() << "Exp:delMR: remove error: " << mrPath;
+               is_ok               = false;
+            }
+         }
+      }
+   }
+
+qDebug() << "Exp:delMR: is_ok" << is_ok;
+   return is_ok;
+}
+
 // Zero out all data structures
 void US_Experiment::clear( void )
 {

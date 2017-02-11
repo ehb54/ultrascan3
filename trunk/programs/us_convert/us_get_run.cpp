@@ -1,6 +1,7 @@
 //! \file us_get_run.cpp
 
 #include "us_get_run.h"
+#include "us_experiment.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"
 #include "us_db2.h"
@@ -314,6 +315,13 @@ void US_GetRun::deleteRun( void )
    q  << "delete_cell_experiments"
       << expID ;
    status = db.statusQuery( q );
+
+   // Let's delete any pcsa_modelrecs records to avoid
+   //  constraints problems
+   QString invID = QString::number( personID );
+   QString runID = tw ->item( ndx, 0 )->text();
+
+   US_Experiment::deleteRunPcsaMrecs( &db, invID, runID );
 
    // Now delete the experiment and all existing rawData, 
    // because we're starting over 

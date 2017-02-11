@@ -22,6 +22,10 @@ QString US_ConvertIO::writeRawDataToDB( US_Experiment& ExpData,
 {
    const int channelID = 1;
    QString error = QString( "" );
+   QString sInvID = QString::number( ExpData.invID );
+
+   // Delete any pcsa_modelrecs records to avoid constraints problems
+   US_Experiment::deleteRunPcsaMrecs( db, sInvID, ExpData.runID );
 
    // Delete all existing solutions and rawData, because we're starting over 
    QStringList q( "delete_rawData" );
@@ -29,7 +33,11 @@ QString US_ConvertIO::writeRawDataToDB( US_Experiment& ExpData,
    int status = db->statusQuery( q );
 
    if ( status != US_DB2::OK )
-      return( db->lastError() );
+   {
+      error += "Error returned deleting rawData\n" +
+               QString::number( status ) + " " + db->lastError() + "\n";
+      return error;
+   }
 
    // Delete links between experiment and solutions
    q.clear();
@@ -38,7 +46,11 @@ QString US_ConvertIO::writeRawDataToDB( US_Experiment& ExpData,
    status = db->statusQuery( q );
 
    if ( status != US_DB2::OK )
-      return( db->lastError() );
+   {
+      error += "Error returned deleting experiment solutions\n" +
+               QString::number( status ) + " " + db->lastError() + "\n";
+      return error;
+   }
 
    // Same with cell table
    q.clear();
@@ -47,7 +59,11 @@ QString US_ConvertIO::writeRawDataToDB( US_Experiment& ExpData,
    status = db->statusQuery( q );
 
    if ( status != US_DB2::OK )
-      return( db->lastError() );
+   {
+      error += "Error returned deleting cell experiments\n" +
+               QString::number( status ) + " " + db->lastError() + "\n";
+      return error;
+   }
 
    // We assume there are files, because calling program checked
 
