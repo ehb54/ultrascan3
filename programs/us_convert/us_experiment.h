@@ -147,6 +147,14 @@ class US_Experiment
       */
       int readRIDisk( QString , QString );
 
+      /*! \brief    Static function to delete any pcsa_modelrecs for the run
+          \param    db      Database connection pointer or NULL for local
+          \param    invID   Investigator
+          \param    runID   Run ID for which to delete records
+          \returns          Flag if delete was OK;
+      */
+      static bool deleteRunPcsaMrecs( US_DB2*, const QString, const QString );
+
       void clear( void ); //!< Function to reset all class variables to defaults
       void show ( void ); //!< Temporary function to display current exp info
 
