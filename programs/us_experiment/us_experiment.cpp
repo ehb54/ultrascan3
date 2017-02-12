@@ -1,6 +1,8 @@
 //! \file us_experiment.cpp
 
 #include "us_experiment.h"
+#include "us_rotor_gui.h"
+
 #if QT_VERSION < 0x050000
 #define setSamples(a,b,c)  setData(a,b,c)
 #define QRegularExpression(a)  QRegExp(a)
@@ -180,6 +182,24 @@ void US_Experiment::newPanel( int panx )
 {
 DbgLv(1) << "newPanel panx=" << panx << "prev.panx=" << curr_panx;
    curr_panx        = panx;
+
+   // Initialize the new current panel after possible changes
+   if ( panx == 0 )
+      epanGeneral  ->initPanel();
+   else if ( panx == 1 )
+      epanRotor    ->initPanel();
+   else if ( panx == 2 )
+      epanSpeeds   ->initPanel();
+   else if ( panx == 3 )
+      epanCells    ->initPanel();
+   else if ( panx == 4 )
+      epanSolutions->initPanel();
+   else if ( panx == 5 )
+      epanPhotoMult->initPanel();
+   else if ( panx == 6 )
+      epanUpload   ->initPanel();
+
+   // Update status text for all panels
    statUpdate();
 }
 
@@ -278,6 +298,11 @@ US_ExperGuiGeneral::US_ExperGuiGeneral( QWidget* topw )
    centerpieceInfo();
 }
 
+// Initialize a panel, especially after clicking on it tab
+void US_ExperGuiGeneral::initPanel()
+{
+}
+
 // Set a specific panel value
 void US_ExperGuiGeneral::setPValue( const QString type, QString& value )
 {
@@ -309,6 +334,9 @@ QString US_ExperGuiGeneral::getPValue( const QString type )
    else if ( type == "investigator" )
    {
    }
+   else if ( type == "dbdisk" )
+   {
+   }
 
    return value;
 }
@@ -318,11 +346,15 @@ QStringList US_ExperGuiGeneral::getPList( const QString type )
 {
    QStringList value( "" );
 
-   if ( type == "run" )
+   if ( type == "all" )
    {
-      value << le_runid->text();
+      value.clear();
+      value << getPValue( "run" );
+      value << getPValue( "project" );
+      value << getPValue( "investigator" );
+      value << getPValue( "dbdisk" );
    }
-   else if ( type == "cpnames" )
+   else if ( type == "centerpieces" )
    {
       value = cp_names;
    }
@@ -453,33 +485,74 @@ US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
    QLabel*      lb_rotor    = us_label( tr( "Rotor:" ) );
    QLabel*      lb_calibr   = us_label( tr( "Calibration:" ) );
    QPushButton* pb_advrotor = us_pushbutton( tr( "Advanced Lab/Rotor/Calibration" ) );
+   int          ihgt        = pb_advrotor->height();
                 cb_lab      = new QComboBox( this );
                 cb_rotor    = new QComboBox( this );
                 cb_calibr   = new QComboBox( this );
+   QSpacerItem* spacer1     = new QSpacerItem( 20, ihgt );
 
    int row=0;
    genL->addWidget( lb_lab,          row,   0, 1, 1 );
-   genL->addWidget( cb_lab,          row++, 1, 1, 3 );
+   genL->addWidget( cb_lab,          row++, 1, 1, 1 );
    genL->addWidget( lb_rotor,        row,   0, 1, 1 );
-   genL->addWidget( cb_rotor,        row++, 1, 1, 3 );
+   genL->addWidget( cb_rotor,        row++, 2, 1, 1 );
    genL->addWidget( lb_calibr,       row,   0, 1, 1 );
-   genL->addWidget( cb_calibr,       row++, 1, 1, 3 );
+   genL->addWidget( cb_calibr,       row++, 3, 1, 1 );
+   genL->addItem  ( spacer1,          row++, 0, 1, 4 );
    genL->addWidget( pb_advrotor,     row++, 0, 1, 4 );
 
    panel->addLayout( genL );
    panel->addStretch();
+
+   US_Passwd pw;
+   US_DB2* dbP              = ( sibPValue( "general", "dbdisk" ) == "db" )
+                              ? new US_DB2( pw.getPasswd() ) : NULL;
+   if ( dbP != NULL )
+   {
+      US_Rotor::readLabsDB( labs, dbP );
+   }
+   else
+   {
+      US_Rotor::readLabsDisk( labs );
+   }
+
+   for ( int ii = 0; ii < labs.count(); ii++ )
+   {
+      sl_labs << QString::number( labs[ ii ].ID )
+                 + ": " + labs[ ii ].name;
+   }
+   cb_lab->clear();
+   cb_lab->addItems( sl_labs );
+
+   connect( cb_lab,       SIGNAL( activated   ( int ) ),
+            this,         SLOT  ( changeLab   ( int ) ) );
+   connect( cb_rotor,     SIGNAL( activated   ( int ) ),
+            this,         SLOT  ( changeRotor ( int ) ) );
+   connect( pb_advrotor,  SIGNAL( clicked()  ),
+            this,         SLOT  ( advRotor() ) );
+
+   changeLab( 0 );
 };
+
+// Initialize a panel, especially after clicking on it tab
+void US_ExperGuiRotor::initPanel()
+{
+}
 
 // Set a specific panel value
 void US_ExperGuiRotor::setPValue( const QString type, QString& value )
 {
    if ( type == "lab" )
    {
-      cb_lab->setCurrentIndex( cb_lab->findText( value ) );
+      cb_lab   ->setCurrentIndex( cb_lab->findText( value ) );
    }
    else if ( type == "rotor" )
    {
-      cb_rotor->setCurrentIndex( cb_rotor->findText( value ) );
+      cb_rotor ->setCurrentIndex( cb_rotor->findText( value ) );
+   }
+   else if ( type == "calibration" )
+   {
+      cb_calibr->setCurrentIndex( cb_rotor->findText( value ) );
    }
 }
 
@@ -510,6 +583,40 @@ QString US_ExperGuiRotor::getPValue( const QString type )
       value = cb_rotor->currentText();
 value=value.isEmpty()?"defaultRotor":value;
    }
+   else if ( type == "calibration" )
+   {
+      value = cb_calibr->currentText();
+   }
+   else if ( type == "abstractRotor" )
+   {
+      int rx      = cb_rotor->currentIndex();
+      int arID    = rotors[ rx ].abstractRotorID;
+      value       = "";
+
+      for ( int ii = 0; ii < arotors.count(); ii++ )
+      {
+         if ( arotors[ ii ].ID == arID )
+         {
+            value       = arotors[ ii ].name;
+            break;
+         }
+      }
+   }
+   else if ( type == "numHoles" )
+   {
+      int rx      = cb_rotor->currentIndex();
+      int arID    = rotors[ rx ].abstractRotorID;
+      value       = "";
+
+      for ( int ii = 0; ii < arotors.count(); ii++ )
+      {
+         if ( arotors[ ii ].ID == arID )
+         {
+            value       = QString::number( arotors[ ii ].numHoles );
+            break;
+         }
+      }
+   }
 
    return value;
 }
@@ -519,13 +626,12 @@ QStringList US_ExperGuiRotor::getPList( const QString type )
 {
    QStringList value( "" );
 
-   if ( type == "run" )
+   if ( type == "all" )
    {
-      //value << le_runid->text();
-   }
-   else if ( type == "cpnames" )
-   {
-      //value = cp_names;
+      value.clear();
+      value << getPValue( "lab" );
+      value << getPValue( "rotor" );
+      value << getPValue( "calibration" );
    }
 
    return value;
@@ -550,12 +656,149 @@ QStringList US_ExperGuiRotor::sibPList( const QString sibling, const QString typ
 // Return status string for the panel
 QString US_ExperGuiRotor::status()
 {
-//   bool is_done  = ( ! le_runid->text().isEmpty() &&
-//                     ! le_project->text().isEmpty() );
-bool is_done=false;
+   bool is_done = ( cb_lab   ->currentIndex() >= 0  &&
+                    cb_rotor ->currentIndex() >= 0  &&
+                    cb_calibr->currentIndex() >= 0 );
    return ( is_done ? QString( "2:X" ) : QString( "2:u" ) );
 }
-                   
+
+// Slot for change in Lab selection
+void US_ExperGuiRotor::changeLab( int ndx )
+{
+qDebug() << "EXP:chgLab  ndx" << ndx;
+   cb_lab->setCurrentIndex( ndx );
+   QString clab        = cb_lab->currentText();
+   int labID           = clab.section( ":", 0, 0 ).toInt();
+   QString descr       = clab.section( ":", 1, 1 ).simplified();
+qDebug() << "EXP: chgLab labID desc" << labID << descr;
+
+   US_Passwd pw;
+   US_DB2* dbP              = ( sibPValue( "general", "dbdisk" ) == "db" )
+                              ? new US_DB2( pw.getPasswd() ) : NULL;
+   if ( dbP != NULL )
+   {
+      US_Rotor::readAbstractRotorsDB( arotors, dbP );
+      US_Rotor::readRotorsFromDB( rotors, labID, dbP );
+   }
+   else
+   {
+      US_Rotor::readAbstractRotorsDisk( arotors );
+      US_Rotor::readRotorsFromDisk( rotors, labID );
+   }
+
+   sl_rotors.clear();
+
+   for ( int ii = 0; ii < rotors.count(); ii++ )
+   {
+      sl_rotors << QString::number( rotors[ ii ].ID )
+                 + ": " + rotors[ ii ].name;
+   }
+
+   cb_rotor->clear();
+   cb_rotor->addItems( sl_rotors );
+   changeRotor( 0 );
+}
+
+// Slot for change in Rotor selection
+void US_ExperGuiRotor::changeRotor( int ndx )
+{
+qDebug() << "EXP:chgRotor  ndx" << ndx;
+   cb_rotor->setCurrentIndex( ndx );
+   QString crot        = cb_rotor->currentText();
+   int rotID           = crot.section( ":", 0, 0 ).toInt();
+   QString descr       = crot.section( ":", 1, 1 ).simplified();
+qDebug() << "EXP: chgRotor rotID desc" << rotID << descr;
+   US_Passwd pw;
+   US_DB2* dbP              = ( sibPValue( "general", "dbdisk" ) == "db" )
+                              ? new US_DB2( pw.getPasswd() ) : NULL;
+   if ( dbP != NULL )
+   {
+      US_Rotor::readCalibrationProfilesDB( calibs, rotID, dbP );
+   }
+   else
+   {
+      US_Rotor::readCalibrationProfilesDisk( calibs, rotID );
+   }
+
+qDebug() << "EXP: chgRotor calibs count" << calibs.count();
+   sl_calibs.clear();
+
+   for ( int ii = 0; ii < calibs.count(); ii++ )
+   {
+      sl_calibs << QString::number( calibs[ ii ].ID )
+                 + ": " + calibs[ ii ].lastUpdated.toString( "d MMMM yyyy" );
+   }
+
+   cb_calibr->clear();
+   cb_calibr->addItems( sl_calibs );
+   int lndx            = calibs.count() - 1;
+   if ( lndx >= 0 )
+      cb_calibr->setCurrentIndex( lndx );
+}
+
+// Slot for click on Advanced Lab... button
+void US_ExperGuiRotor::advRotor()
+{
+   US_Rotor::RotorCalibration  calibr;
+   US_Rotor::Rotor             rotor;
+   int calibx             = cb_calibr->currentIndex();
+   int rotorx             = cb_rotor ->currentIndex();
+   calibr.ID              = ( calibx >= 0 )
+                            ? cb_calibr->currentText().section( ":", 0, 0 ).toInt()
+                            : 0;
+   rotor.ID               = ( rotorx >= 0 )
+                            ? cb_rotor ->currentText().section( ":", 0, 0 ).toInt()
+                            : 0;
+qDebug() << "EXP: advR: IN rID cID" << rotor.ID << calibr.ID;
+   int dbdisk             = ( sibPValue( "general", "dbdisk" ) == "db" )
+                            ? US_Disk_DB_Controls::DB
+                            : US_Disk_DB_Controls::Disk;
+   US_RotorGui* rotorInfo = new US_RotorGui( true, dbdisk, rotor, calibr );
+
+   connect( rotorInfo, SIGNAL( RotorCalibrationSelected(
+                          US_Rotor::Rotor&, US_Rotor::RotorCalibration& ) ),
+            this,      SLOT  ( advRotorChanged( 
+                          US_Rotor::Rotor&, US_Rotor::RotorCalibration& ) ) );
+
+   rotorInfo->exec();
+}
+
+// Slot for rotor,calibration changed in advanced dialog
+void US_ExperGuiRotor::advRotorChanged( US_Rotor::Rotor& crotor,
+                                        US_Rotor::RotorCalibration& ccalib )
+{
+   int rID             = crotor.ID;
+   int cID             = ccalib.ID;
+   int rx              = -1;
+qDebug() << "EXP: advRChg: new rID cID" << rID << cID;
+
+   for ( int ii = 0; ii < sl_rotors.count(); ii++ )
+   {  // Find and select the list item matching the accepted rotor
+      int eID             = sl_rotors[ ii ].section( ":", 0, 0 ).toInt();
+      if ( eID == rID )
+      {  // Match:  select item, set index, break from loop
+         cb_rotor ->setCurrentIndex( ii );
+         rx                  = ii;
+qDebug() << "EXP: advRChg:   rID match at index" << ii;
+         break;
+      }
+   }
+
+   if ( rx >= 0 )
+      changeRotor( rx );     // Rebuild calibrations for new rotor
+
+   for ( int ii = 0; ii < sl_calibs.count(); ii++ )
+   {  // Find and select the list item matching the accepted calibration
+      int eID             = sl_calibs[ ii ].section( ":", 0, 0 ).toInt();
+      if ( eID == cID )
+      {
+         cb_calibr->setCurrentIndex( ii );
+qDebug() << "EXP: advRChg:   cID match at index" << ii;
+         break;
+      }
+qDebug() << "EXP: advRChg:     ii eID" << ii << eID;
+   }
+}
 
 // Panel for Speed step parameters
 US_ExperGuiSpeeds::US_ExperGuiSpeeds( QWidget* topw )
@@ -568,21 +811,21 @@ US_ExperGuiSpeeds::US_ExperGuiSpeeds( QWidget* topw )
    panel->addWidget( lb_panel );
    QGridLayout* genL   = new QGridLayout();
 
-   QLabel* lb_count       = us_label( tr( "Number of Speed Profiles:" ) );
-   QLabel* lb_lenhr       = us_label( tr( "Length of Experiment (Hours):" ) );
-   QLabel* lb_lenmin      = us_label( tr( "Length of Experiment (Minutes):" ) );
-   QLabel* lb_dlyhr       = us_label( tr( "Time Delay for Scans (Hours):" ) );
-   QLabel* lb_dlymin      = us_label( tr( "Time Delay for Scans (Minutes):" ) );
-   QLabel* lb_speed       = us_label( tr( "Rotor Speed (rpm):" ) );
-   QLabel* lb_accel       = us_label( tr( "Acceleration Profile (rpm/sec):" ) );
-   QComboBox* cb_prof     = new QComboBox( this );
-   QwtCounter* ct_speed   = us_counter( 2, 1000, 100000, 100 );
-   QwtCounter* ct_accel   = us_counter( 2,   50,   1000,  50 );
-   QwtCounter* ct_count   = us_counter( 2,    1,    100,   1 );
-   QwtCounter* ct_lenhr   = us_counter( 2,    0,    100,   1 );
-   QwtCounter* ct_lenmin  = us_counter( 2,    0,     60,   1 );
-   QwtCounter* ct_dlyhr   = us_counter( 2,    0,     10,   1 );
-   QwtCounter* ct_dlymin  = us_counter( 2,    0,     60,   1 );
+   QLabel* lb_count    = us_label( tr( "Number of Speed Profiles:" ) );
+   QLabel* lb_lenhr    = us_label( tr( "Length of Experiment (Hours):" ) );
+   QLabel* lb_lenmin   = us_label( tr( "Length of Experiment (Minutes):" ) );
+   QLabel* lb_dlyhr    = us_label( tr( "Time Delay for Scans (Hours):" ) );
+   QLabel* lb_dlymin   = us_label( tr( "Time Delay for Scans (Minutes):" ) );
+   QLabel* lb_speed    = us_label( tr( "Rotor Speed (rpm):" ) );
+   QLabel* lb_accel    = us_label( tr( "Acceleration Profile (rpm/sec):" ) );
+   cb_prof             = new QComboBox( this );
+   ct_speed            = us_counter( 2, 1000, 100000, 100 );
+   ct_accel            = us_counter( 2,   50,   1000,  50 );
+   ct_count            = us_counter( 2,    1,    100,   1 );
+   ct_lenhr            = us_counter( 2,    0,    100,   1 );
+   ct_lenmin           = us_counter( 2,    0,     60,   1 );
+   ct_dlyhr            = us_counter( 2,    0,     10,   1 );
+   ct_dlymin           = us_counter( 2,    0,     60,   1 );
    ct_count ->setSingleStep(   1 );
    ct_speed ->setSingleStep( 100 );
    ct_accel ->setSingleStep(  50 );
@@ -638,10 +881,15 @@ US_ExperGuiSpeeds::US_ExperGuiSpeeds( QWidget* topw )
    adjustSize();
 };
 
+// Initialize a panel, especially after clicking on it tab
+void US_ExperGuiSpeeds::initPanel()
+{
+}
+
 // Set a specific panel value
 void US_ExperGuiSpeeds::setPValue( const QString type, QString& value )
 {
-   if ( type == "lab" )
+   if ( type == "nspeed" )
    {
       //cb_lab->setCurrentIndex( cb_lab->indexOf( value ) );
    }
@@ -653,9 +901,33 @@ QString US_ExperGuiSpeeds::getPValue( const QString type )
 {
    QString value( "" );
 
-   if ( type == "lab" )
+   if ( type == "nspeeds" )
    {
-   //   value = cb_lab->currentText();
+      value = QString::number( ct_count ->value() );
+   }
+   else if ( type == "speed" )
+   {
+      value = QString::number( ct_speed ->value() );
+   }
+   else if ( type == "accel" )
+   {
+      value = QString::number( ct_accel ->value() );
+   }
+   else if ( type == "durhr" )
+   {
+      value = QString::number( ct_lenhr ->value() );
+   }
+   else if ( type == "durmin" )
+   {
+      value = QString::number( ct_lenmin->value() );
+   }
+   else if ( type == "delayhr" )
+   {
+      value = QString::number( ct_dlyhr ->value() );
+   }
+   else if ( type == "delaymin" )
+   {
+      value = QString::number( ct_dlymin->value() );
    }
 
    return value;
@@ -666,13 +938,23 @@ QStringList US_ExperGuiSpeeds::getPList( const QString type )
 {
    QStringList value( "" );
 
-   if ( type == "run" )
+   if ( type == "profiles" )
    {
-      //value << le_runid->text();
-   }
-   else if ( type == "cpnames" )
-   {
-      //value = cp_names;
+      value.clear();
+      int nspeed  = getPValue( "nspeed" ).toInt();
+      int curndx  = cb_prof->currentIndex();
+      for ( int ii = 0; ii < nspeed; ii++ )
+      {
+         cb_prof->setCurrentIndex( ii );
+         value << getPValue( "speed" );
+         value << getPValue( "accel" );
+         value << getPValue( "durhr" );
+         value << getPValue( "durmin" );
+         value << getPValue( "delayhr" );
+         value << getPValue( "delaymin" );
+      }
+
+      cb_prof->setCurrentIndex( curndx );
    }
 
    return value;
@@ -699,7 +981,7 @@ QString US_ExperGuiSpeeds::status()
 {
 //   bool is_done  = ( ! le_runid->text().isEmpty() &&
 //                     ! le_project->text().isEmpty() );
-bool is_done=false;
+bool is_done=true;
    return ( is_done ? QString( "3:X" ) : QString( "3:u" ) );
 }
                    
@@ -716,7 +998,7 @@ qDebug() << "EGC: IN";
    panel->addWidget( lb_panel );
    QGridLayout* genL   = new QGridLayout();
 
-   QPushButton* pb_advrotor = us_pushbutton( tr( "Fill from Rotor information" ) );
+   QPushButton* pb_advrotor = us_pushbutton( tr( "Reset from Rotor information" ) );
    genL->addWidget( pb_advrotor, 0, 0, 1, 8 );
 
    QLabel* lb_hdr1     = us_banner( tr( "Cell" ) );
@@ -725,44 +1007,42 @@ qDebug() << "EGC: IN";
    genL->addWidget( lb_hdr1,     1, 0, 1, 2 );
    genL->addWidget( lb_hdr2,     1, 2, 1, 4 );
    genL->addWidget( lb_hdr3,     1, 6, 1, 2 );
-//   genL->addWidget( lb_hdr6,     1, 7, 1, 1 );
 
-   QList< QLabel* >    cc_labls;
-   QList< QComboBox* > cc_cmbbs;
-   QList< QCheckBox* > cc_chkbs;
-   QList< QWidget* >   cc_widgs;
    QStringList cpnames = sibPList( "general", "cpnames" );
-   int krow  = 2;
-   int ncels = 8;
-   //int nchns = 8;
-   int mxcel = 4;
-   //int mxchn = 2;
+   int krow            = 2;
+   const int mxcels    = 8;
+   int nholes          = sibPValue( "rotor", "numHoles" ).toInt();
+qDebug() << "EGC:  numHoles mxcels" << nholes << mxcels;
 
-   for ( int ii = 0; ii < ncels; ii++ )
+   for ( int ii = 0; ii < mxcels; ii++ )
    {
-      QString scel     = tr( "cell %1" ).arg( ii + 1 );
-      QLabel* clabl    = us_label( scel );
-      QComboBox* cb_cp = us_comboBox();
-      QComboBox* cb_wi = us_comboBox();
+      QString scel        = tr( "cell %1" ).arg( ii + 1 );
+      QLabel* clabl       = us_label( scel );
+      QComboBox* cb_cenp  = us_comboBox();
+      QComboBox* cb_wind  = us_comboBox();
 
-      genL->addWidget( clabl, krow,  0, 1, 2 );
-      genL->addWidget( cb_cp, krow,  2, 1, 4 );
-      genL->addWidget( cb_wi, krow,  6, 1, 2 );
-
-      cb_cp->addItem( tr( "empty" ) );
-      cb_cp->addItems( cpnames );
-      cb_wi->addItem( tr( "quartz" ) );
-      cb_wi->addItem( tr( "sapphire" ) );
-      bool make_vis    = ( ii < mxcel );
-      clabl->setVisible( make_vis );
-      cb_cp->setVisible( make_vis );
-      cb_wi->setVisible( make_vis );
-
+      genL->addWidget( clabl,   krow,  0, 1, 2 );
+      genL->addWidget( cb_cenp, krow,  2, 1, 4 );
+      genL->addWidget( cb_wind, krow,  6, 1, 2 );
       krow++;
+
+      cb_cenp->addItem( tr( "empty" ) );
+      cb_cenp->addItems( cpnames );
+      cb_wind->addItem( tr( "quartz" ) );
+      cb_wind->addItem( tr( "sapphire" ) );
+      bool make_vis       = ( ii < nholes );
+      clabl  ->setVisible( make_vis );
+      cb_cenp->setVisible( make_vis );
+      cb_wind->setVisible( make_vis );
+
+      // Save pointers to row objects for later update
+      cc_labls << clabl;
+      cc_cenps << cb_cenp;
+      cc_winds << cb_wind;
    }
 
-   connect( pb_advrotor,  SIGNAL( clicked()    ),
-            this,         SLOT  ( statUpdate() ) );
+//   connect( pb_advrotor,  SIGNAL( clicked()    ),
+//            this,         SLOT  ( statUpdate() ) );
 
    panel->addLayout( genL );
    panel->addStretch();
@@ -770,6 +1050,36 @@ qDebug() << "EGC: IN";
 QString pval1 = sibPValue( "rotor", "rotor" );
 qDebug() << "EGC: rotor+rotor=" << pval1;
 };
+
+// Initialize a panel, especially after clicking on it tab
+void US_ExperGuiCells::initPanel()
+{
+   const int mxcels    = 8;
+   int nholes          = sibPValue( "rotor", "numHoles" ).toInt();
+   int icbal           = nholes - 1;     // Counter-balance index
+   int icbsib          = nholes / 2 - 1; // Its sibling
+   QStringList sl_bals;
+   sl_bals << "empty counterbalance"
+           << "Titanium counterbalance"
+           << "CarbonFiber counterbalance"
+           << "Epon counterbalance";
+qDebug() << "EGC:initP:  numHoles mxcels" << nholes << mxcels
+ << "icbal icbsib" << icbal << icbsib;
+
+   for ( int ii = 0; ii < mxcels; ii++ )
+   {
+      bool make_vis       = ( ii < nholes );
+      cc_labls[ ii ]->setVisible( make_vis );
+      cc_cenps[ ii ]->setVisible( make_vis );
+      cc_winds[ ii ]->setVisible( make_vis );
+
+      if ( ii == icbal )
+      {
+         cc_cenps[ ii ]->clear();
+         cc_cenps[ ii ]->addItems( sl_bals );
+      }
+   }
+}
 
 // Set a specific panel value
 void US_ExperGuiCells::setPValue( const QString type, QString& value )
@@ -786,9 +1096,57 @@ QString US_ExperGuiCells::getPValue( const QString type )
 {
    QString value( "" );
 
-   if ( type == "lab" )
+   if ( type == "ncells" )
    {
    //   value = cb_lab->currentText();
+   }
+   else if ( type == "1:centerpiece" )
+   {
+   }
+   else if ( type == "1:windows" )
+   {
+   }
+   else if ( type == "2:centerpiece" )
+   {
+   }
+   else if ( type == "2:windows" )
+   {
+   }
+   else if ( type == "3:centerpiece" )
+   {
+   }
+   else if ( type == "3:windows" )
+   {
+   }
+   else if ( type == "4:centerpiece" )
+   {
+   }
+   else if ( type == "4:windows" )
+   {
+   }
+   else if ( type == "5:centerpiece" )
+   {
+   }
+   else if ( type == "5:windows" )
+   {
+   }
+   else if ( type == "6:centerpiece" )
+   {
+   }
+   else if ( type == "6:windows" )
+   {
+   }
+   else if ( type == "7:centerpiece" )
+   {
+   }
+   else if ( type == "7:windows" )
+   {
+   }
+   else if ( type == "8:centerpiece" )
+   {
+   }
+   else if ( type == "8:windows" )
+   {
    }
 
    return value;
@@ -799,13 +1157,9 @@ QStringList US_ExperGuiCells::getPList( const QString type )
 {
    QStringList value( "" );
 
-   if ( type == "run" )
+   if ( type == "cellinfo" )
    {
       //value << le_runid->text();
-   }
-   else if ( type == "cpnames" )
-   {
-      //value = cp_names;
    }
 
    return value;
@@ -861,12 +1215,17 @@ US_ExperGuiSolutions::US_ExperGuiSolutions( QWidget* topw )
    int row=0;
    genL->addWidget( pb_advparam,     row++, 0, 1, 4 );
 
-   connect( pb_advparam,  SIGNAL( clicked()    ),
-            this,         SLOT  ( statUpdate() ) );
+//   connect( pb_advparam,  SIGNAL( clicked()    ),
+//            this,         SLOT  ( statUpdate() ) );
 
    panel->addLayout( genL );
    panel->addStretch();
 };
+
+// Initialize a panel, especially after clicking on it tab
+void US_ExperGuiSolutions::initPanel()
+{
+}
 
 // Set a specific panel value
 void US_ExperGuiSolutions::setPValue( const QString type, QString& value )
@@ -883,7 +1242,7 @@ QString US_ExperGuiSolutions::getPValue( const QString type )
 {
    QString value( "" );
 
-   if ( type == "lab" )
+   if ( type == "1:solution" )
    {
    //   value = cb_lab->currentText();
    }
@@ -896,11 +1255,11 @@ QStringList US_ExperGuiSolutions::getPList( const QString type )
 {
    QStringList value( "" );
 
-   if ( type == "run" )
+   if ( type == "solutions" )
    {
       //value << le_runid->text();
    }
-   else if ( type == "cpnames" )
+   else if ( type == "buffers" )
    {
       //value = cp_names;
    }
@@ -950,12 +1309,17 @@ US_ExperGuiPhotoMult::US_ExperGuiPhotoMult( QWidget* topw )
    int row=0;
    genL->addWidget( pb_advparam,     row++, 0, 1, 4 );
 
-   connect( pb_advparam,  SIGNAL( clicked()    ),
-            this,         SLOT  ( statUpdate() ) );
+//   connect( pb_advparam,  SIGNAL( clicked()    ),
+//            this,         SLOT  ( statUpdate() ) );
 
    panel->addLayout( genL );
    panel->addStretch();
 };
+
+// Initialize a panel, especially after clicking on it tab
+void US_ExperGuiPhotoMult::initPanel()
+{
+}
 
 // Set a specific panel value
 void US_ExperGuiPhotoMult::setPValue( const QString type, QString& value )
@@ -972,7 +1336,7 @@ QString US_ExperGuiPhotoMult::getPValue( const QString type )
 {
    QString value( "" );
 
-   if ( type == "lab" )
+   if ( type == "eprofiles" )
    {
    //   value = cb_lab->currentText();
    }
@@ -985,13 +1349,9 @@ QStringList US_ExperGuiPhotoMult::getPList( const QString type )
 {
    QStringList value( "" );
 
-   if ( type == "run" )
+   if ( type == "eprofiles" )
    {
       //value << le_runid->text();
-   }
-   else if ( type == "cpnames" )
-   {
-      //value = cp_names;
    }
 
    return value;
@@ -1039,12 +1399,17 @@ US_ExperGuiUpload::US_ExperGuiUpload( QWidget* topw )
    int row=0;
    genL->addWidget( pb_advparam,     row++, 0, 1, 4 );
 
-   connect( pb_advparam,  SIGNAL( clicked()    ),
-            this,         SLOT  ( statUpdate() ) );
+//   connect( pb_advparam,  SIGNAL( clicked()    ),
+//            this,         SLOT  ( statUpdate() ) );
 
    panel->addLayout( genL );
    panel->addStretch();
 };
+
+// Initialize a panel, especially after clicking on it tab
+void US_ExperGuiUpload::initPanel()
+{
+}
 
 // Set a specific panel value
 void US_ExperGuiUpload::setPValue( const QString type, QString& value )
@@ -1074,13 +1439,9 @@ QStringList US_ExperGuiUpload::getPList( const QString type )
 {
    QStringList value( "" );
 
-   if ( type == "run" )
+   if ( type == "uploaded" )
    {
       //value << le_runid->text();
-   }
-   else if ( type == "cpnames" )
-   {
-      //value = cp_names;
    }
 
    return value;

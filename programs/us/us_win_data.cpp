@@ -21,12 +21,12 @@ namespace US_WinData
 
     P_GLOBFITEQ,                           // Global Fit Menu
 
-    P_CONVERT,      P_EXPORT,       P_FDSMAN, //Utilities menu
-    P_FITMEN,       P_COLORGRAD,    P_RPTGEN,
-    P_ROTORCAL,     P_LICENSE,      P_VHWCOMB,
-    P_DDCOMB,       P_GLOMODL,      P_VIEWMWL,
-    P_VIEWMSS,      P_VIEWCFA,      P_VIEWXPN,
-    P_SPECFIT,      P_SPECDEC,
+    P_CONVERT,      P_EXPORT,       P_CEXPERI, //Utilities menu
+    P_FDSMAN,       P_FITMEN,       P_COLORGRAD,
+    P_RPTGEN,       P_ROTORCAL,     P_LICENSE,
+    P_VHWCOMB,      P_DDCOMB,       P_GLOMODL,
+    P_VIEWMWL,      P_VIEWMSS,      P_VIEWCFA,
+    P_VIEWXPN,      P_SPECFIT,      P_SPECDEC,
     
     P_ASTFEM,       P_EQUILTIMESIM,        // Simulation Menu
     P_SASSOC,       P_MODEL1,       P_MODEL2,
@@ -167,6 +167,11 @@ namespace US_WinData
       QObject::tr( "OpenAUC Data Export Program" )
     },
     
+    { P_CEXPERI,  1, 0, "us_experiment",
+      QObject::tr( "Loading Create Experiment Routine" ),
+      QObject::tr( "Experiment Creation Program" )
+    },
+
     { P_FDSMAN,   1, 0, "us_fds_filemanager",
       QObject::tr( "Loading Fluorescence Data File Manager" ),
       QObject::tr( "Fluorescence Data File Manager Program" )

@@ -307,6 +307,47 @@ US_Rotor::Status US_Rotor::readAbstractRotorsDisk( QVector< US_Rotor::AbstractRo
    return US_Rotor::ROTOR_OK;
 }
 
+// Function to read all the abstract rotor info from disk
+US_Rotor::Status US_Rotor::readRotorsFromDB( QVector< US_Rotor::Rotor >& rotors,
+                                             int labID, US_DB2* db )
+{
+   QStringList rotorIDs;
+   QStringList qry;
+   qry << "get_rotor_names" << QString::number( labID );
+   db->query( qry );
+
+   while ( db->next() )
+   {  // Get the list of rotor IDs for the specified laboratory
+      rotorIDs << db->value( 0 ).toString();
+   }
+
+   qry.clear();     
+   qry << "get_rotor_info" << " ";
+   for ( int ii = 0; ii < rotorIDs.count(); ii++ )
+   {  // Get detailed profile information for each calibration ID
+      QString rotorID = rotorIDs[ ii ];
+      qry[ 1 ]        = rotorID;
+      db->query( qry );
+      db->next();
+
+      US_Rotor::Rotor rotor;
+      rotor.ID                 = rotorID.toInt();
+      rotor.GUID               = db->value( 0 ).toString();
+      rotor.abstractRotorID    = db->value( 4 ).toInt();
+      rotor.abstractRotorGUID  = db->value( 5 ).toString();
+      rotor.labID              = labID;
+      rotor.name               = db->value( 1 ).toString();
+      rotor.serialNumber       = db->value( 2 ).toString();
+
+      rotors << rotor;
+   }
+
+   if ( rotors.size() == 0 )
+      return US_Rotor::NOT_FOUND;
+
+   return US_Rotor::ROTOR_OK;
+}
+
 // A function to read rotor information concerning a single lab from disk
 US_Rotor::Status US_Rotor::readRotorsFromDisk(
          QVector< US_Rotor::Rotor >& rotors, int labID )
@@ -371,6 +412,52 @@ US_Rotor::Status US_Rotor::readRotorsFromDisk(
    }
 
    if ( rotors.size() == 0 )
+      return US_Rotor::NOT_FOUND;
+
+   return US_Rotor::ROTOR_OK;
+}
+
+// A function to read rotor calibration profile information about a single rotor from DB
+US_Rotor::Status US_Rotor::readCalibrationProfilesDB(
+         QVector< US_Rotor::RotorCalibration >& profiles, int rotorID, US_DB2* db )
+{
+   QStringList calibIDs;
+   QStringList qry;
+   qry << "get_rotor_calibration_profiles" << QString::number( rotorID );
+   db->query( qry );
+
+   while ( db->next() )
+   {  // Get the list of calibration IDs for the specified rotor
+      calibIDs << db->value( 0 ).toString();
+   }
+
+   qry.clear();     
+   qry << "get_rotor_calibration_info" << QString::number( rotorID );
+   for ( int ii = 0; ii < calibIDs.count(); ii++ )
+   {  // Get detailed profile information for each calibration ID
+      QString calibID = calibIDs[ ii ];
+      qry[ 1 ]        = calibID;
+      db->query( qry );
+      db->next();
+
+      US_Rotor::RotorCalibration rc;
+      rc.ID          = calibID.toInt();
+      rc.GUID        = db->value( 0 ).toString();
+      rc.rotorID     = db->value( 1 ).toInt();
+      rc.rotorGUID   = db->value( 2 ).toString();
+      rc.calibrationExperimentID   = db->value( 8 ).toInt();
+      rc.calibrationExperimentGUID = QString( "" );
+      rc.coeff1      = db->value( 4 ).toDouble();
+      rc.coeff2      = db->value( 5 ).toDouble();
+      rc.label       = db->value( 9 ).toString();
+      rc.report      = db->value( 3 ).toString();
+      rc.lastUpdated = db->value( 7 ).toDate();
+      rc.omega2t     = db->value( 6 ).toDouble();
+
+      profiles << rc;
+   }
+
+   if ( profiles.size() == 0 )
       return US_Rotor::NOT_FOUND;
 
    return US_Rotor::ROTOR_OK;
