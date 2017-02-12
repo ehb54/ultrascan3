@@ -1008,7 +1008,7 @@ qDebug() << "EGC: IN";
    genL->addWidget( lb_hdr2,     1, 2, 1, 4 );
    genL->addWidget( lb_hdr3,     1, 6, 1, 2 );
 
-   QStringList cpnames = sibPList( "general", "cpnames" );
+   cpnames             = sibPList( "general", "centerpieces" );
    int krow            = 2;
    const int mxcels    = 8;
    int nholes          = sibPValue( "rotor", "numHoles" ).toInt();
@@ -1030,10 +1030,6 @@ qDebug() << "EGC:  numHoles mxcels" << nholes << mxcels;
       cb_cenp->addItems( cpnames );
       cb_wind->addItem( tr( "quartz" ) );
       cb_wind->addItem( tr( "sapphire" ) );
-      bool make_vis       = ( ii < nholes );
-      clabl  ->setVisible( make_vis );
-      cb_cenp->setVisible( make_vis );
-      cb_wind->setVisible( make_vis );
 
       // Save pointers to row objects for later update
       cc_labls << clabl;
@@ -1047,6 +1043,7 @@ qDebug() << "EGC:  numHoles mxcels" << nholes << mxcels;
    panel->addLayout( genL );
    panel->addStretch();
 
+   initPanel();
 QString pval1 = sibPValue( "rotor", "rotor" );
 qDebug() << "EGC: rotor+rotor=" << pval1;
 };
@@ -1068,6 +1065,7 @@ qDebug() << "EGC:initP:  numHoles mxcels" << nholes << mxcels
 
    for ( int ii = 0; ii < mxcels; ii++ )
    {
+qDebug() << "EGC:initP:   ii cenps-count" << ii << cc_cenps[ii]->count();
       bool make_vis       = ( ii < nholes );
       cc_labls[ ii ]->setVisible( make_vis );
       cc_cenps[ ii ]->setVisible( make_vis );
