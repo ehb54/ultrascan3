@@ -280,12 +280,31 @@ class US_UTIL_EXTERN US_Rotor
       */
       static Status readAbstractRotorsDisk( QVector< US_Rotor::AbstractRotor >& );
 
+      /*! \brief    Function to retrieve all the rotors in a particular lab from DB
+
+          \param    rotors A reference to where the rotors will be stored
+          \param    labID The ID of the lab where the rotors are located
+          \param    db  For database access, an open database connection
+      */
+      static Status readRotorsFromDB( QVector< US_Rotor::Rotor >&, int, US_DB2* db );
+
       /*! \brief    Function to retrieve all the rotors in a particular lab from disk
 
           \param    rotors A reference to where the rotors will be stored
           \param    labID The ID of the lab where the rotors are located
       */
       static Status readRotorsFromDisk( QVector< US_Rotor::Rotor >&, int );
+
+      /*! \brief    Function to retrieve all the calibration profiles about a
+                    particular rotor from disk
+
+          \param    profiles A reference to where the rotor calibration profiles 
+                             will be stored
+          \param    rotorID  The ID of the rotor 
+          \param    db  For database access, an open database connection
+      */
+      static Status readCalibrationProfilesDB( QVector< US_Rotor::RotorCalibration >&, int,
+                                               US_DB2* db );
 
       /*! \brief    Function to retrieve all the calibration profiles about a
                     particular rotor from disk

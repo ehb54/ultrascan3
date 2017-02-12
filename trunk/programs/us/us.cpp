@@ -192,6 +192,7 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
   addMenu(  P_SPECDEC  , tr( "Spectrum &Decomposition"           ), spectrum);
   addMenu(  P_CONVERT  , tr( "&Import Experimental Data"         ), utilities );
   addMenu(  P_EXPORT   , tr( "&Export OpenAUC Data"              ), utilities );
+  addMenu(  P_CEXPERI  , tr( "Create E&xperiment"                ), utilities );
   addMenu(  P_FDSMAN   , tr( "FDS File &Manager"                 ), utilities );
   addMenu(  P_FITMEN   , tr( "&Fit Meniscus"                     ), utilities );
   utilities->addMenu(spectrum);
