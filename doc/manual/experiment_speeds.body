@@ -1,0 +1,107 @@
+[% INCLUDE header.us3
+   title = 'UltraScan III Experiment Speeds Panel'
+%]
+    <h2> Create Experiment - Speed Steps Panel: </h2>
+    <p class='center'><img src="images/experiment_speeds.png"
+    alt="Define Speed Steps panel"/></p>
+
+    <p> Using this panel, you can define one or more speed steps
+    for the experiment. For each speed step, a target rotor speed
+    in revolutions per minute must be defined. An acceleration
+    in RPM per second for the experiment start or the transition
+    from the previous step is declared. The duration of the
+    experiment at the given speed and a delay between start or
+    previous step are specified. These last two are given
+    separately in hours and minutes.</p>
+
+    <p> As with all panels, a set of tabs allows you to navigate to
+    other panels in order to perform specialized subtasks relating
+    to experiment creation. Links to and summaries of the panels are
+    given in the final section of this page.</p>
+
+    <h3> Dialog Items: </h3>
+
+    <ul>
+      <li><b>Number of Speed Profiles:</b> Select a counter value that
+      specifies the number of constant rotor speeds to be used for
+      the duration of the experiment. Most often, this will be "1".</li>
+
+      <li><b>(step description)</b> This pull-down menu selection sets
+      the speed step for which the speed and duration to follow apply.</li>
+
+      <li><b>Rotor Speed (rpm):</b> Select a counter value to specify the rotor
+      speed for the speed step.</li>
+
+      <li><b>Acceleration Profile (rpm_sec):</b> Select an acceleration value for
+      the transition from zero speed or from the speed of the previous step.</li>
+
+      <li><b>Length of Experiment (Hours):</b> Specify the duration in hours of
+      the portion of the experiment at the current rotor speed.  </li>
+
+      <li><b>Length of Experiment (Minutes):</b> Specify the residual minutes
+      of duration of the portion of the experiment at the current rotor speed.
+      This specification may be a floating point value. </li>
+
+      <li><b>Time Delay for Scans (Hours):</b> Specify the duration in hours of
+      the portion of the experiment spent in transitioning from zero speed or
+      the previous speed to the current constant rotor speed. </li>
+
+      <li><b>Time Delay for Scans (Minutes):</b> Specify the residual minutes
+      of duration of the portion of the experiment spent in transitioning from
+      zero speed or the previous speed to the current constant rotor speed.
+      This specification may be a floating point value. </li>
+    </ul>
+
+    <h3> Shared Dialog Items: </h3>
+
+    <p>A panel status box and multiple buttons are shared by all panels.
+    The <a href="experiment_general.html">General tab help page</a>
+    has detailed explanations of these items.</p>
+
+    <h3>Panel Tab Options:</h3>
+
+    <p>In each panel, tabs are visible at the top of the window to enable the
+    user to move to another panel, to perform specific experiment subtasks.
+
+    <ul>
+      <li><a href="experiment_general.html">1: General</a>
+      A panel whose primary purpose is to specify the experiment run ID (a
+      description string), select a parent project name, and possibly change
+      data source (database or local disk) or database investigator name.
+      </li>
+
+      <li><a href="experiment_rotor.html">2: Lab/Rotor</a>
+      A panel whose primary purpose is to select the Laboratory, Rotor, and
+      Calibration values for the experiment.
+      </li>
+
+      <li><a href="experiment_speeds.html">3: Speeds</a>
+      A panel whose primary primary purpose is to specify one or more speed steps.
+      For each step, speeds and durations may be given.
+      </li>
+
+      <li><a href="experiment_cells.html">4: Cells</a>
+      A panel whose primary purpose is to select the centerpieces (or
+      counterbalance) for the cells, along with a quartz/sapphire windows
+      selection.
+      </li>
+
+      <li><a href="experiment_solutions.html">5: Solutions</a>
+      A panel whose primary purpose is to specify the solution to be used
+      in each cell/channel.
+      </li>
+
+      <li><a href="experiment_photomult.html">6: Photo Multiplier</a>
+      A panel whose primary purpose is to define extinction profiles and the
+      implied photo multiplier voltage at each wavelength.
+      </li>
+
+      <li><a href="experiment_upload.html">7: Upload</a>
+      A panel whose primary purpose is to engineer the creation of an
+      experiment-defining JSON string and upload it to an Optima XLA
+      database.
+      </li>
+    </ul>
+
+[% INCLUDE footer.us3 %]
+

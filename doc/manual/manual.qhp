@@ -36,6 +36,7 @@
             <keyword id="c2" name="components"       ref="components.html"/>
             <keyword id="c3" name="configuration"    ref="config.html"/>
             <keyword id="c4" name="convert-data"     ref="convert.html"/>
+            <keyword id="c5" name="create-experiment" ref="experiment_general.html"/>
             <keyword id="d1" name="data-loader"      ref="data_loader.html"/>
             <keyword id="d2" name="ddist-combine"    ref="ddist_combine.html"/>
             <keyword id="e1" name="edit"             ref="us_edit.html"/>
@@ -142,6 +143,21 @@
             <file>images/buffer_settings.png</file>
             <file>images/buffer_info.png</file>
             <file>images/us_buffer_spect.png</file>
+
+            <file>experiment_general.html</file>
+            <file>experiment_rotor.html</file>
+            <file>experiment_speeds.html</file>
+            <file>experiment_cells.html</file>
+            <file>experiment_solutions.html</file>
+            <file>experiment_photomult.html</file>
+            <file>experiment_upload.html</file>
+            <file>images/experiment_general.png</file>
+            <file>images/experiment_rotor.png</file>
+            <file>images/experiment_speeds.png</file>
+            <file>images/experiment_cells.png</file>
+            <file>images/experiment_solutions.png</file>
+            <file>images/experiment_photomult.png</file>
+            <file>images/experiment_upload.png</file>
 
             <file>us_solution.html</file>
             <file>images/us_solution1.png</file>

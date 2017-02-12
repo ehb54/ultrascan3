@@ -63,6 +63,7 @@
     <ul>
       <li> <a href="convert.html">Import Experimental Data</a> </li>
       <li> <a href="export_legacy.html">Export Experimental Data</a> </li>
+      <li> <a href="experiment_general.html">Create Experiment</a> </li>
       <li> <a href="us_fds_filemanager.html">Fluorescence Data File Manager</a> </li>
       <li> <a href="fit_meniscus.html">Fit Meniscus</a> </li>
       <li> <a href="colorgradient.html">Color Gradient Generator</a> </li>
