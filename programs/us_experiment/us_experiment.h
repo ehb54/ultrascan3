@@ -158,6 +158,7 @@ class US_ExperGuiCells : public US_Widgets
       QList< QLabel* >     cc_labls;  // Cell label GUI objects
       QList< QComboBox* >  cc_cenps;  // Centerpiece GUI objects
       QList< QComboBox* >  cc_winds;  // Windows GUI objects
+      QStringList          cpnames;   // Centerpiece names
 };
 
 class US_ExperGuiSolutions : public US_Widgets 
