@@ -34,12 +34,15 @@ class US_ExperGuiGeneral : public US_Widgets
       QString     sibPValue( const QString, const QString );
       QStringList sibPList ( const QString, const QString );
       QString     status   ( void );
+      void        help     ( void )
+         { showHelp.show_help( "manual/experiment_general.html" ); };
 
       QStringList cpNames  ( void );
       bool        cpInfo   ( const QString, US_AbstractCenterpiece& );
 
    private:
       QWidget* mainw;
+      US_Help  showHelp;
 
       US_Disk_DB_Controls*  disk_controls; //!< Radiobuttons for disk/db choice
 
@@ -76,10 +79,13 @@ class US_ExperGuiRotor : public US_Widgets
       QString     sibPValue( const QString, const QString );
       QStringList sibPList ( const QString, const QString );
       QString     status   ( void );
+      void        help     ( void )
+         { showHelp.show_help( "manual/experiment_rotor.html" ); };
 
    private:
 
       QWidget* mainw;
+      US_Help  showHelp;
       QComboBox* cb_lab;
       QComboBox* cb_rotor;
       QComboBox* cb_calibr;
@@ -96,11 +102,11 @@ class US_ExperGuiRotor : public US_Widgets
 
    private slots:
 
-   void changeLab  ( int );
-   void changeRotor( int );
-   void advRotor   ( void );
-   void advRotorChanged( US_Rotor::Rotor&,
-                         US_Rotor::RotorCalibration& );
+      void changeLab  ( int );
+      void changeRotor( int );
+      void advRotor   ( void );
+      void advRotorChanged( US_Rotor::Rotor&,
+                            US_Rotor::RotorCalibration& );
 };
 
 class US_ExperGuiSpeeds : public US_Widgets 
@@ -120,10 +126,13 @@ class US_ExperGuiSpeeds : public US_Widgets
       QString     sibPValue( const QString, const QString );
       QStringList sibPList ( const QString, const QString );
       QString     status   ( void );
+      void        help     ( void )
+         { showHelp.show_help( "manual/experiment_speeds.html" ); };
 
    private:
 
       QWidget*     mainw;
+      US_Help      showHelp;
       QComboBox*  cb_prof;
       QwtCounter* ct_speed;
       QwtCounter* ct_accel;
@@ -151,10 +160,13 @@ class US_ExperGuiCells : public US_Widgets
       QString     sibPValue( const QString, const QString );
       QStringList sibPList ( const QString, const QString );
       QString     status   ( void );
+      void        help     ( void )
+         { showHelp.show_help( "manual/experiment_cells.html" ); };
 
    private:
 
       QWidget* mainw;
+      US_Help  showHelp;
       QList< QLabel* >     cc_labls;  // Cell label GUI objects
       QList< QComboBox* >  cc_cenps;  // Centerpiece GUI objects
       QList< QComboBox* >  cc_winds;  // Windows GUI objects
@@ -178,10 +190,13 @@ class US_ExperGuiSolutions : public US_Widgets
       QString     sibPValue( const QString, const QString );
       QStringList sibPList ( const QString, const QString );
       QString     status   ( void );
+      void        help     ( void )
+         { showHelp.show_help( "manual/experiment_solutions.html" ); };
 
    private:
 
       QWidget* mainw;
+      US_Help  showHelp;
 };
 
 class US_ExperGuiPhotoMult : public US_Widgets 
@@ -201,10 +216,13 @@ class US_ExperGuiPhotoMult : public US_Widgets
       QString     sibPValue( const QString, const QString );
       QStringList sibPList ( const QString, const QString );
       QString     status   ( void );
+      void        help     ( void )
+         { showHelp.show_help( "manual/experiment_photomult.html" ); };
 
    private:
 
       QWidget* mainw;
+      US_Help  showHelp;
 };
 
 class US_ExperGuiUpload : public US_Widgets 
@@ -224,10 +242,14 @@ class US_ExperGuiUpload : public US_Widgets
       QString     sibPValue( const QString, const QString );
       QStringList sibPList ( const QString, const QString );
       QString     status   ( void );
+      void        help     ( void )
+         { showHelp.show_help( "manual/experiment_upload.html" ); };
 
    private:
 
       QWidget* mainw;
+      US_Help  showHelp;
+
 };
 
 class US_Experiment : public US_Widgets 
@@ -252,23 +274,19 @@ class US_Experiment : public US_Widgets
       US_ExperGuiPhotoMult* epanPhotoMult;
       US_ExperGuiUpload*    epanUpload;
 
-      US_Help               showHelp;
-
       QLineEdit*            le_stat;
 
       int                   dbg_level;
       int                   curr_panx;
 
-private slots:
+   private slots:
 
-   void reset     ( void );
-   void newPanel  ( int  );
-   void statUpdate( void );
-   void panelUp   ( void );
-   void panelDown ( void );
-
-   void help                 ( void )
-      { showHelp.show_help( "manual/us_experiment.html" ); };
+      void reset     ( void );
+      void newPanel  ( int  );
+      void statUpdate( void );
+      void panelUp   ( void );
+      void panelDown ( void );
+      void help      ( void );
 };
 #endif
 

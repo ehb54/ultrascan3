@@ -243,6 +243,25 @@ void US_Experiment::panelDown()
    tabWidget->setCurrentIndex( qMax( newndx, 0 ) );
 }
 
+// Open manual help appropriate to the current panel
+void US_Experiment::help( void )
+{
+   if ( curr_panx == 0 )
+      epanGeneral  ->help();
+   else if ( curr_panx == 1 )
+      epanRotor    ->help();
+   else if ( curr_panx == 2 )
+      epanSpeeds   ->help();
+   else if ( curr_panx == 3 )
+      epanCells    ->help();
+   else if ( curr_panx == 4 )
+      epanSolutions->help();
+   else if ( curr_panx == 5 )
+      epanPhotoMult->help();
+   else if ( curr_panx == 6 )
+      epanUpload   ->help();
+}
+
 // Reset parameters to their defaults
 void US_Experiment::reset( void )
 {
