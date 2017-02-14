@@ -10,6 +10,7 @@
 #include "us_investigator.h"
 #include "us_util.h"
 #include "us_rotor.h"
+#include "us_solution.h"
 #include "us_passwd.h"
 #include "us_db2.h"
 #include "us_hardware.h"
@@ -52,6 +53,7 @@ class US_ExperGuiGeneral : public US_Widgets
 
       QList< US_AbstractCenterpiece >  acp_list;  // Full Centerpiece information
       QStringList                      cp_names;  // List of Centerpiece names
+      int        dbg_level;
 
    private slots:
 
@@ -99,6 +101,7 @@ class US_ExperGuiRotor : public US_Widgets
       QStringList sl_rotors;
       QStringList sl_arotors;
       QStringList sl_calibs;
+      int         dbg_level;
 
    private slots:
 
@@ -133,14 +136,34 @@ class US_ExperGuiSpeeds : public US_Widgets
 
       QWidget*     mainw;
       US_Help      showHelp;
-      QComboBox*  cb_prof;
-      QwtCounter* ct_speed;
-      QwtCounter* ct_accel;
-      QwtCounter* ct_count;
-      QwtCounter* ct_lenhr;
-      QwtCounter* ct_lenmin;
-      QwtCounter* ct_dlyhr;
-      QwtCounter* ct_dlymin;
+
+      QComboBox*   cb_prof;
+      QwtCounter*  ct_speed;
+      QwtCounter*  ct_accel;
+      QwtCounter*  ct_count;
+      QwtCounter*  ct_lenhr;
+      QwtCounter*  ct_lenmin;
+      QwtCounter*  ct_dlyhr;
+      QwtCounter*  ct_dlymin;
+
+      QVector< QString >  profdesc;
+      QVector< double >   ssvals;
+
+      int          dbg_level;
+      int          nspeed;
+      int          curssx;
+
+   private slots:
+
+      QString speedp_description( const int );
+      void    ssChangeCount( double );
+      void    ssChangeProfx( int    );
+      void    ssChangeSpeed( double );
+      void    ssChangeAccel( double );
+      void    ssChangeDurhr( double );
+      void    ssChangeDurmn( double );
+      void    ssChangeDlyhr( double );
+      void    ssChangeDlymn( double );
 };
 
 class US_ExperGuiCells : public US_Widgets 
@@ -164,13 +187,18 @@ class US_ExperGuiCells : public US_Widgets
          { showHelp.show_help( "manual/experiment_cells.html" ); };
 
    private:
-
       QWidget* mainw;
       US_Help  showHelp;
       QList< QLabel* >     cc_labls;  // Cell label GUI objects
       QList< QComboBox* >  cc_cenps;  // Centerpiece GUI objects
       QList< QComboBox* >  cc_winds;  // Windows GUI objects
       QStringList          cpnames;   // Centerpiece names
+      int          dbg_level;
+
+   private slots:
+      void centerpieceChanged( int );
+      void windowsChanged    ( int );
+
 };
 
 class US_ExperGuiSolutions : public US_Widgets 
@@ -197,7 +225,24 @@ class US_ExperGuiSolutions : public US_Widgets
 
       QWidget* mainw;
       US_Help  showHelp;
+      int          dbg_level;
+
+      QVector< QLabel* >     cc_labls;
+      QVector< QComboBox* >  cc_solus;
+      QStringList            sonames;
+
+      QMap< QString, QString >      solu_ids;
+      QMap< QString, US_Solution >  solu_data;
+
+   private slots:
+
+      void manageSolutions( void );
+      void detailSolutions( void );
+      bool solutionID     ( const QString, QString& );
+      bool solutionData   ( const QString, US_Solution& );
+      int  allSolutions   ( void );
 };
+
 
 class US_ExperGuiPhotoMult : public US_Widgets 
 {
@@ -223,6 +268,7 @@ class US_ExperGuiPhotoMult : public US_Widgets
 
       QWidget* mainw;
       US_Help  showHelp;
+      int          dbg_level;
 };
 
 class US_ExperGuiUpload : public US_Widgets 
@@ -249,6 +295,7 @@ class US_ExperGuiUpload : public US_Widgets
 
       QWidget* mainw;
       US_Help  showHelp;
+      int          dbg_level;
 
 };
 
@@ -264,7 +311,7 @@ class US_Experiment : public US_Widgets
 
    private:
 
-      QTabWidget*           tabWidget;
+      QTabWidget* tabWidget;
 
       US_ExperGuiGeneral*   epanGeneral;
       US_ExperGuiRotor*     epanRotor;
@@ -274,10 +321,10 @@ class US_Experiment : public US_Widgets
       US_ExperGuiPhotoMult* epanPhotoMult;
       US_ExperGuiUpload*    epanUpload;
 
-      QLineEdit*            le_stat;
+      QLineEdit*  le_stat;
 
-      int                   dbg_level;
-      int                   curr_panx;
+      int         dbg_level;
+      int         curr_panx;
 
    private slots:
 
