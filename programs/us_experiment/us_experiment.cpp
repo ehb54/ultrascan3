@@ -2,6 +2,7 @@
 
 #include "us_experiment.h"
 #include "us_rotor_gui.h"
+#include "us_solution_gui.h"
 
 #if QT_VERSION < 0x050000
 #define setSamples(a,b,c)  setData(a,b,c)
@@ -271,6 +272,7 @@ void US_Experiment::reset( void )
 US_ExperGuiGeneral::US_ExperGuiGeneral( QWidget* topw )
 {
    mainw               = topw;
+   dbg_level           = US_Settings::us_debug();
    QVBoxLayout* panel  = new QVBoxLayout( this );
    panel->setSpacing        ( 2 );
    panel->setContentsMargins( 2, 2, 2, 2 );
@@ -317,7 +319,7 @@ US_ExperGuiGeneral::US_ExperGuiGeneral( QWidget* topw )
    centerpieceInfo();
 }
 
-// Initialize a panel, especially after clicking on it tab
+// Initialize a panel, especially after clicking on its tab
 void US_ExperGuiGeneral::initPanel()
 {
 }
@@ -349,12 +351,15 @@ QString US_ExperGuiGeneral::getPValue( const QString type )
    }
    else if ( type == "project" )
    {
+      value = le_project->text();
    }
    else if ( type == "investigator" )
    {
+      value = le_investigator->text();
    }
    else if ( type == "dbdisk" )
    {
+      value = ( disk_controls->db() ) ? "DB" : "Disk";
    }
 
    return value;
@@ -464,8 +469,8 @@ void US_ExperGuiGeneral::sel_project( void )
 // Capture selected project information
 void US_ExperGuiGeneral::project_info( US_Project& project )
 {
-qDebug() << "projinfo: proj.desc" << project.projectDesc;
-qDebug() << "projinfo: proj.guid" << project.projectGUID;
+DbgLv(1) << "projinfo: proj.desc" << project.projectDesc;
+DbgLv(1) << "projinfo: proj.guid" << project.projectGUID;
 
    le_project->setText( project.projectDesc );
 }
@@ -489,10 +494,12 @@ void US_ExperGuiGeneral::centerpieceInfo( void )
    }
 }
 
+
 // Panel for Lab/Rotor parameters
 US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
 {
    mainw               = topw;
+   dbg_level           = US_Settings::us_debug();
    QVBoxLayout* panel  = new QVBoxLayout( this );
    panel->setSpacing        ( 2 );
    panel->setContentsMargins( 2, 2, 2, 2 );
@@ -524,7 +531,7 @@ US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
    panel->addStretch();
 
    US_Passwd pw;
-   US_DB2* dbP              = ( sibPValue( "general", "dbdisk" ) == "db" )
+   US_DB2* dbP              = ( sibPValue( "general", "dbdisk" ) == "DB" )
                               ? new US_DB2( pw.getPasswd() ) : NULL;
    if ( dbP != NULL )
    {
@@ -553,7 +560,7 @@ US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
    changeLab( 0 );
 };
 
-// Initialize a panel, especially after clicking on it tab
+// Initialize a panel, especially after clicking on its tab
 void US_ExperGuiRotor::initPanel()
 {
 }
@@ -684,15 +691,15 @@ QString US_ExperGuiRotor::status()
 // Slot for change in Lab selection
 void US_ExperGuiRotor::changeLab( int ndx )
 {
-qDebug() << "EXP:chgLab  ndx" << ndx;
+DbgLv(1) << "EXP:chgLab  ndx" << ndx;
    cb_lab->setCurrentIndex( ndx );
    QString clab        = cb_lab->currentText();
    int labID           = clab.section( ":", 0, 0 ).toInt();
    QString descr       = clab.section( ":", 1, 1 ).simplified();
-qDebug() << "EXP: chgLab labID desc" << labID << descr;
+DbgLv(1) << "EXP: chgLab labID desc" << labID << descr;
 
    US_Passwd pw;
-   US_DB2* dbP              = ( sibPValue( "general", "dbdisk" ) == "db" )
+   US_DB2* dbP              = ( sibPValue( "general", "dbdisk" ) == "DB" )
                               ? new US_DB2( pw.getPasswd() ) : NULL;
    if ( dbP != NULL )
    {
@@ -721,14 +728,14 @@ qDebug() << "EXP: chgLab labID desc" << labID << descr;
 // Slot for change in Rotor selection
 void US_ExperGuiRotor::changeRotor( int ndx )
 {
-qDebug() << "EXP:chgRotor  ndx" << ndx;
+DbgLv(1) << "EXP:chgRotor  ndx" << ndx;
    cb_rotor->setCurrentIndex( ndx );
    QString crot        = cb_rotor->currentText();
    int rotID           = crot.section( ":", 0, 0 ).toInt();
    QString descr       = crot.section( ":", 1, 1 ).simplified();
-qDebug() << "EXP: chgRotor rotID desc" << rotID << descr;
+DbgLv(1) << "EXP: chgRotor rotID desc" << rotID << descr;
    US_Passwd pw;
-   US_DB2* dbP              = ( sibPValue( "general", "dbdisk" ) == "db" )
+   US_DB2* dbP              = ( sibPValue( "general", "dbdisk" ) == "DB" )
                               ? new US_DB2( pw.getPasswd() ) : NULL;
    if ( dbP != NULL )
    {
@@ -739,7 +746,7 @@ qDebug() << "EXP: chgRotor rotID desc" << rotID << descr;
       US_Rotor::readCalibrationProfilesDisk( calibs, rotID );
    }
 
-qDebug() << "EXP: chgRotor calibs count" << calibs.count();
+DbgLv(1) << "EXP: chgRotor calibs count" << calibs.count();
    sl_calibs.clear();
 
    for ( int ii = 0; ii < calibs.count(); ii++ )
@@ -768,8 +775,8 @@ void US_ExperGuiRotor::advRotor()
    rotor.ID               = ( rotorx >= 0 )
                             ? cb_rotor ->currentText().section( ":", 0, 0 ).toInt()
                             : 0;
-qDebug() << "EXP: advR: IN rID cID" << rotor.ID << calibr.ID;
-   int dbdisk             = ( sibPValue( "general", "dbdisk" ) == "db" )
+DbgLv(1) << "EXP: advR: IN rID cID" << rotor.ID << calibr.ID;
+   int dbdisk             = ( sibPValue( "general", "dbdisk" ) == "DB" )
                             ? US_Disk_DB_Controls::DB
                             : US_Disk_DB_Controls::Disk;
    US_RotorGui* rotorInfo = new US_RotorGui( true, dbdisk, rotor, calibr );
@@ -789,7 +796,7 @@ void US_ExperGuiRotor::advRotorChanged( US_Rotor::Rotor& crotor,
    int rID             = crotor.ID;
    int cID             = ccalib.ID;
    int rx              = -1;
-qDebug() << "EXP: advRChg: new rID cID" << rID << cID;
+DbgLv(1) << "EXP: advRChg: new rID cID" << rID << cID;
 
    for ( int ii = 0; ii < sl_rotors.count(); ii++ )
    {  // Find and select the list item matching the accepted rotor
@@ -798,7 +805,7 @@ qDebug() << "EXP: advRChg: new rID cID" << rID << cID;
       {  // Match:  select item, set index, break from loop
          cb_rotor ->setCurrentIndex( ii );
          rx                  = ii;
-qDebug() << "EXP: advRChg:   rID match at index" << ii;
+DbgLv(1) << "EXP: advRChg:   rID match at index" << ii;
          break;
       }
    }
@@ -812,10 +819,10 @@ qDebug() << "EXP: advRChg:   rID match at index" << ii;
       if ( eID == cID )
       {
          cb_calibr->setCurrentIndex( ii );
-qDebug() << "EXP: advRChg:   cID match at index" << ii;
+DbgLv(1) << "EXP: advRChg:   cID match at index" << ii;
          break;
       }
-qDebug() << "EXP: advRChg:     ii eID" << ii << eID;
+DbgLv(1) << "EXP: advRChg:     ii eID" << ii << eID;
    }
 }
 
@@ -823,6 +830,7 @@ qDebug() << "EXP: advRChg:     ii eID" << ii << eID;
 US_ExperGuiSpeeds::US_ExperGuiSpeeds( QWidget* topw )
 {
    mainw               = topw;
+   dbg_level           = US_Settings::us_debug();
    QVBoxLayout* panel  = new QVBoxLayout( this );
    panel->setSpacing        ( 2 );
    panel->setContentsMargins( 2, 2, 2, 2 );
@@ -845,6 +853,16 @@ US_ExperGuiSpeeds::US_ExperGuiSpeeds( QWidget* topw )
    ct_lenmin           = us_counter( 2,    0,     60,   1 );
    ct_dlyhr            = us_counter( 2,    0,     10,   1 );
    ct_dlymin           = us_counter( 2,    0,     60,   1 );
+   nspeed              = 1;
+   curssx              = 0;
+   profdesc.resize( nspeed );
+   ssvals  .resize( nspeed * 6 );
+   ssvals[ 0 ]         = 4500;
+   ssvals[ 1 ]         = 400;
+   ssvals[ 2 ]         = 5;
+   ssvals[ 3 ]         = 30;
+   ssvals[ 4 ]         = 0;
+   ssvals[ 5 ]         = 30;
    ct_count ->setSingleStep(   1 );
    ct_speed ->setSingleStep( 100 );
    ct_accel ->setSingleStep(  50 );
@@ -852,14 +870,15 @@ US_ExperGuiSpeeds::US_ExperGuiSpeeds( QWidget* topw )
    ct_lenmin->setSingleStep(   1 );
    ct_dlyhr ->setSingleStep(   1 );
    ct_dlymin->setSingleStep(   1 );
-   ct_count ->setValue(    1 );
-   ct_speed ->setValue( 4500 );
-   ct_accel ->setValue(  400 );
-   ct_lenhr ->setValue(    5 );
-   ct_lenmin->setValue(   30 );
-   ct_dlyhr ->setValue(    0 );
-   ct_dlymin->setValue(   30 );
-   cb_prof->addItem( tr( "Speed Profile 1: 4500 rpm for 5 hr 30 min" ) );
+   ct_count ->setValue( nspeed );
+   ct_speed ->setValue( ssvals[ 0 ] );
+   ct_accel ->setValue( ssvals[ 1 ] );
+   ct_lenhr ->setValue( ssvals[ 2 ] );
+   ct_lenmin->setValue( ssvals[ 3 ] );
+   ct_dlyhr ->setValue( ssvals[ 4 ] );
+   ct_dlymin->setValue( ssvals[ 5 ] );
+   //cb_prof->addItem( tr( "Speed Profile 1: 4500 rpm for 5 hr 30 min" ) );
+   cb_prof->addItem( speedp_description( 0 ) );
 
    lb_count->adjustSize();
    QFont font( US_GuiSettings::fontFamily(),
@@ -895,12 +914,29 @@ US_ExperGuiSpeeds::US_ExperGuiSpeeds( QWidget* topw )
    genL->setColumnStretch( 0, 4 );
    genL->setColumnStretch( 3, 0 );
 
+   connect( ct_count,  SIGNAL( valueChanged ( double ) ),
+            this,      SLOT  ( ssChangeCount( double ) ) );
+   connect( cb_prof,   SIGNAL( activated    ( int    ) ),
+            this,      SLOT  ( ssChangeProfx( int    ) ) );
+   connect( ct_speed,  SIGNAL( valueChanged ( double ) ),
+            this,      SLOT  ( ssChangeSpeed( double ) ) );
+   connect( ct_accel,  SIGNAL( valueChanged ( double ) ),
+            this,      SLOT  ( ssChangeAccel( double ) ) );
+   connect( ct_lenhr,  SIGNAL( valueChanged ( double ) ),
+            this,      SLOT  ( ssChangeDurhr( double ) ) );
+   connect( ct_lenmin, SIGNAL( valueChanged ( double ) ),
+            this,      SLOT  ( ssChangeDurmn( double ) ) );
+   connect( ct_dlyhr,  SIGNAL( valueChanged ( double ) ),
+            this,      SLOT  ( ssChangeDlyhr( double ) ) );
+   connect( ct_dlymin, SIGNAL( valueChanged ( double ) ),
+            this,      SLOT  ( ssChangeDlymn( double ) ) );
+
    panel->addLayout( genL );
    panel->addStretch();
    adjustSize();
 };
 
-// Initialize a panel, especially after clicking on it tab
+// Initialize a panel, especially after clicking on its tab
 void US_ExperGuiSpeeds::initPanel()
 {
 }
@@ -912,7 +948,7 @@ void US_ExperGuiSpeeds::setPValue( const QString type, QString& value )
    {
       //cb_lab->setCurrentIndex( cb_lab->indexOf( value ) );
    }
-qDebug() << "EGG:setPV: type value" << type << value;
+DbgLv(1) << "EGG:setPV: type value" << type << value;
 }
 
 // Get a specific panel value
@@ -1003,13 +1039,137 @@ QString US_ExperGuiSpeeds::status()
 bool is_done=true;
    return ( is_done ? QString( "3:X" ) : QString( "3:u" ) );
 }
-                   
+
+// Return speed profile description string for an indicated step
+QString US_ExperGuiSpeeds::speedp_description( int ssx )
+{
+   // For example: "Speed Profile 1: 4500 rpm for 5 hr 30 min"
+   return tr( "Speed Profile %1 :    %2 rpm for %3 hr %4 min" )
+          .arg( ssx + 1 )
+          .arg( ssvals[ ssx * 6 ] )
+          .arg( ssvals[ ssx * 6 + 2 ] )
+          .arg( ssvals[ ssx * 6 + 3 ] );
+}
+
+// Slot for change in speed-step count
+void US_ExperGuiSpeeds::ssChangeCount( double val )
+{
+   int new_nsp = (int)val;
+DbgLv(1) << "EGS: chgKnt: nsp nnsp" << nspeed << new_nsp;
+   if ( new_nsp > nspeed )
+   {  // Number of speed steps increases
+      profdesc.resize( new_nsp );
+      ssvals  .resize( new_nsp * 6 );
+      int kk           = nspeed * 6;
+      int jj           = curssx * 6;
+      double ssacc     = ssvals[ jj + 1 ];
+      double ssduh     = ssvals[ jj + 2 ];
+      double ssdum     = ssvals[ jj + 3 ];
+      double ssdlh     = ssvals[ jj + 4 ];
+      double ssdlm     = ssvals[ jj + 5 ];
+DbgLv(1) << "EGS: chgKnt:  jj kk" << jj << kk << "acc duh dum dlh dlm"
+ << ssacc << ssduh << ssdum << ssdlh << ssdlm;
+
+      for ( int ii = nspeed; ii < new_nsp; ii++, kk += 6 )
+      {  // Fill in new speed step description and values
+         ssvals[ kk     ] = ssvals[ kk - 6 ] + 1000.0; // Speed
+         ssvals[ kk + 1 ] = ssacc;                     // Accel
+         ssvals[ kk + 2 ] = ssduh;                     // Dur (hr)
+         ssvals[ kk + 3 ] = ssdum;                     // Dur (min)
+         ssvals[ kk + 4 ] = ssdlh;                     // Delay (hr)
+         ssvals[ kk + 5 ] = ssdlm;                     // Delay (min)
+         profdesc[ ii ]   = speedp_description( ii );
+DbgLv(1) << "EGS: chgKnt:    ii" << ii << "pdesc" << profdesc[ii];
+
+         // Add to the profile description list comboBox
+         cb_prof->addItem( profdesc[ ii ] );
+      }
+
+      // Point to the first new speed step
+      cb_prof->setCurrentIndex( nspeed );
+      ssChangeProfx( nspeed );
+   }
+
+   else
+   {  // Number of speed steps descreases or remains the same
+      // Point to the last speed step
+      cb_prof->setCurrentIndex( new_nsp - 1 );
+      ssChangeProfx( new_nsp - 1 );
+   }
+
+   nspeed      = new_nsp;
+}
+
+// Slot for change in speed-step profile index
+void US_ExperGuiSpeeds::ssChangeProfx( int ssp )
+{
+DbgLv(1) << "EGS: chgPfx: ssp" << ssp << "prev-ssx" << curssx;
+   curssx      = ssp;
+   // Set all counters for newly selected step
+   int kk      = ssp * 6;
+   ct_speed ->setValue( ssvals[ kk++ ] );
+   ct_accel ->setValue( ssvals[ kk++ ] );
+   ct_lenhr ->setValue( ssvals[ kk++ ] );
+   ct_lenmin->setValue( ssvals[ kk++ ] );
+   ct_dlyhr ->setValue( ssvals[ kk++ ] );
+   ct_dlymin->setValue( ssvals[ kk++ ] );
+}
+
+// Slot for change in speed value
+void US_ExperGuiSpeeds::ssChangeSpeed( double val )
+{
+DbgLv(1) << "EGS: chgSpe: val" << val << "ssx" << curssx;
+   ssvals[ curssx * 6     ] = val;  // Set Speed in step vals vector
+   profdesc[ curssx ]       = speedp_description( curssx );
+   cb_prof->setItemText( curssx, profdesc[ curssx ] );
+}
+
+// Slot for change in acceleration value
+void US_ExperGuiSpeeds::ssChangeAccel( double val )
+{
+DbgLv(1) << "EGS: chgAcc: val" << val << "ssx" << curssx;
+   ssvals[ curssx * 6 + 1 ] = val;  // Set Acceleration in step vals vector
+}
+
+// Slot for change in duration-hour value
+void US_ExperGuiSpeeds::ssChangeDurhr( double val )
+{
+DbgLv(1) << "EGS: chgDuh: val" << val << "ssx" << curssx;
+   ssvals[ curssx * 6 + 2 ] = val;  // Set Duration-Hr in step vals vector
+   profdesc[ curssx ]       = speedp_description( curssx );
+   cb_prof->setItemText( curssx, profdesc[ curssx ] );
+}
+
+// Slot for change in duration-minute value
+void US_ExperGuiSpeeds::ssChangeDurmn( double val )
+{
+DbgLv(1) << "EGS: chgDum: val" << val << "ssx" << curssx;
+   ssvals[ curssx * 6 + 3 ] = val;  // Set Duration-min in step vals vector
+   profdesc[ curssx ]       = speedp_description( curssx );
+   cb_prof->setItemText( curssx, profdesc[ curssx ] );
+}
+
+// Slot for change in delay-hour value
+void US_ExperGuiSpeeds::ssChangeDlyhr( double val )
+{
+DbgLv(1) << "EGS: chgDlh: val" << val << "ssx" << curssx;
+   ssvals[ curssx * 6 + 4 ] = val;  // Set Delay-hr in step vals vector
+}
+
+// Slot for change in delay-minute value
+void US_ExperGuiSpeeds::ssChangeDlymn( double val )
+{
+DbgLv(1) << "EGS: chgDlm: val" << val << "ssx" << curssx;
+   ssvals[ curssx * 6 + 0 ] = val;  // Set Delay-min in step vals vector
+}
+
 
 // Panel for Cells parameters
 US_ExperGuiCells::US_ExperGuiCells( QWidget* topw )
 {
-qDebug() << "EGC: IN";
+DbgLv(1) << "EGC: IN";
    mainw               = topw;
+   dbg_level           = US_Settings::us_debug();
    QVBoxLayout* panel  = new QVBoxLayout( this );
    panel->setSpacing        ( 2 );
    panel->setContentsMargins( 2, 2, 2, 2 );
@@ -1031,7 +1191,7 @@ qDebug() << "EGC: IN";
    int krow            = 2;
    const int mxcels    = 8;
    int nholes          = sibPValue( "rotor", "numHoles" ).toInt();
-qDebug() << "EGC:  numHoles mxcels" << nholes << mxcels;
+DbgLv(1) << "EGC:  numHoles mxcels" << nholes << mxcels;
 
    for ( int ii = 0; ii < mxcels; ii++ )
    {
@@ -1039,6 +1199,11 @@ qDebug() << "EGC:  numHoles mxcels" << nholes << mxcels;
       QLabel* clabl       = us_label( scel );
       QComboBox* cb_cenp  = us_comboBox();
       QComboBox* cb_wind  = us_comboBox();
+
+      QString strow       = QString::number( ii );
+      clabl  ->setObjectName( strow + ": label" );
+      cb_cenp->setObjectName( strow + ": centerpiece" );
+      cb_wind->setObjectName( strow + ": windows" );
 
       genL->addWidget( clabl,   krow,  0, 1, 2 );
       genL->addWidget( cb_cenp, krow,  2, 1, 4 );
@@ -1049,6 +1214,11 @@ qDebug() << "EGC:  numHoles mxcels" << nholes << mxcels;
       cb_cenp->addItems( cpnames );
       cb_wind->addItem( tr( "quartz" ) );
       cb_wind->addItem( tr( "sapphire" ) );
+
+      connect( cb_cenp, SIGNAL( activated         ( int ) ),
+               this,    SLOT  ( centerpieceChanged( int ) ) );
+      connect( cb_wind, SIGNAL( activated         ( int ) ),
+               this,    SLOT  ( windowsChanged    ( int ) ) );
 
       // Save pointers to row objects for later update
       cc_labls << clabl;
@@ -1064,36 +1234,46 @@ qDebug() << "EGC:  numHoles mxcels" << nholes << mxcels;
 
    initPanel();
 QString pval1 = sibPValue( "rotor", "rotor" );
-qDebug() << "EGC: rotor+rotor=" << pval1;
+DbgLv(1) << "EGC: rotor+rotor=" << pval1;
 };
 
-// Initialize a panel, especially after clicking on it tab
+// Initialize a panel, especially after clicking on its tab
 void US_ExperGuiCells::initPanel()
 {
    const int mxcels    = 8;
    int nholes          = sibPValue( "rotor", "numHoles" ).toInt();
    int icbal           = nholes - 1;     // Counter-balance index
-   int icbsib          = nholes / 2 - 1; // Its sibling
    QStringList sl_bals;
-   sl_bals << "empty counterbalance"
+   sl_bals << "empty (counterbalance)"
            << "Titanium counterbalance"
            << "CarbonFiber counterbalance"
            << "Epon counterbalance";
-qDebug() << "EGC:initP:  numHoles mxcels" << nholes << mxcels
- << "icbal icbsib" << icbal << icbsib;
+DbgLv(1) << "EGC:initP:  numHoles mxcels" << nholes << mxcels
+ << "icbal" << icbal;
 
    for ( int ii = 0; ii < mxcels; ii++ )
    {
-qDebug() << "EGC:initP:   ii cenps-count" << ii << cc_cenps[ii]->count();
+DbgLv(1) << "EGC:initP:   ii cenps-count" << ii << cc_cenps[ii]->count();
       bool make_vis       = ( ii < nholes );
+      QComboBox* cb_cenp  = cc_cenps[ ii ];
+      QComboBox* cb_wind  = cc_winds[ ii ];
+      QString cp_text     = cb_cenp->currentText();
       cc_labls[ ii ]->setVisible( make_vis );
-      cc_cenps[ ii ]->setVisible( make_vis );
-      cc_winds[ ii ]->setVisible( make_vis );
+      cb_cenp       ->setVisible( make_vis );
+      cb_wind       ->setVisible( make_vis );
 
       if ( ii == icbal )
       {
-         cc_cenps[ ii ]->clear();
-         cc_cenps[ ii ]->addItems( sl_bals );
+         cb_cenp->clear();
+         cb_cenp->addItems( sl_bals );
+         cb_wind->setVisible( false );
+      }
+
+      else if ( ii < nholes  && cp_text.contains( "counterbalance" ) )
+      {  // Was previously counterbalance, but now needs to be centerpiece
+         cb_cenp->clear();
+         cb_cenp->addItems( cpnames );
+         cb_wind->setVisible( true );
       }
    }
 }
@@ -1105,7 +1285,7 @@ void US_ExperGuiCells::setPValue( const QString type, QString& value )
    {
       //cb_lab->setCurrentIndex( cb_lab->indexOf( value ) );
    }
-qDebug() << "EGG:setPV: type value" << type << value;
+DbgLv(1) << "EGC:setPV: type value" << type << value;
 }
 
 // Get a specific panel value
@@ -1173,10 +1353,22 @@ QString US_ExperGuiCells::getPValue( const QString type )
 QStringList US_ExperGuiCells::getPList( const QString type )
 {
    QStringList value( "" );
+DbgLv(1) << "EGC:getPL: type" << type;
 
    if ( type == "cellinfo" )
    {
       //value << le_runid->text();
+   }
+   else if ( type == "centerpieces" )
+   {
+      value.clear();
+      int nholes          = sibPValue( "rotor", "numHoles" ).toInt();
+DbgLv(1) << "EGC:getPL:  cc_cenps size" << cc_cenps.count();
+      for ( int ii = 0; ii < nholes; ii++ )
+      {
+DbgLv(1) << "EGC:getPL:   ii Text" << ii << cc_cenps[ii]->currentText();
+         value << cc_cenps[ ii ]->currentText();
+      }
    }
 
    return value;
@@ -1186,8 +1378,8 @@ QStringList US_ExperGuiCells::getPList( const QString type )
 QString US_ExperGuiCells::sibPValue( const QString sibling, const QString type )
 {
    QString value( "" );
-qDebug() << "EGC:cPV: IN sibling" << sibling << "type" << type;
-qDebug() << "EGC:cPV: mainw" << mainw;
+DbgLv(1) << "EGC:cPV: IN sibling" << sibling << "type" << type;
+DbgLv(1) << "EGC:cPV: mainw" << mainw;
    if ( mainw != NULL )
    {
       value = ((US_Experiment*)mainw)->childPValue( sibling, type );
@@ -1207,41 +1399,196 @@ QStringList US_ExperGuiCells::sibPList( const QString sibling, const QString typ
 // Return status string for the panel
 QString US_ExperGuiCells::status()
 {
-//   bool is_done  = ( ! le_runid->text().isEmpty() &&
-//                     ! le_project->text().isEmpty() );
-QString pval1 = sibPValue( "rotor", "rotor" );
-qDebug() << "EGC:st: rotor+rotor=" << pval1;
-bool is_done=false;
+   int nholes          = sibPValue( "rotor", "numHoles" ).toInt();
+   int nempty          = 0;
+
+   for ( int ii = 0; ii < nholes; ii++ )
+   {
+      if ( cc_cenps[ ii ]->currentText().contains( "empty" ) )
+         nempty++;      // Keep count of "empty" centerpieces
+   }
+
+   bool is_done        = ( nempty < nholes );  // Done when not all empty
+DbgLv(1) << "EGC:st: nholes nempty is_done" << nholes << nempty << is_done;
    return ( is_done ? QString( "4:X" ) : QString( "4:u" ) );
 }
-                   
+ 
+// Slot for change in centerpiece selection
+void US_ExperGuiCells::centerpieceChanged( int sel )
+{
+DbgLv(1) << "EGC:cpChg: sel" << sel;
+   QObject* sobj       = sender();   // Sender object
+   QString sname       = sobj->objectName();
+   int irow            = sname.section( ":", 0, 0 ).toInt();
+DbgLv(1) << "EGC:cpChg:  sname irow" << sname << irow;
+   int nholes          = sibPValue( "rotor", "numHoles" ).toInt();
+   int icbal           = nholes - 1;     // Counter-balance index
+
+   if ( irow != icbal )
+   {  // Not counterbalance:  change cross cell
+      int halfnh          = nholes / 2;     // Half number holes
+      int xrow            = ( irow < halfnh ) ? irow + halfnh : irow - halfnh;
+      cc_cenps[ xrow ]->setCurrentIndex( sel );
+   }
+}
+
+// Slot for change in windows selection
+void US_ExperGuiCells::windowsChanged( int sel )
+{
+DbgLv(1) << "EGC:wiChg: sel" << sel;
+   QObject* sobj       = sender();   // Sender object
+   QString sname       = sobj->objectName();
+   int irow            = sname.section( ":", 0, 0 ).toInt();
+DbgLv(1) << "EGC:wiChg:  sname irow" << sname << irow;
+   int nholes          = sibPValue( "rotor", "numHoles" ).toInt();
+   int icbal           = nholes - 1;     // Counter-balance index
+
+   if ( irow != icbal )
+   {  // Not counterbalance:  change cross cell
+      int halfnh          = nholes / 2;     // Half number holes
+      int xrow            = ( irow < halfnh ) ? irow + halfnh : irow - halfnh;
+      cc_winds[ xrow ]->setCurrentIndex( sel );
+   }
+}                  
 
 // Panel for Solutions parameters
 US_ExperGuiSolutions::US_ExperGuiSolutions( QWidget* topw )
 {
    mainw               = topw;
+   dbg_level           = US_Settings::us_debug();
    QVBoxLayout* panel  = new QVBoxLayout( this );
    panel->setSpacing        ( 2 );
    panel->setContentsMargins( 2, 2, 2, 2 );
-   QLabel* lb_panel    = us_banner( tr( "5: Specify solutions for each cell" ) );
+   QLabel* lb_panel    = us_banner(
+                            tr( "5: Specify a solution for each cell/channel" ) );
    panel->addWidget( lb_panel );
    QGridLayout* genL   = new QGridLayout();
 
-   QPushButton* pb_advparam = us_pushbutton( tr( "Fill from other Panel information" ) );
+   QPushButton* pb_manage   = us_pushbutton( tr( "Manage Solutions" ) );
+   QPushButton* pb_details  = us_pushbutton( tr( "View Solution Details" ) );
 
-   int row=0;
-   genL->addWidget( pb_advparam,     row++, 0, 1, 4 );
+   int row             = 1;
+   genL->addWidget( pb_manage,       row,   0, 1, 3 );
+   genL->addWidget( pb_details,      row++, 3, 1, 3 );
+   QLabel* lb_hdr1     = us_banner( tr( "Cell / Channel" ) );
+   QLabel* lb_hdr2     = us_banner( tr( "Solution" ) );
+   genL->addWidget( lb_hdr1,         row,   0, 1, 1 );
+   genL->addWidget( lb_hdr2,         row++, 1, 1, 5 );
 
-//   connect( pb_advparam,  SIGNAL( clicked()    ),
-//            this,         SLOT  ( statUpdate() ) );
+   QStringList cpnames = sibPList( "cells", "centerpieces" );
+   const int mxcels    = 8;
+   int nholes          = sibPValue( "rotor", "numHoles" ).toInt();
+DbgLv(1) << "EGS:  numHoles mxcels" << nholes << mxcels;
+
+   QLabel*     cclabl;
+   QComboBox*  cb_solu;
+//sonames << "(unspecified)"
+//        << "Solution 1"
+//        << "Solution 2";
+
+   allSolutions();        // Read in all solution names and IDs
+
+   for ( int ii = 0; ii < 48; ii++ )
+   {  // Loop to build initial place-holder solution rows
+      QString scel;
+      if      ( ii == 0 ) scel = QString( "0/A" );
+      else if ( ii == 1 ) scel = QString( "0/B" );
+      else if ( ii == 2 ) scel = QString( "9/A" );
+      else if ( ii == 3 ) scel = QString( "9/B" );
+      else                scel = QString( "none" );
+      cclabl              = us_label( scel );
+      cb_solu             = us_comboBox();
+
+      QString strow       = QString::number( ii );
+      cclabl ->setObjectName( strow + ": label" );
+      cb_solu->setObjectName( strow + ": solution" );
+
+      genL->addWidget( cclabl,  row,    0, 1, 1 );
+      genL->addWidget( cb_solu, row++,  1, 1, 5 );
+
+      cb_solu->addItems( sonames );
+
+#if 0
+      connect( cb_solu, SIGNAL( activated      ( int ) ),
+               this,    SLOT  ( solutionChanged( int ) ) );
+#endif
+      bool is_vis          = ( ii < 4 );
+      cclabl ->setVisible( is_vis );
+      cb_solu->setVisible( is_vis );
+
+      // Save pointers to row objects for later update
+      cc_labls << cclabl;
+      cc_solus << cb_solu;
+   }
+
+   connect( pb_manage,    SIGNAL( clicked()         ),
+            this,         SLOT  ( manageSolutions() ) );
+   connect( pb_details,   SIGNAL( clicked()         ),
+            this,         SLOT  ( detailSolutions() ) );
 
    panel->addLayout( genL );
    panel->addStretch();
+
+   initPanel();
 };
 
-// Initialize a panel, especially after clicking on it tab
+// Initialize a panel, especially after clicking on its tab
 void US_ExperGuiSolutions::initPanel()
 {
+   int nsrows          = 0;  // Count of visible solution rows
+   QStringList cpnames = sibPList( "cells", "centerpieces" );
+DbgLv(1) << "EGS:initP: cpnames" << cpnames;
+   QStringList slabls;
+
+   // Build channel labels based on cells information
+   for ( int ii = 0; ii < cpnames.count(); ii++ )
+   {
+      QString cpname      = cpnames[ ii ];
+      int chx             = cpname.indexOf( "-channel" );
+DbgLv(1) << "EGS:initP:   ii" << ii << "cpname chx" << cpname << chx;
+      if ( chx > 0 )
+      {  // Non-empty cell centerpiece:  get channel count, build rows
+         QString scell       = QString::number( ii + 1 );
+         QString schans( "ABCDEF" );
+         int nchan           = cpname.left( chx ).section( " ", -1, -1 )
+                                 .simplified().toInt();
+DbgLv(1) << "EGS:initP:     scell" << scell << "nchan" << nchan;
+         for ( int jj = 0; jj < nchan; jj++ )
+         {
+            QString celchn      = scell + " / " + QString( schans ).mid( jj, 1 );
+DbgLv(1) << "EGS:initP:      jj" << jj << "celchn" << celchn;
+            slabls << celchn;
+            nsrows++;
+         }
+      }
+   }
+
+   QString slabl;
+   int nslabs          = nsrows;
+   nsrows              = qMax( nsrows, 3 );  // Show at least 3 dummy rows
+DbgLv(1) << "EGS:initP:  nslabs nsrows" << nslabs << nsrows
+ << "k_labs k_sols" << cc_labls.count() << cc_solus.count();
+ 
+   // Set cell/channel labels, make visible, all live rows
+   for ( int ii = 0; ii < nsrows; ii++ )
+   {
+      slabl               = ( ii < nslabs ) ? slabls[ ii ] : tr( "none" );
+DbgLv(1) << "EGS:initP:   ii" << ii << "slabl" << slabl;
+      cc_labls[ ii ]->setText( slabl );
+      cc_labls[ ii ]->setVisible( true );
+      cc_solus[ ii ]->setVisible( true );
+   }
+
+   slabl               = tr( "none" );
+
+   // Make remaining rows invisible
+   for ( int ii = nsrows; ii < 48; ii++ )
+   {
+      cc_labls[ ii ]->setText( slabl );
+      cc_labls[ ii ]->setVisible( false );
+      cc_solus[ ii ]->setVisible( false );
+   }
+
 }
 
 // Set a specific panel value
@@ -1251,7 +1598,7 @@ void US_ExperGuiSolutions::setPValue( const QString type, QString& value )
    {
       //cb_lab->setCurrentIndex( cb_lab->indexOf( value ) );
    }
-qDebug() << "EGG:setPV: type value" << type << value;
+DbgLv(1) << "EGS:setPV: type value" << type << value;
 }
 
 // Get a specific panel value
@@ -1305,15 +1652,255 @@ QString US_ExperGuiSolutions::status()
 {
 //   bool is_done  = ( ! le_runid->text().isEmpty() &&
 //                     ! le_project->text().isEmpty() );
-bool is_done=false;
+   const int mxrow     = 48;
+   int ncelchn         = 0;
+   int nunspec         = 0;
+   QString elabl       = tr( "none" );
+   QString usolu       = tr( "(unspecified)" );
+
+   // Count rows and those unspecified
+   for ( int ii = 0; ii < mxrow; ii++ )
+   {
+      if ( cc_labls[ ii ]->text() == elabl )
+         break;        // The "none" label is end of channels
+
+      ncelchn++;       // Bump cell/channel count
+
+      if ( cc_solus[ ii ]->currentText().contains( usolu ) )
+         nunspec++;    // Bump "(unspecified)" Solution count
+   }
+
+   bool is_done        = ( ncelchn > 0  &&  nunspec < 1 );
+DbgLv(1) << "EGS:st: ncelchn nunspec is_done" << ncelchn << nunspec << is_done;
    return ( is_done ? QString( "5:X" ) : QString( "5:u" ) );
 }
-                   
+
+// Slot to open a dialog for managing solutions
+void US_ExperGuiSolutions::manageSolutions()
+{
+   US_SolutionGui* sdiag = new US_SolutionGui;
+   sdiag->show();
+}
+
+// Slot to open a dialog for showing details about solutions
+void US_ExperGuiSolutions::detailSolutions()
+{
+   // Create a new editor text dialog with fixed font
+   US_Editor* ediag = new US_Editor( US_Editor::DEFAULT, true, "", this );
+   ediag->setWindowTitle( tr( "Details on Selected Solutions" ) );
+   ediag->resize( 720, 440 );
+   ediag->e->setFont( QFont( US_Widgets::fixedFont().family(),
+                             US_GuiSettings::fontSize() ) );
+   QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
+
+   // Accumulate information on solutions that are currently selected
+   QStringList sdescrs;
+
+   for ( int ii = 0; ii < cc_solus.count(); ii++ )
+   {
+      QComboBox* cbsolu  = cc_solus[ ii ];
+      if ( ! cbsolu->isVisible() )
+         break;
+
+      QString sdescr     = cbsolu->currentText();
+
+      if ( ! sdescr.contains( tr( "(unspecified)" ) )  &&
+           ! sdescrs.contains( sdescr ) )
+      {
+         sdescrs << sdescr;
+      }
+   }
+
+   // Start composing the text that it displays
+   QStringList atypes;
+   atypes << "PROTEIN" << "DNA" << "RNA" << "CARBOHYDRATE";
+   QString dtext  = tr( "Solutions currently selected:\n\n" );
+
+   for ( int ii = 0; ii < sdescrs.count(); ii++ )
+   {
+      US_Solution soludata;
+      solutionData( sdescrs[ ii ], soludata );
+
+      dtext   += tr( "  Solution:      " ) + sdescrs[ ii ] + "\n";
+      dtext   += tr( "    Buffer:        " ) + soludata.buffer.description + "\n";
+      for ( int jj = 0; jj < soludata.buffer.component.count(); jj++ )
+      {
+         dtext   += tr( "      Component:     " )
+                    + soludata.buffer.component[ jj ].name + "\n";
+         dtext   += tr( "       concentration:  %1 " )
+                    .arg( soludata.buffer.concentration[ jj ] )
+                    + soludata.buffer.component[ jj ].unit + "\n";
+      }
+
+      for ( int jj = 0; jj < soludata.analyteInfo.count(); jj++ )
+      {
+         dtext   += tr( "    Analyte:       " )
+                    + soludata.analyteInfo[ jj ].analyte.description + "\n";
+         dtext   += tr( "      type:          " )
+                    + atypes[ soludata.analyteInfo[ jj ].analyte.type ] + "\n";
+         dtext   += tr( "      molar ratio:   %1\n" )
+                    .arg( soludata.analyteInfo[ jj ].amount );
+      }
+
+      dtext   += "\n";
+   }
+
+   // Load text and show the dialog
+   QApplication::restoreOverrideCursor();
+   qApp->processEvents();
+
+   ediag->e->setText( dtext );
+   ediag->show();
+}
+
+// Return the solution ID/GUID for a given solution description
+bool US_ExperGuiSolutions::solutionID( const QString sdescr,
+      QString& solID )
+{
+   bool found    = solu_ids.keys().contains( sdescr );
+   solID         = found ? solu_ids[ sdescr ] : solID;
+
+   return found;
+}
+
+// Return the solution object for a given solution description
+bool US_ExperGuiSolutions::solutionData( const QString sdescr,
+      US_Solution& soludata )
+{
+   QString solID = QString( "" );
+   bool found    = solutionID( sdescr, solID );
+DbgLv(1) << "EGS:solDat:  sdescr" << sdescr << "found" << found
+ << "solID" << solID;
+
+   if ( found )
+   {
+      if ( solu_data.keys().contains( sdescr ) )
+      {  // Previously fetched and mapped:  just return it
+         soludata      = solu_data[ sdescr ];
+DbgLv(1) << "EGS:solDat:    OLDfound descr" << soludata.solutionDesc;
+      }
+
+      else
+      {  // Not fetched before:  do so now and map it
+         US_Passwd pw;
+         US_DB2* dbP   = ( sibPValue( "general", "dbdisk" ) == "DB" )
+                         ? new US_DB2( pw.getPasswd() ) : NULL;
+         if ( dbP != NULL )
+         {
+            int stat      = soludata.readFromDB( solID.toInt(), dbP );
+            found         = ( stat == US_DB2::OK );
+DbgLv(1) << "EGS:solDat:    NEWfound descr" << soludata.solutionDesc << stat;
+         }
+         else
+         {
+            soludata.readFromDisk( solID );
+         }
+      }
+   }
+
+   return found;
+}
+
+// Build a mapping of all solution descriptions to solution IDs
+int US_ExperGuiSolutions::allSolutions()
+{
+   sonames.clear();
+   sonames << "(unspecified)";
+
+   US_Passwd pw;
+   US_DB2* dbP       = ( sibPValue( "general", "dbdisk" ) == "DB" )
+                       ? new US_DB2( pw.getPasswd() ) : NULL;
+   if ( dbP != NULL )
+   {  // Read all the solutions in the database
+      QString invID     = sibPValue( "general", "investigator" )
+                             .section( ":", 0, 0 ).simplified();
+      QStringList qry;
+      qry << "all_solutionIDs" << invID;
+      dbP->query( qry );
+
+      if ( dbP->lastErrno() != US_DB2::OK )
+      {
+         qDebug() << "*ERROR* allSolutions error" << dbP->lastErrno();
+         return 0;
+      }
+
+      while ( dbP->next() )
+      {
+         QString solID     = dbP->value( 0 ).toString();
+         QString descr     = dbP->value( 1 ).toString();
+
+         if ( descr.isEmpty() )
+            continue;
+
+         solu_ids[ descr ] = solID;
+         sonames << descr;
+      }
+   }  // END: solutions in DB
+
+   else
+   {  // Read all the solutions on the local disk
+      QString path;
+      US_Solution solution;
+      if ( ! solution.diskPath( path ) )
+         return 0;
+
+      QDir dir( path );
+      QStringList filter( "S*.xml" );
+      QStringList fnames = dir.entryList( filter, QDir::Files,
+                                          QDir::Name );
+      QFile s_file;
+      QString solID;
+      QString descr;
+
+      for ( int ii = 0; ii < fnames.size(); ii++ )
+      {  // Examine each S*.xml file
+         s_file.setFileName( path + "/" + fnames[ ii ] );
+
+         if ( ! s_file.open( QIODevice::ReadOnly | QIODevice::Text ) )
+            continue;
+
+         QXmlStreamReader xmli( &s_file );
+
+         while ( ! xmli.atEnd() )
+         {
+            xmli.readNext();
+
+            if ( xmli.isStartElement() )
+            {
+               QXmlStreamAttributes attrs = xmli.attributes();
+
+               if ( xmli.name() == "solution" )
+               {
+                  solID             = attrs.value( "guid" ).toString();
+               }
+
+               else if ( xmli.name() == "description" )
+               {
+                  xmli.readNext();
+                  descr             = xmli.text().toString();
+
+                  if ( descr.isEmpty() )
+                     continue;
+
+                  solu_ids[ descr ] = solID;
+                  sonames << descr;
+               }
+            }  // END: Start element
+         }  // END: XML element loop
+      }  // END: file names loop
+
+      s_file.close();
+   }  // END: solutions on local disk
+
+   return solu_ids.keys().count();
+}
+
 
 // Panel for Photo Multiplier parameters
 US_ExperGuiPhotoMult::US_ExperGuiPhotoMult( QWidget* topw )
 {
    mainw               = topw;
+   dbg_level           = US_Settings::us_debug();
    QVBoxLayout* panel  = new QVBoxLayout( this );
    panel->setSpacing        ( 2 );
    panel->setContentsMargins( 2, 2, 2, 2 );
@@ -1333,7 +1920,7 @@ US_ExperGuiPhotoMult::US_ExperGuiPhotoMult( QWidget* topw )
    panel->addStretch();
 };
 
-// Initialize a panel, especially after clicking on it tab
+// Initialize a panel, especially after clicking on its tab
 void US_ExperGuiPhotoMult::initPanel()
 {
 }
@@ -1345,7 +1932,7 @@ void US_ExperGuiPhotoMult::setPValue( const QString type, QString& value )
    {
       //cb_lab->setCurrentIndex( cb_lab->indexOf( value ) );
    }
-qDebug() << "EGG:setPV: type value" << type << value;
+DbgLv(1) << "EGG:setPV: type value" << type << value;
 }
 
 // Get a specific panel value
@@ -1404,6 +1991,7 @@ bool is_done=false;
 US_ExperGuiUpload::US_ExperGuiUpload( QWidget* topw )
 {
    mainw               = topw;
+   dbg_level           = US_Settings::us_debug();
    QVBoxLayout* panel  = new QVBoxLayout( this );
    panel->setSpacing        ( 2 );
    panel->setContentsMargins( 2, 2, 2, 2 );
@@ -1423,7 +2011,7 @@ US_ExperGuiUpload::US_ExperGuiUpload( QWidget* topw )
    panel->addStretch();
 };
 
-// Initialize a panel, especially after clicking on it tab
+// Initialize a panel, especially after clicking on its tab
 void US_ExperGuiUpload::initPanel()
 {
 }
@@ -1435,7 +2023,7 @@ void US_ExperGuiUpload::setPValue( const QString type, QString& value )
    {
       //cb_lab->setCurrentIndex( cb_lab->indexOf( value ) );
    }
-qDebug() << "EGG:setPV: type value" << type << value;
+DbgLv(1) << "EGG:setPV: type value" << type << value;
 }
 
 // Get a specific panel value
