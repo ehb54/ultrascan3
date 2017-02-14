@@ -299,12 +299,12 @@ class US_ExperGuiUpload : public US_Widgets
 
 };
 
-class US_Experiment : public US_Widgets 
+class US_ExperimentMain : public US_Widgets 
 {
    Q_OBJECT
 
    public:
-      US_Experiment();
+      US_ExperimentMain();
 
       QString     childPValue( const QString, const QString );
       QStringList childPList ( const QString, const QString );

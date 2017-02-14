@@ -4,16 +4,16 @@
 #include <QDomDocument>
 
 #include "us_edit.h"
+#include "us_exclude_profile.h"
+#include "us_select_lambdas.h"
+#include "us_ri_noise.h"
+#include "us_edit_scan.h"
 #include "us_license_t.h"
 #include "us_license.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"
 #include "us_investigator.h"
 #include "us_run_details2.h"
-#include "us_exclude_profile.h"
-#include "us_select_lambdas.h"
-#include "us_ri_noise.h"
-#include "us_edit_scan.h"
 #include "us_math2.h"
 #include "us_util.h"
 #include "us_load_auc.h"
@@ -23,6 +23,7 @@
 #include "us_images.h"
 #include "us_editor.h"
 #include "us_report.h"
+
 #if QT_VERSION < 0x050000
 #define setSamples(a,b,c)  setData(a,b,c)
 #define setMinimum(a)      setMinValue(a)
@@ -35,7 +36,7 @@
 #endif
 
 //! \brief Main program for US_Edit. Loads translators and starts
-//         the class US_FitMeniscus.
+//!        the class US_FitMeniscus.
 
 int main( int argc, char* argv[] )
 {

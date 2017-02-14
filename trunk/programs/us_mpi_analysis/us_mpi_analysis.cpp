@@ -1027,7 +1027,7 @@ void US_MPI_Analysis::dset_matrices( int dsx, int nsolutes,
 // Calculate residuals (FE Modeling and NNLS)
 void US_MPI_Analysis::calc_residuals( int         offset,
                                       int         dataset_count,
-                                      US_SolveSim::Simulation& simu_values )
+                                      SIMULATION& simu_values )
 {
    count_calc_residuals++;
 bool do_dbg=( dbg_level > 0 && ( group_rank < 2 || group_rank == 11 ) );
@@ -1585,9 +1585,9 @@ DbgLv(1) << "2dsa master shutdown : worker" << i << " upd. maxrss" << maxrss
 }
 
 // Write model output at the end of an iteration
-void US_MPI_Analysis::write_model( const US_SolveSim::Simulation& sim, 
-                                   US_Model::AnalysisType         type,
-                                   bool                           glob_sols )
+void US_MPI_Analysis::write_model( const SIMULATION&      sim, 
+                                   US_Model::AnalysisType type,
+                                   bool                   glob_sols )
 {
    US_DataIO::EditedData* edata = &data_sets[ current_dataset ]->run_data;
 
@@ -2053,8 +2053,8 @@ US_Model::AnalysisType US_MPI_Analysis::model_type( const QString a_type )
 }
 
 // Write superglobal model output at the end of an iteration
-void US_MPI_Analysis::write_superg( const US_SolveSim::Simulation& sim, 
-                                    US_Model::AnalysisType         type )
+void US_MPI_Analysis::write_superg( const SIMULATION&      sim, 
+                                    US_Model::AnalysisType type )
 {
    const QString uaGUID( "00000000-0000-0000-0000-000000000000" );
    US_DataIO::EditedData* edata = &data_sets[ 0 ]->run_data;

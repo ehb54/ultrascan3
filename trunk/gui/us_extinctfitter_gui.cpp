@@ -1,3 +1,5 @@
+//! \file us_extinctfitter_gui.cpp
+
 #include "us_extinctfitter_gui.h"
 #include "us_gui_util.h"
 #if QT_VERSION < 0x050000

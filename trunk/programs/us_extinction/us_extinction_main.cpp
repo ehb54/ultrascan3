@@ -1,4 +1,4 @@
-//! \file us_extinction.cpp
+//! \file us_extinction_main.cpp
 //
 #include <QApplication>
 #include "us_extinction_gui.h"
