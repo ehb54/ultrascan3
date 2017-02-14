@@ -24,7 +24,7 @@ class US_UTIL_EXTERN US_ExtProfile
       //! \param  dbP        Database connection pointer
       //! \param  compID     Component (Buffer|Analyte|Experiment) ID
       //! \param  compType   Component type ("Buffer"|"Analyte"|"Sample")
-      //! \param  valueType  Reference for returned value type
+      //! \param  valType    Reference for returned value type
       //! \param  extinction Reference for returned extinction profile
       //! \return            Profile ID of fetched profile (-1 if none)
       static int fetch_eprofile( US_DB2*, const int, QString&, QString&,

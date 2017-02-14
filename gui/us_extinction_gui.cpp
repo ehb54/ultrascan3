@@ -1,4 +1,4 @@
-//! \file us_extinction.cpp
+//! \file us_extinction_gui.cpp
 //
 #include "us_extinction_gui.h"
 #include "us_license_t.h"

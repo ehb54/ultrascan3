@@ -730,7 +730,7 @@ double US_TimeState::time_dvalue( const QString key, int* stat )
 }
 
 // Get a time string value for a given key from the current record
-QString US_TimeState::time_svalue( QString key, int* stat )
+QString US_TimeState::time_svalue( const QString key, int* stat )
 {
    QString svalue;
    int     ivalue;

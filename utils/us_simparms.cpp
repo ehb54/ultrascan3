@@ -397,7 +397,7 @@ DbgLv(2) << "SP:iFD: bottom" << bottom;
 
 // Read the speed steps vector from runID file
 int US_SimulationParameters::readSpeedSteps( QString runID, QString dataType,
-      QVector< US_SimulationParameters::SpeedProfile >& speedsteps )
+      QVector< SpeedProfile >& speedsteps )
 {
    speedsteps.clear();
    SpeedProfile sp;
@@ -436,7 +436,7 @@ DbgLv(1) << "SP:rSS:   step" << nsteps << "rotorspeed" << sp.rotorspeed
 // Compute the speed steps vector from data scans
 void US_SimulationParameters::computeSpeedSteps(
       QVector< US_DataIO::Scan >* scans,
-      QVector< US_SimulationParameters::SpeedProfile >& speedsteps )
+      QVector< SpeedProfile >& speedsteps )
 {
    SpeedProfile sp;
    speedsteps.clear();

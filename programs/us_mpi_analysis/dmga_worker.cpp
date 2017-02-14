@@ -1133,7 +1133,7 @@ DbgLv(1) << my_rank << "dg:dgkey" << fkey << "mv0 mvn" << dgmarker[0] << dgmarke
 
 // Calculate residuals for a given discrete GA gene
 void US_MPI_Analysis::calc_residuals_dmga( int offset, int dset_count,
-      US_SolveSim::Simulation& sim_vals, DGene& dgene )
+                                           SIMULATION& sim_vals, DGene& dgene )
 {
    int lim_offs    = offset + dset_count;
 

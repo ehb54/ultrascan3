@@ -1,6 +1,6 @@
-//! \file us_experiment.cpp
+//! \file us_experiment_main.cpp
 
-#include "us_experiment.h"
+#include "us_experiment_main.h"
 #include "us_rotor_gui.h"
 #include "us_solution_gui.h"
 
@@ -13,8 +13,8 @@
 #define DbgLv(a) if(dbg_level>=a)qDebug()
 #endif
 
-//! \brief Main program for US_Experiment. Loads translators and starts
-//         the class US_Experiment
+//! \brief Main program for US_ExperimentMain. Loads translators and starts
+//         the class US_ExperimentMain
 
 int main( int argc, char* argv[] )
 {
@@ -24,13 +24,13 @@ int main( int argc, char* argv[] )
 
    // License is OK.  Start up.
 
-   US_Experiment w;
+   US_ExperimentMain w;
    w.show();                   //!< \memberof QWidget
    return application.exec();  //!< \memberof QApplication
 }
 
 // Constructor
-US_Experiment::US_Experiment() : US_Widgets()
+US_ExperimentMain::US_ExperimentMain() : US_Widgets()
 {
    dbg_level    = US_Settings::us_debug();
    curr_panx    = 0;
@@ -103,8 +103,8 @@ US_Experiment::US_Experiment() : US_Widgets()
 }
 
 // Public function to return a parameter value
-//   from a US_Experiment child panel
-QString US_Experiment::childPValue( const QString child, const QString type )
+//   from a US_ExperimentMain child panel
+QString US_ExperimentMain::childPValue( const QString child, const QString type )
 {
    QString value( "" );
 
@@ -141,8 +141,8 @@ QString US_Experiment::childPValue( const QString child, const QString type )
 }
 
 // Public function to return a parameter list value
-//   from a US_Experiment child panel
-QStringList US_Experiment::childPList( const QString child, const QString type )
+//   from a US_ExperimentMain child panel
+QStringList US_ExperimentMain::childPList( const QString child, const QString type )
 {
    QStringList value;
 
@@ -179,7 +179,7 @@ QStringList US_Experiment::childPList( const QString child, const QString type )
 }
 
 // Slot to handle a new panel selected
-void US_Experiment::newPanel( int panx )
+void US_ExperimentMain::newPanel( int panx )
 {
 DbgLv(1) << "newPanel panx=" << panx << "prev.panx=" << curr_panx;
    curr_panx        = panx;
@@ -205,7 +205,7 @@ DbgLv(1) << "newPanel panx=" << panx << "prev.panx=" << curr_panx;
 }
 
 // Slot to update status text for all panels
-void US_Experiment::statUpdate()
+void US_ExperimentMain::statUpdate()
 {
    QString stattext = le_stat->text();
 DbgLv(1) << "statUpd: IN stat" << stattext;
@@ -229,7 +229,7 @@ DbgLv(1) << "statUpd:  MOD stat" << stattext;
 }
 
 // Slot to advance to the next panel
-void US_Experiment::panelUp()
+void US_ExperimentMain::panelUp()
 {
    int newndx = tabWidget->currentIndex() + 1;
    int maxndx = tabWidget->count() - 1;
@@ -238,14 +238,14 @@ DbgLv(1) << "panUp: newndx, maxndx" << newndx << maxndx;
 }
 
 // Slot to descend to the previous panel
-void US_Experiment::panelDown()
+void US_ExperimentMain::panelDown()
 {
    int newndx = tabWidget->currentIndex() - 1;
    tabWidget->setCurrentIndex( qMax( newndx, 0 ) );
 }
 
 // Open manual help appropriate to the current panel
-void US_Experiment::help( void )
+void US_ExperimentMain::help( void )
 {
    if ( curr_panx == 0 )
       epanGeneral  ->help();
@@ -264,7 +264,7 @@ void US_Experiment::help( void )
 }
 
 // Reset parameters to their defaults
-void US_Experiment::reset( void )
+void US_ExperimentMain::reset( void )
 {
 }
 
@@ -390,7 +390,7 @@ QStringList US_ExperGuiGeneral::getPList( const QString type )
 QString US_ExperGuiGeneral::sibPValue( const QString sibling, const QString type )
 {
    return ( mainw != NULL
-            ? ((US_Experiment*)mainw)->childPValue( sibling, type )
+            ? ((US_ExperimentMain*)mainw)->childPValue( sibling, type )
             : QString("") );
 }
 
@@ -398,7 +398,7 @@ QString US_ExperGuiGeneral::sibPValue( const QString sibling, const QString type
 QStringList US_ExperGuiGeneral::sibPList( const QString sibling, const QString type )
 {
    return ( mainw != NULL
-            ? ((US_Experiment*)mainw)->childPList( sibling, type )
+            ? ((US_ExperimentMain*)mainw)->childPList( sibling, type )
             : QStringList() );
 }
 
@@ -667,7 +667,7 @@ QStringList US_ExperGuiRotor::getPList( const QString type )
 QString US_ExperGuiRotor::sibPValue( const QString sibling, const QString type )
 {
    return ( mainw != NULL
-            ? ((US_Experiment*)mainw)->childPValue( sibling, type )
+            ? ((US_ExperimentMain*)mainw)->childPValue( sibling, type )
             : QString("") );
 }
 
@@ -675,7 +675,7 @@ QString US_ExperGuiRotor::sibPValue( const QString sibling, const QString type )
 QStringList US_ExperGuiRotor::sibPList( const QString sibling, const QString type )
 {
    return ( mainw != NULL
-            ? ((US_Experiment*)mainw)->childPList( sibling, type )
+            ? ((US_ExperimentMain*)mainw)->childPList( sibling, type )
             : QStringList() );
 }
 
@@ -1019,7 +1019,7 @@ QStringList US_ExperGuiSpeeds::getPList( const QString type )
 QString US_ExperGuiSpeeds::sibPValue( const QString sibling, const QString type )
 {
    return ( mainw != NULL
-            ? ((US_Experiment*)mainw)->childPValue( sibling, type )
+            ? ((US_ExperimentMain*)mainw)->childPValue( sibling, type )
             : QString("") );
 }
 
@@ -1027,7 +1027,7 @@ QString US_ExperGuiSpeeds::sibPValue( const QString sibling, const QString type 
 QStringList US_ExperGuiSpeeds::sibPList( const QString sibling, const QString type )
 {
    return ( mainw != NULL
-            ? ((US_Experiment*)mainw)->childPList( sibling, type )
+            ? ((US_ExperimentMain*)mainw)->childPList( sibling, type )
             : QStringList() );
 }
 
@@ -1382,7 +1382,7 @@ DbgLv(1) << "EGC:cPV: IN sibling" << sibling << "type" << type;
 DbgLv(1) << "EGC:cPV: mainw" << mainw;
    if ( mainw != NULL )
    {
-      value = ((US_Experiment*)mainw)->childPValue( sibling, type );
+      value = ((US_ExperimentMain*)mainw)->childPValue( sibling, type );
    }
 
    return value;
@@ -1392,7 +1392,7 @@ DbgLv(1) << "EGC:cPV: mainw" << mainw;
 QStringList US_ExperGuiCells::sibPList( const QString sibling, const QString type )
 {
    return ( mainw != NULL
-            ? ((US_Experiment*)mainw)->childPList( sibling, type )
+            ? ((US_ExperimentMain*)mainw)->childPList( sibling, type )
             : QStringList() );
 }
 
@@ -1635,7 +1635,7 @@ QStringList US_ExperGuiSolutions::getPList( const QString type )
 QString US_ExperGuiSolutions::sibPValue( const QString sibling, const QString type )
 {
    return ( mainw != NULL
-            ? ((US_Experiment*)mainw)->childPValue( sibling, type )
+            ? ((US_ExperimentMain*)mainw)->childPValue( sibling, type )
             : QString("") );
 }
 
@@ -1643,7 +1643,7 @@ QString US_ExperGuiSolutions::sibPValue( const QString sibling, const QString ty
 QStringList US_ExperGuiSolutions::sibPList( const QString sibling, const QString type )
 {
    return ( mainw != NULL
-            ? ((US_Experiment*)mainw)->childPList( sibling, type )
+            ? ((US_ExperimentMain*)mainw)->childPList( sibling, type )
             : QStringList() );
 }
 
@@ -1965,7 +1965,7 @@ QStringList US_ExperGuiPhotoMult::getPList( const QString type )
 QString US_ExperGuiPhotoMult::sibPValue( const QString sibling, const QString type )
 {
    return ( mainw != NULL
-            ? ((US_Experiment*)mainw)->childPValue( sibling, type )
+            ? ((US_ExperimentMain*)mainw)->childPValue( sibling, type )
             : QString("") );
 }
 
@@ -1973,7 +1973,7 @@ QString US_ExperGuiPhotoMult::sibPValue( const QString sibling, const QString ty
 QStringList US_ExperGuiPhotoMult::sibPList( const QString sibling, const QString type )
 {
    return ( mainw != NULL
-            ? ((US_Experiment*)mainw)->childPList( sibling, type )
+            ? ((US_ExperimentMain*)mainw)->childPList( sibling, type )
             : QStringList() );
 }
 
@@ -2056,7 +2056,7 @@ QStringList US_ExperGuiUpload::getPList( const QString type )
 QString US_ExperGuiUpload::sibPValue( const QString sibling, const QString type )
 {
    return ( mainw != NULL
-            ? ((US_Experiment*)mainw)->childPValue( sibling, type )
+            ? ((US_ExperimentMain*)mainw)->childPValue( sibling, type )
             : QString("") );
 }
 
@@ -2064,7 +2064,7 @@ QString US_ExperGuiUpload::sibPValue( const QString sibling, const QString type 
 QStringList US_ExperGuiUpload::sibPList( const QString sibling, const QString type )
 {
    return ( mainw != NULL
-            ? ((US_Experiment*)mainw)->childPList( sibling, type )
+            ? ((US_ExperimentMain*)mainw)->childPList( sibling, type )
             : QStringList() );
 }
 

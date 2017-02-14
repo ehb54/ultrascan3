@@ -106,7 +106,7 @@ DbgLv(1) << "CfDa: sctype" << sctype << "is_absorb" << is_absorb;
 
 // Load internal values from a vector of loaded rawDatas
 void US_CfaData::load_auc( QVector< US_DataIO::RawData >& allData,
-                           QStringList ifpaths )
+                           const QStringList ifpaths )
 {
    QStringList chans;
    sctype       = -1;

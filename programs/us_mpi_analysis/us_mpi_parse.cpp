@@ -295,8 +295,7 @@ if (my_rank==0) DbgLv(0) << "PF:   DC_model" << parameters[name] << name;
    }
 }
 
-void US_MPI_Analysis::parse_dataset( QXmlStreamReader& xml,
-      US_SolveSim::DataSet* dataset )
+void US_MPI_Analysis::parse_dataset( QXmlStreamReader& xml, DATASET* dataset )
 {
    dataset->simparams.speed_step.clear();
 
@@ -421,8 +420,7 @@ void US_MPI_Analysis::parse_dataset( QXmlStreamReader& xml,
    }
 }
 
-void US_MPI_Analysis::parse_files( QXmlStreamReader& xml,
-      US_SolveSim::DataSet* dataset )
+void US_MPI_Analysis::parse_files( QXmlStreamReader& xml, DATASET* dataset )
 {
    while ( ! xml.atEnd() )
    {
@@ -453,8 +451,7 @@ if (my_rank==0) DbgLv(0) << "PF: MWL edit_file" << dataset->edit_file;
    }
 }
 
-void US_MPI_Analysis::parse_solution( QXmlStreamReader& xml,
-      US_SolveSim::DataSet* dataset )
+void US_MPI_Analysis::parse_solution( QXmlStreamReader& xml, DATASET* dataset )
 {
    while ( ! xml.atEnd() )
    {

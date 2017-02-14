@@ -1,5 +1,5 @@
-#ifndef US_SELECT_LAMBDAS_H
-#define US_SELECT_LAMBDAS_H
+#ifndef US_SEL_LAMBDAS_H
+#define US_SEL_LAMBDAS_H
 
 #include "us_extern.h"
 #include "us_widgets_dialog.h"
@@ -36,7 +36,7 @@ class US_SelectLambdas : public US_WidgetsDialog
 
       QVector< int >   original;
       QVector< int >   selected;
-      
+
       US_Help          showHelp;
 
    private slots:

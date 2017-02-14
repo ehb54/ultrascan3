@@ -648,7 +648,7 @@ int US_XpnData::parse_doubles( const QString svals, QVector< double >& dvals )
 
 // Load internal values from a vector of loaded rawDatas
 void US_XpnData::load_auc( QVector< US_DataIO::RawData >& allData,
-                           QStringList ifpaths )
+                           const QStringList ifpaths )
 {
    QStringList chans;
    sctype       = -1;

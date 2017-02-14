@@ -26,14 +26,14 @@ class US_BufferGuiSelect: public US_Widgets
 
    public:
 
-      /*! brief Buffer Selection Tab. To 
-      instantiate the class a calling function must
-      provide the ID of the investigator.
-
-      \param invID          A pointer to the current investigator ID
-      \param select_db_disk Indicates whether the default search
-         is on the local disk or in the DB
-      */
+      //! brief Buffer Selection Tab. To 
+      //! instantiate the class a calling function must
+      //! provide the ID of the investigator.
+      //!
+      //! \param invID          A pointer to the current investigator ID
+      //! \param select_db_disk Indicates whether the default search
+      //!    is on the local disk or in the DB
+      //! \param tmp_buffer     Pointer for in/out buffer
 
       US_BufferGuiSelect( int*, int*, US_Buffer* );
 
@@ -128,16 +128,15 @@ class US_BufferGuiNew : public US_Widgets
 
    public:
 
-      /*! brief Tab for entering a new Buffer. To 
-         instantiate the class a calling function must
-         provide the ID of the investigator.
-
-         \param invID          The current investigator ID
-         \param select_db_disk Indicates whether the default search
-                                 is on the local disk or in the DB
-         \param buffer         Pointer to a US_Buffer object holding the active
-                                 buffer (for editing and adding new buffers)
-      */
+      //! brief Tab for entering a new Buffer. To 
+      //! instantiate the class a calling function must
+      //! provide the ID of the investigator.
+      //!
+      //! \param invID          The current investigator ID
+      //! \param select_db_disk Indicates whether the default search
+      //!                         is on the local disk or in the DB
+      //! \param tmp_buffer     Pointer to a US_Buffer object holding the active
+      //!                         buffer (for editing and adding new buffers)
       US_BufferGuiNew( int*, int*, US_Buffer* );
       US_Extinction *w;
       
@@ -233,16 +232,15 @@ class US_BufferGuiEdit : public US_Widgets
 
    public:
 
-      /*! brief Tab for entering a new Buffer. To 
-         instantiate the class a calling function must
-         provide the ID of the investigator.
-
-         \param invID          The current investigator ID
-         \param select_db_disk Indicates whether the default search
-                                 is on the local disk or in the DB
-         \param buffer         Pointer to a US_Buffer object holding the active
-                                 buffer (for editing and adding new buffers)
-      */
+      //! brief Tab for entering a new Buffer. To 
+      //!  instantiate the class a calling function must
+      //!  provide the ID of the investigator.
+      //!
+      //! \param invID          The current investigator ID
+      //! \param select_db_disk Indicates whether the default search
+      //!                         is on the local disk or in the DB
+      //! \param tmp_buffer     Pointer to a US_Buffer object holding the active
+      //!                         buffer (for editing and adding new buffers)
       US_BufferGuiEdit( int*, int*, US_Buffer* );
       QString edit_buffer_description;
       US_Extinction *w;
