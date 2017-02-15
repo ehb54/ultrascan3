@@ -14,7 +14,8 @@
 
 // Constructor
 
-US_Extinction::US_Extinction(QString buffer, const QString& text, QWidget* parent) : US_Widgets()  
+US_Extinction::US_Extinction(QString buffer, const QString& text, QWidget* parent)
+ : US_Widgets(parent,0)  
 {
     
   //mode_select(buffer);
@@ -324,9 +325,9 @@ US_Extinction::US_Extinction() : US_Widgets()
    gl2 = new QGridLayout();
    gl2->addWidget(lbl_gaussians, 0, 0);
    gl2->addWidget(ct_gaussian, 0, 1);
-        gl2->addWidget(lbl_cutoff, 1, 0);
-        gl2->addWidget(le_odCutoff, 1, 1);
-        gl2->addWidget(lbl_lambda1, 2, 0);
+   gl2->addWidget(lbl_cutoff, 1, 0);
+   gl2->addWidget(le_odCutoff, 1, 1);
+   gl2->addWidget(lbl_lambda1, 2, 0);
    gl2->addWidget(ct_gaussian, 0, 1);
    gl2->addWidget(lbl_cutoff, 1, 0);
    gl2->addWidget(le_odCutoff, 1, 1);
@@ -839,19 +840,19 @@ void US_Extinction::calc_extinction()
    {
      for (int i=0; i<extinction.size(); i++)
        {
-	 extinction[i] /=  pathlength;
+         extinction[i] /=  pathlength;
        }
    }
    // Do not scale if buffer...
    if (buffer_temp == "" or buffer_temp == "ANALYTE")
    {
        if(od_wavelength != 0 )
-	 {
-	   for (int i=0; i<extinction.size(); i++)
-	     {
-	       extinction[i] = extinction_coefficient * (extinction[i]/od_wavelength);
-	     }
-	 }
+       {
+          for (int i=0; i<extinction.size(); i++)
+          {
+             extinction[i] = extinction_coefficient * (extinction[i]/od_wavelength);
+          }
+       }
    }
    delete[] fitparameters;
 }

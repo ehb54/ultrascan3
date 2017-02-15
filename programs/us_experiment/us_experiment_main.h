@@ -18,12 +18,12 @@
 #include "us_license_t.h"
 #include "us_license.h"
 
+//! \brief Experiment General panel
 class US_ExperGuiGeneral : public US_Widgets 
 {
    Q_OBJECT
 
    public:
-
       US_ExperGuiGeneral( QWidget* );
       ~US_ExperGuiGeneral() {};
 
@@ -56,7 +56,6 @@ class US_ExperGuiGeneral : public US_Widgets
       int        dbg_level;
 
    private slots:
-
       void sel_project     ( void );
       void project_info    ( US_Project& );
       void sel_investigator( void );
@@ -64,12 +63,12 @@ class US_ExperGuiGeneral : public US_Widgets
 
 };
 
+//! \brief Experiment Rotor panel
 class US_ExperGuiRotor : public US_Widgets 
 {
    Q_OBJECT
 
    public:
-
       US_ExperGuiRotor( QWidget* );
       ~US_ExperGuiRotor() {};
 
@@ -85,7 +84,6 @@ class US_ExperGuiRotor : public US_Widgets
          { showHelp.show_help( "manual/experiment_rotor.html" ); };
 
    private:
-
       QWidget* mainw;
       US_Help  showHelp;
       QComboBox* cb_lab;
@@ -102,22 +100,23 @@ class US_ExperGuiRotor : public US_Widgets
       QStringList sl_arotors;
       QStringList sl_calibs;
       int         dbg_level;
+      bool        changed;
 
    private slots:
-
       void changeLab  ( int );
       void changeRotor( int );
+      void changeCalib( int );
       void advRotor   ( void );
       void advRotorChanged( US_Rotor::Rotor&,
                             US_Rotor::RotorCalibration& );
 };
 
+//! \brief Experiment Speeds panel
 class US_ExperGuiSpeeds : public US_Widgets 
 {
    Q_OBJECT
 
    public:
-
       US_ExperGuiSpeeds( QWidget* );
       ~US_ExperGuiSpeeds() {};
 
@@ -133,7 +132,6 @@ class US_ExperGuiSpeeds : public US_Widgets
          { showHelp.show_help( "manual/experiment_speeds.html" ); };
 
    private:
-
       QWidget*     mainw;
       US_Help      showHelp;
 
@@ -152,9 +150,9 @@ class US_ExperGuiSpeeds : public US_Widgets
       int          dbg_level;
       int          nspeed;
       int          curssx;
+      bool         changed;
 
    private slots:
-
       QString speedp_description( const int );
       void    ssChangeCount( double );
       void    ssChangeProfx( int    );
@@ -166,12 +164,12 @@ class US_ExperGuiSpeeds : public US_Widgets
       void    ssChangeDlymn( double );
 };
 
+//! \brief Experiment Cells panel
 class US_ExperGuiCells : public US_Widgets 
 {
    Q_OBJECT
 
    public:
-
       US_ExperGuiCells( QWidget* );
       ~US_ExperGuiCells() {};
 
@@ -201,12 +199,12 @@ class US_ExperGuiCells : public US_Widgets
 
 };
 
+//! \brief Experiment Solutions panel
 class US_ExperGuiSolutions : public US_Widgets 
 {
    Q_OBJECT
 
    public:
-
       US_ExperGuiSolutions( QWidget* );
       ~US_ExperGuiSolutions() {};
 
@@ -222,7 +220,6 @@ class US_ExperGuiSolutions : public US_Widgets
          { showHelp.show_help( "manual/experiment_solutions.html" ); };
 
    private:
-
       QWidget* mainw;
       US_Help  showHelp;
       int          dbg_level;
@@ -235,7 +232,6 @@ class US_ExperGuiSolutions : public US_Widgets
       QMap< QString, US_Solution >  solu_data;
 
    private slots:
-
       void manageSolutions( void );
       void detailSolutions( void );
       bool solutionID     ( const QString, QString& );
@@ -244,12 +240,12 @@ class US_ExperGuiSolutions : public US_Widgets
 };
 
 
+//! \brief Experiment Photo-Multiplier panel
 class US_ExperGuiPhotoMult : public US_Widgets 
 {
    Q_OBJECT
 
    public:
-
       US_ExperGuiPhotoMult( QWidget* );
       ~US_ExperGuiPhotoMult() {};
 
@@ -265,18 +261,22 @@ class US_ExperGuiPhotoMult : public US_Widgets
          { showHelp.show_help( "manual/experiment_photomult.html" ); };
 
    private:
-
       QWidget* mainw;
       US_Help  showHelp;
       int          dbg_level;
+
+   private slots:
+      void manageEProfiles ( void );
+      void process_results ( QMap< double, double >& );
+      void detailMultiplier( void );
 };
 
+//! \brief Experiment Upload panel
 class US_ExperGuiUpload : public US_Widgets 
 {
    Q_OBJECT
 
    public:
-
       US_ExperGuiUpload( QWidget* );
       ~US_ExperGuiUpload() {};
 
@@ -292,13 +292,35 @@ class US_ExperGuiUpload : public US_Widgets
          { showHelp.show_help( "manual/experiment_upload.html" ); };
 
    private:
-
       QWidget* mainw;
       US_Help  showHelp;
-      int          dbg_level;
 
+      QPushButton* pb_upload;
+
+      QCheckBox*   ck_run;
+      QCheckBox*   ck_project;
+      QCheckBox*   ck_rotor;
+      QCheckBox*   ck_rotor_ok;
+      QCheckBox*   ck_speed;
+      QCheckBox*   ck_speed_ok;
+      QCheckBox*   ck_centerp;
+      QCheckBox*   ck_solution;
+      QCheckBox*   ck_extprofs;
+      QCheckBox*   ck_connect;
+      QCheckBox*   ck_upl_enab;
+      QCheckBox*   ck_upl_done;
+
+      int          dbg_level;
+      bool         uploaded;
+      bool         connected;
+
+   private slots:
+      void detailExperiment( void );
+      void testConnection  ( void );
+      void uploadExperiment( void );
 };
 
+//! \brief Experiment Main Window
 class US_ExperimentMain : public US_Widgets 
 {
    Q_OBJECT

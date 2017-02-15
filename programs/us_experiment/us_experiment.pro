@@ -2,6 +2,7 @@ include( ../../gui.pri )
 
 TARGET        = us_experiment
 QT           += xml
+QT           += sql
 
 HEADERS       = us_experiment_main.h
 
