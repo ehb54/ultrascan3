@@ -585,7 +585,7 @@ void US_ExperGuiRotor::setPValue( const QString type, QString& value )
    {
       cb_rotor ->setCurrentIndex( cb_rotor->findText( value ) );
    }
-   else if ( type == "calibration" )
+   else if ( type == "calib" )
    {
       cb_calibr->setCurrentIndex( cb_rotor->findText( value ) );
    }
@@ -618,7 +618,7 @@ QString US_ExperGuiRotor::getPValue( const QString type )
       value = cb_rotor->currentText();
 value=value.isEmpty()?"defaultRotor":value;
    }
-   else if ( type == "calibration" )
+   else if ( type == "calib" )
    {
       value = cb_calibr->currentText();
    }
@@ -670,7 +670,7 @@ QStringList US_ExperGuiRotor::getPList( const QString type )
       value.clear();
       value << getPValue( "lab" );
       value << getPValue( "rotor" );
-      value << getPValue( "calibration" );
+      value << getPValue( "calib" );
    }
 
    return value;
@@ -972,7 +972,7 @@ void US_ExperGuiSpeeds::setPValue( const QString type, QString& value )
    {
       //cb_lab->setCurrentIndex( cb_lab->indexOf( value ) );
    }
-DbgLv(1) << "EGG:setPV: type value" << type << value;
+DbgLv(1) << "EGS:setPV: type value" << type << value;
 }
 
 // Get a specific panel value
@@ -1021,15 +1021,18 @@ QStringList US_ExperGuiSpeeds::getPList( const QString type )
 {
    QStringList value( "" );
 
+DbgLv(1) << "EGS:getPL: type" << type;
    if ( type == "profiles" )
    {
       value.clear();
-      int nspeed  = getPValue( "nspeed" ).toInt();
+      int nspeed  = (int)ct_count ->value();
+DbgLv(1) << "EGS:getPL: nspeed" << nspeed;
       int curndx  = cb_prof->currentIndex();
       for ( int ii = 0; ii < nspeed; ii++ )
       {
          cb_prof->setCurrentIndex( ii );
          value << getPValue( "speed" );
+DbgLv(1) << "EGS:getPL:  ii" << ii << "speed" << getPValue("speed");
          value << getPValue( "accel" );
          value << getPValue( "durhr" );
          value << getPValue( "durmin" );
@@ -1398,7 +1401,7 @@ QString US_ExperGuiCells::getPValue( const QString type )
 // Get specific panel list values
 QStringList US_ExperGuiCells::getPList( const QString type )
 {
-   QStringList value( "" );
+   QStringList value;
 DbgLv(1) << "EGC:getPL: type" << type;
 
    if ( type == "cellinfo" )
@@ -1407,13 +1410,23 @@ DbgLv(1) << "EGC:getPL: type" << type;
    }
    else if ( type == "centerpieces" )
    {
-      value.clear();
       int nholes          = sibPValue( "rotor", "numHoles" ).toInt();
 DbgLv(1) << "EGC:getPL:  cc_cenps size" << cc_cenps.count();
       for ( int ii = 0; ii < nholes; ii++ )
       {
-DbgLv(1) << "EGC:getPL:   ii Text" << ii << cc_cenps[ii]->currentText();
-         value << cc_cenps[ ii ]->currentText();
+         QString celnm       = cc_labls[ ii ]->text();
+         QString centp       = cc_cenps[ ii ]->currentText();
+         QString windo       = cc_winds[ ii ]->currentText();
+DbgLv(1) << "EGC:getPL:   ii Text" << ii << centp;
+         if ( ! centp.contains( tr( "empty" ) ) )
+         {
+            QString centry      = celnm + " : " + centp;
+            if ( ( ii + 1 ) != nholes )
+            {
+               centry             += "  ( " + windo + " )";
+            }
+            value << centry;
+         }
       }
    }
 
@@ -1528,9 +1541,6 @@ DbgLv(1) << "EGS:  numHoles mxcels" << nholes << mxcels;
 
    QLabel*     cclabl;
    QComboBox*  cb_solu;
-//sonames << "(unspecified)"
-//        << "Solution 1"
-//        << "Solution 2";
 
    allSolutions();        // Read in all solution names and IDs
 
@@ -1651,15 +1661,39 @@ DbgLv(1) << "EGS:setPV: type value" << type << value;
 QString US_ExperGuiSolutions::getPValue( const QString type )
 {
    QString value( "" );
+   QString stat     = status();
 
-   if ( type == "1:solution" )
-   {
-   //   value = cb_lab->currentText();
-   }
-   else if ( type == "alldone" )
-   {
-      QString stat     = status();
+   if ( type == "alldone" )
+   {  // Status string
       value            = ( stat == "5:X" ) ? "1" : "0";
+   }
+   else if ( type == "nchant" )
+   {  // Number channels total
+      value               = QString::number( nchant );
+   }
+   else if ( type == "nchanu" )
+   {  // Number channels unspecified
+      value               = QString::number( nchanu );
+   }
+   else if ( type == "nchanf" )
+   {  // Number channels filled with centerpiece
+      value               = QString::number( nchanf );
+   }
+   else if ( type == "nusols" )
+   {  // Number unique solutions given
+      QString elabl       = tr( "none" );
+      QString usolu       = tr( "(unspecified)" );
+      QStringList solus;
+
+      // Accumulate unique solutions specified
+      for ( int ii = 0; ii < nchant; ii++ )
+      {
+         QString solu        = cc_solus[ ii ]->currentText();
+         if ( ! solu.contains( usolu )  && ! solus.contains( solu ) )
+            solus << solu;  // Add to list of unique solution names
+      }
+      // Return string:  number unique solutions specified
+      value               = QString::number( solus.count() );
    }
 
    return value;
@@ -1668,15 +1702,56 @@ QString US_ExperGuiSolutions::getPValue( const QString type )
 // Get specific panel list values
 QStringList US_ExperGuiSolutions::getPList( const QString type )
 {
-   QStringList value( "" );
+   QStringList value;                      // Output list
+   QStringList solus;                      // Unique solutions list
+   QMap< QString, QStringList >  sochans;  // Solution-to-channels map
+
+   status();
 
    if ( type == "solutions" )
    {
-      //value << le_runid->text();
-   }
-   else if ( type == "buffers" )
-   {
-      //value = cp_names;
+      QString usolu       = tr( "(unspecified)" );
+
+      // Accumulate unique solutions specified, with map to channels
+      for ( int ii = 0; ii < nchant; ii++ )
+      {
+         QString labl        = cc_labls[ ii ]->text();
+         QString solu        = cc_solus[ ii ]->currentText();
+         QStringList sochan;
+
+         if ( ! solu.contains( usolu ) )
+         {  // Solution is specified for the channel
+            if ( solus.contains( solu ) )
+            {  // Previously encountered solution
+               sochan              = sochans[ solu ];  // Solution channels
+               sochan << labl;                         // Add to them
+               sochans[ solu ]     = sochan;           // Update
+               
+            }
+            else
+            {  // Newly encounted solution
+               solus << solu;                          // Unique solution
+               sochan << labl;                         // Begin solution channels
+               sochans[ solu ]     = sochan;           // Update
+            }
+         }
+      }
+
+      // Form list of unique solutions with list of channels for each
+      for ( int ii = 0; ii < solus.count(); ii++ )
+      {
+         QString solu        = solus[ ii ];            // Solution description
+         QStringList sochan  = sochans[ solu ];        // Solution channels list
+         solu               += "  ( " + sochan[ 0 ];   // Initial channel append
+         // Append channels list to solution entry
+         for ( int jj = 1; jj < sochan.count(); jj++ )
+         {
+            solu               += ", " + sochan[ jj ]; // Build channel list
+         }
+         solu               += "  )";                  // Close out channels string
+         // Add to the output list
+         value << solu;
+      }
    }
 
    return value;
@@ -1701,28 +1776,30 @@ QStringList US_ExperGuiSolutions::sibPList( const QString sibling, const QString
 // Return status string for the panel
 QString US_ExperGuiSolutions::status()
 {
-//   bool is_done  = ( ! le_runid->text().isEmpty() &&
-//                     ! le_project->text().isEmpty() );
-   const int mxrow     = 48;
-   int ncelchn         = 0;
-   int nunspec         = 0;
+   mxrow               = 48;     // Maximum possible rows
+   nchant              = 0;      // Number channels total
+   nchanu              = 0;      // Number channels unspecified
+   nchanf              = 0;      // Number channels filled
    QString elabl       = tr( "none" );
    QString usolu       = tr( "(unspecified)" );
 
-   // Count rows and those unspecified
+   // Count rows, those unspecified, those filled
    for ( int ii = 0; ii < mxrow; ii++ )
    {
       if ( cc_labls[ ii ]->text() == elabl )
-         break;        // The "none" label is end of channels
+         break;        // The "none" label is end of used channels
 
-      ncelchn++;       // Bump cell/channel count
+      nchant++;        // Bump cell/channel count to fill
 
       if ( cc_solus[ ii ]->currentText().contains( usolu ) )
-         nunspec++;    // Bump "(unspecified)" Solution count
+         nchanu++;     // Bump "(unspecified)" Solution count
+      else
+         nchanf++;     // Bump filled Solution count
    }
 
-   bool is_done        = ( ncelchn > 0  &&  nunspec < 1 );
-DbgLv(1) << "EGS:st: ncelchn nunspec is_done" << ncelchn << nunspec << is_done;
+   bool is_done        = ( nchant > 0  &&  nchanu < 1 );
+DbgLv(1) << "EGS:st: nchant nchanu nchanf is_done"
+ << nchant << nchanu << nchanf << is_done;
    return ( is_done ? QString( "5:X" ) : QString( "5:u" ) );
 }
 
@@ -1741,8 +1818,11 @@ void US_ExperGuiSolutions::detailSolutions()
    ediag->setWindowTitle( tr( "Details on Selected Solutions" ) );
    ediag->resize( 720, 440 );
    ediag->e->setFont( QFont( US_Widgets::fixedFont().family(),
-                             US_GuiSettings::fontSize() ) );
+                             US_GuiSettings::fontSize() - 1,
+                             QFont::Bold ) );
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
+QFont ufont=ediag->e->font();
+DbgLv(1) << "EGS:detS: ufont" << ufont.family();
 
    // Accumulate information on solutions that are currently selected
    QStringList sdescrs;
@@ -2068,13 +2148,13 @@ void US_ExperGuiPhotoMult::manageEProfiles()
 DbgLv(1) << "EGPM: mEP: IN";
    //US_Extinction ediag( "BUFFER", "some buffer", this );
    US_Extinction* ediag = new US_Extinction;
-   //QMap< double, double >  eprof;
-   //connect( &ediag, SIGNAL( get_results(     QMap<double,double>& ) ),
-   //         this,   SLOT  ( process_results( QMap<double,double>& ) ) );
-DbgLv(1) << "EGPM: mEP: ediag created";
+   ediag->setParent(   this, Qt::Window );
+   ediag->setAttribute( Qt::WA_DeleteOnClose );
+
+   connect( ediag,  SIGNAL( get_results(     QMap<double,double>& ) ),
+            this,   SLOT  ( process_results( QMap<double,double>& ) ) );
+
    ediag->show();
-DbgLv(1) << "EGPM: mEP: ediag shown";
-   //US_Sleep::sleep( 30 );
 }
 
 // Slot to show details of all photo multiplier controls
@@ -2091,13 +2171,14 @@ void US_ExperGuiPhotoMult::detailMultiplier()
    ediag->setWindowTitle( tr( "Details on Extinction and Voltage Profiles" ) );
    ediag->resize( 720, 440 );
    ediag->e->setFont( QFont( US_Widgets::fixedFont().family(),
-                             US_GuiSettings::fontSize() ) );
+                             US_GuiSettings::fontSize() - 1,
+                             QFont::Bold ) );
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
 
    // Accumulate information on solutions that are currently selected
 
    // Start composing the text that it displays
-   QString dtext  = tr( "Extinction/Voltage Photo-Multiplier Information:\n\n" );
+   QString dtext  = tr( "Wavelength/Voltage Photo-Multiplier Information:\n\n" );
 
 dtext+= "NONE (not yet implemented)\n";
 
@@ -2201,6 +2282,73 @@ US_ExperGuiUpload::US_ExperGuiUpload( QWidget* topw )
    connected           = false;
 
    QStringList dblist  = US_Settings::defaultXpnHost();
+   int ndble           = dblist.count();
+   if ( ndble < 6 )
+   {  // Handle a default entry without exactly 6 parts
+      QStringList dblold  = dblist;
+      dblist.clear();
+
+      switch ( ndble )
+      {
+         case 0 :
+         {
+            dblist << "test_connect";
+            dblist << "bcf.uthscsa.edu";
+            dblist << "5432";
+            dblist << "AUC_DATA_DB";
+            dblist << "auc_admin";
+            break;
+         }
+         case 1 :
+         {
+            dblist << ( dblold[ 0 ].isEmpty() ? "test_connect" : dblold[ 0 ] );
+            dblist << "bcf.uthscsa.edu";
+            dblist << "5432";
+            dblist << "AUC_DATA_DB";
+            dblist << "auc_admin";
+            break;
+         }
+         case 2 :
+         {
+            dblist << ( dblold[ 0 ].isEmpty() ? "test_connect"    : dblold[ 0 ] );
+            dblist << ( dblold[ 1 ].isEmpty() ? "bcf.uthscsa.edu" : dblold[ 1 ] );
+            dblist << "5432";
+            dblist << "AUC_DATA_DB";
+            dblist << "auc_admin";
+            break;
+         }
+         case 3 :
+         {
+            dblist << ( dblold[ 0 ].isEmpty() ? "test_connect"    : dblold[ 0 ] );
+            dblist << ( dblold[ 1 ].isEmpty() ? "bcf.uthscsa.edu" : dblold[ 1 ] );
+            dblist << ( dblold[ 2 ].isEmpty() ? "5432"            : dblold[ 2 ] );
+            dblist << "AUC_DATA_DB";
+            dblist << "auc_admin";
+            break;
+         }
+         case 4 :
+         {
+            dblist << ( dblold[ 0 ].isEmpty() ? "test_connect"    : dblold[ 0 ] );
+            dblist << ( dblold[ 1 ].isEmpty() ? "bcf.uthscsa.edu" : dblold[ 1 ] );
+            dblist << ( dblold[ 2 ].isEmpty() ? "5432"            : dblold[ 2 ] );
+            dblist << ( dblold[ 3 ].isEmpty() ? "AUC_DATA_DB"     : dblold[ 3 ] );
+            dblist << "auc_admin";
+            break;
+         }
+         case 5 :
+         {
+            dblist << ( dblold[ 0 ].isEmpty() ? "test_connect"    : dblold[ 0 ] );
+            dblist << ( dblold[ 1 ].isEmpty() ? "bcf.uthscsa.edu" : dblold[ 1 ] );
+            dblist << ( dblold[ 2 ].isEmpty() ? "5432"            : dblold[ 2 ] );
+            dblist << ( dblold[ 3 ].isEmpty() ? "AUC_DATA_DB"     : dblold[ 3 ] );
+            dblist << ( dblold[ 4 ].isEmpty() ? "auc_admin"       : dblold[ 4 ] );
+            break;
+         }
+      }
+      dblist << dblist[ 4 ];
+      US_Settings::set_def_xpn_host( dblist );
+   }
+
    QString xpnhost     = dblist[ 1 ];
    int     xpnport     = dblist[ 2 ].toInt();
    QString dbname      = dblist[ 3 ];
@@ -2285,6 +2433,7 @@ QStringList US_ExperGuiUpload::getPList( const QString type )
 // Get a specific panel value from a sibling panel
 QString US_ExperGuiUpload::sibPValue( const QString sibling, const QString type )
 {
+DbgLv(1) << "EGU:sibPL: sib" << sibling << "type" << type;
    return ( mainw != NULL
             ? ((US_ExperimentMain*)mainw)->childPValue( sibling, type )
             : QString("") );
@@ -2315,15 +2464,127 @@ void US_ExperGuiUpload::detailExperiment()
    ediag->setWindowTitle( tr( "Details on Experiment Controls" ) );
    ediag->resize( 720, 440 );
    ediag->e->setFont( QFont( US_Widgets::fixedFont().family(),
-                             US_GuiSettings::fontSize() ) );
+                             US_GuiSettings::fontSize() - 1,
+                             QFont::Bold ) );
+QFont ufont=ediag->e->font();
+DbgLv(1) << "EGU:detE: ufont" << ufont.family();
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
 
-   // Accumulate information on solutions that are currently selected
+   // Accumulate information on controls that have been specified
+   QString v_run     = sibPValue( "general",   "runID" );
+   QString v_proj    = sibPValue( "general",   "project" );
+   QString v_invid   = sibPValue( "general",   "investigator" );
+   QString v_dbdisk  = sibPValue( "general",   "dbdisk" );
+   QString v_lab     = sibPValue( "rotor",     "lab" );
+   QString v_rotor   = sibPValue( "rotor",     "rotor" );
+   QString v_calib   = sibPValue( "rotor",     "calib" );
+   QString v_centp   = sibPValue( "cells",     "nonEmpty" );
+   QString v_nspeed  = sibPValue( "speeds",    "nspeeds" );
+   QString v_nsolct  = sibPValue( "solutions", "nchant" );
+   QString v_nsolcu  = sibPValue( "solutions", "nchanu" );
+   QString v_nsolcf  = sibPValue( "solutions", "nchanf" );
+   QString v_nsolun  = sibPValue( "solutions", "nusols" );
+DbgLv(1) << "EGU:dE: n speed,solct,solun" << v_nspeed << v_nsolct << v_nsolun;
 
-   // Start composing the text that it displays
-   QString dtext  = tr( "Experiment Control Information:\n\n" );
+   QStringList sspeed   = sibPList( "speeds",    "profiles" );
+DbgLv(1) << "EGU:dE: speed profiles" << sspeed;
+   QStringList scentp   = sibPList( "cells",     "centerpieces" );
+DbgLv(1) << "EGU:dE: cells centerpieces" << scentp;
+   QStringList ssolut   = sibPList( "solutions", "solutions" );
+DbgLv(1) << "EGU:dE: solus solus" << ssolut;
 
-dtext+= "NONE (not yet implemented)\n";
+   bool chk_run      = ! v_run .isEmpty();
+   bool chk_project  = ! v_proj.isEmpty();
+   bool chk_rotor_ok = ( sibPValue( "rotor",     "changed" ).toInt() > 0 );
+   bool chk_speed_ok = ( sibPValue( "speeds",    "changed" ).toInt() > 0 );
+   bool chk_centerp  = ( v_centp.toInt() > 0 );
+   bool chk_solution = ( sibPValue( "solutions", "alldone" ).toInt() > 0 );
+   bool chk_extprofs = ( sibPValue( "photomult", "allprof" ).toInt() > 0 );
+   bool chk_vars_set = ( chk_run       &&  chk_project   &&
+                         chk_rotor_ok  &&  chk_speed_ok  &&
+                         chk_centerp   &&  chk_solution  &&
+                         chk_extprofs );
+   bool chk_upl_enab = ( chk_vars_set  &&  connected );
+   bool chk_upl_done = uploaded;
+
+   QString s_Yes     = tr( "YES" );
+   QString s_no      = tr( "no" );
+   QString v_genok   = ( chk_run && chk_project ) ? s_Yes : s_no; ;
+   QString v_rotok   = s_Yes;
+   QString v_rotuc   = chk_rotor_ok ? s_Yes : s_no;
+   QString v_speok   = s_Yes;
+   QString v_speuc   = chk_speed_ok ? s_Yes : s_no;
+   QString v_celok   = chk_centerp  ? s_Yes : s_no;
+   QString v_solok   = chk_solution ? s_Yes : s_no;
+   QString v_phook   = chk_extprofs ? s_Yes : s_no;
+   QString v_conok   = connected    ? s_Yes : s_no;
+   QString v_uleok   = chk_upl_enab ? s_Yes : s_no;
+   QString v_ulcok   = chk_upl_done ? s_Yes : s_no;
+
+   // Compose the text to be displayed
+   QString dtext  = tr( "Experiment Control Information:\n" );
+   dtext += tr( "\nGeneral\n" );
+   dtext += tr( "  ALL SPECIFIED:           " ) + v_genok  + "\n";
+   dtext += tr( "  RunId:                   " ) + v_run    + "\n";
+   dtext += tr( "  Project:                 " ) + v_proj   + "\n";
+   dtext += tr( "  Investigator:            " ) + v_invid  + "\n";
+   dtext += tr( "  DB / Disk:               " ) + v_dbdisk + "\n";
+   dtext += tr( "\nRotor\n" );
+   dtext += tr( "  ALL SPECIFIED:           " ) + v_rotok  + "\n";
+   dtext += tr( "  USER CHANGES:            " ) + v_rotuc  + "\n";
+   dtext += tr( "  Laboratory:              " ) + v_lab    + "\n";
+   dtext += tr( "  Rotor:                   " ) + v_rotor  + "\n";
+   dtext += tr( "  Calibration:             " ) + v_calib  + "\n";
+   dtext += tr( "\nSpeeds\n" );
+   dtext += tr( "  ALL SPECIFIED:           " ) + v_speok  + "\n";
+   dtext += tr( "  USER CHANGES:            " ) + v_speuc  + "\n";
+   dtext += tr( "  Number Speed Steps:      " ) + v_nspeed + "\n";
+
+   int nspeed        = v_nspeed.toInt();
+DbgLv(1) << "EGU:dE: nspeed" << nspeed;
+   int jj            = 0;
+   for ( int ii = 0; ii < nspeed; ii++, jj+= 6 )
+   {
+      dtext += tr( "    Step %1:\n" ).arg( ii + 1 );
+      dtext += tr( "      Speed:         " ) + sspeed[ jj     ] + " rpm\n";
+      dtext += tr( "      Acceleration:  " ) + sspeed[ jj + 1 ] + " rpm/s\n";
+      dtext += tr( "      Duration:      " ) + sspeed[ jj + 2 ] + " h  "
+                                             + sspeed[ jj + 3 ] + " m\n";
+      dtext += tr( "      Delay:         " ) + sspeed[ jj + 4 ] + " h  "
+                                             + sspeed[ jj + 5 ] + " m\n";
+   }
+
+   dtext += tr( "\nCells\n" );
+   dtext += tr( "  ALL SPECIFIED:           " ) + v_celok  + "\n";
+   dtext += tr( "  Non-empty Centerpieces:  " ) + v_centp  + "\n";
+
+DbgLv(1) << "EGU:dE: ncentp" << scentp.count();
+   for ( int ii = 0; ii < scentp.count(); ii++ )
+   {
+      dtext += "    " + scentp[ ii ] + "\n";
+   }
+
+   dtext += tr( "\nSolutions\n" );
+   dtext += tr( "  ALL SPECIFIED:           " ) + v_solok  + "\n";
+   dtext += tr( "  Number Channels Filled:  " ) + v_nsolcf +
+            tr( " of " ) +  v_nsolct + "\n";
+   dtext += tr( "  Number Unique Solutions: " ) + v_nsolun + "\n";
+DbgLv(1) << "EGU:dE: " << QString(":%1:%2:%3: (:solok:nsolcf:nsolun:)")
+ .arg(v_solok).arg(v_nsolcf).arg(v_nsolun);
+
+DbgLv(1) << "EGU:dE: nsolut" << ssolut.count();
+   for ( int ii = 0; ii < ssolut.count(); ii++ )
+   {
+      dtext += "    " + ssolut[ ii ] + "\n";
+   }
+
+   dtext += tr( "\nPhoto Multiplier\n" );
+   dtext += tr( "  ALL SPECIFIED:           " ) + v_phook  + "\n";
+   dtext += tr( "\nUpload\n" );
+   dtext += tr( "  CONNECTED:               " ) + v_conok  + "\n";
+   dtext += tr( "  UPLOAD ENABLED:          " ) + v_uleok  + "\n";
+   dtext += tr( "  UPLOAD COMPLETED:        " ) + v_ulcok  + "\n";
+dtext+= "\n** NOT YET FULLY IMPLEMENTED **\n";
 
    // Load text and show the dialog
    QApplication::restoreOverrideCursor();
