@@ -197,11 +197,13 @@ class US_BufferGuiNew : public US_Widgets
       void write_db        ( void );
       void write_disk      ( void );
       void help( void ) { showHelp.show_help( "buffer_new.html" ); };
-
+      
+      void process_results( QMap < double, double > &xyz );
+ 
    public slots:
       void init_buffer		( void );
       
-      void process_results( QMap < double, double > &xyz );
+      //void process_results( QMap < double, double > &xyz );
 
 };
 
@@ -275,11 +277,13 @@ class US_BufferGuiEdit : public US_Widgets
       void write_db    ( void );
       void write_disk  ( void );
       void help( void ) { showHelp.show_help( "buffer_edit.html" ); };
+      
+      void process_results( QMap < double, double > &xyz );
 
    public slots:
       void init_buffer		( void );
 
-      void process_results( QMap < double, double > &xyz );
+      //void process_results( QMap < double, double > &xyz );
 };
 
 //! \class US_BufferGuiSettings
