@@ -23,11 +23,7 @@ US_Extinction::US_Extinction(QString buffer, const QString& text, QWidget* paren
   
   this->parent = parent;
 
-    
-  //( ( US_BufferGuiNew *) parent)->....; // check if parent is active OR 
-  
-  //connect(SIGNAL( get_results(vector < double > & )), SLOT( parent->proces_results( vector < double > & ) ) );
-  connect(this, SIGNAL( get_results(QMap < double, double > & )), parent, SLOT(process_results( QMap < double, double > & ) ) );
+  //connect(this, SIGNAL( get_results(QMap < double, double > & )), parent, SLOT(process_results( QMap < double, double > & ) ) );
 
    disk_controls = new US_Disk_DB_Controls(0);
    //default values for limits on the graph

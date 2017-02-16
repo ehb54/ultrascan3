@@ -968,7 +968,6 @@ US_BufferGuiNew::US_BufferGuiNew( int *invID, int *select_db_disk,
       new QListWidgetItem( sitem, lw_allcomps, key.toInt() );
    }
 
-
    connect( le_descrip,  SIGNAL( editingFinished() ),
             this,        SLOT  ( new_description() ) );
    connect( le_concen,   SIGNAL( editingFinished() ),
@@ -1330,6 +1329,9 @@ void US_BufferGuiNew::spectrum()
   
   //US_Extinction  *w = new US_Extinction("BUFFER", le_descrip->text(), (QWidget*)this); 
   w = new US_Extinction("BUFFER", le_descrip->text(), (QWidget*)this); 
+  
+  connect( w, SIGNAL( get_results(QMap < double, double > & )), this, SLOT(process_results( QMap < double, double > & ) ) );
+  
   w->setParent(this, Qt::Window);
   w->setAttribute(Qt::WA_DeleteOnClose);
   w->show(); 
@@ -1459,6 +1461,7 @@ US_BufferGuiEdit::US_BufferGuiEdit( int *invID, int *select_db_disk,
    QLabel *empty = us_banner ("");
    main->addWidget( empty,           row,   0, 6, 8 );
 
+
    connect( le_ph,       SIGNAL( editingFinished() ), 
             this,        SLOT  ( ph             () ) );
    connect( pb_spectrum, SIGNAL( clicked()  ),
@@ -1517,6 +1520,9 @@ DbgLv(1) << "BufE:SL: spectrum()  count" << buffer->extinction.count();
      
      if (msgBox.clickedButton()==pButtonUpload) {
        w = new US_Extinction("BUFFER", le_descrip->text(), (QWidget*)this); 
+       
+       connect( w, SIGNAL( get_results(QMap < double, double > & )), this, SLOT(process_results( QMap < double, double > & ) ) );
+       
        w->setParent(this, Qt::Window);
        w->setAttribute(Qt::WA_DeleteOnClose);
        w->show(); 
@@ -1628,6 +1634,9 @@ DbgLv(1) << "BufE:SL: spectrum()  count" << buffer->extinction.count();
        buffer->replace_spectrum = true;
 
        w = new US_Extinction("BUFFER", le_descrip->text(), (QWidget*)this); 
+
+       connect( w, SIGNAL( get_results(QMap < double, double > & )), this, SLOT(process_results( QMap < double, double > & ) ) );
+
        w->setParent(this, Qt::Window);
        w->setAttribute(Qt::WA_DeleteOnClose);
        w->show(); 
