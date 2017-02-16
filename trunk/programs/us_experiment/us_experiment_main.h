@@ -222,7 +222,11 @@ class US_ExperGuiSolutions : public US_Widgets
    private:
       QWidget* mainw;
       US_Help  showHelp;
-      int          dbg_level;
+      int      dbg_level;
+      int      mxrow;
+      int      nchant;
+      int      nchanu;
+      int      nchanf;
 
       QVector< QLabel* >     cc_labls;
       QVector< QComboBox* >  cc_solus;
