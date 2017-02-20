@@ -16,7 +16,7 @@
 #define DbgLv(a) if(dbg_level>=a)qDebug()  //!< debug-level-conditioned qDebug()
 #endif
 
-//! Class for holding Beckman XPN Data with functions for
+//! Class for holding Beckman XPN (Optima) Data with functions for
 //! importing from raw files or loading from vectors of rawData.
 class US_UTIL_EXTERN US_XpnData : public QObject
 {

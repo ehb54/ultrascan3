@@ -233,8 +233,8 @@ namespace US_WinData
     },
     
     { P_VIEWXPN,   0, 0, "us_xpn_viewer", 
-      QObject::tr( "Loading View Raw XPN Data" ),
-      QObject::tr( "View/Import Raw XPN Data"  )
+      QObject::tr( "Loading View Raw Optima Data" ),
+      QObject::tr( "View/Import Raw Optima Data"  )
     },
     
     { P_SPECFIT,   0, 0, "us_extinction",

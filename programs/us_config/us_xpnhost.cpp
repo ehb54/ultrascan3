@@ -19,7 +19,7 @@ US_XpnHost::US_XpnHost( QWidget* w, Qt::WindowFlags flags )
    // Frame layout
    setPalette( US_GuiSettings::frameColor() );
 
-   setWindowTitle( "XPN DB Host Configuration" );
+   setWindowTitle( "Optima DB Host Configuration" );
    setAttribute( Qt::WA_DeleteOnClose );
 
    QByteArray currentHash = US_Settings::UltraScanPW();
@@ -36,7 +36,7 @@ US_XpnHost::US_XpnHost( QWidget* w, Qt::WindowFlags flags )
    topbox->setSpacing( 2 );
 
    // Set up the database list window
-   QLabel* banner = us_banner( tr( "XPN Host List" ) );
+   QLabel* banner = us_banner( tr( "Optima Host List" ) );
    topbox->addWidget( banner );
 
    QLabel* banner2 = us_banner(
@@ -60,7 +60,7 @@ US_XpnHost::US_XpnHost( QWidget* w, Qt::WindowFlags flags )
    connect( lw_entries, SIGNAL( itemDoubleClicked( QListWidgetItem* ) ),
                         SLOT  ( select_db        ( QListWidgetItem* ) ) );
    // Detail info
-   QLabel* info = us_banner( tr( "XPN Host Detailed Information" ) );
+   QLabel* info = us_banner( tr( "Optima Host Detailed Information" ) );
    topbox->addWidget( info );
 
    // Row 0
@@ -68,46 +68,73 @@ US_XpnHost::US_XpnHost( QWidget* w, Qt::WindowFlags flags )
    QGridLayout* details = new QGridLayout();
 
    // Row 1
-   QLabel* desc         = us_label( "XPN Host Description:" );
+   QLabel* desc         = us_label( tr( "Optima Host Description:" ) );
    le_description       = us_lineedit( "", 0 );
-   details->addWidget( desc,           row,   0 );
-   details->addWidget( le_description, row++, 1 );
+   details->addWidget( desc,           row,   0, 1, 2 );
+   details->addWidget( le_description, row++, 2, 1, 2 );
 
    // Row 2
-   QLabel* host        = us_label( "XPN DB Host Address:" );
+   QLabel* host        = us_label( tr( "Optima DB Host Address:" ) );
    le_host             = us_lineedit( "", 0 );
-   details->addWidget( host,           row,   0 );
-   details->addWidget( le_host,        row++, 1 );
+   details->addWidget( host,           row,   0, 1, 2 );
+   details->addWidget( le_host,        row++, 2, 1, 2 );
 
    // Row 3
-   QLabel* port        = us_label( "XPN DB Port:" );
+   QLabel* port        = us_label( tr( "Optima DB Port:" ) );
    le_port             = us_lineedit( def_port, 0 );
-   details->addWidget( port,           row,   0 );
-   details->addWidget( le_port,        row++, 1 );
+   details->addWidget( port,           row,   0, 1, 2 );
+   details->addWidget( le_port,        row++, 2, 1, 2 );
 
    // Row 4
-   QLabel* name        = us_label( "XPN DB Name:" );
+   QLabel* name        = us_label( tr( "Optima DB Name:" ) );
    le_name             = us_lineedit( def_name, 0 );
-   details->addWidget( name,           row,   0 );
-   details->addWidget( le_name,        row++, 1 );
+   details->addWidget( name,           row,   0, 1, 2 );
+   details->addWidget( le_name,        row++, 2, 1, 2 );
 
    // Row 5
-   QLabel* user        = us_label( "DB Username:" );
+   QLabel* user        = us_label( tr( "DB Username:" ) );
    le_user             = us_lineedit( def_user, 0 );
-   details->addWidget( user,           row,   0 );
-   details->addWidget( le_user,        row++, 1 );
+   details->addWidget( user,           row,   0, 1, 2 );
+   details->addWidget( le_user,        row++, 2, 1, 2 );
 
    // Row 6
-   QLabel* pasw        = us_label( "DB Password:" );
+   QLabel* pasw        = us_label( tr( "DB Password:" ) );
    le_pasw             = us_lineedit( def_pasw, 0 );
    le_pasw->setEchoMode( QLineEdit::Password );
-   details->addWidget( pasw,           row,   0 );
-   details->addWidget( le_pasw,        row++, 1 );
+   details->addWidget( pasw,           row,   0, 1, 2 );
+   details->addWidget( le_pasw,        row++, 2, 1, 2 );
 
-   // Make the line edit entries wider
-   QFontMetrics fm( le_host->font() );
-   le_port->setMinimumWidth( fm.maxWidth() * 10 );
+   // Row 7
+   QLabel* bn_optsys   = us_banner( tr( "Installed Optical Systems" ) );
+   details->addWidget( bn_optsys,      row++, 0, 1, 4 );
 
+   // Rows 8,9,10
+   QStringList osyss;
+   osyss << "UV/visible"
+         << "Rayleigh Interference"
+#if 0
+         << "Fluorescense"
+#endif
+         << "(not installed)";
+   QLabel* lb_os1      = us_label( tr( "Op Sys1:" ) );
+   QLabel* lb_os2      = us_label( tr( "Op Sys2:" ) );
+   QLabel* lb_os3      = us_label( tr( "Op Sys3:" ) );
+   cb_os1              = us_comboBox();
+   cb_os2              = us_comboBox();
+   cb_os3              = us_comboBox();
+   cb_os1->addItems( osyss );
+   cb_os2->addItems( osyss );
+   cb_os3->addItems( osyss );
+   details->addWidget( lb_os1,         row,   0, 1, 1 );
+   details->addWidget( cb_os1,         row++, 1, 1, 3 );
+   details->addWidget( lb_os2,         row,   0, 1, 1 );
+   details->addWidget( cb_os2,         row++, 1, 1, 3 );
+   details->addWidget( lb_os3,         row,   0, 1, 1 );
+   details->addWidget( cb_os3,         row++, 1, 1, 3 );
+   cb_os1->setCurrentIndex( 0 );
+   cb_os2->setCurrentIndex( 1 );
+   cb_os3->setCurrentIndex( 2 );
+   
    topbox->addLayout( details );
 
    //Pushbuttons
@@ -125,7 +152,7 @@ US_XpnHost::US_XpnHost( QWidget* w, Qt::WindowFlags flags )
             this,           SLOT  ( deleteDB() ) );
    buttons->addWidget( pb_delete, row++, 1 );
 
-   pb_testConnect = us_pushbutton( tr( "Test XPN Host Connectivity" ) );
+   pb_testConnect = us_pushbutton( tr( "Test Optima Host Connectivity" ) );
    connect( pb_testConnect, SIGNAL( clicked()      ),
             this,           SLOT  ( test_connect() ) );
    buttons->addWidget( pb_testConnect, row++, 0, 1, 2 );
@@ -149,9 +176,18 @@ US_XpnHost::US_XpnHost( QWidget* w, Qt::WindowFlags flags )
 
    topbox->addLayout( buttons );
    topbox->addLayout( std_buttons );
+
+   adjustSize();
+   int lwid             = lw_entries->width();
+   int lhgt             = pb_help   ->height() * 6;
+   lw_entries->resize( lwid, lhgt );
+   adjustSize();
+
+   // Start out with default entry shown
+   select_db( lw_entries->currentItem(), false );
 }
 
-void US_XpnHost::select_db( QListWidgetItem* entry )
+void US_XpnHost::select_db( QListWidgetItem* entry, const bool showmsg )
 {
    // When this is run, we will always have a current dblist
 
@@ -173,14 +209,41 @@ void US_XpnHost::select_db( QListWidgetItem* entry )
          if ( elen > 5 )
             le_pasw       ->setText( dblist.at( ii ).at( 5 ) );
 
+         if ( elen == 9 )
+         {
+            cb_os1        ->setCurrentIndex( cb_os1->findText(
+                               dblist.at( ii ).at( 6 ) ) );
+            cb_os2        ->setCurrentIndex( cb_os2->findText(
+                               dblist.at( ii ).at( 7 ) ) );
+            cb_os3        ->setCurrentIndex( cb_os3->findText(
+                               dblist.at( ii ).at( 8 ) ) );
+         }
+         else
+         {
+            QStringList dbentr;
+            dbentr << le_description->text()
+                   << le_host       ->text()
+                   << le_port       ->text()
+                   << le_name       ->text()
+                   << le_user       ->text()
+                   << le_pasw       ->text()
+                   << cb_os1        ->currentText()
+                   << cb_os2        ->currentText()
+                   << cb_os3        ->currentText();
+            dblist.replace( ii, dbentr );
+         }
+
          // Set the default DB and user for that DB
          US_Settings::set_def_xpn_host( dblist.at( ii ) );
 
          update_lw( item );
 
-         QMessageBox::information( this,
-            tr( "Xpn Host Selected" ),
-            tr( "The default database host has been updated." ) );
+         if ( showmsg )
+         {
+            QMessageBox::information( this,
+               tr( "Optima Host Selected" ),
+               tr( "The default database host has been updated." ) );
+         }
          pb_save  ->setEnabled( true );
          pb_delete->setEnabled( true );
 
@@ -204,7 +267,7 @@ void US_XpnHost::check_add()
    {
       QMessageBox::information( this,
          tr( "Attention" ),
-         tr( "Please enter an XPN DB Host Address before saving..." ) );
+         tr( "Please enter a Optima DB Host Address before saving..." ) );
       return;
    }
 
@@ -232,17 +295,31 @@ void US_XpnHost::check_add()
          int elen    = dblist.at( ii ).size();
          db.replace( 1, le_host->text() );
          db.replace( 2, le_port->text() );
-         if ( elen > 5 )
+         if ( elen > 6 )
          {
+            if ( elen < 8 ) db << "";
+            if ( elen < 9 ) db << "";
             db.replace( 3, le_name->text() );
             db.replace( 4, le_user->text() );
             db.replace( 5, le_pasw->text() );
+            db.replace( 6, cb_os1 ->currentText() );
+            db.replace( 7, cb_os2 ->currentText() );
+            db.replace( 8, cb_os3 ->currentText() );
+         }
+         else if ( elen == 6 )
+         {
+            db << cb_os1 ->currentText();
+            db << cb_os2 ->currentText();
+            db << cb_os3 ->currentText();
          }
          else if ( elen == 3 )
          {
             db << le_name->text();
             db << le_user->text();
             db << le_pasw->text();
+            db << cb_os1 ->currentText();
+            db << cb_os2 ->currentText();
+            db << cb_os3 ->currentText();
          }
 
          dblist.replace( ii, db );
@@ -259,7 +336,10 @@ void US_XpnHost::check_add()
             << le_port->text()
             << le_name->text()
             << le_user->text()
-            << le_pasw->text();
+            << le_pasw->text()
+            << cb_os1 ->currentText()
+            << cb_os2 ->currentText()
+            << cb_os3 ->currentText();
 
       dblist << entry;
    }
@@ -316,6 +396,9 @@ void US_XpnHost::reset( void )
    le_name       ->setText( def_name );
    le_user       ->setText( def_user );
    le_pasw       ->setText( def_pasw );
+   cb_os1        ->setCurrentIndex( 0 );
+   cb_os2        ->setCurrentIndex( 1 );
+   cb_os3        ->setCurrentIndex( 2 );
 
    pb_save       ->setEnabled( false );
    pb_delete     ->setEnabled( false );
@@ -339,7 +422,7 @@ void US_XpnHost::save_default( void )
          if ( conn_stat[ desc ] != "connect_ok" )
          {
             QMessageBox::information( this,
-               tr( "Default XpnHost Problem" ),
+               tr( "Default OptimaHost Problem" ),
                tr( "The current database information has not been tested "
                    "for connectivity.\n"
                    "The default database has not been updated.") );
@@ -352,14 +435,14 @@ void US_XpnHost::save_default( void )
          reset();
 
          QMessageBox::information( this,
-            tr( "Default XpnHost" ),
+            tr( "Default OptimaHost" ),
             tr( "The default database has been updated." ) );
          return;
       }
    }
 
    QMessageBox::warning( this,
-      tr( "Default XpnHost Problem" ),
+      tr( "Default OptimaHost Problem" ),
       tr( "The description does not match any in the database list.\n"
           "The default database has not been updated." ) );
 }
@@ -465,7 +548,7 @@ bool US_XpnHost::test_connect( void )
    if ( ok )
    {
       QMessageBox::information( this,
-        tr( "XpnHost Connection" ),
+        tr( "OptimaHost Connection" ),
         tr( "The connection was successful." ) );
 
       pb_save->setEnabled( true );
@@ -474,7 +557,7 @@ bool US_XpnHost::test_connect( void )
    else
    {
       QMessageBox::warning( this,
-        tr( "XpnHost Connection" ),
+        tr( "OptimaHost Connection" ),
         tr( "The connection failed.\n" ) + xpn_data->lastError() );
 
       conn_stat[ xpndesc ] = "connect_bad";

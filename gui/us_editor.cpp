@@ -85,8 +85,8 @@ US_Editor::US_Editor( int menu, bool readonly, const QString& extension,
    menuBar()->setFont   ( QFont( US_GuiSettings::fontFamily(),
                           US_GuiSettings::fontSize() ) );
 
-   currentFont = QFont( "Courier", US_GuiSettings::fontSize() - 1, 
-         QFont::Bold );
+   currentFont = QFont( "monospace", US_GuiSettings::fontSize() - 1, 
+                        QFont::Bold );
    
    e = new QTextEdit( this );
    e->setFont          ( currentFont );
@@ -173,6 +173,7 @@ void US_Editor::saveFile( void )
 void US_Editor::update_font(  )
 {
    bool  ok;
+   currentFont   = e->font();
    QFont newFont = QFontDialog::getFont( &ok, currentFont, this );
    
    if ( ok )

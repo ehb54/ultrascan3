@@ -80,7 +80,7 @@ class US_UTIL_EXTERN US_TimeState : public QObject
 
       //! \brief Write the definitions XML file for the last opened data file.
       //! \param timeinc  Time increment (0.0 -> no time increment).
-      //! \param imptype  Import type ("XLA", "MWRS", "CFA", "XPN" ).
+      //! \param imptype  Import type ("XLA", "MWRS", "CFA", "OPTIMA" ).
       //! \return         Status flag (0->OK).
       int write_defs( double = 0.0, QString = "" );
 
@@ -205,7 +205,7 @@ class US_UTIL_EXTERN US_TimeState : public QObject
       QString      filename;        //!< TimeState binary base file name.
       QString      filepath;        //!< TimeState binary full file path.
       QString      fvers;           //!< File version string.
-      QString      imp_type;        //!< Import type ("XLA"|"MWRS"|"CFA"|"XPN").
+      QString      imp_type;        //!< Import type ("XLA"|"MWRS"|"CFA"|"OPTIMA").
       QString      error_msg;       //!< Current error message string.
 
       bool         lit_endian;      //!< Flag:  machine is little-endian.

@@ -37,13 +37,17 @@ class US_XpnHost : public US_Widgets
     QLineEdit*   le_user;  
     QLineEdit*   le_pasw;  
 
+    QComboBox*   cb_os1;
+    QComboBox*   cb_os2;
+    QComboBox*   cb_os3;
+
     QListWidget* lw_entries;
 
     void update_lw( const QString& = 0 );
     
   private slots:
     void help        ( void );
-    void select_db   ( QListWidgetItem* );
+    void select_db   ( QListWidgetItem*, const bool = true );
     void check_add   ( void );
     void reset       ( void );
     void save_default( void );

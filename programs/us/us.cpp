@@ -198,15 +198,15 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
   utilities->addMenu(spectrum);
   addMenu(  P_COLORGRAD, tr( "Color &Gradient Generator"         ), utilities );
   addMenu(  P_RPTGEN   , tr( "&Report Generator"                 ), utilities );
-  addMenu(  P_ROTORCAL , tr( "R&otor Calibration"                ), utilities );
+  addMenu(  P_ROTORCAL , tr( "Rotor &Calibration"                ), utilities );
   addMenu(  P_LICENSE  , tr( "&License Manager"                  ), utilities );
   addMenu(  P_VHWCOMB ,  tr( "Combine Distribution &Plots (vHW)" ), utilities );
   addMenu(  P_DDCOMB   , tr( "Combine &Discrete Distributions"   ), utilities );
   addMenu(  P_GLOMODL ,  tr( "Create Global &Model"              ), utilities );
   addMenu(  P_VIEWMWL ,  tr( "&View Multiwavelength Data"        ), utilities );
   addMenu(  P_VIEWMSS ,  tr( "View Multiwavelength &S-Spectra"   ), utilities );
-  addMenu(  P_VIEWCFA ,  tr( "View Raw &CFA Data"                ), utilities );
-  addMenu(  P_VIEWXPN ,  tr( "View Raw &XPN Data"                ), utilities );
+  addMenu(  P_VIEWCFA ,  tr( "View Raw C&FA Data"                ), utilities );
+  addMenu(  P_VIEWXPN ,  tr( "View Raw &Optima Data"             ), utilities );
 
   QMenu* simulation  = new QMenu( tr( "S&imulation" ),  this );
   addMenu(  P_ASTFEM, tr( "&Finite Element Simulation (ASTFEM)" ), simulation );

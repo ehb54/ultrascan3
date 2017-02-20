@@ -1137,7 +1137,7 @@ DbgLv(1) << "expA:   ii" << ii << "scan" << scannbr << "stage" << istagen
    // Complete write of TMST file and defining XML
    if ( tsobj.close_write_data() == 0 )
    {
-      tsobj.write_defs( 0.0, "XPN" );
+      tsobj.write_defs( 0.0, "Optima" );
       nfiles        += 2;
 DbgLv(1) << "expA: TMST files written.";
    }
@@ -1409,7 +1409,7 @@ QString US_XpnData::runDetails( void )
 
    // Create report string
 
-   QString msg = tr( "XPN Data Statistics for RunID \"%1\",\n" )
+   QString msg = tr( "Optima Data Statistics for RunID \"%1\",\n" )
                                            .arg( runID );
    if ( is_raw )
    {

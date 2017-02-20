@@ -388,7 +388,7 @@ void US_Settings::set_defaultDB( const QStringList& defaultDB )
     settings.setValue( "defaultDB", defaultDB );
 }
 
-// XPN Database Host Entries
+// Optima Database Host Entries
 QList<QStringList> US_Settings::xpn_db_hosts( void )
 {
   QSettings settings( US3, "UltraScan" );

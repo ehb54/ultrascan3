@@ -428,13 +428,13 @@ QFont US_Widgets::fixedFont()
    bool          fmatch;
    bool          ffixed;
    const char*   preffam[] = {
+      "DejaVu Sans Mono",
+      "Nimbus Mono L",
       "Liberation Mono",
       "FreeMono",
-      "DejaVu Sans Mono",
-      "DejaVu LGC San Mono",
+      "DejaVu LGC Sans Mono",
       "Andale Mono",
       "Menlo", 
-      "Nimbus Mono L",
       "Luxi Mono",
       "Lucida Console",
       "Fixedsys",
@@ -443,7 +443,8 @@ QFont US_Widgets::fixedFont()
       "Monaco",
       "Courier New",
       "Courier 10 Pitch",
-      "Courier"
+      "Courier",
+      "Monospace"
    };
    const int     pfsize = sizeof( preffam ) / sizeof( preffam[ 0 ] );
 
@@ -454,6 +455,8 @@ QFont US_Widgets::fixedFont()
       finfo    = QFontInfo( tfont );
       fmatch   = finfo.exactMatch();
       ffixed   = finfo.fixedPitch();
+qDebug() << "fixf:   ii" << ii << "family" << family
+ << "fmatch" << fmatch << "ffixed" << ffixed;
       if ( fmatch  &&  ffixed )
       {
          ffont    = tfont;
@@ -465,6 +468,7 @@ QFont US_Widgets::fixedFont()
          break;
       }
    }
+qDebug() << "fixf:   ffont.family()" << ffont.family();
    return ffont;
 }
 

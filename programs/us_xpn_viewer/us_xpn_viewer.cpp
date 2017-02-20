@@ -58,7 +58,7 @@ US_XpnDataViewer::US_XpnDataViewer() : US_Widgets()
 {
    const QChar chlamb( 955 );
 
-   setWindowTitle( tr( "Beckman XPN (Optima XLA) Data Viewer" ) );
+   setWindowTitle( tr( "Beckman Optima Data Viewer" ) );
    setPalette( US_GuiSettings::frameColor() );
 
    QGridLayout* settings = new QGridLayout;
@@ -86,9 +86,9 @@ DbgLv(1) << "xpnentr count" << xpnentr.count();
       xpnentr << "test-host" << "bcf.uthscsa.edu" << "5432";
 
       QMessageBox::warning( this,
-            tr( "No XPN Host Entry" ),
-            tr( "A default XPN Host entry is being used.\n"
-                "You should add entries via Preferences:XPN Host Preferences\n"
+            tr( "No Optima Host Entry" ),
+            tr( "A default Optima Host entry is being used.\n"
+                "You should add entries via Preferences:Optima Host Preferences\n"
                 "as soon as possible" ) );
    }
 else
@@ -105,7 +105,7 @@ else
    // Load controls     
    QLabel*      lb_run      = us_banner( tr( "Load the Run" ) );
 
-                pb_loadXpn  = us_pushbutton( tr( "Load Raw XPN Data" ) );
+                pb_loadXpn  = us_pushbutton( tr( "Load Raw Optima Data" ) );
                 pb_loadAUC  = us_pushbutton( tr( "Load US3 AUC Data" ) );
                 pb_reset    = us_pushbutton( tr( "Reset Data" ) );
                 pb_details  = us_pushbutton( tr( "Data Details" ), true  );
@@ -488,7 +488,7 @@ DbgLv(1) << "ec: call changeCellCh";
    changeCellCh();                          // Force a plot initialize
 }
 
-// Load XPN raw (.postgres) data
+// Load Optima raw (.postgres) data
 void US_XpnDataViewer::load_xpn_raw( )
 {
    // Ask for data directory
@@ -547,7 +547,7 @@ DbgLv(1) << "RDr:   drDesc" << drDesc;
 
    // Read the data
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor) );
-   le_status->setText( tr( "Reading Raw XPN data ..." ) );
+   le_status->setText( tr( "Reading Raw Optima data ..." ) );
    qApp->processEvents();
 
    int iRunId         = fRunId.toInt();
@@ -559,7 +559,7 @@ DbgLv(1) << "RDr:   drDesc" << drDesc;
 DbgLv(1) << "RDr:     iRId" << iRunId << "sMsks scnmask" << sMasks << scanmask;
 
    xpn_data->import_data( iRunId, scanmask );
-   le_status->setText( tr( "Initial Raw XPN data import complete." ) );
+   le_status->setText( tr( "Initial Raw Optima data import complete." ) );
    qApp->processEvents();
 
    // Infer and report on type of data to eventually export
@@ -662,7 +662,7 @@ DbgLv(1) << "RDr: allData size" << allData.size();
    enableControls();
 }
 
-// Load US3 AUC XPN-derived data
+// Load US3 AUC Optima-derived data
 void US_XpnDataViewer::load_auc_xpn( )
 {
    int status        = 0;
@@ -832,7 +832,7 @@ void US_XpnDataViewer::runDetails( void )
    // Open the dialog and display the report text
    US_Editor* editd = new US_Editor( US_Editor::DEFAULT, true );
 
-   editd->setWindowTitle( tr( "XPN Raw Data Statistics" ) );
+   editd->setWindowTitle( tr( "Optima Raw Data Statistics" ) );
    editd->move( pos() + QPoint( 200, 200 ) );
    editd->resize( 600, 500 );
    editd->e->setFont( QFont( US_Widgets::fixedFont().family(),
