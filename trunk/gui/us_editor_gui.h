@@ -13,7 +13,7 @@ class US_GUI_EXTERN US_EditorGui : public US_WidgetsDialog
    public:
       US_EditorGui(); 
 
-      //! The access to the contenets of the editor
+      //! The access to the contents of the editor
       US_Editor* editor;
 
    signals:

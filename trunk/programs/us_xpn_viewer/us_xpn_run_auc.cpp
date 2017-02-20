@@ -9,7 +9,7 @@
 US_XpnRunAuc::US_XpnRunAuc( QString& runID ) 
 : US_WidgetsDialog( 0, 0 ), runID( runID )
 {
-   setWindowTitle( tr( "US3 Directories with XPN-derived .auc Files" ) );
+   setWindowTitle( tr( "US3 Directories with Optima-derived .auc Files" ) );
 
    setPalette( US_GuiSettings::frameColor() );
 
@@ -83,7 +83,7 @@ qDebug() << "LdDk:  rdirs count" << rdirs.count() << "impdir" << impdir
 qDebug() << "LdDk:   ii" << ii << "run" << rdirs[ii]
  << "count" << nfiles;
 
-      if ( nfiles < 1 )              // Definitely not XPN
+      if ( nfiles < 1 )              // Definitely not Optima
          continue;
 
       QString rfn    = wdir + efiles[ 0 ];
@@ -103,13 +103,15 @@ qDebug() << "LdDk:   ii" << ii << "run" << rdirs[ii]
 qDebug() << "LdDk:    dfname -- exists/opened";
 
       QTextStream fsi( &dfile );
-      QString pmatch( "import_type=\"XPN\"" );
+      QString pmatch( "import_type=\"Optima\"" );
+      QString pmatch2( "import_type=\"XPN\"" );
       QString xmli   = fsi.readAll();
       dfile.close();
 qDebug() << "LdDk:     pmatch" << pmatch;
 
-      if ( ! xmli.contains( pmatch ) )
-         continue;  // Skip if TMST def has no import_type="XPN"
+      if ( ! xmli.contains( pmatch )  &&
+           ! xmli.contains( pmatch2 ) )
+         continue;  // Skip if TMST def has no import_type="Optima"
 
 
       // Add an eligible run directory to the list

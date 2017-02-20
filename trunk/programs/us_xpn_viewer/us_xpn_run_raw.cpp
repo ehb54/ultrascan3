@@ -9,7 +9,7 @@
 US_XpnRunRaw::US_XpnRunRaw( QString& runDesc, QStringList& rdLists ) 
 : US_WidgetsDialog( 0, 0 ), runDesc( runDesc ), rdLists( rdLists )
 {
-   setWindowTitle( tr( "Raw XPN postgreSQL database runs" ) );
+   setWindowTitle( tr( "Raw Optima postgreSQL database runs" ) );
 
    setPalette( US_GuiSettings::frameColor() );
 

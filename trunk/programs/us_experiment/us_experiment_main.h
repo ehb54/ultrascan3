@@ -28,8 +28,6 @@ class US_ExperGuiGeneral : public US_Widgets
       ~US_ExperGuiGeneral() {};
 
       void        initPanel( void );
-      void        setPValue( const QString, QString& );
-      void        setPValue( const QString, QStringList& );
       QString     getPValue( const QString );
       QStringList getPList ( const QString );
       QString     sibPValue( const QString, const QString );
@@ -59,6 +57,7 @@ class US_ExperGuiGeneral : public US_Widgets
       void sel_project     ( void );
       void project_info    ( US_Project& );
       void sel_investigator( void );
+      void runID_entered   ( void );
       void centerpieceInfo ( void );
 
 };
@@ -73,8 +72,6 @@ class US_ExperGuiRotor : public US_Widgets
       ~US_ExperGuiRotor() {};
 
       void        initPanel( void );
-      void        setPValue( const QString, QString& );
-      void        setPValue( const QString, QStringList& );
       QString     getPValue( const QString );
       QStringList getPList ( const QString );
       QString     sibPValue( const QString, const QString );
@@ -121,8 +118,6 @@ class US_ExperGuiSpeeds : public US_Widgets
       ~US_ExperGuiSpeeds() {};
 
       void        initPanel( void );
-      void        setPValue( const QString, QString& );
-      void        setPValue( const QString, QStringList& );
       QString     getPValue( const QString );
       QStringList getPList ( const QString );
       QString     sibPValue( const QString, const QString );
@@ -174,8 +169,6 @@ class US_ExperGuiCells : public US_Widgets
       ~US_ExperGuiCells() {};
 
       void        initPanel( void );
-      void        setPValue( const QString, QString& );
-      void        setPValue( const QString, QStringList& );
       QString     getPValue( const QString );
       QStringList getPList ( const QString );
       QString     sibPValue( const QString, const QString );
@@ -187,16 +180,17 @@ class US_ExperGuiCells : public US_Widgets
    private:
       QWidget* mainw;
       US_Help  showHelp;
-      QList< QLabel* >     cc_labls;  // Cell label GUI objects
-      QList< QComboBox* >  cc_cenps;  // Centerpiece GUI objects
-      QList< QComboBox* >  cc_winds;  // Windows GUI objects
-      QStringList          cpnames;   // Centerpiece names
+      QList< QLabel* >     cc_labls;   // Cell label GUI objects
+      QList< QComboBox* >  cc_cenps;   // Centerpiece GUI objects
+      QList< QComboBox* >  cc_winds;   // Windows GUI objects
+      QStringList          cpnames;    // Centerpiece names
+      QStringList          scntypes;   // Scan types names
+      QStringList          tcb_centps; // CPs paired with Titanium CB
       int          dbg_level;
 
    private slots:
       void centerpieceChanged( int );
       void windowsChanged    ( int );
-
 };
 
 //! \brief Experiment Solutions panel
@@ -209,8 +203,6 @@ class US_ExperGuiSolutions : public US_Widgets
       ~US_ExperGuiSolutions() {};
 
       void        initPanel( void );
-      void        setPValue( const QString, QString& );
-      void        setPValue( const QString, QStringList& );
       QString     getPValue( const QString );
       QStringList getPList ( const QString );
       QString     sibPValue( const QString, const QString );
@@ -244,18 +236,49 @@ class US_ExperGuiSolutions : public US_Widgets
 };
 
 
-//! \brief Experiment Photo-Multiplier panel
-class US_ExperGuiPhotoMult : public US_Widgets 
+//! \brief Experiment Optical Systems panel
+class US_ExperGuiOptical : public US_Widgets 
 {
    Q_OBJECT
 
    public:
-      US_ExperGuiPhotoMult( QWidget* );
-      ~US_ExperGuiPhotoMult() {};
+      US_ExperGuiOptical( QWidget* );
+      ~US_ExperGuiOptical() {};
 
       void        initPanel( void );
-      void        setPValue( const QString, QString& );
-      void        setPValue( const QString, QStringList& );
+      QString     getPValue( const QString );
+      QStringList getPList ( const QString );
+      QString     sibPValue( const QString, const QString );
+      QStringList sibPList ( const QString, const QString );
+      QString     status   ( void );
+      void        help     ( void )
+         { showHelp.show_help( "manual/experiment_photomult.html" ); };
+
+   private:
+      QWidget* mainw;
+      QList< QLabel* >        cc_labls;  // Cell label GUI objects
+      QList< QButtonGroup* >  cc_osyss;  // Ck-boxes OptSys GUI objects
+
+      US_Help  showHelp;
+      int          dbg_level;
+
+   private slots:
+      void opsysChecked    ( bool );
+      void manageEProfiles ( void );
+      void process_results ( QMap< double, double >& );
+      void detailOptical   ( void );
+};
+
+//! \brief Experiment Spectra panel
+class US_ExperGuiSpectra : public US_Widgets 
+{
+   Q_OBJECT
+
+   public:
+      US_ExperGuiSpectra( QWidget* );
+      ~US_ExperGuiSpectra() {};
+
+      void        initPanel( void );
       QString     getPValue( const QString );
       QStringList getPList ( const QString );
       QString     sibPValue( const QString, const QString );
@@ -267,12 +290,24 @@ class US_ExperGuiPhotoMult : public US_Widgets
    private:
       QWidget* mainw;
       US_Help  showHelp;
+      QList< QLabel* >         cc_labls;
+      QList< QPushButton* >    cc_wavls;
+      QList< QCheckBox* >      cc_optis;
+      QList< QPushButton* >    cc_loads;
+      QList< QPushButton* >    cc_manus;
+      QList< QCheckBox* >      cc_dones;
+
       int          dbg_level;
+      const int    mxrow = 24;
 
    private slots:
-      void manageEProfiles ( void );
-      void process_results ( QMap< double, double >& );
-      void detailMultiplier( void );
+      void manageEProfiles  ( void );
+      void process_results  ( QMap< double, double >& );
+      void detailSpectra    ( void );
+      void selectWavelengths( void );
+      void checkOptima      ( bool );
+      void loadSpectrum     ( void );
+      void manualSpectrum   ( void );
 };
 
 //! \brief Experiment Upload panel
@@ -285,8 +320,6 @@ class US_ExperGuiUpload : public US_Widgets
       ~US_ExperGuiUpload() {};
 
       void        initPanel( void );
-      void        setPValue( const QString, QString& );
-      void        setPValue( const QString, QStringList& );
       QString     getPValue( const QString );
       QStringList getPList ( const QString );
       QString     sibPValue( const QString, const QString );
@@ -317,11 +350,13 @@ class US_ExperGuiUpload : public US_Widgets
       int          dbg_level;
       bool         uploaded;
       bool         connected;
+      QString      json_upl;
 
    private slots:
-      void detailExperiment( void );
-      void testConnection  ( void );
-      void uploadExperiment( void );
+      void    detailExperiment( void );
+      void    testConnection  ( void );
+      void    uploadExperiment( void );
+      QString buildJson       ( void );
 };
 
 //! \brief Experiment Main Window
@@ -344,7 +379,8 @@ class US_ExperimentMain : public US_Widgets
       US_ExperGuiSpeeds*    epanSpeeds;
       US_ExperGuiCells*     epanCells;
       US_ExperGuiSolutions* epanSolutions;
-      US_ExperGuiPhotoMult* epanPhotoMult;
+      US_ExperGuiOptical*   epanOptical;
+      US_ExperGuiSpectra*   epanSpectra;
       US_ExperGuiUpload*    epanUpload;
 
       QLineEdit*  le_stat;
