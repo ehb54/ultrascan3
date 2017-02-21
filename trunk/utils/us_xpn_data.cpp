@@ -44,7 +44,7 @@ bool US_XpnData::connect_data( const QString xpnhost, const int xpnport,
    is_raw        = true;
 
    dbxpn           = QSqlDatabase::addDatabase( "QPSQL", "XpnData" );
-DbgLv(1) << "XpDa:scn: drivers" << dbxpn.drivers();
+DbgLv(1) << "XpDa:cnc: drivers" << dbxpn.drivers();
    dbxpn.setDatabaseName( "XpnData" );
    dbxpn.setHostName    ( dbhost );
    dbxpn.setPort        ( dbport );
@@ -64,20 +64,20 @@ DbgLv(1) << "XpDa:scn: drivers" << dbxpn.drivers();
    }
 
    QStringList qdrvrs = dbxpn.drivers();
-DbgLv(1) << "XpDa:scn: drivers" << qdrvrs;
+DbgLv(1) << "XpDa:cnc: drivers" << qdrvrs;
    QStringList sqtabs = dbxpn.tables( QSql::Tables );
-DbgLv(1) << "XpDa:scn: sqtabs" << sqtabs;
+DbgLv(1) << "XpDa:cnc: sqtabs" << sqtabs;
 
    if ( qdrvrs.contains( "QPSQL" )  &&
         ( sqtabs.contains( "\"AUC_schema\".\"ExperimentRun\"" )  ||
           sqtabs.contains( "AUC_schema.ExperimentRun" ) ) )
    {
       status        = true;
-DbgLv(1) << "XpDa:scn: QPSQL-in-qdrvrs && ExpRun-in-sqtabs";
+DbgLv(1) << "XpDa:cnc: QPSQL-in-qdrvrs && ExpRun-in-sqtabs";
    }
    else
    {
-DbgLv(1) << "XpDa:scn: qdrvrs|sqtab content error:"
+DbgLv(1) << "XpDa:cnc: qdrvrs|sqtab content error:"
  << (qdrvrs.contains("QPSQL"))
  << (sqtabs.contains( "\"AUC_schema\".\"ExperimentRun\"" ));
       status        = false;
@@ -1778,5 +1778,41 @@ DbgLv(1) << "XpDa:b_i:       rad0 radn" << a_radii[0] << a_radii[rkntl-1]
 
    // Compute radius values
 
+}
+
+// Dump (print) information on tables and their fields
+void US_XpnData::dump_tables()
+{
+   if ( !dbxpn.isOpen() )
+   {
+      qDebug() << "*ERROR* Optima DB not opened.";
+      return;
+   }
+
+   QStringList sqtabs = dbxpn.tables( QSql::Tables );
+   QSqlRecord qrec;
+   QString schname( "AUC_schema" );
+
+   for ( int ii = 0; ii < sqtabs.count(); ii++ )
+   {
+      QString tabname = QString( sqtabs[ ii ] ).section( ".", 1, 1 );
+//DbgLv(1) << "XpDa:dmp:  ii tabname" << ii << tabname;
+      QString qrytab  = "\"" + schname + "\".\"" + tabname + "\"";
+
+      qrec            = dbxpn.record( qrytab );
+      int cols        = qrec.count();
+//DbgLv(1) << "XpDa:dmp:  record lsterr" << dbxpn.lastError().text();
+      QStringList cnames;
+      qDebug() << "Table Name :" << tabname << "  #Columns :" << cols;
+
+      for ( int col = 0; col < cols; col++ )
+      {
+         QString fldname = qrec.fieldName( col );
+         //cnames << fldname;                   // Get column names
+         qDebug() << " " << col << ": Field :" << fldname;
+      }
+
+      //qDebug() << "  Columns:" << cnames;
+   }
 }
 

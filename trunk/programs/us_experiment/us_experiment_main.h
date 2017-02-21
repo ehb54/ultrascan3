@@ -43,21 +43,26 @@ class US_ExperGuiGeneral : public US_Widgets
       QWidget* mainw;
       US_Help  showHelp;
 
-      US_Disk_DB_Controls*  disk_controls; //!< Radiobuttons for disk/db choice
+      QLineEdit*   le_runid;
+      QLineEdit*   le_protocol;
+      QLineEdit*   le_project;
+      QLineEdit*   le_investigator;
 
-      QLineEdit* le_runid;
-      QLineEdit* le_project;
-      QLineEdit* le_investigator;
+      QwtCounter*  ct_tempera;
+
+      QStringList  cp_names;  // List of Centerpiece names
+      int          dbg_level;
+      bool         use_db;
 
       QList< US_AbstractCenterpiece >  acp_list;  // Full Centerpiece information
-      QStringList                      cp_names;  // List of Centerpiece names
-      int        dbg_level;
 
    private slots:
       void sel_project     ( void );
       void project_info    ( US_Project& );
       void sel_investigator( void );
       void runID_entered   ( void );
+      void load_protocol   ( void );
+      void changed_protocol( void );
       void centerpieceInfo ( void );
 
 };
@@ -220,9 +225,10 @@ class US_ExperGuiSolutions : public US_Widgets
       int      nchanu;
       int      nchanf;
 
-      QVector< QLabel* >     cc_labls;
-      QVector< QComboBox* >  cc_solus;
-      QStringList            sonames;
+      QVector< QLabel* >       cc_labls;
+      QVector< QComboBox* >    cc_solus;
+      QVector< QPushButton* >  cc_comms;
+      QStringList              sonames;
 
       QMap< QString, QString >      solu_ids;
       QMap< QString, US_Solution >  solu_data;
@@ -233,6 +239,7 @@ class US_ExperGuiSolutions : public US_Widgets
       bool solutionID     ( const QString, QString& );
       bool solutionData   ( const QString, US_Solution& );
       int  allSolutions   ( void );
+      void addComments    ( void );
 };
 
 
@@ -260,7 +267,8 @@ class US_ExperGuiOptical : public US_Widgets
       QList< QButtonGroup* >  cc_osyss;  // Ck-boxes OptSys GUI objects
 
       US_Help  showHelp;
-      int          dbg_level;
+      int      dbg_level;
+      int      mxrow;
 
    private slots:
       void opsysChecked    ( bool );
@@ -298,7 +306,7 @@ class US_ExperGuiSpectra : public US_Widgets
       QList< QCheckBox* >      cc_dones;
 
       int          dbg_level;
-      const int    mxrow = 24;
+      int          mxrow;
 
    private slots:
       void manageEProfiles  ( void );
@@ -372,6 +380,7 @@ class US_ExperimentMain : public US_Widgets
 
    private:
 
+      //QLineEdit*  le_stat;
       QTabWidget* tabWidget;
 
       US_ExperGuiGeneral*   epanGeneral;
@@ -383,8 +392,7 @@ class US_ExperimentMain : public US_Widgets
       US_ExperGuiSpectra*   epanSpectra;
       US_ExperGuiUpload*    epanUpload;
 
-      QLineEdit*  le_stat;
-
+      QString     stattext;
       int         dbg_level;
       int         curr_panx;
 

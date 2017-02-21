@@ -72,6 +72,7 @@ US_ExperimentMain::US_ExperimentMain() : US_Widgets()
    tabWidget->addTab( epanUpload,    tr( "8: Upload"           ) );
    tabWidget->setCurrentIndex( 0 );
 
+#if 0
    QLabel* lb_stat        = us_label( tr( "Status:" ) );
    le_stat = us_lineedit( tr( "1:u  2:u  3:u  4:u  5:u  6:u  7:u  8:u"
                               "   ('u'==unspecified  'X'==parameterized)" ),
@@ -82,22 +83,24 @@ US_ExperimentMain::US_ExperimentMain() : US_Widgets()
 
    statL->addWidget( lb_stat, 0, 0, 1, 1 );
    statL->addWidget( le_stat, 0, 1, 1, 7 );
+#endif
+   stattext               = tr( "1:u  2:u  3:u  4:u  5:u  6:u  7:u  8:u" );
 
    QPushButton* pb_close  = us_pushbutton( tr( "Close" ) );
    QPushButton* pb_help   = us_pushbutton( tr( "Help" ) );
    QPushButton* pb_next   = us_pushbutton( tr( "Next Panel" ) );
    QPushButton* pb_prev   = us_pushbutton( tr( "Previous Panel" ) );
-   QPushButton* pb_stupd  = us_pushbutton( tr( "Status Update" ) );
+   //QPushButton* pb_stupd  = us_pushbutton( tr( "Status Update" ) );
    buttL->addWidget( pb_help  );
-   buttL->addWidget( pb_stupd );
+   //buttL->addWidget( pb_stupd );
    buttL->addWidget( pb_prev  );
    buttL->addWidget( pb_next  );
    buttL->addWidget( pb_close );
 
    connect( tabWidget, SIGNAL( currentChanged( int ) ),
             this,      SLOT  ( newPanel      ( int ) ) );
-   connect( pb_stupd,  SIGNAL( clicked()    ),
-            this,      SLOT  ( statUpdate() ) );
+   //connect( pb_stupd,  SIGNAL( clicked()    ),
+   //         this,      SLOT  ( statUpdate() ) );
    connect( pb_next,   SIGNAL( clicked()    ),
             this,      SLOT  ( panelUp()    ) );
    connect( pb_prev,   SIGNAL( clicked()    ),
@@ -232,7 +235,9 @@ DbgLv(1) << "newPanel panx=" << panx << "prev.panx=" << curr_panx;
 // Slot to update status text for all panels
 void US_ExperimentMain::statUpdate()
 {
+#if 0
    QString stattext = le_stat->text();
+#endif
 DbgLv(1) << "statUpd: IN stat" << stattext;
    stattext.replace( QRegularExpression( "1:[uX]" ),
                      epanGeneral  ->status() );
@@ -252,7 +257,9 @@ DbgLv(1) << "statUpd: IN stat" << stattext;
                      epanUpload   ->status() );
 DbgLv(1) << "statUpd:  MOD stat" << stattext;
 
+#if 0
    le_stat->setText( stattext );
+#endif
 }
 
 // Slot to advance to the next panel
@@ -302,6 +309,7 @@ US_ExperGuiGeneral::US_ExperGuiGeneral( QWidget* topw )
 {
    mainw               = topw;
    dbg_level           = US_Settings::us_debug();
+   use_db              = ( US_Settings::default_data_location() < 2 );
    QVBoxLayout* panel  = new QVBoxLayout( this );
    panel->setSpacing        ( 2 );
    panel->setContentsMargins( 2, 2, 2, 2 );
@@ -311,10 +319,29 @@ US_ExperGuiGeneral::US_ExperGuiGeneral( QWidget* topw )
    QGridLayout* genL   = new QGridLayout();
 
    QLabel*      lb_runid        = us_label( tr( "Run ID:" ) );
+   QLabel*      lb_tempera      = us_label( tr( "Run Temperature " ) + DEGC + ":" );
    QPushButton* pb_project      = us_pushbutton( tr( "Select Project" ) );
+   QPushButton* pb_protocol     = us_pushbutton( tr( "Load Protocol" ) );
    QPushButton* pb_investigator = us_pushbutton( tr( "Select Investigator" ) );
                 le_runid        = us_lineedit( "", 0, false );
+                le_protocol     = us_lineedit( "", 0, false );
                 le_project      = us_lineedit( "", 0, false );
+                ct_tempera      = us_counter( 2, 0, 40, 1 );
+
+   lb_runid->adjustSize();
+   QFont font( US_GuiSettings::fontFamily(),
+               US_GuiSettings::fontSize() - 1 );
+   QFontMetrics fmet( font );
+   int fwid    = fmet.maxWidth();
+   int chgt    = lb_runid->height();
+   int cwid    = fwid * 3;
+   int mwid    = fwid * 4;
+   ct_tempera->setSingleStep( 1 );
+   ct_tempera->setValue     ( 20 );
+   ct_tempera->setMaximumWidth ( mwid );
+   ct_tempera->resize       ( cwid, chgt );
+   ct_tempera->adjustSize   ();
+   //QSpacerItem* spacer1         = new QSpacerItem( cwid, chgt );
 
    if ( US_Settings::us_inv_level() < 1 )
       pb_investigator->setEnabled( false );
@@ -325,16 +352,22 @@ US_ExperGuiGeneral::US_ExperGuiGeneral( QWidget* topw )
       : "";
    le_investigator = us_lineedit( number + US_Settings::us_inv_name(), 0, false );
 
+#if 0
    disk_controls   = new US_Disk_DB_Controls;
+#endif
 
-   int row=0;
+   int row         = 0;
+   genL->addWidget( pb_investigator, row,   0, 1, 1 );
+   genL->addWidget( le_investigator, row++, 1, 1, 5 );
    genL->addWidget( lb_runid,        row,   0, 1, 1 );
-   genL->addWidget( le_runid,        row++, 1, 1, 3 );
+   genL->addWidget( le_runid,        row++, 1, 1, 5 );
+   genL->addWidget( pb_protocol,     row,   0, 1, 1 );
+   genL->addWidget( le_protocol,     row++, 1, 1, 5 );
    genL->addWidget( pb_project,      row,   0, 1, 1 );
-   genL->addWidget( le_project,      row++, 1, 1, 3 );
-   genL->addWidget( pb_investigator, row,   0, 1, 2 );
-   genL->addWidget( le_investigator, row++, 2, 1, 2 );
-   genL->addLayout( disk_controls,   row++, 0, 1, 4 );
+   genL->addWidget( le_project,      row++, 1, 1, 5 );
+   genL->addWidget( lb_tempera,      row,   0, 1, 1 );
+   genL->addWidget( ct_tempera,      row,   1, 1, 1 );
+   //genL->addWidget( lb_degree,       row++, 2, 1, 4 );
 
    panel->addLayout( genL );
    panel->addStretch();
@@ -345,6 +378,10 @@ US_ExperGuiGeneral::US_ExperGuiGeneral( QWidget* topw )
             this,            SLOT(   sel_project()      ) );
    connect( pb_investigator, SIGNAL( clicked()          ), 
             this,            SLOT(   sel_investigator() ) );
+   connect( pb_protocol,     SIGNAL( clicked()          ), 
+            this,            SLOT(   load_protocol()    ) );
+   connect( le_protocol,     SIGNAL( editingFinished()  ),
+            this,            SLOT(   changed_protocol() ) );
 
    // Read in centerpiece information and populate names list
    centerpieceInfo();
@@ -374,7 +411,7 @@ QString US_ExperGuiGeneral::getPValue( const QString type )
    }
    else if ( type == "dbdisk" )
    {
-      value = ( disk_controls->db() ) ? "DB" : "Disk";
+      value = use_db ? "DB" : "Disk";
    }
 
    return value;
@@ -497,8 +534,8 @@ DbgLv(1) << "EGG: rchg: changed" << changed;
 // Select DB investigator
 void US_ExperGuiGeneral::sel_project( void )
 {
-   int dbdisk           = ( disk_controls->db() ) ? US_Disk_DB_Controls::DB
-                          : US_Disk_DB_Controls::Disk;
+   int dbdisk            = use_db ? US_Disk_DB_Controls::DB
+                                  : US_Disk_DB_Controls::Disk;
    US_Project project;
    US_ProjectGui* dialog = new US_ProjectGui( true, dbdisk, project );
    connect( dialog, SIGNAL( updateProjectGuiSelection( US_Project& ) ),
@@ -524,6 +561,26 @@ void US_ExperGuiGeneral::sel_investigator( void )
    //report_entry.investigator = US_Settings::us_inv_name();
 }
 
+// Load Protocol
+void US_ExperGuiGeneral::load_protocol( void )
+{
+DbgLv(1) << "EGG:ldPro:";
+QString mtitle  = tr( "Not Yet Implemented" );
+QString message = tr( "The ability to load a protocol from the database\n" )
+ + tr( "or local disk has not yet been implemented." );
+QMessageBox::information( this, mtitle, message );
+}
+
+// Verify entered protocol name
+void US_ExperGuiGeneral::changed_protocol( void )
+{
+DbgLv(1) << "EGG:ldPro:";
+QString mtitle  = tr( "Not Yet Implemented" );
+QString message = tr( "The ability to determine if a given protocol\n" )
+ + tr( "name is unique has not yet been implemented." );
+QMessageBox::information( this, mtitle, message );
+}
+
 // Capture selected project information
 void US_ExperGuiGeneral::project_info( US_Project& project )
 {
@@ -537,9 +594,7 @@ DbgLv(1) << "projinfo: proj.guid" << project.projectGUID;
 void US_ExperGuiGeneral::centerpieceInfo( void )
 {
    US_Passwd pw;
-   US_DB2* dbP          = ( disk_controls->db() )
-                          ? new US_DB2( pw.getPasswd() )
-                          : NULL;
+   US_DB2* dbP    = use_db ? new US_DB2( pw.getPasswd() ) : NULL;
 
    // Read in the full centerpiece information from DB or Disk
    US_AbstractCenterpiece::read_centerpieces( dbP, acp_list );
@@ -885,10 +940,10 @@ US_ExperGuiSpeeds::US_ExperGuiSpeeds( QWidget* topw )
    QGridLayout* genL   = new QGridLayout();
 
    QLabel* lb_count    = us_label( tr( "Number of Speed Profiles:" ) );
-   QLabel* lb_lenhr    = us_label( tr( "Length of Experiment (Hours):" ) );
-   QLabel* lb_lenmin   = us_label( tr( "Length of Experiment (Minutes):" ) );
-   QLabel* lb_dlyhr    = us_label( tr( "Time Delay for Scans (Hours):" ) );
-   QLabel* lb_dlymin   = us_label( tr( "Time Delay for Scans (Minutes):" ) );
+   QLabel* lb_lenhr    = us_label( tr( "Length of Experiment (hours):" ) );
+   QLabel* lb_lenmin   = us_label( tr( "Length of Experiment (minutes):" ) );
+   QLabel* lb_dlyhr    = us_label( tr( "Time Delay for Scans (hours):" ) );
+   QLabel* lb_dlymin   = us_label( tr( "Time Delay for Scans (minutes):" ) );
    QLabel* lb_speed    = us_label( tr( "Rotor Speed (rpm):" ) );
    QLabel* lb_accel    = us_label( tr( "Acceleration Profile (rpm/sec):" ) );
    cb_prof             = new QComboBox( this );
@@ -1163,10 +1218,28 @@ DbgLv(1) << "EGS: chgPfx:  speed-c speed-p" << ssvals[ssp*6] << ssvals[curssx*6]
 void US_ExperGuiSpeeds::ssChangeSpeed( double val )
 {
    changed          = true;
+   int sx           = curssx * 6;
 DbgLv(1) << "EGS: chgSpe: val" << val << "ssx" << curssx;
-   ssvals[ curssx * 6     ] = val;  // Set Speed in step vals vector
-   profdesc[ curssx ]       = speedp_description( curssx );
+   ssvals[ sx ]     = val;  // Set Speed in step vals vector
+   profdesc[ curssx ] = speedp_description( curssx );
    cb_prof->setItemText( curssx, profdesc[ curssx ] );
+
+   // Set minimum delay time based on speed change and acceleration
+   double spdelta   = ( curssx > 0 ) ? ( val - ssvals[ sx - 6 ] ) : val;
+   double accel     = ssvals[ sx + 1 ];
+   double delayhr   = ssvals[ sx + 4 ];
+DbgLv(1) << "EGS: chgSpe:  spdelta accel delayhr" << spdelta << accel << delayhr;
+   if ( delayhr == 0.0 )
+   {  // If delay hours is 0, compute the low minutes needed to accelerate
+      double delayse   = qCeil( spdelta / accel );     // Low delay in seconds
+      double delaymi   = (int)qCeil( delayse / 60.0 ); // Low delay in minutes
+DbgLv(1) << "EGS: chgSpe:  delayse delaymi" << delayse << delaymi;
+      ct_dlymin->setMinimum( delaymi );
+   }
+   else
+   {  // If delay at least 1 hour, minimum delay minutes is 0
+      ct_dlymin->setMinimum( 0.0 );
+   }
 }
 
 // Slot for change in acceleration value
@@ -1389,11 +1462,7 @@ QStringList US_ExperGuiCells::getPList( const QString type )
    QStringList value;
 DbgLv(1) << "EGC:getPL: type" << type;
 
-   if ( type == "cellinfo" )
-   {
-      //value << le_runid->text();
-   }
-   else if ( type == "centerpieces" )
+   if ( type == "centerpieces" )
    {
       int nholes          = sibPValue( "rotor", "nholes" ).toInt();
 DbgLv(1) << "EGC:getPL:  cc_cenps size" << cc_cenps.count();
@@ -1512,6 +1581,7 @@ DbgLv(1) << "EGC:wiChg:  sname irow" << sname << irow;
 US_ExperGuiSolutions::US_ExperGuiSolutions( QWidget* topw )
 {
    mainw               = topw;
+   mxrow               = 24;     // Maximum possible rows
    dbg_level           = US_Settings::us_debug();
    QVBoxLayout* panel  = new QVBoxLayout( this );
    panel->setSpacing        ( 2 );
@@ -1535,14 +1605,16 @@ US_ExperGuiSolutions::US_ExperGuiSolutions( QWidget* topw )
    QStringList cpnames = sibPList( "cells", "centerpieces" );
    const int mxcels    = 8;
    int nholes          = sibPValue( "rotor", "nholes" ).toInt();
+   QString add_comm    = tr( "Add Comments" );
 DbgLv(1) << "EGS:  nholes mxcels" << nholes << mxcels;
 
-   QLabel*     cclabl;
-   QComboBox*  cb_solu;
+   QLabel*       cclabl;
+   QComboBox*    cb_solu;
+   QPushButton*  pb_comm;
 
    allSolutions();        // Read in all solution names and IDs
 
-   for ( int ii = 0; ii < 24; ii++ )
+   for ( int ii = 0; ii < mxrow; ii++ )
    {  // Loop to build initial place-holder solution rows
       QString scel;
       if      ( ii == 0 ) scel = QString( "0/A" );
@@ -1552,16 +1624,21 @@ DbgLv(1) << "EGS:  nholes mxcels" << nholes << mxcels;
       else                scel = QString( "none" );
       cclabl              = us_label( scel );
       cb_solu             = us_comboBox();
+      pb_comm             = us_pushbutton( add_comm );
 
       QString strow       = QString::number( ii );
       cclabl ->setObjectName( strow + ": label" );
       cb_solu->setObjectName( strow + ": solution" );
+      pb_comm->setObjectName( strow + ": addcomm" );
 
       genL->addWidget( cclabl,  row,    0, 1, 1 );
-      genL->addWidget( cb_solu, row++,  1, 1, 5 );
+      genL->addWidget( cb_solu, row,    1, 1, 4 );
+      genL->addWidget( pb_comm, row++,  5, 1, 1 );
 
       cb_solu->addItems( sonames );
 
+      connect( pb_comm, SIGNAL( clicked()           ),
+               this,    SLOT  ( addComments()       ) );
 #if 0
       connect( cb_solu, SIGNAL( activated      ( int ) ),
                this,    SLOT  ( solutionChanged( int ) ) );
@@ -1569,10 +1646,12 @@ DbgLv(1) << "EGS:  nholes mxcels" << nholes << mxcels;
       bool is_vis          = ( ii < 4 );
       cclabl ->setVisible( is_vis );
       cb_solu->setVisible( is_vis );
+      pb_comm->setVisible( is_vis );
 
       // Save pointers to row objects for later update
       cc_labls << cclabl;
       cc_solus << cb_solu;
+      cc_comms << pb_comm;
    }
 
    connect( pb_manage,    SIGNAL( clicked()         ),
@@ -1619,7 +1698,7 @@ DbgLv(1) << "EGS:initP:      jj" << jj << "celchn" << celchn;
 
    QString slabl;
    int nslabs          = nsrows;
-   nsrows              = qMax( nsrows, 3 );  // Show at least 3 dummy rows
+   //nsrows              = qMax( nsrows, 3 );  // Show at least 3 dummy rows
 DbgLv(1) << "EGS:initP:  nslabs nsrows" << nslabs << nsrows
  << "k_labs k_sols" << cc_labls.count() << cc_solus.count();
  
@@ -1631,16 +1710,18 @@ DbgLv(1) << "EGS:initP:   ii" << ii << "slabl" << slabl;
       cc_labls[ ii ]->setText( slabl );
       cc_labls[ ii ]->setVisible( true );
       cc_solus[ ii ]->setVisible( true );
+      cc_comms[ ii ]->setVisible( true );
    }
 
    slabl               = tr( "none" );
 
    // Make remaining rows invisible
-   for ( int ii = nsrows; ii < 24; ii++ )
+   for ( int ii = nsrows; ii < mxrow; ii++ )
    {
       cc_labls[ ii ]->setText( slabl );
       cc_labls[ ii ]->setVisible( false );
       cc_solus[ ii ]->setVisible( false );
+      cc_comms[ ii ]->setVisible( false );
    }
 
 }
@@ -1718,7 +1799,7 @@ QStringList US_ExperGuiSolutions::getPList( const QString type )
             }
             else
             {  // Newly encounted solution
-               solus << solu;                          // Unique solution
+               solus  << solu;                         // Unique solution
                sochan << labl;                         // Begin solution channels
                sochans[ solu ]     = sochan;           // Update
             }
@@ -1780,7 +1861,6 @@ QStringList US_ExperGuiSolutions::sibPList( const QString sibling, const QString
 // Return status string for the panel
 QString US_ExperGuiSolutions::status()
 {
-   mxrow               = 24;     // Maximum possible rows
    nchant              = 0;      // Number channels total
    nchanu              = 0;      // Number channels unspecified
    nchanf              = 0;      // Number channels filled
@@ -2045,11 +2125,21 @@ int US_ExperGuiSolutions::allSolutions()
    return solu_ids.keys().count();
 }
 
+// Slot to handle click on row Add Comments button
+void US_ExperGuiSolutions::addComments()
+{
+   QObject* sobj       = sender();   // Sender object
+   QString sname       = sobj->objectName();
+   int irow            = sname.section( ":", 0, 0 ).toInt();
+DbgLv(1) << "EGS:addComm: sname irow" << sname << irow;
+}
+
 
 // Panel for Optical Systems parameters
 US_ExperGuiOptical::US_ExperGuiOptical( QWidget* topw )
 {
    mainw               = topw;
+   mxrow               = 24;     // Maximum possible rows
    dbg_level           = US_Settings::us_debug();
    QVBoxLayout* panel  = new QVBoxLayout( this );
    panel->setSpacing        ( 2 );
@@ -2101,7 +2191,7 @@ DbgLv(1) << "EGO:main:   opsys1-3" << opsys1 << opsys2 << opsys3;
    nckopt          += opsys2.contains( tr( "not installed" ) ) ? 0 : 1;
    nckopt          += opsys3.contains( tr( "not installed" ) ) ? 0 : 1;
 
-   for ( int ii = 0; ii < 24; ii++ )
+   for ( int ii = 0; ii < mxrow; ii++ )
    {  // Loop to build initial place-holder optical rows
       QString scel;
       if      ( ii == 0 ) scel = QString( "0/A" );
@@ -2207,33 +2297,29 @@ DbgLv(1) << "EGO:initP:      jj" << jj << "celchn" << celchn;
       
    }
 
-   QString slabl;
-   int nslabs       = nsrows;
-   nsrows           = qMax( nsrows, 3 );  // Show at least 3 dummy rows
-   QString unavail  = tr( "(unavailable)" );
-DbgLv(1) << "EGO:initP:  nslabs nsrows" << nslabs << nsrows
+   QString notinst  = tr( "(not installed)" );
+DbgLv(1) << "EGO:initP:  nsrows" << nsrows
  << "k_labs k_sys1" << cc_labls.count() << cc_osyss.count();
  
    // Set cell/channel labels and checkboxes; make visible, all live rows
    for ( int ii = 0; ii < nsrows; ii++ )
    {
-      slabl            = ( ii < nslabs ) ? slabls[ ii ] : tr( "none" );
-      cc_labls[ ii ]->setText( slabl );
+      cc_labls[ ii ]->setText( slabls[ ii ] );
       cc_labls[ ii ]->setVisible( true );
       QCheckBox* ckbox1 = (QCheckBox*)cc_osyss[ ii ]->button( 1 );
       QCheckBox* ckbox2 = (QCheckBox*)cc_osyss[ ii ]->button( 2 );
       QCheckBox* ckbox3 = (QCheckBox*)cc_osyss[ ii ]->button( 3 );
-      ckbox1->setVisible( ! ckbox1->text().contains( unavail ) );
-      ckbox2->setVisible( ! ckbox2->text().contains( unavail ) );
-      ckbox3->setVisible( ! ckbox3->text().contains( unavail ) );
-DbgLv(1) << "EGO:initP:   ii" << ii << "slabl" << slabl << "boxtexts"
- << ckbox1->text() << ckbox2->text() << ckbox3->text();
+      ckbox1->setVisible( ! ckbox1->text().contains( notinst ) );
+      ckbox2->setVisible( ! ckbox2->text().contains( notinst ) );
+      ckbox3->setVisible( ! ckbox3->text().contains( notinst ) );
+DbgLv(1) << "EGO:initP:   ii" << ii << "slabl" << slabls[ ii ]
+ << "boxtexts" << ckbox1->text() << ckbox2->text() << ckbox3->text();
    }
 
-   slabl            = tr( "none" );
+   QString slabl    = tr( "none" );
 
    // Make remaining rows invisible
-   for ( int ii = nsrows; ii < 24; ii++ )
+   for ( int ii = nsrows; ii < mxrow; ii++ )
    {
       cc_labls[ ii ]->setText( slabl );
       cc_labls[ ii ]->setVisible( false );
@@ -2337,7 +2423,7 @@ DbgLv(1) << "EGO: oCk:   optype" << optype;
    QString labnone     = tr( "none" );
    QList< int >  ccrows;
 DbgLv(1) << "EGO: oCk:    clabl" << clabl << "scell" << scell;
-   for ( int ii = 0; ii < 24; ii++ )
+   for ( int ii = 0; ii < mxrow; ii++ )
    {
       // Ignore the exact same row
       if ( ii == irow )
@@ -2407,7 +2493,7 @@ dtext+= "NONE (not yet implemented)\n";
 US_ExperGuiSpectra::US_ExperGuiSpectra( QWidget* topw )
 {
    mainw               = topw;
-   int mxrow           = 24;
+   mxrow               = 24;     // Maximum possible rows
    dbg_level           = US_Settings::us_debug();
    QVBoxLayout* panel  = new QVBoxLayout( this );
    panel->setSpacing        ( 2 );
@@ -2520,6 +2606,69 @@ US_ExperGuiSpectra::US_ExperGuiSpectra( QWidget* topw )
 // Initialize a panel, especially after clicking on its tab
 void US_ExperGuiSpectra::initPanel()
 {
+   int nsrows          = 0;  // Count of visible optical rows
+   QStringList cpnames = sibPList( "cells", "centerpieces" );
+DbgLv(1) << "EGO:initP: cpnames" << cpnames;
+   QStringList slabls;
+
+   // Build channel labels based on cells information
+   for ( int ii = 0; ii < cpnames.count(); ii++ )
+   {
+      QString cpname   = cpnames[ ii ];
+      int chx          = cpname.indexOf( "-channel" );
+DbgLv(1) << "EGO:initP:   ii" << ii << "cpname chx" << cpname << chx;
+      if ( chx > 0 )
+      {  // Non-empty cell centerpiece:  get channel count, build rows
+         QString scell    = QString( cpname ).section( " ", 1, 1 );
+         QString schans( "ABCDEF" );
+         int nchan        = cpname.left( chx ).section( " ", -1, -1 )
+                              .simplified().toInt();
+DbgLv(1) << "EGO:initP:     scell" << scell << "nchan" << nchan;
+         for ( int jj = 0; jj < nchan; jj++ )
+         {
+            QString celchn   = scell + " / " + QString( schans ).mid( jj, 1 );
+DbgLv(1) << "EGO:initP:      jj" << jj << "celchn" << celchn;
+            slabls << celchn;
+            nsrows++;
+         }
+      }
+      
+   }
+
+   QString slabl;
+   int nslabs       = nsrows;
+   //nsrows           = qMax( nsrows, 3 );  // Show at least 3 dummy rows
+   QString unavail  = tr( "(unavailable)" );
+DbgLv(1) << "EGS:initP:  nslabs nsrows" << nslabs << nsrows
+ << "k_labs" << cc_labls.count();
+ 
+   // Set cell/channel labels and elements; make visible, all live rows
+   for ( int ii = 0; ii < nsrows; ii++ )
+   {
+      slabl            = ( ii < nslabs ) ? slabls[ ii ] : tr( "none" );
+      cc_labls[ ii ]->setText( slabl );
+      cc_labls[ ii ]->setVisible( true );
+      cc_wavls[ ii ]->setVisible( true );
+      cc_optis[ ii ]->setVisible( true );
+      cc_loads[ ii ]->setVisible( true );
+      cc_manus[ ii ]->setVisible( true );
+      cc_dones[ ii ]->setVisible( true );
+DbgLv(1) << "EGS:initP:   ii" << ii << "slabl" << slabl;
+   }
+
+   slabl            = tr( "none" );
+
+   // Make remaining rows invisible
+   for ( int ii = nsrows; ii < mxrow; ii++ )
+   {
+      cc_labls[ ii ]->setText( slabl );
+      cc_labls[ ii ]->setVisible( false );
+      cc_wavls[ ii ]->setVisible( false );
+      cc_optis[ ii ]->setVisible( false );
+      cc_loads[ ii ]->setVisible( false );
+      cc_manus[ ii ]->setVisible( false );
+      cc_dones[ ii ]->setVisible( false );
+   }
 }
 
 // Get a specific panel value
@@ -2694,6 +2843,12 @@ DbgLv(1) << "EGS:manSp: sname" << sname << "irow" << irow << cclabl;
    tdiag->setWindowTitle( tr( "Manually Enter Spectrum (%1)" )
                           .arg( cclabl ) );
    tdiag->exec();
+   if ( changed )
+   {
+DbgLv(1) << "EGS:manSp: extinction:" << extinction;
+   }
+else
+DbgLv(1) << "EGS:manSp: *NOT Accepted*";
 }
 
 
@@ -3135,6 +3290,7 @@ QMessageBox::information( this, mtitle, message );
 QString US_ExperGuiUpload::buildJson( void )
 {
    QString       js_exper("");
+#if QT_VERSION > 0x050000
 
    // Accumulate information on controls that have been specified
    QString v_run     = sibPValue( "general",   "runID" );
@@ -3277,6 +3433,7 @@ else
  qDebug() << "*ERROR* Unable to open file" << fpath;
 /*DEBUG*/
 
+#endif
    return js_exper;
 }
 

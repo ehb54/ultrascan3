@@ -285,6 +285,9 @@ class US_UTIL_EXTERN US_XpnData : public QObject
       //! \returns      DB Connection last error string
       QString lastError     ( void );
 
+      //! \brief Dump information to STDERR on tables,fields
+      void    dump_tables   ( void  );
+
    signals:
       //! \brief Emit a signal that includes status text
       void status_text  ( QString );
