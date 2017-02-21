@@ -34,7 +34,11 @@ US_Editor::US_Editor( int menu, bool readonly, const QString& extension,
 #ifndef Q_OS_MAC
    edMenuBar       = menuBar();
 #else
+#if QT_VERSION > 0x050000
+   edMenuBar       = menuBar();
+#else
    edMenuBar       = new QMenuBar( 0 );
+#endif
 #endif
    QMenu* fileMenu = edMenuBar->addMenu( tr( "&File" ) );
    fileMenu->setFont  ( QFont( US_GuiSettings::fontFamily(),

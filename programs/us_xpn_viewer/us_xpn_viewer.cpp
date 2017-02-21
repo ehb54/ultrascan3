@@ -497,6 +497,7 @@ void US_XpnDataViewer::load_xpn_raw( )
 DbgLv(1) << "RDr: call connect_data  dbname h p u w"
  << xpnname << dbhost << dbport << xpnuser << xpnpasw;
    xpn_data->connect_data( dbhost, dbport, xpnname, xpnuser, xpnpasw );
+   if ( dbg_level > 0 )  xpn_data->dump_tables();
    xpn_data->scan_runs( runInfo );
    xpn_data->filter_runs( runInfo );
 DbgLv(1) << "RDr:  rtn fr import_data";
