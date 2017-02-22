@@ -350,6 +350,7 @@ class US_ExperGuiUpload : public US_Widgets
       QCheckBox*   ck_speed_ok;
       QCheckBox*   ck_centerp;
       QCheckBox*   ck_solution;
+      QCheckBox*   ck_optical;
       QCheckBox*   ck_extprofs;
       QCheckBox*   ck_connect;
       QCheckBox*   ck_upl_enab;

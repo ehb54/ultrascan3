@@ -12,6 +12,8 @@
 
 #if QT_VERSION < 0x050000
 #define setSamples(a,b,c)  setData(a,b,c)
+#define setMinimum(a)      setMinValue(a)
+#define setMaximum(a)      setMaxValue(a)
 #define QRegularExpression(a)  QRegExp(a)
 #endif
 
@@ -2131,7 +2133,12 @@ void US_ExperGuiSolutions::addComments()
    QObject* sobj       = sender();   // Sender object
    QString sname       = sobj->objectName();
    int irow            = sname.section( ":", 0, 0 ).toInt();
+   QString cclabl      = cc_labls[ irow ]->text();
 DbgLv(1) << "EGS:addComm: sname irow" << sname << irow;
+QString mtitle  = tr( "Not Yet Implemented" );
+QString message = tr( "The ability to add comments for " )
+ + cclabl + "\n" + tr( "has not yet been implement" );
+QMessageBox::information( this, mtitle, message );
 }
 
 
@@ -2890,6 +2897,8 @@ US_ExperGuiUpload::US_ExperGuiUpload( QWidget* topw )
                                            ck_centerp,  false );
    QLayout* lo_solution     = us_checkbox( tr( "all Channel Solutions" ),
                                            ck_solution, false );
+   QLayout* lo_optical      = us_checkbox( tr( "all Channel Optical Systems" ),
+                                           ck_optical,  false );
    QLayout* lo_extprofs     = us_checkbox( tr( "Spectra" ),
                                            ck_extprofs, false );
    QLayout* lo_connect      = us_checkbox( tr( "Connected" ),
@@ -2906,6 +2915,7 @@ US_ExperGuiUpload::US_ExperGuiUpload( QWidget* topw )
    ck_speed_ok->setEnabled( true  );
    ck_centerp ->setEnabled( false );
    ck_solution->setEnabled( false );
+   ck_optical ->setEnabled( false );
    ck_extprofs->setEnabled( false );
    ck_connect ->setEnabled( false );
    ck_upl_enab->setEnabled( false );
@@ -2924,7 +2934,8 @@ US_ExperGuiUpload::US_ExperGuiUpload( QWidget* topw )
    genL->addLayout( lo_speed,        row,   1, 1, 2 );
    genL->addLayout( lo_speed_ok,     row++, 3, 1, 2 );
    genL->addLayout( lo_centerp,      row++, 1, 1, 2 );
-   genL->addLayout( lo_solution,     row++, 1, 1, 2 );
+   genL->addLayout( lo_solution,     row,   1, 1, 2 );
+   genL->addLayout( lo_optical,      row++, 3, 1, 2 );
    genL->addLayout( lo_extprofs,     row,   1, 1, 2 );
    genL->addLayout( lo_connect,      row++, 3, 1, 2 );
    genL->addLayout( lo_upl_enab,     row,   1, 1, 2 );
