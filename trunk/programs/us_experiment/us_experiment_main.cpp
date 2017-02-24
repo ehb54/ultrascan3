@@ -9,6 +9,7 @@
 #include "us_license.h"
 #include "us_license_t.h"
 #include "us_sleep.h"
+#include "us_util.h"
 
 #if QT_VERSION < 0x050000
 #define setSamples(a,b,c)  setData(a,b,c)
@@ -387,11 +388,35 @@ US_ExperGuiGeneral::US_ExperGuiGeneral( QWidget* topw )
 
    // Read in centerpiece information and populate names list
    centerpieceInfo();
+
+   initPanel();
 }
 
 // Initialize a panel, especially after clicking on its tab
 void US_ExperGuiGeneral::initPanel()
 {
+//*Test*
+QList<QStringList> lsl1;
+QList<QStringList> lsl2;
+QString llstring;
+QString llstring2;
+QStringList ii1;
+QStringList ii2;
+QStringList ii3;
+ii1 << "1AA" << "1BB" << "1CC";
+ii2 << "2AA" << "2BB";
+ii3 << "3AA" << "3BB" << "3CC" << "3DD";
+lsl1 << ii1 << ii2 << ii3;
+US_Util::listlistBuild( lsl1, llstring );
+US_Util::listlistParse( lsl2, llstring );
+for ( int ii=0;ii<lsl1.count();ii++ )
+{ qDebug() << "TEST: lsl1" << ii << lsl1[ii]; }
+qDebug() << "TEST: llstring" << llstring;
+for ( int ii=0;ii<lsl2.count();ii++ )
+{ qDebug() << "TEST: lsl2" << ii << lsl2[ii]; }
+US_Util::listlistBuild( lsl1, llstring2 );
+qDebug() << "TEST: llstring2" << llstring2;
+//*Test*
 }
 
 // Get a specific panel value
@@ -941,48 +966,69 @@ US_ExperGuiSpeeds::US_ExperGuiSpeeds( QWidget* topw )
    panel->addWidget( lb_panel );
    QGridLayout* genL   = new QGridLayout();
 
+   // Labels
    QLabel* lb_count    = us_label( tr( "Number of Speed Profiles:" ) );
-   QLabel* lb_lenhr    = us_label( tr( "Length of Experiment (hours):" ) );
-   QLabel* lb_lenmin   = us_label( tr( "Length of Experiment (minutes):" ) );
-   QLabel* lb_dlyhr    = us_label( tr( "Time Delay for Scans (hours):" ) );
-   QLabel* lb_dlymin   = us_label( tr( "Time Delay for Scans (minutes):" ) );
    QLabel* lb_speed    = us_label( tr( "Rotor Speed (rpm):" ) );
    QLabel* lb_accel    = us_label( tr( "Acceleration Profile (rpm/sec):" ) );
+   QLabel* lb_durhr    = us_label( tr( "Length of Experiment (hours):" ) );
+   QLabel* lb_durmin   = us_label( tr( "Length of Experiment (minutes):" ) );
+   QLabel* lb_dlyhr    = us_label( tr( "Time Delay for Scans (hours):" ) );
+   QLabel* lb_dlymin   = us_label( tr( "Time Delay for Scans (minutes):" ) );
+   QLabel* lb_dlysec   = us_label( tr( "Time Delay for Scans (seconds):" ) );
+
+   // ComboBox and counters
    cb_prof             = new QComboBox( this );
    ct_speed            = us_counter( 2, 1000, 100000, 100 );
    ct_accel            = us_counter( 2,   50,   1000,  50 );
    ct_count            = us_counter( 2,    1,    100,   1 );
-   ct_lenhr            = us_counter( 2,    0,    100,   1 );
-   ct_lenmin           = us_counter( 2,    0,     60,   1 );
-   ct_dlyhr            = us_counter( 2,    0,     10,   1 );
-   ct_dlymin           = us_counter( 2,    0,     60,   1 );
+   ct_durhr            = us_counter( 2,    0,    100,   1 );
+   ct_durmin           = us_counter( 2,    0,     59,   1 );
+   ct_dlyhr            = us_counter( 2,    0,     50,   1 );
+   ct_dlymin           = us_counter( 2,    0,     59,   1 );
+   ct_dlysec           = us_counter( 2,    0,     59,   1 );
+
+   // Default values
    nspeed              = 1;
    curssx              = 0;
-   profdesc.resize( nspeed );
-   ssvals  .resize( nspeed * 6 );
-   ssvals[ 0 ]         = 30000;
-   ssvals[ 1 ]         = 400;
-   ssvals[ 2 ]         = 5;
-   ssvals[ 3 ]         = 30;
-   ssvals[ 4 ]         = 0;
-   ssvals[ 5 ]         = 30;
+   double defspeed     = 45000;
+   double defaccel     = 400;
+   double defdurhr     = 5;
+   double defdurmin    = 30;
+   double defdurtim    = ( defdurhr * 60. ) + defdurmin;
+   double defdlyhr     = 0;
+   double defdlymin    = 2;
+   double defdlysec    = 30;
+   double defdlytim    = ( defdlyhr * 3600. ) + ( defdlymin * 60. ) + defdlysec;
+   profdesc.resize( nspeed );  // Speed profile descriptions
+   ssvals  .resize( nspeed );  // Speed step values
+   ssvals[ 0 ][ "speed" ]    = defspeed;  // Speed default
+   ssvals[ 0 ][ "accel" ]    = defaccel;  // Acceleration default
+   ssvals[ 0 ][ "duration" ] = defdurtim; // Duration in minutes default (5h 30m)
+   ssvals[ 0 ][ "delay" ]    = defdlytim; // Delay in seconds default (2m 30s)
+
+   // Set up counters and profile description
    ct_count ->setSingleStep(   1 );
    ct_speed ->setSingleStep( 100 );
    ct_accel ->setSingleStep(  50 );
-   ct_lenhr ->setSingleStep(   1 );
-   ct_lenmin->setSingleStep(   1 );
+   ct_durhr ->setSingleStep(   1 );
+   ct_durmin->setSingleStep(   1 );
    ct_dlyhr ->setSingleStep(   1 );
    ct_dlymin->setSingleStep(   1 );
-   ct_count ->setValue( nspeed );
-   ct_speed ->setValue( ssvals[ 0 ] );
-   ct_accel ->setValue( ssvals[ 1 ] );
-   ct_lenhr ->setValue( ssvals[ 2 ] );
-   ct_lenmin->setValue( ssvals[ 3 ] );
-   ct_dlyhr ->setValue( ssvals[ 4 ] );
-   ct_dlymin->setValue( ssvals[ 5 ] );
-   //cb_prof->addItem( tr( "Speed Profile 1: 30000 rpm for 5 hr 30 min" ) );
+   ct_dlysec->setSingleStep(   1 );
+
+   ct_count ->setValue( nspeed    );
+   ct_speed ->setValue( defspeed  );
+   ct_accel ->setValue( defaccel  );
+   ct_durhr ->setValue( defdurhr  );
+   ct_durmin->setValue( defdurmin );
+   ct_dlyhr ->setValue( defdlyhr  );
+   ct_dlymin->setValue( defdlymin );
+   ct_dlysec->setValue( defdlysec );
+
+   // Speed profile description, e.g., "Speed Profile 1: 30000 rpm for 5 hr 30 min"
    cb_prof->addItem( speedp_description( 0 ) );
 
+   // Adjust counter sizes
    lb_count->adjustSize();
    QFont font( US_GuiSettings::fontFamily(),
                US_GuiSettings::fontSize() );
@@ -993,11 +1039,13 @@ US_ExperGuiSpeeds::US_ExperGuiSpeeds( QWidget* topw )
    ct_count ->resize( csizw, rheight );
    ct_speed ->resize( csizw, rheight );
    ct_accel ->resize( csizw, rheight );
-   ct_lenhr ->resize( csizw, rheight );
-   ct_lenmin->resize( csizw, rheight );
+   ct_durhr ->resize( csizw, rheight );
+   ct_durmin->resize( csizw, rheight );
    ct_dlyhr ->resize( csizw, rheight );
    ct_dlymin->resize( csizw, rheight );
+   ct_dlysec->resize( csizw, rheight );
 
+   // Create main layout rows
    int row = 0;
    genL->addWidget( lb_count,  row,   0, 1, 3 );
    genL->addWidget( ct_count,  row++, 3, 1, 1 );
@@ -1006,37 +1054,46 @@ US_ExperGuiSpeeds::US_ExperGuiSpeeds( QWidget* topw )
    genL->addWidget( ct_speed,  row++, 3, 1, 1 );
    genL->addWidget( lb_accel,  row,   0, 1, 3 );
    genL->addWidget( ct_accel,  row++, 3, 1, 1 );
-   genL->addWidget( lb_lenhr,  row,   0, 1, 3 );
-   genL->addWidget( ct_lenhr,  row++, 3, 1, 1 );
-   genL->addWidget( lb_lenmin, row,   0, 1, 3 );
-   genL->addWidget( ct_lenmin, row++, 3, 1, 1 );
+   genL->addWidget( lb_durhr,  row,   0, 1, 3 );
+   genL->addWidget( ct_durhr,  row++, 3, 1, 1 );
+   genL->addWidget( lb_durmin, row,   0, 1, 3 );
+   genL->addWidget( ct_durmin, row++, 3, 1, 1 );
    genL->addWidget( lb_dlyhr,  row,   0, 1, 3 );
    genL->addWidget( ct_dlyhr,  row++, 3, 1, 1 );
    genL->addWidget( lb_dlymin, row,   0, 1, 3 );
    genL->addWidget( ct_dlymin, row++, 3, 1, 1 );
+   genL->addWidget( lb_dlysec, row,   0, 1, 3 );
+   genL->addWidget( ct_dlysec, row++, 3, 1, 1 );
    genL->setColumnStretch( 0, 4 );
    genL->setColumnStretch( 3, 0 );
 
-   connect( ct_count,  SIGNAL( valueChanged ( double ) ),
-            this,      SLOT  ( ssChangeCount( double ) ) );
-   connect( cb_prof,   SIGNAL( activated    ( int    ) ),
-            this,      SLOT  ( ssChangeProfx( int    ) ) );
-   connect( ct_speed,  SIGNAL( valueChanged ( double ) ),
-            this,      SLOT  ( ssChangeSpeed( double ) ) );
-   connect( ct_accel,  SIGNAL( valueChanged ( double ) ),
-            this,      SLOT  ( ssChangeAccel( double ) ) );
-   connect( ct_lenhr,  SIGNAL( valueChanged ( double ) ),
-            this,      SLOT  ( ssChangeDurhr( double ) ) );
-   connect( ct_lenmin, SIGNAL( valueChanged ( double ) ),
-            this,      SLOT  ( ssChangeDurmn( double ) ) );
-   connect( ct_dlyhr,  SIGNAL( valueChanged ( double ) ),
-            this,      SLOT  ( ssChangeDlyhr( double ) ) );
-   connect( ct_dlymin, SIGNAL( valueChanged ( double ) ),
-            this,      SLOT  ( ssChangeDlymn( double ) ) );
+   // Connect signals and slots
+   connect( ct_count,  SIGNAL( valueChanged  ( double ) ),
+            this,      SLOT  ( ssChangeCount ( double ) ) );
+   connect( cb_prof,   SIGNAL( activated     ( int    ) ),
+            this,      SLOT  ( ssChangeProfx ( int    ) ) );
+   connect( ct_speed,  SIGNAL( valueChanged  ( double ) ),
+            this,      SLOT  ( ssChangeSpeed ( double ) ) );
+   connect( ct_accel,  SIGNAL( valueChanged  ( double ) ),
+            this,      SLOT  ( ssChangeAccel ( double ) ) );
+   connect( ct_durhr,  SIGNAL( valueChanged  ( double ) ),
+            this,      SLOT  ( ssChangeDurhr ( double ) ) );
+   connect( ct_durmin, SIGNAL( valueChanged  ( double ) ),
+            this,      SLOT  ( ssChangeDurmin( double ) ) );
+   connect( ct_dlyhr,  SIGNAL( valueChanged  ( double ) ),
+            this,      SLOT  ( ssChangeDlyhr ( double ) ) );
+   connect( ct_dlymin, SIGNAL( valueChanged  ( double ) ),
+            this,      SLOT  ( ssChangeDlymin( double ) ) );
+   connect( ct_dlysec, SIGNAL( valueChanged  ( double ) ),
+            this,      SLOT  ( ssChangeDlysec( double ) ) );
 
+   // Complete overall layout
    panel->addLayout( genL );
    panel->addStretch();
    adjustSize();
+
+   // Set low delay-minutes based on speed,acceleration,delay-hours
+   adjustDelay();
 };
 
 // Initialize a panel, especially after clicking on its tab
@@ -1063,11 +1120,11 @@ QString US_ExperGuiSpeeds::getPValue( const QString type )
    }
    else if ( type == "durhr" )
    {
-      value = QString::number( ct_lenhr ->value() );
+      value = QString::number( ct_durhr ->value() );
    }
    else if ( type == "durmin" )
    {
-      value = QString::number( ct_lenmin->value() );
+      value = QString::number( ct_durmin->value() );
    }
    else if ( type == "delayhr" )
    {
@@ -1076,6 +1133,10 @@ QString US_ExperGuiSpeeds::getPValue( const QString type )
    else if ( type == "delaymin" )
    {
       value = QString::number( ct_dlymin->value() );
+   }
+   else if ( type == "delaysec" )
+   {
+      value = QString::number( ct_dlysec->value() );
    }
    else if ( type == "changed" )
    {
@@ -1090,16 +1151,25 @@ QStringList US_ExperGuiSpeeds::getPList( const QString type )
 {
    QStringList value( "" );
 
-DbgLv(1) << "EGS:getPL: type" << type;
+DbgLv(1) << "EGSp:getPL: type" << type;
    if ( type == "profiles" )
    {  // Compose list of all speed-step values
       value.clear();
       int nspeed  = (int)ct_count ->value();
-DbgLv(1) << "EGS:getPL: nspeed" << nspeed;
+DbgLv(1) << "EGSp:getPL: nspeed" << nspeed;
 
-      for ( int ii = 0; ii < nspeed * 6; ii++ )
-      {  // Build list of QString forms of speed-step doubles
-         value << QString::number( ssvals[ ii ] );
+      for ( int ii = 0; ii < nspeed; ii++ )
+      {  // Build list of QString forms of speed-step int
+         for ( int jj = 0; jj < ssvals[ ii ].size(); jj++ )
+         {
+            QStringList keys = ssvals[ ii ].keys();
+            for ( int kk; kk < keys.count(); kk++ )
+            {
+               QString key      = keys[ kk ];
+               int ssval        = ssvals[ ii ][ key ];
+               value << ( key + ":" + QString::number( ssval ) );
+            }
+         }
       }
    }
 
@@ -1135,11 +1205,15 @@ bool is_done=true;
 QString US_ExperGuiSpeeds::speedp_description( int ssx )
 {
    // For example: "Speed Profile 1: 30000 rpm for 5 hr 30 min"
+   double durtim  = ssvals[ ssx ][ "duration" ]; // Duration total minutes
+   double durhr   = qFloor( durtim / 60.0 );     // Duration hours
+   double durmin  = durtim - ( durhr * 60.0 );   // Duration residual minutes
+DbgLv(1) << "EGSp: spDesc: ssx" << ssx
+ << "dur tim,hr,min" << durtim << durhr << durmin;
+
    return tr( "Speed Profile %1 :    %2 rpm for %3 hr %4 min" )
-          .arg( ssx + 1 )
-          .arg( ssvals[ ssx * 6 ] )
-          .arg( ssvals[ ssx * 6 + 2 ] )
-          .arg( ssvals[ ssx * 6 + 3 ] );
+          .arg( ssx + 1 ).arg( ssvals[ ssx ][ "speed" ] )
+          .arg( durhr ).arg( durmin );
 }
 
 // Slot for change in speed-step count
@@ -1147,36 +1221,40 @@ void US_ExperGuiSpeeds::ssChangeCount( double val )
 {
    changed          = true;
    int new_nsp      = (int)val;
-DbgLv(1) << "EGS: chgKnt: nsp nnsp" << nspeed << new_nsp;
+DbgLv(1) << "EGSp: chgKnt: nsp nnsp" << nspeed << new_nsp;
    if ( new_nsp > nspeed )
    {  // Number of speed steps increases
       profdesc.resize( new_nsp );
-      ssvals  .resize( new_nsp * 6 );
-      int kk           = nspeed * 6;
-      int jj           = kk - 6;
-      double ssspeed   = ssvals[ jj ];
-      double ssaccel   = ssvals[ jj + 1 ];
-      double ssdurhr   = ssvals[ jj + 2 ];
-      double ssdurmn   = ssvals[ jj + 3 ];
-      double ssdlyhr   = ssvals[ jj + 4 ];
-      double ssdlymn   = ssvals[ jj + 5 ];
-DbgLv(1) << "EGS: chgKnt:  jj kk" << jj << kk << "spd acc duh dum dlh dlm"
- << ssspeed << ssaccel << ssdurhr << ssdurmn << ssdlyhr << ssdlymn;
+      ssvals  .resize( new_nsp );
+      int kk           = nspeed - 1;
+      double ssspeed   = (double)ssvals[ kk ][ "speed" ];
+      double ssaccel   = (double)ssvals[ kk ][ "accel" ];
+      double ssdurtim  = (double)ssvals[ kk ][ "duration" ];
+      double ssdurmin  = qRound( ssdurtim / 60.0 );
+      double ssdurhr   = ssdurtim - ( ssdurmin * 60.0 );
+      double ssdlytim  = (double)ssvals[ kk ][ "delay" ];
+      double ssdlymin  = qFloor( ssdlytim / 60.0 );
+      double ssdlyhr   = qFloor( ssdlymin / 60.0 );
+      ssdlymin        -= ( ssdlyhr * 60.0 );
+      double ssdlysec  = ssdlytim - ( ssdlyhr * 3600.0 )
+                                  - ( ssdlymin * 60.0 );
+      ssdurtim         = ( ssdurhr * 60.0 ) + ssdurmin;
+      ssdlytim         = ( ssdlyhr * 3600.0 ) + ( ssdlymin * 60.0 ) + ssdlysec;
+DbgLv(1) << "EGSp: chgKnt:  kk" << kk << "spd acc dur dly"
+ << ssspeed << ssaccel << ssdurtim << ssdlytim;
 
-      for ( int ii = nspeed; ii < new_nsp; ii++ )
+      for ( kk = nspeed; kk < new_nsp; kk++ )
       {  // Fill in new speed step description and values
          ssspeed         += 5000.0;
-         ssvals[ kk++ ]   = ssspeed;          // Speed
-         ssvals[ kk++ ]   = ssaccel;          // Acceleration
-         ssvals[ kk++ ]   = ssdurhr;          // Duration (hr)
-         ssvals[ kk++ ]   = ssdurmn;          // Duration (min)
-         ssvals[ kk++ ]   = ssdlyhr;          // Delay (hr)
-         ssvals[ kk++ ]   = ssdlymn;          // Delay (min)
-         profdesc[ ii ]   = speedp_description( ii );
-DbgLv(1) << "EGS: chgKnt:    ii" << ii << "pdesc" << profdesc[ii];
+         ssvals[ kk ][ "speed"    ] = ssspeed;   // Speed
+         ssvals[ kk ][ "accel"    ] = ssaccel;   // Acceleration
+         ssvals[ kk ][ "duration" ] = ssdurtim;  // Duration in minutes
+         ssvals[ kk ][ "delay"    ] = ssdlytim;  // Delay in seconds
+         profdesc[ kk ]             = speedp_description( kk );
+DbgLv(1) << "EGSp: chgKnt:    kk" << kk << "pdesc" << profdesc[kk];
 
          // Add to the profile description list comboBox
-         cb_prof->addItem( profdesc[ ii ] );
+         cb_prof->addItem( profdesc[ kk ] );
       }
 
       // Point to the first new speed step
@@ -1185,10 +1263,10 @@ DbgLv(1) << "EGS: chgKnt:    ii" << ii << "pdesc" << profdesc[ii];
    }
 
    else
-   {  // Number of speed steps descreases or remains the same
+   {  // Number of speed steps decreases or remains the same
       // Point to the last speed step
       profdesc.resize( new_nsp );
-      ssvals  .resize( new_nsp * 6 );
+      ssvals  .resize( new_nsp );
       cb_prof->clear();
       for ( int ii = 0; ii < new_nsp; ii++ )
          cb_prof->addItem( profdesc[ ii ] );
@@ -1203,71 +1281,75 @@ DbgLv(1) << "EGS: chgKnt:    ii" << ii << "pdesc" << profdesc[ii];
 void US_ExperGuiSpeeds::ssChangeProfx( int ssp )
 {
    changed          = true;
-DbgLv(1) << "EGS: chgPfx: ssp" << ssp << "prev-ssx" << curssx;
-DbgLv(1) << "EGS: chgPfx:  speed-c speed-p" << ssvals[ssp*6] << ssvals[curssx*6];
+DbgLv(1) << "EGSp: chgPfx: ssp" << ssp << "prev-ssx" << curssx;
+   curssx           = qMin( curssx, ( ssvals.size() - 1 ) );
+DbgLv(1) << "EGSp: chgPfx:  speed-c speed-p"
+ << ssvals[ssp]["speed"] << ssvals[curssx]["speed"];
    curssx           = ssp;
    // Set all counters for newly selected step
-   int kk           = ssp * 6;
-   ct_speed ->setValue( ssvals[ kk++ ] );
-   ct_accel ->setValue( ssvals[ kk++ ] );
-   ct_lenhr ->setValue( ssvals[ kk++ ] );
-   ct_lenmin->setValue( ssvals[ kk++ ] );
-   ct_dlyhr ->setValue( ssvals[ kk++ ] );
-   ct_dlymin->setValue( ssvals[ kk++ ] );
+   double ssspeed   = (double)ssvals[ curssx ][ "speed" ];
+   double ssaccel   = (double)ssvals[ curssx ][ "accel" ];
+   double ssdurtim  = (double)ssvals[ curssx ][ "duration" ];
+   double ssdurhr   = qFloor( ssdurtim / 60.0 );
+   double ssdurmin  = ssdurtim - ( ssdurhr * 60.0 );
+DbgLv(1) << "EGSp: chgPfx:   durtim durhr durmin" << ssdurtim << ssdurhr << ssdurmin;
+   double ssdlytim  = (double)ssvals[ curssx ][ "delay" ];
+   double ssdlymin  = qFloor( ssdlytim / 60.0 );
+   double ssdlyhr   = qFloor( ssdlymin / 60.0 );
+   ssdlymin        -= ( ssdlyhr * 60.0 );
+   double ssdlysec  = ssdlytim - ( ssdlyhr * 3600.0 )
+                               - ( ssdlymin * 60.0 );
+   ct_speed ->setValue( ssspeed  );
+   ct_accel ->setValue( ssaccel  );
+   ct_durhr ->setValue( ssdurhr  );
+   ct_durmin->setValue( ssdurmin );
+   ct_dlyhr ->setValue( ssdlyhr  );
+   ct_dlymin->setValue( ssdlymin );
+   ct_dlysec->setValue( ssdlysec );
 }
 
 // Slot for change in speed value
 void US_ExperGuiSpeeds::ssChangeSpeed( double val )
 {
    changed          = true;
-   int sx           = curssx * 6;
-DbgLv(1) << "EGS: chgSpe: val" << val << "ssx" << curssx;
-   ssvals[ sx ]     = val;  // Set Speed in step vals vector
+DbgLv(1) << "EGSp: chgSpe: val" << val << "ssx" << curssx;
+   ssvals  [ curssx ][ "speed" ] = val;  // Set Speed in step vals vector
    profdesc[ curssx ] = speedp_description( curssx );
    cb_prof->setItemText( curssx, profdesc[ curssx ] );
 
    // Set minimum delay time based on speed change and acceleration
-   double spdelta   = ( curssx > 0 ) ? ( val - ssvals[ sx - 6 ] ) : val;
-   double accel     = ssvals[ sx + 1 ];
-   double delayhr   = ssvals[ sx + 4 ];
-DbgLv(1) << "EGS: chgSpe:  spdelta accel delayhr" << spdelta << accel << delayhr;
-   if ( delayhr == 0.0 )
-   {  // If delay hours is 0, compute the low minutes needed to accelerate
-      double delayse   = qCeil( spdelta / accel );     // Low delay in seconds
-      double delaymi   = (int)qCeil( delayse / 60.0 ); // Low delay in minutes
-DbgLv(1) << "EGS: chgSpe:  delayse delaymi" << delayse << delaymi;
-      ct_dlymin->setMinimum( delaymi );
-   }
-   else
-   {  // If delay at least 1 hour, minimum delay minutes is 0
-      ct_dlymin->setMinimum( 0.0 );
-   }
+   adjustDelay();
 }
 
 // Slot for change in acceleration value
 void US_ExperGuiSpeeds::ssChangeAccel( double val )
 {
-DbgLv(1) << "EGS: chgAcc: val" << val << "ssx" << curssx;
-   ssvals[ curssx * 6 + 1 ] = val;  // Set Acceleration in step vals vector
+DbgLv(1) << "EGSp: chgAcc: val" << val << "ssx" << curssx;
+   ssvals[ curssx ][ "accel" ] = val;  // Set Acceleration in step vals vector
+
+   // Set minimum delay time based on speed and new acceleration
+   adjustDelay();
 }
 
 // Slot for change in duration-hour value
 void US_ExperGuiSpeeds::ssChangeDurhr( double val )
 {
    changed          = true;
-DbgLv(1) << "EGS: chgDuh: val" << val << "ssx" << curssx;
-   ssvals[ curssx * 6 + 2 ] = val;  // Set Duration-Hr in step vals vector
-   profdesc[ curssx ]       = speedp_description( curssx );
+DbgLv(1) << "EGSp: chgDuh: val" << val << "ssx" << curssx;
+   double ssdurtim  = ( val * 60.0 ) + ct_durmin->value();
+   ssvals[ curssx ][ "duration" ] = ssdurtim;  // Set Duration in step vals vector
+   profdesc[ curssx ] = speedp_description( curssx );
    cb_prof->setItemText( curssx, profdesc[ curssx ] );
 }
 
 // Slot for change in duration-minute value
-void US_ExperGuiSpeeds::ssChangeDurmn( double val )
+void US_ExperGuiSpeeds::ssChangeDurmin( double val )
 {
    changed          = true;
-DbgLv(1) << "EGS: chgDum: val" << val << "ssx" << curssx;
-   ssvals[ curssx * 6 + 3 ] = val;  // Set Duration-min in step vals vector
-   profdesc[ curssx ]       = speedp_description( curssx );
+DbgLv(1) << "EGSp: chgDum: val" << val << "ssx" << curssx;
+   double ssdurtim  = ( ct_durhr->value() * 60.0 ) + val;
+   ssvals[ curssx ][ "duration" ] = ssdurtim;  // Set Duration in step vals vector
+   profdesc[ curssx ] = speedp_description( curssx );
    cb_prof->setItemText( curssx, profdesc[ curssx ] );
 }
 
@@ -1275,16 +1357,102 @@ DbgLv(1) << "EGS: chgDum: val" << val << "ssx" << curssx;
 void US_ExperGuiSpeeds::ssChangeDlyhr( double val )
 {
    changed          = true;
-DbgLv(1) << "EGS: chgDlh: val" << val << "ssx" << curssx;
-   ssvals[ curssx * 6 + 4 ] = val;  // Set Delay-hr in step vals vector
+DbgLv(1) << "EGSp: chgDlh: val" << val << "ssx" << curssx;
+   double ssdlyhr   = val;
+   double ssdlymin  = ct_dlymin->value();
+   double ssdlysec  = ct_dlysec->value();
+   double ssdlytim  = ( ssdlyhr * 3600.0 ) + ( ssdlymin * 60.0 ) + ssdlysec;
+   ssvals[ curssx ][ "delay" ] = ssdlytim;  // Set Delay in step vals vector
+
+   // Set minimum delay time based on speed, acceleration, and delay-hours
+   adjustDelay();
 }
 
 // Slot for change in delay-minute value
-void US_ExperGuiSpeeds::ssChangeDlymn( double val )
+void US_ExperGuiSpeeds::ssChangeDlymin( double val )
 {
    changed          = true;
-DbgLv(1) << "EGS: chgDlm: val" << val << "ssx" << curssx;
-   ssvals[ curssx * 6 + 5 ] = val;  // Set Delay-min in step vals vector
+DbgLv(1) << "EGSp: chgDlm: val" << val << "ssx" << curssx;
+   double ssdlyhr   = ct_dlyhr ->value();
+   double ssdlymin  = val;
+   double ssdlysec  = ct_dlysec->value();
+   double ssdlytim  = ( ssdlyhr * 3600.0 ) + ( ssdlymin * 60.0 ) + ssdlysec;
+   ssvals[ curssx ][ "delay" ] = ssdlytim;  // Set Delay in step vals vector
+
+   // Set minimum delay time based on speed, acceleration, and delay-hours
+   adjustDelay();
+}
+
+// Slot for change in delay-second value
+void US_ExperGuiSpeeds::ssChangeDlysec( double val )
+{
+   changed          = true;
+DbgLv(1) << "EGSp: chgDls: val" << val << "ssx" << curssx;
+   double ssdlyhr   = ct_dlyhr ->value();
+   double ssdlymin  = ct_dlymin->value();
+   double ssdlysec  = val;
+   double ssdlytim  = ( ssdlyhr * 3600.0 ) + ( ssdlymin * 60.0 ) + ssdlysec;
+   ssvals[ curssx ][ "delay" ] = ssdlytim;  // Set Delay in step vals vector
+}
+
+// Function to adjust delay minimum when related values are changed
+void US_ExperGuiSpeeds::adjustDelay( void )
+{
+   // Set minimum delay time based on speed change and acceleration
+   double cspeed    = ssvals[ curssx ][ "speed" ];  // Current step's speed
+   double pspeed    = ( curssx > 0 ) ? ssvals[ curssx - 1 ][ "speed" ] : 0.0;
+   double spdelta   = cspeed - pspeed;         // Speed delta
+   double accel     = ssvals[ curssx ][ "accel" ];   // Acceleration
+   double delaytim  = ssvals[ curssx ][ "delay" ];   // Delay in total seconds
+   double delayhr   = qFloor( delaytim / 3600.0 );   // Delay in hours
+   double delaymin  = qFloor( delayhr / 60.0 );      // Delay in minutes
+   delaymin        -= ( delayhr * 60.0 );            // Residual minutes
+   double delaysec  = qRound( delaytim
+                              - ( delayhr * 3600.0 )
+                              - ( delaymin * 60.0 ) );  // Residual seconds
+   double delaylowm = 0.0;   // Delay-minutes low for delay-hours > 0
+   double delaylows = 0.0;   // Delay-seconds low for delay-hours > 0
+   double setdlyhr  = ct_dlyhr ->value();  // Currently set hours
+   double setdlymin = ct_dlymin->value();  // Currently set minutes
+   double setdlysec = ct_dlysec->value();  // Currently set seconds
+DbgLv(1) << "EGSp: adjDelay:  spdelta accel delayhr delaymin delaysec"
+ << spdelta << accel << delayhr << delaymin << delaysec;
+DbgLv(1) << "EGSp: adjDelay:    setdlyhr setdlymin setdlysec"
+ << setdlyhr << setdlymin << setdlysec;
+
+   if ( delayhr == 0.0 )
+   {  // If delay hours is 0, compute the low minutes needed to accelerate
+      double delayls   = qCeil( spdelta / accel );        // Low seconds delay
+      double delaylm   = qFloor( delayls / 60.0 );        // Low minutes delay
+      delayls         -= qRound( delaylm * 60.0 );        // Residual low seconds
+      delaylowm        = delaylm;          // Lower limit on delay minutes
+
+      if ( setdlymin <= delaylm )
+      {  // For delay-minutes at or below low-delay-minutes, need to set low seconds
+         delaylows        = delayls;
+DbgLv(1) << "EGSp: adjDelay:   delaylm delaymin" << delaylm << delaymin
+ << "delaylows" << delaylows;
+      }
+DbgLv(1) << "EGSp: adjDelay:  delaysec delaylows" << delaysec << delaylows
+ << "delaylowm" << delaylowm;
+   }
+
+   ct_dlymin->setMinimum( delaylowm );
+   ct_dlysec->setMinimum( delaylows );
+   setdlymin        = ct_dlymin->value();  // (newly?) set minutes
+   setdlysec        = ct_dlysec->value();  // (newly?) set seconds
+
+   // Save delay minutes,seconds if changing the minimum changed the value
+   double delaynmin = qMax( setdlymin, delaylowm );  // Adjusted minutes?
+   double delaynsec = qMax( setdlysec, delaylows );  // Adjusted seconds?
+
+   if ( delaynmin != setdlymin  ||  delaynsec != setdlysec )
+   {  // Change in delay time due to minimum:  save new delay in seconds
+      delaytim         = ( delayhr * 3600.0 ) + ( delaynmin * 60.0 ) + delaynsec;
+      ssvals[ curssx ][ "delay" ] = delaytim;
+   }
+DbgLv(1) << "EGSp: adjDelay:   setdlymin delaynmin" << setdlymin << delaynmin;
+DbgLv(1) << "EGSp: adjDelay:   setdlysec delaynsec" << setdlysec << delaynsec;
 }
 
 
@@ -1393,7 +1561,6 @@ DbgLv(1) << "EGC:initP:   ii cenps-count" << ii << cc_cenps[ii]->count();
       if ( ii == icbal )
       {  // This is a counterbalance cell
          cb_cenp->clear();
-         cb_cenp->addItems( sl_bals );
          cb_cenp->addItems( sl_bals );
          cb_wind->setVisible( false );
          // Select counterbalance based on cross cell
@@ -1608,7 +1775,7 @@ US_ExperGuiSolutions::US_ExperGuiSolutions( QWidget* topw )
    const int mxcels    = 8;
    int nholes          = sibPValue( "rotor", "nholes" ).toInt();
    QString add_comm    = tr( "Add Comments" );
-DbgLv(1) << "EGS:  nholes mxcels" << nholes << mxcels;
+DbgLv(1) << "EGSo:  nholes mxcels" << nholes << mxcels;
 
    QLabel*       cclabl;
    QComboBox*    cb_solu;
@@ -1672,7 +1839,7 @@ void US_ExperGuiSolutions::initPanel()
 {
    int nsrows          = 0;  // Count of visible solution rows
    QStringList cpnames = sibPList( "cells", "centerpieces" );
-DbgLv(1) << "EGS:initP: cpnames" << cpnames;
+DbgLv(1) << "EGSo:initP: cpnames" << cpnames;
    QStringList slabls;
 
    // Build channel labels based on cells information
@@ -1680,18 +1847,18 @@ DbgLv(1) << "EGS:initP: cpnames" << cpnames;
    {
       QString cpname      = cpnames[ ii ];
       int chx             = cpname.indexOf( "-channel" );
-DbgLv(1) << "EGS:initP:   ii" << ii << "cpname chx" << cpname << chx;
+DbgLv(1) << "EGSo:initP:   ii" << ii << "cpname chx" << cpname << chx;
       if ( chx > 0 )
       {  // Non-empty cell centerpiece:  get channel count, build rows
          QString scell       = QString( cpname ).section( " ", 1, 1 );
          QString schans( "ABCDEF" );
          int nchan           = cpname.left( chx ).section( " ", -1, -1 )
                                  .simplified().toInt();
-DbgLv(1) << "EGS:initP:     scell" << scell << "nchan" << nchan;
+DbgLv(1) << "EGSo:initP:     scell" << scell << "nchan" << nchan;
          for ( int jj = 0; jj < nchan; jj++ )
          {
             QString celchn      = scell + " / " + QString( schans ).mid( jj, 1 );
-DbgLv(1) << "EGS:initP:      jj" << jj << "celchn" << celchn;
+DbgLv(1) << "EGSo:initP:      jj" << jj << "celchn" << celchn;
             slabls << celchn;
             nsrows++;
          }
@@ -1701,14 +1868,14 @@ DbgLv(1) << "EGS:initP:      jj" << jj << "celchn" << celchn;
    QString slabl;
    int nslabs          = nsrows;
    //nsrows              = qMax( nsrows, 3 );  // Show at least 3 dummy rows
-DbgLv(1) << "EGS:initP:  nslabs nsrows" << nslabs << nsrows
+DbgLv(1) << "EGSo:initP:  nslabs nsrows" << nslabs << nsrows
  << "k_labs k_sols" << cc_labls.count() << cc_solus.count();
  
    // Set cell/channel labels, make visible, all live rows
    for ( int ii = 0; ii < nsrows; ii++ )
    {
       slabl               = ( ii < nslabs ) ? slabls[ ii ] : tr( "none" );
-DbgLv(1) << "EGS:initP:   ii" << ii << "slabl" << slabl;
+DbgLv(1) << "EGSo:initP:   ii" << ii << "slabl" << slabl;
       cc_labls[ ii ]->setText( slabl );
       cc_labls[ ii ]->setVisible( true );
       cc_solus[ ii ]->setVisible( true );
@@ -1884,7 +2051,7 @@ QString US_ExperGuiSolutions::status()
    }
 
    bool is_done        = ( nchant > 0  &&  nchanu < 1 );
-DbgLv(1) << "EGS:st: nchant nchanu nchanf is_done"
+DbgLv(1) << "EGSo:st: nchant nchanu nchanf is_done"
  << nchant << nchanu << nchanf << is_done;
    return ( is_done ? QString( "5:X" ) : QString( "5:u" ) );
 }
@@ -1908,7 +2075,7 @@ void US_ExperGuiSolutions::detailSolutions()
                              QFont::Bold ) );
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
 QFont ufont=ediag->e->font();
-DbgLv(1) << "EGS:detS: ufont" << ufont.family();
+DbgLv(1) << "EGSo:detS: ufont" << ufont.family();
 
    // Accumulate information on solutions that are currently selected
    QStringList sdescrs;
@@ -1922,7 +2089,7 @@ DbgLv(1) << "EGS:detS: ufont" << ufont.family();
          break;
 
       QString sdescr     = cbsolu->currentText();  // Solution description
-DbgLv(1) << "EGS:detS:    ii" << ii << "solu" << sdescr;
+DbgLv(1) << "EGSo:detS:    ii" << ii << "solu" << sdescr;
 
       if ( sdescr.contains( usolu ) )  // Skip around "(unspecified)"
          continue;
@@ -1932,12 +2099,12 @@ DbgLv(1) << "EGS:detS:    ii" << ii << "solu" << sdescr;
       {  // Add solution description to list and begin channels-used list
          sdescrs << sdescr;
          chanuse[ sdescr ] = chanu;
-DbgLv(1) << "EGS:detS:      chanu" << chanu;
+DbgLv(1) << "EGSo:detS:      chanu" << chanu;
       }
       else
       {  // Append to channels-used for solution
          chanuse[ sdescr ] = chanuse[ sdescr ] + ",  " + chanu;
-DbgLv(1) << "EGS:detS:      chanu" << chanuse[sdescr];
+DbgLv(1) << "EGSo:detS:      chanu" << chanuse[sdescr];
       }
    }
 
@@ -2001,7 +2168,7 @@ bool US_ExperGuiSolutions::solutionData( const QString sdescr,
 {
    QString solID = QString( "" );
    bool found    = solutionID( sdescr, solID );
-DbgLv(1) << "EGS:solDat:  sdescr" << sdescr << "found" << found
+DbgLv(1) << "EGSo:solDat:  sdescr" << sdescr << "found" << found
  << "solID" << solID;
 
    if ( found )
@@ -2009,7 +2176,7 @@ DbgLv(1) << "EGS:solDat:  sdescr" << sdescr << "found" << found
       if ( solu_data.keys().contains( sdescr ) )
       {  // Previously fetched and mapped:  just return it
          soludata      = solu_data[ sdescr ];
-DbgLv(1) << "EGS:solDat:    OLDfound descr" << soludata.solutionDesc;
+DbgLv(1) << "EGSo:solDat:    OLDfound descr" << soludata.solutionDesc;
       }
 
       else
@@ -2021,7 +2188,7 @@ DbgLv(1) << "EGS:solDat:    OLDfound descr" << soludata.solutionDesc;
          {
             int stat      = soludata.readFromDB( solID.toInt(), dbP );
             found         = ( stat == US_DB2::OK );
-DbgLv(1) << "EGS:solDat:    NEWfound descr" << soludata.solutionDesc << stat;
+DbgLv(1) << "EGSo:solDat:    NEWfound descr" << soludata.solutionDesc << stat;
          }
          else
          {
@@ -2134,7 +2301,7 @@ void US_ExperGuiSolutions::addComments()
    QString sname       = sobj->objectName();
    int irow            = sname.section( ":", 0, 0 ).toInt();
    QString cclabl      = cc_labls[ irow ]->text();
-DbgLv(1) << "EGS:addComm: sname irow" << sname << irow;
+DbgLv(1) << "EGSo:addComm: sname irow" << sname << irow;
 QString mtitle  = tr( "Not Yet Implemented" );
 QString message = tr( "The ability to add comments for " )
  + cclabl + "\n" + tr( "has not yet been implement" );
@@ -2168,7 +2335,7 @@ US_ExperGuiOptical::US_ExperGuiOptical( QWidget* topw )
 
    const int mxcels    = 8;
    int nholes          = sibPValue( "rotor", "nholes" ).toInt();
-DbgLv(1) << "EGO:  nholes mxcels" << nholes << mxcels;
+DbgLv(1) << "EGOp:  nholes mxcels" << nholes << mxcels;
 
    QLabel*        cclabl;
    QCheckBox*     ck_osys1;
@@ -2184,15 +2351,15 @@ DbgLv(1) << "EGO:  nholes mxcels" << nholes << mxcels;
    QStringList optentr = US_Settings::defaultXpnHost();
    int nopten       = optentr.count();
    int nopsys       = nopten - 6;
-DbgLv(1) << "EGO:main: optentr" << optentr;
-DbgLv(1) << "EGO:main:  nopten" << nopten << "nopsys" << nopsys;
+DbgLv(1) << "EGOp:main: optentr" << optentr;
+DbgLv(1) << "EGOp:main:  nopten" << nopten << "nopsys" << nopsys;
    QString opsys1   = ( nopten > 6 ) ? optentr[ 6 ]
                                      : tr( "UV/visible" );
    QString opsys2   = ( nopten > 7 ) ? optentr[ 7 ]
                                      : tr( "Rayleigh Interference" );
    QString opsys3   = ( nopten > 8 ) ? optentr[ 8 ]
                                      : tr( "(not installed)" );
-DbgLv(1) << "EGO:main:   opsys1-3" << opsys1 << opsys2 << opsys3;
+DbgLv(1) << "EGOp:main:   opsys1-3" << opsys1 << opsys2 << opsys3;
    int nckopt       = 0;
    nckopt          += opsys1.contains( tr( "not installed" ) ) ? 0 : 1;
    nckopt          += opsys2.contains( tr( "not installed" ) ) ? 0 : 1;
@@ -2251,7 +2418,7 @@ DbgLv(1) << "EGO:main:   opsys1-3" << opsys1 << opsys2 << opsys3;
 
       bool is_vis          = ( ii < 4 );
       cclabl  ->setVisible( is_vis );
-DbgLv(1) << "EGO:main:    ii" << ii << "is_vis nckopt" << is_vis << nckopt;
+DbgLv(1) << "EGOp:main:    ii" << ii << "is_vis nckopt" << is_vis << nckopt;
       bg_osyss->button( 1 )->setVisible( is_vis && ( nckopt > 0 ) );
       bg_osyss->button( 2 )->setVisible( is_vis && ( nckopt > 1 ) );
       bg_osyss->button( 3 )->setVisible( is_vis && ( nckopt > 2 ) );
@@ -2277,7 +2444,7 @@ void US_ExperGuiOptical::initPanel()
 {
    int nsrows          = 0;  // Count of visible optical rows
    QStringList cpnames = sibPList( "cells", "centerpieces" );
-DbgLv(1) << "EGO:initP: cpnames" << cpnames;
+DbgLv(1) << "EGOp:initP: cpnames" << cpnames;
    QStringList slabls;
 
    // Build channel labels based on cells information
@@ -2285,18 +2452,18 @@ DbgLv(1) << "EGO:initP: cpnames" << cpnames;
    {
       QString cpname   = cpnames[ ii ];
       int chx          = cpname.indexOf( "-channel" );
-DbgLv(1) << "EGO:initP:   ii" << ii << "cpname chx" << cpname << chx;
+DbgLv(1) << "EGOp:initP:   ii" << ii << "cpname chx" << cpname << chx;
       if ( chx > 0 )
       {  // Non-empty cell centerpiece:  get channel count, build rows
          QString scell    = QString( cpname ).section( " ", 1, 1 );
          QString schans( "ABCDEF" );
          int nchan        = cpname.left( chx ).section( " ", -1, -1 )
                               .simplified().toInt();
-DbgLv(1) << "EGO:initP:     scell" << scell << "nchan" << nchan;
+DbgLv(1) << "EGOp:initP:     scell" << scell << "nchan" << nchan;
          for ( int jj = 0; jj < nchan; jj++ )
          {
             QString celchn   = scell + " / " + QString( schans ).mid( jj, 1 );
-DbgLv(1) << "EGO:initP:      jj" << jj << "celchn" << celchn;
+DbgLv(1) << "EGOp:initP:      jj" << jj << "celchn" << celchn;
             slabls << celchn;
             nsrows++;
          }
@@ -2305,7 +2472,7 @@ DbgLv(1) << "EGO:initP:      jj" << jj << "celchn" << celchn;
    }
 
    QString notinst  = tr( "(not installed)" );
-DbgLv(1) << "EGO:initP:  nsrows" << nsrows
+DbgLv(1) << "EGOp:initP:  nsrows" << nsrows
  << "k_labs k_sys1" << cc_labls.count() << cc_osyss.count();
  
    // Set cell/channel labels and checkboxes; make visible, all live rows
@@ -2319,7 +2486,7 @@ DbgLv(1) << "EGO:initP:  nsrows" << nsrows
       ckbox1->setVisible( ! ckbox1->text().contains( notinst ) );
       ckbox2->setVisible( ! ckbox2->text().contains( notinst ) );
       ckbox3->setVisible( ! ckbox3->text().contains( notinst ) );
-DbgLv(1) << "EGO:initP:   ii" << ii << "slabl" << slabls[ ii ]
+DbgLv(1) << "EGOp:initP:   ii" << ii << "slabl" << slabls[ ii ]
  << "boxtexts" << ckbox1->text() << ckbox2->text() << ckbox3->text();
    }
 
@@ -2359,9 +2526,61 @@ QStringList US_ExperGuiOptical::getPList( const QString type )
 {
    QStringList value( "" );
 
-   if ( type == "eprofiles" )
+   if ( type == "profiles" )
    {
-      //value << le_runid->text();
+      QString eslabl   = tr( "none" );
+      QString notinst  = tr( "(not installed)" );
+      int nsrow        = 0;
+
+      // Build optical profile entries
+      for ( int ii = 0; ii < mxrow; ii++ )
+      {
+         QString clabl     = cc_labls[ ii ]->text();
+DbgLv(1) << "EGOp: gPL:" << ii << clabl;
+
+         if ( clabl == eslabl )
+            break;
+
+         nsrow++;
+         QCheckBox* ckbox1 = (QCheckBox*)cc_osyss[ ii ]->button( 1 );
+         QCheckBox* ckbox2 = (QCheckBox*)cc_osyss[ ii ]->button( 2 );
+         QCheckBox* ckbox3 = (QCheckBox*)cc_osyss[ ii ]->button( 3 );
+         QString cbtext1   = ckbox1->text();
+         QString cbtext2   = ckbox2->text();
+         QString cbtext3   = ckbox3->text();
+         bool chked1       = ckbox1->isChecked();
+         bool chked2       = ckbox2->isChecked();
+         bool chked3       = ckbox3->isChecked();
+DbgLv(1) << "EGOp: gPL:   (1) text" << cbtext1 << "checked" << chked1;
+DbgLv(1) << "EGOp: gPL:   (2) text" << cbtext2 << "checked" << chked2;
+DbgLv(1) << "EGOp: gPL:   (3) text" << cbtext3 << "checked" << chked3;
+         int noptis        = 0;
+         QString pentry( "" );
+
+         if ( !cbtext1.isEmpty()  &&  ( cbtext1 != notinst )  && chked1 )
+         {  // Checked optical system:  add to profile entry
+            pentry           += ( ":" + cbtext1 );
+            noptis++;
+         }
+
+         if ( !cbtext2.isEmpty()  &&  ( cbtext2 != notinst )  && chked2 )
+         {  // Checked optical system:  add to profile entry
+            pentry           += ( ":" + cbtext2 );
+            noptis++;
+         }
+
+         if ( !cbtext3.isEmpty()  &&  ( cbtext3 != notinst )  && chked3 )
+         {  // Checked optical system:  add to profile entry
+            pentry           += ( ":" + cbtext3 );
+            noptis++;
+         }
+
+         if ( noptis > 0 )
+         {
+            value << clabl + pentry;
+         }
+DbgLv(1) << "EGOp: gPL:     noptis" << noptis << "pentry" << pentry;
+      }
    }
 
    return value;
@@ -2396,7 +2615,7 @@ is_done=true;
 // Slot to manage extinction profiles
 void US_ExperGuiOptical::manageEProfiles()
 {
-DbgLv(1) << "EGO: mEP: IN";
+DbgLv(1) << "EGOp: mEP: IN";
    //US_Extinction ediag( "BUFFER", "some buffer", this );
    US_Extinction* ediag = new US_Extinction;
    ediag->setParent(   this, Qt::Window );
@@ -2411,16 +2630,16 @@ DbgLv(1) << "EGO: mEP: IN";
 // Slot to handle an optical system being checked
 void US_ExperGuiOptical::opsysChecked( bool checked )
 {
-DbgLv(1) << "EGO: oCk: checked" << checked;
+DbgLv(1) << "EGOp: oCk: checked" << checked;
    // Determine which row and which of 3 possible check boxes
    QObject* sobj       = sender();      // Sender object
    QString oname       = sobj->objectName();
    int irow            = oname.section( ":", 0, 0 ).toInt();
    int ibtn            = oname.mid( oname.length() - 1 ).toInt();
-DbgLv(1) << "EGO: oCk:  oname" << oname << "irow" << irow << "ibtn" << ibtn;
+DbgLv(1) << "EGOp: oCk:  oname" << oname << "irow" << irow << "ibtn" << ibtn;
    // Ignore if not Interference
    QString optype      = cc_osyss[ irow ]->button( ibtn )->text();
-DbgLv(1) << "EGO: oCk:   optype" << optype;
+DbgLv(1) << "EGOp: oCk:   optype" << optype;
    if ( optype != tr( "Rayleigh Interference" ) )
       return;
 
@@ -2429,7 +2648,7 @@ DbgLv(1) << "EGO: oCk:   optype" << optype;
    QString scell       = clabl.left( 1 );
    QString labnone     = tr( "none" );
    QList< int >  ccrows;
-DbgLv(1) << "EGO: oCk:    clabl" << clabl << "scell" << scell;
+DbgLv(1) << "EGOp: oCk:    clabl" << clabl << "scell" << scell;
    for ( int ii = 0; ii < mxrow; ii++ )
    {
       // Ignore the exact same row
@@ -2445,10 +2664,10 @@ DbgLv(1) << "EGO: oCk:    clabl" << clabl << "scell" << scell;
       {  // Save same-cell row and disconnect the checkbox
          ccrows << ii;
          cc_osyss[ ii ]->button( ibtn )->disconnect();
-DbgLv(1) << "EGO: oCk:     ii" << ii << "rlabl" << rlabl;
+DbgLv(1) << "EGOp: oCk:     ii" << ii << "rlabl" << rlabl;
       }
    }
-DbgLv(1) << "EGO: oCk: ccrows" << ccrows;
+DbgLv(1) << "EGOp: oCk: ccrows" << ccrows;
 
    // Set check-state of Interference boxes in same-cell rows and reconnect
    for ( int ii = 0; ii < ccrows.count(); ii++ )
@@ -2615,7 +2834,9 @@ void US_ExperGuiSpectra::initPanel()
 {
    int nsrows          = 0;  // Count of visible optical rows
    QStringList cpnames = sibPList( "cells", "centerpieces" );
-DbgLv(1) << "EGO:initP: cpnames" << cpnames;
+DbgLv(1) << "EGwS:initP: cpnames" << cpnames;
+   QStringList opprofs = sibPList( "optical", "profiles" );
+DbgLv(1) << "EGwS:initP:  opprofs" << opprofs;
    QStringList slabls;
 
    // Build channel labels based on cells information
@@ -2623,20 +2844,35 @@ DbgLv(1) << "EGO:initP: cpnames" << cpnames;
    {
       QString cpname   = cpnames[ ii ];
       int chx          = cpname.indexOf( "-channel" );
-DbgLv(1) << "EGO:initP:   ii" << ii << "cpname chx" << cpname << chx;
+DbgLv(1) << "EGwS:initP:   ii" << ii << "cpname chx" << cpname << chx;
       if ( chx > 0 )
       {  // Non-empty cell centerpiece:  get channel count, build rows
          QString scell    = QString( cpname ).section( " ", 1, 1 );
          QString schans( "ABCDEF" );
          int nchan        = cpname.left( chx ).section( " ", -1, -1 )
                               .simplified().toInt();
-DbgLv(1) << "EGO:initP:     scell" << scell << "nchan" << nchan;
+         bool show        = true;
+
+DbgLv(1) << "EGwS:initP:     scell" << scell << "nchan" << nchan;
          for ( int jj = 0; jj < nchan; jj++ )
          {
             QString celchn   = scell + " / " + QString( schans ).mid( jj, 1 );
-DbgLv(1) << "EGO:initP:      jj" << jj << "celchn" << celchn;
-            slabls << celchn;
-            nsrows++;
+DbgLv(1) << "EGwS:initP:      jj" << jj << "celchn" << celchn;
+            for ( int kk = 0; kk < opprofs.size(); kk++ )
+            {
+               QString pentry  = opprofs[ kk ];
+               QString pcchan  = QString( pentry ).section( ":", 0, 0 );
+               if ( pcchan == celchn )
+               {
+                  show            = pentry.contains( tr( "UV/visible" ) );
+               }
+            }
+
+            if ( show )
+            {
+               slabls << celchn;
+               nsrows++;
+            }
          }
       }
       
@@ -2646,7 +2882,7 @@ DbgLv(1) << "EGO:initP:      jj" << jj << "celchn" << celchn;
    int nslabs       = nsrows;
    //nsrows           = qMax( nsrows, 3 );  // Show at least 3 dummy rows
    QString unavail  = tr( "(unavailable)" );
-DbgLv(1) << "EGS:initP:  nslabs nsrows" << nslabs << nsrows
+DbgLv(1) << "EGwS:initP:  nslabs nsrows" << nslabs << nsrows
  << "k_labs" << cc_labls.count();
  
    // Set cell/channel labels and elements; make visible, all live rows
@@ -2660,7 +2896,7 @@ DbgLv(1) << "EGS:initP:  nslabs nsrows" << nslabs << nsrows
       cc_loads[ ii ]->setVisible( true );
       cc_manus[ ii ]->setVisible( true );
       cc_dones[ ii ]->setVisible( true );
-DbgLv(1) << "EGS:initP:   ii" << ii << "slabl" << slabl;
+DbgLv(1) << "EGwS:initP:   ii" << ii << "slabl" << slabl;
    }
 
    slabl            = tr( "none" );
@@ -2790,7 +3026,7 @@ void US_ExperGuiSpectra::selectWavelengths()
    QString sname       = sobj->objectName();
    int irow            = sname.section( ":", 0, 0 ).toInt();
    QString cclabl      = cc_labls[ irow ]->text();
-DbgLv(1) << "EGS:selWl: sname" << sname << "irow" << irow << cclabl;
+DbgLv(1) << "EGwS:selWl: sname" << sname << "irow" << irow << cclabl;
 QString mtitle  = tr( "Not Yet Implemented" );
 QString message = tr( "The ability to select wavelengths for " )
  + cclabl + "\n" + tr( "has not yet been implement" );
@@ -2804,7 +3040,7 @@ void US_ExperGuiSpectra::checkOptima( bool checked )
    QString sname       = sobj->objectName();
    int irow            = sname.section( ":", 0, 0 ).toInt();
    QString cclabl      = cc_labls[ irow ]->text();
-DbgLv(1) << "EGS:ckOpt: sname" << sname << "irow" << irow << cclabl;
+DbgLv(1) << "EGwS:ckOpt: sname" << sname << "irow" << irow << cclabl;
    cc_loads[ irow ]->setEnabled( !checked );
    cc_manus[ irow ]->setEnabled( !checked );
    cc_dones[ irow ]->setChecked(  checked );
@@ -2823,7 +3059,7 @@ void US_ExperGuiSpectra::loadSpectrum()
    QString sname       = sobj->objectName();
    int irow            = sname.section( ":", 0, 0 ).toInt();
    QString cclabl      = cc_labls[ irow ]->text();
-DbgLv(1) << "EGS:loadS: sname" << sname << "irow" << irow << cclabl;
+DbgLv(1) << "EGwS:loadS: sname" << sname << "irow" << irow << cclabl;
    //US_Extinction ediag( "BUFFER", "some buffer", this );
    US_Extinction* ediag = new US_Extinction;
    ediag->setParent(   this, Qt::Window );
@@ -2842,7 +3078,7 @@ void US_ExperGuiSpectra::manualSpectrum()
    QString sname       = sobj->objectName();
    int irow            = sname.section( ":", 0, 0 ).toInt();
    QString cclabl      = cc_labls[ irow ]->text();
-DbgLv(1) << "EGS:manSp: sname" << sname << "irow" << irow << cclabl;
+DbgLv(1) << "EGwS:manSp: sname" << sname << "irow" << irow << cclabl;
    QMap< double, double >  extinction;
    QString strExtinc   = tr( "Extinction:" );
    bool changed        = false;
@@ -2852,10 +3088,10 @@ DbgLv(1) << "EGS:manSp: sname" << sname << "irow" << irow << cclabl;
    tdiag->exec();
    if ( changed )
    {
-DbgLv(1) << "EGS:manSp: extinction:" << extinction;
+DbgLv(1) << "EGwS:manSp: extinction:" << extinction;
    }
 else
-DbgLv(1) << "EGS:manSp: *NOT Accepted*";
+DbgLv(1) << "EGwS:manSp: *NOT Accepted*";
 }
 
 
@@ -2974,7 +3210,7 @@ US_ExperGuiUpload::US_ExperGuiUpload( QWidget* topw )
       {
          dblist.replace( ii, dblold[ ii ] );
       }
-DbgLv(1) << "EGO:main:   opsys1-3" << dblist[6] << dblist[7] << dblist[8];
+DbgLv(1) << "EGUp:main:   opsys1-3" << dblist[6] << dblist[7] << dblist[8];
 
       dblist << dblist[ 4 ];
       US_Settings::set_def_xpn_host( dblist );

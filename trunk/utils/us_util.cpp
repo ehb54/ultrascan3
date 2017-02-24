@@ -228,3 +228,149 @@ QString US_Util::bool_string( const bool boolval )
    return QString( boolval ? "1" : "0" );
 }
 
+// Return a QString representing a QList<QStringList>
+//   Two delimeters (e.g., '^', ':') are chosen by finding the
+//   first two not found in any QString of any QStringList.
+//   Those two characters (level1 and level2) are the first
+//   two characters of the output string. The level2 delimeter
+//   separates strings in each list and the level1 delimeter
+//   separates the stringlist substrings.
+int US_Util::listlistBuild( QList< QStringList >& lsl, QString& llstring )
+{
+   int nlelem      = lsl.count();
+//qDebug() << "llB: nlelem" << nlelem;
+
+   if ( nlelem == 0 )
+      return nlelem;
+
+   int ndelimf     = 0;
+   QString delim1;
+   QString delim2;
+
+   // List of potential delimeters
+   QStringList delims;
+   delims << "^" << ":" << "$" << "+" << "=" << "*" << "&" << "%"
+          << "#" << "@" << ";" << ",";
+//qDebug() << "llB:  delims" << delims;
+
+   // Search the strings in the list of string lists for each delimeter
+   for ( int ii = 0; ii < delims.count(); ii++ )
+   {
+      QString delim   = delims[ ii ];
+//qDebug() << "llB:   ii delim" << ii << delim;
+      int kfound      = 0;
+
+      for ( int jj = 0; jj < nlelem; jj++ )
+      {
+         for ( int kk =0; kk < lsl[ jj ].count(); kk++ )
+         {
+            if ( lsl[ jj ][ kk ].contains( delim ) )
+            {
+               kfound++;
+               break;
+            }
+         }
+         if ( kfound > 0 )
+            break;
+      }
+//qDebug() << "llB:     kbound" << kfound;
+
+      if ( kfound == 0 )
+      {  // This delimeter not found:  use it for one of the two
+         ndelimf++;
+//qDebug() << "llB:      ndelimf" << ndelimf << "delim" << delim;
+         if ( ndelimf == 1 )
+         {
+            delim1          = delim;
+         }
+         else
+         {
+            delim2          = delim;
+            break;
+         }
+      }
+
+      if ( ndelimf > 1 )
+         break;
+   }
+
+//qDebug() << "llB: ndelimf" << ndelimf << "delim1" << delim1 << "delim2" << delim2;
+   if ( ndelimf < 2 )
+   {  // Ouch!!! Couldn't find two delimeters to use
+      llstring        = QString( "" );
+      return 0;
+   }
+
+   // Now build up the output string starting with delimeters
+   llstring        = delim1 + delim2;
+   int lastii      = nlelem - 1;
+
+   // Build outer strings for each QStringList
+   for ( int ii = 0; ii < nlelem; ii++ )
+   {
+      QStringList sl  = lsl[ ii ];
+//qDebug() << "llB:  ii" << ii << "sl" << sl;
+      int nslelem     = sl.count();
+      int lastjj      = nslelem - 1;
+      QString inner( "" );
+
+      // Build an inner string from QStringList strings
+      for ( int jj = 0; jj < nslelem; jj++ )
+      {  
+         // Concatenate a string
+         inner          += sl[ jj ];
+      
+         // For all but last, concatenate a delimeter
+         if ( jj < lastjj )
+            inner          += delim2;
+      }
+//qDebug() << "llB:    inner" << inner;
+      
+      // Concatenate a string
+      llstring       += inner;
+      
+      // For all but last, concatenate a delimeter
+      if ( ii < lastii )
+         llstring       += delim1;
+   }
+//qDebug() << "llB: llstring" << llstring;
+      
+   return nlelem;          // Return the count of QList elements
+}
+
+// Return a QList<QStringList> as represented by an input QString.
+//   The first two characters (level1 and level2) of the input string
+//   are taken as delimeters. These delimeters are used to separate
+//   out stringlist substrings and then to separate out strings within
+//   each stringlist.
+int US_Util::listlistParse( QList< QStringList >& lsl, QString& llstring )
+{
+   int nlelem      = 0;
+   QString delim1  = QString( llstring ).left( 1 );   // Outer delimeter (ch 1)
+   QString delim2  = QString( llstring ).mid( 1, 1 ); // Inner delimeter (ch 2)
+//qDebug() << "llP: delim1" << delim1 << "delim2" << delim2;
+
+   if ( delim1.isEmpty()  ||  delim2.isEmpty() )
+   {  // Ouch!!  Input string doesn't even have delimeters
+      lsl.clear();
+      return nlelem;
+   }
+
+   // Get the list of formatted outer level strings
+//qDebug() << "llP: llstring" << llstring;
+//qDebug() << "llP: llstringM" << QString(llstring).mid(2);
+   QStringList out = QString( llstring ).mid( 2 ).split( delim1 );
+//qDebug() << "llP: out count" << out.count();
+   nlelem          = out.count();    // List count
+   lsl.clear();                      // Initialize output
+
+   // Build the outer list of stringlists by parsing inner strings
+   for ( int ii = 0; ii < nlelem; ii++ )
+   {
+      QString inner   = out[ ii ];   // Inner formatted string
+      lsl << inner.split( delim2 );  // Parse and append stringlist
+   }
+
+   return nlelem;                    // Return the count of QList elements
+}
+

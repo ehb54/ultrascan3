@@ -4,6 +4,8 @@ TARGET        = us_experiment
 QT           += xml
 QT           += sql
 
-HEADERS       = us_experiment_main.h
+HEADERS       = us_experiment_main.h   \
+                us_run_protocol.h
 
-SOURCES       = us_experiment_main.cpp
+SOURCES       = us_experiment_main.cpp   \
+                us_run_protocol.cpp
