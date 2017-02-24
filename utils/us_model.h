@@ -55,9 +55,9 @@ class US_UTIL_EXTERN US_Model
       QStringList  mcixmls;     //!< Component MC iteration XML contents
       int          nmcixs;      //!< Number of MC component xmls (iterations)
 
-		//! An integer to define the number of subgrids for a CUSTOMGRID needed
-		//! for the 2DSA initialization or output components for DISCRETEGA
-		int		    subGrids;
+      //! An integer to define the number of subgrids for a CUSTOMGRID needed
+      //! for the 2DSA initialization or output components for DISCRETEGA
+      int           subGrids;
 
       //! An index into components (-1 means none).  Generally buffer data 
       //! in the form of a component that affects the data readings.

@@ -126,6 +126,20 @@ class US_UTIL_EXTERN US_Util
       //! returns        XML attribute string representation ("0" or "1").
       static QString bool_string( const bool );
 
+      //! \brief Return a string representing a QList<QStringList>.
+      //!
+      //! \param lsl      Input list of stringlists to represent
+      //! \param llstring Output list of lists string representation
+      //! returns         Count of stringlists in list
+      static int listlistBuild( QList< QStringList >&, QString& );
+
+      //! \brief Return a QList<QStringList> as represented in a string.
+      //!
+      //! \param lsl      Output list of stringlists represented
+      //! \param llstring Input list of lists string representation
+      //! returns         Count of stringlists in list
+      static int listlistParse( QList< QStringList >&, QString& );
+
    private:
       static unsigned char hex2int( unsigned char c );
 };

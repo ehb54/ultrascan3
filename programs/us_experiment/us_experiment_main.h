@@ -3,6 +3,7 @@
 
 #include <QApplication>
 
+#include "us_run_protocol.h"
 #include "us_project_gui.h"
 #include "us_editor.h"
 #include "us_settings.h"
@@ -139,29 +140,43 @@ class US_ExperGuiSpeeds : public US_Widgets
       QwtCounter*  ct_speed;
       QwtCounter*  ct_accel;
       QwtCounter*  ct_count;
-      QwtCounter*  ct_lenhr;
-      QwtCounter*  ct_lenmin;
+      QwtCounter*  ct_durhr;
+      QwtCounter*  ct_durmin;
       QwtCounter*  ct_dlyhr;
       QwtCounter*  ct_dlymin;
+      QwtCounter*  ct_dlysec;
 
-      QVector< QString >  profdesc;
-      QVector< double >   ssvals;
+      QVector< QString >  profdesc;           // Speed profile description
+      QVector< QMap< QString, int> >  ssvals; // Speed-step values
 
-      int          dbg_level;
-      int          nspeed;
-      int          curssx;
-      bool         changed;
+      int          dbg_level;     // Debug flag
+      int          nspeed;        // Number of speed steps
+      int          curssx;        // Current speed step index
+      bool         changed;       // Flag if any speed step changes
 
    private slots:
+      //! \brief Compose a speed step description
       QString speedp_description( const int );
-      void    ssChangeCount( double );
-      void    ssChangeProfx( int    );
-      void    ssChangeSpeed( double );
-      void    ssChangeAccel( double );
-      void    ssChangeDurhr( double );
-      void    ssChangeDurmn( double );
-      void    ssChangeDlyhr( double );
-      void    ssChangeDlymn( double );
+      //! \brief Slot for SS change in number of steps
+      void    ssChangeCount ( double );
+      //! \brief Slot for SS change in profile index
+      void    ssChangeProfx ( int    );
+      //! \brief Slot for SS change in speed
+      void    ssChangeSpeed ( double );
+      //! \brief Slot for SS change in acceleration
+      void    ssChangeAccel ( double );
+      //! \brief Slot for SS change in duration-hours
+      void    ssChangeDurhr ( double );
+      //! \brief Slot for SS change in duration-minutes
+      void    ssChangeDurmin( double );
+      //! \brief Slot for SS change in delay hours
+      void    ssChangeDlyhr ( double );
+      //! \brief Slot for SS change in delay minutes
+      void    ssChangeDlymin( double );
+      //! \brief Slot for SS change in delay seconds
+      void    ssChangeDlysec( double );
+      //! \brief Function to adjust delay based on speed,accel,delay-hrs
+      void    adjustDelay   ( void   );
 };
 
 //! \brief Experiment Cells panel
@@ -379,10 +394,13 @@ class US_ExperimentMain : public US_Widgets
       QString     childPValue( const QString, const QString );
       QStringList childPList ( const QString, const QString );
 
+      US_RunProtocol  loadProto;
+      US_RunProtocol  currProto;
+
    private:
 
       //QLineEdit*  le_stat;
-      QTabWidget* tabWidget;
+      QTabWidget*           tabWidget;
 
       US_ExperGuiGeneral*   epanGeneral;
       US_ExperGuiRotor*     epanRotor;
