@@ -255,6 +255,8 @@ class US_ExperGuiSolutions : public US_Widgets
       bool solutionData   ( const QString, US_Solution& );
       int  allSolutions   ( void );
       void addComments    ( void );
+      void commentStrings ( const QString, QString&,
+                            QStringList& );
 };
 
 
