@@ -184,6 +184,9 @@ US_XpnHost::US_XpnHost( QWidget* w, Qt::WindowFlags flags )
    adjustSize();
 
    // Start out with default entry shown
+   dblist                = US_Settings::xpn_db_hosts();
+   if ( dblist.size() == 0 )
+      update_lw(  tr( "place-holder" ) );
    select_db( lw_entries->currentItem(), false );
 }
 
@@ -321,6 +324,17 @@ void US_XpnHost::check_add()
             db << cb_os2 ->currentText();
             db << cb_os3 ->currentText();
          }
+         else if ( elen == 0 )
+         {
+            db << le_description->text();
+            db << le_host->text();
+            db << le_name->text();
+            db << le_user->text();
+            db << le_pasw->text();
+            db << cb_os1 ->currentText();
+            db << cb_os2 ->currentText();
+            db << cb_os3 ->currentText();
+         }
 
          dblist.replace( ii, db );
          updated = true;
@@ -365,6 +379,22 @@ void US_XpnHost::update_lw( const QString& current )
 //set_xpn_db_hosts( const QList<QStringList>& );
 //defaultXpnHost()
 //set_def_xpn_host( const QStringList& );
+
+   if ( dblist.size() == 0 )
+   {  // First-time:  create an initial default entry
+      QStringList entry;
+      entry << tr( "place-holder" )
+            << "192.168.0.1"
+            << def_port
+            << def_name
+            << def_user
+            << def_pasw
+            << "UV/visible"
+            << "Rayleigh Interference"
+            << "(not installed)";
+
+      dblist << entry;
+   }
 
    if ( defaultDB.size() > 0 ) defaultDBname = defaultDB.at( 0 );
 

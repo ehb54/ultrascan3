@@ -23,18 +23,24 @@ class US_UTIL_EXTERN US_RunProtocol
             inline bool operator!= ( const RunProtoRotor& p ) const 
             { return ! operator==(p); }
 
-            QString     lab;           //!< Laboratory with rotor
+            //! Load controls from XML
+            bool fromXml( QXmlStreamReader& );
+
+            //! Save controls to XML
+            bool toXml  ( QXmlStreamWriter& );
+
+            QString     laboratory;    //!< Laboratory with rotor
             QString     rotor;         //!< Rotor description
             QString     calibration;   //!< Rotor Calibration description
             QString     labGUID;       //!< Laboratory GUID
-            QString     rotorGUID;     //!< Rotor GUID
-            QString     calibGUID;     //!< Rotor Calibration GUID
-            QString     absrotGUID;    //!< Abstract Rotor GUID
+            QString     rotGUID;       //!< Rotor GUID
+            QString     calGUID;       //!< Rotor Calibration GUID
+            QString     absGUID;       //!< Abstract Rotor GUID
 
             int         labID;         //!< Laboratory lab DB Id
-            int         rotorID;       //!< Rotor DB Id
-            int         calibrationID; //!< Rotor Calibration DB Id
-            int         absRotorID;    //!< Abstract Rotor DB Id
+            int         rotID;         //!< Rotor DB Id
+            int         calID;         //!< Rotor Calibration DB Id
+            int         absID;         //!< Abstract Rotor DB Id
       };
 
       //! \brief Protocol Speed Steps controls class
@@ -44,7 +50,7 @@ class US_UTIL_EXTERN US_RunProtocol
             class US_UTIL_EXTERN SpeedStep
             {
                public:
-                  double      rotorspeed;    //!< Step rotor speed in rpm
+                  double      speed;         //!< Step rotor speed in rpm
                   double      accel;         //!< Acceleration in rpm/sec
                   double      duration;      //!< Duration in minutes
                   double      delay;         //!< Delay in seconds
@@ -66,6 +72,12 @@ class US_UTIL_EXTERN US_RunProtocol
             //! A test for unequal components
             inline bool operator!= ( const RunProtoSpeed& p ) const 
             { return ! operator==(p); }
+
+            //! Load controls from XML
+            bool fromXml( QXmlStreamReader& );
+
+            //! Save controls to XML
+            bool toXml  ( QXmlStreamWriter& );
 
             int         nstep;           //!< Number of speed steps
 
@@ -102,6 +114,12 @@ class US_UTIL_EXTERN US_RunProtocol
             inline bool operator!= ( const RunProtoCells& p ) const 
             { return ! operator==(p); }
 
+            //! Load controls from XML
+            bool fromXml( QXmlStreamReader& );
+
+            //! Save controls to XML
+            bool toXml  ( QXmlStreamWriter& );
+
             int         ncell;         //!< Number of total cells
             int         nused;         //!< Number of cells used
 
@@ -116,9 +134,10 @@ class US_UTIL_EXTERN US_RunProtocol
             class US_UTIL_EXTERN ChanSolu
             {
                public:
-                  QString     channel;       //!< Channel description ("2 / A")
-                  QString     solution;      //!< Windows (quartz|sapphire)
-                  QString     comment;       //!< Counterbalance description
+                  QString     channel;       //!< Channel name ("2 / A")
+                  QString     solution;      //!< Solution name
+                  QString     sol_id;        //!< Solution Id/GUID
+                  QString     ch_comment;    //!< Channel run comment
 
                   ChanSolu();
 
@@ -137,15 +156,20 @@ class US_UTIL_EXTERN US_RunProtocol
             inline bool operator!= ( const RunProtoSolutions& p ) const 
             { return ! operator==(p); }
 
+            //! Load controls from XML
+            bool fromXml( QXmlStreamReader& );
+
+            //! Save controls to XML
+            bool toXml  ( QXmlStreamWriter& );
+
+
             int         nschan;          //!< Number of solution channels
             int         nuniqs;          //!< Number of unique solutions
 
             QVector< ChanSolu > chsols;  //!< Channel solutions,comments
 
             QStringList         solus;   //!< Unique solution descriptions
-            QStringList         sguids;  //!< Solution GUIDs
-
-            QList< int >        sids;    //!< Solution db Ids
+            QStringList         sids;    //!< Solution Ids (GUIDs if Disk)
       };
 
       //! \brief Protocol Optical Systems controls class
@@ -176,6 +200,12 @@ class US_UTIL_EXTERN US_RunProtocol
             //! A test for unequal components
             inline bool operator!= ( const RunProtoOptics& p ) const 
             { return ! operator==(p); }
+
+            //! Load controls from XML
+            bool fromXml( QXmlStreamReader& );
+
+            //! Save controls to XML
+            bool toXml  ( QXmlStreamWriter& );
 
             int         nochan;          //!< Number of channels with optics
 
@@ -211,6 +241,12 @@ class US_UTIL_EXTERN US_RunProtocol
             inline bool operator!= ( const RunProtoSpectra& p ) const 
             { return ! operator==(p); }
 
+            //! Load controls from XML
+            bool fromXml( QXmlStreamReader& );
+
+            //! Save controls to XML
+            bool toXml  ( QXmlStreamWriter& );
+
             int         nspect;           //!< Number of channels with spectra
 
             QVector< Spectrum > chspecs;  //!< Channel spectra
@@ -236,24 +272,22 @@ class US_UTIL_EXTERN US_RunProtocol
       //! \brief Constructor for the US_RunProtocol class
       US_RunProtocol();
 
-      //! \brief Store a control set's doubles parameters
-      //! \param type   Type of control ("rotor", "speed", ...)
-      //! \param parmap Mapping of parameters to store in this object.
-      //! \returns      A flag is store was successful.
-      bool storeDControls( const QString, QMap< QString, double >& );
-
-      //! \brief Store a control set's string parameters
-      //! \param type   Type of control ("rotor", "speed", ...)
-      //! \param parmap Mapping of parameters to store in this object.
-      //! \returns      A flag is store was successful.
-      bool storeSControls( const QString, QMap< QString, QString >& );
-
       //! A test for protocol equality
       bool operator== ( const US_RunProtocol& ) const;      
 
       //! A test for protocol inequality
       inline bool operator!= ( const US_RunProtocol& p )
          const { return ! operator==(p); }
+
+      //! \brief Read into internal controls from XML
+      //! \param xmli   Xml stream to read
+      //! \returns      A flag if read was successful.
+      bool fromXml( QXmlStreamReader& );
+
+      //! \brief Write internal controls to XML
+      //! \param xmlo   Xml stream to write
+      //! \returns      A flag if write was successful.
+      bool toXml  ( QXmlStreamWriter& );
 
 //3-------------------------------------------------------------------------->80
       RunProtoRotor      rpRotor;  //!< Rotor controls

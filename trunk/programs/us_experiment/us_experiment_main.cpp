@@ -975,6 +975,12 @@ US_ExperGuiSpeeds::US_ExperGuiSpeeds( QWidget* topw )
    QLabel* lb_dlyhr    = us_label( tr( "Time Delay for Scans (hours):" ) );
    QLabel* lb_dlymin   = us_label( tr( "Time Delay for Scans (minutes):" ) );
    QLabel* lb_dlysec   = us_label( tr( "Time Delay for Scans (seconds):" ) );
+   QCheckBox* ck_endoff;
+   QCheckBox* ck_radcal;
+   QLayout* lo_endoff  = us_checkbox( tr( "Spin down centrifuge at job end" ),
+                                      ck_endoff, true );
+   QLayout* lo_radcal  = us_checkbox( tr( "Perform radial calibration" ),
+                                      ck_radcal, false );
 
    // ComboBox and counters
    cb_prof             = new QComboBox( this );
@@ -1047,23 +1053,25 @@ US_ExperGuiSpeeds::US_ExperGuiSpeeds( QWidget* topw )
 
    // Create main layout rows
    int row = 0;
-   genL->addWidget( lb_count,  row,   0, 1, 3 );
-   genL->addWidget( ct_count,  row++, 3, 1, 1 );
-   genL->addWidget( cb_prof,   row++, 0, 1, 4 );
-   genL->addWidget( lb_speed,  row,   0, 1, 3 );
-   genL->addWidget( ct_speed,  row++, 3, 1, 1 );
-   genL->addWidget( lb_accel,  row,   0, 1, 3 );
-   genL->addWidget( ct_accel,  row++, 3, 1, 1 );
-   genL->addWidget( lb_durhr,  row,   0, 1, 3 );
-   genL->addWidget( ct_durhr,  row++, 3, 1, 1 );
-   genL->addWidget( lb_durmin, row,   0, 1, 3 );
-   genL->addWidget( ct_durmin, row++, 3, 1, 1 );
-   genL->addWidget( lb_dlyhr,  row,   0, 1, 3 );
-   genL->addWidget( ct_dlyhr,  row++, 3, 1, 1 );
-   genL->addWidget( lb_dlymin, row,   0, 1, 3 );
-   genL->addWidget( ct_dlymin, row++, 3, 1, 1 );
-   genL->addWidget( lb_dlysec, row,   0, 1, 3 );
-   genL->addWidget( ct_dlysec, row++, 3, 1, 1 );
+   genL->addWidget( lb_count,   row,   0, 1, 3 );
+   genL->addWidget( ct_count,   row++, 3, 1, 1 );
+   genL->addWidget( cb_prof,    row++, 0, 1, 4 );
+   genL->addWidget( lb_speed,   row,   0, 1, 3 );
+   genL->addWidget( ct_speed,   row++, 3, 1, 1 );
+   genL->addWidget( lb_accel,   row,   0, 1, 3 );
+   genL->addWidget( ct_accel,   row++, 3, 1, 1 );
+   genL->addWidget( lb_durhr,   row,   0, 1, 3 );
+   genL->addWidget( ct_durhr,   row++, 3, 1, 1 );
+   genL->addWidget( lb_durmin,  row,   0, 1, 3 );
+   genL->addWidget( ct_durmin,  row++, 3, 1, 1 );
+   genL->addWidget( lb_dlyhr,   row,   0, 1, 3 );
+   genL->addWidget( ct_dlyhr,   row++, 3, 1, 1 );
+   genL->addWidget( lb_dlymin,  row,   0, 1, 3 );
+   genL->addWidget( ct_dlymin,  row++, 3, 1, 1 );
+   genL->addWidget( lb_dlysec,  row,   0, 1, 3 );
+   genL->addWidget( ct_dlysec,  row++, 3, 1, 1 );
+   genL->addLayout( lo_endoff,  row,   0, 1, 2 );
+   genL->addLayout( lo_radcal,  row++, 2, 1, 2 );
    genL->setColumnStretch( 0, 4 );
    genL->setColumnStretch( 3, 0 );
 
@@ -1208,12 +1216,19 @@ QString US_ExperGuiSpeeds::speedp_description( int ssx )
    double durtim  = ssvals[ ssx ][ "duration" ]; // Duration total minutes
    double durhr   = qFloor( durtim / 60.0 );     // Duration hours
    double durmin  = durtim - ( durhr * 60.0 );   // Duration residual minutes
+   int    escans  = qRound( durtim * 6.0 );      // Estimated step scans
+   double durtot  = 0.0;
+   for ( int ii = 0; ii < ssvals.size(); ii++ )
+      durtot        += ssvals[ ii ][ "duration" ];
+   int    tscans  = qRound( durtot * 6.0 );      // Estimated total scans
+  
 DbgLv(1) << "EGSp: spDesc: ssx" << ssx
  << "dur tim,hr,min" << durtim << durhr << durmin;
 
-   return tr( "Speed Profile %1 :    %2 rpm for %3 hr %4 min" )
+   return tr( "Speed Profile %1 :    %2 rpm for %3 hr %4 min"
+              "  (%5 estimated scans, %6 run total)" )
           .arg( ssx + 1 ).arg( ssvals[ ssx ][ "speed" ] )
-          .arg( durhr ).arg( durmin );
+          .arg( durhr ).arg( durmin ).arg( escans ).arg( tscans );
 }
 
 // Slot for change in speed-step count
@@ -1230,8 +1245,8 @@ DbgLv(1) << "EGSp: chgKnt: nsp nnsp" << nspeed << new_nsp;
       double ssspeed   = (double)ssvals[ kk ][ "speed" ];
       double ssaccel   = (double)ssvals[ kk ][ "accel" ];
       double ssdurtim  = (double)ssvals[ kk ][ "duration" ];
-      double ssdurmin  = qRound( ssdurtim / 60.0 );
-      double ssdurhr   = ssdurtim - ( ssdurmin * 60.0 );
+      double ssdurhr   = qFloor( ssdurtim / 60.0 );
+      double ssdurmin  = ssdurtim - ( ssdurhr * 60.0 );
       double ssdlytim  = (double)ssvals[ kk ][ "delay" ];
       double ssdlymin  = qFloor( ssdlytim / 60.0 );
       double ssdlyhr   = qFloor( ssdlymin / 60.0 );
@@ -1774,7 +1789,7 @@ US_ExperGuiSolutions::US_ExperGuiSolutions( QWidget* topw )
    QStringList cpnames = sibPList( "cells", "centerpieces" );
    const int mxcels    = 8;
    int nholes          = sibPValue( "rotor", "nholes" ).toInt();
-   QString add_comm    = tr( "Add Comments" );
+   QString add_comm    = tr( "Add to Comments" );
 DbgLv(1) << "EGSo:  nholes mxcels" << nholes << mxcels;
 
    QLabel*       cclabl;
@@ -2205,12 +2220,14 @@ int US_ExperGuiSolutions::allSolutions()
 {
    sonames.clear();
    sonames << "(unspecified)";
+   QStringList soids;
 
    US_Passwd pw;
    US_DB2* dbP       = ( sibPValue( "general", "dbdisk" ) == "DB" )
                        ? new US_DB2( pw.getPasswd() ) : NULL;
    if ( dbP != NULL )
    {  // Read all the solutions in the database
+      soids << "-1";
       QString invID     = sibPValue( "general", "investigator" )
                              .section( ":", 0, 0 ).simplified();
       QStringList qry;
@@ -2233,11 +2250,13 @@ int US_ExperGuiSolutions::allSolutions()
 
          solu_ids[ descr ] = solID;
          sonames << descr;
+         soids   << solID;
       }
    }  // END: solutions in DB
 
    else
    {  // Read all the solutions on the local disk
+      soids << "00000000";
       QString path;
       US_Solution solution;
       if ( ! solution.diskPath( path ) )
@@ -2283,6 +2302,7 @@ int US_ExperGuiSolutions::allSolutions()
 
                   solu_ids[ descr ] = solID;
                   sonames << descr;
+                  soids   << solID;
                }
             }  // END: Start element
          }  // END: XML element loop
@@ -2291,21 +2311,155 @@ int US_ExperGuiSolutions::allSolutions()
       s_file.close();
    }  // END: solutions on local disk
 
+   // Do a pass through solution names looking for duplicates
+   int ndup           = 0;
+   for ( int ii = 1; ii < sonames.count(); ii++ )
+   {
+      QString sname      = sonames[ ii ];
+      int lstx           = sonames.lastIndexOf( sname );
+      if ( lstx > ii )
+      {  // At least one other with this name, make them unique
+         ndup++;
+         QString snbase     = sname;
+         int kk             = 1;
+         sname              = snbase + QString().sprintf( "  (%d)", kk );
+         sonames.replace( ii, sname );        // Replace 1st of duplicates
+         for ( int jj = ii + 1; jj <= lstx; jj++ )
+         {
+            sname           = sonames[ jj ];
+
+            if ( sname == snbase )
+            {  // This is a duplicate
+               kk++;
+               sname              = snbase + QString().sprintf( "  (%d)", kk );
+               sonames.replace( jj, sname );  // Replace each of duplicates
+            }
+         }
+      }  // Handling duplicate
+   }  // Testing solution entries
+
+   if ( ndup > 0 )
+   {  // There were duplicates, so re-do the name-to-id mapping
+      solu_ids.clear();
+      for ( int ii = 0; ii < sonames.count(); ii++ )
+      { 
+         QString sname     = sonames[ ii ];
+         solu_ids[ sname ] = soids  [ ii ];
+      }
+   }  // Re-mapping ids to names
+ 
    return solu_ids.keys().count();
 }
 
-// Slot to handle click on row Add Comments button
+// Slot to handle click on row Add to Comments button
 void US_ExperGuiSolutions::addComments()
 {
+DbgLv(1) << "EGSo:addComm: IN";
+   bool ok;
+   QString chcomm( "" );
+   QStringList comms;
+   QString sufx        = "";
    QObject* sobj       = sender();   // Sender object
    QString sname       = sobj->objectName();
    int irow            = sname.section( ":", 0, 0 ).toInt();
-   QString cclabl      = cc_labls[ irow ]->text();
 DbgLv(1) << "EGSo:addComm: sname irow" << sname << irow;
-QString mtitle  = tr( "Not Yet Implemented" );
-QString message = tr( "The ability to add comments for " )
- + cclabl + "\n" + tr( "has not yet been implement" );
-QMessageBox::information( this, mtitle, message );
+   QString cclabl      = cc_labls[ irow ]->text();
+DbgLv(1) << "EGSo:addComm:  cclabl" << cclabl;
+   QString sdescr      = cc_solus[ irow ]->currentText();
+
+   // Get list of channel comment component strings
+   //  and compose default channel comment string
+   commentStrings( sdescr, chcomm, comms );
+   int ncc             = comms.count();  // Number of component strings
+
+   // Start the Add-to-Comments dialog text
+   QString msg =
+        tr( "The Protocol composes a fixed comment for each<br/>" )
+      + tr( "channel that consists of its solution, buffer, analyte(s).<br/>" )
+      + tr( "That is, for channel " ) + " <b>" + cclabl + "</b>, "
+      + tr( "the Experiment Run <br/>comment is currently:<br/><br/>" );
+
+   // Build initial comments (solution, buffer, analytes)
+   msg        += "<b>";
+   for ( int jj = 0; jj < ncc; jj++ )
+   {
+      QString cc  = comms[ jj ];
+      if ( ( jj + 1 ) < ncc )
+      {  // Not last component string
+         if ( cc.length() < 80 )
+         {
+            msg        += "   \"" + cc + ", \"<br/>";
+         }
+         else
+         {
+            QString l1  = QString( cc ).left( 80 );
+            QString l2  = QString( cc ).mid( 80 );
+            msg        += "   \"" + l1 + "\"<br/>";
+            msg        += "   \"" + l2 + ", \"<br/>";
+         }
+      }
+
+      else
+      {  // Last component string
+         if ( cc.length() < 80 )
+         {  // Append analyte
+            msg        += "   \"" + cc  + "\"</b><br/><br/>";
+         }
+         else
+         {  // Append analyte on two lines
+            QString l1  = QString( cc ).left( 80 );
+            QString l2  = QString( cc ).mid( 80 );
+            msg        += "   \"" + l1 + "\"<br/>";
+            msg        += "   \"" + l2 + "\"</b><br/><br/>";
+         }
+      }
+   }
+
+   // Complete dialog text and display the dialog
+   msg         = msg 
+      + tr( "You may enter additional characters to append to<br/>" )
+      + tr( "this text, then click on <b>OK</b>:<br/><br/>" );
+
+   sufx        = QInputDialog::getText( this,
+      tr( "Add to Experiment's Channel Comments" ),
+      msg, QLineEdit::Normal, sufx, &ok );
+
+   if ( ok )
+   {  // OK:  append suffix to channel comment
+      chcomm     += ", " + sufx;
+   }
+DbgLv(1) << "EGSo:addComm:  sufx" << sufx;
+DbgLv(1) << "EGSo:addComm:   chcomm" << chcomm;
+}
+
+// Function to compose channel comment strings (string and list)
+void US_ExperGuiSolutions::commentStrings( const QString solname,
+      QString& comment, QStringList& comstrngs )
+{
+   US_Solution soludata;
+   solutionData( solname, soludata );
+   comstrngs.clear();
+
+   // Start with solution name/description
+   comstrngs << solname;               // First string (solution)
+   comment        = solname + ", ";    // Beginning of channel comment
+
+   // Append buffer description
+   QString buf = soludata.buffer.description;
+   comstrngs << buf;                   // Second string (buffer)
+   comment       += buf + ", ";        // Append to channel comment
+
+   // Append analytes
+   int nana    = soludata.analyteInfo.count();
+   for ( int jj = 0; jj < nana; jj++ )
+   {
+      QString ana = soludata.analyteInfo[ jj ].analyte.description;
+      comstrngs << ana;                // Subsequent string (analyte)
+      if ( ( jj + 1 ) < nana )
+         comment       += ana + ", ";  // Append not-last analyte
+      else
+         comment       += ana;         // Append last analyte
+   }
 }
 
 
