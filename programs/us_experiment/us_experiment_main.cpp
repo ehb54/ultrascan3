@@ -1171,7 +1171,7 @@ DbgLv(1) << "EGSp:getPL: nspeed" << nspeed;
          for ( int jj = 0; jj < ssvals[ ii ].size(); jj++ )
          {
             QStringList keys = ssvals[ ii ].keys();
-            for ( int kk; kk < keys.count(); kk++ )
+            for ( int kk = 0; kk < keys.count(); kk++ )
             {
                QString key      = keys[ kk ];
                int ssval        = ssvals[ ii ][ key ];

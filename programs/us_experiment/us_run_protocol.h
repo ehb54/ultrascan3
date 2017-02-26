@@ -7,11 +7,11 @@
 
 //! A class to define a Run Protocol object for US_ExperimentMain and
 //!  related classes
-class US_UTIL_EXTERN US_RunProtocol
+class US_RunProtocol
 {
    public:
       //! \brief Protocol Lab/Rotor controls class
-      class US_UTIL_EXTERN RunProtoRotor
+      class RunProtoRotor
       {
          public:
             RunProtoRotor();
@@ -44,10 +44,10 @@ class US_UTIL_EXTERN US_RunProtocol
       };
 
       //! \brief Protocol Speed Steps controls class
-      class US_UTIL_EXTERN RunProtoSpeed
+      class RunProtoSpeed
       {
          public:
-            class US_UTIL_EXTERN SpeedStep
+            class SpeedStep
             {
                public:
                   double      speed;         //!< Step rotor speed in rpm
@@ -85,10 +85,10 @@ class US_UTIL_EXTERN US_RunProtocol
       };
 
       //! \brief Protocol Cells controls class
-      class US_UTIL_EXTERN RunProtoCells
+      class RunProtoCells
       {
          public:
-            class US_UTIL_EXTERN CellUse
+            class CellUse
             {
                public:
                   int         cell;          //!< Cell number
@@ -128,10 +128,10 @@ class US_UTIL_EXTERN US_RunProtocol
       };
 
       //! \brief Protocol Solutions controls class
-      class US_UTIL_EXTERN RunProtoSolutions
+      class RunProtoSolutions
       {
          public:
-            class US_UTIL_EXTERN ChanSolu
+            class ChanSolu
             {
                public:
                   QString     channel;       //!< Channel name ("2 / A")
@@ -173,10 +173,10 @@ class US_UTIL_EXTERN US_RunProtocol
       };
 
       //! \brief Protocol Optical Systems controls class
-      class US_UTIL_EXTERN RunProtoOptics
+      class RunProtoOptics
       {
          public:
-            class US_UTIL_EXTERN OpticSys
+            class OpticSys
             {
                public:
                   QString     channel;       //!< Channel description ("2 / A")
@@ -213,10 +213,10 @@ class US_UTIL_EXTERN US_RunProtocol
       };
 
       //! \brief Protocol Spectra controls class
-      class US_UTIL_EXTERN RunProtoSpectra
+      class RunProtoSpectra
       {
          public:
-            class US_UTIL_EXTERN Spectrum
+            class Spectrum
             {
                public:
                   QString          channel;  //!< Channel description ("2 / A")
@@ -253,7 +253,7 @@ class US_UTIL_EXTERN US_RunProtocol
       };
 
       //! \brief Protocol Upload controls class
-      class US_UTIL_EXTERN RunProtoUpload
+      class RunProtoUpload
       {
          public:
             RunProtoUpload();
