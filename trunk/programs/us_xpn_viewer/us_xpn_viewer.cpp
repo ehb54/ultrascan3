@@ -143,7 +143,7 @@ else
 
                 pb_prev     = us_pushbutton( tr( "Previous" ) );
                 pb_next     = us_pushbutton( tr( "Next" ) );
-   us_checkbox( tr( "Always Auto-scale Y Axis" ), ck_autoscy, false );
+   us_checkbox( tr( "Always Auto-scale Y Axis" ), ck_autoscy, true );
    pb_prev->setIcon( US_Images::getIcon( US_Images::ARROW_LEFT  ) );
    pb_next->setIcon( US_Images::getIcon( US_Images::ARROW_RIGHT ) );
 

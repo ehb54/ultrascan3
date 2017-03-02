@@ -63,6 +63,7 @@ HEADERS      = \
                us_run_details2.h        \
                us_sassoc.h              \
                us_select_edits.h        \
+               us_select_item.h         \
                us_select_runs.h         \
                us_solution_gui.h        \
                us_spectrodata.h         \
@@ -109,6 +110,7 @@ SOURCES      = \
                us_rotor_gui.cpp           \
                us_run_details2.cpp        \
                us_sassoc.cpp              \
+               us_select_item.cpp         \
                us_select_edits.cpp        \
                us_select_runs.cpp         \
                us_solution_gui.cpp        \

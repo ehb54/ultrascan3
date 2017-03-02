@@ -8,7 +8,7 @@
 // RunProtocol constructor
 US_RunProtocol::US_RunProtocol()
 {
-   pname           = "new protocol";
+   protname        = "new protocol";
    pGUID           = QString( "00000000-0000-0000-0000-000000000000" );
    optimahost      = "192.168.1.1";
    investigator    = "Stephen Hawking";
@@ -18,18 +18,18 @@ US_RunProtocol::US_RunProtocol()
 // RunProtocol Equality operator
 bool US_RunProtocol::operator== ( const US_RunProtocol& rp ) const
 {
-   if ( pname         != rp.pname         ) return false;
-   if ( pGUID         != rp.pGUID         ) return false;
-   if ( optimahost    != rp.optimahost    ) return false;
-   if ( investigator  != rp.investigator  ) return false;
-   if ( temperature   != rp.temperature   ) return false;
+   if ( investigator != rp.investigator )  return false;
+   if ( protname     != rp.protname     )  return false;
+   if ( pGUID        != rp.pGUID        )  return false;
+   if ( optimahost   != rp.optimahost   )  return false;
+   if ( temperature  != rp.temperature  )  return false;
 
-   if ( rpRotor       != rp.rpRotor       ) return false;
-   if ( rpSpeed       != rp.rpSpeed       ) return false;
-   if ( rpCells       != rp.rpCells       ) return false;
-   if ( rpSolut       != rp.rpSolut       ) return false;
-   if ( rpOptic       != rp.rpOptic       ) return false;
-   if ( rpSpect       != rp.rpSpect       ) return false;
+   if ( rpRotor      != rp.rpRotor      )  return false;
+   if ( rpSpeed      != rp.rpSpeed      )  return false;
+   if ( rpCells      != rp.rpCells      )  return false;
+   if ( rpSolut      != rp.rpSolut      )  return false;
+   if ( rpOptic      != rp.rpOptic      )  return false;
+   if ( rpSpect      != rp.rpSpect      )  return false;
 
    return true;
 }
@@ -43,7 +43,7 @@ bool US_RunProtocol::toXml( QXmlStreamWriter& xmlo )
    xmlo.writeAttribute    ( "version", "1.0" );
 
    xmlo.writeStartElement ( "protocol" );
-   xmlo.writeAttribute    ( "description",  pname );
+   xmlo.writeAttribute    ( "name",         protname );
    xmlo.writeAttribute    ( "guid",         pGUID );
    xmlo.writeAttribute    ( "optima_host",  optimahost );
    xmlo.writeAttribute    ( "investigator", investigator );
@@ -78,42 +78,19 @@ bool US_RunProtocol::fromXml( QXmlStreamReader& xmli )
          if ( ename == "protocol" )
          {
             QXmlStreamAttributes attr = xmli.attributes();
-            pname           = attr.value( "description"  ).toString();
+            protname        = attr.value( "name"         ).toString();
             pGUID           = attr.value( "guid"         ).toString();
             optimahost      = attr.value( "optima_host"  ).toString();
             investigator    = attr.value( "investigator" ).toString();
             temperature     = attr.value( "temperature"  ).toString().toDouble();
          }
 
-         else if ( ename == "rotor" )
-         {
-            rpRotor     .fromXml( xmli );
-         }
-
-         else if ( ename == "speed" )
-         {
-            rpSpeed     .fromXml( xmli );
-         }
-
-         else if ( ename == "cells" )
-         {
-            rpCells     .fromXml( xmli );
-         }
-
-         else if ( ename == "solutions" )
-         {
-            rpSolut     .fromXml( xmli );
-         }
-
-         else if ( ename == "optics" )
-         {
-            rpOptic     .fromXml( xmli );
-         }
-
-         else if ( ename == "spectra" )
-         {
-            rpSpect     .fromXml( xmli );
-         }
+         else if ( ename == "rotor" )      { rpRotor.fromXml( xmli ); }
+         else if ( ename == "speed" )      { rpSpeed.fromXml( xmli ); }
+         else if ( ename == "cells" )      { rpCells.fromXml( xmli ); }
+         else if ( ename == "solutions" )  { rpSolut.fromXml( xmli ); }
+         else if ( ename == "optics" )     { rpOptic.fromXml( xmli ); }
+         else if ( ename == "spectra" )    { rpSpect.fromXml( xmli ); }
       }
    }
 
@@ -376,6 +353,7 @@ bool US_RunProtocol::RunProtoCells::toXml( QXmlStreamWriter& xmlo )
    xmlo.writeStartElement( "cells" );
    xmlo.writeAttribute   ( "total_holes", QString::number( ncell ) );
    xmlo.writeAttribute   ( "used_holes",  QString::number( nused ) );
+
    for ( int ii = 0; ii < nused; ii++ )
    {
       xmlo.writeStartElement( "cell" );
@@ -391,6 +369,7 @@ bool US_RunProtocol::RunProtoCells::toXml( QXmlStreamWriter& xmlo )
       }
       xmlo.writeEndElement(); // cell
    }
+
    xmlo.writeEndElement(); // cells
 
    return ( ! xmlo.hasError() );
