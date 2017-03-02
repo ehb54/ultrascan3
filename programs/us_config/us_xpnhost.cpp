@@ -8,6 +8,8 @@
 #include "us_crypto.h"
 #include "us_db2.h"
 
+#define def_desc QString("place-holder")
+#define def_host QString("192.168.1.1")
 #define def_port QString("5432")
 #define def_name QString("AUC_DATA_DB")
 #define def_user QString("aucuser")
@@ -184,9 +186,12 @@ US_XpnHost::US_XpnHost( QWidget* w, Qt::WindowFlags flags )
    adjustSize();
 
    // Start out with default entry shown
+qDebug() << "xpnH:Main: call xpn_db_hosts";
    dblist                = US_Settings::xpn_db_hosts();
+qDebug() << "xpnH:Main:  size" << dblist.size() << "dblist" << dblist;
    if ( dblist.size() == 0 )
       update_lw(  tr( "place-holder" ) );
+qDebug() << "xpnH:Main: call select_db";
    select_db( lw_entries->currentItem(), false );
 }
 
@@ -194,6 +199,8 @@ void US_XpnHost::select_db( QListWidgetItem* entry, const bool showmsg )
 {
    // When this is run, we will always have a current dblist
 
+qDebug() << "xpnH:selDB: entry" << entry;
+qDebug() << "xpnH:selDB:  etext" << entry->text();
    // Delete trailing (default) if that is present
    QString item = entry->text().remove( " (default)" );
 
@@ -202,6 +209,8 @@ void US_XpnHost::select_db( QListWidgetItem* entry, const bool showmsg )
       if ( item == dblist.at( ii ).at( 0 ) )
       {
          int elen    = dblist.at( ii ).size();
+qDebug() << "xpnH:selDB: item" << item << "elen" << elen;
+#if 0
          le_description->setText( item );
          le_host       ->setText( dblist.at( ii ).at( 1 ) );
          le_port       ->setText( dblist.at( ii ).at( 2 ) );
@@ -235,6 +244,50 @@ void US_XpnHost::select_db( QListWidgetItem* entry, const bool showmsg )
                    << cb_os3        ->currentText();
             dblist.replace( ii, dbentr );
          }
+#endif
+#if 1
+         if ( elen < 9 )
+         {  // Old entry has from 0 to 8 strings: use what you can
+            QStringList dbentr;
+            dbentr << ( ( elen > 0 ) ? dblist.at( ii ).at( 0 )
+                                     : le_description->text() )
+                   << ( ( elen > 1 ) ? dblist.at( ii ).at( 1 )
+                                     : le_host       ->text() )
+                   << ( ( elen > 2 ) ? dblist.at( ii ).at( 2 )
+                                     : le_port       ->text() )
+                   << ( ( elen > 3 ) ? dblist.at( ii ).at( 3 )
+                                     : le_name       ->text() )
+                   << ( ( elen > 4 ) ? dblist.at( ii ).at( 4 )
+                                     : le_user       ->text() )
+                   << ( ( elen > 5 ) ? dblist.at( ii ).at( 5 )
+                                     : le_pasw       ->text() )
+                   << ( ( elen > 6 ) ? dblist.at( ii ).at( 6 )
+                                     : cb_os1 ->currentText() )
+                   << ( ( elen > 7 ) ? dblist.at( ii ).at( 7 )
+                                     : cb_os2 ->currentText() )
+                   <<                  cb_os3 ->currentText();
+qDebug() << "xpnH:selDB:   --- less than 9 ---";
+qDebug() << "xpnH:selDB:    dblist(ii)" << dblist.at(ii);
+qDebug() << "xpnH:selDB:    dbentr    " << dbentr;
+            dblist.replace( ii, dbentr );
+         }
+else
+qDebug() << "xpnH:selDB:   +++ has all 9 +++";
+
+         // Populate current entry GUI slots
+         le_description->setText( item );
+         le_host       ->setText( dblist.at( ii ).at( 1 ) );
+         le_port       ->setText( dblist.at( ii ).at( 2 ) );
+         le_name       ->setText( dblist.at( ii ).at( 3 ) );
+         le_user       ->setText( dblist.at( ii ).at( 4 ) );
+         le_pasw       ->setText( dblist.at( ii ).at( 5 ) );
+         cb_os1        ->setCurrentIndex( cb_os1->findText(
+                                  dblist.at( ii ).at( 6 ) ) );
+         cb_os2        ->setCurrentIndex( cb_os2->findText(
+                                  dblist.at( ii ).at( 7 ) ) );
+         cb_os3        ->setCurrentIndex( cb_os3->findText(
+                                  dblist.at( ii ).at( 8 ) ) );
+#endif
 
          // Set the default DB and user for that DB
          US_Settings::set_def_xpn_host( dblist.at( ii ) );
@@ -372,8 +425,11 @@ void US_XpnHost::update_lw( const QString& current )
 {
    lw_entries->clear();
 
+qDebug() << "xpnH: upd_lw: IN";
    dblist                = US_Settings::xpn_db_hosts();
+qDebug() << "xpnH: upd_lw:  dblist" << dblist;
    QStringList defaultDB = US_Settings::defaultXpnHost();
+qDebug() << "xpnH: upd_lw:  defDB" << defaultDB;
    QString     defaultDBname;
 //xpn_db_hosts()
 //set_xpn_db_hosts( const QList<QStringList>& );
@@ -383,8 +439,8 @@ void US_XpnHost::update_lw( const QString& current )
    if ( dblist.size() == 0 )
    {  // First-time:  create an initial default entry
       QStringList entry;
-      entry << tr( "place-holder" )
-            << "192.168.0.1"
+      entry << def_desc
+            << def_host
             << def_port
             << def_name
             << def_user
@@ -394,23 +450,39 @@ void US_XpnHost::update_lw( const QString& current )
             << "(not installed)";
 
       dblist << entry;
+
+      if ( defaultDB.size() == 0 )
+      {  // If we have no default, set the dummy entry as such
+         defaultDB       = entry;
+      }
    }
 
-   if ( defaultDB.size() > 0 ) defaultDBname = defaultDB.at( 0 );
+   if ( defaultDB.size() > 0 )   defaultDBname = defaultDB.at( 0 );
+   bool def_sel    = false;         // Flag no default selection yet
 
    for ( int ii = 0; ii < dblist.size(); ii++ )
-   {
+   {  // Search entries for a match to the default
       QString desc    = dblist.at( ii ).at( 0 );
       QString display = desc;
 
-      if ( desc == defaultDBname ) display.append( " (default)" );
+      // Flag a match to the default with " (default)" in the list
+      if ( desc == defaultDBname )  display.append( " (default)" );
 
       QListWidgetItem* widget = new QListWidgetItem( display );
       lw_entries->addItem( widget );
 
       if ( desc == current )
+      {  // Select the matching entry in the list and flag it as selected
          lw_entries->setCurrentItem( widget, QItemSelectionModel::Select );
+         def_sel         = true;    // Flag a default selection made
+      }
    }
+
+   if ( ! def_sel  &&  dblist.size() > 0 )
+   {  // Insure that *something* is selected!
+      lw_entries->setCurrentRow( 0 );
+   }
+qDebug() << "xpnH: upd_lw: OUT";
 }
 
 void US_XpnHost::reset( void )

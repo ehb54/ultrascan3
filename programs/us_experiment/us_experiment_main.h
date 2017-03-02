@@ -4,6 +4,7 @@
 #include <QApplication>
 
 #include "us_run_protocol.h"
+#include "us_protocol_util.h"
 #include "us_project_gui.h"
 #include "us_editor.h"
 #include "us_settings.h"
@@ -19,6 +20,8 @@
 #include "us_license_t.h"
 #include "us_license.h"
 
+class US_ExperimentMain;
+
 //! \brief Experiment General panel
 class US_ExperGuiGeneral : public US_Widgets 
 {
@@ -29,11 +32,16 @@ class US_ExperGuiGeneral : public US_Widgets
       ~US_ExperGuiGeneral() {};
 
       void        initPanel( void );
-      QString     getPValue( const QString );
-      QStringList getPList ( const QString );
-      QString     sibPValue( const QString, const QString );
-      QStringList sibPList ( const QString, const QString );
-      QString     status   ( void );
+      void        savePanel( void );
+      QString     getSValue( const QString );
+      int         getIValue( const QString );
+      double      getDValue( const QString );
+      QStringList getLValue( const QString );
+      QString     sibSValue( const QString, const QString );
+      int         sibIValue( const QString, const QString );
+      double      sibDValue( const QString, const QString );
+      QStringList sibLValue( const QString, const QString );
+      int         status   ( void );
       void        help     ( void )
          { showHelp.show_help( "manual/experiment_general.html" ); };
 
@@ -41,7 +49,8 @@ class US_ExperGuiGeneral : public US_Widgets
       bool        cpInfo   ( const QString, US_AbstractCenterpiece& );
 
    private:
-      QWidget* mainw;
+      US_ExperimentMain*   mainw;
+      US_RunProtocol*      currProto;   // Current RunProtocol controls pointer
       US_Help  showHelp;
 
       QLineEdit*   le_runid;
@@ -61,7 +70,7 @@ class US_ExperGuiGeneral : public US_Widgets
       void sel_project     ( void );
       void project_info    ( US_Project& );
       void sel_investigator( void );
-      void runID_entered   ( void );
+      void run_name_entered( void );
       void load_protocol   ( void );
       void changed_protocol( void );
       void centerpieceInfo ( void );
@@ -78,16 +87,22 @@ class US_ExperGuiRotor : public US_Widgets
       ~US_ExperGuiRotor() {};
 
       void        initPanel( void );
-      QString     getPValue( const QString );
-      QStringList getPList ( const QString );
-      QString     sibPValue( const QString, const QString );
-      QStringList sibPList ( const QString, const QString );
-      QString     status   ( void );
+      void        savePanel( void );
+      QString     getSValue( const QString );
+      int         getIValue( const QString );
+      double      getDValue( const QString );
+      QStringList getLValue( const QString );
+      QString     sibSValue( const QString, const QString );
+      int         sibIValue( const QString, const QString );
+      double      sibDValue( const QString, const QString );
+      QStringList sibLValue( const QString, const QString );
+      int         status   ( void );
       void        help     ( void )
          { showHelp.show_help( "manual/experiment_rotor.html" ); };
 
    private:
-      QWidget* mainw;
+      US_ExperimentMain*   mainw;
+      US_RunProtocol::RunProtoRotor*  rpRotor;
       US_Help  showHelp;
       QComboBox* cb_lab;
       QComboBox* cb_rotor;
@@ -124,16 +139,22 @@ class US_ExperGuiSpeeds : public US_Widgets
       ~US_ExperGuiSpeeds() {};
 
       void        initPanel( void );
-      QString     getPValue( const QString );
-      QStringList getPList ( const QString );
-      QString     sibPValue( const QString, const QString );
-      QStringList sibPList ( const QString, const QString );
-      QString     status   ( void );
+      void        savePanel( void );
+      QString     getSValue( const QString );
+      int         getIValue( const QString );
+      double      getDValue( const QString );
+      QStringList getLValue( const QString );
+      QString     sibSValue( const QString, const QString );
+      int         sibIValue( const QString, const QString );
+      double      sibDValue( const QString, const QString );
+      QStringList sibLValue( const QString, const QString );
+      int         status   ( void );
       void        help     ( void )
          { showHelp.show_help( "manual/experiment_speeds.html" ); };
 
    private:
-      QWidget*     mainw;
+      US_ExperimentMain*   mainw;
+      US_RunProtocol::RunProtoSpeed* rpSpeed;
       US_Help      showHelp;
 
       QComboBox*   cb_prof;
@@ -189,16 +210,22 @@ class US_ExperGuiCells : public US_Widgets
       ~US_ExperGuiCells() {};
 
       void        initPanel( void );
-      QString     getPValue( const QString );
-      QStringList getPList ( const QString );
-      QString     sibPValue( const QString, const QString );
-      QStringList sibPList ( const QString, const QString );
-      QString     status   ( void );
+      void        savePanel( void );
+      QString     getSValue( const QString );
+      int         getIValue( const QString );
+      double      getDValue( const QString );
+      QStringList getLValue( const QString );
+      QString     sibSValue( const QString, const QString );
+      int         sibIValue( const QString, const QString );
+      double      sibDValue( const QString, const QString );
+      QStringList sibLValue( const QString, const QString );
+      int         status   ( void );
       void        help     ( void )
          { showHelp.show_help( "manual/experiment_cells.html" ); };
 
    private:
-      QWidget* mainw;
+      US_ExperimentMain*   mainw;
+      US_RunProtocol::RunProtoCells* rpCells;
       US_Help  showHelp;
       QList< QLabel* >     cc_labls;   // Cell label GUI objects
       QList< QComboBox* >  cc_cenps;   // Centerpiece GUI objects
@@ -223,16 +250,22 @@ class US_ExperGuiSolutions : public US_Widgets
       ~US_ExperGuiSolutions() {};
 
       void        initPanel( void );
-      QString     getPValue( const QString );
-      QStringList getPList ( const QString );
-      QString     sibPValue( const QString, const QString );
-      QStringList sibPList ( const QString, const QString );
-      QString     status   ( void );
+      void        savePanel( void );
+      QString     getSValue( const QString );
+      int         getIValue( const QString );
+      double      getDValue( const QString );
+      QStringList getLValue( const QString );
+      QString     sibSValue( const QString, const QString );
+      int         sibIValue( const QString, const QString );
+      double      sibDValue( const QString, const QString );
+      QStringList sibLValue( const QString, const QString );
+      int         status   ( void );
       void        help     ( void )
          { showHelp.show_help( "manual/experiment_solutions.html" ); };
 
    private:
-      QWidget* mainw;
+      US_ExperimentMain*   mainw;
+      US_RunProtocol::RunProtoSolutions*  rpSolut;
       US_Help  showHelp;
       int      dbg_level;
       int      mxrow;
@@ -270,16 +303,22 @@ class US_ExperGuiOptical : public US_Widgets
       ~US_ExperGuiOptical() {};
 
       void        initPanel( void );
-      QString     getPValue( const QString );
-      QStringList getPList ( const QString );
-      QString     sibPValue( const QString, const QString );
-      QStringList sibPList ( const QString, const QString );
-      QString     status   ( void );
+      void        savePanel( void );
+      QString     getSValue( const QString );
+      int         getIValue( const QString );
+      double      getDValue( const QString );
+      QStringList getLValue( const QString );
+      QString     sibSValue( const QString, const QString );
+      int         sibIValue( const QString, const QString );
+      double      sibDValue( const QString, const QString );
+      QStringList sibLValue( const QString, const QString );
+      int         status   ( void );
       void        help     ( void )
          { showHelp.show_help( "manual/experiment_photomult.html" ); };
 
    private:
-      QWidget* mainw;
+      US_ExperimentMain*   mainw;
+      US_RunProtocol::RunProtoOptics*  rpOptic;
       QList< QLabel* >        cc_labls;  // Cell label GUI objects
       QList< QButtonGroup* >  cc_osyss;  // Ck-boxes OptSys GUI objects
 
@@ -304,16 +343,22 @@ class US_ExperGuiSpectra : public US_Widgets
       ~US_ExperGuiSpectra() {};
 
       void        initPanel( void );
-      QString     getPValue( const QString );
-      QStringList getPList ( const QString );
-      QString     sibPValue( const QString, const QString );
-      QStringList sibPList ( const QString, const QString );
-      QString     status   ( void );
+      void        savePanel( void );
+      QString     getSValue( const QString );
+      int         getIValue( const QString );
+      double      getDValue( const QString );
+      QStringList getLValue( const QString );
+      QString     sibSValue( const QString, const QString );
+      int         sibIValue( const QString, const QString );
+      double      sibDValue( const QString, const QString );
+      QStringList sibLValue( const QString, const QString );
+      int         status   ( void );
       void        help     ( void )
          { showHelp.show_help( "manual/experiment_photomult.html" ); };
 
    private:
-      QWidget* mainw;
+      US_ExperimentMain*   mainw;
+      US_RunProtocol::RunProtoSpectra*  rpSpect;
       US_Help  showHelp;
       QList< QLabel* >         cc_labls;
       QList< QPushButton* >    cc_wavls;
@@ -345,16 +390,22 @@ class US_ExperGuiUpload : public US_Widgets
       ~US_ExperGuiUpload() {};
 
       void        initPanel( void );
-      QString     getPValue( const QString );
-      QStringList getPList ( const QString );
-      QString     sibPValue( const QString, const QString );
-      QStringList sibPList ( const QString, const QString );
-      QString     status   ( void );
+      void        savePanel( void );
+      QString     getSValue( const QString );
+      int         getIValue( const QString );
+      double      getDValue( const QString );
+      QStringList getLValue( const QString );
+      QString     sibSValue( const QString, const QString );
+      int         sibIValue( const QString, const QString );
+      double      sibDValue( const QString, const QString );
+      QStringList sibLValue( const QString, const QString );
+      int         status   ( void );
       void        help     ( void )
          { showHelp.show_help( "manual/experiment_upload.html" ); };
 
    private:
-      QWidget* mainw;
+      US_ExperimentMain*   mainw;
+      US_RunProtocol::RunProtoUpload*  rpUload;
       US_Help  showHelp;
 
       QPushButton* pb_upload;
@@ -393,11 +444,14 @@ class US_ExperimentMain : public US_Widgets
    public:
       US_ExperimentMain();
 
-      QString     childPValue( const QString, const QString );
-      QStringList childPList ( const QString, const QString );
+      QString     childSValue( const QString, const QString );
+      int         childIValue( const QString, const QString );
+      double      childDValue( const QString, const QString );
+      QStringList childLValue( const QString, const QString );
 
-      US_RunProtocol  loadProto;
-      US_RunProtocol  currProto;
+      US_RunProtocol  loadProto;   // Controls as loaded from an RP record
+      US_RunProtocol  currProto;   // Current RunProtocol controls
+
 
    private:
 
@@ -413,7 +467,7 @@ class US_ExperimentMain : public US_Widgets
       US_ExperGuiSpectra*   epanSpectra;
       US_ExperGuiUpload*    epanUpload;
 
-      QString     stattext;
+      int         statflag;
       int         dbg_level;
       int         curr_panx;
 

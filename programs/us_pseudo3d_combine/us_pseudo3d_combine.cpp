@@ -1378,12 +1378,12 @@ void US_Pseudo3D_Combine::select_x_axis( int ival )
 // Select coordinate for vertical axis
 void US_Pseudo3D_Combine::select_y_axis( int ival )
 {
-   const QString ylabs[] = {      "s", "f/f0",  "MW", "vbar", "D", "f"  };
-   const double  yvlos[] = {      1.0,   1.0,   2e+4,  0.60, 1e-8, 1e-8 };
-   const double  yvhis[] = {     10.0,   4.0,   1e+5,  0.80, 1e-7, 1e-7 };
-   const double  ymins[] = { -10000.0,   1.0,    0.0,  0.01, 1e-9, 1e-9 };
-   const double  ymaxs[] = {  10000.0,  50.0,  1e+10,  3.00, 1e-5, 1e-5 };
-   const double  yincs[] = {     0.01,  0.01, 1000.0,  0.01, 1e-9, 1e-9 };
+   const QString ylabs[] = {      "s", "f/f0",  "MW", "vbar",    "D", "f"  };
+   const double  yvlos[] = {      1.0,   1.0,   2e+4,  0.60,     0.0, 1e-8 };
+   const double  yvhis[] = {     10.0,   4.0,   1e+5,  0.80,    30.0, 1e-7 };
+   const double  ymins[] = { -10000.0,   1.0,    0.0,  0.01,     0.0, 1e-9 };
+   const double  ymaxs[] = {  10000.0,  50.0,  1e+10,  3.00, 10000.0, 1e-5 };
+   const double  yincs[] = {     0.01,  0.01, 1000.0,  0.01,    0.01, 1e-9 };
 
    plot_y     = ival;
 qDebug() << "select-y: plot_y" << plot_y;

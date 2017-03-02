@@ -37,7 +37,7 @@ class US_RunProtocol
             QString     calGUID;       //!< Rotor Calibration GUID
             QString     absGUID;       //!< Abstract Rotor GUID
 
-            int         labID;         //!< Laboratory lab DB Id
+            int         labID;         //!< Laboratory bB Id
             int         rotID;         //!< Rotor DB Id
             int         calID;         //!< Rotor Calibration DB Id
             int         absID;         //!< Abstract Rotor DB Id
@@ -298,10 +298,12 @@ class US_RunProtocol
       RunProtoSpectra    rpSpect;  //!< Spectra controls
       RunProtoUpload     rpUload;  //!< Upload controls
 
-      QString      pname;          //!< Protocol name (description)
-      QString      pGUID;          //!< Protocol GUID
-      QString      optimahost;     //!< Optima host (numeric IP address)
       QString      investigator;   //!< Investigator name
+      QString      runname;        //!< Run ID (name)
+      QString      protname;       //!< Protocol name (description)
+      QString      pGUID;          //!< Protocol GUID
+      QString      project;        //!< Project description
+      QString      optimahost;     //!< Optima host (numeric IP address)
 
       double       temperature;    //!< Run temperature in degrees centigrade
 
