@@ -31,7 +31,7 @@ class US_ExperGuiGeneral : public US_Widgets
       US_ExperGuiGeneral( QWidget* );
       ~US_ExperGuiGeneral() {};
 
-      void        initPanel( void );
+      void        initPanel( void );    // Standard panel utilities
       void        savePanel( void );
       QString     getSValue( const QString );
       int         getIValue( const QString );
@@ -45,35 +45,42 @@ class US_ExperGuiGeneral : public US_Widgets
       void        help     ( void )
          { showHelp.show_help( "manual/experiment_general.html" ); };
 
-      QStringList cpNames  ( void );
-      bool        cpInfo   ( const QString, US_AbstractCenterpiece& );
+      // Detailed information for specific centerpiece
+      bool        centpInfo   ( const QString, US_AbstractCenterpiece& );
+      // All protocols: names and summary information
+      int         getProtos   ( QStringList&, QList< QStringList >& );
+      // Append to the names,summary-data protocol lists
+      bool        updateProtos( const QStringList );
 
    private:
-      US_ExperimentMain*   mainw;
-      US_RunProtocol*      currProto;   // Current RunProtocol controls pointer
+      US_ExperimentMain*    mainw;      // Parent to all panels
+      US_RunProtocol*       currProto;  // Current RunProtocol controls pointer
       US_Help  showHelp;
 
-      QLineEdit*   le_runid;
-      QLineEdit*   le_protocol;
-      QLineEdit*   le_project;
-      QLineEdit*   le_investigator;
+      QLineEdit*   le_runid;            // Run name line edit
+      QLineEdit*   le_protocol;         // Protocol name line edit
+      QLineEdit*   le_project;          // Project name line edit
+      QLineEdit*   le_investigator;     // Investigator line edit
 
-      QwtCounter*  ct_tempera;
+      QwtCounter*  ct_tempera;          // Temperature counter
 
-      QStringList  cp_names;  // List of Centerpiece names
       int          dbg_level;
-      bool         use_db;
+      bool         use_db;              // Using the LIMS database?
 
-      QList< US_AbstractCenterpiece >  acp_list;  // Full Centerpiece information
+      QList< QStringList >  protdata;   // List of all protocol data strings
+      QStringList           cp_names;   // List of Centerpiece names
+      QStringList           pr_names;   // List of protocol names
+
+      QList< US_AbstractCenterpiece >  acp_list; // Full Centerpiece information
 
    private slots:
-      void sel_project     ( void );
-      void project_info    ( US_Project& );
-      void sel_investigator( void );
-      void run_name_entered( void );
-      void load_protocol   ( void );
-      void changed_protocol( void );
-      void centerpieceInfo ( void );
+      void sel_project     ( void );        // Slot for project button clicked
+      void project_info    ( US_Project& ); // Slot for project diag results
+      void sel_investigator( void );        // Slot for investigator changed
+      void run_name_entered( void );        // Slot for run name entered
+      void load_protocol   ( void );        // Slot for protocol loaded
+      void changed_protocol( void );        // Slot for change in protocol name
+      void centerpieceInfo ( void );        // Function for all centerpieces
 
 };
 
@@ -86,7 +93,7 @@ class US_ExperGuiRotor : public US_Widgets
       US_ExperGuiRotor( QWidget* );
       ~US_ExperGuiRotor() {};
 
-      void        initPanel( void );
+      void        initPanel( void );    // Standard panel utilities
       void        savePanel( void );
       QString     getSValue( const QString );
       int         getIValue( const QString );
@@ -102,31 +109,32 @@ class US_ExperGuiRotor : public US_Widgets
 
    private:
       US_ExperimentMain*   mainw;
-      US_RunProtocol::RunProtoRotor*  rpRotor;
+      US_RunProtocol::RunProtoRotor*  rpRotor;        // Rotor protocol
       US_Help  showHelp;
-      QComboBox* cb_lab;
-      QComboBox* cb_rotor;
-      QComboBox* cb_calibr;
+      QComboBox* cb_lab;                              // Lab combo box
+      QComboBox* cb_rotor;                            // Rotor combo box
+      QComboBox* cb_calibr;                           // Calibration combo box
 
-      QVector< US_Rotor::Lab >               labs;
-      QVector< US_Rotor::Rotor >             rotors;
-      QVector< US_Rotor::AbstractRotor >     arotors;
-      QVector< US_Rotor::RotorCalibration >  calibs;
+      QVector< US_Rotor::Lab >               labs;    // All labs
+      QVector< US_Rotor::Rotor >             rotors;  // All rotors in lab
+      QVector< US_Rotor::AbstractRotor >     arotors; // All abstract rotors
+      QVector< US_Rotor::RotorCalibration >  calibs;  // Calibrations of rotor
 
-      QStringList sl_labs;
-      QStringList sl_rotors;
-      QStringList sl_arotors;
-      QStringList sl_calibs;
+      QStringList sl_labs;         // Lab combo choices
+      QStringList sl_rotors;       // Rotor combo choices
+      QStringList sl_arotors;      // Abstract rotor combo choices
+      QStringList sl_calibs;       // Calibration combo choices
       int         dbg_level;
-      bool        changed;
+      int         nholes;          // Number of holes for current rotor
+      bool        changed;         // Has rotor protocol changed?
 
    private slots:
-      void changeLab  ( int );
-      void changeRotor( int );
-      void changeCalib( int );
-      void advRotor   ( void );
+      void changeLab  ( int );     // Slot for change in lab
+      void changeRotor( int );     // Slot for change in rotor
+      void changeCalib( int );     // Slot for change in calibration
+      void advRotor   ( void );    // Function for advanced rotor dialog
       void advRotorChanged( US_Rotor::Rotor&,
-                            US_Rotor::RotorCalibration& );
+                            US_Rotor::RotorCalibration& ); // Rotor diag change
 };
 
 //! \brief Experiment Speeds panel
@@ -138,7 +146,7 @@ class US_ExperGuiSpeeds : public US_Widgets
       US_ExperGuiSpeeds( QWidget* );
       ~US_ExperGuiSpeeds() {};
 
-      void        initPanel( void );
+      void        initPanel( void );    // Standard panel utilities
       void        savePanel( void );
       QString     getSValue( const QString );
       int         getIValue( const QString );
@@ -157,18 +165,18 @@ class US_ExperGuiSpeeds : public US_Widgets
       US_RunProtocol::RunProtoSpeed* rpSpeed;
       US_Help      showHelp;
 
-      QComboBox*   cb_prof;
-      QwtCounter*  ct_speed;
-      QwtCounter*  ct_accel;
-      QwtCounter*  ct_count;
-      QwtCounter*  ct_durhr;
-      QwtCounter*  ct_durmin;
-      QwtCounter*  ct_dlyhr;
-      QwtCounter*  ct_dlymin;
-      QwtCounter*  ct_dlysec;
+      QComboBox*   cb_prof;      // Choice: current speed step
+      QwtCounter*  ct_count;     // Counter: number of speed steps
+      QwtCounter*  ct_speed;     // Counter: step's rotor speed
+      QwtCounter*  ct_accel;     // Counter: step's acceleration
+      QwtCounter*  ct_durhr;     // Counter: step's duration in hours
+      QwtCounter*  ct_durmin;    // Counter: step's duration in minutes
+      QwtCounter*  ct_dlyhr;     // Counter: step's delay in hours
+      QwtCounter*  ct_dlymin;    // Counter: step's delay in minutes
+      QwtCounter*  ct_dlysec;    // Counter: step's delay in seconds
 
-      QVector< QString >  profdesc;           // Speed profile description
-      QVector< QMap< QString, int> >  ssvals; // Speed-step values
+      QVector< QString >  profdesc;              // Speed profile description
+      QVector< QMap< QString, double> >  ssvals; // Speed-step values
 
       int          dbg_level;     // Debug flag
       int          nspeed;        // Number of speed steps
@@ -209,7 +217,7 @@ class US_ExperGuiCells : public US_Widgets
       US_ExperGuiCells( QWidget* );
       ~US_ExperGuiCells() {};
 
-      void        initPanel( void );
+      void        initPanel( void );    // Standard panel utilities
       void        savePanel( void );
       QString     getSValue( const QString );
       int         getIValue( const QString );
@@ -227,17 +235,19 @@ class US_ExperGuiCells : public US_Widgets
       US_ExperimentMain*   mainw;
       US_RunProtocol::RunProtoCells* rpCells;
       US_Help  showHelp;
-      QList< QLabel* >     cc_labls;   // Cell label GUI objects
-      QList< QComboBox* >  cc_cenps;   // Centerpiece GUI objects
-      QList< QComboBox* >  cc_winds;   // Windows GUI objects
+      QList< QLabel* >     cc_labls;   // Cell label object pointers
+      QList< QComboBox* >  cc_cenps;   // Centerpiece object pointers
+      QList< QComboBox* >  cc_winds;   // Windows object pointers
       QStringList          cpnames;    // Centerpiece names
-      QStringList          scntypes;   // Scan types names
-      QStringList          tcb_centps; // CPs paired with Titanium CB
+      QStringList          tcb_centps; // CPs paired w/ Titanium Counterbalance
       int          dbg_level;
+      int          ncells;             // Number of cell rows
+      int          nused;              // Number of cell centerpieces given
 
    private slots:
-      void centerpieceChanged( int );
-      void windowsChanged    ( int );
+      void centerpieceChanged( int );  // Centerpiece choice selected
+      void windowsChanged    ( int );  // Windows choice selected
+      void rebuild_Cells     ( void ); // Rebuild run protocol for cells
 };
 
 //! \brief Experiment Solutions panel
@@ -249,7 +259,7 @@ class US_ExperGuiSolutions : public US_Widgets
       US_ExperGuiSolutions( QWidget* );
       ~US_ExperGuiSolutions() {};
 
-      void        initPanel( void );
+      void        initPanel( void );    // Standard panel utilities
       void        savePanel( void );
       QString     getSValue( const QString );
       int         getIValue( const QString );
@@ -280,6 +290,8 @@ class US_ExperGuiSolutions : public US_Widgets
 
       QMap< QString, QString >      solu_ids;
       QMap< QString, US_Solution >  solu_data;
+      QMap< QString, QString >      pro_comms;
+      QMap< QString, QString >      run_comms;
 
    private slots:
       void manageSolutions( void );
@@ -290,6 +302,7 @@ class US_ExperGuiSolutions : public US_Widgets
       void addComments    ( void );
       void commentStrings ( const QString, QString&,
                             QStringList& );
+      void rebuild_Solut     ( void ); // Rebuild run protocol for solutions
 };
 
 
@@ -302,7 +315,7 @@ class US_ExperGuiOptical : public US_Widgets
       US_ExperGuiOptical( QWidget* );
       ~US_ExperGuiOptical() {};
 
-      void        initPanel( void );
+      void        initPanel( void );    // Standard panel utilities
       void        savePanel( void );
       QString     getSValue( const QString );
       int         getIValue( const QString );
@@ -324,13 +337,13 @@ class US_ExperGuiOptical : public US_Widgets
 
       US_Help  showHelp;
       int      dbg_level;
-      int      mxrow;
+      int      mxrow;                    // Max optics rows
+      int      nochan;                   // Number optics rows
+      int      nuchan;                   // Number used rows
 
    private slots:
-      void opsysChecked    ( bool );
-      void manageEProfiles ( void );
-      void process_results ( QMap< double, double >& );
-      void detailOptical   ( void );
+      void opsysChecked      ( bool );
+      void rebuild_Optic     ( void ); // Rebuild run protocol for optical
 };
 
 //! \brief Experiment Spectra panel
@@ -342,7 +355,7 @@ class US_ExperGuiSpectra : public US_Widgets
       US_ExperGuiSpectra( QWidget* );
       ~US_ExperGuiSpectra() {};
 
-      void        initPanel( void );
+      void        initPanel( void );    // Standard panel utilities
       void        savePanel( void );
       QString     getSValue( const QString );
       int         getIValue( const QString );
@@ -378,6 +391,7 @@ class US_ExperGuiSpectra : public US_Widgets
       void checkOptima      ( bool );
       void loadSpectrum     ( void );
       void manualSpectrum   ( void );
+      void rebuild_Spect    ( void ); // Rebuild run protocol for spectra
 };
 
 //! \brief Experiment Upload panel
@@ -389,7 +403,7 @@ class US_ExperGuiUpload : public US_Widgets
       US_ExperGuiUpload( QWidget* );
       ~US_ExperGuiUpload() {};
 
-      void        initPanel( void );
+      void        initPanel( void );    // Standard panel utilities
       void        savePanel( void );
       QString     getSValue( const QString );
       int         getIValue( const QString );
@@ -405,9 +419,18 @@ class US_ExperGuiUpload : public US_Widgets
 
    private:
       US_ExperimentMain*   mainw;
-      US_RunProtocol::RunProtoUpload*  rpUload;
+      US_RunProtocol*       loadProto;  // Loaded RunProtocol controls pointer
+      US_RunProtocol*       currProto;  // Current RunProtocol controls pointer
+      US_RunProtocol::RunProtoRotor*      rpRotor;  //!< Rotor controls
+      US_RunProtocol::RunProtoSpeed*      rpSpeed;  //!< Speed controls
+      US_RunProtocol::RunProtoCells*      rpCells;  //!< Cells controls
+      US_RunProtocol::RunProtoSolutions*  rpSolut;  //!< Solutions controls
+      US_RunProtocol::RunProtoOptics*     rpOptic;  //!< Optical Systems controls
+      US_RunProtocol::RunProtoSpectra*    rpSpect;  //!< Spectra controls
+      US_RunProtocol::RunProtoUpload*     rpUload;  //!< Upload controls
       US_Help  showHelp;
 
+      QPushButton* pb_saverp;
       QPushButton* pb_upload;
 
       QCheckBox*   ck_run;
@@ -421,10 +444,26 @@ class US_ExperGuiUpload : public US_Widgets
       QCheckBox*   ck_optical;
       QCheckBox*   ck_extprofs;
       QCheckBox*   ck_connect;
+      QCheckBox*   ck_rp_diff;
+      QCheckBox*   ck_prot_svd;
       QCheckBox*   ck_upl_enab;
       QCheckBox*   ck_upl_done;
 
       int          dbg_level;
+      bool         have_run;
+      bool         have_proj;
+      bool         have_rotor;
+      bool         chgd_rotor;
+      bool         have_speed;
+      bool         chgd_speed;
+      bool         have_cells;
+      bool         have_solus;
+      bool         have_optic;
+      bool         have_spect;
+      bool         have_sol;
+      bool         rps_differ;
+      bool         proto_svd;
+      bool         upld_enab;
       bool         uploaded;
       bool         connected;
       QString      json_upl;
@@ -433,6 +472,7 @@ class US_ExperGuiUpload : public US_Widgets
       void    detailExperiment( void );
       void    testConnection  ( void );
       void    uploadExperiment( void );
+      void    saveRunProtocol ( void );
       QString buildJson       ( void );
 };
 
@@ -444,10 +484,14 @@ class US_ExperimentMain : public US_Widgets
    public:
       US_ExperimentMain();
 
-      QString     childSValue( const QString, const QString );
-      int         childIValue( const QString, const QString );
-      double      childDValue( const QString, const QString );
-      QStringList childLValue( const QString, const QString );
+      QString     childSValue ( const QString, const QString );
+      int         childIValue ( const QString, const QString );
+      double      childDValue ( const QString, const QString );
+      QStringList childLValue ( const QString, const QString );
+      void        initPanels  ( void );
+      bool        centpInfo   ( const QString, US_AbstractCenterpiece& );
+      int         getProtos   ( QStringList&, QList< QStringList >& );
+      bool        updateProtos( const QStringList );
 
       US_RunProtocol  loadProto;   // Controls as loaded from an RP record
       US_RunProtocol  currProto;   // Current RunProtocol controls

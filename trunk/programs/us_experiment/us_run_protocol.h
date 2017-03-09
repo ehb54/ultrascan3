@@ -2,6 +2,7 @@
 #define US_RPROTOCOL_H
 
 #include <QtCore>
+
 #include "us_extern.h"
 #include "us_db2.h"
 
@@ -32,6 +33,7 @@ class US_RunProtocol
             QString     laboratory;    //!< Laboratory with rotor
             QString     rotor;         //!< Rotor description
             QString     calibration;   //!< Rotor Calibration description
+
             QString     labGUID;       //!< Laboratory GUID
             QString     rotGUID;       //!< Rotor GUID
             QString     calGUID;       //!< Rotor Calibration GUID
@@ -95,7 +97,7 @@ class US_RunProtocol
 
                   QString     centerpiece;   //!< Centerpiece description
                   QString     windows;       //!< Windows (quartz|sapphire)
-                  QString     counterbal;    //!< Counterbalance description
+                  QString     cbalance;      //!< Counterbalance description
 
                   CellUse();
 
@@ -123,7 +125,6 @@ class US_RunProtocol
             int         ncell;         //!< Number of total cells
             int         nused;         //!< Number of cells used
 
-            QVector< CellUse >  all;   //!< All cells in rotor
             QVector< CellUse >  used;  //!< Cells used (cp or cb)
       };
 
@@ -137,7 +138,7 @@ class US_RunProtocol
                   QString     channel;       //!< Channel name ("2 / A")
                   QString     solution;      //!< Solution name
                   QString     sol_id;        //!< Solution Id/GUID
-                  QString     ch_comment;    //!< Channel run comment
+                  QString     ch_comment;    //!< Channel protocol comment
 
                   ChanSolu();
 
