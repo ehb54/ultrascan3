@@ -59,13 +59,14 @@ BEGIN
   SET @BUFFER_IN_USE  = 516;
   SET @ANALYTE_IN_USE = 517;
   SET @SOLUTION_IN_USE = 518;
-  SET @NO_CALIB       = 519;
-  SET @NO_REPORT      = 520;
-  SET @NO_REPORT_TRIPLE = 521;
-  SET @NO_REPORT_DOCUMENT = 522;
-  SET @NO_DOCUMENT_LINK = 523;
+  SET @NO_CALIB        = 519;
+  SET @NO_REPORT       = 520;
+  SET @NO_REPORT_TRIPLE     = 521;
+  SET @NO_REPORT_DOCUMENT   = 522;
+  SET @NO_DOCUMENT_LINK     = 523;
   SET @MORE_THAN_SINGLE_ROW = 524;
   SET @NO_MRECS       = 525;
+  SET @NO_PROTOCOL    = 526;
 
   -- Some user levels
   SET @US3_USER       = 0;
@@ -527,5 +528,6 @@ SOURCE us3_noise_procs.sql
 SOURCE us3_report_procs.sql
 SOURCE us3_timestate_procs.sql
 SOURCE us3_eprofile_procs.sql
+SOURCE us3_protocol_procs.sql
 
 DELIMITER ;

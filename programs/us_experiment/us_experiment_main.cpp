@@ -39,7 +39,7 @@ int main( int argc, char* argv[] )
    return application.exec();  //!< \memberof QApplication
 }
 
-// Constructor
+// Constructor:  build the main layout with tab widget panels
 US_ExperimentMain::US_ExperimentMain() : US_Widgets()
 {
    dbg_level    = US_Settings::us_debug();
@@ -133,12 +133,12 @@ US_ExperGuiGeneral::US_ExperGuiGeneral( QWidget* topw )
 
    QLabel*      lb_runid        = us_label( tr( "Run Name:" ) );
    QLabel*      lb_tempera      = us_label( tr( "Run Temperature " ) + DEGC + ":" );
+   QPushButton* pb_investigator = us_pushbutton( tr( "Select Investigator" ) );
    QPushButton* pb_project      = us_pushbutton( tr( "Select Project" ) );
    QPushButton* pb_protocol     = us_pushbutton( tr( "Load Protocol" ) );
-   QPushButton* pb_investigator = us_pushbutton( tr( "Select Investigator" ) );
                 le_runid        = us_lineedit( "", 0, false );
                 le_protocol     = us_lineedit( "", 0, false );
-                le_project      = us_lineedit( "", 0, false );
+                le_project      = us_lineedit( "", 0, true  );
                 ct_tempera      = us_counter( 2, 0, 40, 1 );
 
    // Insure reasonable size for temperature counter
@@ -165,7 +165,7 @@ US_ExperGuiGeneral::US_ExperGuiGeneral( QWidget* topw )
       QString::number( US_Settings::us_inv_ID() ) + ": "
       : "";
    QString invtxt  = invnbr + US_Settings::us_inv_name();
-   le_investigator = us_lineedit( invtxt, 0, false );
+   le_investigator = us_lineedit( invtxt, 0, true );
 
    // Set defaults
    currProto       = &mainw->currProto;
@@ -206,23 +206,34 @@ US_ExperGuiGeneral::US_ExperGuiGeneral( QWidget* topw )
    // Read in centerpiece information and populate names list
    centerpieceInfo();
 
+   // Read in summary information on all existing run protocols
+   bool fromdisk         = US_Settings::debug_match( "protocolFromDisk" );
+   bool load_db          = fromdisk ? false : use_db;
+   US_Passwd  pw;
+   US_DB2* dbP           = load_db ? new US_DB2( pw.getPasswd() ) : NULL;
+
+   US_ProtocolUtil::list_all( protdata, dbP );
+
+   for ( int ii = 0; ii < protdata.count(); ii++ )
+      pr_names << protdata[ ii ][ 0 ];
+DbgLv(1) << "EGGe: main : prnames,prdata counts" << pr_names.count() << protdata.count();
+
    // Do the initialization we do at panel entry
    initPanel();
 }
 
 // Return detail information for a specific centerpiece as named
-bool US_ExperGuiGeneral::cpInfo( const QString cpname,
+bool US_ExperGuiGeneral::centpInfo( const QString cpname,
       US_AbstractCenterpiece& cpEntry )
 {
    bool is_found   = false;
 
    for ( int ii = 0; ii < acp_list.count(); ii++ )
-   {
-      US_AbstractCenterpiece cpiece = acp_list[ ii ];
-      if ( cpiece.name == cpname )
+   {  // Search abstract centerpieces for a name match
+      if ( acp_list[ ii ].name == cpname )
       {  // Match found:  flag found and return entry
          is_found        = true;
-         cpEntry         = cpiece;
+         cpEntry         = acp_list[ ii ];
          break;
       }
    }
@@ -230,17 +241,41 @@ bool US_ExperGuiGeneral::cpInfo( const QString cpname,
    return is_found;
 }
 
+// Return a protocol names list and data entries list
+int US_ExperGuiGeneral::getProtos( QStringList& prnames,
+      QList< QStringList >& prentries )
+{
+DbgLv(1) << "EGGe: getProtos IN";
+   prnames         = pr_names;   // Return a names list copy
+   prentries       = protdata;   // Return an entries list copy
+DbgLv(1) << "EGGe:  gP: prnames count" << prnames.count()
+ << "prdat count" << protdata.count();
+   return prnames.count();       // Return the current list count
+}
+
+// Update protocol name list and data list from an entry
+bool US_ExperGuiGeneral::updateProtos( const QStringList prentry )
+{
+   if ( pr_names.contains( prentry[ 0 ] ) )
+      return false;              // Not ok if the name is already in the list
+
+   pr_names << prentry[ 0 ];     // Append to the names list
+   protdata << prentry;          // Append to the data entries list
+
+   return true;
+}
+
 // Verify valid run name (possible modify for valid-only characters)
 void US_ExperGuiGeneral::run_name_entered( void )
 {
-DbgLv(1) << "EGG: rchg: IN";
+DbgLv(1) << "EGGe: rchg: IN";
    // Modify run name to have only valid characters
    QRegExp rx( "[^A-Za-z0-9_-]" );
    QString rname     = le_runid->text();
    QString old_rname = rname;
-DbgLv(1) << "EGG: rchg: old_rname" << old_rname;
+DbgLv(1) << "EGGe: rchg: old_rname" << old_rname;
    rname.replace( rx,  "_" );
-DbgLv(1) << "EGG: rchg:     rname" << rname;
+DbgLv(1) << "EGGe: rchg:     rname" << rname;
    bool changed      = false;
    
    if ( rname != old_rname )
@@ -254,7 +289,7 @@ DbgLv(1) << "EGG: rchg:     rname" << rname;
       changed           = true;
    }
 
-DbgLv(1) << "EGG: rchg: len(runname)" << rname.length();
+DbgLv(1) << "EGGe: rchg: len(runname)" << rname.length();
    // Limit run ID length to 50 characters
    if ( rname.length() > 50 )
    {
@@ -265,7 +300,7 @@ DbgLv(1) << "EGG: rchg: len(runname)" << rname.length();
       rname             = rname.left( 50 );
       changed           = true;
    }
-DbgLv(1) << "EGG: rchg: changed" << changed;
+DbgLv(1) << "EGGe: rchg: changed" << changed;
 
    if ( changed )
    {  // Replace runID in line edit box
@@ -306,138 +341,93 @@ void US_ExperGuiGeneral::sel_investigator( void )
 // Load Protocol
 void US_ExperGuiGeneral::load_protocol( void )
 {
-   bool load_db          = use_db;
+   bool fromdisk         = US_Settings::debug_match( "protocolFromDisk" );
+   bool load_db          = fromdisk ? false : use_db;
    US_Passwd            pw;
    QString xmlstr( "" );
    QStringList          hdrs;
-   QStringList          protnames;
-   QList< QStringList > protdata;
    int                  prx;
    QString pdtitle( tr( "Select a Protocol to Load" ) );
-DbgLv(1) << "EGG:ldPro:";
-#if 0
-QString mtitle  = tr( "Not Yet Implemented" );
+   pdtitle             += ( ( load_db ) ?
+                            tr( " from Database" ) :
+                            tr( " from Disk" ) );
+//*DEBUG: forced input from disk
+if(fromdisk) {
+QString mtitle  = tr( "Debug Forced Protocol from Disk" );
 QString message = tr( "The ability to load a protocol from the database\n" )
- + tr( "or local disk has not yet been implemented." );
-#endif
-#if 1
-QString mtitle  = tr( "Not Yet Implemented" );
-QString message = tr( "The ability to load a protocol from the database\n" )
- + tr( "has not yet been implemented.\n" )
+ + tr( "has been overridden by a debug setting.\n" )
  + tr( "Protocols from local disk will be listed." );
-load_db=false;
-#endif
 QMessageBox::information( this, mtitle, message );
-DbgLv(1) << "EGG:ldPro: Disk-B: load_db" << load_db;
+}
+//*DEBUG: forced input from disk
+DbgLv(1) << "EGGe:ldPro: Disk-B: load_db" << load_db;
+   // Get database connection pointer (or NULL as disk flag)
    US_DB2* dbP           = load_db ? new US_DB2( pw.getPasswd() ) : NULL;
 
-#if 1
-   US_ProtocolUtil::list_all( protdata, dbP );
-
+   // Build dialog table widget headers
    hdrs << "Protocol Name"
         << "Date"
-        << ( ( dbP != NULL ) ? "DbID" : "File Name" );
-#endif
-#if 0
-   if ( load_db )
-   {  // Build a list of protocol names from the database
-      hdrs << "Protocol Name" << "Date" << "DbID";
-   }  // END: from database
+        << ( load_db ? "DbID" : "File Name" );
 
-   else
-   {  // Build a list of protocol names from local disk
-      hdrs << "Protocol Name" << "Date" << "File Name";
-      QString datdir      = US_Settings::dataDir();
-      datdir.replace( "\\", "/" );
-      datdir              = ( datdir.endsWith( "/" )  ) ? datdir : ( datdir + "/" );
-      datdir             += "projects/";
-      QStringList rfilt( "R*.xml" );
-      QStringList pfiles  = QDir( datdir ).entryList( rfilt, QDir::Files, QDir::Name );
-      int nfiles          = pfiles.count();
-DbgLv(1) << "EGG:ldPro: Disk-B: nfiles" << nfiles << "pfiles" << pfiles;
-
-      for ( int ii = 0; ii < nfiles; ii++ )
-      {
-         QStringList protentry;
-         QString protname;
-         QString prot_id;
-         QString pfname      = pfiles[ ii ];
-         QString pfpath      = datdir + pfname;
-         QString fdate       = US_Util::toUTCDatetimeText(
-                                  QFileInfo( pfpath ).lastModified().toUTC()
-                                  .toString( Qt::ISODate ), true )
-                                  .section( " ", 0, 0 ).simplified();
-DbgLv(1) << "EGG:ldPro: Disk-B:  ii" << ii << "pfname" << pfname << "fdate" << fdate;
-         QFile pfile( pfpath );
-         if ( ! pfile.open( QIODevice::ReadOnly ) )  continue;
-
-         QXmlStreamReader xmli( &pfile );
-
-         while( ! xmli.atEnd() )
-         {
-            xmli.readNext();
-            QString ename       = xmli.name().toString();
-            if ( xmli.isStartElement()  &&  ename == "protocol" )
-            {
-               QXmlStreamAttributes attr = xmli.attributes();
-               protname            = attr.value( "description" ).toString();
-               prot_id             = attr.value( "guid" ).toString();
-               break;
-            }
-         }
-
-         protnames << protname;
-         protentry << protname << fdate << pfname;
-         protdata  << protentry;
-      }  // END: file loop
-   }  // END: local disk
-#endif
-
-#if 0
-QStringList pdat1;
-QStringList pdat2;
-QStringList pdat3;
-pdat1 << "new beckman protocol" << "2017-02-28" << "243";
-//pdat2 << "another protocol but with a rather long description length for it"     << "2017-02-26" << " 13")
-pdat2 << "another protocol but with a very very very very very very very very long description length for it"
- << "2017-02-26" << " 13";
-pdat3 << "protocol demo"        << "2017-02-27" << " 74";;
-protdata << pdat1 << pdat2 << pdat3;
-#endif
-
+   // Select a protocol
    US_SelectItem pdiag( protdata, hdrs, pdtitle, &prx, -2 );
 
    if ( pdiag.exec() == QDialog::Accepted )
-   {
-DbgLv(1) << "EGG:ldPro:  ACCEPT  prx" << prx << "sel proto" << protdata[prx][0];
+   {  // Accept in dialog:  get selected protocol name and its XML
+DbgLv(1) << "EGGe:ldPro:  ACCEPT  prx" << prx << "sel proto" << protdata[prx][0];
       QString pname         = protdata[ prx ][ 0 ];
 
+      // Get the protocol XML that matches the selected protocol name
       US_ProtocolUtil::read_record( pname, &xmlstr, NULL, dbP );
-DbgLv(1) << "EGG:ldPro:  ACCEPT   read_record return len(xml)" << xmlstr.length();
+DbgLv(1) << "EGGe:ldPro:  ACCEPT   read_record return len(xml)" << xmlstr.length();
 
       le_protocol->setText( pname );
    }
+
    else
-   {
-DbgLv(1) << "EGG:ldPro:  REJECT";
+   {  // Reject in dialog
+DbgLv(1) << "EGGe:ldPro:  REJECT";
+      return;
    }
 
    // Now that we have a protocol XML, convert it to internal controls
    QXmlStreamReader xmli( xmlstr );
    mainw->loadProto.fromXml( xmli );
 
-   // Initialize the current protocol from the loaded one
+   // Initialize the current protocol from the loaded one; set temperature
    mainw->currProto      = mainw->loadProto;
+   ct_tempera->setValue( mainw->currProto.temperature );
+DbgLv(1) << "EGGe:ldPro:    dur0" << mainw->currProto.rpSpeed.ssteps[0].duration;
+DbgLv(1) << "EGGe:ldPro:    cPname" << mainw->currProto.protname
+ << "lPname" << mainw->loadProto.protname;
+DbgLv(1) << "EGGe:ldPro:    cOhost" << mainw->currProto.optimahost
+ << "lOhost" << mainw->loadProto.optimahost;
+DbgLv(1) << "EGGe:ldPro:    cTempe" << mainw->currProto.temperature
+ << "lTempe" << mainw->loadProto.temperature;
+
+   // Initialize all other panels using the new protocol
+   mainw->initPanels();
 }
 
 // Verify entered protocol name
 void US_ExperGuiGeneral::changed_protocol( void )
 {
-DbgLv(1) << "EGG:ldPro:";
-QString mtitle  = tr( "Not Yet Implemented" );
-QString message = tr( "The ability to determine if a given protocol\n" )
- + tr( "name is unique has not yet been implemented." );
-QMessageBox::information( this, mtitle, message );
+   QString protname     = le_protocol->text();
+
+   if ( pr_names.contains( protname ) )
+   {
+      QString msg          =
+         tr( "The protocol name given<br/>" )
+         +  "  ( <b>" + protname + "</b> )<br/>"
+         + tr( "is already being used.  It will need to be<br/>"
+               "changed if/when this protocol is saved.<br/><br/>"
+               "If you plan to make changes to this protocol,<br/>"
+               "it is suggested that you change it's name<br/>"
+               "(description text) at this time." );
+      QMessageBox::information( this,
+                                tr( "Duplicate Run Protocol Name" ),
+                                msg );
+   }
 }
 
 // Capture selected project information
@@ -471,6 +461,7 @@ void US_ExperGuiGeneral::centerpieceInfo( void )
 US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
 {
    mainw               = (US_ExperimentMain*)topw;
+   rpRotor             = &(mainw->currProto.rpRotor);
    dbg_level           = US_Settings::us_debug();
    QVBoxLayout* panel  = new QVBoxLayout( this );
    panel->setSpacing        ( 2 );
@@ -528,10 +519,9 @@ US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
 
    changeLab( 0 );
    changed             = false;
-   rpRotor             = &(mainw->currProto.rpRotor);
 
    initPanel();
-};
+}
 
 // Slot for change in Lab selection
 void US_ExperGuiRotor::changeLab( int ndx )
@@ -685,6 +675,7 @@ DbgLv(1) << "EGR: advRChg:     ii eID" << ii << eID;
 US_ExperGuiSpeeds::US_ExperGuiSpeeds( QWidget* topw )
 {
    mainw               = (US_ExperimentMain*)topw;
+   rpSpeed             = &(mainw->currProto.rpSpeed);
    changed             = false;
    dbg_level           = US_Settings::us_debug();
    QVBoxLayout* panel  = new QVBoxLayout( this );
@@ -724,15 +715,21 @@ US_ExperGuiSpeeds::US_ExperGuiSpeeds( QWidget* topw )
    // Default values
    nspeed              = 1;
    curssx              = 0;
-   double defspeed     = 45000;
-   double defaccel     = 400;
-   double defdurhr     = 5;
-   double defdurmin    = 30;
-   double defdurtim    = ( defdurhr * 60. ) + defdurmin;
-   double defdlyhr     = 0;
-   double defdlymin    = 2;
-   double defdlysec    = 30;
-   double defdlytim    = ( defdlyhr * 3600. ) + ( defdlymin * 60. ) + defdlysec;
+   double defspeed     = rpSpeed->ssteps[ 0 ].speed;
+   double defaccel     = rpSpeed->ssteps[ 0 ].accel;
+   double defdurtim    = rpSpeed->ssteps[ 0 ].duration;
+   double defdlytim    = rpSpeed->ssteps[ 0 ].delay;
+   double defdurhr     = qFloor( defdurtim / 60.0 );
+   double defdurmin    = defdurtim - ( defdurhr * 60.0 );
+   double defdlymin    = qFloor( defdlytim / 60.0 );
+   double defdlyhr     = qFloor( defdlymin / 60.0 );
+   defdlymin          -= ( defdlyhr * 60.0 );
+   double defdlysec    = defdlytim - ( defdlyhr * 3600.0 )
+                                   - ( defdlymin * 60.0 );
+DbgLv(1) << "EGSp: defdurtim" << defdurtim;
+DbgLv(1) << "EGSp:   defdurhr" << defdurhr << "defdurmin" << defdurmin;
+DbgLv(1) << "EGSp: defdlytim" << defdlytim;
+DbgLv(1) << "EGSp:   defdlyhr" << defdlyhr << "defdlymin" << defdlymin << "defdlysec" << defdlysec;
    profdesc.resize( nspeed );  // Speed profile descriptions
    ssvals  .resize( nspeed );  // Speed step values
    ssvals[ 0 ][ "speed" ]    = defspeed;  // Speed default
@@ -759,7 +756,8 @@ US_ExperGuiSpeeds::US_ExperGuiSpeeds( QWidget* topw )
    ct_dlymin->setValue( defdlymin );
    ct_dlysec->setValue( defdlysec );
 
-   // Speed profile description, e.g., "Speed Profile 1: 30000 rpm for 5 hr 30 min"
+   // Speed profile 1 description;
+   //   e.g., "Speed Profile 1: 30000 rpm for 5 hr 30 min"
    cb_prof->addItem( speedp_description( 0 ) );
 
    // Adjust counter sizes
@@ -830,7 +828,9 @@ US_ExperGuiSpeeds::US_ExperGuiSpeeds( QWidget* topw )
 
    // Set low delay-minutes based on speed,acceleration,delay-hours
    adjustDelay();
-};
+
+   initPanel();
+}
 
 // Return speed profile description string for an indicated step
 QString US_ExperGuiSpeeds::speedp_description( int ssx )
@@ -865,12 +865,12 @@ DbgLv(1) << "EGSp: chgKnt: nsp nnsp" << nspeed << new_nsp;
       profdesc.resize( new_nsp );
       ssvals  .resize( new_nsp );
       int kk           = nspeed - 1;
-      double ssspeed   = (double)ssvals[ kk ][ "speed" ];
-      double ssaccel   = (double)ssvals[ kk ][ "accel" ];
-      double ssdurtim  = (double)ssvals[ kk ][ "duration" ];
+      double ssspeed   = ssvals[ kk ][ "speed" ];
+      double ssaccel   = ssvals[ kk ][ "accel" ];
+      double ssdurtim  = ssvals[ kk ][ "duration" ];
       double ssdurhr   = qFloor( ssdurtim / 60.0 );
       double ssdurmin  = ssdurtim - ( ssdurhr * 60.0 );
-      double ssdlytim  = (double)ssvals[ kk ][ "delay" ];
+      double ssdlytim  = ssvals[ kk ][ "delay" ];
       double ssdlymin  = qFloor( ssdlytim / 60.0 );
       double ssdlyhr   = qFloor( ssdlymin / 60.0 );
       ssdlymin        -= ( ssdlyhr * 60.0 );
@@ -925,13 +925,13 @@ DbgLv(1) << "EGSp: chgPfx:  speed-c speed-p"
  << ssvals[ssp]["speed"] << ssvals[curssx]["speed"];
    curssx           = ssp;
    // Set all counters for newly selected step
-   double ssspeed   = (double)ssvals[ curssx ][ "speed" ];
-   double ssaccel   = (double)ssvals[ curssx ][ "accel" ];
-   double ssdurtim  = (double)ssvals[ curssx ][ "duration" ];
+   double ssspeed   = ssvals[ curssx ][ "speed" ];
+   double ssaccel   = ssvals[ curssx ][ "accel" ];
+   double ssdurtim  = ssvals[ curssx ][ "duration" ];
    double ssdurhr   = qFloor( ssdurtim / 60.0 );
    double ssdurmin  = ssdurtim - ( ssdurhr * 60.0 );
 DbgLv(1) << "EGSp: chgPfx:   durtim durhr durmin" << ssdurtim << ssdurhr << ssdurmin;
-   double ssdlytim  = (double)ssvals[ curssx ][ "delay" ];
+   double ssdlytim  = ssvals[ curssx ][ "delay" ];
    double ssdlymin  = qFloor( ssdlytim / 60.0 );
    double ssdlyhr   = qFloor( ssdlymin / 60.0 );
    ssdlymin        -= ( ssdlyhr * 60.0 );
@@ -973,9 +973,9 @@ DbgLv(1) << "EGSp: chgAcc: val" << val << "ssx" << curssx;
 void US_ExperGuiSpeeds::ssChangeDurhr( double val )
 {
    changed          = true;
-DbgLv(1) << "EGSp: chgDuh: val" << val << "ssx" << curssx;
    double ssdurtim  = ( val * 60.0 ) + ct_durmin->value();
    ssvals[ curssx ][ "duration" ] = ssdurtim;  // Set Duration in step vals vector
+DbgLv(1) << "EGSp: chgDuh: val" << val << "ssx" << curssx << "ssdurtim" << ssdurtim;
    profdesc[ curssx ] = speedp_description( curssx );
    cb_prof->setItemText( curssx, profdesc[ curssx ] );
 }
@@ -984,8 +984,8 @@ DbgLv(1) << "EGSp: chgDuh: val" << val << "ssx" << curssx;
 void US_ExperGuiSpeeds::ssChangeDurmin( double val )
 {
    changed          = true;
-DbgLv(1) << "EGSp: chgDum: val" << val << "ssx" << curssx;
    double ssdurtim  = ( ct_durhr->value() * 60.0 ) + val;
+DbgLv(1) << "EGSp: chgDum: val" << val << "ssx" << curssx << "ssdurtim" << ssdurtim;
    ssvals[ curssx ][ "duration" ] = ssdurtim;  // Set Duration in step vals vector
    profdesc[ curssx ] = speedp_description( curssx );
    cb_prof->setItemText( curssx, profdesc[ curssx ] );
@@ -1097,8 +1097,9 @@ DbgLv(1) << "EGSp: adjDelay:   setdlysec delaynsec" << setdlysec << delaynsec;
 // Panel for Cells parameters
 US_ExperGuiCells::US_ExperGuiCells( QWidget* topw )
 {
-DbgLv(1) << "EGC: IN";
+DbgLv(1) << "EGCe: IN";
    mainw               = (US_ExperimentMain*)topw;
+   rpCells             = &(mainw->currProto.rpCells);
    dbg_level           = US_Settings::us_debug();
    QVBoxLayout* panel  = new QVBoxLayout( this );
    panel->setSpacing        ( 2 );
@@ -1118,8 +1119,8 @@ DbgLv(1) << "EGC: IN";
 
    cpnames             = sibLValue( "general", "centerpieces" );
    const int mxcels    = 8;
-   int nholes          = sibSValue( "rotor", "nholes" ).toInt();
-DbgLv(1) << "EGC:  nholes mxcels" << nholes << mxcels;
+   int nholes          = sibIValue( "rotor",   "nholes" );
+DbgLv(1) << "EGCe:  nholes mxcels" << nholes << mxcels;
 
    for ( int ii = 0; ii < mxcels; ii++ )
    {
@@ -1164,18 +1165,57 @@ DbgLv(1) << "EGC:  nholes mxcels" << nholes << mxcels;
    // Do first pass at initializing the panel layout
    initPanel();
 QString pval1 = sibSValue( "rotor", "rotor" );
-DbgLv(1) << "EGC: rotor+rotor=" << pval1;
-};
+DbgLv(1) << "EGCe: rotor+rotor=" << pval1;
+}
+
+// Function to rebuild the Cells protocol after Rotor change
+void US_ExperGuiCells::rebuild_Cells( void )
+{
+   int nholes          = sibIValue( "rotor", "nholes" );
+DbgLv(1) << "EGCe:rbC:  r_nholes" << nholes << "c_ncell" << rpCells->ncell;
+   if ( nholes == rpCells->ncell )
+      return;                          // No rotor change means no rebuild
+
+   if ( rpCells->ncell == 0 )
+   {  // No existing Cells protocol, so initialize a brand-new one
+DbgLv(1) << "EGCe:rbC:   ++NEW Cell protocol++";
+      rpCells->ncell      = nholes;
+      rpCells->nused      = 0;
+      rpCells->used.clear();
+      return;
+   }
+
+   // Otherwise, construct a protocol based on rotor holes
+   if ( nholes < rpCells->ncell )
+   {  // Decreasing cells count:  Recompute used count
+DbgLv(1) << "EGCe:rbC: H<C: nused" << rpCells->nused;
+      int kused           = 0;
+      for ( int ii = 0; ii < rpCells->nused; ii++ )
+      {
+         if ( rpCells->used[ ii ].cell > nholes )
+            break;
+         kused++;
+DbgLv(1) << "EGCe:rbC:    ii" << ii << "kused" << kused;
+      }
+ 
+      rpCells->nused      = kused;      // Resize used-cells vector
+      rpCells->used.resize( kused );
+   }
+   // If cells count increases, used stays the same; just reset total count
+
+   rpCells->ncell      = nholes;        // Reset total cells count up/down
+DbgLv(1) << "EGCe:rbC: ncell" << nholes;
+}
 
 // Slot for change in centerpiece selection
 void US_ExperGuiCells::centerpieceChanged( int sel )
 {
-DbgLv(1) << "EGC:cpChg: sel" << sel;
+DbgLv(1) << "EGCe:cpChg: sel" << sel;
    QObject* sobj       = sender();      // Sender object
    QString sname       = sobj->objectName();
    int irow            = sname.section( ":", 0, 0 ).toInt();
-DbgLv(1) << "EGC:cpChg:  sname irow" << sname << irow;
-   int nholes          = sibSValue( "rotor", "nholes" ).toInt();
+DbgLv(1) << "EGCe:cpChg:  sname irow" << sname << irow;
+   int nholes          = sibIValue( "rotor", "nholes" );
    int icbal           = nholes - 1;    // Counter-balance index
 
    if ( irow != icbal )
@@ -1183,18 +1223,18 @@ DbgLv(1) << "EGC:cpChg:  sname irow" << sname << irow;
       int halfnh          = nholes / 2; // Half number holes
       int xrow            = ( irow < halfnh ) ? irow + halfnh : irow - halfnh;
       int jsel            = sel;        // Use same centerpiece for cross
-DbgLv(1) << "EGC:cpChg:  xrow icbal" << xrow << icbal;
+DbgLv(1) << "EGCe:cpChg:  xrow icbal" << xrow << icbal;
 
       if ( xrow == icbal )
       {  // Cross cell is counterbalance
          jsel                = 1;       // Usually "Beckman counterbalance"
          QString cpname      = cc_cenps[ irow ]->currentText();
-DbgLv(1) << "EGC:cpChg:   cpname" << cpname << "tcb_centps" << tcb_centps;
+DbgLv(1) << "EGCe:cpChg:   cpname" << cpname << "tcb_centps" << tcb_centps;
          if ( tcb_centps.contains( cpname ) )
             jsel                = 2;    // In some cases "Titanium counterbalance"
       }
 
-DbgLv(1) << "EGC:cpChg:   CB:jsel" << jsel;
+DbgLv(1) << "EGCe:cpChg:   CB:jsel" << jsel;
       cc_cenps[ xrow ]->setCurrentIndex( jsel );
    }
 }
@@ -1202,12 +1242,12 @@ DbgLv(1) << "EGC:cpChg:   CB:jsel" << jsel;
 // Slot for change in windows selection
 void US_ExperGuiCells::windowsChanged( int sel )
 {
-DbgLv(1) << "EGC:wiChg: sel" << sel;
+DbgLv(1) << "EGCe:wiChg: sel" << sel;
    QObject* sobj       = sender();   // Sender object
    QString sname       = sobj->objectName();
    int irow            = sname.section( ":", 0, 0 ).toInt();
-DbgLv(1) << "EGC:wiChg:  sname irow" << sname << irow;
-   int nholes          = sibSValue( "rotor", "nholes" ).toInt();
+DbgLv(1) << "EGCe:wiChg:  sname irow" << sname << irow;
+   int nholes          = sibIValue( "rotor", "nholes" );
    int icbal           = nholes - 1;     // Counter-balance index
 
    if ( irow != icbal )
@@ -1222,6 +1262,7 @@ DbgLv(1) << "EGC:wiChg:  sname irow" << sname << irow;
 US_ExperGuiSolutions::US_ExperGuiSolutions( QWidget* topw )
 {
    mainw               = (US_ExperimentMain*)topw;
+   rpSolut             = &(mainw->currProto.rpSolut);
    mxrow               = 24;     // Maximum possible rows
    dbg_level           = US_Settings::us_debug();
    QVBoxLayout* panel  = new QVBoxLayout( this );
@@ -1244,10 +1285,9 @@ US_ExperGuiSolutions::US_ExperGuiSolutions( QWidget* topw )
    genL->addWidget( lb_hdr2,         row++, 1, 1, 5 );
 
    QStringList cpnames = sibLValue( "cells", "centerpieces" );
-   const int mxcels    = 8;
-   int nholes          = sibSValue( "rotor", "nholes" ).toInt();
+   int nholes          = sibIValue( "rotor", "nholes" );
    QString add_comm    = tr( "Add to Comments" );
-DbgLv(1) << "EGSo:  nholes mxcels" << nholes << mxcels;
+DbgLv(1) << "EGSo:  nholes mxrow" << nholes << mxrow;
 
    QLabel*       cclabl;
    QComboBox*    cb_solu;
@@ -1280,10 +1320,7 @@ DbgLv(1) << "EGSo:  nholes mxcels" << nholes << mxcels;
 
       connect( pb_comm, SIGNAL( clicked()           ),
                this,    SLOT  ( addComments()       ) );
-#if 0
-      connect( cb_solu, SIGNAL( activated      ( int ) ),
-               this,    SLOT  ( solutionChanged( int ) ) );
-#endif
+
       bool is_vis          = ( ii < 4 );
       cclabl ->setVisible( is_vis );
       cb_solu->setVisible( is_vis );
@@ -1303,8 +1340,14 @@ DbgLv(1) << "EGSo:  nholes mxcels" << nholes << mxcels;
    panel->addLayout( genL );
    panel->addStretch();
 
+DbgLv(1) << "EGSo:main: call initPanel()";
    initPanel();
-};
+}
+
+// Function to rebuild the Solutions protocol after Cells change
+void US_ExperGuiSolutions::rebuild_Solut( void )
+{
+}
 
 // Slot to open a dialog for managing solutions
 void US_ExperGuiSolutions::manageSolutions()
@@ -1444,6 +1487,7 @@ DbgLv(1) << "EGSo:solDat:    NEWfound descr" << soludata.solutionDesc << stat;
          {
             soludata.readFromDisk( solID );
          }
+         solu_data[ sdescr ] = soludata;
       }
    }
 
@@ -1460,6 +1504,7 @@ int US_ExperGuiSolutions::allSolutions()
    US_Passwd pw;
    US_DB2* dbP       = ( sibSValue( "general", "dbdisk" ) == "DB" )
                        ? new US_DB2( pw.getPasswd() ) : NULL;
+//DbgLv(1) << "EGSo: allSo: dbP" << dbP;
    if ( dbP != NULL )
    {  // Read all the solutions in the database
       soids << "-1";
@@ -1501,18 +1546,18 @@ int US_ExperGuiSolutions::allSolutions()
       QStringList filter( "S*.xml" );
       QStringList fnames = dir.entryList( filter, QDir::Files,
                                           QDir::Name );
-      QFile s_file;
       QString solID;
       QString descr;
 
       for ( int ii = 0; ii < fnames.size(); ii++ )
       {  // Examine each S*.xml file
-         s_file.setFileName( path + "/" + fnames[ ii ] );
+DbgLv(1) << "EGSo: allSo:  file" << (ii+1) << "of" << fnames.size() << fnames[ii];
+         QFile* s_file     = new QFile( path + "/" + fnames[ ii ] );
 
-         if ( ! s_file.open( QIODevice::ReadOnly | QIODevice::Text ) )
+         if ( ! s_file->open( QIODevice::ReadOnly | QIODevice::Text ) )
             continue;
 
-         QXmlStreamReader xmli( &s_file );
+         QXmlStreamReader xmli( s_file );
 
          while ( ! xmli.atEnd() )
          {
@@ -1541,9 +1586,11 @@ int US_ExperGuiSolutions::allSolutions()
                }
             }  // END: Start element
          }  // END: XML element loop
+DbgLv(1) << "EGSo: allSo:      desc" << descr << "solID" << solID;
+         s_file->close();
       }  // END: file names loop
 
-      s_file.close();
+//      s_file.close();
    }  // END: solutions on local disk
 
    // Do a pass through solution names looking for duplicates
@@ -1582,6 +1629,7 @@ int US_ExperGuiSolutions::allSolutions()
          solu_ids[ sname ] = soids  [ ii ];
       }
    }  // Re-mapping ids to names
+DbgLv(1) << "EGSo: allSo: sids count" << solu_ids.keys().count();
  
    return solu_ids.keys().count();
 }
@@ -1702,6 +1750,7 @@ void US_ExperGuiSolutions::commentStrings( const QString solname,
 US_ExperGuiOptical::US_ExperGuiOptical( QWidget* topw )
 {
    mainw               = (US_ExperimentMain*)topw;
+   rpOptic             = &(mainw->currProto.rpOptic);
    mxrow               = 24;     // Maximum possible rows
    dbg_level           = US_Settings::us_debug();
    QVBoxLayout* panel  = new QVBoxLayout( this );
@@ -1711,19 +1760,14 @@ US_ExperGuiOptical::US_ExperGuiOptical( QWidget* topw )
    panel->addWidget( lb_panel );
    QGridLayout* genL   = new QGridLayout();
 
-   QPushButton* pb_manage   = us_pushbutton( tr( "Manage Optical Systems" ) );
-   QPushButton* pb_details  = us_pushbutton( tr( "View Optical Details" ) );
-
-   int row             = 1;
-   genL->addWidget( pb_manage,       row,   0, 1, 2 );
-   genL->addWidget( pb_details,      row++, 2, 1, 2 );
    QLabel* lb_hdr1     = us_banner( tr( "Cell / Channel" ) );
    QLabel* lb_hdr2     = us_banner( tr( "Optical System Scans to Perform" ) );
-   genL->addWidget( lb_hdr1,         row,   0, 1, 1 );
-   genL->addWidget( lb_hdr2,         row++, 1, 1, 3 );
+   int row             = 1;
+   genL->addWidget( lb_hdr1, row,   0, 1, 1 );
+   genL->addWidget( lb_hdr2, row++, 1, 1, 3 );
 
    const int mxcels    = 8;
-   int nholes          = sibSValue( "rotor", "nholes" ).toInt();
+   int nholes          = sibIValue( "rotor", "nholes" );
 DbgLv(1) << "EGOp:  nholes mxcels" << nholes << mxcels;
 
    QLabel*        cclabl;
@@ -1817,29 +1861,15 @@ DbgLv(1) << "EGOp:main:    ii" << ii << "is_vis nckopt" << is_vis << nckopt;
       cc_osyss << bg_osyss;
    }
 
-#if 0
-   connect( pb_manage,    SIGNAL( clicked()         ),
-            this,         SLOT  ( manageSolutions() ) );
-#endif
-   connect( pb_details,   SIGNAL( clicked()       ),
-            this,         SLOT  ( detailOptical() ) );
-
    panel->addLayout( genL );
    panel->addStretch();
-};
 
-// Slot to manage extinction profiles
-void US_ExperGuiOptical::manageEProfiles()
+   initPanel();
+}
+
+// Function to rebuild the Optical protocol after Solutions change
+void US_ExperGuiOptical::rebuild_Optic( void )
 {
-DbgLv(1) << "EGOp: mEP: IN";
-   US_Extinction* ediag = new US_Extinction;
-   ediag->setParent(   this, Qt::Window );
-   ediag->setAttribute( Qt::WA_DeleteOnClose );
-
-   connect( ediag,  SIGNAL( get_results(     QMap<double,double>& ) ),
-            this,   SLOT  ( process_results( QMap<double,double>& ) ) );
-
-   ediag->show();
 }
 
 // Slot to handle an optical system being checked
@@ -1896,44 +1926,12 @@ DbgLv(1) << "EGOp: oCk: ccrows" << ccrows;
    }
 }
 
-// Slot to show details of all photo multiplier controls
-void US_ExperGuiOptical::process_results( QMap< double, double >& eprof )
-{
-DbgLv(1) << "EGPM: pr: eprof size" << eprof.keys().count();
-}
-
-// Slot to show details of all photo multiplier controls
-void US_ExperGuiOptical::detailOptical()
-{
-   // Create a new editor text dialog with fixed font
-   US_Editor* ediag = new US_Editor( US_Editor::DEFAULT, true, "", this );
-   ediag->setWindowTitle( tr( "Details on Optical Systems" ) );
-   ediag->resize( 720, 440 );
-   ediag->e->setFont( QFont( US_Widgets::fixedFont().family(),
-                             US_GuiSettings::fontSize() - 1,
-                             QFont::Bold ) );
-   QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
-
-   // Accumulate information on optics that are currently selected
-
-   // Start composing the text that it displays
-   QString dtext  = tr( "Optical System Scans Information:\n\n" );
-
-dtext+= "NONE (not yet implemented)\n";
-
-   // Load text and show the dialog
-   QApplication::restoreOverrideCursor();
-   qApp->processEvents();
-
-   ediag->e->setText( dtext );
-   ediag->show();
-}
-
 
 // Panel for Spectra parameters
 US_ExperGuiSpectra::US_ExperGuiSpectra( QWidget* topw )
 {
    mainw               = (US_ExperimentMain*)topw;
+   rpSpect             = &(mainw->currProto.rpSpect);
    mxrow               = 24;     // Maximum possible rows
    dbg_level           = US_Settings::us_debug();
    QVBoxLayout* panel  = new QVBoxLayout( this );
@@ -2042,7 +2040,14 @@ US_ExperGuiSpectra::US_ExperGuiSpectra( QWidget* topw )
 
    panel->addLayout( genL );
    panel->addStretch();
-};
+
+   initPanel();
+}
+
+// Function to rebuild the Spectra protocol after Optical change
+void US_ExperGuiSpectra::rebuild_Spect( void )
+{
+}
 
 // Slot to manage extinction profiles
 void US_ExperGuiSpectra::manageEProfiles()
@@ -2172,7 +2177,15 @@ DbgLv(1) << "EGwS:manSp: *NOT Accepted*";
 US_ExperGuiUpload::US_ExperGuiUpload( QWidget* topw )
 {
    mainw               = (US_ExperimentMain*)topw;
+   rpRotor             = &(mainw->currProto.rpRotor);
+   rpSpeed             = &(mainw->currProto.rpSpeed);
+   rpCells             = &(mainw->currProto.rpCells);
+   rpSolut             = &(mainw->currProto.rpSolut);
+   rpOptic             = &(mainw->currProto.rpOptic);
+   rpSpect             = &(mainw->currProto.rpSpect);
+   rpUload             = &(mainw->currProto.rpUload);
    uploaded            = false;
+   rps_differ          = true;
    dbg_level           = US_Settings::us_debug();
    QVBoxLayout* panel  = new QVBoxLayout( this );
    panel->setSpacing        ( 2 );
@@ -2185,7 +2198,8 @@ US_ExperGuiUpload::US_ExperGuiUpload( QWidget* topw )
    // Push buttons
    QPushButton* pb_details  = us_pushbutton( tr( "View Experiment Details" ) );
    QPushButton* pb_connect  = us_pushbutton( tr( "Test Connection" ) );
-                pb_upload   = us_pushbutton( tr( "Upload to XLA" ) );
+                pb_upload   = us_pushbutton( tr( "Upload to Optima" ) );
+                pb_saverp   = us_pushbutton( tr( "Save Run Protocol" ) );
 
    pb_upload->setEnabled( false );
 
@@ -2210,12 +2224,19 @@ US_ExperGuiUpload::US_ExperGuiUpload( QWidget* topw )
                                            ck_optical,  false );
    QLayout* lo_extprofs     = us_checkbox( tr( "Spectra" ),
                                            ck_extprofs, false );
-   QLayout* lo_connect      = us_checkbox( tr( "Connected" ),
+   QLayout* lo_connect      = us_checkbox( tr( "Connected to Optima" ),
                                            ck_connect,  false );
+   QLayout* lo_rp_diff      = us_checkbox( tr( "loaded/default Run Protocol"
+                                               " differs from the current"
+                                               " Run Protocol" ),
+                                           ck_rp_diff,  false );
+   QLayout* lo_prot_svd     = us_checkbox( tr( "Protocol Saved" ),
+                                           ck_prot_svd, false );
    QLayout* lo_upl_enab     = us_checkbox( tr( "Upload Enabled" ),
                                            ck_upl_enab, false );
    QLayout* lo_upl_done     = us_checkbox( tr( "Upload Completed" ),
                                            ck_upl_done, false );
+   // Initialize check boxes
    ck_run     ->setEnabled( false );
    ck_project ->setEnabled( false );
    ck_rotor   ->setEnabled( false );
@@ -2227,40 +2248,66 @@ US_ExperGuiUpload::US_ExperGuiUpload( QWidget* topw )
    ck_optical ->setEnabled( false );
    ck_extprofs->setEnabled( false );
    ck_connect ->setEnabled( false );
+   ck_rp_diff ->setEnabled( false );
+   ck_prot_svd->setEnabled( false );
    ck_upl_enab->setEnabled( false );
    ck_upl_done->setEnabled( false );
 
-   // Build the GUI elements
+   // Build the layout
    int row             = 1;
    genL->addWidget( pb_details,      row,   0, 1, 2 );
    genL->addWidget( pb_connect,      row,   2, 1, 2 );
-   genL->addWidget( pb_upload,       row++, 4, 1, 2 );
+   genL->addWidget( pb_saverp,       row,   4, 1, 2 );
+   genL->addWidget( pb_upload,       row++, 6, 1, 2 );
 
-   genL->addLayout( lo_run,          row,   1, 1, 2 );
-   genL->addLayout( lo_project,      row++, 3, 1, 2 );
-   genL->addLayout( lo_rotor,        row,   1, 1, 2 );
-   genL->addLayout( lo_rotor_ok,     row++, 3, 1, 2 );
-   genL->addLayout( lo_speed,        row,   1, 1, 2 );
-   genL->addLayout( lo_speed_ok,     row++, 3, 1, 2 );
-   genL->addLayout( lo_centerp,      row++, 1, 1, 2 );
-   genL->addLayout( lo_solution,     row,   1, 1, 2 );
-   genL->addLayout( lo_optical,      row++, 3, 1, 2 );
-   genL->addLayout( lo_extprofs,     row,   1, 1, 2 );
-   genL->addLayout( lo_connect,      row++, 3, 1, 2 );
-   genL->addLayout( lo_upl_enab,     row,   1, 1, 2 );
-   genL->addLayout( lo_upl_done,     row++, 3, 1, 2 );
+   genL->addLayout( lo_run,          row,   1, 1, 3 );
+   genL->addLayout( lo_project,      row++, 4, 1, 3 );
+   genL->addLayout( lo_rotor,        row,   1, 1, 3 );
+   genL->addLayout( lo_rotor_ok,     row++, 4, 1, 3 );
+   genL->addLayout( lo_speed,        row,   1, 1, 3 );
+   genL->addLayout( lo_speed_ok,     row++, 4, 1, 3 );
+   genL->addLayout( lo_centerp,      row++, 1, 1, 3 );
+   genL->addLayout( lo_solution,     row,   1, 1, 3 );
+   genL->addLayout( lo_optical,      row++, 4, 1, 3 );
+   genL->addLayout( lo_extprofs,     row,   1, 1, 3 );
+   genL->addLayout( lo_connect,      row++, 4, 1, 3 );
+   genL->addLayout( lo_rp_diff,      row++, 1, 1, 6 );
+   genL->addLayout( lo_prot_svd,     row,   1, 1, 2 );
+   genL->addLayout( lo_upl_enab,     row,   3, 1, 2 );
+   genL->addLayout( lo_upl_done,     row++, 5, 1, 3 );
 
+   // Connect to slots
    connect( pb_details,   SIGNAL( clicked()          ),
             this,         SLOT  ( detailExperiment() ) );
    connect( pb_connect,   SIGNAL( clicked()          ),
             this,         SLOT  ( testConnection()   ) );
+   connect( pb_saverp,    SIGNAL( clicked()          ),
+            this,         SLOT  ( saveRunProtocol()  ) );
    connect( pb_upload,    SIGNAL( clicked()          ),
             this,         SLOT  ( uploadExperiment() ) );
 
    panel->addLayout( genL );
    panel->addStretch();
 
+   // Initialize completion flags
+   have_run            = false;
+   have_proj           = false;
+   have_rotor          = true;
+   chgd_rotor          = false;
+   have_speed          = true;
+   chgd_speed          = false;
+   have_cells          = false;
+   have_solus          = false;
+   have_optic          = false;
+   have_spect          = false;
+   have_sol            = false;
+   rps_differ          = false;
+   proto_svd           = false;
+   upld_enab           = false;
+   uploaded            = false;
    connected           = false;
+
+   // Connect to the Optima if possible
    QStringList dblist  = US_Settings::defaultXpnHost();
    int ndble           = dblist.count();
 
@@ -2294,15 +2341,15 @@ DbgLv(1) << "EGUp:main:   opsys1-3" << dblist[6] << dblist[7] << dblist[8];
    QString dbname      = dblist[ 3 ];
    QString dbuser      = dblist[ 4 ];
    QString dbpasw      = dblist[ 5 ];
-DbgLv(1) << "EGU: host port name user pasw" << xpnhost << xpnport
+DbgLv(1) << "EGUp: host port name user pasw" << xpnhost << xpnport
  << dbname << dbuser << dbpasw;
    US_XpnData* xpn_data = new US_XpnData();
    connected           = xpn_data->connect_data( xpnhost, xpnport, dbname,
                                                  dbuser,  dbpasw );
-DbgLv(1) << "EGU:  connected" << connected;
+DbgLv(1) << "EGUp:  connected" << connected;
    xpn_data->close();
    delete xpn_data;
-};
+}
 
 // Slot to show details of all experiment controls
 void US_ExperGuiUpload::detailExperiment()
@@ -2315,40 +2362,47 @@ void US_ExperGuiUpload::detailExperiment()
                              US_GuiSettings::fontSize() - 1,
                              QFont::Bold ) );
 QFont ufont=ediag->e->font();
-DbgLv(1) << "EGU:detE: ufont" << ufont.family();
+DbgLv(1) << "EGUp:detE: ufont" << ufont.family();
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
 
    // Accumulate information on controls that have been specified
-   QString v_run     = sibSValue( "general",   "runID" );
-   QString v_proj    = sibSValue( "general",   "project" );
-   QString v_invid   = sibSValue( "general",   "investigator" );
+   QString v_invid   = mainw->currProto.investigator;
    QString v_dbdisk  = sibSValue( "general",   "dbdisk" );
-   QString v_lab     = sibSValue( "rotor",     "lab" );
-   QString v_rotor   = sibSValue( "rotor",     "rotor" );
-   QString v_calib   = sibSValue( "rotor",     "calib" );
-   QString v_centp   = sibSValue( "cells",     "nonEmpty" );
+   QString v_run     = mainw->currProto.runname;
+   QString v_proj    = mainw->currProto.project;
+   QString v_prot    = mainw->currProto.protname;
+   QString v_ohost   = mainw->currProto.optimahost;
+   double  d_temper  = mainw->currProto.temperature;
+   QString v_temper  = QString::number( d_temper );
+   QString v_lab     = rpRotor->laboratory;
+   QString v_rotor   = rpRotor->rotor;
+   QString v_calib   = rpRotor->calibration;
+   QString v_centp   = sibSValue( "cells",     "nused" );
    QString v_ccbal   = sibSValue( "cells",     "counterbalance" );
-   QString v_nspeed  = sibSValue( "speeds",    "nspeeds" );
+   int     i_nspeed  = rpSpeed->nstep;
+   QString v_nspeed  = QString::number( i_nspeed );
    QString v_nsolct  = sibSValue( "solutions", "nchant" );
    QString v_nsolcu  = sibSValue( "solutions", "nchanu" );
-   QString v_nsolcf  = sibSValue( "solutions", "nchanf" );
-   QString v_nsolun  = sibSValue( "solutions", "nusols" );
-DbgLv(1) << "EGU:dE: n speed,solct,solun" << v_nspeed << v_nsolct << v_nsolun;
+   int     i_nsolcf  = rpSolut->nschan;
+   QString v_nsolcf  = QString::number( i_nsolcf );
+   int     i_nsolun  = rpSolut->nuniqs;
+   QString v_nsolun  = QString::number( i_nsolun );
+DbgLv(1) << "EGUp:dE: n speed,solct,solun" << v_nspeed << v_nsolct << v_nsolun;
 
    QStringList sspeed   = sibLValue( "speeds",    "profiles" );
-DbgLv(1) << "EGU:dE: speed profiles" << sspeed;
+DbgLv(1) << "EGUp:dE: speed profiles" << sspeed;
    QStringList scentp   = sibLValue( "cells",     "centerpieces" );
-DbgLv(1) << "EGU:dE: cells centerpieces" << scentp;
+DbgLv(1) << "EGUp:dE: cells centerpieces" << scentp;
    QStringList ssolut   = sibLValue( "solutions", "solutions" );
-DbgLv(1) << "EGU:dE: solus solus" << ssolut;
+DbgLv(1) << "EGUp:dE: solus solus" << ssolut;
 
    bool chk_run      = ! v_run .isEmpty();
    bool chk_project  = ! v_proj.isEmpty();
-   bool chk_rotor_ok = ( sibSValue( "rotor",     "changed" ).toInt() > 0 );
-   bool chk_speed_ok = ( sibSValue( "speeds",    "changed" ).toInt() > 0 );
+   bool chk_rotor_ok = ( sibIValue( "rotor",     "changed" ) > 0 );
+   bool chk_speed_ok = ( sibIValue( "speeds",    "changed" ) > 0 );
    bool chk_centerp  = ( v_centp.toInt() > 0 );
-   bool chk_solution = ( sibSValue( "solutions", "alldone" ).toInt() > 0 );
-   bool chk_extprofs = ( sibSValue( "photomult", "alldone" ).toInt() > 0 );
+   bool chk_solution = ( sibIValue( "solutions", "alldone" ) > 0 );
+   bool chk_extprofs = ( sibIValue( "photomult", "alldone" ) > 0 );
    bool chk_vars_set = ( chk_run       &&  chk_project   &&
                          chk_centerp   &&  chk_solution  &&
                          chk_extprofs );
@@ -2372,24 +2426,24 @@ DbgLv(1) << "EGU:dE: solus solus" << ssolut;
    // Compose the text to be displayed
    QString dtext  = tr( "Experiment Control Information:\n" );
    dtext += tr( "\nGeneral\n" );
-   dtext += tr( "  ALL SPECIFIED:           " ) + v_genok  + "\n";
-   dtext += tr( "  RunId:                   " ) + v_run    + "\n";
-   dtext += tr( "  Project:                 " ) + v_proj   + "\n";
-   dtext += tr( "  Investigator:            " ) + v_invid  + "\n";
-   dtext += tr( "  DB / Disk:               " ) + v_dbdisk + "\n";
+   dtext += tr( "  ALL SPECIFIED:              " ) + v_genok  + "\n";
+   dtext += tr( "  Investigator:               " ) + v_invid  + "\n";
+   dtext += tr( "  DB / Disk:                  " ) + v_dbdisk + "\n";
+   dtext += tr( "  RunId:                      " ) + v_run    + "\n";
+   dtext += tr( "  Project:                    " ) + v_proj   + "\n";
    dtext += tr( "\nRotor\n" );
-   dtext += tr( "  ALL SPECIFIED:           " ) + v_rotok  + "\n";
-   dtext += tr( "  USER CHANGES:            " ) + v_rotuc  + "\n";
-   dtext += tr( "  Laboratory:              " ) + v_lab    + "\n";
-   dtext += tr( "  Rotor:                   " ) + v_rotor  + "\n";
-   dtext += tr( "  Calibration:             " ) + v_calib  + "\n";
+   dtext += tr( "  ALL SPECIFIED:              " ) + v_rotok  + "\n";
+   dtext += tr( "  USER CHANGES:               " ) + v_rotuc  + "\n";
+   dtext += tr( "  Laboratory:                 " ) + v_lab    + "\n";
+   dtext += tr( "  Rotor:                      " ) + v_rotor  + "\n";
+   dtext += tr( "  Calibration:                " ) + v_calib  + "\n";
    dtext += tr( "\nSpeeds\n" );
-   dtext += tr( "  ALL SPECIFIED:           " ) + v_speok  + "\n";
-   dtext += tr( "  USER CHANGES:            " ) + v_speuc  + "\n";
-   dtext += tr( "  Number Speed Steps:      " ) + v_nspeed + "\n";
+   dtext += tr( "  ALL SPECIFIED:              " ) + v_speok  + "\n";
+   dtext += tr( "  USER CHANGES:               " ) + v_speuc  + "\n";
+   dtext += tr( "  Number Speed Steps:         " ) + v_nspeed + "\n";
 
    int nspeed        = v_nspeed.toInt();
-DbgLv(1) << "EGU:dE: nspeed" << nspeed;
+DbgLv(1) << "EGUp:dE: nspeed" << nspeed;
    int jj            = 0;
    for ( int ii = 0; ii < nspeed; ii++, jj+= 6 )
    {
@@ -2403,10 +2457,10 @@ DbgLv(1) << "EGU:dE: nspeed" << nspeed;
    }
 
    dtext += tr( "\nCells\n" );
-   dtext += tr( "  ALL SPECIFIED:           " ) + v_celok  + "\n";
-   dtext += tr( "  Non-empty Centerpieces:  " ) + v_centp  + "\n";
+   dtext += tr( "  ALL SPECIFIED:              " ) + v_celok  + "\n";
+   dtext += tr( "  Non-empty Centerpieces:     " ) + v_centp  + "\n";
 
-DbgLv(1) << "EGU:dE: ncentp" << scentp.count();
+DbgLv(1) << "EGUp:dE: ncentp" << scentp.count();
    for ( int ii = 0; ii < scentp.count(); ii++ )
    {
       dtext += "    " + scentp[ ii ] + "\n";
@@ -2414,33 +2468,45 @@ DbgLv(1) << "EGU:dE: ncentp" << scentp.count();
 
    if ( v_ccbal.isEmpty() )
    {
-      dtext += tr( "  Counterbalance:          (empty)\n" );
+      dtext += tr( "  Counterbalance:             (empty)\n" );
    }
    else
    {
-      dtext += tr( "  Counterbalance:          " ) + v_ccbal  + "\n";
+      dtext += tr( "  Counterbalance:             " ) + v_ccbal  + "\n";
    }
 
    dtext += tr( "\nSolutions\n" );
-   dtext += tr( "  ALL SPECIFIED:           " ) + v_solok  + "\n";
-   dtext += tr( "  Number Channels Filled:  " ) + v_nsolcf +
+   dtext += tr( "  ALL SPECIFIED:              " ) + v_solok  + "\n";
+   dtext += tr( "  Number Channels Used:       " ) + v_nsolcf +
             tr( " of " ) +  v_nsolct + "\n";
-   dtext += tr( "  Number Unique Solutions: " ) + v_nsolun + "\n";
-DbgLv(1) << "EGU:dE: " << QString(":%1:%2:%3: (:solok:nsolcf:nsolun:)")
+
+   for ( int ii = 0; ii < rpSolut->nschan; ii++ )
+   {
+      dtext += tr( "  Channel " ) +
+               rpSolut->chsols[ ii ].channel + " :  " +
+               tr( "protocol comments" ) + " --\n    " +
+               rpSolut->chsols[ ii ].ch_comment + "\n";
+      dtext += "                :  " +
+               tr( "run comments" ) + " --\n    " +
+               rpSolut->chsols[ ii ].ch_comment + ", plus more\n";
+   }
+
+   dtext += tr( "  Number Unique Solutions:    " ) + v_nsolun + "\n";
+DbgLv(1) << "EGUp:dE: " << QString(":%1:%2:%3: (:solok:nsolcf:nsolun:)")
  .arg(v_solok).arg(v_nsolcf).arg(v_nsolun);
 
-DbgLv(1) << "EGU:dE: nsolut" << ssolut.count();
+DbgLv(1) << "EGUp:dE: nsolut" << ssolut.count();
    for ( int ii = 0; ii < ssolut.count(); ii++ )
    {
       dtext += "    " + ssolut[ ii ] + "\n";
    }
 
    dtext += tr( "\nPhoto Multiplier Spectra\n" );
-   dtext += tr( "  ALL SPECIFIED:           " ) + v_phook  + "\n";
+   dtext += tr( "  ALL SPECIFIED:              " ) + v_phook  + "\n";
    dtext += tr( "\nUpload\n" );
-   dtext += tr( "  CONNECTED:               " ) + v_conok  + "\n";
-   dtext += tr( "  UPLOAD ENABLED:          " ) + v_uleok  + "\n";
-   dtext += tr( "  UPLOAD COMPLETED:        " ) + v_ulcok  + "\n";
+   dtext += tr( "  CONNECTED:                  " ) + v_conok  + "\n";
+   dtext += tr( "  UPLOAD ENABLED:             " ) + v_uleok  + "\n";
+   dtext += tr( "  UPLOAD COMPLETED:           " ) + v_ulcok  + "\n";
 
    // Generate a JSON stream to be uploaded
 
@@ -2475,12 +2541,12 @@ void US_ExperGuiUpload::testConnection()
    QString dbname      = dblist[ 3 ];
    QString dbuser      = dblist[ 4 ];
    QString dbpasw      = dblist[ 5 ];
-DbgLv(1) << "EGU: host port name user pasw" << xpnhost << xpnport
+DbgLv(1) << "EGUp: host port name user pasw" << xpnhost << xpnport
  << dbname << dbuser << dbpasw;
    US_XpnData* xpn_data = new US_XpnData();
    connected           = xpn_data->connect_data( xpnhost, xpnport, dbname,
                                                  dbuser,  dbpasw );
-DbgLv(1) << "EGU:  connected" << connected;
+DbgLv(1) << "EGUp:  connected" << connected;
    xpn_data->close();
    delete xpn_data;
    QString mtitle;
@@ -2488,8 +2554,8 @@ DbgLv(1) << "EGU:  connected" << connected;
 
    if ( connected )
    {  // Let the user know that connection is made and set flag
-      mtitle    = tr( "Successful Connection to XLA" );
-      message   = tr( "The connection to the XLA has been made.\n"
+      mtitle    = tr( "Successful Connection to Optima" );
+      message   = tr( "The connection to the Optima has been made.\n"
                       "  Host:     %1\n"
                       "  Port:     %2\n"
                       "  DB Name:  %3\n"
@@ -2501,15 +2567,86 @@ DbgLv(1) << "EGU:  connected" << connected;
 
    else
    {  // Inform user of failure and give instructions
-      mtitle    = tr( "Failed Connection to XLA" );
-      message   = tr( "The failure to connect to the XLA most likely means\n"
+      mtitle    = tr( "Failed Connection to Optima" );
+      message   = tr( "The failure to connect to the Optima most likely means\n"
                       "that host/port/name/user are misconfigured.\n"
-                      "Reset them in UltraScan's 'XPN Host Preferences'\n"
+                      "Reset them in UltraScan's 'Optima Host Preferences'\n"
                       "and return to retry connecting here." );
       QMessageBox::critical( this, mtitle, message );
    }
 
    initPanel();
+}
+
+// Slot to save the current Run Protocol
+void US_ExperGuiUpload::saveRunProtocol()
+{
+DbgLv(1) << "EGUp:svRP: IN";
+   // Test that the current protcol name is new
+   QStringList           prnames;
+   QList< QStringList >  prdats;
+DbgLv(1) << "EGUp:svRP:  call getProtos()";
+   mainw->getProtos( prnames, prdats );
+DbgLv(1) << "EGUp:svRP:   prnames" << prnames;
+
+   QString protname    = sibSValue( "general", "protocol" );
+DbgLv(1) << "EGUp:svRP:  protname" << protname << "prdats0" << prdats[0];
+
+   if ( prnames.contains( protname ) )
+   {  // Cannot save until a new protocol name is given
+      QString mtitle  = tr( "Protocol Name not New" );
+      QString message = tr( "The current Run Protocol cannot be saved until\n"
+                            "a unique new name is given for it.\n\n"
+                            "In the dialog to follow, add a distinguishing\n"
+                            "suffix to the current protocol name/description\n"
+                            "or create a completely new description." );
+      QMessageBox::critical( this, mtitle, message );
+   }
+   bool ok;
+   QString newpname    = protname;
+   QString msg         =
+      tr( "Enter a new Run Protocol name (description text)<br/>"
+          "for the record to be saved; or modify the<br/>"
+          "existing name so that it is unique.<br/><br/>"
+          "Then click on <b>OK</b> to accept the new name<br/>"
+          "or on <b>Cancel</b> to abort the Run Protocol save.<br/>" );
+
+   // Keep displaying the dialog text until a unique name is given
+   while( prnames.contains( newpname ) )
+   {
+      newpname            = QInputDialog::getText( this,
+                               tr( "Enter New Run Protocol Name/Description" ),
+                               msg, QLineEdit::Normal, newpname, &ok );
+
+      if ( ! ok )
+      {  // Cancel:  abort the save
+         QMessageBox::critical( this,
+            tr( "Save Run Protocol Aborted" ),
+            tr( "The save of a new Run Protocol record<br/>"
+                "has been aborted." ) );
+         return;
+      }
+   }
+
+   // Save the new name and update entries list
+   protname            = newpname;
+DbgLv(1) << "EGUp:svRP:   NEW protname" << protname;
+
+   currProto->protname = protname;            // Update current protocol
+   currProto->pGUID    = US_Util::new_guid();
+DbgLv(1) << "EGUp:svRP:   currProto updated";
+
+   QXmlStreamWriter xmlo( &rpUload->us_xml ); // Compose XML representation
+   currProto->toXml( xmlo );
+
+   QStringList prentry( protname );           // New protocol summary data
+   QString pdate       = "2017-03-05";
+   QString protid      = "1";
+   QString pguid       = currProto->pGUID;
+   prentry << pdate << protid << pguid;
+
+//   mainw->updateProtos( prentry );
+DbgLv(1) << "EGUp:svRP:  new protname" << protname << "prdats0" << prdats[0];
 }
 
 // Slot to upload the experiment to the Optima DB
@@ -2537,27 +2674,27 @@ QString US_ExperGuiUpload::buildJson( void )
    QString v_lab     = sibSValue( "rotor",     "lab" );
    QString v_rotor   = sibSValue( "rotor",     "rotor" );
    QString v_calib   = sibSValue( "rotor",     "calib" );
-   QString v_centp   = sibSValue( "cells",     "nonEmpty" );
+   QString v_centp   = sibSValue( "cells",     "nused" );
    QString v_nspeed  = sibSValue( "speeds",    "nspeeds" );
    QString v_nsolct  = sibSValue( "solutions", "nchant" );
    QString v_nsolcu  = sibSValue( "solutions", "nchanu" );
    QString v_nsolcf  = sibSValue( "solutions", "nchanf" );
    QString v_nsolun  = sibSValue( "solutions", "nusols" );
-DbgLv(1) << "EGU:bj: n speed,solct,solun" << v_nspeed << v_nsolct << v_nsolun;
+DbgLv(1) << "EGUp:bj: n speed,solct,solun" << v_nspeed << v_nsolct << v_nsolun;
 
    QStringList sspeed   = sibLValue( "speeds",    "profiles" );
-DbgLv(1) << "EGU:bj: speed profiles" << sspeed;
+DbgLv(1) << "EGUp:bj: speed profiles" << sspeed;
    QStringList scentp   = sibLValue( "cells",     "centerpieces" );
-DbgLv(1) << "EGU:bj: cells centerpieces" << scentp;
+DbgLv(1) << "EGUp:bj: cells centerpieces" << scentp;
    QStringList ssolut   = sibLValue( "solutions", "channel_solutions" );
-DbgLv(1) << "EGU:bj: solus solus" << ssolut;
+DbgLv(1) << "EGUp:bj: solus solus" << ssolut;
 
    bool chk_run      = ! v_run .isEmpty();
    bool chk_project  = ! v_proj.isEmpty();
    bool chk_centerp  = ( v_centp.toInt() > 0 );
    bool chk_solution = ( sibSValue( "solutions", "alldone" ).toInt() > 0 );
    bool chk_extprofs = ( sibSValue( "photomult", "alldone" ).toInt() > 0 );
-DbgLv(1) << "EGU:bj: ck: run proj cent solu epro"
+DbgLv(1) << "EGUp:bj: ck: run proj cent solu epro"
  << chk_run << chk_project << chk_centerp << chk_solution << chk_extprofs;
    bool chk_vars_set = ( chk_run       &&  chk_project   &&
                          chk_centerp   &&  chk_solution  &&
@@ -2651,7 +2788,7 @@ DbgLv(1) << "EGU:bj: ck: run proj cent solu epro"
    jb_exper          = jd_exper.toJson();
    js_exper          = QString( jb_exper );
 /*DEBUG*/
-DbgLv(1) << "EGU:bj: js_exper" << js_exper;
+DbgLv(1) << "EGUp:bj: js_exper" << js_exper;
 QString urunid=QString( v_run ).replace( " ", "_" );
 QString rpath=US_Settings::resultDir() + "/" + urunid + "/";
 QString fname=urunid + ".experiment-json.dat";

@@ -5,13 +5,17 @@
 #include "us_settings.h"
 #include "us_util.h"
 
+#ifndef _TR_
+#define _TR_(a) QObject::tr(a)
+#endif
+
 // RunProtocol constructor
 US_RunProtocol::US_RunProtocol()
 {
-   protname        = "new protocol";
+   protname        = "";
    pGUID           = QString( "00000000-0000-0000-0000-000000000000" );
    optimahost      = "192.168.1.1";
-   investigator    = "Stephen Hawking";
+   investigator    = "";
    temperature     = 20.0;
 }
 
@@ -43,7 +47,7 @@ bool US_RunProtocol::toXml( QXmlStreamWriter& xmlo )
    xmlo.writeAttribute    ( "version", "1.0" );
 
    xmlo.writeStartElement ( "protocol" );
-   xmlo.writeAttribute    ( "name",         protname );
+   xmlo.writeAttribute    ( "description",  protname );
    xmlo.writeAttribute    ( "guid",         pGUID );
    xmlo.writeAttribute    ( "optima_host",  optimahost );
    xmlo.writeAttribute    ( "investigator", investigator );
@@ -78,7 +82,7 @@ bool US_RunProtocol::fromXml( QXmlStreamReader& xmli )
          if ( ename == "protocol" )
          {
             QXmlStreamAttributes attr = xmli.attributes();
-            protname        = attr.value( "name"         ).toString();
+            protname        = attr.value( "description"  ).toString();
             pGUID           = attr.value( "guid"         ).toString();
             optimahost      = attr.value( "optima_host"  ).toString();
             investigator    = attr.value( "investigator" ).toString();
@@ -171,7 +175,7 @@ bool US_RunProtocol::RunProtoRotor::fromXml( QXmlStreamReader& xmli )
             break;
       }
 
-      else if ( xmli.isEndElement()  && ename == "rotor" )
+      else if ( xmli.isEndElement()  &&  ename == "rotor" )
          break;
 
       xmli.readNext();
@@ -220,10 +224,10 @@ bool US_RunProtocol::RunProtoSpeed::fromXml( QXmlStreamReader& xmli )
          {
             SpeedStep ss;
             QXmlStreamAttributes attr = xmli.attributes();
-            ss.speed     = attr.value( "rotorspeed"   ).toString().toDouble();
-            ss.accel     = attr.value( "acceleration" ).toString().toDouble();
-            ss.duration  = attr.value( "duration"     ).toString().toDouble();
-            ss.delay     = attr.value( "delay"        ).toString().toDouble();
+            ss.speed     = attr.value( "rotorspeed"       ).toString().toDouble();
+            ss.accel     = attr.value( "acceleration"     ).toString().toDouble();
+            ss.duration  = attr.value( "duration_minutes" ).toString().toDouble();
+            ss.delay     = attr.value( "delay_seconds"    ).toString().toDouble();
             ssteps << ss;
             nspeed++;
          }
@@ -249,10 +253,14 @@ bool US_RunProtocol::RunProtoSpeed::toXml( QXmlStreamWriter& xmlo )
    for ( int ii = 0; ii < ssteps.count(); ii++ )
    {
       xmlo.writeStartElement( "speedstep" );
-      xmlo.writeAttribute   ( "rotorspeed",   QString::number( ssteps[ ii ].speed    ) );
-      xmlo.writeAttribute   ( "acceleration", QString::number( ssteps[ ii ].accel    ) );
-      xmlo.writeAttribute   ( "duration",     QString::number( ssteps[ ii ].duration ) );
-      xmlo.writeAttribute   ( "delay",        QString::number( ssteps[ ii ].delay    ) );
+      xmlo.writeAttribute( "rotorspeed",
+                           QString::number( ssteps[ ii ].speed    ) );
+      xmlo.writeAttribute( "acceleration",
+                           QString::number( ssteps[ ii ].accel    ) );
+      xmlo.writeAttribute( "duration_minutes",
+                           QString::number( ssteps[ ii ].duration ) );
+      xmlo.writeAttribute( "delay_seconds",
+                           QString::number( ssteps[ ii ].delay    ) );
       xmlo.writeEndElement(); // speedstep
    }
    xmlo.writeEndElement();    // speed
@@ -287,7 +295,6 @@ US_RunProtocol::RunProtoCells::RunProtoCells()
 {
    ncell                = 0;
    nused                = 0;
-   all .clear();
    used.clear();
 }
 
@@ -297,7 +304,6 @@ bool US_RunProtocol::RunProtoCells::operator==
 {
    if ( ncell  != rp.ncell ) return false;
    if ( nused  != rp.nused ) return false;
-   if ( all    != rp.all   ) return false;
    if ( used   != rp.used  ) return false;
 
    return true;
@@ -329,12 +335,9 @@ bool US_RunProtocol::RunProtoCells::fromXml( QXmlStreamReader& xmli )
             cu.cell        = attr.value( "id"             ).toString().toInt();
             cu.centerpiece = attr.value( "centerpiece"    ).toString();
             cu.windows     = attr.value( "windows"        ).toString();
-            cu.counterbal  = attr.value( "counterbalance" ).toString();
+            cu.cbalance    = attr.value( "counterbalance" ).toString();
             used << cu;
          }
-
-         else
-            break;
       }
 
       bool was_end    = xmli.isEndElement();  // Just read was End of element?
@@ -365,7 +368,7 @@ bool US_RunProtocol::RunProtoCells::toXml( QXmlStreamWriter& xmlo )
       }
       else
       {
-         xmlo.writeAttribute( "counterbalance", used[ ii ].counterbal  );
+         xmlo.writeAttribute( "counterbalance", used[ ii ].cbalance    );
       }
       xmlo.writeEndElement(); // cell
    }
@@ -379,9 +382,9 @@ bool US_RunProtocol::RunProtoCells::toXml( QXmlStreamWriter& xmlo )
 US_RunProtocol::RunProtoCells::CellUse::CellUse()
 {
    cell                 = 0;
-   centerpiece.clear();
-   windows    .clear();
-   counterbal .clear();
+   centerpiece          = _TR_( "empty" );
+   windows              = _TR_( "quartz" );
+   cbalance             = _TR_( "empty (counterbalance)" );
 }
 
 // RunProtoCells::CellUse subclass Equality operator
@@ -391,7 +394,7 @@ bool US_RunProtocol::RunProtoCells::CellUse::operator==
    if ( cell        != c.cell        ) return false;
    if ( centerpiece != c.centerpiece ) return false;
    if ( windows     != c.windows     ) return false;
-   if ( counterbal  != c.counterbal  ) return false;
+   if ( cbalance    != c.cbalance    ) return false;
 
    return true;
 }
@@ -426,13 +429,13 @@ bool US_RunProtocol::RunProtoSolutions::fromXml( QXmlStreamReader& xmli )
    chsols.clear();
 
    while( ! xmli.atEnd() )
-   {
+   {  // Read elements from solution portion of XML stream
       QString ename   = xmli.name().toString();
 
       if ( xmli.isStartElement() )
       {
          if ( ename == "solution" )
-         {
+         {  // Accumulate each solution object
             ChanSolu cs;
             QXmlStreamAttributes attr = xmli.attributes();
             cs.channel     = attr.value( "channel"      ).toString();
@@ -442,9 +445,6 @@ bool US_RunProtocol::RunProtoSolutions::fromXml( QXmlStreamReader& xmli )
             chsols << cs;
             nschan++;
          }
-
-         else if ( ename != "solutions" )
-            break;
       }
 
       bool was_end    = xmli.isEndElement();   // Just read was End of element?
@@ -452,6 +452,22 @@ bool US_RunProtocol::RunProtoSolutions::fromXml( QXmlStreamReader& xmli )
 
       if ( was_end  &&  ename == "solutions" ) // Break after "</solutions>"
          break;
+   }
+
+   // Build unique solutions list, with corresponding solution IDs
+   nuniqs               = 0;
+   solus.clear();
+   sids .clear();
+   for ( int ii = 0; ii < nschan; ii++ )
+   {
+      QString sdesc   = chsols[ ii ].solution;
+
+      if ( ! solus.contains( sdesc ) )
+      {  // Update unique solutions list and correspond Id list
+         solus << sdesc;
+         sids  << chsols[ ii ].sol_id;
+         nuniqs++;
+      }
    }
 
    return ( ! xmli.hasError() );
@@ -492,6 +508,7 @@ bool US_RunProtocol::RunProtoSolutions::ChanSolu::operator==
    if ( channel     != c.channel     ) return false;
    if ( solution    != c.solution    ) return false;
    if ( sol_id      != c.sol_id      ) return false;
+   if ( ch_comment  != c.ch_comment  ) return false;
 
    return true;
 }
@@ -526,7 +543,7 @@ bool US_RunProtocol::RunProtoOptics::fromXml( QXmlStreamReader& xmli )
 
       if ( xmli.isStartElement() )
       {
-         if ( ename == "optical_systems" )
+         if ( ename == "optical_system" )
          {
             OpticSys os;
             QXmlStreamAttributes attr = xmli.attributes();
@@ -537,9 +554,6 @@ bool US_RunProtocol::RunProtoOptics::fromXml( QXmlStreamReader& xmli )
             chopts << os;
             nochan++;
          }
-
-         else if ( ename != "optics" )
-            break;
       }
 
       bool was_end    = xmli.isEndElement();   // Just read was End of element?
@@ -629,16 +643,15 @@ bool US_RunProtocol::RunProtoSpectra::fromXml( QXmlStreamReader& xmli )
          if ( ename == "spectrum" )
          {
             QXmlStreamAttributes attr = xmli.attributes();
-            sp.channel   = attr.value( "channel" ).toString();
-            QString auti = attr.value( "auto"    ).toString();
-            QString load = attr.value( "load"    ).toString();
-            QString manu = attr.value( "manual"  ).toString();
-            if ( auti == "1" )
-               sp.typeinp   = "auto";
-            if ( load == "1" )
-               sp.typeinp   = "load";
-            if ( manu == "1" )
-               sp.typeinp   = "manual";
+            sp.channel           = attr.value( "channel" ).toString();
+            QString fl_auto      = attr.value( "auto"    ).toString();
+            QString fl_load      = attr.value( "load"    ).toString();
+            QString fl_manual    = attr.value( "manual"  ).toString();
+
+            if ( fl_auto   == "1" )   sp.typeinp   = "auto";
+            if ( fl_load   == "1" )   sp.typeinp   = "load";
+            if ( fl_manual == "1" )   sp.typeinp   = "manual";
+
             sp.lambdas.clear();
             sp.values .clear();
          }
@@ -649,8 +662,6 @@ bool US_RunProtocol::RunProtoSpectra::fromXml( QXmlStreamReader& xmli )
             sp.lambdas << attr.value( "lambda" ).toString().toDouble();
             sp.values  << attr.value( "value"  ).toString().toDouble();
          }
-         else if ( ename != "spectra" )
-            break;
       }
 
       else if ( xmli.isEndElement()  &&  ename == "spectrum" )
@@ -659,12 +670,10 @@ bool US_RunProtocol::RunProtoSpectra::fromXml( QXmlStreamReader& xmli )
          nspect++;
       }
 
-      
-
       bool was_end    = xmli.isEndElement();  // Just read was End of element?
       xmli.readNext();                        // Read the next element
 
-      if ( was_end  &&  ename == "speed" )    // Break after "</speed>"
+      if ( was_end  &&  ename == "spectra" )  // Break after "</spectra>"
          break;
    }
 

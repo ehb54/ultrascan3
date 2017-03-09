@@ -279,7 +279,7 @@ void US_RotorGui::reset( void )
    lw_rotors           ->setEnabled( true );
    pb_saveCalibration  ->setEnabled( false );
    pb_reset            ->setEnabled( true );
-   pb_addRotor         ->setEnabled( ( US_Settings::us_inv_level() >= 4 ) &&
+   pb_addRotor         ->setEnabled( ( US_Settings::us_inv_level() >= 3 ) &&
                                      ( disk_controls->db()              ) );
 
    // buttons to enable if a rotor is selected
