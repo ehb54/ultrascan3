@@ -1046,7 +1046,7 @@ DbgLv(1) << "EGSo:inP:  ii" << ii << "channel" << channel << "solx" << solx << "
       cc_labls[ ii ]->setText( channel );
       setCbCurrentText( cc_solus[ ii ], solution );
 DbgLv(1) << "EGSo:inP:      pan-row solut" << cc_solus[ii]->currentText();
-      cc_solus[ ii ]->setCurrentText( solution );
+      setCbCurrentText( cc_solus[ ii ], solution );
 DbgLv(1) << "EGSo:inP:      pan-row solut2" << cc_solus[ii]->currentText();
   
       cc_labls[ ii ]->setVisible( true );
