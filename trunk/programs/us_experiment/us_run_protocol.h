@@ -309,8 +309,6 @@ class US_RunProtocol
       double       temperature;    //!< Run temperature in degrees centigrade
 
    private:
-      //! \brief Load a protocol from the database
-      int  load_db         ( const QString&, US_DB2* );
 };
 #endif
 

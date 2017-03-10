@@ -517,18 +517,9 @@ int US_ExperGuiRotor::status()
 // Initialize a Speeds panel, especially after clicking on its tab
 void US_ExperGuiSpeeds::initPanel()
 {
-   // Populate internal speed-step control
-   int nstep            = rpSpeed ->nstep;
-   for ( int ii = 0; ii < nstep; ii++ )
-   {
-      ssvals[ ii ][ "speed"    ] = rpSpeed->ssteps[ ii ].speed;
-      ssvals[ ii ][ "accel"    ] = rpSpeed->ssteps[ ii ].accel;
-      ssvals[ ii ][ "duration" ] = rpSpeed->ssteps[ ii ].duration;
-      ssvals[ ii ][ "delay"    ] = rpSpeed->ssteps[ ii ].delay;
-   }
-
    // Populate GUI settings from protocol controls
-   int istep            = qMax( 0, cb_prof->currentIndex() );
+   int nstep            = rpSpeed ->nstep;
+   int istep            = qMin( (nstep-1), qMax( 0, cb_prof->currentIndex() ) );
    double duration      = rpSpeed->ssteps[ istep ].duration;
    double delay         = rpSpeed->ssteps[ istep ].delay;
 
@@ -551,13 +542,18 @@ void US_ExperGuiSpeeds::initPanel()
    ct_dlysec->setValue( delaysec );
    changed              = was_changed;   // Restore changed state
 
+DbgLv(1) << "EGSp:inP: nstep" << nstep;
    // Populate internal speed-step control
+   ssvals.resize( nstep );
    for ( int ii = 0; ii < nstep; ii++ )
    {
       ssvals[ ii ][ "speed"    ] = rpSpeed->ssteps[ ii ].speed;
       ssvals[ ii ][ "accel"    ] = rpSpeed->ssteps[ ii ].accel;
       ssvals[ ii ][ "duration" ] = rpSpeed->ssteps[ ii ].duration;
       ssvals[ ii ][ "delay"    ] = rpSpeed->ssteps[ ii ].delay;
+DbgLv(1) << "EGSp:inP:  ii" << ii << "speed accel durat delay"
+ << ssvals[ii]["speed"   ] << ssvals[ii]["accel"]
+ << ssvals[ii]["duration"] << ssvals[ii]["delay"];
    }
 }
 
@@ -565,12 +561,19 @@ void US_ExperGuiSpeeds::initPanel()
 void US_ExperGuiSpeeds::savePanel()
 {
    // Populate protocol speed controls from internal panel control
-   for ( int ii = 0; ii < ssvals.count(); ii++ )
+   int nstep            = ssvals.count();
+   rpSpeed ->nstep      = nstep;
+DbgLv(1) << "EGSp:svP: nstep" << nstep;
+
+   for ( int ii = 0; ii < nstep; ii++ )
    {
       rpSpeed->ssteps[ ii ].speed    = ssvals[ ii ][ "speed"    ];
       rpSpeed->ssteps[ ii ].accel    = ssvals[ ii ][ "accel"    ];
       rpSpeed->ssteps[ ii ].duration = ssvals[ ii ][ "duration" ];
       rpSpeed->ssteps[ ii ].delay    = ssvals[ ii ][ "delay"    ];
+DbgLv(1) << "EGSp:svP:  ii" << ii << "speed accel durat delay"
+ << ssvals[ii]["speed"   ] << ssvals[ii]["accel"]
+ << ssvals[ii]["duration"] << ssvals[ii]["delay"];
    }
 }
 
@@ -644,23 +647,26 @@ QStringList US_ExperGuiSpeeds::getLValue( const QString type )
 
 DbgLv(1) << "EGSp:getLV: type" << type;
    if ( type == "profiles" )
-   {  // Compose list of all speed-step values
+   {  // Compose list of all speed-step values (4 lines per step)
       value.clear();
-      int nspeed  = (int)ct_count ->value();
-DbgLv(1) << "EGSp:getLV: nspeed" << nspeed;
 
-      for ( int ii = 0; ii < nspeed; ii++ )
+      for ( int ii = 0; ii < rpSpeed->nstep; ii++ )
       {  // Build list of QString forms of speed-step double
-         for ( int jj = 0; jj < ssvals[ ii ].size(); jj++ )
-         {
-            QStringList keys = ssvals[ ii ].keys();
-            for ( int kk = 0; kk < keys.count(); kk++ )
-            {
-               QString key      = keys[ kk ];
-               double ssval     = ssvals[ ii ][ key ];
-               value << ( key + ":" + QString::number( ssval ) );
-            }
-         }
+         double speed         = rpSpeed->ssteps[ ii ].speed;
+         double accel         = rpSpeed->ssteps[ ii ].accel;
+         double duration      = rpSpeed->ssteps[ ii ].duration;
+         double delay         = rpSpeed->ssteps[ ii ].delay;
+         double durathrs      = qFloor( duration / 60.0 );
+         double duratmin      = duration - ( durathrs * 60.0 );
+         double delaymin      = qFloor( delay / 60.0 );
+         double delaysec      = delay - ( delaymin * 60.0 );
+
+         value << tr( "%1 rpm" ).arg( speed );
+         value << tr( "%1 rpm/sec" ).arg( accel );
+         value << tr( "%1 minutes  ( %2 h %3 m )" )
+                  .arg( duration ).arg( durathrs ).arg( duratmin );
+         value << tr( "%1 seconds  ( %2 m %3 s )" )
+                  .arg( delay )   .arg( delaymin ).arg( delaysec );
       }
    }
 
@@ -866,6 +872,7 @@ DbgLv(1) << "EGCe:getSV: type" << type;
       value        = ( nused > 0 ) ? rpCells->used[ nused - 1 ].cbalance : value;
 DbgLv(1) << "EGCe:getSV:   CB nused" << nused << "cbal" << value;
    }
+DbgLv(1) << "EGCe:getSV: type" << type << "value" << value;
 
    return value;
 }
@@ -875,9 +882,11 @@ int US_ExperGuiCells::getIValue( const QString type )
 {
    int value      = 0;
 
-   if      ( type == "ncells" ) { value = rpCells->ncell; }
-   else if ( type == "nused" )  { value = rpCells->nused; }
+   if      ( type == "ncells" )  { value = rpCells->ncell; }
+   else if ( type == "nused" )   { value = rpCells->nused; }
+   else if ( type == "alldone" ) { value = ( rpCells->nused > 0 ) ? 1 : 0; }
 
+DbgLv(1) << "EGCe:getIV: type" << type << "value" << value;
    return value;
 }
 
@@ -961,17 +970,8 @@ QStringList US_ExperGuiCells::sibLValue( const QString sibling, const QString ty
 // Return status flag for the panel
 int US_ExperGuiCells::status()
 {
-   int nholes          = sibIValue( "rotor", "nholes" );
-   int nempty          = 0;
-
-   for ( int ii = 0; ii < nholes; ii++ )
-   {
-      if ( cc_cenps[ ii ]->currentText().contains( tr( "empty" ) ) )
-         nempty++;      // Keep count of "empty" centerpieces
-   }
-
-   bool is_done        = ( nempty < nholes );  // Done when not all empty
-DbgLv(1) << "EGCe:st: nholes nempty is_done" << nholes << nempty << is_done;
+   bool is_done        = ( rpCells->nused > 0 );   // Done when not all empty
+DbgLv(1) << "EGCe:st: nused is_done" << rpCells->nused << is_done;
    return ( is_done ? 8 : 0 );
 }
 
@@ -1055,65 +1055,15 @@ DbgLv(1) << "EGSo:inP:      pan-row solut2" << cc_solus[ii]->currentText();
    }
 DbgLv(1) << "EGSo:inP: nchant" << nchant << "nchanf" << nchanf << "nchanu" << nchanu;
 
-#if 0
-   QStringList slabls;
-   int nsrows          = 0;  // Count of visible solution rows
-   QStringList cpnames = sibLValue( "cells", "centerpieces" );
-DbgLv(1) << "EGSo:inP: cpnames" << cpnames;
-
-   // Build channel labels based on cells information
-   for ( int ii = 0; ii < cpnames.count(); ii++ )
-   {
-      QString cpname      = cpnames[ ii ];
-      int chx             = cpname.indexOf( "-channel" );
-DbgLv(1) << "EGSo:inP:   ii" << ii << "cpname chx" << cpname << chx;
-      if ( chx > 0 )
-      {  // Non-empty cell centerpiece:  get channel count, build rows
-         QString scell       = QString( cpname ).section( " ", 1, 1 );
-         QString schans( "ABCDEF" );
-         int nchan           = cpname.left( chx ).section( " ", -1, -1 )
-                                 .simplified().toInt();
-DbgLv(1) << "EGSo:inP:     scell" << scell << "nchan" << nchan;
-         for ( int jj = 0; jj < nchan; jj++ )
-         {
-            QString celchn      = scell + " / " + QString( schans ).mid( jj, 1 );
-DbgLv(1) << "EGSo:inP:      jj" << jj << "celchn" << celchn;
-            slabls << celchn;
-            nsrows++;
-         }
-      }
-   }
-
-   QString slabl;
-   int nslabs          = nsrows;
-   //nsrows              = qMax( nsrows, 3 );  // Show at least 3 dummy rows
-DbgLv(1) << "EGSo:inP:  nslabs nsrows" << nslabs << nsrows
- << "k_labs k_sols" << cc_labls.count() << cc_solus.count();
- 
-   // Set cell/channel labels, make visible, all live rows
-   for ( int ii = 0; ii < nsrows; ii++ )
-   {
-      slabl               = ( ii < nslabs ) ? slabls[ ii ] : tr( "none" );
-DbgLv(1) << "EGSo:inP:   ii" << ii << "slabl" << slabl;
-      cc_labls[ ii ]->setText( slabl );
-      cc_labls[ ii ]->setVisible( true );
-      cc_solus[ ii ]->setVisible( true );
-      cc_comms[ ii ]->setVisible( true );
-   }
-
-#endif
-   QString slabl       = tr( "none" );
-
    // Make remaining rows invisible
    for ( int ii = nchant; ii < mxrow; ii++ )
    {
-      cc_labls[ ii ]->setText( slabl );
+      cc_labls[ ii ]->setText( lab_none );
       cc_labls[ ii ]->setVisible( false );
       cc_solus[ ii ]->setVisible( false );
       cc_comms[ ii ]->setVisible( false );
    }
 DbgLv(1) << "EGSo:inP: mxrow" << mxrow << "labls count" << cc_labls.count();
-
 }
 
 // Save panel controls when about to leave the panel
@@ -1174,15 +1124,13 @@ QString US_ExperGuiSolutions::getSValue( const QString type )
 {
    QString value( "" );
 
-   if ( type == "alldone" )
-   {  // Status string
-      value            = ( status() > 0 ) ? "1" : "0";
-   }
-   else if ( type == "nchant"  ||
-             type == "nchanu"  ||
-             type == "nchanf"  ||
-             type == "nusols" )
-   {  // Number solution rows total|unused|filled|unique
+   if      ( type == "nchant"   ||
+             type == "nchanu"   ||
+             type == "nchanf"   ||
+             type == "nusols"   ||
+             type == "alldone"  ||
+             type == "status" )
+   {  // String representation of integer
       value            = QString::number( getIValue( type ) );
    }
 
@@ -1193,18 +1141,20 @@ QString US_ExperGuiSolutions::getSValue( const QString type )
 int US_ExperGuiSolutions::getIValue( const QString type )
 {
    int value   = 0;
-   if      ( type == "nchant" ) { value = nchant; }
-   else if ( type == "nchanu" ) { value = nchanu; }
-   else if ( type == "nchanf" ) { value = nchanf; }
-   else if ( type == "nusols" ) { value = rpSolut->nuniqs; }
+   if      ( type == "nchant" )  { value = nchant; }
+   else if ( type == "nchanu" )  { value = nchanu; }
+   else if ( type == "nchanf" )  { value = nchanf; }
+   else if ( type == "nusols" )  { value = rpSolut->nuniqs; }
+   else if ( type == "status" )  { value = status(); }
+   else if ( type == "alldone" ) { value = qMin( status(), 1 ); }
    return value;
 }
 
 // Get a specific panel double value
 double US_ExperGuiSolutions::getDValue( const QString type )
 {
-   double value   = 0;
-   if ( type == "dbdisk" ) { value = 1; }
+   double value   = 0.0;
+   if ( type == "dbdisk" ) { value = 1.0; }
 
    return value;
 }
@@ -1219,64 +1169,47 @@ QStringList US_ExperGuiSolutions::getLValue( const QString type )
    status();
 
    if ( type == "solutions" )
-   {
-      QString usolu       = tr( "(unspecified)" );
+   {  // Build a list of unique solutions
+      QStringList chsolus;
 
-      // Accumulate unique solutions specified, with map to channels
-      for ( int ii = 0; ii < nchant; ii++ )
+      // Accumulate an ordered list of channel solutions
+      for ( int ii = 0; ii < rpSolut->nschan; ii++ )
       {
-         QString labl        = cc_labls[ ii ]->text();
-         QString solu        = cc_solus[ ii ]->currentText();
-         QStringList sochan;
-
-         if ( ! solu.contains( usolu ) )
-         {  // Solution is specified for the channel
-            if ( solus.contains( solu ) )
-            {  // Previously encountered solution
-               sochan              = sochans[ solu ];  // Solution channels
-               sochan << labl;                         // Add to them
-               sochans[ solu ]     = sochan;           // Update
-               
-            }
-            else
-            {  // Newly encounted solution
-               solus  << solu;                         // Unique solution
-               sochan << labl;                         // Begin solution channels
-               sochans[ solu ]     = sochan;           // Update
-            }
-         }
+         chsolus << rpSolut->chsols[ ii ].solution;
       }
 
-      // Form list of unique solutions with list of channels for each
-      for ( int ii = 0; ii < solus.count(); ii++ )
+      // Build list of unique solutions with appended channels lists
+      for ( int ii = 0; ii < rpSolut->nuniqs; ii++ )
       {
-         QString solu        = solus[ ii ];            // Solution description
-         QStringList sochan  = sochans[ solu ];        // Solution channels list
-         solu               += "  ( " + sochan[ 0 ];   // Initial channel append
-         // Append channels list to solution entry
-         for ( int jj = 1; jj < sochan.count(); jj++ )
-         {
-            solu               += ", " + sochan[ jj ]; // Build channel list
+         QString solution    = rpSolut->solus[ ii ];
+         int nchanso         = chsolus.count( solution );
+         QStringList sochans;
+
+         for ( int jj = 0; jj < rpSolut->nschan; jj++ )
+         {  // List channels that have this solution
+            if ( rpSolut->chsols[ jj ].solution == solution )
+               sochans << rpSolut->chsols[ jj ].channel;
          }
-         solu               += "  )";                  // Close out channels string
-         // Add to the output list
-         value << solu;
+
+         // Build solution entry "solution  ( chan1, chan2, ... )"
+         QString solentry    = solution + "  ( " + sochans[ 0 ];
+
+         for ( int jj = 1; jj < nchanso; jj++ )
+         {
+            solentry           += ", " + sochans[ jj ];
+         }
+
+         solentry           += " )";
+         value << solentry;
       }
    }
 
    else if ( type == "channel_solutions" )
-   {
-      QString usolu       = tr( "(unspecified)" );
-
-      // Accumulate list of strings in "cell/chan : solution" form
-      for ( int ii = 0; ii < nchant; ii++ )
+   {  // Build a "channel : solution" list for used channels
+      for ( int ii = 0; ii < rpSolut->nschan; ii++ )
       {
-         QString labl        = cc_labls[ ii ]->text();
-         QString solu        = cc_solus[ ii ]->currentText();
-         QString sochan      = labl + " : " + solu;
-
-         if ( ! solu.contains( usolu ) )   // Not unspecified
-            value << sochan;               // Append to the output list
+         value << ( rpSolut->chsols[ ii ].channel + " : " +
+                    rpSolut->chsols[ ii ].solution );
       }
    }
 
@@ -1302,23 +1235,12 @@ QStringList US_ExperGuiSolutions::sibLValue( const QString sibling, const QStrin
 // Return status flag for the panel
 int US_ExperGuiSolutions::status()
 {
-   nchanu              = 0;      // Number channels unspecified
-   nchanf              = 0;      // Number channels filled
-   QString elabl       = tr( "none" );
-   QString usolu       = tr( "(unspecified)" );
+   nchanf              = rpSolut->nschan;   // Number channels filled
+   nchanu              = nchant - nchanf;   // Number channels unspecified
 
-   // Count rows: those unspecified, those filled
-   for ( int ii = 0; ii < nchant; ii++ )
-   {
-      if ( cc_solus[ ii ]->currentText().contains( usolu ) )
-         nchanu++;     // Bump "(unspecified)" Solution count
-      else
-         nchanf++;     // Bump filled Solution count
-   }
-
-   bool is_done        = ( nchant > 0  &&  nchanu < 1 );
-DbgLv(1) << "EGSo:st: nchant nchanu nchanf is_done"
- << nchant << nchanu << nchanf << is_done;
+   bool is_done        = ( nchant > 0  &&  nchanf == nchant );
+DbgLv(1) << "EGSo:st: nchant nchanf nchanu is_done"
+ << nchant << nchanf << nchanu << is_done;
    return ( is_done ? 16 : 0 );
 }
 
@@ -1819,12 +1741,14 @@ DbgLv(1) << "EGwS:st: nspect" << rpSpect->nspect;
    {
       if ( rpSpect->chspecs[ ii ].lambdas.count() == 0 )
          is_done         = false;       // Not done if missing wavelengths
+DbgLv(1) << "EGwS:st:   ii" << ii << "is_done(lambdas count)" << is_done;
 
       else if ( rpSpect->chspecs[ ii ].typeinp == "auto" )
          continue;                      // OK so far, if "auto"
 
       else if ( rpSpect->chspecs[ ii ].values[ 0 ] == 0.0 )
          is_done         = false;       // Not done if missing values
+DbgLv(1) << "EGwS:st:     is_done(non-0 values)" << is_done;
    }
 
    return ( is_done ? 64 : 0 );
@@ -1873,11 +1797,13 @@ DbgLv(1) << "EGUp:inP:   rpUload diff" << (cRP->rpUload!=lRP->rpUload);
    have_cells        = ( sibIValue( "cells",     "alldone"  ) > 0 );
    have_solus        = ( sibIValue( "solutions", "alldone"  ) > 0 );
    have_optic        = ( sibIValue( "optical",   "alldone"  ) > 0 );
-   have_spect        = ( sibIValue( "photomult", "alldone"  ) > 0 );
+   have_spect        = ( sibIValue( "spectra",   "alldone"  ) > 0 );
 DbgLv(1) << "EGUp:inP: ck: run proj cent solu epro"
  << have_run << have_proj << have_cells << have_solus << have_spect;
-   upld_enab         = ( have_run    &&  have_proj &&  have_cells
-                     &&  have_solus  &&  have_spect  &&  connected );
+   proto_ena         = ( have_cells  &&  have_solus  &&  have_optic  &&
+                         have_spect );
+   upld_enab         = ( have_run    &&  have_proj  &&  proto_ena  &&
+                         connected );
 
    ck_run     ->setChecked( have_run   );
    ck_project ->setChecked( have_proj  );
@@ -1886,8 +1812,9 @@ DbgLv(1) << "EGUp:inP: ck: run proj cent solu epro"
    ck_centerp ->setChecked( have_cells );
    ck_solution->setChecked( have_solus );
    ck_optical ->setChecked( have_optic );
-   ck_extprofs->setChecked( have_spect );
+   ck_spectra ->setChecked( have_spect );
    ck_connect ->setChecked( connected  );
+   ck_prot_ena->setChecked( proto_ena  );
    ck_prot_svd->setChecked( proto_svd  );
    ck_upl_enab->setChecked( upld_enab  );
    ck_upl_done->setChecked( uploaded   );

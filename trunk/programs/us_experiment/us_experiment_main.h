@@ -283,26 +283,34 @@ class US_ExperGuiSolutions : public US_Widgets
       int      nchanu;
       int      nchanf;
 
-      QVector< QLabel* >       cc_labls;
-      QVector< QComboBox* >    cc_solus;
-      QVector< QPushButton* >  cc_comms;
-      QStringList              sonames;
+      QVector< QLabel* >       cc_labls;        // Channel label pointers
+      QVector< QComboBox* >    cc_solus;        // Solution choice pointers
+      QVector< QPushButton* >  cc_comms;        // Comment pushbutton pointers
+      QStringList              sonames;         // Solution names
 
-      QMap< QString, QString >      solu_ids;
-      QMap< QString, US_Solution >  solu_data;
-      QMap< QString, QString >      pro_comms;
-      QMap< QString, QString >      run_comms;
+      QMap< QString, QString >      solu_ids;   // Map solution IDs
+      QMap< QString, US_Solution >  solu_data;  // Map solution objects
+      QMap< QString, QString >      pro_comms;  // Map protocol channel comments
+      QMap< QString, QString >      run_comms;  // Map run channel comments
 
    private slots:
+      // Open a solution dialog and return selected solution
       void manageSolutions( void );
+      // Detailed solution information dialog
       void detailSolutions( void );
+      // Get the solution ID/GUID for a given name
       bool solutionID     ( const QString, QString& );
+      // Get the solution object for a given name
       bool solutionData   ( const QString, US_Solution& );
+      // Get all solution names and associated IDs
       int  allSolutions   ( void );
+      // Dialog to add run comments for a channel
       void addComments    ( void );
+      // Compose a comment string for a solution and a list of comment parts
       void commentStrings ( const QString, QString&,
                             QStringList& );
-      void rebuild_Solut     ( void ); // Rebuild run protocol for solutions
+      // Rebuild the solution part of the current run protocol
+      void rebuild_Solut     ( void );
 };
 
 
@@ -342,8 +350,10 @@ class US_ExperGuiOptical : public US_Widgets
       int      nuchan;                   // Number used rows
 
    private slots:
+      // Handle a (un)check of the optical systems to use for a channel
       void opsysChecked      ( bool );
-      void rebuild_Optic     ( void ); // Rebuild run protocol for optical
+      // Rebuild the Optical System part of the current run protocol
+      void rebuild_Optic     ( void );
 };
 
 //! \brief Experiment Spectra panel
@@ -373,25 +383,40 @@ class US_ExperGuiSpectra : public US_Widgets
       US_ExperimentMain*   mainw;
       US_RunProtocol::RunProtoSpectra*  rpSpect;
       US_Help  showHelp;
-      QList< QLabel* >         cc_labls;
-      QList< QPushButton* >    cc_wavls;
-      QList< QCheckBox* >      cc_optis;
-      QList< QPushButton* >    cc_loads;
-      QList< QPushButton* >    cc_manus;
-      QList< QCheckBox* >      cc_dones;
+      QList< QLabel* >         cc_labls;   // Pointers to channel labels
+      QList< QPushButton* >    cc_wavls;   // Pointers to wavelength buttons
+      QList< QCheckBox* >      cc_optis;   // Pointers to Auto-Optima checkboxes
+      QList< QPushButton* >    cc_loads;   // Pointers to Load Spect. buttons
+      QList< QPushButton* >    cc_manus;   // Pointers to Manual Spect. buttons
+      QList< QCheckBox* >      cc_dones;   // Pointers to Done checkboxes
 
-      int          dbg_level;
-      int          mxrow;
+      int          dbg_level;              // Debug level
+      int          mxrow;                  // Maximum possible rows (24)
+      int          nspchan;                // Number Spectra channels (rows)
+
+      QStringList  schans;                 // Selected Spectra channels, ea. row
+      QStringList  stypes;                 // Selected Spectra types, ea. row
+      QList< QVector< double > > slambds;  // Selected wavelenths, ea. channel
+      QList< QVector< double > > plambds;  // Profile wavelenths, ea. channel
+      QList< QVector< double > > pvalues;  // Profile values, ea. channel
 
    private slots:
+      // Manage extinction profiles in a dialog
       void manageEProfiles  ( void );
+      // Process the results of the extinction dialog
       void process_results  ( QMap< double, double >& );
+      // Display details on current Spectra parameter values
       void detailSpectra    ( void );
+      // Select the wavelengths to scan for a channel
       void selectWavelengths( void );
+      // Handle (un)check of Auto in Optima box
       void checkOptima      ( bool );
+      // Load an extinction spectrum
       void loadSpectrum     ( void );
+      // Manually enter a lambda/value spectrum 
       void manualSpectrum   ( void );
-      void rebuild_Spect    ( void ); // Rebuild run protocol for spectra
+      // Rebuild the Spectra part of the current run protocol
+      void rebuild_Spect    ( void );
 };
 
 //! \brief Experiment Upload panel
@@ -442,38 +467,40 @@ class US_ExperGuiUpload : public US_Widgets
       QCheckBox*   ck_centerp;
       QCheckBox*   ck_solution;
       QCheckBox*   ck_optical;
-      QCheckBox*   ck_extprofs;
+      QCheckBox*   ck_spectra;
       QCheckBox*   ck_connect;
       QCheckBox*   ck_rp_diff;
+      QCheckBox*   ck_prot_ena;
       QCheckBox*   ck_prot_svd;
       QCheckBox*   ck_upl_enab;
       QCheckBox*   ck_upl_done;
 
       int          dbg_level;
-      bool         have_run;
-      bool         have_proj;
-      bool         have_rotor;
-      bool         chgd_rotor;
-      bool         have_speed;
-      bool         chgd_speed;
-      bool         have_cells;
-      bool         have_solus;
-      bool         have_optic;
-      bool         have_spect;
-      bool         have_sol;
-      bool         rps_differ;
-      bool         proto_svd;
-      bool         upld_enab;
-      bool         uploaded;
-      bool         connected;
-      QString      json_upl;
+      bool         have_run;    // Have Run specified
+      bool         have_proj;   // Have Project specified
+      bool         have_rotor;  // Have Rotor parameters specified
+      bool         chgd_rotor;  // User Changed Rotor parameters
+      bool         have_speed;  // Have Speed parameters specified
+      bool         chgd_speed;  // User Changed Speed parameters
+      bool         have_cells;  // Have Cell parameters specified
+      bool         have_solus;  // Have Solutions parameters specified
+      bool         have_optic;  // Have Optical parameters specified
+      bool         have_spect;  // Have Spectra parameters specified
+      bool         have_sol;    // Have Solution parameters specified
+      bool         rps_differ;  // Run Protocols differ loaded/current
+      bool         proto_ena;   // Protocol save is possible now
+      bool         proto_svd;   // Protocol have been Saved
+      bool         upld_enab;   // Upload of Run controls is Enabled
+      bool         uploaded;    // Run controls have been Uploaded
+      bool         connected;   // We are Connected to the Optima
+      QString      json_upl;    // JSON to upload
 
    private slots:
-      void    detailExperiment( void );
-      void    testConnection  ( void );
-      void    uploadExperiment( void );
-      void    saveRunProtocol ( void );
-      QString buildJson       ( void );
+      void    detailExperiment( void );  // Dialog to detail experiment
+      void    testConnection  ( void );  // Test Optima connection
+      void    uploadExperiment( void );  // Upload the experiment
+      void    saveRunProtocol ( void );  // Save the Run Protocol
+      QString buildJson       ( void );  // Build the JSON
 };
 
 //! \brief Experiment Main Window
@@ -484,13 +511,18 @@ class US_ExperimentMain : public US_Widgets
    public:
       US_ExperimentMain();
 
+      // Get a named child panel's value of a given type
       QString     childSValue ( const QString, const QString );
       int         childIValue ( const QString, const QString );
       double      childDValue ( const QString, const QString );
       QStringList childLValue ( const QString, const QString );
+      // Initialize all the panels
       void        initPanels  ( void );
+      // Get a named abstract centerpiece information object
       bool        centpInfo   ( const QString, US_AbstractCenterpiece& );
+      // Get the list of protocol names and summary-data strings
       int         getProtos   ( QStringList&, QList< QStringList >& );
+      // Update the list of protocols with a newly named entry
       bool        updateProtos( const QStringList );
 
       US_RunProtocol  loadProto;   // Controls as loaded from an RP record
@@ -499,30 +531,29 @@ class US_ExperimentMain : public US_Widgets
 
    private:
 
-      //QLineEdit*  le_stat;
-      QTabWidget*           tabWidget;
+      QTabWidget*           tabWidget;      // Tab Widget holding the panels
 
-      US_ExperGuiGeneral*   epanGeneral;
-      US_ExperGuiRotor*     epanRotor;
-      US_ExperGuiSpeeds*    epanSpeeds;
-      US_ExperGuiCells*     epanCells;
-      US_ExperGuiSolutions* epanSolutions;
-      US_ExperGuiOptical*   epanOptical;
-      US_ExperGuiSpectra*   epanSpectra;
-      US_ExperGuiUpload*    epanUpload;
+      US_ExperGuiGeneral*   epanGeneral;    // General panel
+      US_ExperGuiRotor*     epanRotor;      // Lab/Rotor panel
+      US_ExperGuiSpeeds*    epanSpeeds;     // Speeds panel
+      US_ExperGuiCells*     epanCells;      // Cells panel
+      US_ExperGuiSolutions* epanSolutions;  // Solutions panel
+      US_ExperGuiOptical*   epanOptical;    // Optical Systems panel
+      US_ExperGuiSpectra*   epanSpectra;    // Spectra panel
+      US_ExperGuiUpload*    epanUpload;     // Upload panel
 
-      int         statflag;
-      int         dbg_level;
-      int         curr_panx;
+      int         statflag;        // Composite panels status flag
+      int         dbg_level;       // Debug print flag
+      int         curr_panx;       // Current panel index (0-7)
 
    private slots:
 
       void reset     ( void );
-      void newPanel  ( int  );
-      void statUpdate( void );
-      void panelUp   ( void );
-      void panelDown ( void );
-      void help      ( void );
+      void newPanel  ( int  );     // Move to a new panel
+      void statUpdate( void );     // Get a status flag update
+      void panelUp   ( void );     // Move to next panel
+      void panelDown ( void );     // Move to previous panel
+      void help      ( void );     // Show documentation window
 };
 #endif
 
