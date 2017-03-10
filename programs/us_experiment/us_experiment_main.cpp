@@ -366,7 +366,7 @@ DbgLv(1) << "EGGe:ldPro: Disk-B: load_db" << load_db;
 
    // Build dialog table widget headers
    hdrs << "Protocol Name"
-        << "Date"
+        << "Created"
         << ( load_db ? "DbID" : "File Name" );
 
    // Select a protocol
@@ -2222,14 +2222,16 @@ US_ExperGuiUpload::US_ExperGuiUpload( QWidget* topw )
                                            ck_solution, false );
    QLayout* lo_optical      = us_checkbox( tr( "all Channel Optical Systems" ),
                                            ck_optical,  false );
-   QLayout* lo_extprofs     = us_checkbox( tr( "Spectra" ),
-                                           ck_extprofs, false );
+   QLayout* lo_spectra      = us_checkbox( tr( "Spectra" ),
+                                           ck_spectra,  false );
    QLayout* lo_connect      = us_checkbox( tr( "Connected to Optima" ),
                                            ck_connect,  false );
    QLayout* lo_rp_diff      = us_checkbox( tr( "loaded/default Run Protocol"
                                                " differs from the current"
                                                " Run Protocol" ),
                                            ck_rp_diff,  false );
+   QLayout* lo_prot_ena     = us_checkbox( tr( "Protocol can be Saved" ),
+                                           ck_prot_ena, false );
    QLayout* lo_prot_svd     = us_checkbox( tr( "Protocol Saved" ),
                                            ck_prot_svd, false );
    QLayout* lo_upl_enab     = us_checkbox( tr( "Upload Enabled" ),
@@ -2246,9 +2248,10 @@ US_ExperGuiUpload::US_ExperGuiUpload( QWidget* topw )
    ck_centerp ->setEnabled( false );
    ck_solution->setEnabled( false );
    ck_optical ->setEnabled( false );
-   ck_extprofs->setEnabled( false );
+   ck_spectra ->setEnabled( false );
    ck_connect ->setEnabled( false );
    ck_rp_diff ->setEnabled( false );
+   ck_prot_ena->setEnabled( false );
    ck_prot_svd->setEnabled( false );
    ck_upl_enab->setEnabled( false );
    ck_upl_done->setEnabled( false );
@@ -2269,12 +2272,13 @@ US_ExperGuiUpload::US_ExperGuiUpload( QWidget* topw )
    genL->addLayout( lo_centerp,      row++, 1, 1, 3 );
    genL->addLayout( lo_solution,     row,   1, 1, 3 );
    genL->addLayout( lo_optical,      row++, 4, 1, 3 );
-   genL->addLayout( lo_extprofs,     row,   1, 1, 3 );
+   genL->addLayout( lo_spectra,      row,   1, 1, 3 );
    genL->addLayout( lo_connect,      row++, 4, 1, 3 );
    genL->addLayout( lo_rp_diff,      row++, 1, 1, 6 );
-   genL->addLayout( lo_prot_svd,     row,   1, 1, 2 );
-   genL->addLayout( lo_upl_enab,     row,   3, 1, 2 );
-   genL->addLayout( lo_upl_done,     row++, 5, 1, 3 );
+   genL->addLayout( lo_prot_ena,     row,   1, 1, 3 );
+   genL->addLayout( lo_prot_svd,     row++, 4, 1, 3 );
+   genL->addLayout( lo_upl_enab,     row,   1, 1, 3 );
+   genL->addLayout( lo_upl_done,     row++, 4, 1, 3 );
 
    // Connect to slots
    connect( pb_details,   SIGNAL( clicked()          ),
@@ -2302,6 +2306,7 @@ US_ExperGuiUpload::US_ExperGuiUpload( QWidget* topw )
    have_spect          = false;
    have_sol            = false;
    rps_differ          = false;
+   proto_ena           = false;
    proto_svd           = false;
    upld_enab           = false;
    uploaded            = false;
@@ -2377,7 +2382,8 @@ DbgLv(1) << "EGUp:detE: ufont" << ufont.family();
    QString v_lab     = rpRotor->laboratory;
    QString v_rotor   = rpRotor->rotor;
    QString v_calib   = rpRotor->calibration;
-   QString v_centp   = sibSValue( "cells",     "nused" );
+   int     i_centp   = rpCells->nused;
+   QString v_centp   = QString::number( i_centp  );
    QString v_ccbal   = sibSValue( "cells",     "counterbalance" );
    int     i_nspeed  = rpSpeed->nstep;
    QString v_nspeed  = QString::number( i_nspeed );
@@ -2400,12 +2406,12 @@ DbgLv(1) << "EGUp:dE: solus solus" << ssolut;
    bool chk_project  = ! v_proj.isEmpty();
    bool chk_rotor_ok = ( sibIValue( "rotor",     "changed" ) > 0 );
    bool chk_speed_ok = ( sibIValue( "speeds",    "changed" ) > 0 );
-   bool chk_centerp  = ( v_centp.toInt() > 0 );
+   bool chk_centerp  = ( i_centp > 0 );
    bool chk_solution = ( sibIValue( "solutions", "alldone" ) > 0 );
-   bool chk_extprofs = ( sibIValue( "photomult", "alldone" ) > 0 );
+   bool chk_spectra  = ( sibIValue( "spectra",   "alldone" ) > 0 );
    bool chk_vars_set = ( chk_run       &&  chk_project   &&
                          chk_centerp   &&  chk_solution  &&
-                         chk_extprofs );
+                         chk_spectra );
    bool chk_upl_enab = ( chk_vars_set  &&  connected );
    bool chk_upl_done = uploaded;
 
@@ -2418,7 +2424,7 @@ DbgLv(1) << "EGUp:dE: solus solus" << ssolut;
    QString v_speuc   = chk_speed_ok ? s_Yes : s_no;
    QString v_celok   = chk_centerp  ? s_Yes : s_no;
    QString v_solok   = chk_solution ? s_Yes : s_no;
-   QString v_phook   = chk_extprofs ? s_Yes : s_no;
+   QString v_phook   = chk_spectra  ? s_Yes : s_no;
    QString v_conok   = connected    ? s_Yes : s_no;
    QString v_uleok   = chk_upl_enab ? s_Yes : s_no;
    QString v_ulcok   = chk_upl_done ? s_Yes : s_no;
@@ -2445,20 +2451,18 @@ DbgLv(1) << "EGUp:dE: solus solus" << ssolut;
    int nspeed        = v_nspeed.toInt();
 DbgLv(1) << "EGUp:dE: nspeed" << nspeed;
    int jj            = 0;
-   for ( int ii = 0; ii < nspeed; ii++, jj+= 6 )
+   for ( int ii = 0; ii < nspeed; ii++ )
    {
-      dtext += tr( "    Step %1:\n" ).arg( ii + 1 );
-      dtext += tr( "      Speed:         " ) + sspeed[ jj     ] + " rpm\n";
-      dtext += tr( "      Acceleration:  " ) + sspeed[ jj + 1 ] + " rpm/s\n";
-      dtext += tr( "      Duration:      " ) + sspeed[ jj + 2 ] + " h  "
-                                             + sspeed[ jj + 3 ] + " m\n";
-      dtext += tr( "      Delay:         " ) + sspeed[ jj + 4 ] + " h  "
-                                             + sspeed[ jj + 5 ] + " m\n";
+      dtext += tr( "    Step %1 :\n" ).arg( ii + 1 );
+      dtext += tr( "      Speed:         " ) + sspeed[ jj++ ] + "\n";
+      dtext += tr( "      Acceleration:  " ) + sspeed[ jj++ ] + "\n";
+      dtext += tr( "      Duration:      " ) + sspeed[ jj++ ] + "\n";
+      dtext += tr( "      Delay:         " ) + sspeed[ jj++ ] + "\n";
    }
 
    dtext += tr( "\nCells\n" );
    dtext += tr( "  ALL SPECIFIED:              " ) + v_celok  + "\n";
-   dtext += tr( "  Non-empty Centerpieces:     " ) + v_centp  + "\n";
+   dtext += tr( "  Specified Centerpieces:     " ) + v_centp  + "\n";
 
 DbgLv(1) << "EGUp:dE: ncentp" << scentp.count();
    for ( int ii = 0; ii < scentp.count(); ii++ )
@@ -2582,7 +2586,7 @@ DbgLv(1) << "EGUp:  connected" << connected;
 void US_ExperGuiUpload::saveRunProtocol()
 {
 DbgLv(1) << "EGUp:svRP: IN";
-   // Test that the current protcol name is new
+   // Test that the current protocol name is new
    QStringList           prnames;
    QList< QStringList >  prdats;
 DbgLv(1) << "EGUp:svRP:  call getProtos()";
@@ -2628,24 +2632,55 @@ DbgLv(1) << "EGUp:svRP:  protname" << protname << "prdats0" << prdats[0];
       }
    }
 
-   // Save the new name and update entries list
+   // Save the new name and compose the XML representing the protocol
    protname            = newpname;
 DbgLv(1) << "EGUp:svRP:   NEW protname" << protname;
+DbgLv(1) << "EGUp:svRP:   currProto previous guid" << currProto->pGUID;
+DbgLv(1) << "EGUp:svRP:   currProto previous protname" << currProto->protname;
 
    currProto->protname = protname;            // Update current protocol
-   currProto->pGUID    = US_Util::new_guid();
-DbgLv(1) << "EGUp:svRP:   currProto updated";
+   currProto->pGUID    = US_Util::new_guid(); // Get a new GUID
+DbgLv(1) << "EGUp:svRP:   currProto updated  guid" << currProto->pGUID;
+DbgLv(1) << "EGUp:svRP:   currProto updated  protname" << currProto->protname;
 
    QXmlStreamWriter xmlo( &rpUload->us_xml ); // Compose XML representation
    currProto->toXml( xmlo );
+DbgLv(1) << "EGUp:svRP:    guid" << currProto->pGUID;
+DbgLv(1) << "EGUp:svRP:    xml(s)" << QString(rpUload->us_xml).left(100);
+int xe=rpUload->us_xml.length()-101;
+DbgLv(1) << "EGUp:svRP:    xml(e)" << QString(rpUload->us_xml).mid(xe);
 
-   QStringList prentry( protname );           // New protocol summary data
-   QString pdate       = "2017-03-05";
-   QString protid      = "1";
+   // Save the new protocol to database or disk
+   US_Passwd  pw;
+   US_DB2* dbP         = ( sibSValue( "general", "dbdisk" ) == "DB" )
+                         ? new US_DB2( pw.getPasswd() ) : NULL;
+
+DbgLv(1) << "EGUp:svRP:   dbP" << dbP;
+   int idProt          = US_ProtocolUtil::write_record( rpUload->us_xml, dbP );
+
+   if ( idProt < 1 )
+   {
+      QString errmsg   = ( dbP != NULL ) ? dbP->lastError() : "???";
+      QMessageBox::critical( this,
+         tr( "*ERROR* in Protocol Write" ),
+         tr( "An error occurred in the attempt to save"
+             " new protocol\n  %1\n  %2 ." ).arg( protname ).arg( errmsg ) );
+      return;
+   }
+
+   // Update the full list of existing protocols
+   QStringList prentry;                       // New protocol summary data
+   QString pdate       = US_Util::toUTCDatetimeText(
+                            QDateTime::currentDateTime().toUTC()
+                            .toString( "yyyy/MM/dd HH:mm" ), true );
+   QString protid      = ( dbP != NULL ) ? QString::number( idProt )
+                         : "R" + QString().sprintf( "%7d", idProt ) + ".xml";
    QString pguid       = currProto->pGUID;
-   prentry << pdate << protid << pguid;
+   prentry << protname << pdate << protid << pguid;
 
-//   mainw->updateProtos( prentry );
+   mainw->updateProtos( prentry );            // Update existing protocols list
+   proto_svd           = true;
+   ck_prot_svd->setChecked( true );
 DbgLv(1) << "EGUp:svRP:  new protname" << protname << "prdats0" << prdats[0];
 }
 
@@ -2667,6 +2702,14 @@ QString US_ExperGuiUpload::buildJson( void )
 #if QT_VERSION > 0x050000
 
    // Accumulate information on controls that have been specified
+   int nused         = sibIValue( "cells",     "nused" );
+   int nspeed        = sibIValue( "speeds",    "nspeeds" );
+   int nchant        = sibIValue( "solution",  "nchant" );
+   int nchanf        = sibIValue( "solution",  "nchanf" );
+   int nchanu        = sibIValue( "solution",  "nchanu" );
+   int nuniqs        = sibIValue( "solutions", "nusols" );
+   int solu_done     = sibIValue( "solutions", "alldone" );
+   int spec_done     = sibIValue( "spectra",   "alldone" );
    QString v_run     = sibSValue( "general",   "runID" );
    QString v_proj    = sibSValue( "general",   "project" );
    QString v_invid   = sibSValue( "general",   "investigator" );
@@ -2674,13 +2717,13 @@ QString US_ExperGuiUpload::buildJson( void )
    QString v_lab     = sibSValue( "rotor",     "lab" );
    QString v_rotor   = sibSValue( "rotor",     "rotor" );
    QString v_calib   = sibSValue( "rotor",     "calib" );
-   QString v_centp   = sibSValue( "cells",     "nused" );
-   QString v_nspeed  = sibSValue( "speeds",    "nspeeds" );
-   QString v_nsolct  = sibSValue( "solutions", "nchant" );
-   QString v_nsolcu  = sibSValue( "solutions", "nchanu" );
-   QString v_nsolcf  = sibSValue( "solutions", "nchanf" );
-   QString v_nsolun  = sibSValue( "solutions", "nusols" );
-DbgLv(1) << "EGUp:bj: n speed,solct,solun" << v_nspeed << v_nsolct << v_nsolun;
+   QString v_centp   = QString::number( nused );
+   QString v_nspeed  = QString::number( nspeed );
+   QString v_nsolct  = QString::number( nchant );
+   QString v_nsolcf  = QString::number( nchanf );
+   QString v_nsolcu  = QString::number( nchanu );
+   QString v_nsolun  = QString::number( nuniqs );
+DbgLv(1) << "EGUp:bj: n speed,chant,usols" << nspeed << nchant << nuniqs;
 
    QStringList sspeed   = sibLValue( "speeds",    "profiles" );
 DbgLv(1) << "EGUp:bj: speed profiles" << sspeed;
@@ -2691,14 +2734,14 @@ DbgLv(1) << "EGUp:bj: solus solus" << ssolut;
 
    bool chk_run      = ! v_run .isEmpty();
    bool chk_project  = ! v_proj.isEmpty();
-   bool chk_centerp  = ( v_centp.toInt() > 0 );
-   bool chk_solution = ( sibSValue( "solutions", "alldone" ).toInt() > 0 );
-   bool chk_extprofs = ( sibSValue( "photomult", "alldone" ).toInt() > 0 );
+   bool chk_centerp  = ( nused  > 0 );
+   bool chk_solution = ( solu_done > 0 );
+   bool chk_spectra  = ( spec_done > 0 );
 DbgLv(1) << "EGUp:bj: ck: run proj cent solu epro"
- << chk_run << chk_project << chk_centerp << chk_solution << chk_extprofs;
+ << chk_run << chk_project << chk_centerp << chk_solution << chk_spectra;
    bool chk_vars_set = ( chk_run       &&  chk_project   &&
                          chk_centerp   &&  chk_solution  &&
-                         chk_extprofs );
+                         chk_spectra );
    bool chk_upl_enab = ( chk_vars_set  &&  connected );
 
    if ( ! chk_upl_enab )
@@ -2723,7 +2766,6 @@ DbgLv(1) << "EGUp:bj: ck: run proj cent solu epro"
    jo_rotor.insert( "calibration", v_calib );
    jo_exper.insert( "rotor", QJsonValue( jo_rotor ) );
 
-   int nspeed        = v_nspeed.toInt();
    int jj            = 0;
    for ( int ii = 0; ii < nspeed; ii++, jj+= 6 )
    {

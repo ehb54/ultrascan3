@@ -128,6 +128,7 @@ END$$
 DROP PROCEDURE IF EXISTS new_protocol$$
 CREATE PROCEDURE new_protocol ( p_personGUID   CHAR(36),
                                 p_password     VARCHAR(80),
+                                p_ownerID      INT,
                                 p_protocolGUID CHAR(36),
                                 p_description  VARCHAR(160),
                                 p_xml          LONGTEXT,
@@ -144,7 +145,13 @@ CREATE PROCEDURE new_protocol ( p_personGUID   CHAR(36),
 
 BEGIN
 
+  DECLARE l_protocolID INT;
+
+  DECLARE duplicate_key TINYINT DEFAULT 0;
   DECLARE null_field    TINYINT DEFAULT 0;
+
+  DECLARE CONTINUE HANDLER FOR 1062
+    SET duplicate_key = 1;
 
   DECLARE CONTINUE HANDLER FOR 1048
     SET null_field = 1;
@@ -152,13 +159,11 @@ BEGIN
   CALL config();
   SET @US3_LAST_ERRNO = @OK;
   SET @US3_LAST_ERROR = '';
-  SET @LAST_INSERT_ID = 0;
+  SET @LAST_INSERT_ID = -1;
  
-  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+  IF ( ( verify_user( p_personGUID, p_password ) = @OK ) &&
+       ( check_GUID ( p_personGUID, p_password, p_protocolGUID ) = @OK ) ) THEN
  
-    -- A user is creating a protocol
-    --  filename is the basename of the .tmst binary file
-    --  definitions is the accompanying XML as text
     INSERT INTO protocol SET
       protocolGUID   = p_protocolGUID,
       description    = p_description,
@@ -174,7 +179,11 @@ BEGIN
       solution2      = p_solution2,
       wavelengths    = p_wavelengths;
    
-    IF ( null_field = 1 ) THEN
+    IF ( duplicate_key = 1 ) THEN
+      SET @US3_LAST_ERRNO = @INSERTDUP;
+      SET @US3_LAST_ERROR = "MySQL: Duplicate entry for protocolGUID/description field(s)";
+
+    ELSEIF ( null_field = 1 ) THEN
       SET @US3_LAST_ERRNO = @INSERTNULL;
       SET @US3_LAST_ERROR = "MySQL: Attempt to insert NULL value in the protocol table";
 
@@ -183,7 +192,7 @@ BEGIN
 
       INSERT INTO protocolPerson SET
         protocolID = @LAST_INSERT_ID,
-        personID   = @US3_ID;
+        personID   = p_ownerID;
 
     END IF;
  
@@ -220,19 +229,20 @@ BEGIN
       SELECT @OK AS status;
   
       IF ( p_ID > 0 ) THEN
-        SELECT   protocolID, protocolGUID, description, xml, optimaHost,
+        SELECT   p.protocolID, protocolGUID, description, xml, optimaHost,
                  timestamp2UTC( dateUpdated ) AS UTC_lastUpdated
-        FROM     protocolPerson p, protocol
-        WHERE    p.protocolID = protocolID
-        AND      p.personID = p_ID
-        ORDER BY protocolID DESC;
+        FROM     protocol p, protocolPerson
+        WHERE    p.protocolID = protocolPerson.protocolID
+        AND      protocolPerson.personID = p_ID
+        ORDER BY p.protocolID DESC;
    
       ELSE
-        SELECT   protocolID, protocolGUID, description, xml, optimaHost,
+        SELECT   p.protocolID, protocolGUID, description, xml, optimaHost,
                  timestamp2UTC( dateUpdated ) AS UTC_lastUpdated,
-                 p.personID
-        FROM     protocolPerson p, protocol
-        ORDER BY protocolID DESC;
+                 personID
+        FROM     protocol p, protocolPerson
+        WHERE    p.protocolID = protocolPerson.protocolID
+        ORDER BY p.protocolID DESC;
 
       END IF;
 
@@ -256,12 +266,12 @@ BEGIN
       -- Ok, user wants his own info
       SELECT @OK AS status;
 
-      SELECT   protocolID, protocolGUID, description, xml, optimaHost,
+      SELECT   p.protocolID, protocolGUID, description, xml, optimaHost,
                timestamp2UTC( dateUpdated ) AS UTC_lastUpdated
-      FROM     protocolPerson p, protocol
-      WHERE    p.protocolID = protocolID
+      FROM     protocol p, protocolPerson
+      WHERE    p.protocolID = protocolPerson.protocolID
       AND      p.personID = @US3_ID
-      ORDER BY protocolID DESC;
+      ORDER BY p.protocolID DESC;
 
     END IF;
 
@@ -304,7 +314,7 @@ BEGIN
     ELSE
       SELECT @OK AS status;
 
-      SELECT   protocolID, protocolGUID, description, xml, optimaHost,
+      SELECT   pc.protocolID, protocolGUID, description, xml, optimaHost,
                timestamp2UTC( dateUpdated ) AS UTC_lastUpdated,
                rotorID, speed1, duration, usedcells, estscans,
                solution1, solution2, wavelengths, pp.personID

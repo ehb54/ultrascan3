@@ -17,29 +17,36 @@ int US_ProtocolUtil::list_all( QList< QStringList >& protdata,
                                US_DB2* dbP )
 {
    int nrecs        = 0;    // Count of records found
-   QStringList protentry;   // Work protocol summary data entry
    protdata.clear();        // Initialize list of entries
 
+qDebug() << "PU:l_all: dbP" << dbP;
    if ( dbP != NULL )
    {  // Read protocol records from the database
       QString inv_id      = QString::number( US_Settings::us_inv_ID() );
       QStringList qry;
       qry << "get_protocol_desc" << inv_id;
       dbP->query( qry );
+qDebug() << "PU:l_all: qry" << qry;
+qDebug() << "PU:l_all:  qry stat" << dbP->lastError();
 
       if ( dbP->lastErrno() != US_DB2::OK )
          return nrecs;
 
       while ( dbP->next() )
       {
+         QStringList protentry;
          QString pdbid    = dbP->value( 0 ).toString();
          QString pguid    = dbP->value( 1 ).toString();
          QString pname    = dbP->value( 2 ).toString();
          QDateTime date   = dbP->value( 5 ).toDateTime().toUTC();
+//         QString pdate    = US_Util::toUTCDatetimeText( date
+//                               .toString( Qt::ISODate ), true )
+//                               .section( " ", 0, 0 ).simplified();
          QString pdate    = US_Util::toUTCDatetimeText( date
                                .toString( Qt::ISODate ), true )
-                               .section( " ", 0, 0 ).simplified();
+                               .section( ":", 0, 1 ) + " UTC";
          protentry << pname << pdate << pdbid << pguid;
+qDebug() << "PU:l_all:  protentry" << protentry;
 
          protdata  << protentry;
          nrecs++;
@@ -62,10 +69,14 @@ int US_ProtocolUtil::list_all( QList< QStringList >& protdata,
          QString prot_id;
          QString pfname      = pfiles[ ii ];
          QString pfpath      = datdir + pfname;
+//         QString fdate       = US_Util::toUTCDatetimeText(
+//                                  QFileInfo( pfpath ).lastModified().toUTC()
+//                                  .toString( Qt::ISODate ), true )
+//                                  .section( " ", 0, 0 ).simplified();
          QString fdate       = US_Util::toUTCDatetimeText(
                                   QFileInfo( pfpath ).lastModified().toUTC()
                                   .toString( Qt::ISODate ), true )
-                                  .section( " ", 0, 0 ).simplified();
+                                  .section( ":", 0, 1 ) + " UTC";
          QFile pfile( pfpath );
          // Skip if there is a file-open problem
          if ( ! pfile.open( QIODevice::ReadOnly ) )  continue;
@@ -91,6 +102,7 @@ int US_ProtocolUtil::list_all( QList< QStringList >& protdata,
       }  // END: file loop
    }  // END: local disk
 
+qDebug() << "PU:l_all: nrecs" << nrecs;
    return nrecs;
 }
 
@@ -140,7 +152,9 @@ int US_ProtocolUtil::write_record( const QString xml,
 
    // Parse the XML for protocol name and other information
    QString protname;
-   QString protguid = US_Util::new_guid();
+   QString protguid;
+   QString investig;
+   QString personID;
    QString ohost;
    QString speed1;
    QString solut1;
@@ -154,6 +168,7 @@ int US_ProtocolUtil::write_record( const QString xml,
    double duration  = 0.0;
    QStringList lambdas;
    QXmlStreamReader xmli( xml );
+qDebug() << "PU:wrrec: len(xml)" << xml.length() << "dbP" << dbP;
 
    while( ! xmli.atEnd() )
    {  // Parse XML
@@ -164,9 +179,10 @@ int US_ProtocolUtil::write_record( const QString xml,
          QString ename    = xmli.name().toString();
          if ( ename == "protocol" )
          {
-            protname         = attr.value( "description" ).toString();
-            protguid         = attr.value( "guid"        ).toString();
-            ohost            = attr.value( "optima_host" ).toString();
+            protname         = attr.value( "description"  ).toString();
+            protguid         = attr.value( "guid"         ).toString();
+            ohost            = attr.value( "optima_host"  ).toString();
+            investig         = attr.value( "investigator" ).toString();
          }
          else if ( ename == "rotor" )
          {
@@ -208,15 +224,18 @@ int US_ProtocolUtil::write_record( const QString xml,
       }  // END: start Element
    }  // END:  Xml parse
 
+   // Person ID parsed from investigator
+   personID         = investig.section( ":", 0, 0 ).simplified();
    // Count of unique wavelengths encountered
    nwvlens          = lambdas.count();
    // Total run duration in minutes rounded to two significant digits
    duration         = qRound( ( duration / 60.0 ) * 100.0 ) * 0.01;
+qDebug() << "PU:wrrec:  personID" << personID << "protguid" << protguid;
 
    if ( dbP != NULL )
    {  // Write a record to the database
       QStringList qry( "new_protocol" );
-      qry << QString::number( US_Settings::us_inv_ID() )
+      qry << personID
           << protguid
           << protname
           << xml
@@ -231,11 +250,14 @@ int US_ProtocolUtil::write_record( const QString xml,
           << QString::number( nwvlens );
 
       dbP->query( qry );
+qDebug() << "PU:wrrec:  qry" << qry;
+qDebug() << "PU:wrrec:   stat" << dbP->lastErrno() << dbP->lastError();
 
       if ( dbP->lastErrno() != US_DB2::OK )
          return newpx;
 
       newpx            = dbP->lastInsertID();
+qDebug() << "PU:wrrec:    newpx" << newpx;
    }
 
    else
@@ -258,6 +280,7 @@ int US_ProtocolUtil::write_record( const QString xml,
       newpx               = QString( filename ).section( ".", 0, 0 ).mid( 1 ).toInt();
    }
 
+qDebug() << "PU:wrrec:    rtn newpx" << newpx;
    return newpx;
 }
 

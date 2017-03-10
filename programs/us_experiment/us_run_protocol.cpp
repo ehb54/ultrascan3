@@ -101,22 +101,6 @@ bool US_RunProtocol::fromXml( QXmlStreamReader& xmli )
    return ( ! xmli.hasError() );
 }
 
-// Load a protocol from DB (by GUID)
-int US_RunProtocol::load_db( const QString& guid, US_DB2* db )
-{
-   QStringList qry;
-
-   qry << "get_protocolID" << guid;
-   db->query( qry );
-
-   if ( db->lastErrno() != US_DB2::OK ) return db->lastErrno();
-   
-   db->next();
-   QString id = db->value( 0 ).toString();
-   //return load( id, db );
-   return id.toInt();
-}
-
 
 // RunProtoRotor subclass constructor
 US_RunProtocol::RunProtoRotor::RunProtoRotor()
@@ -187,6 +171,22 @@ bool US_RunProtocol::RunProtoRotor::fromXml( QXmlStreamReader& xmli )
 // Write the current Rotor portion of controls to an XML stream
 bool US_RunProtocol::RunProtoRotor::toXml( QXmlStreamWriter& xmlo )
 {
+   xmlo.writeStartElement( "rotor" );
+
+   xmlo.writeAttribute( "laboratory",  laboratory );
+   xmlo.writeAttribute( "rotor",       rotor );
+   xmlo.writeAttribute( "calibration", calibration );
+   xmlo.writeAttribute( "labid",       QString::number( labID ) );
+   xmlo.writeAttribute( "rotid",       QString::number( rotID ) );
+   xmlo.writeAttribute( "calid",       QString::number( calID ) );
+   xmlo.writeAttribute( "absid",       QString::number( absID ) );
+   xmlo.writeAttribute( "labguid",     labGUID );
+   xmlo.writeAttribute( "rotguid",     rotGUID );
+   xmlo.writeAttribute( "calguid",     calGUID );
+   xmlo.writeAttribute( "absguid",     absGUID );
+
+   xmlo.writeEndElement();    // rotor
+
    return ( ! xmlo.hasError() );
 }
 
