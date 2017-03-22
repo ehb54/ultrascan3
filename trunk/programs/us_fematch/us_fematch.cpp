@@ -259,6 +259,10 @@ us_setReadOnly( le_compress, true );
    pb_reset_exclude   = us_pushbutton( tr( "Reset Scan Range" ) );
    ct_from->setValue( 0 );
    ct_to  ->setValue( 0 );
+   ct_from->setSingleStep( 1 );
+   ct_to  ->setSingleStep( 1 );
+   ct_from->adjustSize();
+   ct_to  ->adjustSize();
 
    pb_exclude      ->setEnabled( false );
    pb_reset_exclude->setEnabled( false );

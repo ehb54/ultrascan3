@@ -228,6 +228,8 @@ US_AnalysisBase2::US_AnalysisBase2() : US_Widgets()
    controlsLayout->addWidget( ct_boundaryPercent, row++, 1, 1, 1 );
    controlsLayout->addWidget( lb_boundPos       , row,   0, 1, 1 );
    controlsLayout->addWidget( ct_boundaryPos    , row++, 1, 1, 1 );
+   controlsLayout->setColumnStretch( 0, 1 );
+   controlsLayout->setColumnStretch( 1, 1 );
 
    dataLoaded = false;
    buffLoaded = false;

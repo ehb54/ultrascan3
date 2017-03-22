@@ -90,8 +90,9 @@ class US_UTIL_EXTERN US_TimeState : public QObject
 
       //! \brief Read data from a specified data file and its sister XML file.
       //! \param fpath    Full path to the input TMST file.
+      //! \param pfetch   Flag:  pre-fetch all data and close binary file.
       //! \return         Status flag (0->OK).
-      int open_read_data( QString );
+      int open_read_data( QString, const bool = false );
 
       //! \brief Get the count of time data records.
       //! \return         Number of data records present in the data.
@@ -202,6 +203,8 @@ class US_UTIL_EXTERN US_TimeState : public QObject
       QDataStream* dso;             //!< Output data stream pointer.
       QDataStream* dsi;             //!< Input data stream pointer.
 
+      QByteArray   dbytes;          //!< Pre-fetched TimeState binary bytes
+
       QString      filename;        //!< TimeState binary base file name.
       QString      filepath;        //!< TimeState binary full file path.
       QString      fvers;           //!< File version string.
@@ -212,6 +215,7 @@ class US_UTIL_EXTERN US_TimeState : public QObject
       bool         wr_open;         //!< Flag:  file opened for write.
       bool         rd_open;         //!< Flag:  file opened for read.
       bool         const_ti;        //!< Flag:  constant time increment?
+      bool         pre_fetch;       //!< Flag:  data pre-fetched from file.
 
       int          dbg_level;       //!< Debug level.
       int          int_size;        //!< Size of integer on this machine.

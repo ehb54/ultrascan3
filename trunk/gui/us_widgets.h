@@ -170,6 +170,17 @@ class US_GUI_EXTERN US_Widgets : public QFrame
     QTabWidget* us_tabwidget( int = 0,
                               int = QFont::Bold );
 
+    //! \param tedt       - Pointer to QTimeEdit
+    //! \param fontAdjust - Adjustment to default font size
+    //! \param sbox       - Optional pointer to days QSpinBox
+    //! * Color is set to US_GuiSettings::normalColor()
+    QHBoxLayout* us_timeedit( QTimeEdit*&, const int = 0,
+                              QSpinBox** = (QSpinBox**)NULL );
+
+    //! \param fontAdjust -  adjustment to default font size\n
+    //! * Color is set to US_GuiSettings::normalEdit()
+    QSpinBox* us_spinbox( int = 0 );
+
     //! \brief Write a plot file (PNG or SVG+PNG) from a plot
     //! \param fname Full path name of the plot file to create
     //! \param plot  Pointer to plot

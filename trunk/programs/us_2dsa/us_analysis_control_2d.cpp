@@ -190,7 +190,7 @@ DbgLv(1) << "idealThrCout" << nthr;
    optimizeLayout->addWidget( lb_gridreps,   row,   0, 1, 1 );
    optimizeLayout->addWidget( le_gridreps,   row++, 1, 1, 3 );
    optimizeLayout->addLayout( lo_custgr,     row,   0, 1, 2 );
-   optimizeLayout->addWidget( pb_ldmodel,    row++, 2, 1, 4 );
+   optimizeLayout->addWidget( pb_ldmodel,    row++, 2, 1, 2 );
    optimizeLayout->addLayout( lo_menisc,     row++, 0, 1, 4 );
    optimizeLayout->addWidget( lb_menisrng,   row,   0, 1, 2 );
    optimizeLayout->addWidget( ct_menisrng,   row++, 2, 1, 2 );

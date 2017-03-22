@@ -118,6 +118,7 @@ void US_ExperimentMain::reset( void )
 
 // Panel for run and other general parameters
 US_ExperGuiGeneral::US_ExperGuiGeneral( QWidget* topw )
+   : US_WidgetsDialog( topw, 0 )
 {
    mainw               = (US_ExperimentMain*)topw;
    dbg_level           = US_Settings::us_debug();
@@ -139,21 +140,10 @@ US_ExperGuiGeneral::US_ExperGuiGeneral( QWidget* topw )
                 le_runid        = us_lineedit( "", 0, false );
                 le_protocol     = us_lineedit( "", 0, false );
                 le_project      = us_lineedit( "", 0, true  );
-                ct_tempera      = us_counter( 2, 0, 40, 1 );
+                ct_tempera      = us_counter ( 2, 0, 40, 20 );
 
-   // Insure reasonable size for temperature counter
-   lb_runid->adjustSize();
-   QFont font( US_GuiSettings::fontFamily(),
-               US_GuiSettings::fontSize() - 1 );
-   QFontMetrics fmet( font );
-   int fwid    = fmet.maxWidth();
-   int chgt    = lb_runid->height();
-   int cwid    = fwid * 3;
-   int mwid    = fwid * 4;
    ct_tempera->setSingleStep( 1 );
    ct_tempera->setValue     ( 20 );
-   ct_tempera->setMaximumWidth ( mwid );
-   ct_tempera->resize       ( cwid, chgt );
    ct_tempera->adjustSize   ();
 
    // Set up an approprate investigator text
@@ -177,16 +167,16 @@ US_ExperGuiGeneral::US_ExperGuiGeneral( QWidget* topw )
 
    // Build main layout
    int row         = 0;
-   genL->addWidget( pb_investigator, row,   0, 1, 1 );
-   genL->addWidget( le_investigator, row++, 1, 1, 5 );
-   genL->addWidget( lb_runid,        row,   0, 1, 1 );
-   genL->addWidget( le_runid,        row++, 1, 1, 5 );
-   genL->addWidget( pb_protocol,     row,   0, 1, 1 );
-   genL->addWidget( le_protocol,     row++, 1, 1, 5 );
-   genL->addWidget( pb_project,      row,   0, 1, 1 );
-   genL->addWidget( le_project,      row++, 1, 1, 5 );
-   genL->addWidget( lb_tempera,      row,   0, 1, 1 );
-   genL->addWidget( ct_tempera,      row,   1, 1, 1 );
+   genL->addWidget( pb_investigator, row,   0, 1, 2 );
+   genL->addWidget( le_investigator, row++, 2, 1, 6 );
+   genL->addWidget( lb_runid,        row,   0, 1, 2 );
+   genL->addWidget( le_runid,        row++, 2, 1, 6 );
+   genL->addWidget( pb_protocol,     row,   0, 1, 2 );
+   genL->addWidget( le_protocol,     row++, 2, 1, 6 );
+   genL->addWidget( pb_project,      row,   0, 1, 2 );
+   genL->addWidget( le_project,      row++, 2, 1, 6 );
+   genL->addWidget( lb_tempera,      row,   0, 1, 2 );
+   genL->addWidget( ct_tempera,      row++, 2, 1, 2 );
 
    panel->addLayout( genL );
    panel->addStretch();
@@ -305,6 +295,7 @@ DbgLv(1) << "EGGe: rchg: changed" << changed;
    if ( changed )
    {  // Replace runID in line edit box
       le_runid->setText( rname );
+      currProto->runname = rname;
    }
 }
 
@@ -428,6 +419,9 @@ void US_ExperGuiGeneral::changed_protocol( void )
                                 tr( "Duplicate Run Protocol Name" ),
                                 msg );
    }
+   else
+      currProto->protname  = protname;
+ 
 }
 
 // Capture selected project information
@@ -437,6 +431,7 @@ DbgLv(1) << "projinfo: proj.desc" << project.projectDesc;
 DbgLv(1) << "projinfo: proj.guid" << project.projectGUID;
 
    le_project->setText( project.projectDesc );
+   currProto->project   = project.projectDesc;
 }
 
 // Get centerpiece information (initially or after DB/Disk change
@@ -459,6 +454,7 @@ void US_ExperGuiGeneral::centerpieceInfo( void )
 
 // Panel for Lab/Rotor parameters
 US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
+   : US_WidgetsDialog( topw, 0 )
 {
    mainw               = (US_ExperimentMain*)topw;
    rpRotor             = &(mainw->currProto.rpRotor);
@@ -518,6 +514,7 @@ US_ExperGuiRotor::US_ExperGuiRotor( QWidget* topw )
             this,         SLOT  ( advRotor() ) );
 
    changeLab( 0 );
+   savePanel();
    changed             = false;
 
    initPanel();
@@ -671,8 +668,32 @@ DbgLv(1) << "EGR: advRChg:     ii eID" << ii << eID;
    }
 }
 
+// Function to return the abstract rotor for the current rotor
+US_Rotor::AbstractRotor* US_ExperGuiRotor::abstractRotor( const QString rotor )
+{
+   int arID       = -1;
+   for ( int ii = 0; ii < rotors.count(); ii++ )
+   {  // Search for a match to the rotor name
+      if ( rotors[ ii ].name == rotor )
+      {  // Match found:  break with abstractRotor ID value
+         arID           = rotors[ ii ].abstractRotorID;
+         break;
+      }
+   }
+   for ( int ii = 0; ii < arotors.count(); ii++ )
+   {  // Search for a match to the abstract rotor ID
+      if ( arotors[ ii ].ID == arID )
+      {  // Match found:  return with pointer to abstract rotor object
+         return ( &arotors[ ii ] );
+      }
+   }
+
+   return NULL;
+}
+
 // Panel for Speed step parameters
 US_ExperGuiSpeeds::US_ExperGuiSpeeds( QWidget* topw )
+   : US_WidgetsDialog( topw, 0 )
 {
    mainw               = (US_ExperimentMain*)topw;
    rpSpeed             = &(mainw->currProto.rpSpeed);
@@ -686,140 +707,142 @@ US_ExperGuiSpeeds::US_ExperGuiSpeeds( QWidget* topw )
    QGridLayout* genL   = new QGridLayout();
 
    // Labels
-   QLabel* lb_count    = us_label( tr( "Number of Speed Profiles:" ) );
-   QLabel* lb_speed    = us_label( tr( "Rotor Speed (rpm):" ) );
-   QLabel* lb_accel    = us_label( tr( "Acceleration Profile (rpm/sec):" ) );
-   QLabel* lb_durhr    = us_label( tr( "Length of Experiment (hours):" ) );
-   QLabel* lb_durmin   = us_label( tr( "Length of Experiment (minutes):" ) );
-   QLabel* lb_dlyhr    = us_label( tr( "Time Delay for Scans (hours):" ) );
-   QLabel* lb_dlymin   = us_label( tr( "Time Delay for Scans (minutes):" ) );
-   QLabel* lb_dlysec   = us_label( tr( "Time Delay for Scans (seconds):" ) );
-   QCheckBox* ck_endoff;
-   QCheckBox* ck_radcal;
+   QLabel*  lb_count   = us_label( tr( "Number of Speed Profiles:" ) );
+   QLabel*  lb_speed   = us_label( tr( "Rotor Speed (rpm):" ) );
+   QLabel*  lb_accel   = us_label( tr( "Acceleration (rpm/sec):" ) );
+   QLabel*  lb_durat   = us_label( tr( "Duration of Experiment (days hh:mm:ss):" ) );
+   QLabel*  lb_delay   = us_label( tr( "Delay to First Scan (days hh:mm:ss):" ) );
    QLayout* lo_endoff  = us_checkbox( tr( "Spin down centrifuge at job end" ),
                                       ck_endoff, true );
    QLayout* lo_radcal  = us_checkbox( tr( "Perform radial calibration" ),
                                       ck_radcal, false );
+   QLabel*  lb_scnint  = us_label( tr( "Scan Interval (days hh:mm:ss;"
+                                       " 0 => fast-as-possible)" ) );
 
-   // ComboBox and counters
+   // ComboBox, counters, time-edits, spinbox
+   sb_count            = us_spinbox();
    cb_prof             = new QComboBox( this );
-   ct_speed            = us_counter( 2, 1000, 100000, 100 );
+   ct_speed            = us_counter( 2, 1000,  80000, 100 );
    ct_accel            = us_counter( 2,   50,   1000,  50 );
-   ct_count            = us_counter( 2,    1,    100,   1 );
-   ct_durhr            = us_counter( 2,    0,    100,   1 );
-   ct_durmin           = us_counter( 2,    0,     59,   1 );
-   ct_dlyhr            = us_counter( 2,    0,     50,   1 );
-   ct_dlymin           = us_counter( 2,    0,     59,   1 );
-   ct_dlysec           = us_counter( 2,    0,     59,   1 );
+   QHBoxLayout* lo_durat
+                       = us_timeedit( tm_durat,  0, &sb_durat  );
+   QHBoxLayout* lo_delay
+                       = us_timeedit( tm_delay,  0, &sb_delay  );
+   QHBoxLayout* lo_scnint
+                       = us_timeedit( tm_scnint, 0, &sb_scnint );
+   le_maxrpm           = us_lineedit( tr( "Maximum speed for AN50 rotor:"
+                                          "  50000 rpm" ), 0, true );
 
    // Default values
    nspeed              = 1;
    curssx              = 0;
-   double defspeed     = rpSpeed->ssteps[ 0 ].speed;
-   double defaccel     = rpSpeed->ssteps[ 0 ].accel;
-   double defdurtim    = rpSpeed->ssteps[ 0 ].duration;
-   double defdlytim    = rpSpeed->ssteps[ 0 ].delay;
-   double defdurhr     = qFloor( defdurtim / 60.0 );
-   double defdurmin    = defdurtim - ( defdurhr * 60.0 );
-   double defdlymin    = qFloor( defdlytim / 60.0 );
-   double defdlyhr     = qFloor( defdlymin / 60.0 );
-   defdlymin          -= ( defdlyhr * 60.0 );
-   double defdlysec    = defdlytim - ( defdlyhr * 3600.0 )
-                                   - ( defdlymin * 60.0 );
-DbgLv(1) << "EGSp: defdurtim" << defdurtim;
-DbgLv(1) << "EGSp:   defdurhr" << defdurhr << "defdurmin" << defdurmin;
-DbgLv(1) << "EGSp: defdlytim" << defdlytim;
-DbgLv(1) << "EGSp:   defdlyhr" << defdlyhr << "defdlymin" << defdlymin << "defdlysec" << defdlysec;
+   double df_speed     = rpSpeed->ssteps[ 0 ].speed;
+   double df_accel     = rpSpeed->ssteps[ 0 ].accel;
+   double df_duratm    = rpSpeed->ssteps[ 0 ].duration;
+   double df_delatm    = rpSpeed->ssteps[ 0 ].delay;
+
+   QList< int > dhms_dur;
+   QList< int > dhms_dly;
+   US_RunProtocol::timeToList( df_duratm, dhms_dur );
+   US_RunProtocol::timeToList( df_delatm, dhms_dly );
+
+DbgLv(1) << "EGSp: df_duratm" << df_duratm;
+DbgLv(1) << "EGSp:   def  d h m s " << dhms_dur;
+DbgLv(1) << "EGSp: df_delatm" << df_delatm;
+DbgLv(1) << "EGSp:   def  d h m s " << dhms_dly;
    profdesc.resize( nspeed );  // Speed profile descriptions
    ssvals  .resize( nspeed );  // Speed step values
-   ssvals[ 0 ][ "speed" ]    = defspeed;  // Speed default
-   ssvals[ 0 ][ "accel" ]    = defaccel;  // Acceleration default
-   ssvals[ 0 ][ "duration" ] = defdurtim; // Duration in minutes default (5h 30m)
-   ssvals[ 0 ][ "delay" ]    = defdlytim; // Delay in seconds default (2m 30s)
+   ssvals[ 0 ][ "speed" ]    = df_speed;  // Speed default
+   ssvals[ 0 ][ "accel" ]    = df_accel;  // Acceleration default
+   ssvals[ 0 ][ "duration" ] = df_duratm; // Duration in seconds default (5h 30m)
+   ssvals[ 0 ][ "delay" ]    = df_delatm; // Delay in seconds default (2m 30s)
 
    // Set up counters and profile description
-   ct_count ->setSingleStep(   1 );
    ct_speed ->setSingleStep( 100 );
    ct_accel ->setSingleStep(  50 );
-   ct_durhr ->setSingleStep(   1 );
-   ct_durmin->setSingleStep(   1 );
-   ct_dlyhr ->setSingleStep(   1 );
-   ct_dlymin->setSingleStep(   1 );
-   ct_dlysec->setSingleStep(   1 );
 
-   ct_count ->setValue( nspeed    );
-   ct_speed ->setValue( defspeed  );
-   ct_accel ->setValue( defaccel  );
-   ct_durhr ->setValue( defdurhr  );
-   ct_durmin->setValue( defdurmin );
-   ct_dlyhr ->setValue( defdlyhr  );
-   ct_dlymin->setValue( defdlymin );
-   ct_dlysec->setValue( defdlysec );
+   sb_count ->setValue( nspeed    );
+   ct_speed ->setValue( df_speed  );
+   ct_accel ->setValue( df_accel  );
+DbgLv(1) << "EGSp: init sb/de components";
+   sb_durat ->setValue( (int)dhms_dur[ 0 ] );
+   tm_durat ->setTime ( QTime( dhms_dur[ 1 ],
+                               dhms_dur[ 2 ],
+                               dhms_dur[ 3 ] ) );
+   sb_delay ->setValue( (int)dhms_dly[ 0 ] );
+   tm_delay ->setTime ( QTime( dhms_dly[ 1 ],
+                               dhms_dly[ 2 ],
+                               dhms_dly[ 3 ] ) );
+   sb_scnint->setValue( 0 );
+   tm_scnint->setTime ( QTime( 0, 0 ) );
+DbgLv(1) << "EGSp: DONE init sb/de components";
 
    // Speed profile 1 description;
    //   e.g., "Speed Profile 1: 30000 rpm for 5 hr 30 min"
    cb_prof->addItem( speedp_description( 0 ) );
 
    // Adjust counter sizes
-   lb_count->adjustSize();
-   QFont font( US_GuiSettings::fontFamily(),
-               US_GuiSettings::fontSize() );
-   QFontMetrics fmet( font );
-   int fwidth  = fmet.maxWidth();
-   int rheight = lb_count->height();
-   int csizw   = fwidth * 8;
-   ct_count ->resize( csizw, rheight );
-   ct_speed ->resize( csizw, rheight );
-   ct_accel ->resize( csizw, rheight );
-   ct_durhr ->resize( csizw, rheight );
-   ct_durmin->resize( csizw, rheight );
-   ct_dlyhr ->resize( csizw, rheight );
-   ct_dlymin->resize( csizw, rheight );
-   ct_dlysec->resize( csizw, rheight );
+   ct_speed->adjustSize();
+   ct_accel->adjustSize();
 
    // Create main layout rows
    int row = 0;
-   genL->addWidget( lb_count,   row,   0, 1, 3 );
-   genL->addWidget( ct_count,   row++, 3, 1, 1 );
-   genL->addWidget( cb_prof,    row++, 0, 1, 4 );
-   genL->addWidget( lb_speed,   row,   0, 1, 3 );
-   genL->addWidget( ct_speed,   row++, 3, 1, 1 );
-   genL->addWidget( lb_accel,   row,   0, 1, 3 );
-   genL->addWidget( ct_accel,   row++, 3, 1, 1 );
-   genL->addWidget( lb_durhr,   row,   0, 1, 3 );
-   genL->addWidget( ct_durhr,   row++, 3, 1, 1 );
-   genL->addWidget( lb_durmin,  row,   0, 1, 3 );
-   genL->addWidget( ct_durmin,  row++, 3, 1, 1 );
-   genL->addWidget( lb_dlyhr,   row,   0, 1, 3 );
-   genL->addWidget( ct_dlyhr,   row++, 3, 1, 1 );
-   genL->addWidget( lb_dlymin,  row,   0, 1, 3 );
-   genL->addWidget( ct_dlymin,  row++, 3, 1, 1 );
-   genL->addWidget( lb_dlysec,  row,   0, 1, 3 );
-   genL->addWidget( ct_dlysec,  row++, 3, 1, 1 );
-   genL->addLayout( lo_endoff,  row,   0, 1, 2 );
-   genL->addLayout( lo_radcal,  row++, 2, 1, 2 );
-   genL->setColumnStretch( 0, 4 );
-   genL->setColumnStretch( 3, 0 );
+   genL->addWidget( lb_count,   row,    0, 1,  7 );
+   genL->addWidget( sb_count,   row++,  7, 1,  1 );
+DbgLv(1) << "EGSp: addWidg/Layo row" << row;
+   genL->addWidget( cb_prof,    row++,  0, 1,  8 );
+DbgLv(1) << "EGSp: addWidg/Layo row" << row;
+   genL->addWidget( lb_speed,   row,    0, 1,  7 );
+   genL->addWidget( ct_speed,   row++,  7, 1,  1 );
+DbgLv(1) << "EGSp: addWidg/Layo row" << row;
+   genL->addWidget( lb_accel,   row,    0, 1,  7 );
+   genL->addWidget( ct_accel,   row++,  7, 1,  1 );
+DbgLv(1) << "EGSp: addWidg/Layo row" << row;
+DbgLv(1) << "EGSp: addWidg/Layo AA";
+   genL->addWidget( lb_durat,   row,    0, 1,  7 );
+DbgLv(1) << "EGSp: addWidg/Layo BB";
+   genL->addLayout( lo_durat,   row++,  7, 1,  1 );
+DbgLv(1) << "EGSp: addWidg/Layo CC";
+   genL->addWidget( lb_delay,   row,    0, 1,  7 );
+DbgLv(1) << "EGSp: addWidg/Layo DD";
+   genL->addLayout( lo_delay,   row++,  7, 1,  1 );
+DbgLv(1) << "EGSp: addWidg/Layo EE";
+   genL->addWidget( lb_scnint,  row,    0, 1,  7 );
+DbgLv(1) << "EGSp: addWidg/Layo FF";
+   genL->addLayout( lo_scnint,  row++,  7, 1,  1 );
+DbgLv(1) << "EGSp: addWidg/Layo GG";
+   genL->addWidget( le_maxrpm,  row++,  0, 1,  4 );
+DbgLv(1) << "EGSp: addWidg/Layo HH";
+   genL->addLayout( lo_endoff,  row,    0, 1,  4 );
+DbgLv(1) << "EGSp: addWidg/Layo II";
+   genL->addLayout( lo_radcal,  row++,  4, 1,  4 );
+   genL->setColumnStretch(  0, 4 );
+   genL->setColumnStretch(  1, 4 );
+   genL->setColumnStretch(  2, 4 );
+   genL->setColumnStretch(  3, 4 );
+   genL->setColumnStretch(  4, 4 );
+   genL->setColumnStretch(  5, 4 );
+   genL->setColumnStretch(  6, 1 );
+   genL->setColumnStretch(  7, 1 );
 
    // Connect signals and slots
-   connect( ct_count,  SIGNAL( valueChanged  ( double ) ),
-            this,      SLOT  ( ssChangeCount ( double ) ) );
+   connect( sb_count,  SIGNAL( valueChanged  ( int )  ),
+            this,      SLOT  ( ssChangeCount ( int )  ) );
    connect( cb_prof,   SIGNAL( activated     ( int    ) ),
             this,      SLOT  ( ssChangeProfx ( int    ) ) );
    connect( ct_speed,  SIGNAL( valueChanged  ( double ) ),
             this,      SLOT  ( ssChangeSpeed ( double ) ) );
    connect( ct_accel,  SIGNAL( valueChanged  ( double ) ),
             this,      SLOT  ( ssChangeAccel ( double ) ) );
-   connect( ct_durhr,  SIGNAL( valueChanged  ( double ) ),
-            this,      SLOT  ( ssChangeDurhr ( double ) ) );
-   connect( ct_durmin, SIGNAL( valueChanged  ( double ) ),
-            this,      SLOT  ( ssChangeDurmin( double ) ) );
-   connect( ct_dlyhr,  SIGNAL( valueChanged  ( double ) ),
-            this,      SLOT  ( ssChangeDlyhr ( double ) ) );
-   connect( ct_dlymin, SIGNAL( valueChanged  ( double ) ),
-            this,      SLOT  ( ssChangeDlymin( double ) ) );
-   connect( ct_dlysec, SIGNAL( valueChanged  ( double ) ),
-            this,      SLOT  ( ssChangeDlysec( double ) ) );
+   connect( sb_durat,  SIGNAL( valueChanged   ( int ) ),
+            this,      SLOT  ( ssChgDuratDay  ( int ) ) );
+   connect( tm_durat,  SIGNAL( timeChanged    ( const QTime& ) ),
+            this,      SLOT  ( ssChgDuratTime ( const QTime& ) ) );
+   connect( sb_delay,  SIGNAL( valueChanged   ( int ) ),
+            this,      SLOT  ( ssChgDelayDay  ( int ) ) );
+   connect( tm_delay,  SIGNAL( timeChanged    ( const QTime& ) ),
+            this,      SLOT  ( ssChgDelayTime ( const QTime& ) ) );
+DbgLv(1) << "EGSp: addWidg/Layo II";
 
    // Complete overall layout
    panel->addLayout( genL );
@@ -855,10 +878,10 @@ DbgLv(1) << "EGSp: spDesc: ssx" << ssx
 }
 
 // Slot for change in speed-step count
-void US_ExperGuiSpeeds::ssChangeCount( double val )
+void US_ExperGuiSpeeds::ssChangeCount( int val )
 {
    changed          = true;
-   int new_nsp      = (int)val;
+   int new_nsp      = val;
 DbgLv(1) << "EGSp: chgKnt: nsp nnsp" << nspeed << new_nsp;
    if ( new_nsp > nspeed )
    {  // Number of speed steps increases
@@ -902,13 +925,13 @@ DbgLv(1) << "EGSp: chgKnt:    kk" << kk << "pdesc" << profdesc[kk];
 
    else
    {  // Number of speed steps decreases or remains the same
-      // Point to the last speed step
       profdesc.resize( new_nsp );
       ssvals  .resize( new_nsp );
       cb_prof->clear();
       for ( int ii = 0; ii < new_nsp; ii++ )
          cb_prof->addItem( profdesc[ ii ] );
       cb_prof->setCurrentIndex( new_nsp - 1 );
+      // Point to the last speed step
       ssChangeProfx( new_nsp - 1 );
    }
 
@@ -924,39 +947,53 @@ DbgLv(1) << "EGSp: chgPfx: ssp" << ssp << "prev-ssx" << curssx;
 DbgLv(1) << "EGSp: chgPfx:  speed-c speed-p"
  << ssvals[ssp]["speed"] << ssvals[curssx]["speed"];
    curssx           = ssp;
+
    // Set all counters for newly selected step
    double ssspeed   = ssvals[ curssx ][ "speed" ];
    double ssaccel   = ssvals[ curssx ][ "accel" ];
    double ssdurtim  = ssvals[ curssx ][ "duration" ];
-   double ssdurhr   = qFloor( ssdurtim / 60.0 );
-   double ssdurmin  = ssdurtim - ( ssdurhr * 60.0 );
-DbgLv(1) << "EGSp: chgPfx:   durtim durhr durmin" << ssdurtim << ssdurhr << ssdurmin;
    double ssdlytim  = ssvals[ curssx ][ "delay" ];
+   double speedmax  = sibDValue( "rotor",   "maxrpm" );
+
+   QList< int > dhms_dur;
+   QList< int > dhms_dly;
+   US_RunProtocol::timeToList( ssdurtim, dhms_dur );
+   US_RunProtocol::timeToList( ssdlytim, dhms_dly );
+DbgLv(1) << "EGSp: chgPfx:   durtim" << ssdurtim << "dhms_dur" << dhms_dur;
+#if 0
    double ssdlymin  = qFloor( ssdlytim / 60.0 );
    double ssdlyhr   = qFloor( ssdlymin / 60.0 );
    ssdlymin        -= ( ssdlyhr * 60.0 );
    double ssdlysec  = ssdlytim - ( ssdlyhr * 3600.0 )
                                - ( ssdlymin * 60.0 );
-   ct_speed ->setValue( ssspeed  );
+#endif
+
+DbgLv(1) << "EGSp: chgPfx:    speedmax" << speedmax;
+   ct_speed ->setMaximum( speedmax );      // Set speed max based on rotor max
+   ct_speed ->setValue( ssspeed  );        // Set counter values
    ct_accel ->setValue( ssaccel  );
-   ct_durhr ->setValue( ssdurhr  );
-   ct_durmin->setValue( ssdurmin );
-   ct_dlyhr ->setValue( ssdlyhr  );
-   ct_dlymin->setValue( ssdlymin );
-   ct_dlysec->setValue( ssdlysec );
+   sb_durat ->setValue( (int)dhms_dur[ 0 ] );
+   tm_durat ->setTime ( QTime( dhms_dur[ 1 ],
+                               dhms_dur[ 2 ],
+                               dhms_dur[ 3 ] ) );
+   sb_delay ->setValue( (int)dhms_dly[ 0 ] );
+   tm_delay ->setTime ( QTime( dhms_dly[ 1 ],
+                               dhms_dly[ 2 ],
+                               dhms_dly[ 3 ] ) );
 }
 
 // Slot for change in speed value
 void US_ExperGuiSpeeds::ssChangeSpeed( double val )
 {
-   changed          = true;
 DbgLv(1) << "EGSp: chgSpe: val" << val << "ssx" << curssx;
    ssvals  [ curssx ][ "speed" ] = val;  // Set Speed in step vals vector
    profdesc[ curssx ] = speedp_description( curssx );
    cb_prof->setItemText( curssx, profdesc[ curssx ] );
 
    // Set minimum delay time based on speed change and acceleration
-   adjustDelay();
+   changed          = false;             // Flag so delay set to minimum
+   adjustDelay();                        // Set delay minimum and default
+   changed          = true;              // Flag this as a user change
 }
 
 // Slot for change in acceleration value
@@ -966,9 +1003,12 @@ DbgLv(1) << "EGSp: chgAcc: val" << val << "ssx" << curssx;
    ssvals[ curssx ][ "accel" ] = val;  // Set Acceleration in step vals vector
 
    // Set minimum delay time based on speed and new acceleration
-   adjustDelay();
+   changed          = false;             // Flag so delay set to minimum
+   adjustDelay();                        // Set delay minimum and default
+   changed          = true;              // Flag this as a user change
 }
 
+#if 0
 // Slot for change in duration-hour value
 void US_ExperGuiSpeeds::ssChangeDurhr( double val )
 {
@@ -1002,7 +1042,7 @@ DbgLv(1) << "EGSp: chgDlh: val" << val << "ssx" << curssx;
    double ssdlytim  = ( ssdlyhr * 3600.0 ) + ( ssdlymin * 60.0 ) + ssdlysec;
    ssvals[ curssx ][ "delay" ] = ssdlytim;  // Set Delay in step vals vector
 
-   // Set minimum delay time based on speed, acceleration, and delay-hours
+   // Set minimum delay time based on speed, acceleration, and delay
    adjustDelay();
 }
 
@@ -1017,10 +1057,9 @@ DbgLv(1) << "EGSp: chgDlm: val" << val << "ssx" << curssx;
    double ssdlytim  = ( ssdlyhr * 3600.0 ) + ( ssdlymin * 60.0 ) + ssdlysec;
    ssvals[ curssx ][ "delay" ] = ssdlytim;  // Set Delay in step vals vector
 
-   // Set minimum delay time based on speed, acceleration, and delay-hours
+   // Set minimum delay time based on speed, acceleration, and delay
    adjustDelay();
 }
-
 // Slot for change in delay-second value
 void US_ExperGuiSpeeds::ssChangeDlysec( double val )
 {
@@ -1033,26 +1072,83 @@ DbgLv(1) << "EGSp: chgDls: val" << val << "ssx" << curssx;
    ssvals[ curssx ][ "delay" ] = ssdlytim;  // Set Delay in step vals vector
 }
 
+#endif
+
+// Slot for change in duration time (hour/minute/second)
+void US_ExperGuiSpeeds::ssChgDuratTime( const QTime& tval )
+{
+DbgLv(1) << "EGSp: chgDlyT: tval" << tval;
+   double ssdurhr   = tval.hour();
+   double ssdurmin  = tval.minute();
+   double ssdursec  = tval.second();
+   double ssdurtim  = ( ssdurhr * 3600.0 ) + ( ssdurmin * 60.0 ) + ssdursec;
+DbgLv(1) << "EGSp: chgDlyT:  ssdly h m s" << ssdurhr << ssdurmin << ssdursec
+ << "t" << ssdurtim;
+   ssvals[ curssx ][ "duration" ] = ssdurtim;  // Set Duration in step vals vector
+}
+
+// Slot for change in duration day
+void US_ExperGuiSpeeds::ssChgDuratDay( int val )
+{
+   double ssdurday  = val;
+   double ssdurhr   = tm_durat->sectionText( QDateTimeEdit::HourSection ).toDouble();
+DbgLv(1) << "EGSp: chgDlyD: val" << val << "ssdly d h"
+ << ssdurday << ssdurhr;
+// << ssdurhr << ssdurmin << ssdursec << "t" << ssdurtim;
+}
+
+// Slot for change in delay time (hour/minute/second)
+void US_ExperGuiSpeeds::ssChgDelayTime( const QTime& tval )
+{
+DbgLv(1) << "EGSp: chgDlyT: tval" << tval;
+   double ssdlyhr   = tval.hour();
+   double ssdlymin  = tval.minute();
+   double ssdlysec  = tval.second();
+   double ssdlytim  = ( ssdlyhr * 3600.0 ) + ( ssdlymin * 60.0 ) + ssdlysec;
+DbgLv(1) << "EGSp: chgDlyT:  ssdly h m s" << ssdlyhr << ssdlymin << ssdlysec
+ << "t" << ssdlytim;
+   ssvals[ curssx ][ "delay" ] = ssdlytim;  // Set Delay in step vals vector
+}
+
+// Slot for change in delay day
+void US_ExperGuiSpeeds::ssChgDelayDay( int val )
+{
+   double ssdlyday  = (double)val;
+   double ssdlyhr   = tm_delay->sectionText( QDateTimeEdit::HourSection ).toDouble();
+DbgLv(1) << "EGSp: chgDlyD: val" << val << "ssdly d h"
+ << ssdlyday << ssdlyhr;
+// << ssdlyhr << ssdlymin << ssdlysec << "t" << ssdlytim;
+}
+
+
 // Function to adjust delay minimum when related values are changed
 void US_ExperGuiSpeeds::adjustDelay( void )
 {
    // Set minimum delay time based on speed change and acceleration
-   double cspeed    = ssvals[ curssx ][ "speed" ];  // Current step's speed
+   double cspeed    = ssvals[ curssx ][ "speed" ];   // Current step's speed
    double pspeed    = ( curssx > 0 ) ? ssvals[ curssx - 1 ][ "speed" ] : 0.0;
-   double spdelta   = cspeed - pspeed;         // Speed delta
+   double spdelta   = cspeed - pspeed;               // Speed delta
    double accel     = ssvals[ curssx ][ "accel" ];   // Acceleration
+   double delaylow  = qCeil( spdelta / accel );      // Low seconds delay
+   QList< int > dhms;
+   US_RunProtocol::timeToList( delaylow, dhms );
+#if 0
    double delaytim  = ssvals[ curssx ][ "delay" ];   // Delay in total seconds
-   double delayhr   = qFloor( delaytim / 3600.0 );   // Delay in hours
-   double delaymin  = qFloor( delayhr / 60.0 );      // Delay in minutes
-   delaymin        -= ( delayhr * 60.0 );            // Residual minutes
-   double delaysec  = qRound( delaytim
-                              - ( delayhr * 3600.0 )
-                              - ( delaymin * 60.0 ) );  // Residual seconds
+   
+   double delayhr   = (double)dhms[ 1 ];             // Delay in hours
+   double delaymin  = (double)dhms[ 2 ];             // Delay in minutes
+   double delaysec  = (double)dhms[ 3 ];             // Delay in seconds
    double delaylowm = 0.0;   // Delay-minutes low for delay-hours > 0
    double delaylows = 0.0;   // Delay-seconds low for delay-hours > 0
-   double setdlyhr  = ct_dlyhr ->value();  // Currently set hours
-   double setdlymin = ct_dlymin->value();  // Currently set minutes
-   double setdlysec = ct_dlysec->value();  // Currently set seconds
+   double setdlyhr  = tm_delay->time().hour();
+   double setdlymin = tm_delay->time().minute();
+   double setdlysec = tm_delay->time().second();
+//   double setdlyhr  = ct_dlyhr ->value();  // Currently set hours
+//   double setdlymin = ct_dlymin->value();  // Currently set minutes
+//   double setdlysec = ct_dlysec->value();  // Currently set seconds
+//double setdlyhr  = 0.0;
+//double setdlymin = 0.0;
+//double setdlysec = 0.0;
 DbgLv(1) << "EGSp: adjDelay:  spdelta accel delayhr delaymin delaysec"
  << spdelta << accel << delayhr << delaymin << delaysec;
 DbgLv(1) << "EGSp: adjDelay:    setdlyhr setdlymin setdlysec"
@@ -1075,10 +1171,20 @@ DbgLv(1) << "EGSp: adjDelay:  delaysec delaylows" << delaysec << delaylows
  << "delaylowm" << delaylowm;
    }
 
-   ct_dlymin->setMinimum( delaylowm );
-   ct_dlysec->setMinimum( delaylows );
-   setdlymin        = ct_dlymin->value();  // (newly?) set minutes
-   setdlysec        = ct_dlysec->value();  // (newly?) set seconds
+//   ct_dlymin->setMinimum( delaylowm );     // Set delay minima to calculated values
+//   ct_dlysec->setMinimum( delaylows );
+
+DbgLv(1) << "EGSp: adjDelay:  changed" << changed << "delaylowm delaylows" << delaylowm << delaylows;
+   if ( ! changed )
+   {  // If no user change was made yet, set delay values to minima
+//      ct_dlymin->setValue( delaylowm );
+      changed          = false;            // This was no user change
+//      ct_dlysec->setValue( delaylows );
+      changed          = false;            // This was no user change
+   }
+
+//   setdlymin        = ct_dlymin->value();  // (newly?) set minutes
+//   setdlysec        = ct_dlysec->value();  // (newly?) set seconds
 
    // Save delay minutes,seconds if changing the minimum changed the value
    double delaynmin = qMax( setdlymin, delaylowm );  // Adjusted minutes?
@@ -1089,13 +1195,63 @@ DbgLv(1) << "EGSp: adjDelay:  delaysec delaylows" << delaysec << delaylows
       delaytim         = ( delayhr * 3600.0 ) + ( delaynmin * 60.0 ) + delaynsec;
       ssvals[ curssx ][ "delay" ] = delaytim;
    }
-DbgLv(1) << "EGSp: adjDelay:   setdlymin delaynmin" << setdlymin << delaynmin;
-DbgLv(1) << "EGSp: adjDelay:   setdlysec delaynsec" << setdlysec << delaynsec;
+#endif
+   tm_delay->setMinimumTime( QTime( dhms[ 1 ], dhms[ 2 ], dhms[ 3 ] ) );
+//DbgLv(1) << "EGSp: adjDelay:   setdlymin delaynmin" << setdlymin << delaynmin;
+//DbgLv(1) << "EGSp: adjDelay:   setdlysec delaynsec" << setdlysec << delaynsec;
 }
 
+#if 0
+// Function to convert from a time to a day,hour,minute,second list
+void US_ExperGuiSpeeds::timeToList( double& sectime, QList< int >& dhms )
+{
+   int t_minute     = (int)( sectime / 60.0 );
+   int t_second     = qRound( sectime - t_minute * 60.0 );
+   int t_hour       = (int)( t_minute / 60 );
+       t_minute    -= ( t_hour * 60 );
+   int t_day        = (int)( t_hour / 24 );
+       t_day       -= ( t_day * 24 );
+
+   dhms.clear();
+   dhms << t_day << t_hour << t_minute << t_second;
+}
+
+// Function to convert to a time from a day,hour,minute,second list
+void US_ExperGuiSpeeds::timeFromList( double& sectime, QList< int >& dhms )
+{
+   sectime     = dhms[ 0 ] * ( 24 * 60 * 60 ) +
+                 dhms[ 1 ] * ( 60 * 60 ) +
+                 dhms[ 2 ] * 60 +
+                 dhms[ 3 ];
+}
+
+// Function to convert from a time to "0d 00:06:30" type string
+void US_ExperGuiSpeeds::timeToString( double& sectime, QString& strtime )
+{
+   QList< int > dhms;
+   timeToList( sectime, dhms );
+   strtime          = QString().sprintf( "%dd %2d:%2d:%2d",
+                         dhms[ 0 ], dhms[ 1 ], dhms[ 2 ], dhms[ 3 ] );
+}
+
+// Function to convert to a time from a "0d 00:06:30" type string
+void US_ExperGuiSpeeds::timeFromString( double& sectime, QString& strtime )
+{
+   QList< int > dhms;
+   int t_day        = strtime.section( "d", 0, 0 ).toInt();
+   int t_hour       = strtime.section( " ", 1, 1 ).left( 2 ).toInt();
+   int t_minute     = strtime.section( ":", 1, 1 ).toInt();
+   int t_second     = strtime.section( ":", 2, 2 ).toInt();
+
+   dhms << t_day << t_hour << t_minute << t_second;
+
+   timeFromList( sectime, dhms );
+}
+#endif
 
 // Panel for Cells parameters
 US_ExperGuiCells::US_ExperGuiCells( QWidget* topw )
+   : US_WidgetsDialog( topw, 0 )
 {
 DbgLv(1) << "EGCe: IN";
    mainw               = (US_ExperimentMain*)topw;
@@ -1260,10 +1416,13 @@ DbgLv(1) << "EGCe:wiChg:  sname irow" << sname << irow;
 
 // Panel for Solutions parameters
 US_ExperGuiSolutions::US_ExperGuiSolutions( QWidget* topw )
+   : US_WidgetsDialog( topw, 0 )
 {
    mainw               = (US_ExperimentMain*)topw;
    rpSolut             = &(mainw->currProto.rpSolut);
    mxrow               = 24;     // Maximum possible rows
+   nchant              = 0;
+   nchanf              = 0;
    dbg_level           = US_Settings::us_debug();
    QVBoxLayout* panel  = new QVBoxLayout( this );
    panel->setSpacing        ( 2 );
@@ -1295,17 +1454,22 @@ DbgLv(1) << "EGSo:  nholes mxrow" << nholes << mxrow;
 
    allSolutions();        // Read in all solution names and IDs
 
+   QString chn_none( "none" );
+
    for ( int ii = 0; ii < mxrow; ii++ )
    {  // Loop to build initial place-holder solution rows
-      QString scel;
-      if      ( ii == 0 ) scel = QString( "0/A" );
-      else if ( ii == 1 ) scel = QString( "0/B" );
-      else if ( ii == 2 ) scel = QString( "9/A" );
-      else if ( ii == 3 ) scel = QString( "9/B" );
-      else                scel = QString( "none" );
-      cclabl              = us_label( scel );
+      QString schan;
+      if      ( ii == 0 ) schan = QString( "2 / A" );
+      else if ( ii == 1 ) schan = QString( "2 / B" );
+      else if ( ii == 2 ) schan = QString( "6 / A" );
+      else if ( ii == 3 ) schan = QString( "6 / B" );
+      else                schan = chn_none;
+      cclabl              = us_label( schan );
       cb_solu             = us_comboBox();
       pb_comm             = us_pushbutton( add_comm );
+
+      if ( schan != chn_none )
+         srchans << schan;
 
       QString strow       = QString::number( ii );
       cclabl ->setObjectName( strow + ": label" );
@@ -1347,6 +1511,106 @@ DbgLv(1) << "EGSo:main: call initPanel()";
 // Function to rebuild the Solutions protocol after Cells change
 void US_ExperGuiSolutions::rebuild_Solut( void )
 {
+   int nchans          = sibIValue( "cells", "nchans" );
+DbgLv(1) << "EGSo: rbS: nchans nchant" << nchans << nchant;
+   if ( nchans == nchant )
+      return;                          // No cells change means no rebuild
+
+   if ( rpSolut->nschan == 0 )
+   {  // No existing Solutions protocol, so initialize a rudimentary one
+      rpSolut->nuniqs     = 0;
+      rpSolut->chsols.clear();
+      nchant              = nchans;
+      return;
+   }
+
+   // Save information from any existing protocol
+   QStringList sv_chans;
+   QStringList sv_sols;
+   QStringList sv_sids;
+   QStringList sv_chcms;
+   int nchan_s         = rpSolut->nschan;
+   int nuniq_s         = rpSolut->nuniqs;
+DbgLv(1) << "EGSo: rbS: nchan_s nuniq_s" << nchan_s << nuniq_s;
+
+   for ( int ii = 0; ii < nchan_s; ii++ )
+   {
+      sv_chans  << rpSolut->chsols[ ii ].channel;
+      sv_sols   << rpSolut->chsols[ ii ].solution;
+      sv_sids   << rpSolut->chsols[ ii ].sol_id;
+      sv_chcms  << rpSolut->chsols[ ii ].ch_comment;
+   }
+
+   int nchanr          = srchans.count();
+   rpSolut->chsols.clear();
+
+   if ( nchans != nchanr  ||  nchanr == 0 )
+   {  // Must set up total rows channels
+      QStringList centps  = sibLValue( "cells", "centerpieces" );
+      int ncused          = centps.count();
+      nchans              = 0;
+      srchans.clear();
+
+      for ( int ii = 0; ii < ncused; ii++ )
+      {
+         QString centry      = centps[ ii ];
+         int chx             = centry.indexOf( "-channel" );
+         if ( chx > 0 )
+         {
+            QString scell       = centry.section( ":", 0, 0 )
+                                        .section( " ", 1, 1 );
+            QString schans( "ABCDEF" );
+            int nchan           = centry.left( chx ).section( " ", -1, -1 )
+                                  .simplified().toInt();
+            for ( int jj = 0; jj < nchan; jj++ )
+            {
+               QString channel     = scell + " / " + QString( schans ).mid( jj, 1 );
+               srchans << channel;
+            }
+         }
+      }
+      nchans              = srchans.count();
+   }
+      
+   int nuniqs          = 0;
+   int nschan          = 0;
+   suchans.clear();
+   susolus.clear();
+   QStringList un_sols;
+
+   for ( int ii = 0; ii < nchans; ii++ )
+   {
+      US_RunProtocol::RunProtoSolutions::ChanSolu chsol;  
+      QString chan        = srchans[ ii ];
+      int scx             = sv_chans.indexOf( chan );
+DbgLv(1) << "EGSo: rbS:  ii" << ii << "chan" << chan << "scx" << scx;
+
+      if ( scx >= 0 )
+      {
+         QString solu        = sv_sols[ scx ];
+         chsol.channel       = chan;
+         chsol.solution      = solu;
+         chsol.sol_id        = sv_sids [ scx ];
+         chsol.ch_comment    = sv_chcms[ scx ];
+
+         rpSolut->chsols << chsol;
+         suchans << chan;
+         susolus << solu;
+         nschan++;
+
+         if ( !un_sols.contains( solu ) )
+         {
+            un_sols << solu;
+            nuniqs++;
+         }
+      }
+   }
+   rpSolut->nschan     = nschan;
+   rpSolut->nuniqs     = nuniqs;
+   nchant              = nchans;
+   nchanf              = nschan;
+DbgLv(1) << "EGSo:rbS:  nschan nuniqs" << nschan << nuniqs
+ << "sv nschan nuniqs" << nchan_s << nuniq_s;
 }
 
 // Slot to open a dialog for managing solutions
@@ -1748,10 +2012,14 @@ void US_ExperGuiSolutions::commentStrings( const QString solname,
 
 // Panel for Optical Systems parameters
 US_ExperGuiOptical::US_ExperGuiOptical( QWidget* topw )
+   : US_WidgetsDialog( topw, 0 )
 {
    mainw               = (US_ExperimentMain*)topw;
    rpOptic             = &(mainw->currProto.rpOptic);
    mxrow               = 24;     // Maximum possible rows
+   nochan              = 0;
+   nuchan              = 0;
+   nuvvis              = 0;
    dbg_level           = US_Settings::us_debug();
    QVBoxLayout* panel  = new QVBoxLayout( this );
    panel->setSpacing        ( 2 );
@@ -1864,12 +2132,55 @@ DbgLv(1) << "EGOp:main:    ii" << ii << "is_vis nckopt" << is_vis << nckopt;
    panel->addLayout( genL );
    panel->addStretch();
 
+DbgLv(1) << "EGOp:main: call initPanel";
    initPanel();
 }
 
 // Function to rebuild the Optical protocol after Solutions change
 void US_ExperGuiOptical::rebuild_Optic( void )
 {
+   int nchanf          = sibIValue( "solutions", "nchanf" );
+DbgLv(1) << "EGOp rbO: nchanf" << nchanf << "nochan" << nochan;
+
+   if ( nchanf == nochan )
+      return;                          // No solutions change means no rebuild
+
+   if ( rpOptic->nochan == 0 )
+   {  // No existing Optic protocol, so initialize a rudimentary one
+      rpOptic->nochan     = nchanf;
+      rpOptic->chopts.clear();
+      nochan              = nchanf;
+      nuchan              = 0;
+      nuvvis              = 0;
+DbgLv(1) << "EGOp rbO: nochan" << nochan << "(RUDIMENTARY)";
+      return;
+   }
+
+   // Save information from any existing protocol
+   int nochan_sv       = rpOptic->nochan;
+   QVector< US_RunProtocol::RunProtoOptics::OpticSys > chopts_sv = rpOptic->chopts;
+
+   nochan              = nchanf;
+   rpOptic->nochan     = nchanf;
+   rpOptic->chopts.resize( nochan );
+DbgLv(1) << "EGOp rbO:  nochan" << nochan << "nochan_sv" << nochan_sv;
+
+   // Rebuild Optical protocol
+   QStringList solentrs = sibLValue( "solutions", "channel_solutions" );
+
+   for ( int ii = 0; ii < solentrs.count(); ii++ )
+   {
+      QString channel     = solentrs[ ii ].section( ":", 0, 0 )
+                            .simplified();
+      for ( int jj = 0; jj < nochan_sv; jj++ )
+      {
+         if ( chopts_sv[ jj ].channel == channel )
+         {
+            rpOptic->chopts[ ii ] = chopts_sv[ ii ];
+            break;
+         }
+      }
+   }
 }
 
 // Slot to handle an optical system being checked
@@ -1927,254 +2238,9 @@ DbgLv(1) << "EGOp: oCk: ccrows" << ccrows;
 }
 
 
-// Panel for Spectra parameters
-US_ExperGuiSpectra::US_ExperGuiSpectra( QWidget* topw )
-{
-   mainw               = (US_ExperimentMain*)topw;
-   rpSpect             = &(mainw->currProto.rpSpect);
-   mxrow               = 24;     // Maximum possible rows
-   dbg_level           = US_Settings::us_debug();
-   QVBoxLayout* panel  = new QVBoxLayout( this );
-   panel->setSpacing        ( 2 );
-   panel->setContentsMargins( 2, 2, 2, 2 );
-   QLabel* lb_panel    = us_banner( tr( "7: Specify wavelength/value spectra" ) );
-   panel->addWidget( lb_panel );
-   QGridLayout* genL   = new QGridLayout();
-
-   QPushButton* pb_details  = us_pushbutton( tr( "View Current Spectra Settings" ) );
-   connect( pb_details,   SIGNAL( clicked()       ),
-            this,         SLOT  ( detailSpectra() ) );
-
-   QLabel* lb_hdr1     = us_banner( tr( "Cell / Channel" ) );
-   QLabel* lb_hdr2     = us_banner( tr( "Wavelengths" ) );
-   QLabel* lb_hdr3     = us_banner( tr( "Spectra Input" ) );
-   QLabel* lb_hdr4     = us_banner( tr( "All Specified?" ) );
-
-   int row             = 0;
-   genL->addWidget( pb_details,      row++, 3, 1, 3 );
-   genL->addWidget( lb_hdr1,         row,   0, 1, 1 );
-   genL->addWidget( lb_hdr2,         row,   1, 1, 1 );
-   genL->addWidget( lb_hdr3,         row,   2, 1, 3 );
-   genL->addWidget( lb_hdr4,         row++, 5, 1, 1 );
-
-   QLabel*      cclabl;
-   QPushButton* pbwavln;
-   QPushButton* pbsload;
-   QPushButton* pbsmanu;
-   QCheckBox*   ckoptim;
-   QCheckBox*   cksdone;
-   QString swavln   = tr( "Select Wavelengths" );
-   QString soptim   = tr( "Auto in Optima" );
-   QString sloads   = tr( "Load Spectrum" );
-   QString smanus   = tr( "Manual Spectrum" );
-   QString ssdone   = tr( "Done" );
-   QFont   ckfont   = QFont( US_GuiSettings::fontFamily(),
-                             US_GuiSettings::fontSize  (),
-                             QFont::Bold );
-   QPalette ckpal   = US_GuiSettings::normalColor();
-
-   for ( int ii = 0; ii < mxrow; ii++ )
-   {  // Loop to build initial place-holder spectr rows
-      QString scel;
-      if      ( ii == 0 ) scel = QString( "1 / A" );
-      else if ( ii == 1 ) scel = QString( "1 / B" );
-      else if ( ii == 2 ) scel = QString( "2 / A" );
-      else if ( ii == 3 ) scel = QString( "2 / B" );
-      else                scel = QString( "none" );
-      cclabl           = us_label( scel );
-      pbwavln          = us_pushbutton( swavln );
-      ckoptim          = new QCheckBox( soptim, this );
-      pbsload          = us_pushbutton( sloads );
-      pbsmanu          = us_pushbutton( smanus );
-      cksdone          = new QCheckBox( ssdone, this );
-      cksdone->setEnabled( false );
-      QString strow    = QString::number( ii );
-      cclabl ->setObjectName( strow + ": label" );
-      pbwavln->setObjectName( strow + ": pb_wavln" );
-      ckoptim->setObjectName( strow + ": ck_optim" );
-      pbsload->setObjectName( strow + ": pb_sload" );
-      pbsmanu->setObjectName( strow + ": pb_smanu" );
-      cksdone->setObjectName( strow + ": ck_sdone" );
-
-      ckoptim->setFont   ( ckfont );
-      ckoptim->setPalette( ckpal );
-      ckoptim->setChecked( false );
-      ckoptim->setAutoFillBackground( true );
-      cksdone->setFont   ( ckfont );
-      cksdone->setPalette( ckpal );
-      cksdone->setChecked( false );
-      cksdone->setAutoFillBackground( true );
-
-      bool is_vis      = ( ii < 4 );
-
-      genL->addWidget( cclabl,  row,   0, 1, 1 );
-      genL->addWidget( pbwavln, row,   1, 1, 1 );
-      genL->addWidget( ckoptim, row,   2, 1, 1 );
-      genL->addWidget( pbsload, row,   3, 1, 1 );
-      genL->addWidget( pbsmanu, row,   4, 1, 1 );
-      genL->addWidget( cksdone, row++, 5, 1, 1 );
-
-      cclabl ->setVisible( is_vis );
-      pbwavln->setVisible( is_vis );
-      ckoptim->setVisible( is_vis );
-      pbsload->setVisible( is_vis );
-      pbsmanu->setVisible( is_vis );
-      cksdone->setVisible( is_vis );
-
-      connect( pbwavln, SIGNAL( clicked()           ),
-               this,    SLOT  ( selectWavelengths() ) );
-      connect( ckoptim, SIGNAL( toggled    ( bool ) ),
-               this,    SLOT  ( checkOptima( bool ) ) );
-      connect( pbsload, SIGNAL( clicked()           ),
-               this,    SLOT  ( loadSpectrum()      ) );
-      connect( pbsmanu, SIGNAL( clicked()           ),
-               this,    SLOT  ( manualSpectrum()    ) );
-
-      cc_labls << cclabl;
-      cc_wavls << pbwavln;
-      cc_optis << ckoptim;
-      cc_loads << pbsload;
-      cc_manus << pbsmanu;
-      cc_dones << cksdone;
-   }
-
-   panel->addLayout( genL );
-   panel->addStretch();
-
-   initPanel();
-}
-
-// Function to rebuild the Spectra protocol after Optical change
-void US_ExperGuiSpectra::rebuild_Spect( void )
-{
-}
-
-// Slot to manage extinction profiles
-void US_ExperGuiSpectra::manageEProfiles()
-{
-DbgLv(1) << "EGPM: mEP: IN";
-   //US_Extinction ediag( "BUFFER", "some buffer", this );
-   US_Extinction* ediag = new US_Extinction;
-   ediag->setParent(   this, Qt::Window );
-   ediag->setAttribute( Qt::WA_DeleteOnClose );
-
-   connect( ediag,  SIGNAL( get_results(     QMap<double,double>& ) ),
-            this,   SLOT  ( process_results( QMap<double,double>& ) ) );
-
-   ediag->show();
-}
-
-// Slot to show details of all photo multiplier controls
-void US_ExperGuiSpectra::process_results( QMap< double, double >& eprof )
-{
-DbgLv(1) << "EGPM: pr: eprof size" << eprof.keys().count();
-}
-
-// Slot to show details of all wavelength and spectra profiles
-void US_ExperGuiSpectra::detailSpectra()
-{
-   // Create a new editor text dialog with fixed font
-   US_Editor* ediag = new US_Editor( US_Editor::DEFAULT, true, "", this );
-   ediag->setWindowTitle( tr( "Details: Wavelength / Extinction|Voltage|Gain Profiles" ) );
-   ediag->resize( 720, 440 );
-   ediag->e->setFont( QFont( US_Widgets::fixedFont().family(),
-                             US_GuiSettings::fontSize() - 1,
-                             QFont::Bold ) );
-   QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
-
-   // Accumulate information on solutions that are currently selected
-
-   // Start composing the text that it displays
-   QString dtext  = tr( "Wavelength/Voltage Profile Information:\n\n" );
-
-dtext+= "NONE (not yet implemented)\n";
-
-   // Load text and show the dialog
-   QApplication::restoreOverrideCursor();
-   qApp->processEvents();
-
-   ediag->e->setText( dtext );
-   ediag->show();
-}
-
-// Slot to select wavelengths using a dialog
-void US_ExperGuiSpectra::selectWavelengths()
-{
-   QObject* sobj       = sender();      // Sender object
-   QString sname       = sobj->objectName();
-   int irow            = sname.section( ":", 0, 0 ).toInt();
-   QString cclabl      = cc_labls[ irow ]->text();
-DbgLv(1) << "EGwS:selWl: sname" << sname << "irow" << irow << cclabl;
-QString mtitle  = tr( "Not Yet Implemented" );
-QString message = tr( "The ability to select wavelengths for " )
- + cclabl + "\n" + tr( "has not yet been implement" );
-QMessageBox::information( this, mtitle, message );
-}
-
-// Slot to handle the toggle of an "in Optima" checkbox
-void US_ExperGuiSpectra::checkOptima( bool checked )
-{
-   QObject* sobj       = sender();      // Sender object
-   QString sname       = sobj->objectName();
-   int irow            = sname.section( ":", 0, 0 ).toInt();
-   QString cclabl      = cc_labls[ irow ]->text();
-DbgLv(1) << "EGwS:ckOpt: sname" << sname << "irow" << irow << cclabl;
-   cc_loads[ irow ]->setEnabled( !checked );
-   cc_manus[ irow ]->setEnabled( !checked );
-   cc_dones[ irow ]->setChecked(  checked );
-//      cc_labls << cclabl;
-//      cc_wavls << pbwavln;
-//      cc_optis << ckoptim;
-//      cc_loads << pbsload;
-//      cc_manus << pbsmanu;
-//      cc_dones << cksdone;
-}
-
-// Slot to load a spectrum profile using us_extinction
-void US_ExperGuiSpectra::loadSpectrum()
-{
-   QObject* sobj       = sender();      // Sender object
-   QString sname       = sobj->objectName();
-   int irow            = sname.section( ":", 0, 0 ).toInt();
-   QString cclabl      = cc_labls[ irow ]->text();
-DbgLv(1) << "EGwS:loadS: sname" << sname << "irow" << irow << cclabl;
-   //US_Extinction ediag( "BUFFER", "some buffer", this );
-   US_Extinction* ediag = new US_Extinction;
-   ediag->setParent(   this, Qt::Window );
-   ediag->setAttribute( Qt::WA_DeleteOnClose );
-
-   //connect( ediag,  SIGNAL( get_results(     QMap<double,double>& ) ),
-   //         this,   SLOT  ( process_results( QMap<double,double>& ) ) );
-
-   ediag->show();
-}
-
-// Slot to manually enter a spectrum profile using us_table
-void US_ExperGuiSpectra::manualSpectrum()
-{
-   QObject* sobj       = sender();      // Sender object
-   QString sname       = sobj->objectName();
-   int irow            = sname.section( ":", 0, 0 ).toInt();
-   QString cclabl      = cc_labls[ irow ]->text();
-DbgLv(1) << "EGwS:manSp: sname" << sname << "irow" << irow << cclabl;
-   QMap< double, double >  extinction;
-   QString strExtinc   = tr( "Extinction:" );
-   bool changed        = false;
-   US_Table* tdiag     = new US_Table( extinction, strExtinc, changed );
-   tdiag->setWindowTitle( tr( "Manually Enter Spectrum (%1)" )
-                          .arg( cclabl ) );
-   tdiag->exec();
-   if ( changed )
-   {
-DbgLv(1) << "EGwS:manSp: extinction:" << extinction;
-   }
-else
-DbgLv(1) << "EGwS:manSp: *NOT Accepted*";
-}
-
-
 // Panel for Uploading parameters to Optima DB
 US_ExperGuiUpload::US_ExperGuiUpload( QWidget* topw )
+   : US_WidgetsDialog( topw, 0 )
 {
    mainw               = (US_ExperimentMain*)topw;
    rpRotor             = &(mainw->currProto.rpRotor);
@@ -2507,6 +2573,34 @@ DbgLv(1) << "EGUp:dE: nsolut" << ssolut.count();
 
    dtext += tr( "\nPhoto Multiplier Spectra\n" );
    dtext += tr( "  ALL SPECIFIED:              " ) + v_phook  + "\n";
+   dtext += tr( "  Number Channels Used:        %1\n" )
+            .arg( rpSpect->nspect );
+   for ( int ii = 0; ii < rpSpect->nspect; ii++ )
+   {
+      QString channel = rpSpect->chspecs[ ii ].channel;
+      QString typeimp = rpSpect->chspecs[ ii ].typeinp;
+      int    nwavl    = rpSpect->chspecs[ ii ].wvlens.count();
+      double lo_wavl  = rpSpect->chspecs[ ii ].wvlens[ 0 ];
+      double hi_wavl  = rpSpect->chspecs[ ii ].wvlens[ nwavl - 1 ];
+      double lo_valu  = rpSpect->chspecs[ ii ].values[ 0 ];
+      double hi_valu  = rpSpect->chspecs[ ii ].values[ nwavl - 1 ];
+      dtext += tr( "  Channel " ) + channel + " : \n";
+      dtext += tr( "    typeinp           : %1\n" ).arg( typeimp );
+      dtext += tr( "    wavelength count  : %1\n" ).arg( nwavl );
+      dtext += tr( "    wavelength range  : %1  to  %2\n" )
+               .arg( lo_wavl ).arg( hi_wavl );
+      if ( typeimp == "auto" )
+      {
+         dtext += tr( "    values            :"
+                      " (computed in Optima)\n" );
+      }
+      else
+      {
+         dtext += tr( "    value range       : %1  to  %2\n" )
+                  .arg( lo_valu ).arg( hi_valu );
+      }
+   }
+
    dtext += tr( "\nUpload\n" );
    dtext += tr( "  CONNECTED:                  " ) + v_conok  + "\n";
    dtext += tr( "  UPLOAD ENABLED:             " ) + v_uleok  + "\n";
@@ -2644,6 +2738,7 @@ DbgLv(1) << "EGUp:svRP:   currProto updated  guid" << currProto->pGUID;
 DbgLv(1) << "EGUp:svRP:   currProto updated  protname" << currProto->protname;
 
    QXmlStreamWriter xmlo( &rpUload->us_xml ); // Compose XML representation
+   xmlo.setAutoFormatting( true );
    currProto->toXml( xmlo );
 DbgLv(1) << "EGUp:svRP:    guid" << currProto->pGUID;
 DbgLv(1) << "EGUp:svRP:    xml(s)" << QString(rpUload->us_xml).left(100);
@@ -2656,7 +2751,12 @@ DbgLv(1) << "EGUp:svRP:    xml(e)" << QString(rpUload->us_xml).mid(xe);
                          ? new US_DB2( pw.getPasswd() ) : NULL;
 
 DbgLv(1) << "EGUp:svRP:   dbP" << dbP;
-   int idProt          = US_ProtocolUtil::write_record( rpUload->us_xml, dbP );
+   // Always save the protocol to a local file
+   int idProt          = US_ProtocolUtil::write_record( rpUload->us_xml, NULL );
+
+   // Usually (database selected), we write an additional record to DB
+   if ( dbP != NULL )
+      idProt              = US_ProtocolUtil::write_record( rpUload->us_xml, dbP );
 
    if ( idProt < 1 )
    {

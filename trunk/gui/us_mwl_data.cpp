@@ -635,6 +635,8 @@ void US_MwlData::read_header( QDataStream& ds, DataHdr& hd )
    else
    {  // Older version with only rotor_speed (use that as set_speed)
       hd.rotor_speed   = hd.set_speed;
+      hd.set_speed     = qRound( hd.rotor_speed * 0.01 ) * 100.0;
+//DbgLv(1) << "EVER=1.0:  rspeed sspeed" << hd.rotor_speed << hd.set_speed;
       hd.temperature   = (double)( hword( cbuf + 6 ) ) / 10.0;
       hd.omega2t       = dword( cbuf + 8 );
       hd.elaps_time    = iword( cbuf + 12 );

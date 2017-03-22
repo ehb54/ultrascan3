@@ -6,6 +6,7 @@
 #include "us_extern.h"
 #include "us_dataIO.h"
 #include "us_db2.h"
+#include "us_time_state.h"
 
 //! A class to hold parameters of a run for simulation purposes.
 
@@ -20,6 +21,7 @@ class US_UTIL_EXTERN US_SimulationParameters
    enum GridType  { FIXED, MOVING };
 
    class SpeedProfile;
+   class SimSpeedProf;
 
    US_SimulationParameters();
 
@@ -117,6 +119,19 @@ class US_UTIL_EXTERN US_SimulationParameters
    //! \returns      The speedstep DB ID number (<1 if error)
    static int speedstepToDB( US_DB2*, int, SpeedProfile* );
 
+   //! \brief Static function to build a simulation speed step profile
+   //!        from a TimeState object.
+   //! \param tsobj  Pointer to opened TimeState object to analyze
+   //! \param ssps   Reference to vector of simulationspeed profiles to create
+   //! \returns      The number of speed steps found in the TimeState
+   static int ssProfFromTimeState( US_TimeState*, QVector< SimSpeedProf >& );
+
+   //! \brief Function to build an internal simulation speed step profile
+   //!        vector from an internal TimeState object.
+   //! \param tmst_fpath  Path to TimeState binary file to read.
+   //! \returns           The number of speed steps created internally
+   int simSpeedsFromTimeState( const QString );
+
    //! \brief Dump class contents to stderr
    void debug( void );
 
@@ -133,6 +148,8 @@ class US_UTIL_EXTERN US_SimulationParameters
 
    //! Specifics for each rpm value in the simulation
    QVector< SpeedProfile > speed_step;
+   QVector< SimSpeedProf > sim_speed_prof;
+   US_TimeState*           tsobj;
 
    int       simpoints;         //!< number of radial grid points used in sim
    MeshType  meshType;          //!< Type of radial grid 
@@ -186,6 +203,37 @@ class US_UTIL_EXTERN US_SimulationParameters
       int    acceleration;      //!< Acceleration rate from previous RPM (RPM/second)
       int    set_speed;         //!< Set speed for MWL data
       bool   acceleration_flag; //!< Flag to simulate RPM acceleration or not
+   };
+
+   //! \brief Simulation Speed Profile for a single speed step.
+   //!
+   //! Each simulation speed step extends from the beginning of the
+   //! acceleration zone ("time_b_accel") for a specified duration
+   //! (step ends at "time_b_accel"  + "duration"). Speed values over the
+   //! acceleration zone increase at the given rate ("acceleration") each
+   //! second, and the zone is ("time_e_accel" - "time_b_accel") in seconds.
+   //! Thereafter, the speed step continues at a constant speed ("rotorspeed"
+   //! or "avg_speed" if significantly different) until "duration" seconds
+   //! have expired in the step. Omega-squared-t values are given ("w2t-*")
+   //! for the time points at beginning of acceleration, end of acceleration,
+   //! and end of step. Times for first and last scan in step are given.
+   class US_UTIL_EXTERN  SimSpeedProf
+   {
+      public:
+
+      SimSpeedProf();
+
+      double acceleration;      //!< Acceleration in rpm/seconds
+      double w2t_b_accel;       //!< omega2t at beginning of acceleration zone
+      double w2t_e_accel;       //!< omega2t at end of acceleration zone
+      double w2t_e_step;        //!< omega2t at end of step (next w2t_b_accel)
+      double avg_speed;         //!< Unrounded average speed in speed step
+      int    rotorspeed;        //!< RPM for this step
+      int    duration;          //!< Step duration in seconds
+      int    time_b_accel;      //!< time at beginning of acceleration zone
+      int    time_e_accel;      //!< time at end of acceleration zone
+      int    time_f_scan;       //!< time at first scan of step
+      int    time_l_scan;       //!< time at last scan of step
    };
 };
 

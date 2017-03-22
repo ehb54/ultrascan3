@@ -101,6 +101,88 @@ bool US_RunProtocol::fromXml( QXmlStreamReader& xmli )
    return ( ! xmli.hasError() );
 }
 
+// Function to convert from a time to a day,hour,minute,second list
+void US_RunProtocol::timeToList( double& sectime, QList< int >& dhms )
+{
+   int t_minute     = (int)( sectime / 60.0 );
+   int t_second     = qRound( sectime - t_minute * 60.0 );
+   int t_hour       = (int)( t_minute / 60 );
+       t_minute    -= ( t_hour * 60 );
+   int t_day        = (int)( t_hour / 24 );
+       t_day       -= ( t_day * 24 );
+
+   dhms.clear();
+   dhms << t_day << t_hour << t_minute << t_second;
+}
+
+// Function to convert from a time to a day,hour,minute,second list
+void US_RunProtocol::timeToList( QTime& timeobj, int& days, QList< int >& dhms )
+{
+   dhms.clear();
+   dhms << days
+        << timeobj.hour()
+        << timeobj.minute()
+        << timeobj.second();
+}
+
+// Function to convert to a time from a day,hour,minute,second list
+void US_RunProtocol::timeFromList( double& sectime, QList< int >& dhms )
+{
+   sectime     = dhms[ 0 ] * ( 24 * 60 * 60 ) +
+                 dhms[ 1 ] * ( 60 * 60 ) +
+                 dhms[ 2 ] * 60 +
+                 dhms[ 3 ];
+}
+
+// Function to convert to a time from a day,hour,minute,second list
+void US_RunProtocol::timeFromList( QTime& timeobj, int& days,
+                                   QList< int >& dhms )
+{
+   timeobj     = QTime( dhms[ 1 ], dhms[ 2 ], dhms[ 3 ] );
+   days        = dhms[ 0 ];
+}
+
+// Function to convert from a time to "0d 00:06:30" type string
+void US_RunProtocol::timeToString( double& sectime, QString& strtime )
+{
+   QList< int > dhms;
+   timeToList( sectime, dhms );
+   strtime          = QString().sprintf( "%dd %02d:%02d:%02d",
+                         dhms[ 0 ], dhms[ 1 ], dhms[ 2 ], dhms[ 3 ] );
+}
+
+// Function to convert from a time to "0d 00:06:30" type string
+void US_RunProtocol::timeToString( QTime& timeobj, int& days, QString& strtime )
+{
+   strtime          = QString().sprintf( "%dd %02d:%02d:%02d", days,
+                         timeobj.hour(), timeobj.minute(), timeobj.second()  );
+}
+
+// Function to convert to a time from a "0d 00:06:30" type string
+void US_RunProtocol::timeFromString( double& sectime, QString& strtime )
+{
+   QList< int > dhms;
+   int t_day        = strtime.section( "d", 0, 0 ).toInt();
+   int t_hour       = strtime.section( ":", 0, 0 ).right( 2 ).toInt();
+   int t_minute     = strtime.section( ":", 1, 1 ).toInt();
+   int t_second     = strtime.section( ":", 2, 2 ).toInt();
+
+   dhms << t_day << t_hour << t_minute << t_second;
+
+   timeFromList( sectime, dhms );
+}
+
+// Function to convert to a time from a "0d 00:06:30" type string
+void US_RunProtocol::timeFromString( QTime& timeobj, int& days,
+                                     QString& strtime )
+{
+   days             = strtime.section( "d", 0, 0 ).toInt();
+   int t_hour       = strtime.section( ":", 0, 0 ).right( 2 ).toInt();
+   int t_minute     = strtime.section( ":", 1, 1 ).toInt();
+   int t_second     = strtime.section( ":", 2, 2 ).toInt();
+   timeobj          = QTime( t_hour, t_minute, t_second );
+}
+
 
 // RunProtoRotor subclass constructor
 US_RunProtocol::RunProtoRotor::RunProtoRotor()
@@ -117,6 +199,7 @@ US_RunProtocol::RunProtoRotor::RunProtoRotor()
    calID                = -1;
    absID                = -1;
 }
+//3-------------------------------------------------------------------------->80
 
 // RunProtoRotor subclass Equality operator
 bool US_RunProtocol::RunProtoRotor::operator== 
@@ -211,8 +294,8 @@ bool US_RunProtocol::RunProtoSpeed::operator==
 // Read all current Speed controls from an XML stream
 bool US_RunProtocol::RunProtoSpeed::fromXml( QXmlStreamReader& xmli )
 {
-   int nspeed      = 0;
    ssteps.clear();
+   nstep           = 0;
 
    while( ! xmli.atEnd() )
    {
@@ -226,13 +309,37 @@ bool US_RunProtocol::RunProtoSpeed::fromXml( QXmlStreamReader& xmli )
             QXmlStreamAttributes attr = xmli.attributes();
             ss.speed     = attr.value( "rotorspeed"       ).toString().toDouble();
             ss.accel     = attr.value( "acceleration"     ).toString().toDouble();
-            ss.duration  = attr.value( "duration_minutes" ).toString().toDouble();
-            ss.delay     = attr.value( "delay_seconds"    ).toString().toDouble();
+            QString s_du = attr.value( "duration" )     .toString();
+            QString s_dy = attr.value( "delay" )        .toString();
+            QString s_si = attr.value( "scan_interval" ).toString();
+            double d_du  = attr.value( "duration_minutes" ).toString().toDouble();
+            double d_dy  = attr.value( "delay_seconds"    ).toString().toDouble();
+
+            if ( ! s_du.isEmpty() )
+               US_RunProtocol::timeFromString( ss.duration, s_du );
+            else
+               ss.duration  = d_du * 60.0;
+
+            if ( ! s_dy.isEmpty() )
+               US_RunProtocol::timeFromString( ss.delay, s_dy );
+            else
+               ss.delay     = d_dy;
+
+            US_RunProtocol::timeFromString( ss.scanintv, s_si );
+
             ssteps << ss;
-            nspeed++;
          }
 
-         else if ( ename != "speed" )
+         else if ( ename == "speed" )
+         {
+            QXmlStreamAttributes attr = xmli.attributes();
+            int i_spin    = attr.value( "spin_down" ).toString().toInt();
+            int i_rcal    = attr.value( "radial_calibration" ).toString().toInt();
+            spin_down     = ( i_spin != 0 );
+            radial_calib  = ( i_rcal != 0 );
+         }
+
+         else
             break;
       }
 
@@ -243,6 +350,8 @@ bool US_RunProtocol::RunProtoSpeed::fromXml( QXmlStreamReader& xmli )
          break;
    }
 
+   nstep           = ssteps.count();
+
    return ( ! xmli.hasError() );
 }
 
@@ -250,18 +359,27 @@ bool US_RunProtocol::RunProtoSpeed::fromXml( QXmlStreamReader& xmli )
 bool US_RunProtocol::RunProtoSpeed::toXml( QXmlStreamWriter& xmlo )
 {
    xmlo.writeStartElement( "speed" );
+   xmlo.writeAttribute( "spin_down",          spin_down    ? "1" : "0" );
+   xmlo.writeAttribute( "radial_calibration", radial_calib ? "1" : "0" );
+
    for ( int ii = 0; ii < ssteps.count(); ii++ )
    {
+      QString s_durat;
+      QString s_delay;
+      QString s_sintv;
+      US_RunProtocol::timeToString( ssteps[ ii ].duration, s_durat );
+      US_RunProtocol::timeToString( ssteps[ ii ].delay,    s_delay );
+      US_RunProtocol::timeToString( ssteps[ ii ].scanintv, s_sintv );
+
       xmlo.writeStartElement( "speedstep" );
-      xmlo.writeAttribute( "rotorspeed",
-                           QString::number( ssteps[ ii ].speed    ) );
-      xmlo.writeAttribute( "acceleration",
-                           QString::number( ssteps[ ii ].accel    ) );
-      xmlo.writeAttribute( "duration_minutes",
-                           QString::number( ssteps[ ii ].duration ) );
-      xmlo.writeAttribute( "delay_seconds",
-                           QString::number( ssteps[ ii ].delay    ) );
-      xmlo.writeEndElement(); // speedstep
+      xmlo.writeAttribute   ( "rotorspeed",
+                              QString::number( ssteps[ ii ].speed ) );
+      xmlo.writeAttribute   ( "acceleration",
+                              QString::number( ssteps[ ii ].accel ) );
+      xmlo.writeAttribute   ( "duration",      s_durat );
+      xmlo.writeAttribute   ( "delay",         s_delay );
+      xmlo.writeAttribute   ( "scan_interval", s_sintv );
+      xmlo.writeEndElement  (); // speedstep
    }
    xmlo.writeEndElement();    // speed
 
@@ -275,6 +393,7 @@ US_RunProtocol::RunProtoSpeed::SpeedStep::SpeedStep()
    accel       = 400.0;
    duration    = 330.0;
    delay       = 120.0;
+   scanintv    = 0.0;
 }
 
 // RunProtoSpeed::SpeedStep subclass Equality operator
@@ -285,6 +404,7 @@ bool US_RunProtocol::RunProtoSpeed::SpeedStep::operator==
    if ( accel    != ss.accel    ) return false;
    if ( duration != ss.duration ) return false;
    if ( delay    != ss.delay    ) return false;
+   if ( scanintv != ss.scanintv ) return false;
 
    return true;
 }
@@ -652,15 +772,15 @@ bool US_RunProtocol::RunProtoSpectra::fromXml( QXmlStreamReader& xmli )
             if ( fl_load   == "1" )   sp.typeinp   = "load";
             if ( fl_manual == "1" )   sp.typeinp   = "manual";
 
-            sp.lambdas.clear();
-            sp.values .clear();
+            sp.wvlens.clear();
+            sp.values.clear();
          }
 
          else if ( ename == "point" )
          {
             QXmlStreamAttributes attr = xmli.attributes();
-            sp.lambdas << attr.value( "lambda" ).toString().toDouble();
-            sp.values  << attr.value( "value"  ).toString().toDouble();
+            sp.wvlens << attr.value( "lambda" ).toString().toDouble();
+            sp.values << attr.value( "value"  ).toString().toDouble();
          }
       }
 
@@ -693,11 +813,11 @@ bool US_RunProtocol::RunProtoSpectra::toXml( QXmlStreamWriter& xmlo )
       xmlo.writeAttribute   ( "auto",   ( inpt == "auto"   ) ? "1" : "0" );
       xmlo.writeAttribute   ( "load",   ( inpt == "load"   ) ? "1" : "0" );
       xmlo.writeAttribute   ( "manual", ( inpt == "manual" ) ? "1" : "0" );
-      for ( int jj = 0; jj < chspecs[ ii ].lambdas.count(); jj++ )
+      for ( int jj = 0; jj < chspecs[ ii ].wvlens.count(); jj++ )
       {
          xmlo.writeStartElement( "point" );
          xmlo.writeAttribute( "lambda",
-                              QString::number( chspecs[ ii ].lambdas[ jj ] ) );
+                              QString::number( chspecs[ ii ].wvlens[ jj ] ) );
          xmlo.writeAttribute( "value",
                               QString::number( chspecs[ ii ].values [ jj ] ) );
          xmlo.writeEndElement(); // point
@@ -712,10 +832,10 @@ bool US_RunProtocol::RunProtoSpectra::toXml( QXmlStreamWriter& xmlo )
 // RunProtoSpectra::Spectrum subclass constructor
 US_RunProtocol::RunProtoSpectra::Spectrum::Spectrum()
 {
-   channel .clear();
-   typeinp .clear();
-   lambdas .clear();
-   values  .clear();
+   channel.clear();
+   typeinp.clear();
+   wvlens .clear();
+   values .clear();
 }
 
 // RunProtoSpectra::Spectrum subclass Equality operator
@@ -724,7 +844,7 @@ bool US_RunProtocol::RunProtoSpectra::Spectrum::operator==
 {
    if ( channel     != s.channel     ) return false;
    if ( typeinp     != s.typeinp     ) return false;
-   if ( lambdas     != s.lambdas     ) return false;
+   if ( wvlens      != s.wvlens      ) return false;
    if ( values      != s.values      ) return false;
 
    return true;

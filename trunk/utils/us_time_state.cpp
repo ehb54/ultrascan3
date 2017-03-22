@@ -406,11 +406,12 @@ int US_TimeState::write_defs( double timeinc, QString imptype )
 }
 
 // Read in TMST data from a file
-int US_TimeState::open_read_data( QString fpath )
+int US_TimeState::open_read_data( QString fpath, const bool pfetch )
 {
    int status  = 0;
    file_size   = (qint64)0;
    filei       = new QFile( fpath );
+   pre_fetch   = pfetch;
 
    if ( ! filei->open( QIODevice::ReadOnly ) )
    {  // Error opening file for read
@@ -423,7 +424,18 @@ int US_TimeState::open_read_data( QString fpath )
    file_size   = filei->size();
    filepath    = fpath;
    filename    = filepath.section( "/", -1, -1 );
-   dsi         = new QDataStream( filei );
+   if ( pre_fetch )
+   {  // If pre-fetch, read in all data bytes and close file
+      dbytes      = filei->readAll();
+      dsi         = new QDataStream( dbytes );
+      filei->close();
+      filei       = NULL;
+   }
+
+   else
+   {  // By default, create data stream from opened file
+      dsi         = new QDataStream( filei );
+   }
    fvers       = QString( _TMST_VERS_ );
    imp_type    = QString( "XLA" );
 
@@ -532,6 +544,10 @@ int US_TimeState::open_read_data( QString fpath )
    }  // End: element loop
 
    xfi.close();
+
+   rec_size   = koff;                                  // Record size in bytes
+   int ktimes = ( file_size - fhdr_size ) / rec_size;  // Implied number times
+   ntimes     = ( ntimes == 0 ) ? ktimes : ntimes;     // Counted/given times
 
    return status;
 }
@@ -785,10 +801,15 @@ int US_TimeState::close_read_data()
 {
    int status  = 0;
 
-   filei->close();                     // Close the input file
+   if ( pre_fetch )
+      dbytes.clear();                  // Clear data byte array
+   else if ( filei != NULL )
+      filei->close();                  // Close the input file
+
    filei       = NULL;                 // Clear the file pointer
    dsi         = NULL;                 // Clear the data stream pointer
    rd_open     = false;                // Flag a closed file
+
 
    return status;
 }
