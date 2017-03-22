@@ -704,7 +704,7 @@ void US_Extinction::perform_global_buffer(void)
    {
       QMessageBox message;
       message.setWindowTitle(tr("Ultrascan Error:"));
-      message.setText(tr("You will need at least 1 scan \nto perform a global fit.\n\nPlease scan(s) before attempting\na global fit."));
+      message.setText(tr("You will need at least 1 scan \nto perform a global fit.\n\nPlease add scan(s) before attempting\na global fit."));
       message.exec();
       return;
    }
@@ -748,14 +748,23 @@ void US_Extinction::perform_global_buffer(void)
 
 void US_Extinction::perform_global(void)
 {
-  if (v_wavelength.size() < 2)
+  if (v_wavelength.size() < 1)
    {
       QMessageBox message;
       message.setWindowTitle(tr("Ultrascan Error:"));
-      message.setText(tr("You will need at least 2 scans\nto perform a global fit.\n\nPlease add more scans before attempting\na global fit."));
+      message.setText(tr("You will need at least 1 scan \nto perform a global fit.\n\nPlease add scan(s) before attempting\na global fit."));
       message.exec();
       return;
    }
+
+  // if (v_wavelength.size() < 2)
+  //  {
+  //     QMessageBox message;
+  //     message.setWindowTitle(tr("Ultrascan Error:"));
+  //     message.setText(tr("You will need at least 2 scans\nto perform a global fit.\n\nPlease add more scans before attempting\na global fit."));
+  //     message.exec();
+  //     return;
+  //  }
    fitting_widget = false;
    parameters = order * 3 + v_wavelength.size();
    fitparameters = new double [parameters];
