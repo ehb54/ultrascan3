@@ -54,8 +54,9 @@ class US_RunProtocol
                public:
                   double      speed;         //!< Step rotor speed in rpm
                   double      accel;         //!< Acceleration in rpm/sec
-                  double      duration;      //!< Duration in minutes
+                  double      duration;      //!< Duration in seconds
                   double      delay;         //!< Delay in seconds
+                  double      scanintv;      //!< Scan interval in seconds
 
                   SpeedStep();
 
@@ -82,6 +83,8 @@ class US_RunProtocol
             bool toXml  ( QXmlStreamWriter& );
 
             int         nstep;           //!< Number of speed steps
+            bool        spin_down;       //!< Flag: spin down at job end
+            bool        radial_calib;    //!< Flag: radial calibration
 
             QVector< SpeedStep > ssteps; //!< The speed steps
       };
@@ -222,7 +225,7 @@ class US_RunProtocol
                public:
                   QString          channel;  //!< Channel description ("2 / A")
                   QString          typeinp;  //!< Type input (auto|load|manual)
-                  QList< double >  lambdas;  //!< List of wavelengths
+                  QList< double >  wvlens;   //!< List of wavelengths
                   QList< double >  values;   //!< List of values (non-auto)
 
                   Spectrum();
@@ -289,6 +292,51 @@ class US_RunProtocol
       //! \param xmlo   Xml stream to write
       //! \returns      A flag if write was successful.
       bool toXml  ( QXmlStreamWriter& );
+
+      //! \brief Function to convert from a time to a day,hour,min.,sec. list
+      //! \param sectime  Time in seconds
+      //! \param dhms     Returned 4-element list: day, hour, minute, second
+      static void timeToList( double&, QList< int >& );
+
+      //! \brief Function to convert from a time to a day,hour,min.,sec. list
+      //! \param timeobj  Time object
+      //! \param days     Integer days
+      //! \param dhms     Returned 4-element list: day, hour, minute, second
+      static void timeToList( QTime&, int&, QList< int >& );
+//3-------------------------------------------------------------------------->80
+
+      //! \brief Function to convert to a time from a day,hour,min.,sec. list
+      //! \param sectime  Returned time in seconds
+      //! \param dhms     Input 4-element list: day, hour, minute, second
+      static void timeFromList( double&, QList< int >& );
+
+      //! \brief Function to convert to a time from a day,hour,min.,sec. list
+      //! \param timeobj  Returned time object
+      //! \param days     Returned integer days
+      //! \param dhms     Input 4-element list: day, hour, minute, second
+      static void timeFromList( QTime&, int&, QList< int >& );
+
+      //! \brief Function to convert from a time to "0d 00:06:30" type string
+      //! \param sectime  Time in seconds
+      //! \param strtime  Returned time string in "0d 00:06:30" type form
+      static void timeToString( double&, QString& );
+
+      //! \brief Function to convert from a time to "0d 00:06:30" type string
+      //! \param timeobj  Time object
+      //! \param days     Integer days
+      //! \param strtime  Returned time string in "0d 00:06:30" type form
+      static void timeToString( QTime&, int&, QString& );
+
+      //! \brief Function to convert to a time from a "0d 00:06:30" type string
+      //! \param sectime  Returned time in seconds
+      //! \param strtime  Input time string in "0d 00:06:30" type form
+      static void timeFromString( double&, QString& );
+
+      //! \brief Function to convert to a time from a "0d 00:06:30" type string
+      //! \param timeobj  Returned time object
+      //! \param days     Returned integer days
+      //! \param strtime  Input time string in "0d 00:06:30" type form
+      static void timeFromString( QTime&, int&, QString& );
 
 //3-------------------------------------------------------------------------->80
       RunProtoRotor      rpRotor;  //!< Rotor controls

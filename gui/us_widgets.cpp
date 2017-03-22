@@ -299,6 +299,11 @@ QwtCounter* US_Widgets::us_counter( int buttons, double low, double high,
                                     double value )
 {
   QwtCounter* counter = new QwtCounter;
+  counter->setNumButtons( buttons );
+  counter->setRange     ( low, high );
+  counter->setValue     ( value );
+  QList< QObject* > children = counter->children();
+  int totwid          = 0;
 #ifdef Q_OS_MAC
   QList< QObject* > children = counter->children();
 #if QT_VERSION < 0x050000
@@ -317,28 +322,33 @@ QwtCounter* US_Widgets::us_counter( int buttons, double low, double high,
         cwidg->setStyle( btnstyle );
      }
   }
-#endif
+#endif    // END: special button treatment for Mac
+
+  for ( int jj = 0; jj < children.size(); jj++ )
+  {  // Accumulate total width of button widgets
+     QWidget* cwidg = (QWidget*)children.at( jj );
+     QString clname = cwidg->metaObject()->className();
+     if ( clname.contains( "Button" ) )
+     {
+        cwidg->adjustSize();
+        totwid        += cwidg->width();
+     }
+  }
+
   QFont vfont( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() );
   QFontMetrics fm( vfont );
-  counter->setNumButtons( buttons );
-  counter->setRange     ( low, high );
-  counter->setValue     ( value );
   counter->setPalette   ( US_GuiSettings::normalColor() );
   counter->setFont      ( vfont );
   counter->setAutoFillBackground( true );
 
-  // Set minimum width based on current (value) size and range
+  // Set min,curr width based on current value and high-value sizes
   int ncv    = int( log10( value ) ) + 1;
-  int nch    = int( log10( high  ) ) + 1;
   ncv        = ( ncv > 0 ) ? ncv : ( 4 - ncv );
-  nch        = ( nch > 0 ) ? nch : ( 4 - nch );
-  nch        = qMax( nch, ncv );
   int widv   = fm.width( QString( "12345678901234" ).left( ncv ) );
-  int widh   = fm.width( QString( "12345678901234" ).left( nch ) );
   counter->adjustSize();
-  int mwidth = counter->width() + widh - widv;
-  counter->resize         ( mwidth, counter->height() );
-  counter->setMinimumWidth( mwidth - fm.width( "A" ) );
+  int mwidth = widv * 2 + totwid;
+  counter->setMinimumWidth( mwidth );
+  counter->resize(          mwidth + widv, counter->height() );
 
   return counter;
 }
@@ -488,6 +498,49 @@ QTabWidget* US_Widgets::us_tabwidget(  int fontAdjust,
   newtw->setPalette( US_GuiSettings::normalColor() );
 
   return newtw;
+}
+
+// TimeEdit
+QHBoxLayout* US_Widgets::us_timeedit( 
+      QTimeEdit*& tedt, const int fontAdjust, QSpinBox** sbox )
+{
+   QPalette   pal    = US_GuiSettings::normalColor();
+   QFont      font   = QFont( US_GuiSettings::fontFamily(),
+                              US_GuiSettings::fontSize  () + fontAdjust );
+   tedt              = new QTimeEdit( QTime( 0, 0 ), this );
+   tedt->setPalette( pal );
+   tedt->setAutoFillBackground( true );
+   tedt->setFont( font );
+
+   QHBoxLayout* layo = new QHBoxLayout;
+   layo->setContentsMargins( 0, 0, 0, 0 );
+   layo->setSpacing        ( 0 );
+
+   if ( sbox != NULL )
+   {
+      *sbox             = new QSpinBox( this );
+      (*sbox)->setPalette( pal );
+      (*sbox)->setAutoFillBackground( true );
+      (*sbox)->setFont( font );
+
+      layo->addWidget( *sbox );
+   }
+
+   layo->addWidget( tedt );
+
+   return layo;
+}
+
+// SpinBox
+QSpinBox* US_Widgets::us_spinbox( const int fontAdjust )
+{
+   QSpinBox* sbox   = new QSpinBox( this );
+   sbox->setPalette( US_GuiSettings::normalColor() );
+   sbox->setAutoFillBackground( true );
+   sbox->setFont( QFont( US_GuiSettings::fontFamily(),
+                         US_GuiSettings::fontSize() + fontAdjust ) );
+
+   return sbox;
 }
 
 void US_Widgets::write_plot( const QString& fname, const QwtPlot* plot )

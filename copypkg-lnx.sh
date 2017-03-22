@@ -143,25 +143,27 @@ done
 # Remove any somo*prev* files in etc/
 rm -f ${PKGDIR}/etc/somo*prev*
 
-# Copy the SOMO directories
-(cd ${PKGDIR};mkdir somo somo/doc somo/demo);
-SDIR=${SOMOBASE}/doc
-DDIR=${PKGDIR}/somo
-echo "${RSYNC} ${SDIR} ${DDIR}"
-${RSYNC} ${SDIR} ${DDIR}
-
-# Remove the somo/doc/manual/attic directory
-rm -rf ${PKGDIR}/somo/doc/manual/attic
-
-SOMODIR=$SOMOBASE/somo
-if [ -d ${SOMODIR} -a -d ${SOMODIR}/demo ]; then
-  # Clear out somo/demo so only present contents are copied
-  /bin/rm -rf ${PKGDIR}/somo/demo/*
-  # Copy somo demo contents
-  SDIR=${SOMODIR}/demo
+if [ ${QTVER} = "4" ];then
+  # Copy the SOMO directories
+  cd ${PKGDIR};mkdir somo somo/doc somo/demo);
+  SDIR=${SOMOBASE}/doc
   DDIR=${PKGDIR}/somo
   echo "${RSYNC} ${SDIR} ${DDIR}"
-  ${RSYNC} ${SDIR} ${DDIR}
+  RSYNC} ${SDIR} ${DDIR}
+
+  # Remove the somo/doc/manual/attic directory
+  rm -rf ${PKGDIR}/somo/doc/manual/attic
+
+  SOMODIR=$SOMOBASE/somo
+  if [ -d ${SOMODIR} -a -d ${SOMODIR}/demo ]; then
+    # Clear out somo/demo so only present contents are copied
+    /bin/rm -rf ${PKGDIR}/somo/demo/*
+    # Copy somo demo contents
+    SDIR=${SOMODIR}/demo
+    DDIR=${PKGDIR}/somo
+    echo "${RSYNC} ${SDIR} ${DDIR}"
+    ${RSYNC} ${SDIR} ${DDIR}
+  fi
 fi
 
 # Copy special library files

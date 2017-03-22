@@ -23,7 +23,7 @@
 class US_ExperimentMain;
 
 //! \brief Experiment General panel
-class US_ExperGuiGeneral : public US_Widgets 
+class US_ExperGuiGeneral : public US_WidgetsDialog 
 {
    Q_OBJECT
 
@@ -85,7 +85,7 @@ class US_ExperGuiGeneral : public US_Widgets
 };
 
 //! \brief Experiment Rotor panel
-class US_ExperGuiRotor : public US_Widgets 
+class US_ExperGuiRotor : public US_WidgetsDialog 
 {
    Q_OBJECT
 
@@ -133,12 +133,15 @@ class US_ExperGuiRotor : public US_Widgets
       void changeRotor( int );     // Slot for change in rotor
       void changeCalib( int );     // Slot for change in calibration
       void advRotor   ( void );    // Function for advanced rotor dialog
+      // Rotor dialog value selected and accepted return values
       void advRotorChanged( US_Rotor::Rotor&,
-                            US_Rotor::RotorCalibration& ); // Rotor diag change
+                            US_Rotor::RotorCalibration& );
+      // Get pointer to abstractRotor for named rotor
+      US_Rotor::AbstractRotor* abstractRotor( const QString );
 };
 
 //! \brief Experiment Speeds panel
-class US_ExperGuiSpeeds : public US_Widgets 
+class US_ExperGuiSpeeds : public US_WidgetsDialog 
 {
    Q_OBJECT
 
@@ -166,14 +169,22 @@ class US_ExperGuiSpeeds : public US_Widgets
       US_Help      showHelp;
 
       QComboBox*   cb_prof;      // Choice: current speed step
-      QwtCounter*  ct_count;     // Counter: number of speed steps
       QwtCounter*  ct_speed;     // Counter: step's rotor speed
       QwtCounter*  ct_accel;     // Counter: step's acceleration
-      QwtCounter*  ct_durhr;     // Counter: step's duration in hours
-      QwtCounter*  ct_durmin;    // Counter: step's duration in minutes
-      QwtCounter*  ct_dlyhr;     // Counter: step's delay in hours
-      QwtCounter*  ct_dlymin;    // Counter: step's delay in minutes
-      QwtCounter*  ct_dlysec;    // Counter: step's delay in seconds
+
+      QLineEdit*   le_maxrpm;    // Text line: max speed for current rotor
+
+      QTimeEdit*   tm_delay;
+      QTimeEdit*   tm_durat;
+      QTimeEdit*   tm_scnint;
+
+      QSpinBox*    sb_count;
+      QSpinBox*    sb_delay;
+      QSpinBox*    sb_durat;
+      QSpinBox*    sb_scnint;
+
+      QCheckBox*   ck_endoff;
+      QCheckBox*   ck_radcal;
 
       QVector< QString >  profdesc;              // Speed profile description
       QVector< QMap< QString, double> >  ssvals; // Speed-step values
@@ -187,29 +198,38 @@ class US_ExperGuiSpeeds : public US_Widgets
       //! \brief Compose a speed step description
       QString speedp_description( const int );
       //! \brief Slot for SS change in number of steps
-      void    ssChangeCount ( double );
+//      void    ssChangeCount ( double );
+      void    ssChangeCount ( int    );
       //! \brief Slot for SS change in profile index
       void    ssChangeProfx ( int    );
       //! \brief Slot for SS change in speed
       void    ssChangeSpeed ( double );
       //! \brief Slot for SS change in acceleration
       void    ssChangeAccel ( double );
-      //! \brief Slot for SS change in duration-hours
-      void    ssChangeDurhr ( double );
-      //! \brief Slot for SS change in duration-minutes
-      void    ssChangeDurmin( double );
-      //! \brief Slot for SS change in delay hours
-      void    ssChangeDlyhr ( double );
-      //! \brief Slot for SS change in delay minutes
-      void    ssChangeDlymin( double );
-      //! \brief Slot for SS change in delay seconds
-      void    ssChangeDlysec( double );
+      //! \brief Slot for SS change in duration day
+      void    ssChgDuratDay ( int );
+      //! \brief Slot for SS change in duration time
+      void    ssChgDuratTime( const QTime& );
+      //! \brief Slot for SS change in delay day
+      void    ssChgDelayDay ( int );
+      //! \brief Slot for SS change in delay time
+      void    ssChgDelayTime( const QTime& );
       //! \brief Function to adjust delay based on speed,accel,delay-hrs
       void    adjustDelay   ( void   );
+#if 0
+      //! \brief Function to populate a day,hour,minute,second list
+      void    timeToList    ( double&, QList< int >& );
+      //! \brief Function to get time from a day,hour,minute,second list
+      void    timeFromList  ( double&, QList< int >& );
+      //! \brief Function to compose a time's "day d hour:minute:second" string
+      void    timeToString  ( double&, QString& );
+      //! \brief Function to get time from a "day d hour:minute:second" string
+      void    timeFromString( double&, QString& );
+#endif
 };
 
 //! \brief Experiment Cells panel
-class US_ExperGuiCells : public US_Widgets 
+class US_ExperGuiCells : public US_WidgetsDialog 
 {
    Q_OBJECT
 
@@ -251,7 +271,7 @@ class US_ExperGuiCells : public US_Widgets
 };
 
 //! \brief Experiment Solutions panel
-class US_ExperGuiSolutions : public US_Widgets 
+class US_ExperGuiSolutions : public US_WidgetsDialog 
 {
    Q_OBJECT
 
@@ -278,15 +298,17 @@ class US_ExperGuiSolutions : public US_Widgets
       US_RunProtocol::RunProtoSolutions*  rpSolut;
       US_Help  showHelp;
       int      dbg_level;
-      int      mxrow;
-      int      nchant;
-      int      nchanu;
-      int      nchanf;
+      int      mxrow;                           // Max rows (24)
+      int      nchant;                          // Number total rows
+      int      nchanf;                          // Number rows with solutions
 
       QVector< QLabel* >       cc_labls;        // Channel label pointers
       QVector< QComboBox* >    cc_solus;        // Solution choice pointers
       QVector< QPushButton* >  cc_comms;        // Comment pushbutton pointers
-      QStringList              sonames;         // Solution names
+      QStringList              sonames;         // Solution names (all)
+      QStringList              srchans;         // Solution row channels
+      QStringList              suchans;         // Solution used channels
+      QStringList              susolus;         // Used channel solutions
 
       QMap< QString, QString >      solu_ids;   // Map solution IDs
       QMap< QString, US_Solution >  solu_data;  // Map solution objects
@@ -294,28 +316,28 @@ class US_ExperGuiSolutions : public US_Widgets
       QMap< QString, QString >      run_comms;  // Map run channel comments
 
    private slots:
-      // Open a solution dialog and return selected solution
+      // \brief Open a solution dialog and return selected solution
       void manageSolutions( void );
-      // Detailed solution information dialog
+      // \brief Detailed solution information dialog
       void detailSolutions( void );
-      // Get the solution ID/GUID for a given name
+      // \brief Get the solution ID/GUID for a given name
       bool solutionID     ( const QString, QString& );
-      // Get the solution object for a given name
+      // \brief Get the solution object for a given name
       bool solutionData   ( const QString, US_Solution& );
-      // Get all solution names and associated IDs
+      // \brief Get all solution names and associated IDs
       int  allSolutions   ( void );
-      // Dialog to add run comments for a channel
+      // \brief Dialog to add run comments for a channel
       void addComments    ( void );
-      // Compose a comment string for a solution and a list of comment parts
+      // \brief Compose comment string for a solution and list of comment parts
       void commentStrings ( const QString, QString&,
                             QStringList& );
-      // Rebuild the solution part of the current run protocol
+      // \brief Rebuild the solution part of the current run protocol
       void rebuild_Solut     ( void );
 };
 
 
 //! \brief Experiment Optical Systems panel
-class US_ExperGuiOptical : public US_Widgets 
+class US_ExperGuiOptical : public US_WidgetsDialog 
 {
    Q_OBJECT
 
@@ -348,20 +370,22 @@ class US_ExperGuiOptical : public US_Widgets
       int      mxrow;                    // Max optics rows
       int      nochan;                   // Number optics rows
       int      nuchan;                   // Number used rows
+      int      nuvvis;                   // Number UV/vis rows
 
    private slots:
-      // Handle a (un)check of the optical systems to use for a channel
+      // \brief Handle a (un)check of the optical systems to use for a channel
       void opsysChecked      ( bool );
-      // Rebuild the Optical System part of the current run protocol
+      // \brief Rebuild the Optical System part of the current run protocol
       void rebuild_Optic     ( void );
 };
 
 //! \brief Experiment Spectra panel
-class US_ExperGuiSpectra : public US_Widgets 
+class US_ExperGuiSpectra : public US_WidgetsDialog 
 {
    Q_OBJECT
 
    public:
+
       US_ExperGuiSpectra( QWidget* );
       ~US_ExperGuiSpectra() {};
 
@@ -393,34 +417,94 @@ class US_ExperGuiSpectra : public US_Widgets
       int          dbg_level;              // Debug level
       int          mxrow;                  // Maximum possible rows (24)
       int          nspchan;                // Number Spectra channels (rows)
+      int          chrow;                  // Channel row currently modified
+      QString      protname;               // Protocol used by Spectra
 
-      QStringList  schans;                 // Selected Spectra channels, ea. row
-      QStringList  stypes;                 // Selected Spectra types, ea. row
-      QList< QVector< double > > slambds;  // Selected wavelenths, ea. channel
-      QList< QVector< double > > plambds;  // Profile wavelenths, ea. channel
-      QList< QVector< double > > pvalues;  // Profile values, ea. channel
+      QVector< QString >         schans;   // Selected Spectra channels, ea. row
+      QVector< QString >         stypes;   // Selected Spectra types, ea. row
+      QVector< QList< double > > swvlens;  // Selected wavelengths, ea. channel
+      QVector< QList< double > > pwvlens;  // Profile wavelengths, ea. channel
+      QVector< QList< double > > pvalues;  // Profile values, ea. channel
 
    private slots:
-      // Manage extinction profiles in a dialog
+      // \brief Manage extinction profiles in a dialog
       void manageEProfiles  ( void );
-      // Process the results of the extinction dialog
+      // \brief Process the results of the extinction dialog
       void process_results  ( QMap< double, double >& );
-      // Display details on current Spectra parameter values
+      // \brief Display details on current Spectra parameter values
       void detailSpectra    ( void );
-      // Select the wavelengths to scan for a channel
+      // \brief Select the wavelengths to scan for a channel
       void selectWavelengths( void );
-      // Handle (un)check of Auto in Optima box
+      // \brief Handle (un)check of Auto in Optima box
       void checkOptima      ( bool );
-      // Load an extinction spectrum
+      // \brief Load an extinction spectrum
       void loadSpectrum     ( void );
-      // Manually enter a lambda/value spectrum 
+      // \brief Manually enter a wavelength/value spectrum 
       void manualSpectrum   ( void );
-      // Rebuild the Spectra part of the current run protocol
+      // \brief Rebuild the Spectra part of the current run protocol
       void rebuild_Spect    ( void );
 };
 
+
+// Dialog class for selecting wavelengths
+class US_SelectWavelengths : public US_WidgetsDialog
+{
+   Q_OBJECT
+
+   public:
+      US_SelectWavelengths( QStringList&, QStringList& );
+
+   private:
+      QStringList&   orig_wavls;
+      QStringList&   select_wavls;
+
+      QLineEdit*     le_original;
+      QLineEdit*     le_selected;
+
+      QListWidget*   lw_original;
+      QListWidget*   lw_selected;
+
+      QPushButton*   pb_add;
+      QPushButton*   pb_remove;
+      QPushButton*   pb_addall;
+      QPushButton*   pb_rmvall;
+      QPushButton*   pb_accept;
+
+      QwtCounter*    ct_strwln;
+      QwtCounter*    ct_endwln;
+      QwtCounter*    ct_incwln;
+
+      int            dbg_level;
+      int            nbr_poten;
+      int            nbr_selec;
+      int            nbr_range;
+
+      QStringList    original;
+      QStringList    potential;
+      QStringList    selected;
+      
+      US_Help        showHelp;
+
+   private slots:
+      void add_selections ( void );
+      void rmv_selections ( void );
+      void add_all_selects( void );
+      void rmv_all_selects( void );
+      void new_wl_start   ( double );
+      void new_wl_end     ( double );
+      void new_wl_incr    ( double );
+      void new_wl_range   ( const int, const int, const int );
+      void report         ( void );
+      void cancel         ( void );
+      void done           ( void );
+      void reset          ( void );
+      void help           ( void )
+      { showHelp.show_help( "manual/convert-seltrip.html" ); };
+};
+
+
 //! \brief Experiment Upload panel
-class US_ExperGuiUpload : public US_Widgets 
+class US_ExperGuiUpload : public US_WidgetsDialog 
 {
    Q_OBJECT
 
@@ -504,25 +588,25 @@ class US_ExperGuiUpload : public US_Widgets
 };
 
 //! \brief Experiment Main Window
-class US_ExperimentMain : public US_Widgets 
+class US_ExperimentMain : public US_Widgets
 {
    Q_OBJECT
 
    public:
       US_ExperimentMain();
 
-      // Get a named child panel's value of a given type
+      // \brief Get a named child panel's value of a given type
       QString     childSValue ( const QString, const QString );
       int         childIValue ( const QString, const QString );
       double      childDValue ( const QString, const QString );
       QStringList childLValue ( const QString, const QString );
-      // Initialize all the panels
+      // \brief Initialize all the panels
       void        initPanels  ( void );
-      // Get a named abstract centerpiece information object
+      // \brief Get a named abstract centerpiece information object
       bool        centpInfo   ( const QString, US_AbstractCenterpiece& );
-      // Get the list of protocol names and summary-data strings
+      // \brief Get the list of protocol names and summary-data strings
       int         getProtos   ( QStringList&, QList< QStringList >& );
-      // Update the list of protocols with a newly named entry
+      // \brief Update the list of protocols with a newly named entry
       bool        updateProtos( const QStringList );
 
       US_RunProtocol  loadProto;   // Controls as loaded from an RP record
