@@ -1099,7 +1099,7 @@ DbgLv(1) << "agN: aInfo   descr" << ana->description << "type" << ana->type;
 
 // New Analyte panel
 US_AnalyteMgrNew::US_AnalyteMgrNew( int *invID, int *select_db_disk,
-      US_Analyte *tmp_analyte ) : US_Widgets()
+				    US_Analyte *tmp_analyte, double temperature, bool signal ) : US_Widgets()
 {
 DbgLv(1) << "agN: id dbdk ana" << invID << select_db_disk << tmp_analyte;
    analyte    = tmp_analyte;
@@ -1113,30 +1113,6 @@ DbgLv(1) << "agN: id dbdk ana" << invID << select_db_disk << tmp_analyte;
    main->setSpacing( 2 );
    main->setContentsMargins( 2, 2, 2, 2 );
 
-   pb_sequence = us_pushbutton( tr( "Enter Sequence" ) );
-   pb_cancel   = us_pushbutton( tr( "Cancel" ) );
-   pb_accept   = us_pushbutton( tr( "Accept" ) );
-
-   lb_descrip   = us_label( tr( "Analyte Name:" ) );
-   le_descrip   = us_lineedit();
-
-   lb_molecwt           = us_label( tr( "MW (<small>Daltons</small>):" ) );
-   lb_vbar20            = us_label( tr( "VBar (<small>cm<sup>3</sup>/g at 20" )
-				     + DEGC + "</small>):" );
-   lb_residue           = us_label( tr( "Residue count:" ) );
-   lb_e280              = us_label( tr( "E280 ( <small>OD/(mol*cm)</small> ):" ) );
-
-   le_molecwt           = us_lineedit();
-   le_vbar20            = us_lineedit();
-   le_residue           = us_lineedit( "", -1, true );
-   le_e280              = us_lineedit( "", -1, true );
-
-   le_protein_temp      = us_lineedit();
-   le_protein_mw        = us_lineedit();
-   le_protein_vbar20    = us_lineedit();
-   le_protein_vbar      = us_lineedit();
-   le_protein_residues  = us_lineedit();
-   le_protein_e280      = us_lineedit();
 
    QGridLayout* protein = us_radiobutton( tr( "Protein" ), rb_protein, true );
    QGridLayout* dna     = us_radiobutton( tr( "DNA"     ), rb_dna   );
@@ -1162,6 +1138,253 @@ DbgLv(1) << "agN: id dbdk ana" << invID << select_db_disk << tmp_analyte;
    //bn_calcmw  ->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
    //bn_ratnuc  ->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
    
+   pb_sequence = us_pushbutton( tr( "Enter Sequence" ) );
+   pb_cancel   = us_pushbutton( tr( "Cancel" ) );
+   pb_accept   = us_pushbutton( tr( "Accept" ) );
+   
+   lb_descrip   = us_label( tr( "Analyte Name:" ) );
+   le_descrip   = us_lineedit();
+
+   // Start Protein widget /////////////
+
+    protein_widget = new QWidget( this );
+    QGridLayout* protein_info   = new QGridLayout( protein_widget );
+    protein_info->setSpacing        ( 2 );
+    protein_info->setContentsMargins( 2, 2, 2, 2 );
+
+    int prow = 0;
+
+    QLabel* lb_protein_mw = us_label( tr( "MW <small>(Daltons)</small>:" ) );
+    protein_info->addWidget( lb_protein_mw, prow, 0 );
+
+    le_protein_mw = us_lineedit( "", 0, false );
+    protein_info->addWidget( le_protein_mw, prow, 1 );
+
+    QLabel* lb_protein_vbar20 = us_label( 
+          tr( "VBar <small>(cm<sup>3</sup>/g at 20" ) + DEGC + ")</small>:" );
+    protein_info->addWidget( lb_protein_vbar20, prow, 2 );
+
+    le_protein_vbar20 = us_lineedit( "" );
+    // connect( le_protein_vbar20, SIGNAL( textChanged  ( const QString& ) ),
+    //                             SLOT  ( value_changed( const QString& ) ) );
+    protein_info->addWidget( le_protein_vbar20, prow++, 3 );
+
+
+    qDebug() << "Temp. in New: " << temperature;
+    qDebug() << "Signal in New: " << signal;
+
+   
+    QLabel* lb_protein_temp = us_label( 
+          tr( "Temperature <small>(" ) + DEGC + ")</small>:" );
+    protein_info->addWidget( lb_protein_temp, prow, 0 );
+
+    le_protein_temp = us_lineedit( QString::number( temperature, 'f', 1 ) );
+  
+    if ( signal )
+    {
+       us_setReadOnly( le_protein_temp, true );
+    }
+    else
+    {
+       connect( le_protein_temp, SIGNAL( textChanged ( const QString& ) ), 
+                                 SLOT  ( temp_changed( const QString& ) ) );
+    }
+
+    protein_info->addWidget( le_protein_temp, prow, 1 );
+
+    QLabel* lb_protein_vbar = us_label( 
+          tr( "VBar <small>(cm<sup>3</sup>/g at T " ) + DEGC + ")</small>:" );
+
+    protein_info->addWidget( lb_protein_vbar, prow, 2 );
+
+    le_protein_vbar = us_lineedit( "", 0, true );
+    protein_info->addWidget( le_protein_vbar, prow++, 3 );
+    
+
+    QLabel* lb_protein_residues = us_label( tr( "Residue count:" ) );
+    protein_info->addWidget( lb_protein_residues, prow, 0 );
+
+    le_protein_residues = us_lineedit( "", 0, true );
+    protein_info->addWidget( le_protein_residues, prow, 1 );
+    //main->addWidget( protein_widget, row, 0, 1, 3 ); 
+  
+    QLabel* lb_protein_e280     = us_label(
+          tr( "E280 <small>(OD/(mol*cm))</small>:" ) );
+    protein_info->addWidget( lb_protein_e280, prow, 2 );
+    le_protein_e280 = us_lineedit( "", 0, true );
+    protein_info->addWidget( le_protein_e280, prow++, 3 );
+    QSpacerItem* spacer1 = new QSpacerItem( 20, 0 );
+    protein_info->addItem( spacer1, prow, 0, 1, 4 );
+    protein_info->setRowStretch( prow, 100 );
+    //main->addWidget( protein_widget, row, 0, 1, 3 ); 
+
+
+   /*
+  //  lb_molecwt           = us_label( tr( "MW (<small>Daltons</small>):" ) );
+  //  lb_vbar20            = us_label( tr( "VBar (<small>cm<sup>3</sup>/g at 20" )
+  // 				     + DEGC + "</small>):" );
+  //  lb_residue           = us_label( tr( "Residue count:" ) );
+  //  lb_e280              = us_label( tr( "E280 ( <small>OD/(mol*cm)</small> ):" ) );
+
+  //  le_molecwt           = us_lineedit();
+  //  le_vbar20            = us_lineedit();
+  //  le_residue           = us_lineedit( "", -1, true );
+  //  le_e280              = us_lineedit( "", -1, true );
+
+  //  le_protein_temp      = us_lineedit();
+  //  le_protein_mw        = us_lineedit();
+  //  le_protein_vbar20    = us_lineedit();
+  //  le_protein_vbar      = us_lineedit();
+  //  le_protein_residues  = us_lineedit();
+  //  le_protein_e280      = us_lineedit();
+  //  */
+
+
+   // Start DNA/RNA widget //////////////
+   dna_widget              = new QWidget( this );
+   QGridLayout* dna_layout = new QGridLayout( dna_widget );
+   dna_layout->setSpacing        ( 2 );
+   dna_layout->setContentsMargins( 2, 2, 2, 2 );
+
+   //QPalette p = US_GuiSettings::labelColor();
+   QPalette p = US_GuiSettings::frameColor();
+   //qDebug() << "Palette: " << p;
+   
+   QGroupBox*    gb_double = new QGroupBox( tr( "Calculate MW" ) );
+   //p.setColor(QPalette::Dark, Qt::white);
+   gb_double->setAutoFillBackground(true);
+   gb_double->setPalette( p );
+   QGridLayout*  grid1     = new QGridLayout;   
+   grid1->setSpacing        ( 2 );
+   grid1->setContentsMargins( 2, 2, 2, 2 );
+   
+   QGridLayout* box1 = us_checkbox( tr( "Double Stranded" ), ck_stranded, true );
+   QGridLayout* box2 = us_checkbox( tr( "Complement Only" ), ck_mw_only );
+   grid1->addLayout( box1, 0, 0 );
+   grid1->addLayout( box2, 1, 0 );
+   // connect( ck_stranded, SIGNAL( toggled        ( bool ) ), 
+   //                       SLOT  ( update_stranded( bool ) ) );
+   // connect( ck_mw_only , SIGNAL( toggled        ( bool ) ), 
+   //                       SLOT  ( update_mw_only ( bool ) ) );
+ 
+   QVBoxLayout* stretch1 = new QVBoxLayout;
+   stretch1->addStretch();
+   grid1->addLayout( stretch1, 2, 0 );
+
+   gb_double->setLayout( grid1 ); 
+   dna_layout->addWidget( gb_double, 0, 0 );
+
+   QGroupBox*    gb_three_prime = new QGroupBox( tr( "Three prime" ) );
+   gb_three_prime->setAutoFillBackground(true);
+   gb_three_prime->setPalette( p );
+   QGridLayout*  grid2          = new QGridLayout;   
+   grid2->setSpacing        ( 2 );
+   grid2->setContentsMargins( 2, 2, 2, 2 );
+
+   QGridLayout* box3 = us_radiobutton( tr( "Hydroxyl" ), rb_3_hydroxyl, true );
+   QGridLayout* box4 = us_radiobutton( tr( "Phosphate" ), rb_3_phosphate );
+
+   grid2->addLayout( box3, 0, 0 );
+   grid2->addLayout( box4, 0, 1 );
+   gb_three_prime->setLayout( grid2 ); 
+   // connect( rb_3_hydroxyl, SIGNAL( toggled          ( bool ) ), 
+   //                         SLOT  ( update_nucleotide( bool ) ) );
+
+   dna_layout->addWidget( gb_three_prime, 1, 0 );
+
+   QGroupBox*    gb_five_prime = new QGroupBox( tr( "Five prime" ) );
+   gb_five_prime->setAutoFillBackground(true);
+   gb_five_prime->setPalette( p );
+   QGridLayout*  grid3         = new QGridLayout;   
+   grid3->setSpacing        ( 2 );
+   grid3->setContentsMargins( 2, 2, 2, 2 );
+
+   QGridLayout* box5 = us_radiobutton( tr( "Hydroxyl" ), rb_5_hydroxyl, true );
+   QGridLayout* box6 = us_radiobutton( tr( "Phosphate" ), rb_5_phosphate );
+
+   grid3->addLayout( box5, 0, 0 );
+   grid3->addLayout( box6, 0, 1 );
+  
+   gb_five_prime->setLayout( grid3 ); 
+   // connect( rb_5_hydroxyl, SIGNAL( toggled          ( bool ) ), 
+   //                         SLOT  ( update_nucleotide( bool ) ) );
+
+   dna_layout->addWidget( gb_five_prime, 2, 0 );
+
+   QGridLayout* ratios = new QGridLayout;
+
+   QLabel* lb_ratios = us_banner( tr( "Counterion molar ratio/nucletide" ) );
+   ratios->addWidget( lb_ratios, 0, 0, 1, 3 );
+
+   QLabel* lb_sodium = us_label( tr( "Sodium, Na+" ) );
+   ratios->addWidget( lb_sodium, 1, 0 );
+
+   ct_sodium = us_counter( 2, 0.0, 1.0, 0.0 );
+   ct_sodium->setSingleStep( 0.01 );
+   // connect( ct_sodium, SIGNAL( valueChanged     ( double ) ),
+   //                     SLOT  ( update_nucleotide( double ) ) );
+   ratios->addWidget( ct_sodium, 1, 1, 1, 2 );
+
+   QLabel* lb_potassium = us_label( tr( "Potassium, K+" ) );
+   ratios->addWidget( lb_potassium, 2, 0 );
+
+   ct_potassium = us_counter( 2, 0.0, 1.0, 0.0 );
+   ct_potassium->setSingleStep( 0.01 );
+   // connect( ct_potassium, SIGNAL( valueChanged     ( double ) ),
+   //                        SLOT  ( update_nucleotide( double ) ) );
+   ratios->addWidget( ct_potassium, 2, 1, 1, 2 );
+
+   QLabel* lb_lithium = us_label( tr( "Lithium, Li+" ) );
+   ratios->addWidget( lb_lithium, 3, 0 );
+
+   ct_lithium = us_counter( 2, 0.0, 1.0, 0.0 );
+   ct_lithium->setSingleStep( 0.01 );
+   // connect( ct_lithium, SIGNAL( valueChanged     ( double ) ),
+   //                      SLOT  ( update_nucleotide( double ) ) );
+   ratios->addWidget( ct_lithium, 3, 1, 1, 2 );
+
+   QLabel* lb_magnesium = us_label( tr( "Magnesium, Mg+" ) );
+   ratios->addWidget( lb_magnesium, 4, 0 );
+
+   ct_magnesium = us_counter( 2, 0.0, 1.0, 0.0 );
+   ct_magnesium->setSingleStep( 0.01 );
+   // connect( ct_magnesium, SIGNAL( valueChanged     ( double ) ),
+   //                        SLOT  ( update_nucleotide( double ) ) );
+   ratios->addWidget( ct_magnesium, 4, 1, 1, 2 );
+
+   QLabel* lb_calcium = us_label( tr( "Calcium, Ca+" ) );
+   ratios->addWidget( lb_calcium, 5, 0 );
+
+   ct_calcium = us_counter( 2, 0.0, 1.0, 0.0 );
+   ct_calcium->setSingleStep( 0.01 );
+   // connect( ct_calcium, SIGNAL( valueChanged     ( double ) ),
+   //                      SLOT  ( update_nucleotide( double ) ) );
+   ratios->addWidget( ct_calcium, 5, 1 );
+
+   dna_layout->addLayout( ratios, 0, 1, 4, 2 );
+
+   QGridLayout* nucle_data = new QGridLayout;
+   QLabel* lb_nucle_mw = us_label( tr( "MW <small>(Daltons)</small>:" ) );
+   nucle_data->addWidget( lb_nucle_mw, 0, 0 );
+
+   le_nucle_mw = us_lineedit( "", -2, true );
+   nucle_data->addWidget( le_nucle_mw, 0, 1, 1, 3 );
+
+   QLabel* lb_nucle_vbar = us_label( 
+         tr( "VBar<small>(cm<sup>3</sup>/g)</small>:" ) );
+   nucle_data->addWidget( lb_nucle_vbar, 1, 0 );
+
+   le_nucle_vbar = us_lineedit( "" );
+   // connect( le_nucle_vbar, SIGNAL( textChanged  ( const QString& ) ),
+   //                         SLOT  ( value_changed( const QString& ) ) );
+   nucle_data->addWidget( le_nucle_vbar, 1, 1, 1, 3 );
+
+   dna_layout->addLayout( nucle_data, 4, 0, 2, 3 );
+   //main->addWidget( dna_widget, row, 0, 2, 3 ); 
+  
+   // End DNA/RNA widget ///////////////////////////////////////////////
+
+
    int row = 0;
    main->addWidget( bn_newanalyte,   row++,  0, 1, 12 );
    main->addLayout( radios,          row++,  0, 1, 12 );
@@ -1173,6 +1396,8 @@ DbgLv(1) << "agN: id dbdk ana" << invID << select_db_disk << tmp_analyte;
    row += 5;
    //main->addWidget( bn_calcmw,       row,    0, 1,  4 );
    //main->addWidget( bn_ratnuc,       row++,  4, 1,  8 );
+
+   /*
    main->addWidget( lb_molecwt,      row,    0, 1,  4 );
    main->addWidget( le_molecwt,      row,    4, 1,  2 );
    main->addWidget( lb_vbar20,       row,    6, 1,  4 );
@@ -1181,6 +1406,10 @@ DbgLv(1) << "agN: id dbdk ana" << invID << select_db_disk << tmp_analyte;
    main->addWidget( le_residue,      row,    4, 1,  2 );
    main->addWidget( lb_e280,         row,    6, 1,  4 );
    main->addWidget( le_e280,         row++, 10, 1,  2 );
+   */
+   main->addWidget( protein_widget, row, 0, 1, 12 ); 
+   main->addWidget( dna_widget, row, 0, 1, 12 ); 
+   
 
    //for ( int ii = 0; ii < 12; ii++ )  main->setColumnStretch( ii, 99 );
    //for ( int ii = 0; ii < 12; ii++ )  main->setRowStretch( ii, 99 );
@@ -1418,7 +1647,7 @@ void US_AnalyteMgrNew::update_sequence( QString seq )
          if ( spectrum_type == tr( "Absorbance" ) )
          {
 #endif
-            if ( analyte->extinction.count() == 0 )
+	   if ( analyte->extinction.count() == 0 )
                analyte->extinction  [ 280.0 ] = p.e280;
 #if 0
          }
@@ -1438,17 +1667,190 @@ void US_AnalyteMgrNew::update_sequence( QString seq )
 
       case US_Analyte::DNA:
       case US_Analyte::RNA:
-//         update_nucleotide();
-         break;
+	update_nucleotide();
+	break;
 
       case US_Analyte::CARBOHYDRATE:
-//         le_carbs_mw  ->setText( QString::number( (int) analyte->mw ) );
-//         le_carbs_vbar->setText( QString::number( analyte->vbar20, 'f', 4 ) );
+	 le_molecwt  ->setText( QString::number( (int) analyte->mw ) );
+         le_vbar20->setText( QString::number( analyte->vbar20, 'f', 4 ) );
          break;
    }
 
 //   pb_save->setEnabled( true );
 //   pb_more->setEnabled( true );
+}
+
+// Update Nucleotides ////////////////////
+void US_AnalyteMgrNew::update_nucleotide( bool /* value */ )
+{
+   if ( inReset ) return;
+   update_nucleotide();
+}
+
+void US_AnalyteMgrNew::update_nucleotide( double /* value */ )
+{
+   if ( inReset ) return;
+   update_nucleotide();
+}
+
+void US_AnalyteMgrNew::update_nucleotide( void )
+{
+   if ( inReset ) return;
+
+   parse_dna();
+
+   bool isDNA              = rb_dna       ->isChecked();
+   analyte->doubleStranded = ck_stranded  ->isChecked();
+   analyte->complement     = ck_mw_only   ->isChecked();
+   analyte->_3prime        = rb_3_hydroxyl->isChecked();
+   analyte->_5prime        = rb_5_hydroxyl->isChecked();
+
+   analyte->sodium    = ct_sodium   ->value();
+   analyte->potassium = ct_potassium->value();
+   analyte->lithium   = ct_lithium  ->value();
+   analyte->magnesium = ct_magnesium->value();
+   analyte->calcium   = ct_calcium  ->value();
+
+   double MW = 0;
+   uint   total = A + G + C + T + U;
+   
+   if ( analyte->doubleStranded ) total *= 2;
+   
+   const double mw_A = 313.209;
+   const double mw_C = 289.184;
+   const double mw_G = 329.208;
+   const double mw_T = 304.196;
+   const double mw_U = 274.170;
+   
+   if ( isDNA )
+   {
+      if ( analyte->doubleStranded )
+      {
+         MW += A * mw_A;
+         MW += G * mw_G;
+         MW += C * mw_C;
+         MW += T * mw_T;
+         MW += A * mw_T;
+         MW += G * mw_C;
+         MW += C * mw_G;
+         MW += T * mw_A;
+      }
+
+      if ( analyte->complement )
+      {
+         MW += A * mw_T;
+         MW += G * mw_C;
+         MW += C * mw_G;
+         MW += T * mw_A;
+      }
+
+      if ( ! analyte->complement && ! analyte->doubleStranded )
+      {
+         MW += A * mw_A;
+         MW += G * mw_G;
+         MW += C * mw_C;
+         MW += T * mw_T;
+      }
+   }
+   else /* RNA */
+   {
+      if ( analyte->doubleStranded )
+      {
+         MW += A * ( mw_A + 15.999 );
+         MW += G * ( mw_G + 15.999 );
+         MW += C * ( mw_C + 15.999 );
+         MW += U * ( mw_U + 15.999 );
+         MW += A * ( mw_U + 15.999 );
+         MW += G * ( mw_C + 15.999 );
+         MW += C * ( mw_G + 15.999 );
+         MW += U * ( mw_A + 15.999 );
+      }
+
+      if ( analyte->complement )
+      {
+         MW += A * ( mw_U + 15.999 );
+         MW += G * ( mw_C + 15.999 );
+         MW += C * ( mw_G + 15.999 );
+         MW += U * ( mw_A + 15.999 );
+      }
+
+      if ( ! analyte->complement && ! analyte->doubleStranded )
+      {
+         MW += A * ( mw_A + 15.999 );
+         MW += G * ( mw_G + 15.999 );
+         MW += C * ( mw_C + 15.999 );
+         MW += U * ( mw_U + 15.999 );
+      }
+   }
+   
+   MW += analyte->sodium    * total * 22.99;
+   MW += analyte->potassium * total * 39.1;
+   MW += analyte->lithium   * total * 6.94;
+   MW += analyte->magnesium * total * 24.305;
+   MW += analyte->calcium   * total * 40.08;
+   
+   if ( analyte->_3prime )
+   {
+      MW += 17.01;
+      if ( analyte->doubleStranded )  MW += 17.01; 
+   }
+   else // we have phosphate
+   {
+      MW += 94.87;
+      if ( analyte->doubleStranded ) MW += 94.87;
+   }
+
+   if ( analyte->_5prime )
+   {
+      MW -=  77.96;
+      if ( analyte->doubleStranded )  MW -= 77.96; 
+   }
+
+   if ( analyte->sequence.isEmpty() ) MW = 0;
+
+   QString s;
+
+   if ( analyte->doubleStranded )
+   {
+      s.sprintf(" %2.5e kD (%d A, %d G, %d C, %d U, %d T, %d bp)",
+            MW / 1000.0, A, G, C, U, T, total / 2);
+   }
+   else
+   {
+     s.sprintf(" %2.5e kD (%d A, %d G, %d C, %d U, %d T, %d bases)",
+            MW / 1000.0, A, G, C, U, T, total );
+   }
+   
+   le_nucle_mw->setText( s );
+
+   if ( rb_dna->isChecked() )
+   {
+
+      if ( MW > 0 && T == 0 && U > 0)
+         QMessageBox::question( this, 
+            tr( "Attention:" ),
+            tr( "Are you sure?\n"
+                "There don't appear to be any thymine residues present,\n"
+                "instead there are uracil residues in this sequence." ) );
+   }
+   else // DNA */
+   {
+      if ( MW > 0 && T > 0 && U == 0 )
+         QMessageBox::question( this,
+            tr( "Attention:" ),
+            tr( "Are you sure?\n"
+                "There don't appear to be any uracil residues present,\n"
+                "instead there are thymine residues in this sequence." ) );
+   }
+}
+
+void US_AnalyteMgrNew::parse_dna( void )
+{
+   A = analyte->sequence.count( "a" );
+   C = analyte->sequence.count( "c" );
+   G = analyte->sequence.count( "g" );
+   T = analyte->sequence.count( "t" );
+   U = analyte->sequence.count( "u" );
 }
 
 // Slot for change to New panel
@@ -1529,8 +1931,10 @@ DbgLv(1) << "agS: sAtype: type" << type;
          visDRna              = false;
          break;
    }
-   lb_descrip ->setVisible( visProt );
-   le_descrip ->setVisible( visProt );
+   lb_descrip ->setVisible( visAll );
+   le_descrip ->setVisible( visAll );
+   protein_widget->setVisible( visProt );
+   dna_widget->setVisible( visDRna );
    
 
 #if 0
@@ -2135,6 +2539,9 @@ US_AnalyteManager::US_AnalyteManager( bool           signal,
                   : accessf;
    dbg_level    = US_Settings::us_debug();
 
+   qDebug() << "Temperature: " << temperature;
+   qDebug() << "Signal: " << signal;
+
    setWindowTitle( tr( "Analyte Management" ) );
    setPalette( US_GuiSettings::frameColor() );
    this->setMinimumSize( 640, 480 );
@@ -2145,7 +2552,7 @@ US_AnalyteManager::US_AnalyteManager( bool           signal,
 
    tabWidget   = us_tabwidget();
    selectTab   = new US_AnalyteMgrSelect  ( &personID, &disk_or_db, &analyte );
-   newTab      = new US_AnalyteMgrNew     ( &personID, &disk_or_db, &analyte );
+   newTab      = new US_AnalyteMgrNew     ( &personID, &disk_or_db, &analyte, temperature, signal);
    editTab     = new US_AnalyteMgrEdit    ( &personID, &disk_or_db, &analyte );
    settingsTab = new US_AnalyteMgrSettings( &personID, &disk_or_db );
    tabWidget -> addTab( selectTab,   tr( "Select Analyte" ) );

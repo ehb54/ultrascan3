@@ -201,7 +201,7 @@ class US_AnalyteMgrNew : public US_Widgets
          \param analyte         Pointer to a US_Analyte object holding the active
                                  analyte (for editing and adding new analytes)
       */
-      US_AnalyteMgrNew( int*, int*, US_Analyte* );
+   US_AnalyteMgrNew( int*, int*, US_Analyte*, double, bool );
 
    signals:
       void newAnaAccepted( void );  //! New analyte accepted
@@ -213,6 +213,14 @@ class US_AnalyteMgrNew : public US_Widgets
       int*          db_or_disk;
       bool          from_db;
       int           dbg_level;
+
+      bool          inReset;
+
+      uint          A;
+      uint          C;
+      uint          T;
+      uint          G;
+      uint          U;
 
       US_Analyte*   analyte;
       US_Analyte    orig_analyte;
@@ -241,12 +249,37 @@ class US_AnalyteMgrNew : public US_Widgets
       QLineEdit*    le_vbar20;
       QLineEdit*    le_residue;
       QLineEdit*    le_e280;
+
+
       QLineEdit*    le_protein_temp;
       QLineEdit*    le_protein_mw;
       QLineEdit*    le_protein_vbar20;
       QLineEdit*    le_protein_vbar;
       QLineEdit*    le_protein_residues;
       QLineEdit*    le_protein_e280;
+
+      QLineEdit*    le_nucle_mw;
+      QLineEdit*    le_nucle_vbar;
+      QLineEdit*    le_carbs_mw;
+      QLineEdit*    le_carbs_vbar;
+
+      QWidget*      protein_widget;
+      QWidget*      dna_widget;
+      QWidget*      carbs_widget;
+
+      QCheckBox*    ck_stranded;
+      QCheckBox*    ck_mw_only;
+      QCheckBox*    ck_grad_form;
+      QRadioButton* rb_3_hydroxyl;
+      QRadioButton* rb_3_phosphate;
+      QRadioButton* rb_5_hydroxyl;
+      QRadioButton* rb_5_phosphate;
+
+      QwtCounter*   ct_sodium;
+      QwtCounter*   ct_potassium;
+      QwtCounter*   ct_lithium;
+      QwtCounter*   ct_magnesium;
+      QwtCounter*   ct_calcium;
 
       QCheckBox*    ck_manual;
 
@@ -259,6 +292,8 @@ class US_AnalyteMgrNew : public US_Widgets
       //QListWidget*  lw_bufcomps;
 
       US_Help       showHelp;
+      
+      void    parse_dna       ( void );
 
    private slots:
 
@@ -282,6 +317,10 @@ class US_AnalyteMgrNew : public US_Widgets
 
       void manage_sequence ( void );
       void update_sequence ( QString );
+
+      void update_nucleotide  ( bool );
+      void update_nucleotide  ( double );
+      void update_nucleotide  ( void );
 
       void set_analyte_type( int  );
 
