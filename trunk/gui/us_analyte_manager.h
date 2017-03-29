@@ -214,6 +214,9 @@ class US_AnalyteMgrNew : public US_Widgets
       bool          from_db;
       int           dbg_level;
 
+      int           anatype;
+      bool          signal_tmp;
+
       bool          inReset;
 
       uint          A;
@@ -318,6 +321,11 @@ class US_AnalyteMgrNew : public US_Widgets
       void manage_sequence ( void );
       void update_sequence ( QString );
 
+      void value_changed      ( const QString& );
+      void temp_changed       ( const QString& );
+
+      void update_stranded    ( bool );
+      void update_mw_only     ( bool );
       void update_nucleotide  ( bool );
       void update_nucleotide  ( double );
       void update_nucleotide  ( void );
