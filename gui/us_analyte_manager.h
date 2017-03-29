@@ -298,7 +298,7 @@ class US_AnalyteMgrNew : public US_Widgets
       US_Help       showHelp;
       
       void    parse_dna       ( void );
-
+      bool    data_ok         ( void );
    private slots:
 
       void new_description ();
@@ -333,9 +333,11 @@ class US_AnalyteMgrNew : public US_Widgets
 
       void set_analyte_type   ( int  );
       void reset              ( void );
+      void verify_vbar        ( void );
 
    public slots:
       void init_analyte		( void );
+      
 };
 
 //! \class US_AnalyteMgrEdit
