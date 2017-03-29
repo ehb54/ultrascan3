@@ -1138,6 +1138,10 @@ DbgLv(1) << "agN: id dbdk ana" << invID << select_db_disk << tmp_analyte;
    pb_cancel   = us_pushbutton( tr( "Cancel" ) );
    connect( pb_cancel,   SIGNAL( clicked()     ),
             this,        SLOT  ( newCanceled() ) );
+
+   pb_reset   = us_pushbutton( tr( "Reset" ) );
+   connect( pb_reset,   SIGNAL( clicked()     ),
+            this,        SLOT  ( reset() ) );
    
    //pb_save     = us_pushbutton( tr( "Accept" ), false);
    //connect( pb_save, SIGNAL( clicked() ), SLOT( save() ) );
@@ -1147,7 +1151,7 @@ DbgLv(1) << "agN: id dbdk ana" << invID << select_db_disk << tmp_analyte;
             this,        SLOT  ( newAccepted() ) );
    
    lb_descrip   = us_label( tr( "Analyte Name:" ) );
-   le_descrip   = us_lineedit("");
+   le_descrip   = us_lineedit( "New Analyte", 0, false );
    connect( le_descrip, SIGNAL( editingFinished   () ), 
                             SLOT  ( new_description() ) );
 
@@ -1163,14 +1167,14 @@ DbgLv(1) << "agN: id dbdk ana" << invID << select_db_disk << tmp_analyte;
     QLabel* lb_protein_mw = us_label( tr( "MW <small>(Daltons)</small>:" ) );
     protein_info->addWidget( lb_protein_mw, prow, 0 );
 
-    le_protein_mw = us_lineedit( "", 0, false );
+    le_protein_mw = us_lineedit( "0", 0, false );
     protein_info->addWidget( le_protein_mw, prow, 1 );
 
     QLabel* lb_protein_vbar20 = us_label( 
           tr( "VBar <small>(cm<sup>3</sup>/g at 20" ) + DEGC + ")</small>:" );
     protein_info->addWidget( lb_protein_vbar20, prow, 2 );
 
-    le_protein_vbar20 = us_lineedit( "" );
+    le_protein_vbar20 = us_lineedit(  "0.0000", 0, false );
     connect( le_protein_vbar20, SIGNAL( textChanged  ( const QString& ) ),
                                  SLOT  ( value_changed( const QString& ) ) );
     protein_info->addWidget( le_protein_vbar20, prow++, 3 );
@@ -1202,19 +1206,19 @@ DbgLv(1) << "agN: id dbdk ana" << invID << select_db_disk << tmp_analyte;
 
     protein_info->addWidget( lb_protein_vbar, prow, 2 );
 
-    le_protein_vbar = us_lineedit( "", 0, true );
+    le_protein_vbar = us_lineedit( "0.0000", 0, true );
     protein_info->addWidget( le_protein_vbar, prow++, 3 );
     
     QLabel* lb_protein_residues = us_label( tr( "Residue count:" ) );
     protein_info->addWidget( lb_protein_residues, prow, 0 );
 
-    le_protein_residues = us_lineedit( "", 0, true );
+    le_protein_residues = us_lineedit( "0", 0, true );
     protein_info->addWidget( le_protein_residues, prow, 1 );
       
     QLabel* lb_protein_e280     = us_label(
           tr( "E280 <small>(OD/(mol*cm))</small>:" ) );
     protein_info->addWidget( lb_protein_e280, prow, 2 );
-    le_protein_e280 = us_lineedit( "", 0, true );
+    le_protein_e280 = us_lineedit( "0", 0, true );
     protein_info->addWidget( le_protein_e280, prow++, 3 );
     QSpacerItem* spacer1 = new QSpacerItem( 20, 0 );
     protein_info->addItem( spacer1, prow, 0, 1, 4 );
@@ -1375,7 +1379,7 @@ DbgLv(1) << "agN: id dbdk ana" << invID << select_db_disk << tmp_analyte;
          tr( "VBar<small>(cm<sup>3</sup>/g)</small>:" ) );
    nucle_data->addWidget( lb_nucle_vbar, 1, 0 );
 
-   le_nucle_vbar = us_lineedit( "" );
+   le_nucle_vbar = us_lineedit( "0.5500" );
    connect( le_nucle_vbar, SIGNAL( textChanged  ( const QString& ) ),
                             SLOT  ( value_changed( const QString& ) ) );
    nucle_data->addWidget( le_nucle_vbar, 1, 1, 1, 3 );
@@ -1417,9 +1421,10 @@ DbgLv(1) << "agN: id dbdk ana" << invID << select_db_disk << tmp_analyte;
    main->addLayout( radios,          row++,  0, 1, 12 );
    main->addWidget( lb_descrip,      row,    0, 1,  4 );
    main->addWidget( le_descrip,      row++,  4, 1,  8 );
-   main->addWidget( pb_sequence,     row++,  8, 1,  4 );
-   main->addWidget( pb_cancel,       row,    8, 1,  2 );
-   main->addWidget( pb_accept,         row++, 10, 1,  2 );
+   main->addWidget( pb_sequence,     row++,  6, 1,  6 );
+   main->addWidget( pb_cancel,       row,    6, 1,  2 );
+   main->addWidget( pb_reset,        row,    8, 1,  2 );
+   main->addWidget( pb_accept,       row++, 10, 1,  2 );
    row += 5;
    //main->addWidget( bn_calcmw,       row,    0, 1,  4 );
    //main->addWidget( bn_ratnuc,       row++,  4, 1,  8 );
@@ -1920,37 +1925,13 @@ DbgLv(1) << "agN: init_a";
    from_db       = ( (*db_or_disk) == 1 );
 DbgLv(1) << "agN: init_a  from_db" << from_db << "dkordk" << *db_or_disk;
 
-   le_descrip         ->clear();
-   le_protein_mw      ->clear();
-   le_protein_vbar20  ->clear();
-   le_protein_vbar    ->clear();
-   le_protein_residues->clear();
-   if ( !signal_tmp ) le_protein_temp->setText( "20.0" );
-
-   ct_sodium          ->setValue( 0.0 );
-   ct_potassium       ->setValue( 0.0 );
-   ct_lithium         ->setValue( 0.0 );
-   ct_magnesium       ->setValue( 0.0 );
-   ct_calcium         ->setValue( 0.0 );
-                      
-   ck_stranded        ->setChecked( true );
-   ck_mw_only         ->setChecked( false );
-                      
-   rb_3_hydroxyl      ->setChecked( true );
-   rb_5_hydroxyl      ->setChecked( true );
-                      
-   le_nucle_mw        ->clear();
-   le_nucle_vbar      ->clear();
-
-   le_carbs_mw        ->clear();
-   le_carbs_vbar      ->clear();
-   ck_grad_form       ->setChecked( false );
-   
    analyte->analyteID         = "";
    analyte->analyteGUID       = "";
    analyte->description       = "";
    analyte->sequence          = "";
    analyte->extinction.clear();
+
+   reset();
 
 #if 0
    // In case we just re-synced in Settings panel,
@@ -1991,6 +1972,85 @@ DbgLv(1) << "AnaN:SL: init_analyte   lw_allcomps rebuilt";
 #endif
 }
 
+void US_AnalyteMgrNew::reset()
+{
+   QStringList mw;
+   if ( rb_protein->isChecked() ) 
+     {
+       analyte->type = US_Analyte::PROTEIN;
+       le_descrip->setText("New Protein Analyte");
+       le_protein_mw->setText("0");
+       le_protein_vbar20->setText("0.0000");
+       le_protein_vbar  ->setText("0.0000");
+       if ( ! signal_tmp ) le_protein_temp->setText( "20.0" );
+       le_protein_residues ->setText("0");
+       le_protein_e280 ->setText("0");
+       analyte->description = le_descrip->text();
+       analyte->mw          = le_protein_mw->text().toDouble();
+       analyte->vbar20      = le_protein_vbar20->text().toDouble();
+     }
+   
+   if ( rb_dna    ->isChecked() )
+     {
+       analyte->type = US_Analyte::DNA;
+       le_descrip->setText("New DNA Analyte");
+       ck_stranded->setChecked( true );
+       ck_mw_only ->setChecked( false );
+       rb_3_hydroxyl->setChecked( true );
+       rb_5_hydroxyl->setChecked( true );
+       ct_sodium          ->setValue( 0.0 );
+       ct_potassium       ->setValue( 0.0 );
+       ct_lithium         ->setValue( 0.0 );
+       ct_magnesium       ->setValue( 0.0 );
+       ct_calcium         ->setValue( 0.0 );
+       
+       update_nucleotide();
+       le_nucle_vbar->setText("0.5500");
+       mw = le_nucle_mw->text().split( " ", QString::SkipEmptyParts );
+       analyte->description = le_descrip->text();
+       analyte->mw          = mw[ 0 ].toDouble() * 1000.0;
+       analyte->vbar20      = le_nucle_vbar->text().toDouble();
+     }
+   
+   if ( rb_rna    ->isChecked() ) 
+     {
+       analyte->type = US_Analyte::RNA;
+       le_descrip->setText("New RNA Analyte");
+       ck_stranded->setChecked( true );
+       ck_mw_only ->setChecked( false );
+       rb_3_hydroxyl->setChecked( true );
+       rb_5_hydroxyl->setChecked( true );
+       ct_sodium          ->setValue( 0.0 );
+       ct_potassium       ->setValue( 0.0 );
+       ct_lithium         ->setValue( 0.0 );
+       ct_magnesium       ->setValue( 0.0 );
+       ct_calcium         ->setValue( 0.0 );
+
+       update_nucleotide();
+       le_nucle_vbar->setText("0.5500");
+       mw = le_nucle_mw->text().split( " ", QString::SkipEmptyParts );
+       analyte->description = le_descrip->text();
+       analyte->mw          = mw[ 0 ].toDouble() * 1000.0;
+       analyte->vbar20      = le_nucle_vbar->text().toDouble();
+     }
+   
+   if ( rb_carbo  ->isChecked() ) 
+     {
+       analyte->type = US_Analyte::CARBOHYDRATE;
+       le_descrip->setText("New Carbohydrate Analyte");
+       ck_grad_form       ->setChecked( false );
+       le_carbs_mw        ->clear();
+       le_carbs_vbar      ->clear();
+       analyte->description = le_descrip->text();
+       analyte->mw          = le_carbs_mw  ->text().toDouble();
+       analyte->vbar20      = le_carbs_vbar->text().toDouble();
+       analyte->grad_form   = ck_grad_form ->isChecked();
+     }
+
+   pb_accept          ->setEnabled( false );
+
+}
+
 void US_AnalyteMgrNew::set_analyte_type( int type )
 {
 DbgLv(1) << "agN: sAtype" << type;
@@ -2006,22 +2066,51 @@ DbgLv(1) << "agS: sAtype: type" << type;
 
  qDebug() << "Type: " << type;
  anatype = type;
+ QStringList mw;
    switch ( type )
    {
       case US_Analyte::PROTEIN:
          visDRna              = false;
          visCarb              = false;
-         break;
+	 analyte->type = US_Analyte::PROTEIN;
+	 le_descrip->setText("New Protein Analyte");
+	 analyte->description = le_descrip->text();
+	 analyte->mw          = le_protein_mw->text().toDouble();
+	 analyte->vbar20      = le_protein_vbar20->text().toDouble();
+	 break;
 
       case US_Analyte::DNA:
+	 visProt              = false;
+         visCarb              = false;
+	 analyte->type = US_Analyte::DNA;
+	 le_descrip->setText("New DNA Analyte");
+	 update_nucleotide();
+	 mw = le_nucle_mw->text().split( " ", QString::SkipEmptyParts );
+	 analyte->description = le_descrip->text();
+	 analyte->mw          = mw[ 0 ].toDouble() * 1000.0;
+	 analyte->vbar20      = le_nucle_vbar->text().toDouble();
+         break;
       case US_Analyte::RNA:
          visProt              = false;
          visCarb              = false;
+	 analyte->type = US_Analyte::RNA;
+	 le_descrip->setText("New RNA Analyte");
+	 update_nucleotide();
+	 mw = le_nucle_mw->text().split( " ", QString::SkipEmptyParts );
+	 analyte->description = le_descrip->text();
+	 analyte->mw          = mw[ 0 ].toDouble() * 1000.0;
+	 analyte->vbar20      = le_nucle_vbar->text().toDouble();
          break;
 
       case US_Analyte::CARBOHYDRATE:
          visProt              = false;
          visDRna              = false;
+	 analyte->type = US_Analyte::CARBOHYDRATE;
+	 le_descrip->setText("New Carbohydrate Analyte");
+	 analyte->description = le_descrip->text();
+	 analyte->mw          = le_carbs_mw  ->text().toDouble();
+	 analyte->vbar20      = le_carbs_vbar->text().toDouble();
+	 analyte->grad_form   = ck_grad_form ->isChecked();
          break;
    }
    lb_descrip ->setVisible( visAll );
@@ -2337,6 +2426,8 @@ void US_AnalyteMgrNew::newAccepted()
 {
 DbgLv(1) << "AnaN:SL: newAccepted()";
    analyte->analyteGUID   = US_Util::new_guid();
+   
+   qDebug() << "Analyte Type: " << analyte->type;
 
    if ( from_db )
    { // Add analyte to database
