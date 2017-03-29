@@ -2407,6 +2407,8 @@ DbgLv(1) << "AnaN:SL: newAccepted()";
    
    qDebug() << "Analyte Type: " << analyte->type;
 
+   if ( ! data_ok() ) return;
+
    if ( analyte->type == US_Analyte::DNA ||
         analyte->type == US_Analyte::RNA  )
    {
@@ -2438,7 +2440,7 @@ DbgLv(1) << "AnaN:SL: newAccepted()";
       analyte->vbar20 = le_protein_vbar20->text().toDouble();
    }
 
-      // verify_vbar();
+   verify_vbar();
 
    if ( from_db )
    { // Add analyte to database
@@ -2488,6 +2490,144 @@ DbgLv(1) << "AnaN:SL: write_disk()  bufID" << analyte->analyteGUID;
    analyte->write( false, filename );
 }
 
+
+bool US_AnalyteMgrNew::data_ok( void )
+{
+   // Check to see if a sequence is entered
+   if ( analyte->sequence.isEmpty() )
+   {
+      QMessageBox question( QMessageBox::Question,
+            tr( "Attention" ),
+            tr( "There is no sequence defined.\n\n" 
+                "Continue?" ), 
+            QMessageBox::No,
+            this );
+
+      question.addButton( tr( "Continue" ), QMessageBox::YesRole );
+
+      if ( question.exec() == QMessageBox::No )
+         return false;
+   }
+   
+   analyte->description = le_descrip->text().remove( '|' );
+
+   if ( analyte->description.isEmpty() )
+   {
+      QMessageBox question( QMessageBox::Question,
+            tr( "Attention" ),
+            tr( "There is no description for this analyte.\n\n" 
+                "Continue?" ), 
+            QMessageBox::No,
+            this );
+
+      question.addButton( tr( "Continue" ), QMessageBox::YesRole );
+
+      if ( question.exec() == QMessageBox::No )
+         return false;
+
+   }
+
+   double vbar = le_protein_vbar->text().toDouble();
+
+   if ( analyte->type == US_Analyte::PROTEIN && ( vbar <= 0.0  || vbar > 2.0 ) )
+   {
+      QMessageBox::information( this,
+         tr( "Attention" ), 
+         tr( "The vbar entry (%1) is not a reasonable value." )
+         .arg( vbar ) );
+      return false;
+   }
+
+   double mwvl   = le_protein_mw->text().toDouble();
+   if ( analyte->type == US_Analyte::DNA ||
+        analyte->type == US_Analyte::RNA  )
+      mwvl   = le_nucle_mw->text().section( " ", 1, 1 ).toDouble();
+   else if ( analyte->type == US_Analyte::CARBOHYDRATE )
+      mwvl   = le_carbs_mw->text().toDouble();
+
+   if ( mwvl <= 0.0 )
+   {
+      QMessageBox::information( this,
+         tr( "Attention" ), 
+         tr( "The Molecular Weight entry (%1) is not a reasonable value." )
+         .arg( mwvl ) );
+      return false;
+   }
+
+   return true;
+}
+
+void US_AnalyteMgrNew::verify_vbar()
+{
+   if ( analyte->type == US_Analyte::PROTEIN )
+   {
+      US_Math2::Peptide p;
+      double temperature = le_protein_temp->text().toDouble();
+      US_Math2::calc_vbar( p, analyte->sequence, temperature );
+
+      double mwval    = le_protein_mw->text().toDouble();
+
+      if ( p.mw == 0.0 )
+         p.mw            = mwval;
+
+      else if ( mwval != 0.0  &&  qAbs( mwval - p.mw ) > 1.0 )
+      {
+         QString msg  = tr(
+               "There is a difference between<br/>"
+               "the Molecular Weight value that you specified and<br/>"
+               "the one calculated from the protein sequence.<br/> <br/>"
+               "Do you wish to accept the specified value?<ul>"
+               "<li><b>Yes</b> to use %1 (the specified);</li>"
+               "<li><b>No </b> to use %2 (the calculated).</li></ul>" )
+                            .arg( mwval ).arg( p.mw );
+
+         QMessageBox msgBox     ( this );
+         msgBox.setWindowTitle  ( tr( "Analyte MW Difference" ) );
+         msgBox.setTextFormat   ( Qt::RichText );
+         msgBox.setText         ( msg );
+         msgBox.addButton       ( QMessageBox::No  );
+         msgBox.addButton       ( QMessageBox::Yes );
+         msgBox.setDefaultButton( QMessageBox::Yes );
+
+         if ( msgBox.exec() == QMessageBox::No )
+            mwval        = p.mw;
+      }
+
+      else if ( mwval == 0.0 )
+         mwval        = p.mw;
+
+      le_protein_mw->setText( QString::number( (int) mwval ) );
+      analyte->mw      = mwval;
+      double pvbar    = p.vbar20;
+      double vbar20   = le_protein_vbar20->text().toDouble();
+
+      if ( qAbs( vbar20 - pvbar ) > 1e-4 )
+      {
+         QString msg  = tr(
+               "There is a difference between<br/>"
+               "the vbar20 value that you specified and<br/>"
+               "the one calculated from the protein sequence.<br/> <br/>"
+               "Do you wish to accept the specified value?<ul>"
+               "<li><b>Yes</b> to use %1 (the specified);</li>"
+               "<li><b>No </b> to use %2 (the calculated).</li></ul>" )
+                            .arg( vbar20 ).arg( pvbar );
+
+         QMessageBox msgBox( this );
+         msgBox.setWindowTitle( tr( "Analyte Vbar Difference" ) );
+         msgBox.setTextFormat ( Qt::RichText );
+         msgBox.setText       ( msg );
+         msgBox.addButton     ( QMessageBox::No  );
+         msgBox.addButton     ( QMessageBox::Yes );
+         msgBox.setDefaultButton( QMessageBox::Yes );
+
+         if ( msgBox.exec() == QMessageBox::No )
+            vbar20       = pvbar;
+
+         analyte->vbar20  = vbar20;
+         le_protein_vbar20->setText( QString::number( vbar20 ) );
+      }
+   }
+}
 
 // Edit Existing Analyte panel
 US_AnalyteMgrEdit::US_AnalyteMgrEdit( int *invID, int *select_db_disk,
