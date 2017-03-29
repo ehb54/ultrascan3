@@ -2066,83 +2066,29 @@ DbgLv(1) << "agS: sAtype: type" << type;
 
  qDebug() << "Type: " << type;
  anatype = type;
- QStringList mw;
-   switch ( type )
+ 
+ reset();
+ 
+ switch ( type )
    {
       case US_Analyte::PROTEIN:
          visDRna              = false;
          visCarb              = false;
-	 analyte->type = US_Analyte::PROTEIN;
-	 le_descrip->setText("New Protein Analyte");
-	 le_protein_mw->setText("0");
-	 le_protein_vbar20->setText("0.0000");
-	 le_protein_vbar  ->setText("0.0000");
-	 if ( ! signal_tmp ) le_protein_temp->setText( "20.0" );
-	 le_protein_residues ->setText("0");
-	 le_protein_e280 ->setText("0");
-	 analyte->description = le_descrip->text();
-	 analyte->mw          = le_protein_mw->text().toDouble();
-	 analyte->vbar20      = le_protein_vbar20->text().toDouble();
 	 break;
 
       case US_Analyte::DNA:
 	 visProt              = false;
          visCarb              = false;
-	 analyte->type = US_Analyte::DNA;
-	 le_descrip->setText("New DNA Analyte");
-	 ck_stranded->setChecked( true );
-	 ck_mw_only ->setChecked( false );
-	 rb_3_hydroxyl->setChecked( true );
-	 rb_5_hydroxyl->setChecked( true );
-	 ct_sodium          ->setValue( 0.0 );
-	 ct_potassium       ->setValue( 0.0 );
-	 ct_lithium         ->setValue( 0.0 );
-	 ct_magnesium       ->setValue( 0.0 );
-	 ct_calcium         ->setValue( 0.0 );
-
-	 update_nucleotide();
-	 le_nucle_vbar->setText("0.5500");
-	 mw = le_nucle_mw->text().split( " ", QString::SkipEmptyParts );
-	 analyte->description = le_descrip->text();
-	 analyte->mw          = mw[ 0 ].toDouble() * 1000.0;
-	 analyte->vbar20      = le_nucle_vbar->text().toDouble();
          break;
 
       case US_Analyte::RNA:
          visProt              = false;
          visCarb              = false;
-	 analyte->type = US_Analyte::RNA;
-	 le_descrip->setText("New RNA Analyte");
-	 ck_stranded->setChecked( true );
-	 ck_mw_only ->setChecked( false );
-	 rb_3_hydroxyl->setChecked( true );
-	 rb_5_hydroxyl->setChecked( true );
-	 ct_sodium          ->setValue( 0.0 );
-	 ct_potassium       ->setValue( 0.0 );
-	 ct_lithium         ->setValue( 0.0 );
-	 ct_magnesium       ->setValue( 0.0 );
-	 ct_calcium         ->setValue( 0.0 );
-	 
-	 update_nucleotide();
-	 le_nucle_vbar->setText("0.5500");
-	 mw = le_nucle_mw->text().split( " ", QString::SkipEmptyParts );
-	 analyte->description = le_descrip->text();
-	 analyte->mw          = mw[ 0 ].toDouble() * 1000.0;
-	 analyte->vbar20      = le_nucle_vbar->text().toDouble();
          break;
 
       case US_Analyte::CARBOHYDRATE:
          visProt              = false;
          visDRna              = false;
-	 analyte->type = US_Analyte::CARBOHYDRATE;
-	 le_descrip->setText("New Carbohydrate Analyte");
-	 ck_grad_form       ->setChecked( false );
-	 le_carbs_mw        ->clear();
-	 le_carbs_vbar      ->clear();
-	 analyte->description = le_descrip->text();
-	 analyte->mw          = le_carbs_mw  ->text().toDouble();
-	 analyte->vbar20      = le_carbs_vbar->text().toDouble();
-	 analyte->grad_form   = ck_grad_form ->isChecked();
          break;
    }
    lb_descrip ->setVisible( visAll );
@@ -2460,6 +2406,39 @@ DbgLv(1) << "AnaN:SL: newAccepted()";
    analyte->analyteGUID   = US_Util::new_guid();
    
    qDebug() << "Analyte Type: " << analyte->type;
+
+   if ( analyte->type == US_Analyte::DNA ||
+        analyte->type == US_Analyte::RNA  )
+   {
+      // Strip trailing items from the mw text box.
+      QStringList mw = le_nucle_mw->text().split( " ", QString::SkipEmptyParts );
+
+      if ( mw.empty() )
+      {
+         QMessageBox::warning( this,
+            tr( "Analyte Error" ),
+            tr( "Molecular weight is empty.  Define a sequence." ) );
+         return;
+      }
+
+      analyte->mw     = mw[ 0 ].toDouble() * 1000.0;
+      analyte->vbar20 = le_nucle_vbar->text().toDouble();
+   }
+
+   else if ( analyte->type == US_Analyte::CARBOHYDRATE )
+   {
+      analyte->mw        = le_carbs_mw  ->text().toDouble();
+      analyte->vbar20    = le_carbs_vbar->text().toDouble();
+      analyte->grad_form = ck_grad_form ->isChecked();
+   }
+
+   else
+   {
+      analyte->mw     = le_protein_mw    ->text().toDouble();
+      analyte->vbar20 = le_protein_vbar20->text().toDouble();
+   }
+
+      // verify_vbar();
 
    if ( from_db )
    { // Add analyte to database
