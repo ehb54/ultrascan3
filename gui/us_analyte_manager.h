@@ -230,6 +230,7 @@ class US_AnalyteMgrNew : public US_Widgets
       
       QPushButton*  pb_sequence;
       QPushButton*  pb_accept;
+      QPushButton*  pb_reset;
       QPushButton*  pb_cancel;
 
       QLabel*       bn_calcmw;
@@ -330,7 +331,8 @@ class US_AnalyteMgrNew : public US_Widgets
       void update_nucleotide  ( double );
       void update_nucleotide  ( void );
 
-      void set_analyte_type( int  );
+      void set_analyte_type   ( int  );
+      void reset              ( void );
 
    public slots:
       void init_analyte		( void );
