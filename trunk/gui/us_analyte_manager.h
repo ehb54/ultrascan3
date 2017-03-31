@@ -13,6 +13,10 @@
 #include "us_analyte.h"
 #include <qwt_counter.h>
 
+#include "us_minimize.h"
+#include "us_extinction_gui.h"
+#include "us_extinctfitter_gui.h"
+
 #ifndef DbgLv
 #define DbgLv(a) if(dbg_level>=a)qDebug()
 #endif
@@ -340,6 +344,26 @@ class US_AnalyteMgrNew : public US_Widgets
       void init_analyte		( void );
       
 };
+
+// class to view buffer spectrum
+class US_AnalyteViewSpectrum : public US_Widgets
+{
+   Q_OBJECT
+
+   public:
+
+        US_AnalyteViewSpectrum(QMap<double,double>& analyte_temp);
+	
+	QMap <double, double> analyte;
+	US_Plot*	plotLayout;
+	QwtPlot	 	*data_plot;
+	
+	void plot_extinction();
+	
+   private:
+	
+};
+
 
 //! \class US_AnalyteMgrEdit
 //!      This class provides a tabbed entry for non-hydrodynamic analyte mods
