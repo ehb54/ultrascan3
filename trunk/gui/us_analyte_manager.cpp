@@ -468,6 +468,48 @@ bool US_AnalyteMgrSelect::analyte_path( QString& path )
    return true;
 }
 
+// Display analyte sequence
+void US_AnalyteMgrSelect::sequence( void )
+{
+  QString inf_text;
+  QString big_line( "" );
+   
+  QFont tfont( QFont( US_Widgets::fixedFont().family(),
+		      US_GuiSettings::fontSize() -1  ) );
+  QFontMetrics fmet( tfont );
+  
+  QString seqsmry = analyte->sequence;
+  
+  int nlines = int(seqsmry.count() / 70);
+  // if (nlines > 1)
+  //   big_line += QString( 70, ' ' );
+  // else
+  //   big_line = seqsmry;
+  
+  big_line += QString( 70, ' ' );
+
+  //qDebug() << "Seq. length: " << seqsmry.length();
+  
+  // Build and show the analyte sequence
+   int iwid     = fmet.width( big_line ) + 40;
+   int ihgt     = fmet.lineSpacing() * qMin( 22, nlines ) + 80;
+
+   US_Editor* ana_info = new US_Editor( US_Editor::DEFAULT, true,
+                                        QString(), this );
+   ana_info->setWindowTitle( tr( "Selected Analyte Sequence Information" ) );
+   ana_info->move( pos() + QPoint( 200, 200 ) );
+   ana_info->resize( iwid, ihgt );
+   ana_info->e->setFont( tfont );
+   if ( seqsmry.count() != 0 )
+     ana_info->e->setText( seqsmry );
+   else
+     {
+       QString empty("  Sequence is Empty    ");
+       ana_info->e->setText( empty );
+     }
+   ana_info->show();
+}
+
 // Display detailed information on selected analyte
 void US_AnalyteMgrSelect::info_analyte( void )
 {
