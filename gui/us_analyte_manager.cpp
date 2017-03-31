@@ -481,15 +481,8 @@ void US_AnalyteMgrSelect::sequence( void )
   QString seqsmry = analyte->sequence;
   
   int nlines = int(seqsmry.count() / 70);
-  // if (nlines > 1)
-  //   big_line += QString( 70, ' ' );
-  // else
-  //   big_line = seqsmry;
-  
   big_line += QString( 70, ' ' );
 
-  //qDebug() << "Seq. length: " << seqsmry.length();
-  
   // Build and show the analyte sequence
    int iwid     = fmet.width( big_line ) + 40;
    int ihgt     = fmet.lineSpacing() * qMin( 22, nlines ) + 80;
@@ -501,19 +494,21 @@ void US_AnalyteMgrSelect::sequence( void )
    ana_info->resize( iwid, ihgt );
    ana_info->e->setFont( tfont );
    if ( seqsmry.count() != 0 )
-     ana_info->e->setText( seqsmry );
+     {
+       ana_info->e->setText( seqsmry );
+       ana_info->show();
+     }
    else
      {
-       QString empty("  Sequence is Empty    ");
-       ana_info->e->setText( empty );
+       QMessageBox::information( this,
+				 tr( "WARNING" ),
+				 tr( "Analyte does not have sequence!" ) );
      }
-   ana_info->show();
 }
 
 // Display detailed information on selected analyte
 void US_AnalyteMgrSelect::info_analyte( void )
 {
-
    qDebug() << "AnalyteID for INFO: " << analyte->analyteGUID;
 
    US_Math2::Peptide p;
@@ -639,115 +634,78 @@ void US_AnalyteMgrSelect::info_analyte( void )
    ana_info->e->setFont( tfont );
    ana_info->e->setText( inf_text );
    ana_info->show();
+}
 
-   ///////////////////////////////////////////////////////////////////////////////////////////////////
-
+// View Spectrum in Buffer Select
+US_AnalyteViewSpectrum::US_AnalyteViewSpectrum(QMap<double,double>& analyte_temp) : US_Widgets()
+{
+  analyte = analyte_temp;
   
-#if 0
-   QStringList lines;
-   QString inf_text;
-   QString big_line( "" );
-   int mxlch    = 0;
-   int nspec    = buffer->extinction.keys().count();
-   int ncomp    = buffer->component.count();
-   QFont tfont( QFont( US_Widgets::fixedFont().family(),
-                       US_GuiSettings::fontSize() - 1 ) );
-   QFontMetrics fmet( tfont );
+  data_plot = new QwtPlot();
+  //changedCurve = NULL;
+  plotLayout = new US_Plot(data_plot, tr(""), tr("Wavelength(nm)"), tr(""));
+  data_plot->setCanvasBackground(Qt::black);
+  data_plot->setTitle("Extinction Profile");
+  data_plot->setMinimumSize(560, 240);
+  //data_plot->enableAxis(1, true);
+  data_plot->setAxisTitle(0, "Extinction OD/(mol*cm)");
 
-   // Compose buffer information lines
-   lines << tr( "Detailed information on the selected buffer" );
-   lines << "";
-   lines << tr( "Description:              " ) + buffer->description;
-   lines << tr( "Density:                  " ) + QString::number(
-                                                    buffer->density );
-   lines << tr( "Viscosity:                " ) + QString::number(
-                                                    buffer->viscosity );
-   lines << tr( "pH:                       " ) + QString::number(
-                                                    buffer->pH );
-   lines << tr( "Compressibility:          " ) + QString::number(
-                                                    buffer->compressibility );
-   lines << tr( "Manual density,viscosity: " ) + ( buffer->manual
-                                                   ? tr( "ON" ) : tr( "off" ) );
-   lines << tr( "Database ID (-1==HD):     " ) + buffer->analyteID;
-   lines << tr( "Global Identifier:        " ) + buffer->GUID;
-   lines << tr( "Inputting Investigator:   " ) + buffer->person;
-   lines << tr( "Spectrum pairs Count:     " ) + QString::number( nspec );
-   lines << tr( "Components Count:         " ) + QString::number( ncomp );
-   lines << "";
+  us_grid(data_plot);
+   
+  QGridLayout* main;
+  main = new QGridLayout(this);
+  main->setSpacing(2);
+  //main->setContentsMargins(2,2,2,2);
+  main->addLayout(plotLayout, 0, 1);
 
-   // Compose the sections on each component
-   for ( int ii = 0; ii < ncomp; ii++ )
-   {
-      QString compx   = tr( "%1 of %2" ).arg( ii + 1 ).arg( ncomp );
+  plot_extinction();
 
-      lines << "  " + tr( "Component index:          " ) + compx;
-      lines << "  " + tr( "Gradient Forming:         " ) + sgradf;
-      lines << "";
-   }
+}
 
-   // Compose the section for any extinction spectrum
-   QString stitle  = tr( "  Extinction Spectrum:      " );
-   QString spline  = stitle;
-   QList< double >  keys = buffer->extinction.keys();
-DbgLv(1) << "AnaS-info: keys" << keys;
-DbgLv(1) << "AnaS-info values" << buffer->extinction.values();
-   for ( int ii = 0; ii < nspec; ii++ )
-   {
-      double waveln   = keys[ ii ];
-      double extinc   = buffer->extinction[ waveln ];
-DbgLv(1) << "AnaS-info:  ii" << ii << "waveln extinc" << waveln << extinc;
-      QString spair   = QString::number( waveln ) + " / " +
-                        QString::number( extinc ) + "  ";
-      spline         += spair;
-
-      if ( ( ii % 4 ) == 3  ||  ( ii + 1 ) == nspec )
-      {
-         lines << spline;
-         spline          = stitle;
-      }
-   }
-   if ( nspec > 0 )  lines << "";
-
-   // Create a single text string of info lines
-   int nlines   = lines.count();
-
-   for ( int ii = 0; ii < nlines; ii++ )
-   {
-      QString cur_line = lines[ ii ];
-      int nlchr        = cur_line.length();
-
-      if ( nlchr > mxlch )
-      {
-         mxlch         = nlchr;
-         big_line      = cur_line;
-      }
-
-      inf_text     += cur_line + "\n";
-   }
-
-   // Build and show the buffer details dialog
-   int iwid     = fmet.width( big_line ) + 40;
-   int ihgt     = fmet.lineSpacing() * qMin( 22, nlines ) + 80;
-
-   US_Editor* buf_info = new US_Editor( US_Editor::DEFAULT, true,
-                                        QString(), this );
-   buf_info->setWindowTitle( tr( "Detailed Selected Analyte Information" ) );
-   buf_info->move( pos() + QPoint( 200, 200 ) );
-   buf_info->resize( iwid, ihgt );
-   buf_info->e->setFont( tfont );
-   buf_info->e->setText( inf_text );
-   buf_info->show();
-#endif
+void US_AnalyteViewSpectrum::plot_extinction()
+{ 
+  QVector <double> x;
+  QVector <double> y;
+  
+  QMap<double, double>::iterator it;
+  
+  for (it = analyte.begin(); it != analyte.end(); ++it) {
+    x.push_back(it.key());
+    y.push_back(it.value());
+  }
+  
+  QwtSymbol* symbol = new QwtSymbol;
+  symbol->setSize(10);
+  symbol->setPen(QPen(Qt::blue));
+  symbol->setBrush(Qt::yellow);
+  symbol->setStyle(QwtSymbol::Ellipse);
+  
+  QwtPlotCurve *spectrum;
+  spectrum = us_curve(data_plot, "Spectrum Data");
+  spectrum->setSymbol(symbol);    
+  spectrum->setSamples( x.data(), y.data(), (int) x.size() );
+  data_plot->replot();
 }
 
 // Display a spectrum dialog for list/manage
 void US_AnalyteMgrSelect::spectrum( void )
 {
-DbgLv(1) << "AnaS:SL: spectrum()  count" << analyte->extinction.count();
-QMessageBox::information( this,
- tr( "INCOMPLETE" ),
- tr( "A new Spectrum dialog is under development." ) );
+  qDebug() << analyte->extinction;
+  
+  if (analyte->extinction.isEmpty())
+    {
+      QMessageBox::information( this,
+      tr( "WARNING" ),
+      tr( "Analyte does not have spectrum data!" ) );
+    }
+  else
+    {
+      US_AnalyteViewSpectrum *w = new US_AnalyteViewSpectrum(analyte->extinction);
+      w->setParent(this, Qt::Window);
+      w->show();
+    }
 }
+
 
 // Remove a selected analyte
 void US_AnalyteMgrSelect::delete_analyte( void )
