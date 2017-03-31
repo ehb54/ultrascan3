@@ -471,6 +471,136 @@ bool US_AnalyteMgrSelect::analyte_path( QString& path )
 // Display detailed information on selected analyte
 void US_AnalyteMgrSelect::info_analyte( void )
 {
+
+   qDebug() << "AnalyteID for INFO: " << analyte->analyteGUID;
+
+   US_Math2::Peptide p;
+   US_Math2::calc_vbar( p, analyte->sequence, 20.0 );
+   analyte->mw         = ( analyte->mw == 0.0 ) ? p.mw : analyte->mw;
+       
+   QStringList lines;
+   QString inf_text;
+   QString big_line( "" );
+   int mxlch    = 0;
+   int nspec    = analyte->extinction.keys().count();
+   //qDebug() << "#NSPEC:  " << nspec;
+   QFont tfont( QFont( US_Widgets::fixedFont().family(),
+                       US_GuiSettings::fontSize() - 1 ) );
+   QFontMetrics fmet( tfont );
+   
+   QString atype   = tr( "Other" );
+   atype           = analyte->type == ( US_Analyte::PROTEIN )
+                                  ? tr( "Protein" ) : atype;
+   atype           = analyte->type == ( US_Analyte::DNA ) ? tr( "DNA" ) : atype;
+   atype           = analyte->type == ( US_Analyte::RNA ) ? tr( "RNA" ) : atype;
+
+   int seqlen      = analyte->sequence.length();
+   QString seqsmry = analyte->sequence;
+   int total       = 0;
+   if ( seqlen == 0 )
+      seqsmry         = tr( "(empty)" );
+   else
+   {
+      seqsmry         = seqsmry.toLower()
+                               .remove( QRegExp( "[\\s0-9]" ) );
+      seqlen          = seqsmry.length();
+      if ( seqlen > 25 )
+      {
+         seqsmry        = QString( seqsmry ).left( 10 ) + " ... "
+                        + QString( seqsmry ).mid( seqlen - 10 );
+      }
+      seqsmry          += "\n  ";
+
+      for ( int ii = 0; ii < 26; ii++ )
+      {
+         QString letter  = QString( QChar( 'a' + ii ) );
+         int lcount      = analyte->sequence.count( letter );
+         total          += lcount;
+         if ( lcount > 0 )
+         {
+            seqsmry     += QString().sprintf( "%d", lcount )
+                           + " " + letter.toUpper() + ", ";
+	    //seqsmry          += "\n  ";
+         }
+      }
+      seqsmry     += QString().sprintf( "%d", total ) + " tot";
+   }
+
+   // Compose buffer information lines
+   lines << tr( "Detailed information on the selected Analyte" );
+   lines << "";
+   lines << tr( "Description:              " ) + analyte->description;
+   lines << tr( "Type:                     " ) + atype;
+   lines << tr( "Molecular Weight:         " ) + QString::number(
+                                                    analyte->mw ) + " D";;
+   lines << tr( "Vbar (20 deg. C):         " ) + QString::number(
+                                                    analyte->vbar20 );
+   lines << tr( "Sequence length:          " ) + QString::number(seqlen);
+   lines << tr( "Database ID (-1==HD):     " ) + analyte->analyteID;
+   lines << tr( "Global Identifier:        " ) + analyte->analyteGUID;
+   //   lines << tr( "Inputting Investigator:   " ) + analyte->person;
+   lines << tr( "Spectrum pairs Count:     " ) + QString::number( nspec );
+   //lines << tr( "Components Count:         " ) + QString::number( ncomp );
+   lines << "";
+
+   // Sequence Composition 
+   lines << tr( "Sequence summary:" );
+   lines << "  " + seqsmry;
+   lines << "";
+
+   // Compose the section for any extinction spectrum
+   QString stitle  = tr( "Extinction Spectrum:      " );
+   QString spline  = stitle;
+   QList< double >  keys = analyte->extinction.keys();
+   for ( int ii = 0; ii < nspec; ii++ )
+   {
+      double waveln   = keys[ ii ];
+      double extinc   = analyte->extinction[ waveln ];
+      QString spair   = QString::number( waveln ) + " / " +
+                        QString::number( extinc ) + "  ";
+      spline         += spair;
+
+      if ( ( ii % 4 ) == 3  ||  ( ii + 1 ) == nspec )
+      {
+         lines << spline;
+         spline          = stitle;
+      }
+   }
+   if ( nspec > 0 )  lines << "";
+
+   // Create a single text string of info lines
+   int nlines   = lines.count();
+
+   for ( int ii = 0; ii < nlines; ii++ )
+   {
+      QString cur_line = lines[ ii ];
+      int nlchr        = cur_line.length();
+
+      if ( nlchr > mxlch )
+      {
+         mxlch         = nlchr;
+         big_line      = cur_line;
+      }
+
+      inf_text     += cur_line + "\n";
+   }
+
+   // Build and show the analyte details dialog
+   int iwid     = fmet.width( big_line ) + 40;
+   int ihgt     = fmet.lineSpacing() * qMin( 22, nlines ) + 80;
+
+   US_Editor* ana_info = new US_Editor( US_Editor::DEFAULT, true,
+                                        QString(), this );
+   ana_info->setWindowTitle( tr( "Detailed Selected Analyte Information" ) );
+   ana_info->move( pos() + QPoint( 200, 200 ) );
+   ana_info->resize( iwid, ihgt );
+   ana_info->e->setFont( tfont );
+   ana_info->e->setText( inf_text );
+   ana_info->show();
+
+   ///////////////////////////////////////////////////////////////////////////////////////////////////
+
+  
 #if 0
    QStringList lines;
    QString inf_text;
@@ -1014,6 +1144,8 @@ DbgLv(1) << "agN: aInfo" << ana->description;
 // Message string for analyte summary
 QString US_AnalyteMgrSelect::analyte_smry( US_Analyte* ana )
 {
+  qDebug() << "AnalyteID for SMRY: " << analyte->analyteGUID;
+
 DbgLv(1) << "agN: aInfo   descr" << ana->description << "type" << ana->type;
    // Get base analyte value strings
    QString atype   = tr( "Other" );
