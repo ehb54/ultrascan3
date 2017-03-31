@@ -176,6 +176,7 @@ class US_AnalyteMgrSelect: public US_Widgets
       void set_analyte_type( int  );
       QString analyte_info ( US_Analyte* );
       QString analyte_smry ( US_Analyte* );
+      void sequence        (void);
 
       void help( void ) { showHelp.show_help( "analyte_select.html" ); };
 
