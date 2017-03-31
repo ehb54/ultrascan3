@@ -636,7 +636,7 @@ void US_AnalyteMgrSelect::info_analyte( void )
    ana_info->show();
 }
 
-// View Spectrum in Buffer Select
+// View Spectrum in Analyte Select
 US_AnalyteViewSpectrum::US_AnalyteViewSpectrum(QMap<double,double>& analyte_temp) : US_Widgets()
 {
   analyte = analyte_temp;
