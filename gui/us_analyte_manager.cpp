@@ -12,6 +12,9 @@
 #include "us_editor.h"
 #include "us_math2.h"
 
+#define setSymbol(a)      setSymbol(*a)
+#define setSamples(a,b,c) setData(a,b,c)
+
 /*  Class US_ASequenceEditor */
 US_ASequenceEditor::US_ASequenceEditor( const QString& sequence ) 
    : US_WidgetsDialog( 0, 0 )
