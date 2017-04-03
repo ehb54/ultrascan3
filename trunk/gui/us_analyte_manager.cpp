@@ -12,8 +12,10 @@
 #include "us_editor.h"
 #include "us_math2.h"
 
+#if QT_VERSION < 0x050000
 #define setSymbol(a)      setSymbol(*a)
 #define setSamples(a,b,c) setData(a,b,c)
+#endif
 
 /*  Class US_ASequenceEditor */
 US_ASequenceEditor::US_ASequenceEditor( const QString& sequence ) 
