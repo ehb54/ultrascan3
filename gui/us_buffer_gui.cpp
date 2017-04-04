@@ -1328,7 +1328,7 @@ void US_BufferGuiNew::spectrum()
 
   
   //US_Extinction  *w = new US_Extinction("BUFFER", le_descrip->text(), (QWidget*)this); 
-  w = new US_Extinction("BUFFER", le_descrip->text(), (QWidget*)this); 
+  w = new US_Extinction("BUFFER", le_descrip->text(), "", (QWidget*)this); 
   
   connect( w, SIGNAL( get_results(QMap < double, double > & )), this, SLOT(process_results( QMap < double, double > & ) ) );
   
@@ -1519,7 +1519,7 @@ DbgLv(1) << "BufE:SL: spectrum()  count" << buffer->extinction.count();
      msgBox.exec();
      
      if (msgBox.clickedButton()==pButtonUpload) {
-       w = new US_Extinction("BUFFER", le_descrip->text(), (QWidget*)this); 
+       w = new US_Extinction("BUFFER", le_descrip->text(), "", (QWidget*)this); 
        
        connect( w, SIGNAL( get_results(QMap < double, double > & )), this, SLOT(process_results( QMap < double, double > & ) ) );
        
@@ -1633,7 +1633,7 @@ DbgLv(1) << "BufE:SL: spectrum()  count" << buffer->extinction.count();
        // upload and fit new spectrum
        buffer->replace_spectrum = true;
 
-       w = new US_Extinction("BUFFER", le_descrip->text(), (QWidget*)this); 
+       w = new US_Extinction("BUFFER", le_descrip->text(), "", (QWidget*)this); 
 
        connect( w, SIGNAL( get_results(QMap < double, double > & )), this, SLOT(process_results( QMap < double, double > & ) ) );
 
