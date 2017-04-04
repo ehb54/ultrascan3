@@ -5,6 +5,7 @@
 #include "us_math2.h"
 #include "us_datafiles.h"
 #include "us_util.h"
+#include "us_eprofile.h"
 
 #define DEBUG_QUERY qDebug() << "Q" << q << "Err" << db->lastErrno() << db->lastError(); //!< Debug print showing DB query string and error returns
 
@@ -18,6 +19,7 @@ US_Analyte::US_Analyte()
    type           = PROTEIN;
    grad_form      = false;
 
+   replace_spectrum = false;
    // Placeholders for DNA/RNA
    doubleStranded = true;
    complement     = false;
@@ -148,6 +150,7 @@ DEBUG_QUERY;
       nucleotide();
 
    q.clear();
+   /*
    q << "get_spectrum" << analyteID << "Analyte" << "Extinction";
 
    db->query( q );
@@ -179,7 +182,12 @@ DEBUG_QUERY;
       double coeff  = db->value( 2 ).toDouble();
       fluorescence[ lambda ] = coeff;
    }
-
+   */
+   QString compType("Analyte");
+   QString valType("molarExtinction");
+   US_ExtProfile::fetch_eprofile( db, analyteID.toInt(), compType, valType, extinction );
+   
+   
    return US_DB2::OK;
 }
 
@@ -816,7 +824,34 @@ DEBUG_QUERY;
    if ( type == US_Analyte::DNA  || type == US_Analyte::RNA )
       write_nucleotide( db );
 
-   set_spectrum( db );
+   //set_spectrum( db );
+   
+   QString compType("Analyte");
+   QString valType("molarExtinction");
+   qDebug() << "AnalyteID for extProfile: " << analyteID.toInt();
+   
+   if ( !extinction.isEmpty() )
+   {
+      if ( !replace_spectrum )
+      {
+         qDebug() << "Creating Spectrum!!!";
+         US_ExtProfile::create_eprofile( db, analyteID.toInt(), compType, valType, extinction);
+      }
+      else
+      {
+         qDebug() << "Updating Spectrum!!!";
+
+         QMap<double, double> new_extinction = extinction;
+         int profileID = US_ExtProfile::fetch_eprofile(  db, analyteID.toInt(), compType, valType, extinction);
+         
+         qDebug() << "Old Extinction keys: " << extinction.keys().count() << ", ProfileID: " << profileID;
+         US_ExtProfile::update_eprofile( db, profileID, analyteID.toInt(), compType, valType, new_extinction);
+         qDebug() << "New Extinction keys: " << new_extinction.keys().count() << ", ProfileID: " << profileID;
+         
+         replace_spectrum = false;
+      }
+   }
+   
 
    // Write to disk too
    QString path;

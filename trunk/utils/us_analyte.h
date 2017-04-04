@@ -29,6 +29,8 @@ class US_UTIL_EXTERN US_Analyte
       analyte_t         type;           //!< The type of analyte
       bool              grad_form;      //!< Flag if gradient-forming
 
+      bool              replace_spectrum;
+      
       // The following values are valid for DNA/RNA only
       bool              doubleStranded; //!< Single or double stranded analyte?
       bool              complement;     //!< Is the strand a complement?

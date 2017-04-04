@@ -11,6 +11,7 @@
 #include "us_constants.h"
 #include "us_editor.h"
 #include "us_math2.h"
+#include "us_eprofile.h"
 
 #if QT_VERSION < 0x050000
 #define setSymbol(a)      setSymbol(*a)
@@ -2825,6 +2826,147 @@ US_AnalyteMgrEdit::US_AnalyteMgrEdit( int *invID, int *select_db_disk,
             this,        SLOT  ( editCanceled() ) );
    connect( pb_accept,   SIGNAL( clicked()      ),
             this,        SLOT  ( editAccepted() ) );
+   connect( pb_spectrum, SIGNAL( clicked()  ),
+            this,        SLOT  ( spectrum() ) );
+}
+
+// Initialize analyte settings, possibly after re-entry to Edit panel
+void US_AnalyteMgrEdit::spectrum( void )
+{
+   if (analyte->extinction.isEmpty())
+   {
+     QMessageBox msgBox;
+     msgBox.setWindowTitle("Edit Existing Analyte");
+     msgBox.setText("Analyte does not have spectrum data!");
+     //msgBox.setInformativeText("You can Upload and fit buffer spectrum, or Enter points manually");
+     msgBox.setInformativeText("You can upload and fit buffer spectrum by clicking 'Create an Absorbance Profile'");
+
+     //msgBox.setText("Buffer does not have spectrum data!\n You can Upload and fit buffer spectrum, or Enter points manually");
+     msgBox.setStandardButtons(QMessageBox::Cancel);
+     QPushButton* pButtonUpload = msgBox.addButton(tr("Create an Absorbance Profile"), QMessageBox::YesRole);
+     //QPushButton* pButtonManually = msgBox.addButton(tr("Enter Manually"), QMessageBox::YesRole);
+     
+     msgBox.setDefaultButton(pButtonUpload);
+     msgBox.exec();
+     
+     if (msgBox.clickedButton()==pButtonUpload) {
+       w = new US_Extinction("ANALYTE", le_descrip->text(), "1.000", (QWidget*)this); 
+       
+       connect( w, SIGNAL( get_results(QMap < double, double > & )), this, SLOT(process_results( QMap < double, double > & ) ) );
+       
+       w->setParent(this, Qt::Window);
+       w->setAttribute(Qt::WA_DeleteOnClose);
+       w->show(); 
+     }
+   }
+ else 
+   {
+     QMessageBox msg;
+     msg.setWindowTitle("Edit Existing Analyte");
+     msg.setText("Choose how do you want to modify existing spectrum:");
+     msg.setInformativeText("If you choose to replace extinction profile, an old profile will be deleted");
+     
+     //msgBox.setText("Buffer does not have spectrum data!\n You can Upload and fit buffer spectrum, or Enter points manually");
+     msg.setStandardButtons(QMessageBox::Cancel);
+     QPushButton* pButtonReplace = msg.addButton(tr("Replace Spectrum"), QMessageBox::YesRole);
+     //QPushButton* pButtonEdit = msg.addButton(tr("Edit Spectrum"), QMessageBox::YesRole);
+     QPushButton* pButtonDelete = msg.addButton(tr("Delete Spectrum"), QMessageBox::YesRole);
+     QPushButton* pButtonView = msg.addButton(tr("View Spectrum"), QMessageBox::YesRole);
+
+     msg.setDefaultButton(pButtonReplace);
+     msg.exec();
+          
+     if (msg.clickedButton()==pButtonView) {
+       US_AnalyteViewSpectrum *s = new US_AnalyteViewSpectrum(analyte->extinction);
+       s->setParent(this, Qt::Window);
+       s->show();
+     }
+
+     if (msg.clickedButton()==pButtonDelete) {
+       // DELETE extinction spectrum 
+       US_Passwd pw;
+       US_DB2    db( pw.getPasswd() );
+
+       if ( db.lastErrno() != US_DB2::OK )
+	 {
+	   QMessageBox::warning( this, tr( "Connection Problem" ),
+                        tr( "Could not connect to database \n" ) + db.lastError() );
+	   return;
+	 }
+
+       QStringList q( "get_analyteID" );
+       q << analyte->analyteGUID;
+       db.query( q );
+
+       int status = db.lastErrno();
+       
+       if (  status == US_DB2::OK )
+	 {
+	   db.next();
+	   QString analyteID = db.value( 0 ).toString();
+	   
+	   QString compType("Analyte");
+	   US_ExtProfile::delete_eprofile( &db, analyteID.toInt(), compType );
+
+	   QMessageBox::information( this,
+				 tr( "Deletion: Success" ),
+				 tr( "Spectrum was successfully deleted") );
+	   	   
+	   emit editAnaAccepted();
+	   //pb_accept->setEnabled( true );
+	 }
+
+       if ( status == US_DB2::BUFFR_IN_USE )
+	 {
+	   QMessageBox::warning( this,
+				 tr( "Spectrum Not Deleted" ),
+				 tr( "This analyte could not be deleted since\n"
+				     "it is in use in one or more solutions." ) );
+	   return;
+	 }
+       if ( status != US_DB2::OK )
+	 {
+	   QMessageBox::warning( this,
+				 tr( "Attention" ),
+				 tr( "Delete failed.\n\n" ) + db.lastError() );
+	 }
+     }
+     
+     // REPLACE Spectrum
+     if (msg.clickedButton()==pButtonReplace) {
+       
+       // upload and fit new spectrum
+       analyte->replace_spectrum = true;
+
+       w = new US_Extinction("ANALYTE", le_descrip->text(), "1.000", (QWidget*)this); 
+
+       connect( w, SIGNAL( get_results(QMap < double, double > & )), this, SLOT(process_results( QMap < double, double > & ) ) );
+
+       w->setParent(this, Qt::Window);
+       w->setAttribute(Qt::WA_DeleteOnClose);
+       w->show(); 
+     }
+
+   }
+}
+
+void US_AnalyteMgrEdit::process_results(QMap < double, double > &xyz)
+{
+  analyte->extinction = xyz;
+  //analyte->description = "Changed_description";
+  
+  QMap<double, double>::iterator it;
+  QString output;
+
+  for (it = xyz.begin(); it != xyz.end(); ++it) {
+    // Format output here.
+    output += QString(" %1 : %2 /n").arg(it.key()).arg(it.value());
+  }
+
+  QMessageBox::information( this, tr( "Test: Data transmitted" ), tr("Number of keys in extinction QMAP: %1 . You may click 'Accept' from the main window to write new buffer into DB").arg(analyte->extinction.keys().count()) );  
+  
+  pb_accept  ->setEnabled( true );
+  w->close(); 
 }
 
 // Initialize analyte settings, possibly after re-entry to Edit panel
@@ -2851,32 +2993,32 @@ DbgLv(1) << "AnaE:SL:ph()" << buffer->pH;
 }
 
 // Slot to manage spectrum of an existing analyte
-void US_AnalyteMgrEdit::spectrum()
-{
-DbgLv(1) << "AnaE:SL: spectrum()  count" << analyte->extinction.count();
-QMessageBox::information( this,
- tr( "INCOMPLETE" ),
- tr( "A new Spectrum dialog is under development.\n\n"
-     "The dialog to follow will be replaced in\n"
-     "the near future." ) );
+// void US_AnalyteMgrEdit::spectrum()
+// {
+// DbgLv(1) << "AnaE:SL: spectrum()  count" << analyte->extinction.count();
+// QMessageBox::information( this,
+//  tr( "INCOMPLETE" ),
+//  tr( "A new Spectrum dialog is under development.\n\n"
+//      "The dialog to follow will be replaced in\n"
+//      "the near future." ) );
 
-   US_Table* sdiag;
-   QMap< double, double > loc_extinct = analyte->extinction;
-   QString stype( "Extinction" );
-   bool changed = false;
-   sdiag        = new US_Table( loc_extinct, stype, changed, this );
-   sdiag->setWindowTitle( "Manage Extinction Spectrum" );
-   sdiag->exec();
-DbgLv(1) << "AnaE:SL: spectr  extincts" << loc_extinct
- << "changed" << changed;
-   if ( changed )
-   {
-      analyte->extinction = loc_extinct;
-DbgLv(1) << "AnaE:SL: spectr   ana extincts CHANGED";
-   }
+//    US_Table* sdiag;
+//    QMap< double, double > loc_extinct = analyte->extinction;
+//    QString stype( "Extinction" );
+//    bool changed = false;
+//    sdiag        = new US_Table( loc_extinct, stype, changed, this );
+//    sdiag->setWindowTitle( "Manage Extinction Spectrum" );
+//    sdiag->exec();
+// DbgLv(1) << "AnaE:SL: spectr  extincts" << loc_extinct
+//  << "changed" << changed;
+//    if ( changed )
+//    {
+//       analyte->extinction = loc_extinct;
+// DbgLv(1) << "AnaE:SL: spectr   ana extincts CHANGED";
+//    }
 
-   pb_accept->setEnabled( !le_descrip->text().isEmpty() );
-}
+//    pb_accept->setEnabled( !le_descrip->text().isEmpty() );
+// }
 
 // Slot to cancel edited analyte
 void US_AnalyteMgrEdit::editCanceled()

@@ -390,7 +390,9 @@ class US_AnalyteMgrEdit : public US_Widgets
                                  analyte (for editing and adding new analytes)
       */
       US_AnalyteMgrEdit( int*, int*, US_Analyte* );
-
+      QString edit_analyte_description;
+      US_Extinction *w;
+      
    signals:
       void editAnaAccepted( void );  //! Edited analyte accepted
       void editAnaCanceled( void );
@@ -420,6 +422,8 @@ class US_AnalyteMgrEdit : public US_Widgets
       void write_db    ( void );
       void write_disk  ( void );
       void help( void ) { showHelp.show_help( "analyte_edit.html" ); };
+
+      void process_results( QMap < double, double > &xyz );
 
    public slots:
       void init_analyte		( void );
