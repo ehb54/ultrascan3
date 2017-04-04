@@ -14,7 +14,7 @@
 
 // Constructor
 
-US_Extinction::US_Extinction(QString buffer, const QString& text, QWidget* parent)
+US_Extinction::US_Extinction(QString buffer, const QString& text, const QString& text_e280, QWidget* parent)
  : US_Widgets(parent,0)  
 {
     
@@ -55,14 +55,18 @@ US_Extinction::US_Extinction(QString buffer, const QString& text, QWidget* paren
    connect( pb_perform, SIGNAL( clicked()), SLOT(perform_global()));
    pb_perform->hide();
 
-   
-   pb_perform_buffer = us_pushbutton( tr( "Perform Buffer Fit") );            // New button for 'Fit Buffer...'
+   if (buffer_temp.toStdString() == "BUFFER")
+     pb_perform_buffer = us_pushbutton( tr( "Perform Buffer Fit") );            // New button for 'Fit Buffer...'
+   if (buffer_temp.toStdString() == "ANALYTE")
+     pb_perform_buffer = us_pushbutton( tr( "Perform Analyte Fit") );            // New button for 'Fit Analyte...'
+
    connect( pb_perform_buffer, SIGNAL( clicked()), SLOT(perform_global_buffer()));
    //pb_perform_buffer->hide();
    
    pb_calculate = us_pushbutton( tr( "Calculate E280 from Peptide File") );
    connect( pb_calculate, SIGNAL( clicked()), SLOT(calculateE280()));
-   pb_calculate->hide();
+   if (buffer_temp.toStdString() == "BUFFER")
+     pb_calculate->hide();
 
    pb_save = us_pushbutton( tr( "Save") );
    connect( pb_save, SIGNAL( clicked()), SLOT(save()));
@@ -80,10 +84,9 @@ US_Extinction::US_Extinction(QString buffer, const QString& text, QWidget* paren
    connect( pb_close, SIGNAL( clicked()), SLOT(close()));
    
    lbl_peptide = us_banner(tr("Peptide Information"));
-   lbl_peptide->hide();
+   if (buffer_temp.toStdString() == "BUFFER")
+     lbl_peptide->hide();
    
-
-
    lbl_wvinfo = us_banner(tr("Wavelength Information:"));
    lbl_associate = us_label(tr("Associate with Run:"));
    lbl_gaussians = us_label(tr("# of Gaussians: "));
@@ -93,7 +96,8 @@ US_Extinction::US_Extinction(QString buffer, const QString& text, QWidget* paren
    lbl_pathlength = us_label(tr("Pathlength:"));
 
    lbl_coefficient = us_label(tr("Extinction Coeff.:"));
-   lbl_coefficient->hide();
+   if (buffer_temp.toStdString() == "BUFFER")
+     lbl_coefficient->hide();
 
 
    lw_file_names = us_listwidget();
@@ -112,8 +116,13 @@ US_Extinction::US_Extinction(QString buffer, const QString& text, QWidget* paren
    le_lambdaLimitRight = us_lineedit("1500.0",1, false);
    le_pathlength = us_lineedit("1.2000", 1, false);
 
+   
    le_coefficient = us_lineedit("1.0000",1, false);
-   le_coefficient->hide();
+   if (text_e280.toStdString() != "0")
+     le_coefficient->setText(text_e280);
+      
+   if (buffer_temp.toStdString() == "BUFFER")
+      le_coefficient->hide();
 
    ct_gaussian = us_counter(2, 1, 50, 15);
    ct_gaussian->setSingleStep(1);
@@ -123,7 +132,8 @@ US_Extinction::US_Extinction(QString buffer, const QString& text, QWidget* paren
    ct_coefficient = us_counter(2, 200, 1500, 280);
    ct_coefficient->setSingleStep(1);
    ct_coefficient->setEnabled(true);
-   ct_coefficient->hide();
+   if (buffer_temp.toStdString() == "BUFFER")
+     ct_coefficient->hide();
 
 
    data_plot = new QwtPlot();

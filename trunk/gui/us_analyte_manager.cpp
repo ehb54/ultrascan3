@@ -1271,7 +1271,8 @@ DbgLv(1) << "agN: id dbdk ana" << invID << select_db_disk << tmp_analyte;
    bn_newanalyte  ->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
    
    pb_sequence = us_pushbutton( tr( "Enter Sequence" ) );
-   
+   pb_spectrum = us_pushbutton( tr( "Manage Spectrum" ) );
+
    pb_cancel   = us_pushbutton( tr( "Cancel" ) );
    connect( pb_cancel,   SIGNAL( clicked()     ),
             this,        SLOT  ( newCanceled() ) );
@@ -1361,25 +1362,6 @@ DbgLv(1) << "agN: id dbdk ana" << invID << select_db_disk << tmp_analyte;
     protein_info->addItem( spacer1, prow, 0, 1, 4 );
     protein_info->setRowStretch( prow, 100 );
     
-   /*
-  //  lb_molecwt           = us_label( tr( "MW (<small>Daltons</small>):" ) );
-  //  lb_vbar20            = us_label( tr( "VBar (<small>cm<sup>3</sup>/g at 20" )
-  // 				     + DEGC + "</small>):" );
-  //  lb_residue           = us_label( tr( "Residue count:" ) );
-  //  lb_e280              = us_label( tr( "E280 ( <small>OD/(mol*cm)</small> ):" ) );
-
-  //  le_molecwt           = us_lineedit();
-  //  le_vbar20            = us_lineedit();
-  //  le_residue           = us_lineedit( "", -1, true );
-  //  le_e280              = us_lineedit( "", -1, true );
-
-  //  le_protein_temp      = us_lineedit();
-  //  le_protein_mw        = us_lineedit();
-  //  le_protein_vbar20    = us_lineedit();
-  //  le_protein_vbar      = us_lineedit();
-  //  le_protein_residues  = us_lineedit();
-  //  le_protein_e280      = us_lineedit();
-  //  */
     // END Protein widget ///////////////////////////////////////////////
 
    // Start DNA/RNA widget //////////////
@@ -1558,24 +1540,13 @@ DbgLv(1) << "agN: id dbdk ana" << invID << select_db_disk << tmp_analyte;
    main->addLayout( radios,          row++,  0, 1, 12 );
    main->addWidget( lb_descrip,      row,    0, 1,  4 );
    main->addWidget( le_descrip,      row++,  4, 1,  8 );
-   main->addWidget( pb_sequence,     row++,  6, 1,  6 );
+   main->addWidget( pb_sequence,     row,    6, 1,  3 );
+   main->addWidget( pb_spectrum,     row++,  9, 1,  3 );
    main->addWidget( pb_cancel,       row,    6, 1,  2 );
    main->addWidget( pb_reset,        row,    8, 1,  2 );
    main->addWidget( pb_accept,       row++, 10, 1,  2 );
    row += 5;
-   //main->addWidget( bn_calcmw,       row,    0, 1,  4 );
-   //main->addWidget( bn_ratnuc,       row++,  4, 1,  8 );
-
-   /*
-   main->addWidget( lb_molecwt,      row,    0, 1,  4 );
-   main->addWidget( le_molecwt,      row,    4, 1,  2 );
-   main->addWidget( lb_vbar20,       row,    6, 1,  4 );
-   main->addWidget( le_vbar20,       row++, 10, 1,  2 );
-   main->addWidget( lb_residue,      row,    0, 1,  4 );
-   main->addWidget( le_residue,      row,    4, 1,  2 );
-   main->addWidget( lb_e280,         row,    6, 1,  4 );
-   main->addWidget( le_e280,         row++, 10, 1,  2 );
-   */
+  
    main->addWidget( protein_widget, row, 0, 1, 12 ); 
    main->addWidget( dna_widget, row, 0, 1, 12 ); 
    main->addWidget( carbs_widget, row, 0, 2, 12 ); 
@@ -1588,6 +1559,8 @@ DbgLv(1) << "agN: id dbdk ana" << invID << select_db_disk << tmp_analyte;
             this,            SLOT  ( set_analyte_type( int )       ) );
    connect( pb_sequence,     SIGNAL( clicked() ),
 	    this,            SLOT  ( manage_sequence()    ) );
+   connect( pb_spectrum,     SIGNAL( clicked() ),
+	    this,            SLOT  ( manage_spectrum()    ) );
 
    init_analyte();
    set_analyte_type( 0 );
@@ -1718,6 +1691,37 @@ DbgLv(1) << "agN: id dbdk ana" << invID << select_db_disk << tmp_analyte;
 #endif
 }
 
+
+// Slot for Entering Spectra ////
+void US_AnalyteMgrNew::manage_spectrum( void )
+{
+  w = new US_Extinction("ANALYTE", le_descrip->text(), le_protein_e280->text(), (QWidget*)this); 
+  
+  connect( w, SIGNAL( get_results(QMap < double, double > & )), this, SLOT(process_results( QMap < double, double > & ) ) );
+  
+  w->setParent(this, Qt::Window);
+  w->setAttribute(Qt::WA_DeleteOnClose);
+  w->show(); 
+}
+
+void US_AnalyteMgrNew::process_results(QMap < double, double > &xyz)
+{
+  analyte->extinction = xyz;
+   
+  QMap<double, double>::iterator it;
+  QString output;
+
+  for (it = xyz.begin(); it != xyz.end(); ++it) {
+    // Format output here.
+    output += QString(" %1 : %2 /n").arg(it.key()).arg(it.value());
+  }
+
+  QMessageBox::information( this, tr( "Test: Data transmitted" ), tr("Number of keys in extinction QMAP: %1 . You may click 'Accept' from the main window to write new buffer into DB").arg(analyte->extinction.keys().count()) );  
+
+  pb_accept  ->setEnabled( true );
+  w->close(); 
+}
+
 // Slot for Entering/Editing Sequence ////
 void US_AnalyteMgrNew::manage_sequence( void )
 {
@@ -1832,6 +1836,7 @@ void US_AnalyteMgrNew::update_sequence( QString seq )
          }
          break;
 #endif
+	 pb_spectrum->setEnabled(true);
       }
 
       case US_Analyte::DNA:
@@ -2125,6 +2130,8 @@ void US_AnalyteMgrNew::reset()
        analyte->description = le_descrip->text();
        analyte->mw          = le_protein_mw->text().toDouble();
        analyte->vbar20      = le_protein_vbar20->text().toDouble();
+
+       pb_spectrum->setEnabled( false );
      }
    
    if ( rb_dna    ->isChecked() )
@@ -2147,6 +2154,8 @@ void US_AnalyteMgrNew::reset()
        analyte->description = le_descrip->text();
        analyte->mw          = mw[ 0 ].toDouble() * 1000.0;
        analyte->vbar20      = le_nucle_vbar->text().toDouble();
+
+       pb_spectrum->setEnabled( true );
      }
    
    if ( rb_rna    ->isChecked() ) 
@@ -2169,6 +2178,8 @@ void US_AnalyteMgrNew::reset()
        analyte->description = le_descrip->text();
        analyte->mw          = mw[ 0 ].toDouble() * 1000.0;
        analyte->vbar20      = le_nucle_vbar->text().toDouble();
+
+       pb_spectrum->setEnabled( true );
      }
    
    if ( rb_carbo  ->isChecked() ) 
@@ -2182,6 +2193,8 @@ void US_AnalyteMgrNew::reset()
        analyte->mw          = le_carbs_mw  ->text().toDouble();
        analyte->vbar20      = le_carbs_vbar->text().toDouble();
        analyte->grad_form   = ck_grad_form ->isChecked();
+
+       pb_spectrum->setEnabled( true );
      }
 
    pb_accept          ->setEnabled( false );

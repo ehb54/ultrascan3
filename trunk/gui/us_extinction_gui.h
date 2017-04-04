@@ -16,8 +16,9 @@ class US_GUI_EXTERN US_Extinction : public US_Widgets
    public:
       US_Extinction();
 
-      US_Extinction(QString temp_mode, const QString &text, QWidget *parent);
-
+      //US_Extinction(QString temp_mode, const QString &text, QWidget *parent);
+      US_Extinction(QString temp_mode, const QString &text, const QString &text_e280, QWidget *parent);
+      
       QVector <QString> filenames;
       US_ExtinctFitter *fitter;
       US_Disk_DB_Controls* disk_controls;

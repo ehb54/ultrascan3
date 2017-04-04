@@ -207,6 +207,7 @@ class US_AnalyteMgrNew : public US_Widgets
                                  analyte (for editing and adding new analytes)
       */
    US_AnalyteMgrNew( int*, int*, US_Analyte*, double, bool );
+   US_Extinction *w;
 
    signals:
       void newAnaAccepted( void );  //! New analyte accepted
@@ -234,6 +235,7 @@ class US_AnalyteMgrNew : public US_Widgets
       US_Analyte    orig_analyte;
       
       QPushButton*  pb_sequence;
+      QPushButton*  pb_spectrum;
       QPushButton*  pb_accept;
       QPushButton*  pb_reset;
       QPushButton*  pb_cancel;
@@ -325,6 +327,8 @@ class US_AnalyteMgrNew : public US_Widgets
       void help( void ) { showHelp.show_help( "analyte_new.html" ); };
 
       void manage_sequence ( void );
+      void manage_spectrum ( void );
+
       void update_sequence ( QString );
 
       void value_changed      ( const QString& );
@@ -339,6 +343,8 @@ class US_AnalyteMgrNew : public US_Widgets
       void set_analyte_type   ( int  );
       void reset              ( void );
       void verify_vbar        ( void );
+
+      void process_results( QMap < double, double > &xyz );
 
    public slots:
       void init_analyte		( void );
