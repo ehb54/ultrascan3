@@ -55,13 +55,17 @@ US_Extinction::US_Extinction(QString buffer, const QString& text, const QString&
    connect( pb_perform, SIGNAL( clicked()), SLOT(perform_global()));
    pb_perform->hide();
 
-   if (buffer_temp.toStdString() == "BUFFER")
+   //if (buffer_temp.toStdString() == "BUFFER")
      pb_perform_buffer = us_pushbutton( tr( "Perform Buffer Fit") );            // New button for 'Fit Buffer...'
-   if (buffer_temp.toStdString() == "ANALYTE")
-     pb_perform_buffer = us_pushbutton( tr( "Perform Analyte Fit") );            // New button for 'Fit Analyte...'
+     //if (buffer_temp.toStdString() == "ANALYTE")
+     pb_perform_analyte = us_pushbutton( tr( "Perform Analyte Fit") );            // New button for 'Fit Analyte...'
 
    connect( pb_perform_buffer, SIGNAL( clicked()), SLOT(perform_global_buffer()));
-   //pb_perform_buffer->hide();
+   connect( pb_perform_analyte, SIGNAL( clicked()), SLOT(perform_global_analyte()));
+   if (buffer_temp.toStdString() == "BUFFER")
+     pb_perform_analyte->hide();
+   if (buffer_temp.toStdString() == "ANALYTE")
+     pb_perform_buffer->hide();
    
    pb_calculate = us_pushbutton( tr( "Calculate E280 from Peptide File") );
    connect( pb_calculate, SIGNAL( clicked()), SLOT(calculateE280()));
@@ -189,6 +193,7 @@ US_Extinction::US_Extinction(QString buffer, const QString& text, const QString&
    submain->addWidget(pb_update, 5, 0);
    submain->addWidget(pb_perform, 6, 0);
    submain->addWidget(pb_perform_buffer, 6, 0);
+   submain->addWidget(pb_perform_analyte, 6, 0);
 
    submain->addLayout(gl2, 7, 0);
    submain->addWidget(lbl_peptide, 8, 0);
@@ -716,6 +721,44 @@ bool US_Extinction::deleteCurve(void)
 ///////////////////////////////////////////////////////////
 
 void US_Extinction::perform_global_buffer(void)
+{
+  if (v_wavelength.size() < 1)
+   {
+      QMessageBox message;
+      message.setWindowTitle(tr("Ultrascan Error:"));
+      message.setText(tr("You will need at least 1 scan \nto perform a global fit.\n\nPlease add scan(s) before attempting\na global fit."));
+      message.exec();
+      return;
+   }
+  
+  fitting_widget = false;
+  parameters = order * 3 + v_wavelength.size();
+  fitparameters = new double [parameters];
+  for (int i=0; i<v_wavelength.size(); i++)
+    {
+      fitparameters[i] = 0.3;
+    }
+  float lambda_step = (lambda_max - lambda_min)/(order+1); // create "order" peaks evenly distributed over the range
+  for (unsigned int i=0; i<order; i++)
+    {
+      fitparameters[v_wavelength.size() + (i * 3) ] = 1;
+      fitparameters[v_wavelength.size() + (i * 3) + 1] = lambda_min + lambda_step * i;
+      fitparameters[v_wavelength.size() + (i * 3) + 2] = 10;
+    }
+  fitter = new US_ExtinctFitter(&v_wavelength, fitparameters, order, parameters,
+				projectName, &fitting_widget, true);
+  fitter->setParent(this, Qt::Window);
+  fitter->show();
+  fitted = true;
+  
+  connect(fitter, SIGNAL(fittingWidgetClosed()), SLOT(plot()));
+ 
+}
+
+
+///////////////////////////////////////////////////////////
+
+void US_Extinction::perform_global_analyte(void)
 {
   if (v_wavelength.size() < 1)
    {

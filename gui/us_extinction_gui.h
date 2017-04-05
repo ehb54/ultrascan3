@@ -58,6 +58,7 @@ class US_GUI_EXTERN US_Extinction : public US_Widgets
 
       QPushButton* pb_perform;
       QPushButton* pb_perform_buffer;
+      QPushButton* pb_perform_analyte;
       QPushButton* pb_accept;
 
       QPushButton* pb_calculate;
@@ -91,6 +92,7 @@ class US_GUI_EXTERN US_Extinction : public US_Widgets
 
       void    perform_global( void );
       void    perform_global_buffer( void );
+      void    perform_global_analyte( void );
       void    accept( void );
 
       void    calculateE280( void );
