@@ -65,7 +65,7 @@ US_Extinction::US_Extinction(QString buffer, const QString& text, const QString&
    
    pb_calculate = us_pushbutton( tr( "Calculate E280 from Peptide File") );
    connect( pb_calculate, SIGNAL( clicked()), SLOT(calculateE280()));
-   if (buffer_temp.toStdString() == "BUFFER")
+   //if (buffer_temp.toStdString() == "BUFFER")
      pb_calculate->hide();
 
    pb_save = us_pushbutton( tr( "Save") );
@@ -99,6 +99,9 @@ US_Extinction::US_Extinction(QString buffer, const QString& text, const QString&
    if (buffer_temp.toStdString() == "BUFFER")
      lbl_coefficient->hide();
 
+   lbl_wavelengthref = us_label(tr("Wavelength:"));
+   if (buffer_temp.toStdString() == "BUFFER")
+     lbl_wavelengthref->hide();
 
    lw_file_names = us_listwidget();
    connect(lw_file_names, SIGNAL(itemSelectionChanged()), SLOT(listToCurve()));
@@ -170,8 +173,9 @@ US_Extinction::US_Extinction(QString buffer, const QString& text, const QString&
 
    QGridLayout* gl3;
    gl3 = new QGridLayout();
-   gl3->addWidget(lbl_coefficient, 0, 0);
+   gl3->addWidget(lbl_wavelengthref, 0, 0);
    gl3->addWidget(ct_coefficient, 0, 1);
+   gl3->addWidget(lbl_coefficient, 1, 0);
    gl3->addWidget(le_coefficient, 1, 1);
 
    QGridLayout* submain;
@@ -289,6 +293,8 @@ US_Extinction::US_Extinction() : US_Widgets()
    lbl_lambda2 = us_label(tr("Upper Lambda Limit "));
    lbl_pathlength = us_label(tr("Pathlength:"));
    lbl_coefficient = us_label(tr("Extinction Coeff.:"));
+   lbl_wavelengthref = us_label(tr("Wavelength:"));
+
    lw_file_names = us_listwidget();
    connect(lw_file_names, SIGNAL(itemSelectionChanged()), SLOT(listToCurve()));
    connect(lw_file_names, SIGNAL(itemDoubleClicked(QListWidgetItem*)), SLOT(deleteCurve()));
@@ -346,8 +352,9 @@ US_Extinction::US_Extinction() : US_Widgets()
 
    QGridLayout* gl3;
    gl3 = new QGridLayout();
-   gl3->addWidget(lbl_coefficient, 0, 0);
+   gl3->addWidget(lbl_wavelengthref, 0, 0);
    gl3->addWidget(ct_coefficient, 0, 1);
+   gl3->addWidget(lbl_coefficient, 1, 0);
    gl3->addWidget(le_coefficient, 1, 1);
 
    QGridLayout* submain;
@@ -719,42 +726,51 @@ void US_Extinction::perform_global_buffer(void)
       return;
    }
   
-   fitting_widget = false;
-   parameters = order * 3 + v_wavelength.size();
-   fitparameters = new double [parameters];
-   for (int i=0; i<v_wavelength.size(); i++)
-   {
-      fitparameters[i] = 0.3;
-   }
-   float lambda_step = (lambda_max - lambda_min)/(order+1); // create "order" peaks evenly distributed over the range
-   for (unsigned int i=0; i<order; i++)
-   {
-      fitparameters[v_wavelength.size() + (i * 3) ] = 1;
-      // spread out the peaks
-      fitparameters[v_wavelength.size() + (i * 3) + 1] = lambda_min + lambda_step * i;
-      fitparameters[v_wavelength.size() + (i * 3) + 2] = 10;
-   }
-   //opens the fitting GUI
-
-   
-   fitter = new US_ExtinctFitter(&v_wavelength, fitparameters, order, parameters,
+  QMessageBox msg;
+  msg.setWindowTitle("Extinction Coefficient");
+  QString text = QString("A value of %1 for the molar extinction coefficient at %2 nm will be used.").arg(le_coefficient->text()).arg(ct_coefficient->value());
+  msg.setText(text);
+  msg.setInformativeText("Continue or Enter new value(s)?");
+  
+  //msgBox.setText("Buffer does not have spectrum data!\n You can Upload and fit buffer spectrum, or Enter points manually");
+  QPushButton* pContinue = msg.addButton(tr("Continue"), QMessageBox::YesRole);
+  QPushButton* pNewval = msg.addButton(tr("Enter New Value"), QMessageBox::YesRole);
+    
+  msg.setDefaultButton(pContinue);
+  msg.exec();
+          
+  if (msg.clickedButton()==pContinue) {
+    fitting_widget = false;
+    parameters = order * 3 + v_wavelength.size();
+    fitparameters = new double [parameters];
+    for (int i=0; i<v_wavelength.size(); i++)
+      {
+	fitparameters[i] = 0.3;
+      }
+    float lambda_step = (lambda_max - lambda_min)/(order+1); // create "order" peaks evenly distributed over the range
+    for (unsigned int i=0; i<order; i++)
+      {
+	fitparameters[v_wavelength.size() + (i * 3) ] = 1;
+	fitparameters[v_wavelength.size() + (i * 3) + 1] = lambda_min + lambda_step * i;
+	fitparameters[v_wavelength.size() + (i * 3) + 2] = 10;
+      }
+    fitter = new US_ExtinctFitter(&v_wavelength, fitparameters, order, parameters,
                                   projectName, &fitting_widget, true);
-//   fitter = new US_ExtinctFitter(&v_wavelength, fitparameters, order, parameters,
-//                                  projectName, &fitting_widget );
- 
-   //fitter->setParent(this, Qt::Window);
-   fitter->setParent(this, Qt::Window);
-   
-   fitter->show();
- 
-   
-   fitted = true;
-   //causes the fitted line to plot after the fitting widget is closed
-   connect(fitter, SIGNAL(fittingWidgetClosed()), SLOT(plot()));
-   //data_plot->enableOutline(true);
+    fitter->setParent(this, Qt::Window);
+    fitter->show();
+    fitted = true;
+    
+    connect(fitter, SIGNAL(fittingWidgetClosed()), SLOT(plot()));
+  }
+  
+  if (msg.clickedButton()==pNewval) {
+    ct_coefficient->setStyleSheet("border: 2px solid red");
+    le_coefficient->setStyleSheet("border: 2px solid red");
+    return;
+  }
 }
-/////////////////////////////////////////////////////////////////////
 
+/////////////////////////////////////////////////////////////////////
 
 void US_Extinction::perform_global(void)
 {

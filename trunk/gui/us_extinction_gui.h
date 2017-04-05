@@ -50,6 +50,7 @@ class US_GUI_EXTERN US_Extinction : public US_Widgets
       QLabel*      lbl_lambda2;
       QLabel*      lbl_pathlength;
       QLabel*      lbl_coefficient;
+      QLabel*      lbl_wavelengthref;
       QListWidget* lw_file_names;
       QPushButton* pb_addWavelength;
       QPushButton* pb_reset;
