@@ -2859,7 +2859,7 @@ void US_AnalyteMgrEdit::spectrum( void )
        w->show(); 
      }
    }
- else 
+   else 
    {
      QMessageBox msg;
      msg.setWindowTitle("Edit Existing Analyte");
