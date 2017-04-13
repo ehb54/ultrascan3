@@ -261,6 +261,7 @@ DbgLv(1) << "EGGe: inP: prn,prd counts" << protdata.count() << pr_names.count();
    le_protocol    ->setText ( currProto->protname );
    le_project     ->setText ( currProto->project );
    ct_tempera     ->setValue( currProto->temperature );
+   ct_tedelay     ->setValue( currProto->temeq_delay );
 }
 
 // Save panel controls when about to leave the panel
@@ -272,6 +273,7 @@ void US_ExperGuiGeneral::savePanel()
    currProto->protname     = le_protocol    ->text();
    currProto->project      = le_project     ->text();
    currProto->temperature  = ct_tempera     ->value();
+   currProto->temeq_delay  = ct_tedelay     ->value();
 }
 
 // Get a specific panel string value
@@ -440,11 +442,14 @@ DbgLv(1) << "EGRo:gIV: type" << type;
    {
       US_Rotor::AbstractRotor* arotor = abstractRotor( rpRotor->rotor );
       value          = ( arotor != NULL ) ? arotor->numHoles : 0;
+DbgLv(1) << "EGRo:gIV:  arotor" << arotor->name << "value" << value;
    }
    else if ( type == "maxrpm" )
    {
       US_Rotor::AbstractRotor* arotor = abstractRotor( rpRotor->rotor );
+DbgLv(1) << "EGRo:gIV:  arotor" << arotor << "rotor" << rpRotor->rotor;
       value          = ( arotor != NULL ) ? arotor->maxRPM : 50000;
+DbgLv(1) << "EGRo:gIV:  arotor" << arotor->name << "value" << value;
    }
    else if ( type == "labID" )   { value = rpRotor->labID; }
    else if ( type == "rotID" )   { value = rpRotor->rotID; }
@@ -800,13 +805,14 @@ void US_ExperGuiCells::savePanel()
    int nholes          = sibIValue( "rotor", "nholes" );
    int nused           = 0;
    QStringList ulabs;
+   QString txtempty    = tr( "empty" );
 
    for ( int ii = 0; ii < nholes; ii++ )
    {  // Count used (non-empty) cell rows
       QString celnam      = cc_labls[ ii ]->text();
       QString centp       = cc_cenps[ ii ]->currentText();
 DbgLv(1) << "EGCe:svP:  ii" << ii << "celnam" << celnam << "centp" << centp;
-      if ( ! centp.contains( tr( "empty" ) ) )
+      if ( ! centp.contains( txtempty ) )
       {
          nused++;
          ulabs << celnam;
@@ -954,6 +960,31 @@ DbgLv(1) << "EGCe:getSL:     ii" << ii << " Entry" << centry;
       }
    }
 
+   else if ( type == "cpchannels" )
+   {  // Return channel strings where a centerpiece is selected
+      int icbal           = sibIValue( "rotor", "nholes" ) - 1;
+      QString schans( "ABCDEF" );
+
+      for ( int ii = 0; ii < rpCells->nused; ii++ )
+      {  // Examine the used cells
+         int icell        = rpCells->used[ ii ].cell;
+         if ( icell >= icbal )   continue;                   // Skip counterbal.
+         QString channel  = QString( "%1 / " ).arg( icell ); // Start channel
+         QString centp    = rpCells->used[ ii ].centerpiece; // Centerpiece
+         int chx          = centp.indexOf( "-channel" );     // Index chan count
+
+         if ( chx > 0 )
+         {  // Complete string for each channel in centerpiece
+            int ncchn      = QString( centp ).left( chx ).section( " ", -1, -1 )
+                                             .simplified().toInt();
+            for ( int jj = 0; jj < ncchn; jj++ )
+            {  // Save channel strings (e.g., "1 / A", "1 / B", "2 / A", ...)
+               value << channel + schans.mid( jj, 1 );
+            }
+         }
+      }
+   }
+
    return value;
 }
 
@@ -991,7 +1022,9 @@ void US_ExperGuiSolutions::initPanel()
 {
    rpSolut             = &(mainw->currProto.rpSolut);
 
+DbgLv(1) << "EGSo:inP: call rbS";
    rebuild_Solut();
+DbgLv(1) << "EGSo:inP:  aft rbS nchant" << nchant << "nchanf" << nchanf;
 
    QString unspec      = tr( "(unspecified)" );
    QString lab_none( "none" );
@@ -1134,11 +1167,13 @@ QString US_ExperGuiSolutions::getSValue( const QString type )
 int US_ExperGuiSolutions::getIValue( const QString type )
 {
    int value   = 0;
+DbgLv(1) << "EGSo: gIV: type" << type;
    if      ( type == "nchant" )  { value = nchant; }
    else if ( type == "nchanf" )  { value = nchanf; }
    else if ( type == "nusols" )  { value = rpSolut->nuniqs; }
    else if ( type == "status" )  { value = status(); }
    else if ( type == "alldone" ) { value = qMin( status(), 1 ); }
+DbgLv(1) << "EGSo: gIV:  value" << value;
    return value;
 }
 
@@ -1156,9 +1191,10 @@ QStringList US_ExperGuiSolutions::getLValue( const QString type )
 {
    QStringList value;                      // Output list
    QStringList solus;                      // Unique solutions list
-   QMap< QString, QStringList >  sochans;  // Solution-to-channels map
 
+DbgLv(1) << "EGSo: gLV: type" << type;
    status();
+DbgLv(1) << "EGSo: gLV:  status rtn";
 
    if ( type == "solutions" )
    {  // Build a list of unique solutions
@@ -1205,6 +1241,15 @@ QStringList US_ExperGuiSolutions::getLValue( const QString type )
       }
    }
 
+   else if ( type == "sochannels" )
+   {  // Build a channels list for used channels
+      for ( int ii = 0; ii < rpSolut->nschan; ii++ )
+      {
+         value << rpSolut->chsols[ ii ].channel;
+      }
+   }
+
+DbgLv(1) << "EGSo: gLV:  value" << value;
    return value;
 }
 
@@ -1229,12 +1274,11 @@ int US_ExperGuiSolutions::status()
 {
    nchant              = srchans.count();   // Number total solution channels
    nchanf              = rpSolut->nschan;   // Number channels filled
-   nchanf              = ( nchanf > 0 ) ? nchanf
-                         : suchans.count();
+   nchanf              = ( nchanf > 0 ) ? nchanf : suchans.count();
 
    bool is_done        = ( nchant > 0  &&  nchanf == nchant );
-DbgLv(1) << "EGSo:st: nchant nchanf is_done"
- << nchant << nchanf << is_done;
+DbgLv(1) << "EGSo:st: nchant" << nchant << "nchanf" << nchanf << " is_done"
+ << is_done;
    return ( is_done ? 16 : 0 );
 }
 

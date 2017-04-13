@@ -17,6 +17,7 @@ US_RunProtocol::US_RunProtocol()
    optimahost      = "192.168.1.1";
    investigator    = "";
    temperature     = 20.0;
+   temeq_delay     = 10.0;
 }
 
 // RunProtocol Equality operator
@@ -27,6 +28,7 @@ bool US_RunProtocol::operator== ( const US_RunProtocol& rp ) const
    if ( pGUID        != rp.pGUID        )  return false;
    if ( optimahost   != rp.optimahost   )  return false;
    if ( temperature  != rp.temperature  )  return false;
+   if ( temeq_delay  != rp.temeq_delay  )  return false;
 
    if ( rpRotor      != rp.rpRotor      )  return false;
    if ( rpSpeed      != rp.rpSpeed      )  return false;
@@ -52,6 +54,7 @@ bool US_RunProtocol::toXml( QXmlStreamWriter& xmlo )
    xmlo.writeAttribute    ( "optima_host",  optimahost );
    xmlo.writeAttribute    ( "investigator", investigator );
    xmlo.writeAttribute    ( "temperature",  QString::number( temperature ) );
+   xmlo.writeAttribute    ( "temeq_delay",  QString::number( temeq_delay ) );
 
    rpRotor.toXml( xmlo );
    rpSpeed.toXml( xmlo );
@@ -87,6 +90,8 @@ bool US_RunProtocol::fromXml( QXmlStreamReader& xmli )
             optimahost      = attr.value( "optima_host"  ).toString();
             investigator    = attr.value( "investigator" ).toString();
             temperature     = attr.value( "temperature"  ).toString().toDouble();
+            QString s_ted   = attr.value( "temeq_delay"  ).toString();
+            temeq_delay     = s_ted.isEmpty() ? temeq_delay : s_ted.toDouble();
          }
 
          else if ( ename == "rotor" )      { rpRotor.fromXml( xmli ); }

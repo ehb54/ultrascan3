@@ -355,6 +355,7 @@ class US_RunProtocol
       QString      optimahost;     //!< Optima host (numeric IP address)
 
       double       temperature;    //!< Run temperature in degrees centigrade
+      double       temeq_delay;    //!< Temperature-equilibration delay minutes
 
    private:
 };
