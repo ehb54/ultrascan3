@@ -63,6 +63,7 @@ class US_ExperGuiGeneral : public US_WidgetsDialog
       QLineEdit*   le_investigator;     // Investigator line edit
 
       QwtCounter*  ct_tempera;          // Temperature counter
+      QwtCounter*  ct_tedelay;          // Temp-equil-delay counter
 
       int          dbg_level;
       bool         use_db;              // Using the LIMS database?

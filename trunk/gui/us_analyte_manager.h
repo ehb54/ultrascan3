@@ -58,6 +58,7 @@ class US_AnalyteMgrSelect: public US_Widgets
       //! \param invID          A pointer to the current investigator ID
       //! \param select_db_disk Indicates whether the default search
       //!    is on the local disk or in the DB
+      //! \param tmp_analyte    Pointer for selected analyte
       US_AnalyteMgrSelect( int*, int*, US_Analyte* );
 
       US_Analyte*   analyte;
@@ -203,8 +204,10 @@ class US_AnalyteMgrNew : public US_Widgets
          \param invID          The current investigator ID
          \param select_db_disk Indicates whether the default search
                                  is on the local disk or in the DB
-         \param analyte         Pointer to a US_Analyte object holding the active
+         \param tmp_analyte    Pointer to a US_Analyte object holding the active
                                  analyte (for editing and adding new analytes)
+         \param temperature    The average analyte temperature
+         \param signal         Flag if signal is to be output
       */
    US_AnalyteMgrNew( int*, int*, US_Analyte*, double, bool );
    US_Extinction *w;
@@ -386,7 +389,7 @@ class US_AnalyteMgrEdit : public US_Widgets
          \param invID          The current investigator ID
          \param select_db_disk Indicates whether the default search
                                  is on the local disk or in the DB
-         \param analyte         Pointer to a US_Analyte object holding the active
+         \param tmp_analyte    Pointer to a US_Analyte object holding the active
                                  analyte (for editing and adding new analytes)
       */
       US_AnalyteMgrEdit( int*, int*, US_Analyte* );
@@ -485,11 +488,12 @@ class US_GUI_EXTERN US_AnalyteManager : public US_WidgetsDialog
 
    public:
       //! Main constructor
-      //! \param signal_wanted A flag to specify if one of the signals
-      //!               should be emitted when terminating the dialog
-      //! \param buf    The default analyte
-      //! \param select_db_disk An indicator of whether to search the disk
-      //!               or DB for the default analyte
+      //! \param signal  A flag to specify if one of the signals
+      //!                should be emitted when terminating the dialog
+      //! \param GUID    The default analyte
+      //! \param accessf An indicator of whether to search the disk
+      //!                or DB for the default analyte
+      //! \param temper  The average analyte temperature
       US_AnalyteManager( bool           = false,
                          const QString& = QString(), 
                          int            = US_Disk_DB_Controls::Default,

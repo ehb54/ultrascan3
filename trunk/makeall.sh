@@ -45,6 +45,12 @@ fi
 if [ -z "`which doxygen`" ]; then
   DODOX=0
 fi
+if [ -z "`which latex`" ]; then
+  DODOX=0
+fi
+if [ -z "`which dvips`" ]; then
+  DODOX=0
+fi
 
 DIR=$(pwd)
 rm -f build.log

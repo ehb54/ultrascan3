@@ -134,17 +134,26 @@ US_ExperGuiGeneral::US_ExperGuiGeneral( QWidget* topw )
 
    QLabel*      lb_runid        = us_label( tr( "Run Name:" ) );
    QLabel*      lb_tempera      = us_label( tr( "Run Temperature " ) + DEGC + ":" );
+   QLabel*      lb_tedelay      = us_label( tr( "Temperature-Equilibration Delay" ) );
+   QLabel*      lb_tedmins      = us_label( tr( "Minutes" ) );
    QPushButton* pb_investigator = us_pushbutton( tr( "Select Investigator" ) );
    QPushButton* pb_project      = us_pushbutton( tr( "Select Project" ) );
    QPushButton* pb_protocol     = us_pushbutton( tr( "Load Protocol" ) );
                 le_runid        = us_lineedit( "", 0, false );
                 le_protocol     = us_lineedit( "", 0, false );
                 le_project      = us_lineedit( "", 0, true  );
-                ct_tempera      = us_counter ( 2, 0, 40, 20 );
+                ct_tempera      = us_counter ( 2, 0,  40, 20 );
+                ct_tedelay      = us_counter ( 2, 0, 120, 10 );
+   int          ihgt            = pb_protocol->height();
+   QSpacerItem* spacer1         = new QSpacerItem( 20, ihgt );
+   QSpacerItem* spacer2         = new QSpacerItem( 20, ihgt );
 
    ct_tempera->setSingleStep( 1 );
    ct_tempera->setValue     ( 20 );
    ct_tempera->adjustSize   ();
+   ct_tedelay->setSingleStep( 1 );
+   ct_tedelay->setValue     ( 10 );
+   ct_tedelay->adjustSize   ();
 
    // Set up an approprate investigator text
    if ( US_Settings::us_inv_level() < 1 )
@@ -164,6 +173,7 @@ US_ExperGuiGeneral::US_ExperGuiGeneral( QWidget* topw )
    currProto->protname     = "";
    currProto->project      = "";
    currProto->temperature  = 20.0;
+   currProto->temeq_delay  = 10.0;
 
    // Build main layout
    int row         = 0;
@@ -175,8 +185,13 @@ US_ExperGuiGeneral::US_ExperGuiGeneral( QWidget* topw )
    genL->addWidget( le_protocol,     row++, 2, 1, 6 );
    genL->addWidget( pb_project,      row,   0, 1, 2 );
    genL->addWidget( le_project,      row++, 2, 1, 6 );
-   genL->addWidget( lb_tempera,      row,   0, 1, 2 );
-   genL->addWidget( ct_tempera,      row++, 2, 1, 2 );
+   genL->addWidget( lb_tempera,      row,   0, 1, 3 );
+   genL->addWidget( ct_tempera,      row,   3, 1, 2 );
+   genL->addItem  ( spacer1,         row++, 5, 1, 3 );
+   genL->addWidget( lb_tedelay,      row,   0, 1, 3 );
+   genL->addWidget( ct_tedelay,      row,   3, 1, 2 );
+   genL->addWidget( lb_tedmins,      row,   5, 1, 1 );
+   genL->addItem  ( spacer2,         row++, 6, 1, 2 );
 
    panel->addLayout( genL );
    panel->addStretch();
@@ -388,6 +403,7 @@ DbgLv(1) << "EGGe:ldPro:  REJECT";
    // Initialize the current protocol from the loaded one; set temperature
    mainw->currProto      = mainw->loadProto;
    ct_tempera->setValue( mainw->currProto.temperature );
+   ct_tedelay->setValue( mainw->currProto.temeq_delay );
 DbgLv(1) << "EGGe:ldPro:    dur0" << mainw->currProto.rpSpeed.ssteps[0].duration;
 DbgLv(1) << "EGGe:ldPro:    cPname" << mainw->currProto.protname
  << "lPname" << mainw->loadProto.protname;
@@ -671,17 +687,21 @@ DbgLv(1) << "EGR: advRChg:     ii eID" << ii << eID;
 // Function to return the abstract rotor for the current rotor
 US_Rotor::AbstractRotor* US_ExperGuiRotor::abstractRotor( const QString rotor )
 {
+DbgLv(1) << "EGR:  absR: rotor" << rotor;
    int arID       = -1;
    for ( int ii = 0; ii < rotors.count(); ii++ )
    {  // Search for a match to the rotor name
+DbgLv(1) << "EGR:  absR:   ii" << ii << "rname" << rotors[ii].name;
       if ( rotors[ ii ].name == rotor )
       {  // Match found:  break with abstractRotor ID value
          arID           = rotors[ ii ].abstractRotorID;
          break;
       }
    }
+DbgLv(1) << "EGR:  arID" << arID << "arcount" << arotors.count();
    for ( int ii = 0; ii < arotors.count(); ii++ )
    {  // Search for a match to the abstract rotor ID
+DbgLv(1) << "EGR:  absR:   ii" << ii << "rID" << arotors[ii].ID;
       if ( arotors[ ii ].ID == arID )
       {  // Match found:  return with pointer to abstract rotor object
          return ( &arotors[ ii ] );
@@ -1512,7 +1532,8 @@ DbgLv(1) << "EGSo:main: call initPanel()";
 void US_ExperGuiSolutions::rebuild_Solut( void )
 {
    int nchans          = sibIValue( "cells", "nchans" );
-DbgLv(1) << "EGSo: rbS: nchans nchant" << nchans << nchant;
+DbgLv(1) << "EGSo: rbS: nchans nchant" << nchans << nchant
+ << "rpS.nschan" << rpSolut->nschan;
    if ( nchans == nchant )
       return;                          // No cells change means no rebuild
 
@@ -1520,7 +1541,12 @@ DbgLv(1) << "EGSo: rbS: nchans nchant" << nchans << nchant;
    {  // No existing Solutions protocol, so initialize a rudimentary one
       rpSolut->nuniqs     = 0;
       rpSolut->chsols.clear();
-      nchant              = nchans;
+      suchans        .clear();
+      nchanf              = 0;
+      srchans             = sibLValue( "cells", "cpchannels" );
+DbgLv(1) << "EGSo: rbS: srchans" << srchans;
+      nchant              = srchans.count();
+DbgLv(1) << "EGSo: rbS:  nchant" << nchant;
       return;
    }
 
@@ -2140,18 +2166,50 @@ DbgLv(1) << "EGOp:main: call initPanel";
 void US_ExperGuiOptical::rebuild_Optic( void )
 {
    int nchanf          = sibIValue( "solutions", "nchanf" );
-DbgLv(1) << "EGOp rbO: nchanf" << nchanf << "nochan" << nochan;
+   QStringList ochans  = sibLValue( "solutions", "sochannels" );
+   int kochan          = ochans.count();
+DbgLv(1) << "EGOp rbO: nchanf" << nchanf << "nochan" << nochan << "kochan" << kochan;
 
    if ( nchanf == nochan )
-      return;                          // No solutions change means no rebuild
+   {
+      nochan              = ochans.count();
+      int ndiff           = ( nochan == nchanf ) ? 0 : 1;
+      nochan              = qMin( nochan, nchanf );
+      
+      for ( int ii = 0; ii < nochan; ii++ )
+      {
+         if ( rpOptic->chopts[ ii ].channel != ochans[ ii ] )
+            ndiff++;
+      }
 
+      if ( ndiff == 0 )
+         return;                       // No solutions change means no rebuild
+   }
+
+DbgLv(1) << "EGOp rbO: rp.nochan" << rpOptic->nochan;
    if ( rpOptic->nochan == 0 )
    {  // No existing Optic protocol, so initialize a rudimentary one
+      nochan              = ochans.count();
+      nchanf              = nochan;
       rpOptic->nochan     = nchanf;
-      rpOptic->chopts.clear();
-      nochan              = nchanf;
+      rpOptic->chopts.resize( nchanf );
       nuchan              = 0;
       nuvvis              = 0;
+      QString notinst     = tr( "(not installed)" );
+
+      for ( int ii = 0; ii < nochan; ii++ )
+      {
+         rpOptic->chopts[ ii ].channel = ochans[ ii ];
+         rpOptic->chopts[ ii ].scan1   = ii < 4 
+                                       ? cc_osyss[ ii ]->button( 1 )->text()
+                                       : notinst;
+         rpOptic->chopts[ ii ].scan2   = ii < 4 
+                                       ? cc_osyss[ ii ]->button( 2 )->text()
+                                       : notinst;
+         rpOptic->chopts[ ii ].scan3   = ii < 4 
+                                       ? cc_osyss[ ii ]->button( 3 )->text()
+                                       : notinst;
+      }
 DbgLv(1) << "EGOp rbO: nochan" << nochan << "(RUDIMENTARY)";
       return;
    }
@@ -2162,25 +2220,31 @@ DbgLv(1) << "EGOp rbO: nochan" << nochan << "(RUDIMENTARY)";
 
    nochan              = nchanf;
    rpOptic->nochan     = nchanf;
-   rpOptic->chopts.resize( nochan );
 DbgLv(1) << "EGOp rbO:  nochan" << nochan << "nochan_sv" << nochan_sv;
 
    // Rebuild Optical protocol
    QStringList solentrs = sibLValue( "solutions", "channel_solutions" );
+   int kechan          = solentrs.count(); 
+   rpOptic->chopts.clear();
+DbgLv(1) << "EGOp rbO:   solentrs count" << kechan;
 
-   for ( int ii = 0; ii < solentrs.count(); ii++ )
+   for ( int ii = 0; ii < kechan; ii++ )
    {
       QString channel     = solentrs[ ii ].section( ":", 0, 0 )
                             .simplified();
       for ( int jj = 0; jj < nochan_sv; jj++ )
       {
+DbgLv(1) << "EGOp rbO:    ii" << ii << "jj" << jj
+ << "chsv.channel" << chopts_sv[jj].channel << "channel" << channel;
          if ( chopts_sv[ jj ].channel == channel )
          {
-            rpOptic->chopts[ ii ] = chopts_sv[ ii ];
+            rpOptic->chopts << chopts_sv[ jj ];
             break;
          }
       }
    }
+   rpOptic->nochan     = rpOptic->chopts.count();
+DbgLv(1) << "EGOp rbO: rpO.nochan" << rpOptic->nochan;
 }
 
 // Slot to handle an optical system being checked

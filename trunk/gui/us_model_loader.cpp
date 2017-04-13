@@ -465,7 +465,7 @@ time1=QDateTime::currentDateTime();
             else if ( listedit  &&  can_run )
             {
                query << "get_model_desc_by_runID"
-                     << invID << "%" + runIDs[ ii ] + "%";
+                     << invID << runIDs[ ii ];
             }
 
             else if ( do_manual || do_unasgn )
@@ -476,6 +476,7 @@ time1=QDateTime::currentDateTime();
 
 qDebug() << " query" << query;
             dbP->query( query );
+qDebug() << " lastError" << dbP->lastError();
 qDebug() << " NumRows" << dbP->numRows();
 time2=QDateTime::currentDateTime();
 qDebug() << "Timing: get_model_desc" << time1.msecsTo(time2);
