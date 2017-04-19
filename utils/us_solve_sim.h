@@ -33,6 +33,7 @@ class US_UTIL_EXTERN US_SolveSim : public QObject
             QString                 requestID;    //!< Request ID for 2DSA/GA
             QString                 auc_file;     //!< Raw AUC file path
             QString                 edit_file;    //!< Edit file path
+            QString                 tmst_file;    //!< TimeState file path
             QString                 model_file;   //!< Model file path
             QList< QString >        noise_files;  //!< Path(s) of noise file(s)
             US_DataIO::EditedData   run_data;     //!< Experiment data
