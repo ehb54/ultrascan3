@@ -10,6 +10,7 @@
 #include "us_license_t.h"
 #include "us_sleep.h"
 #include "us_util.h"
+#include "us_crypto.h"
 #include "us_select_item.h"
 
 #if QT_VERSION < 0x050000
@@ -2456,7 +2457,7 @@ US_ExperGuiUpload::US_ExperGuiUpload( QWidget* topw )
       dblist << "5432";
       dblist << "AUC_DATA_DB";
       dblist << "auc_admin";
-      dblist << "auc_admin";
+      dblist << "encpasswd";
       dblist << tr( "UV/visible" );
       dblist << tr( "Rayleigh Interference" );
       dblist << tr( "(not installed)" );
@@ -2468,16 +2469,21 @@ US_ExperGuiUpload::US_ExperGuiUpload( QWidget* topw )
 DbgLv(1) << "EGUp:main:   opsys1-3" << dblist[6] << dblist[7] << dblist[8];
 
       dblist << dblist[ 4 ];
+      
       US_Settings::set_def_xpn_host( dblist );
    }
 
+   US_Passwd pw;
    QString xpnhost     = dblist[ 1 ];
    int     xpnport     = dblist[ 2 ].toInt();
    QString dbname      = dblist[ 3 ];
    QString dbuser      = dblist[ 4 ];
-   QString dbpasw      = dblist[ 5 ];
+   QString epasw       = dblist[ 5 ];
+   QString epasw0      = epasw.section( "^", 0, 0 );
+   QString epasw1      = epasw.section( "^", 1, 1 );
+   QString dbpasw      = US_Crypto::decrypt( epasw0, pw.getPasswd(), epasw1 );
 DbgLv(1) << "EGUp: host port name user pasw" << xpnhost << xpnport
- << dbname << dbuser << dbpasw;
+ << dbname << dbuser << epasw;
    US_XpnData* xpn_data = new US_XpnData();
    connected           = xpn_data->connect_data( xpnhost, xpnport, dbname,
                                                  dbuser,  dbpasw );
@@ -2697,14 +2703,18 @@ dtext+= "\n** NOT YET FULLY IMPLEMENTED **\n";
 // Slot to test XPN connection and reset the connection flag
 void US_ExperGuiUpload::testConnection()
 {
+   US_Passwd pw;
    QStringList dblist  = US_Settings::defaultXpnHost();
    QString xpnhost     = dblist[ 1 ];
    int     xpnport     = dblist[ 2 ].toInt();
    QString dbname      = dblist[ 3 ];
    QString dbuser      = dblist[ 4 ];
-   QString dbpasw      = dblist[ 5 ];
+   QString epasw       = dblist[ 5 ];
+   QString epasw0      = epasw.section( "^", 0, 0 );
+   QString epasw1      = epasw.section( "^", 1, 1 );
+   QString dbpasw      = US_Crypto::decrypt( epasw0, pw.getPasswd(), epasw1 );
 DbgLv(1) << "EGUp: host port name user pasw" << xpnhost << xpnport
- << dbname << dbuser << dbpasw;
+ << dbname << dbuser << epasw;
    US_XpnData* xpn_data = new US_XpnData();
    connected           = xpn_data->connect_data( xpnhost, xpnport, dbname,
                                                  dbuser,  dbpasw );

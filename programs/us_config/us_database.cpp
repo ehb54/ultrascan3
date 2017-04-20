@@ -69,7 +69,7 @@ US_Database::US_Database( QWidget* w, Qt::WindowFlags flags )
   details->addWidget( le_description, row++, 1 );
 
   // Row 2
-  QLabel* user = us_label( "DB Connection Name:" );
+  QLabel* user = us_label( "User Name:" );
   details->addWidget( user, row, 0 );
 
   le_username = us_lineedit( "", 0 );
