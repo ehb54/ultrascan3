@@ -30,9 +30,13 @@ class US_GUI_EXTERN US_Extinction : public US_Widgets
       double *fitparameters;
       bool fitted, fitting_widget;
       QString buffer_temp;
+      
+      QVector <QVector<double> > xfit_data;
+      QVector <QVector<double> > yfit_data;
 
    private:
       QVector <WavelengthScan> v_wavelength;
+      QVector <WavelengthScan> v_wavelength_original;
       QVector <QwtPlotCurve*>  v_curve;
 
       QWidget * parent;
@@ -106,8 +110,10 @@ class US_GUI_EXTERN US_Extinction : public US_Widgets
       bool    deleteCurve();
       void    accessAnalyteExtinc( US_Analyte );
 
+      void process_yfit( QVector <QVector<double> > &x, QVector <QVector<double> > &y );
+
     signals:
       void    get_results( QMap < double, double > &xyz );
-
+      
 };
 #endif
