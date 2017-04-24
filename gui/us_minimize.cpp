@@ -179,7 +179,8 @@ void US_Minimize::setup_GUI()
 	gl3->addWidget(pb_plottwo, 3, 2);	
 	lbl_lambdaStep = us_label(tr("Lambda Step Size:"));
 	gl3->addWidget(lbl_lambdaStep, 4, 0);
-   le_lambdaStep = us_lineedit("1.0000e+01", 1, false);
+	//le_lambdaStep = us_lineedit("1.0000e+01", 1, false);
+	le_lambdaStep = us_lineedit("2.000", 1, false);
    connect(le_lambdaStep, SIGNAL(textChanged(const QString&)), SLOT(update_lambdaStep(const QString &)));
 	gl3->addWidget(le_lambdaStep, 4, 1);
 	pb_plotthree = us_pushbutton(tr(""));

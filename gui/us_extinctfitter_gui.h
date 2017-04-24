@@ -28,7 +28,7 @@ class US_GUI_EXTERN US_ExtinctFitter : public US_Minimize
 	public:
 
 	US_ExtinctFitter(QVector <struct WavelengthScan> *, double*&, unsigned int&, unsigned int&, QString&, bool *);
-	US_ExtinctFitter(QVector <struct WavelengthScan> *, double*&, unsigned int&, unsigned int&, QString&, bool *, bool);
+	//US_ExtinctFitter(QVector <struct WavelengthScan> *, double*&, unsigned int&, unsigned int&, QString&, bool *, bool);
 	
 	private: 
 		QVector <struct WavelengthScan> *wls_v;
@@ -57,6 +57,7 @@ class US_GUI_EXTERN US_ExtinctFitter : public US_Minimize
    signals:
 
       void dataSaved(const QString &, const int);   //needed to save a list of used scans
+      void get_yfit( QVector <QVector<double> > &, QVector <QVector<double> > &);
 };
 
 #endif

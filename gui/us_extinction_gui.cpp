@@ -121,7 +121,7 @@ US_Extinction::US_Extinction(QString buffer, const QString& text, const QString&
    le_odCutoff = us_lineedit("1.500", 1, false);
    le_lambdaLimitLeft = us_lineedit("200.0", 1, false);
    le_lambdaLimitRight = us_lineedit("1500.0",1, false);
-   le_pathlength = us_lineedit("1.2000", 1, false);
+   le_pathlength = us_lineedit("1.0000", 1, false);
 
    
    le_coefficient = us_lineedit("1.0000",1, false);
@@ -311,7 +311,7 @@ US_Extinction::US_Extinction() : US_Widgets()
    le_odCutoff = us_lineedit("1.500", 1, false);
    le_lambdaLimitLeft = us_lineedit("200.0", 1, false);
    le_lambdaLimitRight = us_lineedit("1500.0",1, false);
-   le_pathlength = us_lineedit("1.2000", 1, false);
+   le_pathlength = us_lineedit("1.0000", 1, false);
    le_coefficient = us_lineedit("1.0000",1, false);
 
    ct_gaussian = us_counter(2, 1, 50, 15);
@@ -542,6 +542,8 @@ bool US_Extinction::loadScan(const QString &fileName)
    {
       //QMessageBox msg2 = us_longmessagebox("Ultrascan Error:", "The wavelength file\n" + fileName + "\ncannot be read.\n Please check to make sure that you have\n read access to this file.", this);
    }
+
+   v_wavelength_original = v_wavelength;
    return(true);
 }
 void US_Extinction::plot()
@@ -592,7 +594,9 @@ void US_Extinction::plot()
       title = v_wavelength.at(m).fileName;
       c = us_curve(data_plot, title);
       c->setSymbol(s);
-      c->setPen(QPen(Qt::green));
+      c->setStyle(QwtPlotCurve::NoCurve);
+      //c->setPen(QPen(Qt::green));
+      //c->setPen(Qt::red, 0.0);
       double* xx = (double*)x_plot.at(m).data();
       double* yy = (double*)y_plot.at(m).data();
       c->setSamples( xx, yy, x_plot.at(m).size() );
@@ -608,6 +612,17 @@ void US_Extinction::plot()
       double* ee = (double*)extinction.data();
       fit_curve->setSamples( ll, ee, lambda.size());
       fit_curve->setYAxis(QwtPlot::yRight);
+      
+      for(int m = 0; m < xfit_data.size(); m++)
+	{
+	  QwtPlotCurve* fitdata;
+	  fitdata = us_curve(data_plot, title);
+	  fitdata->setPen(QPen(Qt::cyan));
+	  double* xx_ffit = (double*)xfit_data.at(m).data();
+	  double* yy_ffit = (double*)yfit_data.at(m).data();
+	  fitdata->setSamples( xx_ffit, yy_ffit, xfit_data.at(m).size() );
+	  v_curve.push_back(fitdata);
+	}
    }
 
    data_plot->replot();
@@ -623,10 +638,15 @@ void US_Extinction::reset_scanlist(void)
    v_curve.clear();
    dataPlotClear( data_plot );
    data_plot->replot();
+
+   
 }
 void US_Extinction::update_data(void)
 {
    fitted = false;
+   
+   v_wavelength =  v_wavelength_original;
+
    pathlength = le_pathlength->text().toFloat();
    float minimum = le_lambdaLimitLeft->text().toFloat(), maximum = le_lambdaLimitRight->text().toFloat(), odLimit = le_odCutoff->text().toFloat();
    //Deletes points that are over the cutoffs set by the user
@@ -634,8 +654,14 @@ void US_Extinction::update_data(void)
    {
       for(int j = 0; j < v_wavelength.at(i).v_readings.size(); j++)
       {
-         if(v_wavelength.at(i).v_readings.at(j).lambda > maximum)
-            v_wavelength[i].v_readings.remove(j, v_wavelength.at(i).v_readings.size() - j);
+	//if(v_wavelength.at(i).v_readings.at(j).lambda == maximum)
+	// v_wavelength[i].v_readings.remove(j, v_wavelength.at(i).v_readings.size() - j);
+	
+	if(v_wavelength.at(i).v_readings.at(j).lambda > maximum)
+	  {
+	    v_wavelength[i].v_readings.remove(j, v_wavelength.at(i).v_readings.size() - j);
+	    break;
+	  }
          if(v_wavelength.at(i).v_readings.at(j).lambda == minimum)
             v_wavelength[i].v_readings.remove(0, j + 1);
          if(v_wavelength.at(i).v_readings.at(j).od > odLimit)
@@ -645,6 +671,8 @@ void US_Extinction::update_data(void)
          }
       }
    }
+
+   qDebug() << "Orig., Updated: " << v_wavelength_original.at(0).v_readings.size() << ", " << v_wavelength.at(0).v_readings.size();
    plot();
 }
 
@@ -745,8 +773,14 @@ void US_Extinction::perform_global_buffer(void)
       fitparameters[v_wavelength.size() + (i * 3) + 1] = lambda_min + lambda_step * i;
       fitparameters[v_wavelength.size() + (i * 3) + 2] = 10;
     }
+  //fitter = new US_ExtinctFitter(&v_wavelength, fitparameters, order, parameters,
+  //				projectName, &fitting_widget, true);
+  
   fitter = new US_ExtinctFitter(&v_wavelength, fitparameters, order, parameters,
-				projectName, &fitting_widget, true);
+				projectName, &fitting_widget);
+
+  connect( fitter, SIGNAL( get_yfit( QVector <QVector<double> > &, QVector <QVector<double> > & )), this, SLOT(process_yfit( QVector <QVector<double> > &, QVector <QVector<double> > & ) ) );
+
   fitter->setParent(this, Qt::Window);
   fitter->show();
   fitted = true;
@@ -798,7 +832,10 @@ void US_Extinction::perform_global_analyte(void)
 	fitparameters[v_wavelength.size() + (i * 3) + 2] = 10;
       }
     fitter = new US_ExtinctFitter(&v_wavelength, fitparameters, order, parameters,
-                                  projectName, &fitting_widget, true);
+                                  projectName, &fitting_widget);
+
+    connect( fitter, SIGNAL( get_yfit( QVector <QVector<double> > &, QVector <QVector<double> > & )), this, SLOT(process_yfit( QVector <QVector<double> > &, QVector <QVector<double> > & ) ) );
+
     fitter->setParent(this, Qt::Window);
     fitter->show();
     fitted = true;
@@ -855,6 +892,8 @@ void US_Extinction::perform_global(void)
    fitter = new US_ExtinctFitter(&v_wavelength, fitparameters, order, parameters,
                                   projectName, &fitting_widget);
  
+   connect( fitter, SIGNAL( get_yfit( QVector <QVector<double> > &, QVector <QVector<double> > & )), this, SLOT(process_yfit( QVector <QVector<double> > &, QVector <QVector<double> > & ) ) );
+
    fitter->setParent(this, Qt::Window);
    fitter->show();
  
@@ -931,6 +970,17 @@ void US_Extinction::calc_extinction()
    delete[] fitparameters;
 }
 
+void US_Extinction::process_yfit(QVector <QVector<double> > &x, QVector <QVector<double> > &y)
+{
+  xfit_data.clear();
+  yfit_data.clear();
+  
+  xfit_data = x;
+  yfit_data = y;
+
+  qDebug() << "Size x, y: " << x.size() << ", " << y.size();
+}
+
 //Changes number of Gaussians used to create the best fit curve
 void US_Extinction::update_order(double new_order)
 {
@@ -990,7 +1040,14 @@ void US_Extinction::save(void)
       return;
    }
 
-   QString filename = QFileDialog::getSaveFileName(this, "Save File", "/home/minji/ultrascan/results/", "*.extinction.dat");
+   //QString filename = QFileDialog::getSaveFileName(this, "Save File", "/home/minji/ultrascan/results/", "*.extinction.dat");
+   
+   QString result_dir  = US_Settings::resultDir();
+   QString filename_passed = result_dir + "/" +  le_associate->text();
+   
+   qDebug() << filename_passed;
+   
+   QString filename = QFileDialog::getSaveFileName(this, "Save File", filename_passed, "*.extinction.dat");
    if(filename.isEmpty())
       return;
    

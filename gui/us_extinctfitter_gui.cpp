@@ -9,6 +9,7 @@
 
 //using namespace std;
 
+/*
 US_ExtinctFitter::US_ExtinctFitter(QVector <struct WavelengthScan> *temp_wls_v, double*& temp_guess, unsigned int& temp_order, unsigned int& temp_parameters, QString& temp_projectName, bool *temp_fitting_widget, bool bufferfit) : US_Minimize(temp_fitting_widget, true)
 {
    guess = temp_guess;
@@ -25,6 +26,7 @@ US_ExtinctFitter::US_ExtinctFitter(QVector <struct WavelengthScan> *temp_wls_v, 
 	connect(pb_overlays, SIGNAL(clicked()), SLOT(plot_overlays()));
    connect(pb_residuals, SIGNAL(clicked()), SLOT(plot_residuals()));
 }
+*/
 
 US_ExtinctFitter::US_ExtinctFitter(QVector <struct WavelengthScan> *temp_wls_v, double*& temp_guess, unsigned int& temp_order, unsigned int& temp_parameters, QString& temp_projectName,  bool *temp_fitting_widget) : US_Minimize(temp_fitting_widget, true)
 {
@@ -34,7 +36,8 @@ US_ExtinctFitter::US_ExtinctFitter(QVector <struct WavelengthScan> *temp_wls_v, 
    wls_v = temp_wls_v;
    runs = 0;
    runs_percent = 0;
-   
+
+     
    projectName = temp_projectName;
 	connect(pb_overlays, SIGNAL(clicked()), SLOT(plot_overlays()));
    connect(pb_residuals, SIGNAL(clicked()), SLOT(plot_residuals()));
@@ -400,7 +403,9 @@ void US_ExtinctFitter::plot_overlays()
 		v_all_yplot_fit.push_back(v_yplot_fit);
 		v_all_yplot_raw.push_back(v_yplot_raw);
    }
-
+   
+   //emit get_yfit( v_all_xplot, v_all_yplot_fit );   // Send fitting data
+   
    //qDebug() << "Starting plot overlay 2: "  ; 
 
    //QwtSymbol* symbol = new QwtSymbol(QwtSymbol::Diamond,QBrush(Qt::red),QPen(Qt::red),QSize(5,5));
@@ -501,6 +506,8 @@ void US_ExtinctFitter::plot_overlays()
    data_plot->replot();
   // data_plot->updatePlot();      //no updatePlot() in new version
    pb_print->setEnabled(true);
+
+   emit get_yfit( v_all_xplot, v_all_yplot_fit );   // Send fitting data
 }
 
 void US_ExtinctFitter::plot_residuals()
