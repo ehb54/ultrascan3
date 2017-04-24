@@ -380,7 +380,7 @@ class US_ExperGuiOptical : public US_WidgetsDialog
       void rebuild_Optic     ( void );
 };
 
-//! \brief Experiment Spectra panel
+//! \brief Experiment Ranges panel
 class US_ExperGuiSpectra : public US_WidgetsDialog 
 {
    Q_OBJECT
@@ -410,29 +410,26 @@ class US_ExperGuiSpectra : public US_WidgetsDialog
       US_Help  showHelp;
       QList< QLabel* >         cc_labls;   // Pointers to channel labels
       QList< QPushButton* >    cc_wavls;   // Pointers to wavelength buttons
-      QList< QCheckBox* >      cc_optis;   // Pointers to Auto-Optima checkboxes
-      QList< QPushButton* >    cc_loads;   // Pointers to Load Spect. buttons
-      QList< QPushButton* >    cc_manus;   // Pointers to Manual Spect. buttons
-      QList< QCheckBox* >      cc_dones;   // Pointers to Done checkboxes
+      QList< QwtCounter* >     cc_lrads;   // Pointers to Radial Low counters
+      QList< QwtCounter* >     cc_hrads;   // Pointers to Radial High counters
 
       int          dbg_level;              // Debug level
       int          mxrow;                  // Maximum possible rows (24)
-      int          nspchan;                // Number Spectra channels (rows)
+      int          nrnchan;                // Number Ranges channels (rows)
       int          chrow;                  // Channel row currently modified
-      QString      protname;               // Protocol used by Spectra
+      QString      protname;               // Protocol used by Ranges
 
-      QVector< QString >         schans;   // Selected Spectra channels, ea. row
-      QVector< QString >         stypes;   // Selected Spectra types, ea. row
+      QVector< QString >         rchans;   // Selected Range channel, ea. row
       QVector< QList< double > > swvlens;  // Selected wavelengths, ea. channel
-      QVector< QList< double > > pwvlens;  // Profile wavelengths, ea. channel
-      QVector< QList< double > > pvalues;  // Profile values, ea. channel
+      QVector< double >          locrads;  // Low radius value, ea. channel
+      QVector< double >          hicrads;  // High radius value, ea. channel
 
    private slots:
       // \brief Manage extinction profiles in a dialog
       void manageEProfiles  ( void );
       // \brief Process the results of the extinction dialog
       void process_results  ( QMap< double, double >& );
-      // \brief Display details on current Spectra parameter values
+      // \brief Display details on current Ranges parameter values
       void detailSpectra    ( void );
       // \brief Select the wavelengths to scan for a channel
       void selectWavelengths( void );
@@ -442,7 +439,7 @@ class US_ExperGuiSpectra : public US_WidgetsDialog
       void loadSpectrum     ( void );
       // \brief Manually enter a wavelength/value spectrum 
       void manualSpectrum   ( void );
-      // \brief Rebuild the Spectra part of the current run protocol
+      // \brief Rebuild the Ranges part of the current run protocol
       void rebuild_Spect    ( void );
 };
 
@@ -536,12 +533,12 @@ class US_ExperGuiUpload : public US_WidgetsDialog
       US_RunProtocol::RunProtoCells*      rpCells;  //!< Cells controls
       US_RunProtocol::RunProtoSolutions*  rpSolut;  //!< Solutions controls
       US_RunProtocol::RunProtoOptics*     rpOptic;  //!< Optical Systems controls
-      US_RunProtocol::RunProtoSpectra*    rpSpect;  //!< Spectra controls
-      US_RunProtocol::RunProtoUpload*     rpUload;  //!< Upload controls
+      US_RunProtocol::RunProtoSpectra*    rpSpect;  //!< Ranges controls
+      US_RunProtocol::RunProtoUpload*     rpUload;  //!< Submit controls
       US_Help  showHelp;
 
       QPushButton* pb_saverp;
-      QPushButton* pb_upload;
+      QPushButton* pb_submit;
 
       QCheckBox*   ck_run;
       QCheckBox*   ck_project;
@@ -557,8 +554,8 @@ class US_ExperGuiUpload : public US_WidgetsDialog
       QCheckBox*   ck_rp_diff;
       QCheckBox*   ck_prot_ena;
       QCheckBox*   ck_prot_svd;
-      QCheckBox*   ck_upl_enab;
-      QCheckBox*   ck_upl_done;
+      QCheckBox*   ck_sub_enab;
+      QCheckBox*   ck_sub_done;
 
       int          dbg_level;
       bool         have_run;    // Have Run specified
@@ -569,21 +566,21 @@ class US_ExperGuiUpload : public US_WidgetsDialog
       bool         chgd_speed;  // User Changed Speed parameters
       bool         have_cells;  // Have Cell parameters specified
       bool         have_solus;  // Have Solutions parameters specified
-      bool         have_optic;  // Have Optical parameters specified
-      bool         have_spect;  // Have Spectra parameters specified
+      bool         have_optic;  // Have Optics parameters specified
+      bool         have_spect;  // Have Ranges parameters specified
       bool         have_sol;    // Have Solution parameters specified
       bool         rps_differ;  // Run Protocols differ loaded/current
       bool         proto_ena;   // Protocol save is possible now
       bool         proto_svd;   // Protocol have been Saved
-      bool         upld_enab;   // Upload of Run controls is Enabled
-      bool         uploaded;    // Run controls have been Uploaded
+      bool         subm_enab;   // Submit of Run controls is Enabled
+      bool         submitted;   // Run controls have been Submitted
       bool         connected;   // We are Connected to the Optima
       QString      json_upl;    // JSON to upload
 
    private slots:
       void    detailExperiment( void );  // Dialog to detail experiment
       void    testConnection  ( void );  // Test Optima connection
-      void    uploadExperiment( void );  // Upload the experiment
+      void    submitExperiment( void );  // Submit the experiment
       void    saveRunProtocol ( void );  // Save the Run Protocol
       QString buildJson       ( void );  // Build the JSON
 };
@@ -623,9 +620,9 @@ class US_ExperimentMain : public US_Widgets
       US_ExperGuiSpeeds*    epanSpeeds;     // Speeds panel
       US_ExperGuiCells*     epanCells;      // Cells panel
       US_ExperGuiSolutions* epanSolutions;  // Solutions panel
-      US_ExperGuiOptical*   epanOptical;    // Optical Systems panel
-      US_ExperGuiSpectra*   epanSpectra;    // Spectra panel
-      US_ExperGuiUpload*    epanUpload;     // Upload panel
+      US_ExperGuiOptical*   epanOptical;    // Optics panel
+      US_ExperGuiSpectra*   epanSpectra;    // Ranges panel
+      US_ExperGuiUpload*    epanUpload;     // Submit panel
 
       int         statflag;        // Composite panels status flag
       int         dbg_level;       // Debug print flag

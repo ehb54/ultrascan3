@@ -184,7 +184,7 @@ class US_UTIL_EXTERN US_XpnData : public QObject
       bool    connect_data( const QString, const int = 5432,
                             const QString = QString( "AUC_DATA_DB" ),
                             const QString = QString( "aucuser" ),
-                            const QString = QString( "badpasswd" ) );
+                            const QString = QString( "aucuser" ) );
 
       //! \brief Connect for XPN data with remote host DB
       //! \param adbname Name of database to examine
@@ -235,6 +235,11 @@ class US_UTIL_EXTERN US_XpnData : public QObject
       //! \param celchns Output cell/channels string list
       //! \returns       Number of cell/channels in the list
       int     cellchannels  ( QStringList& );
+
+      //! \brief Return list of cell/channel/wavelength strings
+      //! \param trips   Output cell/channel/wavelengths string list
+      //! \returns       Number of triples in the list
+      int     data_triples  ( QStringList& );
 
       //! \brief Build RawData vector
       //! \param allData Output vector of rawDatas built from XPN data

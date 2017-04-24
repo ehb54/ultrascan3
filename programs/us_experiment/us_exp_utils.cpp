@@ -963,7 +963,7 @@ DbgLv(1) << "EGCe:getSL:     ii" << ii << " Entry" << centry;
    else if ( type == "cpchannels" )
    {  // Return channel strings where a centerpiece is selected
       int icbal           = sibIValue( "rotor", "nholes" ) - 1;
-      QString schans( "ABCDEF" );
+      QString rchans( "ABCDEF" );
 
       for ( int ii = 0; ii < rpCells->nused; ii++ )
       {  // Examine the used cells
@@ -979,7 +979,7 @@ DbgLv(1) << "EGCe:getSL:     ii" << ii << " Entry" << centry;
                                              .simplified().toInt();
             for ( int jj = 0; jj < ncchn; jj++ )
             {  // Save channel strings (e.g., "1 / A", "1 / B", "2 / A", ...)
-               value << channel + schans.mid( jj, 1 );
+               value << channel + rchans.mid( jj, 1 );
             }
          }
       }
@@ -1571,68 +1571,45 @@ DbgLv(1) << "EGwS:inP:  call rbS";
    rebuild_Spect();
 
    QString ch_none( "none" );
-DbgLv(1) << "EGwS:inP:  nspchan" << nspchan;
+DbgLv(1) << "EGwS:inP:  nrnchan" << nrnchan;
 
-   for ( int ii = 0; ii < nspchan; ii++ )
+   for ( int ii = 0; ii < nrnchan; ii++ )
    {
-      QString channel     = schans[ ii ];
-      QString typeinp     = stypes[ ii ];
-DbgLv(1) << "EGwS:inP:    ii" << ii << "channel" << channel << "typeinp" << typeinp;
+      QString channel     = rchans[ ii ];
+DbgLv(1) << "EGwS:inP:    ii" << ii << "channel" << channel;
       cc_labls[ ii ]->setText( channel );
-      cc_optis[ ii ]->setChecked( typeinp == "auto" );
-      cc_dones[ ii ]->setChecked( typeinp == "auto" );
       cc_labls[ ii ]->setVisible( true );
       cc_wavls[ ii ]->setVisible( true );
-      cc_optis[ ii ]->setVisible( true );
-      cc_loads[ ii ]->setVisible( true );
-      cc_manus[ ii ]->setVisible( true );
-      cc_dones[ ii ]->setVisible( true );
    }
 
    // Make remaining rows invisible
-   for ( int ii = nspchan; ii < mxrow; ii++ )
+   for ( int ii = nrnchan; ii < mxrow; ii++ )
    {
       cc_labls[ ii ]->setText( ch_none );
       cc_labls[ ii ]->setVisible( false );
       cc_wavls[ ii ]->setVisible( false );
-      cc_optis[ ii ]->setVisible( false );
-      cc_loads[ ii ]->setVisible( false );
-      cc_manus[ ii ]->setVisible( false );
-      cc_dones[ ii ]->setVisible( false );
    }
 }
 
 // Save panel controls when about to leave the panel
 void US_ExperGuiSpectra::savePanel()
 {
-DbgLv(1) << "EGwS:svP: nspchan" << nspchan << "nspect" << rpSpect->nspect;
-   rpSpect->nspect  = nspchan;            // Protocol channels
-   rpSpect->chspecs.resize( nspchan );    // Expand or contract?
+DbgLv(1) << "EGwS:svP: nrnchan" << nrnchan << "nranges" << rpSpect->nranges;
+   rpSpect->nranges  = nrnchan;            // Protocol channels
+   rpSpect->chrngs.resize( nrnchan );    // Expand or contract?
 
-   for ( int ii = 0; ii < nspchan; ii++ )
+   for ( int ii = 0; ii < nrnchan; ii++ )
    {
-      rpSpect->chspecs[ ii ].channel = schans[ ii ];
-      rpSpect->chspecs[ ii ].typeinp = stypes[ ii ];
+      rpSpect->chrngs[ ii ].channel = rchans[ ii ];
 
-      rpSpect->chspecs[ ii ].wvlens.clear();
-      rpSpect->chspecs[ ii ].values.clear();
-
-      if ( swvlens[ ii ].count() == 0  &&
-           pwvlens[ ii ].count() > 0 )
-         swvlens[ ii ]    = pwvlens[ ii ];
+      rpSpect->chrngs[ ii ].wvlens.clear();
 
       for ( int jj = 0; jj < swvlens[ ii ].count(); jj++ )
       {  // Wavelength values from selected wavelengths
          double wavelen   = swvlens[ ii ][ jj ];
-         int wvx          = pwvlens[ ii ].indexOf( wavelen );
-
-         if ( wvx >= 0 )
-         {  // Use if also in profile list; use value there
-            rpSpect->chspecs[ ii ].wvlens << wavelen;
-            rpSpect->chspecs[ ii ].values << pvalues[ ii ][ wvx ];
-         }
+         rpSpect->chrngs[ ii ].wvlens << wavelen;
       }
-DbgLv(1) << "EGwS:svP:  ii" << ii << "wvl knt" << rpSpect->chspecs[ii].wvlens.count();
+DbgLv(1) << "EGwS:svP:  ii" << ii << "wvl knt" << rpSpect->chrngs[ii].wvlens.count();
    }
 }
 
@@ -1657,7 +1634,7 @@ QString US_ExperGuiSpectra::getSValue( const QString type )
 int US_ExperGuiSpectra::getIValue( const QString type )
 {
    int value   = 0;
-   if      ( type == "nspect" )  { value = rpSpect->nspect; }
+   if      ( type == "nspect" )  { value = rpSpect->nranges; }
    else if ( type == "alldone" ) { value = ( status() > 0 ) ? 1 : 0; }
    else if ( type == "status"  ) { value = status(); }
 
@@ -1706,20 +1683,13 @@ QStringList US_ExperGuiSpectra::sibLValue( const QString sibling, const QString 
 int US_ExperGuiSpectra::status()
 {
    bool is_done    = true;
-DbgLv(1) << "EGwS:st: nspect" << rpSpect->nspect;
+DbgLv(1) << "EGwS:st: nranges" << rpSpect->nranges;
 
-   for ( int ii = 0; ii < rpSpect->nspect; ii++ )
+   for ( int ii = 0; ii < rpSpect->nranges; ii++ )
    {
-      if ( rpSpect->chspecs[ ii ].wvlens.count() == 0 )
+      if ( rpSpect->chrngs[ ii ].wvlens.count() == 0 )
          is_done         = false;       // Not done if missing wavelengths
 DbgLv(1) << "EGwS:st:   ii" << ii << "is_done(wvlens count)" << is_done;
-
-      else if ( rpSpect->chspecs[ ii ].typeinp == "auto" )
-         continue;                      // OK so far, if "auto"
-
-      else if ( rpSpect->chspecs[ ii ].values[ 0 ] == 0.0 )
-         is_done         = false;       // Not done if missing values
-DbgLv(1) << "EGwS:st:     is_done(non-0 values)" << is_done;
    }
 
    return ( is_done ? 64 : 0 );
@@ -1773,7 +1743,7 @@ DbgLv(1) << "EGUp:inP: ck: run proj cent solu epro"
  << have_run << have_proj << have_cells << have_solus << have_spect;
    proto_ena         = ( have_cells  &&  have_solus  &&  have_optic  &&
                          have_spect );
-   upld_enab         = ( have_run    &&  have_proj  &&  proto_ena  &&
+   subm_enab         = ( have_run    &&  have_proj  &&  proto_ena  &&
                          connected );
 
    ck_run     ->setChecked( have_run   );
@@ -1787,11 +1757,11 @@ DbgLv(1) << "EGUp:inP: ck: run proj cent solu epro"
    ck_connect ->setChecked( connected  );
    ck_prot_ena->setChecked( proto_ena  );
    ck_prot_svd->setChecked( proto_svd  );
-   ck_upl_enab->setChecked( upld_enab  );
-   ck_upl_done->setChecked( uploaded   );
+   ck_sub_enab->setChecked( subm_enab  );
+   ck_sub_done->setChecked( submitted  );
    ck_rp_diff ->setChecked( rps_differ );
 
-   pb_upload  ->setEnabled( upld_enab  );
+   pb_submit  ->setEnabled( subm_enab  );
    pb_saverp  ->setEnabled( have_cells &&  have_solus &&  have_spect );
 }
 

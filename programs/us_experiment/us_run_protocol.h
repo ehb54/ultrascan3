@@ -220,19 +220,19 @@ class US_RunProtocol
       class RunProtoSpectra
       {
          public:
-            class Spectrum
+            class Ranges
             {
                public:
                   QString          channel;  //!< Channel description ("2 / A")
-                  QString          typeinp;  //!< Type input (auto|load|manual)
                   QList< double >  wvlens;   //!< List of wavelengths
-                  QList< double >  values;   //!< List of values (non-auto)
+                  double           lo_rad;   //!< Low radius for channel
+                  double           hi_rad;   //!< High radius for channel
 
-                  Spectrum();
+                  Ranges();
 
-                  bool operator== ( const Spectrum& ) const;
+                  bool operator== ( const Ranges& ) const;
 
-                  inline bool operator!= ( const Spectrum& s ) const 
+                  inline bool operator!= ( const Ranges& s ) const 
                   { return ! operator==(s); }
             };
 
@@ -251,9 +251,9 @@ class US_RunProtocol
             //! Save controls to XML
             bool toXml  ( QXmlStreamWriter& );
 
-            int         nspect;           //!< Number of channels with spectra
+            int                nranges;     //!< Number of channels with ranges
 
-            QVector< Spectrum > chspecs;  //!< Channel spectra
+            QVector< Ranges >  chrngs;      //!< Channel ranges
       };
 
       //! \brief Protocol Upload controls class

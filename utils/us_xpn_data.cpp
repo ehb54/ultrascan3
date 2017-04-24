@@ -17,7 +17,7 @@ US_XpnData::US_XpnData( ) {
    dbport       = 5432;
    dbname       = QString( "AUC_DATA_DB" );
    dbuser       = QString( "aucuser" );
-   dbpasw       = QString( "badpasswd" );
+   dbpasw       = QString( "aucuser" );
    sctype       = 1;
    runType      = "RI";
 DbgLv(0) << "XpDa: dbg_level" << dbg_level;
@@ -848,6 +848,13 @@ int US_XpnData::cellchannels( QStringList& celchns )
    return ncelchn;
 }
 
+// Return the list of triple strings
+int US_XpnData::data_triples( QStringList& trips )
+{
+   trips = triples;
+   return triples.count();
+}
+
 // Populate the list of RawData objects from raw input XPN data
 int US_XpnData::build_rawData( QVector< US_DataIO::RawData >& allData )
 {
@@ -886,7 +893,9 @@ DbgLv(1) << "BldRawD     trx" << trx << " building scans... ccx" << ccx;
       // Set triple values
       rdata.type[ 0 ]   = dtype0;
       rdata.type[ 1 ]   = dtype1;
-      QString celchn    = cellchans[ ccx ];
+      QString dtrip     = triples[ trx ];
+      //QString celchn    = cellchans[ ccx ];
+      QString celchn    = dtrip.section( "/", 0, 1 );
       rdata.cell        = celchn.section( "/", 0, 0 ).toInt();
       rdata.channel     = celchn.section( "/", 1, 1 ).simplified()
                           .toLatin1().data()[ 0 ];
@@ -1042,12 +1051,17 @@ DbgLv(1) << "expA: ntrips ftype fbase" << ntrips << ftype << fbase
    for ( int ii = 0; ii < ntrips; ii++ )
    {  // Create a file for each triple
       US_DataIO::RawData* rdata = &allData[ ii ];
+#if 0
       QString trnode    = QString::number( rdata->cell ) + "." +
                           QString( rdata->channel ) + "." +
                           QString().sprintf( "%03d",
                                 qRound( rdata->scanData[ 0 ].wavelength ) );
+#endif
+      QString trnode    = trnodes[ ii ];
       QString fname     = fbase + trnode + ".auc";
       QString fpath     = cur_dir + fname;
+DbgLv(1) << "expA: ii" << ii << "triples[ii]" << triples[ii]
+ << "trnodes[ii]" << trnodes[ii] << "trnode" << trnode;
 
       US_DataIO::writeRawData( fpath, *rdata );
 

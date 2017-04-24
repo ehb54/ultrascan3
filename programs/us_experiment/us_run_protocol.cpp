@@ -738,26 +738,26 @@ bool US_RunProtocol::RunProtoOptics::OpticSys::operator==
 // RunProtoSpectra subclass constructor
 US_RunProtocol::RunProtoSpectra::RunProtoSpectra()
 {
-   nspect               = 0;
-   chspecs.clear();
+   nranges              = 0;
+   chrngs.clear();
 }
 
 // RunProtoSpectra subclass Equality operator
 bool US_RunProtocol::RunProtoSpectra::operator== 
                   ( const RunProtoSpectra& rp ) const
 {
-   if ( nspect  != rp.nspect  ) return false;
-   if ( chspecs != rp.chspecs ) return false;
+   if ( nranges != rp.nranges  ) return false;
+   if ( chrngs  != rp.chrngs )   return false;
 
    return true;
 }
 
-// Read all current Spectra controls from an XML stream
+// Read all current Ranges controls from an XML stream
 bool US_RunProtocol::RunProtoSpectra::fromXml( QXmlStreamReader& xmli )
 {
-   nspect               = 0;
-   chspecs.clear();
-   Spectrum sp;
+   nranges              = 0;
+   chrngs.clear();
+   Ranges rng;
 
    while( ! xmli.atEnd() )
    {
@@ -765,41 +765,41 @@ bool US_RunProtocol::RunProtoSpectra::fromXml( QXmlStreamReader& xmli )
 
       if ( xmli.isStartElement() )
       {
-         if ( ename == "spectrum" )
+         if ( ename == "range"  ||  ename == "spectrum" )
          {
             QXmlStreamAttributes attr = xmli.attributes();
-            sp.channel           = attr.value( "channel" ).toString();
-            QString fl_auto      = attr.value( "auto"    ).toString();
-            QString fl_load      = attr.value( "load"    ).toString();
-            QString fl_manual    = attr.value( "manual"  ).toString();
+            rng.channel          = attr.value( "channel" )     .toString();
+            QString slorad       = attr.value( "start_radius" ).toString();
+            QString shirad       = attr.value( "end_radius" )  .toString();
+            rng.lo_rad           = slorad.isEmpty() ? rng.lo_rad : slorad.toDouble();
+            rng.hi_rad           = shirad.isEmpty() ? rng.hi_rad : shirad.toDouble();
 
-            if ( fl_auto   == "1" )   sp.typeinp   = "auto";
-            if ( fl_load   == "1" )   sp.typeinp   = "load";
-            if ( fl_manual == "1" )   sp.typeinp   = "manual";
-
-            sp.wvlens.clear();
-            sp.values.clear();
+            rng.wvlens.clear();
          }
 
-         else if ( ename == "point" )
+         else if ( ename == "wavelength"  ||  ename == "point" )
          {
             QXmlStreamAttributes attr = xmli.attributes();
-            sp.wvlens << attr.value( "lambda" ).toString().toDouble();
-            sp.values << attr.value( "value"  ).toString().toDouble();
+            rng.wvlens << attr.value( "lambda" ).toString().toDouble();
          }
       }
 
-      else if ( xmli.isEndElement()  &&  ename == "spectrum" )
+      else if ( xmli.isEndElement()  &&
+               ( ename == "range"  ||  ename == "spectrum" ) )
       {
-         chspecs << sp;
-         nspect++;
+         chrngs << rng;
+         nranges++;
       }
 
       bool was_end    = xmli.isEndElement();  // Just read was End of element?
       xmli.readNext();                        // Read the next element
 
-      if ( was_end  &&  ename == "spectra" )  // Break after "</spectra>"
-         break;
+      if ( was_end )
+      {
+         if ( ename == "ranges"  ||          // Break after "</ranges>"
+              ename == "spectra" )           // Break after "</spectra>"
+           break;
+      }
    }
 
    return ( ! xmli.hasError() );
@@ -808,49 +808,47 @@ bool US_RunProtocol::RunProtoSpectra::fromXml( QXmlStreamReader& xmli )
 // Write the current Spectra portion of controls to an XML stream
 bool US_RunProtocol::RunProtoSpectra::toXml( QXmlStreamWriter& xmlo )
 {
-   nspect               = chspecs.count();
-   xmlo.writeStartElement( "spectra" );
-   for ( int ii = 0; ii < nspect; ii++ )
+   nranges              = chrngs.count();
+   xmlo.writeStartElement( "ranges" );
+   for ( int ii = 0; ii < nranges; ii++ )
    {
-      QString inpt         = chspecs[ ii ].typeinp;
-      xmlo.writeStartElement( "spectrum" );
-      xmlo.writeAttribute   ( "channel", chspecs[ ii ].channel );
-      xmlo.writeAttribute   ( "auto",   ( inpt == "auto"   ) ? "1" : "0" );
-      xmlo.writeAttribute   ( "load",   ( inpt == "load"   ) ? "1" : "0" );
-      xmlo.writeAttribute   ( "manual", ( inpt == "manual" ) ? "1" : "0" );
-      for ( int jj = 0; jj < chspecs[ ii ].wvlens.count(); jj++ )
+      xmlo.writeStartElement( "range" );
+      xmlo.writeAttribute   ( "channel",      chrngs[ ii ].channel );
+      xmlo.writeAttribute   ( "start_radius",
+                              QString::number( chrngs[ ii ].lo_rad ) );
+      xmlo.writeAttribute   ( "end_radius",
+                              QString::number( chrngs[ ii ].hi_rad ) );
+      for ( int jj = 0; jj < chrngs[ ii ].wvlens.count(); jj++ )
       {
-         xmlo.writeStartElement( "point" );
-         xmlo.writeAttribute( "lambda",
-                              QString::number( chspecs[ ii ].wvlens[ jj ] ) );
-         xmlo.writeAttribute( "value",
-                              QString::number( chspecs[ ii ].values [ jj ] ) );
-         xmlo.writeEndElement(); // point
+         xmlo.writeStartElement( "wavelength" );
+         xmlo.writeAttribute   ( "lambda",
+                                 QString::number( chrngs[ ii ].wvlens[ jj ] ) );
+         xmlo.writeEndElement(); // wavelength
       }
-      xmlo.writeEndElement(); // spectrum
+      xmlo.writeEndElement(); // range
    }
-   xmlo.writeEndElement(); // spectra
+   xmlo.writeEndElement(); // ranges
 
    return ( ! xmlo.hasError() );
 }
 
-// RunProtoSpectra::Spectrum subclass constructor
-US_RunProtocol::RunProtoSpectra::Spectrum::Spectrum()
+// RunProtoSpectra::Ranges subclass constructor
+US_RunProtocol::RunProtoSpectra::Ranges::Ranges()
 {
    channel.clear();
-   typeinp.clear();
    wvlens .clear();
-   values .clear();
+   lo_rad               = 5.8;
+   hi_rad               = 7.2;
 }
 
-// RunProtoSpectra::Spectrum subclass Equality operator
-bool US_RunProtocol::RunProtoSpectra::Spectrum::operator==
-                  ( const Spectrum& s ) const
+// RunProtoSpectra::Ranges subclass Equality operator
+bool US_RunProtocol::RunProtoSpectra::Ranges::operator==
+                  ( const Ranges& s ) const
 {
    if ( channel     != s.channel     ) return false;
-   if ( typeinp     != s.typeinp     ) return false;
    if ( wvlens      != s.wvlens      ) return false;
-   if ( values      != s.values      ) return false;
+   if ( lo_rad      != s.lo_rad      ) return false;
+   if ( hi_rad      != s.hi_rad      ) return false;
 
    return true;
 }

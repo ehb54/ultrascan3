@@ -26,44 +26,39 @@ US_ExperGuiSpectra::US_ExperGuiSpectra( QWidget* topw )
    mainw               = (US_ExperimentMain*)topw;
    rpSpect             = &(mainw->currProto.rpSpect);
    mxrow               = 24;     // Maximum possible rows
-   nspchan             = 0;
+   nrnchan             = 0;
    protname            = mainw->currProto.protname;
    chrow               = -1;
    dbg_level           = US_Settings::us_debug();
    QVBoxLayout* panel  = new QVBoxLayout( this );
    panel->setSpacing        ( 2 );
    panel->setContentsMargins( 2, 2, 2, 2 );
-   QLabel* lb_panel    = us_banner( tr( "7: Specify wavelength/value spectra" ) );
+   QLabel* lb_panel    = us_banner( tr( "7: Specify wavelength and radius ranges" ) );
    panel->addWidget( lb_panel );
    QGridLayout* genL   = new QGridLayout();
 
-   QPushButton* pb_details  = us_pushbutton( tr( "View Current Spectra Settings" ) );
+   QPushButton* pb_details  = us_pushbutton( tr( "View Current Range Settings" ) );
    connect( pb_details,   SIGNAL( clicked()       ),
             this,         SLOT  ( detailSpectra() ) );
 
    QLabel* lb_hdr1     = us_banner( tr( "Cell / Channel" ) );
    QLabel* lb_hdr2     = us_banner( tr( "Wavelengths" ) );
-   QLabel* lb_hdr3     = us_banner( tr( "Spectra Input" ) );
-   QLabel* lb_hdr4     = us_banner( tr( "All Specified?" ) );
+   QLabel* lb_hdr3     = us_banner( tr( "Radius Ranges" ) );
 
    int row             = 0;
-   genL->addWidget( pb_details,      row++, 3, 1, 3 );
-   genL->addWidget( lb_hdr1,         row,   0, 1, 1 );
-   genL->addWidget( lb_hdr2,         row,   1, 1, 1 );
-   genL->addWidget( lb_hdr3,         row,   2, 1, 3 );
-   genL->addWidget( lb_hdr4,         row++, 5, 1, 1 );
+   genL->addWidget( pb_details,      row++, 8, 1, 8 );
+   genL->addWidget( lb_hdr1,         row,   0, 1, 3 );
+   genL->addWidget( lb_hdr2,         row,   3, 1, 6 );
+   genL->addWidget( lb_hdr3,         row++, 9, 1, 7 );
 
    QLabel*      cclabl;
    QPushButton* pbwavln;
-   QPushButton* pbsload;
-   QPushButton* pbsmanu;
-   QCheckBox*   ckoptim;
-   QCheckBox*   cksdone;
+   QLabel*      lbwlrng;
+   QwtCounter*  ctradfr;
+   QLabel*      lablto;
+   QwtCounter*  ctradto;
    QString swavln   = tr( "Select Wavelengths" );
-   QString soptim   = tr( "Auto in Optima" );
-   QString sloads   = tr( "Load Spectrum" );
-   QString smanus   = tr( "Manual Spectrum" );
-   QString ssdone   = tr( "Done" );
+   QString srngto   = tr( "to" );
    QFont   ckfont   = QFont( US_GuiSettings::fontFamily(),
                              US_GuiSettings::fontSize  (),
                              QFont::Bold );
@@ -79,64 +74,58 @@ US_ExperGuiSpectra::US_ExperGuiSpectra( QWidget* topw )
       else                scel = QString( "none" );
       cclabl           = us_label( scel );
       pbwavln          = us_pushbutton( swavln );
-      ckoptim          = new QCheckBox( soptim, this );
-      pbsload          = us_pushbutton( sloads );
-      pbsmanu          = us_pushbutton( smanus );
-      cksdone          = new QCheckBox( ssdone, this );
-      cksdone->setEnabled( false );
+      lbwlrng          = us_label( "2, 278 to 282" );
+      ctradfr          = us_counter( 3, 5.6, 7.4, 5.8 );
+      lablto           = us_label( srngto );
+      ctradto          = us_counter( 3, 5.6, 7.4, 7.2 );
       QString strow    = QString::number( ii );
       cclabl ->setObjectName( strow + ": label" );
       pbwavln->setObjectName( strow + ": pb_wavln" );
-      ckoptim->setObjectName( strow + ": ck_optim" );
-      pbsload->setObjectName( strow + ": pb_sload" );
-      pbsmanu->setObjectName( strow + ": pb_smanu" );
-      cksdone->setObjectName( strow + ": ck_sdone" );
-
-      ckoptim->setFont   ( ckfont );
-      ckoptim->setPalette( ckpal );
-      ckoptim->setChecked( false );
-      ckoptim->setAutoFillBackground( true );
-      cksdone->setFont   ( ckfont );
-      cksdone->setPalette( ckpal );
-      cksdone->setChecked( false );
-      cksdone->setAutoFillBackground( true );
+      lbwlrng->setObjectName( strow + ": lb_wlrng" );
+      ctradfr->setObjectName( strow + ": ct_radfr" );
+      lablto ->setObjectName( strow + ": lb_to"    );
+      ctradto->setObjectName( strow + ": ct_radto" );
 
       bool is_vis      = ( ii < 4 );
 
-      genL->addWidget( cclabl,  row,   0, 1, 1 );
-      genL->addWidget( pbwavln, row,   1, 1, 1 );
-      genL->addWidget( ckoptim, row,   2, 1, 1 );
-      genL->addWidget( pbsload, row,   3, 1, 1 );
-      genL->addWidget( pbsmanu, row,   4, 1, 1 );
-      genL->addWidget( cksdone, row++, 5, 1, 1 );
+      genL->addWidget( cclabl,  row,    0, 1, 3 );
+      genL->addWidget( pbwavln, row,    3, 1, 3 );
+      genL->addWidget( lbwlrng, row,    6, 1, 3 );
+      genL->addWidget( ctradfr, row,    9, 1, 3 );
+      genL->addWidget( lablto,  row,   12, 1, 1 );
+      genL->addWidget( ctradto, row++, 13, 1, 3 );
 
       cclabl ->setVisible( is_vis );
       pbwavln->setVisible( is_vis );
-      ckoptim->setVisible( is_vis );
-      pbsload->setVisible( is_vis );
-      pbsmanu->setVisible( is_vis );
-      cksdone->setVisible( is_vis );
+      lbwlrng->setVisible( is_vis );
+      ctradfr->setVisible( is_vis );
+      lablto ->setVisible( is_vis );
+      ctradto->setVisible( is_vis );
 
-      connect( pbwavln, SIGNAL( clicked()           ),
-               this,    SLOT  ( selectWavelengths() ) );
-      connect( ckoptim, SIGNAL( toggled    ( bool ) ),
-               this,    SLOT  ( checkOptima( bool ) ) );
-      connect( pbsload, SIGNAL( clicked()           ),
-               this,    SLOT  ( loadSpectrum()      ) );
-      connect( pbsmanu, SIGNAL( clicked()           ),
-               this,    SLOT  ( manualSpectrum()    ) );
+      connect( pbwavln, SIGNAL( clicked()              ),
+               this,    SLOT  ( selectWavelengths()    ) );
+#if 0
+      connect( ctradfr, SIGNAL( valueChanged( double ) ),
+               this,    SLOT  ( loRadChanged( double ) ) );
+      connect( ctradfr, SIGNAL( valueChanged( double ) ),
+               this,    SLOT  ( hiRadChanged( double ) ) );
+      connect( ckoptim, SIGNAL( toggled     ( bool )   ),
+               this,    SLOT  ( checkOptima ( bool )   ) );
+      connect( pbsload, SIGNAL( clicked()              ),
+               this,    SLOT  ( loadSpectrum()         ) );
+      connect( pbsmanu, SIGNAL( clicked()              ),
+               this,    SLOT  ( manualSpectrum()       ) );
+#endif
 
       cc_labls << cclabl;
       cc_wavls << pbwavln;
-      cc_optis << ckoptim;
-      cc_loads << pbsload;
-      cc_manus << pbsmanu;
-      cc_dones << cksdone;
+      cc_lrads << ctradfr;
+      cc_hrads << ctradto;
    }
 
 #if 0
    // Build initial dummy internal values
-   schans << "1 / A" << "1 / B" << "3 / A" << "3 / B";
+   rchans << "1 / A" << "1 / B" << "3 / A" << "3 / B";
    stypes << "load" << "manual" << "auto" << "manual";
    QList< double > lmbd;
    lmbd << 280.0;
@@ -158,19 +147,19 @@ US_ExperGuiSpectra::US_ExperGuiSpectra( QWidget* topw )
 void US_ExperGuiSpectra::rebuild_Spect( void )
 {
    int nuvvis          = sibIValue( "optical", "nuvvis" );
-   int nspect_sv       = rpSpect->nspect;
-   nspchan             = schans.count();
-DbgLv(1) << "EGwS: rbS: nuvvis" << nuvvis << "nspect_sv" << nspect_sv
- << "nspchan" << nspchan;
+   int nrange_sv       = rpSpect->nranges;
+   nrnchan             = rchans.count();
+DbgLv(1) << "EGwS: rbS: nuvvis" << nuvvis << "nrange_sv" << nrange_sv
+ << "nrnchan" << nrnchan;
 
-//   if ( nspect_sv == nuvvis  &&  nuvvis != 0 )
+//   if ( nrange_sv == nuvvis  &&  nuvvis != 0 )
 //      return;                           // No optical change means no rebuild
 
-DbgLv(1) << "EGwS: rbS:  nspchan" << nspchan;
-   if ( nspect_sv == 0 )
+DbgLv(1) << "EGwS: rbS:  nrnchan" << nrnchan;
+   if ( nrange_sv == 0 )
    {  // No existing Spectra protocol, so init with rudimentary one
-      rpSpect->nspect     = nuvvis;
-      rpSpect->chspecs.resize( nuvvis );
+      rpSpect->nranges    = nuvvis;
+      rpSpect->chrngs.resize( nuvvis );
       QString uvvis       = tr( "UV/visible" );
       QStringList oprof   = sibLValue( "optical", "profiles" );
       int kuv             = 0;
@@ -178,12 +167,9 @@ DbgLv(1) << "EGwS: rbS:  nspchan" << nspchan;
       {
          if ( oprof[ ii ].contains( uvvis ) )
          {
-            rpSpect->chspecs[ kuv ].channel  = oprof[ ii ].section( ":", 0, 0 );
-            rpSpect->chspecs[ kuv ].typeinp  = "manual";
-            rpSpect->chspecs[ kuv ].wvlens.clear();
-            rpSpect->chspecs[ kuv ].values.clear();
-            rpSpect->chspecs[ kuv ].wvlens <<  280.0;
-            rpSpect->chspecs[ kuv ].values <<  0.0;
+            rpSpect->chrngs[ kuv ].channel  = oprof[ ii ].section( ":", 0, 0 );
+            rpSpect->chrngs[ kuv ].wvlens.clear();
+            rpSpect->chrngs[ kuv ].wvlens <<  280.0;
             if ( ++kuv >= nuvvis )  break;
          }
       }
@@ -197,66 +183,61 @@ DbgLv(1) << "EGwS: rbS:  protname" << protname << "cur_pname" << cur_pname;
    if ( protname != cur_pname )
    {  // Protocol has changed:  rebuild internals
       protname            = cur_pname;
-      nspchan             = nspect_sv;
-      rpSpect->nspect     = nuvvis;
-      schans .resize( nspchan );
-      stypes .resize( nspchan );
-      swvlens.resize( nspchan );
-      pwvlens.resize( nspchan );
-      pvalues.resize( nspchan );
-DbgLv(1) << "EGwS: rbS: rbI -- nspchan" << nspchan;
+      nrnchan             = nrange_sv;
+      rpSpect->nranges    = nuvvis;
+      rchans .resize( nrnchan );
+      swvlens.resize( nrnchan );
+      locrads.resize( nrnchan );
+      hicrads.resize( nrnchan );
+DbgLv(1) << "EGwS: rbS: rbI -- nrnchan" << nrnchan;
 
-      for ( int ii = 0; ii < nspchan; ii++ )
+      for ( int ii = 0; ii < nrnchan; ii++ )
       {
-         schans [ ii ]       = rpSpect->chspecs[ ii ].channel;
-         stypes [ ii ]       = rpSpect->chspecs[ ii ].typeinp;
-         int nwavl           = rpSpect->chspecs[ ii ].wvlens.count();
+         rchans [ ii ]       = rpSpect->chrngs[ ii ].channel;
+         int nwavl           = rpSpect->chrngs[ ii ].wvlens.count();
          swvlens[ ii ].clear();
-         pwvlens[ ii ].clear();
-         pvalues[ ii ].clear();
 
          for ( int jj = 0; jj < nwavl; jj++ )
          {
-            double wavelen      = rpSpect->chspecs[ ii ].wvlens[ jj ];
-            double value        = rpSpect->chspecs[ ii ].values[ jj ];
+            double wavelen      = rpSpect->chrngs[ ii ].wvlens[ jj ];
             swvlens[ ii ] << wavelen;
-            pwvlens[ ii ] << wavelen;
-            pvalues[ ii ] << value;
-DbgLv(1) << "EGwS: rbS:   ii jj " << ii << jj << "value" << value;
+DbgLv(1) << "EGwS: rbS:   ii jj " << ii << jj << "wavelen" << wavelen;
          }
+
+         locrads[ ii ]       = rpSpect->chrngs[ ii ].lo_rad;
+         hicrads[ ii ]       = rpSpect->chrngs[ ii ].hi_rad;
+DbgLv(1) << "EGwS: rbS:  ii lorad hirad" << locrads[ii] << hicrads[ii];
       }
       return;
    }
 
    // Save info from any previous protocol
-   QVector< US_RunProtocol::RunProtoSpectra::Spectrum > chspecs_sv;
-   chspecs_sv          = rpSpect->chspecs;
-   rpSpect->chspecs.clear();
+   QVector< US_RunProtocol::RunProtoSpectra::Ranges > chrngs_sv;
+   chrngs_sv           = rpSpect->chrngs;
+   rpSpect->chrngs.clear();
    QStringList oprofs  = sibLValue( "optical", "profiles" );
    int nochan          = oprofs.count();
 DbgLv(1) << "EGwS: rbS:  nochan" << nochan;
 
    // Save info from current panel parameters
-   int nspchan_sv      = nspchan;
-   int ntchan          = nspchan_sv + nochan;
-DbgLv(1) << "EGwS: rbS:  nspchan_s ntchan" << nspchan_sv << ntchan;
-   if ( nspchan_sv > 0 )
+   int nrnchan_sv      = nrnchan;
+   int ntchan          = nrnchan_sv + nochan;
+DbgLv(1) << "EGwS: rbS:  nrnchan_s ntchan" << nrnchan_sv << ntchan;
+   if ( nrnchan_sv > 0 )
    {
-      schans .resize( ntchan );
-      stypes .resize( ntchan );
+      rchans .resize( ntchan );
       swvlens.resize( ntchan );
-      pwvlens.resize( ntchan );
-      pvalues.resize( ntchan );
+      locrads.resize( ntchan );
+      hicrads.resize( ntchan );
       int kk              = nochan;
 
-      for ( int ii = 0; ii < nspchan_sv; ii++ )
+      for ( int ii = 0; ii < nrnchan_sv; ii++ )
       {
-         schans [ kk ]    = schans [ ii ];
-         stypes [ kk ]    = stypes [ ii ];
+         rchans [ kk ]    = rchans [ ii ];
          swvlens[ kk ]    = swvlens[ ii ];
-         pwvlens[ kk ]    = pwvlens[ ii ];
-         pvalues[ kk ]    = pvalues[ ii ];
-         schans [ ii ]    = "";
+         locrads[ kk ]    = locrads[ ii ];
+         hicrads[ kk ]    = hicrads[ ii ];
+         rchans [ ii ]    = "";
       }
    }
 
@@ -272,9 +253,9 @@ DbgLv(1) << "EGwS: rbS:   ii" << ii << "chan" << channel << "pentry" << pentry;
       if ( ! pentry.contains( uvvis ) )  continue;
 
       int spx             = -1;
-      for ( int jj = 0; jj < nspect_sv; jj++ )
+      for ( int jj = 0; jj < nrange_sv; jj++ )
       {
-         if ( chspecs_sv[ jj ].channel == channel )
+         if ( chrngs_sv[ jj ].channel == channel )
          {  // Match in old protocol:  save its index
             spx                 = jj;
             break;
@@ -284,64 +265,51 @@ DbgLv(1) << "EGwS: rbS:   ii" << ii << "chan" << channel << "pentry" << pentry;
 DbgLv(1) << "EGwS: rbS:     spx" << spx;
       if ( spx < 0 )
       {  // No such channel in old protocol:  use basic entry
-         US_RunProtocol::RunProtoSpectra::Spectrum  chspec;
-         chspec.channel      = channel;
-         chspec.wvlens << 280.0;
-         chspec.values << 0.0;
-         rpSpect->chspecs << chspec;
+         US_RunProtocol::RunProtoSpectra::Ranges  chrng;
+         chrng.channel      = channel;
+         chrng.lo_rad       = 5.8;
+         chrng.hi_rad       = 7.2;
+         chrng.wvlens << 280.0;
+         rpSpect->chrngs << chrng;
       }
       else
       {  // Match to old protocol:  use that entry
-         rpSpect->chspecs << chspecs_sv[ spx ];
+         rpSpect->chrngs << chrngs_sv[ spx ];
       }
    }
 
-   rpSpect->nspect     = rpSpect->chspecs.count();
-   nspchan             = rpSpect->nspect;
-   schans .resize( nspchan );
-   stypes .resize( nspchan );
-   swvlens.resize( nspchan );
-   pwvlens.resize( nspchan );
-   pvalues.resize( nspchan );
-DbgLv(1) << "EGwS: rbS:  nspchan" << nspchan << "nspchan_sv" << nspchan_sv;
+   rpSpect->nranges    = rpSpect->chrngs.count();
+   nrnchan             = rpSpect->nranges;
+   swvlens.resize( nrnchan );
+DbgLv(1) << "EGwS: rbS:  nrnchan" << nrnchan << "nrnchan_sv" << nrnchan_sv;
 
    // Rebuild panel parameters
-   if ( nspchan_sv > 0 )
+   if ( nrnchan_sv > 0 )
    {  // Use previous panel parameters
-      for ( int ii = 0; ii < nspchan; ii++ )
+      for ( int ii = 0; ii < nrnchan; ii++ )
       {
-         QString channel     = rpSpect->chspecs[ ii ].channel;
-         int ppx             = schans.indexOf( channel );
+         QString channel     = rpSpect->chrngs[ ii ].channel;
+         int ppx             = rchans.indexOf( channel );
 DbgLv(1) << "EGwS: rbS:    ii" << ii << "channel" << channel << "ppx" << ppx;
          if ( ppx >= 0 )
          {
-            schans [ ii ]       = schans [ ppx ];
-            stypes [ ii ]       = stypes [ ppx ];
+            rchans [ ii ]       = rchans [ ppx ];
             swvlens[ ii ]       = swvlens[ ppx ];
-            pwvlens[ ii ]       = pwvlens[ ppx ];
-            pvalues[ ii ]       = pvalues[ ppx ];
          }
          else
          {
-            schans [ ii ]       = channel;
-            stypes [ ii ]       = rpSpect->chspecs[ ii ].typeinp;
-            swvlens[ ii ]       = rpSpect->chspecs[ ii ].wvlens;
-            pwvlens[ ii ]       = rpSpect->chspecs[ ii ].wvlens;
-            pvalues[ ii ]       = rpSpect->chspecs[ ii ].values;
+            rchans [ ii ]       = channel;
+            swvlens[ ii ]       = rpSpect->chrngs[ ii ].wvlens;
          }
-DbgLv(1) << "EGwS: rbS:     typ" << stypes[ii] << "wv0" << pwvlens[ii][0];
       }
    }
    else
    {  // Create first shot at panel parameters
-      for ( int ii = 0; ii < nspchan; ii++ )
+      for ( int ii = 0; ii < nrnchan; ii++ )
       {
-DbgLv(1) << "EGwS: rbS:    ii" << ii << "channel" << rpSpect->chspecs[ii].channel;
-         schans [ ii ]       = rpSpect->chspecs[ ii ].channel;
-         stypes [ ii ]       = rpSpect->chspecs[ ii ].typeinp;
-         swvlens[ ii ]       = rpSpect->chspecs[ ii ].wvlens;
-         pwvlens[ ii ]       = rpSpect->chspecs[ ii ].wvlens;
-         pvalues[ ii ]       = rpSpect->chspecs[ ii ].values;
+DbgLv(1) << "EGwS: rbS:    ii" << ii << "channel" << rpSpect->chrngs[ii].channel;
+         rchans [ ii ]       = rpSpect->chrngs[ ii ].channel;
+         swvlens[ ii ]       = rpSpect->chrngs[ ii ].wvlens;
       }
    }
 
@@ -370,6 +338,7 @@ DbgLv(1) << "EGwS: mEP: IN";
 void US_ExperGuiSpectra::process_results( QMap< double, double >& eprof )
 {
 DbgLv(1) << "EGwS: pr: eprof size" << eprof.keys().count() << "chrow" << chrow;
+#if 0
    pwvlens[ chrow ] = eprof.keys();
    pvalues[ chrow ].clear();
 
@@ -377,6 +346,7 @@ DbgLv(1) << "EGwS: pr: eprof size" << eprof.keys().count() << "chrow" << chrow;
    {
       pvalues[ chrow ] << eprof[ pwvlens[ chrow ][ ii ] ];
    }
+#endif
 }
 
 // Slot to show details of all wavelength and spectra profiles
@@ -394,66 +364,32 @@ void US_ExperGuiSpectra::detailSpectra()
    // Compose the text that it displays
    QString dtext  = tr( "Wavelength/Value Profile Information:\n\n" );
    dtext += tr( "Number of Panel Channels Used:     %1\n" )
-            .arg( nspchan );
+            .arg( nrnchan );
    dtext += tr( "Number of Protocol Channels Used:  %1\n" )
-            .arg( rpSpect->nspect );
+            .arg( rpSpect->nranges );
 
-   if ( nspchan != rpSpect->nspect )
+   if ( nrnchan != rpSpect->nranges )
    {  // Should not occur!
       dtext += tr( "\n*ERROR* Channel counts should be identical\n" );
-      nspchan   = 0;    // Skip channel details; too risky
+      nrnchan   = 0;    // Skip channel details; too risky
    }
 
-   for ( int ii = 0; ii < nspchan; ii++ )
+   for ( int ii = 0; ii < nrnchan; ii++ )
    {  // Show information for each channel
-      dtext += tr( "\n  Channel " ) + schans[ ii ] + " : \n";
-      dtext += tr( "    Type Input                  : %1\n" )
-               .arg( stypes[ ii ] );
+      dtext += tr( "\n  Channel " ) + rchans[ ii ] + " : \n";
       int nswavl = swvlens[ ii ].count();
-      int npwavl = pwvlens[ ii ].count();
-      int npvalu = pvalues[ ii ].count();
-      int nowavl = rpSpect->chspecs[ ii ].wvlens.count();
-      int novalu = rpSpect->chspecs[ ii ].values.count();
+      int nowavl = rpSpect->chrngs[ ii ].wvlens.count();
 
       dtext += tr( "    Selected Wavelength count   : %1\n" )
                .arg( nswavl );
       dtext += tr( "    Selected Wavelength range   : %1 to %2\n" )
                .arg( swvlens[ ii ][ 0 ] ).arg( swvlens[ ii ][ nswavl - 1 ] );
-      dtext += tr( "    Profile Wavelength count    : %1\n" )
-               .arg( npwavl );
-      dtext += tr( "    Profile Wavelength range    : %1 to %2\n" )
-               .arg( pwvlens[ ii ][ 0 ] ).arg( pwvlens[ ii ][ npwavl - 1 ] );
-      dtext += tr( "    Profile Value range         : " );
-      if ( stypes[ ii ] == "auto" )                    // Auto has no values
-         dtext += tr( "(determined in the Optima)\n" );
-      else if ( npvalu > 0 )                           // Non-auto value range
-         dtext += tr( "%1 to %2\n" ).arg( pvalues[ ii ][ 0 ] )
-                                    .arg( pvalues[ ii ][ npvalu - 1 ] );
-      else                                             // Non-auto, no values
-         dtext += tr( "(no values)\n" );
 
       dtext += tr( "    Protocol Wavelength count   : %1\n" )
                .arg( nowavl );
       dtext += tr( "    Protocol Wavelength range   : %1 to %2\n" )
-               .arg( rpSpect->chspecs[ ii ].wvlens[ 0 ] )
-               .arg( rpSpect->chspecs[ ii ].wvlens[ nowavl - 1 ] );
-      dtext += tr( "    Protocol Value range        : " );
-      if ( rpSpect->chspecs[ ii ].typeinp == "auto" )  // Auto has no values
-         dtext += tr( "(determined in the Optima)\n" );
-      else if ( novalu > 0 )                           // Non-auto values
-      {
-         dtext += tr( "%1 to %2\n" )
-                  .arg( rpSpect->chspecs[ ii ].values[ 0 ] )
-                  .arg( rpSpect->chspecs[ ii ].values[ novalu - 1 ] );
-         double valavg = 0.0;
-         for ( int jj = 0; jj < novalu; jj++ )
-            valavg += rpSpect->chspecs[ ii ].values[ jj ];
-         valavg /= (double)novalu;
-         dtext += tr( "    Protocol Value average      : %1\n" )
-                  .arg( valavg );
-      }
-      else                                             // Non-auto, no values
-         dtext += tr( "(no values)\n" );
+               .arg( rpSpect->chrngs[ ii ].wvlens[ 0 ] )
+               .arg( rpSpect->chrngs[ ii ].wvlens[ nowavl - 1 ] );
    }
 
    // Load text and show the dialog
@@ -475,8 +411,8 @@ void US_ExperGuiSpectra::selectWavelengths()
    QStringList wlselec;                 // Selected wavelength list
 
    int nswavl          = swvlens[ chrow ].count();
-   int npwavl          = pwvlens[ chrow ].count();
 
+#if 0
    if ( npwavl > nswavl )    // Potential list is the larger
    {  // Get potential wavelength list from profile wavelengths
       for ( int ii = 0; ii < npwavl; ii++ )
@@ -493,6 +429,26 @@ void US_ExperGuiSpectra::selectWavelengths()
    {  // Default wavelength potential has a single value
       wlpoten << "280";
    }
+#endif
+#if 1
+   // Build the list of currently selected wavelengths, this row
+   for ( int jj = 0; jj < nswavl; jj++ )
+      wlselec << QString::number( swvlens[ chrow ][ jj ] );
+
+   // Build the list of potential wavelengths, using all wavelengths
+   //  selected on any rows other than this one
+   for ( int ii = 0; ii < nrnchan; ii++ )
+   {  // Show information for each channel
+      int kswavl          = swvlens[ ii ].count();
+      for ( int jj = 0; jj < kswavl; jj++ )
+      {
+         QString swavl       = QString::number( swvlens[ ii ][ jj ] );
+         if ( ! wlselec.contains( swavl )  &&
+              ! wlpoten.contains( swavl ) )
+            wlpoten << swavl;
+      }
+   }
+#endif
 DbgLv(1) << "EGwS: sW: wlpoten" << wlpoten;
 DbgLv(1) << "EGwS: sW: wlselec" << wlselec;
 
@@ -515,30 +471,9 @@ void US_ExperGuiSpectra::checkOptima( bool checked )
    QString sname       = sobj->objectName();
    chrow               = sname.section( ":", 0, 0 ).toInt();
    QString cclabl      = cc_labls[ chrow ]->text();
-DbgLv(1) << "EGwS:ckOpt: sname" << sname << "chrow" << chrow << cclabl;
-   cc_loads[ chrow ]->setEnabled( !checked );
-   cc_manus[ chrow ]->setEnabled( !checked );
+DbgLv(1) << "EGwS:ckOpt: sname" << sname << "chrow" << chrow << cclabl
+ << "checked" << checked;
 
-
-   if ( checked )
-   {  // "Auto" has been turned on
-DbgLv(1) << "EGwS:ckOpt:  count pwv pva swv" << pwvlens.count() << pvalues.count()
- << swvlens.count();
-      cc_dones[ chrow ]->setChecked( checked );   // Also check "Done"
-DbgLv(1) << "EGwS:ckOpt:  count styp" << stypes.count();
-      stypes.replace( chrow, "auto" );
-      int nvals           = swvlens[ chrow ].count();
-DbgLv(1) << "EGwS:ckOpt:  nvals(swv[r])" << nvals;
-      pwvlens[ chrow ]    = swvlens[ chrow ];     // Profile wls == Selected
-      pvalues[ chrow ].clear();
-      for ( int jj = 0; jj < nvals; jj++ )        // Values all zero
-         pvalues[ chrow ] << 0.0;
-   }
-   else
-   {  // "Auto" has been unchecked
-      stypes.replace( chrow, "manual" );          // Default alternative
-      cc_dones[ chrow ]->setChecked( checked );   // Uncheck "Done" for now
-   }
 DbgLv(1) << "EGwS:ckOpt:  OK";
 }
 
@@ -564,10 +499,11 @@ DbgLv(1) << "EGwS:loadS: sname" << sname << "chrow" << chrow << cclabl;
 // Slot to manually enter a spectrum profile using us_table
 void US_ExperGuiSpectra::manualSpectrum()
 {
+#if 0
    QObject* sobj       = sender();      // Sender object
    QString sname       = sobj->objectName();
    chrow               = sname.section( ":", 0, 0 ).toInt();
-   QString channel     = schans[ chrow ];
+   QString channel     = rchans[ chrow ];
 DbgLv(1) << "EGwS:manSp: sname" << sname << "chrow" << chrow << channel;
    QMap< double, double >  extinction;
 
@@ -610,6 +546,7 @@ if (nwavl>0)
    }
 else
 DbgLv(1) << "EGwS:manSp: *NOT Accepted*";
+#endif
 }
 
 
