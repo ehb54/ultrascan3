@@ -17,7 +17,7 @@ US_XpnData::US_XpnData( ) {
    dbport       = 5432;
    dbname       = QString( "AUC_DATA_DB" );
    dbuser       = QString( "aucuser" );
-   dbpasw       = QString( "aucuser" );
+   dbpasw       = QString( "badpasswd" );
    sctype       = 1;
    runType      = "RI";
 DbgLv(0) << "XpDa: dbg_level" << dbg_level;
@@ -1058,10 +1058,10 @@ DbgLv(1) << "expA: ntrips ftype fbase" << ntrips << ftype << fbase
                                 qRound( rdata->scanData[ 0 ].wavelength ) );
 #endif
       QString trnode    = trnodes[ ii ];
-      QString fname     = fbase + trnode + ".auc";
-      QString fpath     = cur_dir + fname;
 DbgLv(1) << "expA: ii" << ii << "triples[ii]" << triples[ii]
  << "trnodes[ii]" << trnodes[ii] << "trnode" << trnode;
+      QString fname     = fbase + trnode + ".auc";
+      QString fpath     = cur_dir + fname;
 
       US_DataIO::writeRawData( fpath, *rdata );
 
