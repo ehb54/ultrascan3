@@ -19,6 +19,7 @@
 #include "us_report.h"
 #include "us_gui_util.h"
 #include "us_util.h"
+#include "us_crypto.h"
 #include "us_editor.h"
 #include "us_images.h"
 #if QT_VERSION < 0x050000
@@ -94,13 +95,22 @@ DbgLv(1) << "xpnentr count" << xpnentr.count();
 else
  DbgLv(1) << "xpnentr ..." << xpnentr;
 
-
+   QString encpw;
+   QString decpw;
+   QString encpw0;
+   QString encpw1;
+   QString masterpw;
+   US_Passwd pw;
    xpndesc      = xpnentr.at( 0 );
    xpnhost      = xpnentr.at( 1 );
    xpnport      = xpnentr.at( 2 );
    xpnname      = xpnentr.at( 3 );
    xpnuser      = xpnentr.at( 4 );
-   xpnpasw      = xpnentr.at( 5 );
+   encpw        = xpnentr.at( 5 );
+   encpw0       = encpw.section( "^", 0, 0 );
+   encpw1       = encpw.section( "^", 1, 1 );
+   masterpw     = pw.getPasswd();
+   xpnpasw      = US_Crypto::decrypt( encpw0, masterpw, encpw1 );
 
    // Load controls     
    QLabel*      lb_run      = us_banner( tr( "Load the Run" ) );
