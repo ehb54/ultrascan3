@@ -19,7 +19,6 @@
 #include "us_report.h"
 #include "us_gui_util.h"
 #include "us_util.h"
-#include "us_crypto.h"
 #include "us_editor.h"
 #include "us_images.h"
 #if QT_VERSION < 0x050000
@@ -95,22 +94,13 @@ DbgLv(1) << "xpnentr count" << xpnentr.count();
 else
  DbgLv(1) << "xpnentr ..." << xpnentr;
 
-   QString encpw;
-   QString decpw;
-   QString encpw0;
-   QString encpw1;
-   QString masterpw;
-   US_Passwd pw;
+
    xpndesc      = xpnentr.at( 0 );
    xpnhost      = xpnentr.at( 1 );
    xpnport      = xpnentr.at( 2 );
    xpnname      = xpnentr.at( 3 );
    xpnuser      = xpnentr.at( 4 );
-   encpw        = xpnentr.at( 5 );
-   encpw0       = encpw.section( "^", 0, 0 );
-   encpw1       = encpw.section( "^", 1, 1 );
-   masterpw     = pw.getPasswd();
-   xpnpasw      = US_Crypto::decrypt( encpw0, masterpw, encpw1 );
+   xpnpasw      = xpnentr.at( 5 );
 
    // Load controls     
    QLabel*      lb_run      = us_banner( tr( "Load the Run" ) );
@@ -650,6 +640,7 @@ DbgLv(1) << "RDr:   rvS rvE" << radii[0] << radii[npoint-1];
    nlambda      = xpn_data->lambdas_raw( lambdas );
    int wvlo     = lambdas[ 0 ];
    int wvhi     = lambdas[ nlambda - 1 ];
+#if 0
    ntriple      = nlambda * ncellch;  // Number triples
    ntpoint      = npoint  * nscan;    // Number radius points per triple
 DbgLv(1) << "RDr: nwl wvlo wvhi" << nlambda << wvlo << wvhi
@@ -663,6 +654,13 @@ DbgLv(1) << "RDr: nwl wvlo wvhi" << nlambda << wvlo << wvhi
       for ( int kk = 0; kk < nlambda; kk++ )
          triples << celchn + " / " + QString::number( lambdas[ kk] );
    }
+#endif
+#if 1
+   ntriple      = xpn_data->data_triples( triples );
+DbgLv(1) << "RDr: nwl wvlo wvhi" << nlambda << wvlo << wvhi
+   << "ncellch" << ncellch << "nlambda" << nlambda << "ntriple" << ntriple
+   << triples.count();
+#endif
 
 DbgLv(1) << "RDr: allData size" << allData.size();
    QApplication::restoreOverrideCursor();

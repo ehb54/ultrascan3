@@ -70,14 +70,14 @@ US_ExperimentMain::US_ExperimentMain() : US_Widgets()
    statflag            = 0;
 
    // Add panels to the tab widget
-   tabWidget->addTab( epanGeneral,   tr( "1: General"          ) );
-   tabWidget->addTab( epanRotor,     tr( "2: Lab/Rotor"        ) );
-   tabWidget->addTab( epanSpeeds,    tr( "3: Speeds"           ) );
-   tabWidget->addTab( epanCells,     tr( "4: Cells"            ) );
-   tabWidget->addTab( epanSolutions, tr( "5: Solutions"        ) );
-   tabWidget->addTab( epanOptical,   tr( "6: Optical Systems"  ) );
-   tabWidget->addTab( epanSpectra,   tr( "7: Spectra"          ) );
-   tabWidget->addTab( epanUpload,    tr( "8: Upload"           ) );
+   tabWidget->addTab( epanGeneral,   tr( "1: General"   ) );
+   tabWidget->addTab( epanRotor,     tr( "2: Lab/Rotor" ) );
+   tabWidget->addTab( epanSpeeds,    tr( "3: Speeds"    ) );
+   tabWidget->addTab( epanCells,     tr( "4: Cells"     ) );
+   tabWidget->addTab( epanSolutions, tr( "5: Solutions" ) );
+   tabWidget->addTab( epanOptical,   tr( "6: Optics"    ) );
+   tabWidget->addTab( epanSpectra,   tr( "7: Ranges"    ) );
+   tabWidget->addTab( epanUpload,    tr( "8: Submit"    ) );
    tabWidget->setCurrentIndex( curr_panx );
 
    // Add bottom buttons
@@ -547,6 +547,8 @@ DbgLv(1) << "EGR:chgLab  ndx" << ndx;
    int labID           = clab.section( ":", 0, 0 ).toInt();
    QString descr       = clab.section( ":", 1, 1 ).simplified();
 DbgLv(1) << "EGR: chgLab labID desc" << labID << descr;
+   arotors.clear();
+   rotors .clear();
 
    US_Passwd pw;
    US_DB2* dbP              = ( sibSValue( "general", "dbdisk" ) == "DB" )
@@ -572,6 +574,7 @@ DbgLv(1) << "EGR: chgLab labID desc" << labID << descr;
 
    cb_rotor->clear();
    cb_rotor->addItems( sl_rotors );
+DbgLv(1) << "EGR: chgLab  sl_rotors count" << sl_rotors.count();
    changeRotor( 0 );
 }
 
@@ -2315,24 +2318,24 @@ US_ExperGuiUpload::US_ExperGuiUpload( QWidget* topw )
    rpOptic             = &(mainw->currProto.rpOptic);
    rpSpect             = &(mainw->currProto.rpSpect);
    rpUload             = &(mainw->currProto.rpUload);
-   uploaded            = false;
+   submitted           = false;
    rps_differ          = true;
    dbg_level           = US_Settings::us_debug();
    QVBoxLayout* panel  = new QVBoxLayout( this );
    panel->setSpacing        ( 2 );
    panel->setContentsMargins( 2, 2, 2, 2 );
-   QLabel* lb_panel    = us_banner( tr( "7: Upload experiment parameters"
-                                        " to Optima DB" ) );
+   QLabel* lb_panel    = us_banner( tr( "7: Submit an Experiment"
+                                        " to the Optima" ) );
    panel->addWidget( lb_panel );
    QGridLayout* genL   = new QGridLayout();
 
    // Push buttons
    QPushButton* pb_details  = us_pushbutton( tr( "View Experiment Details" ) );
    QPushButton* pb_connect  = us_pushbutton( tr( "Test Connection" ) );
-                pb_upload   = us_pushbutton( tr( "Upload to Optima" ) );
-                pb_saverp   = us_pushbutton( tr( "Save Run Protocol" ) );
+                pb_submit   = us_pushbutton( tr( "Submit the Run"  ) );
+                pb_saverp   = us_pushbutton( tr( "Save the Protocol" ) );
 
-   pb_upload->setEnabled( false );
+   pb_submit->setEnabled( false );
 
    // Check boxes showing current completed parameterizations
    QLayout* lo_run          = us_checkbox( tr( "RunID" ),
@@ -2353,7 +2356,7 @@ US_ExperGuiUpload::US_ExperGuiUpload( QWidget* topw )
                                            ck_solution, false );
    QLayout* lo_optical      = us_checkbox( tr( "all Channel Optical Systems" ),
                                            ck_optical,  false );
-   QLayout* lo_spectra      = us_checkbox( tr( "Spectra" ),
+   QLayout* lo_spectra      = us_checkbox( tr( "Ranges" ),
                                            ck_spectra,  false );
    QLayout* lo_connect      = us_checkbox( tr( "Connected to Optima" ),
                                            ck_connect,  false );
@@ -2365,10 +2368,10 @@ US_ExperGuiUpload::US_ExperGuiUpload( QWidget* topw )
                                            ck_prot_ena, false );
    QLayout* lo_prot_svd     = us_checkbox( tr( "Protocol Saved" ),
                                            ck_prot_svd, false );
-   QLayout* lo_upl_enab     = us_checkbox( tr( "Upload Enabled" ),
-                                           ck_upl_enab, false );
-   QLayout* lo_upl_done     = us_checkbox( tr( "Upload Completed" ),
-                                           ck_upl_done, false );
+   QLayout* lo_sub_enab     = us_checkbox( tr( "Submit Enabled" ),
+                                           ck_sub_enab, false );
+   QLayout* lo_sub_done     = us_checkbox( tr( "Submit Completed" ),
+                                           ck_sub_done, false );
    // Initialize check boxes
    ck_run     ->setEnabled( false );
    ck_project ->setEnabled( false );
@@ -2384,15 +2387,15 @@ US_ExperGuiUpload::US_ExperGuiUpload( QWidget* topw )
    ck_rp_diff ->setEnabled( false );
    ck_prot_ena->setEnabled( false );
    ck_prot_svd->setEnabled( false );
-   ck_upl_enab->setEnabled( false );
-   ck_upl_done->setEnabled( false );
+   ck_sub_enab->setEnabled( false );
+   ck_sub_done->setEnabled( false );
 
    // Build the layout
    int row             = 1;
    genL->addWidget( pb_details,      row,   0, 1, 2 );
    genL->addWidget( pb_connect,      row,   2, 1, 2 );
    genL->addWidget( pb_saverp,       row,   4, 1, 2 );
-   genL->addWidget( pb_upload,       row++, 6, 1, 2 );
+   genL->addWidget( pb_submit,       row++, 6, 1, 2 );
 
    genL->addLayout( lo_run,          row,   1, 1, 3 );
    genL->addLayout( lo_project,      row++, 4, 1, 3 );
@@ -2408,8 +2411,8 @@ US_ExperGuiUpload::US_ExperGuiUpload( QWidget* topw )
    genL->addLayout( lo_rp_diff,      row++, 1, 1, 6 );
    genL->addLayout( lo_prot_ena,     row,   1, 1, 3 );
    genL->addLayout( lo_prot_svd,     row++, 4, 1, 3 );
-   genL->addLayout( lo_upl_enab,     row,   1, 1, 3 );
-   genL->addLayout( lo_upl_done,     row++, 4, 1, 3 );
+   genL->addLayout( lo_sub_enab,     row,   1, 1, 3 );
+   genL->addLayout( lo_sub_done,     row++, 4, 1, 3 );
 
    // Connect to slots
    connect( pb_details,   SIGNAL( clicked()          ),
@@ -2418,8 +2421,8 @@ US_ExperGuiUpload::US_ExperGuiUpload( QWidget* topw )
             this,         SLOT  ( testConnection()   ) );
    connect( pb_saverp,    SIGNAL( clicked()          ),
             this,         SLOT  ( saveRunProtocol()  ) );
-   connect( pb_upload,    SIGNAL( clicked()          ),
-            this,         SLOT  ( uploadExperiment() ) );
+   connect( pb_submit,    SIGNAL( clicked()          ),
+            this,         SLOT  ( submitExperiment() ) );
 
    panel->addLayout( genL );
    panel->addStretch();
@@ -2439,8 +2442,8 @@ US_ExperGuiUpload::US_ExperGuiUpload( QWidget* topw )
    rps_differ          = false;
    proto_ena           = false;
    proto_svd           = false;
-   upld_enab           = false;
-   uploaded            = false;
+   subm_enab           = false;
+   submitted           = false;
    connected           = false;
 
    // Connect to the Optima if possible
@@ -2548,8 +2551,8 @@ DbgLv(1) << "EGUp:dE: solus solus" << ssolut;
    bool chk_vars_set = ( chk_run       &&  chk_project   &&
                          chk_centerp   &&  chk_solution  &&
                          chk_spectra );
-   bool chk_upl_enab = ( chk_vars_set  &&  connected );
-   bool chk_upl_done = uploaded;
+   bool chk_sub_enab = ( chk_vars_set  &&  connected );
+   bool chk_sub_done = submitted;
 
    QString s_Yes     = tr( "YES" );
    QString s_no      = tr( "no" );
@@ -2562,8 +2565,8 @@ DbgLv(1) << "EGUp:dE: solus solus" << ssolut;
    QString v_solok   = chk_solution ? s_Yes : s_no;
    QString v_phook   = chk_spectra  ? s_Yes : s_no;
    QString v_conok   = connected    ? s_Yes : s_no;
-   QString v_uleok   = chk_upl_enab ? s_Yes : s_no;
-   QString v_ulcok   = chk_upl_done ? s_Yes : s_no;
+   QString v_uleok   = chk_sub_enab ? s_Yes : s_no;
+   QString v_ulcok   = chk_sub_done ? s_Yes : s_no;
 
    // Compose the text to be displayed
    QString dtext  = tr( "Experiment Control Information:\n" );
@@ -2641,34 +2644,24 @@ DbgLv(1) << "EGUp:dE: nsolut" << ssolut.count();
       dtext += "    " + ssolut[ ii ] + "\n";
    }
 
-   dtext += tr( "\nPhoto Multiplier Spectra\n" );
+   dtext += tr( "\nUsed Channel Ranges\n" );
    dtext += tr( "  ALL SPECIFIED:              " ) + v_phook  + "\n";
    dtext += tr( "  Number Channels Used:        %1\n" )
-            .arg( rpSpect->nspect );
-   for ( int ii = 0; ii < rpSpect->nspect; ii++ )
+            .arg( rpSpect->nranges );
+   for ( int ii = 0; ii < rpSpect->nranges; ii++ )
    {
-      QString channel = rpSpect->chspecs[ ii ].channel;
-      QString typeimp = rpSpect->chspecs[ ii ].typeinp;
-      int    nwavl    = rpSpect->chspecs[ ii ].wvlens.count();
-      double lo_wavl  = rpSpect->chspecs[ ii ].wvlens[ 0 ];
-      double hi_wavl  = rpSpect->chspecs[ ii ].wvlens[ nwavl - 1 ];
-      double lo_valu  = rpSpect->chspecs[ ii ].values[ 0 ];
-      double hi_valu  = rpSpect->chspecs[ ii ].values[ nwavl - 1 ];
+      QString channel = rpSpect->chrngs[ ii ].channel;
+      int    nwavl    = rpSpect->chrngs[ ii ].wvlens.count();
+      double lo_wavl  = rpSpect->chrngs[ ii ].wvlens[ 0 ];
+      double hi_wavl  = rpSpect->chrngs[ ii ].wvlens[ nwavl - 1 ];
+      double lo_radi  = rpSpect->chrngs[ ii ].lo_rad;
+      double hi_radi  = rpSpect->chrngs[ ii ].hi_rad;
       dtext += tr( "  Channel " ) + channel + " : \n";
-      dtext += tr( "    typeinp           : %1\n" ).arg( typeimp );
       dtext += tr( "    wavelength count  : %1\n" ).arg( nwavl );
       dtext += tr( "    wavelength range  : %1  to  %2\n" )
                .arg( lo_wavl ).arg( hi_wavl );
-      if ( typeimp == "auto" )
-      {
-         dtext += tr( "    values            :"
-                      " (computed in Optima)\n" );
-      }
-      else
-      {
-         dtext += tr( "    value range       : %1  to  %2\n" )
-                  .arg( lo_valu ).arg( hi_valu );
-      }
+      dtext += tr( "    radius range      : %1  to  %2\n" )
+               .arg( lo_radi ).arg( hi_radi );
    }
 
    dtext += tr( "\nUpload\n" );
@@ -2858,15 +2851,15 @@ DbgLv(1) << "EGUp:svRP:   dbP" << dbP;
 DbgLv(1) << "EGUp:svRP:  new protname" << protname << "prdats0" << prdats[0];
 }
 
-// Slot to upload the experiment to the Optima DB
-void US_ExperGuiUpload::uploadExperiment()
+// Slot to submit the experiment to the Optima DB
+void US_ExperGuiUpload::submitExperiment()
 {
 QString mtitle    = tr( "Not Yet Implemented" );
 QString message   = tr( "The ability to upload a JSON file with the controls\n"
                         "for an experiment has not yet been implement" );
 QMessageBox::information( this, mtitle, message );
 
-   //uploaded     = true;
+   //submitted    = true;
 }
 
 // Function to build a Json object and document holding experiment controls
@@ -2916,9 +2909,9 @@ DbgLv(1) << "EGUp:bj: ck: run proj cent solu epro"
    bool chk_vars_set = ( chk_run       &&  chk_project   &&
                          chk_centerp   &&  chk_solution  &&
                          chk_spectra );
-   bool chk_upl_enab = ( chk_vars_set  &&  connected );
+   bool chk_sub_enab = ( chk_vars_set  &&  connected );
 
-   if ( ! chk_upl_enab )
+   if ( ! chk_sub_enab )
       return js_exper; 		// Parameterization incomplete: empty return
 
    // Start building Json of experiment controls
