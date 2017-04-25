@@ -9,5 +9,5 @@ HEADERS       = us_experiment_main.h   \
 
 SOURCES       = us_experiment_main.cpp   \
                 us_exp_utils.cpp         \
-                us_proto_spectra.cpp     \
+                us_proto_ranges.cpp      \
                 us_run_protocol.cpp
