@@ -67,8 +67,8 @@ QString US_ExperimentMain::childSValue( const QString child, const QString type 
    else if ( child == "cells"    ) { value = epanCells    ->getSValue( type ); }
    else if ( child == "solutions") { value = epanSolutions->getSValue( type ); }
    else if ( child == "optical"  ) { value = epanOptical  ->getSValue( type ); }
-   else if ( child == "spectra"  ) { value = epanSpectra  ->getSValue( type ); }
-   else if ( child == "upload"   ) { value = epanUpload   ->getSValue( type ); }
+   else if ( child == "ranges"   ) { value = epanRanges   ->getSValue( type ); }
+   else if ( child == "submit"   ) { value = epanUpload   ->getSValue( type ); }
    return value;
 }
 
@@ -82,8 +82,8 @@ int US_ExperimentMain::childIValue( const QString child, const QString type )
    else if ( child == "cells"    ) { value = epanCells    ->getIValue( type ); }
    else if ( child == "solutions") { value = epanSolutions->getIValue( type ); }
    else if ( child == "optical"  ) { value = epanOptical  ->getIValue( type ); }
-   else if ( child == "spectra"  ) { value = epanSpectra  ->getIValue( type ); }
-   else if ( child == "upload"   ) { value = epanUpload   ->getIValue( type ); }
+   else if ( child == "ranges"   ) { value = epanRanges   ->getIValue( type ); }
+   else if ( child == "submit"   ) { value = epanUpload   ->getIValue( type ); }
    return value;
 }
 
@@ -97,8 +97,8 @@ double US_ExperimentMain::childDValue( const QString child, const QString type )
    else if ( child == "cells"    ) { value = epanCells    ->getDValue( type ); }
    else if ( child == "solutions") { value = epanSolutions->getDValue( type ); }
    else if ( child == "optical"  ) { value = epanOptical  ->getDValue( type ); }
-   else if ( child == "spectra"  ) { value = epanSpectra  ->getDValue( type ); }
-   else if ( child == "upload"   ) { value = epanUpload   ->getDValue( type ); }
+   else if ( child == "ranges"   ) { value = epanRanges   ->getDValue( type ); }
+   else if ( child == "submit"   ) { value = epanUpload   ->getDValue( type ); }
    return value;
 }
 
@@ -113,8 +113,8 @@ QStringList US_ExperimentMain::childLValue( const QString child, const QString t
    else if ( child == "cells"    ) { value = epanCells    ->getLValue( type ); }
    else if ( child == "solutions") { value = epanSolutions->getLValue( type ); }
    else if ( child == "optical"  ) { value = epanOptical  ->getLValue( type ); }
-   else if ( child == "spectra"  ) { value = epanSpectra  ->getLValue( type ); }
-   else if ( child == "upload"   ) { value = epanUpload   ->getLValue( type ); }
+   else if ( child == "ranges"   ) { value = epanRanges   ->getLValue( type ); }
+   else if ( child == "submit"   ) { value = epanUpload   ->getLValue( type ); }
 
    return value;
 }
@@ -132,7 +132,7 @@ DbgLv(1) << "newPanel panx=" << panx << "prev.panx=" << curr_panx;
    else if ( curr_panx == 3 ) epanCells    ->savePanel();
    else if ( curr_panx == 4 ) epanSolutions->savePanel();
    else if ( curr_panx == 5 ) epanOptical  ->savePanel();
-   else if ( curr_panx == 6 ) epanSpectra  ->savePanel();
+   else if ( curr_panx == 6 ) epanRanges   ->savePanel();
    else if ( curr_panx == 7 ) epanRotor    ->savePanel();
 
    curr_panx              = panx;         // Set new current panel
@@ -144,7 +144,7 @@ DbgLv(1) << "newPanel panx=" << panx << "prev.panx=" << curr_panx;
    else if ( panx == 3 )      epanCells    ->initPanel();
    else if ( panx == 4 )      epanSolutions->initPanel();
    else if ( panx == 5 )      epanOptical  ->initPanel();
-   else if ( panx == 6 )      epanSpectra  ->initPanel();
+   else if ( panx == 6 )      epanRanges   ->initPanel();
    else if ( panx == 7 )      epanUpload   ->initPanel();
 
    // Update status flag for all panels
@@ -161,7 +161,7 @@ DbgLv(1) << "statUpd: IN stat" << statflag;
               + epanCells    ->status()
               + epanSolutions->status()
               + epanOptical  ->status()
-              + epanSpectra  ->status()
+              + epanRanges   ->status()
               + epanUpload   ->status();
 DbgLv(1) << "statUpd:  MOD stat" << statflag;
 }
@@ -191,7 +191,7 @@ void US_ExperimentMain::help( void )
    else if ( curr_panx == 3 ) epanCells    ->help();
    else if ( curr_panx == 4 ) epanSolutions->help();
    else if ( curr_panx == 5 ) epanOptical  ->help();
-   else if ( curr_panx == 6 ) epanSpectra  ->help();
+   else if ( curr_panx == 6 ) epanRanges   ->help();
    else if ( curr_panx == 7 ) epanUpload   ->help();
 }
 
@@ -216,7 +216,7 @@ void US_ExperimentMain::initPanels()
    epanCells    ->initPanel();
    epanSolutions->initPanel();
    epanOptical  ->initPanel();
-   epanSpectra  ->initPanel();
+   epanRanges   ->initPanel();
    epanUpload   ->initPanel();
 }
 
@@ -1560,15 +1560,15 @@ DbgLv(1) << "EGOp:st: nochan nuchan done" << nochan << nuchan << is_done;
 //========================= End:   Optical   section =========================
 
 
-//========================= Start: Spectra   section =========================
+//========================= Start: Ranges    section =========================
                    
-// Initialize a Spectra panel, especially after clicking on its tab
-void US_ExperGuiSpectra::initPanel()
+// Initialize a Ranges panel, especially after clicking on its tab
+void US_ExperGuiRanges::initPanel()
 {
-   rpSpect             = &(mainw->currProto.rpSpect);
+   rpRange             = &(mainw->currProto.rpRange);
 
 DbgLv(1) << "EGwS:inP:  call rbS";
-   rebuild_Spect();
+   rebuild_Ranges();
 
    QString ch_none( "none" );
 DbgLv(1) << "EGwS:inP:  nrnchan" << nrnchan;
@@ -1576,10 +1576,27 @@ DbgLv(1) << "EGwS:inP:  nrnchan" << nrnchan;
    for ( int ii = 0; ii < nrnchan; ii++ )
    {
       QString channel     = rchans[ ii ];
+      QString labwlr;
+      int kswavl          = swvlens[ ii ].count();
 DbgLv(1) << "EGwS:inP:    ii" << ii << "channel" << channel;
+      if ( kswavl == 0 )
+         labwlr              = tr( "0 selected" );
+      else if ( kswavl == 1 )
+         labwlr              = tr( "1,  %1" )
+                               .arg( swvlens[ ii ][ 0 ] );
+      else
+         labwlr              = tr( "%1,  %2 to %3" )
+                               .arg( kswavl )
+                               .arg( swvlens[ ii ][ 0 ] )
+                               .arg( swvlens[ ii ][ kswavl - 1 ] );
       cc_labls[ ii ]->setText( channel );
+      cc_lrngs[ ii ]->setText( labwlr  );
       cc_labls[ ii ]->setVisible( true );
       cc_wavls[ ii ]->setVisible( true );
+      cc_lrngs[ ii ]->setVisible( true );
+      cc_lrads[ ii ]->setVisible( true );
+      cc_hrads[ ii ]->setVisible( true );
+      cc_lbtos[ ii ]->setVisible( true );
    }
 
    // Make remaining rows invisible
@@ -1588,33 +1605,38 @@ DbgLv(1) << "EGwS:inP:    ii" << ii << "channel" << channel;
       cc_labls[ ii ]->setText( ch_none );
       cc_labls[ ii ]->setVisible( false );
       cc_wavls[ ii ]->setVisible( false );
+      cc_lrngs[ ii ]->setVisible( false );
+      cc_lrads[ ii ]->setVisible( false );
+      cc_hrads[ ii ]->setVisible( false );
+      cc_lbtos[ ii ]->setVisible( false );
    }
 }
 
 // Save panel controls when about to leave the panel
-void US_ExperGuiSpectra::savePanel()
+void US_ExperGuiRanges::savePanel()
 {
-DbgLv(1) << "EGwS:svP: nrnchan" << nrnchan << "nranges" << rpSpect->nranges;
-   rpSpect->nranges  = nrnchan;            // Protocol channels
-   rpSpect->chrngs.resize( nrnchan );    // Expand or contract?
+DbgLv(1) << "EGwS:svP: nrnchan" << nrnchan << "nranges" << rpRange->nranges;
+   rpRange->nranges  = nrnchan;            // Protocol channels
+   rpRange->chrngs.resize( nrnchan );    // Expand or contract?
 
    for ( int ii = 0; ii < nrnchan; ii++ )
    {
-      rpSpect->chrngs[ ii ].channel = rchans[ ii ];
+      rpRange->chrngs[ ii ].channel = rchans [ ii ];
+      rpRange->chrngs[ ii ].lo_rad  = locrads[ ii ];
+      rpRange->chrngs[ ii ].hi_rad  = hicrads[ ii ];
 
-      rpSpect->chrngs[ ii ].wvlens.clear();
+      rpRange->chrngs[ ii ].wvlens.clear();
 
       for ( int jj = 0; jj < swvlens[ ii ].count(); jj++ )
       {  // Wavelength values from selected wavelengths
-         double wavelen   = swvlens[ ii ][ jj ];
-         rpSpect->chrngs[ ii ].wvlens << wavelen;
+         rpRange->chrngs[ ii ].wvlens << swvlens[ ii ][ jj ];
       }
-DbgLv(1) << "EGwS:svP:  ii" << ii << "wvl knt" << rpSpect->chrngs[ii].wvlens.count();
+DbgLv(1) << "EGwS:svP:  ii" << ii << "wvl knt" << rpRange->chrngs[ii].wvlens.count();
    }
 }
 
 // Get a specific panel value
-QString US_ExperGuiSpectra::getSValue( const QString type )
+QString US_ExperGuiRanges::getSValue( const QString type )
 {
    QString value( "" );
 
@@ -1631,10 +1653,10 @@ QString US_ExperGuiSpectra::getSValue( const QString type )
 }
 
 // Get a specific panel integer value
-int US_ExperGuiSpectra::getIValue( const QString type )
+int US_ExperGuiRanges::getIValue( const QString type )
 {
    int value   = 0;
-   if      ( type == "nspect" )  { value = rpSpect->nranges; }
+   if      ( type == "nrange" )  { value = rpRange->nranges; }
    else if ( type == "alldone" ) { value = ( status() > 0 ) ? 1 : 0; }
    else if ( type == "status"  ) { value = status(); }
 
@@ -1642,7 +1664,7 @@ int US_ExperGuiSpectra::getIValue( const QString type )
 }
 
 // Get a specific panel double value
-double US_ExperGuiSpectra::getDValue( const QString type )
+double US_ExperGuiRanges::getDValue( const QString type )
 {
    double value   = 0.0;
    if ( type == "dbdisk" ) { value = 1.0; }
@@ -1651,7 +1673,7 @@ double US_ExperGuiSpectra::getDValue( const QString type )
 }
 
 // Get specific panel list values
-QStringList US_ExperGuiSpectra::getLValue( const QString type )
+QStringList US_ExperGuiRanges::getLValue( const QString type )
 {
    QStringList value( "" );
 
@@ -1664,30 +1686,30 @@ QStringList US_ExperGuiSpectra::getLValue( const QString type )
 }
 
 // Get a specific panel value from a sibling panel
-QString US_ExperGuiSpectra::sibSValue( const QString sibling, const QString type )
+QString US_ExperGuiRanges::sibSValue( const QString sibling, const QString type )
 { return mainw->childSValue( sibling, type ); }
 
 // Get a specific panel integer value from a sibling panel
-int US_ExperGuiSpectra::sibIValue( const QString sibling, const QString type )
+int US_ExperGuiRanges::sibIValue( const QString sibling, const QString type )
 { return mainw->childIValue( sibling, type ); }
 
 // Get a specific panel double value from a sibling panel
-double US_ExperGuiSpectra::sibDValue( const QString sibling, const QString type )
+double US_ExperGuiRanges::sibDValue( const QString sibling, const QString type )
 { return mainw->childDValue( sibling, type ); }
 
 // Get a specific panel list from a sibling panel
-QStringList US_ExperGuiSpectra::sibLValue( const QString sibling, const QString type )
+QStringList US_ExperGuiRanges::sibLValue( const QString sibling, const QString type )
 { return mainw->childLValue( sibling, type ); }
 
 // Return status flag for the panel
-int US_ExperGuiSpectra::status()
+int US_ExperGuiRanges::status()
 {
    bool is_done    = true;
-DbgLv(1) << "EGwS:st: nranges" << rpSpect->nranges;
+DbgLv(1) << "EGwS:st: nranges" << rpRange->nranges;
 
-   for ( int ii = 0; ii < rpSpect->nranges; ii++ )
+   for ( int ii = 0; ii < rpRange->nranges; ii++ )
    {
-      if ( rpSpect->chrngs[ ii ].wvlens.count() == 0 )
+      if ( rpRange->chrngs[ ii ].wvlens.count() == 0 )
          is_done         = false;       // Not done if missing wavelengths
 DbgLv(1) << "EGwS:st:   ii" << ii << "is_done(wvlens count)" << is_done;
    }
@@ -1695,7 +1717,7 @@ DbgLv(1) << "EGwS:st:   ii" << ii << "is_done(wvlens count)" << is_done;
    return ( is_done ? 64 : 0 );
 }
 
-//========================= End:   Spectra   section =========================
+//========================= End:   Ranges    section =========================
 
 //========================= Start: Upload    section =========================
 
@@ -1710,8 +1732,8 @@ void US_ExperGuiUpload::initPanel()
    rpCells         = &currProto->rpCells;
    rpSolut         = &currProto->rpSolut;
    rpOptic         = &currProto->rpOptic;
-   rpSpect         = &currProto->rpSpect;
-   rpUload         = &currProto->rpUload;
+   rpRange         = &currProto->rpRange;
+   rpSubmt         = &currProto->rpSubmt;
 if(rps_differ)
 {
 US_RunProtocol* cRP = currProto;
@@ -1727,8 +1749,8 @@ DbgLv(1) << "EGUp:inP:   rpSpeed diff" << (cRP->rpSpeed!=lRP->rpSpeed);
 DbgLv(1) << "EGUp:inP:   rpCells diff" << (cRP->rpCells!=lRP->rpCells);
 DbgLv(1) << "EGUp:inP:   rpSolut diff" << (cRP->rpSolut!=lRP->rpSolut);
 DbgLv(1) << "EGUp:inP:   rpOptic diff" << (cRP->rpOptic!=lRP->rpOptic);
-DbgLv(1) << "EGUp:inP:   rpSpect diff" << (cRP->rpSpect!=lRP->rpSpect);
-DbgLv(1) << "EGUp:inP:   rpUload diff" << (cRP->rpUload!=lRP->rpUload);
+DbgLv(1) << "EGUp:inP:   rpRange diff" << (cRP->rpRange!=lRP->rpRange);
+DbgLv(1) << "EGUp:inP:   rpSubmt diff" << (cRP->rpSubmt!=lRP->rpSubmt);
 }
 
    have_run          = ! sibSValue( "general",   "runID"    ).isEmpty();
@@ -1738,11 +1760,11 @@ DbgLv(1) << "EGUp:inP:   rpUload diff" << (cRP->rpUload!=lRP->rpUload);
    have_cells        = ( sibIValue( "cells",     "alldone"  ) > 0 );
    have_solus        = ( sibIValue( "solutions", "alldone"  ) > 0 );
    have_optic        = ( sibIValue( "optical",   "alldone"  ) > 0 );
-   have_spect        = ( sibIValue( "spectra",   "alldone"  ) > 0 );
+   have_range        = ( sibIValue( "ranges",    "alldone"  ) > 0 );
 DbgLv(1) << "EGUp:inP: ck: run proj cent solu epro"
- << have_run << have_proj << have_cells << have_solus << have_spect;
+ << have_run << have_proj << have_cells << have_solus << have_range;
    proto_ena         = ( have_cells  &&  have_solus  &&  have_optic  &&
-                         have_spect );
+                         have_range );
    subm_enab         = ( have_run    &&  have_proj  &&  proto_ena  &&
                          connected );
 
@@ -1753,7 +1775,7 @@ DbgLv(1) << "EGUp:inP: ck: run proj cent solu epro"
    ck_centerp ->setChecked( have_cells );
    ck_solution->setChecked( have_solus );
    ck_optical ->setChecked( have_optic );
-   ck_spectra ->setChecked( have_spect );
+   ck_ranges  ->setChecked( have_range );
    ck_connect ->setChecked( connected  );
    ck_prot_ena->setChecked( proto_ena  );
    ck_prot_svd->setChecked( proto_svd  );
@@ -1762,7 +1784,7 @@ DbgLv(1) << "EGUp:inP: ck: run proj cent solu epro"
    ck_rp_diff ->setChecked( rps_differ );
 
    pb_submit  ->setEnabled( subm_enab  );
-   pb_saverp  ->setEnabled( have_cells &&  have_solus &&  have_spect );
+   pb_saverp  ->setEnabled( have_cells && have_solus && have_range );
 }
 
 // Save panel controls when about to leave the panel
@@ -1781,9 +1803,9 @@ QString US_ExperGuiUpload::getSValue( const QString type )
              type == "len_json" )
       value  = QString::number( getIValue( type ) );
    else if ( type == "xml" )  
-      value  = rpUload->us_xml;
+      value  = rpSubmt->us_xml;
    else if ( type == "json" ) 
-      value  = rpUload->op_json;
+      value  = rpSubmt->op_json;
 
    return value;
 }
@@ -1794,8 +1816,8 @@ int US_ExperGuiUpload::getIValue( const QString type )
    int value   = 0;
    if      ( type == "alldone" )  { value = ( status() > 0 ) ? 1 : 0; }
    else if ( type == "status"  )  { value = status(); }
-   else if ( type == "len_xml" )  { value = rpUload->us_xml.length(); }
-   else if ( type == "len_json" ) { value = rpUload->op_json.length(); }
+   else if ( type == "len_xml" )  { value = rpSubmt->us_xml.length(); }
+   else if ( type == "len_json" ) { value = rpSubmt->op_json.length(); }
    return value;
 }
 

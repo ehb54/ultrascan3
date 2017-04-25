@@ -216,8 +216,8 @@ class US_RunProtocol
             QVector< OpticSys > chopts;  //!< Channel optical systems
       };
 
-      //! \brief Protocol Spectra controls class
-      class RunProtoSpectra
+      //! \brief Protocol Ranges controls class
+      class RunProtoRanges
       {
          public:
             class Ranges
@@ -236,13 +236,13 @@ class US_RunProtocol
                   { return ! operator==(s); }
             };
 
-            RunProtoSpectra();
+            RunProtoRanges();
 
             //! A test for identical components
-            bool operator== ( const RunProtoSpectra& ) const;
+            bool operator== ( const RunProtoRanges& ) const;
 
             //! A test for unequal components
-            inline bool operator!= ( const RunProtoSpectra& p ) const 
+            inline bool operator!= ( const RunProtoRanges& p ) const 
             { return ! operator==(p); }
 
             //! Load controls from XML
@@ -344,8 +344,8 @@ class US_RunProtocol
       RunProtoCells      rpCells;  //!< Cells controls
       RunProtoSolutions  rpSolut;  //!< Solutions controls
       RunProtoOptics     rpOptic;  //!< Optical Systems controls
-      RunProtoSpectra    rpSpect;  //!< Spectra controls
-      RunProtoUpload     rpUload;  //!< Upload controls
+      RunProtoRanges     rpRange;  //!< Ranges controls
+      RunProtoUpload     rpSubmt;  //!< Upload controls
 
       QString      investigator;   //!< Investigator name
       QString      runname;        //!< Run ID (name)

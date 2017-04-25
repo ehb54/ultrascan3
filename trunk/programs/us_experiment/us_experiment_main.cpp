@@ -65,7 +65,7 @@ US_ExperimentMain::US_ExperimentMain() : US_Widgets()
    epanCells           = new US_ExperGuiCells    ( this );
    epanSolutions       = new US_ExperGuiSolutions( this );
    epanOptical         = new US_ExperGuiOptical  ( this );
-   epanSpectra         = new US_ExperGuiSpectra  ( this );
+   epanRanges          = new US_ExperGuiRanges   ( this );
    epanUpload          = new US_ExperGuiUpload   ( this );
    statflag            = 0;
 
@@ -76,7 +76,7 @@ US_ExperimentMain::US_ExperimentMain() : US_Widgets()
    tabWidget->addTab( epanCells,     tr( "4: Cells"     ) );
    tabWidget->addTab( epanSolutions, tr( "5: Solutions" ) );
    tabWidget->addTab( epanOptical,   tr( "6: Optics"    ) );
-   tabWidget->addTab( epanSpectra,   tr( "7: Ranges"    ) );
+   tabWidget->addTab( epanRanges,    tr( "7: Ranges"    ) );
    tabWidget->addTab( epanUpload,    tr( "8: Submit"    ) );
    tabWidget->setCurrentIndex( curr_panx );
 
@@ -984,14 +984,6 @@ DbgLv(1) << "EGSp: chgPfx:  speed-c speed-p"
    US_RunProtocol::timeToList( ssdurtim, dhms_dur );
    US_RunProtocol::timeToList( ssdlytim, dhms_dly );
 DbgLv(1) << "EGSp: chgPfx:   durtim" << ssdurtim << "dhms_dur" << dhms_dur;
-#if 0
-   double ssdlymin  = qFloor( ssdlytim / 60.0 );
-   double ssdlyhr   = qFloor( ssdlymin / 60.0 );
-   ssdlymin        -= ( ssdlyhr * 60.0 );
-   double ssdlysec  = ssdlytim - ( ssdlyhr * 3600.0 )
-                               - ( ssdlymin * 60.0 );
-#endif
-
 DbgLv(1) << "EGSp: chgPfx:    speedmax" << speedmax;
    ct_speed ->setMaximum( speedmax );      // Set speed max based on rotor max
    ct_speed ->setValue( ssspeed  );        // Set counter values
@@ -1031,72 +1023,6 @@ DbgLv(1) << "EGSp: chgAcc: val" << val << "ssx" << curssx;
    adjustDelay();                        // Set delay minimum and default
    changed          = true;              // Flag this as a user change
 }
-
-#if 0
-// Slot for change in duration-hour value
-void US_ExperGuiSpeeds::ssChangeDurhr( double val )
-{
-   changed          = true;
-   double ssdurtim  = ( val * 60.0 ) + ct_durmin->value();
-   ssvals[ curssx ][ "duration" ] = ssdurtim;  // Set Duration in step vals vector
-DbgLv(1) << "EGSp: chgDuh: val" << val << "ssx" << curssx << "ssdurtim" << ssdurtim;
-   profdesc[ curssx ] = speedp_description( curssx );
-   cb_prof->setItemText( curssx, profdesc[ curssx ] );
-}
-
-// Slot for change in duration-minute value
-void US_ExperGuiSpeeds::ssChangeDurmin( double val )
-{
-   changed          = true;
-   double ssdurtim  = ( ct_durhr->value() * 60.0 ) + val;
-DbgLv(1) << "EGSp: chgDum: val" << val << "ssx" << curssx << "ssdurtim" << ssdurtim;
-   ssvals[ curssx ][ "duration" ] = ssdurtim;  // Set Duration in step vals vector
-   profdesc[ curssx ] = speedp_description( curssx );
-   cb_prof->setItemText( curssx, profdesc[ curssx ] );
-}
-
-// Slot for change in delay-hour value
-void US_ExperGuiSpeeds::ssChangeDlyhr( double val )
-{
-   changed          = true;
-DbgLv(1) << "EGSp: chgDlh: val" << val << "ssx" << curssx;
-   double ssdlyhr   = val;
-   double ssdlymin  = ct_dlymin->value();
-   double ssdlysec  = ct_dlysec->value();
-   double ssdlytim  = ( ssdlyhr * 3600.0 ) + ( ssdlymin * 60.0 ) + ssdlysec;
-   ssvals[ curssx ][ "delay" ] = ssdlytim;  // Set Delay in step vals vector
-
-   // Set minimum delay time based on speed, acceleration, and delay
-   adjustDelay();
-}
-
-// Slot for change in delay-minute value
-void US_ExperGuiSpeeds::ssChangeDlymin( double val )
-{
-   changed          = true;
-DbgLv(1) << "EGSp: chgDlm: val" << val << "ssx" << curssx;
-   double ssdlyhr   = ct_dlyhr ->value();
-   double ssdlymin  = val;
-   double ssdlysec  = ct_dlysec->value();
-   double ssdlytim  = ( ssdlyhr * 3600.0 ) + ( ssdlymin * 60.0 ) + ssdlysec;
-   ssvals[ curssx ][ "delay" ] = ssdlytim;  // Set Delay in step vals vector
-
-   // Set minimum delay time based on speed, acceleration, and delay
-   adjustDelay();
-}
-// Slot for change in delay-second value
-void US_ExperGuiSpeeds::ssChangeDlysec( double val )
-{
-   changed          = true;
-DbgLv(1) << "EGSp: chgDls: val" << val << "ssx" << curssx;
-   double ssdlyhr   = ct_dlyhr ->value();
-   double ssdlymin  = ct_dlymin->value();
-   double ssdlysec  = val;
-   double ssdlytim  = ( ssdlyhr * 3600.0 ) + ( ssdlymin * 60.0 ) + ssdlysec;
-   ssvals[ curssx ][ "delay" ] = ssdlytim;  // Set Delay in step vals vector
-}
-
-#endif
 
 // Slot for change in duration time (hour/minute/second)
 void US_ExperGuiSpeeds::ssChgDuratTime( const QTime& tval )
@@ -1156,122 +1082,10 @@ void US_ExperGuiSpeeds::adjustDelay( void )
    double delaylow  = qCeil( spdelta / accel );      // Low seconds delay
    QList< int > dhms;
    US_RunProtocol::timeToList( delaylow, dhms );
-#if 0
-   double delaytim  = ssvals[ curssx ][ "delay" ];   // Delay in total seconds
-   
-   double delayhr   = (double)dhms[ 1 ];             // Delay in hours
-   double delaymin  = (double)dhms[ 2 ];             // Delay in minutes
-   double delaysec  = (double)dhms[ 3 ];             // Delay in seconds
-   double delaylowm = 0.0;   // Delay-minutes low for delay-hours > 0
-   double delaylows = 0.0;   // Delay-seconds low for delay-hours > 0
-   double setdlyhr  = tm_delay->time().hour();
-   double setdlymin = tm_delay->time().minute();
-   double setdlysec = tm_delay->time().second();
-//   double setdlyhr  = ct_dlyhr ->value();  // Currently set hours
-//   double setdlymin = ct_dlymin->value();  // Currently set minutes
-//   double setdlysec = ct_dlysec->value();  // Currently set seconds
-//double setdlyhr  = 0.0;
-//double setdlymin = 0.0;
-//double setdlysec = 0.0;
-DbgLv(1) << "EGSp: adjDelay:  spdelta accel delayhr delaymin delaysec"
- << spdelta << accel << delayhr << delaymin << delaysec;
-DbgLv(1) << "EGSp: adjDelay:    setdlyhr setdlymin setdlysec"
- << setdlyhr << setdlymin << setdlysec;
-
-   if ( delayhr == 0.0 )
-   {  // If delay hours is 0, compute the low minutes needed to accelerate
-      double delayls   = qCeil( spdelta / accel );        // Low seconds delay
-      double delaylm   = qFloor( delayls / 60.0 );        // Low minutes delay
-      delayls         -= qRound( delaylm * 60.0 );        // Residual low seconds
-      delaylowm        = delaylm;          // Lower limit on delay minutes
-
-      if ( setdlymin <= delaylm )
-      {  // For delay-minutes at or below low-delay-minutes, need to set low seconds
-         delaylows        = delayls;
-DbgLv(1) << "EGSp: adjDelay:   delaylm delaymin" << delaylm << delaymin
- << "delaylows" << delaylows;
-      }
-DbgLv(1) << "EGSp: adjDelay:  delaysec delaylows" << delaysec << delaylows
- << "delaylowm" << delaylowm;
-   }
-
-//   ct_dlymin->setMinimum( delaylowm );     // Set delay minima to calculated values
-//   ct_dlysec->setMinimum( delaylows );
-
-DbgLv(1) << "EGSp: adjDelay:  changed" << changed << "delaylowm delaylows" << delaylowm << delaylows;
-   if ( ! changed )
-   {  // If no user change was made yet, set delay values to minima
-//      ct_dlymin->setValue( delaylowm );
-      changed          = false;            // This was no user change
-//      ct_dlysec->setValue( delaylows );
-      changed          = false;            // This was no user change
-   }
-
-//   setdlymin        = ct_dlymin->value();  // (newly?) set minutes
-//   setdlysec        = ct_dlysec->value();  // (newly?) set seconds
-
-   // Save delay minutes,seconds if changing the minimum changed the value
-   double delaynmin = qMax( setdlymin, delaylowm );  // Adjusted minutes?
-   double delaynsec = qMax( setdlysec, delaylows );  // Adjusted seconds?
-
-   if ( delaynmin != setdlymin  ||  delaynsec != setdlysec )
-   {  // Change in delay time due to minimum:  save new delay in seconds
-      delaytim         = ( delayhr * 3600.0 ) + ( delaynmin * 60.0 ) + delaynsec;
-      ssvals[ curssx ][ "delay" ] = delaytim;
-   }
-#endif
    tm_delay->setMinimumTime( QTime( dhms[ 1 ], dhms[ 2 ], dhms[ 3 ] ) );
 //DbgLv(1) << "EGSp: adjDelay:   setdlymin delaynmin" << setdlymin << delaynmin;
 //DbgLv(1) << "EGSp: adjDelay:   setdlysec delaynsec" << setdlysec << delaynsec;
 }
-
-#if 0
-// Function to convert from a time to a day,hour,minute,second list
-void US_ExperGuiSpeeds::timeToList( double& sectime, QList< int >& dhms )
-{
-   int t_minute     = (int)( sectime / 60.0 );
-   int t_second     = qRound( sectime - t_minute * 60.0 );
-   int t_hour       = (int)( t_minute / 60 );
-       t_minute    -= ( t_hour * 60 );
-   int t_day        = (int)( t_hour / 24 );
-       t_day       -= ( t_day * 24 );
-
-   dhms.clear();
-   dhms << t_day << t_hour << t_minute << t_second;
-}
-
-// Function to convert to a time from a day,hour,minute,second list
-void US_ExperGuiSpeeds::timeFromList( double& sectime, QList< int >& dhms )
-{
-   sectime     = dhms[ 0 ] * ( 24 * 60 * 60 ) +
-                 dhms[ 1 ] * ( 60 * 60 ) +
-                 dhms[ 2 ] * 60 +
-                 dhms[ 3 ];
-}
-
-// Function to convert from a time to "0d 00:06:30" type string
-void US_ExperGuiSpeeds::timeToString( double& sectime, QString& strtime )
-{
-   QList< int > dhms;
-   timeToList( sectime, dhms );
-   strtime          = QString().sprintf( "%dd %2d:%2d:%2d",
-                         dhms[ 0 ], dhms[ 1 ], dhms[ 2 ], dhms[ 3 ] );
-}
-
-// Function to convert to a time from a "0d 00:06:30" type string
-void US_ExperGuiSpeeds::timeFromString( double& sectime, QString& strtime )
-{
-   QList< int > dhms;
-   int t_day        = strtime.section( "d", 0, 0 ).toInt();
-   int t_hour       = strtime.section( " ", 1, 1 ).left( 2 ).toInt();
-   int t_minute     = strtime.section( ":", 1, 1 ).toInt();
-   int t_second     = strtime.section( ":", 2, 2 ).toInt();
-
-   dhms << t_day << t_hour << t_minute << t_second;
-
-   timeFromList( sectime, dhms );
-}
-#endif
 
 // Panel for Cells parameters
 US_ExperGuiCells::US_ExperGuiCells( QWidget* topw )
@@ -2316,8 +2130,8 @@ US_ExperGuiUpload::US_ExperGuiUpload( QWidget* topw )
    rpCells             = &(mainw->currProto.rpCells);
    rpSolut             = &(mainw->currProto.rpSolut);
    rpOptic             = &(mainw->currProto.rpOptic);
-   rpSpect             = &(mainw->currProto.rpSpect);
-   rpUload             = &(mainw->currProto.rpUload);
+   rpRange             = &(mainw->currProto.rpRange);
+   rpSubmt             = &(mainw->currProto.rpSubmt);
    submitted           = false;
    rps_differ          = true;
    dbg_level           = US_Settings::us_debug();
@@ -2356,8 +2170,8 @@ US_ExperGuiUpload::US_ExperGuiUpload( QWidget* topw )
                                            ck_solution, false );
    QLayout* lo_optical      = us_checkbox( tr( "all Channel Optical Systems" ),
                                            ck_optical,  false );
-   QLayout* lo_spectra      = us_checkbox( tr( "Ranges" ),
-                                           ck_spectra,  false );
+   QLayout* lo_ranges       = us_checkbox( tr( "Ranges" ),
+                                           ck_ranges,   false );
    QLayout* lo_connect      = us_checkbox( tr( "Connected to Optima" ),
                                            ck_connect,  false );
    QLayout* lo_rp_diff      = us_checkbox( tr( "loaded/default Run Protocol"
@@ -2382,7 +2196,7 @@ US_ExperGuiUpload::US_ExperGuiUpload( QWidget* topw )
    ck_centerp ->setEnabled( false );
    ck_solution->setEnabled( false );
    ck_optical ->setEnabled( false );
-   ck_spectra ->setEnabled( false );
+   ck_ranges  ->setEnabled( false );
    ck_connect ->setEnabled( false );
    ck_rp_diff ->setEnabled( false );
    ck_prot_ena->setEnabled( false );
@@ -2406,7 +2220,7 @@ US_ExperGuiUpload::US_ExperGuiUpload( QWidget* topw )
    genL->addLayout( lo_centerp,      row++, 1, 1, 3 );
    genL->addLayout( lo_solution,     row,   1, 1, 3 );
    genL->addLayout( lo_optical,      row++, 4, 1, 3 );
-   genL->addLayout( lo_spectra,      row,   1, 1, 3 );
+   genL->addLayout( lo_ranges,       row,   1, 1, 3 );
    genL->addLayout( lo_connect,      row++, 4, 1, 3 );
    genL->addLayout( lo_rp_diff,      row++, 1, 1, 6 );
    genL->addLayout( lo_prot_ena,     row,   1, 1, 3 );
@@ -2437,7 +2251,7 @@ US_ExperGuiUpload::US_ExperGuiUpload( QWidget* topw )
    have_cells          = false;
    have_solus          = false;
    have_optic          = false;
-   have_spect          = false;
+   have_range          = false;
    have_sol            = false;
    rps_differ          = false;
    proto_ena           = false;
@@ -2547,10 +2361,10 @@ DbgLv(1) << "EGUp:dE: solus solus" << ssolut;
    bool chk_speed_ok = ( sibIValue( "speeds",    "changed" ) > 0 );
    bool chk_centerp  = ( i_centp > 0 );
    bool chk_solution = ( sibIValue( "solutions", "alldone" ) > 0 );
-   bool chk_spectra  = ( sibIValue( "spectra",   "alldone" ) > 0 );
+   bool chk_ranges   = ( sibIValue( "ranges",    "alldone" ) > 0 );
    bool chk_vars_set = ( chk_run       &&  chk_project   &&
                          chk_centerp   &&  chk_solution  &&
-                         chk_spectra );
+                         chk_ranges );
    bool chk_sub_enab = ( chk_vars_set  &&  connected );
    bool chk_sub_done = submitted;
 
@@ -2563,7 +2377,7 @@ DbgLv(1) << "EGUp:dE: solus solus" << ssolut;
    QString v_speuc   = chk_speed_ok ? s_Yes : s_no;
    QString v_celok   = chk_centerp  ? s_Yes : s_no;
    QString v_solok   = chk_solution ? s_Yes : s_no;
-   QString v_phook   = chk_spectra  ? s_Yes : s_no;
+   QString v_phook   = chk_ranges   ? s_Yes : s_no;
    QString v_conok   = connected    ? s_Yes : s_no;
    QString v_uleok   = chk_sub_enab ? s_Yes : s_no;
    QString v_ulcok   = chk_sub_done ? s_Yes : s_no;
@@ -2647,15 +2461,15 @@ DbgLv(1) << "EGUp:dE: nsolut" << ssolut.count();
    dtext += tr( "\nUsed Channel Ranges\n" );
    dtext += tr( "  ALL SPECIFIED:              " ) + v_phook  + "\n";
    dtext += tr( "  Number Channels Used:        %1\n" )
-            .arg( rpSpect->nranges );
-   for ( int ii = 0; ii < rpSpect->nranges; ii++ )
+            .arg( rpRange->nranges );
+   for ( int ii = 0; ii < rpRange->nranges; ii++ )
    {
-      QString channel = rpSpect->chrngs[ ii ].channel;
-      int    nwavl    = rpSpect->chrngs[ ii ].wvlens.count();
-      double lo_wavl  = rpSpect->chrngs[ ii ].wvlens[ 0 ];
-      double hi_wavl  = rpSpect->chrngs[ ii ].wvlens[ nwavl - 1 ];
-      double lo_radi  = rpSpect->chrngs[ ii ].lo_rad;
-      double hi_radi  = rpSpect->chrngs[ ii ].hi_rad;
+      QString channel = rpRange->chrngs[ ii ].channel;
+      int    nwavl    = rpRange->chrngs[ ii ].wvlens.count();
+      double lo_wavl  = rpRange->chrngs[ ii ].wvlens[ 0 ];
+      double hi_wavl  = rpRange->chrngs[ ii ].wvlens[ nwavl - 1 ];
+      double lo_radi  = rpRange->chrngs[ ii ].lo_rad;
+      double hi_radi  = rpRange->chrngs[ ii ].hi_rad;
       dtext += tr( "  Channel " ) + channel + " : \n";
       dtext += tr( "    wavelength count  : %1\n" ).arg( nwavl );
       dtext += tr( "    wavelength range  : %1  to  %2\n" )
@@ -2804,13 +2618,13 @@ DbgLv(1) << "EGUp:svRP:   currProto previous protname" << currProto->protname;
 DbgLv(1) << "EGUp:svRP:   currProto updated  guid" << currProto->pGUID;
 DbgLv(1) << "EGUp:svRP:   currProto updated  protname" << currProto->protname;
 
-   QXmlStreamWriter xmlo( &rpUload->us_xml ); // Compose XML representation
+   QXmlStreamWriter xmlo( &rpSubmt->us_xml ); // Compose XML representation
    xmlo.setAutoFormatting( true );
    currProto->toXml( xmlo );
 DbgLv(1) << "EGUp:svRP:    guid" << currProto->pGUID;
-DbgLv(1) << "EGUp:svRP:    xml(s)" << QString(rpUload->us_xml).left(100);
-int xe=rpUload->us_xml.length()-101;
-DbgLv(1) << "EGUp:svRP:    xml(e)" << QString(rpUload->us_xml).mid(xe);
+DbgLv(1) << "EGUp:svRP:    xml(s)" << QString(rpSubmt->us_xml).left(100);
+int xe=rpSubmt->us_xml.length()-101;
+DbgLv(1) << "EGUp:svRP:    xml(e)" << QString(rpSubmt->us_xml).mid(xe);
 
    // Save the new protocol to database or disk
    US_Passwd  pw;
@@ -2819,11 +2633,11 @@ DbgLv(1) << "EGUp:svRP:    xml(e)" << QString(rpUload->us_xml).mid(xe);
 
 DbgLv(1) << "EGUp:svRP:   dbP" << dbP;
    // Always save the protocol to a local file
-   int idProt          = US_ProtocolUtil::write_record( rpUload->us_xml, NULL );
+   int idProt          = US_ProtocolUtil::write_record( rpSubmt->us_xml, NULL );
 
    // Usually (database selected), we write an additional record to DB
    if ( dbP != NULL )
-      idProt              = US_ProtocolUtil::write_record( rpUload->us_xml, dbP );
+      idProt              = US_ProtocolUtil::write_record( rpSubmt->us_xml, dbP );
 
    if ( idProt < 1 )
    {
@@ -2876,7 +2690,7 @@ QString US_ExperGuiUpload::buildJson( void )
    int nchanu        = sibIValue( "solution",  "nchanu" );
    int nuniqs        = sibIValue( "solutions", "nusols" );
    int solu_done     = sibIValue( "solutions", "alldone" );
-   int spec_done     = sibIValue( "spectra",   "alldone" );
+   int rngs_done     = sibIValue( "ranges",    "alldone" );
    QString v_run     = sibSValue( "general",   "runID" );
    QString v_proj    = sibSValue( "general",   "project" );
    QString v_invid   = sibSValue( "general",   "investigator" );
@@ -2903,12 +2717,12 @@ DbgLv(1) << "EGUp:bj: solus solus" << ssolut;
    bool chk_project  = ! v_proj.isEmpty();
    bool chk_centerp  = ( nused  > 0 );
    bool chk_solution = ( solu_done > 0 );
-   bool chk_spectra  = ( spec_done > 0 );
+   bool chk_ranges   = ( rngs_done > 0 );
 DbgLv(1) << "EGUp:bj: ck: run proj cent solu epro"
- << chk_run << chk_project << chk_centerp << chk_solution << chk_spectra;
+ << chk_run << chk_project << chk_centerp << chk_solution << chk_ranges;
    bool chk_vars_set = ( chk_run       &&  chk_project   &&
                          chk_centerp   &&  chk_solution  &&
-                         chk_spectra );
+                         chk_ranges );
    bool chk_sub_enab = ( chk_vars_set  &&  connected );
 
    if ( ! chk_sub_enab )

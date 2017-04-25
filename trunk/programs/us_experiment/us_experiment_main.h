@@ -381,14 +381,14 @@ class US_ExperGuiOptical : public US_WidgetsDialog
 };
 
 //! \brief Experiment Ranges panel
-class US_ExperGuiSpectra : public US_WidgetsDialog 
+class US_ExperGuiRanges : public US_WidgetsDialog 
 {
    Q_OBJECT
 
    public:
 
-      US_ExperGuiSpectra( QWidget* );
-      ~US_ExperGuiSpectra() {};
+      US_ExperGuiRanges( QWidget* );
+      ~US_ExperGuiRanges() {};
 
       void        initPanel( void );    // Standard panel utilities
       void        savePanel( void );
@@ -406,12 +406,14 @@ class US_ExperGuiSpectra : public US_WidgetsDialog
 
    private:
       US_ExperimentMain*   mainw;
-      US_RunProtocol::RunProtoSpectra*  rpSpect;
+      US_RunProtocol::RunProtoRanges*  rpRange;
       US_Help  showHelp;
       QList< QLabel* >         cc_labls;   // Pointers to channel labels
       QList< QPushButton* >    cc_wavls;   // Pointers to wavelength buttons
+      QList< QLabel* >         cc_lrngs;   // Pointers to wl range labels
       QList< QwtCounter* >     cc_lrads;   // Pointers to Radial Low counters
       QList< QwtCounter* >     cc_hrads;   // Pointers to Radial High counters
+      QList< QLabel* >         cc_lbtos;   // Pointers to "to" labels
 
       int          dbg_level;              // Debug level
       int          mxrow;                  // Maximum possible rows (24)
@@ -426,21 +428,25 @@ class US_ExperGuiSpectra : public US_WidgetsDialog
 
    private slots:
       // \brief Manage extinction profiles in a dialog
-      void manageEProfiles  ( void );
+//      void manageEProfiles  ( void );
       // \brief Process the results of the extinction dialog
-      void process_results  ( QMap< double, double >& );
+//      void process_results  ( QMap< double, double >& );
       // \brief Display details on current Ranges parameter values
-      void detailSpectra    ( void );
+      void detailRanges     ( void );
       // \brief Select the wavelengths to scan for a channel
       void selectWavelengths( void );
       // \brief Handle (un)check of Auto in Optima box
-      void checkOptima      ( bool );
+//      void checkOptima      ( bool );
       // \brief Load an extinction spectrum
-      void loadSpectrum     ( void );
+//      void loadSpectrum     ( void );
       // \brief Manually enter a wavelength/value spectrum 
-      void manualSpectrum   ( void );
+//      void manualSpectrum   ( void );
+      // \brief Handle a change in the low radius value
+      void changedLowRadius ( double );
+      // \brief Handle a change in the high radius value
+      void changedHighRadius( double );
       // \brief Rebuild the Ranges part of the current run protocol
-      void rebuild_Spect    ( void );
+      void rebuild_Ranges   ( void );
 };
 
 
@@ -522,7 +528,7 @@ class US_ExperGuiUpload : public US_WidgetsDialog
       QStringList sibLValue( const QString, const QString );
       int         status   ( void );
       void        help     ( void )
-         { showHelp.show_help( "manual/experiment_upload.html" ); };
+         { showHelp.show_help( "manual/experiment_submit.html" ); };
 
    private:
       US_ExperimentMain*   mainw;
@@ -533,8 +539,8 @@ class US_ExperGuiUpload : public US_WidgetsDialog
       US_RunProtocol::RunProtoCells*      rpCells;  //!< Cells controls
       US_RunProtocol::RunProtoSolutions*  rpSolut;  //!< Solutions controls
       US_RunProtocol::RunProtoOptics*     rpOptic;  //!< Optical Systems controls
-      US_RunProtocol::RunProtoSpectra*    rpSpect;  //!< Ranges controls
-      US_RunProtocol::RunProtoUpload*     rpUload;  //!< Submit controls
+      US_RunProtocol::RunProtoRanges*     rpRange;  //!< Ranges controls
+      US_RunProtocol::RunProtoUpload*     rpSubmt;  //!< Submit controls
       US_Help  showHelp;
 
       QPushButton* pb_saverp;
@@ -549,7 +555,7 @@ class US_ExperGuiUpload : public US_WidgetsDialog
       QCheckBox*   ck_centerp;
       QCheckBox*   ck_solution;
       QCheckBox*   ck_optical;
-      QCheckBox*   ck_spectra;
+      QCheckBox*   ck_ranges;
       QCheckBox*   ck_connect;
       QCheckBox*   ck_rp_diff;
       QCheckBox*   ck_prot_ena;
@@ -567,7 +573,7 @@ class US_ExperGuiUpload : public US_WidgetsDialog
       bool         have_cells;  // Have Cell parameters specified
       bool         have_solus;  // Have Solutions parameters specified
       bool         have_optic;  // Have Optics parameters specified
-      bool         have_spect;  // Have Ranges parameters specified
+      bool         have_range;  // Have Ranges parameters specified
       bool         have_sol;    // Have Solution parameters specified
       bool         rps_differ;  // Run Protocols differ loaded/current
       bool         proto_ena;   // Protocol save is possible now
@@ -621,7 +627,7 @@ class US_ExperimentMain : public US_Widgets
       US_ExperGuiCells*     epanCells;      // Cells panel
       US_ExperGuiSolutions* epanSolutions;  // Solutions panel
       US_ExperGuiOptical*   epanOptical;    // Optics panel
-      US_ExperGuiSpectra*   epanSpectra;    // Ranges panel
+      US_ExperGuiRanges*    epanRanges;     // Ranges panel
       US_ExperGuiUpload*    epanUpload;     // Submit panel
 
       int         statflag;        // Composite panels status flag

@@ -1,4 +1,4 @@
-//! \file us_proto_spectra.cpp
+//! \file us_proto_ranges.cpp
 
 #include "us_experiment_main.h"
 #include "us_extinction_gui.h"
@@ -19,12 +19,12 @@
 #define DbgLv(a) if(dbg_level>=a)qDebug()
 #endif
 
-// Panel for Spectra parameters
-US_ExperGuiSpectra::US_ExperGuiSpectra( QWidget* topw )
+// Panel for Ranges parameters
+US_ExperGuiRanges::US_ExperGuiRanges( QWidget* topw )
    : US_WidgetsDialog( topw, 0 )
 {
    mainw               = (US_ExperimentMain*)topw;
-   rpSpect             = &(mainw->currProto.rpSpect);
+   rpRange             = &(mainw->currProto.rpRange);
    mxrow               = 24;     // Maximum possible rows
    nrnchan             = 0;
    protname            = mainw->currProto.protname;
@@ -39,7 +39,7 @@ US_ExperGuiSpectra::US_ExperGuiSpectra( QWidget* topw )
 
    QPushButton* pb_details  = us_pushbutton( tr( "View Current Range Settings" ) );
    connect( pb_details,   SIGNAL( clicked()       ),
-            this,         SLOT  ( detailSpectra() ) );
+            this,         SLOT  ( detailRanges()  ) );
 
    QLabel* lb_hdr1     = us_banner( tr( "Cell / Channel" ) );
    QLabel* lb_hdr2     = us_banner( tr( "Wavelengths" ) );
@@ -65,7 +65,7 @@ US_ExperGuiSpectra::US_ExperGuiSpectra( QWidget* topw )
    QPalette ckpal   = US_GuiSettings::normalColor();
 
    for ( int ii = 0; ii < mxrow; ii++ )
-   {  // Loop to build initial place-holder spectr rows
+   {  // Loop to build initial place-holder ranges rows
       QString scel;
       if      ( ii == 0 ) scel = QString( "1 / A" );
       else if ( ii == 1 ) scel = QString( "1 / B" );
@@ -74,7 +74,7 @@ US_ExperGuiSpectra::US_ExperGuiSpectra( QWidget* topw )
       else                scel = QString( "none" );
       cclabl           = us_label( scel );
       pbwavln          = us_pushbutton( swavln );
-      lbwlrng          = us_label( "2, 278 to 282" );
+      lbwlrng          = us_label( "2,  278 to 282" );
       ctradfr          = us_counter( 3, 5.6, 7.4, 5.8 );
       lablto           = us_label( srngto );
       ctradto          = us_counter( 3, 5.6, 7.4, 7.2 );
@@ -102,25 +102,27 @@ US_ExperGuiSpectra::US_ExperGuiSpectra( QWidget* topw )
       lablto ->setVisible( is_vis );
       ctradto->setVisible( is_vis );
 
-      connect( pbwavln, SIGNAL( clicked()              ),
-               this,    SLOT  ( selectWavelengths()    ) );
+      connect( pbwavln, SIGNAL( clicked()           ),
+               this,    SLOT  ( selectWavelengths() ) );
+      connect( ctradfr, SIGNAL( valueChanged     ( double ) ),
+               this,    SLOT  ( changedLowRadius ( double ) ) );
+      connect( ctradto, SIGNAL( valueChanged     ( double ) ),
+               this,    SLOT  ( changedHighRadius( double ) ) );
 #if 0
-      connect( ctradfr, SIGNAL( valueChanged( double ) ),
-               this,    SLOT  ( loRadChanged( double ) ) );
-      connect( ctradfr, SIGNAL( valueChanged( double ) ),
-               this,    SLOT  ( hiRadChanged( double ) ) );
-      connect( ckoptim, SIGNAL( toggled     ( bool )   ),
-               this,    SLOT  ( checkOptima ( bool )   ) );
-      connect( pbsload, SIGNAL( clicked()              ),
-               this,    SLOT  ( loadSpectrum()         ) );
-      connect( pbsmanu, SIGNAL( clicked()              ),
-               this,    SLOT  ( manualSpectrum()       ) );
+      connect( ckoptim, SIGNAL( toggled    ( bool )   ),
+               this,    SLOT  ( checkOptima( bool )   ) );
+      connect( pbsload, SIGNAL( clicked()             ),
+               this,    SLOT  ( loadSpectrum()        ) );
+      connect( pbsmanu, SIGNAL( clicked()             ),
+               this,    SLOT  ( manualSpectrum()      ) );
 #endif
 
       cc_labls << cclabl;
       cc_wavls << pbwavln;
+      cc_lrngs << lbwlrng;
       cc_lrads << ctradfr;
       cc_hrads << ctradto;
+      cc_lbtos << lablto;
    }
 
 #if 0
@@ -143,11 +145,11 @@ US_ExperGuiSpectra::US_ExperGuiSpectra( QWidget* topw )
    initPanel();
 }
 
-// Function to rebuild the Spectra protocol after Optical change
-void US_ExperGuiSpectra::rebuild_Spect( void )
+// Function to rebuild the Ranges protocol after Optical change
+void US_ExperGuiRanges::rebuild_Ranges( void )
 {
    int nuvvis          = sibIValue( "optical", "nuvvis" );
-   int nrange_sv       = rpSpect->nranges;
+   int nrange_sv       = rpRange->nranges;
    nrnchan             = rchans.count();
 DbgLv(1) << "EGwS: rbS: nuvvis" << nuvvis << "nrange_sv" << nrange_sv
  << "nrnchan" << nrnchan;
@@ -157,9 +159,9 @@ DbgLv(1) << "EGwS: rbS: nuvvis" << nuvvis << "nrange_sv" << nrange_sv
 
 DbgLv(1) << "EGwS: rbS:  nrnchan" << nrnchan;
    if ( nrange_sv == 0 )
-   {  // No existing Spectra protocol, so init with rudimentary one
-      rpSpect->nranges    = nuvvis;
-      rpSpect->chrngs.resize( nuvvis );
+   {  // No existing Ranges protocol, so init with rudimentary one
+      rpRange->nranges    = nuvvis;
+      rpRange->chrngs.resize( nuvvis );
       QString uvvis       = tr( "UV/visible" );
       QStringList oprof   = sibLValue( "optical", "profiles" );
       int kuv             = 0;
@@ -167,9 +169,9 @@ DbgLv(1) << "EGwS: rbS:  nrnchan" << nrnchan;
       {
          if ( oprof[ ii ].contains( uvvis ) )
          {
-            rpSpect->chrngs[ kuv ].channel  = oprof[ ii ].section( ":", 0, 0 );
-            rpSpect->chrngs[ kuv ].wvlens.clear();
-            rpSpect->chrngs[ kuv ].wvlens <<  280.0;
+            rpRange->chrngs[ kuv ].channel  = oprof[ ii ].section( ":", 0, 0 );
+            rpRange->chrngs[ kuv ].wvlens.clear();
+            rpRange->chrngs[ kuv ].wvlens <<  280.0;
             if ( ++kuv >= nuvvis )  break;
          }
       }
@@ -184,7 +186,7 @@ DbgLv(1) << "EGwS: rbS:  protname" << protname << "cur_pname" << cur_pname;
    {  // Protocol has changed:  rebuild internals
       protname            = cur_pname;
       nrnchan             = nrange_sv;
-      rpSpect->nranges    = nuvvis;
+      rpRange->nranges    = nuvvis;
       rchans .resize( nrnchan );
       swvlens.resize( nrnchan );
       locrads.resize( nrnchan );
@@ -193,28 +195,28 @@ DbgLv(1) << "EGwS: rbS: rbI -- nrnchan" << nrnchan;
 
       for ( int ii = 0; ii < nrnchan; ii++ )
       {
-         rchans [ ii ]       = rpSpect->chrngs[ ii ].channel;
-         int nwavl           = rpSpect->chrngs[ ii ].wvlens.count();
+         rchans [ ii ]       = rpRange->chrngs[ ii ].channel;
+         int nwavl           = rpRange->chrngs[ ii ].wvlens.count();
          swvlens[ ii ].clear();
 
          for ( int jj = 0; jj < nwavl; jj++ )
          {
-            double wavelen      = rpSpect->chrngs[ ii ].wvlens[ jj ];
+            double wavelen      = rpRange->chrngs[ ii ].wvlens[ jj ];
             swvlens[ ii ] << wavelen;
 DbgLv(1) << "EGwS: rbS:   ii jj " << ii << jj << "wavelen" << wavelen;
          }
 
-         locrads[ ii ]       = rpSpect->chrngs[ ii ].lo_rad;
-         hicrads[ ii ]       = rpSpect->chrngs[ ii ].hi_rad;
+         locrads[ ii ]       = rpRange->chrngs[ ii ].lo_rad;
+         hicrads[ ii ]       = rpRange->chrngs[ ii ].hi_rad;
 DbgLv(1) << "EGwS: rbS:  ii lorad hirad" << locrads[ii] << hicrads[ii];
       }
       return;
    }
 
    // Save info from any previous protocol
-   QVector< US_RunProtocol::RunProtoSpectra::Ranges > chrngs_sv;
-   chrngs_sv           = rpSpect->chrngs;
-   rpSpect->chrngs.clear();
+   QVector< US_RunProtocol::RunProtoRanges::Ranges > chrngs_sv;
+   chrngs_sv           = rpRange->chrngs;
+   rpRange->chrngs.clear();
    QStringList oprofs  = sibLValue( "optical", "profiles" );
    int nochan          = oprofs.count();
 DbgLv(1) << "EGwS: rbS:  nochan" << nochan;
@@ -265,21 +267,21 @@ DbgLv(1) << "EGwS: rbS:   ii" << ii << "chan" << channel << "pentry" << pentry;
 DbgLv(1) << "EGwS: rbS:     spx" << spx;
       if ( spx < 0 )
       {  // No such channel in old protocol:  use basic entry
-         US_RunProtocol::RunProtoSpectra::Ranges  chrng;
+         US_RunProtocol::RunProtoRanges::Ranges  chrng;
          chrng.channel      = channel;
          chrng.lo_rad       = 5.8;
          chrng.hi_rad       = 7.2;
          chrng.wvlens << 280.0;
-         rpSpect->chrngs << chrng;
+         rpRange->chrngs << chrng;
       }
       else
       {  // Match to old protocol:  use that entry
-         rpSpect->chrngs << chrngs_sv[ spx ];
+         rpRange->chrngs << chrngs_sv[ spx ];
       }
    }
 
-   rpSpect->nranges    = rpSpect->chrngs.count();
-   nrnchan             = rpSpect->nranges;
+   rpRange->nranges    = rpRange->chrngs.count();
+   nrnchan             = rpRange->nranges;
    swvlens.resize( nrnchan );
 DbgLv(1) << "EGwS: rbS:  nrnchan" << nrnchan << "nrnchan_sv" << nrnchan_sv;
 
@@ -288,18 +290,22 @@ DbgLv(1) << "EGwS: rbS:  nrnchan" << nrnchan << "nrnchan_sv" << nrnchan_sv;
    {  // Use previous panel parameters
       for ( int ii = 0; ii < nrnchan; ii++ )
       {
-         QString channel     = rpSpect->chrngs[ ii ].channel;
+         QString channel     = rpRange->chrngs[ ii ].channel;
          int ppx             = rchans.indexOf( channel );
 DbgLv(1) << "EGwS: rbS:    ii" << ii << "channel" << channel << "ppx" << ppx;
          if ( ppx >= 0 )
          {
             rchans [ ii ]       = rchans [ ppx ];
             swvlens[ ii ]       = swvlens[ ppx ];
+            locrads[ ii ]       = locrads[ ppx ];
+            hicrads[ ii ]       = hicrads[ ppx ];
          }
          else
          {
             rchans [ ii ]       = channel;
-            swvlens[ ii ]       = rpSpect->chrngs[ ii ].wvlens;
+            swvlens[ ii ]       = rpRange->chrngs[ ii ].wvlens;
+            locrads[ ii ]       = rpRange->chrngs[ ii ].lo_rad;
+            hicrads[ ii ]       = rpRange->chrngs[ ii ].hi_rad;
          }
       }
    }
@@ -307,16 +313,18 @@ DbgLv(1) << "EGwS: rbS:    ii" << ii << "channel" << channel << "ppx" << ppx;
    {  // Create first shot at panel parameters
       for ( int ii = 0; ii < nrnchan; ii++ )
       {
-DbgLv(1) << "EGwS: rbS:    ii" << ii << "channel" << rpSpect->chrngs[ii].channel;
-         rchans [ ii ]       = rpSpect->chrngs[ ii ].channel;
-         swvlens[ ii ]       = rpSpect->chrngs[ ii ].wvlens;
+DbgLv(1) << "EGwS: rbS:    ii" << ii << "channel" << rpRange->chrngs[ii].channel;
+         rchans [ ii ]       = rpRange->chrngs[ ii ].channel;
+         swvlens[ ii ]       = rpRange->chrngs[ ii ].wvlens;
+         locrads[ ii ]       = rpRange->chrngs[ ii ].lo_rad;
+         hicrads[ ii ]       = rpRange->chrngs[ ii ].hi_rad;
       }
    }
-
 }
 
+#if 0
 // Slot to manage extinction profiles
-void US_ExperGuiSpectra::manageEProfiles()
+void US_ExperGuiRanges::manageEProfiles()
 {
 DbgLv(1) << "EGwS: mEP: IN";
    QObject* sobj       = sender();      // Sender object
@@ -335,10 +343,9 @@ DbgLv(1) << "EGwS: mEP: IN";
 }
 
 // Slot to handle specifications from a US_Extinction dialog
-void US_ExperGuiSpectra::process_results( QMap< double, double >& eprof )
+void US_ExperGuiRanges::process_results( QMap< double, double >& eprof )
 {
 DbgLv(1) << "EGwS: pr: eprof size" << eprof.keys().count() << "chrow" << chrow;
-#if 0
    pwvlens[ chrow ] = eprof.keys();
    pvalues[ chrow ].clear();
 
@@ -346,15 +353,15 @@ DbgLv(1) << "EGwS: pr: eprof size" << eprof.keys().count() << "chrow" << chrow;
    {
       pvalues[ chrow ] << eprof[ pwvlens[ chrow ][ ii ] ];
    }
-#endif
 }
+#endif
 
-// Slot to show details of all wavelength and spectra profiles
-void US_ExperGuiSpectra::detailSpectra()
+// Slot to show details of all wavelength and radius ranges
+void US_ExperGuiRanges::detailRanges()
 {
    // Create a new editor text dialog with fixed font
    US_Editor* ediag = new US_Editor( US_Editor::DEFAULT, true, "", this );
-   ediag->setWindowTitle( tr( "Details: Wavelength / Extinction|Voltage|Gain Profiles" ) );
+   ediag->setWindowTitle( tr( "Details:  Channel Wavelength and Radius Ranges" ) );
    ediag->resize( 720, 440 );
    ediag->e->setFont( QFont( US_Widgets::fixedFont().family(),
                              US_GuiSettings::fontSize() - 1,
@@ -362,13 +369,13 @@ void US_ExperGuiSpectra::detailSpectra()
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
 
    // Compose the text that it displays
-   QString dtext  = tr( "Wavelength/Value Profile Information:\n\n" );
+   QString dtext  = tr( "Wavelength, Radius Range Information:\n\n" );
    dtext += tr( "Number of Panel Channels Used:     %1\n" )
             .arg( nrnchan );
    dtext += tr( "Number of Protocol Channels Used:  %1\n" )
-            .arg( rpSpect->nranges );
+            .arg( rpRange->nranges );
 
-   if ( nrnchan != rpSpect->nranges )
+   if ( nrnchan != rpRange->nranges )
    {  // Should not occur!
       dtext += tr( "\n*ERROR* Channel counts should be identical\n" );
       nrnchan   = 0;    // Skip channel details; too risky
@@ -378,18 +385,15 @@ void US_ExperGuiSpectra::detailSpectra()
    {  // Show information for each channel
       dtext += tr( "\n  Channel " ) + rchans[ ii ] + " : \n";
       int nswavl = swvlens[ ii ].count();
-      int nowavl = rpSpect->chrngs[ ii ].wvlens.count();
 
       dtext += tr( "    Selected Wavelength count   : %1\n" )
                .arg( nswavl );
-      dtext += tr( "    Selected Wavelength range   : %1 to %2\n" )
-               .arg( swvlens[ ii ][ 0 ] ).arg( swvlens[ ii ][ nswavl - 1 ] );
+      if ( nswavl > 0 )
+         dtext += tr( "    Selected Wavelength range   : %1 to %2\n" )
+                  .arg( swvlens[ ii ][ 0 ] ).arg( swvlens[ ii ][ nswavl - 1 ] );
 
-      dtext += tr( "    Protocol Wavelength count   : %1\n" )
-               .arg( nowavl );
-      dtext += tr( "    Protocol Wavelength range   : %1 to %2\n" )
-               .arg( rpSpect->chrngs[ ii ].wvlens[ 0 ] )
-               .arg( rpSpect->chrngs[ ii ].wvlens[ nowavl - 1 ] );
+      dtext += tr( "    Radius range                : %1 to %2\n" )
+               .arg( locrads[ ii ] ).arg( hicrads[ ii ] );
    }
 
    // Load text and show the dialog
@@ -401,7 +405,7 @@ void US_ExperGuiSpectra::detailSpectra()
 }
 
 // Slot to select wavelengths using a dialog
-void US_ExperGuiSpectra::selectWavelengths()
+void US_ExperGuiRanges::selectWavelengths()
 {
    QObject* sobj       = sender();      // Sender object
    QString sname       = sobj->objectName();
@@ -443,11 +447,11 @@ void US_ExperGuiSpectra::selectWavelengths()
       for ( int jj = 0; jj < kswavl; jj++ )
       {
          QString swavl       = QString::number( swvlens[ ii ][ jj ] );
-         if ( ! wlselec.contains( swavl )  &&
-              ! wlpoten.contains( swavl ) )
+         if ( ! wlpoten.contains( swavl ) )
             wlpoten << swavl;
       }
    }
+   wlpoten.sort();
 #endif
 DbgLv(1) << "EGwS: sW: wlpoten" << wlpoten;
 DbgLv(1) << "EGwS: sW: wlselec" << wlselec;
@@ -459,13 +463,28 @@ DbgLv(1) << "EGwS: sW: wlselec" << wlselec;
    swdiag->exec();
 
    swvlens[ chrow ].clear();
-   for ( int ii = 0; ii < wlselec.count(); ii++ )
+   int kswavl          = wlselec.count();
+   int lswx            = qMax( 0, kswavl - 1 );
+   QString labwlr;
+
+   for ( int ii = 0; ii < kswavl; ii++ )
       swvlens[ chrow ] << wlselec[ ii ].toDouble();
-DbgLv(1) << "EGwS: sW: swvlens" << swvlens;
+
+   if ( kswavl == 0 )
+      labwlr              = tr( "0 selected" );
+   else if ( kswavl == 1 )
+      labwlr              = "1,  " + wlselec[ 0 ];
+   else
+      labwlr              = QString::number( kswavl ) + ",  " + wlselec[ 0 ]
+                            + tr( " to " ) + wlselec[ lswx ];
+
+   cc_lrngs[ chrow ]->setText( labwlr );
+DbgLv(1) << "EGwS: sW: labwlr" << labwlr << "swvlens" << swvlens;
 }
 
+#if 0
 // Slot to handle the toggle of an "in Optima" checkbox
-void US_ExperGuiSpectra::checkOptima( bool checked )
+void US_ExperGuiRanges::checkOptima( bool checked )
 {
    QObject* sobj       = sender();      // Sender object
    QString sname       = sobj->objectName();
@@ -478,7 +497,7 @@ DbgLv(1) << "EGwS:ckOpt:  OK";
 }
 
 // Slot to load a spectrum profile using us_extinction
-void US_ExperGuiSpectra::loadSpectrum()
+void US_ExperGuiRanges::loadSpectrum()
 {
    QObject* sobj       = sender();      // Sender object
    QString sname       = sobj->objectName();
@@ -497,9 +516,8 @@ DbgLv(1) << "EGwS:loadS: sname" << sname << "chrow" << chrow << cclabl;
 }
 
 // Slot to manually enter a spectrum profile using us_table
-void US_ExperGuiSpectra::manualSpectrum()
+void US_ExperGuiRanges::manualSpectrum()
 {
-#if 0
    QObject* sobj       = sender();      // Sender object
    QString sname       = sobj->objectName();
    chrow               = sname.section( ":", 0, 0 ).toInt();
@@ -546,9 +564,28 @@ if (nwavl>0)
    }
 else
 DbgLv(1) << "EGwS:manSp: *NOT Accepted*";
+}
 #endif
+
+// Slot to handle a change in the low radius value
+void US_ExperGuiRanges::changedLowRadius( double val )
+{
+   QObject* sobj       = sender();      // Sender object
+   QString sname       = sobj->objectName();
+   chrow               = sname.section( ":", 0, 0 ).toInt();
+DbgLv(1) << "chgLoRad: val" << val << "row" << chrow;
+   locrads[ chrow ]    = val;
 }
 
+// Slot to handle a change in the high radius value
+void US_ExperGuiRanges::changedHighRadius( double val )
+{
+   QObject* sobj       = sender();      // Sender object
+   QString sname       = sobj->objectName();
+   chrow               = sname.section( ":", 0, 0 ).toInt();
+DbgLv(1) << "chgHiRad: val" << val << "row" << chrow;
+   hicrads[ chrow ]    = val;
+}
 
 
 // Class dialog object for selecting wavelengths
@@ -616,7 +653,7 @@ DbgLv(1) << "SelWl:    k_pot k_sel" << potential.count() << selected.count();
    QPushButton* pb_help   = us_pushbutton( tr( "Help" ) );
    QPushButton* pb_cancel = us_pushbutton( tr( "Cancel" ) );
                 pb_accept = us_pushbutton( tr( "Accept" ) );
-   pb_accept->setEnabled( nbr_selec > 0 );
+   //pb_accept->setEnabled( nbr_selec > 0 );
    pb_add   ->setEnabled( nbr_poten > 0 );
    pb_remove->setEnabled( nbr_selec > 0 );
    pb_addall->setEnabled( nbr_poten > 0 );
@@ -844,7 +881,7 @@ void US_SelectWavelengths::report( void )
                          tr( "%1 selected wavelengths" ).arg( nbr_selec ) );
 
    // Enable/disable buttons appropriately
-   pb_accept->setEnabled( nbr_selec > 0 );
+//   pb_accept->setEnabled( nbr_selec > 0 );
    pb_add   ->setEnabled( nbr_poten > 0 );
    pb_remove->setEnabled( nbr_selec > 0 );
    pb_addall->setEnabled( nbr_poten > 0 );
@@ -873,7 +910,8 @@ void US_SelectWavelengths::reset( void )
 // Cancel button clicked:  returned delete-selections is empty
 void US_SelectWavelengths::cancel( void )
 {
-   select_wavls.clear();
+//   select_wavls.clear();
+   reset();
 
    reject();
    close();

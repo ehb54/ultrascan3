@@ -35,7 +35,7 @@ bool US_RunProtocol::operator== ( const US_RunProtocol& rp ) const
    if ( rpCells      != rp.rpCells      )  return false;
    if ( rpSolut      != rp.rpSolut      )  return false;
    if ( rpOptic      != rp.rpOptic      )  return false;
-   if ( rpSpect      != rp.rpSpect      )  return false;
+   if ( rpRange      != rp.rpRange      )  return false;
 
    return true;
 }
@@ -61,7 +61,7 @@ bool US_RunProtocol::toXml( QXmlStreamWriter& xmlo )
    rpCells.toXml( xmlo );
    rpSolut.toXml( xmlo );
    rpOptic.toXml( xmlo );
-   rpSpect.toXml( xmlo );
+   rpRange.toXml( xmlo );
 
    xmlo.writeEndElement();    // protocol
 
@@ -99,7 +99,8 @@ bool US_RunProtocol::fromXml( QXmlStreamReader& xmli )
          else if ( ename == "cells" )      { rpCells.fromXml( xmli ); }
          else if ( ename == "solutions" )  { rpSolut.fromXml( xmli ); }
          else if ( ename == "optics" )     { rpOptic.fromXml( xmli ); }
-         else if ( ename == "spectra" )    { rpSpect.fromXml( xmli ); }
+         else if ( ename == "ranges"  )    { rpRange.fromXml( xmli ); }
+         else if ( ename == "spectra" )    { rpRange.fromXml( xmli ); }
       }
    }
 
@@ -735,16 +736,16 @@ bool US_RunProtocol::RunProtoOptics::OpticSys::operator==
 }
 
 
-// RunProtoSpectra subclass constructor
-US_RunProtocol::RunProtoSpectra::RunProtoSpectra()
+// RunProtoRanges subclass constructor
+US_RunProtocol::RunProtoRanges::RunProtoRanges()
 {
    nranges              = 0;
    chrngs.clear();
 }
 
-// RunProtoSpectra subclass Equality operator
-bool US_RunProtocol::RunProtoSpectra::operator== 
-                  ( const RunProtoSpectra& rp ) const
+// RunProtoRanges subclass Equality operator
+bool US_RunProtocol::RunProtoRanges::operator== 
+                  ( const RunProtoRanges& rp ) const
 {
    if ( nranges != rp.nranges  ) return false;
    if ( chrngs  != rp.chrngs )   return false;
@@ -753,7 +754,7 @@ bool US_RunProtocol::RunProtoSpectra::operator==
 }
 
 // Read all current Ranges controls from an XML stream
-bool US_RunProtocol::RunProtoSpectra::fromXml( QXmlStreamReader& xmli )
+bool US_RunProtocol::RunProtoRanges::fromXml( QXmlStreamReader& xmli )
 {
    nranges              = 0;
    chrngs.clear();
@@ -805,8 +806,8 @@ bool US_RunProtocol::RunProtoSpectra::fromXml( QXmlStreamReader& xmli )
    return ( ! xmli.hasError() );
 }
 
-// Write the current Spectra portion of controls to an XML stream
-bool US_RunProtocol::RunProtoSpectra::toXml( QXmlStreamWriter& xmlo )
+// Write the current Ranges portion of controls to an XML stream
+bool US_RunProtocol::RunProtoRanges::toXml( QXmlStreamWriter& xmlo )
 {
    nranges              = chrngs.count();
    xmlo.writeStartElement( "ranges" );
@@ -832,8 +833,8 @@ bool US_RunProtocol::RunProtoSpectra::toXml( QXmlStreamWriter& xmlo )
    return ( ! xmlo.hasError() );
 }
 
-// RunProtoSpectra::Ranges subclass constructor
-US_RunProtocol::RunProtoSpectra::Ranges::Ranges()
+// RunProtoRanges::Ranges subclass constructor
+US_RunProtocol::RunProtoRanges::Ranges::Ranges()
 {
    channel.clear();
    wvlens .clear();
@@ -841,8 +842,8 @@ US_RunProtocol::RunProtoSpectra::Ranges::Ranges()
    hi_rad               = 7.2;
 }
 
-// RunProtoSpectra::Ranges subclass Equality operator
-bool US_RunProtocol::RunProtoSpectra::Ranges::operator==
+// RunProtoRanges::Ranges subclass Equality operator
+bool US_RunProtocol::RunProtoRanges::Ranges::operator==
                   ( const Ranges& s ) const
 {
    if ( channel     != s.channel     ) return false;
