@@ -151,13 +151,13 @@ void US_ExperGuiRanges::rebuild_Ranges( void )
    int nuvvis          = sibIValue( "optical", "nuvvis" );
    int nrange_sv       = rpRange->nranges;
    nrnchan             = rchans.count();
-DbgLv(1) << "EGwS: rbS: nuvvis" << nuvvis << "nrange_sv" << nrange_sv
+DbgLv(1) << "EGRn: rbR: nuvvis" << nuvvis << "nrange_sv" << nrange_sv
  << "nrnchan" << nrnchan;
 
 //   if ( nrange_sv == nuvvis  &&  nuvvis != 0 )
 //      return;                           // No optical change means no rebuild
 
-DbgLv(1) << "EGwS: rbS:  nrnchan" << nrnchan;
+DbgLv(1) << "EGRn: rbR:  nrnchan" << nrnchan;
    if ( nrange_sv == 0 )
    {  // No existing Ranges protocol, so init with rudimentary one
       rpRange->nranges    = nuvvis;
@@ -175,12 +175,12 @@ DbgLv(1) << "EGwS: rbS:  nrnchan" << nrnchan;
             if ( ++kuv >= nuvvis )  break;
          }
       }
-DbgLv(1) << "EGwS: rbS:  dummy proto  oprof count" << oprof.count() << "nuvvis" << nuvvis;
+DbgLv(1) << "EGRn: rbR:  dummy proto  oprof count" << oprof.count() << "nuvvis" << nuvvis;
       return;
    }
 
    QString cur_pname   = sibSValue( "general", "protocol" );
-DbgLv(1) << "EGwS: rbS:  protname" << protname << "cur_pname" << cur_pname;
+DbgLv(1) << "EGRn: rbR:  protname" << protname << "cur_pname" << cur_pname;
 
    if ( protname != cur_pname )
    {  // Protocol has changed:  rebuild internals
@@ -191,7 +191,7 @@ DbgLv(1) << "EGwS: rbS:  protname" << protname << "cur_pname" << cur_pname;
       swvlens.resize( nrnchan );
       locrads.resize( nrnchan );
       hicrads.resize( nrnchan );
-DbgLv(1) << "EGwS: rbS: rbI -- nrnchan" << nrnchan;
+DbgLv(1) << "EGRn: rbR: rbI -- nrnchan" << nrnchan;
 
       for ( int ii = 0; ii < nrnchan; ii++ )
       {
@@ -203,12 +203,12 @@ DbgLv(1) << "EGwS: rbS: rbI -- nrnchan" << nrnchan;
          {
             double wavelen      = rpRange->chrngs[ ii ].wvlens[ jj ];
             swvlens[ ii ] << wavelen;
-DbgLv(1) << "EGwS: rbS:   ii jj " << ii << jj << "wavelen" << wavelen;
+DbgLv(1) << "EGRn: rbR:   ii jj " << ii << jj << "wavelen" << wavelen;
          }
 
          locrads[ ii ]       = rpRange->chrngs[ ii ].lo_rad;
          hicrads[ ii ]       = rpRange->chrngs[ ii ].hi_rad;
-DbgLv(1) << "EGwS: rbS:  ii lorad hirad" << locrads[ii] << hicrads[ii];
+DbgLv(1) << "EGRn: rbR:  ii lorad hirad" << locrads[ii] << hicrads[ii];
       }
       return;
    }
@@ -219,12 +219,12 @@ DbgLv(1) << "EGwS: rbS:  ii lorad hirad" << locrads[ii] << hicrads[ii];
    rpRange->chrngs.clear();
    QStringList oprofs  = sibLValue( "optical", "profiles" );
    int nochan          = oprofs.count();
-DbgLv(1) << "EGwS: rbS:  nochan" << nochan;
+DbgLv(1) << "EGRn: rbR:  nochan" << nochan;
 
    // Save info from current panel parameters
    int nrnchan_sv      = nrnchan;
    int ntchan          = nrnchan_sv + nochan;
-DbgLv(1) << "EGwS: rbS:  nrnchan_s ntchan" << nrnchan_sv << ntchan;
+DbgLv(1) << "EGRn: rbR:  nrnchan_s ntchan" << nrnchan_sv << ntchan;
    if ( nrnchan_sv > 0 )
    {
       rchans .resize( ntchan );
@@ -245,12 +245,12 @@ DbgLv(1) << "EGwS: rbS:  nrnchan_s ntchan" << nrnchan_sv << ntchan;
 
    // Now rebuild panel parameters and protocol
    QString uvvis       = tr( "UV/visible" );
-DbgLv(1) << "EGwS: rbS:  nochan" << nochan;
+DbgLv(1) << "EGRn: rbR:  nochan" << nochan;
    for ( int ii = 0; ii < nochan; ii++ )
    {
       QString pentry      = oprofs[ ii ];
       QString channel     = pentry.section( ":", 0, 0 ).simplified();
-DbgLv(1) << "EGwS: rbS:   ii" << ii << "chan" << channel << "pentry" << pentry;
+DbgLv(1) << "EGRn: rbR:   ii" << ii << "chan" << channel << "pentry" << pentry;
 
       if ( ! pentry.contains( uvvis ) )  continue;
 
@@ -264,7 +264,7 @@ DbgLv(1) << "EGwS: rbS:   ii" << ii << "chan" << channel << "pentry" << pentry;
          }
       }
 
-DbgLv(1) << "EGwS: rbS:     spx" << spx;
+DbgLv(1) << "EGRn: rbR:     spx" << spx;
       if ( spx < 0 )
       {  // No such channel in old protocol:  use basic entry
          US_RunProtocol::RunProtoRanges::Ranges  chrng;
@@ -282,8 +282,9 @@ DbgLv(1) << "EGwS: rbS:     spx" << spx;
 
    rpRange->nranges    = rpRange->chrngs.count();
    nrnchan             = rpRange->nranges;
-   swvlens.resize( nrnchan );
-DbgLv(1) << "EGwS: rbS:  nrnchan" << nrnchan << "nrnchan_sv" << nrnchan_sv;
+   if ( swvlens.count() < nrnchan )
+      swvlens.resize( nrnchan );
+DbgLv(1) << "EGRn: rbR:  nrnchan" << nrnchan << "nrnchan_sv" << nrnchan_sv;
 
    // Rebuild panel parameters
    if ( nrnchan_sv > 0 )
@@ -292,9 +293,11 @@ DbgLv(1) << "EGwS: rbS:  nrnchan" << nrnchan << "nrnchan_sv" << nrnchan_sv;
       {
          QString channel     = rpRange->chrngs[ ii ].channel;
          int ppx             = rchans.indexOf( channel );
-DbgLv(1) << "EGwS: rbS:    ii" << ii << "channel" << channel << "ppx" << ppx;
+DbgLv(1) << "EGRn: rbR:    ii" << ii << "channel" << channel << "ppx" << ppx;
          if ( ppx >= 0 )
          {
+DbgLv(1) << "EGRn: rbR:     sizes: rch swv lor hir"
+ << rchans.count() << swvlens.count() << locrads.count() << hicrads.count();
             rchans [ ii ]       = rchans [ ppx ];
             swvlens[ ii ]       = swvlens[ ppx ];
             locrads[ ii ]       = locrads[ ppx ];
@@ -313,20 +316,25 @@ DbgLv(1) << "EGwS: rbS:    ii" << ii << "channel" << channel << "ppx" << ppx;
    {  // Create first shot at panel parameters
       for ( int ii = 0; ii < nrnchan; ii++ )
       {
-DbgLv(1) << "EGwS: rbS:    ii" << ii << "channel" << rpRange->chrngs[ii].channel;
+DbgLv(1) << "EGRn: rbR:    ii" << ii << "channel" << rpRange->chrngs[ii].channel;
          rchans [ ii ]       = rpRange->chrngs[ ii ].channel;
          swvlens[ ii ]       = rpRange->chrngs[ ii ].wvlens;
          locrads[ ii ]       = rpRange->chrngs[ ii ].lo_rad;
          hicrads[ ii ]       = rpRange->chrngs[ ii ].hi_rad;
       }
    }
+
+   rchans .resize( nrnchan );
+   swvlens.resize( nrnchan );
+   locrads.resize( nrnchan );
+   hicrads.resize( nrnchan );
 }
 
 #if 0
 // Slot to manage extinction profiles
 void US_ExperGuiRanges::manageEProfiles()
 {
-DbgLv(1) << "EGwS: mEP: IN";
+DbgLv(1) << "EGRn: mEP: IN";
    QObject* sobj       = sender();      // Sender object
    QString sname       = sobj->objectName();
    chrow               = sname.section( ":", 0, 0 ).toInt();
@@ -345,7 +353,7 @@ DbgLv(1) << "EGwS: mEP: IN";
 // Slot to handle specifications from a US_Extinction dialog
 void US_ExperGuiRanges::process_results( QMap< double, double >& eprof )
 {
-DbgLv(1) << "EGwS: pr: eprof size" << eprof.keys().count() << "chrow" << chrow;
+DbgLv(1) << "EGRn: pr: eprof size" << eprof.keys().count() << "chrow" << chrow;
    pwvlens[ chrow ] = eprof.keys();
    pvalues[ chrow ].clear();
 
@@ -453,8 +461,8 @@ void US_ExperGuiRanges::selectWavelengths()
    }
    wlpoten.sort();
 #endif
-DbgLv(1) << "EGwS: sW: wlpoten" << wlpoten;
-DbgLv(1) << "EGwS: sW: wlselec" << wlselec;
+DbgLv(1) << "EGRn: sW: wlpoten" << wlpoten;
+DbgLv(1) << "EGRn: sW: wlselec" << wlselec;
 
    // Open a wavelengths choice dialog and use to update selected wavelengths
 
@@ -479,7 +487,7 @@ DbgLv(1) << "EGwS: sW: wlselec" << wlselec;
                             + tr( " to " ) + wlselec[ lswx ];
 
    cc_lrngs[ chrow ]->setText( labwlr );
-DbgLv(1) << "EGwS: sW: labwlr" << labwlr << "swvlens" << swvlens;
+DbgLv(1) << "EGRn: sW: labwlr" << labwlr << "swvlens" << swvlens;
 }
 
 #if 0
@@ -490,10 +498,10 @@ void US_ExperGuiRanges::checkOptima( bool checked )
    QString sname       = sobj->objectName();
    chrow               = sname.section( ":", 0, 0 ).toInt();
    QString cclabl      = cc_labls[ chrow ]->text();
-DbgLv(1) << "EGwS:ckOpt: sname" << sname << "chrow" << chrow << cclabl
+DbgLv(1) << "EGRn:ckOpt: sname" << sname << "chrow" << chrow << cclabl
  << "checked" << checked;
 
-DbgLv(1) << "EGwS:ckOpt:  OK";
+DbgLv(1) << "EGRn:ckOpt:  OK";
 }
 
 // Slot to load a spectrum profile using us_extinction
@@ -503,7 +511,7 @@ void US_ExperGuiRanges::loadSpectrum()
    QString sname       = sobj->objectName();
    chrow               = sname.section( ":", 0, 0 ).toInt();
    QString cclabl      = cc_labls[ chrow ]->text();
-DbgLv(1) << "EGwS:loadS: sname" << sname << "chrow" << chrow << cclabl;
+DbgLv(1) << "EGRn:loadS: sname" << sname << "chrow" << chrow << cclabl;
    //US_Extinction ediag( "BUFFER", "some buffer", this );
    US_Extinction* ediag = new US_Extinction;
    ediag->setParent(   this, Qt::Window );
@@ -522,7 +530,7 @@ void US_ExperGuiRanges::manualSpectrum()
    QString sname       = sobj->objectName();
    chrow               = sname.section( ":", 0, 0 ).toInt();
    QString channel     = rchans[ chrow ];
-DbgLv(1) << "EGwS:manSp: sname" << sname << "chrow" << chrow << channel;
+DbgLv(1) << "EGRn:manSp: sname" << sname << "chrow" << chrow << channel;
    QMap< double, double >  extinction;
 
    for ( int ii = 0; ii < pwvlens[ chrow ].count(); ii++ )
@@ -530,7 +538,7 @@ DbgLv(1) << "EGwS:manSp: sname" << sname << "chrow" << chrow << channel;
       double wavelen      = pwvlens[ chrow ][ ii ];
       double value        = pvalues[ chrow ][ ii ];
       extinction[ wavelen ]  = value;
-DbgLv(1) << "EGwS:manSp:  ii" << ii << "w v" << wavelen << value;
+DbgLv(1) << "EGRn:manSp:  ii" << ii << "w v" << wavelen << value;
    }
 
    QString strExtinc   = tr( "Extinction:" );
@@ -544,7 +552,7 @@ DbgLv(1) << "EGwS:manSp:  ii" << ii << "w v" << wavelen << value;
    {
       QList< double > ewavls = extinction.keys();
       int nwavl              = ewavls.count();
-DbgLv(1) << "EGwS:manSP: extinc size" << nwavl << "chrow" << chrow;
+DbgLv(1) << "EGRn:manSP: extinc size" << nwavl << "chrow" << chrow;
       pwvlens[ chrow ] = ewavls;
       pvalues[ chrow ].clear();
 
@@ -552,10 +560,10 @@ DbgLv(1) << "EGwS:manSP: extinc size" << nwavl << "chrow" << chrow;
       {
          pvalues[ chrow ] << extinction[ ewavls[ ii ] ];
       }
-DbgLv(1) << "EGwS:manSP:  0 : wavl valu" << pwvlens[chrow][0] << pvalues[chrow][0];
+DbgLv(1) << "EGRn:manSP:  0 : wavl valu" << pwvlens[chrow][0] << pvalues[chrow][0];
 int nn=nwavl-1;
 if (nwavl>0)
- DbgLv(1) << "EGwS:manSP:  n : wavl valu" << pwvlens[chrow][nn] << pvalues[chrow][nn];
+ DbgLv(1) << "EGRn:manSP:  n : wavl valu" << pwvlens[chrow][nn] << pvalues[chrow][nn];
 
       if ( swvlens[ chrow ].count() == 0 )
       {
@@ -563,7 +571,7 @@ if (nwavl>0)
       }
    }
 else
-DbgLv(1) << "EGwS:manSp: *NOT Accepted*";
+DbgLv(1) << "EGRn:manSp: *NOT Accepted*";
 }
 #endif
 
