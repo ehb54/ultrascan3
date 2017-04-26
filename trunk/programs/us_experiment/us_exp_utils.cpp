@@ -1446,6 +1446,7 @@ QStringList US_ExperGuiOptical::getLValue( const QString type )
 
    if ( type == "profiles" )
    {
+      value.clear();
       QString eslabl    = tr( "none" );
       QString notinst   = tr( "(not installed)" );
 
