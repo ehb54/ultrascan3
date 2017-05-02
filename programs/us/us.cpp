@@ -647,7 +647,7 @@ void US_Win::help( int index )
         tr( "About UltraScan..." ),
         tr( "UltraScan III version %1\n"
             "%2\n"
-            "Copyright 1989 - 2016\n"
+            "Copyright 1989 - 2017\n"
             "Borries Demeler and the University of Texas System\n\n"
             "For more information, please visit:\n"
             "http://www.ultrascan.uthscsa.edu/\n\n"

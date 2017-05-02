@@ -285,7 +285,6 @@ QwtCounter* US_WidgetsDialog::us_counter( int buttons, double low, double high,
   QList< QObject* > children = counter->children();
   int totwid          = 0;
 #ifdef Q_OS_MAC
-  QList< QObject* > children = counter->children();
 #if QT_VERSION < 0x050000
   QStyle *btnstyle = new QPlastiqueStyle();
 #else
