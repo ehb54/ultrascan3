@@ -145,11 +145,11 @@ rm -f ${PKGDIR}/etc/somo*prev*
 
 if [ ${QTVER} = "4" ];then
   # Copy the SOMO directories
-  cd ${PKGDIR};mkdir somo somo/doc somo/demo);
+  cd ${PKGDIR};mkdir somo somo/doc somo/demo;
   SDIR=${SOMOBASE}/doc
   DDIR=${PKGDIR}/somo
   echo "${RSYNC} ${SDIR} ${DDIR}"
-  RSYNC} ${SDIR} ${DDIR}
+  ${RSYNC} ${SDIR} ${DDIR}
 
   # Remove the somo/doc/manual/attic directory
   rm -rf ${PKGDIR}/somo/doc/manual/attic
