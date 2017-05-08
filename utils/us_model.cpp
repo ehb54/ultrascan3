@@ -438,6 +438,12 @@ QString US_Model::typeText( int subtype )
                   kk++;
                   int mm   = description.indexOf( "_", kk ) - kk;
                   tdesc    = description.mid( kk, mm );
+
+                  // Insure '-MC'/'-TR' won't be repeated
+                  if ( monteCarlo )
+                     tdesc    = tdesc.replace( "-MC", "" );
+                  if ( alphaRP != 0.0 )
+                     tdesc    = tdesc.replace( "-TR", "" );
                }
                else           // By default, assume "-IS" gets appended
                   tdesc    = tdesc + "-IS";
