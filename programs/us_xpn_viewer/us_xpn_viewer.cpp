@@ -436,6 +436,17 @@ void US_XpnDataViewer::enableControls( void )
    npoint      = allData[ 0 ].pointCount();
    ntpoint     = nscan * npoint;
    isMWL       = ( nlambda > 2 );
+   if ( isMWL )
+   {  // If apparently MWL, test for all wavelengths each channel
+      int ktrip   = ncellch * nlambda;
+      if ( ntriple != ktrip )
+      {  // Possibly to be treated on triple basis (not MWL)
+         if ( ntriple <= ( nlambda * 2 ) )
+         {
+            isMWL       = false;
+         }
+      }
+   }
 DbgLv(1) << "ec: ncc nwl nsc npt ntpt" << ncellch << nlambda << nscan
  << npoint << ntpoint << "Mwl" << isMWL;
    QStringList slrads;
@@ -1150,6 +1161,9 @@ void US_XpnDataViewer::changeRecord( void )
          int iccx       = cellchans.indexOf( new_cc );
          connect_ranges( false );
          cb_cellchn->setCurrentIndex( iccx );
+         QString new_wl = QString( cb_pltrec->currentText() )
+                          .section( "/", 2, 2 );
+         le_lrange ->setText( new_wl + tr( " only" ) );
          connect_ranges( true );
       }
    }
