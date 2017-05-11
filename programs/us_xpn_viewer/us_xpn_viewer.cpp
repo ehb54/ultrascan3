@@ -444,6 +444,7 @@ void US_XpnDataViewer::enableControls( void )
          if ( ntriple <= ( nlambda * 2 ) )
          {
             isMWL       = false;
+            cb_cellchn ->setEnabled( false );
          }
       }
    }
