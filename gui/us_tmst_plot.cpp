@@ -33,6 +33,10 @@ US_TmstPlot::US_TmstPlot( QWidget* parent, const QString tspath )
    nfkeys           = 0;
    ndkeys           = 0;
    ntimes           = 0;
+   nscans           = 0;
+   nplpts           = 0;
+   x_scans          = false;
+   s_start          = true;
    defvers          = QString( "1.0" );
    imptype          = QString( "(unknown)" );
 DbgLv(1) << "TP:mn: tmstpath" << tmstpath;
@@ -72,6 +76,11 @@ DbgLv(1) << "TP:mn:   xdpath" << xdpath;
    ctrlsLayout->addWidget( lb_info,     row++, 0,  1, 4 );
    ctrlsLayout->addWidget( lw_datinfo,  row++, 0, 20, 4 );
 
+   QGridLayout* box1 = us_checkbox( tr( "X axis scans only" ),
+                          ck_xscans, x_scans );
+   QGridLayout* box2 = us_checkbox( tr( "X start at scan 1" ),
+                          ck_sstart, s_start );
+
    buttonsLayout ->addWidget( pb_detail );
    buttonsLayout ->addWidget( pb_close  );
 
@@ -96,6 +105,8 @@ DbgLv(1) << "TP:mn:   xdpath" << xdpath;
 
    leftLayout ->addLayout( ctrlsLayout );
    leftLayout ->addStretch();
+   leftLayout ->addLayout( box1  );
+   leftLayout ->addLayout( box2  );
    leftLayout ->addLayout( buttonsLayout  );
 
    mainLayout->addLayout( leftLayout  );
@@ -113,6 +124,10 @@ DbgLv(1) << "TP:mn:   xdpath" << xdpath;
             this,      SLOT  ( details()   ) );
    connect( pb_close,  SIGNAL( clicked()   ),
             this,      SLOT  ( close()     ) );
+   connect( ck_xscans, SIGNAL( toggled( bool ) ),
+            this,      SLOT  ( plot_data()     ) );
+   connect( ck_sstart, SIGNAL( toggled( bool ) ),
+            this,      SLOT  ( plot_data()     ) );
 
    adjustSize();
    lw_datinfo->setMinimumHeight( lb_pltkey ->height() * 16 );
@@ -135,6 +150,22 @@ DbgLv(1) << "TP:mn:   resized" << size() << "lw size" << lw_datinfo->size();
 // Plot the data (both key-specific and combined)
 void US_TmstPlot::plot_data()
 {
+   if ( ck_xscans->isChecked() )
+   {  // For scans-only, disable scan1-start checkbox and set checked
+      ck_sstart->setEnabled( false );
+      if ( ! ck_sstart->isChecked() )
+      {
+         ck_sstart->disconnect();
+         ck_sstart->setChecked( true );
+         connect( ck_sstart, SIGNAL( toggled( bool ) ),
+                  this,      SLOT  ( plot_data()     ) );
+      }
+   }
+   else
+   {  // If not scans-only, insure scan1-start checkbox is enabled
+      ck_sstart->setEnabled( true );
+   }
+
    plot_kdata();     // Plot data for specific key
 
    plot_cdata();     // Plot combined data
@@ -161,17 +192,41 @@ void US_TmstPlot::plot_kdata()
    US_PlotPicker* pick = new US_PlotPicker( data_plot1 );  // Annotated cursor
    pick->setRubberBand( QwtPicker::RectRubberBand );
 
-   int kx       = dkeys.indexOf( "Scan" );     // X data index
+   x_scans      = ck_xscans->isChecked();
+   s_start      = ck_sstart->isChecked();
+
+   QString xkey = x_scans ? "Scan" : "Time";
+   QString xtit = x_scans ? "Scan Number" : "Time (minutes)";
+   int kx       = dkeys.indexOf( xkey );       // X data index
    int ky       = dkeys.indexOf( pkey );       // Y data index
+   int ks       = dkeys.indexOf( "Scan" );     // Scan number index
+   data_plot1->setAxisTitle( QwtPlot::xBottom, xtit );
    QVector< double > xvec( ntimes, 0.0 );      // Initialize X vector
    QVector< double > yvec( ntimes, 0.0 );      // Initialize Y vector
 
    double* xx   = xvec.data();
    double* yy   = yvec.data();
-   double smin  = dmins[ "Scan" ];
-   double smax  = dmaxs[ "Scan" ];
-   double ymin  = dmins[ pkey ];
-   double ymax  = dmaxs[ pkey ];
+   double smin  = dmaxs[ xkey  ];
+   double smax  = -1.0;
+   double ymin  = dmaxs[ pkey ];
+   double ymax  = -1.0;
+
+   // Accumulate X,Y points
+   nplpts       = point_indexes();
+
+
+   for ( int jj = 0; jj < nplpts; jj++ )
+   {
+      int jt       = pntxs[ jj ];
+      xx[ jj ]     = dvals[ kx ][ jt ];
+      yy[ jj ]     = dvals[ ky ][ jt ];
+      smin         = qMin( smin, xx[ jj ] );
+      smax         = qMax( smax, xx[ jj ] );
+      ymin         = qMin( ymin, yy[ jj ] );
+      ymax         = qMax( ymax, yy[ jj ] );
+   }
+
+DbgLv(1) << "TP:plkd   smin smax" << smin << smax << "xkey" << xkey << "kx ks" << kx << ks;
    data_plot1->setAxisScale( QwtPlot::xBottom, smin, smax );
 
    if ( ymin < ymax )
@@ -186,15 +241,11 @@ void US_TmstPlot::plot_kdata()
       data_plot1->setAxisScale( QwtPlot::yLeft, ymin, ymax );
    }
 
-   for ( int jt = 0; jt < ntimes; jt++ )
-   {  // Accumulate curve X,Y points
-      xx[ jt ]     = dvals[ kx ][ jt ];
-      yy[ jt ]     = dvals[ ky ][ jt ];
-   }
-
    QwtPlotCurve* curv = us_curve( data_plot1, pkey );  // Create a single curve
-   curv->setPen ( QPen( US_GuiSettings::plotCurve(), 2 ) );
-   curv->setSamples( xx, yy, ntimes );
+//   curv->setPen ( QPen( US_GuiSettings::plotCurve(), 2 ) );
+   curv->setPen    ( QPen( curve_color( ky ) ) );
+   //curv->setSamples( xx, yy, ntimes );
+   curv->setSamples( xx, yy, nplpts );
 
    data_plot1->replot();
 }
@@ -202,27 +253,8 @@ void US_TmstPlot::plot_kdata()
 // Plot the combined data
 void US_TmstPlot::plot_cdata()
 {
-   const QColor ccolors[] = {   // Curve colors that differ by key
-      QColor( 255,   0,   0 ),
-      QColor(   0, 255,   0 ),
-      QColor(   0,   0, 255 ),
-      QColor( 255, 255,   0 ),
-      QColor( 255,   0, 255 ),
-      QColor(   0, 255, 255 ),
-      QColor( 122,   0, 255 ),
-      QColor(   0, 255, 122 ),
-      QColor(   0, 122, 255 ),
-      QColor( 255, 122,   0 ),
-      QColor( 122, 255,   0 ),
-      QColor(  80,   0, 255 ),
-      QColor(   0, 255,  80 ),
-      QColor(   0,  80, 255 ),
-      QColor( 255,  80,   0 ),
-      QColor(  80, 255,   0 ),
-      QColor(  40, 255,  40 ),
-      QColor(  40,  40, 255 ),
-      QColor(  80,  80,  80 ),
-      QColor( 122, 122, 122 ) };
+   x_scans      = ck_xscans->isChecked();
+   s_start      = ck_sstart->isChecked();
 
    dataPlotClear( data_plot2 );
    us_grid( data_plot2 );                                     // Grid
@@ -240,20 +272,28 @@ void US_TmstPlot::plot_cdata()
    QVector< double > yvec( ntimes, 0.0 );
    double* xx   = xvec.data();
    double* yy   = yvec.data();
-   int kx       = dkeys.indexOf( "Scan" );                    // X key index
+   QString xkey = x_scans ? "Scan" : "Time";
+   QString xtit = x_scans ? "Scan Number" : "Time (minutes)";
+   int kx       = dkeys.indexOf( xkey );                      // X key index
+   double smin  = dmaxs[ xkey ];
+   double smax  = -1.0;
 
-   // Do a one-time set-up of the X vector (scan numbers)
-   for ( int jt = 0; jt < ntimes; jt++ )
+   // Accumulate X,Y points
+   nplpts       = point_indexes();
+
+   for ( int jj = 0; jj < nplpts; jj++ )
    {
-      xx[ jt ]     = dvals[ kx ][ jt ];
+      int jt       = pntxs[ jj ];
+      xx[ jj ]     = dvals[ kx ][ jt ];
+      smin         = qMin( smin, xx[ jj ] );
+      smax         = qMax( smax, xx[ jj ] );
    }
 
    // Set axes scales and title
-   int ncolrs   = sizeof( ccolors ) / sizeof( ccolors[0] );   // Colors count
    int npkeys   = pkeys.count();                              // Plot key count
-DbgLv(1) << "TP:plcd: ncolrs ndkeys npkeys" << ncolrs << ndkeys << npkeys;
-   double smin  = dmins[ "Scan" ];   // Get scan number range; scale X
-   double smax  = dmaxs[ "Scan" ];
+DbgLv(1) << "TP:plcd:  ndkeys npkeys npltps" << ndkeys << npkeys << nplpts
+ << "smin smax" << smin << smax;
+   data_plot2->setAxisTitle( QwtPlot::xBottom, xtit );
    data_plot2->setAxisScale( QwtPlot::xBottom, smin, smax );
    data_plot2->setAxisTitle( QwtPlot::yLeft, tr( "Y percent + K offset" ) );
 
@@ -261,13 +301,20 @@ DbgLv(1) << "TP:plcd: ncolrs ndkeys npkeys" << ncolrs << ndkeys << npkeys;
    for ( int jk = 0; jk < npkeys; jk++ )
    {
       QString pkey = pkeys[ jk ];                             // Plot key
-      int jc       = ( jk < ncolrs ) ? jk : ( jk % ncolrs );  // Color index
-      QColor ccolr = ccolors[ jc ];                           // Curve color
       int ky       = dkeys.indexOf( pkey );                   // Data key index
-      double ymin  = dmins[ pkey ];                           // Data Y min
-      double ymax  = dmaxs[ pkey ];                           // Data Y max
-DbgLv(1) << "TP:plcd:   jk jc ky" << jk << jc << ky
- << "color" << ccolr << "key" << pkey;
+      QColor ccolr = curve_color( ky );                       // Curve color
+      double ymin  = dmaxs[ pkey ];                           // Data Y min
+      double ymax  = -1.0;                                    // Data Y max
+
+      for ( int jj = 0; jj < nplpts; jj++ )
+      {  // Get data Y min,max
+         int jt       = pntxs[ jj ];
+         double yval  = dvals[ ky ][ jt ];
+         ymin         = qMin( ymin, yval );
+         ymax         = qMax( ymax, yval );
+      }
+DbgLv(1) << "TP:plcd:   jk ky" << jk << ky
+ << "color" << ccolr << "key" << pkey << "ymin ymax" << ymin << ymax;
 
       if ( ymin == ymax )
       {  // Adjust the range when Y is constant
@@ -283,16 +330,18 @@ DbgLv(1) << "TP:plcd:   " << pkey << ccolr << "  ymin ymax" << ymin << ymax
  << "yoff" << yoff << "yscl" << yscl;
 
       // Scale and offset each Y point to fit in common Y axis
-      for ( int jt = 0; jt < ntimes; jt++ )
+      for ( int jj = 0; jj < nplpts; jj++ )
       {
-         yy[ jt ]     = yoff + dvals[ ky ][ jt ] * yscl;
+         int jt       = pntxs[ jj ];
+         yy[ jj ]     = yoff + dvals[ ky ][ jt ] * yscl;
       }
-DbgLv(1) << "TP:plcd:       yy0 yyn" << yy[0] << yy[ntimes-1];
+DbgLv(1) << "TP:plcd:       yy0 yyn" << yy[0] << yy[nplpts-1];
 
       // Create the colored curve for the current key value type; add to legend
       QwtPlotCurve* curv = us_curve( data_plot2, pkey );
       curv->setPen ( QPen( ccolr, 2 ) );
-      curv->setSamples( xx, yy, ntimes );
+      //curv->setSamples( xx, yy, ntimes );
+      curv->setSamples( xx, yy, nplpts );
       curv->setItemAttribute( QwtPlotItem::Legend, true );
    }
 
@@ -334,10 +383,11 @@ void US_TmstPlot::details()
    dtext += tr( "Field Key Count:   %1\n"   ).arg( nfkeys  );
    dtext += tr( "Data Key Count:    %1\n"   ).arg( ndkeys  );
    dtext += tr( "Time Value Count:  %1\n"   ).arg( ntimes  );
+   dtext += tr( "Scan Number Count: %1\n"   ).arg( nscans  );
    dtext += tr( "Def. Version:      %1\n"   ).arg( defvers );
    dtext += tr( "Import Type:       %1\n"   ).arg( imptype );
-   int jl = ntimes - 1;
-   int jm = ntimes / 2;
+   int jl     = ntimes - 1;
+   int jm     = ntimes / 2;
 
    for ( int jk = 0; jk < ndkeys; jk++ )
    {  // Compose a brief summary for each key
@@ -418,16 +468,44 @@ DbgLv(1) << "TP:rdda: ntimes nfkeys" << ntimes << nfkeys;
 
    double scalea  = 1.0 / (double)ntimes;             // Averaging scale
    int tmdx       = dkeys.indexOf( "Time" );          // Time data index
+   int scdx       = dkeys.indexOf( "Scan" );          // Scan number index
    int dtdx       = dkeys.indexOf( "TimeInterval" );  // Delta-t data index
-DbgLv(1) << "TP:rdda: tmdx" << tmdx << "dtdx" << dtdx
- << "dvals[tmdx]size" << dvals[tmdx].size();
-   dvals[ dtdx ] << ( dvals[ tmdx ][ 1 ] - dvals[ tmdx ][ 0 ] );  // Interval 1
 
-   for ( int jt = 1; jt < ntimes; jt++ )
-   {  // Build the vector of TimeInterval values
-      dvals[ dtdx ] << ( dvals[ tmdx ][ jt ] - dvals[ tmdx ][ jt - 1 ] );
+   // Build a list of time indexes to scan points
+   for ( int jt = 0; jt < ntimes; jt++ )
+   {
+      int scan       = (int)dvals[ scdx ][ jt ];
+      if ( scan > 0 )  scnxs << jt;
    }
-DbgLv(1) << "TP:rdda:  dvals[dtdx]size" << dvals[dtdx].size();
+
+   nscans         = scnxs.count();
+DbgLv(1) << "TP:rdda: tmdx" << tmdx << "dtdx" << dtdx
+ << "dvals[tmdx]size" << dvals[tmdx].size() << "nscans" << nscans;
+
+   // Build the vector of TimeInterval-between-scans values
+   int jt1        = scnxs[ 0 ];
+   int jt2        = scnxs[ 1 ];
+   double delta_t = ( dvals[ tmdx ][ jt2 ] - dvals[ tmdx ][ jt1 ] );
+   for ( int jj = 0; jj < jt1; jj++ )
+      dvals[ dtdx ] << delta_t;
+
+   for ( int ii = 1; ii < scnxs.count(); ii++ )
+   {
+      jt1            = scnxs[ ii - 1 ];
+      jt2            = scnxs[ ii ];
+      delta_t        = ( dvals[ tmdx ][ jt2 ] - dvals[ tmdx ][ jt1 ] );
+      for ( int jj = jt1; jj < jt2; jj++ )
+      {
+         dvals[ dtdx ] << delta_t;
+      }
+   }
+
+   for ( int jj = jt2; jj < ntimes; jj++ )
+   {
+      dvals[ dtdx ] << delta_t;
+   }
+
+DbgLv(1) << "TP:rdda:  dvals[dtdx]size" << dvals[dtdx].size() << "ntimes" << ntimes;
 
    // Now scan values for each key to build minimum,maximum,average
    for ( int jk = 0; jk < ndkeys; jk++ )
@@ -489,6 +567,7 @@ DbgLv(1) << "TP:rdda:    key" << dkey << "   min,max,avg"
    infotxt << tr( "Directory:  %1" ).arg( dat_dir );
    infotxt << tr( "File:  %1" ).arg( tsfname );
    infotxt << tr( "Time Count:  %1" ).arg( ntimes );
+   infotxt << tr( "Scan Count:  %1" ).arg( nscans );
    infotxt << tr( "Field Key Count:  %1" ).arg( nfkeys );
    infotxt << tr( "Data Key Count:  %1" ).arg( ndkeys );
 
@@ -504,5 +583,56 @@ DbgLv(1) << "TP:rdda:    key" << dkey << "   min,max,avg"
    lw_datinfo->addItems( infotxt );
 
    return;
+}
+
+// Get color for a specific key
+QColor US_TmstPlot::curve_color( const int keyx )
+{
+   const QColor ccolors[] = {   // Curve colors that differ by key
+      QColor( 255,   0,   0 ),
+      QColor(   0, 255,   0 ),
+      QColor(   0,   0, 255 ),
+      QColor( 255, 255,   0 ),
+      QColor( 255,   0, 255 ),
+      QColor(   0, 255, 255 ),
+      QColor( 122,   0, 255 ),
+      QColor(   0, 255, 122 ),
+      QColor(   0, 122, 255 ),
+      QColor( 255, 122,   0 ),
+      QColor( 122, 255,   0 ),
+      QColor(  80,   0, 255 ),
+      QColor(   0, 255,  80 ),
+      QColor(   0,  80, 255 ),
+      QColor( 255,  80,   0 ),
+      QColor(  80, 255,   0 ),
+      QColor(  40, 255,  40 ),
+      QColor(  40,  40, 255 ),
+      QColor(  80,  80,  80 ),
+      QColor( 122, 122, 122 ) };
+   int ncolrs   = sizeof( ccolors ) / sizeof( ccolors[0] );      // Colors count
+   int jc       = ( keyx < ncolrs ) ? keyx : ( keyx % ncolrs );  // Color index
+
+   return ccolors[ jc ];
+}
+
+// Generate the current plot point data indexes
+int US_TmstPlot::point_indexes()
+{
+   pntxs.clear();
+
+   if ( x_scans )
+      pntxs = scnxs;
+   else if ( s_start )
+   {
+      for ( int jj = scnxs[ 0 ]; jj < ntimes; jj++ )
+         pntxs << jj;
+   }
+   else
+   {
+      for ( int jj = 0; jj < ntimes; jj++ )
+         pntxs << jj;
+   }
+
+   return pntxs.count();
 }
 
