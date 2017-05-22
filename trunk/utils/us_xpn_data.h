@@ -174,6 +174,20 @@ class US_UTIL_EXTERN US_XpnData : public QObject
             QString   radPath;       //!< Radial path (' ','A','B')
       };
 
+      //! System Status Data table values
+      class tbSyData
+      {
+         public:
+            int       dataId;        //!< Data table entry ID
+            int       runId;         //!< Run ID
+            int       exptime;       //!< Time in seconds from exp. start
+            int       stageNum;      //!< Stage number
+            double    tempera;       //!< Temperature
+            double    speed;         //!< Speed in revs per minute
+            double    omgSqT;        //!< OmegaSquaredT
+            QDateTime expstart;      //!< Experiment start
+      };
+
       //! \brief Connect for XPN data with remote host DB
       //! \param xpnhost Host name of XPN database server
       //! \param xpnport Port value of XPN database server
@@ -316,6 +330,7 @@ class US_UTIL_EXTERN US_XpnData : public QObject
       QVector< tbFsData >  tFsdata;  //!< Fluorescence data table values
       QVector< tbIsData >  tIsdata;  //!< Interference data table values
       QVector< tbWsData >  tWsdata;  //!< Wavelength   data table values
+      QVector< tbSyData >  tSydata;  //!< System status data table values
 
       QVector< double >   r_rpms;    //!< Raw RPMs from scans
       QVector< double >   s_rpms;    //!< Set RPMs from speed steps

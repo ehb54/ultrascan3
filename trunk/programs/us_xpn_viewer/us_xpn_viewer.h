@@ -56,6 +56,7 @@ class US_XpnDataViewer : public US_Widgets
      QwtCounter*    ct_to;
 
      QCheckBox*     ck_autoscy;
+     QCheckBox*     ck_autorld;
 
      QPushButton*   pb_loadXpn;
      QPushButton*   pb_loadAUC;
@@ -69,6 +70,7 @@ class US_XpnDataViewer : public US_Widgets
      QPushButton*   pb_movie2d;
      QPushButton*   pb_saveauc;
      QPushButton*   pb_showtmst;
+     QPushButton*   pb_reload;
 
      QwtPlot*       data_plot;
      QwtPlotGrid*   grid;
@@ -154,6 +156,7 @@ class US_XpnDataViewer : public US_Widgets
      int    dvec_index     ( QVector< double >&, const double );
      void   showTimeState  ( void );
      void   status_report  ( QString );
+     void   reloadData     ( void );
      void   help           ( void )
      { showHelp.show_help( "xpn_viewer.html" ); };
 };

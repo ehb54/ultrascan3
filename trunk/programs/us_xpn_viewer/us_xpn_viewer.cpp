@@ -122,6 +122,7 @@ else
                 pb_plot2d   = us_pushbutton( tr( "Refresh Plot" ) );
                 pb_saveauc  = us_pushbutton( tr( "Export openAUC" )  );
                 pb_showtmst = us_pushbutton( tr( "Show Time State" )  );
+                pb_reload   = us_pushbutton( tr( "Reload Data" )      );
 
    QLabel*      lb_dir      = us_label( tr( "Directory" ), -1 );
                 le_dir      = us_lineedit( "", -1, true );
@@ -154,6 +155,7 @@ else
                 pb_prev     = us_pushbutton( tr( "Previous" ) );
                 pb_next     = us_pushbutton( tr( "Next" ) );
    us_checkbox( tr( "Always Auto-scale Y Axis" ), ck_autoscy, true );
+   us_checkbox( tr( "Auto Reload" ),              ck_autorld, false );
    pb_prev->setIcon( US_Images::getIcon( US_Images::ARROW_LEFT  ) );
    pb_next->setIcon( US_Images::getIcon( US_Images::ARROW_RIGHT ) );
 
@@ -198,6 +200,8 @@ else
             this,         SLOT  ( runDetails()   ) );
    connect( pb_saveauc,   SIGNAL( clicked()      ),
             this,         SLOT  ( export_auc()   ) );
+   connect( pb_reload,    SIGNAL( clicked()      ),
+            this,         SLOT  ( reloadData()   ) );
    connect( cb_cellchn,   SIGNAL( currentIndexChanged( int ) ),
             this,         SLOT  ( changeCellCh( )            ) );
    connect( cb_rstart,    SIGNAL( currentIndexChanged( int ) ),
@@ -242,6 +246,8 @@ else
    settings->addWidget( pb_details,    row++, 4, 1, 4 );
    settings->addWidget( pb_plot2d,     row,   0, 1, 4 );
    settings->addWidget( pb_saveauc,    row++, 4, 1, 4 );
+   settings->addWidget( pb_reload,     row,   0, 1, 4 );
+   settings->addWidget( ck_autorld,    row++, 4, 1, 4 );
    settings->addWidget( lb_prcntls,    row++, 0, 1, 8 );
    settings->addWidget( lb_rstart,     row,   0, 1, 2 );
    settings->addWidget( cb_rstart,     row,   2, 1, 2 );
@@ -325,6 +331,8 @@ void US_XpnDataViewer::reset( void )
    pb_loadXpn ->setEnabled( true );
    pb_loadAUC ->setEnabled( true );
    pb_details ->setEnabled( false  );
+   pb_reload  ->setEnabled( false  );
+   ck_autorld ->setEnabled( false  );
    cb_cellchn ->setEnabled( false );
    cb_rstart  ->setEnabled( false );
    cb_rend    ->setEnabled( false );
@@ -415,6 +423,7 @@ void US_XpnDataViewer::enableControls( void )
    pb_loadAUC ->setEnabled( false );
    pb_reset   ->setEnabled( true );
    pb_details ->setEnabled( true );
+   pb_reload  ->setEnabled( true );
    cb_cellchn ->setEnabled( true );
    cb_rstart  ->setEnabled( true );
    cb_rend    ->setEnabled( true );
@@ -1471,6 +1480,40 @@ void US_XpnDataViewer::status_report( QString stat_text )
 
    le_status->setText( stat_text );
 
+   qApp->processEvents();
+}
+
+// Slot to reload data
+void US_XpnDataViewer::reloadData()
+{
+   QMessageBox::warning( this,
+         tr( "Reload Data Not Implemented" ),
+         tr( "The \"Reload Data\" action is not yet "  
+             "completely implemented." ) );
+   int runix          = runID.indexOf( "-run" ) + 4;
+DbgLv(1) << "RLd:  runID" << runID << "runix" << runix;
+   QString fRunId     = runID.mid( runix );
+   int iRunId         = fRunId.toInt();
+#if 0
+   QString sMasks     = QString( drDesc ).section( delim, 7, 10 );
+   int scanmask       = QString( sMasks ).mid( 0, 1 ) == "1" ? 1 : 0;
+   scanmask          += QString( sMasks ).mid( 2, 1 ) == "1" ? 2 : 0;
+   scanmask          += QString( sMasks ).mid( 4, 1 ) == "1" ? 4 : 0;
+   scanmask          += QString( sMasks ).mid( 6, 1 ) == "1" ? 8 : 0;
+#endif
+   int scanmask       = 1;
+DbgLv(1) << "RLd:     iRunId" << iRunId << "runType scanmask" << runType << scanmask;
+
+QDateTime sttime=QDateTime::currentDateTime();
+   xpn_data->import_data( iRunId, scanmask );
+int tm1=sttime.msecsTo(QDateTime::currentDateTime());
+DbgLv(1) << "RLd:      import-done tm1" << tm1;
+   le_status->setText( tr( "Update Raw Optima data import complete." ) );
+   qApp->processEvents();
+   xpn_data->build_rawData( allData );
+int tm2=sttime.msecsTo(QDateTime::currentDateTime());
+DbgLv(1) << "RLd:      build-raw done tm2" << tm2;
+   le_status->setText( tr( "Update of AUC data complete." ) );
    qApp->processEvents();
 }
 

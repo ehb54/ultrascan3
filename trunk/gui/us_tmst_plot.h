@@ -29,6 +29,8 @@ class US_GUI_EXTERN US_TmstPlot : public US_WidgetsDialog
 
       QComboBox*    cb_pltkey;              //!< Plot (upper) key options
       QListWidget*  lw_datinfo;             //!< Summary information text
+      QCheckBox*    ck_xscans;              //!< X-axis scans only checkbox
+      QCheckBox*    ck_sstart;              //!< X start at scan 1 checkbox
 
       QStringList                   pkeys;  //!< Plot option keys
       QStringList                   dkeys;  //!< Data keys
@@ -38,6 +40,9 @@ class US_GUI_EXTERN US_TmstPlot : public US_WidgetsDialog
       QMap< QString, double >       dmaxs;  //!< Data maxima
       QMap< QString, double >       davgs;  //!< Data averages
 
+      QList< int >  scnxs;                  //!< Non-zero scan indexs in data
+      QList< int >  pntxs;                  //!< Current plot point indexs in data
+
       QString       tmstpath;               //!< Full path to .tmst file
       QString       defvers;                //!< Definitions file version
       QString       imptype;                //!< Import type ("XLA"|"MWRS",...)
@@ -46,6 +51,11 @@ class US_GUI_EXTERN US_TmstPlot : public US_WidgetsDialog
       int           nfkeys;                 //!< Number of file field keys
       int           ndkeys;                 //!< Number of data keys
       int           ntimes;                 //!< Number of time values
+      int           nscans;                 //!< Number of non-0 scan numbers
+      int           nplpts;                 //!< Number of plot points
+
+      bool          x_scans;                //!< Flag: X axis is scan numbers?
+      bool          s_start;                //!< Flag: X axis starts at scan 1?
 
    private slots:
       void plot_data ( void );      //!< Create both plots
@@ -55,6 +65,8 @@ class US_GUI_EXTERN US_TmstPlot : public US_WidgetsDialog
       void next_plot ( void );      //!< Move to next key plot
       void details   ( void );      //!< Display data details
       void read_data ( void );      //!< Read TimeState data
+      QColor curve_color( const int );  //!< Curve color by key index
+      int  point_indexes( void );   //!< Generate plot point indexes
 };
 #endif
 

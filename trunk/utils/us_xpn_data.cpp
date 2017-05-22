@@ -304,6 +304,7 @@ bool US_XpnData::import_data( const int runId, const int scanMask )
    tFsdata.clear();
    tIsdata.clear();
    tWsdata.clear();
+   tSydata.clear();
    bool ascnf    = scanMask & 1;
    bool fscnf    = scanMask & 2;
    bool iscnf    = scanMask & 4;
@@ -333,8 +334,11 @@ bool US_XpnData::import_data( const int runId, const int scanMask )
    {  // Scan and build data for Wavelength Scan Data
       wrows      = scan_xpndata( runId, 'W' );
    }
-DbgLv(1) << "XpDa:i_d: arows frows irows wrows"
-   << arows << frows << irows << wrows;
+
+   // Scan and build data for System Status Data
+   int srows  = scan_xpndata( runId, 'S' );
+DbgLv(1) << "XpDa:i_d: arows frows irows wrows srows"
+   << arows << frows << irows << wrows << srows;
 
    return status;
 }
@@ -349,9 +353,11 @@ int US_XpnData::scan_xpndata( const int runId, const QChar scantype )
    tabname         = ( scantype == 'F' ) ? "FluorescenceScanData" : tabname;
    tabname         = ( scantype == 'I' ) ? "InterferenceScanData" : tabname;
    tabname         = ( scantype == 'W' ) ? "WavelengthScanData"   : tabname;
+   tabname         = ( scantype == 'S' ) ? "SystemStatusData"     : tabname;
    QString sqtab   = schname + "." + tabname;
    QString qrytab  = "\"" + schname + "\".\"" + tabname + "\"";
    QString sRunId  = QString::number( runId );
+   QStringList cnames;
 
    int count       = 0;
    int rows        = 0;
@@ -379,7 +385,6 @@ DbgLv(1) << "XpDa:s_x: sRunId" << sRunId << "count" << count;
    sqry            = dbxpn.exec( qrytext );
    qrec            = dbxpn.record( qrytab );
    int cols        = qrec.count();
-   QStringList cnames;
 
    for ( int col = 0; col < cols; col++ )
    {
@@ -419,6 +424,7 @@ DbgLv(1) << "XpDa:s_x:  cols" << cols << "cnames" << cnames[0] << "..."
    isctyp        = ( scantype == 'F' ) ? 2 : isctyp;
    isctyp        = ( scantype == 'I' ) ? 3 : isctyp;
    isctyp        = ( scantype == 'W' ) ? 4 : isctyp;
+   isctyp        = ( scantype == 'S' ) ? 5 : isctyp;
 DbgLv(1) << "XpDa:s_x:  isctyp scantype" << isctyp << scantype;
 
    // Loop to read data and store in internal array
@@ -474,13 +480,16 @@ QString rpsave = asdrow.radPath;
                tAsdata << asdrow;
             }
 //*DEBUG*
-if(rows<9 || (rows+9)>count) {
+if(rows<21 || (rows+21)>count) {
 DbgLv(1) << "XpDa:scn:    row" << rows << "run" << asdrow.runId
  << "dat" << asdrow.dataId << "pc vc c pc2 vc2"
  << pcount << vcount << asdrow.count << pcount2 << vcount2 << "rp" << rpsave;
 DbgLv(1) << "XpDa:scn:     rads0 rads1 vals0 vals1"
  << asdrow.rads[0] << asdrow.rads[1] << asdrow.vals[0] << asdrow.vals[1]
  << QString(sPoss).left(20) << QString(sVals).left(20);
+DbgLv(1) << "XpDa:scn:      etim scn temp speed omg estr"
+ << asdrow.exptime << asdrow.scanSeqN << asdrow.tempera << asdrow.speed
+ << asdrow.omgSqT << asdrow.expstart.toString();
 }
 //*DEBUG*
 
@@ -617,11 +626,31 @@ DbgLv(1) << "XpDa:scn:    row" << rows << "run dat pc vc vc2 c" << wsdrow.runId
 //*DEBUG*
             break;
          }
+         case 5:
+         {
+            tbSyData sydrow;
+            sydrow.dataId    = sqry.value( jdatid ).toInt();
+            sydrow.runId     = sqry.value( jrunid ).toInt();
+            sydrow.expstart  = sqry.value( jexpst ).toDateTime();
+            sydrow.exptime   = sqry.value( jexptm ).toInt();
+            sydrow.tempera   = sqry.value( jtempe ).toDouble();
+            sydrow.speed     = sqry.value( jspeed ).toDouble();
+            sydrow.omgSqT    = sqry.value( jomgsq ).toDouble();
+            sydrow.stageNum  = sqry.value( jstage ).toInt();
+
+            tSydata << sydrow;
+//*DEBUG*
+if(rows<21 || (rows+21)>count) {
+DbgLv(1) << "XpDa:scn:    row" << rows << "run dat" << sydrow.runId << sydrow.dataId
+ << "time" << sydrow.exptime << "temp" << sydrow.tempera << "speed" << sydrow.speed
+ << "omg2t" << sydrow.omgSqT;
+}
+//*DEBUG*
+            break;
+         }
       }
    }
 
-DbgLv(1) << "XpDa:scn: rows count" << rows << count << "out recs"
- << tAsdata.count();
    return rows;
 }
 
@@ -1096,57 +1125,243 @@ DbgLv(1) << "expA:  nf" << nfiles << "fname" << fname;
 
    QString tspath    = cur_dir + runID + ".time_state.tmst";
    int ntimes        = udata->scanCount();
-DbgLv(1) << "expA: ntimes" << ntimes << "tspath" << tspath;
+   int ntssda        = tSydata.count();
+//*DEBUG*
+QVector< double > xv_scn;
+QVector< double > yv_scn;
+QVector< double > xv_tms;
+QVector< double > yv_tms;
+double utime1=udata->scanData[0].seconds;
+double uomgt1=udata->scanData[0].omega2t;
+double utime2=udata->scanData[ntimes-1].seconds;
+double uomgt2=udata->scanData[ntimes-1].omega2t;
+double avgrpm=0.0;
+for (int jj=0; jj<ntimes; jj++)
+{
+ avgrpm += udata->scanData[jj].rpm;
+ xv_scn << udata->scanData[jj].seconds;
+ yv_scn << udata->scanData[jj].omega2t;
+}
+avgrpm /= (double)ntimes;
+double delta_t = utime2 - utime1;
+double delta_o = uomgt2 - uomgt1;
+double cdelt_o = sq( avgrpm * M_PI / 30. ) * delta_t;
+DbgLv(1) << "expA:DLT:SCN: time1 time2" << utime1 << utime2;
+DbgLv(1) << "expA:DLT:SCN: omgt1 omgt2" << uomgt1 << uomgt2;
+DbgLv(1) << "expA:DLT:SCN: delta-t delta-o" << delta_t << delta_o;
+DbgLv(1) << "expA:DLT:SCN: avgrpm cdelt-o" << avgrpm << cdelt_o;
+int jutime1=(int)utime1;
+int jutime2=(int)utime2;
+int jt1=0;
+int jt2=0;
+for ( int jj = 0; jj<ntssda; jj++ )
+{
+ int jtime=tSydata[jj].exptime;
+ if ( jtime < jutime1 ) continue;
+ if ( jtime >= jutime2 )
+ {
+  jt2 = jj;
+  break;
+ }
+ else if ( jt1 == 0 )
+ {
+  jt1 = jj;
+ }
+}
+double stime1=tSydata[jt1].exptime;
+double stime2=tSydata[jt2].exptime;
+double somgt1=tSydata[jt1].omgSqT;
+double somgt2=tSydata[jt2].omgSqT;
+avgrpm=0.0;
+for (int jj=jt1; jj<=jt2; jj++)
+{
+ avgrpm += tSydata[jj].speed;
+ xv_tms << tSydata[jj].exptime;
+ yv_tms << tSydata[jj].omgSqT;
+}
+avgrpm /= (double)(jt2-jt1+1);
+delta_t = stime2 - stime1;
+delta_o = somgt2 - somgt1;
+cdelt_o = sq( avgrpm * M_PI / 30. ) * delta_t;
+DbgLv(1) << "expA:DLT:TMS: time1 time2" << stime1 << stime2;
+DbgLv(1) << "expA:DLT:TMS: omgt1 omgt2" << somgt1 << somgt2;
+DbgLv(1) << "expA:DLT:TMS: delta-t delta-o" << delta_t << delta_o;
+DbgLv(1) << "expA:DLT:TMS: avgrpm cdelt-o" << avgrpm << cdelt_o;
+double* xa_scn = xv_scn.data();
+double* ya_scn = yv_scn.data();
+double* xa_tms = xv_tms.data();
+double* ya_tms = yv_tms.data();
+double slope_s, slope_t, icept_s, icept_t;
+double sigma_s, sigma_t, corre_s, corre_t;
+int nscnp = xv_scn.count();
+int ntmsp = xv_tms.count();
+US_Math2::linefit( &xa_scn, &ya_scn, &slope_s, &icept_s, &sigma_s, &corre_s, nscnp );
+US_Math2::linefit( &xa_tms, &ya_tms, &slope_t, &icept_t, &sigma_t, &corre_t, ntmsp );
+DbgLv(1) << "expA:DLT:SCN: npoint" << nscnp << "x1,y1,x2,y2" << xa_scn[0] << ya_scn[0] << xa_scn[nscnp-1] << ya_scn[nscnp-1];
+DbgLv(1) << "expA:DLT:TMS: npoint" << ntmsp << "x1,y1,x2,y2" << xa_tms[0] << ya_tms[0] << xa_tms[ntmsp-1] << ya_tms[ntmsp-1];
+DbgLv(1) << "expA:DLT:SCN:  slope" << slope_s << "intercept" << icept_s;
+DbgLv(1) << "expA:DLT:TMS:  slope" << slope_t << "intercept" << icept_t;
+DbgLv(1) << "expA:DLT:SCN:   stddev" << sigma_s << "correlation" << corre_s;
+DbgLv(1) << "expA:DLT:TMS:   stddev" << sigma_t << "correlation" << corre_t;
+US_Math2::linefit( &ya_scn, &xa_scn, &slope_s, &icept_s, &sigma_s, &corre_s, nscnp );
+US_Math2::linefit( &ya_tms, &xa_tms, &slope_t, &icept_t, &sigma_t, &corre_t, ntmsp );
+DbgLv(1) << "expA:DLT:SCN: npoint" << nscnp << "x1,y1,x2,y2" << ya_scn[0] << xa_scn[0] << ya_scn[nscnp-1] << xa_scn[nscnp-1];
+DbgLv(1) << "expA:DLT:TMS: npoint" << ntmsp << "x1,y1,x2,y2" << ya_tms[0] << xa_tms[0] << ya_tms[ntmsp-1] << xa_tms[ntmsp-1];
+DbgLv(1) << "expA:DLT:SCN:  slope" << slope_s << "intercept" << icept_s;
+DbgLv(1) << "expA:DLT:TMS:  slope" << slope_t << "intercept" << icept_t;
+DbgLv(1) << "expA:DLT:SCN:   stddev" << sigma_s << "correlation" << corre_s;
+DbgLv(1) << "expA:DLT:TMS:   stddev" << sigma_t << "correlation" << corre_t;
+//*DEBUG*
 
    tsobj.open_write_data( tspath );      // Initialize TMST creation
 
    tsobj.set_keys( fkeys, ffmts );       // Define keys and formats
 
-   for ( int ii = 0;  ii < ntimes; ii++ )
-   {  // Create a record for each scan
-      US_DataIO::Scan* uscan = &udata->scanData[ ii ];
-      int scannbr       = ii + 1;           // Scan number
-      double rawSpeed   = uscan->rpm;
-      double tempera    = uscan->temperature;
-      double omega2t    = uscan->omega2t;
-      double time       = uscan->seconds;
-      double setSpeed   = qRound( rawSpeed * 0.01 ) * 100.0;
+   if ( ntssda < ntimes )
+   {
+DbgLv(1) << "expA: ntimes" << ntimes << "tspath" << tspath;
+      for ( int ii = 0;  ii < ntimes; ii++ )
+      {  // Create a record for each scan
+         US_DataIO::Scan* uscan = &udata->scanData[ ii ];
+         int scannbr       = ii + 1;           // Scan number
+         double rawSpeed   = uscan->rpm;
+         double tempera    = uscan->temperature;
+         double omega2t    = uscan->omega2t;
+         double time       = uscan->seconds;
+         double setSpeed   = qRound( rawSpeed * 0.01 ) * 100.0;
 
-      // Find the speed step (stage) to which this scan belongs
-      int jstage        = 0;
-      double ssDiff     = 1e+99;
+         // Find the speed step (stage) to which this scan belongs
+         int jstage        = 0;
+         double ssDiff     = 1e+99;
 
-      for( int jj = 0; jj < speedsteps.count(); jj++ )
-      {
-         double ssSpeed    = speedsteps[ jj ].set_speed;
-         double jjDiff     = qAbs( ssSpeed - setSpeed );
-
-         if ( jjDiff < ssDiff )
+         for( int jj = 0; jj < speedsteps.count(); jj++ )
          {
-            ssDiff            = jjDiff;
-            jstage            = jj;
-         }
-      }
+            double ssSpeed    = speedsteps[ jj ].set_speed;
+            double jjDiff     = qAbs( ssSpeed - setSpeed );
 
-      int istagen       = jstage + 1;
-      setSpeed          = speedsteps[ jstage ].set_speed;
-      int irSpeed       = (int)qRound( rawSpeed );
-      int isSpeed       = (int)qRound( setSpeed );
+            if ( jjDiff < ssDiff )
+            {
+               ssDiff            = jjDiff;
+               jstage            = jj;
+            }
+         }
+
+         int istagen       = jstage + 1;
+         setSpeed          = speedsteps[ jstage ].set_speed;
+         int irSpeed       = (int)qRound( rawSpeed );
+         int isSpeed       = (int)qRound( setSpeed );
 DbgLv(1) << "expA:   ii" << ii << "scan" << scannbr << "stage" << istagen
  << "speed" << irSpeed << isSpeed << "time" << time;
 
-      // Set values for this scan
-      tsobj.set_value( fkeys[ 0 ], scannbr );       // Scan
-      tsobj.set_value( fkeys[ 1 ], istagen );       // Stage (speed step)
-      tsobj.set_value( fkeys[ 2 ], time    );       // Time in seconds
-      tsobj.set_value( fkeys[ 3 ], irSpeed );       // Raw speed
-      tsobj.set_value( fkeys[ 4 ], isSpeed );       // Set (stage) speed
-      tsobj.set_value( fkeys[ 5 ], omega2t );       // Omega-Squared-T
-      tsobj.set_value( fkeys[ 6 ], tempera );       // Temperature
+         // Set values for this scan
+         tsobj.set_value( fkeys[ 0 ], scannbr );       // Scan
+         tsobj.set_value( fkeys[ 1 ], istagen );       // Stage (speed step)
+         tsobj.set_value( fkeys[ 2 ], time    );       // Time in seconds
+         tsobj.set_value( fkeys[ 3 ], irSpeed );       // Raw speed
+         tsobj.set_value( fkeys[ 4 ], isSpeed );       // Set (stage) speed
+         tsobj.set_value( fkeys[ 5 ], omega2t );       // Omega-Squared-T
+         tsobj.set_value( fkeys[ 6 ], tempera );       // Temperature
 
-      // Write the scan record
-      tsobj.flush_record();
+         // Write the scan record
+         tsobj.flush_record();
+      }
    }
+   else
+   {  // Build TMST from System Status Data table values
+      int ftx           = 1;
+      int stgoff        = 0;
+
+      for ( int ii = 0; ii < ntssda; ii++ )
+      {  // Find the index to the first non-zero speed
+         int irSpeed       = (int)qRound( tSydata[ ii ].speed );
+         if ( irSpeed > 0 )
+         {
+            ftx               = ii;
+            stgoff            = 1 - tSydata[ ii ].stageNum;
+            break;
+         }
+      }
+
+      ftx               = ( ftx > 0 ) ? ( ftx - 1 ) : 0;
+DbgLv(1) << "expA: ftx" << ftx;
+      QList< int > sctimes;
+
+      for ( int ii = 0; ii < ntimes; ii++ )
+      {  // Build a list of scan times
+         US_DataIO::Scan* uscan = &udata->scanData[ ii ];
+         int time          = (int)qRound( uscan->seconds );
+         sctimes << time;
+DbgLv(1) << "expA:  ii" << ii << "sctime" << time;
+      }
+
+      ntimes            = ntssda;
+      int time_n        = 0;                        // Initial values
+      double speed_n    = 0.0;
+      double omg2t_n    = 0.0;
+      double tempe_n    = tSydata[ ftx ].tempera;
+      double omg2t_sm   = 0.0;
+  
+      for ( int ii = ftx; ii < ntimes; ii++ )
+      {  // Create a record for each system status row
+         int time_p        = time_n;                // Previous values
+         double speed_p    = speed_n;
+         double omg2t_p    = omg2t_n;
+         double tempe_p    = tempe_n;
+         time_n            = tSydata[ ii ].exptime; // Next values
+         speed_n           = tSydata[ ii ].speed;
+         omg2t_n           = tSydata[ ii ].omgSqT;
+         tempe_n           = tSydata[ ii ].tempera;
+         int stage         = tSydata[ ii ].stageNum + stgoff;
+         int timeinc       = time_n - time_p;       // Increments
+         double trange     = timeinc > 0 ? ( 1.0 / (double)timeinc ) : 1.0;
+         double speed_i    = ( speed_n - speed_p ) * trange;
+         double omg2t_i    = ( omg2t_n - omg2t_p ) * trange;
+         double tempe_i    = ( tempe_n - tempe_p ) * trange;
+         int time_c        = time_p;                // Initial 1-sec values
+         double rawSpeed   = speed_p;
+         double omega2t    = omg2t_p;
+         double tempera    = tempe_p;
+DbgLv(1) << "expA:   ii" << ii << "stage" << stage << "time_n" << time_n
+ << "speed_n" << speed_n << "omg2t_n" << omg2t_n;
+
+         for ( int jj = 0; jj < timeinc; jj++ )
+         {  // Expand values for each second in present range
+            time_c++;                                // Bump to next second
+            rawSpeed         += speed_i;
+            omega2t          += omg2t_i;
+            tempera          += tempe_i;
+
+            double omg2t_d    = sq( rawSpeed * M_PI / 30.0 );
+            omg2t_sm         += omg2t_d;
+            double setSpeed   = qRound( rawSpeed * 0.01 ) * 100.0;
+            double exptime    = (double)time_c;
+            int irSpeed       = (int)qRound( rawSpeed );
+            int isSpeed       = (int)qRound( setSpeed );
+
+            // Set scan number to matching-time scan or 0
+            int scannbr       = sctimes.indexOf( time_c );
+//DbgLv(1) << "expA:                 scan" << scannbr;
+            scannbr           = ( scannbr >= 0 ) ? ( scannbr + 1 ) : 0;
+ 
+DbgLv(1) << "expA:      jj" << jj << "scan" << scannbr
+ << "time_c" << time_c << "speed" << irSpeed << isSpeed
+ << "omg2t(rec)" << omega2t << "omg2t(sum)" << omg2t_sm;
+            omega2t           = omg2t_sm;
+
+            // Set values for this time
+            tsobj.set_value( fkeys[ 0 ], scannbr );  // Scan
+            tsobj.set_value( fkeys[ 1 ], stage   );  // Stage (speed step)
+            tsobj.set_value( fkeys[ 2 ], exptime );  // Time in seconds
+            tsobj.set_value( fkeys[ 3 ], irSpeed );  // Raw speed
+            tsobj.set_value( fkeys[ 4 ], isSpeed );  // Set (stage) speed
+            tsobj.set_value( fkeys[ 5 ], omega2t );  // Omega-Squared-T
+            tsobj.set_value( fkeys[ 6 ], tempera );  // Temperature
+
+            // Write the scan record
+            tsobj.flush_record();
+         }  // END: loop thru seconds in status data interval
+      }  // END: table data loop
+   }  // END: have System Status Data
 
    // Complete write of TMST file and defining XML
    if ( tsobj.close_write_data() == 0 )
@@ -1558,6 +1773,51 @@ QString US_XpnData::runDetails( void )
 
    }  // END: table type loop
 
+   // Compose message for values in System Status Data table
+   int ssknt      = tSydata.count();
+   if ( ssknt < 2 )
+      return msg;
+
+   int runID      = tSydata[ 0 ].runId;
+   int kk         = ssknt - 1;
+
+   QString tabname( "SystemStatusData" );
+   msg += tr( "\n  Table Name:  '" ) + tabname + "'  ( runID ="
+          + QString::number( runID ) + " )\n";
+   msg += tr( "    Count of Data Records:    %1\n" ).arg( ssknt );
+   int stage1     = tSydata[  0 ].stageNum;
+   int stage2     = tSydata[ kk ].stageNum;
+   int time1      = tSydata[  0 ].exptime;
+   int time2      = tSydata[ kk ].exptime;
+   double temp1   = tSydata[  0 ].tempera;
+   double temp2   = tSydata[ kk ].tempera;
+   double speed1  = tSydata[  0 ].speed;
+   double speed2  = tSydata[ kk ].speed;
+   double omega1  = tSydata[  0 ].omgSqT;
+   double omega2  = tSydata[ kk ].omgSqT;
+   double templ   = 10000.0;
+   double temph   = 0.0;
+   double speedh  = -1.0;
+   for ( int jj = 0; jj < ssknt; jj++ )
+   {
+      templ          = qMin( templ, tSydata[ jj ].tempera );
+      temph          = qMax( temph, tSydata[ jj ].tempera );
+      speedh         = qMax( speedh, tSydata[ jj ].speed );
+   }
+   msg += tr( "    First Stage:              %1\n" ).arg( stage1 );
+   msg += tr( "    Last  Stage:              %1\n" ).arg( stage2 );
+   msg += tr( "    First Time (secs.):       %1\n" ).arg( time1  );
+   msg += tr( "    Last  Time (secs.):       %1\n" ).arg( time2  );
+   msg += tr( "    First Temperature:        %1\n" ).arg( temp1  );
+   msg += tr( "    Last  Temperature:        %1\n" ).arg( temp2  );
+   msg += tr( "    First Speed (rpm):        %1\n" ).arg( speed1 );
+   msg += tr( "    Last  Speed (rpm):        %1\n" ).arg( speed2 );
+   msg += tr( "    First OmegaSquaredT:      %1\n" ).arg( omega1 );
+   msg += tr( "    Last  OmegaSquaredT:      %1\n" ).arg( omega2 );
+   msg += tr( "    Low   Temperature:        %1\n" ).arg( templ  );
+   msg += tr( "    High  Temperature:        %1\n" ).arg( temph  );
+   msg += tr( "    High  Speed (rpm):        %1\n" ).arg( speedh );
+
    return msg;
 }
 
@@ -1585,6 +1845,8 @@ void US_XpnData::build_internals( )
    mxstgn        = 0;
    mnscnn        = 99999;
    mxscnn        = 0;
+   nlambda       = 0;
+   ntriple       = 0;
    int sdknt     = 0;
    sdknt         = ( runType == "RI" ) ? tAsdata.count() : sdknt;
    sdknt         = ( runType == "FI" ) ? tFsdata.count() : sdknt;
