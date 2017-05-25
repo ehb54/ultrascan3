@@ -1,0 +1,95 @@
+#!/bin/bash
+#	srcdevel  - source directory changes development to/from production
+
+if [ $# -lt 1 ]; then
+   echo "srcdevel  - source directory changes for development to/from production"
+   echo "	usage --"
+   echo " srcdevel <opt> <files>"
+   echo "	where --"
+   echo " <opt>   == option: '-d', '-p', or '-t'"
+   echo "    '-d'  -> set up for development mode"
+   echo "    '-p'  -> set up for production mode"
+   echo "    '-t'  -> test state of current directory"
+   echo " <files> == current directory files to process"
+   exit 0
+fi
+ 
+OPT=$1
+shift
+FILES=$@
+CDIR=`pwd`
+LNKFS=`find ./ -maxdepth 1 -type l -exec basename {} \;`
+SUBDIR=`basename ${CDIR}`
+
+case $OPT in
+
+  -d)
+     # Do actions for setting development mode
+     echo "Set up for development"
+     if [ -z "${FILES}" ]; then
+        echo "*** ERROR *** -d option requires a list of files"
+        exit 1
+     fi
+
+     ADIR="../../alpha"
+     if [ ${SUBDIR} = "gui"  -o  ${SUBDIR} = "utils" ]; then
+        ADIR="../alpha"
+     fi
+     if [ ${SUBDIR} = "etc" ]; then
+        ADIR="../alpha"
+     fi
+     if [ ${SUBDIR} = "ultrascan3" ]; then
+        ADIR="./alpha"
+     fi
+
+     echo "  Linking to development source ..."
+     for F in ${FILES}; do 
+        if [ -f ${ADIR}/${F} ]; then
+           rm -f ${F}
+           ln -s ${ADIR}/${F} ${F}
+        else
+           echo "*** ERROR *** file ${ADIR}/${F} does not exist!!"
+           exit 2
+        fi
+     done
+     ls -l ${FILES}
+     exit 0
+     ;;
+
+  -p)
+     # Do actions for setting production mode
+     echo "Set up for production"
+     if [ -z "${FILES}" ]; then
+        echo "*** ERROR *** -p option requires a list of files"
+        exit 3
+     fi
+     if [ ! -z "${LNKFS}" ]; then
+        echo "  Removing links: ..."
+        for F in ${FILES}; do 
+           if [ -h ${F} ]; then
+              echo "rm -f ${F}"
+              rm -f ${F}
+           fi
+       done
+     fi
+     echo "  Updating production source ..."
+     svn up ${FILES}
+     ls -l ${FILES}
+     exit 0
+     ;;
+
+  -t)
+     # Test current directory's state
+     echo "Test current directory svn state"
+     echo "  SVN status of ${CDIR} --"
+     svn status|grep -v '^?'
+     echo "  LINKED files here --"
+     if [ ! -z "${LNKFS}" ]; then
+        ls -l ${LNKFS}
+     else
+        echo "(NONE)"
+     fi
+     exit 0
+     ;;
+esac
+
