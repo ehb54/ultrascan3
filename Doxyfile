@@ -714,6 +714,7 @@ RECURSIVE              = YES
 # run.
 
 EXCLUDE                = ./doc/ \
+                         ./alpha/ \
                          ./testing/ \
                          ./gui/moc/ \
                          ./gui/hold-dev/ \
