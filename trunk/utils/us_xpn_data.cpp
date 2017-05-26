@@ -305,6 +305,7 @@ bool US_XpnData::import_data( const int runId, const int scanMask )
    tIsdata.clear();
    tWsdata.clear();
    tSydata.clear();
+   tCrprof.clear();
    bool ascnf    = scanMask & 1;
    bool fscnf    = scanMask & 2;
    bool iscnf    = scanMask & 4;
@@ -337,8 +338,11 @@ bool US_XpnData::import_data( const int runId, const int scanMask )
 
    // Scan and build data for System Status Data
    int srows  = scan_xpndata( runId, 'S' );
-DbgLv(1) << "XpDa:i_d: arows frows irows wrows srows"
-   << arows << frows << irows << wrows << srows;
+
+   // Scan and build data for Centrifuge Run Profile
+   int crows  = scan_xpndata( runId, 'C' );
+DbgLv(1) << "XpDa:i_d: arows frows irows wrows srows crows"
+   << arows << frows << irows << wrows << srows << crows;
 
    return status;
 }
@@ -354,6 +358,7 @@ int US_XpnData::scan_xpndata( const int runId, const QChar scantype )
    tabname         = ( scantype == 'I' ) ? "InterferenceScanData" : tabname;
    tabname         = ( scantype == 'W' ) ? "WavelengthScanData"   : tabname;
    tabname         = ( scantype == 'S' ) ? "SystemStatusData"     : tabname;
+   tabname         = ( scantype == 'C' ) ? "CentrifugeRunProfile" : tabname;
    QString sqtab   = schname + "." + tabname;
    QString qrytab  = "\"" + schname + "\".\"" + tabname + "\"";
    QString sRunId  = QString::number( runId );
@@ -367,6 +372,17 @@ int US_XpnData::scan_xpndata( const int runId, const QChar scantype )
    qrytab          = "\"" + schname + "\".\"" + tabname + "\"";
    QString qrytext = "SELECT count(*) from " + qrytab
                    + " WHERE \"RunId\"=" + sRunId + ";";
+#if 1
+   if ( scantype == 'C' )
+      qrytext         = "SELECT count(*) from " + qrytab + ";";
+#endif
+#if 0
+   if ( scantype == 'C' )
+   {
+      qrytext         = "SELECT count(*) from " + qrytab + ";";
+                      + " WHERE \"FugeRunProfileId\"=" + sRunId + ";";
+   }
+#endif
    sqry            = dbxpn.exec( qrytext );
    sqry.next();
    count           = sqry.value( 0 ).toInt();
@@ -382,6 +398,17 @@ DbgLv(1) << "XpDa:s_x: sRunId" << sRunId << "count" << count;
    // Get columns and determine indecies of fields
    qrytext         = "SELECT * from " + qrytab
                      + " WHERE \"RunId\"=" + sRunId + ";";
+#if 1
+   if ( scantype == 'C' )
+      qrytext         = "SELECT * from " + qrytab + ";";
+#endif
+#if 0
+   if ( scantype == 'C' )
+   {
+      qrytext         = "SELECT * from " + qrytab
+                      + " WHERE \"FugeRunProfileId\"=" + sRunId + ";";
+   }
+#endif
    sqry            = dbxpn.exec( qrytext );
    qrec            = dbxpn.record( qrytab );
    int cols        = qrec.count();
@@ -396,6 +423,7 @@ DbgLv(1) << "XpDa:s_x:  cols" << cols << "cnames" << cnames[0] << "..."
 
    int jdatid    = cnames.indexOf( "DataId"               );
    int jrunid    = cnames.indexOf( "RunId"                );
+   int jfruid    = cnames.indexOf( "FugeRunProfileId"     );
    int jexpst    = cnames.indexOf( "ExperimentStart"      );
    int jexptm    = cnames.indexOf( "ExperimentTime"       );
    int jtempe    = cnames.indexOf( "Temperature"          );
@@ -420,11 +448,24 @@ DbgLv(1) << "XpDa:s_x:  cols" << cols << "cnames" << cnames[0] << "..."
    int jvalus    = cnames.indexOf( "Values"               );
    int jscnpo    = cnames.indexOf( "ScanPosition"         );
    int jwavls    = cnames.indexOf( "Wavelengths"          );
+   int jsbrak    = cnames.indexOf( "StepBraking"          );
+   int jbrate    = cnames.indexOf( "BrakingRate"          );
+   int jholdt    = cnames.indexOf( "HoldTempAfterFinal"   );
+   int jholds    = cnames.indexOf( "HoldSpeedAfterFinal"  );
+   int jsette    = cnames.indexOf( "SetTempBeforeStart"   );
+   int jssint    = cnames.indexOf( "SystemStatusInterval" );
+   int jstges    = cnames.indexOf( "Stages"               );
+   int jstgrp    = cnames.indexOf( "StageRPM"             );
+   int jstgst    = cnames.indexOf( "StageStart"           );
+   int jstgdu    = cnames.indexOf( "StageDuration"        );
+   int jstgac    = cnames.indexOf( "StageAccelRate"       );
+   int jpaids    = cnames.indexOf( "StageCellParameterIds" );
    int isctyp    = ( scantype == 'A' ) ? 1 : 0;
    isctyp        = ( scantype == 'F' ) ? 2 : isctyp;
    isctyp        = ( scantype == 'I' ) ? 3 : isctyp;
    isctyp        = ( scantype == 'W' ) ? 4 : isctyp;
    isctyp        = ( scantype == 'S' ) ? 5 : isctyp;
+   isctyp        = ( scantype == 'C' ) ? 6 : isctyp;
 DbgLv(1) << "XpDa:s_x:  isctyp scantype" << isctyp << scantype;
 
    // Loop to read data and store in internal array
@@ -648,7 +689,110 @@ DbgLv(1) << "XpDa:scn:    row" << rows << "run dat" << sydrow.runId << sydrow.da
 //*DEBUG*
             break;
          }
+         case 6:
+         {
+            tbCrProf crprow;
+            crprow.frunId    = sqry.value( jfruid ).toInt();
+            crprow.tempera   = sqry.value( jtempe ).toDouble();
+            crprow.sbrake    = sqry.value( jsbrak ).toInt();
+            crprow.brrate    = sqry.value( jbrate ).toDouble();
+            crprow.holdte    = sqry.value( jholdt ).toInt();
+            crprow.holdsp    = sqry.value( jholds ).toInt();
+            crprow.sette     = sqry.value( jsette ).toInt();
+            crprow.sstintv   = sqry.value( jssint ).toDouble();
+            crprow.stages    = sqry.value( jstges ).toString();
+            crprow.stgrpm    = sqry.value( jstgrp ).toDouble();
+            crprow.stgstart  = sqry.value( jstgst ).toDouble();
+            crprow.stgdurat  = sqry.value( jstgdu ).toDouble();
+            crprow.stgaccel  = sqry.value( jstgac ).toDouble();
+            crprow.paramids  = sqry.value( jpaids ).toString();
+
+            tCrprof << crprow;
+//*DEBUG*
+if(rows<21 || (rows+21)>count) {
+DbgLv(1) << "XpDa:scn:    row" << rows << "fugeRunId" << crprow.frunId
+ << "ssInterval" << crprow.sstintv;
+}
+//*DEBUG*
+            break;
+         }
       }
+   }
+
+   if ( scantype == 'C' )
+   {  // Show mapping of RunId to ExperimentId to FugeRunProfileId
+      QList< int >  rExpIds;  // ExperimentRun experiment Ids
+      QList< int >  rRunIds;  // ExperimentRun run Ids
+      QList< int >  dExpIds;  // ExperimentDefinition experiment Ids
+      QList< int >  dFugIds;  // ExperimentDefinition fugeProfile Ids
+DbgLv(1) << "XpDa:scn:    tCrprof count" << tCrprof.count();
+
+      int iRunId      = sRunId.toInt();
+      tabname         = "ExperimentRun";
+      sqtab           = schname + "." + tabname;
+      qrytab          = "\"" + schname + "\".\"" + tabname + "\"";
+      qrytext         = "SELECT * from " + qrytab + ";"; 
+      sqry            = dbxpn.exec( qrytext );
+      qrec            = dbxpn.record( qrytab );
+      int cols        = qrec.count();
+      cnames.clear();
+      for ( int col = 0; col < cols; col++ )
+      {  // Get ExperimentRun column names
+         QString fldname = qrec.fieldName( col );
+         cnames << qrec.fieldName( col );     // Get column names
+      }
+      // Get indexes to ExperimentId and RunId
+      int jexpid      = cnames.indexOf( "ExperimentId" );
+      int jrunid      = cnames.indexOf( "RunId" );
+      while ( sqry.next() )
+      {  // Build a list of ExperimentRun expIds and runIds
+         int rExpId      = sqry.value( jexpid ).toInt();
+         int rRunId      = sqry.value( jrunid ).toInt();
+         rExpIds << rExpId;
+         rRunIds << rRunId;
+      }
+
+      tabname         = "ExperimentDefinition";
+      sqtab           = schname + "." + tabname;
+      qrytab          = "\"" + schname + "\".\"" + tabname + "\"";
+      qrytext         = "SELECT * from " + qrytab + ";"; 
+      sqry            = dbxpn.exec( qrytext );
+      qrec            = dbxpn.record( qrytab );
+      cols            = qrec.count();
+      cnames.clear();
+      for ( int col = 0; col < cols; col++ )
+      {  // Get ExperimentDefinition column names
+         QString fldname = qrec.fieldName( col );
+         cnames << qrec.fieldName( col );     // Get column names
+      }
+      // Get indexes to ExperimentId and FugeRunProfileId
+      jexpid          = cnames.indexOf( "ExperimentId" );
+      int jfruid      = cnames.indexOf( "FugeRunProfileId" );
+      while ( sqry.next() )
+      {  // Build a list of ExperimentDefinition expIds and fugeIds
+         int dExpId      = sqry.value( jexpid ).toInt();
+         int dFugId      = sqry.value( jfruid ).toInt();
+         dExpIds << dExpId;
+         dFugIds << dFugId;
+      }
+      // Map experimentId to runId, then fugeId to experimentId
+      int rrndx       = rRunIds.indexOf( iRunId );
+      int iExpId      = rExpIds[ rrndx ];
+      int dendx       = dExpIds.indexOf( iExpId );
+      int iFugId      = dFugIds[ dendx ];
+      double sstintv  = 1000.0;
+DbgLv(1) << "XpDa:scn:    RunId" << iRunId << "ExperimentId" << iExpId
+ << "FugeRunProfileId" << iFugId; 
+
+      for ( int ii = 0; ii < tCrprof.count(); ii++ )
+      {  // Look for matching fuge Id in CentrifugeRunProfile values
+         if ( tCrprof[ ii ].frunId == iFugId )
+         {  // Match found:  get corresponding SystemStatusInterval
+            sstintv          = tCrprof[ ii ].sstintv;
+            break;
+         }
+      }
+DbgLv(1) << "XpDa:scn:    FugId" << iFugId << "sstInterval" << sstintv;
    }
 
    return rows;

@@ -1515,5 +1515,7 @@ int tm2=sttime.msecsTo(QDateTime::currentDateTime());
 DbgLv(1) << "RLd:      build-raw done tm2" << tm2;
    le_status->setText( tr( "Update of AUC data complete." ) );
    qApp->processEvents();
+
+   changeCellCh();
 }
 
