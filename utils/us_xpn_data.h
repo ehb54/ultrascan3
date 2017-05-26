@@ -188,6 +188,27 @@ class US_UTIL_EXTERN US_XpnData : public QObject
             QDateTime expstart;      //!< Experiment start
       };
 
+      //! Centrifuge Run Profile table values
+      class tbCrProf
+      {
+         public:
+            int       frunId;        //!< Fuge run profile ID
+            int       sbrake;        //!< Step Braking
+            int       holdte;        //!< Hold temp after final
+            int       holdsp;        //!< Hold speed after final
+            int       sette;         //!< Set temp before start
+            int       sstintv;       //!< System status interval
+            double    brrate;        //!< Braking rate
+            double    tempera;       //!< Temperature
+            double    stgrpm;        //!< Stage RPM
+            double    stgstart;      //!< Stage start
+            double    stgdurat;      //!< Stage duration
+            double    stgaccel;      //!< Stage acceleration rate
+            QString   stages;        //!< Stages
+            QString   paramids;      //!< Stage cell parameter Ids
+      };
+
+
       //! \brief Connect for XPN data with remote host DB
       //! \param xpnhost Host name of XPN database server
       //! \param xpnport Port value of XPN database server
@@ -331,6 +352,7 @@ class US_UTIL_EXTERN US_XpnData : public QObject
       QVector< tbIsData >  tIsdata;  //!< Interference data table values
       QVector< tbWsData >  tWsdata;  //!< Wavelength   data table values
       QVector< tbSyData >  tSydata;  //!< System status data table values
+      QVector< tbCrProf >  tCrprof;  //!< Centrifuge run prof. table values
 
       QVector< double >   r_rpms;    //!< Raw RPMs from scans
       QVector< double >   s_rpms;    //!< Set RPMs from speed steps
