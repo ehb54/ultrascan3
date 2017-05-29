@@ -1486,36 +1486,60 @@ void US_XpnDataViewer::status_report( QString stat_text )
 // Slot to reload data
 void US_XpnDataViewer::reloadData()
 {
-   QMessageBox::warning( this,
-         tr( "Reload Data Not Implemented" ),
-         tr( "The \"Reload Data\" action is not yet "  
-             "completely implemented." ) );
-   int runix          = runID.indexOf( "-run" ) + 4;
-DbgLv(1) << "RLd:  runID" << runID << "runix" << runix;
+   int runix          = runID.lastIndexOf( "-run" ) + 4;
    QString fRunId     = runID.mid( runix );
    int iRunId         = fRunId.toInt();
-#if 0
-   QString sMasks     = QString( drDesc ).section( delim, 7, 10 );
-   int scanmask       = QString( sMasks ).mid( 0, 1 ) == "1" ? 1 : 0;
-   scanmask          += QString( sMasks ).mid( 2, 1 ) == "1" ? 2 : 0;
-   scanmask          += QString( sMasks ).mid( 4, 1 ) == "1" ? 4 : 0;
-   scanmask          += QString( sMasks ).mid( 6, 1 ) == "1" ? 8 : 0;
-#endif
+DbgLv(1) << "RLd:  runID" << runID << "runix" << runix << "iRunId" << iRunId;
    int scanmask       = 1;
+   scanmask           = ( runType == "FI" ) ? 2 : scanmask;
+   scanmask           = ( runType == "IP" ) ? 4 : scanmask;
+   scanmask           = ( runType == "WI" ) ? 8 : scanmask;
 DbgLv(1) << "RLd:     iRunId" << iRunId << "runType scanmask" << runType << scanmask;
 
 QDateTime sttime=QDateTime::currentDateTime();
-   xpn_data->import_data( iRunId, scanmask );
+   QString smsg       = le_status->text();
+
+   // Import any newly added Scan Data records
+   bool upd_ok        =  xpn_data->reimport_data( iRunId, scanmask );
+
+   if ( ! upd_ok )
+   {  // No change in data scans:  report inability to update
+      nscan       = allData[ trpxs ].scanCount();
+      QMessageBox::warning( this,
+            tr( "Reload Data Not Possible" ),
+            tr( "The \"Reload Data\" action had no effect.\n"
+                "No additional data has been recorded." ) );
+
+      if ( ! smsg.endsWith( tr( " scans)" ) ) )
+      {  // If need be, add scan count to the status message
+         smsg        = smsg + tr( "  (%1 scans)" ).arg( nscan );
+         le_status->setText( smsg );
+         qApp->processEvents();
+      }
+      return;     // Return with no change in AUC data
+   }
 int tm1=sttime.msecsTo(QDateTime::currentDateTime());
-DbgLv(1) << "RLd:      import-done tm1" << tm1;
-   le_status->setText( tr( "Update Raw Optima data import complete." ) );
-   qApp->processEvents();
-   xpn_data->build_rawData( allData );
-int tm2=sttime.msecsTo(QDateTime::currentDateTime());
-DbgLv(1) << "RLd:      build-raw done tm2" << tm2;
-   le_status->setText( tr( "Update of AUC data complete." ) );
+
+   // Otherwise, report updated raw data import
+   le_status->setText( tr( "Update of Raw Optima data import complete." ) );
    qApp->processEvents();
 
+   // Now, update the AUC data with new scans
+   xpn_data->rebuild_rawData( allData );
+
+int tm2=sttime.msecsTo(QDateTime::currentDateTime());
+DbgLv(1) << "RLd:      build-raw done: tm1 tm2" << tm1 << tm2;
+   // Reset scan counter maximum and report update complete
+   nscan       = allData[ trpxs ].scanCount();
+   npoint      = allData[ trpxs ].pointCount();
+   ntpoint     = nscan * npoint;
+   ct_from->setMaximum( nscan );
+   ct_to  ->setMaximum( nscan );
+   le_status->setText( tr( "Update of AUC data complete -- now %1 scans." )
+                       .arg( nscan ) );
+   qApp->processEvents();
+
+   // Do resets and re-plot the current triple
    changeCellCh();
 }
 

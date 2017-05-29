@@ -292,6 +292,27 @@ class US_UTIL_EXTERN US_Math2
       //! \return Computed best number of grid repetitions
       static int best_grid_reps( int&, int& );
 
+      //! \brief Compute the norm value of a simulation data set
+      //! \param simdat  Pointer to a simulation data set
+      //! \return        The norm value of the dataset values
+      static double norm_value( US_DataIO::RawData* );
+
+      //! \brief Compute the norm value of an experiment data set
+      //! \param expdat  Pointer to an experiement data set
+      //! \return        The norm value of the dataset values
+      static double norm_value( US_DataIO::EditedData* );
+
+      //! \brief Compute the norm value of a data array
+      //! \param datary  Pointer to an array of data values
+      //! \param nval    Count of values in the array
+      //! \return        The norm value of the array
+      static double norm_value( double*, const int );
+
+      //! \brief Compute the norm value of a data vector
+      //! \param datvec  Pointer to a vector of data values
+      //! \return        The norm value of the vector
+      static double norm_value( QVector< double >* );
+
       private:
 
       static void _nnls_g1 ( double a, double b, double*, double*, double* );

@@ -93,42 +93,15 @@ int US_XpnData::scan_runs( QStringList& runInfo )
    if ( !dbxpn.isOpen() )
       return nruns;
 
-   QSqlQuery  sqry;
-   QSqlRecord qrec;
-   QString schname( "AUC_schema" );
    QString tabname( "ExperimentRun" );
+   QSqlQuery  sqry;
+   QString schname( "AUC_schema" );
    QString sqtab   = schname + "." + tabname;
    QString qrytab  = "\"" + schname + "\".\"" + tabname + "\"";
-
-   qrec            = dbxpn.record( qrytab );
-   int cols        = qrec.count();
-DbgLv(1) << "XpDa:scn:  record lsterr" << dbxpn.lastError().text();
    QStringList cnames;
+   QList< int > cxs;
 
-   for ( int col = 0; col < cols; col++ )
-   {
-      QString fldname = qrec.fieldName( col );
-      cnames << fldname;                   // Get column names
-DbgLv(1) << "XpDa:scn:    col" << col << "fldname" << fldname;
-   }
-
-   int jrunid    = cnames.indexOf( "RunId"                );
-   int jexpid    = cnames.indexOf( "ExperimentId"         );
-   int jrotsn    = cnames.indexOf( "RotorSN"              );
-   int jdatpa    = cnames.indexOf( "DataPath"             );
-   int jexpst    = cnames.indexOf( "ExperimentStart"      );
-   int jinssn    = cnames.indexOf( "InstrumentSN"         );
-   int jsmo1s    = cnames.indexOf( "ScienceModule1SN"     );
-   int jsmo2s    = cnames.indexOf( "ScienceModule2SN"     );
-   int jsmo3s    = cnames.indexOf( "ScienceModule3SN"     );
-   int jrunst    = cnames.indexOf( "RunStatus"            );
-   int jexpde    = cnames.indexOf( "ExperimentDefinition" );
-   int jexpnm    = cnames.indexOf( "ExperimentName"       );
-   int jresnm    = cnames.indexOf( "ResearcherName"       );
-   int jascnf    = cnames.indexOf( "AbsorbanceScan"       );
-   int jfscnf    = cnames.indexOf( "FluorescenceScan"     );
-   int jiscnf    = cnames.indexOf( "InterferenceScan"     );
-   int jwscnf    = cnames.indexOf( "WavelengthScan"       );
+   int cols        = column_indexes( tabname, cnames, cxs );
 
    sqry            = dbxpn.exec( "SELECT count(*) from " + qrytab + ";" );
    sqry.next();
@@ -159,23 +132,23 @@ DbgLv(1) << "XpDa:scn: tabname" << tabname << "rows" << rows
       row++;
 
       tbExpRun exprow;
-      exprow.runId     = sqry.value( jrunid ).toInt();
-      exprow.expId     = sqry.value( jexpid ).toInt();
-      exprow.rotorSN   = sqry.value( jrotsn ).toInt();
-      exprow.datapath  = sqry.value( jdatpa ).toString();
-      exprow.expstart  = sqry.value( jexpst ).toDateTime();
-      exprow.instrSN   = sqry.value( jinssn ).toString();
-      exprow.scimo1sn  = sqry.value( jsmo1s ).toString();
-      exprow.scimo2sn  = sqry.value( jsmo2s ).toString();
-      exprow.scimo3sn  = sqry.value( jsmo3s ).toString();
-      exprow.runstat   = sqry.value( jrunst ).toInt();
-      exprow.expdef    = sqry.value( jexpde ).toString();
-      exprow.expname   = sqry.value( jexpnm ).toString();
-      exprow.resname   = sqry.value( jresnm ).toString();
-      exprow.abscnf    = sqry.value( jascnf ).toBool();
-      exprow.flscnf    = sqry.value( jfscnf ).toBool();
-      exprow.inscnf    = sqry.value( jiscnf ).toBool();
-      exprow.wlscnf    = sqry.value( jwscnf ).toBool();
+      exprow.runId     = sqry.value( cxs[ 0] ).toInt();
+      exprow.expId     = sqry.value( cxs[ 1] ).toInt();
+      exprow.rotorSN   = sqry.value( cxs[ 2] ).toInt();
+      exprow.datapath  = sqry.value( cxs[ 3] ).toString();
+      exprow.expstart  = sqry.value( cxs[ 4] ).toDateTime();
+      exprow.instrSN   = sqry.value( cxs[ 5] ).toString();
+      exprow.scimo1sn  = sqry.value( cxs[ 6] ).toString();
+      exprow.scimo2sn  = sqry.value( cxs[ 7] ).toString();
+      exprow.scimo3sn  = sqry.value( cxs[ 8] ).toString();
+      exprow.runstat   = sqry.value( cxs[ 9] ).toInt();
+      exprow.expdef    = sqry.value( cxs[10] ).toString();
+      exprow.expname   = sqry.value( cxs[11] ).toString();
+      exprow.resname   = sqry.value( cxs[12] ).toString();
+      exprow.abscnf    = sqry.value( cxs[13] ).toBool();
+      exprow.flscnf    = sqry.value( cxs[14] ).toBool();
+      exprow.inscnf    = sqry.value( cxs[15] ).toBool();
+      exprow.wlscnf    = sqry.value( cxs[16] ).toBool();
 
       tExprun << exprow;
 
@@ -347,6 +320,67 @@ DbgLv(1) << "XpDa:i_d: arows frows irows wrows srows crows"
    return status;
 }
 
+// Re-import XPN data from a selected database server
+bool US_XpnData::reimport_data( const int runId, const int scanMask )
+{
+   bool status   = true;
+
+   if ( ! dbxpn.open() )
+   {
+      return false;
+   }
+
+   int oarows    = tAsdata.count();     // Get old row counts
+   int ofrows    = tFsdata.count();
+   int oirows    = tIsdata.count();
+   int owrows    = tWsdata.count();
+   if ( oarows > 1  &&  tAsdata[ 0 ].radPath != tAsdata[ 1 ].radPath )
+      oarows       /= 2;
+   if ( ofrows > 0  &&  tFsdata[ 0 ].radPath != tFsdata[ 1 ].radPath )
+      ofrows       /= 2;
+   if ( owrows > 0  &&  tWsdata[ 0 ].radPath != tWsdata[ 1 ].radPath )
+      owrows       /= 2;
+   bool ascnf    = scanMask & 1;
+   bool fscnf    = scanMask & 2;
+   bool iscnf    = scanMask & 4;
+   bool wscnf    = scanMask & 8;
+
+   int arows     = 0;
+   int frows     = 0;
+   int irows     = 0;
+   int wrows     = 0;
+
+   if ( ascnf )
+   {  // Scan and update data for Absorbance Scan Data
+      arows      = update_xpndata( runId, 'A' );
+      status     = ( arows > oarows );
+DbgLv(1) << "XpDa: rei_dat: arows oarows status" << arows << oarows << status;
+   }
+
+   if ( fscnf )
+   {  // Scan and update data for Fluorescence Scan Data
+      frows      = update_xpndata( runId, 'F' );
+      status     = ( frows > ofrows );
+   }
+
+   if ( iscnf )
+   {  // Scan and update data for Interference Scan Data
+      irows      = update_xpndata( runId, 'I' );
+      status     = ( irows > oirows );
+   }
+
+   if ( wscnf )
+   {  // Scan and update data for Wavelength Scan Data
+      wrows      = update_xpndata( runId, 'W' );
+      status     = ( wrows > owrows );
+   }
+
+DbgLv(1) << "XpDa: rei_dat: arows frows irows wrows"
+   << arows << frows << irows << wrows << "status" << status;
+
+   return status;
+}
+
 // Query and save data for a [AIFW]ScanData table
 int US_XpnData::scan_xpndata( const int runId, const QChar scantype )
 {
@@ -363,26 +397,17 @@ int US_XpnData::scan_xpndata( const int runId, const QChar scantype )
    QString qrytab  = "\"" + schname + "\".\"" + tabname + "\"";
    QString sRunId  = QString::number( runId );
    QStringList cnames;
+   QList< int > cxs;
 
    int count       = 0;
    int rows        = 0;
 
    // Get count of rows matching runId
-   sqtab           = schname + "." + tabname;
-   qrytab          = "\"" + schname + "\".\"" + tabname + "\"";
    QString qrytext = "SELECT count(*) from " + qrytab
                    + " WHERE \"RunId\"=" + sRunId + ";";
-#if 1
    if ( scantype == 'C' )
       qrytext         = "SELECT count(*) from " + qrytab + ";";
-#endif
-#if 0
-   if ( scantype == 'C' )
-   {
-      qrytext         = "SELECT count(*) from " + qrytab + ";";
-                      + " WHERE \"FugeRunProfileId\"=" + sRunId + ";";
-   }
-#endif
+
    sqry            = dbxpn.exec( qrytext );
    sqry.next();
    count           = sqry.value( 0 ).toInt();
@@ -398,68 +423,15 @@ DbgLv(1) << "XpDa:s_x: sRunId" << sRunId << "count" << count;
    // Get columns and determine indecies of fields
    qrytext         = "SELECT * from " + qrytab
                      + " WHERE \"RunId\"=" + sRunId + ";";
-#if 1
    if ( scantype == 'C' )
       qrytext         = "SELECT * from " + qrytab + ";";
-#endif
-#if 0
-   if ( scantype == 'C' )
-   {
-      qrytext         = "SELECT * from " + qrytab
-                      + " WHERE \"FugeRunProfileId\"=" + sRunId + ";";
-   }
-#endif
-   sqry            = dbxpn.exec( qrytext );
-   qrec            = dbxpn.record( qrytab );
-   int cols        = qrec.count();
 
-   for ( int col = 0; col < cols; col++ )
-   {
-      QString fldname = qrec.fieldName( col );
-      cnames << qrec.fieldName( col );     // Get column names
-   }
+   int cols        = column_indexes( tabname, cnames, cxs );
 DbgLv(1) << "XpDa:s_x:  cols" << cols << "cnames" << cnames[0] << "..."
- << cnames[cols-1];
+ << cnames[cols-1] << "tabname" << tabname;
 
-   int jdatid    = cnames.indexOf( "DataId"               );
-   int jrunid    = cnames.indexOf( "RunId"                );
-   int jfruid    = cnames.indexOf( "FugeRunProfileId"     );
-   int jexpst    = cnames.indexOf( "ExperimentStart"      );
-   int jexptm    = cnames.indexOf( "ExperimentTime"       );
-   int jtempe    = cnames.indexOf( "Temperature"          );
-   int jspeed    = cnames.indexOf( "RPM"                  );
-   int jomgsq    = cnames.indexOf( "OmegaSquaredT"        );
-   int jstage    = cnames.indexOf( "StageNum"             );
-   int jscanx    = cnames.indexOf( "ScanSeqNum"           );
-   int jsname    = cnames.indexOf( "SampleName"           );
-   int jsctyp    = cnames.indexOf( "ScanTypeFlag"         );
-   int jmodpo    = cnames.indexOf( "ModulePosition"       );
-   int jcelpo    = cnames.indexOf( "CellPosition"         );
-   int jrepli    = cnames.indexOf( "Replicate"            );
-   int jwavel    = cnames.indexOf( "Wavelength"           );
-   int jradpa    = cnames.indexOf( "RadialPath"           );
-   int jcount    = cnames.indexOf( "Count"                );
-   int jposis    = cnames.indexOf( "Positions"            );
-   int jv1ary    = cnames.indexOf( "V1_Array"             );
-   int jpos2s    = cnames.indexOf( "Positions2"           );
-   int jv2ary    = cnames.indexOf( "V2_Array"             );
-   int jstrpo    = cnames.indexOf( "StartPosition"        );
-   int jresol    = cnames.indexOf( "Resolution"           );
-   int jvalus    = cnames.indexOf( "Values"               );
-   int jscnpo    = cnames.indexOf( "ScanPosition"         );
-   int jwavls    = cnames.indexOf( "Wavelengths"          );
-   int jsbrak    = cnames.indexOf( "StepBraking"          );
-   int jbrate    = cnames.indexOf( "BrakingRate"          );
-   int jholdt    = cnames.indexOf( "HoldTempAfterFinal"   );
-   int jholds    = cnames.indexOf( "HoldSpeedAfterFinal"  );
-   int jsette    = cnames.indexOf( "SetTempBeforeStart"   );
-   int jssint    = cnames.indexOf( "SystemStatusInterval" );
-   int jstges    = cnames.indexOf( "Stages"               );
-   int jstgrp    = cnames.indexOf( "StageRPM"             );
-   int jstgst    = cnames.indexOf( "StageStart"           );
-   int jstgdu    = cnames.indexOf( "StageDuration"        );
-   int jstgac    = cnames.indexOf( "StageAccelRate"       );
-   int jpaids    = cnames.indexOf( "StageCellParameterIds" );
+   sqry            = dbxpn.exec( qrytext );
+
    int isctyp    = ( scantype == 'A' ) ? 1 : 0;
    isctyp        = ( scantype == 'F' ) ? 2 : isctyp;
    isctyp        = ( scantype == 'I' ) ? 3 : isctyp;
@@ -480,54 +452,15 @@ DbgLv(1) << "XpDa:s_x:  isctyp scantype" << isctyp << scantype;
       {
          case 1:
          {
-            tbAsData asdrow;
-            asdrow.runId     = sqry.value( jrunid ).toInt();
-            asdrow.dataId    = sqry.value( jdatid ).toInt();
-            asdrow.exptime   = sqry.value( jexptm ).toInt();
-            asdrow.stageNum  = sqry.value( jstage ).toInt();
-            asdrow.scanSeqN  = sqry.value( jscanx ).toInt();
-            asdrow.modPos    = sqry.value( jmodpo ).toInt();
-            asdrow.cellPos   = sqry.value( jcelpo ).toInt();
-            asdrow.replic    = sqry.value( jrepli ).toInt();
-            asdrow.wavelen   = sqry.value( jwavel ).toInt();
-            asdrow.tempera   = sqry.value( jtempe ).toDouble();
-            asdrow.speed     = sqry.value( jspeed ).toDouble();
-            asdrow.omgSqT    = sqry.value( jomgsq ).toDouble();
-            asdrow.count     = sqry.value( jcount ).toInt();
-            asdrow.expstart  = sqry.value( jexpst ).toDateTime();
-            asdrow.samplName = sqry.value( jsname ).toString();
-            asdrow.scanTypeF = sqry.value( jsctyp ).toString();
-            asdrow.radPath   = sqry.value( jradpa ).toString();
-            QString sPoss    = sqry.value( jposis ).toString();
-            QString sVals    = sqry.value( jv1ary ).toString();
-            int pcount       = parse_doubles( sPoss, asdrow.rads );
-            int vcount       = parse_doubles( sVals, asdrow.vals );
-            int pcount2      = 0;
-            int vcount2      = 0;
-QString rpsave = asdrow.radPath;
-            if ( asdrow.radPath == " "  ||  asdrow.radPath.isEmpty() )
-            {  // Store both an 'A' and 'B' channel record
-               asdrow.radPath   = "A";
-               tAsdata << asdrow;
-               asdrow.radPath   = "B";
-               sPoss            = sqry.value( jpos2s ).toString();
-               sVals            = sqry.value( jv2ary ).toString();
-               pcount2          = parse_doubles( sPoss, asdrow.rads );
-               vcount2          = parse_doubles( sVals, asdrow.vals );
-               tAsdata << asdrow;
-            }
-            else
-            {  // Store either an 'A' or a 'B' channel record
-               tAsdata << asdrow;
-            }
+            update_ATable( sqry, cxs );
 //*DEBUG*
 if(rows<21 || (rows+21)>count) {
+int ldx=tAsdata.count()-1;
+tbAsData asdrow = tAsdata[ldx];
 DbgLv(1) << "XpDa:scn:    row" << rows << "run" << asdrow.runId
- << "dat" << asdrow.dataId << "pc vc c pc2 vc2"
- << pcount << vcount << asdrow.count << pcount2 << vcount2 << "rp" << rpsave;
+ << "dat" << asdrow.dataId << "count" << asdrow.count;
 DbgLv(1) << "XpDa:scn:     rads0 rads1 vals0 vals1"
- << asdrow.rads[0] << asdrow.rads[1] << asdrow.vals[0] << asdrow.vals[1]
- << QString(sPoss).left(20) << QString(sVals).left(20);
+ << asdrow.rads[0] << asdrow.rads[1] << asdrow.vals[0] << asdrow.vals[1];
 DbgLv(1) << "XpDa:scn:      etim scn temp speed omg estr"
  << asdrow.exptime << asdrow.scanSeqN << asdrow.tempera << asdrow.speed
  << asdrow.omgSqT << asdrow.expstart.toString();
@@ -538,47 +471,13 @@ DbgLv(1) << "XpDa:scn:      etim scn temp speed omg estr"
          }
          case 2:
          {
-            tbFsData fsdrow;
-            fsdrow.runId     = sqry.value( jrunid ).toInt();
-            fsdrow.dataId    = sqry.value( jdatid ).toInt();
-            fsdrow.exptime   = sqry.value( jexptm ).toInt();
-            fsdrow.stageNum  = sqry.value( jstage ).toInt();
-            fsdrow.scanSeqN  = sqry.value( jscanx ).toInt();
-            fsdrow.modPos    = sqry.value( jmodpo ).toInt();
-            fsdrow.cellPos   = sqry.value( jcelpo ).toInt();
-            fsdrow.replic    = sqry.value( jrepli ).toInt();
-            fsdrow.wavelen   = sqry.value( jwavel ).toInt();
-            fsdrow.tempera   = sqry.value( jtempe ).toDouble();
-            fsdrow.speed     = sqry.value( jspeed ).toDouble();
-            fsdrow.omgSqT    = sqry.value( jomgsq ).toDouble();
-            fsdrow.expstart  = sqry.value( jexpst ).toDateTime();
-            fsdrow.samplName = sqry.value( jsname ).toString();
-            fsdrow.scanTypeF = sqry.value( jsctyp ).toString();
-            fsdrow.radPath   = sqry.value( jradpa ).toString();
-            fsdrow.count     = sqry.value( jcount ).toInt();
-            QString sPoss    = sqry.value( jposis ).toString();
-            QString sVals    = sqry.value( jvalus ).toString();
-            int pcount       = parse_doubles( sPoss, fsdrow.rads );
-            int vcount       = parse_doubles( sVals, fsdrow.vals );
-            int pcount2      = 0;
-            int vcount2      = 0;
-            if ( fsdrow.radPath == " "  ||  fsdrow.radPath.isEmpty() )
-            {  // Store both an 'A' and 'B' channel record
-               fsdrow.radPath   = "A";
-               tFsdata << fsdrow;
-               fsdrow.radPath   = "B";
-               sPoss            = sqry.value( jpos2s ).toString();
-               sVals            = sqry.value( jv2ary ).toString();
-               pcount2          = parse_doubles( sPoss, fsdrow.rads );
-               vcount2          = parse_doubles( sVals, fsdrow.vals );
-            }
-
-            tFsdata << fsdrow;
+            update_FTable( sqry, cxs );
 //*DEBUG*
 if(rows<9 || (rows+9)>count) {
+int ldx=tFsdata.count()-1;
+tbFsData fsdrow = tFsdata[ldx];
 DbgLv(1) << "XpDa:scn:    row" << rows << "run" << fsdrow.runId
- << "dat" << fsdrow.dataId << "pc vc c pc2 vc2"
- << pcount << vcount << fsdrow.count << pcount2 << vcount2;
+ << "dat" << fsdrow.dataId;
 DbgLv(1) << "XpDa:scn:       cnames" << cnames;
 }
 //*DEBUG*
@@ -586,38 +485,13 @@ DbgLv(1) << "XpDa:scn:       cnames" << cnames;
          }
          case 3:
          {
-            tbIsData isdrow;
-            isdrow.runId     = sqry.value( jrunid ).toInt();
-            isdrow.dataId    = sqry.value( jdatid ).toInt();
-            isdrow.exptime   = sqry.value( jexptm ).toInt();
-            isdrow.stageNum  = sqry.value( jstage ).toInt();
-            isdrow.scanSeqN  = sqry.value( jscanx ).toInt();
-            isdrow.modPos    = sqry.value( jmodpo ).toInt();
-            isdrow.cellPos   = sqry.value( jcelpo ).toInt();
-            isdrow.replic    = sqry.value( jrepli ).toInt();
-            isdrow.wavelen   = sqry.value( jwavel ).toInt();
-            isdrow.tempera   = sqry.value( jtempe ).toDouble();
-            isdrow.speed     = sqry.value( jspeed ).toDouble();
-            isdrow.omgSqT    = sqry.value( jomgsq ).toDouble();
-            isdrow.startPos  = sqry.value( jstrpo ).toDouble();
-            isdrow.resolu    = sqry.value( jresol ).toDouble();
-            isdrow.expstart  = sqry.value( jexpst ).toDateTime();
-            isdrow.samplName = sqry.value( jsname ).toString();
-            isdrow.scanTypeF = sqry.value( jsctyp ).toString();
-            isdrow.count     = sqry.value( jcount ).toInt();
-            QString sPoss    = sqry.value( jposis ).toString();
-            QString sVals    = sqry.value( jvalus ).toString();
-            int pcount       = parse_doubles( sPoss, isdrow.rads );
-            int vcount       = parse_doubles( sVals, isdrow.vals );
-
-            tIsdata << isdrow;
+            update_ITable( sqry, cxs );
 //*DEBUG*
 if(rows<9 || (rows+9)>count) {
-DbgLv(1) << "XpDa:scn:      jstrpo jresol jposis jvalus"
- << jstrpo << jresol << jposis << jvalus;
+int ldx=tIsdata.count()-1;
+tbIsData isdrow = tIsdata[ldx];
 DbgLv(1) << "XpDa:scn:    row" << rows << "run" << isdrow.runId
- << "dat" << isdrow.dataId << "pc vc c" << pcount << vcount << isdrow.count
- << "modpos celpos" << isdrow.modPos << isdrow.cellPos;
+ << "dat" << isdrow.dataId;
 DbgLv(1) << "XpDa:scn:     rads0 rads1 vals0 vals1"
  << isdrow.rads[0] << isdrow.rads[1] << isdrow.vals[0] << isdrow.vals[1];
 }
@@ -626,43 +500,13 @@ DbgLv(1) << "XpDa:scn:     rads0 rads1 vals0 vals1"
          }
          case 4:
          {
-            tbWsData wsdrow;
-            wsdrow.runId     = sqry.value( jrunid ).toInt();
-            wsdrow.dataId    = sqry.value( jdatid ).toInt();
-            wsdrow.exptime   = sqry.value( jexptm ).toInt();
-            wsdrow.stageNum  = sqry.value( jstage ).toInt();
-            wsdrow.scanSeqN  = sqry.value( jscanx ).toInt();
-            wsdrow.modPos    = sqry.value( jmodpo ).toInt();
-            wsdrow.cellPos   = sqry.value( jcelpo ).toInt();
-            wsdrow.replic    = sqry.value( jrepli ).toInt();
-            wsdrow.scanPos   = sqry.value( jscnpo ).toInt();
-            wsdrow.tempera   = sqry.value( jtempe ).toDouble();
-            wsdrow.speed     = sqry.value( jspeed ).toDouble();
-            wsdrow.omgSqT    = sqry.value( jomgsq ).toDouble();
-            wsdrow.expstart  = sqry.value( jexpst ).toDateTime();
-            wsdrow.samplName = sqry.value( jsname ).toString();
-            wsdrow.scanTypeF = sqry.value( jsctyp ).toString();
-            wsdrow.radPath   = sqry.value( jradpa ).toString();
-            wsdrow.count     = sqry.value( jcount ).toInt();
-            QString sPoss    = sqry.value( jwavls ).toString();
-            QString sVals    = sqry.value( jv1ary ).toString();
-            int pcount       = parse_doubles( sPoss, wsdrow.wvls );
-            int vcount       = parse_doubles( sVals, wsdrow.vals );
-            int vcount2      = 0;
-            if ( wsdrow.radPath == " "  ||  wsdrow.radPath.isEmpty() )
-            {  // Store both an 'A' and 'B' channel record
-               wsdrow.radPath   = "A";
-               tWsdata << wsdrow;
-               wsdrow.radPath   = "B";
-               sVals            = sqry.value( jv2ary ).toString();
-               vcount2          = parse_doubles( sVals, wsdrow.vals );
-            }
-
-            tWsdata << wsdrow;
+            update_WTable( sqry, cxs );
 //*DEBUG*
 if(rows<9 || (rows+9)>count) {
-DbgLv(1) << "XpDa:scn:    row" << rows << "run dat pc vc vc2 c" << wsdrow.runId
- << wsdrow.dataId << pcount << vcount << vcount2 << wsdrow.count;
+int ldx=tWsdata.count()-1;
+tbWsData wsdrow = tWsdata[ldx];
+DbgLv(1) << "XpDa:scn:    row" << rows << "run dat count" << wsdrow.runId
+ << wsdrow.dataId << wsdrow.count;
 }
 //*DEBUG*
             break;
@@ -670,14 +514,15 @@ DbgLv(1) << "XpDa:scn:    row" << rows << "run dat pc vc vc2 c" << wsdrow.runId
          case 5:
          {
             tbSyData sydrow;
-            sydrow.dataId    = sqry.value( jdatid ).toInt();
-            sydrow.runId     = sqry.value( jrunid ).toInt();
-            sydrow.expstart  = sqry.value( jexpst ).toDateTime();
-            sydrow.exptime   = sqry.value( jexptm ).toInt();
-            sydrow.tempera   = sqry.value( jtempe ).toDouble();
-            sydrow.speed     = sqry.value( jspeed ).toDouble();
-            sydrow.omgSqT    = sqry.value( jomgsq ).toDouble();
-            sydrow.stageNum  = sqry.value( jstage ).toInt();
+
+            sydrow.dataId    = sqry.value( cxs[  0 ] ).toInt();
+            sydrow.runId     = sqry.value( cxs[  1 ] ).toInt();
+            sydrow.expstart  = sqry.value( cxs[  2 ] ).toDateTime();
+            sydrow.exptime   = sqry.value( cxs[  3 ] ).toInt();
+            sydrow.tempera   = sqry.value( cxs[  4 ] ).toDouble();
+            sydrow.speed     = sqry.value( cxs[  5 ] ).toDouble();
+            sydrow.omgSqT    = sqry.value( cxs[  6 ] ).toDouble();
+            sydrow.stageNum  = sqry.value( cxs[  7 ] ).toInt();
 
             tSydata << sydrow;
 //*DEBUG*
@@ -692,20 +537,21 @@ DbgLv(1) << "XpDa:scn:    row" << rows << "run dat" << sydrow.runId << sydrow.da
          case 6:
          {
             tbCrProf crprow;
-            crprow.frunId    = sqry.value( jfruid ).toInt();
-            crprow.tempera   = sqry.value( jtempe ).toDouble();
-            crprow.sbrake    = sqry.value( jsbrak ).toInt();
-            crprow.brrate    = sqry.value( jbrate ).toDouble();
-            crprow.holdte    = sqry.value( jholdt ).toInt();
-            crprow.holdsp    = sqry.value( jholds ).toInt();
-            crprow.sette     = sqry.value( jsette ).toInt();
-            crprow.sstintv   = sqry.value( jssint ).toDouble();
-            crprow.stages    = sqry.value( jstges ).toString();
-            crprow.stgrpm    = sqry.value( jstgrp ).toDouble();
-            crprow.stgstart  = sqry.value( jstgst ).toDouble();
-            crprow.stgdurat  = sqry.value( jstgdu ).toDouble();
-            crprow.stgaccel  = sqry.value( jstgac ).toDouble();
-            crprow.paramids  = sqry.value( jpaids ).toString();
+
+            crprow.frunId    = sqry.value( cxs[  0 ] ).toInt();
+            crprow.tempera   = sqry.value( cxs[  1 ] ).toDouble();
+            crprow.sbrake    = sqry.value( cxs[  2 ] ).toInt();
+            crprow.brrate    = sqry.value( cxs[  3 ] ).toDouble();
+            crprow.holdte    = sqry.value( cxs[  4 ] ).toInt();
+            crprow.holdsp    = sqry.value( cxs[  5 ] ).toInt();
+            crprow.sette     = sqry.value( cxs[  6 ] ).toInt();
+            crprow.sstintv   = sqry.value( cxs[  7 ] ).toDouble();
+            crprow.stages    = sqry.value( cxs[  8 ] ).toString();
+            crprow.stgrpm    = sqry.value( cxs[  9 ] ).toDouble();
+            crprow.stgstart  = sqry.value( cxs[ 10 ] ).toDouble();
+            crprow.stgdurat  = sqry.value( cxs[ 11 ] ).toDouble();
+            crprow.stgaccel  = sqry.value( cxs[ 12 ] ).toDouble();
+            crprow.paramids  = sqry.value( cxs[ 13 ] ).toString();
 
             tCrprof << crprow;
 //*DEBUG*
@@ -734,14 +580,8 @@ DbgLv(1) << "XpDa:scn:    tCrprof count" << tCrprof.count();
       qrytext         = "SELECT * from " + qrytab + ";"; 
       sqry            = dbxpn.exec( qrytext );
       qrec            = dbxpn.record( qrytab );
-      int cols        = qrec.count();
-      cnames.clear();
-      for ( int col = 0; col < cols; col++ )
-      {  // Get ExperimentRun column names
-         QString fldname = qrec.fieldName( col );
-         cnames << qrec.fieldName( col );     // Get column names
-      }
       // Get indexes to ExperimentId and RunId
+      cols            = column_indexes( tabname, cnames, cxs );
       int jexpid      = cnames.indexOf( "ExperimentId" );
       int jrunid      = cnames.indexOf( "RunId" );
       while ( sqry.next() )
@@ -758,13 +598,7 @@ DbgLv(1) << "XpDa:scn:    tCrprof count" << tCrprof.count();
       qrytext         = "SELECT * from " + qrytab + ";"; 
       sqry            = dbxpn.exec( qrytext );
       qrec            = dbxpn.record( qrytab );
-      cols            = qrec.count();
-      cnames.clear();
-      for ( int col = 0; col < cols; col++ )
-      {  // Get ExperimentDefinition column names
-         QString fldname = qrec.fieldName( col );
-         cnames << qrec.fieldName( col );     // Get column names
-      }
+      cols            = column_indexes( tabname, cnames, cxs );
       // Get indexes to ExperimentId and FugeRunProfileId
       jexpid          = cnames.indexOf( "ExperimentId" );
       int jfruid      = cnames.indexOf( "FugeRunProfileId" );
@@ -796,6 +630,144 @@ DbgLv(1) << "XpDa:scn:    FugId" << iFugId << "sstInterval" << sstintv;
    }
 
    return rows;
+}
+
+// Query and update data for a [AIFW]ScanData table
+int US_XpnData::update_xpndata( const int runId, const QChar scantype )
+{
+   QStringList  cnames;
+   QList< int > cxs;
+   QSqlQuery    sqry;
+   QSqlRecord   qrec;
+   QString sRunId  = QString::number( runId );
+   QString schname( "AUC_schema" );
+   QString tabname( "AbsorbanceScanData" );
+   QString sqtab, qrytab, qrytext;
+   int norows      = 0;
+   int nnrows      = 0;
+   int nradps      = 2;
+
+   if ( scantype == 'A' )
+   {  // Get Absorbance old and new counts
+      nradps          = ( tAsdata[ 0 ].radPath == tAsdata[ 1 ].radPath )
+                        ? 1 : 2;
+      for ( int ii = 0; ii < tAsdata.count(); ii++ )
+      {
+         if ( tAsdata[ ii ].runId == runId )
+            norows++;
+      }
+      norows         /= nradps;
+DbgLv(1) << "XpDa:updx:  sdat count" << tAsdata.count();
+   }
+   else if ( scantype == 'F' )
+   {  // Get Fluorescence old and new counts
+      for ( int ii = 0; ii < tFsdata.count(); ii++ )
+      {
+         if ( tFsdata[ ii ].runId == runId )
+            norows++;
+      }
+      tabname         = "FluorescenceScanData";
+   }
+   else if ( scantype == 'I' )
+   {  // Get Interference old and new counts
+      for ( int ii = 0; ii < tIsdata.count(); ii++ )
+      {
+         if ( tIsdata[ ii ].runId == runId )
+            norows++;
+      }
+      tabname         = "InterferenceScanData";
+   }
+   else if ( scantype == 'W' )
+   {  // Get Wavelength old and new counts
+      for ( int ii = 0; ii < tWsdata.count(); ii++ )
+      {
+         if ( tWsdata[ ii ].runId == runId )
+            norows++;
+      }
+      tabname         = "WavelengthScanData";
+   }
+
+   // Count the number of rows now in the data table
+   sqtab           = schname + "." + tabname;
+   qrytab          = "\"" + schname + "\".\"" + tabname + "\"";
+   qrytext         = "SELECT count(*) from " + qrytab
+                   + " WHERE \"RunId\"=" + sRunId + ";";
+   sqry            = dbxpn.exec( qrytext );
+   sqry.next();
+   nnrows          = sqry.value( 0 ).toInt();
+DbgLv(1) << "XpDa:updx:  norows" << norows << "nnrows" << nnrows;
+
+   // Return now if the new count is zero or the same as the old
+   if ( nnrows == 0 )
+      return nnrows;
+   else if ( nnrows == norows )
+      return (-nnrows);
+
+   // Set new rows count or flag that it is the same as old count
+   nnrows          = ( nnrows > norows ) ? nnrows : ( -nnrows );
+
+   if ( nnrows > 0 )
+   {  // There are new rows, so update data tables
+      qrytext         = "SELECT * from " + qrytab
+                      + " WHERE \"RunId\"=" + sRunId + ";";
+      sqry            = dbxpn.exec( qrytext );
+      int cols        = column_indexes( tabname, cnames, cxs );
+DbgLv(1) << "XpDa:updx:   cols" << cols << "flds" << cxs.count();
+      int rows        = 0;
+
+      if ( scantype == 'A' )
+      {
+         while ( sqry.next() )
+         {
+            rows++;
+            // Skip update of rows already captured
+            if ( rows <= norows )   continue;
+
+            // Update new table entries
+            update_ATable( sqry, cxs );
+         }
+      }
+
+      else if ( scantype == 'F' )
+      {
+         while ( sqry.next() )
+         {
+            rows++;
+            // Skip update of rows already captured
+            if ( rows <= norows )   continue;
+
+            // Update new table entries
+            update_FTable( sqry, cxs );
+         }
+      }
+
+      else if ( scantype == 'I' )
+      {
+         while ( sqry.next() )
+         {
+            rows++;
+            // Skip update of rows already captured
+            if ( rows <= norows )   continue;
+
+            // Update new table entries
+            update_ITable( sqry, cxs );
+         }
+      }
+
+      else if ( scantype == 'W' )
+      {
+         while ( sqry.next() )
+         {
+            rows++;
+            // Skip update of rows already captured
+            if ( rows <= norows )   continue;
+
+            // Update new table entries
+            update_WTable( sqry, cxs );
+         }
+      }
+   }
+   return nnrows;
 }
 
 // Parse a string into a vector of doubles
@@ -1180,12 +1152,167 @@ DbgLv(1) << "BldRawD trx" << trx << "scx" << scx << "speed" << speed;
 }
 //*DEBUG*
 
-   QString stat_text = tr( "All %1 raw AUCs have been build." ).arg( ntriple );
+   QString stat_text = tr( "All %1 raw AUCs have been built." ).arg( ntriple );
    emit status_text( stat_text );
   
    nscan             = mxscnn;
 
 DbgLv(1) << "BldRawD  DONE ntriple" << ntriple << "mxscnn" << mxscnn
+ << "mnscnn" << mnscnn;
+   return ntriple;
+}
+
+// Update the list of RawData objects from raw input XPN data
+int US_XpnData::rebuild_rawData( QVector< US_DataIO::RawData >& allData )
+{
+DbgLv(1) << "rBldRawD IN";
+   int mxscno      = 0;
+   int mxscnn      = 0;
+//   int mxrown      = 0;
+
+   // Count the maximum scans for current AUC data
+   for ( int ii = 0; ii < allData.count(); ii++ )
+   {
+      mxscno          = qMax( mxscno, allData[ ii ].scanCount() );
+   }
+DbgLv(1) << "rBldRawD mxscno" << mxscno;
+
+   // First rebuild the internal arrays and variables
+   rebuild_internals();
+
+   const int low_memApc = 20;
+   npoint          = a_radii.count();
+
+   // Set up the interpolated byte array (all one bits)
+   int    nbytei   = ( npoint + 7 ) / 8;
+   QByteArray interpo( nbytei, '\255' );
+
+   // Rebuild the raw data set for each triple
+   int    ccx      = 0;
+   int    wvx      = 0;
+   int    scnnbr   = 0;
+   nscnn           = scnnbrs.count();
+   int    stgnbr   = 0;
+   nstgn           = stgnbrs.count();
+
+   for ( int trx = 0; trx < ntriple; trx++ )
+   {  // Update scans for each triple
+DbgLv(1) << "rBldRawD     trx" << trx << " rebuilding scans... ccx" << ccx;
+      US_DataIO::RawData* rdata = &allData[ trx ];
+      QString triple    = triples[ trx ].replace( " / ", "/" );
+      QString trnode    = trnodes[ trx ];
+      int oscknt        = rdata->scanCount();   // Old scan count, this triple
+      int ndscan        = 0;                    // New scan count
+
+QDateTime time10=QDateTime::currentDateTime();
+      for ( int sgx = 0; sgx < nstgn; sgx++ )
+      {  // Set stage values
+         stgnbr            = stgnbrs[ sgx ];
+         for ( int scx = 0; scx < nscnn; scx++ )
+         {  // Set scan values
+            scnnbr            = scnnbrs[ scx ];
+
+            int datx          = scan_data_index( trnode, stgnbr, scnnbr );
+
+            if ( datx < 0 )  continue;
+
+            ndscan++;
+DbgLv(1) << "rBldRawD      sqx" << sgx << "scx" << scx
+ << "ndscan oscknt" << ndscan << oscknt;
+            if ( ndscan < oscknt )  continue;    // Skip old AUC scan
+
+            set_scan_data( datx );               // Get scan table data
+
+            US_DataIO::Scan scan;
+            scan.temperature  = csdrec.tempera;
+            scan.rpm          = csdrec.speed;
+            scan.seconds      = (double)csdrec.exptime;
+            scan.omega2t      = csdrec.omgSqT;
+            scan.wavelength   = csdrec.wavelen;
+            scan.nz_stddev    = false;
+//            int npoint        = csdrec.rads->count();
+            scan.interpolated = interpo;
+
+if(scx<3 || (scx+4)>nscnn)
+DbgLv(1) << "rBldRawD       trx wvx scx scnnbr" << trx << wvx << scx << scnnbr
+ << "wavl" << scan.wavelength;
+
+//*DEBUG*
+if(trx==0) {
+DbgLv(1) << "rBldRawD      scx" << scx << "trx" << trx
+ << "seconds" << scan.seconds << "rpm" << scan.rpm;
+}
+//*DEBUG*
+            int kpoint        = get_readings( scan.rvalues, trx, sgx, scx );
+
+            if ( kpoint < 0 )
+               continue;                 // Skip output if no stage,scan match
+
+if(scx<3 || (scx+4)>nscnn)
+DbgLv(1) << "rBldRawD        scx" << scx << "rvalues size" << scan.rvalues.size()
+ << "rvalues[mid]" << scan.rvalues[scan.rvalues.size()/2];
+
+            if ( ndscan == oscknt )
+            {  // If last of old scans, update in case readings were added
+               rdata->scanData[ scx ] = scan;
+            }
+            else
+            {  // If new scan, append the scan to the triple
+               rdata->scanData << scan;
+            }
+         } // END: scan loop
+      } // END: stage loop
+DbgLv(1) << "rBldRawD         EoSl: trx" << trx;
+QDateTime time20=QDateTime::currentDateTime();
+DbgLv(1) << "rBldRawD trx" << trx << "TIMEMS:scan loop time"
+ << time10.msecsTo(time20);
+
+      // Set the average speed for the final/only speed step
+      mnscnn            = qMin( mnscnn, ndscan );
+      mxscnn            = qMax( mxscnn, ndscan );
+
+DbgLv(1) << "BldRawD     trx" << trx << " saving allData... ndscan" << ndscan;
+
+      QString stat_text = tr( "Of %1 raw AUCs, updated %2" )
+                          .arg( ntriple ).arg( trx + 1 );
+      emit status_text( stat_text );
+
+      wvx++;
+
+      if ( wvx >= nlambda )
+      {  // After final wavelength, reset at next cell/channel
+         ccx++;
+         wvx  = 0;
+
+         // Free up some memory if it is getting tight
+         int memAv = US_Memory::memory_profile();
+
+         if ( memAv < low_memApc )
+         {
+//            tscans.clear();
+int memAv2 = US_Memory::memory_profile();
+DbgLv(1) << "BldRawD  memfree %: 1memAV" << memAv << "2memAV" << memAv2;
+         }
+      }
+   } // END: triple loop
+//*DEBUG*
+for ( int trx = 0; trx < ntriple; trx++ )
+{
+ US_DataIO::RawData* rdata = &allData[trx];
+ for (int scx=0; scx<rdata->scanCount(); scx++ )
+ {
+  double speed=rdata->scanData[scx].rpm;
+DbgLv(1) << "rBldRawD trx" << trx << "scx" << scx << "speed" << speed;
+ }
+}
+//*DEBUG*
+
+   QString stat_text = tr( "All %1 raw AUCs have been rebuilt." ).arg( ntriple );
+   emit status_text( stat_text );
+  
+   nscan             = mxscnn;
+
+DbgLv(1) << "rBldRawD  DONE ntriple" << ntriple << "mxscnn" << mxscnn
  << "mnscnn" << mnscnn;
    return ntriple;
 }
@@ -1551,6 +1678,7 @@ void US_XpnData::run_values( QString& arunid, QString& aruntype )
 void US_XpnData::set_scan_data( const int datx, const QString arType )
 {
    QString rType    = arType.isEmpty() ? runType : arType;
+
    if ( rType == "RI" )
    {
       tbAsData* asdrow = &tAsdata[ datx ];
@@ -1646,6 +1774,10 @@ void US_XpnData::set_scan_data( const int datx, const QString arType )
       csdrec.rads      = &wsdrow->wvls;
       csdrec.vals      = &wsdrow->vals;
    }
+if (datx<5)
+DbgLv(1) << "XpDa:ssd: datx" << datx << "csd: dId rId scan"
+ << csdrec.dataId << csdrec.runId << csdrec.scanSeqN
+ << "rType" << rType;
 }
 
 // Private slot to map counts and sizes
@@ -2200,6 +2332,69 @@ DbgLv(1) << "XpDa:b_i:       rad0 radn" << a_radii[0] << a_radii[rkntl-1]
 
 }
 
+// Rebuild the internal variables and arrays (mainly, just scan information)
+void US_XpnData::rebuild_internals( )
+{
+   scnnbrs   .clear();
+   mnscnn        = 99999;
+   mxscnn        = 0;
+   int sdknt     = 0;
+   sdknt         = ( runType == "RI" ) ? tAsdata.count() : sdknt;
+   sdknt         = ( runType == "FI" ) ? tFsdata.count() : sdknt;
+   sdknt         = ( runType == "IP" ) ? tIsdata.count() : sdknt;
+   sdknt         = ( runType == "WI" ) ? tWsdata.count() : sdknt;
+
+   // Analyze *ScanData table values
+DbgLv(1) << "XpDa:rb_i:   csdrec count" << sdknt;
+   for ( int ii = 0; ii < sdknt; ii++ )
+   {  // Get cell/channel, triple, lambda lists
+      set_scan_data( ii );
+
+      int stage     = csdrec.stageNum;
+      int scnnbr    = csdrec.scanSeqN;
+      int celpos    = csdrec.cellPos;
+      int iwavln    = csdrec.wavelen;
+      QString schan = csdrec.radPath;
+      QString scell = QString::number( celpos );
+      QString swavl = QString::number( iwavln );
+
+      QString cechn = scell + " / " + schan;
+      QString tripl = cechn + " / " + swavl;
+      QString tnode = scell + "." + schan + "." + swavl;
+
+      QString darec = tnode + "."
+                    + QString().sprintf( "%05i.%05i", stage, scnnbr );
+DbgLv(1) << "XpDa:b_i: ii" << ii << "scnnbr" << scnnbr
+ << "darec" << darec;
+
+      // Update lists of used scans, datarecs (trnode.stage.scan)
+
+      int scnnx     = scnnbrs.indexOf( scnnbr );
+      if ( scnnx < 0 )
+      {
+         scnnbrs << scnnbr;              // Save unique ScanNumber
+      }
+
+      int rdatx     = datrecs.indexOf( darec );
+      if ( rdatx < 0 )
+      {
+         datrecs << darec;
+      }
+
+   }  // END: *ScanData records loop
+DbgLv(1) << "XpDa:b_i:    scnnbrs count" << scnnbrs.count();
+
+DbgLv(1) << "XpDa:b_i:       kdarec" << datrecs.count()
+ << "da0 dan" << datrecs[0] << datrecs[datrecs.count()-1];
+qSort(datrecs);
+qSort(scnnbrs);
+DbgLv(1) << "XpDa:b_i:       kdarec" << datrecs.count()
+ << "da0 dan" << datrecs[0] << datrecs[datrecs.count()-1];
+DbgLv(1) << "XpDa:b_i:       kstgn " << stgnbrs.count()
+ << "scn0 scnn" << scnnbrs[0] << scnnbrs[scnnbrs.count()-1];
+
+}
+
 // Dump (print) information on tables and their fields
 void US_XpnData::dump_tables()
 {
@@ -2233,6 +2428,280 @@ void US_XpnData::dump_tables()
       }
 
       //qDebug() << "  Columns:" << cnames;
+   }
+}
+
+// Get column indexes and other properties of a db table
+int US_XpnData::column_indexes( const QString tabname, QStringList& cnames,
+                                QList< int >& cxs )
+{
+   const QString schname( "AUC_schema" );
+   QString sqtab   = schname + "." + tabname;
+   QString qrytab  = "\"" + schname + "\".\"" + tabname + "\"";
+   QSqlRecord qrec = dbxpn.record( qrytab );
+   int ncols       = qrec.count();
+   cnames.clear();
+   cxs   .clear();
+   QStringList flds;
+
+   if ( tabname == "AbsorbanceScanData" )
+   {
+      flds << "DataId" << "RunId" << "ExperimentStart" << "ExperimentTime"
+           << "Temperature" << "RPM" << "OmegaSquaredT" << "StageNum"
+           << "ScanSeqNum" << "SampleName" << "ScanTypeFlag" << "ModulePosition"
+           << "CellPosition" << "Replicate" << "Wavelength" << "RadialPath"
+           << "Count" << "Positions" << "V1_Array" << "Positions2"
+           << "V2_Array";
+   }
+
+   else if ( tabname == "FluorescenceScanData" )
+   {
+      flds << "DataId" << "RunId" << "ExperimentStart" << "ExperimentTime"
+           << "Temperature" << "RPM" << "OmegaSquaredT" << "StageNum"
+           << "ScanSeqNum" << "SampleName" << "ScanTypeFlag" << "ModulePosition"
+           << "CellPosition" << "Replicate" << "Wavelength" << "RadialPath"
+           << "Count" << "Positions" << "V1_Array" << "Positions2"
+           << "V2_Array";
+   }
+
+   else if ( tabname == "InterferenceScanData" )
+   {
+      flds << "DataId" << "RunId" << "ExperimentStart" << "ExperimentTime"
+           << "Temperature" << "RPM" << "OmegaSquaredT" << "StageNum"
+           << "ScanSeqNum" << "SampleName" << "ScanTypeFlag" << "ModulePosition"
+           << "CellPosition" << "Replicate" << "Count" << "StartPosition"
+           << "Resolution" << "Wavelength" << "Positions" << "Values";
+   }
+
+   else if ( tabname == "WavelengthScanData" )
+   {
+      flds << "DataId" << "RunId" << "ExperimentStart" << "ExperimentTime"
+           << "Temperature" << "RPM" << "OmegaSquaredT" << "StageNum"
+           << "ScanSeqNum" << "SampleName" << "ScanTypeFlag" << "ModulePosition"
+           << "CellPosition" << "Replicate" << "ScanPosition" << "RadialPath"
+           << "Count" << "Wavelengths" << "V1_Array" << "V2_Array";
+   }
+
+   else if ( tabname == "ExperimentRun" )
+   {
+      flds << "RunId" << "ExperimentId" << "RotorSN" << "DataPath"
+           << "ExperimentStart" << "InstrumentSN" << "ScienceModule1SN" << "ScienceModule2SN"
+           << "ScienceModule3SN" << "RunStatus" << "ExperimentDefinition" << "ExperimentName"
+           << "ResearcherName" << "AbsorbanceScan" << "FluorescenceScan" << "InterferenceScan"
+           << "WavelengthScan";
+   }
+
+   else if ( tabname == "ExperimentDefinition" )
+   {
+      flds << "ExperimentId" << "FugeRunProfileId" << "CellCount" << "Researcher"
+           << "Name" << "Project" << "Comments" << "Used"
+           << "UseCount";
+   }
+
+   else if ( tabname == "SystemStatusData" )
+   {
+      flds << "DataId" << "RunId" << "ExperimentStart" << "ExperimentTime"
+           << "Temperature" << "RPM" << "OmegaSquaredT" << "StageNum";
+   }
+
+   else if ( tabname == "CentrifugeRunProfile" )
+   {
+      flds << "FugeRunProfileId" << "Temperature" << "StepBraking" << "BrakingRate"
+           << "HoldTempAfterFinal" << "HoldSpeedAfterFinal" << "SetTempBeforeStart"
+           << "SystemStatusInterval"
+           << "Stages" << "StageRPM" << "StageStart" << "StageDuration"
+           << "StageAccelRate" << "StageCellParameterIds" << "Used";
+   }
+
+   else
+   {
+      qDebug() << "*WARNING:  flds unspecified for tabname" << tabname;
+      return 0;
+   }
+
+   int nflds       = flds.count();
+   if ( ncols != nflds )
+   {
+      qDebug() << "*WARNING:  for" << tabname << "field,column counts:"
+               << nflds << ncols;
+   }
+
+   for ( int col = 0; col < ncols; col++ )
+   {
+      QString fldname = qrec.fieldName( col );
+      cnames << fldname;                   // Get column names
+DbgLv(1) << "XpDa:cox:    col" << col << "fldname" << fldname;
+   }
+
+   for ( int fld = 0; fld < nflds; fld++ )
+   {
+      cxs << cnames.indexOf( flds[ fld ] );
+   }
+DbgLv(1) << "XpDa:cox: ncols" << ncols << "nflds" << nflds
+ << "tabname" << tabname;
+
+   return qMin( ncols, nflds );
+}
+
+// Update an entry in the Absorbance data table
+void US_XpnData::update_ATable( QSqlQuery& sqry, QList< int >& cxs )
+{
+   // Construct an AData entry
+   tbAsData asdrow;
+   asdrow.dataId    = sqry.value( cxs[  0 ] ).toInt();
+   asdrow.runId     = sqry.value( cxs[  1 ] ).toInt();
+   asdrow.expstart  = sqry.value( cxs[  2 ] ).toDateTime();
+   asdrow.exptime   = sqry.value( cxs[  3 ] ).toInt();
+   asdrow.tempera   = sqry.value( cxs[  4 ] ).toDouble();
+   asdrow.speed     = sqry.value( cxs[  5 ] ).toDouble();
+   asdrow.omgSqT    = sqry.value( cxs[  6 ] ).toDouble();
+   asdrow.stageNum  = sqry.value( cxs[  7 ] ).toInt();
+   asdrow.scanSeqN  = sqry.value( cxs[  8 ] ).toInt();
+   asdrow.samplName = sqry.value( cxs[  9 ] ).toString();
+   asdrow.scanTypeF = sqry.value( cxs[ 10 ] ).toString();
+   asdrow.modPos    = sqry.value( cxs[ 11 ] ).toInt();
+   asdrow.cellPos   = sqry.value( cxs[ 12 ] ).toInt();
+   asdrow.replic    = sqry.value( cxs[ 13 ] ).toInt();
+   asdrow.wavelen   = sqry.value( cxs[ 14 ] ).toInt();
+   asdrow.radPath   = sqry.value( cxs[ 15 ] ).toString();
+   asdrow.count     = sqry.value( cxs[ 16 ] ).toInt();
+   QString sPoss    = sqry.value( cxs[ 17 ] ).toString();
+   QString sVals    = sqry.value( cxs[ 18 ] ).toString();
+   parse_doubles( sPoss, asdrow.rads );
+   parse_doubles( sVals, asdrow.vals );
+
+   if ( asdrow.radPath == " "  ||  asdrow.radPath.isEmpty() )
+   {  // Store both an 'A' and 'B' channel record
+      asdrow.radPath   = "A";
+      tAsdata << asdrow;             // Update table data entry
+      asdrow.radPath   = "B";
+      sPoss            = sqry.value( cxs[ 19 ] ).toString();
+      sVals            = sqry.value( cxs[ 20 ] ).toString();
+      parse_doubles( sPoss, asdrow.rads );
+      parse_doubles( sVals, asdrow.vals );
+      tAsdata << asdrow;             // Update table data entry
+   }
+
+   else
+   {  // Store either an 'A' or a 'B' channel record
+      tAsdata << asdrow;             // Update table data entry
+   }
+}
+
+// Update an entry in the Fluorescence data table
+void US_XpnData::update_FTable( QSqlQuery& sqry, QList< int >& cxs )
+{
+   // Construct an FData entry
+   tbFsData fsdrow;
+   fsdrow.dataId    = sqry.value( cxs[  0 ] ).toInt();
+   fsdrow.runId     = sqry.value( cxs[  1 ] ).toInt();
+   fsdrow.expstart  = sqry.value( cxs[  2 ] ).toDateTime();
+   fsdrow.exptime   = sqry.value( cxs[  3 ] ).toInt();
+   fsdrow.tempera   = sqry.value( cxs[  4 ] ).toDouble();
+   fsdrow.speed     = sqry.value( cxs[  5 ] ).toDouble();
+   fsdrow.omgSqT    = sqry.value( cxs[  6 ] ).toDouble();
+   fsdrow.stageNum  = sqry.value( cxs[  7 ] ).toInt();
+   fsdrow.scanSeqN  = sqry.value( cxs[  8 ] ).toInt();
+   fsdrow.samplName = sqry.value( cxs[  9 ] ).toString();
+   fsdrow.scanTypeF = sqry.value( cxs[ 10 ] ).toString();
+   fsdrow.modPos    = sqry.value( cxs[ 11 ] ).toInt();
+   fsdrow.cellPos   = sqry.value( cxs[ 12 ] ).toInt();
+   fsdrow.replic    = sqry.value( cxs[ 13 ] ).toInt();
+   fsdrow.wavelen   = sqry.value( cxs[ 14 ] ).toInt();
+   fsdrow.radPath   = sqry.value( cxs[ 15 ] ).toString();
+   fsdrow.count     = sqry.value( cxs[ 16 ] ).toInt();
+   QString sPoss    = sqry.value( cxs[ 17 ] ).toString();
+   QString sVals    = sqry.value( cxs[ 18 ] ).toString();
+   parse_doubles( sPoss, fsdrow.rads );
+   parse_doubles( sVals, fsdrow.vals );
+
+   if ( fsdrow.radPath == " "  ||  fsdrow.radPath.isEmpty() )
+   {  // Store both an 'A' and 'B' channel record
+      fsdrow.radPath   = "A";
+      tFsdata << fsdrow;
+      fsdrow.radPath   = "B";
+      sPoss            = sqry.value( cxs[ 19 ] ).toString();
+      sVals            = sqry.value( cxs[ 20 ] ).toString();
+      parse_doubles( sPoss, fsdrow.rads );
+      parse_doubles( sVals, fsdrow.vals );
+      tFsdata << fsdrow;
+   }
+
+   else
+   {  // Store either an 'A' or a 'B' channel record
+      tFsdata << fsdrow;
+   }
+}
+// Update an entry in the Interference data table
+void US_XpnData::update_ITable( QSqlQuery& sqry, QList< int >& cxs )
+{
+   // Construct an IData entry
+   tbIsData isdrow;
+   isdrow.dataId    = sqry.value( cxs[  0 ] ).toInt();
+   isdrow.runId     = sqry.value( cxs[  1 ] ).toInt();
+   isdrow.expstart  = sqry.value( cxs[  2 ] ).toDateTime();
+   isdrow.exptime   = sqry.value( cxs[  3 ] ).toInt();
+   isdrow.tempera   = sqry.value( cxs[  4 ] ).toDouble();
+   isdrow.speed     = sqry.value( cxs[  5 ] ).toDouble();
+   isdrow.omgSqT    = sqry.value( cxs[  6 ] ).toDouble();
+   isdrow.stageNum  = sqry.value( cxs[  7 ] ).toInt();
+   isdrow.scanSeqN  = sqry.value( cxs[  8 ] ).toInt();
+   isdrow.samplName = sqry.value( cxs[  9 ] ).toString();
+   isdrow.scanTypeF = sqry.value( cxs[ 10 ] ).toString();
+   isdrow.modPos    = sqry.value( cxs[ 11 ] ).toInt();
+   isdrow.cellPos   = sqry.value( cxs[ 12 ] ).toInt();
+   isdrow.replic    = sqry.value( cxs[ 13 ] ).toInt();
+   isdrow.count     = sqry.value( cxs[ 14 ] ).toInt();
+   isdrow.startPos  = sqry.value( cxs[ 15 ] ).toDouble();
+   isdrow.resolu    = sqry.value( cxs[ 16 ] ).toDouble();
+   isdrow.wavelen   = sqry.value( cxs[ 17 ] ).toInt();
+   QString sPoss    = sqry.value( cxs[ 18 ] ).toString();
+   QString sVals    = sqry.value( cxs[ 19 ] ).toString();
+   parse_doubles( sPoss, isdrow.rads );
+   parse_doubles( sVals, isdrow.vals );
+
+   tIsdata << isdrow;
+}
+// Update an entry in the Wavelength data table
+void US_XpnData::update_WTable( QSqlQuery& sqry, QList< int >& cxs )
+{
+   // Construct a WData entry
+   tbWsData wsdrow;
+   wsdrow.dataId    = sqry.value( cxs[  0 ] ).toInt();
+   wsdrow.runId     = sqry.value( cxs[  1 ] ).toInt();
+   wsdrow.expstart  = sqry.value( cxs[  2 ] ).toDateTime();
+   wsdrow.exptime   = sqry.value( cxs[  3 ] ).toInt();
+   wsdrow.tempera   = sqry.value( cxs[  4 ] ).toDouble();
+   wsdrow.speed     = sqry.value( cxs[  5 ] ).toDouble();
+   wsdrow.omgSqT    = sqry.value( cxs[  6 ] ).toDouble();
+   wsdrow.stageNum  = sqry.value( cxs[  7 ] ).toInt();
+   wsdrow.scanSeqN  = sqry.value( cxs[  8 ] ).toInt();
+   wsdrow.samplName = sqry.value( cxs[  9 ] ).toString();
+   wsdrow.scanTypeF = sqry.value( cxs[ 10 ] ).toString();
+   wsdrow.modPos    = sqry.value( cxs[ 11 ] ).toInt();
+   wsdrow.cellPos   = sqry.value( cxs[ 12 ] ).toInt();
+   wsdrow.replic    = sqry.value( cxs[ 13 ] ).toInt();
+   wsdrow.scanPos   = sqry.value( cxs[ 14 ] ).toInt();
+   wsdrow.radPath   = sqry.value( cxs[ 15 ] ).toString();
+   wsdrow.count     = sqry.value( cxs[ 16 ] ).toInt();
+   QString sPoss    = sqry.value( cxs[ 17 ] ).toString();
+   QString sVals    = sqry.value( cxs[ 18 ] ).toString();
+   parse_doubles( sPoss, wsdrow.wvls );
+   parse_doubles( sVals, wsdrow.vals );
+
+   if ( wsdrow.radPath == " "  ||  wsdrow.radPath.isEmpty() )
+   {  // Store both an 'A' and 'B' channel record
+      wsdrow.radPath   = "A";
+      tWsdata << wsdrow;
+      wsdrow.radPath   = "B";
+      sVals            = sqry.value( cxs[ 19 ] ).toString();
+      parse_doubles( sVals, wsdrow.vals );
+      tWsdata << wsdrow;
+   }
+
+   else
+   {  // Store either an 'A' or a 'B' channel record
+      tWsdata << wsdrow;
    }
 }
 

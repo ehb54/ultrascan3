@@ -240,15 +240,28 @@ class US_UTIL_EXTERN US_XpnData : public QObject
 
       //! \brief Scan the DB for [AIFW]ScanData table information
       //! \param runId    Run ID to match
-      //! \param scantype Scan type ('A','F','I','W') to match
+      //! \param scantype Scan type ('A','F','I','W','S','C') to match
       //! \returns        Number of rows of match ScanData found
       int     scan_xpndata( const int, const QChar );
+
+      //! \brief Update the DB [AIFW]ScanData table information
+      //! \param runId    Run ID to match
+      //! \param scantype Scan type ('A','F','I','W') to match
+      //! \returns        Number of rows of match ScanData found or
+      //! \                negative count if no new rows added.
+      int     update_xpndata( const int, const QChar );
 
       //! \brief Import ScanData from the postgres database
       //! \param runId    Run ID to match
       //! \param scanMask Scan mask (AFIW, 1 to 15) of tables
       //! \returns        Status of import (true->imported OK)
       bool    import_data   ( const int, const int );
+
+      //! \brief Reimport ScanData from the postgres database
+      //! \param runId    Run ID to match
+      //! \param scanMask Scan mask (AFIW, 1 to 15) of tables
+      //! \returns        Status of reimport (false->reimport not needed)
+      bool    reimport_data ( const int, const int );
 
       //! \brief Load XPN internal variables from loaded rawDatas
       //! \param allData Vector of loaded rawDatas
@@ -280,6 +293,11 @@ class US_UTIL_EXTERN US_XpnData : public QObject
       //! \param allData Output vector of rawDatas built from XPN data
       //! \returns       Number of triples in the data (size of allData)
       int     build_rawData ( QVector< US_DataIO::RawData >& );
+
+      //! \brief Rebuild RawData vector
+      //! \param allData Input/Updated vector of rawDatas built from XPN data
+      //! \returns       Number of triples in the data (size of allData)
+      int     rebuild_rawData ( QVector< US_DataIO::RawData >& );
 
       //! \brief Export to openAUC
       //! \param allData Input vector of rawDatas built from XPN data
@@ -421,6 +439,18 @@ class US_UTIL_EXTERN US_XpnData : public QObject
       int    parse_doubles ( const QString, QVector< double >& );
       // Build internal arrays and variables
       void   build_internals( void );
+      // Rebuild internal arrays and variables
+      void   rebuild_internals( void );
+      // Get column indexes and other db table information
+      int    column_indexes( const QString, QStringList&, QList< int >& );
+      // Update an entry in the Absorbance data table
+      void   update_ATable( QSqlQuery&, QList< int >& );
+      // Update an entry in the Fluorescence data table
+      void   update_FTable( QSqlQuery&, QList< int >& );
+      // Update an entry in the Interference data table
+      void   update_ITable( QSqlQuery&, QList< int >& );
+      // Update an entry in the Wavelength data table
+      void   update_WTable( QSqlQuery&, QList< int >& );
 
 };
 #endif

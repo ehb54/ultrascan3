@@ -1505,3 +1505,61 @@ int US_Math2::best_grid_reps( int& ngrid_s, int& ngrid_k )
    return nreps_g;
 }
 
+// Compute the norm value for a simulation data set
+double US_Math2::norm_value( US_DataIO::RawData* simdat )
+{
+   double normval  = 0.0;
+   int npoint      = simdat->pointCount();
+
+   for ( int ii = 0; ii < simdat->scanCount(); ii++ )
+   {
+      for ( int jj = 0; jj < npoint; jj++ )
+      {
+         double dval     = simdat->value( ii, jj );
+         normval        += ( dval * dval );
+      }
+   }
+
+   normval         = ( normval > 0.0 ) ? sqrt( normval ) : normval;
+   return normval;
+}
+
+// Compute the norm value for an experiment data set
+double US_Math2::norm_value( US_DataIO::EditedData* expdat )
+{
+   double normval  = 0.0;
+   int npoint      = expdat->pointCount();
+
+   for ( int ii = 0; ii < expdat->scanCount(); ii++ )
+   {
+      for ( int jj = 0; jj < npoint; jj++ )
+      {
+         double dval     = expdat->value( ii, jj );
+         normval        += ( dval * dval );
+      }
+   }
+
+   normval         = ( normval > 0.0 ) ? sqrt( normval ) : normval;
+   return normval;
+}
+
+// Compute the norm value for a data array of doubles
+double US_Math2::norm_value( double* datary, const int nval )
+{
+   double normval  = 0.0;
+
+   for ( int ii = 0; ii < nval; ii++ )
+   {
+      normval         = ( datary[ ii ] * datary[ ii ] );
+   }
+
+   normval         = ( normval > 0.0 ) ? sqrt( normval ) : normval;
+   return normval;
+}
+
+// Compute the norm value for a data vector of doubles
+double US_Math2::norm_value( QVector< double >* datvec )
+{
+   return norm_value( datvec->data(), datvec->count() );
+}
+
