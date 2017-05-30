@@ -581,6 +581,7 @@ DbgLv(1) << "RDr:   drDesc" << drDesc;
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor) );
    le_status->setText( tr( "Reading Raw Optima data ..." ) );
    qApp->processEvents();
+QDateTime sttime=QDateTime::currentDateTime();
 
    int iRunId         = fRunId.toInt();
    QString sMasks     = QString( drDesc ).section( delim, 7, 10 );
@@ -593,6 +594,7 @@ DbgLv(1) << "RDr:     iRId" << iRunId << "sMsks scnmask" << sMasks << scanmask;
    xpn_data->import_data( iRunId, scanmask );
    le_status->setText( tr( "Initial Raw Optima data import complete." ) );
    qApp->processEvents();
+double tm1=(double)sttime.msecsTo(QDateTime::currentDateTime())/1000.0;
 
    // Infer and report on type of data to eventually export
    runType            = "RI";
@@ -647,6 +649,8 @@ DbgLv(1) << "RDr:  runID" << runID << "runType" << runType;
    qApp->processEvents();
 
    xpn_data->build_rawData( allData );
+double tm2=(double)sttime.msecsTo(QDateTime::currentDateTime())/1000.0;
+DbgLv(1) << "RDr:      build-raw done: tm1 tm2" << tm1 << tm2;
 
    QApplication::restoreOverrideCursor();
    QApplication::restoreOverrideCursor();
@@ -1498,6 +1502,8 @@ DbgLv(1) << "RLd:     iRunId" << iRunId << "runType scanmask" << runType << scan
 
 QDateTime sttime=QDateTime::currentDateTime();
    QString smsg       = le_status->text();
+   le_status->setText( tr( "Scanning Optima DB for any data updates..." ) );
+   qApp->processEvents();
 
    // Import any newly added Scan Data records
    bool upd_ok        =  xpn_data->reimport_data( iRunId, scanmask );
@@ -1518,7 +1524,7 @@ QDateTime sttime=QDateTime::currentDateTime();
       }
       return;     // Return with no change in AUC data
    }
-int tm1=sttime.msecsTo(QDateTime::currentDateTime());
+double tm1=(double)sttime.msecsTo(QDateTime::currentDateTime())/1000.0;
 
    // Otherwise, report updated raw data import
    le_status->setText( tr( "Update of Raw Optima data import complete." ) );
@@ -1527,7 +1533,7 @@ int tm1=sttime.msecsTo(QDateTime::currentDateTime());
    // Now, update the AUC data with new scans
    xpn_data->rebuild_rawData( allData );
 
-int tm2=sttime.msecsTo(QDateTime::currentDateTime());
+double tm2=(double)sttime.msecsTo(QDateTime::currentDateTime())/1000.0;
 DbgLv(1) << "RLd:      build-raw done: tm1 tm2" << tm1 << tm2;
    // Reset scan counter maximum and report update complete
    nscan       = allData[ trpxs ].scanCount();
