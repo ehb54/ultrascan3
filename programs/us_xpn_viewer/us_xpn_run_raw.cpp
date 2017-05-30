@@ -221,7 +221,7 @@ void US_XpnRunRaw::populate_list()
    }
 
    tw->setSortingEnabled( true );
-   tw->sortByColumn( 2, Qt::DescendingOrder );
+   tw->sortByColumn( 1, Qt::DescendingOrder );
    tw->resizeColumnsToContents();
    tw->adjustSize();
    tw->resize( size().width() - 4, tw->size().height() );
