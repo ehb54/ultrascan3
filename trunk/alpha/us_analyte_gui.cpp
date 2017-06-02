@@ -1579,13 +1579,57 @@ DbgLv(1) << "agN: id dbdk ana" << invID << select_db_disk << tmp_analyte;
 // Slot for Entering Spectra ////
 void US_AnalyteMgrNew::manage_spectrum( void )
 {
-  w = new US_Extinction("ANALYTE", le_descrip->text(), le_protein_e280->text(), (QWidget*)this); 
+  QMessageBox msg;
+  msg.setWindowTitle("New Analyte Spectrum");
+  msg.setText("Choose how do you want to create spectrum:");
+  msg.setInformativeText(" - You can enter spectrum Manually, or Upload and fit the spectrum with the spectrum fitter");
   
-  connect( w, SIGNAL( get_results(QMap < double, double > & )), this, SLOT(process_results( QMap < double, double > & ) ) );
+  //msgBox.setText("Buffer does not have spectrum data!\n You can Upload and fit analyte spectrum, or Enter points manually");
+  msg.setStandardButtons(QMessageBox::Cancel);
+  QPushButton* pButtonUpload = msg.addButton(tr("Upload Spectrum"), QMessageBox::YesRole);
+  QPushButton* pButtonManually = msg.addButton(tr("Enter Manually"), QMessageBox::YesRole);
+    
+  msg.setDefaultButton(pButtonUpload);
+  msg.exec();
+    
+  // Upload spectrum
+  if (msg.clickedButton()==pButtonUpload) {
+    
+    w = new US_Extinction("ANALYTE", le_descrip->text(), le_protein_e280->text(), (QWidget*)this); 
+    
+    connect( w, SIGNAL( get_results(QMap < double, double > & )), this, SLOT(process_results( QMap < double, double > & ) ) );
+    
+    w->setParent(this, Qt::Window);
+    w->setAttribute(Qt::WA_DeleteOnClose);
+    w->show(); 
+  }
   
-  w->setParent(this, Qt::Window);
-  w->setAttribute(Qt::WA_DeleteOnClose);
-  w->show(); 
+  if (msg.clickedButton()==pButtonManually) {
+    US_Table* sdiag;
+    QMap< double, double > loc_extinct = analyte->extinction;
+    QString stype( "Extinction" );
+    bool changed = false;
+    sdiag        = new US_Table( loc_extinct, stype, changed, this );
+    sdiag->setWindowTitle( "Manage Extinction Spectrum" );
+    sdiag->exec();
+    DbgLv(1) << "BufE:SL: spectr  extincts" << loc_extinct
+	     << "changed" << changed;
+    if ( changed )
+      {
+	qDebug() << "Existing: Inside Changed: "; 
+	qDebug() << "#buff->extinc BEFORE: " << analyte->extinction.keys().count();
+	
+	analyte->extinction.clear();                                                   
+	analyte->extinction = loc_extinct;
+	
+	////Update via STORED Procedures ....
+	//analyte->replace_spectrum = true; 
+	
+	qDebug() << "#analyte->extinc AFTER: " << analyte->extinction.keys().count() << ", AnalyteID: " <<  analyte->analyteID;
+	DbgLv(1) << "Analyte:SL: spectr   ana extincts CHANGED";
+      }
+    le_protein_e280->setText( QString::number(analyte->extinction[280.0]) );
+  }
 }
 
 void US_AnalyteMgrNew::process_results(QMap < double, double > &xyz)
@@ -2689,17 +2733,18 @@ void US_AnalyteMgrEdit::spectrum( void )
      msgBox.setWindowTitle("Edit Existing Analyte");
      msgBox.setText("Analyte does not have spectrum data!");
      //msgBox.setInformativeText("You can Upload and fit analyte spectrum, or Enter points manually");
-     msgBox.setInformativeText("You can upload and fit analyte spectrum by clicking 'Create an Absorbance Profile'");
+     msgBox.setInformativeText("You can Upload and Fit analyte spectrum, or Enter spectrum Manually");
 
      //msgBox.setText("Buffer does not have spectrum data!\n You can Upload and fit analyte spectrum, or Enter points manually");
      msgBox.setStandardButtons(QMessageBox::Cancel);
-     QPushButton* pButtonUpload = msgBox.addButton(tr("Create an Absorbance Profile"), QMessageBox::YesRole);
-     //QPushButton* pButtonManually = msgBox.addButton(tr("Enter Manually"), QMessageBox::YesRole);
+     QPushButton* pButtonUpload = msgBox.addButton(tr("Upload&Fit Spectum"), QMessageBox::YesRole);
+     QPushButton* pButtonManually = msgBox.addButton(tr("Enter Manually"), QMessageBox::YesRole);
      
      msgBox.setDefaultButton(pButtonUpload);
      msgBox.exec();
      
      if (msgBox.clickedButton()==pButtonUpload) {
+
        w = new US_Extinction("ANALYTE", le_descrip->text(), "1.000", (QWidget*)this); 
        
        connect( w, SIGNAL( get_results(QMap < double, double > & )), this, SLOT(process_results( QMap < double, double > & ) ) );
@@ -2708,6 +2753,33 @@ void US_AnalyteMgrEdit::spectrum( void )
        w->setAttribute(Qt::WA_DeleteOnClose);
        w->show(); 
      }
+
+     if (msgBox.clickedButton()==pButtonManually) {
+       US_Table* sdiag;
+       QMap< double, double > loc_extinct = analyte->extinction;
+       QString stype( "Extinction" );
+       bool changed = false;
+       sdiag        = new US_Table( loc_extinct, stype, changed, this );
+       sdiag->setWindowTitle( "Manage Extinction Spectrum" );
+       sdiag->exec();
+       DbgLv(1) << "BufE:SL: spectr  extincts" << loc_extinct
+		<< "changed" << changed;
+       if ( changed )
+	 {
+	   qDebug() << "Existing: Inside Changed: "; 
+	   qDebug() << "#buff->extinc BEFORE: " << analyte->extinction.keys().count();
+
+	   analyte->extinction.clear();                                                   
+	   analyte->extinction = loc_extinct;
+
+	   ////Update via STORED Procedures ....
+	   //analyte->replace_spectrum = true; 
+
+	   qDebug() << "#analyte->extinc AFTER: " << analyte->extinction.keys().count() << ", AnalyteID: " <<  analyte->analyteID;
+	   DbgLv(1) << "Analyte:SL: spectr   ana extincts CHANGED";
+	 }
+       pb_accept->setEnabled( !le_descrip->text().isEmpty() );
+     }    
    }
    else 
    {
@@ -2722,18 +2794,21 @@ void US_AnalyteMgrEdit::spectrum( void )
      //QPushButton* pButtonEdit = msg.addButton(tr("Edit Spectrum"), QMessageBox::YesRole);
      QPushButton* pButtonDelete = msg.addButton(tr("Delete Spectrum"), QMessageBox::YesRole);
      QPushButton* pButtonView = msg.addButton(tr("View Spectrum"), QMessageBox::YesRole);
+     QPushButton* pButtonEdit = msg.addButton(tr("Edit Spectrum"), QMessageBox::YesRole);
 
      msg.setDefaultButton(pButtonReplace);
      msg.exec();
-          
+     
+
+     // VIEW spectrum
      if (msg.clickedButton()==pButtonView) {
        US_AnalyteViewSpectrum *s = new US_AnalyteViewSpectrum(analyte->extinction);
        s->setParent(this, Qt::Window);
        s->show();
      }
 
+     // DELETE extinction spectrum 
      if (msg.clickedButton()==pButtonDelete) {
-       // DELETE extinction spectrum 
        US_Passwd pw;
        US_DB2    db( pw.getPasswd() );
 
@@ -2782,6 +2857,34 @@ void US_AnalyteMgrEdit::spectrum( void )
 	 }
      }
      
+     // EDIT Spectrum
+     if (msg.clickedButton()==pButtonEdit) {
+       US_Table* sdiag;
+       QMap< double, double > loc_extinct = analyte->extinction;
+       QString stype( "Extinction" );
+       bool changed = false;
+       sdiag        = new US_Table( loc_extinct, stype, changed, this );
+       sdiag->setWindowTitle( "Manage Extinction Spectrum" );
+       sdiag->exec();
+       DbgLv(1) << "BufE:SL: spectr  extincts" << loc_extinct
+		<< "changed" << changed;
+       if ( changed )
+	 {
+	   qDebug() << "Existing: Inside Changed: "; 
+	   qDebug() << "#buff->extinc BEFORE: " << analyte->extinction.keys().count();
+
+	   analyte->extinction.clear();                                                   
+	   analyte->extinction = loc_extinct;
+
+	   //Update via STORED Procedures ....
+	   analyte->replace_spectrum = true; 
+
+	   qDebug() << "#analyte->extinc AFTER: " << analyte->extinction.keys().count() << ", AnalyteID: " <<  analyte->analyteID;
+	   DbgLv(1) << "Analyte:SL: spectr   ana extincts CHANGED";
+	 }
+       pb_accept->setEnabled( !le_descrip->text().isEmpty() );
+     }
+   
      // REPLACE Spectrum
      if (msg.clickedButton()==pButtonReplace) {
        
