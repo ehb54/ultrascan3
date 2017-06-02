@@ -252,8 +252,17 @@ DbgLv(1) << "AnaS:   ana-extsiz" << analyte->extinction.keys().size();
    analyte->mw          = ( analyte->mw == 0.0 ) ? pp.mw : analyte->mw;
    int rescount         = pp.residues;
    int extcount         = analyte->extinction.keys().count();
-   QString e280         = ( extcount == 0 ) ? tr( "(none)" )
-                          : QString::number( pp.e280 );
+
+   //QString e280         = ( extcount == 0 ) ? tr( "(none)" ) : QString::number( pp.e280 );
+   QString e280         = "";
+   if ( extcount == 0 ) {
+     e280 = tr( "(none)" );
+   }
+   else {
+     e280 = QString::number( analyte->extinction[ 280.0 ] );
+   }
+   
+
    le_molecwt   ->setText( QString::number( analyte->mw ) );
    le_vbar20    ->setText( QString::number( analyte->vbar20 ) );
    le_residue   ->setText( QString::number( rescount ) );
@@ -1582,6 +1591,7 @@ void US_AnalyteMgrNew::manage_spectrum( void )
 void US_AnalyteMgrNew::process_results(QMap < double, double > &xyz)
 {
    analyte->extinction = xyz;
+   le_protein_e280 -> setText(QString::number(analyte->extinction[280.0]));
    
    QMap<double, double>::iterator it;
    QString output;
