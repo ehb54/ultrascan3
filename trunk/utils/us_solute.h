@@ -82,7 +82,6 @@ class US_UTIL_EXTERN US_Solute
                                 double, double, int, int, double,
                                 QList< QVector< US_Solute > >& );
 
-   private:
       static QVector< US_Solute > create_solutes(
                     double s_min,   double s_max,   double s_step,
                     double ff0_min, double ff0_max, double ff0_step,

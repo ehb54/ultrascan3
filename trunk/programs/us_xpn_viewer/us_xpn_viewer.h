@@ -50,8 +50,10 @@ class US_XpnDataViewer : public US_Widgets
      QComboBox*     cb_rstart;
      QComboBox*     cb_rend;
      QComboBox*     cb_pltrec;
+     QComboBox*     cb_optsys;
 
      QwtCounter*    ct_recavg;
+     QwtCounter*    ct_rinterv;
      QwtCounter*    ct_from;
      QwtCounter*    ct_to;
 
@@ -117,6 +119,8 @@ class US_XpnDataViewer : public US_Widgets
      int            k3dlamb;
      int            k3drads;
      int            k3dsize;
+     int            rlt_id;
+     int            rlt_dlay;
 
      bool           have_rngs;
      bool           isMWL;
@@ -144,6 +148,9 @@ class US_XpnDataViewer : public US_Widgets
      void   changeRadius   ( void );
      void   changeCellCh   ( void );
      void   changeRecord   ( void );
+     void   changeOptics   ( void );
+     void   changeReload   ( void );
+     void   changeInterval ( void );
      void   resetAll       ( void );
      void   prevPlot       ( void );
      void   nextPlot       ( void );
@@ -157,6 +164,7 @@ class US_XpnDataViewer : public US_Widgets
      void   showTimeState  ( void );
      void   status_report  ( QString );
      void   reloadData     ( void );
+     void   timerEvent     ( QTimerEvent *e );
      void   help           ( void )
      { showHelp.show_help( "xpn_viewer.html" ); };
 };

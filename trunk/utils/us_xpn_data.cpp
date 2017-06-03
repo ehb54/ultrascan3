@@ -377,6 +377,9 @@ DbgLv(1) << "XpDa: rei_dat: arows oarows status" << arows << oarows << status;
 
 DbgLv(1) << "XpDa: rei_dat: arows frows irows wrows"
    << arows << frows << irows << wrows << "status" << status;
+//*DEBUG*
+//status=true;
+//*DEBUG*
 
    return status;
 }
@@ -640,6 +643,7 @@ int US_XpnData::update_xpndata( const int runId, const QChar scantype )
    QSqlQuery    sqry;
    QSqlRecord   qrec;
    QString sRunId  = QString::number( runId );
+   QString sExpTm;
    QString schname( "AUC_schema" );
    QString tabname( "AbsorbanceScanData" );
    QString sqtab, qrytab, qrytext;
@@ -649,42 +653,51 @@ int US_XpnData::update_xpndata( const int runId, const QChar scantype )
 
    if ( scantype == 'A' )
    {  // Get Absorbance old and new counts
+      int tknt        = tAsdata.count();
       nradps          = ( tAsdata[ 0 ].radPath == tAsdata[ 1 ].radPath )
                         ? 1 : 2;
-      for ( int ii = 0; ii < tAsdata.count(); ii++ )
+      for ( int ii = 0; ii < tknt; ii++ )
       {
          if ( tAsdata[ ii ].runId == runId )
             norows++;
       }
       norows         /= nradps;
-DbgLv(1) << "XpDa:updx:  sdat count" << tAsdata.count();
+      sExpTm          = QString::number( tAsdata[ tknt - 1 ].exptime );
+//sExpTm = QString::number( tAsdata[ tknt - 8 ].exptime );
+DbgLv(1) << "XpDa:updx:  sdat count" << tknt << "last-exptime" << sExpTm;;
    }
    else if ( scantype == 'F' )
    {  // Get Fluorescence old and new counts
+      int tknt        = tFsdata.count();
       for ( int ii = 0; ii < tFsdata.count(); ii++ )
       {
          if ( tFsdata[ ii ].runId == runId )
             norows++;
       }
       tabname         = "FluorescenceScanData";
+      sExpTm          = QString::number( tFsdata[ tknt - 1 ].exptime );
    }
    else if ( scantype == 'I' )
    {  // Get Interference old and new counts
+      int tknt        = tIsdata.count();
       for ( int ii = 0; ii < tIsdata.count(); ii++ )
       {
          if ( tIsdata[ ii ].runId == runId )
             norows++;
       }
       tabname         = "InterferenceScanData";
+      sExpTm          = QString::number( tIsdata[ tknt - 1 ].exptime );
    }
    else if ( scantype == 'W' )
    {  // Get Wavelength old and new counts
+      int tknt        = tWsdata.count();
       for ( int ii = 0; ii < tWsdata.count(); ii++ )
       {
          if ( tWsdata[ ii ].runId == runId )
             norows++;
       }
       tabname         = "WavelengthScanData";
+      sExpTm          = QString::number( tWsdata[ tknt - 1 ].exptime );
    }
 
    // Count the number of rows now in the data table
@@ -695,7 +708,16 @@ DbgLv(1) << "XpDa:updx:  sdat count" << tAsdata.count();
    sqry            = dbxpn.exec( qrytext );
    sqry.next();
    nnrows          = sqry.value( 0 ).toInt();
-DbgLv(1) << "XpDa:updx:  norows" << norows << "nnrows" << nnrows;
+
+   qrytext         = "SELECT count(*) from " + qrytab
+                   + " WHERE \"RunId\"=" + sRunId
+                   + " AND \"ExperimentTime\">=" + sExpTm + ";";
+   sqry            = dbxpn.exec( qrytext );
+   sqry.next();
+   int narows      = sqry.value( 0 ).toInt();
+DbgLv(1) << "XpDa:updx:  qrytext" << qrytext;
+DbgLv(1) << "XpDa:updx:  norows" << norows << "nnrows" << nnrows
+ << "narows" << narows;
 
    // Return now if the new count is zero or the same as the old
    if ( nnrows == 0 )
@@ -709,7 +731,8 @@ DbgLv(1) << "XpDa:updx:  norows" << norows << "nnrows" << nnrows;
    if ( nnrows > 0 )
    {  // There are new rows, so update data tables
       qrytext         = "SELECT * from " + qrytab
-                      + " WHERE \"RunId\"=" + sRunId + ";";
+                      + " WHERE \"RunId\"=" + sRunId
+                      + " AND \"ExperimentTime\">=" + sExpTm + ";";
       sqry            = dbxpn.exec( qrytext );
       int cols        = column_indexes( tabname, cnames, cxs );
 DbgLv(1) << "XpDa:updx:   cols" << cols << "flds" << cxs.count();
@@ -721,7 +744,7 @@ DbgLv(1) << "XpDa:updx:   cols" << cols << "flds" << cxs.count();
          {
             rows++;
             // Skip update of rows already captured
-            if ( rows <= norows )   continue;
+//            if ( rows <= norows )   continue;
 
             // Update new table entries
             update_ATable( sqry, cxs );
@@ -1166,9 +1189,19 @@ DbgLv(1) << "BldRawD  DONE ntriple" << ntriple << "mxscnn" << mxscnn
 int US_XpnData::rebuild_rawData( QVector< US_DataIO::RawData >& allData )
 {
 DbgLv(1) << "rBldRawD IN";
+QDateTime time00=QDateTime::currentDateTime();
    int mxscno      = 0;
    int mxscnn      = 0;
 //   int mxrown      = 0;
+int timi1=0;
+int timi2=0;
+int timi3=0;
+int timi4=0;
+int timi5=0;
+int timi6=0;
+int timi9=0;
+QDateTime time10;
+QDateTime time20;
 
    // Count the maximum scans for current AUC data
    for ( int ii = 0; ii < allData.count(); ii++ )
@@ -1178,6 +1211,7 @@ DbgLv(1) << "rBldRawD IN";
 DbgLv(1) << "rBldRawD mxscno" << mxscno;
 
    // First rebuild the internal arrays and variables
+time10=QDateTime::currentDateTime();
    rebuild_internals();
 
    const int low_memApc = 20;
@@ -1194,31 +1228,45 @@ DbgLv(1) << "rBldRawD mxscno" << mxscno;
    nscnn           = scnnbrs.count();
    int    stgnbr   = 0;
    nstgn           = stgnbrs.count();
+time20=QDateTime::currentDateTime();
+timi1+=time10.msecsTo(time20);
+QDateTime time30=time20;
+int timi7=0;
 
    for ( int trx = 0; trx < ntriple; trx++ )
    {  // Update scans for each triple
 DbgLv(1) << "rBldRawD     trx" << trx << " rebuilding scans... ccx" << ccx;
+time10=QDateTime::currentDateTime();
       US_DataIO::RawData* rdata = &allData[ trx ];
       QString triple    = triples[ trx ].replace( " / ", "/" );
       QString trnode    = trnodes[ trx ];
       int oscknt        = rdata->scanCount();   // Old scan count, this triple
       int ndscan        = 0;                    // New scan count
+time20=QDateTime::currentDateTime();
+timi2+=time10.msecsTo(time20);
+QDateTime time07a=QDateTime::currentDateTime();
 
-QDateTime time10=QDateTime::currentDateTime();
       for ( int sgx = 0; sgx < nstgn; sgx++ )
       {  // Set stage values
          stgnbr            = stgnbrs[ sgx ];
          for ( int scx = 0; scx < nscnn; scx++ )
          {  // Set scan values
+time10=QDateTime::currentDateTime();
             scnnbr            = scnnbrs[ scx ];
 
             int datx          = scan_data_index( trnode, stgnbr, scnnbr );
 
+if(datx<0 ) {
+time20=QDateTime::currentDateTime();
+timi3+=time10.msecsTo(time20); }
             if ( datx < 0 )  continue;
 
             ndscan++;
 DbgLv(1) << "rBldRawD      sqx" << sgx << "scx" << scx
  << "ndscan oscknt" << ndscan << oscknt;
+if(ndscan<oscknt) {
+time20=QDateTime::currentDateTime();
+timi3+=time10.msecsTo(time20); }
             if ( ndscan < oscknt )  continue;    // Skip old AUC scan
 
             set_scan_data( datx );               // Get scan table data
@@ -1243,6 +1291,9 @@ DbgLv(1) << "rBldRawD      scx" << scx << "trx" << trx
  << "seconds" << scan.seconds << "rpm" << scan.rpm;
 }
 //*DEBUG*
+time20=QDateTime::currentDateTime();
+timi3+=time10.msecsTo(time20);
+time10=QDateTime::currentDateTime();
             int kpoint        = get_readings( scan.rvalues, trx, sgx, scx );
 
             if ( kpoint < 0 )
@@ -1260,13 +1311,18 @@ DbgLv(1) << "rBldRawD        scx" << scx << "rvalues size" << scan.rvalues.size(
             {  // If new scan, append the scan to the triple
                rdata->scanData << scan;
             }
+time20=QDateTime::currentDateTime();
+timi4+=time10.msecsTo(time20);
          } // END: scan loop
       } // END: stage loop
+QDateTime time07b=QDateTime::currentDateTime();
+timi7+=time07a.msecsTo(time07b);
 DbgLv(1) << "rBldRawD         EoSl: trx" << trx;
-QDateTime time20=QDateTime::currentDateTime();
-DbgLv(1) << "rBldRawD trx" << trx << "TIMEMS:scan loop time"
- << time10.msecsTo(time20);
+//QDateTime time20=QDateTime::currentDateTime();
+//DbgLv(1) << "rBldRawD trx" << trx << "TIMEMS:scan loop time"
+// << time10.msecsTo(time20);
 
+time10=QDateTime::currentDateTime();
       // Set the average speed for the final/only speed step
       mnscnn            = qMin( mnscnn, ndscan );
       mxscnn            = qMax( mxscnn, ndscan );
@@ -1294,7 +1350,12 @@ int memAv2 = US_Memory::memory_profile();
 DbgLv(1) << "BldRawD  memfree %: 1memAV" << memAv << "2memAV" << memAv2;
          }
       }
+time20=QDateTime::currentDateTime();
+timi5+=time10.msecsTo(time20);
    } // END: triple loop
+time10=QDateTime::currentDateTime();
+QDateTime time40=time10;
+int timi8=time30.msecsTo(time40);
 //*DEBUG*
 for ( int trx = 0; trx < ntriple; trx++ )
 {
@@ -1312,8 +1373,14 @@ DbgLv(1) << "rBldRawD trx" << trx << "scx" << scx << "speed" << speed;
   
    nscan             = mxscnn;
 
+time20=QDateTime::currentDateTime();
+timi6+=time10.msecsTo(time20);
 DbgLv(1) << "rBldRawD  DONE ntriple" << ntriple << "mxscnn" << mxscnn
  << "mnscnn" << mnscnn;
+timi9+=time00.msecsTo(time20);
+DbgLv(1) << "rBldRawD   timi1" << timi1 << "timi2" << timi2
+ << "timi3" << timi3 << "timi4" << timi4 << "timi5" << timi5 << "timi6" << timi6
+ << "   timi9" << timi9 << "  timi8 timi7" << timi8 << timi7;
    return ntriple;
 }
 
@@ -1796,10 +1863,27 @@ void US_XpnData::mapCounts( void )
    counts[ "elambda"   ]  = elambda;
 }
 
+#if 0
 // Return a scan data index within the ScanData vector
 int US_XpnData::scan_data_index( const QString trnode,
                                  const int mstage, const int mscann )
 {
+QDateTime time10;
+QDateTime time20;
+QDateTime time30;
+QDateTime time40;
+QDateTime time00;
+time00=QDateTime::currentDateTime();
+time10=QDateTime::currentDateTime();
+int timi1=0;
+int timi2=0;
+int timi3=0;
+int timi4=0;
+int timi5=0;
+int timi6=0;
+int timi7=0;
+int timi8=0;
+int timi9=0;
    int datx       = -1;          // Default:  scan record not found
    int sdknt      = 0;
    sdknt          = ( runType == "RI" ) ? tAsdata.count() : sdknt;
@@ -1809,10 +1893,16 @@ int US_XpnData::scan_data_index( const QString trnode,
    int     mcell  = QString( trnode ).section( ".", 0, 0 ).toInt();
    QString mchan  = QString( trnode ).section( ".", 1, 1 ).simplified();
    int     mwavl  = QString( trnode ).section( ".", 2, 2 ).toInt();
+time20=QDateTime::currentDateTime();
+timi1+=time10.msecsTo(time20);
+time10=QDateTime::currentDateTime();
 
    for ( int ii = 0; ii < sdknt; ii++ )
    {
+time30=QDateTime::currentDateTime();
       set_scan_data( ii );
+time40=QDateTime::currentDateTime();
+timi2+=time30.msecsTo(time40);
 
       if ( ( csdrec.cellPos  != mcell  )  ||
            ( csdrec.radPath  != mchan  )  ||
@@ -1824,11 +1914,158 @@ int US_XpnData::scan_data_index( const QString trnode,
       datx           = ii;
       break;
    }
+time20=QDateTime::currentDateTime();
+timi3+=time10.msecsTo(time20);
+timi9+=time00.msecsTo(time20);
 DbgLv(1) << "XpDa:scdX: trnode mstage mscann" << trnode << mstage << mscann
- << "datx" << datx;
+ << "datx" << datx << "ti's" << timi1 << timi2 << timi3 << timi9
+ << "datrec size" << datrec.count() << sdknt;
 
    return datx;
 }
+#endif
+
+#if 1
+// Return a scan data index within the ScanData vector
+int US_XpnData::scan_data_index( const QString trnode,
+                                 const int mstage, const int mscann )
+{
+   static int pdatx = 0;
+QDateTime time10;
+QDateTime time20;
+QDateTime time30;
+QDateTime time40;
+QDateTime time00;
+time00=QDateTime::currentDateTime();
+time10=QDateTime::currentDateTime();
+int timi1=0;
+int timi2=0;
+int timi3=0;
+int timi9=0;
+   int datx       = -1;          // Default:  scan record not found
+   int sdknt      = 0;
+   int ntry       = 0;
+   int jj         = pdatx;
+   int     mcell  = QString( trnode ).section( ".", 0, 0 ).toInt();
+   QString mchan  = QString( trnode ).section( ".", 1, 1 ).simplified();
+   int     mwavl  = QString( trnode ).section( ".", 2, 2 ).toInt();
+time20=QDateTime::currentDateTime();
+timi1+=time10.msecsTo(time20);
+time10=QDateTime::currentDateTime();
+
+   if ( runType == "RI" )
+   {
+      tbAsData* asdrec;
+      sdknt          = tAsdata.count();
+      for ( int ii = 0; ii < sdknt; ii++ )
+      {
+//time30=QDateTime::currentDateTime();
+         asdrec         = &tAsdata[ jj ];
+         ntry++;
+
+         if ( ( asdrec->scanSeqN == mscann )  &&
+              ( asdrec->stageNum == mstage )  &&
+              ( asdrec->wavelen  == mwavl  )  &&
+              ( asdrec->radPath  == mchan  )  &&
+              ( asdrec->cellPos  == mcell  ) )
+         {
+            datx           = jj;
+//time40=QDateTime::currentDateTime();
+//timi2+=time30.msecsTo(time40);
+            break;
+         }
+//time40=QDateTime::currentDateTime();
+//timi2+=time30.msecsTo(time40);
+         jj             = ( (++jj) < sdknt ) ? jj : 0;
+      }
+   }
+
+   else if ( runType == "FI" )
+   {
+      tbFsData* fsdrec;
+      sdknt          = tFsdata.count();
+      for ( int ii = 0; ii < sdknt; ii++ )
+      {
+//time30=QDateTime::currentDateTime();
+         fsdrec         = &tFsdata[ jj ];
+         ntry++;
+
+         if ( ( fsdrec->scanSeqN == mscann )  &&
+              ( fsdrec->stageNum == mstage )  &&
+              ( fsdrec->wavelen  == mwavl  )  &&
+              ( fsdrec->radPath  == mchan  )  &&
+              ( fsdrec->cellPos  == mcell  ) )
+         {
+            datx           = jj;
+            break;
+         }
+//time40=QDateTime::currentDateTime();
+//timi2+=time30.msecsTo(time40);
+         jj             = ( (++jj) < sdknt ) ? jj : 0;
+      }
+   }
+
+   else if ( runType == "IP" )
+   {
+      tbIsData* isdrec;
+      sdknt          = tIsdata.count();
+      for ( int ii = 0; ii < sdknt; ii++ )
+      {
+//time30=QDateTime::currentDateTime();
+         isdrec         = &tIsdata[ jj ];
+         ntry++;
+
+         if ( ( isdrec->scanSeqN == mscann )  &&
+              ( isdrec->stageNum == mstage )  &&
+              ( isdrec->wavelen  == mwavl  )  &&
+              ( mchan == "A"               )  &&
+              ( isdrec->cellPos  == mcell  ) )
+         {
+            datx           = jj;
+            break;
+         }
+//time40=QDateTime::currentDateTime();
+//timi2+=time30.msecsTo(time40);
+         jj             = ( (++jj) < sdknt ) ? jj : 0;
+      }
+   }
+
+   else if ( runType == "WI" )
+   {
+      tbWsData* wsdrec;
+      sdknt          = tWsdata.count();
+      for ( int ii = 0; ii < sdknt; ii++ )
+      {
+//time30=QDateTime::currentDateTime();
+         wsdrec         = &tWsdata[ jj ];
+         ntry++;
+
+         if ( ( wsdrec->scanSeqN == mscann )  &&
+              ( wsdrec->stageNum == mstage )  &&
+              ( wsdrec->scanPos  == mwavl  )  &&
+              ( wsdrec->radPath  == mchan  )  &&
+              ( wsdrec->cellPos  == mcell  ) )
+         {
+            datx           = jj;
+            break;
+         }
+//time40=QDateTime::currentDateTime();
+//timi2+=time30.msecsTo(time40);
+         jj             = ( (++jj) < sdknt ) ? jj : 0;
+      }
+   }
+
+time20=QDateTime::currentDateTime();
+timi3+=time10.msecsTo(time20);
+timi9+=time00.msecsTo(time20);
+DbgLv(1) << "XpDa:scdX: trnode mstage mscann" << trnode << mstage << mscann
+ << "datx" << datx << "ti's" << timi1 << timi2 << timi3 << timi9
+ << "sdknt" << sdknt << "ntry" << ntry;
+   pdatx          = ( datx >= 0 ) ? datx : pdatx;
+
+   return datx;
+}
+#endif
 
 // Get data readings from a range of Scans table records
 int US_XpnData::get_readings( QVector< double >& rvalues,
@@ -2335,6 +2572,8 @@ DbgLv(1) << "XpDa:b_i:       rad0 radn" << a_radii[0] << a_radii[rkntl-1]
 // Rebuild the internal variables and arrays (mainly, just scan information)
 void US_XpnData::rebuild_internals( )
 {
+   int nscno     = scnnbrs.count();
+
    scnnbrs   .clear();
    mnscnn        = 99999;
    mxscnn        = 0;
@@ -2345,7 +2584,7 @@ void US_XpnData::rebuild_internals( )
    sdknt         = ( runType == "WI" ) ? tWsdata.count() : sdknt;
 
    // Analyze *ScanData table values
-DbgLv(1) << "XpDa:rb_i:   csdrec count" << sdknt;
+DbgLv(1) << "XpDa:rb_i:   csdrec count" << sdknt << "nscno" << nscno;
    for ( int ii = 0; ii < sdknt; ii++ )
    {  // Get cell/channel, triple, lambda lists
       set_scan_data( ii );
@@ -2569,22 +2808,48 @@ void US_XpnData::update_ATable( QSqlQuery& sqry, QList< int >& cxs )
    QString sVals    = sqry.value( cxs[ 18 ] ).toString();
    parse_doubles( sPoss, asdrow.rads );
    parse_doubles( sVals, asdrow.vals );
+   int mdx1         = -1;
+   int mdx2         = -1;
+   int strow        = tAsdata.count() - 1;
+   int enrow        = qMax( ( strow - 100 ), -1 );
+   for ( int ii = strow; ii > enrow; ii-- )
+   {  // Look for any dataId match in already captured rows
+      if ( tAsdata[ ii ].dataId == asdrow.dataId )
+      {  // Match: get index(es)
+         if ( mdx1 < 0 )
+            mdx1       = ii;
+         else
+         {
+            mdx2       = ii;
+            break;
+         }
+      }
+   }
 
    if ( asdrow.radPath == " "  ||  asdrow.radPath.isEmpty() )
    {  // Store both an 'A' and 'B' channel record
       asdrow.radPath   = "A";
-      tAsdata << asdrow;             // Update table data entry
+      if ( mdx1 < 0 )
+         tAsdata << asdrow;          // Update table with data entry
+      else
+         tAsdata[ mdx1 ] = asdrow;   // Replace table data entry
       asdrow.radPath   = "B";
       sPoss            = sqry.value( cxs[ 19 ] ).toString();
       sVals            = sqry.value( cxs[ 20 ] ).toString();
       parse_doubles( sPoss, asdrow.rads );
       parse_doubles( sVals, asdrow.vals );
-      tAsdata << asdrow;             // Update table data entry
+      if ( mdx2 < 0 )
+         tAsdata << asdrow;          // Update table with data entry
+      else
+         tAsdata[ mdx2 ] = asdrow;   // Replace table data entry
    }
 
    else
    {  // Store either an 'A' or a 'B' channel record
-      tAsdata << asdrow;             // Update table data entry
+      if ( mdx1 < 0 )
+         tAsdata << asdrow;          // Update table with data entry
+      else
+         tAsdata[ mdx1 ] = asdrow;   // Replace table data entry
    }
 }
 
@@ -2660,7 +2925,25 @@ void US_XpnData::update_ITable( QSqlQuery& sqry, QList< int >& cxs )
    parse_doubles( sPoss, isdrow.rads );
    parse_doubles( sVals, isdrow.vals );
 
-   tIsdata << isdrow;
+   int mdx1         = -1;
+   int strow        = tIsdata.count() - 1;
+   int enrow        = qMax( ( strow - 100 ), -1 );
+   for ( int ii = strow; ii > enrow; ii-- )
+   {  // Look for any dataId match in already captured rows
+      if ( tIsdata[ ii ].dataId == isdrow.dataId )
+      {  // Match: get index(es)
+         if ( mdx1 < 0 )
+         {
+            mdx1       = ii;
+            break;
+         }
+      }
+   }
+
+   if ( mdx1 < 0 )
+      tIsdata << isdrow;          // Update table with data entry
+   else
+      tIsdata[ mdx1 ] = isdrow;   // Replace table data entry
 }
 // Update an entry in the Wavelength data table
 void US_XpnData::update_WTable( QSqlQuery& sqry, QList< int >& cxs )
