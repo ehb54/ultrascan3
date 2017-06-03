@@ -743,8 +743,6 @@ DbgLv(1) << "XpDa:updx:   cols" << cols << "flds" << cxs.count();
          while ( sqry.next() )
          {
             rows++;
-            // Skip update of rows already captured
-//            if ( rows <= norows )   continue;
 
             // Update new table entries
             update_ATable( sqry, cxs );
@@ -756,8 +754,6 @@ DbgLv(1) << "XpDa:updx:   cols" << cols << "flds" << cxs.count();
          while ( sqry.next() )
          {
             rows++;
-            // Skip update of rows already captured
-            if ( rows <= norows )   continue;
 
             // Update new table entries
             update_FTable( sqry, cxs );
@@ -769,8 +765,6 @@ DbgLv(1) << "XpDa:updx:   cols" << cols << "flds" << cxs.count();
          while ( sqry.next() )
          {
             rows++;
-            // Skip update of rows already captured
-            if ( rows <= norows )   continue;
 
             // Update new table entries
             update_ITable( sqry, cxs );
@@ -782,14 +776,14 @@ DbgLv(1) << "XpDa:updx:   cols" << cols << "flds" << cxs.count();
          while ( sqry.next() )
          {
             rows++;
-            // Skip update of rows already captured
-            if ( rows <= norows )   continue;
 
             // Update new table entries
             update_WTable( sqry, cxs );
          }
       }
+DbgLv(1) << "XpDa:updx:   narows" << narows << "updd rows" << rows;
    }
+
    return nnrows;
 }
 
@@ -2820,8 +2814,9 @@ void US_XpnData::update_ATable( QSqlQuery& sqry, QList< int >& cxs )
    int mdx2         = -1;
    int strow        = tAsdata.count() - 1;
    int enrow        = qMax( ( strow - 100 ), -1 );
+
    for ( int ii = strow; ii > enrow; ii-- )
-   {  // Look for any dataId match in already captured rows
+   {  // Look from end for any dataId match in already captured rows
       if ( tAsdata[ ii ].dataId == asdrow.dataId )
       {  // Match: get index(es)
          if ( mdx1 < 0 )
@@ -2887,24 +2882,52 @@ void US_XpnData::update_FTable( QSqlQuery& sqry, QList< int >& cxs )
    QString sVals    = sqry.value( cxs[ 18 ] ).toString();
    parse_doubles( sPoss, fsdrow.rads );
    parse_doubles( sVals, fsdrow.vals );
+   int mdx1         = -1;
+   int mdx2         = -1;
+   int strow        = tFsdata.count() - 1;
+   int enrow        = qMax( ( strow - 100 ), -1 );
+
+   for ( int ii = strow; ii > enrow; ii-- )
+   {  // Look from end for any dataId match in already captured rows
+      if ( tFsdata[ ii ].dataId == fsdrow.dataId )
+      {  // Match: get index(es)
+         if ( mdx1 < 0 )
+            mdx1       = ii;
+         else
+         {
+            mdx2       = ii;
+            break;
+         }
+      }
+   }
 
    if ( fsdrow.radPath == " "  ||  fsdrow.radPath.isEmpty() )
    {  // Store both an 'A' and 'B' channel record
       fsdrow.radPath   = "A";
-      tFsdata << fsdrow;
+      if ( mdx1 < 0 )
+         tFsdata << fsdrow;          // Update table with data entry
+      else
+         tFsdata[ mdx1 ] = fsdrow;   // Replace table data entry
       fsdrow.radPath   = "B";
       sPoss            = sqry.value( cxs[ 19 ] ).toString();
       sVals            = sqry.value( cxs[ 20 ] ).toString();
       parse_doubles( sPoss, fsdrow.rads );
       parse_doubles( sVals, fsdrow.vals );
-      tFsdata << fsdrow;
+      if ( mdx2 < 0 )
+         tFsdata << fsdrow;          // Update table with data entry
+      else
+         tFsdata[ mdx2 ] = fsdrow;   // Replace table data entry
    }
 
    else
    {  // Store either an 'A' or a 'B' channel record
-      tFsdata << fsdrow;
+      if ( mdx1 < 0 )
+         tFsdata << fsdrow;          // Update table with data entry
+      else
+         tFsdata[ mdx1 ] = fsdrow;   // Replace table data entry
    }
 }
+
 // Update an entry in the Interference data table
 void US_XpnData::update_ITable( QSqlQuery& sqry, QList< int >& cxs )
 {
@@ -2932,12 +2955,12 @@ void US_XpnData::update_ITable( QSqlQuery& sqry, QList< int >& cxs )
    QString sVals    = sqry.value( cxs[ 19 ] ).toString();
    parse_doubles( sPoss, isdrow.rads );
    parse_doubles( sVals, isdrow.vals );
-
    int mdx1         = -1;
    int strow        = tIsdata.count() - 1;
    int enrow        = qMax( ( strow - 100 ), -1 );
+
    for ( int ii = strow; ii > enrow; ii-- )
-   {  // Look for any dataId match in already captured rows
+   {  // Look from end for any dataId match in already captured rows
       if ( tIsdata[ ii ].dataId == isdrow.dataId )
       {  // Match: get index(es)
          if ( mdx1 < 0 )
@@ -2953,6 +2976,7 @@ void US_XpnData::update_ITable( QSqlQuery& sqry, QList< int >& cxs )
    else
       tIsdata[ mdx1 ] = isdrow;   // Replace table data entry
 }
+
 // Update an entry in the Wavelength data table
 void US_XpnData::update_WTable( QSqlQuery& sqry, QList< int >& cxs )
 {
@@ -2979,20 +3003,46 @@ void US_XpnData::update_WTable( QSqlQuery& sqry, QList< int >& cxs )
    QString sVals    = sqry.value( cxs[ 18 ] ).toString();
    parse_doubles( sPoss, wsdrow.wvls );
    parse_doubles( sVals, wsdrow.vals );
+   int mdx1         = -1;
+   int mdx2         = -1;
+   int strow        = tWsdata.count() - 1;
+   int enrow        = qMax( ( strow - 100 ), -1 );
 
+   for ( int ii = strow; ii > enrow; ii-- )
+   {  // Look from end for any dataId match in already captured rows
+      if ( tWsdata[ ii ].dataId == wsdrow.dataId )
+      {  // Match: get index(es)
+         if ( mdx1 < 0 )
+            mdx1       = ii;
+         else
+         {
+            mdx2       = ii;
+            break;
+         }
+      }
+   }
    if ( wsdrow.radPath == " "  ||  wsdrow.radPath.isEmpty() )
    {  // Store both an 'A' and 'B' channel record
       wsdrow.radPath   = "A";
-      tWsdata << wsdrow;
+      if ( mdx1 < 0 )
+         tWsdata << wsdrow;          // Update table with data entry
+      else
+         tWsdata[ mdx1 ] = wsdrow;   // Replace table data entry
       wsdrow.radPath   = "B";
       sVals            = sqry.value( cxs[ 19 ] ).toString();
       parse_doubles( sVals, wsdrow.vals );
-      tWsdata << wsdrow;
+      if ( mdx2 < 0 )
+         tWsdata << wsdrow;          // Update table with data entry
+      else
+         tWsdata[ mdx2 ] = wsdrow;   // Replace table data entry
    }
 
    else
    {  // Store either an 'A' or a 'B' channel record
-      tWsdata << wsdrow;
+      if ( mdx1 < 0 )
+         tWsdata << wsdrow;          // Update table with data entry
+      else
+         tWsdata[ mdx1 ] = wsdrow;   // Replace table data entry
    }
 }
 
