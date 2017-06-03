@@ -1957,6 +1957,8 @@ time10=QDateTime::currentDateTime();
    {
       tbAsData* asdrec;
       sdknt          = tAsdata.count();
+      jj             = ( jj < sdknt ) ? jj : 0;
+
       for ( int ii = 0; ii < sdknt; ii++ )
       {
 //time30=QDateTime::currentDateTime();
@@ -1984,6 +1986,8 @@ time10=QDateTime::currentDateTime();
    {
       tbFsData* fsdrec;
       sdknt          = tFsdata.count();
+      jj             = ( jj < sdknt ) ? jj : 0;
+
       for ( int ii = 0; ii < sdknt; ii++ )
       {
 //time30=QDateTime::currentDateTime();
@@ -2009,6 +2013,8 @@ time10=QDateTime::currentDateTime();
    {
       tbIsData* isdrec;
       sdknt          = tIsdata.count();
+      jj             = ( jj < sdknt ) ? jj : 0;
+
       for ( int ii = 0; ii < sdknt; ii++ )
       {
 //time30=QDateTime::currentDateTime();
@@ -2034,6 +2040,8 @@ time10=QDateTime::currentDateTime();
    {
       tbWsData* wsdrec;
       sdknt          = tWsdata.count();
+      jj             = ( jj < sdknt ) ? jj : 0;
+
       for ( int ii = 0; ii < sdknt; ii++ )
       {
 //time30=QDateTime::currentDateTime();

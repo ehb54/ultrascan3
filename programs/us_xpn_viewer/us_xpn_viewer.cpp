@@ -1238,6 +1238,7 @@ DbgLv(1) << "chgRec: recx" << recx;
 // Slot to handle a change in the optical system
 void US_XpnDataViewer::changeOptics( void )
 {
+   // Determine the new run type
    int optrx      = cb_optsys->currentIndex();
    QString ostyp  = cb_optsys ->currentText();
    QString rtype( "RI" );
@@ -1250,11 +1251,24 @@ void US_XpnDataViewer::changeOptics( void )
 DbgLv(1) << "chgOpt: optrx" << optrx << "ostyp" << ostyp
  << "rtype" << rtype;
 
-   if ( rtype == runType )   // If simply re-choosing same optics,
-      return;                //  bale out now
+  // If simply re-choosing the same optics, bale out now
+   if ( rtype == runType )
+      return;
 
 QDateTime sttime=QDateTime::currentDateTime();
    runType       = rtype;    // Set the new run type (RI, IP, ...)
+
+   // Turn off auto-reload if on
+   if ( rlt_id != 0 )
+   {
+      ck_autorld->setChecked( false );
+      QMessageBox::warning( this,
+            tr( "Auto-Reload Stopped" ),
+            tr( "Auto-Reload has been stopped and its box unchecked,"
+                "\n since the optical system has been changed." ) );
+   }
+
+   // Set up for a new run type
    xpn_data->set_run_values( runID, runType );
 
    // For new optics, rebuild internal arrays and all AUC
