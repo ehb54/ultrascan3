@@ -78,6 +78,7 @@ US_XpnDataViewer::US_XpnDataViewer() : US_Widgets()
    xpn_data     = NULL;
    runID        = "";
    runType      = "RI";
+   rlt_id       = 0;
    currentDir   = "";
    QStringList xpnentr = US_Settings::defaultXpnHost();
 DbgLv(1) << "xpnentr count" << xpnentr.count();
@@ -151,6 +152,8 @@ else
                 le_lrange   = us_lineedit( "280 only", -1, true );
                 lb_pltrec   = us_label( prectype, -1 );
                 cb_pltrec   = us_comboBox();
+   QLabel*      lb_optsys   = us_label( tr( "Optical System:" ), -1 );
+                cb_optsys   = us_comboBox();
 
                 pb_prev     = us_pushbutton( tr( "Previous" ) );
                 pb_next     = us_pushbutton( tr( "Next" ) );
@@ -158,6 +161,15 @@ else
    us_checkbox( tr( "Auto Reload" ),              ck_autorld, false );
    pb_prev->setIcon( US_Images::getIcon( US_Images::ARROW_LEFT  ) );
    pb_next->setIcon( US_Images::getIcon( US_Images::ARROW_RIGHT ) );
+   QLabel*      lb_rinterv  = us_label( tr( "Reload Interval Seconds:" ), -1 );
+                ct_rinterv  = us_counter( 2, 10, 3600, 1 );
+   ct_rinterv->setFont( sfont );
+   ct_rinterv->setMinimumWidth( lwid );
+   ct_rinterv->resize( rhgt, swid );
+   ct_rinterv->setMinimum   (   10 );
+   ct_rinterv->setMaximum   ( 3600 );
+   ct_rinterv->setValue     (   20 );
+   ct_rinterv->setSingleStep(    1 );
 
    // Scan controls     
    QLabel*      lb_scanctl  = us_banner( tr( "Scan Control" ) );
@@ -202,6 +214,8 @@ else
             this,         SLOT  ( export_auc()   ) );
    connect( pb_reload,    SIGNAL( clicked()      ),
             this,         SLOT  ( reloadData()   ) );
+   connect( ck_autorld,   SIGNAL( clicked()      ),
+            this,         SLOT  ( changeReload()             ) );
    connect( cb_cellchn,   SIGNAL( currentIndexChanged( int ) ),
             this,         SLOT  ( changeCellCh( )            ) );
    connect( cb_rstart,    SIGNAL( currentIndexChanged( int ) ),
@@ -226,6 +240,8 @@ else
             this,         SLOT  ( changeCellCh()  ) );
    connect( pb_showtmst,  SIGNAL( clicked()       ),
             this,         SLOT  ( showTimeState() ) );
+   connect( ct_rinterv,   SIGNAL( valueChanged( double ) ),
+            this,         SLOT  ( changeInterval()       ) );
    connect( pb_help,      SIGNAL( clicked()  ),
             this,         SLOT  ( help()     ) );
    connect( pb_close,     SIGNAL( clicked()  ),
@@ -248,11 +264,15 @@ else
    settings->addWidget( pb_saveauc,    row++, 4, 1, 4 );
    settings->addWidget( pb_reload,     row,   0, 1, 4 );
    settings->addWidget( ck_autorld,    row++, 4, 1, 4 );
+   settings->addWidget( lb_rinterv,    row,   0, 1, 4 );
+   settings->addWidget( ct_rinterv,    row++, 4, 1, 4 );
    settings->addWidget( lb_prcntls,    row++, 0, 1, 8 );
    settings->addWidget( lb_rstart,     row,   0, 1, 2 );
    settings->addWidget( cb_rstart,     row,   2, 1, 2 );
    settings->addWidget( lb_rend,       row,   4, 1, 2 );
    settings->addWidget( cb_rend,       row++, 6, 1, 2 );
+   settings->addWidget( lb_optsys,     row,   0, 1, 4 );
+   settings->addWidget( cb_optsys,     row++, 4, 1, 4 );
    settings->addWidget( lb_cellchn,    row,   0, 1, 2 );
    settings->addWidget( cb_cellchn,    row,   2, 1, 2 );
    settings->addWidget( lb_lrange,     row,   4, 1, 2 );
@@ -330,9 +350,9 @@ void US_XpnDataViewer::reset( void )
 
    pb_loadXpn ->setEnabled( true );
    pb_loadAUC ->setEnabled( true );
-   pb_details ->setEnabled( false  );
-   pb_reload  ->setEnabled( false  );
-   ck_autorld ->setEnabled( false  );
+   pb_details ->setEnabled( false );
+   pb_reload  ->setEnabled( false );
+   ck_autorld ->setEnabled( true  );
    cb_cellchn ->setEnabled( false );
    cb_rstart  ->setEnabled( false );
    cb_rend    ->setEnabled( false );
@@ -595,9 +615,11 @@ DbgLv(1) << "RDr:     iRId" << iRunId << "sMsks scnmask" << sMasks << scanmask;
    le_status->setText( tr( "Initial Raw Optima data import complete." ) );
    qApp->processEvents();
 double tm1=(double)sttime.msecsTo(QDateTime::currentDateTime())/1000.0;
+   QStringList opsys;
 
    // Infer and report on type of data to eventually export
    runType            = "RI";
+   int optndx         = 0;
 
    if ( scanmask == 1  ||  scanmask == 2  ||
         scanmask == 4  ||  scanmask == 8 )
@@ -605,6 +627,14 @@ double tm1=(double)sttime.msecsTo(QDateTime::currentDateTime())/1000.0;
       runType            = ( scanmask == 2 ) ? "FI" : runType;
       runType            = ( scanmask == 4 ) ? "IP" : runType;
       runType            = ( scanmask == 8 ) ? "WI" : runType;
+      if ( scanmask == 1 )
+         opsys << "Absorbance";
+      else if ( scanmask == 2 )
+         opsys << "Fluorescence";
+      else if ( scanmask == 4 )
+         opsys << "Interference";
+      else if ( scanmask == 8 )
+         opsys << "Wavelength";
    }
 
    else if ( ( scanmask & 1 ) != 0 )
@@ -622,10 +652,12 @@ double tm1=(double)sttime.msecsTo(QDateTime::currentDateTime())/1000.0;
       drtype2            = ( runType2 == "RI" ) ? "Absorbance"   : drtype2;
       drtype2            = ( runType2 == "FI" ) ? "Fluorescence" : drtype2;
       drtype2            = ( runType2 == "WI" ) ? "Wavelength"   : drtype2;
+      opsys << drtype1 << drtype2;
+
       QString msg        = tr( "Multiple scan data types are present:\n" )
                            +   "'" + drtype1 + "'\n or \n"
                            +   "'" + drtype2 + "' .\n\n"
-                           + tr( "Choose one for output." );
+                           + tr( "Choose one for initial display." );
       QMessageBox mbox;
       mbox.setWindowTitle( tr( "Scan Data Type to Process" ) );
       mbox.setText( msg );
@@ -636,8 +668,18 @@ double tm1=(double)sttime.msecsTo(QDateTime::currentDateTime())/1000.0;
 
       mbox.exec();
       if ( mbox.clickedButton() == pb_opt2 )
+      {
          runType            = runType2;
+         optndx             = 1;
+      }
    }
+
+   cb_optsys->disconnect();
+   cb_optsys->clear();
+   cb_optsys->addItems( opsys );
+   cb_optsys->setCurrentIndex( optndx );
+   connect( cb_optsys,    SIGNAL( currentIndexChanged( int ) ),
+            this,         SLOT  ( changeOptics( )            ) );
 
    runID         = new_runID;
 DbgLv(1) << "RDr:  runID" << runID << "runType" << runType;
@@ -1193,6 +1235,76 @@ DbgLv(1) << "chgRec: recx" << recx;
    pb_next  ->setEnabled( ( recx < lplrec ) );
 }
 
+// Slot to handle a change in the optical system
+void US_XpnDataViewer::changeOptics( void )
+{
+   int optrx      = cb_optsys->currentIndex();
+   QString ostyp  = cb_optsys ->currentText();
+   QString rtype( "RI" );
+   if ( ostyp == "Interference" )
+      rtype          = "IP";
+   else if ( ostyp == "Fluorescence" )
+      rtype          = "FI";
+   else if ( ostyp == "Wavelength" )
+      rtype          = "WI";
+DbgLv(1) << "chgOpt: optrx" << optrx << "ostyp" << ostyp
+ << "rtype" << rtype;
+
+   if ( rtype == runType )   // If simply re-choosing same optics,
+      return;                //  bale out now
+
+QDateTime sttime=QDateTime::currentDateTime();
+   runType       = rtype;    // Set the new run type (RI, IP, ...)
+   xpn_data->set_run_values( runID, runType );
+
+   // For new optics, rebuild internal arrays and all AUC
+   QApplication::setOverrideCursor( QCursor( Qt::WaitCursor) );
+   le_status->setText( tr( "Rebuilding AUC data ..." ) );
+   qApp->processEvents();
+
+   xpn_data->build_rawData( allData );
+double tm2=(double)sttime.msecsTo(QDateTime::currentDateTime())/1000.0;
+DbgLv(1) << "chgOpt:   build-raw done: tm2" << tm2;
+
+   QApplication::restoreOverrideCursor();
+   QApplication::restoreOverrideCursor();
+
+   // Reset various flags, counts, and lists
+   isRaw         = true;
+   haveData      = true;
+   ncellch       = xpn_data->cellchannels( cellchans );
+   radii.clear();
+   radii << allData[ 0 ].xvalues;
+   nscan         = allData[ 0 ].scanCount();
+   npoint        = allData[ 0 ].pointCount();
+
+DbgLv(1) << "chgOpt: mwr ntriple" << ntriple;
+DbgLv(1) << "chgOpt: ncellch" << ncellch << cellchans.count();
+DbgLv(1) << "chgOpt: nscan" << nscan << "npoint" << npoint;
+DbgLv(1) << "chgOpt:   rvS rvE" << radii[0] << radii[npoint-1];
+   cb_cellchn->disconnect();
+   cb_cellchn->clear();
+   cb_cellchn->addItems( cellchans );
+   connect( cb_cellchn,   SIGNAL( currentIndexChanged( int ) ),
+            this,         SLOT  ( changeCellCh(            ) ) );
+
+   nlambda      = xpn_data->lambdas_raw( lambdas );
+   int wvlo     = lambdas[ 0 ];
+   int wvhi     = lambdas[ nlambda - 1 ];
+   ntriple      = xpn_data->data_triples( triples );
+DbgLv(1) << "chgOpt: nwl wvlo wvhi" << nlambda << wvlo << wvhi
+   << "ncellch" << ncellch << "nlambda" << nlambda << "ntriple" << ntriple
+   << triples.count();
+
+DbgLv(1) << "chgOpt: allData size" << allData.size();
+   QApplication::restoreOverrideCursor();
+   QString tspath = currentDir + "/" + runID + ".time_state.tmst";
+   haveTmst       = QFile( tspath ).exists();
+
+   // Ok to reenable some buttons now
+   enableControls();
+}
+
 // Slot to handle a click to go to the previous record
 void US_XpnDataViewer::prevPlot( void )
 {
@@ -1511,10 +1623,13 @@ QDateTime sttime=QDateTime::currentDateTime();
    if ( ! upd_ok )
    {  // No change in data scans:  report inability to update
       nscan       = allData[ trpxs ].scanCount();
-      QMessageBox::warning( this,
-            tr( "Reload Data Not Possible" ),
-            tr( "The \"Reload Data\" action had no effect.\n"
-                "No additional data has been recorded." ) );
+      if ( rlt_id == 0 )    // Output message only if not auto-reload
+      {
+         QMessageBox::warning( this,
+               tr( "Reload Data Not Possible" ),
+               tr( "The \"Reload Data\" action had no effect.\n"
+                   "No additional data has been recorded." ) );
+      }
 
       if ( ! smsg.endsWith( tr( " scans)" ) ) )
       {  // If need be, add scan count to the status message
@@ -1534,7 +1649,8 @@ double tm1=(double)sttime.msecsTo(QDateTime::currentDateTime())/1000.0;
    xpn_data->rebuild_rawData( allData );
 
 double tm2=(double)sttime.msecsTo(QDateTime::currentDateTime())/1000.0;
-DbgLv(1) << "RLd:      build-raw done: tm1 tm2" << tm1 << tm2;
+DbgLv(1) << "RLd:      build-raw done: tm1 tm2" << tm1 << tm2
+ << "tm2i" << (tm2-tm1);
    // Reset scan counter maximum and report update complete
    nscan       = allData[ trpxs ].scanCount();
    npoint      = allData[ trpxs ].pointCount();
@@ -1547,5 +1663,68 @@ DbgLv(1) << "RLd:      build-raw done: tm1 tm2" << tm1 << tm2;
 
    // Do resets and re-plot the current triple
    changeCellCh();
+}
+
+// Slot to respond to a timer event (auto-reload)
+void US_XpnDataViewer::timerEvent( QTimerEvent *event )
+{
+   int tim_id  = event->timerId();
+DbgLv(1) << "            timerEvent:   tim_id" << tim_id << "    "
+ << QDateTime::currentDateTime().toString( "hh:mm:ss" );
+
+   if ( tim_id != rlt_id )
+   {  // if other than auto-reload event, pass on to normal handler
+      QWidget::timerEvent( event );
+      return;
+   }
+
+   // Do a reload of data
+   reloadData();
+}
+
+// Slot to handle change in auto-reload check
+void US_XpnDataViewer::changeReload()
+{
+DbgLv(1) << "chgRld: checked" << ck_autorld->isChecked();
+   if ( ck_autorld->isChecked() )
+   {  // Changing to checked:  start the timer
+      data_plot->replot();
+
+      rlt_dlay    = qRound( ct_rinterv->value() * 1000.0 );
+      rlt_id      = startTimer( rlt_dlay );
+DbgLv(1) << "chgRld:  rlt_dlay" << rlt_dlay << "rlt_id" << rlt_id;
+   }
+
+   else
+   {  // Just been unchecked:  stop the timer if need be
+DbgLv(1) << "chgRld:  rlt_id" << rlt_id;
+      if ( rlt_id != 0 )
+      {
+         killTimer( rlt_id );
+DbgLv(1) << "chgRld:    STOPPED";
+      }
+      rlt_id      = 0;
+   }
+}
+
+// Slot to handle change in auto-reload interval
+void US_XpnDataViewer::changeInterval()
+{
+DbgLv(1) << "chgInt: checked" << ck_autorld->isChecked();
+   if ( ! ck_autorld->isChecked() )
+   {  // If no auto reload checked, ignore this interval change for now
+      rlt_id      = 0;
+      return;
+   }
+
+DbgLv(1) << "chgInt:  rlt_id" << rlt_id << "newInt" << ct_rinterv->value()
+ << "    " << QDateTime::currentDateTime().toString( "hh:mm:ss" );
+   // Otherwise, stop the timer and then restart it with a new delay
+   if ( rlt_id != 0 )
+   {
+      killTimer( rlt_id );
+   }
+
+   changeReload();
 }
 
