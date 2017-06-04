@@ -13,6 +13,16 @@
 #include "us_analyte.h"
 #include <qwt_counter.h>
 
+#include "us_minimize.h"
+#include "us_extinction_gui.h"
+#include "us_extinctfitter_gui.h"
+
+#ifndef DbgLv
+#define DbgLv(a) if(dbg_level>=a)qDebug()
+#endif
+
+class US_Extinction;
+
 //! A class to bring up a dialog that edits an analyte sequence
 class US_GUI_EXTERN US_SequenceEditor : public US_WidgetsDialog
 {
@@ -35,37 +45,188 @@ class US_GUI_EXTERN US_SequenceEditor : public US_WidgetsDialog
       void accept( void );
 };
 
-//! A class that manages analyte composition and characteristics
-class US_GUI_EXTERN US_AnalyteGui : public US_WidgetsDialog
+//! \class US_AnalyteMgrSelect
+//!      This class provides a tabbed entry for analyte selection
+class US_AnalyteMgrSelect: public US_Widgets
 {
    Q_OBJECT
 
    public:
-      //! Constructor.
-      //! \param signal - A flag to indicate that a signal is wanted
-      //! \param GUID   - The global identifier of the current analyte
-      //! \param access - A flag to indicate 
-      //! \param temp   - The the temperature of the simulation
-      US_AnalyteGui( bool            = false, 
-                     const QString&  = QString(),
-                     int             = US_Disk_DB_Controls::Default,
-                     double          = NORMAL_TEMP );
+
+      //! brief Analyte Selection Tab. To 
+      //! instantiate the class a calling function must
+      //! provide the ID of the investigator.
+
+      //! \param invID          A pointer to the current investigator ID
+      //! \param select_db_disk Indicates whether the default search
+      //!    is on the local disk or in the DB
+      //! \param tmp_analyte    Pointer for selected analyte
+      US_AnalyteMgrSelect( int*, int*, US_Analyte* );
+
+      US_Analyte*   analyte;
+      US_Analyte*   tmp_analyte;
+      US_Analyte    orig_analyte;
+
+      int*          personID;
+      int*          db_or_disk;
+      bool          from_db;
 
    signals:
-      //! A signal that indicates that the analyte data has been updated and
-      //! the screen is closing.
-      //! \param data - The updated analyte data
-      void valueChanged( US_Analyte data );
-
-      //! A signal to indicate that the current disk/db selection has changed.
-      //! /param DB True if DB is the new selection
-      void use_db( bool DB );
+      //! Currently selected analyte is accepted by User
+      void analyteAccepted( void );
+      void selectionCanceled( void );
 
    private:
-      int           personID;
-      bool          signal_wanted;
-      QString       guid;
-      double        temperature;
+
+      int           dbg_level;
+
+      QHBoxLayout*  radios;
+      QButtonGroup* typeButtons;
+      QGridLayout*  gfbox;
+
+      QLabel*       bn_select;
+      QLabel*       bn_calcmw;
+      QLabel*       bn_ratnuc;
+
+      QLabel*       lb_search;
+      QLabel*       lb_molecwt;
+      QLabel*       lb_vbar20;
+      QLabel*       lb_residue;
+      QLabel*       lb_e280;
+      QLabel*       lb_strand;
+      QLabel*       lb_3prime;
+      QLabel*       lb_5prime;
+      QLabel*       lb_sodium;
+      QLabel*       lb_potassium;
+      QLabel*       lb_lithium;
+      QLabel*       lb_magnesium;
+      QLabel*       lb_calcium;
+
+      QLineEdit*    le_search;
+      QLineEdit*    le_molecwt;
+      QLineEdit*    le_vbar20;
+      QLineEdit*    le_residue;
+      QLineEdit*    le_e280;
+      QLineEdit*    le_strand;
+      QLineEdit*    le_3prime;
+      QLineEdit*    le_5prime;
+      QLineEdit*    le_sodium;
+      QLineEdit*    le_potassium;
+      QLineEdit*    le_lithium;
+      QLineEdit*    le_magnesium;
+      QLineEdit*    le_calcium;
+
+      QPushButton*  pb_cancel;
+      QPushButton*  pb_accept;
+      QPushButton*  pb_spectrum;
+      QPushButton*  pb_sequence;
+      QPushButton*  pb_delete;
+      QPushButton*  pb_info;
+      QPushButton*  pb_help;
+
+      QListWidget*  lw_analyte_list;
+      QTextEdit*    te_analyte_smry;
+
+      QRadioButton* rb_protein;
+      QRadioButton* rb_dna;
+      QRadioButton* rb_rna;
+      QRadioButton* rb_carbo;
+      //QRadioButton* rb_3_hydroxyl;
+      //QRadioButton* rb_3_phosphate;
+      //QRadioButton* rb_5_hydroxyl;
+      //QRadioButton* rb_5_phosphate;
+
+      QCheckBox*    ck_gradform;
+
+      US_Help       showHelp;
+
+      // For list widget
+      class AnalyteInfo
+      {
+         public:
+         QString description;
+         QString analyteID;
+         QString guid;
+         int     index;
+      };
+
+      QList< AnalyteInfo > analyte_metadata;
+      QStringList   filenames;
+      QStringList   descriptions;
+      QStringList   GUIDs;
+      QStringList   analyteIDs;
+
+   private slots:
+
+      void query           ( void );
+      void spectrum        ( void );
+      void delete_analyte  ( void );
+      void delete_disk     ( void );
+      void delete_db       ( void );
+      bool analyte_in_use  ( QString& );
+      void info_analyte    ( void );
+      void accept_analyte  ( void );
+      void select_analyte  ( QListWidgetItem* );
+      void select_analyte  ( );
+      void read_from_disk  ( QListWidgetItem* );
+      void read_from_db    ( QListWidgetItem* );
+      void read_from_db    ( const QString&   );
+      void search          ( const QString& = QString() );
+//      void show_component  ( const QString&, double );
+      void reject          ( void );
+      void accept          ( void );
+      void read_analyte    ( void );
+      void read_db         ( void );
+      void connect_error   ( const QString& );
+      bool analyte_path    ( QString& );
+      void reset           ( void );
+      void set_analyte_type( int  );
+      QString analyte_info ( US_Analyte* );
+      QString analyte_smry ( US_Analyte* );
+      void sequence        (void);
+
+      void help( void ) { showHelp.show_help( "analyte_select.html" ); };
+
+   public slots:
+      void init_analyte		( void );
+};
+
+//! \class US_AnalyteMgrNew
+//!      This class provides a tabbed entry for new analyte creation
+class US_AnalyteMgrNew : public US_Widgets
+{
+   Q_OBJECT
+
+   public:
+
+      /*! brief Tab for entering a new Analyte. To 
+         instantiate the class a calling function must
+         provide the ID of the investigator.
+
+         \param invID          The current investigator ID
+         \param select_db_disk Indicates whether the default search
+                                 is on the local disk or in the DB
+         \param tmp_analyte    Pointer to a US_Analyte object holding the active
+                                 analyte (for editing and adding new analytes)
+         \param temperature    The average analyte temperature
+         \param signal         Flag if signal is to be output
+      */
+   US_AnalyteMgrNew( int*, int*, US_Analyte*, double, bool );
+   US_Extinction *w;
+
+   signals:
+      void newAnaAccepted( void );  //! New analyte accepted
+      void newAnaCanceled( void );
+
+   private:
+
+      int*          personID;
+      int*          db_or_disk;
+      bool          from_db;
+      int           dbg_level;
+
+      int           anatype;
+      bool          signal_tmp;
 
       bool          inReset;
 
@@ -75,45 +236,43 @@ class US_GUI_EXTERN US_AnalyteGui : public US_WidgetsDialog
       uint          G;
       uint          U;
 
-      US_Analyte    analyte;
-      US_Analyte    saved_analyte;
+      US_Analyte*   analyte;
+      US_Analyte    orig_analyte;
+      
+      QPushButton*  pb_sequence;
+      QPushButton*  pb_spectrum;
+      QPushButton*  pb_accept;
+      QPushButton*  pb_reset;
+      QPushButton*  pb_cancel;
 
-      class US_GUI_EXTERN AnalyteInfo
-      {
-         public:
-         QString description;
-         QString guid;
-         QString filename;
-         QString analyteID;
-         int     index;
-      };
+      QLabel*       bn_calcmw;
+      QLabel*       bn_ratnuc;
 
-      // Populated in list(), new() used in select()
-      QList< AnalyteInfo > info; 
+      QLabel*       lb_bselect;
+      QLabel*       lb_descrip;
+      QLabel*       lb_molecwt;
+      QLabel*       lb_vbar20;
+      QLabel*       lb_residue;
+      QLabel*       lb_e280;
 
-      QStringList   files;
+      QLineEdit*    le_concen;
+      QLineEdit*    le_density;
+      QLineEdit*    le_viscos;
+      QLineEdit*    le_ph;   
+      QLineEdit*    le_compress;
+      QLineEdit*    le_descrip;
+      QLineEdit*    le_molecwt;
+      QLineEdit*    le_vbar20;
+      QLineEdit*    le_residue;
+      QLineEdit*    le_e280;
 
-      QStringList   filenames;    // From list_from_disk()
-      QStringList   analyteIDs;   // From list_from_DB()
-      QStringList   descriptions; // From list(), new()
-      QStringList   GUIDs;        // From list(), new()
 
-      QComboBox*    cmb_optics;
-
-      US_Help       showHelp;
-
-      QListWidget*  lw_analytes;
-
-      QLineEdit*    le_investigator;
-      QLineEdit*    le_search;
-      QLineEdit*    le_description;
+      QLineEdit*    le_protein_temp;
       QLineEdit*    le_protein_mw;
       QLineEdit*    le_protein_vbar20;
       QLineEdit*    le_protein_vbar;
-      QLineEdit*    le_protein_temp;
       QLineEdit*    le_protein_residues;
       QLineEdit*    le_protein_e280;
-      QLineEdit*    le_guid;
 
       QLineEdit*    le_nucle_mw;
       QLineEdit*    le_nucle_vbar;
@@ -123,13 +282,6 @@ class US_GUI_EXTERN US_AnalyteGui : public US_WidgetsDialog
       QWidget*      protein_widget;
       QWidget*      dna_widget;
       QWidget*      carbs_widget;
-      
-      US_Disk_DB_Controls* disk_controls; //!< Radiobuttons for disk/db choice
-      
-      QRadioButton* rb_protein;
-      QRadioButton* rb_dna;
-      QRadioButton* rb_rna;
-      QRadioButton* rb_carb;
 
       QCheckBox*    ck_stranded;
       QCheckBox*    ck_mw_only;
@@ -139,68 +291,280 @@ class US_GUI_EXTERN US_AnalyteGui : public US_WidgetsDialog
       QRadioButton* rb_5_hydroxyl;
       QRadioButton* rb_5_phosphate;
 
-      QPushButton*  pb_save;
-      QPushButton*  pb_delete;
-      QPushButton*  pb_sequence;
-      QPushButton*  pb_spectrum;
-      QPushButton*  pb_more;
-
       QwtCounter*   ct_sodium;
       QwtCounter*   ct_potassium;
       QwtCounter*   ct_lithium;
       QwtCounter*   ct_magnesium;
       QwtCounter*   ct_calcium;
 
+      QCheckBox*    ck_manual;
+
+      QRadioButton* rb_protein;
+      QRadioButton* rb_dna;
+      QRadioButton* rb_rna;
+      QRadioButton* rb_carbo;
+
+      //QListWidget*  lw_allcomps;
+      //QListWidget*  lw_bufcomps;
+
+      US_Help       showHelp;
+      
       void    parse_dna       ( void );
-      void    connect_error   ( const QString& );
-      bool    database_ok     ( US_DB2& );
       bool    data_ok         ( void );
-      int     status_query    ( const QStringList& );
-      void    load_analyte    ( void );
-      void    populate        ( void );
-      void    list_from_disk  ( void );
-      void    list_from_db    ( void );
-      void    delete_from_disk( void );
-      void    delete_from_db  ( void );
-      void    select_from_disk( void );
-      void    select_from_db  ( void );
-      bool    discard_changes ( void );
-      bool    analyte_in_use  ( QString& );
-
    private slots:
-      void set_analyte_type   ( int  );
-      void sel_investigator   ( void );
-      void search             ( const QString& = QString() );
-      void select_analyte     ( QListWidgetItem* );
-      void check_db           ( void );
 
-      void new_analyte        ( void );
-      void list               ( void );
-      void save               ( void );
-      void delete_analyte     ( void );
+      void new_description ();
+      void add_component   ();
+      void select_bcomp    ();
+      void remove_bcomp    ( QListWidgetItem* );
+      void recalc_density  ( void );
+      void recalc_viscosity( void );
+      void ph              ( void );
+      void compressibility ( void );
+      void density         ( void );
+      void viscosity       ( void );
+      void manual_flag     ( bool );
+      void spectrum        ( void );
+      void newAccepted     ( void );
+      void newCanceled     ( void );
+      void write_db        ( void );
+      void write_disk      ( void );
+      void help( void ) { showHelp.show_help( "analyte_new.html" ); };
 
-      void change_description ( void );
+      void manage_sequence ( void );
+      void manage_spectrum ( void );
+
+      void update_sequence ( QString );
+
       void value_changed      ( const QString& );
-      void manage_sequence    ( void );
-      void spectrum           ( void );
-      void more_info          ( void );
       void temp_changed       ( const QString& );
-      void verify_vbar        ( void );
 
       void update_stranded    ( bool );
       void update_mw_only     ( bool );
       void update_nucleotide  ( bool );
       void update_nucleotide  ( double );
       void update_nucleotide  ( void );
-      void source_changed     ( bool );
 
+      void set_analyte_type   ( int  );
       void reset              ( void );
-      void close              ( void );
+      void verify_vbar        ( void );
+
+      void process_results( QMap < double, double > &xyz );
+
+   public slots:
+      void init_analyte		( void );
+      
+};
+
+// class to view buffer spectrum
+class US_AnalyteViewSpectrum : public US_Widgets
+{
+   Q_OBJECT
+
+   public:
+
+        US_AnalyteViewSpectrum(QMap<double,double>& analyte_temp);
+	
+	QMap <double, double> analyte;
+	US_Plot*	plotLayout;
+	QwtPlot	 	*data_plot;
+	
+	void plot_extinction();
+	
+   private:
+	
+};
+
+
+//! \class US_AnalyteMgrEdit
+//!      This class provides a tabbed entry for non-hydrodynamic analyte mods
+class US_AnalyteMgrEdit : public US_Widgets
+{
+   Q_OBJECT
+
+   public:
+
+      /*! brief Tab for entering a new Analyte. To 
+         instantiate the class a calling function must
+         provide the ID of the investigator.
+
+         \param invID          The current investigator ID
+         \param select_db_disk Indicates whether the default search
+                                 is on the local disk or in the DB
+         \param tmp_analyte    Pointer to a US_Analyte object holding the active
+                                 analyte (for editing and adding new analytes)
+      */
+      US_AnalyteMgrEdit( int*, int*, US_Analyte* );
+      QString edit_analyte_description;
+      US_Extinction *w;
+      
+   signals:
+      void editAnaAccepted( void );  //! Edited analyte accepted
+      void editAnaCanceled( void );
+
+   private:
+      int*          personID;
+      int*          db_or_disk;
+      bool          from_db;
+      int           dbg_level;
+
+      US_Analyte*   analyte;
+      US_Analyte    orig_analyte;
+
+      QPushButton*  pb_accept;
+      QLineEdit*    le_descrip;
+      QLineEdit*    le_bguid;
+      QLineEdit*    le_ph;
+
+      US_Help       showHelp;
+
+   private slots:
+
+      void ph          ( void );
+      void spectrum    ( void );
+      void editAccepted( void );
+      void editCanceled( void );
+      void write_db    ( void );
+      void write_disk  ( void );
+      void help( void ) { showHelp.show_help( "analyte_edit.html" ); };
+
+      void process_results( QMap < double, double > &xyz );
+
+   public slots:
+      void init_analyte		( void );
+};
+
+//! \class US_AnalyteMgrSettings
+//!      This class provides a tabbed entry for general analyte settings
+class US_AnalyteMgrSettings: public US_Widgets
+{
+   Q_OBJECT
+
+   public:
+
+      //! \brief Selection tab for changing investigator and 
+      //!        choosing between db/disk access, as well as
+      //!        for synchronizing the analyte components local
+      //!        file with the database.
+      //!
+      //! \param invID          A pointer to the current investigator ID
+      //! \param select_db_disk A pointer to a flag that indicates whether 
+      //!                       the default search is on the local disk or
+      //!                       in the DB
+      US_AnalyteMgrSettings( int*, int* );
+
+   signals:
+      //! A signal to indicate that the current disk/db selection has changed. 
+      //! /param DB True if DB is the new selection
+      void use_db( bool DB );
+      //! A signal to indicate that the current investigator was changed. 
+      //! /param invID is the new selection
+      void investigator_changed( int invID );
+
+   private:
+      int*          personID;
+      int*          db_or_disk;
+      int           dbg_level;
+      bool          from_db;
+      bool          signal_wanted;
+
+      QLineEdit*    le_investigator;
+
+      US_Help       showHelp;
+
+      US_Disk_DB_Controls* disk_controls;
+
+   private slots:
+      void sel_investigator   ( void );
+      void assign_investigator( int  );
+      void db_changed         ( bool );
 
       void help            ( void ) 
       { showHelp.show_help( "analytes.html" ); };
 
-      void update_sequence    ( QString );
-      void assign_investigator( int     );
+};
+
+class US_GUI_EXTERN US_AnalyteGui : public US_WidgetsDialog
+{
+   Q_OBJECT
+
+   public:
+      //! Main constructor
+      //! \param signal  A flag to specify if one of the signals
+      //!                should be emitted when terminating the dialog
+      //! \param GUID    The default analyte
+      //! \param accessf An indicator of whether to search the disk
+      //!                or DB for the default analyte
+      //! \param temper  The average analyte temperature
+      US_AnalyteGui( bool           = false,
+                     const QString& = QString(), 
+                     int            = US_Disk_DB_Controls::Default,
+                     double         = NORMAL_TEMP );
+
+   signals:
+      //! A signal to indicate that the analyte density and viscosity
+      //!  has been updated and the screen is closing.
+      //! \param density   - new density of the analyte
+      //! \param viscosity - new viscosity of the analyte
+      void valueChanged( double density, double viscosity );
+
+      //! A signal to indicate that the analyte data
+      //!  has been updated and the screen is closing.
+      //! \param analyte   - the updated analyte data.
+      void valueChanged( US_Analyte analyte );
+
+      //! A signal to indicate that the current disk/db selection has changed. 
+      //! Return the ID of the analyte in the current database.  A
+      //! value of -1 indicates the data was manually input or was
+      //! returned from the local disk.
+      //! \param analyteID - A string value of the returned ID
+      void valueAnalyteID( const QString analyteID );
+
+      //! A signal to indicate that the current disk/db selection has changed. 
+      //! /param DB      - Disk/Db flag: True if DB is the new selection.
+      void use_db( bool DB );
+
+   private:
+      bool          signal;
+      QString       guid;
+      double        temperature;
+
+      int           disk_or_db;
+      int           personID;
+      int           dbg_level;
+      bool          from_db;
+      bool          analyteCurrent;
+      bool          manualUpdate;
+      bool          view_shared;
+      bool          access;
+
+      QTabWidget*            tabWidget;
+      US_AnalyteMgrSelect*   selectTab;
+      US_AnalyteMgrNew*      newTab;
+      US_AnalyteMgrEdit*     editTab;
+      US_AnalyteMgrSettings* settingsTab;
+
+      //!< The currently active analyte Data. 
+      US_Analyte analyte;
+      US_Analyte orig_analyte; // saves original analyte upon entry,
+                             //   is returned if cancel was pressed
+
+   private slots:
+      void checkTab         ( int  );
+      void update_disk_or_db( bool );
+      void update_personID  ( int  );
+
+//      void sel_investigator   ( void );
+//      void source_changed     ( bool );
+      void value_changed      ( const QString& );
+//      void assign_investigator( int  );
+//      void synch_components   ( void );
+      void editAnaAccepted    ( void );
+      void editAnaCanceled    ( void );
+      void newAnaAccepted     ( void );
+      void newAnaCanceled     ( void );
+      void analyteAccepted    ( void );
+      void analyteRejected    ( void );
 };
 #endif
+
