@@ -10,8 +10,7 @@ TARGETS     = $(INSTALL_DIR)/manual.qch $(INSTALL_DIR)/manual.qhc
 # images/*.png is a little overkill.  We probably just want to grep
 # manual.qhp for .png files
 
-##OTHER_Files = ultrascan3.txt images/ultra.xpm $(wildcard images/*.png)$
-OTHER_Files = ultrascan3.txt images/ultra.xpm $(wildcard images/*.png) $(wildcard *.img.html)$
+OTHER_Files = ultrascan3.txt images/ultra.xpm $(wildcard images/*.png) $(wildcard *.img.html)
 
 $(TARGETS): manual.qhp manual.qhcp $(HTML_Files) $(OTHER_Files)
 	@echo "Making Qt Assistant files"
