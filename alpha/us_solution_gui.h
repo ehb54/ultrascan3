@@ -190,6 +190,8 @@ class US_SolutionMgrNew : public US_Widgets
       QPushButton*  pb_cancel;
       QPushButton*  pb_analyte;
       QPushButton*  pb_buffer;
+      QPushButton*  pb_removeAnalyte;
+      QPushButton*  pb_spectrum;
 
       QLineEdit*    le_commonVbar20;
       QLineEdit*    le_density;
@@ -280,7 +282,10 @@ class US_SolutionMgrEdit : public US_Widgets
       QPushButton*  pb_accept;
       QLineEdit*    le_descrip;
       QLineEdit*    le_bguid;
-      QLineEdit*    le_ph;
+      QLineEdit*    le_storageTemp;
+      
+      QTextEdit*    te_notes;
+      
 
       US_Help       showHelp;
 
