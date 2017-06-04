@@ -72,7 +72,7 @@ US_SolutionMgrSelect::US_SolutionMgrSelect( int *invID, int *select_db_disk,
 
    te_notes = us_textedit();
    te_notes->setMaximumSize( 600, 100 );
-   te_notes->setReadOnly( false );
+   te_notes->setReadOnly( true );
    //connect( te_notes, SIGNAL( textChanged( void ) ),  SLOT  ( saveNotes  ( void ) ) );
    
 
@@ -610,6 +610,11 @@ US_SolutionMgrNew::US_SolutionMgrNew( int *invID, int *select_db_disk,
    pb_analyte = us_pushbutton( tr( "Add Analyte" ) );
    pb_buffer  = us_pushbutton( tr( "Select Buffer" ) );
 
+   pb_removeAnalyte = us_pushbutton( tr( "Remove Analyte" ), false );
+   //connect( pb_removeAnalyte, SIGNAL( clicked() ), SLOT( removeAnalyte() ) );
+
+   pb_spectrum = us_pushbutton( tr( "Manage Spectrum" ) );
+
    pb_cancel   = us_pushbutton( tr( "Cancel" ) );
    connect( pb_cancel,   SIGNAL( clicked()     ),
             this,        SLOT  ( newCanceled() ) );
@@ -683,15 +688,19 @@ US_SolutionMgrNew::US_SolutionMgrNew( int *invID, int *select_db_disk,
    main->addWidget( pb_analyte,      row,    6, 1,  3 );
    main->addWidget( pb_buffer,       row++,  9, 1,  3 );
    main->addLayout( lo_amount,       row,    0, 1,  6 );
+
+   main->addWidget( pb_removeAnalyte,  row,    6, 1,  3 );
+   main->addWidget( pb_spectrum,       row++,  9, 1,  3 );
+
+   main->addWidget( lb_banner3,      row,    0, 1, 6 );
+
    main->addWidget( pb_cancel,       row,    6, 1,  2 );
    main->addWidget( pb_reset,        row,    8, 1,  2 );
    main->addWidget( pb_accept,       row++, 10, 1,  2 );
-
-   main->addWidget( lb_banner3,      row,    0, 1, 6 );
    
+   main->addWidget( lw_analytes,     row,     0, 4, 6 );
    main->addWidget( lb_banner1,      row++,   6, 1, 6 );
-   main->addWidget( lw_analytes,     row,     0, 1, 6 );
-   main->addWidget( te_notes,        row++,   6, 1, 6 );
+   main->addWidget( te_notes,        row++,   6, 3, 6 );
 
    
    row += 7;
@@ -720,6 +729,52 @@ US_SolutionMgrEdit::US_SolutionMgrEdit( int *invID, int *select_db_disk,
    db_or_disk  = select_db_disk;
    from_db     = ( (*db_or_disk) == 1 );
    dbg_level   = US_Settings::us_debug();
+
+   QGridLayout* main = new QGridLayout( this );
+   main->setSpacing         ( 2 );
+   main->setContentsMargins ( 2, 2, 2, 2 );
+
+   QPushButton* pb_cancel   = us_pushbutton( tr( "Cancel" ) );
+   pb_accept                = us_pushbutton( tr( "Accept" ) );
+   QPushButton* pb_spectrum = us_pushbutton( tr( "Manage Spectrum" ) );
+   QPushButton* pb_help     = us_pushbutton( tr( "Help" ) );
+   QLabel* bn_modana        = us_banner( tr( "Edit an existing analyte" ) );
+   QLabel* lb_descrip       = us_label( tr( "Description:" ) );
+   le_descrip    = us_lineedit( solution-> solutionDesc );
+   us_setReadOnly( le_descrip, true );
+
+   QLabel* lb_storageTemp = us_label( tr( "Storage Temperature:" ) );
+   le_storageTemp = us_lineedit();
+
+   te_notes = us_textedit();
+   //te_notes->setMaximumSize( 600, 100 );
+   te_notes->setReadOnly( false );
+   //connect( te_notes, SIGNAL( textChanged( void ) ),  SLOT  ( saveNotes  ( void ) ) );
+   QLabel* lb_banner4 = us_banner( tr( "Solution comments" )  );
+   lb_banner4->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
+
+   int row = 0;
+   main->addWidget( bn_modana,       row++, 0, 1, 12 );
+   main->addWidget( lb_descrip,      row,   0, 1, 4 );
+   main->addWidget( le_descrip,      row++, 4, 1, 8 );
+
+   main->addWidget( lb_banner4,      row,   0, 1, 6 );
+   main->addWidget( lb_storageTemp,  row,   6, 1, 2 );
+   main->addWidget( le_storageTemp,  row++, 8, 1, 4 );
+
+   main->addWidget( te_notes,        row,   0, 2, 6 );
+
+   main->addWidget( pb_cancel,       row,   6, 1, 3 );
+   main->addWidget( pb_accept,       row++, 9, 1, 3 );
+   
+   main->addWidget( pb_spectrum,     row,   6, 1, 3 );
+   main->addWidget( pb_help,         row,   9, 1, 3 );
+   
+   row += 8;
+
+   QLabel *empty = us_banner ("");
+   main->addWidget( empty,           row,   0, 9, 12);
+   
 
 }
 
