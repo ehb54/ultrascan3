@@ -66,7 +66,7 @@ void WorkerThread2D::define_work( WorkPacket2D& workin )
    sim_vals             = workin.sim_vals;
    sim_vals.variances   = workin.sim_vals.variances;
    sim_vals.ti_noise    = workin.sim_vals.ti_noise;
-   sim_vals.ri_noise    = workin.sim_vals.ti_noise;
+   sim_vals.ri_noise    = workin.sim_vals.ri_noise;
    sim_vals.solutes     = workin.sim_vals.solutes;
 }
 
