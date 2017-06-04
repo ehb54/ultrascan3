@@ -148,8 +148,210 @@ class US_SolutionMgrSelect: public US_Widgets
      //void init_solution		( void );
 };
 
+//! \class US_SolutionGuiMgrNew
+//!      This class provides a tabbed entry for new solution creation
+class US_SolutionMgrNew : public US_Widgets
+{
+   Q_OBJECT
+
+   public:
+
+      //! brief Tab for entering a new Solution. To 
+      //! instantiate the class a calling function must
+      //! provide the ID of the investigator.
+      //!
+      //! \param invID          The current investigator ID
+      //! \param select_db_disk Indicates whether the default search
+      //!                         is on the local disk or in the DB
+      //! \param tmp_solution     Pointer to a US_Solution object holding the active
+      //!                         solution (for editing and adding new solutions)
+      US_SolutionMgrNew( int*, int*, US_Solution* );
+      US_Extinction *w;
+      
+            
+   signals:
+      void newBufAccepted( void );  //! New solution accepted
+      void newBufCanceled( void );
+
+   private:
+
+      int*          personID;
+      int*          db_or_disk;
+      bool          from_db;
+      int           dbg_level;
+
+            
+      US_Solution*    solution;
+
+      QLabel*       lb_descrip;
+      QLineEdit*    le_descrip;
+      QPushButton*  pb_accept;
+      QPushButton*  pb_reset;
+      QPushButton*  pb_cancel;
+      QPushButton*  pb_analyte;
+      QPushButton*  pb_buffer;
+
+      QLineEdit*    le_commonVbar20;
+      QLineEdit*    le_density;
+      QLineEdit*    le_viscosity;
+      QLineEdit*    le_storageTemp;
+      
+      QTextEdit*    te_notes;
+
+      QwtCounter*   ct_amount;
+      QLabel*       lb_amount;
+
+      QLabel*       lb_bufferInfo;
+      QLineEdit*    le_bufferInfo;
+
+      QListWidget*  lw_analytes;
+      
+
+      //! A SolutionComponent map structure for all components in 
+      //!   template list (stored in us_home/etc/solution.xml). 
+      //QMap< QString, US_SolutionComponent > component_list;
+
+      US_Help       showHelp;
+
+   private slots:
+
+      /* void new_description (); */
+      /* void add_component   (); */
+      /* void select_bcomp    (); */
+      /* void remove_bcomp    ( QListWidgetItem* ); */
+      /* void recalc_density  ( void ); */
+      /* void recalc_viscosity( void ); */
+      /* void ph              ( void ); */
+      /* void compressibility ( void ); */
+      /* void density         ( void ); */
+      /* void viscosity       ( void ); */
+      /* void manual_flag     ( bool ); */
+      /* void spectrum        ( void ); */
+      /* void newAccepted     ( void ); */
+      /* void newCanceled     ( void ); */
+      /* void write_db        ( void ); */
+      /* void write_disk      ( void ); */
+      void help( void ) { showHelp.show_help( "solution_new.html" ); };
+      
+      //void process_results( QMap < double, double > &xyz );
+ 
+   public slots:
+     //void init_solution		( void );
+      
+      //void process_results( QMap < double, double > &xyz );
+
+};
+
+//! \class US_SolutionMgrEdit
+//!      This class provides a tabbed entry for non-hydrodynamic solution mods
+class US_SolutionMgrEdit : public US_Widgets
+{
+   Q_OBJECT
+
+   public:
+
+      //! brief Tab for entering a new Solution. To 
+      //!  instantiate the class a calling function must
+      //!  provide the ID of the investigator.
+      //!
+      //! \param invID          The current investigator ID
+      //! \param select_db_disk Indicates whether the default search
+      //!                         is on the local disk or in the DB
+      //! \param tmp_solution     Pointer to a US_Solution object holding the active
+      //!                         solution (for editing and adding new solutions)
+      US_SolutionMgrEdit( int*, int*, US_Solution* );
+      QString edit_solution_description;
+      US_Extinction *w;
+
+   signals:
+      void editBufAccepted( void );  //! Edited solution accepted
+      void editBufCanceled( void );
+
+   private:
+
+      int*          personID;
+      int*          db_or_disk;
+      bool          from_db;
+      int           dbg_level;
+
+      US_Solution*    solution;
+      US_Solution     orig_solution;
+
+      QPushButton*  pb_accept;
+      QLineEdit*    le_descrip;
+      QLineEdit*    le_bguid;
+      QLineEdit*    le_ph;
+
+      US_Help       showHelp;
+
+   private slots:
+
+      /* void ph          ( void ); */
+      /* void spectrum    ( void ); */
+      /* void editAccepted( void ); */
+      /* void editCanceled( void ); */
+      /* void write_db    ( void ); */
+      /* void write_disk  ( void ); */
+      void help( void ) { showHelp.show_help( "solution_edit.html" ); };
+      
+      //void process_results( QMap < double, double > &xyz );
+
+   public slots:
+     // void init_solution		( void );
+
+      //void process_results( QMap < double, double > &xyz );
+};
 
 
+//! \class US_SolutionMgrSettings
+//!      This class provides a tabbed entry for general solution settings
+class US_SolutionMgrSettings: public US_Widgets
+{
+   Q_OBJECT
+
+   public:
+
+      //! \brief Selection tab for changing investigator and 
+      //!        choosing between db/disk access, as well as
+      //!        for synchronizing the solution components local
+      //!        file with the database.
+      //!
+      //! \param invID          A pointer to the current investigator ID
+      //! \param select_db_disk A pointer to a flag that indicates whether 
+      //!                       the default search is on the local disk or
+      //!                       in the DB
+      US_SolutionMgrSettings( int*, int* );
+
+   private:
+
+      int*          personID;
+      int*          db_or_disk;
+      int           dbg_level;
+      bool          from_db;
+
+      QLineEdit*    le_investigator;
+      //QLineEdit*    le_syncstat;
+
+      US_Disk_DB_Controls* disk_controls;
+
+      US_Help       showHelp;
+
+   signals:
+      //! A signal to indicate that the current disk/db selection has changed. 
+      //! /param DB True if DB is the new selection
+      void use_db( bool DB );
+      //! A signal to indicate that the current investigator was changed. 
+      //! /param invID is the new selection
+      void investigator_changed( int invID );
+
+   private slots:
+      void sel_investigator   ( void );
+      void db_changed         ( bool );
+      void assign_investigator( int  );
+      void synch_components   ( void );
+
+      void help( void ) { showHelp.show_help( "solution_settings.html" ); };
+};
 
 
 class US_GUI_EXTERN US_SolutionGui : public US_WidgetsDialog
@@ -254,9 +456,9 @@ class US_GUI_EXTERN US_SolutionGui : public US_WidgetsDialog
 
       QTabWidget*             tabWidget;
       US_SolutionMgrSelect*   selectTab;
-      //US_SolutionMgrNew*      newTab;
-      //US_SolutionMgrEdit*     editTab;
-      //US_SolutionMgrSettings* settingsTab;
+      US_SolutionMgrNew*      newTab;
+      US_SolutionMgrEdit*     editTab;
+      US_SolutionMgrSettings* settingsTab;
 
       //!< The currently active solution Data. 
       US_Solution solution;

@@ -66,9 +66,9 @@ US_SolutionMgrSelect::US_SolutionMgrSelect( int *invID, int *select_db_disk,
    le_viscosity = us_lineedit();
    us_setReadOnly( le_viscosity,     true );
    le_storageTemp = us_lineedit();
-   //us_setReadOnly( le_storageTemp,     true );
-   connect( le_storageTemp, SIGNAL( textEdited      ( const QString&   ) ),
-                            SLOT  ( saveTemperature ( const QString&   ) ) );
+   us_setReadOnly( le_storageTemp,     true );
+   //connect( le_storageTemp, SIGNAL( textEdited      ( const QString&   ) ),
+   //                         SLOT  ( saveTemperature ( const QString&   ) ) );
 
    te_notes = us_textedit();
    te_notes->setMaximumSize( 600, 100 );
@@ -581,6 +581,236 @@ void US_SolutionMgrSelect::reset( void )
 
 
 
+US_SolutionMgrNew::US_SolutionMgrNew( int *invID, int *select_db_disk,
+      US_Solution *tmp_solution ) : US_Widgets()
+{
+   solution     = tmp_solution;
+   personID   = invID;
+   db_or_disk = select_db_disk;
+   from_db    = ( (*db_or_disk) == 1 );
+   dbg_level  = US_Settings::us_debug();
+
+   setPalette( US_GuiSettings::frameColor() );
+   QGridLayout* main = new QGridLayout( this );
+   main->setSpacing( 2 );
+   main->setContentsMargins( 2, 2, 2, 2 );
+
+   QLabel* bn_newsolution    = us_banner( tr( "Create New Solution" ) );
+   bn_newsolution  ->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
+
+   lb_descrip   = us_label( tr( "Solution Name:" ) );
+   le_descrip   = us_lineedit( "New Solution", 0, false );
+   //connect( le_descrip, SIGNAL( editingFinished   () ), 
+   //                         SLOT  ( new_description() ) );
+
+   lb_bufferInfo   = us_label( tr( "Buffer Name:" ) );
+   le_bufferInfo = us_lineedit();
+   us_setReadOnly( le_bufferInfo,   true );
+      
+   pb_analyte = us_pushbutton( tr( "Add Analyte" ) );
+   pb_buffer  = us_pushbutton( tr( "Select Buffer" ) );
+
+   pb_cancel   = us_pushbutton( tr( "Cancel" ) );
+   connect( pb_cancel,   SIGNAL( clicked()     ),
+            this,        SLOT  ( newCanceled() ) );
+
+   pb_reset   = us_pushbutton( tr( "Reset" ) );
+   connect( pb_reset,   SIGNAL( clicked()     ),
+            this,        SLOT  ( reset() ) );
+   
+   //pb_save     = us_pushbutton( tr( "Accept" ), false);
+   //connect( pb_save, SIGNAL( clicked() ), SLOT( save() ) );
+   
+   pb_accept     = us_pushbutton( tr( "Accept" ), false);
+   connect( pb_accept,   SIGNAL( clicked()     ),
+            this,        SLOT  ( newAccepted() ) );
+
+
+   QHBoxLayout* lo_amount = new QHBoxLayout();
+
+   lb_amount = us_label( tr( "Analyte Molar Ratio:" ) );
+   lo_amount->addWidget( lb_amount );
+
+   ct_amount = us_counter ( 2, 0, 100, 1 ); // #buttons, low, high, start_value
+   ct_amount->setSingleStep( 1 );
+   ct_amount->setFont( QFont( US_GuiSettings::fontFamily(),
+                              US_GuiSettings::fontSize() ) );
+   lo_amount->addWidget( ct_amount );
+   
+
+   QLabel* lb_banner3 = us_banner( tr( "Current solution contents" )  );
+   lb_banner3->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
+   lw_analytes = us_listwidget();
+   lw_analytes-> setSortingEnabled( true );
+   //connect( lw_analytes, SIGNAL( itemClicked  ( QListWidgetItem* ) ),
+   //                      SLOT  ( selectAnalyte( QListWidgetItem* ) ) );
+   //connect( lw_analytes, SIGNAL( itemDoubleClicked  ( QListWidgetItem* ) ),
+   //                      SLOT  ( changeAnalyte      ( QListWidgetItem* ) ) );
+
+
+   QLabel* lb_commonVbar20 = us_label( tr( "Common VBar (20C):" ) );
+   QLabel* lb_density = us_label( tr( "Buffer density:" ) );
+   QLabel* lb_viscosity = us_label( tr( "Buffer viscosity:" ) );
+   QLabel* lb_storageTemp = us_label( tr( "Storage Temperature:" ) );
+   
+
+   le_commonVbar20 = us_lineedit();
+   us_setReadOnly( le_commonVbar20,   true );
+   le_density = us_lineedit();
+   us_setReadOnly( le_density,     true );
+   le_viscosity = us_lineedit();
+   us_setReadOnly( le_viscosity,     true );
+   le_storageTemp = us_lineedit();
+   //connect( le_storageTemp, SIGNAL( textEdited      ( const QString&   ) ),
+   //                         SLOT  ( saveTemperature ( const QString&   ) ) );
+ 
+   te_notes = us_textedit();
+   //te_notes->setMaximumSize( 600, 100 );
+   te_notes->setReadOnly( false );
+   //connect( te_notes, SIGNAL( textChanged( void ) ),  SLOT  ( saveNotes  ( void ) ) );
+   
+   QLabel* lb_banner1 = us_banner( tr( "Solution notes" )  );
+   lb_banner1->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
+
+   int row = 0;
+   main->addWidget( bn_newsolution,  row++,  0, 1, 12 );
+   main->addWidget( lb_descrip,      row,    0, 1,  4 );
+   main->addWidget( le_descrip,      row++,  4, 1,  8 );
+   
+   main->addWidget( lb_bufferInfo,   row,    0, 1,  2 );
+   main->addWidget( le_bufferInfo,   row,    2, 1,  4 );
+      
+   main->addWidget( pb_analyte,      row,    6, 1,  3 );
+   main->addWidget( pb_buffer,       row++,  9, 1,  3 );
+   main->addLayout( lo_amount,       row,    0, 1,  6 );
+   main->addWidget( pb_cancel,       row,    6, 1,  2 );
+   main->addWidget( pb_reset,        row,    8, 1,  2 );
+   main->addWidget( pb_accept,       row++, 10, 1,  2 );
+
+   main->addWidget( lb_banner3,      row,    0, 1, 6 );
+   
+   main->addWidget( lb_banner1,      row++,   6, 1, 6 );
+   main->addWidget( lw_analytes,     row,     0, 1, 6 );
+   main->addWidget( te_notes,        row++,   6, 1, 6 );
+
+   
+   row += 7;
+   
+   main->addWidget( lb_commonVbar20, row,   0, 1, 2 );
+   main->addWidget( le_commonVbar20, row,   2, 1, 4 );
+   main->addWidget( lb_density,      row,   6, 1, 2 );
+   main->addWidget( le_density,      row++, 8, 1, 4 );
+   main->addWidget( lb_viscosity,    row,   0, 1, 2 );
+   main->addWidget( le_viscosity,    row,   2, 1, 4 );
+   main->addWidget( lb_storageTemp,  row,   6, 1, 2);
+   main->addWidget( le_storageTemp,  row,   8, 1, 4);  
+
+   //main->setRowStretch( 5, 5 );
+
+ }
+
+// Edit Existing Solution panel
+US_SolutionMgrEdit::US_SolutionMgrEdit( int *invID, int *select_db_disk,
+      US_Solution *tmp_solution ) : US_Widgets()
+{
+  
+   solution      = tmp_solution;
+   orig_solution = *solution;
+   personID    = invID;
+   db_or_disk  = select_db_disk;
+   from_db     = ( (*db_or_disk) == 1 );
+   dbg_level   = US_Settings::us_debug();
+
+}
+
+// Settings panel
+US_SolutionMgrSettings::US_SolutionMgrSettings( int *invID, int *select_db_disk )
+   : US_Widgets()
+{
+   personID   = invID;
+   db_or_disk = select_db_disk;
+   from_db    = ( (*db_or_disk) == 1 );
+   dbg_level  = US_Settings::us_debug();
+
+   QGridLayout* main = new QGridLayout( this );
+   main->setSpacing         ( 2 );
+   main->setContentsMargins ( 2, 2, 2, 2 );
+
+      QStringList DB = US_Settings::defaultDB();
+   if ( DB.isEmpty() ) DB << "Undefined";
+
+   QLabel* lb_DB  = us_banner( tr( "Database: " ) + DB.at( 0 ) );
+   QPushButton* pb_investigator = us_pushbutton( tr( "Select Investigator" ) );
+   QPushButton* pb_help         = us_pushbutton( tr( "Help" ) );
+
+   if ( US_Settings::us_inv_level() < 3 )
+      pb_investigator->setEnabled( false );
+
+   QString number  = ( (*personID) > 0 )
+      ? QString::number( US_Settings::us_inv_ID() ) + ": "
+      : "";
+
+   le_investigator = us_lineedit( number + US_Settings::us_inv_name() );
+   int idb_or_disk = from_db ? US_Disk_DB_Controls::DB
+                             : US_Disk_DB_Controls::Disk;
+   disk_controls   = new US_Disk_DB_Controls( idb_or_disk );
+   QLabel *empty   = us_banner ("");
+
+   lb_DB      ->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
+   us_setReadOnly( le_investigator, true );
+
+
+   int row = 0;
+   main->addWidget( lb_DB,           row++, 0, 1, 4 );
+   main->addWidget( pb_investigator, row,   0, 1, 1 );
+   main->addWidget( le_investigator, row++, 1, 1, 3 );
+   main->addLayout( disk_controls,   row,   0, 1, 3 );
+   main->addWidget( pb_help,         row++, 3, 1, 1 );
+   main->addWidget( empty,           row,   0, 6, 4 );
+
+   connect( disk_controls,   SIGNAL( changed   ( bool ) ),
+            this,            SLOT  ( db_changed( bool ) ) );
+   connect( pb_investigator, SIGNAL( clicked()          ),
+            this,            SLOT(   sel_investigator() ) );
+   connect( pb_help,         SIGNAL( clicked() ),
+            this,            SLOT  ( help()    ) );
+
+}
+// Select a new investigator
+void US_SolutionMgrSettings::sel_investigator( void )
+{
+   US_Investigator* inv_dialog = new US_Investigator( true, (*personID) );
+
+   connect( inv_dialog,
+            SIGNAL( investigator_accepted( int ) ),
+            SLOT  ( assign_investigator  ( int ) ) );
+
+   inv_dialog->exec();
+}
+
+// Note and notify of change in db/disk source
+void US_SolutionMgrSettings::db_changed( bool db )
+{
+   emit use_db( db );
+   // calling class needs to query DB/disk when signal is emitted
+   qApp->processEvents();
+}
+
+// Assign an investigator after a change
+void US_SolutionMgrSettings::assign_investigator( int invID )
+{
+   (*personID) = invID;
+
+   QString number = ( (*personID) > 0 )
+   ? QString::number( invID ) + ": "
+   : "";
+
+   le_investigator->setText( number + US_Settings::us_inv_name() );
+   emit investigator_changed( invID );
+}
+
+
+
 // Main Solution window with panels
 US_SolutionGui::US_SolutionGui( 
       int   expID,
@@ -612,13 +842,13 @@ US_SolutionGui::US_SolutionGui(
 
    tabWidget   = us_tabwidget();
    selectTab   = new US_SolutionMgrSelect  ( &personID, &disk_or_db, &solution );
-   // newTab      = new US_SolutionMgrNew     ( &personID, &disk_or_db, &solution, temperature, signal);
-   // editTab     = new US_SolutionMgrEdit    ( &personID, &disk_or_db, &solution );
-   // settingsTab = new US_SolutionMgrSettings( &personID, &disk_or_db );
+   newTab      = new US_SolutionMgrNew     ( &personID, &disk_or_db, &solution );
+   editTab     = new US_SolutionMgrEdit    ( &personID, &disk_or_db, &solution );
+   settingsTab = new US_SolutionMgrSettings( &personID, &disk_or_db );
    tabWidget -> addTab( selectTab,   tr( "Select Solution" ) );
-   // tabWidget -> addTab( newTab,      tr( "Enter New Solution" ) );
-   // tabWidget -> addTab( editTab,     tr( "Edit Existing Solution" ) );
-   // tabWidget -> addTab( settingsTab, tr( "Settings" ) );
+   tabWidget -> addTab( newTab,      tr( "Enter New Solution" ) );
+   tabWidget -> addTab( editTab,     tr( "Edit Existing Solution" ) );
+   tabWidget -> addTab( settingsTab, tr( "Settings" ) );
 
    main->addWidget( tabWidget );
 
