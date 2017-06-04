@@ -29,7 +29,6 @@ HEADERS      = \
                us_abstractrotor_gui.h   \
                us_analysis_base2.h      \
                us_analyte_gui.h         \
-               us_analyte_manager.h     \
                us_associations_gui.h    \
                us_buffer_gui.h          \
                us_choice.h              \
@@ -78,7 +77,6 @@ SOURCES      = \
                us_abstractrotor_gui.cpp   \
                us_analysis_base2.cpp      \
                us_analyte_gui.cpp         \
-               us_analyte_manager.cpp     \
                us_associations_gui.cpp    \
                us_buffer_gui.cpp          \
                us_choice.cpp              \
