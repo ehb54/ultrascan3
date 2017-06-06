@@ -145,6 +145,7 @@ class US_RotorCalibration : public US_Widgets
       void       loadDisk       ( void );
       void       plotAll        ( void );
       void       currentRect    ( QwtDoubleRect );
+      void       currentRectf   ( QRectF );
       void       divide         ( QwtDoubleRect );
       void       mouse          ( const QwtDoublePoint& );
       void       findTriple     ( void );

@@ -155,8 +155,14 @@ US_RotorCalibration::US_RotorCalibration() : US_Widgets()
    data_plot->setAxisScale(QwtPlot::xBottom, 5.7, 7.3);
    data_plot->setAxisAutoScale(QwtPlot::yLeft);
    
-   connect (plot, SIGNAL (zoomedCorners(QwtDoubleRect)),
+#if QT_VERSION < 0x050000
+   connect (plot, SIGNAL (zoomed(QwtDoubleRect)),
              this, SLOT   (currentRect  (QwtDoubleRect)));
+#else
+   connect (plot, SIGNAL (zoomedCorners (QRectF)),
+             this, SLOT   (currentRectf  (QRectF)));
+#endif
+
    
    top->addLayout(plot, 1, 1, row - 1, 1);
 
@@ -619,11 +625,11 @@ void US_RotorCalibration::plotAll(void)
 void US_RotorCalibration::currentRect (QwtDoubleRect rect)
 {
    if (cb_6channel->isChecked()) 
-	{
-		divide(rect);
-	}
-	else
-	{
+   {
+      divide(rect);
+   }
+   else
+   {
       if (newlimit)
       {
          if (top_of_cell)
@@ -641,7 +647,41 @@ void US_RotorCalibration::currentRect (QwtDoubleRect rect)
          pb_calculate->setEnabled(true);
       }
       newlimit = false;
-	}
+   }
+}
+
+void US_RotorCalibration::currentRectf (QRectF rectf)
+{
+	QwtDoubleRect rect;
+	rect.setBottom(rectf.bottom()); 
+	rect.setTop(rectf.top()); 
+	rect.setLeft(rectf.left()); 
+	rect.setRight(rectf.right()); 
+
+   if (cb_6channel->isChecked()) 
+   {
+      divide(rect);
+   }
+   else
+   {
+      if (newlimit)
+      {
+         if (top_of_cell)
+         {
+            limit[current_triple].rect[0] = rect;
+            limit[current_triple].used[0] = true;
+            cb_assigned->setChecked(true);
+         }
+         else
+         {
+            limit[current_triple].rect[1] = rect;
+            limit[current_triple].used[1] = true;
+            cb_assigned->setChecked(true);
+         }
+         pb_calculate->setEnabled(true);
+      }
+      newlimit = false;
+   }
 }
 
 void US_RotorCalibration::divide(QwtDoubleRect rect)
