@@ -1043,6 +1043,7 @@ DbgLv(1) << "BldRawD IN";
    nscnn           = scnnbrs.count();
    int    stgnbr   = 0;
    nstgn           = stgnbrs.count();
+   ntscan          = 0;
 DbgLv(1) << "BldRawD szs: ccd" << ccdescs.size()
  << "wvs" << wavelns.size() << "nlambda" << nlambda << "nscnn" << nscnn;
 
@@ -1131,6 +1132,7 @@ DbgLv(1) << "BldRawD trx" << trx << "TIMEMS:scan loop time"
       // Set the average speed for the final/only speed step
       mnscnn            = qMin( mnscnn, ndscan );
       mxscnn            = qMax( mxscnn, ndscan );
+      ntscan           += ndscan;
 
 DbgLv(1) << "BldRawD     trx" << trx << " saving allData... ndscan" << ndscan;
       allData << rdata;               // Append triple data to the array
@@ -1320,6 +1322,7 @@ time10=QDateTime::currentDateTime();
       // Set the average speed for the final/only speed step
       mnscnn            = qMin( mnscnn, ndscan );
       mxscnn            = qMax( mxscnn, ndscan );
+      ntscan           += ndscan;
 
 DbgLv(1) << "BldRawD     trx" << trx << " saving allData... ndscan" << ndscan;
 
@@ -1855,6 +1858,7 @@ void US_XpnData::mapCounts( void )
    counts[ "point_all" ]  = npointt;
    counts[ "slambda"   ]  = slambda;
    counts[ "elambda"   ]  = elambda;
+   counts[ "scan_all"  ]  = ntscan;
 }
 
 #if 0
@@ -2174,7 +2178,8 @@ QString US_XpnData::runDetails( void )
    msg += tr( "    Triples Count:            %1\n" ).arg( ntriple );
    msg += tr( "    Cell/Channel Count:       %1\n" ).arg( ncelchn );
    msg += tr( "    Radius Points:            %1\n" ).arg( npoint );
-   msg += tr( "    Scan Count (max.):        %1\n" ).arg( nscan );
+   msg += tr( "    Max. Scan/Triple Count:   %1\n" ).arg( nscan );
+   msg += tr( "    Total Scans Count:        %1\n" ).arg( ntscan );
    msg += tr( "    Wavelengths Count:        %1\n" ).arg( nlambda );
 
    // Report on *ScanData table statistics

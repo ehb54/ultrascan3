@@ -1,6 +1,6 @@
 include( ../../gui.pri )
 
-QT           += opengl sql
+QT           += opengl sql xml
 
 TARGET        = us_xpn_viewer
 

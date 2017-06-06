@@ -28,6 +28,8 @@ class US_XpnDataViewer : public US_Widgets
 
      QList< int >      excludes;    //!< List of scans to exclude
 
+     QList< QColor >   mcolors;     //!< Map colors for scan curves
+
      US_XpnData*    xpn_data;       //!< Raw XPN (.postres) data loaded
 
      QStringList    runInfo;        //!< List of run information strings
@@ -45,6 +47,7 @@ class US_XpnDataViewer : public US_Widgets
      QLineEdit*     le_runID;
      QLineEdit*     le_lrange;
      QLineEdit*     le_status;
+     QLineEdit*     le_colmap;
 
      QComboBox*     cb_cellchn;
      QComboBox*     cb_rstart;
@@ -73,6 +76,7 @@ class US_XpnDataViewer : public US_Widgets
      QPushButton*   pb_saveauc;
      QPushButton*   pb_showtmst;
      QPushButton*   pb_reload;
+     QPushButton*   pb_colmap;
 
      QwtPlot*       data_plot;
      QwtPlotGrid*   grid;
@@ -121,6 +125,7 @@ class US_XpnDataViewer : public US_Widgets
      int            k3dsize;
      int            rlt_id;
      int            rlt_dlay;
+     int            mcknt;
 
      bool           have_rngs;
      bool           isMWL;
@@ -165,6 +170,7 @@ class US_XpnDataViewer : public US_Widgets
      void   status_report  ( QString );
      void   reloadData     ( void );
      void   timerEvent     ( QTimerEvent *e );
+     void   selectColorMap ( void );
      void   help           ( void )
      { showHelp.show_help( "xpn_viewer.html" ); };
 };

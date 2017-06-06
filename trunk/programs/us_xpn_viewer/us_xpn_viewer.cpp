@@ -22,6 +22,7 @@
 #include "us_crypto.h"
 #include "us_editor.h"
 #include "us_images.h"
+#include "us_colorgradIO.h"
 #if QT_VERSION < 0x050000
 #define setSamples(a,b,c)  setData(a,b,c)
 #define setMinimum(a)      setMinValue(a)
@@ -124,6 +125,7 @@ else
                 pb_saveauc  = us_pushbutton( tr( "Export openAUC" )  );
                 pb_showtmst = us_pushbutton( tr( "Show Time State" )  );
                 pb_reload   = us_pushbutton( tr( "Reload Data" )      );
+                pb_colmap   = us_pushbutton( tr( "Color Map" )        );
 
    QLabel*      lb_dir      = us_label( tr( "Directory" ), -1 );
                 le_dir      = us_lineedit( "", -1, true );
@@ -136,6 +138,8 @@ else
 
    QLabel*      lb_cellchn  = us_label( tr( "Cell/Channel:" ), -1 );
                 cb_cellchn  = us_comboBox();
+
+                le_colmap   = us_lineedit( "cm-rainbow", -1, true );
 
    int rhgt     = le_runID->height();
    ptype_mw     = tr( "Plot %1:"    ).arg( chlamb );
@@ -201,6 +205,15 @@ else
    QPushButton* pb_help     = us_pushbutton( tr( "Help" ) );
    QPushButton* pb_close    = us_pushbutton( tr( "Close" ) );
 
+   // Default scan curve color list and count
+   QString cmfpath          = US_Settings::etcDir() + "/cm-rainbow.xml";
+ DbgLv(1) << "cmfpath" << cmfpath;
+   US_ColorGradIO::read_color_gradient( cmfpath, mcolors );
+   mcknt                    = mcolors.count();
+DbgLv(1) << "mcolors count" << mcknt;
+if(mcknt>0)
+ DbgLv(1) << "mcolors c0,cn" << mcolors[0] << mcolors[mcknt-1];
+
    // Signals and Slots
    connect( pb_loadXpn,   SIGNAL( clicked()      ),
             this,         SLOT  ( load_xpn_raw() ) );
@@ -240,6 +253,8 @@ else
             this,         SLOT  ( changeCellCh()  ) );
    connect( pb_showtmst,  SIGNAL( clicked()       ),
             this,         SLOT  ( showTimeState() ) );
+   connect( pb_colmap,    SIGNAL( clicked()        ),
+            this,         SLOT  ( selectColorMap() ) );
    connect( ct_rinterv,   SIGNAL( valueChanged( double ) ),
             this,         SLOT  ( changeInterval()       ) );
    connect( pb_help,      SIGNAL( clicked()  ),
@@ -283,6 +298,8 @@ else
    settings->addWidget( pb_next,       row++, 6, 1, 2 );
    settings->addWidget( ck_autoscy,    row,   0, 1, 4 );
    settings->addWidget( pb_showtmst,   row++, 4, 1, 4 );
+   settings->addWidget( pb_colmap,     row,   0, 1, 2 );
+   settings->addWidget( le_colmap,     row++, 2, 1, 6 );
    settings->addWidget( lb_scanctl,    row++, 0, 1, 8 );
    settings->addWidget( lb_from,       row,   0, 1, 1 );
    settings->addWidget( ct_from,       row,   1, 1, 3 );
@@ -1015,6 +1032,7 @@ DbgLv(1) << "PltA: kpoint" << kpoint << "trpxs" << trpxs
    QPen    pen_red ( Qt::red );
    QPen    pen_plot( US_GuiSettings::plotCurve() );
    int     rdx       = radxs;
+   int     colx      = -1;
    US_DataIO::RawData* rdata = &allData[ trpxs ];
    int     scan_knt  = rdata->scanCount();
 
@@ -1033,10 +1051,17 @@ DbgLv(1) << "PltA:   rr[n]" << rr[kpoint-1];
       {
          vv[ ptx ]       = rdata->value( scnx, rdx );
       }
-if(scnx<3 || (scnx+4)>nscan)
-DbgLv(1) << "PltA:   vv[n]" << vv[kpoint-1] << "scnx" << scnx;
+
+      if ( mcknt > 0 )
+      {
+         colx                = scan_nbr % mcknt;
+         pen_plot            = QPen( mcolors[ colx ] );
+      }
 
       scan_nbr++;
+if(scnx<3 || (scnx+4)>nscan)
+DbgLv(1) << "PltA:   vv[n]" << vv[kpoint-1] << "scnx" << scnx
+ << "scan_nbr" << scan_nbr << "colx" << colx;
       QString       title = tr( "Raw Data at scan " )
                             + QString::number( scan_nbr );
       QwtPlotCurve* curv  = us_curve( data_plot, title );
@@ -1740,5 +1765,32 @@ DbgLv(1) << "chgInt:  rlt_id" << rlt_id << "newInt" << ct_rinterv->value()
    }
 
    changeReload();
+}
+
+// Slot to use a file dialog to select a new scan curve color map
+void US_XpnDataViewer::selectColorMap()
+{
+   QString cmapname( "cm-rainbow" );
+   QString filter  = tr( "Color Map files (*cm-*.xml);;"
+                         "Any XML files (*.xml);;"
+                         "Any files (*)" );
+
+   // get an xml file name for the color map
+   QString cmfpath = QFileDialog::getOpenFileName( this,
+       tr( "Load Color Map File" ),
+       US_Settings::etcDir(), filter, 0, 0 );
+
+   if ( cmfpath.isEmpty() )
+        return;
+
+DbgLv(1) << "sCM: cmfpath" << cmfpath;
+   US_ColorGradIO::read_color_gradient( cmfpath, mcolors );
+   mcknt           = mcolors.count();
+DbgLv(1) << "sCM: mcolors count" << mcknt;
+   cmapname        = QFileInfo( cmfpath ).baseName().replace( ".xml$", "" );
+   le_colmap->setText( cmapname );
+
+   if ( allData.size() > 0 )
+      plot_all();
 }
 

@@ -191,6 +191,9 @@ void US_Plot::zoom( bool on )
 #if QT_VERSION < 0x050000
       connect( zoomer, SIGNAL ( zoomed(        QwtDoubleRect ) ), 
                        SIGNAL ( zoomedCorners( QwtDoubleRect ) ) );
+#else
+      connect( zoomer, SIGNAL ( zoomed(        QRectF        ) ), 
+                       SIGNAL ( zoomedCorners( QRectF        ) ) );
 #endif
       
       panner = new QwtPlotPanner( plot->canvas() );
