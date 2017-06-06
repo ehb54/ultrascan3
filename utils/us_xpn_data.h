@@ -394,7 +394,7 @@ class US_UTIL_EXTERN US_XpnData : public QObject
 
       int       sctype;              //!< Scan type captured (1<==>Data)
       int       nfile;               //!< Number of input files
-      int       nscan;               //!< Number of scans per triple
+      int       nscan;               //!< Number of scans per triple (max.)
       int       ncell;               //!< Number of cells
       int       nchan;               //!< Number of channels
       int       ncelchn;             //!< Number of Cell/Channels
@@ -412,6 +412,7 @@ class US_UTIL_EXTERN US_XpnData : public QObject
       int       mxstgn;              //!< Maximum stage number
       int       mnscnn;              //!< Minimum scan number
       int       mxscnn;              //!< Maximum scan number
+      int       ntscan;              //!< Total scans for all triples
 
       double    radinc;              //!< Output AUC data radial increment
 
