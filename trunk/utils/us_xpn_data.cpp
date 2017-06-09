@@ -1430,7 +1430,6 @@ DbgLv(1) << "expA: ii" << ii << "triples[ii]" << triples[ii]
       US_DataIO::writeRawData( fpath, *rdata );
 
       nfiles++;
-DbgLv(1) << "expA:  nf" << nfiles << "fname" << fname;
 
       // Find index to first dataset with maximum scans
       int kscans        = rdata->scanCount();
@@ -1440,6 +1439,8 @@ DbgLv(1) << "expA:  nf" << nfiles << "fname" << fname;
          mxscans           = kscans;
          iiuse             = ii;
       }
+DbgLv(1) << "expA:   nf" << nfiles << "fname" << fname
+ << "kscans" << kscans << "mxscans" << mxscans << "iiuse" << iiuse;
    }
 
    // Create a speed step vector

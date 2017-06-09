@@ -487,7 +487,7 @@ void US_XpnDataViewer::enableControls( void )
       int ktrip   = ncellch * nlambda;
       if ( ntriple != ktrip )
       {  // Possibly to be treated on triple basis (not MWL)
-         if ( ntriple <= ( nlambda * 2 ) )
+         if ( ntriple <= ( nlambda * 2 )  ||  ntriple < 16 )
          {
             isMWL       = false;
             cb_cellchn ->setEnabled( false );
