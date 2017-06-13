@@ -535,17 +535,17 @@ void US_vHW_Combine::plot_distr( DistrDesc ddesc, QString distrID )
    QString ecID = distrID + tr( " (diff.)" );
    QwtPlotCurve* dcurve;
    QwtPlotCurve* ecurve;
-   QPen    dlpen( Qt::yellow );
+   QPen    dlpen( QBrush( ddesc.color ), 1.0 );
    QPen    elpen( QBrush( ddesc.color ), 3.0 );
 
    if ( dplot  &&  !dconc )
    {  // Build curves for distribution plot
       dcurve        = us_curve( data_plot1, dcID );
       dcurve->setStyle  ( QwtPlotCurve::Lines );
-      dcurve->setSymbol ( dsym );
       dcurve->setPen    ( dlpen );
       dcurve->setSamples( xx, yy, ndispt );
       dcurve->setYAxis  ( QwtPlot::yLeft );
+      dcurve->setSymbol ( dsym );
    }
 
    if ( dplot  &&  dconc )
@@ -559,10 +559,10 @@ void US_vHW_Combine::plot_distr( DistrDesc ddesc, QString distrID )
       double* yc    = dconcs.data();
       dcurve        = us_curve( data_plot1, dcID );
       dcurve->setStyle  ( QwtPlotCurve::Lines );
-      dcurve->setSymbol ( dsym );
       dcurve->setPen    ( dlpen );
       dcurve->setSamples( xx, yc, ndispt );
       dcurve->setYAxis  ( QwtPlot::yRight );
+      dcurve->setSymbol ( dsym );
    }
 
    if ( eplot )
@@ -911,14 +911,14 @@ void US_vHW_Combine::possibleSymbols()
    colors  << QColor( 255,   0,   0 );
    colors  << QColor(   0, 255,   0 );
    colors  << QColor(   0,   0, 255 );
-   colors  << QColor( 255, 255,   0 );
-   colors  << QColor( 255,   0, 255 );
-   colors  << QColor(   0, 255, 255 );
    colors  << QColor( 122,   0, 255 );
    colors  << QColor(   0, 255, 122 );
    colors  << QColor(   0, 122, 255 );
    colors  << QColor( 255, 122,   0 );
    colors  << QColor( 122, 255,   0 );
+   colors  << QColor( 255, 255,   0 );
+   colors  << QColor( 255,   0, 255 );
+   colors  << QColor(   0, 255, 255 );
    colors  << QColor(  80,   0, 255 );
    colors  << QColor( 255,   0,  80 );
    colors  << QColor(  80,   0, 255 );
