@@ -323,7 +323,7 @@ DbgLv(1) << "XpDa:i_d: arows frows irows wrows srows crows"
 // Re-import XPN data from a selected database server
 bool US_XpnData::reimport_data( const int runId, const int scanMask )
 {
-   bool status   = true;
+   bool status   = false;
 
    if ( ! dbxpn.open() )
    {
@@ -353,26 +353,26 @@ bool US_XpnData::reimport_data( const int runId, const int scanMask )
    if ( ascnf )
    {  // Scan and update data for Absorbance Scan Data
       arows      = update_xpndata( runId, 'A' );
-      status     = ( arows > oarows );
+      status     = ( status  ||  arows > oarows );
 DbgLv(1) << "XpDa: rei_dat: arows oarows status" << arows << oarows << status;
    }
 
    if ( fscnf )
    {  // Scan and update data for Fluorescence Scan Data
       frows      = update_xpndata( runId, 'F' );
-      status     = ( frows > ofrows );
+      status     = ( status  ||  frows > ofrows );
    }
 
    if ( iscnf )
    {  // Scan and update data for Interference Scan Data
       irows      = update_xpndata( runId, 'I' );
-      status     = ( irows > oirows );
+      status     = ( status  ||  irows > oirows );
    }
 
    if ( wscnf )
    {  // Scan and update data for Wavelength Scan Data
       wrows      = update_xpndata( runId, 'W' );
-      status     = ( wrows > owrows );
+      status     = ( status  ||  wrows > owrows );
    }
 
 DbgLv(1) << "XpDa: rei_dat: arows frows irows wrows"
@@ -605,6 +605,7 @@ DbgLv(1) << "XpDa:scn:    tCrprof count" << tCrprof.count();
       // Get indexes to ExperimentId and FugeRunProfileId
       jexpid          = cnames.indexOf( "ExperimentId" );
       int jfruid      = cnames.indexOf( "FugeRunProfileId" );
+DbgLv(1) << "XpDa:scn:    jexpid jfruid" << jexpid << jfruid;
       while ( sqry.next() )
       {  // Build a list of ExperimentDefinition expIds and fugeIds
          int dExpId      = sqry.value( jexpid ).toInt();
@@ -612,23 +613,32 @@ DbgLv(1) << "XpDa:scn:    tCrprof count" << tCrprof.count();
          dExpIds << dExpId;
          dFugIds << dFugId;
       }
+//DbgLv(1) << "XpDa:scn: dExpIds" << dExpIds;
+//DbgLv(1) << "XpDa:scn: dFugIds" << dFugIds;
       // Map experimentId to runId, then fugeId to experimentId
       int rrndx       = rRunIds.indexOf( iRunId );
+DbgLv(1) << "XpDa:scn:  iRunId" << iRunId << "rrndx" << rrndx;
       int iExpId      = rExpIds[ rrndx ];
       int dendx       = dExpIds.indexOf( iExpId );
-      int iFugId      = dFugIds[ dendx ];
-      double sstintv  = 1000.0;
+DbgLv(1) << "XpDa:scn:  iExpId" << iExpId << "dendx" << dendx;
+      int iFugId      = ( dendx >= 0 ) ? dFugIds[ dendx ] : iExpId;
+      double sstintv  = 0.0;
+      double sstintl  = 1000.0;
 DbgLv(1) << "XpDa:scn:    RunId" << iRunId << "ExperimentId" << iExpId
  << "FugeRunProfileId" << iFugId; 
 
       for ( int ii = 0; ii < tCrprof.count(); ii++ )
       {  // Look for matching fuge Id in CentrifugeRunProfile values
+         sstintl          = tCrprof[ ii ].sstintv;
+
          if ( tCrprof[ ii ].frunId == iFugId )
-         {  // Match found:  get corresponding SystemStatusInterval
-            sstintv          = tCrprof[ ii ].sstintv;
+         {  // Match found:  save corresponding SystemStatusInterval
+            sstintv          = sstintl;
             break;
          }
       }
+
+      sstintv         = ( sstintv > 0.0 ) ? sstintv : sstintl;
 DbgLv(1) << "XpDa:scn:    FugId" << iFugId << "sstInterval" << sstintv;
    }
 
