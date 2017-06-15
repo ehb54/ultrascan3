@@ -24,14 +24,14 @@ US_Extinction::US_Extinction(QString buffer, const QString& text, const QString&
   this->parent = parent;
 
   //connect(this, SIGNAL( get_results(QMap < double, double > & )), parent, SLOT(process_results( QMap < double, double > & ) ) );
-
+    
    disk_controls = new US_Disk_DB_Controls(0);
    //default values for limits on the graph
    lambdaLimitLeft = 200.0;
    lambdaLimitRight = 1500.0;
    lambda_min = 1000;
    lambda_max = -1000;
-   odCutoff = 1.5;
+   odCutoff = 3.0;
    
    //length of cuvette
    pathlength = (float) 1.2;
@@ -245,7 +245,7 @@ US_Extinction::US_Extinction() : US_Widgets()
    lambdaLimitRight = 1500.0;
    lambda_min = 1000;
    lambda_max = -1000;
-   odCutoff = 1.5;
+   odCutoff = 3.0;
    
    //length of cuvette
    pathlength = (float) 1.2;
@@ -444,7 +444,9 @@ void US_Extinction::reading(QStringList sl)
    } 
    le_lambdaLimitLeft->setText(str1.sprintf(" %2.1f", lambda_min));
    le_lambdaLimitRight->setText(str1.sprintf(" %2.1f", lambda_max));
-   plot();
+
+   update_data();
+   //plot();
 }
 bool US_Extinction::isComment(const QString &str)
 {
@@ -501,6 +503,8 @@ bool US_Extinction::loadScan(const QString &fileName)
          strl = str1.split(" ");
          temp_x = strl.at(0).toFloat();
          temp_y = strl.at(1).toFloat();
+	 
+	 
          if(temp_x >= lambdaLimitLeft && temp_y <= odCutoff && temp_x <= lambdaLimitRight)
          {
             Reading r = {temp_x, temp_y};
@@ -544,7 +548,9 @@ bool US_Extinction::loadScan(const QString &fileName)
    }
 
    v_wavelength_original = v_wavelength;
+   
    return(true);
+   
 }
 void US_Extinction::plot()
 {
