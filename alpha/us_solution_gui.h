@@ -51,7 +51,6 @@ class US_SolutionMgrSelect: public US_Widgets
       US_Help       showHelp;
 
       QLineEdit*    le_bufferInfo;
-      QLineEdit*    le_solutionDesc;
       QLineEdit*    le_commonVbar20;
       QLineEdit*    le_density;
       QLineEdit*    le_viscosity;
@@ -91,6 +90,7 @@ class US_SolutionMgrSelect: public US_Widgets
       bool                        autosave;
       bool                        changed;
 
+      QStringList   IDs;
       QStringList   filenames;
       QStringList   descriptions;
       QStringList   GUIDs;
@@ -99,14 +99,16 @@ class US_SolutionMgrSelect: public US_Widgets
       QMap< QListWidgetItem*, int > solutionMap;
       QMap< QListWidgetItem*, int > analyteMap;
 
-
+      QLabel*       lb_amount;
+      
    private slots:
 
-      void search          ( const QString& = QString() );
-      //void selectSolution     ( QListWidgetItem* );
-      void reset           ( void );
-      // void db_error( const QString& );
+      void search              ( const QString& = QString() );
+      void selectSolution      ( QListWidgetItem* );
+      void reset               ( void );
+      void db_error            ( const QString& );
   
+      void selectAnalyte      ( QListWidgetItem* );
       //void query           ( void ); 
 
       // void read_solution    ( void ); 
@@ -114,11 +116,18 @@ class US_SolutionMgrSelect: public US_Widgets
       //void connect_error   ( const QString& );
       // bool solution_path    ( QString& ); 
 
-      /* void accept_solution  ( void ); */
+
+      
+      void load               ( void );
+      void loadDisk           ( void );
+      void loadDB             ( void );
+      void loadSolutions      ( void );
+      
+      void accept_solution  ( void ); 
       /* void spectrum        ( void ); */
       /* void delete          ( void ); */
-      /* void reject          ( void ); */
-      /* void accept          ( void ); */
+      void reject          ( void ); 
+      void accept          ( void ); 
 
        
       /* void delete_disk     ( void ); */
@@ -353,7 +362,7 @@ class US_SolutionMgrSettings: public US_Widgets
       void sel_investigator   ( void );
       void db_changed         ( bool );
       void assign_investigator( int  );
-      void synch_components   ( void );
+      //void synch_components   ( void );
 
       void help( void ) { showHelp.show_help( "solution_settings.html" ); };
 };
