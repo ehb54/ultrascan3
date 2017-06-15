@@ -1770,6 +1770,7 @@ void US_AnalyteMgrNew::update_sequence( QString seq )
          break;
 #endif
 	 pb_spectrum->setEnabled(true);
+	 break;
       }
 
       case US_Analyte::DNA:
