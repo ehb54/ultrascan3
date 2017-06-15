@@ -117,7 +117,7 @@ class US_BufferGuiSelect: public US_Widgets
       void help( void ) { showHelp.show_help( "buffer_select.html" ); };
 
    public slots:
-      void init_buffer		( void );
+     void init_buffer		( void );
 };
 
 //! \class US_BufferGuiNew
@@ -276,6 +276,8 @@ class US_BufferGuiEdit : public US_Widgets
       void editCanceled( void );
       void write_db    ( void );
       void write_disk  ( void );
+      void add_spectrumDisk    ( void );
+      void readingspectra (const QString&);
       void help( void ) { showHelp.show_help( "buffer_edit.html" ); };
       
       void process_results( QMap < double, double > &xyz );

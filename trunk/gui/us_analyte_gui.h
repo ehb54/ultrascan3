@@ -426,6 +426,8 @@ class US_AnalyteMgrEdit : public US_Widgets
       void editCanceled( void );
       void write_db    ( void );
       void write_disk  ( void );
+      void add_spectrumDisk    ( void );
+      void readingspectra (const QString&);
       void help( void ) { showHelp.show_help( "analyte_edit.html" ); };
 
       void process_results( QMap < double, double > &xyz );

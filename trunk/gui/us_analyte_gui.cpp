@@ -2725,6 +2725,71 @@ US_AnalyteMgrEdit::US_AnalyteMgrEdit( int *invID, int *select_db_disk,
             this,        SLOT  ( spectrum() ) );
 }
 
+void US_AnalyteMgrEdit::add_spectrumDisk( void )
+{
+  QStringList files;
+  QFile f;
+  
+  QFileDialog dialog (this);
+  //dialog.setNameFilter(tr("Text (*.txt *.csv *.dat *.wa *.dsp)"));
+
+  dialog.setNameFilter(tr("Text files (*.[Tt][Xx][Tt] *.[Cc][Ss][Vv] *.[Dd][Aa][Tt] *.[Ww][Aa]* *.[Dd][Ss][Pp]);;All files (*)"));
+    
+  dialog.setFileMode(QFileDialog::ExistingFile);
+  dialog.setViewMode(QFileDialog::Detail);
+  //dialog.setDirectory("/home/alexsav/ultrascan/data/spectra");
+  
+  QString work_dir_data  = US_Settings::dataDir();
+  qDebug() << work_dir_data;
+  dialog.setDirectory(work_dir_data);
+  
+  if(dialog.exec())
+    {
+      files = dialog.selectedFiles();
+      readingspectra(files[0]);
+    }
+  //qDebug() << "Files: " << files[0];
+}
+
+void US_AnalyteMgrEdit::readingspectra(const QString &fileName)
+{
+  QString str1;
+  QStringList strl;
+  float temp_x, temp_y;
+  QMap< double, double > temp_extinct;
+  
+  if(!fileName.isEmpty())
+    {
+      QFile f(fileName);
+     
+      if(f.open(QIODevice::ReadOnly | QIODevice::Text))
+	{
+	  QTextStream ts(&f);
+	  while(!ts.atEnd())
+	    {
+	      if( !ts.atEnd() )
+		{
+		  str1 = ts.readLine();
+		}
+	      str1 = str1.simplified();
+	      str1 = str1.replace("\"", " ");
+	      str1 = str1.replace(",", " ");
+	      strl = str1.split(" ");
+	      temp_x = strl.at(0).toFloat();
+	      temp_y = strl.at(1).toFloat();
+
+	      //qDebug() << temp_x << ", " << temp_y;
+
+	      if (temp_x != 0)
+		{
+		  temp_extinct[double(temp_x)] = double(temp_y);
+		}
+	    }
+	}
+      analyte->extinction = temp_extinct;
+    }
+}
+
 // Initialize analyte settings, possibly after re-entry to Edit panel
 void US_AnalyteMgrEdit::spectrum( void )
 {
@@ -2738,9 +2803,10 @@ void US_AnalyteMgrEdit::spectrum( void )
 
      //msgBox.setText("Buffer does not have spectrum data!\n You can Upload and fit analyte spectrum, or Enter points manually");
      msgBox.setStandardButtons(QMessageBox::Cancel);
-     QPushButton* pButtonUpload = msgBox.addButton(tr("Upload&Fit Spectum"), QMessageBox::YesRole);
+     QPushButton* pButtonUpload = msgBox.addButton(tr("Upload and Fit Spectum"), QMessageBox::YesRole);
      QPushButton* pButtonManually = msgBox.addButton(tr("Enter Manually"), QMessageBox::YesRole);
-     
+     QPushButton* pButtonUploadDisk = msgBox.addButton(tr("Upload from Disk"), QMessageBox::YesRole);
+
      msgBox.setDefaultButton(pButtonUpload);
      msgBox.exec();
      
@@ -2753,6 +2819,11 @@ void US_AnalyteMgrEdit::spectrum( void )
        w->setParent(this, Qt::Window);
        w->setAttribute(Qt::WA_DeleteOnClose);
        w->show(); 
+     }
+
+     if (msgBox.clickedButton()==pButtonUploadDisk) {
+       add_spectrumDisk();
+       pb_accept->setEnabled( !le_descrip->text().isEmpty() );
      }
 
      if (msgBox.clickedButton()==pButtonManually) {
