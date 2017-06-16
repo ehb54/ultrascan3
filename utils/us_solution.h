@@ -52,6 +52,9 @@ class US_UTIL_EXTERN US_Solution
       QString          notes;              //!< Notes on the channel solution
       solutionStatus   saveStatus;         //!< Most recent save status
 
+      //! extinction[ wavelength ] <=> value
+      QMap< double, double > extinction;
+
       //! \brief Generic constructor for the US_Solution class.
       US_Solution();
 
