@@ -786,6 +786,8 @@ void US_Solution::clear( void )
    notes        = QString( "" );
    saveStatus   = NOT_SAVED;
    analyteInfo.clear();
+
+   extinction.clear();
 }
 
 void US_Solution::show( void )
