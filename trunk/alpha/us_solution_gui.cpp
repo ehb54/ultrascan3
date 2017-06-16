@@ -127,7 +127,7 @@ US_SolutionMgrSelect::US_SolutionMgrSelect( int *invID, int *select_db_disk,
 
    connect( le_search,      SIGNAL( textChanged( const QString& ) ),
 	    this,           SLOT  ( search     ( const QString& ) ) );
-   connect( lw_solutions, SIGNAL( itemClicked    ( QListWidgetItem* ) ),
+   connect( lw_solutions, SIGNAL  ( itemClicked    ( QListWidgetItem* ) ),
    	                    SLOT  ( selectSolution ( QListWidgetItem* ) ) );
    connect( pb_help,        SIGNAL( clicked() ),
 	    this,           SLOT  ( help()    ) );
@@ -135,13 +135,14 @@ US_SolutionMgrSelect::US_SolutionMgrSelect( int *invID, int *select_db_disk,
             this,           SLOT  ( reject()  ) );
    connect( pb_accept,      SIGNAL( clicked()       ),
 	    this,           SLOT  ( accept_solution() ) );
-   
-   // connect( pb_spectrum,    SIGNAL( clicked()  ),
-   //          this,           SLOT  ( spectrum() ) );
-   // connect( pb_delete,      SIGNAL( clicked()       ),
-   //          this,           SLOT  ( delete_buffer() ) );
-      
+   connect( pb_delete,      SIGNAL( clicked() ), 
+	                    SLOT  ( delete_solution() ) );
+   connect( pb_spectrum,    SIGNAL( clicked()  ),
+            this,           SLOT  ( spectrum() ) );
+       
    // Load the solution descriptions
+   search("");
+   qDebug() << "Before load: ";
    load();
 
    // Select the current one if we know what it is
@@ -157,32 +158,189 @@ US_SolutionMgrSelect::US_SolutionMgrSelect( int *invID, int *select_db_disk,
          lw_solutions->setCurrentItem( items[ 0 ] );
       }
    }
+   
 
 }
 
+// View Spectrum in Analyte Select
+US_SolutionViewSpectrum::US_SolutionViewSpectrum(QMap<double,double>& solution_temp) : US_Widgets()
+{
+  solution = solution_temp;
+  
+  data_plot = new QwtPlot();
+  //changedCurve = NULL;
+  plotLayout = new US_Plot(data_plot, tr(""), tr("Wavelength(nm)"), tr(""));
+  data_plot->setCanvasBackground(Qt::black);
+  data_plot->setTitle("Extinction Profile");
+  data_plot->setMinimumSize(560, 240);
+  //data_plot->enableAxis(1, true);
+  data_plot->setAxisTitle(0, "Extinction OD/(mol*cm)");
+
+  us_grid(data_plot);
+   
+  QGridLayout* main;
+  main = new QGridLayout(this);
+  main->setSpacing(2);
+  //main->setContentsMargins(2,2,2,2);
+  main->addLayout(plotLayout, 0, 1);
+
+  plot_extinction();
+
+}
+
+void US_SolutionViewSpectrum::plot_extinction()
+{ 
+  QVector <double> x;
+  QVector <double> y;
+  
+  QMap<double, double>::iterator it;
+  
+  for (it = solution.begin(); it != solution.end(); ++it) {
+    x.push_back(it.key());
+    y.push_back(it.value());
+  }
+  
+  QwtSymbol* symbol = new QwtSymbol;
+  symbol->setSize(10);
+  symbol->setPen(QPen(Qt::blue));
+  symbol->setBrush(Qt::yellow);
+  symbol->setStyle(QwtSymbol::Ellipse);
+  
+  QwtPlotCurve *spectrum;
+  spectrum = us_curve(data_plot, "Spectrum Data");
+  spectrum->setSymbol(symbol);    
+  spectrum->setSamples( x.data(), y.data(), (int) x.size() );
+  data_plot->replot();
+}
+
+// Display a spectrum dialog for list/manage
+void US_SolutionMgrSelect::spectrum( void )
+{
+  qDebug() << solution->extinction;
+  
+  if (solution->extinction.isEmpty())
+    {
+      QMessageBox::information( this,
+      tr( "WARNING" ),
+      tr( "Solution does not have spectrum data!" ) );
+    }
+  else
+    {
+      US_SolutionViewSpectrum *w = new US_SolutionViewSpectrum(solution->extinction);
+      w->setParent(this, Qt::Window);
+      w->show();
+    }
+}
+
+
+// Function to delete a solution from disk, db, or in the current form
+void US_SolutionMgrSelect::delete_solution( void )
+{
+   int status = US_DB2::OK;
+
+   if ( from_db )
+   {
+      US_Passwd pw;
+      QString masterPW = pw.getPasswd();
+      US_DB2 db( masterPW );
+   
+      if ( db.lastErrno() != US_DB2::OK )
+      {
+         db_error( db.lastError() );
+         return;
+      }
+
+      status = solution->deleteFromDB( &db );
+   }
+
+   else
+      status = solution->deleteFromDisk();
+
+   if ( status == US_DB2::SOLUT_IN_USE )
+   {
+      QMessageBox::warning( this,
+         tr( "Delete aborted" ),
+         tr( "Solution NOT Deleted, since it is in use\n"
+             "by one or more experiments" ) );
+      return;
+   }
+
+   solution->clear();
+   analyteMap.clear();
+   load();
+   reset();
+
+   QMessageBox::information( this,
+         tr( "Delete results" ),
+         tr( "Solution Deleted" ) );
+   //changed = true;
+}
 
 // Function to load solutions into solutions list widget
 void US_SolutionMgrSelect::load( void )
 {
    from_db       = ( (*db_or_disk) == 1 );
    
-   /*  In Buffers/Analytes - skjipped here ...
-   QString bguid = buffer->GUID;
-   QString bufid = buffer->bufferID;
-   int idBuf     = bufid.toInt();
+   /*  In Buffers/Analytes - skipped here ... */
+   QString sguid = solution->solutionGUID;
+   int solid = solution->solutionID;
+   //int idSol     = solid.toInt();
 
-   if ( ( from_db  &&  idBuf < 0 )  ||
-        ( !from_db  &&  bguid.isEmpty() ) )
+   if ( ( from_db  &&  solid < 0 )  ||
+        ( !from_db  &&  sguid.isEmpty() ) )
    {
-      lw_buffer_list->setCurrentRow( -1 );
+      lw_solutions->setCurrentRow( -1 );
    }
-   */
+   /* */
    
    if ( from_db )
       loadDB();
 
    else
       loadDisk();
+
+   if ( ! sguid.isEmpty() )
+   {  // There is a selected analyte, select a list item
+      if ( from_db ) // DB access
+      {
+         // Search for analyteID
+         for ( int ii = 0; ii < info.size(); ii++ )
+         {
+            if ( solid == info[ ii ].solutionID )
+            {
+	      //DbgLv(1) << "agS-initb:  ii" << ii << "match anaID"<< analyte->analyteID;
+              qDebug() <<  "agS-initb:  ii" << ii << "match SolID"<< solution->solutionID;
+	      lw_solutions->setCurrentRow( ii );
+               QListWidgetItem* item = lw_solutions->item( ii );
+               //select_analyte( item );
+	       selectSolution( item );
+               break;
+            }
+         }
+      }
+
+      else            // Disk access
+      {
+         // Search for GUID
+         for ( int ii = 0; ii < info.size(); ii++ )
+         {
+            if ( sguid == info[ ii ].GUID )
+            {
+               lw_solutions->setCurrentRow( ii );
+               QListWidgetItem* item = lw_solutions->item( ii );
+               //select_analyte( item );
+               selectSolution( item );
+	       break;
+            }
+         }
+      }
+   }
+   else
+   {  // There is no selected analyte, de-select a list item
+      lw_solutions->setCurrentRow( -1 );
+
+      reset();
+   }   
 
 }
 
@@ -196,6 +354,8 @@ void US_SolutionMgrSelect::loadDisk( void )
    descriptions.clear();
    GUIDs.clear();
    filenames.clear();
+   le_search->  clear();
+   le_search->  setReadOnly( true );
 
    QDir dir( path );
    QStringList filter( "S*.xml" );
@@ -238,7 +398,18 @@ void US_SolutionMgrSelect::loadDisk( void )
       a_file.close();
    }
 
-   loadSolutions();
+   // New from Analytes ///////////////
+   lw_solutions->clear();
+   if ( descriptions.size() == 0 )
+     lw_solutions->addItem( "No analyte files found." );
+   else
+   {
+      le_search->setReadOnly( false );
+      search();
+   }
+   //////////////////////////////////////
+
+   //loadSolutions();
 }
 
 // Function to load solutions from db
@@ -267,6 +438,13 @@ void US_SolutionMgrSelect::loadDB( void )
    GUIDs.clear();
    filenames.clear();
 
+
+   qDebug() << "load in DB:";
+
+   le_search->  clear();
+   le_search->  setText( "" );
+   le_search->  setReadOnly( true );
+
    while ( db.next() )
    {
       QString newID = db.value( 0 ).toString();
@@ -276,9 +454,95 @@ void US_SolutionMgrSelect::loadDB( void )
       filenames    << QString( "" );
    }
 
-   loadSolutions();
+   // NEW from Analyte ////
+   lw_solutions->clear();
+   if ( descriptions.size() == 0 )
+   {
+      lw_solutions->addItem( "No analyte files found." );
+   }
+   else
+   {
+      le_search->setReadOnly( false );
+      qDebug() << "load in DB: before search";
+      search();
+   }
+   // ///////////////////////////
+
+   //loadSolutions();
 }
 
+
+
+//  will search solutions matching search string
+ void US_SolutionMgrSelect::search( QString const& text )
+ {
+    QString sep = ";";
+    QStringList sortdesc;
+    lw_solutions  ->clear();
+    info.clear();
+    solutionMap.clear();
+ 
+    sortdesc       .clear();
+    int dsize   = descriptions.size();    
+
+    for ( int ii = 0; ii < descriptions.size(); ii++ )
+    {  // get list of filtered-description + index strings
+       if ( descriptions[ ii ].contains(
+          QRegExp( ".*" + text + ".*", Qt::CaseInsensitive ) )  &&
+          ! descriptions[ ii].isEmpty() )
+       {
+          sortdesc << descriptions[ ii ] + sep + QString::number( ii );
+       }
+    }
+
+    // sort the descriptions
+    sortdesc.sort();
+
+    qDebug() << "Sol-search:  descsize" << dsize  << "sortsize" << sortdesc.size();
+
+ // DbgLv(1) << "BufS-search:  descsize" << dsize
+ //  << "sortsize" << sortdesc.size();
+
+    for ( int jj = 0; jj < sortdesc.size(); jj++ )
+    {  // build list of sorted meta data and ListWidget entries
+      
+      int ii      = sortdesc[ jj ].section( sep, 1, 1 ).toInt();
+      //int ii = jj;
+      
+      if ( ii < 0  ||  ii >= dsize )
+       {
+ DbgLv(1) << "BufS-search:  *ERROR* ii" << ii << "jj" << jj
+  << "sdesc" << sortdesc[jj].section(sep,0,0);
+          continue;
+       }
+
+       qDebug() << "search 11";
+       SolutionInfo si;
+       si.index       = ii;
+       si.description = descriptions[ ii ];
+       si.GUID        = GUIDs       [ ii ];
+       si.filename    = filenames   [ ii ];
+       qDebug() << "search 11a";
+       si.solutionID    = IDs   [ ii ].toInt();
+              
+       qDebug() << "search 11aaa";
+       
+       info << si;
+
+       qDebug() << "search 22";
+
+       QListWidgetItem* item = new QListWidgetItem( descriptions[ ii ], lw_solutions );
+       solutionMap[ item ] = ii;
+       
+       qDebug() << "Search ii(ndx): " << ii;
+       lw_solutions->addItem( item );
+       //lw_solutions->addItem( si.description );
+    }
+ }
+
+
+
+/*
 // Function to load the solutions list widget from the solutions data structure
 void US_SolutionMgrSelect::loadSolutions( void )
 {
@@ -304,6 +568,7 @@ void US_SolutionMgrSelect::loadSolutions( void )
    }
 
 }
+*/
 
 // Function to display an error returned from the database
 void US_SolutionMgrSelect::db_error( const QString& error )
@@ -324,22 +589,37 @@ void US_SolutionMgrSelect::accept_solution( void )
 {
    emit solutionAccepted();
 }
-// Accept a selected analyte for return to the caller
-void US_SolutionMgrSelect::accept( void )
-{
-}
 
 
 // Function to handle when analyte listwidget item is selected
 void US_SolutionMgrSelect::selectSolution( QListWidgetItem* item )
 {
+  int     solutionID = 0;
+  QString solutionGUID = "";
+  qDebug() << "selecSol item: ";
    // Account for the fact that the list has been sorted
    int     ndx          = solutionMap[ item ];
-   int     solutionID   = info[ ndx ].solutionID;
-   QString solutionGUID = info[ ndx ].GUID;
+   qDebug() << "selecSol 2  ndx: " << ndx;
+   
+   // Iterate over 'info' and check for info[i].index - should be equal to ndx //
+   for (int i = 0; i < info.size(); ++i)
+     {
+       qDebug() << "INFO_index: "<< info[i].index;
+       if (ndx == info[i].index)
+	 {
+	   solutionID   = info[ i ].solutionID;
+	   solutionGUID = info[ i ].GUID;
+	   break;
+	 }
+     }
 
+   //int     solutionID   = info[ ndx ].solutionID;
+   //QString solutionGUID = info[ ndx ].GUID;
+   
    solution->clear();
 
+   qDebug() << "SolutionID: " << solutionID;
+   
    int status = US_DB2::OK;
 
    if ( from_db )
@@ -512,55 +792,7 @@ void US_SolutionMgrSelect::selectAnalyte( QListWidgetItem* item )
 }
 
 
- //  will search solutions matching search string
- void US_SolutionMgrSelect::search( QString const& text )
- {
-    QString sep = ";";
-    QStringList sortdesc;
-    lw_solutions  ->clear();
-    info.clear();
-    sortdesc       .clear();
-    int dsize   = descriptions.size();    
-
-    for ( int ii = 0; ii < descriptions.size(); ii++ )
-    {  // get list of filtered-description + index strings
-       if ( descriptions[ ii ].contains(
-          QRegExp( ".*" + text + ".*", Qt::CaseInsensitive ) )  &&
-          ! descriptions[ ii].isEmpty() )
-       {
-          sortdesc << descriptions[ ii ] + sep + QString::number( ii );
-       }
-    }
-
-    // sort the descriptions
-    sortdesc.sort();
- DbgLv(1) << "BufS-search:  descsize" << dsize
-  << "sortsize" << sortdesc.size();
-
-    for ( int jj = 0; jj < sortdesc.size(); jj++ )
-    {  // build list of sorted meta data and ListWidget entries
-       int ii      = sortdesc[ jj ].section( sep, 1, 1 ).toInt();
-
-       if ( ii < 0  ||  ii >= dsize )
-       {
- DbgLv(1) << "BufS-search:  *ERROR* ii" << ii << "jj" << jj
-  << "sdesc" << sortdesc[jj].section(sep,0,0);
-          continue;
-       }
-       SolutionInfo si;
-       si.index       = ii;
-       si.description = descriptions[ ii ];
-       si.GUID        = GUIDs       [ ii ];
-       si.filename    = filenames   [ ii ];
-       si.solutionID    = solutionIDs   [ ii ].toInt();
-
-       info << si;
-
-       lw_solutions->addItem( si.description );
-    }
- }
-
-
+ 
 
 US_SolutionMgrNew::US_SolutionMgrNew( int *invID, int *select_db_disk,
       US_Solution *tmp_solution ) : US_Widgets()
@@ -597,19 +829,19 @@ US_SolutionMgrNew::US_SolutionMgrNew( int *invID, int *select_db_disk,
    pb_spectrum = us_pushbutton( tr( "Manage Spectrum" ) );
 
    pb_cancel   = us_pushbutton( tr( "Cancel" ) );
-   connect( pb_cancel,   SIGNAL( clicked()     ),
-            this,        SLOT  ( newCanceled() ) );
+   // connect( pb_cancel,   SIGNAL( clicked()     ),
+   //          this,        SLOT  ( newCanceled() ) );
 
    pb_reset   = us_pushbutton( tr( "Reset" ) );
-   connect( pb_reset,   SIGNAL( clicked()     ),
-            this,        SLOT  ( reset() ) );
+   // connect( pb_reset,   SIGNAL( clicked()     ),
+   //          this,        SLOT  ( reset() ) );
    
    //pb_save     = us_pushbutton( tr( "Accept" ), false);
    //connect( pb_save, SIGNAL( clicked() ), SLOT( save() ) );
    
    pb_accept     = us_pushbutton( tr( "Accept" ), false);
-   connect( pb_accept,   SIGNAL( clicked()     ),
-            this,        SLOT  ( newAccepted() ) );
+   // connect( pb_accept,   SIGNAL( clicked()     ),
+   //          this,        SLOT  ( newAccepted() ) );
 
 
    QHBoxLayout* lo_amount = new QHBoxLayout();
