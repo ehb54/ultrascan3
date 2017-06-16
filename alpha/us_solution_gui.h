@@ -109,14 +109,6 @@ class US_SolutionMgrSelect: public US_Widgets
       void db_error            ( const QString& );
   
       void selectAnalyte      ( QListWidgetItem* );
-      //void query           ( void ); 
-
-      // void read_solution    ( void ); 
-      //void read_db         ( void ); 
-      //void connect_error   ( const QString& );
-      // bool solution_path    ( QString& ); 
-
-
       
       void load               ( void );
       void loadDisk           ( void );
@@ -124,11 +116,10 @@ class US_SolutionMgrSelect: public US_Widgets
       void loadSolutions      ( void );
       
       void accept_solution  ( void ); 
-      /* void spectrum        ( void ); */
-      /* void delete          ( void ); */
+      void spectrum        ( void ); 
+      void delete_solution ( void ); 
       void reject          ( void ); 
-      void accept          ( void ); 
-
+      
        
       /* void delete_disk     ( void ); */
       /* void delete_db       ( void ); */
@@ -143,9 +134,6 @@ class US_SolutionMgrSelect: public US_Widgets
 
 //      void show_component  ( const QString&, double );
 
-
-  
-      
       /* void set_solution_type( int  ); */
       /* QString solution_info ( US_Solution* ); */
       /* QString solution_smry ( US_Solution* ); */
@@ -155,6 +143,26 @@ class US_SolutionMgrSelect: public US_Widgets
 
    public slots:
      //void init_solution		( void );
+};
+
+
+// class to view solution spectrum
+class US_SolutionViewSpectrum : public US_Widgets
+{
+   Q_OBJECT
+
+   public:
+
+        US_SolutionViewSpectrum(QMap<double,double>& solution_temp);
+	
+	QMap <double, double> solution;
+	US_Plot*	plotLayout;
+	QwtPlot	 	*data_plot;
+	
+	void plot_extinction();
+	
+   private:
+	
 };
 
 //! \class US_SolutionGuiMgrNew
