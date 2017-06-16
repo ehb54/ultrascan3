@@ -113,7 +113,7 @@ class US_SolutionMgrSelect: public US_Widgets
       void load               ( void );
       void loadDisk           ( void );
       void loadDB             ( void );
-      void loadSolutions      ( void );
+      //void loadSolutions      ( void );
       
       void accept_solution  ( void ); 
       void spectrum        ( void ); 
