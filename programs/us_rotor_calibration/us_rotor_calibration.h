@@ -32,6 +32,7 @@ struct Average_multi
    int    rpm;
    int    channel;
    int    index; // holds the index of the division, zero is the first on the left
+   double sigma; // standard deviation
 };
 
 struct SpeedEntry

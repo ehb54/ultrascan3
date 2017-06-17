@@ -1324,8 +1324,9 @@ void US_RotorCalibration::calc_6channel(void)
       }
    }
    qSort(speeds); // sort the speeds with the slowest being the first element
-	double average;
+	double average, sigma_sum;
 	int count = 0;
+	int l=0;
 
    // Create a new vector avg_multi2 to hold the average of multiple
 	// scans performed at the same speed from each vertical region.
@@ -1346,9 +1347,23 @@ void US_RotorCalibration::calc_6channel(void)
             }
          }
          tmp_avg_multi.avg   = average/count;
+			sigma_sum = 0;
+			for (i=0; i<avg_multi.size(); i++)
+         {
+            if (avg_multi[i].rpm == speeds[j] && avg_multi[i].index == k)
+            {
+					sigma_sum += pow(tmp_avg_multi.avg - avg_multi[i].avg, 2.0);
+            }
+         }
+// avg_multi2 contains the average edge radii for each 
+// slot (indexed by k from 0-13 for 14 edges) for each speed
+// and also the standard deviations obtained from multiple 
+// scans performed at each speed.
+         tmp_avg_multi.sigma = pow(sigma_sum/count, 0.5);
          tmp_avg_multi.rpm   = speeds[j];
          tmp_avg_multi.index = k;
 			avg_multi2.push_back(tmp_avg_multi);
+			l++;
       }
    }
 	double val1, val2;
@@ -1373,7 +1388,7 @@ void US_RotorCalibration::calc_6channel(void)
 				}
 			}
 			SE_tmp.diff.push_back(val1-val2);
-			if (speeds[j] == 7000) qDebug() << "k:" << SE_tmp.channel << "Speed:" << speeds[j] << val1 << val2;
+			//if (speeds[j] == 7000) qDebug() << "k:" << SE_tmp.channel << "Speed:" << speeds[j] << val1 << val2;
 		}
 		SE_v.push_back(SE_tmp);
 	}
@@ -1393,6 +1408,7 @@ void US_RotorCalibration::calc_6channel(void)
    sd1.resize(numspeeds);
    sd2.resize(numspeeds);
 	double sum=0.0, mean;
+	qDebug() << "channels:" << channels;
 	for (i=0; i<numspeeds; i++)
 	{
 		for (k=0; k<channels; k++)
@@ -1432,9 +1448,6 @@ void US_RotorCalibration::calc_6channel(void)
       sd1[i] += y[i];
       sd2[i] += y[i];
    }
-   plot->btnZoom->setChecked(false);
-   dataPlotClear( data_plot );
-   data_plot->replot();
    QwtPlotCurve* c1;
    QwtPlotCurve* c2;
    QwtPlotCurve* c3;
@@ -1483,12 +1496,37 @@ void US_RotorCalibration::calc_6channel(void)
       xfit[i] = (double) i * 60000.0 / 500.0;
       yfit[i] = coef[0] + coef[1] * xfit[i] + coef[2] *  sq(xfit[i]);
    }
-      
+// now that we have rotor stretch coefficients, we can take the average
+// radial positions for each edge at each speed, which are stored in
+// avg_multi2, correct them to a single position that would be observed
+// at rest, and find a standard deviation for their offsets when corrected
+// from all speeds, and compare them to the theoretical positions:
+
+   for (k=0; k<bounds.size(); k++)
+	{
+		for (j=0; j<speeds.size(); j++)
+   	{
+         count = 0;
+         average = 0.0;
+			for (i=0; i<avg_multi2.size(); i++)
+         {
+            if (avg_multi2[i].rpm == speeds[j] && avg_multi2[i].index == k)
+            {
+               count++;
+					average += avg_multi2[i].avg - (coef[0] + coef[1] * speeds[j] + coef[2] *  sq(speeds[j]));
+            }
+         }
+			qDebug() << "k:" << k << "avg:" << average/count << "speed:" << speeds[j];
+		}
+	}
    c4  = us_curve(data_plot, "fit");
    c4->setStyle  (QwtPlotCurve::Lines);
    c4->setPen    (QColor(Qt::yellow));
    c4->setSamples(xfit.data(), yfit.data(), 501);
 
+   plot->btnZoom->setChecked(false);
+   dataPlotClear( data_plot );
+   data_plot->replot();
    data_plot->setTitle(tr("Rotor Stretch\n"
                "(Error bars = 1 standard deviation)"));
 
