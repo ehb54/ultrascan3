@@ -293,11 +293,16 @@ void US_SolutionMgrSelect::load( void )
    }
    /* */
    
-   if ( from_db )
-      loadDB();
+   qDebug() << "From_DB: " << from_db;
 
+   if ( from_db )
+     {
+        loadDB();
+     }
    else
-      loadDisk();
+     {
+       loadDisk();
+     }
 
    if ( ! sguid.isEmpty() )
    {  // There is a selected analyte, select a list item
@@ -339,6 +344,7 @@ void US_SolutionMgrSelect::load( void )
    {  // There is no selected analyte, de-select a list item
       lw_solutions->setCurrentRow( -1 );
 
+      qDebug() << "in load(): before RESET: ";
       reset();
    }   
 
@@ -347,7 +353,9 @@ void US_SolutionMgrSelect::load( void )
 // Function to load solutions from disk
 void US_SolutionMgrSelect::loadDisk( void )
 {
-   QString path;
+ 
+  qDebug() << "load Disk";
+  QString path;
    if ( ! solution->diskPath( path ) ) return;
 
    IDs.clear();
@@ -425,13 +433,25 @@ void US_SolutionMgrSelect::loadDB( void )
       return;
    }
 
-   if ( investigatorID < 1 ) investigatorID = US_Settings::us_inv_ID();
+   qDebug() << "load in DB000:";
 
-   QStringList q( "all_solutionIDs" );
-   q << QString::number( investigatorID );
+   QString IDperson = QString::number( *personID );
+   QStringList q;
+   q << "all_solutionIDs" << IDperson;
    db.query( q );
 
+   qDebug() << "load in DB1111";
+
+   // if ( investigatorID < 1 ) investigatorID = US_Settings::us_inv_ID();
+   // QStringList q( "all_solutionIDs" );
+   // q << QString::number( investigatorID );
+   // db.query( q );
+
+   qDebug() << "load in DB2222";
+
    if ( db.lastErrno() != US_DB2::OK ) return;
+
+   qDebug() << "load in DB3333";
 
    IDs.clear();
    descriptions.clear();
@@ -813,8 +833,7 @@ US_SolutionMgrNew::US_SolutionMgrNew( int *invID, int *select_db_disk,
 
    lb_descrip   = us_label( tr( "Solution Name:" ) );
    le_descrip   = us_lineedit( "New Solution", 0, false );
-   //connect( le_descrip, SIGNAL( editingFinished   () ), 
-   //                         SLOT  ( new_description() ) );
+   
 
    lb_bufferInfo   = us_label( tr( "Buffer Name:" ) );
    le_bufferInfo = us_lineedit();
@@ -824,18 +843,13 @@ US_SolutionMgrNew::US_SolutionMgrNew( int *invID, int *select_db_disk,
    pb_buffer  = us_pushbutton( tr( "Select Buffer" ) );
 
    pb_removeAnalyte = us_pushbutton( tr( "Remove Analyte" ), false );
-   //connect( pb_removeAnalyte, SIGNAL( clicked() ), SLOT( removeAnalyte() ) );
-
+ 
    pb_spectrum = us_pushbutton( tr( "Manage Spectrum" ) );
 
    pb_cancel   = us_pushbutton( tr( "Cancel" ) );
-   // connect( pb_cancel,   SIGNAL( clicked()     ),
-   //          this,        SLOT  ( newCanceled() ) );
 
    pb_reset   = us_pushbutton( tr( "Reset" ) );
-   // connect( pb_reset,   SIGNAL( clicked()     ),
-   //          this,        SLOT  ( reset() ) );
-   
+  
    //pb_save     = us_pushbutton( tr( "Accept" ), false);
    //connect( pb_save, SIGNAL( clicked() ), SLOT( save() ) );
    
@@ -860,11 +874,7 @@ US_SolutionMgrNew::US_SolutionMgrNew( int *invID, int *select_db_disk,
    lb_banner3->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
    lw_analytes = us_listwidget();
    lw_analytes-> setSortingEnabled( true );
-   //connect( lw_analytes, SIGNAL( itemClicked  ( QListWidgetItem* ) ),
-   //                      SLOT  ( selectAnalyte( QListWidgetItem* ) ) );
-   //connect( lw_analytes, SIGNAL( itemDoubleClicked  ( QListWidgetItem* ) ),
-   //                      SLOT  ( changeAnalyte      ( QListWidgetItem* ) ) );
-
+ 
 
    QLabel* lb_commonVbar20 = us_label( tr( "Common VBar (20C):" ) );
    QLabel* lb_density = us_label( tr( "Buffer density:" ) );
@@ -928,8 +938,332 @@ US_SolutionMgrNew::US_SolutionMgrNew( int *invID, int *select_db_disk,
    main->addWidget( le_storageTemp,  row,   8, 1, 4);  
 
    //main->setRowStretch( 5, 5 );
+   connect( le_descrip, SIGNAL( editingFinished   () ), SLOT  ( new_description() ) );
+   connect( pb_analyte, SIGNAL( clicked() ), SLOT( addAnalyte() ) );
+   connect( pb_reset,   SIGNAL( clicked() ), this, SLOT  ( newSolution() ) );
 
+   connect( lw_analytes, SIGNAL( itemClicked  ( QListWidgetItem* ) ),
+	                 SLOT  ( selectAnalyte( QListWidgetItem* ) ) );
+   
+   connect( pb_removeAnalyte, SIGNAL( clicked() ), SLOT( removeAnalyte() ) );
+
+   connect( pb_cancel,   SIGNAL( clicked()     ),
+            this,        SLOT  ( newCanceled() ) );
+   connect( pb_buffer,   SIGNAL( clicked() ), SLOT( selectBuffer() ) );
+   
+
+   newSolution();
  }
+
+// Slot to capture new solution description
+void US_SolutionMgrNew::new_description()
+{
+  solution->solutionDesc = le_descrip->text();
+  
+  bool can_accept = ( !le_descrip->text().isEmpty()  &&
+		      !le_bufferInfo ->text().isEmpty() );
+  pb_accept    ->setEnabled( can_accept );
+  pb_spectrum  ->setEnabled( can_accept );
+}
+
+void US_SolutionMgrNew::newSolution( void )
+{
+   from_db       = ( (*db_or_disk) == 1 );
+
+   solution->clear();
+   analyteMap.clear();
+
+   reset();
+   //changed = true;
+}
+
+void US_SolutionMgrNew::reset( void )
+{
+   QList< US_Solution::AnalyteInfo >&   ai         = solution->analyteInfo;
+   QString                              bufferDesc = solution->buffer.description;
+
+   le_bufferInfo   -> setText( solution->buffer.description );
+   le_descrip      -> setText( solution->solutionDesc );
+   le_commonVbar20 -> setText( QString::number( solution->commonVbar20 ) );
+   le_density      -> setText( QString::number( solution->buffer.density ) );
+   le_viscosity    -> setText( QString::number( solution->buffer.viscosity ) );
+   le_storageTemp  -> setText( QString::number( solution->storageTemp  ) );
+   te_notes        -> setText( solution->notes        );
+   //le_guid         -> setText( solution->solutionGUID );
+   ct_amount       -> disconnect();
+   ct_amount       -> setEnabled( false );
+   ct_amount       -> setValue( 1 );
+
+   pb_buffer       -> setEnabled( true );
+
+   pb_analyte      -> setEnabled( true );
+   pb_removeAnalyte-> setEnabled( false );
+
+   // Let's calculate if we're eligible to save this solution
+   pb_accept       -> setEnabled( false );
+   if ( !le_descrip->text().isEmpty()  && ! bufferDesc.isEmpty() ) //we can have a solution with buffer only
+   {
+      pb_accept    -> setEnabled( true );
+   }
+
+   // // We can always delete something, even if it's just what's in the dialog
+   // pb_del          -> setEnabled( false );
+   // if ( lw_solutions->currentRow() != -1 )
+   // {
+   //    pb_del       -> setEnabled( true );
+   // }
+
+   // Display analytes that have been selected
+   lw_analytes->clear();
+   analyteMap.clear();
+   for ( int i = 0; i < ai.size(); i++ )
+   {
+      // Create a map to account for sorting of the list
+      QListWidgetItem* item = new QListWidgetItem( ai[ i ].analyte.description, lw_analytes );
+      analyteMap[ item ] = i;
+
+      lw_analytes->addItem( item );
+   }
+
+   // Turn the red label back
+   QPalette p = lb_amount->palette();
+   p.setColor( QPalette::WindowText, Qt::white );
+   lb_amount->setPalette( p );
+
+   // // Figure out if the accept button should be enabled
+   // if ( ! signal )      // Then it's just a close button
+   //    pb_accept->setEnabled( true );
+
+   // else if ( solution->saveStatus == US_Solution::BOTH )
+   //    pb_accept->setEnabled( true );
+
+   // else if ( ( ! disk_controls->db() ) && solution->saveStatus == US_Solution::HD_ONLY )
+   //    pb_accept->setEnabled( true );
+
+   // else if ( (   disk_controls->db() ) && solution->saveStatus == US_Solution::DB_ONLY )
+   //    pb_accept->setEnabled( true );
+
+   // else
+   //    pb_accept->setEnabled( false );
+
+}
+
+
+// Function to add analyte to solution
+void US_SolutionMgrNew::addAnalyte( void )
+{
+   int dbdisk = ( from_db ) ? US_Disk_DB_Controls::DB
+                            : US_Disk_DB_Controls::Disk;
+
+   US_AnalyteGui* analyte_dialog = new US_AnalyteGui( true, QString(), dbdisk );
+
+   connect( analyte_dialog, SIGNAL( valueChanged  ( US_Analyte ) ),
+            this,           SLOT  ( assignAnalyte ( US_Analyte ) ) );
+
+   // connect( analyte_dialog, SIGNAL( use_db        ( bool ) ), 
+   //                          SLOT  ( update_disk_db( bool ) ) );
+
+   analyte_dialog->exec();
+   qApp->processEvents();
+   //changed = true;
+
+}
+
+// Get information about selected analyte
+void US_SolutionMgrNew::assignAnalyte( US_Analyte data )
+{
+   US_Solution::AnalyteInfo newInfo;
+   newInfo.analyte = data;
+   newInfo.amount  = 1;
+
+   if ( from_db )
+   {
+      // Now double-check analyteID from db if we can
+      US_Passwd pw;
+      QString masterPW = pw.getPasswd();
+      US_DB2 db( masterPW );
+      
+      if ( db.lastErrno() == US_DB2::OK )
+      {
+         QStringList q( "get_analyteID" );
+         q << newInfo.analyte.analyteGUID;
+         db.query( q );
+      
+         if ( db.next() )
+            newInfo.analyte.analyteID = db.value( 0 ).toString();
+      }
+   }
+
+   // Make sure item has not been added already
+   // Check manually because the amounts could be different, but it's still
+   // the same analyte
+   bool found = false;
+   foreach ( US_Solution::AnalyteInfo itemInfo, solution->analyteInfo )
+   {
+      if ( itemInfo.analyte == newInfo.analyte )
+      {
+         found = true;
+         break;
+      }
+   }
+
+   if ( found )
+   {
+      QMessageBox::information( this,
+            tr( "Attention" ),
+            tr( "Your solution already contains this analyte\n"
+                "If you wish to change the amount, remove it and "
+                "add it again.\n" ) );
+      return;
+   }
+
+   solution->analyteInfo << newInfo;
+
+   calcCommonVbar20();
+
+   // We're maintaining a map to account for automatic sorting of the list
+   QListWidgetItem* item = new QListWidgetItem( newInfo.analyte.description, lw_analytes );
+   analyteMap[ item ] = solution->analyteInfo.size() - 1;      // The one we just added
+
+   reset();
+   //changed = true;
+}
+
+// Slot to cancel edited analyte
+void US_SolutionMgrNew::newCanceled()
+{
+    emit newSolCanceled();
+}
+
+// Function to calculate the default commonVbar20 value
+void US_SolutionMgrNew::calcCommonVbar20( void )
+{
+   solution->commonVbar20 = 0.0;
+
+   if ( solution->analyteInfo.size() == 1 )
+      solution->commonVbar20 = solution->analyteInfo[ 0 ].analyte.vbar20;
+
+   else     // multiple analytes
+   {
+      double numerator   = 0.0;
+      double denominator = 0.0;
+      foreach ( US_Solution::AnalyteInfo ai, solution->analyteInfo )
+      {
+         numerator   += ai.analyte.vbar20 * ai.analyte.mw * ai.amount;
+         denominator += ai.analyte.mw * ai.amount;
+      }
+
+      solution->commonVbar20 = ( denominator == 0 ) ? 0.0 : ( numerator / denominator );
+
+   }
+   //changed = true;
+}
+
+// Function to handle when solution listwidget item is selected
+void US_SolutionMgrNew::selectAnalyte( QListWidgetItem* item )
+{
+   // Get the right index in the sorted list, and load the amount
+   int ndx = analyteMap[ item ];
+   ct_amount ->setValue( solution->analyteInfo[ ndx ].amount );
+
+   // Now turn the label red to catch attention
+   QPalette p = lb_amount->palette();
+   p.setColor( QPalette::WindowText, Qt::red );
+   lb_amount->setPalette( p );
+
+   pb_removeAnalyte ->setEnabled( true );
+   ct_amount        ->setEnabled( true );
+   connect( ct_amount, SIGNAL( valueChanged ( double ) ),      // if the user has changed it
+                       SLOT  ( saveAmount   ( double ) ) );
+   //changed = true;
+}
+
+// Function to update the amount that is associated with an individual analyte
+void US_SolutionMgrNew::saveAmount( double amount )
+{
+   // Get the right index in the sorted list of analytes
+   QListWidgetItem* item = lw_analytes->currentItem();
+
+   // if item not selected return
+
+   int ndx = analyteMap[ item ];
+   solution->analyteInfo[ ndx ].amount = amount;
+
+   calcCommonVbar20();
+
+   // Update commonVbar20 value in GUI
+   le_commonVbar20 -> setText( QString::number( solution->commonVbar20 ) );
+   //changed = true;
+}
+
+// Function to add analyte to solution
+void US_SolutionMgrNew::removeAnalyte( void )
+{
+   // Allow for the fact that this listwidget is sorted
+   QListWidgetItem* item = lw_analytes->currentItem();
+   int ndx = analyteMap[ item ];
+
+   solution->analyteInfo.removeAt( ndx );
+   lw_analytes ->removeItemWidget( item );
+
+   calcCommonVbar20();
+
+   reset();
+   //changed = true;
+}
+
+// Create a dialog to request a buffer selection
+void US_SolutionMgrNew::selectBuffer( void )
+{
+   int dbdisk = ( from_db ) ? US_Disk_DB_Controls::DB
+                                        : US_Disk_DB_Controls::Disk;
+
+   US_BufferGui* buffer_dialog = new US_BufferGui( true,
+                                                   solution->buffer, dbdisk );
+
+   connect( buffer_dialog, SIGNAL( valueChanged ( US_Buffer ) ),
+            this,          SLOT  ( assignBuffer ( US_Buffer ) ) );
+
+   // connect( buffer_dialog, SIGNAL( use_db        ( bool ) ), 
+   //                         SLOT  ( update_disk_db( bool ) ) );
+
+   buffer_dialog->exec();
+   qApp->processEvents();
+   //changed = true;
+}
+
+// Get information about selected buffer
+void US_SolutionMgrNew::assignBuffer( US_Buffer newBuffer )
+{
+   if ( from_db ) 
+   {
+      // Now get the corresponding bufferID, if we can
+      US_Passwd pw;
+      QString masterPW = pw.getPasswd();
+      US_DB2 db( masterPW );
+      
+      if ( db.lastErrno() == US_DB2::OK )
+      {
+         QStringList q( "get_bufferID" );
+         q << newBuffer.GUID;
+         db.query( q );
+      
+         if ( db.next() )
+            newBuffer.bufferID = db.value( 0 ).toString();
+      
+         else
+            newBuffer.bufferID = QString( "-1" );
+      
+      }
+   }
+
+   solution->buffer = newBuffer;
+
+   reset();
+   //changed = true;
+}
+
+
 
 // Edit Existing Solution panel
 US_SolutionMgrEdit::US_SolutionMgrEdit( int *invID, int *select_db_disk,
@@ -1126,18 +1460,18 @@ US_SolutionGui::US_SolutionGui(
             this,        SLOT (  solutionAccepted(      void ) ) );
    connect( selectTab,   SIGNAL( selectionCanceled(    void ) ),
             this,        SLOT (  solutionRejected(      void ) ) );
-   // connect( newTab,      SIGNAL( newAnaAccepted(       void ) ),
-   //          this,        SLOT (  newAnaAccepted(       void ) ) );
-   // connect( newTab,      SIGNAL( newAnaCanceled(       void ) ),
-   //          this,        SLOT (  newAnaCanceled(       void ) ) );
-   // connect( editTab,     SIGNAL( editAnaAccepted(      void ) ),
-   //          this,        SLOT (  editAnaAccepted(      void ) ) );
-   // connect( editTab,     SIGNAL( editAnaCanceled(      void ) ),
-   //          this,        SLOT (  editAnaCanceled(      void ) ) );
-   // connect( settingsTab, SIGNAL( use_db(               bool ) ),
-   //          this,        SLOT (  update_disk_or_db(    bool ) ) );
-   // connect( settingsTab, SIGNAL( investigator_changed( int  ) ),
-   //          this,        SLOT (  update_personID(      int  ) ) );
+   connect( newTab,      SIGNAL( newSolAccepted(       void ) ),
+            this,        SLOT (  newSolAccepted(       void ) ) );
+   connect( newTab,      SIGNAL( newSolCanceled(       void ) ),
+            this,        SLOT (  newSolCanceled(       void ) ) );
+   connect( editTab,     SIGNAL( editSolAccepted(      void ) ),
+            this,        SLOT (  editSolAccepted(      void ) ) );
+   connect( editTab,     SIGNAL( editSolCanceled(      void ) ),
+            this,        SLOT (  editSolCanceled(      void ) ) );
+   connect( settingsTab, SIGNAL( use_db(               bool ) ),
+            this,        SLOT (  update_disk_or_db(    bool ) ) );
+   connect( settingsTab, SIGNAL( investigator_changed( int  ) ),
+            this,        SLOT (  update_personID(      int  ) ) );
 }
 
 void US_SolutionGui::value_changed( const QString& )
@@ -1158,7 +1492,7 @@ DbgLv(1) << "ckTab: currTab" << currentTab;
    if ( currentTab == 0 )
    {
 DbgLv(1) << "ckTab:   selectTab  init_solution";
-//selectTab  ->init_solution();
+ selectTab  ->load();
    }
    else if ( currentTab == 1 )
    {
@@ -1185,28 +1519,28 @@ void US_SolutionGui::update_personID( int ID )
 }
 
 // Slot for Edit panel solution-accepted
-void US_SolutionGui::editAnaAccepted( void )
+void US_SolutionGui::editSolAccepted( void )
 {
 DbgLv(1) << "main: editAnaAccepted";
    tabWidget->setCurrentIndex( 0 );
 }
 
 // Slot for Edit panel solution-changes-rejected
-void US_SolutionGui::editAnaCanceled( void )
+void US_SolutionGui::editSolCanceled( void )
 {
 DbgLv(1) << "main: editAnaCanceled";
    tabWidget->setCurrentIndex( 0 );
 }
 
 // Slot for New panel solution accepted
-void US_SolutionGui::newAnaAccepted( void )
+void US_SolutionGui::newSolAccepted( void )
 {
 DbgLv(1) << "main: newAnaAccepted";
    tabWidget->setCurrentIndex( 0 );
 }
 
 // Slot for New panel solution add rejected
-void US_SolutionGui::newAnaCanceled( void )
+void US_SolutionGui::newSolCanceled( void )
 {
 DbgLv(1) << "main: newAnaCanceled";
    tabWidget->setCurrentIndex( 0 );
