@@ -90,7 +90,7 @@ US_RotorCalibration::US_RotorCalibration() : US_Widgets()
    ct_channel->setSingleStep(1);
    top->addWidget(ct_channel, row++, 0);
 
-   QGridLayout* lo_6channel = us_checkbox(tr("Use 6-Slot Cal. Mask"), cb_6channel, false);
+   QGridLayout* lo_6channel = us_checkbox(tr("Use 7-Slot Cal. Mask"), cb_6channel, false);
    connect (cb_6channel, SIGNAL (clicked()), this, SLOT (use_6channel()));
    top->addLayout(lo_6channel, row++, 0);
 
@@ -1448,6 +1448,77 @@ void US_RotorCalibration::calc_6channel(void)
       sd1[i] += y[i];
       sd2[i] += y[i];
    }
+   if (! US_Matrix::lsfit(coef, x.data(), y.data(), numspeeds, 3))
+   {
+      QMessageBox::warning(this,
+            tr("Data Problem"),
+            tr("The data is inadequate for this fit order"));
+   }
+
+   QVector< double > xfit(501);
+   QVector< double > yfit(501);
+   
+   for (int i = 0; i < 501; i++)
+   {
+      xfit[i] = (double) i * 60000.0 / 500.0;
+      yfit[i] = coef[0] + coef[1] * xfit[i] + coef[2] *  sq(xfit[i]);
+   }
+// now that we have rotor stretch coefficients, we can take the average
+// radial positions for each edge at each speed, which are stored in
+// avg_multi2, correct them to a single position that would be observed
+// at rest, and find a standard deviation for their offsets when corrected
+// from all speeds, and compare them to the theoretical positions:
+
+	QVector <double> radavg;
+	QVector <double> edge_measured;
+	QVector <double> edge_known;
+	QVector <double> edge_sigma;
+   edge_known.push_back(5.850);
+   edge_known.push_back(5.956);
+   edge_known.push_back(6.053);
+   edge_known.push_back(6.157);
+   edge_known.push_back(6.253);
+   edge_known.push_back(6.358);
+   edge_known.push_back(6.453);
+   edge_known.push_back(6.558);
+   edge_known.push_back(6.654);
+   edge_known.push_back(6.760);
+   edge_known.push_back(6.854);
+   edge_known.push_back(6.959);
+   edge_known.push_back(7.054);
+   edge_known.push_back(7.160);
+   for (k=0; k<bounds.size(); k++) // bounds equals the number of edges
+	{
+		sum=0.0;
+		for (j=0; j<speeds.size(); j++)
+   	{
+         count = 0;
+         average = 0.0;
+			for (i=0; i<avg_multi2.size(); i++)
+         {
+            if (avg_multi2[i].rpm == speeds[j] && avg_multi2[i].index == k)
+            {
+               count++;
+					average += avg_multi2[i].avg - (coef[0] + coef[1] * speeds[j] + coef[2] *  sq(speeds[j]));
+            }
+         }
+			radavg.push_back(average/count); //store all averages for later std. dev. calculation.
+			sum += average/count; // accumulate all stretch-corrected edge radii for a single egde
+		}
+		edge_measured.push_back(sum/speeds.size());
+		sigma_sum=0.0;
+		for (j=0; j<speeds.size(); j++)
+      {
+			sigma_sum += sq(edge_measured[k]-radavg[j]);
+		}
+		radavg.clear();
+		edge_sigma.push_back(pow(sigma_sum/speeds.size(), 0.5));
+		//qDebug() << "Edge" << k << edge_measured[k] << "+/-" << pow(sigma_sum/speeds.size(), 0.5) << "predicted:" << edge_known[k] << "difference:" << edge_known[k]-edge_measured[k];
+	}
+			
+   dataPlotClear( data_plot );
+   data_plot->replot();
+   plot->btnZoom->setChecked(false);
    QwtPlotCurve* c1;
    QwtPlotCurve* c2;
    QwtPlotCurve* c3;
@@ -1481,52 +1552,11 @@ void US_RotorCalibration::calc_6channel(void)
    c3->setStyle  (QwtPlotCurve::NoCurve);
    c3->setSamples(x.data(), sd2.data(), numspeeds);
    
-   if (! US_Matrix::lsfit(coef, x.data(), y.data(), numspeeds, 3))
-   {
-      QMessageBox::warning(this,
-            tr("Data Problem"),
-            tr("The data is inadequate for this fit order"));
-   }
-
-   QVector< double > xfit(501);
-   QVector< double > yfit(501);
-   
-   for (int i = 0; i < 501; i++)
-   {
-      xfit[i] = (double) i * 60000.0 / 500.0;
-      yfit[i] = coef[0] + coef[1] * xfit[i] + coef[2] *  sq(xfit[i]);
-   }
-// now that we have rotor stretch coefficients, we can take the average
-// radial positions for each edge at each speed, which are stored in
-// avg_multi2, correct them to a single position that would be observed
-// at rest, and find a standard deviation for their offsets when corrected
-// from all speeds, and compare them to the theoretical positions:
-
-   for (k=0; k<bounds.size(); k++)
-	{
-		for (j=0; j<speeds.size(); j++)
-   	{
-         count = 0;
-         average = 0.0;
-			for (i=0; i<avg_multi2.size(); i++)
-         {
-            if (avg_multi2[i].rpm == speeds[j] && avg_multi2[i].index == k)
-            {
-               count++;
-					average += avg_multi2[i].avg - (coef[0] + coef[1] * speeds[j] + coef[2] *  sq(speeds[j]));
-            }
-         }
-			qDebug() << "k:" << k << "avg:" << average/count << "speed:" << speeds[j];
-		}
-	}
    c4  = us_curve(data_plot, "fit");
    c4->setStyle  (QwtPlotCurve::Lines);
    c4->setPen    (QColor(Qt::yellow));
    c4->setSamples(xfit.data(), yfit.data(), 501);
 
-   plot->btnZoom->setChecked(false);
-   dataPlotClear( data_plot );
-   data_plot->replot();
    data_plot->setTitle(tr("Rotor Stretch\n"
                "(Error bars = 1 standard deviation)"));
 
@@ -1548,7 +1578,19 @@ void US_RotorCalibration::calc_6channel(void)
                             + QString("%1").arg(coef[1], 0, 'e', 5 ) + " rpm + "
                             + QString("%1").arg(coef[2], 0, 'e', 5 ) + " rpm^2\n\n";
    
-   fileText += "Below is a listing of the stretching values as a function of speed:\n\n";
+   fileText += "Below is a listing of the edge positions at rest for the 7 calibration channels (in cm):\n\n";
+   fileText += "Edge: Position: Std. Dev.: Predicted: Difference:\n";
+
+   for ( int i = 0; i <edge_measured.size() ; i++ )
+   {
+      fileText += QString( "%1").arg(i+1, 3)                      + "   "
+                + QString( "%1").arg(edge_measured[i], 0, 'f', 5 ) + "   "
+                + QString( "%1").arg(edge_sigma[i], 0, 'e', 5 )    + "   "
+                + QString( "%1").arg(edge_known[i], 0, 'f', 3 )    + "    "
+                + QString( "%1").arg(edge_known[i] - edge_measured[i], 0, 'e', 5 )    + "\n";
+   }
+
+   fileText += "\n\nBelow is a listing of the stretching values as a function of speed:\n\n";
    fileText += "Speed: Stretch (cm): Standard Dev.:\n";
    
    fileText += QString( "%1" ).arg( 0, 5, 10 ) + "   "
