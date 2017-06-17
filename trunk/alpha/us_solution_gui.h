@@ -110,7 +110,7 @@ class US_SolutionMgrSelect: public US_Widgets
   
       void selectAnalyte      ( QListWidgetItem* );
       
-      void load               ( void );
+      //void load               ( void );
       void loadDisk           ( void );
       void loadDB             ( void );
       //void loadSolutions      ( void );
@@ -142,6 +142,7 @@ class US_SolutionMgrSelect: public US_Widgets
       void help( void ) { showHelp.show_help( "solution_select.html" ); };
 
    public slots:
+     void load               ( void );
      //void init_solution		( void );
 };
 
@@ -187,8 +188,8 @@ class US_SolutionMgrNew : public US_Widgets
       
             
    signals:
-      void newBufAccepted( void );  //! New solution accepted
-      void newBufCanceled( void );
+      void newSolAccepted( void );  //! New solution accepted
+      void newSolCanceled( void );
 
    private:
 
@@ -225,6 +226,7 @@ class US_SolutionMgrNew : public US_Widgets
 
       QListWidget*  lw_analytes;
       
+      QMap< QListWidgetItem*, int > analyteMap;
 
       //! A SolutionComponent map structure for all components in 
       //!   template list (stored in us_home/etc/solution.xml). 
@@ -234,8 +236,21 @@ class US_SolutionMgrNew : public US_Widgets
 
    private slots:
 
-      /* void new_description (); */
-      /* void add_component   (); */
+     void addAnalyte         ( void );
+     void assignAnalyte      ( US_Analyte );
+     void calcCommonVbar20   ( void );
+     void reset               ( void );
+     void newSolution        ( void );
+     void new_description    ();
+     void saveAmount         ( double );
+     void selectAnalyte      ( QListWidgetItem* );
+     void removeAnalyte      ( void );
+     void newCanceled        ( void );
+     void selectBuffer       ( void );
+     void assignBuffer       ( US_Buffer );
+     
+
+     /* void add_component   (); */
       /* void select_bcomp    (); */
       /* void remove_bcomp    ( QListWidgetItem* ); */
       /* void recalc_density  ( void ); */
@@ -497,10 +512,10 @@ class US_GUI_EXTERN US_SolutionGui : public US_WidgetsDialog
       void value_changed      ( const QString& );
 //      void assign_investigator( int  );
 //      void synch_components   ( void );
-      void editAnaAccepted    ( void );
-      void editAnaCanceled    ( void );
-      void newAnaAccepted     ( void );
-      void newAnaCanceled     ( void );
+      void editSolAccepted    ( void );
+      void editSolCanceled    ( void );
+      void newSolAccepted     ( void );
+      void newSolCanceled     ( void );
       void solutionAccepted    ( void );
       void solutionRejected    ( void );
 };
