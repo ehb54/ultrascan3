@@ -60,13 +60,26 @@ US_Extinction::US_Extinction(QString buffer, const QString& text, const QString&
      //if (buffer_temp.toStdString() == "ANALYTE")
      pb_perform_analyte = us_pushbutton( tr( "Perform Analyte Fit") );            // New button for 'Fit Analyte...'
 
+     pb_perform_solution = us_pushbutton( tr( "Perform Solution Fit") );          // New button for 'Fit Solution...'
+
    connect( pb_perform_buffer, SIGNAL( clicked()), SLOT(perform_global_buffer()));
    connect( pb_perform_analyte, SIGNAL( clicked()), SLOT(perform_global_analyte()));
+   connect( pb_perform_solution, SIGNAL( clicked()), SLOT(perform_global_solution()));
    if (buffer_temp.toStdString() == "BUFFER")
-     pb_perform_analyte->hide();
+     {
+       pb_perform_analyte->hide();
+       pb_perform_solution->hide();
+     }
    if (buffer_temp.toStdString() == "ANALYTE")
-     pb_perform_buffer->hide();
-   
+     {
+       pb_perform_buffer->hide();
+       pb_perform_solution->hide();
+     }
+   if (buffer_temp.toStdString() == "SOLUTION")
+     {
+       pb_perform_buffer->hide();
+       pb_perform_analyte->hide();
+     }
    pb_calculate = us_pushbutton( tr( "Calculate E280 from Peptide File") );
    connect( pb_calculate, SIGNAL( clicked()), SLOT(calculateE280()));
    //if (buffer_temp.toStdString() == "BUFFER")
@@ -194,6 +207,7 @@ US_Extinction::US_Extinction(QString buffer, const QString& text, const QString&
    submain->addWidget(pb_perform, 6, 0);
    submain->addWidget(pb_perform_buffer, 6, 0);
    submain->addWidget(pb_perform_analyte, 6, 0);
+   submain->addWidget(pb_perform_solution, 6, 0);
 
    submain->addLayout(gl2, 7, 0);
    submain->addWidget(lbl_peptide, 8, 0);
@@ -794,6 +808,47 @@ void US_Extinction::perform_global_buffer(void)
   connect(fitter, SIGNAL(fittingWidgetClosed()), SLOT(plot()));
  
 }
+
+////////////////////////////////////////////////////////////////////////////
+void US_Extinction::perform_global_solution(void)
+{
+  if (v_wavelength.size() < 1)
+   {
+      QMessageBox message;
+      message.setWindowTitle(tr("Ultrascan Error:"));
+      message.setText(tr("You will need at least 1 scan \nto perform a global fit.\n\nPlease add scan(s) before attempting\na global fit."));
+      message.exec();
+      return;
+   }
+  
+  fitting_widget = false;
+  parameters = order * 3 + v_wavelength.size();
+  fitparameters = new double [parameters];
+  for (int i=0; i<v_wavelength.size(); i++)
+    {
+      fitparameters[i] = 0.3;
+    }
+  float lambda_step = (lambda_max - lambda_min)/(order+1); // create "order" peaks evenly distributed over the range
+  for (unsigned int i=0; i<order; i++)
+    {
+      fitparameters[v_wavelength.size() + (i * 3) ] = 1;
+      fitparameters[v_wavelength.size() + (i * 3) + 1] = lambda_min + lambda_step * i;
+      fitparameters[v_wavelength.size() + (i * 3) + 2] = 10;
+    }
+  //fitter = new US_ExtinctFitter(&v_wavelength, fitparameters, order, parameters,
+  //				projectName, &fitting_widget, true);
+  
+  fitter = new US_ExtinctFitter(&v_wavelength, fitparameters, order, parameters,
+				projectName, &fitting_widget);
+
+  connect( fitter, SIGNAL( get_yfit( QVector <QVector<double> > &, QVector <QVector<double> > & )), this, SLOT(process_yfit( QVector <QVector<double> > &, QVector <QVector<double> > & ) ) );
+
+  fitter->setParent(this, Qt::Window);
+  fitter->show();
+  fitted = true;
+  
+  connect(fitter, SIGNAL(fittingWidgetClosed()), SLOT(plot()));
+ }
 
 
 ///////////////////////////////////////////////////////////

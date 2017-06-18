@@ -9,6 +9,7 @@
 #include "us_buffer.h"
 #include "us_analyte.h"
 #include "us_math2.h"
+#include "us_eprofile.h"
 
 // The constructor clears out the data structure
 US_Solution::US_Solution()
@@ -211,6 +212,10 @@ int US_Solution::readFromDB  ( int solutionID, US_DB2* db )
          analyteInfo << newInfo;
       }
    }
+
+   QString compType("Sample");
+   QString valType("molarExtinction");
+   US_ExtProfile::fetch_eprofile( db, solutionID, compType, valType, extinction );
 
    saveStatus = DB_ONLY;
 
@@ -460,6 +465,35 @@ int US_Solution::saveToDB( int expID, int channelID, US_DB2* db )
          return status;
       }
    }
+
+   /// Write extinctionProfile /////////////////////////////
+   QString compType("Sample");
+   QString valType("molarExtinction");
+   qDebug() << "SampleID for extProfile: " << solutionID;
+   
+   if ( !extinction.isEmpty() )
+   {
+      if ( !replace_spectrum )
+      {
+         qDebug() << "Creating Spectrum!!!";
+         US_ExtProfile::create_eprofile( db, solutionID, compType, valType, extinction);
+      }
+      else
+      {
+         qDebug() << "Updating Spectrum!!!";
+
+         QMap<double, double> new_extinction = extinction;
+         int profileID = US_ExtProfile::fetch_eprofile(  db, solutionID, compType, valType, extinction);
+         
+         qDebug() << "Old Extinction keys: " << extinction.keys().count() << ", ProfileID: " << profileID;
+         US_ExtProfile::update_eprofile( db, profileID, solutionID, compType, valType, new_extinction);
+         qDebug() << "New Extinction keys: " << new_extinction.keys().count() << ", ProfileID: " << profileID;
+         
+         replace_spectrum = false;
+      }
+   }
+   ////////////////////////////////////////    
+
 
    saveStatus = BOTH;
 

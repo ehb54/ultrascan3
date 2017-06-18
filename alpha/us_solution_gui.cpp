@@ -68,15 +68,10 @@ US_SolutionMgrSelect::US_SolutionMgrSelect( int *invID, int *select_db_disk,
    us_setReadOnly( le_viscosity,     true );
    le_storageTemp = us_lineedit();
    us_setReadOnly( le_storageTemp,     true );
-   //connect( le_storageTemp, SIGNAL( textEdited      ( const QString&   ) ),
-   //                         SLOT  ( saveTemperature ( const QString&   ) ) );
-
    te_notes = us_textedit();
    te_notes->setMaximumSize( 600, 100 );
    te_notes->setReadOnly( true );
-   //connect( te_notes, SIGNAL( textChanged( void ) ),  SLOT  ( saveNotes  ( void ) ) );
-   
-
+ 
    QLabel* lb_banner3 = us_banner( tr( "Current solution contents" )  );
    lb_banner3->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
 
@@ -496,7 +491,8 @@ void US_SolutionMgrSelect::loadDB( void )
 //  will search solutions matching search string
  void US_SolutionMgrSelect::search( QString const& text )
  {
-    QString sep = ";";
+
+   QString sep = ";";
     QStringList sortdesc;
     lw_solutions  ->clear();
     info.clear();
@@ -636,7 +632,10 @@ void US_SolutionMgrSelect::selectSolution( QListWidgetItem* item )
    //int     solutionID   = info[ ndx ].solutionID;
    //QString solutionGUID = info[ ndx ].GUID;
    
+   qDebug() << "Inside Select: Extinction_1 " << solution->extinction.keys().count();
+
    solution->clear();
+   qDebug() << "Inside Select: Extinction_2 " << solution->extinction.keys().count();
 
    qDebug() << "SolutionID: " << solutionID;
    
@@ -815,13 +814,15 @@ void US_SolutionMgrSelect::selectAnalyte( QListWidgetItem* item )
  
 
 US_SolutionMgrNew::US_SolutionMgrNew( int *invID, int *select_db_disk,
-      US_Solution *tmp_solution ) : US_Widgets()
+				      US_Solution *tmp_solution, int tmp_experimentID, int tmp_channelID ) : US_Widgets()
 {
    solution     = tmp_solution;
    personID   = invID;
    db_or_disk = select_db_disk;
    from_db    = ( (*db_or_disk) == 1 );
    dbg_level  = US_Settings::us_debug();
+   experimentID = tmp_experimentID;
+   channelID  = tmp_channelID;
 
    setPalette( US_GuiSettings::frameColor() );
    QGridLayout* main = new QGridLayout( this );
@@ -834,7 +835,6 @@ US_SolutionMgrNew::US_SolutionMgrNew( int *invID, int *select_db_disk,
    lb_descrip   = us_label( tr( "Solution Name:" ) );
    le_descrip   = us_lineedit( "New Solution", 0, false );
    
-
    lb_bufferInfo   = us_label( tr( "Buffer Name:" ) );
    le_bufferInfo = us_lineedit();
    us_setReadOnly( le_bufferInfo,   true );
@@ -854,9 +854,6 @@ US_SolutionMgrNew::US_SolutionMgrNew( int *invID, int *select_db_disk,
    //connect( pb_save, SIGNAL( clicked() ), SLOT( save() ) );
    
    pb_accept     = us_pushbutton( tr( "Accept" ), false);
-   // connect( pb_accept,   SIGNAL( clicked()     ),
-   //          this,        SLOT  ( newAccepted() ) );
-
 
    QHBoxLayout* lo_amount = new QHBoxLayout();
 
@@ -889,14 +886,11 @@ US_SolutionMgrNew::US_SolutionMgrNew( int *invID, int *select_db_disk,
    le_viscosity = us_lineedit();
    us_setReadOnly( le_viscosity,     true );
    le_storageTemp = us_lineedit();
-   //connect( le_storageTemp, SIGNAL( textEdited      ( const QString&   ) ),
-   //                         SLOT  ( saveTemperature ( const QString&   ) ) );
- 
+   
    te_notes = us_textedit();
    //te_notes->setMaximumSize( 600, 100 );
    te_notes->setReadOnly( false );
-   //connect( te_notes, SIGNAL( textChanged( void ) ),  SLOT  ( saveNotes  ( void ) ) );
-   
+      
    QLabel* lb_banner1 = us_banner( tr( "Solution notes" )  );
    lb_banner1->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
 
@@ -924,7 +918,6 @@ US_SolutionMgrNew::US_SolutionMgrNew( int *invID, int *select_db_disk,
    main->addWidget( lw_analytes,     row,     0, 4, 6 );
    main->addWidget( lb_banner1,      row++,   6, 1, 6 );
    main->addWidget( te_notes,        row++,   6, 3, 6 );
-
    
    row += 7;
    
@@ -951,9 +944,268 @@ US_SolutionMgrNew::US_SolutionMgrNew( int *invID, int *select_db_disk,
             this,        SLOT  ( newCanceled() ) );
    connect( pb_buffer,   SIGNAL( clicked() ), SLOT( selectBuffer() ) );
    
+   connect( pb_accept,   SIGNAL( clicked()     ),
+            this,        SLOT  ( newAccepted() ) );
+
+   connect( le_storageTemp, SIGNAL( textEdited      ( const QString&   ) ),
+                            SLOT  ( saveTemperature ( const QString&   ) ) );
+   
+   connect( te_notes, SIGNAL( textChanged( void ) ),  SLOT  ( saveNotes  ( void ) ) );
+   
+   connect( pb_spectrum,     SIGNAL( clicked() ),
+	    this,            SLOT  ( spectrum()    ) );
 
    newSolution();
- }
+}
+
+
+void US_SolutionMgrNew::add_spectrumDisk( void )
+{
+  QStringList files;
+  QFile f;
+  
+  QFileDialog dialog (this);
+  //dialog.setNameFilter(tr("Text (*.txt *.csv *.dat *.wa *.dsp)"));
+
+  dialog.setNameFilter(tr("Text files (*.[Tt][Xx][Tt] *.[Cc][Ss][Vv] *.[Dd][Aa][Tt] *.[Ww][Aa]* *.[Dd][Ss][Pp]);;All files (*)"));
+    
+  dialog.setFileMode(QFileDialog::ExistingFile);
+  dialog.setViewMode(QFileDialog::Detail);
+  //dialog.setDirectory("/home/alexsav/ultrascan/data/spectra");
+  
+  QString work_dir_data  = US_Settings::dataDir();
+  qDebug() << work_dir_data;
+  dialog.setDirectory(work_dir_data);
+  
+  if(dialog.exec())
+    {
+      files = dialog.selectedFiles();
+      readingspectra(files[0]);
+    }
+  //qDebug() << "Files: " << files[0];
+}
+
+void US_SolutionMgrNew::readingspectra(const QString &fileName)
+{
+  QString str1;
+  QStringList strl;
+  float temp_x, temp_y;
+  QMap< double, double > temp_extinct;
+  
+  if(!fileName.isEmpty())
+    {
+      QFile f(fileName);
+     
+      if(f.open(QIODevice::ReadOnly | QIODevice::Text))
+	{
+	  QTextStream ts(&f);
+	  while(!ts.atEnd())
+	    {
+	      if( !ts.atEnd() )
+		{
+		  str1 = ts.readLine();
+		}
+	      str1 = str1.simplified();
+	      str1 = str1.replace("\"", " ");
+	      str1 = str1.replace(",", " ");
+	      strl = str1.split(" ");
+	      temp_x = strl.at(0).toFloat();
+	      temp_y = strl.at(1).toFloat();
+
+	      //qDebug() << temp_x << ", " << temp_y;
+
+	      if (temp_x != 0)
+		{
+		  temp_extinct[double(temp_x)] = double(temp_y);
+		}
+	    }
+	}
+      solution->extinction = temp_extinct;
+    }
+}
+
+
+void US_SolutionMgrNew::spectrum( void )
+{
+  QMessageBox msg;
+  msg.setWindowTitle("New Solution Spectrum");
+  msg.setText("Choose how do you want to create spectrum:");
+  //msg.setInformativeText(" - You can enter spectrum Manually, or Upload and fit the spectrum with the spectrum fitter");
+  msg.setInformativeText(" - You can Upload and Fit the spectrum with the Spectrum Fitter, or Upload Spectrum form Disk");
+
+  //msgBox.setText("Buffer does not have spectrum data!\n You can Upload and fit analyte spectrum, or Enter points manually");
+  msg.setStandardButtons(QMessageBox::Cancel);
+  QPushButton* pButtonUpload = msg.addButton(tr("Upload Spectrum"), QMessageBox::YesRole);
+  //QPushButton* pButtonManually = msg.addButton(tr("Enter Manually"), QMessageBox::YesRole);
+  QPushButton* pButtonUploadDisk = msg.addButton(tr("Upload from Disk"), QMessageBox::YesRole);
+
+  msg.setDefaultButton(pButtonUpload);
+  msg.exec();
+    
+  // Upload spectrum
+  if (msg.clickedButton()==pButtonUpload) {
+    
+    w = new US_Extinction("SOLUTION", le_descrip->text(), "", (QWidget*)this); 
+    
+    connect( w, SIGNAL( get_results(QMap < double, double > & )), this, SLOT(process_results( QMap < double, double > & ) ) );
+    
+    w->setParent(this, Qt::Window);
+    w->setAttribute(Qt::WA_DeleteOnClose);
+    w->show(); 
+  }
+  if (msg.clickedButton()==pButtonUploadDisk) {
+    add_spectrumDisk();
+    pb_accept->setEnabled( !le_descrip->text().isEmpty() );
+  }
+  
+  // if (msg.clickedButton()==pButtonManually) {
+  //   US_Table* sdiag;
+  //   QMap< double, double > loc_extinct = analyte->extinction;
+  //   QString stype( "Extinction" );
+  //   bool changed = false;
+  //   sdiag        = new US_Table( loc_extinct, stype, changed, this );
+  //   sdiag->setWindowTitle( "Manage Extinction Spectrum" );
+  //   sdiag->exec();
+  //   DbgLv(1) << "BufE:SL: spectr  extincts" << loc_extinct
+  // 	     << "changed" << changed;
+  //   if ( changed )
+  //     {
+  // 	qDebug() << "Existing: Inside Changed: "; 
+  // 	qDebug() << "#buff->extinc BEFORE: " << analyte->extinction.keys().count();
+	
+  // 	analyte->extinction.clear();                                                   
+  // 	analyte->extinction = loc_extinct;
+	
+  // 	////Update via STORED Procedures ....
+  // 	//analyte->replace_spectrum = true; 
+	
+  // 	qDebug() << "#analyte->extinc AFTER: " << analyte->extinction.keys().count() << ", AnalyteID: " <<  analyte->analyteID;
+  // 	DbgLv(1) << "Analyte:SL: spectr   ana extincts CHANGED";
+  //     }
+  //   le_protein_e280->setText( QString::number(analyte->extinction[280.0]) );
+  // }
+}
+
+void US_SolutionMgrNew::process_results(QMap < double, double > &xyz)
+{
+   solution->extinction = xyz;
+   //le_protein_e280 -> setText(QString::number(analyte->extinction[280.0]));
+   
+   QMap<double, double>::iterator it;
+   QString output;
+
+   for (it = xyz.begin(); it != xyz.end(); ++it) {
+      // Format output here.
+      output += QString(" %1 : %2 /n").arg(it.key()).arg(it.value());
+   }
+
+   QMessageBox::information( this,
+      tr( "Test: Data transmitted" ),
+      tr( "Number of keys in extinction QMAP: %1 . You may click 'Accept'"
+          " from the main window to write new solution into DB" )
+      .arg( solution->extinction.keys().count() ) );  
+
+   pb_accept  ->setEnabled( true );
+   w->close(); 
+}
+
+
+// Function to save solution information to disk or db
+void US_SolutionMgrNew::newAccepted()
+{
+
+   if ( le_storageTemp->text().isEmpty() )
+      solution->storageTemp = 0;
+
+   if ( from_db )
+   {
+      US_Passwd pw;
+      QString masterPW = pw.getPasswd();
+      US_DB2 db( masterPW );
+   
+      if ( db.lastErrno() != US_DB2::OK )
+      {
+	 QMessageBox::warning( this, tr( "Database Problem" ),
+         tr( "Database returned the following error: \n" ) + db.lastError() );
+         //db_error( db.lastError() );
+         return;
+      }
+      qDebug() << "Inside newAccepted(): " << "ExpID: " << experimentID << ", cID: " << channelID;
+      int status = solution->saveToDB( experimentID, channelID, &db );
+
+      // if ( status != US_DB2::OK && ! display_status )  // then we return but no status msg
+      //    return;
+
+      if ( status != US_DB2::OK )
+      {
+         QMessageBox::information( this,
+               tr( "Attention" ) ,
+               db.lastError() );
+         return;
+      }     
+
+      else if ( status == US_DB2::NO_BUFFER )
+      {
+         QMessageBox::information( this,
+               tr( "Attention" ),
+               tr( "There was a problem saving the buffer to the database.\n" ) );
+         return;
+      }
+
+      else if ( status == US_DB2::NOROWS )
+      {
+         QMessageBox::information( this,
+               tr( "Attention" ) ,
+               tr( "A solution component is missing from the database, "
+                   "and the attempt to save it failed.\n") );
+         return;
+      }
+
+      // else if ( status != US_DB2::OK )
+      // {
+      //    QMessageBox::information( this,
+      //          tr( "Attention" ) ,
+      //          db.lastError() );
+      //    return;
+      // }
+    
+   }
+
+   else
+      solution->saveToDisk();
+
+   emit newSolAccepted();
+
+   // if ( display_status )
+   // {
+   //    QMessageBox::information( this,
+   //          tr( "Save results" ),
+   //          tr( "Solution saved" ) );
+   // }
+
+   // // Refresh solution list
+   // solutionMap.clear();
+   // lw_solutions->clear();
+
+   // load();
+   // reset();
+
+   // // Select the solution
+   // QList< QListWidgetItem* > items 
+   //   = lw_solutions->findItems( solution.solutionDesc, Qt::MatchExactly );
+
+   // // should be exactly 1, but let's make sure
+   // if ( items.size() == 1 )
+   // {
+   //    selectSolution( items[ 0 ] );
+   //    lw_solutions->setCurrentItem( items[ 0 ] );
+   // }
+
+   // //  changed = false;
+   
+}
+
+
 
 // Slot to capture new solution description
 void US_SolutionMgrNew::new_description()
@@ -972,7 +1224,6 @@ void US_SolutionMgrNew::newSolution( void )
 
    solution->clear();
    analyteMap.clear();
-
    reset();
    //changed = true;
 }
@@ -998,12 +1249,14 @@ void US_SolutionMgrNew::reset( void )
 
    pb_analyte      -> setEnabled( true );
    pb_removeAnalyte-> setEnabled( false );
-
+   pb_spectrum     -> setEnabled( false );
+   
    // Let's calculate if we're eligible to save this solution
    pb_accept       -> setEnabled( false );
    if ( !le_descrip->text().isEmpty()  && ! bufferDesc.isEmpty() ) //we can have a solution with buffer only
    {
       pb_accept    -> setEnabled( true );
+      pb_spectrum  -> setEnabled( true );
    }
 
    // // We can always delete something, even if it's just what's in the dialog
@@ -1196,6 +1449,24 @@ void US_SolutionMgrNew::saveAmount( double amount )
    //changed = true;
 }
 
+// Function to update the storage temperature associated with the current solution
+void US_SolutionMgrNew::saveTemperature( const QString& )
+{
+   solution->storageTemp = le_storageTemp ->text().toDouble();
+   //changed = true;
+}
+
+// Function to update the notes associated with the current solution
+void US_SolutionMgrNew::saveNotes( void )
+{
+   // Let's see if the notes have actually changed
+   if ( solution->notes != te_notes->toPlainText() )
+   {
+      solution->notes        = te_notes        ->toPlainText();
+   }
+   //changed = true;
+}
+
 // Function to add analyte to solution
 void US_SolutionMgrNew::removeAnalyte( void )
 {
@@ -1260,8 +1531,13 @@ void US_SolutionMgrNew::assignBuffer( US_Buffer newBuffer )
    solution->buffer = newBuffer;
 
    reset();
+   if (!le_descrip->text().isEmpty() )
+     pb_spectrum -> setEnabled( true );
    //changed = true;
 }
+
+
+
 
 
 
@@ -1444,7 +1720,7 @@ US_SolutionGui::US_SolutionGui(
 
    tabWidget   = us_tabwidget();
    selectTab   = new US_SolutionMgrSelect  ( &personID, &disk_or_db, &solution );
-   newTab      = new US_SolutionMgrNew     ( &personID, &disk_or_db, &solution );
+   newTab      = new US_SolutionMgrNew     ( &personID, &disk_or_db, &solution, experimentID, channelID );
    editTab     = new US_SolutionMgrEdit    ( &personID, &disk_or_db, &solution );
    settingsTab = new US_SolutionMgrSettings( &personID, &disk_or_db );
    tabWidget -> addTab( selectTab,   tr( "Select Solution" ) );
@@ -1497,7 +1773,7 @@ DbgLv(1) << "ckTab:   selectTab  init_solution";
    else if ( currentTab == 1 )
    {
 DbgLv(1) << "ckTab:   newTab     init_solution";
-//newTab     ->init_solution();
+ newTab     ->newSolution();
    }
    else if ( currentTab == 2 )
    {

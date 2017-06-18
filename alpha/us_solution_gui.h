@@ -183,10 +183,9 @@ class US_SolutionMgrNew : public US_Widgets
       //!                         is on the local disk or in the DB
       //! \param tmp_solution     Pointer to a US_Solution object holding the active
       //!                         solution (for editing and adding new solutions)
-      US_SolutionMgrNew( int*, int*, US_Solution* );
+      US_SolutionMgrNew( int*, int*, US_Solution*, int, int );
       US_Extinction *w;
-      
-            
+                  
    signals:
       void newSolAccepted( void );  //! New solution accepted
       void newSolCanceled( void );
@@ -198,8 +197,10 @@ class US_SolutionMgrNew : public US_Widgets
       bool          from_db;
       int           dbg_level;
 
-            
-      US_Solution*    solution;
+      int           experimentID;
+      int           channelID;
+      
+      US_Solution*  solution;
 
       QLabel*       lb_descrip;
       QLineEdit*    le_descrip;
@@ -239,8 +240,8 @@ class US_SolutionMgrNew : public US_Widgets
      void addAnalyte         ( void );
      void assignAnalyte      ( US_Analyte );
      void calcCommonVbar20   ( void );
-     void reset               ( void );
-     void newSolution        ( void );
+     void reset              ( void );
+     
      void new_description    ();
      void saveAmount         ( double );
      void selectAnalyte      ( QListWidgetItem* );
@@ -248,7 +249,13 @@ class US_SolutionMgrNew : public US_Widgets
      void newCanceled        ( void );
      void selectBuffer       ( void );
      void assignBuffer       ( US_Buffer );
-     
+     void newAccepted        ( void);
+     void saveTemperature    ( const QString& );
+     void saveNotes          ( void );
+     void spectrum           ( void );
+
+     void add_spectrumDisk   ( void );
+     void readingspectra     (const QString&);
 
      /* void add_component   (); */
       /* void select_bcomp    (); */
@@ -266,14 +273,11 @@ class US_SolutionMgrNew : public US_Widgets
       /* void write_db        ( void ); */
       /* void write_disk      ( void ); */
       void help( void ) { showHelp.show_help( "solution_new.html" ); };
-      
-      //void process_results( QMap < double, double > &xyz );
+      void process_results( QMap < double, double > &xyz );
  
    public slots:
-     //void init_solution		( void );
-      
-      //void process_results( QMap < double, double > &xyz );
-
+     void newSolution        ( void );
+ 
 };
 
 //! \class US_SolutionMgrEdit
