@@ -12,6 +12,7 @@
 #include "us_extinction_gui.h"
 #include "us_extinctfitter_gui.h"
 
+#include "us_new_spectrum.h"
 
 #ifndef DbgLv
 #define DbgLv(a) if(dbg_level>=a)qDebug()  //!< debug-level-conditioned qDebug()
@@ -151,8 +152,6 @@ class US_BufferGuiNew : public US_Widgets
       int*          db_or_disk;
       bool          from_db;
       int           dbg_level;
-
-            
       US_Buffer*    buffer;
 
       QPushButton*  pb_accept;
@@ -191,14 +190,15 @@ class US_BufferGuiNew : public US_Widgets
       void density         ( void );
       void viscosity       ( void );
       void manual_flag     ( bool );
-      void spectrum        ( void );
+      //void spectrum        ( void );
+      void spectrum_class  ( void );
       void newAccepted     ( void );
       void newCanceled     ( void );
       void write_db        ( void );
       void write_disk      ( void );
       void help( void ) { showHelp.show_help( "buffer_new.html" ); };
       
-      void process_results( QMap < double, double > &xyz );
+      //void process_results( QMap < double, double > &xyz );
  
    public slots:
       void init_buffer		( void );

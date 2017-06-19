@@ -17,6 +17,8 @@
 #include "us_extinction_gui.h"
 #include "us_extinctfitter_gui.h"
 
+//#include "us_new_spectrum.h"
+
 #ifndef DbgLv
 #define DbgLv(a) if(dbg_level>=a)qDebug()
 #endif
@@ -214,6 +216,8 @@ class US_AnalyteMgrNew : public US_Widgets
    US_AnalyteMgrNew( int*, int*, US_Analyte*, double, bool );
    US_Extinction *w;
 
+   //QLineEdit*    le_protein_e280;
+
    signals:
       void newAnaAccepted( void );  //! New analyte accepted
       void newAnaCanceled( void );
@@ -332,7 +336,8 @@ class US_AnalyteMgrNew : public US_Widgets
       void help( void ) { showHelp.show_help( "analyte_new.html" ); };
 
       void manage_sequence ( void );
-      void manage_spectrum ( void );
+      //void manage_spectrum ( void );
+      void spectrum_class  ( void );
 
       void update_sequence ( QString );
 
@@ -349,8 +354,9 @@ class US_AnalyteMgrNew : public US_Widgets
       void reset              ( void );
       void verify_vbar        ( void );
 
-      void process_results( QMap < double, double > &xyz );
-
+      //void process_results( QMap < double, double > &xyz );
+      void change_prot_e280  ( void );
+      
    public slots:
       void init_analyte		( void );
       
