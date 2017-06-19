@@ -239,28 +239,24 @@ US_EditSpectrum::US_EditSpectrum( QString tmp_type, QString tmp_exists, const QS
 
 void US_EditSpectrum::view_spectrum(void)
 {
+  QMap<double,double> ext;
   if (type == "BUFFER")
     {
-      US_BufferViewSpectrum *s = new US_BufferViewSpectrum(buffer->extinction);
-      s->setParent(this, Qt::Window);
-      s->show();
-    }
-  
+      ext = buffer->extinction;
+    }  
   if (type == "ANALYTE")
     {
-      US_AnalyteViewSpectrum *s = new US_AnalyteViewSpectrum(analyte->extinction);
-      s->setParent(this, Qt::Window);
-      s->show();
-    }
-
+      ext = analyte->extinction;
+    }  
   if (type == "SOLUTION")
     {
-      US_SolutionViewSpectrum *s = new US_SolutionViewSpectrum(solution->extinction);
-      s->setParent(this, Qt::Window);
-      s->show();
-    } 
-
- }
+      ext = solution->extinction;
+    }    
+  
+  US_ViewSpectrum *s = new US_ViewSpectrum(ext);
+  s->setParent(this, Qt::Window);
+  s->show();
+}
 
 void US_EditSpectrum::delete_spectrum(void)
 {

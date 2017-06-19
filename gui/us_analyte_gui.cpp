@@ -656,57 +656,6 @@ void US_AnalyteMgrSelect::info_analyte( void )
    ana_info->show();
 }
 
-// View Spectrum in Analyte Select
-US_AnalyteViewSpectrum::US_AnalyteViewSpectrum(QMap<double,double>& analyte_temp) : US_Widgets()
-{
-  analyte = analyte_temp;
-  
-  data_plot = new QwtPlot();
-  //changedCurve = NULL;
-  plotLayout = new US_Plot(data_plot, tr(""), tr("Wavelength(nm)"), tr(""));
-  data_plot->setCanvasBackground(Qt::black);
-  data_plot->setTitle("Extinction Profile");
-  data_plot->setMinimumSize(560, 240);
-  //data_plot->enableAxis(1, true);
-  data_plot->setAxisTitle(0, "Extinction OD/(mol*cm)");
-
-  us_grid(data_plot);
-   
-  QGridLayout* main;
-  main = new QGridLayout(this);
-  main->setSpacing(2);
-  //main->setContentsMargins(2,2,2,2);
-  main->addLayout(plotLayout, 0, 1);
-
-  plot_extinction();
-
-}
-
-void US_AnalyteViewSpectrum::plot_extinction()
-{ 
-  QVector <double> x;
-  QVector <double> y;
-  
-  QMap<double, double>::iterator it;
-  
-  for (it = analyte.begin(); it != analyte.end(); ++it) {
-    x.push_back(it.key());
-    y.push_back(it.value());
-  }
-  
-  QwtSymbol* symbol = new QwtSymbol;
-  symbol->setSize(10);
-  symbol->setPen(QPen(Qt::blue));
-  symbol->setBrush(Qt::yellow);
-  symbol->setStyle(QwtSymbol::Ellipse);
-  
-  QwtPlotCurve *spectrum;
-  spectrum = us_curve(data_plot, "Spectrum Data");
-  spectrum->setSymbol(symbol);    
-  spectrum->setSamples( x.data(), y.data(), (int) x.size() );
-  data_plot->replot();
-}
-
 // Display a spectrum dialog for list/manage
 void US_AnalyteMgrSelect::spectrum( void )
 {
@@ -720,7 +669,7 @@ void US_AnalyteMgrSelect::spectrum( void )
     }
   else
     {
-      US_AnalyteViewSpectrum *w = new US_AnalyteViewSpectrum(analyte->extinction);
+      US_ViewSpectrum *w = new US_ViewSpectrum(analyte->extinction);
       w->setParent(this, Qt::Window);
       w->show();
     }

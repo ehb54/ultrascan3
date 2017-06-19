@@ -153,59 +153,6 @@ US_SolutionMgrSelect::US_SolutionMgrSelect( int *invID, int *select_db_disk,
          lw_solutions->setCurrentItem( items[ 0 ] );
       }
    }
-   
-
-}
-
-// View Spectrum in Analyte Select
-US_SolutionViewSpectrum::US_SolutionViewSpectrum(QMap<double,double>& solution_temp) : US_Widgets()
-{
-  solution = solution_temp;
-  
-  data_plot = new QwtPlot();
-  //changedCurve = NULL;
-  plotLayout = new US_Plot(data_plot, tr(""), tr("Wavelength(nm)"), tr(""));
-  data_plot->setCanvasBackground(Qt::black);
-  data_plot->setTitle("Extinction Profile");
-  data_plot->setMinimumSize(560, 240);
-  //data_plot->enableAxis(1, true);
-  data_plot->setAxisTitle(0, "Extinction OD/(mol*cm)");
-
-  us_grid(data_plot);
-   
-  QGridLayout* main;
-  main = new QGridLayout(this);
-  main->setSpacing(2);
-  //main->setContentsMargins(2,2,2,2);
-  main->addLayout(plotLayout, 0, 1);
-
-  plot_extinction();
-
-}
-
-void US_SolutionViewSpectrum::plot_extinction()
-{ 
-  QVector <double> x;
-  QVector <double> y;
-  
-  QMap<double, double>::iterator it;
-  
-  for (it = solution.begin(); it != solution.end(); ++it) {
-    x.push_back(it.key());
-    y.push_back(it.value());
-  }
-  
-  QwtSymbol* symbol = new QwtSymbol;
-  symbol->setSize(10);
-  symbol->setPen(QPen(Qt::blue));
-  symbol->setBrush(Qt::yellow);
-  symbol->setStyle(QwtSymbol::Ellipse);
-  
-  QwtPlotCurve *spectrum;
-  spectrum = us_curve(data_plot, "Spectrum Data");
-  spectrum->setSymbol(symbol);    
-  spectrum->setSamples( x.data(), y.data(), (int) x.size() );
-  data_plot->replot();
 }
 
 // Display a spectrum dialog for list/manage
@@ -221,7 +168,7 @@ void US_SolutionMgrSelect::spectrum( void )
     }
   else
     {
-      US_SolutionViewSpectrum *w = new US_SolutionViewSpectrum(solution->extinction);
+      US_ViewSpectrum *w = new US_ViewSpectrum(solution->extinction);
       w->setParent(this, Qt::Window);
       w->show();
     }

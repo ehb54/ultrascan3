@@ -494,57 +494,6 @@ DbgLv(1) << "BufS-info:  ii" << ii << "waveln extinc" << waveln << extinc;
    buf_info->show();
 }
 
-// View Spectrum in Buffer Select
-US_BufferViewSpectrum::US_BufferViewSpectrum(QMap<double,double>& buffer_temp) : US_Widgets()
-{
-  buffer = buffer_temp;
-  
-  data_plot = new QwtPlot();
-  //changedCurve = NULL;
-  plotLayout = new US_Plot(data_plot, tr(""), tr("Wavelength(nm)"), tr(""));
-  data_plot->setCanvasBackground(Qt::black);
-  data_plot->setTitle("Extinction Profile");
-  data_plot->setMinimumSize(560, 240);
-  //data_plot->enableAxis(1, true);
-  data_plot->setAxisTitle(0, "Extinction OD/(mol*cm)");
-
-  us_grid(data_plot);
-   
-  QGridLayout* main;
-  main = new QGridLayout(this);
-  main->setSpacing(2);
-  //main->setContentsMargins(2,2,2,2);
-  main->addLayout(plotLayout, 0, 1);
-
-  plot_extinction();
-
-}
-
-void US_BufferViewSpectrum::plot_extinction()
-{ 
-  QVector <double> x;
-  QVector <double> y;
-  
-  QMap<double, double>::iterator it;
-  
-  for (it = buffer.begin(); it != buffer.end(); ++it) {
-    x.push_back(it.key());
-    y.push_back(it.value());
-  }
-  
-  QwtSymbol* symbol = new QwtSymbol;
-  symbol->setSize(10);
-  symbol->setPen(QPen(Qt::blue));
-  symbol->setBrush(Qt::yellow);
-  symbol->setStyle(QwtSymbol::Ellipse);
-  
-  QwtPlotCurve *spectrum;
-  spectrum = us_curve(data_plot, "Spectrum Data");
-  spectrum->setSymbol(symbol);    
-  spectrum->setSamples( x.data(), y.data(), (int) x.size() );
-  data_plot->replot();
-}
-
 // Display a spectrum dialog for list/manage
 void US_BufferGuiSelect::spectrum( void )
 {
@@ -558,7 +507,7 @@ void US_BufferGuiSelect::spectrum( void )
     }
   else
     {
-      US_BufferViewSpectrum *w = new US_BufferViewSpectrum(buffer->extinction);
+      US_ViewSpectrum *w = new US_ViewSpectrum(buffer->extinction);
       w->setParent(this, Qt::Window);
       w->show();
     }

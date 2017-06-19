@@ -68,4 +68,6 @@ class US_GUI_EXTERN US_EditSpectrum : public US_Widgets
       void view_spectrum     ( void );
 };
 
+
+
 #endif
