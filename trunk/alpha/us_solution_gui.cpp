@@ -1031,93 +1031,9 @@ void US_SolutionMgrNew::spectrum_class( void )
 {
   US_NewSpectrum *w = new US_NewSpectrum("SOLUTION", le_descrip->text(), "", solution);
   w->setParent(this, Qt::Window);
+  w->setWindowModality(Qt::WindowModal);
   w->setAttribute(Qt::WA_DeleteOnClose);
   w->show(); 
-}
-
-
-void US_SolutionMgrNew::spectrum( void )
-{
-  QMessageBox msg;
-  msg.setWindowTitle("New Solution Spectrum");
-  msg.setText("Choose how do you want to create spectrum:");
-  //msg.setInformativeText(" - You can enter spectrum Manually, or Upload and fit the spectrum with the spectrum fitter");
-  msg.setInformativeText(" - You can Upload and Fit the spectrum with the Spectrum Fitter, or Upload Spectrum form Disk");
-
-  //msgBox.setText("Buffer does not have spectrum data!\n You can Upload and fit analyte spectrum, or Enter points manually");
-  msg.setStandardButtons(QMessageBox::Cancel);
-  QPushButton* pButtonUpload = msg.addButton(tr("Upload Spectrum"), QMessageBox::YesRole);
-  //QPushButton* pButtonManually = msg.addButton(tr("Enter Manually"), QMessageBox::YesRole);
-  QPushButton* pButtonUploadDisk = msg.addButton(tr("Upload from Disk"), QMessageBox::YesRole);
-
-  msg.setDefaultButton(pButtonUpload);
-  msg.exec();
-    
-  // Upload spectrum
-  if (msg.clickedButton()==pButtonUpload) {
-    
-    w = new US_Extinction("SOLUTION", le_descrip->text(), "", (QWidget*)this); 
-    
-    connect( w, SIGNAL( get_results(QMap < double, double > & )), this, SLOT(process_results( QMap < double, double > & ) ) );
-    
-    w->setParent(this, Qt::Window);
-    w->setAttribute(Qt::WA_DeleteOnClose);
-    w->show(); 
-  }
-  if (msg.clickedButton()==pButtonUploadDisk) {
-    add_spectrumDisk();
-    pb_accept->setEnabled( !le_descrip->text().isEmpty() );
-  }
-  
-  // if (msg.clickedButton()==pButtonManually) {
-  //   US_Table* sdiag;
-  //   QMap< double, double > loc_extinct = analyte->extinction;
-  //   QString stype( "Extinction" );
-  //   bool changed = false;
-  //   sdiag        = new US_Table( loc_extinct, stype, changed, this );
-  //   sdiag->setWindowTitle( "Manage Extinction Spectrum" );
-  //   sdiag->exec();
-  //   DbgLv(1) << "BufE:SL: spectr  extincts" << loc_extinct
-  // 	     << "changed" << changed;
-  //   if ( changed )
-  //     {
-  // 	qDebug() << "Existing: Inside Changed: "; 
-  // 	qDebug() << "#buff->extinc BEFORE: " << analyte->extinction.keys().count();
-	
-  // 	analyte->extinction.clear();                                                   
-  // 	analyte->extinction = loc_extinct;
-	
-  // 	////Update via STORED Procedures ....
-  // 	//analyte->replace_spectrum = true; 
-	
-  // 	qDebug() << "#analyte->extinc AFTER: " << analyte->extinction.keys().count() << ", AnalyteID: " <<  analyte->analyteID;
-  // 	DbgLv(1) << "Analyte:SL: spectr   ana extincts CHANGED";
-  //     }
-  //   le_protein_e280->setText( QString::number(analyte->extinction[280.0]) );
-  // }
-}
-
-void US_SolutionMgrNew::process_results(QMap < double, double > &xyz)
-{
-   solution->extinction = xyz;
-   //le_protein_e280 -> setText(QString::number(analyte->extinction[280.0]));
-   
-   QMap<double, double>::iterator it;
-   QString output;
-
-   for (it = xyz.begin(); it != xyz.end(); ++it) {
-      // Format output here.
-      output += QString(" %1 : %2 /n").arg(it.key()).arg(it.value());
-   }
-
-   QMessageBox::information( this,
-      tr( "Test: Data transmitted" ),
-      tr( "Number of keys in extinction QMAP: %1 . You may click 'Accept'"
-          " from the main window to write new solution into DB" )
-      .arg( solution->extinction.keys().count() ) );  
-
-   pb_accept  ->setEnabled( true );
-   w->close(); 
 }
 
 

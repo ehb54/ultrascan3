@@ -1591,6 +1591,7 @@ void US_AnalyteMgrNew::spectrum_class( void )
            this,  SLOT ( change_prot_e280( void ) ) );
 
   w->setParent(this, Qt::Window);
+  w->setWindowModality(Qt::WindowModal);
   w->setAttribute(Qt::WA_DeleteOnClose);
   w->show(); 
 }

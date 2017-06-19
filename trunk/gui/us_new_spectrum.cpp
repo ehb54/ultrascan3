@@ -25,18 +25,23 @@ US_NewSpectrum::US_NewSpectrum( QString tmp_type, const QString& tmp_text, const
    main->setSpacing( 2 );
    main->setContentsMargins( 2, 2, 2, 2 );
    
+   this->setMinimumSize( 480, 45 );
+
    setWindowTitle( tr( "Spectrum Management" ) );
 
+   QLabel* bn_info     = us_banner( tr( "Select how spectrum will be uploaded" ) );
+   bn_info->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
    pb_cancel     = us_pushbutton( tr( "Cancel" ) );
    pb_manual     = us_pushbutton( tr( "Enter Manually" ) );
    pb_uploadDisk = us_pushbutton( tr( "Upload from Disk" ) );
    pb_uploadFit  = us_pushbutton( tr( "Upload and Fit" ) );
 
    int row = 0;
-   main->addWidget( pb_cancel,       row,   0, 1, 1 );
-   main->addWidget( pb_manual,       row,   2, 1, 1 );
-   main->addWidget( pb_uploadDisk,   row,   3, 1, 1 );
-   main->addWidget( pb_uploadFit,    row,   4, 1, 1 );
+   main->addWidget( bn_info,         row++, 0, 1, 8 );
+   main->addWidget( pb_cancel,       row,   0, 1, 2 );
+   main->addWidget( pb_manual,       row,   2, 1, 2 );
+   main->addWidget( pb_uploadDisk,   row,   4, 1, 2 );
+   main->addWidget( pb_uploadFit,    row,   6, 1, 2 );
 
    connect( pb_cancel,      SIGNAL( clicked()  ),
             this,           SLOT  ( cancel() ) ); 
@@ -61,28 +66,32 @@ US_NewSpectrum::US_NewSpectrum( QString tmp_type, const QString& tmp_text, const
    main->setSpacing( 2 );
    main->setContentsMargins( 2, 2, 2, 2 );
    
+   this->setMinimumSize( 480, 45 );
+   
    setWindowTitle( tr( "Spectrum Management" ) );
 
+   QLabel* bn_info     = us_banner( tr( "Select how spectrum will be uploaded" ) );
+   bn_info->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
    pb_cancel     = us_pushbutton( tr( "Cancel" ) );
    pb_manual     = us_pushbutton( tr( "Enter Manually" ) );
    pb_uploadDisk = us_pushbutton( tr( "Upload from Disk" ) );
    pb_uploadFit  = us_pushbutton( tr( "Upload and Fit" ) );
 
    int row = 0;
-   main->addWidget( pb_cancel,       row,   0, 1, 1 );
-   main->addWidget( pb_manual,       row,   2, 1, 1 );
-   main->addWidget( pb_uploadDisk,   row,   3, 1, 1 );
-   main->addWidget( pb_uploadFit,    row,   4, 1, 1 );     
+   main->addWidget( bn_info,         row++, 0, 1, 8 );
+   main->addWidget( pb_cancel,       row,   0, 1, 2 );
+   main->addWidget( pb_manual,       row,   2, 1, 2 );
+   main->addWidget( pb_uploadDisk,   row,   4, 1, 2 );
+   main->addWidget( pb_uploadFit,    row,   6, 1, 2 );
 
    connect( pb_cancel,      SIGNAL( clicked()  ),
             this,           SLOT  ( cancel() ) ); 
    connect( pb_manual,      SIGNAL( clicked()  ),
-            this,           SLOT  ( entermanually() ) );    
+            this,           SLOT  ( entermanually() ) );     
    connect( pb_uploadDisk,  SIGNAL( clicked()  ),
             this,           SLOT  ( uploadDisk() ) );
    connect( pb_uploadFit,   SIGNAL( clicked()  ),
 	    this,           SLOT  ( uploadFit() ) );
-
 }
 
 
@@ -98,23 +107,28 @@ US_NewSpectrum::US_NewSpectrum( QString tmp_type, const QString& tmp_text, const
    main->setSpacing( 2 );
    main->setContentsMargins( 2, 2, 2, 2 );
    
+   this->setMinimumSize( 480, 45 );
+   
    setWindowTitle( tr( "Spectrum Management" ) );
 
+   QLabel* bn_info     = us_banner( tr( "Select how spectrum will be uploaded" ) );
+   bn_info->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
    pb_cancel     = us_pushbutton( tr( "Cancel" ) );
    pb_manual     = us_pushbutton( tr( "Enter Manually" ) );
    pb_uploadDisk = us_pushbutton( tr( "Upload from Disk" ) );
    pb_uploadFit  = us_pushbutton( tr( "Upload and Fit" ) );
 
    int row = 0;
-   main->addWidget( pb_cancel,       row,   0, 1, 1 );
-   main->addWidget( pb_manual,       row,   2, 1, 1 );
-   main->addWidget( pb_uploadDisk,   row,   3, 1, 1 );
-   main->addWidget( pb_uploadFit,    row,   4, 1, 1 );     
+   main->addWidget( bn_info,         row++, 0, 1, 8 );
+   main->addWidget( pb_cancel,       row,   0, 1, 2 );
+   main->addWidget( pb_manual,       row,   2, 1, 2 );
+   main->addWidget( pb_uploadDisk,   row,   4, 1, 2 );
+   main->addWidget( pb_uploadFit,    row,   6, 1, 2 );
 
    connect( pb_cancel,      SIGNAL( clicked()  ),
             this,           SLOT  ( cancel() ) ); 
    connect( pb_manual,      SIGNAL( clicked()  ),
-            this,           SLOT  ( entermanually() ) );    
+            this,           SLOT  ( entermanually() ) );     
    connect( pb_uploadDisk,  SIGNAL( clicked()  ),
             this,           SLOT  ( uploadDisk() ) );
    connect( pb_uploadFit,   SIGNAL( clicked()  ),
