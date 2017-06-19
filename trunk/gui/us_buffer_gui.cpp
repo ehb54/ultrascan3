@@ -1430,8 +1430,10 @@ US_BufferGuiEdit::US_BufferGuiEdit( int *invID, int *select_db_disk,
 
    connect( le_ph,       SIGNAL( editingFinished() ), 
             this,        SLOT  ( ph             () ) );
+   // connect( pb_spectrum, SIGNAL( clicked()  ),
+   //          this,        SLOT  ( spectrum() ) );
    connect( pb_spectrum, SIGNAL( clicked()  ),
-            this,        SLOT  ( spectrum() ) );
+            this,        SLOT  ( spectrum_class() ) );
    connect( pb_help,     SIGNAL( clicked()  ),
             this,        SLOT  ( help()     ) );
    connect( pb_cancel,   SIGNAL( clicked()      ),
@@ -1463,279 +1465,39 @@ DbgLv(1) << "BufE:SL:ph()" << buffer->pH;
    pb_accept->setEnabled( !le_descrip->text().isEmpty() );
 }
 
-void US_BufferGuiEdit::add_spectrumDisk( void )
-{
-  QStringList files;
-  QFile f;
-  
-  QFileDialog dialog (this);
-  //dialog.setNameFilter(tr("Text (*.txt *.csv *.dat *.wa *.dsp)"));
 
-  dialog.setNameFilter(tr("Text files (*.[Tt][Xx][Tt] *.[Cc][Ss][Vv] *.[Dd][Aa][Tt] *.[Ww][Aa]* *.[Dd][Ss][Pp]);;All files (*)"));
-    
-  dialog.setFileMode(QFileDialog::ExistingFile);
-  dialog.setViewMode(QFileDialog::Detail);
-  //dialog.setDirectory("/home/alexsav/ultrascan/data/spectra");
+// Initialize analyte settings, possibly after re-entry to Edit panel
+void US_BufferGuiEdit::spectrum_class( void )
+{
+  QString ifexists;
+  if (buffer->extinction.isEmpty())
+    ifexists = "NEW";
+  else
+    ifexists = "EXISTS";
   
-  QString work_dir_data  = US_Settings::dataDir();
-  qDebug() << work_dir_data;
-  dialog.setDirectory(work_dir_data);
+  US_EditSpectrum *w = new US_EditSpectrum("BUFFER", ifexists, le_descrip->text(), "1.000", buffer);
   
-  if(dialog.exec())
-    {
-      files = dialog.selectedFiles();
-      readingspectra(files[0]);
-    }
-  //qDebug() << "Files: " << files[0];
+  connect( w,     SIGNAL( change_spectrum( void ) ),
+	   this,  SLOT ( change_spectrum( void ) ) );
+  connect( w,     SIGNAL( accept_enable( void ) ),
+	   this,  SLOT ( accept_enable( void ) ) );
+  
+  w->setParent(this, Qt::Window);
+  w->setWindowModality(Qt::WindowModal);
+  w->setAttribute(Qt::WA_DeleteOnClose);
+  w->show(); 
 }
 
-void US_BufferGuiEdit::readingspectra(const QString &fileName)
+void US_BufferGuiEdit::change_spectrum( void )
 {
-  QString str1;
-  QStringList strl;
-  float temp_x, temp_y;
-  QMap< double, double > temp_extinct;
-  
-  if(!fileName.isEmpty())
-    {
-      QFile f(fileName);
-     
-      if(f.open(QIODevice::ReadOnly | QIODevice::Text))
-	{
-	  QTextStream ts(&f);
-	  while(!ts.atEnd())
-	    {
-	      if( !ts.atEnd() )
-		{
-		  str1 = ts.readLine();
-		}
-	      str1 = str1.simplified();
-	      str1 = str1.replace("\"", " ");
-	      str1 = str1.replace(",", " ");
-	      strl = str1.split(" ");
-	      temp_x = strl.at(0).toFloat();
-	      temp_y = strl.at(1).toFloat();
-
-	      //qDebug() << temp_x << ", " << temp_y;
-
-	      if (temp_x != 0)
-		{
-		  temp_extinct[double(temp_x)] = double(temp_y);
-		}
-	    }
-	}
-      buffer->extinction = temp_extinct;
-    }
+  emit editBufAccepted();
 }
 
-
-
-// Slot to manage spectrum of an existing buffer
-void US_BufferGuiEdit::spectrum()
+void US_BufferGuiEdit::accept_enable( void )
 {
-DbgLv(1) << "BufE:SL: spectrum()  count" << buffer->extinction.count();
-
- if (buffer->extinction.isEmpty())
-   {
-     QMessageBox msgBox;
-     msgBox.setWindowTitle("Edit Existing Buffer");
-     msgBox.setText("Buffer does not have spectrum data!");
-     //msgBox.setInformativeText("You can Upload and fit buffer spectrum, or Enter points manually");
-     msgBox.setInformativeText("You can upload and fit buffer spectrum by clicking 'Create an Absorbance Profile'");
-
-     //msgBox.setText("Buffer does not have spectrum data!\n You can Upload and fit buffer spectrum, or Enter points manually");
-     msgBox.setStandardButtons(QMessageBox::Cancel);
-     QPushButton* pButtonUpload = msgBox.addButton(tr("Create an Absorbance Profile"), QMessageBox::YesRole);
-     //QPushButton* pButtonManually = msgBox.addButton(tr("Enter Manually"), QMessageBox::YesRole);
-     QPushButton* pButtonUploadDisk = msgBox.addButton(tr("Upload from Disk"), QMessageBox::YesRole);
-
-     msgBox.setDefaultButton(pButtonUpload);
-     msgBox.exec();
-     
-     if (msgBox.clickedButton()==pButtonUpload) {
-       w = new US_Extinction("BUFFER", le_descrip->text(), "", (QWidget*)this); 
-       
-       connect( w, SIGNAL( get_results(QMap < double, double > & )), this, SLOT(process_results( QMap < double, double > & ) ) );
-       
-       w->setParent(this, Qt::Window);
-       w->setAttribute(Qt::WA_DeleteOnClose);
-       w->show(); 
-     }
-
-     if (msgBox.clickedButton()==pButtonUploadDisk) {
-       add_spectrumDisk();
-       pb_accept->setEnabled( !le_descrip->text().isEmpty() );
-     }
-
-     /*
-     // Enter Manually 
-     if (msgBox.clickedButton()==pButtonManually) {
-       US_Table* sdiag;
-       QMap< double, double > loc_extinct = buffer->extinction;
-       QString stype( "Extinction" );
-       bool changed = false;
-       sdiag        = new US_Table( loc_extinct, stype, changed, this );
-       sdiag->setWindowTitle( "Manage Extinction Spectrum" );
-       sdiag->exec();
-       DbgLv(1) << "BufE:SL: spectr  extincts" << loc_extinct
-		<< "changed" << changed;
-       if ( changed )
-	 {
-	   qDebug() << "Manual: Inside Changed: ";  
-	   buffer->extinction = loc_extinct;
-	   DbgLv(1) << "BufE:SL: spectr   buf extincts CHANGED";
-	 }
-       
-       pb_accept->setEnabled( !le_descrip->text().isEmpty() );
-     }
-     */
-    
-   }
- else 
-   {
-     QMessageBox msg;
-     msg.setWindowTitle("Edit Existing Buffer");
-     msg.setText("Choose how do you want to modify existing spectrum:");
-     msg.setInformativeText("If you choose to replace extinction profile, an old profile will be deleted");
-     
-     //msgBox.setText("Buffer does not have spectrum data!\n You can Upload and fit buffer spectrum, or Enter points manually");
-     msg.setStandardButtons(QMessageBox::Cancel);
-     QPushButton* pButtonReplace = msg.addButton(tr("Replace Spectrum"), QMessageBox::YesRole);
-     //QPushButton* pButtonEdit = msg.addButton(tr("Edit Spectrum"), QMessageBox::YesRole);
-     QPushButton* pButtonDelete = msg.addButton(tr("Delete Spectrum"), QMessageBox::YesRole);
-     QPushButton* pButtonView = msg.addButton(tr("View Spectrum"), QMessageBox::YesRole);
-
-     msg.setDefaultButton(pButtonReplace);
-     msg.exec();
-     
-     
-     if (msg.clickedButton()==pButtonView) {
-       US_BufferViewSpectrum *s = new US_BufferViewSpectrum(buffer->extinction);
-       s->setParent(this, Qt::Window);
-       s->show();
-     }
-
-
-     if (msg.clickedButton()==pButtonDelete) {
-       // DELETE extinction spectrum 
-       US_Passwd pw;
-       US_DB2    db( pw.getPasswd() );
-
-       if ( db.lastErrno() != US_DB2::OK )
-	 {
-	   QMessageBox::warning( this, tr( "Connection Problem" ),
-                        tr( "Could not connect to database \n" ) + db.lastError() );
-	   return;
-	 }
-
-       QStringList q( "get_bufferID" );
-       q << buffer->GUID;
-       db.query( q );
-
-       int status = db.lastErrno();
-       
-       if (  status == US_DB2::OK )
-	 {
-	   db.next();
-	   QString bufferID = db.value( 0 ).toString();
-	   
-	   QString compType("Buffer");
-	   US_ExtProfile::delete_eprofile( &db, bufferID.toInt(), compType );
-
-	   QMessageBox::information( this,
-				 tr( "Deletion: Success" ),
-				 tr( "Spectrum was successfully deleted") );
-	   
-	   
-	   emit editBufAccepted();
-	   //pb_accept->setEnabled( true );
-	 }
-
-       if ( status == US_DB2::BUFFR_IN_USE )
-	 {
-	   QMessageBox::warning( this,
-				 tr( "Spectrum Not Deleted" ),
-				 tr( "This buffer could not be deleted since\n"
-				     "it is in use in one or more solutions." ) );
-	   return;
-	 }
-       if ( status != US_DB2::OK )
-	 {
-	   QMessageBox::warning( this,
-				 tr( "Attention" ),
-				 tr( "Delete failed.\n\n" ) + db.lastError() );
-	 }
-     }
-     
-     // REPLACE Spectrum
-     if (msg.clickedButton()==pButtonReplace) {
-       
-       // upload and fit new spectrum
-       buffer->replace_spectrum = true;
-
-       w = new US_Extinction("BUFFER", le_descrip->text(), "", (QWidget*)this); 
-
-       connect( w, SIGNAL( get_results(QMap < double, double > & )), this, SLOT(process_results( QMap < double, double > & ) ) );
-
-       w->setParent(this, Qt::Window);
-       w->setAttribute(Qt::WA_DeleteOnClose);
-       w->show(); 
-     }
-     
-     /*
-     // EDIT spectrum
-     if (msg.clickedButton()==pButtonEdit) {
-     
-       US_Table* sdiag;
-       QMap< double, double > loc_extinct = buffer->extinction;
-       QString stype( "Extinction" );
-       bool changed = false;
-       sdiag        = new US_Table( loc_extinct, stype, changed, this );
-       sdiag->setWindowTitle( "Manage Extinction Spectrum" );
-       sdiag->exec();
-       DbgLv(1) << "BufE:SL: spectr  extincts" << loc_extinct
-		<< "changed" << changed;
-       if ( changed )
-	 {
-	   qDebug() << "Existing: Inside Changed: "; 
-	   qDebug() << "#buff->extinc BEFORE: " << buffer->extinction.keys().count();
-	   buffer->extinction.clear();
-	   buffer->extinction = loc_extinct;
-	   qDebug() << "#buff->extinc AFTER: " << buffer->extinction.keys().count() << ", BufferID: " <<  buffer->bufferID;
-	   DbgLv(1) << "BufE:SL: spectr   buf extincts CHANGED";
-	 }
-       pb_accept->setEnabled( !le_descrip->text().isEmpty() );
-     }
-     */
-   }
+  pb_accept->setEnabled( !le_descrip->text().isEmpty() );
 }
 
-// Slot for getting Fitting results from calling US_Extinction routing 
-void US_BufferGuiEdit::process_results(QMap < double, double > &xyz)
-{
-  buffer->extinction = xyz;
-  //buffer->description = "Changed_description";
-  
-  QMap<double, double>::iterator it;
-  QString output;
-
-  for (it = xyz.begin(); it != xyz.end(); ++it) {
-    // Format output here.
-    output += QString(" %1 : %2 /n").arg(it.key()).arg(it.value());
-  }
-
-  QMessageBox::information( this, tr( "Test: Data transmitted" ), tr("Number of keys in extinction QMAP: %1 . You may click 'Accept' from the main window to write new buffer into DB").arg(buffer->extinction.keys().count()) );  
-  //QMessageBox::information( this, tr( "Test: Data transmitted" ), tr("keys: %1").arg(buffer->extinction.keys()) );  
-  //QMessageBox::information( this, tr( "Test: Data transmitted" ), output );  
-  
-   // bool can_accept = ( !le_descrip->text().isEmpty()  &&
-   //                     !le_density->text().isEmpty()  &&
-   //                     !le_viscos ->text().isEmpty() );
-   // pb_accept  ->setEnabled( can_accept );
-  
-  pb_accept  ->setEnabled( true );
-  w->close(); 
-}
 
 // Slot to cancel edited buffer
 void US_BufferGuiEdit::editCanceled()

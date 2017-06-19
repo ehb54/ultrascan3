@@ -13,6 +13,7 @@
 #include "us_extinctfitter_gui.h"
 
 #include "us_new_spectrum.h"
+#include "us_edit_spectrum.h"
 
 #ifndef DbgLv
 #define DbgLv(a) if(dbg_level>=a)qDebug()  //!< debug-level-conditioned qDebug()
@@ -139,7 +140,7 @@ class US_BufferGuiNew : public US_Widgets
       //! \param tmp_buffer     Pointer to a US_Buffer object holding the active
       //!                         buffer (for editing and adding new buffers)
       US_BufferGuiNew( int*, int*, US_Buffer* );
-      US_Extinction *w;
+      //US_Extinction *w;
       
             
    signals:
@@ -198,13 +199,8 @@ class US_BufferGuiNew : public US_Widgets
       void write_disk      ( void );
       void help( void ) { showHelp.show_help( "buffer_new.html" ); };
       
-      //void process_results( QMap < double, double > &xyz );
- 
    public slots:
       void init_buffer		( void );
-      
-      //void process_results( QMap < double, double > &xyz );
-
 };
 
 // class to view buffer spectrum
@@ -245,7 +241,7 @@ class US_BufferGuiEdit : public US_Widgets
       //!                         buffer (for editing and adding new buffers)
       US_BufferGuiEdit( int*, int*, US_Buffer* );
       QString edit_buffer_description;
-      US_Extinction *w;
+      //US_Extinction *w;
 
    signals:
       void editBufAccepted( void );  //! Edited buffer accepted
@@ -271,21 +267,18 @@ class US_BufferGuiEdit : public US_Widgets
    private slots:
 
       void ph          ( void );
-      void spectrum    ( void );
+      void spectrum_class    ( void );
       void editAccepted( void );
       void editCanceled( void );
       void write_db    ( void );
       void write_disk  ( void );
-      void add_spectrumDisk    ( void );
-      void readingspectra (const QString&);
       void help( void ) { showHelp.show_help( "buffer_edit.html" ); };
       
-      void process_results( QMap < double, double > &xyz );
+      void change_spectrum( void );
+      void accept_enable  ( void );
 
    public slots:
       void init_buffer		( void );
-
-      //void process_results( QMap < double, double > &xyz );
 };
 
 //! \class US_BufferGuiSettings
