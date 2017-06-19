@@ -952,8 +952,11 @@ US_SolutionMgrNew::US_SolutionMgrNew( int *invID, int *select_db_disk,
    
    connect( te_notes, SIGNAL( textChanged( void ) ),  SLOT  ( saveNotes  ( void ) ) );
    
+   // connect( pb_spectrum,     SIGNAL( clicked() ),
+   // 	    this,            SLOT  ( spectrum()    ) );
    connect( pb_spectrum,     SIGNAL( clicked() ),
-	    this,            SLOT  ( spectrum()    ) );
+    	    this,            SLOT  ( spectrum_class()    ) ); 
+
 
    newSolution();
 }
@@ -1022,6 +1025,14 @@ void US_SolutionMgrNew::readingspectra(const QString &fileName)
 	}
       solution->extinction = temp_extinct;
     }
+}
+
+void US_SolutionMgrNew::spectrum_class( void )
+{
+  US_NewSpectrum *w = new US_NewSpectrum("SOLUTION", le_descrip->text(), "", solution);
+  w->setParent(this, Qt::Window);
+  w->setAttribute(Qt::WA_DeleteOnClose);
+  w->show(); 
 }
 
 

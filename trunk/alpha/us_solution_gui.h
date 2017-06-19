@@ -14,6 +14,8 @@
 #include "us_extinction_gui.h"
 #include "us_extinctfitter_gui.h"
 
+#include "us_new_spectrum.h"
+
 //! \Class US_SolutionMgrSelect
 //!      This class provides a tabbed entry for solution selection
 class US_SolutionMgrSelect: public US_Widgets
@@ -49,7 +51,6 @@ class US_SolutionMgrSelect: public US_Widgets
 
       int           dbg_level;
       US_Help       showHelp;
-
       QLineEdit*    le_bufferInfo;
       QLineEdit*    le_commonVbar20;
       QLineEdit*    le_density;
@@ -166,6 +167,7 @@ class US_SolutionViewSpectrum : public US_Widgets
 	
 };
 
+
 //! \class US_SolutionGuiMgrNew
 //!      This class provides a tabbed entry for new solution creation
 class US_SolutionMgrNew : public US_Widgets
@@ -253,7 +255,8 @@ class US_SolutionMgrNew : public US_Widgets
      void saveTemperature    ( const QString& );
      void saveNotes          ( void );
      void spectrum           ( void );
-
+     void spectrum_class     ( void );
+     
      void add_spectrumDisk   ( void );
      void readingspectra     (const QString&);
 
