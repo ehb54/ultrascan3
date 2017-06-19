@@ -34,6 +34,7 @@ HEADERS      = \
                us_choice.h              \
                us_colorgradIO.h         \
                us_data_loader.h         \
+               us_edit_spectrum.h       \
                us_editor.h              \
                us_editor_gui.h          \
                us_extinction_gui.h      \
@@ -83,6 +84,7 @@ SOURCES      = \
                us_choice.cpp              \
                us_colorgradIO.cpp         \
                us_data_loader.cpp         \
+               us_edit_spectrum.cpp       \
                us_editor.cpp              \
                us_editor_gui.cpp          \
                us_extinction_gui.cpp      \
