@@ -214,7 +214,7 @@ class US_AnalyteMgrNew : public US_Widgets
          \param signal         Flag if signal is to be output
       */
    US_AnalyteMgrNew( int*, int*, US_Analyte*, double, bool );
-   US_Extinction *w;
+   //US_Extinction *w;
 
    //QLineEdit*    le_protein_e280;
 
@@ -354,7 +354,6 @@ class US_AnalyteMgrNew : public US_Widgets
       void reset              ( void );
       void verify_vbar        ( void );
 
-      //void process_results( QMap < double, double > &xyz );
       void change_prot_e280  ( void );
       
    public slots:
@@ -402,7 +401,7 @@ class US_AnalyteMgrEdit : public US_Widgets
       */
       US_AnalyteMgrEdit( int*, int*, US_Analyte* );
       QString edit_analyte_description;
-      US_Extinction *w;
+      //US_Extinction *w;
       
    signals:
       void editAnaAccepted( void );  //! Edited analyte accepted
@@ -427,17 +426,16 @@ class US_AnalyteMgrEdit : public US_Widgets
    private slots:
 
       void ph          ( void );
-      void spectrum    ( void );
+      void spectrum_class    ( void );
       void editAccepted( void );
       void editCanceled( void );
       void write_db    ( void );
       void write_disk  ( void );
-      void add_spectrumDisk    ( void );
-      void readingspectra (const QString&);
+     
       void help( void ) { showHelp.show_help( "analyte_edit.html" ); };
-
-      void process_results( QMap < double, double > &xyz );
-
+      void change_spectrum( void ); 
+      void accept_enable  ( void ); 
+   
    public slots:
       void init_analyte		( void );
 };

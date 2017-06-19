@@ -186,7 +186,7 @@ class US_SolutionMgrNew : public US_Widgets
       //! \param tmp_solution     Pointer to a US_Solution object holding the active
       //!                         solution (for editing and adding new solutions)
       US_SolutionMgrNew( int*, int*, US_Solution*, int, int );
-      US_Extinction *w;
+      //US_Extinction *w;
                   
    signals:
       void newSolAccepted( void );  //! New solution accepted
@@ -254,14 +254,9 @@ class US_SolutionMgrNew : public US_Widgets
      void newAccepted        ( void);
      void saveTemperature    ( const QString& );
      void saveNotes          ( void );
-     //void spectrum           ( void );
      void spectrum_class     ( void );
      
-     void add_spectrumDisk   ( void );
-     void readingspectra     (const QString&);
-
      void help( void ) { showHelp.show_help( "solution_new.html" ); };
-     //void process_results( QMap < double, double > &xyz );
  
    public slots:
      void newSolution        ( void );
