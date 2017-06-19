@@ -147,27 +147,6 @@ class US_SolutionMgrSelect: public US_Widgets
      //void init_solution		( void );
 };
 
-
-// class to view solution spectrum
-class US_SolutionViewSpectrum : public US_Widgets
-{
-   Q_OBJECT
-
-   public:
-
-        US_SolutionViewSpectrum(QMap<double,double>& solution_temp);
-	
-	QMap <double, double> solution;
-	US_Plot*	plotLayout;
-	QwtPlot	 	*data_plot;
-	
-	void plot_extinction();
-	
-   private:
-	
-};
-
-
 //! \class US_SolutionGuiMgrNew
 //!      This class provides a tabbed entry for new solution creation
 class US_SolutionMgrNew : public US_Widgets

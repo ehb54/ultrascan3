@@ -60,4 +60,23 @@ class US_GUI_EXTERN US_NewSpectrum : public US_Widgets
       void entermanually      ( void );
 };
 
+// class to view spectrum
+class US_ViewSpectrum : public US_Widgets
+{
+   Q_OBJECT
+
+   public:
+
+        US_ViewSpectrum(QMap<double,double>& tmp_extinciton);
+	
+	QMap <double, double> extinction;
+	US_Plot*	plotLayout;
+	QwtPlot	 	*data_plot;
+	
+	void plot_extinction();
+	
+   private:
+	
+};
+
 #endif

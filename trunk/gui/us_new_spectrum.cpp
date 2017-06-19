@@ -307,3 +307,54 @@ void US_NewSpectrum::cancel(void)
 {
   this->close();
 }
+
+/// View Spectrum ///////////////////////////
+US_ViewSpectrum::US_ViewSpectrum(QMap<double,double>& tmp_extinction) : US_Widgets()
+{
+  extinction = tmp_extinction;
+  
+  data_plot = new QwtPlot();
+  //changedCurve = NULL;
+  plotLayout = new US_Plot(data_plot, tr(""), tr("Wavelength(nm)"), tr(""));
+  data_plot->setCanvasBackground(Qt::black);
+  data_plot->setTitle("Extinction Profile");
+  data_plot->setMinimumSize(560, 240);
+  //data_plot->enableAxis(1, true);
+  data_plot->setAxisTitle(0, "Extinction OD/(mol*cm)");
+
+  us_grid(data_plot);
+   
+  QGridLayout* main;
+  main = new QGridLayout(this);
+  main->setSpacing(2);
+  //main->setContentsMargins(2,2,2,2);
+  main->addLayout(plotLayout, 0, 1);
+
+  plot_extinction();
+
+}
+
+void US_ViewSpectrum::plot_extinction()
+{ 
+  QVector <double> x;
+  QVector <double> y;
+  
+  QMap<double, double>::iterator it;
+  
+  for (it = extinction.begin(); it != extinction.end(); ++it) {
+    x.push_back(it.key());
+    y.push_back(it.value());
+  }
+  
+  QwtSymbol* symbol = new QwtSymbol;
+  symbol->setSize(10);
+  symbol->setPen(QPen(Qt::blue));
+  symbol->setBrush(Qt::yellow);
+  symbol->setStyle(QwtSymbol::Ellipse);
+  
+  QwtPlotCurve *spectrum;
+  spectrum = us_curve(data_plot, "Spectrum Data");
+  spectrum->setSymbol(symbol);    
+  spectrum->setSamples( x.data(), y.data(), (int) x.size() );
+  data_plot->replot();
+}
