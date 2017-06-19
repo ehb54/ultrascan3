@@ -1295,7 +1295,9 @@ DbgLv(1) << "BufN:SL: manual_flag()" << is_on;
 void US_BufferGuiNew::spectrum_class( void )
 {
   US_NewSpectrum *w = new US_NewSpectrum("BUFFER", le_descrip->text(), "", buffer);
+ 
   w->setParent(this, Qt::Window);
+  w->setWindowModality(Qt::WindowModal);
   w->setAttribute(Qt::WA_DeleteOnClose);
   w->show(); 
 }

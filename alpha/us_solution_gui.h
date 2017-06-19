@@ -254,29 +254,14 @@ class US_SolutionMgrNew : public US_Widgets
      void newAccepted        ( void);
      void saveTemperature    ( const QString& );
      void saveNotes          ( void );
-     void spectrum           ( void );
+     //void spectrum           ( void );
      void spectrum_class     ( void );
      
      void add_spectrumDisk   ( void );
      void readingspectra     (const QString&);
 
-     /* void add_component   (); */
-      /* void select_bcomp    (); */
-      /* void remove_bcomp    ( QListWidgetItem* ); */
-      /* void recalc_density  ( void ); */
-      /* void recalc_viscosity( void ); */
-      /* void ph              ( void ); */
-      /* void compressibility ( void ); */
-      /* void density         ( void ); */
-      /* void viscosity       ( void ); */
-      /* void manual_flag     ( bool ); */
-      /* void spectrum        ( void ); */
-      /* void newAccepted     ( void ); */
-      /* void newCanceled     ( void ); */
-      /* void write_db        ( void ); */
-      /* void write_disk      ( void ); */
-      void help( void ) { showHelp.show_help( "solution_new.html" ); };
-      void process_results( QMap < double, double > &xyz );
+     void help( void ) { showHelp.show_help( "solution_new.html" ); };
+     //void process_results( QMap < double, double > &xyz );
  
    public slots:
      void newSolution        ( void );
