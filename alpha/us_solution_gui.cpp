@@ -11,6 +11,11 @@
 #include "us_solution.h"
 
 
+#if QT_VERSION < 0x050000
+#define setSymbol(a)      setSymbol(*a)
+#define setSamples(a,b,c) setData(a,b,c)
+#endif
+
 US_SolutionMgrSelect::US_SolutionMgrSelect( int *invID, int *select_db_disk,
       US_Solution *tmp_solution ) : US_Widgets()
 {
