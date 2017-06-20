@@ -1016,9 +1016,9 @@ US_PlotCurveConfig::US_PlotCurveConfig( QwtPlot* currentPlot,
    QLabel* lb_symbolStyle = us_label( tr( "Style:" ) );
    cmbb_symbolStyle = us_comboBox();
    cmbb_symbolStyle->addItem( tr( "No Symbol"       ), QwtSymbol::NoSymbol  );
-   cmbb_symbolStyle->addItem( tr( "Ellipse"         ), QwtSymbol::Ellipse   );
    cmbb_symbolStyle->addItem( tr( "Rectangle"       ), QwtSymbol::Rect      );
    cmbb_symbolStyle->addItem( tr( "Diamond"         ), QwtSymbol::Diamond   );
+   cmbb_symbolStyle->addItem( tr( "Ellipse"         ), QwtSymbol::Ellipse   );
    cmbb_symbolStyle->addItem( tr( "Down Triangle"   ), QwtSymbol::DTriangle );
    cmbb_symbolStyle->addItem( tr( "Up Triangle"     ), QwtSymbol::UTriangle );
    cmbb_symbolStyle->addItem( tr( "Left Triangle"   ), QwtSymbol::LTriangle );
@@ -1034,19 +1034,29 @@ US_PlotCurveConfig::US_PlotCurveConfig( QwtPlot* currentPlot,
    QList< int > symbolStyles;
    symbolStyles 
       << QwtSymbol::NoSymbol  << QwtSymbol::Rect      << QwtSymbol::Diamond  
-      << QwtSymbol::Triangle  << QwtSymbol::DTriangle << QwtSymbol::UTriangle 
+      << QwtSymbol::Ellipse   << QwtSymbol::DTriangle << QwtSymbol::UTriangle 
       << QwtSymbol::LTriangle << QwtSymbol::RTriangle << QwtSymbol::Cross    
       << QwtSymbol::XCross    << QwtSymbol::HLine     << QwtSymbol::VLine    
       << QwtSymbol::Star1     << QwtSymbol::Star2     << QwtSymbol::Hexagon;
 
-   symbolStyle = selSymbol->style();
+   if ( selSymbol != NULL )
+   {
+      symbolStyle = selSymbol->style();
 
-   for ( int i = 0; i < symbolStyles.size(); i++ )
-      if ( symbolStyles [ i ] == symbolStyle )
+      for ( int i = 0; i < symbolStyles.size(); i++ )
       {
-         cmbb_symbolStyle->setCurrentIndex ( i );
-         break;
+         if ( symbolStyles [ i ] == symbolStyle )
+         {
+            cmbb_symbolStyle->setCurrentIndex ( i );
+            break;
+         }
       }
+   }
+   else
+   {
+      cmbb_symbolStyle->setCurrentIndex( 0 );
+      selSymbol             = new QwtSymbol;
+   }
 
    connect( cmbb_symbolStyle, SIGNAL( currentIndexChanged( int ) ), 
                               SLOT  ( symbolStyleChanged ( int ) ) );
@@ -1203,6 +1213,7 @@ void US_PlotCurveConfig::apply( void )
 #else
    QwtSymbol *oldSymbol  = (QwtSymbol*)&firstSelectedCurve->symbol();
 #endif
+   oldSymbol             = ( oldSymbol != NULL ) ? oldSymbol : new QwtSymbol;
    QPen      symbolPen   = oldSymbol->pen();
    QBrush    symbolBrush = oldSymbol->brush();
    
@@ -1854,7 +1865,7 @@ qDebug() << "GRID COUNT" << ngrid;
    QBoxLayout* majorStyle = new QHBoxLayout;
 
    QStringList styles;
-   styles << tr( "Solid" ) << tr( "Dash" ) << tr( "Dot" ) << tr( "DashDotDot" )
+   styles << tr( "Solid" ) << tr( "Dash" ) << tr( "Dot" ) << tr( "DashDot" )
           << tr( "DashDotDot" );
 
    QList< int > penStyle;
