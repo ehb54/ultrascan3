@@ -908,8 +908,6 @@ US_SolutionMgrNew::US_SolutionMgrNew( int *invID, int *select_db_disk,
    newSolution();
 }
 
-
-
 void US_SolutionMgrNew::spectrum_class( void )
 {
   US_NewSpectrum *w = new US_NewSpectrum("SOLUTION", le_descrip->text(), "", solution);
@@ -918,7 +916,6 @@ void US_SolutionMgrNew::spectrum_class( void )
   w->setAttribute(Qt::WA_DeleteOnClose);
   w->show(); 
 }
-
 
 // Function to save solution information to disk or db
 void US_SolutionMgrNew::newAccepted()
@@ -970,49 +967,12 @@ void US_SolutionMgrNew::newAccepted()
                    "and the attempt to save it failed.\n") );
          return;
       }
-
-      // else if ( status != US_DB2::OK )
-      // {
-      //    QMessageBox::information( this,
-      //          tr( "Attention" ) ,
-      //          db.lastError() );
-      //    return;
-      // }
-    
    }
 
    else
       solution->saveToDisk();
 
    emit newSolAccepted();
-
-   // if ( display_status )
-   // {
-   //    QMessageBox::information( this,
-   //          tr( "Save results" ),
-   //          tr( "Solution saved" ) );
-   // }
-
-   // // Refresh solution list
-   // solutionMap.clear();
-   // lw_solutions->clear();
-
-   // load();
-   // reset();
-
-   // // Select the solution
-   // QList< QListWidgetItem* > items 
-   //   = lw_solutions->findItems( solution.solutionDesc, Qt::MatchExactly );
-
-   // // should be exactly 1, but let's make sure
-   // if ( items.size() == 1 )
-   // {
-   //    selectSolution( items[ 0 ] );
-   //    lw_solutions->setCurrentItem( items[ 0 ] );
-   // }
-
-   // //  changed = false;
-   
 }
 
 
@@ -1069,13 +1029,6 @@ void US_SolutionMgrNew::reset( void )
       pb_spectrum  -> setEnabled( true );
    }
 
-   // // We can always delete something, even if it's just what's in the dialog
-   // pb_del          -> setEnabled( false );
-   // if ( lw_solutions->currentRow() != -1 )
-   // {
-   //    pb_del       -> setEnabled( true );
-   // }
-
    // Display analytes that have been selected
    lw_analytes->clear();
    analyteMap.clear();
@@ -1092,23 +1045,6 @@ void US_SolutionMgrNew::reset( void )
    QPalette p = lb_amount->palette();
    p.setColor( QPalette::WindowText, Qt::white );
    lb_amount->setPalette( p );
-
-   // // Figure out if the accept button should be enabled
-   // if ( ! signal )      // Then it's just a close button
-   //    pb_accept->setEnabled( true );
-
-   // else if ( solution->saveStatus == US_Solution::BOTH )
-   //    pb_accept->setEnabled( true );
-
-   // else if ( ( ! disk_controls->db() ) && solution->saveStatus == US_Solution::HD_ONLY )
-   //    pb_accept->setEnabled( true );
-
-   // else if ( (   disk_controls->db() ) && solution->saveStatus == US_Solution::DB_ONLY )
-   //    pb_accept->setEnabled( true );
-
-   // else
-   //    pb_accept->setEnabled( false );
-
 }
 
 
@@ -1353,16 +1289,17 @@ void US_SolutionMgrNew::assignBuffer( US_Buffer newBuffer )
 
 // Edit Existing Solution panel
 US_SolutionMgrEdit::US_SolutionMgrEdit( int *invID, int *select_db_disk,
-      US_Solution *tmp_solution ) : US_Widgets()
+					US_Solution *tmp_solution, int tmp_experimentID, int tmp_channelID ) : US_Widgets()
 {
-  
    solution      = tmp_solution;
    orig_solution = *solution;
    personID    = invID;
    db_or_disk  = select_db_disk;
    from_db     = ( (*db_or_disk) == 1 );
    dbg_level   = US_Settings::us_debug();
-
+   experimentID = tmp_experimentID;
+   channelID  = tmp_channelID;
+   
    QGridLayout* main = new QGridLayout( this );
    main->setSpacing         ( 2 );
    main->setContentsMargins ( 2, 2, 2, 2 );
@@ -1408,10 +1345,141 @@ US_SolutionMgrEdit::US_SolutionMgrEdit( int *invID, int *select_db_disk,
    QLabel *empty = us_banner ("");
    main->addWidget( empty,           row,   0, 9, 12);
    
-
+   connect( pb_spectrum, SIGNAL( clicked()  ),
+            this,        SLOT  ( spectrum_class() ) );
+   connect( pb_accept,   SIGNAL( clicked()  ),
+            this,        SLOT  ( editAccepted() ) );
+   connect( pb_cancel,   SIGNAL( clicked()  ),
+            this,        SLOT  ( editCanceled() ) );
+   connect( pb_help,     SIGNAL( clicked() ),
+            this,        SLOT  ( help()    ) );
+   connect( le_storageTemp, SIGNAL( textEdited      ( const QString&   ) ),
+                            SLOT  ( saveTemperature ( const QString&   ) ) );
+   
+   connect( te_notes, SIGNAL( textChanged( void ) ),  SLOT  ( saveNotes  ( void ) ) );
+}
+// Initialize solution settings, possibly after re-entry to Edit panel
+void US_SolutionMgrEdit::init_solution( void )
+{
+   from_db     = ( (*db_or_disk) == 1 );
+   orig_solution = *solution;
+   le_descrip ->setText( solution->solutionDesc );
+   //le_ph      ->setText( QString::number( buffer->pH ) );
+   pb_accept  ->setEnabled( false );
+   te_notes   -> setText( solution->notes );
+   le_storageTemp -> setText( QString::number( solution->storageTemp  ) );
+   
+   edit_solution_description = le_descrip->text();
 }
 
-// Settings panel
+// Initialize analyte settings, possibly after re-entry to Edit panel
+void US_SolutionMgrEdit::spectrum_class( void )
+{
+  QString ifexists;
+  if (solution->extinction.isEmpty())
+    ifexists = "NEW";
+  else
+    ifexists = "EXISTS";
+  
+  US_EditSpectrum *w = new US_EditSpectrum("SOLUTION", ifexists, le_descrip->text(), "1.000", solution);
+  
+  connect( w,     SIGNAL( change_spectrum( void ) ),
+	   this,  SLOT ( change_spectrum( void ) ) );
+  connect( w,     SIGNAL( accept_enable( void ) ),
+	   this,  SLOT ( accept_enable( void ) ) );
+  
+  w->setParent(this, Qt::Window);
+  w->setWindowModality(Qt::WindowModal);
+  w->setAttribute(Qt::WA_DeleteOnClose);
+  w->show(); 
+}
+
+void US_SolutionMgrEdit::change_spectrum( void )
+{
+  emit editSolAccepted();
+}
+
+void US_SolutionMgrEdit::accept_enable( void )
+{
+  pb_accept->setEnabled( !le_descrip->text().isEmpty() );
+}
+
+void US_SolutionMgrEdit::editAccepted( void )
+{
+  if ( from_db )
+   {
+      US_Passwd pw;
+      QString masterPW = pw.getPasswd();
+      US_DB2 db( masterPW );
+   
+      if ( db.lastErrno() != US_DB2::OK )
+      {
+	 QMessageBox::warning( this, tr( "Database Problem" ),
+         tr( "Database returned the following error: \n" ) + db.lastError() );
+	 return;
+      }
+      qDebug() << "Inside editAccepted(): " << "ExpID: " << experimentID << ", cID: " << channelID;
+      int status = solution->saveToDB( experimentID, channelID, &db );
+
+     
+      if ( status != US_DB2::OK )
+      {
+         QMessageBox::information( this,
+               tr( "Attention" ) ,
+               db.lastError() );
+         return;
+      }     
+
+      else if ( status == US_DB2::NO_BUFFER )
+      {
+         QMessageBox::information( this,
+               tr( "Attention" ),
+               tr( "There was a problem saving the buffer to the database.\n" ) );
+         return;
+      }
+
+      else if ( status == US_DB2::NOROWS )
+      {
+         QMessageBox::information( this,
+               tr( "Attention" ) ,
+               tr( "A solution component is missing from the database, "
+                   "and the attempt to save it failed.\n") );
+         return;
+      }
+    
+   }
+
+   else
+      solution->saveToDisk();
+
+  emit editSolAccepted();
+}
+
+void US_SolutionMgrEdit::editCanceled( void )
+{
+  emit editSolAccepted();
+}
+
+// Function to update the storage temperature associated with the current solution
+void US_SolutionMgrEdit::saveTemperature( const QString& )
+{
+   solution->storageTemp = le_storageTemp ->text().toDouble();
+   pb_accept -> setEnabled(true);
+}
+
+// Function to update the notes associated with the current solution
+void US_SolutionMgrEdit::saveNotes( void )
+{
+   // Let's see if the notes have actually changed
+   if ( solution->notes != te_notes->toPlainText() )
+   {
+      solution->notes        = te_notes   ->toPlainText();
+      pb_accept -> setEnabled(true);
+   }
+}
+
+
+///// Settings panel
 US_SolutionMgrSettings::US_SolutionMgrSettings( int *invID, int *select_db_disk )
    : US_Widgets()
 {
@@ -1531,7 +1599,7 @@ US_SolutionGui::US_SolutionGui(
    tabWidget   = us_tabwidget();
    selectTab   = new US_SolutionMgrSelect  ( &personID, &disk_or_db, &solution );
    newTab      = new US_SolutionMgrNew     ( &personID, &disk_or_db, &solution, experimentID, channelID );
-   editTab     = new US_SolutionMgrEdit    ( &personID, &disk_or_db, &solution );
+   editTab     = new US_SolutionMgrEdit    ( &personID, &disk_or_db, &solution, experimentID, channelID );
    settingsTab = new US_SolutionMgrSettings( &personID, &disk_or_db );
    tabWidget -> addTab( selectTab,   tr( "Select Solution" ) );
    tabWidget -> addTab( newTab,      tr( "Enter New Solution" ) );
@@ -1577,18 +1645,27 @@ DbgLv(1) << "ckTab: currTab" << currentTab;
    // in case relevant changes were made elsewhere
    if ( currentTab == 0 )
    {
-DbgLv(1) << "ckTab:   selectTab  init_solution";
- selectTab  ->load();
+     DbgLv(1) << "ckTab:   selectTab  init_solution";
+     selectTab  ->load();
    }
    else if ( currentTab == 1 )
    {
-DbgLv(1) << "ckTab:   newTab     init_solution";
- newTab     ->newSolution();
+     DbgLv(1) << "ckTab:   newTab     init_solution";
+     newTab     ->newSolution();
    }
    else if ( currentTab == 2 )
    {
-DbgLv(1) << "ckTab:   editTab    init_solution";
-//editTab    ->init_solution();
+     DbgLv(1) << "ckTab:   editTab    init_solution";
+     editTab    ->init_solution();
+     if (editTab->edit_solution_description == "")
+       {
+	 QMessageBox::information( this,
+	 tr( "WARNING" ),
+	 tr( "No Solution selected! Please select Solution from the list" ) );
+ 
+	 emit editSolAccepted();
+	 
+       }
    }
 }
 

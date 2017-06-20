@@ -259,15 +259,18 @@ class US_SolutionMgrEdit : public US_Widgets
       //!                         is on the local disk or in the DB
       //! \param tmp_solution     Pointer to a US_Solution object holding the active
       //!                         solution (for editing and adding new solutions)
-      US_SolutionMgrEdit( int*, int*, US_Solution* );
+      US_SolutionMgrEdit( int*, int*, US_Solution*, int, int );
       QString edit_solution_description;
-      US_Extinction *w;
+      //US_Extinction *w;
 
    signals:
-      void editBufAccepted( void );  //! Edited solution accepted
-      void editBufCanceled( void );
+      void editSolAccepted( void );  //! Edited solution accepted
+      void editSolCanceled( void );
 
    private:
+
+      int           experimentID;
+      int           channelID;
 
       int*          personID;
       int*          db_or_disk;
@@ -283,26 +286,21 @@ class US_SolutionMgrEdit : public US_Widgets
       QLineEdit*    le_storageTemp;
       
       QTextEdit*    te_notes;
-      
-
       US_Help       showHelp;
 
    private slots:
-
-      /* void ph          ( void ); */
-      /* void spectrum    ( void ); */
-      /* void editAccepted( void ); */
-      /* void editCanceled( void ); */
-      /* void write_db    ( void ); */
-      /* void write_disk  ( void ); */
+      void spectrum_class    ( void );
+      void editAccepted      ( void );
+      void editCanceled      ( void );
+      //void ph          ( void ); 
+      void change_spectrum   ( void ); 
+      void accept_enable     ( void ); 
+      void saveTemperature   ( const QString& );
+      void saveNotes         ( void );
       void help( void ) { showHelp.show_help( "solution_edit.html" ); };
-      
-      //void process_results( QMap < double, double > &xyz );
 
    public slots:
-     // void init_solution		( void );
-
-      //void process_results( QMap < double, double > &xyz );
+     void init_solution	     ( void );
 };
 
 
