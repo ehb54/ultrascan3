@@ -79,6 +79,7 @@ class US_RotorCalibration : public US_Widgets
       int                current_cell;
       bool               top_of_cell;
       bool               newlimit;
+		bool					 zoomed;
 
       QString            rotor;
       QString            fileText;
@@ -123,7 +124,7 @@ class US_RotorCalibration : public US_Widgets
 
       QCheckBox*         cb_assigned;
       QCheckBox*         cb_6channel;
-      QComboBox*         cb_lab;
+      QComboBox*         cb_wavelengths;
       
       US_DataIO::RawData             data;
       QVector< US_DataIO::RawData >  allData;
@@ -136,9 +137,12 @@ class US_RotorCalibration : public US_Widgets
 		QVector< QwtDoubleRect >       bounds_rect; // holds limits for multi-channel calibration mask
 
 		QwtDoubleRect						 zoom_mask; // holds zoomed rectangle for multi-channel calibration mask
+		QStringList                    wavelengths;
+		int									 current_wavelength;
 
    private slots:
       void       reset          ( void );
+      void       changeLambda   ( int  );
       void       source_changed ( bool );
       void       update_disk_db ( bool );
       void       load           ( void );
