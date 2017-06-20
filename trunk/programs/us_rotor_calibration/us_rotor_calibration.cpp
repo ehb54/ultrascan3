@@ -42,6 +42,7 @@ US_RotorCalibration::US_RotorCalibration() : US_Widgets()
 
    rotor    = "Default Rotor";
    newlimit = false;
+	zoomed = false;
 
    setWindowTitle(tr("Edit Rotor Calibration"));
    setPalette(US_GuiSettings::frameColor());
@@ -89,6 +90,13 @@ US_RotorCalibration::US_RotorCalibration() : US_Widgets()
    //ct_channel = us_counter (2, 0, 0); // Update range upon load
    ct_channel->setSingleStep(1);
    top->addWidget(ct_channel, row++, 0);
+
+   QLabel* lb_wavelengths = us_label(tr("Current Wavelength:"), -1);
+   lb_wavelengths->setMaximumHeight(height);
+   top->addWidget(lb_wavelengths, row++, 0);
+   
+	cb_wavelengths = us_comboBox();
+   top->addWidget(cb_wavelengths, row++, 0);
 
    QGridLayout* lo_6channel = us_checkbox(tr("Use 7-Slot Cal. Mask"), cb_6channel, false);
    connect (cb_6channel, SIGNAL (clicked()), this, SLOT (use_6channel()));
@@ -184,17 +192,20 @@ void US_RotorCalibration::use_6channel()
 	ct_cell->setEnabled(false);
 	ct_channel->setEnabled(false);
    le_instructions->setText(tr("Please zoom all useful vertical regions..."));
+	zoomed = true;
 }
 
 void US_RotorCalibration::reset()
 {
    avg.clear();
+	cb_wavelengths->disconnect();
+	cb_wavelengths->clear();
    data.scanData.clear();
    allData.clear();
-
    dataPlotClear( data_plot );
    data_plot    ->replot();
    plot->btnZoom->setChecked(false);
+   current_triple = -1;
 
    pb_load      ->setEnabled(true );
    pb_reset     ->setEnabled(false);
@@ -382,7 +393,7 @@ void US_RotorCalibration::loadDB(void)
    US_Passwd pw;
    QString masterPW = pw.getPasswd();
    US_DB2 db(masterPW);
-
+	wavelengths.clear();
    if (db.lastErrno() != US_DB2::OK)
    {
       QMessageBox::information(this,
@@ -438,6 +449,8 @@ void US_RotorCalibration::loadDB(void)
   		QStringList part = filenames[i].split(".");
 
       QString t = part[2] + " / " + part[3] + " / " + part[4];
+		wavelengths << part[4];
+		qDebug() << t ;
 		if ((part[3] == "A") && (maxchannel < 1)) maxchannel = 1;
 		if ((part[3] == "B") && (maxchannel < 2)) maxchannel = 2;
 		if ((part[3] == "C") && (maxchannel < 3)) maxchannel = 3;
@@ -456,7 +469,7 @@ void US_RotorCalibration::loadDB(void)
 	ct_channel->setRange(1, maxchannel);
 	ct_cell   ->setSingleStep(1);
 	ct_channel->setSingleStep(1);
-
+	cb_wavelengths->addItems(wavelengths);
    // Load the data
    QDir dir;
    QString  tempdir  = US_Settings::tmpDir() + "/";
@@ -521,11 +534,14 @@ void US_RotorCalibration::loadDB(void)
       tmp_limit.used[1] = false;
       limit.push_back(tmp_limit);
    }
+	qDebug() << "Size of allData:" << allData.size();
 
    current_triple = -1;
    top_of_cell = false;
    pb_reset->setEnabled (true);
    pb_accept->setEnabled(true);
+	connect( cb_wavelengths,    SIGNAL(currentIndexChanged(int)),
+            this, SLOT(changeLambda (int)));
    next();
 }
 
@@ -644,7 +660,10 @@ void US_RotorCalibration::currentRect (QwtDoubleRect rect)
             limit[current_triple].used[1] = true;
             cb_assigned->setChecked(true);
          }
-         pb_calculate->setEnabled(true);
+			if (!cb_6channel->isChecked())
+			{
+         	pb_calculate->setEnabled(true);
+			}
       }
       newlimit = false;
    }
@@ -657,7 +676,7 @@ void US_RotorCalibration::currentRectf (QRectF rectf)
 	rect.setTop(rectf.top()); 
 	rect.setLeft(rectf.left()); 
 	rect.setRight(rectf.right()); 
-
+qDebug() << "Going into currentRectf..";
    if (cb_6channel->isChecked()) 
    {
       divide(rect);
@@ -688,13 +707,15 @@ void US_RotorCalibration::divide(QwtDoubleRect rect)
 {
 	zoom_mask = rect;
 	QwtDoubleRect tmp_rect;
-   le_instructions->setText(tr("Please control-left click between each vertical region, then click calculate..."));
+	if (zoomed)
+	{
+   	le_instructions->setText(tr("Please control-left click between each vertical region, then click calculate..."));
+	}
 	pick->disconnect();
 	connect(pick, SIGNAL(cMouseUp(const QwtDoublePoint&)),
 					   SLOT  (mouse   (const QwtDoublePoint&)));
 	bounds.clear();
 	pb_accept->setEnabled(false);
-	pb_calculate->setEnabled(true);
 }
 
 // takes each separator line drawn for multi-channel calibration mask
@@ -727,6 +748,7 @@ void US_RotorCalibration::mouse (const QwtDoublePoint& p)
    v_line->setPen(pen);
 
    data_plot->replot();
+	pb_calculate->setEnabled(true);
 }
 
 // Once a limit region has been zoomed the user will accept the limits and
@@ -745,6 +767,7 @@ void US_RotorCalibration::next()
          current_triple --; // make sure we don't go out of bound
          le_instructions->setText("All vertical regions have been reviewed, calculating rotor calibration...");
          pb_accept->setEnabled(false);
+   		le_instructions->setText(tr("calculating..."));
          calculate();
          return;
       }
@@ -784,6 +807,9 @@ void US_RotorCalibration::next()
 // values to assure that the zeroth-order coefficient is close to zero. 
 void US_RotorCalibration::calculate()
 {
+		  qDebug() << "entering calculate()...";
+  	le_instructions->setText(tr("calculating..."));
+	qApp->processEvents();
 	if (cb_6channel->isChecked())
 	{
 		calc_6channel();
@@ -1279,6 +1305,7 @@ void US_RotorCalibration::calc_6channel(void)
    Average_multi tmp_avg_multi;
 	QVector <Average_multi> avg_multi2;
 
+
 	for (k=0; k<bounds.size(); k++)
 	{
 		if (k > 0)
@@ -1570,7 +1597,7 @@ void US_RotorCalibration::calc_6channel(void)
    pb_view->setEnabled(true);
    QDateTime now = QDateTime::currentDateTime();
    fileText = "CALIBRATION REPORT FOR ROTOR: " + rotor + "\nPERFORMED ON: " + now.toString();
-   fileText += "\n\nCalibration is based on data from run: " + runID;
+   fileText += "\n\nCalibration is based on data from run: " + runID + " at " + cb_wavelengths->currentText() + " nm";
    fileText += "\n\nThe following equation was fitted to the measured "
                "stretch values for this rotor:\n\n";
    
@@ -1603,6 +1630,7 @@ void US_RotorCalibration::calc_6channel(void)
                 + QString( "%1").arg(y[i], 0, 'e', 5 ) + "   "
                 + QString( "%1").arg((sd1[i] - y[i])/2.0, 0, 'e', 5 )         + "\n";
    }
+	pb_calculate->setEnabled(false);
 }
 
 double US_RotorCalibration::findAverage(QwtDoubleRect rect,
@@ -1788,3 +1816,19 @@ void US_RotorCalibration::view()
    edit->show();
 }
 
+void US_RotorCalibration::changeLambda(int l)
+{
+	current_triple = l;
+	zoomed = false;
+	x.clear();
+	y.clear();
+	sd1.clear();
+	sd2.clear();
+	avg.clear();
+	avg_multi.clear();
+	bounds.clear();
+	bounds_rect.clear();
+//	use_6channel();
+   le_instructions->setText(tr("Please zoom all useful vertical regions..."));
+	update_plot();
+}
