@@ -125,7 +125,6 @@ US_Plot::US_Plot( QwtPlot*& parent_plot, const QString& title,
 
    plot        = new QwtPlot;
    parent_plot = plot;
-   
 
    configWidget = NULL;
   
@@ -639,17 +638,20 @@ void US_PlotConfig::updateTitleFont( void )
 /*!  \brief Change the plot canvas color */
 void US_PlotConfig::selectCanvasColor( void )
 {
-   QPalette p       = lb_showCanvasColor->palette();
-   QColor   current = p.color( QPalette::Active, QPalette::Window );
-   QColor   c       = QColorDialog::getColor( current, this, tr( "Select canvas color" ) );
+   QPalette pal     = lb_showCanvasColor->palette();
+   QColor   current = pal.color( QPalette::Active, QPalette::Window );
+   QColor   col     = QColorDialog::getColor( current, this, tr( "Select canvas color" ) );
    
-   if ( c.isValid() )
+   if ( col.isValid() )
    {
-     p.setColor( QPalette::Active  , QPalette::Window, c );
-     p.setColor( QPalette::Inactive, QPalette::Window, c );
-     lb_showCanvasColor->setPalette( p );
-     plot->setCanvasBackground( c );
-     plot->replot();
+      pal.setColor( QPalette::Window, col );
+      lb_showCanvasColor->setPalette( pal );
+#if QT_VERSION > 0x050000
+      plot->setCanvasBackground( QBrush( col ) );
+#else
+      plot->setCanvasBackground( col );
+#endif
+      plot->replot();
    }
 }
 
@@ -735,6 +737,17 @@ void US_PlotConfig::updateLegendFont( void )
          tr( "The layout does not exist.  Set the legend position first." ) );
       return;
    }
+#if QT_VERSION > 0x050000
+   else
+   {
+      // For Qwt6/Qt5, more than a legend setFont() is needed
+      QMessageBox::warning( this,
+        tr( "Legend Font Unchanged" ), 
+        tr( "Currently, with Qwt6/Qt5 versions, the Legend\n"
+            "Font cannot be changed." ) );
+      return;
+   }
+#endif
 
    QFont font = plot->legend()->font();
 
@@ -744,7 +757,13 @@ void US_PlotConfig::updateLegendFont( void )
 
    if ( ok )
    {
+#if QT_VERSION > 0x050000
+      // For Qwt6/Qt5, more than a legend setFont() is needed
       plot->legend()->setFont( newFont );
+#else
+      // For Qwt5/Qt4, only a legend setFont() is needed
+      plot->legend()->setFont( newFont );
+#endif
       setLegendFontString();
       plot->replot();
    }
@@ -757,7 +776,7 @@ void US_PlotConfig::updateAxis( int axis )
    {
       axisWidget->close();
    }
-   
+
    axisWidget = new US_PlotAxisConfig( axis, plot );
    //axisWidget->setAttribute( Qt::WA_DeleteOnClose );
    //connect( axisWidget, SIGNAL( axisConfigClosed( void ) ),
@@ -982,7 +1001,7 @@ US_PlotCurveConfig::US_PlotCurveConfig( QwtPlot* currentPlot,
    QLabel* lb_curveWidth = us_label( tr( "Width (pixels):" ) );
    stylewidth->addWidget( lb_curveWidth );
 
-   sb_curveWidth = new QSpinBox;
+   sb_curveWidth = us_spinbox( 0 );
    sb_curveWidth->setRange( 1, 10 );
    sb_curveWidth->setValue( firstSelectedCurve->pen().width() );
    connect( sb_curveWidth, SIGNAL( valueChanged( int ) ), 
@@ -1067,7 +1086,7 @@ US_PlotCurveConfig::US_PlotCurveConfig( QwtPlot* currentPlot,
    // Row 7  Symbol width and height
    QLabel* lb_symbolWidth  = us_label( tr( "Width (pixels):" ) );
 
-   sb_symbolWidth = new QSpinBox;
+   sb_symbolWidth = us_spinbox( 0 );
    sb_symbolWidth->setRange( 1, 30 );
    sb_symbolWidth->setValue( selSymbol->size().width() );
    connect( sb_symbolWidth, SIGNAL( valueChanged( int ) ), 
@@ -1075,7 +1094,7 @@ US_PlotCurveConfig::US_PlotCurveConfig( QwtPlot* currentPlot,
 
    QLabel* lb_symbolHeight = us_label( tr( "Height (pixels):" ) );
 
-   sb_symbolHeight = new QSpinBox;
+   sb_symbolHeight = us_spinbox( 0 );
    sb_symbolHeight->setRange( 1, 30 );
    sb_symbolHeight->setValue( selSymbol->size().height() );
    connect( sb_symbolWidth, SIGNAL( valueChanged( int ) ), 
@@ -1888,7 +1907,7 @@ qDebug() << "GRID COUNT" << ngrid;
    QLabel* lb_majorWidth = us_label( tr( "Width (pixels):" ) );
    majorStyle->addWidget( lb_majorWidth );
 
-   sb_majorWidth = new QSpinBox;
+   sb_majorWidth = us_spinbox( 0 );
    sb_majorWidth->setRange( 1, 5 );
    sb_majorWidth->setValue( gmajorPen.width() );
 
@@ -1958,7 +1977,7 @@ qDebug() << "GRID COUNT" << ngrid;
    QLabel* lb_minorWidth = us_label( tr( "Width (pixels):" ) );
    minorStyle->addWidget( lb_minorWidth );
 
-   sb_minorWidth = new QSpinBox;
+   sb_minorWidth = us_spinbox( 0 );
    sb_minorWidth->setRange( 1, 5 ); 
    sb_minorWidth->setValue( gminorPen.width() );
 
