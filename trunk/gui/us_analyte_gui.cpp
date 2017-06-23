@@ -2598,7 +2598,7 @@ US_AnalyteMgrEdit::US_AnalyteMgrEdit( int *invID, int *select_db_disk,
    bn_modana->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
    //bn_spacer->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
    pb_accept->setEnabled( false );
-   us_setReadOnly( le_descrip, true );
+   us_setReadOnly( le_descrip, false );
 
    int row = 0;
    main->addWidget( bn_modana,       row++, 0, 1, 8 );
@@ -2622,8 +2622,19 @@ US_AnalyteMgrEdit::US_AnalyteMgrEdit( int *invID, int *select_db_disk,
    //          this,        SLOT  ( spectrum() ) );
    connect( pb_spectrum, SIGNAL( clicked()  ),
             this,        SLOT  ( spectrum_class() ) );
+   connect( le_descrip, SIGNAL( editingFinished   () ), 
+	                SLOT  ( description() ) );
 }
 
+// Slot for manually changed description
+void US_AnalyteMgrEdit::description()
+{
+  if ( analyte->description != le_descrip->text() )
+    {
+      analyte->description = le_descrip->text();
+      pb_accept->setEnabled( !le_descrip->text().isEmpty() );
+    }
+}
 
 // Initialize analyte settings, possibly after re-entry to Edit panel
 void US_AnalyteMgrEdit::spectrum_class( void )
@@ -2668,45 +2679,6 @@ DbgLv(1) << "agE: init_a  from_db" << from_db << "dkordk" << *db_or_disk;
    le_descrip ->setText( analyte->description );
    pb_accept  ->setEnabled( false );
 }
-
-// Slot for manually changed pH
-void US_AnalyteMgrEdit::ph()
-{
-#if 0
-   buffer->pH         = le_ph->text().toDouble();
-DbgLv(1) << "AnaE:SL:ph()" << buffer->pH;
-
-   pb_accept->setEnabled( !le_descrip->text().isEmpty() );
-#endif
-}
-
-// Slot to manage spectrum of an existing analyte
-// void US_AnalyteMgrEdit::spectrum()
-// {
-// DbgLv(1) << "AnaE:SL: spectrum()  count" << analyte->extinction.count();
-// QMessageBox::information( this,
-//  tr( "INCOMPLETE" ),
-//  tr( "A new Spectrum dialog is under development.\n\n"
-//      "The dialog to follow will be replaced in\n"
-//      "the near future." ) );
-
-//    US_Table* sdiag;
-//    QMap< double, double > loc_extinct = analyte->extinction;
-//    QString stype( "Extinction" );
-//    bool changed = false;
-//    sdiag        = new US_Table( loc_extinct, stype, changed, this );
-//    sdiag->setWindowTitle( "Manage Extinction Spectrum" );
-//    sdiag->exec();
-// DbgLv(1) << "AnaE:SL: spectr  extincts" << loc_extinct
-//  << "changed" << changed;
-//    if ( changed )
-//    {
-//       analyte->extinction = loc_extinct;
-// DbgLv(1) << "AnaE:SL: spectr   ana extincts CHANGED";
-//    }
-
-//    pb_accept->setEnabled( !le_descrip->text().isEmpty() );
-// }
 
 // Slot to cancel edited analyte
 void US_AnalyteMgrEdit::editCanceled()

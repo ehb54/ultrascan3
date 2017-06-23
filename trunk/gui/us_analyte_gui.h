@@ -405,8 +405,7 @@ class US_AnalyteMgrEdit : public US_Widgets
 
    private slots:
 
-      void ph          ( void );
-      void spectrum_class    ( void );
+     void spectrum_class    ( void );
       void editAccepted( void );
       void editCanceled( void );
       void write_db    ( void );
@@ -415,6 +414,7 @@ class US_AnalyteMgrEdit : public US_Widgets
       void help( void ) { showHelp.show_help( "analyte_edit.html" ); };
       void change_spectrum( void ); 
       void accept_enable  ( void ); 
+      void description    ( void );
    
    public slots:
       void init_analyte		( void );

@@ -118,6 +118,8 @@ int US_ExtProfile::create_eprofile( US_DB2* dbP, const int compID,
    // Compose an XML string to represent the profile
    xml_eprofile( compID, compType, valueType, extinction, epxml );
 
+   qDebug() << "BUFFER eprofile: After xml_eprofile() ";
+
    // Determine if a record of this ID,Type exists in the DB
    QStringList qry;
    qry << "get_eprofile" << QString::number( compID ) << compType;

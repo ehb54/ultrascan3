@@ -258,6 +258,7 @@ class US_BufferGuiEdit : public US_Widgets
       
       void change_spectrum( void );
       void accept_enable  ( void );
+      void description    ( void );
 
    public slots:
       void init_buffer		( void );

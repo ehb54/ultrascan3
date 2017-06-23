@@ -184,7 +184,13 @@ void US_NewSpectrum::process_results(QMap < double, double > &xyz)
           " from the main window to write new %2 into DB" )
 			     .arg( xyz.keys().count() ).arg( type ) );  
 
-   //pb_accept  ->setEnabled( true );
+   if ( type == "BUFFER")
+     buffer->new_or_changed_spectrum = true;
+   if ( type == "ANALYTE")
+     analyte->new_or_changed_spectrum = true;
+   if ( type == "SOLUTION")
+     solution->new_or_changed_spectrum = true;
+    
    w_spec->close(); 
    this->close();
    
@@ -253,11 +259,20 @@ void US_NewSpectrum::readingspectra(const QString &fileName)
 	    }
 	}
       if ( type == "BUFFER")
-	buffer->extinction = temp_extinct;
+	{
+	  buffer->extinction = temp_extinct;
+	  buffer->new_or_changed_spectrum = true;
+	}
       if ( type == "ANALYTE")
-	analyte->extinction = temp_extinct;
+	{
+	  analyte->extinction = temp_extinct;
+	  analyte->new_or_changed_spectrum = true;
+	}
       if ( type == "SOLUTION")
-	solution->extinction = temp_extinct;
+	{
+	  solution->extinction = temp_extinct;
+	  solution->new_or_changed_spectrum = true;
+	}
     }
   this->close();
   emit change_prot_e280();
@@ -290,16 +305,19 @@ void US_NewSpectrum::entermanually( void )
 	  {
 	    buffer->extinction.clear();                                                   
 	    buffer->extinction = loc_extinct;
+	    buffer->new_or_changed_spectrum = true;
 	  }
 	if ( type == "ANALYTE")
 	  {
 	    analyte->extinction.clear();                                                   
 	    analyte->extinction = loc_extinct;
+	    analyte->new_or_changed_spectrum = true;
 	  }
 	if ( type == "SOLUTION")
 	  {
 	    solution->extinction.clear();                                                   
 	    solution->extinction = loc_extinct;
+	    solution->new_or_changed_spectrum = true;
 	  }
 
 	////Update via STORED Procedures ....

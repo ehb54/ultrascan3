@@ -471,7 +471,8 @@ int US_Solution::saveToDB( int expID, int channelID, US_DB2* db )
    QString valType("molarExtinction");
    qDebug() << "SampleID for extProfile: " << solutionID;
    
-   if ( !extinction.isEmpty() )
+   //if ( !extinction.isEmpty() )
+   if ( !extinction.isEmpty() and new_or_changed_spectrum ) 
    {
       if ( !replace_spectrum )
       {
@@ -491,6 +492,7 @@ int US_Solution::saveToDB( int expID, int channelID, US_DB2* db )
          
          replace_spectrum = false;
       }
+      new_or_changed_spectrum = false; 
    }
    ////////////////////////////////////////    
 
@@ -807,6 +809,9 @@ US_Solution& US_Solution::operator=( const US_Solution& rhs )
 
 void US_Solution::clear( void )
 {
+   replace_spectrum = false;
+   new_or_changed_spectrum = false;
+
    solutionID   = 0;
    solutionGUID = QString( "" );
    solutionDesc = QString( "" );

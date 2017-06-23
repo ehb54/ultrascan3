@@ -20,6 +20,7 @@ US_Analyte::US_Analyte()
    grad_form      = false;
 
    replace_spectrum = false;
+   new_or_changed_spectrum = false;
    // Placeholders for DNA/RNA
    doubleStranded = true;
    complement     = false;
@@ -830,7 +831,8 @@ DEBUG_QUERY;
    QString valType("molarExtinction");
    qDebug() << "AnalyteID for extProfile: " << analyteID.toInt();
    
-   if ( !extinction.isEmpty() )
+   //if ( !extinction.isEmpty() )
+   if ( !extinction.isEmpty() and new_or_changed_spectrum )  
    {
       if ( !replace_spectrum )
       {
@@ -850,6 +852,7 @@ DEBUG_QUERY;
          
          replace_spectrum = false;
       }
+      new_or_changed_spectrum = false; 
    }
    
 

@@ -362,18 +362,6 @@ void US_EditSpectrum::uploadDisk(void)
 
 void US_EditSpectrum::uploadFit(void)
 {    
-
-  //Update via STORED Procedures ....
-  if (exists == "EXISTS")
-    {
-      if ( type == "BUFFER")
-	buffer->replace_spectrum = true; 
-      if ( type == "ANALYTE")
-	analyte->replace_spectrum = true; 
-      if ( type == "SOLUTION")
-	solution->replace_spectrum = true; 
-    }
-    
     w_spec = new US_Extinction(type, text, "1.000", (QWidget*)this); 
     
     connect( w_spec, SIGNAL( get_results(QMap < double, double > & )), this, SLOT(process_results( QMap < double, double > & ) ) );
@@ -381,7 +369,6 @@ void US_EditSpectrum::uploadFit(void)
     w_spec->setParent(this, Qt::Window);
     w_spec->setAttribute(Qt::WA_DeleteOnClose);
     w_spec->show(); 
-
 }
 
 void US_EditSpectrum::process_results(QMap < double, double > &xyz)
@@ -407,6 +394,35 @@ void US_EditSpectrum::process_results(QMap < double, double > &xyz)
           " from the main window to write new %2 into DB" )
 			     .arg( xyz.keys().count() ).arg( type ) );  
 
+   //Update via STORED Procedures ....
+   if (exists == "EXISTS")
+     {
+       if ( type == "BUFFER")
+	 {
+	   buffer->replace_spectrum = true; 
+	   buffer->new_or_changed_spectrum = true;
+	 }
+       if ( type == "ANALYTE")
+	 {
+	   analyte->replace_spectrum = true;
+	   analyte->new_or_changed_spectrum = true;
+	 }
+       if ( type == "SOLUTION")
+	 {
+	   solution->replace_spectrum = true; 
+	   solution->new_or_changed_spectrum = true;
+	 }
+     }
+   if (exists == "NEW")
+     {
+       if ( type == "BUFFER")
+	 buffer->new_or_changed_spectrum = true;
+       if ( type == "ANALYTE")
+	 analyte->new_or_changed_spectrum = true;
+       if ( type == "SOLUTION")
+	 solution->new_or_changed_spectrum = true;
+     }
+    
    w_spec->close(); 
    this->close();
    emit accept_enable();
@@ -484,12 +500,31 @@ void US_EditSpectrum::readingspectra(const QString &fileName)
       if (exists == "EXISTS")
 	{
 	  if ( type == "BUFFER")
-	    buffer->replace_spectrum = true; 
+	    {
+	      buffer->replace_spectrum = true;
+	      buffer->new_or_changed_spectrum = true;
+	    }
 	  if ( type == "ANALYTE")
-	    analyte->replace_spectrum = true; 
+	    {
+	      analyte->replace_spectrum = true;
+	      analyte->new_or_changed_spectrum = true;
+	    }
 	  if ( type == "SOLUTION")
-	    solution->replace_spectrum = true; 
+	    {
+	      solution->replace_spectrum = true; 
+	      solution->new_or_changed_spectrum = true;
+	    }
 	}
+      if (exists == "NEW")
+	{
+	  if ( type == "BUFFER")
+	    buffer->new_or_changed_spectrum = true;
+	  if ( type == "ANALYTE")
+	    analyte->new_or_changed_spectrum = true;
+	  if ( type == "SOLUTION")
+	    solution->new_or_changed_spectrum = true;
+	}
+	
     }
 
   emit accept_enable();
@@ -539,14 +574,32 @@ void US_EditSpectrum::editmanually( void )
 	if (exists == "EXISTS")
 	  {
 	    if ( type == "BUFFER")
-	      buffer->replace_spectrum = true; 
+	      {
+		buffer->replace_spectrum = true; 
+		buffer->new_or_changed_spectrum = true;
+	      }
 	    if ( type == "ANALYTE")
-	      analyte->replace_spectrum = true; 
+	      {
+		analyte->replace_spectrum = true;
+		analyte->new_or_changed_spectrum = true;
+	      }
 	    if ( type == "SOLUTION")
-	      solution->replace_spectrum = true; 
+	      {
+		solution->replace_spectrum = true; 
+		solution->new_or_changed_spectrum = true;
+	      }
+	  }
+	if (exists == "NEW")
+	  {
+	    if ( type == "BUFFER")
+	      buffer->new_or_changed_spectrum = true;
+	    if ( type == "ANALYTE")
+	      analyte->new_or_changed_spectrum = true;
+	    if ( type == "SOLUTION")
+	      solution->new_or_changed_spectrum = true;
 	  }
       }
-
+    
     emit accept_enable();
     this->close();
 }
