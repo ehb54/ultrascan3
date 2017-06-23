@@ -17,7 +17,6 @@ class US_UTIL_EXTERN US_Analyte
       //! A test for equality between two analytes.
       bool operator== ( const US_Analyte& ) const;
 
-
       //! The types of analytes used in UltraScan III
       enum analyte_t { PROTEIN, DNA, RNA, CARBOHYDRATE };
 
@@ -30,6 +29,7 @@ class US_UTIL_EXTERN US_Analyte
       bool              grad_form;      //!< Flag if gradient-forming
 
       bool              replace_spectrum;
+      bool              new_or_changed_spectrum;
       
       // The following values are valid for DNA/RNA only
       bool              doubleStranded; //!< Single or double stranded analyte?

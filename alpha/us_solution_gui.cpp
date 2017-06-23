@@ -1316,7 +1316,7 @@ US_SolutionMgrEdit::US_SolutionMgrEdit( int *invID, int *select_db_disk,
    QLabel* bn_modana        = us_banner( tr( "Edit an existing analyte" ) );
    QLabel* lb_descrip       = us_label( tr( "Description:" ) );
    le_descrip    = us_lineedit( solution-> solutionDesc );
-   us_setReadOnly( le_descrip, true );
+   us_setReadOnly( le_descrip, false );
 
    QLabel* lb_storageTemp = us_label( tr( "Storage Temperature:" ) );
    le_storageTemp = us_lineedit();
@@ -1362,7 +1362,20 @@ US_SolutionMgrEdit::US_SolutionMgrEdit( int *invID, int *select_db_disk,
                             SLOT  ( saveTemperature ( const QString&   ) ) );
    
    connect( te_notes, SIGNAL( textChanged( void ) ),  SLOT  ( saveNotes  ( void ) ) );
+   connect( le_descrip, SIGNAL( editingFinished   () ), 
+	                SLOT  ( description() ) );
 }
+
+// Slot for manually changed description
+void US_SolutionMgrEdit::description()
+{
+  if ( solution->solutionDesc != le_descrip->text() )
+    {
+      solution->solutionDesc = le_descrip->text();
+      pb_accept->setEnabled( !le_descrip->text().isEmpty() );
+    }
+}
+
 // Initialize solution settings, possibly after re-entry to Edit panel
 void US_SolutionMgrEdit::init_solution( void )
 {

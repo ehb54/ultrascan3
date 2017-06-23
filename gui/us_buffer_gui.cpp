@@ -1360,7 +1360,8 @@ US_BufferGuiEdit::US_BufferGuiEdit( int *invID, int *select_db_disk,
    bn_modbuf->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
    //bn_spacer->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
    pb_accept->setEnabled( false );
-   us_setReadOnly( le_descrip, true );
+   //us_setReadOnly( le_descrip, true );
+   us_setReadOnly( le_descrip, false );
 
    int row = 0;
    main->addWidget( bn_modbuf,       row++, 0, 1, 8 );
@@ -1376,7 +1377,9 @@ US_BufferGuiEdit::US_BufferGuiEdit( int *invID, int *select_db_disk,
    QLabel *empty = us_banner ("");
    main->addWidget( empty,           row,   0, 6, 8 );
 
-
+   
+   connect( le_descrip,   SIGNAL( editingFinished() ), 
+	     this,        SLOT  ( description    () ) );
    connect( le_ph,       SIGNAL( editingFinished() ), 
             this,        SLOT  ( ph             () ) );
    // connect( pb_spectrum, SIGNAL( clicked()  ),
@@ -1408,12 +1411,24 @@ DbgLv(1) << "BufE: init: bufGUIDs" << buffer->GUID << orig_buffer.GUID;
 // Slot for manually changed pH
 void US_BufferGuiEdit::ph()
 {
-   buffer->pH         = le_ph->text().toDouble();
-DbgLv(1) << "BufE:SL:ph()" << buffer->pH;
+  if (buffer->pH != le_ph->text().toDouble() )
+    {
+      buffer->pH         = le_ph->text().toDouble();
+      DbgLv(1) << "BufE:SL:ph()" << buffer->pH;
 
-   pb_accept->setEnabled( !le_descrip->text().isEmpty() );
+      pb_accept->setEnabled( !le_descrip->text().isEmpty() );
+    }
 }
 
+// Slot for manually changed description
+void US_BufferGuiEdit::description()
+{
+  if (buffer->description != le_descrip->text() )
+    {
+      buffer->description = le_descrip->text();
+      pb_accept->setEnabled( !le_descrip->text().isEmpty() );
+    }
+}
 
 // Initialize analyte settings, possibly after re-entry to Edit panel
 void US_BufferGuiEdit::spectrum_class( void )

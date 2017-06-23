@@ -219,6 +219,7 @@ US_Buffer::US_Buffer()
    viscosity       = VISC_20W;
    manual          = false;
    replace_spectrum = false;
+   new_or_changed_spectrum = false;
    person       .clear();
    bufferID     .clear();
    GUID         .clear();
@@ -574,11 +575,12 @@ int US_Buffer::saveToDB( US_DB2* db, const QString private_buffer )
    QString valType("molarExtinction");
    qDebug() << "bufferID for extProfile: " << bufferID.toInt();
    
-   if ( !extinction.isEmpty() )
+   if ( !extinction.isEmpty() and new_or_changed_spectrum )
+     //if ( !extinction.isEmpty() )
    {
-      if ( !replace_spectrum )
+     if ( !replace_spectrum )
       {
-         qDebug() << "Creating Spectrum!!!";
+	 qDebug() << "Creating Spectrum!!!";
          US_ExtProfile::create_eprofile( db, bufferID.toInt(), compType, valType, extinction);
       }
       else
@@ -594,6 +596,7 @@ int US_Buffer::saveToDB( US_DB2* db, const QString private_buffer )
          
          replace_spectrum = false;
       }
+      new_or_changed_spectrum = false; 
    }
    //putSpectrum( db, "Extinction" );
    //putSpectrum( db, "Refraction" );
@@ -601,10 +604,14 @@ int US_Buffer::saveToDB( US_DB2* db, const QString private_buffer )
 
    // Also write to to disk
    bool    newFile;
+   qDebug() << "Wrute to disk 0: " ;
    QString path     = US_Settings::dataDir() + "/buffers";
+   qDebug() << "Wrute to disk 1: " ;
    QString filename = get_filename( path, GUID, newFile );
+   qDebug() << "Wrute to disk 2: " ;
    writeToDisk( filename );
-
+   qDebug() << "Wrute to disk 3: " ;
+   
    qDebug() << "bufferID upon saveToDB() completion: " << idBuffer;
 
    return idBuffer;

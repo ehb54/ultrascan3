@@ -52,8 +52,9 @@ class US_UTIL_EXTERN US_Solution
       QString          notes;              //!< Notes on the channel solution
       solutionStatus   saveStatus;         //!< Most recent save status
 
-      bool              replace_spectrum;
-
+      bool             replace_spectrum;
+      bool             new_or_changed_spectrum;
+      
       //! extinction[ wavelength ] <=> value
       QMap< double, double > extinction;
 

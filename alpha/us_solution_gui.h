@@ -298,6 +298,7 @@ class US_SolutionMgrEdit : public US_Widgets
       void saveTemperature   ( const QString& );
       void saveNotes         ( void );
       void help( void ) { showHelp.show_help( "solution_edit.html" ); };
+      void description       ( void );
 
    public slots:
      void init_solution	     ( void );
