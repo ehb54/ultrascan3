@@ -278,12 +278,14 @@ void US_GetRun::deleteRun( void )
    if ( status != 0 ) return;
 
    int ndx = tw ->currentRow();
-   QString expID = tw ->item( ndx, 2 )->text();
+   QString expID = tw ->item( ndx, 2 )->text().simplified();
+qDebug() << "GetRun:delRun: ndx" << ndx << "expID" << expID;
 
    // Let's make sure it's not a calibration experiment in use
    QStringList q( "count_calibration_experiments " );
    q << expID;
    int count = db.functionQuery( q );
+qDebug() << "GetRun:delRun: calexp count" << count;
 
    if ( count < 0 )
    {
@@ -302,24 +304,25 @@ void US_GetRun::deleteRun( void )
       return;
    }
 
-   tw->removeRow( ndx );
-
    // Delete links between experiment and solutions
    q.clear();
    q << "delete_experiment_solutions"
      << expID ;
    status = db.statusQuery( q );
+qDebug() << "GetRun:delRun: del sols status" << status;
 
    // Same with cell table
    q.clear();
    q  << "delete_cell_experiments"
       << expID ;
    status = db.statusQuery( q );
+qDebug() << "GetRun:delRun: del cells status" << status;
 
    // Let's delete any pcsa_modelrecs records to avoid
    //  constraints problems
    QString invID = QString::number( personID );
    QString runID = tw ->item( ndx, 0 )->text();
+qDebug() << "GetRun:delRun:  invID" << invID << "runID" << runID;
 
    US_Experiment::deleteRunPcsaMrecs( &db, invID, runID );
 
@@ -338,6 +341,9 @@ qDebug() << "GetRun:delRun: del_exp stat" << status;
             db.lastError() + tr( " (error=%1, expID=%2)" )
             .arg( status ).arg( expID ) );
    }
+
+   // Delete table widget row for removed run
+   tw->removeRow( ndx );
 }
 
 // Function to populate the data tree
