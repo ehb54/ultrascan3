@@ -1676,8 +1676,8 @@ void US_AnalyteMgrNew::update_sequence( QString seq )
 	break;
 
       case US_Analyte::CARBOHYDRATE:
-	 le_molecwt  ->setText( QString::number( (int) analyte->mw ) );
-         le_vbar20->setText( QString::number( analyte->vbar20, 'f', 4 ) );
+	 le_protein_mw  ->setText( QString::number( (int) analyte->mw ) );
+         le_protein_vbar20->setText( QString::number( analyte->vbar20, 'f', 4 ) );
          break;
    }
 
