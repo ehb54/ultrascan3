@@ -613,8 +613,14 @@ void US_AnalyteMgrSelect::info_analyte( void )
    {
       double waveln   = keys[ ii ];
       double extinc   = analyte->extinction[ waveln ];
-      QString spair   = QString::number( waveln ) + " / " +
-                        QString::number( extinc ) + "  ";
+      
+      QString spair;    
+      if (extinc < 0)
+	spair = QString::number( waveln ) + " /" +
+	        QString::number( extinc, 'f', 4) + "  ";
+      else 
+	spair = QString::number( waveln ) + " / " +
+	        QString::number( extinc, 'f', 4) + "  ";
       spline         += spair;
 
       if ( ( ii % 4 ) == 3  ||  ( ii + 1 ) == nspec )

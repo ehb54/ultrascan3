@@ -451,8 +451,17 @@ DbgLv(1) << "BufS-info values" << buffer->extinction.values();
       double waveln   = keys[ ii ];
       double extinc   = buffer->extinction[ waveln ];
 DbgLv(1) << "BufS-info:  ii" << ii << "waveln extinc" << waveln << extinc;
-      QString spair   = QString::number( waveln ) + " / " +
-                        QString::number( extinc ) + "  ";
+//QString spair   = QString::number( waveln ) + " / " +
+//                        QString::number( extinc ) + "  ";
+
+      QString spair;    
+      if (extinc < 0)
+	spair = QString::number( waveln ) + " /" +
+	        QString::number( extinc, 'f', 4) + "  ";
+      else 
+	spair = QString::number( waveln ) + " / " +
+	        QString::number( extinc, 'f', 4) + "  ";
+      
       spline         += spair;
 
       if ( ( ii % 4 ) == 3  ||  ( ii + 1 ) == nspec )
@@ -1118,6 +1127,67 @@ DbgLv(1) << "BufN:SL:  selb:  cname" << bcomp.name << "crange" << bcomp.range
 void US_BufferGuiNew::remove_bcomp( QListWidgetItem* item )
 {
 DbgLv(1) << "BufN:SL: remove_bcomp()" << item->text();
+  
+   QMessageBox mBox;
+   mBox.setText(tr("Are you sure you want to delete the buffer component you double-clicked?"));
+   QPushButton *yesButton = mBox.addButton(tr("Yes"), QMessageBox::AcceptRole);
+   QPushButton *cancelButton = mBox.addButton(tr("Cancel"), QMessageBox::RejectRole);
+   
+   mBox.exec();
+   
+   if (mBox.clickedButton() == cancelButton)
+     {
+      return;
+     }
+   if (mBox.clickedButton() == yesButton)
+     {
+       // Get selected component
+       QListWidgetItem* item    = lw_bufcomps->currentItem();
+       QString item_name = item->text().split("(")[0].trimmed();
+       
+       qDebug() << "Selected item name: " << item_name; 
+       qDebug() << "Old buffer components: ";
+       for ( int ii = 0; ii < buffer->component.size(); ii++ )
+	 {
+	   qDebug() << "NAME: " << buffer->component[ ii ].name << ", concentration:" << buffer->concentration[ ii ] << ", compID: " << buffer->componentIDs[ ii ];
+	 } 
+       
+       int index = 0;
+       for ( int ii = 0; ii < buffer->component.size(); ++ii )
+	 {
+	   if ( item_name == buffer->component[ ii ].name )
+	     {
+	       index = ii;
+	       qDebug() << "TO DELETE::: NAME: " << buffer->component[ ii ].name << ", concentration:" << buffer->concentration[ ii ] << ", compID: " << buffer->componentIDs[ ii ];
+	       buffer->component.removeAt( ii );
+	       buffer->concentration.removeAt( ii );
+	       buffer->componentIDs.removeAt( ii );
+	       
+	       delete lw_bufcomps->currentItem();
+	       break;
+	     }
+	 }
+       qDebug() << "index: " << index << ", buf_size: " << buffer->component.size();
+       
+       //buffer->component.removeAt( index );
+       
+       
+       qDebug() << "Updated buffer components: ";
+       for ( int ii = 0; ii < buffer->component.size(); ii++ )
+	 {
+	   qDebug() << "NAME: " << buffer->component[ ii ].name << ", concentration:" << buffer->concentration[ ii ] << ", compID: " << buffer->componentIDs[ ii ];
+	 }
+
+       recalc_density();
+       recalc_viscosity();
+
+       bool can_accept = ( !le_descrip->text().isEmpty()  &&
+			   !le_density->text().isEmpty()  &&
+			   !le_viscos ->text().isEmpty() );
+       pb_accept->setEnabled( can_accept );
+       pb_spectrum->setEnabled( can_accept );
+     }
+
 }
 
 // Slot to recalculate density based on new component
@@ -1125,8 +1195,10 @@ void US_BufferGuiNew::recalc_density( void )
 {
    int bcsize        = buffer->component.size();
    if ( bcsize < 1 )
-      return;
-
+     {
+       le_density->setText( "" );
+       return;
+     }
    buffer->density   = DENS_20W;
 DbgLv(1) << "BufN:SL: recalc_density()" << buffer->component[bcsize-1].name;
 
@@ -1161,8 +1233,11 @@ void US_BufferGuiNew::recalc_viscosity( void )
 {
    int bcsize        = buffer->component.size();
    if ( bcsize < 1 )
-      return;
-
+     {
+       le_viscos->setText( "" );
+       return;
+     }
+   
    buffer->viscosity = VISC_20W;
 DbgLv(1) << "BufN:SL: recalc_viscosity()" << buffer->component[bcsize-1].name;
 
