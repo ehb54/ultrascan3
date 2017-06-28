@@ -890,7 +890,7 @@ DbgLv(1) << "XpDa:LdMw:    DUPLICATE triple" << triple << "trx" << trx;
                chan             = trnode.section( ".", 1, 1 );
                iwvl             = trnode.section( ".", 2, 2 ).toInt();
                wavl             = QString::number( iwvl );
-               celchn           = triple.section( " / ", 0, 1 );
+               celchn           = triple.section( " / ", 0, 1 ).simplified();
 DbgLv(1) << "XpDa:LdMw:      NEW triple" << triple << trnode;
                triples << triple;
             }
@@ -1068,7 +1068,7 @@ DbgLv(1) << "BldRawD     trx" << trx << " building scans... ccx" << ccx;
       rdata.type[ 1 ]   = dtype1;
       QString dtrip     = triples[ trx ];
       //QString celchn    = cellchans[ ccx ];
-      QString celchn    = dtrip.section( "/", 0, 1 );
+      QString celchn    = dtrip .section( "/", 0, 1 ).simplified();
       rdata.cell        = celchn.section( "/", 0, 0 ).toInt();
       rdata.channel     = celchn.section( "/", 1, 1 ).simplified()
                           .toLatin1().data()[ 0 ];
@@ -1081,9 +1081,12 @@ DbgLv(1) << "BldRawD        channel" << rdata.channel
       rdata.xvalues     = a_radii;
       int ndscan        = 0;
       int rdx           = 0;
-      rdata.description = ccdescs.at( ccx );
+      //rdata.description = ccdescs.at( ccx );
+      rdata.description = cc_description( celchn );
       QString triple    = triples[ trx ].replace( " / ", "/" );
       QString trnode    = trnodes[ trx ];
+DbgLv(1) << "BldRawD         trip" << trnode << "descr" << rdata.description
+ << "celchn" << celchn;
 
 QDateTime time10=QDateTime::currentDateTime();
       for ( int sgx = 0; sgx < nstgn; sgx++ )
@@ -2549,6 +2552,7 @@ DbgLv(1) << "XpDa:b_i:   jcell jchan" << jcell << jchan;
             {
                no_desc       = false;
                ccdescs << csdrec.samplName;
+DbgLv(1) << "XpDa:b_i:     samplName" << csdrec.samplName << "ccdescs sz" << ccdescs.count();
                break;
             }
          }
