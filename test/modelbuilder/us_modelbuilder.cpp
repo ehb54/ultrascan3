@@ -177,7 +177,7 @@ void US_ModelBuilder::startSimulation(void) {
 
    int dim = 20;
 
-   qDebug() << QHostInfo::localHostName();
+   //qDebug() << QHostInfo::localHostName();
 
 
    //SD grid generaton
@@ -1644,7 +1644,7 @@ QVector<QVector<US_Model::SimulationComponent> > US_ModelBuilder::generateSDGrid
             //do coefficient calculation, and proceed only if successful
             if(US_Model::calc_coefficients(current) && current.f_f0 <= 4.0 && current.f_f0 >= 1)
             {
-               qDebug() << "s: " << current.s << " , D: " << current.D << " , f_f0: " << current.f_f0 << endl;
+               //qDebug() << "s: " << current.s << " , D: " << current.D << " , f_f0: " << current.f_f0 << endl;
                column.append(current);
             }
 
@@ -1734,7 +1734,7 @@ QVector<QVector<US_Model::SimulationComponent> > US_ModelBuilder::generateMKGrid
             //do coefficient calculation, and proceed only if successful
             if(US_Model::calc_coefficients(current) && current.f_f0 <= 4.0 && current.f_f0 >= 1)
             {
-               qDebug() << "s: " << current.s << " , D: " << current.D << " , f_f0: " << current.f_f0 << endl;
+               //qDebug() << "s: " << current.s << " , D: " << current.D << " , f_f0: " << current.f_f0 << endl;
                column.append(current);
             }
 
