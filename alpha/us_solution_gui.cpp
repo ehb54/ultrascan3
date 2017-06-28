@@ -1735,7 +1735,9 @@ void US_SolutionGui::solutionAccepted( void )
 #endif
    emit valueChanged  ( solution );
    emit valueSolutionID( solution.solutionID );
+   emit updateSolutionGuiSelection( solution );
 
+   qDebug() << "Solution Accepted: ";
    accept();
 }
 

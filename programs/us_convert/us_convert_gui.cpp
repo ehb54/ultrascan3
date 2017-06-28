@@ -979,10 +979,14 @@ DbgLv(1) << "rTS: NON_EXIST:" << tmst_fnamei;
 void US_ConvertGui::enableControls( void )
 {
    if ( allData.size() == 0 )
-      reset();
+     {
+       qDebug() << "In enableControls: just RESET" ;
+       reset();
+     }
 
    else
    {
+      qDebug() << "In enableControls: DO IT" ;
 DbgLv(1) << "CGui: enabCtl: have-data" << allData.size() << all_tripinfo.size();
       // Ok to enable some buttons now
       pb_showTmst    ->setEnabled( ! tmst_fnamei.isEmpty() );
@@ -1968,6 +1972,7 @@ DbgLv(0) << "CGui: updSol: dax" << idax
    QApplication::restoreOverrideCursor();
 
    enableControls();
+   qDebug() << "Inside Solution Info Update in us_convert: ";
 }
 
 void US_ConvertGui::cancelSolutionInfo( void )
