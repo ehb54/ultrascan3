@@ -163,14 +163,6 @@ void US_ModelBuilder::startSimulation(void) {
    startButton->setDisabled(true);
    parameterButton->setDisabled(true);
 
-   //QVector<QVector2D> toPrint = generateFaxenGrid(3.5e-13, 5e-13, 1, 4, 500);
-   //QVector<QVector<QVector2D*>* >* grid = readAnalyticalPoints("input/faxenGeneratorOutputFullsize.tsv");
-   //QVector<QVector<QVector2D*>* >* grid = gridFromSide(0.0005, 0.00005);
-   //QVector<QVector<QVector2D*>* >* grid = generateRegularGrid(3.5e-13, 5e-13, 1, 4, 2000);
-   //QVector<QVector<QVector2D*>* >* grid = generateRegularGrid(1e-13, 1e-12, 1, 4, 8000);
-   //QVector<QVector3D*>* grid = testRegularGrid(generateRegularGrid(1e-13, 1e-12, 1, 4, 8000));
-   //QVector<QVector2D> faxenGrid = generateFaxenGrid(1e-13, 3.5e-13, 1, 4, 500);
-
    double sMin = 1e-13;
    double sMax = 10e-13;
 
@@ -185,7 +177,7 @@ void US_ModelBuilder::startSimulation(void) {
 
    int dim = 20;
 
-   //qDebug() << QSysInfo::prettyProductName();
+   qDebug() << QHostInfo::localHostName();
 
 
    //SD grid generaton
@@ -374,7 +366,6 @@ void US_ModelBuilder::startSimulation(void) {
    outfileFG.close();
    */
 
-
    //Numerical grid generation along s-lines (s-major)
    /*
    QFile outfileN("output/numericalGrid_sp50_sMajor.tsv");
@@ -427,7 +418,6 @@ void US_ModelBuilder::startSimulation(void) {
 
    outfileN2.close();
    */
-
 
    //Sk-grid gridsize testing
    /*
@@ -494,7 +484,6 @@ void US_ModelBuilder::startSimulation(void) {
    outfileFGAverage.close();
    */
 
-
    //sd gridsize testing
    /*
    qDebug() << "Generating sd grids for RMSD averaging";
@@ -526,19 +515,47 @@ void US_ModelBuilder::startSimulation(void) {
    outfileSDAverage.close();
    */
 
-   /*
-   US_Model::SimulationComponent model1 = modelComponentFromSK(0.000000000000100096, 1);
-   US_Model::SimulationComponent model2 = modelComponentFromSK(0.000000000000100288, 1);
+   //MK grid gridsize testing
+   qDebug() << "Generating mk grids for RMSD averaging";
 
-   US_DataIO::RawData* data1 = simulateComponent(model1);
-   US_DataIO::RawData* data2 = simulateComponent(model2);
+   QFile outfileMKAverage("output/mkGrid_Averages_kMajor.tsv");
+   outfileMKAverage.open(QIODevice::ReadWrite);
+   QTextStream outstreamMKAverage(&outfileMKAverage);
+   outstreamMKAverage << "#PointCount \t AverageRMSD \t SampleStddev" << endl;
 
-   double rmsd = calculateScaledRMSD(data1, model1, data2, model2);
-   delete data1;
-   delete data2;
+   //generate grid at different sizes
+   for(int dimension = 20; dimension < 400; dimension += 10)
+   {
+      qDebug() << "Making grid for dimension: " << dimension;
 
-   qDebug() << "RMSD: " << rmsd;
-   */
+      //make grid
+      QVector<QVector<US_Model::SimulationComponent> > grid = generateMKGrid(mMin, mMax, kMin, kMax, dimension, dimension, 'k');
+
+      //get RMSD
+      QVector<QVector<double> > results = checkLineRMSDParalell(grid, false);
+
+      //stats - 3-length array of count, average, stddev
+      QVector<double> stats = calculateGridStatistics(results);
+
+      //output data to file
+      outstreamMKAverage << stats.at(0) << " \t" << stats.at(1) << " \t" << stats.at(2) <<  endl;
+   }
+
+   outfileMKAverage.close();
+
+
+//   US_Model::SimulationComponent model1 = modelComponentFromSK(0.000000000000100096, 1);
+//   US_Model::SimulationComponent model2 = modelComponentFromSK(0.000000000000100288, 1);
+
+//   US_DataIO::RawData* data1 = simulateComponent(model1);
+//   US_DataIO::RawData* data2 = simulateComponent(model2);
+
+//   double rmsd = calculateScaledRMSD(data1, model1, data2, model2);
+//   delete data1;
+//   delete data2;
+
+//   qDebug() << "RMSD: " << rmsd;
+
 
    //re-enable parameter button, start button
    parameterButton->setDisabled(false);
@@ -624,7 +641,6 @@ void US_ModelBuilder::initalize_simulationParameters() {
 }
 
 //this function produces an initalized RawData sim object using given simparams
-
 US_DataIO::RawData* US_ModelBuilder::init_simData(US_Model* system) {
    //instantiate object to be initalized
    US_DataIO::RawData* working_simdata = new US_DataIO::RawData();
@@ -727,7 +743,7 @@ double US_ModelBuilder::calculateDistance( US_Model::SimulationComponent first ,
 }
 
 // compute the value of f_f0 for a solute with specified s and D values
-double US_ModelBuilder::calculateff0(double s, double D)
+double US_ModelBuilder::calculateFrictionalRatioSD(double s, double D)
 {
    //constants
    double R = 8.314e7; // already defined in US_Constants
@@ -747,7 +763,7 @@ double US_ModelBuilder::calculateff0(double s, double D)
    return (f / f_0);
 }
 
-double US_ModelBuilder::calculateDiffusionSK(double s, double ff0) 
+double US_ModelBuilder::calculateDiffusionSK(double s, double k)
 {
    double R = 8.314e7;
    double T = 293.15;
@@ -758,14 +774,14 @@ double US_ModelBuilder::calculateDiffusionSK(double s, double ff0)
 
    double D;
 
-   D = (R * T) / (N * ff0 * 9.0 * eta * PI * pow((2.0 * s * ff0 * vbar * eta)
+   D = (R * T) / (N * k * 9.0 * eta * PI * pow((2.0 * s * k * vbar * eta)
                                                  / (1.0 - vbar * rho), 0.5));
 
    return D;
 }
 
 // calculates diffusion from molecular weight and f/f0
-double US_ModelBuilder::calculateDiffusionMK(double M, double ff0)
+double US_ModelBuilder::calculateDiffusionMK(double M, double k)
 {
    double R = 8.314e7;
    double T = 293.15;
@@ -776,7 +792,7 @@ double US_ModelBuilder::calculateDiffusionMK(double M, double ff0)
    double V = M * (vbar / N);
    double r_0= cbrt( (3 * V) / (4 * PI));
    double f_0 = 6 * PI * eta * r_0;
-   double f = ff0 * f_0;
+   double f = k * f_0;
 
    double D = (R * T) / (N * f);
 
@@ -795,16 +811,6 @@ double US_ModelBuilder::calculateSedimentationMD(double M, double D)
 
    return s;
 }
-
-/*
-//find a specified number of nearest neighbors
-//Operates by taking an ellipse with axes 20% of those of the overall bounds (1/20 total area) centered on the target point
-//as a filter; if more than the desired number of points are in the box
-QVector< SimulationComponent > US_ModelBuilder::findNearestNeighbors(int index, QVector<QVector2D*>* all, int numToFind) 
-{  
-
-
-}*/
 
 //Takes an ordered list of SCs, simulates each, and returns the list of resulting RMSD values from (0,1),(1,2), etc.
 QVector<double> US_ModelBuilder::findListRMSD(QVector<US_Model::SimulationComponent> components)
@@ -1597,7 +1603,7 @@ QVector<QVector<US_Model::SimulationComponent> > US_ModelBuilder::generateSDGrid
 
             US_Model::SimulationComponent current;
 
-            double k = calculateff0(s, D);
+            double k = calculateFrictionalRatioSD(s, D);
 
             current.s = s;
             current.D = D;
@@ -1629,8 +1635,98 @@ QVector<QVector<US_Model::SimulationComponent> > US_ModelBuilder::generateSDGrid
 
             US_Model::SimulationComponent current;
 
-            double k = calculateff0(s, D);
+            double k = calculateFrictionalRatioSD(s, D);
 
+            current.s = s;
+            current.D = D;
+            current.f_f0 = k;
+
+            //do coefficient calculation, and proceed only if successful
+            if(US_Model::calc_coefficients(current) && current.f_f0 <= 4.0 && current.f_f0 >= 1)
+            {
+               qDebug() << "s: " << current.s << " , D: " << current.D << " , f_f0: " << current.f_f0 << endl;
+               column.append(current);
+            }
+
+         }
+
+         grid.append(column);
+      }
+   }
+
+   //otherwise, error
+   else
+   {
+      qDebug() << "ConstantAxis is neither s nor k!";
+      return grid;
+   }
+
+   //end
+   return grid;
+}
+
+QVector<QVector<US_Model::SimulationComponent> > US_ModelBuilder::generateMKGrid(double mMin, double mMax, double kMin, double kMax, int mDim, int kDim, QChar constantAxis)
+{
+   QVector<QVector<US_Model::SimulationComponent> > grid;
+
+   //get rate of change in both dims
+   double deltaM = (mMax - mMin) / mDim;
+   double deltaK = (kMax - kMin) / kDim;
+   double m = 0.0;
+   double k = 0.0;
+
+   //make grid for sMajor
+   if(constantAxis == 'm' || constantAxis == 'M')
+   {
+      for(int i = 0; i < mDim; i++)
+      {
+         QVector<US_Model::SimulationComponent> column;
+         m = (deltaM * i) + mMin;
+
+         for(int j = 0; j < kDim; j++)
+         {
+            k = (deltaK * j) + kMin;
+
+            US_Model::SimulationComponent current;
+
+            double D = calculateDiffusionMK(m, k);
+            double s = calculateSedimentationMD(m, D);
+
+            current.mw = m;
+            current.s = s;
+            current.D = D;
+            current.f_f0 = k;
+
+            //do coefficient calculation, and proceed only if successful
+            if(US_Model::calc_coefficients(current) && current.f_f0 <= 4.0 && current.f_f0 >= 1)
+            {
+               //qDebug() << "s: " << current.s << " , D: " << current.D << " , f_f0: " << current.f_f0 << endl;
+               column.append(current);
+            }
+
+         }
+         grid.append(column);
+      }
+   }
+
+   //grid for kMajor
+   else if(constantAxis == 'k' || constantAxis == 'K')
+   {
+      for(int i = 0; i < kDim; i++)
+      {
+         QVector<US_Model::SimulationComponent> column;
+         k = (deltaK * i) + kMin;
+
+         for(int j = 0; j < mDim; j++)
+         {
+            m = (deltaM * i) + mMin;
+
+            US_Model::SimulationComponent current;
+
+            double D = calculateDiffusionMK(m, k);
+            double s = calculateSedimentationMD(m, D);
+
+            current.mw = m;
             current.s = s;
             current.D = D;
             current.f_f0 = k;

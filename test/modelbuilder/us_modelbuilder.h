@@ -4,7 +4,7 @@
 #include <QtGui>
 #include <QApplication>
 #include <QDomDocument>
-//#include <QSysInfo>
+#include <QHostInfo>
 #include <QVector>
 #include <QFile>
 #include <QFileInfo>
@@ -40,60 +40,63 @@
 #include "../../programs/us_astfem_sim/us_simulationparameters.h"
 #include "../../programs/us_astfem_sim/us_astfem_sim.h"
 
-class US_ModelBuilder : public US_Widgets {
-    Q_OBJECT
+class US_ModelBuilder : public US_Widgets
+{
+   Q_OBJECT
 
 public:
-    US_ModelBuilder();
-    //~US_ModelBuilder();
+   US_ModelBuilder();
+   //~US_ModelBuilder();
 
 private:
 
-    US_Help showHelp;
-    QLineEdit* le_RMSD;
-    QLineEdit* le_sedimentationVal;
-    QLineEdit* le_diffusionVal;
-    QPushButton* startButton;
-    QPushButton* parameterButton;
-    QwtPlot* data_plot;
-    US_SimulationParameters working_simparams;
-    US_SimulationParameters simparams;
+   US_Help showHelp;
+   QLineEdit* le_RMSD;
+   QLineEdit* le_sedimentationVal;
+   QLineEdit* le_diffusionVal;
+   QPushButton* startButton;
+   QPushButton* parameterButton;
+   QwtPlot* data_plot;
+   US_SimulationParameters working_simparams;
+   US_SimulationParameters simparams;
 
 private slots:
-    void collectParameters(void);
-    void startSimulation(void);
-    void update_parameters(void);
-    void initalize_simulationParameters
-    (void);
+   void collectParameters(void);
+   void startSimulation(void);
+   void update_parameters(void);
+   void initalize_simulationParameters
+   (void);
 
-    void help(void) {
-        showHelp.show_help("manual/us_buoyancy.html");
-    };
+   void help(void)
+   {
+      showHelp.show_help("manual/us_buoyancy.html");
+   };
 
-    US_DataIO::RawData* init_simData(US_Model* system);
+   US_DataIO::RawData* init_simData(US_Model* system);
 
-    double interpolatePoint(QVector3D target, QVector3D p11, QVector3D p12, QVector3D p21, QVector3D p22);
-    
-    //Declarations from rewrite below:
-    
-    double calculateDistance	( US_Model::SimulationComponent , US_Model::SimulationComponent );
-    US_DataIO::RawData* simulateComponent	( US_Model::SimulationComponent );
-    QVector<double> findListRMSD( QVector<US_Model::SimulationComponent> );
-    double calculateff0( double , double );
-    double calculateDiffusionSK( double , double );
-    double calculateDiffusionMK( double , double );
-    double calculateSedimentationMD( double , double );
-    double calculateScaledRMSD(US_DataIO::RawData* simulation1, US_Model::SimulationComponent component1 , US_DataIO::RawData* simulation2 , US_Model::SimulationComponent component2);
-    QVector<QVector<US_Model::SimulationComponent> > switchRegularGridOrientation(QVector<QVector<US_Model::SimulationComponent> >);
-    QVector<QPair<US_Model::SimulationComponent, double> > testRegularGrid(QVector<QVector<US_Model::SimulationComponent> >);
-    QVector<QVector<US_Model::SimulationComponent> > createFaxenGrid(double , double , double , double , int);
-    US_Model::SimulationComponent modelComponentFromSK(double s, double k);
-	 QVector<US_Model::SimulationComponent> calculateLine(double tolerance, double targetRMSD, QVector2D startCoord, QVector2D endCoord);
-    QVector<QVector<US_Model::SimulationComponent> > createNumericalGrid(double tolerance, double targetRMSD, double minS, double maxS, double minK, double maxK, QChar majorAxis);
-    QVector<QVector<double> > checkLineRMSDParalell(QVector<QVector<US_Model::SimulationComponent> > grid, bool approximateToMidpoint);
-    QVector<QVector<US_Model::SimulationComponent> > generateSKGrid(double sMin, double sMax, double kMin, double kMax, int sDim, int kDim, QChar constantAxis);
-    QVector<QVector<US_Model::SimulationComponent> > generateSDGrid(double sMin, double sMax, double dMin, double dMax, int sDim, int dDim, QChar constantAxis);
-    QVector<double> calculateGridStatistics(QVector<QVector<double> > processedGrid);
+   double interpolatePoint(QVector3D target, QVector3D p11, QVector3D p12, QVector3D p21, QVector3D p22);
+
+   //Declarations from rewrite below:
+
+   double calculateDistance( US_Model::SimulationComponent first , US_Model::SimulationComponent second );
+   US_DataIO::RawData* simulateComponent	( US_Model::SimulationComponent component );
+   QVector<double> findListRMSD(QVector<US_Model::SimulationComponent> components);
+   double calculateFrictionalRatioSD( double s , double D );
+   double calculateDiffusionSK( double s , double k);
+   double calculateDiffusionMK( double M, double k);
+   double calculateSedimentationMD( double , double D);
+   double calculateScaledRMSD(US_DataIO::RawData* simulation1, US_Model::SimulationComponent component1 , US_DataIO::RawData* simulation2 , US_Model::SimulationComponent component2);
+   QVector<QVector<US_Model::SimulationComponent> > switchRegularGridOrientation(QVector<QVector<US_Model::SimulationComponent> > regular);
+   QVector<QPair<US_Model::SimulationComponent, double> > testRegularGrid(QVector<QVector<US_Model::SimulationComponent> > grid);
+   QVector<QVector<US_Model::SimulationComponent> > createFaxenGrid(double minS, double maxS, double minK, double maxK, int grids);
+   US_Model::SimulationComponent modelComponentFromSK(double s, double k);
+   QVector<US_Model::SimulationComponent> calculateLine(double tolerance, double targetRMSD, QVector2D startCoord, QVector2D endCoord);
+   QVector<QVector<US_Model::SimulationComponent> > createNumericalGrid(double tolerance, double targetRMSD, double minS, double maxS, double minK, double maxK, QChar majorAxis);
+   QVector<QVector<double> > checkLineRMSDParalell(QVector<QVector<US_Model::SimulationComponent> > grid, bool approximateToMidpoint);
+   QVector<QVector<US_Model::SimulationComponent> > generateSKGrid(double sMin, double sMax, double kMin, double kMax, int sDim, int kDim, QChar constantAxis);
+   QVector<QVector<US_Model::SimulationComponent> > generateSDGrid(double sMin, double sMax, double dMin, double dMax, int sDim, int dDim, QChar constantAxis);
+   QVector<QVector<US_Model::SimulationComponent> > generateMKGrid(double mMin, double mMax, double kMin, double kMax, int mDim, int kDim, QChar constantAxis);
+   QVector<double> calculateGridStatistics(QVector<QVector<double> > processedGrid);
 };
 
 #endif
