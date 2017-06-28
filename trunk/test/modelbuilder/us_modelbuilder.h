@@ -4,7 +4,7 @@
 #include <QtGui>
 #include <QApplication>
 #include <QDomDocument>
-#include <QHostInfo>
+//#include <QHostInfo>
 #include <QVector>
 #include <QFile>
 #include <QFileInfo>
