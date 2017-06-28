@@ -4,6 +4,19 @@
 #include <QtGui>
 #include <QApplication>
 #include <QDomDocument>
+//#include <QSysInfo>
+#include <QVector>
+#include <QFile>
+#include <QFileInfo>
+#include <QTextStream>
+#if QT_VERSION > 0x050000
+#include <QtConcurrent/QtConcurrent>
+#else
+#include <qtconcurrentrun.h>
+#endif
+#include <QThread>
+#include <qwt_legend.h>
+#include <cmath>
 #include "us_extern.h"
 #include "us_widgets.h"
 #include "us_help.h"
@@ -17,7 +30,6 @@
 #include "us_gui_settings.h"
 #include "us_investigator.h"
 #include "us_run_details2.h"
-#include <cmath>
 #include "us_util.h"
 #include "us_load_auc.h"
 #include "us_passwd.h"
@@ -27,21 +39,6 @@
 #include "us_plot3d_xyz.h"
 #include "../../programs/us_astfem_sim/us_simulationparameters.h"
 #include "../../programs/us_astfem_sim/us_astfem_sim.h"
-#include <QVector>
-#include <QFile>
-#include <QFileInfo>
-#include <QDirIterator>
-#include <QTextStream>
-#if QT_VERSION > 0x050000
-#include <QtConcurrent/QtConcurrent>
-#else
-#include <qtconcurrentrun.h>
-#endif
-#include <QThread>
-
-#include <qwt_legend.h>
-#include "RegularGrid.h"
-#include "points2.h"
 
 class US_ModelBuilder : public US_Widgets {
     Q_OBJECT
@@ -73,64 +70,30 @@ private slots:
         showHelp.show_help("manual/us_buoyancy.html");
     };
 
-    US_Model* get_model(double s_value, double d_value, double k_value);
-
     US_DataIO::RawData* init_simData(US_Model* system);
-
-    US_DataIO::RawData* perform_calculation(QVector2D* p);
-
-    double calculate_RMSD(US_DataIO::RawData* simdata_1, US_DataIO::RawData* simdata_2);
-
-    double calculate_diffusion(double s_val, double k_val);
-
-    QVector2D* getNextPoint(QVector2D start, QVector2D end, double target, double tolerance, int maxIterations);
-
-    QVector<QVector2D*>* calculate_line
-    (QVector<double>* params, QVector2D* initial, QVector2D* end);
-
-    /*QVector<QVector<QVector2D*> >* identify_boundaryPoints
-    (QVector2D* initial_QVector2D);*/
-
-    QVector<QVector<QVector2D*> *>* readAnalyticalPoints
-    (QString filename);
-
-    QVector<QVector3D>* getBatchRMSD
-    (QVector<QVector2D*>* QVector2Ds);
-
-    QVector<QVector<QVector3D> *>* testSpeeds
-    (QVector<QVector<QVector2D*> *>* QVector2Ds, QVector<int>* speeds);
-
-    QVector<QVector<QVector3D>* >* testGrid
-    (QVector<QVector<QVector2D*> *>* QVector2Ds);
-
-    QVector<QVector<QVector2D*> *>* generateRegularGrid
-    (double sStart, double sEnd, double kStart, double kEnd, int QVector2DQuantity);
-
-    double calculateDistance(QVector2D* point1, QVector2D* point2);
-
-    QVector2D* calculateMidpoint
-    (QVector2D* point1, QVector2D* point2);
-
-    QVector<QVector<QVector2D*>* >* gridFromSide
-    (double targetRMSD, double toleranceRMSD);
-
-    QVector<QVector2D*>* approximate_frictional_line
-    (QVector<double>* params);
-
-    QVector<QVector<QVector2D *>* >* generateFaxenGrid
-    (double sRangeStart, double sRangeEnd, double ff0RangeStart, double ff0RangeEnd, int numPoints);
-
-    RegularGrid* testRegularGrid(QVector<QVector<QVector2D*> *>* regularGrid);
-
-    //QVector3D interpolateRepulsion(QVector3D point, QVector<QVector3D*> repulsors);
 
     double interpolatePoint(QVector3D target, QVector3D p11, QVector3D p12, QVector3D p21, QVector3D p22);
     
-    QVector<QVector3D*>* testIrregularGrid(QVector<QVector2D*>* input);
+    //Declarations from rewrite below:
     
-    QVector<QVector2D*>* findNearestNeighbors(int index, QVector<QVector2D*>* all, int numToFind);
-    
-    QVector<QVector2D*>* readIrregularGrid(QString filename);
+    double calculateDistance	( US_Model::SimulationComponent , US_Model::SimulationComponent );
+    US_DataIO::RawData* simulateComponent	( US_Model::SimulationComponent );
+    QVector<double> findListRMSD( QVector<US_Model::SimulationComponent> );
+    double calculateff0( double , double );
+    double calculateDiffusionSK( double , double );
+    double calculateDiffusionMK( double , double );
+    double calculateSedimentationMD( double , double );
+    double calculateScaledRMSD(US_DataIO::RawData* simulation1, US_Model::SimulationComponent component1 , US_DataIO::RawData* simulation2 , US_Model::SimulationComponent component2);
+    QVector<QVector<US_Model::SimulationComponent> > switchRegularGridOrientation(QVector<QVector<US_Model::SimulationComponent> >);
+    QVector<QPair<US_Model::SimulationComponent, double> > testRegularGrid(QVector<QVector<US_Model::SimulationComponent> >);
+    QVector<QVector<US_Model::SimulationComponent> > createFaxenGrid(double , double , double , double , int);
+    US_Model::SimulationComponent modelComponentFromSK(double s, double k);
+	 QVector<US_Model::SimulationComponent> calculateLine(double tolerance, double targetRMSD, QVector2D startCoord, QVector2D endCoord);
+    QVector<QVector<US_Model::SimulationComponent> > createNumericalGrid(double tolerance, double targetRMSD, double minS, double maxS, double minK, double maxK, QChar majorAxis);
+    QVector<QVector<double> > checkLineRMSDParalell(QVector<QVector<US_Model::SimulationComponent> > grid, bool approximateToMidpoint);
+    QVector<QVector<US_Model::SimulationComponent> > generateSKGrid(double sMin, double sMax, double kMin, double kMax, int sDim, int kDim, QChar constantAxis);
+    QVector<QVector<US_Model::SimulationComponent> > generateSDGrid(double sMin, double sMax, double dMin, double dMax, int sDim, int dDim, QChar constantAxis);
+    QVector<double> calculateGridStatistics(QVector<QVector<double> > processedGrid);
 };
 
 #endif

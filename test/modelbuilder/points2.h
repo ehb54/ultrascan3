@@ -66,12 +66,13 @@ public:
 
     grid(RegularGrid* rg, point pts, double deltat, int neighbour_points = 0, int neighbour_steps = 0);
     //grid( RegularGrid* rg ,double deltat ,int neighbour_points = 0,int neighbour_steps = 0 );
+    //void run(int steps, string instance, bool do_write = false, QwtPlot* grid_display = NULL);
     void run(int steps, bool do_write = false, QwtPlot* grid_display = NULL);
 
     bool write_pgrid(string file);
     bool in_bounds(point p);
     double charge(point p);
-    //double distance_from_bound(point p)
+    double distance_from_bound(point p);
     double* get_dim_values(int dim);
     point do_reflect(point p, point vector, point dir);
     point check_bounds(point p);
