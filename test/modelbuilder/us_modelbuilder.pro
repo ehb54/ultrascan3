@@ -2,7 +2,7 @@ include( ../../gui.pri )
 
 CONFIG	     += qt debug
 TARGET        = us_modelbuilder
-QT           += core xml network
+QT           += core xml
 #QT		+= xml
 INCLUDEPATH  += ../../programs
 

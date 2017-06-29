@@ -1665,6 +1665,7 @@ QVector<QVector<US_Model::SimulationComponent> > US_ModelBuilder::generateSDGrid
    return grid;
 }
 
+//Generates a grid on the mk plane with the specifications passed
 QVector<QVector<US_Model::SimulationComponent> > US_ModelBuilder::generateMKGrid(double mMin, double mMax, double kMin, double kMax, int mDim, int kDim, QChar constantAxis)
 {
    QVector<QVector<US_Model::SimulationComponent> > grid;
@@ -1719,7 +1720,7 @@ QVector<QVector<US_Model::SimulationComponent> > US_ModelBuilder::generateMKGrid
 
          for(int j = 0; j < mDim; j++)
          {
-            m = (deltaM * i) + mMin;
+            m = (deltaM * j) + mMin;
 
             US_Model::SimulationComponent current;
 
