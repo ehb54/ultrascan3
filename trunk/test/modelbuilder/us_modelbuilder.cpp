@@ -521,7 +521,7 @@ void US_ModelBuilder::startSimulation(void) {
 
    //MK grid gridsize testing
    //run only if we're on node 1
-   if(hostname.compare("n1"))
+   if(hostname.compare("n1") == 0)
    {
       qDebug() << "n1: Generating mk grids for RMSD averaging";
 
