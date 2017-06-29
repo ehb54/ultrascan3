@@ -31,7 +31,7 @@ int main(int argc, char* argv[]) {
 
    US_ModelBuilder w;
 
-   //TODO: Uncomment
+   //Uncomment to enable GUI display (also uncomment the entire constructor below)
    //w.show(); //!< \memberof QWidget
 
    return application.exec(); //!< \memberof QApplication
@@ -40,6 +40,19 @@ int main(int argc, char* argv[]) {
 // Constructor
 
 US_ModelBuilder::US_ModelBuilder() : US_Widgets() {
+
+   //Enclosed lines setup and start the application, skipping GUI
+   /////////////////////////////////////
+
+   //set simparams to defualt values
+   initalize_simulationParameters();
+
+   //run simulation
+   startSimulation();
+
+   /////////////////////////////////////
+
+   /*
    setWindowTitle(tr("Model Builder"));
    setPalette(US_GuiSettings::frameColor());
 
@@ -120,8 +133,6 @@ US_ModelBuilder::US_ModelBuilder() : US_Widgets() {
 
    resultsBox->setLayout(resultsSpecs);
 
-   //set simparams to defualt values
-   initalize_simulationParameters();
 
    //fill global gridLayout and apply
    specs->addWidget(dataBox, 0, 0);
@@ -130,8 +141,8 @@ US_ModelBuilder::US_ModelBuilder() : US_Widgets() {
    top->addLayout(specs);
    this->setLayout(top);
 
-   //TODO: Remove temporary pre-emptive button press
-   startSimulation();
+   */
+
 }
 
 //this function allows the user to open simparams GUI
@@ -150,18 +161,10 @@ void US_ModelBuilder::collectParameters(void) {
 
 void US_ModelBuilder::update_parameters(void) {
    simparams = working_simparams;
-   startButton -> setEnabled(true);
 }
 
 //this function allows the user to begin the simulation
-
 void US_ModelBuilder::startSimulation(void) {
-   //lock input fields
-   le_sedimentationVal->setDisabled(true);
-   le_diffusionVal->setDisabled(true);
-   le_RMSD->setDisabled(true);
-   startButton->setDisabled(true);
-   parameterButton->setDisabled(true);
 
    double sMin = 1e-13;
    double sMax = 10e-13;
@@ -562,11 +565,6 @@ void US_ModelBuilder::startSimulation(void) {
 //   delete data2;
 
 //   qDebug() << "RMSD: " << rmsd;
-
-
-   //re-enable parameter button, start button
-   parameterButton->setDisabled(false);
-   startButton->setDisabled(false);
 
    //TODO: remove temporary exit
    qDebug() << "Exiting \"normally\"";
