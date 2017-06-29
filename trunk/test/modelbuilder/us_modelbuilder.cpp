@@ -16,7 +16,8 @@ using namespace std;
 //global variable instance number
 QString instanceNum;
 
-int main(int argc, char* argv[]) {
+int main(int argc, char* argv[])
+{
    QApplication application(argc, argv);
 
 #include "main1.inc"
@@ -39,7 +40,8 @@ int main(int argc, char* argv[]) {
 
 // Constructor
 
-US_ModelBuilder::US_ModelBuilder() : US_Widgets() {
+US_ModelBuilder::US_ModelBuilder() : US_Widgets()
+{
 
    //Enclosed lines setup and start the application, skipping GUI
    /////////////////////////////////////
@@ -159,26 +161,28 @@ void US_ModelBuilder::collectParameters(void) {
 
 //this function updates the global simparams variable with user data
 
-void US_ModelBuilder::update_parameters(void) {
+void US_ModelBuilder::update_parameters(void)
+{
    simparams = working_simparams;
 }
 
 //this function allows the user to begin the simulation
-void US_ModelBuilder::startSimulation(void) {
+void US_ModelBuilder::startSimulation(void)
+{
 
-   double sMin = 1e-13;
-   double sMax = 10e-13;
+//   double sMin = 1e-13;
+//   double sMax = 10e-13;
 
    double kMin = 1.0;
    double kMax = 4.0;
 
-   double dMin = 1e-7;
-   double dMax = 6e-7;
+//   double dMin = 1e-7;
+//   double dMax = 6e-7;
 
    double mMin = 5000;
    double mMax = 970000;
 
-   int dim = 20;
+//   int dim = 20;
 
    //find out the hostname
    char tempHN[1024];
@@ -572,7 +576,8 @@ void US_ModelBuilder::startSimulation(void) {
 }
 
 //interpolates the RMSD of the point 'target' using the RMSDs of 4 surrounding points on a regular grid
-double US_ModelBuilder::interpolatePoint(QVector3D target, QVector3D p11, QVector3D p12, QVector3D p21, QVector3D p22) {
+double US_ModelBuilder::interpolatePoint(QVector3D target, QVector3D p11, QVector3D p12, QVector3D p21, QVector3D p22)
+{
    //extract x and y values
    double x = target.x();
    double y = target.y();
