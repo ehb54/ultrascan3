@@ -177,8 +177,12 @@ void US_ModelBuilder::startSimulation(void) {
 
    int dim = 20;
 
-   //qDebug() << QHostInfo::localHostName();
-
+   //find out the hostname
+   char tempHN[1024];
+   tempHN[1023] = '\0';
+   gethostname(tempHN, 1024);
+   QString hostname = QString::fromLocal8Bit(tempHN);
+   qDebug() << hostname;
 
    //SD grid generaton
    /*
@@ -516,33 +520,36 @@ void US_ModelBuilder::startSimulation(void) {
    */
 
    //MK grid gridsize testing
-   qDebug() << "Generating mk grids for RMSD averaging";
-
-   QFile outfileMKAverage("output/mkGrid_Averages_kMajor.tsv");
-   outfileMKAverage.open(QIODevice::ReadWrite);
-   QTextStream outstreamMKAverage(&outfileMKAverage);
-   outstreamMKAverage << "#PointCount \t AverageRMSD \t SampleStddev" << endl;
-
-   //generate grid at different sizes
-   for(int dimension = 20; dimension < 400; dimension += 10)
+   //run only if we're on node 1
+   if(hostname.compare("n1"))
    {
-      qDebug() << "Making grid for dimension: " << dimension;
+      qDebug() << "n1: Generating mk grids for RMSD averaging";
 
-      //make grid
-      QVector<QVector<US_Model::SimulationComponent> > grid = generateMKGrid(mMin, mMax, kMin, kMax, dimension, dimension, 'k');
+      QFile outfileMKAverage("output/mkGrid_Averages_kMajor.tsv");
+      outfileMKAverage.open(QIODevice::ReadWrite);
+      QTextStream outstreamMKAverage(&outfileMKAverage);
+      outstreamMKAverage << "#PointCount \t AverageRMSD \t SampleStddev" << endl;
 
-      //get RMSD
-      QVector<QVector<double> > results = checkLineRMSDParalell(grid, false);
+      //generate grid at different sizes
+      for(int dimension = 20; dimension < 400; dimension += 10)
+      {
+         qDebug() << "Making grid for dimension: " << dimension;
 
-      //stats - 3-length array of count, average, stddev
-      QVector<double> stats = calculateGridStatistics(results);
+         //make grid
+         QVector<QVector<US_Model::SimulationComponent> > grid = generateMKGrid(mMin, mMax, kMin, kMax, dimension, dimension, 'k');
 
-      //output data to file
-      outstreamMKAverage << stats.at(0) << " \t" << stats.at(1) << " \t" << stats.at(2) <<  endl;
+         //get RMSD
+         QVector<QVector<double> > results = checkLineRMSDParalell(grid, false);
+
+         //stats - 3-length array of count, average, stddev
+         QVector<double> stats = calculateGridStatistics(results);
+
+         //output data to file
+         outstreamMKAverage << stats.at(0) << " \t" << stats.at(1) << " \t" << stats.at(2) <<  endl;
+      }
+
+      outfileMKAverage.close();
    }
-
-   outfileMKAverage.close();
-
 
 //   US_Model::SimulationComponent model1 = modelComponentFromSK(0.000000000000100096, 1);
 //   US_Model::SimulationComponent model2 = modelComponentFromSK(0.000000000000100288, 1);
