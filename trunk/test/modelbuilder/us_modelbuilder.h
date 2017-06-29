@@ -4,7 +4,6 @@
 #include <QtGui>
 #include <QApplication>
 #include <QDomDocument>
-//#include <QHostInfo>
 #include <QVector>
 #include <QFile>
 #include <QFileInfo>
@@ -17,6 +16,7 @@
 #include <QThread>
 #include <qwt_legend.h>
 #include <cmath>
+#include <unistd.h> //for getting hostname
 #include "us_extern.h"
 #include "us_widgets.h"
 #include "us_help.h"
