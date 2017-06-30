@@ -8,6 +8,7 @@
 #include <QFile>
 #include <QFileInfo>
 #include <QTextStream>
+#include <QPair>
 #if QT_VERSION > 0x050000
 #include <QtConcurrent/QtConcurrent>
 #else
@@ -80,6 +81,7 @@ private slots:
 
    double calculateDistance( US_Model::SimulationComponent first , US_Model::SimulationComponent second );
    US_DataIO::RawData* simulateComponent	( US_Model::SimulationComponent component );
+   QVector<QPair<US_Model::SimulationComponent, US_DataIO::RawData*> > simulateBatch(QVector<US_Model::SimulationComponent> components);
 
    //Calculation functions, from other solute properties
    double calculateFrictionalRatioSD( double s , double D );
@@ -96,7 +98,7 @@ private slots:
    QVector<QPair<US_Model::SimulationComponent, double> > testRegularGrid(QVector<QVector<US_Model::SimulationComponent> > grid);
    QVector<QVector<US_Model::SimulationComponent> > switchRegularGridOrientation(QVector<QVector<US_Model::SimulationComponent> > regular);
 
-
+   QVector<double> calculateIrregularGridRMSD(QVector<QVector<US_Model::SimulationComponent> > grid, int numNeighbors);
 
    //Grid generation functions for particular grid-types and planes
    QVector<QVector<US_Model::SimulationComponent> > createFaxenGrid(double minS, double maxS, double minK, double maxK, int grids);
