@@ -1166,6 +1166,62 @@ QVector<QPair<US_Model::SimulationComponent, double> > US_ModelBuilder::testRegu
    return results;
 }
 
+//Calculates RMSD levels for an irregular grid;
+//Accomplished by simulating every solute, storing the simulations in the heap, and then finding RMSD relative to every point
+//A point's RMSD is determined by taking the average RMSD of the 'numNeighbors' lowest values
+//NOTE: UNDER NO CONDITIONS PASS A LARGE GRID IN HERE
+//TODO: Optimize by selecting nearest 20 or so points in sk or sd grid for comparison instead of calculating RMSD for everything
+//returns them as a qvector of sedimentation, diffusion, f/f0, MW, and RMSD; this is done because std::tuple is unavailable on Alamo
+QVector<double> US_ModelBuilder::calculateIrregularGridRMSD(QVector<QVector<US_Model::SimulationComponent> > grid, int numNeighbors)
+{
+   QVector<double> results;
+
+   //vector to store simulations for every point
+   QVector<QPair<US_Model::SimulationComponent, US_DataIO::RawData*> > simulations;
+   QVector<QFuture<QVector<QPair<US_Model::SimulationComponent, US_DataIO::RawData*> > > > futures;
+/*
+   //queue up all points for computation
+   for(int i = 0; i < grid.size(); i++)
+   {
+      futures.append(QTConcurrent::run(this, &US_ModelBuilder::simulateBatch, grid.at(i)));
+   }
+
+   //get all points back from threads; block until finished
+   int numFutures = futures.size();
+   for(int i = 0; i < numFutures; i++)
+   {
+      simulations.append(futures.at(0).result());
+      qDebug() << "Got thread result " << i << " of " << numFutures;
+   }
+
+
+
+
+
+   //Delete every element of the simulations cache vector
+   for(int i = 0; i < simulations.size(); i++)
+   {
+      delete simulations.at(i);
+   }*/
+
+   return results;
+}
+
+//Simulates every point in a list of components
+QVector<QPair<US_Model::SimulationComponent, US_DataIO::RawData*> > US_ModelBuilder::simulateBatch(QVector<US_Model::SimulationComponent> components)
+{
+   QVector<QPair<US_Model::SimulationComponent, US_DataIO::RawData*> > simulations;
+
+   for(int i = 0; i < components.size(); i++)
+   {
+      QPair<US_Model::SimulationComponent, US_DataIO::RawData*> value (components.at(1), simulateComponent(components.at(i)));
+      simulations.append(value);
+   }
+
+   return simulations;
+}
+
+
 //Generates a Faxen grid from boundaries given
 QVector<QVector<US_Model::SimulationComponent> > US_ModelBuilder::createFaxenGrid(double minS, double maxS, double minK, double maxK, int grids)
 {
@@ -1796,17 +1852,3 @@ QVector<double> US_ModelBuilder::calculateGridStatistics(QVector<QVector<double>
 
    return data;
 }
-
-//Calculates RMSD levels for an irregular grid;
-//Accomplished by simulating every solute, storing the simulations in the heap, and then finding RMSD relative to every point
-//A point's RMSD is determined by taking the average RMSD of the 6 lowest values
-//NOTE: UNDER NO CONDITIONS PASS A LARGE GRID IN HERE
-//TODO: Optimize by selecting nearest 20 or so points in sk or sd grid for comparison instead of calculating RMSD for everything
-//returns them as a qvector of sedimentation, diffusion, f/f0, MW, and RMSD
-//QVector<std::tuple> US_ModelBuilder::calculateIrregularGridRMSD(QVector<QVector<US_Model::SimulationComponent> >)
-//{
-//   QVector<std::tuple> results;
-
-//   return results;
-//}
-
