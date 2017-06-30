@@ -691,7 +691,7 @@ void US_SolveSim::calc_residuals( int offset, int dataset_count,
             }
             else
             {    DbgLv(1)<<"solve_sim: timestate file does not exist";
-               // US_AstfemMath::writetimestate (tmst_fpath,dset->simparams, sim_vals.sim_data , true) ;
+               // US_AstfemMath::writetimestate( tmst_fpath,dset->simparams, sim_vals.sim_data );
                // dset->simparams.simSpeedsFromTimeState( tmst_fpath);
 
             }
@@ -867,7 +867,7 @@ void US_SolveSim::calc_residuals( int offset, int dataset_count,
             }
             else
             {   DbgLv(1)<<"solve_sim_2: timestate file does not exist";                                                  
-                //US_AstfemMath::writetimestate (tmst_fpath,dset->simparams, sim_vals.sim_data , true) ;
+                //US_AstfemMath::writetimestate( tmst_fpath,dset->simparams, sim_vals.sim_data ) ;
                 //dset->simparams.simSpeedsFromTimeState( tmst_fpath);        
             }
 

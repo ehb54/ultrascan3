@@ -5,18 +5,13 @@
 #include "us_model.h"
 #include "us_simparms.h"
 #include "us_extern.h"
-//#include "us_experiment.h"
-//#include "us_widgets.h"
-//#include "us_astfem_rsa.h"
-//#include "us_lamm_astfvm.h"
+
 #include <unistd.h>
 
 //! \brief A group of static mathematical functions to support finite element 
 //!        calculations
-class US_UTIL_EXTERN US_AstfemMath : public QObject
+class US_UTIL_EXTERN US_AstfemMath
 {
-   Q_OBJECT
- 
    public:
 
       class MfemInitial;
@@ -28,22 +23,22 @@ class US_UTIL_EXTERN US_AstfemMath : public QObject
       //US_LammAstfvm*          astfvm;
       //US_Model                system;
       //US_SimulationParameters simparams;
-     // static void get_af_params( US_DataIO::RawData& , US_SimulationParameters&,US_Model&);
+      // static void get_af_params( US_DataIO::RawData& , US_SimulationParameters&,US_Model&);
       //static void interpolate_subha (int ,double* ,double*, int, QVector< double >&  ,double*);
         //QVector< SP_SPEEDPROFILE >         speedsteps;   //!< Speed steps
-      
-static void update_experimental_grid( US_DataIO::RawData& , US_SimulationParameters&, bool , int);
+
       //! \brief Interpolate first onto second
       //! \param C0    Input MfemInitial
       //! \param C1    MfemInitial with interpolated concentrations
       static void interpolate_C0( MfemInitial&, MfemInitial& );
-      static int  writetimestate(const QString& , US_SimulationParameters& , US_DataIO::RawData& , bool );
-//, US_TimeState&) ;
+
       //! \brief Interpolate starting concentration QVector MfemInitial onto C0
       //! \param C0    Input MfemInitial
       //! \param C1    First scan with interpolated concentrations
       //! \param xvec  Start x (radius) values for each scan
       static void interpolate_C0( MfemInitial&, double*, QVector< double >& );
+
+      static int  writetimestate( const QString&, US_SimulationParameters&, US_DataIO::RawData& );
 
       //! \brief Initialize a 2d matrix in memory to all zeros.
       //! \param val1   First dimension
@@ -112,7 +107,7 @@ static void update_experimental_grid( US_DataIO::RawData& , US_SimulationParamet
       //! \param a1 The a0 value
       //! \param a2 The a0 value
       //! \returns Cube root
-      static double cube_root    ( long double, long double, double );
+      static double cube_root    ( double, double, double );
 
       //! \brief Solve Ax = b using Gaussian Elimination
       //! \param n  The order of the square matrix

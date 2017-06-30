@@ -1,5 +1,6 @@
 //! \file us_analysis_control_2d.cpp
 #include <QApplication>
+#include <QDateTime>
 
 #include "us_2dsa.h"
 #include "us_analysis_control_2d.h"
@@ -26,7 +27,6 @@
 #include "us_report.h"
 #include "us_constants.h"
 #include "us_show_norm.h"
-#include <QDateTime>
 
 
 //#include "us_pseudo3d_combine.h"
@@ -1610,57 +1610,27 @@ void US_AnalysisControl2D::norm_complete( WorkerThreadCalcNorm* wthr )
    }
 
    model2.update_coefficients();
-   //if ( kthrdr == 0 )
-   //{
-   //  for ( int i = 0; i< model2.components.size() ; i++ )
-   //    DbgLv(1)<<"model2_values_from_norm_complete"<< model2.components[ i ].s <<
-   //              model2.components[ i ].signal_concentration  << model2.components[ i ].f_f0;
-   //}
    kthrdr--;
-   //DbgLv(1)<<"time_before_kthrd=0"<< QDateTime.toString( "hh:mm:ss" )  ;
-   //while ( kthrdr >= 0 )
-   //{
-         //   DbgLv(1)<< "kthrdr= " << kthrdr ;  
-     //for ( int i = 0 ; i< kthrdr; i++)
-   //      US_Sleep::msleep( 500 );
-  // }
 
    if ( kthrdr == 0 )
    {
-      for ( int i = 0; i< model2.components.size() ; i++ )
-      DbgLv(1)<<"model2_values_from_norm_complete"<< model2.components[ i ].s <<
-                model2.components[ i ].signal_concentration  << model2.components[ i ].f_f0;
       double cff0       = ck_varvbar->isChecked() ? ct_constff0->value() : 0.0;
       bool cnst_vbr     = ( cff0 == 0.0 );
 
-      for ( int ii = 0; ii < workout.nsolutes; ii++ )
+      for ( int ii = 0; ii< model2.components.size(); ii++ )
       {  // For plotting purposes, scale sedimentation coefficients
          model2.components[ ii ].s *= 1.0e+13;
+DbgLv(1) << "model2_values_from_norm_complete"
+ << "  s,k" << model2.components[ ii ].s << model2.components[ ii ].f_f0
+ << "  norm" << model2.components[ ii ].signal_concentration;
       }
 
       analcd1  = new US_show_norm( &model2, cnst_vbr, parentw );
 
       analcd1->show();
-      //DbgLv(1)<<"time_before_kthrd=0"<<QDateTime.toString( "hh:mm:ss") ;
+//DbgLv(1) << "time_before_kthrd=0" << QDateTime.toString( "hh:mm:ss") ;
    }
    
-   DbgLv(1) << "uac2:NC: kthrdr" << kthrdr << "COMPLETE thrn" << workout.thrn;
-
-#if 0
-   if ( kthrdr < 1 )
-   {  // All threads have completed:  display the norms
-      double cff0       = ck_varvbar->isChecked() ? ct_constff0->value() : 0.0;
-      bool cnst_vbr     = ( cff0 == 0.0 );
-
-      for ( int ii = 0; ii < workout.nsolutes; ii++ )
-      {  // For plotting purposes, scale sedimentation coefficients
-         model2.components[ ii ].s *= 1.0e+13;
-      }
-
-      analcd1  = new US_show_norm( &model2, cnst_vbr, parentw );
-
-      analcd1->show();
-   }
-#endif
+DbgLv(1) << "uac2:NC: kthrdr" << kthrdr << "COMPLETE thrn" << workout.thrn;
 }
 

@@ -1049,24 +1049,26 @@ void US_2dsa::open_fitcntl()
         dset.simparams.speed_step  = speed_steps;
      }
      QString tmst_fpath = US_Settings::resultDir() +"/" + runID +"/" + runID + ".time_state.tmst";
-     QFileInfo check_file(tmst_fpath);
+     QFileInfo check_file( tmst_fpath );
      sdata = rawList[ drow ] ;
      US_AstfemMath::initSimData( sdata, dataList[ drow ], 0.0 );
 
-     if ( (check_file.exists()) && (check_file.isFile()) )
+     if ( check_file.exists()  &&  check_file.isFile() )
      {
         dset.simparams.simSpeedsFromTimeState( tmst_fpath );
-        DbgLv(1)<<"2dsa : timestate file exists"<< tmst_fpath 
-              << " timestateobject = "<<dset.simparams.tsobj
-              << "stepscount=" << dset.simparams.speed_step.size();
+DbgLv(1)<<"2dsa : timestate file exists"<< tmst_fpath 
+ << " timestateobject = "<<dset.simparams.tsobj
+ << "stepscount=" << dset.simparams.speed_step.size();
 
      }
      else
-     { DbgLv(1)<<"2dsa : timestate file does not exist and  timestateobject = "<<dset.simparams.tsobj
-              << "exp_steps=" << exp_steps << tmst_fpath ;
-       QString tmst_fname = US_Settings::tmpDir() + "/" + temp_Id_name() + ".time_state.tmst";
-       US_AstfemMath::writetimestate (tmst_fpath,dset.simparams, sdata , true) ;
-       dset.simparams.simSpeedsFromTimeState( tmst_fpath);
+     {
+        QString tmst_fpath = US_Settings::tmpDir() + "/" + temp_Id_name() + ".time_state.tmst";
+        US_AstfemMath::writetimestate( tmst_fpath, dset.simparams, sdata );
+
+        dset.simparams.simSpeedsFromTimeState( tmst_fpath );
+DbgLv(1)<<"2dsa : timestate file does not exist and  timestateobject = "
+ << dset.simparams.tsobj << "exp_steps=" << exp_steps << tmst_fpath ;
      }
 
      dset.run_data           = dataList[ drow ];
