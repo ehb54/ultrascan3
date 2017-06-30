@@ -91,12 +91,12 @@ private slots:
    //RMSD calculation functions and associated utilities
    double calculateScaledRMSD(US_DataIO::RawData* simulation1, US_Model::SimulationComponent component1 , US_DataIO::RawData* simulation2 , US_Model::SimulationComponent component2);
    QVector<double> findListRMSD(QVector<US_Model::SimulationComponent> components);
-   QVector<std::tuple<double, double, double, double, double> > checkLineRMSDParalell(QVector<QVector<US_Model::SimulationComponent> > grid, bool approximateToMidpoint);
-   std::tuple<int, double, double> calculateGridStatistics(QVector<std::tuple<double, double, double, double, double> > processedGrid);
+   QVector<QVector<double> > checkLineRMSDParalell(QVector<QVector<US_Model::SimulationComponent> > grid, bool approximateToMidpoint);
+   QVector<double> calculateGridStatistics(QVector<QVector<double> > processedGrid);
    QVector<QPair<US_Model::SimulationComponent, double> > testRegularGrid(QVector<QVector<US_Model::SimulationComponent> > grid);
    QVector<QVector<US_Model::SimulationComponent> > switchRegularGridOrientation(QVector<QVector<US_Model::SimulationComponent> > regular);
 
-   QVector<std::tuple<double, double, double, double, double> > calculateIrregularGridRMSD(QVector<QVector<US_Model::SimulationComponent> >);
+
 
    //Grid generation functions for particular grid-types and planes
    QVector<QVector<US_Model::SimulationComponent> > createFaxenGrid(double minS, double maxS, double minK, double maxK, int grids);
