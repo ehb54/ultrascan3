@@ -528,7 +528,7 @@ void US_ModelBuilder::startSimulation(void)
 
    //MK grid gridsize testing
    //run only if we're on node 1
-   if(hostname.compare("n1") == 0)
+   if(hostname.compare("n1") == 0 || true)
    {
       qDebug() << "n1: Generating mk grids for RMSD averaging";
 
@@ -538,7 +538,7 @@ void US_ModelBuilder::startSimulation(void)
       outstreamMKAverage << "#PointCount \t AverageRMSD \t SampleStddev" << endl;
 
       //generate grid at different sizes
-      for(int dimension = 20; dimension < 400; dimension += 10)
+      for(int dimension = 20; dimension < 40; dimension += 10)
       {
          qDebug() << "Making grid for dimension: " << dimension;
 
@@ -546,13 +546,13 @@ void US_ModelBuilder::startSimulation(void)
          QVector<QVector<US_Model::SimulationComponent> > grid = generateMKGrid(mMin, mMax, kMin, kMax, dimension, dimension, 'k');
 
          //get RMSD
-         QVector<QVector<double> > results = checkLineRMSDParalell(grid, false);
+         QVector<std::tuple<double, double, double, double, double> > results = checkLineRMSDParalell(grid, false);
 
          //stats - 3-length array of count, average, stddev
-         QVector<double> stats = calculateGridStatistics(results);
+         std::tuple<int, double, double> stats = calculateGridStatistics(results);
 
          //output data to file
-         outstreamMKAverage << stats.at(0) << " \t" << stats.at(1) << " \t" << stats.at(2) <<  endl;
+         outstreamMKAverage << std::get<0>(stats) << " \t" << std::get<1>(stats) << " \t" << std::get<2>(stats) <<  endl;
       }
 
       outfileMKAverage.close();
@@ -1461,9 +1461,9 @@ QVector<QVector<US_Model::SimulationComponent> > US_ModelBuilder::createNumerica
 
 
 //finds the RMSDs between adjacent points in each column of the 2d qvector grid and returns them as a qvector of sedimentation, diffusion, f/f0, MW, and RMSD
-QVector<QVector<double> > US_ModelBuilder::checkLineRMSDParalell(QVector<QVector<US_Model::SimulationComponent> > grid, bool approximateToMidpoint)
+QVector<std::tuple<double, double, double, double, double> > US_ModelBuilder::checkLineRMSDParalell(QVector<QVector<US_Model::SimulationComponent> > grid, bool approximateToMidpoint)
 {
-   QVector<QVector<double> > values;
+   QVector<std::tuple<double, double, double, double, double> > values;
    QVector<QFuture<QVector<double> > > futures;
 
    //qDebug() << "Max thread count: " << QThreadPool::globalInstance()->maxThreadCount();
@@ -1491,7 +1491,6 @@ QVector<QVector<double> > US_ModelBuilder::checkLineRMSDParalell(QVector<QVector
 
       for(int lcv = 1; lcv < column.size(); lcv++)
       {
-         QVector<double> data;
          US_Model::SimulationComponent component1 = column.at(lcv - 1);
          US_Model::SimulationComponent component2 = column.at(lcv);
          double s;
@@ -1516,12 +1515,13 @@ QVector<QVector<double> > US_ModelBuilder::checkLineRMSDParalell(QVector<QVector
          }
 
          //save data
-         data.append(s);
-         data.append(D);
-         data.append(f_f0);
-         data.append(mw);
-         data.append(vals.at(lcv - 1));
-         values.append(data);
+//         data.append(s);
+//         data.append(D);
+//         data.append(f_f0);
+//         data.append(mw);
+//         data.append(vals.at(lcv - 1));
+
+         values.append(std::make_tuple(s, D, f_f0, mw, vals.at(lcv - 1)));
       }
    }
 
@@ -1768,9 +1768,9 @@ QVector<QVector<US_Model::SimulationComponent> > US_ModelBuilder::generateMKGrid
 
 //calculates distribution statistics on a specified grid, calculating along inner QVectors
 //Returns data in a size 3 qvector in the form: pointcount, average RMSD, standard deviation
-QVector<double> US_ModelBuilder::calculateGridStatistics(QVector<QVector<double> > processedGrid)
+std::tuple<int, double, double> US_ModelBuilder::calculateGridStatistics(QVector<std::tuple<double, double, double, double, double> > processedGrid)
 {
-   int numPoints = 0.0;
+   int numPoints = 0;
    double average = 0.0;
    double stddev = 0.0;
    QVector<double> data;
@@ -1778,7 +1778,7 @@ QVector<double> US_ModelBuilder::calculateGridStatistics(QVector<QVector<double>
    //calculate average
    for(int i = 0; i < processedGrid.size(); i++)
    {
-      average += processedGrid.at(i).at(4);
+      average += std::get<4>(processedGrid.at(i));
       numPoints++;
    }
    average = average / ((double) numPoints);
@@ -1786,13 +1786,23 @@ QVector<double> US_ModelBuilder::calculateGridStatistics(QVector<QVector<double>
    //calculate standard deviation
    for(int i = 0; i < processedGrid.size(); i++)
    {
-      stddev += sq(processedGrid.at(i).at(4) - average);
+      stddev += sq(std::get<4>(processedGrid.at(i)) - average);
    }
    stddev = sqrt((1 / (numPoints - 1.0)) * stddev);
 
-   data.append(numPoints);
-   data.append(average);
-   data.append(stddev);
-
-   return data;
+   return std::make_tuple(numPoints, average, stddev);
 }
+
+//Calculates RMSD levels for an irregular grid;
+//Accomplished by simulating every solute, storing the simulations in the heap, and then finding RMSD relative to every point
+//A point's RMSD is determined by taking the average RMSD of the 6 lowest values
+//NOTE: UNDER NO CONDITIONS PASS A LARGE GRID IN HERE
+//TODO: Optimize by selecting nearest 20 or so points in sk or sd grid for comparison instead of calculating RMSD for everything
+//returns them as a qvector of sedimentation, diffusion, f/f0, MW, and RMSD
+QVector<std::tuple<double, double, double, double, double> > US_ModelBuilder::calculateIrregularGridRMSD(QVector<QVector<US_Model::SimulationComponent> >)
+{
+   QVector<std::tuple<double, double, double, double, double> > results;
+
+   return results;
+}
+
