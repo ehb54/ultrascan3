@@ -865,6 +865,7 @@ QString US_TimeState::last_error_message( )
 int US_TimeState::dbCreate( US_DB2* dbP,
                             const int expID, const QString fpath )
 {
+int dbg_level=US_Settings::us_debug();
    QStringList query;
    int tmstID   = -1;
    if ( dbP == NULL  ||  fpath.isEmpty()  ||  expID < 1 )
@@ -885,8 +886,7 @@ int US_TimeState::dbCreate( US_DB2* dbP,
    QString tmst_cksm  = US_Util::md5sum_file( tmst_fpath );
    QString defs_cksm  = US_Util::md5sum_file( defs_fpath );
    QString tmst_fname = QString( fpath ).section( "/", -1, -1 );
-int dbg_level=US_Settings::us_debug();
-//DbgLv(1) << "dbCreate: dbP fn ck" << dbP << tmst_fname << tmst_cksm;
+DbgLv(1) << "dbCreate: dbP fn ck" << dbP << tmst_fname << tmst_cksm;
 
    QByteArray defs_da = xfi.readAll();
    xfi.close();
@@ -952,7 +952,7 @@ int dbg_level=US_Settings::us_debug();
 int US_TimeState::dbDelete( US_DB2* dbP, const int tmstID )
 {
 int dbg_level=US_Settings::us_debug();
-//DbgLv(1) << "dbDelete: dbP tmstID" << dbP << tmstID;
+DbgLv(1) << "dbDelete: dbP tmstID" << dbP << tmstID;
    QStringList query;
    query << "delete_timestate" << QString::number( tmstID );
    int status = dbP->statusQuery( query );
@@ -965,8 +965,8 @@ int US_TimeState::dbExamine( US_DB2* dbP, int* tmstIdP, int* expIdP,
       QString* fnameP, QString* xdefsP, QString* cksumP, QDateTime* lastupdP )
 {
 int dbg_level=US_Settings::us_debug();
-//DbgLv(1) << "dbExamine: dbP tmstID expID fname xdefs cksum lastupd"
-// << dbP << tmstIdP << expIdP << fnameP << xdefsP << cksumP << lastupdP;
+DbgLv(1) << "dbExamine: dbP tmstID expID fname xdefs cksum lastupd"
+ << dbP << tmstIdP << expIdP << fnameP << xdefsP << cksumP << lastupdP;
    QStringList query;
    int tmstID    = ( tmstIdP == NULL ) ? 0 : *tmstIdP;
    int expID     = ( expIdP  == NULL ) ? 0 : *expIdP;
@@ -983,7 +983,7 @@ int dbg_level=US_Settings::us_debug();
       if ( status != US_DB2::OK )
          return status;
 
-      int nrows     = dbP->numRows();
+//      int nrows     = dbP->numRows();
       dbP->next();
       expID         = dbP->value( 0 ).toString().toInt();
 //DbgLv(1) << "dbExamine:  get_timestate expID" << expID << "nrows" << nrows;
@@ -1006,10 +1006,10 @@ int dbg_level=US_Settings::us_debug();
       if ( status != US_DB2::OK )
          return status;
 
-      int nrows     = dbP->numRows();
+//      int nrows     = dbP->numRows();
 //DbgLv(1) << "dbExamine:  get_experiment_timestate  nrows" << nrows;
 //      dbP->next();
-bool havenx=dbP->next();
+//bool havenx=dbP->next();
       status        = dbP->lastErrno();
 //DbgLv(1) << "dbExamine:  get_experiment_timestate  next status" << status
 // << "have_next" << havenx;
@@ -1034,8 +1034,8 @@ bool havenx=dbP->next();
    if ( cksumP != NULL )    // Return cksum+size string if requested
       *cksumP       = dbP->value( 3 ).toString() + " " +
                       dbP->value( 4 ).toString();
-if(cksumP!=NULL)
-DbgLv(1) << "dbExamine:  cksum-db" << *cksumP;
+//if(cksumP!=NULL)
+//DbgLv(1) << "dbExamine:  cksum-db" << *cksumP;
 
    if ( lastupdP != NULL )  // Return last-updated datetime if requested
       *lastupdP     = QDateTime::fromString( dbP->value( 5 ).toString(),
@@ -1049,7 +1049,7 @@ int US_TimeState::dbDownload( US_DB2* dbP, const int tmstID,
       const QString fpath )
 {
 int dbg_level=US_Settings::us_debug();
-//DbgLv(1) << "dbDownload: dbP tmstID fpath" << dbP << tmstID << fpath;
+DbgLv(1) << "dbDownload: dbP tmstID fpath" << dbP << tmstID << fpath;
    int status = dbP->readBlobFromDB( fpath, QString( "download_timestate" ),
                                      tmstID );
    return status;
@@ -1060,7 +1060,7 @@ int US_TimeState::dbUpload( US_DB2* dbP, const int tmstID,
       const QString fpath )
 {
 int dbg_level=US_Settings::us_debug();
-//DbgLv(1) << "dbUpload: dbP tmstID fpath" << dbP << tmstID << fpath;
+DbgLv(1) << "dbUpload: dbP tmstID fpath" << dbP << tmstID << fpath;
    int status = dbP->writeBlobToDB( fpath, QString( "upload_timestate" ),
                                     tmstID );
    return status;

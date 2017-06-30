@@ -895,10 +895,9 @@ void US_Astfem_Sim::save_scans( void )
      // QString fn_results = QFileDialog::getExistingDirectory( this,
      //    tr( "Select a directory for the simulated data:" ),
      //    US_Settings::resultDir() );
-      //qDebug()<< "filenamefrom us_astfem_sim"<<  fn << fn_results ;
-      astfem_math.writetimestate (tmst_fname ,simparams, sim_data, true) ;   
+//qDebug()<< "filenamefrom us_astfem_sim"<<  fn << fn_results ;
+      astfem_math.writetimestate( tmst_fname ,simparams, sim_data );
    }
-  // writetimestate() ;
 }
 
 void US_Astfem_Sim::save_xla( const QString& dirname )
@@ -1075,9 +1074,6 @@ DbgLv(1) << "Sim:SV: OD-Limit nchange nmodscn" << nchange << nmodscn
    US_DataIO::writeRawData( ofname, sim_data );
   
    progress->setValue( total_scans );
-   //-------------------
- //  int tc = writetimestate( run_id , dirname) ;
-   //-------------------
    lb_progress->setText( tr( "Completed" ) );
    
    pb_saveSim->setEnabled( false );
@@ -1323,7 +1319,6 @@ void US_Astfem_Sim::dump_ss( US_SimulationParameters::SpeedProfile& sp )
 
 void US_Astfem_Sim::dump_astfem_data( void )
 {
-   /*
    qDebug() << "astfem_data---- list size " << astfem_data.size();
    for ( int j = 0; j < astfem_data.size(); j++ ) 
    {
@@ -1347,12 +1342,10 @@ void US_Astfem_Sim::dump_astfem_data( void )
       for ( int i = 0; i < astfem_data[ j ].scan.size(); i++ ) 
          dump_mfem_scan( astfem_data[ j ].scan [ i ] );
    }
-   */
 }
 
-void US_Astfem_Sim::dump_mfem_scan( US_DataIO::Scan& /*ms*/ )
+void US_Astfem_Sim::dump_mfem_scan( US_DataIO::Scan& )
 {
-   /*
    qDebug() << "mfem_scan----";
    qDebug() << "time " << ms.time;
    qDebug() << "omega_s_t " << ms.omega_s_t;
@@ -1361,266 +1354,5 @@ void US_Astfem_Sim::dump_mfem_scan( US_DataIO::Scan& /*ms*/ )
    qDebug() << "time " << ms.time;
    qDebug() << "conc list size " << ms.conc.size();
    //qDebug() << "conc " << ms.conc;
-   */
 }
-//-----------------------------------------------------------------
-/*void load_mfem_data( US_DataIO::RawData&      edata,
-                                    US_AstfemMath::MfemData& fdata )
-{
-   int  nscan  = edata.scanCount();
-   int  nconc  = edata.pointCount();
-    fdata.id       = edata.description;
-   fdata.cell     = edata.cell;
-   fdata.scan  .resize( nscan );
-   fdata.radius   = edata.xvalues;
-     for ( int ii = 0; ii < nscan; ii++ )
-   {
-      US_AstfemMath::MfemScan* fscan = &fdata.scan[ ii ];
 
-      fscan->temperature = edata.scanData[ ii ].temperature;
-      fscan->rpm         = edata.scanData[ ii ].rpm;
-      fscan->time        = edata.scanData[ ii ].seconds;
-      fscan->omega_s_t   = edata.scanData[ ii ].omega2t;
-      fscan->conc        = edata.scanData[ ii ].rvalues;
-   }
-}*/
-//-----------------------------------------------------------------
-/*void initializeconc( int kk, US_AstfemMath::MfemInitial& CT0, bool noninteracting )
-{
-    US_Model::SimulationComponent* sc = &system.components[ kk ];
-    int nval   = af_c0.concentration.size();
-    //-------------------------------------------------
-     for ( int i = 0; i< CT0.concentration.size(); i++ )
-        CT0.concentration[i] =0.0;
-    //------------------------------------------------
-    // We don't have an existing CT0 concentration vector. Build up the initial
-    // concentration vector with constant concentration 
-    //-------------------------------------------------
-      if  ( nval == 0 )
-    {
-        double mxct=0.0;
-        int jmxc=0;
-        nval       = CT0.concentration.size();
-        if  ( simparams.band_forming )
-        {
-            // Calculate the width of the lamella
-              double angl = simparams.cp_angle   != 0.0 ? simparams.cp_angle   : 2.5;
-            double plen = simparams.cp_pathlen != 0.0 ? simparams.cp_pathlen : 1.2;
-            double base = sq( af_params.current_meniscus )+ simparams.band_volume * 360.0 / ( angl * plen * M_PI );
-            double lamella_width = sqrt( base ) - af_params.current_meniscus;
-            // Calculate the spread of the lamella:
-              for ( int j = 0; j < nval; j++ )
-           {
-               base = ( CT0.radius[ j ] - af_params.current_meniscus )/ lamella_width;
-               CT0.concentration[ j ] += sc->signal_concentration * exp( -pow( base, 4.0 ) );
-               if (  j<2||j>(CT0.concentration.size()-3)||j==(CT0.concentration.size()/40))
-                     DbgLv(2) << "RSA:  j base conc" << j << base << CT0.concentration[j];
-               if(mxct<CT0.concentration[j]) {mxct=CT0.concentration[j];jmxc=j;}
-           }
-        }
-          else  // !simparams.band_forming
-        {
-            for ( int j = 0; j < nval; j++ )
-            {
-                CT0.concentration[j] += sc->signal_concentration;
-                if(mxct<CT0.concentration[j]) {mxct=CT0.concentration[j];jmxc=j;}
-            }
-        }
-    }
-
-     else  // af_c0.concentration.size() > 0
-    {
-        if  ( noninteracting )
-        {
-            // Take the existing initial concentration vector and copy it to the
-            // temporary CT0 vector: needs rubber band to make sure meniscus and
-            // bottom equal current_meniscus and current_bottom
-            CT0.radius       .clear();
-            CT0.concentration.clear(); 
-            CT0.radius       .reserve( nval );
-            CT0.concentration.reserve( nval );
-            //CT0 = system.components[ k ].c0;
-            double conc0 = 0.0;                                                                               for ( int jj = 0; jj < nval; jj++ )
-            {
-                CT0.radius       .append( af_c0.radius       [ jj ] );
-                CT0.concentration.append( af_c0.concentration[ jj ] );
-                conc0 += af_c0.concentration[ jj ];
-            }
-        }
-         else // interpolation
-        {
-            US_AstfemMath::MfemInitial C;
-            int    nval  = CT0.concentration.size();
-            for ( int i = 0; i< CT0.concentration.size(); i++ )
-                CT0.concentration[i] =0.0;
-            C.radius       .clear();
-            C.concentration.clear();
-            C.radius       .reserve( nval );
-            C.concentration.reserve( nval );
-            double dr  = ( af_params.current_bottom - af_params.current_meniscus )
-                      / (double)( nval - 1 );
-            double rad = af_params.current_meniscus;
-            for ( int j = 0; j < nval; j++ )
-            {
-                C.radius       .append( rad );
-                C.concentration.append( 0.0 );
-                rad   += dr;
-            }
-            US_AstfemMath::interpolate_C0( af_c0, C );
-            for ( int j = 0; j < nval; j++ )
-                CT0.concentration[ j ] += C.concentration[ j ];
-        }
-    }
-}
-*/
-
-/*int US_Astfem_Sim::writetimestate(const QString& dirname, US_DataIO::RawData& sim_data)
-{
-   US_TimeState timestate;
-   QString run_id    = dirname.section( "/", -1, -1 );
-
-   QString tmst_fbase   = run_id  + ".time_state.tmst";
-   QString defs_fbase   = run_id  + ".time_state.xml";
-  
-   QString tmst_fdir    = dirname;
-   tmst_fdir =  tmst_fdir + "/";
-   
-   QString tmst_fname   = tmst_fdir + tmst_fbase;
-   QString defs_fname   = tmst_fdir + defs_fbase;
-
-   int     nspeed       = simparams.speed_step.size();
-   
-   qDebug()<<"tmst fname=	"<< tmst_fname 
-           <<"defs_fname   ="<< defs_fname 
-           <<  "runid=	"<<run_id;
-   //---------------------------
-    if ( timestate.open_write_data( tmst_fname, 0.0, 0.0 ) != 0 )
-   { 
-      qDebug()<<"Unable to open"; 
-      QMessageBox::critical( this,
-         tr( "Unwritable TimeState File" ),
-         tr( "   Unable to write the Time State file\n\"%1\"\n"
-             "   in directory\n\"%2\".\n\nCheck directory permissions." )
-         .arg( tmst_fbase ).arg( tmst_fdir ) );
-      //resetAll();
-      return -1;
-   }
-   
-   qDebug()<< "Subha : Number of speeds=        " << nspeed <<
-               "Time state file name=   " << tmst_fname;
-
-   timestate.set_key( "Time",        "F4" );
-   timestate.set_key( "Step",    "I2" );
-   timestate.set_key( "RawSpeed",    "I4" );
-   timestate.set_key( "SetSpeed",    "I4" );
-   timestate.set_key( "Omega2T",     "F4" );
-   timestate.set_key( "Temperature", "F4" );
-   timestate.set_key( "Scan",        "I10" );
-
-
-//   double t2  = sim_data.scanData[0].seconds;
-//   double w2t = sim_data.scanData[0].omega2t;
-//   double c   = pow(sim_data.scanData[0].rpm*M_PI/30.0,2.0);
-//   double d   = -2.0/3.0;
-//   double t1 = (w2t - t2*c)/(d*c);
-  
-   double duration =0.0;
-   double rpm     = 0.0;
-   double omega2t = 0.0;
-   int    scan_nbr= 0;
-   double temperature = sim_data.scanData[0].temperature;
-   int t_acc;// Used for time when accelertaed upto the specified rotor speed
- 
-   int nscans = sim_data.scanData.size() ;// Used for number of scans
-  
-   QList< int > scantimes ;
-
-   for ( int i = 0 ; i < nscans ; i++ )   
-   {   
-       scantimes.push_back(i);
-       scantimes [i] = sim_data.scanData[i].seconds ;
-    
-   }
-   double ts,fractpart,rate,prvs_speed ;
-   US_SimulationParameters::SpeedProfile* sp;
-
-   for ( int step = 0; step < nspeed; step++)
-   {
-       sp           = &simparams.speed_step[ step ];       
-       if ( step > 0)
-       {  ts = ( simparams.speed_step[ step ].rotorspeed - 
-                     simparams.speed_step[ step-1 ].rotorspeed)/(double)sp->acceleration ;
-          prvs_speed = simparams.speed_step[ step-1 ].rotorspeed ;
-       }
-       else
-       {   ts = simparams.speed_step[ 0 ].rotorspeed/( double)sp->acceleration ;
-           prvs_speed = 0.0 ;
-       }
-
-       fractpart = ts - int(ts);
-
-       if ( fractpart == 0.0 )
-           t_acc = (int) ts;
-       else
-           t_acc = int(ts) + 1;
-
-       rate = ( simparams.speed_step[ step ].rotorspeed - prvs_speed )/double(t_acc) ;
-
-       double speed    = simparams.speed_step[step].rotorspeed;
-
-       qDebug()<<"t_acc=        "<< t_acc << "step =    "<<step<< "speed=       "<< speed<< "rate=	"<< rate;
-
-       duration += (simparams.speed_step[step].duration_hours*3600.0) 
-                + (simparams.speed_step[step].duration_minutes*60.0);
-       int d1;
-
-       if ( step == 0 )
-          d1 = 0;
-       else
-          d1 += (simparams.speed_step[step-1].duration_hours*3600.0)
-                + (simparams.speed_step[step-1].duration_minutes*60.0);
-       qDebug()<<"d1=        "<< d1 << "duration =    "<< duration <<"step=	"<< step;
-       rpm -= rate ;
-       for ( int i = d1; i<= int(duration); i++ )
-       {
-           int tacc = d1 + t_acc ;
-
-           if ( i<= tacc )
-              rpm     += rate ;
-           else
-              rpm     =  speed ;
-
-           int    set_speed  = qRound( rpm / 100.0 ) * 100;
-           
-          // qDebug()<<"rpm=	"<<rpm <<"set_speed=" << set_speed <<" tacc=	"<< tacc<< 
-          //           "t_acc=	"<< t_acc<< "d1=	"<< d1;
-           omega2t  += pow((rpm*M_PI/30.0),2.0);
-
-           int itime   = i ;
-           int scanx   = scantimes.indexOf( itime );
-           scan_nbr     = ( scanx < 0 ) ? 0 : (scanx + 1);           
-           //---------------------------------------------------------
-           timestate.set_value( "Time",        itime   );
-           timestate.set_value( "Step",        step   );
-           timestate.set_value( "RawSpeed",    rpm         );
-           timestate.set_value( "SetSpeed",    set_speed   );
-           timestate.set_value( "Omega2T",     omega2t     );
-           timestate.set_value( "Temperature", temperature );
-           timestate.set_value( "Scan",        scan_nbr    );
-           qDebug()<<"----------------------------------";
-           qDebug()<<"Timestate:"<<"time=      "<< itime 
-                   <<"w2t=   "<<omega2t<<"rpm= "<<rpm
-                   <<"	set speed="<< set_speed
-                   <<"scan_nbr=	"<<  scan_nbr
-                   <<"step=	"<<step;
-           qDebug()<<"----------------------------------";
-           
-           timestate.flush_record();
-       }
-   }
-    timestate.close_write_data();
-    timestate.write_defs();
-    qDebug() << "Timestate from us_Astfem_sim: ntimes" << timestate.time_count();
-    return timestate.time_count();
-}
-*/

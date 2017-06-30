@@ -14,137 +14,12 @@
 #endif
 #endif
 
-//--------------------------------------------------------------
-void US_AstfemMath::update_experimental_grid( US_DataIO::RawData& sim_data, US_SimulationParameters& simparams,
-                                              bool match, int step)
-{
-     double current_time  = 0.0; // Initial time
-     double duration      = 0.0;    // Initialize total duration
-     double increment     = 0.0; // Initial increment in time
-     int    scan_number   = 0;   // Counter for each scan and initialized to zero
-     double delay         = 0.0; //Initialize acceleration time 
-     double w2t_sum       = 0.0;
-     int total_scans = 0; // Initialize total number of scans 
-     int time_steps;
-     double e,f, t0, t3, w0,w3,dw2, dt2,dw3, b1,b2, dt3,dt1,b3,t2,t1,w1,w2;
-     int i1 = 0;
-     //DbgLv(1)<< "step_sizes from acceleration part=       "<< simparams.speed_step.size()<<"step= "<< step;
-     if (( match == true) && (step<  simparams.speed_step.size() - 1) ) // i.e. Running from us_fematch
-     {
-     US_SimulationParameters::SpeedProfile* sp = &simparams.speed_step[ step ];
-     US_SimulationParameters::SpeedProfile* sp_next  = &simparams.speed_step[ step+1 ];
-     double ts1 = abs( sp_next->rotorspeed - sp->rotorspeed ) /((double) sp->acceleration) ;
-     double fractpart1 = ts1 - (int) ts1;
-     if ( fractpart1 == 0.0 )
-        time_steps = int(ts1);
-     else
-        time_steps = (int) ts1+1;
-     double wfac1  = sq( M_PI / 30.0 );
-     double rpm1  = abs ( sp_next->rotorspeed - sp->rotorspeed ) / ((double) time_steps);
-     double crpm1  = sp->rotorspeed ;
-     double dw_new = sp->w2t_last ;
-     for ( int kk = 0; kk < time_steps; kk++ )
-     {   crpm1       += rpm1;
-         dw_new         += ( wfac1 * sq( crpm1 ) );
-     }
-      e = sq(sp->rotorspeed *M_PI / 30.0);
-     f = sq(sp_next->rotorspeed *M_PI / 30.0);
-     t0  = sp->time_last;
-     w0  = sp->w2t_last;
-     t3  = sp_next->time_last;
-     w3 = sp_next->w2t_last ;
-     dt2 = double (time_steps);
-     dw2 = sp_next->w2t_first - sp->w2t_last;
-     dw3 = dw_new - sp->w2t_last;
-     b1 = (t3-dt2-t0)*f;
-     b2 = (t3-dt2-t0)*e;
-     dt1  = (w3 - w0 - dw2 -b1)/(e - f);
-     dt3  = (w3 - w0 - dw2 -b2)/(f - e);
-     dw3  = f*dt3;
-     dt1  = int (dt1)+1;
-     t1 = t0 + dt1;
-     t2 = t1 + dt2;
-     w2 = w3 - dw3 ;
-     w1 = w2 - dw2 ;
-     sim_data.scanData[ sim_data.scanData.size() -1 ].seconds =t1;
-     sim_data.scanData[ sim_data.scanData.size() -1 ].omega2t =w1;
-     sp->w2t_last  = w1;
-     sp->time_last = t1;
-  }
-   else if ( match == false )
-  {
-   for ( int ii = 0; ii < simparams.speed_step.size(); ii++ )
-   {
-       US_SimulationParameters::SpeedProfile* sp = &simparams.speed_step[ ii ];
-       if  ( ii<= simparams.speed_step.size()-2 )
-       {
-           US_SimulationParameters::SpeedProfile* sp_next  = &simparams.speed_step[ ii+1 ];
-           double ts1 = abs( sp_next->rotorspeed - sp->rotorspeed ) /((double) sp->acceleration) ;
-           double fractpart1 = ts1 - (int) ts1;
-
-           if ( fractpart1 == 0.0 )
-              time_steps = int(ts1);
-           else
-              time_steps = (int) ts1+1;
-           double wfac1  = sq( M_PI / 30.0 );
-           double rpm1  = abs ( sp_next->rotorspeed - sp->rotorspeed ) / ((double) time_steps);
-           double crpm1  = sp->rotorspeed ;
-           double dw_new = sp->w2t_last ;
-           for ( int kk = 0; kk < time_steps; kk++ )
-           { crpm1       += rpm1;
-               dw_new         += ( wfac1 * sq( crpm1 ) );
-           }
-
-           e = sq(sp->rotorspeed *M_PI / 30.0);
-           f = sq(sp_next->rotorspeed *M_PI / 30.0);
-           t0  = sp->time_last;
-           w0  = sp->w2t_last;
-            t3  = sp_next->time_last;
-           w3 = sp_next->w2t_last ;
-
-           dt2 = double (time_steps);
-           //DbgLv(1)<<"----------For step        "<< 0 <<"----------------------" ;
-           dw2 = sp_next->w2t_first - sp->w2t_last;
-           dw3 = dw_new - sp->w2t_last;
-
-           b1 = (t3-dt2-t0)*f;
-           b2 = (t3-dt2-t0)*e;
-           dt1  = (w3 - w0 - dw2 -b1)/(e - f);
-           dt3  = (w3 - w0 - dw2 -b2)/(f - e);
-           dw3  = f*dt3;
-
-           dt1  = int (dt1)+1;
-           t1 = t0 + dt1;
-           t2 = t1 + dt2;
-           w2 = w3 - dw3 ;
-           w1 = w2 - dw2 ;
-           //DbgLv(1)<<"dt1="<< dt1<<"    dt2="<< dt2<<"  dt3="<<dt3<<endl;
-           //DbgLv(1)<<"t1="<<t1<<"       t2="<<t2 <<"    w1="<<w1<<"     w2="<<w2<< "dw2=       "<< dw2 <<endl;
-
-           i1 += sp->scans;
-           sim_data.scanData[ i1-1 ].seconds =t1;
-           sim_data.scanData[ i1-1 ].omega2t =w1;
-
-           sp->w2t_last  = w1;
-           sp->time_last = t1;
-            sp_next->time_first = t2;
-           sim_data.scanData[ i1 ].seconds = t2;
-           sp_next->w2t_first  = w2;
-           sim_data.scanData[ i1 ].omega2t = w2;
-           sim_data.scanData[ i1 ].omega2t = w2;
-           //DbgLv(1)<<"exp_scan_size=  "<<sim_data.scanData.size();
-
-        }//if loop
-    }//for loop      
-  }
-}// End of setting the experimental grid*/
-
 //-------------------------------------------------------
 //Write time state
 //----------------------
 
 int US_AstfemMath::writetimestate( const QString&  tmst_fname,US_SimulationParameters& simparams,
-                                   US_DataIO::RawData& sim_data, bool save_timestate )
+                                   US_DataIO::RawData& sim_data )
 {
 
    QString run_id, tmst_fbase, defs_fbase, tmst_fdir, defs_fname ;                            
@@ -187,8 +62,8 @@ int US_AstfemMath::writetimestate( const QString&  tmst_fname,US_SimulationParam
    double prvs_speed = 0.0 ;
    int    scan_nbr= 0;
    double temperature = sim_data.scanData[0].temperature;
-   int t_acc;// Used for time when accelertaed upto the specified rotor speed
-   double ts,fractpart,rate,speed;
+   int t_acc;    // Used for time when accelerated up to the specified rotor speed
+   double rate, speed;
    int nscans = sim_data.scanData.size() ;// Used for number of scans
    US_SimulationParameters::SpeedProfile* sp; 
    US_SimulationParameters::SpeedProfile* sp_prev;
@@ -208,18 +83,7 @@ int US_AstfemMath::writetimestate( const QString&  tmst_fname,US_SimulationParam
    if ( simparams.sim == false ) 
    {
       double d   = -2.0/3.0; 
-      //US_DataIO::RawData* rdata    = &sim_data;
-      //------------------------------------------------
-      double t21  = sim_data.scanData[0].seconds;
-      double w2t1 = sim_data.scanData[0].omega2t;
-      double c1   = pow((sim_data.scanData[0].rpm*M_PI/30.0),2.0);
 
-      double t11 = (w2t1 - t21*c1)/(d*c1);
-      int t_acc1 = (qCeil) (t11) ;
-      double rate1  =( double) (sim_data.scanData[0].rpm)/(t_acc1);
-      //------------------------------------------------
-
-      //-------------------------------------------------
       double t2  = simparams.speed_step[0].time_first;
       double w2t = simparams.speed_step[0].w2t_first;
       double c   = pow((simparams.speed_step[0].rotorspeed*M_PI/30.0),2.0);
@@ -562,7 +426,7 @@ void US_AstfemMath::tridiag( double* a, double* b, double* c,
 //
 //////////////////////////////////////////////////////////////////
 
-double US_AstfemMath::cube_root( long double a0, long double a1, double a2 )
+double US_AstfemMath::cube_root( double a0, double a1, double a2 )
 {  
    double x;
    

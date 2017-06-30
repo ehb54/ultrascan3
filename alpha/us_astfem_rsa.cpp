@@ -269,16 +269,15 @@ int US_Astfem_RSA::calculate( US_DataIO::RawData& exp_data )
 
        if ( simparams.tsobj != NULL )  // if timestate file exists
        {
-          DbgLv(1)<<"rsa : timestate file exists and timestateobject = "
-                  <<simparams.tsobj<< simparams.sim_speed_prof.count() ;
-
+DbgLv(1)<<"rsa : timestate file exists and timestateobject = "
+ <<simparams.tsobj<< simparams.sim_speed_prof.count();
        }
        else                           // if timestate file does not exist
        {  
-          DbgLv(1)<<"timestate file does not exist" ;
+DbgLv(1)<<"timestate file does not exist";
           QString tmst_fpath = US_Settings::tmpDir() + "/" + temp_Id_name() + ".time_state.tmst";
-          US_AstfemMath::writetimestate (tmst_fpath, simparams, exp_data, false) ;    
-          simparams.simSpeedsFromTimeState( tmst_fpath); 
+          US_AstfemMath::writetimestate( tmst_fpath, simparams, exp_data );    
+          simparams.simSpeedsFromTimeState( tmst_fpath );
        }   
        
        //-----------------------------------------------
@@ -286,9 +285,9 @@ int US_Astfem_RSA::calculate( US_DataIO::RawData& exp_data )
        { 
            time_end << simparams.sim_speed_prof[ istep ].time_e_step;
            w2t_end  << simparams.sim_speed_prof[ istep ].w2t_e_step;
-           accel_times << simparams.sim_speed_prof[ istep ].time_e_accel ;
-           accel_w2ts << simparams.sim_speed_prof[ istep ].w2t_e_accel ;
-           DbgLv(1)<< "rsa readinngs:from timestate file "<<accel_times [istep] <<  accel_w2ts [istep] ;     
+           accel_times << simparams.sim_speed_prof[ istep ].time_e_accel;
+           accel_w2ts << simparams.sim_speed_prof[ istep ].w2t_e_accel;
+DbgLv(1)<< "rsa readinngs:from timestate file "<<accel_times [istep] <<  accel_w2ts [istep];
        }
        //-------------------------------------------------------------------
        //     timestate information update is over
@@ -684,24 +683,25 @@ int US_Astfem_RSA::calculate( US_DataIO::RawData& exp_data )
       ed = &af_data;
       if ( simparams.tsobj != NULL )
       {
-         DbgLv(1)<<"rsa : timestate file exists and timestateobject = "
-                  <<simparams.tsobj<< simparams.sim_speed_prof.count() ;
+DbgLv(1)<<"rsa : timestate file exists and timestateobject = "
+ <<simparams.tsobj<< simparams.sim_speed_prof.count() ;
 
       }
       else
-      {  DbgLv(1)<<"timestate file does not exist" ;
+      {
+DbgLv(1)<<"timestate file does not exist";
          QString tmst_fpath = US_Settings::tmpDir() + "/" + temp_Id_name() + ".time_state.tmst";
-         US_AstfemMath::writetimestate (tmst_fpath, simparams, exp_data, false) ;
-         simparams.simSpeedsFromTimeState( tmst_fpath);
-         DbgLv(1)<<"after writing timestate file" << simparams.sim_speed_prof.count();
+         US_AstfemMath::writetimestate( tmst_fpath, simparams, exp_data );
+         simparams.simSpeedsFromTimeState( tmst_fpath );
+DbgLv(1)<<"after writing timestate file" << simparams.sim_speed_prof.count();
       }
       for ( int istep = 0; istep < simparams.speed_step.size(); istep++ )
       {
            time_end << simparams.sim_speed_prof[ istep ].time_e_step;
            w2t_end  << simparams.sim_speed_prof[ istep ].w2t_e_step;
-           accel_times << simparams.sim_speed_prof[ istep ].time_e_accel ;
-           accel_w2ts << simparams.sim_speed_prof[ istep ].w2t_e_accel ;
-           DbgLv(1)<< "subha: rsa readinngs: "<<accel_times [istep] <<  accel_w2ts [istep] ;
+           accel_times << simparams.sim_speed_prof[ istep ].time_e_accel;
+           accel_w2ts << simparams.sim_speed_prof[ istep ].w2t_e_accel;
+DbgLv(1)<< "subha: rsa readinngs: "<<accel_times [istep] <<  accel_w2ts [istep];
       }
 
 
@@ -3985,12 +3985,12 @@ void US_Astfem_RSA::load_mfem_data( US_DataIO::RawData&      edata,
       fscan->time        = edata.scanData[ ii ].seconds;
       fscan->omega_s_t   = edata.scanData[ ii ].omega2t;
       fscan->conc        = edata.scanData[ ii ].rvalues;
-      if ( ii<3 )
-         DbgLv(2) << "RSA:f  ii c0 cn" << ii << fscan->conc[0] << fscan->conc[nconc-1]
-                  << "d0 dn" << edata.scanData[ii].rvalues[0] << edata.scanData[ii].rvalues[nconc-1];
-      #if 1
+if ( ii<3 )
+ DbgLv(2) << "RSA:f  ii c0 cn" << ii << fscan->conc[0] << fscan->conc[nconc-1]
+  << "d0 dn" << edata.scanData[ii].rvalues[0] << edata.scanData[ii].rvalues[nconc-1];
+#if 1
    }
-   #endif
+#endif
 #if 0
       fscan->conc.resize( nconc );
 

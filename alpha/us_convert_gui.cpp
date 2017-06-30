@@ -4785,7 +4785,7 @@ int US_ConvertGui::writeTimeStateDisk()
    QString defs_fname   = tmst_fdir + defs_fbase;
    QString defs_fnamei  = QString( tmst_fnamei ).section( ".", 0, -2 ) + ".xml";
    int     nspeed       = speedsteps.size();
-   int     ssx          = 0;
+//   int     ssx          = 0;
    QVector< double > rrpms;
    int     nmscans      = isMwl ? mwl_data.raw_speeds( rrpms ) : 0;
    //--------------------------- 
@@ -4930,12 +4930,12 @@ qDebug() << "wTS: EMPTY: tmst_fnamei";
    //simparams.initFromData( disk_controls->db(), *rdata, dat_s );
    
    //astfem_math = US_AstfemMath::US_AstfemMath();
-   int n_times = astfem_math.writetimestate (tmst_fname, simparams, *rdata, true) ;
+   int n_times = astfem_math.writetimestate( tmst_fname, simparams, *rdata );
    //timestate.flush_record();
    //timestate.close_write_data();
    //timestate.write_defs();
    //simparams.simSpeedsFromTimeState( tmst_fname);
-   // qDebug() << "Timestate from us_Astfem_sim: ntimes" << timestate.time_count();
+//qDebug() << "Timestate from us_Astfem_sim: ntimes" << timestate.time_count();
    // return timestate.time_count();
 
    qDebug() << "number of times in file"<< n_times ;
@@ -4959,19 +4959,19 @@ int US_ConvertGui::writeTimeStateDB()
       qDebug() << "wTSdb: connect" << db.lastErrno() << db.lastError();
       return -99;
    }
-   qDebug() << "wTSdb: connect" << db.lastErrno() << db.lastError();
+DbgLv(1) << "wTSdb: connect" << db.lastErrno() << db.lastError();
 
    QString tmst_fbase   = runID + ".time_state.tmst";
    QString tmst_fdir    = ( QString( currentDir ).right( 1 ) == "/" )
                         ? currentDir : currentDir + "/";
    QString tmst_fname   = tmst_fdir + tmst_fbase;
    QString tmst_cksm    = US_Util::md5sum_file( tmst_fname );
-   qDebug() << "wTSdb: fname " << tmst_fname << "cksm" << tmst_cksm<< "fbase" << tmst_fbase;
+DbgLv(1) << "wTSdb: fname " << tmst_fname << "cksm" << tmst_cksm<< "fbase" << tmst_fbase;
 
    // Create a new TimeState DB record, if need be. If one already exists,
    //  it may be updated or it may be deleted and recreated.
    int timestateID = US_TimeState::dbCreate( &db, ExpData.expID, tmst_fname );
-   qDebug() << "wTSdb: post-create timestateID" << timestateID;
+DbgLv(1) << "wTSdb: post-create timestateID" << timestateID;
 
    // If a TimeState DB record now exists, check for binary data in it.
    //  If need be, upload binary TMST data
@@ -4980,16 +4980,16 @@ int US_ConvertGui::writeTimeStateDB()
       QString cksum;
       status            = US_TimeState::dbExamine( &db, &timestateID, NULL,
                                                    NULL, NULL, &cksum, NULL );
-      qDebug() << "wTSdb:  examine status" << status << "cksum-db" << cksum;
+DbgLv(1) << "wTSdb:  examine status" << status << "cksum-db" << cksum;
 
       if ( status == US_DB2::OK  &&  cksum != tmst_cksm )
       {  // No or mismatched blob in DB, so upload it
          status            = US_TimeState::dbUpload( &db, timestateID,
                                                      tmst_fname );
-         qDebug() << "wTSdb:   upload status" << status;
+DbgLv(1) << "wTSdb:   upload status" << status;
       }
    }
-   qDebug()<<"Hi Subha : Timestate from DB is used";
+DbgLv(1) <<"Hi Subha : Timestate from DB is used";
    return status;
 }
 
