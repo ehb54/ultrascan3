@@ -231,7 +231,7 @@ bool US_DataIO::readLegacyFile( const QString&  file,
       sc = ts.readLine();
 
       pp = sc.split( " ", QString::SkipEmptyParts );
-		if ( pp.size() == 1 )
+      if ( pp.size() == 1 )
          pp = sc.split( "\t", QString::SkipEmptyParts );
       if ( pp.size() < 2 )
          break;
@@ -981,7 +981,7 @@ void US_DataIO::do_edits( QXmlStreamReader& xml, EditValues& parameters )
          EditedPoint e;
          QXmlStreamAttributes a = xml.attributes();
          e.scan   = a.value( "scan"   ).toString().toInt();
-         e.radius = a.value( "radius" ).toString().toInt();
+         e.radius = a.value( "radius" ).toString().toDouble();
          e.value  = a.value( "value"  ).toString().toDouble();
 
          parameters.editedPoints << e;
