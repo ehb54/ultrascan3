@@ -262,6 +262,7 @@ DbgLv(1) << "AnaS:   ana-extsiz" << analyte->extinction.keys().size();
    if ( extcount == 0 ) {
      //e280 = tr( "(none)" );
      e280 = QString::number( pp.e280 );
+     analyte->extinction[ 280.0 ] = pp.e280;
    }
    else {
      e280 = QString::number( analyte->extinction[ 280.0 ] );
@@ -535,6 +536,36 @@ void US_AnalyteMgrSelect::info_analyte( void )
    US_Math2::calc_vbar( p, analyte->sequence, 20.0 );
    analyte->mw         = ( analyte->mw == 0.0 ) ? p.mw : analyte->mw;
        
+      // Absorbing residues
+   
+   qDebug() << "W: " << p.w;
+   int cys = int(p.c);
+   int hao = int(p.j);
+   int orn = int(p.o);
+   int trp = int(p.w);
+   int tyr = int(p.y);
+   int all_abs = 0;
+   all_abs = cys + hao + orn + trp + tyr;
+   qDebug() << "Tot AAs: " << all_abs;
+   QString absorbing_residues = tr( "(empty)" );
+   if (all_abs > 0)
+     {
+       absorbing_residues = "";
+       if ( cys > 0)
+	 absorbing_residues += QString().sprintf( "%d", cys ) + " " + "Cys"  + ", ";
+       if ( hao > 0)
+	 absorbing_residues += QString().sprintf( "%d", hao ) + " " + "Hao"  + ", ";
+       if ( orn > 0)
+	 absorbing_residues += QString().sprintf( "%d", orn ) + " " + "Orn"  + ", ";
+       if ( trp > 0)
+	 absorbing_residues += QString().sprintf( "%d", trp ) + " " + "Trp"  + ", ";
+       if ( tyr > 0)
+	 absorbing_residues += QString().sprintf( "%d", tyr ) + " " + "Tyr"  + ", ";
+
+       absorbing_residues += QString().sprintf( "%d", all_abs ) + " tot";
+     }
+   
+
    QStringList lines;
    QString inf_text;
    QString big_line( "" );
@@ -603,8 +634,10 @@ void US_AnalyteMgrSelect::info_analyte( void )
    // Sequence Composition 
    lines << tr( "Sequence summary:" );
    lines << "  " + seqsmry;
+   lines << "  " + tr( "AAs absorbing at 280 nm: " ) +  absorbing_residues;
    lines << "";
-
+   
+     
    // Compose the section for any extinction spectrum
    QString stitle  = tr( "Extinction Spectrum:      " );
    QString spline  = stitle;
@@ -1132,6 +1165,37 @@ DbgLv(1) << "agN: aInfo   descr" << ana->description << "type" << ana->type;
    US_Math2::calc_vbar( pp, ana->sequence, 20.0 );
    ana->mw         = ( ana->mw == 0.0 ) ? pp.mw : ana->mw;
 
+   // Absorbing residues
+   
+   qDebug() << "W: " << pp.w;
+   int cys = int(pp.c);
+   int hao = int(pp.j);
+   int orn = int(pp.o);
+   int trp = int(pp.w);
+   int tyr = int(pp.y);
+   int all_abs = 0;
+   all_abs = cys + hao + orn + trp + tyr;
+   qDebug() << "Tot AAs: " << all_abs;
+   QString absorbing_residues = tr( "(empty)" );
+   if (all_abs > 0)
+     {
+       absorbing_residues = "";
+       if ( cys > 0)
+	 absorbing_residues += QString().sprintf( "%d", cys ) + " " + "Cys"  + ", ";
+       if ( hao > 0)
+	 absorbing_residues += QString().sprintf( "%d", hao ) + " " + "Hao"  + ", ";
+       if ( orn > 0)
+	 absorbing_residues += QString().sprintf( "%d", orn ) + " " + "Orn"  + ", ";
+       if ( trp > 0)
+	 absorbing_residues += QString().sprintf( "%d", trp ) + " " + "Trp"  + ", ";
+       if ( tyr > 0)
+	 absorbing_residues += QString().sprintf( "%d", tyr ) + " " + "Tyr"  + ", ";
+
+       absorbing_residues += QString().sprintf( "%d", all_abs ) + " tot";
+     }
+   
+   qDebug() << "AA absorbibg String: " << absorbing_residues;
+   
    // Compose the sequence summary string
    int total       = 0;
    QString seqsmry = ana->sequence;
@@ -1181,18 +1245,22 @@ DbgLv(1) << "agN: aInfo   descr" << ana->description << "type" << ana->type;
    QString     amsg;
    mlines << tr( "=== Selected Analyte ===" );
    mlines << "  " + ana->description;
-   mlines << tr( "Type:              " ) + atype;
-   mlines << tr( "Molecular Weight:  " ) +  QString::number( ana->mw )
-                                        + " D";
-   mlines << tr( "Vbar (20 deg. C):  " ) +  QString::number( ana->vbar20 );
-   mlines << tr( "Sequence length:   " ) +  QString::number( seqlen );
-   mlines << tr( "Extinction count:  " ) +  QString::number( extknt );
+   mlines << tr( "Type:                    " ) + atype;
+   mlines << tr( "Molecular Weight:        " ) +  QString::number( ana->mw )
+                                        +  " D";
+   mlines << tr( "Vbar (20 deg. C):        " ) +  QString::number( ana->vbar20 );
+   mlines << tr( "Sequence length:         " ) +  QString::number( seqlen );
+   // mlines << tr( "Extinction count:  " ) +  QString::number( extknt );
    mlines << tr( "Sequence summary:" );
    mlines << "  " + seqsmry;
-   mlines << tr( "Extinction " ) + ( ( extknt == 1 ) ? tr( "pair" )
-                                                     : tr( "pairs" ) )
-             + tr( "  (lambda/coeff.):" );
-   mlines << "  " + extsmry;
+   // mlines << tr( "Extinction " ) + ( ( extknt == 1 ) ? tr( "pair" )
+   //                                                   : tr( "pairs" ) )
+   //           + tr( "  (lambda/coeff.):" );
+   // mlines << "  " + extsmry;
+   
+   mlines << tr( "AAs absorbing at 280 nm: " ) +  absorbing_residues;
+   mlines << tr( "E280:                    " ) +  QString::number( analyte->extinction[ 280.0 ]);
+   mlines << tr( "Extinction count:        " ) +  QString::number( extknt );
 
    for ( int ii = 0; ii < mlines.count(); ii++ )
    {  // Create a single string from the lines
