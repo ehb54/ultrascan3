@@ -453,7 +453,9 @@ void US_Extinction::reading(QStringList sl)
       if(!fileName.isEmpty())
       {
          filenames.push_back(fileName);
+	 qDebug() << "Before LOAD " ;
          loadScan(fileName);
+	 qDebug() << "After LOAD " ;
       }
    } 
    le_lambdaLimitLeft->setText(str1.sprintf(" %2.1f", lambda_min));
@@ -521,6 +523,7 @@ bool US_Extinction::loadScan(const QString &fileName)
 	 
          if(temp_x >= lambdaLimitLeft && temp_y <= odCutoff && temp_x <= lambdaLimitRight)
          {
+	   qDebug() << temp_x << ", " << temp_y;
             Reading r = {temp_x, temp_y};
             wls.v_readings.push_back(r);
             lambda_max = max(temp_x, lambda_max);
@@ -528,26 +531,38 @@ bool US_Extinction::loadScan(const QString &fileName)
          }
       }
       f.close();
+      qDebug() << "Inside LAOD 1";
+
       if(wls.v_readings.size() < 10)
       {
          //QMessageBox msg1 = US_LongMessageBox("Ultrascan Error", "This wavelength doesn't have\n enough usable points - scan not loaded", this);
       }
+      qDebug() << "Inside LAOD 11, wls.v_readings.at(0).lambda: " << wls.v_readings.at(0).lambda;
       if(wls.v_readings.at(0).lambda > wls.v_readings.at(wls.v_readings.size() - 1).lambda)
       {//we need to reverse the order of entries
          WavelengthScan wls2;
          wls2.v_readings.clear();
+	 qDebug() << "Inside LAOD 1aa, wls.v_readings.size(), " << wls.v_readings.size() - (unsigned int) 1;
          for(int i=(wls.v_readings.size() - (unsigned int) 1); i >=0; i--)
          {
+	   qDebug() << "i: " << i << wls.v_readings.at(i).lambda << ", " <<  wls.v_readings.at(i).od;
             Reading temp = {wls.v_readings.at(i).lambda, wls.v_readings.at(i).od};
             wls2.v_readings.push_back(temp);
          }
+	 qDebug() << "Inside LAOD 1bb, wls2.v_readings.size(), " << (unsigned int)wls2.v_readings.size();
          wls.v_readings.clear();
+	 
          for(unsigned int i = 0; i < (unsigned int)wls2.v_readings.size(); i++)
          {
-            Reading temp2 = {wls2.v_readings.at(i).lambda, wls.v_readings.at(i).od};
+	   qDebug() << "i: " << i;
+            Reading temp2 = {wls2.v_readings.at(i).lambda, wls2.v_readings.at(i).od};
             wls.v_readings.push_back(temp2);
          }
+	 qDebug() << "Inside LAOD 1cc";
       }
+
+      qDebug() << "Inside LAOD 2";
+
       v_wavelength.push_back(wls);
       str1.sprintf("Scan %d: ", v_wavelength.size());
       str1 += wls.fileName + ", ";
