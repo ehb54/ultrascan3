@@ -9,6 +9,7 @@
 #include <QFileInfo>
 #include <QTextStream>
 #include <QPair>
+#include <QTime>
 #if QT_VERSION > 0x050000
 #include <QtConcurrent/QtConcurrent>
 #else
@@ -17,6 +18,7 @@
 #include <QThread>
 #include <qwt_legend.h>
 #include <cmath>
+#include <stdexcept>
 #include <unistd.h> //for getting hostname
 #include "us_extern.h"
 #include "us_widgets.h"
@@ -79,7 +81,7 @@ private slots:
 
    //Declarations from rewrite below:
 
-   double calculateDistance( US_Model::SimulationComponent first , US_Model::SimulationComponent second );
+   double calculateDistance( US_Model::SimulationComponent first , US_Model::SimulationComponent second, bool scaleS);
    US_DataIO::RawData* simulateComponent	( US_Model::SimulationComponent component );
    QVector<QPair<US_Model::SimulationComponent, US_DataIO::RawData*> > simulateBatch(QVector<US_Model::SimulationComponent> components);
 
@@ -88,17 +90,18 @@ private slots:
    double calculateDiffusionSK( double s , double k);
    double calculateDiffusionMK( double M, double k);
    double calculateSedimentationMD( double , double D);
-   US_Model::SimulationComponent modelComponentFromSK(double s, double k);
+   US_Model::SimulationComponent componentFromSK(double s, double k);
 
    //RMSD calculation functions and associated utilities
    double calculateScaledRMSD(US_DataIO::RawData* simulation1, US_Model::SimulationComponent component1 , US_DataIO::RawData* simulation2 , US_Model::SimulationComponent component2);
+   double calculateScaledRMSD(QPair<US_Model::SimulationComponent, US_DataIO::RawData*> pair1, QPair<US_Model::SimulationComponent, US_DataIO::RawData*> pair2);
    QVector<double> findListRMSD(QVector<US_Model::SimulationComponent> components);
    QVector<QVector<double> > checkLineRMSDParalell(QVector<QVector<US_Model::SimulationComponent> > grid, bool approximateToMidpoint);
    QVector<double> calculateGridStatistics(QVector<QVector<double> > processedGrid);
    QVector<QPair<US_Model::SimulationComponent, double> > testRegularGrid(QVector<QVector<US_Model::SimulationComponent> > grid);
    QVector<QVector<US_Model::SimulationComponent> > switchRegularGridOrientation(QVector<QVector<US_Model::SimulationComponent> > regular);
 
-   QVector<double> calculateIrregularGridRMSD(QVector<QVector<US_Model::SimulationComponent> > grid, int numNeighbors);
+   QVector<QPair<US_Model::SimulationComponent, double> > calculateIrregularGridRMSD(QVector<QVector<US_Model::SimulationComponent> > grid, int numNeighbors);
 
    //Grid generation functions for particular grid-types and planes
    QVector<QVector<US_Model::SimulationComponent> > createFaxenGrid(double minS, double maxS, double minK, double maxK, int grids);
@@ -110,7 +113,12 @@ private slots:
    QVector<US_Model::SimulationComponent> calculateLine(double tolerance, double targetRMSD, QVector2D startCoord, QVector2D endCoord);
    QVector<QVector<US_Model::SimulationComponent> > createNumericalGrid(double tolerance, double targetRMSD, double minS, double maxS, double minK, double maxK, QChar majorAxis);
 
-
+   //trig component
+   QPair<double, double> convertPolar(double degree);
+   US_Model::SimulationComponent findConstantRMSDPointInDirection(US_DataIO::RawData* originSim, US_Model::SimulationComponent origin, double target, double tolerance, double degree);
+   QVector<US_Model::SimulationComponent> findConstantRMSDNeighbors(double s, double k, double degreeIncrement, double target);
+   QPair<double, double> projectPolar(double originX, double originY, double distance, double degree);
+   US_Model::SimulationComponent componentFromSKPair(QPair<double, double> sk, bool scaleS);
 
 };
 
