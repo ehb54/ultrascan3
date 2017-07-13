@@ -692,19 +692,30 @@ void US_Extinction::update_data(void)
 	//if(v_wavelength.at(i).v_readings.at(j).lambda == maximum)
 	// v_wavelength[i].v_readings.remove(j, v_wavelength.at(i).v_readings.size() - j);
 	
-	if(v_wavelength.at(i).v_readings.at(j).lambda > maximum)
+	if(v_wavelength.at(i).v_readings.at(j).lambda >= maximum)
 	  {
 	    v_wavelength[i].v_readings.remove(j, v_wavelength.at(i).v_readings.size() - j);
 	    break;
 	  }
-         if(v_wavelength.at(i).v_readings.at(j).lambda == minimum)
-            v_wavelength[i].v_readings.remove(0, j + 1);
-         if(v_wavelength.at(i).v_readings.at(j).od > odLimit)
-         {
-            v_wavelength[i].v_readings.remove(j);
-            j--;
-         }
+		         
+
+         if(v_wavelength.at(i).v_readings.at(j).lambda < minimum)
+	   {
+	     qDebug() << "Inside MIN: " << v_wavelength.at(i).v_readings.at(j).lambda;
+	     v_wavelength[i].v_readings.remove(0, j + 1);
+	   }
       }
+      
+      for(int j = 0; j < v_wavelength.at(i).v_readings.size(); j++)
+	{
+	  if(v_wavelength.at(i).v_readings.at(j).od >= odLimit)
+	    {
+	      qDebug() << "Inside OD_1: " << v_wavelength.at(i).v_readings.at(j).lambda;
+	      v_wavelength[i].v_readings.remove(j);
+	      j--;
+	    }
+	}
+
    }
 
    qDebug() << "Orig., Updated: " << v_wavelength_original.at(0).v_readings.size() << ", " << v_wavelength.at(0).v_readings.size();
