@@ -95,6 +95,11 @@ class US_UTIL_EXTERN US_SimulationParameters
    //! \param speedsteps Returned vector of speed step profiles
    static void computeSpeedSteps( QVector< US_DataIO::Scan >*, QVector< SpeedProfile >& );
 
+   //! \brief A function to compute speed steps from all data scans
+   //! \param allrData   Pointer to vector of raw datas
+   //! \param speedsteps Returned vector of speed step profiles
+   static void computeSpeedSteps( QVector< US_DataIO::RawData >&, QVector< SpeedProfile >& );
+
    //! \brief Static function to get a speed step profile from an xml portion
    //! \param xmli   Reference to xml stream from which to read
    //! \param spo    Reference to speed profile to populate
@@ -131,6 +136,9 @@ class US_UTIL_EXTERN US_SimulationParameters
    //! \param tmst_fpath  Path to TimeState binary file to read.
    //! \returns           The number of speed steps created internally
    int simSpeedsFromTimeState( const QString );
+
+   void get_rpm_w2t_from_timestate ( const QString , QVector< SimSpeedProf >&  )
+   {};
 
    //! \brief Dump class contents to stderr
    void debug( void );
@@ -236,6 +244,8 @@ class US_UTIL_EXTERN US_SimulationParameters
       int    time_e_accel;      //!< time at end of acceleration zone
       int    time_f_scan;       //!< time at first scan of step
       int    time_l_scan;       //!< time at last scan of step
+      QVector< double > rpm_timestate; //!< rpms from timestate reading 
+      QVector< double > w2t_timestate; //!< w2ts from timestate reading
    };
 };
 
