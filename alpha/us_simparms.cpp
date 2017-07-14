@@ -67,6 +67,10 @@ US_SimulationParameters::SpeedProfile::SpeedProfile()
 US_SimulationParameters::SimSpeedProf::SimSpeedProf()
 {
    acceleration      = 400.0;
+
+   rpm_timestate.clear() ;
+   w2t_timestate.clear() ;
+
    w2t_b_accel       = 0.0;
    w2t_e_accel       = 0.0;
    w2t_e_step        = 0.0;
@@ -565,6 +569,86 @@ DbgLv(1) << "SP:cSS:       sp set avg sdev" << sp.set_speed << sp.avg_speed
  << sp.speed_stddev;
 }
 
+// Compute the experiment speed steps vector from all data scans
+void US_SimulationParameters::computeSpeedSteps(
+      QVector< US_DataIO::RawData >& allrData,
+      QVector< SpeedProfile >& speedsteps )
+{
+   if ( allrData.count() == 1 )
+   {  // For a single triple, compute the speed steps from it
+      computeSpeedSteps( &allrData[ 0 ].scanData, speedsteps );
+      return;
+   }
+
+   // Get indexes to low and high step scan
+   int     ndx1        = -1;
+   int     ndx2        = -1;
+   double timel        = 1e+20;
+   double timeh        = -1e+20;
+
+   for ( int ii = 0; ii < allrData.count(); ii++ )
+   {
+      int    ls           = allrData[ ii ].scanCount() - 1;
+      double time1        = allrData[ ii ].scanData[  0 ].seconds;
+      double time2        = allrData[ ii ].scanData[ ls ].seconds;
+
+      if ( time1 < timel )
+      {  // Accumulate low scan time
+         timel               = time1;   // Lowest scan time
+         ndx1                = ii;      // Triple to which it belongs
+      }
+
+      if ( time2 > timeh )
+      {  // Accumulate high scan time
+         timeh               = time2;   // High scan time
+         ndx2                = ii;      // Triple to which it belongs
+      }
+   }
+
+   // Compute time steps for two triples at the extreme
+   QVector< SpeedProfile >  speedstps2;
+   computeSpeedSteps( &allrData[ ndx1 ].scanData, speedsteps );
+   computeSpeedSteps( &allrData[ ndx2 ].scanData, speedstps2 );
+
+   // Merge them so step time ranges cover all triples' time ranges
+   for ( int ii = 0; ii < speedsteps.count(); ii++ )
+   {
+      SpeedProfile sp1     = speedsteps[ ii ];
+      SpeedProfile sp2     = speedstps2[ ii ];
+      double time1         = sp1.time_first;
+      double time2         = sp2.time_last;
+      double w2t1          = sp1.w2t_first;
+      double w2t2          = sp2.w2t_last;
+      double delay_secs    = sp1.delay_hours * 3600.0 +
+                             sp1.delay_minutes * 60.0;
+
+      if ( sp2.time_first < sp1.time_first )
+      {  // Low time in the step and its corresponding omega2t
+         time1                = sp2.time_first;
+         w2t1                 = sp2.w2t_first;
+      }
+
+      if ( sp1.time_last > sp2.time_last )
+      {  // High time in the step and its corresponding omega2t
+         time2                = sp1.time_last;
+         w2t2                 = sp1.w2t_last;
+      }
+
+      // Reset, recompute time and omega2t values for step
+      double step_secs     = time2 - time1 + delay_secs;
+      sp1.duration_hours   = (int)( step_secs / 3600.0 );
+      sp1.duration_minutes = ( step_secs / 60.0 )
+                            - ( (double)sp1.duration_hours * 60.0 );
+      sp1.w2t_first        = w2t1;
+      sp1.w2t_last         = w2t2;
+      sp1.time_first       = qRound( time1 );
+      sp1.time_last        = qRound( time2 );
+      sp1.avg_speed        = ( sp1.avg_speed + sp2.avg_speed ) * 0.5;
+
+      speedsteps[ ii ]     = sp1;   // Save merged speed step
+   }
+}
+
 // Set parameters from hardware files, related to rotor and centerpiece
 void US_SimulationParameters::setHardware( US_DB2* db, QString rCalID,
       int cp, int ch )
@@ -1059,7 +1143,9 @@ int US_SimulationParameters::ssProfFromTimeState( US_TimeState* tsobj,
    // Insure we have needed keys and get formats
    QStringList fkeys;
    QStringList ffmts;
+
    tsobj->field_keys( &fkeys, &ffmts );       // Get keys and formats
+
    int tmkx         = fkeys.indexOf( "Time" );            // Key indexes
    int sskx         = fkeys.indexOf( "SetSpeed" );
    int rskx         = fkeys.indexOf( "RawSpeed" );
@@ -1184,6 +1270,8 @@ int US_SimulationParameters::ssProfFromTimeState( US_TimeState* tsobj,
             ssp.time_e_step   = tm_p;
             ssp.rotorspeed   = ss_p;
             ssp.duration     = tm_p - ssp.time_b_accel;
+            ssp.rpm_timestate.resize( ssp.duration );
+            ssp.w2t_timestate.resize( ssp.duration );
             ssps << ssp;                      // Save speed step
 
             ssp.time_b_accel = tm_c;          // Start a new one
@@ -1219,8 +1307,25 @@ int US_SimulationParameters::ssProfFromTimeState( US_TimeState* tsobj,
    ssp.time_e_step     = tm_c;
    ssp.rotorspeed      = ss_c;
    ssp.duration        = tm_c - ssp.time_b_accel;
-   
+   ssp.rpm_timestate.resize( ssp.duration );
+   ssp.w2t_timestate.resize( ssp.duration );
    ssps << ssp;                               // Save speed step
+
+   //-----------------------------------------------------------------
+   // update simspeedprofile structure with timestate rpms and w2ts
+   //-----------------------------------------------------------------
+   int rtimex          = 0;
+
+   for ( int i1 = 0; i1 < ssps.count(); i1++ )
+   {
+      for ( int i2 = 0; i2 < ssps[ i1 ].duration; i2++ )
+      {   
+         tsobj->read_record( rtimex );
+         ssps[ i1 ].rpm_timestate[ i2 ] = tsobj->time_dvalue( "RawSpeed" );
+         ssps[ i1 ].w2t_timestate[ i2 ] = tsobj->time_dvalue( "Omega2T" );
+         rtimex              = -1;
+      }
+   }
 
    return ssps.count();
 }

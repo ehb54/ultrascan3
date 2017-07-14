@@ -604,15 +604,15 @@ int US_TimeState::field_keys( QStringList* keysP, QStringList* fmtsP )
 }
 
 // Read in the next or a specified data record
-int US_TimeState::read_record( int rtimex )
+int US_TimeState::read_record( const int rtimex )
 {
-   int status  = 0;
+   int status   = 0;
 
    if ( timex < 0 )
    {  // If current index indicates still in header, complete header calcs
-      int lstv    = nvalues - 1;
-      QString fm  = fmts[ lstv ];
-      rec_size    = offs[ lstv ] + fm.mid( 1 ).toInt();
+      int lstv     = nvalues - 1;
+      QString fm   = fmts[ lstv ];
+      rec_size     = offs[ lstv ] + fm.mid( 1 ).toInt();
    }
 
    if ( rtimex < 0  ||  ( rtimex - timex ) == 1 )
@@ -630,9 +630,19 @@ int US_TimeState::read_record( int rtimex )
       }
    }
 
+   else if ( pre_fetch )  // Check if rewindable
+   {  // For designated record before current, reposition first
+      qint64 fpos  = (qint64)rtimex * rec_size + fhdr_size;
+      dsi->device()->seek( fpos );
+      timex        = rtimex;
+      // Then read the record
+      dsi->readRawData( cdata, rec_size );
+   }
+
    else
    {  // Error if designated time index is less than current
-      status     = 510;
+      //  and stream is from a disk device (non-rewindable)
+      status       = 510;
       return set_error( status );
    }
 

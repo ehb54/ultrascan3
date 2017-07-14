@@ -120,7 +120,7 @@ class US_UTIL_EXTERN US_TimeState : public QObject
       //! \brief Read the next or a specified data record.
       //! \param rtimex Time index of record to read (or -1 for "next").
       //! \return       Status flag (0->OK).
-      int read_record( int = -1 );
+      int read_record( const int = -1 );
 
       //! \brief Get a time integer value for a given key from the current
       //!        record.
