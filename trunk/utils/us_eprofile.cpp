@@ -118,13 +118,15 @@ int US_ExtProfile::create_eprofile( US_DB2* dbP, const int compID,
    // Compose an XML string to represent the profile
    xml_eprofile( compID, compType, valueType, extinction, epxml );
 
-   qDebug() << "BUFFER eprofile: After xml_eprofile() ";
+   qDebug() << "BUFFER/ANALYTE eprofile: After xml_eprofile() ";
 
    // Determine if a record of this ID,Type exists in the DB
    QStringList qry;
    qry << "get_eprofile" << QString::number( compID ) << compType;
    dbP->query( qry );        // DB query to get a profile of given ID,type
    int num_prof     = dbP->numRows();
+   
+   qDebug() << "While creating/updating eprofile: num_prof: " << num_prof; 
 
    if ( num_prof > 0 )
    {  // Already existing record:  update it
@@ -133,6 +135,7 @@ int US_ExtProfile::create_eprofile( US_DB2* dbP, const int compID,
       qry << "update_eprofile" << QString::number( profileID )
           << QString::number( compID ) << compType << valueType << epxml;
       dbP->statusQuery( qry );
+      qDebug() << "New profileID, num_prof >0: " << profileID;
    }
 
    else
@@ -142,8 +145,9 @@ int US_ExtProfile::create_eprofile( US_DB2* dbP, const int compID,
           << valueType << epxml;
       dbP->statusQuery( qry );
       profileID        = dbP->lastInsertID();         // Profile ID
+      qDebug() << "New profileID, num_prof < 0: " << profileID;
    }
-
+   qDebug() << "New profileID: " << profileID;
    return profileID;
 }
 

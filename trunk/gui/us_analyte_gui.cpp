@@ -2480,6 +2480,7 @@ void US_AnalyteMgrNew::write_db()
 DbgLv(1) << "AnaN:SL: write_db()  anaID" << analyte->analyteID;
    US_Passwd pw;
    US_DB2    db( pw.getPasswd() );
+   analyte->new_or_changed_spectrum = true;
    int idAna    = analyte->write( true, "", &db );
    analyte->analyteID = QString::number( idAna );
 
