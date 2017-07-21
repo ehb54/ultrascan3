@@ -832,6 +832,9 @@ DEBUG_QUERY;
    qDebug() << "AnalyteID for extProfile: " << analyteID.toInt();
    
    //if ( !extinction.isEmpty() )
+
+   qDebug() << "new_or_changed_spectrum: " << new_or_changed_spectrum;
+
    if ( !extinction.isEmpty() and new_or_changed_spectrum )  
    {
       if ( !replace_spectrum )
