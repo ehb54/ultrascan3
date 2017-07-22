@@ -848,11 +848,22 @@ DEBUG_QUERY;
 
          QMap<double, double> new_extinction = extinction;
          int profileID = US_ExtProfile::fetch_eprofile(  db, analyteID.toInt(), compType, valType, extinction);
-         
-         qDebug() << "Old Extinction keys: " << extinction.keys().count() << ", ProfileID: " << profileID;
-         US_ExtProfile::update_eprofile( db, profileID, analyteID.toInt(), compType, valType, new_extinction);
-         qDebug() << "New Extinction keys: " << new_extinction.keys().count() << ", ProfileID: " << profileID;
-         
+	
+	 //qDebug() << "Old Extinction keys: " << extinction.keys().count() << ", ProfileID: " << profileID;
+         //US_ExtProfile::update_eprofile( db, profileID, analyteID.toInt(), compType, valType, new_extinction);
+         //qDebug() << "New Extinction keys: " << new_extinction.keys().count() << ", ProfileID: " << profileID;
+	 
+	 if (profileID == -1)
+	   {
+	     qDebug() << "Creating profile when profileID = -1!!!! "; 
+	     US_ExtProfile::create_eprofile( db, analyteID.toInt(), compType, valType, extinction);
+	   }
+	 else
+	   {
+	     qDebug() << "Old Extinction keys: " << extinction.keys().count() << ", ProfileID: " << profileID;
+	     US_ExtProfile::update_eprofile( db, profileID, analyteID.toInt(), compType, valType, new_extinction);
+	     qDebug() << "New Extinction keys: " << new_extinction.keys().count() << ", ProfileID: " << profileID;
+	   }
          replace_spectrum = false;
       }
       new_or_changed_spectrum = false; 
