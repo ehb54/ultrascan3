@@ -342,6 +342,7 @@ class US_AnalyteMgrNew : public US_Widgets
       void update_sequence ( QString );
 
       void value_changed      ( const QString& );
+      void value_changed_e280 ( const QString& );
       void temp_changed       ( const QString& );
 
       void update_stranded    ( bool );

@@ -1392,7 +1392,12 @@ DbgLv(1) << "agN: id dbdk ana" << invID << select_db_disk << tmp_analyte;
     QLabel* lb_protein_e280     = us_label(
           tr( "E280 <small>(OD/(mol*cm))</small>:" ) );
     protein_info->addWidget( lb_protein_e280, prow, 2 );
-    le_protein_e280 = us_lineedit( "0", 0, true );
+    
+    //le_protein_e280 = us_lineedit( "0", 0, true );
+    le_protein_e280 = us_lineedit( "0", 0, false );
+    connect( le_protein_e280, SIGNAL( textChanged  ( const QString& ) ),
+	                      SLOT  ( value_changed_e280( const QString& ) ) );
+
     protein_info->addWidget( le_protein_e280, prow++, 3 );
     QSpacerItem* spacer1 = new QSpacerItem( 20, 0 );
     protein_info->addItem( spacer1, prow, 0, 1, 4 );
@@ -1762,6 +1767,13 @@ void US_AnalyteMgrNew::update_sequence( QString seq )
 //   pb_more->setEnabled( true );
 }
 
+
+void US_AnalyteMgrNew::value_changed_e280( const QString& )
+{
+  double val_vbar20 =  le_protein_e280->text().toDouble();
+  analyte->extinction[280.0] = val_vbar20;
+  qDebug() << "New e280: " << analyte->extinction[280.0];
+} 
 
 void US_AnalyteMgrNew::value_changed( const QString& )
 {
