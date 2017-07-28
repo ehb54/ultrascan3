@@ -1215,10 +1215,19 @@ DbgLv(1) << "IS-MWL:  expi_wvlns size" << expi_wvlns.size() << nwaveln;
       edata         = &allData[ 0 ];
       nrpoint       = edata->pointCount();
       int nscan     = edata->scanCount();
-      int ndset     = ncelchn * nrpoint;
-      int ndpoint   = nscan * maxwavl;
+      int mxscan    = 0;
+      int mxrval    = 0;
+
+      for ( int ii = 0; ii < allData.size(); ii++ )
+      {  // Get maximum scan and point counts over all triples
+         mxscan        = qMax( mxscan, allData[ ii ].scanCount()  );
+         mxrval        = qMax( mxrval, allData[ ii ].pointCount() );
+      }
+
+      int ndset     = ncelchn * mxrval;
+      int ndpoint   = maxwavl * mxscan;
 DbgLv(1) << "IS-MWL:   nrpoint nscan ndset ndpoint" << nrpoint << nscan
- << ndset << ndpoint;
+ << ndset << ndpoint << "mxrval mxscan" << mxrval << mxscan;
 
       for ( int ii = 0; ii < nrpoint; ii++ )
       {  // Update the list of radii that may be plotted
@@ -1227,6 +1236,8 @@ DbgLv(1) << "IS-MWL:   nrpoint nscan ndset ndpoint" << nrpoint << nscan
       }
 DbgLv(1) << "IS-MWL:  expd_radii size" << expd_radii.size() << nrpoint;
 
+      nrpoint       = mxrval;
+      nscan         = mxscan;
       QVector< double > wrdata;
       wrdata.fill( 0.0, ndpoint );
       rdata .clear();
@@ -1254,15 +1265,18 @@ DbgLv(1) << "IS-MWL:  rdata size" << rdata.size() << ndset;
             edata         = &allData[ trx ];               // Triple data
             int iwavl     = rawi_wvlns[ jwx ];             // Wavelength value
             int wvx       = toti_wvlns.indexOf( iwavl );   // Wavelength index
-DbgLv(1) << "IS-MWL:   trx ccx wvx" << trx << ccx << wvx;
+            int kscan     = edata->scanCount();
+            int krpoint   = edata->pointCount();
+DbgLv(1) << "IS-MWL:   trx ccx wvx jwx" << trx << ccx << wvx << jwx
+ << "nscan szscan" << nscan << kscan << "nrpoint szrval" << nrpoint << krpoint;
 
-            for ( int scx = 0; scx < nscan; scx++ )
+            for ( int scx = 0; scx < kscan; scx++ )
             {  // Each scan of a triple
                US_DataIO::Scan* scan  = &edata->scanData[ scx ];
                int odx       = ccx * nrpoint;         // Output dataset index
                int opx       = scx * maxwavl + wvx;   // Output point index
-DbgLv(2) << "IS-MWL:    scx odx opx" << scx << odx << opx;
-               for ( int rax = 0; rax < nrpoint; rax++ )
+DbgLv(2) << "IS-MWL:     scx odx opx" << scx << odx << opx;
+               for ( int rax = 0; rax < krpoint; rax++ )
                {  // Store ea. radius data point as a wavelength point in a scan
                   rdata[ odx++ ][ opx ]  = scan->rvalues[ rax ];
                } // END: radius points loop
