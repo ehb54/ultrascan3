@@ -67,6 +67,7 @@ BEGIN
   SET @MORE_THAN_SINGLE_ROW = 524;
   SET @NO_MRECS       = 525;
   SET @NO_PROTOCOL    = 526;
+  SET @NO_ROTOR_CAL   = 527;
 
   -- Some user levels
   SET @US3_USER       = 0;

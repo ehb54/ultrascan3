@@ -91,6 +91,7 @@ CREATE  TABLE IF NOT EXISTS instrument (
   name TEXT NULL ,
   serialNumber TEXT NULL ,
   dateUpdated TIMESTAMP NULL ,
+  radialCalID int(11) NOT NULL DEFAULT 0 ,
   PRIMARY KEY (instrumentID) ,
   INDEX ndx_instrument_labID (labID ASC) ,
   CONSTRAINT fk_instrument_labID
@@ -269,6 +270,21 @@ CREATE  TABLE IF NOT EXISTS abstractCenterpiece (
   centerpieceRefURI TEXT NULL ,
   dataUpdated TIMESTAMP NULL ,
   PRIMARY KEY (abstractCenterpieceID) )
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table radialCalibration
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS radialCalibration ;
+
+CREATE  TABLE IF NOT EXISTS radialCalibration (
+  radialCalID int(11) NOT NULL AUTO_INCREMENT ,
+  radialCalGUID char(36) NOT NULL UNIQUE ,
+  speed int(11) NOT NULL DEFAULT 0 ,
+  rotorCalID int(11) NOT NULL DEFAULT 0 ,
+  dateUpdated TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP ,
+  PRIMARY KEY (radialCalID) )
 ENGINE = InnoDB;
 
 
@@ -1742,14 +1758,6 @@ CREATE  TABLE IF NOT EXISTS timestate (
     ON UPDATE CASCADE)
 ENGINE = InnoDB;
 
--- Load some non-changing hardware data
-SOURCE us3_hardware_data.sql
-SOURCE us3_buffer_components.sql
-
-SET SQL_MODE=@OLD_SQL_MODE;
-SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
-SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;
-
 
 -- -----------------------------------------------------
 -- Table protocol
@@ -1797,6 +1805,7 @@ CREATE  TABLE IF NOT EXISTS protocolPerson (
     ON UPDATE CASCADE)
 ENGINE = InnoDB;
 
+
 -- -----------------------------------------------------
 -- Table extinctionProfile
 -- -----------------------------------------------------
@@ -1811,4 +1820,13 @@ CREATE TABLE extinctionProfile (
   PRIMARY KEY (profileID) ,
   INDEX ndx_component_ID (componentID ASC) )
 ENGINE = InnoDB;
+
+
+-- Load some non-changing hardware data
+SOURCE us3_hardware_data.sql
+SOURCE us3_buffer_components.sql
+
+SET SQL_MODE=@OLD_SQL_MODE;
+SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
+SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;
 
