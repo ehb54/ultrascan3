@@ -1139,6 +1139,7 @@ CREATE PROCEDURE get_instrument_info ( p_personGUID    CHAR(36),
 
 BEGIN
   DECLARE count_instruments INT;
+  DECLARE count_rcal_instrs INT;
 
   CALL config();
   SET @US3_LAST_ERRNO = @OK;
@@ -1148,6 +1149,12 @@ BEGIN
   INTO       count_instruments
   FROM       instrument
   WHERE      instrumentID = p_instrumentID;
+
+  SELECT     COUNT(*)
+  INTO       count_rcal_instrs
+  FROM       instrument ins, radialCalibration rac
+  WHERE      ins.instrumentID = p_instrumentID
+  AND        rac.radialCalID = ins.radialCalID;
 
   IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
     IF ( count_instruments = 0 ) THEN
@@ -1159,9 +1166,20 @@ BEGIN
     ELSE
       SELECT @OK AS status;
 
-      SELECT   name, serialNumber
-      FROM     instrument
-      WHERE    instrumentID = p_instrumentID;
+      IF ( count_rcal_instrs = 0 ) THEN
+        SELECT   name, serialNumber, labID, dateUpdated, radialCalID
+        FROM     instrument
+        WHERE    instrumentID = p_instrumentID;
+
+      ELSE
+        SELECT   name, serialNumber, labID, dateUpdated, radialCalID,
+                 rac.speed, rac.rotorCalID, roc.coeff1, roc.coeff2
+        FROM     instrument ins, radialCalibration rac, rotorCalibration roc
+        WHERE    instrumentID = p_instrumentID
+        AND      rac.radialCalID = ins.radialCalID
+        AND      roc.rotorCalibrationID = rac.rotorCalID ;
+
+      END IF;
 
     END IF;
 
@@ -1198,6 +1216,31 @@ BEGIN
 
   END IF;
 
+  SELECT @US3_LAST_ERRNO AS status;
+
+END$$
+
+-- UPDATEs an existing instrument with radial calibration ID information
+DROP PROCEDURE IF EXISTS update_instrument$$
+CREATE PROCEDURE update_instrument ( p_personGUID    CHAR(36),
+                                     p_password      VARCHAR(80),
+                                     p_instrumentID  INT,
+                                     p_radialCalID   INT(11) )
+  MODIFIES SQL DATA
+
+BEGIN
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  IF ( verify_userlevel( p_personGUID, p_password, @US3_ADMIN ) = @OK ) THEN
+
+    UPDATE instrument SET radialCalID = p_radialCalID
+    WHERE instrumentID = p_instrumentID;
+
+  END IF;
+      
   SELECT @US3_LAST_ERRNO AS status;
 
 END$$
@@ -1317,6 +1360,135 @@ BEGIN
                maxRPM, pathLength, angle, width
       FROM     abstractCenterpiece
       WHERE    abstractCenterpieceID = p_abstractCenterpieceID;
+
+    END IF;
+
+  ELSE
+    SELECT @US3_LAST_ERRNO AS status;
+
+  END IF;
+
+END$$
+
+
+--
+-- Radial Calibration procedures
+--
+
+-- adds a new radial calibration profile
+DROP PROCEDURE IF EXISTS add_radialcal$$
+CREATE PROCEDURE add_radialcal ( p_personGUID      CHAR(36),
+                                 p_password        VARCHAR(80),
+                                 p_radialCalGUID   CHAR(36),
+                                 p_speed           INT,
+                                 p_rotorCalID      INT )
+  MODIFIES SQL DATA
+
+BEGIN
+  DECLARE count_rotorcals   INT;
+
+  DECLARE duplicate_key TINYINT DEFAULT 0;
+  DECLARE null_field    TINYINT DEFAULT 0;
+
+  DECLARE CONTINUE HANDLER FOR 1062
+    SET duplicate_key = 1;
+
+  DECLARE CONTINUE HANDLER FOR 1048
+    SET null_field = 1;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+  SET @LAST_INSERT_ID = 0;
+
+  SELECT     COUNT(*)
+  INTO       count_rotorcals
+  FROM       rotorCalibration
+  WHERE      rotorCalibrationID = p_rotorCalID;
+
+  IF ( ( verify_userlevel( p_personGUID, p_password, @US3_ADMIN       ) = @OK ) &&
+       ( check_GUID      ( p_personGUID, p_password, p_radialCalGUID  ) = @OK ) ) THEN
+    IF ( count_rotorcals < 1 ) THEN
+      SET @US3_LAST_ERRNO = @NO_ROTOR_CAL;
+      SET @US3_LAST_ERROR = CONCAT('MySQL: No rotor calibration with ID ',
+                                   p_rotorCalID,
+                                   ' exists' );
+
+    ELSE
+      INSERT INTO radialCalibration SET
+        radialCalGUID   = p_radialCalGUID,
+        speed           = p_speed,
+        rotorCalID      = p_rotorCalID,
+        dateUpdated     = NOW() ;
+        
+      IF ( duplicate_key = 1 ) THEN
+        SET @US3_LAST_ERRNO = @INSERTDUP;
+        SET @US3_LAST_ERROR = "MySQL: Duplicate entry for radialCalGUID field";
+  
+      ELSEIF ( null_field = 1 ) THEN
+        SET @US3_LAST_ERRNO = @INSERTNULL;
+        SET @US3_LAST_ERROR = "MySQL: NULL value for radialCalGUID field";
+  
+      ELSE
+        SET @LAST_INSERT_ID = LAST_INSERT_ID();
+  
+      END IF;
+
+    END IF;
+
+  END IF;
+
+  SELECT @US3_LAST_ERRNO AS status;
+
+END$$
+
+-- Returns information about one or all radial calibration profile(s)
+DROP PROCEDURE IF EXISTS get_radialcal_info$$
+CREATE PROCEDURE get_radialcal_info ( p_personGUID  CHAR(36),
+                                      p_password    VARCHAR(80),
+                                      p_radialCalID INT )
+  READS SQL DATA
+
+BEGIN
+  DECLARE count_profiles INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  IF ( p_radialCalID > 0 ) THEN
+    SELECT     COUNT(*)
+    INTO       count_profiles
+    FROM       radialCalibration
+    WHERE      radialCalID = p_radialCalID;
+  ELSE
+    SELECT     COUNT(*)
+    INTO       count_profiles
+    FROM       radialCalibration;
+  END IF;
+
+  IF ( verify_user( p_personGUID, p_password ) = @OK ) THEN
+    IF ( count_profiles = 0 ) THEN
+      SET @US3_LAST_ERRNO = @NOROWS;
+      SET @US3_LAST_ERROR = 'MySQL: no rows returned';
+
+      SELECT @US3_LAST_ERRNO AS status;
+
+    ELSE
+      SELECT @OK AS status;
+
+      IF ( p_radialCalID > 0 ) THEN
+        SELECT   radialCalID, radialCalGUID, speed, rotorCalID, dateUpdated,
+                 roc.coeff1, roc.coeff2
+        FROM     radialCalibration, rotorCalibration roc
+        WHERE    radialCalID = p_radialCalID
+        AND      roc.rotorCalibrationID = rotorCalID ;
+      ELSE
+        SELECT   radialCalID, radialCalGUID, speed, rotorCalID, dateUpdated,
+                 roc.coeff1, roc.coeff2
+        FROM     radialCalibration, rotorCalibration roc
+        WHERE    roc.rotorCalibrationID = rotorCalID ;
+      END IF;
 
     END IF;
 
