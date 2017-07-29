@@ -16,8 +16,7 @@
 
 #include "us_new_spectrum.h"
 
-//! \Class US_SolutionMgrSelect
-//!      This class provides a tabbed entry for solution selection
+//! This class provides a tabbed entry for solution selection
 class US_SolutionMgrSelect: public US_Widgets
 {
    Q_OBJECT
@@ -147,7 +146,6 @@ class US_SolutionMgrSelect: public US_Widgets
      //void init_solution		( void );
 };
 
-//! \class US_SolutionGuiMgrNew
 //!      This class provides a tabbed entry for new solution creation
 class US_SolutionMgrNew : public US_Widgets
 {
@@ -155,18 +153,19 @@ class US_SolutionMgrNew : public US_Widgets
 
    public:
 
-      //! brief Tab for entering a new Solution. To 
-      //! instantiate the class a calling function must
-      //! provide the ID of the investigator.
+      //! brief Tab for entering a new Solution. To instantiate the class,
+      //! a calling function must provide the ID of the investigator.
       //!
-      //! \param invID          The current investigator ID
-      //! \param select_db_disk Indicates whether the default search
-      //!                         is on the local disk or in the DB
-      //! \param tmp_solution     Pointer to a US_Solution object holding the active
-      //!                         solution (for editing and adding new solutions)
+      //! \param invID            Pointer to the current investigator ID
+      //! \param select_db_disk   Pointer to flag if the default search is on
+      //!                           the local disk (0) or in the DB (1)
+      //! \param tmp_solution     Pointer to a US_Solution object holding
+      //!                           the active solution (for editing
+      //!                           and adding new solutions)
+      //! \param tmp_experimentID Experiment ID
+      //! \param tmp_channelID    Channel ID
       US_SolutionMgrNew( int*, int*, US_Solution*, int, int );
-      //US_Extinction *w;
-                  
+
    signals:
       void newSolAccepted( void );  //! New solution accepted
       void newSolCanceled( void );
@@ -242,23 +241,24 @@ class US_SolutionMgrNew : public US_Widgets
  
 };
 
-//! \class US_SolutionMgrEdit
-//!      This class provides a tabbed entry for non-hydrodynamic solution mods
+//! This class provides a tabbed entry for non-hydrodynamic solution mods
 class US_SolutionMgrEdit : public US_Widgets
 {
    Q_OBJECT
 
    public:
 
-      //! brief Tab for entering a new Solution. To 
-      //!  instantiate the class a calling function must
-      //!  provide the ID of the investigator.
+      //! brief Tab for entering a new Solution. To instantiate the class,
+      //!  a calling function must provide the ID of the investigator.
       //!
-      //! \param invID          The current investigator ID
-      //! \param select_db_disk Indicates whether the default search
-      //!                         is on the local disk or in the DB
-      //! \param tmp_solution     Pointer to a US_Solution object holding the active
-      //!                         solution (for editing and adding new solutions)
+      //! \param invID            Pointer to the current investigator ID
+      //! \param select_db_disk   Pointer to flag if the default search is on
+      //!                           the local disk (0) or in the DB (1)
+      //! \param tmp_solution     Pointer to a US_Solution object holding the
+      //!                           active solution (for editing and adding
+      //!                           new solutions)
+      //! \param tmp_experimentID Experiment ID
+      //! \param tmp_channelID    Channel ID
       US_SolutionMgrEdit( int*, int*, US_Solution*, int, int );
       QString edit_solution_description;
       //US_Extinction *w;
@@ -305,8 +305,7 @@ class US_SolutionMgrEdit : public US_Widgets
 };
 
 
-//! \class US_SolutionMgrSettings
-//!      This class provides a tabbed entry for general solution settings
+//! This class provides a tabbed entry for general solution settings
 class US_SolutionMgrSettings: public US_Widgets
 {
    Q_OBJECT
@@ -356,6 +355,7 @@ class US_SolutionMgrSettings: public US_Widgets
 };
 
 
+//! This class provides the main Solutions GUI dialog
 class US_GUI_EXTERN US_SolutionGui : public US_WidgetsDialog
 {
    Q_OBJECT
