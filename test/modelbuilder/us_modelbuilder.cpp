@@ -47,7 +47,7 @@ US_ModelBuilder::US_ModelBuilder() : US_Widgets()
    /////////////////////////////////////
 
    //set simparams to defualt values
-   initalize_simulationParameters();
+   initSimparams();
 
    //run simulation
    startSimulation();
@@ -149,19 +149,20 @@ US_ModelBuilder::US_ModelBuilder() : US_Widgets()
 
 //this function allows the user to open simparams GUI
 
-void US_ModelBuilder::collectParameters(void) {
+void US_ModelBuilder::collectParameters(void)
+{
    working_simparams = simparams;
 
    US_SimulationParametersGui* dialog = new US_SimulationParametersGui(working_simparams);
 
-   connect(dialog, SIGNAL(complete()), SLOT(update_parameters()));
+   connect(dialog, SIGNAL(complete()), SLOT(updateParameters()));
 
    dialog->exec();
 }
 
 //this function updates the global simparams variable with user data
 
-void US_ModelBuilder::update_parameters(void)
+void US_ModelBuilder::updateParameters(void)
 {
    simparams = working_simparams;
 }
@@ -192,121 +193,7 @@ void US_ModelBuilder::startSimulation(void)
    QString hostname = QString::fromLocal8Bit(tempHN);
    qDebug() << hostname;
 
-   //SD grid generaton
-   /*
-   qDebug() << "Generating s-D grid...";
-
-   QVector<QVector<US_Model::SimulationComponent> > sdGrid = generateSDGrid(sMin, sMax, dMin, dMax, dim, dim, 's');
-   */
-
-   //sk grid generation
-   /*
-   qDebug() << "Generating s-k grid...";
-
-   QVector<QVector<US_Model::SimulationComponent> > skGrid = generateSKGrid(sMin, sMax, kMin, kMax, dim, dim, 's');
-   */
-
-   //MW grid generation
-   /*
-   qDebug() << "Generating mw-f/f0 grid...";
-
-   QVector<QVector<US_Model::SimulationComponent> > mkGrid;
-   for(int i = 0; i < dim; i++)
-   {
-      QVector<US_Model::SimulationComponent> column;
-
-      for(int j = 0; j < dim; j++)
-      {
-         US_Model::SimulationComponent current;
-
-         double mw = mMin + j * ((mMax - mMin) / dim);
-         double k = kMin + i * ((kMax - kMin) / dim);
-
-         double D = calculateDiffusionMK(mw, k);
-         double s = calculateSedimentationMD(mw, D);
-
-         current.s = s;
-         current.D = D;
-         current.f_f0 = k;
-         current.mw = mw;
-
-         //qDebug() << "s: " << s << " , D: " << D << " , f_f0: " << k;
-
-         //do coefficient calculation, and proceed only if successful
-         if(US_Model::calc_coefficients(current) && current.f_f0 <= 4.0 && current.f_f0 >= 1)
-         {
-            //qDebug() << "s: " << current.s << " , D: " << current.D << " , f_f0: " << current.f_f0 << endl;
-            column.append(current);
-         }
-         else
-         {
-            //qDebug() << "Discarding invalid f/f0. Point: s, d, f/f0, mw: " << current.s << " , " << current.D << " , " << current.f_f0 << " , " << current.mw;
-         }
-      }
-
-      mkGrid.append(column);
-   }
-   */
-
    qDebug() << "Beginning grid processing/output...";
-
-   //Faxen grid generation and testing; must use constant-k lines
-   /*
-   QFile outfileFG("output/faxenGrid_kMajor.tsv");
-   outfileFG.open(QIODevice::ReadWrite);
-   QTextStream outstreamFG(&outfileFG);
-   outstreamFG << "#s \t D \t f/f0 \t MW \t RMSD" << endl;
-
-   QVector<QVector<US_Model::SimulationComponent> > faxen = createFaxenGrid(sMin,sMax, kMin, kMax, 35);
-
-   //do grid RMSD calc in paralell
-   QVector<QVector<double> > calculatedFG = checkLineRMSDParalell(faxen, true);
-
-   //write results
-   for(int i = 0; i < calculatedFG.size(); i++)
-   {
-      QVector<double> current = calculatedFG.at(i);
-
-      outstreamFG << current.at(0) << " \t" << current.at(1) << " \t" << current.at(2) << " \t" << current.at(3) << " \t" << current.at(4) << endl;
-   }
-
-   outfileFG.close();
-   */
-
-   //faxen gridsize testing
-   /*
-   qDebug() << "Generating Faxen grids for RMSD averaging";
-
-   QFile outfileFGAverage("output/faxenGrid_Averages_kMajor.tsv");
-   outfileFGAverage.open(QIODevice::ReadWrite);
-   QTextStream outstreamFGAverage(&outfileFGAverage);
-   outstreamFGAverage << "#PointCount \t AverageRMSD \t SampleStddev" << endl;
-
-   //run grid generation for different dimensions
-   for(int dimension = 10; dimension < 500; dimension += 10)
-   {
-      qDebug() << "Making grid for dimension: " << dimension;
-
-      int numPoints = 0;
-      double average = 0.0;
-      double stddev = 0.0;
-
-      //make grid
-      QVector<QVector<US_Model::SimulationComponent> > grid = createFaxenGrid(sMin,sMax, kMin, kMax, dimension);
-
-      //get RMSD
-      QVector<QVector<double> > results = checkLineRMSDParalell(grid, false);
-
-      //stats - 3-length array of count, average, stddev
-      QVector<double> stats = calculateGridStatistics(results);
-
-      //output data to file
-      outstreamFGAverage << stats.at(0) << " \t" << stats.at(1) << " \t" << stats.at(2) <<  endl;
-   }
-
-   outfileFGAverage.close();
-   */
-
 
    //RMSD isoline testing
    /*
@@ -316,131 +203,395 @@ void US_ModelBuilder::startSimulation(void)
    double k = 0.0;
    */
 
-   //generate faxen grid
-   QVector<QVector<US_Model::SimulationComponent> > fg = createFaxenGrid(1.25e-13, 9.75e-13, 1.6, 3.4, 11);
-   QVector<US_Model::SimulationComponent> faxenPoints;
+   //special faxen grid run
+   /*
+   QVector<QVector<US_Model::SimulationComponent> > fg = generateFaxenGrid(1.1e-13, 9.9e-13, 1.2, 3.8, 270);
+   //QVector<QVector<US_Model::SimulationComponent> > fg = generateFaxenGrid(1.1e-13, 9.99e-13, 1.05, 3.95, 270);
+   QVector<US_Model::SimulationComponent> faxenPoints1;
+   QVector<US_Model::SimulationComponent> faxenPoints2;
    for(int i = 0; i < fg.size(); i++)
    {
-      faxenPoints.append(fg.at(i));
-   }
+      for(int j = 0; j < fg.at(i).size(); j++)
+      {
+         US_Model::SimulationComponent current = fg.at(i).at(j);
 
-   qDebug()<< "Faxen grid size: " << faxenPoints.size();
+         if(current.s >= 9.6e-13 && current.f_f0 >= 3)
+         {
+            faxenPoints1.append(current);
+         }
+         else if(current.s >= 1.2e-13 && current.s <= 1.5e-13 && current.f_f0 <= 1.5)
+         {
+            faxenPoints2.append(current);
+         }
+      }
+   }
 
    //target RMSD levels
    QVector<double> rmsdTargets;
-   rmsdTargets.append(0.01);
-   rmsdTargets.append(0.005);
-   rmsdTargets.append(0.001);
+   rmsdTargets.append(1e-3);
+   rmsdTargets.append(2e-3);
 
-   double target = 0.0;
+   runIsoRMSDTest(faxenPoints1, rmsdTargets, 10, "largeFaxen_UpperRight");
+   runIsoRMSDTest(faxenPoints2, rmsdTargets, 10, "largeFaxen_LowerLeft");
 
-   //for(double target = 0.001; target < 0.1; target *= 10)
-   foreach(target, rmsdTargets)
+
+   //special sk grid run
+
+   QVector<QVector<US_Model::SimulationComponent> > sk = generateSKGrid(1.1e-13, 9.9e-13, 1.2, 3.8, 340, 62, 's');
+   QVector<US_Model::SimulationComponent> skPoints1;
+   QVector<US_Model::SimulationComponent> skPoints2;
+   for(int i = 0; i < sk.size(); i++)
    {
-      qDebug() << "generating isoRMSD lines for target: " << target;
-
-      QVector<QFuture<QVector<US_Model::SimulationComponent> > > futures;
-      QVector<QPair<double, double> > skPairs;
-
-//      for(int i = 0; i < 30; i++)
-//      {
-//         s = (deltaS * i) + 1.25e-13;
-
-//         for(int j = 0; j < 5; j++)
-//         {
-//            k = (deltaK * j) + 1.25;
-
-//            QPair<double, double> coord(s, k);
-//            skPairs.append(coord);
-//            futures.append(QtConcurrent::run(this, &US_ModelBuilder::findConstantRMSDNeighbors, s, k, 2, target));
-//         }
-//      }
-
-      for(int i = 0; i < faxenPoints.size(); i++)
+      for(int j = 0; j < sk.at(i).size(); j++)
       {
-         double s = faxenPoints.at(i).s;
-         double k = faxenPoints.at(i).f_f0;
-         QPair<double, double> coord(s, k);
-         skPairs.append(coord);
-         futures.append(QtConcurrent::run(this, &US_ModelBuilder::findConstantRMSDNeighbors, s, k, 5, target));
-      }
+         US_Model::SimulationComponent current = sk.at(i).at(j);
 
-      qDebug() << "Threads spawned. Processing...";
-
-      for(int f = 0; f < futures.size(); f++)
-      {
-         qDebug() << "Getting thread result " << (f+1);
-
-         //get location for output file naming
-         QPair<double, double> coord = skPairs.at(0);
-         skPairs.remove(0);
-
-         //outfile
-         QFile outfileIsoLines("output/isoRMSD_Faxen/RMSD_" + QString::number(target) + "/faxen_" + QString::number(target)
-                               + "_" + QString::number(coord.first) + "s_" + QString::number(coord.second) + "k.tsv");
-         outfileIsoLines.open(QFile::WriteOnly | QFile::Truncate);
-         QTextStream outstreamIsoLines(&outfileIsoLines);
-         outstreamIsoLines << "#Sed. Coeff. \t Diff. Coeff. \t Frict. Ratio" << endl;
-
-         QVector<US_Model::SimulationComponent> isoRMSD = futures.at(0).result();
-         futures.remove(0);
-
-         qDebug() << "\tResult size: " << isoRMSD.size();
-
-         US_Model::SimulationComponent isoComponent;
-         foreach(isoComponent, isoRMSD)
+         if(current.s >= 9.6e-13 && current.f_f0 >= 3)
          {
-            if(isoComponent.s != 0 && isoComponent.D != 0 && isoComponent.f_f0 != 0)
-            {
-               outstreamIsoLines << isoComponent.s << " \t" << isoComponent.D << " \t" << isoComponent.f_f0 << endl;
-            }
-            else
-            {
-               qDebug() << "\t\tRecieved 0 value while writing to file";
-            }
+            skPoints1.append(current);
          }
-
-         outfileIsoLines.close();
+         else if(current.s >= 1.2e-13 && current.s <= 1.5e-13 && current.f_f0 <= 1.5)
+         {
+            skPoints2.append(current);
+         }
       }
-
-
    }
 
+   runIsoRMSDTest(skPoints1, rmsdTargets, 10, "largeSK_UpperRight");
+   runIsoRMSDTest(skPoints2, rmsdTargets, 10, "largeSK_LowerLeft");
+   */
+
+   //run isormsd
    /*
-   for(int i = 4; i < 100; i += 2)
+   QVector<double> targets;
+   targets.append(0.01);
+   targets.append(0.0075);
+   targets.append(0.005);
+   targets.append(0.0025);
+   targets.append(0.001);
+
+   QVector<double> times;
+   times.append(3.4);
+   times.append(6.8);
+   times.append(34);
+
+   QVector<double> speeds;
+   speeds.append(60000); //actual target 63460, but outside of bounds
+   speeds.append(40135);
+   speeds.append(29915);
+
+   //foreach(double time, times)
+   foreach(double speed, speeds)
    {
-      QVector<QVector<US_Model::SimulationComponent> > fg = createFaxenGrid(1.25e-13, 9.75e-12, 1.1, 3.9, i);
-      int cnt = 0;
+      //qDebug() << "running grids for time:" << time;
+
+      //set duration
+      //simparams.speed_step[0].duration_hours = (int) time;
+      //simparams.speed_step[0].duration_minutes = (int) ((time - ((int) time)) * 60);
+
+      //set speed
+      qDebug() << "Running grids for speed:" << speed;
+      simparams.speed_step[0].rotorspeed = speed;
+
+      qDebug() << "\tMaking faxen grid";
+      QVector<QVector<US_Model::SimulationComponent> > fg = generateFaxenGrid(1.1e-13, 9.9e-13, 1.2, 3.8, 26);
+      QVector<US_Model::SimulationComponent> faxenPoints;
+      for(int i = 0; i < fg.size(); i++)
+      {
+         faxenPoints.append(fg.at(i));
+      }
+
+      runIsoRMSDTest(faxenPoints, targets, 2, "Faxen_speed" + QString::number(speed));
+
+      qDebug()<< "\tMaking sk grid";
+      QVector<QVector<US_Model::SimulationComponent> > sk = generateSKGrid(1.1e-13, 9.9e-13, 1.2, 3.8, 35, 6, QChar('s'));
+      QVector<US_Model::SimulationComponent> skPoints;
+      for(int i = 0; i < sk.size(); i++)
+      {
+         skPoints.append(sk.at(i));
+      }
+      runIsoRMSDTest(skPoints, targets, 2, "skGrid_speed" + QString::number(speed));
+
+      qDebug()<< "\tMaking sd grid";
+      QVector<QVector<US_Model::SimulationComponent> > sd = generateSDGrid(1.1e-13, 9.9e-13, 8.55883e-08, 1.4469e-06, 46, 8, QChar('s'));
+      QVector<US_Model::SimulationComponent> sdPoints;
+      for(int i = 0; i < sd.size(); i++)
+      {
+         sdPoints.append(sd.at(i));
+      }
+      runIsoRMSDTest(sdPoints, targets, 2, "sdGrid_speed" + QString::number(speed));
+      //qDebug() << "sdsize:" << sdPoints.size();
+
+      qDebug()<< "\tMaking mk grid";
+      QVector<QVector<US_Model::SimulationComponent> > mk = generateMKGrid(6587.98, 1.00235e+06, 1.2, 3.8, 32, 12, QChar('m'));
+      QVector<US_Model::SimulationComponent> mkPoints;
+      for(int i = 0; i < mk.size(); i++)
+      {
+         mkPoints.append(mk.at(i));
+      }
+      runIsoRMSDTest(mkPoints, targets, 2, "mkGrid_speed" + QString::number(speed));
+   }
+   */
+
+
+   //isoRMSDs from JSON
+   /*
+   QFile jsonInputFile ("input/faxen.json");
+   jsonInputFile.open(QIODevice::ReadOnly | QIODevice::Text);
+   QString jsonString = QString(jsonInputFile.readAll());
+
+   QJsonArray jsonSlopeArray = QJsonDocument::fromJson(jsonString.toUtf8()).array();
+
+   QVector<double> targets;
+   targets.append(0.01);
+   targets.append(0.0075);
+   targets.append(0.005);
+   targets.append(0.0025);
+   targets.append(0.001);
+
+   QPair<QVector<QVector<QVector<US_Model::SimulationComponent> > >, QVector<US_Model::SimulationComponent> > sets = levelSetFromJson(jsonSlopeArray, targets);
+   processJsonSlopes(sets.first, sets.second, targets, "jsonFaxenOut");
+   */
+
+   /*
+   QVector<US_Model::SimulationComponent> testPoints(1);
+   testPoints[0] = componentFromSK(1.6e-13, 1.4);
+   QVector<double> testTargets;
+   testTargets.append(0.01);
+   testTargets.append(0.005);
+   testTargets.append(0.001);
+
+   runIsoRMSDTest(testPoints, testTargets, 60, "test");
+   */
+
+   //getLevelSets()
+
+/*
+   for(int i = 4; i < 400; i += 2)
+   {
+      QVector<QVector<US_Model::SimulationComponent> > fg = generateFaxenGrid(1.25e-13, 9.75e-12, 1.1, 3.9, i);
+      int count = 0;
       for(int j = 0; j < fg.size(); j++)
       {
-         cnt += fg.at(j).size();
+         count += fg.at(j).size();
       }
 
 
-      qDebug() << "gridparam, point count: " << i << ", " << cnt;
-   }*/
+      qDebug() << i << ", " << count;
+   }
+*/
 
+   /*
+   US_Model::SimulationComponent m1 = componentFromSK(1.1e-13, 1.2);
+   US_Model::SimulationComponent m2 = componentFromSK(9.9e-13, 3.8);
 
-
-//   US_Model::SimulationComponent model1 = modelComponentFromSK(0.000000000000100096, 1);
-//   US_Model::SimulationComponent model2 = modelComponentFromSK(0.000000000000100288, 1);
-
-//   US_DataIO::RawData* data1 = simulateComponent(model1);
-//   US_DataIO::RawData* data2 = simulateComponent(model2);
-
-//   double rmsd = calculateScaledRMSD(data1, model1, data2, model2);
-//   delete data1;
-//   delete data2;
-
-//   qDebug() << "RMSD: " << rmsd;
+   qDebug() << "D, mw:" << m1.D << "," << m1.mw;
+   qDebug() << "D, mw:" << m2.D << "," << m2.mw;
+   */
 
    //TODO: remove temporary exit
    qDebug() << "Exiting \"normally\"";
    exit(0);
 }
 
-//interpolates the RMSD of the point 'target' using the RMSDs of 4 surrounding points on a regular grid
-double US_ModelBuilder::interpolatePoint(QVector3D target, QVector3D p11, QVector3D p12, QVector3D p21, QVector3D p22)
+//Runs isormsd tests, and outputs to specified directory
+void US_ModelBuilder::runIsoRMSDTest(QVector<US_Model::SimulationComponent> points, QVector<double> rmsdTargets, double increment, QString outputname)
+{
+   //check outfile directory existence
+   QDir outputDirectory("output/isoRMSD_" + outputname);
+   if(!outputDirectory.exists())
+   {
+      outputDirectory.mkpath(".");
+   }
+   //iterate over RMSD directories
+   for(int i = 0; i < rmsdTargets.size(); i++)
+   {
+      QDir outputRMSDDirectory("output/isoRMSD_" + outputname + "/RMSD_" + QString::number(rmsdTargets.at(i)));
+
+      if(!outputRMSDDirectory.exists())
+      {
+         outputRMSDDirectory.mkpath(".");
+      }
+   }
+
+   //setup json objects to store slopes
+   QJsonArray jsonSlopesArray;
+   QJsonDocument jsonSlopes;
+
+   //thread result storage
+   QVector<QFuture<QPair<QVector<QVector<US_Model::SimulationComponent> >, QVector<QPair<double, double> > > > > futures;
+
+   //setup threads
+   for(int i = 0; i < points.size(); i++)
+   {
+      //queue up job
+      futures.append(QtConcurrent::run(this, &US_ModelBuilder::getLevelSets, points.at(i), rmsdTargets, increment));
+   }
+
+   //get thread results in order
+   for(int i = 0; i < points.size(); i++)
+   {
+      //status update every 10 results
+      if((i+1) % 10 == 0)
+      {
+         qDebug() << "\t\tgetting result " << (i+1) << " of " << points.size();
+      }
+
+      QPair<QVector<QVector<US_Model::SimulationComponent> >, QVector<QPair<double, double> > > results = futures.at(0).result();
+      futures.remove(0);
+
+      QVector<QVector<US_Model::SimulationComponent> > resultPoints = results.first;
+      QVector<QPair<double, double> > slopes = results.second;
+
+      //iterate over rmsd levels
+      for(int j = 0; j < rmsdTargets.size(); j++)
+      {
+         if(resultPoints.size() != 0)
+         {
+            //output file
+            QFile outfileIsoLines("output/isoRMSD_" + outputname + "/RMSD_" + QString::number(rmsdTargets.at(j)) + "/" + outputname + "_" + QString::number(rmsdTargets.at(j))
+                                  + "_" + QString::number(points.at(i).s) + "s_" + QString::number(points.at(i).f_f0) + "k.tsv");
+            outfileIsoLines.open(QFile::WriteOnly | QFile::Truncate);
+            QTextStream outstreamIsoLines(&outfileIsoLines);
+            outstreamIsoLines << "#Sed. Coeff. \t Diff. Coeff. \t Frict. Ratio \t Mol. Wt." << endl;
+
+            //iterate over rmsd levels
+            for(int k = 0; k < resultPoints.at(j).size(); k++)
+            {
+               US_Model::SimulationComponent currentComponent = resultPoints.at(j).at(k);
+               outstreamIsoLines << currentComponent.s << " \t" << currentComponent.D << " \t" << currentComponent.f_f0  << " \t" << currentComponent.mw << endl;
+            }
+
+            outfileIsoLines.close();
+         }
+      }
+
+      //store slopes
+      QJsonObject pointSlopes;
+      QJsonArray pointSlopeArray;
+      QJsonArray pointDegreeArray;
+
+      pointSlopes.insert("s_value", QJsonValue(points.at(i).s));
+      pointSlopes.insert("k_value", QJsonValue(points.at(i).f_f0));
+
+      QPair<double, double> slope;
+      foreach(slope, slopes)
+      {
+         pointSlopeArray.append(QJsonValue(slope.first));
+         pointDegreeArray.append(QJsonValue(slope.second));
+      }
+      pointSlopes.insert("slopes", pointSlopeArray);
+      pointSlopes.insert("degrees", pointDegreeArray);
+
+      jsonSlopesArray.append(QJsonValue(pointSlopes));
+   }
+
+   //package and output slopes
+   jsonSlopes.setArray(jsonSlopesArray);
+   QByteArray jsonByteData = jsonSlopes.toJson();
+
+   QFile outfileSlopes("output/isoRMSD_" + outputname + "/slopes.json");
+   outfileSlopes.open(QFile::WriteOnly | QFile::Truncate);
+   outfileSlopes.write(jsonByteData);
+   outfileSlopes.close();
+}
+
+void US_ModelBuilder::processJsonSlopes(QVector<QVector<QVector<US_Model::SimulationComponent> > > sets, QVector<US_Model::SimulationComponent> centerpoints, QVector<double> targets, QString outputname)
+{
+   //check output directory existence
+   QDir outputDirectory("jsonOutput/isoRMSD_" + outputname);
+   if(!outputDirectory.exists())
+   {
+      outputDirectory.mkpath(".");
+   }
+   foreach(double target, targets)
+   {
+      QDir outputRMSDDirectory(outputDirectory.path() + "/RMSD_" + QString::number(target));
+
+      if(!outputRMSDDirectory.exists())
+      {
+         outputRMSDDirectory.mkpath(".");
+      }
+   }
+
+   //iterate over centerpoints and sets
+   for(int i = 0; i < centerpoints.size(); i++)
+   {
+      US_Model::SimulationComponent centerpoint = centerpoints.at(i);
+
+      //iterate over rmsd targets
+      for(int j = 0; j < targets.size(); j++)
+      {
+         //output
+         QFile outfile(outputDirectory.path() + "/RMSD_" + QString::number(targets.at(j)) + "/" + outputname + "_" + QString::number(targets.at(j))
+                       + "_" + QString::number(centerpoint.s) + "s_" + QString::number(centerpoint.f_f0) + "k.tsv");
+         outfile.open(QFile::WriteOnly | QFile::Truncate);
+         QTextStream outstream(&outfile);
+         outstream << "#Sed. Coeff. \t Diff. Coeff. \t Frict. Ratio \t Mol. Wt." << endl;
+
+         //iterate over target-RMSD levelset
+         QVector<US_Model::SimulationComponent> currentSet = sets.at(i).at(j);
+         foreach(US_Model::SimulationComponent component, currentSet)
+         {
+            outstream << component.s << " \t" << component.D << " \t" << component.f_f0  << " \t" << component.mw << endl;
+         }
+      }
+   }
+}
+
+//reads a QJsonObject containing stored slopes and uses them to project RMSD levels in each direction for every point with stored data
+//NOTE: top level qvector has 1 index / centerpoint, mid level has 1 index / rmsd target, bottom has 1 index / projected point
+QPair<QVector<QVector<QVector<US_Model::SimulationComponent> > >, QVector<US_Model::SimulationComponent> > US_ModelBuilder::levelSetFromJson(QJsonArray slopeJson, QVector<double> targets)
+{
+   QVector<QVector<QVector<US_Model::SimulationComponent> > > gridSets;
+   QVector<US_Model::SimulationComponent> centerpoints;
+
+   //loop over all points
+   for(int i = 0; i < slopeJson.size(); i++)
+   {
+      //get current point data
+      QJsonObject currentJsonValue = slopeJson.at(i).toObject();
+      QJsonArray currentSlopes = currentJsonValue.value("slopes").toArray();
+      QJsonArray currentDegrees = currentJsonValue.value("degrees").toArray();
+      double s = currentJsonValue.value("s_value").toDouble();
+      double k = currentJsonValue.value("k_value").toDouble();
+      centerpoints.append(componentFromSK(s, k));
+
+      QVector<QVector<US_Model::SimulationComponent> > levelSets;
+
+      //loop over all targets
+      foreach(double target, targets)
+      {
+         QVector<US_Model::SimulationComponent> levelSet;
+
+         //loop over all slopes
+         for(int j = 0; j < currentSlopes.size(); j++)
+         {
+            double slope = currentSlopes.at(j).toDouble();
+            double degree = currentDegrees.at(j).toDouble();
+
+            //project in direction and add to levelset
+            double projectionDistance = target / slope;
+            US_Model::SimulationComponent projected = componentFromSKPair(projectPolar(s * 1e13, k, projectionDistance, degree), true);
+
+            //check that projection is legal
+            if(projected.s >= 1e-13 && projected.f_f0 >= 1)
+            {
+               levelSet.append(projected);
+            }
+         }
+
+         levelSets.append(levelSet);
+      }
+
+      gridSets.append(levelSets);
+   }
+
+   return QPair<QVector<QVector<QVector<US_Model::SimulationComponent> > >, QVector<US_Model::SimulationComponent> > (gridSets, centerpoints);
+}
+
+//interpolates the RMSD of the point 'target' using the RMSDs of 4 points on a regular grid
+double US_ModelBuilder::interpolatePoint(QVector2D target, QVector3D p11, QVector3D p12, QVector3D p21, QVector3D p22)
 {
    //extract x and y values
    double x = target.x();
@@ -459,8 +610,7 @@ double US_ModelBuilder::interpolatePoint(QVector3D target, QVector3D p11, QVecto
 }
 
 //this function initalizes the simparams variable
-
-void US_ModelBuilder::initalize_simulationParameters() {
+void US_ModelBuilder::initSimparams() {
    /*if (simparams.load_simparms("Resources/sp_defaultProfle.xml") != 0) {
         startButton->setEnabled(false);
         qDebug() << "Error: Simulation Parameters cannot be loaded. Manual selection required.";
@@ -468,8 +618,8 @@ void US_ModelBuilder::initalize_simulationParameters() {
 
    US_SimulationParameters::SpeedProfile sp;
    QString rotor_calibr = "0";
-   //double  rpm          = 15000.0; //normally set to 45000
-   double rpm = 50000.0;
+   //double rpm = 50000.0;
+   double rpm = 40000.0;
 
    // set up bottom start and rotor coefficients from hardware file
    simparams.setHardware( NULL, rotor_calibr, 0, 0 );
@@ -485,13 +635,14 @@ void US_ModelBuilder::initalize_simulationParameters() {
    //sp.duration_hours    = 5;
    //sp.duration_minutes  = 30.0;
    sp.duration_hours    = 6;
-   sp.duration_minutes  = 0.0;
+   sp.duration_minutes  = 48.0;
+
    sp.delay_hours       = 0;
    //sp.delay_minutes     = 20.0;
    sp.delay_minutes     = 2.0;
    sp.rotorspeed        = (int)rpm;
    //sp.scans             = 30;
-   sp.scans             = 100;
+   sp.scans             = 100; //used to use 30
    sp.acceleration      = 400;
    sp.acceleration_flag = true;
 
@@ -515,7 +666,7 @@ void US_ModelBuilder::initalize_simulationParameters() {
 }
 
 //this function produces an initalized RawData sim object using given simparams
-US_DataIO::RawData* US_ModelBuilder::init_simData(US_Model* system) {
+US_DataIO::RawData* US_ModelBuilder::initRawData(US_Model* system) {
    //instantiate object to be initalized
    US_DataIO::RawData* working_simdata = new US_DataIO::RawData();
 
@@ -743,7 +894,7 @@ QVector<double> US_ModelBuilder::findListRMSD(QVector<US_Model::SimulationCompon
 US_DataIO::RawData* US_ModelBuilder::simulateComponent( US_Model::SimulationComponent component )
 {
    //check that s, k values are sane
-   if(component.s >= 1e-14 && component.f_f0 >= 1 && component.f_f0 <= 8)
+   if(component.s >= 1e-14 && component.f_f0 >= 1)
    {
       //Make a model, and add the component
       US_Model model;
@@ -752,7 +903,7 @@ US_DataIO::RawData* US_ModelBuilder::simulateComponent( US_Model::SimulationComp
       //model.debug();
 
       //create the result object
-      US_DataIO::RawData* simulation = init_simData(&model);
+      US_DataIO::RawData* simulation = initRawData(&model);
 
       //create the simulator
       US_Astfem_RSA* simulator = new US_Astfem_RSA(model, simparams);
@@ -781,7 +932,7 @@ double US_ModelBuilder::calculateScaledRMSD(US_DataIO::RawData* simulation1, US_
    if(simulation1->scanCount() != simulation2->scanCount())
    {
       qDebug() << "Error: simulations do not match";
-      return -999;
+      throw std::invalid_argument("Passed simulation scancounts do not match");
    }
 
    //Check that simparams has only one SpeedProfile
@@ -789,7 +940,7 @@ double US_ModelBuilder::calculateScaledRMSD(US_DataIO::RawData* simulation1, US_
 
    {
       qDebug() << "Error: simulations do not match";
-      return -999;
+      throw std::invalid_argument("Passed simulations have different speedprofiles");
    }
 
    //time check
@@ -869,7 +1020,7 @@ double US_ModelBuilder::calculateScaledRMSD(US_DataIO::RawData* simulation1, US_
             if(val1 * 2 < minPlateauConcentration && val2 * 2 < minPlateauConcentration)
             {
                pointCount++;
-               rmsd += pow(abs(val1 - val2) , 2);
+               rmsd += sq(val1 - val2);
             }
             else
             {
@@ -1158,17 +1309,17 @@ QVector<QPair<US_Model::SimulationComponent, US_DataIO::RawData*> > US_ModelBuil
 
 
 //Generates a Faxen grid from boundaries given
-QVector<QVector<US_Model::SimulationComponent> > US_ModelBuilder::createFaxenGrid(double minS, double maxS, double minK, double maxK, int grids)
+QVector<QVector<US_Model::SimulationComponent> > US_ModelBuilder::generateFaxenGrid(double sMin, double sMax, double kMin, double kMax, int grids)
 {
    QVector<QVector<US_Model::SimulationComponent> > grid;
 
    //scale
-   minS /= 1e-13;
-   maxS /= 1e-13;
+   sMin /= 1e-13;
+   sMax /= 1e-13;
 
    int M = grids;
-   double mu_1 = minS * minK;
-   double mu_2 = maxS * maxK;
+   double mu_1 = sMin * kMin;
+   double mu_2 = sMax * kMax;
 
    //list to store precoumputed xi_j values
    QVector<double> jValues;
@@ -1189,10 +1340,10 @@ QVector<QVector<US_Model::SimulationComponent> > US_ModelBuilder::createFaxenGri
       double xi_i = pow((1 - (((double) i) / M)) * pow(mu_1, -0.25) + (((double) i ) / M) * pow(mu_2, -0.25), -4.0);
 
       //check that the value for xi_i is allowed
-      if(xi_i <= minS * maxK)
+      if(xi_i <= sMin * kMax)
       {
          //if the condition is satisfied, we have this column's y-value
-         double y_i = xi_i / minS;
+         double y_i = xi_i / sMin;
 
          //now we have to use all values of xi_j to find the x-values
          for(int j = 0; j < jValues.size(); j++)
@@ -1204,7 +1355,7 @@ QVector<QVector<US_Model::SimulationComponent> > US_ModelBuilder::createFaxenGri
             double x_ij = xi_j / y_i;
 
             //add the point only if it's s-value falls in the bounds
-            if(x_ij >= minS && x_ij <= maxS)
+            if(x_ij >= sMin && x_ij <= sMax)
             {
                US_Model::SimulationComponent current;
 
@@ -1349,7 +1500,7 @@ QVector<US_Model::SimulationComponent> US_ModelBuilder::calculateLine(double tol
             }
 
 
-         } while (abs(targetRMSD - testRMSD) > tolerance && maxDepthInner > countInner);
+         } while (qAbs(targetRMSD - testRMSD) > tolerance && maxDepthInner > countInner);
 
          //check that point is valid to add
          if (calculateDistance(start, testPoint, false) > distanceLimit)
@@ -1571,8 +1722,7 @@ QVector<QVector<US_Model::SimulationComponent> > US_ModelBuilder::generateSKGrid
    //otherwise, error
    else
    {
-      qDebug() << "ConstantAxis is neither s nor k!";
-      return grid;
+      throw std::invalid_argument("ConstatnAxis passed to grid generator was invalid");
    }
 
    //end
@@ -1611,7 +1761,7 @@ QVector<QVector<US_Model::SimulationComponent> > US_ModelBuilder::generateSDGrid
             current.f_f0 = k;
 
             //do coefficient calculation, and proceed only if successful
-            if(US_Model::calc_coefficients(current) && current.f_f0 <= 4.0 && current.f_f0 >= 1)
+            if(US_Model::calc_coefficients(current) && current.f_f0 >= 1 && current.s <= 10e-13 && current.f_f0 <= 4)
             {
                //qDebug() << "s: " << current.s << " , D: " << current.D << " , f_f0: " << current.f_f0 << endl;
                column.append(current);
@@ -1643,7 +1793,7 @@ QVector<QVector<US_Model::SimulationComponent> > US_ModelBuilder::generateSDGrid
             current.f_f0 = k;
 
             //do coefficient calculation, and proceed only if successful
-            if(US_Model::calc_coefficients(current) && current.f_f0 <= 4.0 && current.f_f0 >= 1)
+            if(US_Model::calc_coefficients(current) && current.f_f0 >= 1 && current.s < 10e-13)
             {
                //qDebug() << "s: " << current.s << " , D: " << current.D << " , f_f0: " << current.f_f0 << endl;
                column.append(current);
@@ -1658,8 +1808,7 @@ QVector<QVector<US_Model::SimulationComponent> > US_ModelBuilder::generateSDGrid
    //otherwise, error
    else
    {
-      qDebug() << "ConstantAxis is neither s nor k!";
-      return grid;
+      throw std::invalid_argument("ConstatnAxis passed to grid generator was invalid");
    }
 
    //end
@@ -1700,7 +1849,7 @@ QVector<QVector<US_Model::SimulationComponent> > US_ModelBuilder::generateMKGrid
             current.f_f0 = k;
 
             //do coefficient calculation, and proceed only if successful
-            if(US_Model::calc_coefficients(current) && current.f_f0 <= 4.0 && current.f_f0 >= 1)
+            if(US_Model::calc_coefficients(current) && current.f_f0 <= 4.0 && current.f_f0 >= 1 && current.s < 10e-13)
             {
                //qDebug() << "s: " << current.s << " , D: " << current.D << " , f_f0: " << current.f_f0 << endl;
                column.append(current);
@@ -1734,7 +1883,7 @@ QVector<QVector<US_Model::SimulationComponent> > US_ModelBuilder::generateMKGrid
             current.f_f0 = k;
 
             //do coefficient calculation, and proceed only if successful
-            if(US_Model::calc_coefficients(current) && current.f_f0 <= 4.0 && current.f_f0 >= 1)
+            if(US_Model::calc_coefficients(current) && current.f_f0 <= 4.0 && current.f_f0 >= 1 && current.s < 10e-13)
             {
                //qDebug() << "s: " << current.s << " , D: " << current.D << " , f_f0: " << current.f_f0 << endl;
                column.append(current);
@@ -1749,8 +1898,7 @@ QVector<QVector<US_Model::SimulationComponent> > US_ModelBuilder::generateMKGrid
    //otherwise, error
    else
    {
-      qDebug() << "ConstantAxis is neither s nor k!";
-      return grid;
+      throw std::invalid_argument("ConstatnAxis passed to grid generator was invalid");
    }
 
    //end
@@ -1824,7 +1972,7 @@ US_Model::SimulationComponent US_ModelBuilder::componentFromSKPair(QPair<double,
 
 //Finds a solute point differing from the origin by a specified target RMSD in the polar direction given
 //NOTE: tolerance, in this context does not directly refer to RMSD deviation from the target; use 0.01 as value for most use cases
-US_Model::SimulationComponent US_ModelBuilder::findConstantRMSDPointInDirection(US_DataIO::RawData* originSim, US_Model::SimulationComponent origin, double target, double tolerance, double degree)
+US_Model::SimulationComponent US_ModelBuilder::findConstantRMSDPointInDirection(US_Model::SimulationComponent origin, US_DataIO::RawData* originSim, double target, double tolerance, double degree)
 {
    //constant tau value
    double tau = 2/(1 + sqrt(5));
@@ -1833,12 +1981,36 @@ US_Model::SimulationComponent US_ModelBuilder::findConstantRMSDPointInDirection(
    QPair<double, double> direction = convertPolar(degree);
    double deltaS = ((1e-12 - 1e-13) / 64.0) * 1e13;
    double deltaK = ((4 - 1) / 64.0);
-   double delta = deltaS * direction.first + deltaK * direction.second; //scalar projection of default grid step in
-   delta /= 25;
+   //double delta = deltaS * direction.first + deltaK * direction.second; //scalar projection of default grid step
+   //delta /= 25;
+
+   //TODO: properly fix if we actually need this
+   double delta = 2 * sqrt(sq(deltaS * direction.first) + sq(deltaK * direction.second));
 
    //NOTE: This assumes that delta is a valid, legal stepsize
    //this may not be true for very low RMSDs, and probably should be set dynamically
 
+   //dynamic stepsize setting
+   US_Model::SimulationComponent stepsizeTest = componentFromSKPair(projectPolar(origin.s * 1e13, origin.f_f0, delta, degree), true);
+   US_DataIO::RawData* stepsizeTestSim = simulateComponent(stepsizeTest);
+   double stepsizeTestDifference = qAbs(calculateScaledRMSD(originSim, origin, stepsizeTestSim, stepsizeTest) - target);
+   delete stepsizeTestSim;
+
+   //loop until difference less than initial value
+   //qDebug() << "delta" << delta;
+   //qDebug() << "difference: " << stepsizeTestDifference;
+   while(stepsizeTestDifference > target)
+   {
+      //halve delta
+      delta /= 2;
+      //qDebug() << "new delta: " << delta;
+
+      //redo calcs
+      stepsizeTest = componentFromSKPair(projectPolar(origin.s * 1e13, origin.f_f0, delta, degree), true);
+      stepsizeTestSim = simulateComponent(stepsizeTest);
+      stepsizeTestDifference = qAbs(calculateScaledRMSD(originSim, origin, stepsizeTestSim, stepsizeTest) - target);
+      delete stepsizeTestSim;
+   }
 
    //iterate until we find our bracket
    US_Model::SimulationComponent lambda = componentFromSK(origin.s, origin.f_f0);
@@ -1864,24 +2036,25 @@ US_Model::SimulationComponent US_ModelBuilder::findConstantRMSDPointInDirection(
       //recalculate
       lambdaSim = simulateComponent(lambda);
       lastDifference = lambdaDifference;
-      lambdaDifference = abs(calculateScaledRMSD(originSim, origin, lambdaSim, lambda) - target);
+      lambdaDifference = qAbs(calculateScaledRMSD(originSim, origin, lambdaSim, lambda) - target);
       delete lambdaSim;
 
       //qDebug() << "bracket testpoint: " << lambda.s << " , " << lambda.f_f0 << " , " << lambdaDifference;
    }
 
+   //qDebug() << "bracketing complete";
 
    //build bracket midpoint candidates
    US_Model::SimulationComponent bracketMidpoint = componentFromSKPair(
-                                                   projectPolar(origin.s * 1e13, origin.f_f0,
-                                                   (calculateDistance(origin, bracket.at(1), true) +
-                                                    calculateDistance(origin, bracket.at(2), true)) / 2.0, degree), true);
+                                                      projectPolar(origin.s * 1e13, origin.f_f0,
+                                                                   (calculateDistance(origin, bracket.at(1), true) +
+                                                                    calculateDistance(origin, bracket.at(2), true)) / 2.0, degree), true);
    US_DataIO::RawData* bracketMidpointSim = simulateComponent(bracketMidpoint);
    US_DataIO::RawData* bracketMedianSim = simulateComponent(bracket.at(1));
 
    //compare to find the lower function value
-   if(abs(calculateScaledRMSD(originSim, origin, bracketMidpointSim, bracketMidpoint) - target) >=
-         abs(calculateScaledRMSD(originSim, origin, bracketMedianSim, bracket.at(1)) - target))
+   if(qAbs(calculateScaledRMSD(originSim, origin, bracketMidpointSim, bracketMidpoint) - target) >=
+         qAbs(calculateScaledRMSD(originSim, origin, bracketMedianSim, bracket.at(1)) - target))
    {
       // median is smallest
       //now find which of k-1 or k+1 is closer
@@ -1926,25 +2099,25 @@ US_Model::SimulationComponent US_ModelBuilder::findConstantRMSDPointInDirection(
    double betaDistance = calculateDistance(origin, bracket.at(2), true);
 
    US_Model::SimulationComponent x1 = componentFromSKPair(
-                                            projectPolar(origin.s * 1e13, origin.f_f0,
-                                                         alphaDistance + (1 - tau) * (betaDistance - alphaDistance)
-                                                         , degree), true);
+                                         projectPolar(origin.s * 1e13, origin.f_f0,
+                                                      alphaDistance + (1 - tau) * (betaDistance - alphaDistance)
+                                                      , degree), true);
    US_Model::SimulationComponent x2 = componentFromSKPair(
-                                            projectPolar(origin.s * 1e13, origin.f_f0,
-                                                         alphaDistance + tau * (betaDistance - alphaDistance)
-                                                         , degree), true);
+                                         projectPolar(origin.s * 1e13, origin.f_f0,
+                                                      alphaDistance + tau * (betaDistance - alphaDistance)
+                                                      , degree), true);
 
    US_DataIO::RawData* stepSim1 = simulateComponent(x1);
    US_DataIO::RawData* stepSim2 = simulateComponent(x2);
 
-   double stepDifference1 = abs(calculateScaledRMSD(originSim, origin, stepSim1, x1) - target);
-   double stepDifference2 = abs(calculateScaledRMSD(originSim, origin, stepSim2, x2) - target);
+   double stepDifference1 = qAbs(calculateScaledRMSD(originSim, origin, stepSim1, x1) - target);
+   double stepDifference2 = qAbs(calculateScaledRMSD(originSim, origin, stepSim2, x2) - target);
 
    delete stepSim1;
    delete stepSim2;
 
    //do golden section search until bracket distance is small
-   while(abs(betaDistance - alphaDistance) > tolerance)
+   while(qAbs(betaDistance - alphaDistance) > tolerance)
    {
       //setup bracket for next iteration
       if(stepDifference1 < stepDifference2)
@@ -1955,10 +2128,10 @@ US_Model::SimulationComponent US_ModelBuilder::findConstantRMSDPointInDirection(
          stepDifference2 = stepDifference1;
          betaDistance = calculateDistance(origin, bracket.at(2), true);
          x1 = componentFromSKPair(projectPolar(origin.s * 1e13, origin.f_f0,
-                                 alphaDistance + (1 - tau) * (betaDistance - alphaDistance)
-                                 , degree), true);
+                                               alphaDistance + (1 - tau) * (betaDistance - alphaDistance)
+                                               , degree), true);
          stepSim1 = simulateComponent(x1);
-         stepDifference1 = abs(calculateScaledRMSD(originSim, origin, stepSim1, x1) - target);
+         stepDifference1 = qAbs(calculateScaledRMSD(originSim, origin, stepSim1, x1) - target);
          delete stepSim1;
 
          //qDebug() << x1.s << "," << x1.f_f0 << "," << stepDifference1;
@@ -1971,10 +2144,10 @@ US_Model::SimulationComponent US_ModelBuilder::findConstantRMSDPointInDirection(
          stepDifference1 = stepDifference2;
          alphaDistance = calculateDistance(origin, bracket.at(0), true);
          x2 = componentFromSKPair(projectPolar(origin.s * 1e13, origin.f_f0,
-                                 alphaDistance + tau * (betaDistance - alphaDistance)
-                                 , degree), true);
+                                               alphaDistance + tau * (betaDistance - alphaDistance)
+                                               , degree), true);
          stepSim2 = simulateComponent(x2);
-         stepDifference2 = abs(calculateScaledRMSD(originSim, origin, stepSim2, x2) - target);
+         stepDifference2 = qAbs(calculateScaledRMSD(originSim, origin, stepSim2, x2) - target);
          delete stepSim2;
 
          //qDebug() << x2.s << "," << x2.f_f0 << "," << stepDifference2;
@@ -1982,14 +2155,16 @@ US_Model::SimulationComponent US_ModelBuilder::findConstantRMSDPointInDirection(
    }
 
    US_Model::SimulationComponent midpoint = componentFromSKPair(
-                                                 projectPolar(origin.s * 1e13, origin.f_f0,
-                                                 (calculateDistance(origin, bracket.at(0), true) +
-                                                  calculateDistance(origin, bracket.at(2), true)) / 2.0, degree), true);
+                                               projectPolar(origin.s * 1e13, origin.f_f0,
+                                                            (calculateDistance(origin, bracket.at(0), true) +
+                                                             calculateDistance(origin, bracket.at(2), true)) / 2.0, degree), true);
    //US_DataIO::RawData* mdptSim = simulateComponent(midpoint);
-   //double mdptDifference = abs(calculateScaledRMSD(originSim, origin, mdptSim, midpoint) - target);
+   //double mdptDifference = qAbs(calculateScaledRMSD(originSim, origin, mdptSim, midpoint) - target);
    //delete mdptSim;
    //qDebug() << "result midpoint:";
    //qDebug() << midpoint.s << "," << midpoint.f_f0 << "," << mdptDifference;
+
+   //qDebug() << "ident point: " << midpoint.s << "," << midpoint.f_f0;
    return midpoint;
 }
 
@@ -2005,9 +2180,11 @@ QVector<US_Model::SimulationComponent> US_ModelBuilder::findConstantRMSDNeighbor
    for(double deg = 0.0; deg < 360; deg += degreeIncrement)
    {
       US_Model::SimulationComponent result;
+
       try
       {
-         result = (findConstantRMSDPointInDirection(originSim, origin, target, 0.00001, deg));
+         //result = (findConstantRMSDPointInDirection(origin, originSim, target, 0.000001, deg));
+         result = (findConstantRMSDPointInDirection(origin, originSim, target, 0.1, deg));
       }
       catch(std::invalid_argument) //catch invalid argument exception
       {
@@ -2019,4 +2196,201 @@ QVector<US_Model::SimulationComponent> US_ModelBuilder::findConstantRMSDNeighbor
 
    delete originSim;
    return neighbors;
+}
+
+//Gets a list of sample points (in terms of distance from the origin point along the given line) and RMSDs relative to the specified origin in a given direction
+QVector<QPair<double, double> > US_ModelBuilder::getSamplePoints(US_Model::SimulationComponent origin, US_DataIO::RawData* originSim, int numSamples, double degree)
+{
+   //setup data structure
+   QVector<QPair<double, double> > samples;
+   samples.append(QPair<double, double> (0.0, 0.0));
+
+   double deltaS = ((10 - 1) / 1536.0);
+   double deltaK = ((4 - 1) / 64.0);
+   double rad = degree * (M_PI / 180);
+   double delta = (deltaS * deltaK) / sqrt(sq(deltaK) * sq(cos(rad)) + sq(deltaS) * sq(sin(rad)));
+
+   //do backwards samples
+   bool inBounds = true;
+   for(int i = 1; i <= numSamples && inBounds; i++)
+   {
+      //get point projected in direction
+      US_Model::SimulationComponent current = componentFromSKPair(projectPolar(origin.s * 1e13, origin.f_f0, delta * (i + 1), degree), true);
+
+      //simulate to get rmsd
+      try
+      {
+         US_DataIO::RawData* currentSim = simulateComponent(current);
+         double currentRMSD = calculateScaledRMSD(originSim, origin, currentSim, current);
+         delete currentSim;
+
+         //qDebug() << current.s << "\t" << current.f_f0 << "\t" << currentRMSD;
+
+         //make pair
+         QPair<double, double> currentPair(calculateDistance(origin, current, true), currentRMSD);
+         samples.append(currentPair);
+      }
+      catch(std::invalid_argument) //catch invalid argument exception
+      {
+         //we're no longer in bounds
+         inBounds = false;
+      }
+   }
+
+   return samples;
+}
+
+//gets RMSD level sets around the specified center point for the RMSD levels given
+QPair<QVector<QVector<US_Model::SimulationComponent> >, QVector<QPair<double, double> > > US_ModelBuilder::getLevelSets(US_Model::SimulationComponent center, QVector<double> targets, double degreeIncrement)
+{
+   //level set structure
+   QVector<QVector<US_Model::SimulationComponent> > levelSets;
+
+   //simulate center
+   US_DataIO::RawData* centerSim = simulateComponent(center);
+
+   //qvector to store fitted lines; 1 index for every degree increment
+   //QVector<QPair<double, double> > lines;
+   QVector<QPair<double, double> > slopes;
+
+   //store last distance for each degree level
+   //QVector<double> lastDistances;
+
+   //directional loop
+   for(double degree = 0; degree <= 360; degree += degreeIncrement)
+   {
+      //try to get samples
+      try
+      {
+         //get samples in direction of linefit results
+         QVector<QPair<double, double> > samples = getSamplePoints(center, centerSim, 3, degree); //change the number of points to make this go faster
+
+         //store last distance in samples
+         //lastDistances.append(samples.last().first);
+
+         //linefitlevelSets
+         QVector<double> regressionLine = linefitThroughOrigin(samples);
+
+         //         qDebug() << "=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=\n";
+         //         qDebug() << "slope, intercept: " << slope << "," << intercept;
+         //         qDebug() << "sigma, correlation: " << sigma << "," << correlation;
+         //         qDebug() << "s, k, degree: " << center.s << "," << center.f_f0 << "," << degree;
+
+         //check that correlation is high
+         if(regressionLine.at(2) < 0.9)
+         {
+            qWarning() << "R^2 less than 0.9 at:";
+            qWarning() << "\tR^2, correlation: " << regressionLine.at(2) << "," << regressionLine.at(3);
+            qWarning() << "\ts, k, degree: " << center.s << "," << center.f_f0 << "," << degree;
+         }
+
+         //store line
+         slopes.append(QPair<double, double>(regressionLine.first() , degree));
+      }
+      catch(std::invalid_argument) //catch invalid argument exception
+      {
+         qDebug() << "dropped point in sample search";
+      }
+   }
+
+   //iterate over targets
+   for(int i = 0; i < targets.size(); i++)
+   {
+      //make levelsets
+      QVector<US_Model::SimulationComponent> levelSet;
+
+      //compute target values
+      for(double degree = 0; degree <= 360; degree += degreeIncrement)
+      {
+         //get the line for this degree level
+         //QPair<double, double> currentLine = lines.at((int) (degree / degreeIncrement));
+         double currentSlope = slopes.at((int) (degree / degreeIncrement)).first;
+
+         //get current last distance
+         //double currentLastSampleDistance = lastDistances.at((int) (degree / degreeIncrement));
+
+         //calculate the distance to move
+         double calculatedDistance = (targets.at(i)) / currentSlope;
+
+         //project the point at the desired rmsd level
+         US_Model::SimulationComponent projected = componentFromSKPair(projectPolar(center.s * 1e13, center.f_f0, calculatedDistance, degree), true);
+
+         //check that projected point is legal
+         if(projected.s >= 1e-13 && projected.f_f0 >= 1)
+         {
+            levelSet.append(projected);
+         }
+
+         /*
+         //check that projection falls within sample space
+         if(currentLastSampleDistance < calculatedDistance)
+         {
+            qWarning() << "=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=";
+            qWarning() << "Point out of range:";
+            qWarning() << "degree, distance, sampledistance: " << degree << "," << calculatedDistance << "," << currentLastSampleDistance;
+            qWarning() << "=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=";
+         }
+         */
+      }
+
+      levelSets.append(levelSet);
+   }
+
+   delete centerSim;
+   return QPair<QVector<QVector<US_Model::SimulationComponent> >, QVector<QPair<double, double> > >(levelSets, slopes);
+}
+
+//Performs an OLS regression through the origin (without intercept), returning a qvector containing in this order, the slope, coeff of det, and pearson corr. coeff
+QVector<double> US_ModelBuilder::linefitThroughOrigin(QVector<QPair<double, double> > points)
+{
+   double sumXY = 0.0;
+   double sumXSquared = 0.0;
+   double sumYSquared = 0.0;
+   double sumX = 0.0;
+   double sumY = 0.0;
+   double meanY = 0.0;
+   double regressionSumSquares = 0.0;
+   double totalSumSquares = 0.0;
+
+   QVector<double> regression(3);
+   double slope = 0.0;
+   double pearsonCorrelation = 0.0;
+
+   //setup for regression
+   for(int i = 0; i < points.size(); i++)
+   {
+      QPair<double, double> current = points.at(i);
+
+      sumXY += current.first * current.second;
+      sumXSquared += sq(current.first);
+      sumYSquared += sq(current.second);
+      sumX += current.first;
+      sumY += current.second;
+   }
+
+   //calculate mean of y
+   meanY = sumY / points.size();
+
+   //calculate slope
+   slope = (sumXY / sumXSquared);
+
+   //calculate pearson corr. coeff.
+   pearsonCorrelation = ((points.size() * sumXY) - (sumX * sumY)) /
+                        sqrt((points.size() * sumXSquared - sq(sumX)) *
+                             (points.size() * sumYSquared - sq(sumY)));
+
+   //calculate R^2 (coeff. of determination)
+   for(int i = 0; i < points.size(); i++)
+   {
+      QPair<double, double> current = points.at(i);
+
+      regressionSumSquares += sq((current.first * slope) - meanY);
+      totalSumSquares += sq(current.second - meanY);
+   }
+
+   regression[0] = slope; //store slope
+   regression[1] = (regressionSumSquares / totalSumSquares);
+   regression[2] = pearsonCorrelation;
+
+   return regression;
 }
