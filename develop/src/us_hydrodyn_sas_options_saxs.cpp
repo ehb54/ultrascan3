@@ -661,6 +661,7 @@ void US_Hydrodyn_SasOptionsSaxs::set_saxs_iq_native_sh()
    (*saxs_options).saxs_iq_native_hybrid = false;
    (*saxs_options).saxs_iq_native_hybrid2 = false;
    (*saxs_options).saxs_iq_native_hybrid3 = false;
+   (*saxs_options).saxs_iq_native_fast = false;
    (*saxs_options).saxs_iq_foxs = false;
    (*saxs_options).saxs_iq_crysol = false;
    (*saxs_options).saxs_iq_sastbx = false;
