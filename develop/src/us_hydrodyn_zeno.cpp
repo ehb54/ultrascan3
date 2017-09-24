@@ -13758,7 +13758,12 @@ bool US_Hydrodyn::calc_zeno()
    zeno_results2 = zeno_results;
    QString zeno_model_list            = "";
 
-   bool zeno_cxx                      = gparams.count( "zeno_cxx" ) && gparams[ "zeno_cxx" ] == "true" && advanced_config.expert_mode;
+   bool zeno_cxx                      = gparams.count( "zeno_cxx" ) && gparams[ "zeno_cxx" ] == "true"
+#if QT_VERSION < 0x040000
+      && advanced_config.expert_mode
+#endif
+                 ;
+   
 #if __cplusplus < 201103L
    if ( zeno_cxx ) {
       editor_msg( "darkRed", "Notice: ZENO experimental method is not currently not available for this platform" );

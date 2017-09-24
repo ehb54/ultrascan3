@@ -190,6 +190,17 @@ void US_Hydrodyn_Hydro_Zeno::setupGUI()
    hbl_help_cancel->addWidget( pb_help );
    hbl_help_cancel->addWidget( pb_cancel );
    background->addLayout( hbl_help_cancel , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 2  ) - ( 0 ) );
+
+
+#if QT_VERSION >= 0x040000
+   cb_zeno_interior->hide();
+   lbl_zeno_interior_steps->hide();
+   le_zeno_interior_steps->hide();
+   cb_zeno_surface->hide();
+   lbl_zeno_surface_steps->hide();
+   le_zeno_surface_steps->hide();
+   cb_zeno_cxx->hide();
+#endif
 }
 
 void US_Hydrodyn_Hydro_Zeno::set_zeno_zeno()

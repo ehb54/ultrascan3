@@ -620,7 +620,6 @@ void US_Hydrodyn_Saxs::setupGUI()
    settings_widgets.push_back( lbl_saxs_table );
 
    // ************ SAS ***********
-   qDebug() << "startup: our_saxs_options->saxs_sans = " << our_saxs_options->saxs_sans;
 
    lbl_iq = new mQLabel(us_tr("SAS I(q) Plotting Functions:"), this);
    lbl_iq->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
@@ -633,6 +632,7 @@ void US_Hydrodyn_Saxs::setupGUI()
 
    rb_saxs = new QRadioButton(us_tr("SAXS"), this);
    rb_saxs->setEnabled(true);
+   rb_saxs->setChecked(!our_saxs_options->saxs_sans);
    rb_saxs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    rb_saxs->setPalette( PALET_NORMAL );
    AUTFBACK( rb_saxs );
@@ -640,17 +640,21 @@ void US_Hydrodyn_Saxs::setupGUI()
 
    rb_sans = new QRadioButton(us_tr("SANS"), this);
    rb_sans->setEnabled(true);
+   rb_sans->setChecked(our_saxs_options->saxs_sans);
    rb_sans->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    rb_sans->setPalette( PALET_NORMAL );
    AUTFBACK( rb_sans );
    iq_widgets.push_back( rb_sans );
 
-   if ( our_saxs_options->saxs_sans ) {
-      rb_saxs->setChecked(true);
-   } else {
-      rb_sans->setChecked(true);
-   }
-
+#if QT_VERSION < 0x040000
+   bg_saxs_sans = new QGroupBox( this );
+   int bg_pos = 0;
+   bg_saxs_sans->setExclusive(true);
+   bg_saxs_sans->addButton( rb_saxs, bg_pos++ );
+   bg_saxs_sans->addButton( rb_sans, bg_pos++ );
+   connect(bg_saxs_sans, SIGNAL(buttonClicked(int)), SLOT(set_saxs_sans(int)));
+   // iq_widgets.push_back( bg_saxs_sans );
+#else
    bg_saxs_sans = new QGroupBox();
    bg_saxs_sans->setFlat( true );
 
@@ -662,7 +666,7 @@ void US_Hydrodyn_Saxs::setupGUI()
       bl->addWidget( rb_sans );
       bg_saxs_sans->setLayout( bl );
    }
-
+#endif
 
    rb_saxs_iq_native_debye = new QRadioButton(us_tr("F-DB"), this);
    rb_saxs_iq_native_debye->setEnabled(true);
@@ -2502,7 +2506,6 @@ void US_Hydrodyn_Saxs::show_pr_contrib()
 }
 
 void US_Hydrodyn_Saxs::set_saxs_sans() {
-   qDebug() << "set_saxs_sans()";
    if ( rb_saxs->isChecked() ) {
       return set_saxs_sans( 0 );
    }
@@ -2513,9 +2516,6 @@ void US_Hydrodyn_Saxs::set_saxs_sans() {
 
 void US_Hydrodyn_Saxs::set_saxs_sans(int val)
 {
-   qDebug() << "set_saxs_sans(" << val << ")";
-   qDebug() << "set_saxs_sans(" << val << "): disabled";
-   return;
    if ( our_saxs_options->saxs_sans != val )
    {
       clear_plot_saxs();
@@ -4806,14 +4806,9 @@ void US_Hydrodyn_Saxs::load_saxs_sans()
       
 void US_Hydrodyn_Saxs::update_saxs_sans()
 {
-   qDebug() <<  "update_saxs_sans() disabled";
-   return;
-#ifdef NOPE
-   qDebug() <<  "update_saxs_sans()";
    set_current_method_buttons();
    if ( rb_sans->isChecked() ) 
    {
-      qDebug() <<  "update_saxs_sans(): rb_sans->isChecked()";
       pb_plot_saxs_sans->setText(us_tr("Compute SANS Curve"));
       pb_load_saxs_sans->setText(us_tr("Load SANS Curve"));
       pb_clear_plot_saxs->setText(us_tr("Clear SANS Curve"));
@@ -4843,7 +4838,6 @@ void US_Hydrodyn_Saxs::update_saxs_sans()
       rb_sans_iq_native_fast ->setEnabled(true);
       rb_sans_iq_cryson      ->setEnabled(true);
    } else {
-      qDebug() <<  "update_saxs_sans(): rb_saxs->isChecked()";
       pb_plot_saxs_sans->setText(us_tr("Compute SAXS Curve"));
       pb_load_saxs_sans->setText(us_tr("Load SAXS Curve"));
       pb_clear_plot_saxs->setText(us_tr("Clear SAXS Curve"));
@@ -4873,7 +4867,6 @@ void US_Hydrodyn_Saxs::update_saxs_sans()
       rb_sans_iq_cryson      ->setEnabled(false);
    }
    update_iqq_suffix();
-#endif
 }
 
 void US_Hydrodyn_Saxs::clear_display()
@@ -6872,19 +6865,6 @@ void US_Hydrodyn_Saxs::crop_iq_data( vector < double > &q,
 
 void US_Hydrodyn_Saxs::set_current_method_buttons() 
 {
-   qDebug() << "set_current_method_buttons()";
-   qDebug() << QString( "our_saxs_options-> nd %1 sh %2 h %3 h2 %4 h3 %5 fast %6 foxs %7 crysol %8 sastbx %9")
-      .arg( our_saxs_options->saxs_iq_native_debye )
-      .arg( our_saxs_options->saxs_iq_native_sh )
-      .arg( our_saxs_options->saxs_iq_native_hybrid )
-      .arg( our_saxs_options->saxs_iq_native_hybrid2 )
-      .arg( our_saxs_options->saxs_iq_native_hybrid3 )
-      .arg( our_saxs_options->saxs_iq_native_fast )
-      .arg( our_saxs_options->saxs_iq_foxs )
-      .arg( our_saxs_options->saxs_iq_crysol )
-      .arg( our_saxs_options->saxs_iq_sastbx )
-      ;
-   
    rb_saxs_iq_native_debye  ->setChecked(our_saxs_options->saxs_iq_native_debye);
    rb_saxs_iq_native_sh     ->setChecked(our_saxs_options->saxs_iq_native_sh);
    if ( started_in_expert_mode )
@@ -6903,17 +6883,6 @@ void US_Hydrodyn_Saxs::set_current_method_buttons()
    {
       rb_saxs_iq_sastbx        ->setChecked(our_saxs_options->saxs_iq_sastbx);
    }
-
-   qDebug() << QString( "our_sans_options-> nd %1 sh %2 h %3 h2 %4 h3 %5 fast %6 cryson %7" )
-      .arg( our_saxs_options->sans_iq_native_debye )
-      .arg( our_saxs_options->sans_iq_native_sh )
-      .arg( our_saxs_options->sans_iq_native_hybrid )
-      .arg( our_saxs_options->sans_iq_native_hybrid2 )
-      .arg( our_saxs_options->sans_iq_native_hybrid3 )
-      .arg( our_saxs_options->sans_iq_native_fast )
-      .arg( our_saxs_options->sans_iq_cryson )
-      ;
-   
    rb_sans_iq_native_debye  ->setChecked(our_saxs_options->sans_iq_native_debye);
    rb_sans_iq_native_sh     ->setChecked(our_saxs_options->sans_iq_native_sh);
    if ( started_in_expert_mode )
@@ -6929,8 +6898,6 @@ void US_Hydrodyn_Saxs::set_current_method_buttons()
 }
 
 void US_Hydrodyn_Saxs::set_saxs_iq() {
-   qDebug() << "set_saxs_iq(): disabled\n";
-   return;
    if ( started_in_expert_mode ) {
       if ( rb_saxs_iq_native_debye->isChecked() ) {
          return set_saxs_iq( 0 );
@@ -6977,8 +6944,6 @@ void US_Hydrodyn_Saxs::set_saxs_iq() {
 
 void US_Hydrodyn_Saxs::set_saxs_iq(int val)
 {
-   qDebug() << "set_saxs_iq(" << val << "): disabled\n";
-   return;
    int ref = 0;
    rb_saxs_iq_native_debye  ->setChecked( val == ref ); ref++;
    rb_saxs_iq_native_sh     ->setChecked( val == ref ); ref++;
@@ -7037,8 +7002,6 @@ void US_Hydrodyn_Saxs::set_saxs_iq(int val)
 }
 
 void US_Hydrodyn_Saxs::set_sans_iq() {
-   qDebug() << "set_sans_iq(): disabled\n";
-   return;
    if ( started_in_expert_mode ) {
       if ( rb_sans_iq_native_debye->isChecked() ) {
          return set_sans_iq( 0 );
@@ -7079,8 +7042,6 @@ void US_Hydrodyn_Saxs::set_sans_iq() {
 
 void US_Hydrodyn_Saxs::set_sans_iq(int val)
 {
-   qDebug() << "set_sans_iq(" << val << "): disabled\n";
-   return;
    int ref = 0;
    rb_sans_iq_native_debye  ->setChecked( val == ref ); ref++;
    rb_sans_iq_native_sh     ->setChecked( val == ref ); ref++;
@@ -7287,7 +7248,6 @@ void US_Hydrodyn_Saxs::display_iqq_residuals( QString title,
 
 void US_Hydrodyn_Saxs::update_iqq_suffix()
 {
-   qDebug() << "update_iqq_suffix()";
    QString qs = "";
    // don't forget to update US_Hydrodyn_Saxs_Options update to call this
    // don't forget about US_Hydrodyn_Batch::iqq_suffix
@@ -7295,10 +7255,8 @@ void US_Hydrodyn_Saxs::update_iqq_suffix()
    // the method:
    if ( rb_saxs->isChecked() )
    {
-      qDebug() << "update_iqq_suffix(): rb_saxs->isChecked()";
       if ( our_saxs_options->saxs_iq_crysol )
       {
-         qDebug() << "update_iqq_suffix(): saxs_iq_crysol";
          qs += "cr";
          qs += QString("_h%1_g%2_hs%3")
             .arg( our_saxs_options->sh_max_harmonics )
@@ -7319,37 +7277,30 @@ void US_Hydrodyn_Saxs::update_iqq_suffix()
       } else {
          if ( our_saxs_options->saxs_iq_foxs )
          {
-            qDebug() << "update_iqq_suffix(): saxs_iq_foxs";
             qs += "fx";
          } else {
             if ( our_saxs_options->saxs_iq_native_debye )
             {
-               qDebug() << "update_iqq_suffix(): saxs_iq_native_debye";
                qs += "db";
             }
             if ( our_saxs_options->saxs_iq_native_fast )
             {
-               qDebug() << "update_iqq_suffix(): saxs_iq_native_fast";
                qs += "qd";
             }
             if ( our_saxs_options->saxs_iq_native_hybrid )
             {
-               qDebug() << "update_iqq_suffix(): saxs_iq_native_hybrid";
                qs += "hy";
             }
             if ( our_saxs_options->saxs_iq_native_hybrid2 )
             {
-               qDebug() << "update_iqq_suffix(): saxs_iq_native_hybrid2";
                qs += "h2";
             }
             if ( our_saxs_options->saxs_iq_native_hybrid3 )
             {
-               qDebug() << "update_iqq_suffix(): saxs_iq_native_hybrid3";
                qs += "h3";
             }
             if ( our_saxs_options->saxs_iq_sastbx )
             {
-               qDebug() << "update_iqq_suffix(): saxs_iq_sastbx";
    
                QString method;
                switch ( our_saxs_options->sastbx_method )
@@ -7375,7 +7326,6 @@ void US_Hydrodyn_Saxs::update_iqq_suffix()
             }
             if ( our_saxs_options->saxs_iq_native_sh )
             {
-               qDebug() << "update_iqq_suffix(): saxs_iq_native_sh";
                qs += "sh";
                qs += QString( "_h%1" )
                   .arg( our_saxs_options->sh_max_harmonics )
@@ -7386,7 +7336,6 @@ void US_Hydrodyn_Saxs::update_iqq_suffix()
                    our_saxs_options->saxs_iq_native_hybrid3 ) && 
                  our_saxs_options->saxs_iq_hybrid_adaptive )
             {
-               qDebug() << "update_iqq_suffix(): saxs_iq_native_hybrid*";
                qs += "a";
             }
             if ( our_saxs_options->scale_excl_vol != 1e0 )
@@ -7408,11 +7357,9 @@ void US_Hydrodyn_Saxs::update_iqq_suffix()
    }
    if ( rb_sans->isChecked() ) 
    {
-      qDebug() << "update_iqq_suffix(): rb_sans->isChecked()";
       qs += "n";
       if ( our_saxs_options->sans_iq_cryson )
       {
-         qDebug() << "update_iqq_suffix(): sans_iq_cryson";
          qs += "cr";
          qs += QString("_h%1_g%2_hs%3")
             .arg( our_saxs_options->cryson_sh_max_harmonics )
@@ -7421,32 +7368,26 @@ void US_Hydrodyn_Saxs::update_iqq_suffix()
       }
       if ( our_saxs_options->sans_iq_native_debye )
       {
-         qDebug() << "update_iqq_suffix(): sans_iq_native_debye";
          qs += "db";
       }
       if ( our_saxs_options->sans_iq_native_fast )
       {
-         qDebug() << "update_iqq_suffix(): sans_iq_native_fast";
          qs += "qd";
       }
       if ( our_saxs_options->sans_iq_native_hybrid )
       {
-         qDebug() << "update_iqq_suffix(): sans_iq_native_hybrid";
          qs += "hy";
       }
       if ( our_saxs_options->sans_iq_native_hybrid2 )
       {
-         qDebug() << "update_iqq_suffix(): sans_iq_native_hybrid2";
          qs += "h2";
       }
       if ( our_saxs_options->sans_iq_native_hybrid3 )
       {
-         qDebug() << "update_iqq_suffix(): sans_iq_native_hybrid3";
          qs += "h3";
       }
       if ( our_saxs_options->sans_iq_native_sh )
       {
-         qDebug() << "update_iqq_suffix(): sans_iq_native_sh";
          qs += "sh";
          qs += QString( "_h%1" )
             .arg( our_saxs_options->sh_max_harmonics )
@@ -7457,23 +7398,19 @@ void US_Hydrodyn_Saxs::update_iqq_suffix()
              our_saxs_options->sans_iq_native_hybrid3 ) && 
            our_saxs_options->sans_iq_hybrid_adaptive )
       {
-         qDebug() << "update_iqq_suffix(): sans_iq_native_hybrid*";
          qs += "a";
       }
       if ( our_saxs_options->scale_excl_vol != 1e0 )
       {
-         qDebug() << "update_iqq_suffix(): scale_excl_vol";
          qs += QString("_evs%1")
             .arg( QString("%1").arg( our_saxs_options->scale_excl_vol ).replace(".", "_" ) );
       }
       if ( !our_saxs_options->autocorrelate )
       {
-         qDebug() << "update_iqq_suffix(): autocorrelate";
          qs += "_nac";
       }
       if ( our_saxs_options->swh_excl_vol != 0e0 )
       {
-         qDebug() << "update_iqq_suffix(): swh_excl_vol !=0";
          qs += QString("_swh%1")
             .arg( QString("%1").arg( our_saxs_options->swh_excl_vol ).replace(".", "_" ) );
       }
@@ -7833,9 +7770,6 @@ bool US_Hydrodyn_Saxs::everything_plotted_has_same_grid_as_set()
 
 void US_Hydrodyn_Saxs::fix_sas_options()
 {
-   qDebug() << "fix_sas_options()";
-   qDebug() << "fix_sas_options(): disabled";
-   return;
    
    // cout << "fix_sas_options\n";
    bool any_selected = false;

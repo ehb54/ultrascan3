@@ -211,6 +211,10 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    residue_filename = USglobal->config_list.system_dir + "/etc/somo.residue";
    editor = (QTextEdit *)0;
 
+#if QT_VERSION >= 0x040000
+   gparams[ "zeno_cxx" ] = "true";
+#endif
+
    last_saxs_search_csv.name = "__empty__";
    last_saxs_screen_csv.name = "__empty__";
    last_saxs_buffer_csv.name = "__empty__";
