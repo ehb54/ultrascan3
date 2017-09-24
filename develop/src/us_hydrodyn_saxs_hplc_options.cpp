@@ -67,8 +67,8 @@ void US_Hydrodyn_Saxs_Hplc_Options::setupGUI()
    AUTFBACK( rb_integral );
    connect( rb_integral, SIGNAL( clicked() ), SLOT( update_enables() ) );
 
-#if QT_VERSION < 0x040000
-   bg_bl_type = new QGroupBox( this );
+#if 1 // QT_VERSION < 0x040000
+   bg_bl_type = new QButtonGroup( this );
    int bg_pos = 0;
    bg_bl_type->setExclusive(true);
    bg_bl_type->addButton( rb_linear, bg_pos++ );
@@ -259,8 +259,8 @@ void US_Hydrodyn_Saxs_Hplc_Options::setupGUI()
    rb_emggmg->setPalette( PALET_NORMAL );
    AUTFBACK( rb_emggmg );
 
-#if QT_VERSION < 0x040000
-   bg_gaussian_type = new QGroupBox( this );
+#if 1 // QT_VERSION < 0x040000
+   bg_gaussian_type = new QButtonGroup( this );
    bg_pos = 0;
    bg_gaussian_type->setExclusive(true);
    bg_gaussian_type->addButton( rb_gauss, bg_pos++ );

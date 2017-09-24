@@ -157,7 +157,7 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    pb_help->setPalette( PALET_PUSHB );
    connect(pb_help, SIGNAL(clicked()), SLOT(help()));
 
-   QBoxLayout *background = new QVBoxLayout( this );
+   QBoxLayout * background = new QVBoxLayout( this ); background->setContentsMargins( 0, 0, 0, 0 ); background->setSpacing( 0 );
 
    background->addWidget( lbl_info                    );
    background->addWidget( pb_sas_options_saxs         );
@@ -179,7 +179,7 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
       background->addWidget( pb_sas_options_experimental );
    }
 
-   QBoxLayout *helpclose = new QHBoxLayout;
+   QBoxLayout * helpclose = new QHBoxLayout; helpclose->setContentsMargins( 0, 0, 0, 0 ); helpclose->setSpacing( 0 );
 
    helpclose->addWidget( pb_help   );
    helpclose->addWidget( pb_cancel );

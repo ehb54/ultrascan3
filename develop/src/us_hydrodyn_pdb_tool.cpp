@@ -835,7 +835,7 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    QGridLayout * gl_panes = new QGridLayout; gl_panes->setContentsMargins( 0, 0, 0, 0 ); gl_panes->setSpacing( 0 ); gl_panes->setSpacing( 1 ); gl_panes->setContentsMargins( 1, 1, 1, 1 );
 
    // left pane
-   QBoxLayout *vbl_editor_group = new QVBoxLayout;
+   QBoxLayout * vbl_editor_group = new QVBoxLayout; vbl_editor_group->setContentsMargins( 0, 0, 0, 0 ); vbl_editor_group->setSpacing( 0 );
 #if !defined(QT4) || !defined(Q_WS_MAC)
    vbl_editor_group->addWidget(frame);
 #endif
@@ -843,25 +843,25 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
 
    gl_panes->addLayout( vbl_editor_group, 0, 0 );
 
-   QBoxLayout *hbl_left_buttons_row_1 = new QHBoxLayout;
+   QBoxLayout * hbl_left_buttons_row_1 = new QHBoxLayout; hbl_left_buttons_row_1->setContentsMargins( 0, 0, 0, 0 ); hbl_left_buttons_row_1->setSpacing( 0 );
    hbl_left_buttons_row_1->addWidget( pb_split_pdb );
    hbl_left_buttons_row_1->addSpacing( 2 );
    hbl_left_buttons_row_1->addWidget( pb_join_pdbs );
    
-   QBoxLayout *hbl_left_buttons_row_2 = new QHBoxLayout;
+   QBoxLayout * hbl_left_buttons_row_2 = new QHBoxLayout; hbl_left_buttons_row_2->setContentsMargins( 0, 0, 0, 0 ); hbl_left_buttons_row_2->setSpacing( 0 );
    hbl_left_buttons_row_2->addWidget( pb_merge );
    hbl_left_buttons_row_2->addWidget( pb_renum_pdb );
 
-   QBoxLayout *hbl_left_buttons_row_3 = new QHBoxLayout;
+   QBoxLayout * hbl_left_buttons_row_3 = new QHBoxLayout; hbl_left_buttons_row_3->setContentsMargins( 0, 0, 0, 0 ); hbl_left_buttons_row_3->setSpacing( 0 );
    hbl_left_buttons_row_3->addWidget( pb_hybrid_split );
    hbl_left_buttons_row_3->addWidget( pb_h_to_chainX );
 
-   QBoxLayout *hbl_left_buttons_row_4 = new QHBoxLayout;
+   QBoxLayout * hbl_left_buttons_row_4 = new QHBoxLayout; hbl_left_buttons_row_4->setContentsMargins( 0, 0, 0, 0 ); hbl_left_buttons_row_4->setSpacing( 0 );
    hbl_left_buttons_row_4->addWidget( pb_help );
    hbl_left_buttons_row_4->addSpacing( 2 );
    hbl_left_buttons_row_4->addWidget( pb_cancel );
 
-   QBoxLayout *vbl_left_buttons = new QVBoxLayout;
+   QBoxLayout * vbl_left_buttons = new QVBoxLayout; vbl_left_buttons->setContentsMargins( 0, 0, 0, 0 ); vbl_left_buttons->setSpacing( 0 );
    vbl_left_buttons->addLayout( hbl_left_buttons_row_1 );
    vbl_left_buttons->addLayout( hbl_left_buttons_row_2 );
    vbl_left_buttons->addLayout( hbl_left_buttons_row_3 );
@@ -870,7 +870,7 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    gl_panes->addLayout( vbl_left_buttons, 1, 0 );
 
    // center pane
-   QBoxLayout *vbl_center_top = new QVBoxLayout;
+   QBoxLayout * vbl_center_top = new QVBoxLayout; vbl_center_top->setContentsMargins( 0, 0, 0, 0 ); vbl_center_top->setSpacing( 0 );
    vbl_center_top->addWidget( lbl_csv );
    vbl_center_top->addWidget( lv_csv );
    vbl_center_top->addWidget( lbl_csv_sel_msg );
@@ -878,7 +878,7 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
 
    gl_panes->addLayout( vbl_center_top, 0, 1 );
 
-   QBoxLayout *hbl_center_buttons_row_1 = new QHBoxLayout;
+   QBoxLayout * hbl_center_buttons_row_1 = new QHBoxLayout; hbl_center_buttons_row_1->setContentsMargins( 0, 0, 0, 0 ); hbl_center_buttons_row_1->setSpacing( 0 );
    hbl_center_buttons_row_1->addWidget( pb_csv_load_1 );
    hbl_center_buttons_row_1->addSpacing( 2 );
    hbl_center_buttons_row_1->addWidget( pb_csv_load );
@@ -891,7 +891,7 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    hbl_center_buttons_row_1->addSpacing( 2 );
    hbl_center_buttons_row_1->addWidget( pb_csv_clear );
    
-   QBoxLayout *hbl_center_buttons_row_2 = new QHBoxLayout;
+   QBoxLayout * hbl_center_buttons_row_2 = new QHBoxLayout; hbl_center_buttons_row_2->setContentsMargins( 0, 0, 0, 0 ); hbl_center_buttons_row_2->setSpacing( 0 );
    hbl_center_buttons_row_2->addWidget( pb_csv_cut );
    hbl_center_buttons_row_2->addSpacing( 2 );
    hbl_center_buttons_row_2->addWidget( pb_csv_copy );
@@ -904,7 +904,7 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    hbl_center_buttons_row_2->addSpacing( 2 );
    hbl_center_buttons_row_2->addWidget( pb_csv_angle );
 
-   QBoxLayout *hbl_center_buttons_row_3 = new QHBoxLayout;
+   QBoxLayout * hbl_center_buttons_row_3 = new QHBoxLayout; hbl_center_buttons_row_3->setContentsMargins( 0, 0, 0, 0 ); hbl_center_buttons_row_3->setSpacing( 0 );
    hbl_center_buttons_row_3->addWidget( pb_csv_reseq );
    hbl_center_buttons_row_3->addSpacing( 2 );
    hbl_center_buttons_row_3->addWidget( pb_csv_check );
@@ -917,7 +917,7 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    hbl_center_buttons_row_3->addSpacing( 2 );
    hbl_center_buttons_row_3->addWidget( pb_csv_clash_report );
 
-   QBoxLayout *hbl_center_buttons_row_4 = new QHBoxLayout;
+   QBoxLayout * hbl_center_buttons_row_4 = new QHBoxLayout; hbl_center_buttons_row_4->setContentsMargins( 0, 0, 0, 0 ); hbl_center_buttons_row_4->setSpacing( 0 );
    hbl_center_buttons_row_4->addWidget( pb_csv_sel );
    hbl_center_buttons_row_4->addSpacing( 2 );
    hbl_center_buttons_row_4->addWidget( pb_csv_sel_clear );
@@ -932,7 +932,7 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    hbl_center_buttons_row_4->addSpacing( 2 );
    hbl_center_buttons_row_4->addWidget( pb_csv_sel_nearest_residues );
 
-   QBoxLayout *vbl_center_buttons = new QVBoxLayout;
+   QBoxLayout * vbl_center_buttons = new QVBoxLayout; vbl_center_buttons->setContentsMargins( 0, 0, 0, 0 ); vbl_center_buttons->setSpacing( 0 );
    vbl_center_buttons->addLayout( hbl_center_buttons_row_1 );
    vbl_center_buttons->addLayout( hbl_center_buttons_row_2 );
    vbl_center_buttons->addLayout( hbl_center_buttons_row_3 );
@@ -941,15 +941,15 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    gl_panes->addLayout( vbl_center_buttons, 1, 1 );
 
    // right pane
-   QBoxLayout *vbl_wheel = new QVBoxLayout;
+   QBoxLayout * vbl_wheel = new QVBoxLayout; vbl_wheel->setContentsMargins( 0, 0, 0, 0 ); vbl_wheel->setSpacing( 0 );
    vbl_wheel->addWidget( qwtw_wheel );
    vbl_wheel->addWidget( lbl_pos_range );
 
-   QBoxLayout *hbl_csv2_wheel = new QHBoxLayout;
+   QBoxLayout * hbl_csv2_wheel = new QHBoxLayout; hbl_csv2_wheel->setContentsMargins( 0, 0, 0, 0 ); hbl_csv2_wheel->setSpacing( 0 );
    hbl_csv2_wheel->addWidget( lv_csv2 );
    hbl_csv2_wheel->addLayout( vbl_wheel );
 
-   QBoxLayout *vbl_right_top = new QVBoxLayout;
+   QBoxLayout * vbl_right_top = new QVBoxLayout; vbl_right_top->setContentsMargins( 0, 0, 0, 0 ); vbl_right_top->setSpacing( 0 );
    vbl_right_top->addWidget( lbl_csv2 );
    vbl_right_top->addLayout( hbl_csv2_wheel );
    vbl_right_top->addWidget( lbl_csv2_sel_msg );
@@ -957,7 +957,7 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
 
    gl_panes->addLayout( vbl_right_top, 0, 2 );
 
-   QBoxLayout *hbl_right_buttons_row_1 = new QHBoxLayout;
+   QBoxLayout * hbl_right_buttons_row_1 = new QHBoxLayout; hbl_right_buttons_row_1->setContentsMargins( 0, 0, 0, 0 ); hbl_right_buttons_row_1->setSpacing( 0 );
    hbl_right_buttons_row_1->addWidget( pb_csv2_load_1 );
    hbl_right_buttons_row_1->addSpacing( 2 );
    hbl_right_buttons_row_1->addWidget( pb_csv2_load );
@@ -972,7 +972,7 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    hbl_right_buttons_row_1->addSpacing( 2 );
    hbl_right_buttons_row_1->addWidget( pb_csv2_clear );
    
-   QBoxLayout *hbl_right_buttons_row_2 = new QHBoxLayout;
+   QBoxLayout * hbl_right_buttons_row_2 = new QHBoxLayout; hbl_right_buttons_row_2->setContentsMargins( 0, 0, 0, 0 ); hbl_right_buttons_row_2->setSpacing( 0 );
    hbl_right_buttons_row_2->addWidget( pb_csv2_cut );
    hbl_right_buttons_row_2->addSpacing( 2 );
    hbl_right_buttons_row_2->addWidget( pb_csv2_copy );
@@ -985,7 +985,7 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    hbl_right_buttons_row_2->addSpacing( 2 );
    hbl_right_buttons_row_2->addWidget( pb_csv2_angle );
 
-   QBoxLayout *hbl_right_buttons_row_3 = new QHBoxLayout;
+   QBoxLayout * hbl_right_buttons_row_3 = new QHBoxLayout; hbl_right_buttons_row_3->setContentsMargins( 0, 0, 0, 0 ); hbl_right_buttons_row_3->setSpacing( 0 );
    hbl_right_buttons_row_3->addWidget( pb_csv2_reseq );
    hbl_right_buttons_row_3->addSpacing( 2 );
    hbl_right_buttons_row_3->addWidget( pb_csv2_check );
@@ -998,7 +998,7 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    hbl_right_buttons_row_3->addSpacing( 2 );
    hbl_right_buttons_row_3->addWidget( pb_csv2_clash_report );
 
-   QBoxLayout *hbl_right_buttons_row_4 = new QHBoxLayout;
+   QBoxLayout * hbl_right_buttons_row_4 = new QHBoxLayout; hbl_right_buttons_row_4->setContentsMargins( 0, 0, 0, 0 ); hbl_right_buttons_row_4->setSpacing( 0 );
    hbl_right_buttons_row_4->addWidget( pb_csv2_sel );
    hbl_right_buttons_row_4->addSpacing( 2 );
    hbl_right_buttons_row_4->addWidget( pb_csv2_sel_clear );
@@ -1013,7 +1013,7 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    hbl_right_buttons_row_4->addSpacing( 2 );
    hbl_right_buttons_row_4->addWidget( pb_csv2_sel_nearest_residues );
 
-   QBoxLayout *vbl_right_buttons = new QVBoxLayout;
+   QBoxLayout * vbl_right_buttons = new QVBoxLayout; vbl_right_buttons->setContentsMargins( 0, 0, 0, 0 ); vbl_right_buttons->setSpacing( 0 );
    vbl_right_buttons->addLayout( hbl_right_buttons_row_1 );
    vbl_right_buttons->addLayout( hbl_right_buttons_row_2 );
    vbl_right_buttons->addLayout( hbl_right_buttons_row_3 );

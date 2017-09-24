@@ -1698,8 +1698,8 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    rb_scale_high -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
    connect( rb_scale_high, SIGNAL( clicked() ), SLOT( scale_enables() ) );
 
-#if QT_VERSION < 0x040000
-   bg_scale_low_high = new QGroupBox( this );
+#if 1 // QT_VERSION < 0x040000
+   bg_scale_low_high = new QButtonGroup( this );
    int bg_pos = 0;
    bg_scale_low_high->setExclusive(true);
    bg_scale_low_high->addButton( rb_scale_low, bg_pos++ );
@@ -1853,8 +1853,8 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    rb_testiq_from_i_t -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
    connect( rb_testiq_from_i_t, SIGNAL( clicked() ), SLOT( testiq_gauss_line() ) );
 
-#if QT_VERSION < 0x040000
-   bg_testiq_gaussians = new QGroupBox( this );
+#if 1 // QT_VERSION < 0x040000
+   bg_testiq_gaussians = new QButtonGroup( this );
    bg_pos = 0;
    bg_testiq_gaussians->setExclusive( true );
    bg_testiq_gaussians->addButton( rb_testiq_from_i_t, bg_pos++ );
@@ -2045,8 +2045,8 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    rb_guinier_resid_pct -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
    connect( rb_guinier_resid_pct, SIGNAL( clicked() ), SLOT( guinier_residuals_update() ) );
 
-#if QT_VERSION < 0x040000
-   bg_guinier_resid_type = new QGroupBox( this );
+#if 1 // QT_VERSION < 0x040000
+   bg_guinier_resid_type = new QButtonGroup( this );
    bg_pos = 0;
    bg_guinier_resid_type->setExclusive(true);
    bg_guinier_resid_type->addButton( rb_guinier_resid_diff, bg_pos++ );
@@ -2527,8 +2527,8 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    rb_rgc_shape_ellipsoid -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
    connect( rb_rgc_shape_ellipsoid, SIGNAL( clicked() ), SLOT( rgc_shape() ) );
 
-#if QT_VERSION < 0x040000
-   bg_rgc_shape = new QGroupBox( this );
+#if 1 // QT_VERSION < 0x040000
+   bg_rgc_shape = new QButtonGroup( this );
    bg_pos = 0;
    bg_rgc_shape->setExclusive(true);
    bg_rgc_shape->addButton( rb_rgc_shape_sphere, bg_pos++ );
@@ -2670,8 +2670,8 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    rb_pm_shape_torus -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
    connect( rb_pm_shape_torus, SIGNAL( clicked() ), SLOT( pm_enables() ) );
 
-#if QT_VERSION < 0x040000
-   bg_pm_shape = new QGroupBox( this );
+#if 1 //  QT_VERSION < 0x040000
+   bg_pm_shape = new QButtonGroup( this );
    bg_pos = 0;
    bg_pm_shape->setExclusive(true);
    bg_pm_shape->addButton( rb_pm_shape_sphere, bg_pos++ );
@@ -2840,7 +2840,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
 
    // build layout
 
-   QBoxLayout *hbl_file_buttons = new QHBoxLayout();
+   QBoxLayout * hbl_file_buttons = new QHBoxLayout(); hbl_file_buttons->setContentsMargins( 0, 0, 0, 0 ); hbl_file_buttons->setSpacing( 0 );
    hbl_file_buttons->addWidget ( pb_add_files );
    hbl_file_buttons->addWidget ( pb_similar_files );
    hbl_file_buttons->addWidget ( pb_conc);
@@ -2851,7 +2851,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    files_widgets.push_back( pb_conc );
    files_widgets.push_back( pb_clear_files );
 
-   QBoxLayout *hbl_file_buttons_1 = new QHBoxLayout();
+   QBoxLayout * hbl_file_buttons_1 = new QHBoxLayout(); hbl_file_buttons_1->setContentsMargins( 0, 0, 0, 0 ); hbl_file_buttons_1->setSpacing( 0 );
    hbl_file_buttons_1->addWidget ( pb_regex_load );
    hbl_file_buttons_1->addWidget ( le_regex );
    hbl_file_buttons_1->addWidget ( le_regex_args );
@@ -2862,7 +2862,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    files_expert_widgets.push_back( le_regex_args );
    files_expert_widgets.push_back( pb_save_state );
 
-   QBoxLayout *hbl_file_buttons_2 = new QHBoxLayout();
+   QBoxLayout * hbl_file_buttons_2 = new QHBoxLayout(); hbl_file_buttons_2->setContentsMargins( 0, 0, 0, 0 ); hbl_file_buttons_2->setSpacing( 0 );
    hbl_file_buttons_2->addWidget ( pb_select_all );
    hbl_file_buttons_2->addWidget ( pb_invert );
    // hbl_file_buttons_2->addWidget ( pb_adjacent );
@@ -2888,7 +2888,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    files_widgets.push_back ( pb_axis_y );
    files_widgets.push_back ( pb_rescale );
 
-   QBoxLayout *hbl_file_buttons_2b = new QHBoxLayout();
+   QBoxLayout * hbl_file_buttons_2b = new QHBoxLayout(); hbl_file_buttons_2b->setContentsMargins( 0, 0, 0, 0 ); hbl_file_buttons_2b->setSpacing( 0 );
    hbl_file_buttons_2b->addWidget( pb_stack_push_all );
    hbl_file_buttons_2b->addWidget( pb_stack_push_sel );
    hbl_file_buttons_2b->addWidget( lbl_stack );
@@ -2955,7 +2955,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    // }
    // #endif
 
-   QBoxLayout *hbl_file_buttons_3 = new QHBoxLayout();
+   QBoxLayout * hbl_file_buttons_3 = new QHBoxLayout(); hbl_file_buttons_3->setContentsMargins( 0, 0, 0, 0 ); hbl_file_buttons_3->setSpacing( 0 );
    hbl_file_buttons_3->addWidget ( pb_conc_avg );
    hbl_file_buttons_3->addWidget ( pb_normalize );
    hbl_file_buttons_3->addWidget ( pb_avg );
@@ -2973,7 +2973,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    files_widgets.push_back ( pb_color_rotate );
    files_expert_widgets.push_back ( pb_ag );
 
-   QBoxLayout *hbl_file_buttons_4 = new QHBoxLayout();
+   QBoxLayout * hbl_file_buttons_4 = new QHBoxLayout(); hbl_file_buttons_4->setContentsMargins( 0, 0, 0, 0 ); hbl_file_buttons_4->setSpacing( 0 );
    hbl_file_buttons_4->addWidget ( pb_bin );
    hbl_file_buttons_4->addWidget ( pb_smooth );
    hbl_file_buttons_4->addWidget ( pb_svd );
@@ -2988,7 +2988,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    files_widgets.push_back ( pb_test_i_of_t );
    files_widgets.push_back ( pb_create_i_of_q );
 
-   QBoxLayout *hbl_conc_file = new QHBoxLayout();
+   QBoxLayout * hbl_conc_file = new QHBoxLayout(); hbl_conc_file->setContentsMargins( 0, 0, 0, 0 ); hbl_conc_file->setSpacing( 0 );
    hbl_conc_file->addWidget ( pb_load_conc );
    hbl_conc_file->addWidget ( pb_repeak );
    hbl_conc_file->addWidget ( pb_conc_file );
@@ -2999,19 +2999,19 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    files_widgets.push_back ( pb_conc_file );
    files_widgets.push_back ( pb_detector );
 
-   //    QBoxLayout *hbl_hplc = new QHBoxLayout();
+   //    QBoxLayout * hbl_hplc = new QHBoxLayout(); hbl_hplc->setContentsMargins( 0, 0, 0, 0 ); hbl_hplc->setSpacing( 0 );
    //    hbl_hplc->addWidget ( pb_set_hplc );
    //    hbl_hplc->addWidget ( lbl_hplc );
 
-   //    QBoxLayout *hbl_empty = new QHBoxLayout();
+   //    QBoxLayout * hbl_empty = new QHBoxLayout(); hbl_empty->setContentsMargins( 0, 0, 0, 0 ); hbl_empty->setSpacing( 0 );
    //    hbl_empty->addWidget ( pb_set_empty );
    //    hbl_empty->addWidget ( lbl_empty );
 
-   //    QBoxLayout *hbl_signal = new QHBoxLayout();
+   //    QBoxLayout * hbl_signal = new QHBoxLayout(); hbl_signal->setContentsMargins( 0, 0, 0, 0 ); hbl_signal->setSpacing( 0 );
    //    hbl_signal->addWidget ( pb_set_signal );
    //    hbl_signal->addWidget ( lbl_signal );
 
-   QBoxLayout *hbl_created = new QHBoxLayout();
+   QBoxLayout * hbl_created = new QHBoxLayout(); hbl_created->setContentsMargins( 0, 0, 0, 0 ); hbl_created->setSpacing( 0 );
    hbl_created->addWidget ( pb_select_all_created );
    hbl_created->addWidget ( pb_invert_all_created );
    hbl_created->addWidget ( pb_adjacent_created );
@@ -3026,14 +3026,14 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    created_files_widgets.push_back( pb_save_created_csv );
    created_files_widgets.push_back( pb_save_created );
 
-   QBoxLayout *hbl_created_2 = new QHBoxLayout();
+   QBoxLayout * hbl_created_2 = new QHBoxLayout(); hbl_created_2->setContentsMargins( 0, 0, 0, 0 ); hbl_created_2->setSpacing( 0 );
    hbl_created_2->addWidget ( pb_show_created );
    hbl_created_2->addWidget ( pb_show_only_created );
 
    created_files_widgets.push_back ( pb_show_created );
    created_files_widgets.push_back ( pb_show_only_created );
 
-   QBoxLayout *vbl_editor_group = new QVBoxLayout(0);
+   QBoxLayout * vbl_editor_group = new QVBoxLayout(0); vbl_editor_group->setContentsMargins( 0, 0, 0, 0 ); vbl_editor_group->setSpacing( 0 );
    vbl_editor_group->addWidget ( lbl_editor );
 #if !defined(QT4) || !defined(Q_WS_MAC)
    vbl_editor_group->addWidget ( frame );
@@ -3055,11 +3055,11 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    created_files_widgets.push_back ( le_created_dir );
    created_files_widgets.push_back ( lbl_selected_created );
 
-   QBoxLayout *vbl_model = new QVBoxLayout( 0 );
+   QBoxLayout * vbl_model = new QVBoxLayout( 0 ); vbl_model->setContentsMargins( 0, 0, 0, 0 ); vbl_model->setSpacing( 0 );
    vbl_model->addWidget( lbl_model_files );
    vbl_model->addWidget( lb_model_files );
    {
-      QBoxLayout *hbl = new QHBoxLayout();
+      QBoxLayout * hbl = new QHBoxLayout(); hbl->setContentsMargins( 0, 0, 0, 0 ); hbl->setSpacing( 0 );
       hbl->addWidget( pb_model_select_all );
       hbl->addWidget( pb_model_text );
       hbl->addWidget( pb_model_view );
@@ -3096,7 +3096,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
       gl_files->addLayout( vbl_editor_group , j, 0 ); j++;
    }
 
-   QBoxLayout *hbl_plot_buttons = new QHBoxLayout();
+   QBoxLayout * hbl_plot_buttons = new QHBoxLayout(); hbl_plot_buttons->setContentsMargins( 0, 0, 0, 0 ); hbl_plot_buttons->setSpacing( 0 );
    hbl_plot_buttons->addWidget( pb_select_vis );
    hbl_plot_buttons->addWidget( pb_remove_vis );
    hbl_plot_buttons->addWidget( pb_crop_common );
@@ -3128,7 +3128,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    // gl_wheel->addWidget         ( pb_wheel_cancel, 0, 10 );
    // gl_wheel->addWidget         ( pb_wheel_save  , 0, 11 );
 
-   QBoxLayout *hbl_top = new QHBoxLayout();
+   QBoxLayout * hbl_top = new QHBoxLayout(); hbl_top->setContentsMargins( 0, 0, 0, 0 ); hbl_top->setSpacing( 0 );
    hbl_top->addWidget( pb_p3d );
    hbl_top->addWidget( pb_ref );
    hbl_top->addWidget( pb_guinier_plot_rg );
@@ -3140,7 +3140,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    hbl_top->addWidget( pb_wheel_cancel );
    hbl_top->addWidget( pb_wheel_save );
 
-   // QBoxLayout *hbl_mode = new QHBoxLayout();
+   // QBoxLayout * hbl_mode = new QHBoxLayout(); hbl_mode->setContentsMargins( 0, 0, 0, 0 ); hbl_mode->setSpacing( 0 );
    // hbl_mode->addWidget( pb_gauss_start );
    // hbl_mode->addWidget( pb_ggauss_start );
    // hbl_mode->addWidget( pb_baseline_start );
@@ -3154,7 +3154,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    // hbl_mode->addWidget( pb_wyatt_start );
    // hbl_mode->addWidget( pb_wyatt_apply );
 
-   QBoxLayout *hbl_mode0 = new QHBoxLayout();
+   QBoxLayout * hbl_mode0 = new QHBoxLayout(); hbl_mode0->setContentsMargins( 0, 0, 0, 0 ); hbl_mode0->setSpacing( 0 );
    hbl_mode0->addWidget( pb_blanks_start );
    hbl_mode0->addWidget( pb_baseline_start );
    hbl_mode0->addWidget( pb_baseline_test );
@@ -3164,7 +3164,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    hbl_mode0->addWidget( pb_wyatt_start );
    hbl_mode0->addWidget( pb_wyatt_apply );
 
-   QBoxLayout *hbl_mode = new QHBoxLayout();
+   QBoxLayout * hbl_mode = new QHBoxLayout(); hbl_mode->setContentsMargins( 0, 0, 0, 0 ); hbl_mode->setSpacing( 0 );
    hbl_mode->addWidget( pb_gauss_start );
    hbl_mode->addWidget( pb_ggauss_start );
    hbl_mode->addWidget( pb_scale );
@@ -3179,9 +3179,9 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
 
    // scale
 
-   QBoxLayout *vbl_scale = new QVBoxLayout( 0 );
+   QBoxLayout * vbl_scale = new QVBoxLayout( 0 ); vbl_scale->setContentsMargins( 0, 0, 0, 0 ); vbl_scale->setSpacing( 0 );
    {
-      QBoxLayout *hbl = new QHBoxLayout();
+      QBoxLayout * hbl = new QHBoxLayout(); hbl->setContentsMargins( 0, 0, 0, 0 ); hbl->setSpacing( 0 );
       hbl->addWidget( cb_scale_scroll );
       hbl->addWidget( lbl_scale_q_range );
       hbl->addWidget( le_scale_q_start );
@@ -3191,7 +3191,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    }      
 
    {
-      QBoxLayout *hbl = new QHBoxLayout();
+      QBoxLayout * hbl = new QHBoxLayout(); hbl->setContentsMargins( 0, 0, 0, 0 ); hbl->setSpacing( 0 );
       hbl->addWidget( lbl_scale_low_high );
       hbl->addWidget( rb_scale_low );
       hbl->addWidget( rb_scale_high );
@@ -3204,9 +3204,9 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    }      
 
    // testiq
-   QBoxLayout *vbl_testiq = new QVBoxLayout( 0 );
+   QBoxLayout * vbl_testiq = new QVBoxLayout( 0 ); vbl_testiq->setContentsMargins( 0, 0, 0, 0 ); vbl_testiq->setSpacing( 0 );
    {
-      QBoxLayout *hbl = new QHBoxLayout();
+      QBoxLayout * hbl = new QHBoxLayout(); hbl->setContentsMargins( 0, 0, 0, 0 ); hbl->setSpacing( 0 );
       hbl->addWidget( lbl_testiq_q_range );
       hbl->addWidget( le_testiq_q_start );
       hbl->addWidget( le_testiq_q_end );
@@ -3220,14 +3220,14 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    }      
 
    // guinier
-   QBoxLayout *hbl_guinier_resid = new QHBoxLayout();
+   QBoxLayout * hbl_guinier_resid = new QHBoxLayout(); hbl_guinier_resid->setContentsMargins( 0, 0, 0, 0 ); hbl_guinier_resid->setSpacing( 0 );
    hbl_guinier_resid->addWidget( rb_guinier_resid_diff );
    hbl_guinier_resid->addWidget( rb_guinier_resid_sd );
    hbl_guinier_resid->addWidget( rb_guinier_resid_pct );
 
-   QBoxLayout *vbl_guinier = new QVBoxLayout( 0 );
+   QBoxLayout * vbl_guinier = new QVBoxLayout( 0 ); vbl_guinier->setContentsMargins( 0, 0, 0, 0 ); vbl_guinier->setSpacing( 0 );
    {
-      QBoxLayout *hbl = new QHBoxLayout();
+      QBoxLayout * hbl = new QHBoxLayout(); hbl->setContentsMargins( 0, 0, 0, 0 ); hbl->setSpacing( 0 );
       hbl->addWidget( lbl_guinier_rg_t_range );
       hbl->addWidget( le_guinier_rg_t_start );
       hbl->addWidget( le_guinier_rg_t_end );
@@ -3240,7 +3240,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    }      
 
    {
-      QBoxLayout *hbl = new QHBoxLayout();
+      QBoxLayout * hbl = new QHBoxLayout(); hbl->setContentsMargins( 0, 0, 0, 0 ); hbl->setSpacing( 0 );
       hbl->addWidget( lbl_guinier_mw_t_range );
       hbl->addWidget( le_guinier_mw_t_start );
       hbl->addWidget( le_guinier_mw_t_end );
@@ -3253,7 +3253,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    }      
       
    {
-      QBoxLayout *hbl = new QHBoxLayout();
+      QBoxLayout * hbl = new QHBoxLayout(); hbl->setContentsMargins( 0, 0, 0, 0 ); hbl->setSpacing( 0 );
       hbl->addWidget( cb_guinier_scroll );
       hbl->addWidget( lbl_guinier_q_range );
       hbl->addWidget( le_guinier_q_start );
@@ -3271,14 +3271,14 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    }      
    vbl_guinier->addWidget( lbl_guinier_stats );
 
-   // QBoxLayout * vbl_guinier_plots = new QVBoxLayout( 0 );
+   // QBoxLayout * vbl_guinier_plots = new QVBoxLayout( 0 ); vbl_guinier_plots->setContentsMargins( 0, 0, 0, 0 ); vbl_guinier_plots->setSpacing( 0 );
    // vbl_guinier_plots->addWidget( guinier_plot );
    // vbl_guinier_plots->addWidget( guinier_plot_errors );
 
    // pm
-   QBoxLayout *vbl_pm = new QVBoxLayout( 0 );
+   QBoxLayout * vbl_pm = new QVBoxLayout( 0 ); vbl_pm->setContentsMargins( 0, 0, 0, 0 ); vbl_pm->setSpacing( 0 );
    {
-      QBoxLayout *hbl = new QHBoxLayout();
+      QBoxLayout * hbl = new QHBoxLayout(); hbl->setContentsMargins( 0, 0, 0, 0 ); hbl->setSpacing( 0 );
       hbl->addWidget( lbl_pm_q_range );
       hbl->addWidget( le_pm_q_start );
       hbl->addWidget( le_pm_q_end );
@@ -3286,7 +3286,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
       vbl_pm->addLayout( hbl );
    }      
    {
-      QBoxLayout *hbl = new QHBoxLayout();
+      QBoxLayout * hbl = new QHBoxLayout(); hbl->setContentsMargins( 0, 0, 0, 0 ); hbl->setSpacing( 0 );
       hbl->addWidget( rb_pm_shape_sphere );
       hbl->addWidget( rb_pm_shape_spheroid );
       hbl->addWidget( rb_pm_shape_ellipsoid );
@@ -3296,7 +3296,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    }
 
    {
-      QBoxLayout *hbl = new QHBoxLayout();
+      QBoxLayout * hbl = new QHBoxLayout(); hbl->setContentsMargins( 0, 0, 0, 0 ); hbl->setSpacing( 0 );
       hbl->addWidget( cb_pm_sd );
       hbl->addWidget( cb_pm_q_logbin );
       hbl->addWidget( lbl_pm_q_pts );
@@ -3306,7 +3306,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
       vbl_pm->addLayout( hbl );
    }      
    {
-      QBoxLayout *hbl = new QHBoxLayout();
+      QBoxLayout * hbl = new QHBoxLayout(); hbl->setContentsMargins( 0, 0, 0, 0 ); hbl->setSpacing( 0 );
       hbl->addWidget( lbl_pm_samp_e_dens );
       hbl->addWidget( le_pm_samp_e_dens );
       hbl->addWidget( lbl_pm_buff_e_dens );
@@ -3316,9 +3316,9 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    }      
 
    // rgc
-   QBoxLayout *vbl_rgc = new QVBoxLayout( 0 );
+   QBoxLayout * vbl_rgc = new QVBoxLayout( 0 ); vbl_rgc->setContentsMargins( 0, 0, 0, 0 ); vbl_rgc->setSpacing( 0 );
    {
-      QBoxLayout *hbl = new QHBoxLayout();
+      QBoxLayout * hbl = new QHBoxLayout(); hbl->setContentsMargins( 0, 0, 0, 0 ); hbl->setSpacing( 0 );
       hbl->addWidget( lbl_rgc_mw );
       hbl->addWidget( le_rgc_mw );
       hbl->addWidget( lbl_rgc_vol );
@@ -3328,7 +3328,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
       vbl_rgc->addLayout( hbl );
    }      
    {
-      QBoxLayout *hbl = new QHBoxLayout();
+      QBoxLayout * hbl = new QHBoxLayout(); hbl->setContentsMargins( 0, 0, 0, 0 ); hbl->setSpacing( 0 );
       
       hbl->addWidget( rb_rgc_shape_sphere );
       hbl->addWidget( rb_rgc_shape_oblate );
@@ -3341,7 +3341,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    }      
 
    {
-      QBoxLayout *hbl = new QHBoxLayout();
+      QBoxLayout * hbl = new QHBoxLayout(); hbl->setContentsMargins( 0, 0, 0, 0 ); hbl->setSpacing( 0 );
       hbl->addWidget( lbl_rgc_rg );
       hbl->addWidget( le_rgc_rg );
       hbl->addWidget( lbl_rgc_extents );
@@ -3351,7 +3351,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
       vbl_rgc->addLayout( hbl );
    }      
 
-   QBoxLayout *hbl_ggauss_scroll = new QHBoxLayout();
+   QBoxLayout * hbl_ggauss_scroll = new QHBoxLayout(); hbl_ggauss_scroll->setContentsMargins( 0, 0, 0, 0 ); hbl_ggauss_scroll->setSpacing( 0 );
    {
       hbl_ggauss_scroll->addWidget( cb_ggauss_scroll );
       hbl_ggauss_scroll->addWidget( cb_ggauss_scroll_p_green );
@@ -3417,11 +3417,11 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    hbl_baseline->addWidget( le_wyatt_end2    );
    hbl_baseline->addWidget( cb_wyatt_2       );
 
-   QBoxLayout *hbl_ggqfit_plot_ctls = new QHBoxLayout();
+   QBoxLayout * hbl_ggqfit_plot_ctls = new QHBoxLayout(); hbl_ggqfit_plot_ctls->setContentsMargins( 0, 0, 0, 0 ); hbl_ggqfit_plot_ctls->setSpacing( 0 );
    hbl_ggqfit_plot_ctls->addWidget( cb_ggq_plot_chi2 );
    hbl_ggqfit_plot_ctls->addWidget( cb_ggq_plot_P );
 
-   QBoxLayout *vbl_plot_group = new QVBoxLayout(0);
+   QBoxLayout * vbl_plot_group = new QVBoxLayout(0); vbl_plot_group->setContentsMargins( 0, 0, 0, 0 ); vbl_plot_group->setSpacing( 0 );
    // vbl_plot_group->addWidget ( plot_dist );
    // vbl_plot_group->addWidget ( plot_ref );
    // vbl_plot_group->addLayout ( vbl_guinier_plots );
@@ -3452,7 +3452,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
 
    vbl_plot_group->addLayout ( hbl_plot_buttons );
 
-//    QBoxLayout *hbl_files_plot = new QHBoxLayout();
+//    QBoxLayout * hbl_files_plot = new QHBoxLayout(); hbl_files_plot->setContentsMargins( 0, 0, 0, 0 ); hbl_files_plot->setSpacing( 0 );
 //    // hbl_files_plot->addLayout( vbl_files );
 //    hbl_files_plot->addLayout( gl_files );
 //    hbl_files_plot->addLayout( vbl_plot_group );

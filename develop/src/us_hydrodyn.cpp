@@ -1331,19 +1331,19 @@ void US_Hydrodyn::setupGUI()
    j++;
 
    {
-      QBoxLayout * hbl = new QHBoxLayout();
+      QBoxLayout * hbl = new QHBoxLayout(); hbl->setContentsMargins( 0, 0, 0, 0 ); hbl->setSpacing( 0 );
       hbl->addWidget( pb_best );
       hbl->addWidget( pb_comparative );
       background->addLayout( hbl, j, 0 );
    }
    {
-      QBoxLayout * hbl = new QHBoxLayout();
+      QBoxLayout * hbl = new QHBoxLayout(); hbl->setContentsMargins( 0, 0, 0, 0 ); hbl->setSpacing( 0 );
       hbl->addWidget( pb_stop_calc );
       hbl->addWidget( pb_cancel );
       background->addLayout( hbl, j, 1 );
    }
    j++;
-   QBoxLayout *bl_help_config = new QHBoxLayout;
+   QBoxLayout * bl_help_config = new QHBoxLayout; bl_help_config->setContentsMargins( 0, 0, 0, 0 ); bl_help_config->setSpacing( 0 );
    bl_help_config->addWidget( pb_help );
    bl_help_config->addWidget( pb_config );
 

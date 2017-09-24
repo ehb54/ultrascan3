@@ -756,7 +756,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::setupGUI()
    row++;
 
    {
-      QBoxLayout *hbl = new QHBoxLayout();
+      QBoxLayout * hbl = new QHBoxLayout(); hbl->setContentsMargins( 0, 0, 0, 0 ); hbl->setSpacing( 0 );
       hbl->addWidget( cb_comm_dist1 );
       hbl->addWidget( cb_comm_dist2 );
       hbl->addWidget( cb_test_mode );
@@ -767,7 +767,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::setupGUI()
    gl_main->addWidget( lbl_test_info , row , 0 , 1 + ( row ) - ( row ) , 1 + ( 3  ) - ( 0 ) );
    row++;
    {
-      QBoxLayout *hbl = new QHBoxLayout();
+      QBoxLayout * hbl = new QHBoxLayout(); hbl->setContentsMargins( 0, 0, 0, 0 ); hbl->setSpacing( 0 );
       hbl_test = new QHBoxLayout();
       hbl->addLayout( hbl_test );
       hbl->addWidget( pb_test );

@@ -1635,7 +1635,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    background->addWidget(cb_store_abs_diff_eta, j, 10);
    j++;
 
-   QBoxLayout *hbl_param = new QHBoxLayout();
+   QBoxLayout * hbl_param = new QHBoxLayout(); hbl_param->setContentsMargins( 0, 0, 0, 0 ); hbl_param->setSpacing( 0 );
    hbl_param->addWidget(pb_load_param);
    hbl_param->addWidget(pb_reset_param);
    hbl_param->addWidget(pb_save_param);
@@ -1645,7 +1645,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    background->addWidget( lbl_title_csv , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 10 ) - ( 0 ) );
    j++;
 
-   QBoxLayout *hbl_csv = new QHBoxLayout();
+   QBoxLayout * hbl_csv = new QHBoxLayout(); hbl_csv->setContentsMargins( 0, 0, 0, 0 ); hbl_csv->setSpacing( 0 );
    hbl_csv->addWidget(pb_load_csv);
    hbl_csv->addWidget(pb_process_csv);
    hbl_csv->addWidget(pb_save_csv);
@@ -1656,12 +1656,12 @@ void US_Hydrodyn_Comparative::setupGUI()
 
    // gl_loaded_selected_editor->addWidget(lbl_loaded, 0, 0);
    gl_loaded_selected_editor->addWidget( lb_loaded , 0 , 0 , 1 + ( 1 ) - ( 0 ) , 1 + ( 0 ) - ( 0 ) );
-   QBoxLayout *hbl_loaded_buttons1 = new QHBoxLayout();
+   QBoxLayout * hbl_loaded_buttons1 = new QHBoxLayout(); hbl_loaded_buttons1->setContentsMargins( 0, 0, 0, 0 ); hbl_loaded_buttons1->setSpacing( 0 );
    hbl_loaded_buttons1->addWidget(pb_loaded_select_all);
    hbl_loaded_buttons1->addWidget(pb_loaded_remove);
    gl_loaded_selected_editor->addLayout(hbl_loaded_buttons1, 2, 0);
 
-   QBoxLayout *hbl_loaded_buttons2 = new QHBoxLayout();
+   QBoxLayout * hbl_loaded_buttons2 = new QHBoxLayout(); hbl_loaded_buttons2->setContentsMargins( 0, 0, 0, 0 ); hbl_loaded_buttons2->setSpacing( 0 );
    hbl_loaded_buttons2->addWidget(pb_loaded_view);
    hbl_loaded_buttons2->addWidget(pb_loaded_merge);
    hbl_loaded_buttons2->addWidget(pb_loaded_set_ranges);
@@ -1670,17 +1670,17 @@ void US_Hydrodyn_Comparative::setupGUI()
    // gl_loaded_selected_editor->addWidget(lbl_selected, 0, 1);
    gl_loaded_selected_editor->addWidget( lb_selected , 0 , 1 , 1 + ( 1 ) - ( 0 ) , 1 + ( 1 ) - ( 1 ) );
 
-   QBoxLayout *hbl_selected_buttons1 = new QHBoxLayout();
+   QBoxLayout * hbl_selected_buttons1 = new QHBoxLayout(); hbl_selected_buttons1->setContentsMargins( 0, 0, 0, 0 ); hbl_selected_buttons1->setSpacing( 0 );
    hbl_selected_buttons1->addWidget(pb_selected_select_all);
    hbl_selected_buttons1->addWidget(pb_selected_remove);
    gl_loaded_selected_editor->addLayout(hbl_selected_buttons1, 2, 1);
 
-   QBoxLayout *hbl_selected_buttons2 = new QHBoxLayout();
+   QBoxLayout * hbl_selected_buttons2 = new QHBoxLayout(); hbl_selected_buttons2->setContentsMargins( 0, 0, 0, 0 ); hbl_selected_buttons2->setSpacing( 0 );
    hbl_selected_buttons2->addWidget(pb_selected_merge);
    hbl_selected_buttons2->addWidget(pb_selected_set_ranges);
    gl_loaded_selected_editor->addLayout(hbl_selected_buttons2, 3, 1);
 
-   QBoxLayout *vbl_editor_group = new QVBoxLayout(0);
+   QBoxLayout * vbl_editor_group = new QVBoxLayout(0); vbl_editor_group->setContentsMargins( 0, 0, 0, 0 ); vbl_editor_group->setSpacing( 0 );
 #if !defined(QT4) || !defined(Q_WS_MAC)
    vbl_editor_group->addWidget(frame);
 #endif
@@ -1693,7 +1693,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    background->addLayout( gl_loaded_selected_editor , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 10 ) - ( 0 ) );
    j++;
 
-   QBoxLayout *hbl_bottom = new QHBoxLayout();
+   QBoxLayout * hbl_bottom = new QHBoxLayout(); hbl_bottom->setContentsMargins( 0, 0, 0, 0 ); hbl_bottom->setSpacing( 0 );
    hbl_bottom->addWidget(pb_help);
    hbl_bottom->addWidget(pb_cancel);
    background->addLayout( hbl_bottom , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 10 ) - ( 0 ) );

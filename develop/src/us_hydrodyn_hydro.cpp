@@ -65,7 +65,7 @@ void US_Hydrodyn_Hydro::setupGUI()
    AUTFBACK( cnt_unit );
    connect(cnt_unit, SIGNAL(valueChanged(double)), SLOT(update_unit(double)));
 
-#if QT_VERSION < 0x040000
+#if  QT_VERSION < 0x040000
    bg_solvent_conditions = new QGroupBox(4, Qt::Horizontal, "Solvent type and conditions:", this);
 
    lbl_solvent_name = new QLabel(us_tr(" Solvent:"), bg_solvent_conditions);
@@ -481,7 +481,7 @@ void US_Hydrodyn_Hydro::setupGUI()
    }
 
 #endif
-#if QT_VERSION < 0x040000
+#if  QT_VERSION < 0x040000
    bg_volume_correction = new QGroupBox(4, Qt::Horizontal, "Total Volume of Model: (for Rotational Diff. and Intrinsic Visc. Volume Corr.)", this);
    bg_volume_correction->setExclusive(true);
    connect(bg_volume_correction, SIGNAL(clicked(int)), this, SLOT(select_volume_correction(int)));

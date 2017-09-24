@@ -616,7 +616,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit::setupGUI()
    row++;
 
    {
-      QBoxLayout *hbl = new QHBoxLayout();
+      QBoxLayout * hbl = new QHBoxLayout(); hbl->setContentsMargins( 0, 0, 0, 0 ); hbl->setSpacing( 0 );
       hbl->addWidget( cb_comm_dist1 );
       hbl->addWidget( cb_comm_dist2 );
       gl_main->addLayout( hbl , row , 0 , 1 + ( row ) - ( row ) , 1 + ( 3  ) - ( 0 ) );

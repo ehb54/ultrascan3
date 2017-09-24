@@ -500,7 +500,7 @@ void US_Hydrodyn_Saxs_Buffer_Nth::setupGUI()
    pb_go -> setPalette      ( PALET_PUSHB );
    connect( pb_go, SIGNAL( clicked() ), SLOT( go() ) );
 
-   QBoxLayout *background = new QHBoxLayout( this );
+   QBoxLayout * background = new QHBoxLayout( this ); background->setContentsMargins( 0, 0, 0, 0 ); background->setSpacing( 0 );
    QVBoxLayout * left = new QVBoxLayout( 0 ); left->setContentsMargins( 0, 0, 0, 0 ); left->setSpacing( 0 );
 
    left->addWidget( lbl_title );
@@ -566,14 +566,14 @@ void US_Hydrodyn_Saxs_Buffer_Nth::setupGUI()
       gl_intensity->addWidget         ( cb_q_range    , j, 0 );
 
       {
-         QBoxLayout *hbl = new QHBoxLayout();
+         QBoxLayout * hbl = new QHBoxLayout(); hbl->setContentsMargins( 0, 0, 0, 0 ); hbl->setSpacing( 0 );
          hbl->addWidget( le_q_start );
          hbl->addWidget( le_q_end );
          gl_intensity->addLayout( hbl , j , 1 , 1 + ( j ) - ( j ) , 1 + ( 2  ) - ( 1 ) );
          ++j;
       }
       {
-         QBoxLayout *hbl = new QHBoxLayout();
+         QBoxLayout * hbl = new QHBoxLayout(); hbl->setContentsMargins( 0, 0, 0, 0 ); hbl->setSpacing( 0 );
          hbl->addWidget( pb_i_avg_all );
          hbl->addWidget( pb_i_avg_sel );
          gl_intensity->addLayout( hbl , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 2  ) - ( 0 ) );
@@ -584,7 +584,7 @@ void US_Hydrodyn_Saxs_Buffer_Nth::setupGUI()
       j += 3;
 
       {
-         QBoxLayout *hbl = new QHBoxLayout();
+         QBoxLayout * hbl = new QHBoxLayout(); hbl->setContentsMargins( 0, 0, 0, 0 ); hbl->setSpacing( 0 );
          hbl->addWidget( rb_i_above );
          hbl->addWidget( rb_i_below );
          gl_intensity->addLayout( hbl, j, 0 );
@@ -613,12 +613,12 @@ void US_Hydrodyn_Saxs_Buffer_Nth::setupGUI()
    background->addLayout( left );
 
    {
-      QBoxLayout * vbl = new QVBoxLayout( 0 );
+      QBoxLayout * vbl = new QVBoxLayout( 0 ); vbl->setContentsMargins( 0, 0, 0, 0 ); vbl->setSpacing( 0 );
       vbl->addWidget( plot_data );
       vbl->addWidget( qwtw_wheel );
 
       {
-         QBoxLayout * hbl = new QHBoxLayout();
+         QBoxLayout * hbl = new QHBoxLayout(); hbl->setContentsMargins( 0, 0, 0, 0 ); hbl->setSpacing( 0 );
          hbl->addWidget( pb_clear_plot );
          hbl->addWidget( pb_color_rotate );
          hbl->addWidget( pb_save_dat );

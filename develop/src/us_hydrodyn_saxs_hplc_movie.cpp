@@ -271,14 +271,14 @@ void US_Hydrodyn_Saxs_Hplc_Movie::setupGUI()
    QVBoxLayout * background = new QVBoxLayout(this); background->setContentsMargins( 0, 0, 0, 0 ); background->setSpacing( 0 );
 
    {
-      QBoxLayout *bl_tl = new QHBoxLayout();
+      QBoxLayout * bl_tl = new QHBoxLayout(); bl_tl->setContentsMargins( 0, 0, 0, 0 ); bl_tl->setSpacing( 0 );
       bl_tl->addWidget( lbl_state );
       bl_tl->addWidget( lbl_current );
       background->addLayout( bl_tl );
    }
 
    {
-      QBoxLayout *bl_tl = new QHBoxLayout();
+      QBoxLayout * bl_tl = new QHBoxLayout(); bl_tl->setContentsMargins( 0, 0, 0, 0 ); bl_tl->setSpacing( 0 );
       bl_tl->addWidget( pb_front );
       bl_tl->addWidget( pb_prev );
       bl_tl->addWidget( pb_slower );
@@ -290,7 +290,7 @@ void US_Hydrodyn_Saxs_Hplc_Movie::setupGUI()
    }
 
    {
-      QBoxLayout *bl_tl = new QHBoxLayout();
+      QBoxLayout * bl_tl = new QHBoxLayout(); bl_tl->setContentsMargins( 0, 0, 0, 0 ); bl_tl->setSpacing( 0 );
       bl_tl->addWidget( cb_show_gauss );
       bl_tl->addWidget( cb_show_ref );
       bl_tl->addWidget( cb_mono );
@@ -301,7 +301,7 @@ void US_Hydrodyn_Saxs_Hplc_Movie::setupGUI()
    }
 
    {
-      QBoxLayout *bl_tl = new QHBoxLayout();
+      QBoxLayout * bl_tl = new QHBoxLayout(); bl_tl->setContentsMargins( 0, 0, 0, 0 ); bl_tl->setSpacing( 0 );
       bl_tl->addWidget( cb_save );
       bl_tl->addWidget( le_save );
       bl_tl->addWidget( cb_save_overwrite );
@@ -309,7 +309,7 @@ void US_Hydrodyn_Saxs_Hplc_Movie::setupGUI()
    }
 
    {
-      QBoxLayout *bottom = new QHBoxLayout();
+      QBoxLayout * bottom = new QHBoxLayout(); bottom->setContentsMargins( 0, 0, 0, 0 ); bottom->setSpacing( 0 );
       bottom->addWidget( pb_help );
       bottom->addWidget( pb_cancel );
       background->addSpacing( 2 );

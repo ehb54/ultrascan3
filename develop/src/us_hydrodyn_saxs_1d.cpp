@@ -609,21 +609,21 @@ void US_Hydrodyn_Saxs_1d::setupGUI()
       j++;
    }
 
-   QBoxLayout *vbl_editor_group = new QVBoxLayout( 0 );
+   QBoxLayout * vbl_editor_group = new QVBoxLayout( 0 ); vbl_editor_group->setContentsMargins( 0, 0, 0, 0 ); vbl_editor_group->setSpacing( 0 );
    vbl_editor_group->addLayout( gl_options );
 #if !defined(QT4) || !defined(Q_WS_MAC)
    vbl_editor_group->addWidget( frame      );
 #endif
    vbl_editor_group->addWidget( editor     );
 
-   QBoxLayout *hbl_plot_buttons     = new QHBoxLayout();
+   QBoxLayout * hbl_plot_buttons = new QHBoxLayout(); hbl_plot_buttons->setContentsMargins( 0, 0, 0, 0 ); hbl_plot_buttons->setSpacing( 0 );
    hbl_plot_buttons->addSpacing( 4 );
    hbl_plot_buttons->addWidget ( pb_save_data );
    hbl_plot_buttons->addSpacing( 4 );
    hbl_plot_buttons->addWidget ( pb_to_somo   );
    hbl_plot_buttons->addSpacing( 4 );
 
-   QBoxLayout *vbl_plot_area     = new QVBoxLayout( 0 );
+   QBoxLayout * vbl_plot_area = new QVBoxLayout( 0 ); vbl_plot_area->setContentsMargins( 0, 0, 0, 0 ); vbl_plot_area->setSpacing( 0 );
    vbl_plot_area->addWidget( lbl_1d );
    vbl_plot_area->addWidget( plot_saxs );
    vbl_plot_area->addLayout( hbl_plot_buttons );

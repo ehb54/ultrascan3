@@ -494,7 +494,7 @@ void US_Hydrodyn_Saxs_Screen::setupGUI()
    hbl_bottom->addWidget(pb_cancel);
    hbl_bottom->addSpacing(4);
 
-   QBoxLayout *vbl_editor_group = new QVBoxLayout(0);
+   QBoxLayout * vbl_editor_group = new QVBoxLayout(0); vbl_editor_group->setContentsMargins( 0, 0, 0, 0 ); vbl_editor_group->setSpacing( 0 );
 #if !defined(QT4) || !defined(Q_WS_MAC)
    vbl_editor_group->addWidget(frame);
 #endif
@@ -506,13 +506,13 @@ void US_Hydrodyn_Saxs_Screen::setupGUI()
    gbl_messages->addWidget( lbl_message3, 1, 0 );
    gbl_messages->addWidget( lbl_message4, 1, 1 );
 
-   QBoxLayout *vbl_plot_group = new QVBoxLayout(0);
+   QBoxLayout * vbl_plot_group = new QVBoxLayout(0); vbl_plot_group->setContentsMargins( 0, 0, 0, 0 ); vbl_plot_group->setSpacing( 0 );
    vbl_plot_group->addWidget(plot_dist);
    vbl_plot_group->addLayout(gbl_messages);
    vbl_plot_group->addWidget(qwtw_wheel);
    vbl_plot_group->addWidget(lbl_pos_range);
 
-   QBoxLayout *vbl_wheel2 = new QVBoxLayout(0);
+   QBoxLayout * vbl_wheel2 = new QVBoxLayout(0); vbl_wheel2->setContentsMargins( 0, 0, 0, 0 ); vbl_wheel2->setSpacing( 0 );
    vbl_wheel2->addWidget(qwtw_wheel2);
    vbl_wheel2->addWidget(lbl_pos_range2);
    

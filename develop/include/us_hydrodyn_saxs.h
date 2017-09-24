@@ -206,11 +206,19 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
 
       QPrinter printer;
 
+#if QT_VERSION < 0x040000
       QGroupBox *bg_saxs_sans;
+#else
+      QButtonGroup *bg_saxs_sans;
+#endif
       QRadioButton *rb_saxs;
       QRadioButton *rb_sans;
 
+#if QT_VERSION < 0x040000
       QGroupBox *bg_saxs_iq;
+#else
+      QButtonGroup *bg_saxs_iq;
+#endif
       QRadioButton *rb_saxs_iq_native_debye;
       QRadioButton *rb_saxs_iq_native_sh;
       QRadioButton *rb_saxs_iq_native_hybrid;
@@ -221,7 +229,11 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       QRadioButton *rb_saxs_iq_sastbx;
       QRadioButton *rb_saxs_iq_crysol;
 
+#if QT_VERSION < 0x040000
       QGroupBox *bg_sans_iq;
+#else
+      QButtonGroup *bg_sans_iq;
+#endif
       QRadioButton *rb_sans_iq_native_debye;
       QRadioButton *rb_sans_iq_native_sh;
       QRadioButton *rb_sans_iq_native_hybrid;
@@ -286,7 +298,11 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       QLineEdit *le_user_lowI;
       QLineEdit *le_user_highI;
 
+#if QT_VERSION < 0x040000
       QGroupBox *bg_curve;
+#else
+      QButtonGroup *bg_curve;
+#endif
       QRadioButton *rb_curve_raw;
       QRadioButton *rb_curve_saxs_dry;
       QRadioButton *rb_curve_saxs;

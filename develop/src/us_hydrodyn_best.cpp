@@ -474,7 +474,7 @@ void US_Hydrodyn_Best::setupGUI()
 
    // ----- left side
    {
-      QBoxLayout *bl = new QVBoxLayout( 0 );
+      QBoxLayout * bl = new QVBoxLayout( 0 ); bl->setContentsMargins( 0, 0, 0, 0 ); bl->setSpacing( 0 );
       bl->addWidget( lbl_input );
       bl->addWidget( lb_data );
       {
@@ -510,7 +510,7 @@ void US_Hydrodyn_Best::setupGUI()
 
    // ----- right side
    {
-      QBoxLayout *bl = new QVBoxLayout( 0 );
+      QBoxLayout * bl = new QVBoxLayout( 0 ); bl->setContentsMargins( 0, 0, 0, 0 ); bl->setSpacing( 0 );
       bl->addWidget( plot_data );
       // needs layout for dynamic cb_'s 
       hbl_points = new QHBoxLayout();

@@ -298,7 +298,7 @@ void US_Config_GUI::setup_GUI()
    w = ( cwidth > w ) ? cwidth : w;
 
 
-   QBoxLayout * topbox = new QVBoxLayout; topbox->setSpacing( 2 );
+   QBoxLayout * topbox = new QVBoxLayout; topbox->setContentsMargins( 0, 0, 0, 0 ); topbox->setSpacing( 0 ); topbox->setSpacing( 2 );
    
    topbox->addWidget(lbl_directions);
    topbox->addWidget(lbl_paths);
@@ -344,7 +344,7 @@ void US_Config_GUI::setup_GUI()
    lineGrid2->addWidget(le_temperature_tol,j,1);
    j++;
    lineGrid2->addWidget(lbl_beckman_bug,j,0);
-   QBoxLayout *radiobutton = new QHBoxLayout();
+   QBoxLayout * radiobutton = new QHBoxLayout(); radiobutton->setContentsMargins( 0, 0, 0, 0 ); radiobutton->setSpacing( 0 );
    radiobutton->addWidget(bt_on);
    radiobutton->addWidget(bt_off);
    lineGrid2->addLayout(radiobutton,j,1);
@@ -361,7 +361,7 @@ void US_Config_GUI::setup_GUI()
    lineGrid2->addWidget(lbl_numThreads,j,0);
    lineGrid2->addWidget(cnt_numThreads,j,1);
 
-   QBoxLayout * pushbutton = new QHBoxLayout; topbox->addLayout( pushbutton ); pushbutton->setSpacing( 2 );
+   QBoxLayout * pushbutton = new QHBoxLayout; pushbutton->setContentsMargins( 0, 0, 0, 0 ); pushbutton->setSpacing( 0 ); topbox->addLayout( pushbutton ); pushbutton->setSpacing( 2 );
    pushbutton->addWidget(pb_help);
    pushbutton->addWidget(pb_save);
    pushbutton->addWidget(pb_cancel);

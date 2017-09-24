@@ -554,18 +554,18 @@ void US_Hydrodyn_Saxs_2d::setupGUI()
       j++;
    }
 
-   QBoxLayout *vbl_editor_group = new QVBoxLayout( 0 );
+   QBoxLayout * vbl_editor_group = new QVBoxLayout( 0 ); vbl_editor_group->setContentsMargins( 0, 0, 0, 0 ); vbl_editor_group->setSpacing( 0 );
    vbl_editor_group->addLayout( gl_options );
 #if !defined(QT4) || !defined(Q_WS_MAC)
    vbl_editor_group->addWidget( frame      );
 #endif
    vbl_editor_group->addWidget( editor     );
 
-   QBoxLayout *hbl_wheel     = new QHBoxLayout();
+   QBoxLayout * hbl_wheel = new QHBoxLayout(); hbl_wheel->setContentsMargins( 0, 0, 0, 0 ); hbl_wheel->setSpacing( 0 );
    hbl_wheel->addWidget( qwtw_wheel );
    hbl_wheel->addWidget( lbl_wheel_pos );
 
-   QBoxLayout *vbl_image_wheel     = new QVBoxLayout( 0 );
+   QBoxLayout * vbl_image_wheel = new QVBoxLayout( 0 ); vbl_image_wheel->setContentsMargins( 0, 0, 0, 0 ); vbl_image_wheel->setSpacing( 0 );
    vbl_image_wheel->addWidget( lbl_2d );
    vbl_image_wheel->addLayout( hbl_wheel );
 

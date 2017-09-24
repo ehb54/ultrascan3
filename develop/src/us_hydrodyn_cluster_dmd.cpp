@@ -326,7 +326,7 @@ void US_Hydrodyn_Cluster_Dmd::setupGUI()
    hbl_load_save->addWidget ( pb_save_csv );
    hbl_load_save->addSpacing( 4 );
 
-   QBoxLayout *vbl_editor_group = new QVBoxLayout(0);
+   QBoxLayout * vbl_editor_group = new QVBoxLayout(0); vbl_editor_group->setContentsMargins( 0, 0, 0, 0 ); vbl_editor_group->setSpacing( 0 );
 #if !defined(QT4) || !defined(Q_WS_MAC)
    vbl_editor_group->addWidget( frame );
 #endif

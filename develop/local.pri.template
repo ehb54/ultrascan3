@@ -101,6 +101,3 @@ macx {
   LIBS        += -L$$QWTPATH/lib -lqwt
 #  X11LIB       = -L/usr/X11R6/lib -lXau -lX11
 }
-
-QT += network
-

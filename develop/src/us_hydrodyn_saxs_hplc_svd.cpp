@@ -654,18 +654,18 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
 
    // ----- left side
    {
-      QBoxLayout *bl = new QVBoxLayout( 0 );
+      QBoxLayout * bl = new QVBoxLayout( 0 ); bl->setContentsMargins( 0, 0, 0, 0 ); bl->setSpacing( 0 );
       bl->addWidget( lbl_data );
       bl->addWidget( lv_data );
 
       {
-         QBoxLayout *bl_buttons = new QHBoxLayout();
+         QBoxLayout * bl_buttons = new QHBoxLayout(); bl_buttons->setContentsMargins( 0, 0, 0, 0 ); bl_buttons->setSpacing( 0 );
          bl_buttons->addWidget( pb_clear );
          bl_buttons->addWidget( pb_replot );
          bl->addLayout( bl_buttons );
       }
       {
-         QBoxLayout *bl_buttons = new QHBoxLayout();
+         QBoxLayout * bl_buttons = new QHBoxLayout(); bl_buttons->setContentsMargins( 0, 0, 0, 0 ); bl_buttons->setSpacing( 0 );
          bl_buttons->addWidget( pb_to_hplc );
          bl_buttons->addWidget( pb_color_rotate );
          bl->addLayout( bl_buttons );
@@ -690,7 +690,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
       }
 
       {
-         QBoxLayout *bl_buttons = new QHBoxLayout();
+         QBoxLayout * bl_buttons = new QHBoxLayout(); bl_buttons->setContentsMargins( 0, 0, 0, 0 ); bl_buttons->setSpacing( 0 );
          bl_buttons->addWidget( pb_svd );
          bl_buttons->addWidget( pb_stop );
          bl->addLayout( bl_buttons );
@@ -700,7 +700,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
       bl->addWidget( lb_ev );
 
       {
-         QBoxLayout *bl_buttons = new QHBoxLayout();
+         QBoxLayout * bl_buttons = new QHBoxLayout(); bl_buttons->setContentsMargins( 0, 0, 0, 0 ); bl_buttons->setSpacing( 0 );
          bl_buttons->addWidget( pb_svd_plot );
          bl_buttons->addWidget( pb_svd_save );
          bl_buttons->addWidget( pb_recon );
@@ -708,14 +708,14 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
       }
 
       {
-         QBoxLayout *bl_buttons = new QHBoxLayout();
+         QBoxLayout * bl_buttons = new QHBoxLayout(); bl_buttons->setContentsMargins( 0, 0, 0, 0 ); bl_buttons->setSpacing( 0 );
          bl_buttons->addWidget( pb_indiv_recon );
          bl_buttons->addWidget( pb_inc_recon );
          bl->addLayout( bl_buttons );
       }
 
       {
-         QBoxLayout *bl_buttons = new QHBoxLayout();
+         QBoxLayout * bl_buttons = new QHBoxLayout(); bl_buttons->setContentsMargins( 0, 0, 0, 0 ); bl_buttons->setSpacing( 0 );
          bl_buttons->addWidget( pb_inc_chi_plot );
          bl_buttons->addWidget( pb_inc_rmsd_plot );
          bl_buttons->addWidget( pb_rmsd_save );
@@ -733,7 +733,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
 
    // ----- right side
    {
-      QBoxLayout *bl = new QVBoxLayout( 0 );
+      QBoxLayout * bl = new QVBoxLayout( 0 ); bl->setContentsMargins( 0, 0, 0, 0 ); bl->setSpacing( 0 );
       bl->addWidget( plot_data );
       bl->addWidget( plot_errors );
 
@@ -750,7 +750,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
       //       }
 
       {
-         QBoxLayout *bl_buttons = new QHBoxLayout();
+         QBoxLayout * bl_buttons = new QHBoxLayout(); bl_buttons->setContentsMargins( 0, 0, 0, 0 ); bl_buttons->setSpacing( 0 );
          bl_buttons->addWidget( cb_plot_errors );
          bl_buttons->addWidget( cb_plot_errors_sd );
          bl_buttons->addWidget( cb_plot_errors_pct );
@@ -758,7 +758,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
       }
 
       {
-         QBoxLayout *bl_buttons = new QHBoxLayout();
+         QBoxLayout * bl_buttons = new QHBoxLayout(); bl_buttons->setContentsMargins( 0, 0, 0, 0 ); bl_buttons->setSpacing( 0 );
          bl_buttons->addWidget( cb_plot_errors_rev );
          bl_buttons->addWidget( cb_plot_errors_ref );
          bl_buttons->addWidget( cb_plot_errors_group );
@@ -766,7 +766,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
       }
 
       {
-         QBoxLayout *bl_buttons = new QHBoxLayout();
+         QBoxLayout * bl_buttons = new QHBoxLayout(); bl_buttons->setContentsMargins( 0, 0, 0, 0 ); bl_buttons->setSpacing( 0 );
          bl_buttons->addWidget( pb_iq_it );
          bl_buttons->addWidget( pb_axis_x );
          bl_buttons->addWidget( pb_axis_y );
@@ -779,7 +779,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
    background->addLayout( top );
 
    {
-      QBoxLayout *bottom = new QHBoxLayout();
+      QBoxLayout * bottom = new QHBoxLayout(); bottom->setContentsMargins( 0, 0, 0, 0 ); bottom->setSpacing( 0 );
       bottom->addWidget( pb_help );
       bottom->addWidget( progress );
       bottom->addWidget( pb_cancel );

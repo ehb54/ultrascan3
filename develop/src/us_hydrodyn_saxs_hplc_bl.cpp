@@ -57,7 +57,7 @@ void US_Hydrodyn_Saxs_Hplc_Bl::setupGUI()
    rb_integral->setPalette( USglobal->global_colors.cg_normal );
    connect( rb_integral, SIGNAL( clicked() ), SLOT( update_enables() ) );
 
-#if QT_VERSION < 0x040000
+#if 1 // QT_VERSION < 0x040000
    bg_bl_type = new QGroupBox( this );
    int bg_pos = 0;
    bg_bl_type->setExclusive(true);

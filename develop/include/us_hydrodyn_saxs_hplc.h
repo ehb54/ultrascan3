@@ -439,7 +439,11 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       QLabel       * lbl_scale_low_high;
       QRadioButton * rb_scale_low;
       QRadioButton * rb_scale_high;
+#if QT_VERSION < 0x040000
       QGroupBox * bg_scale_low_high;
+#else
+      QButtonGroup * bg_scale_low_high;
+#endif
       QCheckBox    * cb_scale_sd;
       QCheckBox    * cb_scale_save_intp;
       QCheckBox    * cb_scale_scroll;
@@ -464,7 +468,11 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       QCheckBox    * cb_testiq_from_gaussian;
 
       QLabel                *    lbl_testiq_gaussians;
+#if QT_VERSION < 0x040000
       QGroupBox          *    bg_testiq_gaussians;
+#else
+      QButtonGroup         *    bg_testiq_gaussians;
+#endif
       QRadioButton          *    rb_testiq_from_i_t;
       QHBoxLayout           *    hbl_testiq_gaussians;
       vector < QRadioButton * >  rb_testiq_gaussians;
@@ -512,7 +520,11 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       QRadioButton * rb_guinier_resid_diff;
       QRadioButton * rb_guinier_resid_sd;
       QRadioButton * rb_guinier_resid_pct;
+#if QT_VERSION < 0x040000
       QGroupBox * bg_guinier_resid_type;
+#else
+      QButtonGroup * bg_guinier_resid_type;
+#endif
 
       QPushButton  * pb_guinier_plot_rg;
       QPushButton  * pb_guinier_plot_mw;
@@ -662,7 +674,12 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       QRadioButton * rb_rgc_shape_oblate;
       QRadioButton * rb_rgc_shape_prolate;
       QRadioButton * rb_rgc_shape_ellipsoid;
+#if QT_VERSION < 0x040000
       QGroupBox * bg_rgc_shape;
+#else
+      QButtonGroup * bg_rgc_shape;
+#endif
+
       QLineEdit    * le_rgc_axis_b;
       QLineEdit    * le_rgc_axis_c;
       QLabel       * lbl_rgc_rg;
@@ -685,7 +702,11 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       QRadioButton * rb_pm_shape_ellipsoid;
       QRadioButton * rb_pm_shape_cylinder;
       QRadioButton * rb_pm_shape_torus;
+#if QT_VERSION < 0x040000
       QGroupBox * bg_pm_shape;
+#else
+      QButtonGroup * bg_pm_shape;
+#endif
       QCheckBox    * cb_pm_sd;
       QCheckBox    * cb_pm_q_logbin;
       QLabel       * lbl_pm_q_range;

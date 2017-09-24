@@ -772,7 +772,7 @@ void US_AddResidue::setupGUI()
    background->addWidget(cmb_placing, j, 4);
    j++;
    background->addWidget(lbl_beadchain, j, 3);
-   QBoxLayout *bl = new QHBoxLayout();
+   QBoxLayout * bl = new QHBoxLayout(); bl->setContentsMargins( 0, 0, 0, 0 ); bl->setSpacing( 0 );
    bl->addWidget(rb_backbone);
    bl->addWidget(rb_sidechain);
    background->addLayout(bl, j, 4);

@@ -1130,18 +1130,18 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    connect(pb_cancel, SIGNAL(clicked()), SLOT(cancel()));
 
    // build layout
-   QBoxLayout *hbl_file_buttons = new QHBoxLayout();
+   QBoxLayout * hbl_file_buttons = new QHBoxLayout(); hbl_file_buttons->setContentsMargins( 0, 0, 0, 0 ); hbl_file_buttons->setSpacing( 0 );
    hbl_file_buttons->addWidget ( pb_add_files );
    hbl_file_buttons->addWidget ( pb_similar_files );
    hbl_file_buttons->addWidget ( pb_conc);
    hbl_file_buttons->addWidget ( pb_clear_files );
 
-   QBoxLayout *hbl_file_buttons_1 = new QHBoxLayout();
+   QBoxLayout * hbl_file_buttons_1 = new QHBoxLayout(); hbl_file_buttons_1->setContentsMargins( 0, 0, 0, 0 ); hbl_file_buttons_1->setSpacing( 0 );
    hbl_file_buttons_1->addWidget ( pb_regex_load );
    hbl_file_buttons_1->addWidget ( le_regex );
    hbl_file_buttons_1->addWidget ( le_regex_args );
 
-   QBoxLayout *hbl_file_buttons_2 = new QHBoxLayout();
+   QBoxLayout * hbl_file_buttons_2 = new QHBoxLayout(); hbl_file_buttons_2->setContentsMargins( 0, 0, 0, 0 ); hbl_file_buttons_2->setSpacing( 0 );
    hbl_file_buttons_2->addWidget ( pb_select_all );
    hbl_file_buttons_2->addWidget ( pb_invert );
    // hbl_file_buttons_2->addWidget ( pb_adjacent );
@@ -1153,35 +1153,35 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    hbl_file_buttons_2->addWidget ( pb_axis_y );
    hbl_file_buttons_2->addWidget ( pb_rescale );
 
-   QBoxLayout *hbl_file_buttons_3 = new QHBoxLayout();
+   QBoxLayout * hbl_file_buttons_3 = new QHBoxLayout(); hbl_file_buttons_3->setContentsMargins( 0, 0, 0, 0 ); hbl_file_buttons_3->setSpacing( 0 );
    hbl_file_buttons_3->addWidget ( pb_conc_avg );
    hbl_file_buttons_3->addWidget ( pb_normalize );
    hbl_file_buttons_3->addWidget ( pb_asum );
    hbl_file_buttons_3->addWidget ( pb_avg );
 
-   QBoxLayout *hbl_buffer = new QHBoxLayout();
+   QBoxLayout * hbl_buffer = new QHBoxLayout(); hbl_buffer->setContentsMargins( 0, 0, 0, 0 ); hbl_buffer->setSpacing( 0 );
    hbl_buffer->addWidget ( pb_set_buffer );
    hbl_buffer->addWidget ( lbl_buffer );
 
-   QBoxLayout *hbl_empty = new QHBoxLayout();
+   QBoxLayout * hbl_empty = new QHBoxLayout(); hbl_empty->setContentsMargins( 0, 0, 0, 0 ); hbl_empty->setSpacing( 0 );
    hbl_empty->addWidget ( pb_set_empty );
    hbl_empty->addWidget ( lbl_empty );
 
-   QBoxLayout *hbl_signal = new QHBoxLayout();
+   QBoxLayout * hbl_signal = new QHBoxLayout(); hbl_signal->setContentsMargins( 0, 0, 0, 0 ); hbl_signal->setSpacing( 0 );
    hbl_signal->addWidget ( pb_set_signal );
    hbl_signal->addWidget ( lbl_signal );
 
-   QBoxLayout *hbl_created = new QHBoxLayout();
+   QBoxLayout * hbl_created = new QHBoxLayout(); hbl_created->setContentsMargins( 0, 0, 0, 0 ); hbl_created->setSpacing( 0 );
    hbl_created->addWidget ( pb_select_all_created );
    hbl_created->addWidget ( pb_adjacent_created );
    hbl_created->addWidget ( pb_save_created_csv );
    hbl_created->addWidget ( pb_save_created );
 
-   QBoxLayout *hbl_created_2 = new QHBoxLayout();
+   QBoxLayout * hbl_created_2 = new QHBoxLayout(); hbl_created_2->setContentsMargins( 0, 0, 0, 0 ); hbl_created_2->setSpacing( 0 );
    hbl_created_2->addWidget ( pb_show_created );
    hbl_created_2->addWidget ( pb_show_only_created );
 
-   QBoxLayout *vbl_editor_group = new QVBoxLayout(0);
+   QBoxLayout * vbl_editor_group = new QVBoxLayout(0); vbl_editor_group->setContentsMargins( 0, 0, 0, 0 ); vbl_editor_group->setSpacing( 0 );
 #if !defined(QT4) || !defined(Q_WS_MAC)
    vbl_editor_group->addWidget (frame);
 #endif
@@ -1191,7 +1191,7 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    hbl_dir->addWidget( cb_lock_dir );
    hbl_dir->addWidget( lbl_dir );
 
-   QBoxLayout *vbl_files = new QVBoxLayout( 0 );
+   QBoxLayout * vbl_files = new QVBoxLayout( 0 ); vbl_files->setContentsMargins( 0, 0, 0, 0 ); vbl_files->setSpacing( 0 );
    vbl_files->addWidget( lbl_files );
    vbl_files->addLayout( hbl_dir );
    vbl_files->addLayout( hbl_file_buttons );
@@ -1235,7 +1235,7 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    hbl_join->addWidget( pb_join_fit_linear );
    hbl_join->addWidget( lbl_join_rmsd );
 
-   QBoxLayout *hbl_plot_buttons = new QHBoxLayout();
+   QBoxLayout * hbl_plot_buttons = new QHBoxLayout(); hbl_plot_buttons->setContentsMargins( 0, 0, 0, 0 ); hbl_plot_buttons->setSpacing( 0 );
    hbl_plot_buttons->addWidget( pb_select_vis );
    hbl_plot_buttons->addWidget( pb_remove_vis );
    hbl_plot_buttons->addWidget( pb_crop_common );
@@ -1246,18 +1246,18 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    hbl_plot_buttons->addWidget( pb_crop_right );
    hbl_plot_buttons->addWidget( pb_legend );
 
-   QBoxLayout *hbl_plot_buttons_2 = new QHBoxLayout();
+   QBoxLayout * hbl_plot_buttons_2 = new QHBoxLayout(); hbl_plot_buttons_2->setContentsMargins( 0, 0, 0, 0 ); hbl_plot_buttons_2->setSpacing( 0 );
    hbl_plot_buttons_2->addWidget( cb_guinier );
    hbl_plot_buttons_2->addWidget( lbl_guinier );
 
-   QBoxLayout *vbl_plot_group = new QVBoxLayout(0);
+   QBoxLayout * vbl_plot_group = new QVBoxLayout(0); vbl_plot_group->setContentsMargins( 0, 0, 0, 0 ); vbl_plot_group->setSpacing( 0 );
    vbl_plot_group->addWidget ( plot_dist );
    vbl_plot_group->addLayout ( gl_wheel  );
    vbl_plot_group->addLayout ( hbl_join  );
    vbl_plot_group->addLayout ( hbl_plot_buttons );
    vbl_plot_group->addLayout ( hbl_plot_buttons_2 );
 
-   // QBoxLayout *hbl_files_plot = new QHBoxLayout();
+   // QBoxLayout * hbl_files_plot = new QHBoxLayout(); hbl_files_plot->setContentsMargins( 0, 0, 0, 0 ); hbl_files_plot->setSpacing( 0 );
    // hbl_files_plot->addLayout( vbl_files );
    // hbl_files_plot->addLayout( vbl_plot_group );
 

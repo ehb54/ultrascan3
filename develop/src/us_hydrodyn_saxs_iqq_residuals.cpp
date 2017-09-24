@@ -314,7 +314,7 @@ void US_Hydrodyn_Saxs_Iqq_Residuals::setupGUI()
    background->addWidget( plot , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
    j++;
 
-   QBoxLayout *hbl = new QHBoxLayout();
+   QBoxLayout * hbl = new QHBoxLayout(); hbl->setContentsMargins( 0, 0, 0, 0 ); hbl->setSpacing( 0 );
    hbl->addWidget(cb_plot_difference);
    hbl->addWidget(cb_plot_log);
    hbl->addWidget(cb_plot_as_percent);

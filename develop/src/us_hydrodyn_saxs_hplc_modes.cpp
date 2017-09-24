@@ -105,10 +105,10 @@ void US_Hydrodyn_Saxs_Hplc::pm_enables()
 {
    bool shapes_selected = false;
 #if QT_VERSION >= 0x040000
-   for ( int i = 0; i < (int) bg_pm_shape->layout()->count(); ++i )
-   {
-      if ( ((QRadioButton *)bg_pm_shape->layout()->itemAt( i )->widget())->isChecked() )
-      {
+   for ( QList < QAbstractButton* >::iterator it = bg_pm_shape->buttons().begin();
+         it != bg_pm_shape->buttons().end();
+         ++it ) {
+      if ( ((QRadioButton*)*it)->isChecked() ) {
          shapes_selected = true;
       }
    }

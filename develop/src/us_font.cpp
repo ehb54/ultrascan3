@@ -203,7 +203,7 @@ US_Font::~US_Font()
 }
 void US_Font::setup_GUI()
 {
-   QBoxLayout * topbox = new QVBoxLayout; topbox->setSpacing( 2 );
+   QBoxLayout * topbox = new QVBoxLayout; topbox->setContentsMargins( 0, 0, 0, 0 ); topbox->setSpacing( 0 ); topbox->setSpacing( 2 );
    topbox->addWidget(lbl_info);
    topbox->addWidget(pb_font);
    QGridLayout * lineGrid = new QGridLayout; lineGrid->setContentsMargins( 0, 0, 0, 0 ); lineGrid->setSpacing( 0 ); topbox->addLayout( lineGrid );;
@@ -218,7 +218,7 @@ void US_Font::setup_GUI()
    topbox->addWidget(lbl_font4);
    topbox->addWidget(lbl_font5);
    topbox->addWidget(lbl_font6);
-   QBoxLayout * buttonbox = new QHBoxLayout; topbox->addLayout( buttonbox );
+   QBoxLayout * buttonbox = new QHBoxLayout; buttonbox->setContentsMargins( 0, 0, 0, 0 ); buttonbox->setSpacing( 0 ); topbox->addLayout( buttonbox );
    buttonbox->addWidget(pb_help);
    buttonbox->addWidget(pb_ok);
    buttonbox->addWidget(pb_cancel);
