@@ -4,11 +4,11 @@
 #include "../include/us_saxs_util.h"
 #include "../include/us_hydrodyn_saxs_hplc_scale_trend.h"
 //Added by qt3to4:
-#include <Q3HBoxLayout>
+#include <QHBoxLayout>
 #include <QCloseEvent>
-#include <Q3Frame>
+#include <QFrame>
 #include <QLabel>
-#include <Q3VBoxLayout>
+#include <QVBoxLayout>
 
 US_Hydrodyn_Saxs_Hplc_Scale_Trend::US_Hydrodyn_Saxs_Hplc_Scale_Trend(
                                                                        void                     *              us_hydrodyn,
@@ -16,7 +16,7 @@ US_Hydrodyn_Saxs_Hplc_Scale_Trend::US_Hydrodyn_Saxs_Hplc_Scale_Trend(
                                                                        map < QString, vector < vector < double > > > plots,
                                                                        QWidget *                               p,
                                                                        const char *                            name
-                                                                       ) : Q3Frame( p, name )
+                                                                       ) : QFrame(  p )
 {
    this->us_hydrodyn                          = us_hydrodyn;
    this->parameters                           = parameters;
@@ -24,7 +24,7 @@ US_Hydrodyn_Saxs_Hplc_Scale_Trend::US_Hydrodyn_Saxs_Hplc_Scale_Trend(
 
    USglobal = new US_Config();
    setPalette( PALET_FRAME );
-   setCaption( tr( "US-SOMO: SAXS-HPLC Scale Analysis" ) );
+   setWindowTitle( us_tr( "US-SOMO: SAXS-HPLC Scale Analysis" ) );
 
    plot_zoomer = (ScrollZoomer *) 0;
 
@@ -70,13 +70,13 @@ void US_Hydrodyn_Saxs_Hplc_Scale_Trend::setupGUI()
    AUTFBACK( lbl_results );
    lbl_results ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
 
-   pb_help =  new QPushButton ( tr( "Help" ), this );
+   pb_help =  new QPushButton ( us_tr( "Help" ), this );
    pb_help -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1) );
    pb_help -> setMinimumHeight( minHeight1 );
    pb_help -> setPalette      ( PALET_PUSHB );
    connect( pb_help, SIGNAL( clicked() ), SLOT( help() ) );
 
-   pb_close =  new QPushButton ( tr( "Close" ), this );
+   pb_close =  new QPushButton ( us_tr( "Close" ), this );
    pb_close -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1) );
    pb_close -> setMinimumHeight( minHeight1 );
    pb_close -> setPalette      ( PALET_PUSHB );
@@ -123,7 +123,7 @@ void US_Hydrodyn_Saxs_Hplc_Scale_Trend::setupGUI()
    plot->setTitle( parameters[ "title" ] );
    plot->setCanvasBackground(USglobal->global_colors.plot);
 
-   Q3VBoxLayout *background = new Q3VBoxLayout( this );
+   QVBoxLayout * background = new QVBoxLayout( this ); background->setContentsMargins( 0, 0, 0, 0 ); background->setSpacing( 0 );
    // background->addSpacing(4);
 
    // background->addWidget( lbl_title );
@@ -133,7 +133,7 @@ void US_Hydrodyn_Saxs_Hplc_Scale_Trend::setupGUI()
 
    background->addWidget( lbl_results );
 
-   Q3HBoxLayout *hbl_bottom = new Q3HBoxLayout( 0 );
+   QHBoxLayout * hbl_bottom = new QHBoxLayout(); hbl_bottom->setContentsMargins( 0, 0, 0, 0 ); hbl_bottom->setSpacing( 0 );
    //   hbl_bottom->addSpacing( 4 );
    hbl_bottom->addWidget ( pb_help );
    //   hbl_bottom->addSpacing( 4 );
@@ -166,7 +166,7 @@ void US_Hydrodyn_Saxs_Hplc_Scale_Trend::closeEvent( QCloseEvent *e )
 
 void US_Hydrodyn_Saxs_Hplc_Scale_Trend::update_plot()
 {
-   qDebug( "update plot" );
+   us_qdebug( "update plot" );
 
    if ( plot_zoomer )
    {
@@ -210,7 +210,7 @@ void US_Hydrodyn_Saxs_Hplc_Scale_Trend::update_plot()
 #endif
    }
 
-   qDebug( "scale1" ); 
+   us_qdebug( "scale1" ); 
 
    for ( int i = 0; i < (int) slopes.size(); ++i ) {
       QString this_name = QString( "slope of fits error bars" );
@@ -243,7 +243,7 @@ void US_Hydrodyn_Saxs_Hplc_Scale_Trend::update_plot()
       plot->setCurveData  ( curve, x, y, 2 );
 #endif
    }
-   qDebug( "scale2" ); 
+   us_qdebug( "scale2" ); 
 
    {
       QString this_name = QString( "fit of slope of fits error bars" );
@@ -271,7 +271,7 @@ void US_Hydrodyn_Saxs_Hplc_Scale_Trend::update_plot()
 #endif
    }
 
-   qDebug( "scale3" ); 
+   us_qdebug( "scale3" ); 
    {
       QPen use_pen = QPen( Qt::red, use_line_width, Qt::DashDotLine );
       QFont use_font = QFont("Helvetica", 11, QFont::Bold );
@@ -337,7 +337,7 @@ void US_Hydrodyn_Saxs_Hplc_Scale_Trend::update_plot()
       }
    }      
 
-   qDebug( "scale4" ); 
+   us_qdebug( "scale4" ); 
 
    plot->setAxisScale( QwtPlot::xBottom, use_x_min, use_x_max );
    plot->setAxisScale( QwtPlot::yLeft  , use_y_min, use_y_max );
@@ -356,7 +356,7 @@ void US_Hydrodyn_Saxs_Hplc_Scale_Trend::update_plot()
 
 void US_Hydrodyn_Saxs_Hplc_Scale_Trend::analysis()
 {
-   qDebug( "analysis" );
+   us_qdebug( "analysis" );
 
    // plots map has q, I, maybe:error
 
@@ -374,14 +374,14 @@ void US_Hydrodyn_Saxs_Hplc_Scale_Trend::analysis()
       I[ it->first ] = it->second[ 1 ];
       e[ it->first ] = it->second[ 2 ];
 
-   //    qDebug( US_Vector::qs_vector3( QString( "plot '%1'" ).arg( it->first ),
+   //    us_qdebug( US_Vector::qs_vector3( QString( "plot '%1'" ).arg( it->first ),
    //                                   it->second[ 0 ],
    //                                   it->second[ 1 ],
    //                                   it->second[ 2 ] ) );
    }
 
    if ( !names.size() || !q.count( names[ 0 ] ) || !q[ names[ 0 ] ].size() ) {
-      qDebug( "scale trend: no data" );
+      us_qdebug( "scale trend: no data" );
       cancel();
       return;
    }
@@ -393,7 +393,7 @@ void US_Hydrodyn_Saxs_Hplc_Scale_Trend::analysis()
 
    for ( int i = 0; i < (int) names.size(); ++i ) {
       if ( q_ref != q[ names[ i ] ] ) {
-         qDebug( US_Vector::qs_vector2( 
+         us_qdebug( US_Vector::qs_vector2( 
                                        QString( "scale trend: incompatible grids %1 %2" )
                                        .arg( names[ 0 ] )
                                        .arg( names[ i ] )
@@ -410,7 +410,7 @@ void US_Hydrodyn_Saxs_Hplc_Scale_Trend::analysis()
          use_errors = false;
       }
 
-      // qDebug( QString( "%1 %2 %3 %4\n" )
+      // us_qdebug( QString( "%1 %2 %3 %4\n" )
       //         .arg( names[ i ] )
       //         .arg( q[ names[ i ] ].size() )
       //         .arg( I[ names[ i ] ].size() )
@@ -461,12 +461,12 @@ void US_Hydrodyn_Saxs_Hplc_Scale_Trend::analysis()
       double sigb;
       double chi2;
 
-      // qDebug( QString( "%1:" ).arg( q_ref[ i ] ) );
+      // us_qdebug( QString( "%1:" ).arg( q_ref[ i ] ) );
       if ( use_errors ) {
-         // qDebug( US_Vector::qs_vector3( "xys", x, y, s ) );
+         // us_qdebug( US_Vector::qs_vector3( "xys", x, y, s ) );
          US_Saxs_Util::linear_fit( x, y, s, a, b, siga, sigb, chi2 );
       } else {
-         // qDebug( US_Vector::qs_vector2( "xy", x, y ) );
+         // us_qdebug( US_Vector::qs_vector2( "xy", x, y ) );
          US_Saxs_Util::linear_fit( x, y, a, b, siga, sigb, chi2 );
       }         
       
@@ -503,5 +503,5 @@ void US_Hydrodyn_Saxs_Hplc_Scale_Trend::analysis()
       lbl_results->setText( msg );
    }
 
-   // qDebug( US_Vector::qs_vector3( "slopes", slopes_x, slopes, slopes_e ) );
+   // us_qdebug( US_Vector::qs_vector3( "slopes", slopes_x, slopes, slopes_e ) );
 }

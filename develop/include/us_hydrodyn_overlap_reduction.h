@@ -6,7 +6,7 @@
 #include <qlabel.h>
 #include <qstring.h>
 #include <qlayout.h>
-#include <q3frame.h>
+//#include <q3frame.h>
 #include <qcheckbox.h>
 #include <qwt_counter.h>
 
@@ -42,7 +42,7 @@ struct overlap_reduction
    double remove_hierarch_percent;
 };
 
-class US_EXTERN US_Hydrodyn_OR : public Q3Frame
+class US_EXTERN US_Hydrodyn_OR : public QFrame
 {
    Q_OBJECT
 

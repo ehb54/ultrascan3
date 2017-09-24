@@ -10,7 +10,7 @@
 #include "../include/us_hydrodyn.h"
 #include <qregexp.h>
 //Added by qt3to4:
-#include <Q3TextStream>
+#include <QTextStream>
 
 
 #ifndef WIN32
@@ -69,12 +69,12 @@ void US_Hydrodyn::bd_prepare()
    pb_show_hydro_results->setEnabled(false);
    pb_calc_hydro->setEnabled(false);
 
-   somo_processed.resize(lb_model->numRows());
-   bead_models.resize(lb_model->numRows());
+   somo_processed.resize(lb_model->count());
+   bead_models.resize(lb_model->count());
    QString msg = QString("\n%1 models selected:").arg(project);
-   for(int i = 0; i < lb_model->numRows(); i++) {
+   for(int i = 0; i < lb_model->count(); i++) {
       somo_processed[i] = 0;
-      if ( lb_model->isSelected(i) ) {
+      if ( lb_model->item(i)->isSelected() ) {
          current_model = i;
          msg += QString(" %1").arg(i+1);
       }
@@ -88,10 +88,10 @@ void US_Hydrodyn::bd_prepare()
    overlap_reduction save_buried_overlap = buried_overlap;;
 
    for (current_model = 0; 
-        current_model < (unsigned int)lb_model->numRows(); 
+        current_model < (unsigned int)lb_model->count(); 
         current_model++)
    {
-      if (!any_errors && lb_model->isSelected(current_model))
+      if (!any_errors && lb_model->item(current_model)->isSelected())
       {
          any_models = true;
          if(!compute_asa(true))
@@ -141,10 +141,10 @@ void US_Hydrodyn::bd_prepare()
       qApp->processEvents();
       compute_bd_connections();
       for (current_model = 0; 
-           current_model < (unsigned int)lb_model->numRows(); 
+           current_model < (unsigned int)lb_model->count(); 
            current_model++)
       {
-         if ( lb_model->isSelected(current_model) )
+         if ( lb_model->item(current_model)->isSelected() )
          {
             QString fname = 
                somo_dir + SLASH + "bd" + SLASH + project + QString("_%1").arg(current_model + 1) +
@@ -166,8 +166,8 @@ void US_Hydrodyn::bd_prepare()
    pb_somo->setEnabled(true);
    pb_grid_pdb->setEnabled(true);
    pb_grid->setEnabled(true);
-   bd_anaflex_enables( ( ( browflex && browflex->isRunning() ) ||
-                         ( anaflex && anaflex->isRunning() ) ) ? false : true );
+   bd_anaflex_enables( ( ( browflex && browflex->state() == QProcess::Running ) ||
+                         ( anaflex && anaflex->state() == QProcess::Running ) ) ? false : true );
 }
 
 void US_Hydrodyn::bd_run()
@@ -194,20 +194,20 @@ int US_Hydrodyn::create_browflex_files()
    QFile f;
    // main file
    {
-      f.setName(basename + "-main.txt");
+      f.setFileName(basename + "-main.txt");
       if ( !f.open(QIODevice::WriteOnly) )
       {
-         editor->append(QString("File write error: can't create %1\n").arg(f.name()));
+         editor->append(QString("File write error: can't create %1\n").arg(f.fileName()));
          return -1;
       }
-      bd_last_file = f.name();
+      bd_last_file = f.fileName();
       bd_last_traj_file = somo_dir + SLASH + "bd" + SLASH + filename + "-tra.txt";
       bd_last_molec_file = somo_dir + SLASH + "bd" + SLASH + filename + "-molec.txt";
 #if defined(DEBUG_CONN)
       cout << "last tra file " << bd_last_traj_file << endl;
       cout << "last molec file " << bd_last_molec_file << endl;
 #endif
-      Q3TextStream ts(&f);
+      QTextStream ts(&f);
       ts <<
          QString(
                  "%1-log.txt            !logfile\n"
@@ -231,13 +231,13 @@ int US_Hydrodyn::create_browflex_files()
    }
    // molecular file
    {
-      f.setName(basename + "-molec.txt");
+      f.setFileName(basename + "-molec.txt");
       if ( !f.open(QIODevice::WriteOnly) )
       {
-         editor->append(QString("File write error: can't create %1\n").arg(f.name()));
+         editor->append(QString("File write error: can't create %1\n").arg(f.fileName()));
          return -1;
       }
-      Q3TextStream ts(&f);
+      QTextStream ts(&f);
       ts << QString(" %1,   Temperature (C)\n").arg(hydro.temperature);
       ts << QString(" %1,   Solvent viscosity (poise)\n").arg(hydro.solvent_viscosity / 100.0);
       // mass
@@ -286,7 +286,7 @@ int US_Hydrodyn::create_browflex_files()
       {
          if ( connection_active[it->first] )
          {
-            if ( rx.search(it->first) == -1 ) 
+            if ( rx.indexIn(it->first) == -1 ) 
             {
                editor->append("unexpected regexp extract failure (write_browflex_files)!\n");
                return -1;
@@ -786,13 +786,13 @@ int US_Hydrodyn::create_browflex_files()
    }
    // initial coordinates file
    {
-      f.setName(basename + "-initc.txt");
+      f.setFileName(basename + "-initc.txt");
       if ( !f.open(QIODevice::WriteOnly) )
       {
-         editor->append(QString("File write error: can't create %1\n").arg(f.name()));
+         editor->append(QString("File write error: can't create %1\n").arg(f.fileName()));
          return -1;
       }
-      Q3TextStream ts(&f);
+      QTextStream ts(&f);
       for ( unsigned int i = 0; i < bead_models[current_model].size(); i++ )
       {
          ts << 
@@ -806,13 +806,13 @@ int US_Hydrodyn::create_browflex_files()
    }
    // brownian dynamics file
    {
-      f.setName(basename + "-brown.txt");
+      f.setFileName(basename + "-brown.txt");
       if ( !f.open(QIODevice::WriteOnly) )
       {
-         editor->append(QString("File write error: can't create %1\n").arg(f.name()));
+         editor->append(QString("File write error: can't create %1\n").arg(f.fileName()));
          return -1;
       }
-      Q3TextStream ts(&f);
+      QTextStream ts(&f);
       ts << QString("%1,         mol\n").arg(bd_options.nmol);
       ts << QString("%1,         tprev\n").arg(bd_options.tprev);
       ts << QString("%1,         ttraj\n").arg(bd_options.ttraj);
@@ -844,12 +844,12 @@ public:
 int US_Hydrodyn::write_pdb( QString fname, vector < PDB_atom > *model )
 {
    QFile fpdb;
-   fpdb.setName(QString("%1.pdb").arg(fname));
+   fpdb.setFileName(QString("%1.pdb").arg(fname));
    if ( !fpdb.open(QIODevice::WriteOnly) )
    {
       return -1;
    }
-   Q3TextStream ts(&fpdb);
+   QTextStream ts(&fpdb);
    ts << 
       QString("HEADER  US-SOMO BD Connection file %1\n").arg(fname);
 
@@ -893,7 +893,7 @@ int US_Hydrodyn::write_pdb( QString fname, vector < PDB_atom > *model )
    {
       if ( connection_active[it->first] ) 
       {
-         if ( rx.search(it->first) == -1 ) 
+         if ( rx.indexIn(it->first) == -1 ) 
          {
             editor->append("unexpected regexp extract failure (write_pdb)!\n");
             return -1;
@@ -964,24 +964,7 @@ int US_Hydrodyn::write_pdb( QString fname, vector < PDB_atom > *model )
 
    if ( bd_options.show_pdb )
    { // display pdb
-      QStringList argument;
-#if !defined(WIN32) && !defined(MAC)
-      argument.append("xterm");
-      argument.append("-e");
-#endif
-#if defined(BIN64)
-      argument.append(USglobal->config_list.system_dir + SLASH + "bin64" + SLASH + "rasmol");
-#else
-      argument.append(USglobal->config_list.system_dir + SLASH + "bin" + SLASH + "rasmol");
-#endif
-      argument.append(QFileInfo(fpdb.name()).fileName());
-      rasmol->setWorkingDirectory(QFileInfo(fpdb.name()).dirPath());
-      rasmol->setArguments(argument);
-      if (!rasmol->start())
-      {
-         QMessageBox::message(tr("Please note:"), tr("There was a problem starting RASMOL\n"
-                                                     "Please check to make sure RASMOL is properly installed..."));
-      }
+      model_viewer( fpdb.fileName() );
    }
    
    return 0;
@@ -998,10 +981,10 @@ int US_Hydrodyn::compute_bd_connections()
    vector < unsigned int > models_to_proc;
 
    for ( current_model = 0; 
-         current_model < (unsigned int)lb_model->numRows(); 
+         current_model < (unsigned int)lb_model->count(); 
          current_model++)
    {
-      if ( lb_model->isSelected(current_model) )
+      if ( lb_model->item(current_model)->isSelected() )
       {
          models_to_proc.push_back(current_model);
       }
@@ -1163,7 +1146,7 @@ int US_Hydrodyn::compute_bd_connections()
             it != connection_active.end();
             it++ )
       {
-         if ( rx.search(it->first) == -1 ) 
+         if ( rx.indexIn(it->first) == -1 ) 
          {
             editor->append("unexpected regexp extract failure (compute_connections)!\n");
             return -1;
@@ -1287,7 +1270,7 @@ int US_Hydrodyn::write_contact_plot( QString fname, PDB_model *model, float thre
    {
       return -1;
    }
-   Q3TextStream ts(&f);
+   QTextStream ts(&f);
 
    for (unsigned int j = 0; j < model->molecule.size(); j++)
    {
@@ -1330,7 +1313,7 @@ int US_Hydrodyn::write_contact_plot( QString fname, vector < PDB_atom > *model, 
    {
       return -1;
    }
-   Q3TextStream ts(&f);
+   QTextStream ts(&f);
 
    // find all the mc beads which are within thresh dist and write out the pairs
 
@@ -1672,7 +1655,7 @@ int US_Hydrodyn::run_browflex()
       //      project + QString("_%1").arg(current_model + 1) +
       //      QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "")
       //      + "-bf-main.txt\n" ;
-   QString dir = fi.dirPath();
+   QString dir = fi.path();
 
 #if defined(DEBUG_CONN)
    cout << QString("run browflex dir <%1> prog <%2> stdin <%3>\n")
@@ -1680,54 +1663,74 @@ int US_Hydrodyn::run_browflex()
       .arg(prog)
       .arg(browfile);
 #endif
-   browflex = new Q3Process( this );
+   browflex = new QProcess( this );
    browflex->setWorkingDirectory( dir );
+#if QT_VERSION < 0x04000
    browflex->addArgument( prog );
-   connect( browflex, SIGNAL(readyReadStdout()), this, SLOT(browflex_readFromStdout()) );
-   connect( browflex, SIGNAL(readyReadStderr()), this, SLOT(browflex_readFromStderr()) );
-   connect( browflex, SIGNAL(processExited()), this, SLOT(browflex_processExited()) );
-   connect( browflex, SIGNAL(launchFinished()), this, SLOT(browflex_launchFinished()) );
+#else
+   QStringList args;
+   args
+      << "<"
+      << browfile
+      ;
+#endif
+   
+   connect( browflex, SIGNAL(readyReadStandardOutput()), this, SLOT(browflex_readFromStdout()) );
+   connect( browflex, SIGNAL(readyReadStandardError()), this, SLOT(browflex_readFromStderr()) );
+   connect( browflex, SIGNAL(finished( int, QProcess::ExitStatus )), this, SLOT(browflex_finished( int, QProcess::ExitStatus )) );
+   connect( browflex, SIGNAL(started()), this, SLOT(browflex_started()) );
 
    editor->append("\n\nStarting Browflex\n");
+#if QT_VERSION < 0x040000
    browflex->launch( browfile );
-
+#else
+   browflex->start( prog, args, QIODevice::ReadOnly );
+#endif
    return 0;
 }
 
 void US_Hydrodyn::browflex_readFromStdout()
 {
+#if QT_VERSION < 0x040000
    while ( browflex->canReadLineStdout() )
    {
       editor_msg("brown", browflex->readLineStdout() + "\n");
    }
+#else
+   editor_msg( "brown", QString( browflex->readAllStandardOutput() ) );
+#endif   
    //  qApp->processEvents();
 }
    
 void US_Hydrodyn::browflex_readFromStderr()
 {
+#if QT_VERSION < 0x040000
    while ( browflex->canReadLineStderr() )
    {
       editor_msg("red", browflex->readLineStderr() + "\n");
    }
+#else
+   editor_msg( "red", QString( browflex->readAllStandardError() ) );
+#endif   
    //  qApp->processEvents();
 }
    
-void US_Hydrodyn::browflex_processExited()
+void US_Hydrodyn::browflex_finished( int, QProcess::ExitStatus )
 {
    //   for ( int i = 0; i < 10000; i++ )
    //   {
    browflex_readFromStderr();
    browflex_readFromStdout();
       //   }
-   disconnect( browflex, SIGNAL(readyReadStdout()), 0, 0);
-   disconnect( browflex, SIGNAL(readyReadStderr()), 0, 0);
-   disconnect( browflex, SIGNAL(processExited()), 0, 0);
+   disconnect( browflex, SIGNAL(readyReadStandardOutput()), 0, 0);
+   disconnect( browflex, SIGNAL(readyReadStandardError()), 0, 0);
+   disconnect( browflex, SIGNAL(finished( int, QProcess::ExitStatus )), 0, 0);
    editor->append("Browflex finished.\n");
    for ( current_model = 0; 
-         current_model < (unsigned int)lb_model->numRows(); 
+         current_model < (unsigned int)lb_model->count(); 
          current_model++)
    {
-      if ( lb_model->isSelected(current_model) )
+      if ( lb_model->item(current_model)->isSelected() )
       {
          if ( anaflex_options.run_anaflex )
          {
@@ -1741,10 +1744,10 @@ void US_Hydrodyn::browflex_processExited()
    pb_stop_calc->setEnabled(false);
 }
    
-void US_Hydrodyn::browflex_launchFinished()
+void US_Hydrodyn::browflex_started()
 {
    editor_msg("brown", "Browflex launch exited\n");
-   disconnect( browflex, SIGNAL(launchFinished()), 0, 0);
+   disconnect( browflex, SIGNAL(started()), 0, 0);
    bd_anaflex_enables(false);
    pb_stop_calc->setEnabled(true);
 }
@@ -1757,8 +1760,8 @@ void US_Hydrodyn::bd_anaflex_enables( bool flag )
       return;
    }
 
-   if ( ( browflex && browflex->isRunning() ) ||
-        ( anaflex && anaflex->isRunning() ) )
+   if ( ( browflex && browflex->state() == QProcess::Running ) ||
+        ( anaflex && anaflex->state() == QProcess::Running ) )
    {
       bd_window->pb_bd_prepare->setEnabled(false);
       bd_window->pb_bd_load->setEnabled(false);
@@ -1776,8 +1779,8 @@ void US_Hydrodyn::bd_anaflex_enables( bool flag )
 
    // any models selected
    int models = 0;
-   for(int i = 0; i < lb_model->numRows(); i++) {
-      if ( lb_model->isSelected(i) ) {
+   for(int i = 0; i < lb_model->count(); i++) {
+      if ( lb_model->item(i)->isSelected() ) {
          models++;
       }
    }
@@ -1803,7 +1806,7 @@ void US_Hydrodyn::bd_anaflex_enables( bool flag )
 
 void US_Hydrodyn::bd_load_error( QString filename )
 {
-   editor_msg("red", QString(tr("\nFile %1 does not look like a Browflex file.\n")).arg(filename));
+   editor_msg("red", QString(us_tr("\nFile %1 does not look like a Browflex file.\n")).arg(filename));
 }
 
 bool US_Hydrodyn::bd_valid_browflex_main( QString filename )
@@ -1825,14 +1828,14 @@ bool US_Hydrodyn::bd_valid_browflex_main( QString filename )
    if ( !filename.isEmpty() )
    {
       QFileInfo fi(filename);
-      QString dir = fi.dirPath();
+      QString dir = fi.path();
       // check for file format
       QFile f( filename );
       if ( !f.open( QIODevice::ReadOnly ) )
       {
          return false;
       }
-      Q3TextStream ts( &f );
+      QTextStream ts( &f );
       QString tmp_filename;
       // logfile
       if ( !ts.atEnd() )
@@ -1981,15 +1984,15 @@ void US_Hydrodyn::bd_load()
       switch (
               QMessageBox::question(
                                     this,
-                                    tr("Load Browflex Files"),
-                                    QString(tr("Replace current Browflex file ") + fi.fileName() + "?"),
+                                    us_tr("Load Browflex Files"),
+                                    QString(us_tr("Replace current Browflex file ") + fi.fileName() + "?"),
                                     QMessageBox::Yes, 
                                     QMessageBox::No,
                                     QMessageBox::NoButton
                                     ) )
       {
       case QMessageBox::Yes : 
-         filename = QFileDialog::getOpenFileName( this , caption() , somo_dir + SLASH + "bd" , "*.txt *.TXT" );
+         filename = QFileDialog::getOpenFileName( this , windowTitle() , somo_dir + SLASH + "bd" , "*.txt *.TXT" );
          break;
       case QMessageBox::No : 
          return;
@@ -2000,14 +2003,14 @@ void US_Hydrodyn::bd_load()
          break;
       }
    } else {
-      filename = QFileDialog::getOpenFileName( this , caption() , somo_dir + SLASH + "bd" , "*.txt *.TXT" );
+      filename = QFileDialog::getOpenFileName( this , windowTitle() , somo_dir + SLASH + "bd" , "*.txt *.TXT" );
    }
    // check to make sure it is a good browflex file
       
    if ( !filename.isEmpty() )
    {
       QFileInfo fi(filename);
-      QString dir = fi.dirPath();
+      QString dir = fi.path();
       QString name = fi.fileName();
       QString traj_file = "";
       QString molec_file = "";
@@ -2015,7 +2018,7 @@ void US_Hydrodyn::bd_load()
       QFile f( filename );
       if ( !f.open( QIODevice::ReadOnly ) )
       {
-         editor_msg("red",QString(tr("\nCould not open file %1 for reading. Check permissions.\n")).arg(filename));
+         editor_msg("red",QString(us_tr("\nCould not open file %1 for reading. Check permissions.\n")).arg(filename));
          return;
       }
       if ( !bd_valid_browflex_main( filename ) )
@@ -2024,7 +2027,7 @@ void US_Hydrodyn::bd_load()
          f.close();
          return;
       }
-      Q3TextStream ts( &f );
+      QTextStream ts( &f );
       QString tmp_filename;
       // logfile
       if ( !ts.atEnd() )
@@ -2151,14 +2154,14 @@ void US_Hydrodyn::bd_edit_util( QString dir, QString filename )
          {
             view_file( filename );
          } else {
-            editor_msg("dark red", QString(tr("\nFile %1 is empty, not openend.\n")).arg(filename));
+            editor_msg("dark red", QString(us_tr("\nFile %1 is empty, not openend.\n")).arg(filename));
          }
       } else {
          if( !fi.exists() )
          {
-            editor_msg("red", QString(tr("\nCould not open file %1, does not exist.\n")).arg(filename));
+            editor_msg("red", QString(us_tr("\nCould not open file %1, does not exist.\n")).arg(filename));
          } else {
-            editor_msg("red", QString(tr("\nCould not open file %1 for reading. Check permissions.\n")).arg(filename));
+            editor_msg("red", QString(us_tr("\nCould not open file %1 for reading. Check permissions.\n")).arg(filename));
          }
       }
    }
@@ -2174,8 +2177,8 @@ void US_Hydrodyn::bd_edit()
       switch (
               QMessageBox::question(
                                     this,
-                                    tr("View/Edit Browflex Files"),
-                                    QString(tr("View/Edit current file ") + fi.fileName() + "?"),
+                                    us_tr("View/Edit Browflex Files"),
+                                    QString(us_tr("View/Edit current file ") + fi.fileName() + "?"),
                                     QMessageBox::Yes, 
                                     QMessageBox::No,
                                     QMessageBox::Cancel
@@ -2185,7 +2188,7 @@ void US_Hydrodyn::bd_edit()
          filename = bd_last_file;
          break;
       case QMessageBox::No : 
-         filename = QFileDialog::getOpenFileName( this , caption() , somo_dir + SLASH + "bd" , "*.txt *.TXT" );
+         filename = QFileDialog::getOpenFileName( this , windowTitle() , somo_dir + SLASH + "bd" , "*.txt *.TXT" );
          break;
       case QMessageBox::Cancel :
       default :
@@ -2193,17 +2196,17 @@ void US_Hydrodyn::bd_edit()
          break;
       }
    } else {
-      filename = QFileDialog::getOpenFileName( this , caption() , somo_dir + SLASH + "bd" , "*.txt *.TXT" );
+      filename = QFileDialog::getOpenFileName( this , windowTitle() , somo_dir + SLASH + "bd" , "*.txt *.TXT" );
    }
    if ( !filename.isEmpty() )
    {
       QFileInfo fi(filename);
-      QString dir = fi.dirPath();
+      QString dir = fi.path();
       // open file and view this and all associated files if first line ends with .txt or .TXT
       QFile f( filename );
       if ( !f.open( QIODevice::ReadOnly ) )
       {
-         editor_msg("red", QString(tr("\nCould not open file %1 for reading. Check permissions.\n")).arg(filename));
+         editor_msg("red", QString(us_tr("\nCould not open file %1 for reading. Check permissions.\n")).arg(filename));
          return;
       }
       view_file( filename );
@@ -2215,8 +2218,8 @@ void US_Hydrodyn::bd_edit()
       switch (
               QMessageBox::question(
                                     this,
-                                    tr("Load Browflex Files"),
-                                    QString(tr(fi.fileName() + " appears to be a 'main' Browflex file, open all ancillary files? ")),
+                                    us_tr("Load Browflex Files"),
+                                    QString(us_tr(fi.fileName() + " appears to be a 'main' Browflex file, open all ancillary files? ")),
                                     QMessageBox::Yes, 
                                     QMessageBox::No,
                                     QMessageBox::NoButton
@@ -2231,7 +2234,7 @@ void US_Hydrodyn::bd_edit()
          break;
       }
       
-      Q3TextStream ts( &f );
+      QTextStream ts( &f );
       QString tmp_filename;
       // logfile
       if ( !ts.atEnd() )
@@ -2344,45 +2347,45 @@ void US_Hydrodyn::bd_load_results()
    QFileInfo fi_traj( bd_last_traj_file );
    if( !fi_traj.exists() )
    {
-      editor_msg("red", QString(tr("\nCould not open trajectory file %1, does not exist.\n")).arg(bd_last_traj_file));
+      editor_msg("red", QString(us_tr("\nCould not open trajectory file %1, does not exist.\n")).arg(bd_last_traj_file));
       return;
    }
    if( !fi_traj.isReadable() )
    {
-      editor_msg("red", QString(tr("\nCould not open trajectory file %1 for reading. Check permissions.\n")).arg(bd_last_traj_file));
+      editor_msg("red", QString(us_tr("\nCould not open trajectory file %1 for reading. Check permissions.\n")).arg(bd_last_traj_file));
       return;
    }
    if( !fi_traj.size() )
    {
-      editor_msg("red", QString(tr("\nTrajectory file %1 is empty!\n")).arg(bd_last_traj_file));
+      editor_msg("red", QString(us_tr("\nTrajectory file %1 is empty!\n")).arg(bd_last_traj_file));
       return;
    }
    QFileInfo fi_molec( bd_last_molec_file );
    if( !fi_molec.exists() )
    {
-      editor_msg("red", QString(tr("\nCould not open molecular file %1, does not exist.\n")).arg(bd_last_molec_file));
+      editor_msg("red", QString(us_tr("\nCould not open molecular file %1, does not exist.\n")).arg(bd_last_molec_file));
       return;
    }
    if( !fi_molec.isReadable() )
    {
-      editor_msg("red", QString(tr("\nCould not open molecular file %1 for reading. Check permissions.\n")).arg(bd_last_molec_file));
+      editor_msg("red", QString(us_tr("\nCould not open molecular file %1 for reading. Check permissions.\n")).arg(bd_last_molec_file));
       return;
    }
    if( !fi_molec.size() )
    {
-      editor_msg("red", QString(tr("\nMolecular file %1 is empty!\n")).arg(bd_last_molec_file));
+      editor_msg("red", QString(us_tr("\nMolecular file %1 is empty!\n")).arg(bd_last_molec_file));
       return;
    }
    // read bead sizes
    {
-      QString errmsg = QString(tr("\nMolecular file ") + "%1" + tr("error at line")).arg(bd_last_molec_file) + "%1\n";
+      QString errmsg = QString(us_tr("\nMolecular file ") + "%1" + us_tr("error at line")).arg(bd_last_molec_file) + "%1\n";
       QFile f( bd_last_molec_file );
       if ( !f.open( QIODevice::ReadOnly ) )
       {
-         editor_msg("red", QString(tr("\nCould not open molecular file %1 for reading. Check permissions.\n")).arg(bd_last_molec_file));
+         editor_msg("red", QString(us_tr("\nCould not open molecular file %1 for reading. Check permissions.\n")).arg(bd_last_molec_file));
          return;
       }
-      Q3TextStream ts( &f );
+      QTextStream ts( &f );
 
       // temperature
       int line = 1;
@@ -2510,27 +2513,27 @@ void US_Hydrodyn::bd_load_results_after_anaflex()
    QFileInfo fi_out1( anaflex_last_out1_file );
    if( !fi_out1.exists() )
    {
-      editor_msg("red", QString(tr("\nCould not Anaflex log file %1, does not exist.\n")).arg(anaflex_last_out1_file));
+      editor_msg("red", QString(us_tr("\nCould not Anaflex log file %1, does not exist.\n")).arg(anaflex_last_out1_file));
       return;
    }
    if( !fi_out1.isReadable() )
    {
-      editor_msg("red", QString(tr("\nCould not open Anaflex log file %1 for reading. Check permissions.\n")).arg(anaflex_last_out1_file));
+      editor_msg("red", QString(us_tr("\nCould not open Anaflex log file %1 for reading. Check permissions.\n")).arg(anaflex_last_out1_file));
       return;
    }
    if( !fi_out1.size() )
    {
-      editor_msg("red", QString(tr("\nAnaflex log file %1 is empty!\n")).arg(anaflex_last_out1_file));
+      editor_msg("red", QString(us_tr("\nAnaflex log file %1 is empty!\n")).arg(anaflex_last_out1_file));
       return;
    }
    QFile f_out1( anaflex_last_out1_file );
    if ( !f_out1.open( QIODevice::ReadOnly ) )
    {
-      editor_msg("red", QString(tr("\nCould not open output file %1 for reading. Check permissions.\n")).arg(anaflex_last_out1_file));
+      editor_msg("red", QString(us_tr("\nCould not open output file %1 for reading. Check permissions.\n")).arg(anaflex_last_out1_file));
       return;
    }
 
-   Q3TextStream ts_out1( &f_out1 );
+   QTextStream ts_out1( &f_out1 );
    
    float unit_of_length = 0.0;
    {
@@ -2539,7 +2542,7 @@ void US_Hydrodyn::bd_load_results_after_anaflex()
       QRegExp rx("^Unit of length = (.*)$");
       while( !done &&  !ts_out1.atEnd() )
       {
-         if ( rx.search(ts_out1.readLine()) != -1 )
+         if ( rx.indexIn(ts_out1.readLine()) != -1 )
          {
             done = true;
             unit_of_length = rx.cap(1).toFloat();
@@ -2548,7 +2551,7 @@ void US_Hydrodyn::bd_load_results_after_anaflex()
       f_out1.close();
       if ( !done ) 
       {
-         editor_msg("red", QString(tr("\nCould not find \"Unit of length\" in file %1.\n")).arg(anaflex_last_out1_file));
+         editor_msg("red", QString(us_tr("\nCould not find \"Unit of length\" in file %1.\n")).arg(anaflex_last_out1_file));
          return;
       }
    }
@@ -2581,30 +2584,30 @@ void US_Hydrodyn::bd_load_results_after_anaflex()
    QFileInfo fi_log( anaflex_last_log_file );
    if( !fi_log.exists() )
    {
-      editor_msg("red", QString(tr("\nCould not Anaflex log file %1, does not exist.\n")).arg(anaflex_last_log_file));
+      editor_msg("red", QString(us_tr("\nCould not Anaflex log file %1, does not exist.\n")).arg(anaflex_last_log_file));
       return;
    }
    if( !fi_log.isReadable() )
    {
-      editor_msg("red", QString(tr("\nCould not open Anaflex log file %1 for reading. Check permissions.\n")).arg(anaflex_last_log_file));
+      editor_msg("red", QString(us_tr("\nCould not open Anaflex log file %1 for reading. Check permissions.\n")).arg(anaflex_last_log_file));
       return;
    }
    if( !fi_log.size() )
    {
-      editor_msg("red", QString(tr("\nAnaflex log file %1 is empty!\n")).arg(anaflex_last_log_file));
+      editor_msg("red", QString(us_tr("\nAnaflex log file %1 is empty!\n")).arg(anaflex_last_log_file));
       return;
    }
-   QString dir = fi_log.dirPath();
+   QString dir = fi_log.path();
 
-   QString errmsg = QString(tr("\nAnaflex log file ") + "%1" + tr(" error at line ")).arg(anaflex_last_log_file) + "%1\n";
+   QString errmsg = QString(us_tr("\nAnaflex log file ") + "%1" + us_tr(" error at line ")).arg(anaflex_last_log_file) + "%1\n";
    QFile f( anaflex_last_log_file );
    if ( !f.open( QIODevice::ReadOnly ) )
    {
-      editor_msg("red", QString(tr("\nCould not open molecular file %1 for reading. Check permissions.\n")).arg(anaflex_last_log_file));
+      editor_msg("red", QString(us_tr("\nCould not open molecular file %1 for reading. Check permissions.\n")).arg(anaflex_last_log_file));
       return;
    }
 
-   Q3TextStream ts( &f );
+   QTextStream ts( &f );
 
    // name
    QString name;
@@ -2693,7 +2696,7 @@ void US_Hydrodyn::bd_load_results_after_anaflex()
    if ( beads != bd_load_results_bead_radius.size() )
    {
       editor_msg("red", 
-                 QString(tr("Number of beads in Anaflex log file (%1) does not match"
+                 QString(us_tr("Number of beads in Anaflex log file (%1) does not match"
                             " number of beads in Browflex molecular file (%2)"))
                  .arg(beads)
                  .arg(bd_load_results_bead_radius.size()));
@@ -2707,7 +2710,7 @@ void US_Hydrodyn::bd_load_results_after_anaflex()
 
    // set the parameters
 
-   QString msg = QString(tr(" Enter conditions for the bead models: "));
+   QString msg = QString(us_tr(" Enter conditions for the bead models: "));
    
    double psv = 0.0; // misc.vbar;
    bool check_fix_overlaps = true;
@@ -2830,8 +2833,8 @@ void US_Hydrodyn::bd_load_results_after_anaflex()
                   ;
                
                progress->reset();
-               progress->setTotalSteps(mpos);
-               progress->setProgress(progress->progress() + 1);
+               progress->setMaximum(mpos);
+               progress->setValue(progress->value() + 1);
                qApp->processEvents();
                // write_bead_model( model_name + "-X", &bead_model );
                if ( has_corr )
@@ -2846,7 +2849,7 @@ void US_Hydrodyn::bd_load_results_after_anaflex()
                      
                      bead_check(false, false);
                      editor->append("Finished rechecking beads\n");
-                     progress->setProgress(19);
+                     progress->setValue(19);
                   }
                   else
                   {
@@ -2873,9 +2876,9 @@ void US_Hydrodyn::bd_load_results_after_anaflex()
                      double save_threshold_percent = asa.threshold_percent;
                      asa.threshold = asa.grid_threshold;
                      asa.threshold_percent = asa.grid_threshold_percent;
-                     progress->setProgress(progress->progress() + 1);
+                     progress->setValue(progress->value() + 1);
                      bead_check(true, true);
-                     progress->setProgress(progress->progress() + 1);
+                     progress->setValue(progress->value() + 1);
                      asa.threshold = save_threshold;
                      asa.threshold_percent = save_threshold_percent;
                      // now apply radial reduction with outward translation using
@@ -2887,7 +2890,7 @@ void US_Hydrodyn::bd_load_results_after_anaflex()
                      sidechain_overlap = grid_exposed_overlap;
                      mainchain_overlap = grid_exposed_overlap;
                      buried_overlap = grid_buried_overlap;
-                     progress->setProgress(progress->progress() + 1);
+                     progress->setValue(progress->value() + 1);
                      
                      double save_overlap = overlap_tolerance;
                      overlap_tolerance *= .8;
@@ -2908,9 +2911,9 @@ void US_Hydrodyn::bd_load_results_after_anaflex()
                         double save_threshold_percent = asa.threshold_percent;
                         asa.threshold = asa.grid_threshold;
                         asa.threshold_percent = asa.grid_threshold_percent;
-                        progress->setProgress(progress->progress() + 1);
+                        progress->setValue(progress->value() + 1);
                         bead_check(false, false);
-                        progress->setProgress(progress->progress() + 1);
+                        progress->setValue(progress->value() + 1);
                         asa.threshold = save_threshold;
                         asa.threshold_percent = save_threshold_percent;
                      }
@@ -2926,12 +2929,12 @@ void US_Hydrodyn::bd_load_results_after_anaflex()
                      
                      if (grid_overlap.remove_overlap)
                      {
-                        progress->setProgress(progress->progress() + 1);
+                        progress->setValue(progress->value() + 1);
                         double save_overlap = overlap_tolerance;
                         overlap_tolerance *= .8;
                         radial_reduction();
                         overlap_tolerance = save_overlap;
-                        progress->setProgress(progress->progress() + 1);
+                        progress->setValue(progress->value() + 1);
                      }
                      if (stopFlag)
                      {
@@ -2956,9 +2959,9 @@ void US_Hydrodyn::bd_load_results_after_anaflex()
                         double save_threshold_percent = asa.threshold_percent;
                         asa.threshold = asa.grid_threshold;
                         asa.threshold_percent = asa.grid_threshold_percent;
-                        progress->setProgress(progress->progress() + 1);
+                        progress->setValue(progress->value() + 1);
                         bead_check(false, false);
-                        progress->setProgress(progress->progress() + 1);
+                        progress->setValue(progress->value() + 1);
                         asa.threshold = save_threshold;
                         asa.threshold_percent = save_threshold_percent;
                      }
@@ -3004,14 +3007,14 @@ void US_Hydrodyn::bd_load_results_after_anaflex()
          check_bead_model_for_nan();
          write_bead_model( model_name, &bead_model );
          model_names.push_back(  model_name + ".bead_model" );
-         editor->append(QString(tr("Created bead model %1\n")).arg(name + QString("-m%1-c%2").arg(i).arg(j) + ".bead_model"));
+         editor->append(QString(us_tr("Created bead model %1\n")).arg(name + QString("-m%1-c%2").arg(i).arg(j) + ".bead_model"));
       }
    }
-   progress->setProgress(1,1);
+   progress->setValue( 1 ); progress->setMaximum( 1 );
    f.close();
    bead_output.output = save_bead_output;
 
-   editor->append(tr("Loading into batch window. (this may take some time)\n"));
+   editor->append(us_tr("Loading into batch window. (this may take some time)\n"));
    qApp->processEvents();
    
    // add output to batch window
@@ -3030,8 +3033,8 @@ void US_Hydrodyn::bd_load_results_after_anaflex()
       switch (
               QMessageBox::question(
                                     this,
-                                    tr("Load Browflex Files"),
-                                    QString(tr("The batch operation window currently has files loaded.\n"
+                                    us_tr("Load Browflex Files"),
+                                    QString(us_tr("The batch operation window currently has files loaded.\n"
                                                "      Should they be removed before loading ?\n\n"
                                                "    CANCEL to skip loading of batch operations."
                                                )),
@@ -3056,7 +3059,7 @@ void US_Hydrodyn::bd_load_results_after_anaflex()
       
    batch_window->add_files( model_names );
 
-   editor->append(tr("Load Browflex results completed.\n"));
+   editor->append(us_tr("Load Browflex results completed.\n"));
    batch_window->raise();
 }
 
@@ -3080,7 +3083,7 @@ int US_Hydrodyn::browflex_get_no_of_beads( QString filename )
 #endif
       return 0;
    }
-   Q3TextStream ts( &f );
+   QTextStream ts( &f );
    QString molec_file = "";
    ts.readLine();    // logfile
    ts.readLine();    // trajfile
@@ -3096,8 +3099,8 @@ int US_Hydrodyn::browflex_get_no_of_beads( QString filename )
       return 0;
    }
    f.close();
-   molec_file = QFileInfo(filename).dirPath() + SLASH + molec_file;
-   f.setName(molec_file);
+   molec_file = QFileInfo(filename).path() + SLASH + molec_file;
+   f.setFileName(molec_file);
    if ( !f.open( QIODevice::ReadOnly ) )
    {
 #if defined(DEBUG_CONN)

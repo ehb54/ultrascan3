@@ -1,6 +1,6 @@
 //Added by qt3to4:
 #include <QCloseEvent>
-#include <Q3Frame>
+#include <QFrame>
 #include <QLabel>
 #ifndef US_HYDRODYN_XSR
 #define US_HYDRODYN_XSR
@@ -376,7 +376,7 @@ int printInformation(calc_t *model, grid_t *grid, int cycle);   /* prints genera
 #include "us_hydrodyn.h"
 #include "us_hydrodyn_saxs.h"
 
-class US_EXTERN  US_Hydrodyn_Xsr : public Q3Frame
+class US_EXTERN  US_Hydrodyn_Xsr : public QFrame
 {
    Q_OBJECT
 
@@ -397,11 +397,11 @@ class US_EXTERN  US_Hydrodyn_Xsr : public Q3Frame
       QLabel                  *lbl_title;
 
       QPushButton             *pb_start;
-      Q3ProgressBar            *progress;
+      QProgressBar            *progress;
       QPushButton             *pb_stop;
 
       QFont                   ft;
-      Q3TextEdit               *editor;
+      QTextEdit               *editor;
       QMenuBar                *m;
 
       QPushButton             *pb_help;

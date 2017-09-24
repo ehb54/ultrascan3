@@ -7,12 +7,12 @@
 #include <qstring.h>
 #include <qlayout.h>
 #include <qpushbutton.h>
-#include <q3frame.h>
+//#include <q3frame.h>
 #include <qcheckbox.h>
 #include <qwt_counter.h>
-#include <q3buttongroup.h>
-#include <q3textedit.h>
-#include <q3progressbar.h>
+#include <qgroupbox.h>
+#include <qtextedit.h>
+#include <qprogressbar.h>
 #include <qradiobutton.h>
 #include <qmenubar.h>
 #include <qfileinfo.h>
@@ -37,7 +37,7 @@
 
 using namespace std;
 
-class US_EXTERN US_Hydrodyn_BD : public Q3Frame
+class US_EXTERN US_Hydrodyn_BD : public QFrame
 {
    Q_OBJECT
 

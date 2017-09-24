@@ -7,10 +7,10 @@
 #include <qstring.h>
 #include <qlayout.h>
 #include <qpushbutton.h>
-#include <q3frame.h>
+//#include <q3frame.h>
 #include <qcheckbox.h>
 #include <qwt_counter.h>
-#include <q3buttongroup.h>
+#include <qgroupbox.h>
 //Added by qt3to4:
 #include <QCloseEvent>
 
@@ -45,7 +45,7 @@ struct advanced_config
    bool debug_7;
 };
 
-class US_EXTERN US_Hydrodyn_AdvancedConfig : public Q3Frame
+class US_EXTERN US_Hydrodyn_AdvancedConfig : public QFrame
 {
    Q_OBJECT
 

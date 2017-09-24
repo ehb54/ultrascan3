@@ -3,18 +3,18 @@
 #include "../include/us_hydrodyn.h"
 #include "../include/us_math.h"
 //Added by qt3to4:
-#include <Q3GridLayout>
-#include <Q3BoxLayout>
-#include <Q3HBoxLayout>
+#include <QGridLayout>
+#include <QBoxLayout>
+#include <QHBoxLayout>
 #include <QLabel>
-#include <Q3Frame>
+#include <QFrame>
 #include <QCloseEvent>
 
 US_Hydrodyn_Hydro_Zeno::US_Hydrodyn_Hydro_Zeno(struct hydro_options *hydro,
                                                bool *hydro_zeno_widget, 
                                                void *us_hydrodyn, 
                                                QWidget *p, 
-                                               const char *name) : Q3Frame(p, name)
+                                               const char *name) : QFrame( p )
 {
    this->hydro = hydro;
    this->hydro_zeno_widget = hydro_zeno_widget;
@@ -22,7 +22,7 @@ US_Hydrodyn_Hydro_Zeno::US_Hydrodyn_Hydro_Zeno(struct hydro_options *hydro,
    *hydro_zeno_widget = true;
    USglobal=new US_Config();
    setPalette( PALET_FRAME );
-   setCaption(tr("SOMO  Hydrodynamic Calculation Zeno Options"));
+   setWindowTitle(us_tr("SOMO  Hydrodynamic Calculation Zeno Options"));
    this->setMinimumWidth(500);
    setupGUI();
    update_enables();
@@ -41,8 +41,8 @@ void US_Hydrodyn_Hydro_Zeno::setupGUI()
    int minHeight1 = 30;
    QString str;   
 
-   lbl_info = new QLabel(tr("SOMO Hydrodynamic Calculation Zeno Options:"), this);
-   lbl_info->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Raised);
+   lbl_info = new QLabel(us_tr("SOMO Hydrodynamic Calculation Zeno Options:"), this);
+   lbl_info->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_info->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_info->setMinimumHeight(minHeight1);
    lbl_info->setPalette( PALET_FRAME );
@@ -50,7 +50,7 @@ void US_Hydrodyn_Hydro_Zeno::setupGUI()
    lbl_info->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
 
    cb_zeno_zeno = new QCheckBox( this );
-   cb_zeno_zeno->setText( tr( "Compute Zeno:") );
+   cb_zeno_zeno->setText( us_tr( "Compute Zeno:") );
    cb_zeno_zeno->setEnabled( true );
    cb_zeno_zeno->setChecked( hydro->zeno_zeno );
    cb_zeno_zeno->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
@@ -58,13 +58,13 @@ void US_Hydrodyn_Hydro_Zeno::setupGUI()
    AUTFBACK( cb_zeno_zeno );
    connect( cb_zeno_zeno, SIGNAL( clicked() ), this, SLOT( set_zeno_zeno() ) );
 
-   lbl_zeno_zeno_steps = new QLabel(tr(" Zeno Steps (Thousands):"), this );
+   lbl_zeno_zeno_steps = new QLabel(us_tr(" Zeno Steps (Thousands):"), this );
    lbl_zeno_zeno_steps->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_zeno_zeno_steps->setPalette( PALET_LABEL );
    AUTFBACK( lbl_zeno_zeno_steps );
    lbl_zeno_zeno_steps->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
-   le_zeno_zeno_steps = new QLineEdit( this, "Zeno_Zeno_Steps Line Edit");
+   le_zeno_zeno_steps = new QLineEdit(  this );    le_zeno_zeno_steps->setObjectName( "Zeno_Zeno_Steps Line Edit" );
    le_zeno_zeno_steps->setText(str.sprintf("%u",(*hydro).zeno_zeno_steps));
    le_zeno_zeno_steps->setAlignment(Qt::AlignVCenter);
    le_zeno_zeno_steps->setPalette( PALET_NORMAL );
@@ -73,7 +73,7 @@ void US_Hydrodyn_Hydro_Zeno::setupGUI()
    connect(le_zeno_zeno_steps, SIGNAL(textChanged(const QString &)), SLOT(update_zeno_zeno_steps(const QString &)));
 
    cb_zeno_interior = new QCheckBox( this );
-   cb_zeno_interior->setText( tr( "Compute Interior:") );
+   cb_zeno_interior->setText( us_tr( "Compute Interior:") );
    cb_zeno_interior->setEnabled( true );
    cb_zeno_interior->setChecked( hydro->zeno_interior );
    cb_zeno_interior->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
@@ -81,13 +81,13 @@ void US_Hydrodyn_Hydro_Zeno::setupGUI()
    AUTFBACK( cb_zeno_interior );
    connect( cb_zeno_interior, SIGNAL( clicked() ), this, SLOT( set_zeno_interior() ) );
 
-   lbl_zeno_interior_steps = new QLabel(tr(" Interior Steps (Thousands):"), this );
+   lbl_zeno_interior_steps = new QLabel(us_tr(" Interior Steps (Thousands):"), this );
    lbl_zeno_interior_steps->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_zeno_interior_steps->setPalette( PALET_LABEL );
    AUTFBACK( lbl_zeno_interior_steps );
    lbl_zeno_interior_steps->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
-   le_zeno_interior_steps = new QLineEdit( this, "Zeno_Interior_Steps Line Edit");
+   le_zeno_interior_steps = new QLineEdit(  this );    le_zeno_interior_steps->setObjectName( "Zeno_Interior_Steps Line Edit" );
    le_zeno_interior_steps->setText(str.sprintf("%u",(*hydro).zeno_interior_steps));
    le_zeno_interior_steps->setAlignment(Qt::AlignVCenter);
    le_zeno_interior_steps->setPalette( PALET_NORMAL );
@@ -96,7 +96,7 @@ void US_Hydrodyn_Hydro_Zeno::setupGUI()
    connect(le_zeno_interior_steps, SIGNAL(textChanged(const QString &)), SLOT(update_zeno_interior_steps(const QString &)));
 
    cb_zeno_surface = new QCheckBox( this );
-   cb_zeno_surface->setText( tr( "Compute Surface:") );
+   cb_zeno_surface->setText( us_tr( "Compute Surface:") );
    cb_zeno_surface->setEnabled( true );
    cb_zeno_surface->setChecked( hydro->zeno_surface );
    cb_zeno_surface->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
@@ -104,13 +104,13 @@ void US_Hydrodyn_Hydro_Zeno::setupGUI()
    AUTFBACK( cb_zeno_surface );
    connect( cb_zeno_surface, SIGNAL( clicked() ), this, SLOT( set_zeno_surface() ) );
 
-   lbl_zeno_surface_steps = new QLabel(tr(" Surface Steps (Thousands):"), this );
+   lbl_zeno_surface_steps = new QLabel(us_tr(" Surface Steps (Thousands):"), this );
    lbl_zeno_surface_steps->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_zeno_surface_steps->setPalette( PALET_LABEL );
    AUTFBACK( lbl_zeno_surface_steps );
    lbl_zeno_surface_steps->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
-   le_zeno_surface_steps = new QLineEdit( this, "Zeno_Surface_Steps Line Edit");
+   le_zeno_surface_steps = new QLineEdit(  this );    le_zeno_surface_steps->setObjectName( "Zeno_Surface_Steps Line Edit" );
    le_zeno_surface_steps->setText(str.sprintf("%u",(*hydro).zeno_surface_steps));
    le_zeno_surface_steps->setAlignment(Qt::AlignVCenter);
    le_zeno_surface_steps->setPalette( PALET_NORMAL );
@@ -118,13 +118,13 @@ void US_Hydrodyn_Hydro_Zeno::setupGUI()
    le_zeno_surface_steps->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_zeno_surface_steps, SIGNAL(textChanged(const QString &)), SLOT(update_zeno_surface_steps(const QString &)));
 
-   lbl_zeno_surface_thickness = new QLabel(tr(" Skin Thickness (current units):"), this );
+   lbl_zeno_surface_thickness = new QLabel(us_tr(" Skin Thickness (current units):"), this );
    lbl_zeno_surface_thickness->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_zeno_surface_thickness->setPalette( PALET_LABEL );
    AUTFBACK( lbl_zeno_surface_thickness );
    lbl_zeno_surface_thickness->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
-   le_zeno_surface_thickness = new QLineEdit( this, "Zeno_Skin_Thickness Line Edit");
+   le_zeno_surface_thickness = new QLineEdit(  this );    le_zeno_surface_thickness->setObjectName( "Zeno_Skin_Thickness Line Edit" );
    le_zeno_surface_thickness->setText(str.sprintf("%f",(*hydro).zeno_surface_thickness));
    le_zeno_surface_thickness->setAlignment(Qt::AlignVCenter);
    le_zeno_surface_thickness->setPalette( PALET_NORMAL );
@@ -133,7 +133,7 @@ void US_Hydrodyn_Hydro_Zeno::setupGUI()
    connect(le_zeno_surface_thickness, SIGNAL(textChanged(const QString &)), SLOT(update_zeno_surface_thickness(const QString &)));
 
    cb_zeno_cxx = new QCheckBox( this );
-   cb_zeno_cxx->setText( tr( "Test experimental new Zeno version") );
+   cb_zeno_cxx->setText( us_tr( "Test experimental new Zeno version") );
    cb_zeno_cxx->setEnabled( true );
    cb_zeno_cxx->setChecked( ((US_Hydrodyn *)us_hydrodyn)->gparams.count( "zeno_cxx" ) &&
                             ((US_Hydrodyn *)us_hydrodyn)->gparams[ "zeno_cxx" ] == "true" );
@@ -145,22 +145,22 @@ void US_Hydrodyn_Hydro_Zeno::setupGUI()
       cb_zeno_cxx->hide();
    }
 
-   pb_cancel = new QPushButton(tr("Close"), this);
+   pb_cancel = new QPushButton(us_tr("Close"), this);
    pb_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_cancel->setMinimumHeight(minHeight1);
    pb_cancel->setPalette( PALET_PUSHB );
    connect(pb_cancel, SIGNAL(clicked()), SLOT(cancel()));
 
-   pb_help = new QPushButton(tr("Help"), this);
+   pb_help = new QPushButton(us_tr("Help"), this);
    pb_help->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_help->setMinimumHeight(minHeight1);
    pb_help->setPalette( PALET_PUSHB );
    connect(pb_help, SIGNAL(clicked()), SLOT(help()));
 
    int rows = 0, columns = 3, spacing = 2, j = 0, margin = 4;
-   Q3GridLayout *background=new Q3GridLayout(this, rows, columns, margin, spacing);
+   QGridLayout * background = new QGridLayout( this ); background->setContentsMargins( 0, 0, 0, 0 ); background->setSpacing( 0 ); background->setSpacing( spacing ); background->setContentsMargins( margin, margin, margin, margin );
 
-   background->addMultiCellWidget(lbl_info, j, j, 0, 2);
+   background->addWidget( lbl_info , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 2 ) - ( 0 ) );
    j++;
 
    background->addWidget( cb_zeno_zeno       , j, 0 );
@@ -182,14 +182,14 @@ void US_Hydrodyn_Hydro_Zeno::setupGUI()
    background->addWidget( le_zeno_surface_thickness , j, 2 );
    j++;
 
-   background->addMultiCellWidget( cb_zeno_cxx, j, j, 0, 2 );
+   background->addWidget( cb_zeno_cxx , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 2  ) - ( 0 ) );
    j++;
 
-   Q3BoxLayout *hbl_help_cancel = new Q3HBoxLayout( 0 );
+   QBoxLayout *hbl_help_cancel = new QHBoxLayout();
 
    hbl_help_cancel->addWidget( pb_help );
    hbl_help_cancel->addWidget( pb_cancel );
-   background->addMultiCellLayout( hbl_help_cancel, j, j, 0, 2 );
+   background->addLayout( hbl_help_cancel , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 2  ) - ( 0 ) );
 }
 
 void US_Hydrodyn_Hydro_Zeno::set_zeno_zeno()

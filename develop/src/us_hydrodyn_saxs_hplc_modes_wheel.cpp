@@ -29,7 +29,7 @@ void US_Hydrodyn_Saxs_Hplc::adjust_wheel( double pos )
 
    wheel_enables();
 
-   // qDebug( QString( "adjust_wheel pos %1 focus %2" ).arg( pos ).arg( (unsigned long)le_last_focus ) );
+   // us_qdebug( QString( "adjust_wheel pos %1 focus %2" ).arg( pos ).arg( (unsigned long)le_last_focus ) );
 
    // cout << QString("pos is now %1 wheel step is %2\n").arg(pos, 0, 'f', 8 ).arg( qwtw_wheel->step() );
    switch ( current_mode )
@@ -62,7 +62,7 @@ void US_Hydrodyn_Saxs_Hplc::adjust_wheel( double pos )
       {
          if ( !le_last_focus && cb_guinier_scroll->isChecked() )
          {
-            // qDebug( QString( "guinier scroll is checked value %1" ).arg( pos ) );
+            // us_qdebug( QString( "guinier scroll is checked value %1" ).arg( pos ) );
             lbl_wheel_pos->setText( QString( "%1" ).arg( guinier_names[ pos ] ) );
             guinier_scroll_highlight( pos );
          } else {
@@ -126,7 +126,7 @@ void US_Hydrodyn_Saxs_Hplc::adjust_wheel( double pos )
 
             if ( !le_last_focus )
             {
-               // qDebug( "aw: no last focus in guinier mode\n" );
+               // us_qdebug( "aw: no last focus in guinier mode\n" );
                return;
             }
 
@@ -141,7 +141,7 @@ void US_Hydrodyn_Saxs_Hplc::adjust_wheel( double pos )
       {
          if ( !le_last_focus && cb_scale_scroll->isChecked() )
          {
-            // qDebug( QString( "scale scroll is checked value %1" ).arg( pos ) );
+            // us_qdebug( QString( "scale scroll is checked value %1" ).arg( pos ) );
             lbl_wheel_pos->setText( QString( "%1" ).arg( scale_scroll_selected[ pos ] ) );
             scale_scroll_highlight( pos );
          } else {
@@ -383,7 +383,7 @@ void US_Hydrodyn_Saxs_Hplc::adjust_wheel( double pos )
             if ( cb_ggauss_scroll->isChecked() ) {
                return ggauss_scroll_highlight( pos );
             }
-            // qDebug( QString( "gg adjust_wheel value %1" ).arg( pos ) );
+            // us_qdebug( QString( "gg adjust_wheel value %1" ).arg( pos ) );
             lbl_gauss_fit ->setText( "?" );
             ggaussian_last_pfit_P    .clear();
             ggaussian_last_pfit_N    .clear();
@@ -502,7 +502,7 @@ void US_Hydrodyn_Saxs_Hplc::adjust_wheel( double pos )
          }
       }
       break;
-   default : qDebug( "adjust wheel called in invalid mode" ); break;
+   default : us_qdebug( "adjust wheel called in invalid mode" ); break;
    }
 }
 
@@ -516,7 +516,7 @@ void US_Hydrodyn_Saxs_Hplc::wheel_cancel( bool from_wheel_save )
    {
    case MODE_GGAUSSIAN :
       {
-         pb_cormap->setText( tr( "CorMap" ) );
+         pb_cormap->setText( us_tr( "CorMap" ) );
          f_gaussians = org_f_gaussians;
          gaussians = org_gaussians;
          gauss_delete_markers();
@@ -525,7 +525,7 @@ void US_Hydrodyn_Saxs_Hplc::wheel_cancel( bool from_wheel_save )
             disable_updates = true;
             lb_files->clearSelection();
             for ( int i = 0; i < (int) ggaussian_selected_file_index.size(); ++i ) {
-               lb_files->setSelected( ggaussian_selected_file_index[ i ], true );
+               lb_files->item( ggaussian_selected_file_index[ i ])->setSelected( true );
             }
             disable_updates = false;
             plot_files();
@@ -593,7 +593,7 @@ void US_Hydrodyn_Saxs_Hplc::wheel_cancel( bool from_wheel_save )
 
    case MODE_BLANKS :
       {
-         // qDebug( "wheel cancel in blanks" );
+         // us_qdebug( "wheel cancel in blanks" );
          le_baseline_end_s  ->setText( QString( "%1" ).arg( org_baseline_end_s   ) );
          le_baseline_end_e  ->setText( QString( "%1" ).arg( org_baseline_end_e   ) );
          gauss_delete_markers();
@@ -619,7 +619,7 @@ void US_Hydrodyn_Saxs_Hplc::wheel_cancel( bool from_wheel_save )
 
    case MODE_BASELINE :
       {
-         // qDebug( "wheel cancel in baseline" );
+         // us_qdebug( "wheel cancel in baseline" );
          if ( baseline_test_mode ) {
             lbl_wheel_pos_below->setText( "" );
             baseline_test_mode = false;
@@ -726,7 +726,11 @@ void US_Hydrodyn_Saxs_Hplc::wheel_cancel( bool from_wheel_save )
 
          for ( int i = 0; i < (int) rb_testiq_gaussians.size(); ++i )
          {
-            hbl_testiq_gaussians->remove( rb_testiq_gaussians[ i ] );
+#if QT_VERSION < 0x040000
+            hbl_testiq_gaussians->removeWidget( rb_testiq_gaussians[ i ] );
+#else
+            hbl_testiq_gaussians->removeWidget( rb_testiq_gaussians[ i ] );
+#endif
             delete rb_testiq_gaussians[ i ];
          }
          rb_testiq_gaussians.clear();
@@ -781,7 +785,7 @@ void US_Hydrodyn_Saxs_Hplc::wheel_cancel( bool from_wheel_save )
    case MODE_RGC :
       break;
 
-   default : qDebug( "wheel cancel called in invalid mode" ); break;
+   default : us_qdebug( "wheel cancel called in invalid mode" ); break;
    }
 
    if ( !suppress_replot )
@@ -811,7 +815,7 @@ void US_Hydrodyn_Saxs_Hplc::wheel_save()
    {
    case MODE_SCALE :
       {
-         // qDebug( "wheel save mode scale not yet" );
+         // us_qdebug( "wheel save mode scale not yet" );
          wheel_cancel( true );
          return;
       }
@@ -819,7 +823,7 @@ void US_Hydrodyn_Saxs_Hplc::wheel_save()
 
    case MODE_TESTIQ :
       {
-         // qDebug( "wheel save mode testiq not yet" );
+         // us_qdebug( "wheel save mode testiq not yet" );
          wheel_cancel( true );
          return;
       }
@@ -827,7 +831,7 @@ void US_Hydrodyn_Saxs_Hplc::wheel_save()
 
    case MODE_GUINIER :
       {
-         // qDebug( "wheel save mode scale not yet" );
+         // us_qdebug( "wheel save mode scale not yet" );
          wheel_cancel( true );
          return;
       }
@@ -835,7 +839,7 @@ void US_Hydrodyn_Saxs_Hplc::wheel_save()
 
    case MODE_PM :
       {
-         qDebug( "wheel save mode pm not yet" );
+         us_qdebug( "wheel save mode pm not yet" );
          wheel_cancel( true );
          return;
       }
@@ -956,7 +960,7 @@ void US_Hydrodyn_Saxs_Hplc::wheel_save()
                             blanks_brookesmap_sliding_results, 
                             this,
                             progress ) ) {
-               // qDebug( "sliding_results" );
+               // us_qdebug( "sliding_results" );
                // for ( map < QString, double >::iterator it = blanks_brookesmap_sliding_results.begin();
                //       it != blanks_brookesmap_sliding_results.end();
                //       ++it ) {
@@ -969,7 +973,7 @@ void US_Hydrodyn_Saxs_Hplc::wheel_save()
             if ( f_name.count( blanks_selected[ i ] ) ) {
                default_blanks_files.push_back( f_name[ blanks_selected[ i ] ] );
             } else {
-               editor_msg( "red", tr( "Internal error: mode_blanks closing, missing blanks selected" ) );
+               editor_msg( "red", us_tr( "Internal error: mode_blanks closing, missing blanks selected" ) );
                default_blanks      .clear();
                default_blanks_set  .clear();
                default_blanks_files.clear();
@@ -1000,17 +1004,17 @@ void US_Hydrodyn_Saxs_Hplc::wheel_save()
          wheel_enables( false );
          pb_wheel_save         ->setEnabled( false );
          pb_wheel_cancel       ->setEnabled( false );
-         lbl_wheel_pos->setText( QString( "%1" ).arg( qwtw_wheel->value() ) );
+         lbl_wheel_pos->setText( QString( "%1" ).arg( qwtw_wheel->value( ) ) );
 
          // save time adjusted selected as new
          map < QString, bool > current_files;
 
          int wheel_pos = -1;
 
-         for ( int i = 0; i < (int)lb_files->numRows(); i++ )
+         for ( int i = 0; i < (int)lb_files->count(); i++ )
          {
-            current_files[ lb_files->text( i ) ] = true;
-            if ( lb_files->text( i ) == wheel_file )
+            current_files[ lb_files->item( i )->text( ) ] = true;
+            if ( lb_files->item( i )->text() == wheel_file )
             {
                wheel_pos = i;
             }
@@ -1026,10 +1030,10 @@ void US_Hydrodyn_Saxs_Hplc::wheel_save()
    
          // cout << QString( "new name is %1\n" ).arg( save_name );
 
-         lb_created_files->insertItem( save_name );
-         lb_created_files->setBottomItem( lb_created_files->numRows() - 1 );
-         lb_files->insertItem( save_name );
-         lb_files->setBottomItem( lb_files->numRows() - 1 );
+         lb_created_files->addItem( save_name );
+         lb_created_files->scrollToItem( lb_created_files->item( lb_created_files->count() - 1 ) );
+         lb_files->addItem( save_name );
+         lb_files->scrollToItem( lb_files->item( lb_files->count() - 1 ) );
          created_files_not_saved[ save_name ] = true;
 
          f_pos       [ save_name ] = f_qs.size();
@@ -1056,10 +1060,10 @@ void US_Hydrodyn_Saxs_Hplc::wheel_save()
          conc_files.insert( save_name );
          editor_msg( "gray", QString( "Created %1\n" ).arg( save_name ) );
 
-         lb_files->setSelected( f_pos[ save_name ], true );
+         lb_files->item( f_pos[ save_name ])->setSelected( true );
          if ( wheel_pos != -1 )
          {
-            lb_files->setSelected( wheel_pos, false );
+            lb_files->item( wheel_pos)->setSelected( false );
          }
 
          if ( !suppress_replot )
@@ -1079,8 +1083,8 @@ void US_Hydrodyn_Saxs_Hplc::wheel_save()
          disable_all();
          if ( QMessageBox::Yes == QMessageBox::question(
                                                         this,
-                                                        caption() + tr( ": Timeshift : set concentration file" ),
-                                                        tr("Would you like to *set* the timeshifted concentration file?" ),
+                                                        windowTitle() + us_tr( ": Timeshift : set concentration file" ),
+                                                        us_tr("Would you like to *set* the timeshifted concentration file?" ),
                                                         QMessageBox::Yes, 
                                                         QMessageBox::No | QMessageBox::Default
                                                         ) )
@@ -1090,6 +1094,6 @@ void US_Hydrodyn_Saxs_Hplc::wheel_save()
          update_enables();
       }
       break;
-   default : qDebug( "wheel save called in invalid mode" ); break;
+   default : us_qdebug( "wheel save called in invalid mode" ); break;
    }
 }

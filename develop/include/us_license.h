@@ -16,13 +16,13 @@
 #include <qmessagebox.h>
 #include <qpushbutton.h>
 #include <qradiobutton.h>
-#include <q3listbox.h>
+#include <qlistwidget.h>
 #include <qlineedit.h>
 #include <qlabel.h>
 #include <qevent.h>
 #include <qwidget.h>
 #include <qtranslator.h>
-#include <q3frame.h>
+//#include <q3frame.h>
 #include <qstring.h>
 //Added by qt3to4:
 #include <QCloseEvent>
@@ -39,7 +39,7 @@ class US_EXTERN US_License : public QDialog
    
    private:
       
-      Q3Process *proc;
+      QProcess *proc;
       int stderrSize, trials;
 
       QPushButton *pb_save;
@@ -94,12 +94,12 @@ class US_EXTERN US_License : public QDialog
       QLineEdit *le_code;
       QLineEdit *le_expiration;
 
-      Q3ComboBox *cbb_state;
-      Q3ComboBox *cbb_os1;
-      Q3ComboBox *cbb_version;
-      Q3ComboBox *cbb_licensetype;
+      QComboBox *cbb_state;
+      QComboBox *cbb_os1;
+      QComboBox *cbb_version;
+      QComboBox *cbb_licensetype;
       
-      Q3ListBox *lb_os;
+      QListWidget *lb_os;
       QRadioButton *rb_opteron;
       QRadioButton *rb_intel;
       QRadioButton *rb_sparc;

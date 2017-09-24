@@ -1,7 +1,7 @@
 #include "../include/us3_defines.h"
 #include "../include/us_hydrodyn_file.h"
 //Added by qt3to4:
-#include <Q3GridLayout>
+#include <QGridLayout>
 #include <QLabel>
 #include <QCloseEvent>
 
@@ -20,7 +20,7 @@ US_Hydrodyn_File::US_Hydrodyn_File(QString *dir,
                                    QString *ext,
                                    int *result,
                                    QWidget *p,
-                                   const char *name) : QDialog(p, name)
+                                   const char *name) : QDialog( p )
 {
    this->dir = dir;
    this->base = base;
@@ -30,7 +30,7 @@ US_Hydrodyn_File::US_Hydrodyn_File(QString *dir,
    *result = -1;
    USglobal = new US_Config();
    setPalette( PALET_FRAME );
-   setCaption("File will be overwritten");
+   setWindowTitle("File will be overwritten");
    setupGUI();
    global_Xpos = 200;
    global_Ypos = 150;
@@ -67,7 +67,7 @@ void US_Hydrodyn_File::setupGUI()
    AUTFBACK( lbl_dir );
    lbl_dir->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1, QFont::Bold));
 
-   le_dir = new QLineEdit(this, "dir Line Edit");
+   le_dir = new QLineEdit( this );    le_dir->setObjectName( "dir Line Edit" );
    le_dir->setText(*dir);
    le_dir->setReadOnly(true);
    le_dir->setMinimumWidth(100);
@@ -85,7 +85,7 @@ void US_Hydrodyn_File::setupGUI()
    AUTFBACK( lbl_update );
    lbl_update->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1, QFont::Bold));
 
-   le_base = new QLineEdit(this, "base Line Edit");
+   le_base = new QLineEdit( this );    le_base->setObjectName( "base Line Edit" );
    le_base->setText(*base);
    le_base->setReadOnly(false);
    le_base->setMinimumWidth(200);
@@ -105,7 +105,7 @@ void US_Hydrodyn_File::setupGUI()
       AUTFBACK( lbl_ext );
       lbl_ext->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1, QFont::Bold));
 
-      le_ext = new QLineEdit(this, "ext Line Edit");
+      le_ext = new QLineEdit( this );       le_ext->setObjectName( "ext Line Edit" );
       le_ext->setText(*ext);
       le_ext->setReadOnly(true);
       le_ext->setMinimumWidth(200);
@@ -143,21 +143,21 @@ void US_Hydrodyn_File::setupGUI()
 
    int j = 0;
 
-   Q3GridLayout *background = new Q3GridLayout(this, 1, 4, 4, 2);
+   QGridLayout * background = new QGridLayout( this ); background->setContentsMargins( 0, 0, 0, 0 ); background->setSpacing( 0 ); background->setSpacing( 2 ); background->setContentsMargins( 4, 4, 4, 4 );
 
-   background->addMultiCellWidget(lbl_info, j, j, 0, 0);
-   background->addMultiCellWidget(lbl_filename, j, j, 1, 3);
+   background->addWidget( lbl_info , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 0 ) - ( 0 ) );
+   background->addWidget( lbl_filename , j , 1 , 1 + ( j ) - ( j ) , 1 + ( 3 ) - ( 1 ) );
    j++;
    background->addWidget(lbl_dir, j, 0);
-   background->addMultiCellWidget(le_dir, j, j, 1, 3);
+   background->addWidget( le_dir , j , 1 , 1 + ( j ) - ( j ) , 1 + ( 3 ) - ( 1 ) );
    j++;
    background->addWidget(lbl_update, j, 0);
-   background->addMultiCellWidget(le_base, j, j, 1, 3);
+   background->addWidget( le_base , j , 1 , 1 + ( j ) - ( j ) , 1 + ( 3 ) - ( 1 ) );
    j++;
    if ( ext->length() )
    {
       background->addWidget(lbl_ext, j, 0);
-      background->addMultiCellWidget(le_ext, j, j, 1, 3);
+      background->addWidget( le_ext , j , 1 , 1 + ( j ) - ( j ) , 1 + ( 3 ) - ( 1 ) );
       j++;
    }
    background->addWidget(pb_help, j, 0);

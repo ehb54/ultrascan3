@@ -10,7 +10,7 @@
 #include "../include/us_hydrodyn.h"
 #include <qregexp.h>
 //Added by qt3to4:
-#include <Q3TextStream>
+#include <QTextStream>
 
 #ifndef WIN32
 #   include <unistd.h>
@@ -29,9 +29,9 @@ void US_Hydrodyn::dmd_static_pairs()
    vector < PDB_atom *> atoms;
    vector < int > chainseq;
    
-   for ( unsigned int use_model = 0; use_model < (unsigned int)lb_model->numRows(); use_model++ )
+   for ( unsigned int use_model = 0; use_model < (unsigned int)lb_model->count(); use_model++ )
    {
-      if ( 0 || lb_model->isSelected(use_model) )
+      if ( 0 || lb_model->item(use_model)->isSelected() )
       {
          for ( unsigned int j = 0; j < model_vector[use_model].molecule.size(); j++ )
          {
@@ -95,10 +95,10 @@ void US_Hydrodyn::dmd_static_pairs()
       QFile f(basename);
       if ( !f.open(QIODevice::WriteOnly) )
       {
-         editor->append(QString("File write error: can't create %1\n").arg(f.name()));
+         editor->append(QString("File write error: can't create %1\n").arg(f.fileName()));
          return;
       }
-      Q3TextStream ts(&f);
+      QTextStream ts(&f);
       ts << out;
       f.close();
    }
@@ -111,10 +111,10 @@ void US_Hydrodyn::dmd_static_pairs()
       QFile f(basename);
       if ( !f.open(QIODevice::WriteOnly) )
       {
-         editor->append(QString("File write error: can't create %1\n").arg(f.name()));
+         editor->append(QString("File write error: can't create %1\n").arg(f.fileName()));
          return;
       }
-      Q3TextStream ts(&f);
+      QTextStream ts(&f);
       ts << out2;
       f.close();
    }

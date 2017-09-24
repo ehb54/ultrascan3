@@ -2,10 +2,10 @@
 #include "../include/us_hydrodyn_asa.h"
 #include "../include/us_hydrodyn.h"
 //Added by qt3to4:
-#include <Q3HBoxLayout>
+#include <QHBoxLayout>
 #include <QCloseEvent>
-#include <Q3GridLayout>
-#include <Q3Frame>
+#include <QGridLayout>
+#include <QFrame>
 #include <QLabel>
 
 #define SLASH "/"
@@ -14,7 +14,7 @@
 #  define SLASH "\\"
 #endif
 
-US_Hydrodyn_SasOptionsSaxs::US_Hydrodyn_SasOptionsSaxs(struct saxs_options *saxs_options, bool *sas_options_saxs_widget, void *us_hydrodyn, QWidget *p, const char *name) : Q3Frame(p, name)
+US_Hydrodyn_SasOptionsSaxs::US_Hydrodyn_SasOptionsSaxs(struct saxs_options *saxs_options, bool *sas_options_saxs_widget, void *us_hydrodyn, QWidget *p, const char *name) : QFrame( p )
 {
    this->sas_options_saxs_widget = sas_options_saxs_widget;
    this->saxs_options = saxs_options;
@@ -22,7 +22,7 @@ US_Hydrodyn_SasOptionsSaxs::US_Hydrodyn_SasOptionsSaxs(struct saxs_options *saxs
    *sas_options_saxs_widget = true;
    USglobal=new US_Config();
    setPalette( PALET_FRAME );
-   setCaption(tr("US-SOMO SAXS Computation Options"));
+   setWindowTitle(us_tr("US-SOMO SAXS Computation Options"));
    setupGUI();
    global_Xpos += 30;
    global_Ypos += 30;
@@ -39,15 +39,15 @@ void US_Hydrodyn_SasOptionsSaxs::setupGUI()
    started_in_expert_mode = U_EXPT;
 
    int minHeight1 = 30;
-   lbl_info = new QLabel(tr("US-SOMO SAXS Computation Options:"), this);
-   lbl_info->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Raised);
+   lbl_info = new QLabel(us_tr("US-SOMO SAXS Computation Options:"), this);
+   lbl_info->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_info->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_info->setMinimumHeight(minHeight1);
    lbl_info->setPalette( PALET_FRAME );
    AUTFBACK( lbl_info );
    lbl_info->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
 
-   lbl_water_e_density = new QLabel(tr(" Water electron density (e / A^3): "), this);
+   lbl_water_e_density = new QLabel(us_tr(" Water electron density (e / A^3): "), this);
    lbl_water_e_density->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_water_e_density->setMinimumHeight(minHeight1);
    lbl_water_e_density->setPalette( PALET_LABEL );
@@ -66,7 +66,7 @@ void US_Hydrodyn_SasOptionsSaxs::setupGUI()
    AUTFBACK( cnt_water_e_density );
    connect(cnt_water_e_density, SIGNAL(valueChanged(double)), SLOT(update_water_e_density(double)));
 
-   lbl_saxs_iq = new QLabel(tr(" I(q) method: "), this);
+   lbl_saxs_iq = new QLabel(us_tr(" I(q) method: "), this);
    lbl_saxs_iq->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_saxs_iq->setMinimumHeight(minHeight1);
    lbl_saxs_iq->setPalette( PALET_LABEL );
@@ -74,7 +74,7 @@ void US_Hydrodyn_SasOptionsSaxs::setupGUI()
    lbl_saxs_iq->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    cb_saxs_iq_native_debye = new QCheckBox(this);
-   cb_saxs_iq_native_debye->setText(tr("F-DB "));
+   cb_saxs_iq_native_debye->setText(us_tr("F-DB "));
    cb_saxs_iq_native_debye->setEnabled(true);
    cb_saxs_iq_native_debye->setChecked((*saxs_options).saxs_iq_native_debye);
    cb_saxs_iq_native_debye->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -83,7 +83,7 @@ void US_Hydrodyn_SasOptionsSaxs::setupGUI()
    connect(cb_saxs_iq_native_debye, SIGNAL(clicked()), this, SLOT(set_saxs_iq_native_debye()));
 
    cb_saxs_iq_native_sh = new QCheckBox(this);
-   cb_saxs_iq_native_sh->setText(tr("SH-DB "));
+   cb_saxs_iq_native_sh->setText(us_tr("SH-DB "));
    cb_saxs_iq_native_sh->setEnabled(true);
    cb_saxs_iq_native_sh->setChecked((*saxs_options).saxs_iq_native_sh);
    cb_saxs_iq_native_sh->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -94,7 +94,7 @@ void US_Hydrodyn_SasOptionsSaxs::setupGUI()
    if ( started_in_expert_mode )
    {
       cb_saxs_iq_native_hybrid = new QCheckBox(this);
-      cb_saxs_iq_native_hybrid->setText(tr("Hybrid "));
+      cb_saxs_iq_native_hybrid->setText(us_tr("Hybrid "));
       cb_saxs_iq_native_hybrid->setEnabled(true);
       cb_saxs_iq_native_hybrid->setChecked((*saxs_options).saxs_iq_native_hybrid);
       cb_saxs_iq_native_hybrid->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -103,7 +103,7 @@ void US_Hydrodyn_SasOptionsSaxs::setupGUI()
       connect(cb_saxs_iq_native_hybrid, SIGNAL(clicked()), this, SLOT(set_saxs_iq_native_hybrid()));
 
       cb_saxs_iq_native_hybrid2 = new QCheckBox(this);
-      cb_saxs_iq_native_hybrid2->setText(tr("H2 "));
+      cb_saxs_iq_native_hybrid2->setText(us_tr("H2 "));
       cb_saxs_iq_native_hybrid2->setEnabled(true);
       cb_saxs_iq_native_hybrid2->setChecked((*saxs_options).saxs_iq_native_hybrid2);
       cb_saxs_iq_native_hybrid2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -112,7 +112,7 @@ void US_Hydrodyn_SasOptionsSaxs::setupGUI()
       connect(cb_saxs_iq_native_hybrid2, SIGNAL(clicked()), this, SLOT(set_saxs_iq_native_hybrid2()));
 
       cb_saxs_iq_native_hybrid3 = new QCheckBox(this);
-      cb_saxs_iq_native_hybrid3->setText(tr("H3 "));
+      cb_saxs_iq_native_hybrid3->setText(us_tr("H3 "));
       cb_saxs_iq_native_hybrid3->setEnabled(true);
       cb_saxs_iq_native_hybrid3->setChecked((*saxs_options).saxs_iq_native_hybrid3);
       cb_saxs_iq_native_hybrid3->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -121,7 +121,7 @@ void US_Hydrodyn_SasOptionsSaxs::setupGUI()
       connect(cb_saxs_iq_native_hybrid3, SIGNAL(clicked()), this, SLOT(set_saxs_iq_native_hybrid3()));
 
       cb_saxs_iq_hybrid_adaptive = new QCheckBox(this);
-      cb_saxs_iq_hybrid_adaptive->setText(tr("Adaptive "));
+      cb_saxs_iq_hybrid_adaptive->setText(us_tr("Adaptive "));
       cb_saxs_iq_hybrid_adaptive->setEnabled(true);
       cb_saxs_iq_hybrid_adaptive->setChecked((*saxs_options).saxs_iq_hybrid_adaptive);
       cb_saxs_iq_hybrid_adaptive->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -131,7 +131,7 @@ void US_Hydrodyn_SasOptionsSaxs::setupGUI()
    }
 
    cb_saxs_iq_native_fast = new QCheckBox(this);
-   cb_saxs_iq_native_fast->setText(tr("Q-DB "));
+   cb_saxs_iq_native_fast->setText(us_tr("Q-DB "));
    cb_saxs_iq_native_fast->setEnabled(true);
    cb_saxs_iq_native_fast->setChecked((*saxs_options).saxs_iq_native_fast);
    cb_saxs_iq_native_fast->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -140,7 +140,7 @@ void US_Hydrodyn_SasOptionsSaxs::setupGUI()
    connect(cb_saxs_iq_native_fast, SIGNAL(clicked()), this, SLOT(set_saxs_iq_native_fast()));
 
    cb_saxs_iq_native_fast_compute_pr = new QCheckBox(this);
-   cb_saxs_iq_native_fast_compute_pr->setText(tr("P(r) "));
+   cb_saxs_iq_native_fast_compute_pr->setText(us_tr("P(r) "));
    cb_saxs_iq_native_fast_compute_pr->setEnabled(true);
    cb_saxs_iq_native_fast_compute_pr->setChecked((*saxs_options).saxs_iq_native_fast_compute_pr);
    cb_saxs_iq_native_fast_compute_pr->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -151,7 +151,7 @@ void US_Hydrodyn_SasOptionsSaxs::setupGUI()
    if ( started_in_expert_mode )
    {
       cb_saxs_iq_foxs = new QCheckBox(this);
-      cb_saxs_iq_foxs->setText(tr("FoXS"));
+      cb_saxs_iq_foxs->setText(us_tr("FoXS"));
       cb_saxs_iq_foxs->setEnabled(true);
       cb_saxs_iq_foxs->setChecked((*saxs_options).saxs_iq_foxs);
       cb_saxs_iq_foxs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -161,7 +161,7 @@ void US_Hydrodyn_SasOptionsSaxs::setupGUI()
    }
 
    cb_saxs_iq_crysol = new QCheckBox(this);
-   cb_saxs_iq_crysol->setText(tr("Crysol"));
+   cb_saxs_iq_crysol->setText(us_tr("Crysol"));
    cb_saxs_iq_crysol->setEnabled(true);
    cb_saxs_iq_crysol->setChecked((*saxs_options).saxs_iq_crysol);
    cb_saxs_iq_crysol->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -172,7 +172,7 @@ void US_Hydrodyn_SasOptionsSaxs::setupGUI()
    if ( started_in_expert_mode )
    {
       cb_saxs_iq_sastbx = new QCheckBox(this);
-      cb_saxs_iq_sastbx->setText(tr("Sastbx"));
+      cb_saxs_iq_sastbx->setText(us_tr("Sastbx"));
       cb_saxs_iq_sastbx->setEnabled(true);
       cb_saxs_iq_sastbx->setChecked((*saxs_options).saxs_iq_sastbx);
       cb_saxs_iq_sastbx->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -181,7 +181,7 @@ void US_Hydrodyn_SasOptionsSaxs::setupGUI()
       connect(cb_saxs_iq_sastbx, SIGNAL(clicked()), this, SLOT(set_saxs_iq_sastbx()));
    }
 
-   lbl_fast_bin_size = new QLabel(tr(" Quick Debye: Bin size"), this);
+   lbl_fast_bin_size = new QLabel(us_tr(" Quick Debye: Bin size"), this);
    lbl_fast_bin_size->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_fast_bin_size->setMinimumHeight(minHeight1);
    lbl_fast_bin_size->setPalette( PALET_LABEL );
@@ -200,7 +200,7 @@ void US_Hydrodyn_SasOptionsSaxs::setupGUI()
    AUTFBACK( cnt_fast_bin_size );
    connect(cnt_fast_bin_size, SIGNAL(valueChanged(double)), SLOT(update_fast_bin_size(double)));
 
-   lbl_fast_modulation = new QLabel(tr(" Quick Debye: Modulation"), this);
+   lbl_fast_modulation = new QLabel(us_tr(" Quick Debye: Modulation"), this);
    lbl_fast_modulation->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_fast_modulation->setMinimumHeight(minHeight1);
    lbl_fast_modulation->setPalette( PALET_LABEL );
@@ -219,7 +219,7 @@ void US_Hydrodyn_SasOptionsSaxs::setupGUI()
    AUTFBACK( cnt_fast_modulation );
    connect(cnt_fast_modulation, SIGNAL(valueChanged(double)), SLOT(update_fast_modulation(double)));
 
-   lbl_hybrid2_q_points = new QLabel(tr(" Hybrid, H2, H3: q points"), this);
+   lbl_hybrid2_q_points = new QLabel(us_tr(" Hybrid, H2, H3: q points"), this);
    lbl_hybrid2_q_points->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_hybrid2_q_points->setMinimumHeight(minHeight1);
    lbl_hybrid2_q_points->setPalette( PALET_LABEL );
@@ -239,9 +239,9 @@ void US_Hydrodyn_SasOptionsSaxs::setupGUI()
    connect(cnt_hybrid2_q_points, SIGNAL(valueChanged(double)), SLOT(update_hybrid2_q_points(double)));
 
    lbl_sh_max_harmonics = new QLabel( started_in_expert_mode ?
-                                      tr(" SH/Crysol/Sastbx: Maximum order of harmonics")
+                                      us_tr(" SH/Crysol/Sastbx: Maximum order of harmonics")
                                       :
-                                      tr(" SH/Crysol: Maximum order of harmonics")
+                                      us_tr(" SH/Crysol: Maximum order of harmonics")
                                       , this);
    lbl_sh_max_harmonics->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_sh_max_harmonics->setMinimumHeight(minHeight1);
@@ -262,9 +262,9 @@ void US_Hydrodyn_SasOptionsSaxs::setupGUI()
    connect(cnt_sh_max_harmonics, SIGNAL(valueChanged(double)), SLOT(update_sh_max_harmonics(double)));
 
    lbl_sh_fibonacci_grid_order = new QLabel( started_in_expert_mode ? 
-                                             tr(" Crysol/Sastbx: Order of Fibonacci grid")
+                                             us_tr(" Crysol/Sastbx: Order of Fibonacci grid")
                                              :
-                                             tr(" Crysol: Order of Fibonacci grid")
+                                             us_tr(" Crysol: Order of Fibonacci grid")
                                              , this);
    lbl_sh_fibonacci_grid_order->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_sh_fibonacci_grid_order->setMinimumHeight(minHeight1);
@@ -285,9 +285,9 @@ void US_Hydrodyn_SasOptionsSaxs::setupGUI()
    connect(cnt_sh_fibonacci_grid_order, SIGNAL(valueChanged(double)), SLOT(update_sh_fibonacci_grid_order(double)));
 
    lbl_crysol_hydration_shell_contrast = new QLabel( started_in_expert_mode ?
-                                                     tr(" Crysol/Sastbx: Contrast of hydration shell (e / A^3):")
+                                                     us_tr(" Crysol/Sastbx: Contrast of hydration shell (e / A^3):")
                                                      :
-                                                     tr(" Crysol: Contrast of hydration shell (e / A^3):")
+                                                     us_tr(" Crysol: Contrast of hydration shell (e / A^3):")
                                                      , this);
    lbl_crysol_hydration_shell_contrast->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_crysol_hydration_shell_contrast->setMinimumHeight(minHeight1);
@@ -307,7 +307,7 @@ void US_Hydrodyn_SasOptionsSaxs::setupGUI()
    AUTFBACK( cnt_crysol_hydration_shell_contrast );
    connect(cnt_crysol_hydration_shell_contrast, SIGNAL(valueChanged(double)), SLOT(update_crysol_hydration_shell_contrast(double)));
 
-   lbl_crysol = new QLabel(tr(" Crysol options:"), this);
+   lbl_crysol = new QLabel(us_tr(" Crysol options:"), this);
    lbl_crysol->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_crysol->setMinimumHeight(minHeight1);
    lbl_crysol->setPalette( PALET_LABEL );
@@ -315,7 +315,7 @@ void US_Hydrodyn_SasOptionsSaxs::setupGUI()
    lbl_crysol->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    cb_crysol_default_load_difference_intensity = new QCheckBox(this);
-   cb_crysol_default_load_difference_intensity->setText(tr(" Automatically load difference intensity"));
+   cb_crysol_default_load_difference_intensity->setText(us_tr(" Automatically load difference intensity"));
    cb_crysol_default_load_difference_intensity->setEnabled(true);
    cb_crysol_default_load_difference_intensity->setChecked((*saxs_options).crysol_default_load_difference_intensity);
    cb_crysol_default_load_difference_intensity->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -324,7 +324,7 @@ void US_Hydrodyn_SasOptionsSaxs::setupGUI()
    connect(cb_crysol_default_load_difference_intensity, SIGNAL(clicked()), this, SLOT(set_crysol_default_load_difference_intensity()));
 
    cb_crysol_version_26 = new QCheckBox(this);
-   cb_crysol_version_26->setText(tr(" Support version 2.6"));
+   cb_crysol_version_26->setText(us_tr(" Support version 2.6"));
    cb_crysol_version_26->setEnabled(true);
    cb_crysol_version_26->setChecked((*saxs_options).crysol_version_26);
    cb_crysol_version_26->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -333,7 +333,7 @@ void US_Hydrodyn_SasOptionsSaxs::setupGUI()
    connect(cb_crysol_version_26, SIGNAL(clicked()), this, SLOT(set_crysol_version_26()));
 
    cb_crysol_explicit_hydrogens = new QCheckBox(this);
-   cb_crysol_explicit_hydrogens->setText(tr(" Explicit hydrogens"));
+   cb_crysol_explicit_hydrogens->setText(us_tr(" Explicit hydrogens"));
    cb_crysol_explicit_hydrogens->setEnabled(true);
    cb_crysol_explicit_hydrogens->setChecked((*saxs_options).crysol_explicit_hydrogens);
    cb_crysol_explicit_hydrogens->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -341,14 +341,14 @@ void US_Hydrodyn_SasOptionsSaxs::setupGUI()
    AUTFBACK( cb_crysol_explicit_hydrogens );
    connect(cb_crysol_explicit_hydrogens, SIGNAL(clicked()), this, SLOT(set_crysol_explicit_hydrogens()));
 
-   lbl_ra = new QLabel( tr(" Crysol: Average atomic radius (A):"), this );
+   lbl_ra = new QLabel( us_tr(" Crysol: Average atomic radius (A):"), this );
    lbl_ra->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_ra->setMinimumHeight(minHeight1);
    lbl_ra->setPalette( PALET_LABEL );
    AUTFBACK( lbl_ra );
    lbl_ra->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
-   le_ra = new mQLineEdit(this, "le_ra Line Edit");
+   le_ra = new mQLineEdit( this );    le_ra->setObjectName( "le_ra Line Edit" );
    le_ra->setText( 
                   (( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "sas_crysol_ra" ) ?
                   (( US_Hydrodyn * ) us_hydrodyn )->gparams[ "sas_crysol_ra" ] : QString( "0" ) );
@@ -366,14 +366,14 @@ void US_Hydrodyn_SasOptionsSaxs::setupGUI()
       le_ra->hide();
    }
 
-   lbl_vol = new QLabel( tr(" Crysol: Excluded volume (A^3):"), this );
+   lbl_vol = new QLabel( us_tr(" Crysol: Excluded volume (A^3):"), this );
    lbl_vol->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_vol->setMinimumHeight(minHeight1);
    lbl_vol->setPalette( PALET_LABEL );
    AUTFBACK( lbl_vol );
    lbl_vol->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
-   le_vol = new mQLineEdit(this, "le_vol Line Edit");
+   le_vol = new mQLineEdit( this );    le_vol->setObjectName( "le_vol Line Edit" );
    le_vol->setText( 
                   (( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "sas_crysol_vol" ) ?
                   (( US_Hydrodyn * ) us_hydrodyn )->gparams[ "sas_crysol_vol" ] : QString( "0" ) );
@@ -391,14 +391,14 @@ void US_Hydrodyn_SasOptionsSaxs::setupGUI()
       le_vol->hide();
    }
 
-   pb_crysol_target = new QPushButton(tr("Crysol target experimental data"), this);
+   pb_crysol_target = new QPushButton(us_tr("Crysol target experimental data"), this);
    pb_crysol_target->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_crysol_target->setMinimumHeight(minHeight1);
    pb_crysol_target->setPalette( PALET_PUSHB );
    connect(pb_crysol_target, SIGNAL(clicked()), SLOT(crysol_target()));
 
 
-   le_crysol_target = new QLineEdit(this, "");
+   le_crysol_target = new QLineEdit( this );    le_crysol_target->setObjectName( "" );
    le_crysol_target->setMinimumHeight(minHeight1);
    le_crysol_target->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    le_crysol_target->setPalette( PALET_EDIT );
@@ -417,35 +417,36 @@ void US_Hydrodyn_SasOptionsSaxs::setupGUI()
    if ( started_in_expert_mode )
    {
 
-      lbl_sastbx_method = new QLabel(tr(" Sastbx: Method"), this);
+      lbl_sastbx_method = new QLabel(us_tr(" Sastbx: Method"), this);
       lbl_sastbx_method->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
       lbl_sastbx_method->setMinimumHeight(minHeight1);
       lbl_sastbx_method->setPalette( PALET_LABEL );
       AUTFBACK( lbl_sastbx_method );
       lbl_sastbx_method->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
-      rb_sastbx_method_she = new QRadioButton(tr("Spherical harmonics"), this);
+      rb_sastbx_method_she = new QRadioButton(us_tr("Spherical harmonics"), this);
       rb_sastbx_method_she->setEnabled(true);
       rb_sastbx_method_she->setChecked( saxs_options->sastbx_method == 0 );
       rb_sastbx_method_she->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
       rb_sastbx_method_she->setPalette( PALET_NORMAL );
       AUTFBACK( rb_sastbx_method_she );
 
-      rb_sastbx_method_debye = new QRadioButton(tr("Debye"), this);
+      rb_sastbx_method_debye = new QRadioButton(us_tr("Debye"), this);
       rb_sastbx_method_debye->setEnabled(true);
       rb_sastbx_method_debye->setChecked( saxs_options->sastbx_method == 1 );
       rb_sastbx_method_debye->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
       rb_sastbx_method_debye->setPalette( PALET_NORMAL );
       AUTFBACK( rb_sastbx_method_debye );
 
-      rb_sastbx_method_zernike = new QRadioButton(tr("Zernike"), this);
+      rb_sastbx_method_zernike = new QRadioButton(us_tr("Zernike"), this);
       rb_sastbx_method_zernike->setEnabled(true);
       rb_sastbx_method_zernike->setChecked( saxs_options->sastbx_method == 2 );
       rb_sastbx_method_zernike->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
       rb_sastbx_method_zernike->setPalette( PALET_NORMAL );
       AUTFBACK( rb_sastbx_method_zernike );
 
-      bg_sastbx_method = new QButtonGroup( this );
+#if QT_VERSION < 0x040000
+      bg_sastbx_method = new QGroupBox( this );
       int bg_pos = 0;
       bg_sastbx_method->setExclusive(true);
       bg_sastbx_method->addButton( rb_sastbx_method_she, bg_pos++ );
@@ -453,31 +454,45 @@ void US_Hydrodyn_SasOptionsSaxs::setupGUI()
       bg_sastbx_method->addButton( rb_sastbx_method_zernike, bg_pos++ );
 
       connect(bg_sastbx_method, SIGNAL(buttonClicked(int)), SLOT(set_sastbx_method(int)));
+#else
+      bg_sastbx_method = new QGroupBox();
+      connect(rb_sastbx_method_she, SIGNAL(clicked()), SLOT(set_sastbx_method()));
+      connect(rb_sastbx_method_debye, SIGNAL(clicked()), SLOT(set_sastbx_method()));
+      connect(rb_sastbx_method_zernike, SIGNAL(clicked()), SLOT(set_sastbx_method()));
+
+      {
+         QHBoxLayout * bl = new QHBoxLayout; bl->setContentsMargins( 0, 0, 0, 0 ); bl->setSpacing( 0 );
+         bl->addWidget( rb_sastbx_method_she );
+         bl->addWidget( rb_sastbx_method_debye );
+         bl->addWidget( rb_sastbx_method_zernike );
+         bg_sastbx_method->setLayout( bl );
+      }
+#endif
    }
 
-   pb_cancel = new QPushButton(tr("Close"), this);
+   pb_cancel = new QPushButton(us_tr("Close"), this);
    pb_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_cancel->setMinimumHeight(minHeight1);
    pb_cancel->setPalette( PALET_PUSHB );
    connect(pb_cancel, SIGNAL(clicked()), SLOT(cancel()));
 
-   pb_help = new QPushButton(tr("Help"), this);
+   pb_help = new QPushButton(us_tr("Help"), this);
    pb_help->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_help->setMinimumHeight(minHeight1);
    pb_help->setPalette( PALET_PUSHB );
    connect(pb_help, SIGNAL(clicked()), SLOT(help()));
 
    int rows=0, columns = 2, spacing = 2, j=0, margin=4;
-   Q3GridLayout *background=new Q3GridLayout(this, rows, columns, margin, spacing);
+   QGridLayout * background = new QGridLayout( this ); background->setContentsMargins( 0, 0, 0, 0 ); background->setSpacing( 0 ); background->setSpacing( spacing ); background->setContentsMargins( margin, margin, margin, margin );
 
-   background->addMultiCellWidget(lbl_info, j, j, 0, 1);
+   background->addWidget( lbl_info , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
    j++;
 
    background->addWidget(lbl_water_e_density, j, 0);
    background->addWidget(cnt_water_e_density, j, 1);
    j++;
 
-   Q3HBoxLayout *hbl_saxs_iq = new Q3HBoxLayout;
+   QHBoxLayout * hbl_saxs_iq = new QHBoxLayout; hbl_saxs_iq->setContentsMargins( 0, 0, 0, 0 ); hbl_saxs_iq->setSpacing( 0 );
    hbl_saxs_iq->addWidget(lbl_saxs_iq);
    hbl_saxs_iq->addWidget(cb_saxs_iq_native_debye);
    hbl_saxs_iq->addWidget(cb_saxs_iq_native_sh);
@@ -500,7 +515,7 @@ void US_Hydrodyn_SasOptionsSaxs::setupGUI()
    {
       hbl_saxs_iq->addWidget(cb_saxs_iq_sastbx);
    }
-   background->addMultiCellLayout(hbl_saxs_iq, j, j, 0, 1);
+   background->addLayout( hbl_saxs_iq , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
    j++;
 
    background->addWidget(lbl_fast_bin_size, j, 0);
@@ -539,19 +554,19 @@ void US_Hydrodyn_SasOptionsSaxs::setupGUI()
    background->addWidget(le_crysol_target, j, 1);
    j++;
 
-   Q3HBoxLayout *hbl_crysol = new Q3HBoxLayout;
+   QHBoxLayout * hbl_crysol = new QHBoxLayout; hbl_crysol->setContentsMargins( 0, 0, 0, 0 ); hbl_crysol->setSpacing( 0 );
    hbl_crysol->addWidget(lbl_crysol);
    hbl_crysol->addWidget(cb_crysol_default_load_difference_intensity);
    hbl_crysol->addWidget(cb_crysol_version_26);
    hbl_crysol->addWidget(cb_crysol_explicit_hydrogens);
-   background->addMultiCellLayout(hbl_crysol, j, j, 0, 1);
+   background->addLayout( hbl_crysol , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
    j++;
 
 
    if ( started_in_expert_mode )
    {
       background->addWidget(lbl_sastbx_method, j, 0);
-      Q3HBoxLayout *hbl_sastbx_method = new Q3HBoxLayout;
+      QHBoxLayout * hbl_sastbx_method = new QHBoxLayout; hbl_sastbx_method->setContentsMargins( 0, 0, 0, 0 ); hbl_sastbx_method->setSpacing( 0 );
       // hbl_sastbx_method->addWidget( bg_sastbx_method );
       hbl_sastbx_method->addWidget( rb_sastbx_method_she );
       hbl_sastbx_method->addWidget( rb_sastbx_method_debye );
@@ -993,6 +1008,18 @@ void US_Hydrodyn_SasOptionsSaxs::update_fast_bin_size(double val)
    // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
+void US_Hydrodyn_SasOptionsSaxs::set_sastbx_method() {
+   if ( rb_sastbx_method_she->isChecked() ) {
+      return set_sastbx_method( 0 );
+   }
+   if ( rb_sastbx_method_debye->isChecked() ) {
+      return set_sastbx_method( 1 );
+   }
+   if ( rb_sastbx_method_zernike->isChecked() ) {
+      return set_sastbx_method( 2 );
+   }
+}
+
 void US_Hydrodyn_SasOptionsSaxs::set_sastbx_method( int val )
 {
    saxs_options->sastbx_method = ( unsigned int ) val;
@@ -1009,7 +1036,7 @@ void US_Hydrodyn_SasOptionsSaxs::crysol_target()
 
    ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this );
 
-   QString filename = QFileDialog::getOpenFileName( this , caption() + tr( "Select a file for CRYSOL experimental data target" ) , use_dir , "*.dat *.DAT" );
+   QString filename = QFileDialog::getOpenFileName( this , windowTitle() + us_tr( "Select a file for CRYSOL experimental data target" ) , use_dir , "*.dat *.DAT" );
 
 
 

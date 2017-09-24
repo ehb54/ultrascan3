@@ -4,13 +4,13 @@
 #include "../include/us_hydrodyn_cluster.h"
 #include "../include/us_hydrodyn_cluster_submit.h"
 //Added by qt3to4:
-#include <Q3TextStream>
-#include <Q3HBoxLayout>
+#include <QTextStream>
+#include <QHBoxLayout>
 #include <QLabel>
-#include <Q3Frame>
-#include <Q3PopupMenu>
-#include <Q3VBoxLayout>
-#include <Q3BoxLayout>
+#include <QFrame>
+ //#include <Q3PopupMenu>
+#include <QVBoxLayout>
+#include <QBoxLayout>
 #include <QCloseEvent>
 
 // note: this program uses cout and/or cerr and this should be replaced
@@ -25,10 +25,10 @@ US_Hydrodyn_Cluster_Submit::US_Hydrodyn_Cluster_Submit(
                                          void *us_hydrodyn, 
                                          QWidget *p, 
                                          const char *name
-                                         ) : QDialog(p, name)
+                                         ) : QDialog( p )
 {
    this->us_hydrodyn = us_hydrodyn;
-   setCaption(tr("US-SOMO: Cluster Submit"));
+   setWindowTitle(us_tr("US-SOMO: Cluster Submit"));
    cluster_window = (void *)p;
    USglobal = new US_Config();
 
@@ -66,8 +66,8 @@ US_Hydrodyn_Cluster_Submit::US_Hydrodyn_Cluster_Submit(
         cluster_pw.isEmpty() )
    {
       QMessageBox::information( this, 
-                                tr("US-SOMO: Cluster Jobs"),
-                                tr("Cluster credentials must be set in Cluster Config before continuing"),
+                                us_tr("US-SOMO: Cluster Jobs"),
+                                us_tr("Cluster credentials must be set in Cluster Config before continuing"),
                                 0 );
       return;
    }
@@ -75,8 +75,8 @@ US_Hydrodyn_Cluster_Submit::US_Hydrodyn_Cluster_Submit(
    if ( !update_files( false ) )
    {
       QMessageBox::information( this, 
-                                tr("US-SOMO: Cluster Jobs"),
-                                tr("No unsubmitted jobs found"),
+                                us_tr("US-SOMO: Cluster Jobs"),
+                                us_tr("No unsubmitted jobs found"),
                                 0 );
    }
 
@@ -87,7 +87,7 @@ US_Hydrodyn_Cluster_Submit::US_Hydrodyn_Cluster_Submit(
    QDir dir1( submitted_dir );
    if ( !dir1.exists() )
    {
-      editor_msg( "black", QString( tr( "Created directory %1" ) ).arg( submitted_dir ) );
+      editor_msg( "black", QString( us_tr( "Created directory %1" ) ).arg( submitted_dir ) );
       dir1.mkdir( submitted_dir );
    }
 
@@ -95,7 +95,7 @@ US_Hydrodyn_Cluster_Submit::US_Hydrodyn_Cluster_Submit(
    QDir dir2( tmp_dir );
    if ( !dir2.exists() )
    {
-      editor_msg( "black", QString( tr( "Created directory %1" ) ).arg( tmp_dir ) );
+      editor_msg( "black", QString( us_tr( "Created directory %1" ) ).arg( tmp_dir ) );
       dir2.mkdir( tmp_dir );
    }
 
@@ -119,16 +119,26 @@ unsigned int US_Hydrodyn_Cluster_Submit::update_files( bool set_lv_files )
    // traverse directory and build up files
    QDir::setCurrent( pkg_dir );
    QDir qd;
-   QStringList tgz_files = qd.entryList( "*.tgz" );
-   QStringList tar_files = qd.entryList( "*.tar" );
-   QStringList all_files = QStringList::split( "\n", 
-                                               tgz_files.join("\n") + 
-                                               ( tgz_files.size() ? "\n" : "" ) +
-                                               tar_files.join("\n") );
+   QStringList tgz_files = qd.entryList( QStringList() << "*.tgz" );
+   QStringList tar_files = qd.entryList( QStringList() << "*.tar" );
+   // QStringList all_files = QStringList::split( "\n", 
+   //                                             tgz_files.join("\n") + 
+   //                                             ( tgz_files.size() ? "\n" : "" ) +
+   //                                             tar_files.join("\n") );
+
+   QStringList all_files;
+   {
+      QString qs =
+         tgz_files.join("\n") + 
+         ( tgz_files.size() ? "\n" : "" ) +
+         tar_files.join("\n")
+         ;
+      all_files = (qs ).split( "\n" , QString::SkipEmptyParts );
+   }
 
    for ( unsigned int i = 0; i < ( unsigned int ) all_files.size(); i++ )
    {
-      if ( !all_files[ i ].contains( "_out", false ) )
+      if ( !all_files[ i ].contains( "_out", Qt::CaseInsensitive ) )
       {
          files << all_files[ i ];
       }
@@ -143,11 +153,20 @@ unsigned int US_Hydrodyn_Cluster_Submit::update_files( bool set_lv_files )
          // qt3 QFileInfo::size() is incorrect uint is too small
          // so use fstat()
 
-         new Q3ListViewItem( lv_files, 
+#if QT_VERSION < 0x040000
+         new QTreeWidgetItem( lv_files, 
                             files[ i ], 
                             QString( " %1 " ).arg( QFileInfo( files[ i ] ).created().toString() ),
                             QString( " %1 bytes " ).arg( QFileInfo( files[ i ] ).size() )
                             );
+#else
+         lv_files->addTopLevelItem( new QTreeWidgetItem(
+                                                        QStringList()
+                                                        << files[ i ]
+                                                        << QString( " %1 " ).arg( QFileInfo( files[ i ] ).created().toString() )
+                                                        << QString( " %1 bytes " ).arg( QFileInfo( files[ i ] ).size() )
+                                                        ) );
+#endif
       }
    }
 
@@ -158,46 +177,56 @@ void US_Hydrodyn_Cluster_Submit::setupGUI()
 {
    int minHeight1 = 30;
 
-   lbl_title = new QLabel( tr( "Submit jobs to cluster" ), this);
-   lbl_title->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Raised);
+   lbl_title = new QLabel( us_tr( "Submit jobs to cluster" ), this);
+   lbl_title->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_title->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_title->setMinimumHeight(minHeight1);
    lbl_title->setPalette( PALET_FRAME );
    AUTFBACK( lbl_title );
    lbl_title->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
 
-   lbl_files = new QLabel(tr("Available jobs:"), this);
+   lbl_files = new QLabel(us_tr("Available jobs:"), this);
    lbl_files->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_files->setMinimumHeight(minHeight1);
    lbl_files->setPalette( PALET_LABEL );
    AUTFBACK( lbl_files );
    lbl_files->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1, QFont::Bold));
 
-   lv_files = new Q3ListView(this);
-   lv_files->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Raised);
+   lv_files = new QTreeWidget(this);
+   lv_files->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lv_files->setMinimumHeight(minHeight1 * 3);
    lv_files->setPalette( PALET_EDIT );
    AUTFBACK( lv_files );
    lv_files->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
    lv_files->setEnabled(true);
-   lv_files->setSelectionMode( Q3ListView::Multi );
+   lv_files->setSelectionMode( QAbstractItemView::MultiSelection );
 
-   lv_files->addColumn( tr( "Name" ) );
-   lv_files->addColumn( tr( "Created" ) );
-   lv_files->addColumn( tr( "Size" ) );
-   lv_files->addColumn( tr( "Status" ) );
+#if QT_VERSION < 0x040000
+   lv_files->addColumn( us_tr( "Name" ) );
+   lv_files->addColumn( us_tr( "Created" ) );
+   lv_files->addColumn( us_tr( "Size" ) );
+   lv_files->addColumn( us_tr( "Status" ) );
+#else
+   lv_files->setColumnCount( 4 );
+   lv_files->setHeaderLabels( QStringList()
+                              << us_tr( "Name" )
+                              << us_tr( "Created" )
+                              << us_tr( "Size" )
+                              << us_tr( "Status" )
+                              );
+#endif   
 
-   connect( lv_files, SIGNAL( selectionChanged() ), SLOT( update_enables() ) );
+   connect( lv_files, SIGNAL( itemSelectionChanged() ), SLOT( update_enables() ) );
 
-   lbl_systems = new QLabel(tr("Systems"), this);
+   lbl_systems = new QLabel(us_tr("Systems"), this);
    lbl_systems->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_systems->setMinimumHeight(minHeight1);
    lbl_systems->setPalette( PALET_LABEL );
    AUTFBACK( lbl_systems );
    lbl_systems->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1, QFont::Bold));
 
-   lb_systems = new Q3ListBox(this);
-   lb_systems->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Raised);
+   lb_systems = new QListWidget(this);
+   lb_systems->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lb_systems->setMinimumHeight(minHeight1 * 
                                 ( ((US_Hydrodyn_Cluster *)cluster_window)->cluster_systems.size() > 8 ?
                                   8 : ((US_Hydrodyn_Cluster *)cluster_window)->cluster_systems.size() ) );
@@ -212,95 +241,122 @@ void US_Hydrodyn_Cluster_Submit::setupGUI()
          it != ((US_Hydrodyn_Cluster *)cluster_window)->cluster_systems.end();
          it++ )
    {
-      lb_systems->insertItem( it->first );
+      lb_systems->addItem( it->first );
    }
 
-   lb_systems->setCurrentItem(0);
-   lb_systems->setSelected(0, false);
-   lb_systems->setSelectionMode( Q3ListBox::Single );
+   lb_systems->setCurrentItem( lb_systems->item(0) );
+   lb_systems->item(0)->setSelected( false);
+   lb_systems->setSelectionMode( QAbstractItemView::SingleSelection );
    // lb_systems->setColumnMode( QListBox::FitToWidth );
-   connect( lb_systems, SIGNAL( selectionChanged() ), SLOT( systems() ) );
+   connect( lb_systems, SIGNAL( itemSelectionChanged() ), SLOT( systems() ) );
 
-   pb_select_all = new QPushButton(tr("Select all jobs"), this);
+   pb_select_all = new QPushButton(us_tr("Select all jobs"), this);
    pb_select_all->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_select_all->setMinimumHeight(minHeight1);
    pb_select_all->setPalette( PALET_PUSHB );
    connect(pb_select_all, SIGNAL(clicked()), SLOT(select_all()));
 
-   pb_remove = new QPushButton(tr("Remove selected jobs"), this);
+   pb_remove = new QPushButton(us_tr("Remove selected jobs"), this);
    pb_remove->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_remove->setMinimumHeight(minHeight1);
    pb_remove->setPalette( PALET_PUSHB );
    connect(pb_remove, SIGNAL(clicked()), SLOT( remove() ));
 
-   pb_submit = new QPushButton(tr("Submit selected jobs"), this);
+   pb_submit = new QPushButton(us_tr("Submit selected jobs"), this);
    pb_submit->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_submit->setMinimumHeight(minHeight1);
    pb_submit->setPalette( PALET_PUSHB );
    connect(pb_submit, SIGNAL(clicked()), SLOT( submit()) );
    
-   progress = new Q3ProgressBar(this, "FTP Progress");
+   progress = new QProgressBar( this );
    progress->setMinimumHeight( minHeight1 );
    progress->setPalette( PALET_NORMAL );
    AUTFBACK( progress );
    progress->reset();
 
-   connect( &ftp, SIGNAL( dataTransferProgress ( int, int  ) ), progress, SLOT( setProgress        ( int, int  ) ) );
+   connect( &ftp, SIGNAL( dataTransferProgress ( int, int  ) ), progress, SLOT( setValue        ( int, int  ) ) );
    connect( &ftp, SIGNAL( stateChanged         ( int       ) ), this    , SLOT( ftp_stateChanged   ( int       ) ) );
    connect( &ftp, SIGNAL( commandStarted       ( int       ) ), this    , SLOT( ftp_commandStarted ( int       ) ) );
    connect( &ftp, SIGNAL( commandFinished      ( int, bool ) ), this    , SLOT( ftp_commandFinished( int, bool ) ) );
    connect( &ftp, SIGNAL( done                 ( bool      ) ), this    , SLOT( ftp_done           ( bool      ) ) );
 
-   editor = new Q3TextEdit(this);
+   editor = new QTextEdit(this);
    editor->setPalette( PALET_NORMAL );
    AUTFBACK( editor );
    editor->setReadOnly(true);
 
-#if defined(QT4) && defined(Q_WS_MAC)
+#if QT_VERSION < 0x040000
+# if defined(QT4) && defined(Q_WS_MAC)
    {
-      Q3PopupMenu * file = new Q3PopupMenu;
-      file->insertItem( tr("&Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
-      file->insertItem( tr("&Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
-      file->insertItem( tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
+ //      Q3PopupMenu * file = new Q3PopupMenu;
+      file->insertItem( us_tr("&Font"),  this, SLOT(update_font( )),    Qt::ALT+Qt::Key_F );
+      file->insertItem( us_tr("&Save"),  this, SLOT(save( )),    Qt::ALT+Qt::Key_S );
+      file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display( )),   Qt::ALT+Qt::Key_X );
 
       QMenuBar *menu = new QMenuBar( this );
       AUTFBACK( menu );
 
-      menu->insertItem(tr("&Messages"), file );
+      menu->insertItem(us_tr("&Messages"), file );
    }
-#else
-   Q3Frame *frame;
-   frame = new Q3Frame(this);
+# else
+   QFrame *frame;
+   frame = new QFrame(this);
    frame->setMinimumHeight(minHeight1);
 
-   m = new QMenuBar(frame, "menu" );
+   m = new QMenuBar( frame );    m->setObjectName( "menu" );
    m->setMinimumHeight(minHeight1 - 5);
    m->setPalette( PALET_NORMAL );
    AUTFBACK( m );
-   Q3PopupMenu * file = new Q3PopupMenu(editor);
-   m->insertItem( tr("&File"), file );
-   file->insertItem( tr("Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
-   file->insertItem( tr("Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
-   file->insertItem( tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
+ //   Q3PopupMenu * file = new Q3PopupMenu(editor);
+   m->insertItem( us_tr("&File"), file );
+   file->insertItem( us_tr("Font"),  this, SLOT(update_font( )),    Qt::ALT+Qt::Key_F );
+   file->insertItem( us_tr("Save"),  this, SLOT(save( )),    Qt::ALT+Qt::Key_S );
+   file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display( )),   Qt::ALT+Qt::Key_X );
+# endif
+#else
+   QFrame *frame;
+   frame = new QFrame(this);
+   frame->setMinimumHeight(minHeight1);
+
+   m = new QMenuBar( frame );    m->setObjectName( "menu" );
+   m->setMinimumHeight(minHeight1 - 5);
+   m->setPalette( PALET_NORMAL );
+   AUTFBACK( m );
+
+   {
+      QMenu * new_menu = m->addMenu( us_tr( "&File" ) );
+
+      QAction *qa1 = new_menu->addAction( us_tr( "Font" ) );
+      qa1->setShortcut( Qt::ALT+Qt::Key_F );
+      connect( qa1, SIGNAL(triggered()), this, SLOT( update_font() ) );
+
+      QAction *qa2 = new_menu->addAction( us_tr( "Save" ) );
+      qa2->setShortcut( Qt::ALT+Qt::Key_S );
+      connect( qa2, SIGNAL(triggered()), this, SLOT( save() ) );
+
+      QAction *qa3 = new_menu->addAction( us_tr( "Clear Display" ) );
+      qa3->setShortcut( Qt::ALT+Qt::Key_X );
+      connect( qa3, SIGNAL(triggered()), this, SLOT( clear_display() ) );
+   }
 #endif
 
-   editor->setWordWrap (Q3TextEdit::WidgetWidth);
+   editor->setWordWrapMode (QTextOption::WordWrap);
    editor->setMinimumHeight(100);
 
-   pb_stop = new QPushButton(tr("Stop"), this);
+   pb_stop = new QPushButton(us_tr("Stop"), this);
    pb_stop->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_stop->setMinimumHeight(minHeight1);
    pb_stop->setPalette( PALET_PUSHB );
    connect(pb_stop, SIGNAL(clicked()), SLOT(stop()));
    pb_stop->setEnabled( false );
 
-   pb_help = new QPushButton(tr("Help"), this);
+   pb_help = new QPushButton(us_tr("Help"), this);
    pb_help->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_help->setMinimumHeight(minHeight1);
    pb_help->setPalette( PALET_PUSHB );
    connect(pb_help, SIGNAL(clicked()), SLOT(help()));
 
-   pb_cancel = new QPushButton(tr("Close"), this);
+   pb_cancel = new QPushButton(us_tr("Close"), this);
    Q_CHECK_PTR(pb_cancel);
    pb_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_cancel->setMinimumHeight(minHeight1);
@@ -309,7 +365,7 @@ void US_Hydrodyn_Cluster_Submit::setupGUI()
 
    // build layout
 
-   Q3HBoxLayout *hbl_buttons1 = new Q3HBoxLayout( 0 );
+   QHBoxLayout * hbl_buttons1 = new QHBoxLayout(); hbl_buttons1->setContentsMargins( 0, 0, 0, 0 ); hbl_buttons1->setSpacing( 0 );
    hbl_buttons1->addSpacing( 4 );
    hbl_buttons1->addWidget ( pb_select_all);
    hbl_buttons1->addSpacing( 4 );
@@ -318,7 +374,7 @@ void US_Hydrodyn_Cluster_Submit::setupGUI()
    hbl_buttons1->addWidget ( pb_submit );
    hbl_buttons1->addSpacing( 4 );
 
-   Q3HBoxLayout *hbl_bottom = new Q3HBoxLayout( 0 );
+   QHBoxLayout * hbl_bottom = new QHBoxLayout(); hbl_bottom->setContentsMargins( 0, 0, 0, 0 ); hbl_bottom->setSpacing( 0 );
    hbl_bottom->addSpacing( 4 );
    hbl_bottom->addWidget ( pb_stop );
    hbl_bottom->addSpacing( 4 );
@@ -327,13 +383,13 @@ void US_Hydrodyn_Cluster_Submit::setupGUI()
    hbl_bottom->addWidget ( pb_cancel );
    hbl_bottom->addSpacing( 4 );
 
-   Q3BoxLayout *vbl_editor_group = new Q3VBoxLayout(0);
+   QBoxLayout *vbl_editor_group = new QVBoxLayout(0);
 #if !defined(QT4) || !defined(Q_WS_MAC)
    vbl_editor_group->addWidget(frame);
 #endif
    vbl_editor_group->addWidget(editor);
 
-   Q3VBoxLayout *background = new Q3VBoxLayout( this );
+   QVBoxLayout * background = new QVBoxLayout( this ); background->setContentsMargins( 0, 0, 0, 0 ); background->setSpacing( 0 );
    background->addSpacing( 4);
    background->addWidget ( lbl_title );
    background->addSpacing( 4 );
@@ -357,11 +413,11 @@ void US_Hydrodyn_Cluster_Submit::setupGUI()
 
 void US_Hydrodyn_Cluster_Submit::systems()
 {
-   for ( int i = 0; i < lb_systems->numRows(); i++ )
+   for ( int i = 0; i < lb_systems->count(); i++ )
    {
-      if ( lb_systems->isSelected(i) )
+      if ( lb_systems->item(i)->isSelected() )
       {
-         selected_system_name = lb_systems->text( i );
+         selected_system_name = lb_systems->item( i )->text( );
          cout << "run config systems for " << selected_system_name << "\n";
          
          if ( ((US_Hydrodyn_Cluster *)cluster_window)->cluster_systems.count( selected_system_name ) )
@@ -388,14 +444,14 @@ void US_Hydrodyn_Cluster_Submit::systems()
                ftp_url_port    .replace( QRegExp( "^.*:" ), "" );
             } else {
                QMessageBox::warning( this, 
-                                     tr( "US-SOMO: Cluster config" ), 
-                                     QString( tr( "The system %1 does not seem to have sufficient configuration information defined" ) ).arg( lb_systems->text( i ) ) );
+                                     us_tr( "US-SOMO: Cluster config" ), 
+                                     QString( us_tr( "The system %1 does not seem to have sufficient configuration information defined" ) ).arg( lb_systems->item( i )->text() ) );
                lb_systems->clearSelection();
             } 
          } else {
             QMessageBox::warning( this, 
-                                  tr( "US-SOMO: Cluster config" ), 
-                                  QString( tr( "The system %1 does not seem to have any information" ) ).arg( lb_systems->text( i ) ) );
+                                  us_tr( "US-SOMO: Cluster config" ), 
+                                  QString( us_tr( "The system %1 does not seem to have any information" ) ).arg( lb_systems->item( i )->text() ) );
             lb_systems->clearSelection();
          }            
       }
@@ -424,7 +480,7 @@ void US_Hydrodyn_Cluster_Submit::closeEvent(QCloseEvent *e)
    }
    if ( system_proc_active )
    {
-      system_proc->tryTerminate();
+      system_proc->terminate();
       QTimer::singleShot( 2500, system_proc, SLOT( kill() ) );
    }
    global_Xpos -= 30;
@@ -454,41 +510,41 @@ void US_Hydrodyn_Cluster_Submit::update_font()
 void US_Hydrodyn_Cluster_Submit::save()
 {
    QString fn;
-   fn = QFileDialog::getSaveFileName( this , caption() , QString::null , QString::null );
+   fn = QFileDialog::getSaveFileName( this , windowTitle() , QString::null , QString::null );
    if(!fn.isEmpty() )
    {
-      QString text = editor->text();
+      QString text = editor->toPlainText();
       QFile f( fn );
       if ( !f.open( QIODevice::WriteOnly | QIODevice::Text) )
       {
          return;
       }
-      Q3TextStream t( &f );
+      QTextStream t( &f );
       t << text;
       f.close();
-      editor->setModified( false );
-      setCaption( fn );
+ //      editor->setModified( false );
+      setWindowTitle( fn );
    }
 }
 
 void US_Hydrodyn_Cluster_Submit::editor_msg( QString color, QString msg )
 {
-   QColor save_color = editor->color();
-   editor->setColor(color);
+   QColor save_color = editor->textColor();
+   editor->setTextColor(color);
    editor->append(msg);
-   editor->setColor(save_color);
-   editor->scrollToBottom();
+   editor->setTextColor(save_color);
+   editor->verticalScrollBar()->setValue(editor->verticalScrollBar()->maximum());
 }
    
 void US_Hydrodyn_Cluster_Submit::update_enables()
 {
    bool any_systems = false;
 
-   for ( int i = 0; i < lb_systems->numRows(); i++ )
+   for ( int i = 0; i < lb_systems->count(); i++ )
    {
-      if ( lb_systems->isSelected( i ) )
+      if ( lb_systems->item( i )->isSelected() )
       {
-         cout << lb_systems->text( i ) << endl;
+         cout << lb_systems->item( i )->text( ) << endl;
          any_systems = true;
       }
    }
@@ -504,17 +560,7 @@ void US_Hydrodyn_Cluster_Submit::update_enables()
 
    if ( !running && !disable_updates )
    {
-      bool any_selected = false;
-      Q3ListViewItem *lvi = lv_files->firstChild();
-      if ( lvi )
-      {
-         do {
-            if ( lvi->isSelected() )
-            {
-               any_selected = true;
-            }
-         } while ( ( lvi = lvi->nextSibling() ) );
-      }
+      bool any_selected = US_Static::lv_any_selected( lv_files );
       pb_remove->setEnabled( any_selected );
       pb_submit->setEnabled( any_selected && any_systems );
    }
@@ -522,26 +568,8 @@ void US_Hydrodyn_Cluster_Submit::update_enables()
 
 void US_Hydrodyn_Cluster_Submit::select_all()
 {
-   bool any_not_selected = false;
-   Q3ListViewItem *lvi = lv_files->firstChild();
-   if ( lvi )
-   {
-      do {
-         if ( !lvi->isSelected() )
-         {
-            any_not_selected = true;
-         }
-      } while ( ( lvi = lvi->nextSibling() ) );
-   }
-
    disable_updates = true;
-   lvi = lv_files->firstChild();
-   if ( lvi )
-   {
-      do {
-         lv_files->setSelected( lvi, any_not_selected );
-      } while ( ( lvi = lvi->nextSibling() ) );
-   }
+   US_Static::lv_select_all_or_none( lv_files );
    disable_updates = false;
    update_enables();
 }
@@ -552,7 +580,7 @@ bool US_Hydrodyn_Cluster_Submit::submit_xml( QString file, QString &xml )
    cout << "submit_xml\n";
    if ( !QFile::exists( file ) )
    {
-      errormsg = QString( tr( "submit_xml: File %1 does not exist" ) ).arg( file );
+      errormsg = QString( us_tr( "submit_xml: File %1 does not exist" ) ).arg( file );
       return false;
    }
 
@@ -564,7 +592,7 @@ bool US_Hydrodyn_Cluster_Submit::submit_xml( QString file, QString &xml )
       int result = ust.list( file, tar_list, true );
       if ( result != TAR_OK )
       {
-         errormsg = QString( tr( "submit_xml: Listing tar archive %1 failed %2" ) )
+         errormsg = QString( us_tr( "submit_xml: Listing tar archive %1 failed %2" ) )
             .arg( file )
             .arg( ust.explain( result ) );
          return false;
@@ -573,33 +601,33 @@ bool US_Hydrodyn_Cluster_Submit::submit_xml( QString file, QString &xml )
 
    if ( !selected_system[ "corespernode" ].toUInt() )
    {
-      errormsg = QString( tr( "submit_xml: The selected system %1 does not have a positive cores per node defined" ) )
+      errormsg = QString( us_tr( "submit_xml: The selected system %1 does not have a positive cores per node defined" ) )
          .arg( selected_system_name );
       return false;
    }
 
    if ( !selected_system[ "maxcores" ].toUInt() )
    {
-      errormsg = QString( tr( "submit_xml: The selected system %1 does not have a positive max cores defined" ) )
+      errormsg = QString( us_tr( "submit_xml: The selected system %1 does not have a positive max cores defined" ) )
          .arg( selected_system_name );
       return false;
    }
 
    if ( !selected_system[ "runtime" ].toUInt() )
    {
-      errormsg = QString( tr( "submit_xml: The selected system %1 does not have a positive run time defined" ) )
+      errormsg = QString( us_tr( "submit_xml: The selected system %1 does not have a positive run time defined" ) )
          .arg( selected_system_name );
       return false;
    }
 
-   unsigned int common_count = ( unsigned int ) tar_list.grep( QRegExp( "^common_" ) ).size();
+   unsigned int common_count = ( unsigned int ) tar_list.filter( QRegExp( "^common_" ) ).size();
 
 
    unsigned int job_count = ( unsigned int ) tar_list.size() - common_count - 1;
    
    {
       QRegExp rx( "^(bfnb|bfnbpm|oned|best)_p(\\d+)_" );
-      if ( rx.search( file ) != -1 )
+      if ( rx.indexIn( file ) != -1 )
       {
          job_count = rx.cap( 2 ).toUInt();
          cout << QString( "host count, %1\n" ).arg( job_count );
@@ -682,7 +710,7 @@ bool US_Hydrodyn_Cluster_Submit::submit_xml( QString file, QString &xml )
    cout << xml << endl;
    if ( !submit_active )
    {
-      errormsg = tr( "Stopped by user request" );
+      errormsg = us_tr( "Stopped by user request" );
       update_files();
       update_enables();
       return false;
@@ -703,7 +731,7 @@ void US_Hydrodyn_Cluster_Submit::stop()
    }
    if ( system_proc_active )
    {
-      system_proc->tryTerminate();
+      system_proc->terminate();
       QTimer::singleShot( 2500, system_proc, SLOT( kill() ) );
    }
    update_enables();
@@ -717,7 +745,8 @@ void US_Hydrodyn_Cluster_Submit::submit()
    jobs.clear();
    
    QStringList qsl_submit;
-   Q3ListViewItem *lvi = lv_files->firstChild();
+#if QT_VERSION < 0x040000
+   QTreeWidgetItem *lvi = lv_files->firstChild();
    if ( lvi )
    {
       do {
@@ -729,6 +758,19 @@ void US_Hydrodyn_Cluster_Submit::submit()
       
       emit process_next();
    }
+#else
+   QTreeWidgetItemIterator it( lv_files, QTreeWidgetItemIterator::Selected );
+   QTreeWidgetItem *lvi;
+   if ( *it ) {
+      while ( *it ) {
+         lvi = *it;
+         jobs[ lvi ] = "prepare stage";
+         ++it;
+      }
+      
+      emit process_next();
+   }
+#endif
 }
 
 void US_Hydrodyn_Cluster_Submit::process_next()
@@ -750,7 +792,7 @@ void US_Hydrodyn_Cluster_Submit::process_next()
    process_list();
 
    bool ok = true;
-   for ( map < Q3ListViewItem *, QString >::iterator it = jobs.begin();
+   for ( map < QTreeWidgetItem *, QString >::iterator it = jobs.begin();
          it != jobs.end();
          it++ )
    {
@@ -786,9 +828,9 @@ void US_Hydrodyn_Cluster_Submit::process_next()
 
    if ( ok )
    {
-      editor_msg( "black", tr( "submission complete" ) );
+      editor_msg( "black", us_tr( "submission complete" ) );
    } else {
-      editor_msg( "red", tr( "submission had errors" ) );
+      editor_msg( "red", us_tr( "submission had errors" ) );
    }
       
    submit_active = false;
@@ -796,8 +838,8 @@ void US_Hydrodyn_Cluster_Submit::process_next()
    if ( !update_files() )
    {
       QMessageBox::information( this, 
-                                tr("US-SOMO: Cluster Jobs"),
-                                tr("No further unsubmitted jobs found"),
+                                us_tr("US-SOMO: Cluster Jobs"),
+                                us_tr("No further unsubmitted jobs found"),
                                 0 );
       close();
    }
@@ -808,14 +850,14 @@ void US_Hydrodyn_Cluster_Submit::process_next()
 void US_Hydrodyn_Cluster_Submit::process_prepare_stage()
 {
    editor_msg( "black", QString( "preparing stage %1" ).arg( next_to_process->text( 0 ) ) );
-   next_to_process->setText( 3, tr( "Preparing to stage" ) );
+   next_to_process->setText( 3, us_tr( "Preparing to stage" ) );
    cout << "process prepare stage\n";
    if ( prepare_stage( next_to_process->text( 0 ) ) )
    {
       jobs[ next_to_process ] = "stage";
    } else {
       editor_msg( "red", errormsg );
-      next_to_process->setText( 3, tr( "Error: Prepare to stage failed" ) );
+      next_to_process->setText( 3, us_tr( "Error: Prepare to stage failed" ) );
       jobs[ next_to_process ] = "prepare stage failed";
    }
    emit process_next();
@@ -824,14 +866,14 @@ void US_Hydrodyn_Cluster_Submit::process_prepare_stage()
 void US_Hydrodyn_Cluster_Submit::process_stage()
 {
    editor_msg( "black", QString( "staging %1" ).arg( next_to_process->text( 0 ) ) );
-   next_to_process->setText( 3, tr( "Staging" ) );
+   next_to_process->setText( 3, us_tr( "Staging" ) );
    cout << "process stage\n";
    if ( stage( next_to_process->text( 0 ) ) )
    {
       jobs[ next_to_process ] = "submit";
    } else {
       editor_msg( "red", errormsg );
-      next_to_process->setText( 3, tr( "Error: Staging failed" ) );
+      next_to_process->setText( 3, us_tr( "Error: Staging failed" ) );
       jobs[ next_to_process ] = "stage failed";
    }
    emit process_next();
@@ -840,14 +882,14 @@ void US_Hydrodyn_Cluster_Submit::process_stage()
 void US_Hydrodyn_Cluster_Submit::process_submit()
 {
    editor_msg( "black", QString( "submitting %1" ).arg( next_to_process->text( 0 ) ) );
-   next_to_process->setText( 3, tr( "Submitting" ) );
+   next_to_process->setText( 3, us_tr( "Submitting" ) );
    cout << "process submit\n";
    if ( job_submit( next_to_process->text( 0 ) ) )
    {
       jobs[ next_to_process ] = "move";
    } else {
       editor_msg( "red", errormsg );
-      next_to_process->setText( 3, tr( "Error: Submit failed" ) );
+      next_to_process->setText( 3, us_tr( "Error: Submit failed" ) );
       jobs[ next_to_process ] = "submit failed";
    }
    emit process_next();
@@ -855,16 +897,16 @@ void US_Hydrodyn_Cluster_Submit::process_submit()
 
 void US_Hydrodyn_Cluster_Submit::process_move()
 {
-   next_to_process->setText( 3, tr( "Moving to submitted" ) );
+   next_to_process->setText( 3, us_tr( "Moving to submitted" ) );
    editor_msg( "black", QString( "move %1 to submitted/" ).arg( next_to_process->text( 0 ) ) );
    cout << "process move\n";
    if ( move_file( next_to_process->text( 0 ) ) )
    {
-      next_to_process->setText( 3, tr( "Moved to submitted" ) );
+      next_to_process->setText( 3, us_tr( "Moved to submitted" ) );
       jobs[ next_to_process ] = "complete";
    } else {
       editor_msg( "red", errormsg );
-      next_to_process->setText( 3, tr( "Error: Moving to submitted failed" ) );
+      next_to_process->setText( 3, us_tr( "Error: Moving to submitted failed" ) );
       jobs[ next_to_process ] = "move failed";
    }
    emit process_next();
@@ -877,7 +919,7 @@ bool US_Hydrodyn_Cluster_Submit::move_file( QString file )
 
    if ( !QDir::setCurrent( pkg_dir ) )
    {
-      errormsg = QString( tr( "move: can not change to directory %1" ) ).arg( pkg_dir );
+      errormsg = QString( us_tr( "move: can not change to directory %1" ) ).arg( pkg_dir );
       return false;
    }
 
@@ -891,7 +933,7 @@ bool US_Hydrodyn_Cluster_Submit::move_file( QString file )
 
 void US_Hydrodyn_Cluster_Submit::process_list()
 {
-   for ( map < Q3ListViewItem *, QString >::iterator it = jobs.begin();
+   for ( map < QTreeWidgetItem *, QString >::iterator it = jobs.begin();
          it != jobs.end();
          it++ )
    {
@@ -919,49 +961,69 @@ bool US_Hydrodyn_Cluster_Submit::system_cmd( QStringList cmd )
 
    if ( !cmd.size() )
    {
-      errormsg = tr( "system_cmd called with no command" );
+      errormsg = us_tr( "system_cmd called with no command" );
       return false;
    }
 
-   system_proc = new Q3Process( this );
+   system_proc = new QProcess( this );
 
+#if QT_VERSION < 0x040000
    system_proc->setArguments( cmd );
+#else
+   QString prog = cmd.front();
+   cmd.pop_front();
+   QStringList args = cmd;
+#endif
 
    system_proc_active = true;
 
-   connect( system_proc, SIGNAL(readyReadStdout()), this, SLOT(system_proc_readFromStdout()) );
-   connect( system_proc, SIGNAL(readyReadStderr()), this, SLOT(system_proc_readFromStderr()) );
-   connect( system_proc, SIGNAL(processExited()),   this, SLOT(system_proc_processExited()) );
-   connect( system_proc, SIGNAL(launchFinished()),  this, SLOT(system_proc_launchFinished()) );
+   connect( system_proc, SIGNAL(readyReadStandardOutput()), this, SLOT(system_proc_readFromStdout()) );
+   connect( system_proc, SIGNAL(readyReadStandardError()), this, SLOT(system_proc_readFromStderr()) );
+   connect( system_proc, SIGNAL(finished( int, QProcess::ExitStatus )),   this, SLOT(system_proc_finished( int, QProcess::ExitStatus )) );
+   connect( system_proc, SIGNAL(started()),  this, SLOT(system_proc_started()) );
 
+
+#if QT_VERSION < 0x040000
    return system_proc->start();
+#else
+   system_proc->start( prog, args );
+   return system_proc->waitForStarted();
+#endif
 }
 
 void US_Hydrodyn_Cluster_Submit::system_proc_readFromStdout()
 {
+#if QT_VERSION < 0x040000
    while ( system_proc->canReadLineStdout() )
    {
       editor_msg("brown", system_proc->readLineStdout());
    }
+#else
+   editor_msg( "brown", QString( system_proc->readAllStandardOutput() ) );
+#endif   
 }
    
 void US_Hydrodyn_Cluster_Submit::system_proc_readFromStderr()
 {
+#if QT_VERSION < 0x040000
    while ( system_proc->canReadLineStderr() )
    {
       editor_msg("red", system_proc->readLineStderr());
    }
+#else
+   editor_msg( "red", QString( system_proc->readAllStandardError() ) );
+#endif   
 }
    
-void US_Hydrodyn_Cluster_Submit::system_proc_processExited()
+void US_Hydrodyn_Cluster_Submit::system_proc_finished( int, QProcess::ExitStatus )
 {
    cout << "system_proc exit\n";
    system_proc_readFromStderr();
    system_proc_readFromStdout();
 
-   disconnect( system_proc, SIGNAL(readyReadStdout()), 0, 0);
-   disconnect( system_proc, SIGNAL(readyReadStderr()), 0, 0);
-   disconnect( system_proc, SIGNAL(processExited()), 0, 0);
+   disconnect( system_proc, SIGNAL(readyReadStandardOutput()), 0, 0);
+   disconnect( system_proc, SIGNAL(readyReadStandardError()), 0, 0);
+   disconnect( system_proc, SIGNAL(finished( int, QProcess::ExitStatus )), 0, 0);
 
    // editor->append("System_Proc finished.");
    system_proc_active = false;
@@ -969,10 +1031,10 @@ void US_Hydrodyn_Cluster_Submit::system_proc_processExited()
    emit process_next();
 }
    
-void US_Hydrodyn_Cluster_Submit::system_proc_launchFinished()
+void US_Hydrodyn_Cluster_Submit::system_proc_started()
 {
    editor_msg("brown", "System_Proc launch exited");
-   disconnect( system_proc, SIGNAL(launchFinished()), 0, 0);
+   disconnect( system_proc, SIGNAL(started()), 0, 0);
 }
 
 bool US_Hydrodyn_Cluster_Submit::prepare_stage( QString file )
@@ -980,13 +1042,13 @@ bool US_Hydrodyn_Cluster_Submit::prepare_stage( QString file )
    errormsg = "";
    if ( !QDir::setCurrent( pkg_dir ) )
    {
-      errormsg = QString( tr( "stage: can not change to directory %1" ) ).arg( pkg_dir );
+      errormsg = QString( us_tr( "stage: can not change to directory %1" ) ).arg( pkg_dir );
       return false;
    }
 
    if ( !QFile::exists( file ) )
    {
-      errormsg = QString( tr( "stage: can not find file %1" ) ).arg( file );
+      errormsg = QString( us_tr( "stage: can not find file %1" ) ).arg( file );
       return false;
    }
 
@@ -1047,13 +1109,13 @@ bool US_Hydrodyn_Cluster_Submit::stage( QString file )
    errormsg = "";
    if ( !QDir::setCurrent( pkg_dir ) )
    {
-      errormsg = QString( tr( "stage: can not change to directory %1" ) ).arg( pkg_dir );
+      errormsg = QString( us_tr( "stage: can not change to directory %1" ) ).arg( pkg_dir );
       return false;
    }
 
    if ( !QFile::exists( file ) )
    {
-      errormsg = QString( tr( "stage: can not find file %1" ) ).arg( file );
+      errormsg = QString( us_tr( "stage: can not find file %1" ) ).arg( file );
       return false;
    }
 
@@ -1061,7 +1123,7 @@ bool US_Hydrodyn_Cluster_Submit::stage( QString file )
    ftp_file = new QFile( file );
    if ( !ftp_file->open( QIODevice::ReadOnly ) )
    {
-      errormsg = QString( tr( "stage: can not open file %1" ) ).arg( file );
+      errormsg = QString( us_tr( "stage: can not open file %1" ) ).arg( file );
       delete ftp_file;
       ftp_file = ( QFile * ) 0;
       return false;
@@ -1114,17 +1176,7 @@ bool US_Hydrodyn_Cluster_Submit::stage( QString file )
 
 void US_Hydrodyn_Cluster_Submit::remove()
 {
-   bool any_selected = false;
-   Q3ListViewItem *lvi = lv_files->firstChild();
-   if ( lvi )
-   {
-      do {
-         if ( lvi->isSelected() )
-         {
-            any_selected = true;
-         }
-      } while ( ( lvi = lvi->nextSibling() ) );
-   }
+   bool any_selected = US_Static::lv_any_selected( lv_files );
 
    if ( !any_selected )
    {
@@ -1133,23 +1185,24 @@ void US_Hydrodyn_Cluster_Submit::remove()
 
    if ( QMessageBox::question(
                               this,
-                              tr("US-SOMO: Cluster Jobs: Remove"),
-                              tr( "The jobs will be permenantly removed.\n"
+                              us_tr("US-SOMO: Cluster Jobs: Remove"),
+                              us_tr( "The jobs will be permenantly removed.\n"
                                   "Are you sure? " ),
-                              tr("&Yes"), tr("&No"),
+                              us_tr("&Yes"), us_tr("&No"),
                               QString::null, 0, 1 ) )
    {
-      editor_msg( "black", tr( "Remove canceled by user" ) );
+      editor_msg( "black", us_tr( "Remove canceled by user" ) );
       return;
    }
 
    if ( !QDir::setCurrent( pkg_dir ) )
    {
-      editor_msg( "red" , QString( tr( "can not change to directory %1" ) ).arg( pkg_dir ) );
+      editor_msg( "red" , QString( us_tr( "can not change to directory %1" ) ).arg( pkg_dir ) );
       return;
    }
 
-   lvi = lv_files->firstChild();
+#if QT_VERSION < 0x040000
+   QTreeWidgetItem *lvi = lv_files->firstChild();
 
    if ( lvi )
    {
@@ -1158,18 +1211,32 @@ void US_Hydrodyn_Cluster_Submit::remove()
          {
             if ( !QFile::remove( lvi->text( 0 ) ) )
             {
-               editor_msg( "red" , QString( tr( "can not remove file %1" ) ).arg( lvi->text( 0 ) ) );
+               editor_msg( "red" , QString( us_tr( "can not remove file %1" ) ).arg( lvi->text( 0 ) ) );
             } else {
-               editor_msg( "black" , QString( tr( "Removed file: %1" ) ).arg( lvi->text( 0 ) ) );
+               editor_msg( "black" , QString( us_tr( "Removed file: %1" ) ).arg( lvi->text( 0 ) ) );
             }
          }
       } while ( ( lvi = lvi->nextSibling() ) );
    }
+#else
+   QTreeWidgetItemIterator it( lv_files, QTreeWidgetItemIterator::Selected );
+   QTreeWidgetItem *lvi;
+   while ( *it ) {
+      lvi = *it;
+      if ( !QFile::remove( lvi->text( 0 ) ) )
+      {
+         editor_msg( "red" , QString( us_tr( "can not remove file %1" ) ).arg( lvi->text( 0 ) ) );
+      } else {
+         editor_msg( "black" , QString( us_tr( "Removed file: %1" ) ).arg( lvi->text( 0 ) ) );
+      }
+      ++it;
+   }
+#endif
    if ( !update_files() )
    {
       QMessageBox::information( this, 
-                                tr("US-SOMO: Cluster Jobs"),
-                                tr("No further unsubmitted jobs found"),
+                                us_tr("US-SOMO: Cluster Jobs"),
+                                us_tr("No further unsubmitted jobs found"),
                                 0 );
       close();
    }
@@ -1187,20 +1254,20 @@ bool US_Hydrodyn_Cluster_Submit::send_http_post( QString xml )
    current_http_response = "";
 
    connect( &submit_http, SIGNAL( stateChanged ( int ) ), this, SLOT( http_stateChanged ( int ) ) );
-   connect( &submit_http, SIGNAL( responseHeaderReceived ( const Q3HttpResponseHeader & ) ), this, SLOT( http_responseHeaderReceived ( const Q3HttpResponseHeader & ) ) );
-   connect( &submit_http, SIGNAL( readyRead ( const Q3HttpResponseHeader & ) ), this, SLOT( http_readyRead ( const Q3HttpResponseHeader & ) ) );
+   connect( &submit_http, SIGNAL( responseHeaderReceived ( const QHttpResponseHeader & ) ), this, SLOT( http_responseHeaderReceived ( const QHttpResponseHeader & ) ) );
+   connect( &submit_http, SIGNAL( readyRead ( const QHttpResponseHeader & ) ), this, SLOT( http_readyRead ( const QHttpResponseHeader & ) ) );
    connect( &submit_http, SIGNAL( dataSendProgress ( int, int ) ), this, SLOT( http_dataSendProgress ( int, int ) ) );
    connect( &submit_http, SIGNAL( dataReadProgress ( int, int ) ), this, SLOT( http_dataReadProgress ( int, int ) ) );
    connect( &submit_http, SIGNAL( requestStarted ( int ) ), this, SLOT( http_requestStarted ( int ) ) );
    connect( &submit_http, SIGNAL( requestFinished ( int, bool ) ), this, SLOT( http_requestFinished ( int, bool ) ) );
    connect( &submit_http, SIGNAL( done ( bool ) ), this, SLOT( http_done ( bool ) ) );
 
-   Q3HttpRequestHeader header("POST", "/ogce-rest/job/runjob/async" );
+   QHttpRequestHeader header("POST", "/ogce-rest/job/runjob/async" );
    header.setValue( "Host", submit_url_host );
    header.setContentType( "application/xml" );
    submit_http.setHost( submit_url_host, submit_url_port.toUInt() );
    // without the qba below, QHttp:request will send a null
-   QByteArray qba = xml.utf8();
+   QByteArray qba = xml.toUtf8();
    qba.resize( qba.size() - 1 );
    submit_http.request( header, qba );
 
@@ -1212,12 +1279,12 @@ void US_Hydrodyn_Cluster_Submit::http_stateChanged ( int /* estate */ )
    // editor_msg( "blue", QString( "http state %1" ).arg( state ) );
 }
 
-void US_Hydrodyn_Cluster_Submit::http_responseHeaderReceived ( const Q3HttpResponseHeader & resp )
+void US_Hydrodyn_Cluster_Submit::http_responseHeaderReceived ( const QHttpResponseHeader & resp )
 {
    cout << resp.reasonPhrase() << endl;
 }
 
-void US_Hydrodyn_Cluster_Submit::http_readyRead( const Q3HttpResponseHeader & resp )
+void US_Hydrodyn_Cluster_Submit::http_readyRead( const QHttpResponseHeader & resp )
 {
    cout << "http: readyRead\n";
    cout << resp.reasonPhrase() << endl;
@@ -1267,8 +1334,8 @@ void US_Hydrodyn_Cluster_Submit::http_done ( bool error )
 {
    cout << "http: done " << error << "\n";
    disconnect( &submit_http, SIGNAL( stateChanged ( int ) ), 0, 0 );
-   disconnect( &submit_http, SIGNAL( responseHeaderReceived ( const Q3HttpResponseHeader & ) ), 0, 0 );
-   disconnect( &submit_http, SIGNAL( readyRead ( const Q3HttpResponseHeader & ) ), 0, 0 );
+   disconnect( &submit_http, SIGNAL( responseHeaderReceived ( const QHttpResponseHeader & ) ), 0, 0 );
+   disconnect( &submit_http, SIGNAL( readyRead ( const QHttpResponseHeader & ) ), 0, 0 );
    disconnect( &submit_http, SIGNAL( dataSendProgress ( int, int ) ), 0, 0 );
    disconnect( &submit_http, SIGNAL( dataReadProgress ( int, int ) ), 0, 0 );
    disconnect( &submit_http, SIGNAL( requestStarted ( int ) ), 0, 0 );
@@ -1280,49 +1347,49 @@ void US_Hydrodyn_Cluster_Submit::http_done ( bool error )
    {
       switch( submit_http.error() )
       {
-      case Q3Http::NoError :
-         current_http_error = tr( "No error occurred." );
+      case QHttp::NoError :
+         current_http_error = us_tr( "No error occurred." );
          break;
 
-      case Q3Http::HostNotFound:
-         current_http_error = tr( "The host name lookup failed." );
+      case QHttp::HostNotFound:
+         current_http_error = us_tr( "The host name lookup failed." );
          break;
 
-      case Q3Http::ConnectionRefused:
-         current_http_error = tr( "The server refused the connection." );
+      case QHttp::ConnectionRefused:
+         current_http_error = us_tr( "The server refused the connection." );
          break;
 
-      case Q3Http::UnexpectedClose:
-         current_http_error = tr( "The server closed the connection unexpectedly." );
+      case QHttp::UnexpectedClose:
+         current_http_error = us_tr( "The server closed the connection unexpectedly." );
          break;
 
-      case Q3Http::InvalidResponseHeader:
-         current_http_error = tr( "The server sent an invalid response header." );
+      case QHttp::InvalidResponseHeader:
+         current_http_error = us_tr( "The server sent an invalid response header." );
          break;
 
-      case Q3Http::WrongContentLength:
-         current_http_error = tr( "The client could not read the content correctly because an error with respect to the content length occurred." );
+      case QHttp::WrongContentLength:
+         current_http_error = us_tr( "The client could not read the content correctly because an error with respect to the content length occurred." );
          break;
 
-      case Q3Http::Aborted:
-         current_http_error = tr( "The request was aborted with abort()." );
+      case QHttp::Aborted:
+         current_http_error = us_tr( "The request was aborted with abort()." );
          break;
 
-      case Q3Http::UnknownError:
+      case QHttp::UnknownError:
       default:
-         current_http_error = tr( "Unknown Error." );
+         current_http_error = us_tr( "Unknown Error." );
          break;
       }
       cout << current_http_error << endl;
       QMessageBox::warning( this,
-                            tr("US-SOMO: Cluster Config"), 
-                            tr( QString( "There was a error with the management server:\n%1" )
+                            us_tr("US-SOMO: Cluster Config"), 
+                            us_tr( QString( "There was a error with the management server:\n%1" )
                                 .arg( current_http_error ) ),
                             QMessageBox::Ok,
                             QMessageBox::NoButton
                             );
       submit_active = false;
-      editor_msg( "red", tr( "Error: " ) + current_http_error );
+      editor_msg( "red", us_tr( "Error: " ) + current_http_error );
       update_enables();
       return;
    }
@@ -1332,27 +1399,27 @@ void US_Hydrodyn_Cluster_Submit::http_done ( bool error )
 void US_Hydrodyn_Cluster_Submit::ftp_stateChanged ( int state )
 {
    cout << "ftp state changed: " << state << endl;
-   if ( state == Q3Ftp::Unconnected )
+   if ( state == QFtp::Unconnected )
    {
       cout << "- There is no connection to the host. \n";
    }
-   if ( state == Q3Ftp::HostLookup )
+   if ( state == QFtp::HostLookup )
    {
       cout << "- A host name lookup is in progress. \n";
    }
-   if ( state == Q3Ftp::Connecting )
+   if ( state == QFtp::Connecting )
    {
       cout << "- An attempt to connect to the host is in progress. \n";
    }
-   if ( state == Q3Ftp::Connected )
+   if ( state == QFtp::Connected )
    {
       cout << "- Connection to the host has been achieved. \n";
    }
-   if ( state == Q3Ftp::LoggedIn )
+   if ( state == QFtp::LoggedIn )
    {
       cout << "- Connection and user login have been achieved. \n";
    }
-   if ( state == Q3Ftp::Closing )
+   if ( state == QFtp::Closing )
    {
       cout << "- The connection is closing down, but it is not yet closed.\n";
    }

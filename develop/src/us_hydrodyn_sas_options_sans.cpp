@@ -2,10 +2,10 @@
 #include "../include/us_hydrodyn_asa.h"
 #include "../include/us_hydrodyn.h"
 //Added by qt3to4:
-#include <Q3HBoxLayout>
+#include <QHBoxLayout>
 #include <QCloseEvent>
-#include <Q3GridLayout>
-#include <Q3Frame>
+#include <QGridLayout>
+#include <QFrame>
 #include <QLabel>
 
 #define SLASH "/"
@@ -14,7 +14,7 @@
 #  define SLASH "\\"
 #endif
 
-US_Hydrodyn_SasOptionsSans::US_Hydrodyn_SasOptionsSans(struct saxs_options *saxs_options, bool *sas_options_sans_widget, void *us_hydrodyn, QWidget *p, const char *name) : Q3Frame(p, name)
+US_Hydrodyn_SasOptionsSans::US_Hydrodyn_SasOptionsSans(struct saxs_options *saxs_options, bool *sas_options_sans_widget, void *us_hydrodyn, QWidget *p, const char *name) : QFrame( p )
 {
    this->sas_options_sans_widget = sas_options_sans_widget;
    this->saxs_options = saxs_options;
@@ -22,7 +22,7 @@ US_Hydrodyn_SasOptionsSans::US_Hydrodyn_SasOptionsSans(struct saxs_options *saxs
    *sas_options_sans_widget = true;
    USglobal=new US_Config();
    setPalette( PALET_FRAME );
-   setCaption(tr("US-SOMO SANS Computation Options"));
+   setWindowTitle(us_tr("US-SOMO SANS Computation Options"));
    setupGUI();
    global_Xpos += 30;
    global_Ypos += 30;
@@ -39,15 +39,15 @@ void US_Hydrodyn_SasOptionsSans::setupGUI()
    started_in_expert_mode = U_EXPT;
 
    int minHeight1 = 30;
-   lbl_info = new QLabel(tr("US-SOMO SANS Computation Options:"), this);
-   lbl_info->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Raised);
+   lbl_info = new QLabel(us_tr("US-SOMO SANS Computation Options:"), this);
+   lbl_info->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_info->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_info->setMinimumHeight(minHeight1);
    lbl_info->setPalette( PALET_FRAME );
    AUTFBACK( lbl_info );
    lbl_info->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
 
-   lbl_h_scat_len = new QLabel(tr(" H scattering length (*10^-12 cm): "), this);
+   lbl_h_scat_len = new QLabel(us_tr(" H scattering length (*10^-12 cm): "), this);
    lbl_h_scat_len->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_h_scat_len->setMinimumHeight(minHeight1);
    lbl_h_scat_len->setPalette( PALET_LABEL );
@@ -66,7 +66,7 @@ void US_Hydrodyn_SasOptionsSans::setupGUI()
    AUTFBACK( cnt_h_scat_len );
    connect(cnt_h_scat_len, SIGNAL(valueChanged(double)), SLOT(update_h_scat_len(double)));
 
-   lbl_d_scat_len = new QLabel(tr(" D scattering length (*10^-12 cm): "), this);
+   lbl_d_scat_len = new QLabel(us_tr(" D scattering length (*10^-12 cm): "), this);
    lbl_d_scat_len->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_d_scat_len->setMinimumHeight(minHeight1);
    lbl_d_scat_len->setPalette( PALET_LABEL );
@@ -85,7 +85,7 @@ void US_Hydrodyn_SasOptionsSans::setupGUI()
    AUTFBACK( cnt_d_scat_len );
    connect(cnt_d_scat_len, SIGNAL(valueChanged(double)), SLOT(update_d_scat_len(double)));
 
-   lbl_h2o_scat_len_dens = new QLabel(tr(" H2O scattering length density (*10^10 cm^-2): "), this);
+   lbl_h2o_scat_len_dens = new QLabel(us_tr(" H2O scattering length density (*10^10 cm^-2): "), this);
    lbl_h2o_scat_len_dens->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_h2o_scat_len_dens->setMinimumHeight(minHeight1);
    lbl_h2o_scat_len_dens->setPalette( PALET_LABEL );
@@ -104,7 +104,7 @@ void US_Hydrodyn_SasOptionsSans::setupGUI()
    AUTFBACK( cnt_h2o_scat_len_dens );
    connect(cnt_h2o_scat_len_dens, SIGNAL(valueChanged(double)), SLOT(update_h2o_scat_len_dens(double)));
 
-   lbl_d2o_scat_len_dens = new QLabel(tr(" D2O scattering length density (*10^10 cm^-2): "), this);
+   lbl_d2o_scat_len_dens = new QLabel(us_tr(" D2O scattering length density (*10^10 cm^-2): "), this);
    lbl_d2o_scat_len_dens->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_d2o_scat_len_dens->setMinimumHeight(minHeight1);
    lbl_d2o_scat_len_dens->setPalette( PALET_LABEL );
@@ -123,7 +123,7 @@ void US_Hydrodyn_SasOptionsSans::setupGUI()
    AUTFBACK( cnt_d2o_scat_len_dens );
    connect(cnt_d2o_scat_len_dens, SIGNAL(valueChanged(double)), SLOT(update_d2o_scat_len_dens(double)));
 
-   lbl_d2o_conc = new QLabel(tr(" Buffer D2O fraction (0 - 1): "), this);
+   lbl_d2o_conc = new QLabel(us_tr(" Buffer D2O fraction (0 - 1): "), this);
    lbl_d2o_conc->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_d2o_conc->setMinimumHeight(minHeight1);
    lbl_d2o_conc->setPalette( PALET_LABEL );
@@ -142,7 +142,7 @@ void US_Hydrodyn_SasOptionsSans::setupGUI()
    AUTFBACK( cnt_d2o_conc );
    connect(cnt_d2o_conc, SIGNAL(valueChanged(double)), SLOT(update_d2o_conc(double)));
 
-   lbl_frac_of_exch_pep = new QLabel(tr(" Fraction of non-exchanged peptide H (0 - 1): "), this);
+   lbl_frac_of_exch_pep = new QLabel(us_tr(" Fraction of non-exchanged peptide H (0 - 1): "), this);
    lbl_frac_of_exch_pep->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_frac_of_exch_pep->setMinimumHeight(minHeight1);
    lbl_frac_of_exch_pep->setPalette( PALET_LABEL );
@@ -161,7 +161,7 @@ void US_Hydrodyn_SasOptionsSans::setupGUI()
    AUTFBACK( cnt_frac_of_exch_pep );
    connect(cnt_frac_of_exch_pep, SIGNAL(valueChanged(double)), SLOT(update_frac_of_exch_pep(double)));
 
-   lbl_perdeuteration = new QLabel(tr(" Perdeuteration (0 - 1): "), this);
+   lbl_perdeuteration = new QLabel(us_tr(" Perdeuteration (0 - 1): "), this);
    lbl_perdeuteration->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_perdeuteration->setMinimumHeight(minHeight1);
    lbl_perdeuteration->setPalette( PALET_LABEL );
@@ -181,7 +181,7 @@ void US_Hydrodyn_SasOptionsSans::setupGUI()
    AUTFBACK( cnt_perdeuteration );
    connect(cnt_perdeuteration, SIGNAL(valueChanged(double)), SLOT(update_perdeuteration(double)));
 
-   lbl_sans_iq = new QLabel(tr(" I(q) method: "), this);
+   lbl_sans_iq = new QLabel(us_tr(" I(q) method: "), this);
    lbl_sans_iq->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_sans_iq->setMinimumHeight(minHeight1);
    lbl_sans_iq->setPalette( PALET_LABEL );
@@ -189,7 +189,7 @@ void US_Hydrodyn_SasOptionsSans::setupGUI()
    lbl_sans_iq->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    cb_sans_iq_native_debye = new QCheckBox(this);
-   cb_sans_iq_native_debye->setText(tr("F-DB "));
+   cb_sans_iq_native_debye->setText(us_tr("F-DB "));
    cb_sans_iq_native_debye->setEnabled(true);
    cb_sans_iq_native_debye->setChecked((*saxs_options).sans_iq_native_debye);
    cb_sans_iq_native_debye->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -200,7 +200,7 @@ void US_Hydrodyn_SasOptionsSans::setupGUI()
    if ( started_in_expert_mode )
    {
       cb_sans_iq_native_hybrid = new QCheckBox(this);
-      cb_sans_iq_native_hybrid->setText(tr("Hybrid "));
+      cb_sans_iq_native_hybrid->setText(us_tr("Hybrid "));
       cb_sans_iq_native_hybrid->setEnabled(true);
       cb_sans_iq_native_hybrid->setChecked((*saxs_options).sans_iq_native_hybrid);
       cb_sans_iq_native_hybrid->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -209,7 +209,7 @@ void US_Hydrodyn_SasOptionsSans::setupGUI()
       connect(cb_sans_iq_native_hybrid, SIGNAL(clicked()), this, SLOT(set_sans_iq_native_hybrid()));
 
       cb_sans_iq_native_hybrid2 = new QCheckBox(this);
-      cb_sans_iq_native_hybrid2->setText(tr("H2 "));
+      cb_sans_iq_native_hybrid2->setText(us_tr("H2 "));
       cb_sans_iq_native_hybrid2->setEnabled(true);
       cb_sans_iq_native_hybrid2->setChecked((*saxs_options).sans_iq_native_hybrid2);
       cb_sans_iq_native_hybrid2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -218,7 +218,7 @@ void US_Hydrodyn_SasOptionsSans::setupGUI()
       connect(cb_sans_iq_native_hybrid2, SIGNAL(clicked()), this, SLOT(set_sans_iq_native_hybrid2()));
 
       cb_sans_iq_native_hybrid3 = new QCheckBox(this);
-      cb_sans_iq_native_hybrid3->setText(tr("H3 "));
+      cb_sans_iq_native_hybrid3->setText(us_tr("H3 "));
       cb_sans_iq_native_hybrid3->setEnabled(true);
       cb_sans_iq_native_hybrid3->setChecked((*saxs_options).sans_iq_native_hybrid3);
       cb_sans_iq_native_hybrid3->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -227,7 +227,7 @@ void US_Hydrodyn_SasOptionsSans::setupGUI()
       connect(cb_sans_iq_native_hybrid3, SIGNAL(clicked()), this, SLOT(set_sans_iq_native_hybrid3()));
 
       cb_sans_iq_hybrid_adaptive = new QCheckBox(this);
-      cb_sans_iq_hybrid_adaptive->setText(tr("Adaptive "));
+      cb_sans_iq_hybrid_adaptive->setText(us_tr("Adaptive "));
       cb_sans_iq_hybrid_adaptive->setEnabled(true);
       cb_sans_iq_hybrid_adaptive->setChecked((*saxs_options).sans_iq_hybrid_adaptive);
       cb_sans_iq_hybrid_adaptive->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -237,7 +237,7 @@ void US_Hydrodyn_SasOptionsSans::setupGUI()
    }
 
    cb_sans_iq_native_fast = new QCheckBox(this);
-   cb_sans_iq_native_fast->setText(tr("Q-DB "));
+   cb_sans_iq_native_fast->setText(us_tr("Q-DB "));
    cb_sans_iq_native_fast->setEnabled(true);
    cb_sans_iq_native_fast->setChecked((*saxs_options).sans_iq_native_fast);
    cb_sans_iq_native_fast->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -246,7 +246,7 @@ void US_Hydrodyn_SasOptionsSans::setupGUI()
    connect(cb_sans_iq_native_fast, SIGNAL(clicked()), this, SLOT(set_sans_iq_native_fast()));
 
    cb_sans_iq_native_fast_compute_pr = new QCheckBox(this);
-   cb_sans_iq_native_fast_compute_pr->setText(tr("P(r) "));
+   cb_sans_iq_native_fast_compute_pr->setText(us_tr("P(r) "));
    cb_sans_iq_native_fast_compute_pr->setEnabled(true);
    cb_sans_iq_native_fast_compute_pr->setChecked((*saxs_options).sans_iq_native_fast_compute_pr);
    cb_sans_iq_native_fast_compute_pr->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -255,7 +255,7 @@ void US_Hydrodyn_SasOptionsSans::setupGUI()
    connect(cb_sans_iq_native_fast_compute_pr, SIGNAL(clicked()), this, SLOT(set_sans_iq_native_fast_compute_pr()));
 
    cb_sans_iq_cryson = new QCheckBox(this);
-   cb_sans_iq_cryson->setText(tr("Cryson"));
+   cb_sans_iq_cryson->setText(us_tr("Cryson"));
    cb_sans_iq_cryson->setEnabled(true);
    cb_sans_iq_cryson->setChecked((*saxs_options).sans_iq_cryson);
    cb_sans_iq_cryson->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -264,9 +264,9 @@ void US_Hydrodyn_SasOptionsSans::setupGUI()
    connect(cb_sans_iq_cryson, SIGNAL(clicked()), this, SLOT(set_sans_iq_cryson()));
 
    lbl_cryson_sh_max_harmonics = new QLabel( started_in_expert_mode ?
-                                      tr(" SH/Cryson: Maximum order of harmonics")
+                                      us_tr(" SH/Cryson: Maximum order of harmonics")
                                       :
-                                      tr(" SH/Cryson: Maximum order of harmonics")
+                                      us_tr(" SH/Cryson: Maximum order of harmonics")
                                       , this);
    lbl_cryson_sh_max_harmonics->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_cryson_sh_max_harmonics->setMinimumHeight(minHeight1);
@@ -287,9 +287,9 @@ void US_Hydrodyn_SasOptionsSans::setupGUI()
    connect(cnt_cryson_sh_max_harmonics, SIGNAL(valueChanged(double)), SLOT(update_cryson_sh_max_harmonics(double)));
 
    lbl_cryson_sh_fibonacci_grid_order = new QLabel( started_in_expert_mode ? 
-                                             tr(" Cryson: Order of Fibonacci grid")
+                                             us_tr(" Cryson: Order of Fibonacci grid")
                                              :
-                                             tr(" Cryson: Order of Fibonacci grid")
+                                             us_tr(" Cryson: Order of Fibonacci grid")
                                              , this);
    lbl_cryson_sh_fibonacci_grid_order->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_cryson_sh_fibonacci_grid_order->setMinimumHeight(minHeight1);
@@ -310,7 +310,7 @@ void US_Hydrodyn_SasOptionsSans::setupGUI()
    connect(cnt_cryson_sh_fibonacci_grid_order, SIGNAL(valueChanged(double)), SLOT(update_cryson_sh_fibonacci_grid_order(double)));
 
    cb_cryson_manual_hs = new QCheckBox(this);
-   cb_cryson_manual_hs->setText( tr(" Cryson: Contrast of hydration shell (*10^10 cm^-2):") );
+   cb_cryson_manual_hs->setText( us_tr(" Cryson: Contrast of hydration shell (*10^10 cm^-2):") );
    cb_cryson_manual_hs->setEnabled( true );
    cb_cryson_manual_hs->setChecked( (*saxs_options).cryson_manual_hs );
    cb_cryson_manual_hs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -321,11 +321,11 @@ void US_Hydrodyn_SasOptionsSans::setupGUI()
    //    lbl_cryson_hydration_shell_contrast = new QLabel( started_in_expert_mode ?
 
    //                                                      :
-   //                                                      tr(" Cryson: Contrast of hydration shell (*10^10 cm^-2):")
+   //                                                      us_tr(" Cryson: Contrast of hydration shell (*10^10 cm^-2):")
    //                                                      , this);
    //    lbl_cryson_hydration_shell_contrast->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    //    lbl_cryson_hydration_shell_contrast->setMinimumHeight(minHeight1);
-   //    lbl_cryson_hydration_shell_contrast->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   //    lbl_cryson_hydration_shell_contrast->setPalette( USglobal->global_colors.cg_label );
    //    lbl_cryson_hydration_shell_contrast->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    cnt_cryson_hydration_shell_contrast = new QwtCounter(this);
@@ -340,22 +340,22 @@ void US_Hydrodyn_SasOptionsSans::setupGUI()
    AUTFBACK( cnt_cryson_hydration_shell_contrast );
    connect(cnt_cryson_hydration_shell_contrast, SIGNAL(valueChanged(double)), SLOT(update_cryson_hydration_shell_contrast(double)));
 
-   pb_cancel = new QPushButton(tr("Close"), this);
+   pb_cancel = new QPushButton(us_tr("Close"), this);
    pb_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_cancel->setMinimumHeight(minHeight1);
    pb_cancel->setPalette( PALET_PUSHB );
    connect(pb_cancel, SIGNAL(clicked()), SLOT(cancel()));
 
-   pb_help = new QPushButton(tr("Help"), this);
+   pb_help = new QPushButton(us_tr("Help"), this);
    pb_help->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_help->setMinimumHeight(minHeight1);
    pb_help->setPalette( PALET_PUSHB );
    connect(pb_help, SIGNAL(clicked()), SLOT(help()));
 
    int rows=0, columns = 2, spacing = 2, j=0, margin=4;
-   Q3GridLayout *background=new Q3GridLayout(this, rows, columns, margin, spacing);
+   QGridLayout * background = new QGridLayout( this ); background->setContentsMargins( 0, 0, 0, 0 ); background->setSpacing( 0 ); background->setSpacing( spacing ); background->setContentsMargins( margin, margin, margin, margin );
 
-   background->addMultiCellWidget(lbl_info, j, j, 0, 1);
+   background->addWidget( lbl_info , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
    j++;
 
    background->addWidget(lbl_h_scat_len, j, 0);
@@ -380,7 +380,7 @@ void US_Hydrodyn_SasOptionsSans::setupGUI()
    background->addWidget(cnt_perdeuteration, j, 1);
    j++;
 
-   Q3HBoxLayout *hbl_sans_iq = new Q3HBoxLayout;
+   QHBoxLayout * hbl_sans_iq = new QHBoxLayout; hbl_sans_iq->setContentsMargins( 0, 0, 0, 0 ); hbl_sans_iq->setSpacing( 0 );
    hbl_sans_iq->addWidget(lbl_sans_iq);
    hbl_sans_iq->addWidget(cb_sans_iq_native_debye);
    if ( started_in_expert_mode )
@@ -393,7 +393,7 @@ void US_Hydrodyn_SasOptionsSans::setupGUI()
    hbl_sans_iq->addWidget(cb_sans_iq_native_fast);
    hbl_sans_iq->addWidget(cb_sans_iq_native_fast_compute_pr);
    hbl_sans_iq->addWidget(cb_sans_iq_cryson);
-   background->addMultiCellLayout(hbl_sans_iq, j, j, 0, 1);
+   background->addLayout( hbl_sans_iq , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
    j++;
 
    background->addWidget(lbl_cryson_sh_max_harmonics, j, 0);

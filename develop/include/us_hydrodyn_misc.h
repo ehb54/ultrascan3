@@ -7,8 +7,8 @@
 #include <qstring.h>
 #include <qlayout.h>
 #include <qpushbutton.h>
-#include <q3buttongroup.h>
-#include <q3frame.h>
+#include <qgroupbox.h>
+//#include <q3frame.h>
 #include <qcheckbox.h>
 #include <qwt_counter.h>
 //Added by qt3to4:
@@ -54,7 +54,7 @@ struct misc_options
    bool   export_msroll;
 };
 
-class US_EXTERN US_Hydrodyn_Misc : public Q3Frame
+class US_EXTERN US_Hydrodyn_Misc : public QFrame
 {
    Q_OBJECT
 

@@ -5,12 +5,12 @@
 #include "../include/us_hydrodyn_saxs_hplc_fit.h"
 #include "../include/us_lm.h"
 //Added by qt3to4:
-#include <Q3HBoxLayout>
+#include <QHBoxLayout>
 #include <QLabel>
-#include <Q3GridLayout>
-#include <Q3Frame>
-#include <Q3VBoxLayout>
-#include <Q3BoxLayout>
+#include <QGridLayout>
+#include <QFrame>
+#include <QVBoxLayout>
+#include <QBoxLayout>
 #include <QCloseEvent>
 
 // note: this program uses cout and/or cerr and this should be replaced
@@ -27,15 +27,15 @@ US_Hydrodyn_Saxs_Hplc_Fit::US_Hydrodyn_Saxs_Hplc_Fit(
                                                      bool set_comm_dist,
                                                      QWidget *p, 
                                                      const char *name
-                                                     ) : QDialog(p, name)
+                                                     ) : QDialog( p )
 {
-   // qDebug( "hf0" );
+   // us_qdebug( "hf0" );
    this->hplc_win      = hplc_win;
    this->set_comm_dist = set_comm_dist;
 
    USglobal = new US_Config();
    setPalette( PALET_FRAME );
-   setCaption( tr( "US-SOMO: SAXS Hplc: Gaussian Fit" ) );
+   setWindowTitle( us_tr( "US-SOMO: SAXS Hplc: Gaussian Fit" ) );
 
    update_hplc = true;
    running = false;
@@ -66,12 +66,12 @@ US_Hydrodyn_Saxs_Hplc_Fit::US_Hydrodyn_Saxs_Hplc_Fit(
       break;
    }
 
-   // qDebug( "hf1" );
+   // us_qdebug( "hf1" );
    setupGUI();
    global_Xpos += 30;
    global_Ypos += 30;
 
-   // qDebug( "hf2" );
+   // us_qdebug( "hf2" );
    gaussians_undo.clear();
    gaussians_undo.push_back( hplc_win->gaussians );
 
@@ -79,9 +79,9 @@ US_Hydrodyn_Saxs_Hplc_Fit::US_Hydrodyn_Saxs_Hplc_Fit(
 
    setGeometry(global_Xpos, global_Ypos, 0, 0 );
 
-   // qDebug( "hf3" );
+   // us_qdebug( "hf3" );
    set_comm_dist ? update_common() : update_enables();
-   // qDebug( "hf4" );
+   // us_qdebug( "hf4" );
    // update_enables();
 
    if ( hplc_win->conc_files.count( hplc_win->wheel_file ) )
@@ -97,8 +97,8 @@ US_Hydrodyn_Saxs_Hplc_Fit::US_Hydrodyn_Saxs_Hplc_Fit(
          {
             conc_ratios.push_back( hplc_win->gaussians[ 2 + i ] / hplc_win->gaussians[ 2 ] );
          }
-         qDebug( US_Vector::qs_vector( "gaussians", hplc_win->gaussians ) );
-         qDebug( US_Vector::qs_vector( "width ratios", conc_ratios ) );
+         us_qdebug( US_Vector::qs_vector( "gaussians", hplc_win->gaussians ) );
+         us_qdebug( US_Vector::qs_vector( "width ratios", conc_ratios ) );
       }
    } else {
       cb_conc_test->hide();
@@ -119,13 +119,13 @@ void US_Hydrodyn_Saxs_Hplc_Fit::redo_settings()
    {
       use_errors = false;
 
-      //       QMessageBox::information( this, this->caption(),
-      //                                 tr( "SD weighting requested, but the errors associated\n"
+      //       QMessageBox::information( this, this->windowTitle(),
+      //                                 us_tr( "SD weighting requested, but the errors associated\n"
       //                                     "with the selected file are not all non-zero.\n" 
       //                                     "SD weighting turned off"
       //                                     ) );
 
-      hplc_win->editor_msg( "dark red",  QString( tr( "SD weighting requested, but the errors associated "
+      hplc_win->editor_msg( "dark red",  QString( us_tr( "SD weighting requested, but the errors associated "
                                                       "with the selected file %1 are not all non-zero. " 
                                                       "SD weighting turned off for this file." ) ).arg( hplc_win->wheel_file ) );
    }
@@ -140,14 +140,14 @@ void US_Hydrodyn_Saxs_Hplc_Fit::redo_settings()
          {
             use_errors = false;
 
-            //             QMessageBox::information( this, this->caption(),
-            //                                       tr( "SD weighting requested, but this currently\n"
+            //             QMessageBox::information( this, this->windowTitle(),
+            //                                       us_tr( "SD weighting requested, but this currently\n"
             //                                           "does not support fractional or negative frame numbers.\n"
             //                                           "SD weighting turned off."
             //                                           ) );
 
             hplc_win->editor_msg( "dark red",  
-                                  tr( "SD weighting requested, but this currently\n"
+                                  us_tr( "SD weighting requested, but this currently\n"
                                       "does not support fractional or negative frame numbers.\n"
                                       "SD weighting turned off." ) );
             break;
@@ -193,8 +193,8 @@ void US_Hydrodyn_Saxs_Hplc_Fit::setupGUI()
 {
    int minHeight1 = 30;
 
-   lbl_title = new QLabel( tr( "US-SOMO: SAXS Hplc: Gaussian Fit" ), this);
-   lbl_title->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Raised);
+   lbl_title = new QLabel( us_tr( "US-SOMO: SAXS Hplc: Gaussian Fit" ), this);
+   lbl_title->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_title->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_title->setMinimumHeight(minHeight1);
    lbl_title->setPalette( PALET_FRAME );
@@ -202,7 +202,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit::setupGUI()
    lbl_title->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize , QFont::Bold));
 
    cb_fix_center = new QCheckBox(this);
-   cb_fix_center->setText(tr(" Fix Gaussian centers" ) );
+   cb_fix_center->setText(us_tr(" Fix Gaussian centers" ) );
    cb_fix_center->setEnabled(true);
    cb_fix_center->setChecked( false );
    cb_fix_center->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -211,7 +211,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit::setupGUI()
    connect(cb_fix_center, SIGNAL( clicked() ), SLOT( update_enables() ) );
 
    cb_pct_center = new QCheckBox(this);
-   cb_pct_center->setText(tr(" % variation" ) );
+   cb_pct_center->setText(us_tr(" % variation" ) );
    cb_pct_center->setEnabled(true);
    cb_pct_center->setChecked( false );
    cb_pct_center->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -219,7 +219,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit::setupGUI()
    AUTFBACK( cb_pct_center );
    connect(cb_pct_center, SIGNAL( clicked() ), SLOT( update_enables() ) );
 
-   le_pct_center = new mQLineEdit(this, "le_pct_center Line Edit");
+   le_pct_center = new mQLineEdit( this );    le_pct_center->setObjectName( "le_pct_center Line Edit" );
    le_pct_center->setText( "5" );
    le_pct_center->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_pct_center->setPalette( PALET_NORMAL );
@@ -231,7 +231,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit::setupGUI()
    ( (QDoubleValidator *)le_pct_center->validator() )->setRange( 0, 100, 1 );
 
    cb_pct_center_from_init = new QCheckBox(this);
-   cb_pct_center_from_init->setText(tr(" From initial value" ) );
+   cb_pct_center_from_init->setText(us_tr(" From initial value" ) );
    cb_pct_center_from_init->setEnabled(true);
    cb_pct_center_from_init->setChecked( false );
    cb_pct_center_from_init->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -240,7 +240,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit::setupGUI()
    connect(cb_pct_center_from_init, SIGNAL( clicked() ), SLOT( update_enables() ) );
 
    cb_fix_width = new QCheckBox(this);
-   cb_fix_width->setText(tr(" Fix Gaussian widths" ) );
+   cb_fix_width->setText(us_tr(" Fix Gaussian widths" ) );
    cb_fix_width->setEnabled(true);
    cb_fix_width->setChecked( false );
    cb_fix_width->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -249,7 +249,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit::setupGUI()
    connect(cb_fix_width, SIGNAL( clicked() ), SLOT( update_enables() ) );
 
    cb_pct_width = new QCheckBox(this);
-   cb_pct_width->setText(tr(" % variation" ) );
+   cb_pct_width->setText(us_tr(" % variation" ) );
    cb_pct_width->setEnabled(true);
    cb_pct_width->setChecked( false );
    cb_pct_width->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -257,7 +257,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit::setupGUI()
    AUTFBACK( cb_pct_width );
    connect(cb_pct_width, SIGNAL( clicked() ), SLOT( update_enables() ) );
 
-   le_pct_width = new mQLineEdit(this, "le_pct_width Line Edit");
+   le_pct_width = new mQLineEdit( this );    le_pct_width->setObjectName( "le_pct_width Line Edit" );
    le_pct_width->setText( "5" );
    le_pct_width->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_pct_width->setPalette( PALET_NORMAL );
@@ -269,7 +269,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit::setupGUI()
    ( (QDoubleValidator *)le_pct_width->validator() )->setRange( 0, 100, 1 );
 
    cb_pct_width_from_init = new QCheckBox(this);
-   cb_pct_width_from_init->setText(tr(" From initial value" ) );
+   cb_pct_width_from_init->setText(us_tr(" From initial value" ) );
    cb_pct_width_from_init->setEnabled(true);
    cb_pct_width_from_init->setChecked( false );
    cb_pct_width_from_init->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -278,7 +278,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit::setupGUI()
    connect(cb_pct_width_from_init, SIGNAL( clicked() ), SLOT( update_enables() ) );
 
    cb_fix_amplitude = new QCheckBox(this);
-   cb_fix_amplitude->setText(tr(" Fix Gaussian amplitudes" ) );
+   cb_fix_amplitude->setText(us_tr(" Fix Gaussian amplitudes" ) );
    cb_fix_amplitude->setEnabled(true);
    cb_fix_amplitude->setChecked( false );
    cb_fix_amplitude->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -287,7 +287,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit::setupGUI()
    connect(cb_fix_amplitude, SIGNAL( clicked() ), SLOT( update_enables() ) );
 
    cb_pct_amplitude = new QCheckBox(this);
-   cb_pct_amplitude->setText(tr(" % variation" ) );
+   cb_pct_amplitude->setText(us_tr(" % variation" ) );
    cb_pct_amplitude->setEnabled(true);
    cb_pct_amplitude->setChecked( false );
    cb_pct_amplitude->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -295,7 +295,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit::setupGUI()
    AUTFBACK( cb_pct_amplitude );
    connect(cb_pct_amplitude, SIGNAL( clicked() ), SLOT( update_enables() ) );
 
-   le_pct_amplitude = new mQLineEdit(this, "le_pct_amplitude Line Edit");
+   le_pct_amplitude = new mQLineEdit( this );    le_pct_amplitude->setObjectName( "le_pct_amplitude Line Edit" );
    le_pct_amplitude->setText( "5" );
    le_pct_amplitude->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_pct_amplitude->setPalette( PALET_NORMAL );
@@ -307,7 +307,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit::setupGUI()
    ( (QDoubleValidator *)le_pct_amplitude->validator() )->setRange( 0, 100, 1 );
 
    cb_pct_amplitude_from_init = new QCheckBox(this);
-   cb_pct_amplitude_from_init->setText(tr(" From initial value" ) );
+   cb_pct_amplitude_from_init->setText(us_tr(" From initial value" ) );
    cb_pct_amplitude_from_init->setEnabled(true);
    cb_pct_amplitude_from_init->setChecked( false );
    cb_pct_amplitude_from_init->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -316,7 +316,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit::setupGUI()
    connect(cb_pct_amplitude_from_init, SIGNAL( clicked() ), SLOT( update_enables() ) );
 
    cb_fix_dist1 = new QCheckBox(this);
-   cb_fix_dist1->setText(tr(" Fix distortion 1" ) );
+   cb_fix_dist1->setText(us_tr(" Fix distortion 1" ) );
    cb_fix_dist1->setEnabled(true);
    cb_fix_dist1->setChecked( false );
    cb_fix_dist1->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -325,7 +325,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit::setupGUI()
    connect(cb_fix_dist1, SIGNAL( clicked() ), SLOT( update_enables() ) );
 
    cb_pct_dist1 = new QCheckBox(this);
-   cb_pct_dist1->setText(tr(" % variation" ) );
+   cb_pct_dist1->setText(us_tr(" % variation" ) );
    cb_pct_dist1->setEnabled(true);
    cb_pct_dist1->setChecked( false );
    cb_pct_dist1->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -333,7 +333,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit::setupGUI()
    AUTFBACK( cb_pct_dist1 );
    connect(cb_pct_dist1, SIGNAL( clicked() ), SLOT( update_enables() ) );
 
-   le_pct_dist1 = new mQLineEdit(this, "le_pct_dist1 Line Edit");
+   le_pct_dist1 = new mQLineEdit( this );    le_pct_dist1->setObjectName( "le_pct_dist1 Line Edit" );
    le_pct_dist1->setText( "5" );
    le_pct_dist1->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_pct_dist1->setPalette( PALET_NORMAL );
@@ -345,7 +345,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit::setupGUI()
    ( (QDoubleValidator *)le_pct_dist1->validator() )->setRange( 0, 100, 1 );
 
    cb_pct_dist1_from_init = new QCheckBox(this);
-   cb_pct_dist1_from_init->setText(tr(" From initial value" ) );
+   cb_pct_dist1_from_init->setText(us_tr(" From initial value" ) );
    cb_pct_dist1_from_init->setEnabled(true);
    cb_pct_dist1_from_init->setChecked( false );
    cb_pct_dist1_from_init->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -354,7 +354,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit::setupGUI()
    connect(cb_pct_dist1_from_init, SIGNAL( clicked() ), SLOT( update_enables() ) );
 
    cb_fix_dist2 = new QCheckBox(this);
-   cb_fix_dist2->setText(tr(" Fix distortion 2" ) );
+   cb_fix_dist2->setText(us_tr(" Fix distortion 2" ) );
    cb_fix_dist2->setEnabled(true);
    cb_fix_dist2->setChecked( false );
    cb_fix_dist2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -363,7 +363,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit::setupGUI()
    connect(cb_fix_dist2, SIGNAL( clicked() ), SLOT( update_enables() ) );
 
    cb_pct_dist2 = new QCheckBox(this);
-   cb_pct_dist2->setText(tr(" % variation" ) );
+   cb_pct_dist2->setText(us_tr(" % variation" ) );
    cb_pct_dist2->setEnabled(true);
    cb_pct_dist2->setChecked( false );
    cb_pct_dist2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -371,7 +371,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit::setupGUI()
    AUTFBACK( cb_pct_dist2 );
    connect(cb_pct_dist2, SIGNAL( clicked() ), SLOT( update_enables() ) );
 
-   le_pct_dist2 = new mQLineEdit(this, "le_pct_dist2 Line Edit");
+   le_pct_dist2 = new mQLineEdit( this );    le_pct_dist2->setObjectName( "le_pct_dist2 Line Edit" );
    le_pct_dist2->setText( "5" );
    le_pct_dist2->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_pct_dist2->setPalette( PALET_NORMAL );
@@ -383,7 +383,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit::setupGUI()
    ( (QDoubleValidator *)le_pct_dist2->validator() )->setRange( 0, 100, 1 );
 
    cb_pct_dist2_from_init = new QCheckBox(this);
-   cb_pct_dist2_from_init->setText(tr(" From initial value" ) );
+   cb_pct_dist2_from_init->setText(us_tr(" From initial value" ) );
    cb_pct_dist2_from_init->setEnabled(true);
    cb_pct_dist2_from_init->setChecked( false );
    cb_pct_dist2_from_init->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -392,7 +392,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit::setupGUI()
    connect(cb_pct_dist2_from_init, SIGNAL( clicked() ), SLOT( update_enables() ) );
 
    cb_comm_dist1 = new QCheckBox(this);
-   cb_comm_dist1->setText(tr(" Common distortion 1" ) );
+   cb_comm_dist1->setText(us_tr(" Common distortion 1" ) );
    cb_comm_dist1->setEnabled( true );
    cb_comm_dist1->setChecked( false );
    cb_comm_dist1->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -401,7 +401,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit::setupGUI()
    connect(cb_comm_dist1, SIGNAL( clicked() ), SLOT( update_common() ) );
 
    cb_comm_dist2 = new QCheckBox(this);
-   cb_comm_dist2->setText(tr(" Common distortion 2" ) );
+   cb_comm_dist2->setText(us_tr(" Common distortion 2" ) );
    cb_comm_dist2->setEnabled(true);
    cb_comm_dist2->setChecked( false );
    cb_comm_dist2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -409,7 +409,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit::setupGUI()
    AUTFBACK( cb_comm_dist2 );
    connect(cb_comm_dist2, SIGNAL( clicked() ), SLOT( update_common() ) );
 
-   lbl_fix_curves = new QLabel(tr(" Fix Gaussians: "), this);
+   lbl_fix_curves = new QLabel(us_tr(" Fix Gaussians: "), this);
    lbl_fix_curves->setAlignment(Qt::AlignRight|Qt::AlignVCenter);
    // lbl_fix_curves->setMinimumHeight(minHeight1);
    lbl_fix_curves->setPalette( PALET_LABEL );
@@ -421,7 +421,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit::setupGUI()
    cout << "qs_rx:" << qs_rx << endl;
    QRegExp rx_fix_curves( qs_rx );
    QRegExpValidator *rx_val_fix_curves = new QRegExpValidator( rx_fix_curves, this );
-   le_fix_curves = new mQLineEdit(this, "le_fix_curves Line Edit");
+   le_fix_curves = new mQLineEdit( this );    le_fix_curves->setObjectName( "le_fix_curves Line Edit" );
    le_fix_curves->setText( "" );
    le_fix_curves->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_fix_curves->setPalette( PALET_NORMAL );
@@ -447,7 +447,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit::setupGUI()
    }
 
    cb_conc_test = new QCheckBox(this);
-   cb_conc_test->setText(tr(" Fix width ratios" ) );
+   cb_conc_test->setText(us_tr(" Fix width ratios" ) );
    cb_conc_test->setEnabled( true );
    cb_conc_test->setChecked( false );
    cb_conc_test->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -455,14 +455,14 @@ void US_Hydrodyn_Saxs_Hplc_Fit::setupGUI()
    AUTFBACK( cb_conc_test );
    connect(cb_conc_test, SIGNAL( clicked() ), SLOT( update_enables() ) );
 
-   lbl_epsilon = new QLabel(tr(" Epsilon: "), this);
+   lbl_epsilon = new QLabel(us_tr(" Epsilon: "), this);
    lbl_epsilon->setAlignment(Qt::AlignRight|Qt::AlignVCenter);
    // lbl_epsilon->setMinimumHeight(minHeight1);
    lbl_epsilon->setPalette( PALET_LABEL );
    AUTFBACK( lbl_epsilon );
    lbl_epsilon->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
-   le_epsilon = new mQLineEdit(this, "le_epsilon Line Edit");
+   le_epsilon = new mQLineEdit( this );    le_epsilon->setObjectName( "le_epsilon Line Edit" );
    double peak = hplc_win->compute_gaussian_peak( hplc_win->wheel_file, hplc_win->gaussians );
    le_epsilon->setText( QString( "%1" ).arg( peak / 1e6 < 0.001 ? peak / 1e6 : 0.001 ) );
    le_epsilon->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
@@ -473,14 +473,14 @@ void US_Hydrodyn_Saxs_Hplc_Fit::setupGUI()
    le_epsilon->setValidator( new QDoubleValidator( le_epsilon ) );
    ( (QDoubleValidator *)le_epsilon->validator() )->setRange( 0e-3, 10, 3 );
 
-   lbl_iterations = new QLabel(tr(" Iterations: "), this);
+   lbl_iterations = new QLabel(us_tr(" Iterations: "), this);
    lbl_iterations->setAlignment(Qt::AlignRight|Qt::AlignVCenter);
    // lbl_iterations->setMinimumHeight(minHeight1);
    lbl_iterations->setPalette( PALET_LABEL );
    AUTFBACK( lbl_iterations );
    lbl_iterations->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
-   le_iterations = new mQLineEdit(this, "le_iterations Line Edit");
+   le_iterations = new mQLineEdit( this );    le_iterations->setObjectName( "le_iterations Line Edit" );
    le_iterations->setText( "100" );
    le_iterations->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_iterations->setPalette( PALET_NORMAL );
@@ -490,14 +490,14 @@ void US_Hydrodyn_Saxs_Hplc_Fit::setupGUI()
    le_iterations->setValidator( new QIntValidator( le_iterations ) );
    ( (QIntValidator *)le_iterations->validator() )->setRange( 1, 10000 );
 
-   lbl_population = new QLabel(tr(" Maximum calls/Population/Grid: "), this);
+   lbl_population = new QLabel(us_tr(" Maximum calls/Population/Grid: "), this);
    lbl_population->setAlignment(Qt::AlignRight|Qt::AlignVCenter);
    // lbl_population->setMinimumHeight(minHeight1);
    lbl_population->setPalette( PALET_LABEL );
    AUTFBACK( lbl_population );
    lbl_population->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
-   le_population = new mQLineEdit(this, "le_population Line Edit");
+   le_population = new mQLineEdit( this );    le_population->setObjectName( "le_population Line Edit" );
    le_population->setText( "100" );
    le_population->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_population->setPalette( PALET_NORMAL );
@@ -507,74 +507,74 @@ void US_Hydrodyn_Saxs_Hplc_Fit::setupGUI()
    le_population->setValidator( new QIntValidator( le_population ) );
    ( (QIntValidator *)le_population->validator() )->setRange( 2, 10000 );
 
-   pb_restore = new QPushButton(tr("Restore to initial values"), this);
+   pb_restore = new QPushButton(us_tr("Restore to initial values"), this);
    pb_restore->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
    // pb_restore->setMinimumHeight(minHeight1);
    pb_restore->setPalette( PALET_PUSHB );
    connect(pb_restore, SIGNAL(clicked()), SLOT(restore()));
 
-   pb_undo = new QPushButton(tr("Undo"), this);
+   pb_undo = new QPushButton(us_tr("Undo"), this);
    pb_undo->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
    // pb_undo->setMinimumHeight(minHeight1);
    pb_undo->setPalette( PALET_PUSHB );
    connect(pb_undo, SIGNAL(clicked()), SLOT(undo()));
 
-   pb_lm = new QPushButton(tr("LM"), this);
+   pb_lm = new QPushButton(us_tr("LM"), this);
    pb_lm->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
    // pb_lm->setMinimumHeight(minHeight1);
    pb_lm->setPalette( PALET_PUSHB );
    connect(pb_lm, SIGNAL(clicked()), SLOT(lm()));
 
-   pb_gsm_sd = new QPushButton(tr("GS SD"), this);
+   pb_gsm_sd = new QPushButton(us_tr("GS SD"), this);
    pb_gsm_sd->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
    // pb_gsm_sd->setMinimumHeight(minHeight1);
    pb_gsm_sd->setPalette( PALET_PUSHB );
    connect(pb_gsm_sd, SIGNAL(clicked()), SLOT(gsm_sd()));
 
-   pb_gsm_ih = new QPushButton(tr("GS IH"), this);
+   pb_gsm_ih = new QPushButton(us_tr("GS IH"), this);
    pb_gsm_ih->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
    // pb_gsm_ih->setMinimumHeight(minHeight1);
    pb_gsm_ih->setPalette( PALET_PUSHB );
    connect(pb_gsm_ih, SIGNAL(clicked()), SLOT(gsm_ih()));
 
-   pb_gsm_cg = new QPushButton(tr("GS CG"), this);
+   pb_gsm_cg = new QPushButton(us_tr("GS CG"), this);
    pb_gsm_cg->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
    // pb_gsm_cg->setMinimumHeight(minHeight1);
    pb_gsm_cg->setPalette( PALET_PUSHB );
    connect(pb_gsm_cg, SIGNAL(clicked()), SLOT(gsm_cg()));
 
-   pb_ga = new QPushButton(tr("GA"), this);
+   pb_ga = new QPushButton(us_tr("GA"), this);
    pb_ga->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
    // pb_ga->setMinimumHeight(minHeight1);
    pb_ga->setPalette( PALET_PUSHB );
    connect(pb_ga, SIGNAL(clicked()), SLOT(ga()));
 
-   pb_grid = new QPushButton(tr("Grid"), this);
+   pb_grid = new QPushButton(us_tr("Grid"), this);
    pb_grid->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
    // pb_grid->setMinimumHeight(minHeight1);
    pb_grid->setPalette( PALET_PUSHB );
    connect(pb_grid, SIGNAL(clicked()), SLOT(grid()));
 
-   progress = new Q3ProgressBar(this, "Progress");
+   progress = new QProgressBar( this );
    // progress->setMinimumHeight(minHeight1);
    progress->setPalette( PALET_NORMAL );
    AUTFBACK( progress );
    progress->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize  ));
    progress->reset();
 
-   pb_stop = new QPushButton(tr("Stop"), this);
+   pb_stop = new QPushButton(us_tr("Stop"), this);
    pb_stop->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
    // pb_stop->setMinimumHeight(minHeight1);
    pb_stop->setPalette( PALET_PUSHB );
    connect(pb_stop, SIGNAL(clicked()), SLOT(stop()));
 
-   pb_help = new QPushButton(tr("Help"), this);
+   pb_help = new QPushButton(us_tr("Help"), this);
    pb_help->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
    // pb_help->setMinimumHeight(minHeight1);
    pb_help->setPalette( PALET_PUSHB );
    connect(pb_help, SIGNAL(clicked()), SLOT(help()));
 
-   pb_cancel = new QPushButton(tr("Close"), this);
+   pb_cancel = new QPushButton(us_tr("Close"), this);
    pb_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
    // pb_cancel->setMinimumHeight(minHeight1);
    pb_cancel->setPalette( PALET_PUSHB );
@@ -582,7 +582,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit::setupGUI()
 
 
    // build layout
-   Q3GridLayout *gl_main = new Q3GridLayout( 0 );
+   QGridLayout * gl_main = new QGridLayout( 0 ); gl_main->setContentsMargins( 0, 0, 0, 0 ); gl_main->setSpacing( 0 );
    int row = 0;
 
    gl_main->addWidget( cb_fix_center           , row, 0 );
@@ -616,43 +616,43 @@ void US_Hydrodyn_Saxs_Hplc_Fit::setupGUI()
    row++;
 
    {
-      Q3BoxLayout *hbl = new Q3HBoxLayout( 0 );
+      QBoxLayout *hbl = new QHBoxLayout();
       hbl->addWidget( cb_comm_dist1 );
       hbl->addWidget( cb_comm_dist2 );
-      gl_main->addMultiCellLayout( hbl, row, row, 0, 3 );
+      gl_main->addLayout( hbl , row , 0 , 1 + ( row ) - ( row ) , 1 + ( 3  ) - ( 0 ) );
       row++;
    }
 
    gl_main->addWidget         ( lbl_fix_curves, row, 0 );
-   // gl_main->addMultiCellWidget( le_fix_curves , row, row, 1, 3 );
-   Q3HBoxLayout *hbl_fix_curves = new Q3HBoxLayout;
+   // gl_main->addWidget( le_fix_curves  , row , 1 , 1 + ( row ) - ( row ) , 1 + ( 3  ) - ( 1 ) );
+   QHBoxLayout * hbl_fix_curves = new QHBoxLayout; hbl_fix_curves->setContentsMargins( 0, 0, 0, 0 ); hbl_fix_curves->setSpacing( 0 );
    for ( unsigned int i = 0; i < ( unsigned int ) cb_fix_curves.size(); i++ )
    {
       hbl_fix_curves->addWidget( cb_fix_curves[ i ] );
    }
-   gl_main->addMultiCellLayout( hbl_fix_curves , row, row, 1, 3 );
+   gl_main->addLayout( hbl_fix_curves  , row , 1 , 1 + ( row ) - ( row ) , 1 + ( 3  ) - ( 1 ) );
    row++;
 
-   gl_main->addMultiCellWidget( cb_conc_test, row, row, 0, 3 );
+   gl_main->addWidget( cb_conc_test , row , 0 , 1 + ( row ) - ( row ) , 1 + ( 3  ) - ( 0 ) );
    row++;
 
    gl_main->addWidget         ( lbl_epsilon, row, 0 );
-   gl_main->addMultiCellWidget( le_epsilon , row, row, 1, 3 );
+   gl_main->addWidget( le_epsilon  , row , 1 , 1 + ( row ) - ( row ) , 1 + ( 3  ) - ( 1 ) );
    row++;
 
    gl_main->addWidget         ( lbl_iterations, row, 0 );
-   gl_main->addMultiCellWidget( le_iterations , row, row, 1, 3 );
+   gl_main->addWidget( le_iterations  , row , 1 , 1 + ( row ) - ( row ) , 1 + ( 3  ) - ( 1 ) );
    row++;
 
    gl_main->addWidget         ( lbl_population, row, 0 );
-   gl_main->addMultiCellWidget( le_population , row, row, 1, 3 );
+   gl_main->addWidget( le_population  , row , 1 , 1 + ( row ) - ( row ) , 1 + ( 3  ) - ( 1 ) );
    row++;
 
-   Q3HBoxLayout *hbl_restore_undo = new Q3HBoxLayout;
+   QHBoxLayout * hbl_restore_undo = new QHBoxLayout; hbl_restore_undo->setContentsMargins( 0, 0, 0, 0 ); hbl_restore_undo->setSpacing( 0 );
    hbl_restore_undo->addWidget ( pb_restore );
    hbl_restore_undo->addWidget ( pb_undo );
 
-   Q3HBoxLayout *hbl_runs = new Q3HBoxLayout;
+   QHBoxLayout * hbl_runs = new QHBoxLayout; hbl_runs->setContentsMargins( 0, 0, 0, 0 ); hbl_runs->setSpacing( 0 );
    hbl_runs->addWidget ( pb_lm );
    hbl_runs->addWidget ( pb_gsm_sd );
    hbl_runs->addWidget ( pb_gsm_ih );
@@ -660,15 +660,15 @@ void US_Hydrodyn_Saxs_Hplc_Fit::setupGUI()
    hbl_runs->addWidget ( pb_ga );
    hbl_runs->addWidget ( pb_grid );
 
-   Q3HBoxLayout *hbl_prog = new Q3HBoxLayout;
+   QHBoxLayout * hbl_prog = new QHBoxLayout; hbl_prog->setContentsMargins( 0, 0, 0, 0 ); hbl_prog->setSpacing( 0 );
    hbl_prog->addWidget ( progress );
    hbl_prog->addWidget ( pb_stop );
 
-   Q3HBoxLayout *hbl_bottom = new Q3HBoxLayout;
+   QHBoxLayout * hbl_bottom = new QHBoxLayout; hbl_bottom->setContentsMargins( 0, 0, 0, 0 ); hbl_bottom->setSpacing( 0 );
    hbl_bottom->addWidget ( pb_help );
    hbl_bottom->addWidget ( pb_cancel );
 
-   Q3VBoxLayout *background = new Q3VBoxLayout( this );
+   QVBoxLayout * background = new QVBoxLayout( this ); background->setContentsMargins( 0, 0, 0, 0 ); background->setSpacing( 0 );
    background->addWidget ( lbl_title );
    background->addSpacing( 4 );
    background->addLayout ( gl_main  );
@@ -690,7 +690,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit::setupGUI()
       // pb_gsm_cg->hide();
       pb_ga    ->hide();
       pb_grid  ->hide();
-      lbl_population->setText( tr( "Maximum calls: " ) );
+      lbl_population->setText( us_tr( "Maximum calls: " ) );
    }
 
    if ( !dist1_active )
@@ -775,7 +775,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit::update_common()
 
 void US_Hydrodyn_Saxs_Hplc_Fit::update_enables()
 {
-   qDebug( "update_enables()" );
+   us_qdebug( "update_enables()" );
    // puts( "hf: ue()" );
    bool run_ok = setup_run();
    // cout << QString( "fit::fix center %1\n"
@@ -1424,14 +1424,14 @@ namespace HFIT
             it != comm_backref.end();
             ++it )
       {
-         qDebug( QString( "backref pos %1 to %2\n" ).arg( it->first ).arg( it->second ) );
+         us_qdebug( QString( "backref pos %1 to %2\n" ).arg( it->first ).arg( it->second ) );
       }
    }
 };
 
 bool US_Hydrodyn_Saxs_Hplc_Fit::setup_run()
 {
-   qDebug( "setup_run()" );
+   us_qdebug( "setup_run()" );
    HFIT::init_params .clear();
    HFIT::base_params .clear();
    HFIT::fixed_params.clear();
@@ -1469,7 +1469,7 @@ bool US_Hydrodyn_Saxs_Hplc_Fit::setup_run()
 
    HFIT::use_errors = use_errors;
 
-   //    QStringList qsl = QStringList::split( ",", le_fix_curves->text() );
+   //    QStringList qsl = (le_fix_curves->text().split( "," , QString::SkipEmptyParts ) );
 
    //    for ( unsigned int i = 0; i < ( unsigned int ) qsl.size(); i++ )
    //    {
@@ -1521,7 +1521,7 @@ bool US_Hydrodyn_Saxs_Hplc_Fit::setup_run()
             base_val = hplc_win->gaussians[ 0 + i ];
          }            
 
-         // qDebug( QString( "in setup_run, pos %1 base_val is %2" ).arg( pos ).arg( base_val ) );
+         // us_qdebug( QString( "in setup_run, pos %1 base_val is %2" ).arg( pos ).arg( base_val ) );
 
          HFIT::init_params .push_back( base_val );
          HFIT::base_params .push_back( hplc_win->gaussians[ 0 + i ] );
@@ -1550,7 +1550,7 @@ bool US_Hydrodyn_Saxs_Hplc_Fit::setup_run()
          }
 
          if ( HFIT::init_params.back() < min ) {
-            // qDebug( QString( "min set amp init_params.size() %1 val %2" ).arg( HFIT::init_params.size() ).arg( HFIT::init_params.back() ) );
+            // us_qdebug( QString( "min set amp init_params.size() %1 val %2" ).arg( HFIT::init_params.size() ).arg( HFIT::init_params.back() ) );
             HFIT::init_params.back() = min;
          }
          if ( HFIT::init_params.back() > max ) {
@@ -1819,16 +1819,16 @@ bool US_Hydrodyn_Saxs_Hplc_Fit::lock_zeros( vector < double > & par )
    // return true if changes are made
 
    // if amplitude & width are fixed, nothing to do
-   qDebug( "lock_zeros() start" );
+   us_qdebug( "lock_zeros() start" );
 
    if ( !hplc_lock_min_retry ) {
-      qDebug( "lock_zeros() not enabled" );
+      us_qdebug( "lock_zeros() not enabled" );
       return false;
    }
 
    if ( cb_fix_amplitude->isChecked() &&
         cb_fix_width->isChecked() ) {
-      qDebug( "lock_zeros() fixed width & amplitude checked, skipping" );
+      us_qdebug( "lock_zeros() fixed width & amplitude checked, skipping" );
       return false;
    }
 
@@ -1877,33 +1877,33 @@ bool US_Hydrodyn_Saxs_Hplc_Fit::lock_zeros( vector < double > & par )
    }
 
    if ( !to_lock.size() ) {
-      qDebug( "lock_zeros() nothing to lock" );
+      us_qdebug( "lock_zeros() nothing to lock" );
       return false;
    }
 
-   qDebug( "check lock" );
+   us_qdebug( "check lock" );
    for ( set < unsigned int >::iterator it = to_lock.begin();
          it != to_lock.end();
          ++it ) {
-      qDebug( QString( "new lock %1" ).arg( *it ) );
+      us_qdebug( QString( "new lock %1" ).arg( *it ) );
       cb_fix_curves[ *it - 1 ]->setChecked( true );
    }
-   qDebug( "done check lock" );
-   qDebug( "lock_zeros() end" );
+   us_qdebug( "done check lock" );
+   us_qdebug( "lock_zeros() end" );
    return true;
 }
 
 bool US_Hydrodyn_Saxs_Hplc_Fit::max_free_peak_delta( vector < double > & par ) {
-   qDebug( "max_free_peak_delta_zeros() start" );
+   us_qdebug( "max_free_peak_delta_zeros() start" );
 
    if ( !hplc_maxfpk_restart ) {
-      qDebug( "max_free_peak_delta() not enabled" );
+      us_qdebug( "max_free_peak_delta() not enabled" );
       return false;
    }
 
    // if amplitude is fixed, skip
    if ( cb_fix_amplitude->isChecked() ) {
-      qDebug( "max_free_peak_delta() fixed amplitude checked, skipping" );
+      us_qdebug( "max_free_peak_delta() fixed amplitude checked, skipping" );
       return false;
    }
 
@@ -1954,7 +1954,7 @@ bool US_Hydrodyn_Saxs_Hplc_Fit::max_free_peak_delta( vector < double > & par ) {
       return false;
    }
 
-   qDebug( QString( "max_free_peak_delta() found max peak pos %1" ).arg( max_pos + 1 ) );
+   us_qdebug( QString( "max_free_peak_delta() found max peak pos %1" ).arg( max_pos + 1 ) );
 
    tmp_gaussians[ 0 + max_i ] *= 1e0 + hplc_maxfpk_restart_pct * 0.01;
    // gaussians_undo.push_back( hplc_win->gaussians );
@@ -2057,7 +2057,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit::lm( bool max_free_peak_delta_run, double prev_rm
 
    vector < double > par = HFIT::init_params;
    // US_Vector::printvector( QString( "par start (rmsd %1)" ).arg( org_rmsd ), par );
-   qDebug( QString( "par start (rmsd %1)\n" ).arg( org_rmsd ) );
+   us_qdebug( QString( "par start (rmsd %1)\n" ).arg( org_rmsd ) );
 
    // LM::qpb  = ( QProgressBar * )0;
    // LM::qApp = ( QApplication * )0;
@@ -2094,7 +2094,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit::lm( bool max_free_peak_delta_run, double prev_rm
          nu = 1e0;
       }
       new_fnorm /= nu;
-      qDebug( QString( "recomputing fnorm for sd's ... should match display field %1" ).arg( new_fnorm ) );
+      us_qdebug( QString( "recomputing fnorm for sd's ... should match display field %1" ).arg( new_fnorm ) );
       // org_rmsd = sqrt( org_rmsd );
       status.fnorm = new_fnorm;
    }
@@ -2108,19 +2108,19 @@ void US_Hydrodyn_Saxs_Hplc_Fit::lm( bool max_free_peak_delta_run, double prev_rm
 #if defined( UHHSF_FULL_DEBUG )
    US_Vector::printvector( QString( "par after fit (norm %1)" ).arg( status.fnorm ), par );
 #endif
-   qDebug(QString( "par fit (rmsd %1)\n" ).arg( status.fnorm ) );
+   us_qdebug(QString( "par fit (rmsd %1)\n" ).arg( status.fnorm ) );
 
    double best_rmsd = org_rmsd;
 
    if ( max_free_peak_delta_run ) {
-      qDebug( QString( "max free peak delta run results org_rmsd %1 prev_rmsd %2 status.fnorm %3" )
+      us_qdebug( QString( "max free peak delta run results org_rmsd %1 prev_rmsd %2 status.fnorm %3" )
               .arg( org_rmsd )
               .arg( prev_rmsd )
               .arg( status.fnorm )
               );
       if ( org_rmsd > status.fnorm &&
            prev_rmsd > status.fnorm ) {
-         qDebug( "max free peak delta run improvement found" );
+         us_qdebug( "max free peak delta run improvement found" );
          for ( unsigned int i = 0; i < HFIT::param_fixed.size(); i++ )
          {
             if ( !HFIT::param_fixed[ i ] ||
@@ -2140,15 +2140,15 @@ void US_Hydrodyn_Saxs_Hplc_Fit::lm( bool max_free_peak_delta_run, double prev_rm
          gaussians_undo.push_back( hplc_win->gaussians );
       } else {
          // we need to pop back the old ones
-         qDebug( "max free peak delta run worse then before" );
-         qDebug( "undoing old gaussians" );
+         us_qdebug( "max free peak delta run worse then before" );
+         us_qdebug( "undoing old gaussians" );
          return undo();
       }
    } else {
       if ( org_rmsd > status.fnorm )
       {
          best_rmsd = status.fnorm;
-         qDebug( "improvement found" );
+         us_qdebug( "improvement found" );
          for ( unsigned int i = 0; i < HFIT::param_fixed.size(); i++ )
          {
             if ( !HFIT::param_fixed[ i ] ||
@@ -2170,11 +2170,11 @@ void US_Hydrodyn_Saxs_Hplc_Fit::lm( bool max_free_peak_delta_run, double prev_rm
          if ( lock_zeros( par ) ) {
             update_enables();
             if ( pb_lm->isEnabled() ) {
-               qDebug( "retrying with more fixed curves" );
+               us_qdebug( "retrying with more fixed curves" );
                // pb_lm->animateClick();
                return lm( max_free_peak_delta_run );
             } else {
-               qDebug( "all curves locked" );
+               us_qdebug( "all curves locked" );
             }
          }
       } else {
@@ -2182,18 +2182,18 @@ void US_Hydrodyn_Saxs_Hplc_Fit::lm( bool max_free_peak_delta_run, double prev_rm
          if ( lock_zeros( par ) ) {
             update_enables();
             if ( pb_lm->isEnabled() ) {
-               qDebug( "retrying with more fixed curves" );
+               us_qdebug( "retrying with more fixed curves" );
                // pb_lm->animateClick();
                return lm( max_free_peak_delta_run );
             } else {
-               qDebug( "all curves locked" );
+               us_qdebug( "all curves locked" );
             }
          }
       }
 
       if ( hplc_maxfpk_restart &&
            max_free_peak_delta( par ) ) {
-         qDebug( "max free peak delta retry" );
+         us_qdebug( "max free peak delta retry" );
          gaussians_undo.push_back( hplc_win->gaussians );
          return lm( true, best_rmsd );
       }
@@ -2551,7 +2551,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit::grid()
    for ( unsigned int i = 0; i < total_count; i++ )
    {
       unsigned int remainder = i;
-      progress->setProgress( i, total_count );
+      progress->setValue( i ); progress->setMaximum( total_count );
       qApp->processEvents();
 
       for ( unsigned int j = 0; j < ( unsigned int ) HFIT::init_params.size(); j++ )
@@ -2701,7 +2701,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit::ga()
    for ( unsigned int i = 0; i < total_count; i++ )
    {
       unsigned int remainder = i;
-      progress->setProgress( i, total_count );
+      progress->setValue( i ); progress->setMaximum( total_count );
       qApp->processEvents();
 
       for ( unsigned int j = 0; j < ( unsigned int ) HFIT::init_params.size(); j++ )

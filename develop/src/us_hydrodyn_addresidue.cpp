@@ -20,13 +20,13 @@
 #include "../include/color_white.xpm"
 #include "../include/color_yellow.xpm"
 //Added by qt3to4:
-#include <Q3TextStream>
-#include <Q3HBoxLayout>
+#include <QTextStream>
+#include <QHBoxLayout>
 #include <QLabel>
-#include <Q3GridLayout>
+#include <QGridLayout>
 #include <QPixmap>
-#include <Q3Frame>
-#include <Q3BoxLayout>
+#include <QFrame>
+#include <QBoxLayout>
 #include <QCloseEvent>
 
 // note: this program uses cout and/or cerr and this should be replaced
@@ -37,7 +37,7 @@ static std::basic_ostream<char>& operator<<(std::basic_ostream<char>& os, const 
 
 // #define DEBUG_RESIDUE
 
-US_AddResidue::US_AddResidue(bool *widget_flag, const double hydrovol, QWidget *p, const char *name) : QWidget( p, name)
+US_AddResidue::US_AddResidue(bool *widget_flag, const double hydrovol, QWidget *p, const char *name) : QWidget( p )
 {
    this->widget_flag = widget_flag;
    this->hydrovol = hydrovol;
@@ -53,7 +53,7 @@ US_AddResidue::US_AddResidue(bool *widget_flag, const double hydrovol, QWidget *
    atom_filename = USglobal->config_list.system_dir + "/etc/somo.atom";
    residue_filename = USglobal->config_list.system_dir + "/etc/somo.residue";
    setPalette( PALET_FRAME );
-   setCaption(tr("SoMo: Modify Residue Lookup Tables"));
+   setWindowTitle(us_tr("SoMo: Modify Residue Lookup Tables"));
    setupGUI();
    global_Xpos += 30;
    global_Ypos += 30;
@@ -77,31 +77,31 @@ void US_AddResidue::setupGUI()
    int minHeight1 = 24;
    int minWidth1  = 144;
 
-   lbl_info1 = new QLabel(tr(" 1: Define Residue Properties: "), this);
+   lbl_info1 = new QLabel(us_tr(" 1: Define Residue Properties: "), this);
    Q_CHECK_PTR(lbl_info1);
-   lbl_info1->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Raised);
+   lbl_info1->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_info1->setMinimumHeight(minHeight1);
    lbl_info1->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_info1->setPalette( PALET_FRAME );
    AUTFBACK( lbl_info1 );
    lbl_info1->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
 
-   pb_select_atom_file = new QPushButton(tr("Load Atom Definition File"), this);
+   pb_select_atom_file = new QPushButton(us_tr("Load Atom Definition File"), this);
    Q_CHECK_PTR(pb_select_atom_file);
    pb_select_atom_file->setMinimumHeight(minHeight1);
    pb_select_atom_file->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_select_atom_file->setPalette( PALET_PUSHB );
    connect(pb_select_atom_file, SIGNAL(clicked()), SLOT(select_atom_file()));
 
-   lbl_atom_file = new QLabel(tr(" not selected"),this);
-   lbl_atom_file->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Sunken);
+   lbl_atom_file = new QLabel(us_tr(" not selected"),this);
+   lbl_atom_file->setFrameStyle(QFrame::WinPanel|QFrame::Sunken);
    lbl_atom_file->setMinimumHeight(minHeight1);
    lbl_atom_file->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_atom_file->setPalette( PALET_EDIT );
    AUTFBACK( lbl_atom_file );
    lbl_atom_file->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 
-   pb_select_residue_file = new QPushButton(tr("Load Residue Definition File"), this);
+   pb_select_residue_file = new QPushButton(us_tr("Load Residue Definition File"), this);
    Q_CHECK_PTR(pb_select_residue_file);
    pb_select_residue_file->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_select_residue_file->setEnabled(false);
@@ -109,15 +109,15 @@ void US_AddResidue::setupGUI()
    pb_select_residue_file->setPalette( PALET_PUSHB );
    connect(pb_select_residue_file, SIGNAL(clicked()), SLOT(select_residue_file()));
 
-   lbl_residue_file = new QLabel(tr(" not selected"),this);
-   lbl_residue_file->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Sunken);
+   lbl_residue_file = new QLabel(us_tr(" not selected"),this);
+   lbl_residue_file->setFrameStyle(QFrame::WinPanel|QFrame::Sunken);
    lbl_residue_file->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_residue_file->setMinimumHeight(minHeight1);
    lbl_residue_file->setPalette( PALET_EDIT );
    AUTFBACK( lbl_residue_file );
    lbl_residue_file->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 
-   lbl_numresidues = new QLabel(tr(" Number of Residues in File: 0"), this);
+   lbl_numresidues = new QLabel(us_tr(" Number of Residues in File: 0"), this);
    Q_CHECK_PTR(lbl_numresidues);
    lbl_numresidues->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_numresidues->setMinimumHeight(minHeight1);
@@ -125,14 +125,14 @@ void US_AddResidue::setupGUI()
    AUTFBACK( lbl_numresidues );
    lbl_numresidues->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
-   lb_residues = new Q3ListBox(this, "Residue Listing" );
+   lb_residues = new QListWidget( this );
    lb_residues->setPalette( PALET_NORMAL );
    AUTFBACK( lb_residues );
    lb_residues->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    lb_residues->setMinimumHeight(minHeight1);
-   connect(lb_residues, SIGNAL(selected(int)), this, SLOT(select_residue(int)));
+   connect(lb_residues, SIGNAL(currentRowChanged(int)), this, SLOT(select_residue(int)));
 
-   lbl_residue_name = new QLabel(tr(" Residue Name:"), this);
+   lbl_residue_name = new QLabel(us_tr(" Residue Name:"), this);
    Q_CHECK_PTR(lbl_residue_name);
    lbl_residue_name->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_residue_name->setMinimumHeight(minHeight1);
@@ -140,7 +140,7 @@ void US_AddResidue::setupGUI()
    AUTFBACK( lbl_residue_name );
    lbl_residue_name->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
-   le_residue_name = new QLineEdit(this, "Residue name Line Edit");
+   le_residue_name = new QLineEdit( this );    le_residue_name->setObjectName( "Residue name Line Edit" );
    le_residue_name->setMinimumHeight(minHeight1);
    le_residue_name->setEnabled(false);
    le_residue_name->setPalette( PALET_NORMAL );
@@ -148,7 +148,7 @@ void US_AddResidue::setupGUI()
    le_residue_name->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_residue_name, SIGNAL(textChanged(const QString &)), SLOT(update_name(const QString &)));
 
-   lbl_residue_comment = new QLabel(tr(" Description:"), this);
+   lbl_residue_comment = new QLabel(us_tr(" Description:"), this);
    Q_CHECK_PTR(lbl_residue_comment);
    lbl_residue_comment->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_residue_comment->setMinimumHeight(minHeight1);
@@ -156,7 +156,7 @@ void US_AddResidue::setupGUI()
    AUTFBACK( lbl_residue_comment );
    lbl_residue_comment->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
-   le_residue_comment = new QLineEdit(this, "Residue name Line Edit");
+   le_residue_comment = new QLineEdit( this );    le_residue_comment->setObjectName( "Residue name Line Edit" );
    le_residue_comment->setMinimumHeight(minHeight1);
    le_residue_comment->setEnabled(false);
    le_residue_comment->setPalette( PALET_NORMAL );
@@ -164,7 +164,7 @@ void US_AddResidue::setupGUI()
    le_residue_comment->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_residue_comment, SIGNAL(textChanged(const QString &)), SLOT(update_comment(const QString &)));
 
-   lbl_numatoms = new QLabel(tr(" Number of Atoms in Residue:"), this);
+   lbl_numatoms = new QLabel(us_tr(" Number of Atoms in Residue:"), this);
    Q_CHECK_PTR(lbl_numatoms);
    lbl_numatoms->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_numatoms->setMinimumHeight(minHeight1);
@@ -184,7 +184,7 @@ void US_AddResidue::setupGUI()
    AUTFBACK( cnt_numatoms );
    connect(cnt_numatoms, SIGNAL(valueChanged(double)), SLOT(update_numatoms(double)));
 
-   lbl_numbeads = new QLabel(tr(" Number of Beads for Residue:"), this);
+   lbl_numbeads = new QLabel(us_tr(" Number of Beads for Residue:"), this);
    Q_CHECK_PTR(lbl_numbeads);
    lbl_numbeads->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_numbeads->setPalette( PALET_LABEL );
@@ -204,7 +204,7 @@ void US_AddResidue::setupGUI()
    AUTFBACK( cnt_numbeads );
    connect(cnt_numbeads, SIGNAL(valueChanged(double)), SLOT(update_numbeads(double)));
 
-   lbl_type = new QLabel(tr(" Residue Type:"), this);
+   lbl_type = new QLabel(us_tr(" Residue Type:"), this);
    Q_CHECK_PTR(lbl_type);
    lbl_type->setMinimumHeight(minHeight1);
    lbl_type->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
@@ -212,26 +212,26 @@ void US_AddResidue::setupGUI()
    AUTFBACK( lbl_type );
    lbl_type->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
-   cmb_type = new Q3ComboBox(false, this, "Bead Color" );
+   cmb_type = new QComboBox(  this );    cmb_type->setObjectName( "Bead Color" );
    cmb_type->setPalette( PALET_NORMAL );
    AUTFBACK( cmb_type );
    cmb_type->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cmb_type->setSizeLimit(6);
+ //   cmb_type->setSizeLimit(6);
    cmb_type->setEnabled(false);
-   cmb_type->insertItem("Amino Acid");
-   cmb_type->insertItem("Sugar Moiety");
-   cmb_type->insertItem("Nucleotide");
-   cmb_type->insertItem("Heme");
-   cmb_type->insertItem("Phosphate");
-   cmb_type->insertItem("Co-factor");
-   cmb_type->insertItem("Ion");
-   cmb_type->insertItem("Detergent");
-   cmb_type->insertItem("Lipid");
-   cmb_type->insertItem("Other");
+   cmb_type->addItem("Amino Acid");
+   cmb_type->addItem("Sugar Moiety");
+   cmb_type->addItem("Nucleotide");
+   cmb_type->addItem("Heme");
+   cmb_type->addItem("Phosphate");
+   cmb_type->addItem("Co-factor");
+   cmb_type->addItem("Ion");
+   cmb_type->addItem("Detergent");
+   cmb_type->addItem("Lipid");
+   cmb_type->addItem("Other");
    cmb_type->setMinimumHeight(minHeight1);
    connect(cmb_type, SIGNAL(activated(int)), this, SLOT(select_type(int)));
 
-   lbl_molvol = new QLabel(tr(" Residue anhydrous mol. vol. (A^3):"), this);
+   lbl_molvol = new QLabel(us_tr(" Residue anhydrous mol. vol. (A^3):"), this);
    Q_CHECK_PTR(lbl_molvol);
    lbl_molvol->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_molvol->setMinimumHeight(minHeight1);
@@ -239,7 +239,7 @@ void US_AddResidue::setupGUI()
    AUTFBACK( lbl_molvol );
    lbl_molvol->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
-   le_molvol = new QLineEdit(this, "Residue molvol Line Edit");
+   le_molvol = new QLineEdit( this );    le_molvol->setObjectName( "Residue molvol Line Edit" );
    le_molvol->setPalette( PALET_NORMAL );
    AUTFBACK( le_molvol );
    le_molvol->setMinimumHeight(minHeight1);
@@ -247,7 +247,7 @@ void US_AddResidue::setupGUI()
    le_molvol->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_molvol, SIGNAL(textChanged(const QString &)), SLOT(update_molvol(const QString &)));
 
-   lbl_vbar = new QLabel(tr(" Residue partial spec. vol. (cm^3/g):"), this);
+   lbl_vbar = new QLabel(us_tr(" Residue partial spec. vol. (cm^3/g):"), this);
    Q_CHECK_PTR(lbl_vbar);
    lbl_vbar->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_vbar->setMinimumHeight(minHeight1);
@@ -255,7 +255,7 @@ void US_AddResidue::setupGUI()
    AUTFBACK( lbl_vbar );
    lbl_vbar->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
-   le_vbar = new QLineEdit(this, "Residue vbar Line Edit");
+   le_vbar = new QLineEdit( this );    le_vbar->setObjectName( "Residue vbar Line Edit" );
    le_vbar->setPalette( PALET_NORMAL );
    AUTFBACK( le_vbar );
    le_vbar->setMinimumHeight(minHeight1);
@@ -263,7 +263,7 @@ void US_AddResidue::setupGUI()
    le_vbar->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_vbar, SIGNAL(textChanged(const QString &)), SLOT(update_vbar(const QString &)));
 
-   lbl_asa = new QLabel(tr(" Max. Accessible Surface Area (A^2):"), this);
+   lbl_asa = new QLabel(us_tr(" Max. Accessible Surface Area (A^2):"), this);
    Q_CHECK_PTR(lbl_asa);
    lbl_asa->setMinimumHeight(minHeight1);
    lbl_asa->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
@@ -271,7 +271,7 @@ void US_AddResidue::setupGUI()
    AUTFBACK( lbl_asa );
    lbl_asa->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
-   le_asa = new QLineEdit(this, "Residue asa Line Edit");
+   le_asa = new QLineEdit( this );    le_asa->setObjectName( "Residue asa Line Edit" );
    le_asa->setPalette( PALET_NORMAL );
    AUTFBACK( le_asa );
    le_asa->setMinimumHeight(minHeight1);
@@ -279,7 +279,7 @@ void US_AddResidue::setupGUI()
    le_asa->setEnabled(false);
    connect(le_asa, SIGNAL(textChanged(const QString &)), SLOT(update_asa(const QString &)));
 
-   pb_accept_residue = new QPushButton(tr(" Accept Residue and Continue "), this);
+   pb_accept_residue = new QPushButton(us_tr(" Accept Residue and Continue "), this);
    Q_CHECK_PTR(pb_accept_residue);
    pb_accept_residue->setEnabled(false);
    pb_accept_residue->setMinimumHeight(minHeight1);
@@ -287,16 +287,16 @@ void US_AddResidue::setupGUI()
    pb_accept_residue->setPalette( PALET_PUSHB );
    connect(pb_accept_residue, SIGNAL(clicked()), SLOT(accept_residue()));
 
-   lbl_info2 = new QLabel(tr(" 2. Define Residue Atoms: "), this);
+   lbl_info2 = new QLabel(us_tr(" 2. Define Residue Atoms: "), this);
    Q_CHECK_PTR(lbl_info2);
-   lbl_info2->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Raised);
+   lbl_info2->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_info2->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_info2->setMinimumHeight(minHeight1);
    lbl_info2->setPalette( PALET_FRAME );
    AUTFBACK( lbl_info2 );
    lbl_info2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
 
-   lbl_r_atoms = new QLabel(tr(" Select Residue Atom to be defined:  "), this);
+   lbl_r_atoms = new QLabel(us_tr(" Select Residue Atom to be defined:  "), this);
    Q_CHECK_PTR(lbl_r_atoms);
    lbl_r_atoms->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_r_atoms->setMinimumHeight(minHeight1);
@@ -304,15 +304,15 @@ void US_AddResidue::setupGUI()
    AUTFBACK( lbl_r_atoms );
    lbl_r_atoms->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
-   cmb_r_atoms = new Q3ComboBox(false, this, "Residue's Atom Listing" );
+   cmb_r_atoms = new QComboBox(  this );    cmb_r_atoms->setObjectName( "Residue's Atom Listing" );
    cmb_r_atoms->setPalette( PALET_NORMAL );
    AUTFBACK( cmb_r_atoms );
    cmb_r_atoms->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cmb_r_atoms->setSizeLimit(5);
+ //   cmb_r_atoms->setSizeLimit(5);
    cmb_r_atoms->setMinimumHeight(minHeight1);
    connect(cmb_r_atoms, SIGNAL(activated(int)), this, SLOT(select_r_atom(int)));
 
-   lbl_define_atom = new QLabel(tr(" Select Atom from Lookup Table:"), this);
+   lbl_define_atom = new QLabel(us_tr(" Select Atom from Lookup Table:"), this);
    Q_CHECK_PTR(lbl_define_atom);
    lbl_define_atom->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_define_atom->setMinimumHeight(minHeight1);
@@ -320,15 +320,15 @@ void US_AddResidue::setupGUI()
    AUTFBACK( lbl_define_atom );
    lbl_define_atom->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
-   cmb_atoms = new Q3ComboBox(false, this, "Atom Listing" );
+   cmb_atoms = new QComboBox(  this );    cmb_atoms->setObjectName( "Atom Listing" );
    cmb_atoms->setPalette( PALET_NORMAL );
    AUTFBACK( cmb_atoms );
    cmb_atoms->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cmb_atoms->setSizeLimit(5);
+ //   cmb_atoms->setSizeLimit(5);
    cmb_atoms->setMinimumHeight(minHeight1);
    connect(cmb_atoms, SIGNAL(activated(int)), this, SLOT(update_hybrid(int)));
 
-   lbl_define_hybrid = new QLabel(tr(" Select Hybridization for Atom:"), this);
+   lbl_define_hybrid = new QLabel(us_tr(" Select Hybridization for Atom:"), this);
    Q_CHECK_PTR(lbl_define_hybrid);
    lbl_define_hybrid->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_define_hybrid->setMinimumHeight(minHeight1);
@@ -336,14 +336,14 @@ void US_AddResidue::setupGUI()
    AUTFBACK( lbl_define_hybrid );
    lbl_define_hybrid->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
-   cmb_hybrids = new Q3ComboBox(false, this, "Hybridization Listing" );
+   cmb_hybrids = new QComboBox(  this );    cmb_hybrids->setObjectName( "Hybridization Listing" );
    cmb_hybrids->setPalette( PALET_NORMAL );
    AUTFBACK( cmb_hybrids );
    cmb_hybrids->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cmb_hybrids->setSizeLimit(5);
+ //   cmb_hybrids->setSizeLimit(5);
    cmb_hybrids->setMinimumHeight(minHeight1);
 
-   lbl_positioning = new QLabel(tr(" Atom determines Position: "), this);
+   lbl_positioning = new QLabel(us_tr(" Atom determines Position: "), this);
    Q_CHECK_PTR(lbl_positioning);
    lbl_positioning->setMinimumHeight(minHeight1);
    lbl_positioning->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
@@ -352,7 +352,7 @@ void US_AddResidue::setupGUI()
    lbl_positioning->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    cb_positioning = new QCheckBox(this);
-   cb_positioning->setText(tr(" (Check if true)"));
+   cb_positioning->setText(us_tr(" (Check if true)"));
    cb_positioning->setChecked(position_flag);
    cb_positioning->setEnabled(false);
    cb_positioning->setMinimumHeight(minHeight1);
@@ -361,7 +361,7 @@ void US_AddResidue::setupGUI()
    AUTFBACK( cb_positioning );
    connect(cb_positioning, SIGNAL(clicked()), SLOT(set_positioning()));
 
-   lbl_atom_hydration = new QLabel(tr(" Hydration Number for Atom: "), this);
+   lbl_atom_hydration = new QLabel(us_tr(" Hydration Number for Atom: "), this);
    Q_CHECK_PTR(lbl_atom_hydration);
    lbl_atom_hydration->setMinimumHeight(minHeight1);
    lbl_atom_hydration->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
@@ -382,7 +382,7 @@ void US_AddResidue::setupGUI()
    AUTFBACK( cnt_atom_hydration );
    connect(cnt_atom_hydration, SIGNAL(valueChanged(double)), SLOT(update_atom_hydration(double)));
 
-   pb_accept_atom = new QPushButton(tr("Assign Current Atom"), this);
+   pb_accept_atom = new QPushButton(us_tr("Assign Current Atom"), this);
    Q_CHECK_PTR(pb_accept_atom);
    pb_accept_atom->setEnabled(false);
    pb_accept_atom->setMinimumHeight(minHeight1);
@@ -390,7 +390,7 @@ void US_AddResidue::setupGUI()
    pb_accept_atom->setPalette( PALET_PUSHB );
    connect(pb_accept_atom, SIGNAL(clicked()), SLOT(accept_atom()));
 
-   pb_atom_continue = new QPushButton(tr("Continue"), this);
+   pb_atom_continue = new QPushButton(us_tr("Continue"), this);
    Q_CHECK_PTR(pb_atom_continue);
    pb_atom_continue->setEnabled(false);
    pb_atom_continue->setMinimumHeight(minHeight1);
@@ -398,16 +398,16 @@ void US_AddResidue::setupGUI()
    pb_atom_continue->setPalette( PALET_PUSHB );
    connect(pb_atom_continue, SIGNAL(clicked()), SLOT(atom_continue()));
 
-   lbl_info3 = new QLabel(tr(" 3. Define Residue Bead Properties: "), this);
+   lbl_info3 = new QLabel(us_tr(" 3. Define Residue Bead Properties: "), this);
    Q_CHECK_PTR(lbl_info3);
-   lbl_info3->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Raised);
+   lbl_info3->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_info3->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_info3->setMinimumHeight(minHeight1);
    lbl_info3->setPalette( PALET_FRAME );
    AUTFBACK( lbl_info3 );
    lbl_info3->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
 
-   lbl_r_beads = new QLabel(tr(" Select Residue Bead to be defined: "), this);
+   lbl_r_beads = new QLabel(us_tr(" Select Residue Bead to be defined: "), this);
    Q_CHECK_PTR(lbl_r_beads);
    lbl_r_beads->setMinimumHeight(minHeight1);
    lbl_r_beads->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
@@ -415,16 +415,16 @@ void US_AddResidue::setupGUI()
    AUTFBACK( lbl_r_beads );
    lbl_r_beads->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
-   cmb_r_beads = new Q3ComboBox(false, this, "bead Listing" );
+   cmb_r_beads = new QComboBox(  this );    cmb_r_beads->setObjectName( "bead Listing" );
    cmb_r_beads->setPalette( PALET_NORMAL );
    AUTFBACK( cmb_r_beads );
    cmb_r_beads->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cmb_r_beads->setSizeLimit(5);
+ //   cmb_r_beads->setSizeLimit(5);
    cmb_r_beads->setEnabled(false);
    cmb_r_beads->setMinimumHeight(minHeight1);
    connect(cmb_r_beads, SIGNAL(activated(int)), this, SLOT(select_r_bead(int)));
 
-   lbl_bead_color = new QLabel(tr(" Select Bead Color: "), this);
+   lbl_bead_color = new QLabel(us_tr(" Select Bead Color: "), this);
    Q_CHECK_PTR(lbl_bead_color);
    lbl_bead_color->setMinimumHeight(minHeight1);
    lbl_bead_color->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
@@ -432,34 +432,34 @@ void US_AddResidue::setupGUI()
    AUTFBACK( lbl_bead_color );
    lbl_bead_color->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
-   cmb_bead_color = new Q3ComboBox(false, this, "Bead Color" );
+   cmb_bead_color = new QComboBox(  this );    cmb_bead_color->setObjectName( "Bead Color" );
    cmb_bead_color->setPalette( PALET_NORMAL );
    AUTFBACK( cmb_bead_color );
    cmb_bead_color->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cmb_bead_color->setSizeLimit(5);
+ //   cmb_bead_color->setSizeLimit(5);
    cmb_bead_color->setMinimumHeight(minHeight1);
-   cmb_bead_color->insertItem(QPixmap(color_black), " (0)");
-   cmb_bead_color->insertItem(QPixmap(color_blue), " (1)");
-   cmb_bead_color->insertItem(QPixmap(color_green), " (2)");
-   cmb_bead_color->insertItem(QPixmap(color_cyan), " (3)");
-   cmb_bead_color->insertItem(QPixmap(color_red), " (4)");
-   cmb_bead_color->insertItem(QPixmap(color_magenta), " (5)");
-   cmb_bead_color->insertItem(QPixmap(color_brown), " (6)");
-   cmb_bead_color->insertItem(QPixmap(color_white), " (7)");
-   cmb_bead_color->insertItem(QPixmap(color_grey), " (8)");
-   cmb_bead_color->insertItem(QPixmap(color_lightblue), " (9)");
-   cmb_bead_color->insertItem(QPixmap(color_lightgreen), " (10)");
-   cmb_bead_color->insertItem(QPixmap(color_lightcyan), " (11)");
-   cmb_bead_color->insertItem(QPixmap(color_lightred), " (12)");
-   cmb_bead_color->insertItem(QPixmap(color_lightmagenta), " (13)");
-   cmb_bead_color->insertItem(QPixmap(color_yellow), " (14)");
-   cmb_bead_color->insertItem(QPixmap(color_brightwhite), " (15)");
-   cmb_bead_color->setCurrentItem(1);
+   cmb_bead_color->addItem(QIcon(QPixmap(color_black)), " (0)");
+   cmb_bead_color->addItem(QIcon(QPixmap(color_blue)), " (1)");
+   cmb_bead_color->addItem(QIcon(QPixmap(color_green)), " (2)");
+   cmb_bead_color->addItem(QIcon(QPixmap(color_cyan)), " (3)");
+   cmb_bead_color->addItem(QIcon(QPixmap(color_red)), " (4)");
+   cmb_bead_color->addItem(QIcon(QPixmap(color_magenta)), " (5)");
+   cmb_bead_color->addItem(QIcon(QPixmap(color_brown)), " (6)");
+   cmb_bead_color->addItem(QIcon(QPixmap(color_white)), " (7)");
+   cmb_bead_color->addItem(QIcon(QPixmap(color_grey)), " (8)");
+   cmb_bead_color->addItem(QIcon(QPixmap(color_lightblue)), " (9)");
+   cmb_bead_color->addItem(QIcon(QPixmap(color_lightgreen)), " (10)");
+   cmb_bead_color->addItem(QIcon(QPixmap(color_lightcyan)), " (11)");
+   cmb_bead_color->addItem(QIcon(QPixmap(color_lightred)), " (12)");
+   cmb_bead_color->addItem(QIcon(QPixmap(color_lightmagenta)), " (13)");
+   cmb_bead_color->addItem(QIcon(QPixmap(color_yellow)), " (14)");
+   cmb_bead_color->addItem(QIcon(QPixmap(color_brightwhite)), " (15)");
+   cmb_bead_color->setCurrentIndex(1);
    cmb_bead_color->setEnabled(false);
    connect(cmb_bead_color, SIGNAL(activated(int)), this, SLOT(select_bead_color(int)));
 
    cb_hydration = new QCheckBox(this);
-   cb_hydration->setText(tr(" Override Bead Hydration Value: "));
+   cb_hydration->setText(us_tr(" Override Bead Hydration Value: "));
    cb_hydration->setChecked(hydration_flag);
    cb_hydration->setEnabled(false);
    cb_hydration->setMinimumHeight(minHeight1);
@@ -482,7 +482,7 @@ void US_AddResidue::setupGUI()
    AUTFBACK( cnt_hydration );
    connect(cnt_hydration, SIGNAL(valueChanged(double)), SLOT(update_hydration(double)));
 
-   lbl_placing = new QLabel(tr(" Select Positioning Method: "), this);
+   lbl_placing = new QLabel(us_tr(" Select Positioning Method: "), this);
    Q_CHECK_PTR(lbl_placing);
    lbl_placing->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_placing->setMinimumHeight(minHeight1);
@@ -490,19 +490,19 @@ void US_AddResidue::setupGUI()
    AUTFBACK( lbl_placing );
    lbl_placing->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
-   cmb_placing = new Q3ComboBox(false, this, "Placing Combo" );
+   cmb_placing = new QComboBox(  this );    cmb_placing->setObjectName( "Placing Combo" );
    cmb_placing->setPalette( PALET_NORMAL );
    AUTFBACK( cmb_placing );
    cmb_placing->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cmb_placing->setSizeLimit(5);
-   cmb_placing->insertItem("Center of Gravity");
-   cmb_placing->insertItem("Farthest Atom");
-   cmb_placing->insertItem("No Positioning");
+ //   cmb_placing->setSizeLimit(5);
+   cmb_placing->addItem("Center of Gravity");
+   cmb_placing->addItem("Farthest Atom");
+   cmb_placing->addItem("No Positioning");
    cmb_placing->setEnabled(false);
    cmb_placing->setMinimumHeight(minHeight1);
    connect(cmb_placing, SIGNAL(activated(int)), this, SLOT(select_placing_method(int)));
 
-   lbl_select_beadatom = new QLabel(tr(" Select Atom for Bead (multi-selection OK): "), this);
+   lbl_select_beadatom = new QLabel(us_tr(" Select Atom for Bead (multi-selection OK): "), this);
    Q_CHECK_PTR(lbl_select_beadatom);
    lbl_select_beadatom->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_select_beadatom->setMinimumHeight(minHeight1);
@@ -510,7 +510,7 @@ void US_AddResidue::setupGUI()
    AUTFBACK( lbl_select_beadatom );
    lbl_select_beadatom->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
-   lbl_list_beadatom = new QLabel(tr(" Currently defined Atoms for Bead: "), this);
+   lbl_list_beadatom = new QLabel(us_tr(" Currently defined Atoms for Bead: "), this);
    Q_CHECK_PTR(lbl_list_beadatom);
    lbl_list_beadatom->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_list_beadatom->setMinimumHeight(minHeight1);
@@ -518,28 +518,28 @@ void US_AddResidue::setupGUI()
    AUTFBACK( lbl_list_beadatom );
    lbl_list_beadatom->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
-   lb_select_beadatom = new Q3ListBox(this, "beadatom selection listbox" );
+   lb_select_beadatom = new QListWidget( this );
    lb_select_beadatom->setPalette( PALET_NORMAL );
    AUTFBACK( lb_select_beadatom );
    lb_select_beadatom->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    //lb_select_beadatom->setEnabled(false);
-   lb_select_beadatom->setSelectionMode(Q3ListBox::Extended);
+   lb_select_beadatom->setSelectionMode(QAbstractItemView::ExtendedSelection);
    lb_select_beadatom->setMinimumHeight(minHeight1);
-   lb_select_beadatom->setHScrollBarMode(Q3ScrollView::Auto);
-   lb_select_beadatom->setVScrollBarMode(Q3ScrollView::Auto);
-   connect(lb_select_beadatom, SIGNAL(selectionChanged()), this, SLOT(select_beadatom()));
+ //   lb_select_beadatom->setHScrollBarMode(QScrollView::Auto);
+ //   lb_select_beadatom->setVScrollBarMode(QScrollView::Auto);
+   connect(lb_select_beadatom, SIGNAL(itemSelectionChanged()), this, SLOT(select_beadatom()));
 
-   lb_list_beadatom = new Q3ListBox(this, "beadatom list listbox" );
+   lb_list_beadatom = new QListWidget( this );
    lb_list_beadatom->setPalette( PALET_NORMAL );
    AUTFBACK( lb_list_beadatom );
    lb_list_beadatom->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    //lb_list_beadatom->setEnabled(false);
-   lb_list_beadatom->setSelectionMode(Q3ListBox::Extended);
-   lb_list_beadatom->setHScrollBarMode(Q3ScrollView::Auto);
-   lb_list_beadatom->setVScrollBarMode(Q3ScrollView::Auto);
+   lb_list_beadatom->setSelectionMode(QAbstractItemView::ExtendedSelection);
+ //   lb_list_beadatom->setHScrollBarMode(QScrollView::Auto);
+ //   lb_list_beadatom->setVScrollBarMode(QScrollView::Auto);
    lb_list_beadatom->setMinimumHeight(minHeight1);
 
-   lbl_beadchain = new QLabel(tr(" This Bead is part of the: "), this);
+   lbl_beadchain = new QLabel(us_tr(" This Bead is part of the: "), this);
    Q_CHECK_PTR(lbl_beadchain);
    lbl_beadchain->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_beadchain->setMinimumHeight(minHeight1);
@@ -547,30 +547,47 @@ void US_AddResidue::setupGUI()
    AUTFBACK( lbl_beadchain );
    lbl_beadchain->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
-   rb_backbone = new QRadioButton(tr("Backbone"), this);
+   rb_backbone = new QRadioButton(us_tr("Backbone"), this);
    rb_backbone->setMinimumHeight(minHeight1);
    rb_backbone->setEnabled(false);
    rb_backbone->setChecked(true);
    rb_backbone->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    rb_backbone->setPalette( PALET_NORMAL );
    AUTFBACK( rb_backbone );
+#if QT_VERSION >= 0x040000
+   connect( rb_backbone, SIGNAL( clicked() ), this, SLOT( set_chain() ) );
+#endif
 
-   rb_sidechain = new QRadioButton(tr("Sidechain"), this);
+   rb_sidechain = new QRadioButton(us_tr("Sidechain"), this);
    rb_sidechain->setEnabled(false);
    rb_sidechain->setChecked(false);
    rb_sidechain->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    rb_sidechain->setMinimumHeight(minHeight1);
    rb_sidechain->setPalette( PALET_NORMAL );
    AUTFBACK( rb_sidechain );
+#if QT_VERSION >= 0x040000
+   connect( rb_sidechain, SIGNAL( clicked() ), this, SLOT( set_chain() ) );
+#endif
 
-   bg_chain = new Q3ButtonGroup(1, Qt::Horizontal, 0);
+#if QT_VERSION < 0x040000
+   bg_chain = new QGroupBox(1, Qt::Horizontal, 0);
    bg_chain->setRadioButtonExclusive(true);
    bg_chain->insert(rb_backbone);
    bg_chain->insert(rb_sidechain);
    bg_chain->setMinimumHeight(minHeight1);
    connect(bg_chain, SIGNAL(clicked(int)), SLOT(set_chain(int)));
-
-   lbl_bead_volume = new QLabel(tr(" Bead Volume: "), this);
+#else
+   bg_chain = new QGroupBox();
+   bg_chain->setFlat( true );
+   {
+      QHBoxLayout * bl = new QHBoxLayout; bl->setContentsMargins( 0, 0, 0, 0 ); bl->setSpacing( 0 );
+      bl->addWidget( rb_backbone );
+      bl->addWidget( rb_sidechain );
+      bg_chain->setLayout( bl );
+   }
+#endif
+   
+   lbl_bead_volume = new QLabel(us_tr(" Bead Volume: "), this);
    Q_CHECK_PTR(lbl_bead_volume);
    lbl_bead_volume->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_bead_volume->setMinimumHeight(minHeight1);
@@ -578,7 +595,7 @@ void US_AddResidue::setupGUI()
    AUTFBACK( lbl_bead_volume );
    lbl_bead_volume->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
-   le_bead_volume = new QLineEdit(this, "Bead Volume Line Edit");
+   le_bead_volume = new QLineEdit( this );    le_bead_volume->setObjectName( "Bead Volume Line Edit" );
    le_bead_volume->setPalette( PALET_NORMAL );
    AUTFBACK( le_bead_volume );
    le_bead_volume->setMinimumHeight(minHeight1);
@@ -586,7 +603,7 @@ void US_AddResidue::setupGUI()
    le_bead_volume->setEnabled(false);
    connect(le_bead_volume, SIGNAL(textChanged(const QString &)), SLOT(update_bead_volume(const QString &)));
 
-   lbl_bead_mw = new QLabel(tr(" Bead Mol. Weight: "), this);
+   lbl_bead_mw = new QLabel(us_tr(" Bead Mol. Weight: "), this);
    Q_CHECK_PTR(lbl_bead_mw);
    lbl_bead_mw->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_bead_mw->setMinimumHeight(minHeight1);
@@ -594,7 +611,7 @@ void US_AddResidue::setupGUI()
    AUTFBACK( lbl_bead_mw );
    lbl_bead_mw->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
-   le_bead_mw = new QLineEdit(this, "Bead MW Line Edit");
+   le_bead_mw = new QLineEdit( this );    le_bead_mw->setObjectName( "Bead MW Line Edit" );
    le_bead_mw->setPalette( PALET_NORMAL );
    AUTFBACK( le_bead_mw );
    le_bead_mw->setMinimumHeight(minHeight1);
@@ -602,7 +619,7 @@ void US_AddResidue::setupGUI()
    le_bead_mw->setEnabled(true);
    le_bead_mw->setReadOnly(true);
 
-   lbl_bead_hydro_from_atom = new QLabel(tr(" Bead Hydration from Atoms' Values: "), this);
+   lbl_bead_hydro_from_atom = new QLabel(us_tr(" Bead Hydration from Atoms' Values: "), this);
    Q_CHECK_PTR(lbl_bead_hydro_from_atom);
    lbl_bead_hydro_from_atom->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_bead_hydro_from_atom->setMinimumHeight(minHeight1);
@@ -610,7 +627,7 @@ void US_AddResidue::setupGUI()
    AUTFBACK( lbl_bead_hydro_from_atom );
    lbl_bead_hydro_from_atom->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
-   le_bead_hydro_from_atom = new QLineEdit(this, "Bead Hydration from Atoms' Line Edit");
+   le_bead_hydro_from_atom = new QLineEdit( this );    le_bead_hydro_from_atom->setObjectName( "Bead Hydration from Atoms' Line Edit" );
    le_bead_hydro_from_atom->setPalette( PALET_NORMAL );
    AUTFBACK( le_bead_hydro_from_atom );
    le_bead_hydro_from_atom->setMinimumHeight(minHeight1);
@@ -618,7 +635,7 @@ void US_AddResidue::setupGUI()
    le_bead_hydro_from_atom->setEnabled(true);
    le_bead_hydro_from_atom->setReadOnly(true);
 
-   lbl_bead_hydrovol = new QLabel(tr(" Bead hydrated Volume, Radius: "), this);
+   lbl_bead_hydrovol = new QLabel(us_tr(" Bead hydrated Volume, Radius: "), this);
    Q_CHECK_PTR(lbl_bead_hydrovol);
    lbl_bead_hydrovol->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_bead_hydrovol->setMinimumHeight(minHeight1);
@@ -626,7 +643,7 @@ void US_AddResidue::setupGUI()
    AUTFBACK( lbl_bead_hydrovol );
    lbl_bead_hydrovol->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
-   le_bead_hydrovol = new QLineEdit(this, "Residue Volume Line Edit");
+   le_bead_hydrovol = new QLineEdit( this );    le_bead_hydrovol->setObjectName( "Residue Volume Line Edit" );
    le_bead_hydrovol->setPalette( PALET_NORMAL );
    AUTFBACK( le_bead_hydrovol );
    le_bead_hydrovol->setMinimumHeight(minHeight1);
@@ -634,7 +651,7 @@ void US_AddResidue::setupGUI()
    le_bead_hydrovol->setEnabled(true);
    le_bead_hydrovol->setReadOnly(true);
 
-   pb_accept_bead = new QPushButton(tr("Accept Bead Definition"), this);
+   pb_accept_bead = new QPushButton(us_tr("Accept Bead Definition"), this);
    Q_CHECK_PTR(pb_accept_bead);
    pb_accept_bead->setMinimumHeight(minHeight1);
    pb_accept_bead->setEnabled(false);
@@ -642,14 +659,14 @@ void US_AddResidue::setupGUI()
    pb_accept_bead->setPalette( PALET_PUSHB );
    connect(pb_accept_bead, SIGNAL(clicked()), SLOT(accept_bead()));
 
-   pb_help = new QPushButton(tr("Help"), this);
+   pb_help = new QPushButton(us_tr("Help"), this);
    Q_CHECK_PTR(pb_help);
    pb_help->setMinimumHeight(minHeight1);
    pb_help->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_help->setPalette( PALET_PUSHB );
    connect(pb_help, SIGNAL(clicked()), SLOT(help()));
 
-   pb_reset = new QPushButton(tr("Reset"), this);
+   pb_reset = new QPushButton(us_tr("Reset"), this);
    Q_CHECK_PTR(pb_reset);
    pb_reset->setMinimumHeight(minHeight1);
    pb_reset->setEnabled(false);
@@ -657,7 +674,7 @@ void US_AddResidue::setupGUI()
    pb_reset->setPalette( PALET_PUSHB );
    connect(pb_reset, SIGNAL(clicked()), SLOT(reset()));
 
-   pb_add = new QPushButton(tr("Add Residue to File"), this);
+   pb_add = new QPushButton(us_tr("Add Residue to File"), this);
    Q_CHECK_PTR(pb_add);
    pb_add->setEnabled(false);
    pb_add->setMinimumHeight(minHeight1);
@@ -665,7 +682,7 @@ void US_AddResidue::setupGUI()
    pb_add->setPalette( PALET_PUSHB );
    connect(pb_add, SIGNAL(clicked()), SLOT(add()));
 
-   pb_delete_residue = new QPushButton(tr("Delete Residue"), this);
+   pb_delete_residue = new QPushButton(us_tr("Delete Residue"), this);
    Q_CHECK_PTR(pb_delete_residue);
    pb_delete_residue->setMinimumHeight(minHeight1);
    pb_delete_residue->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
@@ -673,7 +690,7 @@ void US_AddResidue::setupGUI()
    pb_delete_residue->setPalette( PALET_PUSHB );
    connect(pb_delete_residue, SIGNAL(clicked()), SLOT(delete_residue()));
 
-   pb_close = new QPushButton(tr("Close"), this);
+   pb_close = new QPushButton(us_tr("Close"), this);
    Q_CHECK_PTR(pb_close);
    pb_close->setMinimumHeight(minHeight1);
    pb_close->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
@@ -681,11 +698,11 @@ void US_AddResidue::setupGUI()
    connect(pb_close, SIGNAL(clicked()), SLOT(close()));
 
    int rows=24, columns = 5, spacing = 2, j=0, margin=4, colspace=10;
-   Q3GridLayout *background = new Q3GridLayout(this, rows, columns, margin, spacing);
+   QGridLayout * background = new QGridLayout( this ); background->setContentsMargins( 0, 0, 0, 0 ); background->setSpacing( 0 ); background->setSpacing( spacing ); background->setContentsMargins( margin, margin, margin, margin );
 
-   background->setColSpacing(2, colspace);
+   background->setColumnMinimumWidth(2, colspace);
    //section 1
-   background->addMultiCellWidget(lbl_info1, j, j, 0, 1);
+   background->addWidget( lbl_info1 , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
    j++;
    background->addWidget(pb_select_atom_file, j, 0);
    background->addWidget(lbl_atom_file, j, 1);
@@ -718,11 +735,11 @@ void US_AddResidue::setupGUI()
    background->addWidget(le_asa, j, 1);
    j++;
    background->addWidget(lbl_numresidues, j, 0);
-   background->addMultiCellWidget(lb_residues, j, j+3, 1, 1);
+   background->addWidget( lb_residues , j , 1 , 1 + ( j+3 ) - ( j ) , 1 + ( 1 ) - ( 1 ) );
    background->addWidget(pb_accept_residue, j+1, 0);
    j+=4;
    //section 2
-   background->addMultiCellWidget(lbl_info2, j, j, 0, 1);
+   background->addWidget( lbl_info2 , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
    j++;
    background->addWidget(lbl_r_atoms, j, 0);
    background->addWidget(cmb_r_atoms, j, 1);
@@ -743,7 +760,7 @@ void US_AddResidue::setupGUI()
    background->addWidget(pb_atom_continue, j, 1);
    j = 0;
    //section 3
-   background->addMultiCellWidget(lbl_info3, j, j, 3, 4);
+   background->addWidget( lbl_info3 , j , 3 , 1 + ( j ) - ( j ) , 1 + ( 4 ) - ( 3 ) );
    j++;
    background->addWidget(lbl_r_beads, j, 3);
    background->addWidget(cmb_r_beads, j, 4);
@@ -755,7 +772,7 @@ void US_AddResidue::setupGUI()
    background->addWidget(cmb_placing, j, 4);
    j++;
    background->addWidget(lbl_beadchain, j, 3);
-   Q3BoxLayout *bl = new Q3HBoxLayout(0);
+   QBoxLayout *bl = new QHBoxLayout();
    bl->addWidget(rb_backbone);
    bl->addWidget(rb_sidechain);
    background->addLayout(bl, j, 4);
@@ -763,8 +780,8 @@ void US_AddResidue::setupGUI()
    background->addWidget(lbl_list_beadatom, j, 3);
    background->addWidget(lbl_select_beadatom, j, 4);
    j++;
-   background->addMultiCellWidget(lb_list_beadatom, j, j+7, 3, 3);
-   background->addMultiCellWidget(lb_select_beadatom, j, j+7, 4, 4);
+   background->addWidget( lb_list_beadatom , j , 3 , 1 + ( j+7 ) - ( j ) , 1 + ( 3 ) - ( 3 ) );
+   background->addWidget( lb_select_beadatom , j , 4 , 1 + ( j+7 ) - ( j ) , 1 + ( 4 ) - ( 4 ) );
    j+=8;
    background->addWidget(lbl_bead_volume, j, 3);
    background->addWidget(le_bead_volume, j, 4);
@@ -853,13 +870,13 @@ void US_AddResidue::add()
    if ( cmp1 != cmp2 )
    {
       switch ( QMessageBox::warning(this, 
-                                    tr("Attention:"),
-                                    tr("The residue volume does not match the volume of the beads:\n\n") +
-                                    QString(tr("Residue volume: %1 A^3, Sum of beads: %2 A^3\n\n"))
+                                    us_tr("Attention:"),
+                                    us_tr("The residue volume does not match the volume of the beads:\n\n") +
+                                    QString(us_tr("Residue volume: %1 A^3, Sum of beads: %2 A^3\n\n"))
                                     .arg(cmp1).arg(cmp2) +
-                                    tr("What would you like to do?\n"),
-                                    tr("&Correct the bead volume manually"), 
-                                    tr("&Override"),
+                                    us_tr("What would you like to do?\n"),
+                                    us_tr("&Correct the bead volume manually"), 
+                                    us_tr("&Override"),
                                     0, 
                                     0,
                                     0 
@@ -872,12 +889,12 @@ void US_AddResidue::add()
       case 1 : // override
          break;
       }
-      //      QMessageBox::message("Attention:", "The residue volume does not match the volume of the beads:\n\n" + str1);
+      //      US_Static::us_message("Attention:", "The residue volume does not match the volume of the beads:\n\n" + str1);
       //      return;
    }
    for (i=0; i<residue_list.size(); i++)
    {
-      if (residue_list[i].name.upper() == new_residue.name.upper() && residue_list[i].comment.upper() == new_residue.comment.upper())
+      if (residue_list[i].name.toUpper() == new_residue.name.toUpper() && residue_list[i].comment.toUpper() == new_residue.comment.toUpper())
       {
          item = (int) i;
          residue_list[i].type = new_residue.type;
@@ -901,7 +918,7 @@ void US_AddResidue::add()
       residue_list.push_back(new_residue);
    }
    write_residue_file();
-   str1.sprintf(tr(" Number of Residues in File: %d"), residue_list.size());
+   str1.sprintf(us_trp(" Number of Residues in File: %d"), residue_list.size());
    lbl_numresidues->setText(str1);
    pb_accept_bead->setEnabled(false);
    pb_add->setEnabled(false);
@@ -919,7 +936,7 @@ void US_AddResidue::read_residue_file(const QString & filename)
    i=1;
    if (f.open(QIODevice::ReadOnly))
    {
-      Q3TextStream ts(&f);
+      QTextStream ts(&f);
       while (!ts.atEnd())
       {
          new_residue.comment = ts.readLine();
@@ -962,13 +979,13 @@ void US_AddResidue::read_residue_file(const QString & filename)
                new_residue.r_atom.push_back(new_atom);
                /*                  str1.sprintf("%d: ", j+1);
                                    str1 += new_atom.name;
-                                   cmb_r_atoms->insertItem(str1);
+                                   cmb_r_atoms->addItem(str1);
                */
             }
             else
             {
-               QMessageBox::warning(this, tr("UltraScan Warning"),
-                                    tr("Please note:\n\nThere was an error reading\nthe selected Residue File!\n\nAtom "
+               QMessageBox::warning(this, us_tr("UltraScan Warning"),
+                                    us_tr("Please note:\n\nThere was an error reading\nthe selected Residue File!\n\nAtom "
                                        + new_atom.name + " cannot be read and will be deleted from List."),
                                     QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
             }
@@ -983,7 +1000,7 @@ void US_AddResidue::read_residue_file(const QString & filename)
             str2 = ts.readLine(); // read rest of line
             new_residue.r_bead.push_back(new_bead);
             //               str1.sprintf("Bead %d: defined", j+1);
-            //               cmb_r_beads->insertItem(str1);
+            //               cmb_r_beads->addItem(str1);
          }
          calc_bead_mw(&new_residue);
          if ( !new_residue.name.isEmpty()
@@ -1055,7 +1072,7 @@ void US_AddResidue::read_residue_file(const QString & filename)
             {
                str1 += new_residue.name + " (" + new_residue.comment + ")";
             }
-            lb_residues->insertItem(str1);
+            lb_residues->addItem(str1);
             i++;
          }
       }
@@ -1063,8 +1080,8 @@ void US_AddResidue::read_residue_file(const QString & filename)
    }
    else
    {
-      QMessageBox::warning(this, tr("UltraScan Warning"),
-                           tr("Please note:\n\nThere was an error reading\nthe selected Residue File!\n"
+      QMessageBox::warning(this, us_tr("UltraScan Warning"),
+                           us_tr("Please note:\n\nThere was an error reading\nthe selected Residue File!\n"
                               "Please select a different file."),
                            QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
    }
@@ -1073,7 +1090,7 @@ void US_AddResidue::read_residue_file(const QString & filename)
 void US_AddResidue::select_residue_file()
 {
    QString old_filename = residue_filename, str1;
-   residue_filename = QFileDialog::getOpenFileName( this , caption() , USglobal->config_list.system_dir + "/etc" , "*.residue *.RESIDUE" );
+   residue_filename = QFileDialog::getOpenFileName( this , windowTitle() , USglobal->config_list.system_dir + "/etc" , "*.residue *.RESIDUE" );
    if (residue_filename.isEmpty())
    {
       residue_filename = old_filename;
@@ -1095,14 +1112,19 @@ void US_AddResidue::select_residue_file()
       }
       else
       {
-         QMessageBox mb(tr("UltraScan Warning"),
-                        tr("Please note:\n\nThere was a problem opening this\nfile with read/write permission.\n"
-                           "This file cannot be modified.\n\nDo you want to open the file in read-only mode"),
-                        QMessageBox::Question,
-                        QMessageBox::Yes | QMessageBox::Default,
-                        QMessageBox::No,
-                        QMessageBox::Cancel | QMessageBox::Escape, 0, 0, false, 0);
-         switch (mb.exec())
+         // QMessageBox mb(us_tr("UltraScan Warning"),
+         //                us_tr("Please note:\n\nThere was a problem opening this\nfile with read/write permission.\n"
+         //                   "This file cannot be modified.\n\nDo you want to open the file in read-only mode"),
+         //                QMessageBox::Question,
+         //                QMessageBox::Yes | QMessageBox::Default,
+         //                QMessageBox::No,
+         //                QMessageBox::Cancel | QMessageBox::Escape, 0, 0, false, 0);
+         // switch (mb.exec())
+         switch( QMessageBox::question( this,
+                                        us_tr("UltraScan Warning"),
+                                        us_tr("Please note:\n\nThere was a problem opening this\nfile with read/write permission.\n"
+                                           "This file cannot be modified.\n\nDo you want to open the file in read-only mode")
+                                        ) )
          {
          case QMessageBox::Yes:
             {
@@ -1118,7 +1140,7 @@ void US_AddResidue::select_residue_file()
          }
       }
    }
-   str1.sprintf(tr(" Number of Residues in File: %d"), residue_list.size());
+   str1.sprintf(us_trp(" Number of Residues in File: %d"), residue_list.size());
    lbl_numresidues->setText(str1);
 }
 
@@ -1142,7 +1164,7 @@ void US_AddResidue::calc_bead_mw(struct residue *res)
 void US_AddResidue::select_atom_file()
 {
    QString old_filename = atom_filename, str1, str2;
-   atom_filename = QFileDialog::getOpenFileName( this , caption() , USglobal->config_list.system_dir + "/etc" , "*.atom *.ATOM" );
+   atom_filename = QFileDialog::getOpenFileName( this , windowTitle() , USglobal->config_list.system_dir + "/etc" , "*.atom *.ATOM" );
    if (atom_filename.isEmpty())
    {
       atom_filename = old_filename;
@@ -1156,7 +1178,7 @@ void US_AddResidue::select_atom_file()
       unsigned int i, j;
       if (f.open(QIODevice::ReadOnly|QIODevice::Text))
       {
-         Q3TextStream ts(&f);
+         QTextStream ts(&f);
          while (!ts.atEnd())
          {
             ts >> new_atom.name;
@@ -1189,7 +1211,7 @@ void US_AddResidue::select_atom_file()
             else // add it to the list
             {
                atoms.push_back(atom_list[i].name);
-               cmb_atoms->insertItem(atom_list[i].name);
+               cmb_atoms->addItem(atom_list[i].name);
             }
          }
          pb_select_residue_file->setEnabled(true);
@@ -1216,7 +1238,7 @@ void US_AddResidue::update_numatoms(double val)
    for (unsigned int i=0; i<(unsigned int) val; i++)
    {
       str.sprintf("Atom %d: (undefined)", i+1);
-      cmb_r_atoms->insertItem(str);
+      cmb_r_atoms->addItem(str);
    }
 }
 
@@ -1229,7 +1251,7 @@ void US_AddResidue::update_numbeads(double val)
    for (unsigned int i=0; i<(unsigned int) val; i++)
    {
       str.sprintf("Bead %d: (undefined)", i+1);
-      cmb_r_beads->insertItem(str);
+      cmb_r_beads->addItem(str);
       new_residue.r_bead[i].color = 0;
       new_residue.r_bead[i].chain = 0;
       new_residue.r_bead[i].hydration = 0;
@@ -1265,13 +1287,13 @@ void US_AddResidue::update_hybrid(int val)
 #endif
    for (unsigned int i=0; i<atom_list.size(); i++)
    {
-      if(atom_list[i].name == cmb_atoms->text(val))
+      if(atom_list[i].name == cmb_atoms->itemText(val))
       {
 #if defined(DEBUG_RESIDUE)
          cout << "adding atom_list[" << i << "].name = " << atom_list[i].name 
               << " hybrid.name " << atom_list[i].hybrid.name << endl;
 #endif
-         cmb_hybrids->insertItem(atom_list[i].hybrid.name);
+         cmb_hybrids->addItem(atom_list[i].hybrid.name);
       }
    }
 }
@@ -1290,9 +1312,9 @@ void US_AddResidue::select_beadatom()
    }
    for (i=0; i<lb_select_beadatom->count(); i++)
    {
-      if(lb_select_beadatom->isSelected(i))
+      if(lb_select_beadatom->item(i)->isSelected())
       {
-         lb_list_beadatom->insertItem(lb_select_beadatom->text(i));
+         lb_list_beadatom->addItem(lb_select_beadatom->item(i)->text());
          //         cout << "Current bead 1: " << current_bead << endl;
          new_residue.r_atom[i].bead_assignment = current_bead;
       }
@@ -1323,10 +1345,10 @@ void US_AddResidue::select_bead_color(int val)
 {
    if (val == 0 || val == 6)
    {
-      QMessageBox::warning(this, tr("UltraScan Warning"),
-                           tr("Please note:\n\nBlack and brown are reserved colors,\nplease choose a different color."),
+      QMessageBox::warning(this, us_tr("UltraScan Warning"),
+                           us_tr("Please note:\n\nBlack and brown are reserved colors,\nplease choose a different color."),
                            QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
-      cmb_bead_color->setCurrentItem(1);
+      cmb_bead_color->setCurrentIndex(1);
       return;
    }
    new_bead.color = (unsigned int) val;
@@ -1348,8 +1370,8 @@ void US_AddResidue::select_r_bead(int val)
       new_bead.placing_method = new_residue.r_bead[current_bead].placing_method;
       new_bead.hydration = new_residue.r_bead[current_bead].hydration;
       new_bead.volume = new_residue.r_bead[current_bead].volume;
-      cmb_bead_color->setCurrentItem(new_residue.r_bead[current_bead].color);
-      cmb_placing->setCurrentItem(new_residue.r_bead[current_bead].placing_method);
+      cmb_bead_color->setCurrentIndex(new_residue.r_bead[current_bead].color);
+      cmb_placing->setCurrentIndex(new_residue.r_bead[current_bead].placing_method);
       cnt_hydration->setValue(new_residue.r_bead[current_bead].hydration);
       str.sprintf("%7.2f", new_residue.r_bead[current_bead].volume);
       le_bead_volume->setText(str);
@@ -1369,11 +1391,19 @@ void US_AddResidue::select_r_bead(int val)
 
       if (new_residue.r_bead[current_bead].chain)
       {
+#if QT_VERSION < 0x040000
          bg_chain->setButton(1);
+#else
+         rb_sidechain->setChecked( true );
+#endif
       }
       else
       {
+#if QT_VERSION < 0x040000
          bg_chain->setButton(0);
+#else
+         rb_backbone->setChecked( true );
+#endif
       }
    }
    else
@@ -1397,7 +1427,7 @@ void US_AddResidue::select_r_bead(int val)
          {
             str += " (" + new_residue.r_atom[i].hybrid.name + ", Positioning: no)";
          }
-         lb_list_beadatom->insertItem(str);
+         lb_list_beadatom->addItem(str);
       }
    }
 }
@@ -1416,15 +1446,15 @@ void US_AddResidue::select_r_atom(int val)
       }
       for ( unsigned int i = 0; i < (unsigned int) cmb_atoms->count(); i++ )
       {
-         if (cmb_atoms->text(i) == new_residue.r_atom[val].name) 
+         if (cmb_atoms->itemText(i) == new_residue.r_atom[val].name) 
          {
-            cmb_atoms->setCurrentItem(i);
+            cmb_atoms->setCurrentIndex(i);
             update_hybrid(i);
             for ( unsigned int j = 0; j < (unsigned int) cmb_hybrids->count(); j++ ) 
             {
-               if (cmb_hybrids->text(j) == new_residue.r_atom[val].hybrid.name) 
+               if (cmb_hybrids->itemText(j) == new_residue.r_atom[val].hybrid.name) 
                {
-                  cmb_hybrids->setCurrentItem(j);
+                  cmb_hybrids->setCurrentIndex(j);
                   break;
                }
             }
@@ -1446,7 +1476,7 @@ void US_AddResidue::select_residue(int val)
    le_residue_comment->setText(residue_list[val].comment);
    cnt_numatoms->setValue(residue_list[val].r_atom.size());
    cnt_numbeads->setValue(residue_list[val].r_bead.size());
-   cmb_type->setCurrentItem(residue_list[val].type);
+   cmb_type->setCurrentIndex(residue_list[val].type);
    le_molvol->setText(str.sprintf("%7.2f", residue_list[val].molvol));
    le_vbar->setText(str.sprintf("%5.3f", residue_list[val].vbar));
    le_asa->setText(str.sprintf("%7.2f", residue_list[val].asa));
@@ -1530,21 +1560,21 @@ void US_AddResidue::reset()
    pb_atom_continue->setEnabled(false);
    pb_accept_atom->setEnabled(false);
    cmb_r_atoms->clear();
-   //   cmb_atoms->setCurrentItem(0);
+   //   cmb_atoms->setCurrentIndex(0);
    cmb_r_atoms->setEnabled(false);
    cmb_hybrids->setEnabled(false);
 
    cmb_r_beads->setEnabled(false);
    cmb_r_beads->clear();
    cmb_bead_color->setEnabled(false);
-   cmb_bead_color->setCurrentItem(0);
+   cmb_bead_color->setCurrentIndex(0);
    cb_hydration->setEnabled(false);
    cb_hydration->setChecked(false);
    cnt_hydration->setEnabled(false);
    cnt_hydration->setValue(0);
    cnt_atom_hydration->setEnabled(false);
    cnt_atom_hydration->setValue(0);
-   cmb_placing->setCurrentItem(0);
+   cmb_placing->setCurrentIndex(0);
    cmb_placing->setEnabled(false);
    /*
      rb_backbone->setEnabled(false);
@@ -1553,7 +1583,11 @@ void US_AddResidue::reset()
      rb_sidechain->setChecked(false);
    */
    bg_chain->setEnabled(false);
+#if QT_VERSION < 0x040000
    bg_chain->setButton(0);
+#else
+   rb_backbone->setChecked( true );
+#endif
    lb_select_beadatom->setEnabled(false);
    lb_select_beadatom->clear();
    lb_list_beadatom->setEnabled(false);
@@ -1574,8 +1608,8 @@ void US_AddResidue::accept_residue()
       || new_residue.vbar == 0
       || new_residue.asa == 0)
    {
-      QMessageBox::warning(this, tr("UltraScan Warning"),
-                           tr("Please define all residue fields\nbefore accepting the residue!"),
+      QMessageBox::warning(this, us_tr("UltraScan Warning"),
+                           us_tr("Please define all residue fields\nbefore accepting the residue!"),
                            QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
    }
    else
@@ -1597,7 +1631,7 @@ void US_AddResidue::accept_residue()
       pb_select_atom_file->setEnabled(false);
       pb_select_residue_file->setEnabled(false);
       current_atom = 0;
-      cmb_r_atoms->setCurrentItem(current_atom);
+      cmb_r_atoms->setCurrentIndex(current_atom);
       enable_area_2(true);
    }
    if(existing_residue)
@@ -1616,20 +1650,20 @@ void US_AddResidue::accept_residue()
          {
             str += " (" + new_residue.r_atom[i].hybrid.name + ", Positioning: no)";
          }
-         cmb_r_atoms->insertItem(str);
+         cmb_r_atoms->addItem(str);
       }
-      cmb_r_atoms->setCurrentItem(0);
+      cmb_r_atoms->setCurrentIndex(0);
       for ( unsigned int i = 0; i < (unsigned int) cmb_atoms->count(); i++ )
       {
-         if (cmb_atoms->text(i) == new_residue.r_atom[0].name) 
+         if (cmb_atoms->itemText(i) == new_residue.r_atom[0].name) 
          {
-            cmb_atoms->setCurrentItem(i);
+            cmb_atoms->setCurrentIndex(i);
             update_hybrid(i);
             for ( unsigned int j = 0; j < (unsigned int) cmb_hybrids->count(); j++ ) 
             {
-               if (cmb_hybrids->text(j) == new_residue.r_atom[0].hybrid.name) 
+               if (cmb_hybrids->itemText(j) == new_residue.r_atom[0].hybrid.name) 
                {
-                  cmb_hybrids->setCurrentItem(j);
+                  cmb_hybrids->setCurrentIndex(j);
                   break;
                }
             }
@@ -1663,7 +1697,7 @@ void US_AddResidue::accept_residue()
    bool flag = true;
    for (int i=0; i<cmb_r_atoms->count(); i++)
    {
-      str = cmb_r_atoms->text(i);
+      str = cmb_r_atoms->itemText(i);
       if (str.contains("undefined"))
       {
          flag = false;
@@ -1694,7 +1728,11 @@ void US_AddResidue::atom_continue()
    rb_sidechain->setEnabled(true);
    rb_sidechain->setChecked(false);
    bg_chain->setEnabled(true);
+#if QT_VERSION < 0x040000
    bg_chain->setButton(0);
+#else
+   rb_backbone->setChecked( true );
+#endif
    lb_list_beadatom->setEnabled(true);
    lb_list_beadatom->clear();
    lb_select_beadatom->setEnabled(true);
@@ -1705,7 +1743,7 @@ void US_AddResidue::atom_continue()
       for (unsigned int i=0; i<new_residue.r_bead.size(); i++)
       {
          str.sprintf("Bead %d: defined", i + 1);
-         cmb_r_beads->insertItem(str);
+         cmb_r_beads->addItem(str);
       }
    }
    else
@@ -1713,41 +1751,49 @@ void US_AddResidue::atom_continue()
       for (unsigned int i=0; i<new_residue.r_bead.size(); i++)
       {
          str.sprintf("Bead %d: undefined", i + 1);
-         cmb_r_beads->insertItem(str);
+         cmb_r_beads->addItem(str);
       }
    }
-   cmb_r_beads->setCurrentItem(0);
+   cmb_r_beads->setCurrentIndex(0);
    current_bead = 0;
    current_atom = 0;
    select_r_bead(0);
    for (int i=0; i<cmb_r_atoms->count(); i++)
    {
-      lb_select_beadatom->insertItem(cmb_r_atoms->text(i));
+      lb_select_beadatom->addItem(cmb_r_atoms->itemText(i));
    }
    pb_accept_bead->setEnabled(true);
    pb_atom_continue->setEnabled(false);
    enable_area_2(false);
    enable_area_3(true);
    /*
-     lb_select_beadatom->setCurrentItem(0);
+     lb_select_beadatom->setCurrentItem( lb_select_beadatom->item(0) );
 
      cmb_r_beads->clear();
      for (unsigned int i=0; i<new_residue.r_bead.size(); i++)
      {
      str.sprintf("Bead %d: defined", i + 1);
-     cmb_r_beads->insertItem(str);
+     cmb_r_beads->addItem(str);
      }
-     cmb_r_beads->setCurrentItem(0);
-     cmb_bead_color->setCurrentItem(new_residue.r_bead[0].color);
+     cmb_r_beads->setCurrentIndex(0);
+     cmb_bead_color->setCurrentIndex(new_residue.r_bead[0].color);
      cnt_hydration->setValue(new_residue.r_bead[0].hydration);
-     cmb_placing->setCurrentItem(new_residue.r_bead[0].placing_method);
+     cmb_placing->setCurrentIndex(new_residue.r_bead[0].placing_method);
      if (new_residue.r_bead[0].chain)
      {
+     #if QT_VERSION < 0x040000
      bg_chain->setButton(1);
+     #else
+     rb_sidechain->setChecked( true );
+     #endif
      }
      else
      {
+     #if QT_VERSION < 0x040000
      bg_chain->setButton(0);
+     #else
+     rb_backbone->setChecked( true );
+     #endif
      }
      str.sprintf("%f", new_residue.r_bead[0].volume);
      le_bead_volume->setText(str);
@@ -1755,7 +1801,7 @@ void US_AddResidue::atom_continue()
      {
      if(new_residue.r_atom[i].bead_assignment == 0)
      {
-     lb_list_beadatom->insertItem(lb_select_beadatom->text(i));
+     lb_list_beadatom->addItem(lb_select_beadatom->item(i)->text());
      }
      }
    */
@@ -1765,26 +1811,26 @@ void US_AddResidue::accept_bead()
 {
    if (new_bead.volume == 0.0)
    {
-      QMessageBox::message("Attention:", "No bead volume entered for this bead!\nPlease correct this and try again...");
+      US_Static::us_message("Attention:", "No bead volume entered for this bead!\nPlease correct this and try again...");
       pb_add->setEnabled(false);
       return;
    }
    if (new_bead.color == 0 || new_bead.color == 6)
    {
-      QMessageBox::warning(this, tr("UltraScan Warning"),
-                           tr("Please note:\n\nBlack and brown are reserved colors,\nplease choose a different bead color."),
+      QMessageBox::warning(this, us_tr("UltraScan Warning"),
+                           us_tr("Please note:\n\nBlack and brown are reserved colors,\nplease choose a different bead color."),
                            QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
-      cmb_bead_color->setCurrentItem(1);
+      cmb_bead_color->setCurrentIndex(1);
       return;
    }
    
    QString str;
    str.sprintf("Bead %d: defined", current_bead + 1);
-   cmb_r_beads->changeItem(str, current_bead);
+   cmb_r_beads->setItemText( current_bead,str);
    bool flag = true;
    for (int i=0; i<cmb_r_beads->count(); i++)
    {
-      str = cmb_r_beads->text(i);
+      str = cmb_r_beads->itemText(i);
       if (str.contains("undefined"))
       {
          flag = false;
@@ -1804,7 +1850,7 @@ void US_AddResidue::accept_atom()
    int current_item1, current_item2=0;
    if (existing_residue)
    {
-         position_flag = new_residue.r_atom[cmb_r_atoms->currentItem()].positioner;
+         position_flag = new_residue.r_atom[cmb_r_atoms->currentIndex( )].positioner;
    }
 #if defined(DEBUG_RESIDUE)
    cout << "Residue print accept_atom() - 1: \n";
@@ -1812,7 +1858,7 @@ void US_AddResidue::accept_atom()
 #endif
    QString str;
    // find current hybridization in atom_list:
-   current_item1 = cmb_r_atoms->currentItem();
+   current_item1 = cmb_r_atoms->currentIndex( );
    for (unsigned int i=0; i<atom_list.size(); i++)
    {
       if (cmb_atoms->currentText() == atom_list[i].name && cmb_hybrids->currentText() == atom_list[i].hybrid.name)
@@ -1844,7 +1890,7 @@ void US_AddResidue::accept_atom()
    new_residue.r_atom[current_item1].hydration = (unsigned int) cnt_atom_hydration->value();
    new_residue.r_atom[current_item1].serial_number = current_item1;
    new_residue.r_atom[current_item1].positioner = cb_positioning->isChecked(); // position_flag;
-   str.sprintf("Atom %d: " + atom_list[current_item2].name, current_item1+1);
+   str.sprintf(qPrintable("Atom %d: " + atom_list[current_item2].name), current_item1+1);
    str += " (" + new_residue.r_atom[current_item1].hybrid.name + ", Positioning: ";
    if (new_residue.r_atom[current_item1].positioner)
    {
@@ -1854,11 +1900,11 @@ void US_AddResidue::accept_atom()
    {
       str += "no)";
    }
-   cmb_r_atoms->changeItem(str, current_item1);
+   cmb_r_atoms->setItemText( current_item1,str);
    bool flag = true;
    for (int i=0; i<cmb_r_atoms->count(); i++)
    {
-      str = cmb_r_atoms->text(i);
+      str = cmb_r_atoms->itemText(i);
       if (str.contains("undefined"))
       {
          flag = false;
@@ -1872,6 +1918,16 @@ void US_AddResidue::accept_atom()
    cout << "Residue print accept_atom() - 2: \n";
    print_residue(new_residue);
 #endif
+}
+
+void US_AddResidue::set_chain()
+{
+   if ( rb_backbone->isChecked() ) {
+      return set_chain( 0 );
+   }
+   if ( rb_sidechain->isChecked() ) {
+      return set_chain( 1 );
+   }
 }
 
 void US_AddResidue::set_chain(int val)
@@ -1923,14 +1979,14 @@ void US_AddResidue::delete_residue()
    vector <struct residue>::iterator it;
    for (it=residue_list.begin(); it != residue_list.end(); it++)
    {
-      if ((*it).name.upper() == new_residue.name.upper())
+      if ((*it).name.toUpper() == new_residue.name.toUpper())
       {
          residue_list.erase(it);
          break;
       }
    }
    write_residue_file();
-   str1.sprintf(tr(" Number of Residues in File: %d"), residue_list.size());
+   str1.sprintf(us_trp(" Number of Residues in File: %d"), residue_list.size());
    lbl_numresidues->setText(str1);
    pb_accept_bead->setEnabled(false);
    pb_add->setEnabled(false);
@@ -1945,11 +2001,11 @@ void US_AddResidue::write_residue_file()
    if (f.open(QIODevice::WriteOnly|QIODevice::Text))
    {
       lb_residues->clear();
-      Q3TextStream ts(&f);
+      QTextStream ts(&f);
       for (unsigned int i=0; i<residue_list.size(); i++)
       {
          ts << residue_list[i].comment << endl;
-         ts << residue_list[i].name.upper()
+         ts << residue_list[i].name.toUpper()
             << "\t" << residue_list[i].type
             << "\t" << str1.sprintf("%7.2f", residue_list[i].molvol)
             << "\t" << residue_list[i].asa
@@ -1958,7 +2014,7 @@ void US_AddResidue::write_residue_file()
             << "\t" << residue_list[i].vbar << endl;
          for (unsigned int j=0; j<residue_list[i].r_atom.size(); j++)
          {
-            ts << residue_list[i].r_atom[j].name.upper()
+            ts << residue_list[i].r_atom[j].name.toUpper()
                << "\t" << residue_list[i].r_atom[j].hybrid.name
                << "\t" << residue_list[i].r_atom[j].hybrid.mw
                << "\t" << residue_list[i].r_atom[j].hybrid.radius
@@ -2042,14 +2098,14 @@ void US_AddResidue::write_residue_file()
             str1 += residue_list[i].name + " (" + residue_list[i].comment + ")";
          }
          
-         lb_residues->insertItem(str1);
+         lb_residues->addItem(str1);
       }
       f.close();
    }
    else
    {
-      QMessageBox::warning(this, tr("UltraScan Warning"),
-                           tr("Please note:\n\nThis file was opened in read-only mode.\n"
+      QMessageBox::warning(this, us_tr("UltraScan Warning"),
+                           us_tr("Please note:\n\nThis file was opened in read-only mode.\n"
                               "This file cannot be edited.\nPlease select a different file."),
                            QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
    }

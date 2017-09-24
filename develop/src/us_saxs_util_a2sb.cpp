@@ -1,6 +1,6 @@
 #include "../include/us_saxs_util.h"
 //Added by qt3to4:
-#include <Q3TextStream>
+#include <QTextStream>
 
 // note: this program uses cout and/or cerr and this should be replaced
 
@@ -276,7 +276,7 @@ bool US_Saxs_Util::a2sb_run()
 
       QString outname = 
          QString( "%1%2-%3-%4%5%6-a2sb" )
-         .arg( QFileInfo( control_parameters[ "inputfile" ] ).baseName( true ) )
+         .arg( QFileInfo( control_parameters[ "inputfile" ] ).completeBaseName() )
          .arg( model_vector_as_loaded.size() ? QString( "-%1" ).arg( current_model + 1 ) : "" )
          .arg( control_parameters[ "nsagsm" ] )
          .arg( QString( "cs%1" ).arg( a2sb_cube_side ).replace( ".", "_" ) )
@@ -293,7 +293,7 @@ bool US_Saxs_Util::a2sb_run()
 
       if ( f.open( QIODevice::WriteOnly ) )
       {
-         Q3TextStream ts( &f );
+         QTextStream ts( &f );
          ts << nsa_qs_bead_model();
          ts << nsa_physical_stats();
          ts << QString( "original atoms in structure %1\n"
@@ -301,10 +301,10 @@ bool US_Saxs_Util::a2sb_run()
             .arg( tot_atoms )
             .arg( bead_models[ 0 ].size() );
          f.close();
-         cout << QString( "written: %1\n" ).arg( f.name() );
-         output_files << f.name();
+         cout << QString( "written: %1\n" ).arg( f.fileName() );
+         output_files << f.fileName();
       } else {
-         errormsg = QString( "Error: could not create file %1" ).arg( f.name() );
+         errormsg = QString( "Error: could not create file %1" ).arg( f.fileName() );
          failed = true;
          break;
       }

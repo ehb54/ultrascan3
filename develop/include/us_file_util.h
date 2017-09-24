@@ -1,12 +1,13 @@
 #ifndef US_FILE_UTIL_H
 #define US_FILE_UTIL_H
 
+#include "us_util.h"
 #include "us_extern.h"
 
 #include <qstring.h>
 #include <qstringlist.h>
 //Added by qt3to4:
-#include <Q3TextStream>
+#include <QTextStream>
 #include <stdio.h>
 #include <qfile.h>
 #include <qfileinfo.h>
@@ -55,7 +56,7 @@ class US_EXTERN US_Log
       
       bool          autoflush;
       QFile         f;
-      Q3TextStream * ts;
+      QTextStream * ts;
 };
 
 #endif

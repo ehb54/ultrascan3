@@ -109,7 +109,7 @@ bool US_PM::best_vary_one_param(
             //             {
             //                qs += QString( " %1" ).arg( params[ i ] );
             //             }
-            //             cout << qs.ascii() << endl;
+            //             cout << qs.toAscii().data() << endl;
             if ( us_log )
             {
                us_log->log( US_Vector::qs_vector( QString( "best_vary_one_param: %1beads %2 fitness %3, params:" )
@@ -148,7 +148,7 @@ bool US_PM::best_vary_one_param(
             //             {
             //                qs += QString( " %1" ).arg( params[ i ] );
             //             }
-            //             cout << qs.ascii() << endl;
+            //             cout << qs.toAscii().data() << endl;
             if ( steps_without_change > 100 )
             {
                if ( us_log )
@@ -558,7 +558,7 @@ bool US_PM::best_vary_one_param(
             //             {
             //                qs += QString( " %1" ).arg( params[ i ] );
             //             }
-            //             cout << qs.ascii() << endl;
+            //             cout << qs.toAscii().data() << endl;
             if ( us_log )
             {
                us_log->log( US_Vector::qs_vector( QString( "best_vary_one_param: %1beads %2 fitness %3, params:" )
@@ -597,7 +597,7 @@ bool US_PM::best_vary_one_param(
             //             {
             //                qs += QString( " %1" ).arg( params[ i ] );
             //             }
-            //             cout << qs.ascii() << endl;
+            //             cout << qs.toAscii().data() << endl;
             if ( steps_without_change > 100 )
             {
                if ( us_log )

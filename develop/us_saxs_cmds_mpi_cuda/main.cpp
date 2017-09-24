@@ -39,7 +39,7 @@ int main (int argc, char **argv)
    }
    int errorbase = -1000;
 
-   if ( cmds[0].lower() == "iq" ) 
+   if ( cmds[0].toLower() == "iq" ) 
    {
       if ( cmds.size() != 2 ) 
       {
@@ -79,7 +79,7 @@ int main (int argc, char **argv)
    }
    errorbase -= 1000;
 
-   if ( cmds[0].lower() == "nsa" ) 
+   if ( cmds[0].toLower() == "nsa" ) 
    {
       if ( cmds.size() != 2 ) 
       {
@@ -116,7 +116,7 @@ int main (int argc, char **argv)
    }
    errorbase -= 1000;
 
-   if ( cmds[0].lower() == "1d" ) 
+   if ( cmds[0].toLower() == "1d" ) 
    {
       if ( cmds.size() != 2 ) 
       {

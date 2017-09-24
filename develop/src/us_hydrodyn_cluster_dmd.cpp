@@ -3,14 +3,14 @@
 #include "../include/us_hydrodyn_cluster_dmd.h"
 #include "../include/us_hydrodyn.h"
 //Added by qt3to4:
-#include <Q3TextStream>
-#include <Q3HBoxLayout>
-#include <Q3ValueList>
+#include <QTextStream>
+#include <QHBoxLayout>
+ //#include <Q3ValueList>
 #include <QLabel>
-#include <Q3Frame>
-#include <Q3PopupMenu>
-#include <Q3VBoxLayout>
-#include <Q3BoxLayout>
+#include <QFrame>
+ //#include <Q3PopupMenu>
+#include <QVBoxLayout>
+#include <QBoxLayout>
 #include <QCloseEvent>
 
 #define SLASH QDir::separator()
@@ -26,7 +26,7 @@ US_Hydrodyn_Cluster_Dmd::US_Hydrodyn_Cluster_Dmd(
                                                void *us_hydrodyn, 
                                                QWidget *p, 
                                                const char *name
-                                               ) : QDialog(p, name)
+                                               ) : QDialog( p )
 {
    this->csv1 = csv1;
    this->original_csv1 = &csv1;
@@ -38,7 +38,7 @@ US_Hydrodyn_Cluster_Dmd::US_Hydrodyn_Cluster_Dmd(
    this->us_hydrodyn = us_hydrodyn;
    USglobal = new US_Config();
    setPalette( PALET_FRAME );
-   setCaption(tr("US-SOMO: Cluster DMD Setup"));
+   setWindowTitle(us_tr("US-SOMO: Cluster DMD Setup"));
 
    if ( !csv1.data.size() )
    {
@@ -56,7 +56,7 @@ US_Hydrodyn_Cluster_Dmd::US_Hydrodyn_Cluster_Dmd(
    QDir dir1( dmd_dir );
    if ( !dir1.exists() )
    {
-      editor_msg( "black", QString( tr( "Created directory %1" ) ).arg( dmd_dir ) );
+      editor_msg( "black", QString( us_tr( "Created directory %1" ) ).arg( dmd_dir ) );
       dir1.mkdir( dmd_dir );
    }
 
@@ -65,11 +65,11 @@ US_Hydrodyn_Cluster_Dmd::US_Hydrodyn_Cluster_Dmd(
 
    unsigned int csv_height = t_csv->rowHeight(0) + 30;
    unsigned int csv_width = t_csv->columnWidth(0) + 45;
-   for ( int i = 0; i < t_csv->numRows(); i++ )
+   for ( int i = 0; i < t_csv->rowCount(); i++ )
    {
       csv_height += t_csv->rowHeight(i);
    }
-   for ( int i = 1; i < t_csv->numCols(); i++ )
+   for ( int i = 1; i < t_csv->columnCount(); i++ )
    {
       csv_width += t_csv->columnWidth(i);
    }
@@ -100,26 +100,31 @@ void US_Hydrodyn_Cluster_Dmd::setupGUI()
 #endif
 
    lbl_title = new QLabel(csv1.name.left(80), this);
-   lbl_title->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Raised);
+   lbl_title->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_title->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_title->setMinimumHeight(minHeight1);
    lbl_title->setPalette( PALET_FRAME );
    AUTFBACK( lbl_title );
    lbl_title->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
 
-   t_csv = new Q3Table(csv1.data.size(), csv1.header.size(), this);
-   t_csv->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Raised);
+   t_csv = new QTableWidget(csv1.data.size(), csv1.header.size(), this);
+   t_csv->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    // t_csv->setMinimumHeight(minHeight1 * 3);
    // t_csv->setMinimumWidth(minWidth1);
    t_csv->setPalette( PALET_EDIT );
    AUTFBACK( t_csv );
    t_csv->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
    t_csv->setEnabled(true);
-   t_csv->setSelectionMode( Q3Table::SingleRow );
+   t_csv->setSelectionMode( QAbstractItemView::SingleSelection );t_csv->setSelectionBehavior( QAbstractItemView::SelectRows );
 
    reload_csv();
 
-   Q3ValueList < unsigned int > column_widths;
+#if QT_VERSION < 0x040000      
+ //   Q3ValueList < unsigned int > column_widths;
+#else
+   QList < unsigned int > column_widths;
+#endif
+
    column_widths 
       << 120
       << 60
@@ -136,132 +141,160 @@ void US_Hydrodyn_Cluster_Dmd::setupGUI()
       
    for ( unsigned int i = 0; i < (unsigned int)csv1.header.size(); i++ )
    {
-      t_csv->horizontalHeader()->setLabel(i, csv1.header[i]);
+      t_csv->setHorizontalHeaderItem(i, new QTableWidgetItem( csv1.header[i]));
       t_csv->setColumnWidth( i, column_widths[ i ] );
    }
 
-   t_csv->setSorting(false);
-   t_csv->setRowMovingEnabled(true);
-   t_csv->setColumnMovingEnabled(false);
-   t_csv->setReadOnly(false);
+   t_csv->setSortingEnabled(false);
+    t_csv->verticalHeader()->setMovable(true);
+    t_csv->horizontalHeader()->setMovable(false);
+   //  t_csv->setReadOnly(false);
 
-   t_csv->setColumnReadOnly( 0,  true );
-   t_csv->setColumnReadOnly( 11, true );
+   { for ( int i = 0; i < t_csv->rowCount(); ++i ) { t_csv->item( i,  0 )->setFlags( t_csv->item( i,  0 )->flags() ^ Qt::ItemIsEditable ); } };
+   { for ( int i = 0; i < t_csv->rowCount(); ++i ) { t_csv->item( i,  11 )->setFlags( t_csv->item( i,  11 )->flags() ^ Qt::ItemIsEditable ); } };
 
    // probably I'm not understanding something, but these next two lines don't seem to do anything
-   t_csv->horizontalHeader()->adjustHeaderSize();
+   // t_csv->horizontalHeader()->adjustHeaderSize();
    t_csv->adjustSize();
 
    recompute_interval_from_points( 3 );
    recompute_interval_from_points( 7 );
 
    connect( t_csv, SIGNAL( valueChanged(int, int) ), SLOT( table_value( int, int ) ) );
-   connect( t_csv, SIGNAL( selectionChanged() ), SLOT( update_enables() ) );
+   connect( t_csv, SIGNAL( itemSelectionChanged() ), SLOT( update_enables() ) );
    connect( t_csv->verticalHeader(), SIGNAL( released( int ) ), SLOT( row_header_released( int ) ) );
 
-   //   pb_select_all = new QPushButton(tr("Select all"), this);
+   //   pb_select_all = new QPushButton(us_tr("Select all"), this);
    //   pb_select_all->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    //   pb_select_all->setMinimumHeight(minHeight1);
-   //   pb_select_all->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   //   pb_select_all->setPalette( USglobal->global_colors.cg_pushb );
    //   connect(pb_select_all, SIGNAL(clicked()), SLOT(select_all()));
 
-   pb_copy = new QPushButton(tr("Copy values"), this);
+   pb_copy = new QPushButton(us_tr("Copy values"), this);
    pb_copy->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_copy->setMinimumHeight(minHeight1);
    pb_copy->setPalette( PALET_PUSHB );
    connect(pb_copy, SIGNAL(clicked()), SLOT(copy()));
 
-   pb_paste = new QPushButton(tr("Paste values to selected"), this);
+   pb_paste = new QPushButton(us_tr("Paste values to selected"), this);
    pb_paste->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_paste->setMinimumHeight(minHeight1);
    pb_paste->setPalette( PALET_PUSHB );
    connect(pb_paste, SIGNAL(clicked()), SLOT(paste()));
 
-   pb_paste_all = new QPushButton(tr("Paste values to all"), this);
+   pb_paste_all = new QPushButton(us_tr("Paste values to all"), this);
    pb_paste_all->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_paste_all->setMinimumHeight(minHeight1);
    pb_paste_all->setPalette( PALET_PUSHB );
    connect(pb_paste_all, SIGNAL(clicked()), SLOT(paste_all()));
 
-   pb_dup = new QPushButton(tr("Duplicate row"), this);
+   pb_dup = new QPushButton(us_tr("Duplicate row"), this);
    pb_dup->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_dup->setMinimumHeight(minHeight1);
    pb_dup->setPalette( PALET_PUSHB );
    connect(pb_dup, SIGNAL(clicked()), SLOT(dup()));
 
-   pb_delete = new QPushButton(tr("Delete row"), this);
+   pb_delete = new QPushButton(us_tr("Delete row"), this);
    pb_delete->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_delete->setMinimumHeight(minHeight1);
    pb_delete->setPalette( PALET_PUSHB );
    connect(pb_delete, SIGNAL(clicked()), SLOT(delete_rows()));
 
-   pb_load = new QPushButton(tr("Load"), this);
+   pb_load = new QPushButton(us_tr("Load"), this);
    pb_load->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_load->setMinimumHeight(minHeight1);
    pb_load->setPalette( PALET_PUSHB );
    connect(pb_load, SIGNAL(clicked()), SLOT(load()));
 
-   pb_reset = new QPushButton(tr("Reset"), this);
+   pb_reset = new QPushButton(us_tr("Reset"), this);
    pb_reset->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_reset->setMinimumHeight(minHeight1);
    pb_reset->setPalette( PALET_PUSHB );
    connect( pb_reset, SIGNAL( clicked() ), SLOT( reset() ) );
 
-   pb_save_csv = new QPushButton(tr("Save"), this);
+   pb_save_csv = new QPushButton(us_tr("Save"), this);
    pb_save_csv->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_save_csv->setMinimumHeight(minHeight1);
    pb_save_csv->setPalette( PALET_PUSHB );
    connect(pb_save_csv, SIGNAL(clicked()), SLOT(save_csv()));
 
-   editor = new Q3TextEdit(this);
+   editor = new QTextEdit(this);
    editor->setPalette( PALET_NORMAL );
    AUTFBACK( editor );
    editor->setReadOnly(true);
 
-#if defined(QT4) && defined(Q_WS_MAC)
+#if QT_VERSION < 0x040000
+# if defined(QT4) && defined(Q_WS_MAC)
    {
-      Q3PopupMenu * file = new Q3PopupMenu;
-      file->insertItem( tr("&Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
-      file->insertItem( tr("&Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
-      file->insertItem( tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
+ //      Q3PopupMenu * file = new Q3PopupMenu;
+      file->insertItem( us_tr("&Font"),  this, SLOT(update_font( )),    Qt::ALT+Qt::Key_F );
+      file->insertItem( us_tr("&Save"),  this, SLOT(save( )),    Qt::ALT+Qt::Key_S );
+      file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display( )),   Qt::ALT+Qt::Key_X );
 
       QMenuBar *menu = new QMenuBar( this );
       AUTFBACK( menu );
 
-      menu->insertItem(tr("&Messages"), file );
+      menu->insertItem(us_tr("&Messages"), file );
    }
-#else
-   Q3Frame *frame;
-   frame = new Q3Frame(this);
+# else
+   QFrame *frame;
+   frame = new QFrame(this);
    frame->setMinimumHeight(minHeight3);
 
-   m = new QMenuBar(frame, "menu" );
+   m = new QMenuBar( frame );    m->setObjectName( "menu" );
    m->setMinimumHeight(minHeight1 - 5);
    m->setPalette( PALET_NORMAL );
    AUTFBACK( m );
-   Q3PopupMenu * file = new Q3PopupMenu(editor);
-   m->insertItem( tr("&File"), file );
-   file->insertItem( tr("Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
-   file->insertItem( tr("Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
-   file->insertItem( tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
+ //   Q3PopupMenu * file = new Q3PopupMenu(editor);
+   m->insertItem( us_tr("&File"), file );
+   file->insertItem( us_tr("Font"),  this, SLOT(update_font( )),    Qt::ALT+Qt::Key_F );
+   file->insertItem( us_tr("Save"),  this, SLOT(save( )),    Qt::ALT+Qt::Key_S );
+   file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display( )),   Qt::ALT+Qt::Key_X );
+# endif
+#else
+   QFrame *frame;
+   frame = new QFrame(this);
+   frame->setMinimumHeight(minHeight3);
+
+   m = new QMenuBar( frame );    m->setObjectName( "menu" );
+   m->setMinimumHeight(minHeight1 - 5);
+   m->setPalette( PALET_NORMAL );
+   AUTFBACK( m );
+
+   {
+      QMenu * new_menu = m->addMenu( us_tr( "&File" ) );
+
+      QAction *qa1 = new_menu->addAction( us_tr( "Font" ) );
+      qa1->setShortcut( Qt::ALT+Qt::Key_F );
+      connect( qa1, SIGNAL(triggered()), this, SLOT( update_font() ) );
+
+      QAction *qa2 = new_menu->addAction( us_tr( "Save" ) );
+      qa2->setShortcut( Qt::ALT+Qt::Key_S );
+      connect( qa2, SIGNAL(triggered()), this, SLOT( save() ) );
+
+      QAction *qa3 = new_menu->addAction( us_tr( "Clear Display" ) );
+      qa3->setShortcut( Qt::ALT+Qt::Key_X );
+      connect( qa3, SIGNAL(triggered()), this, SLOT( clear_display() ) );
+   }
 #endif
 
-   editor->setWordWrap (Q3TextEdit::WidgetWidth);
+
+   editor->setWordWrapMode (QTextOption::WordWrap);
    editor->setMinimumHeight( 50 );
    
-   pb_cancel = new QPushButton(tr("Cancel"), this);
+   pb_cancel = new QPushButton(us_tr("Cancel"), this);
    pb_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_cancel->setMinimumHeight(minHeight1);
    pb_cancel->setPalette( PALET_PUSHB );
    connect(pb_cancel, SIGNAL(clicked()), SLOT(cancel()));
 
-   pb_help = new QPushButton(tr("Help"), this);
+   pb_help = new QPushButton(us_tr("Help"), this);
    pb_help->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_help->setMinimumHeight(minHeight1);
    pb_help->setPalette( PALET_PUSHB );
    connect(pb_help, SIGNAL(clicked()), SLOT(help()));
 
-   pb_ok = new QPushButton( tr("Close"), this);
+   pb_ok = new QPushButton( us_tr("Close"), this);
    pb_ok->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_ok->setMinimumHeight(minHeight1);
    pb_ok->setPalette( PALET_PUSHB );
@@ -269,7 +302,7 @@ void US_Hydrodyn_Cluster_Dmd::setupGUI()
 
    // build layout
 
-   Q3HBoxLayout *hbl_ctls = new Q3HBoxLayout(0);
+   QHBoxLayout * hbl_ctls = new QHBoxLayout(); hbl_ctls->setContentsMargins( 0, 0, 0, 0 ); hbl_ctls->setSpacing( 0 );
    hbl_ctls->addSpacing( 4 );
    //   hbl_ctls->addWidget ( pb_select_all );
    //   hbl_ctls->addSpacing( 4 );
@@ -284,7 +317,7 @@ void US_Hydrodyn_Cluster_Dmd::setupGUI()
    hbl_ctls->addWidget ( pb_delete );
    hbl_ctls->addSpacing( 4 );
 
-   Q3HBoxLayout *hbl_load_save = new Q3HBoxLayout(0);
+   QHBoxLayout * hbl_load_save = new QHBoxLayout(); hbl_load_save->setContentsMargins( 0, 0, 0, 0 ); hbl_load_save->setSpacing( 0 );
    hbl_load_save->addSpacing( 4 );
    hbl_load_save->addWidget ( pb_load );
    hbl_load_save->addSpacing( 4 );
@@ -293,13 +326,13 @@ void US_Hydrodyn_Cluster_Dmd::setupGUI()
    hbl_load_save->addWidget ( pb_save_csv );
    hbl_load_save->addSpacing( 4 );
 
-   Q3BoxLayout *vbl_editor_group = new Q3VBoxLayout(0);
+   QBoxLayout *vbl_editor_group = new QVBoxLayout(0);
 #if !defined(QT4) || !defined(Q_WS_MAC)
    vbl_editor_group->addWidget( frame );
 #endif
    vbl_editor_group->addWidget( editor );
 
-   Q3HBoxLayout *hbl_bottom = new Q3HBoxLayout(0);
+   QHBoxLayout * hbl_bottom = new QHBoxLayout(); hbl_bottom->setContentsMargins( 0, 0, 0, 0 ); hbl_bottom->setSpacing( 0 );
    hbl_bottom->addSpacing( 4 );
    hbl_bottom->addWidget ( pb_cancel );
    hbl_bottom->addSpacing( 4 );
@@ -309,7 +342,7 @@ void US_Hydrodyn_Cluster_Dmd::setupGUI()
    hbl_bottom->addSpacing( 4 );
 
 
-   Q3VBoxLayout *background = new Q3VBoxLayout(this);
+   QVBoxLayout * background = new QVBoxLayout(this); background->setContentsMargins( 0, 0, 0, 0 ); background->setSpacing( 0 );
    background->addSpacing( 4 );
    background->addWidget ( lbl_title );
    background->addSpacing( 4 );
@@ -395,20 +428,20 @@ void US_Hydrodyn_Cluster_Dmd::update_font()
 void US_Hydrodyn_Cluster_Dmd::save()
 {
    QString fn;
-   fn = QFileDialog::getSaveFileName( this , caption() , QString::null , QString::null );
+   fn = QFileDialog::getSaveFileName( this , windowTitle() , QString::null , QString::null );
    if(!fn.isEmpty() )
    {
-      QString text = editor->text();
+      QString text = editor->toPlainText();
       QFile f( fn );
       if ( !f.open( QIODevice::WriteOnly | QIODevice::Text) )
       {
          return;
       }
-      Q3TextStream t( &f );
+      QTextStream t( &f );
       t << text;
       f.close();
-      editor->setModified( false );
-      setCaption( fn );
+ //      editor->setModified( false );
+      setWindowTitle( fn );
    }
 }
 
@@ -422,9 +455,9 @@ csv US_Hydrodyn_Cluster_Dmd::current_csv()
       {
          if ( csv1.data[i][j] == "Y" || csv1.data[i][j] == "N" )
          {
-            tmp_csv.data[i][j] = ((Q3CheckTableItem *)(t_csv->item( i, j )))->isChecked() ? "Y" : "N";
+            tmp_csv.data[i][j] = ((QCheckBox *)(t_csv->cellWidget( i, j )))->isChecked() ? "Y" : "N";
          } else {
-            tmp_csv.data[i][j] = t_csv->text( i, j );
+            tmp_csv.data[i][j] = t_csv->item( i, j )->text();
          }
          tmp_csv.num_data[i][j] = tmp_csv.data[i][j].toDouble();
       }
@@ -434,46 +467,43 @@ csv US_Hydrodyn_Cluster_Dmd::current_csv()
   
 void US_Hydrodyn_Cluster_Dmd::recompute_interval_from_points( unsigned int basecol )
 {
-   for ( unsigned int i = 0; i < (unsigned int)t_csv->numRows(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int)t_csv->rowCount(); i++ )
    {
-      t_csv->setText(
-                     i, basecol + 2, 
-                     ( 
-                      t_csv->text(i, basecol + 1 ).toDouble() == 0e0 ?
+      QString toset =
+                      t_csv->item(i, basecol + 1 )->text().toDouble() == 0e0 ?
                       ""
                       :
                       QString("%1")
-                      .arg( t_csv->text(i, basecol ).toDouble() 
-                             / ( t_csv->text( i, basecol + 1 ).toDouble() ) ) 
-                      )
-                     );
+                      .arg( t_csv->item(i, basecol )->text().toDouble() 
+                             / ( t_csv->item( i, basecol + 1 )->text().toDouble() ) )
+         ;
+      t_csv->setItem( i, basecol + 2, new QTableWidgetItem( toset ) );
    }
 }
 
 void US_Hydrodyn_Cluster_Dmd::recompute_points_from_interval( unsigned int basecol )
 {
-   for ( unsigned int i = 0; i < (unsigned int)t_csv->numRows(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int)t_csv->rowCount(); i++ )
    {
-      t_csv->setText(
-                     i, basecol + 1, 
-                     ( 
-                      t_csv->text( i, basecol + 2 ).toDouble() == 0e0 ?
+      QString toset =
+                      t_csv->item( i, basecol + 2 )->text().toDouble() == 0e0 ?
                       ""
                       :
                       QString("%1")
-                      .arg( (unsigned int)( t_csv->text( i, basecol ).toDouble()
-                                            / t_csv->text( i, basecol + 2 ).toDouble() ) ) ) 
-                     );
+                      .arg( (unsigned int)( t_csv->item( i, basecol )->text().toDouble()
+                                            / t_csv->item( i, basecol + 2 )->text().toDouble() ) )
+         ;
+      t_csv->setItem( i, basecol + 1, new QTableWidgetItem( toset ) );
    }
 }
 
 void US_Hydrodyn_Cluster_Dmd::editor_msg( QString color, QString msg )
 {
-   QColor save_color = editor->color();
-   editor->setColor(color);
+   QColor save_color = editor->textColor();
+   editor->setTextColor(color);
    editor->append(msg);
-   editor->setColor(save_color);
-   editor->scrollToBottom();
+   editor->setTextColor(save_color);
+   editor->verticalScrollBar()->setValue(editor->verticalScrollBar()->maximum());
 }
 
 void US_Hydrodyn_Cluster_Dmd::reset()
@@ -535,7 +565,7 @@ void US_Hydrodyn_Cluster_Dmd::reset_csv()
       } else {
          if ( full_filenames[ filename  ] != full_filename )
          {
-             editor_msg( "dark red", QString( tr( "Warning: The same file name has been referenced in multiple file locations.\n"
+             editor_msg( "dark red", QString( us_tr( "Warning: The same file name has been referenced in multiple file locations.\n"
                                                   "%1 vs %2\n"
                                                   "This will cause problems.  Duplicate reference skipped.\n" ) )
                          .arg( full_filenames[ filename ] )
@@ -587,9 +617,9 @@ void US_Hydrodyn_Cluster_Dmd::copy()
    csv_copy.num_data.clear();
    csv_copy.prepended_names.clear();
 
-   for ( int i = 0; i < t_csv->numRows(); i++ )
+   for ( int i = 0; i < t_csv->rowCount(); i++ )
    {
-      if ( t_csv->isRowSelected( i ) )
+      if ( t_csv->item( i , 0 )->isSelected() )
       {
          // editor_msg( "black", QString( "copying row %1" ).arg( i ) );
          csv_copy.data           .push_back( csv1.data           [ i ] );
@@ -609,10 +639,10 @@ void US_Hydrodyn_Cluster_Dmd::paste()
 {
    csv1 = current_csv();
    unsigned int pos = 0;
-   for ( int i = 0; i < t_csv->numRows(); i++ )
+   for ( int i = 0; i < t_csv->rowCount(); i++ )
    {
       // editor_msg( "black", QString( "checking row %1" ).arg( i ) );
-      if ( t_csv->isRowSelected( i ) )
+      if ( t_csv->item( i , 0 )->isSelected() )
       {
          // editor_msg( "black", QString( "pasting into row %1" ).arg( i ) );
          for ( unsigned int j = 1; j < (unsigned int)csv_copy.data[ pos % csv_copy.data.size() ].size(); j++ )
@@ -640,7 +670,7 @@ void US_Hydrodyn_Cluster_Dmd::paste_all()
 {
    csv1 = current_csv();
    unsigned int pos = 0;
-   for ( int i = 0; i < t_csv->numRows(); i++ )
+   for ( int i = 0; i < t_csv->rowCount(); i++ )
    {
       for ( unsigned int j = 1; j < csv_copy.data[ pos % csv_copy.data.size() ].size(); j++ )
       {
@@ -656,9 +686,9 @@ void US_Hydrodyn_Cluster_Dmd::paste_all()
 void US_Hydrodyn_Cluster_Dmd::dup()
 {
    csv1 = current_csv();
-   for ( int i = 0; i < t_csv->numRows(); i++ )
+   for ( int i = 0; i < t_csv->rowCount(); i++ )
    {
-      if ( t_csv->isRowSelected( i ) )
+      if ( t_csv->item( i , 0 )->isSelected() )
       {
          csv1.data           .push_back( csv1.data           [ i ] );
          csv1.num_data       .push_back( csv1.num_data       [ i ] );
@@ -673,7 +703,7 @@ void US_Hydrodyn_Cluster_Dmd::load()
 {
    QString use_dir = dmd_dir;
 
-   QString fname = QFileDialog::getOpenFileName( this , caption() , use_dir , "DMD parameter files (*.dmd *.dmd)" );
+   QString fname = QFileDialog::getOpenFileName( this , windowTitle() , use_dir , "DMD parameter files (*.dmd *.dmd)" );
 
    if ( fname.isEmpty() )
    {
@@ -683,8 +713,8 @@ void US_Hydrodyn_Cluster_Dmd::load()
    if ( !QFile::exists( fname ) )
    {
       QMessageBox::warning( this, 
-                            tr( "US-SOMO : Cluster DMD Setup : Load" ),
-                            QString( tr( "File %1 does not exist" ) ).arg( fname ) );
+                            us_tr( "US-SOMO : Cluster DMD Setup : Load" ),
+                            QString( us_tr( "File %1 does not exist" ) ).arg( fname ) );
       return;
    }
 
@@ -693,8 +723,8 @@ void US_Hydrodyn_Cluster_Dmd::load()
    if ( !f.open( QIODevice::ReadOnly ) )
    {
       QMessageBox::warning( this, 
-                            tr( "US-SOMO : Cluster DMD Setup : Load" ),
-                            QString( tr( "Can not open file %1 for reading" ) ).arg( fname ) );
+                            us_tr( "US-SOMO : Cluster DMD Setup : Load" ),
+                            QString( us_tr( "Can not open file %1 for reading" ) ).arg( fname ) );
       return;
    }
 
@@ -711,7 +741,7 @@ void US_Hydrodyn_Cluster_Dmd::load()
       our_files[ csv1.data[ i ][ 0 ] ].push_back( i );
    }
       
-   Q3TextStream ts( &f );
+   QTextStream ts( &f );
 
    QStringList qsl_lines;
 
@@ -741,9 +771,9 @@ void US_Hydrodyn_Cluster_Dmd::load()
          it++ )
    {
       bool ok;
-      QString res = QInputDialog::getItem(
-                                          tr( "US-SOMO : Cluster DMD Setup : Load : Missing name" ),
-                                          QString( tr(
+      QString res = US_Static::getItem(
+                                          us_tr( "US-SOMO : Cluster DMD Setup : Load : Missing name" ),
+                                          QString( us_tr(
                                                       "%1 is found in the DMD file but is not a currently selected PDB.\n"
                                                       "Select a remapping or cancel to ignore:" ) )
                                           .arg( it->first )
@@ -809,14 +839,14 @@ void US_Hydrodyn_Cluster_Dmd::save_csv()
 {
    QString use_dir = dmd_dir;
 
-   QString fname = QFileDialog::getSaveFileName( this , tr("Choose a filename to save the dmd run parameters") , use_dir , "*.dmd *.dmd" );
+   QString fname = QFileDialog::getSaveFileName( this , us_tr("Choose a filename to save the dmd run parameters") , use_dir , "*.dmd *.dmd" );
 
    if ( fname.isEmpty() )
    {
       return;
    }
 
-   if ( !fname.contains( QRegExp("\\.dmd$",false) ) )
+   if ( !fname.contains( QRegExp("\\.dmd$", Qt::CaseInsensitive ) ) )
    {
       fname += ".dmd";
    }
@@ -832,19 +862,19 @@ void US_Hydrodyn_Cluster_Dmd::save_csv()
    if ( !f.open( QIODevice::WriteOnly ) )
    {
       QMessageBox::warning( this, 
-                            tr( "US-SOMO : Cluster DMD Setup : Save" ),
-                            QString( tr( "Can not open file %1 for writing" ) ).arg( fname ) );
+                            us_tr( "US-SOMO : Cluster DMD Setup : Save" ),
+                            QString( us_tr( "Can not open file %1 for writing" ) ).arg( fname ) );
       return;
    }
 
    csv tmp_csv = current_csv();
 
-   Q3TextStream ts( &f );
+   QTextStream ts( &f );
    ts << csv_to_qstring( tmp_csv );
    f.close();
    QMessageBox::information( this, 
-                             tr( "US-SOMO : Cluster DMD Setup : Save" ),
-                             QString( tr( "File %1 saved" ) ).arg( fname ) );
+                             us_tr( "US-SOMO : Cluster DMD Setup : Save" ),
+                             QString( us_tr( "File %1 saved" ) ).arg( fname ) );
 }
 
 void US_Hydrodyn_Cluster_Dmd::update_enables()
@@ -855,9 +885,9 @@ void US_Hydrodyn_Cluster_Dmd::update_enables()
       disable_updates = true;
       unsigned int selected = 0;
       vector < int > selected_rows;
-      for ( int i = 0; i < t_csv->numRows(); i++ )
+      for ( int i = 0; i < t_csv->rowCount(); i++ )
       {
-         if ( t_csv->isRowSelected( i ) )
+         if ( t_csv->item( i , 0 )->isSelected() )
          {
             selected++;
             selected_rows.push_back( i );
@@ -884,7 +914,7 @@ void US_Hydrodyn_Cluster_Dmd::update_enables()
 void US_Hydrodyn_Cluster_Dmd::reload_csv()
 {
    interval_starting_row = 0;
-   t_csv->setNumRows( csv1.data.size() );
+   t_csv->setRowCount( csv1.data.size() );
    for ( unsigned int i = 0; i < (unsigned int)csv1.data.size(); i++ )
    {
       if ( csv1.data[ i ].size() < 3 || csv1.data[ i ][ 2 ].isEmpty() )
@@ -895,10 +925,10 @@ void US_Hydrodyn_Cluster_Dmd::reload_csv()
       {
          if ( csv1.data[i][j] == "Y" || csv1.data[i][j] == "N" )
          {
-            t_csv->setItem( i, j, new Q3CheckTableItem( t_csv, "" ) );
-            ((Q3CheckTableItem *)(t_csv->item( i, j )))->setChecked( csv1.data[i][j] == "Y" );
+            t_csv->setCellWidget( i, j, new QCheckBox() );
+            ((QCheckBox *)(t_csv->cellWidget( i, j )))->setChecked( csv1.data[i][j] == "Y" );
          } else {
-            t_csv->setText( i, j, csv1.data[i][j] );
+            t_csv->setItem( i, j, new QTableWidgetItem( csv1.data[i][j] ) );
          }
       }
    }
@@ -912,9 +942,9 @@ void US_Hydrodyn_Cluster_Dmd::delete_rows()
    csv_new.num_data.clear();
    csv_new.prepended_names.clear();
    
-   for ( int i = 0; i < t_csv->numRows(); i++ )
+   for ( int i = 0; i < t_csv->rowCount(); i++ )
    {
-      if ( !t_csv->isRowSelected( i ) )
+      if ( !t_csv->item( i , 0 )->isSelected() )
       {
          csv_new.data           .push_back( csv1.data           [ i ] );
          csv_new.num_data       .push_back( csv1.num_data       [ i ] );
@@ -933,19 +963,19 @@ void US_Hydrodyn_Cluster_Dmd::select_all()
    int selected = 0;
    vector < int > selected_rows;
 
-   for ( int i = 0; i < t_csv->numRows(); i++ )
+   for ( int i = 0; i < t_csv->rowCount(); i++ )
    {
-      if ( t_csv->isRowSelected( i ) )
+      if ( t_csv->item( i , 0 )->isSelected() )
       {
          selected++;
          selected_rows.push_back( i );
       }
    }
    
-   if ( selected != t_csv->numRows() )
+   if ( selected != t_csv->rowCount() )
    {
       // select all
-      for ( int i = 0; i < t_csv->numRows(); i++ )
+      for ( int i = 0; i < t_csv->rowCount(); i++ )
       {
          t_csv->selectRow( selected_rows[ i ] );
       }
@@ -987,9 +1017,9 @@ void US_Hydrodyn_Cluster_Dmd::row_header_released( int row )
 {
    // cout << QString( "row_header_released %1\n" ).arg( row );
    t_csv->clearSelection();
-   Q3TableSelection qts( row, 0, row, 12 );
+   QTableWidgetSelectionRange qts( row, 0, row, 12 );
    
-   t_csv->addSelection( qts );
+   t_csv->setRangeSelected( qts, true );
    update_enables();
 }
 
@@ -1026,7 +1056,7 @@ void US_Hydrodyn_Cluster_Dmd::sync_csv_with_selected()
       } else {
          if ( full_filenames[ filename  ] != full_filename )
          {
-             editor_msg( "red", QString( tr( "WARNING: The same file name has been referenced in multiple file locations.\n"
+             editor_msg( "red", QString( us_tr( "WARNING: The same file name has been referenced in multiple file locations.\n"
                                              "%1 vs %2\n"
                                              "This will cause problems.  Duplicate reference skipped.\n" ) )
                          .arg( full_filenames[ filename ] )
@@ -1109,7 +1139,7 @@ QStringList US_Hydrodyn_Cluster_Dmd::csv_parse_line( QString qs )
       return qsl;
    }
 
-   QStringList qsl_chars = QStringList::split("", qs);
+   QStringList qsl_chars = (qs).split( "" , QString::SkipEmptyParts );
    QString token = "";
 
    bool in_quote = false;
@@ -1153,7 +1183,7 @@ bool US_Hydrodyn_Cluster_Dmd::setup_residues( QString filename )
 {
    if ( !full_filenames.count( filename ) )
    {
-      editor_msg( "red", QString( tr( "Internal Error: filename %1 has not been cached" ) ).arg( filename ) );
+      editor_msg( "red", QString( us_tr( "Internal Error: filename %1 has not been cached" ) ).arg( filename ) );
       return false;
    }
 
@@ -1162,17 +1192,17 @@ bool US_Hydrodyn_Cluster_Dmd::setup_residues( QString filename )
    QFile f( full_filename );
    if ( !f.exists() )
    {
-      editor_msg( "red", QString( tr( "Error: file %1 does not exist" ) ).arg( full_filename ) );
+      editor_msg( "red", QString( us_tr( "Error: file %1 does not exist" ) ).arg( full_filename ) );
       return false;
    }
 
    if ( !f.open( QIODevice::ReadOnly ) )
    {
-      editor_msg( "red", QString( tr( "Error: file %1 can not be opened.\nCheck permissions" ) ).arg( full_filename ) );
+      editor_msg( "red", QString( us_tr( "Error: file %1 can not be opened.\nCheck permissions" ) ).arg( full_filename ) );
       return false;
    }
 
-   Q3TextStream ts( &f );
+   QTextStream ts( &f );
 
    QRegExp rx_end ("^END");
    QRegExp rx_atom("^(ATOM|HETATM)");
@@ -1202,15 +1232,15 @@ bool US_Hydrodyn_Cluster_Dmd::setup_residues( QString filename )
    {
       QString line = ts.readLine();
 
-      if ( rx_end.search( line ) != -1 )
+      if ( rx_end.indexIn( line ) != -1 )
       {
          break;
       }
-      if ( rx_atom.search( line ) != -1 )
+      if ( rx_atom.indexIn( line ) != -1 )
       {
          QString      chain_id   = line.mid( 21, 1 );
-         unsigned int residue_no = line.mid( 22, 4 ).stripWhiteSpace().toUInt();
-         QString      this_key   = chain_id + line.mid( 22, 4 ).stripWhiteSpace();
+         unsigned int residue_no = line.mid( 22, 4 ).trimmed().toUInt();
+         QString      this_key   = chain_id + line.mid( 22, 4 ).trimmed();
          // cout << QString( "line <%1> chain id <%2> key <%3>\n" ).arg( line.left(30) ).arg( chain_id ).arg( this_key );
 
          if ( last_key.isEmpty() ||
@@ -1218,7 +1248,7 @@ bool US_Hydrodyn_Cluster_Dmd::setup_residues( QString filename )
          {
             if ( dup_chain.count( this_key ) )
             {
-               editor_msg( "red", QString( tr( "Error: repeated residue or chain %1 in file %2" ) )
+               editor_msg( "red", QString( us_tr( "Error: repeated residue or chain %1 in file %2" ) )
                            .arg( this_key ) 
                            .arg( full_filename ) 
                            );
@@ -1236,7 +1266,7 @@ bool US_Hydrodyn_Cluster_Dmd::setup_residues( QString filename )
 
    if ( !residues_chain.count( filename ) )
    {
-      editor_msg( "red", QString( tr( "Error: no chains or residues found file %1" ) )
+      editor_msg( "red", QString( us_tr( "Error: no chains or residues found file %1" ) )
                   .arg( full_filename ) 
                   );
       return false;
@@ -1244,7 +1274,7 @@ bool US_Hydrodyn_Cluster_Dmd::setup_residues( QString filename )
 
    if ( residues_chain[ filename ].size() == 1 )
    {
-      editor_msg( "red", QString( tr( "Error: only one residue %1:%2 found in file %2" ) )
+      editor_msg( "red", QString( us_tr( "Error: only one residue %1:%2 found in file %2" ) )
                   .arg( residues_chain [ filename ][ 0 ] ) 
                   .arg( residues_number[ filename ][ 0 ] ) 
                   .arg( full_filename ) 
@@ -1295,7 +1325,7 @@ void US_Hydrodyn_Cluster_Dmd::residue_summary( QString filename )
    // cout << "residue summary: " << filename << endl;
    if ( !residues_chain.count( filename ) )
    {
-      editor_msg( "red", QString( tr( "Internal Error: filename %1 not prepared for summary" ) ).arg( filename ) );
+      editor_msg( "red", QString( us_tr( "Internal Error: filename %1 not prepared for summary" ) ).arg( filename ) );
       return;
    }
       
@@ -1307,33 +1337,33 @@ void US_Hydrodyn_Cluster_Dmd::residue_summary( QString filename )
       // cout << "key " << key << endl;
       if ( !residues_range_start.count( key ) )
       {
-         editor_msg( "red", QString( tr( "Internal Error: filename %1 range %2 not prepared for summary" ) ).arg( filename ).arg( key ) );
+         editor_msg( "red", QString( us_tr( "Internal Error: filename %1 range %2 not prepared for summary" ) ).arg( filename ).arg( key ) );
          return;
       }
       if ( !residues_range_end.count( key ) )
       {
-         editor_msg( "red", QString( tr( "Internal Error: filename %1 range %2 unbalanced for summary" ) ).arg( filename ).arg( key ) );
+         editor_msg( "red", QString( us_tr( "Internal Error: filename %1 range %2 unbalanced for summary" ) ).arg( filename ).arg( key ) );
          return;
       }
       if ( !residues_range_start[ key ].size() )
       {
-         editor_msg( "red", QString( tr( "Internal Error: filename %1 range %2 empty start key" ) ).arg( filename ).arg( key ) );
+         editor_msg( "red", QString( us_tr( "Internal Error: filename %1 range %2 empty start key" ) ).arg( filename ).arg( key ) );
          return;
       }
       if ( !residues_range_end[ key ].size() )
       {
-         editor_msg( "red", QString( tr( "Internal Error: filename %1 range %2 empty end key" ) ).arg( filename ).arg( key ) );
+         editor_msg( "red", QString( us_tr( "Internal Error: filename %1 range %2 empty end key" ) ).arg( filename ).arg( key ) );
          return;
       }
       if ( residues_range_end[ key ].size() != residues_range_end[ key ].size() )
       {
-         editor_msg( "red", QString( tr( "Internal Error: filename %1 range %2 start end mismatch" ) ).arg( filename ).arg( key ) );
+         editor_msg( "red", QString( us_tr( "Internal Error: filename %1 range %2 start end mismatch" ) ).arg( filename ).arg( key ) );
          return;
       }
       // for ( unsigned int j = 0; j < residues_range_start[ key ].size(); j++ )
       // {
       pos++;
-      editor_msg( "dark blue", QString( tr( "%1: Chain %2 [%3] residue range: %4 - %5\n" ) )
+      editor_msg( "dark blue", QString( us_tr( "%1: Chain %2 [%3] residue range: %4 - %5\n" ) )
                   .arg( filename )
                   .arg( chain_id )
                   .arg( pos )
@@ -1346,15 +1376,19 @@ void US_Hydrodyn_Cluster_Dmd::residue_summary( QString filename )
 
 bool US_Hydrodyn_Cluster_Dmd::convert_static_range( int row )
 {
-   QString filename     = t_csv->text( row, 0  );
-   QString static_range = t_csv->text( row, 10 ).stripWhiteSpace();
+   QString filename     = t_csv->item( row, 0  )->text();
+   QString static_range = t_csv->item( row, 10 )->text().trimmed();
    if ( static_range.isEmpty() )
    {
-      t_csv->setText( row, 11, "" );
+      t_csv->setItem( row, 11, new QTableWidgetItem( "" ) );
       return true;
    }
 
-   QStringList qsl = QStringList::split( QRegExp( "\\s*(\\s|,|;)+\\s*" ), static_range );
+   QStringList qsl;
+   {
+      QRegExp rx = QRegExp( "\\s*(\\s|,|;)+\\s*" );
+      qsl = (static_range ).split( rx , QString::SkipEmptyParts );
+   }
 
    cout << QString( "convert_static_range qsl.size() %1\n" ).arg( qsl.size() );
 
@@ -1365,15 +1399,15 @@ bool US_Hydrodyn_Cluster_Dmd::convert_static_range( int row )
    bool has_errors = false;
    for ( unsigned int i = 0; i < (unsigned int)qsl.size(); i++ )
    {
-      qsl[ i ] = qsl[ i ].stripWhiteSpace();
+      qsl[ i ] = qsl[ i ].trimmed();
       if ( qsl[ i ].isEmpty() )
       {
          continue;
       }
-      if ( rx.search( qsl[ i ] ) == -1 )
+      if ( rx.indexIn( qsl[ i ] ) == -1 )
       {
          editor_msg( "red",
-                     QString( tr( "Error: Static range \"%1\" has an invalid format.\n"
+                     QString( us_tr( "Error: Static range \"%1\" has an invalid format.\n"
                                   "The format must be \"Chain:residue_number\" or \"Chain:start_residue_number-end_residue_residue_number\"\n" ) )
                      .arg( qsl[ i ] ) 
                      );
@@ -1390,7 +1424,7 @@ bool US_Hydrodyn_Cluster_Dmd::convert_static_range( int row )
       if ( start_residue > end_residue )
       {
          editor_msg( "red",
-                     QString( tr( "Error: Static range \"%1\" has an invalid format.\n"
+                     QString( us_tr( "Error: Static range \"%1\" has an invalid format.\n"
                                   "The end residue number is less that the start residue number\n" ) )
                      .arg( qsl[ i ] ) 
                      );
@@ -1411,7 +1445,7 @@ bool US_Hydrodyn_Cluster_Dmd::convert_static_range( int row )
            !residues_chain_map[ filename ].count( chain_id ) )
       {
          editor_msg( "red",
-                     QString( tr( "Error: No matching chain found for static range \"%1\" chain %2." ) )
+                     QString( us_tr( "Error: No matching chain found for static range \"%1\" chain %2." ) )
                      .arg( qsl[ i ] ) 
                      .arg( chain_id ) 
                      );
@@ -1473,7 +1507,7 @@ bool US_Hydrodyn_Cluster_Dmd::convert_static_range( int row )
          if ( used_bits[ j ] == 0 )
          {
             editor_msg( "dark red",
-                        QString( tr( "Warning: Unused static residue %1:%2 from static entry %3" ) )
+                        QString( us_tr( "Warning: Unused static residue %1:%2 from static entry %3" ) )
                         .arg( chain_id ) 
                         .arg( j ) 
                         .arg( qsl[ i ] ) 
@@ -1481,7 +1515,7 @@ bool US_Hydrodyn_Cluster_Dmd::convert_static_range( int row )
             continue;
          }
          editor_msg( "dark red",
-                     QString( tr( "Warning: Multiply used static residue %1:%2 from static entry %3" ) )
+                     QString( us_tr( "Warning: Multiply used static residue %1:%2 from static entry %3" ) )
                      .arg( chain_id ) 
                      .arg( j ) 
                      .arg( qsl[ i ] ) 
@@ -1490,9 +1524,9 @@ bool US_Hydrodyn_Cluster_Dmd::convert_static_range( int row )
    }
    if ( has_errors )
    {
-      t_csv->setText( row, 11, "" );
+      t_csv->setItem( row, 11, new QTableWidgetItem( "" ) );
       return false;
    }
-   t_csv->setText( row, 11, native_range );
+   t_csv->setItem( row, 11, new QTableWidgetItem( native_range ) );
    return true;
 }

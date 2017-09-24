@@ -192,7 +192,7 @@ bool US_Saxs_Util::guinier_fit(
       .arg( sigb )
       .arg( x.size() - 2 )
       .arg( chi2 )
-      .ascii()
+      .toAscii().data()
       ;
    */
 

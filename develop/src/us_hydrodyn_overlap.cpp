@@ -2,9 +2,9 @@
 #include "../include/us_hydrodyn_overlap.h"
 #include "../include/us_hydrodyn.h"
 //Added by qt3to4:
-#include <Q3GridLayout>
+#include <QGridLayout>
 #include <QLabel>
-#include <Q3Frame>
+#include <QFrame>
 #include <QCloseEvent>
 
 US_Hydrodyn_Overlap::US_Hydrodyn_Overlap(struct overlap_reduction *sidechain_overlap,
@@ -18,7 +18,7 @@ US_Hydrodyn_Overlap::US_Hydrodyn_Overlap(struct overlap_reduction *sidechain_ove
                                          double *overlap_tolerance,
                                          bool *overlap_widget, 
                                          void *us_hydrodyn,
-                                         QWidget *p, const char *name) : Q3Frame(p, name)
+                                         QWidget *p, const char *name) : QFrame( p )
 {
    this->sidechain_overlap = sidechain_overlap;
    this->mainchain_overlap = mainchain_overlap;
@@ -34,7 +34,7 @@ US_Hydrodyn_Overlap::US_Hydrodyn_Overlap(struct overlap_reduction *sidechain_ove
    *overlap_widget = true;
    USglobal=new US_Config();
    setPalette( PALET_FRAME );
-   setCaption(tr("SoMo Bead Overlap Reduction Options"));
+   setWindowTitle(us_tr("SoMo Bead Overlap Reduction Options"));
    show_grid_only = false;
    setupGUI();
    global_Xpos += 30;
@@ -50,7 +50,7 @@ US_Hydrodyn_Overlap::US_Hydrodyn_Overlap(struct overlap_reduction *grid_exposed_
                                          bool *overlap_widget, 
                                          void *us_hydrodyn, 
                                          QWidget *p, 
-                                         const char *name) : Q3Frame(p, name)
+                                         const char *name) : QFrame( p )
 {
    this->grid_exposed_overlap = grid_exposed_overlap;
    this->grid_buried_overlap = grid_buried_overlap;
@@ -62,7 +62,7 @@ US_Hydrodyn_Overlap::US_Hydrodyn_Overlap(struct overlap_reduction *grid_exposed_
    *overlap_widget = true;
    USglobal=new US_Config();
    setPalette( PALET_FRAME );
-   setCaption(tr("Grid Bead Overlap Reduction Options"));
+   setWindowTitle(us_tr("Grid Bead Overlap Reduction Options"));
    show_grid_only = true;
    setupGUI();
    global_Xpos += 30;
@@ -100,7 +100,7 @@ void US_Hydrodyn_Overlap::setupGUI()
                                    us_hydrodyn, 
                                    this);
       other_ORs.push_back((void *) grid_OR);
-      lbl_info = new QLabel(tr("Grid Bead Overlap Reduction Options:"), this);
+      lbl_info = new QLabel(us_tr("Grid Bead Overlap Reduction Options:"), this);
    }
    else
    {
@@ -123,20 +123,20 @@ void US_Hydrodyn_Overlap::setupGUI()
                                      us_hydrodyn, 
                                      this);
       other_ORs.push_back((void *) buried_OR);
-      lbl_info = new QLabel(tr("SoMo Bead Overlap Reduction Options:"), this);
+      lbl_info = new QLabel(us_tr("SoMo Bead Overlap Reduction Options:"), this);
    }
    //buried_OR->cnt_fuse->setEnabled(false);
    //buried_OR->cb_fuse->setEnabled(false);
 
    Q_CHECK_PTR(lbl_info);
-   lbl_info->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Raised);
+   lbl_info->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_info->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_info->setMinimumHeight(minHeight1);
    lbl_info->setPalette( PALET_FRAME );
    AUTFBACK( lbl_info );
    lbl_info->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
 
-   lbl_overlap_tolerance = new QLabel(tr(" Bead Overlap Tolerance: "), this);
+   lbl_overlap_tolerance = new QLabel(us_tr(" Bead Overlap Tolerance: "), this);
    Q_CHECK_PTR(lbl_overlap_tolerance);
    lbl_overlap_tolerance->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_overlap_tolerance->setMinimumHeight(minHeight1);
@@ -173,14 +173,14 @@ void US_Hydrodyn_Overlap::setupGUI()
       tw_overlap->addTab(buried_OR, "Buried beads");
    }
 
-   pb_cancel = new QPushButton(tr("Close"), this);
+   pb_cancel = new QPushButton(us_tr("Close"), this);
    Q_CHECK_PTR(pb_cancel);
    pb_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_cancel->setMinimumHeight(minHeight1);
    pb_cancel->setPalette( PALET_PUSHB );
    connect(pb_cancel, SIGNAL(clicked()), SLOT(cancel()));
 
-   pb_help = new QPushButton(tr("Help"), this);
+   pb_help = new QPushButton(us_tr("Help"), this);
    Q_CHECK_PTR(pb_help);
    pb_help->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_help->setMinimumHeight(minHeight1);
@@ -188,14 +188,14 @@ void US_Hydrodyn_Overlap::setupGUI()
    connect(pb_help, SIGNAL(clicked()), SLOT(help()));
 
    int rows=11, columns = 2, spacing = 2, j=0, margin=4;
-   Q3GridLayout *background=new Q3GridLayout(this, rows, columns, margin, spacing);
+   QGridLayout * background = new QGridLayout( this ); background->setContentsMargins( 0, 0, 0, 0 ); background->setSpacing( 0 ); background->setSpacing( spacing ); background->setContentsMargins( margin, margin, margin, margin );
 
-   background->addMultiCellWidget(lbl_info, j, j, 0, 1);
+   background->addWidget( lbl_info , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
    j++;
    background->addWidget(lbl_overlap_tolerance, j, 0);
    background->addWidget(cnt_overlap_tolerance, j, 1);
    j++;
-   background->addMultiCellWidget(tw_overlap, j, j+6, 0, 1);
+   background->addWidget( tw_overlap , j , 0 , 1 + ( j+6 ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
    j+=8;
    background->addWidget(pb_help, j, 0);
    background->addWidget(pb_cancel, j, 1);

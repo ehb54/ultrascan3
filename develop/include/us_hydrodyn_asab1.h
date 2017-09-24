@@ -26,8 +26,8 @@ us_hydrodyn_asab1_main(vector <PDB_atom *> active_atoms,
              asa_options *asa_opts,
              hydro_results *use_results,
              bool use_recheck,
-             Q3ProgressBar *progress,
-             Q3TextEdit *editor,
+             QProgressBar *progress,
+             QTextEdit *editor,
              US_Hydrodyn *use_us_hydrodyn
              );
 

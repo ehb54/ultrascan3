@@ -80,7 +80,7 @@ bool US_Hydrodyn_Saxs_Hplc::unified_ggaussian_to_f_gaussians()
 
    if ( common_size + per_file_size != (unsigned int)gaussian_type_size )
    {
-      errormsg = QString( tr( "Internal error: unified_ggaussians_to_f_gaussians(): common_size %1 + per_file_size %2 != gaussian_type_size %3\n" ) )
+      errormsg = QString( us_tr( "Internal error: unified_ggaussians_to_f_gaussians(): common_size %1 + per_file_size %2 != gaussian_type_size %3\n" ) )
          .arg( common_size )
          .arg( per_file_size )
          .arg( gaussian_type_size )
@@ -119,7 +119,7 @@ bool US_Hydrodyn_Saxs_Hplc::gg_fit_vector(
 {
    if ( !unified_ggaussian_ok )
    {
-      editor_msg( "red", tr( "Internal error: gg_chi_fit_vector() called but unified gaussians not ok" ) );
+      editor_msg( "red", us_tr( "Internal error: gg_chi_fit_vector() called but unified gaussians not ok" ) );
       return false;
    }
 
@@ -141,7 +141,7 @@ bool US_Hydrodyn_Saxs_Hplc::gg_fit_vector(
 
    bool use_errors = unified_ggaussian_use_errors && cb_sd_weight->isChecked();
 
-   // qDebug( use_errors ? "use errors ON" : "use errors OFF" );
+   // us_qdebug( use_errors ? "use errors ON" : "use errors OFF" );
 
    vector < double > tmp_g( gaussian_type_size );
 
@@ -262,13 +262,13 @@ bool US_Hydrodyn_Saxs_Hplc::gg_fit_vector(
          ggaussian_last_gg_t  .push_back( this_t );
          ggaussian_last_I     .push_back( I );
          ggaussian_last_e     .push_back( e );
-         // qDebug( QString( "p fit for %1 = %2" ).arg( unified_ggaussian_files[ i ] ).arg( pfit.back() ) );
+         // us_qdebug( QString( "p fit for %1 = %2" ).arg( unified_ggaussian_files[ i ] ).arg( pfit.back() ) );
       }
 
       double rmsd = 0e0;
       double tmp;
 
-      // qDebug( US_Vector::qs_vector3( "this_t, G, I", this_t, G, f_Is[ unified_ggaussian_files[ i ] ] ) );
+      // us_qdebug( US_Vector::qs_vector3( "this_t, G, I", this_t, G, f_Is[ unified_ggaussian_files[ i ] ] ) );
 
       int size = (int) G.size();
 
@@ -288,7 +288,7 @@ bool US_Hydrodyn_Saxs_Hplc::gg_fit_vector(
                nu = 1e0;
             }
          }
-         // qDebug( QString( "curve %1 nu %2 rmsd %3" ).arg( unified_ggaussian_files[ i ] ).arg( nu ).arg( rmsd / nu ) );
+         // us_qdebug( QString( "curve %1 nu %2 rmsd %3" ).arg( unified_ggaussian_files[ i ] ).arg( nu ).arg( rmsd / nu ) );
          rmsd /= nu;
       } else {
          for ( int j = 0; j < size; ++j )
@@ -329,7 +329,7 @@ bool US_Hydrodyn_Saxs_Hplc::gg_fit_vector(
       }
    }
 
-   // qDebug( US_Vector::qs_vector2( "q rmsd", unified_ggaussian_qvals, fit ) );
+   // us_qdebug( US_Vector::qs_vector2( "q rmsd", unified_ggaussian_qvals, fit ) );
    
    ggqfit_plot->clear();
 
@@ -339,7 +339,7 @@ bool US_Hydrodyn_Saxs_Hplc::gg_fit_vector(
    if ( cb_ggq_plot_chi2->isChecked() ) {
       ggqfit_plot->enableAxis  ( QwtPlot::yLeft , true );
       
-      ggqfit_plot->setAxisTitle( QwtPlot::yLeft, tr( use_errors ? "normalized Chi^2" : "RMSD" ) );
+      ggqfit_plot->setAxisTitle( QwtPlot::yLeft, us_tr( use_errors ? "normalized Chi^2" : "RMSD" ) );
 
       {
          QPen use_pen = QPen( Qt::green, use_line_width, Qt::DotLine );
@@ -394,7 +394,7 @@ bool US_Hydrodyn_Saxs_Hplc::gg_fit_vector(
 
    if ( cb_ggq_plot_P->isChecked() ) {
       ggqfit_plot->enableAxis  ( QwtPlot::yRight , true );
-      ggqfit_plot->setAxisTitle( QwtPlot::yRight, tr( "P value (log scale)" ) );
+      ggqfit_plot->setAxisTitle( QwtPlot::yRight, us_tr( "P value (log scale)" ) );
 
 //    // pvalue
 //    {
@@ -546,7 +546,7 @@ vector < double > US_Hydrodyn_Saxs_Hplc::compute_ggaussian_gaussian_sum()
    vector < double > result;
    if ( !unified_ggaussian_ok )
    {
-      editor_msg( "red", tr( "Internal error: gaussian rmsd called but unified gaussians not ok" ) );
+      editor_msg( "red", us_tr( "Internal error: gaussian rmsd called but unified gaussians not ok" ) );
       return result;
    }
 
@@ -610,7 +610,7 @@ double US_Hydrodyn_Saxs_Hplc::ggaussian_rmsd( bool norm_chi )
 {
    if ( !unified_ggaussian_ok )
    {
-      editor_msg( "red", tr( "Internal error: gaussian rmsd called but unified gaussians not ok" ) );
+      editor_msg( "red", us_tr( "Internal error: gaussian rmsd called but unified gaussians not ok" ) );
       return 1e99;
    }
 
@@ -656,7 +656,7 @@ double US_Hydrodyn_Saxs_Hplc::ggaussian_rmsd( bool norm_chi )
 
 bool US_Hydrodyn_Saxs_Hplc::gg_fit_replot() {
    if ( !unified_ggaussian_ok ) {
-      editor_msg( "red", tr( "Internal error (gg_fit_replot): Global Gaussian mode, but unified Global Gaussians are not ok." ) );
+      editor_msg( "red", us_tr( "Internal error (gg_fit_replot): Global Gaussian mode, but unified Global Gaussians are not ok." ) );
       ggaussian_enables();
       return false;
    }

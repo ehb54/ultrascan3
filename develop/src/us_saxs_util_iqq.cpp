@@ -1,7 +1,7 @@
 #include "../include/us_saxs_util.h"
 #include "../include/us_revision.h"
 //Added by qt3to4:
-#include <Q3TextStream>
+#include <QTextStream>
 
 // note: this program uses cout and/or cerr and this should be replaced
 
@@ -85,7 +85,7 @@ bool US_Saxs_Util::read_control( QString controlfile )
 
       cout << "controlfile is now " << controlfile << endl;
       controlfile = QFileInfo( controlfile ).fileName();
-      f.setName( controlfile );
+      f.setFileName( controlfile );
       if ( !f.open( QIODevice::ReadOnly ) )
       {
          errormsg = QString( "Error: %1 can not be opened.  Check permissions" ).arg( controlfile );
@@ -120,7 +120,7 @@ bool US_Saxs_Util::read_control( QString controlfile )
       cout << QString( "from tar file %1, new control file %2\n" ).arg( controlfile ).arg( qslt[ 0 ] );
       controlfile = qslt[ 0 ];
 
-      f.setName( controlfile );
+      f.setFileName( controlfile );
       if ( !f.open( QIODevice::ReadOnly ) )
       {
          errormsg = QString( "Error: %1 can not be opened.  Check permissions" ).arg( controlfile );
@@ -130,7 +130,7 @@ bool US_Saxs_Util::read_control( QString controlfile )
 
    // read and setup control
 
-   Q3TextStream ts( &f );
+   QTextStream ts( &f );
    QRegExp rx_blank  ( "^\\s*$" );
    QRegExp rx_comment( "#.*$" );
    QRegExp rx_valid  ( 
@@ -536,14 +536,14 @@ bool US_Saxs_Util::read_control( QString controlfile )
          continue;
       }
 
-      QStringList qsl = QStringList::split( QRegExp("\\s+"), qs );
+      QStringList qsl = (qs ).split( QRegExp("\\s+") , QString::SkipEmptyParts );
 
       if ( !qsl.size() )
       {
          continue;
       }
 
-      if ( rx_valid.search( qsl[ 0 ].lower() ) == -1 )
+      if ( rx_valid.indexIn( qsl[ 0 ].toLower() ) == -1 )
       {
          errormsg = QString( "Error reading %1 line %2 : Unrecognized token %3" )
             .arg( controlfile )
@@ -552,11 +552,11 @@ bool US_Saxs_Util::read_control( QString controlfile )
          return false;
       }
 
-      QString option = qsl[ 0 ].lower();
+      QString option = qsl[ 0 ].toLower();
       qsl.pop_front();
       control_parameters[ option ] = qsl.join(" ");
 
-      if ( rx_arg_1.search( option ) != -1 && 
+      if ( rx_arg_1.indexIn( option ) != -1 && 
            qsl.size() < 1 )
       {
          errormsg = QString( "Error reading %1 line %2 : Missing argument " )
@@ -565,7 +565,7 @@ bool US_Saxs_Util::read_control( QString controlfile )
          return false;
       }
 
-      if ( rx_arg_2.search( option ) != -1 && 
+      if ( rx_arg_2.indexIn( option ) != -1 && 
            qsl.size() < 2 )
       {
          errormsg = QString( "Error reading %1 line %2 : Missing argument " )
@@ -575,7 +575,7 @@ bool US_Saxs_Util::read_control( QString controlfile )
       }
 
 
-      if ( rx_file.search( option ) != -1 )
+      if ( rx_file.indexIn( option ) != -1 )
       {
          QFile qfc( qsl[ 0 ] );
          if ( !qfc.exists() )
@@ -588,7 +588,7 @@ bool US_Saxs_Util::read_control( QString controlfile )
          }
       }         
 
-      if ( rx_flush.search( option ) != -1 )
+      if ( rx_flush.indexIn( option ) != -1 )
       {
          if ( !flush_output() )
          {
@@ -652,13 +652,13 @@ bool US_Saxs_Util::read_control( QString controlfile )
          double secs = qsl[ 0 ].toDouble();
          secs *= 2e0;
          // secs *= 1e-1; // finer resolution if nanosleep available
-         cout << QString( "sleep %1\n" ).arg( secs ).ascii();
+         cout << QString( "sleep %1\n" ).arg( secs ).toAscii().data();
          timespec ns;
          timespec ns_ret;
          ns.tv_sec  = ( long ) secs;
          ns.tv_nsec = ( long ) ( 1e9 * ( secs - ns.tv_sec ) );
-         cout << QString( "sleep s %1\n" ).arg( ns.tv_sec ).ascii();
-         cout << QString( "sleep ns %1\n" ).arg( ns.tv_nsec ).ascii();
+         cout << QString( "sleep s %1\n" ).arg( ns.tv_sec ).toAscii().data();
+         cout << QString( "sleep ns %1\n" ).arg( ns.tv_nsec ).toAscii().data();
          nanosleep(&ns, &ns_ret);
 # endif
 #else
@@ -846,7 +846,7 @@ bool US_Saxs_Util::read_control( QString controlfile )
       
       if ( option == "iqmethod" )
       {
-         if ( rx_valid_saxs_iqmethod.search( qsl[ 0 ] ) == -1 )
+         if ( rx_valid_saxs_iqmethod.indexIn( qsl[ 0 ] ) == -1 )
          {
             errormsg = QString( "Error %1 line %2 : invalid %3 %4" )
                .arg( controlfile )
@@ -878,7 +878,7 @@ bool US_Saxs_Util::read_control( QString controlfile )
          // restating inputfile clears the previous dmd run files
          output_dmd_pdbs.clear();
          // read pdb, needs residue file
-         QString ext = QFileInfo( qsl[ 0 ] ).extension( false ).lower();
+         QString ext = QFileInfo( qsl[ 0 ] ).suffix().toLower();
 
          if ( ext != "pdb" )
          {
@@ -1033,10 +1033,10 @@ bool US_Saxs_Util::read_control( QString controlfile )
                QFile f( QString( "timeout-%1" ).arg( myrank ) );
                if( f.open( QIODevice::WriteOnly | QIODevice::Append ) )
                {
-                  Q3TextStream ts( &f );
+                  QTextStream ts( &f );
                   ts << QString( "%1: Timed out\n" ).arg( myrank ) << flush;
                   f.close();
-                  output_files << f.name();
+                  output_files << f.fileName();
                }
             }
          }
@@ -1362,7 +1362,7 @@ bool US_Saxs_Util::set_control_parameters_from_experiment_file( QString filename
       return false;
    }
    
-   QString ext = QFileInfo( filename ).extension( false ).lower();
+   QString ext = QFileInfo( filename ).suffix().toLower();
 
    QRegExp rx_valid_ext (
                          "^("
@@ -1372,7 +1372,7 @@ bool US_Saxs_Util::set_control_parameters_from_experiment_file( QString filename
                          // "out|"
                          "ssaxs)$" );
 
-   if ( rx_valid_ext.search( ext ) == -1 )
+   if ( rx_valid_ext.indexIn( ext ) == -1 )
    {
       errormsg = QString("Error: %1 unsupported file extension %2").arg( filename ).arg( ext );
       return false;
@@ -1384,7 +1384,7 @@ bool US_Saxs_Util::set_control_parameters_from_experiment_file( QString filename
       return false;
    }
 
-   Q3TextStream ts(&f);
+   QTextStream ts(&f);
    vector < QString > qv;
    QStringList qsl;
    while ( !ts.atEnd() )
@@ -1407,13 +1407,13 @@ bool US_Saxs_Util::set_control_parameters_from_experiment_file( QString filename
 
    if ( ext == "csv" )
    {
-      QStringList qsl_headers = qsl.grep("\"Name\",\"Type; q:\"");
+      QStringList qsl_headers = qsl.filter("\"Name\",\"Type; q:\"");
       if ( qsl_headers.size() == 0 )
       {
          errormsg = QString("Error: the file %1 has no valid q grid lines").arg( filename );
          return false;
       }
-      QStringList qsl_q = QStringList::split( ",", qsl_headers[ 0 ], true );
+      QStringList qsl_q = (qsl_headers[ 0 ]).split( "," );
       if ( qsl_q.size() < 3 )
       {
          errormsg = QString("Error: the file %1 q grid line has insufficient columns").arg( filename );
@@ -1446,12 +1446,17 @@ bool US_Saxs_Util::set_control_parameters_from_experiment_file( QString filename
       for ( unsigned int i = 1; i < (unsigned int) qv.size(); i++ )
       {
          if ( qv[i].contains(QRegExp("^#")) ||
-              rx_ok_line.search( qv[i] ) == -1 )
+              rx_ok_line.indexIn( qv[i] ) == -1 )
          {
             continue;
          }
          
-         QStringList tokens = QStringList::split(QRegExp("\\s+"), qv[i].replace(QRegExp("^\\s+"),""));
+         // QStringList tokens = (qv[i].replace(QRegExp("^\\s+").split( QRegExp("\\s+") , QString::SkipEmptyParts ),""));
+         QStringList tokens;
+         {
+            QString qs = qv[i].replace(QRegExp("^\\s+"),"");
+            tokens = (qs ).split( QRegExp("\\s+") , QString::SkipEmptyParts );
+         }
 
          if ( tokens.size() > 1 )
          {
@@ -1724,7 +1729,7 @@ bool US_Saxs_Util::validate_control_parameters( bool for_sgp )
                         "h3a|"
                         "fd)$" );
 
-   if ( rx_fd_params.search( control_parameters[ "iqmethod" ] ) != -1 )
+   if ( rx_fd_params.indexIn( control_parameters[ "iqmethod" ] ) != -1 )
    {
       checks << "fdbinsize";
       vals   << "0.5";
@@ -1744,7 +1749,7 @@ bool US_Saxs_Util::validate_control_parameters( bool for_sgp )
                         "h3a)$"
                         );
                         
-   if ( rx_hy_params.search( control_parameters[ "iqmethod" ] ) != -1 )
+   if ( rx_hy_params.indexIn( control_parameters[ "iqmethod" ] ) != -1 )
    {
       checks << "hypoints";
       vals   << "15";
@@ -1757,7 +1762,7 @@ bool US_Saxs_Util::validate_control_parameters( bool for_sgp )
                             "crysol)$"
                             );
                         
-   if ( rx_crysol_params.search( control_parameters[ "iqmethod" ] ) != -1 )
+   if ( rx_crysol_params.indexIn( control_parameters[ "iqmethod" ] ) != -1 )
    {
       checks << "crysolharm";
       vals   << "15";
@@ -1903,7 +1908,7 @@ bool US_Saxs_Util::write_output( QString model, vector < double > &q, vector < d
          }
       } while ( QFile::exists( fsaxs_name ) );
 
-      FILE *fsaxs = fopen(fsaxs_name, "w");
+      FILE *fsaxs = us_fopen(fsaxs_name, "w");
       if ( fsaxs ) 
       {
          output_files << fsaxs_name;
@@ -1912,15 +1917,15 @@ bool US_Saxs_Util::write_output( QString model, vector < double > &q, vector < d
             QString("")
             .sprintf(
                      "Simulated SAXS data generated from %s by US_SOMO %s %s q(%f:%f) step %f\n"
-                     , control_parameters[ "inputfile" ].ascii()
-                     , US_Version.ascii()
+                     , control_parameters[ "inputfile" ].toAscii().data()
+                     , US_Version.toAscii().data()
                      , REVISION
                      , our_saxs_options.start_q
                      , our_saxs_options.end_q
                      , our_saxs_options.delta_q
                      );
          fprintf(fsaxs, "%s",
-                 last_saxs_header.ascii() );
+                 last_saxs_header.toAscii().data() );
          for ( unsigned int i = 0; i < q.size(); i++ )
          {
             fprintf(fsaxs, "%.6e\t%.6e\n", q[i], I[i]);
@@ -2145,14 +2150,14 @@ bool US_Saxs_Util::flush_output_one()
             {
                write_output_count++;
             
-               FILE *of = fopen(fname, "wb");
+               FILE *of = us_fopen(fname, "wb");
                if ( of )
                {
                   output_files << fname;
                   QString header = QString("")
                      .sprintf(
                               "Simulated SAXS data generated by US_SOMO %s"
-                              , US_Version.ascii()
+                              , US_Version.toAscii().data()
                               );
                   
                   bool q_data_added = false;
@@ -2171,8 +2176,8 @@ bool US_Saxs_Util::flush_output_one()
                         if ( !q_data_added )
                         {
                            fprintf(of, "\"Name\",\"Type; q:\",%s,\"%s\"\n", 
-                                   vector_double_to_csv( saxs_q_for_csv[ i ] ).ascii(),
-                                   header.ascii());
+                                   vector_double_to_csv( saxs_q_for_csv[ i ] ).toAscii().data(),
+                                   header.toAscii().data());
                            q_data_added = true;
                         }
                         QString name = QString("%1 Model %2 %3 %4")
@@ -2182,9 +2187,9 @@ bool US_Saxs_Util::flush_output_one()
                            .arg( saxs_method_for_csv[ i ] );
                         
                         fprintf(of, "\"%s\",\"%s\",%s\n", 
-                                name.ascii(),
+                                name.toAscii().data(),
                                 "I(q)",
-                                vector_double_to_csv(saxs_I_for_csv[i]).ascii());
+                                vector_double_to_csv(saxs_I_for_csv[i]).toAscii().data());
                      }
                   }            
                   fclose( of );
@@ -2217,7 +2222,7 @@ bool US_Saxs_Util::write_timings( QString file, QString msg )
    QFile f( out_file );
    if ( f.open( QIODevice::WriteOnly ) )
    {
-      Q3TextStream ts( &f );
+      QTextStream ts( &f );
       ts << msg << endl;
       ts << timings;
       f.close();
@@ -2234,12 +2239,15 @@ bool US_Saxs_Util::mwc(
                        const vector < double > & q_org,
                        const vector < double > & I,
                        double                    Rg,
+                       double                    /* sigRg */,
                        double                    I0,
+                       double                    sigI0,
                        double                    mw_per_N,
                        double                  & qm,
                        double                  & Vc,
                        double                  & Qr,
                        double                  & mwc,
+                       double                  & mwc_sd,
                        QString                 & messages,
                        QString                 & notes
                         )
@@ -2393,7 +2401,54 @@ bool US_Saxs_Util::mwc(
 
    Qr = Vc * Vc / Rg;
 
-   // qDebug( QString( "splined a %1 b %2 c %3 Vc %4 lVc %5 lN %6 N %7 mwc %8" )
+   // sd calc
+   // using p.d.'s to propagate uncertainty from maxima:
+   // maxima:
+   //                                             2
+   //          sqrt(4 c log(I0/sqiqdq) - 4 a c + b )
+   //          ------------------------------------- - b/c
+   //                            c
+   //        %e
+   //   sqrt(---------------------------------------------) abs(mw_per_N) abs(sigI0)
+   //                          I0               2
+   //                4 c log(------) - 4 a c + b
+   //                        sqiqdq
+   //   ----------------------------------------------------------------------------
+   //                                     abs(I0)
+   // fortran(%);
+   //
+   //      (sqrt(exp(sqrt(4*c*log(I0/sqiqdq)-4*a*c+b**2)/c-b/c)/(b**2-4*a*c+4*c*log(I0/sqiqdq)))*abs(mw_per_N)*abs(sigI0))/abs(I0)
+
+   {
+      double b2m4acp4clogi0sqiqdq = b * b - 4e0 * a * c + 4e0 * c * log( I0 / sqiqdq );
+
+      mwc_sd =
+         ( sqrt( exp( sqrt( b2m4acp4clogi0sqiqdq )
+                      /
+                      c - b / c )
+                 / 
+                 b2m4acp4clogi0sqiqdq ) * 
+           mw_per_N * sigI0 )
+         / 
+         I0
+         ;
+
+      // double mwc_sd_org =
+      //    ( sqrt( exp( sqrt( 4e0 * c * log( I0 / sqiqdq ) - 4e0 * a * c + b * b ) 
+      //                 /
+      //                 c - b / c )
+      //            / 
+      //            ( b * b - 4e0 * a * c + 4 * c * log( I0 / sqiqdq ) ) ) * 
+      //      mw_per_N * sigI0 ) 
+      //    / 
+      //    I0
+      //    ;
+
+      // us_qdebug( QString( "mwc %1 mwc_sd %1 mwc_sd_org %1 rg %1 sigRg %1 I0 %1 sigI0 %1" )
+      //         .arg( mwc ).arg( mwc_sd ).arg( mwc_sd_org ).arg( Rg ).arg( sigRg ).arg( I0 ).arg( sigI0 ) );
+   }
+
+   // us_qdebug( QString( "splined a %1 b %2 c %3 Vc %4 lVc %5 lN %6 N %7 mwc %8" )
    //         .arg( a )
    //         .arg( b )
    //         .arg( c )
@@ -2466,15 +2521,15 @@ bool US_Saxs_Util::cormap(
    // ust.start_timer( "prob_of_streak_f" );
    // float psf = prob_of_streak_f( 25000, 100 );
    // ust.end_timer( "prob_of_streak_f" );
-   // qDebug( ust.list_times() );
-   // qDebug( QString( "p %1 pf %2" ).arg( ps ).arg( psf ) );
+   // us_qdebug( ust.list_times() );
+   // us_qdebug( QString( "p %1 pf %2" ).arg( ps ).arg( psf ) );
    // errormsg = "";
 
    int m  = (int) I.size();
 
    if ( m < 2 ) {
          errormsg = 
-            QString( QObject::tr( "Error in cormap: a minimum of 2 intensity vectors are required and only %1 were given" ) )
+            QString( us_tr( "Error in cormap: a minimum of 2 intensity vectors are required and only %1 were given" ) )
             .arg( m );
          return false;
    }
@@ -2486,7 +2541,7 @@ bool US_Saxs_Util::cormap(
    for ( int i = 0; i < m; ++i ) {
       if ( (int) I[ i ].size() != qp ) {
          errormsg = 
-            QString( QObject::tr( "Error in cormap: the intensity vectors are of different size (%1)  than the q vector size (%2)" ) )
+            QString( us_tr( "Error in cormap: the intensity vectors are of different size (%1)  than the q vector size (%2)" ) )
             .arg( I[ i ].size() )
             .arg( q     .size() )
             ;
@@ -2527,11 +2582,11 @@ bool US_Saxs_Util::cormap(
       for ( int l = 0; l < qp; ++l ) {
          bool altsigma = false;
          if ( sigma[ k ][ k ] == 0e0 ) {
-            // qDebug( QString( QObject::tr( "Notice in cormap: found zero sigma at %1 %2" ) ).arg( k ).arg( k ) );
+            // us_qdebug( QString( us_tr( "Notice in cormap: found zero sigma at %1 %2" ) ).arg( k ).arg( k ) );
             altsigma = true;
          }
          if ( sigma[ l ][ l ] == 0e0 ) {
-            // qDebug( QString( QObject::tr( "Notice in cormap: found zero sigma at %1 %2" ) ).arg( l ).arg( l ) );
+            // us_qdebug( QString( us_tr( "Notice in cormap: found zero sigma at %1 %2" ) ).arg( l ).arg( l ) );
             altsigma = true;
          }
          if ( altsigma ) {
@@ -2557,7 +2612,7 @@ bool US_Saxs_Util::cormap(
       }
    }
 
-   // qDebug( QString( "min %1 max %2" ).arg( min ).arg( max ) );
+   // us_qdebug( QString( "min %1 max %2" ).arg( min ).arg( max ) );
 
    // for ( int k = 0; k < qp; ++k ) {
    //    QString summary;
@@ -2569,7 +2624,7 @@ bool US_Saxs_Util::cormap(
    //    cout << summary;
    // }
    
-   // qDebug( "trace:" );
+   // us_qdebug( "trace:" );
    
    // {
    //    QString summary;
@@ -2629,8 +2684,8 @@ bool US_Saxs_Util::cormap(
       S = longest_start_q + 1;
       C = contiguous_pts;
       P = (double) prob_of_streak_f( N, C );
-      // qDebug( QString( "N %1 Loc %2 Size %3" ).arg( qp ).arg( longest_start_q + 1 ).arg( contiguous_pts ) );
-      // qDebug( QString( "N %1 Loc %2 Size %3 PV %4" ).arg( qp ).arg( longest_start_q + 1 ).arg( contiguous_pts ).arg( prob_of_streak( qp, contiguous_pts ) ) );
+      // us_qdebug( QString( "N %1 Loc %2 Size %3" ).arg( qp ).arg( longest_start_q + 1 ).arg( contiguous_pts ) );
+      // us_qdebug( QString( "N %1 Loc %2 Size %3 PV %4" ).arg( qp ).arg( longest_start_q + 1 ).arg( contiguous_pts ).arg( prob_of_streak( qp, contiguous_pts ) ) );
    }
 
 

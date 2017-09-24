@@ -7,23 +7,25 @@
 #include <qstring.h>
 #include <qlayout.h>
 #include <qpushbutton.h>
-#include <q3frame.h>
+//#include <q3frame.h>
 #include <qcheckbox.h>
-#include <q3textedit.h>
-#include <q3progressbar.h>
+#include <qtextedit.h>
+#include <qprogressbar.h>
 #include <qmenubar.h>
 #include <qfileinfo.h>
 #include <qprinter.h>
 #include <qradiobutton.h>
-#include <q3table.h>
+#include <qtablewidget.h>
 #include <qwt_plot_zoomer.h>
 #include <qwt_wheel.h>
 //Added by qt3to4:
-#include <Q3BoxLayout>
-#include <Q3HBoxLayout>
+#include <QBoxLayout>
+#include <QHBoxLayout>
 #include <QMouseEvent>
 #include <QCloseEvent>
-#include "../3dplot/mesh2mainwindow.h"
+#if QT_VERSION < 0x040000
+# include "../3dplot/mesh2mainwindow.h"
+#endif
 
 #ifdef QT4
 #include "qwt_plot_marker.h"
@@ -125,7 +127,7 @@ struct hplc_stack_data
    set < QString >                     conc_files;
 };
 
-class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
+class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
 {
    Q_OBJECT
 
@@ -164,7 +166,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
                      bool              replot  = true );
 
    private:
+#if QT_VERSION < 0x040000
       Mesh2MainWindow *plot3d_window;
+#endif
       bool             plot3d_flag;
 
       csv           csv1;
@@ -175,7 +179,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
 
       QLabel        *lbl_title;
 
-      Q3ProgressBar  *progress;
+      QProgressBar  *progress;
 
       mQLabel       *lbl_files;
       QCheckBox     *cb_lock_dir;
@@ -215,7 +219,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       QPushButton   *pb_stack_rot_up;
       QPushButton   *pb_stack_rot_down;
 
-      Q3ListBox      *lb_files;
+      QListWidget      *lb_files;
       QLabel        *lbl_selected;
       // QPushButton   *pb_plot_files;
       QPushButton   *pb_conc_avg;
@@ -248,7 +252,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
 
       QLabel        *lbl_created_files;
       mQLineEdit    *le_created_dir;
-      Q3ListBox      *lb_created_files;
+      QListWidget      *lb_created_files;
       QLabel        *lbl_selected_created;
 
       // models
@@ -256,7 +260,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       set < QString >          models_not_saved;
 
       QLabel        *lbl_model_files;
-      Q3ListBox      *lb_model_files;
+      QListWidget      *lb_model_files;
       QLabel        *lbl_model_created;
 
       QPushButton   * pb_model_select_all;
@@ -283,7 +287,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
 
       mQLabel     * lbl_editor;
       QFont         ft;
-      Q3TextEdit     *editor;
+      QTextEdit     *editor;
       QMenuBar      *m;
 
       QPushButton   *pb_help;
@@ -312,7 +316,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       QCheckBox     *cb_plot_errors_pct;
       QCheckBox     *cb_plot_errors_group;
 
-      Q3BoxLayout    *l_plot_errors;
+      QBoxLayout    *l_plot_errors;
 
       QPushButton   *pb_timeshift;
       QPushButton   *pb_timescale;
@@ -435,7 +439,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       QLabel       * lbl_scale_low_high;
       QRadioButton * rb_scale_low;
       QRadioButton * rb_scale_high;
-      QButtonGroup * bg_scale_low_high;
+      QGroupBox * bg_scale_low_high;
       QCheckBox    * cb_scale_sd;
       QCheckBox    * cb_scale_save_intp;
       QCheckBox    * cb_scale_scroll;
@@ -460,9 +464,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       QCheckBox    * cb_testiq_from_gaussian;
 
       QLabel                *    lbl_testiq_gaussians;
-      QButtonGroup          *    bg_testiq_gaussians;
+      QGroupBox          *    bg_testiq_gaussians;
       QRadioButton          *    rb_testiq_from_i_t;
-      Q3HBoxLayout           *    hbl_testiq_gaussians;
+      QHBoxLayout           *    hbl_testiq_gaussians;
       vector < QRadioButton * >  rb_testiq_gaussians;
       
       bool           testiq_ggaussian_ok;
@@ -508,7 +512,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       QRadioButton * rb_guinier_resid_diff;
       QRadioButton * rb_guinier_resid_sd;
       QRadioButton * rb_guinier_resid_pct;
-      QButtonGroup * bg_guinier_resid_type;
+      QGroupBox * bg_guinier_resid_type;
 
       QPushButton  * pb_guinier_plot_rg;
       QPushButton  * pb_guinier_plot_mw;
@@ -562,6 +566,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
 #ifdef QT4
       QwtPlotGrid  * guinier_plot_mw_grid;
 #endif
+
+      QwtPlot      * guinier_plot_summary;
 
       int                                 guinier_scroll_pos;
       void                                guinier_scroll_highlight( int pos );
@@ -656,7 +662,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       QRadioButton * rb_rgc_shape_oblate;
       QRadioButton * rb_rgc_shape_prolate;
       QRadioButton * rb_rgc_shape_ellipsoid;
-      QButtonGroup * bg_rgc_shape;
+      QGroupBox * bg_rgc_shape;
       QLineEdit    * le_rgc_axis_b;
       QLineEdit    * le_rgc_axis_c;
       QLabel       * lbl_rgc_rg;
@@ -679,7 +685,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       QRadioButton * rb_pm_shape_ellipsoid;
       QRadioButton * rb_pm_shape_cylinder;
       QRadioButton * rb_pm_shape_torus;
-      QButtonGroup * bg_pm_shape;
+      QGroupBox * bg_pm_shape;
       QCheckBox    * cb_pm_sd;
       QCheckBox    * cb_pm_q_logbin;
       QLabel       * lbl_pm_q_range;
@@ -973,7 +979,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
 
       bool                         adjacent_ok( QString name );
 
-      void                         avg     ( QStringList files );
+      void                         avg     ( QStringList files, QString suffix = "" );
       void                         conc_avg( QStringList files );
       void                         bin( QStringList files );
       void                         smooth( QStringList files );
@@ -1183,7 +1189,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       bool                         detector_ri;
       double                       detector_ri_conv;
 
-      bool                         adjacent_select( Q3ListBox *lb, QString match_pattern );
+      bool                         adjacent_select( QListWidget *lb, QString match_pattern );
 
       enum                         gaussian_types
          {
@@ -1212,7 +1218,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
 
       unsigned int                 use_line_width;
 
-      QColorGroup                  cg_red;
+      QPalette                  cg_red;
 
       void                         errors_multi_file( QStringList files );
 
@@ -1571,7 +1577,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public Q3Frame
       void axis_y                      ( bool nochange = false, bool no_replot = false );
       void legend_set                  ();
 
-      void rename_created( Q3ListBoxItem *, const QPoint & );
+      void rename_created( QListWidgetItem *, const QPoint & );
 
       void set_plot_errors_rev();
       void set_plot_errors_sd();

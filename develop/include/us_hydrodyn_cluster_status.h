@@ -7,10 +7,10 @@
 #include <qstring.h>
 #include <qlayout.h>
 #include <qpushbutton.h>
-#include <q3frame.h>
-#include <q3listview.h>
-#include <q3socket.h>
-#include <q3cstring.h>
+//#include <q3frame.h>
+#include <qtreewidget.h>
+#include <qtcpsocket.h>
+//#include <q3cstring.h>
 #include <qiodevice.h>
 //Added by qt3to4:
 #include <QCloseEvent>
@@ -19,8 +19,8 @@
 #include "us_hydrodyn_pdbdefs.h"
 #include "us_hydrodyn_batch.h"
 
-#include <q3http.h>
-#include <q3ftp.h>
+#include <qhttp.h>
+#include <qftp.h>
 
 #ifdef WIN32
 # if !defined( QT4 )
@@ -52,17 +52,17 @@ class US_EXTERN US_Hydrodyn_Cluster_Status : public QDialog
 
       QLabel        *lbl_title;
 
-      Q3ListView     *lv_files;
+      QTreeWidget     *lv_files;
 
       QPushButton   *pb_refresh;
       QPushButton   *pb_remove;
       QPushButton   *pb_retrieve_selected;
       QPushButton   *pb_retrieve;
 
-      Q3ProgressBar  *progress;
+      QProgressBar  *progress;
 
       QFont         ft;
-      Q3TextEdit     *editor;
+      QTextEdit     *editor;
       QMenuBar      *m;
 
       QPushButton   *pb_stop;
@@ -94,9 +94,9 @@ class US_EXTERN US_Hydrodyn_Cluster_Status : public QDialog
 
       bool          comm_active;
       QString       comm_mode;
-      Q3Http         submit_http;
+      QHttp         submit_http;
 
-      Q3Ftp          ftp;
+      QFtp          ftp;
 
       QFile         *ftp_file;
       QString       ftp_url;
@@ -108,10 +108,10 @@ class US_EXTERN US_Hydrodyn_Cluster_Status : public QDialog
       QString       current_http;
       QString       current_http_response;
 
-      map < Q3ListViewItem *, QString > jobs;
+      map < QTreeWidgetItem *, QString > jobs;
       map < QString, QString >         job_hostname;
 
-      Q3ListViewItem *next_to_process;
+      QTreeWidgetItem *next_to_process;
       void          get_status();
       void          cancel_selected();
       void          complete_remove();
@@ -121,7 +121,7 @@ class US_EXTERN US_Hydrodyn_Cluster_Status : public QDialog
       bool          system_proc_active;
       bool          processing_active;
       bool          stopFlag;
-      Q3Process      *system_proc;
+      QProcess      *system_proc;
       bool          schedule_retrieve( QString file );
 
    private slots:
@@ -148,8 +148,8 @@ class US_EXTERN US_Hydrodyn_Cluster_Status : public QDialog
       void get_next_retrieve();
 
       void http_stateChanged ( int state );
-      void http_responseHeaderReceived ( const Q3HttpResponseHeader & resp );
-      void http_readyRead ( const Q3HttpResponseHeader & resp );
+      void http_responseHeaderReceived ( const QHttpResponseHeader & resp );
+      void http_readyRead ( const QHttpResponseHeader & resp );
       void http_dataSendProgress ( int done, int total );
       void http_dataReadProgress ( int done, int total );
       void http_requestStarted ( int id );
@@ -167,8 +167,8 @@ class US_EXTERN US_Hydrodyn_Cluster_Status : public QDialog
 
       void system_proc_readFromStdout();
       void system_proc_readFromStderr();
-      void system_proc_processExited();
-      void system_proc_launchFinished();
+      void system_proc_finished( int, QProcess::ExitStatus );
+      void system_proc_started();
 
    protected slots:
 

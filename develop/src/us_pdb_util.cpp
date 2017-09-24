@@ -33,7 +33,7 @@ QStringList US_Pdb_Util::sort_pdbs( const QStringList & filenames )
    {
       QString tmp = filenames[ i ].mid( head.length() );
       tmp = tmp.mid( 0, tmp.length() - tail.length() );
-      if ( rx_cap.search( tmp ) != -1 )
+      if ( rx_cap.indexIn( tmp ) != -1 )
       {
          tmp = rx_cap.cap( 2 );
       }
@@ -163,11 +163,15 @@ QString US_Pdb_Util::qstring_common_tail( const QString & s1, const QString & s2
 
 bool US_Pdb_Util::range_to_set( set < QString > & result, const QString & s )
 {
-   // qDebug( QString( "range_to_set '%1'" ).arg( s ) );
+   // us_qdebug( QString( "range_to_set '%1'" ).arg( s ) );
 
-   QStringList qsl = QStringList::split( QRegExp( "\\s*(\\s|,|;)\\s*" ), s );
+   QStringList qsl;
+   {
+      QRegExp rx = QRegExp( "\\s*(\\s|,|;)\\s*" );
+      qsl = (s ).split( rx , QString::SkipEmptyParts );
+   }
 
-   // qDebug( qsl.join("\n") + QString( "\n" ) );
+   // us_qdebug( qsl.join("\n") + QString( "\n" ) );
 
    QRegExp rx_1( "(.?):(\\d+)" );
    QRegExp rx_2( "(.?):(\\d+)-(\\d+)" );
@@ -176,7 +180,7 @@ bool US_Pdb_Util::range_to_set( set < QString > & result, const QString & s )
 
    for ( int i = 0; i < (int) qsl.size(); i++ )
    {
-      if ( rx_2.search( qsl[ i ] ) != -1 )
+      if ( rx_2.indexIn( qsl[ i ] ) != -1 )
       {
          QString chain  = rx_2.cap( 1 );
          int     startr = rx_2.cap( 2 ).toInt();
@@ -190,7 +194,7 @@ bool US_Pdb_Util::range_to_set( set < QString > & result, const QString & s )
             result.insert( QString( "%1~%2" ).arg( chain ).arg( j ) );
          }
       } else {
-         if ( rx_1.search( qsl[ i ] ) != -1 )
+         if ( rx_1.indexIn( qsl[ i ] ) != -1 )
          {
             QString chain  = rx_1.cap( 1 );
             int     r      = rx_1.cap( 2 ).toInt();

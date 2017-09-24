@@ -7,13 +7,13 @@
 #include <qmessagebox.h>
 #include <qdatastream.h>
 //Added by qt3to4:
-#include <Q3Frame>
+#include <QFrame>
 #include "us_util.h"
 //! An Interface for database adminstration.
 /*!
    For database delete operation perimission.
 */
-class US_EXTERN US_Admin : public Q3Frame
+class US_EXTERN US_Admin : public QFrame
 {
    Q_OBJECT
    

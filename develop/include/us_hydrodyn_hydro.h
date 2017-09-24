@@ -7,9 +7,9 @@
 #include <qstring.h>
 #include <qlayout.h>
 #include <qpushbutton.h>
-#include <q3buttongroup.h>
-#include <q3groupbox.h>
-#include <q3frame.h>
+#include <qradiobutton.h>
+#include <qgroupbox.h>
+//#include <q3frame.h>
 #include <qcheckbox.h>
 #include <qwt_counter.h>
 #include <qlineedit.h>
@@ -62,7 +62,7 @@ struct hydro_options
    float zeno_surface_thickness;
 };
 
-class US_EXTERN US_Hydrodyn_Hydro : public Q3Frame
+class US_EXTERN US_Hydrodyn_Hydro : public QFrame
 {
    Q_OBJECT
 
@@ -91,15 +91,15 @@ class US_EXTERN US_Hydrodyn_Hydro : public Q3Frame
       QLabel *lbl_solvent_viscosity;
       QLabel *lbl_solvent_density;
       
-      Q3ButtonGroup *bg_solvent_conditions;
-      Q3ButtonGroup *bg_reference_system;
-      Q3ButtonGroup *bg_boundary_cond;
-      Q3ButtonGroup *bg_volume_correction;
-      Q3ButtonGroup *bg_mass_correction;
-      Q3ButtonGroup *bg_overlap;
-      Q3ButtonGroup *bg_bead_inclusion;
+      QGroupBox *bg_solvent_conditions;
+      QGroupBox *bg_reference_system;
+      QGroupBox *bg_boundary_cond;
+      QGroupBox *bg_volume_correction;
+      QGroupBox *bg_mass_correction;
+      QGroupBox *bg_overlap;
+      QGroupBox *bg_bead_inclusion;
       
-      Q3GroupBox *gb_buried;
+      QGroupBox *bg_buried;
 
       QCheckBox *cb_solvent_defaults;
       QCheckBox *cb_diffusion_center;
@@ -117,6 +117,19 @@ class US_EXTERN US_Hydrodyn_Hydro : public Q3Frame
       QCheckBox *cb_rotational;
       QCheckBox *cb_viscosity;
       
+      QRadioButton *rb_diffusion_center;
+      QRadioButton *rb_cartesian_origin;
+      QRadioButton *rb_stick;
+      QRadioButton *rb_slip;
+      QRadioButton *rb_auto_mass;
+      QRadioButton *rb_manual_mass;
+      QRadioButton *rb_auto_volume;
+      QRadioButton *rb_manual_volume;
+      QRadioButton *rb_exclusion;
+      QRadioButton *rb_inclusion;
+      QRadioButton *rb_auto_overlap;
+      QRadioButton *rb_manual_overlap;
+
       QwtCounter *cnt_unit;
       
       QLineEdit *le_solvent_name;
@@ -146,11 +159,18 @@ class US_EXTERN US_Hydrodyn_Hydro : public Q3Frame
       void update_volume(const QString &str);
       void update_mass(const QString &str);
       void update_overlap(const QString &str);
+
+      void select_reference_system();
       void select_reference_system(int);
+      void select_boundary_cond();
       void select_boundary_cond(int);
+      void select_volume_correction();
       void select_volume_correction(int);
+      void select_mass_correction();
       void select_mass_correction(int);
+      void select_overlap();
       void select_overlap(int);
+      void select_bead_inclusion();
       void select_bead_inclusion(int);
       void set_solvent_defaults();
       void set_rotational();

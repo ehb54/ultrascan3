@@ -6,13 +6,13 @@
 #include <QResizeEvent>
 #include <QLabel>
 #include <QCloseEvent>
-#include <Q3TextStream>
+#include <QTextStream>
 #include <QDragEnterEvent>
-#include <Q3HBoxLayout>
-#include <Q3VBoxLayout>
-#include <Q3Frame>
+#include <QHBoxLayout>
+#include <QVBoxLayout>
+#include <QFrame>
 #include <QDropEvent>
-#include <Q3PopupMenu>
+ //#include <Q3PopupMenu>
 
 #ifndef WIN32
 #   include <unistd.h>
@@ -38,15 +38,15 @@ static std::basic_ostream<char>& operator<<(std::basic_ostream<char>& os, const 
 #define BW_LISTBOX
 
 #if !defined(BW_LISTBOX)
-  void Q3ListBoxText::paint( QPainter *painter )
+  void QListWidgetText::paint( QPainter *painter )
   {
     int itemHeight = height( listBox() );
     QFontMetrics fm = painter->fontMetrics();
     int yPos = ( ( itemHeight - fm.height() ) / 2 ) + fm.ascent();
     QRegExp rx( "^<(.*)~(.*)~(.*)>(.*)$" );
-    if ( rx.search(text()) != -1 ) 
+    if ( rx.indexIn(text()) != -1 ) 
     {
-       bool highlighted = ( painter->backgroundColor().name() != "#ffffff" );
+       bool highlighted = ( painter->backgroundColor().fileName() != "#ffffff" );
        painter->setPen(rx.cap(highlighted ? 2 : 1));
        painter->drawText( 3, yPos, rx.cap(3) + " " + rx.cap(4));
     } else {
@@ -61,18 +61,19 @@ US_Hydrodyn_Batch::US_Hydrodyn_Batch(
                                      void *us_hydrodyn, 
                                      QWidget *p, 
                                      const char *name
-                                     ) : Q3Frame(p, name)
+                                     ) : QFrame( p )
 {
    batch_job_running = false;
    save_batch_active = false;
    this->batch_widget = batch_widget;
    this->batch = batch;
    this->us_hydrodyn = us_hydrodyn;
+   this->lb_model = ((US_Hydrodyn *)us_hydrodyn)->lb_model;
    cb_hydrate = (QCheckBox *)0;
    *batch_widget = true;
    USglobal = new US_Config();
    setPalette( PALET_FRAME );
-   setCaption( "US-SOMO: " + tr( "Batch Mode / Cluster Operation" ) );
+   setWindowTitle( "US-SOMO: " + us_tr( "Batch Mode / Cluster Operation" ) );
    // should move to save/restore
    batch->mm_first = true;
    batch->mm_all = false;
@@ -120,31 +121,31 @@ void US_Hydrodyn_Batch::setupGUI()
    int minHeight1 = 20;
    int minWidth1 = 200;
 
-   QPalette qp_cg = QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal);
+   QPalette qp_cg = USglobal->global_colors.cg_normal;
 
-   QColorGroup qcg_cb_disabled = USglobal->global_colors.cg_normal;
+   QPalette qcg_cb_disabled = USglobal->global_colors.cg_normal;
 
-   // qcg_cb_disabled.setColor( QColorGroup::Background, Qt::yellow );
-   qcg_cb_disabled.setColor( QColorGroup::Foreground, Qt::darkRed );
-   // qcg_cb_disabled.setColor( QColorGroup::Base      , Qt::cyan );
-   qcg_cb_disabled.setColor( QColorGroup::Text      , Qt::darkRed );
-   // qcg_cb_disabled.setColor( QColorGroup::Button    , Qt::red );
-   // qcg_cb_disabled.setColor( QColorGroup::ButtonText, Qt::magenta );
+   // qcg_cb_disabled.setColor( QPalette::Background, Qt::yellow );
+   qcg_cb_disabled.setColor( QPalette::Foreground, Qt::darkRed );
+   // qcg_cb_disabled.setColor( QPalette::Base      , Qt::cyan );
+   qcg_cb_disabled.setColor( QPalette::Text      , Qt::darkRed );
+   // qcg_cb_disabled.setColor( QPalette::Button    , Qt::red );
+   // qcg_cb_disabled.setColor( QPalette::ButtonText, Qt::magenta );
 
-   QPalette qp_cb = QPalette(USglobal->global_colors.cg_normal, qcg_cb_disabled, USglobal->global_colors.cg_normal);
+   QPalette qp_cb = USglobal->global_colors.cg_normal;
 
-   lbl_selection = new QLabel(tr("Select files:"), this);
+   lbl_selection = new QLabel(us_tr("Select files:"), this);
    Q_CHECK_PTR(lbl_selection);
-   lbl_selection->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Raised);
+   lbl_selection->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_selection->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_selection->setMinimumHeight(minHeight1);
    lbl_selection->setPalette( PALET_FRAME );
    AUTFBACK( lbl_selection );
    lbl_selection->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 
-   lb_files = new Q3ListBox(this);
+   lb_files = new QListWidget(this);
    Q_CHECK_PTR(lb_files);
-   lb_files->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Raised);
+   lb_files->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lb_files->setMinimumHeight(minHeight1 * 3);
    lb_files->setMinimumWidth(minWidth1);
    lb_files->setPalette( PALET_EDIT );
@@ -170,50 +171,52 @@ void US_Hydrodyn_Batch::setupGUI()
          }
          if ( !dup )
          {
-            lb_files->insertItem(batch->file[i]);
+            lb_files->addItem(batch->file[i]);
             ((US_Hydrodyn *)us_hydrodyn)->add_to_directory_history( batch->file[ i ], false );
          } else {
-            load_errors += QString(tr("File skipped: %1 (already in list)\n")).arg(batch->file[i]);
+            load_errors += QString(us_tr("File skipped: %1 (already in list)\n")).arg(batch->file[i]);
          }
       } else {
-         load_errors += QString(tr("File skipped: %1 (not a valid file name)\n")).arg(batch->file[i]);
+         load_errors += QString(us_tr("File skipped: %1 (not a valid file name)\n")).arg(batch->file[i]);
       }
    }
 
-   lb_files->setCurrentItem(0);
-   lb_files->setSelected(0, false);
-   lb_files->setSelectionMode(Q3ListBox::Multi);
-   connect(lb_files, SIGNAL(selectionChanged()), SLOT(update_enables()));
+   if ( lb_files->count() ) {
+      lb_files->setCurrentItem( lb_files->item(0) );
+      lb_files->item(0)->setSelected( false);
+   }
+   lb_files->setSelectionMode(QAbstractItemView::MultiSelection);
+   connect(lb_files, SIGNAL(itemSelectionChanged()), SLOT(update_enables()));
 
-   pb_add_files = new QPushButton(tr("Add Files"), this);
+   pb_add_files = new QPushButton(us_tr("Add Files"), this);
    Q_CHECK_PTR(pb_add_files);
    pb_add_files->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_add_files->setMinimumHeight(minHeight1);
    pb_add_files->setPalette( PALET_PUSHB );
    connect(pb_add_files, SIGNAL(clicked()), SLOT(add_files()));
 
-   pb_select_all = new QPushButton(tr("Select All"), this);
+   pb_select_all = new QPushButton(us_tr("Select All"), this);
    Q_CHECK_PTR(pb_select_all);
    pb_select_all->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_select_all->setMinimumHeight(minHeight1);
    pb_select_all->setPalette( PALET_PUSHB );
    connect(pb_select_all, SIGNAL(clicked()), SLOT(select_all()));
 
-   pb_remove_files = new QPushButton(tr("Remove Selected"), this);
+   pb_remove_files = new QPushButton(us_tr("Remove Selected"), this);
    Q_CHECK_PTR(pb_remove_files);
    pb_remove_files->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_remove_files->setMinimumHeight(minHeight1);
    pb_remove_files->setPalette( PALET_PUSHB );
    connect(pb_remove_files, SIGNAL(clicked()), SLOT(remove_files()));
 
-   pb_load_somo = new QPushButton(tr("Load into SOMO"), this);
+   pb_load_somo = new QPushButton(us_tr("Load into SOMO"), this);
    Q_CHECK_PTR(pb_load_somo);
    pb_load_somo->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_load_somo->setMinimumHeight(minHeight1);
    pb_load_somo->setPalette( PALET_PUSHB );
    connect(pb_load_somo, SIGNAL(clicked()), SLOT(load_somo()));
 
-   pb_load_saxs = new QPushButton(tr("Load into SAS"), this);
+   pb_load_saxs = new QPushButton(us_tr("Load into SAS"), this);
    Q_CHECK_PTR(pb_load_saxs);
    pb_load_saxs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_load_saxs->setMinimumHeight(minHeight1);
@@ -225,7 +228,7 @@ void US_Hydrodyn_Batch::setupGUI()
 #else
    if ( U_EXPT )
    {
-      pb_make_movie = new QPushButton(tr("Make movie"), this);
+      pb_make_movie = new QPushButton(us_tr("Make movie"), this);
       Q_CHECK_PTR(pb_make_movie);
       pb_make_movie->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
       pb_make_movie->setMinimumHeight(minHeight1);
@@ -236,32 +239,33 @@ void US_Hydrodyn_Batch::setupGUI()
    }
 #endif
 
-   lbl_total_files = new QLabel(tr("Total Files: 0 "), this);
-   lbl_total_files->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Raised);
+   lbl_total_files = new QLabel(us_tr("Total Files: 0 "), this);
+   lbl_total_files->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_total_files->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_total_files->setMinimumHeight(minHeight1);
    lbl_total_files->setPalette( PALET_FRAME );
    AUTFBACK( lbl_total_files );
    lbl_total_files->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 
-   lbl_selected = new QLabel(tr("Selected: 0 "), this);
-   lbl_selected->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Raised);
+   lbl_selected = new QLabel(us_tr("Selected: 0 "), this);
+   lbl_selected->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_selected->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_selected->setMinimumHeight(minHeight1);
    lbl_selected->setPalette( PALET_FRAME );
    AUTFBACK( lbl_selected );
    lbl_selected->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 
-   lbl_screen = new QLabel(tr("Screen selected files:"), this);
+   lbl_screen = new QLabel(us_tr("Screen selected files:"), this);
    Q_CHECK_PTR(lbl_screen);
-   lbl_screen->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Raised);
+   lbl_screen->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_screen->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_screen->setMinimumHeight(minHeight1);
    lbl_screen->setPalette( PALET_FRAME );
    AUTFBACK( lbl_screen );
    lbl_screen->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 
-   bg_residues = new Q3ButtonGroup(3, Qt::Vertical, "If non-coded residues are found:", this);
+#if QT_VERSION < 0x040000   
+   bg_residues = new QGroupBox(3, Qt::Vertical, "If non-coded residues are found:", this);
    QFont qf = bg_residues->font();
    qf.setPointSize(qf.pointSize() - 1);
    bg_residues->setFont(qf);
@@ -272,7 +276,7 @@ void US_Hydrodyn_Batch::setupGUI()
    connect(bg_residues, SIGNAL(clicked(int)), this, SLOT(residue(int)));
 
    cb_residue_stop = new QCheckBox(bg_residues);
-   cb_residue_stop->setText(tr(" List them and stop operation"));
+   cb_residue_stop->setText(us_tr(" List them and stop operation"));
    cb_residue_stop->setEnabled(true);
    //   cb_residue_stop->setMinimumHeight(minHeight1);
    cb_residue_stop->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -280,7 +284,7 @@ void US_Hydrodyn_Batch::setupGUI()
    AUTFBACK( cb_residue_stop );
 
    cb_residue_skip = new QCheckBox(bg_residues);
-   cb_residue_skip->setText(tr(" List them, skip residue and proceed"));
+   cb_residue_skip->setText(us_tr(" List them, skip residue and proceed"));
    cb_residue_skip->setEnabled(true);
    //   cb_residue_skip->setMinimumHeight(minHeight1);
    cb_residue_skip->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -288,7 +292,7 @@ void US_Hydrodyn_Batch::setupGUI()
    AUTFBACK( cb_residue_skip );
 
    cb_residue_auto = new QCheckBox(bg_residues);
-   cb_residue_auto->setText(tr(" Use automatic bead builder (approximate method)"));
+   cb_residue_auto->setText(us_tr(" Use automatic bead builder (approximate method)"));
    cb_residue_auto->setEnabled(true);
    //   cb_residue_auto->setMinimumHeight(minHeight1);
    cb_residue_auto->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -296,8 +300,64 @@ void US_Hydrodyn_Batch::setupGUI()
    AUTFBACK( cb_residue_auto );
 
    bg_residues->setButton(batch->missing_residues);
+#else
+   bg_residues = new QGroupBox("If non-coded residues are found:", this);
+   QFont qf = bg_residues->font();
+   qf.setPointSize(qf.pointSize() - 1);
+   bg_residues->setFont(qf);
+   bg_residues->setFlat( true );
+   // bg_residues->setExclusive(true);
+   bg_residues->setAlignment(Qt::AlignHCenter);
+   // bg_residues->setInsideMargin(3);
+   // bg_residues->setInsideSpacing(0);
 
-   bg_atoms = new Q3ButtonGroup(3, Qt::Vertical, "If missing atoms within a residue are found:", this);
+   rb_residue_stop = new QRadioButton();
+   rb_residue_stop->setText(us_tr(" List them and stop operation"));
+   rb_residue_stop->setEnabled(true);
+   //   rb_residue_stop->setMinimumHeight(minHeight1);
+   rb_residue_stop->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   rb_residue_stop->setPalette( PALET_NORMAL );
+   AUTFBACK( rb_residue_stop );
+   connect( rb_residue_stop, SIGNAL( clicked() ), this, SLOT( residue() ) );
+
+   rb_residue_skip = new QRadioButton();
+   rb_residue_skip->setText(us_tr(" List them, skip residue and proceed"));
+   rb_residue_skip->setEnabled(true);
+   //   rb_residue_skip->setMinimumHeight(minHeight1);
+   rb_residue_skip->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   rb_residue_skip->setPalette( PALET_NORMAL );
+   AUTFBACK( rb_residue_skip );
+   connect( rb_residue_skip, SIGNAL( clicked() ), this, SLOT( residue() ) );
+
+   rb_residue_auto = new QRadioButton();
+   rb_residue_auto->setText(us_tr(" Use automatic bead builder (approximate method)"));
+   rb_residue_auto->setEnabled(true);
+   //   rb_residue_auto->setMinimumHeight(minHeight1);
+   rb_residue_auto->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   rb_residue_auto->setPalette( PALET_NORMAL );
+   AUTFBACK( rb_residue_auto );
+   connect( rb_residue_auto, SIGNAL( clicked() ), this, SLOT( residue() ) );
+
+   {
+      QVBoxLayout * vbox = new QVBoxLayout; vbox->setContentsMargins( 0, 0, 0, 0 ); vbox->setSpacing( 0 );
+      vbox->addWidget( rb_residue_stop );
+      vbox->addWidget( rb_residue_skip );
+      vbox->addWidget( rb_residue_auto );
+      bg_residues->setLayout( vbox );
+   }
+
+   // bg_residues->setButton(batch->missing_residues);
+   switch ( batch->missing_residues ) {
+   case 0 : rb_residue_stop->setChecked( true ); break;
+   case 1 : rb_residue_skip->setChecked( true ); break;
+   case 2 : rb_residue_auto->setChecked( true ); break;
+   default : qDebug() << "batch missing residues selection error"; break;
+   }
+
+#endif
+
+#if QT_VERSION < 0x040000   
+   bg_atoms = new QGroupBox(3, Qt::Vertical, "If missing atoms within a residue are found:", this);
    qf = bg_atoms->font();
    qf.setPointSize(qf.pointSize() - 1);
    bg_atoms->setFont(qf);
@@ -308,7 +368,7 @@ void US_Hydrodyn_Batch::setupGUI()
    connect(bg_atoms, SIGNAL(clicked(int)), this, SLOT(atom(int)));
 
    cb_atom_stop = new QCheckBox(bg_atoms);
-   cb_atom_stop->setText(tr(" List them and stop operation"));
+   cb_atom_stop->setText(us_tr(" List them and stop operation"));
    cb_atom_stop->setEnabled(true);
    //   cb_atom_stop->setMinimumHeight(minHeight1);
    cb_atom_stop->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -316,7 +376,7 @@ void US_Hydrodyn_Batch::setupGUI()
    AUTFBACK( cb_atom_stop );
 
    cb_atom_skip = new QCheckBox(bg_atoms);
-   cb_atom_skip->setText(tr(" List them, skip entire residue and proceed"));
+   cb_atom_skip->setText(us_tr(" List them, skip entire residue and proceed"));
    cb_atom_skip->setEnabled(true);
    //   cb_atom_skip->setMinimumHeight(minHeight1);
    cb_atom_skip->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -324,7 +384,7 @@ void US_Hydrodyn_Batch::setupGUI()
    AUTFBACK( cb_atom_skip );
 
    cb_atom_auto = new QCheckBox(bg_atoms);
-   cb_atom_auto->setText(tr(" Use approximate method to generate bead"));
+   cb_atom_auto->setText(us_tr(" Use approximate method to generate bead"));
    cb_atom_auto->setEnabled(true);
    //   cb_atom_auto->setMinimumHeight(minHeight1);
    cb_atom_auto->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -332,17 +392,71 @@ void US_Hydrodyn_Batch::setupGUI()
    AUTFBACK( cb_atom_auto );
 
    bg_atoms->setButton(batch->missing_atoms);
+#else
+   bg_atoms = new QGroupBox( "If missing atoms within a residue are found:" );
+   qf = bg_atoms->font();
+   qf.setPointSize(qf.pointSize() - 1);
+   bg_atoms->setFont(qf);
+   bg_atoms->setFlat( true );
+   // bg_atoms->setExclusive(true);
+   bg_atoms->setAlignment(Qt::AlignHCenter);
+   // bg_atoms->setInsideMargin(3);
+   // bg_atoms->setInsideSpacing(0);
 
-   pb_screen = new QPushButton(tr("Screen Selected"), this);
+   rb_atom_stop = new QRadioButton();
+   rb_atom_stop->setText(us_tr(" List them and stop operation"));
+   rb_atom_stop->setEnabled(true);
+   //   rb_atom_stop->setMinimumHeight(minHeight1);
+   rb_atom_stop->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   rb_atom_stop->setPalette( PALET_NORMAL );
+   AUTFBACK( rb_atom_stop );
+   connect( rb_atom_stop, SIGNAL( clicked() ), this, SLOT( atom() ) );
+
+   rb_atom_skip = new QRadioButton();
+   rb_atom_skip->setText(us_tr(" List them, skip entire residue and proceed"));
+   rb_atom_skip->setEnabled(true);
+   //   rb_atom_skip->setMinimumHeight(minHeight1);
+   rb_atom_skip->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   rb_atom_skip->setPalette( PALET_NORMAL );
+   AUTFBACK( rb_atom_skip );
+   connect( rb_atom_skip, SIGNAL( clicked() ), this, SLOT( atom() ) );
+
+   rb_atom_auto = new QRadioButton();
+   rb_atom_auto->setText(us_tr(" Use approximate method to generate bead"));
+   rb_atom_auto->setEnabled(true);
+   //   rb_atom_auto->setMinimumHeight(minHeight1);
+   rb_atom_auto->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   rb_atom_auto->setPalette( PALET_NORMAL );
+   AUTFBACK( rb_atom_auto );
+   connect( rb_atom_auto, SIGNAL( clicked() ), this, SLOT( atom() ) );
+
+   // bg_atoms->setButton(batch->missing_atoms);
+   switch ( batch->missing_atoms ) {
+   case 0 : rb_atom_stop->setChecked( true ); break;
+   case 1 : rb_atom_skip->setChecked( true ); break;
+   case 2 : rb_atom_auto->setChecked( true ); break;
+   default : qDebug() << "batch missing atoms selection error"; break;
+   }
+
+   {
+      QVBoxLayout * bl = new QVBoxLayout; bl->setContentsMargins( 0, 0, 0, 0 ); bl->setSpacing( 0 );
+      bl->addWidget( rb_atom_stop );
+      bl->addWidget( rb_atom_skip );
+      bl->addWidget( rb_atom_auto );
+      bg_atoms->setLayout( bl );
+   }
+#endif
+
+   pb_screen = new QPushButton(us_tr("Screen Selected"), this);
    Q_CHECK_PTR(pb_screen);
    pb_screen->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_screen->setMinimumHeight(minHeight1);
    pb_screen->setPalette( PALET_PUSHB );
    connect(pb_screen, SIGNAL(clicked()), SLOT(screen()));
 
-   lbl_process = new QLabel(tr("Process selected files:"), this);
+   lbl_process = new QLabel(us_tr("Process selected files:"), this);
    Q_CHECK_PTR(lbl_process);
-   lbl_process->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Raised);
+   lbl_process->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_process->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_process->setMinimumHeight(minHeight1);
    lbl_process->setPalette( PALET_FRAME );
@@ -350,7 +464,7 @@ void US_Hydrodyn_Batch::setupGUI()
    lbl_process->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 
    cb_mm_first = new QCheckBox(this);
-   cb_mm_first->setText(tr(" Process Only First Model in PDB's with Multiple Models "));
+   cb_mm_first->setText(us_tr(" Process Only First Model in PDB's with Multiple Models "));
    cb_mm_first->setChecked(batch->mm_first);
    cb_mm_first->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_mm_first->setPalette( PALET_NORMAL );
@@ -358,7 +472,7 @@ void US_Hydrodyn_Batch::setupGUI()
    connect(cb_mm_first, SIGNAL(clicked()), this, SLOT(set_mm_first()));
 
    cb_mm_all = new QCheckBox(this);
-   cb_mm_all->setText(tr(" Process All Models in PDB's with Multiple Models "));
+   cb_mm_all->setText(us_tr(" Process All Models in PDB's with Multiple Models "));
    cb_mm_all->setChecked(batch->mm_all);
    cb_mm_all->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_mm_all->setPalette( PALET_NORMAL );
@@ -366,7 +480,7 @@ void US_Hydrodyn_Batch::setupGUI()
    connect(cb_mm_all, SIGNAL(clicked()), this, SLOT(set_mm_all()));
 
    cb_dmd = new QCheckBox(this);
-   cb_dmd->setText(tr(" Run DMD "));
+   cb_dmd->setText(us_tr(" Run DMD "));
    cb_dmd->setChecked(batch->dmd);
    cb_dmd->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_dmd->setPalette( PALET_NORMAL );
@@ -374,7 +488,7 @@ void US_Hydrodyn_Batch::setupGUI()
    connect(cb_dmd, SIGNAL(clicked()), this, SLOT(set_dmd()));
 
    cb_somo = new QCheckBox(this);
-   cb_somo->setText(tr(" Build SoMo Bead Model "));
+   cb_somo->setText(us_tr(" Build SoMo Bead Model "));
    cb_somo->setChecked(batch->somo);
    cb_somo->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_somo->setPalette( PALET_NORMAL );
@@ -382,7 +496,7 @@ void US_Hydrodyn_Batch::setupGUI()
    connect(cb_somo, SIGNAL(clicked()), this, SLOT(set_somo()));
 
    cb_somo_o = new QCheckBox(this);
-   cb_somo_o->setText(tr(" Build SoMo Overlap Bead Model "));
+   cb_somo_o->setText(us_tr(" Build SoMo Overlap Bead Model "));
    cb_somo_o->setChecked(batch->somo_o);
    cb_somo_o->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_somo_o->setPalette( PALET_NORMAL );
@@ -390,7 +504,7 @@ void US_Hydrodyn_Batch::setupGUI()
    connect(cb_somo_o, SIGNAL(clicked()), this, SLOT(set_somo_o()));
 
    cb_grid = new QCheckBox(this);
-   cb_grid->setText(tr(" Build AtoB (Grid) Bead Model"));
+   cb_grid->setText(us_tr(" Build AtoB (Grid) Bead Model"));
    cb_grid->setChecked(batch->grid);
    cb_grid->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_grid->setPalette( PALET_NORMAL );
@@ -398,7 +512,7 @@ void US_Hydrodyn_Batch::setupGUI()
    connect(cb_grid, SIGNAL(clicked()), this, SLOT(set_grid()));
 
    cb_equi_grid = new QCheckBox(this);
-   cb_equi_grid->setText(tr(" Grid bead models for P(r)"));
+   cb_equi_grid->setText(us_tr(" Grid bead models for P(r)"));
    cb_equi_grid->setChecked(batch->equi_grid);
    cb_equi_grid->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_equi_grid->setPalette( PALET_NORMAL );
@@ -411,7 +525,7 @@ void US_Hydrodyn_Batch::setupGUI()
    }
 
    cb_iqq = new QCheckBox(this);
-   cb_iqq->setText(tr("Compute SAXS I(q) "));
+   cb_iqq->setText(us_tr("Compute SAXS I(q) "));
    cb_iqq->setChecked(batch->iqq);
    cb_iqq->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_iqq->setPalette( PALET_NORMAL );
@@ -419,7 +533,7 @@ void US_Hydrodyn_Batch::setupGUI()
    connect(cb_iqq, SIGNAL(clicked()), this, SLOT(set_iqq()));
 
    cb_saxs_search = new QCheckBox(this);
-   cb_saxs_search->setText(tr("I(q) search "));
+   cb_saxs_search->setText(us_tr("I(q) search "));
    cb_saxs_search->setChecked(batch->saxs_search);
    cb_saxs_search->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_saxs_search->setPalette( PALET_NORMAL );
@@ -427,7 +541,7 @@ void US_Hydrodyn_Batch::setupGUI()
    connect(cb_saxs_search, SIGNAL(clicked()), this, SLOT(set_saxs_search()));
 
    cb_prr = new QCheckBox(this);
-   cb_prr->setText(tr("Compute SAXS P(r) "));
+   cb_prr->setText(us_tr("Compute SAXS P(r) "));
    cb_prr->setChecked(batch->prr);
    cb_prr->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_prr->setPalette( PALET_NORMAL );
@@ -436,7 +550,7 @@ void US_Hydrodyn_Batch::setupGUI()
 
 #if defined(USE_H)
    cb_hydrate = new QCheckBox(this);
-   cb_hydrate->setText(tr("Hydrate "));
+   cb_hydrate->setText(us_tr("Hydrate "));
    cb_hydrate->setChecked(batch->hydrate);
    cb_hydrate->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_hydrate->setPalette( PALET_NORMAL );
@@ -445,14 +559,14 @@ void US_Hydrodyn_Batch::setupGUI()
 #endif
 
    cb_csv_saxs = new QCheckBox(this);
-   cb_csv_saxs->setText(tr(" Combined SAXS Results File:"));
+   cb_csv_saxs->setText(us_tr(" Combined SAXS Results File:"));
    cb_csv_saxs->setChecked(batch->csv_saxs);
    cb_csv_saxs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_csv_saxs->setPalette( PALET_NORMAL );
    AUTFBACK( cb_csv_saxs );
    connect(cb_csv_saxs, SIGNAL(clicked()), this, SLOT(set_csv_saxs()));
 
-   le_csv_saxs_name = new QLineEdit(this, "csv_saxs_name Line Edit");
+   le_csv_saxs_name = new QLineEdit( this );    le_csv_saxs_name->setObjectName( "csv_saxs_name Line Edit" );
    le_csv_saxs_name->setText(batch->csv_saxs_name);
    le_csv_saxs_name->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_csv_saxs_name->setMinimumWidth(150);
@@ -462,7 +576,7 @@ void US_Hydrodyn_Batch::setupGUI()
    connect(le_csv_saxs_name, SIGNAL(textChanged(const QString &)), SLOT(update_csv_saxs_name(const QString &)));
 
    cb_create_native_saxs = new QCheckBox(this);
-   cb_create_native_saxs->setText(tr(" Create Individual SAXS Results Files"));
+   cb_create_native_saxs->setText(us_tr(" Create Individual SAXS Results Files"));
    cb_create_native_saxs->setChecked(batch->create_native_saxs);
    cb_create_native_saxs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_create_native_saxs->setPalette( PALET_NORMAL );
@@ -470,7 +584,7 @@ void US_Hydrodyn_Batch::setupGUI()
    connect(cb_create_native_saxs, SIGNAL(clicked()), this, SLOT(set_create_native_saxs()));
 
    cb_compute_iq_avg = new QCheckBox(this);
-   cb_compute_iq_avg->setText(tr(" Compute I(q) average curves"));
+   cb_compute_iq_avg->setText(us_tr(" Compute I(q) average curves"));
    cb_compute_iq_avg->setChecked(batch->compute_iq_avg);
    cb_compute_iq_avg->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_compute_iq_avg->setPalette( PALET_NORMAL );
@@ -478,7 +592,7 @@ void US_Hydrodyn_Batch::setupGUI()
    connect(cb_compute_iq_avg, SIGNAL(clicked()), this, SLOT(set_compute_iq_avg()));
 
    cb_compute_iq_only_avg = new QCheckBox(this);
-   cb_compute_iq_only_avg->setText(tr(" Only save average"));
+   cb_compute_iq_only_avg->setText(us_tr(" Only save average"));
    cb_compute_iq_only_avg->setChecked( batch->compute_iq_only_avg );
    cb_compute_iq_only_avg->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_compute_iq_only_avg->setPalette( PALET_NORMAL );
@@ -486,7 +600,7 @@ void US_Hydrodyn_Batch::setupGUI()
    connect(cb_compute_iq_only_avg, SIGNAL(clicked()), this, SLOT(set_compute_iq_only_avg()));
 
    cb_compute_iq_std_dev = new QCheckBox(this);
-   cb_compute_iq_std_dev->setText(tr(" Compute I(q) std deviation curves"));
+   cb_compute_iq_std_dev->setText(us_tr(" Compute I(q) std deviation curves"));
    cb_compute_iq_std_dev->setChecked(batch->compute_iq_std_dev);
    cb_compute_iq_std_dev->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_compute_iq_std_dev->setPalette( PALET_NORMAL );
@@ -494,7 +608,7 @@ void US_Hydrodyn_Batch::setupGUI()
    connect(cb_compute_iq_std_dev, SIGNAL(clicked()), this, SLOT(set_compute_iq_std_dev()));
 
    cb_compute_prr_avg = new QCheckBox(this);
-   cb_compute_prr_avg->setText(tr(" Compute P(r) average curves"));
+   cb_compute_prr_avg->setText(us_tr(" Compute P(r) average curves"));
    cb_compute_prr_avg->setChecked(batch->compute_prr_avg);
    cb_compute_prr_avg->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_compute_prr_avg->setPalette( PALET_NORMAL );
@@ -502,7 +616,7 @@ void US_Hydrodyn_Batch::setupGUI()
    connect(cb_compute_prr_avg, SIGNAL(clicked()), this, SLOT(set_compute_prr_avg()));
 
    cb_compute_prr_std_dev = new QCheckBox(this);
-   cb_compute_prr_std_dev->setText(tr(" Compute P(r) std deviation curves"));
+   cb_compute_prr_std_dev->setText(us_tr(" Compute P(r) std deviation curves"));
    cb_compute_prr_std_dev->setChecked(batch->compute_prr_std_dev);
    cb_compute_prr_std_dev->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_compute_prr_std_dev->setPalette( PALET_NORMAL );
@@ -510,7 +624,7 @@ void US_Hydrodyn_Batch::setupGUI()
    connect(cb_compute_prr_std_dev, SIGNAL(clicked()), this, SLOT(set_compute_prr_std_dev()));
 
    cb_hydro = new QCheckBox(this);
-   cb_hydro->setText(tr(" Calculate RB Hydrodynamics SMI"));
+   cb_hydro->setText(us_tr(" Calculate RB Hydrodynamics SMI"));
    cb_hydro->setChecked(batch->hydro);
    cb_hydro->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_hydro->setPalette( PALET_NORMAL );
@@ -526,14 +640,14 @@ void US_Hydrodyn_Batch::setupGUI()
    connect(cb_zeno, SIGNAL(clicked()), this, SLOT(set_zeno()));
 
    cb_avg_hydro = new QCheckBox(this);
-   cb_avg_hydro->setText(tr(" Combined Hydro Results File:"));
+   cb_avg_hydro->setText(us_tr(" Combined Hydro Results File:"));
    cb_avg_hydro->setChecked(batch->avg_hydro);
    cb_avg_hydro->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_avg_hydro->setPalette( PALET_NORMAL );
    AUTFBACK( cb_avg_hydro );
    connect(cb_avg_hydro, SIGNAL(clicked()), this, SLOT(set_avg_hydro()));
 
-   le_avg_hydro_name = new QLineEdit(this, "avg_hydro_name Line Edit");
+   le_avg_hydro_name = new QLineEdit( this );    le_avg_hydro_name->setObjectName( "avg_hydro_name Line Edit" );
    le_avg_hydro_name->setText(batch->avg_hydro_name);
    le_avg_hydro_name->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_avg_hydro_name->setMinimumWidth(100);
@@ -542,7 +656,7 @@ void US_Hydrodyn_Batch::setupGUI()
    le_avg_hydro_name->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    connect(le_avg_hydro_name, SIGNAL(textChanged(const QString &)), SLOT(update_avg_hydro_name(const QString &)));
 
-   pb_select_save_params = new QPushButton(tr("Select Parameters to be Saved"), this);
+   pb_select_save_params = new QPushButton(us_tr("Select Parameters to be Saved"), this);
    Q_CHECK_PTR(pb_select_save_params);
    //   pb_select_save_params->setMinimumHeight(minHeight1);
    pb_select_save_params->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
@@ -551,41 +665,35 @@ void US_Hydrodyn_Batch::setupGUI()
    connect(pb_select_save_params, SIGNAL(clicked()), SLOT(select_save_params()));
 
    cb_saveParams = new QCheckBox(this);
-   cb_saveParams->setText(tr(" Save parameters to file "));
+   cb_saveParams->setText(us_tr(" Save parameters to file "));
    cb_saveParams->setChecked(((US_Hydrodyn *)us_hydrodyn)->saveParams);
    cb_saveParams->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_saveParams->setPalette( PALET_NORMAL );
    AUTFBACK( cb_saveParams );
    connect(cb_saveParams, SIGNAL(clicked()), this, SLOT(set_saveParams()));
 
-   pb_start = new QPushButton(tr("Start"), this);
+   pb_start = new QPushButton(us_tr("Start"), this);
    Q_CHECK_PTR(pb_start);
    pb_start->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_start->setMinimumHeight(minHeight1);
    pb_start->setPalette( PALET_PUSHB );
    connect(pb_start, SIGNAL(clicked()), SLOT(start()));
 
-   progress = new Q3ProgressBar(this, "Loading Progress");
+   progress = new QProgressBar( this );
    progress->setPalette( PALET_NORMAL );
    AUTFBACK( progress );
    progress->setMinimumWidth(70);
    progress->reset();
 
-   // ws_progress2 = new QWidgetStack( this, "progress2" );
-
    // lbl_progress2 = new QLabel( "", this);
 
-   progress2 = new Q3ProgressBar(this, "Loading Progress2");
+   progress2 = new QProgressBar( this );
    progress2->setPalette( PALET_NORMAL );
    AUTFBACK( progress2 );
    progress2->reset();
    progress2->hide();
 
-   // ws_progress2->addWidget( lbl_progress2, 0 );
-   // ws_progress2->addWidget( progress2, 1 );
-   // ws_progress2->raiseWidget( 0 );
-
-   pb_stop = new QPushButton(tr("Stop"), this);
+   pb_stop = new QPushButton(us_tr("Stop"), this);
    Q_CHECK_PTR(pb_stop);
    pb_stop->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_stop->setMinimumHeight(minHeight1);
@@ -593,74 +701,101 @@ void US_Hydrodyn_Batch::setupGUI()
    pb_stop->setEnabled(false);
    connect(pb_stop, SIGNAL(clicked()), SLOT(stop()));
 
-   pb_cancel = new QPushButton(tr("Close"), this);
+   pb_cancel = new QPushButton(us_tr("Close"), this);
    Q_CHECK_PTR(pb_cancel);
    pb_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_cancel->setMinimumHeight(minHeight1);
    pb_cancel->setPalette( PALET_PUSHB );
    connect(pb_cancel, SIGNAL(clicked()), SLOT(cancel()));
 
-   pb_cluster = new QPushButton(tr("Cluster"), this);
+   pb_cluster = new QPushButton(us_tr("Cluster"), this);
    pb_cluster->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_cluster->setMinimumHeight(minHeight1);
    pb_cluster->setPalette( PALET_PUSHB );
    connect(pb_cluster, SIGNAL(clicked()), SLOT(cluster()));
 
-   pb_open_saxs_options = new QPushButton(tr("SAXS/SANS Options"), this);
+   pb_open_saxs_options = new QPushButton(us_tr("SAXS/SANS Options"), this);
    pb_open_saxs_options->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_open_saxs_options->setMinimumHeight(minHeight1);
    pb_open_saxs_options->setPalette( PALET_PUSHB );
    connect(pb_open_saxs_options, SIGNAL(clicked()), SLOT(open_saxs_options()));
 
-   pb_help = new QPushButton(tr("Help"), this);
+   pb_help = new QPushButton(us_tr("Help"), this);
    Q_CHECK_PTR(pb_help);
    pb_help->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_help->setMinimumHeight(minHeight1);
    pb_help->setPalette( PALET_PUSHB );
    connect(pb_help, SIGNAL(clicked()), SLOT(help()));
 
-   editor = new Q3TextEdit(this);
+   editor = new QTextEdit(this);
    editor->setPalette( PALET_NORMAL );
    AUTFBACK( editor );
    editor->setReadOnly(true);
    editor->setMinimumWidth(350);
 
-#if defined(QT4) && defined(Q_WS_MAC)
+#if QT_VERSION < 0x040000
+# if defined(QT4) && defined(Q_WS_MAC)
    {
-      Q3PopupMenu * file = new Q3PopupMenu;
-      file->insertItem( tr("&Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
-      file->insertItem( tr("&Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
-# ifndef NO_EDITOR_PRINT
-      file->insertItem( tr("&Print"), this, SLOT(print()),   Qt::ALT+Qt::Key_P );
-# endif
-      file->insertItem( tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
+ //      Q3PopupMenu * file = new Q3PopupMenu;
+      file->insertItem( us_tr("&Font"),  this, SLOT(update_font( )),    Qt::ALT+Qt::Key_F );
+      file->insertItem( us_tr("&Save"),  this, SLOT(save( )),    Qt::ALT+Qt::Key_S );
+#  ifndef NO_EDITOR_PRINT
+      file->insertItem( us_tr("&Print"), this, SLOT(print( )),   Qt::ALT+Qt::Key_P );
+#  endif
+      file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display( )),   Qt::ALT+Qt::Key_X );
 
       QMenuBar * menu = new QMenuBar( this );
       AUTFBACK( menu );
 
-      menu->insertItem(tr("&Messages"), file );
+      menu->insertItem(us_tr("&Messages"), file );
    }
-#else
-   m = new QMenuBar( editor, "menu" );
+# else
+   m = new QMenuBar(  editor );    m->setObjectName( "menu" );
    m->setMinimumHeight(minHeight1 - 5);
    m->setPalette( PALET_NORMAL );
    AUTFBACK( m );
-   Q3PopupMenu * file = new Q3PopupMenu(editor);
-   m->insertItem( tr("&File"), file );
-   file->insertItem( tr("Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
-   file->insertItem( tr("Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
-# ifndef NO_EDITOR_PRINT
-   file->insertItem( tr("Print"), this, SLOT(print()),   Qt::ALT+Qt::Key_P );
+ //   Q3PopupMenu * file = new Q3PopupMenu(editor);
+   m->insertItem( us_tr("&File"), file );
+   file->insertItem( us_tr("Font"),  this, SLOT(update_font( )),    Qt::ALT+Qt::Key_F );
+   file->insertItem( us_tr("Save"),  this, SLOT(save( )),    Qt::ALT+Qt::Key_S );
+#  ifndef NO_EDITOR_PRINT
+   file->insertItem( us_tr("Print"), this, SLOT(print( )),   Qt::ALT+Qt::Key_P );
+#  endif
+   file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display( )),   Qt::ALT+Qt::Key_X );
 # endif
-   file->insertItem( tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
+#else
+# if defined( Q_WS_MAC )
+   m = new QMenuBar(  this );    m->setObjectName( "menu" );
+# else
+   m = new QMenuBar(  editor );    m->setObjectName( "menu" );
+# endif
+   m->setMinimumHeight(minHeight1 - 5);
+   m->setPalette( PALET_NORMAL );
+   AUTFBACK( m );
+
+   {
+      QMenu * new_menu = m->addMenu( us_tr( "&File" ) );
+
+      QAction *qa1 = new_menu->addAction( us_tr( "Font" ) );
+      qa1->setShortcut( Qt::ALT+Qt::Key_F );
+      connect( qa1, SIGNAL(triggered()), this, SLOT( update_font() ) );
+
+      QAction *qa2 = new_menu->addAction( us_tr( "Save" ) );
+      qa2->setShortcut( Qt::ALT+Qt::Key_S );
+      connect( qa2, SIGNAL(triggered()), this, SLOT( save() ) );
+
+      QAction *qa3 = new_menu->addAction( us_tr( "Clear Display" ) );
+      qa3->setShortcut( Qt::ALT+Qt::Key_X );
+      connect( qa3, SIGNAL(triggered()), this, SLOT( clear_display() ) );
+   }
 #endif
 
-   editor->setWordWrap (((US_Hydrodyn *)us_hydrodyn)->advanced_config.scroll_editor ? Q3TextEdit::NoWrap : Q3TextEdit::WidgetWidth);
-   editor->setMargin(5);
+   editor->setWordWrapMode (((US_Hydrodyn *)us_hydrodyn)->advanced_config.scroll_editor ? QTextOption::NoWrap : QTextOption::WordWrap);
+//    editor->setMargin(5);
 
    // 1st section // selection info
 
-   Q3HBoxLayout *hbl_selection_ops = new Q3HBoxLayout;
+   QHBoxLayout * hbl_selection_ops = new QHBoxLayout; hbl_selection_ops->setContentsMargins( 0, 0, 0, 0 ); hbl_selection_ops->setSpacing( 0 );
    hbl_selection_ops->addWidget(pb_add_files);
    hbl_selection_ops->addWidget(pb_select_all);
    hbl_selection_ops->addWidget(pb_remove_files);
@@ -671,11 +806,11 @@ void US_Hydrodyn_Batch::setupGUI()
       hbl_selection_ops->addWidget(pb_make_movie);
    }
 
-   Q3HBoxLayout *hbl_counts = new Q3HBoxLayout;
+   QHBoxLayout * hbl_counts = new QHBoxLayout; hbl_counts->setContentsMargins( 0, 0, 0, 0 ); hbl_counts->setSpacing( 0 );
    hbl_counts->addWidget(lbl_total_files);
    hbl_counts->addWidget(lbl_selected);
 
-   Q3VBoxLayout *vbl_selection = new Q3VBoxLayout;
+   QVBoxLayout * vbl_selection = new QVBoxLayout; vbl_selection->setContentsMargins( 0, 0, 0, 0 ); vbl_selection->setSpacing( 0 );
    vbl_selection->addWidget(lb_files);
    vbl_selection->addLayout(hbl_selection_ops);
    vbl_selection->addSpacing(3);
@@ -684,21 +819,21 @@ void US_Hydrodyn_Batch::setupGUI()
 
    // 2nd section - screening
 
-   //   QHBoxLayout *hbl_screen = new QHBoxLayout;
+   //   QHBoxLayout * hbl_screen = new QHBoxLayout; hbl_screen->setContentsMargins( 0, 0, 0, 0 ); hbl_screen->setSpacing( 0 );
    //   hbl_screen->addWidget(bg_residues);
    //   hbl_screen->addWidget(bg_atoms);
    
    // 3rd section - process control
-   Q3HBoxLayout *hbl_hydro = new Q3HBoxLayout;
+   QHBoxLayout * hbl_hydro = new QHBoxLayout; hbl_hydro->setContentsMargins( 0, 0, 0, 0 ); hbl_hydro->setSpacing( 0 );
    hbl_hydro->addWidget(cb_avg_hydro);
    hbl_hydro->addWidget(le_avg_hydro_name);
 
-   Q3HBoxLayout *hbl_somo_grid = new Q3HBoxLayout;
+   QHBoxLayout * hbl_somo_grid = new QHBoxLayout; hbl_somo_grid->setContentsMargins( 0, 0, 0, 0 ); hbl_somo_grid->setSpacing( 0 );
    hbl_somo_grid->addWidget(cb_somo);
    hbl_somo_grid->addWidget(cb_grid);
    hbl_somo_grid->addWidget(cb_somo_o);
 
-   Q3HBoxLayout *hbl_iqq_prr = new Q3HBoxLayout;
+   QHBoxLayout * hbl_iqq_prr = new QHBoxLayout; hbl_iqq_prr->setContentsMargins( 0, 0, 0, 0 ); hbl_iqq_prr->setSpacing( 0 );
    hbl_iqq_prr->addWidget(cb_iqq);
    hbl_iqq_prr->addWidget(cb_saxs_search);
    hbl_iqq_prr->addWidget(cb_prr);
@@ -707,42 +842,42 @@ void US_Hydrodyn_Batch::setupGUI()
    hbl_iqq_prr->addWidget(cb_hydrate);
 #endif
 
-   Q3HBoxLayout *hbl_csv_saxs = new Q3HBoxLayout;
+   QHBoxLayout * hbl_csv_saxs = new QHBoxLayout; hbl_csv_saxs->setContentsMargins( 0, 0, 0, 0 ); hbl_csv_saxs->setSpacing( 0 );
    hbl_csv_saxs->addWidget(cb_csv_saxs);
    hbl_csv_saxs->addWidget(le_csv_saxs_name);
    hbl_csv_saxs->addWidget(cb_create_native_saxs);
 
-   Q3HBoxLayout *hbl_iq_avg_std_dev = new Q3HBoxLayout;
+   QHBoxLayout * hbl_iq_avg_std_dev = new QHBoxLayout; hbl_iq_avg_std_dev->setContentsMargins( 0, 0, 0, 0 ); hbl_iq_avg_std_dev->setSpacing( 0 );
    hbl_iq_avg_std_dev->addWidget(cb_compute_iq_avg);
    hbl_iq_avg_std_dev->addWidget(cb_compute_iq_only_avg);
    hbl_iq_avg_std_dev->addWidget(cb_compute_iq_std_dev);
 
-   Q3HBoxLayout *hbl_prr_avg_std_dev = new Q3HBoxLayout;
+   QHBoxLayout * hbl_prr_avg_std_dev = new QHBoxLayout; hbl_prr_avg_std_dev->setContentsMargins( 0, 0, 0, 0 ); hbl_prr_avg_std_dev->setSpacing( 0 );
    hbl_prr_avg_std_dev->addWidget(cb_compute_prr_avg);
    hbl_prr_avg_std_dev->addWidget(cb_compute_prr_std_dev);
 
-   Q3HBoxLayout *hbl_save = new Q3HBoxLayout;
+   QHBoxLayout * hbl_save = new QHBoxLayout; hbl_save->setContentsMargins( 0, 0, 0, 0 ); hbl_save->setSpacing( 0 );
    hbl_save->addWidget(pb_select_save_params);
    hbl_save->addWidget(cb_saveParams);
 
-   Q3HBoxLayout *hbl_process = new Q3HBoxLayout;
+   QHBoxLayout * hbl_process = new QHBoxLayout; hbl_process->setContentsMargins( 0, 0, 0, 0 ); hbl_process->setSpacing( 0 );
    hbl_process->addWidget(pb_start);
    hbl_process->addWidget(progress);
    hbl_process->addWidget(progress2);
    hbl_process->addWidget(pb_stop);
    
    // 4th section - help & cancel
-   Q3HBoxLayout *hbl_help_cancel = new Q3HBoxLayout;
+   QHBoxLayout * hbl_help_cancel = new QHBoxLayout; hbl_help_cancel->setContentsMargins( 0, 0, 0, 0 ); hbl_help_cancel->setSpacing( 0 );
    hbl_help_cancel->addWidget(pb_help);
    hbl_help_cancel->addWidget(pb_cluster);
    hbl_help_cancel->addWidget(pb_open_saxs_options);
    hbl_help_cancel->addWidget(pb_cancel);
 
-   Q3HBoxLayout *hbl_hydro_zeno = new Q3HBoxLayout;
+   QHBoxLayout * hbl_hydro_zeno = new QHBoxLayout; hbl_hydro_zeno->setContentsMargins( 0, 0, 0, 0 ); hbl_hydro_zeno->setSpacing( 0 );
    hbl_hydro_zeno->addWidget( cb_hydro );
    hbl_hydro_zeno->addWidget( cb_zeno );
 
-   Q3VBoxLayout *leftside = new Q3VBoxLayout();
+   QVBoxLayout * leftside = new QVBoxLayout(); leftside->setContentsMargins( 0, 0, 0, 0 ); leftside->setSpacing( 0 );
    leftside->setMargin(5);
    leftside->addWidget(lbl_selection);
    leftside->addLayout(vbl_selection);
@@ -767,7 +902,7 @@ void US_Hydrodyn_Batch::setupGUI()
    leftside->addSpacing(5);
    leftside->addLayout(hbl_help_cancel);
 
-   Q3HBoxLayout *background = new Q3HBoxLayout(this);
+   QHBoxLayout * background = new QHBoxLayout(this); background->setContentsMargins( 0, 0, 0, 0 ); background->setSpacing( 0 );
    background->addLayout(leftside);
    background->addWidget(editor);
 
@@ -803,10 +938,10 @@ void US_Hydrodyn_Batch::setupGUI()
    clear_display();
    if ( load_errors != "" ) 
    {
-      QColor save_color = editor->color();
-      editor->setColor("dark red");
+      QColor save_color = editor->textColor();
+      editor->setTextColor("dark red");
       editor->append(load_errors);
-      editor->setColor(save_color);
+      editor->setTextColor(save_color);
    }
 }
 
@@ -832,10 +967,10 @@ void US_Hydrodyn_Batch::closeEvent(QCloseEvent *e)
 
 void US_Hydrodyn_Batch::add_file( QString filename )
 {
-   QColor save_color = editor->color();
+   QColor save_color = editor->textColor();
    disable_updates = true;
    bool dup = false;
-   for ( int i = 0; i < lb_files->numRows(); i++ )
+   for ( int i = 0; i < lb_files->count(); i++ )
    {
       if ( filename == get_file_name(i) ) 
       {
@@ -846,22 +981,22 @@ void US_Hydrodyn_Batch::add_file( QString filename )
    if ( !dup )
    {
       batch->file.push_back(filename);
-      lb_files->insertItem(filename);
-      editor->setColor("dark blue");
-      editor->append(QString(tr("File loaded: %1")).arg(filename));
+      lb_files->addItem(filename);
+      editor->setTextColor("dark blue");
+      editor->append(QString(us_tr("File loaded: %1")).arg(filename));
    }
-   editor->setColor(save_color);
+   editor->setTextColor(save_color);
    disable_updates = false;
    update_enables();
 }
 
 void US_Hydrodyn_Batch::add_files( vector < QString > filenames )
 {
-   QColor save_color = editor->color();
+   QColor save_color = editor->textColor();
    disable_updates = true;
 
    map < QString, bool > current_files;
-   for ( int i = 0; i < lb_files->numRows(); i++ )
+   for ( int i = 0; i < lb_files->count(); i++ )
    {
       current_files[get_file_name(i)] = true;
    }
@@ -880,15 +1015,15 @@ void US_Hydrodyn_Batch::add_files( vector < QString > filenames )
          current_files[filenames[i]] = true;
          batch->file.push_back(filenames[i]);
          ((US_Hydrodyn *)us_hydrodyn)->add_to_directory_history( filenames[ i ] );
-         lb_files->insertItem(filenames[i]);
-         editor->setColor("dark blue");
-         editor->append(QString(tr("File loaded: %1")).arg(filenames[i]));
+         lb_files->addItem(filenames[i]);
+         editor->setTextColor("dark blue");
+         editor->append(QString(us_tr("File loaded: %1")).arg(filenames[i]));
       } else {
-         //         editor->setColor("dark red");
-         //         editor->append(QString(tr("File skipped: %1 (already in list)")).arg(filenames[i]));
+         //         editor->setTextColor("dark red");
+         //         editor->append(QString(us_tr("File skipped: %1 (already in list)")).arg(filenames[i]));
       }
    }
-   editor->setColor(save_color);
+   editor->setTextColor(save_color);
    disable_updates = false;
    update_enables();
 }
@@ -904,11 +1039,11 @@ void US_Hydrodyn_Batch::add_files()
    QStringList filenames = QFileDialog::getOpenFileNames( this , "Please select a PDB file or files..." , use_dir , "Structures (*.pdb *.PDB *.bead_model *.BEAD_MODEL *.beams *.BEAD_MODEL)" );
 
    map < QString, bool > current_files;
-   for ( int i = 0; i < lb_files->numRows(); i++ )
+   for ( int i = 0; i < lb_files->count(); i++ )
    {
       current_files[get_file_name(i)] = true;
    }
-   QColor save_color = editor->color();
+   QColor save_color = editor->textColor();
    QStringList::Iterator it = filenames.begin();
    if ( it != filenames.end() )
    {
@@ -926,7 +1061,7 @@ void US_Hydrodyn_Batch::add_files()
          
       bool dup = false;
       dup = current_files[QString(*it)];
-      // for ( int i = 0; i < lb_files->numRows(); i++ )
+      // for ( int i = 0; i < lb_files->count(); i++ )
       //      {
       //         if ( QString(*it) == get_file_name(i) ) 
       //         {
@@ -938,16 +1073,16 @@ void US_Hydrodyn_Batch::add_files()
       {
          current_files[*it] = true;
          batch->file.push_back(*it);
-         lb_files->insertItem(*it);
-         editor->setColor("dark blue");
-         editor->append(QString(tr("File loaded: %1")).arg(*it));
+         lb_files->addItem(*it);
+         editor->setTextColor("dark blue");
+         editor->append(QString(us_tr("File loaded: %1")).arg(*it));
       } else {
-         editor->setColor("dark red");
-         editor->append(QString(tr("File skipped: %1 (already in list)")).arg(*it));
+         editor->setTextColor("dark red");
+         editor->append(QString(us_tr("File skipped: %1 (already in list)")).arg(*it));
       }
       ++it;
    }
-   editor->setColor(save_color);
+   editor->setTextColor(save_color);
    check_for_missing_files(true);
    disable_updates = false;
    update_enables();
@@ -956,18 +1091,18 @@ void US_Hydrodyn_Batch::add_files()
 void US_Hydrodyn_Batch::select_all()
 {
    bool any_not_selected = false;
-   for ( int i = 0; i < lb_files->numRows(); i++ )
+   for ( int i = 0; i < lb_files->count(); i++ )
    {
-      if ( !lb_files->isSelected(i) )
+      if ( !lb_files->item(i)->isSelected() )
       {
          any_not_selected = true;
       }
    }
 
    disable_updates = true;
-   for ( int i = 0; i < lb_files->numRows(); i++ )
+   for ( int i = 0; i < lb_files->count(); i++ )
    {
-      lb_files->setSelected(i,any_not_selected);
+      lb_files->item(i)->setSelected(any_not_selected);
    }
    disable_updates = false;
    update_enables();
@@ -975,7 +1110,7 @@ void US_Hydrodyn_Batch::select_all()
 
 void US_Hydrodyn_Batch::remove_files()
 {
-   if ( lbl_selected->text() == QString("Selected: %1").arg(lb_files->numRows()) ) 
+   if ( lbl_selected->text() == QString("Selected: %1").arg(lb_files->count( )) ) 
    {
       status.clear();
       batch->file.clear();
@@ -984,19 +1119,19 @@ void US_Hydrodyn_Batch::remove_files()
    }
    disable_updates = true;
    batch->file.clear();
-   for ( int i = 0; i < lb_files->numRows(); i++ )
+   for ( int i = 0; i < lb_files->count(); i++ )
    {
-      if ( !lb_files->isSelected(i) )
+      if ( !lb_files->item(i)->isSelected() )
       {
          batch->file.push_back(get_file_name(i));
       }
    }
-   for ( int i = 0; i < lb_files->numRows(); i++ )
+   for ( int i = 0; i < lb_files->count(); i++ )
    {
-      if ( lb_files->isSelected(i) )
+      if ( lb_files->item(i)->isSelected() )
       {
          status[get_file_name(i)] = 0;
-         lb_files->removeItem(i);
+         delete lb_files->takeItem(i);
          i--;
       }
    }
@@ -1008,9 +1143,9 @@ void US_Hydrodyn_Batch::load_somo()
 {
    disable_updates = true;
    set_issue_info( false );
-   for ( int i = 0; i < lb_files->numRows(); i++ )
+   for ( int i = 0; i < lb_files->count(); i++ )
    {
-      if ( lb_files->isSelected(i) )
+      if ( lb_files->item(i)->isSelected() )
       {
          if ( lb_files->item(i)->text().contains(QRegExp("^File missing")) )
          {
@@ -1019,7 +1154,7 @@ void US_Hydrodyn_Batch::load_somo()
          }
          bool result;
          QString file = get_file_name(i);
-         QColor save_color = editor->color();
+         QColor save_color = editor->textColor();
          if ( file.contains(QRegExp(".(pdb|PDB)$")) &&
               !((US_Hydrodyn *)us_hydrodyn)->is_dammin_dammif(file) )
          {
@@ -1029,13 +1164,13 @@ void US_Hydrodyn_Batch::load_somo()
                 ((US_Hydrodyn *)us_hydrodyn)->pdb_parse.missing_atoms != batch->missing_atoms )
             {
                switch ( QMessageBox::question(this, 
-                                              caption() + tr( ": Notice" ),
-                                              QString(tr("Please note:\n\n"
+                                              windowTitle() + us_tr( ": Notice" ),
+                                              QString(us_tr("Please note:\n\n"
                                                          "You are loading a PDB file and the current Batch Operation\n"
                                                          "PDB parsing options don't match SOMO's current settings\n"
                                                          "What would you like to do?\n")),
-                                              tr("Use &Batch current mode settings"), 
-                                              tr("Keep &SOMO's setting"),
+                                              us_tr("Use &Batch current mode settings"), 
+                                              us_tr("Keep &SOMO's setting"),
                                               QString::null,
                                               0, // Stop == button 0
                                               0 // Escape == button 0
@@ -1054,13 +1189,13 @@ void US_Hydrodyn_Batch::load_somo()
          }
          if ( result ) 
          {
-            editor->setColor("dark blue");
-            editor->append(QString(tr("Screening: %1 ok.").arg(file)));
+            editor->setTextColor("dark blue");
+            editor->append(QString(us_tr("Screening: %1 ok.").arg(file)));
          } else {
-            editor->setColor("red");
-            editor->append(QString(tr("Screening: %1 FAILED.").arg(file)));
+            editor->setTextColor("red");
+            editor->append(QString(us_tr("Screening: %1 FAILED.").arg(file)));
          }
-         editor->setColor(save_color);
+         editor->setTextColor(save_color);
          ((US_Hydrodyn *)us_hydrodyn)->raise();
          break;
       }
@@ -1073,9 +1208,9 @@ void US_Hydrodyn_Batch::load_saxs()
 {
    disable_updates = true;
    set_issue_info( false );
-   for ( int i = 0; i < lb_files->numRows(); i++ )
+   for ( int i = 0; i < lb_files->count(); i++ )
    {
-      if ( lb_files->isSelected(i) )
+      if ( lb_files->item(i)->isSelected() )
       {
          if ( lb_files->item(i)->text().contains(QRegExp("^File missing")) )
          {
@@ -1084,7 +1219,7 @@ void US_Hydrodyn_Batch::load_saxs()
          }
          bool result;
          QString file = get_file_name(i);
-         QColor save_color = editor->color();
+         QColor save_color = editor->textColor();
          if ( file.contains(QRegExp(".(pdb|PDB)$")) &&
               !((US_Hydrodyn *)us_hydrodyn)->is_dammin_dammif(file) )
          {
@@ -1094,13 +1229,13 @@ void US_Hydrodyn_Batch::load_saxs()
          }
          if ( result ) 
          {
-            editor->setColor("dark blue");
-            editor->append(QString(tr("Screening: %1 ok.").arg(file)));
+            editor->setTextColor("dark blue");
+            editor->append(QString(us_tr("Screening: %1 ok.").arg(file)));
          } else {
-            editor->setColor("red");
-            editor->append(QString(tr("Screening: %1 FAILED.").arg(file)));
+            editor->setTextColor("red");
+            editor->append(QString(us_tr("Screening: %1 FAILED.").arg(file)));
          }
-         editor->setColor(save_color);
+         editor->setTextColor(save_color);
 
          if ( file.contains(QRegExp(".(pdb|PDB)$")) &&
               !((US_Hydrodyn *)us_hydrodyn)->is_dammin_dammif(file) )
@@ -1128,9 +1263,9 @@ void US_Hydrodyn_Batch::update_enables()
    bool any_pdb_selected         = false;
    bool any_bead_model_selected  = false;
 
-   for ( int i = 0; i < lb_files->numRows(); i++ )
+   for ( int i = 0; i < lb_files->count(); i++ )
    {
-      if ( lb_files->isSelected(i) )
+      if ( lb_files->item(i)->isSelected() )
       {
          count_selected++;
          if ( get_file_name(i).contains(QRegExp("(pdb|PDB)$")) )
@@ -1153,7 +1288,7 @@ void US_Hydrodyn_Batch::update_enables()
    }
    // the globals
 
-   pb_select_all->setEnabled(lb_files->numRows());
+   pb_select_all->setEnabled(lb_files->count());
    pb_remove_files->setEnabled(count_selected);
    pb_screen->setEnabled(count_selected);
    pb_load_somo->setEnabled(count_selected == 1);
@@ -1433,9 +1568,35 @@ void US_Hydrodyn_Batch::update_enables()
    set_counts();
 }
 
+void US_Hydrodyn_Batch::residue()
+{
+   if ( rb_residue_stop->isChecked() ) {
+      return residue( 0 );
+   }
+   if ( rb_residue_skip->isChecked() ) {
+      return residue( 1 );
+   }
+   if ( rb_residue_auto->isChecked() ) {
+      return residue( 2 );
+   }
+}
+
 void US_Hydrodyn_Batch::residue(int val)
 {
    batch->missing_residues = val;
+}
+
+void US_Hydrodyn_Batch::atom()
+{
+   if ( rb_atom_stop->isChecked() ) {
+      return atom( 0 );
+   }
+   if ( rb_atom_skip->isChecked() ) {
+      return atom( 1 );
+   }
+   if ( rb_atom_auto->isChecked() ) {
+      return atom( 2 );
+   }
 }
 
 void US_Hydrodyn_Batch::atom(int val)
@@ -1536,35 +1697,35 @@ void US_Hydrodyn_Batch::screen()
 {
    disable_updates = true;
    disable_after_start();
-   QColor save_color = editor->color();
-   editor->append(tr("\nScreen files:\n"));
+   QColor save_color = editor->textColor();
+   editor->append(us_tr("\nScreen files:\n"));
    check_for_missing_files(true);
    bool result;
    progress->reset();
-   progress->setTotalSteps(lb_files->numRows());
+   progress->setMaximum(lb_files->count());
 
    set_issue_info( false );
 
-   for ( int i = 0; i < lb_files->numRows(); i++ )
+   for ( int i = 0; i < lb_files->count(); i++ )
    {
-      progress->setProgress( i );
+      progress->setValue( i );
       qApp->processEvents();
-      if ( lb_files->isSelected(i) )
+      if ( lb_files->item(i)->isSelected() )
       {
          QString file = get_file_name(i);
-         // editor->append(QString(tr("Screening: %1").arg(file)));
+         // editor->append(QString(us_tr("Screening: %1").arg(file)));
          if ( stopFlag )
          {
-            editor->setColor("dark red");
+            editor->setTextColor("dark red");
             editor->append("Stopped by user");
             enable_after_stop();
-            editor->setColor(save_color);
+            editor->setTextColor(save_color);
             disable_updates = false;
             return;
          }
          status[file] = 2; // screening now
-         lb_files->changeItem(QString("%1%2").arg(status_color[status[file]]).arg(file), i);
-         lb_files->setSelected(i, false);
+         lb_files->item( i)->setText(QString("%1%2").arg(status_color[status[file]]).arg(file));
+         lb_files->item(i)->setSelected( false);
          qApp->processEvents();
          if ( file.contains(QRegExp(".(pdb|PDB)$")) ) 
          {
@@ -1575,19 +1736,19 @@ void US_Hydrodyn_Batch::screen()
          if ( result ) 
          {
             status[file] = 3; // screen ok
-            editor->setColor("dark blue");
-            editor->append(QString(tr("Screening: %1 ok.").arg(file)));
+            editor->setTextColor("dark blue");
+            editor->append(QString(us_tr("Screening: %1 ok.").arg(file)));
          } else {
             status[file] = 4; // screen failed
-            editor->setColor("red");
-            editor->append(QString(tr("Screening: %1 FAILED.").arg(file)));
+            editor->setTextColor("red");
+            editor->append(QString(us_tr("Screening: %1 FAILED.").arg(file)));
          }
-         lb_files->changeItem(QString("%1%2").arg(status_color[status[file]]).arg(file), i);
-         lb_files->setSelected(i, result);
-         editor->setColor(save_color);
+         lb_files->item( i)->setText(QString("%1%2").arg(status_color[status[file]]).arg(file));
+         lb_files->item(i)->setSelected( result);
+         editor->setTextColor(save_color);
       }
    }
-   progress->setProgress(1,1);
+   progress->setValue( 1 ); progress->setMaximum( 1 );
    disable_updates = false;
    enable_after_stop();
 }
@@ -1703,13 +1864,13 @@ void US_Hydrodyn_Batch::set_saxs_search()
          {
             ((US_Hydrodyn *) us_hydrodyn)->
                saxs_search_window->
-               editor_msg("blue", tr("Set search parameters for batch mode and then\n"
+               editor_msg("blue", us_tr("Set search parameters for batch mode and then\n"
                                      "close this window or return to the batch window when done\n"));
          } else {
-            editor_msg("red", tr("Could not activate SAXS search window!\n"));
+            editor_msg("red", us_tr("Could not activate SAXS search window!\n"));
          }
       } else {
-         editor_msg("red", tr("Could not activate SAXS window!\n"));
+         editor_msg("red", us_tr("Could not activate SAXS window!\n"));
       }
    }
    update_enables();
@@ -1872,13 +2033,13 @@ void US_Hydrodyn_Batch::start( bool quiet )
    if ( !((US_Hydrodyn *)us_hydrodyn)->misc.compute_vbar )
    {
       switch ( QMessageBox::warning(this, 
-                                    caption() + tr( ": Warning" ),
-                                    QString(tr("Please note:\n\nThe vbar is currently manually set to %1.\n"
+                                    windowTitle() + us_tr( ": Warning" ),
+                                    QString(us_tr("Please note:\n\nThe vbar is currently manually set to %1.\n"
                                                "What would you like to do?\n"))
                                     .arg(((US_Hydrodyn *)us_hydrodyn)->misc.vbar),
-                                    tr("&Stop"), 
-                                    tr("&Change the vbar setting now"),
-                                    tr("C&ontinue"),
+                                    us_tr("&Stop"), 
+                                    us_tr("&Change the vbar setting now"),
+                                    us_tr("C&ontinue"),
                                     0, // Stop == button 0
                                     0 // Escape == button 0
                                     ) )
@@ -1900,14 +2061,14 @@ void US_Hydrodyn_Batch::start( bool quiet )
    if ( !quiet && !((US_Hydrodyn *)us_hydrodyn)->overwrite )
    {
       switch ( QMessageBox::warning(this, 
-                                    caption() + tr( ": Warning" ),
-                                    QString(tr("Please note:\n\n"
+                                    windowTitle() + us_tr( ": Warning" ),
+                                    QString(us_tr("Please note:\n\n"
                                                "Overwriting of existing files currently off.\n"
                                                "This could cause Batch mode to block during processing.\n"
                                                "What would you like to do?\n")),
-                                    tr("&Stop"), 
-                                    tr("&Turn on overwrite now"),
-                                    tr("C&ontinue anyway"),
+                                    us_tr("&Stop"), 
+                                    us_tr("&Turn on overwrite now"),
+                                    us_tr("C&ontinue anyway"),
                                     0, // Stop == button 0
                                     0 // Escape == button 0
                                     ) )
@@ -1927,14 +2088,14 @@ void US_Hydrodyn_Batch::start( bool quiet )
 
    disable_after_start();
    disable_updates = true;
-   editor->append(tr("\nProcess files:\n"));
+   editor->append(us_tr("\nProcess files:\n"));
    check_for_missing_files(true);
    bool result;
 
    progress->reset();
-   progress->setTotalSteps(lb_files->numRows() * 2);
+   progress->setMaximum(lb_files->count() * 2);
 
-   QColor save_color = editor->color();
+   QColor save_color = editor->textColor();
    if ( cb_avg_hydro->isChecked() )
    {
       save_batch_active = true;
@@ -1966,23 +2127,23 @@ void US_Hydrodyn_Batch::start( bool quiet )
 
    set_issue_info();
 
-   for ( int i = 0; i < lb_files->numRows(); i++ )
+   for ( int i = 0; i < lb_files->count(); i++ )
    {
-      progress->setProgress( i * 2 );
+      progress->setValue( i * 2 );
       set_counts();
       qApp->processEvents();
-      if ( lb_files->isSelected(i) )
+      if ( lb_files->item(i)->isSelected() )
       {
          job_timer.init_timer ( QString( "%1 process" ).arg( get_file_name( i ) ) );
          job_timer.start_timer( QString( "%1 process" ).arg( get_file_name( i ) ) );
          QString file = get_file_name(i);
-         // editor->append(QString(tr("Screening: %1\r").arg(file)));
+         // editor->append(QString(us_tr("Screening: %1\r").arg(file)));
          if ( stopFlag )
          {
-            editor->setColor("dark red");
+            editor->setTextColor("dark red");
             editor->append("Stopped by user");
             enable_after_stop();
-            editor->setColor(save_color);
+            editor->setTextColor(save_color);
             disable_updates = false;
             save_batch_active = false;
             ((US_Hydrodyn *)us_hydrodyn)->save_params.data_vector.clear();
@@ -1994,8 +2155,8 @@ void US_Hydrodyn_Batch::start( bool quiet )
             return;
          }
          status[file] = 5; // processing now
-         lb_files->changeItem(QString("%1%2").arg(status_color[status[file]]).arg(file), i);
-         lb_files->setSelected(i, false);
+         lb_files->item( i)->setText(QString("%1%2").arg(status_color[status[file]]).arg(file));
+         lb_files->item(i)->setSelected( false);
          qApp->processEvents();
          job_timer.init_timer ( QString( "%1 screen" ).arg( get_file_name( i ) ) );
          job_timer.start_timer( QString( "%1 screen" ).arg( get_file_name( i ) ) );
@@ -2010,21 +2171,21 @@ void US_Hydrodyn_Batch::start( bool quiet )
          {
             if ( result )
             {
-               editor->setColor("dark blue");
-               editor->append(QString(tr("Screening: %1 ok.").arg(file)));
+               editor->setTextColor("dark blue");
+               editor->append(QString(us_tr("Screening: %1 ok.").arg(file)));
             } else {
-               editor->setColor("dark red");
-               editor->append(QString(tr("Screening: %1 not ok, but proceeding anyway.").arg(file)));
-               editor->setColor("dark blue");
+               editor->setTextColor("dark red");
+               editor->append(QString(us_tr("Screening: %1 not ok, but proceeding anyway.").arg(file)));
+               editor->setTextColor("dark blue");
                result = 1;
             }
                
             if ( stopFlag )
             {
-               editor->setColor("dark red");
+               editor->setTextColor("dark red");
                editor->append("Stopped by user");
                enable_after_stop();
-               editor->setColor(save_color);
+               editor->setTextColor(save_color);
                disable_updates = false;
                save_batch_active = false;
                ((US_Hydrodyn *)us_hydrodyn)->save_params.data_vector.clear();
@@ -2043,7 +2204,7 @@ void US_Hydrodyn_Batch::start( bool quiet )
                save_us_hydrodyn_settings();
                if ( batch->mm_all ) 
                {
-                  ((US_Hydrodyn *)us_hydrodyn)->lb_model->selectAll(true);
+                  lb_model->selectAll();
                }
                if ( batch->somo )
                {
@@ -2070,10 +2231,10 @@ void US_Hydrodyn_Batch::start( bool quiet )
             } 
             if ( stopFlag )
             {
-               editor->setColor("dark red");
+               editor->setTextColor("dark red");
                editor->append("Stopped by user");
                enable_after_stop();
-               editor->setColor(save_color);
+               editor->setTextColor(save_color);
                disable_updates = false;
                save_batch_active = false;
                ((US_Hydrodyn *)us_hydrodyn)->save_params.data_vector.clear();
@@ -2088,12 +2249,11 @@ void US_Hydrodyn_Batch::start( bool quiet )
             {
                save_us_hydrodyn_settings();
                if ( batch->mm_all && 
-                    ((US_Hydrodyn *)us_hydrodyn)->lb_model->numRows() > 1 )
+                    lb_model->count() > 1 )
                {
                   // loop through them:
-                  unsigned int lb_model_rows = (unsigned int)((US_Hydrodyn *)us_hydrodyn)->lb_model->numRows();
+                  unsigned int lb_model_rows = (unsigned int)lb_model->count();
                   progress2->reset();
-                  // ws_progress2->raiseWidget( 1 );
                   progress2->show();
 #if defined(USE_H)
                   // save everything if hydrate on
@@ -2109,29 +2269,29 @@ void US_Hydrodyn_Batch::start( bool quiet )
                         ii < lb_model_rows && !stopFlag;
                         ii++ ) 
                   {
-                     progress2->setProgress( ii, lb_model_rows );
+                     progress2->setValue( ii ); progress2->setMaximum( lb_model_rows );
 #if defined(USE_H)
                      if ( batch->hydrate )
                      {
                         ((US_Hydrodyn *)us_hydrodyn)->restore_state();
                      }
 #endif
-                     editor_msg( "dark gray",  QString( tr( "Processing I(q): %1 from %2" ) )
-                                 .arg( ((US_Hydrodyn *)us_hydrodyn)->lb_model->text( ii ) )
+                     editor_msg( "dark gray",  QString( us_tr( "Processing I(q): %1 from %2" ) )
+                                 .arg( lb_model->item( ii )->text() )
                                  .arg( QFileInfo( get_file_name( i ) ).fileName() ));
                      qApp->processEvents();
                      // select only one
-                     ((US_Hydrodyn *)us_hydrodyn)->lb_model->setSelected(ii, true);
+                     lb_model->item(ii)->setSelected( true);
                      for ( unsigned int j = 0;
-                           j < (unsigned int)((US_Hydrodyn *)us_hydrodyn)->lb_model->numRows(); 
+                           j < (unsigned int)lb_model->count(); 
                            j++ ) 
                      {
                         if ( ii != j )
                         {
-                           ((US_Hydrodyn *)us_hydrodyn)->lb_model->setSelected(j, false);
+                           lb_model->item(j)->setSelected( false);
                         }
                      }
-                     ((US_Hydrodyn *)us_hydrodyn)->lb_model->ensureCurrentVisible();
+                     lb_model->scrollToItem( lb_model->currentItem() );
 #if defined(USE_H)
                      if ( batch->hydrate )
                      {
@@ -2181,7 +2341,7 @@ void US_Hydrodyn_Batch::start( bool quiet )
                         if ( batch->hydrate && 
                              pdb_mode &&
                              batch->mm_all &&
-                             (unsigned int)((US_Hydrodyn *)us_hydrodyn)->lb_model->numRows() > 1 )
+                             (unsigned int)lb_model->count() > 1 )
                         {
                            QDir qd;
                            cout << "remove: " << ((US_Hydrodyn *)us_hydrodyn)->last_hydrated_pdb_name << endl;
@@ -2217,7 +2377,7 @@ void US_Hydrodyn_Batch::start( bool quiet )
                               } else {
 #endif                              
                                  csv_source_name_iqq.push_back( file + " " + 
-                                                                ((US_Hydrodyn *)us_hydrodyn)->lb_model->text( ii ) );
+                                                                lb_model->item( ii )->text( ) );
 #if defined(USE_H)
                               }
 #endif
@@ -2249,9 +2409,9 @@ void US_Hydrodyn_Batch::start( bool quiet )
                      QFile f( fname );
                      if ( !f.open( QIODevice::WriteOnly ) )
                      {
-                        editor_msg("red", QString( tr("can not open file %1 for writing" ) ).arg( fname ));
+                        editor_msg("red", QString( us_tr("can not open file %1 for writing" ) ).arg( fname ));
                      } else {
-                        Q3TextStream ts( &f );
+                        QTextStream ts( &f );
                         ts << ((US_Hydrodyn *)us_hydrodyn)->last_hydrated_pdb_header;
                         ts << hydrated_pdb_nmr_text;
                         ts << "END\n";
@@ -2261,7 +2421,6 @@ void US_Hydrodyn_Batch::start( bool quiet )
                      ((US_Hydrodyn *)us_hydrodyn)->clear_state();
                   }
 #endif
-                  // ws_progress2->raiseWidget( 0 );
                   progress2->hide();
                } else {
 #if defined(USE_H)
@@ -2308,7 +2467,7 @@ void US_Hydrodyn_Batch::start( bool quiet )
                      if ( batch->hydrate && 
                           pdb_mode &&
                           batch->mm_all &&
-                          (unsigned int)((US_Hydrodyn *)us_hydrodyn)->lb_model->numRows() > 1 )
+                          (unsigned int)lb_model->count() > 1 )
                      {
                         QDir qd;
                         cout << "remove: " << ((US_Hydrodyn *)us_hydrodyn)->last_hydrated_pdb_name << endl;
@@ -2340,11 +2499,13 @@ void US_Hydrodyn_Batch::start( bool quiet )
                            if ( batch->hydrate )
                            {
                               csv_source_name_iqq.push_back( file + " hydrated " + 
-                                                             ((US_Hydrodyn *)us_hydrodyn)->lb_model->text(0) );
+                                                             lb_model->item(0)->text( )
+                                                             );
                            } else {
 #endif
                               csv_source_name_iqq.push_back( file + " " + 
-                                                             ((US_Hydrodyn *)us_hydrodyn)->lb_model->text(0) );
+                                                             lb_model->item(0)->text( )
+                                                             );
 #if defined(USE_H)
                            }
 #endif
@@ -2375,10 +2536,10 @@ void US_Hydrodyn_Batch::start( bool quiet )
             } 
             if ( stopFlag )
             {
-               editor->setColor("dark red");
+               editor->setTextColor("dark red");
                editor->append("Stopped by user");
                enable_after_stop();
-               editor->setColor(save_color);
+               editor->setTextColor(save_color);
                disable_updates = false;
                save_batch_active = false;
                ((US_Hydrodyn *)us_hydrodyn)->save_params.data_vector.clear();
@@ -2393,13 +2554,12 @@ void US_Hydrodyn_Batch::start( bool quiet )
             {
                save_us_hydrodyn_settings();
                if ( batch->mm_all && 
-                    ((US_Hydrodyn *)us_hydrodyn)->lb_model->numRows() > 1 )
+                    lb_model->count() > 1 )
                {
                   // loop through them:
-                  unsigned int lb_model_rows = (unsigned int)((US_Hydrodyn *)us_hydrodyn)->lb_model->numRows();
+                  unsigned int lb_model_rows = (unsigned int)lb_model->count();
                   progress2->reset();
                   progress2->show();
-                  // ws_progress2->raiseWidget( 1 );
 #if defined(USE_H)
                   // save everything if hydrate on
                   QString hydrated_pdb_nmr_text;
@@ -2413,30 +2573,30 @@ void US_Hydrodyn_Batch::start( bool quiet )
                         ii <  lb_model_rows && !stopFlag;
                         ii++ ) 
                   {
-                     progress2->setProgress( ii, lb_model_rows );
+                     progress2->setValue( ii ); progress2->setMaximum( lb_model_rows );
 #if defined(USE_H)
                      if ( batch->hydrate )
                      {
                         ((US_Hydrodyn *)us_hydrodyn)->restore_state();
                      }
 #endif
-                     editor_msg( "dark gray",  QString( tr( "Processing P(r): %1 from %2" ) )
-                                 .arg( ((US_Hydrodyn *)us_hydrodyn)->lb_model->text( ii ) )
+                     editor_msg( "dark gray",  QString( us_tr( "Processing P(r): %1 from %2" ) )
+                                 .arg( lb_model->item( ii )->text() )
                                  .arg( QFileInfo( get_file_name( i ) ).fileName() ));
                      ;
                      qApp->processEvents();
                      // select only one
-                     ((US_Hydrodyn *)us_hydrodyn)->lb_model->setSelected(ii, true);
+                     lb_model->item(ii)->setSelected( true);
                      for ( unsigned int j = 0;
-                           j < (unsigned int)((US_Hydrodyn *)us_hydrodyn)->lb_model->numRows(); 
+                           j < (unsigned int)lb_model->count(); 
                            j++ ) 
                      {
                         if ( ii != j )
                         {
-                           ((US_Hydrodyn *)us_hydrodyn)->lb_model->setSelected(j, false);
+                           lb_model->item(j)->setSelected( false);
                         }
                      }
-                     ((US_Hydrodyn *)us_hydrodyn)->lb_model->ensureCurrentVisible();
+                     lb_model->scrollToItem( lb_model->currentItem() );
 #if defined(USE_H)
                      if ( batch->hydrate )
                      {
@@ -2477,7 +2637,7 @@ void US_Hydrodyn_Batch::start( bool quiet )
                            } else {
 #endif                              
                               csv_source_name_prr.push_back( file + " " + 
-                                                             ((US_Hydrodyn *)us_hydrodyn)->lb_model->text( ii ) );
+                                                             lb_model->item( ii )->text( ) );
 #if defined(USE_H)
                            }
 #endif
@@ -2508,9 +2668,9 @@ void US_Hydrodyn_Batch::start( bool quiet )
                      QFile f( fname );
                      if ( !f.open( QIODevice::WriteOnly ) )
                      {
-                        editor_msg("red", QString( tr("can not open file %1 for writing" ) ).arg( fname ));
+                        editor_msg("red", QString( us_tr("can not open file %1 for writing" ) ).arg( fname ));
                      } else {
-                        Q3TextStream ts( &f );
+                        QTextStream ts( &f );
                         ts << ((US_Hydrodyn *)us_hydrodyn)->last_hydrated_pdb_header;
                         ts << hydrated_pdb_nmr_text;
                         ts << "END\n";
@@ -2521,7 +2681,6 @@ void US_Hydrodyn_Batch::start( bool quiet )
                   }
 #endif
                   progress2->hide();
-                  // ws_progress2->raiseWidget( 0 );
                } else {
 #if defined(USE_H)
                   if ( batch->hydrate )
@@ -2562,11 +2721,13 @@ void US_Hydrodyn_Batch::start( bool quiet )
                         if ( batch->hydrate )
                         {
                            csv_source_name_prr.push_back( file + " hydrated " + 
-                                                          ((US_Hydrodyn *)us_hydrodyn)->lb_model->text(0) );
+                                                          lb_model->item(0)->text( )
+                                                          );
                         } else {
 #endif
                            csv_source_name_prr.push_back( file + " " + 
-                                                          ((US_Hydrodyn *)us_hydrodyn)->lb_model->text(0) );
+                                                          lb_model->item(0)->text( )
+                                                          );
 #if defined(USE_H)
                         }
 #endif
@@ -2594,13 +2755,13 @@ void US_Hydrodyn_Batch::start( bool quiet )
                }   
                restore_us_hydrodyn_settings();
             }
-            progress->setProgress( 1 + i * 2 );
+            progress->setValue( 1 + i * 2 );
             if ( stopFlag )
             {
-               editor->setColor("dark red");
+               editor->setTextColor("dark red");
                editor->append("Stopped by user");
                enable_after_stop();
-               editor->setColor(save_color);
+               editor->setTextColor(save_color);
                disable_updates = false;
                save_batch_active = false;
                ((US_Hydrodyn *)us_hydrodyn)->save_params.data_vector.clear();
@@ -2619,7 +2780,7 @@ void US_Hydrodyn_Batch::start( bool quiet )
                job_timer.start_timer ( QString( "%1 hydrodynamics" ).arg( get_file_name( i ) ) );
                if ( batch->mm_all ) 
                {
-                  ((US_Hydrodyn *)us_hydrodyn)->lb_model->selectAll(true);
+                  lb_model->selectAll();
                }
                if ( batch->hydro ) {
                   result = ((US_Hydrodyn *)us_hydrodyn)->calc_hydro() ? false : true;
@@ -2634,26 +2795,26 @@ void US_Hydrodyn_Batch::start( bool quiet )
             if ( result ) 
             {
                status[file] = 6; // processing ok
-               editor->append(QString(tr("Processing: %1 ok.").arg(file)));
+               editor->append(QString(us_tr("Processing: %1 ok.").arg(file)));
             } else {
                status[file] = 7; // processing failed
-               editor->setColor("red");
-               editor->append(QString(tr("Processing: %1 FAILED.").arg(file)));
+               editor->setTextColor("red");
+               editor->append(QString(us_tr("Processing: %1 FAILED.").arg(file)));
             }
          } else {
             status[file] = 7; // processing failed
-            editor->setColor("red");
-            editor->append(QString(tr("Screening: %1 FAILED.").arg(file)));
+            editor->setTextColor("red");
+            editor->append(QString(us_tr("Screening: %1 FAILED.").arg(file)));
          }
-         lb_files->changeItem(QString("%1%2").arg(status_color[status[file]]).arg(file), i);
-         lb_files->setSelected(i, result);
-         editor->setColor(save_color);
+         lb_files->item( i)->setText(QString("%1%2").arg(status_color[status[file]]).arg(file));
+         lb_files->item(i)->setSelected( result);
+         editor->setTextColor(save_color);
          job_timer.end_timer( QString( "%1 process" ).arg( get_file_name( i ) ) );
       }
       this->isVisible() ? this->raise() : this->show();
       qApp->processEvents();
    }
-   progress->setProgress(99,100);
+   progress->setValue( 99 ); progress->setMaximum( 100 );
    if ( batch->csv_saxs )
    {
       if ( batch->iqq && saxs_q.size() )
@@ -2693,16 +2854,16 @@ void US_Hydrodyn_Batch::start( bool quiet )
          fname = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck(fname, 0, this);
       }         
 
-      FILE *of = fopen(fname, "wb");
+      FILE *of = us_fopen(fname, "wb");
       if ( of )
       {
          for ( unsigned int i = 0; i < ((US_Hydrodyn *)us_hydrodyn)->save_params.data_vector.size(); i++ )
          {
-            fprintf(of, "%s", ((US_Hydrodyn *)us_hydrodyn)->save_params.data_vector[i].hydro_res.ascii());
+            fprintf(of, "%s", ((US_Hydrodyn *)us_hydrodyn)->save_params.data_vector[i].hydro_res.toAscii().data());
          }
          if ( stats.size() == 2 )
          {
-            fprintf(of, "%s", ((US_Hydrodyn *)us_hydrodyn)->save_util->hydroFormatStats(stats).ascii());
+            fprintf(of, "%s", ((US_Hydrodyn *)us_hydrodyn)->save_util->hydroFormatStats(stats).toAscii().data());
          }
          fclose(of);
       }
@@ -2713,25 +2874,25 @@ void US_Hydrodyn_Batch::start( bool quiet )
          {
             fname = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck(fname, 0, this);
          }         
-         FILE *of = fopen(fname, "wb");
+         FILE *of = us_fopen(fname, "wb");
          if ( of )
          {
-            fprintf(of, "%s", ((US_Hydrodyn *)us_hydrodyn)->save_util->header().ascii());
+            fprintf(of, "%s", ((US_Hydrodyn *)us_hydrodyn)->save_util->header().toAscii().data());
             for ( unsigned int i = 0; i < ((US_Hydrodyn *)us_hydrodyn)->save_params.data_vector.size(); i++ )
             {
-               fprintf(of, "%s", ((US_Hydrodyn *)us_hydrodyn)->save_util->dataString(&(((US_Hydrodyn *)us_hydrodyn)->save_params.data_vector[i])).ascii());
+               fprintf(of, "%s", ((US_Hydrodyn *)us_hydrodyn)->save_util->dataString(&(((US_Hydrodyn *)us_hydrodyn)->save_params.data_vector[i])).toAscii().data());
             }
             if ( stats.size() == 2 ) 
             {
-               fprintf(of, "%s", ((US_Hydrodyn *)us_hydrodyn)->save_util->dataString(&stats[0]).ascii());
-               fprintf(of, "%s", ((US_Hydrodyn *)us_hydrodyn)->save_util->dataString(&stats[1]).ascii());
+               fprintf(of, "%s", ((US_Hydrodyn *)us_hydrodyn)->save_util->dataString(&stats[0]).toAscii().data());
+               fprintf(of, "%s", ((US_Hydrodyn *)us_hydrodyn)->save_util->dataString(&stats[1]).toAscii().data());
             }
             fclose(of);
          }
       }  
    }
    ((US_Hydrodyn *)us_hydrodyn)->save_params.data_vector.clear();
-   progress->setProgress(1,1);
+   progress->setValue( 1 ); progress->setMaximum( 1 );
    disable_updates = false;
    enable_after_stop();
    set_counts();
@@ -2767,20 +2928,20 @@ void US_Hydrodyn_Batch::update_font()
 void US_Hydrodyn_Batch::save()
 {
    QString fn;
-   fn = QFileDialog::getSaveFileName( this , caption() , QString::null , QString::null );
+   fn = QFileDialog::getSaveFileName( this , windowTitle() , QString::null , QString::null );
    if(!fn.isEmpty() )
    {
-      QString text = editor->text();
+      QString text = editor->toPlainText();
       QFile f( fn );
       if ( !f.open( QIODevice::WriteOnly | QIODevice::Text) )
       {
          return;
       }
-      Q3TextStream t( &f );
+      QTextStream t( &f );
       t << text;
       f.close();
-      editor->setModified( false );
-      setCaption( fn );
+ //      editor->setModified( false );
+      setWindowTitle( fn );
    }
 }
 
@@ -2796,17 +2957,17 @@ void US_Hydrodyn_Batch::print()
       p.setFont(editor->font() );
       int yPos      = 0;         // y position for each line
       QFontMetrics fm = p.fontMetrics();
-      Q3PaintDeviceMetrics metrics( &printer ); // need width/height
+      //  QPaintDeviceMetrics metrics( &printer ); // need width/height
       // of printer surface
       for( int i = 0 ; i < editor->lines() ; i++ ) {
-         if ( MARGIN + yPos > metrics.height() - MARGIN ) {
+         if ( MARGIN + yPos > printer.height() - MARGIN ) {
             printer.newPage();      // no more room on this page
             yPos = 0;         // back to top of page
          }
          p.drawText( MARGIN, MARGIN + yPos,
-                     metrics.width(), fm.lineSpacing(),
+                     printer.width(), fm.lineSpacing(),
                      ExpandTabs | DontClip,
-                     editor->text( i ) );
+                     editor->toPlainText( i ) );
          yPos = yPos + fm.lineSpacing();
       }
       p.end();            // send job to printer
@@ -2817,7 +2978,7 @@ void US_Hydrodyn_Batch::print()
 void US_Hydrodyn_Batch::clear_display()
 {
    editor->clear();
-   editor->append(QString(tr("\n\nWelcome to SOMO UltraScan batch control %1 %2\n"))
+   editor->append(QString(us_tr("\n\nWelcome to SOMO UltraScan batch control %1 %2\n"))
 		  .arg(US_Version)
 		  .arg(REVISION)
 		  );
@@ -2825,7 +2986,13 @@ void US_Hydrodyn_Batch::clear_display()
 
 void US_Hydrodyn_Batch::dragEnterEvent(QDragEnterEvent *event)
 {
-   event->accept(Q3UriDrag::canDecode(event));
+#if QT_VERSION < 0x040000
+   event->accept(QNotUsed::canDecode(event));
+#else
+   if ( event->mimeData()->hasText() ) {
+      event->acceptProposedAction();
+   }
+#endif
 }
 
 void US_Hydrodyn_Batch::dropEvent(QDropEvent *event)
@@ -2833,14 +3000,20 @@ void US_Hydrodyn_Batch::dropEvent(QDropEvent *event)
    disable_updates = true;
    QStringList fileNames;
    editor->append("\n");
-   if ( Q3UriDrag::decodeLocalFiles(event, fileNames) )
-   {
+#if QT_VERSION < 0x040000
+   if ( QNotUsed::decodeLocalFiles(event, fileNames) ) {
+#else
+   if ( event->mimeData()->hasUrls() ) {
+      for ( int i = 0; i < event->mimeData()->urls().size(); ++i ) {
+         fileNames << event->mimeData()->urls().at(i).toLocalFile();
+      }
+#endif
       map < QString, bool > current_files;
-      for ( int i = 0; i < lb_files->numRows(); i++ )
+      for ( int i = 0; i < lb_files->count(); i++ )
       {
          current_files[get_file_name(i)] = true;
       }
-      QColor save_color = editor->color();
+      QColor save_color = editor->textColor();
       QStringList::Iterator it = fileNames.begin();
       unsigned int count = 0;
       while( it != fileNames.end() ) 
@@ -2863,20 +3036,20 @@ void US_Hydrodyn_Batch::dropEvent(QDropEvent *event)
             {
                current_files[*it] = true;
                batch->file.push_back(*it);
-               lb_files->insertItem(*it);
-               editor->setColor("dark blue");
-               editor->append(QString(tr("File loaded: %1")).arg(*it));
+               lb_files->addItem(*it);
+               editor->setTextColor("dark blue");
+               editor->append(QString(us_tr("File loaded: %1")).arg(*it));
             } else {
-               editor->setColor("dark red");
-               editor->append(QString(tr("File skipped: %1 (already in list)")).arg(*it));
+               editor->setTextColor("dark red");
+               editor->append(QString(us_tr("File skipped: %1 (already in list)")).arg(*it));
             }
          } else {
-            editor->setColor("red");
-            editor->append(QString(tr("File ignored: %1 (not a valid file name)")).arg(*it));
+            editor->setTextColor("red");
+            editor->append(QString(us_tr("File ignored: %1 (not a valid file name)")).arg(*it));
          }
          ++it;
       }
-      editor->setColor(save_color);
+      editor->setTextColor(save_color);
    }
    check_for_missing_files(true);
    disable_updates = false;
@@ -2886,14 +3059,15 @@ void US_Hydrodyn_Batch::dropEvent(QDropEvent *event)
 QString US_Hydrodyn_Batch::get_file_name(int i)
 {
 #if defined(BW_LISTBOX)
-   return lb_files->item(i)->text().replace(QRegExp(
-                                                    "^(File missing|"
-                                                    "Screening|"
-                                                    "Screen done|"
-                                                    "Screen failed|"
-                                                    "Processing|"
-                                                    "Processing done|"
-                                                    "Processing failed): "),"");
+   return lb_files->item(i)->text()
+      .replace(QRegExp(
+                       "^(File missing|"
+                       "Screening|"
+                       "Screen done|"
+                       "Screen failed|"
+                       "Processing|"
+                       "Processing done|"
+                       "Processing failed): "),"");
 #else
    return lb_files->item(i)->text().replace(QRegExp("<.*>"),"");
 #endif
@@ -2901,7 +3075,7 @@ QString US_Hydrodyn_Batch::get_file_name(int i)
 
 void US_Hydrodyn_Batch::check_for_missing_files(bool display_messages)
 {
-   if ( lb_files->numRows() > 1000 )
+   if ( lb_files->count() > 1000 )
    {
       printf("check for missing files disabled - too many files!\n");
       return;
@@ -2910,19 +3084,19 @@ void US_Hydrodyn_Batch::check_for_missing_files(bool display_messages)
    disable_updates = true;
    printf("check for missing files!\n");
    QString f;
-   QColor save_color = editor->color();
+   QColor save_color = editor->textColor();
    bool is_selected;
-   int item = lb_files->currentItem();
-   bool item_selected = lb_files->isSelected(item);
+   int item = lb_files->currentRow();
+   bool item_selected = item >= 0 ? lb_files->item(item)->isSelected( ) : false;
    unsigned int count = 0;
-   for ( int i = 0; i < lb_files->numRows(); i++ )
+   for ( int i = 0; i < lb_files->count(); i++ )
    {
       if ( ! ( count++ % 500 ) )
       {
          qApp->processEvents();
       }
       f = get_file_name(i);
-      is_selected = lb_files->isSelected(i);
+      is_selected = lb_files->item(i)->isSelected( );
       if ( QFile::exists(f) )
       {
          if ( !status.count(f) ||
@@ -2934,16 +3108,18 @@ void US_Hydrodyn_Batch::check_for_missing_files(bool display_messages)
          status[f] = 1;
          if ( display_messages )
          {
-            editor->setColor("red");
-            editor->append(QString(tr("File does not exist: %1")).arg(f));
-            editor->setColor(save_color);
+            editor->setTextColor("red");
+            editor->append(QString(us_tr("File does not exist: %1")).arg(f));
+            editor->setTextColor(save_color);
          }
       }
-      lb_files->changeItem(QString("%1%2").arg(status_color[status[f]]).arg(f), i);
-      lb_files->setSelected(i, is_selected);
+      lb_files->item( i)->setText(QString("%1%2").arg(status_color[status[f]]).arg(f));
+      lb_files->item(i)->setSelected( is_selected);
    }
-   lb_files->setCurrentItem(item);
-   lb_files->setSelected(item, item_selected);
+   if ( item >= 0 ) {
+      lb_files->setCurrentItem( lb_files->item(item) );
+      lb_files->item(item)->setSelected( item_selected);
+   }
    disable_updates = save_disable_updates;
    if ( !disable_updates )
    {
@@ -2953,11 +3129,11 @@ void US_Hydrodyn_Batch::check_for_missing_files(bool display_messages)
 
 void US_Hydrodyn_Batch::set_counts()
 {
-   lbl_total_files->setText(QString("Total files: %1").arg(lb_files->count()));
+   lbl_total_files->setText(QString("Total files: %1").arg(lb_files->count( )));
    unsigned int count = 0;
-   for ( int i = 0; i < lb_files->numRows(); i++ )
+   for ( int i = 0; i < lb_files->count(); i++ )
    {
-      if ( lb_files->isSelected(i) )
+      if ( lb_files->item(i)->isSelected() )
       {
          count++;
       }
@@ -2967,7 +3143,7 @@ void US_Hydrodyn_Batch::set_counts()
 
 int US_Hydrodyn_Batch::count_files()
 {
-   return lb_files->numRows();
+   return lb_files->count();
 }
 
 void US_Hydrodyn_Batch::clear_files()
@@ -3000,21 +3176,21 @@ void US_Hydrodyn_Batch::make_movie()
    float tc_pointsize = 20;
    bool black_background = true;
 
-   for ( int i = 0; i < lb_files->numRows(); i++ )
+   for ( int i = 0; i < lb_files->count(); i++ )
    {
       // load file into somo
-      if ( lb_files->isSelected(i) )
+      if ( lb_files->item(i)->isSelected() )
       {
          QString file = get_file_name(i);
          output_file = QFileInfo(file).baseName();
-         proc_dir = QFileInfo(file).dirPath();
+         proc_dir = QFileInfo(file).path();
          break;
       }
    }
 
    US_Hydrodyn_Batch_Movie_Opts *hbmo = 
       new US_Hydrodyn_Batch_Movie_Opts (
-                                        QString(tr("Select parameters for movie file:")),
+                                        QString(us_tr("Select parameters for movie file:")),
                                         &title,
                                         &proc_dir,
                                         ((US_Hydrodyn *)us_hydrodyn)->somo_dir,
@@ -3038,34 +3214,34 @@ void US_Hydrodyn_Batch::make_movie()
    if ( !cancel_req )
    {
       QFileInfo fi(proc_dir);
-      QColor save_color = editor->color();
+      QColor save_color = editor->textColor();
       if ( !fi.exists() )
       {
          QDir new_dir;
          if ( !new_dir.mkdir(proc_dir) ) 
          {
-            editor->setColor("red");
-            editor->append(tr("Error: Could not create directory " + proc_dir + "\n"));
-            editor->setColor(save_color);
+            editor->setTextColor("red");
+            editor->append(us_tr("Error: Could not create directory " + proc_dir + "\n"));
+            editor->setTextColor(save_color);
             cancel_req = true;
          } else {
-            editor->setColor("dark blue");
-            editor->append(tr("Notice: creating directory " + proc_dir + "\n"));
-            editor->setColor(save_color);
+            editor->setTextColor("dark blue");
+            editor->append(us_tr("Notice: creating directory " + proc_dir + "\n"));
+            editor->setTextColor(save_color);
          }
       } else {
          if ( !fi.isDir() )
          {
-            editor->setColor("red");
-            editor->append(tr("Error: ") + proc_dir + tr(" not a directory\n"));
-            editor->setColor(save_color);
+            editor->setTextColor("red");
+            editor->append(us_tr("Error: ") + proc_dir + us_tr(" not a directory\n"));
+            editor->setTextColor(save_color);
             cancel_req = true;
          } else {
             if ( !fi.isWritable() )
             {
-               editor->setColor("red");
-               editor->append(tr("Error: ") + proc_dir + tr(" not writable (check permissions)\n"));
-               editor->setColor(save_color);
+               editor->setTextColor("red");
+               editor->append(us_tr("Error: ") + proc_dir + us_tr(" not writable (check permissions)\n"));
+               editor->setTextColor(save_color);
                cancel_req = true;
             }
          }
@@ -3079,32 +3255,32 @@ void US_Hydrodyn_Batch::make_movie()
       return;
    }
    
-   for ( int i = 0; i < lb_files->numRows(); i++ )
+   for ( int i = 0; i < lb_files->count(); i++ )
    {
       // load file into somo
-      if ( lb_files->isSelected(i) )
+      if ( lb_files->item(i)->isSelected() )
       {
          bool result;
          QString file = get_file_name(i);
-         QString dir = QFileInfo(file).dirPath();
-         // QColor save_color = editor->color();
+         QString dir = QFileInfo(file).path();
+         // QColor save_color = editor->textColor();
          if ( file.contains(QRegExp(".(pdb|PDB)$")) ) 
          {
             // result = ((US_Hydrodyn *)us_hydrodyn)->screen_pdb(file, true);
-            editor->setColor("red");
-            editor->append(QString(tr("PDB not yet supported for movie frames: %1")).arg(file));
+            editor->setTextColor("red");
+            editor->append(QString(us_tr("PDB not yet supported for movie frames: %1")).arg(file));
          } else {
             result = screen_bead_model(file);
             if ( result ) 
             {
-               editor->setColor("dark blue");
-               editor->append(QString(tr("Screening: %1 ok.").arg(file)));
+               editor->setTextColor("dark blue");
+               editor->append(QString(us_tr("Screening: %1 ok.").arg(file)));
             } else {
-               editor->setColor("red");
-               editor->append(QString(tr("Screening: %1 FAILED.").arg(file)));
+               editor->setTextColor("red");
+               editor->append(QString(us_tr("Screening: %1 FAILED.").arg(file)));
             }
-            editor->setColor("dark blue");
-            editor->append(QString(tr("Creating movie frame for %1")).arg(file));
+            editor->setTextColor("dark blue");
+            editor->append(QString(us_tr("Creating movie frame for %1")).arg(file));
             ((US_Hydrodyn *)us_hydrodyn)->visualize(true,proc_dir,scale,black_background);
          }
       }
@@ -3112,7 +3288,7 @@ void US_Hydrodyn_Batch::make_movie()
    QString tc_format_string = "%.0f";
    {
       QRegExp rx("\\.(\\d*)$");
-      if ( rx.search(QString("%1").arg(tc_delta)) != -1 )
+      if ( rx.indexIn(QString("%1").arg(tc_delta)) != -1 )
       {
          tc_format_string = QString("%.%1f").arg(rx.cap(1).length());
       }
@@ -3156,7 +3332,7 @@ void US_Hydrodyn_Batch::make_movie()
                           QString("mogrify -gravity southwest -fill %1 -font Courier-10-Pitch-Regular -pointsize %2 -draw 'text 25,25 \"%3 %4\"' ")
                           .arg(black_background ? "white" : "black")
                           .arg(tc_pointsize)
-                          .arg(QString("").sprintf(tc_format_string, tc_start))
+                          .arg(QString("").sprintf(qPrintable(tc_format_string), tc_start))
                           .arg(tc_unit) 
                           + fi.fileName() + ".gif\n"
                           : "" ) +
@@ -3176,21 +3352,21 @@ void US_Hydrodyn_Batch::make_movie()
          tc_start += tc_delta;
       }
       cout << "cmdlog [" << cmdlog << "]\n";
-      system(cmdlog.ascii());
+      system(cmdlog.toAscii().data());
       cout << "cmd0 [" << cmd0 << "]\ncmd2 [" << cmd2 << "]\n";
-      system(cmd0.ascii());
+      system(cmd0.toAscii().data());
       for ( unsigned int i = 0; i < cmd1.size(); i++ )
       {
          cout << QString("cmd1:%1 [%2]\n").arg(i).arg(cmd1[i]);
-         system(cmd1[i].ascii());
+         system(cmd1[i].toAscii().data());
       }
-      system(cmd2.ascii());
+      system(cmd2.toAscii().data());
       if ( clean_up ) 
       {
          for ( unsigned int i = 0; i < cmd3.size(); i++ )
          {
             cout << QString("cmd3:%1 [%2]\n").arg(i).arg(cmd3[i]);
-            system(cmd3[i].ascii());
+            system(cmd3[i].toAscii().data());
          }
       }
    } else {
@@ -3221,7 +3397,7 @@ void US_Hydrodyn_Batch::save_csv_saxs_iqq( bool quiet )
    {
       fname = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck(fname, 0, this);
    }         
-   FILE *of = fopen(fname, "wb");
+   FILE *of = us_fopen(fname, "wb");
    if ( of )
    {
 
@@ -3325,16 +3501,16 @@ void US_Hydrodyn_Batch::save_csv_saxs_iqq( bool quiet )
 
       //  header: "name","type",q1,q2,...,qn, header info
       fprintf(of, "\"Name\",\"Type; q:\",%s,\"%s\"\n", 
-              vector_double_to_csv(saxs_q).ascii(),
-              saxs_header_iqq.remove("\n").ascii());
+              vector_double_to_csv(saxs_q).toAscii().data(),
+              saxs_header_iqq.remove("\n").toAscii().data());
       if ( !cb_compute_iq_only_avg->isChecked() )
       {
          for ( unsigned int i = 0; i < csv_source_name_iqq.size(); i++ )
          {
             fprintf(of, "\"%s\",\"%s\",%s\n", 
-                    csv_source_name_iqq[i].ascii(),
+                    csv_source_name_iqq[i].toAscii().data(),
                     "I(q)",
-                    vector_double_to_csv(saxs_iqq[i]).ascii());
+                    vector_double_to_csv(saxs_iqq[i]).toAscii().data());
          }
       }
       fprintf(of, "\n");
@@ -3347,9 +3523,9 @@ void US_Hydrodyn_Batch::save_csv_saxs_iqq( bool quiet )
             {
                any_printed = true;
                fprintf(of, "\"%s\",\"%s\",%s\n", 
-                       csv_source_name_iqq[i].ascii(),
+                       csv_source_name_iqq[i].toAscii().data(),
                        "Ia(q)",
-                       vector_double_to_csv(saxs_iqqa[i]).ascii());
+                       vector_double_to_csv(saxs_iqqa[i]).toAscii().data());
             }
          }
       }
@@ -3364,9 +3540,9 @@ void US_Hydrodyn_Batch::save_csv_saxs_iqq( bool quiet )
             if ( saxs_iqqc[i].size() )
             {
                fprintf(of, "\"%s\",\"%s\",%s\n", 
-                       csv_source_name_iqq[i].ascii(),
+                       csv_source_name_iqq[i].toAscii().data(),
                        "Ic(q)",
-                       vector_double_to_csv(saxs_iqqc[i]).ascii());
+                       vector_double_to_csv(saxs_iqqc[i]).toAscii().data());
             }
          }
       }
@@ -3376,35 +3552,35 @@ void US_Hydrodyn_Batch::save_csv_saxs_iqq( bool quiet )
          fprintf(of, "\n\"%s\",\"%s\",%s\n", 
                  "Average",
                  "I(q)",
-                 vector_double_to_csv(iq_avg).ascii());
+                 vector_double_to_csv(iq_avg).toAscii().data());
          if ( batch->compute_iq_std_dev && sum_count > 2 )
          {
             fprintf(of, "\"%s\",\"%s\",%s\n", 
                     "Average",
                     "I(q) sd",
-                    vector_double_to_csv(iq_std_dev).ascii());
+                    vector_double_to_csv(iq_std_dev).toAscii().data());
             fprintf(of, "\"%s\",\"%s\",%s\n", 
                     "Standard deviation",
                     "I(q)",
-                    vector_double_to_csv(iq_std_dev).ascii());
+                    vector_double_to_csv(iq_std_dev).toAscii().data());
             fprintf(of, "\"%s\",\"%s\",%s\n", 
                     "Average minus 1 standard deviation",
                     "I(q)",
-                    vector_double_to_csv(iq_avg_minus_std_dev).ascii());
+                    vector_double_to_csv(iq_avg_minus_std_dev).toAscii().data());
             fprintf(of, "\"%s\",\"%s\",%s\n", 
                     "Average plus 1 standard deviation",
                     "I(q)",
-                    vector_double_to_csv(iq_avg_plus_std_dev).ascii());
+                    vector_double_to_csv(iq_avg_plus_std_dev).toAscii().data());
          }
       }
 
       fclose(of);
-      editor->append(tr("Created file: " + fname + "\n"));
+      editor->append(us_tr("Created file: " + fname + "\n"));
    } else {
-      QColor save_color = editor->color();
-      editor->setColor("red");
-      editor->append(tr("ERROR creating file: " + fname + "\n"));
-      editor->setColor(save_color);
+      QColor save_color = editor->textColor();
+      editor->setTextColor("red");
+      editor->append(us_tr("ERROR creating file: " + fname + "\n"));
+      editor->setTextColor(save_color);
    }
 }
 
@@ -3419,7 +3595,7 @@ void US_Hydrodyn_Batch::save_csv_saxs_prr()
    {
       fname = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( fname, 0, this );
    }         
-   FILE *of = fopen(fname, "wb");
+   FILE *of = us_fopen(fname, "wb");
    if ( of )
    {
       // setup for average & stdev
@@ -3540,19 +3716,19 @@ void US_Hydrodyn_Batch::save_csv_saxs_prr()
 
       //  header: "name","type",r1,r2,...,rn, header info
       fprintf(of, "\"Name\",\"MW (Daltons)\",\"Area\",\"Type; r:\",%s,\"%s\"\n", 
-              vector_double_to_csv(saxs_r).ascii(),
-              saxs_header_prr.remove("\n").ascii()
+              vector_double_to_csv(saxs_r).toAscii().data(),
+              saxs_header_prr.remove("\n").toAscii().data()
               );
       float sum_mw = 0.0;
       for ( unsigned int i = 0; i < csv_source_name_prr.size(); i++ )
       {
          sum_mw += saxs_prr_mw[i];
          fprintf(of, "\"%s\",%.2f,%.2f,\"%s\",%s\n", 
-                 csv_source_name_prr[i].ascii(),
+                 csv_source_name_prr[i].toAscii().data(),
                  saxs_prr_mw[i],
                  compute_pr_area(saxs_prr[i], saxs_r),
                  "P(r)",
-                 vector_double_to_csv(saxs_prr[i]).ascii());
+                 vector_double_to_csv(saxs_prr[i]).toAscii().data());
       }
       fprintf(of, "\n");
       if ( csv_source_name_prr.size() )
@@ -3562,11 +3738,11 @@ void US_Hydrodyn_Batch::save_csv_saxs_prr()
       for ( unsigned int i = 0; i < csv_source_name_prr.size(); i++ )
       {
          fprintf(of, "\"%s\",%.2f,%.2f,\"%s\",%s\n", 
-                 csv_source_name_prr[i].ascii(),
+                 csv_source_name_prr[i].toAscii().data(),
                  saxs_prr_mw[i],
                  compute_pr_area(saxs_prr_norm[i], saxs_r),
                  "P(r) normed",
-                 vector_double_to_csv(saxs_prr_norm[i]).ascii());
+                 vector_double_to_csv(saxs_prr_norm[i]).toAscii().data());
       }
       if ( batch->compute_prr_avg && sum_count > 1 )
       {
@@ -3575,7 +3751,7 @@ void US_Hydrodyn_Batch::save_csv_saxs_prr()
                  pr_mw_avg,
                  compute_pr_area(pr_avg, saxs_r),
                  "P(r)",
-                 vector_double_to_csv(pr_avg).ascii());
+                 vector_double_to_csv(pr_avg).toAscii().data());
          if ( batch->compute_prr_std_dev && sum_count > 2 )
          {
             fprintf(of, "\"%s\",%.2f,%.2f,\"%s\",%s\n", 
@@ -3583,28 +3759,28 @@ void US_Hydrodyn_Batch::save_csv_saxs_prr()
                     pr_mw_std_dev,
                     compute_pr_area(pr_std_dev, saxs_r),
                     "P(r)",
-                    vector_double_to_csv(pr_std_dev).ascii());
+                    vector_double_to_csv(pr_std_dev).toAscii().data());
             fprintf(of, "\"%s\",%.2f,%.2f,\"%s\",%s\n", 
                     "Average minus 1 standard deviation",
                     pr_mw_avg - pr_mw_std_dev,
                     compute_pr_area(pr_avg_minus_std_dev, saxs_r),
                     "P(r)",
-                    vector_double_to_csv(pr_avg_minus_std_dev).ascii());
+                    vector_double_to_csv(pr_avg_minus_std_dev).toAscii().data());
             fprintf(of, "\"%s\",%.2f,%.2f,\"%s\",%s\n", 
                     "Average plus 1 standard deviation",
                     pr_mw_avg + pr_mw_std_dev,
                     compute_pr_area(pr_avg_plus_std_dev, saxs_r),
                     "P(r)",
-                    vector_double_to_csv(pr_avg_plus_std_dev).ascii());
+                    vector_double_to_csv(pr_avg_plus_std_dev).toAscii().data());
          }
       }
       fclose(of);
-      editor->append(tr("Created file: " + fname + "\n"));
+      editor->append(us_tr("Created file: " + fname + "\n"));
    } else {
-      QColor save_color = editor->color();
-      editor->setColor("red");
-      editor->append(tr("ERROR creating file: " + fname + "\n"));
-      editor->setColor(save_color);
+      QColor save_color = editor->textColor();
+      editor->setTextColor("red");
+      editor->append(us_tr("ERROR creating file: " + fname + "\n"));
+      editor->setTextColor(save_color);
    }
 }
 
@@ -3627,10 +3803,10 @@ double US_Hydrodyn_Batch::compute_pr_area( vector < double > vd, vector < double
 
 void US_Hydrodyn_Batch::editor_msg( QString color, QString msg )
 {
-   QColor save_color = editor->color();
-   editor->setColor(color);
+   QColor save_color = editor->textColor();
+   editor->setTextColor(color);
    editor->append(msg);
-   editor->setColor(save_color);
+   editor->setTextColor(save_color);
 }
 
 QString US_Hydrodyn_Batch::iqq_suffix()
@@ -3727,11 +3903,11 @@ bool US_Hydrodyn_Batch::activate_saxs_search_window()
       {
          return true;
       } else {
-         editor_msg("red", tr("Could not activate SAXS search window!\n"));
+         editor_msg("red", us_tr("Could not activate SAXS search window!\n"));
          return false;
       }
    } else {
-      editor_msg("red", tr("Could not activate SAXS window!\n"));
+      editor_msg("red", us_tr("Could not activate SAXS window!\n"));
       return false;
    }
 }

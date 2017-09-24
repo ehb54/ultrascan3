@@ -727,10 +727,10 @@
 #define SOUTPUT stdout               /* The standard output file */
 #define SCONSOL stderr               /* The console file */
 #define nultxtf NULL                 /* Indicates an unassigned text file */
-#define initxtf(x) fopen(x,"w+")     /* Initialize and open a text file */
-#define apptxtf(x) fopen(x,"a")      /* Initialize or append to a text file */
-#define opntxtf(x) fopen(x,"r+")     /* Open an existing text file */
-#define rdotxtf(x) fopen(x,"r")      /* Open a readonly text file */
+#define initxtf(x) us_fopen(x,"w+")     /* Initialize and open a text file */
+#define apptxtf(x) us_fopen(x,"a")      /* Initialize or append to a text file */
+#define opntxtf(x) us_fopen(x,"r+")     /* Open an existing text file */
+#define rdotxtf(x) us_fopen(x,"r")      /* Open a readonly text file */
 #ifdef USETXTFNC
 #define wrtxtf  SioWrtxtf
 #define wrteol  SioWrteol
@@ -790,10 +790,10 @@
 #define SOUTPUT stdout               /* The standard output file */
 #define SCONSOL stderr               /* The console file */
 #define nultxtf NULL                 /* Indicates an unassigned text file */
-#define initxtf(x) fopen(x,"w+")     /* Initialize and open a text file */
-#define apptxtf(x) fopen(x,"a")      /* Initialize or append to a text file */
-#define opntxtf(x) fopen(x,"r+")     /* Open an existing text file */
-#define rdotxtf(x) fopen(x,"r")      /* Open a readonly text file */
+#define initxtf(x) us_fopen(x,"w+")     /* Initialize and open a text file */
+#define apptxtf(x) us_fopen(x,"a")      /* Initialize or append to a text file */
+#define opntxtf(x) us_fopen(x,"r+")     /* Open an existing text file */
+#define rdotxtf(x) us_fopen(x,"r")      /* Open a readonly text file */
 #ifdef USETXTFNC
 #define wrtxtf  SioWrtxtf
 #define wrteol  SioWrteol
@@ -898,10 +898,10 @@
 #define SOUTPUT stdout               /* The standard output file */
 #define SCONSOL stderr               /* The console file */
 #define nultxtf NULL                 /* Indicates an unassigned text file */
-#define initxtf(x) fopen(x,"w+")     /* Initialize and open a text file */
-#define apptxtf(x) fopen(x,"a")      /* Initialize or append to a text file */
-#define opntxtf(x) fopen(x,"r+")     /* Open an existing text file */
-#define rdotxtf(x) fopen(x,"r")      /* Open a readonly text file */
+#define initxtf(x) us_fopen(x,"w+")     /* Initialize and open a text file */
+#define apptxtf(x) us_fopen(x,"a")      /* Initialize or append to a text file */
+#define opntxtf(x) us_fopen(x,"r+")     /* Open an existing text file */
+#define rdotxtf(x) us_fopen(x,"r")      /* Open a readonly text file */
 #ifdef USETXTFNC
 #define wrtxtf  SioWrtxtf
 #define wrteol  SioWrteol
@@ -941,10 +941,10 @@
 #define postxtf(x) ftell(x)          /* Return the position of a text file */
 #define txtopner(x) (x==NULL)        /* Text open error ? */
 #define nulbinf    NULL              /* Indicates an unassigned binary file */
-#define inibinf(x) fopen(x,"w+b")    /* Initialize and open a binary file */
-#define opnbinf(x) fopen(x,"r+b")    /* Open an existing binary file */
-#define appbinf(x) fopen(x,"a+b")    /* Append to a binary file */
-#define rdobinf(x) fopen(x,"rb")     /* Open a readonly binary file */
+#define inibinf(x) us_fopen(x,"w+b")    /* Initialize and open a binary file */
+#define opnbinf(x) us_fopen(x,"r+b")    /* Open an existing binary file */
+#define appbinf(x) us_fopen(x,"a+b")    /* Append to a binary file */
+#define rdobinf(x) us_fopen(x,"rb")     /* Open a readonly binary file */
 #ifdef THCPLAT
 #define rdbinf(f,r,n) fread(r,1L,(size_t)n,f)
 #define wrbinf(f,r,n) fwrite(r,1L,(size_t)n,f)
@@ -980,7 +980,7 @@
 #ifdef ANSPLAT
 #define delfile(x) remove(x)         /* Delete a file */
 #else
-#define delfile(x) unlink(x)         /* Delete a file */
+#define delfile(x) QFile::remove(x)         /* Delete a file */
 #endif /* ANSPLAT */
 #endif /* ZORPLAT */
 #endif /* A86PLAT */
@@ -995,9 +995,9 @@
 #ifdef UNXPLAT
 #define rawfile FILE*                /* The type of raw binary file handles */
 #define nulrawf    NULL              /* Indicates an unassigned binary file */
-#define inirawf(x) fopen(x,"w+b")    /* Initialize and open a binary file */
-#define opnrawf(x) fopen(x,"r+b")    /* Open an existing binary file */
-#define rdorawf(x) fopen(x,"rb")    /* Open an existing binary file */
+#define inirawf(x) us_fopen(x,"w+b")    /* Initialize and open a binary file */
+#define opnrawf(x) us_fopen(x,"r+b")    /* Open an existing binary file */
+#define rdorawf(x) us_fopen(x,"rb")    /* Open an existing binary file */
 #define rdrawf(f,r,n) fread(r,1,n,f) /* Read a binary file */
 #define wrrawf(f,r,n) fwrite(r,1,n,f)/* Write a binary file */
 #define clsrawf(x) fclose(x)         /* Close a binary file */
@@ -1010,9 +1010,9 @@
 #ifdef ANSPLAT
 #define rawfile FILE*                /* The type of raw binary file handles */
 #define nulrawf    NULL              /* Indicates an unassigned binary file */
-#define inirawf(x) fopen(x,"w+b")    /* Initialize and open a binary file */
-#define opnrawf(x) fopen(x,"r+b")    /* Open an existing binary file */
-#define rdorawf(x) fopen(x,"rb")    /* Open an existing binary file */
+#define inirawf(x) us_fopen(x,"w+b")    /* Initialize and open a binary file */
+#define opnrawf(x) us_fopen(x,"r+b")    /* Open an existing binary file */
+#define rdorawf(x) us_fopen(x,"rb")    /* Open an existing binary file */
 #define rdrawf(f,r,n) fread(r,1,n,f) /* Read a binary file */
 #define wrrawf(f,r,n) fwrite(r,1,n,f)/* Write a binary file */
 #define clsrawf(x) fclose(x)         /* Close a binary file */
@@ -1042,9 +1042,9 @@
 #ifdef MPWPLAT
 #define rawfile FILE*                /* The type of raw binary file handles */
 #define nulrawf    NULL              /* Indicates an unassigned binary file */
-#define inirawf(x) fopen(x,"w+b")    /* Initialize and open a binary file */
-#define opnrawf(x) fopen(x,"r+b")    /* Open an existing binary file */
-#define rdorawf(x) fopen(x,"rb")     /* Open an existing binary file */
+#define inirawf(x) us_fopen(x,"w+b")    /* Initialize and open a binary file */
+#define opnrawf(x) us_fopen(x,"r+b")    /* Open an existing binary file */
+#define rdorawf(x) us_fopen(x,"rb")     /* Open an existing binary file */
 #define rdrawf(f,r,n) fread(r,1,n,f) /* Read a binary file */
 #define wrrawf(f,r,n) fwrite(r,1,n,f)/* Write a binary file */
 #define clsrawf(x) fclose(x)         /* Close a binary file */
@@ -1092,9 +1092,9 @@
 #ifdef TSOPLAT
 #define rawfile FILE*                /* The type of raw binary file handles */
 #define nulrawf    NULL              /* Indicates an unassigned binary file */
-#define inirawf(x) fopen(x,"w+b")    /* Initialize and open a binary file */
-#define opnrawf(x) fopen(x,"r+b")    /* Open an existing binary file */
-#define rdorawf(x) fopen(x,"rb")     /* Open an existing binary file */
+#define inirawf(x) us_fopen(x,"w+b")    /* Initialize and open a binary file */
+#define opnrawf(x) us_fopen(x,"r+b")    /* Open an existing binary file */
+#define rdorawf(x) us_fopen(x,"rb")     /* Open an existing binary file */
 #define rdrawf(f,r,n) fread(r,1,n,f) /* Read a binary file */
 #define wrrawf(f,r,n) fwrite(r,1,n,f)/* Write a binary file */
 #define clsrawf(x) fclose(x)         /* Close a binary file */
@@ -1107,9 +1107,9 @@
 #ifdef VMSPLAT
 #define rawfile FILE*                /* The type of raw binary file handles */
 #define nulrawf    NULL
-#define inirawf(x) fopen(x,"w+b")    /* Initialize a binary file */
-#define opnrawf(x) fopen(x,"r+b")    /* Open an existing binary file */
-#define rdorawf(x) fopen(x,"rb")     /* Open an existing binary file */
+#define inirawf(x) us_fopen(x,"w+b")    /* Initialize a binary file */
+#define opnrawf(x) us_fopen(x,"r+b")    /* Open an existing binary file */
+#define rdorawf(x) us_fopen(x,"rb")     /* Open an existing binary file */
 #define rdrawf(f,r,n) fread(r,1,n,f) /* Read a binary file */
 #define wrrawf(f,r,n) fwrite(r,1,n,f)/* Write a binary file */
 #define clsrawf(x) fclose(x)         /* Close a binary file */
@@ -1447,7 +1447,7 @@
    void    fiofdata(int option,void* str,int ns);
 #else
    extern LONG    fifidint();        /* FORTRAN intrinsic function IDINT */
-   extern int     fifindex();        /* FORTRAN intrinsic function INDEX */
+   extern int     fifindex( );        /* FORTRAN intrinsic function INDEX */
    extern LONG    fifipow();         /* Compute long integer power */
    extern int     fioclose();
    extern char*(* FioConvertName)();
@@ -12575,7 +12575,7 @@
    extern char* (*FioLocalName)();
    extern void  (*FioCloseOperation)(); 
    extern int  fiogetname();         /* Get name of file from OS */
-   extern int  fifindex();           /* FORTRAN intrinsic function INDEX */
+   extern int  fifindex( );           /* FORTRAN intrinsic function INDEX */
    extern void fiortxt();            /* Read next text record */
 #endif
 
@@ -14191,20 +14191,20 @@
             {
                if(fiocurf->fstat & FREADONLY)
                   *(binfile*)&(fiocurf->ffile) = 
-                     fopen(fiocurf->fname,"rb","rfm=fix",
+                     us_fopen(fiocurf->fname,"rb","rfm=fix",
                            "shr=get,put,upd,upi",mrs);
                else if(fiocurf->fstat & (FEXIST | FUNKNOWN))
                {
                   *(binfile*)&(fiocurf->ffile) = 
-                     fopen(fiocurf->fname,"r+b","rfm=fix",
+                     us_fopen(fiocurf->fname,"r+b","rfm=fix",
                            "shr=get,put,upd,upi",mrs);
                   if(binopner(*(binfile*)&(fiocurf->ffile)))
                      *(binfile*)&(fiocurf->ffile) = 
-                        fopen(fiocurf->fname,"rb","rfm=fix",
+                        us_fopen(fiocurf->fname,"rb","rfm=fix",
                               "shr=get,put,upd,upi",mrs);
                }
                else *(binfile*)&(fiocurf->ffile) = 
-                       fopen(fiocurf->fname,"w+b","rfm=fix",
+                       us_fopen(fiocurf->fname,"w+b","rfm=fix",
                              "shr=get,put,upd,upi",mrs);
                goto fioopen5;
             }
@@ -14278,17 +14278,17 @@
             {
                if(fiocurf->fstat & FREADONLY)
                   *(txtfile*)&(fiocurf->ffile) = 
-                     fopen(fiocurf->fname,"r","rfm=fix",mrs);
+                     us_fopen(fiocurf->fname,"r","rfm=fix",mrs);
                else if(fiocurf->fstat & (FEXIST | FUNKNOWN))
                {
                   *(txtfile*)&(fiocurf->ffile) = 
-                     fopen(fiocurf->fname,"r+","rfm=fix",mrs);
+                     us_fopen(fiocurf->fname,"r+","rfm=fix",mrs);
                   if(txtopner(*(txtfile*)&(fiocurf->ffile)))
                      *(txtfile*)&(fiocurf->ffile) =
-                        fopen(fiocurf->fname,"r","rfm=fix",mrs);
+                        us_fopen(fiocurf->fname,"r","rfm=fix",mrs);
                }
                else *(txtfile*)&(fiocurf->ffile) =
-                       fopen(fiocurf->fname,"w+"/*,"rfm=fix",mrs */);
+                       us_fopen(fiocurf->fname,"w+"/*,"rfm=fix",mrs */);
                goto fioopen6;
             }
 #endif

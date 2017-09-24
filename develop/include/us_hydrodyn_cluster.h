@@ -7,12 +7,12 @@
 #include <qstring.h>
 #include <qlayout.h>
 #include <qpushbutton.h>
-#include <q3frame.h>
+//#include <q3frame.h>
 #include <qcheckbox.h>
-#include <q3textedit.h>
+#include <qtextedit.h>
 #include <qvalidator.h>
 #include <qtimer.h>
-#include <q3socket.h>
+#include <qtcpsocket.h>
 //Added by qt3to4:
 #include <QCloseEvent>
 
@@ -72,7 +72,7 @@ class US_EXTERN US_Hydrodyn_Cluster : public QDialog
       QLabel        *lbl_target;
       QPushButton   *pb_add_target;
       QPushButton   *pb_clear_target;
-      Q3ListBox      *lb_target_files;
+      QListWidget      *lb_target_files;
 
       QLabel        *lbl_no_of_jobs;
       QLineEdit     *le_no_of_jobs;
@@ -93,7 +93,7 @@ class US_EXTERN US_Hydrodyn_Cluster : public QDialog
       QPushButton   *pb_load_results;
 
       QFont         ft;
-      Q3TextEdit     *editor;
+      QTextEdit     *editor;
       QMenuBar      *m;
 
       QPushButton   *pb_help;

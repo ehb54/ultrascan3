@@ -2,7 +2,7 @@
 #include "../include/us_saxs_util_asab1.h"
 #include "../include/us_hydrodyn_results.h"
 //Added by qt3to4:
-#include <Q3TextStream>
+#include <QTextStream>
 
 // note: this program uses cout and/or cerr and this should be replaced
 
@@ -327,7 +327,7 @@ void US_Saxs_Util::build_to_hydrate()
             .arg( this_atom->resSeq )
             .arg( this_atom->chainID );
 
-         if ( rx_main_chain.search( this_atom->resName ) == -1 
+         if ( rx_main_chain.indexIn( this_atom->resName ) == -1 
               && exposed_sc.count( mapkey )
               && rotamers.count( this_atom->resName )
               )
@@ -415,7 +415,7 @@ bool US_Saxs_Util::compute_to_hydrate_dihedrals()
           it != to_hydrate.end();
           it++ )
    {
-      if ( rx_expand_mapkey.search( it->first ) == -1 )
+      if ( rx_expand_mapkey.indexIn( it->first ) == -1 )
       {
          errormsg = QString( "Internal error: could not expand mapkey %1" ).arg( it->first );
          return false;
@@ -635,12 +635,12 @@ bool US_Saxs_Util::load_rotamer( QString filename )
    }      
 
    QStringList qsl;
-   Q3TextStream ts( &f );
+   QTextStream ts( &f );
    
    while ( !ts.atEnd() )
    {
       QString qs = ts.readLine();
-      if ( qs.lower().contains( QRegExp( "^end-file" ) ) )
+      if ( qs.toLower().contains( QRegExp( "^end-file" ) ) )
       {
          break;
       }
@@ -661,7 +661,7 @@ bool US_Saxs_Util::load_rotamer( QString filename )
 
    for ( unsigned int i = 0; i < (unsigned int) qsl.size(); i++ )
    {
-      if ( rx_skip.search( qsl[ i ] ) != -1 )
+      if ( rx_skip.indexIn( qsl[ i ] ) != -1 )
       {
          continue;
       }
@@ -673,7 +673,7 @@ bool US_Saxs_Util::load_rotamer( QString filename )
          qsl[ i ].at( 22 ) = ' ';
 #endif
       }
-      QStringList qsl_line = QStringList::split( rx_whitespace, qsl[ i ] );
+      QStringList qsl_line = (qsl[ i ] ).split( rx_whitespace , QString::SkipEmptyParts );
       if ( qsl_line[ 0 ] == "multiple-rotate:" )
       {
          if ( in_rotamer )
@@ -1029,8 +1029,8 @@ bool US_Saxs_Util::load_rotamer( QString filename )
                      .sprintf(     
                               "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
                               ++apos,
-                              rotated_rotamers[ name ][ jj ][ j ].side_chain[ k ].name.ascii(),
-                              name.left( 3 ).ascii(),
+                              rotated_rotamers[ name ][ jj ][ j ].side_chain[ k ].name.toAscii().data(),
+                              name.left( 3 ).toAscii().data(),
                               "A",
                               1,
                               rotated_rotamers[ name ][ jj ][ j ].side_chain[ k ].coordinate.axis[ 0 ],
@@ -1048,7 +1048,7 @@ bool US_Saxs_Util::load_rotamer( QString filename )
                      .sprintf(     
                               "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
                               ++apos,
-                              rotated_rotamers[ name ][ jj ][ j ].waters[ k ].name.ascii(),
+                              rotated_rotamers[ name ][ jj ][ j ].waters[ k ].name.toAscii().data(),
                               "WAT",
                               "B",
                               2,
@@ -1252,7 +1252,7 @@ bool US_Saxs_Util::load_rotamer( QString filename )
       }
       
       if ( !in_rotamer_waters &&
-           rx_main_chain.search( qsl_line[ 2 ] ) != -1 )
+           rx_main_chain.indexIn( qsl_line[ 2 ] ) != -1 )
       {
          // skip main chain 
          continue;
@@ -1572,7 +1572,7 @@ bool US_Saxs_Util::compute_best_fit_rotamer()
          it != to_hydrate_dihedrals.end();
          it++ )
    {
-      if ( rx_expand_mapkey.search( it->first ) == -1 )
+      if ( rx_expand_mapkey.indexIn( it->first ) == -1 )
       {
          errormsg = QString( "Internal error: could not expand mapkey %1" ).arg( it->first );
          return false;
@@ -1647,7 +1647,7 @@ bool US_Saxs_Util::setup_pointmap_rotamers()
          it != to_hydrate_pointmaps.end();
          it++ )
    {
-      if ( rx_expand_mapkey.search( it->first ) == -1 )
+      if ( rx_expand_mapkey.indexIn( it->first ) == -1 )
       {
          errormsg = QString( "Internal error: could not expand mapkey %1" ).arg( it->first );
          return false;
@@ -1947,7 +1947,7 @@ bool US_Saxs_Util::compute_waters_to_add()
       }
 
       // add a waters for each pointmap for this residue
-      if ( rx_expand_mapkey.search( it->first ) == -1 )
+      if ( rx_expand_mapkey.indexIn( it->first ) == -1 )
       {
          errormsg = QString( "Internal error: could not expand mapkey %1" ).arg( it->first );
          return false;
@@ -2262,7 +2262,7 @@ bool US_Saxs_Util::flush_pdb()
    last_hydrated_pdb_header =
       QString( "HEADER  US-SOMO Hydrated pdb file %1\n" ).arg( fname );
 
-   Q3TextStream ts( &f );
+   QTextStream ts( &f );
    ts << last_hydrated_pdb_header;
    ts << last_hydrated_pdb_text;
    ts << "END\n";
@@ -2285,7 +2285,7 @@ bool US_Saxs_Util::buffer_pdb_with_waters()
    last_hydrated_pdb_text +=
       QString( "MODEL    %1\n" ).arg( current_model + 1 );
 
-   last_hydrated_pdb_text += last_pdb_load_calc_mw_msg.gres( "\n", "" ).join( "\nREMARK " ) + "\n";
+   last_hydrated_pdb_text += last_pdb_load_calc_mw_msg.replaceInStrings( "\n", "" ).join( "\nREMARK " ) + "\n";
    for ( int i = 0; i < ( int ) last_steric_clash_log.size(); i++ )
    {
       last_hydrated_pdb_text += last_steric_clash_log[ i ];
@@ -2307,16 +2307,16 @@ bool US_Saxs_Util::buffer_pdb_with_waters()
             .sprintf(     
                      "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
                      this_atom->serial,
-                     this_atom->orgName.ascii(),
-                     this_atom->resName.ascii(),
-                     this_atom->chainID.ascii(),
+                     this_atom->orgName.toAscii().data(),
+                     this_atom->resName.toAscii().data(),
+                     this_atom->chainID.toAscii().data(),
                      this_atom->resSeq.toUInt(),
                      this_atom->coordinate.axis[ 0 ],
                      this_atom->coordinate.axis[ 1 ],
                      this_atom->coordinate.axis[ 2 ],
                      this_atom->occupancy,
                      this_atom->tempFactor,
-                     this_atom->element.ascii()
+                     this_atom->element.toAscii().data()
                      );
          chains_used[ this_atom->chainID ] = true;
 
@@ -2383,7 +2383,7 @@ bool US_Saxs_Util::buffer_pdb_with_waters()
             .sprintf(     
                      "ATOM  %5d  OW  WAT %1s%4d    %8.3f%8.3f%8.3f  1.00  0.00           O  \n",
                      ++atom_number,
-                     chainID.ascii(),
+                     chainID.toAscii().data(),
                      ++residue_number,
                      it->second[ i ].axis[ 0 ],
                      it->second[ i ].axis[ 1 ],
@@ -2778,8 +2778,8 @@ bool US_Saxs_Util::pdb_asa_for_saxs_hydrate()
                      if (last_main_bead->bead_positioner &&
                          this_atom->placing_method == 1) {
                         fprintf(stderr, "warning: 2 positioners in bead %s %s %d\n",
-                                last_main_bead->name.ascii(),
-                                last_main_bead->resName.ascii(),
+                                last_main_bead->name.toAscii().data(),
+                                last_main_bead->resName.toAscii().data(),
                                 last_main_bead->serial);
                      }
                      last_main_bead->bead_positioner = true;
@@ -2830,8 +2830,8 @@ bool US_Saxs_Util::pdb_asa_for_saxs_hydrate()
                   if (use_atom->bead_positioner &&
                       this_atom->placing_method == 1) {
                      fprintf(stderr, "warning: 2 or more positioners in bead %s %s %d\n",
-                             use_atom->name.ascii(),
-                             use_atom->resName.ascii(),
+                             use_atom->name.toAscii().data(),
+                             use_atom->resName.toAscii().data(),
                              use_atom->serial);
                   }
                   use_atom->bead_positioner = true;
@@ -3114,8 +3114,8 @@ bool US_Saxs_Util::pdb_asa_for_saxs_hydrate()
                      this_atom->bead_coordinate = this_atom->bead_cog_coordinate;
                      // if (this_atom->bead_positioner) {
                      // fprintf(stderr, "warning: this bead had a atom claiming position & a bead placing method of cog! %s %s %d\n",
-                     //   this_atom->name.ascii(),
-                     //   this_atom->resName.ascii(),
+                     //   this_atom->name.toAscii().data(),
+                     //   this_atom->resName.toAscii().data(),
                      //   this_atom->serial);
                      // }
                      break;
@@ -3129,8 +3129,8 @@ bool US_Saxs_Util::pdb_asa_for_saxs_hydrate()
                      this_atom->bead_coordinate = this_atom->bead_cog_coordinate;
                      fprintf(stderr, "warning: unknown bead placing method %d %s %s %d <using cog!>\n",
                              this_atom->placing_method,
-                             this_atom->name.ascii(),
-                             this_atom->resName.ascii(),
+                             this_atom->name.toAscii().data(),
+                             this_atom->resName.toAscii().data(),
                              this_atom->serial);
                      break;
                   }
@@ -3138,8 +3138,8 @@ bool US_Saxs_Util::pdb_asa_for_saxs_hydrate()
                else 
                {
                   errormsg = QString("").sprintf( "serious internal error 1 on %s %s %d, quitting\n",
-                                                  this_atom->name.ascii(),
-                                                  this_atom->resName.ascii(),
+                                                  this_atom->name.toAscii().data(),
+                                                  this_atom->resName.toAscii().data(),
                                                   this_atom->serial );
                   return false;
                   break;
@@ -3310,8 +3310,8 @@ bool US_Saxs_Util::create_beads()
                  && this_atom->resName != "HOH" && (this_atom->altLoc == "A" || this_atom->altLoc == " ")))
             {
                errormsg.append(QString("").sprintf("unknown residue molecule %d atom %d name %s resname %s coord [%f,%f,%f]\n",
-                                                        j + 1, k, this_atom->name.ascii(),
-                                                        this_atom->resName.ascii(),
+                                                        j + 1, k, this_atom->name.toAscii().data(),
+                                                        this_atom->resName.toAscii().data(),
                                                         this_atom->coordinate.axis[0], this_atom->coordinate.axis[1], this_atom->coordinate.axis[2]));
                return false;
             }
@@ -3325,7 +3325,7 @@ bool US_Saxs_Util::create_beads()
          {
             // clear tmp_used if new resSeq
 #if defined(DEBUG)
-            printf("respos %d != -1 last used %s %s\n", respos, this_atom->resSeq.ascii(), last_resSeq.ascii());
+            printf("respos %d != -1 last used %s %s\n", respos, this_atom->resSeq.toAscii().data(), last_resSeq.toAscii().data());
 #endif
             if (this_atom->resSeq != last_resSeq ||
                 this_atom->resName != last_resName ||
@@ -3334,7 +3334,7 @@ bool US_Saxs_Util::create_beads()
                 residue_list[respos].name == "N1")
             {
 #if defined(DEBUG)
-               printf("clear last used %s %s\n", this_atom->resSeq.ascii(), last_resSeq.ascii());
+               printf("clear last used %s %s\n", this_atom->resSeq.toAscii().data(), last_resSeq.toAscii().data());
 #endif
                for (unsigned int m = 0; m < residue_list[respos].r_atom.size(); m++)
                {
@@ -3362,7 +3362,7 @@ bool US_Saxs_Util::create_beads()
 #if defined(DEBUG)
                if(this_atom->name == "N" && !k && misc_pb_rule_on) {
                   printf("this_atom->name == N/N1 this residue_list[%d].r_atom[%d].name == %s\n",
-                         respos, m, residue_list[respos].r_atom[m].name.ascii());
+                         respos, m, residue_list[respos].r_atom[m].name.toAscii().data());
                }
 #endif
                if (!residue_list[respos].r_atom[m].tmp_used &&
@@ -3390,8 +3390,8 @@ bool US_Saxs_Util::create_beads()
             if (atompos == -1)
             {
                errormsg.append(QString("").sprintf("unknown atom molecule %d atom %d name %s resname %s coord [%f,%f,%f]\n",
-                                                    j + 1, k, this_atom->name.ascii(),
-                                                    this_atom->resName.ascii(),
+                                                    j + 1, k, this_atom->name.toAscii().data(),
+                                                    this_atom->resName.toAscii().data(),
                                                     this_atom->coordinate.axis[0], this_atom->coordinate.axis[1], this_atom->coordinate.axis[2]));
             } 
             else 
@@ -3462,7 +3462,7 @@ bool US_Saxs_Util::create_beads()
                               this_atom->saxs_name = saxs_util->hybrid_map[hybrid_name].saxs_name; 
                               this_atom->hybrid_name = hybrid_name;
                               this_atom->hydrogens = 0;
-                              if ( count_hydrogens.search(hybrid_name) != -1 )
+                              if ( count_hydrogens.indexIn(hybrid_name) != -1 )
                               {
                                  this_atom->hydrogens = count_hydrogens.cap(1).toInt();
                               }
@@ -3520,7 +3520,7 @@ bool US_Saxs_Util::create_beads()
 #if defined(DEBUG)
                printf
                   ("skipped bound waters & H %s %s rad %f resseq %s\n",
-                   this_atom->name.ascii(), this_atom->resName.ascii(), this_atom->radius, this_atom->resSeq.ascii());
+                   this_atom->name.toAscii().data(), this_atom->resName.toAscii().data(), this_atom->radius, this_atom->resSeq.toAscii().data());
                fflush(stdout);
 #endif
             }
@@ -4149,7 +4149,7 @@ bool US_Saxs_Util::check_for_missing_atoms( PDB_model *model, QStringList &qsl )
                if (lastResSeq != this_atom->resSeq)
                {
                   // new residue
-                  // printf("new residue %s\n", this_atom->resSeq.ascii());
+                  // printf("new residue %s\n", this_atom->resSeq.toAscii().data());
                   residues_found++;
                   if (lastResPos != -1)
                   {
@@ -4282,7 +4282,7 @@ bool US_Saxs_Util::check_for_missing_atoms( PDB_model *model, QStringList &qsl )
                         .arg(this_atom->resName)
                         .arg(this_atom->name)
                         .arg(0); 
-                     printf("cases residue found: idx %s\n", idx.ascii());
+                     printf("cases residue found: idx %s\n", idx.toAscii().data());
                      if (valid_atom_map[idx].size()) 
                      {
                         puts("case 2.1");
@@ -5571,7 +5571,7 @@ bool US_Saxs_Util::compute_waters_to_add_alt()
          }
 
          // add waters for each pointmap for this residue
-         if ( rx_expand_mapkey.search( this_residue ) == -1 )
+         if ( rx_expand_mapkey.indexIn( this_residue ) == -1 )
          {
             errormsg = QString( "Internal error: could not expand mapkey %1" ).arg( this_residue );
             return false;
@@ -5612,7 +5612,7 @@ bool US_Saxs_Util::compute_waters_to_add_alt()
             {
                // multiple rotated rotamers for pointmap
 
-               if ( rx_expand_mapkey.search( this_residue ) == -1 )
+               if ( rx_expand_mapkey.indexIn( this_residue ) == -1 )
                {
                   errormsg = QString( "Internal error: could not expand mapkey %1" ).arg( this_residue );
                   return false;
@@ -6269,7 +6269,7 @@ bool US_Saxs_Util::list_steric_clash_recheck()
    QFile f(fname);
    if ( f.open( QIODevice::WriteOnly ) )
    {
-      Q3TextStream ts( &f );
+      QTextStream ts( &f );
       ts << 
          QString(
                  "Hydration of                  %1\n"
@@ -6313,7 +6313,7 @@ bool US_Saxs_Util::list_steric_clash_recheck()
       QFile f(fname);
       if ( f.open( QIODevice::WriteOnly ) )
       {
-         Q3TextStream ts( &f );
+         QTextStream ts( &f );
          ts << hydrate_clash_detail;
          f.close();
          output_files << fname;

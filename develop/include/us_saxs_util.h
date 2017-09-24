@@ -921,13 +921,16 @@ class US_EXTERN US_Saxs_Util
                               const vector < double > & q,
                               const vector < double > & I,
                               double                    Rg,
+                              double                    sigRg,
                               double                    I0,
+                              double                    sigI0,
                               double                    k,
                               double                    c,
                               double                    qmax,
                               double                  & Vc,
                               double                  & Qr,
                               double                  & mwt,
+                              double                  & sigmwt,
                               QString                 & messages,
                               QString                 & notes,
                               QString                 & warning
@@ -937,12 +940,15 @@ class US_EXTERN US_Saxs_Util
                               const vector < double > & q,
                               const vector < double > & I,
                               double                    Rg,
+                              double                    sigRg,
                               double                    I0,
+                              double                    sigI0,
                               double                    mw_per_N,
                               double                  & qm,
                               double                  & Vc,
                               double                  & Qr,
                               double                  & mwc,
+                              double                  & sigmwc,
                               QString                 & messages,
                               QString                 & notes
                                );
@@ -1797,6 +1803,12 @@ class US_EXTERN US_Saxs_Util
 
 };
 
+#if QT_VERSION >= 0x040000
+extern QString us_tr( QString );
+extern const char * us_trp( QString );
+extern void us_qdebug( QString );
+FILE * us_fopen( QString f, const char *mode );
+#endif
 
 # if defined( USE_MPI )
    extern void debug_mpi( QString );

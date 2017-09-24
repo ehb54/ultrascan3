@@ -7,12 +7,12 @@
 #include <qstring.h>
 #include <qlayout.h>
 #include <qpushbutton.h>
-#include <q3frame.h>
+//#include <q3frame.h>
 #include <qcheckbox.h>
 #include <qwt_counter.h>
-#include <qbuttongroup.h>
-#include <q3textedit.h>
-#include <q3progressbar.h>
+#include <qgroupbox.h>
+#include <qtextedit.h>
+#include <qprogressbar.h>
 #include <qradiobutton.h>
 #include <qmenubar.h>
 #include <qfileinfo.h>
@@ -119,7 +119,7 @@ struct crop_undo_data
    map < QString, vector < double > >  f_errors;
 };
 
-class US_EXTERN US_Hydrodyn_Saxs : public Q3Frame
+class US_EXTERN US_Hydrodyn_Saxs : public QFrame
 {
    Q_OBJECT
 
@@ -206,11 +206,11 @@ class US_EXTERN US_Hydrodyn_Saxs : public Q3Frame
 
       QPrinter printer;
 
-      QButtonGroup *bg_saxs_sans;
+      QGroupBox *bg_saxs_sans;
       QRadioButton *rb_saxs;
       QRadioButton *rb_sans;
 
-      QButtonGroup *bg_saxs_iq;
+      QGroupBox *bg_saxs_iq;
       QRadioButton *rb_saxs_iq_native_debye;
       QRadioButton *rb_saxs_iq_native_sh;
       QRadioButton *rb_saxs_iq_native_hybrid;
@@ -221,7 +221,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public Q3Frame
       QRadioButton *rb_saxs_iq_sastbx;
       QRadioButton *rb_saxs_iq_crysol;
 
-      QButtonGroup *bg_sans_iq;
+      QGroupBox *bg_sans_iq;
       QRadioButton *rb_sans_iq_native_debye;
       QRadioButton *rb_sans_iq_native_sh;
       QRadioButton *rb_sans_iq_native_hybrid;
@@ -286,7 +286,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public Q3Frame
       QLineEdit *le_user_lowI;
       QLineEdit *le_user_highI;
 
-      QButtonGroup *bg_curve;
+      QGroupBox *bg_curve;
       QRadioButton *rb_curve_raw;
       QRadioButton *rb_curve_saxs_dry;
       QRadioButton *rb_curve_saxs;
@@ -301,7 +301,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public Q3Frame
 
       QFont ft;
 
-      Q3TextEdit *editor;
+      QTextEdit *editor;
 
       QMenuBar *m;
 
@@ -328,8 +328,8 @@ class US_EXTERN US_Hydrodyn_Saxs : public Q3Frame
       QwtWheel    * qwtw_wheel;
       QPushButton * pb_manual_guinier_process;
 
-      Q3ProgressBar *progress_pr;
-      Q3ProgressBar *progress_saxs;
+      QProgressBar *progress_pr;
+      QProgressBar *progress_saxs;
 
       struct atom current_atom;
       struct hybridization current_hybrid;
@@ -447,7 +447,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public Q3Frame
       bool stopFlag;
       bool create_native_saxs;
 
-      Q3ProgressBar *progress;
+      QProgressBar *progress;
 
       void set_current_method_buttons();
       void update_iqq_suffix();
@@ -490,7 +490,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public Q3Frame
                               double &miny,
                               double &maxy );
 
-      Q3Process *rasmol;
+      QProcess *rasmol;
 
       bool bead_model_ok_for_saxs;
 
@@ -652,10 +652,10 @@ class US_EXTERN US_Hydrodyn_Saxs : public Q3Frame
       int run_sans_iq_cryson( QString pdb );
       int run_saxs_iq_sastbx( QString pdb );
 
-      Q3Process *foxs;
-      Q3Process *crysol;
-      Q3Process *cryson;
-      Q3Process *sastbx;
+      QProcess *foxs;
+      QProcess *crysol;
+      QProcess *cryson;
+      QProcess *sastbx;
 
       QStringList crysol_stdout;
       QStringList crysol_stderr;
@@ -804,25 +804,25 @@ class US_EXTERN US_Hydrodyn_Saxs : public Q3Frame
 
       void foxs_readFromStdout();
       void foxs_readFromStderr();
-      void foxs_launchFinished();
-      void foxs_processExited();
+      void foxs_started();
+      void foxs_finished( int, QProcess::ExitStatus );
 
       void crysol_readFromStdout();
       void crysol_readFromStderr();
-      void crysol_launchFinished();
-      void crysol_processExited();
+      void crysol_started();
+      void crysol_finished( int, QProcess::ExitStatus );
       void crysol_wroteToStdin();
       void crysol_timeout();
 
       void cryson_readFromStdout();
       void cryson_readFromStderr();
-      void cryson_launchFinished();
-      void cryson_processExited();
+      void cryson_started();
+      void cryson_finished( int, QProcess::ExitStatus );
 
       void sastbx_readFromStdout();
       void sastbx_readFromStderr();
-      void sastbx_launchFinished();
-      void sastbx_processExited();
+      void sastbx_started();
+      void sastbx_finished( int, QProcess::ExitStatus );
 
       double compute_ff(
                         saxs     &sa,     // gaussian decomposition for the main atom
@@ -855,8 +855,11 @@ class US_EXTERN US_Hydrodyn_Saxs : public Q3Frame
    private slots:
 
       void setupGUI();
+      void set_saxs_sans();
       void set_saxs_sans(int);
+      void set_saxs_iq();
       void set_saxs_iq(int);
+      void set_sans_iq();
       void set_sans_iq(int);
       void load_saxs_sans();
       void load_plot_saxs();
@@ -872,6 +875,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public Q3Frame
       void show_pr_contrib();
       void update_pr_contrib_low(const QString &);
       void update_pr_contrib_high(const QString &);
+      void set_curve();
       void set_curve(int);
       void load_pr( bool just_plotted_curves = false );
       void load_plot_pr();
@@ -959,7 +963,7 @@ class saxs_Iq_thr_t : public QThread
                          vector < double > *Ic,
                          vector < double > *q,
                          unsigned int threads,
-                         Q3ProgressBar *progress,
+                         QProgressBar *progress,
                          QLabel *lbl_core_progress,
                          bool *stopFlag
                          );
@@ -980,7 +984,7 @@ class saxs_Iq_thr_t : public QThread
   vector < double > *q;
 
   unsigned int threads;
-  Q3ProgressBar *progress;
+  QProgressBar *progress;
   QLabel *lbl_core_progress;
   bool *stopFlag;
 
@@ -1003,7 +1007,7 @@ class saxs_pr_thr_t : public QThread
                          vector < float > *hist,
                          double delta,
                          unsigned int threads,
-                         Q3ProgressBar *progress,
+                         QProgressBar *progress,
                          QLabel *lbl_core_progress,
                          bool *stopFlag,
                          float b_bar_inv2
@@ -1021,7 +1025,7 @@ class saxs_pr_thr_t : public QThread
 
   double delta;
   unsigned int threads;
-  Q3ProgressBar *progress;
+  QProgressBar *progress;
   QLabel *lbl_core_progress;
   bool *stopFlag;
   float b_bar_inv2;

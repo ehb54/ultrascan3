@@ -7,7 +7,7 @@
 #include <qlineedit.h>
 #include <qstring.h>
 #include <qlayout.h>
-#include <q3frame.h>
+//#include <q3frame.h>
 //Added by qt3to4:
 #include <QCloseEvent>
 
@@ -59,7 +59,7 @@ struct hydro_results
    double solvent_density;
 };
 
-class US_EXTERN US_Hydrodyn_Results : public Q3Frame
+class US_EXTERN US_Hydrodyn_Results : public QFrame
 {
    Q_OBJECT
 

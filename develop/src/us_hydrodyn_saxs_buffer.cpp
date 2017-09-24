@@ -6,16 +6,16 @@
 #ifdef QT4
 #include <qwt_scale_engine.h>
 //Added by qt3to4:
-#include <Q3BoxLayout>
+#include <QBoxLayout>
+#include <QVBoxLayout>
+#include <QFrame>
 #include <QLabel>
+ //#include <Q3PopupMenu>
+#include <QHBoxLayout>
+#include <QTextStream>
 #include <QMouseEvent>
 #include <QCloseEvent>
-#include <Q3GridLayout>
-#include <Q3TextStream>
-#include <Q3HBoxLayout>
-#include <Q3VBoxLayout>
-#include <Q3Frame>
-#include <Q3PopupMenu>
+#include <QGridLayout>
 #endif
 
 // note: this program uses cout and/or cerr and this should be replaced
@@ -32,14 +32,14 @@ US_Hydrodyn_Saxs_Buffer::US_Hydrodyn_Saxs_Buffer(
                                                void *us_hydrodyn, 
                                                QWidget *p, 
                                                const char *name
-                                               ) : Q3Frame(p, name)
+                                               ) : QFrame( p )
 {
    this->csv1 = csv1;
    this->us_hydrodyn = us_hydrodyn;
    USglobal = new US_Config();
-   title = tr( "US-SOMO: SAXS: Data Utility" );
+   title = us_tr( "US-SOMO: SAXS: Data Utility" );
    setPalette( PALET_FRAME );
-   setCaption( title );
+   setWindowTitle( title );
    order_ascending = false;
    conc_widget     = false;
 #ifdef QT4
@@ -69,11 +69,11 @@ US_Hydrodyn_Saxs_Buffer::US_Hydrodyn_Saxs_Buffer(
    t_csv->horizontalHeader()->setMaximumHeight( 23 );
    unsigned int csv_height = 38;
    unsigned int csv_width = t_csv->columnWidth(0) + 49;
-   for ( int i = 0; i < t_csv->numRows(); i++ )
+   for ( int i = 0; i < t_csv->rowCount(); i++ )
    {
       csv_height += t_csv->rowHeight(i);
    }
-   for ( int i = 1; i < t_csv->numCols(); i++ )
+   for ( int i = 1; i < t_csv->columnCount(); i++ )
    {
       csv_width += t_csv->columnWidth(i);
    }
@@ -335,7 +335,7 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    // lbl_title->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    // lbl_title->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    // lbl_title->setMinimumHeight(minHeight1);
-   // lbl_title->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
+   // lbl_title->setPalette( USglobal->global_colors.cg_frame );
    // lbl_title->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 
    lbl_files = new QLabel("Data files", this);
@@ -346,72 +346,72 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    lbl_files->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 
    cb_lock_dir = new QCheckBox(this);
-   cb_lock_dir->setText(tr("Lock "));
+   cb_lock_dir->setText(us_tr("Lock "));
    cb_lock_dir->setEnabled( true );
    cb_lock_dir->setChecked( false );
    cb_lock_dir->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 2 ) );
    cb_lock_dir->setPalette( PALET_NORMAL );
    AUTFBACK( cb_lock_dir );
 
-   lbl_dir = new mQLabel( QDir::currentDirPath(), this );
+   lbl_dir = new mQLabel( QDir::currentPath(), this );
    lbl_dir->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_dir->setPalette( PALET_NORMAL );
    AUTFBACK( lbl_dir );
    lbl_dir->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 2));
    connect( lbl_dir, SIGNAL(pressed()), SLOT( dir_pressed() ));
 
-   pb_add_files = new QPushButton(tr("Add files"), this);
+   pb_add_files = new QPushButton(us_tr("Add files"), this);
    pb_add_files->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_add_files->setMinimumHeight(minHeight3);
    pb_add_files->setPalette( PALET_PUSHB );
    connect(pb_add_files, SIGNAL(clicked()), SLOT(add_files()));
 
-   pb_similar_files = new QPushButton(tr("Similar"), this);
+   pb_similar_files = new QPushButton(us_tr("Similar"), this);
    pb_similar_files->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_similar_files->setMinimumHeight(minHeight3);
    pb_similar_files->setPalette( PALET_PUSHB );
    connect(pb_similar_files, SIGNAL(clicked()), SLOT(similar_files()));
 
-   pb_conc = new QPushButton(tr("Concentrations"), this);
+   pb_conc = new QPushButton(us_tr("Concentrations"), this);
    pb_conc->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_conc->setMinimumHeight(minHeight3);
    pb_conc->setPalette( PALET_PUSHB );
    connect(pb_conc, SIGNAL(clicked()), SLOT(conc()));
 
-   pb_clear_files = new QPushButton(tr("Remove files"), this);
+   pb_clear_files = new QPushButton(us_tr("Remove files"), this);
    pb_clear_files->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_clear_files->setMinimumHeight(minHeight3);
    pb_clear_files->setPalette( PALET_PUSHB );
    connect(pb_clear_files, SIGNAL(clicked()), SLOT(clear_files()));
 
-   pb_regex_load = new QPushButton(tr("RL"), this);
+   pb_regex_load = new QPushButton(us_tr("RL"), this);
    pb_regex_load->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_regex_load->setMinimumHeight(minHeight3);
    pb_regex_load->setPalette( PALET_PUSHB );
    connect(pb_regex_load, SIGNAL(clicked()), SLOT(regex_load()));
 
-   le_regex = new QLineEdit(this, "le_regex Line Edit");
+   le_regex = new QLineEdit( this );    le_regex->setObjectName( "le_regex Line Edit" );
    le_regex->setText( "" );
    le_regex->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_regex->setPalette( PALET_NORMAL );
    AUTFBACK( le_regex );
    le_regex->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
 
-   le_regex_args = new QLineEdit(this, "le_regex_args Line Edit");
+   le_regex_args = new QLineEdit( this );    le_regex_args->setObjectName( "le_regex_args Line Edit" );
    le_regex_args->setText( "" );
    le_regex_args->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_regex_args->setPalette( PALET_NORMAL );
    AUTFBACK( le_regex_args );
    le_regex_args->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
 
-   lb_files = new Q3ListBox(this, "files files listbox" );
+   lb_files = new QListWidget( this );
    lb_files->setPalette( PALET_NORMAL );
    AUTFBACK( lb_files );
    lb_files->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    lb_files->setEnabled(true);
-   lb_files->setSelectionMode( Q3ListBox::Extended );
+   lb_files->setSelectionMode( QAbstractItemView::ExtendedSelection );
    lb_files->setMinimumHeight( minHeight1 * 8 );
-   connect( lb_files, SIGNAL( selectionChanged() ), SLOT( update_files() ) );
+   connect( lb_files, SIGNAL( itemSelectionChanged() ), SLOT( update_files() ) );
 
    lbl_selected = new QLabel("0 files selected", this );
    lbl_selected->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
@@ -419,95 +419,95 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    AUTFBACK( lbl_selected );
    lbl_selected->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 2));
 
-   pb_select_all = new QPushButton(tr("Select all"), this);
+   pb_select_all = new QPushButton(us_tr("Select all"), this);
    pb_select_all->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_select_all->setMinimumHeight(minHeight1);
    pb_select_all->setPalette( PALET_PUSHB );
    connect(pb_select_all, SIGNAL(clicked()), SLOT(select_all()));
 
-   pb_invert = new QPushButton(tr("Invert"), this);
+   pb_invert = new QPushButton(us_tr("Invert"), this);
    pb_invert->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_invert->setMinimumHeight(minHeight1);
    pb_invert->setPalette( PALET_PUSHB );
    connect(pb_invert, SIGNAL(clicked()), SLOT(invert()));
 
-   pb_color_rotate = new QPushButton(tr("C"), this);
+   pb_color_rotate = new QPushButton(us_tr("C"), this);
    pb_color_rotate->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_color_rotate->setMinimumHeight(minHeight1);
    pb_color_rotate->setMaximumWidth ( minHeight1 * 2 );
    pb_color_rotate->setPalette( PALET_PUSHB );
    connect(pb_color_rotate, SIGNAL(clicked()), SLOT(color_rotate()));
 
-   //    pb_join = new QPushButton(tr("J"), this);
+   //    pb_join = new QPushButton(us_tr("J"), this);
    //    pb_join->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    //    pb_join->setMinimumHeight( minHeight1 );
    //    pb_join->setMaximumWidth ( minHeight1 * 2 );
-   //    pb_join->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   //    pb_join->setPalette( USglobal->global_colors.cg_pushb );
    //    connect(pb_join, SIGNAL(clicked()), SLOT(join()));
 
-   pb_select_nth = new QPushButton(tr("Select"), this);
+   pb_select_nth = new QPushButton(us_tr("Select"), this);
    pb_select_nth->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_select_nth->setMinimumHeight(minHeight1);
    pb_select_nth->setPalette( PALET_PUSHB );
    connect(pb_select_nth, SIGNAL(clicked()), SLOT(select_nth()));
 
-   // pb_adjacent = new QPushButton(tr("Similar"), this);
+   // pb_adjacent = new QPushButton(us_tr("Similar"), this);
    // pb_adjacent->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    // pb_adjacent->setMinimumHeight(minHeight1);
-   // pb_adjacent->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   // pb_adjacent->setPalette( USglobal->global_colors.cg_pushb );
    // connect(pb_adjacent, SIGNAL(clicked()), SLOT(adjacent()));
 
-   pb_to_saxs = new QPushButton(tr("S"), this);
+   pb_to_saxs = new QPushButton(us_tr("S"), this);
    pb_to_saxs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_to_saxs->setMinimumHeight( minHeight1 );
    pb_to_saxs->setMaximumWidth ( minHeight1 * 2 );
    pb_to_saxs->setPalette( PALET_PUSHB );
    connect(pb_to_saxs, SIGNAL(clicked()), SLOT(to_saxs()));
 
-   pb_view = new QPushButton(tr("View"), this);
+   pb_view = new QPushButton(us_tr("View"), this);
    pb_view->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_view->setMinimumHeight( minHeight1 );
    pb_view->setMaximumWidth ( minHeight1 * 4 );
    pb_view->setPalette( PALET_PUSHB );
    connect(pb_view, SIGNAL(clicked()), SLOT( view() ));
 
-   pb_rescale = new QPushButton(tr("Rescale"), this);
+   pb_rescale = new QPushButton(us_tr("Rescale"), this);
    pb_rescale->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_rescale->setMinimumHeight(minHeight1);
    pb_rescale->setPalette( PALET_PUSHB );
    connect(pb_rescale, SIGNAL(clicked()), SLOT(rescale()));
 
-   // pb_plot_files = new QPushButton(tr("Plot"), this);
+   // pb_plot_files = new QPushButton(us_tr("Plot"), this);
    // pb_plot_files->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    // pb_plot_files->setMinimumHeight(minHeight1);
-   // pb_plot_files->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   // pb_plot_files->setPalette( USglobal->global_colors.cg_pushb );
    // connect(pb_plot_files, SIGNAL(clicked()), SLOT(plot_files()));
 
-   pb_asum = new QPushButton(tr("WS"), this);
+   pb_asum = new QPushButton(us_tr("WS"), this);
    pb_asum->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_asum->setMinimumHeight(minHeight1);
    pb_asum->setPalette( PALET_PUSHB );
    connect(pb_asum, SIGNAL(clicked()), SLOT(asum()));
 
-   pb_avg = new QPushButton(tr("Average"), this);
+   pb_avg = new QPushButton(us_tr("Average"), this);
    pb_avg->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_avg->setMinimumHeight(minHeight1);
    pb_avg->setPalette( PALET_PUSHB );
    connect(pb_avg, SIGNAL(clicked()), SLOT(avg()));
 
-   pb_normalize = new QPushButton(tr("N"), this);
+   pb_normalize = new QPushButton(us_tr("N"), this);
    pb_normalize->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_normalize->setMinimumHeight(minHeight1);
    pb_normalize->setPalette( PALET_PUSHB );
    connect(pb_normalize, SIGNAL(clicked()), SLOT(normalize()));
 
-   pb_conc_avg = new QPushButton(tr("Concentration normalized average"), this);
+   pb_conc_avg = new QPushButton(us_tr("Concentration normalized average"), this);
    pb_conc_avg->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_conc_avg->setMinimumHeight(minHeight1);
    pb_conc_avg->setPalette( PALET_PUSHB );
    connect(pb_conc_avg, SIGNAL(clicked()), SLOT(conc_avg()));
 
-   pb_set_buffer = new QPushButton(tr("Set buffer"), this);
+   pb_set_buffer = new QPushButton(us_tr("Set buffer"), this);
    pb_set_buffer->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_set_buffer->setMinimumHeight(minHeight1);
    pb_set_buffer->setPalette( PALET_PUSHB );
@@ -520,7 +520,7 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    AUTFBACK( lbl_buffer );
    lbl_buffer->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
 
-   pb_set_empty = new QPushButton(tr("Set blank"), this);
+   pb_set_empty = new QPushButton(us_tr("Set blank"), this);
    pb_set_empty->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_set_empty->setMinimumHeight(minHeight1);
    pb_set_empty->setPalette( PALET_PUSHB );
@@ -533,7 +533,7 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    AUTFBACK( lbl_empty );
    lbl_empty->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
 
-   pb_set_signal = new QPushButton(tr("Set solution"), this);
+   pb_set_signal = new QPushButton(us_tr("Set solution"), this);
    pb_set_signal->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_set_signal->setMinimumHeight(minHeight1);
    pb_set_signal->setPalette( PALET_PUSHB );
@@ -553,24 +553,24 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    AUTFBACK( lbl_created_files );
    lbl_created_files->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 
-   lbl_created_dir = new mQLabel( QDir::currentDirPath(), this );
+   lbl_created_dir = new mQLabel( QDir::currentPath(), this );
    lbl_created_dir->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_created_dir->setPalette( PALET_NORMAL );
    AUTFBACK( lbl_created_dir );
    lbl_created_dir->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 2));
    connect( lbl_created_dir, SIGNAL(pressed()), SLOT( created_dir_pressed() ));
 
-   lb_created_files = new Q3ListBox(this, "created_files created_files listbox" );
+   lb_created_files = new QListWidget( this );
    lb_created_files->setPalette( PALET_NORMAL );
    AUTFBACK( lb_created_files );
    lb_created_files->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    lb_created_files->setEnabled(true);
-   lb_created_files->setSelectionMode( Q3ListBox::Extended );
+   lb_created_files->setSelectionMode( QAbstractItemView::ExtendedSelection );
    lb_created_files->setMinimumHeight( minHeight1 * 3 );
-   connect( lb_created_files, SIGNAL( selectionChanged() ), SLOT( update_created_files() ) );
+   connect( lb_created_files, SIGNAL( itemSelectionChanged() ), SLOT( update_created_files() ) );
    connect( lb_created_files, 
-            SIGNAL( rightButtonClicked( Q3ListBoxItem *, const QPoint & ) ),
-            SLOT  ( rename_created    ( Q3ListBoxItem *, const QPoint & ) ) );
+            SIGNAL( rightButtonClicked( QListWidgetItem *, const QPoint & ) ),
+            SLOT  ( rename_created    ( QListWidgetItem *, const QPoint & ) ) );
 
    lbl_selected_created = new QLabel("0 files selected", this );
    lbl_selected_created->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
@@ -578,114 +578,141 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    AUTFBACK( lbl_selected_created );
    lbl_selected_created->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 2));
 
-   pb_select_all_created = new QPushButton(tr("Select all"), this);
+   pb_select_all_created = new QPushButton(us_tr("Select all"), this);
    pb_select_all_created->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize  - 1));
    pb_select_all_created->setMinimumHeight(minHeight1);
    pb_select_all_created->setPalette( PALET_PUSHB );
    connect(pb_select_all_created, SIGNAL(clicked()), SLOT(select_all_created()));
 
-   pb_adjacent_created = new QPushButton(tr("Similar"), this);
+   pb_adjacent_created = new QPushButton(us_tr("Similar"), this);
    pb_adjacent_created->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_adjacent_created->setMinimumHeight(minHeight1);
    pb_adjacent_created->setPalette( PALET_PUSHB );
    connect(pb_adjacent_created, SIGNAL(clicked()), SLOT(adjacent_created()));
 
-   pb_save_created_csv = new QPushButton(tr("Save CSV"), this);
+   pb_save_created_csv = new QPushButton(us_tr("Save CSV"), this);
    pb_save_created_csv->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_save_created_csv->setMinimumHeight(minHeight1);
    pb_save_created_csv->setPalette( PALET_PUSHB );
    connect(pb_save_created_csv, SIGNAL(clicked()), SLOT(save_created_csv()));
 
-   pb_save_created = new QPushButton(tr("Save"), this);
+   pb_save_created = new QPushButton(us_tr("Save"), this);
    pb_save_created->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_save_created->setMinimumHeight(minHeight1);
    pb_save_created->setPalette( PALET_PUSHB );
    connect(pb_save_created, SIGNAL(clicked()), SLOT(save_created()));
 
-   pb_show_created = new QPushButton(tr("Show"), this);
+   pb_show_created = new QPushButton(us_tr("Show"), this);
    pb_show_created->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_show_created->setMinimumHeight(minHeight1);
    pb_show_created->setPalette( PALET_PUSHB );
    connect(pb_show_created, SIGNAL(clicked()), SLOT(show_created()));
 
-   pb_show_only_created = new QPushButton(tr("Show only"), this);
+   pb_show_only_created = new QPushButton(us_tr("Show only"), this);
    pb_show_only_created->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_show_only_created->setMinimumHeight(minHeight1);
    pb_show_only_created->setPalette( PALET_PUSHB );
    connect(pb_show_only_created, SIGNAL(clicked()), SLOT(show_only_created()));
 
-   progress = new Q3ProgressBar(this, "Progress");
+   progress = new QProgressBar( this );
    // progress->setMinimumHeight(minHeight1);
    progress->setPalette( PALET_NORMAL );
    AUTFBACK( progress );
    progress->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    progress->reset();
 
-   pb_start = new QPushButton(tr("Buffer subtraction over range"), this);
+   pb_start = new QPushButton(us_tr("Buffer subtraction over range"), this);
    pb_start->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_start->setMinimumHeight(minHeight1);
    pb_start->setPalette( PALET_PUSHB );
    connect(pb_start, SIGNAL(clicked()), SLOT(start()));
 
-   pb_run_current = new QPushButton(tr("Current value buffer subtraction"), this);
+   pb_run_current = new QPushButton(us_tr("Current value buffer subtraction"), this);
    pb_run_current->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_run_current->setMinimumHeight(minHeight1);
    pb_run_current->setPalette( PALET_PUSHB );
    connect(pb_run_current, SIGNAL(clicked()), SLOT(run_current()));
 
-   pb_run_divide = new QPushButton(tr("Current value buffer divide"), this);
+   pb_run_divide = new QPushButton(us_tr("Current value buffer divide"), this);
    pb_run_divide->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_run_divide->setMinimumHeight(minHeight1);
    pb_run_divide->setPalette( PALET_PUSHB );
    connect(pb_run_divide, SIGNAL(clicked()), SLOT(run_divide()));
 
-   pb_run_best = new QPushButton(tr("Best buffer subtraction"), this);
+   pb_run_best = new QPushButton(us_tr("Best buffer subtraction"), this);
    pb_run_best->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_run_best->setMinimumHeight(minHeight1);
    pb_run_best->setPalette( PALET_PUSHB );
    connect(pb_run_best, SIGNAL(clicked()), SLOT(run_best()));
 
-   pb_stop = new QPushButton(tr("Stop"), this);
+   pb_stop = new QPushButton(us_tr("Stop"), this);
    pb_stop->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_stop->setMinimumHeight(minHeight1);
    pb_stop->setPalette( PALET_PUSHB );
    connect(pb_stop, SIGNAL(clicked()), SLOT(stop()));
 
-   editor = new Q3TextEdit(this);
+   editor = new QTextEdit(this);
    editor->setPalette( PALET_NORMAL );
    AUTFBACK( editor );
    editor->setReadOnly(true);
    editor->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 2 ));
 
-#if defined(QT4) && defined(Q_WS_MAC)
+#if QT_VERSION < 0x040000
+# if defined(QT4) && defined(Q_WS_MAC)
    {
-      Q3PopupMenu * file = new Q3PopupMenu;
-      file->insertItem( tr("&Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
-      file->insertItem( tr("&Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
-      file->insertItem( tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
+ //      Q3PopupMenu * file = new Q3PopupMenu;
+      file->insertItem( us_tr("&Font"),  this, SLOT(update_font( )),    Qt::ALT+Qt::Key_F );
+      file->insertItem( us_tr("&Save"),  this, SLOT(save( )),    Qt::ALT+Qt::Key_S );
+      file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display( )),   Qt::ALT+Qt::Key_X );
 
       QMenuBar *menu = new QMenuBar( this );
       AUTFBACK( menu );
 
-      menu->insertItem(tr("&Messages"), file );
+      menu->insertItem(us_tr("&Messages"), file );
    }
-#else
-   Q3Frame *frame;
-   frame = new Q3Frame(this);
+# else
+   QFrame *frame;
+   frame = new QFrame(this);
    frame->setMinimumHeight(minHeight3);
 
-   m = new QMenuBar(frame, "menu" );
+   m = new QMenuBar( frame );    m->setObjectName( "menu" );
    m->setMinimumHeight(minHeight1 - 5);
    m->setPalette( PALET_NORMAL );
    AUTFBACK( m );
-   Q3PopupMenu * file = new Q3PopupMenu(editor);
-   m->insertItem( tr("&File"), file );
-   file->insertItem( tr("Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
-   file->insertItem( tr("Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
-   file->insertItem( tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
+ //   Q3PopupMenu * file = new Q3PopupMenu(editor);
+   m->insertItem( us_tr("&File"), file );
+   file->insertItem( us_tr("Font"),  this, SLOT(update_font( )),    Qt::ALT+Qt::Key_F );
+   file->insertItem( us_tr("Save"),  this, SLOT(save( )),    Qt::ALT+Qt::Key_S );
+   file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display( )),   Qt::ALT+Qt::Key_X );
+# endif
+#else
+   QFrame *frame;
+   frame = new QFrame(this);
+   frame->setMinimumHeight(minHeight3);
+
+   m = new QMenuBar( frame );    m->setObjectName( "menu" );
+   m->setMinimumHeight(minHeight1 - 5);
+   m->setPalette( PALET_NORMAL );
+   AUTFBACK( m );
+
+   {
+      QMenu * new_menu = m->addMenu( us_tr( "&File" ) );
+
+      QAction *qa1 = new_menu->addAction( us_tr( "Font" ) );
+      qa1->setShortcut( Qt::ALT+Qt::Key_F );
+      connect( qa1, SIGNAL(triggered()), this, SLOT( update_font() ) );
+
+      QAction *qa2 = new_menu->addAction( us_tr( "Save" ) );
+      qa2->setShortcut( Qt::ALT+Qt::Key_S );
+      connect( qa2, SIGNAL(triggered()), this, SLOT( save() ) );
+
+      QAction *qa3 = new_menu->addAction( us_tr( "Clear Display" ) );
+      qa3->setShortcut( Qt::ALT+Qt::Key_X );
+      connect( qa3, SIGNAL(triggered()), this, SLOT( clear_display() ) );
+   }
 #endif
 
-   editor->setWordWrap (Q3TextEdit::WidgetWidth);
+   editor->setWordWrapMode (QTextOption::WordWrap);
    editor->setMinimumHeight( minHeight1 * 3 );
 
    plot_dist = new QwtPlot(this);
@@ -710,8 +737,8 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    grid_saxs->setMinPen( QPen( USglobal->global_colors.minor_ticks, 0, Qt::DotLine ) );
    grid_saxs->attach( plot_dist );
 #endif
-   plot_dist->setAxisTitle(QwtPlot::xBottom, /* cb_guinier->isChecked() ? tr("q^2 (1/Angstrom^2)") : */  tr("q (1/Angstrom)"));
-   plot_dist->setAxisTitle(QwtPlot::yLeft, tr("I(q) (log scale)"));
+   plot_dist->setAxisTitle(QwtPlot::xBottom, /* cb_guinier->isChecked() ? us_tr("q^2 (1/Angstrom^2)") : */  us_tr("q (1/Angstrom)"));
+   plot_dist->setAxisTitle(QwtPlot::yLeft, us_tr("I(q) (log scale)"));
 #ifndef QT4
    plot_dist->setTitleFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 3, QFont::Bold));
    plot_dist->setAxisTitleFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
@@ -739,13 +766,13 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    plot_dist->setLegendFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 2 ) );
 #else
    QwtLegend* legend_pd = new QwtLegend;
-   legend_pd->setFrameStyle( Q3Frame::Box | Q3Frame::Sunken );
+   legend_pd->setFrameStyle( QFrame::Box | QFrame::Sunken );
    plot_dist->insertLegend( legend_pd, QwtPlot::BottomLegend );
 #endif
    connect( plot_dist->canvas(), SIGNAL( mouseReleased( const QMouseEvent & ) ), SLOT( plot_mouse(  const QMouseEvent & ) ) );
 
-   t_csv = new Q3Table(csv1.data.size(), csv1.header.size(), this);
-   t_csv->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Raised);
+   t_csv = new QTableWidget(csv1.data.size(), csv1.header.size(), this);
+   t_csv->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    t_csv->setMinimumHeight(minHeight1 * ( 1 + csv1.data.size() ) );
    t_csv->setMaximumHeight(minHeight1 * ( 2 + csv1.data.size() ) );
    // t_csv->setMinimumWidth(minWidth1);
@@ -760,30 +787,30 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
       {
          if ( csv1.data[i][j] == "Y" || csv1.data[i][j] == "N" )
          {
-            t_csv->setItem( i, j, new Q3CheckTableItem( t_csv, "" ) );
-            ((Q3CheckTableItem *)(t_csv->item( i, j )))->setChecked( csv1.data[i][j] == "Y" );
+            t_csv->setCellWidget( i, j, new QCheckBox() );
+            ((QCheckBox *)(t_csv->cellWidget( i, j )))->setChecked( csv1.data[i][j] == "Y" );
          } else {
-            t_csv->setText( i, j, csv1.data[i][j] );
+            t_csv->setItem( i, j, new QTableWidgetItem( csv1.data[i][j] ) );
          }
       }
    }
 
    for ( unsigned int i = 0; i < csv1.header.size(); i++ )
    {
-      t_csv->horizontalHeader()->setLabel(i, csv1.header[i]);
+      t_csv->setHorizontalHeaderItem(i, new QTableWidgetItem( csv1.header[i]));
    }
 
-   t_csv->setSorting(false);
-   t_csv->setRowMovingEnabled(false);
-   t_csv->setColumnMovingEnabled(false);
-   t_csv->setReadOnly(false);
+   t_csv->setSortingEnabled(false);
+    t_csv->verticalHeader()->setMovable(false);
+    t_csv->horizontalHeader()->setMovable(false);
+   //  t_csv->setReadOnly(false);
 
    t_csv->setColumnWidth(0, 330);
-   t_csv->setColumnReadOnly(0, true);
-   t_csv->setColumnReadOnly(t_csv->numCols() - 1, true);
+   { for ( int i = 0; i < t_csv->rowCount(); ++i ) { t_csv->item( i, 0 )->setFlags( t_csv->item( i, 0 )->flags() ^ Qt::ItemIsEditable ); } };
+   { for ( int i = 0; i < t_csv->rowCount(); ++i ) { t_csv->item( i, t_csv->columnCount() - 1 )->setFlags( t_csv->item( i, t_csv->columnCount() - 1 )->flags() ^ Qt::ItemIsEditable ); } };
 
    // probably I'm not understanding something, but these next two lines don't seem to do anything
-   t_csv->horizontalHeader()->adjustHeaderSize();
+   // t_csv->horizontalHeader()->adjustHeaderSize();
    t_csv->adjustSize();
 
    recompute_interval_from_points();
@@ -804,40 +831,40 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    qwtw_wheel->setEnabled      ( false );
    connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
 
-   pb_wheel_cancel = new QPushButton(tr("Cancel"), this);
+   pb_wheel_cancel = new QPushButton(us_tr("Cancel"), this);
    pb_wheel_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_wheel_cancel->setMinimumHeight(minHeight1);
    pb_wheel_cancel->setPalette( PALET_PUSHB );
    pb_wheel_cancel->setEnabled(false);
    connect(pb_wheel_cancel, SIGNAL(clicked()), SLOT(wheel_cancel()));
 
-   pb_wheel_save = new QPushButton(tr("Keep"), this);
+   pb_wheel_save = new QPushButton(us_tr("Keep"), this);
    pb_wheel_save->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_wheel_save->setMinimumHeight(minHeight1);
    pb_wheel_save->setPalette( PALET_PUSHB );
    pb_wheel_save->setEnabled(false);
    connect(pb_wheel_save, SIGNAL(clicked()), SLOT(wheel_save()));
 
-   pb_join_start = new QPushButton(tr("Join"), this);
+   pb_join_start = new QPushButton(us_tr("Join"), this);
    pb_join_start->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_join_start->setMinimumHeight(minHeight1);
    pb_join_start->setPalette( PALET_PUSHB );
    connect(pb_join_start, SIGNAL(clicked()), SLOT(join_start()));
 
-   pb_join_swap = new QPushButton( join_adjust_lowq ? tr("Scale high-q") : tr("Scale low-q"), this);
+   pb_join_swap = new QPushButton( join_adjust_lowq ? us_tr("Scale high-q") : us_tr("Scale low-q"), this);
    pb_join_swap->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_join_swap->setMinimumHeight(minHeight1);
    pb_join_swap->setPalette( PALET_PUSHB );
    pb_join_swap->setEnabled(false);
    connect(pb_join_swap, SIGNAL(clicked()), SLOT(join_swap()));
 
-   lbl_join_offset = new QLabel( tr( "Linear offset:" ), this );
+   lbl_join_offset = new QLabel( us_tr( "Linear offset:" ), this );
    lbl_join_offset->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_join_offset->setPalette( PALET_NORMAL );
    AUTFBACK( lbl_join_offset );
    lbl_join_offset->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
 
-   le_join_offset = new mQLineEdit(this, "le_join_offset Line Edit");
+   le_join_offset = new mQLineEdit( this );    le_join_offset->setObjectName( "le_join_offset Line Edit" );
    le_join_offset->setText( "" );
    le_join_offset->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_join_offset->setPalette( PALET_NORMAL );
@@ -848,13 +875,13 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    connect( le_join_offset, SIGNAL( textChanged( const QString & ) ), SLOT( join_offset_text( const QString & ) ) );
    connect( le_join_offset, SIGNAL( focussed ( bool ) )             , SLOT( join_offset_focus( bool ) ) );
 
-   lbl_join_mult = new QLabel( tr( "Multiplier:" ), this );
+   lbl_join_mult = new QLabel( us_tr( "Multiplier:" ), this );
    lbl_join_mult->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_join_mult->setPalette( PALET_NORMAL );
    AUTFBACK( lbl_join_mult );
    lbl_join_mult->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
 
-   le_join_mult = new mQLineEdit(this, "le_join_mult Line Edit");
+   le_join_mult = new mQLineEdit( this );    le_join_mult->setObjectName( "le_join_mult Line Edit" );
    le_join_mult->setText( "" );
    le_join_mult->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_join_mult->setPalette( PALET_NORMAL );
@@ -865,13 +892,13 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    connect( le_join_mult, SIGNAL( textChanged( const QString & ) ), SLOT( join_mult_text( const QString & ) ) );
    connect( le_join_mult, SIGNAL( focussed ( bool ) )             , SLOT( join_mult_focus( bool ) ) );
 
-   lbl_join_start = new QLabel( tr( "Start:" ), this );
+   lbl_join_start = new QLabel( us_tr( "Start:" ), this );
    lbl_join_start->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_join_start->setPalette( PALET_NORMAL );
    AUTFBACK( lbl_join_start );
    lbl_join_start->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
 
-   le_join_start = new mQLineEdit(this, "le_join_start Line Edit");
+   le_join_start = new mQLineEdit( this );    le_join_start->setObjectName( "le_join_start Line Edit" );
    le_join_start->setText( "" );
    le_join_start->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_join_start->setPalette( PALET_NORMAL );
@@ -882,13 +909,13 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    connect( le_join_start, SIGNAL( textChanged( const QString & ) ), SLOT( join_start_text( const QString & ) ) );
    connect( le_join_start, SIGNAL( focussed ( bool ) )             , SLOT( join_start_focus( bool ) ) );
 
-   lbl_join_point = new QLabel( tr( "Cut:" ), this );
+   lbl_join_point = new QLabel( us_tr( "Cut:" ), this );
    lbl_join_point->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_join_point->setPalette( PALET_NORMAL );
    AUTFBACK( lbl_join_point );
    lbl_join_point->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
 
-   le_join_point = new mQLineEdit(this, "le_join_point Line Edit");
+   le_join_point = new mQLineEdit( this );    le_join_point->setObjectName( "le_join_point Line Edit" );
    le_join_point->setText( "" );
    le_join_point->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_join_point->setPalette( PALET_NORMAL );
@@ -899,13 +926,13 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    connect( le_join_point, SIGNAL( textChanged( const QString & ) ), SLOT( join_point_text( const QString & ) ) );
    connect( le_join_point, SIGNAL( focussed ( bool ) )             , SLOT( join_point_focus( bool ) ) );
 
-   lbl_join_end = new QLabel( tr( "End:" ), this );
+   lbl_join_end = new QLabel( us_tr( "End:" ), this );
    lbl_join_end->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_join_end->setPalette( PALET_NORMAL );
    AUTFBACK( lbl_join_end );
    lbl_join_end->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
 
-   le_join_end = new mQLineEdit(this, "le_join_end Line Edit");
+   le_join_end = new mQLineEdit( this );    le_join_end->setObjectName( "le_join_end Line Edit" );
    le_join_end->setText( "" );
    le_join_end->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_join_end->setPalette( PALET_NORMAL );
@@ -916,14 +943,14 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    connect( le_join_end, SIGNAL( textChanged( const QString & ) ), SLOT( join_end_text( const QString & ) ) );
    connect( le_join_end, SIGNAL( focussed ( bool ) )             , SLOT( join_end_focus( bool ) ) );
 
-   pb_join_fit_scaling = new QPushButton(tr("Fit"), this);
+   pb_join_fit_scaling = new QPushButton(us_tr("Fit"), this);
    pb_join_fit_scaling->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_join_fit_scaling->setMinimumHeight(minHeight1);
    pb_join_fit_scaling->setPalette( PALET_PUSHB );
    pb_join_fit_scaling->setEnabled( false );
    connect(pb_join_fit_scaling, SIGNAL(clicked()), SLOT(join_fit_scaling()));
 
-   pb_join_fit_linear = new QPushButton(tr("Linear"), this);
+   pb_join_fit_linear = new QPushButton(us_tr("Linear"), this);
    pb_join_fit_linear->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_join_fit_linear->setMinimumHeight(minHeight1);
    pb_join_fit_linear->setPalette( PALET_PUSHB );
@@ -936,74 +963,74 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    AUTFBACK( lbl_join_rmsd );
    lbl_join_rmsd->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
 
-   pb_select_vis = new QPushButton(tr("Select Visible"), this);
+   pb_select_vis = new QPushButton(us_tr("Select Visible"), this);
    pb_select_vis->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_select_vis->setMinimumHeight(minHeight1);
    pb_select_vis->setPalette( PALET_PUSHB );
    connect(pb_select_vis, SIGNAL(clicked()), SLOT(select_vis()));
 
-   pb_remove_vis = new QPushButton(tr("Remove Visible"), this);
+   pb_remove_vis = new QPushButton(us_tr("Remove Visible"), this);
    pb_remove_vis->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_remove_vis->setMinimumHeight(minHeight1);
    pb_remove_vis->setPalette( PALET_PUSHB );
    connect(pb_remove_vis, SIGNAL(clicked()), SLOT(remove_vis()));
 
-   pb_crop_common = new QPushButton(tr("Crop Common"), this);
+   pb_crop_common = new QPushButton(us_tr("Crop Common"), this);
    pb_crop_common->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_crop_common->setMinimumHeight(minHeight1);
    pb_crop_common->setPalette( PALET_PUSHB );
    connect(pb_crop_common, SIGNAL(clicked()), SLOT(crop_common()));
 
-   pb_crop_vis = new QPushButton(tr("Crop Visible"), this);
+   pb_crop_vis = new QPushButton(us_tr("Crop Visible"), this);
    pb_crop_vis->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_crop_vis->setMinimumHeight(minHeight1);
    pb_crop_vis->setPalette( PALET_PUSHB );
    connect(pb_crop_vis, SIGNAL(clicked()), SLOT(crop_vis()));
 
-   pb_crop_zero = new QPushButton(tr("Crop Zeros"), this);
+   pb_crop_zero = new QPushButton(us_tr("Crop Zeros"), this);
    pb_crop_zero->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_crop_zero->setMinimumHeight(minHeight1);
    pb_crop_zero->setPalette( PALET_PUSHB );
    connect(pb_crop_zero, SIGNAL(clicked()), SLOT(crop_zero()));
 
-   pb_crop_left = new QPushButton(tr("Crop Left"), this);
+   pb_crop_left = new QPushButton(us_tr("Crop Left"), this);
    pb_crop_left->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_crop_left->setMinimumHeight(minHeight1);
    pb_crop_left->setPalette( PALET_PUSHB );
    connect(pb_crop_left, SIGNAL(clicked()), SLOT(crop_left()));
 
-   pb_crop_undo = new QPushButton(tr("Undo"), this);
+   pb_crop_undo = new QPushButton(us_tr("Undo"), this);
    pb_crop_undo->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_crop_undo->setMinimumHeight(minHeight1);
    pb_crop_undo->setPalette( PALET_PUSHB );
    connect(pb_crop_undo, SIGNAL(clicked()), SLOT(crop_undo()));
 
-   pb_crop_right = new QPushButton(tr("Crop Right"), this);
+   pb_crop_right = new QPushButton(us_tr("Crop Right"), this);
    pb_crop_right->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_crop_right->setMinimumHeight(minHeight1);
    pb_crop_right->setPalette( PALET_PUSHB );
    connect(pb_crop_right, SIGNAL(clicked()), SLOT(crop_right()));
 
-   pb_legend = new QPushButton(tr("Legend"), this);
+   pb_legend = new QPushButton(us_tr("Legend"), this);
    pb_legend->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_legend->setMinimumHeight(minHeight1);
    pb_legend->setPalette( PALET_PUSHB );
    connect(pb_legend, SIGNAL(clicked()), SLOT(legend()));
 
-   pb_axis_x = new QPushButton(tr("X"), this);
+   pb_axis_x = new QPushButton(us_tr("X"), this);
    pb_axis_x->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_axis_x->setMinimumHeight(minHeight1);
    pb_axis_x->setPalette( PALET_PUSHB );
    connect(pb_axis_x, SIGNAL(clicked()), SLOT(axis_x()));
 
-   pb_axis_y = new QPushButton(tr("Y"), this);
+   pb_axis_y = new QPushButton(us_tr("Y"), this);
    pb_axis_y->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_axis_y->setMinimumHeight(minHeight1);
    pb_axis_y->setPalette( PALET_PUSHB );
    connect(pb_axis_y, SIGNAL(clicked()), SLOT(axis_y()));
 
    cb_guinier = new QCheckBox(this);
-   cb_guinier->setText(tr(" Guinier"));
+   cb_guinier->setText(us_tr(" Guinier"));
    cb_guinier->setChecked(false);
    cb_guinier->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    cb_guinier->setPalette( PALET_NORMAL );
@@ -1022,40 +1049,54 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    AUTFBACK( lbl_np );
    lbl_np->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
 
-   rb_np_crop = new QRadioButton( tr("Crop "), this);
+   rb_np_crop = new QRadioButton( us_tr("Crop "), this);
    rb_np_crop->setEnabled(true);
    rb_np_crop->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    rb_np_crop->setPalette( PALET_NORMAL );
    AUTFBACK( rb_np_crop );
 
-   rb_np_min = new QRadioButton( tr("Set to minimum "), this);
+   rb_np_min = new QRadioButton( us_tr("Set to minimum "), this);
    rb_np_min->setEnabled(true);
    rb_np_min->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    rb_np_min->setPalette( PALET_NORMAL );
    AUTFBACK( rb_np_min );
 
-   rb_np_ignore = new QRadioButton( tr("Ignore (log of non-positive not defined)"), this);
+   rb_np_ignore = new QRadioButton( us_tr("Ignore (log of non-positive not defined)"), this);
    rb_np_ignore->setEnabled(true);
    rb_np_ignore->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    rb_np_ignore->setPalette( PALET_NORMAL );
    AUTFBACK( rb_np_ignore );
 
-   rb_np_ask = new QRadioButton( tr("Ask (blocks mass processing) "), this);
+   rb_np_ask = new QRadioButton( us_tr("Ask (blocks mass processing) "), this);
    rb_np_ask->setEnabled(true);
    rb_np_ask->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    rb_np_ask->setPalette( PALET_NORMAL );
    AUTFBACK( rb_np_ask );
 
-   bg_np = new Q3ButtonGroup(1, Qt::Horizontal, 0);
+#if QT_VERSION < 0x040000
+   bg_np = new QGroupBox(1, Qt::Horizontal, 0);
    bg_np->setRadioButtonExclusive(true);
    bg_np->insert(rb_np_crop);
    bg_np->insert(rb_np_min);
    bg_np->insert(rb_np_ignore);
    bg_np->insert(rb_np_ask);
+#else
+   bg_np = new QGroupBox();
+   bg_np->setFlat( true );
+
+   {
+      QHBoxLayout * bl = new QHBoxLayout; bl->setContentsMargins( 0, 0, 0, 0 ); bl->setSpacing( 0 );
+      bl->addWidget( rb_np_crop );
+      bl->addWidget( rb_np_min );
+      bl->addWidget( rb_np_ignore );
+      bl->addWidget( rb_np_ask );
+      bg_np->setLayout( bl );
+   }
+#endif
    rb_np_crop->setChecked( true );
 
    cb_multi_sub = new QCheckBox(this);
-   cb_multi_sub->setText(tr(" Subtract buffer from every selected file (exepting set buffer and set blank) " ) );
+   cb_multi_sub->setText(us_tr(" Subtract buffer from every selected file (exepting set buffer and set blank) " ) );
    cb_multi_sub->setChecked(false);
    cb_multi_sub->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    cb_multi_sub->setPalette( PALET_NORMAL );
@@ -1063,44 +1104,44 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    connect( cb_multi_sub, SIGNAL( clicked() ), SLOT( update_enables() ) );
 
    cb_multi_sub_avg = new QCheckBox(this);
-   cb_multi_sub_avg->setText(tr(" Average" ) );
+   cb_multi_sub_avg->setText(us_tr(" Average" ) );
    cb_multi_sub_avg->setChecked(false);
    cb_multi_sub_avg->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    cb_multi_sub_avg->setPalette( PALET_NORMAL );
    AUTFBACK( cb_multi_sub_avg );
 
    cb_multi_sub_conc_avg = new QCheckBox(this);
-   cb_multi_sub_conc_avg->setText(tr(" Concentration normalized average" ) );
+   cb_multi_sub_conc_avg->setText(us_tr(" Concentration normalized average" ) );
    cb_multi_sub_conc_avg->setChecked(false);
    cb_multi_sub_conc_avg->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    cb_multi_sub_conc_avg->setPalette( PALET_NORMAL );
    AUTFBACK( cb_multi_sub_conc_avg );
 
-   pb_help = new QPushButton(tr("Help"), this);
+   pb_help = new QPushButton(us_tr("Help"), this);
    pb_help->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
    pb_help->setMinimumHeight(minHeight1);
    pb_help->setPalette( PALET_PUSHB );
    connect(pb_help, SIGNAL(clicked()), SLOT(help()));
 
-   pb_cancel = new QPushButton(tr("Close"), this);
+   pb_cancel = new QPushButton(us_tr("Close"), this);
    pb_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
    pb_cancel->setMinimumHeight(minHeight1);
    pb_cancel->setPalette( PALET_PUSHB );
    connect(pb_cancel, SIGNAL(clicked()), SLOT(cancel()));
 
    // build layout
-   Q3BoxLayout *hbl_file_buttons = new Q3HBoxLayout( 0 );
+   QBoxLayout *hbl_file_buttons = new QHBoxLayout();
    hbl_file_buttons->addWidget ( pb_add_files );
    hbl_file_buttons->addWidget ( pb_similar_files );
    hbl_file_buttons->addWidget ( pb_conc);
    hbl_file_buttons->addWidget ( pb_clear_files );
 
-   Q3BoxLayout *hbl_file_buttons_1 = new Q3HBoxLayout( 0 );
+   QBoxLayout *hbl_file_buttons_1 = new QHBoxLayout();
    hbl_file_buttons_1->addWidget ( pb_regex_load );
    hbl_file_buttons_1->addWidget ( le_regex );
    hbl_file_buttons_1->addWidget ( le_regex_args );
 
-   Q3BoxLayout *hbl_file_buttons_2 = new Q3HBoxLayout( 0 );
+   QBoxLayout *hbl_file_buttons_2 = new QHBoxLayout();
    hbl_file_buttons_2->addWidget ( pb_select_all );
    hbl_file_buttons_2->addWidget ( pb_invert );
    // hbl_file_buttons_2->addWidget ( pb_adjacent );
@@ -1112,45 +1153,45 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    hbl_file_buttons_2->addWidget ( pb_axis_y );
    hbl_file_buttons_2->addWidget ( pb_rescale );
 
-   Q3BoxLayout *hbl_file_buttons_3 = new Q3HBoxLayout( 0 );
+   QBoxLayout *hbl_file_buttons_3 = new QHBoxLayout();
    hbl_file_buttons_3->addWidget ( pb_conc_avg );
    hbl_file_buttons_3->addWidget ( pb_normalize );
    hbl_file_buttons_3->addWidget ( pb_asum );
    hbl_file_buttons_3->addWidget ( pb_avg );
 
-   Q3BoxLayout *hbl_buffer = new Q3HBoxLayout( 0 );
+   QBoxLayout *hbl_buffer = new QHBoxLayout();
    hbl_buffer->addWidget ( pb_set_buffer );
    hbl_buffer->addWidget ( lbl_buffer );
 
-   Q3BoxLayout *hbl_empty = new Q3HBoxLayout( 0 );
+   QBoxLayout *hbl_empty = new QHBoxLayout();
    hbl_empty->addWidget ( pb_set_empty );
    hbl_empty->addWidget ( lbl_empty );
 
-   Q3BoxLayout *hbl_signal = new Q3HBoxLayout( 0 );
+   QBoxLayout *hbl_signal = new QHBoxLayout();
    hbl_signal->addWidget ( pb_set_signal );
    hbl_signal->addWidget ( lbl_signal );
 
-   Q3BoxLayout *hbl_created = new Q3HBoxLayout( 0 );
+   QBoxLayout *hbl_created = new QHBoxLayout();
    hbl_created->addWidget ( pb_select_all_created );
    hbl_created->addWidget ( pb_adjacent_created );
    hbl_created->addWidget ( pb_save_created_csv );
    hbl_created->addWidget ( pb_save_created );
 
-   Q3BoxLayout *hbl_created_2 = new Q3HBoxLayout( 0 );
+   QBoxLayout *hbl_created_2 = new QHBoxLayout();
    hbl_created_2->addWidget ( pb_show_created );
    hbl_created_2->addWidget ( pb_show_only_created );
 
-   Q3BoxLayout *vbl_editor_group = new Q3VBoxLayout(0);
+   QBoxLayout *vbl_editor_group = new QVBoxLayout(0);
 #if !defined(QT4) || !defined(Q_WS_MAC)
    vbl_editor_group->addWidget (frame);
 #endif
    vbl_editor_group->addWidget (editor);
 
-   Q3HBoxLayout *hbl_dir = new Q3HBoxLayout( 0 );
+   QHBoxLayout * hbl_dir = new QHBoxLayout(); hbl_dir->setContentsMargins( 0, 0, 0, 0 ); hbl_dir->setSpacing( 0 );
    hbl_dir->addWidget( cb_lock_dir );
    hbl_dir->addWidget( lbl_dir );
 
-   Q3BoxLayout *vbl_files = new Q3VBoxLayout( 0 );
+   QBoxLayout *vbl_files = new QVBoxLayout( 0 );
    vbl_files->addWidget( lbl_files );
    vbl_files->addLayout( hbl_dir );
    vbl_files->addLayout( hbl_file_buttons );
@@ -1171,15 +1212,15 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    vbl_files->addLayout( hbl_created_2 );
    vbl_files->addLayout( vbl_editor_group );
 
-   Q3GridLayout *gl_wheel = new Q3GridLayout(0);
-   gl_wheel->addMultiCellWidget( pb_join_start  , 0, 0, 0, 0 );
-   gl_wheel->addMultiCellWidget( pb_join_swap   , 0, 0, 1, 1 );
-   gl_wheel->addMultiCellWidget( lbl_wheel_pos  , 0, 0, 2, 2 );
-   gl_wheel->addMultiCellWidget( qwtw_wheel     , 0, 0, 3, 8 );
+   QGridLayout * gl_wheel = new QGridLayout(0); gl_wheel->setContentsMargins( 0, 0, 0, 0 ); gl_wheel->setSpacing( 0 );
+   gl_wheel->addWidget( pb_join_start   , 0 , 0 , 1 + ( 0 ) - ( 0 ) , 1 + ( 0  ) - ( 0 ) );
+   gl_wheel->addWidget( pb_join_swap    , 0 , 1 , 1 + ( 0 ) - ( 0 ) , 1 + ( 1  ) - ( 1 ) );
+   gl_wheel->addWidget( lbl_wheel_pos   , 0 , 2 , 1 + ( 0 ) - ( 0 ) , 1 + ( 2  ) - ( 2 ) );
+   gl_wheel->addWidget( qwtw_wheel      , 0 , 3 , 1 + ( 0 ) - ( 0 ) , 1 + ( 8  ) - ( 3 ) );
    gl_wheel->addWidget         ( pb_wheel_cancel, 0, 9 );
    gl_wheel->addWidget         ( pb_wheel_save  , 0, 10 );
 
-   Q3HBoxLayout *hbl_join = new Q3HBoxLayout( 0 );
+   QHBoxLayout * hbl_join = new QHBoxLayout(); hbl_join->setContentsMargins( 0, 0, 0, 0 ); hbl_join->setSpacing( 0 );
    hbl_join->addWidget( lbl_join_offset );
    hbl_join->addWidget( le_join_offset );
    hbl_join->addWidget( lbl_join_mult );
@@ -1194,7 +1235,7 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    hbl_join->addWidget( pb_join_fit_linear );
    hbl_join->addWidget( lbl_join_rmsd );
 
-   Q3BoxLayout *hbl_plot_buttons = new Q3HBoxLayout(0);
+   QBoxLayout *hbl_plot_buttons = new QHBoxLayout();
    hbl_plot_buttons->addWidget( pb_select_vis );
    hbl_plot_buttons->addWidget( pb_remove_vis );
    hbl_plot_buttons->addWidget( pb_crop_common );
@@ -1205,40 +1246,40 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    hbl_plot_buttons->addWidget( pb_crop_right );
    hbl_plot_buttons->addWidget( pb_legend );
 
-   Q3BoxLayout *hbl_plot_buttons_2 = new Q3HBoxLayout(0);
+   QBoxLayout *hbl_plot_buttons_2 = new QHBoxLayout();
    hbl_plot_buttons_2->addWidget( cb_guinier );
    hbl_plot_buttons_2->addWidget( lbl_guinier );
 
-   Q3BoxLayout *vbl_plot_group = new Q3VBoxLayout(0);
+   QBoxLayout *vbl_plot_group = new QVBoxLayout(0);
    vbl_plot_group->addWidget ( plot_dist );
    vbl_plot_group->addLayout ( gl_wheel  );
    vbl_plot_group->addLayout ( hbl_join  );
    vbl_plot_group->addLayout ( hbl_plot_buttons );
    vbl_plot_group->addLayout ( hbl_plot_buttons_2 );
 
-   // QBoxLayout *hbl_files_plot = new QHBoxLayout( 0 );
+   // QBoxLayout *hbl_files_plot = new QHBoxLayout();
    // hbl_files_plot->addLayout( vbl_files );
    // hbl_files_plot->addLayout( vbl_plot_group );
 
-   Q3GridLayout *gl_files_plot = new Q3GridLayout( 0 );
+   QGridLayout * gl_files_plot = new QGridLayout( 0 ); gl_files_plot->setContentsMargins( 0, 0, 0, 0 ); gl_files_plot->setSpacing( 0 );
    gl_files_plot->addLayout( vbl_files     , 0, 0 );
    gl_files_plot->addLayout( vbl_plot_group, 0, 1 );
-   gl_files_plot->setColStretch( 0, 0 );
-   gl_files_plot->setColStretch( 1, 1 );
+   gl_files_plot->setColumnStretch( 0, 0 );
+   gl_files_plot->setColumnStretch( 1, 1 );
 
-   Q3HBoxLayout *hbl_np = new Q3HBoxLayout(0);
+   QHBoxLayout * hbl_np = new QHBoxLayout(); hbl_np->setContentsMargins( 0, 0, 0, 0 ); hbl_np->setSpacing( 0 );
    hbl_np->addWidget ( lbl_np );
    hbl_np->addWidget ( rb_np_crop );
    hbl_np->addWidget ( rb_np_min );
    hbl_np->addWidget ( rb_np_ignore );
    hbl_np->addWidget ( rb_np_ask );
 
-   Q3HBoxLayout *hbl_multi = new Q3HBoxLayout(0);
+   QHBoxLayout * hbl_multi = new QHBoxLayout(); hbl_multi->setContentsMargins( 0, 0, 0, 0 ); hbl_multi->setSpacing( 0 );
    hbl_multi->addWidget ( cb_multi_sub );
    hbl_multi->addWidget ( cb_multi_sub_avg );
    hbl_multi->addWidget ( cb_multi_sub_conc_avg );
 
-   Q3HBoxLayout *hbl_controls = new Q3HBoxLayout(0);
+   QHBoxLayout * hbl_controls = new QHBoxLayout(); hbl_controls->setContentsMargins( 0, 0, 0, 0 ); hbl_controls->setSpacing( 0 );
    hbl_controls->addSpacing( 1 );
    hbl_controls->addWidget (pb_start);
    hbl_controls->addSpacing( 1 );
@@ -1251,12 +1292,12 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    hbl_controls->addWidget (pb_stop);
    hbl_controls->addSpacing( 1 );
 
-   Q3GridLayout *gl_bottom = new Q3GridLayout( 0 );
+   QGridLayout * gl_bottom = new QGridLayout( 0 ); gl_bottom->setContentsMargins( 0, 0, 0, 0 ); gl_bottom->setSpacing( 0 );
    gl_bottom->addWidget( pb_help  , 0, 0 );
    gl_bottom->addWidget( progress , 0, 1 );
    gl_bottom->addWidget( pb_cancel, 0, 2 );
    
-   Q3VBoxLayout *background = new Q3VBoxLayout(this);
+   QVBoxLayout * background = new QVBoxLayout(this); background->setContentsMargins( 0, 0, 0, 0 ); background->setSpacing( 0 );
    background->addSpacing( 1 );
    // background->addWidget ( lbl_title );
    // background->addSpacing( 1 );
@@ -1294,11 +1335,11 @@ void US_Hydrodyn_Saxs_Buffer::closeEvent(QCloseEvent *e)
 {
    QStringList created_not_saved_list;
 
-   for ( int i = 0; i < lb_files->numRows(); i++ )
+   for ( int i = 0; i < lb_files->count(); i++ )
    {
-      if ( created_files_not_saved.count( lb_files->text( i ) ) )
+      if ( created_files_not_saved.count( lb_files->item( i )->text( ) ) )
       {
-         created_not_saved_list << lb_files->text( i );
+         created_not_saved_list << lb_files->item( i )->text( );
       }
    }
 
@@ -1312,19 +1353,19 @@ void US_Hydrodyn_Saxs_Buffer::closeEvent(QCloseEvent *e)
 
       if ( qsl.size() < created_not_saved_list.size() )
       {
-         qsl << QString( tr( "... and %1 more not listed" ) ).arg( created_not_saved_list.size() - qsl.size() );
+         qsl << QString( us_tr( "... and %1 more not listed" ) ).arg( created_not_saved_list.size() - qsl.size() );
       }
 
       switch ( QMessageBox::warning(this, 
                                     title,
-                                    QString( tr( "Please note:\n\n"
+                                    QString( us_tr( "Please note:\n\n"
                                                  "These files were created but not saved as .dat files:\n"
                                                  "%1\n\n"
                                                  "What would you like to do?\n" ) )
                                     .arg( qsl.join( "\n" ) ),
-                                    tr( "&Save them now" ), 
-                                    tr( "&Close the window anyway" ), 
-                                    tr( "&Quit from closing" ), 
+                                    us_tr( "&Save them now" ), 
+                                    us_tr( "&Close the window anyway" ), 
+                                    us_tr( "&Quit from closing" ), 
                                     0, // Stop == button 0
                                     0 // Escape == button 0
                                     ) )
@@ -1361,18 +1402,22 @@ void US_Hydrodyn_Saxs_Buffer::table_value( int row, int col )
    cout << "table value\n";
    if ( col == 2 || col == 3 || col == 5 || col == 6 )
    {
-      if ( !t_csv->text( row, col ).isEmpty() &&
-           t_csv->text( row, col ) != QString( "%1" ).arg(  t_csv->text( row, col ).toDouble() ) )
+      if (
+          !t_csv->item( row, col )->text().isEmpty() &&
+          t_csv->item( row, col )->text() != QString( "%1" ).arg(  t_csv->item( row, col )->text().toDouble() )
+          )
       {
-         t_csv->setText( row, col , QString( "%1" ).arg(  t_csv->text( row, col ).toDouble() ) );
+         t_csv->setItem( row, col , new QTableWidgetItem( QString( "%1" ).arg(  t_csv->item( row, col )->text( ).toDouble( ) ) ) );
       }
    }
    if ( col == 4 )
    {
-      if ( !t_csv->text( row, col ).isEmpty() &&
-           t_csv->text( row, col ) != QString( "%1" ).arg(  t_csv->text( row, col ).toUInt() ) )
+      if (
+          !t_csv->item( row, col )->text().isEmpty() &&
+          t_csv->item( row, col )->text() != QString( "%1" ).arg(  t_csv->item( row, col )->text().toUInt() )
+          )
       {
-         t_csv->setText( row, col , QString( "%1" ).arg(  t_csv->text( row, col ).toUInt() ) );
+         t_csv->setItem( row, col , new QTableWidgetItem( QString( "%1" ).arg(  t_csv->item( row, col )->text( ).toUInt( ) ) ) );
       }
    }
 
@@ -1387,20 +1432,20 @@ void US_Hydrodyn_Saxs_Buffer::table_value( int row, int col )
    if ( col == 1 )
    {
       if ( ( row == 1 || row == 2 ) &&
-           ((Q3CheckTableItem *)(t_csv->item( row, 1 )))->isChecked() &&
-           ((Q3CheckTableItem *)(t_csv->item( 0, 1 )))->isChecked()  )
+           ((QCheckBox *)(t_csv->cellWidget( row, 1 )))->isChecked() &&
+           ((QCheckBox *)(t_csv->cellWidget( 0, 1 )))->isChecked()  )
       {
-         ((Q3CheckTableItem *)(t_csv->item( 0, 1 )))->setChecked( false );
+         ((QCheckBox *)(t_csv->cellWidget( 0, 1 )))->setChecked( false );
       }
-      if ( row == 0 && ((Q3CheckTableItem *)(t_csv->item( row, 1 )))->isChecked() )
+      if ( row == 0 && ((QCheckBox *)(t_csv->cellWidget( row, 1 )))->isChecked() )
       {
-         if ( ((Q3CheckTableItem *)(t_csv->item( 1, 1 )))->isChecked() )
+         if ( ((QCheckBox *)(t_csv->cellWidget( 1, 1 )))->isChecked() )
          {
-            ((Q3CheckTableItem *)(t_csv->item( 1, 1 )))->setChecked( false );
+            ((QCheckBox *)(t_csv->cellWidget( 1, 1 )))->setChecked( false );
          }
-         if ( ((Q3CheckTableItem *)(t_csv->item( 2, 1 )))->isChecked() )
+         if ( ((QCheckBox *)(t_csv->cellWidget( 2, 1 )))->isChecked() )
          {
-            ((Q3CheckTableItem *)(t_csv->item( 2, 1 )))->setChecked( false );
+            ((QCheckBox *)(t_csv->cellWidget( 2, 1 )))->setChecked( false );
          }
       }
    }
@@ -1428,20 +1473,20 @@ void US_Hydrodyn_Saxs_Buffer::update_font()
 void US_Hydrodyn_Saxs_Buffer::save()
 {
    QString fn;
-   fn = QFileDialog::getSaveFileName( this , caption() , QString::null , QString::null );
+   fn = QFileDialog::getSaveFileName( this , windowTitle() , QString::null , QString::null );
    if(!fn.isEmpty() )
    {
-      QString text = editor->text();
+      QString text = editor->toPlainText();
       QFile f( fn );
       if ( !f.open( QIODevice::WriteOnly | QIODevice::Text) )
       {
          return;
       }
-      Q3TextStream t( &f );
+      QTextStream t( &f );
       t << text;
       f.close();
-      editor->setModified( false );
-      setCaption( fn );
+ //      editor->setModified( false );
+      setWindowTitle( fn );
    }
 }
 
@@ -1465,13 +1510,13 @@ void US_Hydrodyn_Saxs_Buffer::start()
 
    unsigned int current_offset = 0;
 
-   for ( unsigned int i = 0; i < (unsigned int)t_csv->numRows(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int)t_csv->rowCount(); i++ )
    {
-      if ( ((Q3CheckTableItem *)(t_csv->item( i, 1 )))->isChecked() )
+      if ( ((QCheckBox *)(t_csv->cellWidget( i, 1 )))->isChecked() )
       {
-         starts    [i]   =  t_csv->text(i, 2).toDouble();
-         ends      [i]   =  t_csv->text(i, 3).toDouble();
-         points    [i]   =  t_csv->text(i, 4).toUInt();
+         starts    [i]   =  t_csv->item(i, 2)->text().toDouble();
+         ends      [i]   =  t_csv->item(i, 3)->text().toDouble();
+         points    [i]   =  t_csv->item(i, 4)->text().toUInt();
          offsets   [i]   =  current_offset;
          current_offset +=  points[i];
          next_offsets[i] =  current_offset;
@@ -1493,7 +1538,7 @@ void US_Hydrodyn_Saxs_Buffer::start()
       total_points *= it->second;
    }
 
-   editor_msg("black", QString( tr( "Total points %1\n").arg( total_points ) ) );
+   editor_msg("black", QString( us_tr( "Total points %1\n").arg( total_points ) ) );
 
    // linearization of an arbitrary number of loops
 
@@ -1503,23 +1548,26 @@ void US_Hydrodyn_Saxs_Buffer::start()
       {
          break;
       }
-      progress->setProgress(i, total_points);
+      progress->setValue( i ); progress->setMaximum( total_points );
       unsigned int pos = i;
       QString msg = "";
       for ( map < unsigned int, unsigned int >::iterator it = points.begin();
             it != points.end();
             it++ )
       {
-         t_csv->setText(it->first, 6, QString("%1").arg(starts[it->first] + ( pos % it->second ) * increments[it->first]));
+         {
+            QString val = QString("%1").arg(starts[it->first] + ( pos % it->second ) * increments[it->first]);
+            t_csv->setItem(it->first, 6, new QTableWidgetItem( val ) );
+         }
          pos /= it->second;
-         msg += QString("%1 %2; ").arg(t_csv->text(it->first, 0)).arg(t_csv->text(it->first, 6));
+         msg += QString("%1 %2; ").arg(t_csv->item(it->first, 0)->text()).arg(t_csv->item(it->first, 6)->text());
       }
-      editor_msg( "black", tr( "Running:" ) + msg );
+      editor_msg( "black", us_tr( "Running:" ) + msg );
       run_current();
    }
 
    running = false;
-   progress->setProgress(1, 1);
+   progress->setValue( 1 ); progress->setMaximum( 1 );
    update_enables();
 }
 
@@ -1538,13 +1586,13 @@ void US_Hydrodyn_Saxs_Buffer::run_current()
       map < QString, bool > selected_non_buffer_non_empty;
       QStringList created_files;
       
-      for ( int i = 0; i < lb_files->numRows(); i++ )
+      for ( int i = 0; i < lb_files->count(); i++ )
       {
-         if ( lb_files->isSelected( i ) && 
-              lb_files->text( i ) != lbl_buffer->text() &&
-              lb_files->text( i ) != lbl_empty->text() )
+         if ( lb_files->item( i )->isSelected( ) && 
+              lb_files->item( i )->text( ) != lbl_buffer->text() &&
+              lb_files->item( i )->text( ) != lbl_empty->text() )
          {
-            selected_non_buffer_non_empty[ lb_files->text( i ) ] = true;
+            selected_non_buffer_non_empty[ lb_files->item( i )->text( ) ] = true;
          }
       }
       unsigned int total_points = selected_non_buffer_non_empty.size() + 1;
@@ -1555,7 +1603,7 @@ void US_Hydrodyn_Saxs_Buffer::run_current()
       {
          if ( !is_running )
          {
-            progress->setProgress( pos++ , total_points );
+            progress->setValue( pos++ ); progress->setMaximum( total_points );
          }
          lbl_signal->setText( it->first );
          qApp->processEvents();
@@ -1590,7 +1638,7 @@ void US_Hydrodyn_Saxs_Buffer::run_current()
       {
          running = false;
          update_enables();
-         progress->setProgress(1, 1);
+         progress->setValue( 1 ); progress->setMaximum( 1 );
       }
 
    } else {
@@ -1613,13 +1661,13 @@ void US_Hydrodyn_Saxs_Buffer::run_divide()
       map < QString, bool > selected_non_buffer_non_empty;
       QStringList created_files;
       
-      for ( int i = 0; i < lb_files->numRows(); i++ )
+      for ( int i = 0; i < lb_files->count(); i++ )
       {
-         if ( lb_files->isSelected( i ) && 
-              lb_files->text( i ) != lbl_buffer->text() &&
-              lb_files->text( i ) != lbl_empty->text() )
+         if ( lb_files->item( i )->isSelected( ) && 
+              lb_files->item( i )->text( ) != lbl_buffer->text() &&
+              lb_files->item( i )->text( ) != lbl_empty->text() )
          {
-            selected_non_buffer_non_empty[ lb_files->text( i ) ] = true;
+            selected_non_buffer_non_empty[ lb_files->item( i )->text( ) ] = true;
          }
       }
       unsigned int total_points = selected_non_buffer_non_empty.size() + 1;
@@ -1630,7 +1678,7 @@ void US_Hydrodyn_Saxs_Buffer::run_divide()
       {
          if ( !is_running )
          {
-            progress->setProgress( pos++ , total_points );
+            progress->setValue( pos++ ); progress->setMaximum( total_points );
          }
          lbl_signal->setText( it->first );
          qApp->processEvents();
@@ -1658,7 +1706,7 @@ void US_Hydrodyn_Saxs_Buffer::run_divide()
       {
          running = false;
          update_enables();
-         progress->setProgress(1, 1);
+         progress->setValue( 1 ); progress->setMaximum( 1 );
       }
    } else {
       run_one_divide();
@@ -1675,34 +1723,34 @@ void US_Hydrodyn_Saxs_Buffer::run_one( bool do_plot )
 
    map < QString, bool > current_files;
 
-   for ( int i = 0; i < lb_files->numRows(); i++ )
+   for ( int i = 0; i < lb_files->count(); i++ )
    {
-      QString this_file = lb_files->text( i );
+      QString this_file = lb_files->item( i )->text( );
       current_files[ this_file ] = true;
    }
 
    if ( !current_files.count( buffer ) )
    {
-      editor_msg( "red", QString( tr( "Error: no data found for buffer %1" ) ).arg( buffer ) );
+      editor_msg( "red", QString( us_tr( "Error: no data found for buffer %1" ) ).arg( buffer ) );
       return;
    } 
 
    if ( !current_files.count( solution ) )
    {
-      editor_msg( "red", QString( tr( "Error: no data found for solution %1" ) ).arg( solution ) );
+      editor_msg( "red", QString( us_tr( "Error: no data found for solution %1" ) ).arg( solution ) );
       return;
    } 
 
    if ( !empty.isEmpty() && !current_files.count( empty ) )
    {
-      editor_msg( "red", QString( tr( "Error: no data found for blank %1" ) ).arg( empty ) );
+      editor_msg( "red", QString( us_tr( "Error: no data found for blank %1" ) ).arg( empty ) );
       return;
    } 
 
    if ( f_qs[ buffer ].size() != f_qs[ solution ].size() ||
         ( !empty.isEmpty() && f_qs[ buffer ].size() != f_qs[ empty ].size() ) )
    {
-      editor_msg( "red", tr( "Error: incompatible grids, the files selected do not have the same number of points" ) );
+      editor_msg( "red", us_tr( "Error: incompatible grids, the files selected do not have the same number of points" ) );
       return;
    }
 
@@ -1720,32 +1768,36 @@ void US_Hydrodyn_Saxs_Buffer::run_one( bool do_plot )
       if ( fabs( bsub_q[ j ] - f_qs[ buffer ][ j ] ) > Q_VAL_TOL ||
            ( !empty.isEmpty() && bsub_q[ j ] != f_qs[ empty ][ j ] ) )
       {
-         editor_msg( "red", tr( "Error: incompatible grids, the q values differ between selected files" ) );
+         editor_msg( "red", us_tr( "Error: incompatible grids, the q values differ between selected files" ) );
          return;
       }
    }
    
    // determine parameters
-   bool use_alpha = ((Q3CheckTableItem *)(t_csv->item( 0, 1 )))->isChecked();
-   bool use_psv   = ((Q3CheckTableItem *)(t_csv->item( 1, 1 )))->isChecked();
+   bool use_alpha = ((QCheckBox *)(t_csv->cellWidget( 0, 1 )))->isChecked();
+   bool use_psv   = ((QCheckBox *)(t_csv->cellWidget( 1, 1 )))->isChecked();
 
    if ( ( !use_alpha && !use_psv ) || ( use_alpha && use_psv ) )
    {
-      editor_msg( "red", tr( "Internal error: both alpha & psv methods active" ) );
+      editor_msg( "red", us_tr( "Internal error: both alpha & psv methods active" ) );
       return;
    }
 
-   if ( ( use_alpha && t_csv->text( 0, 6 ).isEmpty() ) ||
-        ( use_psv && ( t_csv->text( 1, 6 ).isEmpty() ||
-                       t_csv->text( 2, 6 ).isEmpty() ) ) )
+   if (
+       ( use_alpha && t_csv->item( 0, 6 )->text().isEmpty() ) ||
+       (
+        use_psv && ( t_csv->item( 1, 6 )->text().isEmpty() ||
+                     t_csv->item( 2, 6 )->text().isEmpty() )
+        )
+       )
    {
-      editor_msg( "red", tr( "Internal error: method selected does not have current values" ) );
+      editor_msg( "red", us_tr( "Internal error: method selected does not have current values" ) );
       return;
    }
       
-   double alpha  = t_csv->text( 0, 6 ).toDouble();
-   double psv    = t_csv->text( 1, 6 ).toDouble();
-   double gamma  = t_csv->text( 2, 6 ).toDouble();
+   double alpha  = t_csv->item( 0, 6 )->text().toDouble();
+   double psv    = t_csv->item( 1, 6 )->text().toDouble();
+   double gamma  = t_csv->item( 2, 6 )->text().toDouble();
 
    map < QString, double > concs = current_concs();
    double this_conc = concs.count( solution ) ? concs[ solution ] : 0e0;
@@ -1757,30 +1809,30 @@ void US_Hydrodyn_Saxs_Buffer::run_one( bool do_plot )
    {
       if ( !concs.count( solution ) || concs[ solution ] == 0e0 )
       {
-         editor_msg( "dark red", tr( "Warning: the solution has zero concentration" ) );
+         editor_msg( "dark red", us_tr( "Warning: the solution has zero concentration" ) );
       }
          
       alpha = 1e0 - gamma * this_conc * psv / 1000;
-      msg = QString( tr( "alpha %1 gamma %2 conc %3 psv %4" ) )
+      msg = QString( us_tr( "alpha %1 gamma %2 conc %3 psv %4" ) )
          .arg( alpha )
          .arg( gamma )
          .arg( this_conc )
          .arg( psv );
    } else {
-      msg = QString( tr( "alpha %1" ) ).arg( alpha );
+      msg = QString( us_tr( "alpha %1" ) ).arg( alpha );
    }
 
    // assuming zero covariance for now
    if ( buffer_has_errors && !solution_has_errors )
    {
-      editor_msg( "dark red", tr( "Warning: the buffer has errors defined but not the solution" ) );
+      editor_msg( "dark red", us_tr( "Warning: the buffer has errors defined but not the solution" ) );
       
       bsub_error = f_errors[ buffer ];
    } else {
       if ( !buffer_has_errors && !solution_has_errors && empty_has_errors )
       {
          // this is a strange case
-         editor_msg( "dark red", tr( "Warning: the blank has errors defined but not the solution or buffer!" ) );
+         editor_msg( "dark red", us_tr( "Warning: the blank has errors defined but not the solution or buffer!" ) );
          bsub_error = f_errors[ empty ];
       }
    }
@@ -1839,32 +1891,32 @@ void US_Hydrodyn_Saxs_Buffer::run_one( bool do_plot )
       int result;
       if ( rb_np_crop->isChecked() )
       {
-         editor_msg( "dark red", QString( tr( "Warning: non-positive values caused cropping at q = %1" ) ).arg( bsub_q[ negative_pos ] ) );
+         editor_msg( "dark red", QString( us_tr( "Warning: non-positive values caused cropping at q = %1" ) ).arg( bsub_q[ negative_pos ] ) );
          result = 0;
       }
       if ( rb_np_min->isChecked() )
       {
-         editor_msg( "dark red", QString( tr( "Warning: non-positive values caused %1 minimum values set" ) ).arg( negative_count ) );
+         editor_msg( "dark red", QString( us_tr( "Warning: non-positive values caused %1 minimum values set" ) ).arg( negative_count ) );
          result = 1;
       }
       if ( rb_np_ignore->isChecked() )
       {
-         editor_msg( "dark red", QString( tr( "Warning: %1 non-positive values ignored" ) ).arg( negative_count ) );
+         editor_msg( "dark red", QString( us_tr( "Warning: %1 non-positive values ignored" ) ).arg( negative_count ) );
          result = 2;
       }
       if ( rb_np_ask->isChecked() )
       {
          result = QMessageBox::warning(this, 
                                        title,
-                                       QString( tr( "Please note:\n\n"
+                                       QString( us_tr( "Please note:\n\n"
                                                     "The buffer subtraction causes %1 points be non-positive\n"
                                                     "Starting at a q value of %2\n\n"
                                                     "What would you like to do?\n" ) )
                                        .arg( negative_count )
                                        .arg( bsub_q[ negative_pos ] ),
-                                       tr( "&Crop the data" ), 
-                                       tr( "&Set to the minimum positive value" ), 
-                                       tr( "&Leave them negative or zero" ), 
+                                       us_tr( "&Crop the data" ), 
+                                       us_tr( "&Set to the minimum positive value" ), 
+                                       us_tr( "&Leave them negative or zero" ), 
                                        0, // Stop == button 0
                                        0 // Escape == button 0
                                        );
@@ -1880,9 +1932,9 @@ void US_Hydrodyn_Saxs_Buffer::run_one( bool do_plot )
                {
                   QMessageBox::warning(this, 
                                        title,
-                                       tr("Insufficient data left after cropping"));
+                                       us_tr("Insufficient data left after cropping"));
                } else {
-                  editor_msg( "red", tr( "Notice: Cropping left nothing" ) );
+                  editor_msg( "red", us_tr( "Notice: Cropping left nothing" ) );
                }
                return;
             }
@@ -1919,10 +1971,10 @@ void US_Hydrodyn_Saxs_Buffer::run_one( bool do_plot )
       bsub_name = head + QString( "-%1" ).arg( ++ext );
    }
 
-   lb_created_files->insertItem( bsub_name );
-   lb_created_files->setBottomItem( lb_created_files->numRows() - 1 );
-   lb_files->insertItem( bsub_name );
-   lb_files->setBottomItem( lb_files->numRows() - 1 );
+   lb_created_files->addItem( bsub_name );
+   lb_created_files->scrollToItem( lb_created_files->item( lb_created_files->count() - 1 ) );
+   lb_files->addItem( bsub_name );
+   lb_files->scrollToItem( lb_files->item( lb_files->count() - 1 ) );
    created_files_not_saved[ bsub_name ] = true;
    last_created_file = bsub_name;
    
@@ -1989,25 +2041,25 @@ void US_Hydrodyn_Saxs_Buffer::update_enables()
 
    QString last_selected_file;
 
-   for ( int i = 0; i < lb_files->numRows(); i++ )
+   for ( int i = 0; i < lb_files->count(); i++ )
    {
-      if ( lb_files->isSelected( i ) )
+      if ( lb_files->item( i )->isSelected() )
       {
-         selected_map[ lb_files->text( i ) ] = true;
+         selected_map[ lb_files->item( i )->text( ) ] = true;
          last_selected_pos = i;
-         last_selected_file = lb_files->text( i );
+         last_selected_file = lb_files->item( i )->text( );
          files_selected_count++;
-         if ( lb_files->text( i ) != lbl_buffer->text() &&
-              lb_files->text( i ) != lbl_empty->text() )
+         if ( lb_files->item( i )->text( ) != lbl_buffer->text() &&
+              lb_files->item( i )->text( ) != lbl_empty->text() )
          {
             non_buffer_non_empty_files_selected_count++;
          }
       }
    }
 
-   lbl_selected->setText( QString( tr( "%1 of %2 files selected" ) )
+   lbl_selected->setText( QString( us_tr( "%1 of %2 files selected" ) )
                           .arg( files_selected_count )
-                          .arg( lb_files->numRows() ) );
+                          .arg( lb_files->count() ) );
 
    unsigned int files_created_selected_not_saved_count = 0;
    unsigned int files_created_selected_count           = 0;
@@ -2016,27 +2068,27 @@ void US_Hydrodyn_Saxs_Buffer::update_enables()
 
    QString last_created_selected_file;
 
-   for ( int i = 0; i < lb_created_files->numRows(); i++ )
+   for ( int i = 0; i < lb_created_files->count(); i++ )
    {
-      if ( lb_created_files->isSelected( i ) )
+      if ( lb_created_files->item( i )->isSelected() )
       {
-         last_created_selected_file = lb_created_files->text( i );
-         created_selected_map[ lb_created_files->text( i ) ] = true;
+         last_created_selected_file = lb_created_files->item( i )->text( );
+         created_selected_map[ lb_created_files->item( i )->text( ) ] = true;
          files_created_selected_count++;
-         if ( !selected_map.count( lb_created_files->text( i ) ) )
+         if ( !selected_map.count( lb_created_files->item( i )->text( ) ) )
          {
             files_created_selected_not_shown_count++;
          } 
-         if ( created_files_not_saved.count( lb_created_files->text( i ) ) )
+         if ( created_files_not_saved.count( lb_created_files->item( i )->text( ) ) )
          {
             files_created_selected_not_saved_count++;
          }
       }
    }
 
-   lbl_selected_created->setText( QString( tr( "%1 of %2 files selected" ) )
+   lbl_selected_created->setText( QString( us_tr( "%1 of %2 files selected" ) )
                                   .arg( files_created_selected_count )
-                                  .arg( lb_created_files->numRows() ) );
+                                  .arg( lb_created_files->count() ) );
 
    unsigned int files_selected_not_created           = 0;
    for ( map < QString, bool >::iterator it = selected_map.begin();
@@ -2050,38 +2102,38 @@ void US_Hydrodyn_Saxs_Buffer::update_enables()
    }
 
    pb_similar_files      ->setEnabled( files_selected_count == 1 );
-   pb_conc               ->setEnabled( lb_files->numRows() > 0 );
+   pb_conc               ->setEnabled( lb_files->count() > 0 );
    pb_clear_files        ->setEnabled( files_selected_count > 0 );
    pb_avg                ->setEnabled( files_selected_count > 1 );
    pb_asum               ->setEnabled( files_selected_count );
    pb_normalize          ->setEnabled( all_selected_have_nonzero_conc() );
    pb_conc_avg           ->setEnabled( all_selected_have_nonzero_conc() );
    pb_set_buffer         ->setEnabled( files_selected_count == 1 && 
-                                       lb_files->text( last_selected_pos ) != lbl_buffer->text() &&
-                                       lb_files->text( last_selected_pos ) != lbl_empty ->text() &&
-                                       lb_files->text( last_selected_pos ) != lbl_signal->text()
+                                       lb_files->item( last_selected_pos )->text( ) != lbl_buffer->text() &&
+                                       lb_files->item( last_selected_pos )->text( ) != lbl_empty ->text() &&
+                                       lb_files->item( last_selected_pos )->text( ) != lbl_signal->text()
                                        );
    pb_set_signal         ->setEnabled( files_selected_count == 1 && 
-                                       lb_files->text( last_selected_pos ) != lbl_buffer->text() &&
-                                       lb_files->text( last_selected_pos ) != lbl_empty ->text() &&
-                                       lb_files->text( last_selected_pos ) != lbl_signal->text() );
+                                       lb_files->item( last_selected_pos )->text( ) != lbl_buffer->text() &&
+                                       lb_files->item( last_selected_pos )->text( ) != lbl_empty ->text() &&
+                                       lb_files->item( last_selected_pos )->text( ) != lbl_signal->text() );
    pb_set_empty          ->setEnabled( files_selected_count == 1 && 
-                                       lb_files->text( last_selected_pos ) != lbl_buffer->text() &&
-                                       lb_files->text( last_selected_pos ) != lbl_empty ->text() &&
-                                       lb_files->text( last_selected_pos ) != lbl_signal->text() );
-   pb_select_all         ->setEnabled( lb_files->numRows() > 0 );
-   pb_invert             ->setEnabled( lb_files->numRows() > 0 );
+                                       lb_files->item( last_selected_pos )->text( ) != lbl_buffer->text() &&
+                                       lb_files->item( last_selected_pos )->text( ) != lbl_empty ->text() &&
+                                       lb_files->item( last_selected_pos )->text( ) != lbl_signal->text() );
+   pb_select_all         ->setEnabled( lb_files->count() > 0 );
+   pb_invert             ->setEnabled( lb_files->count() > 0 );
    pb_color_rotate       ->setEnabled( files_selected_count );
    //    pb_join               ->setEnabled( files_selected_count == 2 );
    pb_join_start         ->setEnabled( files_selected_count == 2 );
-   // pb_adjacent           ->setEnabled( lb_files->numRows() > 1 );
-   pb_select_nth         ->setEnabled( lb_files->numRows() > 2 );
+   // pb_adjacent           ->setEnabled( lb_files->count() > 1 );
+   pb_select_nth         ->setEnabled( lb_files->count() > 2 );
    pb_to_saxs            ->setEnabled( files_selected_count );
    pb_view               ->setEnabled( files_selected_count && files_selected_count <= 10 );
    pb_rescale            ->setEnabled( files_selected_count > 0 );
 
-   pb_select_all_created ->setEnabled( lb_created_files->numRows() > 0 );
-   pb_adjacent_created   ->setEnabled( lb_created_files->numRows() > 1 );
+   pb_select_all_created ->setEnabled( lb_created_files->count() > 0 );
+   pb_adjacent_created   ->setEnabled( lb_created_files->count() > 1 );
    pb_save_created_csv   ->setEnabled( files_created_selected_count > 0 );
    pb_save_created       ->setEnabled( files_created_selected_not_saved_count > 0 );
 
@@ -2092,22 +2144,22 @@ void US_Hydrodyn_Saxs_Buffer::update_enables()
    bool any_best_empty    = false;
    bool any_current_empty = false;
    bool any_selected      = 
-      ( ((Q3CheckTableItem *)(t_csv->item( 0, 1 )))->isChecked() ||
-        ( ((Q3CheckTableItem *)(t_csv->item( 1, 1 )))->isChecked() &&
-          ( ((Q3CheckTableItem *)(t_csv->item( 2, 1 )))->isChecked() ||
-            !t_csv->text( 2, 6 ).isEmpty() ) )
+      ( ((QCheckBox *)(t_csv->cellWidget( 0, 1 )))->isChecked() ||
+        ( ((QCheckBox *)(t_csv->cellWidget( 1, 1 )))->isChecked() &&
+          ( ((QCheckBox *)(t_csv->cellWidget( 2, 1 )))->isChecked() ||
+            !t_csv->item( 2, 6 )->text().isEmpty() ) )
         );
    if ( !running )
    {
-      for ( unsigned int i = 0; i < (unsigned int)t_csv->numRows(); i++ )
+      for ( unsigned int i = 0; i < (unsigned int)t_csv->rowCount(); i++ )
       {
-         if ( ((Q3CheckTableItem *)(t_csv->item( i, 1 )))->isChecked() )
+         if ( ((QCheckBox *)(t_csv->cellWidget( i, 1 )))->isChecked() )
          {
-            if ( t_csv->text(i, 7).isEmpty() )
+            if ( t_csv->item(i, 7)->text().isEmpty() )
             {
                any_best_empty = true;
             }
-            if ( t_csv->text(i, 6).isEmpty() )
+            if ( t_csv->item(i, 6)->text().isEmpty() )
             {
                any_current_empty = true;
             }
@@ -2175,9 +2227,9 @@ void US_Hydrodyn_Saxs_Buffer::update_enables()
                                     plot_dist_zoomer && 
                                     plot_dist_zoomer->zoomRect() != plot_dist_zoomer->zoomBase()
                                     );
-   pb_legend           ->setEnabled( lb_files->numRows() && files_selected_count <= 20 );
-   pb_axis_x           ->setEnabled( lb_files->numRows() );
-   pb_axis_y           ->setEnabled( lb_files->numRows() );
+   pb_legend           ->setEnabled( lb_files->count() && files_selected_count <= 20 );
+   pb_axis_x           ->setEnabled( lb_files->count() );
+   pb_axis_y           ->setEnabled( lb_files->count() );
    pb_color_rotate     ->setEnabled( true );
    // cb_guinier          ->setEnabled( files_selected_count );
    legend_set();
@@ -2190,9 +2242,9 @@ void US_Hydrodyn_Saxs_Buffer::update_enables()
 
 bool US_Hydrodyn_Saxs_Buffer::any_to_run()
 {
-   for ( unsigned int i = 0; i < (unsigned int)t_csv->numRows(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int)t_csv->rowCount(); i++ )
    {
-      if ( ((Q3CheckTableItem *)(t_csv->item( i, 1 )))->isChecked() )
+      if ( ((QCheckBox *)(t_csv->cellWidget( i, 1 )))->isChecked() )
       {
          return true;
       }
@@ -2203,38 +2255,40 @@ bool US_Hydrodyn_Saxs_Buffer::any_to_run()
 
 void US_Hydrodyn_Saxs_Buffer::editor_msg( QString color, QString msg )
 {
-   QColor save_color = editor->color();
-   editor->setColor(color);
+   QColor save_color = editor->textColor();
+   editor->setTextColor(color);
    editor->append(msg);
-   editor->setColor(save_color);
+   editor->setTextColor(save_color);
 }
 
 void US_Hydrodyn_Saxs_Buffer::editor_msg_qc( QColor qcolor, QString msg )
 {
-   QColor save_color = editor->color();
-   editor->setColor(qcolor);
+   QColor save_color = editor->textColor();
+   editor->setTextColor(qcolor);
    editor->append(msg);
-   editor->setColor(save_color);
+   editor->setTextColor(save_color);
 }
 
 bool US_Hydrodyn_Saxs_Buffer::validate()
 {
    bool errors = false;
 
-   for ( unsigned int i = 0; i < (unsigned int)t_csv->numRows(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int)t_csv->rowCount(); i++ )
    {
-      if ( t_csv->text( i, 2 ).toDouble() > t_csv->text( i, 3 ).toDouble() )
+      if ( t_csv->item( i, 2 )->text().toDouble() >
+           t_csv->item( i, 3 )->text().toDouble() )
       {
          editor_msg("red", QString("Row %1 column \"Low value\" can not be greater than \"High value\"\n").arg(i));
          errors = true;
       }
-      if ( t_csv->text( i, 4 ).toInt() < 1 )
+      if ( t_csv->item( i, 4 )->text().toInt() < 1 )
       {
          editor_msg("red", QString("Row %1 column \"Points\" must be greater or equal to one\n").arg(i));
          errors = true;
       }
-      if ( t_csv->text( i, 4 ).toDouble() == 1  &&
-           t_csv->text( i, 2 ).toDouble() > t_csv->text( i, 3 ).toDouble() )
+      if ( t_csv->item( i, 4 )->text().toDouble() == 1  &&
+           t_csv->item( i, 2 )->text().toDouble() >
+           t_csv->item( i, 3 )->text().toDouble() )
       {
          editor_msg("red", QString("Row %1 one \"Points\" requires \"Low value\" equals \"High value\"\n").arg(i));
          errors = true;
@@ -2253,7 +2307,7 @@ bool US_Hydrodyn_Saxs_Buffer::activate_saxs_window()
       setFocus();
       if ( !*saxs_widget )
       {
-         editor_msg("red", tr("Could not activate SAXS window!\n"));
+         editor_msg("red", us_tr("Could not activate SAXS window!\n"));
          return false;
       }
    }
@@ -2271,9 +2325,9 @@ csv US_Hydrodyn_Saxs_Buffer::current_csv()
       {
          if ( csv1.data[i][j] == "Y" || csv1.data[i][j] == "N" )
          {
-            tmp_csv.data[i][j] = ((Q3CheckTableItem *)(t_csv->item( i, j )))->isChecked() ? "Y" : "N";
+            tmp_csv.data[i][j] = ((QCheckBox *)(t_csv->cellWidget( i, j )))->isChecked() ? "Y" : "N";
          } else {
-            tmp_csv.data[i][j] = t_csv->text( i, j );
+            tmp_csv.data[i][j] = t_csv->item( i, j )->text();
          }
          tmp_csv.num_data[i][j] = tmp_csv.data[i][j].toDouble();
       }
@@ -2283,51 +2337,48 @@ csv US_Hydrodyn_Saxs_Buffer::current_csv()
   
 void US_Hydrodyn_Saxs_Buffer::recompute_interval_from_points()
 {
-   for ( unsigned int i = 0; i < (unsigned int)t_csv->numRows(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int)t_csv->rowCount(); i++ )
    {
-      t_csv->setText(
-                     i, 5, 
-                     ( 
-                      t_csv->text(i, 4).toDouble() == 0e0 ?
-                      ""
-                      :
-                      QString("%1")
-                      .arg( ( t_csv->text(i, 3).toDouble() -
-                              t_csv->text(i, 2).toDouble() )
-                             / ( t_csv->text(i, 4).toDouble() - 1e0 ) ) 
-                      )
-                     );
+      QString toset =
+         t_csv->item(i, 4)->text().toDouble() == 0e0 ?
+         ""
+         :
+         QString("%1")
+         .arg( ( t_csv->item(i, 3)->text().toDouble() -
+                 t_csv->item(i, 2)->text().toDouble() )
+               / ( t_csv->item(i, 4)->text().toDouble() - 1e0 ) )
+         ;
+         
+      t_csv->setItem( i, 5, new QTableWidgetItem( toset ) );
    }
 }
 
 
 void US_Hydrodyn_Saxs_Buffer::recompute_points_from_interval()
 {
-   for ( unsigned int i = 0; i < (unsigned int)t_csv->numRows(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int)t_csv->rowCount(); i++ )
    {
-      t_csv->setText(
-                     i, 4, 
-                     ( 
-                      t_csv->text(i, 5).toDouble() == 0e0 ?
-                      ""
-                      :
-                      QString("%1")
-                      .arg( 1 + (unsigned int)(( t_csv->text(i, 3).toDouble() -
-                                                 t_csv->text(i, 2).toDouble() )
-                                               / t_csv->text(i, 5).toDouble() + 0.5) ) 
-                      )
-                     );
+      QString toset =
+         t_csv->item(i, 5)->text().toDouble() == 0e0 ?
+         ""
+         :
+         QString("%1")
+         .arg( 1 + (unsigned int)(( t_csv->item(i, 3)->text().toDouble() -
+                                    t_csv->item(i, 2)->text().toDouble() )
+                                  / t_csv->item(i, 5)->text().toDouble() + 0.5) )
+         ;
+      t_csv->setItem( i, 4, new QTableWidgetItem( toset ) );
    }
 }
 
 void US_Hydrodyn_Saxs_Buffer::clear_files()
 {
    QStringList files;
-   for ( int i = 0; i < lb_files->numRows(); i++ )
+   for ( int i = 0; i < lb_files->count(); i++ )
    {
-      if ( lb_files->isSelected( i ) )
+      if ( lb_files->item( i )->isSelected() )
       {
-         files << lb_files->text( i );
+         files << lb_files->item( i )->text( );
       }
    }
    clear_files( files );
@@ -2362,19 +2413,19 @@ void US_Hydrodyn_Saxs_Buffer::clear_files( QStringList files )
 
       if ( qsl.size() < created_not_saved_list.size() )
       {
-         qsl << QString( tr( "... and %1 more not listed" ) ).arg( created_not_saved_list.size() - qsl.size() );
+         qsl << QString( us_tr( "... and %1 more not listed" ) ).arg( created_not_saved_list.size() - qsl.size() );
       }
 
       switch ( QMessageBox::warning(this, 
-                                    title + tr( " Remove Files" ),
-                                    QString( tr( "Please note:\n\n"
+                                    title + us_tr( " Remove Files" ),
+                                    QString( us_tr( "Please note:\n\n"
                                                  "These files were created but not saved as .dat files:\n"
                                                  "%1\n\n"
                                                  "What would you like to do?\n" ) )
                                     .arg( qsl.join( "\n" ) ),
-                                    tr( "&Save them now" ), 
-                                    tr( "&Remove them anyway" ), 
-                                    tr( "&Quit from removing files" ), 
+                                    us_tr( "&Save them now" ), 
+                                    us_tr( "&Remove them anyway" ), 
+                                    us_tr( "&Quit from removing files" ), 
                                     0, // Stop == button 0
                                     0 // Escape == button 0
                                     ) )
@@ -2396,49 +2447,49 @@ void US_Hydrodyn_Saxs_Buffer::clear_files( QStringList files )
    }
 
    // remove them now
-   for ( int i = lb_files->numRows(); i >= 0; i-- )
+   for ( int i = lb_created_files->count() - 1; i >= 0; i-- )
    {
-      if ( selected_map.count( lb_created_files->text( i ) ) )
+      if ( selected_map.count( lb_created_files->item( i )->text( ) ) )
       {
-         created_files_not_saved.erase( lb_created_files->text( i ) );
-         lb_created_files->removeItem( i );
+         created_files_not_saved.erase( lb_created_files->item( i )->text() );
+         delete lb_created_files->takeItem( i );
       }
    }
 
-   for ( int i = lb_files->numRows() - 1; i >= 0; i-- )
+   for ( int i = lb_files->count() - 1; i >= 0; i-- )
    {
-      if ( selected_map.count( lb_files->text( i ) ) )
+      if ( selected_map.count( lb_files->item( i )->text( ) ) )
       {
-         editor_msg( "black", QString( tr( "Removed %1" ) ).arg( lb_files->text( i ) ) );
-         if ( lbl_buffer->text() == lb_files->text( i ) )
+         editor_msg( "black", QString( us_tr( "Removed %1" ) ).arg( lb_files->item( i )->text( ) ) );
+         if ( lbl_buffer->text() == lb_files->item( i )->text() )
          {
             lbl_buffer->setText( "" );
          }
-         if ( lbl_signal->text() == lb_files->text( i ) )
+         if ( lbl_signal->text() == lb_files->item( i )->text() )
          {
             lbl_signal->setText( "" );
          }
-         if ( lbl_empty->text() == lb_files->text( i ) )
+         if ( lbl_empty->text() == lb_files->item( i )->text() )
          {
             lbl_empty->setText( "" );
          }
-         f_qs_string.erase( lb_files->text( i ) );
-         f_qs       .erase( lb_files->text( i ) );
-         f_Is       .erase( lb_files->text( i ) );
-         f_errors   .erase( lb_files->text( i ) );
-         f_pos      .erase( lb_files->text( i ) );
-         f_name     .erase( lb_files->text( i ) );
-         f_psv      .erase( lb_files->text( i ) );
-         f_I0se     .erase( lb_files->text( i ) );
-         f_conc     .erase( lb_files->text( i ) );
-         f_extc     .erase( lb_files->text( i ) );
-         lb_files->removeItem( i );
+         f_qs_string.erase( lb_files->item( i )->text() );
+         f_qs       .erase( lb_files->item( i )->text() );
+         f_Is       .erase( lb_files->item( i )->text() );
+         f_errors   .erase( lb_files->item( i )->text() );
+         f_pos      .erase( lb_files->item( i )->text() );
+         f_name     .erase( lb_files->item( i )->text() );
+         f_psv      .erase( lb_files->item( i )->text() );
+         f_I0se     .erase( lb_files->item( i )->text() );
+         f_conc     .erase( lb_files->item( i )->text() );
+         f_extc     .erase( lb_files->item( i )->text() );
+         delete lb_files->takeItem( i );
       }
    }
 
    disable_updates = false;
    plot_files();
-   if ( !lb_files->numRows() &&
+   if ( !lb_files->count() &&
         plot_dist_zoomer )
    {
       delete plot_dist_zoomer;
@@ -2447,7 +2498,7 @@ void US_Hydrodyn_Saxs_Buffer::clear_files( QStringList files )
    update_csv_conc();
    if ( conc_widget )
    {
-      if ( lb_files->numRows() )
+      if ( lb_files->count() )
       {
          conc_window->refresh( csv_conc );
       } else {
@@ -2469,9 +2520,9 @@ public:
 void US_Hydrodyn_Saxs_Buffer::add_files()
 {
    map < QString, bool > existing_items;
-   for ( int i = 0; i < lb_files->numRows(); i++ )
+   for ( int i = 0; i < lb_files->count(); i++ )
    {
-      existing_items[ lb_files->text( i ) ] = true;
+      existing_items[ lb_files->item( i )->text( ) ] = true;
    }
 
    if ( cb_lock_dir->isChecked() )
@@ -2479,7 +2530,7 @@ void US_Hydrodyn_Saxs_Buffer::add_files()
       QDir::setCurrent( lbl_dir->text() );
    }
 
-   QString use_dir = QDir::currentDirPath();
+   QString use_dir = QDir::currentPath();
    
    if ( !*saxs_widget )
    {
@@ -2511,14 +2562,14 @@ void US_Hydrodyn_Saxs_Buffer::add_files()
    
    if ( filenames.size() )
    {
-      last_load_dir = QFileInfo( filenames[ 0 ] ).dirPath();
+      last_load_dir = QFileInfo( filenames[ 0 ] ).path();
       if ( !cb_lock_dir->isChecked() )
       {
          QDir::setCurrent( last_load_dir );
-         lbl_dir        ->setText( QDir::currentDirPath() );
-         lbl_created_dir->setText( QDir::currentDirPath() + "/produced" ); 
+         lbl_dir        ->setText( QDir::currentPath() );
+         lbl_created_dir->setText( QDir::currentPath() + "/produced" ); 
       }
-      editor_msg( "black", QString( tr( "loaded from %1:" ) ).arg( last_load_dir ) );
+      editor_msg( "black", QString( us_tr( "loaded from %1:" ) ).arg( last_load_dir ) );
    }
 
 
@@ -2541,7 +2592,7 @@ void US_Hydrodyn_Saxs_Buffer::add_files()
       bool add_dp = head.contains( QRegExp( "\\d_$" ) );
 
 #ifdef DEBUG_LOAD_REORDER
-      qDebug( QString( "sort head <%1> tail <%2>  dp %3 " ).arg( head ).arg( tail ).arg( add_dp ? "yes" : "no" ) );
+      us_qdebug( QString( "sort head <%1> tail <%2>  dp %3 " ).arg( head ).arg( tail ).arg( add_dp ? "yes" : "no" ) );
 #endif
       
       set < QString > used;
@@ -2550,15 +2601,15 @@ void US_Hydrodyn_Saxs_Buffer::add_files()
       {
          QString tmp = filenames[ i ].mid( head.length() );
          tmp = tmp.mid( 0, tmp.length() - tail.length() );
-         if ( rx_cap.search( tmp ) != -1 )
+         if ( rx_cap.indexIn( tmp ) != -1 )
          {
 #ifdef DEBUG_LOAD_REORDER
-            qDebug( QString( "rx_cap search tmp %1 found" ).arg( tmp ) );
+            us_qdebug( QString( "rx_cap search tmp %1 found" ).arg( tmp ) );
 #endif
             tmp = rx_cap.cap( 1 ) + "." + rx_cap.cap( 2 );
 #ifdef DEBUG_LOAD_REORDER
          } else {
-            qDebug( QString( "rx_cap search tmp %1 NOT found" ).arg( tmp ) );
+            us_qdebug( QString( "rx_cap search tmp %1 NOT found" ).arg( tmp ) );
 #endif
          }
 
@@ -2568,13 +2619,13 @@ void US_Hydrodyn_Saxs_Buffer::add_files()
          }
 
 #ifdef DEBUG_LOAD_REORDER
-         qDebug( QString( "tmp is now %1 double is %2" ).arg( tmp ).arg( tmp.toDouble() ) );
+         us_qdebug( QString( "tmp is now %1 double is %2" ).arg( tmp ).arg( tmp.toDouble() ) );
 #endif
 
          if ( used.count( tmp ) )
          {
 #ifdef DEBUG_LOAD_REORDER
-            qDebug( QString( "rx_cap used exit <%1>" ).arg( tmp ) );
+            us_qdebug( QString( "rx_cap used exit <%1>" ).arg( tmp ) );
 #endif
             reorder = false;
             break;
@@ -2586,13 +2637,13 @@ void US_Hydrodyn_Saxs_Buffer::add_files()
          sval.name  = filenames[ i ];
          svals      .push_back( sval );
 #ifdef DEBUG_LOAD_REORDER
-         qDebug( QString( "sort tmp <%1> xval <%2>" ).arg( tmp ).arg( sval.x ) );
+         us_qdebug( QString( "sort tmp <%1> xval <%2>" ).arg( tmp ).arg( sval.x ) );
 #endif
       }
       if ( reorder )
       {
 #ifdef DEBUG_LOAD_REORDER
-         qDebug( "reordered" );
+         us_qdebug( "reordered" );
 #endif
          svals.sort();
 
@@ -2616,35 +2667,35 @@ void US_Hydrodyn_Saxs_Buffer::add_files()
          saxs_window->add_to_directory_history( filenames[ i ] );
       }
 
-      QString basename = QFileInfo( filenames[ i ] ).baseName( true );
+      QString basename = QFileInfo( filenames[ i ] ).completeBaseName();
       if ( !existing_items.count( basename ) )
       {
          if ( !load_file( filenames[ i ] ) )
          {
             errors += errormsg + "\n";
          } else {
-            editor_msg( "black", QString( tr( "%1" ) ).arg( basename ) );
+            editor_msg( "black", QString( us_tr( "%1" ) ).arg( basename ) );
             add_filenames << basename;
          }
          qApp->processEvents();
       } else {
-         errors += QString( tr( "Duplicate name not loaded %1%2" ) ).arg( basename ).arg( errors.isEmpty() ? "" : "\n" );
+         errors += QString( us_tr( "Duplicate name not loaded %1%2" ) ).arg( basename ).arg( errors.isEmpty() ? "" : "\n" );
       }
    }
 
    if ( errors.isEmpty() )
    {
-      editor_msg( "blue", tr( "Files loaded ok" ) );
+      editor_msg( "blue", us_tr( "Files loaded ok" ) );
    } else {
       editor_msg( "red", errors );
    }
 
-   lb_files->insertStringList( add_filenames );
+   lb_files->addItems( add_filenames );
 
    if ( add_filenames.size() &&
         existing_items.size() )
    {
-      lb_files->setBottomItem( existing_items.size() );
+      lb_files->scrollToItem( lb_files->item( existing_items.size() ) );
    }
 
    if ( add_filenames.size() && plot_dist_zoomer )
@@ -2666,25 +2717,25 @@ void US_Hydrodyn_Saxs_Buffer::add_files()
 void US_Hydrodyn_Saxs_Buffer::add_files( QStringList filenames )
 {
    map < QString, bool > existing_items;
-   for ( int i = 0; i < lb_files->numRows(); i++ )
+   for ( int i = 0; i < lb_files->count(); i++ )
    {
-      existing_items[ lb_files->text( i ) ] = true;
+      existing_items[ lb_files->item( i )->text( ) ] = true;
    }
 
-   QString use_dir = QDir::currentDirPath();
+   QString use_dir = QDir::currentPath();
    
    QStringList add_filenames;
    
    if ( filenames.size() )
    {
-      last_load_dir = QFileInfo( filenames[ 0 ] ).dirPath();
+      last_load_dir = QFileInfo( filenames[ 0 ] ).path();
       if ( !cb_lock_dir->isChecked() )
       {
          QDir::setCurrent( last_load_dir );
-         lbl_dir        ->setText( QDir::currentDirPath() );
-         lbl_created_dir->setText( QDir::currentDirPath() + "/produced" ); 
+         lbl_dir        ->setText( QDir::currentPath() );
+         lbl_created_dir->setText( QDir::currentPath() + "/produced" ); 
       }
-      editor_msg( "black", QString( tr( "loaded from %1:" ) ).arg( last_load_dir ) );
+      editor_msg( "black", QString( us_tr( "loaded from %1:" ) ).arg( last_load_dir ) );
    }
 
    QString errors;
@@ -2696,35 +2747,35 @@ void US_Hydrodyn_Saxs_Buffer::add_files( QStringList filenames )
          saxs_window->add_to_directory_history( filenames[ i ] );
       }
 
-      QString basename = QFileInfo( filenames[ i ] ).baseName( true );
+      QString basename = QFileInfo( filenames[ i ] ).completeBaseName();
       if ( !existing_items.count( basename ) )
       {
          if ( !load_file( filenames[ i ] ) )
          {
             errors += errormsg + "\n";
          } else {
-            editor_msg( "black", QString( tr( "%1" ) ).arg( basename ) );
+            editor_msg( "black", QString( us_tr( "%1" ) ).arg( basename ) );
             add_filenames << basename;
          }
          qApp->processEvents();
       } else {
-         errors += QString( tr( "Duplicate name not loaded %1%2" ) ).arg( basename ).arg( errors.isEmpty() ? "" : "\n" );
+         errors += QString( us_tr( "Duplicate name not loaded %1%2" ) ).arg( basename ).arg( errors.isEmpty() ? "" : "\n" );
       }
    }
 
    if ( errors.isEmpty() )
    {
-      editor_msg( "blue", tr( "Files loaded ok" ) );
+      editor_msg( "blue", us_tr( "Files loaded ok" ) );
    } else {
       editor_msg( "red", errors );
    }
 
-   lb_files->insertStringList( add_filenames );
+   lb_files->addItems( add_filenames );
 
    if ( add_filenames.size() &&
         existing_items.size() )
    {
-      lb_files->setBottomItem( existing_items.size() );
+      lb_files->scrollToItem( lb_files->item( existing_items.size() ) );
    }
 
    if ( add_filenames.size() && plot_dist_zoomer )
@@ -2772,12 +2823,12 @@ void US_Hydrodyn_Saxs_Buffer::plot_files()
       legend();
    }
 
-   for ( int i = 0; i < lb_files->numRows(); i++ )
+   for ( int i = 0; i < lb_files->count(); i++ )
    {
-      if ( lb_files->isSelected( i ) )
+      if ( lb_files->item( i )->isSelected() )
       {
          //any_selected = true;
-         if ( plot_file( lb_files->text( i ), file_minx, file_maxx, file_miny, file_maxy ) )
+         if ( plot_file( lb_files->item( i )->text(), file_minx, file_maxx, file_miny, file_maxy ) )
          {
             if ( first )
             {
@@ -2806,7 +2857,7 @@ void US_Hydrodyn_Saxs_Buffer::plot_files()
             }
          }
       } else {
-         if ( get_min_max( lb_files->text( i ), file_minx, file_maxx, file_miny, file_maxy ) )
+         if ( get_min_max( lb_files->item( i )->text(), file_minx, file_maxx, file_miny, file_maxy ) )
          {
             if ( first )
             {
@@ -2868,7 +2919,7 @@ bool US_Hydrodyn_Saxs_Buffer::plot_file( QString file,
         !f_Is        .count( file ) ||
         !f_pos       .count( file ) )
    {
-      editor_msg( "red", QString( tr( "Internal error: request to plot %1, but not found in data" ) ).arg( file ) );
+      editor_msg( "red", QString( us_tr( "Internal error: request to plot %1, but not found in data" ) ).arg( file ) );
       return false;
    }
 
@@ -2965,7 +3016,7 @@ bool US_Hydrodyn_Saxs_Buffer::get_min_max( QString file,
         !f_Is        .count( file ) ||
         !f_pos       .count( file ) )
    {
-      // editor_msg( "red", QString( tr( "Internal error: requested %1, but not found in data" ) ).arg( file ) );
+      // editor_msg( "red", QString( us_tr( "Internal error: requested %1, but not found in data" ) ).arg( file ) );
       return false;
    }
 
@@ -3018,15 +3069,28 @@ bool US_Hydrodyn_Saxs_Buffer::get_min_max( QString file,
 
 void US_Hydrodyn_Saxs_Buffer::invert()
 {
-   lb_files->invertSelection();
+   set < int > was_selected;
+   for ( int i = 0; i < lb_files->count(); i++ ) {
+      if ( lb_files->item( i )->isSelected() ) {
+         was_selected.insert( i );
+      }
+   }
+
+   disable_updates = true;
+   for ( int i = 0; i < lb_files->count(); i++ ) {
+      lb_files->item( i)->setSelected( !was_selected.count( i ) );
+   }
+   disable_updates = false;
+   plot_files();
+   update_enables();
 }
 
 void US_Hydrodyn_Saxs_Buffer::select_all()
 {
    bool all_selected = true;
-   for ( int i = 0; i < lb_files->numRows(); i++ )
+   for ( int i = 0; i < lb_files->count(); i++ )
    {
-      if ( !lb_files->isSelected( i ) )
+      if ( !lb_files->item( i )->isSelected() )
       {
          all_selected = false;
          break;
@@ -3034,9 +3098,9 @@ void US_Hydrodyn_Saxs_Buffer::select_all()
    }
 
    disable_updates = true;
-   for ( int i = 0; i < lb_files->numRows(); i++ )
+   for ( int i = 0; i < lb_files->count(); i++ )
    {
-      lb_files->setSelected( i, !all_selected );
+      lb_files->item( i)->setSelected( !all_selected );
    }
    disable_updates = false;
    plot_files();
@@ -3046,9 +3110,9 @@ void US_Hydrodyn_Saxs_Buffer::select_all()
 void US_Hydrodyn_Saxs_Buffer::select_all_created()
 {
    bool all_selected = true;
-   for ( int i = 0; i < lb_created_files->numRows(); i++ )
+   for ( int i = 0; i < lb_created_files->count(); i++ )
    {
-      if ( !lb_created_files->isSelected( i ) )
+      if ( !lb_created_files->item( i )->isSelected() )
       {
          all_selected = false;
          break;
@@ -3056,9 +3120,9 @@ void US_Hydrodyn_Saxs_Buffer::select_all_created()
    }
 
    disable_updates = true;
-   for ( int i = 0; i < lb_created_files->numRows(); i++ )
+   for ( int i = 0; i < lb_created_files->count(); i++ )
    {
-      lb_created_files->setSelected( i, !all_selected );
+      lb_created_files->item( i)->setSelected( !all_selected );
    }
    disable_updates = false;
    update_enables();
@@ -3075,7 +3139,7 @@ bool US_Hydrodyn_Saxs_Buffer::load_file( QString filename )
    }
    //   cout << QString( "opening %1\n" ).arg( filename ) << flush;
    
-   QString ext = QFileInfo( filename ).extension( false ).lower();
+   QString ext = QFileInfo( filename ).suffix().toLower();
 
    QRegExp rx_valid_ext (
                          "^("
@@ -3085,7 +3149,7 @@ bool US_Hydrodyn_Saxs_Buffer::load_file( QString filename )
                          // "out|"
                          "ssaxs)$" );
 
-   if ( rx_valid_ext.search( ext ) == -1 )
+   if ( rx_valid_ext.indexIn( ext ) == -1 )
    {
       errormsg = QString("Error: %1 unsupported file extension %2").arg( filename ).arg( ext );
       return false;
@@ -3097,7 +3161,7 @@ bool US_Hydrodyn_Saxs_Buffer::load_file( QString filename )
       return false;
    }
 
-   Q3TextStream ts(&f);
+   QTextStream ts(&f);
    vector < QString > qv;
    QStringList qsl;
 
@@ -3124,16 +3188,16 @@ bool US_Hydrodyn_Saxs_Buffer::load_file( QString filename )
       QRegExp rx_conc      ( "Conc:\\s*(\\S+)(\\s|$)" );
       QRegExp rx_psv       ( "PSV:\\s*(\\S+)(\\s|$)" );
       QRegExp rx_I0se      ( "I0se:\\s*(\\S+)(\\s|$)" );
-      if ( rx_conc.search( qv[ 0 ] ) )
+      if ( rx_conc.indexIn( qv[ 0 ] ) )
       {
          this_conc = rx_conc.cap( 1 ).toDouble();
          // cout << QString( "found conc %1\n" ).arg( this_conc );
       }
-      if ( rx_psv.search( qv[ 0 ] ) )
+      if ( rx_psv.indexIn( qv[ 0 ] ) )
       {
          this_psv = rx_psv.cap( 1 ).toDouble();
       }
-      if ( rx_I0se.search( qv[ 0 ] ) )
+      if ( rx_I0se.indexIn( qv[ 0 ] ) )
       {
          this_I0se = rx_I0se.cap( 1 ).toDouble();
       }
@@ -3157,12 +3221,17 @@ bool US_Hydrodyn_Saxs_Buffer::load_file( QString filename )
    for ( int i = 1; i < (int) qv.size(); i++ )
    {
       if ( qv[i].contains(QRegExp("^#")) ||
-           rx_ok_line.search( qv[i] ) == -1 )
+           rx_ok_line.indexIn( qv[i] ) == -1 )
       {
          continue;
       }
       
-      QStringList tokens = QStringList::split(QRegExp("\\s+"), qv[i].replace(QRegExp("^\\s+"),""));
+      // QStringList tokens = (qv[i].replace(QRegExp("^\\s+").split( QRegExp("\\s+") , QString::SkipEmptyParts ),""));
+      QStringList tokens;
+      {
+         QString qs = qv[i].replace(QRegExp("^\\s+"),"");
+         tokens = (qs ).split( QRegExp("\\s+") , QString::SkipEmptyParts );
+      }
 
       if ( (int)tokens.size() > 1 + offset )
       {
@@ -3198,18 +3267,18 @@ bool US_Hydrodyn_Saxs_Buffer::load_file( QString filename )
 
    if ( !q.size() )
    {
-      editor_msg( "red", QString( tr( "Error: File %1 has no data" ) ).arg( filename ) );
+      editor_msg( "red", QString( us_tr( "Error: File %1 has no data" ) ).arg( filename ) );
       return false;
    }
                   
    if ( is_zero_vector( I ) )
    {
-      editor_msg( "red", QString( tr( "Error: File %1 has only zero signal" ) ).arg( filename ) );
+      editor_msg( "red", QString( us_tr( "Error: File %1 has only zero signal" ) ).arg( filename ) );
       return false;
    }
 
    // cout << QString( "opened %1\n" ).arg( filename ) << flush;
-   QString basename = QFileInfo( filename ).baseName( true );
+   QString basename = QFileInfo( filename ).completeBaseName();
    f_name      [ basename ] = filename;
    f_pos       [ basename ] = f_qs.size();
    f_qs_string [ basename ] = q_string;
@@ -3237,7 +3306,7 @@ bool US_Hydrodyn_Saxs_Buffer::load_file( QString filename )
       if ( e.size() )
       {
          editor->append( 
-                        QString( tr( "Notice: File %1 appeared to have standard deviations, but some were zero or less, so all were dropped\n" ) 
+                        QString( us_tr( "Notice: File %1 appeared to have standard deviations, but some were zero or less, so all were dropped\n" ) 
                                  ).arg( filename ) 
                         );
       }
@@ -3248,11 +3317,11 @@ bool US_Hydrodyn_Saxs_Buffer::load_file( QString filename )
 
 void US_Hydrodyn_Saxs_Buffer::set_buffer()
 {
-   for ( int i = 0; i < lb_files->numRows(); i++ )
+   for ( int i = 0; i < lb_files->count(); i++ )
    {
-      if ( lb_files->isSelected( i ) )
+      if ( lb_files->item( i )->isSelected() )
       {
-         lbl_buffer->setText( lb_files->text( i ) );
+         lbl_buffer->setText( lb_files->item( i )->text() );
       }
    }
    update_csv_conc();
@@ -3265,11 +3334,11 @@ void US_Hydrodyn_Saxs_Buffer::set_buffer()
 
 void US_Hydrodyn_Saxs_Buffer::set_signal()
 {
-   for ( int i = 0; i < lb_files->numRows(); i++ )
+   for ( int i = 0; i < lb_files->count(); i++ )
    {
-      if ( lb_files->isSelected( i ) )
+      if ( lb_files->item( i )->isSelected() )
       {
-         lbl_signal->setText( lb_files->text( i ) );
+         lbl_signal->setText( lb_files->item( i )->text() );
       }
    }
    update_enables();
@@ -3277,11 +3346,11 @@ void US_Hydrodyn_Saxs_Buffer::set_signal()
 
 void US_Hydrodyn_Saxs_Buffer::set_empty()
 {
-   for ( int i = 0; i < lb_files->numRows(); i++ )
+   for ( int i = 0; i < lb_files->count(); i++ )
    {
-      if ( lb_files->isSelected( i ) )
+      if ( lb_files->item( i )->isSelected() )
       {
-         lbl_empty->setText( lb_files->text( i ) );
+         lbl_empty->setText( lb_files->item( i )->text() );
       }
    }
    update_csv_conc();
@@ -3303,13 +3372,13 @@ void US_Hydrodyn_Saxs_Buffer::update_created_files()
 void US_Hydrodyn_Saxs_Buffer::avg()
 {
    QStringList files;
-   for ( int i = 0; i < lb_files->numRows(); i++ )
+   for ( int i = 0; i < lb_files->count(); i++ )
    {
-      if ( lb_files->isSelected( i ) && 
-           lb_files->text( i ) != lbl_buffer->text() &&
-           lb_files->text( i ) != lbl_empty->text() )
+      if ( lb_files->item( i )->isSelected( ) && 
+           lb_files->item( i )->text( ) != lbl_buffer->text() &&
+           lb_files->item( i )->text( ) != lbl_empty->text() )
       {
-         files << lb_files->text( i );
+         files << lb_files->item( i )->text( );
       }
    }
    avg( files );
@@ -3318,11 +3387,11 @@ void US_Hydrodyn_Saxs_Buffer::avg()
 void US_Hydrodyn_Saxs_Buffer::asum()
 {
    QStringList files;
-   for ( int i = 0; i < lb_files->numRows(); i++ )
+   for ( int i = 0; i < lb_files->count(); i++ )
    {
-      if ( lb_files->isSelected( i ) )
+      if ( lb_files->item( i )->isSelected() )
       {
-         files << lb_files->text( i );
+         files << lb_files->item( i )->text( );
       }
    }
    asum( files );
@@ -3394,7 +3463,7 @@ void US_Hydrodyn_Saxs_Buffer::avg( QStringList files )
 
    if ( crop )
    {
-      editor_msg( "dark red", QString( tr( "Notice: averaging requires cropping to %1 points" ) ).arg( min_q_len ) );
+      editor_msg( "dark red", QString( us_tr( "Notice: averaging requires cropping to %1 points" ) ).arg( min_q_len ) );
       for ( map < QString, vector < double > >::iterator it = t_qs.begin();
             it != t_qs.end();
             it++ )
@@ -3438,10 +3507,10 @@ void US_Hydrodyn_Saxs_Buffer::avg( QStringList files )
    if ( all_nonzero_errors )
    {
       editor_msg( "black" ,
-                  tr( "Notice: using standard deviation in mean calculation" ) );
+                  us_tr( "Notice: using standard deviation in mean calculation" ) );
    } else {
       editor_msg( "black" ,
-                  tr( "Notice: NOT using standard deviation in mean calculation, since some sd's were zero or missing" ) );
+                  us_tr( "Notice: NOT using standard deviation in mean calculation, since some sd's were zero or missing" ) );
    }
 
    for ( int i = 0; i < (int)files.size(); i++ )
@@ -3483,14 +3552,14 @@ void US_Hydrodyn_Saxs_Buffer::avg( QStringList files )
       } else {
          if ( avg_qs.size() != t_qs[ this_file ].size() )
          {
-            editor_msg( "red", tr( "Error: incompatible grids, the files selected do not have the same number of points" ) );
+            editor_msg( "red", us_tr( "Error: incompatible grids, the files selected do not have the same number of points" ) );
             return;
          }
          for ( int j = 0; j < (int)t_Is[ this_file ].size(); j++ )
          {
             if ( fabs( avg_qs[ j ] - t_qs[ this_file ][ j ] ) > Q_VAL_TOL )
             {
-               editor_msg( "red", tr( "Error: incompatible grids, the q values differ between selected files" ) );
+               editor_msg( "red", us_tr( "Error: incompatible grids, the q values differ between selected files" ) );
                cout << QString( "val1 %1 val2 %2 fabs diff %3\n" ).arg( avg_qs[ j ] ).arg(  t_qs[ this_file ][ j ]  ).arg(fabs( avg_qs[ j ] - t_qs[ this_file ][ j ] ) );
                return;
             }
@@ -3511,7 +3580,7 @@ void US_Hydrodyn_Saxs_Buffer::avg( QStringList files )
 
    if ( selected_count < 2 )
    {
-      editor_msg( "red", tr( "Error: not at least 2 files selected so there is nothing to average" ) );
+      editor_msg( "red", us_tr( "Error: not at least 2 files selected so there is nothing to average" ) );
       return;
    }      
 
@@ -3558,9 +3627,9 @@ void US_Hydrodyn_Saxs_Buffer::avg( QStringList files )
    QString avg_name = head + "avg" + tail;
 
    map < QString, bool > current_files;
-   for ( int i = 0; i < (int)lb_files->numRows(); i++ )
+   for ( int i = 0; i < (int)lb_files->count(); i++ )
    {
-      current_files[ lb_files->text( i ) ] = true;
+      current_files[ lb_files->item( i )->text( ) ] = true;
    }
 
    while ( current_files.count( avg_name ) )
@@ -3568,10 +3637,10 @@ void US_Hydrodyn_Saxs_Buffer::avg( QStringList files )
       avg_name = head + QString( "avg-%1" ).arg( ++ext ) + tail;
    }
 
-   lb_created_files->insertItem( avg_name );
-   lb_created_files->setBottomItem( lb_created_files->numRows() - 1 );
-   lb_files->insertItem( avg_name );
-   lb_files->setBottomItem( lb_files->numRows() - 1 );
+   lb_created_files->addItem( avg_name );
+   lb_created_files->scrollToItem( lb_created_files->item( lb_created_files->count() - 1 ) );
+   lb_files->addItem( avg_name );
+   lb_files->scrollToItem( lb_files->item( lb_files->count() - 1 ) );
    created_files_not_saved[ avg_name ] = true;
    
    f_pos       [ avg_name ] = f_qs.size();
@@ -3712,12 +3781,12 @@ void US_Hydrodyn_Saxs_Buffer::save_created()
 {
    QStringList           created_not_saved_list;
 
-   for ( int i = 0; i < lb_created_files->numRows(); i++ )
+   for ( int i = 0; i < lb_created_files->count(); i++ )
    {
-      if ( lb_created_files->isSelected( i ) && 
-           created_files_not_saved.count( lb_created_files->text( i ) ) )
+      if ( lb_created_files->item( i )->isSelected( ) && 
+           created_files_not_saved.count( lb_created_files->item( i )->text() ) )
       {
-         created_not_saved_list << lb_created_files->text( i );
+         created_not_saved_list << lb_created_files->item( i )->text( );
       }
    }
    save_files( created_not_saved_list );
@@ -3727,12 +3796,12 @@ void US_Hydrodyn_Saxs_Buffer::save_created_csv()
 {
    QStringList           created_not_saved_list;
 
-   for ( int i = 0; i < lb_created_files->numRows(); i++ )
+   for ( int i = 0; i < lb_created_files->count(); i++ )
    {
-      if ( lb_created_files->isSelected( i ) ) // &&
-           // created_files_not_saved.count( lb_created_files->text( i ) ) )
+      if ( lb_created_files->item( i )->isSelected() ) // &&
+           // created_files_not_saved.count( lb_created_files->item( i )->text() ) )
       {
-         created_not_saved_list << lb_created_files->text( i );
+         created_not_saved_list << lb_created_files->item( i )->text( );
       }
    }
    save_files_csv( created_not_saved_list );
@@ -3742,7 +3811,7 @@ bool US_Hydrodyn_Saxs_Buffer::save_files_csv( QStringList files )
 {
    if ( !files.size() )
    {
-      editor_msg( "red", tr( "Internal error: save_files_csv called empty" ) );
+      editor_msg( "red", us_tr( "Internal error: save_files_csv called empty" ) );
       return false;
    }
 
@@ -3752,9 +3821,9 @@ bool US_Hydrodyn_Saxs_Buffer::save_files_csv( QStringList files )
       {
          if ( dir1.mkdir( lbl_created_dir->text() ) )
          {
-            editor_msg( "black", QString( tr( "Created directory %1" ) ).arg( lbl_created_dir->text() ) );
+            editor_msg( "black", QString( us_tr( "Created directory %1" ) ).arg( lbl_created_dir->text() ) );
          } else {
-            editor_msg( "red", QString( tr( "Error: Can not create directory %1 Check permissions." ) ).arg( lbl_created_dir->text() ) );
+            editor_msg( "red", QString( us_tr( "Error: Can not create directory %1 Check permissions." ) ).arg( lbl_created_dir->text() ) );
             return false;
          }
       }
@@ -3762,7 +3831,7 @@ bool US_Hydrodyn_Saxs_Buffer::save_files_csv( QStringList files )
 
    if ( !QDir::setCurrent( lbl_created_dir->text() ) )
    {
-      editor_msg( "red", QString( tr( "Error: can not set directory %1" ) ).arg( lbl_created_dir->text() ) );
+      editor_msg( "red", QString( us_tr( "Error: can not set directory %1" ) ).arg( lbl_created_dir->text() ) );
       return false;
    }
 
@@ -3770,7 +3839,7 @@ bool US_Hydrodyn_Saxs_Buffer::save_files_csv( QStringList files )
    {
       if ( !f_qs.count( files[ i ] ) )
       {
-         editor_msg( "red", QString( tr( "Error: no data found for %1" ) ).arg( files[ i ] ) );
+         editor_msg( "red", QString( us_tr( "Error: no data found for %1" ) ).arg( files[ i ] ) );
          return false;
       } 
    }
@@ -3779,7 +3848,7 @@ bool US_Hydrodyn_Saxs_Buffer::save_files_csv( QStringList files )
 
    QString use_filename = head + ".csv";
 
-   editor_msg( "black", QString( tr( "Current directory is %1" ) ).arg( QDir::current().canonicalPath() ) );
+   editor_msg( "black", QString( us_tr( "Current directory is %1" ) ).arg( QDir::current().canonicalPath() ) );
 
    if ( QFile::exists( use_filename ) )
    {
@@ -3790,11 +3859,11 @@ bool US_Hydrodyn_Saxs_Buffer::save_files_csv( QStringList files )
    QFile f( use_filename );
    if ( !f.open( QIODevice::WriteOnly ) )
    {
-      editor_msg( "red", QString( tr( "Error: can not open %1 for writing" ) ).arg( use_filename ) );
+      editor_msg( "red", QString( us_tr( "Error: can not open %1 for writing" ) ).arg( use_filename ) );
       return false;
    }
 
-   Q3TextStream ts( &f );
+   QTextStream ts( &f );
 
    // copies for potential cropping:
 
@@ -3817,7 +3886,7 @@ bool US_Hydrodyn_Saxs_Buffer::save_files_csv( QStringList files )
            !f_Is.count( this_file ) ||
            !f_errors.count( this_file ) )
       {
-         editor_msg( "red", QString( tr( "Internal error: requested %1, but not found in data" ) ).arg( this_file ) );
+         editor_msg( "red", QString( us_tr( "Internal error: requested %1, but not found in data" ) ).arg( this_file ) );
          f.close();
          return false;
       }
@@ -3838,7 +3907,7 @@ bool US_Hydrodyn_Saxs_Buffer::save_files_csv( QStringList files )
 
    if ( crop )
    {
-      editor_msg( "dark red", QString( tr( "Notice: output contains versions cropped to identical grids for compatibility" ) ) );
+      editor_msg( "dark red", QString( us_tr( "Notice: output contains versions cropped to identical grids for compatibility" ) ) );
 
       map < double, bool > map_int;
       for ( unsigned int i = 0; i < ( unsigned int )v_int.size(); i++ )
@@ -3883,7 +3952,7 @@ bool US_Hydrodyn_Saxs_Buffer::save_files_csv( QStringList files )
 
    if ( !t_qs.count( files[ 0 ] ) )
    {
-      editor_msg( "red", QString( tr( "Internal error: requested %1, but not found in data" ) ).arg( files[ 0 ] ) );
+      editor_msg( "red", QString( us_tr( "Internal error: requested %1, but not found in data" ) ).arg( files[ 0 ] ) );
       f.close();
       return false;
    }
@@ -3897,14 +3966,14 @@ bool US_Hydrodyn_Saxs_Buffer::save_files_csv( QStringList files )
    ts << 
       QString( "\"Name\",\"Type; q:\",%1,\"%2%3\"\n" )
       .arg( qline.join( "," ) )
-      .arg( title + tr( " utility output" ) )
-      .arg( crop ? tr( " cropped" ) : "" );
+      .arg( title + us_tr( " utility output" ) )
+      .arg( crop ? us_tr( " cropped" ) : "" );
 
    for ( int i = 0; i < (int)files.size(); i++ )
    {
       if ( !t_qs.count( files[ i ] ) )
       {
-         editor_msg( "red", QString( tr( "Internal error: requested %1, but not found in data" ) ).arg( files[ i ] ) );
+         editor_msg( "red", QString( us_tr( "Internal error: requested %1, but not found in data" ) ).arg( files[ i ] ) );
          f.close();
          return false;
       }
@@ -3924,7 +3993,7 @@ bool US_Hydrodyn_Saxs_Buffer::save_files_csv( QStringList files )
    }
 
    f.close();
-   editor_msg( "black", QString( tr( "%1 written as %2" ) )
+   editor_msg( "black", QString( us_tr( "%1 written as %2" ) )
                .arg( files.join( " " ) )
                .arg( use_filename ) );
    return true;
@@ -3943,7 +4012,7 @@ bool US_Hydrodyn_Saxs_Buffer::save_files( QStringList files )
       }
       if ( cancel )
       {
-         editor_msg( "red", tr( "save cancelled" ) );
+         editor_msg( "red", us_tr( "save cancelled" ) );
          break;
       }
    }
@@ -3955,7 +4024,7 @@ bool US_Hydrodyn_Saxs_Buffer::save_file( QString file, bool &cancel, bool &overw
 {
    if ( !f_qs.count( file ) )
    {
-      editor_msg( "red", QString( tr( "Error: no data found for %1" ) ).arg( file ) );
+      editor_msg( "red", QString( us_tr( "Error: no data found for %1" ) ).arg( file ) );
       return false;
    } 
 
@@ -3965,9 +4034,9 @@ bool US_Hydrodyn_Saxs_Buffer::save_file( QString file, bool &cancel, bool &overw
       {
          if ( dir1.mkdir( lbl_created_dir->text() ) )
          {
-            editor_msg( "black", QString( tr( "Created directory %1" ) ).arg( lbl_created_dir->text() ) );
+            editor_msg( "black", QString( us_tr( "Created directory %1" ) ).arg( lbl_created_dir->text() ) );
          } else {
-            editor_msg( "red", QString( tr( "Error: Can not create directory %1 Check permissions." ) ).arg( lbl_created_dir->text() ) );
+            editor_msg( "red", QString( us_tr( "Error: Can not create directory %1 Check permissions." ) ).arg( lbl_created_dir->text() ) );
             return false;
          }
       }
@@ -3975,7 +4044,7 @@ bool US_Hydrodyn_Saxs_Buffer::save_file( QString file, bool &cancel, bool &overw
 
    if ( !QDir::setCurrent( lbl_created_dir->text() ) )
    {
-      editor_msg( "red", QString( tr( "Error: can not set directory %1" ) ).arg( lbl_created_dir->text() ) );
+      editor_msg( "red", QString( us_tr( "Error: can not set directory %1" ) ).arg( lbl_created_dir->text() ) );
       return false;
    }
 
@@ -4000,11 +4069,11 @@ bool US_Hydrodyn_Saxs_Buffer::save_file( QString file, bool &cancel, bool &overw
    QFile f( use_filename );
    if ( !f.open( QIODevice::WriteOnly ) )
    {
-      editor_msg( "red", QString( tr( "Error: can not open %1 for writing" ) ).arg( use_filename ) );
+      editor_msg( "red", QString( us_tr( "Error: can not open %1 for writing" ) ).arg( use_filename ) );
       return false;
    }
 
-   Q3TextStream ts( &f );
+   QTextStream ts( &f );
 
    map < QString, double > concs = current_concs();
 
@@ -4019,7 +4088,7 @@ bool US_Hydrodyn_Saxs_Buffer::save_file( QString file, bool &cancel, bool &overw
       }
    }
 
-   ts << QString( title + tr( " output: %1%2%3%4\n" ) )
+   ts << QString( title + us_tr( " output: %1%2%3%4\n" ) )
       .arg( file )
       .arg( f_psv .count( file ) ? QString( " PSV:%1"  ).arg( f_psv [ file ] ) : QString( "" ) )
       .arg( f_I0se.count( file ) ? QString( " I0se:%1" ).arg( f_I0se[ file ] ) : QString( "" ) )
@@ -4042,18 +4111,18 @@ bool US_Hydrodyn_Saxs_Buffer::save_file( QString file, bool &cancel, bool &overw
            (int)f_errors[ file ].size() > i )
       {
          ts << QString("").sprintf( "%-18s\t%.6e\t%.6e\n",
-                                    f_qs_string[ file ][ i ].ascii(),
+                                    f_qs_string[ file ][ i ].toAscii().data(),
                                     f_Is       [ file ][ i ],
                                     f_errors   [ file ][ i ] );
       } else {
          ts << QString("").sprintf( "%-18s\t%.6e\n",
-                                    f_qs_string[ file ][ i ].ascii(),
+                                    f_qs_string[ file ][ i ].toAscii().data(),
                                     f_Is       [ file ][ i ] );
       }
    }
 
    f.close();
-   editor_msg( "black", QString( tr( "%1 written as %2" ) )
+   editor_msg( "black", QString( us_tr( "%1 written as %2" ) )
                .arg( file )
                .arg( use_filename ) );
    created_files_not_saved.erase( file );
@@ -4086,12 +4155,12 @@ void US_Hydrodyn_Saxs_Buffer::update_csv_conc()
       csv_conc.header.push_back("File");
       csv_conc.header.push_back("Concentration\nmg/ml");
       
-      for ( int i = 0; i < lb_files->numRows(); i++ )
+      for ( int i = 0; i < lb_files->count(); i++ )
       {
-         if ( !skip.count( lb_files->text( i ) ) )
+         if ( !skip.count( lb_files->item( i )->text( ) ) )
          {
             vector < QString > tmp_data;
-            tmp_data.push_back( lb_files->text( i ) );
+            tmp_data.push_back( lb_files->item( i )->text() );
             tmp_data.push_back( "" );
             
             csv_conc.prepended_names.push_back(tmp_data[0]);
@@ -4101,11 +4170,11 @@ void US_Hydrodyn_Saxs_Buffer::update_csv_conc()
    } else {
       map < QString, bool > current_files;
       map < QString, bool > csv_files;
-      for ( int i = 0; i < lb_files->numRows(); i++ )
+      for ( int i = 0; i < lb_files->count(); i++ )
       {
-         if ( !skip.count( lb_files->text( i ) ) )
+         if ( !skip.count( lb_files->item( i )->text( ) ) )
          {
-            current_files[ lb_files->text( i ) ] = true;
+            current_files[ lb_files->item( i )->text( ) ] = true;
          }
       }
       csv new_csv = csv_conc;
@@ -4122,13 +4191,13 @@ void US_Hydrodyn_Saxs_Buffer::update_csv_conc()
          }
       }
       // add new ones
-      for ( int i = 0; i < lb_files->numRows(); i++ )
+      for ( int i = 0; i < lb_files->count(); i++ )
       {
-         if ( !skip.count( lb_files->text( i ) ) &&
-              !csv_files.count( lb_files->text( i ) ) )
+         if ( !skip.count( lb_files->item( i )->text() ) &&
+              !csv_files.count( lb_files->item( i )->text() ) )
          {
             vector < QString > tmp_data;
-            tmp_data.push_back( lb_files->text( i ) );
+            tmp_data.push_back( lb_files->item( i )->text() );
             tmp_data.push_back( "" );
             
             new_csv.prepended_names.push_back(tmp_data[0]);
@@ -4198,7 +4267,7 @@ map < QString, double > US_Hydrodyn_Saxs_Buffer::current_concs( bool quiet )
       {
          QMessageBox::warning( this, 
                                title,
-                               tr( "There are unsaved updates in the open Solution Concentration window\n"
+                               us_tr( "There are unsaved updates in the open Solution Concentration window\n"
                                    "This will cause the concentration values used by the current calculation\n"
                                    "to differ from those shown in the Solution Concentration window\n"
                                    "You probably want to save the values in the Solution Concentration window and repeat the computation."
@@ -4228,13 +4297,13 @@ map < QString, double > US_Hydrodyn_Saxs_Buffer::window_concs()
 void US_Hydrodyn_Saxs_Buffer::conc_avg()
 {
    QStringList files;
-   for ( int i = 0; i < lb_files->numRows(); i++ )
+   for ( int i = 0; i < lb_files->count(); i++ )
    {
-      if ( lb_files->isSelected( i ) && 
-           lb_files->text( i ) != lbl_buffer->text() &&
-           lb_files->text( i ) != lbl_empty->text() )
+      if ( lb_files->item( i )->isSelected( ) && 
+           lb_files->item( i )->text( ) != lbl_buffer->text() &&
+           lb_files->item( i )->text( ) != lbl_empty->text() )
       {
-         files << lb_files->text( i );
+         files << lb_files->item( i )->text( );
       }
    }
    conc_avg( files );
@@ -4319,7 +4388,7 @@ void US_Hydrodyn_Saxs_Buffer::conc_avg( QStringList files )
 
    if ( crop )
    {
-      editor_msg( "dark red", QString( tr( "Notice: averaging requires cropping to %1 points" ) ).arg( min_q_len ) );
+      editor_msg( "dark red", QString( us_tr( "Notice: averaging requires cropping to %1 points" ) ).arg( min_q_len ) );
       for ( map < QString, vector < double > >::iterator it = t_qs.begin();
             it != t_qs.end();
             it++ )
@@ -4363,10 +4432,10 @@ void US_Hydrodyn_Saxs_Buffer::conc_avg( QStringList files )
    if ( all_nonzero_errors )
    {
       editor_msg( "black" ,
-                  tr( "Notice: using standard deviation in mean calculation" ) );
+                  us_tr( "Notice: using standard deviation in mean calculation" ) );
    } else {
       editor_msg( "black" ,
-                  tr( "Notice: NOT using standard deviation in mean calculation, since some sd's were zero or missing" ) );
+                  us_tr( "Notice: NOT using standard deviation in mean calculation, since some sd's were zero or missing" ) );
    }
 
    for ( int i = 0; i < (int)files.size(); i++ )
@@ -4386,7 +4455,7 @@ void US_Hydrodyn_Saxs_Buffer::conc_avg( QStringList files )
 
       if ( !inv_concs.count( this_file ) )
       {
-         editor_msg( "red", QString( tr( "Error: found zero or no concentration for %1" ) ).arg( this_file ) );
+         editor_msg( "red", QString( us_tr( "Error: found zero or no concentration for %1" ) ).arg( this_file ) );
          return;
       }
       if ( first )
@@ -4420,7 +4489,7 @@ void US_Hydrodyn_Saxs_Buffer::conc_avg( QStringList files )
       } else {
          if ( avg_qs.size() != t_qs[ this_file ].size() )
          {
-            editor_msg( "red", tr( "Error: incompatible grids, the files selected do not have the same number of points" ) );
+            editor_msg( "red", us_tr( "Error: incompatible grids, the files selected do not have the same number of points" ) );
             return;
          }
          tot_conc  += inv_concs[ this_file ];
@@ -4431,7 +4500,7 @@ void US_Hydrodyn_Saxs_Buffer::conc_avg( QStringList files )
             if ( fabs( avg_qs[ j ] - t_qs[ this_file ][ j ] ) > Q_VAL_TOL )
             {
                cout << QString( "val1 %1 val2 %2 fabs diff %3\n" ).arg( avg_qs[ j ] ).arg(  t_qs[ this_file ][ j ]  ).arg(fabs( avg_qs[ j ] - t_qs[ this_file ][ j ] ) );
-               editor_msg( "red", tr( "Error: incompatible grids, the q values differ between selected files" ) );
+               editor_msg( "red", us_tr( "Error: incompatible grids, the q values differ between selected files" ) );
                return;
             }
             nIs[ j ] *= inv_concs[ this_file ];
@@ -4450,7 +4519,7 @@ void US_Hydrodyn_Saxs_Buffer::conc_avg( QStringList files )
 
    if ( selected_count < 2 )
    {
-      editor_msg( "red", tr( "Error: not at least 2 files selected so there is nothing to average" ) );
+      editor_msg( "red", us_tr( "Error: not at least 2 files selected so there is nothing to average" ) );
       return;
    }      
 
@@ -4500,9 +4569,9 @@ void US_Hydrodyn_Saxs_Buffer::conc_avg( QStringList files )
    QString avg_name = head + "cnavg" + tail;
 
    map < QString, bool > current_files;
-   for ( int i = 0; i < lb_files->numRows(); i++ )
+   for ( int i = 0; i < lb_files->count(); i++ )
    {
-      current_files[ lb_files->text( i ) ] = true;
+      current_files[ lb_files->item( i )->text( ) ] = true;
    }
 
    while ( current_files.count( avg_name ) )
@@ -4510,10 +4579,10 @@ void US_Hydrodyn_Saxs_Buffer::conc_avg( QStringList files )
       avg_name = head + QString( "cnavg-%1" ).arg( ++ext ) + tail;
    }
 
-   lb_created_files->insertItem( avg_name );
-   lb_created_files->setBottomItem( lb_created_files->numRows() - 1 );
-   lb_files->insertItem( avg_name );
-   lb_files->setBottomItem( lb_files->numRows() - 1 );
+   lb_created_files->addItem( avg_name );
+   lb_created_files->scrollToItem( lb_created_files->item( lb_created_files->count() - 1 ) );
+   lb_files->addItem( avg_name );
+   lb_files->scrollToItem( lb_files->item( lb_files->count() - 1 ) );
    created_files_not_saved[ avg_name ] = true;
    
    f_pos       [ avg_name ] = f_qs.size();
@@ -4563,14 +4632,14 @@ bool US_Hydrodyn_Saxs_Buffer::all_selected_have_nonzero_conc()
    }
 
    unsigned int selected_count = 0;
-   for ( int i = 0; i < lb_files->numRows(); i++ )
+   for ( int i = 0; i < lb_files->count(); i++ )
    {
-      if ( lb_files->isSelected( i )  && 
-           lb_files->text( i ) != lbl_buffer->text() &&
-           lb_files->text( i ) != lbl_empty->text() )
+      if ( lb_files->item( i )->isSelected( )  && 
+           lb_files->item( i )->text( ) != lbl_buffer->text() &&
+           lb_files->item( i )->text( ) != lbl_empty->text() )
       {
          selected_count++;
-         if ( !nonzero_concs.count( lb_files->text( i ) ) )
+         if ( !nonzero_concs.count( lb_files->item( i )->text( ) ) )
          {
             return false;
          }
@@ -4588,21 +4657,21 @@ void US_Hydrodyn_Saxs_Buffer::show_created()
 {
    map < QString, bool > created_selected;
 
-   for ( int i = 0; i < lb_created_files->numRows(); i++ )
+   for ( int i = 0; i < lb_created_files->count(); i++ )
    {
-      if ( lb_created_files->isSelected( i ) )
+      if ( lb_created_files->item( i )->isSelected() )
       {
-         created_selected[ lb_created_files->text( i ) ] = true;
+         created_selected[ lb_created_files->item( i )->text( ) ] = true;
       }
    }
 
    disable_updates = true;
-   for ( int i = 0; i < lb_files->numRows(); i++ )
+   for ( int i = 0; i < lb_files->count(); i++ )
    {
-      if ( !lb_files->isSelected( i ) && 
-           created_selected.count( lb_files->text( i ) ) )
+      if ( !lb_files->item( i )->isSelected( ) && 
+           created_selected.count( lb_files->item( i )->text() ) )
       {
-         lb_files->setSelected( i, true );
+         lb_files->item( i)->setSelected( true );
       }
    }
    disable_updates = false;
@@ -4643,12 +4712,12 @@ void US_Hydrodyn_Saxs_Buffer::rescale()
    double file_maxy;
    
    bool first = true;
-   for ( int i = 0; i < lb_files->numRows(); i++ )
+   for ( int i = 0; i < lb_files->count(); i++ )
    {
-      if ( lb_files->isSelected( i ) )
+      if ( lb_files->item( i )->isSelected() )
       {
          //any_selected = true;
-         if ( get_min_max( lb_files->text( i ), file_minx, file_maxx, file_miny, file_maxy ) )
+         if ( get_min_max( lb_files->item( i )->text(), file_minx, file_maxx, file_miny, file_maxy ) )
          {
             if ( first )
             {
@@ -4712,25 +4781,25 @@ bool US_Hydrodyn_Saxs_Buffer::adjacent_ok( QString name )
 
 // void US_Hydrodyn_Saxs_Buffer::adjacent()
 // {
-//    qDebug( "adjacent" );
+//    us_qdebug( "adjacent" );
 //    QString match_name;
 //    int     match_pos = 0;
 //    QStringList turn_on;
 
 //    disable_all();
 
-//    qDebug( "adjacent 0" );
-//    for ( int i = 0; i < lb_files->numRows(); i++ )
+//    us_qdebug( "adjacent 0" );
+//    for ( int i = 0; i < lb_files->count(); i++ )
 //    {
-//       if ( lb_files->isSelected( i ) )
+//       if ( lb_files->item( i )->isSelected() )
 //       {
-//          match_name = lb_files->text( i );
+//          match_name = lb_files->item( i )->text( );
 //          turn_on << match_name;
 //          match_pos = i;
 //          break;
 //       }
 //    }
-//    qDebug( "adjacent 1" );
+//    us_qdebug( "adjacent 1" );
 
 //    QRegExp rx;
 
@@ -4751,7 +4820,7 @@ bool US_Hydrodyn_Saxs_Buffer::adjacent_ok( QString name )
 //                     );
 //    }
 
-//    qDebug( "adjacent 2" );
+//    us_qdebug( "adjacent 2" );
 //    if ( !found && match_name.contains( QRegExp( "_cn\\d+.*$" ) ) )
 //    {
 //       found = true;
@@ -4762,7 +4831,7 @@ bool US_Hydrodyn_Saxs_Buffer::adjacent_ok( QString name )
 //                     );
 //    }
 
-//    qDebug( "adjacent 3" );
+//    us_qdebug( "adjacent 3" );
 //    if ( !found && match_name.contains( QRegExp( "\\d+$" ) ) )
 //    {
 //       found = true;
@@ -4776,7 +4845,7 @@ bool US_Hydrodyn_Saxs_Buffer::adjacent_ok( QString name )
 //    // cout << "rx: " << rx.pattern() << endl;
 
 //    unsigned int newly_set = 0;
-//    qDebug( "adjacent 4" );
+//    us_qdebug( "adjacent 4" );
 
 //    if ( found )
 //    {
@@ -4784,23 +4853,23 @@ bool US_Hydrodyn_Saxs_Buffer::adjacent_ok( QString name )
       
 //       for ( int i = match_pos - 1; i >= 0; i-- )
 //       {
-//          if ( lb_files->text( i ).contains( rx ) )
+//          if ( lb_files->item( i )->text().contains( rx ) )
 //          {
-//             if ( !lb_files->isSelected( i ) )
+//             if ( !lb_files->item( i )->isSelected() )
 //             {
-//                lb_files->setSelected( i, true );
+//                lb_files->item( i)->setSelected( true );
 //                newly_set++;
 //             }
 //          }
 //       }
       
-//       for ( int i = match_pos + 1; i < lb_files->numRows(); i++ )
+//       for ( int i = match_pos + 1; i < lb_files->count(); i++ )
 //       {
-//          if ( lb_files->text( i ).contains( rx ) )
+//          if ( lb_files->item( i )->text().contains( rx ) )
 //          {
-//             if ( !lb_files->isSelected( i ) )
+//             if ( !lb_files->item( i )->isSelected() )
 //             {
-//                lb_files->setSelected( i, true );
+//                lb_files->item( i)->setSelected( true );
 //                newly_set++;
 //             }
 //          }
@@ -4828,11 +4897,11 @@ void US_Hydrodyn_Saxs_Buffer::adjacent_created()
 
    disable_all();
 
-   for ( int i = 0; i < lb_created_files->numRows(); i++ )
+   for ( int i = 0; i < lb_created_files->count(); i++ )
    {
-      if ( lb_created_files->isSelected( i ) )
+      if ( lb_created_files->item( i )->isSelected() )
       {
-         match_name = lb_created_files->text( i );
+         match_name = lb_created_files->item( i )->text( );
          turn_on << match_name;
          match_pos = i;
          break;
@@ -4888,23 +4957,23 @@ void US_Hydrodyn_Saxs_Buffer::adjacent_created()
       
       for ( int i = match_pos - 1; i >= 0; i-- )
       {
-         if ( lb_created_files->text( i ).contains( rx ) )
+         if ( lb_created_files->item( i )->text().contains( rx ) )
          {
-            if ( !lb_created_files->isSelected( i ) )
+            if ( !lb_created_files->item( i )->isSelected() )
             {
-               lb_created_files->setSelected( i, true );
+               lb_created_files->item( i)->setSelected( true );
                newly_set++;
             }
          }
       }
       
-      for ( int i = match_pos + 1; i < lb_created_files->numRows(); i++ )
+      for ( int i = match_pos + 1; i < lb_created_files->count(); i++ )
       {
-         if ( lb_created_files->text( i ).contains( rx ) )
+         if ( lb_created_files->item( i )->text().contains( rx ) )
          {
-            if ( !lb_created_files->isSelected( i ) )
+            if ( !lb_created_files->item( i )->isSelected() )
             {
-               lb_created_files->setSelected( i, true );
+               lb_created_files->item( i)->setSelected( true );
                newly_set++;
             }
          }
@@ -4925,7 +4994,7 @@ void US_Hydrodyn_Saxs_Buffer::adjacent_created()
    update_enables();
 }
 
-bool US_Hydrodyn_Saxs_Buffer::adjacent_select( Q3ListBox *lb, QString match )
+bool US_Hydrodyn_Saxs_Buffer::adjacent_select( QListWidget *lb, QString match )
 {
    bool ok;
    static QString last_match;
@@ -4934,9 +5003,9 @@ bool US_Hydrodyn_Saxs_Buffer::adjacent_select( Q3ListBox *lb, QString match )
       match = last_match;
    }
 
-   match = QInputDialog::getText(
-                                 caption() + tr( ": Select by pattern" ), 
-                                 tr( "Regular expression search\n"
+   match = US_Static::getText(
+                                 windowTitle() + us_tr( ": Select by pattern" ), 
+                                 us_tr( "Regular expression search\n"
                                      "\n"
                                      "Special matches:\n"
                                      " ^ beginning of a line\n"
@@ -4975,13 +5044,13 @@ bool US_Hydrodyn_Saxs_Buffer::adjacent_select( Q3ListBox *lb, QString match )
    QRegExp rx( match );
    bool any_set = false;
 
-   for ( int i = 0; i < lb->numRows(); i++ )
+   for ( int i = 0; i < lb->count(); i++ )
    {
-      if ( lb->text( i ).contains( rx ) )
+      if ( lb->item( i )->text().contains( rx ) )
       {
-         if ( !lb->isSelected( i ) )
+         if ( !lb->item( i )->isSelected() )
          {
-            lb->setSelected( i, true );
+            lb->item( i)->setSelected( true );
             any_set = true;
          }
       }
@@ -4995,11 +5064,11 @@ bool US_Hydrodyn_Saxs_Buffer::adjacent_select( Q3ListBox *lb, QString match )
 void US_Hydrodyn_Saxs_Buffer::join()
 {
    vector < QString > selected;
-   for ( int i = 0; i < lb_files->numRows(); i++ )
+   for ( int i = 0; i < lb_files->count(); i++ )
    {
-      if ( lb_files->isSelected( i ) )
+      if ( lb_files->item( i )->isSelected() )
       {
-         selected.push_back( lb_files->text( i ) );
+         selected.push_back( lb_files->item( i )->text() );
       }
    }
 
@@ -5034,9 +5103,9 @@ void US_Hydrodyn_Saxs_Buffer::join()
    {
       // ask for overlap point
       bool ok;
-      double res = QInputDialog::getDouble(
-                                           title + tr( ": Join" ),
-                                           QString( tr( "The curves %1 and %2\n"
+      double res = US_Static::getDouble(
+                                           title + us_tr( ": Join" ),
+                                           QString( us_tr( "The curves %1 and %2\n"
                                                         "have an overlap q-range of %3 to %4.\n"
                                                         "Enter the join q-value:" ) )
                                            .arg( selected[ 0 ] )
@@ -5077,7 +5146,7 @@ void US_Hydrodyn_Saxs_Buffer::join()
    if ( error_warn )
    {
       editor_msg( "dark red",
-                  QString( tr( "Warning: no errors will be stored because %1 does not contain any error information" ) )
+                  QString( us_tr( "Warning: no errors will be stored because %1 does not contain any error information" ) )
                   .arg( f_errors[ selected[ 0 ] ].size() ? selected[ 1 ] : selected[ 0 ] ) );
    }
 
@@ -5138,10 +5207,10 @@ void US_Hydrodyn_Saxs_Buffer::join()
       use_basename = QString( "%1-%2" ).arg( basename ).arg( ++ext );
    }
 
-   lb_created_files->insertItem   ( use_basename );
-   lb_created_files->setBottomItem( lb_created_files->numRows() - 1 );
-   lb_files        ->insertItem   ( use_basename );
-   lb_files        ->setBottomItem( lb_files->numRows() - 1 );
+   lb_created_files->addItem( use_basename );
+   lb_created_files->scrollToItem( lb_created_files->item( lb_created_files->count() - 1 ) );
+   lb_files->addItem( use_basename );
+   lb_files->scrollToItem( lb_files->item( lb_files->count() - 1 ) );
 
    created_files_not_saved[ use_basename ] = true;
    
@@ -5167,11 +5236,11 @@ void US_Hydrodyn_Saxs_Buffer::join()
    }
 
    lb_files        ->clearSelection();
-   lb_created_files->setSelected( lb_created_files->numRows() - 1, true );
+   lb_created_files->item( lb_created_files->count() - 1)->setSelected( true );
    show_created();
 
    editor_msg( "black", 
-               QString( tr( "Created %1 as join of %2 and %3 at q %4" ) )
+               QString( us_tr( "Created %1 as join of %2 and %3 at q %4" ) )
                .arg( use_basename )
                .arg( selected[ 0 ] )
                .arg( selected[ 1 ] )
@@ -5189,11 +5258,11 @@ void US_Hydrodyn_Saxs_Buffer::to_saxs()
    update_csv_conc();
    map < QString, double > concs = current_concs();
 
-   for ( int i = 0; i < lb_files->numRows(); i++ )
+   for ( int i = 0; i < lb_files->count(); i++ )
    {
-      if ( lb_files->isSelected( i ) )
+      if ( lb_files->item( i )->isSelected() )
       {
-         QString this_file = lb_files->text( i );
+         QString this_file = lb_files->item( i )->text( );
          if ( f_qs.count( this_file ) &&
               f_Is.count( this_file ) )
          {
@@ -5217,7 +5286,7 @@ void US_Hydrodyn_Saxs_Buffer::to_saxs()
             
 
          } else {
-            editor_msg( "red", QString( tr( "Internal error: requested %1, but not found in data" ) ).arg( this_file ) );
+            editor_msg( "red", QString( us_tr( "Internal error: requested %1, but not found in data" ) ).arg( this_file ) );
          }
       }
    }
@@ -5294,11 +5363,11 @@ void US_Hydrodyn_Saxs_Buffer::select_vis()
 #endif
    // find curves within zoomRect & select only them
    map < QString, bool > selected_files;
-   for ( int i = 0; i < lb_files->numRows(); i++ )
+   for ( int i = 0; i < lb_files->count(); i++ )
    {
-      if ( lb_files->isSelected( i ) )
+      if ( lb_files->item( i )->isSelected() )
       {
-         QString this_file = lb_files->text( i );
+         QString this_file = lb_files->item( i )->text( );
          if ( f_qs.count( this_file ) &&
               f_Is.count( this_file ) )
          {
@@ -5319,11 +5388,11 @@ void US_Hydrodyn_Saxs_Buffer::select_vis()
 
    disable_updates = true;
    lb_files->clearSelection();
-   for ( int i = 0; i < lb_files->numRows(); i++ )
+   for ( int i = 0; i < lb_files->count(); i++ )
    {
-      if ( selected_files.count( lb_files->text( i ) ) )
+      if ( selected_files.count( lb_files->item( i )->text( ) ) )
       {
-         lb_files->setSelected( i, true );
+         lb_files->item( i)->setSelected( true );
       }
    }
    disable_updates = false;
@@ -5346,11 +5415,11 @@ void US_Hydrodyn_Saxs_Buffer::remove_vis()
    // find curves within zoomRect & select only them
    cout << "select visible\n";
    QStringList selected_files;
-   for ( int i = 0; i < lb_files->numRows(); i++ )
+   for ( int i = 0; i < lb_files->count(); i++ )
    {
-      if ( lb_files->isSelected( i ) )
+      if ( lb_files->item( i )->isSelected() )
       {
-         QString this_file = lb_files->text( i );
+         QString this_file = lb_files->item( i )->text( );
          if ( f_qs.count( this_file ) &&
               f_Is.count( this_file ) )
          {
@@ -5397,11 +5466,11 @@ void US_Hydrodyn_Saxs_Buffer::crop_left()
    unsigned show_pts = 5;
    // unsigned show_pts_min = show_pts - 3;
 
-   for ( int i = 0; i < lb_files->numRows(); i++ )
+   for ( int i = 0; i < lb_files->count(); i++ )
    {
-      if ( lb_files->isSelected( i ) )
+      if ( lb_files->item( i )->isSelected() )
       {
-         QString this_file = lb_files->text( i );
+         QString this_file = lb_files->item( i )->text( );
          if ( f_qs.count( this_file ) &&
               f_Is.count( this_file ) &&
               f_qs[ this_file ].size() > show_pts - 1 &&
@@ -5451,7 +5520,7 @@ void US_Hydrodyn_Saxs_Buffer::crop_left()
                }
             }
          } else {
-            editor_msg( "red", QString( tr( "Crop left: curves need at least %1 points to crop" ) ).arg( show_pts ) );
+            editor_msg( "red", QString( us_tr( "Crop left: curves need at least %1 points to crop" ) ).arg( show_pts ) );
             return;
          }            
       }
@@ -5477,7 +5546,7 @@ void US_Hydrodyn_Saxs_Buffer::crop_left()
 
    if ( !all_lefts_visible )
    {
-      editor_msg( "black", tr( "Crop left: press again to crop one point" ) );
+      editor_msg( "black", us_tr( "Crop left: press again to crop one point" ) );
       // will our current zoom rectangle show all the points?
       // if so, simply move it
       double dx = maxx - minx;
@@ -5607,7 +5676,7 @@ void US_Hydrodyn_Saxs_Buffer::crop_left()
       to_created( it->first );
    }
    crop_undos.push_back( cud );
-   editor_msg( "blue", tr( "Crop left: cropped 1 point" ) );
+   editor_msg( "blue", us_tr( "Crop left: cropped 1 point" ) );
 
    update_files();
 }
@@ -5628,11 +5697,11 @@ void US_Hydrodyn_Saxs_Buffer::crop_right()
    unsigned show_pts = 5;
    // unsigned show_pts_min = show_pts - 3;
 
-   for ( int i = 0; i < lb_files->numRows(); i++ )
+   for ( int i = 0; i < lb_files->count(); i++ )
    {
-      if ( lb_files->isSelected( i ) )
+      if ( lb_files->item( i )->isSelected() )
       {
-         QString this_file = lb_files->text( i );
+         QString this_file = lb_files->item( i )->text( );
          if ( f_qs.count( this_file ) &&
               f_Is.count( this_file ) &&
               f_qs[ this_file ].size() > show_pts - 1 &&
@@ -5683,7 +5752,7 @@ void US_Hydrodyn_Saxs_Buffer::crop_right()
                }
             }
          } else {
-            editor_msg( "red", QString( tr( "Crop right: curves need at least %1 points to crop" ) ).arg( show_pts ) );
+            editor_msg( "red", QString( us_tr( "Crop right: curves need at least %1 points to crop" ) ).arg( show_pts ) );
             return;
          }            
       }
@@ -5708,7 +5777,7 @@ void US_Hydrodyn_Saxs_Buffer::crop_right()
 
    if ( !all_rights_visible )
    {
-      editor_msg( "black", tr( "Crop right: press again to crop one point" ) );
+      editor_msg( "black", us_tr( "Crop right: press again to crop one point" ) );
       // will our current zoom rectangle show all the points?
       // if so, simply move it
       double dx = maxx - minx;
@@ -5825,7 +5894,7 @@ void US_Hydrodyn_Saxs_Buffer::crop_right()
       to_created( it->first );
    }
    crop_undos.push_back( cud );
-   editor_msg( "blue", tr( "Crop right: cropped 1 point" ) );
+   editor_msg( "blue", us_tr( "Crop right: cropped 1 point" ) );
 
    update_files();
 }
@@ -5839,9 +5908,9 @@ void US_Hydrodyn_Saxs_Buffer::crop_undo()
 
    map < QString, bool > current_files;
 
-   for ( int i = 0; i < lb_files->numRows(); i++ )
+   for ( int i = 0; i < lb_files->count(); i++ )
    {
-      current_files[ lb_files->text( i ) ] = true;
+      current_files[ lb_files->item( i )->text( ) ] = true;
    }
 
    crop_undo_data cud = crop_undos.back();
@@ -5856,7 +5925,7 @@ void US_Hydrodyn_Saxs_Buffer::crop_undo()
       {
          if ( !f_qs.count( it->first ) )
          {
-            editor_msg( "red", QString( tr( "Error: can not undo crop to missing file %1" ) ).arg( it->first ) );
+            editor_msg( "red", QString( us_tr( "Error: can not undo crop to missing file %1" ) ).arg( it->first ) );
          } else {
             f_qs_string[ it->first ] = cud.f_qs_string[ it->first ];
             f_qs       [ it->first ] = cud.f_qs       [ it->first ];
@@ -5867,7 +5936,7 @@ void US_Hydrodyn_Saxs_Buffer::crop_undo()
             } else {
                if ( f_errors.count( it->first ) && f_errors[ it->first ].size() )
                {
-                  editor_msg( "dark red", QString( tr( "Warning: file %1 had no errors before crop common but somehow has errors now (?), removing them" ) ).arg( it->first ) );
+                  editor_msg( "dark red", QString( us_tr( "Warning: file %1 had no errors before crop common but somehow has errors now (?), removing them" ) ).arg( it->first ) );
                   f_errors.erase( it->first );
                }
             }
@@ -5878,7 +5947,7 @@ void US_Hydrodyn_Saxs_Buffer::crop_undo()
       {
          if ( !current_files.count( cud.files[ i ] ) )
          {
-            editor_msg( "red", QString( tr( "Error: can not undo crop to missing file %1" ) ).arg( cud.files[ i ] ) );
+            editor_msg( "red", QString( us_tr( "Error: can not undo crop to missing file %1" ) ).arg( cud.files[ i ] ) );
          } else {
             if ( cud.is_left )
             {
@@ -5924,7 +5993,7 @@ void US_Hydrodyn_Saxs_Buffer::crop_undo()
             }
          }
       }
-      editor_msg( "blue", tr( "Crop undo: restored 1 point" ) );
+      editor_msg( "blue", us_tr( "Crop undo: restored 1 point" ) );
    }
    update_files();
 }
@@ -5939,18 +6008,18 @@ void US_Hydrodyn_Saxs_Buffer::crop_common()
 
    vector < vector < double > > grids;
 
-   for ( int i = 0; i < lb_files->numRows(); i++ )
+   for ( int i = 0; i < lb_files->count(); i++ )
    {
-      if ( lb_files->isSelected( i ) )
+      if ( lb_files->item( i )->isSelected() )
       {
-         QString this_file = lb_files->text( i );
+         QString this_file = lb_files->item( i )->text( );
          if ( f_qs.count( this_file ) &&
               f_Is.count( this_file ) &&
               f_qs[ this_file ].size() &&
               f_Is[ this_file ].size() )
          {
             selected_files[ this_file ] = true;
-            grids.push_back( f_qs[ lb_files->text( i ) ] );
+            grids.push_back( f_qs[ lb_files->item( i )->text() ] );
          }
       }
    }
@@ -5959,7 +6028,7 @@ void US_Hydrodyn_Saxs_Buffer::crop_common()
    vector < double > v_int   = US_Vector::intersection( grids );
 
    editor_msg( "black", 
-               QString( tr( "Crop common:\n"
+               QString( us_tr( "Crop common:\n"
                             "Current selected files have a maximal q-range of (%1:%2) with %3 points\n"
                             "Current selected files have a common  q-range of (%4:%5) with %6 points\n"
                             ) )
@@ -5975,13 +6044,13 @@ void US_Hydrodyn_Saxs_Buffer::crop_common()
 
    if ( !any_differences )
    {
-      editor_msg( "black", tr( "Crop common: no differences between selected grids" ) );
+      editor_msg( "black", us_tr( "Crop common: no differences between selected grids" ) );
       return;
    }
 
    if ( !v_int.size() )
    {
-      editor_msg( "black", tr( "Crop common: grids have no common points" ) );
+      editor_msg( "black", us_tr( "Crop common: grids have no common points" ) );
       return;
    }
 
@@ -6041,22 +6110,22 @@ void US_Hydrodyn_Saxs_Buffer::crop_common()
       to_created( it->first );
    }
    crop_undos.push_back( cud );
-   editor_msg( "blue", tr( "Crop common: done" ) );
+   editor_msg( "blue", us_tr( "Crop common: done" ) );
 
    update_files();
 }
 
 void US_Hydrodyn_Saxs_Buffer::view()
 {
-   for ( int i = 0; i < lb_files->numRows(); i++ )
+   for ( int i = 0; i < lb_files->count(); i++ )
    {
-      if ( lb_files->isSelected( i ) )
+      if ( lb_files->item( i )->isSelected() )
       {
-         QString file = lb_files->text( i );
+         QString file = lb_files->item( i )->text( );
 
          QString text;
 
-         text += QString( title + tr( " output: %1\n" ) ).arg( file );
+         text += QString( title + us_tr( " output: %1\n" ) ).arg( file );
 
          bool use_errors = ( f_errors.count( file ) && 
                              f_errors[ file ].size() > 0 );
@@ -6074,18 +6143,18 @@ void US_Hydrodyn_Saxs_Buffer::view()
                  (int)f_errors[ file ].size() > i )
             {
                text += QString("").sprintf( "%-18s\t%.6e\t%.6e\n",
-                                          f_qs_string[ file ][ i ].ascii(),
+                                          f_qs_string[ file ][ i ].toAscii().data(),
                                           f_Is       [ file ][ i ],
                                           f_errors   [ file ][ i ] );
             } else {
                text += QString("").sprintf( "%-18s\t%.6e\n",
-                                          f_qs_string[ file ][ i ].ascii(),
+                                          f_qs_string[ file ][ i ].toAscii().data(),
                                           f_Is       [ file ][ i ] );
             }
          }
 
          TextEdit *edit;
-         edit = new TextEdit( this, file );
+         edit = new TextEdit( this, qPrintable( file ) );
          edit->setFont    ( QFont( "Courier" ) );
          edit->setPalette ( PALET_NORMAL );
          AUTFBACK( edit );
@@ -6120,9 +6189,9 @@ bool US_Hydrodyn_Saxs_Buffer::is_nonzero_vector( vector < double > &v )
 void US_Hydrodyn_Saxs_Buffer::to_created( QString file )
 {
    bool in_created = false;
-   for ( int i = 0; i < (int)lb_created_files->numRows(); i++ )
+   for ( int i = 0; i < (int)lb_created_files->count(); i++ )
    {
-      if ( file == lb_created_files->text( i ) )
+      if ( file == lb_created_files->item( i )->text() )
       {
          created_files_not_saved[ file ] = true;
          in_created = true;
@@ -6131,8 +6200,8 @@ void US_Hydrodyn_Saxs_Buffer::to_created( QString file )
 
    if ( !in_created )
    {
-      lb_created_files->insertItem( file );
-      lb_created_files->setBottomItem( lb_created_files->numRows() - 1 );
+      lb_created_files->addItem( file );
+      lb_created_files->scrollToItem( lb_created_files->item( lb_created_files->count() - 1 ) );
       created_files_not_saved[ file ] = true;
    }
 }
@@ -6154,11 +6223,11 @@ void US_Hydrodyn_Saxs_Buffer::crop_vis()
 
    map < QString, bool > selected_files;
 
-   for ( int i = 0; i < lb_files->numRows(); i++ )
+   for ( int i = 0; i < lb_files->count(); i++ )
    {
-      if ( lb_files->isSelected( i ) )
+      if ( lb_files->item( i )->isSelected() )
       {
-         QString this_file = lb_files->text( i );
+         QString this_file = lb_files->item( i )->text( );
          if ( f_qs.count( this_file ) &&
               f_Is.count( this_file ) )
          {
@@ -6179,7 +6248,7 @@ void US_Hydrodyn_Saxs_Buffer::crop_vis()
 
    if ( !selected_files.size() )
    {
-      editor_msg( "red", tr( "Crop visible: The current visible plot is empty" ) );
+      editor_msg( "red", us_tr( "Crop visible: The current visible plot is empty" ) );
       return;
    }
 
@@ -6194,7 +6263,7 @@ void US_Hydrodyn_Saxs_Buffer::crop_vis()
       if ( f_qs[ it->first ][ 0 ]   < minx &&
            f_qs[ it->first ].back() > maxx )
       {
-         editor_msg( "red", tr( "Crop visible: error: you can not crop out the middle of a curve" ) );
+         editor_msg( "red", us_tr( "Crop visible: error: you can not crop out the middle of a curve" ) );
          return;
       }
       if ( f_qs[ it->first ][ 0 ]   < minx )
@@ -6216,14 +6285,14 @@ void US_Hydrodyn_Saxs_Buffer::crop_vis()
       {
          if ( it->second != last_crop )
          {
-            editor_msg( "dark red", tr( "Crop visible: warning: you are cropping the left of some curves and the right of others. " ) );
+            editor_msg( "dark red", us_tr( "Crop visible: warning: you are cropping the left of some curves and the right of others. " ) );
             break;
          }
       }
    }
    
    editor_msg( "black",
-               QString( tr( "Crop visible:\n"
+               QString( us_tr( "Crop visible:\n"
                             "Cropping out q-range of (%1:%2)\n" ) )
                .arg( minx )
                .arg( maxx ) );
@@ -6279,7 +6348,7 @@ void US_Hydrodyn_Saxs_Buffer::crop_vis()
       to_created( it->first );
    }
    crop_undos.push_back( cud );
-   editor_msg( "blue", tr( "Crop visible: done" ) );
+   editor_msg( "blue", us_tr( "Crop visible: done" ) );
 
    update_files();
 
@@ -6313,14 +6382,14 @@ void US_Hydrodyn_Saxs_Buffer::axis_y()
 
    if ( axis_y_log )
    {
-      plot_dist->setAxisTitle(QwtPlot::yLeft, tr("I(q) (log scale)") );
+      plot_dist->setAxisTitle(QwtPlot::yLeft, us_tr("I(q) (log scale)") );
 #ifndef QT4
       plot_dist->setAxisOptions(QwtPlot::yLeft, QwtAutoScale::Logarithmic);
 #else
       plot_dist->setAxisScaleEngine(QwtPlot::yLeft, new QwtLog10ScaleEngine);
 #endif
    } else {
-      plot_dist->setAxisTitle(QwtPlot::yLeft, tr("I(q)") );
+      plot_dist->setAxisTitle(QwtPlot::yLeft, us_tr("I(q)") );
 #ifndef QT4
       plot_dist->setAxisOptions(QwtPlot::yLeft, QwtAutoScale::None);
 #else
@@ -6343,14 +6412,14 @@ void US_Hydrodyn_Saxs_Buffer::axis_x()
    axis_x_log = !axis_x_log;
    if ( axis_x_log )
    {
-      plot_dist->setAxisTitle(QwtPlot::xBottom,  tr("q (1/Angstrom) (log scale)") );
+      plot_dist->setAxisTitle(QwtPlot::xBottom,  us_tr("q (1/Angstrom) (log scale)") );
 #ifndef QT4
       plot_dist->setAxisOptions(QwtPlot::xBottom, QwtAutoScale::Logarithmic);
 #else
       plot_dist->setAxisScaleEngine(QwtPlot::xBottom, new QwtLog10ScaleEngine);
 #endif
    } else {
-      plot_dist->setAxisTitle(QwtPlot::xBottom,  tr("q (1/Angstrom)") );
+      plot_dist->setAxisTitle(QwtPlot::xBottom,  us_tr("q (1/Angstrom)") );
 #ifndef QT4
       plot_dist->setAxisOptions(QwtPlot::xBottom, QwtAutoScale::None);
 #else
@@ -6379,11 +6448,11 @@ void US_Hydrodyn_Saxs_Buffer::legend_set()
 void US_Hydrodyn_Saxs_Buffer::similar_files()
 {
    vector < QString > selected;
-   for ( int i = 0; i < lb_files->numRows(); i++ )
+   for ( int i = 0; i < lb_files->count(); i++ )
    {
-      if ( lb_files->isSelected( i ) )
+      if ( lb_files->item( i )->isSelected() )
       {
-         selected.push_back( lb_files->text( i ) );
+         selected.push_back( lb_files->item( i )->text() );
       }
    }
 
@@ -6396,13 +6465,13 @@ void US_Hydrodyn_Saxs_Buffer::similar_files()
    {
       editor_msg( 
                  "red", 
-                 QString( tr( "Error: count not find disk reference for %1" ) )
+                 QString( us_tr( "Error: count not find disk reference for %1" ) )
                  .arg( selected[ 0 ] ) );
       return;
    }
 
    QString similar = QFileInfo( f_name[ selected[ 0 ] ] ).fileName();
-   QString dir     = QFileInfo( f_name[ selected[ 0 ] ] ).dirPath();
+   QString dir     = QFileInfo( f_name[ selected[ 0 ] ] ).path();
    QString match   = similar;
    match.replace( QRegExp( "\\d{2,}" ), "\\d+" );
 
@@ -6410,17 +6479,17 @@ void US_Hydrodyn_Saxs_Buffer::similar_files()
       .arg( similar )
       .arg( dir )
       .arg( match )
-      .ascii();
+      .toAscii().data();
    // go to that directory and get file list
    // turn basename into regexp \\d{2,} into \\d+
    // load unloaded files found with match
    QDir::setCurrent( dir );
    if ( !cb_lock_dir->isChecked() )
    {
-      lbl_dir->setText( QDir::currentDirPath() );
+      lbl_dir->setText( QDir::currentPath() );
    }
    QDir qd;
-   add_files( qd.entryList( "*" ).grep( QRegExp( match ) ) );
+   add_files( qd.entryList( QStringList() << "*" ).filter( QRegExp( match ) ) );
 }
 
 void US_Hydrodyn_Saxs_Buffer::regex_load()
@@ -6430,12 +6499,21 @@ void US_Hydrodyn_Saxs_Buffer::regex_load()
    QString dir     = lbl_dir->text();
 
    QDir::setCurrent( dir );
-   lbl_dir->setText( QDir::currentDirPath() );
+   lbl_dir->setText( QDir::currentPath() );
    QDir qd;
 
 
-   QStringList regexs = QStringList::split( QRegExp( "\\s+" ), le_regex->text()      );
-   QStringList args   = QStringList::split( QRegExp( "\\s+" ), le_regex_args->text() );
+   // QStringList regexs = (le_regex->text().split( QRegExp( "\\s+" ) , QString::SkipEmptyParts )      );
+   // QStringList args   = (le_regex_args->text().split( QRegExp( "\\s+" ) , QString::SkipEmptyParts ) );
+   QStringList regexs;
+   QStringList args;
+
+   {
+      QString qs = le_regex->text();
+      regexs = (qs ).split( QRegExp( "\\s+" ) , QString::SkipEmptyParts );
+      qs = le_regex_args->text();
+      args   = (qs ).split( QRegExp( "\\s+" ) , QString::SkipEmptyParts );
+   }
 
    for ( int i = 0; i < (int)args.size(); i++ )
    {
@@ -6443,26 +6521,26 @@ void US_Hydrodyn_Saxs_Buffer::regex_load()
       {
          QString match   = QString( regexs[ j ] ).arg( args[ i ] );
          editor_msg( "dark blue", 
-                     QString( tr( "Load %1 using %2 " ) ).arg( args[ i ] ).arg( match ) );
-         add_files( qd.entryList( "*" ).grep( QRegExp( match ) ) );
+                     QString( us_tr( "Load %1 using %2 " ) ).arg( args[ i ] ).arg( match ) );
+         add_files( qd.entryList( QStringList() << "*" ).filter( QRegExp( match ) ) );
       }
    }
 }
 
-void US_Hydrodyn_Saxs_Buffer::rename_created( Q3ListBoxItem *lbi, const QPoint & )
+void US_Hydrodyn_Saxs_Buffer::rename_created( QListWidgetItem *lbi, const QPoint & )
 {
    map < QString, bool > existing_items;
-   for ( int i = 0; i < (int)lb_files->numRows(); i++ )
+   for ( int i = 0; i < (int)lb_files->count(); i++ )
    {
-      existing_items[ lb_files->text( i ) ] = true;
+      existing_items[ lb_files->item( i )->text( ) ] = true;
    }
 
    QString dupmsg;
    bool ok;
    QString text = lbi->text();
    do {
-      text = QInputDialog::getText(
-                                   tr("US-SOMO: Copy File"),
+      text = US_Static::getText(
+                                   us_tr("US-SOMO: Copy File"),
                                    dupmsg + "New name:", 
                                    QLineEdit::Normal,
                                    text, 
@@ -6475,7 +6553,7 @@ void US_Hydrodyn_Saxs_Buffer::rename_created( Q3ListBoxItem *lbi, const QPoint &
          dupmsg = "";
          if ( existing_items.count( text ) )
          {
-            dupmsg = tr( "Name already exists, choose a unique name\n" );
+            dupmsg = us_tr( "Name already exists, choose a unique name\n" );
          }
       } 
    } while ( ok && !text.isEmpty() && !dupmsg.isEmpty() );
@@ -6486,16 +6564,16 @@ void US_Hydrodyn_Saxs_Buffer::rename_created( Q3ListBoxItem *lbi, const QPoint &
    }
    if ( existing_items.count( text ) )
    {
-      editor_msg( "red", tr( "Internal error: duplicate name" ) );
+      editor_msg( "red", us_tr( "Internal error: duplicate name" ) );
       return;
    }
 
    // just a copy right now, since lbi is "protected within this context"
 
-   lb_created_files->insertItem( text );
-   lb_created_files->setBottomItem( lb_created_files->numRows() - 1 );
-   lb_files->insertItem( text );
-   lb_files->setBottomItem( lb_files->numRows() - 1 );
+   lb_created_files->addItem( text );
+   lb_created_files->scrollToItem( lb_created_files->item( lb_created_files->count() - 1 ) );
+   lb_files->addItem( text );
+   lb_files->scrollToItem( lb_files->item( lb_files->count() - 1 ) );
    created_files_not_saved[ text ] = true;
 
    f_pos      [ text ] = f_qs.size(); // pos      [ lbi->text() ];
@@ -6534,13 +6612,13 @@ void US_Hydrodyn_Saxs_Buffer::rename_created( Q3ListBoxItem *lbi, const QPoint &
 void US_Hydrodyn_Saxs_Buffer::normalize()
 {
    QStringList files;
-   for ( int i = 0; i < lb_files->numRows(); i++ )
+   for ( int i = 0; i < lb_files->count(); i++ )
    {
-      if ( lb_files->isSelected( i ) && 
-           lb_files->text( i ) != lbl_buffer->text() &&
-           lb_files->text( i ) != lbl_empty->text() )
+      if ( lb_files->item( i )->isSelected( ) && 
+           lb_files->item( i )->text( ) != lbl_buffer->text() &&
+           lb_files->item( i )->text( ) != lbl_empty->text() )
       {
-         files << lb_files->text( i );
+         files << lb_files->item( i )->text( );
       }
    }
 
@@ -6559,9 +6637,9 @@ void US_Hydrodyn_Saxs_Buffer::normalize()
    }
 
    map < QString, bool > existing_items;
-   for ( int i = 0; i < lb_files->numRows(); i++ )
+   for ( int i = 0; i < lb_files->count(); i++ )
    {
-      existing_items[ lb_files->text( i ) ] = true;
+      existing_items[ lb_files->item( i )->text( ) ] = true;
    }
 
    for ( int i = 0; i < (int)files.size(); i++ )
@@ -6574,10 +6652,10 @@ void US_Hydrodyn_Saxs_Buffer::normalize()
          norm_name = files[ i ] + QString( "_n%1" ).arg( ++ext );
       }
 
-      lb_created_files->insertItem( norm_name );
-      lb_created_files->setBottomItem( lb_created_files->numRows() - 1 );
-      lb_files->insertItem( norm_name );
-      lb_files->setBottomItem( lb_files->numRows() - 1 );
+      lb_created_files->addItem( norm_name );
+      lb_created_files->scrollToItem( lb_created_files->item( lb_created_files->count() - 1 ) );
+      lb_files->addItem( norm_name );
+      lb_files->scrollToItem( lb_files->item( lb_files->count() - 1 ) );
       created_files_not_saved[ norm_name ] = true;
 
       f_pos      [ norm_name ] = f_qs.size(); 
@@ -6641,9 +6719,9 @@ void US_Hydrodyn_Saxs_Buffer::add_plot( QString           name,
 
    map < QString, bool > current_files;
 
-   for ( int i = 0; i < lb_files->numRows(); i++ )
+   for ( int i = 0; i < lb_files->count(); i++ )
    {
-      QString this_file = lb_files->text( i );
+      QString this_file = lb_files->item( i )->text( );
       current_files[ this_file ] = true;
    }
 
@@ -6658,10 +6736,10 @@ void US_Hydrodyn_Saxs_Buffer::add_plot( QString           name,
       q_string[ i ] = QString( "%1" ).arg( q[ i ] );
    }
    
-   lb_created_files->insertItem( bsub_name );
-   lb_created_files->setBottomItem( lb_created_files->numRows() - 1 );
-   lb_files->insertItem( bsub_name );
-   lb_files->setBottomItem( lb_files->numRows() - 1 );
+   lb_created_files->addItem( bsub_name );
+   lb_created_files->scrollToItem( lb_created_files->item( lb_created_files->count() - 1 ) );
+   lb_files->addItem( bsub_name );
+   lb_files->scrollToItem( lb_files->item( lb_files->count() - 1 ) );
    created_files_not_saved[ bsub_name ] = true;
    last_created_file = bsub_name;
    
@@ -6691,34 +6769,34 @@ void US_Hydrodyn_Saxs_Buffer::run_one_divide()
 
    map < QString, bool > current_files;
 
-   for ( int i = 0; i < lb_files->numRows(); i++ )
+   for ( int i = 0; i < lb_files->count(); i++ )
    {
-      QString this_file = lb_files->text( i );
+      QString this_file = lb_files->item( i )->text( );
       current_files[ this_file ] = true;
    }
 
    if ( !current_files.count( buffer ) )
    {
-      editor_msg( "red", QString( tr( "Error: no data found for buffer %1" ) ).arg( buffer ) );
+      editor_msg( "red", QString( us_tr( "Error: no data found for buffer %1" ) ).arg( buffer ) );
       return;
    } 
 
    if ( !current_files.count( solution ) )
    {
-      editor_msg( "red", QString( tr( "Error: no data found for solution %1" ) ).arg( solution ) );
+      editor_msg( "red", QString( us_tr( "Error: no data found for solution %1" ) ).arg( solution ) );
       return;
    } 
 
    if ( !empty.isEmpty() && !current_files.count( empty ) )
    {
-      editor_msg( "red", QString( tr( "Error: no data found for blank %1" ) ).arg( empty ) );
+      editor_msg( "red", QString( us_tr( "Error: no data found for blank %1" ) ).arg( empty ) );
       return;
    } 
 
    if ( f_qs[ buffer ].size() != f_qs[ solution ].size() ||
         ( !empty.isEmpty() && f_qs[ buffer ].size() != f_qs[ empty ].size() ) )
    {
-      editor_msg( "red", tr( "Error: incompatible grids, the files selected do not have the same number of points" ) );
+      editor_msg( "red", us_tr( "Error: incompatible grids, the files selected do not have the same number of points" ) );
       return;
    }
 
@@ -6736,32 +6814,32 @@ void US_Hydrodyn_Saxs_Buffer::run_one_divide()
       if ( fabs( bsub_q[ j ] - f_qs[ buffer ][ j ] ) > Q_VAL_TOL ||
            ( !empty.isEmpty() && bsub_q[ j ] != f_qs[ empty ][ j ] ) )
       {
-         editor_msg( "red", tr( "Error: incompatible grids, the q values differ between selected files" ) );
+         editor_msg( "red", us_tr( "Error: incompatible grids, the q values differ between selected files" ) );
          return;
       }
    }
    
    // determine parameters
-   bool use_alpha = ((Q3CheckTableItem *)(t_csv->item( 0, 1 )))->isChecked();
-   bool use_psv   = ((Q3CheckTableItem *)(t_csv->item( 1, 1 )))->isChecked();
+   bool use_alpha = ((QCheckBox *)(t_csv->cellWidget( 0, 1 )))->isChecked();
+   bool use_psv   = ((QCheckBox *)(t_csv->cellWidget( 1, 1 )))->isChecked();
 
    if ( ( !use_alpha && !use_psv ) || ( use_alpha && use_psv ) )
    {
-      editor_msg( "red", tr( "Internal error: both alpha & psv methods active" ) );
+      editor_msg( "red", us_tr( "Internal error: both alpha & psv methods active" ) );
       return;
    }
 
-   if ( ( use_alpha && t_csv->text( 0, 6 ).isEmpty() ) ||
-        ( use_psv && ( t_csv->text( 1, 6 ).isEmpty() ||
-                       t_csv->text( 2, 6 ).isEmpty() ) ) )
+   if ( ( use_alpha && t_csv->item( 0, 6 )->text().isEmpty() ) ||
+        ( use_psv && ( t_csv->item( 1, 6 )->text().isEmpty() ||
+                       t_csv->item( 2, 6 )->text().isEmpty() ) ) )
    {
-      editor_msg( "red", tr( "Internal error: method selected does not have current values" ) );
+      editor_msg( "red", us_tr( "Internal error: method selected does not have current values" ) );
       return;
    }
       
-   double alpha  = t_csv->text( 0, 6 ).toDouble();
-   double psv    = t_csv->text( 1, 6 ).toDouble();
-   double gamma  = t_csv->text( 2, 6 ).toDouble();
+   double alpha  = t_csv->item( 0, 6 )->text().toDouble();
+   double psv    = t_csv->item( 1, 6 )->text().toDouble();
+   double gamma  = t_csv->item( 2, 6 )->text().toDouble();
 
    map < QString, double > concs = current_concs();
    double this_conc = concs.count( solution ) ? concs[ solution ] : 0e0;
@@ -6773,30 +6851,30 @@ void US_Hydrodyn_Saxs_Buffer::run_one_divide()
    {
       if ( !concs.count( solution ) || concs[ solution ] == 0e0 )
       {
-         editor_msg( "dark red", tr( "Warning: the solution has zero concentration" ) );
+         editor_msg( "dark red", us_tr( "Warning: the solution has zero concentration" ) );
       }
          
       alpha = 1e0 - gamma * this_conc * psv / 1000;
-      msg = QString( tr( "alpha %1 gamma %2 conc %3 psv %4" ) )
+      msg = QString( us_tr( "alpha %1 gamma %2 conc %3 psv %4" ) )
          .arg( alpha )
          .arg( gamma )
          .arg( this_conc )
          .arg( psv );
    } else {
-      msg = QString( tr( "alpha %1" ) ).arg( alpha );
+      msg = QString( us_tr( "alpha %1" ) ).arg( alpha );
    }
 
    // assuming zero covariance for now
    if ( buffer_has_errors && !solution_has_errors )
    {
-      editor_msg( "dark red", tr( "Warning: the buffer has errors defined but not the solution" ) );
+      editor_msg( "dark red", us_tr( "Warning: the buffer has errors defined but not the solution" ) );
       
       bsub_error = f_errors[ buffer ];
    } else {
       if ( !buffer_has_errors && !solution_has_errors && empty_has_errors )
       {
          // this is a strange case
-         editor_msg( "dark red", tr( "Warning: the blank has errors defined but not the solution or buffer!" ) );
+         editor_msg( "dark red", us_tr( "Warning: the blank has errors defined but not the solution or buffer!" ) );
          bsub_error = f_errors[ empty ];
       }
    }
@@ -6855,32 +6933,32 @@ void US_Hydrodyn_Saxs_Buffer::run_one_divide()
       int result;
       if ( rb_np_crop->isChecked() )
       {
-         editor_msg( "dark red", QString( tr( "Warning: non-positive values caused cropping at q = %1" ) ).arg( bsub_q[ negative_pos ] ) );
+         editor_msg( "dark red", QString( us_tr( "Warning: non-positive values caused cropping at q = %1" ) ).arg( bsub_q[ negative_pos ] ) );
          result = 0;
       }
       if ( rb_np_min->isChecked() )
       {
-         editor_msg( "dark red", QString( tr( "Warning: non-positive values caused %1 minimum values set" ) ).arg( negative_count ) );
+         editor_msg( "dark red", QString( us_tr( "Warning: non-positive values caused %1 minimum values set" ) ).arg( negative_count ) );
          result = 1;
       }
       if ( rb_np_ignore->isChecked() )
       {
-         editor_msg( "dark red", QString( tr( "Warning: %1 non-positive values ignored" ) ).arg( negative_count ) );
+         editor_msg( "dark red", QString( us_tr( "Warning: %1 non-positive values ignored" ) ).arg( negative_count ) );
          result = 2;
       }
       if ( rb_np_ask->isChecked() )
       {
          result = QMessageBox::warning(this, 
                                        title,
-                                       QString( tr( "Please note:\n\n"
+                                       QString( us_tr( "Please note:\n\n"
                                                     "The buffer subtraction causes %1 points be non-positive\n"
                                                     "Starting at a q value of %2\n\n"
                                                     "What would you like to do?\n" ) )
                                        .arg( negative_count )
                                        .arg( bsub_q[ negative_pos ] ),
-                                       tr( "&Crop the data" ), 
-                                       tr( "&Set to the minimum positive value" ), 
-                                       tr( "&Leave them negative or zero" ), 
+                                       us_tr( "&Crop the data" ), 
+                                       us_tr( "&Set to the minimum positive value" ), 
+                                       us_tr( "&Leave them negative or zero" ), 
                                        0, // Stop == button 0
                                        0 // Escape == button 0
                                        );
@@ -6896,9 +6974,9 @@ void US_Hydrodyn_Saxs_Buffer::run_one_divide()
                {
                   QMessageBox::warning(this, 
                                        title,
-                                       tr("Insufficient data left after cropping"));
+                                       us_tr("Insufficient data left after cropping"));
                } else {
-                  editor_msg( "red", tr( "Notice: Cropping left nothing" ) );
+                  editor_msg( "red", us_tr( "Notice: Cropping left nothing" ) );
                }
                return;
             }
@@ -6935,10 +7013,10 @@ void US_Hydrodyn_Saxs_Buffer::run_one_divide()
       bsub_name = head + QString( "-%1" ).arg( ++ext );
    }
 
-   lb_created_files->insertItem( bsub_name );
-   lb_created_files->setBottomItem( lb_created_files->numRows() - 1 );
-   lb_files->insertItem( bsub_name );
-   lb_files->setBottomItem( lb_files->numRows() - 1 );
+   lb_created_files->addItem( bsub_name );
+   lb_created_files->scrollToItem( lb_created_files->item( lb_created_files->count() - 1 ) );
+   lb_files->addItem( bsub_name );
+   lb_files->scrollToItem( lb_files->item( lb_files->count() - 1 ) );
    created_files_not_saved[ bsub_name ] = true;
    last_created_file = bsub_name;
    
@@ -6984,8 +7062,8 @@ void US_Hydrodyn_Saxs_Buffer::crop_zero()
    if ( QMessageBox::Ok != 
         QMessageBox::warning(
                              this,
-                             this->caption() + tr(": Crop zeros" ),
-                             tr(
+                             this->windowTitle() + us_tr(": Crop zeros" ),
+                             us_tr(
                                 "Noisy intensity data that sometimes get negative values are physically meaningful.\n"
                                 "The curves are a subtraction between two positive and very close intensity curves." ),
                              QMessageBox::Ok,
@@ -6997,11 +7075,11 @@ void US_Hydrodyn_Saxs_Buffer::crop_zero()
 
    map < QString, bool > selected_files;
 
-   for ( int i = 0; i < lb_files->numRows(); i++ )
+   for ( int i = 0; i < lb_files->count(); i++ )
    {
-      if ( lb_files->isSelected( i ) )
+      if ( lb_files->item( i )->isSelected() )
       {
-         QString this_file = lb_files->text( i );
+         QString this_file = lb_files->item( i )->text( );
 
          vector < double > new_q;
          vector < double > new_I;
@@ -7598,11 +7676,11 @@ void US_Hydrodyn_Saxs_Buffer::join_swap()
 #endif
 
    join_adjust_lowq = !join_adjust_lowq;
-   pb_join_swap->setText( join_adjust_lowq ? tr("Scale high-q") : tr("Scale low-q") );
+   pb_join_swap->setText( join_adjust_lowq ? us_tr("Scale high-q") : us_tr("Scale low-q") );
    // disconnect( le_join_offset, SIGNAL( textChanged( const QString & ) ) );
    // disconnect( le_join_mult  , SIGNAL( textChanged( const QString & ) ) );
-   le_join_offset->setText( QString( "%1" ).arg( -le_join_offset->text().toDouble() ) );
-   le_join_mult  ->setText( QString( "%1" ).arg( 1e0 / le_join_mult->text().toDouble() ) );
+   le_join_offset->setText( QString( "%1" ).arg( -le_join_offset->text( ).toDouble( ) ) );
+   le_join_mult  ->setText( QString( "%1" ).arg( 1e0 / le_join_mult->text( ).toDouble( ) ) );
    // connect( le_join_offset, SIGNAL( textChanged( const QString & ) ), SLOT( join_offset_text( const QString & ) ) );
    // connect( le_join_mult  , SIGNAL( textChanged( const QString & ) ), SLOT( join_mult_text  ( const QString & ) ) );
    // replot_join();
@@ -7732,27 +7810,27 @@ void US_Hydrodyn_Saxs_Buffer::join_start()
 {
    QStringList selected_files;
    lbl_wheel_pos->setText( QString( "%1" ).arg( 0 ) );
-   pb_join_swap->setText( join_adjust_lowq ? tr("Scale low-q") : tr("Scale high-q") );
+   pb_join_swap->setText( join_adjust_lowq ? us_tr("Scale low-q") : us_tr("Scale high-q") );
 
-   for ( int i = 0; i < lb_files->numRows(); i++ )
+   for ( int i = 0; i < lb_files->count(); i++ )
    {
-      if ( lb_files->isSelected( i ) )
+      if ( lb_files->item( i )->isSelected() )
       {
-         selected_files << lb_files->text( i );
+         selected_files << lb_files->item( i )->text( );
       }
    }
 
    if ( selected_files.size() != 2 )
    {
-      editor_msg( "red", tr( "Internal error: not exactly 2 curves to join" ) );
+      editor_msg( "red", us_tr( "Internal error: not exactly 2 curves to join" ) );
       return;
    }
 
    bool ok;
 
-   wheel_file = QInputDialog::getItem(
-                                      tr( "SOMO: Buffer join: select file" ),
-                                      tr("Select the low-q valued curve:\n" ),
+   wheel_file = US_Static::getItem(
+                                      us_tr( "SOMO: Buffer join: select file" ),
+                                      us_tr("Select the low-q valued curve:\n" ),
                                       selected_files, 
                                       0, 
                                       FALSE, 
@@ -7770,31 +7848,31 @@ void US_Hydrodyn_Saxs_Buffer::join_start()
    {
       if ( !plotted_curves.count( selected_files[ i ] ) )
       {
-         editor_msg( "red", QString( tr( "Internal error: curve %1 not found in data" ) ).arg( selected_files[ i ] ) );
+         editor_msg( "red", QString( us_tr( "Internal error: curve %1 not found in data" ) ).arg( selected_files[ i ] ) );
          return;
       }
 
       if ( !f_qs.count( selected_files[ i ] ) )
       {
-         editor_msg( "red", QString( tr( "Internal error: %1 not found in data" ) ).arg( selected_files[ i ] ) );
+         editor_msg( "red", QString( us_tr( "Internal error: %1 not found in data" ) ).arg( selected_files[ i ] ) );
          return;
       }
 
       if ( f_qs[ selected_files[ i ] ].size() < 2 )
       {
-         editor_msg( "red", QString( tr( "Internal error: %1 almost empty data" ) ).arg( selected_files[ i ] ) );
+         editor_msg( "red", QString( us_tr( "Internal error: %1 almost empty data" ) ).arg( selected_files[ i ] ) );
          return;
       }
 
       if ( !f_Is.count( selected_files[ i ] ) )
       {
-         editor_msg( "red", QString( tr( "Internal error: %1 not found in y data" ) ).arg( selected_files[ i ] ) );
+         editor_msg( "red", QString( us_tr( "Internal error: %1 not found in y data" ) ).arg( selected_files[ i ] ) );
          return;
       }
 
       if ( !f_Is[ selected_files[ i ] ].size() )
       {
-         editor_msg( "red", QString( tr( "Internal error: %1 empty y data" ) ).arg( selected_files[ i ] ) );
+         editor_msg( "red", QString( us_tr( "Internal error: %1 empty y data" ) ).arg( selected_files[ i ] ) );
          return;
       }
    }
@@ -7820,7 +7898,7 @@ void US_Hydrodyn_Saxs_Buffer::join_start()
 
    if ( join_low_q >= join_high_q )
    {
-      editor_msg( "red", QString( tr( "Error: no overlap for join" ) ) );
+      editor_msg( "red", QString( us_tr( "Error: no overlap for join" ) ) );
       return;
    }
       
@@ -7850,9 +7928,9 @@ void US_Hydrodyn_Saxs_Buffer::join_init_markers()
 
    plotted_markers.clear();
 
-   join_add_marker( le_join_start->text().toDouble(), Qt::red, tr( "Start" ) );
-   join_add_marker( le_join_point->text().toDouble(), Qt::magenta, tr( "Join point" ) );
-   join_add_marker( le_join_end  ->text().toDouble(), Qt::red, tr( "End"   ), Qt::AlignLeft | Qt::AlignTop );
+   join_add_marker( le_join_start->text().toDouble(), Qt::red, us_tr( "Start" ) );
+   join_add_marker( le_join_point->text().toDouble(), Qt::magenta, us_tr( "Join point" ) );
+   join_add_marker( le_join_end  ->text().toDouble(), Qt::red, us_tr( "End"   ), Qt::AlignLeft | Qt::AlignTop );
 
    plot_dist->replot();
 }
@@ -7989,7 +8067,7 @@ void US_Hydrodyn_Saxs_Buffer::wheel_save()
    {
       QMessageBox::information( this,
                                 title,
-                                tr( 
+                                us_tr( 
                                    "You have a non-zero linear offset\n"
                                    "Quoting P. Vachette:\n"
                                    "This additional constant is to be avoided and if introduced,\n"
@@ -7998,7 +8076,7 @@ void US_Hydrodyn_Saxs_Buffer::wheel_save()
                                 );
    }
 
-   lbl_wheel_pos->setText( QString( "%1" ).arg( qwtw_wheel->value() ) );
+   lbl_wheel_pos->setText( QString( "%1" ).arg( qwtw_wheel->value( ) ) );
 
    // join the adjusted curves and save
 
@@ -8007,14 +8085,14 @@ void US_Hydrodyn_Saxs_Buffer::wheel_save()
    int wheel_pos = -1;
    int join_pos = -1;
 
-   for ( int i = 0; i < (int)lb_files->numRows(); i++ )
+   for ( int i = 0; i < (int)lb_files->count(); i++ )
    {
-      current_files[ lb_files->text( i ) ] = true;
-      if ( lb_files->text( i ) == wheel_file )
+      current_files[ lb_files->item( i )->text( ) ] = true;
+      if ( lb_files->item( i )->text() == wheel_file )
       {
          wheel_pos = i;
       }
-      if ( lb_files->text( i ) == join_file )
+      if ( lb_files->item( i )->text() == join_file )
       {
          join_pos = i;
       }
@@ -8127,11 +8205,11 @@ void US_Hydrodyn_Saxs_Buffer::wheel_save()
       }
    }
 
-   lb_created_files->insertItem( save_name );
+   lb_created_files->addItem( save_name );
 
-   lb_created_files->setBottomItem( lb_created_files->numRows() - 1 );
-   lb_files->insertItem( save_name );
-   lb_files->setBottomItem( lb_files->numRows() - 1 );
+   lb_created_files->scrollToItem( lb_created_files->item( lb_created_files->count() - 1 ) );
+   lb_files->addItem( save_name );
+   lb_files->scrollToItem( lb_files->item( lb_files->count() - 1 ) );
    created_files_not_saved[ save_name ] = true;
 
    f_pos       [ save_name ] = f_qs.size();
@@ -8140,15 +8218,15 @@ void US_Hydrodyn_Saxs_Buffer::wheel_save()
    f_Is        [ save_name ] = I;
    f_errors    [ save_name ] = errors;
 
-   lb_files->setSelected( f_pos[ save_name ], true );
+   lb_files->item( f_pos[ save_name ])->setSelected( true );
 
    if ( wheel_pos != -1 )
    {
-      lb_files->setSelected( wheel_pos, false );
+      lb_files->item( wheel_pos)->setSelected( false );
    }
    if ( join_pos != -1 )
    {
-      lb_files->setSelected( join_pos, false );
+      lb_files->item( join_pos)->setSelected( false );
    }
 
    plot_dist->replot();
@@ -8206,12 +8284,12 @@ void US_Hydrodyn_Saxs_Buffer::dir_pressed()
 {
    QString use_dir = lbl_dir->text();
    ((US_Hydrodyn  *)us_hydrodyn)->select_from_directory_history( use_dir, this );
-   QString s = QFileDialog::getExistingDirectory( this , tr( "Choose a new base directory" ) , use_dir , QFileDialog::ShowDirsOnly );
+   QString s = QFileDialog::getExistingDirectory( this , us_tr( "Choose a new base directory" ) , use_dir , QFileDialog::ShowDirsOnly );
 
    if ( !s.isEmpty() )
    {
       QDir::setCurrent( s );
-      lbl_dir->setText(  QDir::currentDirPath() );
+      lbl_dir->setText(  QDir::currentPath() );
       ((US_Hydrodyn *)us_hydrodyn)->add_to_directory_history( s );
    }
 }
@@ -8220,7 +8298,7 @@ void US_Hydrodyn_Saxs_Buffer::created_dir_pressed()
 {
    QString use_dir = lbl_dir->text();
    ((US_Hydrodyn  *)us_hydrodyn)->select_from_directory_history( use_dir, this );
-   QString s = QFileDialog::getExistingDirectory( this , tr( "Choose a new base directory for saving files" ) , use_dir , QFileDialog::ShowDirsOnly );
+   QString s = QFileDialog::getExistingDirectory( this , us_tr( "Choose a new base directory for saving files" ) , use_dir , QFileDialog::ShowDirsOnly );
 
    if ( !s.isEmpty() )
    {
@@ -8232,11 +8310,11 @@ void US_Hydrodyn_Saxs_Buffer::created_dir_pressed()
 QStringList US_Hydrodyn_Saxs_Buffer::all_selected_files()
 {
    QStringList files;
-   for ( int i = 0; i < lb_files->numRows(); i++ )
+   for ( int i = 0; i < lb_files->count(); i++ )
    {
-      if ( lb_files->isSelected( i ) )
+      if ( lb_files->item( i )->isSelected() )
       {
-         files << lb_files->text( i );
+         files << lb_files->item( i )->text( );
       }
    }
    return files;
@@ -8322,7 +8400,7 @@ void US_Hydrodyn_Saxs_Buffer::asum( QStringList files )
 
    if ( crop )
    {
-      editor_msg( "dark red", QString( tr( "Notice: averaging requires cropping to %1 points" ) ).arg( min_q_len ) );
+      editor_msg( "dark red", QString( us_tr( "Notice: averaging requires cropping to %1 points" ) ).arg( min_q_len ) );
       for ( map < QString, vector < double > >::iterator it = t_qs.begin();
             it != t_qs.end();
             it++ )
@@ -8366,10 +8444,10 @@ void US_Hydrodyn_Saxs_Buffer::asum( QStringList files )
    if ( all_nonzero_errors )
    {
       editor_msg( "black" ,
-                  tr( "Notice: using standard deviation in mean calculation" ) );
+                  us_tr( "Notice: using standard deviation in mean calculation" ) );
    } else {
       editor_msg( "black" ,
-                  tr( "Notice: NOT using standard deviation in mean calculation, since some sd's were zero or missing" ) );
+                  us_tr( "Notice: NOT using standard deviation in mean calculation, since some sd's were zero or missing" ) );
    }
 
    vector < double > mults;
@@ -8377,11 +8455,11 @@ void US_Hydrodyn_Saxs_Buffer::asum( QStringList files )
 
    for ( int i = 0; i < (int)files.size(); i++ )
    {
-      QString txt = QString( tr( "Enter a weight for %1" ) ).arg( files[ i ] );
+      QString txt = QString( us_tr( "Enter a weight for %1" ) ).arg( files[ i ] );
 
       bool ok;
-      double res = QInputDialog::getDouble(
-                                           title + tr( ": Weighted sum" ),
+      double res = US_Static::getDouble(
+                                           title + us_tr( ": Weighted sum" ),
                                            txt,
                                            1,
                                            1e-5,
@@ -8440,14 +8518,14 @@ void US_Hydrodyn_Saxs_Buffer::asum( QStringList files )
       } else {
          if ( avg_qs.size() != t_qs[ this_file ].size() )
          {
-            editor_msg( "red", tr( "Error: incompatible grids, the files selected do not have the same number of points" ) );
+            editor_msg( "red", us_tr( "Error: incompatible grids, the files selected do not have the same number of points" ) );
             return;
          }
          for ( int j = 0; j < (int)t_Is[ this_file ].size(); j++ )
          {
             if ( fabs( avg_qs[ j ] - t_qs[ this_file ][ j ] ) > Q_VAL_TOL )
             {
-               editor_msg( "red", tr( "Error: incompatible grids, the q values differ between selected files" ) );
+               editor_msg( "red", us_tr( "Error: incompatible grids, the q values differ between selected files" ) );
                cout << QString( "val1 %1 val2 %2 fabs diff %3\n" ).arg( avg_qs[ j ] ).arg(  t_qs[ this_file ][ j ]  ).arg(fabs( avg_qs[ j ] - t_qs[ this_file ][ j ] ) );
                return;
             }
@@ -8489,9 +8567,9 @@ void US_Hydrodyn_Saxs_Buffer::asum( QStringList files )
    QString wsum_name = head + "wsum" + tail;
 
    map < QString, bool > current_files;
-   for ( int i = 0; i < (int)lb_files->numRows(); i++ )
+   for ( int i = 0; i < (int)lb_files->count(); i++ )
    {
-      current_files[ lb_files->text( i ) ] = true;
+      current_files[ lb_files->item( i )->text( ) ] = true;
    }
 
    while ( current_files.count( wsum_name ) )
@@ -8499,10 +8577,10 @@ void US_Hydrodyn_Saxs_Buffer::asum( QStringList files )
       wsum_name = head + QString( "wsum-%1" ).arg( ++ext ) + tail;
    }
 
-   lb_created_files->insertItem( wsum_name );
-   lb_created_files->setBottomItem( lb_created_files->numRows() - 1 );
-   lb_files->insertItem( wsum_name );
-   lb_files->setBottomItem( lb_files->numRows() - 1 );
+   lb_created_files->addItem( wsum_name );
+   lb_created_files->scrollToItem( lb_created_files->item( lb_created_files->count() - 1 ) );
+   lb_files->addItem( wsum_name );
+   lb_files->scrollToItem( lb_files->item( lb_files->count() - 1 ) );
    created_files_not_saved[ wsum_name ] = true;
    
    f_pos       [ wsum_name ] = f_qs.size();
@@ -8547,11 +8625,11 @@ void US_Hydrodyn_Saxs_Buffer::select_these( map < QString, QString > & parameter
 {
    disable_updates = true;
    lb_files->clearSelection();
-   for ( int i = 0; i < lb_files->numRows(); ++i )
+   for ( int i = 0; i < lb_files->count(); ++i )
    {
       if ( parameters.count( QString( "%1" ).arg( i ) ) )
       {
-         lb_files->setSelected( i, true );
+         lb_files->item( i)->setSelected( true );
       }
    }
    disable_updates = false;
@@ -8606,7 +8684,7 @@ double US_Hydrodyn_Saxs_Buffer::tot_intensity( QString &file, double q_min, doub
         !f_Is        .count( file ) ||
         !f_pos       .count( file ) )
    {
-      editor_msg( "red", QString( tr( "Total intensity compute internal error: no curve named %1" ) ).arg( file ) );
+      editor_msg( "red", QString( us_tr( "Total intensity compute internal error: no curve named %1" ) ).arg( file ) );
       return -9e99;
    }
 

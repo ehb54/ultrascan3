@@ -7,25 +7,25 @@
 
 #include "../include/us_hydrodyn_pdb_tool_renum.h"
 //Added by qt3to4:
-#include <Q3HBoxLayout>
+#include <QHBoxLayout>
 #include <QCloseEvent>
-#include <Q3Frame>
+#include <QFrame>
 #include <QLabel>
-#include <Q3VBoxLayout>
+#include <QVBoxLayout>
 
 US_Hydrodyn_Pdb_Tool_Renum::US_Hydrodyn_Pdb_Tool_Renum(
                                                        void                     *              us_hydrodyn,
                                                        map < QString, QString > *              parameters,
                                                        QWidget *                               p,
                                                        const char *                            name
-                                                       ) : QDialog( p, name )
+                                                       ) : QDialog( p )
 {
    this->us_hydrodyn                          = us_hydrodyn;
    this->parameters                           = parameters;
 
    USglobal = new US_Config();
    setPalette( PALET_FRAME );
-   setCaption( tr( "US-SOMO: PDB Editor: Renumber" ) );
+   setWindowTitle( us_tr( "US-SOMO: PDB Editor: Renumber" ) );
 
    setupGUI();
 
@@ -43,8 +43,8 @@ void US_Hydrodyn_Pdb_Tool_Renum::setupGUI()
 {
    int minHeight1  = 30;
 
-   lbl_title =  new QLabel      ( tr( "US-SOMO: PDB Editor: Renumber" ), this );
-   lbl_title -> setFrameStyle   ( Q3Frame::WinPanel | Q3Frame::Raised );
+   lbl_title =  new QLabel      ( us_tr( "US-SOMO: PDB Editor: Renumber" ), this );
+   lbl_title -> setFrameStyle   ( QFrame::WinPanel | QFrame::Raised );
    lbl_title -> setAlignment    ( Qt::AlignCenter | Qt::AlignVCenter );
    lbl_title -> setMinimumHeight( minHeight1 );
    lbl_title -> setPalette      ( PALET_FRAME );
@@ -58,7 +58,7 @@ void US_Hydrodyn_Pdb_Tool_Renum::setupGUI()
    AUTFBACK( lbl_credits_1 );
    lbl_credits_1 -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1, QFont::Bold ) );
 
-   lbl_inputfile = new QLabel      ( tr( "Input file" ), this );
+   lbl_inputfile = new QLabel      ( us_tr( "Input file" ), this );
    lbl_inputfile ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_inputfile ->setMinimumHeight( minHeight1 );
    lbl_inputfile ->setPalette      ( PALET_LABEL );
@@ -66,7 +66,7 @@ void US_Hydrodyn_Pdb_Tool_Renum::setupGUI()
    lbl_inputfile ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
    lbl_inputfile ->setMinimumWidth ( QFontMetrics( lbl_inputfile->font() ).maxWidth() * 24 );
 
-   le_inputfile = new QLineEdit     ( this, "inputfile Line Edit" );
+   le_inputfile = new QLineEdit     (  this );    le_inputfile->setObjectName( "inputfile Line Edit" );
    le_inputfile ->setText           ( parameters->count( "inputfile" ) ? ( *parameters )[ "inputfile" ] : "" );
    le_inputfile ->setAlignment      ( Qt::AlignCenter | Qt::AlignVCenter );
    le_inputfile ->setPalette        ( PALET_NORMAL );
@@ -76,7 +76,7 @@ void US_Hydrodyn_Pdb_Tool_Renum::setupGUI()
    le_inputfile ->setMinimumWidth   ( 150 );
    connect( le_inputfile, SIGNAL( textChanged( const QString & ) ), SLOT( update_inputfile( const QString & ) ) );
 
-   lbl_usechainlist = new QLabel      ( tr( "Only apply to these chains\nleave blank for all chains\notherwise enter a list with no extra spaces" ), this );
+   lbl_usechainlist = new QLabel      ( us_tr( "Only apply to these chains\nleave blank for all chains\notherwise enter a list with no extra spaces" ), this );
    lbl_usechainlist ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_usechainlist ->setMinimumHeight( minHeight1 *  3 );
    lbl_usechainlist ->setPalette      ( PALET_LABEL );
@@ -84,7 +84,7 @@ void US_Hydrodyn_Pdb_Tool_Renum::setupGUI()
    lbl_usechainlist ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
    lbl_usechainlist ->setMinimumWidth ( QFontMetrics( lbl_usechainlist->font() ).maxWidth() * 24 );
 
-   le_usechainlist = new QLineEdit     ( this, "usechainlist Line Edit" );
+   le_usechainlist = new QLineEdit     (  this );    le_usechainlist->setObjectName( "usechainlist Line Edit" );
    le_usechainlist ->setText           ( parameters->count( "usechainlist" ) ? ( *parameters )[ "usechainlist" ] : "" );
    le_usechainlist ->setAlignment      ( Qt::AlignCenter | Qt::AlignVCenter );
    le_usechainlist ->setPalette        ( PALET_NORMAL );
@@ -94,7 +94,7 @@ void US_Hydrodyn_Pdb_Tool_Renum::setupGUI()
    le_usechainlist ->setMinimumWidth   ( 150 );
    connect( le_usechainlist, SIGNAL( textChanged( const QString & ) ), SLOT( update_usechainlist( const QString & ) ) );
 
-   lbl_reseqatom = new QLabel      ( tr( "Resequence ATOM/HETATM numbers {y|n}?" ), this );
+   lbl_reseqatom = new QLabel      ( us_tr( "Resequence ATOM/HETATM numbers {y|n}?" ), this );
    lbl_reseqatom ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_reseqatom ->setMinimumHeight( minHeight1 );
    lbl_reseqatom ->setPalette      ( PALET_LABEL );
@@ -102,7 +102,7 @@ void US_Hydrodyn_Pdb_Tool_Renum::setupGUI()
    lbl_reseqatom ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
    lbl_reseqatom ->setMinimumWidth ( QFontMetrics( lbl_reseqatom->font() ).maxWidth() * 24 );
 
-   le_reseqatom = new QLineEdit     ( this, "reseqatom Line Edit" );
+   le_reseqatom = new QLineEdit     (  this );    le_reseqatom->setObjectName( "reseqatom Line Edit" );
    le_reseqatom ->setText           ( parameters->count( "reseqatom" ) ? ( *parameters )[ "reseqatom" ] : "" );
    le_reseqatom ->setAlignment      ( Qt::AlignCenter | Qt::AlignVCenter );
    le_reseqatom ->setPalette        ( PALET_NORMAL );
@@ -112,7 +112,7 @@ void US_Hydrodyn_Pdb_Tool_Renum::setupGUI()
    le_reseqatom ->setMinimumWidth   ( 150 );
    connect( le_reseqatom, SIGNAL( textChanged( const QString & ) ), SLOT( update_reseqatom( const QString & ) ) );
 
-   lbl_startatom = new QLabel      ( tr( "Starting ATOM/HETATM number" ), this );
+   lbl_startatom = new QLabel      ( us_tr( "Starting ATOM/HETATM number" ), this );
    lbl_startatom ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_startatom ->setMinimumHeight( minHeight1 );
    lbl_startatom ->setPalette      ( PALET_LABEL );
@@ -120,7 +120,7 @@ void US_Hydrodyn_Pdb_Tool_Renum::setupGUI()
    lbl_startatom ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
    lbl_startatom ->setMinimumWidth ( QFontMetrics( lbl_startatom->font() ).maxWidth() * 24 );
 
-   le_startatom = new QLineEdit     ( this, "startatom Line Edit" );
+   le_startatom = new QLineEdit     (  this );    le_startatom->setObjectName( "startatom Line Edit" );
    le_startatom ->setText           ( parameters->count( "startatom" ) ? ( *parameters )[ "startatom" ] : "" );
    le_startatom ->setAlignment      ( Qt::AlignCenter | Qt::AlignVCenter );
    le_startatom ->setPalette        ( PALET_NORMAL );
@@ -130,7 +130,7 @@ void US_Hydrodyn_Pdb_Tool_Renum::setupGUI()
    le_startatom ->setMinimumWidth   ( 150 );
    connect( le_startatom, SIGNAL( textChanged( const QString & ) ), SLOT( update_startatom( const QString & ) ) );
 
-   lbl_chainrestartatom = new QLabel      ( tr( "Restart ATOM/HETATM numbers of each chain {y|n}?" ), this );
+   lbl_chainrestartatom = new QLabel      ( us_tr( "Restart ATOM/HETATM numbers of each chain {y|n}?" ), this );
    lbl_chainrestartatom ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_chainrestartatom ->setMinimumHeight( minHeight1 );
    lbl_chainrestartatom ->setPalette      ( PALET_LABEL );
@@ -138,7 +138,7 @@ void US_Hydrodyn_Pdb_Tool_Renum::setupGUI()
    lbl_chainrestartatom ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
    lbl_chainrestartatom ->setMinimumWidth ( QFontMetrics( lbl_chainrestartatom->font() ).maxWidth() * 24 );
 
-   le_chainrestartatom = new QLineEdit     ( this, "chainrestartatom Line Edit" );
+   le_chainrestartatom = new QLineEdit     (  this );    le_chainrestartatom->setObjectName( "chainrestartatom Line Edit" );
    le_chainrestartatom ->setText           ( parameters->count( "chainrestartatom" ) ? ( *parameters )[ "chainrestartatom" ] : "" );
    le_chainrestartatom ->setAlignment      ( Qt::AlignCenter | Qt::AlignVCenter );
    le_chainrestartatom ->setPalette        ( PALET_NORMAL );
@@ -148,7 +148,7 @@ void US_Hydrodyn_Pdb_Tool_Renum::setupGUI()
    le_chainrestartatom ->setMinimumWidth   ( 150 );
    connect( le_chainrestartatom, SIGNAL( textChanged( const QString & ) ), SLOT( update_chainrestartatom( const QString & ) ) );
 
-   lbl_modelrestartatom = new QLabel      ( tr( "Restart ATOM/HETATM numbers of each model {y|n}?" ), this );
+   lbl_modelrestartatom = new QLabel      ( us_tr( "Restart ATOM/HETATM numbers of each model {y|n}?" ), this );
    lbl_modelrestartatom ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_modelrestartatom ->setMinimumHeight( minHeight1 );
    lbl_modelrestartatom ->setPalette      ( PALET_LABEL );
@@ -156,7 +156,7 @@ void US_Hydrodyn_Pdb_Tool_Renum::setupGUI()
    lbl_modelrestartatom ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
    lbl_modelrestartatom ->setMinimumWidth ( QFontMetrics( lbl_modelrestartatom->font() ).maxWidth() * 24 );
 
-   le_modelrestartatom = new QLineEdit     ( this, "modelrestartatom Line Edit" );
+   le_modelrestartatom = new QLineEdit     (  this );    le_modelrestartatom->setObjectName( "modelrestartatom Line Edit" );
    le_modelrestartatom ->setText           ( parameters->count( "modelrestartatom" ) ? ( *parameters )[ "modelrestartatom" ] : "" );
    le_modelrestartatom ->setAlignment      ( Qt::AlignCenter | Qt::AlignVCenter );
    le_modelrestartatom ->setPalette        ( PALET_NORMAL );
@@ -166,7 +166,7 @@ void US_Hydrodyn_Pdb_Tool_Renum::setupGUI()
    le_modelrestartatom ->setMinimumWidth   ( 150 );
    connect( le_modelrestartatom, SIGNAL( textChanged( const QString & ) ), SLOT( update_modelrestartatom( const QString & ) ) );
 
-   lbl_reseqresidue = new QLabel      ( tr( "Resequence RESIDUE numbers {y|n}?" ), this );
+   lbl_reseqresidue = new QLabel      ( us_tr( "Resequence RESIDUE numbers {y|n}?" ), this );
    lbl_reseqresidue ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_reseqresidue ->setMinimumHeight( minHeight1 );
    lbl_reseqresidue ->setPalette      ( PALET_LABEL );
@@ -174,7 +174,7 @@ void US_Hydrodyn_Pdb_Tool_Renum::setupGUI()
    lbl_reseqresidue ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
    lbl_reseqresidue ->setMinimumWidth ( QFontMetrics( lbl_reseqresidue->font() ).maxWidth() * 24 );
 
-   le_reseqresidue = new QLineEdit     ( this, "reseqresidue Line Edit" );
+   le_reseqresidue = new QLineEdit     (  this );    le_reseqresidue->setObjectName( "reseqresidue Line Edit" );
    le_reseqresidue ->setText           ( parameters->count( "reseqresidue" ) ? ( *parameters )[ "reseqresidue" ] : "" );
    le_reseqresidue ->setAlignment      ( Qt::AlignCenter | Qt::AlignVCenter );
    le_reseqresidue ->setPalette        ( PALET_NORMAL );
@@ -184,7 +184,7 @@ void US_Hydrodyn_Pdb_Tool_Renum::setupGUI()
    le_reseqresidue ->setMinimumWidth   ( 150 );
    connect( le_reseqresidue, SIGNAL( textChanged( const QString & ) ), SLOT( update_reseqresidue( const QString & ) ) );
 
-   lbl_startresidue = new QLabel      ( tr( "Starting RESIDUE number" ), this );
+   lbl_startresidue = new QLabel      ( us_tr( "Starting RESIDUE number" ), this );
    lbl_startresidue ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_startresidue ->setMinimumHeight( minHeight1 );
    lbl_startresidue ->setPalette      ( PALET_LABEL );
@@ -192,7 +192,7 @@ void US_Hydrodyn_Pdb_Tool_Renum::setupGUI()
    lbl_startresidue ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
    lbl_startresidue ->setMinimumWidth ( QFontMetrics( lbl_startresidue->font() ).maxWidth() * 24 );
 
-   le_startresidue = new QLineEdit     ( this, "startresidue Line Edit" );
+   le_startresidue = new QLineEdit     (  this );    le_startresidue->setObjectName( "startresidue Line Edit" );
    le_startresidue ->setText           ( parameters->count( "startresidue" ) ? ( *parameters )[ "startresidue" ] : "" );
    le_startresidue ->setAlignment      ( Qt::AlignCenter | Qt::AlignVCenter );
    le_startresidue ->setPalette        ( PALET_NORMAL );
@@ -202,7 +202,7 @@ void US_Hydrodyn_Pdb_Tool_Renum::setupGUI()
    le_startresidue ->setMinimumWidth   ( 150 );
    connect( le_startresidue, SIGNAL( textChanged( const QString & ) ), SLOT( update_startresidue( const QString & ) ) );
 
-   lbl_chainrestartresidue = new QLabel      ( tr( "Restart RESIDUE numbers of each chain {y|n}?" ), this );
+   lbl_chainrestartresidue = new QLabel      ( us_tr( "Restart RESIDUE numbers of each chain {y|n}?" ), this );
    lbl_chainrestartresidue ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_chainrestartresidue ->setMinimumHeight( minHeight1 );
    lbl_chainrestartresidue ->setPalette      ( PALET_LABEL );
@@ -210,7 +210,7 @@ void US_Hydrodyn_Pdb_Tool_Renum::setupGUI()
    lbl_chainrestartresidue ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
    lbl_chainrestartresidue ->setMinimumWidth ( QFontMetrics( lbl_chainrestartresidue->font() ).maxWidth() * 24 );
 
-   le_chainrestartresidue = new QLineEdit     ( this, "chainrestartresidue Line Edit" );
+   le_chainrestartresidue = new QLineEdit     (  this );    le_chainrestartresidue->setObjectName( "chainrestartresidue Line Edit" );
    le_chainrestartresidue ->setText           ( parameters->count( "chainrestartresidue" ) ? ( *parameters )[ "chainrestartresidue" ] : "" );
    le_chainrestartresidue ->setAlignment      ( Qt::AlignCenter | Qt::AlignVCenter );
    le_chainrestartresidue ->setPalette        ( PALET_NORMAL );
@@ -220,7 +220,7 @@ void US_Hydrodyn_Pdb_Tool_Renum::setupGUI()
    le_chainrestartresidue ->setMinimumWidth   ( 150 );
    connect( le_chainrestartresidue, SIGNAL( textChanged( const QString & ) ), SLOT( update_chainrestartresidue( const QString & ) ) );
 
-   lbl_modelrestartresidue = new QLabel      ( tr( "Restart RESIDUE numbers of each model {y|n}?" ), this );
+   lbl_modelrestartresidue = new QLabel      ( us_tr( "Restart RESIDUE numbers of each model {y|n}?" ), this );
    lbl_modelrestartresidue ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_modelrestartresidue ->setMinimumHeight( minHeight1 );
    lbl_modelrestartresidue ->setPalette      ( PALET_LABEL );
@@ -228,7 +228,7 @@ void US_Hydrodyn_Pdb_Tool_Renum::setupGUI()
    lbl_modelrestartresidue ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
    lbl_modelrestartresidue ->setMinimumWidth ( QFontMetrics( lbl_modelrestartresidue->font() ).maxWidth() * 24 );
 
-   le_modelrestartresidue = new QLineEdit     ( this, "modelrestartresidue Line Edit" );
+   le_modelrestartresidue = new QLineEdit     (  this );    le_modelrestartresidue->setObjectName( "modelrestartresidue Line Edit" );
    le_modelrestartresidue ->setText           ( parameters->count( "modelrestartresidue" ) ? ( *parameters )[ "modelrestartresidue" ] : "" );
    le_modelrestartresidue ->setAlignment      ( Qt::AlignCenter | Qt::AlignVCenter );
    le_modelrestartresidue ->setPalette        ( PALET_NORMAL );
@@ -238,7 +238,7 @@ void US_Hydrodyn_Pdb_Tool_Renum::setupGUI()
    le_modelrestartresidue ->setMinimumWidth   ( 150 );
    connect( le_modelrestartresidue, SIGNAL( textChanged( const QString & ) ), SLOT( update_modelrestartresidue( const QString & ) ) );
 
-   lbl_striphydrogens = new QLabel      ( tr( "Remove Hydrogens {y|n}?" ), this );
+   lbl_striphydrogens = new QLabel      ( us_tr( "Remove Hydrogens {y|n}?" ), this );
    lbl_striphydrogens ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_striphydrogens ->setMinimumHeight( minHeight1 );
    lbl_striphydrogens ->setPalette      ( PALET_LABEL );
@@ -246,7 +246,7 @@ void US_Hydrodyn_Pdb_Tool_Renum::setupGUI()
    lbl_striphydrogens ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
    lbl_striphydrogens ->setMinimumWidth ( QFontMetrics( lbl_striphydrogens->font() ).maxWidth() * 24 );
 
-   le_striphydrogens = new QLineEdit     ( this, "striphydrogens Line Edit" );
+   le_striphydrogens = new QLineEdit     (  this );    le_striphydrogens->setObjectName( "striphydrogens Line Edit" );
    le_striphydrogens ->setText           ( parameters->count( "striphydrogens" ) ? ( *parameters )[ "striphydrogens" ] : "" );
    le_striphydrogens ->setAlignment      ( Qt::AlignCenter | Qt::AlignVCenter );
    le_striphydrogens ->setPalette        ( PALET_NORMAL );
@@ -256,7 +256,7 @@ void US_Hydrodyn_Pdb_Tool_Renum::setupGUI()
    le_striphydrogens ->setMinimumWidth   ( 150 );
    connect( le_striphydrogens, SIGNAL( textChanged( const QString & ) ), SLOT( update_striphydrogens( const QString & ) ) );
 
-   lbl_itassertemplate = new QLabel      ( tr( "Make 3D format (I-TASSER) template {y|n}?" ), this );
+   lbl_itassertemplate = new QLabel      ( us_tr( "Make 3D format (I-TASSER) template {y|n}?" ), this );
    lbl_itassertemplate ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_itassertemplate ->setMinimumHeight( minHeight1 );
    lbl_itassertemplate ->setPalette      ( PALET_LABEL );
@@ -264,7 +264,7 @@ void US_Hydrodyn_Pdb_Tool_Renum::setupGUI()
    lbl_itassertemplate ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
    lbl_itassertemplate ->setMinimumWidth ( QFontMetrics( lbl_itassertemplate->font() ).maxWidth() * 24 );
 
-   le_itassertemplate = new QLineEdit     ( this, "itassertemplate Line Edit" );
+   le_itassertemplate = new QLineEdit     (  this );    le_itassertemplate->setObjectName( "itassertemplate Line Edit" );
    le_itassertemplate ->setText           ( parameters->count( "itassertemplate" ) ? ( *parameters )[ "itassertemplate" ] : "" );
    le_itassertemplate ->setAlignment      ( Qt::AlignCenter | Qt::AlignVCenter );
    le_itassertemplate ->setPalette        ( PALET_NORMAL );
@@ -274,101 +274,101 @@ void US_Hydrodyn_Pdb_Tool_Renum::setupGUI()
    le_itassertemplate ->setMinimumWidth   ( 150 );
    connect( le_itassertemplate, SIGNAL( textChanged( const QString & ) ), SLOT( update_itassertemplate( const QString & ) ) );
 
-   pb_help =  new QPushButton ( tr( "Help" ), this );
+   pb_help =  new QPushButton ( us_tr( "Help" ), this );
    pb_help -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1) );
    pb_help -> setMinimumHeight( minHeight1 );
    pb_help -> setPalette      ( PALET_PUSHB );
    connect( pb_help, SIGNAL( clicked() ), SLOT( help() ) );
 
-   pb_close =  new QPushButton ( tr( "Close" ), this );
+   pb_close =  new QPushButton ( us_tr( "Close" ), this );
    pb_close -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1) );
    pb_close -> setMinimumHeight( minHeight1 );
    pb_close -> setPalette      ( PALET_PUSHB );
    connect( pb_close, SIGNAL( clicked() ), SLOT( cancel() ) );
 
-   Q3VBoxLayout *background = new Q3VBoxLayout( this );
+   QVBoxLayout * background = new QVBoxLayout( this ); background->setContentsMargins( 0, 0, 0, 0 ); background->setSpacing( 0 );
    background->addSpacing(4);
 
    background->addWidget( lbl_title );
    background->addWidget( lbl_credits_1 );
    background->addSpacing( 4 );
-   Q3HBoxLayout * hbl = new Q3HBoxLayout( 0 );
+   QHBoxLayout * hbl = new QHBoxLayout(); hbl->setContentsMargins( 0, 0, 0, 0 ); hbl->setSpacing( 0 );
    hbl->addSpacing( 4 );
    hbl->addWidget( lbl_inputfile );
    hbl->addWidget( le_inputfile );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
    hbl->addWidget( lbl_usechainlist );
    hbl->addWidget( le_usechainlist );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
    hbl->addWidget( lbl_reseqatom );
    hbl->addWidget( le_reseqatom );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
    hbl->addWidget( lbl_startatom );
    hbl->addWidget( le_startatom );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
    hbl->addWidget( lbl_chainrestartatom );
    hbl->addWidget( le_chainrestartatom );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
    hbl->addWidget( lbl_modelrestartatom );
    hbl->addWidget( le_modelrestartatom );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
    hbl->addWidget( lbl_reseqresidue );
    hbl->addWidget( le_reseqresidue );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
    hbl->addWidget( lbl_startresidue );
    hbl->addWidget( le_startresidue );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
    hbl->addWidget( lbl_chainrestartresidue );
    hbl->addWidget( le_chainrestartresidue );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
    hbl->addWidget( lbl_modelrestartresidue );
    hbl->addWidget( le_modelrestartresidue );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
    hbl->addWidget( lbl_striphydrogens );
    hbl->addWidget( le_striphydrogens );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
    hbl->addWidget( lbl_itassertemplate );
    hbl->addWidget( le_itassertemplate );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
 
 
-   Q3HBoxLayout *hbl_bottom = new Q3HBoxLayout( 0 );
+   QHBoxLayout * hbl_bottom = new QHBoxLayout(); hbl_bottom->setContentsMargins( 0, 0, 0, 0 ); hbl_bottom->setSpacing( 0 );
    hbl_bottom->addSpacing( 4 );
    hbl_bottom->addWidget ( pb_help );
    hbl_bottom->addSpacing( 4 );
@@ -463,7 +463,7 @@ void US_Hydrodyn_Pdb_Tool_Renum::update_inputfile( const QString & )
 {
    QString use_dir;
    ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this );
-   QString filename = QFileDialog::getOpenFileName( this , tr( "Select a file for Input file" ) , use_dir , QString::null );
+   QString filename = QFileDialog::getOpenFileName( this , us_tr( "Select a file for Input file" ) , use_dir , QString::null );
 
 
    disconnect( le_inputfile, SIGNAL( textChanged( const QString & ) ), 0, 0 );

@@ -7,11 +7,11 @@
 
 #include "../include/us_hydrodyn_cluster_bfnb.h"
 //Added by qt3to4:
-#include <Q3TextStream>
-#include <Q3HBoxLayout>
+#include <QTextStream>
+#include <QHBoxLayout>
 #include <QLabel>
-#include <Q3Frame>
-#include <Q3VBoxLayout>
+#include <QFrame>
+#include <QVBoxLayout>
 #include <QCloseEvent>
 
 US_Hydrodyn_Cluster_Bfnb::US_Hydrodyn_Cluster_Bfnb(
@@ -19,14 +19,14 @@ US_Hydrodyn_Cluster_Bfnb::US_Hydrodyn_Cluster_Bfnb(
                                                    map < QString, QString > *              parameters,
                                                    QWidget *                               p,
                                                    const char *                            name
-                                                   ) : QDialog( p, name )
+                                                   ) : QDialog( p )
 {
    this->us_hydrodyn                          = us_hydrodyn;
    this->parameters                           = parameters;
 
    USglobal = new US_Config();
    setPalette( PALET_FRAME );
-   setCaption( tr( "US-SOMO: Parsimonious Modeling" ) );
+   setWindowTitle( us_tr( "US-SOMO: Parsimonious Modeling" ) );
 
    setupGUI();
 
@@ -44,8 +44,8 @@ void US_Hydrodyn_Cluster_Bfnb::setupGUI()
 {
    int minHeight1  = 30;
 
-   lbl_title =  new QLabel      ( tr( "US-SOMO: Parsimonious Modeling" ), this );
-   lbl_title -> setFrameStyle   ( Q3Frame::WinPanel | Q3Frame::Raised );
+   lbl_title =  new QLabel      ( us_tr( "US-SOMO: Parsimonious Modeling" ), this );
+   lbl_title -> setFrameStyle   ( QFrame::WinPanel | QFrame::Raised );
    lbl_title -> setAlignment    ( Qt::AlignCenter | Qt::AlignVCenter );
    lbl_title -> setMinimumHeight( minHeight1 );
    lbl_title -> setPalette      ( PALET_FRAME );
@@ -59,8 +59,8 @@ void US_Hydrodyn_Cluster_Bfnb::setupGUI()
    AUTFBACK( lbl_credits_1 );
    lbl_credits_1 -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1, QFont::Bold ) );
 
-   lbl_main_label =  new mQLabel     ( tr( "Main model type controls" ), this );
-   lbl_main_label -> setFrameStyle   ( Q3Frame::WinPanel | Q3Frame::Raised );
+   lbl_main_label =  new mQLabel     ( us_tr( "Main model type controls" ), this );
+   lbl_main_label -> setFrameStyle   ( QFrame::WinPanel | QFrame::Raised );
    lbl_main_label -> setAlignment    ( Qt::AlignCenter | Qt::AlignVCenter );
    lbl_main_label -> setMinimumHeight( minHeight1 );
    lbl_main_label -> setPalette      ( PALET_FRAME );
@@ -69,7 +69,7 @@ void US_Hydrodyn_Cluster_Bfnb::setupGUI()
    connect( lbl_main_label, SIGNAL( pressed() ), SLOT( hide_main_label() ) );
 
 
-   lbl_pmtypes = new QLabel      ( tr( "Model type list\n(0=sphere,1=cylinder,2=spheroid,\n3=ellipsoid,4=torus)" ), this );
+   lbl_pmtypes = new QLabel      ( us_tr( "Model type list\n(0=sphere,1=cylinder,2=spheroid,\n3=ellipsoid,4=torus)" ), this );
    lbl_pmtypes ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_pmtypes ->setMinimumHeight( minHeight1 *  3 );
    lbl_pmtypes ->setPalette      ( PALET_LABEL );
@@ -77,7 +77,7 @@ void US_Hydrodyn_Cluster_Bfnb::setupGUI()
    lbl_pmtypes ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
    lbl_pmtypes ->setMinimumWidth ( QFontMetrics( lbl_pmtypes->font() ).maxWidth() * 21 );
 
-   le_pmtypes = new QLineEdit     ( this, "pmtypes Line Edit" );
+   le_pmtypes = new QLineEdit     (  this );    le_pmtypes->setObjectName( "pmtypes Line Edit" );
    widgets_main_label.push_back( lbl_pmtypes );
    widgets_main_label.push_back( le_pmtypes );
    le_pmtypes ->setText           ( parameters->count( "pmtypes" ) ? ( *parameters )[ "pmtypes" ] : "" );
@@ -89,7 +89,7 @@ void US_Hydrodyn_Cluster_Bfnb::setupGUI()
    le_pmtypes ->setMinimumWidth   ( 150 );
    connect( le_pmtypes, SIGNAL( textChanged( const QString & ) ), SLOT( update_pmtypes( const QString & ) ) );
 
-   cb_pmincrementally = new QCheckBox    ( tr( "Compute models for all lengths upto above" ), this );
+   cb_pmincrementally = new QCheckBox    ( us_tr( "Compute models for all lengths upto above" ), this );
    cb_pmincrementally ->setMinimumHeight ( minHeight1 );
    cb_pmincrementally ->setPalette       ( PALET_NORMAL );
    AUTFBACK( cb_pmincrementally );
@@ -100,7 +100,7 @@ void US_Hydrodyn_Cluster_Bfnb::setupGUI()
    cb_pmincrementally ->setChecked        ( parameters->count( "pmincrementally" ) && ( *parameters )[ "pmincrementally" ] == "true" ? true : false );
    connect( cb_pmincrementally, SIGNAL( clicked() ), SLOT( set_pmincrementally() ) );
 
-   cb_pmallcombinations = new QCheckBox    ( tr( "Compute models for all unique combinations" ), this );
+   cb_pmallcombinations = new QCheckBox    ( us_tr( "Compute models for all unique combinations" ), this );
    cb_pmallcombinations ->setMinimumHeight ( minHeight1 );
    cb_pmallcombinations ->setPalette       ( PALET_NORMAL );
    AUTFBACK( cb_pmallcombinations );
@@ -111,7 +111,7 @@ void US_Hydrodyn_Cluster_Bfnb::setupGUI()
    cb_pmallcombinations ->setChecked        ( parameters->count( "pmallcombinations" ) && ( *parameters )[ "pmallcombinations" ] == "true" ? true : false );
    connect( cb_pmallcombinations, SIGNAL( clicked() ), SLOT( set_pmallcombinations() ) );
 
-   lbl_pmrayleighdrho = new QLabel      ( tr( "Sample electron density e/A^3\n(default: protein average .425)\nProteins: .41-.44, DNA:.59, RNA:.6, Carbs:.49" ), this );
+   lbl_pmrayleighdrho = new QLabel      ( us_tr( "Sample electron density e/A^3\n(default: protein average .425)\nProteins: .41-.44, DNA:.59, RNA:.6, Carbs:.49" ), this );
    lbl_pmrayleighdrho ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_pmrayleighdrho ->setMinimumHeight( minHeight1 *  3 );
    lbl_pmrayleighdrho ->setPalette      ( PALET_LABEL );
@@ -119,7 +119,7 @@ void US_Hydrodyn_Cluster_Bfnb::setupGUI()
    lbl_pmrayleighdrho ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
    lbl_pmrayleighdrho ->setMinimumWidth ( QFontMetrics( lbl_pmrayleighdrho->font() ).maxWidth() * 21 );
 
-   le_pmrayleighdrho = new QLineEdit     ( this, "pmrayleighdrho Line Edit" );
+   le_pmrayleighdrho = new QLineEdit     (  this );    le_pmrayleighdrho->setObjectName( "pmrayleighdrho Line Edit" );
    widgets_main_label.push_back( lbl_pmrayleighdrho );
    widgets_main_label.push_back( le_pmrayleighdrho );
    if ( !parameters->count( "pmrayleighdrho" ) )
@@ -135,7 +135,7 @@ void US_Hydrodyn_Cluster_Bfnb::setupGUI()
    le_pmrayleighdrho ->setMinimumWidth   ( 150 );
    connect( le_pmrayleighdrho, SIGNAL( textChanged( const QString & ) ), SLOT( update_pmrayleighdrho( const QString & ) ) );
 
-   lbl_pmbufferedensity = new QLabel      ( tr( "Buffer electron density e/A^3\n(default: SAS Options->Water e density)\nH2O .334" ), this );
+   lbl_pmbufferedensity = new QLabel      ( us_tr( "Buffer electron density e/A^3\n(default: SAS Options->Water e density)\nH2O .334" ), this );
    lbl_pmbufferedensity ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_pmbufferedensity ->setMinimumHeight( minHeight1 *  3 );
    lbl_pmbufferedensity ->setPalette      ( PALET_LABEL );
@@ -143,7 +143,7 @@ void US_Hydrodyn_Cluster_Bfnb::setupGUI()
    lbl_pmbufferedensity ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
    lbl_pmbufferedensity ->setMinimumWidth ( QFontMetrics( lbl_pmbufferedensity->font() ).maxWidth() * 21 );
 
-   le_pmbufferedensity = new QLineEdit     ( this, "pmbufferedensity Line Edit" );
+   le_pmbufferedensity = new QLineEdit     (  this );    le_pmbufferedensity->setObjectName( "pmbufferedensity Line Edit" );
    widgets_main_label.push_back( lbl_pmbufferedensity );
    widgets_main_label.push_back( le_pmbufferedensity );
    le_pmbufferedensity ->setText           ( parameters->count( "pmbufferedensity" ) ? ( *parameters )[ "pmbufferedensity" ] : "" );
@@ -155,7 +155,7 @@ void US_Hydrodyn_Cluster_Bfnb::setupGUI()
    le_pmbufferedensity ->setMinimumWidth   ( 150 );
    connect( le_pmbufferedensity, SIGNAL( textChanged( const QString & ) ), SLOT( update_pmbufferedensity( const QString & ) ) );
 
-   lbl_pmoutname = new QLabel      ( tr( "Output name prefix (default: no prefix)" ), this );
+   lbl_pmoutname = new QLabel      ( us_tr( "Output name prefix (default: no prefix)" ), this );
    lbl_pmoutname ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_pmoutname ->setMinimumHeight( minHeight1 );
    lbl_pmoutname ->setPalette      ( PALET_LABEL );
@@ -163,7 +163,7 @@ void US_Hydrodyn_Cluster_Bfnb::setupGUI()
    lbl_pmoutname ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
    lbl_pmoutname ->setMinimumWidth ( QFontMetrics( lbl_pmoutname->font() ).maxWidth() * 21 );
 
-   le_pmoutname = new QLineEdit     ( this, "pmoutname Line Edit" );
+   le_pmoutname = new QLineEdit     (  this );    le_pmoutname->setObjectName( "pmoutname Line Edit" );
    widgets_main_label.push_back( lbl_pmoutname );
    widgets_main_label.push_back( le_pmoutname );
    le_pmoutname ->setText           ( parameters->count( "pmoutname" ) ? ( *parameters )[ "pmoutname" ] : "" );
@@ -175,7 +175,7 @@ void US_Hydrodyn_Cluster_Bfnb::setupGUI()
    le_pmoutname ->setMinimumWidth   ( 150 );
    connect( le_pmoutname, SIGNAL( textChanged( const QString & ) ), SLOT( update_pmoutname( const QString & ) ) );
 
-   lbl_pmgridsize = new QLabel      ( tr( "Grid size (A)" ), this );
+   lbl_pmgridsize = new QLabel      ( us_tr( "Grid size (A)" ), this );
    lbl_pmgridsize ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_pmgridsize ->setMinimumHeight( minHeight1 );
    lbl_pmgridsize ->setPalette      ( PALET_LABEL );
@@ -183,7 +183,7 @@ void US_Hydrodyn_Cluster_Bfnb::setupGUI()
    lbl_pmgridsize ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
    lbl_pmgridsize ->setMinimumWidth ( QFontMetrics( lbl_pmgridsize->font() ).maxWidth() * 21 );
 
-   le_pmgridsize = new QLineEdit     ( this, "pmgridsize Line Edit" );
+   le_pmgridsize = new QLineEdit     (  this );    le_pmgridsize->setObjectName( "pmgridsize Line Edit" );
    widgets_main_label.push_back( lbl_pmgridsize );
    widgets_main_label.push_back( le_pmgridsize );
    le_pmgridsize ->setText           ( parameters->count( "pmgridsize" ) ? ( *parameters )[ "pmgridsize" ] : "" );
@@ -195,7 +195,7 @@ void US_Hydrodyn_Cluster_Bfnb::setupGUI()
    le_pmgridsize ->setMinimumWidth   ( 150 );
    connect( le_pmgridsize, SIGNAL( textChanged( const QString & ) ), SLOT( update_pmgridsize( const QString & ) ) );
 
-   cb_pmapproxmaxdimension = new QCheckBox    ( tr( "Automatically compute maximum dimension" ), this );
+   cb_pmapproxmaxdimension = new QCheckBox    ( us_tr( "Automatically compute maximum dimension" ), this );
    cb_pmapproxmaxdimension ->setMinimumHeight ( minHeight1 );
    cb_pmapproxmaxdimension ->setPalette       ( PALET_NORMAL );
    AUTFBACK( cb_pmapproxmaxdimension );
@@ -210,8 +210,8 @@ void US_Hydrodyn_Cluster_Bfnb::setupGUI()
    cb_pmapproxmaxdimension ->setChecked        ( parameters->count( "pmapproxmaxdimension" ) && ( *parameters )[ "pmapproxmaxdimension" ] == "true" ? true : false );
    connect( cb_pmapproxmaxdimension, SIGNAL( clicked() ), SLOT( set_pmapproxmaxdimension() ) );
 
-   lbl_q_label =  new mQLabel     ( tr( "q range editing controls" ), this );
-   lbl_q_label -> setFrameStyle   ( Q3Frame::WinPanel | Q3Frame::Raised );
+   lbl_q_label =  new mQLabel     ( us_tr( "q range editing controls" ), this );
+   lbl_q_label -> setFrameStyle   ( QFrame::WinPanel | QFrame::Raised );
    lbl_q_label -> setAlignment    ( Qt::AlignCenter | Qt::AlignVCenter );
    lbl_q_label -> setMinimumHeight( minHeight1 );
    lbl_q_label -> setPalette      ( PALET_FRAME );
@@ -220,7 +220,7 @@ void US_Hydrodyn_Cluster_Bfnb::setupGUI()
    connect( lbl_q_label, SIGNAL( pressed() ), SLOT( hide_q_label() ) );
 
 
-   lbl_pmminq = new QLabel      ( tr( "Minimum q value (default: 0)" ), this );
+   lbl_pmminq = new QLabel      ( us_tr( "Minimum q value (default: 0)" ), this );
    lbl_pmminq ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_pmminq ->setMinimumHeight( minHeight1 );
    lbl_pmminq ->setPalette      ( PALET_LABEL );
@@ -228,7 +228,7 @@ void US_Hydrodyn_Cluster_Bfnb::setupGUI()
    lbl_pmminq ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
    lbl_pmminq ->setMinimumWidth ( QFontMetrics( lbl_pmminq->font() ).maxWidth() * 21 );
 
-   le_pmminq = new QLineEdit     ( this, "pmminq Line Edit" );
+   le_pmminq = new QLineEdit     (  this );    le_pmminq->setObjectName( "pmminq Line Edit" );
    widgets_q_label.push_back( lbl_pmminq );
    widgets_q_label.push_back( le_pmminq );
    le_pmminq ->setText           ( parameters->count( "pmminq" ) ? ( *parameters )[ "pmminq" ] : "" );
@@ -240,7 +240,7 @@ void US_Hydrodyn_Cluster_Bfnb::setupGUI()
    le_pmminq ->setMinimumWidth   ( 150 );
    connect( le_pmminq, SIGNAL( textChanged( const QString & ) ), SLOT( update_pmminq( const QString & ) ) );
 
-   lbl_pmmaxq = new QLabel      ( tr( "Maximum q value (default: .25)" ), this );
+   lbl_pmmaxq = new QLabel      ( us_tr( "Maximum q value (default: .25)" ), this );
    lbl_pmmaxq ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_pmmaxq ->setMinimumHeight( minHeight1 );
    lbl_pmmaxq ->setPalette      ( PALET_LABEL );
@@ -248,7 +248,7 @@ void US_Hydrodyn_Cluster_Bfnb::setupGUI()
    lbl_pmmaxq ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
    lbl_pmmaxq ->setMinimumWidth ( QFontMetrics( lbl_pmmaxq->font() ).maxWidth() * 21 );
 
-   le_pmmaxq = new QLineEdit     ( this, "pmmaxq Line Edit" );
+   le_pmmaxq = new QLineEdit     (  this );    le_pmmaxq->setObjectName( "pmmaxq Line Edit" );
    widgets_q_label.push_back( lbl_pmmaxq );
    widgets_q_label.push_back( le_pmmaxq );
    le_pmmaxq ->setText           ( parameters->count( "pmmaxq" ) ? ( *parameters )[ "pmmaxq" ] : "" );
@@ -260,7 +260,7 @@ void US_Hydrodyn_Cluster_Bfnb::setupGUI()
    le_pmmaxq ->setMinimumWidth   ( 150 );
    connect( le_pmmaxq, SIGNAL( textChanged( const QString & ) ), SLOT( update_pmmaxq( const QString & ) ) );
 
-   cb_pmlogqbin = new QCheckBox    ( tr( "Create log q bins" ), this );
+   cb_pmlogqbin = new QCheckBox    ( us_tr( "Create log q bins" ), this );
    cb_pmlogqbin ->setMinimumHeight ( minHeight1 );
    cb_pmlogqbin ->setPalette       ( PALET_NORMAL );
    AUTFBACK( cb_pmlogqbin );
@@ -271,7 +271,7 @@ void US_Hydrodyn_Cluster_Bfnb::setupGUI()
    cb_pmlogqbin ->setChecked        ( parameters->count( "pmlogqbin" ) && ( *parameters )[ "pmlogqbin" ] == "true" ? true : false );
    connect( cb_pmlogqbin, SIGNAL( clicked() ), SLOT( set_pmlogqbin() ) );
 
-   lbl_pmqpoints = new QLabel      ( tr( "q points (default: all points)" ), this );
+   lbl_pmqpoints = new QLabel      ( us_tr( "q points (default: all points)" ), this );
    lbl_pmqpoints ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_pmqpoints ->setMinimumHeight( minHeight1 );
    lbl_pmqpoints ->setPalette      ( PALET_LABEL );
@@ -279,7 +279,7 @@ void US_Hydrodyn_Cluster_Bfnb::setupGUI()
    lbl_pmqpoints ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
    lbl_pmqpoints ->setMinimumWidth ( QFontMetrics( lbl_pmqpoints->font() ).maxWidth() * 21 );
 
-   le_pmqpoints = new QLineEdit     ( this, "pmqpoints Line Edit" );
+   le_pmqpoints = new QLineEdit     (  this );    le_pmqpoints->setObjectName( "pmqpoints Line Edit" );
    widgets_q_label.push_back( lbl_pmqpoints );
    widgets_q_label.push_back( le_pmqpoints );
    le_pmqpoints ->setText           ( parameters->count( "pmqpoints" ) ? ( *parameters )[ "pmqpoints" ] : "" );
@@ -291,8 +291,8 @@ void US_Hydrodyn_Cluster_Bfnb::setupGUI()
    le_pmqpoints ->setMinimumWidth   ( 150 );
    connect( le_pmqpoints, SIGNAL( textChanged( const QString & ) ), SLOT( update_pmqpoints( const QString & ) ) );
 
-   lbl_supp_label =  new mQLabel     ( tr( "Supplementary controls" ), this );
-   lbl_supp_label -> setFrameStyle   ( Q3Frame::WinPanel | Q3Frame::Raised );
+   lbl_supp_label =  new mQLabel     ( us_tr( "Supplementary controls" ), this );
+   lbl_supp_label -> setFrameStyle   ( QFrame::WinPanel | QFrame::Raised );
    lbl_supp_label -> setAlignment    ( Qt::AlignCenter | Qt::AlignVCenter );
    lbl_supp_label -> setMinimumHeight( minHeight1 );
    lbl_supp_label -> setPalette      ( PALET_FRAME );
@@ -301,7 +301,7 @@ void US_Hydrodyn_Cluster_Bfnb::setupGUI()
    connect( lbl_supp_label, SIGNAL( pressed() ), SLOT( hide_supp_label() ) );
 
 
-   lbl_pmharmonics = new QLabel      ( tr( "Maximum harmonics (default: 15)" ), this );
+   lbl_pmharmonics = new QLabel      ( us_tr( "Maximum harmonics (default: 15)" ), this );
    lbl_pmharmonics ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_pmharmonics ->setMinimumHeight( minHeight1 );
    lbl_pmharmonics ->setPalette      ( PALET_LABEL );
@@ -309,7 +309,7 @@ void US_Hydrodyn_Cluster_Bfnb::setupGUI()
    lbl_pmharmonics ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
    lbl_pmharmonics ->setMinimumWidth ( QFontMetrics( lbl_pmharmonics->font() ).maxWidth() * 21 );
 
-   le_pmharmonics = new QLineEdit     ( this, "pmharmonics Line Edit" );
+   le_pmharmonics = new QLineEdit     (  this );    le_pmharmonics->setObjectName( "pmharmonics Line Edit" );
    widgets_supp_label.push_back( lbl_pmharmonics );
    widgets_supp_label.push_back( le_pmharmonics );
    le_pmharmonics ->setText           ( parameters->count( "pmharmonics" ) ? ( *parameters )[ "pmharmonics" ] : "" );
@@ -321,7 +321,7 @@ void US_Hydrodyn_Cluster_Bfnb::setupGUI()
    le_pmharmonics ->setMinimumWidth   ( 150 );
    connect( le_pmharmonics, SIGNAL( textChanged( const QString & ) ), SLOT( update_pmharmonics( const QString & ) ) );
 
-   lbl_pmseed = new QLabel      ( tr( "Random seed (default: use time)" ), this );
+   lbl_pmseed = new QLabel      ( us_tr( "Random seed (default: use time)" ), this );
    lbl_pmseed ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_pmseed ->setMinimumHeight( minHeight1 );
    lbl_pmseed ->setPalette      ( PALET_LABEL );
@@ -329,7 +329,7 @@ void US_Hydrodyn_Cluster_Bfnb::setupGUI()
    lbl_pmseed ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
    lbl_pmseed ->setMinimumWidth ( QFontMetrics( lbl_pmseed->font() ).maxWidth() * 21 );
 
-   le_pmseed = new QLineEdit     ( this, "pmseed Line Edit" );
+   le_pmseed = new QLineEdit     (  this );    le_pmseed->setObjectName( "pmseed Line Edit" );
    widgets_supp_label.push_back( lbl_pmseed );
    widgets_supp_label.push_back( le_pmseed );
    le_pmseed ->setText           ( parameters->count( "pmseed" ) ? ( *parameters )[ "pmseed" ] : "" );
@@ -341,7 +341,7 @@ void US_Hydrodyn_Cluster_Bfnb::setupGUI()
    le_pmseed ->setMinimumWidth   ( 150 );
    connect( le_pmseed, SIGNAL( textChanged( const QString & ) ), SLOT( update_pmseed( const QString & ) ) );
 
-   lbl_pmmemory = new QLabel      ( tr( "Maximum memory per core in MB (default: 1024)" ), this );
+   lbl_pmmemory = new QLabel      ( us_tr( "Maximum memory per core in MB (default: 1024)" ), this );
    lbl_pmmemory ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_pmmemory ->setMinimumHeight( minHeight1 );
    lbl_pmmemory ->setPalette      ( PALET_LABEL );
@@ -349,7 +349,7 @@ void US_Hydrodyn_Cluster_Bfnb::setupGUI()
    lbl_pmmemory ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
    lbl_pmmemory ->setMinimumWidth ( QFontMetrics( lbl_pmmemory->font() ).maxWidth() * 21 );
 
-   le_pmmemory = new QLineEdit     ( this, "pmmemory Line Edit" );
+   le_pmmemory = new QLineEdit     (  this );    le_pmmemory->setObjectName( "pmmemory Line Edit" );
    widgets_supp_label.push_back( lbl_pmmemory );
    widgets_supp_label.push_back( le_pmmemory );
    le_pmmemory ->setText           ( parameters->count( "pmmemory" ) ? ( *parameters )[ "pmmemory" ] : "" );
@@ -361,7 +361,7 @@ void US_Hydrodyn_Cluster_Bfnb::setupGUI()
    le_pmmemory ->setMinimumWidth   ( 150 );
    connect( le_pmmemory, SIGNAL( textChanged( const QString & ) ), SLOT( update_pmmemory( const QString & ) ) );
 
-   lbl_pmbestfinestconversion = new QLabel      ( tr( "Finest grid size (default: same as Grid size)" ), this );
+   lbl_pmbestfinestconversion = new QLabel      ( us_tr( "Finest grid size (default: same as Grid size)" ), this );
    lbl_pmbestfinestconversion ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_pmbestfinestconversion ->setMinimumHeight( minHeight1 );
    lbl_pmbestfinestconversion ->setPalette      ( PALET_LABEL );
@@ -369,7 +369,7 @@ void US_Hydrodyn_Cluster_Bfnb::setupGUI()
    lbl_pmbestfinestconversion ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
    lbl_pmbestfinestconversion ->setMinimumWidth ( QFontMetrics( lbl_pmbestfinestconversion->font() ).maxWidth() * 21 );
 
-   le_pmbestfinestconversion = new QLineEdit     ( this, "pmbestfinestconversion Line Edit" );
+   le_pmbestfinestconversion = new QLineEdit     (  this );    le_pmbestfinestconversion->setObjectName( "pmbestfinestconversion Line Edit" );
    widgets_supp_label.push_back( lbl_pmbestfinestconversion );
    widgets_supp_label.push_back( le_pmbestfinestconversion );
    le_pmbestfinestconversion ->setText           ( parameters->count( "pmbestfinestconversion" ) ? ( *parameters )[ "pmbestfinestconversion" ] : "" );
@@ -381,7 +381,7 @@ void US_Hydrodyn_Cluster_Bfnb::setupGUI()
    le_pmbestfinestconversion ->setMinimumWidth   ( 150 );
    connect( le_pmbestfinestconversion, SIGNAL( textChanged( const QString & ) ), SLOT( update_pmbestfinestconversion( const QString & ) ) );
 
-   lbl_pmbestcoarseconversion = new QLabel      ( tr( "Coarse grid size (default: 10)" ), this );
+   lbl_pmbestcoarseconversion = new QLabel      ( us_tr( "Coarse grid size (default: 10)" ), this );
    lbl_pmbestcoarseconversion ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_pmbestcoarseconversion ->setMinimumHeight( minHeight1 );
    lbl_pmbestcoarseconversion ->setPalette      ( PALET_LABEL );
@@ -389,7 +389,7 @@ void US_Hydrodyn_Cluster_Bfnb::setupGUI()
    lbl_pmbestcoarseconversion ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
    lbl_pmbestcoarseconversion ->setMinimumWidth ( QFontMetrics( lbl_pmbestcoarseconversion->font() ).maxWidth() * 21 );
 
-   le_pmbestcoarseconversion = new QLineEdit     ( this, "pmbestcoarseconversion Line Edit" );
+   le_pmbestcoarseconversion = new QLineEdit     (  this );    le_pmbestcoarseconversion->setObjectName( "pmbestcoarseconversion Line Edit" );
    widgets_supp_label.push_back( lbl_pmbestcoarseconversion );
    widgets_supp_label.push_back( le_pmbestcoarseconversion );
    le_pmbestcoarseconversion ->setText           ( parameters->count( "pmbestcoarseconversion" ) ? ( *parameters )[ "pmbestcoarseconversion" ] : "" );
@@ -401,7 +401,7 @@ void US_Hydrodyn_Cluster_Bfnb::setupGUI()
    le_pmbestcoarseconversion ->setMinimumWidth   ( 150 );
    connect( le_pmbestcoarseconversion, SIGNAL( textChanged( const QString & ) ), SLOT( update_pmbestcoarseconversion( const QString & ) ) );
 
-   lbl_pmbestconversiondivisor = new QLabel      ( tr( "Conversion divisor (default: 2.5)" ), this );
+   lbl_pmbestconversiondivisor = new QLabel      ( us_tr( "Conversion divisor (default: 2.5)" ), this );
    lbl_pmbestconversiondivisor ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_pmbestconversiondivisor ->setMinimumHeight( minHeight1 );
    lbl_pmbestconversiondivisor ->setPalette      ( PALET_LABEL );
@@ -409,7 +409,7 @@ void US_Hydrodyn_Cluster_Bfnb::setupGUI()
    lbl_pmbestconversiondivisor ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
    lbl_pmbestconversiondivisor ->setMinimumWidth ( QFontMetrics( lbl_pmbestconversiondivisor->font() ).maxWidth() * 21 );
 
-   le_pmbestconversiondivisor = new QLineEdit     ( this, "pmbestconversiondivisor Line Edit" );
+   le_pmbestconversiondivisor = new QLineEdit     (  this );    le_pmbestconversiondivisor->setObjectName( "pmbestconversiondivisor Line Edit" );
    widgets_supp_label.push_back( lbl_pmbestconversiondivisor );
    widgets_supp_label.push_back( le_pmbestconversiondivisor );
    le_pmbestconversiondivisor ->setText           ( parameters->count( "pmbestconversiondivisor" ) ? ( *parameters )[ "pmbestconversiondivisor" ] : "" );
@@ -421,7 +421,7 @@ void US_Hydrodyn_Cluster_Bfnb::setupGUI()
    le_pmbestconversiondivisor ->setMinimumWidth   ( 150 );
    connect( le_pmbestconversiondivisor, SIGNAL( textChanged( const QString & ) ), SLOT( update_pmbestconversiondivisor( const QString & ) ) );
 
-   lbl_pmbestrefinementrangepct = new QLabel      ( tr( "Refinement percent (default: 2.5)" ), this );
+   lbl_pmbestrefinementrangepct = new QLabel      ( us_tr( "Refinement percent (default: 2.5)" ), this );
    lbl_pmbestrefinementrangepct ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_pmbestrefinementrangepct ->setMinimumHeight( minHeight1 );
    lbl_pmbestrefinementrangepct ->setPalette      ( PALET_LABEL );
@@ -429,7 +429,7 @@ void US_Hydrodyn_Cluster_Bfnb::setupGUI()
    lbl_pmbestrefinementrangepct ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
    lbl_pmbestrefinementrangepct ->setMinimumWidth ( QFontMetrics( lbl_pmbestrefinementrangepct->font() ).maxWidth() * 21 );
 
-   le_pmbestrefinementrangepct = new QLineEdit     ( this, "pmbestrefinementrangepct Line Edit" );
+   le_pmbestrefinementrangepct = new QLineEdit     (  this );    le_pmbestrefinementrangepct->setObjectName( "pmbestrefinementrangepct Line Edit" );
    widgets_supp_label.push_back( lbl_pmbestrefinementrangepct );
    widgets_supp_label.push_back( le_pmbestrefinementrangepct );
    le_pmbestrefinementrangepct ->setText           ( parameters->count( "pmbestrefinementrangepct" ) ? ( *parameters )[ "pmbestrefinementrangepct" ] : "" );
@@ -441,7 +441,7 @@ void US_Hydrodyn_Cluster_Bfnb::setupGUI()
    le_pmbestrefinementrangepct ->setMinimumWidth   ( 150 );
    connect( le_pmbestrefinementrangepct, SIGNAL( textChanged( const QString & ) ), SLOT( update_pmbestrefinementrangepct( const QString & ) ) );
 
-   lbl_pmmaxdimension = new QLabel      ( tr( "Maximum dimension (default & max: 32767 A)" ), this );
+   lbl_pmmaxdimension = new QLabel      ( us_tr( "Maximum dimension (default & max: 32767 A)" ), this );
    lbl_pmmaxdimension ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_pmmaxdimension ->setMinimumHeight( minHeight1 );
    lbl_pmmaxdimension ->setPalette      ( PALET_LABEL );
@@ -449,7 +449,7 @@ void US_Hydrodyn_Cluster_Bfnb::setupGUI()
    lbl_pmmaxdimension ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
    lbl_pmmaxdimension ->setMinimumWidth ( QFontMetrics( lbl_pmmaxdimension->font() ).maxWidth() * 21 );
 
-   le_pmmaxdimension = new QLineEdit     ( this, "pmmaxdimension Line Edit" );
+   le_pmmaxdimension = new QLineEdit     (  this );    le_pmmaxdimension->setObjectName( "pmmaxdimension Line Edit" );
    widgets_supp_label.push_back( lbl_pmmaxdimension );
    widgets_supp_label.push_back( le_pmmaxdimension );
    le_pmmaxdimension ->setText           ( parameters->count( "pmmaxdimension" ) ? ( *parameters )[ "pmmaxdimension" ] : "" );
@@ -461,8 +461,8 @@ void US_Hydrodyn_Cluster_Bfnb::setupGUI()
    le_pmmaxdimension ->setMinimumWidth   ( 150 );
    connect( le_pmmaxdimension, SIGNAL( textChanged( const QString & ) ), SLOT( update_pmmaxdimension( const QString & ) ) );
 
-   lbl_ga_label =  new mQLabel     ( tr( "Genetic algorithm controls" ), this );
-   lbl_ga_label -> setFrameStyle   ( Q3Frame::WinPanel | Q3Frame::Raised );
+   lbl_ga_label =  new mQLabel     ( us_tr( "Genetic algorithm controls" ), this );
+   lbl_ga_label -> setFrameStyle   ( QFrame::WinPanel | QFrame::Raised );
    lbl_ga_label -> setAlignment    ( Qt::AlignCenter | Qt::AlignVCenter );
    lbl_ga_label -> setMinimumHeight( minHeight1 );
    lbl_ga_label -> setPalette      ( PALET_FRAME );
@@ -471,7 +471,7 @@ void US_Hydrodyn_Cluster_Bfnb::setupGUI()
    connect( lbl_ga_label, SIGNAL( pressed() ), SLOT( hide_ga_label() ) );
 
 
-   lbl_pmgapopulation = new QLabel      ( tr( "GA population size (default: 100)" ), this );
+   lbl_pmgapopulation = new QLabel      ( us_tr( "GA population size (default: 100)" ), this );
    lbl_pmgapopulation ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_pmgapopulation ->setMinimumHeight( minHeight1 );
    lbl_pmgapopulation ->setPalette      ( PALET_LABEL );
@@ -479,7 +479,7 @@ void US_Hydrodyn_Cluster_Bfnb::setupGUI()
    lbl_pmgapopulation ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
    lbl_pmgapopulation ->setMinimumWidth ( QFontMetrics( lbl_pmgapopulation->font() ).maxWidth() * 21 );
 
-   le_pmgapopulation = new QLineEdit     ( this, "pmgapopulation Line Edit" );
+   le_pmgapopulation = new QLineEdit     (  this );    le_pmgapopulation->setObjectName( "pmgapopulation Line Edit" );
    widgets_ga_label.push_back( lbl_pmgapopulation );
    widgets_ga_label.push_back( le_pmgapopulation );
    le_pmgapopulation ->setText           ( parameters->count( "pmgapopulation" ) ? ( *parameters )[ "pmgapopulation" ] : "" );
@@ -491,7 +491,7 @@ void US_Hydrodyn_Cluster_Bfnb::setupGUI()
    le_pmgapopulation ->setMinimumWidth   ( 150 );
    connect( le_pmgapopulation, SIGNAL( textChanged( const QString & ) ), SLOT( update_pmgapopulation( const QString & ) ) );
 
-   lbl_pmgagenerations = new QLabel      ( tr( "GA generations (default: 100)" ), this );
+   lbl_pmgagenerations = new QLabel      ( us_tr( "GA generations (default: 100)" ), this );
    lbl_pmgagenerations ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_pmgagenerations ->setMinimumHeight( minHeight1 );
    lbl_pmgagenerations ->setPalette      ( PALET_LABEL );
@@ -499,7 +499,7 @@ void US_Hydrodyn_Cluster_Bfnb::setupGUI()
    lbl_pmgagenerations ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
    lbl_pmgagenerations ->setMinimumWidth ( QFontMetrics( lbl_pmgagenerations->font() ).maxWidth() * 21 );
 
-   le_pmgagenerations = new QLineEdit     ( this, "pmgagenerations Line Edit" );
+   le_pmgagenerations = new QLineEdit     (  this );    le_pmgagenerations->setObjectName( "pmgagenerations Line Edit" );
    widgets_ga_label.push_back( lbl_pmgagenerations );
    widgets_ga_label.push_back( le_pmgagenerations );
    le_pmgagenerations ->setText           ( parameters->count( "pmgagenerations" ) ? ( *parameters )[ "pmgagenerations" ] : "" );
@@ -511,7 +511,7 @@ void US_Hydrodyn_Cluster_Bfnb::setupGUI()
    le_pmgagenerations ->setMinimumWidth   ( 150 );
    connect( le_pmgagenerations, SIGNAL( textChanged( const QString & ) ), SLOT( update_pmgagenerations( const QString & ) ) );
 
-   lbl_pmgamutate = new QLabel      ( tr( "GA mutate probability (default: .1)" ), this );
+   lbl_pmgamutate = new QLabel      ( us_tr( "GA mutate probability (default: .1)" ), this );
    lbl_pmgamutate ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_pmgamutate ->setMinimumHeight( minHeight1 );
    lbl_pmgamutate ->setPalette      ( PALET_LABEL );
@@ -519,7 +519,7 @@ void US_Hydrodyn_Cluster_Bfnb::setupGUI()
    lbl_pmgamutate ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
    lbl_pmgamutate ->setMinimumWidth ( QFontMetrics( lbl_pmgamutate->font() ).maxWidth() * 21 );
 
-   le_pmgamutate = new QLineEdit     ( this, "pmgamutate Line Edit" );
+   le_pmgamutate = new QLineEdit     (  this );    le_pmgamutate->setObjectName( "pmgamutate Line Edit" );
    widgets_ga_label.push_back( lbl_pmgamutate );
    widgets_ga_label.push_back( le_pmgamutate );
    le_pmgamutate ->setText           ( parameters->count( "pmgamutate" ) ? ( *parameters )[ "pmgamutate" ] : "" );
@@ -531,7 +531,7 @@ void US_Hydrodyn_Cluster_Bfnb::setupGUI()
    le_pmgamutate ->setMinimumWidth   ( 150 );
    connect( le_pmgamutate, SIGNAL( textChanged( const QString & ) ), SLOT( update_pmgamutate( const QString & ) ) );
 
-   lbl_pmgasamutate = new QLabel      ( tr( "GA simulated annealing probability (default: .5)" ), this );
+   lbl_pmgasamutate = new QLabel      ( us_tr( "GA simulated annealing probability (default: .5)" ), this );
    lbl_pmgasamutate ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_pmgasamutate ->setMinimumHeight( minHeight1 );
    lbl_pmgasamutate ->setPalette      ( PALET_LABEL );
@@ -539,7 +539,7 @@ void US_Hydrodyn_Cluster_Bfnb::setupGUI()
    lbl_pmgasamutate ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
    lbl_pmgasamutate ->setMinimumWidth ( QFontMetrics( lbl_pmgasamutate->font() ).maxWidth() * 21 );
 
-   le_pmgasamutate = new QLineEdit     ( this, "pmgasamutate Line Edit" );
+   le_pmgasamutate = new QLineEdit     (  this );    le_pmgasamutate->setObjectName( "pmgasamutate Line Edit" );
    widgets_ga_label.push_back( lbl_pmgasamutate );
    widgets_ga_label.push_back( le_pmgasamutate );
    le_pmgasamutate ->setText           ( parameters->count( "pmgasamutate" ) ? ( *parameters )[ "pmgasamutate" ] : "" );
@@ -551,7 +551,7 @@ void US_Hydrodyn_Cluster_Bfnb::setupGUI()
    le_pmgasamutate ->setMinimumWidth   ( 150 );
    connect( le_pmgasamutate, SIGNAL( textChanged( const QString & ) ), SLOT( update_pmgasamutate( const QString & ) ) );
 
-   lbl_pmgacrossover = new QLabel      ( tr( "GA crossover (default: .4)" ), this );
+   lbl_pmgacrossover = new QLabel      ( us_tr( "GA crossover (default: .4)" ), this );
    lbl_pmgacrossover ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_pmgacrossover ->setMinimumHeight( minHeight1 );
    lbl_pmgacrossover ->setPalette      ( PALET_LABEL );
@@ -559,7 +559,7 @@ void US_Hydrodyn_Cluster_Bfnb::setupGUI()
    lbl_pmgacrossover ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
    lbl_pmgacrossover ->setMinimumWidth ( QFontMetrics( lbl_pmgacrossover->font() ).maxWidth() * 21 );
 
-   le_pmgacrossover = new QLineEdit     ( this, "pmgacrossover Line Edit" );
+   le_pmgacrossover = new QLineEdit     (  this );    le_pmgacrossover->setObjectName( "pmgacrossover Line Edit" );
    widgets_ga_label.push_back( lbl_pmgacrossover );
    widgets_ga_label.push_back( le_pmgacrossover );
    le_pmgacrossover ->setText           ( parameters->count( "pmgacrossover" ) ? ( *parameters )[ "pmgacrossover" ] : "" );
@@ -571,7 +571,7 @@ void US_Hydrodyn_Cluster_Bfnb::setupGUI()
    le_pmgacrossover ->setMinimumWidth   ( 150 );
    connect( le_pmgacrossover, SIGNAL( textChanged( const QString & ) ), SLOT( update_pmgacrossover( const QString & ) ) );
 
-   lbl_pmgaelitism = new QLabel      ( tr( "GA elitism (default: 1)" ), this );
+   lbl_pmgaelitism = new QLabel      ( us_tr( "GA elitism (default: 1)" ), this );
    lbl_pmgaelitism ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_pmgaelitism ->setMinimumHeight( minHeight1 );
    lbl_pmgaelitism ->setPalette      ( PALET_LABEL );
@@ -579,7 +579,7 @@ void US_Hydrodyn_Cluster_Bfnb::setupGUI()
    lbl_pmgaelitism ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
    lbl_pmgaelitism ->setMinimumWidth ( QFontMetrics( lbl_pmgaelitism->font() ).maxWidth() * 21 );
 
-   le_pmgaelitism = new QLineEdit     ( this, "pmgaelitism Line Edit" );
+   le_pmgaelitism = new QLineEdit     (  this );    le_pmgaelitism->setObjectName( "pmgaelitism Line Edit" );
    widgets_ga_label.push_back( lbl_pmgaelitism );
    widgets_ga_label.push_back( le_pmgaelitism );
    le_pmgaelitism ->setText           ( parameters->count( "pmgaelitism" ) ? ( *parameters )[ "pmgaelitism" ] : "" );
@@ -591,7 +591,7 @@ void US_Hydrodyn_Cluster_Bfnb::setupGUI()
    le_pmgaelitism ->setMinimumWidth   ( 150 );
    connect( le_pmgaelitism, SIGNAL( textChanged( const QString & ) ), SLOT( update_pmgaelitism( const QString & ) ) );
 
-   lbl_pmgaearlytermination = new QLabel      ( tr( "GA early termination (default: 5)" ), this );
+   lbl_pmgaearlytermination = new QLabel      ( us_tr( "GA early termination (default: 5)" ), this );
    lbl_pmgaearlytermination ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_pmgaearlytermination ->setMinimumHeight( minHeight1 );
    lbl_pmgaearlytermination ->setPalette      ( PALET_LABEL );
@@ -599,7 +599,7 @@ void US_Hydrodyn_Cluster_Bfnb::setupGUI()
    lbl_pmgaearlytermination ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
    lbl_pmgaearlytermination ->setMinimumWidth ( QFontMetrics( lbl_pmgaearlytermination->font() ).maxWidth() * 21 );
 
-   le_pmgaearlytermination = new QLineEdit     ( this, "pmgaearlytermination Line Edit" );
+   le_pmgaearlytermination = new QLineEdit     (  this );    le_pmgaearlytermination->setObjectName( "pmgaearlytermination Line Edit" );
    widgets_ga_label.push_back( lbl_pmgaearlytermination );
    widgets_ga_label.push_back( le_pmgaearlytermination );
    le_pmgaearlytermination ->setText           ( parameters->count( "pmgaearlytermination" ) ? ( *parameters )[ "pmgaearlytermination" ] : "" );
@@ -611,7 +611,7 @@ void US_Hydrodyn_Cluster_Bfnb::setupGUI()
    le_pmgaearlytermination ->setMinimumWidth   ( 150 );
    connect( le_pmgaearlytermination, SIGNAL( textChanged( const QString & ) ), SLOT( update_pmgaearlytermination( const QString & ) ) );
 
-   lbl_pmgapointsmax = new QLabel      ( tr( "GA maximum points per parameter (default: 100)" ), this );
+   lbl_pmgapointsmax = new QLabel      ( us_tr( "GA maximum points per parameter (default: 100)" ), this );
    lbl_pmgapointsmax ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_pmgapointsmax ->setMinimumHeight( minHeight1 );
    lbl_pmgapointsmax ->setPalette      ( PALET_LABEL );
@@ -619,7 +619,7 @@ void US_Hydrodyn_Cluster_Bfnb::setupGUI()
    lbl_pmgapointsmax ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
    lbl_pmgapointsmax ->setMinimumWidth ( QFontMetrics( lbl_pmgapointsmax->font() ).maxWidth() * 21 );
 
-   le_pmgapointsmax = new QLineEdit     ( this, "pmgapointsmax Line Edit" );
+   le_pmgapointsmax = new QLineEdit     (  this );    le_pmgapointsmax->setObjectName( "pmgapointsmax Line Edit" );
    widgets_ga_label.push_back( lbl_pmgapointsmax );
    widgets_ga_label.push_back( le_pmgapointsmax );
    le_pmgapointsmax ->setText           ( parameters->count( "pmgapointsmax" ) ? ( *parameters )[ "pmgapointsmax" ] : "" );
@@ -631,8 +631,8 @@ void US_Hydrodyn_Cluster_Bfnb::setupGUI()
    le_pmgapointsmax ->setMinimumWidth   ( 150 );
    connect( le_pmgapointsmax, SIGNAL( textChanged( const QString & ) ), SLOT( update_pmgapointsmax( const QString & ) ) );
 
-   lbl_misc_label =  new mQLabel     ( tr( "Miscellenaous controls" ), this );
-   lbl_misc_label -> setFrameStyle   ( Q3Frame::WinPanel | Q3Frame::Raised );
+   lbl_misc_label =  new mQLabel     ( us_tr( "Miscellenaous controls" ), this );
+   lbl_misc_label -> setFrameStyle   ( QFrame::WinPanel | QFrame::Raised );
    lbl_misc_label -> setAlignment    ( Qt::AlignCenter | Qt::AlignVCenter );
    lbl_misc_label -> setMinimumHeight( minHeight1 );
    lbl_misc_label -> setPalette      ( PALET_FRAME );
@@ -641,7 +641,7 @@ void US_Hydrodyn_Cluster_Bfnb::setupGUI()
    connect( lbl_misc_label, SIGNAL( pressed() ), SLOT( hide_misc_label() ) );
 
 
-   lbl_pmbestdeltastart = new QLabel      ( tr( "Initial param delta start (default 1)" ), this );
+   lbl_pmbestdeltastart = new QLabel      ( us_tr( "Initial param delta start (default 1)" ), this );
    lbl_pmbestdeltastart ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_pmbestdeltastart ->setMinimumHeight( minHeight1 );
    lbl_pmbestdeltastart ->setPalette      ( PALET_LABEL );
@@ -649,7 +649,7 @@ void US_Hydrodyn_Cluster_Bfnb::setupGUI()
    lbl_pmbestdeltastart ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
    lbl_pmbestdeltastart ->setMinimumWidth ( QFontMetrics( lbl_pmbestdeltastart->font() ).maxWidth() * 21 );
 
-   le_pmbestdeltastart = new QLineEdit     ( this, "pmbestdeltastart Line Edit" );
+   le_pmbestdeltastart = new QLineEdit     (  this );    le_pmbestdeltastart->setObjectName( "pmbestdeltastart Line Edit" );
    widgets_misc_label.push_back( lbl_pmbestdeltastart );
    widgets_misc_label.push_back( le_pmbestdeltastart );
    le_pmbestdeltastart ->setText           ( parameters->count( "pmbestdeltastart" ) ? ( *parameters )[ "pmbestdeltastart" ] : "" );
@@ -661,7 +661,7 @@ void US_Hydrodyn_Cluster_Bfnb::setupGUI()
    le_pmbestdeltastart ->setMinimumWidth   ( 150 );
    connect( le_pmbestdeltastart, SIGNAL( textChanged( const QString & ) ), SLOT( update_pmbestdeltastart( const QString & ) ) );
 
-   lbl_pmbestdeltadivisor = new QLabel      ( tr( "Initial param delta divisor (default 10)" ), this );
+   lbl_pmbestdeltadivisor = new QLabel      ( us_tr( "Initial param delta divisor (default 10)" ), this );
    lbl_pmbestdeltadivisor ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_pmbestdeltadivisor ->setMinimumHeight( minHeight1 );
    lbl_pmbestdeltadivisor ->setPalette      ( PALET_LABEL );
@@ -669,7 +669,7 @@ void US_Hydrodyn_Cluster_Bfnb::setupGUI()
    lbl_pmbestdeltadivisor ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
    lbl_pmbestdeltadivisor ->setMinimumWidth ( QFontMetrics( lbl_pmbestdeltadivisor->font() ).maxWidth() * 21 );
 
-   le_pmbestdeltadivisor = new QLineEdit     ( this, "pmbestdeltadivisor Line Edit" );
+   le_pmbestdeltadivisor = new QLineEdit     (  this );    le_pmbestdeltadivisor->setObjectName( "pmbestdeltadivisor Line Edit" );
    widgets_misc_label.push_back( lbl_pmbestdeltadivisor );
    widgets_misc_label.push_back( le_pmbestdeltadivisor );
    le_pmbestdeltadivisor ->setText           ( parameters->count( "pmbestdeltadivisor" ) ? ( *parameters )[ "pmbestdeltadivisor" ] : "" );
@@ -681,7 +681,7 @@ void US_Hydrodyn_Cluster_Bfnb::setupGUI()
    le_pmbestdeltadivisor ->setMinimumWidth   ( 150 );
    connect( le_pmbestdeltadivisor, SIGNAL( textChanged( const QString & ) ), SLOT( update_pmbestdeltadivisor( const QString & ) ) );
 
-   lbl_pmbestdeltamin = new QLabel      ( tr( "Delta minimum (default .01)" ), this );
+   lbl_pmbestdeltamin = new QLabel      ( us_tr( "Delta minimum (default .01)" ), this );
    lbl_pmbestdeltamin ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_pmbestdeltamin ->setMinimumHeight( minHeight1 );
    lbl_pmbestdeltamin ->setPalette      ( PALET_LABEL );
@@ -689,7 +689,7 @@ void US_Hydrodyn_Cluster_Bfnb::setupGUI()
    lbl_pmbestdeltamin ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
    lbl_pmbestdeltamin ->setMinimumWidth ( QFontMetrics( lbl_pmbestdeltamin->font() ).maxWidth() * 21 );
 
-   le_pmbestdeltamin = new QLineEdit     ( this, "pmbestdeltamin Line Edit" );
+   le_pmbestdeltamin = new QLineEdit     (  this );    le_pmbestdeltamin->setObjectName( "pmbestdeltamin Line Edit" );
    widgets_misc_label.push_back( lbl_pmbestdeltamin );
    widgets_misc_label.push_back( le_pmbestdeltamin );
    le_pmbestdeltamin ->setText           ( parameters->count( "pmbestdeltamin" ) ? ( *parameters )[ "pmbestdeltamin" ] : "" );
@@ -701,7 +701,7 @@ void US_Hydrodyn_Cluster_Bfnb::setupGUI()
    le_pmbestdeltamin ->setMinimumWidth   ( 150 );
    connect( le_pmbestdeltamin, SIGNAL( textChanged( const QString & ) ), SLOT( update_pmbestdeltamin( const QString & ) ) );
 
-   cb_pmcsv = new QCheckBox    ( tr( "Produce csv containing result curves" ), this );
+   cb_pmcsv = new QCheckBox    ( us_tr( "Produce csv containing result curves" ), this );
    cb_pmcsv ->setMinimumHeight ( minHeight1 );
    cb_pmcsv ->setPalette       ( PALET_NORMAL );
    AUTFBACK( cb_pmcsv );
@@ -716,7 +716,7 @@ void US_Hydrodyn_Cluster_Bfnb::setupGUI()
    cb_pmcsv ->setChecked        ( parameters->count( "pmcsv" ) && ( *parameters )[ "pmcsv" ] == "true" ? true : false );
    connect( cb_pmcsv, SIGNAL( clicked() ), SLOT( set_pmcsv() ) );
 
-   lbl_pmdebug = new QLabel      ( tr( "Debug level 1,2 or 3 (default: 0)" ), this );
+   lbl_pmdebug = new QLabel      ( us_tr( "Debug level 1,2 or 3 (default: 0)" ), this );
    lbl_pmdebug ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_pmdebug ->setMinimumHeight( minHeight1 );
    lbl_pmdebug ->setPalette      ( PALET_LABEL );
@@ -724,7 +724,7 @@ void US_Hydrodyn_Cluster_Bfnb::setupGUI()
    lbl_pmdebug ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
    lbl_pmdebug ->setMinimumWidth ( QFontMetrics( lbl_pmdebug->font() ).maxWidth() * 21 );
 
-   le_pmdebug = new QLineEdit     ( this, "pmdebug Line Edit" );
+   le_pmdebug = new QLineEdit     (  this );    le_pmdebug->setObjectName( "pmdebug Line Edit" );
    widgets_misc_label.push_back( lbl_pmdebug );
    widgets_misc_label.push_back( le_pmdebug );
    le_pmdebug ->setText           ( parameters->count( "pmdebug" ) ? ( *parameters )[ "pmdebug" ] : "" );
@@ -736,266 +736,266 @@ void US_Hydrodyn_Cluster_Bfnb::setupGUI()
    le_pmdebug ->setMinimumWidth   ( 150 );
    connect( le_pmdebug, SIGNAL( textChanged( const QString & ) ), SLOT( update_pmdebug( const QString & ) ) );
 
-   pb_save =  new QPushButton ( tr( "Save" ), this );
+   pb_save =  new QPushButton ( us_tr( "Save" ), this );
    pb_save -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1) );
    pb_save -> setMinimumHeight( minHeight1 );
    pb_save -> setPalette      ( PALET_PUSHB );
    connect( pb_save, SIGNAL( clicked() ), SLOT( save() ) );
 
-   pb_load =  new QPushButton ( tr( "Load" ), this );
+   pb_load =  new QPushButton ( us_tr( "Load" ), this );
    pb_load -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1) );
    pb_load -> setMinimumHeight( minHeight1 );
    pb_load -> setPalette      ( PALET_PUSHB );
    connect( pb_load, SIGNAL( clicked() ), SLOT( load() ) );
 
-   pb_help =  new QPushButton ( tr( "Help" ), this );
+   pb_help =  new QPushButton ( us_tr( "Help" ), this );
    pb_help -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1) );
    pb_help -> setMinimumHeight( minHeight1 );
    pb_help -> setPalette      ( PALET_PUSHB );
    connect( pb_help, SIGNAL( clicked() ), SLOT( help() ) );
 
-   pb_close =  new QPushButton ( tr( "Close" ), this );
+   pb_close =  new QPushButton ( us_tr( "Close" ), this );
    pb_close -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1) );
    pb_close -> setMinimumHeight( minHeight1 );
    pb_close -> setPalette      ( PALET_PUSHB );
    connect( pb_close, SIGNAL( clicked() ), SLOT( cancel() ) );
 
-   Q3VBoxLayout *background = new Q3VBoxLayout( this );
+   QVBoxLayout * background = new QVBoxLayout( this ); background->setContentsMargins( 0, 0, 0, 0 ); background->setSpacing( 0 );
    background->addSpacing(4);
 
    background->addWidget( lbl_title );
    background->addWidget( lbl_credits_1 );
    background->addSpacing( 4 );
-   Q3HBoxLayout * hbl = new Q3HBoxLayout( 0 );
+   QHBoxLayout * hbl = new QHBoxLayout(); hbl->setContentsMargins( 0, 0, 0, 0 ); hbl->setSpacing( 0 );
    hbl->addSpacing( 4 );
    hbl->addWidget( lbl_main_label );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
    hbl->addWidget( lbl_pmtypes );
    hbl->addWidget( le_pmtypes );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
    hbl->addWidget( cb_pmincrementally );
    hbl->addWidget( cb_pmallcombinations );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
    hbl->addWidget( lbl_pmrayleighdrho );
    hbl->addWidget( le_pmrayleighdrho );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
    hbl->addWidget( lbl_pmbufferedensity );
    hbl->addWidget( le_pmbufferedensity );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
    hbl->addWidget( lbl_pmoutname );
    hbl->addWidget( le_pmoutname );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
    hbl->addWidget( lbl_pmgridsize );
    hbl->addWidget( le_pmgridsize );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
    hbl->addWidget( cb_pmapproxmaxdimension );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
    hbl->addWidget( lbl_q_label );
    hide_widgets( widgets_q_label, true, false );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
    hbl->addWidget( lbl_pmminq );
    hbl->addWidget( le_pmminq );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
    hbl->addWidget( lbl_pmmaxq );
    hbl->addWidget( le_pmmaxq );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
    hbl->addWidget( cb_pmlogqbin );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
    hbl->addWidget( lbl_pmqpoints );
    hbl->addWidget( le_pmqpoints );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
    hbl->addWidget( lbl_supp_label );
    hide_widgets( widgets_supp_label, true, false );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
    hbl->addWidget( lbl_pmharmonics );
    hbl->addWidget( le_pmharmonics );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
    hbl->addWidget( lbl_pmseed );
    hbl->addWidget( le_pmseed );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
    hbl->addWidget( lbl_pmmemory );
    hbl->addWidget( le_pmmemory );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
    hbl->addWidget( lbl_pmbestfinestconversion );
    hbl->addWidget( le_pmbestfinestconversion );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
    hbl->addWidget( lbl_pmbestcoarseconversion );
    hbl->addWidget( le_pmbestcoarseconversion );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
    hbl->addWidget( lbl_pmbestconversiondivisor );
    hbl->addWidget( le_pmbestconversiondivisor );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
    hbl->addWidget( lbl_pmbestrefinementrangepct );
    hbl->addWidget( le_pmbestrefinementrangepct );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
    hbl->addWidget( lbl_pmmaxdimension );
    hbl->addWidget( le_pmmaxdimension );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
    hbl->addWidget( lbl_ga_label );
    hide_widgets( widgets_ga_label, true, false );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
    hbl->addWidget( lbl_pmgapopulation );
    hbl->addWidget( le_pmgapopulation );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
    hbl->addWidget( lbl_pmgagenerations );
    hbl->addWidget( le_pmgagenerations );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
    hbl->addWidget( lbl_pmgamutate );
    hbl->addWidget( le_pmgamutate );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
    hbl->addWidget( lbl_pmgasamutate );
    hbl->addWidget( le_pmgasamutate );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
    hbl->addWidget( lbl_pmgacrossover );
    hbl->addWidget( le_pmgacrossover );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
    hbl->addWidget( lbl_pmgaelitism );
    hbl->addWidget( le_pmgaelitism );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
    hbl->addWidget( lbl_pmgaearlytermination );
    hbl->addWidget( le_pmgaearlytermination );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
    hbl->addWidget( lbl_pmgapointsmax );
    hbl->addWidget( le_pmgapointsmax );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
    hbl->addWidget( lbl_misc_label );
    hide_widgets( widgets_misc_label, true, false );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
    hbl->addWidget( lbl_pmbestdeltastart );
    hbl->addWidget( le_pmbestdeltastart );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
    hbl->addWidget( lbl_pmbestdeltadivisor );
    hbl->addWidget( le_pmbestdeltadivisor );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
    hbl->addWidget( lbl_pmbestdeltamin );
    hbl->addWidget( le_pmbestdeltamin );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
    hbl->addWidget( cb_pmcsv );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
    hbl->addWidget( lbl_pmdebug );
    hbl->addWidget( le_pmdebug );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
    hbl->addWidget( pb_save );
    hbl->addSpacing( 4 );
    hbl->addWidget( pb_load );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
 
 
-   Q3HBoxLayout *hbl_bottom = new Q3HBoxLayout( 0 );
+   QHBoxLayout * hbl_bottom = new QHBoxLayout(); hbl_bottom->setContentsMargins( 0, 0, 0, 0 ); hbl_bottom->setSpacing( 0 );
    hbl_bottom->addSpacing( 4 );
    hbl_bottom->addWidget ( pb_help );
    hbl_bottom->addSpacing( 4 );
@@ -1388,7 +1388,7 @@ void US_Hydrodyn_Cluster_Bfnb::save()
 {
    QString use_dir = ((US_Hydrodyn *)us_hydrodyn)->somo_dir + QDir::separator() + "cluster" + QDir::separator() + "parameters";
    ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this, true );
-   QString filename = QFileDialog::getSaveFileName( this , tr( "Save the parameters" ) , use_dir , "*.cluster_bfnb" );
+   QString filename = QFileDialog::getSaveFileName( this , us_tr( "Save the parameters" ) , use_dir , "*.cluster_bfnb" );
 
 
    if( !filename.isEmpty() )
@@ -1402,13 +1402,13 @@ void US_Hydrodyn_Cluster_Bfnb::save()
       if ( !f.open( QIODevice::WriteOnly ) )
       {
          QMessageBox::information( this,
-                                   tr( QString( "%1: Save" ).arg( "US-SOMO: Parsimonious Modeling" ) ),
-                                   QString( tr( "Could not open file %1 for writing" ) )
+                                   us_tr( QString( "%1: Save" ).arg( "US-SOMO: Parsimonious Modeling" ) ),
+                                   QString( us_tr( "Could not open file %1 for writing" ) )
                                    .arg( filename ) 
                                    );
          return;
       }
-      Q3TextStream ts( &f );
+      QTextStream ts( &f );
       ts << US_Json::compose( *parameters );
       f.close();
    }
@@ -1418,7 +1418,7 @@ void US_Hydrodyn_Cluster_Bfnb::load()
 {
    QString use_dir = ((US_Hydrodyn *)us_hydrodyn)->somo_dir + QDir::separator() + "cluster" + QDir::separator() + "parameters";
    ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this, true );
-   QString filename = QFileDialog::getOpenFileName( this , tr( "Load parameters" ) , use_dir , "*.cluster_bfnb" );
+   QString filename = QFileDialog::getOpenFileName( this , us_tr( "Load parameters" ) , use_dir , "*.cluster_bfnb" );
 
    if( !filename.isEmpty() )
    {
@@ -1428,14 +1428,14 @@ void US_Hydrodyn_Cluster_Bfnb::load()
       {
           QMessageBox::information( 
                                     this,
-                                    tr( QString( "%1: Open" ).arg( "US-SOMO: Parsimonious Modeling" ) ),
-                                    QString( tr( "Could not open file %1 for reading" ) )
+                                    us_tr( QString( "%1: Open" ).arg( "US-SOMO: Parsimonious Modeling" ) ),
+                                    QString( us_tr( "Could not open file %1 for reading" ) )
                                     .arg( filename ) 
                                     );
           return;
       }
       QString qs;
-      Q3TextStream ts( &f );
+      QTextStream ts( &f );
       while ( !ts.atEnd() )
       {
           qs += ts.readLine();

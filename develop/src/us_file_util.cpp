@@ -1,7 +1,7 @@
 #include "../include/us_file_util.h"
 #include <qregexp.h>
 //Added by qt3to4:
-#include <Q3TextStream>
+#include <QTextStream>
 
 bool US_File_Util::copy( QString from, QString to, bool overwrite )
 {
@@ -35,9 +35,9 @@ bool US_File_Util::copy( QString from, QString to, bool overwrite )
    // I didn't try QFile::readBlock, ::writeBlock, so that may make the difference
 
 #if defined ( Q_WS_WIN )
-   FILE *fin = fopen( from, "rb" );
+   FILE *fin = us_fopen( from, "rb" );
 #else 
-   FILE *fin = fopen( from, "r" );
+   FILE *fin = us_fopen( from, "r" );
 #endif
    if ( !fin )
    {
@@ -46,9 +46,9 @@ bool US_File_Util::copy( QString from, QString to, bool overwrite )
    }
 
 #if defined ( Q_WS_WIN )
-   FILE *fout = fopen( to, "wb" );
+   FILE *fout = us_fopen( to, "wb" );
 #else
-   FILE *fout = fopen( to, "w" );
+   FILE *fout = us_fopen( to, "w" );
 #endif
    if ( !fout )
    {
@@ -164,7 +164,7 @@ bool US_File_Util::read( QString from, QStringList &qsl )
       return false;
    }
 
-   Q3TextStream ts( &f );
+   QTextStream ts( &f );
    while ( !ts.atEnd() )
    {
       QString qs = ts.readLine();
@@ -189,7 +189,7 @@ bool US_File_Util::writeuniq( QString & outname, QString & msg, QString basename
       msg = QString( "could not open file %1 for writing" ).arg( outname );
       return false;
    }
-   Q3TextStream ts( &f );
+   QTextStream ts( &f );
    ts << data;
    f.close();
    return true;
@@ -199,13 +199,13 @@ US_Log::US_Log( QString name, bool autoflush, OpenMode mode )
 {
    this->autoflush = autoflush;
 
-   f.setName( name );
+   f.setFileName( name );
    if ( !f.open( QIODevice::WriteOnly | mode ) )
    {
       error_msg = QString( "Error opening file %1 for writing" ).arg( name );
       return;
    }
-   ts = new Q3TextStream( & f );
+   ts = new QTextStream( & f );
 }
 
 US_Log::~US_Log()

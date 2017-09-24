@@ -1,7 +1,7 @@
 #include "../include/us_hydrodyn.h"
 #include "../include/us_hydrodyn_pdb_tool_selres.h"
 //Added by qt3to4:
-#include <Q3TextStream>
+#include <QTextStream>
 
 // note: this program uses cout and/or cerr and this should be replaced
 
@@ -11,7 +11,7 @@ static std::basic_ostream<char>& operator<<(std::basic_ostream<char>& os, const 
 
 #define SLASH QDir::separator()
 
-void US_Hydrodyn_Pdb_Tool::sel_nearest_residues( Q3ListView *lv )
+void US_Hydrodyn_Pdb_Tool::sel_nearest_residues( QTreeWidget *lv )
 {
    map < QString, QString > parameters;
    US_Hydrodyn_Pdb_Tool_Selres *selres = 
@@ -28,7 +28,7 @@ void US_Hydrodyn_Pdb_Tool::sel_nearest_residues( Q3ListView *lv )
       return;
    }
 
-   editor_msg( "blue", tr( "Select nearest atoms" ) );
+   editor_msg( "blue", us_tr( "Select nearest atoms" ) );
    // pdb_sel_count counts = count_selected( lv );
 
    double max_dist = parameters[ "max_dist" ].toDouble();
@@ -42,7 +42,7 @@ void US_Hydrodyn_Pdb_Tool::sel_nearest_residues( Q3ListView *lv )
    double max_asa = 
       parameters.count( "asa" ) ? parameters[ "asa" ].toDouble() : 0e0;
 
-   set < Q3ListViewItem * > exposed_set;
+   set < QTreeWidgetItem * > exposed_set;
    if ( max_asa )
    {
       exposed_set = 
@@ -55,24 +55,24 @@ void US_Hydrodyn_Pdb_Tool::sel_nearest_residues( Q3ListView *lv )
       }
    }
 
-   map < Q3ListViewItem *, double > distmap;
+   map < QTreeWidgetItem *, double > distmap;
 
-   Q3ListViewItemIterator it1( lv );
-   while ( it1.current() ) 
+   QTreeWidgetItemIterator it1( lv );
+   while ( (*it1) ) 
    {
-      Q3ListViewItem *item1 = it1.current();
+      QTreeWidgetItem *item1 = (*it1);
       // take selected items
       if ( !item1->childCount() && is_selected( item1 ) )
       {
-         Q3ListViewItemIterator it2( lv );
+         QTreeWidgetItemIterator it2( lv );
          if ( !only_new )
          {
             distmap[ item1 ] = 0e0;
          }
          // find distances to not-selected
-         while ( it2.current() ) 
+         while ( (*it2) ) 
          {
-            Q3ListViewItem *item2 = it2.current();
+            QTreeWidgetItem *item2 = (*it2);
             if ( item1 != item2 && !item2->childCount() && !is_selected( item2 ) )
             {
                double d = pair_dist( item1, item2 );
@@ -98,12 +98,12 @@ void US_Hydrodyn_Pdb_Tool::sel_nearest_residues( Q3ListView *lv )
 
    // now select residues within distmap
 
-   lv->selectAll( false );
+   lv->clearSelection();
    
-   Q3ListViewItemIterator it( lv );
-   while ( it.current() ) 
+   QTreeWidgetItemIterator it( lv );
+   while ( (*it) ) 
    {
-      Q3ListViewItem *item = it.current();
+      QTreeWidgetItem *item = (*it);
       if ( distmap.count( item ) &&
            ( !max_asa || exposed_set.count( item ) ) )
       {
@@ -123,7 +123,7 @@ void US_Hydrodyn_Pdb_Tool::sel_nearest_residues( Q3ListView *lv )
    } else {
       emit csv2_selection_changed();
    }
-   editor_msg( "blue", tr( "Select nearest residues done") );
+   editor_msg( "blue", us_tr( "Select nearest residues done") );
    if ( !save_sel.isEmpty() )
    {
       if ( !save_sel.contains( "/" ) )
@@ -138,22 +138,22 @@ void US_Hydrodyn_Pdb_Tool::sel_nearest_residues( Q3ListView *lv )
       QFile f( save_sel );
       if ( !f.open( QIODevice::WriteOnly | QIODevice::Text ) )
       {
-         editor_msg( "red", QString( tr( "Error: Can not create file %1 for writing" ) ).arg( f.name() ) );
+         editor_msg( "red", QString( us_tr( "Error: Can not create file %1 for writing" ) ).arg( f.fileName() ) );
          return;
       }
-      Q3TextStream t( &f );
+      QTextStream t( &f );
       csv out_csv = to_csv( lv, ( lv == lv_csv ) ? csv1 : csv2[ csv2_pos ], true );
       t << csv_to_pdb( out_csv );
       f.close();
-      editor_msg( "dark blue", QString( tr( "Created selected residue file %1" ) ).arg( f.name() ) );
+      editor_msg( "dark blue", QString( us_tr( "Created selected residue file %1" ) ).arg( f.fileName() ) );
    }
    {
       QString out;
-      Q3ListViewItemIterator it1( lv );
-      while ( it1.current() ) 
+      QTreeWidgetItemIterator it1( lv );
+      while ( (*it1) ) 
       {
-         Q3ListViewItem *item1 = it1.current();
-         if ( item1->depth() == 2 && is_selected( item1 ) )
+         QTreeWidgetItem *item1 = (*it1);
+         if ( US_Static::lvi_depth( item1 ) == 2 && is_selected( item1 ) )
          {
             out += QString( "%1%2" ).arg( out.isEmpty() ? "" : "," ).arg( get_residue_number( item1 ) );
          }
@@ -164,14 +164,15 @@ void US_Hydrodyn_Pdb_Tool::sel_nearest_residues( Q3ListView *lv )
    }
 }
 
-set < Q3ListViewItem * > US_Hydrodyn_Pdb_Tool::get_exposed_set_naccess( Q3ListView * lv, 
+set < QTreeWidgetItem * > US_Hydrodyn_Pdb_Tool::get_exposed_set_naccess( QTreeWidget * lv, 
                                                                        double max_asa, 
                                                                        bool sc_or_mc,
                                                                        bool only_selected )
 
 {
-   set < Q3ListViewItem * > result;
-   vector < vector < Q3ListViewItem * > > lv_models  = separate_models( lv );
+   set < QTreeWidgetItem * > result;
+#if QT_VERSION < 0x040000
+   vector < vector < QTreeWidgetItem * > > lv_models  = separate_models( lv );
    vector < QStringList >                qsl_models = separate_models( lv == lv_csv  ? csv1 : csv2[ csv2_pos ] );
    vector < QString >                    models     = get_models( lv );
 
@@ -179,7 +180,7 @@ set < Q3ListViewItem * > US_Hydrodyn_Pdb_Tool::get_exposed_set_naccess( Q3ListVi
         models.size() != lv_models.size() )
    {
       editor_msg( "red", 
-                  QString( tr( "Error: NACCESS splitting models size mismatch %1 vs %2 vs %3" ) )
+                  QString( us_tr( "Error: NACCESS splitting models size mismatch %1 vs %2 vs %3" ) )
                   .arg( lv_models.size() )
                   .arg( qsl_models.size() )
                   .arg( models.size() )
@@ -204,12 +205,12 @@ set < Q3ListViewItem * > US_Hydrodyn_Pdb_Tool::get_exposed_set_naccess( Q3ListVi
    {
       if ( !f.open( QIODevice::WriteOnly ) )
       {
-         QMessageBox::warning( this, caption(),
-                               QString(tr("Could not open %1 for writing!")).arg( filename ) );
+         QMessageBox::warning( this, windowTitle(),
+                               QString(us_tr("Could not open %1 for writing!")).arg( filename ) );
          return result;
       }
 
-      Q3TextStream t( &f );
+      QTextStream t( &f );
       for ( int j = 0; j < (int) qsl_models[ i ].size(); ++j )
       {
          t << qsl_models[ i ][ j ];
@@ -224,7 +225,7 @@ set < Q3ListViewItem * > US_Hydrodyn_Pdb_Tool::get_exposed_set_naccess( Q3ListVi
       }
       if ( !naccess_result_data.size() )
       {
-         editor_msg( "red", QString( tr( "Error: NACCESS did not return any results for model %1" ) ).arg( i + 1 ) );
+         editor_msg( "red", QString( us_tr( "Error: NACCESS did not return any results for model %1" ) ).arg( i + 1 ) );
          return result;
       }
       set < QString > exposed;
@@ -235,12 +236,12 @@ set < Q3ListViewItem * > US_Hydrodyn_Pdb_Tool::get_exposed_set_naccess( Q3ListVi
          {
             QString residue = 
                naccess_result_data[ j ].mid( 4, 3 ) + "~" +
-               naccess_result_data[ j ].mid( 8, 1 ).stripWhiteSpace() + "~" +
-               naccess_result_data[ j ].mid( 9, 4 ).stripWhiteSpace()
+               naccess_result_data[ j ].mid( 8, 1 ).trimmed() + "~" +
+               naccess_result_data[ j ].mid( 9, 4 ).trimmed()
                ;
-            double this_asa    = naccess_result_data[ j ].mid( 23, 5 ).stripWhiteSpace().toDouble();
-            double this_asa_sc = naccess_result_data[ j ].mid( 36, 5 ).stripWhiteSpace().toDouble();
-            double this_asa_mc = naccess_result_data[ j ].mid( 49, 5 ).stripWhiteSpace().toDouble();
+            double this_asa    = naccess_result_data[ j ].mid( 23, 5 ).trimmed().toDouble();
+            double this_asa_sc = naccess_result_data[ j ].mid( 36, 5 ).trimmed().toDouble();
+            double this_asa_mc = naccess_result_data[ j ].mid( 49, 5 ).trimmed().toDouble();
             if ( sc_or_mc )
             {
                this_asa = this_asa_sc > this_asa_mc ? this_asa_sc : this_asa_mc;
@@ -259,14 +260,14 @@ set < Q3ListViewItem * > US_Hydrodyn_Pdb_Tool::get_exposed_set_naccess( Q3ListVi
          cout << *it << endl;
       }
 
-      Q3ListViewItemIterator it( lv );
-      while ( it.current() ) 
+      QTreeWidgetItemIterator it( lv );
+      while ( (*it) ) 
       {
-         Q3ListViewItem *item = it.current();
+         QTreeWidgetItem *item = (*it);
          if ( get_model_id( item ) == models[ i ] &&
               exposed.count( QString( "%1~%2~%3" )
                              .arg( get_residue_name( item ) )
-                             .arg( get_chain_id( item ).stripWhiteSpace() )
+                             .arg( get_chain_id( item ).trimmed() )
                              .arg( get_residue_number( item ) ) ) &&
               ( !only_selected || is_selected( item ) ) )
          {
@@ -281,15 +282,19 @@ set < Q3ListViewItem * > US_Hydrodyn_Pdb_Tool::get_exposed_set_naccess( Q3ListVi
          ++it;
       }
    }
+# else
+   QMessageBox::warning( this, windowTitle(),
+                         us_tr( "NACCESS is not currently supported" ) );
+#endif
 
    return result;
 }
 
-set < Q3ListViewItem * > US_Hydrodyn_Pdb_Tool::get_exposed_set( Q3ListView * lv, 
+set < QTreeWidgetItem * > US_Hydrodyn_Pdb_Tool::get_exposed_set( QTreeWidget * lv, 
                                                                double max_asa, 
                                                                bool only_selected )
 {
-   set < Q3ListViewItem * > result;
+   set < QTreeWidgetItem * > result;
    errormsg = "";
    QString qs;
    if ( !usu->select_residue_file( ((US_Hydrodyn *)us_hydrodyn)->residue_filename ) )
@@ -356,10 +361,10 @@ set < Q3ListViewItem * > US_Hydrodyn_Pdb_Tool::get_exposed_set( Q3ListView * lv,
 
    int aa = 0;
 
-   Q3ListViewItemIterator it( lv );
-   while ( it.current() ) 
+   QTreeWidgetItemIterator it( lv );
+   while ( (*it) ) 
    {
-      Q3ListViewItem *item = it.current();
+      QTreeWidgetItem *item = (*it);
       if ( item->isSelected() )
       {
          cout << QString( "model id <%1> chain id <%2> residue name <%3> residue number <%4>\n" )
@@ -376,7 +381,7 @@ set < Q3ListViewItem * > US_Hydrodyn_Pdb_Tool::get_exposed_set( Q3ListView * lv,
    if ( usu->model_vector.size() != models.size() )
    {
       editor_msg( "red", 
-                  QString( tr( "Error: model size mismatch after read pdb (%1 != %2)" ) )
+                  QString( us_tr( "Error: model size mismatch after read pdb (%1 != %2)" ) )
                   .arg( models.size() )
                   .arg( usu->model_vector.size() )
                   );
@@ -407,7 +412,7 @@ set < Q3ListViewItem * > US_Hydrodyn_Pdb_Tool::get_exposed_set( Q3ListView * lv,
                   if (last_residue != "") {
                      printf(
                             " [ %-6d %s ]\t%.0f\t%.0f\t%.2f\n",
-                            seqno, last_residue.ascii(), residue_asa, residue_ref_asa, 100.0 * residue_asa / residue_ref_asa);
+                            seqno, last_residue.toAscii().data(), residue_asa, residue_ref_asa, 100.0 * residue_asa / residue_ref_asa);
                      if ( 100.0 * residue_asa / residue_ref_asa >= max_asa )
                      {
                         exposed.insert( last_residue );
@@ -426,7 +431,7 @@ set < Q3ListViewItem * > US_Hydrodyn_Pdb_Tool::get_exposed_set( Q3ListView * lv,
          if (last_residue != "") {
             printf( 
                    " [ %-6d %s ]\t%.0f\t%.0f\t%.2f\n",
-                   seqno, last_residue.ascii(), residue_asa, residue_ref_asa, 100.0 * residue_asa / residue_ref_asa);
+                   seqno, last_residue.toAscii().data(), residue_asa, residue_ref_asa, 100.0 * residue_asa / residue_ref_asa);
             if ( 100.0 * residue_asa / residue_ref_asa >= max_asa )
             {
                exposed.insert( last_residue );
@@ -441,14 +446,14 @@ set < Q3ListViewItem * > US_Hydrodyn_Pdb_Tool::get_exposed_set( Q3ListView * lv,
          cout << *it << endl;
       }
 
-      Q3ListViewItemIterator it( lv );
-      while ( it.current() ) 
+      QTreeWidgetItemIterator it( lv );
+      while ( (*it) ) 
       {
-         Q3ListViewItem *item = it.current();
+         QTreeWidgetItem *item = (*it);
          if ( get_model_id( item ) == models[ i ] &&
               exposed.count( QString( "%1~%2~%3" )
                              .arg( get_residue_name( item ) )
-                             .arg( get_chain_id( item ).stripWhiteSpace() )
+                             .arg( get_chain_id( item ).trimmed() )
                              .arg( get_residue_number( item ) ) ) &&
               ( !only_selected || is_selected( item ) ) )
          {
@@ -467,15 +472,15 @@ set < Q3ListViewItem * > US_Hydrodyn_Pdb_Tool::get_exposed_set( Q3ListView * lv,
    return result;
 }
 
-vector < QString > US_Hydrodyn_Pdb_Tool::get_models( Q3ListView *lv )
+vector < QString > US_Hydrodyn_Pdb_Tool::get_models( QTreeWidget *lv )
 {
    vector < QString > result;
    QString last_model = "unknown";
 
-   Q3ListViewItemIterator it( lv );
-   while ( it.current() ) 
+   QTreeWidgetItemIterator it( lv );
+   while ( (*it) ) 
    {
-      Q3ListViewItem *item = it.current();
+      QTreeWidgetItem *item = (*it);
       QString this_model = get_model_id( item );
       if ( this_model != last_model )
       {
@@ -492,6 +497,7 @@ vector < QString > US_Hydrodyn_Pdb_Tool::get_models( Q3ListView *lv )
 
 bool US_Hydrodyn_Pdb_Tool::naccess_run( QString pdb )
 {
+#if QT_VERSION < 0x040000
    naccess_running = false;
    naccess_last_pdb = pdb;
    naccess_result_data.clear();
@@ -543,7 +549,7 @@ bool US_Hydrodyn_Pdb_Tool::naccess_run( QString pdb )
       return false;
    }
 
-   naccess = new Q3Process( this );
+   naccess = new QProcess( this );
    //   naccess->setWorkingDirectory( dir );
    naccess->addArgument( prog );
    naccess->addArgument( pdb );
@@ -552,46 +558,57 @@ bool US_Hydrodyn_Pdb_Tool::naccess_run( QString pdb )
    // naccess->addArgument( "-z" );
    // naccess->addArgument( QString( "%1" ).arg( ((US_Hydrodyn *)us_hydrodyn)->asa.asab1_step ) );
    
-   connect( naccess, SIGNAL(readyReadStdout()), this, SLOT(naccess_readFromStdout()) );
-   connect( naccess, SIGNAL(readyReadStderr()), this, SLOT(naccess_readFromStderr()) );
-   connect( naccess, SIGNAL(processExited()), this, SLOT(naccess_processExited()) );
-   connect( naccess, SIGNAL(launchFinished()), this, SLOT(naccess_launchFinished()) );
+   connect( naccess, SIGNAL(readyReadStandardOutput()), this, SLOT(naccess_readFromStdout()) );
+   connect( naccess, SIGNAL(readyReadStandardError()), this, SLOT(naccess_readFromStderr()) );
+   connect( naccess, SIGNAL(finished( int, QProcess::ExitStatus )), this, SLOT(naccess_finished( int, QProcess::ExitStatus )) );
+   connect( naccess, SIGNAL(started()), this, SLOT(naccess_started()) );
 
    editor->append("\n\nStarting Naccess\n");
    naccess->start();
    naccess_running = true;
 
    return true;
+#else
+   return false;
+#endif
 }
 
 void US_Hydrodyn_Pdb_Tool::naccess_readFromStdout()
 {
+#if QT_VERSION < 0x040000
    while ( naccess->canReadLineStdout() )
    {
       editor_msg("brown", naccess->readLineStdout() + "\n");
    }
+#else
+   editor_msg( "brown", QString( naccess->readAllStandardOutput() ) );
+#endif   
    //  qApp->processEvents();
 }
    
 void US_Hydrodyn_Pdb_Tool::naccess_readFromStderr()
 {
+#if QT_VERSION < 0x040000
    while ( naccess->canReadLineStderr() )
    {
       editor_msg("red", naccess->readLineStderr() + "\n");
    }
+#else
+   editor_msg( "red", QString( naccess->readAllStandardError() ) );
+#endif   
    //  qApp->processEvents();
 }
    
-void US_Hydrodyn_Pdb_Tool::naccess_processExited()
+void US_Hydrodyn_Pdb_Tool::naccess_finished( int, QProcess::ExitStatus )
 {
    //   for ( int i = 0; i < 10000; i++ )
    //   {
    naccess_readFromStderr();
    naccess_readFromStdout();
       //   }
-   disconnect( naccess, SIGNAL(readyReadStdout()), 0, 0);
-   disconnect( naccess, SIGNAL(readyReadStderr()), 0, 0);
-   disconnect( naccess, SIGNAL(processExited()), 0, 0);
+   disconnect( naccess, SIGNAL(readyReadStandardOutput()), 0, 0);
+   disconnect( naccess, SIGNAL(readyReadStandardError()), 0, 0);
+   disconnect( naccess, SIGNAL(finished( int, QProcess::ExitStatus )), 0, 0);
    editor->append("Naccess finished.\n");
 
    // naccess creates 2 files:
@@ -603,19 +620,19 @@ void US_Hydrodyn_Pdb_Tool::naccess_processExited()
 
    if ( !f.exists() )
    {
-      editor_msg("red", QString(tr("Error: Naccess did not create file %1")).arg( naccess_result_file ));
+      editor_msg("red", QString(us_tr("Error: Naccess did not create file %1")).arg( naccess_result_file ));
       naccess_running = false;
       return;
    }
 
    if ( !f.open( QIODevice::ReadOnly ) )
    {
-      editor_msg("red", QString(tr("Error: can not open Naccess result file %1")).arg( naccess_result_file ));
+      editor_msg("red", QString(us_tr("Error: can not open Naccess result file %1")).arg( naccess_result_file ));
       naccess_running = false;
       return;
    }
 
-   Q3TextStream ts( &f );
+   QTextStream ts( &f );
    while ( !ts.atEnd() )
    {
       naccess_result_data << ts.readLine();
@@ -623,28 +640,28 @@ void US_Hydrodyn_Pdb_Tool::naccess_processExited()
    f.close();
    //    if ( !f.remove() )
    //    {
-   //       editor_msg("dark red", QString(tr("Warning: could not remove Naccess result file %1")).arg( naccess_result_file ));
+   //       editor_msg("dark red", QString(us_tr("Warning: could not remove Naccess result file %1")).arg( naccess_result_file ));
    //    }
       
    naccess_running = false;
 }
    
-void US_Hydrodyn_Pdb_Tool::naccess_launchFinished()
+void US_Hydrodyn_Pdb_Tool::naccess_started()
 {
    editor_msg("brown", "Naccess launch exited\n");
-   disconnect( naccess, SIGNAL(launchFinished()), 0, 0);
+   disconnect( naccess, SIGNAL(started()), 0, 0);
 }
 
-vector < vector < Q3ListViewItem * > > US_Hydrodyn_Pdb_Tool::separate_models( Q3ListView *lv )
+vector < vector < QTreeWidgetItem * > > US_Hydrodyn_Pdb_Tool::separate_models( QTreeWidget *lv )
 {
-   vector < Q3ListViewItem * >            vlvi;
-   vector < vector < Q3ListViewItem * > > vvlvi;
+   vector < QTreeWidgetItem * >            vlvi;
+   vector < vector < QTreeWidgetItem * > > vvlvi;
 
    QString last_model = "unknown";
-   Q3ListViewItemIterator it( lv );
-   while ( it.current() ) 
+   QTreeWidgetItemIterator it( lv );
+   while ( (*it) ) 
    {
-      Q3ListViewItem *item = it.current();
+      QTreeWidgetItem *item = (*it);
       QString this_model = get_model_id( item );
       if ( this_model != last_model )
       {
@@ -680,12 +697,12 @@ vector < QStringList > US_Hydrodyn_Pdb_Tool::separate_models( csv &ref_csv )
 
    for ( int i = 0; i < (int) qsl_pdb.size(); i++ )
    {
-      if ( rx_model.search( qsl_pdb[ i ] ) != -1 )
+      if ( rx_model.indexIn( qsl_pdb[ i ] ) != -1 )
       {
          // new model line
          if ( qsl_model.size() )
          {
-            if ( rx_end.search( qsl_model.back() ) == -1 )
+            if ( rx_end.indexIn( qsl_model.back() ) == -1 )
             {
                qsl_model << "END\n";
             }
@@ -693,14 +710,14 @@ vector < QStringList > US_Hydrodyn_Pdb_Tool::separate_models( csv &ref_csv )
             qsl_model.clear();
          }
       }
-      if ( rx_skip.search( qsl_pdb[ i ] ) == -1 )
+      if ( rx_skip.indexIn( qsl_pdb[ i ] ) == -1 )
       {
          qsl_model.push_back( qsl_pdb[ i ] );
       }
    }
    if ( qsl_model.size() )
    {
-      if ( rx_end.search( qsl_model.back() ) == -1 )
+      if ( rx_end.indexIn( qsl_model.back() ) == -1 )
       {
          qsl_model << "END\n";
       }
@@ -709,16 +726,17 @@ vector < QStringList > US_Hydrodyn_Pdb_Tool::separate_models( csv &ref_csv )
    return result;
 }
 
-void US_Hydrodyn_Pdb_Tool::select_residues_with_atoms_selected( Q3ListView *lv )
+void US_Hydrodyn_Pdb_Tool::select_residues_with_atoms_selected( QTreeWidget *lv )
 {
-   Q3ListViewItemIterator it( lv );
-   while ( it.current() ) 
+   QTreeWidgetItemIterator it( lv );
+   while ( (*it) ) 
    {
-      Q3ListViewItem *item = it.current();
+      QTreeWidgetItem *item = (*it);
       if ( !item->isSelected() &&
-           item->depth() == 2 )
+           US_Static::lvi_depth( item ) == 2 )
       {
-         Q3ListViewItem *myChild = item->firstChild();
+#if QT_VERSION < 0x040000
+         QTreeWidgetItem *myChild = item->firstChild();
          while ( myChild )
          {
             if ( myChild->isSelected() )
@@ -728,12 +746,27 @@ void US_Hydrodyn_Pdb_Tool::select_residues_with_atoms_selected( Q3ListView *lv )
             }
             myChild = myChild->nextSibling();
          }
+#else
+         {
+            int children = item->childCount();
+            if ( children ) { 
+               for ( int i = 0; i < children; ++i ) {
+                  QTreeWidgetItem *myChild = item->child( i );
+                  if ( myChild->isSelected() )
+                  {
+                     item->setSelected( true );
+                     break;
+                  }
+               }
+            }
+         }
+#endif
       }
       ++it;
    }
 }
 
-void US_Hydrodyn_Pdb_Tool::sel( Q3ListView *lv )
+void US_Hydrodyn_Pdb_Tool::sel( QTreeWidget *lv )
 {
    // make sure atoms are selected
    clean_selection( lv );
@@ -743,12 +776,12 @@ void US_Hydrodyn_Pdb_Tool::sel( Q3ListView *lv )
 
    QString cur_res_sel;
    {
-      Q3ListViewItemIterator it( lv );
+      QTreeWidgetItemIterator it( lv );
 
-      while ( it.current() ) 
+      while ( (*it) ) 
       {
-         Q3ListViewItem *item = it.current();
-         if ( item->depth() == 2 &&
+         QTreeWidgetItem *item = (*it);
+         if ( US_Static::lvi_depth( item ) == 2 &&
               is_selected( item ) )
          {
             QString rn = get_residue_number( item );
@@ -762,9 +795,9 @@ void US_Hydrodyn_Pdb_Tool::sel( Q3ListView *lv )
       }
    }
    
-   QString text = QInputDialog::getText(
-                                        caption() + tr( ": Select" ),
-                                        tr( "Enter comma seperated residue number selection list\n" ),
+   QString text = US_Static::getText(
+                                        windowTitle() + us_tr( ": Select" ),
+                                        us_tr( "Enter comma seperated residue number selection list\n" ),
                                         QLineEdit::Normal,
                                         cur_res_sel,
                                         &ok, 
@@ -776,14 +809,14 @@ void US_Hydrodyn_Pdb_Tool::sel( Q3ListView *lv )
 
    // make list of selections
 
-   QStringList sels = QStringList::split( ",", text );
+   QStringList sels = (text ).split( "," , QString::SkipEmptyParts );
    set < int > to_sel;
 
    QRegExp rx_range( "(\\d+)-(\\d+)" );
 
    for ( int i = 0; i < (int) sels.size(); ++i )
    {
-      if ( rx_range.search( sels[ i ] ) != -1 )
+      if ( rx_range.indexIn( sels[ i ] ) != -1 )
       {
          int startr = rx_range.cap( 1 ).toInt();
          int endr   = rx_range.cap( 2 ).toInt();
@@ -804,11 +837,11 @@ void US_Hydrodyn_Pdb_Tool::sel( Q3ListView *lv )
    }
 
    {
-      Q3ListViewItemIterator it( lv );
+      QTreeWidgetItemIterator it( lv );
 
-      while ( it.current() ) 
+      while ( (*it) ) 
       {
-         Q3ListViewItem *item = it.current();
+         QTreeWidgetItem *item = (*it);
          if ( to_sel.count( get_residue_number( item ).toInt() ) )
          {
             item->setSelected( true );
@@ -817,7 +850,7 @@ void US_Hydrodyn_Pdb_Tool::sel( Q3ListView *lv )
       }
    }
 
-   lv->triggerUpdate();
+   // lv->triggerUpdate();
 
    clean_selection( lv );
    if ( lv == lv_csv )

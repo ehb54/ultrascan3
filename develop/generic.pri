@@ -52,5 +52,3 @@ macx {
 
 # macx { RC_FILE = us_somo.icns }
 
-#The following line was inserted by qt3to4
-QT += qt3support 

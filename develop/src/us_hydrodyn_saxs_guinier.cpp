@@ -19,7 +19,7 @@
 #ifdef QT4
 # include <qwt_scale_engine.h>
 //Added by qt3to4:
-#include <Q3TextStream>
+#include <QTextStream>
 #endif
 
 #define SLASH "/"
@@ -102,7 +102,7 @@ static void write_csv_data( QFile * f, QString I_tag )
       }
    }
 
-   Q3TextStream ts( f );
+   QTextStream ts( f );
 
    for ( int i = 0; i <= maxlen; ++i )
    {
@@ -186,12 +186,12 @@ void US_Hydrodyn_Saxs::run_guinier_Rt()
 
       if ( !f.open(QIODevice::WriteOnly) )
       {
-         editor_msg( "red", QString(tr("Can not create file %1\n")).arg(f.name()));
+         editor_msg( "red", QString(us_tr("Can not create file %1\n")).arg(f.fileName()));
       } else {
-         Q3TextStream ts(&f);
+         QTextStream ts(&f);
          ts << csvlog;
          f.close();
-         editor->append(QString(tr("Created file %1\n")).arg(f.name()));
+         editor->append(QString(us_tr("Created file %1\n")).arg(f.fileName()));
       }
       if ( ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "guinier_csv_save_data" ) &&
            ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "guinier_csv_save_data" ] == "1" )
@@ -210,10 +210,10 @@ void US_Hydrodyn_Saxs::run_guinier_Rt()
 
          if ( !f.open(QIODevice::WriteOnly) )
          {
-            editor_msg( "red", QString(tr("Can not create file %1\n")).arg(f.name()));
+            editor_msg( "red", QString(us_tr("Can not create file %1\n")).arg(f.fileName()));
          } else {
             write_csv_data( & f, "ln q*I" );
-            editor->append(QString(tr("Created file %1\n")).arg(f.name()));
+            editor->append(QString(us_tr("Created file %1\n")).arg(f.fileName()));
          }
       }
    }
@@ -227,9 +227,9 @@ void US_Hydrodyn_Saxs::run_guinier_Rt()
 
       QStringList toplot;
       toplot
-         << "yleft"   << tr( "Rt [Angstrom]" ) << "Rt" 
-         << "yright1" << tr( "M/A [Dalton/Angstrom^2]" ) << "MA" 
-         << "yright2" << tr( "q^2*I0 [a.u.]" ) << "I0" 
+         << "yleft"   << us_tr( "Rt [Angstrom]" ) << "Rt" 
+         << "yright1" << us_tr( "M/A [Dalton/Angstrom^2]" ) << "MA" 
+         << "yright2" << us_tr( "q^2*I0 [a.u.]" ) << "I0" 
          ;
 
       guinier_frame_plot( title, toplot );
@@ -276,17 +276,17 @@ void US_Hydrodyn_Saxs::guinier_frame_plot( const QString & title, const QStringL
          if ( tmp.contains( "_avg" ) ) {
             skip_curves.insert( i );
          }
-         // qDebug( QString( "filename %1 tmp is %2" ).arg( qsl_plotted_iq_names[ i ] ).arg( tmp ) );
-         if ( rx_clear_nonnumeric.search( tmp ) != -1 )
+         // us_qdebug( QString( "filename %1 tmp is %2" ).arg( qsl_plotted_iq_names[ i ] ).arg( tmp ) );
+         if ( rx_clear_nonnumeric.indexIn( tmp ) != -1 )
          {
             tmp = rx_clear_nonnumeric.cap( 1 );
          }
 
-         if ( rx_cap.search( tmp ) != -1 )
+         if ( rx_cap.indexIn( tmp ) != -1 )
          {
             tmp = rx_cap.cap( 1 ) + "." + rx_cap.cap( 2 );
          }
-         // qDebug( QString( "final tmp is %1" ).arg( tmp ) );
+         // us_qdebug( QString( "final tmp is %1" ).arg( tmp ) );
          double timestamp = tmp.toDouble();
          uniq_times.insert( timestamp );
          time_value.push_back( timestamp );
@@ -418,12 +418,12 @@ void US_Hydrodyn_Saxs::run_guinier_cs()
 
       if ( !f.open(QIODevice::WriteOnly) )
       {
-         editor_msg( "red", QString(tr("Can not create file %1\n")).arg(f.name()));
+         editor_msg( "red", QString(us_tr("Can not create file %1\n")).arg(f.fileName()));
       } else {
-         Q3TextStream ts(&f);
+         QTextStream ts(&f);
          ts << csvlog;
          f.close();
-         editor->append(QString(tr("Created file %1\n")).arg(f.name()));
+         editor->append(QString(us_tr("Created file %1\n")).arg(f.fileName()));
       }
       if ( ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "guinier_csv_save_data" ) &&
            ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "guinier_csv_save_data" ] == "1" )
@@ -442,10 +442,10 @@ void US_Hydrodyn_Saxs::run_guinier_cs()
 
          if ( !f.open(QIODevice::WriteOnly) )
          {
-            editor_msg( "red", QString(tr("Can not create file %1\n")).arg(f.name()));
+            editor_msg( "red", QString(us_tr("Can not create file %1\n")).arg(f.fileName()));
          } else {
             write_csv_data( & f, "ln q*I" );
-            editor->append(QString(tr("Created file %1\n")).arg(f.name()));
+            editor->append(QString(us_tr("Created file %1\n")).arg(f.fileName()));
          }
       }
    }
@@ -459,9 +459,9 @@ void US_Hydrodyn_Saxs::run_guinier_cs()
 
       QStringList toplot;
       toplot
-         << "yleft"   << tr( "Rc [Angstrom]" ) << "Rc" 
-         << "yright1" << tr( "ML [Dalton/Angstrom]" ) << "ML" 
-         << "yright2" << tr( "qI0 [a.u.]" ) << "I0" 
+         << "yleft"   << us_tr( "Rc [Angstrom]" ) << "Rc" 
+         << "yright1" << us_tr( "ML [Dalton/Angstrom]" ) << "ML" 
+         << "yright2" << us_tr( "qI0 [a.u.]" ) << "I0" 
          ;
 
       guinier_frame_plot( title, toplot );
@@ -475,7 +475,11 @@ void US_Hydrodyn_Saxs::run_guinier_analysis()
    clear_csv_data();
    guinier_scratch.clear();
    editor->append("Guinier analysis:\n");
-   editor->setParagraphBackgroundColor ( editor->paragraphs() - 1, plot_saxs->canvasBackground() );
+#if QT_VERSION < 0x040000
+   editor->setParagraphBackgroundColor( editor->paragraphs() - 1,  QColor( "white" ) );
+#else
+   editor->setTextBackgroundColor( QColor( "white" ) );
+#endif
    clear_guinier();
 
    QString csvlog = 
@@ -537,7 +541,11 @@ void US_Hydrodyn_Saxs::run_guinier_analysis()
    {
       guinier_analysis(i, csvlog);
    }
-   editor->setParagraphBackgroundColor ( editor->paragraphs() - 1, QColor("white") );
+#if QT_VERSION < 0x040000
+   editor->setParagraphBackgroundColor( editor->paragraphs() - 1,  QColor( "white" ) );
+#else
+   editor->setTextBackgroundColor( QColor( "white" ) );
+#endif
    cb_guinier->setChecked(true);
    cb_Rt_guinier->setChecked(false);
    cb_cs_guinier->setChecked(false);
@@ -559,12 +567,12 @@ void US_Hydrodyn_Saxs::run_guinier_analysis()
 
       if ( !f.open(QIODevice::WriteOnly) )
       {
-         editor->append(QString(tr("Can not create file %1\n")).arg(f.name()));
+         editor->append(QString(us_tr("Can not create file %1\n")).arg(f.fileName()));
       } else {
-         Q3TextStream ts(&f);
+         QTextStream ts(&f);
          ts << csvlog;
          f.close();
-         editor->append(QString(tr("Created file %1\n")).arg(f.name()));
+         editor->append(QString(us_tr("Created file %1\n")).arg(f.fileName()));
       }
 
       if ( ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "guinier_csv_save_data" ) &&
@@ -584,10 +592,10 @@ void US_Hydrodyn_Saxs::run_guinier_analysis()
 
          if ( !f.open(QIODevice::WriteOnly) )
          {
-            editor_msg( "red", QString(tr("Can not create file %1\n")).arg(f.name()));
+            editor_msg( "red", QString(us_tr("Can not create file %1\n")).arg(f.fileName()));
          } else {
             write_csv_data( & f, "ln I" );
-            editor->append(QString(tr("Created file %1\n")).arg(f.name()));
+            editor->append(QString(us_tr("Created file %1\n")).arg(f.fileName()));
          }
       }
    }
@@ -601,9 +609,9 @@ void US_Hydrodyn_Saxs::run_guinier_analysis()
 
       QStringList toplot;
       toplot
-         << "yleft"   << tr( "Rg [Angstrom]" ) << "Rg" 
-         << "yright1" << tr( "MW [Dalton]" ) << "MW" 
-         << "yright2" << tr( "I0 [a.u.]" ) << "I0" 
+         << "yleft"   << us_tr( "Rg [Angstrom]" ) << "Rg" 
+         << "yright1" << us_tr( "MW [Dalton]" ) << "MW" 
+         << "yright2" << us_tr( "I0 [a.u.]" ) << "I0" 
          ;
 
       guinier_frame_plot( title, toplot );
@@ -632,7 +640,7 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
    {
       if ( plotted_I_error[ i ].size() != plotted_q[ i ].size() )
       {
-         editor_msg( "dark red", QString( tr( "Notice: SD weighting of Guinier fit is off for %1 since SDs are not fully present" ) )
+         editor_msg( "dark red", QString( us_tr( "Notice: SD weighting of Guinier fit is off for %1 since SDs are not fully present" ) )
                      .arg( qsl_plotted_iq_names[ i ] ) );
          use_SD_weighting = false;
       } else {
@@ -643,7 +651,7 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
             {
                if ( plotted_I_error[ i ][ j ] <= 0e0 )
                {
-                  editor_msg( "dark red", QString( tr( "Notice: SD weighting of Guinier fit is off for %1 since at least one SD is zero or negative in the selected q range" ) )
+                  editor_msg( "dark red", QString( us_tr( "Notice: SD weighting of Guinier fit is off for %1 since at least one SD is zero or negative in the selected q range" ) )
                               .arg( qsl_plotted_iq_names[ i ] ) );
                   use_SD_weighting = false;
                   break;
@@ -655,7 +663,7 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
       
    if ( use_guinier_outlier_reject && !use_SD_weighting )
    {
-      editor_msg( "dark red", QString( tr( "Notice: Turning off outlier rejection for Guinier fit of %1 since SD weighting is off" ) )
+      editor_msg( "dark red", QString( us_tr( "Notice: Turning off outlier rejection for Guinier fit of %1 since SD weighting is off" ) )
                   .arg( qsl_plotted_iq_names[ i ] ) );
 
       use_guinier_outlier_reject = false;
@@ -794,7 +802,7 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
             {
                if ( (int) usu.wave[ "data" ].q.size() - (int) pts_decrease < 5 )
                {
-                  internal_error = QString( tr( "Too few points left (%1) after %2 points removed for qRgmax limit" ) )
+                  internal_error = QString( us_tr( "Too few points left (%1) after %2 points removed for qRgmax limit" ) )
                      .arg( (int) usu.wave[ "data" ].q.size() - (int) pts_decrease ).arg( pts_decrease ); 
                   // editor->append( QString( "Error performing Guinier analysis on %1: %2\n" ).arg( qsl_plotted_iq_names[ i ] ).arg( internal_error ) );
                   break;
@@ -1066,7 +1074,7 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
             .sprintf(
                      "Guinier analysis of %s:\n"
                      "Rg %.1f (%.1f) (A) I(0) %.2e (%.2e) MW %.2e (%.2e) q^2 [ %.5f:%.5f] qRgmin %.3f qRgmax %.3f points used %u chi^2 %.2e reduced-chi %.2e"
-                     , qsl_plotted_iq_names[ i ].ascii()
+                     , qsl_plotted_iq_names[ i ].toAscii().data()
                      , Rg
                      , sigb
                      , I0
@@ -1082,12 +1090,13 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
                      , sqrt( chi2 / (bestend - beststart - 1 - pts_removed ) )
                      );
          
-         // qDebug( QString( "plotted q.size() %1" ).arg( plotted_q[ i ].size() ) );
+         // us_qdebug( QString( "plotted q.size() %1" ).arg( plotted_q[ i ].size() ) );
 
          // tainer mw method
          double Vct;
          double Qrt;
          double mwt;
+         double mwt_sd;
          QString messagest;
          QString notest;
          QString warningt;
@@ -1096,7 +1105,9 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
                                 plotted_q[ i ],
                                 plotted_I[ i ],
                                 Rg,
+                                sigb,
                                 I0,
+                                siga,
                                 ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "guinier_mwt_k" ) ?
                                 ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "guinier_mwt_k" ].toDouble() : 0e0,
                                 ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "guinier_mwt_c" ) ?
@@ -1106,6 +1117,7 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
                                 Vct,
                                 Qrt,
                                 mwt,
+                                mwt_sd,
                                 messagest,
                                 notest,
                                 warningt
@@ -1120,7 +1132,7 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
                         mwt
                          ) + notest;
          } else {
-            report += tr( " MW(Vc) could not compute " + messagest + " " + notest );
+            report += us_tr( " MW(Vc) could not compute " + messagest + " " + notest );
          }
 
          // curtis mw method
@@ -1129,6 +1141,7 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
          double Vcc;
          double Qrc;
          double mwc;
+         double mwc_sd;
          QString messagesc;
          QString notesc;
 
@@ -1139,13 +1152,16 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
                                                              plotted_q[ i ],
                                                              plotted_I[ i ],
                                                              Rg,
+                                                             sigb,
                                                              I0,
+                                                             siga,
                                                              ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "guinier_mwc_mw_per_N" ) ?
                                                              ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "guinier_mwc_mw_per_N" ].toDouble() : 0e0,
                                                              qm,
                                                              Vcc,
                                                              Qrc,
                                                              mwc,
+                                                             mwc_sd,
                                                              messagesc,
                                                              notesc
                                                               ) )
@@ -1160,7 +1176,7 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
                            mwc
                             ) + notesc;
             } else {
-               report += tr( " MW(Vc) could not compute " + messagesc + " " + notesc );
+               report += us_tr( " MW(Vc) could not compute " + messagesc + " " + notesc );
             }
          }
 
@@ -1272,7 +1288,7 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
                .arg( I0_std_exp )
                .arg( slope  )
                .arg( slopesd )
-               .arg( tr( use_SD_weighting ? "used" : "not used" ) )
+               .arg( us_tr( use_SD_weighting ? "used" : "not used" ) )
                ;
          }
 
@@ -1349,7 +1365,7 @@ bool US_Hydrodyn_Saxs::guinier_analysis( unsigned int i, QString &csvlog )
          guinier_removed.push_back( empty_removed );
       }         
    }
-   editor_msg( plot_colors[i % plot_colors.size()], report );
+   editor_msg( plot_colors[i % plot_colors.size()], plot_saxs->canvasBackground(), report );
 
    //   cout << csvlog;
    return true;
@@ -1377,7 +1393,7 @@ bool US_Hydrodyn_Saxs::cs_guinier_analysis( unsigned int i, QString &csvlog )
    {
       if ( plotted_I_error[ i ].size() != plotted_q[ i ].size() )
       {
-         editor_msg( "dark red", QString( tr( "Notice: SD weighting of Guinier fit is off for %1 since SDs are not fully present" ) )
+         editor_msg( "dark red", QString( us_tr( "Notice: SD weighting of Guinier fit is off for %1 since SDs are not fully present" ) )
                      .arg( qsl_plotted_iq_names[ i ] ) );
          use_SD_weighting = false;
       } else {
@@ -1388,7 +1404,7 @@ bool US_Hydrodyn_Saxs::cs_guinier_analysis( unsigned int i, QString &csvlog )
             {
                if ( plotted_I_error[ i ][ j ] <= 0e0 )
                {
-                  editor_msg( "dark red", QString( tr( "Notice: SD weighting of Guinier fit is off for %1 since at least one SD is zero or negative in the selected q range" ) )
+                  editor_msg( "dark red", QString( us_tr( "Notice: SD weighting of Guinier fit is off for %1 since at least one SD is zero or negative in the selected q range" ) )
                               .arg( qsl_plotted_iq_names[ i ] ) );
                   use_SD_weighting = false;
                   break;
@@ -1400,7 +1416,7 @@ bool US_Hydrodyn_Saxs::cs_guinier_analysis( unsigned int i, QString &csvlog )
 
    if ( use_guinier_outlier_reject && !use_SD_weighting )
    {
-      editor_msg( "dark red", QString( tr( "Notice: Turning off outlier rejection for Guinier fit of %1 since SD weighting is off" ) )
+      editor_msg( "dark red", QString( us_tr( "Notice: Turning off outlier rejection for Guinier fit of %1 since SD weighting is off" ) )
                   .arg( qsl_plotted_iq_names[ i ] ) );
 
       use_guinier_outlier_reject = false;
@@ -1538,7 +1554,7 @@ bool US_Hydrodyn_Saxs::cs_guinier_analysis( unsigned int i, QString &csvlog )
             {
                if ( (int) usu.wave[ "data" ].q.size() - (int) pts_decrease < 5 )
                {
-                  internal_error = QString( tr( "Too few points left (%1) after %2 points removed for qRgmax limit" ) )
+                  internal_error = QString( us_tr( "Too few points left (%1) after %2 points removed for qRgmax limit" ) )
                      .arg( (int) usu.wave[ "data" ].q.size() - (int) pts_decrease ).arg( pts_decrease ); 
                   // editor->append( QString( "Error performing CS Guinier analysis on %1: %2\n" ).arg( qsl_plotted_iq_names[ i ] ).arg( internal_error ) );
                   break;
@@ -1772,7 +1788,7 @@ bool US_Hydrodyn_Saxs::cs_guinier_analysis( unsigned int i, QString &csvlog )
             .sprintf(
                      "CS Guinier analysis of %s:\n"
                      "Rc %.1f (%.1f) (A) I(0) %.2e (%.2e) M/L %.2e (%.2e) q^2 [%.5f:%.5f] qRcmin %.3f qRcmax %.3f points used %u chi^2 %.2e reduced-chi %.2e\n"
-                     , qsl_plotted_iq_names[ i ].ascii()
+                     , qsl_plotted_iq_names[ i ].toAscii().data()
                      , Rg
                      , sigb 
                      , I0
@@ -1895,7 +1911,7 @@ bool US_Hydrodyn_Saxs::cs_guinier_analysis( unsigned int i, QString &csvlog )
                .arg( I0_std_exp )
                .arg( slope  )
                .arg( slopesd )
-               .arg( tr( use_SD_weighting ? "used" : "not used" ) )
+               .arg( us_tr( use_SD_weighting ? "used" : "not used" ) )
                ;
          }
 
@@ -1971,7 +1987,7 @@ bool US_Hydrodyn_Saxs::Rt_guinier_analysis( unsigned int i, QString &csvlog )
    {
       if ( plotted_I_error[ i ].size() != plotted_q[ i ].size() )
       {
-         editor_msg( "dark red", QString( tr( "Notice: SD weighting of Guinier fit is off for %1 since SDs are not fully present" ) )
+         editor_msg( "dark red", QString( us_tr( "Notice: SD weighting of Guinier fit is off for %1 since SDs are not fully present" ) )
                      .arg( qsl_plotted_iq_names[ i ] ) );
          use_SD_weighting = false;
       } else {
@@ -1982,7 +1998,7 @@ bool US_Hydrodyn_Saxs::Rt_guinier_analysis( unsigned int i, QString &csvlog )
             {
                if ( plotted_I_error[ i ][ j ] <= 0e0 )
                {
-                  editor_msg( "dark red", QString( tr( "Notice: SD weighting of Guinier fit is off for %1 since at least one SD is zero or negative in the selected q range" ) )
+                  editor_msg( "dark red", QString( us_tr( "Notice: SD weighting of Guinier fit is off for %1 since at least one SD is zero or negative in the selected q range" ) )
                               .arg( qsl_plotted_iq_names[ i ] ) );
                   use_SD_weighting = false;
                   break;
@@ -1994,7 +2010,7 @@ bool US_Hydrodyn_Saxs::Rt_guinier_analysis( unsigned int i, QString &csvlog )
 
    if ( use_guinier_outlier_reject && !use_SD_weighting )
    {
-      editor_msg( "dark red", QString( tr( "Notice: Turning off outlier rejection for Guinier fit of %1 since SD weighting is off" ) )
+      editor_msg( "dark red", QString( us_tr( "Notice: Turning off outlier rejection for Guinier fit of %1 since SD weighting is off" ) )
                   .arg( qsl_plotted_iq_names[ i ] ) );
 
       use_guinier_outlier_reject = false;
@@ -2136,7 +2152,7 @@ bool US_Hydrodyn_Saxs::Rt_guinier_analysis( unsigned int i, QString &csvlog )
             {
                if ( (int) usu.wave[ "data" ].q.size() - (int) pts_decrease < 5 )
                {
-                  internal_error = QString( tr( "Too few points left (%1) after %2 points removed for qRgmax limit" ) )
+                  internal_error = QString( us_tr( "Too few points left (%1) after %2 points removed for qRgmax limit" ) )
                      .arg( (int) usu.wave[ "data" ].q.size() - (int) pts_decrease ).arg( pts_decrease ); 
                   // editor->append( QString( "Error performing TV Guinier analysis on %1: %2\n" ).arg( qsl_plotted_iq_names[ i ] ).arg( internal_error ) );
                   break;
@@ -2369,7 +2385,7 @@ bool US_Hydrodyn_Saxs::Rt_guinier_analysis( unsigned int i, QString &csvlog )
             .sprintf(
                      "TV Guinier analysis of %s:\n"
                      "Rt %.1f (%.1f) (A) I(0) %.2e (%.2e) M/A %.2e (%.2e) q^2 [%.5f:%.5f] qRcmin %.3f qRcmax %.3f points used %u chi^2 %.2e reduced-chi %.2e\n"
-                     , qsl_plotted_iq_names[ i ].ascii()
+                     , qsl_plotted_iq_names[ i ].toAscii().data()
                      , Rg
                      , sigb 
                      , I0
@@ -2491,7 +2507,7 @@ bool US_Hydrodyn_Saxs::Rt_guinier_analysis( unsigned int i, QString &csvlog )
                .arg( I0_std_exp )
                .arg( slope  )
                .arg( slopesd )
-               .arg( tr( use_SD_weighting ? "used" : "not used" ) )
+               .arg( us_tr( use_SD_weighting ? "used" : "not used" ) )
                ;
          }
 
@@ -2557,14 +2573,14 @@ void US_Hydrodyn_Saxs::set_guinier()
                              "CS Guinier " : 
                              ( cb_Rt_guinier->isChecked() ?
                                "TV Guinier " : "Guinier " ) )
-                           : "") + tr("SANS Curve"));
+                           : "") + us_tr("SANS Curve"));
    } else {
       plot_saxs->setTitle((cb_guinier->isChecked() ? 
                            ( cb_cs_guinier->isChecked() ?
                              "CS Guinier " : 
                              ( cb_Rt_guinier->isChecked() ?
                                "TV Guinier " : "Guinier " ) )
-                           : "") + tr("SAXS Curve"));
+                           : "") + us_tr("SAXS Curve"));
    }
 
    do_plot_resid();
@@ -2579,9 +2595,9 @@ void US_Hydrodyn_Saxs::set_guinier()
    {
       if ( rb_sans->isChecked() ) 
       {
-         plot_saxs->setTitle( "Kratky " + tr("SANS Curve"));
+         plot_saxs->setTitle( "Kratky " + us_tr("SANS Curve"));
       } else {
-         plot_saxs->setTitle( "Kratky " + tr("SAXS Curve"));
+         plot_saxs->setTitle( "Kratky " + us_tr("SAXS Curve"));
       }
    }      
 
@@ -3050,13 +3066,13 @@ void US_Hydrodyn_Saxs::set_guinier()
 
    plot_saxs->setAxisTitle  ( QwtPlot::xBottom, 
                               cb_guinier->isChecked() ? 
-                              tr( "q^2 (1/Angstrom^2)" ) : tr( "q (1/Angstrom)" ) );
+                              us_tr( "q^2 (1/Angstrom^2)" ) : us_tr( "q (1/Angstrom)" ) );
 
    plot_saxs->setAxisTitle  ( QwtPlot::yLeft,   
                               cb_kratky ->isChecked() ? 
-                              tr( " q^2 * I(q)"        ) : 
-                              ( cb_guinier->isChecked() && cb_cs_guinier->isChecked() ? tr( "q*I(q) (log scale)" ) : 
-                                ( cb_guinier->isChecked() && cb_Rt_guinier->isChecked() ? tr( "q^2*I(q) (log scale)" ) : tr( "I(q) (log scale)" ) ) )
+                              us_tr( " q^2 * I(q)"        ) : 
+                              ( cb_guinier->isChecked() && cb_cs_guinier->isChecked() ? us_tr( "q*I(q) (log scale)" ) : 
+                                ( cb_guinier->isChecked() && cb_Rt_guinier->isChecked() ? us_tr( "q^2*I(q) (log scale)" ) : us_tr( "I(q) (log scale)" ) ) )
                               );
 #ifndef QT4
    plot_saxs->setAxisOptions( QwtPlot::yLeft, 
@@ -3086,7 +3102,7 @@ void US_Hydrodyn_Saxs::set_guinier()
 
 void US_Hydrodyn_Saxs::set_guinier_eb()
 {
-   //   qDebug( "set_guinier_eb()" );
+   //   us_qdebug( "set_guinier_eb()" );
    if ( rb_sans->isChecked() ) 
    {
       plot_saxs->setTitle((cb_guinier->isChecked() ? 
@@ -3094,14 +3110,14 @@ void US_Hydrodyn_Saxs::set_guinier_eb()
                              "CS Guinier " : 
                              ( cb_Rt_guinier->isChecked() ?
                                "TV Guinier " : "Guinier " ) )
-                           : "") + tr("SANS Curve"));
+                           : "") + us_tr("SANS Curve"));
    } else {
       plot_saxs->setTitle((cb_guinier->isChecked() ? 
                            ( cb_cs_guinier->isChecked() ?
                              "CS Guinier " : 
                              ( cb_Rt_guinier->isChecked() ?
                                "TV Guinier " : "Guinier " ) )
-                           : "") + tr("SAXS Curve"));
+                           : "") + us_tr("SAXS Curve"));
    }
 
    do_plot_resid();
@@ -3116,9 +3132,9 @@ void US_Hydrodyn_Saxs::set_guinier_eb()
    {
       if ( rb_sans->isChecked() ) 
       {
-         plot_saxs->setTitle( "Kratky " + tr("SANS Curve"));
+         plot_saxs->setTitle( "Kratky " + us_tr("SANS Curve"));
       } else {
-         plot_saxs->setTitle( "Kratky " + tr("SAXS Curve"));
+         plot_saxs->setTitle( "Kratky " + us_tr("SAXS Curve"));
       }
    }      
 
@@ -3668,13 +3684,13 @@ void US_Hydrodyn_Saxs::set_guinier_eb()
 
    plot_saxs->setAxisTitle  ( QwtPlot::xBottom, 
                               cb_guinier->isChecked() ? 
-                              tr( "q^2 (1/Angstrom^2)" ) : tr( "q (1/Angstrom)" ) );
+                              us_tr( "q^2 (1/Angstrom^2)" ) : us_tr( "q (1/Angstrom)" ) );
 
    plot_saxs->setAxisTitle  ( QwtPlot::yLeft,   
                               cb_kratky ->isChecked() ? 
-                              tr( " q^2 * I(q)"        ) : 
-                              ( cb_guinier->isChecked() && cb_cs_guinier->isChecked() ? tr( "q*I(q) (log scale)" ) : 
-                                ( cb_guinier->isChecked() && cb_Rt_guinier->isChecked() ? tr( "q^2*I(q) (log scale)" ) : tr( "I(q) (log scale)" ) ) )
+                              us_tr( " q^2 * I(q)"        ) : 
+                              ( cb_guinier->isChecked() && cb_cs_guinier->isChecked() ? us_tr( "q*I(q) (log scale)" ) : 
+                                ( cb_guinier->isChecked() && cb_Rt_guinier->isChecked() ? us_tr( "q^2*I(q) (log scale)" ) : us_tr( "I(q) (log scale)" ) ) )
                               );
 #ifndef QT4
    plot_saxs->setAxisOptions( QwtPlot::yLeft, 

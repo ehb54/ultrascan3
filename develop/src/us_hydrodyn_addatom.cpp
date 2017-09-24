@@ -3,10 +3,10 @@
 #include <list>
 #include <qregexp.h>
 //Added by qt3to4:
-#include <Q3TextStream>
+#include <QTextStream>
 #include <QCloseEvent>
-#include <Q3GridLayout>
-#include <Q3Frame>
+#include <QGridLayout>
+#include <QFrame>
 #include <QLabel>
 
 // note: this program uses cout and/or cerr and this should be replaced
@@ -15,14 +15,14 @@ static std::basic_ostream<char>& operator<<(std::basic_ostream<char>& os, const 
    return os << qPrintable(str);
 }
 
-US_AddAtom::US_AddAtom(bool *widget_flag, QWidget *p, const char *name) : QWidget( p, name)
+US_AddAtom::US_AddAtom(bool *widget_flag, QWidget *p, const char *name) : QWidget( p )
 {
    this->widget_flag = widget_flag;
    *widget_flag = true;
    USglobal = new US_Config();
    atom_filename = USglobal->config_list.system_dir + "/etc/somo.atom";
    setPalette( PALET_FRAME );
-   setCaption(tr("SoMo: Modify Atom Lookup Tables"));
+   setWindowTitle(us_tr("SoMo: Modify Atom Lookup Tables"));
    setupGUI();
    global_Xpos += 30;
    global_Ypos += 30;
@@ -37,77 +37,77 @@ void US_AddAtom::setupGUI()
 {
    int minHeight1 = 30;
 
-   lbl_info = new QLabel(tr("Add/Edit Atom Lookup Table:"), this);
+   lbl_info = new QLabel(us_tr("Add/Edit Atom Lookup Table:"), this);
    Q_CHECK_PTR(lbl_info);
-   lbl_info->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Raised);
+   lbl_info->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_info->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_info->setMinimumHeight(minHeight1);
    lbl_info->setPalette( PALET_FRAME );
    AUTFBACK( lbl_info );
    lbl_info->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
 
-   pb_select_atom_file = new QPushButton(tr("Load Atom Definition File"), this);
+   pb_select_atom_file = new QPushButton(us_tr("Load Atom Definition File"), this);
    Q_CHECK_PTR(pb_select_atom_file);
    pb_select_atom_file->setMinimumHeight(minHeight1);
    pb_select_atom_file->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_select_atom_file->setPalette( PALET_PUSHB );
    connect(pb_select_atom_file, SIGNAL(clicked()), SLOT(select_atom_file()));
 
-   pb_select_hybrid_file = new QPushButton(tr("Load Hybridization File"), this);
+   pb_select_hybrid_file = new QPushButton(us_tr("Load Hybridization File"), this);
    Q_CHECK_PTR(pb_select_hybrid_file);
    pb_select_hybrid_file->setMinimumHeight(minHeight1);
    pb_select_hybrid_file->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_select_hybrid_file->setPalette( PALET_PUSHB );
    connect(pb_select_hybrid_file, SIGNAL(clicked()), SLOT(select_hybrid_file()));
 
-   pb_select_saxs_file = new QPushButton(tr("Load SAXS Coefficient File"), this);
+   pb_select_saxs_file = new QPushButton(us_tr("Load SAXS Coefficient File"), this);
    Q_CHECK_PTR(pb_select_saxs_file);
    pb_select_saxs_file->setMinimumHeight(minHeight1);
    pb_select_saxs_file->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_select_saxs_file->setPalette( PALET_PUSHB );
    connect(pb_select_saxs_file, SIGNAL(clicked()), SLOT(select_saxs_file()));
 
-   lbl_atom_table = new QLabel(tr(" not selected"),this);
-   lbl_atom_table->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Sunken);
+   lbl_atom_table = new QLabel(us_tr(" not selected"),this);
+   lbl_atom_table->setFrameStyle(QFrame::WinPanel|QFrame::Sunken);
    lbl_atom_table->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_atom_table->setPalette( PALET_EDIT );
    AUTFBACK( lbl_atom_table );
    lbl_atom_table->setMinimumHeight(minHeight1);
    lbl_atom_table->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 
-   lbl_hybrid_table = new QLabel(tr(" not selected"),this);
-   lbl_hybrid_table->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Sunken);
+   lbl_hybrid_table = new QLabel(us_tr(" not selected"),this);
+   lbl_hybrid_table->setFrameStyle(QFrame::WinPanel|QFrame::Sunken);
    lbl_hybrid_table->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_hybrid_table->setPalette( PALET_EDIT );
    AUTFBACK( lbl_hybrid_table );
    lbl_hybrid_table->setMinimumHeight(minHeight1);
    lbl_hybrid_table->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 
-   lbl_saxs_table = new QLabel(tr(" not selected"),this);
-   lbl_saxs_table->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Sunken);
+   lbl_saxs_table = new QLabel(us_tr(" not selected"),this);
+   lbl_saxs_table->setFrameStyle(QFrame::WinPanel|QFrame::Sunken);
    lbl_saxs_table->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_saxs_table->setPalette( PALET_EDIT );
    AUTFBACK( lbl_saxs_table );
    lbl_saxs_table->setMinimumHeight(minHeight1);
    lbl_saxs_table->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 
-   cmb_atom = new Q3ComboBox(false, this, "Atom Listing" );
+   cmb_atom = new QComboBox(  this );    cmb_atom->setObjectName( "Atom Listing" );
    cmb_atom->setPalette( PALET_NORMAL );
    AUTFBACK( cmb_atom );
    cmb_atom->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cmb_atom->setSizeLimit(5);
+ //   cmb_atom->setSizeLimit(5);
    cmb_atom->setMinimumHeight(minHeight1);
    connect(cmb_atom, SIGNAL(activated(int)), this, SLOT(select_atom(int)));
 
-   cmb_hybrid = new Q3ComboBox(false, this, "Hybrid Listing" );
+   cmb_hybrid = new QComboBox(  this );    cmb_hybrid->setObjectName( "Hybrid Listing" );
    cmb_hybrid->setPalette( PALET_NORMAL );
    AUTFBACK( cmb_hybrid );
    cmb_hybrid->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cmb_hybrid->setSizeLimit(5);
+ //   cmb_hybrid->setSizeLimit(5);
    cmb_hybrid->setMinimumHeight(minHeight1);
    connect(cmb_hybrid, SIGNAL(activated(int)), this, SLOT(select_hybrid(int)));
 
-   lbl_mw1 = new QLabel(tr(" Molecular Weight:"), this);
+   lbl_mw1 = new QLabel(us_tr(" Molecular Weight:"), this);
    Q_CHECK_PTR(lbl_mw1);
    lbl_mw1->setMinimumHeight(minHeight1);
    lbl_mw1->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
@@ -123,7 +123,7 @@ void US_AddAtom::setupGUI()
    AUTFBACK( lbl_mw2 );
    lbl_mw2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 
-   lbl_saxs_name1 = new QLabel(tr(" SAXS Atom Identifier:"), this);
+   lbl_saxs_name1 = new QLabel(us_tr(" SAXS Atom Identifier:"), this);
    Q_CHECK_PTR(lbl_saxs_name1);
    lbl_saxs_name1->setMinimumHeight(minHeight1);
    lbl_saxs_name1->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
@@ -139,7 +139,7 @@ void US_AddAtom::setupGUI()
    AUTFBACK( lbl_saxs_name2 );
    lbl_saxs_name2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 
-   lbl_radius1 = new QLabel(tr(" Radius (A):"), this);
+   lbl_radius1 = new QLabel(us_tr(" Radius (A):"), this);
    Q_CHECK_PTR(lbl_radius1);
    lbl_radius1->setMinimumHeight(minHeight1);
    lbl_radius1->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
@@ -155,7 +155,7 @@ void US_AddAtom::setupGUI()
    AUTFBACK( lbl_radius2 );
    lbl_radius2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 
-   lbl_hybrid1 = new QLabel(tr(" Hybridization:"), this);
+   lbl_hybrid1 = new QLabel(us_tr(" Hybridization:"), this);
    Q_CHECK_PTR(lbl_hybrid1);
    lbl_hybrid1->setMinimumHeight(minHeight1);
    lbl_hybrid1->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
@@ -171,7 +171,7 @@ void US_AddAtom::setupGUI()
    AUTFBACK( lbl_hybrid2 );
    lbl_hybrid2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 
-   lbl_saxs_excl_vol1 = new QLabel(tr(" Excluded Vol. for SAXS Atom:"), this);
+   lbl_saxs_excl_vol1 = new QLabel(us_tr(" Excluded Vol. for SAXS Atom:"), this);
    Q_CHECK_PTR(lbl_saxs_excl_vol1);
    lbl_saxs_excl_vol1->setMinimumHeight(minHeight1);
    lbl_saxs_excl_vol1->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
@@ -179,7 +179,7 @@ void US_AddAtom::setupGUI()
    AUTFBACK( lbl_saxs_excl_vol1 );
    lbl_saxs_excl_vol1->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 
-   lbl_saxs_excl_vol2 = new QLabel(tr(" Enter Excluded Volume (A^3):"), this);
+   lbl_saxs_excl_vol2 = new QLabel(us_tr(" Enter Excluded Volume (A^3):"), this);
    Q_CHECK_PTR(lbl_saxs_excl_vol2);
    lbl_saxs_excl_vol2->setMinimumHeight(minHeight1);
    lbl_saxs_excl_vol2->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
@@ -187,7 +187,7 @@ void US_AddAtom::setupGUI()
    AUTFBACK( lbl_saxs_excl_vol2 );
    lbl_saxs_excl_vol2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 
-   lbl_number_of_atoms = new QLabel(tr(" Number of Atoms in File: 0"), this);
+   lbl_number_of_atoms = new QLabel(us_tr(" Number of Atoms in File: 0"), this);
    Q_CHECK_PTR(lbl_number_of_atoms);
    lbl_number_of_atoms->setMinimumHeight(minHeight1);
    lbl_number_of_atoms->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
@@ -195,7 +195,7 @@ void US_AddAtom::setupGUI()
    AUTFBACK( lbl_number_of_atoms );
    lbl_number_of_atoms->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 
-   lbl_number_of_hybrids = new QLabel(tr(" Number of Hybridizations in File: 0"), this);
+   lbl_number_of_hybrids = new QLabel(us_tr(" Number of Hybridizations in File: 0"), this);
    Q_CHECK_PTR(lbl_number_of_hybrids);
    lbl_number_of_hybrids->setMinimumHeight(minHeight1);
    lbl_number_of_hybrids->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
@@ -203,7 +203,7 @@ void US_AddAtom::setupGUI()
    AUTFBACK( lbl_number_of_hybrids );
    lbl_number_of_hybrids->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 
-   lbl_name = new QLabel(tr(" Atom Name:"), this);
+   lbl_name = new QLabel(us_tr(" Atom Name:"), this);
    Q_CHECK_PTR(lbl_name);
    lbl_name->setMinimumHeight(minHeight1);
    lbl_name->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
@@ -211,14 +211,14 @@ void US_AddAtom::setupGUI()
    AUTFBACK( lbl_name );
    lbl_name->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 
-   le_name = new QLineEdit(this, "Atom name Line Edit");
+   le_name = new QLineEdit( this );    le_name->setObjectName( "Atom name Line Edit" );
    le_name->setPalette( PALET_NORMAL );
    AUTFBACK( le_name );
    le_name->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    le_name->setMinimumHeight(minHeight1);
    connect(le_name, SIGNAL(textChanged(const QString &)), SLOT(update_name(const QString &)));
 
-   le_excl_vol = new QLineEdit(this, "SAXS excluded volume Line Edit");
+   le_excl_vol = new QLineEdit( this );    le_excl_vol->setObjectName( "SAXS excluded volume Line Edit" );
    le_excl_vol->setPalette( PALET_NORMAL );
    AUTFBACK( le_excl_vol );
    le_excl_vol->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -226,7 +226,7 @@ void US_AddAtom::setupGUI()
    le_excl_vol->setEnabled(false);
    connect(le_excl_vol, SIGNAL(textChanged(const QString &)), SLOT(update_excl_vol(const QString &)));
 
-   pb_add = new QPushButton(tr("Add Atom to File"), this);
+   pb_add = new QPushButton(us_tr("Add Atom to File"), this);
    Q_CHECK_PTR(pb_add);
    pb_add->setEnabled(false);
    pb_add->setMinimumHeight(minHeight1);
@@ -234,7 +234,7 @@ void US_AddAtom::setupGUI()
    pb_add->setPalette( PALET_PUSHB );
    connect(pb_add, SIGNAL(clicked()), SLOT(add()));
 
-   pb_delete = new QPushButton(tr("Delete Atom"), this);
+   pb_delete = new QPushButton(us_tr("Delete Atom"), this);
    Q_CHECK_PTR(pb_delete);
    pb_delete->setEnabled(false);
    pb_delete->setMinimumHeight(minHeight1);
@@ -242,22 +242,22 @@ void US_AddAtom::setupGUI()
    pb_delete->setPalette( PALET_PUSHB );
    connect(pb_delete, SIGNAL(clicked()), SLOT(delete_atom()));
 
-   pb_help = new QPushButton(tr("Help"), this);
+   pb_help = new QPushButton(us_tr("Help"), this);
    Q_CHECK_PTR(pb_help);
    pb_help->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_help->setMinimumHeight(minHeight1);
    pb_help->setPalette( PALET_PUSHB );
    connect(pb_help, SIGNAL(clicked()), SLOT(help()));
 
-   pb_close = new QPushButton(tr("Close"), this);
+   pb_close = new QPushButton(us_tr("Close"), this);
    Q_CHECK_PTR(pb_close);
    pb_close->setMinimumHeight(minHeight1);
    pb_close->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_close->setPalette( PALET_PUSHB );
    connect(pb_close, SIGNAL(clicked()), SLOT(close()));
 
-   cb_excl_vol = new QCheckBox(this, "excluded volume checkbox");
-   cb_excl_vol->setText(tr(" Use average value (from SAXS table) "));
+   cb_excl_vol = new QCheckBox( this );    cb_excl_vol->setObjectName( "excluded volume checkbox" );
+   cb_excl_vol->setText(us_tr(" Use average value (from SAXS table) "));
    cb_excl_vol->setChecked(true);
    cb_excl_vol->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_excl_vol->setPalette( PALET_NORMAL );
@@ -265,9 +265,9 @@ void US_AddAtom::setupGUI()
    connect(cb_excl_vol, SIGNAL(clicked()), this, SLOT(set_excl_vol()));
 
    int rows=3, columns = 2, spacing = 2, j=0, margin=4;
-   Q3GridLayout *background = new Q3GridLayout(this, rows, columns, margin, spacing);
+   QGridLayout * background = new QGridLayout( this ); background->setContentsMargins( 0, 0, 0, 0 ); background->setSpacing( 0 ); background->setSpacing( spacing ); background->setContentsMargins( margin, margin, margin, margin );
 
-   background->addMultiCellWidget(lbl_info, j, j, 0, 1);
+   background->addWidget( lbl_info , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
    j++;
    background->addWidget(pb_select_atom_file, j, 0);
    background->addWidget(lbl_atom_table, j, 1);
@@ -317,8 +317,8 @@ void US_AddAtom::add()
    int item = -1;
    for (int i=0; i<(int) atom_list.size(); i++) //check if the same atom was defined previously
    {
-      if (atom_list[i].name.upper() == current_atom.name.upper()
-          &&  atom_list[i].hybrid.name.upper() == current_atom.hybrid.name.upper())
+      if (atom_list[i].name.toUpper() == current_atom.name.toUpper()
+          &&  atom_list[i].hybrid.name.toUpper() == current_atom.hybrid.name.toUpper())
       {
          item = i;
          atom_list[i].hybrid.mw = current_atom.hybrid.mw;
@@ -343,8 +343,8 @@ public:
    atom our_atom;
    bool operator < (const sortable_atom& objIn) const
    {
-      QString atom_cmp = our_atom.name.upper() + "\t" + our_atom.hybrid.name.upper();
-      QString obj_cmp = objIn.our_atom.name.upper() + "\t" + objIn.our_atom.hybrid.name.upper();
+      QString atom_cmp = our_atom.name.toUpper() + "\t" + our_atom.hybrid.name.toUpper();
+      QString obj_cmp = objIn.our_atom.name.toUpper() + "\t" + objIn.our_atom.hybrid.name.toUpper();
       if (
           atom_cmp
           <
@@ -386,32 +386,32 @@ void US_AddAtom::write_atom_file()
    if (f.open(QIODevice::WriteOnly|QIODevice::Text))
    {
       cmb_atom->clear();
-      str1.sprintf(tr(" Number of Atoms in File: %d"), atom_list.size());
-      Q3TextStream ts(&f);
+      str1.sprintf(us_trp(" Number of Atoms in File: %d"), atom_list.size());
+      QTextStream ts(&f);
       for (unsigned int i=0; i<atom_list.size(); i++)
       {
-         ts << atom_list[i].name.upper() << "\t" << atom_list[i].hybrid.name.upper() << "\t" <<
+         ts << atom_list[i].name.toUpper() << "\t" << atom_list[i].hybrid.name.toUpper() << "\t" <<
                atom_list[i].hybrid.mw << "\t" << atom_list[i].hybrid.radius <<  "\t" <<
                atom_list[i].saxs_excl_vol << endl;
          str1.sprintf("%d: ", i+1);
-         str1 += atom_list[i].name.upper();
+         str1 += atom_list[i].name.toUpper();
          str1 += " (";
-         str1 += atom_list[i].hybrid.name.upper();
+         str1 += atom_list[i].hybrid.name.toUpper();
          str1 += ")";
-         cmb_atom->insertItem(str1);
+         cmb_atom->addItem(str1);
       }
       f.close();
    }
    else
    {
-      QMessageBox::message("Attention:", "Could not open the atom file:\n\n" + atom_filename);
+      US_Static::us_message("Attention:", "Could not open the atom file:\n\n" + atom_filename);
    }
 }
 
 void US_AddAtom::select_atom_file()
 {
    QString old_filename = atom_filename, str1, str2;
-   atom_filename = QFileDialog::getOpenFileName( this , caption() , USglobal->config_list.system_dir + "/etc" , "*.atom *.ATOM" );
+   atom_filename = QFileDialog::getOpenFileName( this , windowTitle() , USglobal->config_list.system_dir + "/etc" , "*.atom *.ATOM" );
    if (atom_filename.isEmpty())
    {
       atom_filename = old_filename;
@@ -425,7 +425,7 @@ void US_AddAtom::select_atom_file()
       unsigned int i=1;
       if (f.open(QIODevice::ReadOnly|QIODevice::Text))
       {
-         Q3TextStream ts(&f);
+         QTextStream ts(&f);
          while (!ts.atEnd())
          {
             ts >> current_atom.name;
@@ -440,9 +440,9 @@ void US_AddAtom::select_atom_file()
                str1.sprintf("%d: ", i);
                str1 += current_atom.name;
                str1 += " (";
-               str1 += current_atom.hybrid.name.upper();
+               str1 += current_atom.hybrid.name.toUpper();
                str1 += ")";
-               cmb_atom->insertItem(str1);
+               cmb_atom->addItem(str1);
                i++;
             }
          }
@@ -451,7 +451,7 @@ void US_AddAtom::select_atom_file()
    }
    cb_excl_vol->setChecked(false);
    le_excl_vol->setEnabled(true);
-   str1.sprintf(tr(" Number of Atoms in File: %d"), atom_list.size());
+   str1.sprintf(us_trp(" Number of Atoms in File: %d"), atom_list.size());
    lbl_number_of_atoms->setText(str1);
    pb_add->setEnabled(true);
    if (!atom_filename.isEmpty() && !hybrid_filename.isEmpty() && !saxs_filename.isEmpty())
@@ -463,7 +463,7 @@ void US_AddAtom::select_atom_file()
 void US_AddAtom::select_hybrid_file()
 {
    QString old_filename = hybrid_filename, str1, str2;
-   hybrid_filename = QFileDialog::getOpenFileName( this , caption() , USglobal->config_list.system_dir + "/etc" , "*.hybrid *.HYBRID" );
+   hybrid_filename = QFileDialog::getOpenFileName( this , windowTitle() , USglobal->config_list.system_dir + "/etc" , "*.hybrid *.HYBRID" );
    if (hybrid_filename.isEmpty())
    {
       hybrid_filename = old_filename;
@@ -477,7 +477,7 @@ void US_AddAtom::select_hybrid_file()
       unsigned int i=1;
       if (f.open(QIODevice::ReadOnly|QIODevice::Text))
       {
-         Q3TextStream ts(&f);
+         QTextStream ts(&f);
          while (!ts.atEnd())
          {
             ts >> current_hybrid.saxs_name;
@@ -493,14 +493,14 @@ void US_AddAtom::select_hybrid_file()
                hybrid_list.push_back(current_hybrid);
                str1.sprintf("%d: ", i);
                str1 += current_hybrid.name;
-               cmb_hybrid->insertItem(str1);
+               cmb_hybrid->addItem(str1);
                i++;
             }
          }
          f.close();
       }
    }
-   str1.sprintf(tr(" Number of Hybridizations in File: %d"), hybrid_list.size());
+   str1.sprintf(us_trp(" Number of Hybridizations in File: %d"), hybrid_list.size());
    lbl_number_of_hybrids->setText(str1);
    pb_add->setEnabled(true);
    if (!atom_filename.isEmpty() && !hybrid_filename.isEmpty() && !saxs_filename.isEmpty())
@@ -512,7 +512,7 @@ void US_AddAtom::select_hybrid_file()
 void US_AddAtom::select_saxs_file()
 {
    QString old_filename = saxs_filename, str1, str2;
-   saxs_filename = QFileDialog::getOpenFileName( this , caption() , USglobal->config_list.system_dir + "/etc" , "*.saxs_atoms *.SAXS_ATOMS" );
+   saxs_filename = QFileDialog::getOpenFileName( this , windowTitle() , USglobal->config_list.system_dir + "/etc" , "*.saxs_atoms *.SAXS_ATOMS" );
    if (saxs_filename.isEmpty())
    {
       saxs_filename = old_filename;
@@ -526,7 +526,7 @@ void US_AddAtom::select_saxs_file()
       if (f.open(QIODevice::ReadOnly|QIODevice::Text))
       {
          int line = 0;
-         Q3TextStream ts( &f );
+         QTextStream ts( &f );
          while ( !ts.atEnd() )
          {
 
@@ -536,8 +536,8 @@ void US_AddAtom::select_saxs_file()
             {
                continue;
             }
-            qs.stripWhiteSpace();
-            QStringList qsl = QStringList::split( QRegExp( "\\s+" ), qs );
+            qs.trimmed();
+            QStringList qsl = (qs ).split( QRegExp( "\\s+" ) , QString::SkipEmptyParts );
             int pos = 0;
             if ( qsl.size() == 11 )
             {
@@ -654,7 +654,7 @@ void US_AddAtom::select_atom(int val)
 {
    QString str;
    unsigned int i, j;
-   current_atom.name = atom_list[val].name.upper();
+   current_atom.name = atom_list[val].name.toUpper();
    current_atom.hybrid.mw = atom_list[val].hybrid.mw;
    current_atom.hybrid.name = atom_list[val].hybrid.name;
    current_atom.hybrid.radius = atom_list[val].hybrid.radius;
@@ -670,20 +670,20 @@ void US_AddAtom::select_atom(int val)
    lbl_radius2->setText(str);
    str.sprintf("%3.2f", atom_list[val].saxs_excl_vol);
    le_excl_vol->setText(str);
-   le_name->setText(atom_list[val].name.upper());
-   lbl_hybrid2->setText(atom_list[val].hybrid.name.upper());
+   le_name->setText(atom_list[val].name.toUpper());
+   lbl_hybrid2->setText(atom_list[val].hybrid.name.toUpper());
    pb_delete->setEnabled(true);
    if (atom_list.size() > 0)
    {
       if (hybrid_list.size() > 0)
       {
-         j = cmb_atom->currentItem();
+         j = cmb_atom->currentIndex( );
          for (i=0; i<hybrid_list.size(); i++)
          {
             if (hybrid_list[i].name == atom_list[j].hybrid.name)
             {
                current_atom.hybrid.saxs_name = hybrid_list[i].saxs_name;
-               cmb_hybrid->setCurrentItem(i);
+               cmb_hybrid->setCurrentIndex(i);
                break;
             }
          }

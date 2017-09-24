@@ -1,6 +1,6 @@
 #include "../include/us_saxs_util.h"
 //Added by qt3to4:
-#include <Q3TextStream>
+#include <QTextStream>
 
 // note: this program uses cout and/or cerr and this should be replaced
 
@@ -65,8 +65,8 @@ bool US_Saxs_Util::compute_1d()
    {
       QString     qs  = control_parameters[ "1dintermediatesaves" ];
       qs.replace( ",", " " );
-      qs.stripWhiteSpace();
-      QStringList qsl = QStringList::split( QRegExp( "\\s+" ), qs );
+      qs.trimmed();
+      QStringList qsl = (qs ).split( QRegExp( "\\s+" ) , QString::SkipEmptyParts );
       for ( unsigned int i = 0; i < ( unsigned int ) qsl.size(); i++ )
       {
          unsigned int pos = qsl[ i ].toUInt();
@@ -298,7 +298,7 @@ bool US_Saxs_Util::compute_1d()
             new_atom.hybrid_name = hybrid_name;
             new_atom.hydrogens = 0;
             if ( !our_saxs_options.iqq_use_atomic_ff &&
-                 count_hydrogens.search(hybrid_name) != -1 )
+                 count_hydrogens.indexIn(hybrid_name) != -1 )
             {
                new_atom.hydrogens = count_hydrogens.cap(1).toInt();
             }
@@ -684,18 +684,18 @@ bool US_Saxs_Util::load_rotations( unsigned int number, vector < vector < double
    if ( !f.exists() )
    {
       errormsg = QString( "Notice: cached rotations file %1 does not exist" )
-         .arg( f.name() );
+         .arg( f.fileName() );
       return false;
    }
 
    if ( !f.open( QIODevice::ReadOnly ) )
    {
       errormsg = QString( "Notice: found cached rotations file %1 but could not open it" )
-         .arg( f.name() );
+         .arg( f.fileName() );
       return false;
    }
 
-   Q3TextStream ts( &f );
+   QTextStream ts( &f );
 
    unsigned int line = 0;
 
@@ -707,12 +707,12 @@ bool US_Saxs_Util::load_rotations( unsigned int number, vector < vector < double
       QString     qs  = ts.readLine();
       line++;
 
-      QStringList qsl = QStringList::split( QRegExp( "\\s+" ), qs );
+      QStringList qsl = (qs ).split( QRegExp( "\\s+" ) , QString::SkipEmptyParts );
 
       if ( qsl.size() != 3 )
       {
          errormsg =  QString( "Notice: error in found cached rotations file %1 line %2, does not contain 3 tokens" )
-            .arg( f.name() )
+            .arg( f.fileName() )
             .arg( line )
             ;
          f.close();
@@ -728,7 +728,7 @@ bool US_Saxs_Util::load_rotations( unsigned int number, vector < vector < double
    {
       errormsg = 
          QString( "Notice: error:  cached rotations file %1 line %2, does not contain sufficient rotations (%3 requested vs %4 found)" )
-         .arg( f.name() )
+         .arg( f.fileName() )
          .arg( line )
          .arg( number )
          .arg( rotations.size() )

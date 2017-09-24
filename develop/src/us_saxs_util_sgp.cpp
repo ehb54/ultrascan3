@@ -1,7 +1,7 @@
 #include "../include/us_saxs_util.h"
 #include "../include/us_saxs_gp.h"
 //Added by qt3to4:
-#include <Q3TextStream>
+#include <QTextStream>
 
 // note: this program uses cout and/or cerr and this should be replaced
 
@@ -227,10 +227,10 @@ bool US_Saxs_Util::sgp_run()
       QFile f( QString( "sgp_g%1_best.bead_model" ).arg( g ) );
       if ( f.open( QIODevice::WriteOnly ) )
       {
-         Q3TextStream ts( &f );
+         QTextStream ts( &f );
          ts << population[ 0 ]->qs_bead_model();
          f.close();
-         cout << QString( "written: %1\n" ).arg( f.name() );
+         cout << QString( "written: %1\n" ).arg( f.fileName() );
       }
       cout << sgp_physical_stats( population[ 0 ] );
 
@@ -499,7 +499,7 @@ double US_Saxs_Util::sgp_fitness( sgp_node *node )
       QFile f( "nan_fitness_model.bead_model" );
       if ( f.open( QIODevice::WriteOnly ) )
       {
-         Q3TextStream ts( &f );
+         QTextStream ts( &f );
          ts << node->qs_bead_model();
          f.close();
       }

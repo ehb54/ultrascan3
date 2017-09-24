@@ -7,8 +7,8 @@
 #include <chrono>
 #include "../include/us_hydrodyn_zeno.h"
 #undef R
-#include "q3progressbar.h"
-extern Q3ProgressBar *zeno_progress;
+#include "qprogressbar.h"
+extern QProgressBar *zeno_progress;
 
 #include <fstream>
 class zeno_fout {

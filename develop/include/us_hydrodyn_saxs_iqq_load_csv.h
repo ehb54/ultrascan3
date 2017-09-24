@@ -8,7 +8,7 @@
 #include <qpushbutton.h>
 #include <qdialog.h>
 #include <qstringlist.h>
-#include <q3listbox.h>
+#include <qlistwidget.h>
 #include <qlineedit.h>
 
 #include "us_util.h"
@@ -48,7 +48,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Iqq_Load_Csv : public QDialog
 
       QLabel *lbl_info;
 
-      Q3ListBox    *lb_names;
+      QListWidget    *lb_names;
 
       QCheckBox   *cb_create_avg;
       QCheckBox   *cb_create_std_dev;

@@ -1,8 +1,8 @@
 #include "../include/us_dirhist.h"
 //Added by qt3to4:
 #include <QCloseEvent>
-#include <Q3GridLayout>
-#include <Q3Frame>
+#include <QGridLayout>
+#include <QFrame>
 #include <QLabel>
 
 US_Dirhist::US_Dirhist(
@@ -13,7 +13,7 @@ US_Dirhist::US_Dirhist(
                        bool                        & is_ok,
                        QWidget                     * p,
                        const char                  * name
-                       ) : QDialog(p, name)
+                       ) : QDialog( p )
 {
    this->history       = & history;
    this->last_access   = & last_access;
@@ -25,9 +25,9 @@ US_Dirhist::US_Dirhist(
 
    USglobal = new US_Config();
 
-   setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
+   setPalette( USglobal->global_colors.cg_frame );
 
-   setCaption( tr("US-SOMO: Previously used directories") );
+   setWindowTitle( us_tr("US-SOMO: Previously used directories") );
 
    setupGUI();
    // global_Xpos += 30;
@@ -48,38 +48,46 @@ void US_Dirhist::setupGUI()
    int minHeight1 = 30;
    //   int minHeight2 = 50;
 
-   lbl_info = new QLabel( tr( "Previously used directories" ), this );
-   lbl_info->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Raised);
+   lbl_info = new QLabel( us_tr( "Previously used directories" ), this );
+   lbl_info->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_info->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_info->setMinimumHeight(minHeight1);
-   lbl_info->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
+   lbl_info->setPalette( USglobal->global_colors.cg_frame );
    lbl_info->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 
-   t_hist = new Q3Table( history->size(), 5, this);
-   t_hist->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Raised);
-   t_hist->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
+   t_hist = new QTableWidget( history->size(), 5, this);
+   t_hist->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
+   t_hist->setPalette( USglobal->global_colors.cg_edit );
    t_hist->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
    t_hist->setEnabled(true);
-   t_hist->setSelectionMode( Q3Table::SingleRow );
+   t_hist->setSelectionMode( QAbstractItemView::SingleSelection );t_hist->setSelectionBehavior( QAbstractItemView::SelectRows );
 
    t_hist->setShowGrid( false );
-   t_hist->setReadOnly( true );
 
-   t_hist->horizontalHeader()->setLabel( 0, tr( "Directory" ) );
-   t_hist->horizontalHeader()->setLabel( 1, tr( "Last access" ) );
-   t_hist->horizontalHeader()->setLabel( 3, tr( "Last type loaded" ) );
+   t_hist->setHorizontalHeaderItem( 0, new QTableWidgetItem( us_tr( "Directory" ) ));
+   t_hist->setHorizontalHeaderItem( 1, new QTableWidgetItem( us_tr( "Last access" ) ));
+   t_hist->setHorizontalHeaderItem( 3, new QTableWidgetItem( us_tr( "Last type loaded" ) ));
 
    {
       unsigned int unknowns = 0;
       for ( int i = 0; i < (int) history->size(); ++i )
       {
-         t_hist->setText( i, 0, (*history)[ i ] );
-         t_hist->setText( i, 1, 
-                          last_access->count( (*history)[ i ] ) ?
-                          (*last_access)[ (*history)[ i ] ].toString( Qt::LocalDate ) : "" );
-         t_hist->setText( i, 3, 
-                          ( last_filetype->count( (*history)[ i ] ) && !(*last_filetype)[ (*history)[ i ] ].isEmpty() ) ?
-                          ( "." + (*last_filetype)[ (*history)[ i ] ] ) : "" );
+         t_hist->setItem( i, 0, new QTableWidgetItem( (*history)[ i ] ) );
+         {
+            QString toset =
+               last_access->count( (*history)[ i ] )
+               ? (*last_access)[ (*history)[ i ] ].toString( Qt::LocalDate )
+               : "";
+            t_hist->setItem( i, 1, new QTableWidgetItem( toset ) );
+         }
+         {
+            QString toset =
+               ( last_filetype->count( (*history)[ i ] ) && !(*last_filetype)[ (*history)[ i ] ].isEmpty() )
+               ? ( "." + (*last_filetype)[ (*history)[ i ] ] )
+               : ""
+               ;
+            t_hist->setItem( i, 3, new QTableWidgetItem( toset ) );
+         }
          {
             QString qs = 
                QString( "%1" )
@@ -90,7 +98,7 @@ void US_Dirhist::setupGUI()
             {
                qs = "0" + qs;
             }
-            t_hist->setText( i, 2, qs );
+            t_hist->setItem( i, 2, new QTableWidgetItem( qs ) );
 
             // now type sorted by last access
             QString type =
@@ -101,26 +109,26 @@ void US_Dirhist::setupGUI()
             {
                type += " ";
             }
-            t_hist->setText( i, 4, type + qs );
+            t_hist->setItem( i, 4, new QTableWidgetItem( type + qs ) );
          }
       }
    }
-   t_hist->setSelectionMode( Q3Table::MultiRow );
+   t_hist->setSelectionMode( QAbstractItemView::MultiSelection );t_hist->setSelectionBehavior( QAbstractItemView::SelectRows );
    t_hist->setColumnWidth( 0, 400 );
    t_hist->setColumnWidth( 1, 180 );
    t_hist->setColumnWidth( 3, 120 );
    t_hist->hideColumn( 2 );
    t_hist->hideColumn( 4 );
-   t_hist->horizontalHeader()->setClickEnabled( true );
-   t_hist->setColumnMovingEnabled( false );
+    t_hist->horizontalHeader()->setClickable( true );
+    t_hist->horizontalHeader()->setMovable( false );
 
-   t_hist->sortColumn( 2, false, true );
+   t_hist->sortByColumn( 2,  false ? Qt::AscendingOrder : Qt::DescendingOrder );
    t_hist->clearSelection();
 
    bool any_selected = false;
-   for ( int i = 0; i < t_hist->numRows(); ++i )
+   for ( int i = 0; i < t_hist->rowCount(); ++i )
    {
-      if ( t_hist->text( i, 0 ) == *selected )
+      if ( t_hist->item( i, 0 )->text() == *selected )
       {
          any_selected = true;
          t_hist->selectRow( i );
@@ -129,48 +137,55 @@ void US_Dirhist::setupGUI()
       }
    }
    if ( !any_selected &&
-        t_hist->numRows() )
+        t_hist->rowCount() )
    {
       t_hist->selectRow( 0 );
       t_hist->setCurrentCell( 0, 0 );
    }
 
+  { for ( int i = 0; i < t_hist->rowCount(); ++i ) { for ( int j = 0; j < t_hist->columnCount(); ++j ) { t_hist->item( i, j )->setFlags( t_hist->item( i, j )->flags() ^ Qt::ItemIsEditable ); } } };
+
+#if QT_VERSION < 0x040000   
    connect( t_hist->horizontalHeader(), SIGNAL( clicked(int) ), SLOT( t_sort_column(int) ) );
    connect( t_hist, SIGNAL( doubleClicked( int, int, int, const QPoint & ) ), SLOT( t_doubleClicked( int, int, int, const QPoint & ) ) );
-   connect( t_hist, SIGNAL( selectionChanged() ), SLOT( t_selectionChanged() ) );
+#else
+   connect( t_hist->horizontalHeader(), SIGNAL( sectionClicked(int) ), SLOT( t_sort_column(int) ) );
+   connect( t_hist, SIGNAL( cellDoubleClicked( int, int) ), SLOT( t_doubleClicked( int, int ) ) );
+#endif
+   connect( t_hist, SIGNAL( itemSelectionChanged() ), SLOT( t_selectionChanged() ) );
 
-   pb_del = new QPushButton(tr("Delete directory from history"), this);
+   pb_del = new QPushButton(us_tr("Delete directory from history"), this);
    pb_del->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_del->setMinimumHeight(minHeight1);
-   pb_del->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   pb_del->setPalette( USglobal->global_colors.cg_pushb );
    connect(pb_del, SIGNAL(clicked()), SLOT(del()));
 
-   pb_ok = new QPushButton(tr("OK"), this);
+   pb_ok = new QPushButton(us_tr("OK"), this);
    pb_ok->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_ok->setMinimumHeight(minHeight1);
-   pb_ok->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   pb_ok->setPalette( USglobal->global_colors.cg_pushb );
    connect(pb_ok, SIGNAL(clicked()), SLOT(ok()));
 
-   pb_help = new QPushButton(tr("Help"), this);
+   pb_help = new QPushButton(us_tr("Help"), this);
    pb_help->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_help->setMinimumHeight(minHeight1);
-   pb_help->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   pb_help->setPalette( USglobal->global_colors.cg_pushb );
    connect(pb_help, SIGNAL(clicked()), SLOT(help()));
 
-   pb_cancel = new QPushButton(tr("Cancel"), this);
+   pb_cancel = new QPushButton(us_tr("Cancel"), this);
    pb_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_cancel->setMinimumHeight(minHeight1);
-   pb_cancel->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   pb_cancel->setPalette( USglobal->global_colors.cg_pushb );
    connect(pb_cancel, SIGNAL(clicked()), SLOT(cancel()));
 
    int j = 0;
 
-   Q3GridLayout * background = new Q3GridLayout( this );
+   QGridLayout * background = new QGridLayout( this ); background->setContentsMargins( 0, 0, 0, 0 ); background->setSpacing( 0 );
 
-   background->addMultiCellWidget(lbl_info, j, j, 0, 1);
+   background->addWidget( lbl_info , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
    j++;
 
-   background->addMultiCellWidget(t_hist  , j, j, 0, 1);
+   background->addWidget( t_hist   , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
    j++;
 
    background->addWidget( pb_del , j, 0 );
@@ -209,60 +224,65 @@ void US_Dirhist::t_sort_column( int col )
    // keep selection & currrent
    set < QString > selected;
 
-   QString current = t_hist->text( t_hist->currentRow(), 0 );
-   for ( int i = 0; i < t_hist->numRows(); ++i )
+   QString current = t_hist->item( t_hist->currentRow(), 0 )->text();
+   for ( int i = 0; i < t_hist->rowCount(); ++i )
    {
-      if ( t_hist->isRowSelected( i ) )
+      if ( t_hist->item( i , 0 )->isSelected() )
       {
-         selected.insert( t_hist->text( i, 0 ) );
+         selected.insert( t_hist->item( i, 0 )->text() );
       }
    }
    
-   t_hist->sortColumn( col ? col + 1 : col, order_ascending, true );
+   t_hist->sortByColumn( col ? col + 1 : col,  order_ascending ? Qt::AscendingOrder : Qt::DescendingOrder );
 
-   disconnect( t_hist, SIGNAL( selectionChanged() ), 0, 0 );
+   disconnect( t_hist, SIGNAL( itemSelectionChanged() ), 0, 0 );
    t_hist->clearSelection();
-   for ( int i = 0; i < t_hist->numRows(); ++i )
+   for ( int i = 0; i < t_hist->rowCount(); ++i )
    {
-      if ( selected.count( t_hist->text( i, 0 ) ) )
+      if ( selected.count( t_hist->item( i, 0 )->text() ) )
       {
          t_hist->selectRow( i );
       }
-      if ( current == t_hist->text( i, 0 ) )
+      if ( current == t_hist->item( i, 0 )->text() )
       {
          t_hist->setCurrentCell( i, 0 );
       }
    }
-   connect( t_hist, SIGNAL( selectionChanged() ), SLOT( t_selectionChanged() ) );
+   connect( t_hist, SIGNAL( itemSelectionChanged() ), SLOT( t_selectionChanged() ) );
    t_selectionChanged();
 
    order_ascending = !order_ascending;
 }
 
-void US_Dirhist::t_doubleClicked( int, int col, int, const QPoint &  )
+void US_Dirhist::t_doubleClicked( int, int col )
 {
    *is_ok = true;
-   *selected = t_hist->text( col, 0 );
+   *selected = t_hist->item( col, 0 )->text();
    //   (*last_access)[ *selected ] = QDateTime::currentDateTime();
    ok();
    history->clear();
-   for ( int i = 0; i < t_hist->numRows(); ++i )
+   for ( int i = 0; i < t_hist->rowCount(); ++i )
    {
-      history->push_back( t_hist->text( i, 0 ) );
+      history->push_back( t_hist->item( i, 0 )->text() );
    }
    close();
+}
+
+void US_Dirhist::t_doubleClicked( int row, int col, int, const QPoint &  )
+{
+   return t_doubleClicked( row, col );
 }
 
 void US_Dirhist::ok()
 {
    *is_ok = true;
    history->clear();
-   for ( int i = 0; i < t_hist->numRows(); ++i )
+   for ( int i = 0; i < t_hist->rowCount(); ++i )
    {
-      history->push_back( t_hist->text( i, 0 ) );
-      if ( t_hist->isRowSelected( i ) )
+      history->push_back( t_hist->item( i, 0 )->text() );
+      if ( t_hist->item( i , 0 )->isSelected() )
       {
-         *selected = t_hist->text( i, 0 );
+         *selected = t_hist->item( i, 0 )->text();
          // (*last_access)[ *selected ] = QDateTime::currentDateTime();
       }
    }
@@ -271,29 +291,50 @@ void US_Dirhist::ok()
 
 void US_Dirhist::del()
 {
-   disconnect( t_hist, SIGNAL( selectionChanged() ), 0, 0 );
-   for ( int i = t_hist->numRows() - 1; i >= 0; --i )
+   disconnect( t_hist, SIGNAL( itemSelectionChanged() ), 0, 0 );
+   for ( int i = t_hist->rowCount() - 1; i >= 0; --i )
    {
-      if ( t_hist->isRowSelected( i ) )
+      if ( t_hist->item( i , 0 )->isSelected() )
       {
          t_hist->removeRow( i );
       }
    }
    t_hist->clearSelection();
-   if ( t_hist->numRows() )
+   if ( t_hist->rowCount() )
    {
       t_hist->selectRow( 0 );
       t_hist->setCurrentCell( 0, 0 );
    }      
-   connect( t_hist, SIGNAL( selectionChanged() ), SLOT( t_selectionChanged() ) );
+   connect( t_hist, SIGNAL( itemSelectionChanged() ), SLOT( t_selectionChanged() ) );
    t_selectionChanged();
 }
+
+#if QT_VERSION >= 0x040000   
+# include <QList>
+# include <QTableWidgetSelectionRange>
+#endif
 
 void US_Dirhist::t_selectionChanged()
 {
    // do all the table stuff
-   // qDebug( QString( "num selections %1" ).arg( t_hist->numSelections() ) );
-   // qDebug( QString( "current sel    %1" ).arg( t_hist->currentSelection() ) );
-   pb_ok ->setEnabled( t_hist->numSelections() == 1 );
-   pb_del->setEnabled( t_hist->numSelections() );
+   // us_qdebug( QString( "num selections %1" ).arg( t_hist->numSelections() ) );
+   // us_qdebug( QString( "current sel    %1" ).arg( t_hist->currentSelection() ) );
+   int num_selections = 0;
+#if QT_VERSION < 0x040000
+   num_selections = t_hist->numSelections();
+#else
+   QList < QTableWidgetSelectionRange > ranges = t_hist->selectedRanges();
+   for ( int i =0; i != ranges.size(); ++i ) {
+      QTableWidgetSelectionRange range = ranges.at(i);
+      int top = range.topRow();
+      int bottom = range.bottomRow();
+      for ( int i = top; i <= bottom; ++i ) {
+         if ( t_hist->item( i, 0 )->isSelected() ) {
+            num_selections++;
+         }
+      }
+   }
+#endif
+   pb_ok ->setEnabled( num_selections == 1 );
+   pb_del->setEnabled( num_selections );
 }

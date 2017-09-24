@@ -7,16 +7,16 @@
 #include <qstring.h>
 #include <qlayout.h>
 #include <qpushbutton.h>
-#include <q3frame.h>
+//#include <q3frame.h>
 #include <qcheckbox.h>
 #include <qwt_counter.h>
-#include <q3buttongroup.h>
-#include <q3textedit.h>
-#include <q3progressbar.h>
+#include <qgroupbox.h>
+#include <qtextedit.h>
+#include <qprogressbar.h>
 #include <qmenubar.h>
 #include <qfileinfo.h>
 #include <qprinter.h>
-#include <q3listbox.h>
+#include <qlistwidget.h>
 //Added by qt3to4:
 #include <QCloseEvent>
 
@@ -45,7 +45,7 @@ struct csv
    vector < vector < QString > >    data;             // the entire csv past the first row
    vector < vector < double > >     num_data;         // toDoubles of the csv file
 
-   vector < QString >               prepended_names;  // list of "model names" with QFileInfo(name).baseName(true): 
+   vector < QString >               prepended_names;  // list of "model names" with QFileInfo(name).completeBaseName(): 
 
    // for pdb_tool:
 
@@ -122,7 +122,7 @@ struct comparative_info
    QString path_csv;
 };
 
-class US_EXTERN US_Hydrodyn_Comparative : public Q3Frame
+class US_EXTERN US_Hydrodyn_Comparative : public QFrame
 {
    Q_OBJECT
 
@@ -273,7 +273,7 @@ class US_EXTERN US_Hydrodyn_Comparative : public Q3Frame
       QPushButton                   *pb_save_csv;
 
       QLabel                        *lbl_loaded;
-      Q3ListBox                      *lb_loaded;
+      QListWidget                      *lb_loaded;
       QPushButton                   *pb_loaded_select_all;
       QPushButton                   *pb_loaded_view;
       QPushButton                   *pb_loaded_merge;
@@ -281,14 +281,14 @@ class US_EXTERN US_Hydrodyn_Comparative : public Q3Frame
       QPushButton                   *pb_loaded_remove;
 
       QLabel                        *lbl_selected;
-      Q3ListBox                      *lb_selected;
+      QListWidget                      *lb_selected;
       QPushButton                   *pb_selected_select_all;
       QPushButton                   *pb_selected_merge;
       QPushButton                   *pb_selected_set_ranges;
       QPushButton                   *pb_selected_remove;
 
       QFont                         ft;
-      Q3TextEdit                     *editor;
+      QTextEdit                     *editor;
       QMenuBar                      *m;
       QPrinter                      printer;
 

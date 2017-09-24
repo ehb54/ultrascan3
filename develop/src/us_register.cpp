@@ -2,8 +2,8 @@
 #include "../include/us_license.h"
 #include "qdatetime.h"
 //Added by qt3to4:
-#include <Q3TextStream>
-#include <Q3Frame>
+#include <QTextStream>
+#include <QFrame>
 
 //! Constructor
 /*! 
@@ -11,7 +11,7 @@
   \param p Parent widget.
   \param name Widget name.
 */  
-US_Register::US_Register(QWidget *p, const char *name) : Q3Frame(p, name)
+US_Register::US_Register(QWidget *p, const char *name) : QFrame( p )
 {
   // The following checks the old license location and moves
   // files if necessary.
@@ -19,7 +19,7 @@ US_Register::US_Register(QWidget *p, const char *name) : Q3Frame(p, name)
   QString    d1;
   US_Config* custom = new US_Config( d1 );
   
-  QFile uslicense( QDir::homeDirPath() + "/.uslicense" );
+  QFile uslicense( QDir::homePath() + "/.uslicense" );
   if ( uslicense.exists() ) custom->move_files();
 }
 
@@ -31,10 +31,11 @@ US_Register::~US_Register()
 
 void US_Register::us_license()
 {
-  proc = new Q3Process(this);
-#ifndef Q_WS_MAC
+#if QT_VERSION < 0x040000
+  proc = new QProcess(this);
+# ifndef Q_WS_MAC
   proc->addArgument("us_license");
-#else
+# else
   US_Config* USglobal = new US_Config();
   QString basedir = USglobal->config_list.system_dir;
   if ( basedir == ""  ||  ! QFile( basedir ).exists() )
@@ -43,23 +44,57 @@ void US_Register::us_license()
   if ( ! QFile( applic ).exists() )
     applic  = "/Applications/UltraScanII/bin/us_license.app";
   if ( ! QFile( applic ).exists() )
-    applic  = QDir::homeDirPath() + "/ultrascan2/bin/us_license.app";
+    applic  = QDir::homePath() + "/ultrascan2/bin/us_license.app";
   if ( ! QFile( applic ).exists() )
-    applic  = QDir::homeDirPath() + "/ultrascan/bin/us_license.app";
+    applic  = QDir::homePath() + "/ultrascan/bin/us_license.app";
   proc->addArgument("open");
   proc->addArgument("-a");
   proc->addArgument( applic);
-#endif
+# endif
   
   if ( ! proc->start() ) // Error
   {
-    QMessageBox::message(
-        tr( "Please note:" ), 
-        tr( "There was a problem creating a sub process\n"
+    US_Static::us_message(
+        us_tr( "Please note:" ), 
+        us_tr( "There was a problem creating a sub process\n"
             "for US_LICENSE\n\n"
             "Please check and try again..." ) );
     return;
   }
+#else
+  {
+     QProcess * process = new QProcess( this );
+     QString prog = "us_license";
+     QStringList args;
+# ifdef Q_WS_MAC
+     US_Config* USglobal = new US_Config();
+     QString basedir = USglobal->config_list.system_dir;
+     if ( basedir == ""  ||  ! QFile( basedir ).exists() )
+        basedir = "/Applications/UltraScanII";
+     QString applic  = basedir + "/bin/us_license.app";
+     if ( ! QFile( applic ).exists() )
+        applic  = "/Applications/UltraScanII/bin/us_license.app";
+     if ( ! QFile( applic ).exists() )
+        applic  = QDir::homePath() + "/ultrascan2/bin/us_license.app";
+     if ( ! QFile( applic ).exists() )
+        applic  = QDir::homePath() + "/ultrascan/bin/us_license.app";
+     args
+        << "-a"
+        << applic
+        ;
+     prog = "open";
+# endif
+
+     if ( !process->startDetached( prog, args ) ) {
+        US_Static::us_message(
+                             us_tr( "Please note:" ), 
+                             us_tr( "There was a problem creating a sub process\n"
+                                 "for US_LICENSE\n\n"
+                                 "Please check and try again..." ) );
+        return;
+     }
+  }
+#endif  
 }
 
 /*!
@@ -90,36 +125,36 @@ bool US_Register::read()
   
   if ( f.open( QIODevice::ReadOnly ) )
   {
-    Q3TextStream ts ( &f );
+    QTextStream ts ( &f );
     register_list.lastname = ts.readLine();
-    register_list.lastname = register_list.lastname.stripWhiteSpace();
+    register_list.lastname = register_list.lastname.trimmed();
     
     register_list.firstname = ts.readLine();
-    register_list.firstname = register_list.firstname.stripWhiteSpace();
+    register_list.firstname = register_list.firstname.trimmed();
     
     register_list.company = ts.readLine();
-    register_list.company = register_list.company.stripWhiteSpace();
+    register_list.company = register_list.company.trimmed();
     
     register_list.address = ts.readLine();
-    register_list.address = register_list.address.stripWhiteSpace();
+    register_list.address = register_list.address.trimmed();
     
     register_list.city = ts.readLine();
-    register_list.city = register_list.city.stripWhiteSpace();
+    register_list.city = register_list.city.trimmed();
     
     register_list.state = ts.readLine();
-    register_list.state = register_list.state.stripWhiteSpace();
+    register_list.state = register_list.state.trimmed();
     
     register_list.zip = ts.readLine();
-    register_list.zip = register_list.zip.stripWhiteSpace();
+    register_list.zip = register_list.zip.trimmed();
     
     register_list.phone = ts.readLine();
-    register_list.phone = register_list.phone.stripWhiteSpace();
+    register_list.phone = register_list.phone.trimmed();
     
     register_list.email = ts.readLine();
-    register_list.email = register_list.email.stripWhiteSpace();
+    register_list.email = register_list.email.trimmed();
     
     register_list.platform = ts.readLine();
-    register_list.platform = register_list.platform.stripWhiteSpace();
+    register_list.platform = register_list.platform.trimmed();
 
 #ifdef SPARC
 #define PLATFORM "sparc"
@@ -163,7 +198,7 @@ bool US_Register::read()
          register_list.platform != "generic" )
     {
       str = 
-        tr( "You are running UltraScan on the " TITLE " platform,\n"
+        us_tr( "You are running UltraScan on the " TITLE " platform,\n"
             "but your license is issued for the " + 
             selected_platform + " platform\n\n"
             "You will have to update your license file before\n"
@@ -175,7 +210,7 @@ bool US_Register::read()
     }   
 
     register_list.os = ts.readLine();
-    register_list.os = register_list.os.stripWhiteSpace();
+    register_list.os = register_list.os.trimmed();
 
 #ifdef WIN32
 #define OS "win32"
@@ -225,8 +260,8 @@ bool US_Register::read()
     if ( register_list.os != OS )
     {
       str = 
-        tr( "You are running UltraScan with a" OS_TITLE " operating system,\n"
-            "but your license is issued for the " + register_list.os.upper() + 
+        us_tr( "You are running UltraScan with a" OS_TITLE " operating system,\n"
+            "but your license is issued for the " + register_list.os.toUpper() + 
             " operating system\n\n"
             "You will have to update your license file before\n"
             "proceeding. Click on 'Register' to obtain an\n"
@@ -239,16 +274,16 @@ bool US_Register::read()
     }
 
     register_list.version = ts.readLine();
-    register_list.version = register_list.version.stripWhiteSpace();
+    register_list.version = register_list.version.trimmed();
     
     register_list.license_type = ts.readLine();
-    register_list.license_type = register_list.license_type.stripWhiteSpace();
+    register_list.license_type = register_list.license_type.trimmed();
     
     register_list.license  = ts.readLine();
-    register_list.license = register_list.license.stripWhiteSpace();
+    register_list.license = register_list.license.trimmed();
     
     register_list.expiration = ts.readLine();
-    register_list.expiration = register_list.expiration.stripWhiteSpace();
+    register_list.expiration = register_list.expiration.trimmed();
     
     f.close();
   }
@@ -256,7 +291,7 @@ bool US_Register::read()
   {
     
     str = 
-      tr ("UltraScan could not find your license file:\n\n" + 
+      us_tr("UltraScan could not find your license file:\n\n" + 
           lcfile + "\n\n"
           "You will have to update your license file before\n" +
           "proceeding. Click on 'Register' to obtain a new\n" +
@@ -289,7 +324,7 @@ bool US_Register::read()
     else
     {
       str = 
-        tr( "The license in your home directory is expired.\n"
+        us_tr( "The license in your home directory is expired.\n"
             "You will have to update your license file before\n"
             "proceeding. Click on 'Register' to obtain a new\n"
             "UltraScan License" );
@@ -302,7 +337,7 @@ bool US_Register::read()
   else  // file does not match
   {
     str = 
-      tr( "The license in your home directory is invalid.\n"
+      us_tr( "The license in your home directory is invalid.\n"
           "You will have to update your license file before\n"
           "proceeding. Click on 'Register' to obtain a new\n"
           "UltraScan License" );
@@ -322,10 +357,10 @@ bool US_Register::read()
 void US_Register::license_info( const QString& str )
 {
   switch( QMessageBox::critical( this, 
-        tr( "UltraScan License Error" ), 
+        us_tr( "UltraScan License Error" ), 
         str,  
-        tr( "&Register" ), 
-        tr( "&Cancel" ), 0, 1 ) )  
+        us_tr( "&Register" ), 
+        us_tr( "&Cancel" ), 0, 1 ) )  
     // Enter == button 0, Escape == button 1
   {
     case 0:

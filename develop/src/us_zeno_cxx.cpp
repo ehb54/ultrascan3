@@ -5,10 +5,12 @@
 #include <future>
 #include <chrono>
 #include "../include/us_hydrodyn_zeno.h"
+
 #undef R
-#include "q3progressbar.h"
-extern Q3ProgressBar *zeno_progress;
+#include "qprogressbar.h"
+extern QProgressBar *zeno_progress;
 extern bool *zeno_stop_flag;
+
 #include <fstream>
 class zeno_fout {
 public:
@@ -26,6 +28,12 @@ zeno_fout *zeno_cxx_fout;
 #include <fstream>
 #include <sstream>
 #include <stdexcept>
+
+// note: this program uses cout and/or cerr and this should be replaced
+
+static std::basic_ostream<char>& operator<<(std::basic_ostream<char>& os, const QString& str) { 
+   return os << qPrintable(str);
+}
 
 // $insert class_ih
 // inlined #include "Scanner.ih"
@@ -1612,7 +1620,7 @@ doWalkOnSpheres(int numThreads,
 		double fracErrorBound,
 		double shellThickness,
 		Results<RandomNumberGenerator> & results,
-		double & walkTime);
+		double & walkTime, bool cmdline, US_Udp_Msg  * zeno_us_udp_msg);
 
 template <class NearestSurfacePointFinder>
 void
@@ -1625,7 +1633,7 @@ doWalkOnSpheresThread(Sphere<double> const * boundingSphere,
 		      double shellThickness,
 		      int numWalks,
 		      Results<RandomNumberGenerator> * results,
-                      std::promise<bool> * p0
+                      std::promise<bool> * p0, bool cmdline, US_Udp_Msg  * zeno_us_udp_msg
                       );
 
 template <class InsideOutsideTester>
@@ -1689,7 +1697,9 @@ enum {SPHERE_PRIMITIVES, VOXEL_PRIMITIVES};
 
 // ================================================================
 
-int zeno_cxx_main(int argc, char **argv, const char * fname) { zeno_cxx_fout = new zeno_fout( fname );
+int zeno_cxx_main(int argc, char **argv, const char * fname, bool cmdline_temp, US_Udp_Msg  * zeno_us_udp_msg) { zeno_cxx_fout = new zeno_fout( fname );
+
+  bool cmdline = cmdline_temp;
 
   const double defaultShellThicknessFactor = 0.000001;
 
@@ -1730,6 +1740,24 @@ int zeno_cxx_main(int argc, char **argv, const char * fname) { zeno_cxx_fout = n
 	     printCounts,
 	     printBenchmarks);
 
+  
+  cout << QString("PARAMS: cmdline: %1").arg(cmdline) << endl;
+  cout << QString("PARAMS: filename: %1").arg(fileName) << endl;
+  cout << QString("PARAMS: inputPrimitive: %1").arg(inputPrimitive)<< endl; 
+  cout << QString("PARAMS: numThreads:  %1").arg(numThreads)<< endl;
+  cout << QString("PARAMS: seed:  %1").arg(seed)<< endl;
+  cout << QString("PARAMS: fracErrorBound: %1").arg(fracErrorBound)<< endl; 
+  cout << QString("PARAMS: shellThickness: %1").arg(shellThickness)<< endl;
+  cout << QString("PARAMS: totalNumWalks: %1").arg(totalNumWalks)<< endl;
+  cout << QString("PARAMS: totalNumSamples: %1").arg(totalNumSamples)<< endl;
+  cout << QString("PARAMS: surfacePointsFileName: %1").arg(surfacePointsFileName)<< endl;
+  cout << QString("PARAMS: initializeTime: %1").arg(initializeTime)<< endl;
+  cout << QString("PARAMS: printCounts: %1").arg(printCounts)<< endl;
+  cout << QString("PARAMS: printBenchmarks: %1").arg(printBenchmarks)<< endl;
+  cout << QString("PARAMS: SPHERE_PRIMITIVES: %1").arg(SPHERE_PRIMITIVES)<< endl;
+  cout << QString("PARAMS: VOXEL_PRIMITIVES: %1").arg(VOXEL_PRIMITIVES)<< endl;
+  
+  
   MemMonitor * memMonitor = new MemMonitor;
 
   int numWalksPerProcess = totalNumWalks / mpiSize;
@@ -1819,6 +1847,8 @@ int zeno_cxx_main(int argc, char **argv, const char * fname) { zeno_cxx_fout = n
   sampleRAM("RAM after loading input data", printBenchmarks,
 	    memMonitor, mpiRank);
 
+  //us_qdebug("Insidezeno1");
+
   //one stream for each thread plus one for the results
   int numStreams = numThreads * mpiSize + 1;
 
@@ -1836,6 +1866,8 @@ int zeno_cxx_main(int argc, char **argv, const char * fname) { zeno_cxx_fout = n
   sampleRAM("RAM after building spatial data structure", printBenchmarks,
 	    memMonitor, mpiRank);
 
+  //us_qdebug("Insidezeno2");
+
   RandomNumberGenerator * * threadRNGs = 
     new RandomNumberGenerator *[numThreads];
 
@@ -1851,7 +1883,10 @@ int zeno_cxx_main(int argc, char **argv, const char * fname) { zeno_cxx_fout = n
 
   double walkTime = 0;
 
+  //us_qdebug("Insidezeno21");
+  
   if (inputPrimitive == SPHERE_PRIMITIVES) {
+    //us_qdebug("Insidezeno211a");
     doWalkOnSpheres(numThreads,
 		    numWalksPerProcess,
 		    &boundingSphere, 
@@ -1860,9 +1895,15 @@ int zeno_cxx_main(int argc, char **argv, const char * fname) { zeno_cxx_fout = n
 		    fracErrorBound,
 		    shellThickness,
 		    results,
-		    walkTime);
+		    walkTime,
+		    cmdline,
+		    zeno_us_udp_msg
+		    );
+
+    //us_qdebug("Insidezeno211b");
   }
   else if (inputPrimitive == VOXEL_PRIMITIVES) {
+    //us_qdebug("Insidezeno221a");
     doWalkOnSpheres(numThreads,
 		    numWalksPerProcess,
 		    &boundingSphere, 
@@ -1871,7 +1912,12 @@ int zeno_cxx_main(int argc, char **argv, const char * fname) { zeno_cxx_fout = n
 		    fracErrorBound,
 		    shellThickness,
 		    results,
-		    walkTime);
+		    walkTime, 
+		    cmdline,
+		    zeno_us_udp_msg
+		    );
+    
+    //us_qdebug("Insidezeno222a");
   }
   else {
     assert(0);
@@ -1882,6 +1928,8 @@ int zeno_cxx_main(int argc, char **argv, const char * fname) { zeno_cxx_fout = n
 
   Timer reduceTimer;
   reduceTimer.start();
+
+  //us_qdebug("Insidezeno3");
 
 #ifdef PRINT_LONGEST_WALK
   mpiReduceTime(walkTime);
@@ -2127,6 +2175,7 @@ getOptions(int argc, char **argv,
   printBenchmarks = args_info.print_benchmarks_given;
 
   free(params);
+  //us_qdebug("Freeing memory");
 
   if (totalNumSamples == -1) {
     totalNumSamples = totalNumWalks;
@@ -2177,7 +2226,7 @@ doWalkOnSpheres(int numThreads,
 		double fracErrorBound,
 		double shellThickness,
 		Results<RandomNumberGenerator> & results,
-		double & walkTime) {
+		double & walkTime, bool cmdline, US_Udp_Msg  * zeno_us_udp_msg) {
 
   Timer walkTimer;
   walkTimer.start();
@@ -2194,6 +2243,8 @@ doWalkOnSpheres(int numThreads,
       numWalksPerThread ++;
     }
 
+    //us_qdebug("Inside_doWalkonSpheres1");
+    
     threads[threadNum] = 
       new std::thread(doWalkOnSpheresThread<NearestSurfacePointFinder>,
 		      boundingSphere, 
@@ -2204,32 +2255,53 @@ doWalkOnSpheres(int numThreads,
 		      shellThickness,
 		      numWalksPerThread,
 		      &results,
-                      &p0);
+                      &p0,
+		      cmdline,
+		      zeno_us_udp_msg
+		      );
   }
 
+  //us_qdebug("Inside_doWalkonSpheres2");
+  
   {
      bool join_now = false;
      do {
+       //us_qdebug("Inside_doWalkonSpheres21");
         auto status = future.wait_for(std::chrono::milliseconds(200));
-        qApp->processEvents();
+        //us_qdebug("Inside_doWalkonSpheres22");
+
+	if(!cmdline)
+	  {
+	    qApp->processEvents();
+	  }
+	
+	//us_qdebug("Inside_doWalkonSpheres23");
         if (status == std::future_status::ready) {
            join_now = true;
         }
      } while (!join_now );
-  }           
+  } 
+  
+
+  //us_qdebug("Inside_doWalkonSpheres3");
 
   for (int threadNum = 0; threadNum < numThreads; threadNum++) {
+    //us_qdebug("Inside_doWalkonSpheres31");
     threads[threadNum]->join();
+    //us_qdebug("Inside_doWalkonSpheres32");
   }
 
+  //us_qdebug("Inside_doWalkonSpheres4");
   for (int threadNum = 0; threadNum < numThreads; threadNum++) {
     delete threads[threadNum];
   }
 
+  //us_qdebug("Inside_doWalkonSpheres5");
   delete [] threads;
 
   walkTimer.stop();
   walkTime = walkTimer.getTime();
+  //us_qdebug("Inside_doWalkonSpheres6");
 }
 
 template <class NearestSurfacePointFinder>
@@ -2243,7 +2315,7 @@ doWalkOnSpheresThread(Sphere<double> const * boundingSphere,
 		      double shellThickness,
 		      int numWalks,
 		      Results<RandomNumberGenerator> * results,
-                      std::promise < bool > *p0
+                      std::promise < bool > *p0, bool cmdline, US_Udp_Msg  *zeno_us_udp_msg
                       ) {
 
   WalkerExterior<double, 
@@ -2257,14 +2329,39 @@ doWalkOnSpheresThread(Sphere<double> const * boundingSphere,
            fracErrorBound,
 	   shellThickness);
 
+  //us_qdebug("WalkonSphereTHREAD");
+
   for (int walkNum = 0; walkNum < numWalks; walkNum++) {
 
-     if ( *zeno_stop_flag ) {
-        break;
-     }
-     if ( !threadNum && !( walkNum % 10000 ) ) {
-        zeno_progress->setProgress( walkNum, numWalks );
-     }
+    //us_qdebug(QString("Walk number_1: %1").arg(walkNum));
+    
+    if(!cmdline)
+      {
+	if ( *zeno_stop_flag ){
+	  break;
+	}
+	
+      }
+	//us_qdebug(QString("Walk number_2: %1").arg(walkNum));
+	
+	if ( !threadNum && !( walkNum % 10000 ) ) {
+	  if (!cmdline){
+	    zeno_progress->setValue( walkNum ); zeno_progress->setMaximum( numWalks );
+	  }
+	  else {
+	    if ( zeno_us_udp_msg )
+	      {
+		map < QString, QString > msging;
+		msging[ "progress_output" ] = QString("Hydro (Zeno) calculation: %1\%").arg(QString::number( int((double(walkNum)/double(numWalks))*100.0) ) ).arg(100); // arg(ppos).arg(mppos);
+		msging[ "progress1" ] = QString::number(double(walkNum)/double(numWalks));
+		
+		zeno_us_udp_msg->send_json( msging );
+		//sleep(1);
+	      }   
+	    
+	  }
+	}
+     //us_qdebug(QString("Walk number_3: %1").arg(walkNum));
 
     bool hitObject = false;
     int numSteps   = 0;
@@ -2273,6 +2370,7 @@ doWalkOnSpheresThread(Sphere<double> const * boundingSphere,
     Vector3<double> endPoint;
     Vector3<double> normal;
 
+    
     walker.walk(hitObject, numSteps,
 		startPoint, endPoint, normal);
 
@@ -2283,6 +2381,8 @@ doWalkOnSpheresThread(Sphere<double> const * boundingSphere,
       results->recordMiss(threadNum);
     }
   }
+
+  
 
   if ( !threadNum ) {
      p0->set_value( true );
@@ -3660,7 +3760,7 @@ cmdline_parser_file_save(const char *filename, struct gengetopt_args_info *args_
   FILE *outfile;
   int i = 0;
 
-  outfile = fopen(filename, "w");
+  outfile = us_fopen(filename, "w");
 
   if (!outfile)
     {
@@ -4185,7 +4285,7 @@ _cmdline_parser_configfile (const char *filename, int *my_argc)
   size_t len, next_token;
   char delimiter;
 
-  if ((file = fopen(filename, "r")) == 0)
+  if ((file = us_fopen(filename, "r")) == 0)
     {
       fprintf (stderr, "%s: Error opening configuration file '%s'\n",
                CMDLINE_PARSER_PACKAGE, filename);

@@ -1,7 +1,7 @@
 #if defined( USE_MPI )
 #   include <mpi.h>
 //Added by qt3to4:
-#include <Q3TextStream>
+#include <QTextStream>
     extern int myrank;
 #endif
 
@@ -131,7 +131,7 @@ bool US_Saxs_Util::nsa_validate()
    }
 
    if ( control_parameters.count( "nsascale" ) &&
-        control_parameters[ "nsascale" ].lower().left( 1 ) == "y" )
+        control_parameters[ "nsascale" ].toLower().left( 1 ) == "y" )
    {
       nsa_use_scaling_fit = true;
 #if defined( USE_MPI )
@@ -271,7 +271,7 @@ double US_Saxs_Util::nsa_fitness()
          QFile f( "overlap_error__model.bead_model" );
          if ( f.open( QIODevice::WriteOnly ) )
          {
-            Q3TextStream ts( &f );
+            QTextStream ts( &f );
             ts << nsa_qs_bead_model();
             f.close();
          }
@@ -343,7 +343,7 @@ double US_Saxs_Util::nsa_fitness()
       QFile f( "nan_fitness_model.bead_model" );
       if ( f.open( QIODevice::WriteOnly ) )
       {
-         Q3TextStream ts( &f );
+         QTextStream ts( &f );
          ts << nsa_qs_bead_model();
          f.close();
       }

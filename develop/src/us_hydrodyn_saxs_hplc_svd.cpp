@@ -7,15 +7,15 @@
 #endif
 #include <qpalette.h>
 //Added by qt3to4:
-#include <Q3BoxLayout>
+#include <QBoxLayout>
 #include <QLabel>
 #include <QCloseEvent>
-#include <Q3GridLayout>
-#include <Q3TextStream>
-#include <Q3HBoxLayout>
-#include <Q3VBoxLayout>
-#include <Q3Frame>
-#include <Q3PopupMenu>
+#include <QGridLayout>
+#include <QTextStream>
+#include <QHBoxLayout>
+#include <QVBoxLayout>
+#include <QFrame>
+ //#include <Q3PopupMenu>
 
 // note: this program uses cout and/or cerr and this should be replaced
 
@@ -30,7 +30,7 @@ US_Hydrodyn_Saxs_Hplc_Svd::US_Hydrodyn_Saxs_Hplc_Svd(
                                                      vector < QString > hplc_selected_files,
                                                      QWidget *p, 
                                                      const char *name
-                                                     ) : Q3Frame(p, name)
+                                                     ) : QFrame( p )
 {
    this->hplc_win                = hplc_win;
    this->hplc_selected_files     = hplc_selected_files;
@@ -40,16 +40,16 @@ US_Hydrodyn_Saxs_Hplc_Svd::US_Hydrodyn_Saxs_Hplc_Svd(
 
    USglobal = new US_Config();
    setPalette( PALET_FRAME );
-   setCaption(tr("US-SOMO: SAXS HPLC SVD"));
+   setWindowTitle(us_tr("US-SOMO: SAXS HPLC SVD"));
 
    cg_red = USglobal->global_colors.cg_label;
-   cg_red.setBrush( QColorGroup::Foreground, QBrush( QColor( "red" ),  Qt::SolidPattern ) );
+   cg_red.setBrush( QPalette::Foreground, QBrush( QColor( "red" ),  Qt::SolidPattern ) );
 
    if ( !hplc_selected_files.size() )
    {
       QMessageBox::warning( this, 
-                            caption(),
-                            tr( "Internal error: HPLC SVD called with no curves selected" ) );
+                            windowTitle(),
+                            us_tr( "Internal error: HPLC SVD called with no curves selected" ) );
       close();
       return;
    }
@@ -108,7 +108,7 @@ US_Hydrodyn_Saxs_Hplc_Svd::US_Hydrodyn_Saxs_Hplc_Svd(
 
    show();
 
-   add_i_of_q_or_t( tr( "Original data" ), original_data );
+   add_i_of_q_or_t( us_tr( "Original data" ), original_data );
 }
 
 US_Hydrodyn_Saxs_Hplc_Svd::~US_Hydrodyn_Saxs_Hplc_Svd()
@@ -130,58 +130,82 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
    lbl_data->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
    connect( lbl_data, SIGNAL( pressed() ), SLOT( hide_data() ) );
 
-   lv_data = new Q3ListView( this );
-   lv_data->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Raised);
+   lv_data = new QTreeWidget( this );
+   lv_data->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lv_data->setPalette( PALET_EDIT );
    AUTFBACK( lv_data );
    lv_data->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
    lv_data->setEnabled(true);
    // lv_data->setMinimumWidth(  );
 
+#if QT_VERSION < 0x040000
    lv_data->addColumn( "Source" );
-
-   lv_data->setSorting        ( -1 );
+#else
+   lv_data->setColumnCount( 1 );
+   lv_data->setHeaderLabels( QStringList()
+                             << us_tr( "Source" )
+                             );
+#endif
+   
+   lv_data->setSortingEnabled        ( false );
    lv_data->setRootIsDecorated( true );
-   lv_data->setSelectionMode  ( Q3ListView::Extended );
-   connect(lv_data, SIGNAL(selectionChanged()), SLOT( data_selection_changed() ));
+   lv_data->setSelectionMode( QAbstractItemView::ExtendedSelection );
+   connect(lv_data, SIGNAL(itemSelectionChanged()), SLOT( data_selection_changed() ));
 
-   Q3ListViewItem *element = new Q3ListViewItem( lv_data, QString( tr( "Original data" ) ) );
-   Q3ListViewItem *iq = new Q3ListViewItem( element, mode_i_of_t ? "I(t)" : "I(q)" );
-   /* QListViewItem *it = */ new Q3ListViewItem( element, iq, mode_i_of_t ? "I(q)" : "I(t)" );
+#if QT_VERSION < 0x040000
+   QTreeWidgetItem *element = new QTreeWidgetItem( lv_data, QString( us_tr( "Original data" ) ) );
+   QTreeWidgetItem *iq = new QTreeWidgetItem( element, mode_i_of_t ? "I(t)" : "I(q)" );
+   /* QListViewItem *it = */ new QTreeWidgetItem( element, iq, mode_i_of_t ? "I(q)" : "I(t)" );
 
-   Q3ListViewItem *lvi = iq;
+   QTreeWidgetItem *lvi = iq;
 
    for ( int i = 0; i < (int) hplc_selected_files.size(); ++i )
    {
-      lvi = new Q3ListViewItem( iq, lvi, hplc_selected_files[ i ] );
+      lvi = new QTreeWidgetItem( iq, lvi, hplc_selected_files[ i ] );
    }
+#else
+   QTreeWidgetItem *element = new QTreeWidgetItem( QStringList() << us_tr( "Original data" ) );
+   lv_data->addTopLevelItem( element );
+   QTreeWidgetItem *iq = new QTreeWidgetItem( QStringList() << QString( mode_i_of_t ? "I(t)" : "I(q)" ) );
+   element->addChild( iq );
+   QTreeWidgetItem *it = new QTreeWidgetItem( element, iq );
+   it->setText( 0,  mode_i_of_t ? "I(q)" : "I(t)" );
 
+   QTreeWidgetItem *lvi = iq;
+
+   for ( int i = 0; i < (int) hplc_selected_files.size(); ++i )
+   {
+      lvi = new QTreeWidgetItem( iq, lvi );
+      lvi->setText( 0, hplc_selected_files[ i ] );
+   }
+#endif
+   
    // make i(t), add also
 
    data_widgets.push_back( lv_data );
    
-   pb_clear = new QPushButton(tr("Clear"), this);
+   pb_clear = new QPushButton(us_tr("Clear"), this);
    pb_clear->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_clear->setMinimumHeight(minHeight3);
    pb_clear->setPalette( PALET_PUSHB );
    connect(pb_clear, SIGNAL(clicked()), SLOT(clear()));
    data_widgets.push_back( pb_clear );
 
-   pb_to_hplc = new QPushButton(tr("To HPLC window"), this);
+   pb_to_hplc = new QPushButton(us_tr("To HPLC window"), this);
    pb_to_hplc->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_to_hplc->setMinimumHeight(minHeight3);
    pb_to_hplc->setPalette( PALET_PUSHB );
    connect(pb_to_hplc, SIGNAL(clicked()), SLOT(to_hplc()));
    data_widgets.push_back( pb_to_hplc );
 
-   pb_color_rotate = new QPushButton(tr("Color"), this);
+   pb_color_rotate = new QPushButton(us_tr("Color"), this);
    pb_color_rotate->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_color_rotate->setMinimumHeight(minHeight3);
    pb_color_rotate->setPalette( PALET_PUSHB );
    connect(pb_color_rotate, SIGNAL(clicked()), SLOT(color_rotate()));
    data_widgets.push_back( pb_color_rotate );
 
-   pb_replot = new QPushButton(tr("Replot"), this);
+   pb_replot = new QPushButton(us_tr("Replot"), this);
    pb_replot->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_replot->setMinimumHeight(minHeight3);
    pb_replot->setPalette( PALET_PUSHB );
@@ -198,43 +222,70 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
    lbl_editor->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
    connect( lbl_editor, SIGNAL( pressed() ), SLOT( hide_editor() ) );
 
-   editor = new Q3TextEdit(this);
+   editor = new QTextEdit(this);
    editor->setPalette( PALET_NORMAL );
    AUTFBACK( editor );
    editor->setReadOnly(true);
    editor->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 2 ));
 
-#if defined(QT4) && defined(Q_WS_MAC)
+#if QT_VERSION < 0x040000
+# if defined(QT4) && defined(Q_WS_MAC)
    {
-      Q3PopupMenu * file = new Q3PopupMenu;
-      file->insertItem( tr("&Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
-      file->insertItem( tr("&Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
-      file->insertItem( tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
+ //      Q3PopupMenu * file = new Q3PopupMenu;
+      file->insertItem( us_tr("&Font"),  this, SLOT(update_font( )),    Qt::ALT+Qt::Key_F );
+      file->insertItem( us_tr("&Save"),  this, SLOT(save( )),    Qt::ALT+Qt::Key_S );
+      file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display( )),   Qt::ALT+Qt::Key_X );
 
       mb_editor = new QMenuBar( this );
       AUTFBACK( mb_editor );
 
-      mb_editor->insertItem(tr("&Messages"), file );
+      mb_editor->insertItem(us_tr("&Messages"), file );
    }
-#else
-   Q3Frame *frame;
-   frame = new Q3Frame(this);
+# else
+   QFrame *frame;
+   frame = new QFrame(this);
    frame->setMinimumHeight(minHeight3);
    editor_widgets.push_back( frame );
 
-   mb_editor = new QMenuBar(frame, "menu" );
+   mb_editor = new QMenuBar( frame );    mb_editor->setObjectName( "menu" );
    mb_editor->setMinimumHeight(minHeight1 - 5);
    mb_editor->setPalette( PALET_NORMAL );
    AUTFBACK( mb_editor );
 
-   Q3PopupMenu * file = new Q3PopupMenu(editor);
-   mb_editor->insertItem( tr("&File"), file );
-   file->insertItem( tr("Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
-   file->insertItem( tr("Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
-   file->insertItem( tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
+ //   Q3PopupMenu * file = new Q3PopupMenu(editor);
+   mb_editor->insertItem( us_tr("&File"), file );
+   file->insertItem( us_tr("Font"),  this, SLOT(update_font( )),    Qt::ALT+Qt::Key_F );
+   file->insertItem( us_tr("Save"),  this, SLOT(save( )),    Qt::ALT+Qt::Key_S );
+   file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display( )),   Qt::ALT+Qt::Key_X );
+# endif
+#else
+   QFrame *frame;
+   frame = new QFrame(this);
+   frame->setMinimumHeight(minHeight3);
+
+   mb_editor = new QMenuBar( frame );    mb_editor->setObjectName( "menu" );
+   mb_editor->setMinimumHeight(minHeight1 - 5);
+   mb_editor->setPalette( PALET_NORMAL );
+   AUTFBACK( mb_editor );
+
+   {
+      QMenu * new_menu = mb_editor->addMenu( us_tr( "&File" ) );
+
+      QAction *qa1 = new_menu->addAction( us_tr( "Font" ) );
+      qa1->setShortcut( Qt::ALT+Qt::Key_F );
+      connect( qa1, SIGNAL(triggered()), this, SLOT( update_font() ) );
+
+      QAction *qa2 = new_menu->addAction( us_tr( "Save" ) );
+      qa2->setShortcut( Qt::ALT+Qt::Key_S );
+      connect( qa2, SIGNAL(triggered()), this, SLOT( save() ) );
+
+      QAction *qa3 = new_menu->addAction( us_tr( "Clear Display" ) );
+      qa3->setShortcut( Qt::ALT+Qt::Key_X );
+      connect( qa3, SIGNAL(triggered()), this, SLOT( clear_display() ) );
+   }
 #endif
 
-   editor->setWordWrap (Q3TextEdit::WidgetWidth);
+   editor->setWordWrapMode (QTextOption::WordWrap);
    editor->setMinimumHeight( minHeight1 * 3 );
 
    editor_widgets.push_back( editor );
@@ -263,8 +314,8 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
    grid_data->setMinPen( QPen( USglobal->global_colors.minor_ticks, 0, Qt::DotLine ) );
    grid_data->attach( plot_data );
 #endif
-   plot_data->setAxisTitle(QwtPlot::xBottom, /* cb_guinier->isChecked() ? tr("q^2 (1/Angstrom^2)") : */  tr("q [1/Angstrom]" )); // or Time or Frame"));
-   plot_data->setAxisTitle(QwtPlot::yLeft, tr("Intensity [a.u.] (log scale)"));
+   plot_data->setAxisTitle(QwtPlot::xBottom, /* cb_guinier->isChecked() ? us_tr("q^2 (1/Angstrom^2)") : */  us_tr("q [1/Angstrom]" )); // or Time or Frame"));
+   plot_data->setAxisTitle(QwtPlot::yLeft, us_tr("Intensity [a.u.] (log scale)"));
 #ifndef QT4
    plot_data->setTitleFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 3, QFont::Bold));
    plot_data->setAxisTitleFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
@@ -311,8 +362,8 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
    grid_errors->setMinPen( QPen( USglobal->global_colors.minor_ticks, 0, Qt::DotLine ) );
    grid_errors->attach( plot_errors );
 #endif
-   // plot_errors->setAxisTitle(QwtPlot::xBottom, /* cb_guinier->isChecked() ? tr("q^2 (1/Angstrom^2)") : */  tr("q [1/Angstrom]" )); // or Time or Frame"));
-   plot_errors->setAxisTitle(QwtPlot::yLeft, tr("Delta Intensity [a.u.]"));
+   // plot_errors->setAxisTitle(QwtPlot::xBottom, /* cb_guinier->isChecked() ? us_tr("q^2 (1/Angstrom^2)") : */  us_tr("q [1/Angstrom]" )); // or Time or Frame"));
+   plot_errors->setAxisTitle(QwtPlot::yLeft, us_tr("Delta Intensity [a.u.]"));
 #ifndef QT4
    plot_errors->setTitleFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 3, QFont::Bold));
    plot_errors->setAxisTitleFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
@@ -339,7 +390,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
    errors_widgets.push_back( plot_errors );
 
    cb_plot_errors = new QCheckBox(this);
-   cb_plot_errors->setText(tr("Residuals "));
+   cb_plot_errors->setText(us_tr("Residuals "));
    cb_plot_errors->setEnabled( true );
    cb_plot_errors->setChecked( false );
    cb_plot_errors->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
@@ -349,7 +400,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
    // errors_widgets.push_back( cb_plot_errors );
 
    cb_plot_errors_rev = new QCheckBox(this);
-   cb_plot_errors_rev->setText(tr("Reverse "));
+   cb_plot_errors_rev->setText(us_tr("Reverse "));
    cb_plot_errors_rev->setEnabled( true );
    cb_plot_errors_rev->setChecked( false );
    cb_plot_errors_rev->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
@@ -359,7 +410,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
    errors_widgets.push_back( cb_plot_errors_rev );
 
    cb_plot_errors_sd = new QCheckBox(this);
-   cb_plot_errors_sd->setText(tr("Use SDs "));
+   cb_plot_errors_sd->setText(us_tr("Use SDs "));
    cb_plot_errors_sd->setEnabled( true );
    cb_plot_errors_sd->setChecked( false );
    cb_plot_errors_sd->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
@@ -369,7 +420,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
    errors_widgets.push_back( cb_plot_errors_sd );
 
    cb_plot_errors_pct = new QCheckBox(this);
-   cb_plot_errors_pct->setText(tr("By percent "));
+   cb_plot_errors_pct->setText(us_tr("By percent "));
    cb_plot_errors_pct->setEnabled( true );
    cb_plot_errors_pct->setChecked( false );
    cb_plot_errors_pct->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
@@ -379,7 +430,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
    errors_widgets.push_back( cb_plot_errors_pct );
 
    cb_plot_errors_ref = new QCheckBox(this);
-   cb_plot_errors_ref->setText(tr("Reference "));
+   cb_plot_errors_ref->setText(us_tr("Reference "));
    cb_plot_errors_ref->setEnabled( true );
    cb_plot_errors_ref->setChecked( false );
    cb_plot_errors_ref->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
@@ -389,7 +440,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
    errors_widgets.push_back( cb_plot_errors_ref );
 
    cb_plot_errors_group = new QCheckBox(this);
-   cb_plot_errors_group->setText(tr("Group"));
+   cb_plot_errors_group->setText(us_tr("Group"));
    cb_plot_errors_group->setEnabled( true );
    cb_plot_errors_group->setChecked( false );
    cb_plot_errors_group->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
@@ -399,19 +450,19 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
    errors_widgets.push_back( cb_plot_errors_group );
 
    iq_it_state = mode_i_of_t;
-   pb_iq_it = new QPushButton( tr( mode_i_of_t ? "Show I(q)" : "Show I(t)" ), this);
+   pb_iq_it = new QPushButton( us_tr( mode_i_of_t ? "Show I(q)" : "Show I(t)" ), this);
    pb_iq_it->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_iq_it->setMinimumHeight(minHeight1);
    pb_iq_it->setPalette( PALET_PUSHB );
    connect(pb_iq_it, SIGNAL(clicked()), SLOT(iq_it()));
 
-   pb_axis_x = new QPushButton(tr("X"), this);
+   pb_axis_x = new QPushButton(us_tr("X"), this);
    pb_axis_x->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_axis_x->setMinimumHeight(minHeight1);
    pb_axis_x->setPalette( PALET_PUSHB );
    connect(pb_axis_x, SIGNAL(clicked()), SLOT(axis_x()));
 
-   pb_axis_y = new QPushButton(tr("Y"), this);
+   pb_axis_y = new QPushButton(us_tr("Y"), this);
    pb_axis_y->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_axis_y->setMinimumHeight(minHeight1);
    pb_axis_y->setPalette( PALET_PUSHB );
@@ -428,7 +479,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
    lbl_process->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
    connect( lbl_process, SIGNAL( pressed() ), SLOT( hide_process() ) );
 
-   lbl_q_range = new QLabel( tr( "Active q range:" ), this );
+   lbl_q_range = new QLabel( us_tr( "Active q range:" ), this );
    lbl_q_range->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_q_range->setPalette( PALET_NORMAL );
    AUTFBACK( lbl_q_range );
@@ -436,7 +487,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
    // process_widgets.push_back( lbl_q_range );
    lbl_q_range->hide();
 
-   le_q_start = new mQLineEdit(this, "le_q_start Line Edit");
+   le_q_start = new mQLineEdit( this );    le_q_start->setObjectName( "le_q_start Line Edit" );
    le_q_start->setText( "" );
    le_q_start->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_q_start->setPalette( PALET_NORMAL );
@@ -448,7 +499,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
    // process_widgets.push_back( le_q_start );
    le_q_start->hide();
 
-   le_q_end = new mQLineEdit(this, "le_q_end Line Edit");
+   le_q_end = new mQLineEdit( this );    le_q_end->setObjectName( "le_q_end Line Edit" );
    le_q_end->setText( "" );
    le_q_end->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_q_end->setPalette( PALET_NORMAL );
@@ -460,99 +511,99 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
    // process_widgets.push_back( le_q_end );
    le_q_end->hide();
 
-   //    lbl_t_range = new QLabel( tr( "Active Time range:" ), this );
+   //    lbl_t_range = new QLabel( us_tr( "Active Time range:" ), this );
    //    lbl_t_range->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
-   //    lbl_t_range->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   //    lbl_t_range->setPalette( USglobal->global_colors.cg_normal );
    //    lbl_t_range->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    //    process_widgets.push_back( lbl_t_range );
 
-   //    le_t_start = new mQLineEdit(this, "le_t_start Line Edit");
+   //    le_t_start = new mQLineEdit( this );     le_t_start->setObjectName( "le_t_start Line Edit" );
    //    le_t_start->setText( "" );
    //    le_t_start->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
-   //    le_t_start->setPalette(QPalette( USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   //    le_t_start->setPalette( USglobal->global_colors.cg_normal );
    //    le_t_start->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    //    le_t_start->setEnabled( false );
    //    le_t_start->setValidator( new QDoubleValidator( le_t_start ) );
    //    connect( le_t_start, SIGNAL( textChanged( const QString & ) ), SLOT( t_start_text( const QString & ) ) );
    //    process_widgets.push_back( le_t_start );
 
-   //    le_t_end = new mQLineEdit(this, "le_t_end Line Edit");
+   //    le_t_end = new mQLineEdit( this );     le_t_end->setObjectName( "le_t_end Line Edit" );
    //    le_t_end->setText( "" );
    //    le_t_end->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
-   //    le_t_end->setPalette(QPalette( USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   //    le_t_end->setPalette( USglobal->global_colors.cg_normal );
    //    le_t_end->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    //    le_t_end->setEnabled( false );
    //    le_t_end->setValidator( new QDoubleValidator( le_t_end ) );
    //    connect( le_t_end, SIGNAL( textChanged( const QString & ) ), SLOT( t_end_text( const QString & ) ) );
    //    process_widgets.push_back( le_t_end );
 
-   lbl_ev = new QLabel( tr( "Singular value list:" ), this );
+   lbl_ev = new QLabel( us_tr( "Singular value list:" ), this );
    lbl_ev->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_ev->setPalette( PALET_NORMAL );
    AUTFBACK( lbl_ev );
    lbl_ev->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    process_widgets.push_back( lbl_ev );
 
-   lb_ev = new Q3ListBox(this, "files files listbox" );
+   lb_ev = new QListWidget( this );
    lb_ev->setPalette( PALET_NORMAL );
    AUTFBACK( lb_ev );
    lb_ev->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    lb_ev->setEnabled(true);
-   lb_ev->setSelectionMode( Q3ListBox::Extended );
-   lb_ev->setColumnMode   ( Q3ListBox::FitToWidth );
-   connect( lb_ev, SIGNAL( selectionChanged() ), SLOT( sv_selection_changed() ) );
+   lb_ev->setSelectionMode( QAbstractItemView::ExtendedSelection );
+   // lb_ev->setColumnMode   ( QListBox::FitToWidth );
+   connect( lb_ev, SIGNAL( itemSelectionChanged() ), SLOT( sv_selection_changed() ) );
    process_widgets.push_back( lb_ev );
 
-   pb_svd = new QPushButton(tr("Compute SVD"), this);
+   pb_svd = new QPushButton(us_tr("Compute SVD"), this);
    pb_svd->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_svd->setMinimumHeight(minHeight3);
    pb_svd->setPalette( PALET_PUSHB );
    connect(pb_svd, SIGNAL(clicked()), SLOT(svd()));
    process_widgets.push_back( pb_svd );
 
-   pb_stop = new QPushButton(tr("Stop"), this);
+   pb_stop = new QPushButton(us_tr("Stop"), this);
    pb_stop->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_stop->setMinimumHeight(minHeight3);
    pb_stop->setPalette( PALET_PUSHB );
    connect(pb_stop, SIGNAL(clicked()), SLOT(stop()));
    process_widgets.push_back( pb_stop );
 
-   pb_svd_plot = new QPushButton(tr("Plot SVs"), this);
+   pb_svd_plot = new QPushButton(us_tr("Plot SVs"), this);
    pb_svd_plot->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_svd_plot->setMinimumHeight(minHeight3);
    pb_svd_plot->setPalette( PALET_PUSHB );
    connect(pb_svd_plot, SIGNAL(clicked()), SLOT(svd_plot()));
    process_widgets.push_back( pb_svd_plot );
 
-   pb_svd_save = new QPushButton(tr("Save SVs"), this);
+   pb_svd_save = new QPushButton(us_tr("Save SVs"), this);
    pb_svd_save->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_svd_save->setMinimumHeight(minHeight3);
    pb_svd_save->setPalette( PALET_PUSHB );
    connect(pb_svd_save, SIGNAL(clicked()), SLOT(svd_save()));
    process_widgets.push_back( pb_svd_save );
 
-   pb_recon = new QPushButton(tr("TSVD reconstruction"), this);
+   pb_recon = new QPushButton(us_tr("TSVD reconstruction"), this);
    pb_recon->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_recon->setMinimumHeight(minHeight3);
    pb_recon->setPalette( PALET_PUSHB );
    connect(pb_recon, SIGNAL(clicked()), SLOT(recon()));
    process_widgets.push_back( pb_recon );
 
-   pb_indiv_recon = new QPushButton(tr("Individual TVSD recon."), this);
+   pb_indiv_recon = new QPushButton(us_tr("Individual TVSD recon."), this);
    pb_indiv_recon->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_indiv_recon->setMinimumHeight(minHeight3);
    pb_indiv_recon->setPalette( PALET_PUSHB );
    connect(pb_indiv_recon, SIGNAL(clicked()), SLOT(indiv_recon()));
    process_widgets.push_back( pb_indiv_recon );
 
-   pb_inc_recon = new QPushButton(tr("Incremental TVSD recon."), this);
+   pb_inc_recon = new QPushButton(us_tr("Incremental TVSD recon."), this);
    pb_inc_recon->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_inc_recon->setMinimumHeight(minHeight3);
    pb_inc_recon->setPalette( PALET_PUSHB );
    connect(pb_inc_recon, SIGNAL(clicked()), SLOT(inc_recon()));
    process_widgets.push_back( pb_inc_recon );
 
-   pb_inc_chi_plot = new QPushButton(tr("Plot Chi"), this);
+   pb_inc_chi_plot = new QPushButton(us_tr("Plot Chi"), this);
    pb_inc_chi_plot->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_inc_chi_plot->setMinimumHeight(minHeight3);
    pb_inc_chi_plot->setPalette( PALET_PUSHB );
@@ -560,14 +611,14 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
    // process_widgets.push_back( pb_inc_chi_plot );
    pb_inc_chi_plot->hide();
 
-   pb_inc_rmsd_plot = new QPushButton(tr("Plot RMSDs"), this);
+   pb_inc_rmsd_plot = new QPushButton(us_tr("Plot RMSDs"), this);
    pb_inc_rmsd_plot->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_inc_rmsd_plot->setMinimumHeight(minHeight3);
    pb_inc_rmsd_plot->setPalette( PALET_PUSHB );
    connect(pb_inc_rmsd_plot, SIGNAL(clicked()), SLOT(inc_rmsd_plot()));
    process_widgets.push_back( pb_inc_rmsd_plot );
 
-   pb_rmsd_save = new QPushButton(tr("Save RMSDs"), this);
+   pb_rmsd_save = new QPushButton(us_tr("Save RMSDs"), this);
    pb_rmsd_save->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_rmsd_save->setMinimumHeight(minHeight3);
    pb_rmsd_save->setPalette( PALET_PUSHB );
@@ -576,20 +627,20 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
 
    // -------- bottom section
 
-   pb_help = new QPushButton(tr("Help"), this);
+   pb_help = new QPushButton(us_tr("Help"), this);
    pb_help->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
    pb_help->setMinimumHeight(minHeight1);
    pb_help->setPalette( PALET_PUSHB );
    connect(pb_help, SIGNAL(clicked()), SLOT(help()));
 
-   progress = new Q3ProgressBar(this, "Progress");
+   progress = new QProgressBar( this );
    // progress->setMinimumHeight(minHeight1);
    progress->setPalette( PALET_NORMAL );
    AUTFBACK( progress );
    progress->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    progress->reset();
 
-   pb_cancel = new QPushButton(tr("Close"), this);
+   pb_cancel = new QPushButton(us_tr("Close"), this);
    pb_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
    pb_cancel->setMinimumHeight(minHeight1);
    pb_cancel->setPalette( PALET_PUSHB );
@@ -598,23 +649,23 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
    // -------- build layout
 
 
-   Q3VBoxLayout *background = new Q3VBoxLayout(this);
-   Q3HBoxLayout *top        = new Q3HBoxLayout( 0 );
+   QVBoxLayout * background = new QVBoxLayout(this); background->setContentsMargins( 0, 0, 0, 0 ); background->setSpacing( 0 );
+   QHBoxLayout * top = new QHBoxLayout(); top->setContentsMargins( 0, 0, 0, 0 ); top->setSpacing( 0 );
 
    // ----- left side
    {
-      Q3BoxLayout *bl = new Q3VBoxLayout( 0 );
+      QBoxLayout *bl = new QVBoxLayout( 0 );
       bl->addWidget( lbl_data );
       bl->addWidget( lv_data );
 
       {
-         Q3BoxLayout *bl_buttons = new Q3HBoxLayout( 0 );
+         QBoxLayout *bl_buttons = new QHBoxLayout();
          bl_buttons->addWidget( pb_clear );
          bl_buttons->addWidget( pb_replot );
          bl->addLayout( bl_buttons );
       }
       {
-         Q3BoxLayout *bl_buttons = new Q3HBoxLayout( 0 );
+         QBoxLayout *bl_buttons = new QHBoxLayout();
          bl_buttons->addWidget( pb_to_hplc );
          bl_buttons->addWidget( pb_color_rotate );
          bl->addLayout( bl_buttons );
@@ -622,7 +673,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
 
       bl->addWidget( lbl_process );
       {
-         Q3GridLayout *gl = new Q3GridLayout( 0 );
+         QGridLayout * gl = new QGridLayout( 0 ); gl->setContentsMargins( 0, 0, 0, 0 ); gl->setSpacing( 0 );
          
          gl->addWidget( lbl_q_range  , 0, 0 );
          gl->addWidget( le_q_start   , 0, 1 );
@@ -633,13 +684,13 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
          // gl->addWidget( le_t_end     , 1, 2 );
 
          // gl->addWidget( lbl_ev       , 3, 0 );
-         // gl->addMultiCellWidget( lb_ev        , 3, 3, 1, 2 );
+         // gl->addWidget( lb_ev         , 3 , 1 , 1 + ( 3 ) - ( 3 ) , 1 + ( 2  ) - ( 1 ) );
 
          bl->addLayout( gl );
       }
 
       {
-         Q3BoxLayout *bl_buttons = new Q3HBoxLayout( 0 );
+         QBoxLayout *bl_buttons = new QHBoxLayout();
          bl_buttons->addWidget( pb_svd );
          bl_buttons->addWidget( pb_stop );
          bl->addLayout( bl_buttons );
@@ -649,7 +700,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
       bl->addWidget( lb_ev );
 
       {
-         Q3BoxLayout *bl_buttons = new Q3HBoxLayout( 0 );
+         QBoxLayout *bl_buttons = new QHBoxLayout();
          bl_buttons->addWidget( pb_svd_plot );
          bl_buttons->addWidget( pb_svd_save );
          bl_buttons->addWidget( pb_recon );
@@ -657,14 +708,14 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
       }
 
       {
-         Q3BoxLayout *bl_buttons = new Q3HBoxLayout( 0 );
+         QBoxLayout *bl_buttons = new QHBoxLayout();
          bl_buttons->addWidget( pb_indiv_recon );
          bl_buttons->addWidget( pb_inc_recon );
          bl->addLayout( bl_buttons );
       }
 
       {
-         Q3BoxLayout *bl_buttons = new Q3HBoxLayout( 0 );
+         QBoxLayout *bl_buttons = new QHBoxLayout();
          bl_buttons->addWidget( pb_inc_chi_plot );
          bl_buttons->addWidget( pb_inc_rmsd_plot );
          bl_buttons->addWidget( pb_rmsd_save );
@@ -682,12 +733,12 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
 
    // ----- right side
    {
-      Q3BoxLayout *bl = new Q3VBoxLayout( 0 );
+      QBoxLayout *bl = new QVBoxLayout( 0 );
       bl->addWidget( plot_data );
       bl->addWidget( plot_errors );
 
       //       {
-      //          QGridLayout * gl = new QGridLayout( 0 );
+      //          QGridLayout * gl = new QGridLayout( 0 ); gl->setContentsMargins( 0, 0, 0, 0 ); gl->setSpacing( 0 );
       //          gl -> addWidget( cb_plot_errors       , 0, 0 );
       //          gl -> addWidget( cb_plot_errors_sd    , 0, 1 );
       //          gl -> addWidget( cb_plot_errors_pct   , 0, 2 );
@@ -699,7 +750,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
       //       }
 
       {
-         Q3BoxLayout *bl_buttons = new Q3HBoxLayout( 0 );
+         QBoxLayout *bl_buttons = new QHBoxLayout();
          bl_buttons->addWidget( cb_plot_errors );
          bl_buttons->addWidget( cb_plot_errors_sd );
          bl_buttons->addWidget( cb_plot_errors_pct );
@@ -707,7 +758,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
       }
 
       {
-         Q3BoxLayout *bl_buttons = new Q3HBoxLayout( 0 );
+         QBoxLayout *bl_buttons = new QHBoxLayout();
          bl_buttons->addWidget( cb_plot_errors_rev );
          bl_buttons->addWidget( cb_plot_errors_ref );
          bl_buttons->addWidget( cb_plot_errors_group );
@@ -715,7 +766,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
       }
 
       {
-         Q3BoxLayout *bl_buttons = new Q3HBoxLayout( 0 );
+         QBoxLayout *bl_buttons = new QHBoxLayout();
          bl_buttons->addWidget( pb_iq_it );
          bl_buttons->addWidget( pb_axis_x );
          bl_buttons->addWidget( pb_axis_y );
@@ -728,7 +779,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
    background->addLayout( top );
 
    {
-      Q3BoxLayout *bottom = new Q3HBoxLayout( 0 );
+      QBoxLayout *bottom = new QHBoxLayout();
       bottom->addWidget( pb_help );
       bottom->addWidget( progress );
       bottom->addWidget( pb_cancel );
@@ -784,33 +835,33 @@ void US_Hydrodyn_Saxs_Hplc_Svd::update_font()
 void US_Hydrodyn_Saxs_Hplc_Svd::save()
 {
    QString fn;
-   fn = QFileDialog::getSaveFileName( this , caption() , QString::null , QString::null );
+   fn = QFileDialog::getSaveFileName( this , windowTitle() , QString::null , QString::null );
    if(!fn.isEmpty() )
    {
-      QString text = editor->text();
+      QString text = editor->toPlainText();
       QFile f( fn );
       if ( !f.open( QIODevice::WriteOnly | QIODevice::Text) )
       {
          return;
       }
-      Q3TextStream t( &f );
+      QTextStream t( &f );
       t << text;
       f.close();
-      editor->setModified( false );
-      setCaption( fn );
+ //      editor->setModified( false );
+      setWindowTitle( fn );
    }
 }
 
 void US_Hydrodyn_Saxs_Hplc_Svd::editor_msg( QString color, QString msg )
 {
-   QColor save_color = editor->color();
-   editor->setColor(color);
+   QColor save_color = editor->textColor();
+   editor->setTextColor(color);
    editor->append(msg);
-   editor->setColor(save_color);
+   editor->setTextColor(save_color);
 
-   if ( !editor_widgets[ 0 ]->isVisible() && color == "red" && !msg.stripWhiteSpace().isEmpty() )
+   if ( !editor_widgets[ 0 ]->isVisible() && color == "red" && !msg.trimmed().isEmpty() )
    {
-      lbl_editor->setPalette(QPalette(cg_red, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+      lbl_editor->setPalette( cg_red );
    }
 }
 
@@ -1007,7 +1058,7 @@ bool US_Hydrodyn_Saxs_Hplc_Svd::plot_file( QString file,
         !f_Is        .count( file ) ||
         !f_pos       .count( file ) )
    {
-      editor_msg( "red", QString( tr( "Internal error: request to plot %1, but not found in data" ) ).arg( file ) );
+      editor_msg( "red", QString( us_tr( "Internal error: request to plot %1, but not found in data" ) ).arg( file ) );
       return false;
    }
 
@@ -1090,7 +1141,7 @@ bool US_Hydrodyn_Saxs_Hplc_Svd::get_min_max( QString file,
         !f_Is        .count( file ) ||
         !f_pos       .count( file ) )
    {
-      // editor_msg( "red", QString( tr( "Internal error: requested %1, but not found in data" ) ).arg( file ) );
+      // editor_msg( "red", QString( us_tr( "Internal error: requested %1, but not found in data" ) ).arg( file ) );
       return false;
    }
 
@@ -1292,8 +1343,8 @@ void US_Hydrodyn_Saxs_Hplc_Svd::iq_it()
    chi_plot  = false;
    iq_it_state = !iq_it_state;
    pb_iq_it->setText( mode_i_of_t ? 
-                      tr( iq_it_state ? "Show I(t)" : "Show I(q)" ) :
-                      tr( iq_it_state ? "Show I(q)" : "Show I(t)" )
+                      us_tr( iq_it_state ? "Show I(t)" : "Show I(q)" ) :
+                      us_tr( iq_it_state ? "Show I(q)" : "Show I(t)" )
                       );
    axis_x_title();
    axis_y_title();
@@ -1306,7 +1357,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::to_hplc()
 {
    if ( !ush_win->saxs_hplc_widget )
    {
-      editor_msg( "red", tr( "US-SOMO SAXS HPLC window has been closed" ) );
+      editor_msg( "red", us_tr( "US-SOMO SAXS HPLC window has been closed" ) );
       return;
    }
 
@@ -1415,7 +1466,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::update_enables()
    int sv_items = 0;
    for ( int i = 0; i < (int) lb_ev->count(); ++i )
    {
-      if ( lb_ev->isSelected( i ) )
+      if ( lb_ev->item( i )->isSelected() )
       {
          sv_items++;
       }
@@ -1426,7 +1477,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::update_enables()
 
    lv_data            ->setEnabled( true );
    pb_clear           ->setEnabled( true );
-   pb_to_hplc         ->setEnabled( files.size() && !sources.count( tr( "Original data" ) ) && ush_win->saxs_hplc_widget );
+   pb_to_hplc         ->setEnabled( files.size() && !sources.count( us_tr( "Original data" ) ) && ush_win->saxs_hplc_widget );
    pb_color_rotate    ->setEnabled( true );
    pb_replot          ->setEnabled( !plotted_matches_selected() );
    pb_iq_it           ->setEnabled( true );
@@ -1490,12 +1541,12 @@ QStringList US_Hydrodyn_Saxs_Hplc_Svd::selected_files()
 
    QString iq_or_it = iq_it_state ? "I(t)" : "I(q)";
 
-   Q3ListViewItemIterator it( lv_data );
-   while ( it.current() ) 
+   QTreeWidgetItemIterator it( lv_data );
+   while ( (*it) ) 
    {
-      Q3ListViewItem *item = it.current();
+      QTreeWidgetItem *item = (*it);
       if ( is_selected( item ) &&
-           item->depth() == 2 &&
+           US_Static::lvi_depth( item ) == 2 &&
            item->parent()->text( 0 ) == iq_or_it )
       {
          result << item->text( 0 );
@@ -1509,11 +1560,11 @@ set < QString > US_Hydrodyn_Saxs_Hplc_Svd::get_current_files()
 {
    set < QString > result;
 
-   Q3ListViewItemIterator it( lv_data );
-   while ( it.current() ) 
+   QTreeWidgetItemIterator it( lv_data );
+   while ( (*it) ) 
    {
-      Q3ListViewItem *item = it.current();
-      if ( item->depth() == 2 && 
+      QTreeWidgetItem *item = (*it);
+      if ( US_Static::lvi_depth( item ) == 2 && 
            ( item->parent()->text( 0 ) == "I(q)" ||
              item->parent()->text( 0 ) == "I(t)" ) 
            )
@@ -1529,11 +1580,11 @@ set < QString > US_Hydrodyn_Saxs_Hplc_Svd::get_sources()
 {
    set < QString > result;
 
-   Q3ListViewItemIterator it( lv_data );
-   while ( it.current() ) 
+   QTreeWidgetItemIterator it( lv_data );
+   while ( (*it) ) 
    {
-      Q3ListViewItem *item = it.current();
-      if ( item->depth() == 0 )
+      QTreeWidgetItem *item = (*it);
+      if ( US_Static::lvi_depth( item ) == 0 )
       {
          result.insert( item->text( 0 ) );
       }
@@ -1548,12 +1599,12 @@ set < QString > US_Hydrodyn_Saxs_Hplc_Svd::get_selected_sources()
    QString iq_or_it = iq_it_state ? "I(t)" : "I(q)";
 
    // QStringList qsl;
-   Q3ListViewItemIterator it( lv_data );
-   while ( it.current() ) 
+   QTreeWidgetItemIterator it( lv_data );
+   while ( (*it) ) 
    {
-      Q3ListViewItem *item = it.current();
+      QTreeWidgetItem *item = (*it);
       if ( is_selected( item ) &&
-           item->depth() == 2 &&
+           US_Static::lvi_depth( item ) == 2 &&
            item->parent()->text( 0 ) == iq_or_it )
       {
          result.insert( item->parent()->parent()->text( 0 ) );
@@ -1565,20 +1616,20 @@ set < QString > US_Hydrodyn_Saxs_Hplc_Svd::get_selected_sources()
    return result;
 }
 
-Q3ListViewItem * US_Hydrodyn_Saxs_Hplc_Svd::get_source_item( QString source )
+QTreeWidgetItem * US_Hydrodyn_Saxs_Hplc_Svd::get_source_item( QString source )
 {
-   Q3ListViewItemIterator it( lv_data );
-   while ( it.current() ) 
+   QTreeWidgetItemIterator it( lv_data );
+   while ( (*it) ) 
    {
-      Q3ListViewItem *item = it.current();
-      if ( item->depth() == 0 &&
+      QTreeWidgetItem *item = (*it);
+      if ( US_Static::lvi_depth( item ) == 0 &&
            item->text( 0 ) == source )
       {
          return item;
       }
       ++it;
    }
-   return (Q3ListViewItem *) 0;
+   return (QTreeWidgetItem *) 0;
 }
 
 int US_Hydrodyn_Saxs_Hplc_Svd::selected_sources()
@@ -1587,12 +1638,12 @@ int US_Hydrodyn_Saxs_Hplc_Svd::selected_sources()
 
    set < QString > sources;
 
-   Q3ListViewItemIterator it( lv_data );
-   while ( it.current() ) 
+   QTreeWidgetItemIterator it( lv_data );
+   while ( (*it) ) 
    {
-      Q3ListViewItem *item = it.current();
+      QTreeWidgetItem *item = (*it);
       if ( is_selected( item ) &&
-           item->depth() == 2 &&
+           US_Static::lvi_depth( item ) == 2 &&
            item->parent()->text( 0 ) == iq_or_it )
       {
          sources.insert( item->parent()->parent()->text( 0 ) );
@@ -1607,10 +1658,10 @@ void US_Hydrodyn_Saxs_Hplc_Svd::clean_selected()
    // if a parent is selected, set selected on all children
    // & if all children are selected, set parents selected
 
-   Q3ListViewItemIterator it( lv_data );
-   while ( it.current() ) 
+   QTreeWidgetItemIterator it( lv_data );
+   while ( (*it) ) 
    {
-      Q3ListViewItem *item = it.current();
+      QTreeWidgetItem *item = (*it);
       if ( !item->isSelected() )
       {
          if ( is_selected( item ) || all_children_selected( item ) )
@@ -1621,14 +1672,15 @@ void US_Hydrodyn_Saxs_Hplc_Svd::clean_selected()
       ++it;
    }
 
-   lv_data->triggerUpdate();
+   // lv_data->triggerUpdate();
 }
 
-bool US_Hydrodyn_Saxs_Hplc_Svd::all_children_selected( Q3ListViewItem *lvi )
+bool US_Hydrodyn_Saxs_Hplc_Svd::all_children_selected( QTreeWidgetItem *lvi )
 {
+#if QT_VERSION < 0x040000
    if ( lvi->childCount() )
    {
-      Q3ListViewItem *myChild = lvi->firstChild();
+      QTreeWidgetItem *myChild = lvi->firstChild();
       while( myChild ) 
       {
          if ( myChild->childCount() )
@@ -1648,11 +1700,35 @@ bool US_Hydrodyn_Saxs_Hplc_Svd::all_children_selected( Q3ListViewItem *lvi )
    } else {
       return lvi->isSelected();
    }
+#else
+   int children = lvi->childCount();
+   if ( children ) { 
+      for ( int i = 0; i < children; ++i ) {
+         QTreeWidgetItem *myChild = lvi->child( i );
+         if( myChild ) {
+            if ( myChild->childCount() )
+            {
+               if ( !all_children_selected( myChild ) )
+               {
+                  return false;
+               }
+            } else {
+               if ( !is_selected( myChild ) )
+               {
+                  return false;
+               }
+            }
+         }
+      }
+   } else {
+      return lvi->isSelected();
+   }
+#endif
 
    return true;
 }
 
-bool US_Hydrodyn_Saxs_Hplc_Svd::is_selected( Q3ListViewItem *lvi )
+bool US_Hydrodyn_Saxs_Hplc_Svd::is_selected( QTreeWidgetItem *lvi )
 {
    if ( lvi->isSelected() )
    {
@@ -1671,15 +1747,15 @@ bool US_Hydrodyn_Saxs_Hplc_Svd::is_selected( Q3ListViewItem *lvi )
 
 void US_Hydrodyn_Saxs_Hplc_Svd::axis_x_title()
 {
-   QString title = tr( iq_it_state ? "Time [a.u.]" : "q [1/Angstrom]" );
+   QString title = us_tr( iq_it_state ? "Time [a.u.]" : "q [1/Angstrom]" );
    if ( sv_plot || rmsd_plot || chi_plot )
    {
-      title = tr( "Number" );
+      title = us_tr( "Number" );
    }
 
    if ( axis_x_log )
    {
-      plot_data->setAxisTitle(QwtPlot::xBottom,  title + tr(" (log scale)") );
+      plot_data->setAxisTitle(QwtPlot::xBottom,  title + us_tr(" (log scale)") );
 #ifndef QT4
       plot_data->setAxisOptions(QwtPlot::xBottom, QwtAutoScale::Logarithmic);
 #else
@@ -1698,10 +1774,10 @@ void US_Hydrodyn_Saxs_Hplc_Svd::axis_x_title()
 
 void US_Hydrodyn_Saxs_Hplc_Svd::axis_y_title()
 {
-   QString title = tr( iq_it_state ? "I(t) [a.u.]" : "I(q) [a.u.]" );
+   QString title = us_tr( iq_it_state ? "I(t) [a.u.]" : "I(q) [a.u.]" );
    if ( sv_plot )
    {
-      title = tr( "Singular values" );
+      title = us_tr( "Singular values" );
    }
 
    if ( rmsd_plot )
@@ -1716,7 +1792,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::axis_y_title()
 
    if ( axis_y_log )
    {
-      plot_data->setAxisTitle(QwtPlot::yLeft, title + tr( " (log scale)") );
+      plot_data->setAxisTitle(QwtPlot::yLeft, title + us_tr( " (log scale)") );
 #ifndef QT4
       plot_data->setAxisOptions(QwtPlot::yLeft, QwtAutoScale::Logarithmic);
 #else
@@ -1773,24 +1849,25 @@ bool US_Hydrodyn_Saxs_Hplc_Svd::plotted_matches_selected()
 
 void US_Hydrodyn_Saxs_Hplc_Svd::add_i_of_q_or_t( QString source, QStringList files, bool do_update_enables )
 {
-   editor_msg( "blue", QString( tr(  "Making I(%1) for source %2" ) ).arg( mode_i_of_t ? "q" : "t" ).arg( source ) );
+   editor_msg( "blue", QString( us_tr(  "Making I(%1) for source %2" ) ).arg( mode_i_of_t ? "q" : "t" ).arg( source ) );
 
-   Q3ListViewItem * source_item = get_source_item( source );
+   QTreeWidgetItem * source_item = get_source_item( source );
 
    if ( !source_item )
    {
-      editor_msg( "red", QString( tr( "Internal error: source item not defined %1" ) ).arg( source ) );
+      editor_msg( "red", QString( us_tr( "Internal error: source item not defined %1" ) ).arg( source ) );
       return;
    }
 
-   Q3ListViewItem * i_t_child = (Q3ListViewItem *) 0;
-   Q3ListViewItem * i_q_child = (Q3ListViewItem *) 0;
+   QTreeWidgetItem * i_t_child = (QTreeWidgetItem *) 0;
+   QTreeWidgetItem * i_q_child = (QTreeWidgetItem *) 0;
       
    disable_all();
 
+#if QT_VERSION < 0x040000
    if ( source_item->childCount() )
    {
-      Q3ListViewItem * myChild = source_item->firstChild();
+      QTreeWidgetItem * myChild = source_item->firstChild();
       while ( myChild )
       {
          if ( myChild->text( 0 ) == "I(t)" )
@@ -1809,16 +1886,42 @@ void US_Hydrodyn_Saxs_Hplc_Svd::add_i_of_q_or_t( QString source, QStringList fil
          myChild = myChild->nextSibling();
       }
    }
+#else
+   {
+      int children = source_item->childCount();
+      if ( children ) { 
+         for ( int i = 0; i < children; ++i ) {
+            QTreeWidgetItem *myChild = source_item->child( i );
+            if ( myChild ) {
+               if ( myChild->text( 0 ) == "I(t)" )
+               {
+                  i_t_child = myChild;
+               }
+               if ( myChild->text( 0 ) == "I(q)" )
+               {
+                  i_q_child = myChild;
+               }
+               if ( i_q_child &&
+                    i_t_child )
+               {
+                  break;
+               }
+            }
+         }
+      }
+   }
+#endif
 
+#if QT_VERSION < 0x040000
    if ( mode_i_of_t )
    {
       if ( !i_q_child )
       {
          if ( i_t_child )
          {
-            i_q_child = new Q3ListViewItem( source_item, i_t_child,  "I(q)" );
+            i_q_child = new QTreeWidgetItem( source_item, i_t_child,  "I(q)" );
          } else {
-            i_q_child = new Q3ListViewItem( source_item, source_item,  "I(q)" );
+            i_q_child = new QTreeWidgetItem( source_item, source_item,  "I(q)" );
          }
       }
    } else {
@@ -1826,12 +1929,33 @@ void US_Hydrodyn_Saxs_Hplc_Svd::add_i_of_q_or_t( QString source, QStringList fil
       {
          if ( i_q_child )
          {
-            i_t_child = new Q3ListViewItem( source_item, i_q_child,  "I(t)" );
+            i_t_child = new QTreeWidgetItem( source_item, i_q_child,  "I(t)" );
          } else {
-            i_t_child = new Q3ListViewItem( source_item, source_item,  "I(t)" );
+            i_t_child = new QTreeWidgetItem( source_item, source_item,  "I(t)" );
          }
       }
    }
+#else
+   if ( mode_i_of_t ) {
+      if ( !i_q_child ) {
+         if ( i_t_child ) {
+            i_q_child = new QTreeWidgetItem( source_item, i_t_child );
+         } else {
+            i_q_child = new QTreeWidgetItem( source_item, source_item );
+         }
+         i_q_child->setText( 0, "I(q)" );
+      }
+   } else {
+      if ( !i_t_child ) {
+         if ( i_q_child ) {
+            i_t_child = new QTreeWidgetItem( source_item, i_q_child );
+         } else {
+            i_t_child = new QTreeWidgetItem( source_item, source_item );
+         }
+         i_q_child->setText( 0, "I(t)" );
+      }
+   }
+#endif
 
    // find common q 
    QString head = hplc_win->qstring_common_head( files, true );
@@ -1851,11 +1975,11 @@ void US_Hydrodyn_Saxs_Hplc_Svd::add_i_of_q_or_t( QString source, QStringList fil
    {
       if ( !f_qs.count( files[ i ] ) )
       {
-         editor_msg( "red", QString( tr( "Internal error: request to use %1, but not found in data" ) ).arg( files[ i ] ) );
+         editor_msg( "red", QString( us_tr( "Internal error: request to use %1, but not found in data" ) ).arg( files[ i ] ) );
       } else {
          QString tmp = files[ i ].mid( head.length() );
          tmp = tmp.mid( 0, tmp.length() - tail.length() );
-         if ( rx_cap.search( tmp ) != -1 )
+         if ( rx_cap.indexIn( tmp ) != -1 )
          {
             tmp = rx_cap.cap( 2 );
          }
@@ -1890,7 +2014,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::add_i_of_q_or_t( QString source, QStringList fil
 
    set < QString > current_files = get_current_files();
 
-   Q3ListViewItem * lvi = mode_i_of_t ? i_q_child : i_t_child;
+   QTreeWidgetItem * lvi = mode_i_of_t ? i_q_child : i_t_child;
 
    for ( unsigned int i = 0; i < ( unsigned int )q.size(); i++ )
    {
@@ -1932,7 +2056,12 @@ void US_Hydrodyn_Saxs_Hplc_Svd::add_i_of_q_or_t( QString source, QStringList fil
          }
       }
 
-      lvi = new Q3ListViewItem( mode_i_of_t ? i_q_child : i_t_child, lvi, fname );
+#if QT_VERSION < 0x040000
+      lvi = new QTreeWidgetItem( mode_i_of_t ? i_q_child : i_t_child, lvi, fname );
+#else
+      lvi = new QTreeWidgetItem( mode_i_of_t ? i_q_child : i_t_child, lvi );
+      lvi->setText( 0, fname );
+#endif      
    
       f_pos       [ fname ] = f_qs.size();
       f_qs_string [ fname ] = t_qs;
@@ -1945,7 +2074,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::add_i_of_q_or_t( QString source, QStringList fil
    {
       update_enables();
    }
-   editor_msg( "blue", QString( tr(  "Done making I(%1) for source %2" ) ).arg( mode_i_of_t ? "q" : "t" ).arg( source ) );
+   editor_msg( "blue", QString( us_tr(  "Done making I(%1) for source %2" ) ).arg( mode_i_of_t ? "q" : "t" ).arg( source ) );
 }
 
 void US_Hydrodyn_Saxs_Hplc_Svd::rescale( bool do_update_enables )
@@ -2159,10 +2288,10 @@ void US_Hydrodyn_Saxs_Hplc_Svd::svd()
       v[ j ] = &(V[ j ][ 0 ]);
    }
       
-   editor_msg( "blue", tr( "SVD: matrix F created, computing SVD" ) );
+   editor_msg( "blue", us_tr( "SVD: matrix F created, computing SVD" ) );
    if ( !SVD::dsvd( &(a[ 0 ]), m, n, &(w[ 0 ]), &(v[ 0 ]) ) )
    {
-      editor_msg( "red", tr( SVD::errormsg ) );
+      editor_msg( "red", us_tr( SVD::errormsg ) );
       update_enables();
       return;
    }
@@ -2194,7 +2323,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::svd()
       svd_index[ (int) svd_x.size() ] = it->index;
       svd_x.push_back( (double) svd_x.size() + 1e0 );
       svd_y.push_back( it->x );
-      lb_ev->insertItem( QString( "%1" ).arg( it->x ) );
+      lb_ev->addItem( QString( "%1" ).arg( it->x ) );
    }
 
    update_enables();
@@ -2202,25 +2331,25 @@ void US_Hydrodyn_Saxs_Hplc_Svd::svd()
 
 void US_Hydrodyn_Saxs_Hplc_Svd::recon()
 {
-   editor_msg( "blue", tr( "Start TSVD reconstruction" ) );
+   editor_msg( "blue", us_tr( "Start TSVD reconstruction" ) );
    disable_all();
    recon_mode = "";
    do_recon();
    update_enables();
-   editor_msg( "blue", tr( "Done TSVD reconstruction" ) );
+   editor_msg( "blue", us_tr( "Done TSVD reconstruction" ) );
 }
 
 
 
-Q3ListViewItem * US_Hydrodyn_Saxs_Hplc_Svd::lvi_last_depth( int d )
+QTreeWidgetItem * US_Hydrodyn_Saxs_Hplc_Svd::lvi_last_depth( int d )
 {
-   Q3ListViewItem * result = (Q3ListViewItem *) 0;
+   QTreeWidgetItem * result = (QTreeWidgetItem *) 0;
 
-   Q3ListViewItemIterator it( lv_data );
-   while ( it.current() ) 
+   QTreeWidgetItemIterator it( lv_data );
+   while ( (*it) ) 
    {
-      Q3ListViewItem *item = it.current();
-      if ( item->depth() == d )
+      QTreeWidgetItem *item = (*it);
+      if ( US_Static::lvi_depth( item ) == d )
       {
          result = item;
       }
@@ -2384,13 +2513,13 @@ void US_Hydrodyn_Saxs_Hplc_Svd::inc_chi_plot( bool axis_change )
 
 void US_Hydrodyn_Saxs_Hplc_Svd::inc_recon()
 {
-   editor_msg( "blue", tr( "Start incremental TSVD" ) );
+   editor_msg( "blue", us_tr( "Start incremental TSVD" ) );
    recon_mode = "Inc. ";
    disable_all();
    pb_stop->setEnabled( true );
    running = true;
 
-   last_recon_tag = QString( tr( "\"Incremental TSVD on SVD of %1\",\"RMSD of fit\",\"Singular values\"" ) ).arg( last_svd_name );
+   last_recon_tag = QString( us_tr( "\"Incremental TSVD on SVD of %1\",\"RMSD of fit\",\"Singular values\"" ) ).arg( last_svd_name );
    last_recon_evs.clear();
 
    rmsd_x.clear();
@@ -2403,32 +2532,32 @@ void US_Hydrodyn_Saxs_Hplc_Svd::inc_recon()
 
    for ( int i = 0; i < (int) lb_ev->count(); ++i )
    {
-      if ( lb_ev->isSelected( i ) )
+      if ( lb_ev->item( i )->isSelected() )
       {
          evs_selected.push_back( i );
       }
    }
 
-   disconnect( lb_ev, SIGNAL( selectionChanged() ), 0, 0 );
+   disconnect( lb_ev, SIGNAL( itemSelectionChanged() ), 0, 0 );
 
    for ( int i = 0; i < (int) evs_selected.size(); ++i )
    {
       if ( !running )
       {
-         editor_msg( "red", tr( "Processing stopped" ) );
+         editor_msg( "red", us_tr( "Processing stopped" ) );
          update_enables();
          return;
       }
 
-      progress->setProgress( i, evs_selected.size() );
+      progress->setValue( i ); progress->setMaximum( evs_selected.size() );
 
       lb_ev->clearSelection();
 
       QString evs_used;
       for ( int j = 0; j <= i; ++j )
       {
-         lb_ev->setSelected( evs_selected[ j ], true );
-         evs_used += QString( "%1 ").arg( lb_ev->text( evs_selected[ j ] ) );
+         lb_ev->item( evs_selected[ j ])->setSelected( true );
+         evs_used += QString( "%1 ").arg( lb_ev->item( evs_selected[ j ] )->text() );
       }
       qApp->processEvents();
 
@@ -2447,11 +2576,11 @@ void US_Hydrodyn_Saxs_Hplc_Svd::inc_recon()
 
    progress->reset();
 
-   connect( lb_ev, SIGNAL( selectionChanged() ), SLOT( sv_selection_changed() ) );
+   connect( lb_ev, SIGNAL( itemSelectionChanged() ), SLOT( sv_selection_changed() ) );
 
    running = false;
    update_enables();
-   editor_msg( "blue", tr( "Done TSVD reconstruction" ) );
+   editor_msg( "blue", us_tr( "Done TSVD reconstruction" ) );
 }
 
 void US_Hydrodyn_Saxs_Hplc_Svd::do_recon()
@@ -2470,12 +2599,12 @@ void US_Hydrodyn_Saxs_Hplc_Svd::do_recon()
    QString last_ev;
    for ( int i = 0; i < (int) lb_ev->count(); ++i )
    {
-      if ( !lb_ev->isSelected( i ) )
+      if ( !lb_ev->item( i )->isSelected() )
       {
          D[ svd_index[ i ] ] = 0e0;
       } else {
          sv_count++;
-         last_ev = lb_ev->text( i );
+         last_ev = lb_ev->item( i )->text( );
       }
    }
    
@@ -2521,21 +2650,44 @@ void US_Hydrodyn_Saxs_Hplc_Svd::do_recon()
       }
    }
 
-   Q3ListViewItem * lvi = new Q3ListViewItem( lv_data, lvi_last_depth( 0 ), name );
+#if QT_VERSION < 0x040000
+   QTreeWidgetItem * lvi = new QTreeWidgetItem( lv_data, lvi_last_depth( 0 ), name );
    svd_data_map[ name ] = last_svd_data;
 
-   Q3ListViewItem * lvn = new Q3ListViewItem( lvi, lvi, "SVD of: " + last_svd_name );
-   Q3ListViewItem * evs = new Q3ListViewItem( lvi, lvn, "SVs used" );
-   Q3ListViewItem * lvinext = evs;
+   QTreeWidgetItem * lvn = new QTreeWidgetItem( lvi, lvi, "SVD of: " + last_svd_name );
+   QTreeWidgetItem * evs = new QTreeWidgetItem( lvi, lvn, "SVs used" );
+   QTreeWidgetItem * lvinext = evs;
    for ( int i = 0; i < (int) lb_ev->count(); ++i )
    {
-      if ( lb_ev->isSelected( i ) )
+      if ( lb_ev->item( i )->isSelected() )
       {
-         lvinext = new Q3ListViewItem( evs, lvinext, lb_ev->text( i ) );
+         lvinext = new QTreeWidgetItem( evs, lvinext, lb_ev->item( i )->text() );
       }
    }
 
-   Q3ListViewItem * iqs = new Q3ListViewItem( lvi, lv_data->lastItem(), mode_i_of_t ? "I(t)" : "I(q)" );
+   QTreeWidgetItem * iqs = new QTreeWidgetItem( lvi, US_Static::lv_lastItem( lv_data ), mode_i_of_t ? "I(t)" : "I(q)" );
+#else
+   QTreeWidgetItem * lvi = new QTreeWidgetItem( lv_data, lvi_last_depth( 0 ) );
+   lvi->setText( 0, name );
+   svd_data_map[ name ] = last_svd_data;
+
+   QTreeWidgetItem * lvn = new QTreeWidgetItem( lvi, lvi );
+   lvn->setText( 0, "SVD of: " + last_svd_name );
+   QTreeWidgetItem * evs = new QTreeWidgetItem( lvi, lvn );
+   evs->setText( 0, "SVs used" );
+   QTreeWidgetItem * lvinext = evs;
+   for ( int i = 0; i < (int) lb_ev->count(); ++i )
+   {
+      if ( lb_ev->item( i )->isSelected() )
+      {
+         lvinext = new QTreeWidgetItem( evs, lvinext );
+         lvinext->setText( 0, lb_ev->item( i )->text() );
+      }
+   }
+
+   QTreeWidgetItem * iqs = new QTreeWidgetItem( lvi, US_Static::lv_lastItem( lv_data ) );
+   iqs->setText( 0, mode_i_of_t ? "I(t)" : "I(q)" );
+#endif
 
    // add I(q)
    // contained in columns of F, reference file names from last_svd_data
@@ -2604,7 +2756,13 @@ void US_Hydrodyn_Saxs_Hplc_Svd::do_recon()
       }         
 
       QString this_name = tag + last_svd_data[ i ];
-      lvinext = new Q3ListViewItem( iqs, lvinext, this_name );
+#if QT_VERSION < 0x040000
+      lvinext = new QTreeWidgetItem( iqs, lvinext, this_name );
+#else
+      lvinext = new QTreeWidgetItem( iqs, lvinext );
+      lvinext->setText( 0, this_name );
+#endif
+
       final_files << this_name;
 
       f_pos      [ this_name ] = f_pos.size();
@@ -2619,7 +2777,12 @@ void US_Hydrodyn_Saxs_Hplc_Svd::do_recon()
 
    if ( svd_F_nonzero )
    {
-      lvinext = new Q3ListViewItem( lvi, evs, QString( "RMSD %1" ).arg( last_recon_rmsd ) );
+#if QT_VERSION < 0x040000
+      lvinext = new QTreeWidgetItem( lvi, evs, QString( "RMSD %1" ).arg( last_recon_rmsd ) );
+#else
+      lvinext = new QTreeWidgetItem( lvi, evs );
+      lvinext->setText( 0, QString( "RMSD %1" ).arg( last_recon_rmsd ) );
+#endif
       last_recon_chi = sqrt( chi2 ) / ( n * m - 1e0 );
       // new QListViewItem( lvi, lvinext, QString( "Chi %1" ).arg( last_recon_chi ) );
    }      
@@ -2657,19 +2820,19 @@ void US_Hydrodyn_Saxs_Hplc_Svd::stop()
 {
    pb_stop->setEnabled( false );
    running = false;
-   editor_msg( "red", tr( "Processing stop requested" ) );
+   editor_msg( "red", us_tr( "Processing stop requested" ) );
    qApp->processEvents();
 }
 
 void US_Hydrodyn_Saxs_Hplc_Svd::indiv_recon()
 {
    recon_mode = "Indiv. ";
-   editor_msg( "blue", tr( "Start individual TSVD" ) );
+   editor_msg( "blue", us_tr( "Start individual TSVD" ) );
    disable_all();
    pb_stop->setEnabled( true );
    running = true;
 
-   last_recon_tag = QString( tr( "\"Individual TSVD on SVD of %1\",\"RMSD of fit\",\"Singular value\"" ) ).arg( last_svd_name );
+   last_recon_tag = QString( us_tr( "\"Individual TSVD on SVD of %1\",\"RMSD of fit\",\"Singular value\"" ) ).arg( last_svd_name );
    last_recon_evs.clear();
                             
 
@@ -2683,34 +2846,34 @@ void US_Hydrodyn_Saxs_Hplc_Svd::indiv_recon()
 
    for ( int i = 0; i < (int) lb_ev->count(); ++i )
    {
-      if ( lb_ev->isSelected( i ) )
+      if ( lb_ev->item( i )->isSelected() )
       {
          evs_selected.push_back( i );
       }
    }
 
-   disconnect( lb_ev, SIGNAL( selectionChanged() ), 0, 0 );
+   disconnect( lb_ev, SIGNAL( itemSelectionChanged() ), 0, 0 );
 
    for ( int i = 0; i < (int) evs_selected.size(); ++i )
    {
       if ( !running )
       {
-         editor_msg( "red", tr( "Processing stopped" ) );
+         editor_msg( "red", us_tr( "Processing stopped" ) );
          update_enables();
          return;
       }
 
-      progress->setProgress( i, evs_selected.size() );
+      progress->setValue( i ); progress->setMaximum( evs_selected.size() );
 
       lb_ev->clearSelection();
 
-      lb_ev->setSelected( evs_selected[ i ], true );
+      lb_ev->item( evs_selected[ i ])->setSelected( true );
 
       qApp->processEvents();
 
       do_recon();
 
-      last_recon_evs << QString( "%1" ).arg( lb_ev->text( evs_selected[ i ] ) );
+      last_recon_evs << QString( "%1" ).arg( lb_ev->item( evs_selected[ i ] )->text() );
       rmsd_x.push_back( i + 1e0 );
       rmsd_y.push_back( last_recon_rmsd );
 
@@ -2726,14 +2889,14 @@ void US_Hydrodyn_Saxs_Hplc_Svd::indiv_recon()
    lb_ev->clearSelection();
    for ( int i = 0; i < (int) evs_selected.size(); ++i )
    {
-      lb_ev->setSelected( evs_selected[ i ], true );
+      lb_ev->item( evs_selected[ i ])->setSelected( true );
    }
 
-   connect( lb_ev, SIGNAL( selectionChanged() ), SLOT( sv_selection_changed() ) );
+   connect( lb_ev, SIGNAL( itemSelectionChanged() ), SLOT( sv_selection_changed() ) );
 
    running = false;
    update_enables();
-   editor_msg( "blue", tr( "Done TSVD reconstruction" ) );
+   editor_msg( "blue", us_tr( "Done TSVD reconstruction" ) );
 }
 
 void US_Hydrodyn_Saxs_Hplc_Svd::set_plot_errors()
@@ -2832,25 +2995,34 @@ QStringList US_Hydrodyn_Saxs_Hplc_Svd::add_subset_data( QStringList files )
 
    if ( sel_sources.size() != 1 )
    {
-      editor_msg( "red", QString( tr( "Internal error: add_subset_data with more than one source (%1)" ) ).arg( sel_sources.size() ) );
+      editor_msg( "red", QString( us_tr( "Internal error: add_subset_data with more than one source (%1)" ) ).arg( sel_sources.size() ) );
       return result;
    }
 
-   QString name = QString( tr( "Subset of %1" ) ).arg( *(sel_sources.begin()) );
+   QString name = QString( us_tr( "Subset of %1" ) ).arg( *(sel_sources.begin()) );
 
    {
       int ext = 0;
       while ( sources.count( name ) )
       {
-         name = QString( tr( "Subset %1 of %2" ) ).arg( ++ext ).arg( *(sel_sources.begin()) );
+         name = QString( us_tr( "Subset %1 of %2" ) ).arg( ++ext ).arg( *(sel_sources.begin()) );
       }
    }
 
-   Q3ListViewItem * lvi = new Q3ListViewItem( lv_data, lvi_last_depth( 0 ), name );
+#if QT_VERSION < 0x040000
+   QTreeWidgetItem * lvi = new QTreeWidgetItem( lv_data, lvi_last_depth( 0 ), name );
 
    // copy over I(q), ignore SVs, rmsd since these are not computed
 
-   Q3ListViewItem * iqs = new Q3ListViewItem( lvi, lv_data->lastItem(), mode_i_of_t ? "I(t)" : "I(q)" );
+   QTreeWidgetItem * iqs = new QTreeWidgetItem( lvi, US_Static::lv_lastItem( lv_data ), mode_i_of_t ? "I(t)" : "I(q)" );
+#else
+   QTreeWidgetItem * lvi = new QTreeWidgetItem( lv_data, lvi_last_depth( 0 ) );
+   lvi->setText( 0, name );
+   // copy over I(q), ignore SVs, rmsd since these are not computed
+
+   QTreeWidgetItem * iqs = new QTreeWidgetItem( lvi, US_Static::lv_lastItem( lv_data ) );
+   iqs->setText( 0, mode_i_of_t ? "I(t)" : "I(q)" );
+#endif
 
    QString head = hplc_win->qstring_common_head( files, true );
    QString tag  = head;
@@ -2874,12 +3046,17 @@ QStringList US_Hydrodyn_Saxs_Hplc_Svd::add_subset_data( QStringList files )
    } while( any_found );
    tag += ext ? QString( "%1_" ).arg( ext ) : QString( "" );
 
-   Q3ListViewItem * lvinext = iqs;
+   QTreeWidgetItem * lvinext = iqs;
 
    for ( int i = 0; i < (int)files.size(); ++i )
    {
       QString this_name = tag + last_svd_data[ i ].mid( head.length(), files[ i ].length() - head.length() );
-      lvinext = new Q3ListViewItem( iqs, lvinext, this_name );
+#if QT_VERSION < 0x040000
+      lvinext = new QTreeWidgetItem( iqs, lvinext, this_name );
+#else
+      lvinext = new QTreeWidgetItem( iqs, lvinext );
+      lvinext->setText( 0, this_name );
+#endif
       result << this_name;
       
       f_pos      [ this_name ] = f_pos.size();
@@ -2890,10 +3067,10 @@ QStringList US_Hydrodyn_Saxs_Hplc_Svd::add_subset_data( QStringList files )
       f_is_time  [ this_name ] = mode_i_of_t;
    }
 
-   disconnect(lv_data, SIGNAL(selectionChanged()), 0, 0 );
+   disconnect(lv_data, SIGNAL(itemSelectionChanged()), 0, 0 );
    lv_data->clearSelection();
    lvi->setSelected( true );
-   connect(lv_data, SIGNAL(selectionChanged()), SLOT( data_selection_changed() ));
+   connect(lv_data, SIGNAL(itemSelectionChanged()), SLOT( data_selection_changed() ));
 
    add_i_of_q_or_t( name, result, false );
 
@@ -2904,11 +3081,11 @@ QString US_Hydrodyn_Saxs_Hplc_Svd::get_related_source_name( QString name )
 {
    // find "SVD of: " in current source
 
-   Q3ListViewItemIterator it( lv_data );
-   while ( it.current() ) 
+   QTreeWidgetItemIterator it( lv_data );
+   while ( (*it) ) 
    {
-      Q3ListViewItem *item = it.current();
-      if ( item->depth() == 1 &&
+      QTreeWidgetItem *item = (*it);
+      if ( US_Static::lvi_depth( item ) == 1 &&
            item->text( 0 ).left( 8 ) == "SVD of: " &&
            item->parent()->text( 0 ) == name
            )
@@ -2925,14 +3102,14 @@ QStringList US_Hydrodyn_Saxs_Hplc_Svd::get_files_by_name( QString name )
    QStringList result;
    QString iq_or_it = iq_it_state ? "I(t)" : "I(q)";
 
-   Q3ListViewItemIterator it( lv_data );
-   while ( it.current() ) 
+   QTreeWidgetItemIterator it( lv_data );
+   while ( (*it) ) 
    {
-      Q3ListViewItem *item = it.current();
+      QTreeWidgetItem *item = (*it);
       if ( 
-           item->depth() == 2 &&
-           item->parent()->text( 0 ) == iq_or_it &&
-           item->parent()->parent()->text( 0 ) == name 
+          US_Static::lvi_depth( item ) == 2 &&
+          item->parent()->text( 0 ) == iq_or_it &&
+          item->parent()->parent()->text( 0 ) == name 
            )
       {
          result << item->text( 0 );
@@ -2951,7 +3128,7 @@ bool US_Hydrodyn_Saxs_Hplc_Svd::get_plot_files( QStringList &use_list, QStringLi
    }
    if ( sources.size() > 1 )
    {
-      editor_msg( "red", QString( tr( "Internal error: get_plot_files() with more than one source (%1)" ) ).arg( sources.size() ) );
+      editor_msg( "red", QString( us_tr( "Internal error: get_plot_files() with more than one source (%1)" ) ).arg( sources.size() ) );
       return false;
    }
 
@@ -2960,7 +3137,7 @@ bool US_Hydrodyn_Saxs_Hplc_Svd::get_plot_files( QStringList &use_list, QStringLi
    
    if ( ref_source.isEmpty() )
    {
-      editor_msg( "red", QString( tr( "Internal error: get_plot_files() could not find related name for source %1" ) ).arg( source ) );
+      editor_msg( "red", QString( us_tr( "Internal error: get_plot_files() could not find related name for source %1" ) ).arg( source ) );
       return false;
    }
 
@@ -2975,7 +3152,7 @@ bool US_Hydrodyn_Saxs_Hplc_Svd::get_plot_files( QStringList &use_list, QStringLi
 
    if ( full_list.size() != full_ref_list.size() )
    {
-      editor_msg( "red", QString( tr( "Internal error: get_plot_files() file list count mismatch %1 %2" ) ).arg( full_list.size() ).arg( full_ref_list.size() ) );
+      editor_msg( "red", QString( us_tr( "Internal error: get_plot_files() file list count mismatch %1 %2" ) ).arg( full_list.size() ).arg( full_ref_list.size() ) );
       return false;
    }
       
@@ -3046,7 +3223,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::do_plot_errors()
       if ( f_qs_string[ use_ref_list[ i ] ] != 
            f_qs_string[ use_list    [ i ] ] )
       {
-         editor_msg( "red", QString( tr( "Error: plot residuals: curve grid mismatch" ) ) );
+         editor_msg( "red", QString( us_tr( "Error: plot residuals: curve grid mismatch" ) ) );
          return;
       }
 
@@ -3224,7 +3401,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::do_plot_errors()
       }
 
       plot_errors->setAxisTitle(QwtPlot::yLeft, QString(
-                                                        tr( cb_plot_errors_pct->isChecked() ?
+                                                        us_tr( cb_plot_errors_pct->isChecked() ?
                                                             "% difference %1" :
                                                             ( cb_plot_errors_sd->isChecked() ?
                                                               "delta I%1/sd" : "delta I%1" 
@@ -3498,7 +3675,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::do_plot_errors_group()
    {
       // cout << "upeg: recreating axis\n";
       plot_errors->setAxisTitle(QwtPlot::yLeft, QString(
-                                                        tr( cb_plot_errors_pct->isChecked() ?
+                                                        us_tr( cb_plot_errors_pct->isChecked() ?
                                                             "% difference %1" :
                                                             ( cb_plot_errors_sd->isChecked() ?
                                                               "delta I%1/sd" : "delta I%1" 
@@ -3529,12 +3706,12 @@ void US_Hydrodyn_Saxs_Hplc_Svd::do_plot_errors_group()
 
 bool US_Hydrodyn_Saxs_Hplc_Svd::setup_save( QString tag, QString & fname )
 {
-   QString use_dir = QDir::currentDirPath();
+   QString use_dir = QDir::currentPath();
 
    ush_win->select_from_directory_history( use_dir, this );
    raise();
 
-   fname = QFileDialog::getSaveFileName( this , tr( "Select a file name to " ) + tag , use_dir , "Text files (*.txt *.TXT);;"
+   fname = QFileDialog::getSaveFileName( this , us_tr( "Select a file name to " ) + tag , use_dir , "Text files (*.txt *.TXT);;"
                                         "CSV files (*.csv *.CSV);;"
                                         "All Files (*)" );
 
@@ -3556,7 +3733,7 @@ bool US_Hydrodyn_Saxs_Hplc_Svd::setup_save( QString tag, QString & fname )
 void US_Hydrodyn_Saxs_Hplc_Svd::rmsd_save()
 {
    QString fname;
-   if ( !setup_save( tr( "save last RMSD values" ), fname ) )
+   if ( !setup_save( us_tr( "save last RMSD values" ), fname ) )
    {
       return;
    }
@@ -3565,7 +3742,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::rmsd_save()
 
    if ( !f.open( QIODevice::WriteOnly ) )
    {
-      editor_msg( "red", QString( tr( "Error: can not open %1 for writing" ) ).arg( fname ) );
+      editor_msg( "red", QString( us_tr( "Error: can not open %1 for writing" ) ).arg( fname ) );
       return;
    }
 
@@ -3575,21 +3752,21 @@ void US_Hydrodyn_Saxs_Hplc_Svd::rmsd_save()
       out += QString( "%1,%2,%3" ).arg( rmsd_x[ i ] ).arg( rmsd_y[ i ] ).arg( last_recon_evs[ i ] ) + "\n";
    }
 
-   if ( fname.lower().contains( QRegExp( "\\.txt$" ) ) )
+   if ( fname.toLower().contains( QRegExp( "\\.txt$" ) ) )
    {
       out.replace( "\"", "" ).replace( ",", "\t" );
    }
 
-   Q3TextStream ts( &f );
+   QTextStream ts( &f );
    ts << out;
    f.close();
-   editor_msg( "blue", QString( tr( "RMSDs saved in %1" ) ).arg( fname ) );
+   editor_msg( "blue", QString( us_tr( "RMSDs saved in %1" ) ).arg( fname ) );
 }
 
 void US_Hydrodyn_Saxs_Hplc_Svd::svd_save()
 {
    QString fname;
-   if ( !setup_save( tr( "save last SVD values" ), fname ) )
+   if ( !setup_save( us_tr( "save last SVD values" ), fname ) )
    {
       return;
    }
@@ -3598,23 +3775,23 @@ void US_Hydrodyn_Saxs_Hplc_Svd::svd_save()
 
    if ( !f.open( QIODevice::WriteOnly ) )
    {
-      editor_msg( "red", QString( tr( "Error: can not open %1 for writing" ) ).arg( fname ) );
+      editor_msg( "red", QString( us_tr( "Error: can not open %1 for writing" ) ).arg( fname ) );
       return;
    }
 
-   QString out = QString( tr( "\"SVD of %1\",\"Singular value\"" ) ).arg( last_svd_name ) + "\n";
+   QString out = QString( us_tr( "\"SVD of %1\",\"Singular value\"" ) ).arg( last_svd_name ) + "\n";
    for ( int i = 0; i < (int) lb_ev->count(); ++i )
    {
-      out += QString( "%1,%2" ).arg( i + 1 ).arg( lb_ev->text( i ) ) + "\n";
+      out += QString( "%1,%2" ).arg( i + 1 ).arg( lb_ev->item( i )->text() ) + "\n";
    }
 
-   if ( fname.lower().contains( QRegExp( "\\.txt$" ) ) )
+   if ( fname.toLower().contains( QRegExp( "\\.txt$" ) ) )
    {
       out.replace( "\"", "" ).replace( ",", "\t" );
    }
 
-   Q3TextStream ts( &f );
+   QTextStream ts( &f );
    ts << out;
    f.close();
-   editor_msg( "blue", QString( tr( "RMSDs saved in %1" ) ).arg( fname ) );
+   editor_msg( "blue", QString( us_tr( "RMSDs saved in %1" ) ).arg( fname ) );
 }

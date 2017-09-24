@@ -7,15 +7,15 @@
 #include <qstring.h>
 #include <qlayout.h>
 #include <qpushbutton.h>
-#include <q3frame.h>
+//#include <q3frame.h>
 #include <qcheckbox.h>
-#include <q3textedit.h>
-#include <q3progressbar.h>
+#include <qtextedit.h>
+#include <qprogressbar.h>
 #include <qmenubar.h>
 #include <qfileinfo.h>
 #include <qprinter.h>
-#include <q3table.h>
-#include <q3listview.h>
+#include <qtablewidget.h>
+#include <qtreewidget.h>
 //Added by qt3to4:
 #include <QCloseEvent>
 
@@ -57,7 +57,7 @@ struct pdb_sel_count
    unsigned int not_selected_atoms;
 };
 
-class US_EXTERN US_Hydrodyn_Pdb_Tool_Merge : public Q3Frame
+class US_EXTERN US_Hydrodyn_Pdb_Tool_Merge : public QFrame
 {
    Q_OBJECT
       friend class US_Hydrodyn_Pdb_Tool;
@@ -82,7 +82,7 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool_Merge : public Q3Frame
 
       QLabel               *lbl_title;
 
-      Q3Table               *t_csv;
+      QTableWidget               *t_csv;
       // csv layout for cut/splice
       // 
       // chain|cut start|cut end|fit start|fit end|merge start|merge end
@@ -118,14 +118,14 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool_Merge : public Q3Frame
 
       QCheckBox            *cb_filter;
 
-      Q3ProgressBar         *progress;
+      QProgressBar         *progress;
 
       QPushButton          *pb_start;
       QPushButton          *pb_trial;
       QPushButton          *pb_stop;
 
       QFont                ft;
-      Q3TextEdit            *editor;
+      QTextEdit            *editor;
       QMenuBar             *m;
 
       QPushButton          *pb_help;
@@ -144,9 +144,9 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool_Merge : public Q3Frame
 
       void                 reset_csv_commands();
 
-      Q3ListView            *lv_csv_from;
-      Q3ListView            *lv_csv_to;
-      void                 sel_to_range( Q3ListView *lv, 
+      QTreeWidget            *lv_csv_from;
+      QTreeWidget            *lv_csv_to;
+      void                 sel_to_range( QTreeWidget *lv, 
                                          vector < range_entry > &ranges,
                                          bool just_selected = true );
 

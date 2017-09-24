@@ -27,14 +27,14 @@
 #include <qwidget.h>
 #include <qtranslator.h>
 #include <qlayout.h>
-#include <q3frame.h>
+//#include <q3frame.h>
 //Added by qt3to4:
 #include <QCloseEvent>
 
 //extern int US_EXTERN global_Xpos;
 //extern int US_EXTERN global_Ypos;
 
-class US_EXTERN US_Config_GUI : public Q3Frame
+class US_EXTERN US_Config_GUI : public QFrame
 {
    Q_OBJECT
 

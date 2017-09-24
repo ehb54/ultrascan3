@@ -6,7 +6,7 @@
 #include <qwindowsstyle.h>
 #include <qcheckbox.h>
 #include <qfile.h>
-#include <q3textstream.h>
+//#include <q3textstream.h>
 #include <qdatastream.h>
 #include <qpushbutton.h>
 #include <qlineedit.h>
@@ -15,12 +15,13 @@
 #include <qdialog.h>
 #include <qfiledialog.h>
 #include <qstring.h>
-#include <q3process.h>
+#include <qprocess.h>
 #include <qmessagebox.h>
 #include <qprinter.h>
-#include <q3frame.h>
+//#include <q3frame.h>
 #include <qtranslator.h>
 #include <qlayout.h>
+#include <qtreewidget.h>
 
 #include "us.h"
 #include "us_extern.h"
@@ -74,24 +75,24 @@ struct us_colors
   QColor gray7;
   QColor gray8;
   QColor gray9;
-  QColorGroup cg_frame;
-  QColorGroup cg_pushb;
-  QColorGroup cg_pushb_active;
-  QColorGroup cg_pushb_disabled;
-  QColorGroup cg_label;
-  QColorGroup cg_label_disabled;
-  QColorGroup cg_label_warn;
-  QColorGroup cg_edit;
-  QColorGroup cg_edit_warn;
-  QColorGroup cg_dk_red;
-  QColorGroup cg_dk_green;
-  QColorGroup cg_red;
-  QColorGroup cg_green;
-  QColorGroup cg_gray;
-  QColorGroup cg_normal;
-  QColorGroup cg_plot;
-  QColorGroup cg_lcd;
-  QColorGroup cg_bunt;
+  QPalette cg_frame;
+  QPalette cg_pushb;
+  QPalette cg_pushb_active;
+  QPalette cg_pushb_disabled;
+  QPalette cg_label;
+  QPalette cg_label_disabled;
+  QPalette cg_label_warn;
+  QPalette cg_edit;
+  QPalette cg_edit_warn;
+  QPalette cg_dk_red;
+  QPalette cg_dk_green;
+  QPalette cg_red;
+  QPalette cg_green;
+  QPalette cg_gray;
+  QPalette cg_normal;
+  QPalette cg_plot;
+  QPalette cg_lcd;
+  QPalette cg_bunt;
 };
 
 struct correctionTerms
@@ -214,7 +215,7 @@ class US_EXTERN US_Help : public QWidget
 
   private:
     US_Config *USglobal;
-    Q3Process *proc;
+    QProcess *proc;
 
   private slots:
     void captureStdout();
@@ -314,6 +315,30 @@ struct SA2d_control_variables
   double  minx, miny, maxx, maxy, maxz, xscaling, yscaling, zscaling, alpha, beta;
 };
 
+#if QT_VERSION >= 0x040000
+extern QString us_tr( QString );
+extern const char * us_trp( QString );
+extern void us_qdebug( QString );
+extern FILE * us_fopen( QString f, const char *mode );
+#endif
+
+class US_EXTERN US_Static {
+ public:
+   static bool lv_any_selected( QTreeWidget *lv );
+   static bool lv_any_unselected( QTreeWidget *lv );
+   static void lv_select_all_or_none( QTreeWidget *lv );
+   static int lvi_depth( QTreeWidgetItem *lvi );
+   static QTreeWidgetItem * lv_lastItem( QTreeWidget *lv );
+
+#if QT_VERSION >= 0x040000
+   static double getDouble(const QString & title, const QString & label, double value = 0, double min = -2147483647, double max = 2147483647, int decimals = 1, bool * ok = 0, QWidget * parent = 0, const char * name = 0, Qt::WindowFlags flags = 0);
+   static int getInteger(const QString & title, const QString & label, int value = 0, int min = -2147483647, int max = 2147483647, int step = 1, bool * ok = 0, QWidget * parent = 0, const char * name = 0, Qt::WindowFlags flags = 0);
+   static QString getItem(const QString & title, const QString & label, const QStringList & list, int current = 0, bool editable = true, bool * ok = 0, QWidget * parent = 0, const char * name = 0, Qt::WindowFlags flags = 0);
+   static QString getText(const QString & title, const QString & label, QLineEdit::EchoMode echo = QLineEdit::Normal, const QString & text = QString(), bool * ok = 0, QWidget * parent = 0, const char * name = 0, Qt::WindowFlags flags = 0);
+   // static FILE * us_fopen( QString f, const char *mode );
+   static int us_message(const QString & title, const QString & text, const QString & buttonText = QString(), QWidget * parent = 0, const char * name = 0);
+#endif
+};
 
 #endif
 

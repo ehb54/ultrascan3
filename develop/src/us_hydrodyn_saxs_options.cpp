@@ -2,11 +2,11 @@
 #include "../include/us_hydrodyn_asa.h"
 #include "../include/us_hydrodyn.h"
 //Added by qt3to4:
-#include <Q3BoxLayout>
-#include <Q3HBoxLayout>
-#include <Q3VBoxLayout>
+#include <QBoxLayout>
+#include <QHBoxLayout>
+#include <QVBoxLayout>
 #include <QLabel>
-#include <Q3Frame>
+#include <QFrame>
 #include <QCloseEvent>
 
 #define SLASH "/"
@@ -32,7 +32,7 @@ US_Hydrodyn_SaxsOptions::US_Hydrodyn_SaxsOptions(
                                                  void *us_hydrodyn, 
                                                  QWidget *p, 
                                                  const char *name
-                                                 ) : Q3Frame(p, name)
+                                                 ) : QFrame( p )
 {
    this->saxs_options                    = saxs_options;
 
@@ -55,7 +55,7 @@ US_Hydrodyn_SaxsOptions::US_Hydrodyn_SaxsOptions(
 
    USglobal=new US_Config();
    setPalette( PALET_FRAME );
-   setCaption( tr("US-SOMO SAS Options") );
+   setWindowTitle( us_tr("US-SOMO SAS Options") );
    setupGUI();
    global_Xpos += 30;
    global_Ypos += 30;
@@ -72,33 +72,33 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    started_in_expert_mode = U_EXPT;
 
    int minHeight1 = 30;
-   lbl_info = new QLabel(tr("US-SOMO SAS Options:"), this);
-   lbl_info->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Raised);
+   lbl_info = new QLabel(us_tr("US-SOMO SAS Options:"), this);
+   lbl_info->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_info->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_info->setMinimumHeight(minHeight1);
    lbl_info->setPalette( PALET_FRAME );
    AUTFBACK( lbl_info );
    lbl_info->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
 
-   pb_sas_options_saxs = new QPushButton( tr( "SAXS computation options"), this);
+   pb_sas_options_saxs = new QPushButton( us_tr( "SAXS computation options"), this);
    pb_sas_options_saxs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_sas_options_saxs->setMinimumHeight(minHeight1);
    pb_sas_options_saxs->setPalette( PALET_PUSHB );
    connect(pb_sas_options_saxs, SIGNAL(clicked()), SLOT(sas_options_saxs()));
 
-   pb_sas_options_sans = new QPushButton( tr( "SANS computation options"), this);
+   pb_sas_options_sans = new QPushButton( us_tr( "SANS computation options"), this);
    pb_sas_options_sans->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_sas_options_sans->setMinimumHeight(minHeight1);
    pb_sas_options_sans->setPalette( PALET_PUSHB );
    connect(pb_sas_options_sans, SIGNAL(clicked()), SLOT(sas_options_sans()));
 
-   pb_sas_options_curve = new QPushButton( tr( "Curve generation options"), this);
+   pb_sas_options_curve = new QPushButton( us_tr( "Curve generation options"), this);
    pb_sas_options_curve->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_sas_options_curve->setMinimumHeight(minHeight1);
    pb_sas_options_curve->setPalette( PALET_PUSHB );
    connect(pb_sas_options_curve, SIGNAL(clicked()), SLOT(sas_options_curve()));
 
-   pb_sas_options_bead_model = new QPushButton( tr( "Bead model options"), this);
+   pb_sas_options_bead_model = new QPushButton( us_tr( "Bead model options"), this);
    pb_sas_options_bead_model->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_sas_options_bead_model->setMinimumHeight(minHeight1);
    pb_sas_options_bead_model->setPalette( PALET_PUSHB );
@@ -106,7 +106,7 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
 
    if ( started_in_expert_mode )
    {
-      pb_sas_options_hydration = new QPushButton( tr( "Hydration options"), this);
+      pb_sas_options_hydration = new QPushButton( us_tr( "Hydration options"), this);
       pb_sas_options_hydration->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
       pb_sas_options_hydration->setMinimumHeight(minHeight1);
       pb_sas_options_hydration->setPalette( PALET_PUSHB );
@@ -115,7 +115,7 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
 #endif
    }
 
-   pb_sas_options_guinier = new QPushButton( tr( "Guinier options"), this);
+   pb_sas_options_guinier = new QPushButton( us_tr( "Guinier options"), this);
    pb_sas_options_guinier->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_sas_options_guinier->setMinimumHeight(minHeight1);
    pb_sas_options_guinier->setPalette( PALET_PUSHB );
@@ -123,14 +123,14 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
 
    if ( started_in_expert_mode )
    {
-      pb_sas_options_xsr = new QPushButton( tr( "Cross section fitting options"), this);
+      pb_sas_options_xsr = new QPushButton( us_tr( "Cross section fitting options"), this);
       pb_sas_options_xsr->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
       pb_sas_options_xsr->setMinimumHeight(minHeight1);
       pb_sas_options_xsr->setPalette( PALET_PUSHB );
       connect(pb_sas_options_xsr, SIGNAL(clicked()), SLOT(sas_options_xsr()));
    }
 
-   pb_sas_options_misc = new QPushButton( tr( "Miscellaneous options"), this);
+   pb_sas_options_misc = new QPushButton( us_tr( "Miscellaneous options"), this);
    pb_sas_options_misc->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_sas_options_misc->setMinimumHeight(minHeight1);
    pb_sas_options_misc->setPalette( PALET_PUSHB );
@@ -138,26 +138,26 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
 
    if ( started_in_expert_mode )
    {
-      pb_sas_options_experimental = new QPushButton( tr( "Experimental code options"), this);
+      pb_sas_options_experimental = new QPushButton( us_tr( "Experimental code options"), this);
       pb_sas_options_experimental->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
       pb_sas_options_experimental->setMinimumHeight(minHeight1);
       pb_sas_options_experimental->setPalette( PALET_PUSHB );
       connect(pb_sas_options_experimental, SIGNAL(clicked()), SLOT(sas_options_experimental()));
    }
 
-   pb_cancel = new QPushButton(tr("Close"), this);
+   pb_cancel = new QPushButton(us_tr("Close"), this);
    pb_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_cancel->setMinimumHeight(minHeight1);
    pb_cancel->setPalette( PALET_PUSHB );
    connect(pb_cancel, SIGNAL(clicked()), SLOT(cancel()));
 
-   pb_help = new QPushButton(tr("Help"), this);
+   pb_help = new QPushButton(us_tr("Help"), this);
    pb_help->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_help->setMinimumHeight(minHeight1);
    pb_help->setPalette( PALET_PUSHB );
    connect(pb_help, SIGNAL(clicked()), SLOT(help()));
 
-   Q3BoxLayout *background = new Q3VBoxLayout( this );
+   QBoxLayout *background = new QVBoxLayout( this );
 
    background->addWidget( lbl_info                    );
    background->addWidget( pb_sas_options_saxs         );
@@ -179,7 +179,7 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
       background->addWidget( pb_sas_options_experimental );
    }
 
-   Q3BoxLayout *helpclose = new Q3HBoxLayout;
+   QBoxLayout *helpclose = new QHBoxLayout;
 
    helpclose->addWidget( pb_help   );
    helpclose->addWidget( pb_cancel );

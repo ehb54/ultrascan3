@@ -1,6 +1,6 @@
 #include "../include/us_util.h"
 
-US_Help::US_Help(QWidget *parent, const char* name) : QWidget( parent, name )
+US_Help::US_Help(QWidget *parent, const char* name) : QWidget( parent )
 {
   USglobal = new US_Config();
 }
@@ -40,22 +40,47 @@ void US_Help::show_html_file( QString helpFile )
 
 void US_Help::openBrowser()
 {
-  proc = new Q3Process( this );
-#ifdef Q_WS_MAC
+#if QT_VERSION < 0x040000
+  proc = new QProcess( this );
+# ifdef Q_WS_MAC
   proc->addArgument( "open" );
   proc->addArgument( "-a" );
-#endif
+# endif
   proc->addArgument( USglobal->config_list.browser );
   proc->addArgument( URL );
 
   if ( ! proc->start() ) // Error
   {
-    QMessageBox::message(
-        tr( "UltraScan Error:" ), 
-        tr( "Can't start browser window...\n"
+    US_Static::us_message(
+        us_tr( "UltraScan Error:" ), 
+        us_tr( "Can't start browser window...\n"
             "Please make sure you have the configured browser installed\n\n"
             "Currently configured: " + USglobal->config_list.browser ) );
   }
+#else
+  {
+     QProcess * process = new QProcess( this );
+     QString prog = USglobal->config_list.browser;
+     QStringList args;
+# ifdef Q_WS_MAC
+     args
+        << "-a"
+        ;
+     prog = "open";
+# endif
+     args
+        <<  URL
+        ;
+
+     if ( !process->startDetached( prog, args ) ) {
+        US_Static::us_message(
+                             us_tr( "UltraScan Error:" ), 
+                             us_tr( "Can't start browser window...\n"
+                                 "Please make sure you have the configured browser installed\n\n"
+                                 "Currently configured: " + USglobal->config_list.browser ) );
+     }
+  }
+#endif
 }
 
 
@@ -69,13 +94,13 @@ void US_Help::captureStderr(){}
 
 
  /* 
-  connect( proc, SIGNAL( readyReadStdout() ), 
+  connect( proc, SIGNAL( readyReadStandardOutput() ), 
            this, SLOT  ( captureStdout  () ) );
   
-  connect( proc, SIGNAL( readyReadStderr() ), 
+  connect( proc, SIGNAL( readyReadStandardError() ), 
            this, SLOT  ( captureStderr  () ) );
   
-  connect( proc, SIGNAL( processExited() ), 
+  connect( proc, SIGNAL( finished( int, QProcess::ExitStatus ) ), 
            this, SLOT  ( endProcess   () ) );
   
   proc->clearArguments();
@@ -88,9 +113,9 @@ void US_Help::captureStderr(){}
 
   if ( ! proc->start() ) // Error
   {
-    QMessageBox::message(
-        tr( "UltraScan Error:" ), 
-        tr( "Can't start browser window...\n"
+    US_Static::us_message(
+        us_tr( "UltraScan Error:" ), 
+        us_tr( "Can't start browser window...\n"
             "Please make sure you have the configured browser installed\n\n"
             "Currently configured: " + USglobal->config_list.browser ) );
   }
@@ -110,9 +135,9 @@ void US_Help::endProcess()
 
     if ( ! proc->start() ) // Error
     {
-      QMessageBox::message(
-          tr( "UltraScan Error:" ), 
-          tr( "Can't start browser window...\n"
+      US_Static::us_message(
+          us_tr( "UltraScan Error:" ), 
+          us_tr( "Can't start browser window...\n"
               "Please make sure you have the configured browser installed\n\n"
               "Currently configured: " + USglobal->config_list.browser ) );
       return;
@@ -123,7 +148,7 @@ void US_Help::endProcess()
 
 void US_Help::captureStdout()
 {
-  cout << "std: " << proc->readLineStdout().ascii() << endl;
+  cout << "std: " << proc->readLineStdout().toAscii().data() << endl;
 }
 
 void US_Help::captureStderr()

@@ -6,7 +6,6 @@
 #include <QPixmap>
 #include <QLabel>
 #include <QMouseEvent>
-#include <Q3StrList>
 #include <Q3PopupMenu>
 
 
@@ -31,12 +30,12 @@ US_ImageViewer::US_ImageViewer( QWidget *parent, const char *name, int wFlags )
    menubar = new QMenuBar(this);
    menubar->setSeparator( QMenuBar::InWindowsStyle );
 
-   Q3StrList fmt = QImageWriter::supportedImageFormats();
+   QStringList fmt = QImage::outputFormatList();
    saveimage = new Q3PopupMenu( menubar );
    savepixmap = new Q3PopupMenu( menubar );
-   for (const char* f = fmt.first(); f; f = fmt.next()) {
-      saveimage->insertItem( f );
-      savepixmap->insertItem( f );
+   for (QStringList::iterator f = fmt.begin(); f != fmt.end(); ++f) {
+      saveimage->insertItem( *f );
+      savepixmap->insertItem( *f );
    }
    connect( saveimage, SIGNAL(activated(int)), this, SLOT(saveImage(int)) );
    connect( savepixmap, SIGNAL(activated(int)), this, SLOT(savePixmap(int)) );

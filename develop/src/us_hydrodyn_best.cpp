@@ -8,14 +8,14 @@
 #  include <stdlib.h>
 #  include <float.h>
 //Added by qt3to4:
-#include <Q3TextStream>
-#include <Q3HBoxLayout>
+#include <QBoxLayout>
 #include <QLabel>
-#include <Q3Frame>
-#include <Q3PopupMenu>
-#include <Q3VBoxLayout>
-#include <Q3BoxLayout>
 #include <QCloseEvent>
+#include <QTextStream>
+#include <QHBoxLayout>
+#include <QVBoxLayout>
+#include <QFrame>
+ //#include <Q3PopupMenu>
 // #  define isnan _isnan
 #endif
 
@@ -32,7 +32,7 @@ US_Hydrodyn_Best::US_Hydrodyn_Best(
                                    bool                     *              best_widget,
                                    QWidget *                               p,
                                    const char *                            name
-                                   ) : Q3Frame( p, name )
+                                   ) : QFrame(  p )
 {
    this->us_hydrodyn                          = us_hydrodyn;
    this->best_widget                          = best_widget;
@@ -44,10 +44,10 @@ US_Hydrodyn_Best::US_Hydrodyn_Best(
 
    USglobal = new US_Config();
    setPalette( PALET_FRAME );
-   setCaption( tr( "US-SOMO: BEST results analysis tool" ) );
+   setWindowTitle( us_tr( "US-SOMO: BEST results analysis tool" ) );
 
    cg_red = USglobal->global_colors.cg_label;
-   cg_red.setBrush( QColorGroup::Foreground, QBrush( QColor( "red" ),  Qt::SolidPattern ) );
+   cg_red.setBrush( QPalette::Foreground, QBrush( QColor( "red" ),  Qt::SolidPattern ) );
 
    plot_data_zoomer      = (ScrollZoomer *) 0;
 
@@ -153,17 +153,17 @@ void US_Hydrodyn_Best::setupGUI()
    lbl_input->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
    connect( lbl_input, SIGNAL( pressed() ), SLOT( hide_input() ) );
 
-   lb_data = new Q3ListBox( this );
-   lb_data->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Raised);
+   lb_data = new QListWidget( this );
+   lb_data->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lb_data->setPalette( PALET_EDIT );
    AUTFBACK( lb_data );
    lb_data->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
    lb_data->setEnabled(true);
-   connect( lb_data, SIGNAL( selectionChanged() ), SLOT( data_selected() ) );
+   connect( lb_data, SIGNAL( itemSelectionChanged() ), SLOT( data_selected() ) );
 
    input_widgets.push_back( lb_data );
 
-   pb_load =  new QPushButton ( tr( "Load CSV" ), this );
+   pb_load =  new QPushButton ( us_tr( "Load CSV" ), this );
    pb_load -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1) );
    pb_load -> setMinimumHeight( minHeight1 );
    pb_load -> setPalette      ( PALET_PUSHB );
@@ -171,7 +171,7 @@ void US_Hydrodyn_Best::setupGUI()
 
    input_widgets.push_back( pb_load );
 
-   pb_join_results =  new QPushButton ( tr( "Join results" ), this );
+   pb_join_results =  new QPushButton ( us_tr( "Join results" ), this );
    pb_join_results -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1) );
    pb_join_results -> setMinimumHeight( minHeight1 );
    pb_join_results -> setPalette      ( PALET_PUSHB );
@@ -179,7 +179,7 @@ void US_Hydrodyn_Best::setupGUI()
 
    input_widgets.push_back( pb_join_results );
 
-   pb_save_results =  new QPushButton ( tr( "Save Results" ), this );
+   pb_save_results =  new QPushButton ( us_tr( "Save Results" ), this );
    pb_save_results -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1) );
    pb_save_results -> setMinimumHeight( minHeight1 );
    pb_save_results -> setPalette      ( PALET_PUSHB );
@@ -204,7 +204,7 @@ void US_Hydrodyn_Best::setupGUI()
    cb_plus_lm->setPalette( PALET_NORMAL );
    AUTFBACK( cb_plus_lm );
    cb_plus_lm->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
-   cb_plus_lm->setText( tr( "EXP fit with LM refinement" ) );
+   cb_plus_lm->setText( us_tr( "EXP fit with LM refinement" ) );
    cb_plus_lm->setChecked( false );
    cb_plus_lm->setEnabled( true );
    // cb_plus_lm->show();
@@ -216,7 +216,7 @@ void US_Hydrodyn_Best::setupGUI()
    cb_errorlines->setPalette( PALET_NORMAL );
    AUTFBACK( cb_errorlines );
    cb_errorlines->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
-   cb_errorlines->setText( tr( "Display error lines (+/- 1 sigma of linear fit)" ) );
+   cb_errorlines->setText( us_tr( "Display error lines (+/- 1 sigma of linear fit)" ) );
    cb_errorlines->setChecked( false );
    cb_errorlines->setEnabled( true );
    cb_errorlines->show();
@@ -227,14 +227,14 @@ void US_Hydrodyn_Best::setupGUI()
    cb_manual_rejection->setPalette( PALET_NORMAL );
    AUTFBACK( cb_manual_rejection );
    cb_manual_rejection->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
-   cb_manual_rejection->setText( tr( "Allow manual point rejection" ) );
+   cb_manual_rejection->setText( us_tr( "Allow manual point rejection" ) );
    cb_manual_rejection->setChecked( false );
    cb_manual_rejection->setEnabled( true );
    cb_manual_rejection->show();
    connect( cb_manual_rejection, SIGNAL( clicked() ), SLOT( set_manual_rejection() ) );
    input_widgets.push_back( cb_manual_rejection );
 
-   pb_apply_qtest =  new QPushButton ( tr( "Apply Q test criterion" ), this );
+   pb_apply_qtest =  new QPushButton ( us_tr( "Apply Q test criterion" ), this );
    pb_apply_qtest -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1) );
    pb_apply_qtest -> setMinimumHeight( minHeight1 );
    pb_apply_qtest -> setPalette      ( PALET_PUSHB );
@@ -242,7 +242,7 @@ void US_Hydrodyn_Best::setupGUI()
    connect( pb_apply_qtest, SIGNAL( clicked() ), SLOT( apply_qtest() ) );
    input_widgets.push_back( pb_apply_qtest );
 
-   pb_reset_qtest =  new QPushButton ( tr( "Reset" ), this );
+   pb_reset_qtest =  new QPushButton ( us_tr( "Reset" ), this );
    pb_reset_qtest -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1) );
    pb_reset_qtest -> setMinimumHeight( minHeight1 );
    pb_reset_qtest -> setPalette      ( PALET_PUSHB );
@@ -254,7 +254,7 @@ void US_Hydrodyn_Best::setupGUI()
    rb_90_qtest->setPalette( PALET_NORMAL );
    AUTFBACK( rb_90_qtest );
    rb_90_qtest->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
-   rb_90_qtest->setText( tr( "90%" ) );
+   rb_90_qtest->setText( us_tr( "90%" ) );
    rb_90_qtest->setChecked( true );
    rb_90_qtest->setEnabled( true );
    rb_90_qtest->show();
@@ -264,7 +264,7 @@ void US_Hydrodyn_Best::setupGUI()
    rb_80_qtest->setPalette( PALET_NORMAL );
    AUTFBACK( rb_80_qtest );
    rb_80_qtest->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
-   rb_80_qtest->setText( tr( "80%" ) );
+   rb_80_qtest->setText( us_tr( "80%" ) );
    rb_80_qtest->setEnabled( true );
    rb_80_qtest->show();
    connect( rb_80_qtest, SIGNAL( clicked() ), SLOT( set_loose_qtest() ) );
@@ -274,18 +274,31 @@ void US_Hydrodyn_Best::setupGUI()
    rb_70_qtest->setPalette( PALET_NORMAL );
    AUTFBACK( rb_70_qtest );
    rb_70_qtest->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
-   rb_70_qtest->setText( tr( "70% test level" ) );
+   rb_70_qtest->setText( us_tr( "70% test level" ) );
    rb_70_qtest->setEnabled( true );
    rb_70_qtest->show();
    connect( rb_70_qtest, SIGNAL( clicked() ), SLOT( set_loose_qtest() ) );
    input_widgets.push_back( rb_70_qtest );
 
-   bg_qtest_level = new QButtonGroup( this );
+#if QT_VERSION < 0x040000
+   bg_qtest_level = new QGroupBox( this );
    int bg_pos = 0;
    bg_qtest_level->setExclusive(true);
    bg_qtest_level->addButton( rb_90_qtest, bg_pos++ );
    bg_qtest_level->addButton( rb_80_qtest, bg_pos++ );
    bg_qtest_level->addButton( rb_70_qtest, bg_pos++ );
+#else
+   bg_qtest_level = new QGroupBox();
+   bg_qtest_level->setFlat( true );
+
+   {
+      QVBoxLayout * bl = new QVBoxLayout; bl->setContentsMargins( 0, 0, 0, 0 ); bl->setSpacing( 0 );
+      bl->addWidget( rb_90_qtest );
+      bl->addWidget( rb_80_qtest );
+      bl->addWidget( rb_70_qtest );
+      bg_qtest_level->setLayout( bl );
+   }
+#endif
 
    // ------ editor section
 
@@ -297,46 +310,75 @@ void US_Hydrodyn_Best::setupGUI()
    lbl_editor->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
    connect( lbl_editor, SIGNAL( pressed() ), SLOT( hide_editor() ) );
 
-   editor = new Q3TextEdit(this);
+   editor = new QTextEdit(this);
    editor->setPalette( PALET_NORMAL );
    AUTFBACK( editor );
    editor->setReadOnly(true);
    editor->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 2 ));
 
-#if defined(QT4) && defined(Q_WS_MAC)
+#if QT_VERSION < 0x040000
+# if defined(QT4) && defined(Q_WS_MAC)
    {
-      Q3PopupMenu * file = new Q3PopupMenu;
-      file->insertItem( tr("&Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
-      file->insertItem( tr("&Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
-# ifndef NO_EDITOR_PRINT
-      file->insertItem( tr("&Print"), this, SLOT(print()),   Qt::ALT+Qt::Key_P );
-# endif
-      file->insertItem( tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
+ //      Q3PopupMenu * file = new Q3PopupMenu;
+      file->insertItem( us_tr("&Font"),  this, SLOT(update_font( )),    Qt::ALT+Qt::Key_F );
+      file->insertItem( us_tr("&Save"),  this, SLOT(save( )),    Qt::ALT+Qt::Key_S );
+#  ifndef NO_EDITOR_PRINT
+      file->insertItem( us_tr("&Print"), this, SLOT(print( )),   Qt::ALT+Qt::Key_P );
+#  endif
+      file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display( )),   Qt::ALT+Qt::Key_X );
 
       mb_editor = new QMenuBar( this );
       AUTFBACK( mb_editor );
 
-      mb_editor->insertItem(tr("&Messages"), file );
+      mb_editor->insertItem(us_tr("&Messages"), file );
    }
-#else
-   Q3Frame *frame;
-   frame = new Q3Frame(this);
+# else
+   QFrame *frame;
+   frame = new QFrame(this);
    frame->setMinimumHeight(minHeight3);
    editor_widgets.push_back( frame );
 
-   mb_editor = new QMenuBar(frame, "menu" );
+   mb_editor = new QMenuBar( frame );    mb_editor->setObjectName( "menu" );
    mb_editor->setMinimumHeight(minHeight1 - 5);
    mb_editor->setPalette( PALET_NORMAL );
    AUTFBACK( mb_editor );
 
-   Q3PopupMenu * file = new Q3PopupMenu(editor);
-   mb_editor->insertItem( tr("&File"), file );
-   file->insertItem( tr("Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
-   file->insertItem( tr("Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
-   file->insertItem( tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
+ //   Q3PopupMenu * file = new Q3PopupMenu(editor);
+   mb_editor->insertItem( us_tr("&File"), file );
+   file->insertItem( us_tr("Font"),  this, SLOT(update_font( )),    Qt::ALT+Qt::Key_F );
+   file->insertItem( us_tr("Save"),  this, SLOT(save( )),    Qt::ALT+Qt::Key_S );
+   file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display( )),   Qt::ALT+Qt::Key_X );
+# endif
+#else
+   QFrame *frame;
+   frame = new QFrame(this);
+   frame->setMinimumHeight(minHeight3);
+
+   editor_widgets.push_back( frame );
+
+   mb_editor = new QMenuBar( frame );    mb_editor->setObjectName( "menu" );
+   mb_editor->setMinimumHeight(minHeight1 - 5);
+   mb_editor->setPalette( PALET_NORMAL );
+   AUTFBACK( mb_editor );
+
+   {
+      QMenu * new_menu = mb_editor->addMenu( us_tr( "&File" ) );
+
+      QAction *qa1 = new_menu->addAction( us_tr( "Font" ) );
+      qa1->setShortcut( Qt::ALT+Qt::Key_F );
+      connect( qa1, SIGNAL(triggered()), this, SLOT( update_font() ) );
+
+      QAction *qa2 = new_menu->addAction( us_tr( "Save" ) );
+      qa2->setShortcut( Qt::ALT+Qt::Key_S );
+      connect( qa2, SIGNAL(triggered()), this, SLOT( save() ) );
+
+      QAction *qa3 = new_menu->addAction( us_tr( "Clear Display" ) );
+      qa3->setShortcut( Qt::ALT+Qt::Key_X );
+      connect( qa3, SIGNAL(triggered()), this, SLOT( clear_display() ) );
+   }
 #endif
 
-   editor->setWordWrap (Q3TextEdit::WidgetWidth);
+   editor->setWordWrapMode (QTextOption::WordWrap);
    editor->setMinimumHeight( minHeight1 * 3 );
 
    editor_widgets.push_back( editor );
@@ -364,8 +406,8 @@ void US_Hydrodyn_Best::setupGUI()
    grid_data->setMinPen( QPen( USglobal->global_colors.minor_ticks, 0, Qt::DotLine ) );
    grid_data->attach( plot_data );
 #endif
-   plot_data->setAxisTitle(QwtPlot::xBottom, tr( "1/Triangles"      ) ); 
-   plot_data->setAxisTitle(QwtPlot::yLeft,   tr( "Parameter [a.u.]" ) );
+   plot_data->setAxisTitle(QwtPlot::xBottom, us_tr( "1/Triangles"      ) ); 
+   plot_data->setAxisTitle(QwtPlot::yLeft,   us_tr( "Parameter [a.u.]" ) );
 #ifndef QT4
    plot_data->setTitleFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 3, QFont::Bold));
    plot_data->setAxisTitleFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
@@ -413,13 +455,13 @@ void US_Hydrodyn_Best::setupGUI()
 
    // connect( plot_data_zoomer, SIGNAL( zoomed( const QwtDoubleRect & ) ), SLOT( plot_data_zoomed( const QwtDoubleRect & ) ) );
 
-   pb_help =  new QPushButton ( tr( "Help" ), this );
+   pb_help =  new QPushButton ( us_tr( "Help" ), this );
    pb_help -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1) );
    pb_help -> setMinimumHeight( minHeight1 );
    pb_help -> setPalette      ( PALET_PUSHB );
    connect( pb_help, SIGNAL( clicked() ), SLOT( help() ) );
 
-   pb_close =  new QPushButton ( tr( "Close" ), this );
+   pb_close =  new QPushButton ( us_tr( "Close" ), this );
    pb_close -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1) );
    pb_close -> setMinimumHeight( minHeight1 );
    pb_close -> setPalette      ( PALET_PUSHB );
@@ -427,16 +469,16 @@ void US_Hydrodyn_Best::setupGUI()
 
    // -------- build layout
 
-   Q3VBoxLayout *background = new Q3VBoxLayout( this );
-   Q3HBoxLayout *top        = new Q3HBoxLayout( 0 );
+   QVBoxLayout * background = new QVBoxLayout( this ); background->setContentsMargins( 0, 0, 0, 0 ); background->setSpacing( 0 );
+   QHBoxLayout * top = new QHBoxLayout(); top->setContentsMargins( 0, 0, 0, 0 ); top->setSpacing( 0 );
 
    // ----- left side
    {
-      Q3BoxLayout *bl = new Q3VBoxLayout( 0 );
+      QBoxLayout *bl = new QVBoxLayout( 0 );
       bl->addWidget( lbl_input );
       bl->addWidget( lb_data );
       {
-         Q3HBoxLayout *hbl = new Q3HBoxLayout( 0 );
+         QHBoxLayout * hbl = new QHBoxLayout(); hbl->setContentsMargins( 0, 0, 0, 0 ); hbl->setSpacing( 0 );
          hbl->addWidget( pb_load );
          hbl->addWidget( pb_join_results );
          hbl->addWidget( pb_save_results );
@@ -448,7 +490,7 @@ void US_Hydrodyn_Best::setupGUI()
       bl->addWidget( cb_errorlines );
       bl->addWidget( cb_manual_rejection );
       {
-         Q3HBoxLayout *hbl = new Q3HBoxLayout( 0 );
+         QHBoxLayout * hbl = new QHBoxLayout(); hbl->setContentsMargins( 0, 0, 0, 0 ); hbl->setSpacing( 0 );
          hbl->addWidget( pb_apply_qtest );
          hbl->addWidget( pb_reset_qtest );
          hbl->addWidget( rb_90_qtest );
@@ -468,16 +510,16 @@ void US_Hydrodyn_Best::setupGUI()
 
    // ----- right side
    {
-      Q3BoxLayout *bl = new Q3VBoxLayout( 0 );
+      QBoxLayout *bl = new QVBoxLayout( 0 );
       bl->addWidget( plot_data );
       // needs layout for dynamic cb_'s 
-      hbl_points = new Q3HBoxLayout( 0 );
+      hbl_points = new QHBoxLayout();
       hbl_points->addWidget( lbl_points );
       bl->addLayout( hbl_points );
-      hbl_points_ln = new Q3HBoxLayout( 0 );
+      hbl_points_ln = new QHBoxLayout();
       hbl_points_ln->addWidget( lbl_points_ln );
       bl->addLayout( hbl_points_ln );
-      hbl_points_exp = new Q3HBoxLayout( 0 );
+      hbl_points_exp = new QHBoxLayout();
       hbl_points_exp->addWidget( lbl_points_exp );
       bl->addLayout( hbl_points_exp );
       top->addLayout( bl );
@@ -489,7 +531,7 @@ void US_Hydrodyn_Best::setupGUI()
    background->addSpacing( 4 );
 
    {
-      Q3HBoxLayout *hbl_bottom = new Q3HBoxLayout( 0 );
+      QHBoxLayout * hbl_bottom = new QHBoxLayout(); hbl_bottom->setContentsMargins( 0, 0, 0, 0 ); hbl_bottom->setSpacing( 0 );
       hbl_bottom->addSpacing( 4 );
       hbl_bottom->addWidget ( pb_help );
       hbl_bottom->addSpacing( 4 );
@@ -544,14 +586,14 @@ void US_Hydrodyn_Best::hide_editor()
 
 void US_Hydrodyn_Best::editor_msg( QString color, QString msg )
 {
-   QColor save_color = editor->color();
-   editor->setColor(color);
+   QColor save_color = editor->textColor();
+   editor->setTextColor(color);
    editor->append(msg);
-   editor->setColor(save_color);
+   editor->setTextColor(save_color);
 
-   if ( !editor_widgets[ 0 ]->isVisible() && color == "red" && !msg.stripWhiteSpace().isEmpty() )
+   if ( !editor_widgets[ 0 ]->isVisible() && color == "red" && !msg.trimmed().isEmpty() )
    {
-      lbl_editor->setPalette(QPalette(cg_red, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+      lbl_editor->setPalette( cg_red );
    }
 }
 
@@ -584,20 +626,20 @@ void US_Hydrodyn_Best::update_font()
 void US_Hydrodyn_Best::save()
 {
    QString fn;
-   fn = QFileDialog::getSaveFileName( this , caption() , QString::null , QString::null );
+   fn = QFileDialog::getSaveFileName( this , windowTitle() , QString::null , QString::null );
    if(!fn.isEmpty() )
    {
-      QString text = editor->text();
+      QString text = editor->toPlainText();
       QFile f( fn );
       if ( !f.open( QIODevice::WriteOnly | QIODevice::Text) )
       {
          return;
       }
-      Q3TextStream t( &f );
+      QTextStream t( &f );
       t << text;
       f.close();
-      editor->setModified( false );
-      setCaption( fn );
+ //      editor->setModified( false );
+      setWindowTitle( fn );
    }
 }
 
@@ -617,17 +659,17 @@ void US_Hydrodyn_Best::clear()
    parameter_data     .clear();
    for ( int i = 0; i < (int) cb_points.size(); ++i )
    {
-      hbl_points->remove( cb_points[ i ] );
+      hbl_points->removeWidget( cb_points[ i ] );
       delete cb_points[ i ];
    }
    for ( int i = 0; i < (int) cb_points_ln.size(); ++i )
    {
-      hbl_points_ln->remove( cb_points_ln[ i ] );
+      hbl_points_ln->removeWidget( cb_points_ln[ i ] );
       delete cb_points_ln[ i ];
    }
    for ( int i = 0; i < (int) cb_points_exp.size(); ++i )
    {
-      hbl_points_exp->remove( cb_points_exp[ i ] );
+      hbl_points_exp->removeWidget( cb_points_exp[ i ] );
       delete cb_points_exp[ i ];
    }
    cb_points             .clear();
@@ -661,7 +703,7 @@ void US_Hydrodyn_Best::load()
 
    ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this );
 
-   QString filename = QFileDialog::getOpenFileName( this , caption() + tr( " Load CSV from BEST results" ) , use_dir , "*.csv *.CSV" );
+   QString filename = QFileDialog::getOpenFileName( this , windowTitle() + us_tr( " Load CSV from BEST results" ) , use_dir , "*.csv *.CSV" );
 
 
    if ( filename.isEmpty() )
@@ -677,7 +719,7 @@ void US_Hydrodyn_Best::load()
    QFile f( filename );
    if ( !f.open( QIODevice::ReadOnly ) )
    {
-      editor_msg( "red", QString( tr( "Error opening file %1 (check permissions)" ) ).arg( f.name() ) );
+      editor_msg( "red", QString( us_tr( "Error opening file %1 (check permissions)" ) ).arg( f.fileName() ) );
       pb_load->setEnabled( true );
       return;
    }
@@ -685,11 +727,11 @@ void US_Hydrodyn_Best::load()
    save_last_file = filename;
    le_last_file->setText( save_last_file );
 
-   Q3TextStream ts( &f );
+   QTextStream ts( &f );
    if ( ts.atEnd() )
    {
       f.close();
-      editor_msg( "red", QString( tr( "Error on file %1 no data" ) ).arg( f.name() ) );
+      editor_msg( "red", QString( us_tr( "Error on file %1 no data" ) ).arg( f.fileName() ) );
       pb_load->setEnabled( true );
       return;
    }
@@ -697,28 +739,28 @@ void US_Hydrodyn_Best::load()
 
    {
       loaded_csv_trimmed << ts.readLine();
-      QStringList qsl = US_Csv::parse_line( loaded_csv_trimmed.back() ).gres( "\"", "" );
+      QStringList qsl = US_Csv::parse_line( loaded_csv_trimmed.back() ).replaceInStrings( "\"", "" );
       
       if ( qsl.size() < 8 )
       {
          f.close();
-         editor_msg( "red", QString( tr( "Error on file %1 insufficient data or no triangles?" ) ).arg( f.name() ) );
+         editor_msg( "red", QString( us_tr( "Error on file %1 insufficient data or no triangles?" ) ).arg( f.fileName() ) );
          pb_load->setEnabled( true );
          return;
       }
       
       points = (int) qsl.size() - 8;
 
-      // qDebug( QString( "points read %1 qsl size %2" ).arg( points ).arg( qsl.size() ) );
-      // qDebug( QString( "qsl points + 0 %1" ).arg( qsl[ points + 0 ] ) );
-      // qDebug( QString( "qsl points + 1 %1" ).arg( qsl[ points + 1 ] ) );
-      // qDebug( QString( "qsl points + 2 %1" ).arg( qsl[ points + 2 ] ) );
-      // qDebug( QString( "qsl points + 3 %1" ).arg( qsl[ points + 3 ] ) );
+      // us_qdebug( QString( "points read %1 qsl size %2" ).arg( points ).arg( qsl.size() ) );
+      // us_qdebug( QString( "qsl points + 0 %1" ).arg( qsl[ points + 0 ] ) );
+      // us_qdebug( QString( "qsl points + 1 %1" ).arg( qsl[ points + 1 ] ) );
+      // us_qdebug( QString( "qsl points + 2 %1" ).arg( qsl[ points + 2 ] ) );
+      // us_qdebug( QString( "qsl points + 3 %1" ).arg( qsl[ points + 3 ] ) );
 
       if ( qsl[ points + 1 ] != "Extrapolation to zero triangles (a)" )
       {
          f.close();
-         editor_msg( "red", QString( tr( "Error on file %1 improper format on line 1" ) ).arg( f.name() ) );
+         editor_msg( "red", QString( us_tr( "Error on file %1 improper format on line 1" ) ).arg( f.fileName() ) );
          pb_load->setEnabled( true );
          return;
       }
@@ -728,13 +770,13 @@ void US_Hydrodyn_Best::load()
    loaded_csv_trimmed << ts.readLine(); // triangles used
    {
       loaded_csv_trimmed << ts.readLine();
-      QStringList qsl = US_Csv::parse_line( loaded_csv_trimmed.back() ).gres( "\"", "" );
+      QStringList qsl = US_Csv::parse_line( loaded_csv_trimmed.back() ).replaceInStrings( "\"", "" );
 
-      // qDebug( "1/triangle line:" + qsl.join( ":" ) + QString( "size %1" ).arg( qsl.size() ) );
+      // us_qdebug( "1/triangle line:" + qsl.join( ":" ) + QString( "size %1" ).arg( qsl.size() ) );
       if ( (int) qsl.size() < 1 + points || qsl[ 0 ] != "1/Triangles used" )
       {
          f.close();
-         editor_msg( "red", QString( tr( "Error on file %1 improper format on line 3" ) ).arg( f.name() ) );
+         editor_msg( "red", QString( us_tr( "Error on file %1 improper format on line 3" ) ).arg( f.fileName() ) );
          pb_load->setEnabled( true );
          return;
       }
@@ -744,7 +786,7 @@ void US_Hydrodyn_Best::load()
          if ( qsl[ i ] == "=-1" )
          {
             f.close();
-            editor_msg( "red", QString( tr( "Error on file %1 line 3: 1/triangles incorrect" ) ).arg( f.name() ) );
+            editor_msg( "red", QString( us_tr( "Error on file %1 line 3: 1/triangles incorrect" ) ).arg( f.fileName() ) );
             pb_load->setEnabled( true );
             return;
          }
@@ -753,22 +795,22 @@ void US_Hydrodyn_Best::load()
    }
 
    int line = 3;
-   disconnect( lb_data, SIGNAL( selectionChanged() ), 0, 0 );
+   disconnect( lb_data, SIGNAL( itemSelectionChanged() ), 0, 0 );
    while ( !ts.atEnd() )
    {
       ++line;
       loaded_csv_trimmed << ts.readLine();
-      QStringList qsl = US_Csv::parse_line( loaded_csv_trimmed.back() ).gres( "\"", "" );
-      // qDebug( "next" + qsl.join( ":" ) );
+      QStringList qsl = US_Csv::parse_line( loaded_csv_trimmed.back() ).replaceInStrings( "\"", "" );
+      // us_qdebug( "next" + qsl.join( ":" ) );
       if ( (int) qsl.size() < 1 + points )
       {
          f.close();
-         editor_msg( "red", QString( tr( "Error on file %1 improper format on line %2" ) ).arg( f.name() ).arg( line ) );
+         editor_msg( "red", QString( us_tr( "Error on file %1 improper format on line %2" ) ).arg( f.fileName() ).arg( line ) );
          pb_load->setEnabled( true );
-         connect( lb_data, SIGNAL( selectionChanged() ), SLOT( data_selected() ) );
+         connect( lb_data, SIGNAL( itemSelectionChanged() ), SLOT( data_selected() ) );
          return;
       }
-      // qDebug( QString( "qsl 0: %1 : size %2" ).arg( qsl[ 0 ] ).arg( qsl.size() ) );
+      // us_qdebug( QString( "qsl 0: %1 : size %2" ).arg( qsl[ 0 ] ).arg( qsl.size() ) );
       if ( (int) qsl.size() >= points + 7 )
       {
          // have a linear fittable line
@@ -783,18 +825,18 @@ void US_Hydrodyn_Best::load()
             if ( qsl[ i ] == "?" )
             {
                f.close();
-               editor_msg( "red", QString( tr( "Error on file %1 line %2 - missing data for column %3" ) )
-                           .arg( f.name() )
+               editor_msg( "red", QString( us_tr( "Error on file %1 line %2 - missing data for column %3" ) )
+                           .arg( f.fileName() )
                            .arg( line ) 
                            .arg( i + 1 ) 
                            );
                pb_load->setEnabled( true );
-               connect( lb_data, SIGNAL( selectionChanged() ), SLOT( data_selected() ) );
+               connect( lb_data, SIGNAL( itemSelectionChanged() ), SLOT( data_selected() ) );
                return;
             }
          }
          loaded_csv_trimmed << qs;
-         lb_data->insertItem( qsl[ 0 ] );
+         lb_data->addItem( qsl[ 0 ] );
       }
    }
    editor_msg( "blue", QString( "%1 data columns found" ).arg( points ) );
@@ -841,15 +883,15 @@ void US_Hydrodyn_Best::load()
    }
    
    f.close();
-   loaded_csv_filename = f.name();
+   loaded_csv_filename = f.fileName();
    for ( int i = 0; i < (int) lb_data->count(); ++i )
    {
-      lb_data->setSelected( i, true );
+      lb_data->item( i)->setSelected( true );
       data_selected( false );
    }
-   lb_data->setSelected( 0, true );
+   lb_data->item( 0)->setSelected( true );
    recompute_tau();
-   connect( lb_data, SIGNAL( selectionChanged() ), SLOT( data_selected() ) );
+   connect( lb_data, SIGNAL( itemSelectionChanged() ), SLOT( data_selected() ) );
    cb_changed    ( false );
    cb_changed_ln ( false );
    cb_changed_exp( true  );
@@ -861,8 +903,8 @@ void US_Hydrodyn_Best::load()
 
 void US_Hydrodyn_Best::cb_changed( bool do_data )
 {
-   // qDebug( "cb_changed" );
-   QString text = lb_data->selectedItem()->text();
+   // us_qdebug( "cb_changed" );
+   QString text = lb_data->selectedItems( ).first( )->text();
    cb_checked[ text ].clear();
    for ( int i = 0; i < (int) cb_points.size(); ++i )
    {
@@ -879,8 +921,8 @@ void US_Hydrodyn_Best::cb_changed( bool do_data )
 
 void US_Hydrodyn_Best::cb_changed_ln( bool do_data )
 {
-   // qDebug( "cb_changed_ln" );
-   QString text = lb_data->selectedItem()->text();
+   // us_qdebug( "cb_changed_ln" );
+   QString text = lb_data->selectedItems( ).first( )->text();
    cb_checked_ln[ text ].clear();
    for ( int i = 0; i < (int) cb_points_ln.size(); ++i )
    {
@@ -897,8 +939,8 @@ void US_Hydrodyn_Best::cb_changed_ln( bool do_data )
 
 void US_Hydrodyn_Best::cb_changed_exp( bool do_data )
 {
-   // qDebug( "cb_changed_exp" );
-   QString text = lb_data->selectedItem()->text();
+   // us_qdebug( "cb_changed_exp" );
+   QString text = lb_data->selectedItems( ).first( )->text();
    cb_checked_exp[ text ].clear();
    for ( int i = 0; i < (int) cb_points_exp.size(); ++i )
    {
@@ -915,13 +957,13 @@ void US_Hydrodyn_Best::cb_changed_exp( bool do_data )
    
 void US_Hydrodyn_Best::data_selected( bool do_recompute_tau )
 {
-   // qDebug( "data_selected" );
+   // us_qdebug( "data_selected" );
    if ( !lb_data->count() )
    {
       return;
    }
-   QString text = lb_data->selectedItem()->text();
-   // qDebug( QString( "selected %1 map %2" ).arg( text ).arg( parameter_data[ text ].size() ) );
+   QString text = lb_data->selectedItems( ).first( )->text();
+   // us_qdebug( QString( "selected %1 map %2" ).arg( text ).arg( parameter_data[ text ].size() ) );
    plot_data->clear();
    if ( !cb_checked.count( text ) )
    {
@@ -1157,7 +1199,7 @@ void US_Hydrodyn_Best::data_selected( bool do_recompute_tau )
          double y[ 2 ];
 
          editor_msg( "blue", 
-                     QString( tr( "%1: 0 triangle extrapolation=%2 sigma=%3 sigma %=%4 slope=%5 sigma=%6 sigma %=%7 chi^2=%8" ) )
+                     QString( us_tr( "%1: 0 triangle extrapolation=%2 sigma=%3 sigma %=%4 slope=%5 sigma=%6 sigma %=%7 chi^2=%8" ) )
                      .arg( text )
                      .arg( a,    0, 'g', 8 )
                      .arg( siga, 0, 'g', 8 )
@@ -1356,7 +1398,7 @@ void US_Hydrodyn_Best::data_selected( bool do_recompute_tau )
          double y[ UHB_PTS ];
 
          editor_msg( "blue", 
-                     QString( tr( "%1: 0 triangle LN extrapolation=%2 sigma=%3 sigma %=%4 slope=%5 sigma=%6 sigma %=%7 chi^2=%8" ) )
+                     QString( us_tr( "%1: 0 triangle LN extrapolation=%2 sigma=%3 sigma %=%4 slope=%5 sigma=%6 sigma %=%7 chi^2=%8" ) )
                      .arg( text )
                      .arg( exp( a ),    0, 'g', 8 )
                      .arg( exp( a ) * siga, 0, 'g', 8 )
@@ -1500,14 +1542,14 @@ void US_Hydrodyn_Best::data_selected( bool do_recompute_tau )
          double det = L11 * L22 - L12 * L12;
          if ( det == 0e0 )
          {
-            editor_msg( "red", tr( "exponential fit: zero determinant in fit" ) );
+            editor_msg( "red", us_tr( "exponential fit: zero determinant in fit" ) );
          } else {
             double oneoverdet = 1e0 / det;
             // double A1 = oneoverdet * ( L22 * R1 - L12 * R2 );
             double B1 = oneoverdet * ( - L12 * R1 + L11 * R2 );
             if ( B1 == 0e0 )
             {
-               editor_msg( "red", tr( "exponential fit: zero c" ) );
+               editor_msg( "red", us_tr( "exponential fit: zero c" ) );
             } else {
                // double a1 = -A1 / B1;
                double c1 = B1;
@@ -1531,7 +1573,7 @@ void US_Hydrodyn_Best::data_selected( bool do_recompute_tau )
 
                if ( det == 0e0 )
                {
-                  editor_msg( "red", tr( "exponential fit: zero second determinant in fit" ) );
+                  editor_msg( "red", us_tr( "exponential fit: zero second determinant in fit" ) );
                } else {
                   double oneoverdet = 1e0 / det;
                   double a2 = oneoverdet * ( L22 * R1 - L12 * R2 );
@@ -1540,7 +1582,7 @@ void US_Hydrodyn_Best::data_selected( bool do_recompute_tau )
                   a = a2;
                   b = b2;
                   c = c1;
-                  // qDebug( QString( "ok: a = %1 b = %2 c = %3" ).arg( a ).arg( b ).arg( c ) );
+                  // us_qdebug( QString( "ok: a = %1 b = %2 c = %3" ).arg( a ).arg( b ).arg( c ) );
                   exp_plot_ok = true;
 
                }
@@ -1587,7 +1629,7 @@ void US_Hydrodyn_Best::data_selected( bool do_recompute_tau )
    
                if ( status.fnorm < 0e0 )
                {
-                  // qDebug( "WARNING: lm() returned negative rmsd\n" );
+                  // us_qdebug( "WARNING: lm() returned negative rmsd\n" );
                } else {
                   chi2 = 0e0;
                   for ( int i = 0; i < (int) fit_x.size(); ++i )
@@ -1604,7 +1646,7 @@ void US_Hydrodyn_Best::data_selected( bool do_recompute_tau )
                      b = par[ 1 ];
                      c = par[ 2 ];
                   } else {
-                     editor_msg( "dark red", tr( "Notice: LM did not improve the fit, discarded" ) );
+                     editor_msg( "dark red", us_tr( "Notice: LM did not improve the fit, discarded" ) );
                   }
                }
             }
@@ -1642,7 +1684,7 @@ void US_Hydrodyn_Best::data_selected( bool do_recompute_tau )
             double y[ UHB_PTS ];
             
             editor_msg( "blue", 
-                        QString( tr( "%1: 0 triangle EXP extrapolation=%2 sigma=%2 b=%3 c=%4 chi^2=%5" ) )
+                        QString( us_tr( "%1: 0 triangle EXP extrapolation=%2 sigma=%2 b=%3 c=%4 chi^2=%5" ) )
                         .arg( text )
                         .arg( a + b,    0, 'g', 8 )
                         .arg( siga,     0, 'g', 8 )
@@ -1724,7 +1766,7 @@ void US_Hydrodyn_Best::data_selected( bool do_recompute_tau )
    if ( do_recompute_tau &&
         tau_input_set.count( text ) )
    {
-      // qDebug( "data selected & do recompute_tau" );
+      // us_qdebug( "data selected & do recompute_tau" );
       recompute_tau();
    }
 
@@ -1743,9 +1785,9 @@ void US_Hydrodyn_Best::save_results()
 
    ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this );
    use_dir += QDir::separator() + QFileInfo( loaded_csv_filename ).baseName() + "_results.csv";
-   // qDebug( use_dir );
+   // us_qdebug( use_dir );
 
-   QString filename = QFileDialog::getSaveFileName( this , tr( "Select a name to save the state" ) , use_dir , "*.csv *.CSV" );
+   QString filename = QFileDialog::getSaveFileName( this , us_tr( "Select a name to save the state" ) , use_dir , "*.csv *.CSV" );
 
 
    ((US_Hydrodyn *)us_hydrodyn)->add_to_directory_history( filename );
@@ -1764,7 +1806,7 @@ void US_Hydrodyn_Best::save_results()
    QFile f( filename );
    if ( !f.open( QIODevice::WriteOnly ) )
    {
-      editor_msg( "red", QString( tr( "Could not open file %1 for writing" ) ).arg( f.name() ) );
+      editor_msg( "red", QString( us_tr( "Could not open file %1 for writing" ) ).arg( f.fileName() ) );
       return;
    }
 
@@ -1772,9 +1814,9 @@ void US_Hydrodyn_Best::save_results()
    pb_join_results->setEnabled( false );
    pb_load        ->setEnabled( false );
    lb_data        ->setEnabled( false );
-   disconnect( lb_data, SIGNAL( selectionChanged() ), 0, 0 );
+   disconnect( lb_data, SIGNAL( itemSelectionChanged() ), 0, 0 );
 
-   int cur_selected = lb_data->index( lb_data->selectedItem() );
+   int cur_selected = lb_data->row( lb_data->selectedItems().first() );
 
    map < QString, QString > additions;
 
@@ -1782,9 +1824,9 @@ void US_Hydrodyn_Best::save_results()
    bool any_exp_plot = false;
    for ( int i = 0; i < (int) lb_data->count(); ++i )
    {
-      lb_data->setSelected( i, true );
+      lb_data->item( i)->setSelected( true );
       data_selected( false );
-      additions[ lb_data->text( i ) ] = 
+      additions[ lb_data->item( i )->text( ) ] = 
          QString( "=%1,%2%3,%4%5" )
          .arg( last_a,    0, 'g', 8 )
          .arg( us_isnan( last_siga ) ? "=" : "" )
@@ -1807,7 +1849,7 @@ void US_Hydrodyn_Best::save_results()
       if ( ln_plot_ok )
       {
          any_ln_plot = true;
-         additions[ lb_data->text( i ) ] += 
+         additions[ lb_data->item( i )->text( ) ] += 
             QString( ",=%1,%2%3,%4%5" )
             .arg( exp( last_a_ln ),    0, 'g', 8 )
             .arg( ( us_isnan( last_siga_ln ) || us_isnan( last_a_ln ) || us_isnan( exp( last_a_ln ) ) )  ? "=" : "" )
@@ -1831,7 +1873,7 @@ void US_Hydrodyn_Best::save_results()
       if ( exp_plot_ok )
       {
          any_exp_plot = true;
-         additions[ lb_data->text( i ) ] += 
+         additions[ lb_data->item( i )->text( ) ] += 
             QString( ",=%1,%2%3,%4%5" )
             .arg( last_a_exp,    0, 'g', 8 )
             .arg( us_isnan( last_siga_exp ) ? "=" : "" )
@@ -1857,7 +1899,7 @@ void US_Hydrodyn_Best::save_results()
    QStringList out;
    for ( int i = 0; i < (int)loaded_csv_trimmed.size(); ++i )
    {
-      QStringList qsl = US_Csv::parse_line( loaded_csv_trimmed[ i ] ).gres( "\"", "" );
+      QStringList qsl = US_Csv::parse_line( loaded_csv_trimmed[ i ] ).replaceInStrings( "\"", "" );
       out << loaded_csv_trimmed[ i ];
       if ( qsl.size() && additions.count( qsl[ 0 ] ) )
       {
@@ -1890,15 +1932,15 @@ void US_Hydrodyn_Best::save_results()
          ;
       out[ 0 ] += ",\"Points removed (largest number of triangles is point 1)\"";
    }
-   // qDebug( loaded_csv_filename );
-   // qDebug( loaded_csv_trimmed.join( "\n" ) );
-   // qDebug( out.join( "\n" ) );
-   Q3TextStream ts( &f );
+   // us_qdebug( loaded_csv_filename );
+   // us_qdebug( loaded_csv_trimmed.join( "\n" ) );
+   // us_qdebug( out.join( "\n" ) );
+   QTextStream ts( &f );
    ts << out.join( "\n" ) << endl;
    f.close();
 
-   connect( lb_data, SIGNAL( selectionChanged() ), SLOT( data_selected() ) );
-   lb_data->setSelected( cur_selected, TRUE );
+   connect( lb_data, SIGNAL( itemSelectionChanged() ), SLOT( data_selected() ) );
+   lb_data->item( cur_selected)->setSelected( TRUE );
    pb_save_results->setEnabled( true );
    pb_join_results->setEnabled( true );
    pb_load        ->setEnabled( true );
@@ -1945,7 +1987,7 @@ void US_Hydrodyn_Best::recompute_tau()
 
       for ( int i = 0; i < (int) this_tau_results.size(); ++i )
       {
-         tau_csv_addendum_tag << QString( tr( "Linear extrapolation of Drr EV (1/s) %1" ) ).arg( tau_msg[ i ] );
+         tau_csv_addendum_tag << QString( us_tr( "Linear extrapolation of Drr EV (1/s) %1" ) ).arg( tau_msg[ i ] );
          tau_csv_addendum_val << QString( "%1" ).arg( this_tau_results[ i ], 0, 'g', 8 );
          msg += tau_csv_addendum_tag.back() + " " + tau_csv_addendum_val.back() + "\n";
       }
@@ -1966,7 +2008,7 @@ void US_Hydrodyn_Best::recompute_tau()
       QString msg;
       for ( int i = 0; i < (int) this_tau_results.size(); ++i )
       {
-         tau_csv_addendum_tag << QString( tr( "LOG extrapolation of Drr EV (1/s) %1" ) ).arg( tau_msg[ i ] );
+         tau_csv_addendum_tag << QString( us_tr( "LOG extrapolation of Drr EV (1/s) %1" ) ).arg( tau_msg[ i ] );
          tau_csv_addendum_val << QString( "%1" ).arg( this_tau_results[ i ], 0, 'g', 8 );
          msg += tau_csv_addendum_tag.back() + " " + tau_csv_addendum_val.back() + "\n";
       }
@@ -1987,7 +2029,7 @@ void US_Hydrodyn_Best::recompute_tau()
       QString msg;
       for ( int i = 0; i < (int) this_tau_results.size(); ++i )
       {
-         tau_csv_addendum_tag << QString( tr( "EXP extrapolation of Drr EV (1/s) %1" ) ).arg( tau_msg[ i ] );
+         tau_csv_addendum_tag << QString( us_tr( "EXP extrapolation of Drr EV (1/s) %1" ) ).arg( tau_msg[ i ] );
          tau_csv_addendum_val << QString( "%1" ).arg( this_tau_results[ i ], 0, 'g', 8 );
          msg += tau_csv_addendum_tag.back() + " " + tau_csv_addendum_val.back() + "\n";
       }
@@ -2109,7 +2151,7 @@ void US_Hydrodyn_Best::join_results()
    ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this );
    do 
    {
-      files = QFileDialog::getOpenFileNames( this , tr( "Select CSV results to join" ) , use_dir , "CSV files (*.csv *.CSV)" );
+      files = QFileDialog::getOpenFileNames( this , us_tr( "Select CSV results to join" ) , use_dir , "CSV files (*.csv *.CSV)" );
 
 
       for ( unsigned int i = 0; i < (unsigned int)files.size(); i++ )
@@ -2129,7 +2171,7 @@ void US_Hydrodyn_Best::join_results()
 
    if ( join_files.size() == 1 )
    {
-      editor_msg( "red", tr( "Error: Only one file selected to join." ) );
+      editor_msg( "red", us_tr( "Error: Only one file selected to join." ) );
       return;
    }
    
@@ -2144,7 +2186,7 @@ void US_Hydrodyn_Best::join_results()
 
       ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this );
 
-      save_file = QFileDialog::getSaveFileName( this , tr( "Choose a name to save the joined CSV results" ) , use_dir , "CSV files (*.csv *.CSV)" );
+      save_file = QFileDialog::getSaveFileName( this , us_tr( "Choose a name to save the joined CSV results" ) , use_dir , "CSV files (*.csv *.CSV)" );
 
 
 
@@ -2173,20 +2215,20 @@ void US_Hydrodyn_Best::join_results()
    QFile f_out( save_file );
    if ( !f_out.open( QIODevice::WriteOnly ) )
    {
-      editor_msg( "red", QString( tr( "Error: Can not open file %1 for writing" ) ).arg( save_file ) );
+      editor_msg( "red", QString( us_tr( "Error: Can not open file %1 for writing" ) ).arg( save_file ) );
       return;
    }
 
    ((US_Hydrodyn *)us_hydrodyn)->add_to_directory_history( save_file );
 
 
-   Q3TextStream ts_out( &f_out );
+   QTextStream ts_out( &f_out );
 
    map < QString, QStringList > output;
 
    for ( int i = 0; i < ( int)join_files.size(); ++i )
    {
-      editor_msg( "dark gray", QString( tr( "Processing %1" ) ).arg( join_files[ i ] ) );
+      editor_msg( "dark gray", QString( us_tr( "Processing %1" ) ).arg( join_files[ i ] ) );
       qApp->processEvents();
 
 
@@ -2194,18 +2236,18 @@ void US_Hydrodyn_Best::join_results()
 
       if ( !f_in.open( QIODevice::ReadOnly ) )
       {
-         editor_msg( "red", QString( tr( "Error: Can not open file %1 for reading" ) ).arg( join_files[ i ] ) );
+         editor_msg( "red", QString( us_tr( "Error: Can not open file %1 for reading" ) ).arg( join_files[ i ] ) );
          f_out.close();
          f_out.remove();
          return;
       }
 
-      Q3TextStream ts_in( &f_in );
+      QTextStream ts_in( &f_in );
 
-      QStringList qsl = US_Csv::parse_line( ts_in.readLine() ).gres( "\"", "" );
+      QStringList qsl = US_Csv::parse_line( ts_in.readLine() ).replaceInStrings( "\"", "" );
       if ( !qsl.size() )
       {
-         editor_msg( "red", QString( tr( "Error: file %1 error on line 1 (empty)" ) ).arg( join_files[ i ] ) );
+         editor_msg( "red", QString( us_tr( "Error: file %1 error on line 1 (empty)" ) ).arg( join_files[ i ] ) );
          f_in.close();
          f_out.close();
          f_out.remove();
@@ -2222,10 +2264,10 @@ void US_Hydrodyn_Best::join_results()
       for ( tmp_points = 1; tmp_points < (int) qsl.size() && qsl[ tmp_points ] != "Extrapolation to zero triangles (a)"; ++tmp_points ){};
       tmp_points--;
          
-      // qDebug( QString( "tmp_points %1 qsl size %2" ).arg( tmp_points ).arg( qsl.size() ) );
+      // us_qdebug( QString( "tmp_points %1 qsl size %2" ).arg( tmp_points ).arg( qsl.size() ) );
       if ( (int) qsl.size() <= tmp_points + 1 )
       {
-         editor_msg( "red", QString( tr( "Error: file %1 error on line 1 (points)" ) ).arg( join_files[ i ] ) );
+         editor_msg( "red", QString( us_tr( "Error: file %1 error on line 1 (points)" ) ).arg( join_files[ i ] ) );
          f_in.close();
          f_out.close();
          f_out.remove();
@@ -2234,7 +2276,7 @@ void US_Hydrodyn_Best::join_results()
          
       if ( qsl[ tmp_points + 1 ] != "Extrapolation to zero triangles (a)" )
       {
-         editor_msg( "red", QString( tr( "Error: file %1 error on line 1 (tag)" ) ).arg( join_files[ i ] ) );
+         editor_msg( "red", QString( us_tr( "Error: file %1 error on line 1 (tag)" ) ).arg( join_files[ i ] ) );
          f_in.close();
          f_out.close();
          f_out.remove();
@@ -2243,7 +2285,7 @@ void US_Hydrodyn_Best::join_results()
 
       while ( !ts_in.atEnd() )
       {
-         QStringList qsl = US_Csv::parse_line( ts_in.readLine() ); //.gres( "\"", "" );
+         QStringList qsl = US_Csv::parse_line( ts_in.readLine() ); //.replaceInStrings( "\"", "" );
          if ( (int) qsl.size() >= tmp_points + 2 )
          {
             QStringList qsl_out;
@@ -2271,7 +2313,7 @@ void US_Hydrodyn_Best::join_results()
 
    f_out.close();
    editor_msg( "blue", 
-               QString( tr( "Join results created %1" ) ).arg( f_out.name() ) );
+               QString( us_tr( "Join results created %1" ) ).arg( f_out.fileName() ) );
 }
 
 class uhb_sortable_double {
@@ -2300,7 +2342,7 @@ void US_Hydrodyn_Best::apply_qtest()
    {
       return;
    }
-   QString text = lb_data->selectedItem()->text();
+   QString text = lb_data->selectedItems( ).first( )->text();
 
    vector < double > use_one_over_triangles;
    vector < double > use_parameter_data;
@@ -2325,7 +2367,7 @@ void US_Hydrodyn_Best::apply_qtest()
 
    if ( use_one_over_triangles.size() < 3 )
    {
-      editor_msg( "red", tr( "To few points available for Q test" ) );
+      editor_msg( "red", us_tr( "To few points available for Q test" ) );
       return;
    }
 
@@ -2340,12 +2382,12 @@ void US_Hydrodyn_Best::apply_qtest()
    {
       delta.x     = use_parameter_data[ i ] - ( last_a + use_one_over_triangles[ i ] * last_b );
       delta.index = point_ref[ i ];
-      // qDebug( QString( "compute use_parameter_data[ i ] %1\n"
+      // us_qdebug( QString( "compute use_parameter_data[ i ] %1\n"
       //                  "        use_one_over_triangles[ i ] %2" )
       //         .arg( use_parameter_data[ i ] )
       //         .arg( use_one_over_triangles[ i ] )
       //         );
-      // qDebug( QString( "compute delta %1 index %2" ).arg( delta.x ).arg( delta.index ) );
+      // us_qdebug( QString( "compute delta %1 index %2" ).arg( delta.x ).arg( delta.index ) );
       deltas.push_back( delta );
    }
 
@@ -2366,7 +2408,7 @@ void US_Hydrodyn_Best::apply_qtest()
 
    if ( vdeltas.back().x == vdeltas[ 0 ].x )
    {
-      editor_msg( "blue", tr( "Q test: all deltas identical, no points can be rejected" ) );
+      editor_msg( "blue", us_tr( "Q test: all deltas identical, no points can be rejected" ) );
       return;
    }
 
@@ -2376,7 +2418,7 @@ void US_Hydrodyn_Best::apply_qtest()
       ( vdeltas[ vdelta_end ].x - vdeltas[ vdelta_end - 1 ].x ) /
       ( vdeltas[ vdelta_end ].x - vdeltas[ 0 ].x );
 
-   QString msg = QString( tr( "Q test: Q = %1 " ) ).arg( Q );
+   QString msg = QString( us_tr( "Q test: Q = %1 " ) ).arg( Q );
       
    double qc_mult =  rb_90_qtest->isChecked() ? 1e0 : ( rb_80_qtest->isChecked() ? .8e0 : .7e0 );
 
@@ -2388,14 +2430,14 @@ void US_Hydrodyn_Best::apply_qtest()
    if ( ( use_Qc  &&  Qc[ vdeltas.size() ] < Q ) ||
         ( !use_Qc &&  fabs( vdeltas.back().x ) >= 2.6 * qc_mult ) )
    {
-      msg += QString( tr( "Removing point %1" ) ).arg( vdeltas.back().index + 1 );
+      msg += QString( us_tr( "Removing point %1" ) ).arg( vdeltas.back().index + 1 );
       if ( rb_80_qtest->isChecked() )
       {
-         editor_msg( "dark red", tr( "WARNING: 80% Q test criterion parameters used" ) );
+         editor_msg( "dark red", us_tr( "WARNING: 80% Q test criterion parameters used" ) );
       }
       if ( rb_70_qtest->isChecked() )
       {
-         editor_msg( "dark red", tr( "WARNING: 70% Q test criterion parameters used" ) );
+         editor_msg( "dark red", us_tr( "WARNING: 70% Q test criterion parameters used" ) );
       }
       editor_msg( "blue", msg);
       cb_points[ vdeltas.back().index ]->setChecked( false );
@@ -2404,7 +2446,7 @@ void US_Hydrodyn_Best::apply_qtest()
       return;
    }
 
-   msg += tr( "No points removed." );
+   msg += us_tr( "No points removed." );
 
    editor_msg( "blue", msg );
    rb_90_qtest->setChecked( true );
@@ -2415,9 +2457,9 @@ void US_Hydrodyn_Best::set_loose_qtest()
    if ( !rb_90_qtest->isChecked() )
    {
       switch ( QMessageBox::warning( this
-                                     , caption() + tr( " : Warning" )
+                                     , windowTitle() + us_tr( " : Warning" )
                                      , ( rb_80_qtest->isChecked() ? "80" : "70" ) +
-                                       tr( "% Q test is not recommended.\n"
+                                       us_tr( "% Q test is not recommended.\n"
                                            "Do you still want to enable?" )
                                      , QMessageBox::Yes
                                      , QMessageBox::No
@@ -2439,8 +2481,8 @@ void US_Hydrodyn_Best::set_manual_rejection()
    if ( cb_manual_rejection->isChecked() )
    {
       switch ( QMessageBox::warning( this
-                                     , caption() + tr( " : Warning" )
-                                     , tr( "Manual outlier rejection is not recommended.\n"
+                                     , windowTitle() + us_tr( " : Warning" )
+                                     , us_tr( "Manual outlier rejection is not recommended.\n"
                                            "'Apply Q test criterion' is preferred.\n"
                                            "Do you still want to enable manual rejection?" )
                                      , QMessageBox::Yes

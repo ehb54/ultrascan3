@@ -7,9 +7,8 @@
 #include <qstring.h>
 #include <qlayout.h>
 #include <qpushbutton.h>
-#include <qbuttongroup.h>
-#include <q3groupbox.h>
-#include <q3frame.h>
+#include <qgroupbox.h>
+//#include <q3frame.h>
 #include <qcheckbox.h>
 #include <qwt_counter.h>
 #include <qlineedit.h>
@@ -30,7 +29,7 @@ using namespace std;
 
 #include "../include/us_hydrodyn_hydro.h"
 
-class US_EXTERN US_Hydrodyn_Hydro_Zeno : public Q3Frame
+class US_EXTERN US_Hydrodyn_Hydro_Zeno : public QFrame
 {
    Q_OBJECT
 

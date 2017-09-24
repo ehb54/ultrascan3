@@ -7,10 +7,11 @@
 #include <qstring.h>
 #include <qlayout.h>
 #include <qpushbutton.h>
-#include <q3frame.h>
+#include <qradiobutton.h>
+//#include <q3frame.h>
 #include <qcheckbox.h>
 #include <qwt_counter.h>
-#include <q3buttongroup.h>
+#include <qgroupbox.h>
 //Added by qt3to4:
 #include <QCloseEvent>
 
@@ -100,7 +101,7 @@ struct BD_Options
    
 };
 
-class US_EXTERN US_Hydrodyn_BD_Options : public Q3Frame
+class US_EXTERN US_Hydrodyn_BD_Options : public QFrame
 {
    Q_OBJECT
 
@@ -141,19 +142,29 @@ class US_EXTERN US_Hydrodyn_BD_Options : public Q3Frame
       QLineEdit *le_nconf;
       QLineEdit *le_iseed;
 
-      Q3ButtonGroup  *bg_bead_size_type;
+      QGroupBox  *bg_bead_size_type;
       QCheckBox     *cb_bead_size_type_1st;
       QCheckBox     *cb_bead_size_type_min;
       QCheckBox     *cb_bead_size_type_avg;
 
-      Q3ButtonGroup  *bg_inter;
+      QRadioButton  *rb_bead_size_type_1st;
+      QRadioButton  *rb_bead_size_type_min;
+      QRadioButton  *rb_bead_size_type_avg;
+
+      QGroupBox  *bg_inter;
       QCheckBox     *cb_inter_no_hi;
       QCheckBox     *cb_inter_os;
       QCheckBox     *cb_inter_mos;
 
-      Q3ButtonGroup  *bg_iorder;
+      QRadioButton  *rb_inter_no_hi;
+      QRadioButton  *rb_inter_os;
+      QRadioButton  *rb_inter_mos;
+
+      QGroupBox  *bg_iorder;
       QCheckBox     *cb_iorder_em;
       QCheckBox     *cb_iorder_igt;
+      QRadioButton  *rb_iorder_em;
+      QRadioButton  *rb_iorder_igt;
 
       QCheckBox *cb_do_rr;
       QCheckBox *cb_force_chem;
@@ -180,12 +191,16 @@ class US_EXTERN US_Hydrodyn_BD_Options : public Q3Frame
       QCheckBox *cb_compute_sc_sc_max_elong;
 
       QLabel        *lbl_chem_pb_pb;
-      Q3ButtonGroup  *bg_chem_pb_pb_bond_types;
-      QCheckBox     *cb_chem_pb_pb_bond_type_fraenkel;
       QPushButton   *pb_dup_fraenkel;
+      QGroupBox  *bg_chem_pb_pb_bond_types;
+      QCheckBox     *cb_chem_pb_pb_bond_type_fraenkel;
       QCheckBox     *cb_chem_pb_pb_bond_type_hookean;
       QCheckBox     *cb_chem_pb_pb_bond_type_fene;
       QCheckBox     *cb_chem_pb_pb_bond_type_hard_fene;
+      QRadioButton  *rb_chem_pb_pb_bond_type_fraenkel;
+      QRadioButton  *rb_chem_pb_pb_bond_type_hookean;
+      QRadioButton  *rb_chem_pb_pb_bond_type_fene;
+      QRadioButton  *rb_chem_pb_pb_bond_type_hard_fene;
       QLabel        *lbl_chem_pb_pb_force_constant;
       QLineEdit     *le_chem_pb_pb_force_constant;
       QLabel        *lbl_chem_pb_pb_equilibrium_dist;
@@ -194,11 +209,15 @@ class US_EXTERN US_Hydrodyn_BD_Options : public Q3Frame
       QLineEdit     *le_chem_pb_pb_max_elong;
       
       QLabel        *lbl_chem_pb_sc;
-      Q3ButtonGroup  *bg_chem_pb_sc_bond_types;
+      QGroupBox  *bg_chem_pb_sc_bond_types;
       QCheckBox     *cb_chem_pb_sc_bond_type_fraenkel;
       QCheckBox     *cb_chem_pb_sc_bond_type_hookean;
       QCheckBox     *cb_chem_pb_sc_bond_type_fene;
       QCheckBox     *cb_chem_pb_sc_bond_type_hard_fene;
+      QRadioButton  *rb_chem_pb_sc_bond_type_fraenkel;
+      QRadioButton  *rb_chem_pb_sc_bond_type_hookean;
+      QRadioButton  *rb_chem_pb_sc_bond_type_fene;
+      QRadioButton  *rb_chem_pb_sc_bond_type_hard_fene;
       QLabel        *lbl_chem_pb_sc_force_constant;
       QLineEdit     *le_chem_pb_sc_force_constant;
       QLabel        *lbl_chem_pb_sc_equilibrium_dist;
@@ -207,11 +226,15 @@ class US_EXTERN US_Hydrodyn_BD_Options : public Q3Frame
       QLineEdit     *le_chem_pb_sc_max_elong;
       
       QLabel        *lbl_chem_sc_sc;
-      Q3ButtonGroup  *bg_chem_sc_sc_bond_types;
+      QGroupBox  *bg_chem_sc_sc_bond_types;
       QCheckBox     *cb_chem_sc_sc_bond_type_fraenkel;
       QCheckBox     *cb_chem_sc_sc_bond_type_hookean;
       QCheckBox     *cb_chem_sc_sc_bond_type_fene;
       QCheckBox     *cb_chem_sc_sc_bond_type_hard_fene;
+      QRadioButton  *rb_chem_sc_sc_bond_type_fraenkel;
+      QRadioButton  *rb_chem_sc_sc_bond_type_hookean;
+      QRadioButton  *rb_chem_sc_sc_bond_type_fene;
+      QRadioButton  *rb_chem_sc_sc_bond_type_hard_fene;
       QLabel        *lbl_chem_sc_sc_force_constant;
       QLineEdit     *le_chem_sc_sc_force_constant;
       QLabel        *lbl_chem_sc_sc_equilibrium_dist;
@@ -220,11 +243,15 @@ class US_EXTERN US_Hydrodyn_BD_Options : public Q3Frame
       QLineEdit     *le_chem_sc_sc_max_elong;
       
       QLabel        *lbl_pb_pb;
-      Q3ButtonGroup  *bg_pb_pb_bond_types;
+      QGroupBox  *bg_pb_pb_bond_types;
       QCheckBox     *cb_pb_pb_bond_type_fraenkel;
       QCheckBox     *cb_pb_pb_bond_type_hookean;
       QCheckBox     *cb_pb_pb_bond_type_fene;
       QCheckBox     *cb_pb_pb_bond_type_hard_fene;
+      QRadioButton  *rb_pb_pb_bond_type_fraenkel;
+      QRadioButton  *rb_pb_pb_bond_type_hookean;
+      QRadioButton  *rb_pb_pb_bond_type_fene;
+      QRadioButton  *rb_pb_pb_bond_type_hard_fene;
       QLabel        *lbl_pb_pb_force_constant;
       QLineEdit     *le_pb_pb_force_constant;
       QLabel        *lbl_pb_pb_equilibrium_dist;
@@ -233,11 +260,15 @@ class US_EXTERN US_Hydrodyn_BD_Options : public Q3Frame
       QLineEdit     *le_pb_pb_max_elong;
 
       QLabel        *lbl_pb_sc;
-      Q3ButtonGroup  *bg_pb_sc_bond_types;
+      QGroupBox  *bg_pb_sc_bond_types;
       QCheckBox     *cb_pb_sc_bond_type_fraenkel;
       QCheckBox     *cb_pb_sc_bond_type_hookean;
       QCheckBox     *cb_pb_sc_bond_type_fene;
       QCheckBox     *cb_pb_sc_bond_type_hard_fene;
+      QRadioButton  *rb_pb_sc_bond_type_fraenkel;
+      QRadioButton  *rb_pb_sc_bond_type_hookean;
+      QRadioButton  *rb_pb_sc_bond_type_fene;
+      QRadioButton  *rb_pb_sc_bond_type_hard_fene;
       QLabel        *lbl_pb_sc_force_constant;
       QLineEdit     *le_pb_sc_force_constant;
       QLabel        *lbl_pb_sc_equilibrium_dist;
@@ -246,11 +277,15 @@ class US_EXTERN US_Hydrodyn_BD_Options : public Q3Frame
       QLineEdit     *le_pb_sc_max_elong;
 
       QLabel        *lbl_sc_sc;
-      Q3ButtonGroup  *bg_sc_sc_bond_types;
+      QGroupBox  *bg_sc_sc_bond_types;
       QCheckBox     *cb_sc_sc_bond_type_fraenkel;
       QCheckBox     *cb_sc_sc_bond_type_hookean;
       QCheckBox     *cb_sc_sc_bond_type_fene;
       QCheckBox     *cb_sc_sc_bond_type_hard_fene;
+      QRadioButton  *rb_sc_sc_bond_type_fraenkel;
+      QRadioButton  *rb_sc_sc_bond_type_hookean;
+      QRadioButton  *rb_sc_sc_bond_type_fene;
+      QRadioButton  *rb_sc_sc_bond_type_hard_fene;
       QLabel        *lbl_sc_sc_force_constant;
       QLineEdit     *le_sc_sc_force_constant;
       QLabel        *lbl_sc_sc_equilibrium_dist;
@@ -308,16 +343,25 @@ class US_EXTERN US_Hydrodyn_BD_Options : public Q3Frame
       void update_nconf(const QString &str);
       void update_iseed(const QString &str);
 
+      void set_bead_size_type();
       void set_bead_size_type(int);
 
+      void set_iorder();
       void set_iorder(int);
+      void set_inter();
       void set_inter(int);
 
+      void set_chem_pb_pb_bond_types();
       void set_chem_pb_pb_bond_types( int );
+      void set_chem_pb_sc_bond_types();
       void set_chem_pb_sc_bond_types( int );
+      void set_chem_sc_sc_bond_types();
       void set_chem_sc_sc_bond_types( int );
+      void set_pb_pb_bond_types();
       void set_pb_pb_bond_types( int );
+      void set_pb_sc_bond_types();
       void set_pb_sc_bond_types( int );
+      void set_sc_sc_bond_types();
       void set_sc_sc_bond_types( int );
 
       void update_chem_pb_pb_force_constant(const QString &str);

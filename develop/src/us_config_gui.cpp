@@ -4,15 +4,15 @@
 #include <qfontmetrics.h>
 #include <qmessagebox.h>
 //Added by qt3to4:
-#include <Q3HBoxLayout>
+#include <QHBoxLayout>
 #include <QCloseEvent>
-#include <Q3BoxLayout>
-#include <Q3GridLayout>
-#include <Q3Frame>
+#include <QBoxLayout>
+#include <QGridLayout>
+#include <QFrame>
 #include <QLabel>
-#include <Q3VBoxLayout>
+#include <QVBoxLayout>
 
-US_Config_GUI::US_Config_GUI(QWidget *parent, const char *name) : Q3Frame(parent, name)
+US_Config_GUI::US_Config_GUI(QWidget *parent, const char *name) : QFrame( parent )
 {
    USglobal = new US_Config();
 
@@ -26,23 +26,23 @@ US_Config_GUI::US_Config_GUI(QWidget *parent, const char *name) : Q3Frame(parent
    }
 
    setPalette( PALET_FRAME );
-   setCaption("UltraScan Configuration");
+   setWindowTitle("UltraScan Configuration");
 
-   lbl_directions = new QLabel(QObject::tr("UltraScan " + US_Version + " Configuration:"),this);
-   lbl_directions->setFrameStyle(Q3Frame::WinPanel|Raised);
+   lbl_directions = new QLabel(us_tr("UltraScan " + US_Version + " Configuration:"),this);
+   lbl_directions->setFrameStyle(QFrame::WinPanel|Raised);
    lbl_directions->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_directions->setPalette( PALET_FRAME );
    AUTFBACK( lbl_directions );
    lbl_directions->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 
-   lbl_paths = new QLabel(QObject::tr(" Paths and File Names:"),this);
-   lbl_paths->setFrameStyle(Q3Frame::WinPanel|Raised);
+   lbl_paths = new QLabel(us_tr(" Paths and File Names:"),this);
+   lbl_paths->setFrameStyle(QFrame::WinPanel|Raised);
    lbl_paths->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_paths->setPalette( PALET_FRAME );
    AUTFBACK( lbl_paths );
    lbl_paths->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 
-   pb_browser = new QPushButton(QObject::tr(" WWW Browser:"),this);
+   pb_browser = new QPushButton(us_tr(" WWW Browser:"),this);
    pb_browser->setPalette( PALET_PUSHB );
    pb_browser->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    US_Config::connect(pb_browser, SIGNAL(clicked()), this, SLOT(open_browser_dir()));
@@ -56,7 +56,7 @@ US_Config_GUI::US_Config_GUI(QWidget *parent, const char *name) : Q3Frame(parent
 
    US_Config::connect(le_browser, SIGNAL(textChanged(const QString &)), this, SLOT(update_browser(const QString &)));
 
-   pb_tmp_dir = new QPushButton(QObject::tr(" Temporary Directory:"),this);
+   pb_tmp_dir = new QPushButton(us_tr(" Temporary Directory:"),this);
    pb_tmp_dir->setPalette( PALET_PUSHB );
    pb_tmp_dir->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    US_Config::connect(pb_tmp_dir, SIGNAL(clicked()), this, SLOT(open_tmp_dir()));
@@ -67,7 +67,7 @@ US_Config_GUI::US_Config_GUI(QWidget *parent, const char *name) : Q3Frame(parent
    AUTFBACK( le_tmp_dir );
    US_Config::connect(le_tmp_dir, SIGNAL(textChanged(const QString &)), this, SLOT(update_tmp_dir(const QString &)));
 
-   pb_root_dir = new QPushButton(QObject::tr(" User's UltraScan Directory:"),this);
+   pb_root_dir = new QPushButton(us_tr(" User's UltraScan Directory:"),this);
    pb_root_dir->setPalette( PALET_PUSHB );
    pb_root_dir->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    US_Config::connect(pb_root_dir, SIGNAL(clicked()), this, SLOT(open_root_dir()));
@@ -78,7 +78,7 @@ US_Config_GUI::US_Config_GUI(QWidget *parent, const char *name) : Q3Frame(parent
    AUTFBACK( le_root_dir );
    US_Config::connect(le_root_dir, SIGNAL(textChanged(const QString &)), this, SLOT(update_root_dir(const QString &)));
 
-   pb_data_dir = new QPushButton(QObject::tr(" Data Directory:"),this);
+   pb_data_dir = new QPushButton(us_tr(" Data Directory:"),this);
    pb_data_dir->setPalette( PALET_PUSHB );
    pb_data_dir->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    US_Config::connect(pb_data_dir, SIGNAL(clicked()), this, SLOT(open_data_dir()));
@@ -89,7 +89,7 @@ US_Config_GUI::US_Config_GUI(QWidget *parent, const char *name) : Q3Frame(parent
    AUTFBACK( le_data_dir );
    US_Config::connect(le_data_dir, SIGNAL(textChanged(const QString &)), this, SLOT(update_data_dir(const QString &)));
 
-   pb_result_dir = new QPushButton(QObject::tr(" Result Directory:"),this);
+   pb_result_dir = new QPushButton(us_tr(" Result Directory:"),this);
    pb_result_dir->setPalette( PALET_PUSHB );
    pb_result_dir->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    US_Config::connect(pb_result_dir, SIGNAL(clicked()), this, SLOT(open_result_dir()));
@@ -100,7 +100,7 @@ US_Config_GUI::US_Config_GUI(QWidget *parent, const char *name) : Q3Frame(parent
    AUTFBACK( le_result_dir );
    US_Config::connect(le_result_dir, SIGNAL(textChanged(const QString &)), this, SLOT(update_result_dir(const QString &)));
 
-   pb_html_dir = new QPushButton(QObject::tr(" HTML Reports:"),this);
+   pb_html_dir = new QPushButton(us_tr(" HTML Reports:"),this);
    pb_html_dir->setPalette( PALET_PUSHB );
    pb_html_dir->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    US_Config::connect(pb_html_dir, SIGNAL(clicked()), this, SLOT(open_html_dir()));
@@ -111,7 +111,7 @@ US_Config_GUI::US_Config_GUI(QWidget *parent, const char *name) : Q3Frame(parent
    AUTFBACK( le_html_dir );
    US_Config::connect(le_html_dir, SIGNAL(textChanged(const QString &)), this, SLOT(update_html_dir(const QString &)));
 
-   pb_archive_dir = new QPushButton(QObject::tr(" Archive Directory:"),this);
+   pb_archive_dir = new QPushButton(us_tr(" Archive Directory:"),this);
    pb_archive_dir->setPalette( PALET_PUSHB );
    pb_archive_dir->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    US_Config::connect(pb_archive_dir, SIGNAL(clicked()), this, SLOT(open_archive_dir()));
@@ -122,7 +122,7 @@ US_Config_GUI::US_Config_GUI(QWidget *parent, const char *name) : Q3Frame(parent
    AUTFBACK( le_archive_dir );
    US_Config::connect(le_archive_dir, SIGNAL(textChanged(const QString &)), this, SLOT(update_archive_dir(const QString &)));
 
-   pb_system_dir = new QPushButton(QObject::tr(" UltraScan System:"),this);
+   pb_system_dir = new QPushButton(us_tr(" UltraScan System:"),this);
    pb_system_dir->setPalette( PALET_PUSHB );
    pb_system_dir->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    US_Config::connect(pb_system_dir, SIGNAL(clicked()), this, SLOT(open_system_dir()));
@@ -133,7 +133,7 @@ US_Config_GUI::US_Config_GUI(QWidget *parent, const char *name) : Q3Frame(parent
    AUTFBACK( le_system_dir );
    US_Config::connect(le_system_dir, SIGNAL(textChanged(const QString &)), this, SLOT(update_system_dir(const QString &)));
 
-   pb_help_dir = new QPushButton(QObject::tr(" Help Directory:"),this);
+   pb_help_dir = new QPushButton(us_tr(" Help Directory:"),this);
    pb_help_dir->setPalette( PALET_PUSHB );
    pb_help_dir->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    US_Config::connect(pb_help_dir, SIGNAL(clicked()), this, SLOT(open_help_dir()));
@@ -144,15 +144,15 @@ US_Config_GUI::US_Config_GUI(QWidget *parent, const char *name) : Q3Frame(parent
    AUTFBACK( le_help_dir );
    US_Config::connect(le_help_dir, SIGNAL(textChanged(const QString &)), this, SLOT(update_help_dir(const QString &)));
 
-   lbl_misc = new QLabel(QObject::tr(" Miscellaneous Settings:"),this);
-   lbl_misc->setFrameStyle(Q3Frame::WinPanel|Raised);
+   lbl_misc = new QLabel(us_tr(" Miscellaneous Settings:"),this);
+   lbl_misc->setFrameStyle(QFrame::WinPanel|Raised);
    lbl_misc->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_misc->setPalette( PALET_FRAME );
    AUTFBACK( lbl_misc );
    lbl_misc->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 
-   lbl_temperature_tol = new QLabel(QObject::tr(" Temperature Tolerance (ºC):"),this);
-   lbl_temperature_tol->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Sunken);
+   lbl_temperature_tol = new QLabel(us_tr(" Temperature Tolerance (ºC):"),this);
+   lbl_temperature_tol->setFrameStyle(QFrame::WinPanel|QFrame::Sunken);
    lbl_temperature_tol->setPalette( PALET_LABEL );
    AUTFBACK( lbl_temperature_tol );
    lbl_temperature_tol->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
@@ -163,63 +163,63 @@ US_Config_GUI::US_Config_GUI(QWidget *parent, const char *name) : Q3Frame(parent
    AUTFBACK( le_temperature_tol );
    US_Config::connect(le_temperature_tol, SIGNAL(textChanged(const QString &)), this, SLOT(update_temperature_tol(const QString &)));
 
-   lbl_beckman_bug = new QLabel(QObject::tr(" Beckman Time Bug Correction:"),this);
-   lbl_beckman_bug->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Sunken);
+   lbl_beckman_bug = new QLabel(us_tr(" Beckman Time Bug Correction:"),this);
+   lbl_beckman_bug->setFrameStyle(QFrame::WinPanel|QFrame::Sunken);
    lbl_beckman_bug->setPalette( PALET_LABEL );
    AUTFBACK( lbl_beckman_bug );
    lbl_beckman_bug->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 
    bt_on = new QRadioButton(this);
-   bt_on->setText(QObject::tr("on"));
+   bt_on->setText(us_tr("on"));
    bt_on->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
    bt_on->setPalette( PALET_NORMAL );
    AUTFBACK( bt_on );
    US_Config::connect(bt_on, SIGNAL(clicked()), this, SLOT(update_on_button()));
 
    bt_off = new QRadioButton(this);
-   bt_off->setText(QObject::tr("off"));
+   bt_off->setText(us_tr("off"));
    bt_off->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
    bt_off->setPalette( PALET_NORMAL );
    AUTFBACK( bt_off );
    US_Config::connect(bt_off, SIGNAL(clicked()), this, SLOT(update_off_button()));
 
-   lbl_color = new QLabel(QObject::tr(" Color Preferences:"),this);
-   lbl_color->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Sunken);
+   lbl_color = new QLabel(us_tr(" Color Preferences:"),this);
+   lbl_color->setFrameStyle(QFrame::WinPanel|QFrame::Sunken);
    lbl_color->setPalette( PALET_LABEL );
    AUTFBACK( lbl_color );
    lbl_color->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 
-   pb_color = new QPushButton(QObject::tr("Change"), this);
+   pb_color = new QPushButton(us_tr("Change"), this);
    Q_CHECK_PTR(pb_color);
    pb_color->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_color->setPalette( PALET_PUSHB );
    US_Config::connect(pb_color, SIGNAL(clicked()), this, SLOT(update_color()));
 
-   lbl_font = new QLabel(QObject::tr(" Font Preferences:"),this);
-   lbl_font->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Sunken);
+   lbl_font = new QLabel(us_tr(" Font Preferences:"),this);
+   lbl_font->setFrameStyle(QFrame::WinPanel|QFrame::Sunken);
    lbl_font->setPalette( PALET_LABEL );
    AUTFBACK( lbl_font );
    lbl_font->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 
-   pb_font = new QPushButton(QObject::tr("Change"), this);
+   pb_font = new QPushButton(us_tr("Change"), this);
    Q_CHECK_PTR(pb_font);
    pb_font->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_font->setPalette( PALET_PUSHB );
    US_Config::connect(pb_font, SIGNAL(clicked()), this, SLOT(update_font()));
 
-   lbl_database = new QLabel(QObject::tr(" Database Preferences:"),this);
-   lbl_database->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Sunken);
+   lbl_database = new QLabel(us_tr(" Database Preferences:"),this);
+   lbl_database->setFrameStyle(QFrame::WinPanel|QFrame::Sunken);
    lbl_database->setPalette( PALET_LABEL );
    AUTFBACK( lbl_database );
    lbl_database->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 
-   pb_database = new QPushButton(QObject::tr("Change"), this);
+   pb_database = new QPushButton(us_tr("Change"), this);
    pb_database->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_database->setPalette( PALET_PUSHB );
    US_Config::connect(pb_database, SIGNAL(clicked()), this, SLOT(update_database()));
 
-   lbl_numThreads = new QLabel(QObject::tr(" Number of Threads:"),this);
-   lbl_numThreads->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Sunken);
+   lbl_numThreads = new QLabel(us_tr(" Number of Threads:"),this);
+   lbl_numThreads->setFrameStyle(QFrame::WinPanel|QFrame::Sunken);
    lbl_numThreads->setPalette( PALET_LABEL );
    AUTFBACK( lbl_numThreads );
    lbl_numThreads->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
@@ -238,17 +238,17 @@ US_Config_GUI::US_Config_GUI(QWidget *parent, const char *name) : Q3Frame(parent
 
    connect(cnt_numThreads, SIGNAL(valueChanged(double)), SLOT(update_numThreads(double)));
 
-   pb_help = new QPushButton(QObject::tr("Help"), this);
+   pb_help = new QPushButton(us_tr("Help"), this);
    pb_help->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_help->setPalette( PALET_PUSHB );
    US_Config::connect(pb_help, SIGNAL(clicked()), this, SLOT(help()));
 
-   pb_save = new QPushButton(QObject::tr("Save"), this);
+   pb_save = new QPushButton(us_tr("Save"), this);
    pb_save->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_save->setPalette( PALET_PUSHB );
    US_Config::connect(pb_save, SIGNAL(clicked()), this, SLOT(save()));
 
-   pb_cancel = new QPushButton(QObject::tr("Cancel"), this);
+   pb_cancel = new QPushButton(us_tr("Cancel"), this);
    pb_cancel->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_cancel->setPalette( PALET_PUSHB );
    US_Config::connect(pb_cancel, SIGNAL(clicked()), this, SLOT(cancel()));
@@ -298,16 +298,16 @@ void US_Config_GUI::setup_GUI()
    w = ( cwidth > w ) ? cwidth : w;
 
 
-   Q3BoxLayout*   topbox = new Q3VBoxLayout(this,2);
+   QBoxLayout * topbox = new QVBoxLayout; topbox->setSpacing( 2 );
    
    topbox->addWidget(lbl_directions);
    topbox->addWidget(lbl_paths);
 
    unsigned int j=0;
    
-   Q3GridLayout* lineGrid = new Q3GridLayout( topbox, 10, 2, 2 );
+   QGridLayout * lineGrid = new QGridLayout; lineGrid->setContentsMargins( 0, 0, 0, 0 ); lineGrid->setSpacing( 0 ); topbox->addLayout( lineGrid ); lineGrid->setSpacing( 2  ); lineGrid->setContentsMargins( 2 , 2 , 2 , 2  );
 
-   lineGrid->setColSpacing( 1, w + 10 );  // Set width + 10 pixels
+   lineGrid->setColumnMinimumWidth( 1, w + 10 );  // Set width + 10 pixels
    
    lineGrid->addWidget(pb_browser,j,0);
    lineGrid->addWidget(le_browser,j,1);
@@ -338,13 +338,13 @@ void US_Config_GUI::setup_GUI()
 
    topbox->addWidget(lbl_misc);
 
-   Q3GridLayout *lineGrid2 = new Q3GridLayout(topbox,5,2);
+   QGridLayout * lineGrid2 = new QGridLayout; lineGrid2->setContentsMargins( 0, 0, 0, 0 ); lineGrid2->setSpacing( 0 ); topbox->addLayout( lineGrid2 );;
    j=0;
    lineGrid2->addWidget(lbl_temperature_tol,j,0);
    lineGrid2->addWidget(le_temperature_tol,j,1);
    j++;
    lineGrid2->addWidget(lbl_beckman_bug,j,0);
-   Q3BoxLayout *radiobutton = new Q3HBoxLayout(0);
+   QBoxLayout *radiobutton = new QHBoxLayout();
    radiobutton->addWidget(bt_on);
    radiobutton->addWidget(bt_off);
    lineGrid2->addLayout(radiobutton,j,1);
@@ -361,7 +361,7 @@ void US_Config_GUI::setup_GUI()
    lineGrid2->addWidget(lbl_numThreads,j,0);
    lineGrid2->addWidget(cnt_numThreads,j,1);
 
-   Q3BoxLayout *pushbutton = new Q3HBoxLayout(topbox,2);
+   QBoxLayout * pushbutton = new QHBoxLayout; topbox->addLayout( pushbutton ); pushbutton->setSpacing( 2 );
    pushbutton->addWidget(pb_help);
    pushbutton->addWidget(pb_save);
    pushbutton->addWidget(pb_cancel);
@@ -469,7 +469,7 @@ void US_Config_GUI::update_database()
 #ifndef NO_DB
    US_Database *usdb;
    usdb = new US_Database();
-   usdb->setCaption("Database Configuration");
+   usdb->setWindowTitle("Database Configuration");
    usdb->resize(330,264);
    usdb->show();
 #endif
@@ -483,7 +483,7 @@ void US_Config_GUI::update_off_button()
 
 void US_Config_GUI::open_browser_dir()
 {
-   QString browser = QFileDialog::getOpenFileName( 0 , caption() , USglobal->config_list.browser , QString::null );
+   QString browser = QFileDialog::getOpenFileName( 0 , windowTitle() , USglobal->config_list.browser , QString::null );
 
 
    if ( browser != "" )

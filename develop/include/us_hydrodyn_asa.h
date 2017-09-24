@@ -7,10 +7,11 @@
 #include <qstring.h>
 #include <qlayout.h>
 #include <qpushbutton.h>
-#include <q3frame.h>
+#include <qradiobutton.h>
+//#include <q3frame.h>
 #include <qcheckbox.h>
 #include <qwt_counter.h>
-#include <q3buttongroup.h>
+#include <qgroupbox.h>
 //Added by qt3to4:
 #include <QCloseEvent>
 
@@ -47,7 +48,7 @@ struct asa_options
 
 };
 
-class US_EXTERN US_Hydrodyn_ASA : public Q3Frame
+class US_EXTERN US_Hydrodyn_ASA : public QFrame
 {
    Q_OBJECT
 
@@ -89,14 +90,17 @@ class US_EXTERN US_Hydrodyn_ASA : public Q3Frame
 
       QCheckBox *cb_asa_calculation;
       QCheckBox *cb_bead_check;
+
       QCheckBox *cb_surfracer;
       QCheckBox *cb_asab1;
+      QRadioButton *rb_surfracer;
+      QRadioButton *rb_asab1;
       QCheckBox *cb_vvv;
 
       QPushButton *pb_help;
       QPushButton *pb_cancel;
       
-      Q3ButtonGroup *bg_asa_method;
+      QGroupBox *bg_asa_method;
 
    private slots:
       
@@ -112,6 +116,7 @@ class US_EXTERN US_Hydrodyn_ASA : public Q3Frame
       void update_hydrate_threshold(double);
       void update_vvv_probe_radius(double);
       void update_vvv_grid_dR(double);
+      void select_asa_method();
       void select_asa_method(int);
       void set_asa_calculation();
       void set_bead_check();

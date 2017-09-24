@@ -5,7 +5,7 @@
 #include <QLabel>
 #include <QFocusEvent>
 
-mQLineEdit::mQLineEdit( QWidget *parent, const char * name ) : QLineEdit( parent, name ) {}
+mQLineEdit::mQLineEdit( QWidget *parent ) : QLineEdit( parent ) {}
 
 mQLineEdit::~mQLineEdit() {}
 
@@ -27,8 +27,8 @@ void mQLineEdit::mousePressEvent ( QMouseEvent *e )
    emit( pressed() );
 }
 
-mQLabel::mQLabel( QWidget *parent, const char * name ) : QLabel( parent, name ) {}
-mQLabel::mQLabel( const QString & text, QWidget *parent, const char * name ) : QLabel( text, parent, name ) {}
+mQLabel::mQLabel( QWidget *parent ) : QLabel( parent ) {}
+mQLabel::mQLabel( const QString & text, QWidget *parent ) : QLabel( text, parent ) {}
 
 mQLabel::~mQLabel() {}
 
@@ -44,19 +44,8 @@ void mQLabel::resizeEvent ( QResizeEvent *e )
    emit( resized() );
 }
 
-mQGrid::mQGrid( int n, QWidget* parent, const char* name, Qt::WFlags f ) : Q3Grid( n, parent, name, f ) {}
-mQGrid::mQGrid( int n, Qt::Orientation orient, QWidget* parent, const char* name, Qt::WFlags f) : Q3Grid( n, orient, parent, name, f ) {}
-
-mQGrid::~mQGrid() {}
-
-void mQGrid::resizeEvent ( QResizeEvent *e )
-{
-   Q3Grid::resizeEvent( e );
-   emit( resized() );
-}
-
-mQPushButton::mQPushButton( QWidget *parent, const char * name ) : QPushButton( parent, name ) {}
-mQPushButton::mQPushButton( const QString & text, QWidget *parent, const char * name ) : QPushButton( text, parent, name ) {}
+mQPushButton::mQPushButton( QWidget *parent ) : QPushButton( parent ) {}
+mQPushButton::mQPushButton( const QString & text, QWidget *parent ) : QPushButton( text, parent ) {}
 
 mQPushButton::~mQPushButton() {}
 
@@ -128,14 +117,14 @@ void ShowHide::only_widgets( const std::vector < std::vector < QWidget *> > & wi
 }
 
 
-QStringList MQT::get_lb_qsl( Q3ListBox * lb, bool only_selected )
+QStringList MQT::get_lb_qsl( QListWidget * lb, bool only_selected )
 {
    QStringList qsl;
-   for ( int i = 0; i < lb->numRows(); ++i )
+   for ( int i = 0; i < lb->count(); ++i )
    {
-      if ( !only_selected || lb->isSelected( i ) )
+      if ( !only_selected || lb->item( i )->isSelected() )
       {
-         qsl << lb->text( i );
+         qsl << lb->item( i )->text( );
       }
    }
    return qsl;

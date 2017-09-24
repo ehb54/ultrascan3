@@ -1,7 +1,7 @@
 #include "../include/us_saxs_util.h"
 //Added by qt3to4:
-#include <Q3TextStream>
-#include <Q3ValueList>
+#include <QTextStream>
+ //#include <Q3ValueList>
 
 // note: this program uses cout and/or cerr and this should be replaced
 
@@ -52,7 +52,12 @@ QString sgp_node::validate_params()
 QString sgp_node::default_params()
 {
    QStringList           params;
-   Q3ValueList < double > values;
+
+#if QT_VERSION < 0x040000      
+ //   Q3ValueList < double > values;
+#else
+   QList < double > values;
+#endif
 
    params << "distancequantum";
    values << 2.5;
@@ -767,10 +772,10 @@ void sgp_node::test()
 
       if ( f.open( QIODevice::WriteOnly ) )
       {
-         Q3TextStream ts( &f );
+         QTextStream ts( &f );
          ts << our_sgp->qs_bead_model();
          f.close();
-         cout << QString( "written: %1\n" ).arg( f.name() );
+         cout << QString( "written: %1\n" ).arg( f.fileName() );
       }
                
       cout << "now delete\n";
@@ -790,10 +795,10 @@ void sgp_node::test()
 
       if ( f.open( QIODevice::WriteOnly ) )
       {
-         Q3TextStream ts( &f );
+         QTextStream ts( &f );
          ts << our_sgp2->qs_bead_model();
          f.close();
-         cout << QString( "written: %1\n" ).arg( f.name() );
+         cout << QString( "written: %1\n" ).arg( f.fileName() );
       }
       delete our_sgp2;
    }
@@ -812,10 +817,10 @@ void sgp_node::test()
 
       if ( f.open( QIODevice::WriteOnly ) )
       {
-         Q3TextStream ts( &f );
+         QTextStream ts( &f );
          ts << our_cross->qs_bead_model();
          f.close();
-         cout << QString( "written: %1\n" ).arg( f.name() );
+         cout << QString( "written: %1\n" ).arg( f.fileName() );
       }
       delete our_cross;
    }

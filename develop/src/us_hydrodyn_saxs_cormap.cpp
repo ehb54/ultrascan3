@@ -5,17 +5,17 @@
 #include "../include/us_hydrodyn_saxs_cormap.h"
 #include "../include/us_csv.h"
 #include <qsplitter.h>
-#include <q3grid.h>
+//#include <q3grid.h>
 //Added by qt3to4:
-#include <Q3TextStream>
-#include <Q3HBoxLayout>
+#include <QTextStream>
+#include <QHBoxLayout>
 #include <QLabel>
-#include <Q3GridLayout>
+#include <QGridLayout>
 #include <QPixmap>
-#include <Q3Frame>
+#include <QFrame>
 #include <QEventLoop>
-#include <Q3PopupMenu>
-#include <Q3VBoxLayout>
+ //#include <Q3PopupMenu>
+#include <QVBoxLayout>
 #include <QCloseEvent>
 
 US_Hydrodyn_Saxs_Cormap::US_Hydrodyn_Saxs_Cormap(
@@ -26,7 +26,7 @@ US_Hydrodyn_Saxs_Cormap::US_Hydrodyn_Saxs_Cormap(
                                                  vector < QString >                      selected_files,
                                                  QWidget *                               p,
                                                  const char *                            name
-                                                 ) : Q3Frame( p, name )
+                                                 ) : QFrame(  p )
 {
    this->us_hydrodyn                          = us_hydrodyn;
    this->parameters                           = parameters;
@@ -36,7 +36,7 @@ US_Hydrodyn_Saxs_Cormap::US_Hydrodyn_Saxs_Cormap(
 
    USglobal = new US_Config();
    setPalette( PALET_FRAME );
-   setCaption( tr( "US-SOMO: CorMap Analysis" ) );
+   setWindowTitle( us_tr( "US-SOMO: CorMap Analysis" ) );
 
    plot_zoomer         = ( ScrollZoomer * )0;
    plot_cluster_zoomer = ( ScrollZoomer * )0;
@@ -81,7 +81,7 @@ void US_Hydrodyn_Saxs_Cormap::setupGUI()
    AUTFBACK( lbl_title );
    lbl_title->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 
-   // QGridLayout * gl_image = new QGridLayout( 0 );
+   // QGridLayout * gl_image = new QGridLayout( 0 ); gl_image->setContentsMargins( 0, 0, 0, 0 ); gl_image->setSpacing( 0 );
 
 
    lbl_image = new mQLabel( qs2 );
@@ -93,8 +93,8 @@ void US_Hydrodyn_Saxs_Cormap::setupGUI()
 
    // setup frame for off screen imaging
    {
-      f_brookesmap = new Q3Frame( 0 );
-      Q3GridLayout *gl = new Q3GridLayout( f_brookesmap );
+      f_brookesmap = new QFrame( 0 );
+      QGridLayout *gl = new QGridLayout( f_brookesmap );
    
       lbl_f_title = new QLabel( "", f_brookesmap ); 
       lbl_f_title->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
@@ -170,7 +170,7 @@ void US_Hydrodyn_Saxs_Cormap::setupGUI()
          f_thermo_left->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 2 ) );
          f_thermo_left->setScaleMaxMinor( 0 );
 
-         gl->addMultiCellWidget( lbl_f_title, 0, 0, 0, 1 );
+         gl->addWidget( lbl_f_title , 0 , 0 , 1 + ( 0 ) - ( 0 ) , 1 + ( 1  ) - ( 0 ) );
          gl->addWidget( lbl_f_none   , 1, 0 );
          gl->addWidget( f_thermo_top , 1, 1 );
          gl->addWidget( f_thermo_left, 2, 0 );
@@ -197,8 +197,8 @@ void US_Hydrodyn_Saxs_Cormap::setupGUI()
    plot_grid->setMinPen( QPen( USglobal->global_colors.minor_ticks, 0, Qt::DotLine ) );
    plot_grid->attach( plot );
 #endif
-   plot->setAxisTitle(QwtPlot::xBottom, tr( "Ref."));
-   plot->setAxisTitle(QwtPlot::yLeft  , tr( "Red %" ) );
+   plot->setAxisTitle(QwtPlot::xBottom, us_tr( "Ref."));
+   plot->setAxisTitle(QwtPlot::yLeft  , us_tr( "Red %" ) );
 #ifndef QT4
    plot->setTitleFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 3, QFont::Bold));
    plot->setAxisTitleFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
@@ -213,7 +213,7 @@ void US_Hydrodyn_Saxs_Cormap::setupGUI()
 #endif
    plot->setAxisFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    plot->setMargin(USglobal->config_list.margin);
-   plot->setTitle( tr( "Red pair % histogram\n(Lines represent average, ±1 SD)" ) );
+   plot->setTitle( us_tr( "Red pair % histogram\n(Lines represent average, ±1 SD)" ) );
 #ifndef QT4
    plot->setAxisOptions(QwtPlot::yLeft, QwtAutoScale::None);
 #else
@@ -240,8 +240,8 @@ void US_Hydrodyn_Saxs_Cormap::setupGUI()
    plot_cluster_grid->setMinPen( QPen( USglobal->global_colors.minor_ticks, 0, Qt::DotLine ) );
    plot_cluster_grid->attach( plot );
 #endif
-   plot_cluster->setAxisTitle(QwtPlot::xBottom, tr( "Red cluster size"));
-   plot_cluster->setAxisTitle(QwtPlot::yLeft  , tr( "Count" ) );
+   plot_cluster->setAxisTitle(QwtPlot::xBottom, us_tr( "Red cluster size"));
+   plot_cluster->setAxisTitle(QwtPlot::yLeft  , us_tr( "Count" ) );
 #ifndef QT4
    plot_cluster->setTitleFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 3, QFont::Bold));
    plot_cluster->setAxisTitleFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
@@ -256,7 +256,7 @@ void US_Hydrodyn_Saxs_Cormap::setupGUI()
 #endif
    plot_cluster->setAxisFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    plot_cluster->setMargin(USglobal->config_list.margin);
-   plot_cluster->setTitle( tr( "\nRed cluster size histogram" ) );
+   plot_cluster->setTitle( us_tr( "\nRed cluster size histogram" ) );
 #ifndef QT4
    plot_cluster->setAxisOptions(QwtPlot::yLeft, QwtAutoScale::None);
 #else
@@ -265,14 +265,14 @@ void US_Hydrodyn_Saxs_Cormap::setupGUI()
    plot_cluster->setCanvasBackground(USglobal->global_colors.plot);
 
    cb_adj = new QCheckBox( this );
-   cb_adj -> setText( tr( "Adjusted P values" ) );
+   cb_adj -> setText( us_tr( "Adjusted P values" ) );
    cb_adj -> setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 2 ) );
    cb_adj -> setPalette( PALET_NORMAL );
    AUTFBACK( cb_adj );
    connect( cb_adj, SIGNAL( clicked() ), SLOT( forceImageResized() ) );
 
    cb_hb = new QCheckBox( this );
-   cb_hb -> setText( tr( "Holm-Bonferroni adjusted P values" ) );
+   cb_hb -> setText( us_tr( "Holm-Bonferroni adjusted P values" ) );
    cb_hb -> setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 2 ) );
    cb_hb -> setPalette( PALET_NORMAL );
    AUTFBACK( cb_hb );
@@ -280,77 +280,79 @@ void US_Hydrodyn_Saxs_Cormap::setupGUI()
 
    //   QFrame *editor_frame = new QFrame( qs );
 
-   editor = new Q3TextEdit( qs );
+   editor = new QTextEdit( qs );
    editor->setPalette( PALET_NORMAL );
    AUTFBACK( editor );
    editor->setReadOnly(true);
    editor->setFont( QFont( "Courier", USglobal->config_list.fontSize ) );
 
-#if defined(QT4) && defined(Q_WS_MAC)
+#if QT_VERSION < 0x040000
+# if defined(QT4) && defined(Q_WS_MAC)
    {
-      Q3PopupMenu * file = new Q3PopupMenu;
-      file->insertItem( tr("&Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
-      file->insertItem( tr("&Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
-      file->insertItem( tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
+ //      Q3PopupMenu * file = new Q3PopupMenu;
+      file->insertItem( us_tr("&Font"),  this, SLOT(update_font( )),    Qt::ALT+Qt::Key_F );
+      file->insertItem( us_tr("&Save"),  this, SLOT(save( )),    Qt::ALT+Qt::Key_S );
+      file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display( )),   Qt::ALT+Qt::Key_X );
 
       QMenuBar *menu = new QMenuBar( this );
       AUTFBACK( menu );
 
-      menu->insertItem(tr("&Messages"), file );
+      menu->insertItem(us_tr("&Messages"), file );
    }
-#else
+# else
    // QFrame *frame;
    // frame = new QFrame( qs );
    // frame->setMinimumHeight(minHeight1);
 
-   // m = new QMenuBar(frame, "menu" );
+   // m = new QMenuBar( frame );  m->setObjectName( "menu" );
    // m->setMinimumHeight(minHeight1 - 5);
-   // m->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   // m->setPalette( USglobal->global_colors.cg_normal );
 
    // QPopupMenu * file = new QPopupMenu(editor);
-   // m->insertItem( tr("&File"), file );
-   // file->insertItem( tr("Font"),  this, SLOT(update_font()),    ALT+Key_F );
-   // file->insertItem( tr("Save"),  this, SLOT(save()),    ALT+Key_S );
-   // file->insertItem( tr("Clear Display"), this, SLOT(clear_display()),   ALT+Key_X );
+   // m->insertItem( us_tr("&File"), file );
+   // file->insertItem( us_tr("Font"),  this, SLOT(update_font( )),    ALT+Key_F );
+   // file->insertItem( us_tr("Save"),  this, SLOT(save( )),    ALT+Key_S );
+   // file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display( )),   ALT+Key_X );
+# endif
 #endif
 
-   // editor->setWordWrap (QTextEdit::WidgetWidth);
-   editor->setWordWrap (Q3TextEdit::NoWrap);
+   // editor->setWordWrapMode (QTextOption::WordWrap);
+   editor->setWordWrapMode (QTextOption::NoWrap);
    editor->setMinimumHeight( minHeight1 * 5 );
 
-   pb_help =  new QPushButton ( tr( "Help" ), this );
+   pb_help =  new QPushButton ( us_tr( "Help" ), this );
    pb_help -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1) );
    pb_help -> setMinimumHeight( minHeight1 );
    pb_help -> setPalette      ( PALET_PUSHB );
    connect( pb_help, SIGNAL( clicked() ), SLOT( help() ) );
 
-   pb_sliding =  new QPushButton ( tr( "Sliding" ), this );
+   pb_sliding =  new QPushButton ( us_tr( "Sliding" ), this );
    pb_sliding -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1) );
    pb_sliding -> setMinimumHeight( minHeight1 );
    pb_sliding -> setPalette      ( PALET_PUSHB );
    connect( pb_sliding, SIGNAL( clicked() ), SLOT( sliding() ) );
    pb_sliding->hide();
 
-   pb_save_csv =  new QPushButton ( tr( "Save" ), this );
+   pb_save_csv =  new QPushButton ( us_tr( "Save" ), this );
    pb_save_csv -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1) );
    pb_save_csv -> setMinimumHeight( minHeight1 );
    pb_save_csv -> setPalette      ( PALET_PUSHB );
    connect( pb_save_csv, SIGNAL( clicked() ), SLOT( save_csv() ) );
 
-   pb_load_csv =  new QPushButton ( tr( "Load" ), this );
+   pb_load_csv =  new QPushButton ( us_tr( "Load" ), this );
    pb_load_csv -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1) );
    pb_load_csv -> setMinimumHeight( minHeight1 );
    pb_load_csv -> setPalette      ( PALET_PUSHB );
    connect( pb_load_csv, SIGNAL( clicked() ), SLOT( load_csv() ) );
 
-   pb_close =  new QPushButton ( tr( "Close" ), this );
+   pb_close =  new QPushButton ( us_tr( "Close" ), this );
    pb_close -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1) );
    pb_close -> setMinimumHeight( minHeight1 );
    pb_close -> setPalette      ( PALET_PUSHB );
    connect( pb_close, SIGNAL( clicked() ), SLOT( cancel() ) );
 
 
-   Q3VBoxLayout *background = new Q3VBoxLayout( this );
+   QVBoxLayout * background = new QVBoxLayout( this ); background->setContentsMargins( 0, 0, 0, 0 ); background->setSpacing( 0 );
    background->addWidget( lbl_title );
    // background->addWidget( lbl_image );
 
@@ -365,7 +367,7 @@ void US_Hydrodyn_Saxs_Cormap::setupGUI()
    background->addWidget( cb_adj );
    background->addWidget( cb_hb );
 
-   Q3HBoxLayout *hbl_bottom = new Q3HBoxLayout( 0 );
+   QHBoxLayout * hbl_bottom = new QHBoxLayout(); hbl_bottom->setContentsMargins( 0, 0, 0, 0 ); hbl_bottom->setSpacing( 0 );
    background->addSpacing( 4 );
    hbl_bottom->addWidget ( pb_help );
    hbl_bottom->addWidget ( pb_sliding );
@@ -397,10 +399,10 @@ void US_Hydrodyn_Saxs_Cormap::closeEvent( QCloseEvent *e )
 
 void US_Hydrodyn_Saxs_Cormap::editor_msg( QString color, QString msg )
 {
-   QColor save_color = editor->color();
-   editor->setColor(color);
+   QColor save_color = editor->textColor();
+   editor->setTextColor(color);
    editor->append(msg);
-   editor->setColor(save_color);
+   editor->setTextColor(save_color);
 }
 
 void US_Hydrodyn_Saxs_Cormap::clear_display()
@@ -424,20 +426,20 @@ void US_Hydrodyn_Saxs_Cormap::update_font()
 void US_Hydrodyn_Saxs_Cormap::save()
 {
    QString fn;
-   fn = QFileDialog::getSaveFileName( this , caption() , QString::null , QString::null );
+   fn = QFileDialog::getSaveFileName( this , windowTitle() , QString::null , QString::null );
    if(!fn.isEmpty() )
    {
-      QString text = editor->text();
+      QString text = editor->toPlainText();
       QFile f( fn );
       if ( !f.open( QIODevice::WriteOnly | QIODevice::Text) )
       {
          return;
       }
-      Q3TextStream t( &f );
+      QTextStream t( &f );
       t << text;
       f.close();
-      editor->setModified( false );
-      setCaption( fn );
+ //      editor->setModified( false );
+      setWindowTitle( fn );
    }
 }
 
@@ -645,7 +647,7 @@ bool US_Hydrodyn_Saxs_Cormap_Cluster_Analysis::sliding(
                                                        map < QString, double >       & sliding_results,
                                                        map < QString, double >       & hb_sliding_results,
                                                        QWidget                       * parent,
-                                                       Q3ProgressBar                  * progress
+                                                       QProgressBar                  * progress
                                                        ) {
    if ( !parameters.count( "hb" ) ) {
       if ( !sliding( pvaluepairs,
@@ -656,7 +658,7 @@ bool US_Hydrodyn_Saxs_Cormap_Cluster_Analysis::sliding(
          return false;
       }
 
-      qDebug( "rerunning for hb mode" );
+      us_qdebug( "rerunning for hb mode" );
 
       parameters[ "hb" ] = "true";
       
@@ -691,22 +693,22 @@ bool US_Hydrodyn_Saxs_Cormap_Cluster_Analysis::sliding(
                                                        map < QString, QString >      & parameters,
                                                        map < QString, double >       & sliding_results,
                                                        QWidget                       * parent,
-                                                       Q3ProgressBar                  * progress
+                                                       QProgressBar                  * progress
                                                        ) {
 
    double alpha        = parameters.count( "alpha" ) ? parameters[ "alpha" ].toDouble() : 0.05;
    double alpha_over_5 = parameters.count( "alpha_over_5" ) ? parameters[ "alpha_over_5" ].toDouble() : 0.2 * alpha;
 
-   // qDebug( QString( "sliding alpha %1 over5 %2" ).arg( alpha ).arg( alpha_over_5 ) );
+   // us_qdebug( QString( "sliding alpha %1 over5 %2" ).arg( alpha ).arg( alpha_over_5 ) );
 
    sliding_results.clear();
 
    int pc = (int) pvaluepairs.size();
 
    if ( pc != (int) pvaluepairs[ 0 ].size() ) {
-      errormsg = QObject::tr( "Internal error: cormap of brookes selected, but pvaluepairs not square" );
+      errormsg = us_tr( "Internal error: cormap of brookes selected, but pvaluepairs not square" );
       if ( parent ) {
-         QMessageBox::warning( parent, parent->caption(), errormsg );
+         QMessageBox::warning( parent, parent->windowTitle(), errormsg );
       }
       return false;
    }
@@ -716,9 +718,9 @@ bool US_Hydrodyn_Saxs_Cormap_Cluster_Analysis::sliding(
       parameters[ "sliding_minimum_size" ].toInt() : 10;
 
    if ( start_size > pc ) {
-      errormsg = QObject::tr( "Brookes map sliding cluster analysis: too few frames for analysis" );
+      errormsg = us_tr( "Brookes map sliding cluster analysis: too few frames for analysis" );
       if ( parent ) {
-         QMessageBox::warning( parent, parent->caption(), errormsg );
+         QMessageBox::warning( parent, parent->windowTitle(), errormsg );
       }
       return false;
    }
@@ -733,14 +735,14 @@ bool US_Hydrodyn_Saxs_Cormap_Cluster_Analysis::sliding(
    }
 
    if ( progress ) {
-      progress->setProgress( 0, largest_window - start_size + 1 );
+      progress->setValue( 0 ); progress->setMaximum( largest_window - start_size + 1 );
    }
 
    QString save_alpha = parameters.count( "alpha" ) ? parameters[ "alpha" ] : "0.05";
 
    for ( int i = start_size; i <= largest_window; ++i ) {
       if ( progress ) {
-         progress->setProgress( i - start_size );
+         progress->setValue( i - start_size );
          qApp->processEvents();
       }
       vector < vector < double > > sliding_window( i );
@@ -757,7 +759,7 @@ bool US_Hydrodyn_Saxs_Cormap_Cluster_Analysis::sliding(
       map < QString, QString >  csv_report;
 
       for ( int j = 0; j <= pc - i; ++j ) {
-         // qDebug( QString( "start sliding analysis size %1 pos %2" ).arg( i ).arg( j ) );
+         // us_qdebug( QString( "start sliding analysis size %1 pos %2" ).arg( i ).arg( j ) );
          for ( int k = 0; k < i; ++k ) {
             for ( int l = 0; l < i; ++l ) {
                sliding_window[ k ][ l ] = pvaluepairs[ j + k ][ j + l ];
@@ -784,14 +786,14 @@ bool US_Hydrodyn_Saxs_Cormap_Cluster_Analysis::sliding(
                     parameters,
                     csv_report,
                     parent ) ) {
-            errormsg = QObject::tr( "Brookes map sliding cluster analysis:" ) + errormsg;
+            errormsg = us_tr( "Brookes map sliding cluster analysis:" ) + errormsg;
             if ( parent ) {
-               QMessageBox::warning( parent, parent->caption(), errormsg );
+               QMessageBox::warning( parent, parent->windowTitle(), errormsg );
             }
             return false;
          }
 
-         // qDebug( "csv_report:" );
+         // us_qdebug( "csv_report:" );
          // for ( map < QString, QString >::iterator it = csv_report.begin();
          //       it != csv_report.end();
          //       ++it ) {
@@ -828,9 +830,9 @@ bool US_Hydrodyn_Saxs_Cormap_Cluster_Analysis::sliding(
       sliding_results[ prefixcnt ] = (double) count;
 
       if ( !count ) {
-         errormsg = QObject::tr( "Brookes map sliding cluster analysis: internal error count is zero?" );
+         errormsg = us_tr( "Brookes map sliding cluster analysis: internal error count is zero?" );
          if ( parent ) {
-            QMessageBox::warning( parent, parent->caption(), errormsg );
+            QMessageBox::warning( parent, parent->windowTitle(), errormsg );
          }
          return false;
       }         
@@ -863,7 +865,7 @@ bool US_Hydrodyn_Saxs_Cormap_Cluster_Analysis::sliding(
       progress->reset();
    }
 
-   // qDebug( "sliding_results" );
+   // us_qdebug( "sliding_results" );
    // for ( map < QString, double >::iterator it = sliding_results.begin();
    //       it != sliding_results.end();
    //       ++it ) {
@@ -881,14 +883,14 @@ bool US_Hydrodyn_Saxs_Cormap_Cluster_Analysis::run(
    double alpha        = parameters.count( "alpha" ) ? parameters[ "alpha" ].toDouble() : 0.05;
    double alpha_over_5 = parameters.count( "alpha_over_5" ) ? parameters[ "alpha_over_5" ].toDouble() : 0.2 * alpha;
 
-   // qDebug( QString( "cca.run alpha %1 alpha_over_5 %2" ).arg( alpha ).arg( alpha_over_5 ) );
+   // us_qdebug( QString( "cca.run alpha %1 alpha_over_5 %2" ).arg( alpha ).arg( alpha_over_5 ) );
 
    int pc = (int) pvaluepairs.size();
 
    if ( pc != (int) pvaluepairs[ 0 ].size() ) {
-      errormsg = QObject::tr( "Internal error: cormap of brookes selected, but pvaluepairs not square" );
+      errormsg = us_tr( "Internal error: cormap of brookes selected, but pvaluepairs not square" );
       if ( parent ) {
-         QMessageBox::warning( parent, parent->caption(), errormsg );
+         QMessageBox::warning( parent, parent->windowTitle(), errormsg );
       }
       return false;
    }
@@ -1003,7 +1005,7 @@ bool US_Hydrodyn_Saxs_Cormap_Cluster_Analysis::run(
 
       parameters[ "clusterheader" ] =
          cluster_sizes.size() ?
-         QString( QObject::tr( "Red cluster count %1, average size %2 ±%3 %4, average size as pct of total area %5\% ±%6\n"
+         QString( us_tr( "Red cluster count %1, average size %2 ±%3 %4, average size as pct of total area %5\% ±%6\n"
                       "Red cluster maximum size %7 (%8\%)%9.\n" ) )
          .arg( cluster_sizes.size() )
          .arg( QString( "" ).sprintf( "%.2f", avg_cluster_size ) )
@@ -1015,7 +1017,7 @@ bool US_Hydrodyn_Saxs_Cormap_Cluster_Analysis::run(
          .arg( QString( "" ).sprintf( "%3.1f", max_cluster_size_pct ) )
          .arg( max_cluster_size && cluster_size_to_pos.count( max_cluster_size ) 
                ?
-               QString( QObject::tr( " has %1 occurrence%2 and %3begins at [%4,%5]" ) )
+               QString( us_tr( " has %1 occurrence%2 and %3begins at [%4,%5]" ) )
                .arg( cluster_size_histogram.rbegin()->second )
                .arg( cluster_size_histogram.rbegin()->second > 1 ? "s" : "" )
                .arg( cluster_size_histogram.rbegin()->second > 1 ? "first occurrence " : "" )
@@ -1024,7 +1026,7 @@ bool US_Hydrodyn_Saxs_Cormap_Cluster_Analysis::run(
                : QString( "" ) )
          
          :
-         QString(  QObject::tr( "No red clusters found.\n" ) )
+         QString(  us_tr( "No red clusters found.\n" ) )
          ;
       
       csv_report[ "Red cluster size average"                         ] = QString( "" ).sprintf( "%.3f", avg_cluster_size );
@@ -1066,8 +1068,8 @@ bool US_Hydrodyn_Saxs_Cormap::big_green_box_analysis()
 void US_Hydrodyn_Saxs_Cormap::save_csv()
 {
    // QMessageBox::warning(this, 
-   //                      caption() + tr( " : Save" ),
-   //                      tr( "Saving CorMap analysis results is not currently functional" ), 
+   //                      windowTitle() + us_tr( " : Save" ),
+   //                      us_tr( "Saving CorMap analysis results is not currently functional" ), 
    //                      QMessageBox::Ok | QMessageBox::Default,
    //                      QMessageBox::NoButton
    //                      );
@@ -1087,12 +1089,12 @@ void US_Hydrodyn_Saxs_Cormap::save_csv()
       parameters[ "hb" ] = "true";
    }
 
-   QString use_filename = QFileDialog::getSaveFileName( this , tr( "Select a file name for saving" ) , use_dir , "*.csv" );
+   QString use_filename = QFileDialog::getSaveFileName( this , us_tr( "Select a file name for saving" ) , use_dir , "*.csv" );
 
    if ( use_filename.isEmpty() ) {
       return;
    }
-   use_filename = use_filename.replace( QRegExp( ".csv$", false ), "" );
+   use_filename = use_filename.replace( QRegExp( ".csv$", Qt::CaseInsensitive ), "" );
    use_filename += ".csv";
 
    if ( QFile::exists( use_filename ) ) {
@@ -1103,8 +1105,8 @@ void US_Hydrodyn_Saxs_Cormap::save_csv()
    QFile f( use_filename );
    if ( !f.open( QIODevice::WriteOnly ) ) {
       QMessageBox::warning( this
-                            , caption() + tr( " : Save CSV" )
-                            , QString( tr( "Error: can not open %1 for writing" ) )
+                            , windowTitle() + us_tr( " : Save CSV" )
+                            , QString( us_tr( "Error: can not open %1 for writing" ) )
                             .arg( use_filename )
                             ,QMessageBox::Ok | QMessageBox::Default
                             ,QMessageBox::NoButton
@@ -1114,7 +1116,7 @@ void US_Hydrodyn_Saxs_Cormap::save_csv()
 
    ((US_Hydrodyn *)us_hydrodyn)->add_to_directory_history( use_filename );
 
-   Q3TextStream ts( &f );
+   QTextStream ts( &f );
 
    ts 
       << "\"CorMap Analysis\""  << endl
@@ -1157,7 +1159,7 @@ void US_Hydrodyn_Saxs_Cormap::load_csv()
    QString use_dir = QDir::current().canonicalPath();
    ((US_Hydrodyn  *)us_hydrodyn)->select_from_directory_history( use_dir, this );
 
-   QString filename = QFileDialog::getOpenFileName( this , caption() , use_dir , "*.csv *.CSV" );
+   QString filename = QFileDialog::getOpenFileName( this , windowTitle() , use_dir , "*.csv *.CSV" );
 
    
    if ( filename.isEmpty() ) {
@@ -1175,10 +1177,10 @@ void US_Hydrodyn_Saxs_Cormap::load_csv()
                 this
                 ) 
        ) {
-      qDebug( "load ok" );
+      us_qdebug( "load ok" );
       displayData();
    } else {
-      qDebug( "load failed" );
+      us_qdebug( "load failed" );
    }
 }
 
@@ -1193,8 +1195,8 @@ bool US_Hydrodyn_Saxs_Cormap::load_csv(
    if ( !QFile::exists( filename ) ) {
       if ( parent ) {
          QMessageBox::warning( parent,
-                               parent->caption() + tr( " : Load CSV file" ),
-                               QString( tr( "An error occured when trying to open file\n"
+                               parent->windowTitle() + us_tr( " : Load CSV file" ),
+                               QString( us_tr( "An error occured when trying to open file\n"
                                             "%1\n"
                                             "The file does not exist" ) )
                                .arg( filename )
@@ -1208,8 +1210,8 @@ bool US_Hydrodyn_Saxs_Cormap::load_csv(
    if ( !f.open( QIODevice::ReadOnly ) ) {
       if ( parent ) {
          QMessageBox::warning( parent,
-                               parent->caption() + tr( " : Load CSV file" ),
-                               QString( tr( "An error occured when trying to open file\n"
+                               parent->windowTitle() + us_tr( " : Load CSV file" ),
+                               QString( us_tr( "An error occured when trying to open file\n"
                                             "%1\n"
                                             "Please check the permissions and try again\n" ) )
                                .arg( filename )
@@ -1218,7 +1220,7 @@ bool US_Hydrodyn_Saxs_Cormap::load_csv(
       return false;
    }
 
-   Q3TextStream ts( &f );
+   QTextStream ts( &f );
    vector < QString > qv;
 
    while ( !ts.atEnd() )
@@ -1232,8 +1234,8 @@ bool US_Hydrodyn_Saxs_Cormap::load_csv(
    {
       if ( parent ) {
          QMessageBox::warning( parent,
-                               parent->caption() + tr( " : Load CSV file" ),
-                               QString( tr( "The CSV file %1 is empty" ) )
+                               parent->windowTitle() + us_tr( " : Load CSV file" ),
+                               QString( us_tr( "The CSV file %1 is empty" ) )
                                .arg( filename )
                                );
       }
@@ -1243,15 +1245,15 @@ bool US_Hydrodyn_Saxs_Cormap::load_csv(
    if ( qv[ 0 ] != "\"CorMap Analysis\"" ) {
       if ( parent ) {
          QMessageBox::warning( parent,
-                               parent->caption() + " : Load CSV file",
-                               QString( tr( "The CSV file %1 is not tagged as a CorMap Analysis file" ) )
+                               parent->windowTitle() + " : Load CSV file",
+                               QString( us_tr( "The CSV file %1 is not tagged as a CorMap Analysis file" ) )
                                .arg( filename )
                                );
       }
       return false;
    }
 
-   qDebug( "loading csv file" );
+   us_qdebug( "loading csv file" );
 
    // get pvaluepair info
 
@@ -1276,7 +1278,7 @@ bool US_Hydrodyn_Saxs_Cormap::load_csv(
       {
          int p_rows = qsl[ 1 ].toInt();
          int p_cols = qsl[ 2 ].toInt();
-         // qDebug( QString( "p_rows %1 p_cols %2" ).arg( p_rows ).arg( p_cols ) );
+         // us_qdebug( QString( "p_rows %1 p_cols %2" ).arg( p_rows ).arg( p_cols ) );
          for ( int i = 0; i < p_rows; ++i ) {
             if ( pos >= (int) qv.size() ) {
                csv_corrupt_msg( filename, pos, parent );
@@ -1371,8 +1373,8 @@ bool US_Hydrodyn_Saxs_Cormap::load_csv(
 void US_Hydrodyn_Saxs_Cormap::csv_corrupt_msg( QString file, int line, QWidget * parent ) {
    if ( parent ) {
       QMessageBox::warning( parent,
-                            parent->caption() + " : Load CSV file",
-                            QString( tr( "The CSV file %1 line %2: ended permaturely or is corrupted" ) )
+                            parent->windowTitle() + " : Load CSV file",
+                            QString( us_tr( "The CSV file %1 line %2: ended permaturely or is corrupted" ) )
                             .arg( file ).arg( line + 1 )
                             );
    }
@@ -1498,7 +1500,7 @@ void US_Hydrodyn_Saxs_Cormap::displayData() {
                                       100 );
 
          int pc = (int) pvaluepairs[ 0 ].size();
-         qi     = new QImage( pc, use_height, 32 );
+         qi     = new QImage( pc, use_height, QImage::Format_RGB32 );
          qi_adj = qi;
          qi_hb  = qi;
 
@@ -1566,9 +1568,9 @@ void US_Hydrodyn_Saxs_Cormap::displayData() {
       int hb_red_c    = 0;
 
       int pc = (int) pvaluepairs.size();
-      qi     = new QImage( pc, pc, 32 );
-      qi_adj = new QImage( pc, pc, 32 );
-      qi_hb  = new QImage( pc, pc, 32 );
+      qi     = new QImage( pc, pc, QImage::Format_RGB32 );
+      qi_adj = new QImage( pc, pc, QImage::Format_RGB32 );
+      qi_hb  = new QImage( pc, pc, QImage::Format_RGB32 );
 
       // compute HB alpha's
       {
@@ -1780,7 +1782,7 @@ void US_Hydrodyn_Saxs_Cormap::displayData() {
    if ( false && parameters.count( "cormap_of_brookes" ) ) {
       int pc = (int) pvaluepairs.size();
       if ( pc != (int) pvaluepairs[ 0 ].size() ) {
-         QMessageBox::warning( this, caption(), tr( "Internal error: cormap of brookes selected, but pvaluepairs not square" ) );
+         QMessageBox::warning( this, windowTitle(), us_tr( "Internal error: cormap of brookes selected, but pvaluepairs not square" ) );
       } else {
          vector < vector < int > > rows( pc );
 
@@ -1811,12 +1813,12 @@ void US_Hydrodyn_Saxs_Cormap::displayData() {
          }
                     
          // cobreport =
-         //    tr( "\nCorMap of Brookes plot analysis:\n" )  +
+         //    us_tr( "\nCorMap of Brookes plot analysis:\n" )  +
          //    QString( "%1\t    N  Start point  C   P-value\n" )
          //    .arg( "Row", -7 )
          //    ;
 
-         cobreport = tr( "\nMaximum contiguous red analysis:\n" ) +
+         cobreport = us_tr( "\nMaximum contiguous red analysis:\n" ) +
             QString( "%1\t       P value    Red-streak   \% of points\n" )
             .arg( "Ref.", -7 )
             ;
@@ -1826,8 +1828,8 @@ void US_Hydrodyn_Saxs_Cormap::displayData() {
                
             if ( !streak_check( row0, rows[ i ], N, S, C, P ) ) {
                bad_streak = true;
-               QMessageBox::warning( this, caption(), 
-                                     QString( tr( "Internal error: cormap of brookes got cormap error %1" ) ).arg( ((US_Hydrodyn *)us_hydrodyn)->saxs_util->errormsg ) );
+               QMessageBox::warning( this, windowTitle(), 
+                                     QString( us_tr( "Internal error: cormap of brookes got cormap error %1" ) ).arg( ((US_Hydrodyn *)us_hydrodyn)->saxs_util->errormsg ) );
                break;
             }
 
@@ -1839,7 +1841,7 @@ void US_Hydrodyn_Saxs_Cormap::displayData() {
             //    .arg( N, 6 )
             //    .arg( S, 6 )
             //    .arg( C, 6 )
-            //    .arg( QString( "" ).sprintf( "%.4g", P ).leftJustify( 12 ) )
+            //    .arg( QString( "" ).sprintf( "%.4g", P ).leftJustified( 12 ) )
             //    ;
 
             double red_pct = 100e0 * ( double ) C / ( double ) N;
@@ -1854,9 +1856,9 @@ void US_Hydrodyn_Saxs_Cormap::displayData() {
 
             cobreport += QString( "%1\t %2\t %2\t %4\%\n" )
                .arg( i + 1, -7 )
-               .arg( QString( "" ).sprintf( "%.4f", P ).rightJustify( 12 ) )
+               .arg( QString( "" ).sprintf( "%.4f", P ).rightJustified( 12 ) )
                .arg( C, 6 )
-               .arg( QString( "" ).sprintf( "%3.2f", red_pct ).rightJustify( 12 ) )
+               .arg( QString( "" ).sprintf( "%3.2f", red_pct ).rightJustified( 12 ) )
                ;
          }
 
@@ -1952,8 +1954,8 @@ void US_Hydrodyn_Saxs_Cormap::displayData() {
                QString( "%1 : %2     %3    %4    %5\%\n" )
                .arg( i + 1, 5 )
                .arg( selected_files[ i ], -max_file_name_len )
-               .arg( QString( "" ).sprintf( "%.4g", avgP ).leftJustify( 12 ) )
-               .arg( QString( "" ).sprintf( "%.4g", minP ).leftJustify( 12 ) )
+               .arg( QString( "" ).sprintf( "%.4g", avgP ).leftJustified( 12 ) )
+               .arg( QString( "" ).sprintf( "%.4g", minP ).leftJustified( 12 ) )
                .arg( QString( "" ).sprintf( "%3.1f", pct_red ), 5 )
                ;
 
@@ -2185,7 +2187,7 @@ void US_Hydrodyn_Saxs_Cormap::displayData() {
       
       QFile f( parameters[ "save_csv" ] );
       if ( f.open( QIODevice::WriteOnly | QIODevice::Append ) ) {
-         Q3TextStream tso( &f );
+         QTextStream tso( &f );
          tso << out;
          f.close();
       }
@@ -2282,9 +2284,9 @@ void US_Hydrodyn_Saxs_Cormap::forceImageResized() {
 }
 
 void US_Hydrodyn_Saxs_Cormap::imageResized() {
-   // qDebug( QString( "image width %1 height %2" ).arg( lbl_image->width() ).arg( lbl_image->height() ) );
-   // qDebug( QString( "last use width %1 height %2" ).arg( last_width ).arg( last_height ) );
-   // qDebug( QString( "editor width %1 height %2" ).arg( editor->width() ).arg( editor->height() ) );
+   // us_qdebug( QString( "image width %1 height %2" ).arg( lbl_image->width() ).arg( lbl_image->height() ) );
+   // us_qdebug( QString( "last use width %1 height %2" ).arg( last_width ).arg( last_height ) );
+   // us_qdebug( QString( "editor width %1 height %2" ).arg( editor->width() ).arg( editor->height() ) );
 
    QRect org_geom = geometry();
    QRect org_lbl_geom = lbl_image->geometry();
@@ -2308,7 +2310,7 @@ void US_Hydrodyn_Saxs_Cormap::imageResized() {
 
       if ( use_i_width  == last_width &&
            use_i_height == last_height ) {
-         // qDebug( "skipped" );
+         // us_qdebug( "skipped" );
          return;
       }
 
@@ -2343,7 +2345,7 @@ void US_Hydrodyn_Saxs_Cormap::imageResized() {
          lbl_f_title->setText( 
                               parameters.count( "ppvm_title" ) ?
                               parameters[ "ppvm_title" ] :
-                              tr( "Pairwise P value map" ) 
+                              us_tr( "Pairwise P value map" ) 
                                );
          pm.convertFromImage( 
 #ifdef QT4
@@ -2370,13 +2372,13 @@ void US_Hydrodyn_Saxs_Cormap::imageResized() {
          QPixmap pm = QPixmap::grabWidget( f_brookesmap );
 
          if ( org_geom != geometry() ) {
-            // qDebug( "geometry changed" );
+            // us_qdebug( "geometry changed" );
             last_width = last_height = -1;
             return; //  imageResized();
          }
       
          if ( org_lbl_geom != lbl_image->geometry() ) {
-            // qDebug( "lbl geometry changed" );
+            // us_qdebug( "lbl geometry changed" );
             last_width = last_height = -1;
             return; //  imageResized();
          }
@@ -2389,7 +2391,7 @@ void US_Hydrodyn_Saxs_Cormap::imageResized() {
    }
 
 
-   // qDebug( QString( "max width %1 height %2\n"
+   // us_qdebug( QString( "max width %1 height %2\n"
    //                  "avail_i_width %3 f_thermo width %4\n"
    //                  "avail_i_height %5 thermo height %6 title height %7" )
    //         .arg( max_width )
@@ -2410,7 +2412,7 @@ void US_Hydrodyn_Saxs_Cormap::imageResized() {
    if ( use_i_width  == last_width &&
         use_i_height == last_height &&
         use_mode     == last_mode ) {
-      // qDebug( "skipped" );
+      // us_qdebug( "skipped" );
       return;
    }
 
@@ -2418,9 +2420,9 @@ void US_Hydrodyn_Saxs_Cormap::imageResized() {
    last_height = use_i_height;
    last_mode   = use_mode;
 
-   // qDebug( QString( "top height %1" ).arg( f_thermo_top->height() ) );
+   // us_qdebug( QString( "top height %1" ).arg( f_thermo_top->height() ) );
    // if ( f_thermo_left ) {
-   //    qDebug( QString( "left width %1" ).arg( f_thermo_left->width() ) );
+   //    us_qdebug( QString( "left width %1" ).arg( f_thermo_left->width() ) );
    // }
    // clear out old pixmap
    {
@@ -2442,8 +2444,8 @@ void US_Hydrodyn_Saxs_Cormap::imageResized() {
    qApp->processEvents( 1000 );
 #endif
 
-   // qDebug( QString( "use_i width %1 height %2" ).arg( use_i_height ).arg( use_i_width ) );
-   // qDebug( QString( "lbl_f_image width %1 height %2" ).arg( lbl_f_image->width() ).arg( lbl_f_image->height() ) );
+   // us_qdebug( QString( "use_i width %1 height %2" ).arg( use_i_height ).arg( use_i_width ) );
+   // us_qdebug( QString( "lbl_f_image width %1 height %2" ).arg( lbl_f_image->width() ).arg( lbl_f_image->height() ) );
 
    {
       QPixmap pm;
@@ -2452,7 +2454,7 @@ void US_Hydrodyn_Saxs_Cormap::imageResized() {
          lbl_f_title->setText( 
                               parameters.count( "ppvm_title" ) ?
                               parameters[ "ppvm_title" ] :
-                              tr( "Pairwise P value map" ) 
+                              us_tr( "Pairwise P value map" ) 
                                );
          pm.convertFromImage( 
 #ifdef QT4
@@ -2472,7 +2474,7 @@ void US_Hydrodyn_Saxs_Cormap::imageResized() {
             lbl_f_title->setText( 
                                  parameters.count( "ppvm_title_adj" ) ?
                                  parameters[ "ppvm_title_adj" ] :
-                                 tr( "Pairwise adjusted P value map" ) 
+                                 us_tr( "Pairwise adjusted P value map" ) 
                                   );
             pm.convertFromImage( 
 #ifdef QT4
@@ -2496,7 +2498,7 @@ void US_Hydrodyn_Saxs_Cormap::imageResized() {
                                     (
                                      parameters.count( "ppvm_title" ) ?
                                      parameters[ "ppvm_title" ] :
-                                     tr( "Pairwise P value map" ) 
+                                     us_tr( "Pairwise P value map" ) 
                                      )
                                      );
 
@@ -2519,7 +2521,7 @@ void US_Hydrodyn_Saxs_Cormap::imageResized() {
                lbl_f_title->setText( 
                                     parameters.count( "ppvm_title" ) ?
                                     parameters[ "ppvm_title" ] :
-                                    tr( "Pairwise P value map" ) 
+                                    us_tr( "Pairwise P value map" ) 
                                      );
 
                pm.convertFromImage( 
@@ -2551,7 +2553,7 @@ void US_Hydrodyn_Saxs_Cormap::imageResized() {
 #endif
    {
       QPixmap pm = QPixmap::grabWidget( f_brookesmap );
-      QImage qi = pm.convertToImage();
+      QImage qi = pm.toImage();
       pm.convertFromImage( 
 #ifdef QT4
                           qi.scaled( 
@@ -2566,13 +2568,13 @@ void US_Hydrodyn_Saxs_Cormap::imageResized() {
 #endif
                            );
       if ( org_geom != geometry() ) {
-         // qDebug( "geometry changed" );
+         // us_qdebug( "geometry changed" );
          last_width = last_height = -1;
          return; //  imageResized();
       }
       
       if ( org_lbl_geom != lbl_image->geometry() ) {
-         // qDebug( "lbl geometry changed" );
+         // us_qdebug( "lbl geometry changed" );
          last_width = last_height = -1;
          return; //  imageResized();
       }

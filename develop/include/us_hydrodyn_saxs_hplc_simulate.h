@@ -8,10 +8,10 @@
 #include "qfontmetrics.h"
 #include "qfile.h"
 #include "qfiledialog.h"
-#include "q3textedit.h"
-#include "q3progressbar.h"
+#include "qtextedit.h"
+#include "qprogressbar.h"
 //Added by qt3to4:
-#include <Q3Frame>
+#include <QFrame>
 #include <QCloseEvent>
 
 #include "us_util.h"
@@ -43,7 +43,7 @@ struct uhshs_data {
    QLineEdit  * le_alpha;
 };
 
-class US_EXTERN US_Hydrodyn_Saxs_Hplc_Simulate : public Q3Frame
+class US_EXTERN US_Hydrodyn_Saxs_Hplc_Simulate : public QFrame
 {
    Q_OBJECT
 

@@ -7,15 +7,15 @@
 #include <qstring.h>
 #include <qlayout.h>
 #include <qpushbutton.h>
-#include <q3frame.h>
+//#include <q3frame.h>
 #include <qcheckbox.h>
-#include <q3textedit.h>
-#include <q3progressbar.h>
+#include <qtextedit.h>
+#include <qprogressbar.h>
 #include <qmenubar.h>
 #include <qfileinfo.h>
 #include <qprinter.h>
 #include <qradiobutton.h>
-#include <q3table.h>
+#include <qtablewidget.h>
 #include <qwt_plot_zoomer.h>
 #include <qwt_wheel.h>
 //Added by qt3to4:
@@ -51,7 +51,7 @@
 
 using namespace std;
 
-class US_EXTERN US_Hydrodyn_Saxs_Buffer : public Q3Frame
+class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
 {
    Q_OBJECT
 
@@ -87,9 +87,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public Q3Frame
 
       QLabel        *lbl_title;
 
-      Q3Table        *t_csv;             
+      QTableWidget        *t_csv;             
 
-      Q3ProgressBar  *progress;
+      QProgressBar  *progress;
 
       QLabel        *lbl_files;
       QCheckBox     *cb_lock_dir;
@@ -112,7 +112,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public Q3Frame
       QPushButton   *pb_view;
       QPushButton   *pb_rescale;
 
-      Q3ListBox      *lb_files;
+      QListWidget      *lb_files;
       QLabel        *lbl_selected;
       // QPushButton   *pb_plot_files;
       QPushButton   *pb_avg;
@@ -130,7 +130,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public Q3Frame
       QLabel        *lbl_signal;
 
       QLabel        *lbl_np;
-      Q3ButtonGroup  *bg_np;
+      QGroupBox  *bg_np;
       QRadioButton  *rb_np_crop;
       QRadioButton  *rb_np_min;
       QRadioButton  *rb_np_ignore;
@@ -142,7 +142,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public Q3Frame
 
       QLabel        *lbl_created_files;
       mQLabel       *lbl_created_dir;
-      Q3ListBox      *lb_created_files;
+      QListWidget      *lb_created_files;
       QLabel        *lbl_selected_created;
 
       QPushButton   *pb_select_all_created;
@@ -159,7 +159,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public Q3Frame
       QPushButton   *pb_stop;
 
       QFont         ft;
-      Q3TextEdit     *editor;
+      QTextEdit     *editor;
       QMenuBar      *m;
 
       QPushButton   *pb_help;
@@ -367,7 +367,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public Q3Frame
       QString                      title;
       QStringList                  all_selected_files();
 
-      bool                         adjacent_select( Q3ListBox *lb, QString match );
+      bool                         adjacent_select( QListWidget *lb, QString match );
 
       void                         select_these( map < QString, QString > & parameters, bool reenable = true );
 
@@ -465,7 +465,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public Q3Frame
       void legend_set();
       void guinier();
 
-      void rename_created( Q3ListBoxItem *, const QPoint & );
+      void rename_created( QListWidgetItem *, const QPoint & );
 
    protected slots:
 

@@ -76,7 +76,7 @@ bool US_PM::best_sphere( set < pm_point > & model )
          this_fit = fitness2( I_result );
          if ( us_log )
          {
-            us_log->log( QString( "radius %1 beads %2 fitness %3\n" ).arg( params[ 1 ] ).arg( model.size() ).arg( this_fit ).ascii() );
+            us_log->log( QString( "radius %1 beads %2 fitness %3\n" ).arg( params[ 1 ] ).arg( model.size() ).arg( this_fit ).toAscii().data() );
          }
          if ( this_fit < prev_fit )
          {
@@ -136,7 +136,7 @@ bool US_PM::best_sphere( set < pm_point > & model )
             {
                if ( us_log )
                {
-                  us_log->log( QString( "radius %1 beads %2 fitness %3\n" ).arg( params[ 1 ] ).arg( model.size() ).arg( this_fit, 0, 'g', 8 ).ascii() );
+                  us_log->log( QString( "radius %1 beads %2 fitness %3\n" ).arg( params[ 1 ] ).arg( model.size() ).arg( this_fit, 0, 'g', 8 ).toAscii().data() );
                }
 
                last_fitness_3_pos = last_fitness_2_pos;
@@ -208,7 +208,7 @@ bool US_PM::best_sphere( set < pm_point > & model )
                   skip = true;
                   if ( us_log )
                   {
-                     us_log->log( QString( "skipped radius %1 beads %2 fitness %3\n" ).arg( params[ 1 ] ).arg( model.size() ).arg( this_fit, 0, 'g', 8 ).ascii() );
+                     us_log->log( QString( "skipped radius %1 beads %2 fitness %3\n" ).arg( params[ 1 ] ).arg( model.size() ).arg( this_fit, 0, 'g', 8 ).toAscii().data() );
                   }
                }
             }
@@ -216,7 +216,7 @@ bool US_PM::best_sphere( set < pm_point > & model )
             {
                if ( us_log )
                {
-                  us_log->log( QString( "radius %1 beads %2 fitness %3\n" ).arg( params[ 1 ] ).arg( model.size() ).arg( this_fit, 0, 'g', 8 ).ascii() );
+                  us_log->log( QString( "radius %1 beads %2 fitness %3\n" ).arg( params[ 1 ] ).arg( model.size() ).arg( this_fit, 0, 'g', 8 ).toAscii().data() );
                }
 
                last_fitness_3_pos = last_fitness_2_pos;
@@ -264,7 +264,7 @@ bool US_PM::best_sphere( set < pm_point > & model )
          this_fit = model_fit( params, model, I_result );
          if ( us_log )
          {
-            us_log->log( QString( "radius %1 beads %2 fitness %3\n" ).arg( params[ 1 ] ).arg( model.size() ).arg( this_fit ).ascii() );
+            us_log->log( QString( "radius %1 beads %2 fitness %3\n" ).arg( params[ 1 ] ).arg( model.size() ).arg( this_fit ).toAscii().data() );
          }
          if ( this_fit < prev_fit )
          {
@@ -307,7 +307,7 @@ bool US_PM::best_sphere( set < pm_point > & model )
          double trial_fit = model_fit( params, model, I_result );
          if ( us_log )
          {
-            us_log->log( QString( "radius %1 beads %2 fitness %3\n" ).arg( params[ 1 ] ).arg( model.size() ).arg( trial_fit ).ascii() );
+            us_log->log( QString( "radius %1 beads %2 fitness %3\n" ).arg( params[ 1 ] ).arg( model.size() ).arg( trial_fit ).toAscii().data() );
          }
 
          if ( trial_size < center_size )
@@ -347,7 +347,7 @@ bool US_PM::best_sphere( set < pm_point > & model )
             this_fit = fitness2( I_result );
             if ( us_log )
             {
-               us_log->log( QString( "radius %1 beads %2 fitness %3\n" ).arg( params[ 1 ] ).arg( model.size() ).arg( this_fit ).ascii() );
+               us_log->log( QString( "radius %1 beads %2 fitness %3\n" ).arg( params[ 1 ] ).arg( model.size() ).arg( this_fit ).toAscii().data() );
             }
             if ( this_fit < prev_fit )
             {

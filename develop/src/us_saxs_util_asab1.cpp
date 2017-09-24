@@ -346,7 +346,7 @@ us_saxs_util_asab1_main(vector <PDB_atom *> use_active_atoms,
       results->asa_rg_neg = ro1;
    }
 
-   mol1 = fopen("controll", "w");
+   mol1 = us_fopen("controll", "w");
    for (l = 0; l < nat; l++)
    {
       fprintf(mol1, "%s\t", dt[l].amin);
@@ -520,7 +520,7 @@ us_saxs_util_asab1_main(vector <PDB_atom *> use_active_atoms,
    ordcol();
 
    if (check_asa != 1)
-      pippa = fopen(outris, "w");
+      pippa = us_fopen(outris, "w");
    else
       goto a300;
 
@@ -731,9 +731,9 @@ us_saxs_util_asab1_main(vector <PDB_atom *> use_active_atoms,
 
    if (check_asa != 1)
    {
-      mol = fopen(outfile, "w");
-      mol1 = fopen(outfile1, "w");
-      mol2 = fopen(outfile2, "w");
+      mol = us_fopen(outfile, "w");
+      mol1 = us_fopen(outfile1, "w");
+      mol2 = us_fopen(outfile2, "w");
 
       fprintf(mol, "%d\t%f\t%s\n", nat, 0.0, outfile1);
    }
@@ -916,7 +916,7 @@ us_saxs_util_asab1_main(vector <PDB_atom *> use_active_atoms,
    if (check_asa == 1)
    {
       printf("\n\nRE-CHECK\n");
-      /*   pippa=fopen(outfile1,"w");   */
+      /*   pippa=us_fopen(outfile1,"w");   */
       dd2 = dt;
       countb = 0;
 
@@ -987,13 +987,13 @@ us_saxs_util_asab1_main(vector <PDB_atom *> use_active_atoms,
            i++;
            }
       */
-      mol = fopen(ridotto, "w");
+      mol = us_fopen(ridotto, "w");
       if ((raggio >= ((float) -2.1)) && (raggio <= ((float) -1.9)))
          fprintf(mol, "%d\t%f\t%s\t%f\n", nat, raggio, ridotto_rmc, psv);
       else
          fprintf(mol, "%d\t%f\t%s\n", nat, raggio, ridotto_rmc);
 
-      mol1 = fopen(ridotto_rmc, "w");
+      mol1 = us_fopen(ridotto_rmc, "w");
       for (l = 0; l < nat; l++)
       {
          /*      if(dt[l].col!=8)
@@ -1010,9 +1010,9 @@ us_saxs_util_asab1_main(vector <PDB_atom *> use_active_atoms,
    }
    printf("\n\n\n");
    asab1_free_alloced();
-   unlink("controll");
-   unlink("plotter");
-   unlink("plotter1");
+   QFile::remove("controll");
+   QFile::remove("plotter");
+   QFile::remove("plotter1");
 
    return 0;
 }
@@ -1437,14 +1437,14 @@ ragir()
 
 //    pulisci();
 
-//    init1_mol = fopen("test", "r");
-//    init1_mol1 = fopen("provaly2", "r");
+//    init1_mol = us_fopen("test", "r");
+//    init1_mol1 = us_fopen("provaly2", "r");
 
 //    fscanf(init1_mol, "%d", &nat);
 //    fscanf(init1_mol, "%f", &raggio);
 //    fscanf(init1_mol, "%s", ragcol);
 
-//    init1_rmc = fopen(ragcol, "r");   /* opening the file containing the radii, masses and colors */
+//    init1_rmc = us_fopen(ragcol, "r");   /* opening the file containing the radii, masses and colors */
 
 //    for (i = 0; i < nat; i++)
 //    {
@@ -1508,7 +1508,7 @@ init2()
       /*   pulisci();  */
       printf("\n\n\t%s", "Insert the bead model filename: ");
       scanf("%s", nome);
-      init2_mol = fopen(nome, "r");
+      init2_mol = us_fopen(nome, "r");
 
    }
    /*init2_mol1=NULL;
@@ -1518,7 +1518,7 @@ init2()
  a50:
    printf("\n\n\t%s", "Insert the re-checked bead model filename: ");
    scanf("%s", ridotto);
-   init2_mol1 = fopen(ridotto, "r");
+   init2_mol1 = us_fopen(ridotto, "r");
    if (init2_mol1 != NULL)
    {
       printf("\n");
@@ -1532,14 +1532,14 @@ init2()
       fclose(init2_mol1);
       if (fe == 1)
       {
-         unlink(ridotto);
+         QFile::remove(ridotto);
       }
       if (fe == 2)
          goto a50;
    }
 #endif
    strcpy(ridotto, "asab1_output");
-   init2_mol1 = fopen(ridotto, "w");
+   init2_mol1 = us_fopen(ridotto, "w");
    /*   }   */
    fclose(init2_mol1);
 
@@ -1555,7 +1555,7 @@ init2()
 
 #if defined(NOT_USED)
  a55:
-   init2_mol1 = fopen(ridotto_rmc, "r");
+   init2_mol1 = us_fopen(ridotto_rmc, "r");
    if (init2_mol1 != NULL)
    {
       printf("\n");
@@ -1569,7 +1569,7 @@ init2()
       fclose(init2_mol1);
       if (fe1 == 1)
       {
-         unlink(ridotto_rmc);
+         QFile::remove(ridotto_rmc);
       }
       if (fe1 == 2)
       {
@@ -1582,7 +1582,7 @@ init2()
 
    /*   printf("\n\n\t%s","Insert the filename for the rmc file of the re-checked bead model: ");
         scanf("%s",ridotto_rmc); */
-   //    init2_mol1 = fopen(ridotto_rmc, "w");
+   //    init2_mol1 = us_fopen(ridotto_rmc, "w");
    /*   } */
    //    fclose(init2_mol1);
 
@@ -1591,7 +1591,7 @@ init2()
         getchar(); */
 
    //    if (flag1 != 1)
-   //   init2_mol1 = fopen("provaly2", "r");
+   //   init2_mol1 = us_fopen("provaly2", "r");
 
    nat = active_atoms.size();
    // fscanf(init2_mol, "%d", &nat);
@@ -1602,7 +1602,7 @@ init2()
    // if ((raggio >= ((float) -2.1)) && (raggio <= ((float) -1.9)))
    //   fscanf(init2_mol, "%f", &psv);
 
-   // init2_rmc = fopen(ragcol, "r");   /* opening the file containing the radii, masses and colors */
+   // init2_rmc = us_fopen(ragcol, "r");   /* opening the file containing the radii, masses and colors */
 
    dd = dt;
 
@@ -1666,8 +1666,8 @@ init2()
    for(int i = 0; i < nat; i++) {
       printf("%d %s %s %.4f %.4f %.4f %.4f %d %d\n", 
              i,
-             active_atoms[i]->name.ascii(),
-             active_atoms[i]->resName.ascii(),
+             active_atoms[i]->name.toAscii().data(),
+             active_atoms[i]->resName.toAscii().data(),
              dt[i].r, 
              dt[i].x, 
              dt[i].y, 
@@ -2983,8 +2983,8 @@ ordcol()
    fine[1] = 'P';
    fine[2] = ';';
 
-   ordcol_ord = fopen("plotter", "rb");
-   ord1 = fopen("plotter1", "ab");
+   ordcol_ord = us_fopen("plotter", "rb");
+   ord1 = us_fopen("plotter1", "ab");
 
    fscanf(ordcol_ord, "%s", key);
    fprintf(ord1, "%s%c", key, ' ');
@@ -3087,7 +3087,7 @@ static void plotend();
 static void
 plotinit()
 {
-   plotter_pl = fopen("plotter", "ab");
+   plotter_pl = us_fopen("plotter", "ab");
    if (form == 1)
    {
       fprintf(plotter_pl, "%s%d%c", "DF;IN;IP;VS", vel, ';');
@@ -3138,7 +3138,7 @@ plotcircle()
    dd = dts;
    dd += nc;
 
-   plotter_pl = fopen("plotter", "ab");
+   plotter_pl = us_fopen("plotter", "ab");
 
    d = dd->r - (fl * (((float) 1.0) + ((float) ceil(nat / 15.)) / ((float) 2.0)));
 
@@ -3159,7 +3159,7 @@ plotarc(int i)
    dd = dts;
    dd += nc;
 
-   plotter_pl = fopen("plotter", "ab");
+   plotter_pl = us_fopen("plotter", "ab");
    fprintf(plotter_pl, "%s%d%c", "SP", dd->col, ';');
    fprintf(plotter_pl, "%s%f%c%f%c", "PA", dis[i].xi, ',', dis[i].yi, ';');
    fprintf(plotter_pl, "%s%f%c%f%c%f%c", "PD;AA", dd->x, ',', dd->y, ',', dis[i].ai, ';');
@@ -3171,7 +3171,7 @@ plotarc(int i)
 static void
 plotend()
 {
-   plotter_pl = fopen("plotter", "ab");
+   plotter_pl = us_fopen("plotter", "ab");
    fprintf(plotter_pl, "%s", "SP;");
    fclose(plotter_pl);
 }

@@ -1,13 +1,13 @@
 #include "../include/us3_defines.h"
 #include "../include/us_hydrodyn_xsr.h"
 //Added by qt3to4:
-#include <Q3TextStream>
-#include <Q3HBoxLayout>
+#include <QTextStream>
+#include <QHBoxLayout>
 #include <QLabel>
-#include <Q3Frame>
-#include <Q3PopupMenu>
-#include <Q3VBoxLayout>
-#include <Q3BoxLayout>
+#include <QFrame>
+ //#include <Q3PopupMenu>
+#include <QVBoxLayout>
+#include <QBoxLayout>
 #include <QCloseEvent>
 
 #if !defined(QT4) && defined(Q_WS_WIN)
@@ -269,7 +269,7 @@ namespace xsr {
             fgets(buffer, 999, stdin);
             sscanf(buffer,"%s%d%d%d", filename, &nResidues, &xSize, &ySize);
 
-            input = fopen(filename, "r");
+            input = us_fopen(filename, "r");
 
             for(j = 0; j < nResidues; j ++){
 
@@ -767,7 +767,7 @@ namespace xsr {
 
       for(i = 0; i < model->nContrastPoints; i ++){   /*print best I(q) profile at each cycle*/
 
-         output = fopen(model[i].outFilename, "w");
+         output = us_fopen(model[i].outFilename, "w");
 
          fprintf(output,"Smeared Model I(q) data: Chi**2 = %lf, Unsmeared and unscaled moments: Ic(0) = %lf, Rgc = %lf\n", model[i].chi2, model[i].I0, model[i].Rg);
          fprintf(output,"   q     I(q)\n");   /* header informations */
@@ -797,7 +797,7 @@ namespace xsr {
 
       /* temporarily stores the total pr at each contrast point */
 
-      output = fopen("model.pr", "w");
+      output = us_fopen("model.pr", "w");
 
       for(j = 0; j < pr[0]->nContrastPoints + 1; j ++)   /* print out p(r) = 0.0 */
          fprintf(output,"%13.5E", 0.0);
@@ -840,7 +840,7 @@ namespace xsr {
 
       /* gridPDB is a pointer to the file where the pdb format is written */
 
-      gridPDB = fopen(filename, "w");
+      gridPDB = us_fopen(filename, "w");
 
       for(i = 0; i < grid->nGridPoints; i ++)   /*output best grid at the end of each cycle for viewing*/
          for(j = 0; j < grid->nSymmOps; j ++){
@@ -1069,7 +1069,7 @@ namespace xsr {
             strcpy(model[i].outFilename, data[i].filename);
             strcat(model[i].outFilename, "_fit.dat");   /* the file that contains the calculated intensity data has _fit.dat appended to the actual filename */
 
-            input = fopen(data[i].filename, "r");   /* open the data file */
+            input = us_fopen(data[i].filename, "r");   /* open the data file */
 		
             for(j = 0; j < 5; j ++)
                fgets(buffer, 999, input);   /* scan over header information */
@@ -1311,7 +1311,7 @@ US_Hydrodyn_Xsr::US_Hydrodyn_Xsr(
                                  US_Hydrodyn  * us_hydrodyn,
                                  QWidget *p, 
                                  const char *name
-                                 ) : Q3Frame( p, name )
+                                 ) : QFrame(  p )
 {
    this->us_hydrodyn      = us_hydrodyn;
    this->our_saxs_options = & ( us_hydrodyn->saxs_options );
@@ -1320,7 +1320,7 @@ US_Hydrodyn_Xsr::US_Hydrodyn_Xsr(
 
    USglobal = new US_Config();
    setPalette( PALET_FRAME );
-   setCaption( tr( "US-SOMO: SAXS Cross Sectional Analysis" ) );
+   setWindowTitle( us_tr( "US-SOMO: SAXS Cross Sectional Analysis" ) );
 
    setupGUI();
    running = false;
@@ -1346,75 +1346,102 @@ void US_Hydrodyn_Xsr::setupGUI()
    int minHeight3 = 30;
 #endif
 
-   lbl_title = new QLabel( tr( "US-SOMO: SAXS Cross Sectional Analysis" ), this);
-   lbl_title->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Raised);
+   lbl_title = new QLabel( us_tr( "US-SOMO: SAXS Cross Sectional Analysis" ), this);
+   lbl_title->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_title->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_title->setMinimumHeight(minHeight1);
    lbl_title->setPalette( PALET_FRAME );
    AUTFBACK( lbl_title );
    lbl_title->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
 
-   pb_start = new QPushButton(tr("Start"), this);
+   pb_start = new QPushButton(us_tr("Start"), this);
    pb_start->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_start->setMinimumHeight(minHeight1);
    pb_start->setPalette( PALET_PUSHB );
    connect(pb_start, SIGNAL(clicked()), SLOT(start()));
 
-   pb_stop = new QPushButton(tr("Stop"), this);
+   pb_stop = new QPushButton(us_tr("Stop"), this);
    pb_stop->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_stop->setMinimumHeight(minHeight1);
    pb_stop->setPalette( PALET_PUSHB );
    connect(pb_stop, SIGNAL(clicked()), SLOT(stop()));
 
-   progress = new Q3ProgressBar(this, "Progress");
+   progress = new QProgressBar( this );
    progress->setMinimumHeight(minHeight1);
    progress->setPalette( PALET_NORMAL );
    AUTFBACK( progress );
    progress->reset();
 
-   editor = new Q3TextEdit(this);
+   editor = new QTextEdit(this);
    editor->setPalette( PALET_NORMAL );
    AUTFBACK( editor );
    editor->setReadOnly(true);
 
-#if defined(QT4) && defined(Q_WS_MAC)
+#if QT_VERSION < 0x040000
+# if defined(QT4) && defined(Q_WS_MAC)
    {
-      Q3PopupMenu * file = new Q3PopupMenu;
-      file->insertItem( tr("&Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
-      file->insertItem( tr("&Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
-      file->insertItem( tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
+ //      Q3PopupMenu * file = new Q3PopupMenu;
+      file->insertItem( us_tr("&Font"),  this, SLOT(update_font( )),    Qt::ALT+Qt::Key_F );
+      file->insertItem( us_tr("&Save"),  this, SLOT(save( )),    Qt::ALT+Qt::Key_S );
+      file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display( )),   Qt::ALT+Qt::Key_X );
 
       QMenuBar *menu = new QMenuBar( this );
       AUTFBACK( menu );
 
-      menu->insertItem(tr("&Messages"), file );
+      menu->insertItem(us_tr("&Messages"), file );
    }
-#else
-   Q3Frame *frame;
-   frame = new Q3Frame(this);
+# else
+   QFrame *frame;
+   frame = new QFrame(this);
    frame->setMinimumHeight(minHeight3);
 
-   m = new QMenuBar(frame, "menu" );
+   m = new QMenuBar( frame );    m->setObjectName( "menu" );
    m->setMinimumHeight(minHeight1 - 5);
    m->setPalette( PALET_NORMAL );
    AUTFBACK( m );
-   Q3PopupMenu * file = new Q3PopupMenu(editor);
-   m->insertItem( tr("&File"), file );
-   file->insertItem( tr("Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
-   file->insertItem( tr("Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
-   file->insertItem( tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
-#endif
+ //   Q3PopupMenu * file = new Q3PopupMenu(editor);
+   m->insertItem( us_tr("&File"), file );
+   file->insertItem( us_tr("Font"),  this, SLOT(update_font( )),    Qt::ALT+Qt::Key_F );
+   file->insertItem( us_tr("Save"),  this, SLOT(save( )),    Qt::ALT+Qt::Key_S );
+   file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display( )),   Qt::ALT+Qt::Key_X );
+# endif
+#else
+   QFrame *frame;
+   frame = new QFrame(this);
+   frame->setMinimumHeight(minHeight3);
 
-   editor->setWordWrap (Q3TextEdit::WidgetWidth);
+   m = new QMenuBar( frame );    m->setObjectName( "menu" );
+   m->setMinimumHeight(minHeight1 - 5);
+   m->setPalette( PALET_NORMAL );
+   AUTFBACK( m );
+
+   {
+      QMenu * new_menu = m->addMenu( us_tr( "&File" ) );
+
+      QAction *qa1 = new_menu->addAction( us_tr( "Font" ) );
+      qa1->setShortcut( Qt::ALT+Qt::Key_F );
+      connect( qa1, SIGNAL(triggered()), this, SLOT( update_font() ) );
+
+      QAction *qa2 = new_menu->addAction( us_tr( "Save" ) );
+      qa2->setShortcut( Qt::ALT+Qt::Key_S );
+      connect( qa2, SIGNAL(triggered()), this, SLOT( save() ) );
+
+      QAction *qa3 = new_menu->addAction( us_tr( "Clear Display" ) );
+      qa3->setShortcut( Qt::ALT+Qt::Key_X );
+      connect( qa3, SIGNAL(triggered()), this, SLOT( clear_display() ) );
+   }
+#endif
+   
+   editor->setWordWrapMode (QTextOption::WordWrap);
    // editor->setMinimumHeight(300);
    
-   pb_help = new QPushButton(tr("Help"), this);
+   pb_help = new QPushButton(us_tr("Help"), this);
    pb_help->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_help->setMinimumHeight(minHeight1);
    pb_help->setPalette( PALET_PUSHB );
    connect(pb_help, SIGNAL(clicked()), SLOT(help()));
 
-   pb_cancel = new QPushButton(tr("Close"), this);
+   pb_cancel = new QPushButton(us_tr("Close"), this);
    pb_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_cancel->setMinimumHeight(minHeight1);
    pb_cancel->setPalette( PALET_PUSHB );
@@ -1423,13 +1450,13 @@ void US_Hydrodyn_Xsr::setupGUI()
    // build layout
    // grid for options
 
-   Q3BoxLayout *vbl_editor_group = new Q3VBoxLayout( 0 );
+   QBoxLayout *vbl_editor_group = new QVBoxLayout( 0 );
 #if !defined(QT4) || !defined(Q_WS_MAC)
    vbl_editor_group->addWidget( frame      );
 #endif
    vbl_editor_group->addWidget( editor     );
 
-   Q3HBoxLayout *hbl_controls = new Q3HBoxLayout( 0 );
+   QHBoxLayout * hbl_controls = new QHBoxLayout(); hbl_controls->setContentsMargins( 0, 0, 0, 0 ); hbl_controls->setSpacing( 0 );
    hbl_controls->addSpacing(4);
    hbl_controls->addWidget(pb_start);
    hbl_controls->addSpacing(4);
@@ -1437,17 +1464,17 @@ void US_Hydrodyn_Xsr::setupGUI()
    hbl_controls->addWidget(pb_stop);
    hbl_controls->addSpacing(4);
 
-   Q3VBoxLayout *vbl_target_controls = new Q3VBoxLayout( 0 );
+   QVBoxLayout * vbl_target_controls = new QVBoxLayout( 0 ); vbl_target_controls->setContentsMargins( 0, 0, 0, 0 ); vbl_target_controls->setSpacing( 0 );
    vbl_target_controls->addLayout( hbl_controls );
 
-   Q3HBoxLayout *hbl_bottom = new Q3HBoxLayout( 0 );
+   QHBoxLayout * hbl_bottom = new QHBoxLayout(); hbl_bottom->setContentsMargins( 0, 0, 0, 0 ); hbl_bottom->setSpacing( 0 );
    hbl_bottom->addSpacing( 4 );
    hbl_bottom->addWidget ( pb_help );
    hbl_bottom->addSpacing( 4 );
    hbl_bottom->addWidget ( pb_cancel );
    hbl_bottom->addSpacing( 4 );
 
-   Q3VBoxLayout *background = new Q3VBoxLayout(this);
+   QVBoxLayout * background = new QVBoxLayout(this); background->setContentsMargins( 0, 0, 0, 0 ); background->setSpacing( 0 );
    background->addSpacing( 4 );
    background->addWidget ( lbl_title );
    background->addSpacing( 4 );
@@ -1501,20 +1528,20 @@ void US_Hydrodyn_Xsr::update_font()
 void US_Hydrodyn_Xsr::save()
 {
    QString fn;
-   fn = QFileDialog::getSaveFileName( this , caption() , QString::null , QString::null );
+   fn = QFileDialog::getSaveFileName( this , windowTitle() , QString::null , QString::null );
    if(!fn.isEmpty() )
    {
-      QString text = editor->text();
+      QString text = editor->toPlainText();
       QFile f( fn );
       if ( !f.open( QIODevice::WriteOnly | QIODevice::Text) )
       {
          return;
       }
-      Q3TextStream t( &f );
+      QTextStream t( &f );
       t << text;
       f.close();
-      editor->setModified( false );
-      setCaption( fn );
+ //      editor->setModified( false );
+      setWindowTitle( fn );
    }
 }
 
@@ -1537,10 +1564,10 @@ void US_Hydrodyn_Xsr::update_enables()
 
 void US_Hydrodyn_Xsr::editor_msg( QString color, QString msg )
 {
-   QColor save_color = editor->color();
-   editor->setColor(color);
+   QColor save_color = editor->textColor();
+   editor->setTextColor(color);
    editor->append(msg);
-   editor->setColor(save_color);
+   editor->setTextColor(save_color);
 }
 
 // ------ US_Hydrodyn_Saxs entry 

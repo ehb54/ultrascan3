@@ -3,10 +3,10 @@
 #include "../include/us_hydrodyn.h"
 #include "qregexp.h"
 //Added by qt3to4:
-#include <Q3HBoxLayout>
-#include <Q3Frame>
+#include <QHBoxLayout>
+#include <QFrame>
 #include <QLabel>
-#include <Q3VBoxLayout>
+#include <QVBoxLayout>
 
 // note: this program uses cout and/or cerr and this should be replaced
 
@@ -34,7 +34,7 @@ US_Hydrodyn_Saxs_Iqq_Load_Csv::US_Hydrodyn_Saxs_Iqq_Load_Csv(
                                                      void *us_hydrodyn,
                                                      QWidget *p,
                                                      const char *name
-                                                     ) : QDialog(p, name)
+                                                     ) : QDialog( p )
 {
    this->msg = msg;
    this->qsl_names = qsl_names;
@@ -56,7 +56,7 @@ US_Hydrodyn_Saxs_Iqq_Load_Csv::US_Hydrodyn_Saxs_Iqq_Load_Csv(
 
    USglobal = new US_Config();
    setPalette( PALET_FRAME );
-   setCaption("Load CSV style SAXS results");
+   setWindowTitle("Load CSV style SAXS results");
    setupGUI();
    global_Xpos = 200;
    global_Ypos = 150;
@@ -80,20 +80,20 @@ void US_Hydrodyn_Saxs_Iqq_Load_Csv::setupGUI()
    AUTFBACK( lbl_info );
    lbl_info->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1, QFont::Bold));
 
-   lb_names = new Q3ListBox(this);
-   lb_names->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Raised);
+   lb_names = new QListWidget(this);
+   lb_names->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lb_names->setMinimumHeight(minHeight1 * 15);
    lb_names->setMinimumWidth(minWidth1);
-   lb_names->insertStringList(*qsl_names);
+   lb_names->addItems(*qsl_names);
    lb_names->setPalette( PALET_EDIT );
    AUTFBACK( lb_names );
    lb_names->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
-   lb_names->setSelectionMode(Q3ListBox::Multi);
+   lb_names->setSelectionMode(QAbstractItemView::MultiSelection);
    lb_names->setEnabled(true);
-   connect(lb_names, SIGNAL(selectionChanged()), SLOT(update_selected()));
+   connect(lb_names, SIGNAL(itemSelectionChanged()), SLOT(update_selected()));
 
    cb_create_avg = new QCheckBox(this);
-   cb_create_avg->setText(tr("Create average curve   "));
+   cb_create_avg->setText(us_tr("Create average curve   "));
    cb_create_avg->setEnabled(true);
    cb_create_avg->setChecked(*create_avg);
    cb_create_avg->setMinimumHeight(minHeight2);
@@ -103,7 +103,7 @@ void US_Hydrodyn_Saxs_Iqq_Load_Csv::setupGUI()
    connect(cb_create_avg, SIGNAL(clicked()), this, SLOT(set_create_avg()));
 
    cb_create_std_dev = new QCheckBox(this);
-   cb_create_std_dev->setText(tr("Create std deviation curves   "));
+   cb_create_std_dev->setText(us_tr("Create std deviation curves   "));
    cb_create_std_dev->setEnabled(true);
    cb_create_std_dev->setChecked(*create_std_dev);
    cb_create_std_dev->setMinimumHeight(minHeight2);
@@ -113,7 +113,7 @@ void US_Hydrodyn_Saxs_Iqq_Load_Csv::setupGUI()
    connect(cb_create_std_dev, SIGNAL(clicked()), this, SLOT(set_create_std_dev()));
 
    cb_only_plot_stats = new QCheckBox(this);
-   cb_only_plot_stats->setText(tr("Only plot stats   "));
+   cb_only_plot_stats->setText(us_tr("Only plot stats   "));
    cb_only_plot_stats->setEnabled(true);
    cb_only_plot_stats->setChecked(*only_plot_stats);
    cb_only_plot_stats->setMinimumHeight(minHeight2);
@@ -123,7 +123,7 @@ void US_Hydrodyn_Saxs_Iqq_Load_Csv::setupGUI()
    connect(cb_only_plot_stats, SIGNAL(clicked()), this, SLOT(set_only_plot_stats()));
 
    cb_save_to_csv = new QCheckBox(this);
-   cb_save_to_csv->setText(tr("Save to csv "));
+   cb_save_to_csv->setText(us_tr("Save to csv "));
    cb_save_to_csv->setEnabled(true);
    cb_save_to_csv->setChecked(*save_to_csv);
    cb_save_to_csv->setMinimumHeight(minHeight2);
@@ -132,7 +132,7 @@ void US_Hydrodyn_Saxs_Iqq_Load_Csv::setupGUI()
    AUTFBACK( cb_save_to_csv );
    connect(cb_save_to_csv, SIGNAL(clicked()), this, SLOT(set_save_to_csv()));
 
-   le_csv_filename = new QLineEdit(this, "csv_filename Line Edit");
+   le_csv_filename = new QLineEdit( this );    le_csv_filename->setObjectName( "csv_filename Line Edit" );
    le_csv_filename->setText(*csv_filename);
    le_csv_filename->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_csv_filename->setMinimumWidth(100);
@@ -143,7 +143,7 @@ void US_Hydrodyn_Saxs_Iqq_Load_Csv::setupGUI()
    connect(le_csv_filename, SIGNAL(textChanged(const QString &)), SLOT(update_csv_filename(const QString &)));
 
    cb_save_original_data = new QCheckBox(this);
-   cb_save_original_data->setText(tr("Include source data "));
+   cb_save_original_data->setText(us_tr("Include source data "));
    cb_save_original_data->setEnabled(true);
    cb_save_original_data->setChecked(*save_original_data);
    cb_save_original_data->setMinimumHeight(minHeight2);
@@ -155,7 +155,7 @@ void US_Hydrodyn_Saxs_Iqq_Load_Csv::setupGUI()
    if ( expert_mode )
    {
       cb_run_nnls = new QCheckBox(this);
-      cb_run_nnls->setText(tr("NNLS fit"));
+      cb_run_nnls->setText(us_tr("NNLS fit"));
       cb_run_nnls->setEnabled(true);
       cb_run_nnls->setChecked(*run_nnls);
       cb_run_nnls->setMinimumHeight(minHeight1);
@@ -165,7 +165,7 @@ void US_Hydrodyn_Saxs_Iqq_Load_Csv::setupGUI()
       connect(cb_run_nnls, SIGNAL(clicked()), this, SLOT(set_run_nnls()));
       
       cb_run_best_fit = new QCheckBox(this);
-      cb_run_best_fit->setText(tr("Best fit"));
+      cb_run_best_fit->setText(us_tr("Best fit"));
       cb_run_best_fit->setEnabled(true);
       cb_run_best_fit->setChecked(*run_best_fit);
       cb_run_best_fit->setMinimumHeight(minHeight1);
@@ -174,7 +174,7 @@ void US_Hydrodyn_Saxs_Iqq_Load_Csv::setupGUI()
       AUTFBACK( cb_run_best_fit );
       connect(cb_run_best_fit, SIGNAL(clicked()), this, SLOT(set_run_best_fit()));
       
-      pb_select_target = new QPushButton(tr("Select Target"), this);
+      pb_select_target = new QPushButton(us_tr("Select Target"), this);
       pb_select_target->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
       pb_select_target->setMinimumHeight(minHeight1);
       pb_select_target->setPalette( PALET_PUSHB );
@@ -188,12 +188,12 @@ void US_Hydrodyn_Saxs_Iqq_Load_Csv::setupGUI()
       lbl_nnls_target->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1, QFont::Bold));
       if ( !nnls_target->isEmpty() )
       {
-         lbl_nnls_target->setText(tr("Target model: ") + *nnls_target);
+         lbl_nnls_target->setText(us_tr("Target model: ") + *nnls_target);
       }
    }
 
    cb_clear_plot_first = new QCheckBox(this);
-   cb_clear_plot_first->setText(tr("Clear plot"));
+   cb_clear_plot_first->setText(us_tr("Clear plot"));
    cb_clear_plot_first->setEnabled(true);
    cb_clear_plot_first->setMinimumHeight(minHeight1);
    cb_clear_plot_first->setChecked(*clear_plot_first);
@@ -202,31 +202,31 @@ void US_Hydrodyn_Saxs_Iqq_Load_Csv::setupGUI()
    AUTFBACK( cb_clear_plot_first );
    connect(cb_clear_plot_first, SIGNAL(clicked()), this, SLOT(set_clear_plot_first()));
 
-   pb_select_all = new QPushButton(tr("Select All"), this);
+   pb_select_all = new QPushButton(us_tr("Select All"), this);
    pb_select_all->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_select_all->setMinimumHeight(minHeight1);
    pb_select_all->setPalette( PALET_PUSHB );
    connect(pb_select_all, SIGNAL(clicked()), SLOT(select_all()));
 
-   pb_transpose = new QPushButton(tr("Transpose"), this);
+   pb_transpose = new QPushButton(us_tr("Transpose"), this);
    pb_transpose->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_transpose->setMinimumHeight(minHeight1);
    pb_transpose->setPalette( PALET_PUSHB );
    connect(pb_transpose, SIGNAL(clicked()), SLOT(transpose()));
 
-   pb_save_as_dat = new QPushButton(tr("Save .DAT"), this);
+   pb_save_as_dat = new QPushButton(us_tr("Save .DAT"), this);
    pb_save_as_dat->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_save_as_dat->setMinimumHeight(minHeight1);
    pb_save_as_dat->setPalette( PALET_PUSHB );
    connect(pb_save_as_dat, SIGNAL(clicked()), SLOT(save_as_dat()));
 
-   pb_save_selected = new QPushButton(tr("Save"), this);
+   pb_save_selected = new QPushButton(us_tr("Save"), this);
    pb_save_selected->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_save_selected->setMinimumHeight(minHeight1);
    pb_save_selected->setPalette( PALET_PUSHB );
    connect(pb_save_selected, SIGNAL(clicked()), SLOT(save_selected()));
 
-   pb_cancel = new QPushButton(tr("Cancel"), this);
+   pb_cancel = new QPushButton(us_tr("Cancel"), this);
    pb_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_cancel->setMinimumHeight(minHeight1);
    pb_cancel->setPalette( PALET_PUSHB );
@@ -238,7 +238,7 @@ void US_Hydrodyn_Saxs_Iqq_Load_Csv::setupGUI()
    pb_help->setPalette( PALET_PUSHB );
    connect(pb_help, SIGNAL(clicked()), SLOT(help()));
 
-   pb_ok = new QPushButton(tr("Plot"), this);
+   pb_ok = new QPushButton(us_tr("Plot"), this);
    pb_ok->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_ok->setMinimumHeight(minHeight1);
    pb_ok->setPalette( PALET_PUSHB );
@@ -246,7 +246,7 @@ void US_Hydrodyn_Saxs_Iqq_Load_Csv::setupGUI()
 
    // build layout
 
-   Q3HBoxLayout *hbl_bottom = new Q3HBoxLayout;
+   QHBoxLayout * hbl_bottom = new QHBoxLayout; hbl_bottom->setContentsMargins( 0, 0, 0, 0 ); hbl_bottom->setSpacing( 0 );
    hbl_bottom->addWidget(pb_select_all);
    hbl_bottom->addWidget(pb_transpose);
    hbl_bottom->addWidget(pb_save_as_dat);
@@ -256,7 +256,7 @@ void US_Hydrodyn_Saxs_Iqq_Load_Csv::setupGUI()
    hbl_bottom->addWidget(pb_ok);
    hbl_bottom->addWidget(cb_clear_plot_first);
 
-   Q3HBoxLayout *hbl_avg_std = new Q3HBoxLayout;
+   QHBoxLayout * hbl_avg_std = new QHBoxLayout; hbl_avg_std->setContentsMargins( 0, 0, 0, 0 ); hbl_avg_std->setSpacing( 0 );
    hbl_avg_std->addWidget(cb_create_avg);
    hbl_avg_std->addWidget(cb_create_std_dev);
    hbl_avg_std->addWidget(cb_only_plot_stats);
@@ -264,17 +264,17 @@ void US_Hydrodyn_Saxs_Iqq_Load_Csv::setupGUI()
    hbl_avg_std->addWidget(le_csv_filename);
    hbl_avg_std->addWidget(cb_save_original_data);
 
-   Q3VBoxLayout *background = new Q3VBoxLayout(this);
+   QVBoxLayout * background = new QVBoxLayout(this); background->setContentsMargins( 0, 0, 0, 0 ); background->setSpacing( 0 );
    background->addWidget(lbl_info);
    background->addWidget(lb_names);
    background->addLayout(hbl_avg_std);
    if ( expert_mode )
    {
-      Q3HBoxLayout *hbl_nnls_best_fit = new Q3HBoxLayout;
+      QHBoxLayout * hbl_nnls_best_fit = new QHBoxLayout; hbl_nnls_best_fit->setContentsMargins( 0, 0, 0, 0 ); hbl_nnls_best_fit->setSpacing( 0 );
       hbl_nnls_best_fit->addWidget(cb_run_nnls);
       hbl_nnls_best_fit->addWidget(cb_run_best_fit);
 
-      Q3HBoxLayout *hbl_nnls = new Q3HBoxLayout;
+      QHBoxLayout * hbl_nnls = new QHBoxLayout; hbl_nnls->setContentsMargins( 0, 0, 0, 0 ); hbl_nnls->setSpacing( 0 );
       hbl_nnls->addLayout(hbl_nnls_best_fit);
       hbl_nnls->addWidget(pb_select_target);
       hbl_nnls->addWidget(lbl_nnls_target);
@@ -292,22 +292,22 @@ void US_Hydrodyn_Saxs_Iqq_Load_Csv::select_all()
    bool select_all = false;
 
    // are any unselected ?
-   for ( int i = 0; i < lb_names->numRows(); i++ )
+   for ( int i = 0; i < lb_names->count(); i++ )
    {
-      if ( !lb_names->isSelected(i) )
+      if ( !lb_names->item(i)->isSelected() )
       {
          select_all = true;
          break;
       }
    }
 
-   for ( int i = 0; i < lb_names->numRows(); i++ )
+   for ( int i = 0; i < lb_names->count(); i++ )
    {
-      lb_names->setSelected(i, select_all);
+      lb_names->item(i)->setSelected( select_all);
    }
    if ( select_all )
    {
-      lb_names->setBottomItem(lb_names->numRows() - 1);
+      lb_names->scrollToItem( lb_names->item(lb_names->count() - 1) );
    }
 }
 
@@ -321,13 +321,13 @@ void US_Hydrodyn_Saxs_Iqq_Load_Csv::transpose()
    // pick 
    QString save_file = loaded_filename;
    save_file.replace(".csv","_t.csv");
-   QString fname = QFileDialog::getSaveFileName( this , tr("Choose a filename to save the transposed csv file") , save_file , "*.csv" );
+   QString fname = QFileDialog::getSaveFileName( this , us_tr("Choose a filename to save the transposed csv file") , save_file , "*.csv" );
 
    if ( fname.isEmpty() )
    {
       return;
    }
-   if ( !fname.contains(QRegExp(".csv$",false)) )
+   if ( !fname.contains(QRegExp(".csv$", Qt::CaseInsensitive )) )
    {
       fname += "_t.csv";
    }
@@ -336,7 +336,7 @@ void US_Hydrodyn_Saxs_Iqq_Load_Csv::transpose()
    {
       fname = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( fname, 0, this );
    }
-   FILE *of = fopen(fname, "wb");
+   FILE *of = us_fopen(fname, "wb");
    if ( of )
    {
       // go through the qsl, find selected...
@@ -355,7 +355,7 @@ void US_Hydrodyn_Saxs_Iqq_Load_Csv::transpose()
                it != qsl->end();
                it++ )
       {
-         QStringList qsl_tmp = QStringList::split(",",*it,true);
+         QStringList qsl_tmp = (*it).split( "," );
          if ( qsl_tmp.size() )
          {
             if ( ( map_sel_names.count(qsl_tmp[0]) || it == qsl->begin() ) )
@@ -392,9 +392,9 @@ void US_Hydrodyn_Saxs_Iqq_Load_Csv::transpose()
                // cout <<  QString("array2d_to_save[%1].size() == %2\n")
                // .arg(j)
                // .arg(array2d_to_save[j].size());
-               fprintf(of, comma.ascii());
+               fprintf(of, comma.toAscii().data());
             } else {
-               fprintf(of, "%s%s", comma.ascii(), array2d_to_save[j][i].ascii());
+               fprintf(of, "%s%s", comma.toAscii().data(), array2d_to_save[j][i].toAscii().data());
             }
             comma = ",";
          }
@@ -402,11 +402,11 @@ void US_Hydrodyn_Saxs_Iqq_Load_Csv::transpose()
       }
       fclose(of);
       QMessageBox::information( this, "UltraScan",
-                                QString(tr("Created the output file:\n") + "%1").arg(fname));
+                                QString(us_tr("Created the output file:\n") + "%1").arg(fname));
 
    } else {
       QMessageBox::warning( this, "UltraScan",
-                                QString(tr("Could not create the output file:\n") + "%1").arg(fname));
+                                QString(us_tr("Could not create the output file:\n") + "%1").arg(fname));
    }
 }
 
@@ -415,13 +415,13 @@ void US_Hydrodyn_Saxs_Iqq_Load_Csv::save_selected()
    // pick 
    QString save_file = loaded_filename;
    save_file.replace(".csv","_s.csv");
-   QString fname = QFileDialog::getSaveFileName( this , tr("Choose a filename to save the new csv file") , save_file , "*.csv" );
+   QString fname = QFileDialog::getSaveFileName( this , us_tr("Choose a filename to save the new csv file") , save_file , "*.csv" );
 
    if ( fname.isEmpty() )
    {
       return;
    }
-   if ( !fname.contains(QRegExp(".csv$",false)) )
+   if ( !fname.contains(QRegExp(".csv$", Qt::CaseInsensitive )) )
    {
       fname += ".csv";
    }
@@ -430,7 +430,7 @@ void US_Hydrodyn_Saxs_Iqq_Load_Csv::save_selected()
    {
       fname = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( fname, 0, this );
    }
-   FILE *of = fopen(fname, "wb");
+   FILE *of = us_fopen(fname, "wb");
    if ( of )
    {
       // go through the qsl, find selected...
@@ -447,22 +447,22 @@ void US_Hydrodyn_Saxs_Iqq_Load_Csv::save_selected()
                it != qsl->end();
                it++ )
       {
-         QStringList qsl_tmp = QStringList::split(",",*it,true);
+         QStringList qsl_tmp = (*it).split( "," );
          if ( qsl_tmp.size() ) 
          {
             if ( map_sel_names.count(qsl_tmp[0]) || it == qsl->begin() )
             {
-               fprintf(of, "%s\n", (*it).ascii());
+               fprintf(of, "%s\n", (*it).toAscii().data());
             }
          }
       }
       fclose(of);
       QMessageBox::information( this, "UltraScan",
-                                QString(tr("Created the output file:\n") + "%1").arg(fname));
+                                QString(us_tr("Created the output file:\n") + "%1").arg(fname));
 
    } else {
       QMessageBox::warning( this, "UltraScan",
-                                QString(tr("Could not create the output file:\n") + "%1").arg(fname));
+                                QString(us_tr("Could not create the output file:\n") + "%1").arg(fname));
    }
 }
 
@@ -482,11 +482,11 @@ void US_Hydrodyn_Saxs_Iqq_Load_Csv::help()
 void US_Hydrodyn_Saxs_Iqq_Load_Csv::update_selected()
 {
    qsl_sel_names->clear();
-   for ( int i = 0; i < lb_names->numRows(); i++ )
+   for ( int i = 0; i < lb_names->count(); i++ )
    {
-      if ( lb_names->isSelected(i) )
+      if ( lb_names->item(i)->isSelected() )
       {
-         *qsl_sel_names << lb_names->text(i);
+         *qsl_sel_names << lb_names->item(i)->text( );
       }
    }
    update_enables();
@@ -575,7 +575,7 @@ void US_Hydrodyn_Saxs_Iqq_Load_Csv::select_target()
       } else {
          *nnls_target = (*qsl_names)[0];
       }
-      lbl_nnls_target->setText(tr("Target model: ") + *nnls_target);
+      lbl_nnls_target->setText(us_tr("Target model: ") + *nnls_target);
    }
 }   
 
@@ -611,7 +611,7 @@ void US_Hydrodyn_Saxs_Iqq_Load_Csv::update_enables()
                                     && qsl_sel_names->size() == 1 );
    }
    pb_transpose->setEnabled(qsl_sel_names->size());
-   pb_transpose->setText(QString(tr("Transpose") + "%1")
+   pb_transpose->setText(QString(us_tr("Transpose") + "%1")
                          .arg(qsl_sel_names->size() > 0 ? QString(" (%1)").arg(qsl_sel_names->size()) : ""));
    pb_save_as_dat->setEnabled(qsl_sel_names->size() == 1);
    pb_save_selected->setEnabled(qsl_sel_names->size());
@@ -626,10 +626,10 @@ void US_Hydrodyn_Saxs_Iqq_Load_Csv::save_as_dat()
    bool save_qIq = 0;
    /*
       QMessageBox::question(this, 
-                            tr( "US-SOMO: Save .DAT" ),
-                            tr( "How do you want to save as a q*I(q) file?" ),
-                            tr( "&No, just normally" ),
-                            tr( "&Yes, compute and save I as q*I(q)" ),
+                            us_tr( "US-SOMO: Save .DAT" ),
+                            us_tr( "How do you want to save as a q*I(q) file?" ),
+                            us_tr( "&No, just normally" ),
+                            us_tr( "&Yes, compute and save I as q*I(q)" ),
                             QString::null,
                             0,
                             1
@@ -654,14 +654,14 @@ void US_Hydrodyn_Saxs_Iqq_Load_Csv::save_as_dat()
    save_file = QFileInfo( save_file ).fileName();
    cout << save_file << endl;
 
-   QString fname = QFileDialog::getSaveFileName( this , tr("Choose a filename to save the DAT file") , save_file , "*.dat" );
+   QString fname = QFileDialog::getSaveFileName( this , us_tr("Choose a filename to save the DAT file") , save_file , "*.dat" );
 
    if ( fname.isEmpty() )
    {
       return;
    }
 
-   if ( !fname.contains(QRegExp(".dat$",false)) )
+   if ( !fname.contains(QRegExp(".dat$", Qt::CaseInsensitive )) )
    {
       fname += ".dat";
    }
@@ -672,7 +672,7 @@ void US_Hydrodyn_Saxs_Iqq_Load_Csv::save_as_dat()
       fname = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( fname, 0, this );
    }
 
-   FILE *of = fopen(fname, "wb");
+   FILE *of = us_fopen(fname, "wb");
 
    if ( of )
    {
@@ -687,7 +687,7 @@ void US_Hydrodyn_Saxs_Iqq_Load_Csv::save_as_dat()
                it != qsl->end();
                it++ )
       {
-         QStringList qsl_tmp = QStringList::split(",",*it,true);
+         QStringList qsl_tmp = (*it).split( "," );
          if ( qsl_tmp.size() )
          {
             if ( qsl_tmp[0] == sel_name || it == qsl->begin() )
@@ -734,9 +734,9 @@ void US_Hydrodyn_Saxs_Iqq_Load_Csv::save_as_dat()
                // cout <<  QString("array2d_to_save[%1].size() == %2\n")
                // .arg(j)
                // .arg(array2d_to_save[j].size());
-               fprintf(of, tab.ascii());
+               fprintf(of, tab.toAscii().data());
             } else {
-               fprintf(of, "%s%s", tab.ascii(), QString( "%1" ).arg( array2d_to_save[j][i] ).replace( "\"", "'" ).ascii() );
+               fprintf(of, "%s%s", tab.toAscii().data(), QString( "%1" ).arg( array2d_to_save[j][i] ).replace( "\"", "'" ).toAscii().data() );
             }
             tab = "\t";
          }
@@ -744,11 +744,11 @@ void US_Hydrodyn_Saxs_Iqq_Load_Csv::save_as_dat()
       }
       fclose(of);
       QMessageBox::information( this, "UltraScan",
-                                QString(tr("Created the output file:\n") + "%1").arg(fname));
+                                QString(us_tr("Created the output file:\n") + "%1").arg(fname));
 
    } else {
       QMessageBox::warning( this, "UltraScan",
-                                QString(tr("Could not create the output file:\n") + "%1").arg(fname));
+                                QString(us_tr("Could not create the output file:\n") + "%1").arg(fname));
    }
 }
 

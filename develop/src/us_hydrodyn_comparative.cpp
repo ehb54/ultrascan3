@@ -3,15 +3,15 @@
 #include "../include/us_revision.h"
 #include "qregexp.h"
 //Added by qt3to4:
-#include <Q3BoxLayout>
+#include <QBoxLayout>
 #include <QLabel>
 #include <QCloseEvent>
-#include <Q3GridLayout>
-#include <Q3TextStream>
-#include <Q3HBoxLayout>
-#include <Q3VBoxLayout>
-#include <Q3Frame>
-#include <Q3PopupMenu>
+#include <QGridLayout>
+#include <QTextStream>
+#include <QHBoxLayout>
+#include <QVBoxLayout>
+#include <QFrame>
+ //#include <Q3PopupMenu>
 
 // note: this program uses cout and/or cerr and this should be replaced
 
@@ -101,7 +101,7 @@ US_Hydrodyn_Comparative::US_Hydrodyn_Comparative(
                                                  bool *comparative_widget,  // no comparative widget implies non-gui
                                                  QWidget *p,
                                                  const char *name
-                                                 ) : Q3Frame(p, name)
+                                                 ) : QFrame( p )
 {
    this->comparative = comparative;
    this->us_hydrodyn = us_hydrodyn;
@@ -114,7 +114,7 @@ US_Hydrodyn_Comparative::US_Hydrodyn_Comparative(
    *comparative_widget = true;
    USglobal = new US_Config();
    setPalette( PALET_FRAME );
-   setCaption(tr("Model classifier"));
+   setWindowTitle(us_tr("Model classifier"));
    updates_enabled = true;
    loaded_csv_names.clear();
    loaded_csv_row_prepended_names.clear();
@@ -251,7 +251,7 @@ QString US_Hydrodyn_Comparative::serialize_comparative_entry( comparative_entry 
 
 comparative_entry US_Hydrodyn_Comparative::deserialize_comparative_entry( QString qs )
 {
-   QStringList qsl = QStringList::split("|",qs);
+   QStringList qsl = (qs).split( "|" , QString::SkipEmptyParts );
    comparative_entry ce;
    if ( qsl.size() < 12 )
    {
@@ -296,17 +296,17 @@ comparative_info US_Hydrodyn_Comparative::deserialize_comparative_info( QString 
 {
    comparative_info ci = US_Hydrodyn_Comparative::empty_comparative_info();
    serial_error = "";
-   QStringList qsl = QStringList::split("\n",qs);
+   QStringList qsl = (qs).split( "\n" , QString::SkipEmptyParts );
    if ( qsl.size() < 8 )
    {
       cout << QString("qsl size %1 < 8 qs:<%2>\n").arg(qs,qsl.size());
-      serial_error = tr("Error: invalid parameter file (too few lines)");
+      serial_error = us_tr("Error: invalid parameter file (too few lines)");
       return ci;
    }
-   QStringList qsl0 = QStringList::split("|",qsl[0]);
+   QStringList qsl0 = (qsl[0]).split( "|" , QString::SkipEmptyParts );
    if ( qsl0.size() < 4 )
    {
-      serial_error = tr("Error: invalid parameter file (line 1 too short)");
+      serial_error = us_tr("Error: invalid parameter file (line 1 too short)");
       return ci;
    }
 
@@ -319,43 +319,43 @@ comparative_info US_Hydrodyn_Comparative::deserialize_comparative_info( QString 
    ci.ce_s = deserialize_comparative_entry(qsl[pos++]);
    if ( !serial_error.isEmpty() )
    {
-      serial_error += QString(tr(" line %1")).arg(pos);
+      serial_error += QString(us_tr(" line %1")).arg(pos);
       return ci;
    }
    ci.ce_D = deserialize_comparative_entry(qsl[pos++]);
    if ( !serial_error.isEmpty() )
    {
-      serial_error += QString(tr(" line %1")).arg(pos);
+      serial_error += QString(us_tr(" line %1")).arg(pos);
       return ci;
    }
    ci.ce_sr = deserialize_comparative_entry(qsl[pos++]);
    if ( !serial_error.isEmpty() )
    {
-      serial_error += QString(tr(" line %1")).arg(pos);
+      serial_error += QString(us_tr(" line %1")).arg(pos);
       return ci;
    }
    ci.ce_fr = deserialize_comparative_entry(qsl[pos++]);
    if ( !serial_error.isEmpty() )
    {
-      serial_error += QString(tr(" line %1")).arg(pos);
+      serial_error += QString(us_tr(" line %1")).arg(pos);
       return ci;
    }
    ci.ce_rg = deserialize_comparative_entry(qsl[pos++]);
    if ( !serial_error.isEmpty() )
    {
-      serial_error += QString(tr(" line %1")).arg(pos);
+      serial_error += QString(us_tr(" line %1")).arg(pos);
       return ci;
    }
    ci.ce_tau = deserialize_comparative_entry(qsl[pos++]);
    if ( !serial_error.isEmpty() )
    {
-      serial_error += QString(tr(" line %1")).arg(pos);
+      serial_error += QString(us_tr(" line %1")).arg(pos);
       return ci;
    }
    ci.ce_eta = deserialize_comparative_entry(qsl[pos++]);
    if ( !serial_error.isEmpty() )
    {
-      serial_error += QString(tr(" line %1")).arg(pos);
+      serial_error += QString(us_tr(" line %1")).arg(pos);
       return ci;
    }
    return ci;
@@ -370,41 +370,41 @@ void US_Hydrodyn_Comparative::setupGUI()
    int minHeight3 = 22;
    int minHeightpb = 26;
 
-   QColorGroup cg_modes = USglobal->global_colors.cg_label;
-   cg_modes.setColor(QColorGroup::Shadow, Qt::gray);
-   cg_modes.setColor(QColorGroup::Dark, Qt::gray);
-   cg_modes.setColor(QColorGroup::Light, Qt::white);
-   cg_modes.setColor(QColorGroup::Midlight, Qt::gray);
+   QPalette cg_modes = USglobal->global_colors.cg_label;
+   cg_modes.setColor(QPalette::Shadow, Qt::gray);
+   cg_modes.setColor(QPalette::Dark, Qt::gray);
+   cg_modes.setColor(QPalette::Light, Qt::white);
+   cg_modes.setColor(QPalette::Midlight, Qt::gray);
 
    QFont qf_modes = QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold );
-   QPalette qp_modes = QPalette( cg_modes, cg_modes, cg_modes );
+   QPalette qp_modes = cg_modes;
 
-   lbl_title_param = new QLabel(tr("Select parameters"), this);
-   lbl_title_param->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Raised);
+   lbl_title_param = new QLabel(us_tr("Select parameters"), this);
+   lbl_title_param->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_title_param->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_title_param->setMinimumHeight(minHeight1);
    lbl_title_param->setPalette( PALET_FRAME );
    AUTFBACK( lbl_title_param );
    lbl_title_param->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
 
-   lbl_active = new QLabel(tr("Select to enable variable comparison"), this);
-   lbl_active->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Raised);
+   lbl_active = new QLabel(us_tr("Select to enable variable comparison"), this);
+   lbl_active->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_active->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_active->setMinimumHeight(minHeight1);
    lbl_active->setPalette( PALET_LABEL );
    AUTFBACK( lbl_active );
    lbl_active->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 
-   lbl_target = new QLabel(tr("Experimental\nvalue"), this);
-   lbl_target->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Raised);
+   lbl_target = new QLabel(us_tr("Experimental\nvalue"), this);
+   lbl_target->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_target->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_target->setMinimumHeight(minHeight1);
    lbl_target->setPalette( PALET_LABEL );
    AUTFBACK( lbl_target );
    lbl_target->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 
-   lbl_sort = new QLabel(tr("Sort results"), this);
-   lbl_sort->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Raised);
+   lbl_sort = new QLabel(us_tr("Sort results"), this);
+   lbl_sort->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_sort->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_sort->setMinimumHeight(minHeight3);
    lbl_sort->setPalette( PALET_LABEL );
@@ -412,7 +412,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    lbl_sort->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 
    cb_by_pct = new QCheckBox(this);
-   cb_by_pct->setText(tr("Using percentage difference"));
+   cb_by_pct->setText(us_tr("Using percentage difference"));
    cb_by_pct->setEnabled(true);
    cb_by_pct->setMinimumHeight(minHeight3);
    cb_by_pct->setChecked(comparative->by_pct);
@@ -422,7 +422,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    connect(cb_by_pct, SIGNAL(clicked()), SLOT(set_by_pct()));
 
    cb_rank = new QCheckBox(this);
-   cb_rank->setText(QString(tr("By ranked\n%1absolute\ndifference")).arg(comparative->by_pct ? "% " : "" ));
+   cb_rank->setText(QString(us_tr("By ranked\n%1absolute\ndifference")).arg(comparative->by_pct ? "% " : "" ));
    cb_rank->setEnabled(true);
    cb_rank->setMinimumHeight(minHeight2b);
    cb_rank->setChecked(comparative->rank);
@@ -431,8 +431,8 @@ void US_Hydrodyn_Comparative::setupGUI()
    AUTFBACK( cb_rank );
    connect(cb_rank, SIGNAL(clicked()), SLOT(set_rank()));
 
-   lbl_rank = new QLabel(tr("Rank"), this);
-   lbl_rank->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Raised);
+   lbl_rank = new QLabel(us_tr("Rank"), this);
+   lbl_rank->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_rank->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_rank->setMinimumHeight(minHeight1);
    lbl_rank->setPalette( PALET_LABEL );
@@ -441,7 +441,7 @@ void US_Hydrodyn_Comparative::setupGUI()
 
    cb_weight_controls = new QCheckBox(this);
    cb_weight_controls->setMinimumHeight(minHeight2b);
-   cb_weight_controls->setText(QString(tr("By weighted sum\nof %1absolute\ndifferences")).arg(comparative->by_pct ? "% " : "" ));
+   cb_weight_controls->setText(QString(us_tr("By weighted sum\nof %1absolute\ndifferences")).arg(comparative->by_pct ? "% " : "" ));
    cb_weight_controls->setEnabled(true);
    cb_weight_controls->setChecked(comparative->weight_controls);
    cb_weight_controls->setFont(qf_modes);
@@ -449,24 +449,24 @@ void US_Hydrodyn_Comparative::setupGUI()
    AUTFBACK( cb_weight_controls );
    connect(cb_weight_controls, SIGNAL(clicked()), SLOT(set_weight_controls()));
 
-   lbl_include_in_weight = new QLabel(tr("Include"), this);
-   lbl_include_in_weight->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Raised);
+   lbl_include_in_weight = new QLabel(us_tr("Include"), this);
+   lbl_include_in_weight->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_include_in_weight->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_include_in_weight->setMinimumHeight(minHeight0);
    lbl_include_in_weight->setPalette( PALET_LABEL );
    AUTFBACK( lbl_include_in_weight );
    lbl_include_in_weight->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 
-   lbl_weight = new QLabel(tr("Weight"), this);
-   lbl_weight->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Raised);
+   lbl_weight = new QLabel(us_tr("Weight"), this);
+   lbl_weight->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_weight->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_weight->setMinimumHeight(minHeight0);
    lbl_weight->setPalette( PALET_LABEL );
    AUTFBACK( lbl_weight );
    lbl_weight->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 
-   lbl_ec = new QLabel(tr("Equivalence class controls"), this);
-   lbl_ec->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Raised);
+   lbl_ec = new QLabel(us_tr("Equivalence class controls"), this);
+   lbl_ec->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_ec->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_ec->setMinimumHeight(minHeight3);
    lbl_ec->setPalette( PALET_LABEL );
@@ -475,7 +475,7 @@ void US_Hydrodyn_Comparative::setupGUI()
 
    cb_by_ec = new QCheckBox(this);
    cb_by_ec->setMinimumHeight(minHeight2b);
-   cb_by_ec->setText(tr("By equivalence class rank"));
+   cb_by_ec->setText(us_tr("By equivalence class rank"));
    cb_by_ec->setEnabled(true);
    cb_by_ec->setChecked(comparative->by_ec);
    cb_by_ec->setFont(qf_modes);
@@ -483,56 +483,56 @@ void US_Hydrodyn_Comparative::setupGUI()
    AUTFBACK( cb_by_ec );
    connect(cb_by_ec, SIGNAL(clicked()), SLOT(set_by_ec()));
 
-   lbl_buckets = new QLabel(tr("Number of\npartitions"), this);
-   lbl_buckets->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Raised);
+   lbl_buckets = new QLabel(us_tr("Number of\npartitions"), this);
+   lbl_buckets->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_buckets->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_buckets->setMinimumHeight(minHeight2c);
    lbl_buckets->setPalette( PALET_LABEL );
    AUTFBACK( lbl_buckets );
    lbl_buckets->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 
-   lbl_min = new QLabel(tr("Minimum\nmodel\nvalue"), this);
-   lbl_min->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Raised);
+   lbl_min = new QLabel(us_tr("Minimum\nmodel\nvalue"), this);
+   lbl_min->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_min->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_min->setMinimumHeight(minHeight2c);
    lbl_min->setPalette( PALET_LABEL );
    AUTFBACK( lbl_min );
    lbl_min->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 
-   lbl_max = new QLabel(tr("Maximum\nmodel\nvalue"), this);
-   lbl_max->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Raised);
+   lbl_max = new QLabel(us_tr("Maximum\nmodel\nvalue"), this);
+   lbl_max->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_max->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_max->setMinimumHeight(minHeight2c);
    lbl_max->setPalette( PALET_LABEL );
    AUTFBACK( lbl_max );
    lbl_max->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 
-   lbl_csv_controls = new QLabel(tr("Add columns to results"), this);
-   lbl_csv_controls->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Raised);
+   lbl_csv_controls = new QLabel(us_tr("Add columns to results"), this);
+   lbl_csv_controls->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_csv_controls->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_csv_controls->setMinimumHeight(minHeight1);
    lbl_csv_controls->setPalette( PALET_LABEL );
    AUTFBACK( lbl_csv_controls );
    lbl_csv_controls->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 
-   lbl_store_reference = new QLabel(tr("Experimental\nvalue"), this);
-   lbl_store_reference->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Raised);
+   lbl_store_reference = new QLabel(us_tr("Experimental\nvalue"), this);
+   lbl_store_reference->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_store_reference->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_store_reference->setMinimumHeight(minHeight1);
    lbl_store_reference->setPalette( PALET_LABEL );
    AUTFBACK( lbl_store_reference );
    lbl_store_reference->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 
-   lbl_store_diff = new QLabel((comparative->by_pct ? "%\n" : "" ) + tr("Difference"), this);
-   lbl_store_diff->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Raised);
+   lbl_store_diff = new QLabel((comparative->by_pct ? "%\n" : "" ) + us_tr("Difference"), this);
+   lbl_store_diff->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_store_diff->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_store_diff->setMinimumHeight(minHeight1);
    lbl_store_diff->setPalette( PALET_LABEL );
    AUTFBACK( lbl_store_diff );
    lbl_store_diff->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 
-   lbl_store_abs_diff = new QLabel((comparative->by_pct ? "%\n" : "") + tr("Absolute\ndifference"), this);
-   lbl_store_abs_diff->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Raised);
+   lbl_store_abs_diff = new QLabel((comparative->by_pct ? "%\n" : "") + us_tr("Absolute\ndifference"), this);
+   lbl_store_abs_diff->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_store_abs_diff->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_store_abs_diff->setMinimumHeight(minHeight1);
    lbl_store_abs_diff->setPalette( PALET_LABEL );
@@ -550,7 +550,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    AUTFBACK( cb_active_s );
    connect(cb_active_s, SIGNAL(clicked()), SLOT(set_active_s()));
 
-   le_target_s = new QLineEdit(this, "target_s Line Edit");
+   le_target_s = new QLineEdit( this );    le_target_s->setObjectName( "target_s Line Edit" );
    le_target_s->setText(QString("%1").arg(comparative->ce_s.target));
    // le_target_s->setMinimumHeight(minHeight1);
    le_target_s->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
@@ -559,7 +559,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    le_target_s->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_target_s, SIGNAL(textChanged(const QString &)), SLOT(update_target_s(const QString &)));
 
-   le_rank_s = new QLineEdit(this, "rank_s Line Edit");
+   le_rank_s = new QLineEdit( this );    le_rank_s->setObjectName( "rank_s Line Edit" );
    le_rank_s->setText(QString("%1").arg(comparative->ce_s.rank));
    // le_rank_s->setMinimumHeight(minHeight1);
    le_rank_s->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
@@ -578,7 +578,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    AUTFBACK( cb_include_in_weight_s );
    connect(cb_include_in_weight_s, SIGNAL(clicked()), SLOT(set_include_in_weight_s()));
 
-   le_weight_s = new QLineEdit(this, "weight_s Line Edit");
+   le_weight_s = new QLineEdit( this );    le_weight_s->setObjectName( "weight_s Line Edit" );
    le_weight_s->setText(QString("%1").arg(comparative->ce_s.weight));
    // le_weight_s->setMinimumHeight(minHeight1);
    le_weight_s->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
@@ -587,7 +587,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    le_weight_s->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_weight_s, SIGNAL(textChanged(const QString &)), SLOT(update_weight_s(const QString &)));
 
-   le_buckets_s = new QLineEdit(this, "buckets_s Line Edit");
+   le_buckets_s = new QLineEdit( this );    le_buckets_s->setObjectName( "buckets_s Line Edit" );
    le_buckets_s->setText(QString("%1").arg(comparative->ce_s.buckets));
    // le_buckets_s->setMinimumHeight(minHeight1);
    le_buckets_s->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
@@ -596,7 +596,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    le_buckets_s->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_buckets_s, SIGNAL(textChanged(const QString &)), SLOT(update_buckets_s(const QString &)));
 
-   le_min_s = new QLineEdit(this, "min_s Line Edit");
+   le_min_s = new QLineEdit( this );    le_min_s->setObjectName( "min_s Line Edit" );
    le_min_s->setText(QString("%1").arg(comparative->ce_s.min));
    // le_min_s->setMinimumHeight(minHeight1);
    le_min_s->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
@@ -605,7 +605,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    le_min_s->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_min_s, SIGNAL(textChanged(const QString &)), SLOT(update_min_s(const QString &)));
 
-   le_max_s = new QLineEdit(this, "max_s Line Edit");
+   le_max_s = new QLineEdit( this );    le_max_s->setObjectName( "max_s Line Edit" );
    le_max_s->setText(QString("%1").arg(comparative->ce_s.max));
    // le_max_s->setMinimumHeight(minHeight1);
    le_max_s->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
@@ -655,7 +655,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    AUTFBACK( cb_active_D );
    connect(cb_active_D, SIGNAL(clicked()), SLOT(set_active_D()));
 
-   le_target_D = new QLineEdit(this, "target_D Line Edit");
+   le_target_D = new QLineEdit( this );    le_target_D->setObjectName( "target_D Line Edit" );
    le_target_D->setText(QString("%1").arg(comparative->ce_D.target));
    // le_target_D->setMinimumHeight(minHeight1);
    le_target_D->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
@@ -664,7 +664,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    le_target_D->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_target_D, SIGNAL(textChanged(const QString &)), SLOT(update_target_D(const QString &)));
 
-   le_rank_D = new QLineEdit(this, "rank_D Line Edit");
+   le_rank_D = new QLineEdit( this );    le_rank_D->setObjectName( "rank_D Line Edit" );
    le_rank_D->setText(QString("%1").arg(comparative->ce_D.rank));
    // le_rank_D->setMinimumHeight(minHeight1);
    le_rank_D->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
@@ -683,7 +683,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    AUTFBACK( cb_include_in_weight_D );
    connect(cb_include_in_weight_D, SIGNAL(clicked()), SLOT(set_include_in_weight_D()));
 
-   le_weight_D = new QLineEdit(this, "weight_D Line Edit");
+   le_weight_D = new QLineEdit( this );    le_weight_D->setObjectName( "weight_D Line Edit" );
    le_weight_D->setText(QString("%1").arg(comparative->ce_D.weight));
    // le_weight_D->setMinimumHeight(minHeight1);
    le_weight_D->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
@@ -692,7 +692,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    le_weight_D->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_weight_D, SIGNAL(textChanged(const QString &)), SLOT(update_weight_D(const QString &)));
 
-   le_buckets_D = new QLineEdit(this, "buckets_D Line Edit");
+   le_buckets_D = new QLineEdit( this );    le_buckets_D->setObjectName( "buckets_D Line Edit" );
    le_buckets_D->setText(QString("%1").arg(comparative->ce_D.buckets));
    // le_buckets_D->setMinimumHeight(minHeight1);
    le_buckets_D->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
@@ -701,7 +701,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    le_buckets_D->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_buckets_D, SIGNAL(textChanged(const QString &)), SLOT(update_buckets_D(const QString &)));
 
-   le_min_D = new QLineEdit(this, "min_D Line Edit");
+   le_min_D = new QLineEdit( this );    le_min_D->setObjectName( "min_D Line Edit" );
    le_min_D->setText(QString("%1").arg(comparative->ce_D.min));
    // le_min_D->setMinimumHeight(minHeight1);
    le_min_D->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
@@ -710,7 +710,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    le_min_D->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_min_D, SIGNAL(textChanged(const QString &)), SLOT(update_min_D(const QString &)));
 
-   le_max_D = new QLineEdit(this, "max_D Line Edit");
+   le_max_D = new QLineEdit( this );    le_max_D->setObjectName( "max_D Line Edit" );
    le_max_D->setText(QString("%1").arg(comparative->ce_D.max));
    // le_max_D->setMinimumHeight(minHeight1);
    le_max_D->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
@@ -760,7 +760,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    AUTFBACK( cb_active_sr );
    connect(cb_active_sr, SIGNAL(clicked()), SLOT(set_active_sr()));
 
-   le_target_sr = new QLineEdit(this, "target_sr Line Edit");
+   le_target_sr = new QLineEdit( this );    le_target_sr->setObjectName( "target_sr Line Edit" );
    le_target_sr->setText(QString("%1").arg(comparative->ce_sr.target));
    // le_target_sr->setMinimumHeight(minHeight1);
    le_target_sr->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
@@ -769,7 +769,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    le_target_sr->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_target_sr, SIGNAL(textChanged(const QString &)), SLOT(update_target_sr(const QString &)));
 
-   le_rank_sr = new QLineEdit(this, "rank_sr Line Edit");
+   le_rank_sr = new QLineEdit( this );    le_rank_sr->setObjectName( "rank_sr Line Edit" );
    le_rank_sr->setText(QString("%1").arg(comparative->ce_sr.rank));
    // le_rank_sr->setMinimumHeight(minHeight1);
    le_rank_sr->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
@@ -788,7 +788,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    AUTFBACK( cb_include_in_weight_sr );
    connect(cb_include_in_weight_sr, SIGNAL(clicked()), SLOT(set_include_in_weight_sr()));
 
-   le_weight_sr = new QLineEdit(this, "weight_sr Line Edit");
+   le_weight_sr = new QLineEdit( this );    le_weight_sr->setObjectName( "weight_sr Line Edit" );
    le_weight_sr->setText(QString("%1").arg(comparative->ce_sr.weight));
    // le_weight_sr->setMinimumHeight(minHeight1);
    le_weight_sr->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
@@ -797,7 +797,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    le_weight_sr->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_weight_sr, SIGNAL(textChanged(const QString &)), SLOT(update_weight_sr(const QString &)));
 
-   le_buckets_sr = new QLineEdit(this, "buckets_sr Line Edit");
+   le_buckets_sr = new QLineEdit( this );    le_buckets_sr->setObjectName( "buckets_sr Line Edit" );
    le_buckets_sr->setText(QString("%1").arg(comparative->ce_sr.buckets));
    // le_buckets_sr->setMinimumHeight(minHeight1);
    le_buckets_sr->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
@@ -806,7 +806,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    le_buckets_sr->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_buckets_sr, SIGNAL(textChanged(const QString &)), SLOT(update_buckets_sr(const QString &)));
 
-   le_min_sr = new QLineEdit(this, "min_sr Line Edit");
+   le_min_sr = new QLineEdit( this );    le_min_sr->setObjectName( "min_sr Line Edit" );
    le_min_sr->setText(QString("%1").arg(comparative->ce_sr.min));
    // le_min_sr->setMinimumHeight(minHeight1);
    le_min_sr->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
@@ -815,7 +815,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    le_min_sr->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_min_sr, SIGNAL(textChanged(const QString &)), SLOT(update_min_sr(const QString &)));
 
-   le_max_sr = new QLineEdit(this, "max_sr Line Edit");
+   le_max_sr = new QLineEdit( this );    le_max_sr->setObjectName( "max_sr Line Edit" );
    le_max_sr->setText(QString("%1").arg(comparative->ce_sr.max));
    // le_max_sr->setMinimumHeight(minHeight1);
    le_max_sr->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
@@ -865,7 +865,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    AUTFBACK( cb_active_fr );
    connect(cb_active_fr, SIGNAL(clicked()), SLOT(set_active_fr()));
 
-   le_target_fr = new QLineEdit(this, "target_fr Line Edit");
+   le_target_fr = new QLineEdit( this );    le_target_fr->setObjectName( "target_fr Line Edit" );
    le_target_fr->setText(QString("%1").arg(comparative->ce_fr.target));
    // le_target_fr->setMinimumHeight(minHeight1);
    le_target_fr->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
@@ -874,7 +874,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    le_target_fr->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_target_fr, SIGNAL(textChanged(const QString &)), SLOT(update_target_fr(const QString &)));
 
-   le_rank_fr = new QLineEdit(this, "rank_fr Line Edit");
+   le_rank_fr = new QLineEdit( this );    le_rank_fr->setObjectName( "rank_fr Line Edit" );
    le_rank_fr->setText(QString("%1").arg(comparative->ce_fr.rank));
    // le_rank_fr->setMinimumHeight(minHeight1);
    le_rank_fr->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
@@ -893,7 +893,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    AUTFBACK( cb_include_in_weight_fr );
    connect(cb_include_in_weight_fr, SIGNAL(clicked()), SLOT(set_include_in_weight_fr()));
 
-   le_weight_fr = new QLineEdit(this, "weight_fr Line Edit");
+   le_weight_fr = new QLineEdit( this );    le_weight_fr->setObjectName( "weight_fr Line Edit" );
    le_weight_fr->setText(QString("%1").arg(comparative->ce_fr.weight));
    // le_weight_fr->setMinimumHeight(minHeight1);
    le_weight_fr->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
@@ -902,7 +902,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    le_weight_fr->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_weight_fr, SIGNAL(textChanged(const QString &)), SLOT(update_weight_fr(const QString &)));
 
-   le_buckets_fr = new QLineEdit(this, "buckets_fr Line Edit");
+   le_buckets_fr = new QLineEdit( this );    le_buckets_fr->setObjectName( "buckets_fr Line Edit" );
    le_buckets_fr->setText(QString("%1").arg(comparative->ce_fr.buckets));
    // le_buckets_fr->setMinimumHeight(minHeight1);
    le_buckets_fr->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
@@ -911,7 +911,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    le_buckets_fr->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_buckets_fr, SIGNAL(textChanged(const QString &)), SLOT(update_buckets_fr(const QString &)));
 
-   le_min_fr = new QLineEdit(this, "min_fr Line Edit");
+   le_min_fr = new QLineEdit( this );    le_min_fr->setObjectName( "min_fr Line Edit" );
    le_min_fr->setText(QString("%1").arg(comparative->ce_fr.min));
    // le_min_fr->setMinimumHeight(minHeight1);
    le_min_fr->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
@@ -920,7 +920,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    le_min_fr->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_min_fr, SIGNAL(textChanged(const QString &)), SLOT(update_min_fr(const QString &)));
 
-   le_max_fr = new QLineEdit(this, "max_fr Line Edit");
+   le_max_fr = new QLineEdit( this );    le_max_fr->setObjectName( "max_fr Line Edit" );
    le_max_fr->setText(QString("%1").arg(comparative->ce_fr.max));
    // le_max_fr->setMinimumHeight(minHeight1);
    le_max_fr->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
@@ -970,7 +970,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    AUTFBACK( cb_active_rg );
    connect(cb_active_rg, SIGNAL(clicked()), SLOT(set_active_rg()));
 
-   le_target_rg = new QLineEdit(this, "target_rg Line Edit");
+   le_target_rg = new QLineEdit( this );    le_target_rg->setObjectName( "target_rg Line Edit" );
    le_target_rg->setText(QString("%1").arg(comparative->ce_rg.target));
    // le_target_rg->setMinimumHeight(minHeight1);
    le_target_rg->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
@@ -979,7 +979,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    le_target_rg->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_target_rg, SIGNAL(textChanged(const QString &)), SLOT(update_target_rg(const QString &)));
 
-   le_rank_rg = new QLineEdit(this, "rank_rg Line Edit");
+   le_rank_rg = new QLineEdit( this );    le_rank_rg->setObjectName( "rank_rg Line Edit" );
    le_rank_rg->setText(QString("%1").arg(comparative->ce_rg.rank));
    // le_rank_rg->setMinimumHeight(minHeight1);
    le_rank_rg->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
@@ -998,7 +998,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    AUTFBACK( cb_include_in_weight_rg );
    connect(cb_include_in_weight_rg, SIGNAL(clicked()), SLOT(set_include_in_weight_rg()));
 
-   le_weight_rg = new QLineEdit(this, "weight_rg Line Edit");
+   le_weight_rg = new QLineEdit( this );    le_weight_rg->setObjectName( "weight_rg Line Edit" );
    le_weight_rg->setText(QString("%1").arg(comparative->ce_rg.weight));
    // le_weight_rg->setMinimumHeight(minHeight1);
    le_weight_rg->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
@@ -1007,7 +1007,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    le_weight_rg->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_weight_rg, SIGNAL(textChanged(const QString &)), SLOT(update_weight_rg(const QString &)));
 
-   le_buckets_rg = new QLineEdit(this, "buckets_rg Line Edit");
+   le_buckets_rg = new QLineEdit( this );    le_buckets_rg->setObjectName( "buckets_rg Line Edit" );
    le_buckets_rg->setText(QString("%1").arg(comparative->ce_rg.buckets));
    // le_buckets_rg->setMinimumHeight(minHeight1);
    le_buckets_rg->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
@@ -1016,7 +1016,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    le_buckets_rg->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_buckets_rg, SIGNAL(textChanged(const QString &)), SLOT(update_buckets_rg(const QString &)));
 
-   le_min_rg = new QLineEdit(this, "min_rg Line Edit");
+   le_min_rg = new QLineEdit( this );    le_min_rg->setObjectName( "min_rg Line Edit" );
    le_min_rg->setText(QString("%1").arg(comparative->ce_rg.min));
    // le_min_rg->setMinimumHeight(minHeight1);
    le_min_rg->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
@@ -1025,7 +1025,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    le_min_rg->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_min_rg, SIGNAL(textChanged(const QString &)), SLOT(update_min_rg(const QString &)));
 
-   le_max_rg = new QLineEdit(this, "max_rg Line Edit");
+   le_max_rg = new QLineEdit( this );    le_max_rg->setObjectName( "max_rg Line Edit" );
    le_max_rg->setText(QString("%1").arg(comparative->ce_rg.max));
    // le_max_rg->setMinimumHeight(minHeight1);
    le_max_rg->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
@@ -1075,7 +1075,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    AUTFBACK( cb_active_tau );
    connect(cb_active_tau, SIGNAL(clicked()), SLOT(set_active_tau()));
 
-   le_target_tau = new QLineEdit(this, "target_tau Line Edit");
+   le_target_tau = new QLineEdit( this );    le_target_tau->setObjectName( "target_tau Line Edit" );
    le_target_tau->setText(QString("%1").arg(comparative->ce_tau.target));
    // le_target_tau->setMinimumHeight(minHeight1);
    le_target_tau->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
@@ -1084,7 +1084,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    le_target_tau->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_target_tau, SIGNAL(textChanged(const QString &)), SLOT(update_target_tau(const QString &)));
 
-   le_rank_tau = new QLineEdit(this, "rank_tau Line Edit");
+   le_rank_tau = new QLineEdit( this );    le_rank_tau->setObjectName( "rank_tau Line Edit" );
    le_rank_tau->setText(QString("%1").arg(comparative->ce_tau.rank));
    // le_rank_tau->setMinimumHeight(minHeight1);
    le_rank_tau->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
@@ -1103,7 +1103,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    AUTFBACK( cb_include_in_weight_tau );
    connect(cb_include_in_weight_tau, SIGNAL(clicked()), SLOT(set_include_in_weight_tau()));
 
-   le_weight_tau = new QLineEdit(this, "weight_tau Line Edit");
+   le_weight_tau = new QLineEdit( this );    le_weight_tau->setObjectName( "weight_tau Line Edit" );
    le_weight_tau->setText(QString("%1").arg(comparative->ce_tau.weight));
    // le_weight_tau->setMinimumHeight(minHeight1);
    le_weight_tau->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
@@ -1112,7 +1112,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    le_weight_tau->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_weight_tau, SIGNAL(textChanged(const QString &)), SLOT(update_weight_tau(const QString &)));
 
-   le_buckets_tau = new QLineEdit(this, "buckets_tau Line Edit");
+   le_buckets_tau = new QLineEdit( this );    le_buckets_tau->setObjectName( "buckets_tau Line Edit" );
    le_buckets_tau->setText(QString("%1").arg(comparative->ce_tau.buckets));
    // le_buckets_tau->setMinimumHeight(minHeight1);
    le_buckets_tau->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
@@ -1121,7 +1121,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    le_buckets_tau->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_buckets_tau, SIGNAL(textChanged(const QString &)), SLOT(update_buckets_tau(const QString &)));
 
-   le_min_tau = new QLineEdit(this, "min_tau Line Edit");
+   le_min_tau = new QLineEdit( this );    le_min_tau->setObjectName( "min_tau Line Edit" );
    le_min_tau->setText(QString("%1").arg(comparative->ce_tau.min));
    // le_min_tau->setMinimumHeight(minHeight1);
    le_min_tau->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
@@ -1130,7 +1130,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    le_min_tau->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_min_tau, SIGNAL(textChanged(const QString &)), SLOT(update_min_tau(const QString &)));
 
-   le_max_tau = new QLineEdit(this, "max_tau Line Edit");
+   le_max_tau = new QLineEdit( this );    le_max_tau->setObjectName( "max_tau Line Edit" );
    le_max_tau->setText(QString("%1").arg(comparative->ce_tau.max));
    // le_max_tau->setMinimumHeight(minHeight1);
    le_max_tau->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
@@ -1180,7 +1180,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    AUTFBACK( cb_active_eta );
    connect(cb_active_eta, SIGNAL(clicked()), SLOT(set_active_eta()));
 
-   le_target_eta = new QLineEdit(this, "target_eta Line Edit");
+   le_target_eta = new QLineEdit( this );    le_target_eta->setObjectName( "target_eta Line Edit" );
    le_target_eta->setText(QString("%1").arg(comparative->ce_eta.target));
    // le_target_eta->setMinimumHeight(minHeight1);
    le_target_eta->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
@@ -1189,7 +1189,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    le_target_eta->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_target_eta, SIGNAL(textChanged(const QString &)), SLOT(update_target_eta(const QString &)));
 
-   le_rank_eta = new QLineEdit(this, "rank_eta Line Edit");
+   le_rank_eta = new QLineEdit( this );    le_rank_eta->setObjectName( "rank_eta Line Edit" );
    le_rank_eta->setText(QString("%1").arg(comparative->ce_eta.rank));
    // le_rank_eta->setMinimumHeight(minHeight1);
    le_rank_eta->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
@@ -1208,7 +1208,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    AUTFBACK( cb_include_in_weight_eta );
    connect(cb_include_in_weight_eta, SIGNAL(clicked()), SLOT(set_include_in_weight_eta()));
 
-   le_weight_eta = new QLineEdit(this, "weight_eta Line Edit");
+   le_weight_eta = new QLineEdit( this );    le_weight_eta->setObjectName( "weight_eta Line Edit" );
    le_weight_eta->setText(QString("%1").arg(comparative->ce_eta.weight));
    // le_weight_eta->setMinimumHeight(minHeight1);
    le_weight_eta->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
@@ -1217,7 +1217,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    le_weight_eta->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_weight_eta, SIGNAL(textChanged(const QString &)), SLOT(update_weight_eta(const QString &)));
 
-   le_buckets_eta = new QLineEdit(this, "buckets_eta Line Edit");
+   le_buckets_eta = new QLineEdit( this );    le_buckets_eta->setObjectName( "buckets_eta Line Edit" );
    le_buckets_eta->setText(QString("%1").arg(comparative->ce_eta.buckets));
    // le_buckets_eta->setMinimumHeight(minHeight1);
    le_buckets_eta->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
@@ -1226,7 +1226,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    le_buckets_eta->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_buckets_eta, SIGNAL(textChanged(const QString &)), SLOT(update_buckets_eta(const QString &)));
 
-   le_min_eta = new QLineEdit(this, "min_eta Line Edit");
+   le_min_eta = new QLineEdit( this );    le_min_eta->setObjectName( "min_eta Line Edit" );
    le_min_eta->setText(QString("%1").arg(comparative->ce_eta.min));
    // le_min_eta->setMinimumHeight(minHeight1);
    le_min_eta->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
@@ -1235,7 +1235,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    le_min_eta->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_min_eta, SIGNAL(textChanged(const QString &)), SLOT(update_min_eta(const QString &)));
 
-   le_max_eta = new QLineEdit(this, "max_eta Line Edit");
+   le_max_eta = new QLineEdit( this );    le_max_eta->setObjectName( "max_eta Line Edit" );
    le_max_eta->setText(QString("%1").arg(comparative->ce_eta.max));
    // le_max_eta->setMinimumHeight(minHeight1);
    le_max_eta->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
@@ -1274,207 +1274,235 @@ void US_Hydrodyn_Comparative::setupGUI()
    AUTFBACK( cb_store_abs_diff_eta );
    connect(cb_store_abs_diff_eta, SIGNAL(clicked()), SLOT(set_store_abs_diff_eta()));
 
-   pb_load_param = new QPushButton(tr("Load Parameters"), this);
+   pb_load_param = new QPushButton(us_tr("Load Parameters"), this);
    pb_load_param->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_load_param->setMinimumHeight(minHeight1);
    pb_load_param->setEnabled(true);
    pb_load_param->setPalette( PALET_PUSHB );
    connect(pb_load_param, SIGNAL(clicked()), SLOT(load_param()));
 
-   pb_reset_param = new QPushButton(tr("Reset Parameters"), this);
+   pb_reset_param = new QPushButton(us_tr("Reset Parameters"), this);
    pb_reset_param->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_reset_param->setMinimumHeight(minHeight1);
    pb_reset_param->setEnabled(true);
    pb_reset_param->setPalette( PALET_PUSHB );
    connect(pb_reset_param, SIGNAL(clicked()), SLOT(reset_param()));
 
-   pb_save_param = new QPushButton(tr("Save Parameters"), this);
+   pb_save_param = new QPushButton(us_tr("Save Parameters"), this);
    pb_save_param->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_save_param->setMinimumHeight(minHeight1);
    pb_save_param->setEnabled(true);
    pb_save_param->setPalette( PALET_PUSHB );
    connect(pb_save_param, SIGNAL(clicked()), SLOT(save_param()));
 
-   lbl_title_csv = new QLabel(tr("CSV Processing"), this);
-   lbl_title_csv->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Raised);
+   lbl_title_csv = new QLabel(us_tr("CSV Processing"), this);
+   lbl_title_csv->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_title_csv->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_title_csv->setMinimumHeight(minHeight1);
    lbl_title_csv->setPalette( PALET_FRAME );
    AUTFBACK( lbl_title_csv );
    lbl_title_csv->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
 
-   pb_load_csv = new QPushButton(tr("Load"), this);
+   pb_load_csv = new QPushButton(us_tr("Load"), this);
    pb_load_csv->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_load_csv->setMinimumHeight(minHeight1);
    pb_load_csv->setEnabled(true);
    pb_load_csv->setPalette( PALET_PUSHB );
    connect(pb_load_csv, SIGNAL(clicked()), SLOT(load_csv()));
 
-   pb_process_csv = new QPushButton(tr("Process"), this);
+   pb_process_csv = new QPushButton(us_tr("Process"), this);
    pb_process_csv->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_process_csv->setMinimumHeight(minHeight1);
    pb_process_csv->setEnabled(false);
    pb_process_csv->setPalette( PALET_PUSHB );
    connect(pb_process_csv, SIGNAL(clicked()), SLOT(process_csv()));
 
-   pb_save_csv = new QPushButton(tr("Save"), this);
+   pb_save_csv = new QPushButton(us_tr("Save"), this);
    pb_save_csv->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_save_csv->setMinimumHeight(minHeight1);
    pb_save_csv->setEnabled(false);
    pb_save_csv->setPalette( PALET_PUSHB );
    connect(pb_save_csv, SIGNAL(clicked()), SLOT(save_csv()));
 
-   // lbl_loaded = new QLabel(tr("Loaded"), this);
+   // lbl_loaded = new QLabel(us_tr("Loaded"), this);
    // lbl_loaded->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    // lbl_loaded->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    // lbl_loaded->setMinimumHeight(minHeight1);
-   // lbl_loaded->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
+   // lbl_loaded->setPalette( USglobal->global_colors.cg_frame );
    // lbl_loaded->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
 
-   lb_loaded = new Q3ListBox(this);
-   lb_loaded->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Raised);
+   lb_loaded = new QListWidget(this);
+   lb_loaded->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lb_loaded->setMinimumHeight(minHeight1 * 6);
    // lb_loaded->setMinimumWidth(minWidth1);
-   // lb_loaded->insertStringList(*qsl_loaded);
+   // lb_loaded->addItems(*qsl_loaded);
    lb_loaded->setPalette( PALET_EDIT );
    AUTFBACK( lb_loaded );
    lb_loaded->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
-   lb_loaded->setSelectionMode(Q3ListBox::Multi);
+   lb_loaded->setSelectionMode(QAbstractItemView::MultiSelection);
    lb_loaded->setEnabled(true);
-   connect(lb_loaded, SIGNAL(selectionChanged()), SLOT(update_loaded()));
+   connect(lb_loaded, SIGNAL(itemSelectionChanged()), SLOT(update_loaded()));
 
-   pb_loaded_select_all = new QPushButton(tr("Select all"), this);
+   pb_loaded_select_all = new QPushButton(us_tr("Select all"), this);
    pb_loaded_select_all->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_loaded_select_all->setMinimumHeight(minHeightpb);
    pb_loaded_select_all->setEnabled(false);
    pb_loaded_select_all->setPalette( PALET_PUSHB );
    connect(pb_loaded_select_all, SIGNAL(clicked()), SLOT(loaded_select_all()));
 
-   pb_loaded_view = new QPushButton(tr("View"), this);
+   pb_loaded_view = new QPushButton(us_tr("View"), this);
    pb_loaded_view->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_loaded_view->setMinimumHeight(minHeightpb);
    pb_loaded_view->setEnabled(false);
    pb_loaded_view->setPalette( PALET_PUSHB );
    connect(pb_loaded_view, SIGNAL(clicked()), SLOT(loaded_view()));
 
-   pb_loaded_merge = new QPushButton(tr("Merge"), this);
+   pb_loaded_merge = new QPushButton(us_tr("Merge"), this);
    pb_loaded_merge->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_loaded_merge->setMinimumHeight(minHeightpb);
    pb_loaded_merge->setEnabled(false);
    pb_loaded_merge->setPalette( PALET_PUSHB );
    connect(pb_loaded_merge, SIGNAL(clicked()), SLOT(loaded_merge()));
 
-   pb_loaded_set_ranges = new QPushButton(tr("Set min/max"), this);
+   pb_loaded_set_ranges = new QPushButton(us_tr("Set min/max"), this);
    pb_loaded_set_ranges->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_loaded_set_ranges->setMinimumHeight(minHeightpb);
    pb_loaded_set_ranges->setEnabled(false);
    pb_loaded_set_ranges->setPalette( PALET_PUSHB );
    connect(pb_loaded_set_ranges, SIGNAL(clicked()), SLOT(loaded_set_ranges()));
 
-   pb_loaded_remove = new QPushButton(tr("Remove"), this);
+   pb_loaded_remove = new QPushButton(us_tr("Remove"), this);
    pb_loaded_remove->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_loaded_remove->setMinimumHeight(minHeightpb);
    pb_loaded_remove->setEnabled(false);
    pb_loaded_remove->setPalette( PALET_PUSHB );
    connect(pb_loaded_remove, SIGNAL(clicked()), SLOT(loaded_remove()));
 
-   // lbl_selected = new QLabel(tr("Selected"), this);
+   // lbl_selected = new QLabel(us_tr("Selected"), this);
    // lbl_selected->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    // lbl_selected->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    // lbl_selected->setMinimumHeight(minHeight1);
-   // lbl_selected->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
+   // lbl_selected->setPalette( USglobal->global_colors.cg_frame );
    // lbl_selected->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
 
-   lb_selected = new Q3ListBox(this);
-   lb_selected->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Raised);
+   lb_selected = new QListWidget(this);
+   lb_selected->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    // lb_selected->setMinimumHeight(minHeight1 * 15);
    // lb_selected->setMinimumWidth(minWidth1);
-   // lb_selected->insertStringList(*qsl_selected);
+   // lb_selected->addItems(*qsl_selected);
    lb_selected->setPalette( PALET_EDIT );
    AUTFBACK( lb_selected );
    lb_selected->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
-   lb_selected->setSelectionMode(Q3ListBox::Multi);
+   lb_selected->setSelectionMode(QAbstractItemView::MultiSelection);
    lb_selected->setEnabled(true);
-   connect(lb_selected, SIGNAL(selectionChanged()), SLOT(update_selected()));
+   connect(lb_selected, SIGNAL(itemSelectionChanged()), SLOT(update_selected()));
 
-   pb_selected_select_all = new QPushButton(tr("Select All"), this);
+   pb_selected_select_all = new QPushButton(us_tr("Select All"), this);
    pb_selected_select_all->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_selected_select_all->setMinimumHeight(minHeightpb);
    pb_selected_select_all->setEnabled(false);
    pb_selected_select_all->setPalette( PALET_PUSHB );
    connect(pb_selected_select_all, SIGNAL(clicked()), SLOT(selected_select_all()));
 
-   pb_selected_merge = new QPushButton(tr("Merge"), this);
+   pb_selected_merge = new QPushButton(us_tr("Merge"), this);
    pb_selected_merge->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_selected_merge->setMinimumHeight(minHeightpb);
    pb_selected_merge->setEnabled(false);
    pb_selected_merge->setPalette( PALET_PUSHB );
    connect(pb_selected_merge, SIGNAL(clicked()), SLOT(selected_merge()));
 
-   pb_selected_set_ranges = new QPushButton(tr("Set min/max"),this);
+   pb_selected_set_ranges = new QPushButton(us_tr("Set min/max"),this);
    pb_selected_set_ranges->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_selected_set_ranges->setMinimumHeight(minHeightpb);
    pb_selected_set_ranges->setEnabled(false);
    pb_selected_set_ranges->setPalette( PALET_PUSHB );
    connect(pb_selected_set_ranges, SIGNAL(clicked()), SLOT(selected_set_ranges()));
 
-   pb_selected_remove = new QPushButton(tr("Remove"), this);
+   pb_selected_remove = new QPushButton(us_tr("Remove"), this);
    pb_selected_remove->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_selected_remove->setMinimumHeight(minHeightpb);
    pb_selected_remove->setEnabled(false);
    pb_selected_remove->setPalette( PALET_PUSHB );
    connect(pb_selected_remove, SIGNAL(clicked()), SLOT(selected_remove()));
 
-   editor = new Q3TextEdit(this);
+   editor = new QTextEdit(this);
    editor->setPalette( PALET_NORMAL );
    AUTFBACK( editor );
    editor->setReadOnly(true);
    // editor->setMinimumWidth(300);
    // editor->setMinimumHeight(minHeight1 * 7);
 
-#if defined(QT4) && defined(Q_WS_MAC)
+#if QT_VERSION < 0x040000
+# if defined(QT4) && defined(Q_WS_MAC)
    {
-      Q3PopupMenu * file = new Q3PopupMenu;
-      file->insertItem( tr("&Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
-      file->insertItem( tr("&Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
-# ifndef NO_EDITOR_PRINT
-      file->insertItem( tr("&Print"), this, SLOT(print()),   Qt::ALT+Qt::Key_P );
-# endif
-      file->insertItem( tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
+ //      Q3PopupMenu * file = new Q3PopupMenu;
+      file->insertItem( us_tr("&Font"),  this, SLOT(update_font( )),    Qt::ALT+Qt::Key_F );
+      file->insertItem( us_tr("&Save"),  this, SLOT(save( )),    Qt::ALT+Qt::Key_S );
+#  ifndef NO_EDITOR_PRINT
+      file->insertItem( us_tr("&Print"), this, SLOT(print( )),   Qt::ALT+Qt::Key_P );
+#  endif
+      file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display( )),   Qt::ALT+Qt::Key_X );
 
       QMenuBar *menu = new QMenuBar( this );
       AUTFBACK( menu );
 
-      menu->insertItem(tr("&Messages"), file );
+      menu->insertItem(us_tr("&Messages"), file );
    }
-#else
-   Q3Frame *frame;
-   frame = new Q3Frame(this);
+# else
+   QFrame *frame;
+   frame = new QFrame(this);
    frame->setMinimumHeight(minHeight3);
 
-   m = new QMenuBar(frame, "menu" );
+   m = new QMenuBar( frame );    m->setObjectName( "menu" );
    m->setMinimumHeight(minHeight1 - 5);
    m->setPalette( PALET_NORMAL );
    AUTFBACK( m );
-   Q3PopupMenu * file = new Q3PopupMenu(editor);
-   m->insertItem( tr("&File"), file );
-   file->insertItem( tr("Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
-   file->insertItem( tr("Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
-# ifndef NO_EDITOR_PRINT
-   file->insertItem( tr("Print"), this, SLOT(print()),   Qt::ALT+Qt::Key_P );
+ //   Q3PopupMenu * file = new Q3PopupMenu(editor);
+   m->insertItem( us_tr("&File"), file );
+   file->insertItem( us_tr("Font"),  this, SLOT(update_font( )),    Qt::ALT+Qt::Key_F );
+   file->insertItem( us_tr("Save"),  this, SLOT(save( )),    Qt::ALT+Qt::Key_S );
+#  ifndef NO_EDITOR_PRINT
+   file->insertItem( us_tr("Print"), this, SLOT(print( )),   Qt::ALT+Qt::Key_P );
+#  endif
+   file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display( )),   Qt::ALT+Qt::Key_X );
 # endif
-   file->insertItem( tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
+#else
+   QFrame *frame;
+   frame = new QFrame(this);
+   frame->setMinimumHeight(minHeight3);
+
+   m = new QMenuBar( frame );    m->setObjectName( "menu" );
+   m->setMinimumHeight(minHeight1 - 5);
+   m->setPalette( PALET_NORMAL );
+   AUTFBACK( m );
+
+   {
+      QMenu * new_menu = m->addMenu( us_tr( "&File" ) );
+
+      QAction *qa1 = new_menu->addAction( us_tr( "Font" ) );
+      qa1->setShortcut( Qt::ALT+Qt::Key_F );
+      connect( qa1, SIGNAL(triggered()), this, SLOT( update_font() ) );
+
+      QAction *qa2 = new_menu->addAction( us_tr( "Save" ) );
+      qa2->setShortcut( Qt::ALT+Qt::Key_S );
+      connect( qa2, SIGNAL(triggered()), this, SLOT( save() ) );
+
+      QAction *qa3 = new_menu->addAction( us_tr( "Clear Display" ) );
+      qa3->setShortcut( Qt::ALT+Qt::Key_X );
+      connect( qa3, SIGNAL(triggered()), this, SLOT( clear_display() ) );
+   }
 #endif
 
-   editor->setWordWrap (Q3TextEdit::WidgetWidth);
 
-   pb_help = new QPushButton(tr("Help"), this);
+   editor->setWordWrapMode (QTextOption::WordWrap);
+
+   pb_help = new QPushButton(us_tr("Help"), this);
    pb_help->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_help->setMinimumHeight(minHeight1);
    pb_help->setPalette( PALET_PUSHB );
    connect(pb_help, SIGNAL(clicked()), SLOT(help()));
 
-   pb_cancel = new QPushButton(tr("Close"), this);
+   pb_cancel = new QPushButton(us_tr("Close"), this);
    Q_CHECK_PTR(pb_cancel);
    pb_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_cancel->setMinimumHeight(minHeight1);
@@ -1486,33 +1514,33 @@ void US_Hydrodyn_Comparative::setupGUI()
    int margin = 4;
    int j = 0;
 
-   Q3GridLayout *background = new Q3GridLayout(this, 0, 0, margin, spacing);
+   QGridLayout * background = new QGridLayout( this ); background->setContentsMargins( 0, 0, 0, 0 ); background->setSpacing( 0 ); background->setSpacing( spacing ); background->setContentsMargins( margin, margin, margin, margin );
 
-   background->addMultiCellWidget(lbl_title_param, j, j, 0, 10);
+   background->addWidget( lbl_title_param , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 10 ) - ( 0 ) );
    j++;
 
-   background->addMultiCellWidget(lbl_active, j, j+3, 0, 0);
-   background->addMultiCellWidget(lbl_target, j, j+3, 1, 1);
-   background->addMultiCellWidget(lbl_sort, j, j, 2, 7);
-   background->addMultiCellWidget(cb_by_pct, j+1, j+1, 2, 4);
+   background->addWidget( lbl_active , j , 0 , 1 + ( j+3 ) - ( j ) , 1 + ( 0 ) - ( 0 ) );
+   background->addWidget( lbl_target , j , 1 , 1 + ( j+3 ) - ( j ) , 1 + ( 1 ) - ( 1 ) );
+   background->addWidget( lbl_sort , j , 2 , 1 + ( j ) - ( j ) , 1 + ( 7 ) - ( 2 ) );
+   background->addWidget( cb_by_pct , j+1 , 2 , 1 + ( j+1 ) - ( j+1 ) , 1 + ( 4 ) - ( 2 ) );
 
-   background->addMultiCellWidget(cb_rank, j+2, j+2, 2, 2);
+   background->addWidget( cb_rank , j+2 , 2 , 1 + ( j+2 ) - ( j+2 ) , 1 + ( 2 ) - ( 2 ) );
    background->addWidget(lbl_rank, j+3, 2);
 
-   background->addMultiCellWidget(cb_weight_controls, j+2, j+2, 3, 4);
+   background->addWidget( cb_weight_controls , j+2 , 3 , 1 + ( j+2 ) - ( j+2 ) , 1 + ( 4 ) - ( 3 ) );
    background->addWidget(lbl_include_in_weight, j+3, 3);
    background->addWidget(lbl_weight, j+3, 4);
 
-   background->addMultiCellWidget(lbl_ec, j+1, j+1, 5, 7);
-   background->addMultiCellWidget(cb_by_ec, j+2, j+2, 5, 7);
-   background->addMultiCellWidget(lbl_buckets, j+3, j+3, 5, 5);
-   background->addMultiCellWidget(lbl_min, j+3, j+3, 6, 6);
-   background->addMultiCellWidget(lbl_max, j+3, j+3, 7, 7);
+   background->addWidget( lbl_ec , j+1 , 5 , 1 + ( j+1 ) - ( j+1 ) , 1 + ( 7 ) - ( 5 ) );
+   background->addWidget( cb_by_ec , j+2 , 5 , 1 + ( j+2 ) - ( j+2 ) , 1 + ( 7 ) - ( 5 ) );
+   background->addWidget( lbl_buckets , j+3 , 5 , 1 + ( j+3 ) - ( j+3 ) , 1 + ( 5 ) - ( 5 ) );
+   background->addWidget( lbl_min , j+3 , 6 , 1 + ( j+3 ) - ( j+3 ) , 1 + ( 6 ) - ( 6 ) );
+   background->addWidget( lbl_max , j+3 , 7 , 1 + ( j+3 ) - ( j+3 ) , 1 + ( 7 ) - ( 7 ) );
 
-   background->addMultiCellWidget(lbl_csv_controls, j, j+1, 8, 10);
-   background->addMultiCellWidget(lbl_store_reference, j+2, j+3, 8, 8);
-   background->addMultiCellWidget(lbl_store_diff, j+2, j+3, 9, 9);
-   background->addMultiCellWidget(lbl_store_abs_diff, j+2, j+3, 10, 10);
+   background->addWidget( lbl_csv_controls , j , 8 , 1 + ( j+1 ) - ( j ) , 1 + ( 10 ) - ( 8 ) );
+   background->addWidget( lbl_store_reference , j+2 , 8 , 1 + ( j+3 ) - ( j+2 ) , 1 + ( 8 ) - ( 8 ) );
+   background->addWidget( lbl_store_diff , j+2 , 9 , 1 + ( j+3 ) - ( j+2 ) , 1 + ( 9 ) - ( 9 ) );
+   background->addWidget( lbl_store_abs_diff , j+2 , 10 , 1 + ( j+3 ) - ( j+2 ) , 1 + ( 10 ) - ( 10 ) );
 
    j += 4;
 
@@ -1607,68 +1635,68 @@ void US_Hydrodyn_Comparative::setupGUI()
    background->addWidget(cb_store_abs_diff_eta, j, 10);
    j++;
 
-   Q3BoxLayout *hbl_param = new Q3HBoxLayout(0);
+   QBoxLayout *hbl_param = new QHBoxLayout();
    hbl_param->addWidget(pb_load_param);
    hbl_param->addWidget(pb_reset_param);
    hbl_param->addWidget(pb_save_param);
-   background->addMultiCellLayout(hbl_param, j, j, 0, 10);
+   background->addLayout( hbl_param , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 10 ) - ( 0 ) );
    j++;
 
-   background->addMultiCellWidget(lbl_title_csv, j, j, 0, 10);
+   background->addWidget( lbl_title_csv , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 10 ) - ( 0 ) );
    j++;
 
-   Q3BoxLayout *hbl_csv = new Q3HBoxLayout(0);
+   QBoxLayout *hbl_csv = new QHBoxLayout();
    hbl_csv->addWidget(pb_load_csv);
    hbl_csv->addWidget(pb_process_csv);
    hbl_csv->addWidget(pb_save_csv);
-   background->addMultiCellLayout(hbl_csv, j, j, 0, 10);
+   background->addLayout( hbl_csv , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 10 ) - ( 0 ) );
    j++;
 
-   Q3GridLayout *gl_loaded_selected_editor = new Q3GridLayout(0, 0, 0, 0, 0);
+   QGridLayout * gl_loaded_selected_editor = new QGridLayout; gl_loaded_selected_editor->setContentsMargins( 0, 0, 0, 0 ); gl_loaded_selected_editor->setSpacing( 0 ); gl_loaded_selected_editor->setSpacing( 0 ); gl_loaded_selected_editor->setContentsMargins( 0, 0, 0, 0 );
 
    // gl_loaded_selected_editor->addWidget(lbl_loaded, 0, 0);
-   gl_loaded_selected_editor->addMultiCellWidget(lb_loaded, 0, 1, 0, 0);
-   Q3BoxLayout *hbl_loaded_buttons1 = new Q3HBoxLayout(0);
+   gl_loaded_selected_editor->addWidget( lb_loaded , 0 , 0 , 1 + ( 1 ) - ( 0 ) , 1 + ( 0 ) - ( 0 ) );
+   QBoxLayout *hbl_loaded_buttons1 = new QHBoxLayout();
    hbl_loaded_buttons1->addWidget(pb_loaded_select_all);
    hbl_loaded_buttons1->addWidget(pb_loaded_remove);
    gl_loaded_selected_editor->addLayout(hbl_loaded_buttons1, 2, 0);
 
-   Q3BoxLayout *hbl_loaded_buttons2 = new Q3HBoxLayout(0);
+   QBoxLayout *hbl_loaded_buttons2 = new QHBoxLayout();
    hbl_loaded_buttons2->addWidget(pb_loaded_view);
    hbl_loaded_buttons2->addWidget(pb_loaded_merge);
    hbl_loaded_buttons2->addWidget(pb_loaded_set_ranges);
    gl_loaded_selected_editor->addLayout(hbl_loaded_buttons2, 3, 0);
 
    // gl_loaded_selected_editor->addWidget(lbl_selected, 0, 1);
-   gl_loaded_selected_editor->addMultiCellWidget(lb_selected, 0, 1, 1, 1);
+   gl_loaded_selected_editor->addWidget( lb_selected , 0 , 1 , 1 + ( 1 ) - ( 0 ) , 1 + ( 1 ) - ( 1 ) );
 
-   Q3BoxLayout *hbl_selected_buttons1 = new Q3HBoxLayout(0);
+   QBoxLayout *hbl_selected_buttons1 = new QHBoxLayout();
    hbl_selected_buttons1->addWidget(pb_selected_select_all);
    hbl_selected_buttons1->addWidget(pb_selected_remove);
    gl_loaded_selected_editor->addLayout(hbl_selected_buttons1, 2, 1);
 
-   Q3BoxLayout *hbl_selected_buttons2 = new Q3HBoxLayout(0);
+   QBoxLayout *hbl_selected_buttons2 = new QHBoxLayout();
    hbl_selected_buttons2->addWidget(pb_selected_merge);
    hbl_selected_buttons2->addWidget(pb_selected_set_ranges);
    gl_loaded_selected_editor->addLayout(hbl_selected_buttons2, 3, 1);
 
-   Q3BoxLayout *vbl_editor_group = new Q3VBoxLayout(0);
+   QBoxLayout *vbl_editor_group = new QVBoxLayout(0);
 #if !defined(QT4) || !defined(Q_WS_MAC)
    vbl_editor_group->addWidget(frame);
 #endif
    vbl_editor_group->addWidget(editor);
 
    // gl_loaded_selected_editor->addWidget(frame, 0, 2);
-   //   gl_loaded_selected_editor->addMultiCellWidget(editor, 1, 1, 2, 2);
-   gl_loaded_selected_editor->addMultiCellLayout(vbl_editor_group, 0, 3, 2, 2);
+   //   gl_loaded_selected_editor->addWidget( editor , 1 , 2 , 1 + ( 1 ) - ( 1 ) , 1 + ( 2 ) - ( 2 ) );
+   gl_loaded_selected_editor->addLayout( vbl_editor_group , 0 , 2 , 1 + ( 3 ) - ( 0 ) , 1 + ( 2 ) - ( 2 ) );
    
-   background->addMultiCellLayout(gl_loaded_selected_editor, j, j, 0, 10);
+   background->addLayout( gl_loaded_selected_editor , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 10 ) - ( 0 ) );
    j++;
 
-   Q3BoxLayout *hbl_bottom = new Q3HBoxLayout(0);
+   QBoxLayout *hbl_bottom = new QHBoxLayout();
    hbl_bottom->addWidget(pb_help);
    hbl_bottom->addWidget(pb_cancel);
-   background->addMultiCellLayout(hbl_bottom, j, j, 0, 10);
+   background->addLayout( hbl_bottom , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 10 ) - ( 0 ) );
    j++;
 
    update_enables();
@@ -1700,10 +1728,10 @@ void US_Hydrodyn_Comparative::update_enables()
    {
       cout << "update_enables\n";
 
-      lbl_store_diff->setText((comparative->by_pct ? "%\n" : "" ) + tr("Difference"));
-      lbl_store_abs_diff->setText((comparative->by_pct ? "%\n" : "") + tr("Absolute\ndifference"));
-      cb_rank->setText(QString(tr("By ranked\n%1absolute\ndifference")).arg(comparative->by_pct ? "% " : "" ));
-      cb_weight_controls->setText(QString(tr("By weighted sum\nof %1absolute\ndifferences")).arg(comparative->by_pct ? "% " : "" ));
+      lbl_store_diff->setText((comparative->by_pct ? "%\n" : "" ) + us_tr("Difference"));
+      lbl_store_abs_diff->setText((comparative->by_pct ? "%\n" : "") + us_tr("Absolute\ndifference"));
+      cb_rank->setText(QString(us_tr("By ranked\n%1absolute\ndifference")).arg(comparative->by_pct ? "% " : "" ));
+      cb_weight_controls->setText(QString(us_tr("By weighted sum\nof %1absolute\ndifferences")).arg(comparative->by_pct ? "% " : "" ));
 
       bool any_selected = any_loaded_selected();
       
@@ -2575,28 +2603,28 @@ void US_Hydrodyn_Comparative::load_param()
 
    ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this );
 
-   QString fname = QFileDialog::getOpenFileName( this , tr("Choose a filename to load the parameters") , use_dir , "*.smp" );
+   QString fname = QFileDialog::getOpenFileName( this , us_tr("Choose a filename to load the parameters") , use_dir , "*.smp" );
 
    if ( fname.isEmpty() )
    {
       return;
    }
 
-   comparative->path_param = QFileInfo(fname).dirPath(true);
+   comparative->path_param = QFileInfo(fname).absolutePath();
 
    QFile f(fname);
 
    if ( !f.open( QIODevice::ReadOnly ) )
    {
       QMessageBox::warning( this, "UltraScan",
-                            QString(tr("Could not open %1 for reading! (permissions?)")).arg(fname) );
+                            QString(us_tr("Could not open %1 for reading! (permissions?)")).arg(fname) );
       return;
    }
 
-   ((US_Hydrodyn *)us_hydrodyn)->add_to_directory_history( f.name() );
+   ((US_Hydrodyn *)us_hydrodyn)->add_to_directory_history( f.fileName() );
 
    QString qs = "";
-   Q3TextStream ts( &f );
+   QTextStream ts( &f );
    while ( !ts.atEnd() )
    {
       qs += ts.readLine() + "\n";
@@ -2613,7 +2641,7 @@ void US_Hydrodyn_Comparative::load_param()
    ci.path_csv = comparative->path_csv;
    *comparative = ci;
    refresh();
-   editor->append(QString(tr("Loaded parameter file: %1\n")).arg(fname));
+   editor->append(QString(us_tr("Loaded parameter file: %1\n")).arg(fname));
 }
 
 void US_Hydrodyn_Comparative::reset_param()
@@ -2626,9 +2654,9 @@ void US_Hydrodyn_Comparative::reset_param()
       if ( 
           QMessageBox::question(
                                 this,
-                                tr("Reset Parameters"),
-                                tr("Are you sure you want to reset the parameters?"),
-                                tr("&Yes"), tr("&No"),
+                                us_tr("Reset Parameters"),
+                                us_tr("Are you sure you want to reset the parameters?"),
+                                us_tr("&Yes"), us_tr("&No"),
                                 QString::null, 0, 1 ) 
           ) 
       {
@@ -2636,7 +2664,7 @@ void US_Hydrodyn_Comparative::reset_param()
       }
       *comparative = ci;
       refresh();
-      editor->append(tr("Parameters reset\n"));
+      editor->append(us_tr("Parameters reset\n"));
    }
 }
 
@@ -2650,18 +2678,18 @@ void US_Hydrodyn_Comparative::save_param()
 
    ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this );
 
-   QString fname = QFileDialog::getSaveFileName( this , tr("Choose a filename to save the parameters") , use_dir , "*.smp" );
+   QString fname = QFileDialog::getSaveFileName( this , us_tr("Choose a filename to save the parameters") , use_dir , "*.smp" );
 
    if ( fname.isEmpty() )
    {
       return;
    }
-   if ( !fname.contains(QRegExp(".smp$",false)) )
+   if ( !fname.contains(QRegExp(".smp$", Qt::CaseInsensitive )) )
    {
       fname += ".smp";
    }
 
-   comparative->path_param = QFileInfo(fname).dirPath(true);
+   comparative->path_param = QFileInfo(fname).absolutePath();
    
    if ( QFile::exists(fname) )
    {
@@ -2673,15 +2701,15 @@ void US_Hydrodyn_Comparative::save_param()
    if ( !f.open( QIODevice::WriteOnly ) )
    {
       QMessageBox::warning( this, "UltraScan",
-                            QString(tr("Could not open %1 for writing!")).arg(fname) );
+                            QString(us_tr("Could not open %1 for writing!")).arg(fname) );
       return;
    }
-   ((US_Hydrodyn *)us_hydrodyn)->add_to_directory_history( f.name() );
+   ((US_Hydrodyn *)us_hydrodyn)->add_to_directory_history( f.fileName() );
 
-   Q3TextStream t( &f );
+   QTextStream t( &f );
    t << serialize_comparative_info( *comparative );
    f.close();
-   editor->append(QString(tr("Saved parameter file: %1\n")).arg(fname));
+   editor->append(QString(us_tr("Saved parameter file: %1\n")).arg(fname));
 }
 
 void US_Hydrodyn_Comparative::load_csv()
@@ -2701,7 +2729,7 @@ void US_Hydrodyn_Comparative::load_csv()
       return;
    }
 
-   comparative->path_csv = QFileInfo(filenames[0]).dirPath(true);
+   comparative->path_csv = QFileInfo(filenames[0]).absolutePath();
 
 
    for ( QStringList::iterator it = filenames.begin();
@@ -2712,18 +2740,18 @@ void US_Hydrodyn_Comparative::load_csv()
       csv tmp_csv = csv_read(*it);
       if ( !csv_error.isEmpty() )
       {
-         if ( csv_error != tr("alread loaded") )
+         if ( csv_error != us_tr("alread loaded") )
          {
             editor_msg("red", QString("%1: %2").arg(*it).arg(csv_error));
          }
       } else {
          csvs[*it] = tmp_csv;
          loaded_csv_names[tmp_csv.name] = true;
-         lb_loaded->insertItem(tmp_csv.name);
+         lb_loaded->addItem(tmp_csv.name);
          if ( !csv_warn.isEmpty() )
          {
             QMessageBox::warning( this, "UltraScan",
-                                  QString(tr("Loading the csv %1 produced the following warnings:\n%2"))
+                                  QString(us_tr("Loading the csv %1 produced the following warnings:\n%2"))
                                   .arg(*it)
                                   .arg(csv_warn) 
                                   );
@@ -2745,15 +2773,15 @@ void US_Hydrodyn_Comparative::update_loaded()
    lb_selected->clear();
    
    // add selected loaded entries to selected
-   for ( int i = 0; i < lb_loaded->numRows(); i++ )
+   for ( int i = 0; i < lb_loaded->count(); i++ )
    {
-      if ( lb_loaded->isSelected(i) )
+      if ( lb_loaded->item(i)->isSelected() )
       {
-         if ( csvs.count(lb_loaded->text(i)) )
+         if ( csvs.count(lb_loaded->item(i)->text( )) )
          {
-            lb_selected->insertStringList(csv_model_names(csvs[lb_loaded->text(i)]));
+            lb_selected->addItems(csv_model_names(csvs[ lb_loaded->item(i)->text() ]));
          } else {
-            editor_msg("red", QString(tr("internal error: could not find %1 csv data")).arg(lb_loaded->text(i)));
+            editor_msg("red", QString(us_tr("internal error: could not find %1 csv data")).arg(lb_loaded->item(i)->text( )));
          }
       }
    }
@@ -2767,22 +2795,22 @@ void US_Hydrodyn_Comparative::loaded_select_all()
    bool select_all = false;
 
    // are any unselected ?
-   for ( int i = 0; i < lb_loaded->numRows(); i++ )
+   for ( int i = 0; i < lb_loaded->count(); i++ )
    {
-      if ( !lb_loaded->isSelected(i) )
+      if ( !lb_loaded->item(i)->isSelected() )
       {
          select_all = true;
          break;
       }
    }
 
-   for ( int i = 0; i < lb_loaded->numRows(); i++ )
+   for ( int i = 0; i < lb_loaded->count(); i++ )
    {
-      lb_loaded->setSelected(i, select_all);
+      lb_loaded->item(i)->setSelected( select_all);
    }
    if ( select_all )
    {
-      lb_loaded->setBottomItem(lb_loaded->numRows() - 1);
+      lb_loaded->scrollToItem( lb_loaded->item(lb_loaded->count() - 1) );
    }
 }
 
@@ -2790,7 +2818,7 @@ void US_Hydrodyn_Comparative::loaded_set_ranges()
 {
    if ( !any_loaded_selected() )
    {
-      editor_msg("red", tr("internal error: loaded set exp min/max called but no item selected!\n"));
+      editor_msg("red", us_tr("internal error: loaded set exp min/max called but no item selected!\n"));
       return;
    }
       
@@ -2873,15 +2901,15 @@ void US_Hydrodyn_Comparative::loaded_view()
 {
    for ( unsigned int i = 0; i < lb_loaded->count(); i++ )
    {
-      if ( lb_loaded->isSelected(i) ) 
+      if ( lb_loaded->item(i)->isSelected() ) 
       {
-         if ( !csvs.count(lb_loaded->text(i)) )
+         if ( !csvs.count(lb_loaded->item(i)->text( )) )
          {
-            editor_msg("red", QString(tr("internal error: could not find %1 csv data")).arg(lb_loaded->text(i)));
+            editor_msg("red", QString(us_tr("internal error: could not find %1 csv data")).arg(lb_loaded->item(i)->text( )));
          } else {
             US_Hydrodyn_Csv_Viewer 
                *csv_viewer_window =
-               new US_Hydrodyn_Csv_Viewer(csvs[lb_loaded->text(i)], this);
+               new US_Hydrodyn_Csv_Viewer(csvs[ lb_loaded->item(i)->text() ], this);
             csv_viewer_window->show();
          }
       }
@@ -2895,16 +2923,16 @@ void US_Hydrodyn_Comparative::loaded_merge()
       if (
           QMessageBox::warning(
                                this,
-                               tr("Merge CSV's"),
+                               us_tr("Merge CSV's"),
                                QString(
-                                       tr("The CSVs do not all have the same column names.\n"
+                                       us_tr("The CSVs do not all have the same column names.\n"
                                           "This will create additional columns with blank entries\n"
                                           "for rows from CSVs without these extra columns:\n"
                                           "\n%1\n\n"
                                           "This will effect statistics computed on these extra columns.\n"
                                           "Do you still want to merge them?")
                                        ).arg(csv_premerge_missing_header_qsl.join("\n")),
-                               tr("&Yes"), tr("&No"),
+                               us_tr("&Yes"), us_tr("&No"),
                                QString::null, 0, 1 )
           )
       {
@@ -2921,13 +2949,13 @@ void US_Hydrodyn_Comparative::csv_remove( QString name, int i )
    // cout << loaded_info();
    if ( csvs.count(name) )
    {
-      for ( unsigned int j = 0; j < csvs[name].prepended_names.size(); j++ )
+      for ( unsigned int j = 0; j < csvs[ name ].prepended_names.size(); j++ )
       {
-         // cout << QString(" name: %1|%2\n").arg(csvs[name].name).arg(csvs[name].prepended_names[j]);
+         // cout << QString(" name: %1|%2\n").arg(csvs[ name ].name).arg(csvs[ name ].prepended_names[j]);
          map < QString, bool >::iterator it = 
-            loaded_csv_row_prepended_names.find(csvs[name].name + 
+            loaded_csv_row_prepended_names.find(csvs[ name ].name + 
                                                 "|" + 
-                                                csvs[name].prepended_names[j]);
+                                                csvs[ name ].prepended_names[j]);
          loaded_csv_row_prepended_names.erase(it);
       }
       map < QString, bool >::iterator it = loaded_csv_names.find(name);
@@ -2935,19 +2963,19 @@ void US_Hydrodyn_Comparative::csv_remove( QString name, int i )
       map < QString, csv >::iterator it2 = csvs.find(name);
       csvs.erase(it2);
    } else {
-      editor_msg("red", QString(tr("internal error: csv_remove %1 could not find csv to remove!")).arg(name));
+      editor_msg("red", QString(us_tr("internal error: csv_remove %1 could not find csv to remove!")).arg(name));
    }
-   lb_loaded->removeItem(i);
+   delete lb_loaded->takeItem(i);
 }
 
 void US_Hydrodyn_Comparative::loaded_remove()
 {
    disable_updates();
-   for ( int i = lb_loaded->numRows() - 1; i >= 0; i-- )
+   for ( int i = lb_loaded->count() - 1; i >= 0; i-- )
    {
-      if ( lb_loaded->isSelected(i) )
+      if ( lb_loaded->item(i)->isSelected() )
       {
-         csv_remove(lb_loaded->text(i), i);
+         csv_remove(lb_loaded->item(i)->text(), i);
       }
    }
    enable_updates();
@@ -2962,7 +2990,7 @@ void US_Hydrodyn_Comparative::set_loaded_csv_row_prepended_names( csv &csv1 )
                                                 "|" + 
                                                 csv1.prepended_names[i]) )
       {
-         editor_msg("red", tr("internal error: duplicate loaded prepended names found!"));
+         editor_msg("red", us_tr("internal error: duplicate loaded prepended names found!"));
       } else {
          loaded_csv_row_prepended_names[csv1.name + 
                                         "|" + 
@@ -2982,22 +3010,22 @@ void US_Hydrodyn_Comparative::selected_select_all()
    bool select_all = false;
 
    // are any unselected ?
-   for ( int i = 0; i < lb_selected->numRows(); i++ )
+   for ( int i = 0; i < lb_selected->count(); i++ )
    {
-      if ( !lb_selected->isSelected(i) )
+      if ( !lb_selected->item(i)->isSelected() )
       {
          select_all = true;
          break;
       }
    }
 
-   for ( int i = 0; i < lb_selected->numRows(); i++ )
+   for ( int i = 0; i < lb_selected->count(); i++ )
    {
-      lb_selected->setSelected(i, select_all);
+      lb_selected->item(i)->setSelected( select_all);
    }
    if ( select_all )
    {
-      lb_selected->setBottomItem(lb_selected->numRows() - 1);
+      lb_selected->scrollToItem( lb_selected->item(lb_selected->count() - 1) );
    }
 }
 
@@ -3006,29 +3034,29 @@ void US_Hydrodyn_Comparative::selected_merge()
    csv csv_merged;
    if ( csv_merge_selected_selected(csv_merged) )
    {
-      for ( int i = 0; i < lb_loaded->numRows(); i++ )
+      for ( int i = 0; i < lb_loaded->count(); i++ )
       {
-         lb_loaded->setSelected(i, false);
+         lb_loaded->item(i)->setSelected( false);
       }
       
       csv_merged.name = get_unique_csv_name(csv_merged.name);
-      csvs[csv_merged.name] = csv_merged;
+      csvs[ csv_merged.name ] = csv_merged;
       loaded_csv_names[csv_merged.name] = true;
       set_loaded_csv_row_prepended_names( csv_merged );
       
-      lb_loaded->insertItem(csv_merged.name);
-      lb_loaded->setSelected(lb_loaded->numRows() - 1, true);
-      lb_loaded->setBottomItem(lb_loaded->numRows() - 1);
+      lb_loaded->addItem(csv_merged.name);
+      lb_loaded->item(lb_loaded->count() - 1)->setSelected( true);
+      lb_loaded->scrollToItem( lb_loaded->item(lb_loaded->count() - 1) );
       // I don't think these next 2 lines should be needed, but sometimes
       // if a scrollbar is created, this keeps it from overwriting the bottom item:
-      lb_loaded->setCurrentItem(lb_loaded->numRows() - 1);
-      lb_loaded->ensureCurrentVisible();
+      lb_loaded->setCurrentItem( lb_loaded->item(lb_loaded->count() - 1) );
+      lb_loaded->scrollToItem( lb_loaded->currentItem() );
       
-      editor->append(QString(tr("CSVs merged: %1\n")).arg(csv_merged.name));
+      editor->append(QString(us_tr("CSVs merged: %1\n")).arg(csv_merged.name));
       
-      for ( int i = 0; i < lb_selected->numRows(); i++ )
+      for ( int i = 0; i < lb_selected->count(); i++ )
       {
-         lb_selected->setSelected(i, true);
+         lb_selected->item(i)->setSelected( true);
       }
    }
    enable_updates();
@@ -3038,7 +3066,7 @@ void US_Hydrodyn_Comparative::selected_set_ranges()
 {
    if ( !any_selected_selected() )
    {
-      editor_msg("red", tr("internal error: loaded set exp min/max called but no item selected!\n"));
+      editor_msg("red", us_tr("internal error: loaded set exp min/max called but no item selected!\n"));
       return;
    }
       
@@ -3119,21 +3147,21 @@ void US_Hydrodyn_Comparative::selected_set_ranges()
 
 void US_Hydrodyn_Comparative::selected_remove()
 {
-   for ( int i = lb_selected->numRows() - 1; i >= 0; i-- )
+   for ( int i = lb_selected->count() - 1; i >= 0; i-- )
    {
-      if ( lb_selected->isSelected(i) )
+      if ( lb_selected->item(i)->isSelected() )
       {
-         lb_selected->removeItem(i);
+         delete lb_selected->takeItem(i);
       }
    }
 }
 
 void US_Hydrodyn_Comparative::editor_msg( QString color, QString msg )
 {
-   QColor save_color = editor->color();
-   editor->setColor( color );
+   QColor save_color = editor->textColor();
+   editor->setTextColor( color );
    editor->append( msg );
-   editor->setColor( save_color );
+   editor->setTextColor( save_color );
 }
 
 void US_Hydrodyn_Comparative::process_csv()
@@ -3142,7 +3170,7 @@ void US_Hydrodyn_Comparative::process_csv()
    if ( !csv_merge_selected_selected(csv_processed) )
    {
       enable_updates();
-      // editor_msg("red", tr("internal error: should not get here without anything selected!"));
+      // editor_msg("red", us_tr("internal error: should not get here without anything selected!"));
       return;
    }
 
@@ -3154,25 +3182,25 @@ void US_Hydrodyn_Comparative::process_csv()
       editor_msg("red", csv_error);
    }
 
-   for ( int i = 0; i < lb_loaded->numRows(); i++ )
+   for ( int i = 0; i < lb_loaded->count(); i++ )
    {
-      lb_loaded->setSelected(i, false);
+      lb_loaded->item(i)->setSelected( false);
    }
 
    csv_processed.name = get_unique_csv_name(csv_processed.name);
-   csvs[csv_processed.name] = csv_processed;
+   csvs[ csv_processed.name ] = csv_processed;
    loaded_csv_names[csv_processed.name] = true;
    set_loaded_csv_row_prepended_names( csv_processed );
 
-   lb_loaded->insertItem(csv_processed.name);
-   lb_loaded->setSelected(lb_loaded->numRows() - 1, true);
-   lb_loaded->setBottomItem(lb_loaded->numRows() - 1);
+   lb_loaded->addItem(csv_processed.name);
+   lb_loaded->item(lb_loaded->count() - 1)->setSelected( true);
+   lb_loaded->scrollToItem( lb_loaded->item(lb_loaded->count() - 1) );
    // I don't think these next 2 lines should be needed, but sometimes
    // if a scrollbar is created, this keeps it from overwriting the bottom item:
-   lb_loaded->setCurrentItem(lb_loaded->numRows() - 1);
-   lb_loaded->ensureCurrentVisible();
+   lb_loaded->setCurrentItem( lb_loaded->item(lb_loaded->count() - 1) );
+   lb_loaded->scrollToItem( lb_loaded->currentItem() );
 
-   editor->append(QString(tr("Processed into: %1\n")).arg(csv_processed.name));
+   editor->append(QString(us_tr("Processed into: %1\n")).arg(csv_processed.name));
    enable_updates();
 }
 
@@ -3183,10 +3211,10 @@ void US_Hydrodyn_Comparative::save_csv()
       if ( 
           QMessageBox::question(
                                 this,
-                                tr("Merge CSV's"),
-                                tr("Multiple CSV are selected and must be merged before saving\n"
+                                us_tr("Merge CSV's"),
+                                us_tr("Multiple CSV are selected and must be merged before saving\n"
                                    "Do you want to merge them?"),
-                                tr("&Yes"), tr("&No"),
+                                us_tr("&Yes"), us_tr("&No"),
                                 QString::null, 0, 1 ) 
           ) 
       {
@@ -3197,16 +3225,16 @@ void US_Hydrodyn_Comparative::save_csv()
          if (
              QMessageBox::warning(
                                   this,
-                                  tr("Merge CSV's"),
+                                  us_tr("Merge CSV's"),
                                   QString(
-                                          tr("The CSVs do not all have the same column names.\n"
+                                          us_tr("The CSVs do not all have the same column names.\n"
                                              "This will create additional columns with blank entries\n"
                                              "for rows from CSVs without these extra columns:\n"
                                              "\n%1\n\n"
                                              "This will effect statistics computed on these extra columns.\n"
                                              "Do you still want to merge them?")
                                           ).arg(csv_premerge_missing_header_qsl.join("\n")),
-                                  tr("&Yes"), tr("&No"),
+                                  us_tr("&Yes"), us_tr("&No"),
                                   QString::null, 0, 1 )
              )
          {
@@ -3230,17 +3258,17 @@ void US_Hydrodyn_Comparative::save_csv()
    QString sel_name = first_loaded_selected();
    if ( sel_name.isEmpty() )
    {
-      editor_msg("red", tr("internal error: could not find csv for saving!"));
+      editor_msg("red", us_tr("internal error: could not find csv for saving!"));
       return;
    }
    if ( !csvs.count(sel_name) )
    {
-      editor_msg("red", QString(tr("internal error: could not find %1 csv data")).arg(sel_name));
+      editor_msg("red", QString(us_tr("internal error: could not find %1 csv data")).arg(sel_name));
       return;
    }
 
    QString use_name = sel_name.isEmpty() ? "*.csv" : sel_name;
-   if ( !use_name.contains(QRegExp(".csv$",false)) )
+   if ( !use_name.contains(QRegExp(".csv$", Qt::CaseInsensitive )) )
    {
       use_name += ".csv";
    }
@@ -3252,39 +3280,39 @@ void US_Hydrodyn_Comparative::save_csv()
    }
    // cout << "use_name: " << use_name << "\n";
 
-   QString fname = QFileDialog::getSaveFileName( this , tr("Choose a filename to save the parameters") , use_name , "*.csv" );
+   QString fname = QFileDialog::getSaveFileName( this , us_tr("Choose a filename to save the parameters") , use_name , "*.csv" );
 
    if ( fname.isEmpty() )
    {
       return;
    }
-   if ( !fname.contains(QRegExp(".csv$",false)) )
+   if ( !fname.contains(QRegExp(".csv$", Qt::CaseInsensitive )) )
    {
       fname += ".csv";
    }
 
-   comparative->path_csv = QFileInfo(fname).dirPath(true);
+   comparative->path_csv = QFileInfo(fname).absolutePath();
 
-   csv_write( fname, csvs[sel_name] );
+   csv_write( fname, csvs[ sel_name ] );
 }
 
 void US_Hydrodyn_Comparative::save()
 {
    QString fn;
-   fn = QFileDialog::getSaveFileName( this , caption() , QString::null , QString::null );
+   fn = QFileDialog::getSaveFileName( this , windowTitle() , QString::null , QString::null );
    if(!fn.isEmpty() )
    {
-      QString text = editor->text();
+      QString text = editor->toPlainText();
       QFile f( fn );
       if ( !f.open( QIODevice::WriteOnly | QIODevice::Text) )
       {
          return;
       }
-      Q3TextStream t( &f );
+      QTextStream t( &f );
       t << text;
       f.close();
-      editor->setModified( false );
-      setCaption( fn );
+ //      editor->setModified( false );
+      setWindowTitle( fn );
    }
 }
 
@@ -3300,17 +3328,17 @@ void US_Hydrodyn_Comparative::print()
       p.setFont(editor->font() );
       int yPos      = 0;         // y position for each line
       QFontMetrics fm = p.fontMetrics();
-      Q3PaintDeviceMetrics metrics( &printer ); // need width/height
+      //  QPaintDeviceMetrics metrics( &printer ); // need width/height
       // of printer surface
       for( int i = 0 ; i < editor->lines() ; i++ ) {
-         if ( MARGIN + yPos > metrics.height() - MARGIN ) {
+         if ( MARGIN + yPos > printer.height() - MARGIN ) {
             printer.newPage();      // no more room on this page
             yPos = 0;         // back to top of page
          }
          p.drawText( MARGIN, MARGIN + yPos,
-                     metrics.width(), fm.lineSpacing(),
+                     printer.width(), fm.lineSpacing(),
                                    ExpandTabs | DontClip,
-                                   editor->text( i ) );
+                                   editor->toPlainText( i ) );
          yPos = yPos + fm.lineSpacing();
       }
       p.end();            // send job to printer
@@ -3438,7 +3466,7 @@ csv US_Hydrodyn_Comparative::csv_read( QString filename )
 
    if ( filename.isEmpty() )
    {
-      csv_error = tr("csv read called with empty filename");
+      csv_error = us_tr("csv read called with empty filename");
       return csv1;
    }
 
@@ -3446,17 +3474,17 @@ csv US_Hydrodyn_Comparative::csv_read( QString filename )
 
    if ( !f.exists() )
    {
-      csv_error = QString(tr("File %1 does not exist")).arg(f.name());
+      csv_error = QString(us_tr("File %1 does not exist")).arg(f.fileName());
       return csv1;
    }
 
    if ( !f.open(QIODevice::ReadOnly) )
    {
-      csv_error = QString(tr("Can not open file %1.  Check permissions")).arg(f.name());
+      csv_error = QString(us_tr("Can not open file %1.  Check permissions")).arg(f.fileName());
       return csv1;
    }
 
-   Q3TextStream ts( &f );
+   QTextStream ts( &f );
 
    QStringList qsl;
 
@@ -3473,22 +3501,22 @@ csv US_Hydrodyn_Comparative::csv_read( QString filename )
       if (
           QMessageBox::warning(
                                this,
-                               tr("Read CSV"),
+                               us_tr("Read CSV"),
                                QString(
-                                       tr("The CSV named %1 is already loaded\nDo you want to reload it?")
+                                       us_tr("The CSV named %1 is already loaded\nDo you want to reload it?")
                                        ).arg(filename),
-                               tr("&Yes"), tr("&No"),
+                               us_tr("&Yes"), us_tr("&No"),
                                QString::null, 0, 1 )
           )
       {
-         csv_error = tr("already loaded");
+         csv_error = us_tr("already loaded");
          return csv1;
       }
       // remove old load
       bool removed_one = false;
-      for ( int i = 0; i < lb_loaded->numRows(); i++ )
+      for ( int i = 0; i < lb_loaded->count(); i++ )
       {
-         if ( lb_loaded->text(i) == filename )
+         if ( lb_loaded->item(i)->text() == filename )
          {
             removed_one = true;
             csv_remove(filename, i);
@@ -3497,7 +3525,7 @@ csv US_Hydrodyn_Comparative::csv_read( QString filename )
       }
       if ( !removed_one )
       {
-         editor_msg("red", QString(tr("internal error: could not find %1 in loaded list.")).arg(filename));
+         editor_msg("red", QString(us_tr("internal error: could not find %1 in loaded list.")).arg(filename));
       }
    }
 
@@ -3512,7 +3540,7 @@ csv US_Hydrodyn_Comparative::csv_read( QString filename )
       qs.replace("\"","");
       if ( csv1.header_map.count(qs) )
       {
-         csv_error = QString(tr("Duplicate header name \"%1\" found in file %2")).arg(qs).arg(f.name());
+         csv_error = QString(us_tr("Duplicate header name \"%1\" found in file %2")).arg(qs).arg(f.fileName());
          return csv1;
       }
       csv1.header_map[qs] = i++;
@@ -3539,7 +3567,7 @@ csv US_Hydrodyn_Comparative::csv_read( QString filename )
             {
                if ( vd.size() >= csv1.header.size() )
                {
-                  csv_warn += QString(tr("%1Row %2 has more columns than the header, these columns are skipped"))
+                  csv_warn += QString(us_tr("%1Row %2 has more columns than the header, these columns are skipped"))
                      .arg(csv_warn.isEmpty() ? "" : "\n").arg(row);
                   break;
                }
@@ -3548,7 +3576,7 @@ csv US_Hydrodyn_Comparative::csv_read( QString filename )
             }
             if ( vd.size() < csv1.header.size() )
             {
-               csv_warn += QString(tr("%1Row %2 has insufficient columns, skipped"))
+               csv_warn += QString(us_tr("%1Row %2 has insufficient columns, skipped"))
                   .arg(csv_warn.isEmpty() ? "" : "\n").arg(row);
             } else {
                csv1.data.push_back(vqs);
@@ -3560,17 +3588,17 @@ csv US_Hydrodyn_Comparative::csv_read( QString filename )
 
    if ( !csv1.header_map.count("Model name") )
    {
-      csv_error = tr("no \"Model name\" header found in csv");
+      csv_error = us_tr("no \"Model name\" header found in csv");
       return csv1;
    }
 
    if ( !csv1.data.size() )
    {
-      csv_error = tr("no data lines found in csv");
+      csv_error = us_tr("no data lines found in csv");
       return csv1;
    }
 
-   QString qs_prepend = QFileInfo(csv1.name).baseName(true) + ": ";
+   QString qs_prepend = QFileInfo(csv1.name).completeBaseName() + ": ";
 
    for ( unsigned int i = 0; i < csv1.data.size(); i++ )
    {
@@ -3660,15 +3688,15 @@ csv US_Hydrodyn_Comparative::csv_merge( csv &csv1, csv &csv2 )
 
    if ( !csv1.data.size() || !csv2.data.size() )
    {
-      csv_error = tr("internal error: csv_merge called with zero data csv");
+      csv_error = us_tr("internal error: csv_merge called with zero data csv");
       return csv_merge;
    }
 
    if ( !csv_merge.name.contains("+") )
    {
-      csv_merge.name = QFileInfo(csv_merge.name).baseName(true);
+      csv_merge.name = QFileInfo(csv_merge.name).completeBaseName();
    }
-   csv_merge.name += "+" + QFileInfo(csv2.name).baseName(true);
+   csv_merge.name += "+" + QFileInfo(csv2.name).completeBaseName();
 
 
    // save number of empties that will be needed for csv2's columns that are not present in csv1
@@ -3757,11 +3785,11 @@ bool US_Hydrodyn_Comparative::all_selected_csv_contain( comparative_entry ce )
 
    for ( unsigned int i = 0; i < lb_loaded->count(); i++ )
    {
-      if ( lb_loaded->isSelected(i) )
+      if ( lb_loaded->item(i)->isSelected() )
       {
-         if ( csvs.count(lb_loaded->text(i)) )
+         if ( csvs.count(lb_loaded->item(i)->text( )) )
          {
-            if ( !csvs[lb_loaded->text(i)].header_map.count(ce.name) )
+            if ( !csvs[ lb_loaded->item(i)->text() ].header_map.count(ce.name) )
             {
                all_contain = false;
                break;
@@ -3777,7 +3805,7 @@ bool US_Hydrodyn_Comparative::any_loaded_selected()
    bool any_selected = false;
    for ( unsigned int i = 0; i < lb_loaded->count(); i++ )
    {
-      if ( lb_loaded->isSelected(i) )
+      if ( lb_loaded->item(i)->isSelected() )
       {
          any_selected = true;
          break;
@@ -3791,7 +3819,7 @@ bool US_Hydrodyn_Comparative::one_loaded_selected()
    int no_selected = 0;
    for ( unsigned int i = 0; i < lb_loaded->count(); i++ )
    {
-      if ( lb_loaded->isSelected(i) )
+      if ( lb_loaded->item(i)->isSelected() )
       {
          no_selected++;
          if ( no_selected > 1 )
@@ -3808,9 +3836,9 @@ QString US_Hydrodyn_Comparative::first_loaded_selected()
    QString qs;
    for ( unsigned int i = 0; i < lb_loaded->count(); i++ )
    {
-      if ( lb_loaded->isSelected(i) )
+      if ( lb_loaded->item(i)->isSelected() )
       {
-         qs = lb_loaded->text(i);
+         qs = lb_loaded->item(i)->text( );
          break;
       }
    }
@@ -3822,7 +3850,7 @@ bool US_Hydrodyn_Comparative::any_selected_selected()
    bool any_selected = false;
    for ( unsigned int i = 0; i < lb_selected->count(); i++ )
    {
-      if ( lb_selected->isSelected(i) )
+      if ( lb_selected->item(i)->isSelected() )
       {
          any_selected = true;
          break;
@@ -3836,7 +3864,7 @@ bool US_Hydrodyn_Comparative::one_selected_selected()
    int no_selected = 0;
    for ( unsigned int i = 0; i < lb_selected->count(); i++ )
    {
-      if ( lb_selected->isSelected(i) )
+      if ( lb_selected->item(i)->isSelected() )
       {
          no_selected++;
          if ( no_selected > 1 )
@@ -3860,10 +3888,10 @@ void US_Hydrodyn_Comparative::csv_write( QString filename, csv &csv1 )
    if ( !f.open( QIODevice::WriteOnly ) )
    {
       QMessageBox::warning( this, "UltraScan",
-                            QString(tr("Could not open %1 for writing!")).arg(filename) );
+                            QString(us_tr("Could not open %1 for writing!")).arg(filename) );
       return;
    }
-   Q3TextStream t( &f );
+   QTextStream t( &f );
    QString qs;
    for ( unsigned int i = 0; i < csv1.header.size(); i++ )
    {
@@ -3880,7 +3908,7 @@ void US_Hydrodyn_Comparative::csv_write( QString filename, csv &csv1 )
       t << qs << endl;
    }
    f.close();
-   editor->append(QString(tr("Saved csv file: %1\n")).arg(filename));
+   editor->append(QString(us_tr("Saved csv file: %1\n")).arg(filename));
 }
 
 void US_Hydrodyn_Comparative::csv_merge_loaded_selected() 
@@ -3895,49 +3923,49 @@ void US_Hydrodyn_Comparative::csv_merge_loaded_selected()
 
    if ( !csvs.count(first_loaded_selected()) )
    {
-      editor_msg("red", QString(tr("internal error: could not find %1 csv data")).arg(first_loaded_selected()));
+      editor_msg("red", QString(us_tr("internal error: could not find %1 csv data")).arg(first_loaded_selected()));
       return;
    }
    
-   csv csv_merged = csvs[first_loaded_selected()];
+   csv csv_merged = csvs[ first_loaded_selected() ];
    bool skip_first = true;
    for ( unsigned int i = 0; i < lb_loaded->count(); i++ )
    {
-      if ( !skip_first && lb_loaded->isSelected(i) ) 
+      if ( !skip_first && lb_loaded->item(i)->isSelected() ) 
       {
-         if ( !csvs.count(lb_loaded->text(i)) )
+         if ( !csvs.count(lb_loaded->item(i)->text( )) )
          {
-            editor_msg("red", QString(tr("internal error: could not find %1 csv data")).arg(lb_loaded->text(i)));
+            editor_msg("red", QString(us_tr("internal error: could not find %1 csv data")).arg(lb_loaded->item(i)->text( )));
             enable_updates();
             return;
          }
-         csv_merged = csv_merge(csv_merged, csvs[lb_loaded->text(i)]);
+         csv_merged = csv_merge(csv_merged, csvs[ lb_loaded->item(i)->text() ]);
       }
 
-      if ( skip_first && lb_loaded->isSelected(i) ) 
+      if ( skip_first && lb_loaded->item(i)->isSelected() ) 
       {
          skip_first = false;
       }
    }
-   for ( int i = 0; i < lb_loaded->numRows(); i++ )
+   for ( int i = 0; i < lb_loaded->count(); i++ )
    {
-      lb_loaded->setSelected(i, false);
+      lb_loaded->item(i)->setSelected( false);
    }
 
    csv_merged.name = get_unique_csv_name(csv_merged.name);
-   csvs[csv_merged.name] = csv_merged;
+   csvs[ csv_merged.name ] = csv_merged;
    loaded_csv_names[csv_merged.name] = true;
    set_loaded_csv_row_prepended_names( csv_merged );
 
-   lb_loaded->insertItem(csv_merged.name);
-   lb_loaded->setSelected(lb_loaded->numRows() - 1, true);
-   lb_loaded->setBottomItem(lb_loaded->numRows() - 1);
+   lb_loaded->addItem(csv_merged.name);
+   lb_loaded->item(lb_loaded->count() - 1)->setSelected( true);
+   lb_loaded->scrollToItem( lb_loaded->item(lb_loaded->count() - 1) );
    // I don't think these next 2 lines should be needed, but sometimes
    // if a scrollbar is created, this keeps it from overwriting the bottom item:
-   lb_loaded->setCurrentItem(lb_loaded->numRows() - 1);
-   lb_loaded->ensureCurrentVisible();
+   lb_loaded->setCurrentItem( lb_loaded->item(lb_loaded->count() - 1) );
+   lb_loaded->scrollToItem( lb_loaded->currentItem() );
 
-   editor->append(QString(tr("CSVs merged: %1\n")).arg(csv_merged.name));
+   editor->append(QString(us_tr("CSVs merged: %1\n")).arg(csv_merged.name));
 
    enable_updates();
 }
@@ -3967,9 +3995,9 @@ bool US_Hydrodyn_Comparative::csv_merge_selected_selected( csv &csv_merged )
    // create a map of the selected selected names
    for ( unsigned int i = 0; i < lb_selected->count(); i++ )
    {
-      if ( lb_selected->isSelected(i) ) 
+      if ( lb_selected->item(i)->isSelected() ) 
       {
-         selected_names[lb_selected->text(i)] = true;
+         selected_names[ lb_selected->item(i)->text( ) ] = true;
       }
    }
    
@@ -3982,26 +4010,26 @@ bool US_Hydrodyn_Comparative::csv_merge_selected_selected( csv &csv_merged )
    // now find the csv's that go with them to make our csv list
    for ( unsigned int i = 0; i < lb_loaded->count(); i++ )
    {
-      if ( lb_loaded->isSelected(i) ) 
+      if ( lb_loaded->item(i)->isSelected() ) 
       {
-         if ( !csvs.count(lb_loaded->text(i)) )
+         if ( !csvs.count(lb_loaded->item(i)->text( )) )
          {
-            editor_msg("red", QString(tr("internal error: could not find %1 csv data")).arg(first_loaded_selected()));
+            editor_msg("red", QString(us_tr("internal error: could not find %1 csv data")).arg(first_loaded_selected()));
             enable_updates();
             return false;
          }
-         for ( unsigned int j = 0; j < csvs[lb_loaded->text(i)].prepended_names.size(); j++ )
+         for ( unsigned int j = 0; j < csvs[ lb_loaded->item(i)->text() ].prepended_names.size(); j++ )
          {
-            if ( selected_names.count(csvs[lb_loaded->text(i)].prepended_names[j]) )
+            if ( selected_names.count(csvs[ lb_loaded->item(i)->text( ) ].prepended_names[j]) )
             {
-               if ( !csv_used.count(lb_loaded->text(i)) )
+               if ( !csv_used.count(lb_loaded->item(i)->text( )) )
                {
-                  last_csv = lb_loaded->text(i);
-                  csv_used[lb_loaded->text(i)] = true;
-                  csv_used_vector.push_back(lb_loaded->text(i));
+                  last_csv = lb_loaded->item(i)->text( );
+                  csv_used[ lb_loaded->item(i)->text( ) ] = true;
+                  csv_used_vector.push_back(lb_loaded->item(i)->text());
                }
-               csv_used_models[lb_loaded->text(i)]++;
-               selected_models[csvs[lb_loaded->text(i)].prepended_names[j]] = true;
+               csv_used_models[ lb_loaded->item(i)->text( ) ]++;
+               selected_models[csvs[ lb_loaded->item(i)->text( ) ].prepended_names[j]] = true;
             }
          }
       }
@@ -4014,9 +4042,9 @@ bool US_Hydrodyn_Comparative::csv_merge_selected_selected( csv &csv_merged )
 
    // csv csv_merged;
 
-   csv *ref_csv = &csvs[csv_used_vector[0]];
+   csv *ref_csv = &csvs[ csv_used_vector[0] ];
    csv_merged.name.replace(QRegExp("^selected_rows_from_"),"");
-   csv_merged.name = "selected_rows_from_" + QFileInfo(ref_csv->name).baseName(true);
+   csv_merged.name = "selected_rows_from_" + QFileInfo(ref_csv->name).completeBaseName();
    csv_merged.header_map = ref_csv->header_map;
    csv_merged.header = ref_csv->header;
 
@@ -4040,7 +4068,7 @@ bool US_Hydrodyn_Comparative::csv_merge_selected_selected( csv &csv_merged )
    for ( unsigned int i = 1; i < csv_used_vector.size(); i++ )
    {
       csv csv_to_merge;
-      csv *ref_csv = &csvs[csv_used_vector[i]];
+      csv *ref_csv = &csvs[ csv_used_vector[i ]];
       csv_to_merge.name = ref_csv->name;
       csv_to_merge.header_map = ref_csv->header_map;
       csv_to_merge.header = ref_csv->header;
@@ -4066,16 +4094,16 @@ bool US_Hydrodyn_Comparative::csv_merge_selected_selected( csv &csv_merged )
       if (
           QMessageBox::warning(
                                this,
-                               tr("Merge notice"),
+                               us_tr("Merge notice"),
                                QString(
-                                       tr("The selected models do not all have the same column names.\n"
+                                       us_tr("The selected models do not all have the same column names.\n"
                                           "This will create additional columns with blank entries\n"
                                           "for rows from CSVs without these extra columns:\n"
                                           "\n%1\n\n"
                                           "This will effect statistics computed on these extra columns.\n"
                                           "Do you want to continue?")
                                        ).arg(csv_premerge_missing_header_qsl.join("\n")),
-                               tr("&Yes"), tr("&No"),
+                               us_tr("&Yes"), us_tr("&No"),
                                QString::null, 0, 1 )
           )
       {
@@ -4158,10 +4186,10 @@ bool US_Hydrodyn_Comparative::csv_process( csv &csv1 )
       if ( 
           !QMessageBox::question(
                                  this,
-                                 tr("Process"),
-                                 tr("Some of the added columns that will be computed already exist.\n"
+                                 us_tr("Process"),
+                                 us_tr("Some of the added columns that will be computed already exist.\n"
                                     "What do you want remove them?"),
-                                 tr("&Yes, remove them"), tr("&No, rename them"),
+                                 us_tr("&Yes, remove them"), us_tr("&No, rename them"),
                                  QString::null, 0, 1 ) 
           )
       {
@@ -4388,7 +4416,7 @@ bool US_Hydrodyn_Comparative::csv_process( csv &csv1 )
       
    if ( !sort_cols.size() )
    {
-      editor_msg("red", tr("Internal error: could not find any columns to sort!"));
+      editor_msg("red", us_tr("Internal error: could not find any columns to sort!"));
    } else {
       csv_sort( csv1, sort_cols );
    }
@@ -4416,9 +4444,9 @@ void US_Hydrodyn_Comparative::update_selected_map()
    selected_map.clear();
    for ( unsigned int i = 0; i < lb_selected->count(); i++ )
    {
-      if ( lb_selected->isSelected(i) )
+      if ( lb_selected->item(i)->isSelected() )
       {
-         selected_map[lb_selected->text(i)] = true;
+         selected_map[ lb_selected->item(i)->text( ) ] = true;
       }
    }
 }
@@ -4490,21 +4518,21 @@ bool US_Hydrodyn_Comparative::csv_get_loaded_min_max(
 
    for ( unsigned int i = 0; i < lb_loaded->count(); i++ )
    {
-      if ( lb_loaded->isSelected(i) )
+      if ( lb_loaded->item(i)->isSelected() )
       {
-         if ( !csvs.count(lb_loaded->text(i)) )
+         if ( !csvs.count(lb_loaded->item(i)->text( )) )
          {
-            editor_msg("red", QString(tr("internal error: could not find %1 csv data")).arg(lb_loaded->text(i)));
+            editor_msg("red", QString(us_tr("internal error: could not find %1 csv data")).arg(lb_loaded->item(i)->text( )));
             return false;
          }
-         if ( !csv_get_min_max(tmp_min, tmp_max, rows_used_count, ce, csvs[lb_loaded->text(i)]) )
+         if ( !csv_get_min_max(tmp_min, tmp_max, rows_used_count, ce, csvs[ lb_loaded->item(i)->text() ]) )
          {
-            editor_msg("red", QString(tr("internal error: could not find %1 in csv %2")).arg(ce.name).arg(lb_loaded->text(i)));
+            editor_msg("red", QString(us_tr("internal error: could not find %1 in csv %2")).arg(ce.name).arg(lb_loaded->item(i)->text( )));
             return false;
          }
          if ( !rows_used_count )
          {
-            editor_msg("red", QString(tr("internal error: could not find any rows for %1 in csv %2")).arg(ce.name).arg(lb_loaded->text(i)));
+            editor_msg("red", QString(us_tr("internal error: could not find any rows for %1 in csv %2")).arg(ce.name).arg(lb_loaded->item(i)->text( )));
             return false;
          }
          total_rows_used_count += rows_used_count;
@@ -4528,7 +4556,7 @@ bool US_Hydrodyn_Comparative::csv_get_loaded_min_max(
 
    if ( !total_rows_used_count )
    {
-      editor_msg("red", QString(tr("internal error: could not find any rows for %1 in any of the loaded selected csvs")).arg(ce.name));
+      editor_msg("red", QString(us_tr("internal error: could not find any rows for %1 in any of the loaded selected csvs")).arg(ce.name));
       return false;
    }
    return true;
@@ -4550,16 +4578,16 @@ bool US_Hydrodyn_Comparative::csv_get_selected_min_max(
 
    for ( unsigned int i = 0; i < lb_loaded->count(); i++ )
    {
-      if ( lb_loaded->isSelected(i) )
+      if ( lb_loaded->item(i)->isSelected() )
       {
-         if ( !csvs.count(lb_loaded->text(i)) )
+         if ( !csvs.count(lb_loaded->item(i)->text( )) )
          {
-            editor_msg("red", QString(tr("internal error: could not find %1 csv data")).arg(lb_loaded->text(i)));
+            editor_msg("red", QString(us_tr("internal error: could not find %1 csv data")).arg(lb_loaded->item(i)->text( )));
             return false;
          }
-         if ( !csv_get_min_max(tmp_min, tmp_max, rows_used_count, ce, csvs[lb_loaded->text(i)], false) )
+         if ( !csv_get_min_max(tmp_min, tmp_max, rows_used_count, ce, csvs[ lb_loaded->item(i)->text() ], false) )
          {
-            editor_msg("red", QString(tr("internal error: could not find %1 in csv %2")).arg(ce.name).arg(lb_loaded->text(i)));
+            editor_msg("red", QString(us_tr("internal error: could not find %1 in csv %2")).arg(ce.name).arg(lb_loaded->item(i)->text( )));
             return false;
          }
          if ( rows_used_count )
@@ -4602,7 +4630,7 @@ QStringList US_Hydrodyn_Comparative::csv_parse_line( QString qs )
       return qsl;
    }
 
-   QStringList qsl_chars = QStringList::split("", qs);
+   QStringList qsl_chars = (qs).split( "" , QString::SkipEmptyParts );
    QString token = "";
 
    bool in_quote = false;
@@ -4657,10 +4685,10 @@ bool US_Hydrodyn_Comparative::csv_premerge_column_warning( csv &csv1, csv &csv2 
             {
                if ( csv_premerge_missing_header_qsl.size() == PREMERGE_LIST_LIMIT )
                {
-                  csv_premerge_missing_header_qsl << tr(" (Additional extra columns not shown.)");
+                  csv_premerge_missing_header_qsl << us_tr(" (Additional extra columns not shown.)");
                   return is_ok;
                }
-               csv_premerge_missing_header_qsl << QString(" From %1: %2").arg(QFileInfo(csv1.name).baseName(true)).arg(csv1.header[i]);
+               csv_premerge_missing_header_qsl << QString(" From %1: %2").arg(QFileInfo(csv1.name).completeBaseName()).arg(csv1.header[i]);
             }
          }
       }
@@ -4678,10 +4706,10 @@ bool US_Hydrodyn_Comparative::csv_premerge_column_warning( csv &csv1, csv &csv2 
             {
                if ( csv_premerge_missing_header_qsl.size() == PREMERGE_LIST_LIMIT )
                {
-                  csv_premerge_missing_header_qsl << tr(" (Additional extra columns not shown.)");
+                  csv_premerge_missing_header_qsl << us_tr(" (Additional extra columns not shown.)");
                   return is_ok;
                }
-               csv_premerge_missing_header_qsl << QString(" From %1: %2").arg(QFileInfo(csv2.name).baseName(true)).arg(csv2.header[i]);
+               csv_premerge_missing_header_qsl << QString(" From %1: %2").arg(QFileInfo(csv2.name).completeBaseName()).arg(csv2.header[i]);
             }
          }
       }
@@ -4702,30 +4730,31 @@ bool US_Hydrodyn_Comparative::csv_premerge_column_warning_all_loaded_selected()
 
    if ( !csvs.count(first_loaded_selected()) )
    {
-      editor_msg("red", QString(tr("internal error: could not find %1 csv data")).arg(first_loaded_selected()));
+      editor_msg("red", QString(us_tr("internal error: could not find %1 csv data")).arg(first_loaded_selected()));
       return true;
    }
       
-   csv *csv_ref = &csvs[first_loaded_selected()];
+   csv *csv_ref = &csvs[ first_loaded_selected() ];
    bool skip_first = true;
 
    for ( unsigned int i = 0; i < lb_loaded->count(); i++ )
    {
-      if ( !skip_first && lb_loaded->isSelected(i) ) 
+      if ( !skip_first && lb_loaded->item(i)->isSelected() ) 
       {
-         if ( !csvs.count(lb_loaded->text(i)) )
+         if ( !csvs.count(lb_loaded->item(i)->text( )) )
          {
-            editor_msg("red", QString(tr("internal error: could not find %1 csv data")).arg(lb_loaded->text(i)));
+            editor_msg("red", QString(us_tr("internal error: could not find %1 csv data")).arg(lb_loaded->item(i)->text( )));
             return true;
          }
-         if ( !csv_premerge_column_warning(*csv_ref, csvs[lb_loaded->text(i)]) && 
-              csv_premerge_missing_header_qsl.size() >= PREMERGE_LIST_LIMIT )
+         if (
+             !csv_premerge_column_warning(*csv_ref, csvs[ lb_loaded->item(i)->text() ]) && 
+             csv_premerge_missing_header_qsl.size() >= PREMERGE_LIST_LIMIT )
          {
             return false;
          }
       }
 
-      if ( skip_first && lb_loaded->isSelected(i) ) 
+      if ( skip_first && lb_loaded->item(i)->isSelected() ) 
       {
          skip_first = false;
       }

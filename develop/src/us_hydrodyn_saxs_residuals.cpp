@@ -1,11 +1,11 @@
 #include "../include/us3_defines.h"
 #include "../include/us_hydrodyn_saxs_residuals.h"
 //Added by qt3to4:
-#include <Q3HBoxLayout>
+#include <QHBoxLayout>
 #include <QCloseEvent>
-#include <Q3BoxLayout>
-#include <Q3GridLayout>
-#include <Q3Frame>
+#include <QBoxLayout>
+#include <QGridLayout>
+#include <QFrame>
 
 US_Hydrodyn_Saxs_Residuals::US_Hydrodyn_Saxs_Residuals(
                                                        bool *saxs_residuals_widget,
@@ -20,7 +20,7 @@ US_Hydrodyn_Saxs_Residuals::US_Hydrodyn_Saxs_Residuals(
                                                        bool plot_as_percent,
                                                        QWidget *p, 
                                                        const char *name
-                                                       ) : Q3Frame(p, name)
+                                                       ) : QFrame( p )
 {
    this->saxs_residuals_widget = saxs_residuals_widget;
    this->title = title;
@@ -97,7 +97,7 @@ void US_Hydrodyn_Saxs_Residuals::setupGUI()
    // lbl_title->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    // lbl_title->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    // lbl_title->setMinimumHeight(minHeight1);
-   // lbl_title->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
+   // lbl_title->setPalette( USglobal->global_colors.cg_frame );
    // lbl_title->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
 
    plot = new QwtPlot(this);
@@ -121,8 +121,8 @@ void US_Hydrodyn_Saxs_Residuals::setupGUI()
    grid->setMinPen( QPen( USglobal->global_colors.minor_ticks, 0, Qt::DotLine ) );
    grid->attach( plot );
 #endif
-   plot->setAxisTitle(QwtPlot::xBottom, tr("Distance (Angstrom)"));
-   plot->setAxisTitle(QwtPlot::yLeft, tr("Frequency"));
+   plot->setAxisTitle(QwtPlot::xBottom, us_tr("Distance (Angstrom)"));
+   plot->setAxisTitle(QwtPlot::yLeft, us_tr("Frequency"));
 #ifndef QT4
    plot->setTitleFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
    plot->setAxisTitleFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
@@ -141,11 +141,11 @@ void US_Hydrodyn_Saxs_Residuals::setupGUI()
    plot->setCanvasBackground(USglobal->global_colors.plot);
 
    cb_plot_residuals = new QCheckBox(this);
-   cb_plot_residuals->setText(tr(" Plot residuals"));
+   cb_plot_residuals->setText(us_tr(" Plot residuals"));
    cb_plot_residuals->setEnabled(true);
    cb_plot_residuals->setChecked(plot_residuals);
    cb_plot_residuals->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   QColorGroup qcg_plot_residuals = QColorGroup(
+   QPalette qcg_plot_residuals = QPalette(
                                                 QBrush(Qt::green), // USglobal->global_colors.cg_normal.foreground(),
                                                 USglobal->global_colors.cg_normal.button(), 
                                                 USglobal->global_colors.cg_normal.light(), 
@@ -162,11 +162,11 @@ void US_Hydrodyn_Saxs_Residuals::setupGUI()
    connect(cb_plot_residuals, SIGNAL(clicked()), SLOT(set_plot_residuals()));
 
    cb_plot_difference = new QCheckBox(this);
-   cb_plot_difference->setText(tr(" Plot difference"));
+   cb_plot_difference->setText(us_tr(" Plot difference"));
    cb_plot_difference->setEnabled(true);
    cb_plot_difference->setChecked(plot_difference);
    cb_plot_difference->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   QColorGroup qcg_plot_difference = QColorGroup(
+   QPalette qcg_plot_difference = QPalette(
                                                 QBrush(Qt::yellow), //USglobal->global_colors.cg_normal.foreground(),
                                                 USglobal->global_colors.cg_normal.button(), 
                                                 USglobal->global_colors.cg_normal.light(), 
@@ -182,11 +182,11 @@ void US_Hydrodyn_Saxs_Residuals::setupGUI()
    connect(cb_plot_difference, SIGNAL(clicked()), SLOT(set_plot_difference()));
 
    cb_plot_as_percent = new QCheckBox(this);
-   cb_plot_as_percent->setText(tr(" Plot as percent"));
+   cb_plot_as_percent->setText(us_tr(" Plot as percent"));
    cb_plot_as_percent->setEnabled(true);
    cb_plot_as_percent->setChecked(plot_as_percent);
    cb_plot_as_percent->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   QColorGroup qcg_plot_as_percent = QColorGroup(
+   QPalette qcg_plot_as_percent = QPalette(
                                                  QBrush(Qt::white), //USglobal->global_colors.cg_normal.foreground(),
                                                  USglobal->global_colors.cg_normal.button(), 
                                                  USglobal->global_colors.cg_normal.light(), 
@@ -201,14 +201,14 @@ void US_Hydrodyn_Saxs_Residuals::setupGUI()
    AUTFBACK( cb_plot_as_percent );
    connect(cb_plot_as_percent, SIGNAL(clicked()), SLOT(set_plot_as_percent()));
 
-   pb_help = new QPushButton(tr("Help"), this);
+   pb_help = new QPushButton(us_tr("Help"), this);
    Q_CHECK_PTR(pb_help);
    pb_help->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    // pb_help->setMinimumHeight(minHeight1);
    pb_help->setPalette( PALET_PUSHB );
    connect(pb_help, SIGNAL(clicked()), SLOT(help()));
 
-   pb_cancel = new QPushButton(tr("Close"), this);
+   pb_cancel = new QPushButton(us_tr("Close"), this);
    Q_CHECK_PTR(pb_cancel);
    pb_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    // pb_cancel->setMinimumHeight(minHeight1);
@@ -220,20 +220,20 @@ void US_Hydrodyn_Saxs_Residuals::setupGUI()
    // left box / possible
 
    int rows = 0, columns = 2, spacing = 2, j=0, margin=4;
-   Q3GridLayout *background = new Q3GridLayout(this, rows, columns, margin, spacing);
+   QGridLayout * background = new QGridLayout( this ); background->setContentsMargins( 0, 0, 0, 0 ); background->setSpacing( 0 ); background->setSpacing( spacing ); background->setContentsMargins( margin, margin, margin, margin );
 
-   // background->addMultiCellWidget(lbl_title, j, j, 0, 1);
+   // background->addWidget( lbl_title , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
    // j++;
 
-   background->addMultiCellWidget(plot, j, j, 0, 1);
+   background->addWidget( plot , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
    j++;
 
-   Q3BoxLayout *hbl = new Q3HBoxLayout(0);
+   QBoxLayout *hbl = new QHBoxLayout();
    hbl->addWidget(cb_plot_residuals);
    hbl->addWidget(cb_plot_difference);
    hbl->addWidget(cb_plot_as_percent);
 
-   background->addMultiCellLayout(hbl, j, j, 0, 1);
+   background->addLayout( hbl , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
    // background->addWidget(cb_plot_residuals, j, 0);
    // background->addWidget(cb_plot_difference, j, 1);
    j++;
@@ -297,7 +297,7 @@ void US_Hydrodyn_Saxs_Residuals::set_plot_as_percent()
 void US_Hydrodyn_Saxs_Residuals::update_plot()
 {
    plot->clear();
-   plot->setAxisTitle(QwtPlot::yLeft, plot_as_percent ? tr("Percent") : tr("Frequency"));
+   plot->setAxisTitle(QwtPlot::yLeft, plot_as_percent ? us_tr("Percent") : us_tr("Frequency"));
 
    double minx;
    double maxx;

@@ -11,7 +11,7 @@ static std::basic_ostream<char>& operator<<(std::basic_ostream<char>& os, const 
 #if defined(IQQ_TIMER)
 #  include "../include/us_timer.h"
 //Added by qt3to4:
-#include <Q3TextStream>
+#include <QTextStream>
 #endif
 
 #define SAXS_MIN_Q 0e0
@@ -123,7 +123,7 @@ bool US_Saxs_Util::calc_saxs_iq_native_fast()
             new_atom.saxs_name = hybrid_map[hybrid_name].saxs_name; 
             new_atom.hybrid_name = hybrid_name;
             new_atom.hydrogens = 0;
-            if ( count_hydrogens.search(hybrid_name) != -1 )
+            if ( count_hydrogens.indexIn(hybrid_name) != -1 )
             {
                new_atom.hydrogens = count_hydrogens.cap(1).toInt();
             }
@@ -199,10 +199,10 @@ bool US_Saxs_Util::calc_saxs_iq_native_fast()
          
       if ( our_saxs_options.iq_exact_q )
       {
-         // editor_msg( "blue", QString( tr( "Using exact q" ) ) );
+         // editor_msg( "blue", QString( us_tr( "Using exact q" ) ) );
          if ( !exact_q.size() )
          {
-            // editor_msg( "dark red", QString( tr( "Notice: exact q is empty, computing based upon current q range " ) ) );
+            // editor_msg( "dark red", QString( us_tr( "Notice: exact q is empty, computing based upon current q range " ) ) );
             exact_q.resize( q_points );
             for ( unsigned int j = 0; j < q_points; j++ )
             {
@@ -521,7 +521,7 @@ bool US_Saxs_Util::calc_saxs_iq_native_fast()
             
             if ( ok_to_write )
             {
-               FILE *fpr = fopen(fpr_name, "w");
+               FILE *fpr = us_fopen(fpr_name, "w");
                if ( fpr ) 
                {
                   output_files << fpr_name;
@@ -543,15 +543,15 @@ bool US_Saxs_Util::calc_saxs_iq_native_fast()
                      QString("")
                      .sprintf(
                               "SOMO p(r) vs r data generated from %s by US_SOMO %s %s bin size %f mw %.2f Daltons area %.2f\n"
-                              , control_parameters[ "inputfile" ].ascii()
-                              , US_Version.ascii()
+                              , control_parameters[ "inputfile" ].toAscii().data()
+                              , US_Version.toAscii().data()
                               , REVISION
                               , delta
                               , get_mw(control_parameters[ "inputfile" ], false)
                               , compute_pr_area(pr, r)
                               );
                   fprintf(fpr, "%s",
-                          last_saxs_header.ascii() );
+                          last_saxs_header.toAscii().data() );
                   fprintf(fpr, "r\tp(r)\tnorm. p(r)\n");
                   for ( unsigned int i = 0; i < hist_pr.size(); i++ )
                   {
@@ -584,8 +584,8 @@ bool US_Saxs_Util::calc_saxs_iq_native_fast()
                QString("")
                .sprintf(
                         "SOMO p(r) vs r data generated from %s by US_SOMO %s %s bin size %f mw %.2f Daltons area %.2f\n"
-                        , control_parameters[ "inputfile" ].ascii()
-                        , US_Version.ascii()
+                        , control_parameters[ "inputfile" ].toAscii().data()
+                        , US_Version.toAscii().data()
                         , REVISION
                         , delta
                         , get_mw(control_parameters[ "inputfile" ], false)
@@ -825,7 +825,7 @@ bool US_Saxs_Util::calc_saxs_iq_native_debye()
             new_atom.hybrid_name = hybrid_name;
             new_atom.hydrogens = 0;
             if ( !our_saxs_options.iqq_use_atomic_ff &&
-                 count_hydrogens.search(hybrid_name) != -1 )
+                 count_hydrogens.indexIn(hybrid_name) != -1 )
             {
                new_atom.hydrogens = count_hydrogens.cap(1).toInt();
             }
@@ -856,10 +856,10 @@ bool US_Saxs_Util::calc_saxs_iq_native_debye()
          
       if ( our_saxs_options.iq_exact_q )
       {
-         // editor_msg( "blue", QString( tr( "Using exact q" ) ) );
+         // editor_msg( "blue", QString( us_tr( "Using exact q" ) ) );
          if ( !exact_q.size() )
          {
-            // editor_msg( "dark red", QString( tr( "Notice: exact q is empty, computing based upon current q range " ) ) );
+            // editor_msg( "dark red", QString( us_tr( "Notice: exact q is empty, computing based upon current q range " ) ) );
             exact_q.resize( q_points );
             for ( unsigned int j = 0; j < q_points; j++ )
             {
@@ -1016,10 +1016,10 @@ bool US_Saxs_Util::calc_saxs_iq_native_debye()
          QFile f( "last_iqq.csv" );
          if ( f.open( QIODevice::WriteOnly ) )
          {
-            Q3TextStream t( &f );
+            QTextStream t( &f );
             t << out;
             f.close();
-            noticemsg += QString("created %1\n").arg(f.name());
+            noticemsg += QString("created %1\n").arg(f.fileName());
          }
       }            
 
@@ -1293,7 +1293,7 @@ bool US_Saxs_Util::calc_saxs_iq_native_hybrid()
             new_atom.saxs_name = hybrid_map[hybrid_name].saxs_name; 
             new_atom.hybrid_name = hybrid_name;
             new_atom.hydrogens = 0;
-            if ( count_hydrogens.search(hybrid_name) != -1 )
+            if ( count_hydrogens.indexIn(hybrid_name) != -1 )
             {
                new_atom.hydrogens = count_hydrogens.cap(1).toInt();
             }
@@ -1324,7 +1324,7 @@ bool US_Saxs_Util::calc_saxs_iq_native_hybrid()
          
       if ( our_saxs_options.iq_exact_q )
       {
-         // editor_msg( "blue", QString( tr( "Using exact q" ) ) );
+         // editor_msg( "blue", QString( us_tr( "Using exact q" ) ) );
          if ( !exact_q.size() )
          {
             // editor_msg( "dark red", QString( "Notice: exact q is empty, computing based upon current q range " ) );
@@ -2434,7 +2434,7 @@ bool US_Saxs_Util::load_ff_table( QString filename )
    ff_y2   .clear();
    ff_ev   .clear();
 
-   Q3TextStream ts( &f );
+   QTextStream ts( &f );
    
    unsigned int line = 0;
 
@@ -2452,7 +2452,7 @@ bool US_Saxs_Util::load_ff_table( QString filename )
          continue;
       }
 
-      QStringList qsl = QStringList::split( QRegExp( "\\s+" ), qs );
+      QStringList qsl = (qs ).split( QRegExp( "\\s+" ) , QString::SkipEmptyParts );
 
       // expect:
       //   residueatom (possibly multiple)
@@ -2528,7 +2528,7 @@ bool US_Saxs_Util::load_ff_table( QString filename )
                continue;
             }
 
-            QStringList qsl = QStringList::split( QRegExp( "\\s+" ), qs );
+            QStringList qsl = (qs ).split( QRegExp( "\\s+" ) , QString::SkipEmptyParts );
 
             if ( qsl[ 0 ] == "enddata" )
             {
@@ -2660,7 +2660,7 @@ map < QString, unsigned int > US_Saxs_Util::get_atom_summary_counts( PDB_model *
          }
             
          int hydrogens = 0;
-         if ( count_hydrogens.search( hybrid_name ) != -1 )
+         if ( count_hydrogens.indexIn( hybrid_name ) != -1 )
          {
             hydrogens = count_hydrogens.cap( 1 ).toInt();
          }
@@ -2923,7 +2923,7 @@ bool US_Saxs_Util::pdb_mw( QString file, double & mw )
       errormsg = QString( "US_Saxs_Util::pdb_pw(): could not open file %1" ).arg( file );
       return false;
    }
-   Q3TextStream ts( &f );
+   QTextStream ts( &f );
    QStringList qsl;
    while ( !ts.atEnd() )
    {
@@ -2946,9 +2946,9 @@ bool US_Saxs_Util::pdb_mw( QStringList &qsl, double & mw )
 
    for ( int i = 0; i < (int) qsl.size(); ++i )
    {
-      if ( rx_atom.search( qsl[ i ] ) != -1 )
+      if ( rx_atom.indexIn( qsl[ i ] ) != -1 )
       {
-         QString qs = qsl[ i ].mid( 76, 2 ).stripWhiteSpace();
+         QString qs = qsl[ i ].mid( 76, 2 ).trimmed();
          if ( qs.isEmpty() )
          {
             errormsg = "US_Saxs_Util::pdb_pw(): atom names must be defined in columns 77, 78 of pdb";
@@ -2976,7 +2976,7 @@ bool US_Saxs_Util::pdb_mw( QStringList &qsl, double & mw )
       mw += atom_mw[ it->first ] * it->second;
    }
 
-   // qDebug( QString( "total mw %1" ).arg( mw ) );
+   // us_qdebug( QString( "total mw %1" ).arg( mw ) );
 
    return true;
 }

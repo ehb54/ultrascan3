@@ -1,11 +1,11 @@
 #include "../include/us3_defines.h"
 #include "../include/us_hydrodyn_saxs_iqq_residuals.h"
 //Added by qt3to4:
-#include <Q3HBoxLayout>
+#include <QHBoxLayout>
 #include <QCloseEvent>
-#include <Q3BoxLayout>
-#include <Q3GridLayout>
-#include <Q3Frame>
+#include <QBoxLayout>
+#include <QGridLayout>
+#include <QFrame>
 
 // note: this program uses cout and/or cerr and this should be replaced
 
@@ -32,7 +32,7 @@ US_Hydrodyn_Saxs_Iqq_Residuals::US_Hydrodyn_Saxs_Iqq_Residuals(
                                                              vector < double > std_dev_frac,
                                                              QWidget *p, 
                                                              const char *name
-                                                             ) : Q3Frame(p, name)
+                                                             ) : QFrame( p )
 {
    this->saxs_iqq_residuals_widget = saxs_iqq_residuals_widget;
    this->title = title;
@@ -218,8 +218,8 @@ void US_Hydrodyn_Saxs_Iqq_Residuals::setupGUI()
    grid->setMinPen( QPen( USglobal->global_colors.minor_ticks, 0, Qt::DotLine ) );
    grid->attach( plot );
 #endif
-   plot->setAxisTitle(QwtPlot::xBottom, tr("q (1/Angstrom)"));
-   plot->setAxisTitle(QwtPlot::yLeft, tr(""));
+   plot->setAxisTitle(QwtPlot::xBottom, us_tr("q (1/Angstrom)"));
+   plot->setAxisTitle(QwtPlot::yLeft, us_tr(""));
 #ifndef QT4
    plot->setTitleFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
    plot->setAxisTitleFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
@@ -238,7 +238,7 @@ void US_Hydrodyn_Saxs_Iqq_Residuals::setupGUI()
    plot->setCanvasBackground(USglobal->global_colors.plot);
 
    cb_plot_difference = new QCheckBox(this);
-   cb_plot_difference->setText(tr(" Plot difference"));
+   cb_plot_difference->setText(us_tr(" Plot difference"));
    cb_plot_difference->setEnabled(true);
    cb_plot_difference->setChecked(plot_difference);
    cb_plot_difference->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -248,7 +248,7 @@ void US_Hydrodyn_Saxs_Iqq_Residuals::setupGUI()
    connect(cb_plot_difference, SIGNAL(clicked()), SLOT(set_plot_difference()));
 
    cb_plot_log = new QCheckBox(this);
-   cb_plot_log->setText(tr(" Plot log"));
+   cb_plot_log->setText(us_tr(" Plot log"));
    cb_plot_log->setEnabled(true);
    cb_plot_log->setChecked(plot_log);
    cb_plot_log->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -258,7 +258,7 @@ void US_Hydrodyn_Saxs_Iqq_Residuals::setupGUI()
    connect(cb_plot_log, SIGNAL(clicked()), SLOT(set_plot_log()));
 
    cb_plot_as_percent = new QCheckBox(this);
-   cb_plot_as_percent->setText(tr(" Plot as percent"));
+   cb_plot_as_percent->setText(us_tr(" Plot as percent"));
    cb_plot_as_percent->setEnabled(true);
    cb_plot_as_percent->setChecked(plot_as_percent);
    cb_plot_as_percent->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -269,7 +269,7 @@ void US_Hydrodyn_Saxs_Iqq_Residuals::setupGUI()
    if ( 0 && avg_std_dev_frac )
    {
       cb_plot_mult_avg_sd_frac = new QCheckBox(this);
-      cb_plot_mult_avg_sd_frac->setText( tr( " Mult avg s.d. frac" ) );
+      cb_plot_mult_avg_sd_frac->setText( us_tr( " Mult avg s.d. frac" ) );
       cb_plot_mult_avg_sd_frac->setEnabled(true);
       cb_plot_mult_avg_sd_frac->setChecked( false );
       cb_plot_mult_avg_sd_frac->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -278,7 +278,7 @@ void US_Hydrodyn_Saxs_Iqq_Residuals::setupGUI()
       connect(cb_plot_mult_avg_sd_frac, SIGNAL(clicked()), SLOT( set_plot_mult_avg_sd_frac() ));
 
       cb_plot_mult_sd_frac = new QCheckBox(this);
-      cb_plot_mult_sd_frac->setText( tr( " Mult s.d. frac" ) );
+      cb_plot_mult_sd_frac->setText( us_tr( " Mult s.d. frac" ) );
       cb_plot_mult_sd_frac->setEnabled(true);
       cb_plot_mult_sd_frac->setChecked( false );
       cb_plot_mult_sd_frac->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -287,14 +287,14 @@ void US_Hydrodyn_Saxs_Iqq_Residuals::setupGUI()
       connect(cb_plot_mult_sd_frac, SIGNAL(clicked()), SLOT( set_plot_mult_sd_frac() ));
    }
 
-   pb_help = new QPushButton(tr("Help"), this);
+   pb_help = new QPushButton(us_tr("Help"), this);
    Q_CHECK_PTR(pb_help);
    pb_help->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    // pb_help->setMinimumHeight(minHeight1);
    pb_help->setPalette( PALET_PUSHB );
    connect(pb_help, SIGNAL(clicked()), SLOT(help()));
 
-   pb_cancel = new QPushButton(tr("Close"), this);
+   pb_cancel = new QPushButton(us_tr("Close"), this);
    Q_CHECK_PTR(pb_cancel);
    pb_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    // pb_cancel->setMinimumHeight(minHeight1);
@@ -306,15 +306,15 @@ void US_Hydrodyn_Saxs_Iqq_Residuals::setupGUI()
    // left box / possible
 
    int rows = 0, columns = 2, spacing = 2, j=0, margin=4;
-   Q3GridLayout *background = new Q3GridLayout(this, rows, columns, margin, spacing);
+   QGridLayout * background = new QGridLayout( this ); background->setContentsMargins( 0, 0, 0, 0 ); background->setSpacing( 0 ); background->setSpacing( spacing ); background->setContentsMargins( margin, margin, margin, margin );
 
-   // background->addMultiCellWidget(lbl_title, j, j, 0, 1);
+   // background->addWidget( lbl_title , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
    // j++;
 
-   background->addMultiCellWidget(plot, j, j, 0, 1);
+   background->addWidget( plot , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
    j++;
 
-   Q3BoxLayout *hbl = new Q3HBoxLayout(0);
+   QBoxLayout *hbl = new QHBoxLayout();
    hbl->addWidget(cb_plot_difference);
    hbl->addWidget(cb_plot_log);
    hbl->addWidget(cb_plot_as_percent);
@@ -324,7 +324,7 @@ void US_Hydrodyn_Saxs_Iqq_Residuals::setupGUI()
       hbl->addWidget( cb_plot_mult_sd_frac );
    }
 
-   background->addMultiCellLayout(hbl, j, j, 0, 1);
+   background->addLayout( hbl , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
    j++;
 
    background->addWidget(pb_help, j, 0);

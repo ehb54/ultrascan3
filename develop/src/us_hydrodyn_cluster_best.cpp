@@ -7,26 +7,26 @@
 
 #include "../include/us_hydrodyn_cluster_best.h"
 //Added by qt3to4:
-#include <Q3TextStream>
-#include <Q3HBoxLayout>
+#include <QTextStream>
+#include <QHBoxLayout>
 #include <QCloseEvent>
-#include <Q3Frame>
+#include <QFrame>
 #include <QLabel>
-#include <Q3VBoxLayout>
+#include <QVBoxLayout>
 
 US_Hydrodyn_Cluster_Best::US_Hydrodyn_Cluster_Best(
                                                    void                     *              us_hydrodyn,
                                                    map < QString, QString > *              parameters,
                                                    QWidget *                               p,
                                                    const char *                            name
-                                                   ) : QDialog( p, name )
+                                                   ) : QDialog( p )
 {
    this->us_hydrodyn                          = us_hydrodyn;
    this->parameters                           = parameters;
 
    USglobal = new US_Config();
    setPalette( PALET_FRAME );
-   setCaption( tr( "US-SOMO: BEST cluster interface" ) );
+   setWindowTitle( us_tr( "US-SOMO: BEST cluster interface" ) );
 
    setupGUI();
 
@@ -44,8 +44,8 @@ void US_Hydrodyn_Cluster_Best::setupGUI()
 {
    int minHeight1  = 30;
 
-   lbl_title =  new QLabel      ( tr( "US-SOMO: BEST cluster interface" ), this );
-   lbl_title -> setFrameStyle   ( Q3Frame::WinPanel | Q3Frame::Raised );
+   lbl_title =  new QLabel      ( us_tr( "US-SOMO: BEST cluster interface" ), this );
+   lbl_title -> setFrameStyle   ( QFrame::WinPanel | QFrame::Raised );
    lbl_title -> setAlignment    ( Qt::AlignCenter | Qt::AlignVCenter );
    lbl_title -> setMinimumHeight( minHeight1 );
    lbl_title -> setPalette      ( PALET_FRAME );
@@ -66,7 +66,7 @@ void US_Hydrodyn_Cluster_Best::setupGUI()
    AUTFBACK( lbl_credits_2 );
    lbl_credits_2 -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1, QFont::Bold ) );
 
-   lbl_bestmsrprober = new QLabel      ( tr( "MSROLL: probe radius (default:blank=1.5)" ), this );
+   lbl_bestmsrprober = new QLabel      ( us_tr( "MSROLL: probe radius (default:blank=1.5)" ), this );
    lbl_bestmsrprober ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_bestmsrprober ->setMinimumHeight( minHeight1 );
    lbl_bestmsrprober ->setPalette      ( PALET_LABEL );
@@ -74,7 +74,7 @@ void US_Hydrodyn_Cluster_Best::setupGUI()
    lbl_bestmsrprober ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
    lbl_bestmsrprober ->setMinimumWidth ( QFontMetrics( lbl_bestmsrprober->font() ).maxWidth() * 41 );
 
-   le_bestmsrprober = new QLineEdit     ( this, "bestmsrprober Line Edit" );
+   le_bestmsrprober = new QLineEdit     (  this );    le_bestmsrprober->setObjectName( "bestmsrprober Line Edit" );
    if ( !parameters->count( "bestmsrprober" ) )
    {
       ( *parameters )[ "bestmsrprober" ] = "1.5";
@@ -88,7 +88,7 @@ void US_Hydrodyn_Cluster_Best::setupGUI()
    le_bestmsrprober ->setMinimumWidth   ( 150 );
    connect( le_bestmsrprober, SIGNAL( textChanged( const QString & ) ), SLOT( update_bestmsrprober( const QString & ) ) );
 
-   lbl_bestmsrfinenessangle = new QLabel      ( tr( "MSROLL: starting fineness angle (recommended value >= 0.6)" ), this );
+   lbl_bestmsrfinenessangle = new QLabel      ( us_tr( "MSROLL: starting fineness angle (recommended value >= 0.6)" ), this );
    lbl_bestmsrfinenessangle ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_bestmsrfinenessangle ->setMinimumHeight( minHeight1 );
    lbl_bestmsrfinenessangle ->setPalette      ( PALET_LABEL );
@@ -96,7 +96,7 @@ void US_Hydrodyn_Cluster_Best::setupGUI()
    lbl_bestmsrfinenessangle ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
    lbl_bestmsrfinenessangle ->setMinimumWidth ( QFontMetrics( lbl_bestmsrfinenessangle->font() ).maxWidth() * 41 );
 
-   le_bestmsrfinenessangle = new QLineEdit     ( this, "bestmsrfinenessangle Line Edit" );
+   le_bestmsrfinenessangle = new QLineEdit     (  this );    le_bestmsrfinenessangle->setObjectName( "bestmsrfinenessangle Line Edit" );
    if ( !parameters->count( "bestmsrfinenessangle" ) )
    {
       ( *parameters )[ "bestmsrfinenessangle" ] = ".6";
@@ -110,7 +110,7 @@ void US_Hydrodyn_Cluster_Best::setupGUI()
    le_bestmsrfinenessangle ->setMinimumWidth   ( 150 );
    connect( le_bestmsrfinenessangle, SIGNAL( textChanged( const QString & ) ), SLOT( update_bestmsrfinenessangle( const QString & ) ) );
 
-   lbl_bestmsrmaxtriangles = new QLabel      ( tr( "MSROLL: maximum output triangles (recommended max value 60000)" ), this );
+   lbl_bestmsrmaxtriangles = new QLabel      ( us_tr( "MSROLL: maximum output triangles (recommended max value 60000)" ), this );
    lbl_bestmsrmaxtriangles ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_bestmsrmaxtriangles ->setMinimumHeight( minHeight1 );
    lbl_bestmsrmaxtriangles ->setPalette      ( PALET_LABEL );
@@ -118,7 +118,7 @@ void US_Hydrodyn_Cluster_Best::setupGUI()
    lbl_bestmsrmaxtriangles ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
    lbl_bestmsrmaxtriangles ->setMinimumWidth ( QFontMetrics( lbl_bestmsrmaxtriangles->font() ).maxWidth() * 41 );
 
-   le_bestmsrmaxtriangles = new QLineEdit     ( this, "bestmsrmaxtriangles Line Edit" );
+   le_bestmsrmaxtriangles = new QLineEdit     (  this );    le_bestmsrmaxtriangles->setObjectName( "bestmsrmaxtriangles Line Edit" );
    if ( !parameters->count( "bestmsrmaxtriangles" ) )
    {
       ( *parameters )[ "bestmsrmaxtriangles" ] = "60000";
@@ -132,7 +132,7 @@ void US_Hydrodyn_Cluster_Best::setupGUI()
    le_bestmsrmaxtriangles ->setMinimumWidth   ( 150 );
    connect( le_bestmsrmaxtriangles, SIGNAL( textChanged( const QString & ) ), SLOT( update_bestmsrmaxtriangles( const QString & ) ) );
 
-   cb_bestrcoalautominmax = new QCheckBox    ( tr( "COALESCE: automatically determine the minimum and maximum number of triangles based upon MW\n(checking overrides next 2 settings)" ), this );
+   cb_bestrcoalautominmax = new QCheckBox    ( us_tr( "COALESCE: automatically determine the minimum and maximum number of triangles based upon MW\n(checking overrides next 2 settings)" ), this );
    cb_bestrcoalautominmax ->setMinimumHeight ( minHeight1 *  2 );
    cb_bestrcoalautominmax ->setPalette       ( PALET_NORMAL );
    AUTFBACK( cb_bestrcoalautominmax );
@@ -146,7 +146,7 @@ void US_Hydrodyn_Cluster_Best::setupGUI()
    cb_bestrcoalautominmax ->setChecked        ( parameters->count( "bestrcoalautominmax" ) && ( *parameters )[ "bestrcoalautominmax" ] == "true" ? true : false );
    connect( cb_bestrcoalautominmax, SIGNAL( clicked() ), SLOT( set_bestrcoalautominmax() ) );
 
-   lbl_bestrcoalnmin = new QLabel      ( tr( "COALESCE: minimum number of triangles ( heurstic 18 * Sqrt(MW[Da]) )\n(Not active if 'automatically determine ...' checked above)" ), this );
+   lbl_bestrcoalnmin = new QLabel      ( us_tr( "COALESCE: minimum number of triangles ( heurstic 18 * Sqrt(MW[Da]) )\n(Not active if 'automatically determine ...' checked above)" ), this );
    lbl_bestrcoalnmin ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_bestrcoalnmin ->setMinimumHeight( minHeight1 *  2 );
    lbl_bestrcoalnmin ->setPalette      ( PALET_LABEL );
@@ -154,7 +154,7 @@ void US_Hydrodyn_Cluster_Best::setupGUI()
    lbl_bestrcoalnmin ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
    lbl_bestrcoalnmin ->setMinimumWidth ( QFontMetrics( lbl_bestrcoalnmin->font() ).maxWidth() * 41 );
 
-   le_bestrcoalnmin = new QLineEdit     ( this, "bestrcoalnmin Line Edit" );
+   le_bestrcoalnmin = new QLineEdit     (  this );    le_bestrcoalnmin->setObjectName( "bestrcoalnmin Line Edit" );
    le_bestrcoalnmin ->setText           ( parameters->count( "bestrcoalnmin" ) ? ( *parameters )[ "bestrcoalnmin" ] : "" );
    le_bestrcoalnmin ->setAlignment      ( Qt::AlignCenter | Qt::AlignVCenter );
    le_bestrcoalnmin ->setPalette        ( PALET_NORMAL );
@@ -164,7 +164,7 @@ void US_Hydrodyn_Cluster_Best::setupGUI()
    le_bestrcoalnmin ->setMinimumWidth   ( 150 );
    connect( le_bestrcoalnmin, SIGNAL( textChanged( const QString & ) ), SLOT( update_bestrcoalnmin( const QString & ) ) );
 
-   lbl_bestrcoalnmax = new QLabel      ( tr( "COALESCE: maximum number of triangles ( heurstic 30 * Sqrt(MW[Da]) )\n(Not active if 'automatically determine ...' checked above)" ), this );
+   lbl_bestrcoalnmax = new QLabel      ( us_tr( "COALESCE: maximum number of triangles ( heurstic 30 * Sqrt(MW[Da]) )\n(Not active if 'automatically determine ...' checked above)" ), this );
    lbl_bestrcoalnmax ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_bestrcoalnmax ->setMinimumHeight( minHeight1 *  2 );
    lbl_bestrcoalnmax ->setPalette      ( PALET_LABEL );
@@ -172,7 +172,7 @@ void US_Hydrodyn_Cluster_Best::setupGUI()
    lbl_bestrcoalnmax ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
    lbl_bestrcoalnmax ->setMinimumWidth ( QFontMetrics( lbl_bestrcoalnmax->font() ).maxWidth() * 41 );
 
-   le_bestrcoalnmax = new QLineEdit     ( this, "bestrcoalnmax Line Edit" );
+   le_bestrcoalnmax = new QLineEdit     (  this );    le_bestrcoalnmax->setObjectName( "bestrcoalnmax Line Edit" );
    le_bestrcoalnmax ->setText           ( parameters->count( "bestrcoalnmax" ) ? ( *parameters )[ "bestrcoalnmax" ] : "" );
    le_bestrcoalnmax ->setAlignment      ( Qt::AlignCenter | Qt::AlignVCenter );
    le_bestrcoalnmax ->setPalette        ( PALET_NORMAL );
@@ -182,7 +182,7 @@ void US_Hydrodyn_Cluster_Best::setupGUI()
    le_bestrcoalnmax ->setMinimumWidth   ( 150 );
    connect( le_bestrcoalnmax, SIGNAL( textChanged( const QString & ) ), SLOT( update_bestrcoalnmax( const QString & ) ) );
 
-   lbl_bestrcoaln = new QLabel      ( tr( "COALESCE: number of files produced (Typically 6)" ), this );
+   lbl_bestrcoaln = new QLabel      ( us_tr( "COALESCE: number of files produced (Typically 6)" ), this );
    lbl_bestrcoaln ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_bestrcoaln ->setMinimumHeight( minHeight1 );
    lbl_bestrcoaln ->setPalette      ( PALET_LABEL );
@@ -190,7 +190,7 @@ void US_Hydrodyn_Cluster_Best::setupGUI()
    lbl_bestrcoaln ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
    lbl_bestrcoaln ->setMinimumWidth ( QFontMetrics( lbl_bestrcoaln->font() ).maxWidth() * 41 );
 
-   le_bestrcoaln = new QLineEdit     ( this, "bestrcoaln Line Edit" );
+   le_bestrcoaln = new QLineEdit     (  this );    le_bestrcoaln->setObjectName( "bestrcoaln Line Edit" );
    if ( !parameters->count( "bestrcoaln" ) )
    {
       ( *parameters )[ "bestrcoaln" ] = "6";
@@ -204,7 +204,7 @@ void US_Hydrodyn_Cluster_Best::setupGUI()
    le_bestrcoaln ->setMinimumWidth   ( 150 );
    connect( le_bestrcoaln, SIGNAL( textChanged( const QString & ) ), SLOT( update_bestrcoaln( const QString & ) ) );
 
-   lbl_bestbestmw = new QLabel      ( tr( "BEST: override computed molecular weight (default:blank=compute from structure)" ), this );
+   lbl_bestbestmw = new QLabel      ( us_tr( "BEST: override computed molecular weight (default:blank=compute from structure)" ), this );
    lbl_bestbestmw ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_bestbestmw ->setMinimumHeight( minHeight1 );
    lbl_bestbestmw ->setPalette      ( PALET_LABEL );
@@ -212,7 +212,7 @@ void US_Hydrodyn_Cluster_Best::setupGUI()
    lbl_bestbestmw ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
    lbl_bestbestmw ->setMinimumWidth ( QFontMetrics( lbl_bestbestmw->font() ).maxWidth() * 41 );
 
-   le_bestbestmw = new QLineEdit     ( this, "bestbestmw Line Edit" );
+   le_bestbestmw = new QLineEdit     (  this );    le_bestbestmw->setObjectName( "bestbestmw Line Edit" );
    le_bestbestmw ->setText           ( parameters->count( "bestbestmw" ) ? ( *parameters )[ "bestbestmw" ] : "" );
    le_bestbestmw ->setAlignment      ( Qt::AlignCenter | Qt::AlignVCenter );
    le_bestbestmw ->setPalette        ( PALET_NORMAL );
@@ -222,7 +222,7 @@ void US_Hydrodyn_Cluster_Best::setupGUI()
    le_bestbestmw ->setMinimumWidth   ( 150 );
    connect( le_bestbestmw, SIGNAL( textChanged( const QString & ) ), SLOT( update_bestbestmw( const QString & ) ) );
 
-   lbl_bestexpand = new QLabel      ( tr( "BEST: expand radii by this multiplier (default:blank=1, no expansion)" ), this );
+   lbl_bestexpand = new QLabel      ( us_tr( "BEST: expand radii by this multiplier (default:blank=1, no expansion)" ), this );
    lbl_bestexpand ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_bestexpand ->setMinimumHeight( minHeight1 );
    lbl_bestexpand ->setPalette      ( PALET_LABEL );
@@ -230,7 +230,7 @@ void US_Hydrodyn_Cluster_Best::setupGUI()
    lbl_bestexpand ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
    lbl_bestexpand ->setMinimumWidth ( QFontMetrics( lbl_bestexpand->font() ).maxWidth() * 41 );
 
-   le_bestexpand = new QLineEdit     ( this, "bestexpand Line Edit" );
+   le_bestexpand = new QLineEdit     (  this );    le_bestexpand->setObjectName( "bestexpand Line Edit" );
    le_bestexpand ->setText           ( parameters->count( "bestexpand" ) ? ( *parameters )[ "bestexpand" ] : "" );
    le_bestexpand ->setAlignment      ( Qt::AlignCenter | Qt::AlignVCenter );
    le_bestexpand ->setPalette        ( PALET_NORMAL );
@@ -240,7 +240,7 @@ void US_Hydrodyn_Cluster_Best::setupGUI()
    le_bestexpand ->setMinimumWidth   ( 150 );
    connect( le_bestexpand, SIGNAL( textChanged( const QString & ) ), SLOT( update_bestexpand( const QString & ) ) );
 
-   cb_bestbestvc = new QCheckBox    ( tr( "BEST: Compute the Viscosity Factor in the Center of Viscosity {longer calculation} (default:checked)" ), this );
+   cb_bestbestvc = new QCheckBox    ( us_tr( "BEST: Compute the Viscosity Factor in the Center of Viscosity {longer calculation} (default:checked)" ), this );
    cb_bestbestvc ->setMinimumHeight ( minHeight1 );
    cb_bestbestvc ->setPalette       ( PALET_NORMAL );
    AUTFBACK( cb_bestbestvc );
@@ -254,8 +254,8 @@ void US_Hydrodyn_Cluster_Best::setupGUI()
    cb_bestbestvc ->setChecked        ( parameters->count( "bestbestvc" ) && ( *parameters )[ "bestbestvc" ] == "true" ? true : false );
    connect( cb_bestbestvc, SIGNAL( clicked() ), SLOT( set_bestbestvc() ) );
 
-   lbl_opt_label =  new mQLabel     ( tr( "Optional controls" ), this );
-   lbl_opt_label -> setFrameStyle   ( Q3Frame::WinPanel | Q3Frame::Raised );
+   lbl_opt_label =  new mQLabel     ( us_tr( "Optional controls" ), this );
+   lbl_opt_label -> setFrameStyle   ( QFrame::WinPanel | QFrame::Raised );
    lbl_opt_label -> setAlignment    ( Qt::AlignCenter | Qt::AlignVCenter );
    lbl_opt_label -> setMinimumHeight( minHeight1 );
    lbl_opt_label -> setPalette      ( PALET_FRAME );
@@ -264,7 +264,7 @@ void US_Hydrodyn_Cluster_Best::setupGUI()
    connect( lbl_opt_label, SIGNAL( pressed() ), SLOT( hide_opt_label() ) );
 
 
-   lbl_bestmsrcoalescer = new QLabel      ( tr( "MSROLL: coalesce radius (default:blank)" ), this );
+   lbl_bestmsrcoalescer = new QLabel      ( us_tr( "MSROLL: coalesce radius (default:blank)" ), this );
    lbl_bestmsrcoalescer ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_bestmsrcoalescer ->setMinimumHeight( minHeight1 );
    lbl_bestmsrcoalescer ->setPalette      ( PALET_LABEL );
@@ -272,7 +272,7 @@ void US_Hydrodyn_Cluster_Best::setupGUI()
    lbl_bestmsrcoalescer ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
    lbl_bestmsrcoalescer ->setMinimumWidth ( QFontMetrics( lbl_bestmsrcoalescer->font() ).maxWidth() * 41 );
 
-   le_bestmsrcoalescer = new QLineEdit     ( this, "bestmsrcoalescer Line Edit" );
+   le_bestmsrcoalescer = new QLineEdit     (  this );    le_bestmsrcoalescer->setObjectName( "bestmsrcoalescer Line Edit" );
    widgets_opt_label.push_back( lbl_bestmsrcoalescer );
    widgets_opt_label.push_back( le_bestmsrcoalescer );
    le_bestmsrcoalescer ->setText           ( parameters->count( "bestmsrcoalescer" ) ? ( *parameters )[ "bestmsrcoalescer" ] : "" );
@@ -284,7 +284,7 @@ void US_Hydrodyn_Cluster_Best::setupGUI()
    le_bestmsrcoalescer ->setMinimumWidth   ( 150 );
    connect( le_bestmsrcoalescer, SIGNAL( textChanged( const QString & ) ), SLOT( update_bestmsrcoalescer( const QString & ) ) );
 
-   cb_bestmsrusesomoradii = new QCheckBox    ( tr( "MSROLL: Use US-SOMO radii (checking overrides next 2 fields)" ), this );
+   cb_bestmsrusesomoradii = new QCheckBox    ( us_tr( "MSROLL: Use US-SOMO radii (checking overrides next 2 fields)" ), this );
    cb_bestmsrusesomoradii ->setMinimumHeight ( minHeight1 );
    cb_bestmsrusesomoradii ->setPalette       ( PALET_NORMAL );
    AUTFBACK( cb_bestmsrusesomoradii );
@@ -298,7 +298,7 @@ void US_Hydrodyn_Cluster_Best::setupGUI()
    cb_bestmsrusesomoradii ->setChecked        ( parameters->count( "bestmsrusesomoradii" ) && ( *parameters )[ "bestmsrusesomoradii" ] == "true" ? true : false );
    connect( cb_bestmsrusesomoradii, SIGNAL( clicked() ), SLOT( set_bestmsrusesomoradii() ) );
 
-   lbl_bestmsrradiifile = new QLabel      ( tr( "MSROLL: manual radii file" ), this );
+   lbl_bestmsrradiifile = new QLabel      ( us_tr( "MSROLL: manual radii file" ), this );
    lbl_bestmsrradiifile ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_bestmsrradiifile ->setMinimumHeight( minHeight1 );
    lbl_bestmsrradiifile ->setPalette      ( PALET_LABEL );
@@ -306,7 +306,7 @@ void US_Hydrodyn_Cluster_Best::setupGUI()
    lbl_bestmsrradiifile ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
    lbl_bestmsrradiifile ->setMinimumWidth ( QFontMetrics( lbl_bestmsrradiifile->font() ).maxWidth() * 41 );
 
-   le_bestmsrradiifile = new QLineEdit     ( this, "bestmsrradiifile Line Edit" );
+   le_bestmsrradiifile = new QLineEdit     (  this );    le_bestmsrradiifile->setObjectName( "bestmsrradiifile Line Edit" );
    widgets_opt_label.push_back( lbl_bestmsrradiifile );
    widgets_opt_label.push_back( le_bestmsrradiifile );
    if ( !parameters->count( "bestmsrradiifile" ) )
@@ -322,7 +322,7 @@ void US_Hydrodyn_Cluster_Best::setupGUI()
    le_bestmsrradiifile ->setMinimumWidth   ( 150 );
    connect( le_bestmsrradiifile, SIGNAL( textChanged( const QString & ) ), SLOT( update_bestmsrradiifile( const QString & ) ) );
 
-   lbl_bestmsrpatternfile = new QLabel      ( tr( "MSROLL: manual name pattern file (must also provide radii file above)" ), this );
+   lbl_bestmsrpatternfile = new QLabel      ( us_tr( "MSROLL: manual name pattern file (must also provide radii file above)" ), this );
    lbl_bestmsrpatternfile ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_bestmsrpatternfile ->setMinimumHeight( minHeight1 );
    lbl_bestmsrpatternfile ->setPalette      ( PALET_LABEL );
@@ -330,7 +330,7 @@ void US_Hydrodyn_Cluster_Best::setupGUI()
    lbl_bestmsrpatternfile ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
    lbl_bestmsrpatternfile ->setMinimumWidth ( QFontMetrics( lbl_bestmsrpatternfile->font() ).maxWidth() * 41 );
 
-   le_bestmsrpatternfile = new QLineEdit     ( this, "bestmsrpatternfile Line Edit" );
+   le_bestmsrpatternfile = new QLineEdit     (  this );    le_bestmsrpatternfile->setObjectName( "bestmsrpatternfile Line Edit" );
    widgets_opt_label.push_back( lbl_bestmsrpatternfile );
    widgets_opt_label.push_back( le_bestmsrpatternfile );
    le_bestmsrpatternfile ->setText           ( parameters->count( "bestmsrpatternfile" ) ? ( *parameters )[ "bestmsrpatternfile" ] : "" );
@@ -342,132 +342,132 @@ void US_Hydrodyn_Cluster_Best::setupGUI()
    le_bestmsrpatternfile ->setMinimumWidth   ( 150 );
    connect( le_bestmsrpatternfile, SIGNAL( textChanged( const QString & ) ), SLOT( update_bestmsrpatternfile( const QString & ) ) );
 
-   pb_save =  new QPushButton ( tr( "Save" ), this );
+   pb_save =  new QPushButton ( us_tr( "Save" ), this );
    pb_save -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1) );
    pb_save -> setMinimumHeight( minHeight1 );
    pb_save -> setPalette      ( PALET_PUSHB );
    connect( pb_save, SIGNAL( clicked() ), SLOT( save() ) );
 
-   pb_load =  new QPushButton ( tr( "Load" ), this );
+   pb_load =  new QPushButton ( us_tr( "Load" ), this );
    pb_load -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1) );
    pb_load -> setMinimumHeight( minHeight1 );
    pb_load -> setPalette      ( PALET_PUSHB );
    connect( pb_load, SIGNAL( clicked() ), SLOT( load() ) );
 
-   pb_help =  new QPushButton ( tr( "Help" ), this );
+   pb_help =  new QPushButton ( us_tr( "Help" ), this );
    pb_help -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1) );
    pb_help -> setMinimumHeight( minHeight1 );
    pb_help -> setPalette      ( PALET_PUSHB );
    connect( pb_help, SIGNAL( clicked() ), SLOT( help() ) );
 
-   pb_close =  new QPushButton ( tr( "Close" ), this );
+   pb_close =  new QPushButton ( us_tr( "Close" ), this );
    pb_close -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1) );
    pb_close -> setMinimumHeight( minHeight1 );
    pb_close -> setPalette      ( PALET_PUSHB );
    connect( pb_close, SIGNAL( clicked() ), SLOT( cancel() ) );
 
-   Q3VBoxLayout *background = new Q3VBoxLayout( this );
+   QVBoxLayout * background = new QVBoxLayout( this ); background->setContentsMargins( 0, 0, 0, 0 ); background->setSpacing( 0 );
    background->addSpacing(4);
 
    background->addWidget( lbl_title );
    background->addWidget( lbl_credits_1 );
    background->addWidget( lbl_credits_2 );
    background->addSpacing( 4 );
-   Q3HBoxLayout * hbl = new Q3HBoxLayout( 0 );
+   QHBoxLayout * hbl = new QHBoxLayout(); hbl->setContentsMargins( 0, 0, 0, 0 ); hbl->setSpacing( 0 );
    hbl->addSpacing( 4 );
    hbl->addWidget( lbl_bestmsrprober );
    hbl->addWidget( le_bestmsrprober );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
    hbl->addWidget( lbl_bestmsrfinenessangle );
    hbl->addWidget( le_bestmsrfinenessangle );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
    hbl->addWidget( lbl_bestmsrmaxtriangles );
    hbl->addWidget( le_bestmsrmaxtriangles );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
    hbl->addWidget( cb_bestrcoalautominmax );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
    hbl->addWidget( lbl_bestrcoalnmin );
    hbl->addWidget( le_bestrcoalnmin );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
    hbl->addWidget( lbl_bestrcoalnmax );
    hbl->addWidget( le_bestrcoalnmax );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
    hbl->addWidget( lbl_bestrcoaln );
    hbl->addWidget( le_bestrcoaln );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
    hbl->addWidget( lbl_bestbestmw );
    hbl->addWidget( le_bestbestmw );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
    hbl->addWidget( lbl_bestexpand );
    hbl->addWidget( le_bestexpand );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
    hbl->addWidget( cb_bestbestvc );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
    hbl->addWidget( lbl_opt_label );
    hide_widgets( widgets_opt_label, true, false );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
    hbl->addWidget( lbl_bestmsrcoalescer );
    hbl->addWidget( le_bestmsrcoalescer );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
    hbl->addWidget( cb_bestmsrusesomoradii );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
    hbl->addWidget( lbl_bestmsrradiifile );
    hbl->addWidget( le_bestmsrradiifile );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
    hbl->addWidget( lbl_bestmsrpatternfile );
    hbl->addWidget( le_bestmsrpatternfile );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
    hbl->addWidget( pb_save );
    hbl->addSpacing( 4 );
    hbl->addWidget( pb_load );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
    if ( !((US_Hydrodyn *)us_hydrodyn)->advanced_config.expert_mode )
    {
@@ -475,7 +475,7 @@ void US_Hydrodyn_Cluster_Best::setupGUI()
    }
 
 
-   Q3HBoxLayout *hbl_bottom = new Q3HBoxLayout( 0 );
+   QHBoxLayout * hbl_bottom = new QHBoxLayout(); hbl_bottom->setContentsMargins( 0, 0, 0, 0 ); hbl_bottom->setSpacing( 0 );
    hbl_bottom->addSpacing( 4 );
    hbl_bottom->addWidget ( pb_help );
    hbl_bottom->addSpacing( 4 );
@@ -650,7 +650,7 @@ void US_Hydrodyn_Cluster_Best::update_bestmsrradiifile( const QString & )
 {
    QString use_dir;
    ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this );
-   QString filename = QFileDialog::getOpenFileName( this , tr( "Select a file for MSROLL: manual radii file" ) , use_dir , QString::null );
+   QString filename = QFileDialog::getOpenFileName( this , us_tr( "Select a file for MSROLL: manual radii file" ) , use_dir , QString::null );
 
 
    disconnect( le_bestmsrradiifile, SIGNAL( textChanged( const QString & ) ), 0, 0 );
@@ -667,7 +667,7 @@ void US_Hydrodyn_Cluster_Best::update_bestmsrpatternfile( const QString & )
 {
    QString use_dir;
    ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this );
-   QString filename = QFileDialog::getOpenFileName( this , tr( "Select a file for MSROLL: manual name pattern file (must also provide radii file above)" ) , use_dir , QString::null );
+   QString filename = QFileDialog::getOpenFileName( this , us_tr( "Select a file for MSROLL: manual name pattern file (must also provide radii file above)" ) , use_dir , QString::null );
 
 
    disconnect( le_bestmsrpatternfile, SIGNAL( textChanged( const QString & ) ), 0, 0 );
@@ -684,7 +684,7 @@ void US_Hydrodyn_Cluster_Best::save()
 {
    QString use_dir = ((US_Hydrodyn *)us_hydrodyn)->somo_dir + QDir::separator() + "cluster" + QDir::separator() + "parameters";
    ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this, true );
-   QString filename = QFileDialog::getSaveFileName( this , tr( "Save the parameters" ) , use_dir , "*.cluster_best" );
+   QString filename = QFileDialog::getSaveFileName( this , us_tr( "Save the parameters" ) , use_dir , "*.cluster_best" );
 
 
    if( !filename.isEmpty() )
@@ -698,13 +698,13 @@ void US_Hydrodyn_Cluster_Best::save()
       if ( !f.open( QIODevice::WriteOnly ) )
       {
          QMessageBox::information( this,
-                                   tr( QString( "%1: Save" ).arg( "US-SOMO: BEST cluster interface" ) ),
-                                   QString( tr( "Could not open file %1 for writing" ) )
+                                   us_tr( QString( "%1: Save" ).arg( "US-SOMO: BEST cluster interface" ) ),
+                                   QString( us_tr( "Could not open file %1 for writing" ) )
                                    .arg( filename ) 
                                    );
          return;
       }
-      Q3TextStream ts( &f );
+      QTextStream ts( &f );
       ts << US_Json::compose( *parameters );
       f.close();
    }
@@ -714,7 +714,7 @@ void US_Hydrodyn_Cluster_Best::load()
 {
    QString use_dir = ((US_Hydrodyn *)us_hydrodyn)->somo_dir + QDir::separator() + "cluster" + QDir::separator() + "parameters";
    ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this, true );
-   QString filename = QFileDialog::getOpenFileName( this , tr( "Load parameters" ) , use_dir , "*.cluster_best" );
+   QString filename = QFileDialog::getOpenFileName( this , us_tr( "Load parameters" ) , use_dir , "*.cluster_best" );
 
    if( !filename.isEmpty() )
    {
@@ -724,14 +724,14 @@ void US_Hydrodyn_Cluster_Best::load()
       {
           QMessageBox::information( 
                                     this,
-                                    tr( QString( "%1: Open" ).arg( "US-SOMO: BEST cluster interface" ) ),
-                                    QString( tr( "Could not open file %1 for reading" ) )
+                                    us_tr( QString( "%1: Open" ).arg( "US-SOMO: BEST cluster interface" ) ),
+                                    QString( us_tr( "Could not open file %1 for reading" ) )
                                     .arg( filename ) 
                                     );
           return;
       }
       QString qs;
-      Q3TextStream ts( &f );
+      QTextStream ts( &f );
       while ( !ts.atEnd() )
       {
           qs += ts.readLine();

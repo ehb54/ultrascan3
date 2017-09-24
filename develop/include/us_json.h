@@ -7,7 +7,7 @@
 #include <qstring.h>
 #include <qregexp.h>
 #include <map>
-#include <q3socketdevice.h> 
+#include <qudpsocket.h> 
 #include "us_extern.h"
 
 using namespace std;
@@ -29,7 +29,7 @@ class US_EXTERN US_Json
 class US_EXTERN US_Udp_Msg
 {
  public:
-   US_Udp_Msg( QString host, Q_UINT16 port );
+   US_Udp_Msg( QString host, quint16 port );
    ~US_Udp_Msg();
 
    void set_default_json ( map < QString, QString > & json );
@@ -37,9 +37,9 @@ class US_EXTERN US_Udp_Msg
    void send_json        ( map < QString, QString > json );
 
  private:
-   Q3SocketDevice            * qsd;
+   QUdpSocket            * qsd;
    QString                    host;
-   Q_UINT16                   port;
+   quint16                   port;
    map < QString, QString >   default_json;
 };
 

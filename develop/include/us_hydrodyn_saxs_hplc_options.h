@@ -42,7 +42,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Options : public QDialog
 
       QLabel *                                lbl_baseline;
 
-      QButtonGroup *                          bg_bl_type;
+      QGroupBox *                          bg_bl_type;
 
       QRadioButton *                          rb_linear;
       QRadioButton *                          rb_integral;
@@ -72,7 +72,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Options : public QDialog
 
       QLabel *                                lbl_gaussian_type;
 
-      QButtonGroup *                          bg_gaussian_type;
+      QGroupBox *                          bg_gaussian_type;
       QRadioButton *                          rb_gauss;
       QRadioButton *                          rb_gmg;
       QRadioButton *                          rb_emg;
@@ -117,6 +117,12 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Options : public QDialog
       QPushButton  *                          pb_quit;
       QPushButton  *                          pb_help;
       QPushButton  *                          pb_ok;
+
+      QCheckBox *                             cb_makeiq_cutmax_pct;
+      QLineEdit *                             le_makeiq_cutmax_pct;
+
+      QCheckBox *                             cb_makeiq_avg_peaks;
+      QLineEdit *                             le_makeiq_avg_peaks;
 
       void                                    setupGUI();
 

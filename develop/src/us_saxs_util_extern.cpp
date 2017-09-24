@@ -12,7 +12,7 @@ static std::basic_ostream<char>& operator<<(std::basic_ostream<char>& os, const 
 #if defined(IQQ_TIMER)
 #  include "../include/us_timer.h"
 //Added by qt3to4:
-#include <Q3TextStream>
+#include <QTextStream>
 #endif
 
 #define SLASH QDir::separator()
@@ -77,7 +77,7 @@ bool US_Saxs_Util::run_saxs_iq_foxs()
    iqq_timers.init_timer ( "iqq foxs" );
    iqq_timers.start_timer( "iqq foxs" );
 #endif
-   system( cmd.ascii() );
+   system( cmd.toAscii().data() );
 #if defined(IQQ_TIMER)
    {
       iqq_timers.end_timer  ( "iqq foxs" );
@@ -220,8 +220,8 @@ bool US_Saxs_Util::run_saxs_iq_crysol()
       }
 
       QString qs;
-      Q3TextStream ts( &f );
-      Q3TextStream ts2( &f2 );
+      QTextStream ts( &f );
+      QTextStream ts2( &f2 );
 
       while ( !ts.atEnd() )
       {
@@ -297,7 +297,7 @@ bool US_Saxs_Util::run_saxs_iq_crysol()
    iqq_timers.init_timer ( "iqq crysol" );
    iqq_timers.start_timer( "iqq crysol" );
 #endif
-   system( cmd.ascii() );
+   system( cmd.toAscii().data() );
 #if defined(IQQ_TIMER)
    {
       iqq_timers.end_timer  ( "iqq crysol" );
@@ -377,7 +377,7 @@ bool US_Saxs_Util::load_saxs( QString filename  )
    }
 
    QFile f(filename);
-   QString ext = QFileInfo( filename ).extension( false ).lower();
+   QString ext = QFileInfo( filename ).suffix().toLower();
 
    if ( ext == "pdb" || ext == "PDB" )
    {
@@ -409,7 +409,7 @@ bool US_Saxs_Util::load_saxs( QString filename  )
 
    if ( f.open( QIODevice::ReadOnly ) )
    {
-      Q3TextStream ts(&f);
+      QTextStream ts(&f);
       vector < QString > qv;
       QStringList qsl;
       while ( !ts.atEnd() )
@@ -431,7 +431,7 @@ bool US_Saxs_Util::load_saxs( QString filename  )
          QString test_line = qv[2];
          test_line.replace(QRegExp("^\\s+"),"");
          test_line.replace(QRegExp("\\s+$"),"");
-         QStringList test_list = QStringList::split(QRegExp("\\s+"), test_line);
+         QStringList test_list = (test_line).split( QRegExp("\\s+") , QString::SkipEmptyParts );
          // number_of_fields = test_list.size();
          // cout << "number of fields: " << number_of_fields << endl;
       }
@@ -448,7 +448,7 @@ bool US_Saxs_Util::load_saxs( QString filename  )
 
          Icolumn = 1;
          // I_errorcolumn = 2;
-         // if ( qsl.grep("exp_intensity").size() )
+         // if ( qsl.filter("exp_intensity").size() )
          // {
          //    I_errorcolumn = 0;
          // }
@@ -471,13 +471,18 @@ bool US_Saxs_Util::load_saxs( QString filename  )
       for ( unsigned int i = 1; i < (unsigned int) qv.size(); i++ )
       {
          if ( qv[i].contains(QRegExp("^#")) ||
-              rx_ok_line.search( qv[i] ) == -1 )
+              rx_ok_line.indexIn( qv[i] ) == -1 )
          {
             // cout << "not ok: " << qv[i] << endl; 
             continue;
          }
          
-         QStringList tokens = QStringList::split(QRegExp("\\s+"), qv[i].replace(QRegExp("^\\s+"),""));
+         // QStringList tokens = (qv[i].replace(QRegExp("^\\s+").split( QRegExp("\\s+") , QString::SkipEmptyParts ),""));
+         QStringList tokens;
+         {
+            QString qs = qv[i].replace(QRegExp("^\\s+"),"");
+            tokens = (qs ).split( QRegExp("\\s+") , QString::SkipEmptyParts );
+         }
          if ( (unsigned int) tokens.size() > Icolumn )
          {
             new_q = tokens[0].toDouble();

@@ -7,18 +7,19 @@
 #include <qstring.h>
 #include <qlayout.h>
 #include <qpushbutton.h>
-#include <q3frame.h>
+//#include <q3frame.h>
 #include <qcheckbox.h>
+#include <qradiobutton.h>
 #include <qwt_counter.h>
-#include <q3buttongroup.h>
-#include <q3textedit.h>
-#include <q3progressbar.h>
+#include <qgroupbox.h>
+#include <qtextedit.h>
+#include <qprogressbar.h>
 #include <qmenubar.h>
 #include <qfileinfo.h>
 #include <qprinter.h>
-#include <q3listbox.h>
-#include <q3dragobject.h>
-#include <q3widgetstack.h>
+#include <qlistwidget.h>
+//#include <q3dragobject.h>
+//#include <q3widgetstack.h>
 //Added by qt3to4:
 #include <QDragEnterEvent>
 #include <QDropEvent>
@@ -76,7 +77,7 @@ struct batch_info
    bool equi_grid;
 };
 
-class US_EXTERN US_Hydrodyn_Batch : public Q3Frame
+class US_EXTERN US_Hydrodyn_Batch : public QFrame
 {
    Q_OBJECT
 
@@ -110,7 +111,8 @@ class US_EXTERN US_Hydrodyn_Batch : public Q3Frame
       US_Config     *USglobal;
 
       QLabel        *lbl_selection;
-      Q3ListBox      *lb_files;
+      QListWidget      *lb_files;
+      QListWidget      *lb_model;
       QPushButton   *pb_add_files;
       QPushButton   *pb_select_all;
       QPushButton   *pb_remove_files;
@@ -122,14 +124,20 @@ class US_EXTERN US_Hydrodyn_Batch : public Q3Frame
       QLabel        *lbl_selected;
 
       QLabel        *lbl_screen;
-      Q3ButtonGroup  *bg_residues;
+      QGroupBox  *bg_residues;
       QCheckBox     *cb_residue_stop;
       QCheckBox     *cb_residue_skip;
       QCheckBox     *cb_residue_auto;
-      Q3ButtonGroup  *bg_atoms;
+      QRadioButton  *rb_residue_stop;
+      QRadioButton  *rb_residue_skip;
+      QRadioButton  *rb_residue_auto;
+      QGroupBox  *bg_atoms;
       QCheckBox     *cb_atom_stop;
       QCheckBox     *cb_atom_skip;
       QCheckBox     *cb_atom_auto;
+      QRadioButton  *rb_atom_stop;
+      QRadioButton  *rb_atom_skip;
+      QRadioButton  *rb_atom_auto;
       QPushButton   *pb_screen;
 
       QLabel        *lbl_process;
@@ -159,10 +167,9 @@ class US_EXTERN US_Hydrodyn_Batch : public Q3Frame
 
       QPushButton   *pb_select_save_params;
       QPushButton   *pb_start;
-      Q3ProgressBar  *progress;
-      Q3WidgetStack  *ws_progress2;
+      QProgressBar  *progress;
       QLabel        *lbl_progress2;
-      Q3ProgressBar  *progress2;
+      QProgressBar  *progress2;
       QPushButton   *pb_stop;
 
       QPushButton   *pb_help;
@@ -170,7 +177,7 @@ class US_EXTERN US_Hydrodyn_Batch : public Q3Frame
       QPushButton   *pb_open_saxs_options;
       QPushButton   *pb_cancel;
 
-      Q3TextEdit     *editor;
+      QTextEdit     *editor;
 
       QMenuBar      *m;
       QPrinter      printer;
@@ -262,7 +269,9 @@ class US_EXTERN US_Hydrodyn_Batch : public Q3Frame
       void load_somo();
       void load_saxs();
 
+      void residue();
       void residue(int);
+      void atom();
       void atom(int);
       void screen();
 

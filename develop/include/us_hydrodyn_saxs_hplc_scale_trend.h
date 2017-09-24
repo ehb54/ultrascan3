@@ -9,7 +9,7 @@
 #include "qfile.h"
 #include "qfiledialog.h"
 //Added by qt3to4:
-#include <Q3Frame>
+#include <QFrame>
 #include <QCloseEvent>
 
 #include "us_util.h"
@@ -36,7 +36,7 @@ using namespace std;
 # endif
 #endif      
 
-class US_EXTERN US_Hydrodyn_Saxs_Hplc_Scale_Trend : public Q3Frame
+class US_EXTERN US_Hydrodyn_Saxs_Hplc_Scale_Trend : public QFrame
 {
    Q_OBJECT
 

@@ -4,13 +4,13 @@
 #include "../include/us_saxs_util.h"
 #include "../include/us_hydrodyn_saxs_hplc_baseline_best.h"
 //Added by qt3to4:
-#include <Q3TextStream>
-#include <Q3HBoxLayout>
+#include <QTextStream>
+#include <QHBoxLayout>
 #include <QLabel>
 #include <QPixmap>
-#include <Q3Frame>
-#include <Q3PopupMenu>
-#include <Q3VBoxLayout>
+#include <QFrame>
+ //#include <Q3PopupMenu>
+#include <QVBoxLayout>
 #include <QCloseEvent>
 
 US_Hydrodyn_Saxs_Hplc_Baseline_Best::US_Hydrodyn_Saxs_Hplc_Baseline_Best(
@@ -20,7 +20,7 @@ US_Hydrodyn_Saxs_Hplc_Baseline_Best::US_Hydrodyn_Saxs_Hplc_Baseline_Best(
                                                                          map < QString, vector < double > >      vdparameters,
                                                                          QWidget *                               p,
                                                                          const char *                            name
-                                                                         ) : Q3Frame( p, name )
+                                                                         ) : QFrame(  p )
 {
    this->us_hydrodyn                          = us_hydrodyn;
    this->parameters                           = parameters;
@@ -29,7 +29,7 @@ US_Hydrodyn_Saxs_Hplc_Baseline_Best::US_Hydrodyn_Saxs_Hplc_Baseline_Best(
 
    USglobal = new US_Config();
    setPalette( PALET_FRAME );
-   setCaption( tr( "US-SOMO: HPLC SAXS Baseline Best Region Analysis" ) +
+   setWindowTitle( us_tr( "US-SOMO: HPLC SAXS Baseline Best Region Analysis" ) +
                ( parameters.count( "name" ) ? QString( " : %1" ).arg( parameters[ "name" ] ) : QString( "" ) ) );
 
    plot_zoomer         = ( ScrollZoomer * )0;
@@ -99,8 +99,8 @@ void US_Hydrodyn_Saxs_Hplc_Baseline_Best::setupGUI()
    plot_grid->setMinPen( QPen( USglobal->global_colors.minor_ticks, 0, Qt::DotLine ) );
    plot_grid->attach( plot );
 #endif
-   plot->setAxisTitle(QwtPlot::xBottom, parameters.count( "xlegend" ) ? parameters[ "xlegend" ] : tr( "Start Frame" ) );
-   plot->setAxisTitle(QwtPlot::yLeft  , tr( "Average Red Cluster Size" ) );
+   plot->setAxisTitle(QwtPlot::xBottom, parameters.count( "xlegend" ) ? parameters[ "xlegend" ] : us_tr( "Start Frame" ) );
+   plot->setAxisTitle(QwtPlot::yLeft  , us_tr( "Average Red Cluster Size" ) );
 #ifndef QT4
    plot->setTitleFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 3, QFont::Bold));
    plot->setAxisTitleFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
@@ -136,7 +136,7 @@ void US_Hydrodyn_Saxs_Hplc_Baseline_Best::setupGUI()
    // }
 #endif
 
-   plot_name = caption().replace( "US-SOMO:", "" ).replace( " ", "_" );
+   plot_name = windowTitle().replace( "US-SOMO:", "" ).replace( " ", "_" );
    if ( ((US_Hydrodyn *)us_hydrodyn)->saxs_hplc_widget ) {
       US_Hydrodyn_Saxs_Hplc *hplc_win = ((US_Hydrodyn *)us_hydrodyn)->saxs_hplc_window;
       hplc_win->plot_info[ plot_name ] = plot;
@@ -161,8 +161,8 @@ void US_Hydrodyn_Saxs_Hplc_Baseline_Best::setupGUI()
    hb_plot_grid->setMinPen( QPen( USglobal->global_colors.minor_ticks, 0, Qt::DotLine ) );
    hb_plot_grid->attach( hb_plot );
 #endif
-   hb_plot->setAxisTitle(QwtPlot::xBottom, parameters.count( "xlegend" ) ? parameters[ "xlegend" ] : tr( "Start Frame" ) );
-   hb_plot->setAxisTitle(QwtPlot::yLeft  , tr( "Average Red Cluster Size" ) );
+   hb_plot->setAxisTitle(QwtPlot::xBottom, parameters.count( "xlegend" ) ? parameters[ "xlegend" ] : us_tr( "Start Frame" ) );
+   hb_plot->setAxisTitle(QwtPlot::yLeft  , us_tr( "Average Red Cluster Size" ) );
 #ifndef QT4
    hb_plot->setTitleFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 3, QFont::Bold));
    hb_plot->setAxisTitleFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
@@ -198,7 +198,7 @@ void US_Hydrodyn_Saxs_Hplc_Baseline_Best::setupGUI()
    // }
 #endif
 
-   hb_plot_name = caption().replace( "US-SOMO:", "" ).replace( " ", "_" ) + "_hb";
+   hb_plot_name = windowTitle().replace( "US-SOMO:", "" ).replace( " ", "_" ) + "_hb";
    if ( ((US_Hydrodyn *)us_hydrodyn)->saxs_hplc_widget ) {
       US_Hydrodyn_Saxs_Hplc *hplc_win = ((US_Hydrodyn *)us_hydrodyn)->saxs_hplc_window;
       hplc_win->plot_info[ hb_plot_name ] = hb_plot;
@@ -206,83 +206,87 @@ void US_Hydrodyn_Saxs_Hplc_Baseline_Best::setupGUI()
 
    //   QFrame *editor_frame = new QFrame( qs_left );
 
-   editor = new Q3TextEdit( qs_left );
+   editor = new QTextEdit( qs_left );
    editor->setPalette( PALET_NORMAL );
    AUTFBACK( editor );
    editor->setReadOnly(true);
    editor->setFont( QFont( "Courier", USglobal->config_list.fontSize ) );
 
-#if defined(QT4) && defined(Q_WS_MAC)
+#if QT_VERSION < 0x040000
+# if defined(QT4) && defined(Q_WS_MAC)
    {
-      Q3PopupMenu * file = new Q3PopupMenu;
-      file->insertItem( tr("&Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
-      file->insertItem( tr("&Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
-      file->insertItem( tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
+ //      Q3PopupMenu * file = new Q3PopupMenu;
+      file->insertItem( us_tr("&Font"),  this, SLOT(update_font( )),    Qt::ALT+Qt::Key_F );
+      file->insertItem( us_tr("&Save"),  this, SLOT(save( )),    Qt::ALT+Qt::Key_S );
+      file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display( )),   Qt::ALT+Qt::Key_X );
 
       QMenuBar *menu = new QMenuBar( this );
       AUTFBACK( menu );
 
-      menu->insertItem(tr("&Messages"), file );
+      menu->insertItem(us_tr("&Messages"), file );
    }
-#else
+# else
    // QFrame *frame;
    // frame = new QFrame( qs_left );
    // frame->setMinimumHeight(minHeight1);
 
-   // m = new QMenuBar(frame, "menu" );
+   // m = new QMenuBar( frame );  m->setObjectName( "menu" );
    // m->setMinimumHeight(minHeight1 - 5);
-   // m->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   // m->setPalette( USglobal->global_colors.cg_normal );
 
    // QPopupMenu * file = new QPopupMenu(editor);
-   // m->insertItem( tr("&File"), file );
-   // file->insertItem( tr("Font"),  this, SLOT(update_font()),    ALT+Key_F );
-   // file->insertItem( tr("Save"),  this, SLOT(save()),    ALT+Key_S );
-   // file->insertItem( tr("Clear Display"), this, SLOT(clear_display()),   ALT+Key_X );
+   // m->insertItem( us_tr("&File"), file );
+   // file->insertItem( us_tr("Font"),  this, SLOT(update_font( )),    ALT+Key_F );
+   // file->insertItem( us_tr("Save"),  this, SLOT(save( )),    ALT+Key_S );
+   // file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display( )),   ALT+Key_X );
+# endif
 #endif
-
-   editor->setWordWrap (Q3TextEdit::WidgetWidth);
+   
+   editor->setWordWrapMode (QTextOption::WordWrap);
    editor->setMinimumHeight( minHeight1 * 9 );
    // editor->setTextFormat( Qt::RichText );
 
-   hb_editor = new Q3TextEdit( qs_right );
+   hb_editor = new QTextEdit( qs_right );
    hb_editor->setPalette( PALET_NORMAL );
    AUTFBACK( hb_editor );
    hb_editor->setReadOnly(true);
    hb_editor->setFont( QFont( "Courier", USglobal->config_list.fontSize ) );
 
-#if defined(QT4) && defined(Q_WS_MAC)
+#if QT_VERSION < 0x040000
+# if defined(QT4) && defined(Q_WS_MAC)
    {
-      Q3PopupMenu * file = new Q3PopupMenu;
-      file->insertItem( tr("&Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
-      file->insertItem( tr("&Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
-      file->insertItem( tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
+ //      Q3PopupMenu * file = new Q3PopupMenu;
+      file->insertItem( us_tr("&Font"),  this, SLOT(update_font( )),    Qt::ALT+Qt::Key_F );
+      file->insertItem( us_tr("&Save"),  this, SLOT(save( )),    Qt::ALT+Qt::Key_S );
+      file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display( )),   Qt::ALT+Qt::Key_X );
 
       QMenuBar *menu = new QMenuBar( this );
       AUTFBACK( menu );
 
-      menu->insertItem(tr("&Messages"), file );
+      menu->insertItem(us_tr("&Messages"), file );
    }
-#else
+# else
    // QFrame *frame;
    // frame = new QFrame( qs_right );
    // frame->setMinimumHeight(minHeight1);
 
-   // m = new QMenuBar(frame, "menu" );
+   // m = new QMenuBar( frame );  m->setObjectName( "menu" );
    // m->setMinimumHeight(minHeight1 - 5);
-   // m->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   // m->setPalette( USglobal->global_colors.cg_normal );
 
    // QPopupMenu * file = new QPopupMenu(hb_editor);
-   // m->insertItem( tr("&File"), file );
-   // file->insertItem( tr("Font"),  this, SLOT(update_font()),    ALT+Key_F );
-   // file->insertItem( tr("Save"),  this, SLOT(save()),    ALT+Key_S );
-   // file->insertItem( tr("Clear Display"), this, SLOT(clear_display()),   ALT+Key_X );
+   // m->insertItem( us_tr("&File"), file );
+   // file->insertItem( us_tr("Font"),  this, SLOT(update_font( )),    ALT+Key_F );
+   // file->insertItem( us_tr("Save"),  this, SLOT(save( )),    ALT+Key_S );
+   // file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display( )),   ALT+Key_X );
+# endif
 #endif
 
-   hb_editor->setWordWrap (Q3TextEdit::WidgetWidth);
+   hb_editor->setWordWrapMode (QTextOption::WordWrap);
    hb_editor->setMinimumHeight( minHeight1 * 9 );
    // hb_editor->setTextFormat( Qt::RichText );
 
-   pb_set_best =  new QPushButton ( tr( "Set region in HPLC window" ), this );
+   pb_set_best =  new QPushButton ( us_tr( "Set region in HPLC window" ), this );
    pb_set_best -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1) );
    pb_set_best -> setMinimumHeight( minHeight1 );
    pb_set_best -> setPalette      ( PALET_PUSHB );
@@ -292,7 +296,7 @@ void US_Hydrodyn_Saxs_Hplc_Baseline_Best::setupGUI()
       pb_set_best->hide();
    }
 
-   pb_set_hb_best =  new QPushButton ( tr( "Set region in HPLC window" ), this );
+   pb_set_hb_best =  new QPushButton ( us_tr( "Set region in HPLC window" ), this );
    pb_set_hb_best -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1) );
    pb_set_hb_best -> setMinimumHeight( minHeight1 );
    pb_set_hb_best -> setPalette      ( PALET_PUSHB );
@@ -303,19 +307,19 @@ void US_Hydrodyn_Saxs_Hplc_Baseline_Best::setupGUI()
    }
 
    cb_show_hb = new QCheckBox( this );
-   cb_show_hb -> setText( tr( "Show Holm-Bonferroni computed analysis" ) );
+   cb_show_hb -> setText( us_tr( "Show Holm-Bonferroni computed analysis" ) );
    cb_show_hb -> setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 2 ) );
    cb_show_hb -> setPalette( PALET_NORMAL );
    AUTFBACK( cb_show_hb );
    connect( cb_show_hb, SIGNAL( clicked() ), SLOT( update_enables() ) );
 
-   pb_help =  new QPushButton ( tr( "Help" ), this );
+   pb_help =  new QPushButton ( us_tr( "Help" ), this );
    pb_help -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1) );
    pb_help -> setMinimumHeight( minHeight1 );
    pb_help -> setPalette      ( PALET_PUSHB );
    connect( pb_help, SIGNAL( clicked() ), SLOT( help() ) );
 
-   pb_close =  new QPushButton ( tr( "Close" ), this );
+   pb_close =  new QPushButton ( us_tr( "Close" ), this );
    pb_close -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1) );
    pb_close -> setMinimumHeight( minHeight1 );
    pb_close -> setPalette      ( PALET_PUSHB );
@@ -331,7 +335,7 @@ void US_Hydrodyn_Saxs_Hplc_Baseline_Best::setupGUI()
    }
    cb_show_hb    ->hide();
 
-   Q3VBoxLayout *background = new Q3VBoxLayout( this );
+   QVBoxLayout * background = new QVBoxLayout( this ); background->setContentsMargins( 0, 0, 0, 0 ); background->setSpacing( 0 );
 
    //    QBoxLayout *vbl_editor_group = new QVBoxLayout(qs_right);
    // #if !defined(QT4) || !defined(Q_WS_MAC)
@@ -344,10 +348,10 @@ void US_Hydrodyn_Saxs_Hplc_Baseline_Best::setupGUI()
    }
 
    {
-      Q3HBoxLayout *hb = new Q3HBoxLayout( 0 );
+      QHBoxLayout * hb = new QHBoxLayout(); hb->setContentsMargins( 0, 0, 0, 0 ); hb->setSpacing( 0 );
       {
 
-         Q3VBoxLayout *vbl_left = new Q3VBoxLayout( 0 );
+         QVBoxLayout * vbl_left = new QVBoxLayout( 0 ); vbl_left->setContentsMargins( 0, 0, 0, 0 ); vbl_left->setSpacing( 0 );
          if ( 0 && !parameters.count( "hb" ) ) {
             vbl_left->addWidget( lbl_title );
          }
@@ -362,7 +366,7 @@ void US_Hydrodyn_Saxs_Hplc_Baseline_Best::setupGUI()
       }
 
       if ( 0 ) {
-         Q3VBoxLayout *vbl_right = new Q3VBoxLayout( 0 );
+         QVBoxLayout * vbl_right = new QVBoxLayout( 0 ); vbl_right->setContentsMargins( 0, 0, 0, 0 ); vbl_right->setSpacing( 0 );
          vbl_right->addWidget( lbl_hb_title );
          vbl_right->addWidget( qs_right );
          //         vbl_right->addSpacing( 2 );
@@ -383,7 +387,7 @@ void US_Hydrodyn_Saxs_Hplc_Baseline_Best::setupGUI()
 
    background->addWidget( cb_show_hb );
 
-   Q3HBoxLayout *hbl_bottom = new Q3HBoxLayout( 0 );
+   QHBoxLayout * hbl_bottom = new QHBoxLayout(); hbl_bottom->setContentsMargins( 0, 0, 0, 0 ); hbl_bottom->setSpacing( 0 );
    hbl_bottom->addWidget ( pb_help );
    hbl_bottom->addWidget ( pb_close );
 
@@ -432,24 +436,24 @@ void US_Hydrodyn_Saxs_Hplc_Baseline_Best::editor_hb_ec_msg( QString msg )
    return editor_ec_msg( msg, hb_editor );
 }
 
-void US_Hydrodyn_Saxs_Hplc_Baseline_Best::editor_msg( QString color, QString msg, Q3TextEdit *e )
+void US_Hydrodyn_Saxs_Hplc_Baseline_Best::editor_msg( QString color, QString msg, QTextEdit *e )
 {
    if ( !e ) {
       e = editor;
    }
-   QColor save_color = e->color();
-   e->setColor(color);
+   QColor save_color = e->textColor();
+   e->setTextColor(color);
    e->append(msg);
-   e->setColor(save_color);
+   e->setTextColor(save_color);
 }
 
-void US_Hydrodyn_Saxs_Hplc_Baseline_Best::editor_ec_msg( QString msg, Q3TextEdit *e )
+void US_Hydrodyn_Saxs_Hplc_Baseline_Best::editor_ec_msg( QString msg, QTextEdit *e )
 {
    if ( !e ) {
       e = editor;
    }
-   QColor save_color = e->color();
-   QStringList qsl = QStringList::split( "~~", msg );
+   QColor save_color = e->textColor();
+   QStringList qsl = (msg ).split( "~~" , QString::SkipEmptyParts );
 
    QRegExp rx_color( "^_(\\S+)_$" );
 
@@ -464,20 +468,20 @@ void US_Hydrodyn_Saxs_Hplc_Baseline_Best::editor_ec_msg( QString msg, Q3TextEdit
    colors[ "darkyellow4" ] = QColor(  51,  51, 0 );
 
    for ( int i = 0; i < (int) qsl.size(); ++i ) {
-      if ( rx_color.search( qsl[ i ] ) != -1 ) {
+      if ( rx_color.indexIn( qsl[ i ] ) != -1 ) {
          QColor qc;
          if ( colors.count( rx_color.cap( 1 ) ) ) {
             qc = colors[ rx_color.cap( 1 ) ];
          } else {
             qc = QColor( rx_color.cap( 1 ) );
          }
-         e->setColor( qc );
+         e->setTextColor( qc );
       } else {
          e->append( qsl[ i ] );
       }
    }
 
-   e->setColor(save_color);
+   e->setTextColor(save_color);
 }
 
 void US_Hydrodyn_Saxs_Hplc_Baseline_Best::clear_display()
@@ -503,20 +507,20 @@ void US_Hydrodyn_Saxs_Hplc_Baseline_Best::update_font()
 void US_Hydrodyn_Saxs_Hplc_Baseline_Best::save()
 {
    QString fn;
-   fn = QFileDialog::getSaveFileName( this , caption() , QString::null , QString::null );
+   fn = QFileDialog::getSaveFileName( this , windowTitle() , QString::null , QString::null );
    if(!fn.isEmpty() )
    {
-      QString text = editor->text();
+      QString text = editor->toPlainText();
       QFile f( fn );
       if ( !f.open( QIODevice::WriteOnly | QIODevice::Text) )
       {
          return;
       }
-      Q3TextStream t( &f );
+      QTextStream t( &f );
       t << text;
       f.close();
-      editor->setModified( false );
-      setCaption( fn );
+ //      editor->setModified( false );
+      setWindowTitle( fn );
    }
 }
 
@@ -527,16 +531,16 @@ void US_Hydrodyn_Saxs_Hplc_Baseline_Best::displayData() {
    hb_plot     ->clear();
    hb_editor   ->clear();
 
-   plot->setAxisTitle(QwtPlot::yLeft  , tr( 
+   plot->setAxisTitle(QwtPlot::yLeft  , us_tr( 
                                            parameters.count( "hb" ) 
                                            ? "Red pair %"
                                            : "Average Red Cluster Size" 
                                             ) );
 
-   hb_plot->setAxisTitle(QwtPlot::yLeft  , tr( "Red pair %" ) );
+   hb_plot->setAxisTitle(QwtPlot::yLeft  , us_tr( "Red pair %" ) );
 
-   lbl_title->setText( parameters.count( "title" ) ? parameters[ "title" ] : QString( tr( "Baseline avg. I(q) and average red cluster size by start frame" ) ) );
-   lbl_hb_title->setText( parameters.count( "hb_title" ) ? parameters[ "hb_title" ] : QString( tr( "Baseline avg. I(q) and red pair % by start frame" ) ) );
+   lbl_title->setText( parameters.count( "title" ) ? parameters[ "title" ] : QString( us_tr( "Baseline avg. I(q) and average red cluster size by start frame" ) ) );
+   lbl_hb_title->setText( parameters.count( "hb_title" ) ? parameters[ "hb_title" ] : QString( us_tr( "Baseline avg. I(q) and red pair % by start frame" ) ) );
    // plot data and print anything of importance in editor
 
    editor->append( "<a name=\"top\">" );
@@ -570,7 +574,7 @@ void US_Hydrodyn_Saxs_Hplc_Baseline_Best::displayData() {
       if ( vdparameters.count( "sumqx" ) ) {
          plotted_yright = true;
          plot->enableAxis  ( QwtPlot::yRight , true );
-         plot->setAxisTitle( QwtPlot::yRight, tr( "\nAverage I(q) [a.u.]" ) );
+         plot->setAxisTitle( QwtPlot::yRight, us_tr( "\nAverage I(q) [a.u.]" ) );
 
          if ( vdparameters.count( "sumqy" ) ) {
             for ( int i = 0; i < (int) vdparameters[ "sumqy" ].size(); ++i ) {
@@ -623,7 +627,7 @@ void US_Hydrodyn_Saxs_Hplc_Baseline_Best::displayData() {
                }
             }
 
-            QString curvename = QString( tr( "Baseline avg. I(q) for q less than %1\n(on right axis)" ) ).arg( dparameters[ "cormap_maxq" ] );
+            QString curvename = QString( us_tr( "Baseline avg. I(q) for q less than %1\n(on right axis)" ) ).arg( dparameters[ "cormap_maxq" ] );
 #ifndef QT4
             long curve;
             curve = plot->insertCurve( curvename, QwtPlot::xBottom, QwtPlot::yRight );
@@ -663,7 +667,7 @@ void US_Hydrodyn_Saxs_Hplc_Baseline_Best::displayData() {
                }
 
                {
-                  QString curvename = QString( tr( "Baseline avg. I(q) ±1 SD for q less than %1\n(on right axis)" ) ).arg( dparameters[ "cormap_maxq" ] );
+                  QString curvename = QString( us_tr( "Baseline avg. I(q) ±1 SD for q less than %1\n(on right axis)" ) ).arg( dparameters[ "cormap_maxq" ] );
 #ifndef QT4
                   long curve;
                   curve = plot->insertCurve( curvename, QwtPlot::xBottom, QwtPlot::yRight );
@@ -693,7 +697,7 @@ void US_Hydrodyn_Saxs_Hplc_Baseline_Best::displayData() {
 #endif
                }
                {
-                  QString curvename = QString( tr( "Baseline avg. I(q) ±1 SD for q less than %1\n(on right axis)" ) ).arg( dparameters[ "cormap_maxq" ] );
+                  QString curvename = QString( us_tr( "Baseline avg. I(q) ±1 SD for q less than %1\n(on right axis)" ) ).arg( dparameters[ "cormap_maxq" ] );
 #ifndef QT4
                   long curve;
                   curve = plot->insertCurve( curvename, QwtPlot::xBottom, QwtPlot::yRight );
@@ -995,7 +999,7 @@ void US_Hydrodyn_Saxs_Hplc_Baseline_Best::displayData() {
 
          y[ 0 ] = y[ 1 ] = dparameters[ "blanksaverage" ];
 
-         QString curvename = tr( "Blanks' avg. red cluster size" );
+         QString curvename = us_tr( "Blanks' avg. red cluster size" );
 
 #ifndef QT4
          long curve;
@@ -1020,7 +1024,7 @@ void US_Hydrodyn_Saxs_Hplc_Baseline_Best::displayData() {
 
             y[ 0 ] = y[ 1 ] = y[ 0 ] + dparameters[ "blanksaveragesd" ];
 
-            QString curvename = tr( "Blanks' avg. red cluster size +1 SD" );
+            QString curvename = us_tr( "Blanks' avg. red cluster size +1 SD" );
 #ifndef QT4
             long curve;
             curve = plot->insertCurve( curvename );
@@ -1081,7 +1085,7 @@ void US_Hydrodyn_Saxs_Hplc_Baseline_Best::displayData() {
          if ( vdparameters.count( "sumqx" ) ) {
             plotted_yright = true;
             hb_plot->enableAxis  ( QwtPlot::yRight , true );
-            hb_plot->setAxisTitle( QwtPlot::yRight, tr( "\nAverage I(q) [a.u.]" ) );
+            hb_plot->setAxisTitle( QwtPlot::yRight, us_tr( "\nAverage I(q) [a.u.]" ) );
 
             if ( vdparameters.count( "sumqy" ) ) {
                for ( int i = 0; i < (int) vdparameters[ "sumqy" ].size(); ++i ) {
@@ -1134,7 +1138,7 @@ void US_Hydrodyn_Saxs_Hplc_Baseline_Best::displayData() {
                   }
                }
 
-               QString curvename = QString( tr( "Baseline avg. I(q) for q less than %1\n(on right axis)" ) ).arg( dparameters[ "cormap_maxq" ] );
+               QString curvename = QString( us_tr( "Baseline avg. I(q) for q less than %1\n(on right axis)" ) ).arg( dparameters[ "cormap_maxq" ] );
 #ifndef QT4
                long curve;
                curve = hb_plot->insertCurve( curvename, QwtPlot::xBottom, QwtPlot::yRight );
@@ -1174,7 +1178,7 @@ void US_Hydrodyn_Saxs_Hplc_Baseline_Best::displayData() {
                   }
 
                   {
-                     QString curvename = QString( tr( "Baseline avg. I(q) ±1 SD for q less than %1\n(on right axis)" ) ).arg( dparameters[ "cormap_maxq" ] );
+                     QString curvename = QString( us_tr( "Baseline avg. I(q) ±1 SD for q less than %1\n(on right axis)" ) ).arg( dparameters[ "cormap_maxq" ] );
 #ifndef QT4
                      long curve;
                      curve = hb_plot->insertCurve( curvename, QwtPlot::xBottom, QwtPlot::yRight );
@@ -1204,7 +1208,7 @@ void US_Hydrodyn_Saxs_Hplc_Baseline_Best::displayData() {
 #endif
                   }
                   {
-                     QString curvename = QString( tr( "Baseline avg. I(q) ±1 SD for q less than %1\n(on right axis)" ) ).arg( dparameters[ "cormap_maxq" ] );
+                     QString curvename = QString( us_tr( "Baseline avg. I(q) ±1 SD for q less than %1\n(on right axis)" ) ).arg( dparameters[ "cormap_maxq" ] );
 #ifndef QT4
                      long curve;
                      curve = hb_plot->insertCurve( curvename, QwtPlot::xBottom, QwtPlot::yRight );
@@ -1376,7 +1380,7 @@ void US_Hydrodyn_Saxs_Hplc_Baseline_Best::displayData() {
        // this doesn't seem to work: mp.setColor( QPalette::Normal, QPalette::WindowText, Qt::white );
        // legend_pd->contentsWidget()->setPalette( mp );
        // AUTFBACK( legend_pd );
-       legend_pd->setFrameStyle( Q3Frame::Box | Q3Frame::Sunken );
+       legend_pd->setFrameStyle( QFrame::Box | QFrame::Sunken );
        plot->insertLegend( legend_pd, QwtPlot::RightLegend );
    }
 
@@ -1387,7 +1391,7 @@ void US_Hydrodyn_Saxs_Hplc_Baseline_Best::displayData() {
        // this doesn't seem to work: mp.setColor( QPalette::Normal, QPalette::WindowText, Qt::white );
        // legend_pd->contentsWidget()->setPalette( mp );
        // AUTFBACK( legend_pd );
-       legend_pd->setFrameStyle( Q3Frame::Box | Q3Frame::Sunken );
+       legend_pd->setFrameStyle( QFrame::Box | QFrame::Sunken );
        hb_plot->insertLegend( legend_pd, QwtPlot::RightLegend );
    }
 
@@ -1400,7 +1404,7 @@ void US_Hydrodyn_Saxs_Hplc_Baseline_Best::displayData() {
 
    if ( !vdparameters.count( "bestpos" ) ||
         !dparameters.count( "width" ) ) {
-      qDebug( "no bestpos or width" );
+      us_qdebug( "no bestpos or width" );
       pb_set_best->hide();
    }
 
@@ -1450,9 +1454,9 @@ void US_Hydrodyn_Saxs_Hplc_Baseline_Best::set_best() {
             }
             {
                bool ok;
-               QString choice = QInputDialog::getItem(
-                                                      caption() + tr( " : Choose starting position for baseline" )
-                                                      ,tr( "There are multiple equivalent starting positions for the integral baseline window\n"
+               QString choice = US_Static::getItem(
+                                                      windowTitle() + us_tr( " : Choose starting position for baseline" )
+                                                      ,us_tr( "There are multiple equivalent starting positions for the integral baseline window\n"
                                                            "Please choose one from this list" )
                                                       ,qsl
                                                       ,0
@@ -1490,9 +1494,9 @@ void US_Hydrodyn_Saxs_Hplc_Baseline_Best::set_hb_best() {
             }
             {
                bool ok;
-               QString choice = QInputDialog::getItem(
-                                                      caption() + tr( " : Choose starting position for baseline" )
-                                                      ,tr( "There are multiple equivalent starting positions for the integral baseline window\n"
+               QString choice = US_Static::getItem(
+                                                      windowTitle() + us_tr( " : Choose starting position for baseline" )
+                                                      ,us_tr( "There are multiple equivalent starting positions for the integral baseline window\n"
                                                            "Please choose one from this list" )
                                                       ,qsl
                                                       ,0

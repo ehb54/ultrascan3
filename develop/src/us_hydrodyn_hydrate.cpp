@@ -3,7 +3,7 @@
 #include "../include/us_surfracer.h"
 #include "qmessagebox.h"
 //Added by qt3to4:
-#include <Q3TextStream>
+#include <QTextStream>
 
 // note: this program uses cout and/or cerr and this should be replaced
 
@@ -101,7 +101,7 @@ int US_Hydrodyn::pdb_hydrate_for_saxs( bool quiet )
    if ( !load_rotamer( error_msg ) )
    {
       QMessageBox::warning( this,
-                            tr( "Error reading Hydrated Rotamer file" ),
+                            us_tr( "Error reading Hydrated Rotamer file" ),
                             error_msg );
       return -1;
    } 
@@ -112,17 +112,17 @@ int US_Hydrodyn::pdb_hydrate_for_saxs( bool quiet )
 #endif
 
    vector < unsigned int > selected_models;
-   for ( unsigned int i = 0; i < (unsigned int)lb_model->numRows(); i++ ) 
+   for ( unsigned int i = 0; i < (unsigned int)lb_model->count(); i++ ) 
    {
-      if ( lb_model->isSelected(i) ) 
+      if ( lb_model->item(i)->isSelected() ) 
       {
          selected_models.push_back(i);
       }
    }
    if ( selected_models.size() != 1 )
    {
-      QMessageBox::message(tr("Please note:"),
-                           tr("You must select exactly one model to hydrate."));
+      US_Static::us_message(us_tr("Please note:"),
+                           us_tr("You must select exactly one model to hydrate."));
       return -1;
    } 
 
@@ -155,8 +155,8 @@ int US_Hydrodyn::pdb_hydrate_for_saxs( bool quiet )
 
    QString msg = QString("\n%1 models selected:").arg(project);
 
-   for(int i = 0; i < lb_model->numRows(); i++) {
-      if (lb_model->isSelected(i)) {
+   for(int i = 0; i < lb_model->count(); i++) {
+      if (lb_model->item(i)->isSelected()) {
          current_model = i;
          msg += QString(" %1").arg(i+1);
       }
@@ -164,9 +164,9 @@ int US_Hydrodyn::pdb_hydrate_for_saxs( bool quiet )
    msg += "\n";
    editor->append(msg);
 
-   for (current_model = 0; current_model < (unsigned int)lb_model->numRows(); current_model++)
+   for (current_model = 0; current_model < (unsigned int)lb_model->count(); current_model++)
    {
-      if (!any_errors && lb_model->isSelected(current_model))
+      if (!any_errors && lb_model->item(current_model)->isSelected())
       {
          any_models = true;
          if(!pdb_asa_for_saxs_hydrate())
@@ -177,49 +177,49 @@ int US_Hydrodyn::pdb_hydrate_for_saxs( bool quiet )
 #if defined(DEBUG_TO_HYDRATE_DIHEDRAL)
             cout << list_to_hydrate();
 #endif
-            progress->setProgress(9);
+            progress->setValue(9);
             qApp->processEvents();
             if ( !compute_to_hydrate_dihedrals( error_msg ) )
             {
                QMessageBox::warning( this,
-                                     tr( "Error computing to-hydrate dihedrals" ),
+                                     us_tr( "Error computing to-hydrate dihedrals" ),
                                      error_msg );
                any_errors = true;
             }
 #if defined(DEBUG_TO_HYDRATE_DIHEDRAL)
             cout << list_to_hydrate_dihedrals();
 #endif
-            progress->setProgress(10);
+            progress->setValue(10);
             qApp->processEvents();
             if ( !compute_best_fit_rotamer( error_msg ) )
             {
                QMessageBox::warning( this,
-                                     tr( "Error finding best fit rotamer" ),
+                                     us_tr( "Error finding best fit rotamer" ),
                                      error_msg );
                any_errors = true;
             }
             // cout << list_best_fit_rotamer();
 
-            progress->setProgress(11);
+            progress->setValue(11);
             qApp->processEvents();
             if ( !setup_pointmap_rotamers( error_msg ) )
             {
                QMessageBox::warning( this,
-                                     tr( "Error setting up pointmaps" ),
+                                     us_tr( "Error setting up pointmaps" ),
                                      error_msg );
                any_errors = true;
             }
             // cout << list_pointmap_rotamers();
 
-            progress->setProgress(12);
+            progress->setValue(12);
             qApp->processEvents();
             if ( saxs_options.alt_hydration )
             {
-               editor_msg( "blue", tr( "NOTICE: using alternate hydration (experimental) method" ) );
+               editor_msg( "blue", us_tr( "NOTICE: using alternate hydration (experimental) method" ) );
                if ( !compute_waters_to_add_alt( error_msg, quiet ) )
                {
                   QMessageBox::warning( this,
-                                        tr( "Error trying to add waters" ),
+                                        us_tr( "Error trying to add waters" ),
                                         error_msg );
                   any_errors = true;
                }
@@ -227,18 +227,18 @@ int US_Hydrodyn::pdb_hydrate_for_saxs( bool quiet )
                if ( !compute_waters_to_add( error_msg, quiet ) )
                {
                   QMessageBox::warning( this,
-                                        tr( "Error trying to add waters" ),
+                                        us_tr( "Error trying to add waters" ),
                                         error_msg );
                   any_errors = true;
                }
             }
             // cout << list_waters_to_add();
-            progress->setProgress(1, 1);
+            progress->setValue( 1 ); progress->setMaximum( 1 );
             qApp->processEvents();
             if ( !write_pdb_with_waters( error_msg, quiet ) )
             {
                QMessageBox::warning( this,
-                                     tr( "Error trying to write pdb with waters" ),
+                                     us_tr( "Error trying to write pdb with waters" ),
                                      error_msg );
                any_errors = true;
             }
@@ -246,7 +246,7 @@ int US_Hydrodyn::pdb_hydrate_for_saxs( bool quiet )
                  !screen_pdb( last_hydrated_pdb_name, !quiet ) )
             {
                QMessageBox::warning( this,
-                                     tr( "Error trying to reload hydrated pdb" ),
+                                     us_tr( "Error trying to reload hydrated pdb" ),
                                      error_msg );
                any_errors = true;
             }
@@ -264,8 +264,8 @@ int US_Hydrodyn::pdb_hydrate_for_saxs( bool quiet )
       {
          editor->append("Stopped by user\n\n");
          pb_somo->setEnabled(true);
-         bd_anaflex_enables( ( ( browflex && browflex->isRunning() ) ||
-                               ( anaflex && anaflex->isRunning() ) ) ? false : true );
+         bd_anaflex_enables( ( ( browflex && browflex->state() == QProcess::Running ) ||
+                               ( anaflex && anaflex->state() == QProcess::Running ) ) ? false : true );
          pb_grid_pdb->setEnabled(true);
          progress->reset();
          return -1;
@@ -304,9 +304,9 @@ int US_Hydrodyn::pdb_asa_for_saxs_hydrate()
    results.asa_rg_neg = 0.0;
    editor->append("PDB structure ok\n");
    int mppos = 13;
-   progress->setTotalSteps(mppos);
+   progress->setMaximum(mppos);
    int ppos = 1;
-   progress->setProgress(ppos++); // 1
+   progress->setValue(ppos++); // 1
    qApp->processEvents();
 
    {
@@ -327,7 +327,7 @@ int US_Hydrodyn::pdb_asa_for_saxs_hydrate()
    if ( retval )
    {
       editor->append("Errors found\n");
-      progress->setProgress(mppos);
+      progress->setValue(mppos);
       qApp->processEvents();
       if (stopFlag)
       {
@@ -366,7 +366,7 @@ int US_Hydrodyn::pdb_asa_for_saxs_hydrate()
    }
 
    if(error_string.length()) {
-      progress->setProgress(mppos);
+      progress->setValue(mppos);
       qApp->processEvents();
       printError("Encountered unknown atom(s) error:\n" +
                  error_string);
@@ -388,7 +388,7 @@ int US_Hydrodyn::pdb_asa_for_saxs_hydrate()
                                   editor
                                   );
 
-      progress->setProgress(ppos++); // 2
+      progress->setValue(ppos++); // 2
       qApp->processEvents();
       editor->append("Return from Computing ASA\n");
       if (stopFlag)
@@ -398,7 +398,7 @@ int US_Hydrodyn::pdb_asa_for_saxs_hydrate()
       if ( retval )
       {
          editor->append("Errors found during ASA calculation\n");
-         progress->setProgress(mppos);
+         progress->setValue(mppos);
          qApp->processEvents();
          if (stopFlag)
          {
@@ -436,7 +436,7 @@ int US_Hydrodyn::pdb_asa_for_saxs_hydrate()
          }
       }
       if(error_string.length()) {
-         progress->setProgress(mppos);
+         progress->setValue(mppos);
          qApp->processEvents();
          printError("US_SURFRACER encountered unknown atom(s) error:\n" +
                     error_string);
@@ -476,7 +476,7 @@ int US_Hydrodyn::pdb_asa_for_saxs_hydrate()
                                           this
                                           );
       asa.probe_radius  = save_radius;
-      progress->setProgress(ppos++); // 2
+      progress->setValue(ppos++); // 2
       qApp->processEvents();
       editor->append("Return from Computing ASA\n");
       if (stopFlag)
@@ -486,7 +486,7 @@ int US_Hydrodyn::pdb_asa_for_saxs_hydrate()
       if ( retval )
       {
          editor->append("Errors found during ASA calculation\n");
-         progress->setProgress(mppos);
+         progress->setValue(mppos);
          qApp->processEvents();
          if (stopFlag)
          {
@@ -513,7 +513,7 @@ int US_Hydrodyn::pdb_asa_for_saxs_hydrate()
 
    // pass 1 assign bead #'s, chain #'s, initialize data
 
-   FILE *asaf = fopen(QString(somo_tmp_dir + SLASH + "atom.asa"), "w");
+   FILE *asaf = us_fopen(QString(somo_tmp_dir + SLASH + "atom.asa"), "w");
 
    // for (unsigned int i = 0; i < model_vector.size (); i++)
    {
@@ -535,9 +535,9 @@ int US_Hydrodyn::pdb_asa_for_saxs_hydrate()
             // this_atom->bead_positioner = false;
             this_atom->normalized_ot_is_valid = false;
             fprintf(asaf, "%s\t%s\t%s\t%.2f\n",
-                    this_atom->name.ascii(),
-                    this_atom->resName.ascii(),
-                    this_atom->resSeq.ascii(),
+                    this_atom->name.toAscii().data(),
+                    this_atom->resName.toAscii().data(),
+                    this_atom->resSeq.toAscii().data(),
                     this_atom->asa);
 
             for (unsigned int m = 0; m < 3; m++) {
@@ -550,7 +550,7 @@ int US_Hydrodyn::pdb_asa_for_saxs_hydrate()
    }
    fclose(asaf);
 
-   progress->setProgress(ppos++); // 3
+   progress->setValue(ppos++); // 3
    qApp->processEvents();
    if (stopFlag)
    {
@@ -596,8 +596,8 @@ int US_Hydrodyn::pdb_asa_for_saxs_hydrate()
                if ( advanced_config.debug_1 )
                {
                   printf("pass 2 active %s %s %d pm %d %d\n",
-                         this_atom->name.ascii(),
-                         this_atom->resName.ascii(),
+                         this_atom->name.toAscii().data(),
+                         this_atom->resName.toAscii().data(),
                          this_atom->serial,
                          this_atom->placing_method,
                          this_atom->bead_assignment); fflush(stdout);
@@ -634,8 +634,8 @@ int US_Hydrodyn::pdb_asa_for_saxs_hydrate()
                        advanced_config.debug_2 )
                   {
                      printf("pass 2 active %s %s %d new bead chain %d\n",
-                            this_atom->name.ascii(),
-                            this_atom->resName.ascii(),
+                            this_atom->name.toAscii().data(),
+                            this_atom->resName.toAscii().data(),
                             this_atom->serial,
                             this_atom->chain); fflush(stdout);
                   }
@@ -681,8 +681,8 @@ int US_Hydrodyn::pdb_asa_for_saxs_hydrate()
                   if ( advanced_config.debug_1 )
                   {
                      printf("pass 2 active %s %s %d not a new bead\n",
-                            this_atom->name.ascii(),
-                            this_atom->resName.ascii(),
+                            this_atom->name.toAscii().data(),
+                            this_atom->resName.toAscii().data(),
                             this_atom->serial); fflush(stdout);
                   }
                   if (this_atom->bead_positioner) {
@@ -690,8 +690,8 @@ int US_Hydrodyn::pdb_asa_for_saxs_hydrate()
                      if (last_main_bead->bead_positioner &&
                          this_atom->placing_method == 1) {
                         fprintf(stderr, "warning: 2 positioners in bead %s %s %d\n",
-                                last_main_bead->name.ascii(),
-                                last_main_bead->resName.ascii(),
+                                last_main_bead->name.toAscii().data(),
+                                last_main_bead->resName.toAscii().data(),
                                 last_main_bead->serial);
                      }
                      last_main_bead->bead_positioner = true;
@@ -726,8 +726,8 @@ int US_Hydrodyn::pdb_asa_for_saxs_hydrate()
                if ( advanced_config.debug_1 )
                {
                   printf("atom %s %s p_atom.hybrid.mw %f atom.mw %f\n",
-                         this_atom->name.ascii(),
-                         this_atom->resName.ascii(),
+                         this_atom->name.toAscii().data(),
+                         this_atom->resName.toAscii().data(),
                          this_atom->p_atom->hybrid.mw,
                          this_atom->mw
                          );
@@ -770,11 +770,11 @@ int US_Hydrodyn::pdb_asa_for_saxs_hydrate()
                   if ( advanced_config.debug_3 )
                   {
                      printf("notice: atom %s %s %d excluded from cog calculation in bead %s %s %d\n",
-                            this_atom->name.ascii(),
-                            this_atom->resName.ascii(),
+                            this_atom->name.toAscii().data(),
+                            this_atom->resName.toAscii().data(),
                             this_atom->serial,
-                            use_atom->name.ascii(),
-                            use_atom->resName.ascii(),
+                            use_atom->name.toAscii().data(),
+                            use_atom->resName.toAscii().data(),
                             use_atom->serial);
                   }
                }
@@ -784,8 +784,8 @@ int US_Hydrodyn::pdb_asa_for_saxs_hydrate()
                   if (use_atom->bead_positioner &&
                       this_atom->placing_method == 1) {
                      fprintf(stderr, "warning: 2 or more positioners in bead %s %s %d\n",
-                             use_atom->name.ascii(),
-                             use_atom->resName.ascii(),
+                             use_atom->name.toAscii().data(),
+                             use_atom->resName.toAscii().data(),
                              use_atom->serial);
                   }
                   use_atom->bead_positioner = true;
@@ -843,7 +843,7 @@ int US_Hydrodyn::pdb_asa_for_saxs_hydrate()
       last_molecular_cog.axis[m] = molecular_cog[m];
    }
 
-   progress->setProgress(ppos++); // 4
+   progress->setValue(ppos++); // 4
    qApp->processEvents();
    if (stopFlag)
    {
@@ -869,8 +869,8 @@ int US_Hydrodyn::pdb_asa_for_saxs_hydrate()
                       this_atom->active,
                       this_atom->is_bead,
                       this_atom->chain,
-                      this_atom->name.ascii(),
-                      this_atom->resName.ascii(),
+                      this_atom->name.toAscii().data(),
+                      this_atom->resName.toAscii().data(),
                       this_atom->serial,
                       this_atom->placing_method); fflush(stdout);
             }
@@ -902,8 +902,8 @@ int US_Hydrodyn::pdb_asa_for_saxs_hydrate()
                if ( advanced_config.debug_1 )
                {
                   printf("placed N1, found break, turned off placed N1 %s %s\n", 
-                         this_atom->resName.ascii(),
-                         this_atom->resSeq.ascii()
+                         this_atom->resName.toAscii().data(),
+                         this_atom->resSeq.toAscii().data()
                          );
                }
             }
@@ -946,11 +946,11 @@ int US_Hydrodyn::pdb_asa_for_saxs_hydrate()
                if ( advanced_config.debug_1 )
                {
                   printf("pass 2b active OXT %s %s %d last %s %s %d mw org %f mw new %f\n",
-                         this_atom->name.ascii(),
-                         this_atom->resName.ascii(),
+                         this_atom->name.toAscii().data(),
+                         this_atom->resName.toAscii().data(),
                          this_atom->serial,
-                         last_main_chain_bead->name.ascii(),
-                         last_main_chain_bead->resName.ascii(),
+                         last_main_chain_bead->name.toAscii().data(),
+                         last_main_chain_bead->resName.toAscii().data(),
                          last_main_chain_bead->serial,
                          last_main_chain_bead->bead_ref_mw,
                          this_atom->bead_ref_mw
@@ -1004,8 +1004,8 @@ int US_Hydrodyn::pdb_asa_for_saxs_hydrate()
                if ( advanced_config.debug_1 )
                {
                   printf("pass 2b active, bead, chain == 0 %s %s %d pm %d\n",
-                         this_atom->name.ascii(),
-                         this_atom->resName.ascii(),
+                         this_atom->name.toAscii().data(),
+                         this_atom->resName.toAscii().data(),
                          this_atom->serial,
                          this_atom->placing_method); fflush(stdout);
                }
@@ -1022,8 +1022,8 @@ int US_Hydrodyn::pdb_asa_for_saxs_hydrate()
                   if ( advanced_config.debug_1 )
                   {
                      printf("pass 2b active PRO %s %s %d pm %d\n",
-                            this_atom->name.ascii(),
-                            this_atom->resName.ascii(),
+                            this_atom->name.toAscii().data(),
+                            this_atom->resName.toAscii().data(),
                             this_atom->serial,
                             this_atom->placing_method); fflush(stdout);
                   }
@@ -1067,9 +1067,9 @@ int US_Hydrodyn::pdb_asa_for_saxs_hydrate()
                if ( advanced_config.debug_1 )
                {
                   printf("pass 2b broken end adjustment %s %s %s org mw %.4f vol %.4f\n",
-                         this_atom->name.ascii(),
-                         this_atom->resName.ascii(),
-                         this_atom->resSeq.ascii(),
+                         this_atom->name.toAscii().data(),
+                         this_atom->resName.toAscii().data(),
+                         this_atom->resSeq.toAscii().data(),
                          this_atom->bead_ref_mw,
                          this_atom->bead_ref_volume);
                }
@@ -1089,19 +1089,19 @@ int US_Hydrodyn::pdb_asa_for_saxs_hydrate()
                   if ( advanced_config.debug_1 )
                   {
                      printf("pass 2b broken end adjustment %s %s %s new mw %.4f vol %.4f\n",
-                            this_atom->name.ascii(),
-                            this_atom->resName.ascii(),
-                            this_atom->resSeq.ascii(),
+                            this_atom->name.toAscii().data(),
+                            this_atom->resName.toAscii().data(),
+                            this_atom->resSeq.toAscii().data(),
                             this_atom->bead_ref_mw,
                             this_atom->bead_ref_volume);
                   }
                }
                else
                {
-                  QColor save_color = editor->color();
-                  editor->setColor("red");
+                  QColor save_color = editor->textColor();
+                  editor->setTextColor("red");
                   editor->append("Chain has broken end and PBR-NO-OXT isn't uniquely defined in the residue file.");
-                  editor->setColor(save_color);
+                  editor->setTextColor(save_color);
                }
             }
          } // for k < atom.size()
@@ -1138,16 +1138,16 @@ int US_Hydrodyn::pdb_asa_for_saxs_hydrate()
             }
             else
             {
-               QColor save_color = editor->color();
-               editor->setColor("red");
+               QColor save_color = editor->textColor();
+               editor->setTextColor("red");
                editor->append("Chain has no terminating OXT and PBR-NO-OXT isn't uniquely defined in the residue file.");
-               editor->setColor(save_color);
+               editor->setTextColor(save_color);
             }
          }
       } // for j < molecule.size()
    }
 
-   progress->setProgress(ppos++); // 5
+   progress->setValue(ppos++); // 5
    qApp->processEvents();
    if (stopFlag)
    {
@@ -1167,8 +1167,8 @@ int US_Hydrodyn::pdb_asa_for_saxs_hydrate()
                 this_atom->is_bead) {
 #if defined(DEBUG)
                printf("pass 2c hydration %s %s %d pm %d\n",
-                      this_atom->name.ascii(),
-                      this_atom->resName.ascii(),
+                      this_atom->name.toAscii().data(),
+                      this_atom->resName.toAscii().data(),
                       this_atom->serial,
                       this_atom->placing_method); fflush(stdout);
 #endif
@@ -1182,7 +1182,7 @@ int US_Hydrodyn::pdb_asa_for_saxs_hydrate()
 
    // pass 3 determine visibility, exposed code, normalize cog position, final position determination
    // compute com of entire molecule
-   progress->setProgress(ppos++); // 6
+   progress->setValue(ppos++); // 6
    qApp->processEvents();
    if (stopFlag)
    {
@@ -1206,8 +1206,8 @@ int US_Hydrodyn::pdb_asa_for_saxs_hydrate()
                 this_atom->chain == 0) {
 # if defined(DEBUG)
                printf("pass 2d mc_asa %s %s %d pm %d\n",
-                      this_atom->name.ascii(),
-                      this_atom->resName.ascii(),
+                      this_atom->name.toAscii().data(),
+                      this_atom->resName.toAscii().data(),
                       this_atom->serial,
                       this_atom->placing_method); fflush(stdout);
 # endif
@@ -1249,8 +1249,8 @@ int US_Hydrodyn::pdb_asa_for_saxs_hydrate()
 
 #if defined(DEBUG)
                printf("pass 3 active is bead %s %s %d\n",
-                      this_atom->name.ascii(),
-                      this_atom->resName.ascii(),
+                      this_atom->name.toAscii().data(),
+                      this_atom->resName.toAscii().data(),
                       this_atom->serial); fflush(stdout);
 #endif
                for (unsigned int m = 0; m < 3; m++) {
@@ -1267,8 +1267,8 @@ int US_Hydrodyn::pdb_asa_for_saxs_hydrate()
 
 #if defined(DEBUG)
                   printf("pass 3 active is bead %s %s %d bead assignment %d placing method %d\n",
-                         this_atom->name.ascii(),
-                         this_atom->resName.ascii(),
+                         this_atom->name.toAscii().data(),
+                         this_atom->resName.toAscii().data(),
                          this_atom->serial,
                          this_atom->bead_assignment,
                          this_atom->placing_method
@@ -1280,8 +1280,8 @@ int US_Hydrodyn::pdb_asa_for_saxs_hydrate()
                      this_atom->bead_coordinate = this_atom->bead_cog_coordinate;
                      // if (this_atom->bead_positioner) {
                      // fprintf(stderr, "warning: this bead had a atom claiming position & a bead placing method of cog! %s %s %d\n",
-                     //   this_atom->name.ascii(),
-                     //   this_atom->resName.ascii(),
+                     //   this_atom->name.toAscii().data(),
+                     //   this_atom->resName.toAscii().data(),
                      //   this_atom->serial);
                      // }
                      break;
@@ -1295,8 +1295,8 @@ int US_Hydrodyn::pdb_asa_for_saxs_hydrate()
                      this_atom->bead_coordinate = this_atom->bead_cog_coordinate;
                      fprintf(stderr, "warning: unknown bead placing method %d %s %s %d <using cog!>\n",
                              this_atom->placing_method,
-                             this_atom->name.ascii(),
-                             this_atom->resName.ascii(),
+                             this_atom->name.toAscii().data(),
+                             this_atom->resName.toAscii().data(),
                              this_atom->serial);
                      break;
                   }
@@ -1304,17 +1304,17 @@ int US_Hydrodyn::pdb_asa_for_saxs_hydrate()
                else 
                {
                   fprintf(stderr, "serious internal error 1 on %s %s %d, quitting\n",
-                          this_atom->name.ascii(),
-                          this_atom->resName.ascii(),
+                          this_atom->name.toAscii().data(),
+                          this_atom->resName.toAscii().data(),
                           this_atom->serial);
                   exit(-1);
                   break;
                }
 #if defined(DEBUG) || defined(OLD_ASAB1_SC_COMPUTE)
                printf("pass 3 active is bead %s %s %s checkpoint 1\n",
-                      this_atom->name.ascii(),
-                      this_atom->resName.ascii(),
-                      this_atom->resSeq.ascii()); fflush(stdout);
+                      this_atom->name.toAscii().data(),
+                      this_atom->resName.toAscii().data(),
+                      this_atom->resSeq.toAscii().data()); fflush(stdout);
 #endif
                this_atom->visibility = (this_atom->bead_asa >= asa.hydrate_threshold);
 
@@ -1332,8 +1332,8 @@ int US_Hydrodyn::pdb_asa_for_saxs_hydrate()
 
 #if defined(DEBUG)
                printf("pass 3 active is bead %s %s %d checkpoint 2\n",
-                      this_atom->name.ascii(),
-                      this_atom->resName.ascii(),
+                      this_atom->name.toAscii().data(),
+                      this_atom->resName.toAscii().data(),
                       this_atom->serial); fflush(stdout);
 #endif
                if (!create_beads_normally ||
@@ -1352,8 +1352,8 @@ int US_Hydrodyn::pdb_asa_for_saxs_hydrate()
                }
 #if defined(DEBUG)
                printf("pass 3 active is bead %s %s %d checkpoint 3\n",
-                      this_atom->name.ascii(),
-                      this_atom->resName.ascii(),
+                      this_atom->name.toAscii().data(),
+                      this_atom->resName.toAscii().data(),
                       this_atom->serial); fflush(stdout);
 #endif
 
@@ -1375,7 +1375,7 @@ int US_Hydrodyn::pdb_asa_for_saxs_hydrate()
    }
 
    // pass 4 print results
-   progress->setProgress(ppos++); // 7
+   progress->setValue(ppos++); // 7
    qApp->processEvents();
    if (stopFlag)
    {
@@ -1406,9 +1406,9 @@ int US_Hydrodyn::pdb_asa_for_saxs_hydrate()
                    "[%f,%f,%f]~[%f,%f,%f]~[%f, %f, %f]\n",
 
                    i, j, k,
-                   this_atom->name.ascii(),
-                   this_atom->resName.ascii(),
-                   this_atom->chainID.ascii(),
+                   this_atom->name.toAscii().data(),
+                   this_atom->resName.toAscii().data(),
+                   this_atom->chainID.toAscii().data(),
 
                    this_atom->coordinate.axis[0],
                    this_atom->coordinate.axis[1],
@@ -1453,7 +1453,7 @@ int US_Hydrodyn::pdb_asa_for_saxs_hydrate()
    }
 #endif
 
-   progress->setProgress(ppos++); // 8
+   progress->setValue(ppos++); // 8
    qApp->processEvents();
    if (stopFlag)
    {
@@ -1515,7 +1515,7 @@ void US_Hydrodyn::build_to_hydrate()
             .arg( this_atom->resSeq )
             .arg( this_atom->chainID );
 
-         if ( rx_main_chain.search( this_atom->resName ) == -1 
+         if ( rx_main_chain.indexIn( this_atom->resName ) == -1 
               && exposed_sc.count( mapkey )
               && rotamers.count( this_atom->resName )
               )
@@ -1603,16 +1603,16 @@ bool US_Hydrodyn::compute_to_hydrate_dihedrals( QString &error_msg )
           it != to_hydrate.end();
           it++ )
    {
-      if ( rx_expand_mapkey.search( it->first ) == -1 )
+      if ( rx_expand_mapkey.indexIn( it->first ) == -1 )
       {
-         error_msg = QString( tr( "Internal error: could not expand mapkey %1" ) ).arg( it->first );
+         error_msg = QString( us_tr( "Internal error: could not expand mapkey %1" ) ).arg( it->first );
          return false;
       }
       QString resName = rx_expand_mapkey.cap( 1 );
       // check dihedrals for this residue
       if ( !dihedral_atoms.count( resName ) )
       {
-         error_msg = QString( tr( "No dihedral group found for residue %1." ) ).arg( resName );
+         error_msg = QString( us_tr( "No dihedral group found for residue %1." ) ).arg( resName );
          return false;
       }
 #if defined( DEBUG_TO_HYDRATE_DIHEDRAL )
@@ -1863,30 +1863,10 @@ void US_Hydrodyn::view_exposed()
       editor->append("Error creating file " + fname + "\n");
       return;
    }
-   Q3TextStream t( &f );
+   QTextStream t( &f );
    t << out;
    f.close();
-   QStringList argument;
-#if !defined(WIN32) && !defined(MAC)
-   argument.append("xterm");
-   argument.append("-e");
-#endif
-#if defined(BIN64)
-   argument.append(USglobal->config_list.system_dir + "/bin64/rasmol");
-#else
-   argument.append(USglobal->config_list.system_dir + "/bin/rasmol");
-#endif
-   argument.append("-script");
-   argument.append(fname);
-   rasmol = new Q3Process(this);
-   rasmol->setWorkingDirectory( somo_dir + SLASH + "tmp" );
-   rasmol->setArguments(argument);
-   if (!rasmol->start())
-   {
-      QMessageBox::message(tr("Please note:"), tr("There was a problem starting RASMOL\n"
-                                                  "Please check to make sure RASMOL is properly installed..."));
-      return;
-   }
+   model_viewer( fname, "-script" );
 }
 
 bool US_Hydrodyn::load_rotamer( QString &error_msg )
@@ -1897,7 +1877,7 @@ bool US_Hydrodyn::load_rotamer( QString &error_msg )
       return true;
    }
 
-   editor->append( tr("Reading hydrated rotamer file\n") );
+   editor->append( us_tr("Reading hydrated rotamer file\n") );
    qApp->processEvents();
    rotamers.clear();
    rotated_rotamers.clear();
@@ -1910,24 +1890,24 @@ bool US_Hydrodyn::load_rotamer( QString &error_msg )
    QFile f( saxs_options.default_rotamer_filename );
    if ( !f.exists() )
    {
-      error_msg = tr( "Hydrated Rotamer file not found:\n"
+      error_msg = us_tr( "Hydrated Rotamer file not found:\n"
                       "The Hydrated Rotamer file can be set in SOMO->SAXS/SANS Options" );
       return false;
    }
    if ( !f.open( QIODevice::ReadOnly ) )
    {
-      error_msg = tr( "Hydrated Rotamer file is not readable:\n"
+      error_msg = us_tr( "Hydrated Rotamer file is not readable:\n"
                       "Check file permissions" );
       return false;
    }      
 
    QStringList qsl;
-   Q3TextStream ts( &f );
+   QTextStream ts( &f );
    
    while ( !ts.atEnd() )
    {
       QString qs = ts.readLine();
-      if ( qs.lower().contains( QRegExp( "^end-file" ) ) )
+      if ( qs.toLower().contains( QRegExp( "^end-file" ) ) )
       {
          break;
       }
@@ -1948,7 +1928,7 @@ bool US_Hydrodyn::load_rotamer( QString &error_msg )
 
    for ( unsigned int i = 0; i < (unsigned int) qsl.size(); i++ )
    {
-      if ( rx_skip.search( qsl[ i ] ) != -1 )
+      if ( rx_skip.indexIn( qsl[ i ] ) != -1 )
       {
          continue;
       }
@@ -1960,13 +1940,13 @@ bool US_Hydrodyn::load_rotamer( QString &error_msg )
          qsl[ i ].at( 22 ) = ' ';
 #endif
       }
-      QStringList qsl_line = QStringList::split( rx_whitespace, qsl[ i ] );
+      QStringList qsl_line = (qsl[ i ] ).split( rx_whitespace , QString::SkipEmptyParts );
       if ( qsl_line[ 0 ] == "multiple-rotate:" )
       {
          if ( in_rotamer )
          {
             error_msg = 
-               QString( tr( "Error in hydrated rotamer file line %1.  multiple-rotate token can not occur within a rotamer definition" ) )
+               QString( us_tr( "Error in hydrated rotamer file line %1.  multiple-rotate token can not occur within a rotamer definition" ) )
                .arg( i + 1 );
             return false;
          }            
@@ -1976,7 +1956,7 @@ bool US_Hydrodyn::load_rotamer( QString &error_msg )
          if ( qsl_line.size() < 5 )
          {
             error_msg = 
-               QString( tr( "Error in hydrated rotamer file line %1.  multiple-rotate: requires at least 5 arguments" ) )
+               QString( us_tr( "Error in hydrated rotamer file line %1.  multiple-rotate: requires at least 5 arguments" ) )
                .arg( i + 1 );
             return false;
          }
@@ -1984,7 +1964,7 @@ bool US_Hydrodyn::load_rotamer( QString &error_msg )
          if ( ( qsl_line.size() - 2 ) % 3 )
          {
             error_msg = 
-               QString( tr( "Error in hydrated rotamer file line %1.  multiple-rotate: requires exactly 2 + 3n arguments, n >= 1" ) )
+               QString( us_tr( "Error in hydrated rotamer file line %1.  multiple-rotate: requires exactly 2 + 3n arguments, n >= 1" ) )
                .arg( i + 1 );
             return false;
          }
@@ -1996,7 +1976,7 @@ bool US_Hydrodyn::load_rotamer( QString &error_msg )
          if ( rotated_rotamers.count( name ) )
          {
             error_msg = 
-               QString( tr( "Error in hydrated rotamer file line %1.  multiple-rotate: %2 previously multiple-rotate'd" ) )
+               QString( us_tr( "Error in hydrated rotamer file line %1.  multiple-rotate: %2 previously multiple-rotate'd" ) )
                .arg( i + 1 )
                .arg( name );
             return false;
@@ -2005,7 +1985,7 @@ bool US_Hydrodyn::load_rotamer( QString &error_msg )
          if ( !rotamers.count( residue ) )
          {
             error_msg = 
-               QString( tr( "Error in hydrated rotamer file line %1.  multiple-rotate: residue: %2 must be previously defined" ) )
+               QString( us_tr( "Error in hydrated rotamer file line %1.  multiple-rotate: residue: %2 must be previously defined" ) )
                .arg( i + 1 )
                .arg( residue );
             return false;
@@ -2014,7 +1994,7 @@ bool US_Hydrodyn::load_rotamer( QString &error_msg )
          if ( rotate <= 1 )
          {
             error_msg = 
-               QString( tr( "Error in hydrated rotamer file line %1.  multiple-rotate: rotate count %2, must be 2 or greater" ) )
+               QString( us_tr( "Error in hydrated rotamer file line %1.  multiple-rotate: rotate count %2, must be 2 or greater" ) )
                .arg( i + 1 )
                .arg( rotate );
             return false;
@@ -2030,7 +2010,7 @@ bool US_Hydrodyn::load_rotamer( QString &error_msg )
          //          if ( water_count != rotamers[ residue ][ 0 ].water_positioning_atoms.size() )
          //          {
          //             error_msg = 
-         //                QString( tr( "Error in hydrated rotamer file line %1.  multiple-rotate: difference in water count (%2) with reference rotamer water count (%3)" ) )
+         //                QString( us_tr( "Error in hydrated rotamer file line %1.  multiple-rotate: difference in water count (%2) with reference rotamer water count (%3)" ) )
          //                .arg( i + 1 )
          //                .arg( water_count )
          //                .arg( rotamers[ residue ][ 0 ].water_positioning_atoms.size() );
@@ -2064,7 +2044,7 @@ bool US_Hydrodyn::load_rotamer( QString &error_msg )
             if ( !found_match )
             {
                error_msg = 
-                  QString( tr( "Error in hydrated rotamer file line %1.  multiple-rotate: residue: %2 found, but full name %3 missing" ) )
+                  QString( us_tr( "Error in hydrated rotamer file line %1.  multiple-rotate: residue: %2 found, but full name %3 missing" ) )
                   .arg( i + 1 )
                   .arg( residue )
                   .arg( name );
@@ -2101,7 +2081,7 @@ bool US_Hydrodyn::load_rotamer( QString &error_msg )
                if ( !found_sc_atom )
                {
                   error_msg = 
-                     QString( tr( "Error in hydrated rotamer file line %1.  multiple-rotate: residue: %2 found, atom %3 missing" ) )
+                     QString( us_tr( "Error in hydrated rotamer file line %1.  multiple-rotate: residue: %2 found, atom %3 missing" ) )
                      .arg( i + 1 )
                      .arg( residue )
                      .arg( atoms[ j ] );
@@ -2112,7 +2092,7 @@ bool US_Hydrodyn::load_rotamer( QString &error_msg )
             if ( (unsigned int) ref_rotamer.waters.size() <= water_number )
             {
                error_msg = 
-                  QString( tr( "Error in hydrated rotamer file line %1.  multiple-rotate: residue: %2 found reference rotamer, but it has %3 waters, less than %4 requested" ) )
+                  QString( us_tr( "Error in hydrated rotamer file line %1.  multiple-rotate: residue: %2 found reference rotamer, but it has %3 waters, less than %4 requested" ) )
                   .arg( i + 1 )
                   .arg( residue )
                   .arg( ref_rotamer.waters.size() )
@@ -2126,7 +2106,7 @@ bool US_Hydrodyn::load_rotamer( QString &error_msg )
             if ( ref_rotamer.waters[ water_number ].name != atoms[ 2 ] )
             {
                error_msg = 
-                  QString( tr( "Error in hydrated rotamer file line %1.  multiple-rotate: residue: %2 found, atom %3 missing from waters" ) )
+                  QString( us_tr( "Error in hydrated rotamer file line %1.  multiple-rotate: residue: %2 found, atom %3 missing from waters" ) )
                   .arg( i + 1 )
                   .arg( residue )
                   .arg( atoms[ 2 ] );
@@ -2168,7 +2148,7 @@ bool US_Hydrodyn::load_rotamer( QString &error_msg )
                                   normal( minus( p[ 2 ], p[ 1 ] ) ) ) );
       
 #if defined( UHH_DEBUG_RR )
-            cout << QString( tr( "Angle %1,%2,%3 = %4 or %5 degrees\n" ) )
+            cout << QString( us_tr( "Angle %1,%2,%3 = %4 or %5 degrees\n" ) )
                .arg( atoms[ 0 ] )
                .arg( atoms[ 1 ] )
                .arg( atoms[ 2 ] )
@@ -2219,7 +2199,7 @@ bool US_Hydrodyn::load_rotamer( QString &error_msg )
             float na = acosf( dot( normal( minus( np[ 0 ], np[ 1 ] ) ),
                                    normal( minus( np[ 2 ], np[ 1 ] ) ) ) );
       
-            cout << QString( tr( "new: Angle %1,%2,%3 = %4 or %5 degrees\n" ) )
+            cout << QString( us_tr( "new: Angle %1,%2,%3 = %4 or %5 degrees\n" ) )
                .arg( atoms[ 0 ] )
                .arg( atoms[ 1 ] )
                .arg( atoms[ 2 ] )
@@ -2243,7 +2223,7 @@ bool US_Hydrodyn::load_rotamer( QString &error_msg )
             if ( !atom_align( p, np, ref_rotamer_p, ref_rotamer_np, error_msg ) )
             {
                error_msg = 
-                  QString( tr( "Error in hydrated rotamer file line %1.  multiple-rotate: " ) ).
+                  QString( us_tr( "Error in hydrated rotamer file line %1.  multiple-rotate: " ) ).
                   arg( i + 1 ) + error_msg;
                return false;
             }
@@ -2316,8 +2296,8 @@ bool US_Hydrodyn::load_rotamer( QString &error_msg )
                      .sprintf(     
                               "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
                               ++apos,
-                              rotated_rotamers[ name ][ jj ][ j ].side_chain[ k ].name.ascii(),
-                              name.left( 3 ).ascii(),
+                              rotated_rotamers[ name ][ jj ][ j ].side_chain[ k ].name.toAscii().data(),
+                              name.left( 3 ).toAscii().data(),
                               "A",
                               1,
                               rotated_rotamers[ name ][ jj ][ j ].side_chain[ k ].coordinate.axis[ 0 ],
@@ -2335,7 +2315,7 @@ bool US_Hydrodyn::load_rotamer( QString &error_msg )
                      .sprintf(     
                               "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
                               ++apos,
-                              rotated_rotamers[ name ][ jj ][ j ].waters[ k ].name.ascii(),
+                              rotated_rotamers[ name ][ jj ][ j ].waters[ k ].name.toAscii().data(),
                               "WAT",
                               "B",
                               2,
@@ -2368,7 +2348,7 @@ bool US_Hydrodyn::load_rotamer( QString &error_msg )
          if ( pointmap_atoms.count( res ) )
          {
             error_msg = 
-               QString( tr( "Error in hydrated rotamer file line %1.  %2 was previously defined as a pointmap" ) )
+               QString( us_tr( "Error in hydrated rotamer file line %1.  %2 was previously defined as a pointmap" ) )
                .arg( i + 1 )
                .arg( res );
             return false;
@@ -2381,7 +2361,7 @@ bool US_Hydrodyn::load_rotamer( QString &error_msg )
             if ( points < 3 )
             {
                error_msg = 
-                  QString( tr( "Error in hydrated rotamer file line %1.  Invalid number of points for a map on pointmap line" ) )
+                  QString( us_tr( "Error in hydrated rotamer file line %1.  Invalid number of points for a map on pointmap line" ) )
                   .arg( i + 1 );
                return false;
             }
@@ -2391,7 +2371,7 @@ bool US_Hydrodyn::load_rotamer( QString &error_msg )
                if ( !qsl_line.size() )
                {
                   error_msg = 
-                     QString( tr( "Error in hydrated rotamer file line %1.  Invalid number of tokens on pointmap line" ) )
+                     QString( us_tr( "Error in hydrated rotamer file line %1.  Invalid number of tokens on pointmap line" ) )
                      .arg( i + 1 );
                   return false;
                }
@@ -2403,7 +2383,7 @@ bool US_Hydrodyn::load_rotamer( QString &error_msg )
             if ( !qsl_line.size() )
             {
                error_msg = 
-                  QString( tr( "Error in hydrated rotamer file line %1.  Invalid number of tokens on pointmap line" ) )
+                  QString( us_tr( "Error in hydrated rotamer file line %1.  Invalid number of tokens on pointmap line" ) )
                   .arg( i + 1 );
                return false;
             }
@@ -2416,7 +2396,7 @@ bool US_Hydrodyn::load_rotamer( QString &error_msg )
                if ( !qsl_line.size() )
                {
                   error_msg = 
-                     QString( tr( "Error in hydrated rotamer file line %1.  Invalid number of tokens on pointmap line" ) )
+                     QString( us_tr( "Error in hydrated rotamer file line %1.  Invalid number of tokens on pointmap line" ) )
                      .arg( i + 1 );
                   return false;
                }
@@ -2456,7 +2436,7 @@ bool US_Hydrodyn::load_rotamer( QString &error_msg )
                if ( pointmap_atoms.count( AAs[ j ] ) )
                {
                   error_msg = 
-                     QString( tr( "Error in hydrated rotamer file line %1. "
+                     QString( us_tr( "Error in hydrated rotamer file line %1. "
                                   "Pointmap defined for AA, but preexisting pointmap defined for Amino Acid residue %2." ) )
                      .arg( i + 1 )
                      .arg( AAs[ j ] );
@@ -2488,7 +2468,7 @@ bool US_Hydrodyn::load_rotamer( QString &error_msg )
          if ( four_atoms.size() )
          {
             error_msg = 
-               QString( tr( "Error in hydrated rotamer file line %1.  Invalid number of tokens %2 on dihedral line" ) )
+               QString( us_tr( "Error in hydrated rotamer file line %1.  Invalid number of tokens %2 on dihedral line" ) )
                .arg( i + 1 )
                .arg( qsl_line.size() + 2 );
             return false;
@@ -2501,7 +2481,7 @@ bool US_Hydrodyn::load_rotamer( QString &error_msg )
          if ( qsl_line.size() != 2 )
          {
             error_msg = 
-               QString( tr( "Error in hydrated rotamer file line %1.  Invalid number of tokens %2" ) )
+               QString( us_tr( "Error in hydrated rotamer file line %1.  Invalid number of tokens %2" ) )
                .arg( i + 1 )
                .arg( qsl_line.size() );
             return false;
@@ -2510,7 +2490,7 @@ bool US_Hydrodyn::load_rotamer( QString &error_msg )
          if ( qsl_line[ 0 ] != "start-rotamer:" )
          {
             error_msg = 
-               QString( tr( "Error in hydrated rotamer file line %1.  Unrecognized token %2" ) )
+               QString( us_tr( "Error in hydrated rotamer file line %1.  Unrecognized token %2" ) )
                .arg( i + 1 )
                .arg( qsl_line[ 0 ] );
             return false;
@@ -2534,7 +2514,7 @@ bool US_Hydrodyn::load_rotamer( QString &error_msg )
                  !tmp_rotamer.waters.size() )
             {
                error_msg = 
-                  QString( tr( "Error in hydrated rotamer file line %1.  Empty rotamer" ) )
+                  QString( us_tr( "Error in hydrated rotamer file line %1.  Empty rotamer" ) )
                   .arg( i + 1 );
                return false;
             }
@@ -2546,7 +2526,7 @@ bool US_Hydrodyn::load_rotamer( QString &error_msg )
          if ( qsl_line[ 0 ] != "TER" )
          {
             error_msg = 
-               QString( tr( "Error in hydrated rotamer file line %1.  Unrecognized token %2 in this context" ) )
+               QString( us_tr( "Error in hydrated rotamer file line %1.  Unrecognized token %2 in this context" ) )
                .arg( i + 1 )
                .arg( qsl_line[ 0 ] );
             return false;
@@ -2557,7 +2537,7 @@ bool US_Hydrodyn::load_rotamer( QString &error_msg )
       if ( qsl_line.size() != 12 )
       {
          error_msg = 
-            QString( tr ( "Error in hydrated rotamer file line %1:\n"
+            QString( us_tr( "Error in hydrated rotamer file line %1:\n"
                           "%2\n"
                           "Unexpected number of tokens %3\n" ) )
             .arg( i + 1 )
@@ -2568,7 +2548,7 @@ bool US_Hydrodyn::load_rotamer( QString &error_msg )
       if ( qsl_line[ 0 ] != "ATOM" )
       {
          error_msg = 
-            QString( tr( "Error in hydrated rotamer file line %1.  Unrecognized token %2" ) )
+            QString( us_tr( "Error in hydrated rotamer file line %1.  Unrecognized token %2" ) )
             .arg( i + 1 )
             .arg( qsl_line[ 0 ] );
          return false;
@@ -2581,7 +2561,7 @@ bool US_Hydrodyn::load_rotamer( QString &error_msg )
       }
       
       if ( !in_rotamer_waters &&
-           rx_main_chain.search( qsl_line[ 2 ] ) != -1 )
+           rx_main_chain.indexIn( qsl_line[ 2 ] ) != -1 )
       {
          // skip main chain 
          continue;
@@ -2612,13 +2592,13 @@ bool US_Hydrodyn::load_rotamer( QString &error_msg )
    if ( in_rotamer )
    {
       error_msg = 
-         tr( "Error in hydrated rotamer file at end, no final end-rotamer." );
+         us_tr( "Error in hydrated rotamer file at end, no final end-rotamer." );
       return false;
    }
 
    cout << validate_pointmap();
 
-   editor->append( tr("Done reading hydrated rotamer file\n") );
+   editor->append( us_tr("Done reading hydrated rotamer file\n") );
    qApp->processEvents();
    rotamer_changed = false;
    puts("load_rotamer done");
@@ -2675,7 +2655,7 @@ bool US_Hydrodyn::load_rotamer( QString &error_msg )
 
 bool US_Hydrodyn::compute_rotamer_dihedrals( QString &error_msg )
 {
-   editor->append( tr("Calculating dihedrals of rotamers\n") );
+   editor->append( us_tr("Calculating dihedrals of rotamers\n") );
    qApp->processEvents();
    puts("Calculating dihedrals of rotamers");
 
@@ -2750,7 +2730,7 @@ bool US_Hydrodyn::compute_rotamer_dihedrals( QString &error_msg )
          }
       }
    }
-   editor->append( tr("Done calculating dihedrals of rotamers\n") );
+   editor->append( us_tr("Done calculating dihedrals of rotamers\n") );
    qApp->processEvents();
    puts("Done calculating dihedrals of rotamers");
    return true;
@@ -2942,16 +2922,16 @@ bool US_Hydrodyn::compute_best_fit_rotamer( QString &error_msg )
          it != to_hydrate_dihedrals.end();
          it++ )
    {
-      if ( rx_expand_mapkey.search( it->first ) == -1 )
+      if ( rx_expand_mapkey.indexIn( it->first ) == -1 )
       {
-         error_msg = QString( tr( "Internal error: could not expand mapkey %1" ) ).arg( it->first );
+         error_msg = QString( us_tr( "Internal error: could not expand mapkey %1" ) ).arg( it->first );
          return false;
       }
       QString resName = rx_expand_mapkey.cap( 1 );
       // check dihedrals for this residue
       if ( !rotamers.count( resName ) )
       {
-         error_msg = QString( tr( "No rotamer group found for residue %1." ) ).arg( resName );
+         error_msg = QString( us_tr( "No rotamer group found for residue %1." ) ).arg( resName );
          return false;
       }
       
@@ -2963,7 +2943,7 @@ bool US_Hydrodyn::compute_best_fit_rotamer( QString &error_msg )
          if ( it->second.size() != rotamers[ resName ][ i ].dihedral_angles.size() )
          {
             error_msg = 
-               QString( tr( "Number of dihedrals do not match between side chain %1 (%2) and rotamer %3 (%4)" ) )
+               QString( us_tr( "Number of dihedrals do not match between side chain %1 (%2) and rotamer %3 (%4)" ) )
                .arg( it->first )
                .arg( it->second.size() )
                .arg( rotamers[ resName ][ i ].name )
@@ -3017,16 +2997,16 @@ bool US_Hydrodyn::setup_pointmap_rotamers( QString &error_msg )
          it != to_hydrate_pointmaps.end();
          it++ )
    {
-      if ( rx_expand_mapkey.search( it->first ) == -1 )
+      if ( rx_expand_mapkey.indexIn( it->first ) == -1 )
       {
-         error_msg = QString( tr( "Internal error: could not expand mapkey %1" ) ).arg( it->first );
+         error_msg = QString( us_tr( "Internal error: could not expand mapkey %1" ) ).arg( it->first );
          return false;
       }
       QString resName = rx_expand_mapkey.cap( 1 );
       // for each entry in pointmap_atoms_ref_residue
       if ( !pointmap_atoms_ref_residue.count( resName ) )
       {
-         error_msg = QString( tr( "Internal error: could not find rotamer for pointmap key %1" ) ).arg( it->first );
+         error_msg = QString( us_tr( "Internal error: could not find rotamer for pointmap key %1" ) ).arg( it->first );
          return false;
       }
 
@@ -3034,7 +3014,7 @@ bool US_Hydrodyn::setup_pointmap_rotamers( QString &error_msg )
       {
          if ( !rotamers.count( pointmap_atoms_ref_residue[ resName ][ i ] ) )
          {
-            error_msg = QString( tr( "No rotamer group found for pointmap key %1 reference residue %2." ) )
+            error_msg = QString( us_tr( "No rotamer group found for pointmap key %1 reference residue %2." ) )
                .arg( it->first )
                .arg( pointmap_atoms_ref_residue[ resName ][ i ] );
             return false;
@@ -3068,7 +3048,7 @@ QString US_Hydrodyn::list_pointmap_rotamers()
 
 bool US_Hydrodyn::compute_water_positioning_atoms( QString & error_msg )
 {
-   editor->append( tr("Calculating water positioning atoms for each rotamer\n") );
+   editor->append( us_tr("Calculating water positioning atoms for each rotamer\n") );
    qApp->processEvents();
    puts("Calculating water positioning atoms for each rotamer");
 
@@ -3121,11 +3101,11 @@ bool US_Hydrodyn::compute_water_positioning_atoms( QString & error_msg )
       }
    }
 
-   editor->append( tr("Done calculating water positioning atoms for each rotamer\n") );
+   editor->append( us_tr("Done calculating water positioning atoms for each rotamer\n") );
    qApp->processEvents();
    puts("Done calculating water positioning atoms for each rotamer");
 
-   editor->append( tr("Copy over water positioning info for rotated rotamers\n") );
+   editor->append( us_tr("Copy over water positioning info for rotated rotamers\n") );
    qApp->processEvents();
 
    for ( map < QString, vector < vector < rotamer > > >::iterator it = rotated_rotamers.begin();
@@ -3134,7 +3114,7 @@ bool US_Hydrodyn::compute_water_positioning_atoms( QString & error_msg )
    {
       if ( !back_ref.count( it->first ) )
       {
-         error_msg = QString( tr( "Error: rotated_rotamer wth name %1 not found it rotamers" ) )
+         error_msg = QString( us_tr( "Error: rotated_rotamer wth name %1 not found it rotamers" ) )
             .arg( it->first );
          return false;
       }
@@ -3143,7 +3123,7 @@ bool US_Hydrodyn::compute_water_positioning_atoms( QString & error_msg )
       
       if ( water_count != back_ref[ it->first ]->water_positioning_atoms.size() )
       {
-         error_msg = QString( tr( "Error: rotated_rotamer wth name %1 found but water count differs %2 vs %3" ) )
+         error_msg = QString( us_tr( "Error: rotated_rotamer wth name %1 found but water count differs %2 vs %3" ) )
             .arg( it->first )
             .arg( water_count )
             .arg( back_ref[ it->first ]->water_positioning_atoms.size() );
@@ -3213,7 +3193,7 @@ QString US_Hydrodyn::list_water_positioning_atoms()
 
 bool US_Hydrodyn::compute_waters_to_add( QString &error_msg, bool quiet )
 {
-   editor->append( tr("Transforming waters to add to pdb coordinates\n") );
+   editor->append( us_tr("Transforming waters to add to pdb coordinates\n") );
    qApp->processEvents();
    puts("Transforming waters to add to pdb coordinates");
 
@@ -3238,7 +3218,7 @@ bool US_Hydrodyn::compute_waters_to_add( QString &error_msg, bool quiet )
    {
       if ( !to_hydrate.count( it->first ) )
       {
-         error_msg = QString( tr( "Internal error: best_fit_rotamer key %1 not found in to_hydrate" ) )
+         error_msg = QString( us_tr( "Internal error: best_fit_rotamer key %1 not found in to_hydrate" ) )
             .arg( it->first );
          return false;
       }
@@ -3248,7 +3228,7 @@ bool US_Hydrodyn::compute_waters_to_add( QString &error_msg, bool quiet )
       if ( it->second.water_positioning_atoms.size() !=
            it->second.waters.size() )
       {
-         error_msg = QString( tr( "Internal error: water positioning atom size %1 does not match waters size %2" ) )
+         error_msg = QString( us_tr( "Internal error: water positioning atom size %1 does not match waters size %2" ) )
             .arg( it->second.water_positioning_atoms.size() )
             .arg( it->second.waters.size() );
          return false;
@@ -3264,7 +3244,7 @@ bool US_Hydrodyn::compute_waters_to_add( QString &error_msg, bool quiet )
          {
             if ( !it->second.atom_map.count( it->second.water_positioning_atoms[ i ][ j ] ) )
             {
-               error_msg = QString( tr( "Internal error: water positioning atom %1 not found in atom_map" ) )
+               error_msg = QString( us_tr( "Internal error: water positioning atom %1 not found in atom_map" ) )
                   .arg( it->second.water_positioning_atoms[ i ][ j ] );
                return false;
             }
@@ -3272,7 +3252,7 @@ bool US_Hydrodyn::compute_waters_to_add( QString &error_msg, bool quiet )
 
             if ( !to_hydrate[ it->first ].count( it->second.water_positioning_atoms[ i ][ j ] ) )
             {
-               error_msg = QString( tr( "Internal error: water positioning atom %1 not found in to_hydrate atoms" ) )
+               error_msg = QString( us_tr( "Internal error: water positioning atom %1 not found in to_hydrate atoms" ) )
                   .arg( it->second.water_positioning_atoms[ i ][ j ] );
                return false;
             }
@@ -3322,15 +3302,15 @@ bool US_Hydrodyn::compute_waters_to_add( QString &error_msg, bool quiet )
    {
       if ( !to_hydrate_pointmaps.count( it->first ) )
       {
-         error_msg = QString( tr( "Internal error: pointmap_rotamers key %1 not found in to_hydrate_pointmaps" ) )
+         error_msg = QString( us_tr( "Internal error: pointmap_rotamers key %1 not found in to_hydrate_pointmaps" ) )
             .arg( it->first );
          return false;
       }
 
       // add a waters for each pointmap for this residue
-      if ( rx_expand_mapkey.search( it->first ) == -1 )
+      if ( rx_expand_mapkey.indexIn( it->first ) == -1 )
       {
-         error_msg = QString( tr( "Internal error: could not expand mapkey %1" ) ).arg( it->first );
+         error_msg = QString( us_tr( "Internal error: could not expand mapkey %1" ) ).arg( it->first );
          return false;
       }
       QString resName = rx_expand_mapkey.cap( 1 );
@@ -3338,7 +3318,7 @@ bool US_Hydrodyn::compute_waters_to_add( QString &error_msg, bool quiet )
            !pointmap_atoms_dest.count( resName ) ||
            !pointmap_atoms_ref_residue.count( resName ) )
       {
-         error_msg = QString( tr( "Internal error: could not find pointmap entries for residue of key %1" ) ).arg( it->first );
+         error_msg = QString( us_tr( "Internal error: could not find pointmap entries for residue of key %1" ) ).arg( it->first );
          return false;
       }
          
@@ -3346,7 +3326,7 @@ bool US_Hydrodyn::compute_waters_to_add( QString &error_msg, bool quiet )
            it->second.size() != pointmap_atoms_dest[ resName ].size() ||
            it->second.size() != pointmap_atoms_ref_residue[ resName ].size() )
       {
-         error_msg = QString( tr( "Internal error: could not find pointmap size inconsistancy for key %1" ) ).arg( it->first );
+         error_msg = QString( us_tr( "Internal error: could not find pointmap size inconsistancy for key %1" ) ).arg( it->first );
          return false;
       }
          
@@ -3359,7 +3339,7 @@ bool US_Hydrodyn::compute_waters_to_add( QString &error_msg, bool quiet )
 
          if ( it->second[ i ].residue != pointmap_atoms_ref_residue[ resName ][ i ] )
          {
-            error_msg = QString( tr( "Internal error: inconsistancy for reference residue name for key %1 pos %2 (%3 != %4)" ) )
+            error_msg = QString( us_tr( "Internal error: inconsistancy for reference residue name for key %1 pos %2 (%3 != %4)" ) )
                .arg( it->first )
                .arg( i )
                .arg( it->second[ i ].residue )
@@ -3374,7 +3354,7 @@ bool US_Hydrodyn::compute_waters_to_add( QString &error_msg, bool quiet )
          
          if ( p1.size() != p2.size() )
          {
-            error_msg = QString( tr( "Internal error: size inconsistancy for reference residue name for key %1 pos %2 (%3 != %4)" ) )
+            error_msg = QString( us_tr( "Internal error: size inconsistancy for reference residue name for key %1 pos %2 (%3 != %4)" ) )
                .arg( it->first )
                .arg( i )
                .arg( pointmap_atoms[ resName ][ i ].size() )
@@ -3390,7 +3370,7 @@ bool US_Hydrodyn::compute_waters_to_add( QString &error_msg, bool quiet )
             // .arg(pointmap_atoms_dest[ resName ][ i ][ j ] );
             if ( !it->second[ i ].atom_map.count( pointmap_atoms_dest[ resName ][ i ][ j ] ) )
             {
-               error_msg = QString( tr( "Internal error: atom %1 not found in to_hydrate_pointmaps atoms" ) )
+               error_msg = QString( us_tr( "Internal error: atom %1 not found in to_hydrate_pointmaps atoms" ) )
                   .arg(  pointmap_atoms_dest[ resName ][ i ][ j ]  );
                return false;
             }
@@ -3399,7 +3379,7 @@ bool US_Hydrodyn::compute_waters_to_add( QString &error_msg, bool quiet )
 
             if ( !to_hydrate_pointmaps[ it->first ].count( pointmap_atoms[ resName ][ i ][ j ] ) )
             {
-               error_msg = QString( tr( "Internal error: atom %1 not found in to_hydrate_pointmaps atoms" ) )
+               error_msg = QString( us_tr( "Internal error: atom %1 not found in to_hydrate_pointmaps atoms" ) )
                   .arg(  pointmap_atoms[ resName ][ i ][ j ] );
                return false;
             }
@@ -3514,8 +3494,8 @@ bool US_Hydrodyn::compute_waters_to_add( QString &error_msg, bool quiet )
          }
       }
    }
-   editor->append( tr("Done transforming waters to add to pdb coordinates\n") );
-   editor->append( QString( tr("%1 waters added. %2 not added due to steric clashes \n") )
+   editor->append( us_tr("Done transforming waters to add to pdb coordinates\n") );
+   editor->append( QString( us_tr("%1 waters added. %2 not added due to steric clashes \n") )
                    .arg( count_waters_added ) 
                    .arg( count_waters_not_added ) 
                    );
@@ -3552,12 +3532,12 @@ QString US_Hydrodyn::list_waters_to_add()
 
 QString US_Hydrodyn::list_steric_clash()
 {
-   QString qs = QString( tr( "Steric clash tolerance %1%\n" ) ).arg( saxs_options.steric_clash_distance );
+   QString qs = QString( us_tr( "Steric clash tolerance %1%\n" ) ).arg( saxs_options.steric_clash_distance );
    for ( map < QString, unsigned int >::iterator it = steric_clash_summary.begin();
          it != steric_clash_summary.end();
          it++ )
    {
-      qs += QString( tr( "Steric clashes with %1 : %2\n" ) ).arg( it->first ).arg( it->second );
+      qs += QString( us_tr( "Steric clashes with %1 : %2\n" ) ).arg( it->first ).arg( it->second );
    }
    return qs;
 }
@@ -3954,12 +3934,12 @@ QString US_Hydrodyn::list_steric_clash_recheck( bool quiet )
       }
    }
 
-   QString qs = QString( tr( "Steric clash recheck tolerance %1%\n" ) ).arg( saxs_options.steric_clash_recheck_distance );
+   QString qs = QString( us_tr( "Steric clash recheck tolerance %1%\n" ) ).arg( saxs_options.steric_clash_recheck_distance );
    for ( map < QString, unsigned int >::iterator it = steric_clash_recheck_summary.begin();
          it != steric_clash_recheck_summary.end();
          it++ )
    {
-      qs += QString( tr( "Steric recheck clash %1 : %2\n" ) ).arg( it->first ).arg( it->second );
+      qs += QString( us_tr( "Steric recheck clash %1 : %2\n" ) ).arg( it->first ).arg( it->second );
    }
 
    editor_msg( "blue",
@@ -4020,7 +4000,7 @@ QString US_Hydrodyn::list_steric_clash_recheck( bool quiet )
    QFile f(fname);
    if ( f.open( QIODevice::WriteOnly ) )
    {
-      Q3TextStream ts( &f );
+      QTextStream ts( &f );
       ts << 
          QString(
                  "Hydration of                  %1\n"
@@ -4038,7 +4018,7 @@ QString US_Hydrodyn::list_steric_clash_recheck( bool quiet )
          ts << hydrate_clash_log[ i ];
       }
       ts << "\nEnd clash info\n";
-      qs += QString( tr( "Steric clash report in: %1\n" ) ).arg( fname );
+      qs += QString( us_tr( "Steric clash report in: %1\n" ) ).arg( fname );
       f.close();
       //      if ( !saxs_options.alt_hydration )
       //      {
@@ -4048,7 +4028,7 @@ QString US_Hydrodyn::list_steric_clash_recheck( bool quiet )
       }
       //      }
    } else {
-      editor->append( QString( tr( "Error: could not create %1" ) ).arg( fname ) );
+      editor->append( QString( us_tr( "Error: could not create %1" ) ).arg( fname ) );
    }
    
    {
@@ -4058,12 +4038,12 @@ QString US_Hydrodyn::list_steric_clash_recheck( bool quiet )
       QFile f(fname);
       if ( f.open( QIODevice::WriteOnly ) )
       {
-         Q3TextStream ts( &f );
+         QTextStream ts( &f );
          ts << hydrate_clash_detail;
          f.close();
-         qs += QString( tr( "Steric clash report csv in: %1\n" ) ).arg( fname );
+         qs += QString( us_tr( "Steric clash report csv in: %1\n" ) ).arg( fname );
       } else {
-         editor->append( QString( tr( "Error: could not create %1" ) ).arg( fname ) );
+         editor->append( QString( us_tr( "Error: could not create %1" ) ).arg( fname ) );
       }
    }
 
@@ -4096,7 +4076,7 @@ bool US_Hydrodyn::write_pdb_with_waters( QString &error_msg, bool quiet )
    QFile f( fname );
    if ( !f.open( QIODevice::WriteOnly ) )
    {
-      error_msg = QString( tr("can not open file %1 for writing" ) ).arg( fname );
+      error_msg = QString( us_tr("can not open file %1 for writing" ) ).arg( fname );
       return false;
    }
 
@@ -4123,16 +4103,16 @@ bool US_Hydrodyn::write_pdb_with_waters( QString &error_msg, bool quiet )
             .sprintf(     
                      "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
                      this_atom->serial,
-                     this_atom->orgName.ascii(),
-                     this_atom->resName.ascii(),
-                     this_atom->chainID.ascii(),
+                     this_atom->orgName.toAscii().data(),
+                     this_atom->resName.toAscii().data(),
+                     this_atom->chainID.toAscii().data(),
                      this_atom->resSeq.toUInt(),
                      this_atom->coordinate.axis[ 0 ],
                      this_atom->coordinate.axis[ 1 ],
                      this_atom->coordinate.axis[ 2 ],
                      this_atom->occupancy,
                      this_atom->tempFactor,
-                     this_atom->element.ascii()
+                     this_atom->element.toAscii().data()
                      );
          chains_used[ this_atom->chainID ] = true;
 
@@ -4200,7 +4180,7 @@ bool US_Hydrodyn::write_pdb_with_waters( QString &error_msg, bool quiet )
             .sprintf(     
                      "ATOM  %5d  OW  WAT %1s%4d    %8.3f%8.3f%8.3f  1.00  0.00           O  \n",
                      ++atom_number,
-                     chainID.ascii(),
+                     chainID.toAscii().data(),
                      ++residue_number,
                      it->second[ i ].axis[ 0 ],
                      it->second[ i ].axis[ 1 ],
@@ -4220,9 +4200,9 @@ bool US_Hydrodyn::write_pdb_with_waters( QString &error_msg, bool quiet )
    last_hydrated_pdb_text +=
       "TER\nENDMDL\n";
 
-   Q3TextStream ts( &f );
+   QTextStream ts( &f );
    ts << last_hydrated_pdb_header;
-   ts << last_pdb_load_calc_mw_msg.gres( "\n", "" ).join( "\nREMARK " ) + "\n";
+   ts << last_pdb_load_calc_mw_msg.replaceInStrings( "\n", "" ).join( "\nREMARK " ) + "\n";
    for ( int i = 0; i < ( int ) last_steric_clash_log.size(); i++ )
    {
       ts << last_steric_clash_log[ i ];
@@ -4232,7 +4212,7 @@ bool US_Hydrodyn::write_pdb_with_waters( QString &error_msg, bool quiet )
    f.close();
 
    last_hydrated_pdb_name = fname;
-   editor->append( QString( tr( "File %1 created\n" ) ).arg( fname ) );
+   editor->append( QString( us_tr( "File %1 created\n" ) ).arg( fname ) );
 
    // now rasmol it!
    if ( !quiet ) 
@@ -4261,30 +4241,11 @@ bool US_Hydrodyn::write_pdb_with_waters( QString &error_msg, bool quiet )
       {
          editor->append("Error creating file " + fname + "\n");
       } else {
-         Q3TextStream t( &f );
+         QTextStream t( &f );
          t << out;
          f.close();
          
-         QStringList argument;
-#if !defined(WIN32) && !defined(MAC)
-         argument.append("xterm");
-         argument.append("-e");
-#endif
-#if defined(BIN64)
-         argument.append(USglobal->config_list.system_dir + "/bin64/rasmol");
-#else
-         argument.append(USglobal->config_list.system_dir + "/bin/rasmol");
-#endif
-         argument.append("-script");
-         argument.append(fname);
-         rasmol = new Q3Process(this);
-         rasmol->setWorkingDirectory(somo_dir + SLASH + "tmp");
-         rasmol->setArguments(argument);
-         if (!rasmol->start())
-         {
-            QMessageBox::message(tr("Please note:"), tr("There was a problem starting RASMOL\n"
-                                                        "Please check to make sure RASMOL is properly installed..."));
-         }
+         model_viewer( fname, "-script" );
       }
       hydrate_clash_map_structure .clear();
       hydrate_clash_map_rtmr_water.clear();
@@ -4296,8 +4257,8 @@ bool US_Hydrodyn::write_pdb_with_waters( QString &error_msg, bool quiet )
 
 bool US_Hydrodyn::selected_models_contain( QString residue )
 {
-   for ( unsigned int i = 0; i < (unsigned int)lb_model->numRows(); i++) {
-      if ( lb_model->isSelected( i ) ) {
+   for ( unsigned int i = 0; i < (unsigned int)lb_model->count(); i++) {
+      if ( lb_model->item( i )->isSelected() ) {
          for (unsigned int j = 0; j < (unsigned int) model_vector[i].molecule.size (); j++) {
             for (unsigned int k = 0; k < (unsigned int) model_vector[i].molecule[j].atom.size (); k++) {
                PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
@@ -4399,11 +4360,11 @@ QString US_Hydrodyn::validate_pointmap()
 #if defined( OLD_WAY )
 bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
 {
-   editor->append( tr("Transforming waters to add to pdb coordinates\n") );
+   editor->append( us_tr("Transforming waters to add to pdb coordinates\n") );
    qApp->processEvents();
    puts("Transforming waters to add to pdb coordinates");
 
-   editor_msg( "blue", tr( "NOTICE: only main chain CA-C-N currenly implemented" ) );
+   editor_msg( "blue", us_tr( "NOTICE: only main chain CA-C-N currenly implemented" ) );
 
    steric_clash_summary.clear();
 
@@ -4439,7 +4400,7 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
 
       if ( !to_hydrate.count( it->first ) )
       {
-         error_msg = QString( tr( "Internal error: best_fit_rotamer key %1 not found in to_hydrate" ) )
+         error_msg = QString( us_tr( "Internal error: best_fit_rotamer key %1 not found in to_hydrate" ) )
             .arg( it->first );
          return false;
       }
@@ -4455,7 +4416,7 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
       if ( it->second.water_positioning_atoms.size() !=
            it->second.waters.size() )
       {
-         error_msg = QString( tr( "Internal error: water positioning atom size %1 does not match waters size %2" ) )
+         error_msg = QString( us_tr( "Internal error: water positioning atom size %1 does not match waters size %2" ) )
             .arg( it->second.water_positioning_atoms.size() )
             .arg( it->second.waters.size() );
          return false;
@@ -4471,7 +4432,7 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
          {
             if ( !it->second.atom_map.count( it->second.water_positioning_atoms[ i ][ j ] ) )
             {
-               error_msg = QString( tr( "Internal error: water positioning atom %1 not found in atom_map" ) )
+               error_msg = QString( us_tr( "Internal error: water positioning atom %1 not found in atom_map" ) )
                   .arg( it->second.water_positioning_atoms[ i ][ j ] );
                return false;
             }
@@ -4479,7 +4440,7 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
 
             if ( !to_hydrate[ it->first ].count( it->second.water_positioning_atoms[ i ][ j ] ) )
             {
-               error_msg = QString( tr( "Internal error: water positioning atom %1 not found in to_hydrate atoms" ) )
+               error_msg = QString( us_tr( "Internal error: water positioning atom %1 not found in to_hydrate atoms" ) )
                   .arg( it->second.water_positioning_atoms[ i ][ j ] );
                return false;
             }
@@ -4535,15 +4496,15 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
          ;
       if ( !to_hydrate_pointmaps.count( it->first ) )
       {
-         error_msg = QString( tr( "Internal error: pointmap_rotamers key %1 not found in to_hydrate_pointmaps" ) )
+         error_msg = QString( us_tr( "Internal error: pointmap_rotamers key %1 not found in to_hydrate_pointmaps" ) )
             .arg( it->first );
          return false;
       }
 
       // add waters for each pointmap for this residue
-      if ( rx_expand_mapkey.search( it->first ) == -1 )
+      if ( rx_expand_mapkey.indexIn( it->first ) == -1 )
       {
-         error_msg = QString( tr( "Internal error: could not expand mapkey %1" ) ).arg( it->first );
+         error_msg = QString( us_tr( "Internal error: could not expand mapkey %1" ) ).arg( it->first );
          return false;
       }
       QString resName = rx_expand_mapkey.cap( 1 );
@@ -4551,7 +4512,7 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
            !pointmap_atoms_dest.count( resName ) ||
            !pointmap_atoms_ref_residue.count( resName ) )
       {
-         error_msg = QString( tr( "Internal error: could not find pointmap entries for residue of key %1" ) ).arg( it->first );
+         error_msg = QString( us_tr( "Internal error: could not find pointmap entries for residue of key %1" ) ).arg( it->first );
          return false;
       }
          
@@ -4559,7 +4520,7 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
            it->second.size() != pointmap_atoms_dest[ resName ].size() ||
            it->second.size() != pointmap_atoms_ref_residue[ resName ].size() )
       {
-         error_msg = QString( tr( "Internal error: could not find pointmap size inconsistancy for key %1" ) ).arg( it->first );
+         error_msg = QString( us_tr( "Internal error: could not find pointmap size inconsistancy for key %1" ) ).arg( it->first );
          return false;
       }
          
@@ -4586,7 +4547,7 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
             // no multiple rotated rotamers
             if ( ref_rotamer.residue != pointmap_atoms_ref_residue[ resName ][ i ] )
             {
-               error_msg = QString( tr( "Internal error: inconsistancy for reference residue name for key %1 pos %2 (%3 != %4)" ) )
+               error_msg = QString( us_tr( "Internal error: inconsistancy for reference residue name for key %1 pos %2 (%3 != %4)" ) )
                   .arg( it->first )
                   .arg( i )
                   .arg( ref_rotamer.residue )
@@ -4601,7 +4562,7 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
             
             if ( p1.size() != p2.size() )
             {
-               error_msg = QString( tr( "Internal error: size inconsistancy for reference residue name for key %1 pos %2 (%3 != %4)" ) )
+               error_msg = QString( us_tr( "Internal error: size inconsistancy for reference residue name for key %1 pos %2 (%3 != %4)" ) )
                   .arg( it->first )
                   .arg( i )
                   .arg( pointmap_atoms[ resName ][ i ].size() )
@@ -4617,7 +4578,7 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
                // .arg(pointmap_atoms_dest[ resName ][ i ][ j ] );
                if ( !ref_rotamer.atom_map.count( pointmap_atoms_dest[ resName ][ i ][ j ] ) )
                {
-                  error_msg = QString( tr( "Internal error: atom %1 not found in to_hydrate_pointmaps atoms" ) )
+                  error_msg = QString( us_tr( "Internal error: atom %1 not found in to_hydrate_pointmaps atoms" ) )
                      .arg(  pointmap_atoms_dest[ resName ][ i ][ j ]  );
                   return false;
                }
@@ -4626,7 +4587,7 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
                
                if ( !to_hydrate_pointmaps[ it->first ].count( pointmap_atoms[ resName ][ i ][ j ] ) )
                {
-                  error_msg = QString( tr( "Internal error: atom %1 not found in to_hydrate_pointmaps atoms" ) )
+                  error_msg = QString( us_tr( "Internal error: atom %1 not found in to_hydrate_pointmaps atoms" ) )
                      .arg(  pointmap_atoms[ resName ][ i ][ j ] );
                   return false;
                }
@@ -4707,15 +4668,15 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
 
       if ( !to_hydrate_pointmaps.count( it->first ) )
       {
-         error_msg = QString( tr( "Internal error: pointmap_rotamers key %1 not found in to_hydrate_pointmaps" ) )
+         error_msg = QString( us_tr( "Internal error: pointmap_rotamers key %1 not found in to_hydrate_pointmaps" ) )
             .arg( it->first );
          return false;
       }
 
       // add waters for each pointmap for this residue
-      if ( rx_expand_mapkey.search( it->first ) == -1 )
+      if ( rx_expand_mapkey.indexIn( it->first ) == -1 )
       {
-         error_msg = QString( tr( "Internal error: could not expand mapkey %1" ) ).arg( it->first );
+         error_msg = QString( us_tr( "Internal error: could not expand mapkey %1" ) ).arg( it->first );
          return false;
       }
       QString resName = rx_expand_mapkey.cap( 1 );
@@ -4723,7 +4684,7 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
            !pointmap_atoms_dest.count( resName ) ||
            !pointmap_atoms_ref_residue.count( resName ) )
       {
-         error_msg = QString( tr( "Internal error: could not find pointmap entries for residue of key %1" ) ).arg( it->first );
+         error_msg = QString( us_tr( "Internal error: could not find pointmap entries for residue of key %1" ) ).arg( it->first );
          return false;
       }
          
@@ -4731,7 +4692,7 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
            it->second.size() != pointmap_atoms_dest[ resName ].size() ||
            it->second.size() != pointmap_atoms_ref_residue[ resName ].size() )
       {
-         error_msg = QString( tr( "Internal error: could not find pointmap size inconsistancy for key %1" ) ).arg( it->first );
+         error_msg = QString( us_tr( "Internal error: could not find pointmap size inconsistancy for key %1" ) ).arg( it->first );
          return false;
       }
          
@@ -4765,7 +4726,7 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
 
                if ( ref_rotamer.residue != pointmap_atoms_ref_residue[ resName ][ i ] )
                {
-                  error_msg = QString( tr( "Internal error: inconsistancy for reference residue name for key %1 pos %2 (%3 != %4)" ) )
+                  error_msg = QString( us_tr( "Internal error: inconsistancy for reference residue name for key %1 pos %2 (%3 != %4)" ) )
                      .arg( it->first )
                      .arg( i )
                      .arg( ref_rotamer.residue )
@@ -4780,7 +4741,7 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
             
                if ( p1.size() != p2.size() )
                {
-                  error_msg = QString( tr( "Internal error: size inconsistancy for reference residue name for key %1 pos %2 (%3 != %4)" ) )
+                  error_msg = QString( us_tr( "Internal error: size inconsistancy for reference residue name for key %1 pos %2 (%3 != %4)" ) )
                      .arg( it->first )
                      .arg( i )
                      .arg( pointmap_atoms[ resName ][ i ].size() )
@@ -4796,7 +4757,7 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
                   // .arg(pointmap_atoms_dest[ resName ][ i ][ j ] );
                   if ( !ref_rotamer.atom_map.count( pointmap_atoms_dest[ resName ][ i ][ j ] ) )
                   {
-                     error_msg = QString( tr( "Internal error: atom %1 not found in to_hydrate_pointmaps atoms" ) )
+                     error_msg = QString( us_tr( "Internal error: atom %1 not found in to_hydrate_pointmaps atoms" ) )
                         .arg(  pointmap_atoms_dest[ resName ][ i ][ j ]  );
                      return false;
                   }
@@ -4805,7 +4766,7 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
                   
                   if ( !to_hydrate_pointmaps[ it->first ].count( pointmap_atoms[ resName ][ i ][ j ] ) )
                   {
-                     error_msg = QString( tr( "Internal error: atom %1 not found in to_hydrate_pointmaps atoms" ) )
+                     error_msg = QString( us_tr( "Internal error: atom %1 not found in to_hydrate_pointmaps atoms" ) )
                         .arg(  pointmap_atoms[ resName ][ i ][ j ] );
                      return false;
                   }
@@ -4840,7 +4801,7 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
 
                if ( ref_rotamer.waters.size() != 1 )
                {
-                  error_msg = QString( tr( "Error: currently only one water supported for multiple rotated rotamer waters, found %1 for %2\n" ) )
+                  error_msg = QString( us_tr( "Error: currently only one water supported for multiple rotated rotamer waters, found %1 for %2\n" ) )
                      .arg( ref_rotamer.waters.size() )
                      .arg( ref_rotamer.name );
                   return false;
@@ -4956,7 +4917,7 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
 
    for ( int i = 0; i < ( int ) water_choices_v.size(); i++ )
    {
-      if ( rx_split_key.search( water_choices_v[ i ] ) == -1 )
+      if ( rx_split_key.indexIn( water_choices_v[ i ] ) == -1 )
       {
          error_msg = QString( "Internal error: unexpected key in water_choices_v <%1>" ).arg( water_choices_v[ i ] );
          return false;
@@ -4985,7 +4946,7 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
       {
          int j = ( jj + i + 1 ) % ( int ) water_choices_v.size();
 
-         if ( rx_split_key.search( water_choices_v[ j ] ) == -1 )
+         if ( rx_split_key.indexIn( water_choices_v[ j ] ) == -1 )
          {
             error_msg = QString( "Internal error: unexpected key in water_choices_v 2 <%1>" ).arg( water_choices_v[ j ] );
             return false;
@@ -5101,10 +5062,10 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
       alt_steric_clash_summary   .push_back( steric_clash_summary );
    }
 
-   editor->append( tr("Done transforming waters to add to pdb coordinates\n") );
+   editor->append( us_tr("Done transforming waters to add to pdb coordinates\n") );
    for ( int i = 0; i < ( int ) alt_waters_to_add.size(); i++ )
    {
-      editor->append( QString( tr("Model %1: %2 waters added. %3 not added due to steric clashes \n") )
+      editor->append( QString( us_tr("Model %1: %2 waters added. %3 not added due to steric clashes \n") )
                       .arg( i + 1 )
                       .arg( alt_count_waters_added    [ i ] ) 
                       .arg( alt_count_waters_not_added[ i ] ) 
@@ -5160,7 +5121,7 @@ bool US_Hydrodyn::alt_write_pdb_with_waters( QString &error_msg, bool /* quiet *
    QFile f( fname );
    if ( !f.open( QIODevice::WriteOnly ) )
    {
-      error_msg = QString( tr("can not open file %1 for writing" ) ).arg( fname );
+      error_msg = QString( us_tr("can not open file %1 for writing" ) ).arg( fname );
       return false;
    }
 
@@ -5195,16 +5156,16 @@ bool US_Hydrodyn::alt_write_pdb_with_waters( QString &error_msg, bool /* quiet *
                .sprintf(     
                         "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
                         this_atom->serial,
-                        this_atom->orgName.ascii(),
-                        this_atom->resName.ascii(),
-                        this_atom->chainID.ascii(),
+                        this_atom->orgName.toAscii().data(),
+                        this_atom->resName.toAscii().data(),
+                        this_atom->chainID.toAscii().data(),
                         this_atom->resSeq.toUInt(),
                         this_atom->coordinate.axis[ 0 ],
                         this_atom->coordinate.axis[ 1 ],
                         this_atom->coordinate.axis[ 2 ],
                         this_atom->occupancy,
                         this_atom->tempFactor,
-                        this_atom->element.ascii()
+                        this_atom->element.toAscii().data()
                         );
             chains_used[ this_atom->chainID ] = true;
 
@@ -5272,7 +5233,7 @@ bool US_Hydrodyn::alt_write_pdb_with_waters( QString &error_msg, bool /* quiet *
                .sprintf(     
                         "ATOM  %5d  OW  WAT %1s%4d    %8.3f%8.3f%8.3f  1.00  0.00           O  \n",
                         ++atom_number,
-                        chainID.ascii(),
+                        chainID.toAscii().data(),
                         ++residue_number,
                         it->second[ i ].axis[ 0 ],
                         it->second[ i ].axis[ 1 ],
@@ -5293,14 +5254,14 @@ bool US_Hydrodyn::alt_write_pdb_with_waters( QString &error_msg, bool /* quiet *
          "TER\nENDMDL\n";
    } // for each model
 
-   Q3TextStream ts( &f );
+   QTextStream ts( &f );
    ts << last_hydrated_pdb_header;
    ts << last_hydrated_pdb_text;
    ts << "END\n";
    f.close();
 
    last_hydrated_pdb_name = fname;
-   editor->append( QString( tr( "File %1 created\n" ) ).arg( fname ) );
+   editor->append( QString( us_tr( "File %1 created\n" ) ).arg( fname ) );
 
    /* no rasmol yet
 
@@ -5335,26 +5296,7 @@ bool US_Hydrodyn::alt_write_pdb_with_waters( QString &error_msg, bool /* quiet *
          t << out;
          f.close();
          
-         QStringList argument;
-#if !defined(WIN32) && !defined(MAC)
-         argument.append("xterm");
-         argument.append("-e");
-#endif
-#if defined(BIN64)
-         argument.append(USglobal->config_list.system_dir + "/bin64/rasmol");
-#else
-         argument.append(USglobal->config_list.system_dir + "/bin/rasmol");
-#endif
-         argument.append("-script");
-         argument.append(fname);
-         rasmol = new QProcess(this);
-         rasmol->setWorkingDirectory(somo_dir + SLASH + "tmp");
-         rasmol->setArguments(argument);
-         if (!rasmol->start())
-         {
-            QMessageBox::message(tr("Please note:"), tr("There was a problem starting RASMOL\n"
-                                                        "Please check to make sure RASMOL is properly installed..."));
-         }
+         model_viewer( fname, "-script" );
       }
       hydrate_clash_map_structure .clear();
       hydrate_clash_map_rtmr_water.clear();
@@ -5381,11 +5323,11 @@ public:
 #if !defined( OLD_WAY )
 bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
 {
-   editor->append( tr("Transforming waters to add to pdb coordinates\n") );
+   editor->append( us_tr("Transforming waters to add to pdb coordinates\n") );
    qApp->processEvents();
    puts("Transforming waters to add to pdb coordinates");
 
-   // editor_msg( "blue", tr( "NOTICE: only main chain CA-C-N currenly implemented" ) );
+   // editor_msg( "blue", us_tr( "NOTICE: only main chain CA-C-N currenly implemented" ) );
 
    steric_clash_summary.clear();
 
@@ -5428,7 +5370,7 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
    if ( saxs_options.hydration_rev_asa )
    {
       lsf.reverse();
-      editor_msg( "blue", tr( "NOTICE: Hydration ASA sort order reversed" ) );
+      editor_msg( "blue", us_tr( "NOTICE: Hydration ASA sort order reversed" ) );
    }
 
    for ( list < sortable_float_qs >::iterator it = lsf.begin();
@@ -5440,12 +5382,12 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
    
    // later, we could separate by bead, mc/sc or map reference set of atoms
 
-   progress->setProgress( residues_in_order.size(), residues_in_order.size() * 2 );
+   progress->setValue( residues_in_order.size() ); progress->setMaximum( residues_in_order.size() * 2 );
 
    for ( unsigned int i = 0; i < (unsigned int) residues_in_order.size(); i++ )
    {
       
-      progress->setProgress( residues_in_order.size() + i, residues_in_order.size() * 2 );
+      progress->setValue( residues_in_order.size() + i ); progress->setMaximum( residues_in_order.size() * 2 );
       QString this_residue = residues_in_order[ i ];
       cout << QString( "asa sorted residues %1 asa %2 bfr %3 pm %4\n" )
          .arg( this_residue )
@@ -5464,7 +5406,7 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
 
          if ( !to_hydrate.count( this_residue ) )
          {
-            error_msg = QString( tr( "Internal error: best_fit_rotamer key %1 not found in to_hydrate" ) )
+            error_msg = QString( us_tr( "Internal error: best_fit_rotamer key %1 not found in to_hydrate" ) )
                .arg( this_residue );
             return false;
          }
@@ -5472,7 +5414,7 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
          if ( best_fit.water_positioning_atoms.size() !=
               best_fit.waters.size() )
          {
-            error_msg = QString( tr( "Internal error: water positioning atom size %1 does not match waters size %2" ) )
+            error_msg = QString( us_tr( "Internal error: water positioning atom size %1 does not match waters size %2" ) )
                .arg( best_fit.water_positioning_atoms.size() )
                .arg( best_fit.waters.size() );
             return false;
@@ -5485,7 +5427,7 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
             // for each water
             if ( rotated_rotamers[ best_fit.name ].size() != best_fit.water_positioning_atoms.size() )
             {
-               error_msg = QString( tr( "Internal error: water positioning atom size %1 does not match best fit rotamer size %2" ) )
+               error_msg = QString( us_tr( "Internal error: water positioning atom size %1 does not match best fit rotamer size %2" ) )
                   .arg( best_fit.water_positioning_atoms.size() )
                   .arg( best_fit.waters.size() );
                return false;
@@ -5515,7 +5457,7 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
                   if ( best_fit.water_positioning_atoms[ ii ].size() !=
                        this_ref_rotamer.water_positioning_atoms[ 0 ].size() )
                   {
-                     error_msg = QString( tr( "Internal error: best fit waters count %1 does not match reference %2" ) )
+                     error_msg = QString( us_tr( "Internal error: best fit waters count %1 does not match reference %2" ) )
                         .arg( best_fit.water_positioning_atoms[ ii ].size() )
                         .arg( this_ref_rotamer.water_positioning_atoms[ 0 ].size() )
                         ;
@@ -5526,7 +5468,7 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
                   {
                      if ( !this_ref_rotamer.atom_map.count( this_ref_rotamer.water_positioning_atoms[ 0 ][ jj ] ) )
                      {
-                        error_msg = QString( tr( "Internal error: water positioning atom %1 not found in atom_map" ) )
+                        error_msg = QString( us_tr( "Internal error: water positioning atom %1 not found in atom_map" ) )
                            .arg( this_ref_rotamer.water_positioning_atoms[ 0 ][ jj ] );
                         return false;
                      }
@@ -5535,7 +5477,7 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
 
                      if ( !to_hydrate[ this_residue ].count( best_fit.water_positioning_atoms[ ii ][ jj ] ) )
                      {
-                        error_msg = QString( tr( "Internal error: water positioning atom %1 not found in to_hydrate atoms" ) )
+                        error_msg = QString( us_tr( "Internal error: water positioning atom %1 not found in to_hydrate atoms" ) )
                            .arg( best_fit.water_positioning_atoms[ ii ][ jj ] );
                         return false;
                      }
@@ -5589,7 +5531,7 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
             //             if ( best_fit.water_positioning_atoms.size() !=
             //                  best_fit.waters.size() )
             //             {
-            //                error_msg = QString( tr( "Internal error: water positioning atom size %1 does not match waters size %2" ) )
+            //                error_msg = QString( us_tr( "Internal error: water positioning atom size %1 does not match waters size %2" ) )
             //                   .arg( best_fit.water_positioning_atoms.size() )
             //                   .arg( best_fit.waters.size() );
             //                return false;
@@ -5605,7 +5547,7 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
                {
                   if ( !best_fit.atom_map.count( best_fit.water_positioning_atoms[ i ][ j ] ) )
                   {
-                     error_msg = QString( tr( "Internal error: water positioning atom %1 not found in atom_map" ) )
+                     error_msg = QString( us_tr( "Internal error: water positioning atom %1 not found in atom_map" ) )
                         .arg( best_fit.water_positioning_atoms[ i ][ j ] );
                      return false;
                   }
@@ -5613,7 +5555,7 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
 
                   if ( !to_hydrate[ this_residue ].count( best_fit.water_positioning_atoms[ i ][ j ] ) )
                   {
-                     error_msg = QString( tr( "Internal error: water positioning atom %1 not found in to_hydrate atoms" ) )
+                     error_msg = QString( us_tr( "Internal error: water positioning atom %1 not found in to_hydrate atoms" ) )
                         .arg( best_fit.water_positioning_atoms[ i ][ j ] );
                      return false;
                   }
@@ -5660,15 +5602,15 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
       {
          if ( !to_hydrate_pointmaps.count( this_residue ) )
          {
-            error_msg = QString( tr( "Internal error: pointmap_rotamers key %1 not found in to_hydrate_pointmaps" ) )
+            error_msg = QString( us_tr( "Internal error: pointmap_rotamers key %1 not found in to_hydrate_pointmaps" ) )
                .arg( this_residue );
             return false;
          }
 
          // add waters for each pointmap for this residue
-         if ( rx_expand_mapkey.search( this_residue ) == -1 )
+         if ( rx_expand_mapkey.indexIn( this_residue ) == -1 )
          {
-            error_msg = QString( tr( "Internal error: could not expand mapkey %1" ) ).arg( this_residue );
+            error_msg = QString( us_tr( "Internal error: could not expand mapkey %1" ) ).arg( this_residue );
             return false;
          }
          QString resName = rx_expand_mapkey.cap( 1 );
@@ -5676,7 +5618,7 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
               !pointmap_atoms_dest.count( resName ) ||
               !pointmap_atoms_ref_residue.count( resName ) )
          {
-            error_msg = QString( tr( "Internal error: could not find pointmap entries for residue of key %1" ) ).arg( this_residue );
+            error_msg = QString( us_tr( "Internal error: could not find pointmap entries for residue of key %1" ) ).arg( this_residue );
             return false;
          }
          
@@ -5684,7 +5626,7 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
               pointmap_rotamers[ this_residue ].size() != pointmap_atoms_dest[ resName ].size() ||
               pointmap_rotamers[ this_residue ].size() != pointmap_atoms_ref_residue[ resName ].size() )
          {
-            error_msg = QString( tr( "Internal error: could not find pointmap size inconsistancy for key %1" ) ).arg( this_residue );
+            error_msg = QString( us_tr( "Internal error: could not find pointmap size inconsistancy for key %1" ) ).arg( this_residue );
             return false;
          }
          
@@ -5707,9 +5649,9 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
             {
                // multiple rotated rotamers for pointmap
 
-               if ( rx_expand_mapkey.search( this_residue ) == -1 )
+               if ( rx_expand_mapkey.indexIn( this_residue ) == -1 )
                {
-                  error_msg = QString( tr( "Internal error: could not expand mapkey %1" ) ).arg( this_residue );
+                  error_msg = QString( us_tr( "Internal error: could not expand mapkey %1" ) ).arg( this_residue );
                   return false;
                }
 
@@ -5719,7 +5661,7 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
                     !pointmap_atoms_dest.count( resName ) ||
                     !pointmap_atoms_ref_residue.count( resName ) )
                {
-                  error_msg = QString( tr( "Internal error: could not find pointmap entries for residue of key %1" ) ).arg( resName );
+                  error_msg = QString( us_tr( "Internal error: could not find pointmap entries for residue of key %1" ) ).arg( resName );
                   return false;
                }
          
@@ -5736,7 +5678,7 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
 
                   if ( this_ref_rotamer.residue != pointmap_atoms_ref_residue[ resName ][ i ] )
                   {
-                     error_msg = QString( tr( "Internal error: inconsistancy for reference residue name for key %1 pos %2 (%3 != %4)" ) )
+                     error_msg = QString( us_tr( "Internal error: inconsistancy for reference residue name for key %1 pos %2 (%3 != %4)" ) )
                         .arg( this_residue )
                         .arg( i )
                         .arg( this_ref_rotamer.residue )
@@ -5751,7 +5693,7 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
                   
                   if ( p1.size() != p2.size() )
                   {
-                     error_msg = QString( tr( "Internal error: size inconsistancy for reference residue name for key %1 pos %2 (%3 != %4)" ) )
+                     error_msg = QString( us_tr( "Internal error: size inconsistancy for reference residue name for key %1 pos %2 (%3 != %4)" ) )
                         .arg( this_residue )
                         .arg( i )
                         .arg( pointmap_atoms[ resName ][ i ].size() )
@@ -5767,7 +5709,7 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
                      // .arg(pointmap_atoms_dest[ resName ][ i ][ j ] );
                      if ( !this_ref_rotamer.atom_map.count( pointmap_atoms_dest[ resName ][ i ][ j ] ) )
                      {
-                        error_msg = QString( tr( "Internal error: atom %1 not found in to_hydrate_pointmaps atoms" ) )
+                        error_msg = QString( us_tr( "Internal error: atom %1 not found in to_hydrate_pointmaps atoms" ) )
                            .arg(  pointmap_atoms_dest[ resName ][ i ][ j ]  );
                         return false;
                      }
@@ -5776,7 +5718,7 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
                
                      if ( !to_hydrate_pointmaps[ this_residue ].count( pointmap_atoms[ resName ][ i ][ j ] ) )
                      {
-                        error_msg = QString( tr( "Internal error: atom %1 not found in to_hydrate_pointmaps atoms" ) )
+                        error_msg = QString( us_tr( "Internal error: atom %1 not found in to_hydrate_pointmaps atoms" ) )
                            .arg(  pointmap_atoms[ resName ][ i ][ j ] );
                         return false;
                      }
@@ -5854,7 +5796,7 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
 
                if ( ref_rotamer.residue != pointmap_atoms_ref_residue[ resName ][ i ] )
                {
-                  error_msg = QString( tr( "Internal error: inconsistancy for reference residue name for key %1 pos %2 (%3 != %4)" ) )
+                  error_msg = QString( us_tr( "Internal error: inconsistancy for reference residue name for key %1 pos %2 (%3 != %4)" ) )
                      .arg( this_residue )
                      .arg( i )
                      .arg( ref_rotamer.residue )
@@ -5869,7 +5811,7 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
             
                if ( p1.size() != p2.size() )
                {
-                  error_msg = QString( tr( "Internal error: size inconsistancy for reference residue name for key %1 pos %2 (%3 != %4)" ) )
+                  error_msg = QString( us_tr( "Internal error: size inconsistancy for reference residue name for key %1 pos %2 (%3 != %4)" ) )
                      .arg( this_residue )
                      .arg( i )
                      .arg( pointmap_atoms[ resName ][ i ].size() )
@@ -5885,7 +5827,7 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
                   // .arg(pointmap_atoms_dest[ resName ][ i ][ j ] );
                   if ( !ref_rotamer.atom_map.count( pointmap_atoms_dest[ resName ][ i ][ j ] ) )
                   {
-                     error_msg = QString( tr( "Internal error: atom %1 not found in to_hydrate_pointmaps atoms" ) )
+                     error_msg = QString( us_tr( "Internal error: atom %1 not found in to_hydrate_pointmaps atoms" ) )
                         .arg(  pointmap_atoms_dest[ resName ][ i ][ j ]  );
                      return false;
                   }
@@ -5894,7 +5836,7 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
                
                   if ( !to_hydrate_pointmaps[ this_residue ].count( pointmap_atoms[ resName ][ i ][ j ] ) )
                   {
-                     error_msg = QString( tr( "Internal error: atom %1 not found in to_hydrate_pointmaps atoms" ) )
+                     error_msg = QString( us_tr( "Internal error: atom %1 not found in to_hydrate_pointmaps atoms" ) )
                         .arg(  pointmap_atoms[ resName ][ i ][ j ] );
                      return false;
                   }
@@ -5955,8 +5897,8 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
       } // end if pointmap_rotamers
    }
 
-   editor->append( tr("Done transforming waters to add to pdb coordinates\n") );
-   editor->append( QString( tr("%1 waters added. %2 not added due to steric clashes \n") )
+   editor->append( us_tr("Done transforming waters to add to pdb coordinates\n") );
+   editor->append( QString( us_tr("%1 waters added. %2 not added due to steric clashes \n") )
                    .arg( count_waters_added ) 
                    .arg( count_waters_not_added ) 
                    );

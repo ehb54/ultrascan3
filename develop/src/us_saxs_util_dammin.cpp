@@ -17,10 +17,10 @@ bool US_Saxs_Util::run_dammin()
    if ( control_parameters.count( "dammingnomfile" ) )
    {
       QFileInfo fi( control_parameters[ "dammingnomfile" ] );
-      QString baseName = fi.baseName ( true  );
+      QString baseName = fi.completeBaseName();
       if ( baseName.length() > 8 )
       {
-          QString ext      = fi.extension( false );
+          QString ext      = fi.suffix();
           int     use_len  = 8;
           QString destname = baseName.left( use_len );
           int     copy     = 0;
@@ -50,7 +50,7 @@ bool US_Saxs_Util::run_dammin()
    if ( control_parameters.count( "dammingnom8file" ) )
    {
       QFileInfo fi( control_parameters[ "dammingnom8file" ] );
-      control_parameters[ "damminname" ] = fi.baseName( true );
+      control_parameters[ "damminname" ] = fi.completeBaseName();
    } else {
       errormsg = "Error: dammin: parameter dammingnom8file must be defined";
       return false;
@@ -282,7 +282,7 @@ bool US_Saxs_Util::run_dammin()
    if ( control_parameters.count( "dammingnomfile" ) )
    {
       QFileInfo fi( control_parameters[ "dammingnomfile" ] );
-      control_parameters[ "damminfullname" ] = fi.baseName( true );
+      control_parameters[ "damminfullname" ] = fi.completeBaseName();
    } else {
       errormsg = "Error: dammin: parameter dammingnomfile must be defined";
       return false;
@@ -291,8 +291,8 @@ bool US_Saxs_Util::run_dammin()
         control_parameters.count( "damminfullname" ) )
    {
       QFileInfo fi( control_parameters[ "dammin1pdb" ] );
-      QString baseName = fi.baseName ( true  );
-      QString ext      = fi.extension( false );
+      QString baseName = fi.completeBaseName();
+      QString ext      = fi.suffix();
 
       if ( !fi.exists() )
       {
@@ -321,8 +321,8 @@ bool US_Saxs_Util::run_dammin()
         control_parameters.count( "damminfullname" ) )
    {
       QFileInfo fi( control_parameters[ "damminfit" ] );
-      QString baseName = fi.baseName ( true  );
-      QString ext      = fi.extension( false );
+      QString baseName = fi.completeBaseName();
+      QString ext      = fi.suffix();
 
       if ( !fi.exists() )
       {
@@ -351,8 +351,8 @@ bool US_Saxs_Util::run_dammin()
         control_parameters.count( "damminfullname" ) )
    {
       QFileInfo fi( control_parameters[ "damminfir" ] );
-      QString baseName = fi.baseName ( true  );
-      QString ext      = fi.extension( false );
+      QString baseName = fi.completeBaseName();
+      QString ext      = fi.suffix();
 
       if ( !fi.exists() )
       {
@@ -381,8 +381,8 @@ bool US_Saxs_Util::run_dammin()
         control_parameters.count( "damminfullname" ) )
    {
       QFileInfo fi( control_parameters[ "damminlog" ] );
-      QString baseName = fi.baseName ( true  );
-      QString ext      = fi.extension( false );
+      QString baseName = fi.completeBaseName();
+      QString ext      = fi.suffix();
 
       if ( !fi.exists() )
       {

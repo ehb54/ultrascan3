@@ -19,13 +19,13 @@
 #include <qregexp.h>
 #include <qfont.h>
 //Added by qt3to4:
-#include <Q3BoxLayout>
+#include <QBoxLayout>
 #include <QLabel>
-#include <Q3GridLayout>
-#include <Q3TextStream>
-#include <Q3HBoxLayout>
-#include <Q3Frame>
-#include <Q3PopupMenu>
+#include <QGridLayout>
+#include <QTextStream>
+#include <QHBoxLayout>
+#include <QFrame>
+ //#include <Q3PopupMenu>
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -67,7 +67,7 @@ static std::basic_ostream<char>& operator<<(std::basic_ostream<char>& os, const 
 
 US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
                          QWidget *p, 
-                         const char *name) : Q3Frame(p, name)
+                         const char *name) : QFrame( p )
 {
    USglobal = new US_Config();
    this->batch_file = batch_file;
@@ -81,12 +81,12 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    // no_rr = false;
 
    // int r_stdout = __open(QString(somo_tmp_dir +
-   //           SLASH + "last_stdout.txt").ascii(),
+   //           SLASH + "last_stdout.txt").toAscii().data(),
    //        O_WRONLY | O_CREAT | O_TRUNC, 0666);
    // dup2(r_stdout, STDOUT_FILENO);
 
    // int r_stderr = __open(QString(somo_tmp_dir +
-   //           SLASH + "last_stderr.txt").ascii(),
+   //           SLASH + "last_stderr.txt").toAscii().data(),
    //        O_WRONLY | O_CREAT | O_TRUNC, 0666);
    // dup2(r_stderr, STDERR_FILENO);
 
@@ -139,7 +139,7 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    }
 
    setPalette( PALET_FRAME );
-   setCaption(tr("SOMO Solution Bead Modeler"));
+   setWindowTitle(us_tr("SOMO Solution Bead Modeler"));
    advanced_config.auto_view_pdb = true;
    advanced_config.scroll_editor = false;
    advanced_config.auto_calc_somo = false;
@@ -209,7 +209,7 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    guiFlag = true;
    bead_model_selected_filter = "";
    residue_filename = USglobal->config_list.system_dir + "/etc/somo.residue";
-   editor = (Q3TextEdit *)0;
+   editor = (QTextEdit *)0;
 
    last_saxs_search_csv.name = "__empty__";
    last_saxs_screen_csv.name = "__empty__";
@@ -239,10 +239,10 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
 
    last_read_bead_model = "";
    last_hydro_res = "";
-   chdir(somo_tmp_dir);
+   QDir::setCurrent(somo_tmp_dir);
    if ( advanced_config.debug_5 )
    {
-      printf("%s\n", QString(somo_tmp_dir).ascii());
+      printf("%s\n", QString(somo_tmp_dir).toAscii().data());
    }
    results.total_beads = 0;
    results.used_beads = 0;
@@ -308,16 +308,22 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
 
    comparative = US_Hydrodyn_Comparative::empty_comparative_info();
 
-   rasmol = new Q3Process(this);
+   rasmol = new QProcess(this);
    rasmol->setWorkingDirectory(
-                               QDir(USglobal->config_list.system_dir + SLASH +
+#if QT_VERSION < 0x040000
+                               QDir(
+#endif
+                                    USglobal->config_list.system_dir + SLASH +
 #if defined(BIN64)
                                      "bin64"
 #else
                                     "/bin/"
 #endif
 				    + SLASH
-                                    ));
+#if QT_VERSION < 0x040000
+                                    )
+#endif
+                               );
 
    bead_model_from_file = false;
    QString RMP = "RASMOLPATH=" + USglobal->config_list.system_dir + SLASH +
@@ -336,48 +342,48 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
       char* rmp = (char*) malloc (n + 1);
       if ( rmp )
       {
-         strncpy( rmp, RMP.ascii(), n );
+         strncpy( rmp, RMP.toAscii().data(), n );
          *( rmp + n ) = 0;
          putenv( rmp );
       }
    }
    play_sounds(1);
-   editor->append(QString(tr("\n\nWelcome to SOMO UltraScan %1 %2\nProduced on: %3\n"))
+   editor->append(QString(us_tr("\n\nWelcome to SOMO UltraScan %1 %2\nProduced on: %3\n"))
 		  .arg(US_Version)
 		  .arg(REVISION)
 		  .arg(REVISION_DATE)
 		  );
    if ( numThreads > 1 )
    {
-      editor->append(QString(tr("Multi-threading enabled using %1 threads\n")).arg(numThreads));
+      editor->append(QString(us_tr("Multi-threading enabled using %1 threads\n")).arg(numThreads));
    }
-   QColor save_color = editor->color();
-   editor->setColor("red");
+   QColor save_color = editor->textColor();
+   editor->setTextColor("red");
    if (!dir1.exists())
    {
-      editor->append(tr("Warning: Directory ") + somo_dir + tr(" does not exist.\n"));
+      editor->append(us_tr("Warning: Directory ") + somo_dir + us_tr(" does not exist.\n"));
    }
    if (!dir2.exists())
    {
-      editor->append(tr("Warning: Directory ") + somo_pdb_dir + tr(" does not exist.\n"));
+      editor->append(us_tr("Warning: Directory ") + somo_pdb_dir + us_tr(" does not exist.\n"));
    }
    if (!dir3.exists())
    {
-      editor->append(tr("Warning: Directory ") + somo_tmp_dir + tr(" does not exist.\n"));
+      editor->append(us_tr("Warning: Directory ") + somo_tmp_dir + us_tr(" does not exist.\n"));
    }
    if (!dir4.exists())
    {
-      editor->append(tr("Warning: Directory ") + somo_saxs_dir + tr(" does not exist.\n"));
+      editor->append(us_tr("Warning: Directory ") + somo_saxs_dir + us_tr(" does not exist.\n"));
    }
    if (!dir5.exists())
    {
-      editor->append(tr("Warning: Directory ") + somo_saxs_tmp_dir + tr(" does not exist.\n"));
+      editor->append(us_tr("Warning: Directory ") + somo_saxs_tmp_dir + us_tr(" does not exist.\n"));
    }
    if (!dir6.exists())
    {
-      editor->append(tr("Warning: Directory ") + somo_bd_dir + tr(" does not exist.\n"));
+      editor->append(us_tr("Warning: Directory ") + somo_bd_dir + us_tr(" does not exist.\n"));
    }
-   editor->setColor(save_color);
+   editor->setTextColor(save_color);
 
    if ( batch_file.size() )
    {
@@ -403,14 +409,14 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
        saxs_options.compute_saxs_coeff_for_bead_models
        )
    {
-      QColor save_color = editor->color();
-      editor->setColor("red");
-      editor->append(tr(
+      QColor save_color = editor->textColor();
+      editor->setTextColor("red");
+      editor->append(us_tr(
                         "Warning: Error setting up SAXS structure factor files.\n"
                         "Bead model SAXS disabled.\n"
                         "Check to make sure the files in SOMO->SAXS/SANS Options are correct.\n"
                         ));
-      editor->setColor(save_color);
+      editor->setTextColor(save_color);
       saxs_options.compute_saxs_coeff_for_bead_models = false;
    } else {
       saxs_util->setup_saxs_options();
@@ -422,7 +428,7 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
                                  QDir::separator() + "etc" +
                                  QDir::separator() + "mw.json" ) )
    {
-      editor_msg( "red", tr( "Warning: mw.json not read" ) );
+      editor_msg( "red", us_tr( "Warning: mw.json not read" ) );
    }
 
    if ( 
@@ -430,7 +436,7 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
                                   QDir::separator() + "etc" +
                                   QDir::separator() + "vdw.json" ) )
    {
-      editor_msg( "red", tr( "Warning: vdw.json not read" ) );
+      editor_msg( "red", us_tr( "Warning: vdw.json not read" ) );
    }
 
    if ( 
@@ -438,7 +444,7 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
                                   QDir::separator() + "etc" +
                                   QDir::separator() + "vcm.json" ) )
    {
-      editor_msg( "red", tr( "Warning: vcm.json not read" ) );
+      editor_msg( "red", us_tr( "Warning: vcm.json not read" ) );
    }
 
    if ( saxs_options.wavelength == 0 )
@@ -477,7 +483,7 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
       P.push_back( .006 );
       P.push_back( .00002 );
 
-      qDebug( QString( "holm bonferroni returns %1" ).arg( US_Saxs_Util::holm_bonferroni( P, 0.01 ) ) );
+      us_qdebug( QString( "holm bonferroni returns %1" ).arg( US_Saxs_Util::holm_bonferroni( P, 0.01 ) ) );
    }
 #endif
 }
@@ -492,98 +498,245 @@ void US_Hydrodyn::setupGUI()
    int minHeight1 = 24;
    bead_model_file = "";
 
-   lookup_tables = new Q3PopupMenu;
-   lookup_tables->insertItem(tr("Add/Edit &Hybridization"), this, SLOT(hybrid()));
-   lookup_tables->insertItem(tr("Add/Edit &Atom"), this, SLOT(edit_atom()));
-   lookup_tables->insertItem(tr("Add/Edit &Residue"), this, SLOT(residue()));
-   lookup_tables->insertItem(tr("Add/Edit &SAXS coefficients"), this, SLOT(do_saxs()));
+#if QT_VERSION < 0x040000
+ //   lookup_tables = new Q3PopupMenu;
+   lookup_tables->insertItem(us_tr("Add/Edit &Hybridization"), this, SLOT(hybrid( )));
+   lookup_tables->insertItem(us_tr("Add/Edit &Atom"), this, SLOT(edit_atom( )));
+   lookup_tables->insertItem(us_tr("Add/Edit &Residue"), this, SLOT(residue( )));
+   lookup_tables->insertItem(us_tr("Add/Edit &SAXS coefficients"), this, SLOT(do_saxs( )));
 
-   somo_options = new Q3PopupMenu;
-   somo_options->insertItem(tr("&ASA Calculation"), this, SLOT(show_asa()));
-   somo_options->insertItem(tr("&SoMo Overlap Reduction"), this, SLOT(show_overlap()));
-   somo_options->insertItem(tr("AtoB (Grid) &Overlap Reduction"), this, SLOT(show_grid_overlap()));
-   somo_options->insertItem(tr("&Hydrodynamic Calculations"), this, SLOT(show_hydro()));
-   somo_options->insertItem(tr("Hydrodynamic Calculations &Zeno"), this, SLOT(show_zeno_options()));
-   somo_options->insertItem(tr("&Miscellaneous Options"), this, SLOT(show_misc()));
-   somo_options->insertItem(tr("&Bead Model Output"), this, SLOT(show_bead_output()));
-   somo_options->insertItem(tr("&Grid Functions (AtoB)"), this, SLOT(show_grid()));
-   somo_options->insertItem(tr("SA&XS/SANS Options"), this, SLOT(show_saxs_options()));
+ //   somo_options = new Q3PopupMenu;
+   somo_options->insertItem(us_tr("&ASA Calculation"), this, SLOT(show_asa( )));
+   somo_options->insertItem(us_tr("&SoMo Overlap Reduction"), this, SLOT(show_overlap( )));
+   somo_options->insertItem(us_tr("AtoB (Grid) &Overlap Reduction"), this, SLOT(show_grid_overlap( )));
+   somo_options->insertItem(us_tr("&Hydrodynamic Calculations"), this, SLOT(show_hydro( )));
+   somo_options->insertItem(us_tr("Hydrodynamic Calculations &Zeno"), this, SLOT(show_zeno_options( )));
+   somo_options->insertItem(us_tr("&Miscellaneous Options"), this, SLOT(show_misc( )));
+   somo_options->insertItem(us_tr("&Bead Model Output"), this, SLOT(show_bead_output( )));
+   somo_options->insertItem(us_tr("&Grid Functions (AtoB)"), this, SLOT(show_grid( )));
+   somo_options->insertItem(us_tr("SA&XS/SANS Options"), this, SLOT(show_saxs_options( )));
 
-   md_options = new Q3PopupMenu;
-   // md_options->insertItem(tr("&DMD Options"), this, SLOT(show_dmd_options()));
-   md_options->insertItem(tr("&Browflex Options"), this, SLOT(show_bd_options()));
-   md_options->insertItem(tr("&Anaflex Options"), this, SLOT(show_anaflex_options()));
+ //   md_options = new Q3PopupMenu;
+   // md_options->insertItem(us_tr("&DMD Options"), this, SLOT(show_dmd_options( )));
+   md_options->insertItem(us_tr("&Browflex Options"), this, SLOT(show_bd_options( )));
+   md_options->insertItem(us_tr("&Anaflex Options"), this, SLOT(show_anaflex_options( )));
 
-   pdb_options = new Q3PopupMenu;
-   pdb_options->insertItem(tr("&Parsing"), this, SLOT(pdb_parsing()));
-   pdb_options->insertItem(tr("&Visualization"), this, SLOT(pdb_visualization()));
+ //   pdb_options = new Q3PopupMenu;
+   pdb_options->insertItem(us_tr("&Parsing"), this, SLOT(pdb_parsing( )));
+   pdb_options->insertItem(us_tr("&Visualization"), this, SLOT(pdb_visualization( )));
 
-   configuration = new Q3PopupMenu;
-   configuration->insertItem(tr("&Load Configuration"), this, SLOT(load_config()));
-   configuration->insertItem(tr("&Save Current Configuration"), this, SLOT(write_config()));
-   configuration->insertItem(tr("&Reset to Default Configuration"), this, SLOT(reset()));
-   configuration->insertItem(tr("&Advanced Configuration"), this, SLOT(show_advanced_config()));
-   configuration->insertItem(tr("S&ystem Configuration"), this, SLOT(run_us_config()));
-   configuration->insertItem(tr("A&dministrator"), this, SLOT(run_us_admin()));
+ //   configuration = new Q3PopupMenu;
+   configuration->insertItem(us_tr("&Load Configuration"), this, SLOT(load_config( )));
+   configuration->insertItem(us_tr("&Save Current Configuration"), this, SLOT(write_config( )));
+   configuration->insertItem(us_tr("&Reset to Default Configuration"), this, SLOT(reset( )));
+   configuration->insertItem(us_tr("&Advanced Configuration"), this, SLOT(show_advanced_config( )));
+   configuration->insertItem(us_tr("S&ystem Configuration"), this, SLOT(run_us_config( )));
+   configuration->insertItem(us_tr("A&dministrator"), this, SLOT(run_us_admin( )));
 
-   Q3Frame *frame;
-   frame = new Q3Frame(this);
+   QFrame *frame;
+   frame = new QFrame(this);
    frame->setMinimumHeight(minHeight1);
 
-#if !defined(QT4) || !defined(Q_WS_MAC)
+# if !defined(QT4) || !defined(Q_WS_MAC)
    menu = new QMenuBar(frame);
-#else
+# else
    menu = new QMenuBar( this );
-#endif
+# endif
    menu->setPalette( PALET_NORMAL );
    AUTFBACK( menu );
-   menu->insertItem(tr("&Lookup Tables"), lookup_tables);
-   menu->insertItem(tr("&SOMO"), somo_options);
-   menu->insertItem(tr("&MD"), md_options);
-   menu->insertItem(tr("&PDB"), pdb_options);
-   menu->insertItem(tr("&Configuration"), configuration);
+   menu->insertItem(us_tr("&Lookup Tables"), lookup_tables);
+   menu->insertItem(us_tr("&SOMO"), somo_options);
+   menu->insertItem(us_tr("&MD"), md_options);
+   menu->insertItem(us_tr("&PDB"), pdb_options);
+   menu->insertItem(us_tr("&Configuration"), configuration);
 
-#if defined(QT4) && defined(Q_WS_MAC)
+# if defined(QT4) && defined(Q_WS_MAC)
    {
-      Q3PopupMenu * file = new Q3PopupMenu;
-      file->insertItem( tr("&Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
-      file->insertItem( tr("&Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
-# ifndef NO_EDITOR_PRINT
-      file->insertItem( tr("&Print"), this, SLOT(print()),   Qt::ALT+Qt::Key_P );
-# endif
-      file->insertItem( tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
-      menu->insertItem(tr("&Messages"), file );
+ //      Q3PopupMenu * file = new Q3PopupMenu;
+      file->insertItem( us_tr("&Font"),  this, SLOT(update_font( )),    Qt::ALT+Qt::Key_F );
+      file->insertItem( us_tr("&Save"),  this, SLOT(save( )),    Qt::ALT+Qt::Key_S );
+#  ifndef NO_EDITOR_PRINT
+      file->insertItem( us_tr("&Print"), this, SLOT(print( )),   Qt::ALT+Qt::Key_P );
+#  endif
+      file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display( )),   Qt::ALT+Qt::Key_X );
+      menu->insertItem(us_tr("&Messages"), file );
    }
+# endif
+#else
+   QFrame *frame;
+   frame = new QFrame(this);
+   frame->setMinimumHeight(minHeight1);
+
+# if !defined(Q_WS_MAC)
+   menu = new QMenuBar(frame);
+# else
+   menu = new QMenuBar( this );
+# endif
+   {
+      QMenu *submenu = new QMenu( us_tr("&Lookup Tables") );
+      {
+         QAction *qa = submenu->addAction( us_tr("Add/Edit &Hybridization") );
+         connect( qa, SIGNAL(triggered()), this, SLOT( hybrid() ) );
+      }
+      {
+         QAction *qa = submenu->addAction( us_tr("Add/Edit &Atom") );
+         connect( qa, SIGNAL(triggered()),  this, SLOT(edit_atom()));
+      }
+      {
+         QAction *qa = submenu->addAction( us_tr("Add/Edit &Residue") );
+         connect( qa, SIGNAL( triggered() ), this, SLOT(residue()));
+      }
+      {
+         QAction *qa = submenu->addAction( us_tr("Add/Edit &SAXS coefficients") );
+         connect( qa, SIGNAL( triggered() ), this, SLOT(do_saxs()));
+      }
+      menu->addMenu( submenu );
+   }
+   {
+      QMenu *submenu = new QMenu( us_tr("&SOMO") );
+      {
+         QAction *qa = submenu->addAction( us_tr("&ASA Calculation") );
+         connect( qa, SIGNAL( triggered() ), this, SLOT(show_asa()));
+      }
+      {
+         QAction *qa = submenu->addAction( us_tr("&SoMo Overlap Reduction") );
+         connect( qa, SIGNAL( triggered() ), this, SLOT(show_overlap()));
+      }
+      {
+         QAction *qa = submenu->addAction( us_tr("AtoB (Grid) &Overlap Reduction") );
+         connect( qa, SIGNAL( triggered() ), this, SLOT(show_grid_overlap()));
+      }
+      {
+         QAction *qa = submenu->addAction( us_tr("&Hydrodynamic Calculations") );
+         connect( qa, SIGNAL( triggered() ), this, SLOT(show_hydro()));
+      }
+      {
+         QAction *qa = submenu->addAction( us_tr("Hydrodynamic Calculations &Zeno") );
+         connect( qa, SIGNAL( triggered() ), this, SLOT(show_zeno_options()));
+      }
+      {
+         QAction *qa = submenu->addAction( us_tr("&Miscellaneous Options") );
+         connect( qa, SIGNAL( triggered() ), this, SLOT(show_misc()));
+      }
+      {
+         QAction *qa = submenu->addAction( us_tr("&Bead Model Output") );
+         connect( qa, SIGNAL( triggered() ), this, SLOT(show_bead_output()));
+      }
+      {
+         QAction *qa = submenu->addAction( us_tr("&Grid Functions (AtoB)") );
+         connect( qa, SIGNAL( triggered() ), this, SLOT(show_grid()));
+      }
+      {
+         QAction *qa = submenu->addAction( us_tr("SA&XS/SANS Options") );
+         connect( qa, SIGNAL( triggered() ), this, SLOT(show_saxs_options()));
+      }
+      menu->addMenu( submenu );
+   }
+   {
+      QMenu *submenu = new QMenu( us_tr("&MD") );
+      // {
+      //    QAction *qa = submenu->addAction( us_tr("&DMD Options") );
+      //    connect( qa, SIGNAL( triggered() ), this, SLOT(show_dmd_options()));
+      // }
+      {
+         QAction *qa = submenu->addAction( us_tr("&Browflex Options") );
+         connect( qa, SIGNAL( triggered() ), this, SLOT(show_bd_options()));
+      }
+      {
+         QAction *qa = submenu->addAction( us_tr("&Anaflex Options") );
+         connect( qa, SIGNAL( triggered() ), this, SLOT(show_anaflex_options()));
+      }
+      menu->addMenu( submenu );
+   }
+   {
+      QMenu *submenu = new QMenu( us_tr("&PDB") );
+      {
+         QAction *qa = submenu->addAction( us_tr("&Parsing") );
+         connect( qa, SIGNAL( triggered() ), this, SLOT(pdb_parsing()));
+      }
+      {
+         QAction *qa = submenu->addAction( us_tr("&Visualization") );
+         connect( qa, SIGNAL( triggered() ), this, SLOT(pdb_visualization()));
+      }
+      menu->addMenu( submenu );
+   }
+   {
+      QMenu *submenu = new QMenu( us_tr("&Configuration") );
+      {
+         QAction *qa = submenu->addAction( us_tr( "&Load Configuration" ) );
+         connect( qa, SIGNAL( triggered() ), this, SLOT(load_config()));
+      }
+      {
+         QAction *qa = submenu->addAction( us_tr( "&Save Current Configuration") );
+         connect( qa, SIGNAL( triggered() ), this, SLOT(write_config()));
+      }
+      {
+         QAction *qa = submenu->addAction( us_tr( "&Reset to Default Configuration") );
+         connect( qa, SIGNAL( triggered() ), this, SLOT(reset()));
+      }
+      {
+         QAction *qa = submenu->addAction( us_tr( "&Advanced Configuration") );
+         connect( qa, SIGNAL( triggered() ), this, SLOT(show_advanced_config()));
+      }
+      {
+         QAction *qa = submenu->addAction( us_tr("S&ystem Configuration") );
+         connect( qa, SIGNAL( triggered() ), this, SLOT(run_us_config()));
+      }
+      {
+         QAction *qa = submenu->addAction( us_tr("A&dministrator") );
+         connect( qa, SIGNAL( triggered() ), this, SLOT(run_us_admin()));
+      }
+      menu->addMenu( submenu );
+   }
+# if defined(Q_WS_MAC)
+   {
+      QMenu * submenu = m->addMenu( us_tr( "&File" ) );
+
+      QAction *qa1 = submenu->addAction( us_tr( "Font" ) );
+      qa1->setShortcut( Qt::ALT+Qt::Key_F );
+      connect( qa1, SIGNAL(triggered()), this, SLOT( update_font() ) );
+
+      QAction *qa2 = submenu->addAction( us_tr( "Save" ) );
+      qa2->setShortcut( Qt::ALT+Qt::Key_S );
+      connect( qa2, SIGNAL(triggered()), this, SLOT( save() ) );
+
+      QAction *qa3 = submenu->addAction( us_tr( "Clear Display" ) );
+      qa3->setShortcut( Qt::ALT+Qt::Key_X );
+      connect( qa3, SIGNAL(triggered()), this, SLOT( clear_display() ) );
+
+      menu->addMenu( submenu );
+   }
+# endif
 #endif
 
-   lbl_info1 = new QLabel(tr("PDB Functions:"), this);
+   lbl_info1 = new QLabel(us_tr("PDB Functions:"), this);
    Q_CHECK_PTR(lbl_info1);
-   lbl_info1->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Raised);
+   lbl_info1->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_info1->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_info1->setMinimumHeight(minHeight1);
    lbl_info1->setPalette( PALET_FRAME );
    AUTFBACK( lbl_info1 );
    lbl_info1->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 
-   lbl_info2 = new QLabel(tr("Bead Model Functions:"), this);
+   lbl_info2 = new QLabel(us_tr("Bead Model Functions:"), this);
    Q_CHECK_PTR(lbl_info2);
-   lbl_info2->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Raised);
+   lbl_info2->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_info2->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_info2->setMinimumHeight(minHeight1);
    lbl_info2->setPalette( PALET_FRAME );
    AUTFBACK( lbl_info2 );
    lbl_info2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 
-   lbl_info3 = new QLabel(tr("Hydrodynamic Calculations:"), this);
+   lbl_info3 = new QLabel(us_tr("Hydrodynamic Calculations:"), this);
    Q_CHECK_PTR(lbl_info3);
-   lbl_info3->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Raised);
+   lbl_info3->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_info3->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_info3->setMinimumHeight(minHeight1);
    lbl_info3->setPalette( PALET_FRAME );
    AUTFBACK( lbl_info3 );
    lbl_info3->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 
-   pb_select_residue_file = new QPushButton(tr("Select Lookup Table"), this);
+   pb_select_residue_file = new QPushButton(us_tr("Select Lookup Table"), this);
    Q_CHECK_PTR(pb_select_residue_file);
    pb_select_residue_file->setMinimumHeight(minHeight1);
    pb_select_residue_file->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -592,13 +745,13 @@ void US_Hydrodyn::setupGUI()
 
    lbl_table = new QLabel( QDir::convertSeparators( residue_filename ), this );
    lbl_table->setMinimumHeight(minHeight1);
-   lbl_table->setFrameStyle(Q3Frame::WinPanel|Sunken);
+   lbl_table->setFrameStyle(QFrame::WinPanel|Sunken);
    lbl_table->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_table->setPalette( PALET_EDIT );
    AUTFBACK( lbl_table );
    lbl_table->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 
-   pb_batch = new QPushButton(tr("Batch Mode/Cluster Operation"), this);
+   pb_batch = new QPushButton(us_tr("Batch Mode/Cluster Operation"), this);
    Q_CHECK_PTR(pb_batch);
    pb_batch->setMinimumHeight(minHeight1);
    pb_batch->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -606,14 +759,14 @@ void US_Hydrodyn::setupGUI()
    pb_batch->setAutoDefault( false );
    connect(pb_batch, SIGNAL(clicked()), SLOT(show_batch()));
 
-   pb_view_bead_model = new QPushButton(tr("View Bead Model File"), this);
+   pb_view_bead_model = new QPushButton(us_tr("View Bead Model File"), this);
    Q_CHECK_PTR(pb_view_bead_model);
    pb_view_bead_model->setMinimumHeight(minHeight1);
    pb_view_bead_model->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_view_bead_model->setPalette( PALET_PUSHB );
    connect(pb_view_bead_model, SIGNAL(clicked()), SLOT(view_bead_model()));
 
-   pb_load_pdb = new QPushButton(tr("Load Single PDB File"), this);
+   pb_load_pdb = new QPushButton(us_tr("Load Single PDB File"), this);
    Q_CHECK_PTR(pb_load_pdb);
    pb_load_pdb->setMinimumHeight(minHeight1);
    pb_load_pdb->setEnabled(true);
@@ -622,8 +775,10 @@ void US_Hydrodyn::setupGUI()
    connect(pb_load_pdb, SIGNAL(clicked()), SLOT(load_pdb()));
 
    le_pdb_file = new mQLineEdit( this );
-   le_pdb_file->setText( tr( "not selected" ) );
-   le_pdb_file->setFrameStyle(Q3Frame::WinPanel|Sunken);
+   le_pdb_file->setText( us_tr( "not selected" ) );
+#if QT_VERSION < 0x040000
+   le_pdb_file->setFrameStyle(QFrame::WinPanel|Sunken);
+#endif
    le_pdb_file->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_pdb_file->setMinimumHeight(minHeight1);
    le_pdb_file->setPalette( PALET_EDIT );
@@ -632,7 +787,7 @@ void US_Hydrodyn::setupGUI()
    connect( le_pdb_file, SIGNAL( focussed( bool ) ), SLOT( le_pdb_file_focus( bool ) ) );
    connect( le_pdb_file, SIGNAL( textChanged( const QString & ) ), SLOT( le_pdb_file_changed( const QString & ) ) );
 
-   lbl_model = new QLabel(tr(" Please select a PDB Structure:"), this);
+   lbl_model = new QLabel(us_tr(" Please select a PDB Structure:"), this);
    Q_CHECK_PTR(lbl_model);
    lbl_model->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_model->setMinimumHeight(minHeight1);
@@ -641,38 +796,38 @@ void US_Hydrodyn::setupGUI()
    AUTFBACK( lbl_model );
    lbl_model->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
-   pb_view_pdb = new QPushButton(tr("View/Edit PDB File"), this);
+   pb_view_pdb = new QPushButton(us_tr("View/Edit PDB File"), this);
    Q_CHECK_PTR(pb_view_pdb);
    pb_view_pdb->setMinimumHeight(minHeight1);
    pb_view_pdb->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_view_pdb->setPalette( PALET_PUSHB );
    connect(pb_view_pdb, SIGNAL(clicked()), SLOT(view_pdb()));
 
-   pb_pdb_tool = new QPushButton(tr("PDB Editor"), this);
+   pb_pdb_tool = new QPushButton(us_tr("PDB Editor"), this);
    pb_pdb_tool->setMinimumHeight(minHeight1);
    pb_pdb_tool->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_pdb_tool->setPalette( PALET_PUSHB );
    connect(pb_pdb_tool, SIGNAL(clicked()), SLOT(pdb_tool()));
 
-   lb_model = new Q3ListBox(this, "model selection listbox" );
+   lb_model = new QListWidget( this );
    lb_model->setPalette( PALET_LISTB );
    lb_model->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    //lb_model->setEnabled(false);
    lb_model->setEnabled( true );
-   lb_model->setSelectionMode(Q3ListBox::Extended);
-   lb_model->setHScrollBarMode(Q3ScrollView::Auto);
-   lb_model->setVScrollBarMode(Q3ScrollView::Auto);
-   connect(lb_model, SIGNAL(selected(int)), this, SLOT(select_model(int)));
+   lb_model->setSelectionMode(QAbstractItemView::ExtendedSelection);
+ //   lb_model->setHScrollBarMode(QScrollView::Auto);
+ //   lb_model->setVScrollBarMode(QScrollView::Auto);
+   connect(lb_model, SIGNAL(currentRowChanged(int)), this, SLOT(select_model(int)));
 
-   pb_load_bead_model = new QPushButton(tr("Load Single Bead Model File"), this);
+   pb_load_bead_model = new QPushButton(us_tr("Load Single Bead Model File"), this);
    Q_CHECK_PTR(pb_load_bead_model);
    pb_load_bead_model->setMinimumHeight(minHeight1);
    pb_load_bead_model->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_load_bead_model->setPalette( PALET_PUSHB );
    connect(pb_load_bead_model, SIGNAL(clicked()), SLOT(load_bead_model()));
 
-   le_bead_model_file = new QLineEdit(this, "bead_model_file Line Edit");
-   le_bead_model_file->setText(tr(" not selected "));
+   le_bead_model_file = new QLineEdit( this );    le_bead_model_file->setObjectName( "bead_model_file Line Edit" );
+   le_bead_model_file->setText(us_tr(" not selected "));
    le_bead_model_file->setMinimumHeight(minHeight1);
    le_bead_model_file->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_bead_model_file->setPalette( PALET_EDIT );
@@ -680,7 +835,7 @@ void US_Hydrodyn::setupGUI()
    le_bead_model_file->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_bead_model_file, SIGNAL(textChanged(const QString &)), SLOT(update_bead_model_file(const QString &)));
 
-   lbl_bead_model_prefix = new QLabel(tr(" Bead Model Suffix:"), this);
+   lbl_bead_model_prefix = new QLabel(us_tr(" Bead Model Suffix:"), this);
    Q_CHECK_PTR(lbl_bead_model_prefix);
    lbl_bead_model_prefix->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_bead_model_prefix->setMinimumHeight(minHeight1);
@@ -689,7 +844,7 @@ void US_Hydrodyn::setupGUI()
    lbl_bead_model_prefix->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    cb_setSuffix = new QCheckBox(this);
-   cb_setSuffix->setText(tr(" Add auto-generated suffix "));
+   cb_setSuffix->setText(us_tr(" Add auto-generated suffix "));
    cb_setSuffix->setChecked(setSuffix);
    cb_setSuffix->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_setSuffix->setPalette( PALET_NORMAL );
@@ -697,15 +852,15 @@ void US_Hydrodyn::setupGUI()
    connect(cb_setSuffix, SIGNAL(clicked()), this, SLOT(set_setSuffix()));
 
    cb_overwrite = new QCheckBox(this);
-   cb_overwrite->setText(tr(" Overwrite existing filenames "));
+   cb_overwrite->setText(us_tr(" Overwrite existing filenames "));
    cb_overwrite->setChecked(overwrite);
    cb_overwrite->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_overwrite->setPalette( PALET_NORMAL );
    AUTFBACK( cb_overwrite );
    connect(cb_overwrite, SIGNAL(clicked()), this, SLOT(set_overwrite()));
 
-   le_bead_model_prefix = new QLineEdit(this, "bead_model_prefix Line Edit");
-   le_bead_model_prefix->setText(tr(""));
+   le_bead_model_prefix = new QLineEdit( this );    le_bead_model_prefix->setObjectName( "bead_model_prefix Line Edit" );
+   le_bead_model_prefix->setText(us_tr(""));
    le_bead_model_prefix->setMinimumHeight(minHeight1);
    le_bead_model_prefix->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_bead_model_prefix->setPalette( PALET_EDIT );
@@ -713,8 +868,8 @@ void US_Hydrodyn::setupGUI()
    le_bead_model_prefix->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_bead_model_prefix, SIGNAL(textChanged(const QString &)), SLOT(update_bead_model_prefix(const QString &)));
 
-   le_bead_model_suffix = new QLineEdit(this, "bead_model_suffix Line Edit");
-   le_bead_model_suffix->setText(tr(""));
+   le_bead_model_suffix = new QLineEdit( this );    le_bead_model_suffix->setObjectName( "bead_model_suffix Line Edit" );
+   le_bead_model_suffix->setText(us_tr(""));
    le_bead_model_suffix->setMinimumHeight(minHeight1);
    le_bead_model_suffix->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_bead_model_suffix->setPalette( PALET_EDIT );
@@ -722,7 +877,7 @@ void US_Hydrodyn::setupGUI()
    le_bead_model_suffix->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    le_bead_model_suffix->setReadOnly(true);
 
-   pb_somo = new QPushButton(tr("Build SoMo Bead Model"), this);
+   pb_somo = new QPushButton(us_tr("Build SoMo Bead Model"), this);
    Q_CHECK_PTR(pb_somo);
    pb_somo->setMinimumHeight(minHeight1);
    pb_somo->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -730,7 +885,7 @@ void US_Hydrodyn::setupGUI()
    pb_somo->setPalette( PALET_PUSHB );
    connect(pb_somo, SIGNAL(clicked()), SLOT(calc_somo()));
 
-   pb_somo_o = new QPushButton(tr("Build SoMo Overlap Bead Model"), this);
+   pb_somo_o = new QPushButton(us_tr("Build SoMo Overlap Bead Model"), this);
    Q_CHECK_PTR(pb_somo_o);
    pb_somo_o->setMinimumHeight(minHeight1);
    pb_somo_o->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -739,7 +894,7 @@ void US_Hydrodyn::setupGUI()
    connect(pb_somo_o, SIGNAL(clicked()), SLOT(calc_somo_o()));
 
 #if defined(USE_H)
-   pb_pdb_hydrate_for_saxs = new QPushButton(tr("Hydrate"), this);
+   pb_pdb_hydrate_for_saxs = new QPushButton(us_tr("Hydrate"), this);
    pb_pdb_hydrate_for_saxs->setMinimumHeight(minHeight1);
    pb_pdb_hydrate_for_saxs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_pdb_hydrate_for_saxs->setEnabled(true);
@@ -747,7 +902,7 @@ void US_Hydrodyn::setupGUI()
    connect(pb_pdb_hydrate_for_saxs, SIGNAL(clicked()), SLOT(pdb_hydrate_for_saxs()));
 #endif
 
-   pb_pdb_saxs = new QPushButton(tr("SAXS/SANS Functions"), this);
+   pb_pdb_saxs = new QPushButton(us_tr("SAXS/SANS Functions"), this);
    Q_CHECK_PTR(pb_pdb_saxs);
    pb_pdb_saxs->setMinimumHeight(minHeight1);
    pb_pdb_saxs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -755,7 +910,7 @@ void US_Hydrodyn::setupGUI()
    pb_pdb_saxs->setPalette( PALET_PUSHB );
    connect(pb_pdb_saxs, SIGNAL(clicked()), SLOT(pdb_saxs()));
 
-   pb_bead_saxs = new QPushButton(tr("SAXS/SANS Functions"), this);
+   pb_bead_saxs = new QPushButton(us_tr("SAXS/SANS Functions"), this);
    Q_CHECK_PTR(pb_bead_saxs);
    pb_bead_saxs->setMinimumHeight(minHeight1);
    pb_bead_saxs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -763,21 +918,21 @@ void US_Hydrodyn::setupGUI()
    pb_bead_saxs->setPalette( PALET_PUSHB );
    connect(pb_bead_saxs, SIGNAL(clicked()), SLOT(bead_saxs()));
 
-   pb_rescale_bead_model = new QPushButton(tr("Rescale/Equalize Bead Model"), this);
+   pb_rescale_bead_model = new QPushButton(us_tr("Rescale/Equalize Bead Model"), this);
    pb_rescale_bead_model->setMinimumHeight(minHeight1);
    pb_rescale_bead_model->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_rescale_bead_model->setEnabled(false);
    pb_rescale_bead_model->setPalette( PALET_PUSHB );
    connect(pb_rescale_bead_model, SIGNAL(clicked()), SLOT(rescale_bead_model()));
 
-   pb_equi_grid_bead_model = new QPushButton(tr("Simple grid"), this);
+   pb_equi_grid_bead_model = new QPushButton(us_tr("Simple grid"), this);
    pb_equi_grid_bead_model->setMinimumHeight(minHeight1);
    pb_equi_grid_bead_model->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_equi_grid_bead_model->setEnabled(false);
    pb_equi_grid_bead_model->setPalette( PALET_PUSHB );
    connect(pb_equi_grid_bead_model, SIGNAL(clicked()), SLOT(equi_grid_bead_model()));
 
-   pb_grid_pdb = new QPushButton(tr("Build AtoB (Grid) Bead Model"), this);
+   pb_grid_pdb = new QPushButton(us_tr("Build AtoB (Grid) Bead Model"), this);
    Q_CHECK_PTR(pb_grid_pdb);
    pb_grid_pdb->setMinimumHeight(minHeight1);
    pb_grid_pdb->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -785,7 +940,7 @@ void US_Hydrodyn::setupGUI()
    pb_grid_pdb->setPalette( PALET_PUSHB );
    connect(pb_grid_pdb, SIGNAL(clicked()), SLOT(calc_grid_pdb()));
 
-   pb_grid = new QPushButton(tr("Grid Existing Bead Model"), this);
+   pb_grid = new QPushButton(us_tr("Grid Existing Bead Model"), this);
    Q_CHECK_PTR(pb_grid);
    pb_grid->setMinimumHeight(minHeight1);
    pb_grid->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -794,21 +949,21 @@ void US_Hydrodyn::setupGUI()
    connect(pb_grid, SIGNAL(clicked()), SLOT(calc_grid()));
 
    cb_calcAutoHydro = new QCheckBox(this);
-   cb_calcAutoHydro->setText(tr(" Automatically Calculate Hydrodynamics "));
+   cb_calcAutoHydro->setText(us_tr(" Automatically Calculate Hydrodynamics "));
    cb_calcAutoHydro->setChecked(calcAutoHydro);
    cb_calcAutoHydro->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_calcAutoHydro->setPalette( PALET_NORMAL );
    AUTFBACK( cb_calcAutoHydro );
    connect(cb_calcAutoHydro, SIGNAL(clicked()), this, SLOT(set_calcAutoHydro()));
 
-   pb_view_asa = new QPushButton(tr("View ASA Results"), this);
+   pb_view_asa = new QPushButton(us_tr("View ASA Results"), this);
    Q_CHECK_PTR(pb_view_asa);
    pb_view_asa->setMinimumHeight(minHeight1);
    pb_view_asa->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_view_asa->setPalette( PALET_PUSHB );
    connect(pb_view_asa, SIGNAL(clicked()), SLOT(view_asa()));
 
-   pb_visualize = new QPushButton(tr("Visualize Bead Model"), this);
+   pb_visualize = new QPushButton(us_tr("Visualize Bead Model"), this);
    Q_CHECK_PTR(pb_visualize);
    pb_visualize->setMinimumHeight(minHeight1);
    pb_visualize->setEnabled(false);
@@ -816,14 +971,14 @@ void US_Hydrodyn::setupGUI()
    pb_visualize->setPalette( PALET_PUSHB );
    connect(pb_visualize, SIGNAL(clicked()), SLOT(visualize()));
 
-   pb_batch2 = new QPushButton(tr("Batch Mode/Cluster Operation"), this);
+   pb_batch2 = new QPushButton(us_tr("Batch Mode/Cluster Operation"), this);
    Q_CHECK_PTR(pb_batch2);
    pb_batch2->setMinimumHeight(minHeight1);
    pb_batch2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_batch2->setPalette( PALET_PUSHB );
    connect(pb_batch2, SIGNAL(clicked()), SLOT(show_batch()));
 
-   pb_calc_hydro = new QPushButton(tr("Calculate RB Hydrodynamics SMI"), this);
+   pb_calc_hydro = new QPushButton(us_tr("Calculate RB Hydrodynamics SMI"), this);
    Q_CHECK_PTR(pb_calc_hydro);
    pb_calc_hydro->setEnabled(false);
    pb_calc_hydro->setMinimumHeight(minHeight1);
@@ -831,7 +986,7 @@ void US_Hydrodyn::setupGUI()
    pb_calc_hydro->setPalette( PALET_PUSHB );
    connect(pb_calc_hydro, SIGNAL(clicked()), SLOT(calc_hydro()));
 
-   pb_calc_zeno = new QPushButton(tr("Calculate RB Hydrodynamics ZENO"), this);
+   pb_calc_zeno = new QPushButton(us_tr("Calculate RB Hydrodynamics ZENO"), this);
    Q_CHECK_PTR(pb_calc_zeno);
    pb_calc_zeno->setEnabled(false);
    pb_calc_zeno->setMinimumHeight(minHeight1);
@@ -839,7 +994,7 @@ void US_Hydrodyn::setupGUI()
    pb_calc_zeno->setPalette( PALET_PUSHB );
    connect(pb_calc_zeno, SIGNAL(clicked()), SLOT(calc_zeno_hydro()));
 
-   pb_show_hydro_results = new QPushButton(tr("Show Hydrodynamic Calculations"), this);
+   pb_show_hydro_results = new QPushButton(us_tr("Show Hydrodynamic Calculations"), this);
    Q_CHECK_PTR(pb_show_hydro_results);
    pb_show_hydro_results->setMinimumHeight(minHeight1);
    pb_show_hydro_results->setEnabled(false);
@@ -847,20 +1002,20 @@ void US_Hydrodyn::setupGUI()
    pb_show_hydro_results->setPalette( PALET_PUSHB );
    connect(pb_show_hydro_results, SIGNAL(clicked()), SLOT(show_hydro_results()));
 
-   pb_comparative = new QPushButton(tr("Model classifier"), this);
+   pb_comparative = new QPushButton(us_tr("Model classifier"), this);
    pb_comparative->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_comparative->setEnabled(true);
    pb_comparative->setPalette( PALET_PUSHB );
    connect(pb_comparative, SIGNAL(clicked()), SLOT(select_comparative()));
 
-   pb_best = new QPushButton(tr("BEST"), this);
+   pb_best = new QPushButton(us_tr("BEST"), this);
    pb_best->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_best->setEnabled(true);
    pb_best->setPalette( PALET_PUSHB );
    connect(pb_best, SIGNAL(clicked()), SLOT( best_analysis()));
    // pb_best->hide();
 
-   pb_open_hydro_results = new QPushButton(tr("Open Hydrodynamic Calculations File"), this);
+   pb_open_hydro_results = new QPushButton(us_tr("Open Hydrodynamic Calculations File"), this);
    Q_CHECK_PTR(pb_open_hydro_results);
    pb_open_hydro_results->setMinimumHeight(minHeight1);
    pb_open_hydro_results->setEnabled(true);
@@ -868,7 +1023,7 @@ void US_Hydrodyn::setupGUI()
    pb_open_hydro_results->setPalette( PALET_PUSHB );
    connect(pb_open_hydro_results, SIGNAL(clicked()), SLOT(open_hydro_results()));
 
-   pb_select_save_params = new QPushButton(tr("Select Parameters to be Saved"), this);
+   pb_select_save_params = new QPushButton(us_tr("Select Parameters to be Saved"), this);
    Q_CHECK_PTR(pb_select_save_params);
    pb_select_save_params->setMinimumHeight(minHeight1);
    pb_select_save_params->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -877,7 +1032,7 @@ void US_Hydrodyn::setupGUI()
    connect(pb_select_save_params, SIGNAL(clicked()), SLOT(select_save_params()));
 
    cb_saveParams = new QCheckBox(this);
-   cb_saveParams->setText(tr(" Save parameters to file "));
+   cb_saveParams->setText(us_tr(" Save parameters to file "));
    cb_saveParams->setChecked(saveParams);
    cb_saveParams->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_saveParams->setPalette( PALET_NORMAL );
@@ -885,14 +1040,14 @@ void US_Hydrodyn::setupGUI()
    connect(cb_saveParams, SIGNAL(clicked()), this, SLOT(set_saveParams()));
 
    // ***** dmd *******
-   pb_dmd_run = new QPushButton(tr("Run DMD"), this);
+   pb_dmd_run = new QPushButton(us_tr("Run DMD"), this);
    pb_dmd_run->setMinimumHeight(minHeight1);
    pb_dmd_run->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_dmd_run->setEnabled( true );
    pb_dmd_run->setPalette( PALET_PUSHB );
    connect(pb_dmd_run, SIGNAL(clicked()), SLOT(dmd_run()));
 
-   pb_bd = new QPushButton(tr("BD"), this);
+   pb_bd = new QPushButton(us_tr("BD"), this);
    Q_CHECK_PTR(pb_bd);
    pb_bd->setMinimumHeight(minHeight1);
    pb_bd->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -905,78 +1060,78 @@ void US_Hydrodyn::setupGUI()
    connect(pb_bd, SIGNAL(clicked()), SLOT(show_bd()));
 
    // ***** bd *******
-   //   pb_bd_prepare = new QPushButton(tr("Create Browflex files"), this);
+   //   pb_bd_prepare = new QPushButton(us_tr("Create Browflex files"), this);
    //   pb_bd_prepare->setMinimumHeight(minHeight1);
    //   pb_bd_prepare->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    //   pb_bd_prepare->setEnabled(false);
-   //   pb_bd_prepare->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   //   pb_bd_prepare->setPalette( USglobal->global_colors.cg_pushb );
    //   connect(pb_bd_prepare, SIGNAL(clicked()), SLOT(bd_prepare()));
 
-   //   pb_bd_load = new QPushButton(tr("Load Browflex files"), this);
+   //   pb_bd_load = new QPushButton(us_tr("Load Browflex files"), this);
    //   pb_bd_load->setMinimumHeight(minHeight1);
    //   pb_bd_load->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    //   pb_bd_load->setEnabled(false);
-   //   pb_bd_load->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   //   pb_bd_load->setPalette( USglobal->global_colors.cg_pushb );
    //   connect(pb_bd_load, SIGNAL(clicked()), SLOT(bd_load()));
 
-   //   pb_bd_edit = new QPushButton(tr("View/Edit Browflex files"), this);
+   //   pb_bd_edit = new QPushButton(us_tr("View/Edit Browflex files"), this);
    //   pb_bd_edit->setMinimumHeight(minHeight1);
    //   pb_bd_edit->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    //   pb_bd_edit->setEnabled(false);
-   //   pb_bd_edit->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   //   pb_bd_edit->setPalette( USglobal->global_colors.cg_pushb );
    //   connect(pb_bd_edit, SIGNAL(clicked()), SLOT(bd_edit()));
 
-   //   pb_bd_run = new QPushButton(tr("Run Browflex"), this);
+   //   pb_bd_run = new QPushButton(us_tr("Run Browflex"), this);
    //   pb_bd_run->setMinimumHeight(minHeight1);
    //   pb_bd_run->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    //   pb_bd_run->setEnabled(false);
-   //   pb_bd_run->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   //   pb_bd_run->setPalette( USglobal->global_colors.cg_pushb );
    //   connect(pb_bd_run, SIGNAL(clicked()), SLOT(bd_run()));
 
-   //   pb_bd_load_results = new QPushButton(tr("Load/Process Browflex results"), this);
+   //   pb_bd_load_results = new QPushButton(us_tr("Load/Process Browflex results"), this);
    //   pb_bd_load_results->setMinimumHeight(minHeight1);
    //   pb_bd_load_results->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    //   pb_bd_load_results->setEnabled(false);
-   //   pb_bd_load_results->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   //   pb_bd_load_results->setPalette( USglobal->global_colors.cg_pushb );
    //   connect(pb_bd_load_results, SIGNAL(clicked()), SLOT(bd_load_results()));
 
    // ***** anaflex *******
-   //   pb_anaflex_prepare = new QPushButton(tr("Create Anaflex files"), this);
+   //   pb_anaflex_prepare = new QPushButton(us_tr("Create Anaflex files"), this);
    //   pb_anaflex_prepare->setMinimumHeight(minHeight1);
    //   pb_anaflex_prepare->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    //   pb_anaflex_prepare->setEnabled(false);
-   //   pb_anaflex_prepare->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   //   pb_anaflex_prepare->setPalette( USglobal->global_colors.cg_pushb );
    //   connect(pb_anaflex_prepare, SIGNAL(clicked()), SLOT(anaflex_prepare()));
 
-   //   pb_anaflex_load = new QPushButton(tr("Load Anaflex files"), this);
+   //   pb_anaflex_load = new QPushButton(us_tr("Load Anaflex files"), this);
    //   pb_anaflex_load->setMinimumHeight(minHeight1);
    //   pb_anaflex_load->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    //   pb_anaflex_load->setEnabled(false);
-   //   pb_anaflex_load->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   //   pb_anaflex_load->setPalette( USglobal->global_colors.cg_pushb );
    //   connect(pb_anaflex_load, SIGNAL(clicked()), SLOT(anaflex_load()));
 
-   //   pb_anaflex_edit = new QPushButton(tr("View/Edit Anaflex files"), this);
+   //   pb_anaflex_edit = new QPushButton(us_tr("View/Edit Anaflex files"), this);
    //   pb_anaflex_edit->setMinimumHeight(minHeight1);
    //   pb_anaflex_edit->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    //   pb_anaflex_edit->setEnabled(false);
-   //   pb_anaflex_edit->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   //   pb_anaflex_edit->setPalette( USglobal->global_colors.cg_pushb );
    //   connect(pb_anaflex_edit, SIGNAL(clicked()), SLOT(anaflex_edit()));
 
-   //   pb_anaflex_run = new QPushButton(tr("Run Anaflex"), this);
+   //   pb_anaflex_run = new QPushButton(us_tr("Run Anaflex"), this);
    //   pb_anaflex_run->setMinimumHeight(minHeight1);
    //   pb_anaflex_run->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    //   pb_anaflex_run->setEnabled(false);
-   //   pb_anaflex_run->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   //   pb_anaflex_run->setPalette( USglobal->global_colors.cg_pushb );
    //   connect(pb_anaflex_run, SIGNAL(clicked()), SLOT(anaflex_run()));
 
-   //   pb_anaflex_load_results = new QPushButton(tr("Load Anaflex results"), this);
+   //   pb_anaflex_load_results = new QPushButton(us_tr("Load Anaflex results"), this);
    //   pb_anaflex_load_results->setMinimumHeight(minHeight1);
    //   pb_anaflex_load_results->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    //   pb_anaflex_load_results->setEnabled(false);
-   //   pb_anaflex_load_results->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   //   pb_anaflex_load_results->setPalette( USglobal->global_colors.cg_pushb );
    //   connect(pb_anaflex_load_results, SIGNAL(clicked()), SLOT(anaflex_load_results()));
 
-   pb_help = new QPushButton(tr("Help"), this);
+   pb_help = new QPushButton(us_tr("Help"), this);
    Q_CHECK_PTR(pb_help);
    pb_help->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_help->setMinimumHeight(minHeight1);
@@ -984,13 +1139,13 @@ void US_Hydrodyn::setupGUI()
    connect(pb_help, SIGNAL(clicked()), SLOT(help()));
 
 
-   pb_config = new QPushButton(tr("Config"), this);
+   pb_config = new QPushButton(us_tr("Config"), this);
    pb_config->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_config->setMinimumHeight(minHeight1);
    pb_config->setPalette( PALET_PUSHB );
    connect(pb_config, SIGNAL(clicked()), SLOT(config()));
 
-   pb_stop_calc = new QPushButton(tr("Stop"), this);
+   pb_stop_calc = new QPushButton(us_tr("Stop"), this);
    Q_CHECK_PTR(pb_stop_calc);
    pb_stop_calc->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_stop_calc->setMinimumHeight(minHeight1);
@@ -998,39 +1153,62 @@ void US_Hydrodyn::setupGUI()
    connect(pb_stop_calc, SIGNAL(clicked()), SLOT(stop_calc()));
    pb_stop_calc->setEnabled(false);
 
-   pb_cancel = new QPushButton(tr("Close"), this);
+   pb_cancel = new QPushButton(us_tr("Close"), this);
    Q_CHECK_PTR(pb_cancel);
    pb_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_cancel->setMinimumHeight(minHeight1);
    pb_cancel->setPalette( PALET_PUSHB );
    connect(pb_cancel, SIGNAL(clicked()), SLOT(cancel()));
 
-   progress = new Q3ProgressBar(this, "Loading Progress");
+   progress = new QProgressBar( this );
    progress->setPalette( PALET_NORMAL );
    AUTFBACK( progress );
    progress->reset();
 
-   editor = new Q3TextEdit(this);
+   editor = new QTextEdit(this);
    editor->setPalette( PALET_NORMAL );
    editor->setReadOnly(true);
    editor->setMinimumWidth(550);
 
-#if !defined(QT4) || !defined(Q_WS_MAC)
-   m = new QMenuBar(editor, "menu" );
+#if QT_VERSION < 0x040000
+# if !defined(QT4) || !defined(Q_WS_MAC)
+   m = new QMenuBar( editor );    m->setObjectName( "menu" );
    m->setMinimumHeight(minHeight1);
    m->setPalette( PALET_NORMAL );
    AUTFBACK( m );
-   Q3PopupMenu * file = new Q3PopupMenu(editor);
-   m->insertItem( tr("&File"), file );
-   file->insertItem( tr("Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
-   file->insertItem( tr("Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
+ //   Q3PopupMenu * file = new Q3PopupMenu(editor);
+   m->insertItem( us_tr("&File"), file );
+   file->insertItem( us_tr("Font"),  this, SLOT(update_font( )),    Qt::ALT+Qt::Key_F );
+   file->insertItem( us_tr("Save"),  this, SLOT(save( )),    Qt::ALT+Qt::Key_S );
 
-# ifndef NO_EDITOR_PRINT
-   file->insertItem( tr("Print"), this, SLOT(print()),   Qt::ALT+Qt::Key_P );
+#  ifndef NO_EDITOR_PRINT
+   file->insertItem( us_tr("Print"), this, SLOT(print( )),   Qt::ALT+Qt::Key_P );
+#  endif
+   file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display( )),   Qt::ALT+Qt::Key_X );
 # endif
-   file->insertItem( tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
+#else
+# if !defined(Q_WS_MAC)
+   m = new QMenuBar( editor );    m->setObjectName( "menu" );
+   m->setMinimumHeight(minHeight1);
+   {
+      QMenu * new_menu = m->addMenu( us_tr( "&File" ) );
+
+      QAction *qa1 = new_menu->addAction( us_tr( "Font" ) );
+      qa1->setShortcut( Qt::ALT+Qt::Key_F );
+      connect( qa1, SIGNAL(triggered()), this, SLOT( update_font() ) );
+
+      QAction *qa2 = new_menu->addAction( us_tr( "Save" ) );
+      qa2->setShortcut( Qt::ALT+Qt::Key_S );
+      connect( qa2, SIGNAL(triggered()), this, SLOT( save() ) );
+
+      QAction *qa3 = new_menu->addAction( us_tr( "Clear Display" ) );
+      qa3->setShortcut( Qt::ALT+Qt::Key_X );
+      connect( qa3, SIGNAL(triggered()), this, SLOT( clear_display() ) );
+   }
+# endif
 #endif
-   editor->setWordWrap (advanced_config.scroll_editor ? Q3TextEdit::NoWrap : Q3TextEdit::WidgetWidth);
+   
+   editor->setWordWrapMode (advanced_config.scroll_editor ? QTextOption::NoWrap : QTextOption::WordWrap);
 
    lbl_core_progress = new QLabel("", this);
    Q_CHECK_PTR(lbl_core_progress);
@@ -1043,12 +1221,12 @@ void US_Hydrodyn::setupGUI()
    clear_display();
 
    int rows=20, columns = 3, spacing = 2, j=0, margin=4;
-   Q3GridLayout *background = new Q3GridLayout(this, rows, columns, margin, spacing);
+   QGridLayout * background = new QGridLayout( this ); background->setContentsMargins( 0, 0, 0, 0 ); background->setSpacing( 0 ); background->setSpacing( spacing ); background->setContentsMargins( margin, margin, margin, margin );
 
-   background->addMultiCellWidget(frame, j, j, 0, 1);
-   background->addMultiCellWidget(editor, j, j+24, 2, 2);
+   background->addWidget( frame , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
+   background->addWidget( editor , j , 2 , 1 + ( j+24 ) - ( j ) , 1 + ( 2 ) - ( 2 ) );
    j++;
-   background->addMultiCellWidget(lbl_info1, j, j, 0, 1);
+   background->addWidget( lbl_info1 , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
    j++;
    background->addWidget(pb_select_residue_file, j, 0);
    background->addWidget(lbl_table, j, 1);
@@ -1059,14 +1237,14 @@ void US_Hydrodyn::setupGUI()
    background->addWidget(le_pdb_file, j, 1);
    j++;
    background->addWidget(lbl_model, j, 0);
-   background->addMultiCellWidget(lb_model, j, j+4, 1, 1);
+   background->addWidget( lb_model , j , 1 , 1 + ( j+4 ) - ( j ) , 1 + ( 1 ) - ( 1 ) );
    j++;
-   Q3HBoxLayout *hbl_pdb = new Q3HBoxLayout(0);
+   QHBoxLayout * hbl_pdb = new QHBoxLayout(); hbl_pdb->setContentsMargins( 0, 0, 0, 0 ); hbl_pdb->setSpacing( 0 );
    hbl_pdb->addWidget(pb_view_pdb);
    hbl_pdb->addWidget(pb_pdb_tool);
    background->addLayout(hbl_pdb, j, 0);
    j++;
-   Q3HBoxLayout *hbl_pdb_saxs = new Q3HBoxLayout;
+   QHBoxLayout * hbl_pdb_saxs = new QHBoxLayout; hbl_pdb_saxs->setContentsMargins( 0, 0, 0, 0 ); hbl_pdb_saxs->setSpacing( 0 );
    hbl_pdb_saxs->addWidget(pb_pdb_saxs);
 #if defined(USE_H)
    hbl_pdb_saxs->addWidget(pb_pdb_hydrate_for_saxs);
@@ -1077,18 +1255,18 @@ void US_Hydrodyn::setupGUI()
    j++;
    background->addWidget(pb_bd, j, 0);
    j++;
-   background->addMultiCellWidget(lbl_info2, j, j, 0, 1);
+   background->addWidget( lbl_info2 , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
    j++;
    //   background->addWidget(lbl_bead_model_prefix, j, 0);
-   Q3HBoxLayout *hbl_prefix_suffix = new Q3HBoxLayout;
+   QHBoxLayout * hbl_prefix_suffix = new QHBoxLayout; hbl_prefix_suffix->setContentsMargins( 0, 0, 0, 0 ); hbl_prefix_suffix->setSpacing( 0 );
    hbl_prefix_suffix->addWidget(lbl_bead_model_prefix);
    hbl_prefix_suffix->addWidget(le_bead_model_prefix);
    // hbl_prefix_suffix->addWidget(le_bead_model_suffix);
    background->addLayout(hbl_prefix_suffix, j, 0);
    background->addWidget(le_bead_model_suffix, j, 1);
-   // QGridLayout *gl_prefix_suffix = new QGridLayout(1,3);
-   // gl_prefix_suffix->addMultiCellWidget(le_bead_model_prefix, 0, 0, 0, 0);
-   // gl_prefix_suffix->addMultiCellWidget(le_bead_model_suffix, 0, 0, 1, 2);
+   // QGridLayout * gl_prefix_suffix = new QGridLayout; gl_prefix_suffix->setContentsMargins( 0, 0, 0, 0 ); gl_prefix_suffix->setSpacing( 0 );
+   // gl_prefix_suffix->addWidget( le_bead_model_prefix , 0 , 0 , 1 + ( 0 ) - ( 0 ) , 1 + ( 0 ) - ( 0 ) );
+   // gl_prefix_suffix->addWidget( le_bead_model_suffix , 0 , 1 , 1 + ( 0 ) - ( 0 ) , 1 + ( 2 ) - ( 1 ) );
    // background->addLayout(gl_prefix_suffix, j, 1);   
    j++;
    background->addWidget(cb_overwrite, j, 0);
@@ -1104,7 +1282,7 @@ void US_Hydrodyn::setupGUI()
 
 
    //   background->addWidget(pb_bd_prepare, j, 0);
-   //   QHBoxLayout *qhl_bd_1 = new QHBoxLayout;
+   //   QHBoxLayout * qhl_bd_1 = new QHBoxLayout; qhl_bd_1->setContentsMargins( 0, 0, 0, 0 ); qhl_bd_1->setSpacing( 0 );
    //   qhl_bd_1->addWidget(pb_bd_load);
    //   qhl_bd_1->addWidget(pb_bd_edit);
    //   background->addLayout(qhl_bd_1, j, 1);
@@ -1132,7 +1310,7 @@ void US_Hydrodyn::setupGUI()
    background->addWidget(pb_equi_grid_bead_model, j, 1);
    j++;
 
-   background->addMultiCellWidget(lbl_info3, j, j, 0, 1);
+   background->addWidget( lbl_info3 , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
    j++;
 
    background->addWidget(pb_calc_hydro, j, 0);
@@ -1149,19 +1327,19 @@ void US_Hydrodyn::setupGUI()
    j++;
 
    {
-      Q3BoxLayout * hbl = new Q3HBoxLayout( 0 );
+      QBoxLayout * hbl = new QHBoxLayout();
       hbl->addWidget( pb_best );
       hbl->addWidget( pb_comparative );
       background->addLayout( hbl, j, 0 );
    }
    {
-      Q3BoxLayout * hbl = new Q3HBoxLayout( 0 );
+      QBoxLayout * hbl = new QHBoxLayout();
       hbl->addWidget( pb_stop_calc );
       hbl->addWidget( pb_cancel );
       background->addLayout( hbl, j, 1 );
    }
    j++;
-   Q3BoxLayout *bl_help_config = new Q3HBoxLayout;
+   QBoxLayout *bl_help_config = new QHBoxLayout;
    bl_help_config->addWidget( pb_help );
    bl_help_config->addWidget( pb_config );
 
@@ -1177,7 +1355,9 @@ void US_Hydrodyn::set_expert( bool expert )
    if ( expert )
    {
       //      pb_best->show();
-      lookup_tables->insertItem(tr("Make test set"), this, SLOT( make_test_set() ) );
+#if QT_VERSION < 0x040000
+      lookup_tables->insertItem(us_tr("Make test set"), this, SLOT( make_test_set( ) ) );
+#endif
    }
    expert ? pb_equi_grid_bead_model->show() : pb_equi_grid_bead_model->hide();
    expert ? pb_rescale_bead_model->show() : pb_rescale_bead_model->hide();
@@ -1380,7 +1560,7 @@ void US_Hydrodyn::show_misc()
    else
    {
       if ( misc.restore_pb_rule ) {
-         // qDebug( "show_misc() restoring pb rule" );
+         // us_qdebug( "show_misc() restoring pb rule" );
          misc.pb_rule_on      = true;
          misc.restore_pb_rule = false;
       }
@@ -1451,8 +1631,8 @@ void US_Hydrodyn::show_dmd_options()
 void US_Hydrodyn::show_bd()
 {
 #ifdef NO_BD
-   QMessageBox::message(tr("Please note:"),
-                        tr("Function not available in this version." ) );
+   US_Static::us_message(us_tr("Please note:"),
+                        us_tr("Function not available in this version." ) );
    return;
 #endif
 
@@ -1480,8 +1660,8 @@ void US_Hydrodyn::show_bd()
 void US_Hydrodyn::show_bd_options()
 {
 #ifdef NO_BD
-   QMessageBox::message(tr("Please note:"),
-                        tr("Function not available in this version." ) );
+   US_Static::us_message(us_tr("Please note:"),
+                        us_tr("Function not available in this version." ) );
    return;
 #endif
    if (bd_options_widget)
@@ -1507,8 +1687,8 @@ void US_Hydrodyn::show_bd_options()
 void US_Hydrodyn::show_anaflex_options()
 {
 #ifdef NO_BD
-   QMessageBox::message(tr("Please note:"),
-                        tr("Function not available in this version." ) );
+   US_Static::us_message(us_tr("Please note:"),
+                        us_tr("Function not available in this version." ) );
    return;
 #endif
    if (anaflex_options_widget)
@@ -1631,18 +1811,18 @@ void US_Hydrodyn::load_config()
    QString fname = QFileDialog::getOpenFileName( 0 , "Please select a SOMO configuration file..." , somo_dir , "*.config" , 0 );
    if ( fname == QString::null )
    {
-      QColor save_color = editor->color();
-      editor->setColor("red");
-      editor->append(tr("\nLoad configuration canceled."));
-      editor->setColor(save_color);
+      QColor save_color = editor->textColor();
+      editor->setTextColor("red");
+      editor->append(us_tr("\nLoad configuration canceled."));
+      editor->setTextColor(save_color);
       display_default_differences();
       return;
    }
 
    if ( read_config(fname) )
    {
-      QMessageBox::message(tr("Please note:"),
-                           tr("The configuration file was found to be corrupt.\n"
+      US_Static::us_message(us_tr("Please note:"),
+                           us_tr("The configuration file was found to be corrupt.\n"
                               "Resorting to default values."));
       set_default();
    }
@@ -1655,8 +1835,8 @@ void US_Hydrodyn::write_config()
    switch (
            QMessageBox::question(
                                  this,
-                                 caption() + tr(": Save configuration "),
-                                 tr( "Save the current configuration as 'startup' configuration?" ),
+                                 windowTitle() + us_tr(": Save configuration "),
+                                 us_tr( "Save the current configuration as 'startup' configuration?" ),
                                  QMessageBox::Yes, 
                                  QMessageBox::No,
                                  QMessageBox::Cancel
@@ -1715,14 +1895,14 @@ void US_Hydrodyn::do_reset()
 
 void US_Hydrodyn::reset()
 {
-   QMessageBox mb(tr("UltraScan"), tr("Attention:\nAre you sure you want to reset to the default options?\nAll currently defined options will be reset."),
+   QMessageBox mb(us_tr("UltraScan"), us_tr("Attention:\nAre you sure you want to reset to the default options?\nAll currently defined options will be reset."),
                   QMessageBox::Information,
                   QMessageBox::Yes | QMessageBox::Default,
                   QMessageBox::Cancel | QMessageBox::Escape,
                   QMessageBox::No);
-   mb.setButtonText(QMessageBox::Yes, tr("Yes"));
-   mb.setButtonText(QMessageBox::Cancel, tr("Cancel"));
-   mb.setButtonText(QMessageBox::No, tr("Save Current Options"));
+   mb.setButtonText(QMessageBox::Yes, us_tr("Yes"));
+   mb.setButtonText(QMessageBox::Cancel, us_tr("Cancel"));
+   mb.setButtonText(QMessageBox::No, us_tr("Save Current Options"));
    switch(mb.exec())
    {
    case QMessageBox::Cancel:
@@ -1741,7 +1921,7 @@ void US_Hydrodyn::reset()
 void US_Hydrodyn::select_residue_file()
 {
    QString old_filename = residue_filename;
-   residue_filename = QFileDialog::getOpenFileName( this , caption() , USglobal->config_list.system_dir + "/etc" , "*.residue *.RESIDUE" );
+   residue_filename = QFileDialog::getOpenFileName( this , windowTitle() , USglobal->config_list.system_dir + "/etc" , "*.residue *.RESIDUE" );
    if (residue_filename.isEmpty())
    {
       residue_filename = old_filename;
@@ -1822,22 +2002,22 @@ void US_Hydrodyn::reload_pdb()
 }
 
 void US_Hydrodyn::clear_pdb_info( QString /* msg */ ) {
-   // qDebug( QString( "clear_pdb_info() %1" ). arg( msg ) );
+   // us_qdebug( QString( "clear_pdb_info() %1" ). arg( msg ) );
    pdb_info.clear();
 }
 
 void US_Hydrodyn::set_pdb_info( QString /* msg */ ) {
    if ( misc.pb_rule_on ) {
-      // qDebug( QString( "set_pdb_info() %1 setting pb_rule ON" ). arg( msg ) );
+      // us_qdebug( QString( "set_pdb_info() %1 setting pb_rule ON" ). arg( msg ) );
       pdb_info.insert( "pb_rule" );
    } else {
-      // qDebug( QString( "set_pdb_info() %1 setting pb_rule OFF" ). arg( msg ) );
+      // us_qdebug( QString( "set_pdb_info() %1 setting pb_rule OFF" ). arg( msg ) );
       pdb_info.erase( "pb_rule" );
    }
 }
 
 void US_Hydrodyn::sync_pdb_info( QString /* msg */ ) {
-   // qDebug( QString( "sync_pdb_info() %1 called misc.pb_rule_on %2 pdb_info.count( 'pb_rule' ) %3" )
+   // us_qdebug( QString( "sync_pdb_info() %1 called misc.pb_rule_on %2 pdb_info.count( 'pb_rule' ) %3" )
    //         .arg( msg )
    //         .arg( misc.pb_rule_on ? "true" : "false" )
    //         .arg( pdb_info.count( "pb_rule" ) ? "true" : "false" )
@@ -1852,11 +2032,11 @@ void US_Hydrodyn::sync_pdb_info( QString /* msg */ ) {
       }
            
       if ( misc.pb_rule_on && !pdb_info.count( "pb_rule" ) ) {
-         // qDebug( QString( "sync_pdb_info() %1 misc.pb_rule was ON, now OFF" ). arg( msg ) );
+         // us_qdebug( QString( "sync_pdb_info() %1 misc.pb_rule was ON, now OFF" ). arg( msg ) );
          misc.pb_rule_on      = false;
          misc.restore_pb_rule = true;
       } else {
-         // qDebug( QString( "sync_pdb_info() %1 misc.pb_rule was OFF, now ON" ). arg( msg ) );
+         // us_qdebug( QString( "sync_pdb_info() %1 misc.pb_rule was OFF, now ON" ). arg( msg ) );
          misc.pb_rule_on      = true;
          misc.restore_pb_rule = false;
       }
@@ -1866,9 +2046,9 @@ void US_Hydrodyn::sync_pdb_info( QString /* msg */ ) {
 // add store & reset code for these in state_info ?
 
 int US_Hydrodyn::issue_non_coded( bool quiet ) {
-   qDebug( "issue_non_coded()" );
+   us_qdebug( "issue_non_coded()" );
    if ( quiet || advanced_config.expert_mode ) {
-      qDebug( "issue_non_coded() returning quiet or expert" );
+      us_qdebug( "issue_non_coded() returning quiet or expert" );
       switch ( pdb_parse.missing_residues ) {
       case 0 : // list & stop op
          return ISSUE_RESPONSE_STOP;
@@ -1884,30 +2064,30 @@ int US_Hydrodyn::issue_non_coded( bool quiet ) {
    }
 
    if ( issue_info.count( "stop" ) ) {
-      qDebug( "issue_non_coded() auto return stop" );
+      us_qdebug( "issue_non_coded() auto return stop" );
       return ISSUE_RESPONSE_STOP;
    }
    if ( issue_info.count( "nc_skip" ) ) {
-      qDebug( "issue_non_coded() auto return skip" );
+      us_qdebug( "issue_non_coded() auto return skip" );
       return ISSUE_RESPONSE_NC_SKIP;
    }
    if ( issue_info.count( "nc_replace" ) ) {
-      qDebug( "issue_non_coded() auto return replace" );
+      us_qdebug( "issue_non_coded() auto return replace" );
       return ISSUE_RESPONSE_NC_REPLACE;
    }
 
    switch ( pdb_parse.missing_residues ) {
    case 0 :
-      qDebug( "issue_non_coded() return stop" );
+      us_qdebug( "issue_non_coded() return stop" );
       return ISSUE_RESPONSE_STOP;
       break;
    case 1 :
       {
-         qDebug( "issue_non_coded() setting skip q" );
+         us_qdebug( "issue_non_coded() setting skip q" );
          switch( QMessageBox::question(
                                        this
-                                       ,tr( "US-SOMO: Non coded residue" )
-                                       ,tr("A non-coded residue was encountered\n"
+                                       ,us_tr( "US-SOMO: Non coded residue" )
+                                       ,us_tr("A non-coded residue was encountered\n"
                                            "It can be skipped or you can stop processing.\n"
                                            "This choice will be maintained for all remaining non coded residues encountered in this PDB file.\n"
                                            "For specific residue details, please review the main panel text area after making your selection.\n"
@@ -1919,8 +2099,8 @@ int US_Hydrodyn::issue_non_coded( bool quiet ) {
                                            "\n"
                                            "Please select your option below"
                                            )
-                                       ,tr( "Skip non-coded residues" )
-                                       ,tr( "Stop processing" )
+                                       ,us_tr( "Skip non-coded residues" )
+                                       ,us_tr( "Stop processing" )
                                        ,QString::null
                                        ,1
                                        ,1
@@ -1940,11 +2120,11 @@ int US_Hydrodyn::issue_non_coded( bool quiet ) {
       break;
    case 2 :
       {
-         qDebug( "issue_non_coded() setting abb q" );
+         us_qdebug( "issue_non_coded() setting abb q" );
          switch( QMessageBox::question(
                                        this
-                                       ,tr( "US-SOMO: Non coded residue" )
-                                       ,tr("A non-coded residue was encountered\n"
+                                       ,us_tr( "US-SOMO: Non coded residue" )
+                                       ,us_tr("A non-coded residue was encountered\n"
                                            "It can be replaced with an average residue, skipped or you can stop processing.\n"
                                            "This choice will be maintained for all remaining non coded residues encountered in this PDB file.\n"
                                            "For specific residue details, please review the main panel text area after making your selection.\n"
@@ -1957,9 +2137,9 @@ int US_Hydrodyn::issue_non_coded( bool quiet ) {
                                            "\n"
                                            "Please select your option below"
                                            )
-                                       ,tr( "Replace non-coded with average residues" )
-                                       ,tr( "Skip non-coded residues" )
-                                       ,tr( "Stop processing" )
+                                       ,us_tr( "Replace non-coded with average residues" )
+                                       ,us_tr( "Skip non-coded residues" )
+                                       ,us_tr( "Stop processing" )
                                        ,2
                                        ,2
                                        ) ) {
@@ -1986,16 +2166,16 @@ int US_Hydrodyn::issue_non_coded( bool quiet ) {
 
    }
 
-   qDebug( "issue_non_coded() fall thru" );
+   us_qdebug( "issue_non_coded() fall thru" );
 
    return ISSUE_RESPONSE_STOP;
 }
 
 int US_Hydrodyn::issue_missing_atom( bool quiet ) {
 
-   qDebug( "issue_missing_atom()" );
+   us_qdebug( "issue_missing_atom()" );
    if ( quiet || advanced_config.expert_mode ) {
-      qDebug( "issue_missing_atom() returning quiet or expert" );
+      us_qdebug( "issue_missing_atom() returning quiet or expert" );
       switch ( pdb_parse.missing_atoms ) {
       case 0 : // list & stop op
          return ISSUE_RESPONSE_STOP;
@@ -2011,30 +2191,30 @@ int US_Hydrodyn::issue_missing_atom( bool quiet ) {
    }
 
    if ( issue_info.count( "stop" ) ) {
-      qDebug( "issue_missing_atom() auto return stop" );
+      us_qdebug( "issue_missing_atom() auto return stop" );
       return ISSUE_RESPONSE_STOP;
    }
    if ( issue_info.count( "ma_skip" ) ) {
-      qDebug( "issue_missing_atom() auto return skip" );
+      us_qdebug( "issue_missing_atom() auto return skip" );
       return ISSUE_RESPONSE_MA_SKIP;
    }
    if ( issue_info.count( "ma_model" ) ) {
-      qDebug( "issue_missing_atom() auto return model" );
+      us_qdebug( "issue_missing_atom() auto return model" );
       return ISSUE_RESPONSE_MA_MODEL;
    }
 
    switch ( pdb_parse.missing_atoms ) {
    case 0 :
-      qDebug( "issue_missing_atom() return stop" );
+      us_qdebug( "issue_missing_atom() return stop" );
       return ISSUE_RESPONSE_STOP;
       break;
    case 1 :
       {
-         qDebug( "issue_missing_atom() setting skip q" );
+         us_qdebug( "issue_missing_atom() setting skip q" );
          switch( QMessageBox::question(
                                        this
-                                       ,tr( "US-SOMO: Missing or extra atoms" )
-                                       ,tr("A missing or extra atom was encountered when comparing with the residue table\n"
+                                       ,us_tr( "US-SOMO: Missing or extra atoms" )
+                                       ,us_tr("A missing or extra atom was encountered when comparing with the residue table\n"
                                            "It can be skipped or you can stop processing.\n"
                                            "This choice will be maintained for all remaining missing atoms encountered in this PDB file.\n"
                                            "For specific residue details, please review the main panel text area after making your selection.\n"
@@ -2047,8 +2227,8 @@ int US_Hydrodyn::issue_missing_atom( bool quiet ) {
                                            "\n"
                                            "Please select your option below"
                                            )
-                                       ,tr( "Skip residues with missing atoms" )
-                                       ,tr( "Stop processing" )
+                                       ,us_tr( "Skip residues with missing atoms" )
+                                       ,us_tr( "Stop processing" )
                                        ,QString::null
                                        ,1
                                        ,1
@@ -2068,11 +2248,11 @@ int US_Hydrodyn::issue_missing_atom( bool quiet ) {
       break;
    case 2 :
       {
-         qDebug( "issue_missing_atom() setting approx q" );
+         us_qdebug( "issue_missing_atom() setting approx q" );
          switch( QMessageBox::question(
                                        this
-                                       ,tr( "US-SOMO: Missing or extra atoms" )
-                                       ,tr("A missing or extra atom was encountered when comparing with the residue table\n"
+                                       ,us_tr( "US-SOMO: Missing or extra atoms" )
+                                       ,us_tr("A missing or extra atom was encountered when comparing with the residue table\n"
                                            "It can be modeled with an approximate method, skipped or you can stop processing.\n"
                                            "This choice will be maintained for all remaining missing atoms encountered in this PDB file.\n"
                                            "For specific residue details, please review the main panel text area after making your selection.\n"
@@ -2088,9 +2268,9 @@ int US_Hydrodyn::issue_missing_atom( bool quiet ) {
                                            "\n"
                                            "Please select your option below"
                                            )
-                                       ,tr( "Model with the approximate method" )
-                                       ,tr( "Skip residues with missing atoms" )
-                                       ,tr( "Stop processing" )
+                                       ,us_tr( "Model with the approximate method" )
+                                       ,us_tr( "Skip residues with missing atoms" )
+                                       ,us_tr( "Stop processing" )
                                        ,2
                                        ,2
                                        ) ) {
@@ -2117,7 +2297,7 @@ int US_Hydrodyn::issue_missing_atom( bool quiet ) {
 
    }
 
-   qDebug( "issue_missing_atom() fall thru" );
+   us_qdebug( "issue_missing_atom() fall thru" );
 
    return ISSUE_RESPONSE_STOP;
 }
@@ -2127,7 +2307,7 @@ void US_Hydrodyn::load_pdb()
    issue_info.clear();
    clear_pdb_info( "load_pdb" );
    if ( misc.restore_pb_rule ) {
-      qDebug( "load_pdb() restoring pb rule" );
+      us_qdebug( "load_pdb() restoring pb rule" );
       if ( misc_widget ) {
          misc_window->close();
          delete misc_window;
@@ -2142,7 +2322,7 @@ void US_Hydrodyn::load_pdb()
    if ( 0 && pdb_parse.missing_residues == 1 &&
         !advanced_config.expert_mode )
    {
-      message += tr("You have selected to skip missing residues. If your model contains missing\n"
+      message += us_tr("You have selected to skip missing residues. If your model contains missing\n"
                     "residues, the calculated molecular weight and vbar may be incorrect, and\n"
                     "you should manually enter a global value for the molecular weight in the\n"
                     "SOMO hydrodynamic options, and a global value for the vbar in the SOMO\n"
@@ -2151,7 +2331,7 @@ void US_Hydrodyn::load_pdb()
    if ( 0 && pdb_parse.missing_residues == 2 &&
         !advanced_config.expert_mode )
    {
-      message += tr("You have selected to replace non-coded residues with an average residue.\n"
+      message += us_tr("You have selected to replace non-coded residues with an average residue.\n"
                     "If your model contains non-coded residues, the calculated molecular weight\n"
                     "and vbar may be incorrect. Therefore, you could manually enter a global\n"
                     "value for the molecular weight in the SOMO hydrodynamic options, and a\n"
@@ -2161,13 +2341,13 @@ void US_Hydrodyn::load_pdb()
    }
    if (message != "")
    {
-      QMessageBox mb(tr("UltraScan"), tr("Attention:\n" + message),
+      QMessageBox mb(us_tr("UltraScan"), us_tr("Attention:\n" + message),
                      QMessageBox::Information,
                      QMessageBox::Yes | QMessageBox::Default,
                      QMessageBox::Cancel | QMessageBox::Escape,
                      Qt::NoButton);
-      mb.setButtonText(QMessageBox::Yes, tr("Yes"));
-      mb.setButtonText(QMessageBox::Cancel, tr("Cancel"));
+      mb.setButtonText(QMessageBox::Yes, us_tr("Yes"));
+      mb.setButtonText(QMessageBox::Cancel, us_tr("Cancel"));
       switch(mb.exec())
       {
          case QMessageBox::Cancel:
@@ -2180,7 +2360,7 @@ void US_Hydrodyn::load_pdb()
    if ( 0 && pdb_parse.missing_atoms == 1 &&
         !advanced_config.expert_mode )
    {
-      message += tr("You have selected to skip coded residues containing missing atoms.\n"
+      message += us_tr("You have selected to skip coded residues containing missing atoms.\n"
                     "If your model contains missing atoms, the calculated molecular\n"
                     "weight and vbar may be incorrect, and you should manually enter\n"
                     "a global value for the molecular weight in the SOMO hydrodynamic\n"
@@ -2190,20 +2370,20 @@ void US_Hydrodyn::load_pdb()
    if ( 0 && pdb_parse.missing_atoms == 2 &&
         !advanced_config.expert_mode )
    {
-      message += tr("You have selected to model coded residues with missing atoms\n"
+      message += us_tr("You have selected to model coded residues with missing atoms\n"
                     "with an approximate method.  For best results, you should complete\n"
                     "the structure.\n\n"
                     "Do you want to proceed anyway?");
    }
    if (message != "")
    {
-      QMessageBox mb(tr("UltraScan"), tr("Attention:\n" + message),
+      QMessageBox mb(us_tr("UltraScan"), us_tr("Attention:\n" + message),
                      QMessageBox::Information,
                      QMessageBox::Yes | QMessageBox::Default,
                      QMessageBox::Cancel | QMessageBox::Escape,
                      Qt::NoButton);
-      mb.setButtonText(QMessageBox::Yes, tr("Yes"));
-      mb.setButtonText(QMessageBox::Cancel, tr("Cancel"));
+      mb.setButtonText(QMessageBox::Yes, us_tr("Yes"));
+      mb.setButtonText(QMessageBox::Cancel, us_tr("Cancel"));
       switch(mb.exec())
       {
       case QMessageBox::Cancel:
@@ -2225,12 +2405,12 @@ void US_Hydrodyn::load_pdb()
 
    if ( !filename.isEmpty() )
    {
-      path_load_pdb = QFileInfo(filename).dirPath(true);
+      path_load_pdb = QFileInfo(filename).absolutePath();
    }
 
    if ( QFileInfo(filename).fileName().contains(" ") )
    {
-      printError(tr("Filenames containing spaces are not currently supported.\n"
+      printError(us_tr("Filenames containing spaces are not currently supported.\n"
                     "Please rename the file to remove spaces."));
       return;
    }
@@ -2244,31 +2424,8 @@ void US_Hydrodyn::load_pdb()
       {
          screen_bead_model(filename);
 #if defined(START_RASMOL)
-         QStringList argument;
-#if !defined(WIN32) && !defined(MAC)
-         // maybe we should make this a user defined terminal window?
-         argument.append("xterm");
-         argument.append("-e");
-#endif
-#if defined(BIN64)
-         argument.append(USglobal->config_list.system_dir + SLASH + "bin64" + SLASH + "rasmol");
-#else
-         argument.append(USglobal->config_list.system_dir + SLASH + "bin" + SLASH + "rasmol");
-#endif
-         argument.append(QFileInfo(filename).fileName());
-         rasmol->setWorkingDirectory(QFileInfo(filename).dirPath());
-         rasmol->setArguments(argument);
-         if ( advanced_config.debug_1 )
-         {
-            editor->append(QString("starting rasmol <%1>\n").arg(argument.join("><")));
-            printf("starting rasmol<%s><s>\n", argument.join("><").ascii());
-            fflush(stdout);
-         }
-         if (advanced_config.auto_view_pdb &&
-             !rasmol->start())
-         {
-            QMessageBox::message(tr("Please note:"), tr("There was a problem starting RASMOL\n"
-                                                        "Please check to make sure RASMOL is properly installed..."));
+         if ( advanced_config.auto_view_pdb ) {
+            model_viewer( filename );
          }
 #endif
          return;
@@ -2282,31 +2439,8 @@ void US_Hydrodyn::load_pdb()
       clear_display();
 
 #if defined(START_RASMOL)
-      QStringList argument;
-#if !defined(WIN32) && !defined(MAC)
-      // maybe we should make this a user defined terminal window?
-      argument.append("xterm");
-      argument.append("-e");
-#endif
-#if defined(BIN64)
-      argument.append(USglobal->config_list.system_dir + SLASH + "bin64" + SLASH + "rasmol");
-#else
-      argument.append(USglobal->config_list.system_dir + SLASH + "bin" + SLASH + "rasmol");
-#endif
-      argument.append(QFileInfo(filename).fileName());
-      rasmol->setWorkingDirectory(QFileInfo(filename).dirPath());
-      rasmol->setArguments(argument);
-      if ( advanced_config.debug_1 )
-      {
-         editor->append(QString("starting rasmol <%1>\n").arg(argument.join("><")));
-         printf("starting rasmol<%s><s>\n", argument.join("><").ascii());
-         fflush(stdout);
-      }
-      if (advanced_config.auto_view_pdb &&
-          !rasmol->start())
-      {
-         QMessageBox::message(tr("Please note:"), tr("There was a problem starting RASMOL\n"
-                                                    "Please check to make sure RASMOL is properly installed..."));
+      if ( advanced_config.auto_view_pdb ) {
+         model_viewer( filename );
       }
 #endif
       QFileInfo fi(filename);
@@ -2379,7 +2513,7 @@ void US_Hydrodyn::load_pdb()
    pb_equi_grid_bead_model->setEnabled(false);
    le_bead_model_file->setText(" not selected ");
    bead_models_as_loaded = bead_models;
-   if ( lb_model->numRows() == 1 )
+   if ( lb_model->count() == 1 )
    {
       select_model(0);
    }
@@ -2404,7 +2538,7 @@ bool US_Hydrodyn::screen_pdb(QString filename, bool display_pdb, bool skipcleari
    clear_pdb_info( "screen_pdb" );
 
    if ( misc.restore_pb_rule ) {
-      // qDebug( "screen_pdb() restoring pb rule" );
+      // us_qdebug( "screen_pdb() restoring pb rule" );
       if ( misc_widget ) {
          misc_window->close();
          delete misc_window;
@@ -2419,7 +2553,7 @@ bool US_Hydrodyn::screen_pdb(QString filename, bool display_pdb, bool skipcleari
 
    if ( QFileInfo(filename).fileName().contains(" ") )
    {
-      printError(tr("Filenames containing spaces are not currently supported.\n"
+      printError(us_tr("Filenames containing spaces are not currently supported.\n"
                     "Please rename the file to remove spaces."));
       return false;
    }
@@ -2440,28 +2574,8 @@ bool US_Hydrodyn::screen_pdb(QString filename, bool display_pdb, bool skipcleari
    le_bead_model_suffix->setText( bead_model_suffix );
 
 #if defined(START_RASMOL)
-   if ( display_pdb )
-   {
-      QStringList argument;
-#if !defined(WIN32) && !defined(MAC)
-      // maybe we should make this a user defined terminal window?
-      argument.append("xterm");
-      argument.append("-e");
-#endif
-#if defined(BIN64)
-      argument.append(USglobal->config_list.system_dir + SLASH + "bin64" + SLASH + "rasmol");
-#else
-      argument.append(USglobal->config_list.system_dir + SLASH + "bin" + SLASH + "rasmol");
-#endif
-      argument.append(QFileInfo(filename).fileName());
-      rasmol->setWorkingDirectory(QFileInfo(filename).dirPath());
-      rasmol->setArguments(argument);
-      if (advanced_config.auto_view_pdb &&
-          !rasmol->start())
-      {
-         QMessageBox::message(tr("Please note:"), tr("There was a problem starting RASMOL\n"
-                                                     "Please check to make sure RASMOL is properly installed..."));
-      }
+   if ( display_pdb ) {
+      model_viewer( filename );
    }
 #endif
 
@@ -2482,9 +2596,9 @@ bool US_Hydrodyn::screen_pdb(QString filename, bool display_pdb, bool skipcleari
       return false;
    }
 #if defined( DEBUG_TESTING_JML )
-   qDebug( "extra reset0" );
+   us_qdebug( "extra reset0" );
    reset_chain_residues( &model_vector[0]);
-   qDebug( "after extra reset0" );
+   us_qdebug( "after extra reset0" );
 #endif
 
    QString error_string = "";
@@ -2493,9 +2607,9 @@ bool US_Hydrodyn::screen_pdb(QString filename, bool display_pdb, bool skipcleari
       multi_residue_map = save_multi_residue_map;
       editor->append(QString("Checking the pdb structure for model %1\n").arg( model_name( i ) ) );
 #if defined( DEBUG_TESTING_JML )
-      qDebug( "extra reset" );
+      us_qdebug( "extra reset" );
       reset_chain_residues( &model_vector[i]);
-      qDebug( "after extra reset" );
+      us_qdebug( "after extra reset" );
 #endif
       if (check_for_missing_atoms(&error_string, &model_vector[i]))
       {
@@ -2518,10 +2632,10 @@ bool US_Hydrodyn::screen_pdb(QString filename, bool display_pdb, bool skipcleari
    if ( !model_vector.size() ||
         !model_vector[0].molecule.size() )
    {
-      QColor save_color = editor->color();
-      editor->setColor("red");
-      editor->append(tr("ERROR : PDB file contains no atoms!"));
-      editor->setColor(save_color);
+      QColor save_color = editor->textColor();
+      editor->setTextColor("red");
+      editor->append(us_tr("ERROR : PDB file contains no atoms!"));
+      editor->setTextColor(save_color);
       errors_found++;
    }
 
@@ -2549,7 +2663,7 @@ bool US_Hydrodyn::screen_pdb(QString filename, bool display_pdb, bool skipcleari
    pb_equi_grid_bead_model->setEnabled(false);
    le_bead_model_file->setText(" not selected ");
    bead_models_as_loaded = bead_models;
-   if ( lb_model->numRows() == 1 )
+   if ( lb_model->count() == 1 )
    {
       select_model(0);
    }
@@ -2560,7 +2674,7 @@ bool US_Hydrodyn::screen_bead_model( QString filename )
 {
    if ( QFileInfo(filename).fileName().contains(" ") )
    {
-      printError(tr("Filenames containing spaces are not currently supported.\n"
+      printError(us_tr("Filenames containing spaces are not currently supported.\n"
                     "Please rename the file to remove spaces."));
       return false;
    }
@@ -2591,8 +2705,8 @@ bool US_Hydrodyn::screen_bead_model( QString filename )
    bool only_overlap = false;
    if ( !read_bead_model(filename, only_overlap ))
    {
-      bool so_ovlp = QFileInfo( filename ).baseName( true ).contains( "so_ovlp" );
-      qDebug( QString( "screen bead model so_ovlp %1" ).arg( so_ovlp ? "true" : "false" ) );
+      bool so_ovlp = QFileInfo( filename ).completeBaseName().contains( "so_ovlp" );
+      us_qdebug( QString( "screen bead model so_ovlp %1" ).arg( so_ovlp ? "true" : "false" ) );
       state = BEAD_MODEL_LOADED;
       pb_visualize->setEnabled(true);
       pb_equi_grid_bead_model->setEnabled(true);
@@ -2641,11 +2755,11 @@ void US_Hydrodyn::view_pdb()
 
    select_from_directory_history( use_dir, this );
 
-   QString filename = QFileDialog::getOpenFileName( this , caption() , use_dir , "*.pdb *.PDB" );
+   QString filename = QFileDialog::getOpenFileName( this , windowTitle() , use_dir , "*.pdb *.PDB" );
    
    if (!filename.isEmpty())
    {
-      path_view_pdb = QFileInfo(filename).dirPath(true);
+      path_view_pdb = QFileInfo(filename).absolutePath();
       view_file(filename);
    }
 }
@@ -2659,9 +2773,9 @@ void US_Hydrodyn::select_model( int val )
 {
    current_model = val;
    QString msg = QString( "\n%1 models selected:" ).arg( project );
-   for( int i = 0; i < lb_model->numRows(); i++ )
+   for( int i = 0; i < lb_model->count(); i++ )
    {
-      if ( lb_model->isSelected( i ) )
+      if ( lb_model->item( i )->isSelected() )
       {
          current_model = i;
          // msg += QString( " %1" ).arg( i + 1 );
@@ -2686,14 +2800,14 @@ void US_Hydrodyn::select_model( int val )
    pb_visualize->setEnabled(false);
    pb_equi_grid_bead_model->setEnabled(false);
    //   pb_pdb_saxs->setEnabled(true);
-   bd_anaflex_enables( ( ( browflex && browflex->isRunning() ) ||
-                         ( anaflex && anaflex->isRunning() ) ) ? false : true );
+   bd_anaflex_enables( ( ( browflex && browflex->state() == QProcess::Running ) ||
+                         ( anaflex && anaflex->state() == QProcess::Running ) ) ? false : true );
 }
 
 void US_Hydrodyn::write_bead_ebf(QString fname, vector<PDB_atom> *model)
 {
    {
-      FILE *f = fopen(fname.ascii(), "w");
+      FILE *f = us_fopen(fname.toAscii().data(), "w");
       for (unsigned int i = 0; i < model->size(); i++)
       {
          if ((*model)[i].active)
@@ -2707,7 +2821,7 @@ void US_Hydrodyn::write_bead_ebf(QString fname, vector<PDB_atom> *model)
       fclose(f);
    }
    {
-      FILE *f = fopen(QString("%1-info").arg(fname).ascii(), "w");
+      FILE *f = us_fopen(QString("%1-info").arg(fname).toAscii().data(), "w");
       for (unsigned int i = 0; i < model->size(); i++)
       {
          if ((*model)[i].active)
@@ -2743,12 +2857,12 @@ void US_Hydrodyn::load_bead_model()
 
    if ( !filename.isEmpty() )
    {
-      path_load_bead_model = QFileInfo(filename).dirPath(true);
+      path_load_bead_model = QFileInfo(filename).absolutePath();
    }
 
    if ( QFileInfo(filename).fileName().contains(" ") )
    {
-      printError(tr("Filenames containing spaces are not currently supported.\n"
+      printError(us_tr("Filenames containing spaces are not currently supported.\n"
                     "Please rename the file to remove spaces."));
       return;
    }
@@ -2784,40 +2898,15 @@ void US_Hydrodyn::load_bead_model()
            advanced_config.auto_view_pdb ) 
       {
 #if defined(START_RASMOL)
-         QStringList argument;
-#if !defined(WIN32) && !defined(MAC)
-         // maybe we should make this a user defined terminal window?
-         argument.append("xterm");
-         argument.append("-e");
-#endif
-#if defined(BIN64)
-         argument.append(USglobal->config_list.system_dir + SLASH + "bin64" + SLASH + "rasmol");
-#else
-         argument.append(USglobal->config_list.system_dir + SLASH + "bin" + SLASH + "rasmol");
-#endif
-         argument.append(QFileInfo(filename).fileName());
-         rasmol->setWorkingDirectory(QFileInfo(filename).dirPath());
-         rasmol->setArguments(argument);
-         if ( advanced_config.debug_1 )
-         {
-            editor->append(QString("starting rasmol <%1>\n").arg(argument.join("><")));
-            printf("starting rasmol<%s><s>\n", argument.join("><").ascii());
-            fflush(stdout);
-         }
-         if (advanced_config.auto_view_pdb &&
-             !rasmol->start())
-         {
-            QMessageBox::message(tr("Please note:"), tr("There was a problem starting RASMOL\n"
-                                                        "Please check to make sure RASMOL is properly installed..."));
-         }
+         model_viewer( filename );
 #endif
       }
 
       bool only_overlap = false;
       if (!read_bead_model(filename, only_overlap ))
       {
-         bool so_ovlp = QFileInfo( filename ).baseName( true ).contains( "so_ovlp" );
-         qDebug( QString( "load bead model so_ovlp %1" ).arg( so_ovlp ? "true" : "false" ) );
+         bool so_ovlp = QFileInfo( filename ).completeBaseName().contains( "so_ovlp" );
+         us_qdebug( QString( "load bead model so_ovlp %1" ).arg( so_ovlp ? "true" : "false" ) );
          state = BEAD_MODEL_LOADED;
          pb_visualize->setEnabled(true);
          pb_equi_grid_bead_model->setEnabled(true);
@@ -2870,8 +2959,8 @@ int US_Hydrodyn::calc_somo( bool no_ovlp_removal )
    if ( selected_models_contain( "WAT" ) )
    {
       QMessageBox::warning( this,
-                            tr( "Selected model contains WAT residue" ),
-                            tr( 
+                            us_tr( "Selected model contains WAT residue" ),
+                            us_tr( 
                                "Can not process models that contain the WAT residue.\n"
                                "These are currently generated only for SAXS/SANS computations\n"
                                )
@@ -2882,8 +2971,8 @@ int US_Hydrodyn::calc_somo( bool no_ovlp_removal )
    if ( selected_models_contain( "XHY" ) )
    {
       QMessageBox::warning( this,
-                            tr( "Selected model contains XHY residue" ),
-                            tr( 
+                            us_tr( "Selected model contains XHY residue" ),
+                            us_tr( 
                                "Can not process models that contain the XHY residue.\n"
                                "These are currently generated only for SAXS/SANS computations\n"
                                )
@@ -2902,7 +2991,7 @@ int US_Hydrodyn::calc_somo( bool no_ovlp_removal )
    pb_grid->setEnabled(false);
    model_vector = model_vector_as_loaded;
    sync_pdb_info( "calc_somo" );
-   editor_msg( "dark blue", QString( tr( "Peptide Bond Rule is %1 for this PDB" ) ).arg( misc.pb_rule_on ? "on" : "off" ) );
+   editor_msg( "dark blue", QString( us_tr( "Peptide Bond Rule is %1 for this PDB" ) ).arg( misc.pb_rule_on ? "on" : "off" ) );
    options_log = "";
    no_ovlp_removal ? append_options_log_somo_ovlp() : append_options_log_somo();
    display_default_differences();
@@ -2916,8 +3005,8 @@ int US_Hydrodyn::calc_somo( bool no_ovlp_removal )
    if (stopFlag)
    {
       editor->append("Stopped by user\n\n");
-      bd_anaflex_enables( ( ( browflex && browflex->isRunning() ) ||
-                            ( anaflex && anaflex->isRunning() ) ) ? false : true );
+      bd_anaflex_enables( ( ( browflex && browflex->state() == QProcess::Running ) ||
+                            ( anaflex && anaflex->state() == QProcess::Running ) ) ? false : true );
       pb_somo->setEnabled(true);
       pb_somo_o->setEnabled(true);
       pb_grid_pdb->setEnabled(true);
@@ -2945,12 +3034,12 @@ int US_Hydrodyn::calc_somo( bool no_ovlp_removal )
    }
    bool any_errors = false;
    bool any_models = false;
-   somo_processed.resize(lb_model->numRows());
-   bead_models.resize(lb_model->numRows());
+   somo_processed.resize(lb_model->count());
+   bead_models.resize(lb_model->count());
    QString msg = QString("\n%1 models selected:").arg(project);
-   for(int i = 0; i < lb_model->numRows(); i++) {
+   for(int i = 0; i < lb_model->count(); i++) {
       somo_processed[i] = 0;
-      if (lb_model->isSelected(i)) {
+      if (lb_model->item(i)->isSelected()) {
          current_model = i;
          // msg += QString( " %1" ).arg( i + 1 );
          msg += " " + model_name( i );
@@ -2959,9 +3048,9 @@ int US_Hydrodyn::calc_somo( bool no_ovlp_removal )
    msg += "\n";
    editor->append(msg);
 
-   for (current_model = 0; current_model < (unsigned int)lb_model->numRows(); current_model++)
+   for (current_model = 0; current_model < (unsigned int)lb_model->count(); current_model++)
    {
-      if (!any_errors && lb_model->isSelected(current_model))
+      if (!any_errors && lb_model->item(current_model)->isSelected())
       {
          any_models = true;
          if(!compute_asa( false, no_ovlp_removal ))
@@ -2975,7 +3064,7 @@ int US_Hydrodyn::calc_somo( bool no_ovlp_removal )
 
                bead_check(false, false);
                editor->append("Finished rechecking beads\n");
-               progress->setProgress(19);
+               progress->setValue(19);
             }
             else
             {
@@ -2994,8 +3083,8 @@ int US_Hydrodyn::calc_somo( bool no_ovlp_removal )
          editor->append("Stopped by user\n\n");
          pb_somo->setEnabled(true);
          pb_somo_o->setEnabled(true);
-         bd_anaflex_enables( ( ( browflex && browflex->isRunning() ) ||
-                               ( anaflex && anaflex->isRunning() ) ) ? false : true );
+         bd_anaflex_enables( ( ( browflex && browflex->state() == QProcess::Running ) ||
+                               ( anaflex && anaflex->state() == QProcess::Running ) ) ? false : true );
          pb_grid_pdb->setEnabled(true);
          progress->reset();
          return -1;
@@ -3041,8 +3130,8 @@ int US_Hydrodyn::calc_grid_pdb()
    //    if ( selected_models_contain( "WAT" ) )
    //    {
    //       QMessageBox::warning( this,
-   //                             tr( "Selected model contains WAT residue" ),
-   //                             tr( 
+   //                             us_tr( "Selected model contains WAT residue" ),
+   //                             us_tr( 
    //                                "Can not process models that contain the WAT residue.\n"
    //                                "These are currently generated only for SAXS/SANS computations"
    //                                )
@@ -3053,8 +3142,8 @@ int US_Hydrodyn::calc_grid_pdb()
    if ( selected_models_contain( "XHY" ) )
    {
       QMessageBox::warning( this,
-                            tr( "Selected model contains XHY residue" ),
-                            tr( 
+                            us_tr( "Selected model contains XHY residue" ),
+                            us_tr( 
                                "Can not process models that contain the XHY residue.\n"
                                "These are currently generated only for SAXS/SANS computations\n"
                                )
@@ -3094,7 +3183,7 @@ int US_Hydrodyn::calc_grid_pdb()
             
          QMessageBox::information( this,
                                    "US-SOMO: Build AtoB models with structure factors",
-                                   tr( msg ) );
+                                   us_tr( msg ) );
 
          display_default_differences();
       }
@@ -3104,7 +3193,7 @@ int US_Hydrodyn::calc_grid_pdb()
    pb_stop_calc->setEnabled(true);
    model_vector = model_vector_as_loaded;
    sync_pdb_info( "calc_grid_pdb" );
-   editor_msg( "dark blue", QString( tr( "Peptide Bond Rule is %1 for this PDB" ) ).arg( misc.pb_rule_on ? "on" : "off" ) );
+   editor_msg( "dark blue", QString( us_tr( "Peptide Bond Rule is %1 for this PDB" ) ).arg( misc.pb_rule_on ? "on" : "off" ) );
    options_log = "";
    append_options_log_atob();
    display_default_differences();
@@ -3135,8 +3224,8 @@ int US_Hydrodyn::calc_grid_pdb()
       setSomoGridFile(false);
    }
 
-   for (current_model = 0; current_model < (unsigned int)lb_model->numRows(); current_model++) {
-      if (lb_model->isSelected(current_model)) {
+   for (current_model = 0; current_model < (unsigned int)lb_model->count(); current_model++) {
+      if (lb_model->item(current_model)->isSelected()) {
          printf("in calc_grid: is selected current model %d\n", current_model); fflush(stdout);
          {
             QString error_string;
@@ -3176,10 +3265,10 @@ int US_Hydrodyn::calc_grid_pdb()
                ;
                
             progress->reset();
-            progress->setTotalSteps(mpos);
-            progress->setProgress(progress->progress() + 1);
+            progress->setMaximum(mpos);
+            progress->setValue(progress->value() + 1);
             int retval = create_beads(&error_string);
-            progress->setProgress(progress->progress() + 1);
+            progress->setValue(progress->value() + 1);
             if (stopFlag)
             {
                editor->append("Stopped by user\n\n");
@@ -3254,9 +3343,9 @@ int US_Hydrodyn::calc_grid_pdb()
                               this_atom->bead_computed_radius += additional_radius;
 #if defined(GRID_HYDRATE_DEBUG)
                               printf("hydrating atom %s %s %s hydration %f radius %f + %f -> %f\n"
-                                     , this_atom->name.ascii()
-                                     , this_atom->resName.ascii()
-                                     , this_atom->resSeq.ascii()
+                                     , this_atom->name.toAscii().data()
+                                     , this_atom->resName.toAscii().data()
+                                     , this_atom->resSeq.toAscii().data()
                                      , this_atom->atom_hydration
                                      , this_atom->radius
                                      , additional_radius
@@ -3279,9 +3368,9 @@ int US_Hydrodyn::calc_grid_pdb()
                      bead_models.resize(current_model + 1);
                   }
 
-                  progress->setProgress( progress->progress() + 1 );
-                  int save_progress = progress->progress();
-                  int save_total_steps = progress->totalSteps();
+                  progress->setValue( progress->value() + 1 );
+                  int save_progress = progress->value();
+                  int save_total_steps = progress->maximum();
                   if ( grid.center == 2  && any_zero_si ) // ssi
                   {
                      editor_msg( "red", "Center of scattering requested, but zero scattering intensities are present" );
@@ -3302,8 +3391,8 @@ int US_Hydrodyn::calc_grid_pdb()
                                            progress,
                                            editor,
                                            this);
-                  progress->setTotalSteps( save_total_steps );
-                  progress->setProgress( save_progress + 1 );
+                  progress->setMaximum( save_total_steps );
+                  progress->setValue( save_progress + 1 );
                   if (stopFlag)
                   {
                      editor->append("Stopped by user\n\n");
@@ -3355,9 +3444,9 @@ int US_Hydrodyn::calc_grid_pdb()
                      double save_threshold_percent = asa.threshold_percent;
                      asa.threshold = asa.grid_threshold;
                      asa.threshold_percent = asa.grid_threshold_percent;
-                     progress->setProgress(progress->progress() + 1);
+                     progress->setValue(progress->value() + 1);
                      bead_check(true, true);
-                     progress->setProgress(progress->progress() + 1);
+                     progress->setValue(progress->value() + 1);
                      asa.threshold = save_threshold;
                      asa.threshold_percent = save_threshold_percent;
                      bead_models[current_model] = bead_model;
@@ -3388,7 +3477,7 @@ int US_Hydrodyn::calc_grid_pdb()
                      sidechain_overlap = grid_exposed_overlap;
                      mainchain_overlap = grid_exposed_overlap;
                      buried_overlap = grid_buried_overlap;
-                     progress->setProgress(progress->progress() + 1);
+                     progress->setValue(progress->value() + 1);
 
                      radial_reduction( true );
                      sidechain_overlap = save_sidechain_overlap;
@@ -3406,9 +3495,9 @@ int US_Hydrodyn::calc_grid_pdb()
                         double save_threshold_percent = asa.threshold_percent;
                         asa.threshold = asa.grid_threshold;
                         asa.threshold_percent = asa.grid_threshold_percent;
-                        progress->setProgress(progress->progress() + 1);
+                        progress->setValue(progress->value() + 1);
                         bead_check(false, false);
-                        progress->setProgress(progress->progress() + 1);
+                        progress->setValue(progress->value() + 1);
                         asa.threshold = save_threshold;
                         asa.threshold_percent = save_threshold_percent;
                         bead_models[current_model] = bead_model;
@@ -3419,9 +3508,9 @@ int US_Hydrodyn::calc_grid_pdb()
                   {
                      if (grid_overlap.remove_overlap)
                      {
-                        progress->setProgress(progress->progress() + 1);
+                        progress->setValue(progress->value() + 1);
                         radial_reduction( true );
-                        progress->setProgress(progress->progress() + 1);
+                        progress->setValue(progress->value() + 1);
                         bead_models[current_model] = bead_model;
                      }
                      if (stopFlag)
@@ -3450,9 +3539,9 @@ int US_Hydrodyn::calc_grid_pdb()
                         double save_threshold_percent = asa.threshold_percent;
                         asa.threshold = asa.grid_threshold;
                         asa.threshold_percent = asa.grid_threshold_percent;
-                        progress->setProgress(progress->progress() + 1);
+                        progress->setValue(progress->value() + 1);
                         bead_check(false, false);
-                        progress->setProgress(progress->progress() + 1);
+                        progress->setValue(progress->value() + 1);
                         asa.threshold = save_threshold;
                         asa.threshold_percent = save_threshold_percent;
                         bead_models[current_model] = bead_model;
@@ -3497,7 +3586,7 @@ int US_Hydrodyn::calc_grid_pdb()
                      float tot_excl_vol = 0.0f;
                      for ( unsigned int k = 0; k < sf_bead_factors.size(); k++ )
                      {
-                        extra_text += "BSAXS:: " + sf_bead_factors[ k ].saxs_name.upper();
+                        extra_text += "BSAXS:: " + sf_bead_factors[ k ].saxs_name.toUpper();
                         for ( unsigned int i = 0; i < 4; i++ )
                         {
                            extra_text += QString( " %1" ).arg( sf_bead_factors[ k ].a[ i ] );
@@ -3523,7 +3612,7 @@ int US_Hydrodyn::calc_grid_pdb()
                         tot_excl_vol += bead_model[ k ].saxs_excl_vol;
                      }
 
-                     extra_text += "\nSAXS:: " + sf_factors.saxs_name.upper();
+                     extra_text += "\nSAXS:: " + sf_factors.saxs_name.toUpper();
                      for ( unsigned int i = 0; i < 4; i++ )
                      {
                         extra_text += QString( " %1" ).arg( sf_factors.a[ i ] );
@@ -3552,12 +3641,12 @@ int US_Hydrodyn::calc_grid_pdb()
                      if ( saxs_util->saxs_map.count( sf_factors.saxs_name ) )
                      {
                         editor_msg( "dark red", 
-                                    QString( tr( "Notice: saxs coefficients for %1 replaced by newly loaded values\n" ) )
+                                    QString( us_tr( "Notice: saxs coefficients for %1 replaced by newly loaded values\n" ) )
                                     .arg( sf_factors.saxs_name ) );
                      } else {
                         saxs_util->saxs_list.push_back( sf_factors );
                         editor_msg( "dark blue", 
-                                    QString( tr( "Notice: added coefficients for %1 from newly loaded values\n" ) )
+                                    QString( us_tr( "Notice: added coefficients for %1 from newly loaded values\n" ) )
                                     .arg( sf_factors.saxs_name ) );
                      }
                      saxs_util->saxs_map[ sf_factors.saxs_name ] = sf_factors;
@@ -3567,12 +3656,12 @@ int US_Hydrodyn::calc_grid_pdb()
                         if ( saxs_plot_window->saxs_map.count( sf_factors.saxs_name ) )
                         {
                            editor_msg( "dark red", 
-                                       QString( tr( "Notice: saxs window: saxs coefficients for %1 replaced by newly loaded values\n" ) )
+                                       QString( us_tr( "Notice: saxs window: saxs coefficients for %1 replaced by newly loaded values\n" ) )
                                        .arg( sf_factors.saxs_name ) );
                         } else {
                            saxs_plot_window->saxs_list.push_back( sf_factors );
                            editor_msg( "dark blue", 
-                                       QString( tr( "Notice: saxs window: added coefficients for %1 from newly loaded values\n" ) )
+                                       QString( us_tr( "Notice: saxs window: added coefficients for %1 from newly loaded values\n" ) )
                                        .arg( sf_factors.saxs_name ) );
                         }
                         saxs_plot_window->saxs_map[ sf_factors.saxs_name ] = sf_factors;
@@ -3584,7 +3673,7 @@ int US_Hydrodyn::calc_grid_pdb()
                      if ( !saxs_options.iq_global_avg_for_bead_models && sf_bead_factors.size() != bead_model.size() )
                      {
                         editor_msg( "red", 
-                                    QString( tr( "Overriding setting to use global structure factors since bead model doesn't contain the correct number of structure factors (%1) for the beads (%2)" ) )
+                                    QString( us_tr( "Overriding setting to use global structure factors since bead model doesn't contain the correct number of structure factors (%1) for the beads (%2)" ) )
                                     .arg( sf_bead_factors.size() )
                                     .arg( bead_model.size() )
                                     );
@@ -3593,13 +3682,13 @@ int US_Hydrodyn::calc_grid_pdb()
                      {
                         if ( !saxs_util->saxs_map.count( saxs_options.dummy_saxs_name ) )
                         {
-                           editor_msg( "red", QString( tr("Warning: No '%1' SAXS atom found.\n" ) )
+                           editor_msg( "red", QString( us_tr("Warning: No '%1' SAXS atom found.\n" ) )
                                        .arg( saxs_options.dummy_saxs_name ) );
                            for(unsigned int i = 0; i < bead_model.size(); i++) {
                               bead_model[i].saxs_data.saxs_name = "";
                            }
                         } else {
-                           editor_msg( "blue", QString( tr("Notice: Loading beads with saxs coefficients '%1'" ) )
+                           editor_msg( "blue", QString( us_tr("Notice: Loading beads with saxs coefficients '%1'" ) )
                                        .arg( saxs_options.dummy_saxs_name ) );
                            for( unsigned int i = 0; i < bead_model.size(); i++ ) 
                            {
@@ -3611,7 +3700,7 @@ int US_Hydrodyn::calc_grid_pdb()
                      } else {
                         if ( !saxs_options.iq_global_avg_for_bead_models && sf_bead_factors.size() == bead_model.size() )
                         {
-                           editor_msg( "blue", tr("Notice: Loading beads with bead computed structure factors" ) );
+                           editor_msg( "blue", us_tr("Notice: Loading beads with bead computed structure factors" ) );
                            for( unsigned int i = 0; i < bead_model.size(); i++ ) 
                            {
                               bead_model[i].saxs_name = sf_bead_factors[ i ].saxs_name;
@@ -3624,7 +3713,7 @@ int US_Hydrodyn::calc_grid_pdb()
                   }                    
 
                   editor->append( QString( "Volume of bead model %1\n" ).arg( total_volume_of_bead_model( bead_model ) ) );
-                  progress->setProgress(progress->progress() + 1);
+                  progress->setValue(progress->value() + 1);
 
                   // write_bead_spt(somo_dir + SLASH + project +
                   //       (bead_model_from_file ? "" : QString("_%1").arg(current_model + 1)) +
@@ -3647,7 +3736,7 @@ int US_Hydrodyn::calc_grid_pdb()
 
                }
             }
-            progress->setProgress(progress->totalSteps());
+            progress->setValue(progress->maximum());
          }
       }
    }
@@ -3734,8 +3823,8 @@ int US_Hydrodyn::calc_grid()
       setSomoGridFile(false);
    }
 
-   for (current_model = 0; current_model < (unsigned int)lb_model->numRows(); current_model++) {
-      if (lb_model->isSelected(current_model)) {
+   for (current_model = 0; current_model < (unsigned int)lb_model->count(); current_model++) {
+      if (lb_model->item(current_model)->isSelected()) {
          printf("in calc_grid: is selected current model %d\n", current_model); fflush(stdout);
          if (somo_processed.size() > current_model && somo_processed[current_model]) {
             printf("in calc_grid: somo_processed %d\n", current_model); fflush(stdout);
@@ -3758,8 +3847,8 @@ int US_Hydrodyn::calc_grid()
                ;
                
             progress->reset();
-            progress->setTotalSteps(mpos);
-            progress->setProgress(progress->progress() + 1);
+            progress->setMaximum(mpos);
+            progress->setValue(progress->value() + 1);
             qApp->processEvents();
 
             if ( grid.center == 2 ) // ssi
@@ -3790,7 +3879,7 @@ int US_Hydrodyn::calc_grid()
                                      progress,
                                      editor,
                                      this);
-            progress->setProgress(progress->progress() + 1);
+            progress->setValue(progress->value() + 1);
 
             if (stopFlag)
             {
@@ -3830,9 +3919,9 @@ int US_Hydrodyn::calc_grid()
                double save_threshold_percent = asa.threshold_percent;
                asa.threshold = asa.grid_threshold;
                asa.threshold_percent = asa.grid_threshold_percent;
-               progress->setProgress(progress->progress() + 1);
+               progress->setValue(progress->value() + 1);
                bead_check(true, true);
-               progress->setProgress(progress->progress() + 1);
+               progress->setValue(progress->value() + 1);
                asa.threshold = save_threshold;
                asa.threshold_percent = save_threshold_percent;
                bead_models[current_model] = bead_model;
@@ -3863,9 +3952,9 @@ int US_Hydrodyn::calc_grid()
                sidechain_overlap = grid_exposed_overlap;
                mainchain_overlap = grid_exposed_overlap;
                buried_overlap = grid_buried_overlap;
-               progress->setProgress(progress->progress() + 1);
+               progress->setValue(progress->value() + 1);
                radial_reduction( true );
-               progress->setProgress(progress->progress() + 1);
+               progress->setValue(progress->value() + 1);
                sidechain_overlap = save_sidechain_overlap;
                mainchain_overlap = save_mainchain_overlap;
                buried_overlap = save_buried_overlap;
@@ -3881,9 +3970,9 @@ int US_Hydrodyn::calc_grid()
                   double save_threshold_percent = asa.threshold_percent;
                   asa.threshold = asa.grid_threshold;
                   asa.threshold_percent = asa.grid_threshold_percent;
-                  progress->setProgress(progress->progress() + 1);
+                  progress->setValue(progress->value() + 1);
                   bead_check(false, false);
-                  progress->setProgress(progress->progress() + 1);
+                  progress->setValue(progress->value() + 1);
                   asa.threshold = save_threshold;
                   asa.threshold_percent = save_threshold_percent;
                   bead_models[current_model] = bead_model;
@@ -3893,9 +3982,9 @@ int US_Hydrodyn::calc_grid()
             {
                if (grid_overlap.remove_overlap)
                {
-                  progress->setProgress(progress->progress() + 1);
+                  progress->setValue(progress->value() + 1);
                   radial_reduction( true );
-                  progress->setProgress(progress->progress() + 1);
+                  progress->setValue(progress->value() + 1);
                   if (stopFlag)
                   {
                      editor->append("Stopped by user\n\n");
@@ -3929,9 +4018,9 @@ int US_Hydrodyn::calc_grid()
                   double save_threshold_percent = asa.threshold_percent;
                   asa.threshold = asa.grid_threshold;
                   asa.threshold_percent = asa.grid_threshold_percent;
-                  progress->setProgress(progress->progress() + 1);
+                  progress->setValue(progress->value() + 1);
                   bead_check(false, false);
-                  progress->setProgress(progress->progress() + 1);
+                  progress->setValue(progress->value() + 1);
                   asa.threshold = save_threshold;
                   asa.threshold_percent = save_threshold_percent;
                   if (stopFlag)
@@ -3955,7 +4044,7 @@ int US_Hydrodyn::calc_grid()
                }
             }
             editor->append( QString( "Volume of bead model %1\n" ).arg( total_volume_of_bead_model( bead_model ) ) );
-            progress->setProgress(progress->progress() + 1);
+            progress->setValue(progress->value() + 1);
             // write_bead_spt(somo_dir + SLASH + project +
             //        (bead_model_from_file ? "" : QString("_%1").arg(current_model + 1)) +
             //        QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "") +
@@ -3972,7 +4061,7 @@ int US_Hydrodyn::calc_grid()
                              QString( bead_model_suffix.length() ? ( "-" + bead_model_suffix ) : "" ) +
                              DOTSOMO, &bead_model);
 
-            progress->setProgress(progress->totalSteps());
+            progress->setValue(progress->maximum());
          }
       }
    }
@@ -4054,10 +4143,10 @@ void US_Hydrodyn::view_asa()
 
    select_from_directory_history( use_dir, this );
 
-   QString filename = QFileDialog::getOpenFileName( this , caption() , use_dir , "*.asa_res *.ASA_RES" );
+   QString filename = QFileDialog::getOpenFileName( this , windowTitle() , use_dir , "*.asa_res *.ASA_RES" );
    if (!filename.isEmpty())
    {
-      path_view_asa_res = QFileInfo(filename).dirPath(true);
+      path_view_asa_res = QFileInfo(filename).absolutePath();
       view_file(filename);
    }
 }
@@ -4071,8 +4160,8 @@ void US_Hydrodyn::view_bead_model()
       switch (
               QMessageBox::question(
                                     this,
-                                    tr("View Bead Model File"),
-                                    QString(tr("View last read bead model ") + fi.fileName() + " ?"),
+                                    us_tr("View Bead Model File"),
+                                    QString(us_tr("View last read bead model ") + fi.fileName() + " ?"),
                                     QMessageBox::Yes, 
                                     QMessageBox::No,
                                     QMessageBox::Cancel
@@ -4096,7 +4185,7 @@ void US_Hydrodyn::view_bead_model()
 
             if ( !filename.isEmpty() )
             {
-               path_view_bead_model = QFileInfo(filename).dirPath(true);
+               path_view_bead_model = QFileInfo(filename).absolutePath();
             }
          }
          break;
@@ -4119,7 +4208,7 @@ void US_Hydrodyn::view_bead_model()
 
       if ( !filename.isEmpty() )
       {
-         path_view_bead_model = QFileInfo(filename).dirPath(true);
+         path_view_bead_model = QFileInfo(filename).absolutePath();
       }
    }
    if (!filename.isEmpty())
@@ -4135,8 +4224,8 @@ void US_Hydrodyn::visualize( bool movie_frame,
 {
    QString use_dir = ( dir == "" ? somo_dir : dir );
 
-   for (current_model = 0; current_model < (unsigned int)lb_model->numRows(); current_model++) {
-      if (lb_model->isSelected(current_model)) {
+   for (current_model = 0; current_model < (unsigned int)lb_model->count(); current_model++) {
+      if (lb_model->item(current_model)->isSelected()) {
          if (somo_processed[current_model]) {
             bead_model = bead_models[current_model];
             QString spt_name = 
@@ -4146,6 +4235,7 @@ void US_Hydrodyn::visualize( bool movie_frame,
                  : 
                  ( QString("_%1").arg( current_model + 1 ) +
                    QString( bead_model_suffix.length() ? ("-" + bead_model_suffix) : "" ) ) );
+
             spt_name = spt_name.left( 30 );
 
             write_bead_spt( use_dir + SLASH + spt_name,
@@ -4155,35 +4245,14 @@ void US_Hydrodyn::visualize( bool movie_frame,
                             black_background );
 
             editor->append(QString("Visualizing model %1\n").arg(current_model + 1));
-            QStringList argument;
-#if !defined(WIN32) && !defined(MAC)
-            // maybe we should make this a user defined terminal window?
-            if ( !movie_frame )
-            {
-               argument.append("xterm");
-               argument.append("-e");
-            }
-#endif
-#if defined(BIN64)
-            argument.append(USglobal->config_list.system_dir + "/bin64/rasmol");
-#else
-            argument.append(USglobal->config_list.system_dir + "/bin/rasmol");
-#endif
-            if ( !movie_frame )
-            {
-               argument.append("-script");
-               argument.append( spt_name + ".spt" ); 
-            }
-         
-            rasmol->setWorkingDirectory(use_dir);
+            model_viewer( use_dir + SLASH + spt_name + ".spt", "-script" );
 
-            rasmol->setArguments(argument);
-
+#if defined( TODO_FIX_MOVIE_FRAME )
             if ( movie_frame )
             {
                if (!rasmol->launch(last_spt_text))
                {
-                  QMessageBox::message(tr("Please note:"), tr("There was a problem starting RASMOL\n"
+                  US_Static::us_message(us_tr("Please note:"), us_tr("There was a problem starting RASMOL\n"
                                                               "Please check to make sure RASMOL is properly installed..."));
                   return;
                }
@@ -4191,23 +4260,17 @@ void US_Hydrodyn::visualize( bool movie_frame,
                //               rasmol->writeToStdin(last_spt_text);
                //               rasmol->closeStdin();
                //               qApp->processEvents();
-               while ( rasmol && rasmol->isRunning() )
+               while ( rasmol && rasmol->state() == QProcess::Running )
                {
-#if defined(WIN32) && !defined( MINGW )
+# if defined(WIN32) && !defined( MINGW )
                   _sleep(1);
-#else
+# else
                   US_Saxs_Util::us_usleep(1000);
-#endif
+# endif
                   qApp->processEvents();
                }
-            } else {
-               if (!rasmol->start())
-               {
-                  QMessageBox::message(tr("Please note:"), tr("There was a problem starting RASMOL\n"
-                                                              "Please check to make sure RASMOL is properly installed..."));
-                  return;
-               }
             }
+#endif
          }
          else
          {
@@ -4246,8 +4309,8 @@ int US_Hydrodyn::do_calc_hydro()
    int models_to_proc = 0;
    int first_model_no = 0;
    vector < QString > model_names;
-   for (current_model = 0; current_model < (unsigned int)lb_model->numRows(); current_model++) {
-      if (lb_model->isSelected(current_model)) {
+   for (current_model = 0; current_model < (unsigned int)lb_model->count(); current_model++) {
+      if (lb_model->item(current_model)->isSelected()) {
          if (somo_processed[current_model]) {
             if (!first_model_no) {
                first_model_no = current_model + 1;
@@ -4269,7 +4332,7 @@ int US_Hydrodyn::do_calc_hydro()
       }
    }
 
-   chdir(somo_dir);
+   QDir::setCurrent(somo_dir);
 
    editor->append(QString("%1")
                   //       .arg(hydro.overlap_cutoff ? hydro.overlap : overlap_tolerance)
@@ -4302,16 +4365,16 @@ int US_Hydrodyn::do_calc_hydro()
                                               // (bead_model_from_file ? "" : (models_to_proc == 1 ? "_1" : "_%1")) +
                                               (bead_model_from_file ? "" : "_%1") +
                                               QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "") +
-                                              DOTSOMO + ".beams").ascii(),
+                                              DOTSOMO + ".beams").toAscii().data(),
                                       QString(project +
                                               (bead_model_from_file ? "" : QString("_%1").arg( model_name( first_model_no - 1 ) ) ) +
                                               QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "") +
-                                              DOTSOMO + ".beams").ascii(),
+                                              DOTSOMO + ".beams").toAscii().data(),
                                       model_names,
                                       progress,
                                       editor,
                                       this);
-   chdir(somo_tmp_dir);
+   QDir::setCurrent(somo_tmp_dir);
    if (stopFlag)
    {
       editor->append("Stopped by user\n\n");
@@ -4471,8 +4534,8 @@ void US_Hydrodyn::open_hydro_results()
       switch (
               QMessageBox::question(
                                     this,
-                                    tr("Open Hydrodynamic Calculations File"),
-                                    QString(tr("View last results file ") + fi.fileName() + " ?"),
+                                    us_tr("Open Hydrodynamic Calculations File"),
+                                    QString(us_tr("View last results file ") + fi.fileName() + " ?"),
                                     QMessageBox::Yes, 
                                     QMessageBox::No,
                                     QMessageBox::Cancel
@@ -4490,11 +4553,11 @@ void US_Hydrodyn::open_hydro_results()
             
             select_from_directory_history( use_dir, this );
 
-            filename = QFileDialog::getOpenFileName( this , caption() , use_dir , "*.hydro_res *.HYDRO_RES *.zno *.ZNO" );
+            filename = QFileDialog::getOpenFileName( this , windowTitle() , use_dir , "*.hydro_res *.HYDRO_RES *.zno *.ZNO" );
 
             if ( !filename.isEmpty() )
             {
-               path_open_hydro_res = QFileInfo(filename).dirPath(true);
+               path_open_hydro_res = QFileInfo(filename).absolutePath();
             }
          }
          break;
@@ -4511,11 +4574,11 @@ void US_Hydrodyn::open_hydro_results()
 
       select_from_directory_history( use_dir, this );
 
-      filename = QFileDialog::getOpenFileName( this , caption() , use_dir , "*.hydro_res *.HYDRO_RES *.zno *.ZNO" );
+      filename = QFileDialog::getOpenFileName( this , windowTitle() , use_dir , "*.hydro_res *.HYDRO_RES *.zno *.ZNO" );
 
       if ( !filename.isEmpty() )
       {
-         path_open_hydro_res = QFileInfo(filename).dirPath(true);
+         path_open_hydro_res = QFileInfo(filename).absolutePath();
       }
    }
    if (!filename.isEmpty())
@@ -4601,14 +4664,14 @@ void US_Hydrodyn::stop_calc()
 {
    stopFlag = true;
    anaflex_return_to_bd_load_results = false;
-   if ( browflex && browflex->isRunning() )
+   if ( browflex && browflex->state() == QProcess::Running )
    {
-      browflex->tryTerminate();
+      browflex->terminate();
       QTimer::singleShot( 1000, browflex, SLOT( kill() ) );
    }
-   if ( anaflex && anaflex->isRunning() )
+   if ( anaflex && anaflex->state() == QProcess::Running )
    {
-      anaflex->tryTerminate();
+      anaflex->terminate();
       QTimer::singleShot( 1000, anaflex, SLOT( kill() ) );
    }
    pb_stop_calc->setEnabled(false);
@@ -4634,20 +4697,20 @@ void US_Hydrodyn::update_font()
 void US_Hydrodyn::save()
 {
    QString fn;
-   fn = QFileDialog::getSaveFileName( this , caption() , QString::null , QString::null );
+   fn = QFileDialog::getSaveFileName( this , windowTitle() , QString::null , QString::null );
    if(!fn.isEmpty() )
    {
-      QString text = editor->text();
+      QString text = editor->toPlainText();
       QFile f( fn );
       if ( !f.open( QIODevice::WriteOnly | QIODevice::Text ) )
       {
          return;
       }
-      Q3TextStream t( &f );
+      QTextStream t( &f );
       t << text;
       f.close();
-      editor->setModified( false );
-      setCaption( fn );
+ //      editor->setModified( false );
+      setWindowTitle( fn );
    }
 }
 
@@ -4663,17 +4726,17 @@ void US_Hydrodyn::print()
       p.setFont(editor->font() );
       int yPos      = 0;         // y position for each line
       QFontMetrics fm = p.fontMetrics();
-      Q3PaintDeviceMetrics metrics( &printer ); // need width/height
+      //  QPaintDeviceMetrics metrics( &printer ); // need width/height
       // of printer surface
       for( int i = 0 ; i < editor->lines() ; i++ ) {
-         if ( MARGIN + yPos > metrics.height() - MARGIN ) {
+         if ( MARGIN + yPos > printer.height() - MARGIN ) {
             printer.newPage();      // no more room on this page
             yPos = 0;         // back to top of page
          }
          p.drawText( MARGIN, MARGIN + yPos,
-                     metrics.width(), fm.lineSpacing(),
+                     printer.width(), fm.lineSpacing(),
                      ExpandTabs | DontClip,
-                     editor->text( i ) );
+                     editor->toPlainText( i ) );
          yPos = yPos + fm.lineSpacing();
       }
       p.end();            // send job to printer
@@ -4710,17 +4773,17 @@ void US_Hydrodyn::pdb_saxs( bool create_native_saxs, bool do_raise )
    //      .arg(saxs_options.curve);
 
    vector < unsigned int > selected_models;
-   for ( unsigned int i = 0; i < (unsigned int)lb_model->numRows(); i++ ) 
+   for ( unsigned int i = 0; i < (unsigned int)lb_model->count(); i++ ) 
    {
-      if ( lb_model->isSelected(i) ) 
+      if ( lb_model->item(i)->isSelected() ) 
       {
          selected_models.push_back(i);
       }
    }
    if ( selected_models.size() > 1 )
    {
-      QMessageBox::message(tr("Please note:"),
-                           tr("You must select exactly one model to perform SAXS functions."));
+      US_Static::us_message(us_tr("Please note:"),
+                           us_tr("You must select exactly one model to perform SAXS functions."));
    } 
    else
    {
@@ -4735,17 +4798,17 @@ void US_Hydrodyn::pdb_saxs( bool create_native_saxs, bool do_raise )
                  model_vector[selected_models[0]].mw )
             {
                switch ( QMessageBox::question(this, 
-                                              tr("UltraScan Notice"),
-                                              QString(tr("Please note:\n\n"
+                                              us_tr("UltraScan Notice"),
+                                              QString(us_tr("Please note:\n\n"
                                                          "You have remembered a molecular weight of %1 Daltons\n"
                                                          "but the loaded pdb has a computed molecular weight of %2 Daltons\n"
                                                          "What would you like to do?\n"))
                                               .arg(dammix_remember_mw[QFileInfo(filename).fileName()])
                                               .arg(model_vector[selected_models[0]].mw)
                                               ,
-                                              tr("&Set to the newly computed value"),
-                                              tr("&Keep the remembered value"), 
-                                              tr("&Enter it manually later"),
+                                              us_tr("&Set to the newly computed value"),
+                                              us_tr("&Keep the remembered value"), 
+                                              us_tr("&Enter it manually later"),
                                               0, // Stop == button 0
                                               0 // Escape == button 0
                                               )
@@ -4822,23 +4885,23 @@ void US_Hydrodyn::pdb_saxs( bool create_native_saxs, bool do_raise )
 void US_Hydrodyn::bead_saxs( bool create_native_saxs, bool do_raise )
 {
    vector < unsigned int > selected_models;
-   for ( unsigned int i = 0; i < (unsigned int)lb_model->numRows(); i++ ) 
+   for ( unsigned int i = 0; i < (unsigned int)lb_model->count(); i++ ) 
    {
-      if ( lb_model->isSelected(i) ) 
+      if ( lb_model->item(i)->isSelected() ) 
       {
          selected_models.push_back(i);
       }
    }
    if ( selected_models.size() != 1 )
    {
-      QMessageBox::message(tr("Please note:"),
-                           tr("You must select exactly one model to perform SAXS functions.."));
+      US_Static::us_message(us_tr("Please note:"),
+                           us_tr("You must select exactly one model to perform SAXS functions.."));
    } 
    else
    {
-      QString filename = QFileInfo(bead_model_file).baseName( TRUE ) +
+      QString filename = QFileInfo(bead_model_file).completeBaseName() +
          QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "");
-      if ( !QFileInfo(bead_model_file).baseName( TRUE ).length() )
+      if ( !QFileInfo(bead_model_file).completeBaseName().length() )
       {
          filename = project + QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "");
       }
@@ -4866,17 +4929,17 @@ void US_Hydrodyn::bead_saxs( bool create_native_saxs, bool do_raise )
               tmp_mw )
          {
             switch ( QMessageBox::question(this, 
-                                           tr("UltraScan Notice"),
-                                           QString(tr("Please note:\n\n"
+                                           us_tr("UltraScan Notice"),
+                                           QString(us_tr("Please note:\n\n"
                                                       "You have remembered a molecular weight of %1 Daltons\n"
                                                       "but the loaded bead model a computed molecular weight of %2 Daltons\n"
                                                       "What would you like to do?\n"))
                                            .arg(dammix_remember_mw[QFileInfo(filename).fileName()])
                                            .arg(tmp_mw)
                                            ,
-                                           tr("&Set to the newly computed value"),
-                                           tr("&Keep the remembered value"), 
-                                           tr("&Enter it manually later"),
+                                           us_tr("&Set to the newly computed value"),
+                                           us_tr("&Keep the remembered value"), 
+                                           us_tr("&Enter it manually later"),
                                            0, // Stop == button 0
                                            0 // Escape == button 0
                                            )
@@ -5060,9 +5123,9 @@ void US_Hydrodyn::setHydroFile()
 
    do {
       any_changes = false;
-      for( int i = 0; i < lb_model->numRows(); i++ )
+      for( int i = 0; i < lb_model->count(); i++ )
       {
-         if ( lb_model->isSelected(i) )
+         if ( lb_model->item(i)->isSelected() )
          {
             path = 
                somo_dir + QDir::separator() +
@@ -5106,9 +5169,9 @@ void US_Hydrodyn::setSomoGridFile(bool somo)
 
    do {
       any_changes = false;
-      for( int i = 0; i < lb_model->numRows(); i++ )
+      for( int i = 0; i < lb_model->count(); i++ )
       {
-         if ( lb_model->isSelected(i) )
+         if ( lb_model->item(i)->isSelected() )
          {
             path = 
                somo_dir + QDir::separator() +
@@ -5135,8 +5198,8 @@ void US_Hydrodyn::setSomoGridFile(bool somo)
                   le_bead_model_suffix->setText(bead_model_suffix);
                   any_changes = true;
                }
-               // frmc = fopen(QString("%1.rmc").arg(fname).ascii(), "w");
-               // frmc1 = fopen(QString("%1.rmc1").arg(fname).ascii(), "w");
+               // frmc = us_fopen(QString("%1.rmc").arg(fname).toAscii().data(), "w");
+               // frmc1 = us_fopen(QString("%1.rmc1").arg(fname).toAscii().data(), "w");
             }
             
             if (bead_output.output & US_HYDRODYN_OUTPUT_HYDRO) {
@@ -5181,9 +5244,9 @@ QString US_Hydrodyn::fileNameCheck( QString filename, int mode, QWidget *p )
    // based upon mode, do next stuff
 
    QFileInfo fi(filename);
-   QString path = fi.dirPath() + QDir::separator();
-   QString base = fi.baseName(true);
-   QString ext = fi.extension(false);
+   QString path = fi.path() + QDir::separator();
+   QString base = fi.completeBaseName();
+   QString ext = fi.suffix();
    ext = ext.length() ? "." + ext : ext;
    fileNameCheck( &path, &base, &ext, mode, p);
    return path + base + ext;
@@ -5202,7 +5265,7 @@ QString US_Hydrodyn::fileNameCheck( QString *path, QString *base, QString *ext, 
       QRegExp rx("-(\\d+)$");
       do 
       {
-         if ( rx.search(*base) != -1 ) 
+         if ( rx.indexIn(*base) != -1 ) 
          {
             base->replace(rx, QString("-%1").arg(rx.cap(1).toInt() + 1));
          } else {
@@ -5258,9 +5321,9 @@ QString US_Hydrodyn::fileNameCheck2( QString filename,
    // based upon mode, do next stuff
 
    QFileInfo fi(filename);
-   QString path = fi.dirPath() + QDir::separator();
-   QString base = fi.baseName(true);
-   QString ext = fi.extension(false);
+   QString path = fi.path() + QDir::separator();
+   QString base = fi.completeBaseName();
+   QString ext = fi.suffix();
    ext = ext.length() ? "." + ext : ext;
    fileNameCheck2( &path, &base, &ext, cancel, overwrite_all, mode, p);
    return path + base + ext;
@@ -5285,7 +5348,7 @@ QString US_Hydrodyn::fileNameCheck2( QString *path,
       QRegExp rx("-(\\d+)$");
       do 
       {
-         if ( rx.search(*base) != -1 ) 
+         if ( rx.indexIn(*base) != -1 ) 
          {
             base->replace(rx, QString("-%1").arg(rx.cap(1).toInt() + 1));
          } else {
@@ -5336,7 +5399,7 @@ void US_Hydrodyn::dmd_run()
    {
       QMessageBox::information( this,
                                 "US-SOMO: Run DMD",
-                                tr( "You must load a PDB file before Run DMD" ) );
+                                us_tr( "You must load a PDB file before Run DMD" ) );
       return;
    }
       
@@ -5357,11 +5420,11 @@ void US_Hydrodyn::dmd_run()
       created_batch = true;
       batch_window = new US_Hydrodyn_Batch(&batch, &batch_widget, this);
       fixWinButtons( batch_window );
-      batch_window->lb_files->setSelected( 0, true );
+      batch_window->lb_files->item( 0)->setSelected( true );
    } else {
       batch_window->lb_files->clear();
-      batch_window->lb_files->insertItem(batch.file[0]);
-      batch_window->lb_files->setSelected( 0, true );
+      batch_window->lb_files->addItem(batch.file[0]);
+      batch_window->lb_files->item( 0)->setSelected( true );
    }
    batch_window->cb_mm_first->setChecked( !batch.mm_all );
    batch_window->cb_mm_all  ->setChecked( batch.mm_all );
@@ -5404,20 +5467,20 @@ void US_Hydrodyn::dmd_run()
             }
             if ( !dup )
             {
-               batch_window->lb_files->insertItem(batch.file[i]);
+               batch_window->lb_files->addItem(batch.file[i]);
             } else {
-               load_errors += QString(tr("File skipped: %1 (already in list)\n")).arg(batch.file[i]);
+               load_errors += QString(us_tr("File skipped: %1 (already in list)\n")).arg(batch.file[i]);
             }
          } else {
-            load_errors += QString(tr("File skipped: %1 (not a valid file name)\n")).arg(batch.file[i]);
+            load_errors += QString(us_tr("File skipped: %1 (not a valid file name)\n")).arg(batch.file[i]);
          }
       }
       if ( load_errors != "" ) 
       {
-         QColor save_color = batch_window->editor->color();
-         batch_window->editor->setColor("dark red");
+         QColor save_color = batch_window->editor->textColor();
+         batch_window->editor->setTextColor("dark red");
          batch_window->editor->append(load_errors);
-         batch_window->editor->setColor(save_color);
+         batch_window->editor->setTextColor(save_color);
       }
       batch_window->cb_mm_first->setChecked( !batch.mm_all );
       batch_window->cb_mm_all  ->setChecked( batch.mm_all );
@@ -5432,12 +5495,15 @@ void US_Hydrodyn::dmd_run()
 
 void US_Hydrodyn::run_us_config()
 {
-   Q3Process* process = new Q3Process( this );
+   QProcess* process = new QProcess( this );
+#if QT_VERSION < 0x040000
+   QString config_prog = "us_config";
+   
    process->setCommunication( 0 );
-#ifndef Q_WS_MAC
-   process->addArgument( "us_config" );
-#else
-   QString procbin = USglobal->config_list.system_dir + "/bin/" + "us_config";
+# ifndef Q_WS_MAC
+   process->addArgument( config_prog );
+# else
+   QString procbin = USglobal->config_list.system_dir + "/bin/" + config_prog;
    QString procapp = procbin + ".app";
 
    if ( !QFile( procapp ).exists()  &&  QFile( procbin ).exists() )
@@ -5446,24 +5512,51 @@ void US_Hydrodyn::run_us_config()
    process->addArgument( "open" );
    process->addArgument( "-a" );
    process->addArgument( procapp );
-#endif
+# endif
 
    if ( ! process->start() )
    {
       QMessageBox::information( this,
-                                tr( "Error" ),
-                                tr( "There was a problem creating a subprocess\n"
-                                    "for " ) + QString("us_config").upper() );
+                                us_tr( "Error" ),
+                                us_tr( "There was a problem creating a subprocess\n"
+                                    "for " ) + QString("us_config").toUpper() );
    }
+#else
+   QString prog = "us3_config";
+   QStringList args;
+# if defined( Q_WS_MAC )
+   prog = "open";
+
+   QString procbin = USglobal->config_list.system_dir + "/bin/" + prog;
+   QString procapp = procbin + ".app";
+
+   if ( !QFile( procapp ).exists()  &&  QFile( procbin ).exists() )
+      procapp         = procbin;
+
+   args
+      <<  "-a"
+      << procapp
+      ;
+# endif
+   if ( ! process->startDetached( prog, args ) )
+   {
+      QMessageBox::information( this,
+                                us_tr( "Error" ),
+                                us_tr( "There was a problem creating a subprocess\n"
+                                    "for " ) + QString("us_config").toUpper() );
+   }
+#endif
+
 }
 
 void US_Hydrodyn::run_us_admin()
 {
-   Q3Process* process = new Q3Process( this );
+   QProcess* process = new QProcess( this );
+#if QT_VERSION < 0x040000
    process->setCommunication( 0 );
-#ifndef Q_WS_MAC
+# ifndef Q_WS_MAC
    process->addArgument( "us_admin" );
-#else
+# else
    QString procbin = USglobal->config_list.system_dir + "/bin/" + "us_admin";
    QString procapp = procbin + ".app";
 
@@ -5473,15 +5566,40 @@ void US_Hydrodyn::run_us_admin()
    process->addArgument( "open" );
    process->addArgument( "-a" );
    process->addArgument( procapp );
-#endif
+# endif
 
    if ( ! process->start() )
    {
       QMessageBox::information( this,
-                                tr( "Error" ),
-                                tr( "There was a problem creating a subprocess\n"
-                                    "for " ) + QString("us_admin").upper() );
+                                us_tr( "Error" ),
+                                us_tr( "There was a problem creating a subprocess\n"
+                                    "for " ) + QString("us_admin").toUpper() );
    }
+#else
+   QString prog = "us_admin";
+   QStringList args;
+# if defined( Q_WS_MAC )
+   prog = "open";
+
+   QString procbin = USglobal->config_list.system_dir + "/bin/" + config_prog;
+   QString procapp = procbin + ".app";
+
+   if ( !QFile( procapp ).exists()  &&  QFile( procbin ).exists() )
+      procapp         = procbin;
+
+   args
+      <<  "-a"
+      << procapp
+      ;
+# endif
+   if ( ! process->startDetached( prog, args ) )
+   {
+      QMessageBox::information( this,
+                                us_tr( "Error" ),
+                                us_tr( "There was a problem creating a subprocess\n"
+                                    "for " ) + QString("us_admin").toUpper() );
+   }
+#endif
 }
 
 
@@ -5563,9 +5681,9 @@ bool US_Hydrodyn::equi_grid_bead_model( double dR )
       bool ok;
 
       do {
-         dR = QInputDialog::getDouble(
+         dR = US_Static::getDouble(
                                       "dR for equi grid:",
-                                      tr( "Enter a cube side value in Angstroms:" ),
+                                      us_tr( "Enter a cube side value in Angstroms:" ),
                                       1e0, 
                                       -1e0,
                                       1e4, 
@@ -5592,8 +5710,8 @@ bool US_Hydrodyn::equi_grid_bead_model( double dR )
       setSomoGridFile(false);
    }
 
-   for (current_model = 0; current_model < (unsigned int)lb_model->numRows(); current_model++) {
-      if (lb_model->isSelected(current_model)) {
+   for (current_model = 0; current_model < (unsigned int)lb_model->count(); current_model++) {
+      if (lb_model->item(current_model)->isSelected()) {
          printf("in calc_grid: is selected current model %d\n", current_model); fflush(stdout);
          if (somo_processed.size() > current_model && somo_processed[current_model]) {
             printf("in calc_grid: somo_processed %d\n", current_model); fflush(stdout);
@@ -5713,12 +5831,12 @@ bool US_Hydrodyn::calc_zeno_hydro()
 
 void US_Hydrodyn::le_pdb_file_focus( bool )
 {
-   // qDebug( "focused" );
+   // us_qdebug( "focused" );
    le_pdb_file_save_text = le_pdb_file->text();
 }
 
 void US_Hydrodyn::le_pdb_file_changed( const QString & )
 {
-   // qDebug( "changed" );
+   // us_qdebug( "changed" );
    le_pdb_file->setText( le_pdb_file_save_text );
 }

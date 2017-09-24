@@ -31,7 +31,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Bl : public QDialog
 
       QLabel *                                lbl_title;
 
-      QButtonGroup *                          bg_bl_type;
+      QGroupBox *                          bg_bl_type;
 
       QRadioButton *                          rb_linear;
       QRadioButton *                          rb_integral;

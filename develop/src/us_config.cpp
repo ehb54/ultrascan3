@@ -6,7 +6,7 @@
 #endif
 #include <qregexp.h>
 //Added by qt3to4:
-#include <Q3TextStream>
+#include <QTextStream>
 
 // note: this program uses cout and/or cerr and this should be replaced
 
@@ -15,7 +15,7 @@ static std::basic_ostream<char>& operator<<(std::basic_ostream<char>& os, const 
 }
 
 US_Config::US_Config( QObject* parent, const char* name)
-   : QObject (parent, name)
+   : QObject ( parent )
 {
 #ifdef QT4
    const QString RevSvn( SOMO_Revision );
@@ -42,7 +42,7 @@ US_Config::US_Config( QObject* parent, const char* name)
 
 // This is for us_register only
 US_Config::US_Config( QString /* dummy */, QObject* parent, const char* name )
-   : QObject (parent, name)
+   : QObject ( parent )
 {
    //  config_list.tar = dummy;  // Dummy to avoid compiler complaint
 }
@@ -114,31 +114,31 @@ void US_Config::setModelString()
    vector <QString>& m = modelString; // convenience
 
    m.clear(  );
-   m.push_back( tr( "1-Component, Ideal" ) );                        // model 0
-   m.push_back( tr( "2-Component, Ideal, Noninteracting" ) );        // model 1
-   m.push_back( tr( "3-Component, Ideal, Noninteracting" ) );        // model 2
-   m.push_back( tr( "Fixed Molecular Weight Distribution" ) );       // model 3
-   m.push_back( tr( "Monomer-Dimer Equilibrium" ) );                 // model 4
-   m.push_back( tr( "Monomer-Trimer Equilibrium" ) );                // model 5
-   m.push_back( tr( "Monomer-Tetramer Equilibrium" ) );              // model 6
-   m.push_back( tr( "Monomer-Pentamer Equilibrium" ) );              // model 7
-   m.push_back( tr( "Monomer-Hexamer Equilibrium" ) );               // model 8
-   m.push_back( tr( "Monomer-Heptamer Equilibrium" ) );              // model 9
-   m.push_back( tr( "User-Defined Monomer-Nmer Equilibrium" ) );     // model 10
-   m.push_back( tr( "Monomer-Dimer-Trimer Equilibrium" ) );          // model 11
-   m.push_back( tr( "Monomer-Dimer-Tetramer Equilibrium" ) );        // model 12
-   m.push_back( tr( "User-Defined Monomer - N-mer - M-mer Equilibrium" ) );
+   m.push_back( us_tr( "1-Component, Ideal" ) );                        // model 0
+   m.push_back( us_tr( "2-Component, Ideal, Noninteracting" ) );        // model 1
+   m.push_back( us_tr( "3-Component, Ideal, Noninteracting" ) );        // model 2
+   m.push_back( us_tr( "Fixed Molecular Weight Distribution" ) );       // model 3
+   m.push_back( us_tr( "Monomer-Dimer Equilibrium" ) );                 // model 4
+   m.push_back( us_tr( "Monomer-Trimer Equilibrium" ) );                // model 5
+   m.push_back( us_tr( "Monomer-Tetramer Equilibrium" ) );              // model 6
+   m.push_back( us_tr( "Monomer-Pentamer Equilibrium" ) );              // model 7
+   m.push_back( us_tr( "Monomer-Hexamer Equilibrium" ) );               // model 8
+   m.push_back( us_tr( "Monomer-Heptamer Equilibrium" ) );              // model 9
+   m.push_back( us_tr( "User-Defined Monomer-Nmer Equilibrium" ) );     // model 10
+   m.push_back( us_tr( "Monomer-Dimer-Trimer Equilibrium" ) );          // model 11
+   m.push_back( us_tr( "Monomer-Dimer-Tetramer Equilibrium" ) );        // model 12
+   m.push_back( us_tr( "User-Defined Monomer - N-mer - M-mer Equilibrium" ) );
    // model 13
-   m.push_back( tr( "2-Component Hetero-Association: A + B <=> AB" ) );
+   m.push_back( us_tr( "2-Component Hetero-Association: A + B <=> AB" ) );
    // model 14
-   m.push_back( tr( "User-defined self/Hetero-Association: A + B <=> AB, nA <=> An" ) );
+   m.push_back( us_tr( "User-defined self/Hetero-Association: A + B <=> AB, nA <=> An" ) );
    // model 15
-   m.push_back( tr( "User-Defined Monomer-Nmer, some monomer is incompetent" ) );
+   m.push_back( us_tr( "User-Defined Monomer-Nmer, some monomer is incompetent" ) );
    // model 16
-   m.push_back( tr( "User-Defined Monomer-Nmer, some Nmer is incompetent" ) );
+   m.push_back( us_tr( "User-Defined Monomer-Nmer, some Nmer is incompetent" ) );
    // model 17
-   m.push_back( tr( "User-Defined irreversible Monomer-Nmer" ) );    // model 18
-   m.push_back( tr( "User-Defined Monomer-Nmer plus contaminant" ) );// model 19
+   m.push_back( us_tr( "User-Defined irreversible Monomer-Nmer" ) );    // model 18
+   m.push_back( us_tr( "User-Defined Monomer-Nmer plus contaminant" ) );// model 19
 }
 
 bool US_Config::col_exists()
@@ -240,211 +240,211 @@ void US_Config::color_defaults()
    global_colors.major_ticks.setRgb ( 0xff, 0xff, 0xff );  // white
    global_colors.minor_ticks.setRgb ( 0xaa, 0xaa, 0xaa );  // gray5
 
-   QColorGroup& cg_frame = global_colors.cg_frame;  // Convenience
+   QPalette& cg_frame = global_colors.cg_frame;  // Convenience
 
-   cg_frame.setColor( QColorGroup::Foreground, Qt::white );
-   cg_frame.setColor( QColorGroup::Background, global_colors.frames );
-   cg_frame.setColor( QColorGroup::Light,      global_colors.gray2 );
-   cg_frame.setColor( QColorGroup::Dark,       global_colors.gray4 );
-   cg_frame.setColor( QColorGroup::Mid,        Qt::cyan );
-   cg_frame.setColor( QColorGroup::Text,       Qt::white );
-   cg_frame.setColor( QColorGroup::Base,       global_colors.gray4 );
+   cg_frame.setColor( QPalette::Foreground, Qt::white );
+   cg_frame.setColor( QPalette::Background, global_colors.frames );
+   cg_frame.setColor( QPalette::Light,      global_colors.gray2 );
+   cg_frame.setColor( QPalette::Dark,       global_colors.gray4 );
+   cg_frame.setColor( QPalette::Mid,        Qt::cyan );
+   cg_frame.setColor( QPalette::Text,       Qt::white );
+   cg_frame.setColor( QPalette::Base,       global_colors.gray4 );
 
-   QColorGroup& cg_pushb = global_colors.cg_pushb;  // Convenience
+   QPalette& cg_pushb = global_colors.cg_pushb;  // Convenience
 
-   cg_pushb.setColor( QColorGroup::ButtonText, Qt::black );
-   cg_pushb.setColor( QColorGroup::Button,     global_colors.pushb );
-   cg_pushb.setColor( QColorGroup::Light,      Qt::white );
-   cg_pushb.setColor( QColorGroup::Dark,       global_colors.gray4 );
-   cg_pushb.setColor( QColorGroup::Shadow,     Qt::black );
+   cg_pushb.setColor( QPalette::ButtonText, Qt::black );
+   cg_pushb.setColor( QPalette::Button,     global_colors.pushb );
+   cg_pushb.setColor( QPalette::Light,      Qt::white );
+   cg_pushb.setColor( QPalette::Dark,       global_colors.gray4 );
+   cg_pushb.setColor( QPalette::Shadow,     Qt::black );
    // For splash screen window
-   cg_pushb.setColor( QColorGroup::Background, global_colors.pushb );
+   cg_pushb.setColor( QPalette::Background, global_colors.pushb );
 
-   QColorGroup& cg_pushb_disabled = global_colors.cg_pushb_disabled;  // Convenience
+   QPalette& cg_pushb_disabled = global_colors.cg_pushb_disabled;  // Convenience
 
-   cg_pushb_disabled.setColor( QColorGroup::ButtonText, Qt::white );
-   cg_pushb_disabled.setColor( QColorGroup::Button,     global_colors.pushb );
-   cg_pushb_disabled.setColor( QColorGroup::Light,      Qt::white );
-   cg_pushb_disabled.setColor( QColorGroup::Dark,       global_colors.gray4 );
-   cg_pushb_disabled.setColor( QColorGroup::Shadow,     Qt::black );
+   cg_pushb_disabled.setColor( QPalette::ButtonText, Qt::white );
+   cg_pushb_disabled.setColor( QPalette::Button,     global_colors.pushb );
+   cg_pushb_disabled.setColor( QPalette::Light,      Qt::white );
+   cg_pushb_disabled.setColor( QPalette::Dark,       global_colors.gray4 );
+   cg_pushb_disabled.setColor( QPalette::Shadow,     Qt::black );
    // For splash screen shadow
-   cg_pushb_disabled.setColor( QColorGroup::Background, global_colors.pushb );
-   cg_pushb_disabled.setColor( QColorGroup::Text,       global_colors.gray3 );
+   cg_pushb_disabled.setColor( QPalette::Background, global_colors.pushb );
+   cg_pushb_disabled.setColor( QPalette::Text,       global_colors.gray3 );
 
-   QColorGroup& cg_pushb_active = global_colors.cg_pushb_active;  // Convenience
+   QPalette& cg_pushb_active = global_colors.cg_pushb_active;  // Convenience
 
-   cg_pushb_active.setColor( QColorGroup::ButtonText, Qt::black );
-   cg_pushb_active.setColor( QColorGroup::Button,     global_colors.pushb );
-   cg_pushb_active.setColor( QColorGroup::Light,      Qt::white );
-   cg_pushb_active.setColor( QColorGroup::Dark,       global_colors.gray4 );
-   cg_pushb_active.setColor( QColorGroup::Shadow,     Qt::black );
+   cg_pushb_active.setColor( QPalette::ButtonText, Qt::black );
+   cg_pushb_active.setColor( QPalette::Button,     global_colors.pushb );
+   cg_pushb_active.setColor( QPalette::Light,      Qt::white );
+   cg_pushb_active.setColor( QPalette::Dark,       global_colors.gray4 );
+   cg_pushb_active.setColor( QPalette::Shadow,     Qt::black );
    // For splash screen shadow
-   cg_pushb_active.setColor( QColorGroup::Background, global_colors.pushb );
+   cg_pushb_active.setColor( QPalette::Background, global_colors.pushb );
 
-   QColorGroup& cg_label = global_colors.cg_label;  // Convenience
+   QPalette& cg_label = global_colors.cg_label;  // Convenience
 
-   cg_label.setColor( QColorGroup::Foreground, Qt::white );
-   cg_label.setColor( QColorGroup::Background, global_colors.labels );
-   cg_label.setColor( QColorGroup::Light,      Qt::black );
-   cg_label.setColor( QColorGroup::Dark,       Qt::black );
-   cg_label.setColor( QColorGroup::Mid,        Qt::black );
-   cg_label.setColor( QColorGroup::Text,       Qt::white );
-   cg_label.setColor( QColorGroup::Base,       Qt::black );
+   cg_label.setColor( QPalette::Foreground, Qt::white );
+   cg_label.setColor( QPalette::Background, global_colors.labels );
+   cg_label.setColor( QPalette::Light,      Qt::black );
+   cg_label.setColor( QPalette::Dark,       Qt::black );
+   cg_label.setColor( QPalette::Mid,        Qt::black );
+   cg_label.setColor( QPalette::Text,       Qt::white );
+   cg_label.setColor( QPalette::Base,       Qt::black );
 
-   QColorGroup& cg_label_warn = global_colors.cg_label_warn;  // Convenience
+   QPalette& cg_label_warn = global_colors.cg_label_warn;  // Convenience
 
-   cg_label_warn.setColor( QColorGroup::Foreground, Qt::red );
-   cg_label_warn.setColor( QColorGroup::Button,     global_colors.labels );
-   cg_label_warn.setColor( QColorGroup::Light,      Qt::black );
-   cg_label_warn.setColor( QColorGroup::Dark,       Qt::black );
-   cg_label_warn.setColor( QColorGroup::Mid,        Qt::black );
-   cg_label_warn.setColor( QColorGroup::Text,       Qt::red );
-   cg_label_warn.setColor( QColorGroup::BrightText, Qt::red );
-   cg_label_warn.setColor( QColorGroup::Base,       Qt::black );
-   cg_label_warn.setColor( QColorGroup::Background, Qt::black );
+   cg_label_warn.setColor( QPalette::Foreground, Qt::red );
+   cg_label_warn.setColor( QPalette::Button,     global_colors.labels );
+   cg_label_warn.setColor( QPalette::Light,      Qt::black );
+   cg_label_warn.setColor( QPalette::Dark,       Qt::black );
+   cg_label_warn.setColor( QPalette::Mid,        Qt::black );
+   cg_label_warn.setColor( QPalette::Text,       Qt::red );
+   cg_label_warn.setColor( QPalette::BrightText, Qt::red );
+   cg_label_warn.setColor( QPalette::Base,       Qt::black );
+   cg_label_warn.setColor( QPalette::Background, Qt::black );
 
-   QColorGroup& label_disabled = global_colors.cg_label_disabled; // Convenience
+   QPalette& label_disabled = global_colors.cg_label_disabled; // Convenience
 
-   label_disabled.setColor( QColorGroup::Foreground, Qt::black );
-   label_disabled.setColor( QColorGroup::Background, global_colors.labels );
-   label_disabled.setColor( QColorGroup::Light,      Qt::black );
-   label_disabled.setColor( QColorGroup::Dark,       Qt::black );
-   label_disabled.setColor( QColorGroup::Mid,        Qt::black );
-   label_disabled.setColor( QColorGroup::Text,       global_colors.gray );
-   label_disabled.setColor( QColorGroup::Base,       Qt::black );
+   label_disabled.setColor( QPalette::Foreground, Qt::black );
+   label_disabled.setColor( QPalette::Background, global_colors.labels );
+   label_disabled.setColor( QPalette::Light,      Qt::black );
+   label_disabled.setColor( QPalette::Dark,       Qt::black );
+   label_disabled.setColor( QPalette::Mid,        Qt::black );
+   label_disabled.setColor( QPalette::Text,       global_colors.gray );
+   label_disabled.setColor( QPalette::Base,       Qt::black );
 
-   QColorGroup& cg_edit = global_colors.cg_edit;  // Convenience
+   QPalette& cg_edit = global_colors.cg_edit;  // Convenience
 
-   cg_edit.setColor( QColorGroup::Foreground,      Qt::black );
-   cg_edit.setColor( QColorGroup::Background,      Qt::white );
-   cg_edit.setColor( QColorGroup::Light,           Qt::white );
-   cg_edit.setColor( QColorGroup::Dark,            global_colors.gray );
-   cg_edit.setColor( QColorGroup::Mid,             Qt::black );
-   cg_edit.setColor( QColorGroup::Text,            Qt::black );
-   cg_edit.setColor( QColorGroup::Base,            Qt::white );
-   cg_edit.setColor( QColorGroup::HighlightedText, Qt::white );
-   cg_edit.setColor( QColorGroup::Highlight,       temp_col );
-   cg_edit.setColor( QColorGroup::Button,          global_colors.gray3 );
-   cg_edit.setColor( QColorGroup::Midlight,        global_colors.gray3 );
-   cg_edit.setColor( QColorGroup::BrightText,      Qt::red );
-   cg_edit.setColor( QColorGroup::ButtonText,      Qt::black );
-   cg_edit.setColor( QColorGroup::Shadow,          Qt::black );
+   cg_edit.setColor( QPalette::Foreground,      Qt::black );
+   cg_edit.setColor( QPalette::Background,      Qt::white );
+   cg_edit.setColor( QPalette::Light,           Qt::white );
+   cg_edit.setColor( QPalette::Dark,            global_colors.gray );
+   cg_edit.setColor( QPalette::Mid,             Qt::black );
+   cg_edit.setColor( QPalette::Text,            Qt::black );
+   cg_edit.setColor( QPalette::Base,            Qt::white );
+   cg_edit.setColor( QPalette::HighlightedText, Qt::white );
+   cg_edit.setColor( QPalette::Highlight,       temp_col );
+   cg_edit.setColor( QPalette::Button,          global_colors.gray3 );
+   cg_edit.setColor( QPalette::Midlight,        global_colors.gray3 );
+   cg_edit.setColor( QPalette::BrightText,      Qt::red );
+   cg_edit.setColor( QPalette::ButtonText,      Qt::black );
+   cg_edit.setColor( QPalette::Shadow,          Qt::black );
 
-   QColorGroup& cg_edit_warn = global_colors.cg_edit_warn;  // Convenience
+   QPalette& cg_edit_warn = global_colors.cg_edit_warn;  // Convenience
 
-   cg_edit_warn.setColor( QColorGroup::Foreground, Qt::red );
-   cg_edit_warn.setColor( QColorGroup::Button,     Qt::white );
-   cg_edit_warn.setColor( QColorGroup::Light,      Qt::black );
-   cg_edit_warn.setColor( QColorGroup::Dark,       global_colors.gray );
-   cg_edit_warn.setColor( QColorGroup::Mid,        Qt::white );
-   cg_edit_warn.setColor( QColorGroup::Text,       Qt::red );
-   cg_edit_warn.setColor( QColorGroup::BrightText, Qt::red );
-   cg_edit_warn.setColor( QColorGroup::Base,       Qt::black );
-   cg_edit_warn.setColor( QColorGroup::Background, Qt::white );
+   cg_edit_warn.setColor( QPalette::Foreground, Qt::red );
+   cg_edit_warn.setColor( QPalette::Button,     Qt::white );
+   cg_edit_warn.setColor( QPalette::Light,      Qt::black );
+   cg_edit_warn.setColor( QPalette::Dark,       global_colors.gray );
+   cg_edit_warn.setColor( QPalette::Mid,        Qt::white );
+   cg_edit_warn.setColor( QPalette::Text,       Qt::red );
+   cg_edit_warn.setColor( QPalette::BrightText, Qt::red );
+   cg_edit_warn.setColor( QPalette::Base,       Qt::black );
+   cg_edit_warn.setColor( QPalette::Background, Qt::white );
 
-   QColorGroup& cg_dk_green = global_colors.cg_dk_green;  // Convenience
+   QPalette& cg_dk_green = global_colors.cg_dk_green;  // Convenience
 
-   cg_dk_green.setColor( QColorGroup::Foreground, Qt::black );
-   cg_dk_green.setColor( QColorGroup::Background, global_colors.dk_green );
-   cg_dk_green.setColor( QColorGroup::Light,      Qt::white );
-   cg_dk_green.setColor( QColorGroup::Dark,       global_colors.gray );
-   cg_dk_green.setColor( QColorGroup::Mid,        Qt::black );
-   cg_dk_green.setColor( QColorGroup::Text,       Qt::black );
-   cg_dk_green.setColor( QColorGroup::Base,       Qt::black );
+   cg_dk_green.setColor( QPalette::Foreground, Qt::black );
+   cg_dk_green.setColor( QPalette::Background, global_colors.dk_green );
+   cg_dk_green.setColor( QPalette::Light,      Qt::white );
+   cg_dk_green.setColor( QPalette::Dark,       global_colors.gray );
+   cg_dk_green.setColor( QPalette::Mid,        Qt::black );
+   cg_dk_green.setColor( QPalette::Text,       Qt::black );
+   cg_dk_green.setColor( QPalette::Base,       Qt::black );
 
-   QColorGroup& cg_dk_red = global_colors.cg_dk_red;  // Convenience
+   QPalette& cg_dk_red = global_colors.cg_dk_red;  // Convenience
 
-   cg_dk_red.setColor( QColorGroup::Foreground, Qt::black );
-   cg_dk_red.setColor( QColorGroup::Background, global_colors.dk_red );
-   cg_dk_red.setColor( QColorGroup::Light,      Qt::white );
-   cg_dk_red.setColor( QColorGroup::Dark,       global_colors.gray );
-   cg_dk_red.setColor( QColorGroup::Mid,        Qt::black );
-   cg_dk_red.setColor( QColorGroup::Text,       Qt::black );
-   cg_dk_red.setColor( QColorGroup::Base,       Qt::black );
+   cg_dk_red.setColor( QPalette::Foreground, Qt::black );
+   cg_dk_red.setColor( QPalette::Background, global_colors.dk_red );
+   cg_dk_red.setColor( QPalette::Light,      Qt::white );
+   cg_dk_red.setColor( QPalette::Dark,       global_colors.gray );
+   cg_dk_red.setColor( QPalette::Mid,        Qt::black );
+   cg_dk_red.setColor( QPalette::Text,       Qt::black );
+   cg_dk_red.setColor( QPalette::Base,       Qt::black );
 
-   QColorGroup& cg_green = global_colors.cg_green;  // Convenience
+   QPalette& cg_green = global_colors.cg_green;  // Convenience
 
-   cg_green.setColor( QColorGroup::Foreground, Qt::white );
-   cg_green.setColor( QColorGroup::Background, Qt::green );
-   cg_green.setColor( QColorGroup::Light,      Qt::white );
-   cg_green.setColor( QColorGroup::Dark,       global_colors.gray7 );
-   cg_green.setColor( QColorGroup::Mid,        Qt::darkRed );
-   cg_green.setColor( QColorGroup::Text,       Qt::darkYellow );
-   cg_green.setColor( QColorGroup::Base,       Qt::darkCyan );
+   cg_green.setColor( QPalette::Foreground, Qt::white );
+   cg_green.setColor( QPalette::Background, Qt::green );
+   cg_green.setColor( QPalette::Light,      Qt::white );
+   cg_green.setColor( QPalette::Dark,       global_colors.gray7 );
+   cg_green.setColor( QPalette::Mid,        Qt::darkRed );
+   cg_green.setColor( QPalette::Text,       Qt::darkYellow );
+   cg_green.setColor( QPalette::Base,       Qt::darkCyan );
 
-   QColorGroup& cg_red = global_colors.cg_red;  // Convenience
+   QPalette& cg_red = global_colors.cg_red;  // Convenience
 
-   cg_red.setColor( QColorGroup::Foreground, Qt::red );
-   cg_red.setColor( QColorGroup::Background, Qt::black );
-   cg_red.setColor( QColorGroup::Light,      Qt::white );
-   cg_red.setColor( QColorGroup::Dark,       global_colors.gray7 );
-   cg_red.setColor( QColorGroup::Mid,        Qt::black );
-   cg_red.setColor( QColorGroup::Text,       Qt::black );
-   cg_red.setColor( QColorGroup::Base,       Qt::black );
+   cg_red.setColor( QPalette::Foreground, Qt::red );
+   cg_red.setColor( QPalette::Background, Qt::black );
+   cg_red.setColor( QPalette::Light,      Qt::white );
+   cg_red.setColor( QPalette::Dark,       global_colors.gray7 );
+   cg_red.setColor( QPalette::Mid,        Qt::black );
+   cg_red.setColor( QPalette::Text,       Qt::black );
+   cg_red.setColor( QPalette::Base,       Qt::black );
 
-   QColorGroup& cg_gray = global_colors.cg_gray;  // Convenience
+   QPalette& cg_gray = global_colors.cg_gray;  // Convenience
 
-   cg_gray.setColor( QColorGroup::Foreground, Qt::black );
-   cg_gray.setColor( QColorGroup::Background, Qt::gray );
-   cg_gray.setColor( QColorGroup::Light,      Qt::white );
-   cg_gray.setColor( QColorGroup::Dark,       Qt::black );
-   cg_gray.setColor( QColorGroup::Mid,        Qt::black );
-   cg_gray.setColor( QColorGroup::Text,       Qt::black );
-   cg_gray.setColor( QColorGroup::Base,       Qt::white );
+   cg_gray.setColor( QPalette::Foreground, Qt::black );
+   cg_gray.setColor( QPalette::Background, Qt::gray );
+   cg_gray.setColor( QPalette::Light,      Qt::white );
+   cg_gray.setColor( QPalette::Dark,       Qt::black );
+   cg_gray.setColor( QPalette::Mid,        Qt::black );
+   cg_gray.setColor( QPalette::Text,       Qt::black );
+   cg_gray.setColor( QPalette::Base,       Qt::white );
 
-   QColorGroup& cg_normal = global_colors.cg_normal;  // Convenience
+   QPalette& cg_normal = global_colors.cg_normal;  // Convenience
 
-   cg_normal.setColor( QColorGroup::Foreground,      Qt::black );
-   cg_normal.setColor( QColorGroup::Background,      global_colors.gray3 );
-   cg_normal.setColor( QColorGroup::Light,           Qt::white );
-   cg_normal.setColor( QColorGroup::Dark,            global_colors.gray4 );
-   cg_normal.setColor( QColorGroup::Mid,             global_colors.gray3 );
-   cg_normal.setColor( QColorGroup::Text,            Qt::black );
-   cg_normal.setColor( QColorGroup::Base,            Qt::white );
-   cg_normal.setColor( QColorGroup::HighlightedText, Qt::white );
-   cg_normal.setColor( QColorGroup::Highlight,       temp_col );
-   cg_normal.setColor( QColorGroup::Button,          global_colors.gray3 );
-   cg_normal.setColor( QColorGroup::Midlight,        global_colors.gray3 );
-   cg_normal.setColor( QColorGroup::BrightText,      Qt::red );
-   cg_normal.setColor( QColorGroup::ButtonText,      Qt::black );
-   cg_normal.setColor( QColorGroup::Shadow,          Qt::black );
+   cg_normal.setColor( QPalette::Foreground,      Qt::black );
+   cg_normal.setColor( QPalette::Background,      global_colors.gray3 );
+   cg_normal.setColor( QPalette::Light,           Qt::white );
+   cg_normal.setColor( QPalette::Dark,            global_colors.gray4 );
+   cg_normal.setColor( QPalette::Mid,             global_colors.gray3 );
+   cg_normal.setColor( QPalette::Text,            Qt::black );
+   cg_normal.setColor( QPalette::Base,            Qt::white );
+   cg_normal.setColor( QPalette::HighlightedText, Qt::white );
+   cg_normal.setColor( QPalette::Highlight,       temp_col );
+   cg_normal.setColor( QPalette::Button,          global_colors.gray3 );
+   cg_normal.setColor( QPalette::Midlight,        global_colors.gray3 );
+   cg_normal.setColor( QPalette::BrightText,      Qt::red );
+   cg_normal.setColor( QPalette::ButtonText,      Qt::black );
+   cg_normal.setColor( QPalette::Shadow,          Qt::black );
 
-   QColorGroup& cg_plot = global_colors.cg_plot;  // Convenience
+   QPalette& cg_plot = global_colors.cg_plot;  // Convenience
 
-   cg_plot.setColor( QColorGroup::Foreground,      Qt::black );
-   cg_plot.setColor( QColorGroup::Background,      global_colors.gray3 );
-   cg_plot.setColor( QColorGroup::Light,           Qt::white );
-   cg_plot.setColor( QColorGroup::Dark,            Qt::white );
-   cg_plot.setColor( QColorGroup::Mid,             global_colors.gray5 );
-   cg_plot.setColor( QColorGroup::Text,            Qt::black );
-   cg_plot.setColor( QColorGroup::Base,            Qt::white );
-   cg_plot.setColor( QColorGroup::HighlightedText, Qt::white );
-   cg_plot.setColor( QColorGroup::Highlight,       temp_col );
-   cg_plot.setColor( QColorGroup::Button,          Qt::black );
-   cg_plot.setColor( QColorGroup::Midlight,        Qt::black );
-   cg_plot.setColor( QColorGroup::BrightText,      Qt::black );
-   cg_plot.setColor( QColorGroup::ButtonText,      Qt::white );
-   cg_plot.setColor( QColorGroup::Shadow,          Qt::black );
+   cg_plot.setColor( QPalette::Foreground,      Qt::black );
+   cg_plot.setColor( QPalette::Background,      global_colors.gray3 );
+   cg_plot.setColor( QPalette::Light,           Qt::white );
+   cg_plot.setColor( QPalette::Dark,            Qt::white );
+   cg_plot.setColor( QPalette::Mid,             global_colors.gray5 );
+   cg_plot.setColor( QPalette::Text,            Qt::black );
+   cg_plot.setColor( QPalette::Base,            Qt::white );
+   cg_plot.setColor( QPalette::HighlightedText, Qt::white );
+   cg_plot.setColor( QPalette::Highlight,       temp_col );
+   cg_plot.setColor( QPalette::Button,          Qt::black );
+   cg_plot.setColor( QPalette::Midlight,        Qt::black );
+   cg_plot.setColor( QPalette::BrightText,      Qt::black );
+   cg_plot.setColor( QPalette::ButtonText,      Qt::white );
+   cg_plot.setColor( QPalette::Shadow,          Qt::black );
 
-   QColorGroup& cg_lcd = global_colors.cg_lcd;  // Convenience
+   QPalette& cg_lcd = global_colors.cg_lcd;  // Convenience
 
-   cg_lcd.setColor( QColorGroup::Foreground, Qt::green );
-   cg_lcd.setColor( QColorGroup::Background, Qt::black );
-   cg_lcd.setColor( QColorGroup::Light,      Qt::green );
-   cg_lcd.setColor( QColorGroup::Dark,       global_colors.frames );
-   cg_lcd.setColor( QColorGroup::Mid,        Qt::cyan );
-   cg_lcd.setColor( QColorGroup::Text,       global_colors.dk_red );
-   cg_lcd.setColor( QColorGroup::Base,       Qt::blue );
+   cg_lcd.setColor( QPalette::Foreground, Qt::green );
+   cg_lcd.setColor( QPalette::Background, Qt::black );
+   cg_lcd.setColor( QPalette::Light,      Qt::green );
+   cg_lcd.setColor( QPalette::Dark,       global_colors.frames );
+   cg_lcd.setColor( QPalette::Mid,        Qt::cyan );
+   cg_lcd.setColor( QPalette::Text,       global_colors.dk_red );
+   cg_lcd.setColor( QPalette::Base,       Qt::blue );
 
-   QColorGroup& cg_bunt = global_colors.cg_bunt;  // Convenience
+   QPalette& cg_bunt = global_colors.cg_bunt;  // Convenience
 
-   cg_bunt.setColor( QColorGroup::Foreground, Qt::black );
-   cg_bunt.setColor( QColorGroup::Background, Qt::yellow );
-   cg_bunt.setColor( QColorGroup::Light,      Qt::white );
-   cg_bunt.setColor( QColorGroup::Dark,       Qt::red );
-   cg_bunt.setColor( QColorGroup::Mid,        Qt::cyan );
-   cg_bunt.setColor( QColorGroup::Text,       Qt::green );
-   cg_bunt.setColor( QColorGroup::Base,       Qt::blue );
+   cg_bunt.setColor( QPalette::Foreground, Qt::black );
+   cg_bunt.setColor( QPalette::Background, Qt::yellow );
+   cg_bunt.setColor( QPalette::Light,      Qt::white );
+   cg_bunt.setColor( QPalette::Dark,       Qt::red );
+   cg_bunt.setColor( QPalette::Mid,        Qt::cyan );
+   cg_bunt.setColor( QPalette::Text,       Qt::green );
+   cg_bunt.setColor( QPalette::Base,       Qt::blue );
 }
 
 void US_Config::setDefault()
@@ -486,15 +486,15 @@ void US_Config::setDefault()
    if ( ultrascan == "" )
    {
       ultrascan = qApp->applicationDirPath().remove( QRegExp( "/bin$" ) );
-      // QString warning = tr( "Error:" ), message;
-      // message = tr( "The required environment variable ULTRASCAN is not set.\n"
+      // QString warning = us_tr( "Error:" ), message;
+      // message = us_tr( "The required environment variable ULTRASCAN is not set.\n"
       //               "Please add it and restart the program.  Exiting." );
       // cerr << warning << "\n" << message << endl;
       // emit errorMessage(warning, message);
       // exit( -1 );
    }
 
-   qDebug( QString( "ultrascan %1\n" ).arg( ultrascan ) );
+   us_qdebug( QString( "ultrascan %1\n" ).arg( ultrascan ) );
    config_list.system_dir = QDir::convertSeparators( ultrascan );
 #endif
 
@@ -540,7 +540,7 @@ bool US_Config::read()
       QString str;
 
       f.open( QIODevice::ReadOnly );
-      Q3TextStream ts( &f );
+      QTextStream ts( &f );
       config_list.version = ts.readLine(  );
 
       if ( config_list.version.toFloat(  ) < 6.0 )
@@ -707,7 +707,7 @@ bool US_Config::read()
 
 QString US_Config::get_home_dir(  )
 {
-   QString home = QDir::homeDirPath(  ) + USER_DIR;
+   QString home = QDir::homePath(  ) + USER_DIR;
    return ( QDir::convertSeparators( home ) );
 }
 
@@ -717,7 +717,7 @@ QString US_Config::get_home_dir(  )
 void  US_Config::move_files(  )
 {
    QString home    = get_home_dir();
-   QString oldhome = QDir::homeDirPath(  );
+   QString oldhome = QDir::homePath(  );
 
    //   create new $HOME/ultrascan directory, if it doesn't exist
    if ( ! QDir(home).exists() )

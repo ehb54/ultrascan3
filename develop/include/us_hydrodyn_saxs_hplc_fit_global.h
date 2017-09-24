@@ -7,16 +7,16 @@
 #include <qstring.h>
 #include <qlayout.h>
 #include <qpushbutton.h>
-#include <q3frame.h>
+//#include <q3frame.h>
 #include <qcheckbox.h>
-#include <q3textedit.h>
-#include <q3progressbar.h>
+#include <qtextedit.h>
+#include <qprogressbar.h>
 #include <qmenubar.h>
 #include <qfileinfo.h>
 #include <qprinter.h>
-#include <q3table.h>
+#include <qtablewidget.h>
 //Added by qt3to4:
-#include <Q3HBoxLayout>
+#include <QHBoxLayout>
 #include <QCloseEvent>
 
 //standard C and C++ defs:
@@ -115,7 +115,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Fit_Global : public QDialog
 
       QCheckBox     *cb_test_mode;
       QLabel        *lbl_test_info;
-      Q3HBoxLayout   *hbl_test;
+      QHBoxLayout   *hbl_test;
       vector < QWidget * > test_widgets;
       QPushButton   *pb_test;
       QwtPlot       * plot_test;
@@ -127,7 +127,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Fit_Global : public QDialog
       long            test_curve;
 #endif
 
-      Q3ProgressBar  *progress;
+      QProgressBar  *progress;
       QPushButton   *pb_stop;
 
       QPushButton   *pb_help;

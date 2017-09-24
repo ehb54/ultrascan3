@@ -5107,7 +5107,7 @@ namespace fem {
                                   std::string("DATA type mismatch: target type ")
                                   + target_type
                                   + " vs. "
-                                  + content->type().name()
+                                  + content->type().fileName()
                                   + " value");
       }
    };
@@ -5170,7 +5170,7 @@ namespace fem {
             datum const& obj = (*(values.objects))[i];
             std::cout <<
                "data_buffer[" << i << "]: " <<
-               obj.content->type().name() << std::endl;
+               obj.content->type().fileName() << std::endl;
          }
       }
 
@@ -5988,13 +5988,13 @@ namespace fem {
          if (access == ac_direct) {
             throw TBXX_NOT_IMPLEMENTED();
          }
-         stream.ptr = std::fopen(file_name.c_str(), "ab+");
+         stream.ptr = std::us_fopen(file_name.c_str(), "ab+");
          if (stream.ptr == 0 || std::fseek(stream.ptr, 0L, SEEK_SET) != 0) {
             if (status == st_new) {
                iostat = 1;
             }
             else {
-               stream.ptr = std::fopen(file_name.c_str(), "rb");
+               stream.ptr = std::us_fopen(file_name.c_str(), "rb");
                if (stream.ptr == 0 || std::fseek(stream.ptr, 0L, SEEK_SET) != 0) {
                   iostat = 1;
                }

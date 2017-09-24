@@ -4,12 +4,12 @@
 #include "../include/us_saxs_util.h"
 #include "../include/us_hydrodyn_saxs_hplc_simulate.h"
 //Added by qt3to4:
-#include <Q3HBoxLayout>
+#include <QHBoxLayout>
 #include <QCloseEvent>
-#include <Q3GridLayout>
-#include <Q3Frame>
+#include <QGridLayout>
+#include <QFrame>
 #include <QLabel>
-#include <Q3VBoxLayout>
+#include <QVBoxLayout>
 
 US_Hydrodyn_Saxs_Hplc_Simulate::US_Hydrodyn_Saxs_Hplc_Simulate(
                                                                void                         *          us_hydrodyn,
@@ -20,7 +20,7 @@ US_Hydrodyn_Saxs_Hplc_Simulate::US_Hydrodyn_Saxs_Hplc_Simulate(
                                                                map < QString, vector < double > >      e,
                                                                QWidget *                               p,
                                                                const char *                            name
-                                                               ) : Q3Frame( p, name )
+                                                               ) : QFrame(  p )
 {
    this->us_hydrodyn                = us_hydrodyn;
    this->hplc_win                   = hplc_win;
@@ -32,7 +32,7 @@ US_Hydrodyn_Saxs_Hplc_Simulate::US_Hydrodyn_Saxs_Hplc_Simulate(
 
    USglobal = new US_Config();
    setPalette( PALET_FRAME );
-   setCaption( tr( "US-SOMO: HPLC SAXS Simulate" ) );
+   setWindowTitle( us_tr( "US-SOMO: HPLC SAXS Simulate" ) );
 
    setupGUI();
    ((US_Hydrodyn*)us_hydrodyn)->fixWinButtons( this );
@@ -54,7 +54,7 @@ US_Hydrodyn_Saxs_Hplc_Simulate::~US_Hydrodyn_Saxs_Hplc_Simulate()
 void US_Hydrodyn_Saxs_Hplc_Simulate::setupGUI()
 {
    if ( files.size() > 5 ) {
-      QMessageBox::warning( this, caption(), tr( "A maximum of 5 intensity curves may be selected for simulation" ) );
+      QMessageBox::warning( this, windowTitle(), us_tr( "A maximum of 5 intensity curves may be selected for simulation" ) );
       close();
       return;
    }
@@ -75,7 +75,7 @@ void US_Hydrodyn_Saxs_Hplc_Simulate::setupGUI()
    AUTFBACK( lbl_name );
    lbl_name->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 
-   le_name = new QLineEdit(this, "le_name Line Edit");
+   le_name = new QLineEdit( this );    le_name->setObjectName( "le_name Line Edit" );
    le_name->setText( "Simulate" );
    le_name->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_name->setPalette( PALET_NORMAL );
@@ -89,7 +89,7 @@ void US_Hydrodyn_Saxs_Hplc_Simulate::setupGUI()
    AUTFBACK( lbl_frames );
    lbl_frames->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 
-   le_frames = new QLineEdit(this, "le_frames Line Edit");
+   le_frames = new QLineEdit( this );    le_frames->setObjectName( "le_frames Line Edit" );
    le_frames->setText( QString( "%1" ).arg( ( 1 + files.size() ) * 100 ) );
    le_frames->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_frames->setPalette( PALET_NORMAL );
@@ -98,7 +98,7 @@ void US_Hydrodyn_Saxs_Hplc_Simulate::setupGUI()
    le_frames->setValidator( new QIntValidator( 1, 1000, le_frames ) );
 
    cb_noise = new QCheckBox(this);
-   cb_noise->setText(tr("Random normal noise SD"));
+   cb_noise->setText(us_tr("Random normal noise SD"));
    cb_noise->setEnabled( true );
    cb_noise->setChecked( false );
    cb_noise->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
@@ -106,7 +106,7 @@ void US_Hydrodyn_Saxs_Hplc_Simulate::setupGUI()
    AUTFBACK( cb_noise );
    connect( cb_noise, SIGNAL( clicked() ), SLOT( update_enables() ) );
 
-   le_noise = new QLineEdit(this, "le_noise Line Edit");
+   le_noise = new QLineEdit( this );    le_noise->setObjectName( "le_noise Line Edit" );
    le_noise->setText( ".05" );
    le_noise->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_noise->setPalette( PALET_NORMAL );
@@ -115,7 +115,7 @@ void US_Hydrodyn_Saxs_Hplc_Simulate::setupGUI()
    le_noise->setValidator( new QDoubleValidator( 0, 25, 3, le_noise ) );
 
    cb_slope = new QCheckBox(this);
-   cb_slope->setText(tr("Linear slope"));
+   cb_slope->setText(us_tr("Linear slope"));
    cb_slope->setEnabled( true );
    cb_slope->setChecked( false );
    cb_slope->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
@@ -123,7 +123,7 @@ void US_Hydrodyn_Saxs_Hplc_Simulate::setupGUI()
    AUTFBACK( cb_slope );
    connect( cb_slope, SIGNAL( clicked() ), SLOT( update_enables() ) );
 
-   le_slope = new QLineEdit(this, "le_slope Line Edit");
+   le_slope = new QLineEdit( this );    le_slope->setObjectName( "le_slope Line Edit" );
    le_slope->setText( "0.001" );
    le_slope->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_slope->setPalette( PALET_NORMAL );
@@ -132,7 +132,7 @@ void US_Hydrodyn_Saxs_Hplc_Simulate::setupGUI()
    le_slope->setValidator( new QDoubleValidator( -1, 1, 5, le_slope ) );
 
    cb_alpha = new QCheckBox(this);
-   cb_alpha->setText(tr("Global alpha"));
+   cb_alpha->setText(us_tr("Global alpha"));
    cb_alpha->setEnabled( true );
    cb_alpha->setChecked( false );
    cb_alpha->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
@@ -140,7 +140,7 @@ void US_Hydrodyn_Saxs_Hplc_Simulate::setupGUI()
    AUTFBACK( cb_alpha );
    connect( cb_alpha, SIGNAL( clicked() ), SLOT( update_enables() ) );
 
-   le_alpha = new QLineEdit(this, "le_alpha Line Edit");
+   le_alpha = new QLineEdit( this );    le_alpha->setObjectName( "le_alpha Line Edit" );
    le_alpha->setText( "0.02" );
    le_alpha->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_alpha->setPalette( PALET_NORMAL );
@@ -149,7 +149,7 @@ void US_Hydrodyn_Saxs_Hplc_Simulate::setupGUI()
    le_alpha->setValidator( new QDoubleValidator( 0, 1, 5, le_alpha ) );
 
    cb_i_power = new QCheckBox(this);
-   cb_i_power->setText(tr("Intensity exponent"));
+   cb_i_power->setText(us_tr("Intensity exponent"));
    cb_i_power->setEnabled( true );
    cb_i_power->setChecked( false );
    cb_i_power->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
@@ -157,7 +157,7 @@ void US_Hydrodyn_Saxs_Hplc_Simulate::setupGUI()
    AUTFBACK( cb_i_power );
    connect( cb_i_power, SIGNAL( clicked() ), SLOT( update_enables() ) );
 
-   le_i_power = new QLineEdit(this, "le_i_power Line Edit");
+   le_i_power = new QLineEdit( this );    le_i_power->setObjectName( "le_i_power Line Edit" );
    le_i_power->setText( "1" );
    le_i_power->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_i_power->setPalette( PALET_NORMAL );
@@ -166,7 +166,7 @@ void US_Hydrodyn_Saxs_Hplc_Simulate::setupGUI()
    le_i_power->setValidator( new QDoubleValidator( 0, 5, 3, le_i_power ) );
 
    cb_gamma = new QCheckBox(this);
-   cb_gamma->setText(tr("Gamma"));
+   cb_gamma->setText(us_tr("Gamma"));
    cb_gamma->setEnabled( true );
    cb_gamma->setChecked( false );
    cb_gamma->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
@@ -174,7 +174,7 @@ void US_Hydrodyn_Saxs_Hplc_Simulate::setupGUI()
    AUTFBACK( cb_gamma );
    connect( cb_gamma, SIGNAL( clicked() ), SLOT( update_enables() ) );
 
-   le_gamma = new QLineEdit(this, "le_gamma Line Edit");
+   le_gamma = new QLineEdit( this );    le_gamma->setObjectName( "le_gamma Line Edit" );
    le_gamma->setText( "0" );
    le_gamma->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_gamma->setPalette( PALET_NORMAL );
@@ -183,7 +183,7 @@ void US_Hydrodyn_Saxs_Hplc_Simulate::setupGUI()
    le_gamma->setValidator( new QDoubleValidator( 0, 1, 3, le_gamma ) );
 
    cb_exponent = new QCheckBox(this);
-   cb_exponent->setText(tr("Accumulation factor"));
+   cb_exponent->setText(us_tr("Accumulation factor"));
    cb_exponent->setEnabled( true );
    cb_exponent->setChecked( false );
    cb_exponent->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
@@ -191,7 +191,7 @@ void US_Hydrodyn_Saxs_Hplc_Simulate::setupGUI()
    AUTFBACK( cb_exponent );
    connect( cb_exponent, SIGNAL( clicked() ), SLOT( update_enables() ) );
 
-   le_exponent = new QLineEdit(this, "le_exponent Line Edit");
+   le_exponent = new QLineEdit( this );    le_exponent->setObjectName( "le_exponent Line Edit" );
    le_exponent->setText( "0.5" );
    le_exponent->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_exponent->setPalette( PALET_NORMAL );
@@ -199,7 +199,7 @@ void US_Hydrodyn_Saxs_Hplc_Simulate::setupGUI()
    le_exponent->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    le_exponent->setValidator( new QDoubleValidator( 0, 3, 3, le_exponent ) );
 
-   pb_simulate =  new QPushButton ( tr( "Simulate" ), this );
+   pb_simulate =  new QPushButton ( us_tr( "Simulate" ), this );
    pb_simulate -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1) );
    pb_simulate -> setMinimumHeight( minHeight1 );
    pb_simulate -> setPalette      ( PALET_PUSHB );
@@ -214,39 +214,39 @@ void US_Hydrodyn_Saxs_Hplc_Simulate::setupGUI()
       this_data.lbl_name->setPalette( PALET_LABEL );
       this_data.lbl_name->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 
-      this_data.lbl_i_mult = new QLabel( tr( "Intensity multipler" ), this ); 
+      this_data.lbl_i_mult = new QLabel( us_tr( "Intensity multipler" ), this ); 
       this_data.lbl_i_mult->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
       this_data.lbl_i_mult->setMinimumHeight(minHeight1);
       this_data.lbl_i_mult->setPalette( PALET_LABEL );
       this_data.lbl_i_mult->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 
-      this_data.le_i_mult = new QLineEdit(this, "this_data.le_i_mult Line Edit");
+      this_data.le_i_mult = new QLineEdit( this );       this_data.le_i_mult->setObjectName( "this_data.le_i_mult Line Edit" );
       this_data.le_i_mult->setText( "1" );
       this_data.le_i_mult->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
       this_data.le_i_mult->setPalette( PALET_NORMAL );
       this_data.le_i_mult->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
       this_data.le_i_mult->setValidator( new QDoubleValidator( 1e-3, 1e50, 3, this_data.le_i_mult ) );
 
-      this_data.lbl_center = new QLabel( tr( "Peak frame center" ), this ); 
+      this_data.lbl_center = new QLabel( us_tr( "Peak frame center" ), this ); 
       this_data.lbl_center->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
       this_data.lbl_center->setMinimumHeight(minHeight1);
       this_data.lbl_center->setPalette( PALET_LABEL );
       this_data.lbl_center->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 
-      this_data.le_center = new QLineEdit(this, "this_data.le_center Line Edit");
+      this_data.le_center = new QLineEdit( this );       this_data.le_center->setObjectName( "this_data.le_center Line Edit" );
       this_data.le_center->setText( QString( "%1" ).arg( 100 + i * 100 ) );
       this_data.le_center->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
       this_data.le_center->setPalette( PALET_NORMAL );
       this_data.le_center->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
       this_data.le_center->setValidator( new QDoubleValidator( this_data.le_center ) );
 
-      this_data.lbl_width = new QLabel( tr( "Peak frame width" ), this ); 
+      this_data.lbl_width = new QLabel( us_tr( "Peak frame width" ), this ); 
       this_data.lbl_width->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
       this_data.lbl_width->setMinimumHeight(minHeight1);
       this_data.lbl_width->setPalette( PALET_LABEL );
       this_data.lbl_width->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 
-      this_data.le_width = new QLineEdit(this, "this_data.le_width Line Edit");
+      this_data.le_width = new QLineEdit( this );       this_data.le_width->setObjectName( "this_data.le_width Line Edit" );
       this_data.le_width->setText( "20" );
       this_data.le_width->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
       this_data.le_width->setPalette( PALET_NORMAL );
@@ -254,14 +254,14 @@ void US_Hydrodyn_Saxs_Hplc_Simulate::setupGUI()
       this_data.le_width->setValidator( new QDoubleValidator( this_data.le_width ) );
 
       this_data.cb_alpha = new QCheckBox(this);
-      this_data.cb_alpha->setText(tr("Species specific alpha"));
+      this_data.cb_alpha->setText(us_tr("Species specific alpha"));
       this_data.cb_alpha->setEnabled( false );
       this_data.cb_alpha->setChecked( false );
       this_data.cb_alpha->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
       this_data.cb_alpha->setPalette( PALET_NORMAL );
       connect( this_data.cb_alpha, SIGNAL( clicked() ), SLOT( update_enables() ) );
 
-      this_data.le_alpha = new QLineEdit(this, "this_data.le_width Line Edit");
+      this_data.le_alpha = new QLineEdit( this );       this_data.le_alpha->setObjectName( "this_data.le_width Line Edit" );
       this_data.le_alpha->setText( "0" );
       this_data.le_alpha->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
       this_data.le_alpha->setPalette( PALET_NORMAL );
@@ -271,24 +271,24 @@ void US_Hydrodyn_Saxs_Hplc_Simulate::setupGUI()
       data.push_back( this_data );
    }
 
-   pb_help =  new QPushButton ( tr( "Help" ), this );
+   pb_help =  new QPushButton ( us_tr( "Help" ), this );
    pb_help -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1) );
    pb_help -> setMinimumHeight( minHeight1 );
    pb_help -> setPalette      ( PALET_PUSHB );
    connect( pb_help, SIGNAL( clicked() ), SLOT( help() ) );
 
-   pb_close =  new QPushButton ( tr( "Close" ), this );
+   pb_close =  new QPushButton ( us_tr( "Close" ), this );
    pb_close -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1) );
    pb_close -> setMinimumHeight( minHeight1 );
    pb_close -> setPalette      ( PALET_PUSHB );
    connect( pb_close, SIGNAL( clicked() ), SLOT( cancel() ) );
 
-   Q3VBoxLayout *background = new Q3VBoxLayout( this );
+   QVBoxLayout * background = new QVBoxLayout( this ); background->setContentsMargins( 0, 0, 0, 0 ); background->setSpacing( 0 );
 
    background->addWidget( lbl_title );
 
    {
-      Q3GridLayout *gl = new Q3GridLayout( 0 );
+      QGridLayout * gl = new QGridLayout( 0 ); gl->setContentsMargins( 0, 0, 0, 0 ); gl->setSpacing( 0 );
       int j = 0;
       gl->addWidget( lbl_name   , j  , 0 );
       gl->addWidget( le_name    , j  , 1 );
@@ -310,7 +310,7 @@ void US_Hydrodyn_Saxs_Hplc_Simulate::setupGUI()
    }
 
    {
-      Q3GridLayout *gl = new Q3GridLayout( 0 );
+      QGridLayout * gl = new QGridLayout( 0 ); gl->setContentsMargins( 0, 0, 0, 0 ); gl->setSpacing( 0 );
       for ( int i = 0; i < (int) data.size(); ++i ) {
          int j = 0;
          gl->addWidget( data[ i ].lbl_name  , i, j++ );
@@ -326,7 +326,7 @@ void US_Hydrodyn_Saxs_Hplc_Simulate::setupGUI()
       background->addLayout( gl );
    }      
 
-   Q3HBoxLayout *hbl_bottom = new Q3HBoxLayout( 0 );
+   QHBoxLayout * hbl_bottom = new QHBoxLayout(); hbl_bottom->setContentsMargins( 0, 0, 0, 0 ); hbl_bottom->setSpacing( 0 );
    hbl_bottom->addWidget ( pb_help );
    hbl_bottom->addWidget ( pb_simulate );
    hbl_bottom->addWidget ( pb_close );
@@ -349,14 +349,14 @@ void US_Hydrodyn_Saxs_Hplc_Simulate::help()
 
 void US_Hydrodyn_Saxs_Hplc_Simulate::closeEvent( QCloseEvent *e )
 {
-   QMessageBox mb( this->caption(), 
-                   tr("Attention:\nAre you sure you want to exit the HPLC SAXS Simulation window?"),
+   QMessageBox mb( this->windowTitle(), 
+                   us_tr("Attention:\nAre you sure you want to exit the HPLC SAXS Simulation window?"),
                   QMessageBox::Information,
                   QMessageBox::Yes | QMessageBox::Default,
                   QMessageBox::Cancel | QMessageBox::Escape,
                   QMessageBox::NoButton);
-   mb.setButtonText(QMessageBox::Yes, tr("Yes"));
-   mb.setButtonText(QMessageBox::Cancel, tr("Cancel"));
+   mb.setButtonText(QMessageBox::Yes, us_tr("Yes"));
+   mb.setButtonText(QMessageBox::Cancel, us_tr("Cancel"));
    switch(mb.exec())
    {
    case QMessageBox::Cancel:
@@ -420,7 +420,7 @@ static double_pair random_normal(double mean1, double sd1, double mean2, double 
 
 void US_Hydrodyn_Saxs_Hplc_Simulate::simulate() {
    
-   qDebug( "run simulate" );
+   us_qdebug( "run simulate" );
 
    vector < double > t;
    int frames = le_frames->text().toInt();
@@ -437,11 +437,11 @@ void US_Hydrodyn_Saxs_Hplc_Simulate::simulate() {
    vector < vector < vector < double > > > Its( data.size() );
    // data, qvalue, i(t)
 
-   qDebug( QString( "gaussian type size %1 qpoints %2" ).arg( HW->gaussian_type_size ).arg( qpoints ) );
+   us_qdebug( QString( "gaussian type size %1 qpoints %2" ).arg( HW->gaussian_type_size ).arg( qpoints ) );
 
    vector < double > g( HW->gaussian_type_size, 0e0 );
 
-   qDebug( "1" );
+   us_qdebug( "1" );
 
    for ( int i = 0; i < (int) data.size(); ++i ) {
       Its[ i ].resize( qpoints );
@@ -455,7 +455,7 @@ void US_Hydrodyn_Saxs_Hplc_Simulate::simulate() {
       }
    }
 
-   qDebug( "2" );
+   us_qdebug( "2" );
    // compute sum
    vector < vector < double > > Itt( qpoints );
    for ( int j = 0; j < qpoints; ++j ) {
@@ -466,7 +466,7 @@ void US_Hydrodyn_Saxs_Hplc_Simulate::simulate() {
          }
       }
    }
-   qDebug( "3" );
+   us_qdebug( "3" );
 
    QString nameadd;
 
@@ -544,7 +544,7 @@ void US_Hydrodyn_Saxs_Hplc_Simulate::simulate() {
    }
 
    // plot'em
-   qDebug( "4" );
+   us_qdebug( "4" );
 
    {
       map < QString, bool > current_files = HW->all_files_map();
@@ -576,7 +576,7 @@ void US_Hydrodyn_Saxs_Hplc_Simulate::simulate() {
          } else {
             HW->add_plot( use_name, t, Itt[ j ], true, false );
          }
-         qDebug( QString( "add plot %1" ).arg( use_name ) );
+         us_qdebug( QString( "add plot %1" ).arg( use_name ) );
       }
       HW->update_enables();
    }

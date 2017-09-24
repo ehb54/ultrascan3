@@ -8,12 +8,12 @@
 #include "../include/us_hydrodyn_cluster_dammin.h"
 #include "../include/us_hydrodyn.h"
 //Added by qt3to4:
-#include <Q3HBoxLayout>
+#include <QHBoxLayout>
 #include <QCloseEvent>
-#include <Q3GridLayout>
-#include <Q3Frame>
+#include <QGridLayout>
+#include <QFrame>
 #include <QLabel>
-#include <Q3VBoxLayout>
+#include <QVBoxLayout>
 
 // note: this program uses cout and/or cerr and this should be replaced
 
@@ -27,7 +27,7 @@ US_Hydrodyn_Cluster_Additional::US_Hydrodyn_Cluster_Additional(
                                                                void *us_hydrodyn, 
                                                                QWidget *p, 
                                                                const char *name
-                                                               ) : QDialog(p, name)
+                                                               ) : QDialog( p )
 {
    cluster_window = (void *)p;
 
@@ -38,7 +38,7 @@ US_Hydrodyn_Cluster_Additional::US_Hydrodyn_Cluster_Additional(
 
    USglobal = new US_Config();
    setPalette( PALET_FRAME );
-   setCaption( tr( "US-SOMO: Cluster: Other Methods" ) );
+   setWindowTitle( us_tr( "US-SOMO: Cluster: Other Methods" ) );
 
    load_save_path = ((US_Hydrodyn *)us_hydrodyn)->somo_dir + SLASH + "cluster" + SLASH + "parameters";
 
@@ -69,8 +69,8 @@ void US_Hydrodyn_Cluster_Additional::setupGUI()
 
    int minHeight1 = 30;
 
-   lbl_title = new QLabel( tr( "    US-SOMO: Cluster: Other Methods    " ), this );
-   lbl_title->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Raised);
+   lbl_title = new QLabel( us_tr( "    US-SOMO: Cluster: Other Methods    " ), this );
+   lbl_title->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_title->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_title->setMinimumHeight(minHeight1);
    lbl_title->setPalette( PALET_FRAME );
@@ -78,7 +78,7 @@ void US_Hydrodyn_Cluster_Additional::setupGUI()
    lbl_title->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 
    cb_bfnb = new QCheckBox(this);
-   cb_bfnb->setText(tr(" Active "));
+   cb_bfnb->setText(us_tr(" Active "));
    cb_bfnb->setChecked( options_active.count( "bfnb" ) && options_active[ "bfnb" ] );
    cb_bfnb->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_bfnb->setPalette( PALET_NORMAL );
@@ -93,7 +93,7 @@ void US_Hydrodyn_Cluster_Additional::setupGUI()
    connect( pb_bfnb, SIGNAL( clicked() ), SLOT( bfnb() ) );
 
    cb_bfnb_nsa = new QCheckBox(this);
-   cb_bfnb_nsa->setText(tr(" Active "));
+   cb_bfnb_nsa->setText(us_tr(" Active "));
    cb_bfnb_nsa->setChecked( options_active.count( "bfnb_nsa" ) && options_active[ "bfnb_nsa" ] );
    cb_bfnb_nsa->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_bfnb_nsa->setPalette( PALET_NORMAL );
@@ -108,7 +108,7 @@ void US_Hydrodyn_Cluster_Additional::setupGUI()
    connect( pb_bfnb_nsa, SIGNAL( clicked() ), SLOT( bfnb_nsa() ) );
 
    cb_best = new QCheckBox(this);
-   cb_best->setText(tr(" Active "));
+   cb_best->setText(us_tr(" Active "));
    cb_best->setChecked( options_active.count( "best" ) && options_active[ "best" ] );
    cb_best->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_best->setPalette( PALET_NORMAL );
@@ -123,7 +123,7 @@ void US_Hydrodyn_Cluster_Additional::setupGUI()
    connect( pb_best, SIGNAL( clicked() ), SLOT( best() ) );
 
    cb_oned = new QCheckBox(this);
-   cb_oned->setText(tr(" Active "));
+   cb_oned->setText(us_tr(" Active "));
    cb_oned->setChecked( options_active.count( "oned" ) && options_active[ "oned" ] );
    cb_oned->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_oned->setPalette( PALET_NORMAL );
@@ -138,7 +138,7 @@ void US_Hydrodyn_Cluster_Additional::setupGUI()
    connect( pb_oned, SIGNAL( clicked() ), SLOT( oned() ) );
 
    cb_csa = new QCheckBox(this);
-   cb_csa->setText(tr(" Active "));
+   cb_csa->setText(us_tr(" Active "));
    cb_csa->setChecked( options_active.count( "csa" ) && options_active[ "csa" ] );
    cb_csa->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_csa->setPalette( PALET_NORMAL );
@@ -153,7 +153,7 @@ void US_Hydrodyn_Cluster_Additional::setupGUI()
    connect( pb_csa, SIGNAL( clicked() ), SLOT( csa() ) );
 
    cb_dammin = new QCheckBox(this);
-   cb_dammin->setText(tr(" Active "));
+   cb_dammin->setText(us_tr(" Active "));
    cb_dammin->setChecked( options_active.count( "dammin" ) && options_active[ "dammin" ] );
    cb_dammin->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_dammin->setPalette( PALET_NORMAL );
@@ -168,7 +168,7 @@ void US_Hydrodyn_Cluster_Additional::setupGUI()
    connect( pb_dammin, SIGNAL( clicked() ), SLOT( dammin() ) );
 
    cb_dammif = new QCheckBox(this);
-   cb_dammif->setText(tr(" Active "));
+   cb_dammif->setText(us_tr(" Active "));
    cb_dammif->setChecked( options_active.count( "dammif" ) && options_active[ "dammif" ] );
    cb_dammif->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_dammif->setPalette( PALET_NORMAL );
@@ -183,7 +183,7 @@ void US_Hydrodyn_Cluster_Additional::setupGUI()
    connect( pb_dammif, SIGNAL( clicked() ), SLOT( dammif() ) );
 
    cb_gasbor = new QCheckBox(this);
-   cb_gasbor->setText(tr(" Active "));
+   cb_gasbor->setText(us_tr(" Active "));
    cb_gasbor->setChecked( options_active.count( "gasbor" ) && options_active[ "gasbor" ] );
    cb_gasbor->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_gasbor->setPalette( PALET_NORMAL );
@@ -197,19 +197,19 @@ void US_Hydrodyn_Cluster_Additional::setupGUI()
    pb_gasbor->setPalette( PALET_PUSHB );
    connect( pb_gasbor, SIGNAL( clicked() ), SLOT( gasbor() ) );
 
-   pb_cancel = new QPushButton(tr("Cancel"), this);
+   pb_cancel = new QPushButton(us_tr("Cancel"), this);
    pb_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_cancel->setMinimumHeight(minHeight1);
    pb_cancel->setPalette( PALET_PUSHB );
    connect(pb_cancel, SIGNAL(clicked()), SLOT(cancel()));
 
-   pb_help = new QPushButton(tr("Help"), this);
+   pb_help = new QPushButton(us_tr("Help"), this);
    pb_help->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_help->setMinimumHeight(minHeight1);
    pb_help->setPalette( PALET_PUSHB );
    connect(pb_help, SIGNAL(clicked()), SLOT(help()));
 
-   pb_ok = new QPushButton( tr("Close"), this);
+   pb_ok = new QPushButton( us_tr("Close"), this);
    pb_ok->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_ok->setMinimumHeight(minHeight1);
    pb_ok->setPalette( PALET_PUSHB );
@@ -237,7 +237,7 @@ void US_Hydrodyn_Cluster_Additional::setupGUI()
 
    // build layout
 
-   Q3GridLayout *gl_options = new Q3GridLayout( 0 );
+   QGridLayout * gl_options = new QGridLayout( 0 ); gl_options->setContentsMargins( 0, 0, 0, 0 ); gl_options->setSpacing( 0 );
 
    int j = 0;
 
@@ -273,7 +273,7 @@ void US_Hydrodyn_Cluster_Additional::setupGUI()
    gl_options->addWidget( pb_gasbor    , j, 1 );
    j++;
 
-   Q3HBoxLayout *hbl_bottom = new Q3HBoxLayout(0);
+   QHBoxLayout * hbl_bottom = new QHBoxLayout(); hbl_bottom->setContentsMargins( 0, 0, 0, 0 ); hbl_bottom->setSpacing( 0 );
    hbl_bottom->addSpacing( 4 );
    hbl_bottom->addWidget ( pb_cancel );
    hbl_bottom->addSpacing( 4 );
@@ -283,7 +283,7 @@ void US_Hydrodyn_Cluster_Additional::setupGUI()
    hbl_bottom->addSpacing( 4 );
 
 
-   Q3VBoxLayout *background = new Q3VBoxLayout(this);
+   QVBoxLayout * background = new QVBoxLayout(this); background->setContentsMargins( 0, 0, 0, 0 ); background->setSpacing( 0 );
    background->addSpacing( 4 );
    background->addWidget ( lbl_title );
    background->addSpacing( 4 );

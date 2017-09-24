@@ -7,9 +7,9 @@
 #include <qstring.h>
 #include <qlayout.h>
 #include <qpushbutton.h>
-#include <q3frame.h>
+//#include <q3frame.h>
 #include <qcheckbox.h>
-#include <q3listview.h>
+#include <qtreewidget.h>
 //Added by qt3to4:
 #include <QCloseEvent>
 
@@ -42,14 +42,14 @@ class US_EXTERN US_Hydrodyn_Cluster_Results : public QDialog
       QLabel        *lbl_title;
 
       QLabel        *lbl_files;
-      Q3ListView     *lv_files;
+      QTreeWidget     *lv_files;
 
       QPushButton   *pb_select_all;
       QPushButton   *pb_purge;
       QPushButton   *pb_load_results;
 
       QFont         ft;
-      Q3TextEdit     *editor;
+      QTextEdit     *editor;
       QMenuBar      *m;
 
       QPushButton   *pb_help;
@@ -75,6 +75,8 @@ class US_EXTERN US_Hydrodyn_Cluster_Results : public QDialog
       bool          merge_csvs             ( QStringList &final_results );
       bool          move_to_results        ( QString jobname, QStringList final_results );
       bool          merge_this_csv         ( QString dest, vector < QString > csvs );
+
+      bool          are_any_selected       ( QTreeWidget *lv );
 
    private slots:
 

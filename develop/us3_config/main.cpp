@@ -1,5 +1,5 @@
 #include <qapplication.h>
-#include <q3textstream.h>
+//#include <q3textstream.h>
 #include "../include/us_write_config.h"
 #include "../include/us_version.h"
 #include "../include/us_config_gui.h"
@@ -58,7 +58,7 @@ int main ( int argc, char **argv )
    // Check to see if we are configured
 	QString etcdir = US_Config::get_home_dir() + "/etc";
 	QDir dir1;
-	dir1.mkdir(etcdir, true);
+	dir1.mkdir(etcdir );
    USconfig_check* check = new USconfig_check();
    bool            OK    = check->check_config();
    delete check;
@@ -71,14 +71,14 @@ int main ( int argc, char **argv )
       // Not found, ask the user
       set->move( global_Xpos, global_Ypos );
       set->show();
-      a.setMainWidget( set );
+ //      a.setMainWidget( set );
    }
    else  // OK to continue
    {
       US_Config_GUI *configuration;
       configuration = new US_Config_GUI();
       configuration->show();
-      a.setMainWidget(configuration);
+ //      a.setMainWidget(configuration);
       a.setDesktopSettingsAware(false);
 #ifdef QT4
       {
@@ -113,11 +113,11 @@ bool USconfig_check::check_config()
 			QDir etcdir;
 		   QString path = US_Config::get_home_dir() + "ultrascan/etc";
 			cout <<  path << endl;
-			etcdir.mkdir(path, true);
+			etcdir.mkdir(path );
 		}
    // If we have a config file, return true
    if ( exists( US_Config::get_home_dir() + ETC_DIR + "/usrc.conf" ) ||
-        exists( QDir::homeDirPath() + "/.usrc" ) )
+        exists( QDir::homePath() + "/.usrc" ) )
    {
       US_Config* config = new US_Config( "dummy" );
       if ( config->read() )
@@ -127,8 +127,8 @@ bool USconfig_check::check_config()
       else
       {
          int result = QMessageBox::information( this,
-         tr( "Setup" ),
-         tr( "The configuration file format is out of date.\n"
+         us_tr( "Setup" ),
+         us_tr( "The configuration file format is out of date.\n"
          "Selecting OK will delete it and recreate a valid\n"
          "configuration file, but any customized settings will be lost." ),
          QMessageBox::Ok, QMessageBox::Cancel );
@@ -137,7 +137,7 @@ bool USconfig_check::check_config()
 
          // Delete the configuration file
          QFile::remove( US_Config::get_home_dir() + ETC_DIR + "/usrc.conf" );
-         QFile::remove( QDir::homeDirPath() + "/.usrc" );
+         QFile::remove( QDir::homePath() + "/.usrc" );
       }
    }
 
@@ -188,8 +188,8 @@ void USconfig_check::write_default( const QString& dir )
    if ( ! OK )
    {
       QMessageBox::information( this,
-                                tr( "Setup" ),
-                                tr( "Could not create configuration file.  Aborting." ) );
+                                us_tr( "Setup" ),
+                                us_tr( "Could not create configuration file.  Aborting." ) );
 
       exit ( -1 );
    }
@@ -234,8 +234,8 @@ void USconfig_check::set_default( const QString& system_dir )
 USconfig_setup::USconfig_setup()
 {
    QMessageBox::information( this, 
-                             tr( "Setup Error" ), 
-                             tr( "You need to specify the location of the UltraScan\n" 
+                             us_tr( "Setup Error" ), 
+                             us_tr( "You need to specify the location of the UltraScan\n" 
                                  "system directory") );
 
    int     result = QMessageBox::Ok;
@@ -257,8 +257,8 @@ USconfig_setup::USconfig_setup()
 
       // Not a valid directory
       result = QMessageBox::information( this,
-                                         tr( "Setup" ),
-                                         tr( "The selected directory is not the UltraScan system directory.\n"
+                                         us_tr( "Setup" ),
+                                         us_tr( "The selected directory is not the UltraScan system directory.\n"
                                              "Try again." ),
                                          QMessageBox::Ok, QMessageBox::Cancel );
 
@@ -271,8 +271,8 @@ USconfig_setup::USconfig_setup()
 
    // Show results
    QMessageBox::information( this,
-                             tr( "Setup" ),
-                             tr( msg ) );
+                             us_tr( "Setup" ),
+                             us_tr( msg ) );
 
    exit(0);
 }

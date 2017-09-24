@@ -7,12 +7,12 @@
 #include <qstring.h>
 #include <qlayout.h>
 #include <qpushbutton.h>
-#include <q3frame.h>
+//#include <q3frame.h>
 #include <qcheckbox.h>
-#include <q3textedit.h>
+#include <qtextedit.h>
 #include <qmenubar.h>
 #include <qprinter.h>
-#include <q3table.h>
+#include <qtablewidget.h>
 //Added by qt3to4:
 #include <QCloseEvent>
 
@@ -59,7 +59,7 @@ class US_EXTERN US_Hydrodyn_Cluster_Dmd : public QDialog
 
       QLabel        *lbl_title;
 
-      Q3Table        *t_csv;             
+      QTableWidget        *t_csv;             
 
       QPushButton   *pb_select_all;
       QPushButton   *pb_copy;
@@ -72,7 +72,7 @@ class US_EXTERN US_Hydrodyn_Cluster_Dmd : public QDialog
       QPushButton   *pb_save_csv;
 
       QFont         ft;
-      Q3TextEdit     *editor;
+      QTextEdit     *editor;
       QMenuBar      *m;
 
       QPushButton   *pb_ok;

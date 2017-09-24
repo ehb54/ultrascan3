@@ -8,10 +8,13 @@
 #include <qlayout.h>
 #include <qpushbutton.h>
 #include <qdialog.h>
-#include <q3table.h>
+#include <qtablewidget.h>
 #include <qdatetime.h>
 //Added by qt3to4:
 #include <QCloseEvent>
+#if QT_VERSION >= 0x040000
+# include <QHeaderView>
+#endif
 
 #include "us_util.h"
 
@@ -25,6 +28,8 @@
 #include <iostream>
 
 using namespace std;
+
+
 
 #ifdef WIN32
 # if !defined( QT4 )
@@ -56,7 +61,7 @@ class US_EXTERN US_Dirhist : public QDialog
 
       QLabel                     * lbl_info;
 
-      Q3Table                     * t_hist;
+      QTableWidget                     * t_hist;
 
       QPushButton                * pb_del;
 
@@ -79,6 +84,7 @@ class US_EXTERN US_Dirhist : public QDialog
       void t_selectionChanged();
       void t_sort_column  ( int col );
       void t_doubleClicked( int row, int col, int button, const QPoint & mousePos );
+      void t_doubleClicked( int row, int col );
 
       void del();
       void ok();

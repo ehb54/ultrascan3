@@ -50,28 +50,38 @@ US_Cmdline_App::US_Cmdline_App(
       process.setWorkingDirectory( dir );
    }
    
-   connect( &process, SIGNAL( readyReadStdout() ), this, SLOT( readFromStdout() ) );
-   connect( &process, SIGNAL( readyReadStderr() ), this, SLOT( readFromStderr() ) );
+   connect( &process, SIGNAL( readyReadStandardOutput() ), this, SLOT( readFromStdout() ) );
+   connect( &process, SIGNAL( readyReadStandardError() ), this, SLOT( readFromStderr() ) );
    connect( &process, SIGNAL( processExited  () ), this, SLOT( processExited () ) );
-   connect( &process, SIGNAL( launchFinished () ), this, SLOT( launchFinished() ) );
+   connect( &process, SIGNAL( started () ), this, SLOT( started() ) );
 
    connect( &timer,  SIGNAL( timeout()         ), this, SLOT( timeout()        ) );
 
+#if QT_VERSION < 0x040000
    process.setArguments( args );
-        
+#else
+   QString prog = args.front();
+   args.pop_front();
+#endif
+
    query_response_pos = 0;
    run_to_end         = false;
 
+#if QT_VERSION < 0x040000
    if ( !process.start() )
+#else
+   process.start( prog, args);
+   if ( !process.waitForStarted() )
+#endif
    {
-      // qDebug( "error starting" );
+      // us_qdebug( "error starting" );
       *error_msg += QString( "Error: could not start process: %1\n" ).arg( args[ 0 ] );
       process.kill();
       qa->quit();
       qa->processEvents();
       return;
    }
-   // qDebug( QString( "starting process: %1" ).arg( args[ 0 ] ) );
+   // us_qdebug( QString( "starting process: %1" ).arg( args[ 0 ] ) );
 }
 
 US_Cmdline_App::~US_Cmdline_App()
@@ -83,16 +93,17 @@ void US_Cmdline_App::timeout()
 {
    *error_msg += 
       QString( "Error: out of responses to queries (timeout)\n" );
-   // qDebug( "timeout" );
+   // us_qdebug( "timeout" );
    process.kill();
 }
 
 void US_Cmdline_App::readFromStdout()
 {
    timer.stop();
-   // qDebug( "readFromStdout()" );
+   // us_qdebug( "readFromStdout()" );
    QString qs;
    QString text;
+#if QT_VERSION < 0x040000
    do {
       qs = process.readLineStdout();
       // if ( stdout )
@@ -111,8 +122,11 @@ void US_Cmdline_App::readFromStdout()
       qs = QString( "%1" ).arg( read );
       text += qs;
    } while ( qs.length() );
+#else
+   text = QString( process.readAllStandardOutput() );
+#endif
    
-   // qDebug( QString( "received <%1>" ).arg( text ) );
+   // us_qdebug( QString( "received <%1>" ).arg( text ) );
 
    if ( !run_to_end && app_text.size() )
    {
@@ -129,7 +143,7 @@ void US_Cmdline_App::readFromStdout()
          query_response_pos = previous_pos;
          if ( timer_delay_ms )
          {
-            // qDebug( QString( "starting timer for %1 seconds" ).arg( ( double )timer_delay_ms / 1000e0 ) );
+            // us_qdebug( QString( "starting timer for %1 seconds" ).arg( ( double )timer_delay_ms / 1000e0 ) );
             timer.start( timer_delay_ms );
          } else {
             *error_msg += 
@@ -145,7 +159,7 @@ void US_Cmdline_App::readFromStdout()
       if ( ( int ) app_text.size() > query_response_pos &&
            text.contains( app_text[ query_response_pos ] ) )
       {
-         // qDebug( QString( "received <%1> from application" ).arg( app_text[ query_response_pos ] ) );
+         // us_qdebug( QString( "received <%1> from application" ).arg( app_text[ query_response_pos ] ) );
          if ( response[ query_response_pos ] != "___run___" )
          {
             if ( response[ query_response_pos ].left( 2 ).contains( "__" ) )
@@ -159,11 +173,18 @@ void US_Cmdline_App::readFromStdout()
                qa->quit();
                return;
             }
-            // qDebug( QString( "sent     <%1> to application"   ).arg( response[ query_response_pos ] ) );
+            // us_qdebug( QString( "sent     <%1> to application"   ).arg( response[ query_response_pos ] ) );
+#if QT_VERSION < 0x040000
             process.writeToStdin( response[ query_response_pos ] + "\n" );
+#else
+            {
+               QByteArray qba = QString( response[ query_response_pos ] + "\n" ).toUtf8();
+               process.write( qba.constData(), qba.size() );
+            }
+#endif
             query_response_pos++;
          } else {
-            // qDebug( "now run to end of application" );
+            // us_qdebug( "now run to end of application" );
             run_to_end = true;
          }
       }
@@ -172,7 +193,7 @@ void US_Cmdline_App::readFromStdout()
 
 void US_Cmdline_App::readFromStderr()
 {
-   // qDebug( "readFromStderr()" );
+   // us_qdebug( "readFromStderr()" );
    // if ( stderr )
    // {
    //    while ( process.canReadLineStderr() )
@@ -182,11 +203,15 @@ void US_Cmdline_App::readFromStderr()
    // }
 }
 
-void US_Cmdline_App::processExited()
+void US_Cmdline_App::finished( int, QProcess::ExitStatus )
 {
-   // qDebug( "processExited()" );
+   // us_qdebug( "finished( int, QProcess::ExitStatus )" );
 
+#if QT_VERSION < 0x040000
    if ( !process.normalExit() )
+#else
+   if ( process.exitCode() != QProcess::NormalExit )
+#endif
    {
       *error_msg += "Error: process did not exit normally\n";
    }
@@ -199,7 +224,7 @@ void US_Cmdline_App::processExited()
    qa->quit();
 }
 
-void US_Cmdline_App::launchFinished()
+void US_Cmdline_App::started()
 {
-   // qDebug( "launchFinished()" );
+   // us_qdebug( "started()" );
 }

@@ -1,12 +1,12 @@
 #include "../include/us3_defines.h"
 #include "../include/us_hydrodyn_saxs_hplc_movie.h"
 //Added by qt3to4:
-#include <Q3HBoxLayout>
+#include <QHBoxLayout>
 #include <QCloseEvent>
-#include <Q3BoxLayout>
+#include <QBoxLayout>
 #include <QPixmap>
 #include <QLabel>
-#include <Q3VBoxLayout>
+#include <QVBoxLayout>
 
 // design movie controller interface
 
@@ -18,7 +18,7 @@ US_Hydrodyn_Saxs_Hplc_Movie::US_Hydrodyn_Saxs_Hplc_Movie(
                                                          US_Hydrodyn_Saxs_Hplc *hplc_win,
                                                          QWidget *p, 
                                                          const char *name
-                                                         ) : QDialog (p, name)
+                                                         ) : QDialog ( p )
 {
    this->hplc_win                = hplc_win;
    this->hplc_selected_files     = hplc_selected_files;
@@ -26,12 +26,12 @@ US_Hydrodyn_Saxs_Hplc_Movie::US_Hydrodyn_Saxs_Hplc_Movie(
 
    USglobal = new US_Config();
    setPalette( PALET_FRAME );
-   setCaption(tr("US-SOMO: SAXS HPLC MOVIE"));
+   setWindowTitle(us_tr("US-SOMO: SAXS HPLC MOVIE"));
 
 
-   for ( int i = 0; i < hplc_win->lb_files->numRows(); i++ )
+   for ( int i = 0; i < hplc_win->lb_files->count(); i++ )
    {
-      if ( hplc_win->lb_files->isSelected( i ) )
+      if ( hplc_win->lb_files->item( i )->isSelected() )
       {
          hplc_selected_files    .push_back( i );
       }
@@ -40,8 +40,8 @@ US_Hydrodyn_Saxs_Hplc_Movie::US_Hydrodyn_Saxs_Hplc_Movie(
    if ( !hplc_selected_files.size() )
    {
       QMessageBox::warning( this, 
-                            caption(),
-                            tr( "Internal error: HPLC MOVIE called with no curves selected" ) );
+                            windowTitle(),
+                            us_tr( "Internal error: HPLC MOVIE called with no curves selected" ) );
       close();
       return;
    }
@@ -106,14 +106,14 @@ void US_Hydrodyn_Saxs_Hplc_Movie::setupGUI()
    
    // ------ data section 
 
-   lbl_state = new QLabel( QString( tr( "Stopped: %1 of %2" ).arg( pos + 1 ).arg( hplc_selected_files.size() ) ), this);
+   lbl_state = new QLabel( QString( us_tr( "Stopped: %1 of %2" ).arg( pos + 1 ).arg( hplc_selected_files.size() ) ), this);
    lbl_state->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_state->setMinimumHeight(minHeight1);
    lbl_state->setPalette( PALET_LABEL );
    AUTFBACK( lbl_state );
    lbl_state->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 
-   lbl_current = new QLabel( hplc_win->lb_files->text( hplc_selected_files[ pos ] ), this);
+   lbl_current = new QLabel( hplc_win->lb_files->item( hplc_selected_files[ pos ] )->text(), this);
    lbl_current->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_current->setMinimumHeight(minHeight1);
    lbl_current->setPalette( PALET_LABEL );
@@ -163,7 +163,7 @@ void US_Hydrodyn_Saxs_Hplc_Movie::setupGUI()
    connect(pb_end, SIGNAL(clicked()), SLOT(end()));
 
    cb_show_gauss = new QCheckBox(this);
-   cb_show_gauss->setText(tr("Show Gaussians "));
+   cb_show_gauss->setText(us_tr("Show Gaussians "));
    cb_show_gauss->setEnabled( true );
    cb_show_gauss->setChecked( last_show_gauss );
    cb_show_gauss->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
@@ -172,7 +172,7 @@ void US_Hydrodyn_Saxs_Hplc_Movie::setupGUI()
    connect( cb_show_gauss, SIGNAL( clicked() ), SLOT( set_show_gauss() ) );
 
    cb_show_ref = new QCheckBox(this);
-   cb_show_ref->setText(tr("Show reference "));
+   cb_show_ref->setText(us_tr("Show reference "));
    cb_show_ref->setEnabled( true );
    cb_show_ref->setChecked( last_show_ref );
    cb_show_ref->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
@@ -181,7 +181,7 @@ void US_Hydrodyn_Saxs_Hplc_Movie::setupGUI()
    connect( cb_show_ref, SIGNAL( clicked() ), SLOT( set_show_ref() ) );
 
    cb_mono = new QCheckBox(this);
-   cb_mono->setText(tr("Monochrome   File save as type:"));
+   cb_mono->setText(us_tr("Monochrome   File save as type:"));
    cb_mono->setEnabled( true );
    cb_mono->setChecked( last_mono );
    cb_mono->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
@@ -190,7 +190,7 @@ void US_Hydrodyn_Saxs_Hplc_Movie::setupGUI()
    connect( cb_mono, SIGNAL( clicked() ), SLOT( set_mono() ) );
 
    cb_save = new QCheckBox(this);
-   cb_save->setText(tr("Save to file  Prefix:"));
+   cb_save->setText(us_tr("Save to file  Prefix:"));
    cb_save->setEnabled( true );
    cb_save->setChecked( false );
    cb_save->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
@@ -198,56 +198,69 @@ void US_Hydrodyn_Saxs_Hplc_Movie::setupGUI()
    AUTFBACK( cb_save );
    connect( cb_save, SIGNAL( clicked() ), SLOT( set_save() ) );
 
-   le_save = new QLineEdit(this, "le_save Line Edit");
+   le_save = new QLineEdit( this );    le_save->setObjectName( "le_save Line Edit" );
    le_save->setText( "" );
    le_save->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_save->setPalette( PALET_NORMAL );
    AUTFBACK( le_save );
    le_save->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
 
-   rb_save_png = new QRadioButton( tr("png"), this);
+   rb_save_png = new QRadioButton( us_tr("png"), this);
    rb_save_png->setEnabled(true);
    rb_save_png->setChecked(true);
    rb_save_png->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    rb_save_png->setPalette( PALET_NORMAL );
    AUTFBACK( rb_save_png );
 
-   rb_save_jpeg = new QRadioButton( tr("jpeg"), this);
+   rb_save_jpeg = new QRadioButton( us_tr("jpeg"), this);
    rb_save_jpeg->setEnabled(true);
    rb_save_jpeg->setChecked(false);
    rb_save_jpeg->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    rb_save_jpeg->setPalette( PALET_NORMAL );
    AUTFBACK( rb_save_jpeg );
 
-   rb_save_bmp = new QRadioButton( tr("bmp"), this);
+   rb_save_bmp = new QRadioButton( us_tr("bmp"), this);
    rb_save_bmp->setEnabled(true);
    rb_save_bmp->setChecked(false);
    rb_save_bmp->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    rb_save_bmp->setPalette( PALET_NORMAL );
    AUTFBACK( rb_save_bmp );
 
-   bg_save = new QButtonGroup( this );
+#if QT_VERSION < 0x040000
+   bg_save = new QGroupBox( this );
    int bg_pos = 0;
    bg_save->setExclusive(true);
    bg_save->addButton( rb_save_png, bg_pos++ );
    bg_save->addButton( rb_save_jpeg, bg_pos++ );
    bg_save->addButton( rb_save_bmp, bg_pos++ );
+#else
+   bg_save = new QGroupBox();
+   bg_save->setFlat( true );
+
+   {
+      QHBoxLayout * bl = new QHBoxLayout; bl->setContentsMargins( 0, 0, 0, 0 ); bl->setSpacing( 0 );
+      bl->addWidget( rb_save_png );
+      bl->addWidget( rb_save_jpeg );
+      bl->addWidget( rb_save_bmp );
+      bg_save->setLayout( bl );
+   }
+#endif
 
    cb_save_overwrite = new QCheckBox(this);
-   cb_save_overwrite->setText(tr("Overwrite"));
+   cb_save_overwrite->setText(us_tr("Overwrite"));
    cb_save_overwrite->setEnabled( true );
    cb_save_overwrite->setChecked( false );
    cb_save_overwrite->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
    cb_save_overwrite->setPalette( PALET_NORMAL );
    AUTFBACK( cb_save_overwrite );
 
-   pb_help = new QPushButton(tr("Help"), this );
+   pb_help = new QPushButton(us_tr("Help"), this );
    pb_help->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
    pb_help->setMinimumHeight(minHeight1);
    pb_help->setPalette( PALET_PUSHB );
    connect(pb_help, SIGNAL(clicked()), SLOT(help()));
 
-   pb_cancel = new QPushButton(tr("Close"), this );
+   pb_cancel = new QPushButton(us_tr("Close"), this );
    pb_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ) );
    pb_cancel->setMinimumHeight(minHeight1);
    pb_cancel->setPalette( PALET_PUSHB );
@@ -255,17 +268,17 @@ void US_Hydrodyn_Saxs_Hplc_Movie::setupGUI()
 
    // -------- build layout
 
-   Q3VBoxLayout *background = new Q3VBoxLayout(this);
+   QVBoxLayout * background = new QVBoxLayout(this); background->setContentsMargins( 0, 0, 0, 0 ); background->setSpacing( 0 );
 
    {
-      Q3BoxLayout *bl_tl = new Q3HBoxLayout( 0 );
+      QBoxLayout *bl_tl = new QHBoxLayout();
       bl_tl->addWidget( lbl_state );
       bl_tl->addWidget( lbl_current );
       background->addLayout( bl_tl );
    }
 
    {
-      Q3BoxLayout *bl_tl = new Q3HBoxLayout( 0 );
+      QBoxLayout *bl_tl = new QHBoxLayout();
       bl_tl->addWidget( pb_front );
       bl_tl->addWidget( pb_prev );
       bl_tl->addWidget( pb_slower );
@@ -277,7 +290,7 @@ void US_Hydrodyn_Saxs_Hplc_Movie::setupGUI()
    }
 
    {
-      Q3BoxLayout *bl_tl = new Q3HBoxLayout( 0 );
+      QBoxLayout *bl_tl = new QHBoxLayout();
       bl_tl->addWidget( cb_show_gauss );
       bl_tl->addWidget( cb_show_ref );
       bl_tl->addWidget( cb_mono );
@@ -288,7 +301,7 @@ void US_Hydrodyn_Saxs_Hplc_Movie::setupGUI()
    }
 
    {
-      Q3BoxLayout *bl_tl = new Q3HBoxLayout( 0 );
+      QBoxLayout *bl_tl = new QHBoxLayout();
       bl_tl->addWidget( cb_save );
       bl_tl->addWidget( le_save );
       bl_tl->addWidget( cb_save_overwrite );
@@ -296,7 +309,7 @@ void US_Hydrodyn_Saxs_Hplc_Movie::setupGUI()
    }
 
    {
-      Q3BoxLayout *bottom = new Q3HBoxLayout( 0 );
+      QBoxLayout *bottom = new QHBoxLayout();
       bottom->addWidget( pb_help );
       bottom->addWidget( pb_cancel );
       background->addSpacing( 2 );
@@ -327,7 +340,7 @@ void US_Hydrodyn_Saxs_Hplc_Movie::closeEvent(QCloseEvent *e)
    hplc_win->lb_files->clearSelection();
    for ( int i = 0; i < (int) hplc_selected_files.size(); ++i )
    {
-      hplc_win->lb_files->setSelected( hplc_selected_files[ i ], true );
+      hplc_win->lb_files->item( hplc_selected_files[ i ])->setSelected( true );
    }
    hplc_win->suppress_replot = false;
    hplc_win->plot_files();
@@ -363,7 +376,7 @@ void US_Hydrodyn_Saxs_Hplc_Movie::slower()
    }
    if ( timer->isActive() )
    {
-      timer->changeInterval( timer_msec );
+      timer->setInterval( timer_msec );
    }
 }
 
@@ -373,11 +386,11 @@ void US_Hydrodyn_Saxs_Hplc_Movie::start()
    {
       timer->stop();
       pb_start->setText( "[]" );
-      lbl_state  -> setText( QString( tr( "%1: %2 of %3" ).arg( tr( timer->isActive() ? "Running" : "Stopped" ) ).arg( pos + 1 ).arg( hplc_selected_files.size() ) ) );
+      lbl_state  -> setText( QString( us_tr( "%1: %2 of %3" ).arg( us_tr( timer->isActive( ) ? "Running" : "Stopped" ) ).arg( pos + 1 ).arg( hplc_selected_files.size() ) ) );
    } else {
       timer->start( timer_msec );
       pb_start->setText( "||" );
-      lbl_state  -> setText( QString( tr( "%1: %2 of %3" ).arg( tr( timer->isActive() ? "Running" : "Stopped" ) ).arg( pos + 1 ).arg( hplc_selected_files.size() ) ) );
+      lbl_state  -> setText( QString( us_tr( "%1: %2 of %3" ).arg( us_tr( timer->isActive( ) ? "Running" : "Stopped" ) ).arg( pos + 1 ).arg( hplc_selected_files.size() ) ) );
       if ( cb_save->isChecked() )
       {
          save_plot();
@@ -394,7 +407,7 @@ void US_Hydrodyn_Saxs_Hplc_Movie::faster()
    }
    if ( timer->isActive() )
    {
-      timer->changeInterval( timer_msec );
+      timer->setInterval( timer_msec );
    }
 }
 
@@ -469,15 +482,15 @@ void US_Hydrodyn_Saxs_Hplc_Movie::update_plot()
       } else {
          hplc_win->plot_ref->hide();
       } 
-      hplc_win->lb_files->setSelected( hplc_selected_files[ pos ], true );
+      hplc_win->lb_files->item( hplc_selected_files[ pos ])->setSelected( true );
 
       if ( hplc_win->current_mode == hplc_win->MODE_GAUSSIAN )
       {
          hplc_win->wheel_cancel();
       }
       if ( cb_show_gauss->isChecked() &&
-           hplc_win->f_is_time.count( hplc_win->lb_files->text( hplc_selected_files[ pos ] ) ) &&
-           hplc_win->f_is_time[ hplc_win->lb_files->text( hplc_selected_files[ pos ] ) ] )
+           hplc_win->f_is_time.count( hplc_win->lb_files->item( hplc_selected_files[ pos ] )->text() ) &&
+           hplc_win->f_is_time[ hplc_win->lb_files->item( hplc_selected_files[ pos ] )->text( ) ] )
       {
          hplc_win->gauss_start();
       }
@@ -488,8 +501,8 @@ void US_Hydrodyn_Saxs_Hplc_Movie::update_plot()
       hplc_win->plot_dist  ->replot();
       hplc_win->plot_ref   ->replot();
       hplc_win->plot_errors->replot();
-      lbl_state  -> setText( QString( tr( "%1: %2 of %3" ).arg( tr( timer->isActive() ? "Running" : "Stopped" ) ).arg( pos + 1 ).arg( hplc_selected_files.size() ) ) );
-      lbl_current-> setText( hplc_win->lb_files->text( hplc_selected_files[ pos ] ) );
+      lbl_state  -> setText( QString( us_tr( "%1: %2 of %3" ).arg( us_tr( timer->isActive( ) ? "Running" : "Stopped" ) ).arg( pos + 1 ).arg( hplc_selected_files.size() ) ) );
+      lbl_current-> setText( hplc_win->lb_files->item( hplc_selected_files[ pos ] )->text() );
 
       if ( cb_save->isChecked() )
       {
@@ -524,7 +537,7 @@ void US_Hydrodyn_Saxs_Hplc_Movie::save_plot( QWidget *plot, QString tag )
    QPixmap qPix = QPixmap::grabWidget( plot );
    if( qPix.isNull() )
    {
-      // qDebug( "Failed to capture the plot for saving\n" );
+      // us_qdebug( "Failed to capture the plot for saving\n" );
       return;
    }
    save_plot( qPix, tag, mypos );
@@ -535,7 +548,11 @@ void US_Hydrodyn_Saxs_Hplc_Movie::join_maps( QPixmap & m1, QPixmap & m2 )
    int m1h = m1.height();
    int m2h = m2.height();
 
+#if QT_VERSION < 0x040000
    m1.resize( m1.width() > m2.width() ? m1.width() : m2.width(), m1h + m2h );
+#else
+   m1 = m1.copy( 0, 0, m1.width() > m2.width() ? m1.width() : m2.width(), m1h + m2h );
+#endif
    QPainter paint( &m1 );
    paint.drawPixmap( 0, m1h, m2 );
 }
@@ -548,7 +565,7 @@ void US_Hydrodyn_Saxs_Hplc_Movie::save_plot( QWidget *plot, QWidget *plot2, QWid
    QPixmap qPix3 = QPixmap::grabWidget( plot3 );
    if( qPix.isNull() || qPix2.isNull() || qPix3.isNull() )
    {
-      // qDebug( "Failed to capture the plot for saving\n" );
+      // us_qdebug( "Failed to capture the plot for saving\n" );
       return;
    }
    join_maps( qPix, qPix2 );
@@ -563,7 +580,7 @@ void US_Hydrodyn_Saxs_Hplc_Movie::save_plot( QWidget *plot, QWidget *plot2, QStr
    QPixmap qPix2 = QPixmap::grabWidget( plot2 );
    if( qPix.isNull() || qPix2.isNull() )
    {
-      // qDebug( "Failed to capture the plot for saving\n" );
+      // us_qdebug( "Failed to capture the plot for saving\n" );
       return;
    }
    join_maps( qPix, qPix2 );
@@ -575,8 +592,8 @@ void US_Hydrodyn_Saxs_Hplc_Movie::save_plot( QPixmap & qPix, QString tag, int my
    QPainter paint( &qPix );
    paint.setPen( Qt::blue );
    paint.setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold) );
-   // paint.drawText( 5, 5, hplc_win->lb_files->text( hplc_selected_files[ mypos ] ) );
-   paint.drawText( qPix.rect(), Qt::AlignBottom | Qt::AlignLeft, hplc_win->lb_files->text( hplc_selected_files[ mypos ] ) );
+   // paint.drawText( 5, 5, hplc_win->lb_files->item( hplc_selected_files[ mypos ] )->text() );
+   paint.drawText( qPix.rect(), Qt::AlignBottom | Qt::AlignLeft, hplc_win->lb_files->item( hplc_selected_files[ mypos ] )->text() );
    QString frame = QString( "%1" ).arg( mypos + 1 );
    while( frame.length() < 5 )
    {

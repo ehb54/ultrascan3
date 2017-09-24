@@ -7,7 +7,7 @@
 #include "../include/us_hydrodyn_saxs.h"
 //Added by qt3to4:
 #include <QCloseEvent>
-#include <Q3Frame>
+#include <QFrame>
 #include <QLabel>
 
 using namespace std;
@@ -18,7 +18,7 @@ using namespace std;
 # endif
 #endif
 
-class US_EXTERN US_Hydrodyn_Saxs_Hplc_Svd : public Q3Frame
+class US_EXTERN US_Hydrodyn_Saxs_Hplc_Svd : public QFrame
 {
    Q_OBJECT
 
@@ -41,7 +41,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Svd : public Q3Frame
       // ------ data section 
 
       mQLabel               * lbl_data;
-      Q3ListView             * lv_data;
+      QTreeWidget             * lv_data;
       QPushButton           * pb_clear;
       QPushButton           * pb_to_hplc;
       QPushButton           * pb_color_rotate;
@@ -51,7 +51,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Svd : public Q3Frame
 
       mQLabel               * lbl_editor;
       QFont                   ft;
-      Q3TextEdit             * editor;
+      QTextEdit             * editor;
       QMenuBar              * mb_editor;
 
       // ------ plot section
@@ -100,7 +100,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Svd : public Q3Frame
       QPushButton           * pb_stop;
 
       QLabel                * lbl_ev;
-      Q3ListBox              * lb_ev;
+      QListWidget              * lb_ev;
 
       QPushButton           * pb_svd_plot;
       QPushButton           * pb_svd_save;
@@ -115,7 +115,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Svd : public Q3Frame
       // ------- bottom section
 
       QPushButton           * pb_help;
-      Q3ProgressBar          * progress;
+      QProgressBar          * progress;
       QPushButton           * pb_cancel;
 
 
@@ -170,12 +170,12 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Svd : public Q3Frame
       set < QString >              get_current_files();
       set < QString >              get_sources();
       set < QString >              get_selected_sources();
-      Q3ListViewItem *              get_source_item( QString source );
+      QTreeWidgetItem *              get_source_item( QString source );
 
       int                          selected_sources();
       void                         clean_selected();
-      bool                         is_selected( Q3ListViewItem *lvi );
-      bool                         all_children_selected( Q3ListViewItem *lvi );
+      bool                         is_selected( QTreeWidgetItem *lvi );
+      bool                         all_children_selected( QTreeWidgetItem *lvi );
       bool                         plotted_matches_selected();
 
       bool                         iq_it_state;
@@ -215,10 +215,10 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Svd : public Q3Frame
       QStringList                  last_svd_data;
       QString                      last_svd_name;
       map < QString, QStringList > svd_data_map;
-      Q3ListViewItem *              lvi_last_depth( int d );
+      QTreeWidgetItem *              lvi_last_depth( int d );
 
       vector < QColor >            plot_colors;
-      QColorGroup                  cg_red;
+      QPalette                  cg_red;
 
       void                         do_recon();
       QString                      last_recon_tag;

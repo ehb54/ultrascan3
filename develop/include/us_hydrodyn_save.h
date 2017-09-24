@@ -7,16 +7,16 @@
 #include <qstring.h>
 #include <qlayout.h>
 #include <qpushbutton.h>
-#include <q3frame.h>
+//#include <q3frame.h>
 #include <qcheckbox.h>
 #include <qwt_counter.h>
-#include <q3buttongroup.h>
-#include <q3textedit.h>
-#include <q3progressbar.h>
+#include <qgroupbox.h>
+#include <qtextedit.h>
+#include <qprogressbar.h>
 #include <qmenubar.h>
 #include <qfileinfo.h>
 #include <qprinter.h>
-#include <q3listbox.h>
+#include <qlistwidget.h>
 #include <qtabwidget.h>
 //Added by qt3to4:
 #include <QCloseEvent>
@@ -108,7 +108,7 @@ struct save_info
    save_data             data;
 };
 
-class US_EXTERN US_Hydrodyn_Save : public Q3Frame
+class US_EXTERN US_Hydrodyn_Save : public QFrame
 {
    Q_OBJECT
 
@@ -138,12 +138,12 @@ class US_EXTERN US_Hydrodyn_Save : public Q3Frame
 
 
       QTabWidget                    *tw_possible;
-      Q3ListBox                      *lb_selected;
+      QListWidget                      *lb_selected;
 
       QPushButton                   *pb_add;
       QPushButton                   *pb_remove;
 
-      vector < Q3ListBox * >         lb_possible;
+      vector < QListWidget * >         lb_possible;
 
       vector < QString >            field;
       vector < QString >            descriptive_name;

@@ -8,10 +8,10 @@
 #include "qfontmetrics.h"
 #include "qfile.h"
 #include "qfiledialog.h"
-#include "q3textedit.h"
-#include "q3progressbar.h"
+#include "qtextedit.h"
+#include "qprogressbar.h"
 //Added by qt3to4:
-#include <Q3Frame>
+#include <QFrame>
 #include <QCloseEvent>
 
 #include "us_util.h"
@@ -71,7 +71,7 @@ class US_Hydrodyn_Saxs_Cormap_Cluster_Analysis {
                                    map < QString, QString >      & parameters,
                                    map < QString, double >       & sliding_results,
                                    QWidget                       * parent = 0,
-                                   Q3ProgressBar                  * progress = 0
+                                   QProgressBar                  * progress = 0
                                     );
 
    bool                        sliding( 
@@ -80,7 +80,7 @@ class US_Hydrodyn_Saxs_Cormap_Cluster_Analysis {
                                    map < QString, double >       & sliding_results,
                                    map < QString, double >       & hb_sliding_results,
                                    QWidget                       * parent = 0,
-                                   Q3ProgressBar                  * progress = 0
+                                   QProgressBar                  * progress = 0
                                     );
 
    map < int, int >            cluster_size_histogram;
@@ -94,7 +94,7 @@ class US_Hydrodyn_Saxs_Cormap_Cluster_Analysis {
    set < uhs_index_pair >      cluster_red;
 };
 
-class US_EXTERN US_Hydrodyn_Saxs_Cormap : public Q3Frame
+class US_EXTERN US_Hydrodyn_Saxs_Cormap : public QFrame
 {
    Q_OBJECT
 
@@ -140,7 +140,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Cormap : public Q3Frame
 
       mQLabel                  *              lbl_image;
 
-      Q3Frame                   *              f_brookesmap;
+      QFrame                   *              f_brookesmap;
 
       QwtThermo                *              f_thermo_top;
       QwtThermo                *              f_thermo_left;
@@ -180,8 +180,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Cormap : public Q3Frame
 
 
       QFont         ft;
-      Q3TextEdit     *editor;
-      QMenuBar      *m;
+      QTextEdit     *editor;
+      // QMenuBar      *m;
       void          editor_msg( QString color, QString msg );
 
       bool          streak_check( vector < int > & row1, 

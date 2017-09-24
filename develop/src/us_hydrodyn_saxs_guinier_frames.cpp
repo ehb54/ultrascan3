@@ -3,12 +3,12 @@
 #include "../include/us_saxs_util.h"
 #include "../include/us_hydrodyn_saxs_guinier_frames.h"
 //Added by qt3to4:
-#include <Q3HBoxLayout>
+#include <QHBoxLayout>
 #include <QCloseEvent>
-#include <Q3GridLayout>
-#include <Q3Frame>
+#include <QGridLayout>
+#include <QFrame>
 #include <QLabel>
-#include <Q3VBoxLayout>
+#include <QVBoxLayout>
 
 US_Hydrodyn_Saxs_Guinier_Frames::US_Hydrodyn_Saxs_Guinier_Frames(
                                                                        void                     *              us_hydrodyn,
@@ -16,15 +16,15 @@ US_Hydrodyn_Saxs_Guinier_Frames::US_Hydrodyn_Saxs_Guinier_Frames(
                                                                        map < QString, vector < vector < double > > > plots,
                                                                        QWidget *                               p,
                                                                        const char *                            name
-                                                                       ) : Q3Frame( p, name )
+                                                                       ) : QFrame(  p )
 {
    this->us_hydrodyn                          = us_hydrodyn;
    this->parameters                           = parameters;
    this->plots                                = plots;
 
    USglobal = new US_Config();
-   setPalette( QPalette( USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame ) );
-   setCaption( tr( "US-SOMO: SAS Guinier frames" ) );
+   setPalette( USglobal->global_colors.cg_frame );
+   setWindowTitle( us_tr( "US-SOMO: SAS Guinier frames" ) );
 
    plot_zoomer = (ScrollZoomer *) 0;
 
@@ -61,24 +61,24 @@ void US_Hydrodyn_Saxs_Guinier_Frames::setupGUI()
 
    int minHeight1  = 30;
 
-   // lbl_title =  new QLabel      ( tr( "US-SOMO: SAS Guinier residuals" ), this );
+   // lbl_title =  new QLabel      ( us_tr( "US-SOMO: SAS Guinier residuals" ), this );
    // lbl_title -> setFrameStyle   ( QFrame::WinPanel | QFrame::Raised );
    // lbl_title -> setAlignment    ( Qt::AlignCenter | Qt::AlignVCenter );
    // lbl_title -> setMinimumHeight( minHeight1 );
-   // lbl_title -> setPalette      ( QPalette( USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame ) );
+   // lbl_title -> setPalette      ( USglobal->global_colors.cg_frame );
    // lbl_title -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold ) );
 
    // lbl_credits_1 =  new QLabel      ( "Cite: US-SOMO", this );
    // lbl_credits_1 -> setAlignment    ( Qt::AlignCenter | Qt::AlignVCenter );
    // lbl_credits_1 -> setMinimumHeight( minHeight1 );
-   // lbl_credits_1 -> setPalette      ( QPalette( USglobal->global_colors.cg_label, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal ) );
+   // lbl_credits_1 -> setPalette      ( USglobal->global_colors.cg_label );
    // lbl_credits_1 -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1, QFont::Bold ) );
 
    cb_yright1 = new QCheckBox(this);
    cb_yright1->setEnabled( true );
    cb_yright1->setChecked( false );
    cb_yright1->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_yright1->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   cb_yright1->setPalette( USglobal->global_colors.cg_normal );
    connect(cb_yright1, SIGNAL(clicked()), this, SLOT(set_yright1()));
    cb_yright1->hide();
 
@@ -86,104 +86,104 @@ void US_Hydrodyn_Saxs_Guinier_Frames::setupGUI()
    cb_yright2->setEnabled(true);
    cb_yright2->setChecked( false );
    cb_yright2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_yright2->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   cb_yright2->setPalette( USglobal->global_colors.cg_normal );
    connect(cb_yright2, SIGNAL(clicked()), this, SLOT(set_yright2()));
    cb_yright2->hide();
 
-   pb_reffile =  new QPushButton ( tr( "Load reference" ), this );
+   pb_reffile =  new QPushButton ( us_tr( "Load reference" ), this );
    pb_reffile -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1) );
    pb_reffile -> setMinimumHeight( minHeight1 );
-   pb_reffile -> setPalette      ( QPalette( USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active ) );
+   pb_reffile -> setPalette      ( USglobal->global_colors.cg_pushb );
    connect( pb_reffile, SIGNAL( clicked() ), SLOT( set_reffile() ) );
 
-   le_reffile = new QLineEdit     ( this, "reffile Line Edit" );
+   le_reffile = new QLineEdit     (  this );    le_reffile->setObjectName( "reffile Line Edit" );
    le_reffile ->setText           ( parameters.count( "reffile" ) ? parameters[ "reffile" ] : "" );
    le_reffile ->setAlignment      ( Qt::AlignCenter | Qt::AlignVCenter );
-   le_reffile ->setPalette        ( QPalette( USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal ) );
+   le_reffile ->setPalette        ( USglobal->global_colors.cg_normal );
    le_reffile ->setFont           ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    le_reffile ->setMinimumHeight  ( minHeight1 );
    le_reffile ->setMinimumWidth   ( 150 );
    connect( le_reffile, SIGNAL( textChanged( const QString & ) ), SLOT( update_reffile( const QString & ) ) );
 
-   lbl_xbottom = new QLabel      ( tr( "X axis" ), this );
+   lbl_xbottom = new QLabel      ( us_tr( "X axis" ), this );
    lbl_xbottom ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_xbottom ->setMinimumHeight( minHeight1 );
-   lbl_xbottom ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
+   lbl_xbottom ->setPalette      ( USglobal->global_colors.cg_label );
    lbl_xbottom ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
 
-   le_xbottom_min = new QLineEdit(this, "xbottom_min Line Edit");
+   le_xbottom_min = new QLineEdit( this );    le_xbottom_min->setObjectName( "xbottom_min Line Edit" );
    le_xbottom_min->setText("");
    le_xbottom_min->setMinimumHeight(minHeight1);
    le_xbottom_min->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
-   le_xbottom_min->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_xbottom_min->setPalette( USglobal->global_colors.cg_normal );
    le_xbottom_min->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_xbottom_min, SIGNAL(textChanged(const QString &)), SLOT(update_xbottom_min(const QString &)));
 
-   le_xbottom_max = new QLineEdit(this, "xbottom_max Line Edit");
+   le_xbottom_max = new QLineEdit( this );    le_xbottom_max->setObjectName( "xbottom_max Line Edit" );
    le_xbottom_max->setText("");
    le_xbottom_max->setMinimumHeight(minHeight1);
    le_xbottom_max->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
-   le_xbottom_max->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_xbottom_max->setPalette( USglobal->global_colors.cg_normal );
    le_xbottom_max->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_xbottom_max, SIGNAL(textChanged(const QString &)), SLOT(update_xbottom_max(const QString &)));
 
-   lbl_yleft = new QLabel      ( tr( "Left Y axis" ), this );
+   lbl_yleft = new QLabel      ( us_tr( "Left Y axis" ), this );
    lbl_yleft ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_yleft ->setMinimumHeight( minHeight1 );
-   lbl_yleft ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
+   lbl_yleft ->setPalette      ( USglobal->global_colors.cg_label );
    lbl_yleft ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
 
-   le_yleft_min = new QLineEdit(this, "yleft_min Line Edit");
+   le_yleft_min = new QLineEdit( this );    le_yleft_min->setObjectName( "yleft_min Line Edit" );
    le_yleft_min->setText("");
    le_yleft_min->setMinimumHeight(minHeight1);
    le_yleft_min->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
-   le_yleft_min->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_yleft_min->setPalette( USglobal->global_colors.cg_normal );
    le_yleft_min->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_yleft_min, SIGNAL(textChanged(const QString &)), SLOT(update_yleft_min(const QString &)));
 
-   le_yleft_max = new QLineEdit(this, "yleft_max Line Edit");
+   le_yleft_max = new QLineEdit( this );    le_yleft_max->setObjectName( "yleft_max Line Edit" );
    le_yleft_max->setText("");
    le_yleft_max->setMinimumHeight(minHeight1);
    le_yleft_max->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
-   le_yleft_max->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_yleft_max->setPalette( USglobal->global_colors.cg_normal );
    le_yleft_max->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_yleft_max, SIGNAL(textChanged(const QString &)), SLOT(update_yleft_max(const QString &)));
 
-   lbl_yright = new QLabel      ( tr( "Right Y axis" ), this );
+   lbl_yright = new QLabel      ( us_tr( "Right Y axis" ), this );
    lbl_yright ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_yright ->setMinimumHeight( minHeight1 );
-   lbl_yright ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
+   lbl_yright ->setPalette      ( USglobal->global_colors.cg_label );
    lbl_yright ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
    lbl_yright ->hide();
 
-   le_yright_min = new QLineEdit(this, "yright_min Line Edit");
+   le_yright_min = new QLineEdit( this );    le_yright_min->setObjectName( "yright_min Line Edit" );
    le_yright_min->setText("");
    le_yright_min->setMinimumHeight(minHeight1);
    le_yright_min->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
-   le_yright_min->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_yright_min->setPalette( USglobal->global_colors.cg_normal );
    le_yright_min->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_yright_min, SIGNAL(textChanged(const QString &)), SLOT(update_yright_min(const QString &)));
    le_yright_min ->hide();
 
-   le_yright_max = new QLineEdit(this, "yright_max Line Edit");
+   le_yright_max = new QLineEdit( this );    le_yright_max->setObjectName( "yright_max Line Edit" );
    le_yright_max->setText("");
    le_yright_max->setMinimumHeight(minHeight1);
    le_yright_max->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
-   le_yright_max->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_yright_max->setPalette( USglobal->global_colors.cg_normal );
    le_yright_max->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_yright_max, SIGNAL(textChanged(const QString &)), SLOT(update_yright_max(const QString &)));
    le_yright_max ->hide();
 
-   pb_help =  new QPushButton ( tr( "Help" ), this );
+   pb_help =  new QPushButton ( us_tr( "Help" ), this );
    pb_help -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1) );
    pb_help -> setMinimumHeight( minHeight1 );
-   pb_help -> setPalette      ( QPalette( USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active ) );
+   pb_help -> setPalette      ( USglobal->global_colors.cg_pushb );
    connect( pb_help, SIGNAL( clicked() ), SLOT( help() ) );
 
-   pb_close =  new QPushButton ( tr( "Close" ), this );
+   pb_close =  new QPushButton ( us_tr( "Close" ), this );
    pb_close -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1) );
    pb_close -> setMinimumHeight( minHeight1 );
-   pb_close -> setPalette      ( QPalette( USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active ) );
+   pb_close -> setPalette      ( USglobal->global_colors.cg_pushb );
    connect( pb_close, SIGNAL( clicked() ), SLOT( cancel() ) );
 
    plot = new QwtPlot(this);
@@ -193,20 +193,20 @@ void US_Hydrodyn_Saxs_Guinier_Frames::setupGUI()
    plot->setOutlineStyle(Qwt::VLine);
    plot->enableGridXMin();
    plot->enableGridYMin();
-   plot->setPalette( QPalette(USglobal->global_colors.cg_plot, USglobal->global_colors.cg_plot, USglobal->global_colors.cg_plot));
+   plot->setPalette( USglobal->global_colors.cg_plot );
    plot->setGridMajPen(QPen(USglobal->global_colors.major_ticks, 0, DotLine));
    plot->setGridMinPen(QPen(USglobal->global_colors.minor_ticks, 0, DotLine));
 #else
    grid = new QwtPlotGrid;
    grid->enableXMin( true );
    grid->enableYMin( true );
-   plot->setPalette( QPalette( USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal ) );
+   plot->setPalette( USglobal->global_colors.cg_normal );
    grid->setMajPen( QPen( USglobal->global_colors.major_ticks, 0, Qt::DotLine ) );
    grid->setMinPen( QPen( USglobal->global_colors.minor_ticks, 0, Qt::DotLine ) );
    grid->attach( plot );
 #endif
    plot->setAxisTitle(QwtPlot::xBottom, parameters[ "xbottom" ] );
-   plot->setAxisTitle(QwtPlot::yLeft  , parameters[ "yleft"   ] + tr( " 'Diamonds'" ) );
+   plot->setAxisTitle(QwtPlot::yLeft  , parameters[ "yleft"   ] + us_tr( " 'Diamonds'" ) );
    if ( parameters.count( "yright1" ) ) {
       cb_yright1->setText( parameters[ "yright1" ] );
       cb_yright1->setChecked( true );
@@ -234,7 +234,7 @@ void US_Hydrodyn_Saxs_Guinier_Frames::setupGUI()
    plot->setTitle( parameters[ "title" ] );
    plot->setCanvasBackground(USglobal->global_colors.plot);
 
-   Q3VBoxLayout *background = new Q3VBoxLayout( this );
+   QVBoxLayout * background = new QVBoxLayout( this ); background->setContentsMargins( 0, 0, 0, 0 ); background->setSpacing( 0 );
    // background->addSpacing(4);
 
    // background->addWidget( lbl_title );
@@ -243,7 +243,7 @@ void US_Hydrodyn_Saxs_Guinier_Frames::setupGUI()
    background->addWidget( plot );
 
    {
-      Q3GridLayout * gl = new Q3GridLayout( 0 );
+      QGridLayout * gl = new QGridLayout( 0 ); gl->setContentsMargins( 0, 0, 0, 0 ); gl->setSpacing( 0 );
       gl->addWidget( lbl_xbottom   , 0, 0 );
       gl->addWidget( le_xbottom_min, 0, 1 );
       gl->addWidget( le_xbottom_max, 0, 2 );
@@ -259,7 +259,7 @@ void US_Hydrodyn_Saxs_Guinier_Frames::setupGUI()
    }
 
    {
-      Q3HBoxLayout * hbl = new Q3HBoxLayout( 0 );
+      QHBoxLayout * hbl = new QHBoxLayout(); hbl->setContentsMargins( 0, 0, 0, 0 ); hbl->setSpacing( 0 );
       // hbl->addSpacing( 4 );
       hbl->addWidget( cb_yright1 );
       hbl->addWidget( cb_yright2 );
@@ -267,14 +267,14 @@ void US_Hydrodyn_Saxs_Guinier_Frames::setupGUI()
    }
 
    {
-      Q3HBoxLayout * hbl = new Q3HBoxLayout( 0 );
+      QHBoxLayout * hbl = new QHBoxLayout(); hbl->setContentsMargins( 0, 0, 0, 0 ); hbl->setSpacing( 0 );
       // hbl->addSpacing( 4 );
       hbl->addWidget( pb_reffile );
       hbl->addWidget( le_reffile );
       background->addLayout( hbl );
    }
 
-   Q3HBoxLayout *hbl_bottom = new Q3HBoxLayout( 0 );
+   QHBoxLayout * hbl_bottom = new QHBoxLayout(); hbl_bottom->setContentsMargins( 0, 0, 0, 0 ); hbl_bottom->setSpacing( 0 );
    //   hbl_bottom->addSpacing( 4 );
    hbl_bottom->addWidget ( pb_help );
    //   hbl_bottom->addSpacing( 4 );
@@ -307,7 +307,7 @@ void US_Hydrodyn_Saxs_Guinier_Frames::closeEvent( QCloseEvent *e )
 
 void US_Hydrodyn_Saxs_Guinier_Frames::update_plot()
 {
-   // qDebug( "update plot" );
+   // us_qdebug( "update plot" );
    // build up from plots map
    // it->first is axis name followed by color, x, y, and possibly error
    // later we could bring in more and allow any pair of selections
@@ -315,7 +315,7 @@ void US_Hydrodyn_Saxs_Guinier_Frames::update_plot()
    // for ( map < QString, vector < vector < double > > >::iterator it = plots.begin();
    //       it != plots.end();
    //       ++it ) {
-   //    qDebug( US_Vector::qs_vector4( QString( "plot '%1'" ).arg( it->first ),
+   //    us_qdebug( US_Vector::qs_vector4( QString( "plot '%1'" ).arg( it->first ),
    //                                   it->second[ 0 ],
    //                                   it->second[ 1 ],
    //                                   it->second[ 2 ],
@@ -380,7 +380,7 @@ void US_Hydrodyn_Saxs_Guinier_Frames::update_plot()
          sym.setPen  ( qc );
          QPen use_pen = QPen( qc, use_line_width, Qt::SolidLine );
          
-         // qDebug( QString( "%1 rgb %2 %3 %4" ).arg( rgb ).arg( red ).arg( green ).arg( blue ) );
+         // us_qdebug( QString( "%1 rgb %2 %3 %4" ).arg( rgb ).arg( red ).arg( green ).arg( blue ) );
          
          {
 #ifdef QT4
@@ -453,7 +453,7 @@ void US_Hydrodyn_Saxs_Guinier_Frames::update_plot()
          le_yright_min->show();
          le_yright_max->show();
          plot->enableAxis  ( QwtPlot::yRight , true );
-         plot->setAxisTitle( QwtPlot::yRight , parameters[ use_right ] + tr( " 'Squares'" ) );
+         plot->setAxisTitle( QwtPlot::yRight , parameters[ use_right ] + us_tr( " 'Squares'" ) );
          sym.setStyle( QwtSymbol::Rect );
          vector < vector < double > > * this_plot = & plots[ use_right ];
 
@@ -483,7 +483,7 @@ void US_Hydrodyn_Saxs_Guinier_Frames::update_plot()
             sym.setPen  ( qc );
             QPen use_pen = QPen( qc, use_line_width, Qt::SolidLine );
          
-            // qDebug( QString( "%1 rgb %2 %3 %4" ).arg( rgb ).arg( red ).arg( green ).arg( blue ) );
+            // us_qdebug( QString( "%1 rgb %2 %3 %4" ).arg( rgb ).arg( red ).arg( green ).arg( blue ) );
          
             {
 #ifdef QT4
@@ -520,7 +520,7 @@ void US_Hydrodyn_Saxs_Guinier_Frames::update_plot()
                plot->setCurvePen   ( curve, use_pen );
                plot->setCurveData  ( curve, x, y, 2 );
 #endif
-               // qDebug( QString( "double check plot mw eb x %1 %2 y %3 %4" ).arg( x[0] ).arg( x[1] ).arg( y[0] ).arg( y[1] ) );
+               // us_qdebug( QString( "double check plot mw eb x %1 %2 y %3 %4" ).arg( x[0] ).arg( x[1] ).arg( y[0] ).arg( y[1] ) );
             }
          }
 
@@ -601,7 +601,7 @@ void US_Hydrodyn_Saxs_Guinier_Frames::update_plot()
          }
          
       }
-      // qDebug( US_Vector::qs_vector3( "ref domain scaled", ref_t, ref_I, y) );
+      // us_qdebug( US_Vector::qs_vector3( "ref domain scaled", ref_t, ref_I, y) );
    }      
 
    if ( plot_zoomer )
@@ -728,7 +728,7 @@ void US_Hydrodyn_Saxs_Guinier_Frames::update_reffile( const QString & )
 {
    QString use_dir;
    ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this );
-   QString filename = QFileDialog::getOpenFileName( this , tr( "Select a file for Reference concentration intensity curve" ) , use_dir , QString::null );
+   QString filename = QFileDialog::getOpenFileName( this , us_tr( "Select a file for Reference concentration intensity curve" ) , use_dir , QString::null );
 
 
    disconnect( le_reffile, SIGNAL( textChanged( const QString & ) ), 0, 0 );
@@ -739,7 +739,7 @@ void US_Hydrodyn_Saxs_Guinier_Frames::update_reffile( const QString & )
       ((US_Hydrodyn *)us_hydrodyn)->add_to_directory_history( filename );
       QString error_msg;
       US_Saxs_Util::read_sas_data( filename, ref_t, ref_I, ref_e, error_msg );
-      // qDebug( US_Vector::qs_vector3( filename + " " + error_msg, ref_t, ref_I, ref_e ) );
+      // us_qdebug( US_Vector::qs_vector3( filename + " " + error_msg, ref_t, ref_I, ref_e ) );
    } else {
       ref_t.clear();
       ref_I.clear();

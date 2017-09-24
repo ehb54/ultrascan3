@@ -17,10 +17,10 @@ bool US_Saxs_Util::run_crysol()
    if ( control_parameters.count( "crysolpdb" ) )
    {
       QFileInfo fi( control_parameters[ "crysolpdb" ] );
-      QString baseName = fi.baseName ( true  );
+      QString baseName = fi.completeBaseName();
       if ( baseName.length() > 6 )
       {
-          QString ext      = fi.extension( false );
+          QString ext      = fi.suffix();
           int     use_len  = 6;
           QString destname = baseName.left( use_len );
           int     copy     = 0;
@@ -50,7 +50,7 @@ bool US_Saxs_Util::run_crysol()
    if ( control_parameters.count( "crysolpdb6" ) )
    {
       QFileInfo fi( control_parameters[ "crysolpdb6" ] );
-      control_parameters[ "crysolname" ] = fi.baseName( true );
+      control_parameters[ "crysolname" ] = fi.completeBaseName();
    } else {
       errormsg = "Error: crysol: parameter crysolpdb6 must be defined";
       return false;
@@ -171,7 +171,7 @@ bool US_Saxs_Util::run_crysol()
    if ( control_parameters.count( "crysolpdb" ) )
    {
       QFileInfo fi( control_parameters[ "crysolpdb" ] );
-      control_parameters[ "crysolbasename" ] = fi.baseName( true );
+      control_parameters[ "crysolbasename" ] = fi.completeBaseName();
    } else {
       errormsg = "Error: crysol: parameter crysolpdb must be defined";
       return false;
@@ -180,8 +180,8 @@ bool US_Saxs_Util::run_crysol()
         control_parameters.count( "crysolbasename" ) )
    {
       QFileInfo fi( control_parameters[ "crysollog" ] );
-      QString baseName = fi.baseName ( true  );
-      QString ext      = fi.extension( false );
+      QString baseName = fi.completeBaseName();
+      QString ext      = fi.suffix();
 
       if ( !fi.exists() )
       {
@@ -210,8 +210,8 @@ bool US_Saxs_Util::run_crysol()
         control_parameters.count( "crysolbasename" ) )
    {
       QFileInfo fi( control_parameters[ "crysolint" ] );
-      QString baseName = fi.baseName ( true  );
-      QString ext      = fi.extension( false );
+      QString baseName = fi.completeBaseName();
+      QString ext      = fi.suffix();
 
       if ( !fi.exists() )
       {

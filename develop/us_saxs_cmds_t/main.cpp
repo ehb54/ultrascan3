@@ -5,7 +5,7 @@
 #include "../include/us_pm.h"
 #include "us_cuda.h"
 //Added by qt3to4:
-#include <Q3TextStream>
+#include <QTextStream>
 
 // globals to remove dependencies on libus
 // a better job could be done
@@ -36,7 +36,7 @@ int main (int argc, char **argv)
    //    triangles << QString( outfiles[ i ] ).replace( QRegExp( QString( "^%1_" ).arg( inputbase ) ), "" ).replace( QRegExp( "^0*" ) , "" );
    //    one_over_triangles.push_back( triangles.back().toDouble() != 0e0 ?
    //                                  1e0 / triangles.back().toDouble() : -1e0 );
-   //    qDebug( QString( "%1 %2\n" ).arg( triangles.back() ).arg( one_over_triangles.back() ) );
+   //    us_qdebug( QString( "%1 %2\n" ).arg( triangles.back() ).arg( one_over_triangles.back() ) );
    // }
 
    // exit( 0 );
@@ -135,7 +135,7 @@ int main (int argc, char **argv)
    }
    int errorbase = -1000;
 
-   if (cmds[0].lower() == "avg") 
+   if (cmds[0].toLower() == "avg") 
    {
       if (cmds.size() < 4) 
       {
@@ -175,7 +175,7 @@ int main (int argc, char **argv)
 
    errorbase -= 1000;
 
-   if (cmds[0].lower() == "sbg") 
+   if (cmds[0].toLower() == "sbg") 
    {
       if (cmds.size() != 5) 
       {
@@ -209,7 +209,7 @@ int main (int argc, char **argv)
 
    errorbase -= 1000;
 
-   if (cmds[0].lower() == "scw") 
+   if (cmds[0].toLower() == "scw") 
    {
       if (cmds.size() != 6) 
       {
@@ -245,7 +245,7 @@ int main (int argc, char **argv)
 
    errorbase -= 1000;
 
-   if (cmds[0].lower() == "wgsbs") 
+   if (cmds[0].toLower() == "wgsbs") 
    {
       if (cmds.size() != 10) 
       {
@@ -304,7 +304,7 @@ int main (int argc, char **argv)
 
    errorbase -= 1000;
 
-   if (cmds[0].lower() == "wgsbsg") 
+   if (cmds[0].toLower() == "wgsbsg") 
    {
       if (cmds.size() != 17) 
       {
@@ -381,7 +381,7 @@ int main (int argc, char **argv)
          QFile f(logfile);
          if ( f.open(QIODevice::WriteOnly ) ) 
          {
-            Q3TextStream ts(&f);
+            QTextStream ts(&f);
             ts << log;
             f.close();
          } else {
@@ -394,7 +394,7 @@ int main (int argc, char **argv)
 
    errorbase -= 1000;
 
-   if (cmds[0].lower() == "wgsbsgsm") 
+   if (cmds[0].toLower() == "wgsbsgsm") 
    {
       if (cmds.size() != 22) 
       {
@@ -497,7 +497,7 @@ int main (int argc, char **argv)
          QFile f(logfile);
          if ( f.open(QIODevice::WriteOnly ) ) 
          {
-            Q3TextStream ts(&f);
+            QTextStream ts(&f);
             ts << log;
             f.close();
          } else {
@@ -510,7 +510,7 @@ int main (int argc, char **argv)
 
    errorbase -= 1000;
 
-   if (cmds[0].lower() == "wgsbsggsm") 
+   if (cmds[0].toLower() == "wgsbsggsm") 
    {
       if (cmds.size() != 23) 
       {
@@ -663,7 +663,7 @@ int main (int argc, char **argv)
          QFile f(logfile);
          if ( f.open(QIODevice::WriteOnly ) ) 
          {
-            Q3TextStream ts(&f);
+            QTextStream ts(&f);
             ts << log;
             f.close();
          } else {
@@ -676,7 +676,7 @@ int main (int argc, char **argv)
 
    errorbase -= 1000;
 
-   if (cmds[0].lower() == "wgsbsnggsm") 
+   if (cmds[0].toLower() == "wgsbsnggsm") 
    {
       if (cmds.size() != 24) 
       {
@@ -969,7 +969,7 @@ int main (int argc, char **argv)
          QFile f(logfile);
          if ( f.open(QIODevice::WriteOnly ) ) 
          {
-            Q3TextStream ts(&f);
+            QTextStream ts(&f);
             ts << log;
             f.close();
          } else {
@@ -982,7 +982,7 @@ int main (int argc, char **argv)
 
    errorbase -= 1000;
 
-   if (cmds[0].lower() == "join") 
+   if (cmds[0].toLower() == "join") 
    {
       if (cmds.size() != 5) 
       {
@@ -1017,7 +1017,7 @@ int main (int argc, char **argv)
 
    errorbase -= 1000;
 
-   if (cmds[0].lower() == "guinier_plot") 
+   if (cmds[0].toLower() == "guinier_plot") 
    {
       if (cmds.size() != 3) 
       {
@@ -1049,7 +1049,7 @@ int main (int argc, char **argv)
 
    errorbase -= 1000;
 
-   if (cmds[0].lower() == "guinier_fit") 
+   if (cmds[0].toLower() == "guinier_fit") 
    {
       if (cmds.size() != 7) 
       {
@@ -1128,7 +1128,7 @@ int main (int argc, char **argv)
       } else {
          if ( f.open(QIODevice::WriteOnly ) )
          {
-            Q3TextStream ts(&f);
+            QTextStream ts(&f);
             ts << log;
             f.close();
          } else {
@@ -1142,7 +1142,7 @@ int main (int argc, char **argv)
 
    errorbase -= 1000;
 
-   if (cmds[0].lower() == "guinier_fit2") 
+   if (cmds[0].toLower() == "guinier_fit2") 
    {
       if (cmds.size() != 7) 
       {
@@ -1225,7 +1225,7 @@ int main (int argc, char **argv)
       } else {
          if ( f.open(QIODevice::WriteOnly ) )
          {
-            Q3TextStream ts(&f);
+            QTextStream ts(&f);
             ts << log;
             f.close();
          } else {
@@ -1239,7 +1239,7 @@ int main (int argc, char **argv)
 
    errorbase -= 1000;
 
-   if (cmds[0].lower() == "project_init") 
+   if (cmds[0].toLower() == "project_init") 
    {
       if (cmds.size() != 2) 
       {
@@ -1265,7 +1265,7 @@ int main (int argc, char **argv)
           )
       {
          projectdir = QString("%1%2%3")
-            .arg(QDir::currentDirPath())
+            .arg(QDir::currentPath())
             .arg(QDir::separator())
             .arg(projectdir);
       }
@@ -1405,7 +1405,7 @@ int main (int argc, char **argv)
       }
       errorbase--;
 
-      Q3TextStream ts( &pf );
+      QTextStream ts( &pf );
       ts << 
          QString(
                  "# notes:\n"
@@ -1496,7 +1496,7 @@ int main (int argc, char **argv)
 
    errorbase -= 1000;
 
-   if (cmds[0].lower() == "project_rebuild") 
+   if (cmds[0].toLower() == "project_rebuild") 
    {
       if (cmds.size() != 1) 
       {
@@ -1522,10 +1522,10 @@ int main (int argc, char **argv)
 
    errorbase -= 1000;
 
-   if (cmds[0].lower() == "project_merge") 
+   if (cmds[0].toLower() == "project_merge") 
    {
       if ( !( cmds.size() == 2 ||
-              ( cmds.size() == 3 && cmds[2].lower() == "gnom" ) ) )
+              ( cmds.size() == 3 && cmds[2].toLower() == "gnom" ) ) )
       {
          printf(
                 "usage: %s %s outfile { gnom }\n"
@@ -1538,7 +1538,7 @@ int main (int argc, char **argv)
 
       int p = 1;
       QString outfile = cmds[p++];
-      bool gnom_run = ( cmds.size() == 3 && cmds[2].lower() == "gnom" );
+      bool gnom_run = ( cmds.size() == 3 && cmds[2].toLower() == "gnom" );
          
       double reference_mw_multiplier;
       QFile f("merge");
@@ -1559,12 +1559,12 @@ int main (int argc, char **argv)
       }
       errorbase--;
 
-      Q3TextStream ts(&f);
-      reference_mw_multiplier = ts.readLine().stripWhiteSpace().toDouble();
+      QTextStream ts(&f);
+      reference_mw_multiplier = ts.readLine().trimmed().toDouble();
       vector < QString > projects;
       while ( !ts.atEnd() )
       {
-         projects.push_back(ts.readLine().stripWhiteSpace());
+         projects.push_back(ts.readLine().trimmed());
       }
       f.close();
 
@@ -1585,7 +1585,7 @@ int main (int argc, char **argv)
 
    errorbase -= 1000;
 
-   if (cmds[0].lower() == "project_1d") 
+   if (cmds[0].toLower() == "project_1d") 
    {
       if (cmds.size() != 3) 
       {
@@ -1612,7 +1612,7 @@ int main (int argc, char **argv)
    }
    errorbase -= 1000;
 
-   if ( cmds[0].lower() == "iqqsphere" ) 
+   if ( cmds[0].toLower() == "iqqsphere" ) 
    {
       if ( cmds.size() != 7 ) 
       {
@@ -1654,7 +1654,7 @@ int main (int argc, char **argv)
    }
    errorbase -= 1000;
 
-   if ( cmds[0].lower() == "iqqspherefit" ) 
+   if ( cmds[0].toLower() == "iqqspherefit" ) 
    {
       if ( cmds.size() != 12 ) 
       {
@@ -1703,7 +1703,7 @@ int main (int argc, char **argv)
    }
    errorbase -= 1000;
 
-   if ( cmds[0].lower() == "merge" ) 
+   if ( cmds[0].toLower() == "merge" ) 
    {
       if ( cmds.size() != 6 ) 
       {
@@ -1741,7 +1741,7 @@ int main (int argc, char **argv)
    }
    errorbase -= 1000;
 
-   if ( cmds[0].lower() == "iq" ) 
+   if ( cmds[0].toLower() == "iq" ) 
    {
       if ( cmds.size() != 2 ) 
       {
@@ -1769,7 +1769,7 @@ int main (int argc, char **argv)
    errorbase -= 1000;
 
 #if defined( CUDA )
-   if ( cmds[0].lower() == "cuda" ) 
+   if ( cmds[0].toLower() == "cuda" ) 
    {
      cout << "cuda test\n";
      cuda_hello_world();
@@ -1778,7 +1778,7 @@ int main (int argc, char **argv)
    errorbase -= 1000;
 #endif
 
-   if ( cmds[0].lower() == "sjoin" ) 
+   if ( cmds[0].toLower() == "sjoin" ) 
    {
       if ( cmds.size() != 8 ) 
       {
@@ -2012,7 +2012,7 @@ int main (int argc, char **argv)
    }
    errorbase -= 1000;
 
-   if ( cmds[0].lower() == "smooth" ) 
+   if ( cmds[0].toLower() == "smooth" ) 
    {
       if ( cmds.size() != 5 ) 
       {
@@ -2045,7 +2045,7 @@ int main (int argc, char **argv)
    }
    errorbase -= 1000;
 
-   if ( cmds[0].lower() == "repeak" ) 
+   if ( cmds[0].toLower() == "repeak" ) 
    {
       if ( cmds.size() != 4 ) 
       {
@@ -2077,7 +2077,7 @@ int main (int argc, char **argv)
    }
    errorbase -= 1000;
 
-   if ( cmds[0].lower() == "sort" ) 
+   if ( cmds[0].toLower() == "sort" ) 
    {
       if ( cmds.size() != 4 ) 
       {
@@ -2109,7 +2109,7 @@ int main (int argc, char **argv)
    }
    errorbase -= 1000;
 
-   if ( cmds[0].lower() == "reverse" ) 
+   if ( cmds[0].toLower() == "reverse" ) 
    {
       if ( cmds.size() != 3 ) 
       {
@@ -2140,7 +2140,7 @@ int main (int argc, char **argv)
    }
    errorbase -= 1000;
 
-   if ( cmds[0].lower() == "uniquify" ) 
+   if ( cmds[0].toLower() == "uniquify" ) 
    {
       if ( cmds.size() != 5 ) 
       {
@@ -2173,7 +2173,7 @@ int main (int argc, char **argv)
    }
    errorbase -= 1000;
 
-   if ( cmds[0].lower() == "range" ) 
+   if ( cmds[0].toLower() == "range" ) 
    {
       if ( cmds.size() != 6 ) 
       {
@@ -2207,7 +2207,7 @@ int main (int argc, char **argv)
    }
    errorbase -= 1000;
 
-   if ( cmds[0].lower() == "scale" ) 
+   if ( cmds[0].toLower() == "scale" ) 
    {
       if ( cmds.size() != 5 ) 
       {
@@ -2240,7 +2240,7 @@ int main (int argc, char **argv)
    }
    errorbase -= 1000;
 
-   if ( cmds[0].lower() == "ijoin" ) 
+   if ( cmds[0].toLower() == "ijoin" ) 
    {
       if ( cmds.size() != 7 ) 
       {
@@ -2295,7 +2295,7 @@ int main (int argc, char **argv)
    }
    errorbase -= 1000;
 
-   if ( cmds[0].lower() == "info" ) 
+   if ( cmds[0].toLower() == "info" ) 
    {
       if ( cmds.size() != 2 ) 
       {
@@ -2324,7 +2324,7 @@ int main (int argc, char **argv)
    }
    errorbase -= 1000;
 
-   if ( cmds[0].lower() == "clip" ) 
+   if ( cmds[0].toLower() == "clip" ) 
    {
       if ( cmds.size() != 6 ) 
       {
@@ -2358,7 +2358,7 @@ int main (int argc, char **argv)
    }
    errorbase -= 1000;
 
-   if ( cmds[0].lower() == "pmtest" ) 
+   if ( cmds[0].toLower() == "pmtest" ) 
    {
       if ( cmds.size() != 3 ) 
       {
@@ -2375,13 +2375,13 @@ int main (int argc, char **argv)
       QString      outfile         = cmds[ p++ ];
       QString      infile          = cmds[ p++ ];
 
-      cout << US_PM::test( infile, outfile ).ascii() << endl;
+      cout << US_PM::test( infile, outfile ).toAscii().data() << endl;
       
       exit( 0 );
    }
    errorbase -= 1000;
 
-   if ( cmds[0].lower() == "pm" ) 
+   if ( cmds[0].toLower() == "pm" ) 
    {
       if ( cmds.size() != 2 ) 
       {
@@ -2408,7 +2408,7 @@ int main (int argc, char **argv)
    }
    errorbase -= 1000;
 
-   if ( cmds[0].lower() == "fasta" ) 
+   if ( cmds[0].toLower() == "fasta" ) 
    {
       if ( cmds.size() <= 3 ) 
       {
@@ -2443,7 +2443,7 @@ int main (int argc, char **argv)
    }
    errorbase -= 1000;
 
-   if ( cmds[0].lower() == "json" ) 
+   if ( cmds[0].toLower() == "json" ) 
    {
       if ( cmds.size() != 2 ) 
       {
@@ -2460,7 +2460,7 @@ int main (int argc, char **argv)
       QString      json         = cmds[ p++ ];
 
       US_Saxs_Util usu;
-      cout << usu.run_json( json ).ascii() << endl;
+      cout << usu.run_json( json ).toAscii().data() << endl;
       exit( 0 );
    }
    errorbase -= 1000;

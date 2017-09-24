@@ -7,7 +7,7 @@
 #include "us_extern.h"
 
 #include <qlabel.h>
-#include <q3listbox.h>
+#include <qlistwidget.h>
 #include <qlineedit.h>
 #include <qpushbutton.h>
 #include <qmessagebox.h>
@@ -15,10 +15,10 @@
 #include <qcolordialog.h>
 #include <qstring.h>
 #include <qlcdnumber.h>
-#include <q3progressbar.h>
-#include <Q3ComboBox>
+#include <qprogressbar.h>
+#include <QComboBox>
 #include <qevent.h>
-#include <q3frame.h>
+//#include <q3frame.h>
 #include <qtranslator.h>
 #include <qpen.h>
 
@@ -38,7 +38,7 @@
 #include <qwidget.h>
 */
 
-class US_EXTERN US_Color : public Q3Frame
+class US_EXTERN US_Color : public QFrame
 {
    Q_OBJECT
    
@@ -72,8 +72,8 @@ class US_EXTERN US_Color : public Q3Frame
       QLabel *color_field4;
       QLabel *color_field5;
       QLabel *color_field6;
-      Q3ListBox *lb_scheme;
-      Q3ListBox *lb_item;
+      QListWidget *lb_scheme;
+      QListWidget *lb_item;
       QLineEdit *le_save_as;
       QPushButton *pb_quit;
       QPushButton *pb_delete;
@@ -90,7 +90,7 @@ class US_EXTERN US_Color : public Q3Frame
       QPushButton *pb_color4;
       QPushButton *pb_color5;
       QPushButton *pb_color6;
-      Q3ComboBox *cmbb_margin;
+      QComboBox *cmbb_margin;
       QColor color1;
       QColor color2;
       QColor color3;
@@ -103,19 +103,19 @@ class US_EXTERN US_Color : public Q3Frame
       QColor temp_color4;
       QColor temp_color5;
       QColor temp_color6;
-      QColorGroup temp_cg1;
-      QColorGroup temp_cg2;
-      QColorGroup temp_cg3;
-      QColorGroup temp_cg4;
-      QColorGroup temp_cg5;
-      QColorGroup temp_cg6;
+      QPalette temp_cg1;
+      QPalette temp_cg2;
+      QPalette temp_cg3;
+      QPalette temp_cg4;
+      QPalette temp_cg5;
+      QPalette temp_cg6;
       QwtPlot *plot;
       QwtCounter *cnt;
 #ifdef QT4
       QwtPlotGrid  *grid;
       QwtPlotCurve *curve;
 #endif
-      Q3ProgressBar *progress;
+      QProgressBar *progress;
       QLCDNumber *lcd;
       US_Config *USglobal;
       US_Write_Config *WConfig;

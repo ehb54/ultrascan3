@@ -3,7 +3,7 @@
 #include "../include/us_saxs_util.h"
 #include "../include/us_file_util.h"
 //Added by qt3to4:
-#include <Q3TextStream>
+#include <QTextStream>
 
 extern int npes;
 extern int myrank;
@@ -42,17 +42,17 @@ bool       timed_out;
       QFile f( QString( "mpidebug-%1" ).arg( myrank ) );
       if( f.open( QIODevice::WriteOnly | QIODevice::Append ) )
       {
-         Q3TextStream ts( &f );
+         QTextStream ts( &f );
          ts << QTime::currentTime().toString( "hh:mm:ss.zzz" ) << ":" << msg;
          f.close();
       }
       if ( msg.contains( QRegExp( "^\\d+: (SEND|RECV) " ) ) )
       {
          QFile f( QString( "debug-%1" ).arg( myrank ) );
-         QStringList msgs = QStringList::split( "\n" , msg );
+         QStringList msgs = (msg ).split( "\n" , QString::SkipEmptyParts );
          if( f.open( QIODevice::WriteOnly | QIODevice::Append ) )
          {
-            Q3TextStream ts( &f );
+            QTextStream ts( &f );
             ts << QTime::currentTime().toString( "hh:mm:ss.zzz" ) << ":" << msgs[ 0 ] << endl;
             f.close();
          }
@@ -157,7 +157,11 @@ bool US_Saxs_Util::run_iq_mpi( QString controlfile )
       }         
       errorno--;
 
-      qslt = QStringList::split( "\n", QString( "%1" ).arg( char_files ) );
+      // qslt = (QString( "%1" ).split( "\n" , QString::SkipEmptyParts ).arg( char_files ) );
+      {
+         QString qs = QString( "%1" ).arg( char_files );
+         qslt = (qs ).split( "\n" , QString::SkipEmptyParts );
+      }
    } else {
       cout << QString("%1: extracting job files\n").arg( myrank ) << flush;
       
@@ -207,7 +211,7 @@ bool US_Saxs_Util::run_iq_mpi( QString controlfile )
 
       // check to make sure all files .tgz
 
-      if ( qslt.grep( QRegExp( "\\.(tgz|TGZ)$" ) ).size() != qslt.size() )
+      if ( qslt.filter( QRegExp( "\\.(tgz|TGZ)$" ) ).size() != qslt.size() )
       {
          // not all tgz
          cout << QString("Error: %1 control file does not contain only .tgz files\n").arg( controlfile );
@@ -220,7 +224,7 @@ bool US_Saxs_Util::run_iq_mpi( QString controlfile )
 
       // check for ^common_
 
-      QStringList common = qslt.grep( QRegExp( "^common_" ) );
+      QStringList common = qslt.filter( QRegExp( "^common_" ) );
       if ( common.size() )
       {
          for ( unsigned int i = 0; i < common.size(); i++ )
@@ -264,7 +268,7 @@ bool US_Saxs_Util::run_iq_mpi( QString controlfile )
             }
 
             // mkdir, extract
-            QString qs_base_dir = QDir::currentDirPath();
+            QString qs_base_dir = QDir::currentPath();
             QString qs_run_dir = QString( "%1/common" ).arg( qs_base_dir );
             QDir qd( qs_run_dir );
             if ( !qd.exists() )
@@ -291,15 +295,15 @@ bool US_Saxs_Util::run_iq_mpi( QString controlfile )
                {
                   if ( !f.open( QIODevice::ReadOnly ) )
                   {
-                     // qDebug("Error: could not open directives file" );
+                     // us_qdebug("Error: could not open directives file" );
                      MPI_Abort( MPI_COMM_WORLD, errorno );
                      exit( errorno );
                   }
-                  Q3TextStream ts( &f );
+                  QTextStream ts( &f );
                   QString qs = ts.readLine();
                   f.close();
                   skip_cores_per_core = qs.toUInt();
-                  // qDebug( QString( "%1: found directives, skip cores per core is %2" ).arg( myrank ).arg( skip_cores_per_core ) );
+                  // us_qdebug( QString( "%1: found directives, skip cores per core is %2" ).arg( myrank ).arg( skip_cores_per_core ) );
                }
             }
             
@@ -321,7 +325,7 @@ bool US_Saxs_Util::run_iq_mpi( QString controlfile )
          cout << QString("%1: done with common files\n" ).arg( myrank ) << flush;
       }
 
-      QString qs_files = qslt.join( "\n" ).ascii();
+      QString qs_files = qslt.join( "\n" ).toAscii().data();
       sizeoflist = qs_files.length();
       char char_files[ sizeoflist + 1 ];
       strncpy( char_files, qs_files, sizeoflist + 1 );
@@ -363,7 +367,7 @@ bool US_Saxs_Util::run_iq_mpi( QString controlfile )
 
    cout << QString( "%1: %2\n" ).arg( myrank ).arg( qslt.join( ":" ) ) << flush;
 
-   QString qs_base_dir = QDir::currentDirPath();
+   QString qs_base_dir = QDir::currentPath();
 
    US_Tar ust;
 
@@ -381,7 +385,7 @@ bool US_Saxs_Util::run_iq_mpi( QString controlfile )
 
    if ( !myrank )
    {
-      // qDebug( QString( "0: jobs %1 np %2 skip %3 useprocs %4 inc %5" )
+      // us_qdebug( QString( "0: jobs %1 np %2 skip %3 useprocs %4 inc %5" )
       //         .arg( qslt.size() )
       //         .arg( npes )
       //         .arg( skip_cores_per_core )
@@ -391,7 +395,7 @@ bool US_Saxs_Util::run_iq_mpi( QString controlfile )
 
    if ( myrank % inc )
    {
-      // qDebug( QString( "%1: sleep" ).arg( myrank ) );
+      // us_qdebug( QString( "%1: sleep" ).arg( myrank ) );
       if ( (unsigned int) myrank >= qslt.size() )
       {
          full_output_list << "null_remove";
@@ -424,14 +428,14 @@ bool US_Saxs_Util::run_iq_mpi( QString controlfile )
             QFile f( QString( "errors-%1" ).arg( i ) );
             if( f.open( QIODevice::WriteOnly | QIODevice::Append ) )
             {
-               Q3TextStream ts( &f );
+               QTextStream ts( &f );
                ts << QString( "%1: %2\n" ).arg( myrank ).arg( errormsg ) << flush;
                f.close();
             }
-            if ( !in_output.count( f.name() ) )
+            if ( !in_output.count( f.fileName() ) )
             {
-               in_output[ f.name() ] = true;
-               full_output_list << QString( "tmp_%1/%2" ).arg( i ).arg( f.name() );
+               in_output[ f.fileName() ] = true;
+               full_output_list << QString( "tmp_%1/%2" ).arg( i ).arg( f.fileName() );
             }
          }
 
@@ -440,14 +444,14 @@ bool US_Saxs_Util::run_iq_mpi( QString controlfile )
             QFile f( QString( "notice-%1" ).arg( i ) );
             if( f.open( QIODevice::WriteOnly | QIODevice::Append ) )
             {
-               Q3TextStream ts( &f );
+               QTextStream ts( &f );
                ts << QString( "%1: %2\n" ).arg( myrank ).arg( noticemsg ) << flush;
                f.close();
             }
-            if ( !in_output.count( f.name() ) )
+            if ( !in_output.count( f.fileName() ) )
             {
-               in_output[ f.name() ] = true;
-               full_output_list << QString( "tmp_%1/%2" ).arg( i ).arg( f.name() );
+               in_output[ f.fileName() ] = true;
+               full_output_list << QString( "tmp_%1/%2" ).arg( i ).arg( f.fileName() );
             }
          }
                
@@ -469,7 +473,7 @@ bool US_Saxs_Util::run_iq_mpi( QString controlfile )
 
    nice( 20 );
 
-   // qDebug( QString("%1: end of computation barrier my full_output_list %2\n" ).arg( myrank ).arg( full_output_list.join( ":" ) ) );
+   // us_qdebug( QString("%1: end of computation barrier my full_output_list %2\n" ).arg( myrank ).arg( full_output_list.join( ":" ) ) );
 
    if ( MPI_SUCCESS != MPI_Barrier( MPI_COMM_WORLD ) )
    {
@@ -480,7 +484,7 @@ bool US_Saxs_Util::run_iq_mpi( QString controlfile )
 
    // now collect results
 
-   QString qs_files = full_output_list.join( "\n" ).ascii();
+   QString qs_files = full_output_list.join( "\n" ).toAscii().data();
    sizeoflist = qs_files.length();
 
    unsigned int max_individual_size;
@@ -517,8 +521,12 @@ bool US_Saxs_Util::run_iq_mpi( QString controlfile )
       
       for ( unsigned int i = 0; i < (unsigned int) npes; i++ )
       {
-         qslt = QStringList::split( "\n", QString( "%1" )
-                                    .arg( &gathered_output_files[ i * ( max_individual_size + 1 ) ] ) );
+         // qslt = (QString( "%1" ).split( "\n" , QString::SkipEmptyParts )
+         //                            .arg( &gathered_output_files[ i * ( max_individual_size + 1 ) ] ) );
+         {
+            QString qs =  QString( "%1" ).arg( &gathered_output_files[ i * ( max_individual_size + 1 ) ] );
+            qslt = (qs ).split( "\n" , QString::SkipEmptyParts );
+         }
          for ( unsigned int j = 0; j < qslt.size(); j++ )
          {
             if ( qslt[ j ] != "null_remove" )
@@ -568,7 +576,7 @@ bool US_Saxs_Util::run_iq_mpi( QString controlfile )
          }
          QDir::setCurrent( current.path() );
          QDir ndod;
-         if ( !ndod.mkdir( newdir, true ) )
+         if ( !ndod.mkdir( newdir ) )
          {
             cout << QString("Warning: could not create outputData \"%1\" directory\n" ).arg( ndod.path() );
          }
@@ -603,7 +611,7 @@ bool US_Saxs_Util::run_nsa_mpi( QString controlfile )
       exit( -10002 );
    }         
 
-   QString qs_base_dir = QDir::currentDirPath();
+   QString qs_base_dir = QDir::currentPath();
 
    int minutes = QString( "%1" ).arg( getenv( "GFAC_JOBWALLTIME" ) ).toInt();
    if ( minutes - SHUTDOWN_MINUTES > 0 )
@@ -710,7 +718,11 @@ bool US_Saxs_Util::run_nsa_mpi( QString controlfile )
       }         
       errorno--;
 
-      qslt = QStringList::split( "\n", QString( "%1" ).arg( char_files ) );
+      // qslt = (QString( "%1" ).split( "\n" , QString::SkipEmptyParts ).arg( char_files ) );
+      {
+         QString qs = QString( "%1" ).arg( char_files );
+         qslt = (qs ).split( "\n" , QString::SkipEmptyParts );
+      }
    } else {
       // cout << QString("%1: extracting job files\n").arg( myrank ) << flush;
       
@@ -719,10 +731,10 @@ bool US_Saxs_Util::run_nsa_mpi( QString controlfile )
 
       // copy here
       US_File_Util usu;
-      usu.copy( controlfile, QDir::currentDirPath() + SLASH + QFileInfo( controlfile ).fileName() );
+      usu.copy( controlfile, QDir::currentPath() + SLASH + QFileInfo( controlfile ).fileName() );
       cout << QString( "copying %1 %2 <%3>\n" )
          .arg( controlfile )
-         .arg( QDir::currentDirPath() + SLASH + QFileInfo( controlfile ).fileName() )
+         .arg( QDir::currentPath() + SLASH + QFileInfo( controlfile ).fileName() )
          .arg( usu.errormsg );
       dest = QFileInfo( controlfile ).fileName();
 
@@ -853,7 +865,7 @@ bool US_Saxs_Util::run_nsa_mpi( QString controlfile )
          }
          QDir::setCurrent( current.path() );
          QDir ndod;
-         if ( !ndod.mkdir( newdir, true ) )
+         if ( !ndod.mkdir( newdir ) )
          {
             cout << QString("Warning: could not create outputData \"%1\" directory\n" ).arg( ndod.path() );
          }

@@ -41,10 +41,10 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer_Nth : public QDialog
       vector < QWidget * >                    files_widgets;
 
       QLabel *                                lbl_files;
-      Q3ListBox *                              lb_files;
+      QListWidget *                              lb_files;
 
       QLabel *                                lbl_files_sel;
-      Q3ListBox *                              lb_files_sel;
+      QListWidget *                              lb_files_sel;
       QLabel *                                lbl_files_selected;
 
       // select
@@ -118,12 +118,12 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer_Nth : public QDialog
       QPushButton *                           pb_i_avg_all;
       QPushButton *                           pb_i_avg_sel;
       
-      QButtonGroup *                          bg_i_above_below;
+      QGroupBox *                          bg_i_above_below;
       QRadioButton *                          rb_i_above;
       QRadioButton *                          rb_i_below;
       QLineEdit *                             le_i_level;
 
-      Q3TextEdit *                             te_q;
+      QTextEdit *                             te_q;
 
       QPushButton *                           pb_i_only;
       QPushButton *                           pb_i_add;

@@ -13,14 +13,14 @@ int main (int argc, char **argv)
       delete us_register;
       US_Admin *us_admin;
       us_admin = new US_Admin();
-      us_admin->setCaption("Administrator Password");
+      us_admin->setWindowTitle("Administrator Password");
       us_admin->show();
-      a.setMainWidget(us_admin);
+ //      a.setMainWidget(us_admin);
       a.setDesktopSettingsAware(false);
    }
    else     // problem with license (either missing, incorrect or expired)
    {
-      a.setMainWidget(us_register);
+ //      a.setMainWidget(us_register);
       a.setDesktopSettingsAware(false);
    }
    return a.exec();

@@ -2,16 +2,16 @@
 #include "../include/us_hydrodyn_overlap_reduction.h"
 #include "../include/us_hydrodyn.h"
 //Added by qt3to4:
-#include <Q3GridLayout>
+#include <QGridLayout>
 #include <QLabel>
-#include <Q3Frame>
+#include <QFrame>
 
 US_Hydrodyn_OR::US_Hydrodyn_OR(struct overlap_reduction *o_r, 
                                bool *replicate_o_r_method,
                                vector < void * > *other_ORs,
                                void *us_hydrodyn, 
                                QWidget *p, 
-                               const char *name) : Q3Frame(p, name)
+                               const char *name) : QFrame( p )
 {
    this->o_r = o_r;
    this->replicate_o_r_method = replicate_o_r_method;
@@ -30,9 +30,9 @@ void US_Hydrodyn_OR::setupGUI()
 {
    int minHeight1 = 30;
 
-   lbl_title = new QLabel(tr("Overlap reduction between " + (*o_r).title), this);
+   lbl_title = new QLabel(us_tr("Overlap reduction between " + (*o_r).title), this);
    Q_CHECK_PTR(lbl_title);
-   lbl_title->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Raised);
+   lbl_title->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_title->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_title->setMinimumHeight(minHeight1);
    lbl_title->setPalette( PALET_FRAME );
@@ -40,7 +40,7 @@ void US_Hydrodyn_OR::setupGUI()
    lbl_title->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
 
    cb_remove = new QCheckBox(this);
-   cb_remove->setText(tr(" Remove Overlaps "));
+   cb_remove->setText(us_tr(" Remove Overlaps "));
    cb_remove->setChecked((*o_r).remove_overlap);
    cb_remove->setEnabled(true);
    cb_remove->setMinimumHeight(minHeight1);
@@ -50,7 +50,7 @@ void US_Hydrodyn_OR::setupGUI()
    connect(cb_remove, SIGNAL(clicked()), SLOT(set_remove()));
 
    cb_replicate_method = new QCheckBox(this);
-   cb_replicate_method->setText(tr(" Same overlap reduction method of all bead types"));
+   cb_replicate_method->setText(us_tr(" Same overlap reduction method of all bead types"));
    cb_replicate_method->setChecked(*replicate_o_r_method);
    cb_replicate_method->setEnabled(true);
    cb_replicate_method->setMinimumHeight(minHeight1);
@@ -60,7 +60,7 @@ void US_Hydrodyn_OR::setupGUI()
    connect(cb_replicate_method, SIGNAL(clicked()), SLOT(set_replicate_method()));
 
    cb_fuse = new QCheckBox(this);
-   cb_fuse->setText(tr(" Fuse Beads that overlap by more than: "));
+   cb_fuse->setText(us_tr(" Fuse Beads that overlap by more than: "));
    cb_fuse->setChecked((*o_r).fuse_beads);
    cb_fuse->setMinimumHeight(minHeight1);
    cb_fuse->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -80,7 +80,7 @@ void US_Hydrodyn_OR::setupGUI()
    AUTFBACK( cnt_fuse );
    connect(cnt_fuse, SIGNAL(valueChanged(double)), SLOT(update_fuse(double)));
 
-   lbl_steps = new QLabel(tr(" Overlap Reduction\n Step Size (in %): "), this);
+   lbl_steps = new QLabel(us_tr(" Overlap Reduction\n Step Size (in %): "), this);
    Q_CHECK_PTR(lbl_steps);
    lbl_steps->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_steps->setMinimumHeight(minHeight1+20);
@@ -89,7 +89,7 @@ void US_Hydrodyn_OR::setupGUI()
    lbl_steps->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    cb_hierarch = new QCheckBox(this);
-   cb_hierarch->setText(tr(" Remove Overlaps hierarchically (larger -> smaller) "));
+   cb_hierarch->setText(us_tr(" Remove Overlaps hierarchically (larger -> smaller) "));
    cb_hierarch->setChecked((*o_r).remove_hierarch);
    cb_hierarch->setEnabled((*o_r).remove_overlap);
    cb_hierarch->setMinimumHeight(minHeight1);
@@ -112,7 +112,7 @@ void US_Hydrodyn_OR::setupGUI()
    connect(cnt_hierarch, SIGNAL(valueChanged(double)), SLOT(update_hierarch(double)));
 
    cb_sync = new QCheckBox(this);
-   cb_sync->setText(tr(" Remove Overlaps synchronously: "));
+   cb_sync->setText(us_tr(" Remove Overlaps synchronously: "));
    cb_sync->setChecked((*o_r).remove_sync);
    cb_sync->setEnabled((*o_r).remove_overlap);
    cb_sync->setMinimumHeight(minHeight1);
@@ -137,7 +137,7 @@ void US_Hydrodyn_OR::setupGUI()
    if ((*o_r).show_translate)
    {
       cb_translate = new QCheckBox(this);
-      cb_translate->setText(tr(" Outward Translation "));
+      cb_translate->setText(us_tr(" Outward Translation "));
       cb_translate->setChecked((*o_r).translate_out);
       cb_translate->setEnabled((*o_r).remove_overlap);
       cb_translate->setMinimumHeight(minHeight1);
@@ -148,16 +148,16 @@ void US_Hydrodyn_OR::setupGUI()
    }
 
    int rows=6, columns = 2, spacing = 2, j=0, margin=2;
-   Q3GridLayout *background=new Q3GridLayout(this, rows, columns, margin, spacing);
+   QGridLayout * background = new QGridLayout( this ); background->setContentsMargins( 0, 0, 0, 0 ); background->setSpacing( 0 ); background->setSpacing( spacing ); background->setContentsMargins( margin, margin, margin, margin );
 
-   background->addMultiCellWidget(lbl_title, j, j, 0, 1);
+   background->addWidget( lbl_title , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
    j++;
    background->addWidget(cb_fuse, j, 0);
    background->addWidget(cnt_fuse, j, 1);
    j++;
    background->addWidget(cb_remove, j, 0);
    j++;
-   background->addMultiCellWidget(lbl_steps, j, j+1, 1, 1);
+   background->addWidget( lbl_steps , j , 1 , 1 + ( j+1 ) - ( j ) , 1 + ( 1 ) - ( 1 ) );
    background->addWidget(cb_replicate_method, j+1, 0);
    j+=2;
    background->addWidget(cb_sync, j, 0);

@@ -6,8 +6,9 @@
 #include <qlabel.h>
 #include <qstring.h>
 #include <qlayout.h>
-#include <q3buttongroup.h>
-#include <q3frame.h>
+#include <qgroupbox.h>
+#include <qradiobutton.h>
+//#include <q3frame.h>
 #include <qcheckbox.h>
 //Added by qt3to4:
 #include <QCloseEvent>
@@ -40,7 +41,7 @@ struct pdb_parsing
                            // 2 = use approximate method to generate beads (approximate method, default)
 };
 
-class US_EXTERN US_Hydrodyn_PDB_Parsing : public Q3Frame
+class US_EXTERN US_Hydrodyn_PDB_Parsing : public QFrame
 {
    Q_OBJECT
 
@@ -61,9 +62,9 @@ class US_EXTERN US_Hydrodyn_PDB_Parsing : public Q3Frame
       QPushButton *pb_help;
       QPushButton *pb_cancel;
       
-      Q3ButtonGroup *bg_misc;
-      Q3ButtonGroup *bg_residues;
-      Q3ButtonGroup *bg_atoms;
+      QGroupBox *bg_misc;
+      QGroupBox *bg_residues;
+      QGroupBox *bg_atoms;
 
       QCheckBox *cb_skip_hydrogen;
       QCheckBox *cb_skip_water;
@@ -73,9 +74,15 @@ class US_EXTERN US_Hydrodyn_PDB_Parsing : public Q3Frame
       QCheckBox *cb_residue_stop;
       QCheckBox *cb_residue_skip;
       QCheckBox *cb_residue_auto;
+      QRadioButton *rb_residue_stop;
+      QRadioButton *rb_residue_skip;
+      QRadioButton *rb_residue_auto;
       QCheckBox *cb_atom_stop;
       QCheckBox *cb_atom_skip;
       QCheckBox *cb_atom_auto;
+      QRadioButton *rb_atom_stop;
+      QRadioButton *rb_atom_skip;
+      QRadioButton *rb_atom_auto;
       
    private slots:
       
@@ -85,7 +92,9 @@ class US_EXTERN US_Hydrodyn_PDB_Parsing : public Q3Frame
       void alternate();
       void find_sh();
       void save_csv_on_load();
+      void residue();
       void residue(int);
+      void atom();
       void atom(int);
       void cancel();
       void help();

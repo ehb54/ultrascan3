@@ -2,7 +2,7 @@
 #include "../include/us_write_config.h"
 #include <qregexp.h>
 //Added by qt3to4:
-#include <Q3TextStream>
+#include <QTextStream>
 
 // note: this program uses cout and/or cerr and this should be replaced
 
@@ -14,7 +14,7 @@ void process_script(QString, US_Hydrodyn *);
 
 int main (int argc, char **argv)
 {
-   QDir *dir = new QDir(QDir::currentDirPath());
+   QDir *dir = new QDir(QDir::currentPath());
    QApplication a(argc, argv);
 
    bool expert = false;
@@ -77,7 +77,7 @@ int main (int argc, char **argv)
       batch_file.push_back( dir->filePath(a.argv()[i]) );      
    }
    hydrodyn = new US_Hydrodyn(batch_file);
-   hydrodyn->setCaption("SOMO Solution Modeler");
+   hydrodyn->setWindowTitle("SOMO Solution Modeler");
    if ( residue_file )
    {
       hydrodyn->residue_filename = residue_filename;
@@ -108,7 +108,7 @@ int main (int argc, char **argv)
       hydrodyn->guiFlag = true;
    }
    hydrodyn->show();
-   a.setMainWidget(hydrodyn);
+ //   a.setMainWidget(hydrodyn);
    a.setDesktopSettingsAware(false);
 #ifdef QT4
    {
@@ -130,7 +130,7 @@ void process_script(QString script_filename, US_Hydrodyn *h)
    if ( f.open(QIODevice::ReadOnly) )
    {
       h->read_residue_file();
-      Q3TextStream ts(&f);
+      QTextStream ts(&f);
       QRegExp rx0("^(\\S+)(\\s+|$)");
       QRegExp rx1("^(\\S+)\\s*$");
       QRegExp rx2("^(\\S+)\\s*(\\S+)\\s*$");
@@ -146,14 +146,14 @@ void process_script(QString script_filename, US_Hydrodyn *h)
          bool ok = false;
 
          line++;
-         rx0.search(c);
-         rx1.search(c);
-         rx2.search(c);
-         rx3.search(c);
+         rx0.indexIn(c);
+         rx1.indexIn(c);
+         rx2.indexIn(c);
+         rx3.indexIn(c);
          //         printf("rx0.cap(1) <%s> rx1.cap(1) <%s> rx2.cap(1) <%s>\n"
-         //                ,rx0.cap(1).ascii()
-         //                ,rx1.cap(1).ascii()
-         //                ,rx2.cap(1).ascii()
+         //                ,rx0.cap(1).toAscii().data()
+         //                ,rx1.cap(1).toAscii().data()
+         //                ,rx2.cap(1).toAscii().data()
          //                );
          if ( rx0.cap(1) == "exit" )
          {
@@ -168,27 +168,27 @@ void process_script(QString script_filename, US_Hydrodyn *h)
          {
             cout << QString("loading \"%1\"\t").arg(rx2.cap(2));
             bool result = false;
-            if ( rx2.cap(2).lower().contains(QRegExp("\\.config$")) ) 
+            if ( rx2.cap(2).toLower().contains(QRegExp("\\.config$")) ) 
             {
                ok = true;
                int result2 = h->read_config(rx2.cap(2));
                result = !result2;
             }
-            if ( rx2.cap(2).lower().contains(QRegExp("\\.residue$")) ) 
+            if ( rx2.cap(2).toLower().contains(QRegExp("\\.residue$")) ) 
             {
                ok = true;
                h->residue_filename = rx2.cap(2);
                h->read_residue_file();
                h->lbl_table->setText( QDir::convertSeparators( rx2.cap(2) ) );
             }
-            if ( rx2.cap(2).lower().contains(QRegExp(".pdb$")) ) 
+            if ( rx2.cap(2).toLower().contains(QRegExp(".pdb$")) ) 
             {
                ok = true;
                // no save/restore settings for load into somo
                result = h->screen_pdb(rx2.cap(2), false);
                loadfiletype = "pdb";
             }
-            if ( rx2.cap(2).lower().contains(QRegExp(".(bead_model|beams)$")) ) 
+            if ( rx2.cap(2).toLower().contains(QRegExp(".(bead_model|beams)$")) ) 
             {
                ok = true;
                result = h->screen_bead_model(rx2.cap(2));

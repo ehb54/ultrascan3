@@ -1,6 +1,6 @@
 #include "../include/us_saxs_util.h"
 //Added by qt3to4:
-#include <Q3TextStream>
+#include <QTextStream>
 
 bool US_Saxs_Util::c2check( QString a, QString b )
 {
@@ -15,7 +15,7 @@ bool US_Saxs_Util::c2check( QString a, QString b )
    vector < saxs_atom > atomsa;
    vector < saxs_atom > atomsb;
 
-   // qDebug( QString( "caonly %1" ).arg( control_parameters.count( "c2checkcaonly" ) ) );
+   // us_qdebug( QString( "caonly %1" ).arg( control_parameters.count( "c2checkcaonly" ) ) );
 
    QString inputbase = QFileInfo( control_parameters[ "inputfile" ] ).baseName();
 
@@ -93,7 +93,7 @@ bool US_Saxs_Util::c2check( QString a, QString b )
          centers.push_back ( new_point );
       }
 
-      // qDebug( QString( "c2check ran providing %1 centers" ).arg( centers.size() ) );
+      // us_qdebug( QString( "c2check ran providing %1 centers" ).arg( centers.size() ) );
       // create output file
 
       QString plotlog;
@@ -108,13 +108,13 @@ bool US_Saxs_Util::c2check( QString a, QString b )
          if ( !f.open( QIODevice::WriteOnly ) )
          {
             errormsg =  QString( "Error: can not create file %1" )
-               .arg( f.name() );
+               .arg( f.fileName() );
             return false;
          }
 
-         plotlog += QString( "\"%1\"" ).arg( f.name() );
+         plotlog += QString( "\"%1\"" ).arg( f.fileName() );
 
-         Q3TextStream ts( &f );
+         QTextStream ts( &f );
          for ( int j = 0; j < (int) centers.size(); ++j )
          {
             ts << QString( "%1 %2 %3\n" )
@@ -124,7 +124,7 @@ bool US_Saxs_Util::c2check( QString a, QString b )
                ;
          }
          f.close();
-         output_files << f.name();
+         output_files << f.fileName();
       }
       {
          QFile f( QString( "%1_%2_%3.txt" )
@@ -135,13 +135,13 @@ bool US_Saxs_Util::c2check( QString a, QString b )
          if ( !f.open( QIODevice::WriteOnly ) )
          {
             errormsg =  QString( "Error: can not create file %1" )
-               .arg( f.name() );
+               .arg( f.fileName() );
             return false;
          }
 
-         plotlog += QString( ", \"%1\"" ).arg( f.name() );
+         plotlog += QString( ", \"%1\"" ).arg( f.fileName() );
 
-         Q3TextStream ts( &f );
+         QTextStream ts( &f );
          for ( int j = 0; j < (int) pa.size(); ++j )
          {
             ts << QString( "%1 %2 %3\n" )
@@ -151,7 +151,7 @@ bool US_Saxs_Util::c2check( QString a, QString b )
                ;
          }
          f.close();
-         output_files << f.name();
+         output_files << f.fileName();
       }
       {
          QFile f( QString( "%1_%2_%3.txt" )
@@ -162,13 +162,13 @@ bool US_Saxs_Util::c2check( QString a, QString b )
          if ( !f.open( QIODevice::WriteOnly ) )
          {
             errormsg =  QString( "Error: can not create file %1" )
-               .arg( f.name() );
+               .arg( f.fileName() );
             return false;
          }
 
-         plotlog += QString( ", \"%1\"" ).arg( f.name() );
+         plotlog += QString( ", \"%1\"" ).arg( f.fileName() );
 
-         Q3TextStream ts( &f );
+         QTextStream ts( &f );
          for ( int j = 0; j < (int) pb.size(); ++j )
          {
             ts << QString( "%1 %2 %3\n" )
@@ -178,20 +178,20 @@ bool US_Saxs_Util::c2check( QString a, QString b )
                ;
          }
          f.close();
-         output_files << f.name();
+         output_files << f.fileName();
       }
 
-      // qDebug(  QString( "splot %1\n" ).arg( plotlog ) );
+      // us_qdebug(  QString( "splot %1\n" ).arg( plotlog ) );
 
       {
          QFile f( "plotlog" );
          if ( !f.open( QIODevice::WriteOnly | QIODevice::Append ) )
          {
             errormsg =  QString( "Error: can not create file %1" )
-               .arg( f.name() );
+               .arg( f.fileName() );
             return false;
          }
-         Q3TextStream ts( &f );
+         QTextStream ts( &f );
          ts << QString( "splot %1\n" ).arg( plotlog );
          f.close();
       }

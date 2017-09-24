@@ -21,6 +21,9 @@ SOURCES		+= ../src/us_saxs_util_hydro_supc_hydro.cpp
 SOURCES		+= ../src/us_saxs_util_hydro_pat_hydro.cpp
 SOURCES		+= ../src/us_saxs_util_hydro_zeno_hydro.cpp
 
+SOURCES		+= ../src/us_zeno_cxx.cpp
+SOURCES		+= ../src/us_zeno_cxx_nf.cpp
+
 SOURCES		+= ../src/us_saxs_util_ift.cpp
 SOURCES		+= ../src/us_saxs_util_loads.cpp
 SOURCES		+= ../src/us_saxs_util_nsa.cpp
@@ -92,5 +95,5 @@ unix {
     DESTDIR = $$US3SOMOPATH/bin
  }
 }
-#The following line was inserted by qt3to4
-QT +=  qt3support 
+
+

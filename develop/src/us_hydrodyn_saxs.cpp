@@ -18,15 +18,15 @@
 #include <qwaitcondition.h>
 #include "qwt_symbol.h"
 //Added by qt3to4:
-#include <Q3BoxLayout>
-#include <Q3VBoxLayout>
-#include <Q3Frame>
+#include <QBoxLayout>
+#include <QVBoxLayout>
+#include <QFrame>
 #include <QLabel>
-#include <Q3PopupMenu>
-#include <Q3HBoxLayout>
-#include <Q3TextStream>
+ //#include <Q3PopupMenu>
+#include <QHBoxLayout>
+#include <QTextStream>
 #include <QCloseEvent>
-#include <Q3GridLayout>
+#include <QGridLayout>
 
 #define SLASH "/"
 #if defined(WIN32)
@@ -72,7 +72,7 @@ US_Hydrodyn_Saxs::US_Hydrodyn_Saxs(
                                    void                           *us_hydrodyn,
                                    QWidget                        *p, 
                                    const char                     *name
-                                   ) : Q3Frame(p, name)
+                                   ) : QFrame( p )
 {
    if ( !( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "guinier_mwt_k" ) )
    {
@@ -150,7 +150,7 @@ US_Hydrodyn_Saxs::US_Hydrodyn_Saxs(
 
    USglobal=new US_Config();
    setPalette( PALET_FRAME );
-   setCaption( tr( "US-SOMO: " + tr( "SAS Plotting Functions" ) ) );
+   setWindowTitle( us_tr( "US-SOMO: " + us_tr( "SAS Plotting Functions" ) ) );
    reset_search_csv();
    reset_screen_csv();
    reset_buffer_csv();
@@ -177,10 +177,15 @@ US_Hydrodyn_Saxs::US_Hydrodyn_Saxs(
       }
       default: // undefined
       {
-         QMessageBox mb(tr("UltraScan"),
-                        tr("The source file has not been defined, please try again..."), QMessageBox::Critical,
-                           Qt::NoButton, Qt::NoButton, Qt::NoButton, 0, 0, 1);
-         if (mb.exec())
+         // QMessageBox mb(us_tr("UltraScan"),
+         //                us_tr("The source file has not been defined, please try again..."),
+         //                QMessageBox::Critical,
+         //                   QMessageBox::NoButton, QMessageBox::NoButton, QMessageBox::NoButton, 0, 0, 1);
+         // if (mb.exec())
+         QMessageBox::critical( this,
+                                us_tr("UltraScan"),
+                                us_tr("The source file has not been defined, please try again..."),
+                                Qt::NoButton, Qt::NoButton, Qt::NoButton );
          {
             exit(-1);
          }
@@ -483,10 +488,15 @@ void US_Hydrodyn_Saxs::refresh(
       }
       default: // undefined
       {
-         QMessageBox mb(tr("UltraScan"),
-                        tr("The source file has not been defined, please try again..."), QMessageBox::Critical,
-                           Qt::NoButton, Qt::NoButton, Qt::NoButton, 0, 0, 1);
-         if (mb.exec())
+         // QMessageBox mb(us_tr("UltraScan"),
+         //                us_tr("The source file has not been defined, please try again..."),
+         //                QMessageBox::Critical,
+         //                   QMessageBox::NoButton, QMessageBox::NoButton, QMessageBox::NoButton, 0, 0, 1);
+         // if (mb.exec())
+         QMessageBox::critical( this,
+                                us_tr("UltraScan"),
+                                us_tr("The source file has not been defined, please try again..."),
+                                Qt::NoButton, Qt::NoButton, Qt::NoButton );
          {
             exit(-1);
          }
@@ -533,14 +543,14 @@ void US_Hydrodyn_Saxs::setupGUI()
 
    // ************ initial file ***********
 
-   lbl_filename1 = new QLabel(tr(""), this);
+   lbl_filename1 = new QLabel(us_tr(""), this);
    lbl_filename1->setMinimumHeight(minHeight1);
    lbl_filename1->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_filename1->setPalette( PALET_LABEL );
    AUTFBACK( lbl_filename1 );
    lbl_filename1->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 
-   te_filename2 = new QLineEdit(this, "");
+   te_filename2 = new QLineEdit( this );    te_filename2->setObjectName( "" );
    te_filename2->setMinimumHeight(minHeight1);
    te_filename2->setMaximumHeight(minHeight1);
    te_filename2->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
@@ -552,8 +562,8 @@ void US_Hydrodyn_Saxs::setupGUI()
 
    // ************ settings ***********
 
-   lbl_settings = new mQLabel(tr("Definition files:"), this);
-   lbl_settings->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Raised);
+   lbl_settings = new mQLabel(us_tr("Definition files:"), this);
+   lbl_settings->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_settings->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_settings->setMinimumHeight(minHeight1);
    lbl_settings->setPalette( PALET_FRAME );
@@ -561,29 +571,29 @@ void US_Hydrodyn_Saxs::setupGUI()
    lbl_settings->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
    connect( lbl_settings, SIGNAL( pressed() ), SLOT( hide_settings() ) );
 
-   pb_select_atom_file = new QPushButton(tr("Load Atom Definition File"), this);
+   pb_select_atom_file = new QPushButton(us_tr("Load Atom Definition File"), this);
    pb_select_atom_file->setMinimumHeight(minHeight1);
    pb_select_atom_file->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_select_atom_file->setPalette( PALET_PUSHB );
    connect(pb_select_atom_file, SIGNAL(clicked()), SLOT(select_atom_file()));
    settings_widgets.push_back( pb_select_atom_file );
 
-   pb_select_hybrid_file = new QPushButton(tr("Load Hybridization File"), this);
+   pb_select_hybrid_file = new QPushButton(us_tr("Load Hybridization File"), this);
    pb_select_hybrid_file->setMinimumHeight(minHeight1);
    pb_select_hybrid_file->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_select_hybrid_file->setPalette( PALET_PUSHB );
    connect(pb_select_hybrid_file, SIGNAL(clicked()), SLOT(select_hybrid_file()));
    settings_widgets.push_back( pb_select_hybrid_file );
 
-   pb_select_saxs_file = new QPushButton(tr("Load SAXS Coefficients File"), this);
+   pb_select_saxs_file = new QPushButton(us_tr("Load SAXS Coefficients File"), this);
    pb_select_saxs_file->setMinimumHeight(minHeight1);
    pb_select_saxs_file->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_select_saxs_file->setPalette( PALET_PUSHB );
    connect(pb_select_saxs_file, SIGNAL(clicked()), SLOT(select_saxs_file()));
    settings_widgets.push_back( pb_select_saxs_file );
 
-   lbl_atom_table = new QLabel(tr(" not selected"),this);
-   lbl_atom_table->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Sunken);
+   lbl_atom_table = new QLabel(us_tr(" not selected"),this);
+   lbl_atom_table->setFrameStyle(QFrame::WinPanel|QFrame::Sunken);
    lbl_atom_table->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_atom_table->setPalette( PALET_EDIT );
    AUTFBACK( lbl_atom_table );
@@ -591,8 +601,8 @@ void US_Hydrodyn_Saxs::setupGUI()
    lbl_atom_table->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    settings_widgets.push_back( lbl_atom_table );
 
-   lbl_hybrid_table = new QLabel(tr(" not selected"),this);
-   lbl_hybrid_table->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Sunken);
+   lbl_hybrid_table = new QLabel(us_tr(" not selected"),this);
+   lbl_hybrid_table->setFrameStyle(QFrame::WinPanel|QFrame::Sunken);
    lbl_hybrid_table->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_hybrid_table->setPalette( PALET_EDIT );
    AUTFBACK( lbl_hybrid_table );
@@ -600,8 +610,8 @@ void US_Hydrodyn_Saxs::setupGUI()
    lbl_hybrid_table->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    settings_widgets.push_back( lbl_hybrid_table );
 
-   lbl_saxs_table = new QLabel(tr(" not selected"),this);
-   lbl_saxs_table->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Sunken);
+   lbl_saxs_table = new QLabel(us_tr(" not selected"),this);
+   lbl_saxs_table->setFrameStyle(QFrame::WinPanel|QFrame::Sunken);
    lbl_saxs_table->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_saxs_table->setPalette( PALET_EDIT );
    AUTFBACK( lbl_saxs_table );
@@ -610,9 +620,10 @@ void US_Hydrodyn_Saxs::setupGUI()
    settings_widgets.push_back( lbl_saxs_table );
 
    // ************ SAS ***********
+   qDebug() << "startup: our_saxs_options->saxs_sans = " << our_saxs_options->saxs_sans;
 
-   lbl_iq = new mQLabel(tr("SAS I(q) Plotting Functions:"), this);
-   lbl_iq->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Raised);
+   lbl_iq = new mQLabel(us_tr("SAS I(q) Plotting Functions:"), this);
+   lbl_iq->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_iq->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_iq->setMinimumHeight(minHeight1);
    lbl_iq->setPalette( PALET_FRAME );
@@ -620,38 +631,47 @@ void US_Hydrodyn_Saxs::setupGUI()
    lbl_iq->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
    connect( lbl_iq, SIGNAL( pressed() ), SLOT( hide_iq() ) );
 
-   rb_saxs = new QRadioButton(tr("SAXS"), this);
+   rb_saxs = new QRadioButton(us_tr("SAXS"), this);
    rb_saxs->setEnabled(true);
-   rb_saxs->setChecked(!our_saxs_options->saxs_sans);
    rb_saxs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    rb_saxs->setPalette( PALET_NORMAL );
    AUTFBACK( rb_saxs );
    iq_widgets.push_back( rb_saxs );
 
-   rb_sans = new QRadioButton(tr("SANS"), this);
+   rb_sans = new QRadioButton(us_tr("SANS"), this);
    rb_sans->setEnabled(true);
-   rb_sans->setChecked(our_saxs_options->saxs_sans);
    rb_sans->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    rb_sans->setPalette( PALET_NORMAL );
    AUTFBACK( rb_sans );
    iq_widgets.push_back( rb_sans );
 
-   bg_saxs_sans = new QButtonGroup( this );
-   int bg_pos = 0;
-   bg_saxs_sans->setExclusive(true);
-   bg_saxs_sans->addButton( rb_saxs, bg_pos++ );
-   bg_saxs_sans->addButton( rb_sans, bg_pos++ );
-   connect(bg_saxs_sans, SIGNAL(buttonClicked(int)), SLOT(set_saxs_sans(int)));
-   // iq_widgets.push_back( bg_saxs_sans );
+   if ( our_saxs_options->saxs_sans ) {
+      rb_saxs->setChecked(true);
+   } else {
+      rb_sans->setChecked(true);
+   }
 
-   rb_saxs_iq_native_debye = new QRadioButton(tr("F-DB"), this);
+   bg_saxs_sans = new QGroupBox();
+   bg_saxs_sans->setFlat( true );
+
+   connect( rb_saxs, SIGNAL( clicked() ), this, SLOT( set_saxs_sans() ) );
+   connect( rb_sans, SIGNAL( clicked() ), this, SLOT( set_saxs_sans() ) );
+   {
+      QHBoxLayout * bl = new QHBoxLayout; bl->setContentsMargins( 0, 0, 0, 0 ); bl->setSpacing( 0 );
+      bl->addWidget( rb_saxs );
+      bl->addWidget( rb_sans );
+      bg_saxs_sans->setLayout( bl );
+   }
+
+
+   rb_saxs_iq_native_debye = new QRadioButton(us_tr("F-DB"), this);
    rb_saxs_iq_native_debye->setEnabled(true);
    rb_saxs_iq_native_debye->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    rb_saxs_iq_native_debye->setPalette( PALET_NORMAL );
    AUTFBACK( rb_saxs_iq_native_debye );
    iq_widgets.push_back( rb_saxs_iq_native_debye );
 
-   rb_saxs_iq_native_sh = new QRadioButton(tr("SH-DB"), this);
+   rb_saxs_iq_native_sh = new QRadioButton(us_tr("SH-DB"), this);
    rb_saxs_iq_native_sh->setEnabled(true);
    rb_saxs_iq_native_sh->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    rb_saxs_iq_native_sh->setPalette( PALET_NORMAL );
@@ -660,21 +680,21 @@ void US_Hydrodyn_Saxs::setupGUI()
 
    if ( started_in_expert_mode )
    {
-      rb_saxs_iq_native_hybrid = new QRadioButton(tr("Hybrid   "), this);
+      rb_saxs_iq_native_hybrid = new QRadioButton(us_tr("Hybrid   "), this);
       rb_saxs_iq_native_hybrid->setEnabled(true);
       rb_saxs_iq_native_hybrid->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
       rb_saxs_iq_native_hybrid->setPalette( PALET_NORMAL );
       AUTFBACK( rb_saxs_iq_native_hybrid );
       iq_widgets.push_back( rb_saxs_iq_native_hybrid );
 
-      rb_saxs_iq_native_hybrid2 = new QRadioButton(tr("H2"), this);
+      rb_saxs_iq_native_hybrid2 = new QRadioButton(us_tr("H2"), this);
       rb_saxs_iq_native_hybrid2->setEnabled(true);
       rb_saxs_iq_native_hybrid2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
       rb_saxs_iq_native_hybrid2->setPalette( PALET_NORMAL );
       AUTFBACK( rb_saxs_iq_native_hybrid2 );
       iq_widgets.push_back( rb_saxs_iq_native_hybrid2 );
 
-      rb_saxs_iq_native_hybrid3 = new QRadioButton(tr("H3"), this);
+      rb_saxs_iq_native_hybrid3 = new QRadioButton(us_tr("H3"), this);
       rb_saxs_iq_native_hybrid3->setEnabled(true);
       rb_saxs_iq_native_hybrid3->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
       rb_saxs_iq_native_hybrid3->setPalette( PALET_NORMAL );
@@ -682,7 +702,7 @@ void US_Hydrodyn_Saxs::setupGUI()
       iq_widgets.push_back( rb_saxs_iq_native_hybrid3 );
    }
 
-   rb_saxs_iq_native_fast = new QRadioButton(tr("Q-DB"), this);
+   rb_saxs_iq_native_fast = new QRadioButton(us_tr("Q-DB"), this);
    rb_saxs_iq_native_fast->setEnabled(true);
    rb_saxs_iq_native_fast->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    rb_saxs_iq_native_fast->setPalette( PALET_NORMAL );
@@ -691,7 +711,7 @@ void US_Hydrodyn_Saxs::setupGUI()
 
    if ( started_in_expert_mode )
    {
-      rb_saxs_iq_foxs = new QRadioButton(tr("FoXS"), this);
+      rb_saxs_iq_foxs = new QRadioButton(us_tr("FoXS"), this);
       rb_saxs_iq_foxs->setEnabled(true);
       rb_saxs_iq_foxs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
       rb_saxs_iq_foxs->setPalette( PALET_NORMAL );
@@ -699,7 +719,7 @@ void US_Hydrodyn_Saxs::setupGUI()
       iq_widgets.push_back( rb_saxs_iq_foxs );
    }
 
-   rb_saxs_iq_crysol = new QRadioButton(tr("Crysol"), this);
+   rb_saxs_iq_crysol = new QRadioButton(us_tr("Crysol"), this);
    rb_saxs_iq_crysol->setEnabled(true);
    rb_saxs_iq_crysol->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    rb_saxs_iq_crysol->setPalette( PALET_NORMAL );
@@ -708,7 +728,7 @@ void US_Hydrodyn_Saxs::setupGUI()
 
    if ( started_in_expert_mode )
    {
-      rb_saxs_iq_sastbx = new QRadioButton(tr("Sastbx"), this);
+      rb_saxs_iq_sastbx = new QRadioButton(us_tr("Sastbx"), this);
       rb_saxs_iq_sastbx->setEnabled(true);
       rb_saxs_iq_sastbx->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
       rb_saxs_iq_sastbx->setPalette( PALET_NORMAL );
@@ -716,7 +736,8 @@ void US_Hydrodyn_Saxs::setupGUI()
       iq_widgets.push_back( rb_saxs_iq_sastbx );
    }
 
-   bg_saxs_iq = new QButtonGroup( this );
+#if QT_VERSION < 0x040000
+   bg_saxs_iq = new QGroupBox( this );
    bg_pos = 0;
    bg_saxs_iq->setExclusive(true);
    bg_saxs_iq->addButton( rb_saxs_iq_native_debye, bg_pos++ );
@@ -740,15 +761,55 @@ void US_Hydrodyn_Saxs::setupGUI()
    }
    connect(bg_saxs_iq, SIGNAL(buttonClicked(int)), SLOT(set_saxs_iq(int)));
    // iq_widgets.push_back( bg_saxs_iq );
+#else
+   bg_saxs_iq = new QGroupBox();
+   bg_saxs_iq->setFlat( true );
 
-   rb_sans_iq_native_debye = new QRadioButton(tr("F-DB"), this);
+   connect( rb_saxs_iq_native_debye, SIGNAL( clicked() ), this, SLOT( set_saxs_iq() ) );
+   connect( rb_saxs_iq_native_sh, SIGNAL( clicked() ), this, SLOT( set_saxs_iq() ) );
+   if ( started_in_expert_mode ) {
+      connect( rb_saxs_iq_native_hybrid, SIGNAL( clicked() ), this, SLOT( set_saxs_iq() ) );
+      connect( rb_saxs_iq_native_hybrid2, SIGNAL( clicked() ), this, SLOT( set_saxs_iq() ) );
+      connect( rb_saxs_iq_native_hybrid3, SIGNAL( clicked() ), this, SLOT( set_saxs_iq() ) );
+   }
+   connect( rb_saxs_iq_native_fast, SIGNAL( clicked() ), this, SLOT( set_saxs_iq() ) );
+   if ( started_in_expert_mode ) {
+      connect( rb_saxs_iq_foxs, SIGNAL( clicked() ), this, SLOT( set_saxs_iq() ) );
+   }
+   connect( rb_saxs_iq_crysol, SIGNAL( clicked() ), this, SLOT( set_saxs_iq() ) );
+   if ( started_in_expert_mode ) {
+      connect( rb_saxs_iq_sastbx, SIGNAL( clicked() ), this, SLOT( set_saxs_iq() ) );
+   }
+      
+   {
+      QHBoxLayout * bl = new QHBoxLayout; bl->setContentsMargins( 0, 0, 0, 0 ); bl->setSpacing( 0 );
+      bl->addWidget( rb_saxs_iq_native_debye );
+      bl->addWidget( rb_saxs_iq_native_sh );
+      if ( started_in_expert_mode ) {
+         bl->addWidget( rb_saxs_iq_native_hybrid );
+         bl->addWidget( rb_saxs_iq_native_hybrid2 );
+         bl->addWidget( rb_saxs_iq_native_hybrid3 );
+      }
+      bl->addWidget( rb_saxs_iq_native_fast );
+      if ( started_in_expert_mode ) {
+         bl->addWidget( rb_saxs_iq_foxs );
+      }
+      bl->addWidget( rb_saxs_iq_crysol );
+      if ( started_in_expert_mode ) {
+         bl->addWidget( rb_saxs_iq_sastbx );
+      }
+      bg_saxs_iq->setLayout( bl );
+   }
+#endif
+
+   rb_sans_iq_native_debye = new QRadioButton(us_tr("F-DB"), this);
    rb_sans_iq_native_debye->setEnabled(true);
    rb_sans_iq_native_debye->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    rb_sans_iq_native_debye->setPalette( PALET_NORMAL );
    AUTFBACK( rb_sans_iq_native_debye );
    iq_widgets.push_back( rb_sans_iq_native_debye );
 
-   rb_sans_iq_native_sh = new QRadioButton(tr("SH-DB"), this);
+   rb_sans_iq_native_sh = new QRadioButton(us_tr("SH-DB"), this);
    rb_sans_iq_native_sh->setEnabled(true);
    rb_sans_iq_native_sh->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    rb_sans_iq_native_sh->setPalette( PALET_NORMAL );
@@ -757,21 +818,21 @@ void US_Hydrodyn_Saxs::setupGUI()
 
    if ( started_in_expert_mode )
    {
-      rb_sans_iq_native_hybrid = new QRadioButton(tr("Hybrid   "), this);
+      rb_sans_iq_native_hybrid = new QRadioButton(us_tr("Hybrid   "), this);
       rb_sans_iq_native_hybrid->setEnabled(true);
       rb_sans_iq_native_hybrid->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
       rb_sans_iq_native_hybrid->setPalette( PALET_NORMAL );
       AUTFBACK( rb_sans_iq_native_hybrid );
       iq_widgets.push_back( rb_sans_iq_native_hybrid );
 
-      rb_sans_iq_native_hybrid2 = new QRadioButton(tr("H2"), this);
+      rb_sans_iq_native_hybrid2 = new QRadioButton(us_tr("H2"), this);
       rb_sans_iq_native_hybrid2->setEnabled(true);
       rb_sans_iq_native_hybrid2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
       rb_sans_iq_native_hybrid2->setPalette( PALET_NORMAL );
       AUTFBACK( rb_sans_iq_native_hybrid2 );
       iq_widgets.push_back( rb_sans_iq_native_hybrid2 );
 
-      rb_sans_iq_native_hybrid3 = new QRadioButton(tr("H3"), this);
+      rb_sans_iq_native_hybrid3 = new QRadioButton(us_tr("H3"), this);
       rb_sans_iq_native_hybrid3->setEnabled(true);
       rb_sans_iq_native_hybrid3->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
       rb_sans_iq_native_hybrid3->setPalette( PALET_NORMAL );
@@ -779,21 +840,22 @@ void US_Hydrodyn_Saxs::setupGUI()
       iq_widgets.push_back( rb_sans_iq_native_hybrid3 );
    }
 
-   rb_sans_iq_native_fast = new QRadioButton(tr("Q-DB"), this);
+   rb_sans_iq_native_fast = new QRadioButton(us_tr("Q-DB"), this);
    rb_sans_iq_native_fast->setEnabled(true);
    rb_sans_iq_native_fast->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    rb_sans_iq_native_fast->setPalette( PALET_NORMAL );
    AUTFBACK( rb_sans_iq_native_fast );
    iq_widgets.push_back( rb_sans_iq_native_fast );
 
-   rb_sans_iq_cryson = new QRadioButton(tr("Cryson"), this);
+   rb_sans_iq_cryson = new QRadioButton(us_tr("Cryson"), this);
    rb_sans_iq_cryson->setEnabled(true);
    rb_sans_iq_cryson->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    rb_sans_iq_cryson->setPalette( PALET_NORMAL );
    AUTFBACK( rb_sans_iq_cryson );
    iq_widgets.push_back( rb_sans_iq_cryson );
 
-   bg_sans_iq = new QButtonGroup( this );
+#if QT_VERSION < 0x040000
+   bg_sans_iq = new QGroupBox( this );
    bg_pos = 0;
    bg_sans_iq->setExclusive(true);
    bg_sans_iq->addButton( rb_sans_iq_native_debye, bg_pos++ );
@@ -808,8 +870,36 @@ void US_Hydrodyn_Saxs::setupGUI()
    bg_sans_iq->addButton( rb_sans_iq_cryson, bg_pos++ );
    connect(bg_sans_iq, SIGNAL(buttonClicked(int)), SLOT(set_sans_iq(int)));
    // iq_widgets.push_back( bg_sans_iq );
+#else
+   bg_sans_iq = new QGroupBox();
+   bg_sans_iq->setFlat( true );
 
-   lbl_iqq_suffix = new QLabel(tr(" File suffix: "), this);
+   connect( rb_sans_iq_native_debye, SIGNAL( clicked() ), this, SLOT( set_sans_iq() ) );
+   connect( rb_sans_iq_native_sh, SIGNAL( clicked() ), this, SLOT( set_sans_iq() ) );
+   if ( started_in_expert_mode ) {
+      connect( rb_sans_iq_native_hybrid, SIGNAL( clicked() ), this, SLOT( set_sans_iq() ) );
+      connect( rb_sans_iq_native_hybrid2, SIGNAL( clicked() ), this, SLOT( set_sans_iq() ) );
+      connect( rb_sans_iq_native_hybrid3, SIGNAL( clicked() ), this, SLOT( set_sans_iq() ) );
+   }
+   connect( rb_sans_iq_native_fast, SIGNAL( clicked() ), this, SLOT( set_sans_iq() ) );
+   connect( rb_sans_iq_cryson, SIGNAL( clicked() ), this, SLOT( set_sans_iq() ) );
+
+   {
+      QHBoxLayout * bl = new QHBoxLayout; bl->setContentsMargins( 0, 0, 0, 0 ); bl->setSpacing( 0 );
+      bl->addWidget( rb_sans_iq_native_debye );
+      bl->addWidget( rb_sans_iq_native_sh );
+      if ( started_in_expert_mode ) {
+         bl->addWidget( rb_sans_iq_native_hybrid );
+         bl->addWidget( rb_sans_iq_native_hybrid2 );
+         bl->addWidget( rb_sans_iq_native_hybrid3 );
+      }
+      bl->addWidget( rb_sans_iq_native_fast );
+      bl->addWidget( rb_sans_iq_cryson );
+      bg_sans_iq->setLayout( bl );
+   }
+#endif
+
+   lbl_iqq_suffix = new QLabel(us_tr(" File suffix: "), this);
    lbl_iqq_suffix->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_iqq_suffix->setMinimumHeight(minHeight1);
    lbl_iqq_suffix->setPalette( PALET_LABEL );
@@ -817,8 +907,8 @@ void US_Hydrodyn_Saxs::setupGUI()
    lbl_iqq_suffix->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
    iq_widgets.push_back( lbl_iqq_suffix );
 
-   le_iqq_manual_suffix = new QLineEdit(this, "iqq_manual_suffix Line Edit");
-   le_iqq_manual_suffix->setText(tr(""));
+   le_iqq_manual_suffix = new QLineEdit( this );    le_iqq_manual_suffix->setObjectName( "iqq_manual_suffix Line Edit" );
+   le_iqq_manual_suffix->setText(us_tr(""));
    le_iqq_manual_suffix->setMinimumHeight(minHeight1);
    le_iqq_manual_suffix->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_iqq_manual_suffix->setPalette( PALET_NORMAL );
@@ -826,8 +916,8 @@ void US_Hydrodyn_Saxs::setupGUI()
    le_iqq_manual_suffix->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    iq_widgets.push_back( le_iqq_manual_suffix );
 
-   le_iqq_full_suffix = new QLineEdit(this, "iqq_full_suffix Line Edit");
-   le_iqq_full_suffix->setText(tr(""));
+   le_iqq_full_suffix = new QLineEdit( this );    le_iqq_full_suffix->setObjectName( "iqq_full_suffix Line Edit" );
+   le_iqq_full_suffix->setText(us_tr(""));
    le_iqq_full_suffix->setMinimumHeight(minHeight1);
    le_iqq_full_suffix->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_iqq_full_suffix->setPalette( PALET_NORMAL );
@@ -852,14 +942,14 @@ void US_Hydrodyn_Saxs::setupGUI()
    connect(pb_load_saxs_sans, SIGNAL(clicked()), SLOT(load_saxs_sans()));
    iq_widgets.push_back( pb_load_saxs_sans );
 
-   pb_load_plot_saxs = new QPushButton(tr("Load Plotted"), this);
+   pb_load_plot_saxs = new QPushButton(us_tr("Load Plotted"), this);
    pb_load_plot_saxs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_load_plot_saxs->setMinimumHeight(minHeight1);
    pb_load_plot_saxs->setPalette( PALET_PUSHB );
    connect(pb_load_plot_saxs, SIGNAL(clicked()), SLOT(load_plot_saxs()));
    iq_widgets.push_back( pb_load_plot_saxs );
 
-   pb_set_grid = new QPushButton(tr("Set Grid"), this);
+   pb_set_grid = new QPushButton(us_tr("Set Grid"), this);
    pb_set_grid->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_set_grid->setMinimumHeight(minHeight1);
    pb_set_grid->setPalette( PALET_PUSHB );
@@ -874,7 +964,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    iq_widgets.push_back( pb_clear_plot_saxs );
 
    cb_eb = new QCheckBox(this);
-   cb_eb->setText(tr("Err "));
+   cb_eb->setText(us_tr("Err "));
    cb_eb->setMaximumWidth ( minHeight1 * 2 );
    cb_eb->setChecked( false );
    cb_eb->setMinimumHeight( minHeight1 );
@@ -899,7 +989,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    iq_widgets.push_back( pb_saxs_legend );
 
    cb_create_native_saxs = new QCheckBox(this);
-   cb_create_native_saxs->setText(tr(" Create standard output files"));
+   cb_create_native_saxs->setText(us_tr(" Create standard output files"));
    cb_create_native_saxs->setEnabled(true);
    cb_create_native_saxs->setChecked(create_native_saxs);
    cb_create_native_saxs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -942,7 +1032,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    }
    
    cb_guinier = new QCheckBox(this);
-   cb_guinier->setText(tr(" Guinier "));
+   cb_guinier->setText(us_tr(" Guinier "));
    // cb_guinier->setMinimumHeight(minHeight1);
    cb_guinier->setEnabled(true);
    cb_guinier->setChecked(false);
@@ -953,7 +1043,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    iq_widgets.push_back( cb_guinier );
 
    cb_cs_guinier = new QCheckBox(this);
-   cb_cs_guinier->setText(tr("CS"));
+   cb_cs_guinier->setText(us_tr("CS"));
    // cb_cs_guinier->setMinimumHeight(minHeight1);
    cb_cs_guinier->setEnabled(true);
    cb_cs_guinier->setChecked(false);
@@ -964,7 +1054,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    iq_widgets.push_back( cb_cs_guinier );
 
    cb_Rt_guinier = new QCheckBox(this);
-   cb_Rt_guinier->setText(tr("TV    q^2 range:"));
+   cb_Rt_guinier->setText(us_tr("TV    q^2 range:"));
    // cb_Rt_guinier->setMinimumHeight(minHeight1);
    cb_Rt_guinier->setEnabled(true);
    cb_Rt_guinier->setChecked(false);
@@ -974,7 +1064,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    connect(cb_Rt_guinier, SIGNAL(clicked()), SLOT(set_Rt_guinier()));
    iq_widgets.push_back( cb_Rt_guinier );
 
-   le_guinier_lowq2 = new QLineEdit(this, "guinier_lowq2 Line Edit");
+   le_guinier_lowq2 = new QLineEdit( this );    le_guinier_lowq2->setObjectName( "guinier_lowq2 Line Edit" );
    le_guinier_lowq2->setText("");
    // le_guinier_lowq2->setMinimumHeight(minHeight1);
    le_guinier_lowq2->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
@@ -984,7 +1074,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    connect(le_guinier_lowq2, SIGNAL(textChanged(const QString &)), SLOT(update_guinier_lowq2(const QString &)));
    iq_widgets.push_back( le_guinier_lowq2 );
 
-   le_guinier_highq2 = new QLineEdit(this, "guinier_highq2 Line Edit");
+   le_guinier_highq2 = new QLineEdit( this );    le_guinier_highq2->setObjectName( "guinier_highq2 Line Edit" );
    le_guinier_highq2->setText("");
    // le_guinier_highq2->setMinimumHeight(minHeight1);
    le_guinier_highq2->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
@@ -995,7 +1085,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    iq_widgets.push_back( le_guinier_highq2 );
 
    cb_user_range = new QCheckBox(this);
-   cb_user_range->setText(tr(" Standard "));
+   cb_user_range->setText(us_tr(" Standard "));
    // cb_user_range->setMinimumHeight(minHeight1);
    cb_user_range->setEnabled(true);
    cb_user_range->setChecked(false);
@@ -1006,7 +1096,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    iq_widgets.push_back( cb_user_range );
 
    cb_kratky = new QCheckBox(this);
-   cb_kratky->setText(tr("Kratky plot     q range:"));
+   cb_kratky->setText(us_tr("Kratky plot     q range:"));
    // cb_kratky->setMinimumHeight(minHeight1);
    cb_kratky->setEnabled(true);
    cb_kratky->setChecked(false);
@@ -1016,7 +1106,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    connect(cb_kratky, SIGNAL(clicked()), SLOT(set_kratky()));
    iq_widgets.push_back( cb_kratky );
 
-   le_user_lowq = new QLineEdit(this, "user_lowq Line Edit");
+   le_user_lowq = new QLineEdit( this );    le_user_lowq->setObjectName( "user_lowq Line Edit" );
    le_user_lowq->setText("");
    // le_user_lowq->setMinimumHeight(minHeight1);
    le_user_lowq->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
@@ -1026,7 +1116,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    connect(le_user_lowq, SIGNAL(textChanged(const QString &)), SLOT(update_user_lowq(const QString &)));
    iq_widgets.push_back( le_user_lowq );
 
-   le_user_highq = new QLineEdit(this, "user_highq Line Edit");
+   le_user_highq = new QLineEdit( this );    le_user_highq->setObjectName( "user_highq Line Edit" );
    le_user_highq->setText("");
    // le_user_highq->setMinimumHeight(minHeight1);
    le_user_highq->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
@@ -1036,7 +1126,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    connect(le_user_highq, SIGNAL(textChanged(const QString &)), SLOT(update_user_highq(const QString &)));
    iq_widgets.push_back( le_user_highq );
 
-   le_user_lowI = new QLineEdit(this, "user_lowI Line Edit");
+   le_user_lowI = new QLineEdit( this );    le_user_lowI->setObjectName( "user_lowI Line Edit" );
    le_user_lowI->setText("");
    // le_user_lowI->setMinimumHeight(minHeight1);
    le_user_lowI->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
@@ -1046,7 +1136,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    connect(le_user_lowI, SIGNAL(textChanged(const QString &)), SLOT(update_user_lowI(const QString &)));
    iq_widgets.push_back( le_user_lowI );
 
-   le_user_highI = new QLineEdit(this, "user_highI Line Edit");
+   le_user_highI = new QLineEdit( this );    le_user_highI->setObjectName( "user_highI Line Edit" );
    le_user_highI->setText("");
    // le_user_highI->setMinimumHeight(minHeight1);
    le_user_highI->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
@@ -1117,7 +1207,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    pb_guinier_cs->hide(); // iq_widgets.push_back( pb_guinier_cs );
 
 #if defined(ADD_GUINIER)      
-   lbl_guinier_cutoff = new QLabel(tr("Guinier cutoff\n(1/Angstrom^2) : "), this);
+   lbl_guinier_cutoff = new QLabel(us_tr("Guinier cutoff\n(1/Angstrom^2) : "), this);
    lbl_guinier_cutoff->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_guinier_cutoff->setMinimumHeight(minHeight1);
    lbl_guinier_cutoff->setPalette( PALET_LABEL );
@@ -1139,8 +1229,8 @@ void US_Hydrodyn_Saxs::setupGUI()
    iq_widgets.push_back( cnt_guinier_cutoff );
 #endif
 
-   lbl_pr = new mQLabel(tr("P(r) vs. r  Plotting Functions:"), this);
-   lbl_pr->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Raised);
+   lbl_pr = new mQLabel(us_tr("P(r) vs. r  Plotting Functions:"), this);
+   lbl_pr->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_pr->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_pr->setMinimumHeight(minHeight1);
    lbl_pr->setPalette( PALET_FRAME );
@@ -1148,7 +1238,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    lbl_pr->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
    connect( lbl_pr, SIGNAL( pressed() ), SLOT( hide_pr() ) );
 
-   lbl_bin_size = new QLabel(tr(" Bin size (Angstrom): "), this);
+   lbl_bin_size = new QLabel(us_tr(" Bin size (Angstrom): "), this);
    lbl_bin_size->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_bin_size->setMinimumHeight(minHeight1);
    lbl_bin_size->setPalette( PALET_LABEL );
@@ -1170,7 +1260,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    pr_widgets.push_back( cnt_bin_size );
 
 
-   lbl_smooth = new QLabel(tr(" Smoothing: "), this);
+   lbl_smooth = new QLabel(us_tr(" Smoothing: "), this);
    lbl_smooth->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_smooth->setMinimumHeight(minHeight1);
    lbl_smooth->setPalette( PALET_LABEL );
@@ -1191,7 +1281,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    connect(cnt_smooth, SIGNAL(valueChanged(double)), SLOT(update_smooth(double)));
    pr_widgets.push_back( cnt_smooth );
 
-   rb_curve_raw = new QRadioButton(tr("Raw"), this);
+   rb_curve_raw = new QRadioButton(us_tr("Raw"), this);
    rb_curve_raw->setEnabled(true);
    rb_curve_raw->setChecked(our_saxs_options->curve == 0);
    rb_curve_raw->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -1199,14 +1289,14 @@ void US_Hydrodyn_Saxs::setupGUI()
    AUTFBACK( rb_curve_raw );
    pr_widgets.push_back( rb_curve_raw );
 
-   //   rb_curve_saxs_dry = new QRadioButton(tr("SAXS (unc)"), this);
+   //   rb_curve_saxs_dry = new QRadioButton(us_tr("SAXS (unc)"), this);
    //   rb_curve_saxs_dry->setEnabled(true);
    //   rb_curve_saxs_dry->setChecked(our_saxs_options->curve == 1);
    //   rb_curve_saxs_dry->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   //   rb_curve_saxs_dry->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   //   rb_curve_saxs_dry->setPalette( USglobal->global_colors.cg_normal );
    // pr_widgets.push_back( rb_curve_saxs_dry );
 
-   rb_curve_saxs = new QRadioButton(tr("SAXS"), this);
+   rb_curve_saxs = new QRadioButton(us_tr("SAXS"), this);
    rb_curve_saxs->setEnabled(true);
    rb_curve_saxs->setChecked(our_saxs_options->curve == 1);
    rb_curve_saxs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -1214,7 +1304,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    AUTFBACK( rb_curve_saxs );
    pr_widgets.push_back( rb_curve_saxs );
 
-   rb_curve_sans = new QRadioButton(tr("SANS"), this);
+   rb_curve_sans = new QRadioButton(us_tr("SANS"), this);
    rb_curve_sans->setEnabled(true);
    rb_curve_sans->setChecked(our_saxs_options->curve == 2);
    rb_curve_sans->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -1222,7 +1312,8 @@ void US_Hydrodyn_Saxs::setupGUI()
    AUTFBACK( rb_curve_sans );
    pr_widgets.push_back( rb_curve_sans );
 
-   bg_curve = new QButtonGroup( this );
+#if QT_VERSION < 0x040000
+   bg_curve = new QGroupBox( this );
    bg_pos = 0;
    bg_curve->setExclusive(true);
    bg_curve->addButton( rb_curve_raw, bg_pos++ );
@@ -1231,9 +1322,23 @@ void US_Hydrodyn_Saxs::setupGUI()
    bg_curve->addButton( rb_curve_sans, bg_pos++ );
    connect(bg_curve, SIGNAL(buttonClicked(int)), SLOT(set_curve(int)));
    // pr_widgets.push_back( bg_curve );
+#else
+   bg_curve = new QGroupBox();
+   bg_curve->setFlat( true );
 
+   connect( rb_curve_raw, SIGNAL( clicked() ), this, SLOT( set_curve() ) );
+   connect( rb_curve_saxs, SIGNAL( clicked() ), this, SLOT( set_curve() ) );
+   connect( rb_curve_sans, SIGNAL( clicked() ), this, SLOT( set_curve() ) );
+   {
+      QHBoxLayout * bl = new QHBoxLayout; bl->setContentsMargins( 0, 0, 0, 0 ); bl->setSpacing( 0 );
+      bl->addWidget( rb_curve_raw );
+      bl->addWidget( rb_curve_saxs );
+      bl->addWidget( rb_curve_sans );
+      bg_curve->setLayout( bl );
+   }
+#endif
    cb_normalize = new QCheckBox(this);
-   cb_normalize->setText(tr(" Normalize"));
+   cb_normalize->setText(us_tr(" Normalize"));
    cb_normalize->setEnabled(true);
    cb_normalize->setChecked(true);
    cb_normalize->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -1242,7 +1347,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    pr_widgets.push_back( cb_normalize );
 
    cb_pr_contrib = new QCheckBox(this);
-   cb_pr_contrib->setText(tr(" Residue contrib.  range (Angstrom):"));
+   cb_pr_contrib->setText(us_tr(" Residue contrib.  range (Angstrom):"));
    cb_pr_contrib->setEnabled(true);
    cb_pr_contrib->setChecked(false);
    cb_pr_contrib->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
@@ -1251,7 +1356,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    connect(cb_pr_contrib, SIGNAL(clicked()), SLOT(set_pr_contrib()));
    pr_widgets.push_back( cb_pr_contrib );
 
-   le_pr_contrib_low = new QLineEdit(this, "pr_contrib_low Line Edit");
+   le_pr_contrib_low = new QLineEdit( this );    le_pr_contrib_low->setObjectName( "pr_contrib_low Line Edit" );
    le_pr_contrib_low->setText("");
    le_pr_contrib_low->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_pr_contrib_low->setPalette( PALET_NORMAL );
@@ -1260,7 +1365,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    connect(le_pr_contrib_low, SIGNAL(textChanged(const QString &)), SLOT(update_pr_contrib_low(const QString &)));
    pr_widgets.push_back( le_pr_contrib_low );
 
-   le_pr_contrib_high = new QLineEdit(this, "pr_contrib_high Line Edit");
+   le_pr_contrib_high = new QLineEdit( this );    le_pr_contrib_high->setObjectName( "pr_contrib_high Line Edit" );
    le_pr_contrib_high->setText("");
    le_pr_contrib_high->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_pr_contrib_high->setPalette( PALET_NORMAL );
@@ -1269,7 +1374,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    connect(le_pr_contrib_high, SIGNAL(textChanged(const QString &)), SLOT(update_pr_contrib_high(const QString &)));
    pr_widgets.push_back( le_pr_contrib_high );
 
-   pb_pr_contrib = new QPushButton(tr("Display"), this);
+   pb_pr_contrib = new QPushButton(us_tr("Display"), this);
    pb_pr_contrib->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_pr_contrib->setMinimumHeight(minHeight1);
    pb_pr_contrib->setPalette( PALET_PUSHB );
@@ -1277,60 +1382,60 @@ void US_Hydrodyn_Saxs::setupGUI()
    connect(pb_pr_contrib, SIGNAL(clicked()), SLOT(show_pr_contrib()));
    pr_widgets.push_back( pb_pr_contrib );
 
-   pb_plot_pr = new QPushButton(tr("Compute P(r) Distribution"), this);
+   pb_plot_pr = new QPushButton(us_tr("Compute P(r) Distribution"), this);
    pb_plot_pr->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_plot_pr->setMinimumHeight(minHeight1);
    pb_plot_pr->setPalette( PALET_PUSHB );
    connect(pb_plot_pr, SIGNAL(clicked()), SLOT(show_plot_pr()));
    pr_widgets.push_back( pb_plot_pr );
 
-   pb_load_pr = new QPushButton(tr("Load P(r) Distribution"), this);
+   pb_load_pr = new QPushButton(us_tr("Load P(r) Distribution"), this);
    pb_load_pr->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_load_pr->setMinimumHeight(minHeight1);
    pb_load_pr->setPalette( PALET_PUSHB );
    connect(pb_load_pr, SIGNAL(clicked()), SLOT(load_pr()));
    pr_widgets.push_back( pb_load_pr );
 
-   pb_load_plot_pr = new QPushButton(tr("Load Plotted P(r)"), this);
+   pb_load_plot_pr = new QPushButton(us_tr("Load Plotted P(r)"), this);
    pb_load_plot_pr->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_load_plot_pr->setMinimumHeight(minHeight1);
    pb_load_plot_pr->setPalette( PALET_PUSHB );
    connect(pb_load_plot_pr, SIGNAL(clicked()), SLOT(load_plot_pr()));
    pr_widgets.push_back( pb_load_plot_pr );
 
-   pb_clear_plot_pr = new QPushButton(tr("Clear P(r) Distribution"), this);
+   pb_clear_plot_pr = new QPushButton(us_tr("Clear P(r) Distribution"), this);
    pb_clear_plot_pr->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_clear_plot_pr->setMinimumHeight(minHeight1);
    pb_clear_plot_pr->setPalette( PALET_PUSHB );
    connect(pb_clear_plot_pr, SIGNAL(clicked()), SLOT(clear_plot_pr()));
    pr_widgets.push_back( pb_clear_plot_pr );
 
-   pb_pr_legend = new QPushButton(tr("Legend"), this);
+   pb_pr_legend = new QPushButton(us_tr("Legend"), this);
    pb_pr_legend->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_pr_legend->setMinimumHeight(minHeight1);
    pb_pr_legend->setPalette( PALET_PUSHB );
    connect(pb_pr_legend, SIGNAL(clicked()), SLOT(pr_legend()));
    pr_widgets.push_back( pb_pr_legend );
 
-   pb_stop = new QPushButton(tr("Stop"), this);
+   pb_stop = new QPushButton(us_tr("Stop"), this);
    pb_stop->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_stop->setMinimumHeight(minHeight1);
    pb_stop->setPalette( PALET_PUSHB );
    connect(pb_stop, SIGNAL(clicked()), SLOT(stop()));
 
-   pb_options = new QPushButton(tr("Open Options Panel"), this);
+   pb_options = new QPushButton(us_tr("Open Options Panel"), this);
    pb_options->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_options->setMinimumHeight(minHeight1);
    pb_options->setPalette( PALET_PUSHB );
    connect(pb_options, SIGNAL(clicked()), SLOT(options()));
 
-   pb_help = new QPushButton(tr("Help"), this);
+   pb_help = new QPushButton(us_tr("Help"), this);
    pb_help->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_help->setMinimumHeight(minHeight1);
    pb_help->setPalette( PALET_PUSHB );
    connect(pb_help, SIGNAL(clicked()), SLOT(help()));
 
-   pb_cancel = new QPushButton(tr("Close"), this);
+   pb_cancel = new QPushButton(us_tr("Close"), this);
    pb_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_cancel->setMinimumHeight(minHeight1);
    pb_cancel->setPalette( PALET_PUSHB );
@@ -1361,12 +1466,12 @@ void US_Hydrodyn_Saxs::setupGUI()
    grid_saxs->setMinPen( QPen( USglobal->global_colors.minor_ticks, 0, Qt::DotLine ) );
    grid_saxs->attach( plot_saxs );
 #endif
-   plot_saxs->setAxisTitle( QwtPlot::xBottom, cb_guinier->isChecked() ? tr( "q^2 (1/Angstrom^2)" ) : tr( "q (1/Angstrom)" ) );
+   plot_saxs->setAxisTitle( QwtPlot::xBottom, cb_guinier->isChecked() ? us_tr( "q^2 (1/Angstrom^2)" ) : us_tr( "q (1/Angstrom)" ) );
    plot_saxs->setAxisTitle( QwtPlot::yLeft,   
                             cb_kratky ->isChecked() ? 
-                            tr( " q^2 * I(q)"        ) : 
-                            ( cb_guinier->isChecked() && cb_cs_guinier->isChecked() ? tr( "q*I(q) (log scale)" ) : 
-                              ( cb_guinier->isChecked() && cb_Rt_guinier->isChecked() ? tr( "q^2*I(q) (log scale)" ) : tr( "I(q) (log scale)" ) ) )
+                            us_tr( " q^2 * I(q)"        ) : 
+                            ( cb_guinier->isChecked() && cb_cs_guinier->isChecked() ? us_tr( "q*I(q) (log scale)" ) : 
+                              ( cb_guinier->isChecked() && cb_Rt_guinier->isChecked() ? us_tr( "q^2*I(q) (log scale)" ) : us_tr( "I(q) (log scale)" ) ) )
                             );
 #ifndef QT4
    plot_saxs->setTitleFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 2, QFont::Bold));
@@ -1429,8 +1534,8 @@ void US_Hydrodyn_Saxs::setupGUI()
    grid_pr->setMinPen( QPen( USglobal->global_colors.minor_ticks, 0, Qt::DotLine ) );
    grid_pr->attach( plot_pr );
 #endif
-   plot_pr->setAxisTitle(QwtPlot::xBottom, tr("Distance (Angstrom)"));
-   plot_pr->setAxisTitle(QwtPlot::yLeft, tr("Frequency"));
+   plot_pr->setAxisTitle(QwtPlot::xBottom, us_tr("Distance (Angstrom)"));
+   plot_pr->setAxisTitle(QwtPlot::yLeft, us_tr("Frequency"));
 #ifndef QT4
    plot_pr->setTitleFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 2, QFont::Bold));
    plot_pr->setAxisTitleFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
@@ -1445,7 +1550,7 @@ void US_Hydrodyn_Saxs::setupGUI()
 #endif
    plot_pr->setAxisFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    plot_pr->setMargin(USglobal->config_list.margin);
-   plot_pr->setTitle(tr("P(r) Distribution Curve"));
+   plot_pr->setTitle(us_tr("P(r) Distribution Curve"));
    plot_pr->setCanvasBackground(USglobal->global_colors.plot);
 
 #ifndef QT4
@@ -1477,8 +1582,8 @@ void US_Hydrodyn_Saxs::setupGUI()
    grid_resid->setMinPen( QPen( USglobal->global_colors.minor_ticks, 0, Qt::DotLine ) );
    grid_resid->attach( plot_resid );
 #endif
-   // plot_resid->setAxisTitle(QwtPlot::xBottom, /* cb_guinier->isChecked() ? tr("q^2 (1/Angstrom^2)") : */  tr("q (1/Angstrom) or Frame"));
-   // plot_resid->setAxisTitle(QwtPlot::yLeft, tr("I(q) (log scale)"));
+   // plot_resid->setAxisTitle(QwtPlot::xBottom, /* cb_guinier->isChecked() ? us_tr("q^2 (1/Angstrom^2)") : */  us_tr("q (1/Angstrom) or Frame"));
+   // plot_resid->setAxisTitle(QwtPlot::yLeft, us_tr("I(q) (log scale)"));
 #ifndef QT4
    // plot_resid->setTitleFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 2, QFont::Bold));
    plot_resid->setAxisTitleFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
@@ -1505,7 +1610,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    resid_widgets.push_back( plot_resid );
 
    cb_resid_show = new QCheckBox(this);
-   cb_resid_show->setText(tr(" Show residuals "));
+   cb_resid_show->setText(us_tr(" Show residuals "));
    cb_resid_show->setEnabled(true);
    cb_resid_show->setChecked( ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "saxs_cb_resid_show" ) &&
                               ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "saxs_cb_resid_show" ] == "1" );
@@ -1517,7 +1622,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    cb_resid_show->hide();
 
    cb_resid_show_errorbars = new QCheckBox(this);
-   cb_resid_show_errorbars->setText(tr(" SD error bars "));
+   cb_resid_show_errorbars->setText(us_tr(" SD error bars "));
    cb_resid_show_errorbars->setEnabled(true);
    cb_resid_show_errorbars->setChecked( ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "saxs_cb_resid_show_errorbars" ) &&
                                         ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "saxs_cb_resid_show_errorbars" ] == "1" );
@@ -1529,7 +1634,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    cb_resid_show_errorbars->hide();
 
    cb_manual_guinier = new QCheckBox(this);
-   cb_manual_guinier->setText(tr(" Manual Guinier "));
+   cb_manual_guinier->setText(us_tr(" Manual Guinier "));
    cb_manual_guinier->setEnabled(true);
    cb_manual_guinier->setChecked( ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "saxs_cb_manual_guinier" ) &&
                               ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "saxs_cb_manual_guinier" ] == "1" );
@@ -1541,7 +1646,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    cb_manual_guinier->hide();
 
    cb_resid_pct = new QCheckBox(this);
-   cb_resid_pct->setText(tr(" By percent"));
+   cb_resid_pct->setText(us_tr(" By percent"));
    cb_resid_pct->setEnabled(true);
    cb_resid_pct->setChecked( ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "saxs_cb_resid_pct" ) &&
                              ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "saxs_cb_resid_pct" ] == "1" );
@@ -1553,7 +1658,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    cb_resid_pct->hide();
 
    cb_resid_sd = new QCheckBox(this);
-   cb_resid_sd->setText(tr(" Use standard deviations "));
+   cb_resid_sd->setText(us_tr(" Use standard deviations "));
    cb_resid_sd->setEnabled(true);
    cb_resid_sd->setChecked( ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "saxs_cb_resid_sd" ) &&
                             ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "saxs_cb_resid_sd" ] == "1" );
@@ -1564,8 +1669,8 @@ void US_Hydrodyn_Saxs::setupGUI()
    resid_widgets.push_back( cb_resid_sd );
    cb_resid_sd->hide();
 
-   le_manual_guinier_fit_start = new mQLineEdit(this, "manual_guinier_fit_start Line Edit");
-   le_manual_guinier_fit_start->setText(tr(""));
+   le_manual_guinier_fit_start = new mQLineEdit( this );    le_manual_guinier_fit_start->setObjectName( "manual_guinier_fit_start Line Edit" );
+   le_manual_guinier_fit_start->setText(us_tr(""));
    le_manual_guinier_fit_start->setMinimumHeight(minHeight1);
    le_manual_guinier_fit_start->setMaximumWidth( maxWidth * 6 );
    le_manual_guinier_fit_start->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
@@ -1577,8 +1682,8 @@ void US_Hydrodyn_Saxs::setupGUI()
    connect( le_manual_guinier_fit_start, SIGNAL( textChanged( const QString & ) ), SLOT( manual_guinier_fit_start_text( const QString & ) ) );
    connect( le_manual_guinier_fit_start, SIGNAL( focussed ( bool ) )             , SLOT( manual_guinier_fit_start_focus( bool ) ) );
 
-   le_manual_guinier_fit_end = new mQLineEdit(this, "manual_guinier_fit_end Line Edit");
-   le_manual_guinier_fit_end->setText(tr(""));
+   le_manual_guinier_fit_end = new mQLineEdit( this );    le_manual_guinier_fit_end->setObjectName( "manual_guinier_fit_end Line Edit" );
+   le_manual_guinier_fit_end->setText(us_tr(""));
    le_manual_guinier_fit_end->setMinimumHeight(minHeight1);
    le_manual_guinier_fit_end->setMaximumWidth( maxWidth * 6 );
    le_manual_guinier_fit_end->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
@@ -1600,7 +1705,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    manual_guinier_widgets.push_back( qwtw_wheel );
    qwtw_wheel->setMinimumWidth ( 350 );
    
-   pb_manual_guinier_process = new QPushButton(tr("Process"), this);
+   pb_manual_guinier_process = new QPushButton(us_tr("Process"), this);
    pb_manual_guinier_process->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_manual_guinier_process->setMinimumHeight(minHeight1);
    pb_manual_guinier_process->setPalette( PALET_PUSHB );
@@ -1609,62 +1714,89 @@ void US_Hydrodyn_Saxs::setupGUI()
 
    hide_widgets( manual_guinier_widgets );
 
-   progress_saxs = new Q3ProgressBar(this, "SAXS Progress");
+   progress_saxs = new QProgressBar( this );
    progress_saxs->setMinimumHeight(minHeight1);
    progress_saxs->setPalette( PALET_NORMAL );
    AUTFBACK( progress_saxs );
    progress_saxs->reset();
    iq_widgets.push_back( progress_saxs );
 
-   progress_pr = new Q3ProgressBar(this, "P(r) Progress");
+   progress_pr = new QProgressBar( this );
    progress_pr->setMinimumHeight(minHeight1);
    progress_pr->setPalette( PALET_NORMAL );
    AUTFBACK( progress_pr );
    progress_pr->reset();
    pr_widgets.push_back( progress_pr );
 
-   editor = new Q3TextEdit(this);
+   editor = new QTextEdit(this);
    editor->setPalette( PALET_NORMAL );
    AUTFBACK( editor );
    editor->setReadOnly(true);
    editor->setMinimumWidth(300);
    editor->setMinimumHeight(minHeight1 * 6);
 
-#if defined(QT4) && defined(Q_WS_MAC)
+#if QT_VERSION < 0x040000
+# if defined(QT4) && defined(Q_WS_MAC)
    {
-      Q3PopupMenu * file = new Q3PopupMenu;
-      file->insertItem( tr("&Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
-      file->insertItem( tr("&Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
-# ifndef NO_EDITOR_PRINT
-      file->insertItem( tr("&Print"), this, SLOT(print()),   Qt::ALT+Qt::Key_P );
-# endif
-      file->insertItem( tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
+ //      Q3PopupMenu * file = new Q3PopupMenu;
+      file->insertItem( us_tr("&Font"),  this, SLOT(update_font( )),    Qt::ALT+Qt::Key_F );
+      file->insertItem( us_tr("&Save"),  this, SLOT(save( )),    Qt::ALT+Qt::Key_S );
+#  ifndef NO_EDITOR_PRINT
+      file->insertItem( us_tr("&Print"), this, SLOT(print( )),   Qt::ALT+Qt::Key_P );
+#  endif
+      file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display( )),   Qt::ALT+Qt::Key_X );
 
       QMenuBar *menu = new QMenuBar( this );
       AUTFBACK( menu );
 
-      menu->insertItem(tr("&Messages"), file );
+      menu->insertItem(us_tr("&Messages"), file );
    }
-#else
-   Q3Frame *frame;
-   frame = new Q3Frame(this);
+# else
+   QFrame *frame;
+   frame = new QFrame(this);
    frame->setMinimumHeight(minHeight0);
 
-   m = new QMenuBar(frame, "menu" );
+   m = new QMenuBar( frame );    m->setObjectName( "menu" );
    m->setMinimumHeight(minHeight1 - 5);
    m->setPalette( PALET_NORMAL );
    AUTFBACK( m );
-   Q3PopupMenu * file = new Q3PopupMenu(editor);
-   m->insertItem( tr("&File"), file );
-   file->insertItem( tr("Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
-   file->insertItem( tr("Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
-# ifndef NO_EDITOR_PRINT
-   file->insertItem( tr("Print"), this, SLOT(print()),   Qt::ALT+Qt::Key_P );
+ //   Q3PopupMenu * file = new Q3PopupMenu(editor);
+   m->insertItem( us_tr("&File"), file );
+   file->insertItem( us_tr("Font"),  this, SLOT(update_font( )),    Qt::ALT+Qt::Key_F );
+   file->insertItem( us_tr("Save"),  this, SLOT(save( )),    Qt::ALT+Qt::Key_S );
+#  ifndef NO_EDITOR_PRINT
+   file->insertItem( us_tr("Print"), this, SLOT(print( )),   Qt::ALT+Qt::Key_P );
+#  endif
+   file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display( )),   Qt::ALT+Qt::Key_X );
 # endif
-   file->insertItem( tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
+#else
+   QFrame *frame;
+   frame = new QFrame(this);
+   frame->setMinimumHeight(minHeight0);
+
+   m = new QMenuBar( frame );    m->setObjectName( "menu" );
+   m->setMinimumHeight(minHeight1 - 5);
+   m->setPalette( PALET_NORMAL );
+   AUTFBACK( m );
+
+   {
+      QMenu * new_menu = m->addMenu( us_tr( "&File" ) );
+
+      QAction *qa1 = new_menu->addAction( us_tr( "Font" ) );
+      qa1->setShortcut( Qt::ALT+Qt::Key_F );
+      connect( qa1, SIGNAL(triggered()), this, SLOT( update_font() ) );
+
+      QAction *qa2 = new_menu->addAction( us_tr( "Save" ) );
+      qa2->setShortcut( Qt::ALT+Qt::Key_S );
+      connect( qa2, SIGNAL(triggered()), this, SLOT( save() ) );
+
+      QAction *qa3 = new_menu->addAction( us_tr( "Clear Display" ) );
+      qa3->setShortcut( Qt::ALT+Qt::Key_X );
+      connect( qa3, SIGNAL(triggered()), this, SLOT( clear_display() ) );
+   }
 #endif
-   editor->setWordWrap (Q3TextEdit::WidgetWidth);
-   // editor->setWordWrap (QTextEdit::NoWrap);
+   editor->setWordWrapMode (QTextOption::WordWrap);
+   // editor->setWordWrapMode (QTextOption::NoWrap);
 
    lbl_core_progress = new QLabel("", this);
    Q_CHECK_PTR(lbl_core_progress);
@@ -1675,13 +1807,13 @@ void US_Hydrodyn_Saxs::setupGUI()
    lbl_core_progress->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1, QFont::Bold));
 
    int rows=13, columns = 3, spacing = 2, j=0, margin=4;
-   Q3GridLayout *background=new Q3GridLayout(this, rows, columns, margin, spacing);
+   QGridLayout * background = new QGridLayout( this ); background->setContentsMargins( 0, 0, 0, 0 ); background->setSpacing( 0 ); background->setSpacing( spacing ); background->setContentsMargins( margin, margin, margin, margin );
 
    background->addWidget(lbl_filename1, j, 0);
    background->addWidget(te_filename2, j, 1);
    j++;
 
-   background->addMultiCellWidget(lbl_settings, j, j, 0, 1);
+   background->addWidget( lbl_settings , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
    j++;
 
    background->addWidget(pb_select_atom_file, j, 0);
@@ -1694,21 +1826,21 @@ void US_Hydrodyn_Saxs::setupGUI()
    background->addWidget(lbl_saxs_table, j, 1);
    j++;
 
-   background->addMultiCellWidget(lbl_iq, j, j, 0, 1);
+   background->addWidget( lbl_iq , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
    j++;
 
 
-   Q3BoxLayout *hbl_load_saxs = new Q3HBoxLayout(0);
+   QBoxLayout *hbl_load_saxs = new QHBoxLayout();
    hbl_load_saxs->addWidget(pb_load_saxs_sans);
    hbl_load_saxs->addWidget(pb_load_gnom);
    hbl_load_saxs->addWidget(pb_load_plot_saxs);
    hbl_load_saxs->addWidget(pb_set_grid);
    hbl_load_saxs->addWidget(pb_clear_plot_saxs);
    hbl_load_saxs->addWidget(cb_eb);
-   background->addMultiCellLayout(hbl_load_saxs, j, j, 0, 1);
+   background->addLayout( hbl_load_saxs , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
    j++;
 
-   Q3BoxLayout *hbl_various_0 = new Q3HBoxLayout(0);
+   QBoxLayout *hbl_various_0 = new QHBoxLayout();
    hbl_various_0->addWidget(pb_ift);
    hbl_various_0->addWidget(pb_saxs_search);
    if ( started_in_expert_mode )
@@ -1730,24 +1862,24 @@ void US_Hydrodyn_Saxs::setupGUI()
    hbl_various_0->addWidget(pb_guinier_cs);
    hbl_various_0->addWidget(pb_saxs_legend);
    hbl_various_0->addWidget(pb_pp);
-   background->addMultiCellLayout(hbl_various_0, j, j, 0, 1);
+   background->addLayout( hbl_various_0 , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
    j++;
 
 
-   Q3GridLayout *gl_plot_ctls = new Q3GridLayout( 0 );
+   QGridLayout * gl_plot_ctls = new QGridLayout( 0 ); gl_plot_ctls->setContentsMargins( 0, 0, 0, 0 ); gl_plot_ctls->setSpacing( 0 );
 
    gl_plot_ctls->addWidget( cb_guinier    , 0, 0 );
    gl_plot_ctls->addWidget( cb_cs_guinier , 0, 1 );
    gl_plot_ctls->addWidget( cb_Rt_guinier , 0, 2 );
    gl_plot_ctls->addWidget( cb_user_range , 1, 0 );
-   gl_plot_ctls->addMultiCellWidget( cb_kratky, 1, 1, 1, 2 );
+   gl_plot_ctls->addWidget( cb_kratky , 1 , 1 , 1 + ( 1 ) - ( 1 ) , 1 + ( 2  ) - ( 1 ) );
 
-   //    QHBoxLayout *hbl_guinier = new QHBoxLayout;
+   //    QHBoxLayout * hbl_guinier = new QHBoxLayout; hbl_guinier->setContentsMargins( 0, 0, 0, 0 ); hbl_guinier->setSpacing( 0 );
    //    hbl_guinier->addWidget( cb_guinier );
    //    hbl_guinier->addWidget( cb_cs_guinier );
    //    background->addLayout(hbl_guinier, j, 0);
 
-   Q3HBoxLayout *hbl_guinier_range = new Q3HBoxLayout;
+   QHBoxLayout * hbl_guinier_range = new QHBoxLayout; hbl_guinier_range->setContentsMargins( 0, 0, 0, 0 ); hbl_guinier_range->setSpacing( 0 );
    hbl_guinier_range->addWidget( le_guinier_lowq2 );
    hbl_guinier_range->addWidget( le_guinier_highq2 );
    background->addLayout(hbl_guinier_range, j, 1);
@@ -1758,14 +1890,14 @@ void US_Hydrodyn_Saxs::setupGUI()
    hbl_guinier->addWidget(cnt_guinier_cutoff);
 #endif
 
-   //    QHBoxLayout *hbl_cb_std_kratky = new QHBoxLayout;
+   //    QHBoxLayout * hbl_cb_std_kratky = new QHBoxLayout; hbl_cb_std_kratky->setContentsMargins( 0, 0, 0, 0 ); hbl_cb_std_kratky->setSpacing( 0 );
    //    hbl_cb_std_kratky->addWidget( cb_user_range );
    //    hbl_cb_std_kratky->addWidget( cb_kratky );
    //    background->addLayout( hbl_cb_std_kratky, j, 0 );
 
-   background->addMultiCellLayout( gl_plot_ctls, j-1, j, 0, 0 );
+   background->addLayout( gl_plot_ctls , j-1 , 0 , 1 + ( j ) - ( j-1 ) , 1 + ( 0  ) - ( 0 ) );
 
-   Q3HBoxLayout *hbl_user_range = new Q3HBoxLayout;
+   QHBoxLayout * hbl_user_range = new QHBoxLayout; hbl_user_range->setContentsMargins( 0, 0, 0, 0 ); hbl_user_range->setSpacing( 0 );
    hbl_user_range->addWidget(le_user_lowq);
    hbl_user_range->addWidget(le_user_highq);
    hbl_user_range->addWidget(le_user_lowI);
@@ -1773,12 +1905,12 @@ void US_Hydrodyn_Saxs::setupGUI()
    background->addLayout(hbl_user_range, j, 1);
    j++;
 
-   Q3HBoxLayout *hbl_tools = new Q3HBoxLayout;
+   QHBoxLayout * hbl_tools = new QHBoxLayout; hbl_tools->setContentsMargins( 0, 0, 0, 0 ); hbl_tools->setSpacing( 0 );
    hbl_tools->addWidget(cb_create_native_saxs);
-   background->addMultiCellLayout(hbl_tools, j, j, 0, 1);
+   background->addLayout( hbl_tools , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
    j++;
 
-   Q3BoxLayout *hbl_saxs_iq = new Q3HBoxLayout(0);
+   QBoxLayout *hbl_saxs_iq = new QHBoxLayout();
    hbl_saxs_iq->addWidget(rb_saxs);
    hbl_saxs_iq->addWidget(rb_saxs_iq_native_debye);
    hbl_saxs_iq->addWidget(rb_saxs_iq_native_sh);
@@ -1798,10 +1930,10 @@ void US_Hydrodyn_Saxs::setupGUI()
    {
       hbl_saxs_iq->addWidget(rb_saxs_iq_sastbx);
    }
-   background->addMultiCellLayout(hbl_saxs_iq, j, j, 0, 1);
+   background->addLayout( hbl_saxs_iq , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
    j++;
 
-   Q3BoxLayout *hbl_sans_iq = new Q3HBoxLayout(0);
+   QBoxLayout *hbl_sans_iq = new QHBoxLayout();
    hbl_sans_iq->addWidget(rb_sans);
    hbl_sans_iq->addWidget(rb_sans_iq_native_debye);
    hbl_sans_iq->addWidget(rb_sans_iq_native_sh);
@@ -1813,28 +1945,28 @@ void US_Hydrodyn_Saxs::setupGUI()
    }
    hbl_sans_iq->addWidget(rb_sans_iq_native_fast);
    hbl_sans_iq->addWidget(rb_sans_iq_cryson);
-   background->addMultiCellLayout(hbl_sans_iq, j, j, 0, 1);
+   background->addLayout( hbl_sans_iq , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
    j++;
    
-   Q3BoxLayout *hbl_iqq_suffix = new Q3HBoxLayout(0);
+   QBoxLayout *hbl_iqq_suffix = new QHBoxLayout();
    hbl_iqq_suffix->addWidget(lbl_iqq_suffix);
    hbl_iqq_suffix->addWidget(le_iqq_manual_suffix);
    hbl_iqq_suffix->addWidget(le_iqq_full_suffix);
-   background->addMultiCellLayout(hbl_iqq_suffix, j, j, 0, 1);
+   background->addLayout( hbl_iqq_suffix , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
    j++;
 
    background->addWidget(pb_plot_saxs_sans, j, 0);
    background->addWidget(progress_saxs, j, 1);
    j++;
 
-   background->addMultiCellWidget(lbl_pr, j, j, 0, 1);
+   background->addWidget( lbl_pr , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
    j++;
-   Q3BoxLayout *hbl_plot_pr = new Q3HBoxLayout(0);
+   QBoxLayout *hbl_plot_pr = new QHBoxLayout();
    hbl_plot_pr->addWidget(pb_load_pr);
    hbl_plot_pr->addWidget(pb_load_plot_pr);
    hbl_plot_pr->addWidget(pb_clear_plot_pr);
    hbl_plot_pr->addWidget(pb_pr_legend);
-   background->addMultiCellLayout(hbl_plot_pr, j, j, 0, 1);
+   background->addLayout( hbl_plot_pr , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
    j++;
    background->addWidget(lbl_bin_size, j, 0);
    background->addWidget(cnt_bin_size, j, 1);
@@ -1842,22 +1974,22 @@ void US_Hydrodyn_Saxs::setupGUI()
    background->addWidget(lbl_smooth, j, 0);
    background->addWidget(cnt_smooth, j, 1);
    j++;
-   Q3BoxLayout *bl = new Q3HBoxLayout(0);
+   QBoxLayout *bl = new QHBoxLayout();
    bl->addWidget(rb_curve_raw);
    //   bl->addWidget(rb_curve_saxs_dry);
    bl->addWidget(rb_curve_saxs);
    bl->addWidget(rb_curve_sans);
    bl->addWidget(cb_normalize);
-   background->addMultiCellLayout(bl, j, j, 0, 1);
+   background->addLayout( bl , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
    j++;
    
-   Q3BoxLayout *hbl_contrib = new Q3HBoxLayout(0);
+   QBoxLayout *hbl_contrib = new QHBoxLayout();
    hbl_contrib->addWidget(cb_pr_contrib);
    hbl_contrib->addWidget(le_pr_contrib_low);
    hbl_contrib->addWidget(le_pr_contrib_high);
    hbl_contrib->addWidget(pb_pr_contrib);
 
-   background->addMultiCellLayout(hbl_contrib,j,j,0,1);
+   background->addLayout( hbl_contrib , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
    j++;
 
    background->addWidget(pb_plot_pr, j, 0);
@@ -1867,13 +1999,13 @@ void US_Hydrodyn_Saxs::setupGUI()
    // background->addWidget(pb_clear_plot_pr, j, 1);
    
 #if !defined(QT4) || !defined(Q_WS_MAC)
-   background->addMultiCellWidget(frame, j, j, 0, 1);
+   background->addWidget( frame , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
    j++;
 #endif
-   background->addMultiCellWidget(editor, j, j, 0, 1);
-   //   background->addMultiCellWidget(editor, j, j+3, 0, 1);
-   // background->addMultiCellWidget(plot_pr, j-2, j+3, 2, 2);
-   // background->addMultiCellWidget(plot_pr, j, j, 2, 2);
+   background->addWidget( editor , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
+   //   background->addWidget( editor , j , 0 , 1 + ( j+3 ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
+   // background->addWidget( plot_pr , j-2 , 2 , 1 + ( j+3 ) - ( j-2 ) , 1 + ( 2 ) - ( 2 ) );
+   // background->addWidget( plot_pr , j , 2 , 1 + ( j ) - ( j ) , 1 + ( 2 ) - ( 2 ) );
    j++;
    background->addWidget(pb_stop, j, 0);
    background->addWidget(pb_options, j, 1);
@@ -1882,47 +2014,47 @@ void US_Hydrodyn_Saxs::setupGUI()
    background->addWidget(pb_cancel, j, 1);
    // background->addWidget(lbl_core_progress, j, 2);
 
-   Q3HBoxLayout *hbl_plot_resid_buttons = new Q3HBoxLayout( 0 );
+   QHBoxLayout * hbl_plot_resid_buttons = new QHBoxLayout(); hbl_plot_resid_buttons->setContentsMargins( 0, 0, 0, 0 ); hbl_plot_resid_buttons->setSpacing( 0 );
    hbl_plot_resid_buttons->addWidget( cb_resid_show );
    hbl_plot_resid_buttons->addWidget( cb_manual_guinier );
    hbl_plot_resid_buttons->addWidget( cb_resid_show_errorbars );
    hbl_plot_resid_buttons->addWidget( cb_resid_sd );
    hbl_plot_resid_buttons->addWidget( cb_resid_pct );
 
-   Q3GridLayout *gl_manual_guinier = new Q3GridLayout( 0 );
+   QGridLayout * gl_manual_guinier = new QGridLayout( 0 ); gl_manual_guinier->setContentsMargins( 0, 0, 0, 0 ); gl_manual_guinier->setSpacing( 0 );
    gl_manual_guinier->addWidget( le_manual_guinier_fit_start, 0, 0 );
    gl_manual_guinier->addWidget( le_manual_guinier_fit_end  , 0, 1 );
    gl_manual_guinier->addWidget( qwtw_wheel, 0, 2 );
    gl_manual_guinier->addWidget( pb_manual_guinier_process, 0, 3 );
-   gl_manual_guinier->setColStretch( 0, 1 );
-   gl_manual_guinier->setColStretch( 1, 1 );
-   gl_manual_guinier->setColStretch( 2, 2 );
-   gl_manual_guinier->setColStretch( 3, 0 );
+   gl_manual_guinier->setColumnStretch( 0, 1 );
+   gl_manual_guinier->setColumnStretch( 1, 1 );
+   gl_manual_guinier->setColumnStretch( 2, 2 );
+   gl_manual_guinier->setColumnStretch( 3, 0 );
 
-   Q3BoxLayout * l_plot_resid = new Q3VBoxLayout( 0 );
+   QBoxLayout * l_plot_resid = new QVBoxLayout( 0 );
    l_plot_resid->addWidget( plot_resid );
    l_plot_resid->addLayout( hbl_plot_resid_buttons );
    l_plot_resid->addLayout( gl_manual_guinier );
 
-   Q3VBoxLayout *vbl = new Q3VBoxLayout(0);
+   QVBoxLayout * vbl = new QVBoxLayout(0); vbl->setContentsMargins( 0, 0, 0, 0 ); vbl->setSpacing( 0 );
    vbl->addWidget(plot_saxs);
    // vbl->addSpacing(4);
    vbl->addWidget(plot_pr);
    // vbl->addSpacing(4);
    vbl->addLayout(l_plot_resid);
    vbl->addWidget(lbl_core_progress);
-   background->addMultiCellLayout(vbl, 0, j, 2, 2);
+   background->addLayout( vbl , 0 , 2 , 1 + ( j ) - ( 0 ) , 1 + ( 2 ) - ( 2 ) );
 
-   background->setColSpacing(2, 600);
+   background->setColumnMinimumWidth(2, 600);
    //   for ( int j = 0; j < 15; j++ )
    //   {
    //      background->setRowStretch(j, 0);
    //   }
    //   background->setRowStretch(13, 1);
 
-   background->setColStretch(0, 1);
-   background->setColStretch(1, 2);
-   background->setColStretch(2, 10);
+   background->setColumnStretch(0, 1);
+   background->setColumnStretch(1, 2);
+   background->setColumnStretch(2, 10);
    update_saxs_sans();
    clear_plot_saxs();
    clear_plot_pr();
@@ -2017,7 +2149,7 @@ void saxs_pr_thr_t::saxs_pr_thr_setup(
                                       vector < float > *hist,
                                       double delta,
                                       unsigned int threads,
-                                      Q3ProgressBar *progress,
+                                      QProgressBar *progress,
                                       QLabel *lbl_core_progress,
                                       bool *stopFlag,
                                       float b_bar_inv2
@@ -2118,7 +2250,7 @@ void saxs_pr_thr_t::run()
       double rik; // distance from atom i to k 
       if ( !thread ) 
       {
-         progress->setTotalSteps((int)(1.15f * as1 / threads));
+         progress->setMaximum((int)(1.15f * as1 / threads));
       }
 #if defined(DEBUG_THREAD)
       cerr << "thread " << thread << " as1 = " << as1 
@@ -2133,7 +2265,7 @@ void saxs_pr_thr_t::run()
          if ( !thread ) 
          {
             // lbl_core_progress->setText(QString("Atom %1 of %2\n").arg(i+1).arg(as));
-            progress->setProgress(i+1);
+            progress->setValue(i+1);
             // qApp->processEvents();
          }
          if ( *stopFlag ) 
@@ -2267,8 +2399,8 @@ void US_Hydrodyn_Saxs::show_pr_contrib()
       return;
    }
    progress_pr->reset();
-   progress_pr->setTotalSteps(3);
-   progress_pr->setProgress(0);
+   progress_pr->setMaximum(3);
+   progress_pr->setValue(0);
    // sum up all the atoms that contrib:
    // cout << "trying to sum up\n";
    map < QString, double > contrib_sums;
@@ -2301,7 +2433,7 @@ void US_Hydrodyn_Saxs::show_pr_contrib()
          }
       }
    }
-   progress_pr->setProgress(1);
+   progress_pr->setValue(1);
 
    // if all went ok, we should now have a weighted list in contrib_sums
    // normalize to max 1 (this will later set the color)
@@ -2315,7 +2447,7 @@ void US_Hydrodyn_Saxs::show_pr_contrib()
          max = contrib_sums[it->first];
       }
    }
-   progress_pr->setProgress(2);
+   progress_pr->setValue(2);
    // divide all by max to put in range of [0,1]
    for ( map < QString, double >::iterator it = contrib_sums.begin();
          it != contrib_sums.end();
@@ -2323,7 +2455,7 @@ void US_Hydrodyn_Saxs::show_pr_contrib()
    {
       contrib_sums[it->first] /= max;
    }
-   progress_pr->setProgress(3);
+   progress_pr->setValue(3);
 
    // setup plot:
 #define CONTRIB_GRADIENT_SIZE 3
@@ -2355,7 +2487,7 @@ void US_Hydrodyn_Saxs::show_pr_contrib()
    QDir::setCurrent( contrib_file );
    // cout << "contrib file: " << contrib_file << endl;
    QString fname = 
-      QFileInfo(contrib_file).dirPath() + SLASH + QFileInfo(contrib_file).baseName() + ".spt";
+      QFileInfo(contrib_file).path() + SLASH + QFileInfo(contrib_file).baseName() + ".spt";
    // cout << "spt file: " << fname << endl;
    QFile f(fname);
    if ( !f.open( QIODevice::WriteOnly ) )
@@ -2363,36 +2495,27 @@ void US_Hydrodyn_Saxs::show_pr_contrib()
       editor_msg( "red", "Error creating file " + fname + "\n");
       return;
    }
-   Q3TextStream t( &f );
+   QTextStream t( &f );
    t << out;
    f.close();
-   QStringList argument;
-#if !defined(WIN32) && !defined(MAC)
-   argument.append("xterm");
-   argument.append("-e");
-#endif
-#if defined(BIN64)
-   argument.append(USglobal->config_list.system_dir + "/bin64/rasmol");
-#else
-   argument.append(USglobal->config_list.system_dir + "/bin/rasmol");
-#endif
-   argument.append("-script");
-   argument.append( QFileInfo( fname ).fileName() );
-   rasmol = new Q3Process(this);
-   rasmol->setWorkingDirectory( QFileInfo(contrib_file).dirPath() );
-   //   cout << "Working directory: " << QFileInfo(contrib_file).dirPath() << endl;
-   // ((US_Hydrodyn *)us_hydrodyn)->somo_dir + SLASH + "tmp");
-   rasmol->setArguments(argument);
-   if (!rasmol->start())
-   {
-      QMessageBox::message(tr("Please note:"), tr("There was a problem starting RASMOL\n"
-                                                  "Please check to make sure RASMOL is properly installed..."));
-      return;
+   ((US_Hydrodyn *)us_hydrodyn)->model_viewer( fname, "-script" );
+}
+
+void US_Hydrodyn_Saxs::set_saxs_sans() {
+   qDebug() << "set_saxs_sans()";
+   if ( rb_saxs->isChecked() ) {
+      return set_saxs_sans( 0 );
+   }
+   if ( rb_sans->isChecked() ) {
+      return set_saxs_sans( 1 );
    }
 }
 
 void US_Hydrodyn_Saxs::set_saxs_sans(int val)
 {
+   qDebug() << "set_saxs_sans(" << val << ")";
+   qDebug() << "set_saxs_sans(" << val << "): disabled";
+   return;
    if ( our_saxs_options->saxs_sans != val )
    {
       clear_plot_saxs();
@@ -2407,6 +2530,18 @@ void US_Hydrodyn_Saxs::set_saxs_sans(int val)
       update_saxs_sans();
    }
    // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_Saxs::set_curve() {
+   if ( rb_curve_raw->isChecked() ) {
+      return set_curve( 0 );
+   }
+   if ( rb_curve_saxs->isChecked() ) {
+      return set_curve( 1 );
+   }
+   if ( rb_curve_sans->isChecked() ) {
+      return set_curve( 2 );
+   }
 }
 
 void US_Hydrodyn_Saxs::set_curve(int val)
@@ -2459,7 +2594,7 @@ void US_Hydrodyn_Saxs::show_plot_pr()
       qApp->processEvents();
       if ( stopFlag ) 
       {
-         editor_msg( "dark red", tr("Terminated by user request.\n" ) );
+         editor_msg( "dark red", us_tr("Terminated by user request.\n" ) );
          progress_pr->reset();
          lbl_core_progress->setText("");
          pb_plot_saxs_sans->setEnabled(bead_model_ok_for_saxs);
@@ -2510,7 +2645,7 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                // UPDATE to 1-fraction of exchanged peptide H for peptide bond groups NH only
 #if defined(BUG_DEBUG)
                printf("hybrid name %s b %e\n",
-                      it->first.ascii(),
+                      it->first.toAscii().data(),
                       b[it->first]);
 #endif
                // special exchange handling for aa pb 
@@ -2525,7 +2660,7 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                      (1 - our_saxs_options->frac_of_exch_pep);
 #if defined(BUG_DEBUG)
                   printf("hybrid name %s b %e\n",
-                         QString(it->first + "-aa").ascii(),
+                         QString(it->first + "-aa").toAscii().data(),
                          b[it->first + "-aa"]);
 #endif
                }
@@ -2538,7 +2673,7 @@ void US_Hydrodyn_Saxs::show_plot_pr()
             // for each entry in hybrid_map, compute b
             // if ( !saxs_map.count("H") )
             // {
-            // QMessageBox::message(tr("No Hydrogens:"), tr("No Hydrogen defined in SAXS Atom table"));
+            // US_Static::us_message(us_tr("No Hydrogens:"), us_tr("No Hydrogen defined in SAXS Atom table"));
             // return;
             // }
             // float excl_volH = saxs_map["H"].volume;
@@ -2584,8 +2719,8 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                   QString hybrid_name = residue_atom_hybrid_map[mapkey];
                   if ( !atom_map.count( this_atom->name + "~" + hybrid_name ) )
                   {
-                     QMessageBox::message( tr("Missing Atom:"), 
-                                           QString( tr("Atom %1 not defined") ).arg( this_atom->name ) );
+                     US_Static::us_message( us_tr("Missing Atom:"), 
+                                           QString( us_tr("Atom %1 not defined") ).arg( this_atom->name ) );
                      progress_pr->reset();
                      lbl_core_progress->setText("");
                      pb_plot_saxs_sans->setEnabled(bead_model_ok_for_saxs);
@@ -2599,11 +2734,11 @@ void US_Hydrodyn_Saxs::show_plot_pr()
 #if defined(BUG_DEBUG)
                   printf("atom %d %d hybrid name %s, atom name %s b %e mapkey %s hybrid name %s\n",
                          j, k, 
-                         hybrid_name.ascii(),
-                         this_atom->name.ascii(),
+                         hybrid_name.toAscii().data(),
+                         this_atom->name.toAscii().data(),
                          new_atom.b,
-                         mapkey.ascii(),
-                         hybrid_name.ascii()
+                         mapkey.toAscii().data(),
+                         hybrid_name.toAscii().data()
                          );
 #endif
                }
@@ -2639,8 +2774,8 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                   }
                   if ( !atom_map.count( this_atom->name + "~" + hybrid_name ) )
                   {
-                     QMessageBox::message( tr("Missing Atom:"), 
-                                           QString( tr("Atom %1 not defined") ).arg( this_atom->name ) );
+                     US_Static::us_message( us_tr("Missing Atom:"), 
+                                           QString( us_tr("Atom %1 not defined") ).arg( this_atom->name ) );
                      progress_pr->reset();
                      lbl_core_progress->setText("");
                      pb_plot_saxs_sans->setEnabled(bead_model_ok_for_saxs);
@@ -2660,12 +2795,12 @@ void US_Hydrodyn_Saxs::show_plot_pr()
 #if defined(BUG_DEBUG)
                   printf("atom %d %d hybrid name %s, atom name %s b %e correction %e mapkey %s hybrid name %s\n",
                          j, k, 
-                         hybrid_name.ascii(),
-                         this_atom->name.ascii(),
+                         hybrid_name.toAscii().data(),
+                         this_atom->name.toAscii().data(),
                          new_atom.b,
                          our_saxs_options->water_e_density * radius * radius * radius,
-                         mapkey.ascii(),
-                         hybrid_name.ascii()
+                         mapkey.toAscii().data(),
+                         hybrid_name.toAscii().data()
                          );
 #endif
                }
@@ -2684,7 +2819,7 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                rb_curve_raw->setChecked(true);
                rb_curve_saxs->setChecked(false);
                rb_curve_sans->setChecked(false);
-               editor_msg( "red", tr("WARNING: < b > is zero! Reverting to RAW mode for p(r) vs r computation.") );
+               editor_msg( "red", us_tr("WARNING: < b > is zero! Reverting to RAW mode for p(r) vs r computation.") );
             }
          }
       }
@@ -2805,7 +2940,7 @@ void US_Hydrodyn_Saxs::show_plot_pr()
          // non-threaded
          double rik; 
          unsigned int pos;
-         progress_pr->setTotalSteps((int)(atoms.size()));
+         progress_pr->setMaximum((int)(atoms.size()));
          if ( cb_pr_contrib->isChecked() &&
               !source &&
               contrib_file.contains(QRegExp("(PDB|pdb)$")) )
@@ -2814,11 +2949,11 @@ void US_Hydrodyn_Saxs::show_plot_pr()
             contrib_array.resize(atoms.size());
             for ( unsigned int i = 0; i < atoms.size() - 1; i++ )
             {
-               progress_pr->setProgress(i+1);
+               progress_pr->setValue(i+1);
                qApp->processEvents();
                if ( stopFlag ) 
                {
-                  editor->append(tr("Terminated by user request.\n"));
+                  editor->append(us_tr("Terminated by user request.\n"));
                   progress_pr->reset();
                   lbl_core_progress->setText("");
                   pb_plot_saxs_sans->setEnabled(bead_model_ok_for_saxs);
@@ -2881,11 +3016,11 @@ void US_Hydrodyn_Saxs::show_plot_pr()
             printf( "atoms.size() %d\n", (int) atoms.size() );
             for ( unsigned int i = 0; i < atoms.size() - 1; i++ )
             {
-               progress_pr->setProgress(i+1);
+               progress_pr->setValue(i+1);
                qApp->processEvents();
                if ( stopFlag ) 
                {
-                  editor->append(tr("Terminated by user request.\n"));
+                  editor->append(us_tr("Terminated by user request.\n"));
                   progress_pr->reset();
                   lbl_core_progress->setText("");
                   pb_plot_saxs_sans->setEnabled(bead_model_ok_for_saxs);
@@ -2996,10 +3131,10 @@ void US_Hydrodyn_Saxs::show_plot_pr()
 #if defined(OLD_WAY)
 
             switch( QMessageBox::information( this, 
-                                              tr("Overwrite file:") + "SAXS P(r) vs. r" + tr("output file"),
-                                              tr("The P(r) curve file \"") + 
+                                              us_tr("Overwrite file:") + "SAXS P(r) vs. r" + us_tr("output file"),
+                                              us_tr("The P(r) curve file \"") + 
                                               sprr_filestring() +
-                                              tr("\" will be overwriten"),
+                                              us_tr("\" will be overwriten"),
                                               "&Ok",  "&Cancel", 0,
                                               0,      // Enter == button 0
                                               1 ) ) { // Escape == button 2
@@ -3015,10 +3150,10 @@ void US_Hydrodyn_Saxs::show_plot_pr()
 
          if ( ok_to_write )
          {
-            FILE *fpr = fopen(fpr_name, "w");
+            FILE *fpr = us_fopen(fpr_name, "w");
             if ( fpr ) 
             {
-               editor->append(tr("P(r) curve file: ") + fpr_name + tr(" created.\n"));
+               editor->append(us_tr("P(r) curve file: ") + fpr_name + us_tr(" created.\n"));
                ((US_Hydrodyn *)us_hydrodyn)->last_saxs_r.clear();
                ((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr.clear();
                ((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr_norm.clear();
@@ -3045,15 +3180,15 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                QString("")
                   .sprintf(
                            "SOMO p(r) vs r data generated from %s by US_SOMO %s %s bin size %f mw %.2f Daltons area %.2f\n"
-                           , model_filename.ascii()
-                           , US_Version.ascii()
+                           , model_filename.toAscii().data()
+                           , US_Version.toAscii().data()
                            , REVISION
                            , delta
-                           , get_mw(te_filename2->text(), false)
+, get_mw(te_filename2->text(), false)
                            , compute_pr_area(pr, r)
                            );
                fprintf(fpr, "%s",
-                       ((US_Hydrodyn *)us_hydrodyn)->last_saxs_header.ascii() );
+                       ((US_Hydrodyn *)us_hydrodyn)->last_saxs_header.toAscii().data() );
                fprintf(fpr, "r\tp(r)\tnorm. p(r)\n");
                for ( unsigned int i = 0; i < hist.size(); i++ )
                {
@@ -3071,12 +3206,16 @@ void US_Hydrodyn_Saxs::show_plot_pr()
 #if defined(PR_DEBUG)
                cout << "can't create " << fpr_name << endl;
 #endif
-               editor->append(tr("WARNING: Could not create PR curve file: ") + fpr_name + "\n");
-               QMessageBox mb(tr("UltraScan Warning"),
-                              tr("The output file ") + fpr_name + tr(" could not be created."), 
-                              QMessageBox::Critical,
-                              Qt::NoButton, Qt::NoButton, Qt::NoButton, 0, 0, 1);
-               mb.exec();
+               editor->append(us_tr("WARNING: Could not create PR curve file: ") + fpr_name + "\n");
+               // QMessageBox mb(us_tr("UltraScan Warning"),
+               //                us_tr("The output file ") + fpr_name + us_tr(" could not be created."), 
+               //                QMessageBox::Critical,
+               //                QMessageBox::NoButton, QMessageBox::NoButton, QMessageBox::NoButton, 0, 0, 1);
+               // mb.exec();
+               QMessageBox::critical( this,
+                                      us_tr("UltraScan Warning"),
+                                      us_tr("The output file ") + fpr_name + us_tr(" could not be created."), 
+                                      QMessageBox::NoButton, QMessageBox::NoButton, QMessageBox::NoButton );
             }
          }
       } else {
@@ -3105,11 +3244,11 @@ void US_Hydrodyn_Saxs::show_plot_pr()
             QString("")
             .sprintf(
                      "SOMO p(r) vs r data generated from %s by US_SOMO %s %s bin size %f mw %.2f Daltons area %.2f\n"
-                     , model_filename.ascii()
-                     , US_Version.ascii()
+                     , model_filename.toAscii().data()
+                     , US_Version.toAscii().data()
                      , REVISION
                      , delta
-                     , get_mw(te_filename2->text(), false)
+, get_mw(te_filename2->text(), false)
                      , compute_pr_area(pr, r)
                      );
          for ( unsigned int i = 0; i < hist.size(); i++ )
@@ -3195,8 +3334,8 @@ void US_Hydrodyn_Saxs::show_plot_pr()
 
    plot_pr->replot();
 
-   progress_pr->setTotalSteps(1);
-   progress_pr->setProgress(1);
+   progress_pr->setMaximum(1);
+   progress_pr->setValue(1);
    pb_plot_saxs_sans->setEnabled(bead_model_ok_for_saxs);
    // pb_plot_saxs_sans->setEnabled(false);
    pb_plot_pr->setEnabled(true);
@@ -3250,7 +3389,7 @@ void saxs_Iq_thr_t::saxs_Iq_thr_setup(
                                       vector < double > *Ic,
                                       vector < double > *q,
                                       unsigned int threads,
-                                      Q3ProgressBar *progress,
+                                      QProgressBar *progress,
                                       QLabel *lbl_core_progress,
                                       bool *stopFlag
                                       )
@@ -3356,7 +3495,7 @@ void saxs_Iq_thr_t::run()
       unsigned int q_points = (*q).size();
       if ( !thread ) 
       {
-         progress->setTotalSteps((int)(1.15f * as1 / threads));
+         progress->setMaximum((int)(1.15f * as1 / threads));
       }
 #if defined(DEBUG_THREAD)
       cerr << "thread " << thread << " as1 = " << as1 
@@ -3372,7 +3511,7 @@ void saxs_Iq_thr_t::run()
          if ( !thread ) 
          {
             // lbl_core_progress->setText(QString("Atom %1 of %2\n").arg(i+1).arg(as));
-            progress->setProgress(i+1);
+            progress->setValue(i+1);
             // qApp->processEvents();
          }
          if ( *stopFlag ) 
@@ -3499,7 +3638,7 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
 
    if ( our_saxs_options->multiply_iq_by_atomic_volume )
    {
-      editor_msg("blue", tr( "NOTICE: Multiplying I(q) by atomic volume\n" ) );
+      editor_msg("blue", us_tr( "NOTICE: Multiplying I(q) by atomic volume\n" ) );
    }
 
    if ( our_saxs_options->saxs_iq_native_fast ) 
@@ -3515,7 +3654,7 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
       if ( f.exists() && f.open( QIODevice::ReadOnly ) )
       {
          editor_msg( "blue", "found somo/tmp/saxscmds" );
-         Q3TextStream ts( &f );
+         QTextStream ts( &f );
          unsigned int line = 0;
          QRegExp rx_blank  ( "^\\s*$" );
          QRegExp rx_comment( "#.*$" );
@@ -3528,7 +3667,7 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
             {
                continue;
             }
-            QStringList qsl = QStringList::split( QRegExp( "\\s+" ), qs );
+            QStringList qsl = (qs ).split( QRegExp( "\\s+" ) , QString::SkipEmptyParts );
             if ( qsl[ 0 ] == "run" )
             {
                editor_msg( "blue", QString( "saxscmds: running for: %1" ).arg( specname ) );
@@ -3587,8 +3726,8 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
       return;
    }
    QMessageBox::information(this, 
-                            tr("Method not supported:"), 
-                            QString(tr("The selected method is not supported for this model")));
+                            us_tr("Method not supported:"), 
+                            QString(us_tr("The selected method is not supported for this model")));
    return;
    
    // don't forget to later merge deleted waters into model_vector
@@ -3618,7 +3757,7 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
       qApp->processEvents();
       if ( stopFlag ) 
       {
-         editor->append(tr("Terminated by user request.\n"));
+         editor->append(us_tr("Terminated by user request.\n"));
          progress_saxs->reset();
          lbl_core_progress->setText("");
          pb_plot_saxs_sans->setEnabled(true);
@@ -3656,7 +3795,7 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
                qApp->processEvents();
                if ( stopFlag ) 
                {
-                  editor->append(tr("Terminated by user request.\n"));
+                  editor->append(us_tr("Terminated by user request.\n"));
                   progress_saxs->reset();
                   lbl_core_progress->setText("");
                   pb_plot_saxs_sans->setEnabled(true);
@@ -3680,7 +3819,7 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
                qApp->processEvents();
                if ( stopFlag ) 
                {
-                  editor->append(tr("Terminated by user request.\n"));
+                  editor->append(us_tr("Terminated by user request.\n"));
                   progress_saxs->reset();
                   lbl_core_progress->setText("");
                   pb_plot_saxs_sans->setEnabled(true);
@@ -3709,7 +3848,7 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
                qApp->processEvents();
                if ( stopFlag ) 
                {
-                  editor->append(tr("Terminated by user request.\n"));
+                  editor->append(us_tr("Terminated by user request.\n"));
                   progress_saxs->reset();
                   lbl_core_progress->setText("");
                   pb_plot_saxs_sans->setEnabled(true);
@@ -3742,7 +3881,7 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
                qApp->processEvents();
                if ( stopFlag ) 
                {
-                  editor->append(tr("Terminated by user request.\n"));
+                  editor->append(us_tr("Terminated by user request.\n"));
                   progress_saxs->reset();
                   lbl_core_progress->setText("");
                   pb_plot_saxs_sans->setEnabled(true);
@@ -3778,13 +3917,13 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
          QString("_%1").arg(current_model + 1) + 
          ".atoms";
 
-      FILE *fsaxs_atoms = fopen(fsaxs_atoms_name, "w");
+      FILE *fsaxs_atoms = us_fopen(fsaxs_atoms_name, "w");
       if ( fsaxs_atoms ) 
       {
          for ( unsigned int i = 0; i < atoms.size(); i++ )
          {
             fprintf(fsaxs_atoms, "%s %.3f %.3f %.3f %.2f\n"
-                    , atoms[i].saxs_name.ascii()
+                    , atoms[i].saxs_name.toAscii().data()
                     , atoms[i].pos[0]
                     , atoms[i].pos[1]
                     , atoms[i].pos[2]
@@ -3813,7 +3952,7 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
       qApp->processEvents();
       if ( stopFlag ) 
       {
-         editor->append(tr("Terminated by user request.\n"));
+         editor->append(us_tr("Terminated by user request.\n"));
          progress_saxs->reset();
          lbl_core_progress->setText("");
          pb_plot_saxs_sans->setEnabled(true);
@@ -3964,7 +4103,7 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
 #endif
       if ( stopFlag ) 
       {
-         editor->append(tr("Terminated by user request.\n"));
+         editor->append(us_tr("Terminated by user request.\n"));
          progress_saxs->reset();
          lbl_core_progress->setText("");
          pb_plot_saxs_sans->setEnabled(true);
@@ -4080,7 +4219,7 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
          
          if ( stopFlag ) 
          {
-            editor->append(tr("Terminated by user request.\n"));
+            editor->append(us_tr("Terminated by user request.\n"));
             progress_saxs->reset();
             lbl_core_progress->setText("");
             pb_plot_saxs_sans->setEnabled(true);
@@ -4107,17 +4246,17 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
          double rik; // distance from atom i to k 
          double qrik; // q * rik
          double sqrikd; // sin * q * rik / qrik
-         progress_saxs->setTotalSteps((int)(as1 * 1.15));
+         progress_saxs->setMaximum((int)(as1 * 1.15));
          for ( unsigned int i = 0; i < as1; i++ )
          {
             // QString lcp = QString("Atom %1 of %2").arg(i+1).arg(as);
             // cout << lcp << endl;
             // lbl_core_progress->setText(lcp);
-            progress_saxs->setProgress(i+1);
+            progress_saxs->setValue(i+1);
             qApp->processEvents();
             if ( stopFlag ) 
             {
-               editor->append(tr("Terminated by user request.\n"));
+               editor->append(us_tr("Terminated by user request.\n"));
                progress_saxs->reset();
                lbl_core_progress->setText("");
                pb_plot_saxs_sans->setEnabled(true);
@@ -4288,10 +4427,10 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
             
 #if defined(OLD_WAY)
             switch( QMessageBox::information( this, 
-                                              tr("Overwrite file:") + "SAXS I(q) vs. q" + tr("output file"),
-                                              tr("The file named \"") + 
+                                              us_tr("Overwrite file:") + "SAXS I(q) vs. q" + us_tr("output file"),
+                                              us_tr("The file named \"") + 
                                               saxs_filestring() +
-                                              + tr("\" will be overwriten"),
+                                              + us_tr("\" will be overwriten"),
                                               "&Ok",  "&Cancel", 0,
                                               0,      // Enter == button 0
                                               1 ) ) { // Escape == button 1
@@ -4307,13 +4446,13 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
          
          if ( ok_to_write )
          {
-            FILE *fsaxs = fopen(fsaxs_name, "w");
+            FILE *fsaxs = us_fopen(fsaxs_name, "w");
             if ( fsaxs ) 
             {
 #if defined(SAXS_DEBUG)
                cout << "writing " << fsaxs_name << endl;
 #endif
-               editor->append(tr("SAXS curve file: ") + fsaxs_name + tr(" created.\n"));
+               editor->append(us_tr("SAXS curve file: ") + fsaxs_name + us_tr(" created.\n"));
                ((US_Hydrodyn *)us_hydrodyn)->last_saxs_r.clear();
                ((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr.clear();
                ((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr_norm.clear();
@@ -4325,15 +4464,15 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
                   QString("")
                   .sprintf(
                            "Simulated SAXS data generated from %s by US_SOMO %s %s q(%.3f:%.3f) step %.3f\n"
-                           , model_filename.ascii()
-                           , US_Version.ascii()
+                           , model_filename.toAscii().data()
+                           , US_Version.toAscii().data()
                            , REVISION
                            , our_saxs_options->start_q
                            , our_saxs_options->end_q
                            , our_saxs_options->delta_q
                            );
                fprintf(fsaxs, "%s",
-                       ((US_Hydrodyn *)us_hydrodyn)->last_saxs_header.ascii() );
+                       ((US_Hydrodyn *)us_hydrodyn)->last_saxs_header.toAscii().data() );
                for ( unsigned int i = 0; i < q.size(); i++ )
                {
                   fprintf(fsaxs, "%.6e\t%.6e\t%.6e\t%.6e\n", q[i], I[i], Ia[i], Ic[i]);
@@ -4349,12 +4488,16 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
 #if defined(SAXS_DEBUG)
                cout << "can't create " << fsaxs_name << endl;
 #endif
-               editor->append(tr("WARNING: Could not create SAXS curve file: ") + fsaxs_name + "\n");
-               QMessageBox mb(tr("UltraScan Warning"),
-                              tr("The output file ") + fsaxs_name + tr(" could not be created."), 
-                              QMessageBox::Critical,
-                              Qt::NoButton, Qt::NoButton, Qt::NoButton, 0, 0, 1);
-               mb.exec();
+               editor->append(us_tr("WARNING: Could not create SAXS curve file: ") + fsaxs_name + "\n");
+               // QMessageBox mb(us_tr("UltraScan Warning"),
+               //                us_tr("The output file ") + fsaxs_name + us_tr(" could not be created."), 
+               //                QMessageBox::Critical,
+               //                QMessageBox::NoButton, QMessageBox::NoButton, QMessageBox::NoButton, 0, 0, 1);
+               // mb.exec();
+               QMessageBox::critical( this,
+                                      us_tr("UltraScan Warning"),
+                                      us_tr("The output file ") + fsaxs_name + us_tr(" could not be created."), 
+                                      QMessageBox::NoButton, QMessageBox::NoButton, QMessageBox::NoButton );
             }
          }
       } else {
@@ -4369,8 +4512,8 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
             QString("")
             .sprintf(
                      "Simulated SAXS data generated from %s by US_SOMO %s %s q(%.3f:%.3f) step %.3f\n"
-                     , model_filename.ascii()
-                     , US_Version.ascii()
+                     , model_filename.toAscii().data()
+                     , US_Version.toAscii().data()
                      , REVISION
                      , our_saxs_options->start_q
                      , our_saxs_options->end_q
@@ -4401,17 +4544,17 @@ void US_Hydrodyn_Saxs::print()
       p.setFont(editor->font() );
       int yPos      = 0;         // y position for each line
       QFontMetrics fm = p.fontMetrics();
-      Q3PaintDeviceMetrics metrics( &printer ); // need width/height
+      //  QPaintDeviceMetrics metrics( &printer ); // need width/height
       // of printer surface
       for( int i = 0 ; i < editor->lines() ; i++ ) {
-         if ( MARGIN + yPos > metrics.height() - MARGIN ) {
+         if ( MARGIN + yPos > printer.height() - MARGIN ) {
             printer.newPage();      // no more room on this page
             yPos = 0;         // back to top of page
          }
          p.drawText( MARGIN, MARGIN + yPos,
-                     metrics.width(), fm.lineSpacing(),
+                     printer.width(), fm.lineSpacing(),
                                    ExpandTabs | DontClip,
-                                   editor->text( i ) );
+                                   editor->toPlainText( i ) );
          yPos = yPos + fm.lineSpacing();
       }
       p.end();            // send job to printer
@@ -4431,12 +4574,12 @@ void US_Hydrodyn_Saxs::set_grid()
       if ( plotted_q.size() )
       {
          QMessageBox::information(this, 
-                                  tr("US-SOMO: Set grid"),
-                                  QString(tr("NOTE: Everything plotted already matches the set grid")));
+                                  us_tr("US-SOMO: Set grid"),
+                                  QString(us_tr("NOTE: Everything plotted already matches the set grid")));
       } else {
          QMessageBox::information(this, 
-                                  tr("US-SOMO: Set grid"),
-                                  QString(tr("Nothing plotted")));
+                                  us_tr("US-SOMO: Set grid"),
+                                  QString(us_tr("Nothing plotted")));
          return;
       }
    }
@@ -4568,8 +4711,8 @@ void US_Hydrodyn_Saxs::clear_plot_saxs( bool quiet )
    if ( any_to_close && !quiet )
    {
       switch( QMessageBox::information( this, 
-                                        tr("Close I(q) vs q residual windows"),
-                                        tr("Do you want to close the I(q) vs q residual window(s)?\n"
+                                        us_tr("Close I(q) vs q residual windows"),
+                                        us_tr("Do you want to close the I(q) vs q residual window(s)?\n"
                                            "Note: if you choose not to close them now, they must be manually closed\n"
                                            ),
                                         "&Yes",  "&No", 0,
@@ -4642,8 +4785,8 @@ void US_Hydrodyn_Saxs::show_plot_sans()
    }
 
    QMessageBox::information(this, 
-                            tr("Method not implemented:"), 
-                            QString(tr("The selected method is not yet implemented.")));
+                            us_tr("Method not implemented:"), 
+                            QString(us_tr("The selected method is not yet implemented.")));
 }
 
 void US_Hydrodyn_Saxs::show_plot_saxs_sans()
@@ -4663,17 +4806,22 @@ void US_Hydrodyn_Saxs::load_saxs_sans()
       
 void US_Hydrodyn_Saxs::update_saxs_sans()
 {
+   qDebug() <<  "update_saxs_sans() disabled";
+   return;
+#ifdef NOPE
+   qDebug() <<  "update_saxs_sans()";
    set_current_method_buttons();
    if ( rb_sans->isChecked() ) 
    {
-      pb_plot_saxs_sans->setText(tr("Compute SANS Curve"));
-      pb_load_saxs_sans->setText(tr("Load SANS Curve"));
-      pb_clear_plot_saxs->setText(tr("Clear SANS Curve"));
+      qDebug() <<  "update_saxs_sans(): rb_sans->isChecked()";
+      pb_plot_saxs_sans->setText(us_tr("Compute SANS Curve"));
+      pb_load_saxs_sans->setText(us_tr("Load SANS Curve"));
+      pb_clear_plot_saxs->setText(us_tr("Clear SANS Curve"));
       plot_saxs->setTitle((cb_guinier->isChecked() ? 
                            ( cb_cs_guinier->isChecked() ?
                              "CS Guinier " : 
                              ( cb_Rt_guinier->isChecked() ? "Transverse Guinier " : "Guinier " ) )
-                           : "") + tr("SANS Curve"));
+                           : "") + us_tr("SANS Curve"));
 
       rb_saxs_iq_native_debye->setEnabled(false);
       rb_saxs_iq_native_sh   ->setEnabled(false);
@@ -4695,14 +4843,15 @@ void US_Hydrodyn_Saxs::update_saxs_sans()
       rb_sans_iq_native_fast ->setEnabled(true);
       rb_sans_iq_cryson      ->setEnabled(true);
    } else {
-      pb_plot_saxs_sans->setText(tr("Compute SAXS Curve"));
-      pb_load_saxs_sans->setText(tr("Load SAXS Curve"));
-      pb_clear_plot_saxs->setText(tr("Clear SAXS Curve"));
+      qDebug() <<  "update_saxs_sans(): rb_saxs->isChecked()";
+      pb_plot_saxs_sans->setText(us_tr("Compute SAXS Curve"));
+      pb_load_saxs_sans->setText(us_tr("Load SAXS Curve"));
+      pb_clear_plot_saxs->setText(us_tr("Clear SAXS Curve"));
       plot_saxs->setTitle((cb_guinier->isChecked() ? 
                            ( cb_cs_guinier->isChecked() ?
                              "CS Guinier " : 
                              ( cb_Rt_guinier->isChecked() ? "Transverse Guinier " : "Guinier " ) )
-                           : "") + tr("SAXS Curve"));
+                           : "") + us_tr("SAXS Curve"));
 
       rb_saxs_iq_native_debye->setEnabled(true);
       rb_saxs_iq_native_sh   ->setEnabled(true);
@@ -4724,6 +4873,7 @@ void US_Hydrodyn_Saxs::update_saxs_sans()
       rb_sans_iq_cryson      ->setEnabled(false);
    }
    update_iqq_suffix();
+#endif
 }
 
 void US_Hydrodyn_Saxs::clear_display()
@@ -4747,27 +4897,27 @@ void US_Hydrodyn_Saxs::update_font()
 void US_Hydrodyn_Saxs::save()
 {
    QString fn;
-   fn = QFileDialog::getSaveFileName( this , caption() , QString::null , QString::null );
+   fn = QFileDialog::getSaveFileName( this , windowTitle() , QString::null , QString::null );
    if(!fn.isEmpty() )
    {
-      QString text = editor->text();
+      QString text = editor->toPlainText();
       QFile f( fn );
       if ( !f.open( QIODevice::WriteOnly | QIODevice::Text) )
       {
          return;
       }
-      Q3TextStream t( &f );
+      QTextStream t( &f );
       t << text;
       f.close();
-      editor->setModified( false );
-      setCaption( fn );
+ //      editor->setModified( false );
+      setWindowTitle( fn );
    }
 }
 
 void US_Hydrodyn_Saxs::select_atom_file()
 {
    QString old_filename = atom_filename;
-   atom_filename = QFileDialog::getOpenFileName( this , caption() , USglobal->config_list.system_dir + SLASH + "etc" , "*.atom *.ATOM" );
+   atom_filename = QFileDialog::getOpenFileName( this , windowTitle() , USglobal->config_list.system_dir + SLASH + "etc" , "*.atom *.ATOM" );
    if (atom_filename.isEmpty())
    {
       atom_filename = old_filename;
@@ -4783,13 +4933,13 @@ void US_Hydrodyn_Saxs::select_atom_file(const QString &filename)
 {
    QString str1;
    QFileInfo fi(filename);
-   lbl_atom_table->setText(fi.baseName() + "." + fi.extension());
+   lbl_atom_table->setText(fi.baseName() + "." + fi.completeSuffix());
    atom_list.clear();
    atom_map.clear();
    QFile f(filename);
    if (f.open(QIODevice::ReadOnly|QIODevice::Text))
    {
-      Q3TextStream ts(&f);
+      QTextStream ts(&f);
       while (!ts.atEnd())
       {
          ts >> current_atom.name;
@@ -4811,7 +4961,7 @@ void US_Hydrodyn_Saxs::select_atom_file(const QString &filename)
 void US_Hydrodyn_Saxs::select_hybrid_file()
 {
    QString old_filename = hybrid_filename;
-   hybrid_filename = QFileDialog::getOpenFileName( this , caption() , USglobal->config_list.system_dir + SLASH + "etc" , "*.hybrid *.HYBRID" );
+   hybrid_filename = QFileDialog::getOpenFileName( this , windowTitle() , USglobal->config_list.system_dir + SLASH + "etc" , "*.hybrid *.HYBRID" );
 
    if (hybrid_filename.isEmpty())
    {
@@ -4828,14 +4978,14 @@ void US_Hydrodyn_Saxs::select_hybrid_file(const QString &filename)
 {
    QString str1;
    QFileInfo fi(filename);
-   lbl_hybrid_table->setText(fi.baseName() + "." + fi.extension());
+   lbl_hybrid_table->setText(fi.baseName() + "." + fi.completeSuffix());
    QFile f(filename);
    hybrid_list.clear();
    hybrid_map.clear();
    QRegExp count_hydrogens("H(\\d)");
    if (f.open(QIODevice::ReadOnly|QIODevice::Text))
    {
-      Q3TextStream ts(&f);
+      QTextStream ts(&f);
       while (!ts.atEnd())
       {
          ts >> current_hybrid.saxs_name;
@@ -4846,7 +4996,7 @@ void US_Hydrodyn_Saxs::select_hybrid_file(const QString &filename)
          ts >> current_hybrid.exch_prot;
          ts >> current_hybrid.num_elect;
          current_hybrid.hydrogens = 0;
-         if ( count_hydrogens.search( current_hybrid.name ) != -1 )
+         if ( count_hydrogens.indexIn( current_hybrid.name ) != -1 )
          {
             current_hybrid.hydrogens = count_hydrogens.cap(1).toUInt();
          }
@@ -4866,7 +5016,7 @@ void US_Hydrodyn_Saxs::select_saxs_file()
 {
    QString old_filename = saxs_filename;
       
-   saxs_filename = QFileDialog::getOpenFileName( this , caption() , USglobal->config_list.system_dir + SLASH + "etc" , "*.saxs_atoms *.SAXS_ATOMS" );
+   saxs_filename = QFileDialog::getOpenFileName( this , windowTitle() , USglobal->config_list.system_dir + SLASH + "etc" , "*.saxs_atoms *.SAXS_ATOMS" );
    if (saxs_filename.isEmpty())
    {
       saxs_filename = old_filename;
@@ -4882,13 +5032,13 @@ void US_Hydrodyn_Saxs::select_saxs_file(const QString &filename)
 {
    QString str1;
    QFileInfo fi(filename);
-   lbl_saxs_table->setText(fi.baseName() + "." + fi.extension());
+   lbl_saxs_table->setText(fi.baseName() + "." + fi.completeSuffix());
    QFile f(filename);
    saxs_list.clear();
    saxs_map.clear();
    if (f.open(QIODevice::ReadOnly|QIODevice::Text))
    {
-      Q3TextStream ts(&f);
+      QTextStream ts(&f);
       int line = 0;
       while (!ts.atEnd())
       {
@@ -4898,8 +5048,8 @@ void US_Hydrodyn_Saxs::select_saxs_file(const QString &filename)
          {
             continue;
          }
-         qs.stripWhiteSpace();
-         QStringList qsl = QStringList::split( QRegExp( "\\s+" ), qs );
+         qs.trimmed();
+         QStringList qsl = (qs ).split( QRegExp( "\\s+" ) , QString::SkipEmptyParts );
          int pos = 0;
          if ( qsl.size() == 11 )
          {
@@ -4938,7 +5088,7 @@ void US_Hydrodyn_Saxs::select_saxs_file(const QString &filename)
          } 
 
          editor_msg( "red", 
-                     QString( tr( "Warning: %1 on line %2, invalid number of tokens, ignoring" ) )
+                     QString( us_tr( "Warning: %1 on line %2, invalid number of tokens, ignoring" ) )
                      .arg( filename )
                      .arg( line ) );
       }
@@ -4966,12 +5116,12 @@ void US_Hydrodyn_Saxs::select_saxs_file(const QString &filename)
          if ( saxs_map.count( it->first ) )
          {
             editor_msg( "dark red", 
-                        QString( tr( "NOTICE: saxs coefficients for %1 replaced by newly loaded values\n" ) )
+                        QString( us_tr( "NOTICE: saxs coefficients for %1 replaced by newly loaded values\n" ) )
                         .arg( it->first ) );
          } else {
             saxs_list.push_back( it->second );
             editor_msg( "dark blue", 
-                        QString( tr( "NOTICE: added coefficients for %1 from newly loaded values\n" ) )
+                        QString( us_tr( "NOTICE: added coefficients for %1 from newly loaded values\n" ) )
                         .arg( it->first ) );
          }
          saxs_map[ it->first ] = it->second;
@@ -4981,14 +5131,14 @@ void US_Hydrodyn_Saxs::select_saxs_file(const QString &filename)
       {
          if ( our_saxs_options->dummy_saxs_names.size() )
          {
-            editor_msg( "red", QString( tr( "WARNING: default dummy atom name %1 was not defined in %2."
+            editor_msg( "red", QString( us_tr( "WARNING: default dummy atom name %1 was not defined in %2."
                                             " Set now to %3" ) )
                         .arg( our_saxs_options->dummy_saxs_name )
                         .arg( filename )
                         .arg( our_saxs_options->dummy_saxs_names.last() ) );
             our_saxs_options->dummy_saxs_name = our_saxs_options->dummy_saxs_names.last();
          } else {
-            editor_msg( "red", QString( tr( "ERROR: no saxs structure factors found in %1." ) )
+            editor_msg( "red", QString( us_tr( "ERROR: no saxs structure factors found in %1." ) )
                         .arg( filename ) );
          }
       }
@@ -5715,7 +5865,7 @@ void US_Hydrodyn_Saxs::load_gnom()
 
    select_from_directory_history( use_dir, this );
 
-   QString filename = QFileDialog::getOpenFileName( this , caption() , use_dir , "*.out" );
+   QString filename = QFileDialog::getOpenFileName( this , windowTitle() , use_dir , "*.out" );
    if (filename.isEmpty())
    {
       return;
@@ -5723,8 +5873,8 @@ void US_Hydrodyn_Saxs::load_gnom()
    add_to_directory_history( filename );
 
    QFile f(filename);
-   our_saxs_options->path_load_gnom = QFileInfo(filename).dirPath(true);
-   QString ext = QFileInfo(filename).extension(FALSE).lower();
+   our_saxs_options->path_load_gnom = QFileInfo(filename).absolutePath();
+   QString ext = QFileInfo(filename).suffix().toLower();
    bool plot_gnom = false;
    vector < double > gnom_Iq_reg;
    vector < double > gnom_Iq_exp;
@@ -5734,7 +5884,7 @@ void US_Hydrodyn_Saxs::load_gnom()
    {
       QStringList qsl_gnom;
       {
-         Q3TextStream ts(&f);
+         QTextStream ts(&f);
          while ( !ts.atEnd() )
          {
             qsl_gnom << ts.readLine();
@@ -5749,8 +5899,8 @@ void US_Hydrodyn_Saxs::load_gnom()
       if ( our_saxs_options->iq_scale_ask )
       {
          switch( QMessageBox::information( this, 
-                                           tr("UltraScan"),
-                                           tr("Is this file in 1/Angstrom or 1/nm units?"),
+                                           us_tr("UltraScan"),
+                                           us_tr("Is this file in 1/Angstrom or 1/nm units?"),
                                            "1/&Angstrom", 
                                            "1/&nm", 0,
                                            0,      // Enter == button 0
@@ -5771,7 +5921,7 @@ void US_Hydrodyn_Saxs::load_gnom()
          }
       }
          
-      Q3TextStream ts(&f);
+      QTextStream ts(&f);
       QRegExp iqqh("^\\s*S\\s+J EXP\\s+ERROR\\s+J REG\\s+I REG\\s*$");
       QRegExp prrh("^\\s*R\\s+P\\(R\\)\\s+ERROR\\s*$");
       QRegExp rx2("^\\s*(\\S*)\\s+(\\S*)\\s*$");
@@ -5783,12 +5933,12 @@ void US_Hydrodyn_Saxs::load_gnom()
       while ( !ts.atEnd() )
       {
          tmp = ts.readLine();
-         if ( rxinputfile.search(tmp) != -1 ) 
+         if ( rxinputfile.indexIn(tmp) != -1 ) 
          {
-            // datafiles.push_back(rxinputfile.cap(1).stripWhiteSpace());
+            // datafiles.push_back(rxinputfile.cap(1).trimmed());
             continue;
          }
-         if ( iqqh.search(tmp) != -1 )
+         if ( iqqh.indexIn(tmp) != -1 )
          {
             vector < double > I_exp;
             vector < double > I_reg;
@@ -5798,7 +5948,7 @@ void US_Hydrodyn_Saxs::load_gnom()
             while ( !ts.atEnd() )
             {
                tmp = ts.readLine();
-               if ( rx5.search(tmp) != -1 )
+               if ( rx5.indexIn(tmp) != -1 )
                {
                   q.push_back(rx5.cap(1).toDouble() * units );
                   I_exp.push_back(rx5.cap(2).toDouble());
@@ -5806,7 +5956,7 @@ void US_Hydrodyn_Saxs::load_gnom()
                   // cout << "iqq point: " << rx5.cap(1).toDouble() << " " << rx5.cap(5).toDouble() << endl;
                } else {
                   // end of iqq?
-                  if ( rx2.search(tmp) == -1 )
+                  if ( rx2.indexIn(tmp) == -1 )
                   {
                      plot_gnom = true;
                      gnom_Iq_reg = I_reg;
@@ -5835,7 +5985,7 @@ void US_Hydrodyn_Saxs::load_gnom()
             }
             continue;
          }
-         if ( prrh.search(tmp) != -1 )
+         if ( prrh.indexIn(tmp) != -1 )
          {
             vector < double > r;
             vector < double > pr;
@@ -5844,18 +5994,18 @@ void US_Hydrodyn_Saxs::load_gnom()
             while ( !ts.atEnd() )
             {
                tmp = ts.readLine();
-               if ( rx3.search(tmp) != -1 )
+               if ( rx3.indexIn(tmp) != -1 )
                {
                   r.push_back(rx3.cap(1).toDouble() / units);
                   pr.push_back(rx3.cap(2).toDouble());
                   // cout << "prr point: " << rx3.cap(1).toDouble() << " " << rx3.cap(2).toDouble() << endl;
                } else {
                   // end of prr?
-                  QRegExp qx_mw("molecular weight (\\d+(|\\.\\d+))",false);
-                  QStringList mwline = qsl_gnom.grep(qx_mw);
+                  QRegExp qx_mw("molecular weight (\\d+(|\\.\\d+))", Qt::CaseInsensitive );
+                  QStringList mwline = qsl_gnom.filter(qx_mw);
                   if ( mwline.size() )
                   {
-                     if ( qx_mw.search(mwline[0]) == -1 )
+                     if ( qx_mw.indexIn(mwline[0]) == -1 )
                      {
                         // cerr << QString("qx_mw.search of <%1> for molecular weight failed!\n").arg(mwline[0]);
                         gnom_mw = 0e0;
@@ -5865,8 +6015,8 @@ void US_Hydrodyn_Saxs::load_gnom()
                      }
                      if ( mwline.size() > 1 )
                      {
-                        QMessageBox::message(tr("Please note:"), 
-                                             QString(tr("There are multiple molecular weight lines in the gnom file\n"
+                        US_Static::us_message(us_tr("Please note:"), 
+                                             QString(us_tr("There are multiple molecular weight lines in the gnom file\n"
                                                         "Using the first one found (%1 Daltons)")).arg(gnom_mw));
                      }
                      if ( gnom_mw > 0e0 )
@@ -5899,8 +6049,8 @@ void US_Hydrodyn_Saxs::load_gnom()
       if ( ask_save_mw_to_gnom && gnom_mw )
       {
          switch( QMessageBox::information( this, 
-                                           tr("Save GNOM with Molecular Weight"),
-                                           QString(tr("Do you want to save the molecular weight entered (%1 Daltons) into the gnom.out file?"))
+                                           us_tr("Save GNOM with Molecular Weight"),
+                                           QString(us_tr("Do you want to save the molecular weight entered (%1 Daltons) into the gnom.out file?"))
                                            .arg(gnom_mw),
                                            "&Ok",  
                                            "&Cancel", 
@@ -5918,14 +6068,14 @@ void US_Hydrodyn_Saxs::load_gnom()
                if ( !f.open( QIODevice::WriteOnly ) )
                {
                   QMessageBox::warning( this, "UltraScan",
-                                        QString(tr("Could not open %1 for writing!")).arg(fname) );
+                                        QString(us_tr("Could not open %1 for writing!")).arg(fname) );
                } else {
-                  Q3TextStream t( &f );
+                  QTextStream t( &f );
                   t << QString("Molecular weight %1 Daltons\n\n").arg(gnom_mw);
                   t << qsl_gnom.join("\n");
                   t << "\n";
                   f.close();
-                  editor->append(QString(tr("Created file %1\n")).arg(f.name()));
+                  editor->append(QString(us_tr("Created file %1\n")).arg(f.fileName()));
                }
             }                  
             break;
@@ -5942,9 +6092,9 @@ void US_Hydrodyn_Saxs::load_gnom()
             if ( QFileInfo(datafile).exists() )
             {
                switch( QMessageBox::information( this, 
-                                                 tr("UltraScan"),
-                                                 tr("Found the GNOM associated data file\n") + QFileInfo(datafile).fileName() + "\n" +
-                                                 tr("Do you want to load it?"),
+                                                 us_tr("UltraScan"),
+                                                 us_tr("Found the GNOM associated data file\n") + QFileInfo(datafile).fileName() + "\n" +
+                                                 us_tr("Do you want to load it?"),
                                                  "&Ok", 
                                                  "&No", 0,
                                                  0,      // Enter == button 0
@@ -6053,7 +6203,7 @@ vector < double > US_Hydrodyn_Saxs::rescale( vector < double > x )
 int US_Hydrodyn_Saxs::file_curve_type(QString filename)
 {
    QRegExp rx("sprr_(.)");
-   if ( rx.search(filename) == -1 )
+   if ( rx.indexIn(filename) == -1 )
    {
       return -1;
    }
@@ -6186,12 +6336,12 @@ void US_Hydrodyn_Saxs::set_user_range()
    } else {
       plot_saxs->setAxisTitle  ( QwtPlot::yLeft,   
                                  cb_kratky ->isChecked() ?
-                                 tr( " q^2 * I(q)"        ) : 
+                                 us_tr( " q^2 * I(q)"        ) : 
                                  ( cb_cs_guinier->isChecked() ?                                 
-                                   tr( "q*I(q) (log scale)" ) : 
+                                   us_tr( "q*I(q) (log scale)" ) : 
                                    ( cb_Rt_guinier->isChecked() ?
-                                     tr( "q^2*I(q) (log scale)" ) :
-                                     tr( "I(q) (log scale)" ) ) )
+                                     us_tr( "q^2*I(q) (log scale)" ) :
+                                     us_tr( "I(q) (log scale)" ) ) )
                                  );
 #ifndef QT4
       plot_saxs->setAxisOptions( QwtPlot::yLeft, 
@@ -6722,6 +6872,19 @@ void US_Hydrodyn_Saxs::crop_iq_data( vector < double > &q,
 
 void US_Hydrodyn_Saxs::set_current_method_buttons() 
 {
+   qDebug() << "set_current_method_buttons()";
+   qDebug() << QString( "our_saxs_options-> nd %1 sh %2 h %3 h2 %4 h3 %5 fast %6 foxs %7 crysol %8 sastbx %9")
+      .arg( our_saxs_options->saxs_iq_native_debye )
+      .arg( our_saxs_options->saxs_iq_native_sh )
+      .arg( our_saxs_options->saxs_iq_native_hybrid )
+      .arg( our_saxs_options->saxs_iq_native_hybrid2 )
+      .arg( our_saxs_options->saxs_iq_native_hybrid3 )
+      .arg( our_saxs_options->saxs_iq_native_fast )
+      .arg( our_saxs_options->saxs_iq_foxs )
+      .arg( our_saxs_options->saxs_iq_crysol )
+      .arg( our_saxs_options->saxs_iq_sastbx )
+      ;
+   
    rb_saxs_iq_native_debye  ->setChecked(our_saxs_options->saxs_iq_native_debye);
    rb_saxs_iq_native_sh     ->setChecked(our_saxs_options->saxs_iq_native_sh);
    if ( started_in_expert_mode )
@@ -6740,6 +6903,17 @@ void US_Hydrodyn_Saxs::set_current_method_buttons()
    {
       rb_saxs_iq_sastbx        ->setChecked(our_saxs_options->saxs_iq_sastbx);
    }
+
+   qDebug() << QString( "our_sans_options-> nd %1 sh %2 h %3 h2 %4 h3 %5 fast %6 cryson %7" )
+      .arg( our_saxs_options->sans_iq_native_debye )
+      .arg( our_saxs_options->sans_iq_native_sh )
+      .arg( our_saxs_options->sans_iq_native_hybrid )
+      .arg( our_saxs_options->sans_iq_native_hybrid2 )
+      .arg( our_saxs_options->sans_iq_native_hybrid3 )
+      .arg( our_saxs_options->sans_iq_native_fast )
+      .arg( our_saxs_options->sans_iq_cryson )
+      ;
+   
    rb_sans_iq_native_debye  ->setChecked(our_saxs_options->sans_iq_native_debye);
    rb_sans_iq_native_sh     ->setChecked(our_saxs_options->sans_iq_native_sh);
    if ( started_in_expert_mode )
@@ -6754,9 +6928,57 @@ void US_Hydrodyn_Saxs::set_current_method_buttons()
    update_iqq_suffix();
 }
 
+void US_Hydrodyn_Saxs::set_saxs_iq() {
+   qDebug() << "set_saxs_iq(): disabled\n";
+   return;
+   if ( started_in_expert_mode ) {
+      if ( rb_saxs_iq_native_debye->isChecked() ) {
+         return set_saxs_iq( 0 );
+      }
+      if ( rb_saxs_iq_native_sh->isChecked() ) {
+         return set_saxs_iq( 1 );
+      }
+      if ( rb_saxs_iq_native_hybrid->isChecked() ) {
+         return set_saxs_iq( 2 );
+      }
+      if ( rb_saxs_iq_native_hybrid2->isChecked() ) {
+         return set_saxs_iq( 3 );
+      }
+      if ( rb_saxs_iq_native_hybrid3->isChecked() ) {
+         return set_saxs_iq( 4 );
+      }
+      if ( rb_saxs_iq_native_fast->isChecked() ) {
+         return set_saxs_iq( 5 );
+      }
+      if ( rb_saxs_iq_foxs->isChecked() ) {
+         return set_saxs_iq( 6 );
+      }
+      if ( rb_saxs_iq_crysol->isChecked() ) {
+         return set_saxs_iq( 7 );
+      }
+      if ( rb_saxs_iq_sastbx->isChecked() ) {
+         return set_saxs_iq( 8 );
+      }
+   } else {
+      if ( rb_saxs_iq_native_debye->isChecked() ) {
+         return set_saxs_iq( 0 );
+      }
+      if ( rb_saxs_iq_native_sh->isChecked() ) {
+         return set_saxs_iq( 1 );
+      }
+      if ( rb_saxs_iq_native_fast->isChecked() ) {
+         return set_saxs_iq( 2 );
+      }
+      if ( rb_saxs_iq_crysol->isChecked() ) {
+         return set_saxs_iq( 3 );
+      }
+   }
+}
 
 void US_Hydrodyn_Saxs::set_saxs_iq(int val)
 {
+   qDebug() << "set_saxs_iq(" << val << "): disabled\n";
+   return;
    int ref = 0;
    rb_saxs_iq_native_debye  ->setChecked( val == ref ); ref++;
    rb_saxs_iq_native_sh     ->setChecked( val == ref ); ref++;
@@ -6814,8 +7036,51 @@ void US_Hydrodyn_Saxs::set_saxs_iq(int val)
    update_iqq_suffix();
 }
 
+void US_Hydrodyn_Saxs::set_sans_iq() {
+   qDebug() << "set_sans_iq(): disabled\n";
+   return;
+   if ( started_in_expert_mode ) {
+      if ( rb_sans_iq_native_debye->isChecked() ) {
+         return set_sans_iq( 0 );
+      }
+      if ( rb_sans_iq_native_sh->isChecked() ) {
+         return set_sans_iq( 1 );
+      }
+      if ( rb_sans_iq_native_hybrid->isChecked() ) {
+         return set_sans_iq( 2 );
+      }
+      if ( rb_sans_iq_native_hybrid2->isChecked() ) {
+         return set_sans_iq( 3 );
+      }
+      if ( rb_sans_iq_native_hybrid3->isChecked() ) {
+         return set_sans_iq( 4 );
+      }
+      if ( rb_sans_iq_native_fast->isChecked() ) {
+         return set_sans_iq( 5 );
+      }
+      if ( rb_sans_iq_cryson->isChecked() ) {
+         return set_sans_iq( 6 );
+      }
+   } else {
+      if ( rb_sans_iq_native_debye->isChecked() ) {
+         return set_sans_iq( 0 );
+      }
+      if ( rb_sans_iq_native_sh->isChecked() ) {
+         return set_sans_iq( 1 );
+      }
+      if ( rb_sans_iq_native_fast->isChecked() ) {
+         return set_sans_iq( 2 );
+      }
+      if ( rb_sans_iq_cryson->isChecked() ) {
+         return set_sans_iq( 3 );
+      }
+   }
+}
+
 void US_Hydrodyn_Saxs::set_sans_iq(int val)
 {
+   qDebug() << "set_sans_iq(" << val << "): disabled\n";
+   return;
    int ref = 0;
    rb_sans_iq_native_debye  ->setChecked( val == ref ); ref++;
    rb_sans_iq_native_sh     ->setChecked( val == ref ); ref++;
@@ -6880,7 +7145,7 @@ void US_Hydrodyn_Saxs::display_iqq_residuals( QString title,
    if ( our_saxs_options->ignore_errors &&
         I_errors.size() )
    {
-      editor_msg( "dark red", tr( "Ignoring experimental errors" ) );
+      editor_msg( "dark red", us_tr( "Ignoring experimental errors" ) );
       I_errors.clear();
    }
 
@@ -6999,7 +7264,7 @@ void US_Hydrodyn_Saxs::display_iqq_residuals( QString title,
          new US_Hydrodyn_Saxs_Iqq_Residuals(
                                             &saxs_iqq_residuals_widgets[title],
                                             plot_saxs->width(),
-                                            tr("Residuals & difference targeting:\n") + title,
+                                            us_tr("Residuals & difference targeting:\n") + title,
                                             q,
                                             difference,
                                             difference_no_errors,
@@ -7022,6 +7287,7 @@ void US_Hydrodyn_Saxs::display_iqq_residuals( QString title,
 
 void US_Hydrodyn_Saxs::update_iqq_suffix()
 {
+   qDebug() << "update_iqq_suffix()";
    QString qs = "";
    // don't forget to update US_Hydrodyn_Saxs_Options update to call this
    // don't forget about US_Hydrodyn_Batch::iqq_suffix
@@ -7029,8 +7295,10 @@ void US_Hydrodyn_Saxs::update_iqq_suffix()
    // the method:
    if ( rb_saxs->isChecked() )
    {
+      qDebug() << "update_iqq_suffix(): rb_saxs->isChecked()";
       if ( our_saxs_options->saxs_iq_crysol )
       {
+         qDebug() << "update_iqq_suffix(): saxs_iq_crysol";
          qs += "cr";
          qs += QString("_h%1_g%2_hs%3")
             .arg( our_saxs_options->sh_max_harmonics )
@@ -7051,30 +7319,37 @@ void US_Hydrodyn_Saxs::update_iqq_suffix()
       } else {
          if ( our_saxs_options->saxs_iq_foxs )
          {
+            qDebug() << "update_iqq_suffix(): saxs_iq_foxs";
             qs += "fx";
          } else {
             if ( our_saxs_options->saxs_iq_native_debye )
             {
+               qDebug() << "update_iqq_suffix(): saxs_iq_native_debye";
                qs += "db";
             }
             if ( our_saxs_options->saxs_iq_native_fast )
             {
+               qDebug() << "update_iqq_suffix(): saxs_iq_native_fast";
                qs += "qd";
             }
             if ( our_saxs_options->saxs_iq_native_hybrid )
             {
+               qDebug() << "update_iqq_suffix(): saxs_iq_native_hybrid";
                qs += "hy";
             }
             if ( our_saxs_options->saxs_iq_native_hybrid2 )
             {
+               qDebug() << "update_iqq_suffix(): saxs_iq_native_hybrid2";
                qs += "h2";
             }
             if ( our_saxs_options->saxs_iq_native_hybrid3 )
             {
+               qDebug() << "update_iqq_suffix(): saxs_iq_native_hybrid3";
                qs += "h3";
             }
             if ( our_saxs_options->saxs_iq_sastbx )
             {
+               qDebug() << "update_iqq_suffix(): saxs_iq_sastbx";
    
                QString method;
                switch ( our_saxs_options->sastbx_method )
@@ -7100,6 +7375,7 @@ void US_Hydrodyn_Saxs::update_iqq_suffix()
             }
             if ( our_saxs_options->saxs_iq_native_sh )
             {
+               qDebug() << "update_iqq_suffix(): saxs_iq_native_sh";
                qs += "sh";
                qs += QString( "_h%1" )
                   .arg( our_saxs_options->sh_max_harmonics )
@@ -7110,6 +7386,7 @@ void US_Hydrodyn_Saxs::update_iqq_suffix()
                    our_saxs_options->saxs_iq_native_hybrid3 ) && 
                  our_saxs_options->saxs_iq_hybrid_adaptive )
             {
+               qDebug() << "update_iqq_suffix(): saxs_iq_native_hybrid*";
                qs += "a";
             }
             if ( our_saxs_options->scale_excl_vol != 1e0 )
@@ -7131,9 +7408,11 @@ void US_Hydrodyn_Saxs::update_iqq_suffix()
    }
    if ( rb_sans->isChecked() ) 
    {
+      qDebug() << "update_iqq_suffix(): rb_sans->isChecked()";
       qs += "n";
       if ( our_saxs_options->sans_iq_cryson )
       {
+         qDebug() << "update_iqq_suffix(): sans_iq_cryson";
          qs += "cr";
          qs += QString("_h%1_g%2_hs%3")
             .arg( our_saxs_options->cryson_sh_max_harmonics )
@@ -7142,26 +7421,32 @@ void US_Hydrodyn_Saxs::update_iqq_suffix()
       }
       if ( our_saxs_options->sans_iq_native_debye )
       {
+         qDebug() << "update_iqq_suffix(): sans_iq_native_debye";
          qs += "db";
       }
       if ( our_saxs_options->sans_iq_native_fast )
       {
+         qDebug() << "update_iqq_suffix(): sans_iq_native_fast";
          qs += "qd";
       }
       if ( our_saxs_options->sans_iq_native_hybrid )
       {
+         qDebug() << "update_iqq_suffix(): sans_iq_native_hybrid";
          qs += "hy";
       }
       if ( our_saxs_options->sans_iq_native_hybrid2 )
       {
+         qDebug() << "update_iqq_suffix(): sans_iq_native_hybrid2";
          qs += "h2";
       }
       if ( our_saxs_options->sans_iq_native_hybrid3 )
       {
+         qDebug() << "update_iqq_suffix(): sans_iq_native_hybrid3";
          qs += "h3";
       }
       if ( our_saxs_options->sans_iq_native_sh )
       {
+         qDebug() << "update_iqq_suffix(): sans_iq_native_sh";
          qs += "sh";
          qs += QString( "_h%1" )
             .arg( our_saxs_options->sh_max_harmonics )
@@ -7172,19 +7457,23 @@ void US_Hydrodyn_Saxs::update_iqq_suffix()
              our_saxs_options->sans_iq_native_hybrid3 ) && 
            our_saxs_options->sans_iq_hybrid_adaptive )
       {
+         qDebug() << "update_iqq_suffix(): sans_iq_native_hybrid*";
          qs += "a";
       }
       if ( our_saxs_options->scale_excl_vol != 1e0 )
       {
+         qDebug() << "update_iqq_suffix(): scale_excl_vol";
          qs += QString("_evs%1")
             .arg( QString("%1").arg( our_saxs_options->scale_excl_vol ).replace(".", "_" ) );
       }
       if ( !our_saxs_options->autocorrelate )
       {
+         qDebug() << "update_iqq_suffix(): autocorrelate";
          qs += "_nac";
       }
       if ( our_saxs_options->swh_excl_vol != 0e0 )
       {
+         qDebug() << "update_iqq_suffix(): swh_excl_vol !=0";
          qs += QString("_swh%1")
             .arg( QString("%1").arg( our_saxs_options->swh_excl_vol ).replace(".", "_" ) );
       }
@@ -7215,7 +7504,7 @@ void US_Hydrodyn_Saxs::ask_iq_target_grid( bool force )
       (unsigned int)floor(((our_saxs_options->end_q - our_saxs_options->start_q) / our_saxs_options->delta_q) + .5) + 1;
    
    QString gridmsg = 
-      QString(tr("Current grid:"
+      QString(us_tr("Current grid:"
                  "q range %1 to %2 with a stepsize of %3 giving %4 q-points.\n") )
       .arg(our_saxs_options->start_q)
       .arg(our_saxs_options->end_q)
@@ -7231,9 +7520,9 @@ void US_Hydrodyn_Saxs::ask_iq_target_grid( bool force )
    // display a list of the plotted grids and choose one or cancel
 
    bool ok;
-   QString grid_target = QInputDialog::getItem(
-                                               tr("Set I(q) Grid"),
-                                               tr("Select the target plotted data to set the I(q) grid:\n"
+   QString grid_target = US_Static::getItem(
+                                               us_tr("Set I(q) Grid"),
+                                               us_tr("Select the target plotted data to set the I(q) grid:\n"
                                                   "or Cancel of you do not wish to change the I(q) grid ")
                                                , 
                                                qsl_plotted_iq_names, 
@@ -7249,7 +7538,7 @@ void US_Hydrodyn_Saxs::ask_iq_target_grid( bool force )
         !plotted_iq_names_to_pos.count( grid_target ) )
    {
       QMessageBox::warning( this, "Set I(q) grid",
-                            QString(tr("Error: could not find the grid for target %1")). arg( grid_target ) );
+                            QString(us_tr("Error: could not find the grid for target %1")). arg( grid_target ) );
       return;
    }
 
@@ -7260,7 +7549,7 @@ void US_Hydrodyn_Saxs::ask_iq_target_grid( bool force )
    if ( plotted_q[ pos ].size() < 2 )
    {
       QMessageBox::warning( this, "Set I(q) grid",
-                            QString(tr("Error: Too few data points (%!) to set the grid for target %2"))
+                            QString(us_tr("Error: Too few data points (%!) to set the grid for target %2"))
                             .arg( plotted_q[ pos ].size() ) 
                             .arg( grid_target ) 
                             );
@@ -7337,9 +7626,9 @@ void US_Hydrodyn_Saxs::ask_iq_target_grid( bool force )
       unsigned int grid_points = 
          (unsigned int)floor(((our_saxs_options->end_q - our_saxs_options->start_q) / our_saxs_options->delta_q) + .5) + 1;
 
-      int res = QInputDialog::getInteger(
+      int res = US_Static::getInteger(
                                          "SOMO: Confirm grid",
-                                         QString( tr( 
+                                         QString( us_tr( 
                                                      "Original number of grid points %1\n"
                                                      "Target number of grid points using the divisor below is %2\n"
                                                      "Exact number of grid points using the divisor below is %3\n"
@@ -7376,8 +7665,8 @@ void US_Hydrodyn_Saxs::ask_iq_target_grid( bool force )
          our_saxs_options->delta_angle = save_delta_angle;
          unsigned int grid_points = 
             (unsigned int)floor(((our_saxs_options->end_q - our_saxs_options->start_q) / our_saxs_options->delta_q) + .5) + 1;
-         QMessageBox::message(tr("SOMO: Grid restored"), 
-                              QString(tr("Reverted to orignal grid containing %1 points")).arg( grid_points ));
+         US_Static::us_message(us_tr("SOMO: Grid restored"), 
+                              QString(us_tr("Reverted to orignal grid containing %1 points")).arg( grid_points ));
          ok = true;
       }
    } while ( !ok );
@@ -7396,7 +7685,7 @@ void US_Hydrodyn_Saxs::ask_iq_target_grid( bool force )
    exact_q = new_exact_q;
    {
       QString gridmsg = 
-         QString( tr( "Current exact grid is now:"
+         QString( us_tr( "Current exact grid is now:"
                       "q range %1 to %2 with %3 q-points.\n" ) )
          .arg( exact_q[ 0 ] )
          .arg( exact_q.back() )
@@ -7415,7 +7704,7 @@ void US_Hydrodyn_Saxs::ask_iq_target_grid( bool force )
          (unsigned int)floor(((our_saxs_options->end_q - our_saxs_options->start_q) / our_saxs_options->delta_q) + .5) + 1;
       
       QString gridmsg = 
-         QString(tr("Current grid is now:"
+         QString(us_tr("Current grid is now:"
                     "q range %1 to %2 with a stepsize of %3 giving %4 q-points.\n") )
          .arg(our_saxs_options->start_q)
          .arg(our_saxs_options->end_q)
@@ -7544,6 +7833,9 @@ bool US_Hydrodyn_Saxs::everything_plotted_has_same_grid_as_set()
 
 void US_Hydrodyn_Saxs::fix_sas_options()
 {
+   qDebug() << "fix_sas_options()";
+   qDebug() << "fix_sas_options(): disabled";
+   return;
    
    // cout << "fix_sas_options\n";
    bool any_selected = false;
@@ -7759,15 +8051,15 @@ void US_Hydrodyn_Saxs::check_mwt_constants( bool force )
         ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "guinier_mwt_c"    ].toDouble() != -2.095 ||
         ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "guinier_mwt_qmax" ].toDouble() != 0.2 ) {
       QString msg = 
-         tr( "The MW calculations by the Rambo & Tainer method [Nature 496:477-81] appear to\n"
+         us_tr( "The MW calculations by the Rambo & Tainer method [Nature 496:477-81] appear to\n"
              "provide consistent results for proteins when using the default values for k, c and qmax.\n"
              "See the Options Help for further details." );
 
       switch( QMessageBox::warning( this, 
-                                    caption(),
+                                    windowTitle(),
                                     msg,
-                                    tr( "OK" ),
-                                    tr( "Do not show this warning again" ) )
+                                    us_tr( "OK" ),
+                                    us_tr( "Do not show this warning again" ) )
               ) {
       case 1 : ldata[ "check_mwt_msg_shown" ] = "true";
          break;

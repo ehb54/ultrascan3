@@ -7,9 +7,9 @@
 #include <qstring.h>
 #include <qlayout.h>
 #include <qpushbutton.h>
-#include <q3frame.h>
+//#include <q3frame.h>
 #include <qcheckbox.h>
-#include <q3textedit.h>
+#include <qtextedit.h>
 #include <qmenubar.h>
 #include <qprinter.h>
 //Added by qt3to4:

@@ -1,6 +1,6 @@
 #include "../include/us_plot_util.h"
 //Added by qt3to4:
-#include <Q3TextStream>
+#include <QTextStream>
 
 bool US_Plot_Util::printtofile( QString basename,
                                 map < QString, QwtPlot * > plots, 
@@ -83,17 +83,74 @@ bool US_Plot_Util::printtofile( QString basename,
 
          if ( !f.open( QIODevice::WriteOnly ) )
          {
-            errors = QString( "File %1 can not open for writing" ).arg( f.name() );
+            errors = QString( "File %1 can not open for writing" ).arg( f.fileName() );
             return false;
          }
 
-         Q3TextStream ts( &f );
+         QTextStream ts( &f );
+
+         bool skipx = plotname == "HPLC_SAXS_Guinier_Summary";
+         
+         set < int > skipx_vals;
+         if ( skipx ) {
+            for ( int i = 1; i < curves; ++i ) {
+               if ( x[ i ] == x[ 0 ] ) {
+                  skipx_vals.insert( i );
+               }
+            }
+         }
+
+         if ( skipx && (int) skipx_vals.size() != curves - 1 ) {
+            us_qdebug( "fix up" );
+            vector < vector < double > > new_x;
+            vector < vector < double > > new_y;
+
+            // make master list
+
+            vector < double > union_x = US_Vector::vunion( x );
+            vector < map < double, double > > y_vals;
+            
+            for ( int i = 0; i < curves; ++i ) {
+               map < double, double > this_y;
+               for ( int j = 0; j < (int) y[ i ].size(); ++j ) {
+                  this_y[ x[ i ][ j ] ] = y[ i ][ j ];
+               }
+               y_vals.push_back( this_y );
+               new_x.push_back( union_x );
+            }
+             
+            for ( int i = 0; i < curves; ++i ) {
+               vector < double > this_y;
+               for ( int j = 0; j < (int) new_x[ i ].size(); ++j ) {
+                  this_y.push_back( y_vals[ i ].count( new_x[ i ][ j ] ) ?
+                                    y_vals[ i ][ new_x[ i ][ j ] ] : 
+#if defined( NAN )
+                                    NAN
+#else
+                                    sqrt(-1e0)
+#endif
+                                    );
+               }
+               new_y.push_back( this_y );
+            }
+            
+            x = new_x;
+            y = new_y;
+         }
 
          // title row
 
          for ( int i = 0; i < curves; ++i )
          {
-            ts << "\"" + titles[ i ] + ":x\",\"" + titles[ i ] + ":y\",";
+            if ( skipx ) {
+               if ( i ) {
+                  ts << "\"" + titles[ i ] + "\",";
+               } else {
+                  ts << "\"Frame\",\"" + titles[ i ] + "\",";
+               }
+            } else {
+               ts << "\"" + titles[ i ] + ":x\",\"" + titles[ i ] + ":y\",";
+            }
          }
          ts << "\n";
 
@@ -103,10 +160,18 @@ bool US_Plot_Util::printtofile( QString basename,
          {
             for ( int i = 0; i < curves; i++ )
             {
-               if ( j < (int) x[ i ].size() ) {
-                  ts << x[ i ][ j ] << "," << y[ i ][ j ] << ",";
+               if ( skipx && i ) {
+                  if ( j < (int) x[ i ].size() ) {
+                     ts << y[ i ][ j ] << ",";
+                  } else {
+                     ts << ",";
+                  }
                } else {
-                  ts << ",,";
+                  if ( j < (int) x[ i ].size() ) {
+                     ts << x[ i ][ j ] << "," << y[ i ][ j ] << ",";
+                  } else {
+                     ts << ",,";
+                  }
                }
             }
             ts << "\n";

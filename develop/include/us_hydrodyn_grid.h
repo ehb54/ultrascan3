@@ -7,8 +7,9 @@
 #include <qstring.h>
 #include <qlayout.h>
 #include <qpushbutton.h>
-#include <q3buttongroup.h>
-#include <q3frame.h>
+#include <qgroupbox.h>
+#include <qradiobutton.h>
+//#include <q3frame.h>
 #include <qcheckbox.h>
 #include <qwt_counter.h>
 //Added by qt3to4:
@@ -36,7 +37,7 @@ struct grid_options
    bool         equalize_radii_constant_volume;
 };
 
-class US_EXTERN US_Hydrodyn_Grid : public Q3Frame
+class US_EXTERN US_Hydrodyn_Grid : public QFrame
 {
    Q_OBJECT
 
@@ -66,12 +67,17 @@ class US_EXTERN US_Hydrodyn_Grid : public Q3Frame
       US_Hydrodyn_Overlap *overlap_window;
       
       QwtCounter *cnt_cube_side;
-      Q3ButtonGroup *bg_center;
+      QGroupBox *bg_center;
       QCheckBox *cb_cubic;
       QCheckBox *cb_hydrate;
       QCheckBox *cb_center_mass;
       QCheckBox *cb_center_cubelet;
       QCheckBox *cb_center_si;
+
+      QRadioButton *rb_center_mass;
+      QRadioButton *rb_center_cubelet;
+      QRadioButton *rb_center_si;
+
       QCheckBox *cb_tangency;
       QCheckBox *cb_enable_asa;
       QCheckBox *cb_create_nmr_bead_pdb;
@@ -91,6 +97,7 @@ class US_EXTERN US_Hydrodyn_Grid : public Q3Frame
       
       void setupGUI();
       void update_cube_side(double);
+      void select_center();
       void select_center(int);
       void set_hydrate();
       void set_tangency();

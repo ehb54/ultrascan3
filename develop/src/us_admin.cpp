@@ -2,10 +2,10 @@
 #include "../include/us_admin.h"
 #include "../include/us_encryption.h"
 //Added by qt3to4:
-#include <Q3GridLayout>
-#include <Q3HBoxLayout>
+#include <QGridLayout>
+#include <QHBoxLayout>
 #include <QLabel>
-#include <Q3Frame>
+#include <QFrame>
 
 //! Constructor
 /*! 
@@ -14,16 +14,16 @@
   \param p Parent widget.
   \param name Widget name.
 */  
-US_Admin::US_Admin(QWidget *p, const char *name) : Q3Frame( p, name)
+US_Admin::US_Admin(QWidget *p, const char *name) : QFrame(  p )
 {
   int buttonh = 26;
   
   USglobal = new US_Config();
   setPalette( PALET_FRAME );
   
-  lbl_blank = new QLabel(tr(" Change Administrator Password:"), this);
+  lbl_blank = new QLabel(us_tr(" Change Administrator Password:"), this);
   lbl_blank->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
-  lbl_blank->setFrameStyle(Q3Frame::WinPanel|Raised);  
+  lbl_blank->setFrameStyle(QFrame::WinPanel|Raised);  
   lbl_blank->setPalette( PALET_FRAME );
   AUTFBACK( lbl_blank );
   
@@ -33,7 +33,7 @@ US_Admin::US_Admin(QWidget *p, const char *name) : Q3Frame( p, name)
                            USglobal->config_list.fontSize, 
                            QFont::Bold));
     
-  lbl_psswd1 = new QLabel(tr(" Enter New Password:"),this);
+  lbl_psswd1 = new QLabel(us_tr(" Enter New Password:"),this);
   lbl_psswd1->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
   lbl_psswd1->setPalette( PALET_LABEL );
   AUTFBACK( lbl_psswd1 );
@@ -54,7 +54,7 @@ US_Admin::US_Admin(QWidget *p, const char *name) : Q3Frame( p, name)
   connect (le_psswd1, SIGNAL( textChanged(   const QString& ) ), 
                       SLOT  ( update_psswd1( const QString& ) ) );
   
-  lbl_psswd2 = new QLabel(tr(" Verify New Password:"),this);
+  lbl_psswd2 = new QLabel(us_tr(" Verify New Password:"),this);
   lbl_psswd2->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
   lbl_psswd2->setPalette( PALET_LABEL );
   AUTFBACK( lbl_psswd2 );
@@ -75,7 +75,7 @@ US_Admin::US_Admin(QWidget *p, const char *name) : Q3Frame( p, name)
                       SLOT  ( update_psswd2( const QString& ) ) );
   
   
-  pb_help = new QPushButton(tr("Help"), this);
+  pb_help = new QPushButton(us_tr("Help"), this);
   pb_help->setAutoDefault(false);
   pb_help->setFont(QFont( USglobal->config_list.fontFamily, 
                           USglobal->config_list.fontSize));
@@ -84,7 +84,7 @@ US_Admin::US_Admin(QWidget *p, const char *name) : Q3Frame( p, name)
   pb_help->setEnabled(true);
   connect(pb_help, SIGNAL(clicked()), SLOT(help()));
   
-  pb_save = new QPushButton(tr("Save"), this);
+  pb_save = new QPushButton(us_tr("Save"), this);
   pb_save->setAutoDefault(false);
   pb_save->setFont(QFont( USglobal->config_list.fontFamily, 
                           USglobal->config_list.fontSize));
@@ -92,7 +92,7 @@ US_Admin::US_Admin(QWidget *p, const char *name) : Q3Frame( p, name)
   pb_save->setMinimumHeight(buttonh); pb_save->setEnabled(true);
   connect(pb_save, SIGNAL(clicked()), SLOT(save()));
           
-  pb_cancel = new QPushButton(tr("Cancel"), this);
+  pb_cancel = new QPushButton(us_tr("Cancel"), this);
   pb_cancel->setAutoDefault(false);
   pb_cancel->setFont(QFont( USglobal->config_list.fontFamily, 
                             USglobal->config_list.fontSize));
@@ -101,21 +101,21 @@ US_Admin::US_Admin(QWidget *p, const char *name) : Q3Frame( p, name)
   pb_cancel->setEnabled(true);
   connect(pb_cancel, SIGNAL(clicked()), SLOT(quit()));
 
-  Q3GridLayout* background = new Q3GridLayout( this, 3, 2, 4 );
-  background->setColSpacing(0,200);
-  background->setColSpacing(1,200);
-  background->addMultiCellWidget(lbl_blank,0,0,0,1);
+  QGridLayout * background = new QGridLayout( this ); background->setContentsMargins( 0, 0, 0, 0 ); background->setSpacing( 0 ); background->setSpacing( 4  ); background->setContentsMargins( 4 , 4 , 4 , 4  );
+  background->setColumnMinimumWidth(0,200);
+  background->setColumnMinimumWidth(1,200);
+  background->addWidget( lbl_blank , 0 , 0 , 1 + ( 0 ) - ( 0 ) , 1 + ( 1 ) - ( 0 ) );
   background->addWidget(lbl_psswd1,1,0);
   background->addWidget(le_psswd1,1,1);
   background->addWidget(lbl_psswd2,2,0);
   background->addWidget(le_psswd2,2,1);
   
-  Q3HBoxLayout* buttonLine = new Q3HBoxLayout(4);
+  QHBoxLayout * buttonLine = new QHBoxLayout(); buttonLine->setContentsMargins( 0, 0, 0, 0 ); buttonLine->setSpacing( 0 );
   buttonLine->addWidget(pb_help);
   buttonLine->addWidget(pb_save);
   buttonLine->addWidget(pb_cancel);
   
-  background->addMultiCellLayout(buttonLine,3,3,0,1);
+  background->addLayout( buttonLine , 3 , 0 , 1 + ( 3 ) - ( 3 ) , 1 + ( 1 ) - ( 0 ) );
 }
 
 //! Destructor
@@ -150,9 +150,9 @@ void US_Admin::save()
     le_psswd1->setText("");
     le_psswd2->setText("");
 
-    QMessageBox::message(
-        tr("Attention:"), 
-        tr("The entered passwords are not same, please type again.\n"));
+    US_Static::us_message(
+        us_tr("Attention:"), 
+        us_tr("The entered passwords are not same, please type again.\n"));
     return;
   }
 
@@ -161,17 +161,17 @@ void US_Admin::save()
 
   FILE* fh;
 
-  if ( ( fh = fopen( pdfile, "w" ) ) == NULL ) 
+  if ( ( fh = us_fopen( pdfile, "w" ) ) == NULL ) 
   {
-    QMessageBox::message(
-        tr("Attention:"), 
-        tr("You have no permission to change the adminstrator password.\n"));
+    US_Static::us_message(
+        us_tr("Attention:"), 
+        us_tr("You have no permission to change the adminstrator password.\n"));
     return;
   }
 
   QString md5string = US_Encryption::md5( password1 );
  
-  fputs( md5string, fh ); 
+  fputs( qPrintable( md5string ), fh ); 
   fclose( fh );
 
   quit();

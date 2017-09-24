@@ -7,26 +7,26 @@
 
 #include "../include/us_hydrodyn_cluster_oned.h"
 //Added by qt3to4:
-#include <Q3TextStream>
-#include <Q3HBoxLayout>
+#include <QTextStream>
+#include <QHBoxLayout>
 #include <QCloseEvent>
-#include <Q3Frame>
+#include <QFrame>
 #include <QLabel>
-#include <Q3VBoxLayout>
+#include <QVBoxLayout>
 
 US_Hydrodyn_Cluster_Oned::US_Hydrodyn_Cluster_Oned(
                                                    void                     *              us_hydrodyn,
                                                    map < QString, QString > *              parameters,
                                                    QWidget *                               p,
                                                    const char *                            name
-                                                   ) : QDialog( p, name )
+                                                   ) : QDialog( p )
 {
    this->us_hydrodyn                          = us_hydrodyn;
    this->parameters                           = parameters;
 
    USglobal = new US_Config();
    setPalette( PALET_FRAME );
-   setCaption( tr( "US-SOMO: 1d cluster interface" ) );
+   setWindowTitle( us_tr( "US-SOMO: 1d cluster interface" ) );
 
    setupGUI();
 
@@ -44,8 +44,8 @@ void US_Hydrodyn_Cluster_Oned::setupGUI()
 {
    int minHeight1  = 30;
 
-   lbl_title =  new QLabel      ( tr( "US-SOMO: 1d cluster interface" ), this );
-   lbl_title -> setFrameStyle   ( Q3Frame::WinPanel | Q3Frame::Raised );
+   lbl_title =  new QLabel      ( us_tr( "US-SOMO: 1d cluster interface" ), this );
+   lbl_title -> setFrameStyle   ( QFrame::WinPanel | QFrame::Raised );
    lbl_title -> setAlignment    ( Qt::AlignCenter | Qt::AlignVCenter );
    lbl_title -> setMinimumHeight( minHeight1 );
    lbl_title -> setPalette      ( PALET_FRAME );
@@ -59,7 +59,7 @@ void US_Hydrodyn_Cluster_Oned::setupGUI()
    AUTFBACK( lbl_credits_1 );
    lbl_credits_1 -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1, QFont::Bold ) );
 
-   lbl_1drotationfile = new QLabel      ( tr( "Rotation file" ), this );
+   lbl_1drotationfile = new QLabel      ( us_tr( "Rotation file" ), this );
    lbl_1drotationfile ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_1drotationfile ->setMinimumHeight( minHeight1 );
    lbl_1drotationfile ->setPalette      ( PALET_LABEL );
@@ -67,7 +67,7 @@ void US_Hydrodyn_Cluster_Oned::setupGUI()
    lbl_1drotationfile ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
    lbl_1drotationfile ->setMinimumWidth ( QFontMetrics( lbl_1drotationfile->font() ).maxWidth() * 21 );
 
-   le_1drotationfile = new QLineEdit     ( this, "1drotationfile Line Edit" );
+   le_1drotationfile = new QLineEdit     (  this );    le_1drotationfile->setObjectName( "1drotationfile Line Edit" );
    if ( !parameters->count( "1drotationfile" ) )
    {
       (*parameters)[ "1drotationfile" ] = "";
@@ -81,7 +81,7 @@ void US_Hydrodyn_Cluster_Oned::setupGUI()
    le_1drotationfile ->setMinimumWidth   ( 150 );
    connect( le_1drotationfile, SIGNAL( textChanged( const QString & ) ), SLOT( update_1drotationfile( const QString & ) ) );
 
-   lbl_1drotationsuserand = new QLabel      ( tr( "Use drand48() for rotations" ), this );
+   lbl_1drotationsuserand = new QLabel      ( us_tr( "Use drand48() for rotations" ), this );
    lbl_1drotationsuserand ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_1drotationsuserand ->setMinimumHeight( minHeight1 );
    lbl_1drotationsuserand ->setPalette      ( PALET_LABEL );
@@ -89,7 +89,7 @@ void US_Hydrodyn_Cluster_Oned::setupGUI()
    lbl_1drotationsuserand ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
    lbl_1drotationsuserand ->setMinimumWidth ( QFontMetrics( lbl_1drotationsuserand->font() ).maxWidth() * 21 );
 
-   le_1drotationsuserand = new QLineEdit     ( this, "1drotationsuserand Line Edit" );
+   le_1drotationsuserand = new QLineEdit     (  this );    le_1drotationsuserand->setObjectName( "1drotationsuserand Line Edit" );
    le_1drotationsuserand ->setText           ( parameters->count( "1drotationsuserand" ) ? ( *parameters )[ "1drotationsuserand" ] : "" );
    le_1drotationsuserand ->setAlignment      ( Qt::AlignCenter | Qt::AlignVCenter );
    le_1drotationsuserand ->setPalette        ( PALET_NORMAL );
@@ -99,7 +99,7 @@ void US_Hydrodyn_Cluster_Oned::setupGUI()
    le_1drotationsuserand ->setMinimumWidth   ( 150 );
    connect( le_1drotationsuserand, SIGNAL( textChanged( const QString & ) ), SLOT( update_1drotationsuserand( const QString & ) ) );
 
-   lbl_1dlambda = new QLabel      ( tr( "Lambda" ), this );
+   lbl_1dlambda = new QLabel      ( us_tr( "Lambda" ), this );
    lbl_1dlambda ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_1dlambda ->setMinimumHeight( minHeight1 );
    lbl_1dlambda ->setPalette      ( PALET_LABEL );
@@ -107,7 +107,7 @@ void US_Hydrodyn_Cluster_Oned::setupGUI()
    lbl_1dlambda ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
    lbl_1dlambda ->setMinimumWidth ( QFontMetrics( lbl_1dlambda->font() ).maxWidth() * 21 );
 
-   le_1dlambda = new QLineEdit     ( this, "1dlambda Line Edit" );
+   le_1dlambda = new QLineEdit     (  this );    le_1dlambda->setObjectName( "1dlambda Line Edit" );
    if ( !parameters->count( "1dlambda" ) )
    {
       (*parameters)[ "1dlambda" ] = "1.54";
@@ -121,7 +121,7 @@ void US_Hydrodyn_Cluster_Oned::setupGUI()
    le_1dlambda ->setMinimumWidth   ( 150 );
    connect( le_1dlambda, SIGNAL( textChanged( const QString & ) ), SLOT( update_1dlambda( const QString & ) ) );
 
-   lbl_1ddetectordistance = new QLabel      ( tr( "Detector distance (m)" ), this );
+   lbl_1ddetectordistance = new QLabel      ( us_tr( "Detector distance (m)" ), this );
    lbl_1ddetectordistance ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_1ddetectordistance ->setMinimumHeight( minHeight1 );
    lbl_1ddetectordistance ->setPalette      ( PALET_LABEL );
@@ -129,7 +129,7 @@ void US_Hydrodyn_Cluster_Oned::setupGUI()
    lbl_1ddetectordistance ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
    lbl_1ddetectordistance ->setMinimumWidth ( QFontMetrics( lbl_1ddetectordistance->font() ).maxWidth() * 21 );
 
-   le_1ddetectordistance = new QLineEdit     ( this, "1ddetectordistance Line Edit" );
+   le_1ddetectordistance = new QLineEdit     (  this );    le_1ddetectordistance->setObjectName( "1ddetectordistance Line Edit" );
    if ( !parameters->count( "1ddetectordistance" ) )
    {
       (*parameters)[ "1ddetectordistance" ] = "1.33";
@@ -143,7 +143,7 @@ void US_Hydrodyn_Cluster_Oned::setupGUI()
    le_1ddetectordistance ->setMinimumWidth   ( 150 );
    connect( le_1ddetectordistance, SIGNAL( textChanged( const QString & ) ), SLOT( update_1ddetectordistance( const QString & ) ) );
 
-   lbl_1ddetectorwidth = new QLabel      ( tr( "Detector width (mm)" ), this );
+   lbl_1ddetectorwidth = new QLabel      ( us_tr( "Detector width (mm)" ), this );
    lbl_1ddetectorwidth ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_1ddetectorwidth ->setMinimumHeight( minHeight1 );
    lbl_1ddetectorwidth ->setPalette      ( PALET_LABEL );
@@ -151,7 +151,7 @@ void US_Hydrodyn_Cluster_Oned::setupGUI()
    lbl_1ddetectorwidth ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
    lbl_1ddetectorwidth ->setMinimumWidth ( QFontMetrics( lbl_1ddetectorwidth->font() ).maxWidth() * 21 );
 
-   le_1ddetectorwidth = new QLineEdit     ( this, "1ddetectorwidth Line Edit" );
+   le_1ddetectorwidth = new QLineEdit     (  this );    le_1ddetectorwidth->setObjectName( "1ddetectorwidth Line Edit" );
    if ( !parameters->count( "1ddetectorwidth" ) )
    {
       (*parameters)[ "1ddetectorwidth" ] = "341";
@@ -165,7 +165,7 @@ void US_Hydrodyn_Cluster_Oned::setupGUI()
    le_1ddetectorwidth ->setMinimumWidth   ( 150 );
    connect( le_1ddetectorwidth, SIGNAL( textChanged( const QString & ) ), SLOT( update_1ddetectorwidth( const QString & ) ) );
 
-   lbl_1ddetectorpixelswidth = new QLabel      ( tr( "Detector pixels width" ), this );
+   lbl_1ddetectorpixelswidth = new QLabel      ( us_tr( "Detector pixels width" ), this );
    lbl_1ddetectorpixelswidth ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_1ddetectorpixelswidth ->setMinimumHeight( minHeight1 );
    lbl_1ddetectorpixelswidth ->setPalette      ( PALET_LABEL );
@@ -173,7 +173,7 @@ void US_Hydrodyn_Cluster_Oned::setupGUI()
    lbl_1ddetectorpixelswidth ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
    lbl_1ddetectorpixelswidth ->setMinimumWidth ( QFontMetrics( lbl_1ddetectorpixelswidth->font() ).maxWidth() * 21 );
 
-   le_1ddetectorpixelswidth = new QLineEdit     ( this, "1ddetectorpixelswidth Line Edit" );
+   le_1ddetectorpixelswidth = new QLineEdit     (  this );    le_1ddetectorpixelswidth->setObjectName( "1ddetectorpixelswidth Line Edit" );
    if ( !parameters->count( "1ddetectorpixelswidth" ) )
    {
       (*parameters)[ "1ddetectorpixelswidth" ] = "50";
@@ -187,7 +187,7 @@ void US_Hydrodyn_Cluster_Oned::setupGUI()
    le_1ddetectorpixelswidth ->setMinimumWidth   ( 150 );
    connect( le_1ddetectorpixelswidth, SIGNAL( textChanged( const QString & ) ), SLOT( update_1ddetectorpixelswidth( const QString & ) ) );
 
-   lbl_1drho0 = new QLabel      ( tr( "Solvent electron density: rho0 (e-/A^3)" ), this );
+   lbl_1drho0 = new QLabel      ( us_tr( "Solvent electron density: rho0 (e-/A^3)" ), this );
    lbl_1drho0 ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_1drho0 ->setMinimumHeight( minHeight1 );
    lbl_1drho0 ->setPalette      ( PALET_LABEL );
@@ -195,7 +195,7 @@ void US_Hydrodyn_Cluster_Oned::setupGUI()
    lbl_1drho0 ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
    lbl_1drho0 ->setMinimumWidth ( QFontMetrics( lbl_1drho0->font() ).maxWidth() * 21 );
 
-   le_1drho0 = new QLineEdit     ( this, "1drho0 Line Edit" );
+   le_1drho0 = new QLineEdit     (  this );    le_1drho0->setObjectName( "1drho0 Line Edit" );
    if ( !parameters->count( "1drho0" ) )
    {
       (*parameters)[ "1drho0" ] = "0";
@@ -209,7 +209,7 @@ void US_Hydrodyn_Cluster_Oned::setupGUI()
    le_1drho0 ->setMinimumWidth   ( 150 );
    connect( le_1drho0, SIGNAL( textChanged( const QString & ) ), SLOT( update_1drho0( const QString & ) ) );
 
-   lbl_1ddeltar = new QLabel      ( tr( "Excluded volume: delta R" ), this );
+   lbl_1ddeltar = new QLabel      ( us_tr( "Excluded volume: delta R" ), this );
    lbl_1ddeltar ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_1ddeltar ->setMinimumHeight( minHeight1 );
    lbl_1ddeltar ->setPalette      ( PALET_LABEL );
@@ -217,7 +217,7 @@ void US_Hydrodyn_Cluster_Oned::setupGUI()
    lbl_1ddeltar ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
    lbl_1ddeltar ->setMinimumWidth ( QFontMetrics( lbl_1ddeltar->font() ).maxWidth() * 21 );
 
-   le_1ddeltar = new QLineEdit     ( this, "1ddeltar Line Edit" );
+   le_1ddeltar = new QLineEdit     (  this );    le_1ddeltar->setObjectName( "1ddeltar Line Edit" );
    if ( !parameters->count( "1ddeltar" ) )
    {
       (*parameters)[ "1ddeltar" ] = "1";
@@ -231,7 +231,7 @@ void US_Hydrodyn_Cluster_Oned::setupGUI()
    le_1ddeltar ->setMinimumWidth   ( 150 );
    connect( le_1ddeltar, SIGNAL( textChanged( const QString & ) ), SLOT( update_1ddeltar( const QString & ) ) );
 
-   lbl_1dproberadius = new QLabel      ( tr( "Excluded volume: probe radius" ), this );
+   lbl_1dproberadius = new QLabel      ( us_tr( "Excluded volume: probe radius" ), this );
    lbl_1dproberadius ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_1dproberadius ->setMinimumHeight( minHeight1 );
    lbl_1dproberadius ->setPalette      ( PALET_LABEL );
@@ -239,7 +239,7 @@ void US_Hydrodyn_Cluster_Oned::setupGUI()
    lbl_1dproberadius ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
    lbl_1dproberadius ->setMinimumWidth ( QFontMetrics( lbl_1dproberadius->font() ).maxWidth() * 21 );
 
-   le_1dproberadius = new QLineEdit     ( this, "1dproberadius Line Edit" );
+   le_1dproberadius = new QLineEdit     (  this );    le_1dproberadius->setObjectName( "1dproberadius Line Edit" );
    if ( !parameters->count( "1dproberadius" ) )
    {
       (*parameters)[ "1dproberadius" ] = "1.4";
@@ -253,7 +253,7 @@ void US_Hydrodyn_Cluster_Oned::setupGUI()
    le_1dproberadius ->setMinimumWidth   ( 150 );
    connect( le_1dproberadius, SIGNAL( textChanged( const QString & ) ), SLOT( update_1dproberadius( const QString & ) ) );
 
-   lbl_1dthreshold = new QLabel      ( tr( "Excluded volume: threshold" ), this );
+   lbl_1dthreshold = new QLabel      ( us_tr( "Excluded volume: threshold" ), this );
    lbl_1dthreshold ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_1dthreshold ->setMinimumHeight( minHeight1 );
    lbl_1dthreshold ->setPalette      ( PALET_LABEL );
@@ -261,7 +261,7 @@ void US_Hydrodyn_Cluster_Oned::setupGUI()
    lbl_1dthreshold ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
    lbl_1dthreshold ->setMinimumWidth ( QFontMetrics( lbl_1dthreshold->font() ).maxWidth() * 21 );
 
-   le_1dthreshold = new QLineEdit     ( this, "1dthreshold Line Edit" );
+   le_1dthreshold = new QLineEdit     (  this );    le_1dthreshold->setObjectName( "1dthreshold Line Edit" );
    if ( !parameters->count( "1dthreshold" ) )
    {
       (*parameters)[ "1dthreshold" ] = "1";
@@ -275,7 +275,7 @@ void US_Hydrodyn_Cluster_Oned::setupGUI()
    le_1dthreshold ->setMinimumWidth   ( 150 );
    connect( le_1dthreshold, SIGNAL( textChanged( const QString & ) ), SLOT( update_1dthreshold( const QString & ) ) );
 
-   lbl_1dsamplerotations = new QLabel      ( tr( "Sample rotations" ), this );
+   lbl_1dsamplerotations = new QLabel      ( us_tr( "Sample rotations" ), this );
    lbl_1dsamplerotations ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_1dsamplerotations ->setMinimumHeight( minHeight1 );
    lbl_1dsamplerotations ->setPalette      ( PALET_LABEL );
@@ -283,7 +283,7 @@ void US_Hydrodyn_Cluster_Oned::setupGUI()
    lbl_1dsamplerotations ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
    lbl_1dsamplerotations ->setMinimumWidth ( QFontMetrics( lbl_1dsamplerotations->font() ).maxWidth() * 21 );
 
-   le_1dsamplerotations = new QLineEdit     ( this, "1dsamplerotations Line Edit" );
+   le_1dsamplerotations = new QLineEdit     (  this );    le_1dsamplerotations->setObjectName( "1dsamplerotations Line Edit" );
    if ( !parameters->count( "1dsamplerotations" ) )
    {
       (*parameters)[ "1dsamplerotations" ] = "1";
@@ -297,7 +297,7 @@ void US_Hydrodyn_Cluster_Oned::setupGUI()
    le_1dsamplerotations ->setMinimumWidth   ( 150 );
    connect( le_1dsamplerotations, SIGNAL( textChanged( const QString & ) ), SLOT( update_1dsamplerotations( const QString & ) ) );
 
-   lbl_1daxisrotations = new QLabel      ( tr( "Axis rotations" ), this );
+   lbl_1daxisrotations = new QLabel      ( us_tr( "Axis rotations" ), this );
    lbl_1daxisrotations ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_1daxisrotations ->setMinimumHeight( minHeight1 );
    lbl_1daxisrotations ->setPalette      ( PALET_LABEL );
@@ -305,7 +305,7 @@ void US_Hydrodyn_Cluster_Oned::setupGUI()
    lbl_1daxisrotations ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
    lbl_1daxisrotations ->setMinimumWidth ( QFontMetrics( lbl_1daxisrotations->font() ).maxWidth() * 21 );
 
-   le_1daxisrotations = new QLineEdit     ( this, "1daxisrotations Line Edit" );
+   le_1daxisrotations = new QLineEdit     (  this );    le_1daxisrotations->setObjectName( "1daxisrotations Line Edit" );
    if ( !parameters->count( "1daxisrotations" ) )
    {
       (*parameters)[ "1daxisrotations" ] = "1";
@@ -319,7 +319,7 @@ void US_Hydrodyn_Cluster_Oned::setupGUI()
    le_1daxisrotations ->setMinimumWidth   ( 150 );
    connect( le_1daxisrotations, SIGNAL( textChanged( const QString & ) ), SLOT( update_1daxisrotations( const QString & ) ) );
 
-   lbl_1dintermediatesaves = new QLabel      ( tr( "Intermediate saves (comma separated)" ), this );
+   lbl_1dintermediatesaves = new QLabel      ( us_tr( "Intermediate saves (comma separated)" ), this );
    lbl_1dintermediatesaves ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_1dintermediatesaves ->setMinimumHeight( minHeight1 );
    lbl_1dintermediatesaves ->setPalette      ( PALET_LABEL );
@@ -327,7 +327,7 @@ void US_Hydrodyn_Cluster_Oned::setupGUI()
    lbl_1dintermediatesaves ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
    lbl_1dintermediatesaves ->setMinimumWidth ( QFontMetrics( lbl_1dintermediatesaves->font() ).maxWidth() * 21 );
 
-   le_1dintermediatesaves = new QLineEdit     ( this, "1dintermediatesaves Line Edit" );
+   le_1dintermediatesaves = new QLineEdit     (  this );    le_1dintermediatesaves->setObjectName( "1dintermediatesaves Line Edit" );
    le_1dintermediatesaves ->setText           ( parameters->count( "1dintermediatesaves" ) ? ( *parameters )[ "1dintermediatesaves" ] : "" );
    le_1dintermediatesaves ->setAlignment      ( Qt::AlignCenter | Qt::AlignVCenter );
    le_1dintermediatesaves ->setPalette        ( PALET_NORMAL );
@@ -337,126 +337,126 @@ void US_Hydrodyn_Cluster_Oned::setupGUI()
    le_1dintermediatesaves ->setMinimumWidth   ( 150 );
    connect( le_1dintermediatesaves, SIGNAL( textChanged( const QString & ) ), SLOT( update_1dintermediatesaves( const QString & ) ) );
 
-   pb_save =  new QPushButton ( tr( "Save" ), this );
+   pb_save =  new QPushButton ( us_tr( "Save" ), this );
    pb_save -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1) );
    pb_save -> setMinimumHeight( minHeight1 );
    pb_save -> setPalette      ( PALET_PUSHB );
    connect( pb_save, SIGNAL( clicked() ), SLOT( save() ) );
 
-   pb_load =  new QPushButton ( tr( "Load" ), this );
+   pb_load =  new QPushButton ( us_tr( "Load" ), this );
    pb_load -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1) );
    pb_load -> setMinimumHeight( minHeight1 );
    pb_load -> setPalette      ( PALET_PUSHB );
    connect( pb_load, SIGNAL( clicked() ), SLOT( load() ) );
 
-   pb_help =  new QPushButton ( tr( "Help" ), this );
+   pb_help =  new QPushButton ( us_tr( "Help" ), this );
    pb_help -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1) );
    pb_help -> setMinimumHeight( minHeight1 );
    pb_help -> setPalette      ( PALET_PUSHB );
    connect( pb_help, SIGNAL( clicked() ), SLOT( help() ) );
 
-   pb_close =  new QPushButton ( tr( "Close" ), this );
+   pb_close =  new QPushButton ( us_tr( "Close" ), this );
    pb_close -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1) );
    pb_close -> setMinimumHeight( minHeight1 );
    pb_close -> setPalette      ( PALET_PUSHB );
    connect( pb_close, SIGNAL( clicked() ), SLOT( cancel() ) );
 
-   Q3VBoxLayout *background = new Q3VBoxLayout( this );
+   QVBoxLayout * background = new QVBoxLayout( this ); background->setContentsMargins( 0, 0, 0, 0 ); background->setSpacing( 0 );
    background->addSpacing(4);
 
    background->addWidget( lbl_title );
    background->addWidget( lbl_credits_1 );
    background->addSpacing( 4 );
-   Q3HBoxLayout * hbl = new Q3HBoxLayout( 0 );
+   QHBoxLayout * hbl = new QHBoxLayout(); hbl->setContentsMargins( 0, 0, 0, 0 ); hbl->setSpacing( 0 );
    hbl->addSpacing( 4 );
    hbl->addWidget( lbl_1drotationfile );
    hbl->addWidget( le_1drotationfile );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
    hbl->addWidget( lbl_1drotationsuserand );
    hbl->addWidget( le_1drotationsuserand );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
    hbl->addWidget( lbl_1dlambda );
    hbl->addWidget( le_1dlambda );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
    hbl->addWidget( lbl_1ddetectordistance );
    hbl->addWidget( le_1ddetectordistance );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
    hbl->addWidget( lbl_1ddetectorwidth );
    hbl->addWidget( le_1ddetectorwidth );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
    hbl->addWidget( lbl_1ddetectorpixelswidth );
    hbl->addWidget( le_1ddetectorpixelswidth );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
    hbl->addWidget( lbl_1drho0 );
    hbl->addWidget( le_1drho0 );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
    hbl->addWidget( lbl_1ddeltar );
    hbl->addWidget( le_1ddeltar );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
    hbl->addWidget( lbl_1dproberadius );
    hbl->addWidget( le_1dproberadius );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
    hbl->addWidget( lbl_1dthreshold );
    hbl->addWidget( le_1dthreshold );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
    hbl->addWidget( lbl_1dsamplerotations );
    hbl->addWidget( le_1dsamplerotations );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
    hbl->addWidget( lbl_1daxisrotations );
    hbl->addWidget( le_1daxisrotations );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
    hbl->addWidget( lbl_1dintermediatesaves );
    hbl->addWidget( le_1dintermediatesaves );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
    hbl->addWidget( pb_save );
    hbl->addSpacing( 4 );
    hbl->addWidget( pb_load );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
 
 
-   Q3HBoxLayout *hbl_bottom = new Q3HBoxLayout( 0 );
+   QHBoxLayout * hbl_bottom = new QHBoxLayout(); hbl_bottom->setContentsMargins( 0, 0, 0, 0 ); hbl_bottom->setSpacing( 0 );
    hbl_bottom->addSpacing( 4 );
    hbl_bottom->addWidget ( pb_help );
    hbl_bottom->addSpacing( 4 );
@@ -503,7 +503,7 @@ void US_Hydrodyn_Cluster_Oned::update_1drotationfile( const QString & )
 {
    QString use_dir;
    ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this );
-   QString filename = QFileDialog::getOpenFileName( this , tr( "Select a file for Rotation file" ) , use_dir , QString::null );
+   QString filename = QFileDialog::getOpenFileName( this , us_tr( "Select a file for Rotation file" ) , use_dir , QString::null );
 
 
    disconnect( le_1drotationfile, SIGNAL( textChanged( const QString & ) ), 0, 0 );
@@ -580,7 +580,7 @@ void US_Hydrodyn_Cluster_Oned::save()
 {
    QString use_dir = ((US_Hydrodyn *)us_hydrodyn)->somo_dir + QDir::separator() + "cluster" + QDir::separator() + "parameters";
    ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this, true );
-   QString filename = QFileDialog::getSaveFileName( this , tr( "Save the parameters" ) , use_dir , "*.cluster_oned" );
+   QString filename = QFileDialog::getSaveFileName( this , us_tr( "Save the parameters" ) , use_dir , "*.cluster_oned" );
 
 
    if( !filename.isEmpty() )
@@ -594,13 +594,13 @@ void US_Hydrodyn_Cluster_Oned::save()
       if ( !f.open( QIODevice::WriteOnly ) )
       {
          QMessageBox::information( this,
-                                   tr( QString( "%1: Save" ).arg( "US-SOMO: 1d cluster interface" ) ),
-                                   QString( tr( "Could not open file %1 for writing" ) )
+                                   us_tr( QString( "%1: Save" ).arg( "US-SOMO: 1d cluster interface" ) ),
+                                   QString( us_tr( "Could not open file %1 for writing" ) )
                                    .arg( filename ) 
                                    );
          return;
       }
-      Q3TextStream ts( &f );
+      QTextStream ts( &f );
       ts << US_Json::compose( *parameters );
       f.close();
    }
@@ -610,7 +610,7 @@ void US_Hydrodyn_Cluster_Oned::load()
 {
    QString use_dir = ((US_Hydrodyn *)us_hydrodyn)->somo_dir + QDir::separator() + "cluster" + QDir::separator() + "parameters";
    ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this, true );
-   QString filename = QFileDialog::getOpenFileName( this , tr( "Load parameters" ) , use_dir , "*.cluster_oned" );
+   QString filename = QFileDialog::getOpenFileName( this , us_tr( "Load parameters" ) , use_dir , "*.cluster_oned" );
 
    if( !filename.isEmpty() )
    {
@@ -620,14 +620,14 @@ void US_Hydrodyn_Cluster_Oned::load()
       {
           QMessageBox::information( 
                                     this,
-                                    tr( QString( "%1: Open" ).arg( "US-SOMO: 1d cluster interface" ) ),
-                                    QString( tr( "Could not open file %1 for reading" ) )
+                                    us_tr( QString( "%1: Open" ).arg( "US-SOMO: 1d cluster interface" ) ),
+                                    QString( us_tr( "Could not open file %1 for reading" ) )
                                     .arg( filename ) 
                                     );
           return;
       }
       QString qs;
-      Q3TextStream ts( &f );
+      QTextStream ts( &f );
       while ( !ts.atEnd() )
       {
           qs += ts.readLine();

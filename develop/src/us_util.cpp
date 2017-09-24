@@ -2,13 +2,13 @@
 #include "../include/us_util.h"
 #include "qdatetime.h"
 //Added by qt3to4:
-#include <Q3TextStream>
-#include <Q3GridLayout>
-#include <Q3Frame>
+#include <QTextStream>
+#include <QGridLayout>
+#include <QFrame>
 #include <QLabel>
 
 OneLiner::OneLiner(const QString &message, QWidget *parent, 
-                   const char *name) : QDialog( parent, name, true )
+                   const char *name) : QDialog( parent )
 {
 
    this->setGeometry(200,200,370, 320);
@@ -17,17 +17,17 @@ OneLiner::OneLiner(const QString &message, QWidget *parent,
    lbl1->setGeometry(10,10,350,220);
    lbl1->setAlignment(Qt::AlignVCenter | Qt::AlignHCenter);
 
-   parameter1 = new QLineEdit( this, "lineEdit" );
+   parameter1 = new QLineEdit(  this );    parameter1->setObjectName( "lineEdit" );
    parameter1->setGeometry( 10, 240, 350, 30 );
    connect( parameter1, SIGNAL(textChanged(const QString &)),
             SLOT(update(const QString &)) );
 
-   ok = new QPushButton( tr("Ok"), this );
+   ok = new QPushButton( us_tr("Ok"), this );
    ok->setAutoDefault(false);
    ok->setGeometry( 10,280, 174, 30 );
    connect( ok, SIGNAL(clicked()), SLOT(accept()) );
 
-   cancel = new QPushButton( tr("Cancel"), this );
+   cancel = new QPushButton( us_tr("Cancel"), this );
    cancel->setAutoDefault(false);
    cancel->setGeometry( 186,280, 174, 30 );
    connect( cancel, SIGNAL(clicked()), SLOT(reject()) );
@@ -47,7 +47,7 @@ void OneLiner::update(const QString &Textstr)
    string = Textstr;
 }
 
-US_FitParameter::US_FitParameter(QWidget *parent, const char *name) : QWidget(parent, name)
+US_FitParameter::US_FitParameter(QWidget *parent, const char *name) : QWidget( parent )
 {
    USglobal = new US_Config();
    int buttonh = 26;
@@ -100,26 +100,26 @@ US_FitParameter::US_FitParameter(QWidget *parent, const char *name) : QWidget(pa
    lbl_bounds = new QLabel("", this);
    lbl_bounds->setGeometry(xpos + (unsigned int) (column6/2) - 7, ypos+5, 14, 14);
    lbl_bounds->setFixedSize(15,15);
-   lbl_bounds->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Sunken);
-   lbl_bounds->setPalette( QPalette(USglobal->global_colors.cg_dk_green, USglobal->global_colors.cg_dk_green, USglobal->global_colors.cg_dk_green) );
+   lbl_bounds->setFrameStyle(QFrame::WinPanel|QFrame::Sunken);
+   lbl_bounds->setPalette( USglobal->global_colors.cg_dk_green );
    
       
-   Q3GridLayout *legendLayout= new Q3GridLayout(this,1, 9, 0);
+   QGridLayout * legendLayout = new QGridLayout( this ); legendLayout->setContentsMargins( 0, 0, 0, 0 ); legendLayout->setSpacing( 0 ); legendLayout->setSpacing( 0 ); legendLayout->setContentsMargins( 0, 0, 0, 0 );
    legendLayout->addWidget(le_value,0,0);
-   legendLayout->setColSpacing(0,column2);
+   legendLayout->setColumnMinimumWidth(0,column2);
    legendLayout->addWidget(le_range,0,1);
-   legendLayout->setColSpacing(1,column3);
+   legendLayout->setColumnMinimumWidth(1,column3);
    legendLayout->addWidget(lbl_unit,0,2);
-   legendLayout->setColSpacing(2,column4-5);
+   legendLayout->setColumnMinimumWidth(2,column4-5);
    legendLayout->addWidget(cb_float,0,3);
-   legendLayout->setColSpacing(3,column5/2-7);
-   legendLayout->setColSpacing(4,column5/2);
+   legendLayout->setColumnMinimumWidth(3,column5/2-7);
+   legendLayout->setColumnMinimumWidth(4,column5/2);
    legendLayout->addWidget(cb_constrained,0,5);
-   legendLayout->setColSpacing(5,column5/2-7);
-   legendLayout->setColSpacing(6,column5/2);
+   legendLayout->setColumnMinimumWidth(5,column5/2-7);
+   legendLayout->setColumnMinimumWidth(6,column5/2);
    legendLayout->addWidget(lbl_bounds,0,7);
-   legendLayout->setColSpacing(7,column6/2-7);
-   legendLayout->setColSpacing(8,column5/2);
+   legendLayout->setColumnMinimumWidth(7,column6/2-7);
+   legendLayout->setColumnMinimumWidth(8,column5/2);
 
 
 
@@ -166,20 +166,20 @@ void US_FitParameter::setUnit(const QString &str)
 
 void US_FitParameter::setFloatRed()
 {
-   lbl_bounds->setPalette(QPalette(USglobal->global_colors.cg_red, USglobal->global_colors.cg_red, USglobal->global_colors.cg_red));
+   lbl_bounds->setPalette( USglobal->global_colors.cg_red );
 }
 
 void US_FitParameter::setFloatGreen()
 {
-   lbl_bounds->setPalette(QPalette(USglobal->global_colors.cg_green, USglobal->global_colors.cg_green, USglobal->global_colors.cg_green));
+   lbl_bounds->setPalette( USglobal->global_colors.cg_green );
 }
 
 void US_FitParameter::setFloatDisabled()
 {
-   lbl_bounds->setPalette( QPalette(USglobal->global_colors.cg_dk_green, USglobal->global_colors.cg_dk_green, USglobal->global_colors.cg_dk_green) );
+   lbl_bounds->setPalette( USglobal->global_colors.cg_dk_green );
 }
 
-US_FitParameterLegend::US_FitParameterLegend(QWidget *parent, const char *name) : QWidget(parent, name)
+US_FitParameterLegend::US_FitParameterLegend(QWidget *parent, const char *name) : QWidget( parent )
 {
    USglobal = new US_Config();
 
@@ -189,9 +189,9 @@ US_FitParameterLegend::US_FitParameterLegend(QWidget *parent, const char *name) 
 
    QString str;
    
-   lbl_legend1 = new QLabel(tr("Parameter:"),this);
+   lbl_legend1 = new QLabel(us_tr("Parameter:"),this);
    lbl_legend1->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
-   lbl_legend1->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Sunken);
+   lbl_legend1->setFrameStyle(QFrame::WinPanel|QFrame::Sunken);
    lbl_legend1->setPalette( PALET_LABEL );
    AUTFBACK( lbl_legend1 );
    lbl_legend1->setGeometry(xpos, ypos, span, buttonh);
@@ -199,9 +199,9 @@ US_FitParameterLegend::US_FitParameterLegend(QWidget *parent, const char *name) 
 
    xpos += column1 + spacing;
 
-   lbl_legend2 = new QLabel(tr("Initial Guess:"),this);
+   lbl_legend2 = new QLabel(us_tr("Initial Guess:"),this);
    lbl_legend2->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
-   lbl_legend2->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Sunken);
+   lbl_legend2->setFrameStyle(QFrame::WinPanel|QFrame::Sunken);
    lbl_legend2->setPalette( PALET_LABEL );
    AUTFBACK( lbl_legend2 );
    lbl_legend2->setGeometry(xpos, ypos, column2, buttonh);
@@ -209,9 +209,9 @@ US_FitParameterLegend::US_FitParameterLegend(QWidget *parent, const char *name) 
 
    xpos += column2 + spacing;
 
-   lbl_legend3 = new QLabel(tr("+/- Bounds:"),this);
+   lbl_legend3 = new QLabel(us_tr("+/- Bounds:"),this);
    lbl_legend3->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
-   lbl_legend3->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Sunken);
+   lbl_legend3->setFrameStyle(QFrame::WinPanel|QFrame::Sunken);
    lbl_legend3->setPalette( PALET_LABEL );
    AUTFBACK( lbl_legend3 );
    lbl_legend3->setGeometry(xpos, ypos, column3, buttonh);
@@ -219,9 +219,9 @@ US_FitParameterLegend::US_FitParameterLegend(QWidget *parent, const char *name) 
 
    xpos += column3 + column4 + 2 * spacing;
 
-   lbl_legend4 = new QLabel(tr("Float:"),this);
+   lbl_legend4 = new QLabel(us_tr("Float:"),this);
    lbl_legend4->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
-   lbl_legend4->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Sunken);
+   lbl_legend4->setFrameStyle(QFrame::WinPanel|QFrame::Sunken);
    lbl_legend4->setPalette( PALET_LABEL );
    AUTFBACK( lbl_legend4 );
    lbl_legend4->setGeometry(xpos, ypos, column5, buttonh);
@@ -229,8 +229,8 @@ US_FitParameterLegend::US_FitParameterLegend(QWidget *parent, const char *name) 
 
    xpos += column5 + spacing;
 
-   lbl_legend5 = new QLabel(tr("Lock:"),this);
-   lbl_legend5->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Sunken);
+   lbl_legend5 = new QLabel(us_tr("Lock:"),this);
+   lbl_legend5->setFrameStyle(QFrame::WinPanel|QFrame::Sunken);
    lbl_legend5->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
    lbl_legend5->setPalette( PALET_LABEL );
    AUTFBACK( lbl_legend5 );
@@ -239,8 +239,8 @@ US_FitParameterLegend::US_FitParameterLegend(QWidget *parent, const char *name) 
 
    xpos += column5 + spacing;
 
-   lbl_legend6 = new QLabel(tr("Bound:"),this);
-   lbl_legend6->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Sunken);
+   lbl_legend6 = new QLabel(us_tr("Bound:"),this);
+   lbl_legend6->setFrameStyle(QFrame::WinPanel|QFrame::Sunken);
    lbl_legend6->setAlignment(Qt::AlignHCenter|Qt::AlignVCenter);
    lbl_legend6->setPalette( PALET_LABEL );
    AUTFBACK( lbl_legend6 );
@@ -249,19 +249,19 @@ US_FitParameterLegend::US_FitParameterLegend(QWidget *parent, const char *name) 
    setGeometry(xpos, ypos, span, buttonh);
    show();
    
-   Q3GridLayout *legendLayout= new Q3GridLayout(this,1, 6, 0);
+   QGridLayout * legendLayout = new QGridLayout( this ); legendLayout->setContentsMargins( 0, 0, 0, 0 ); legendLayout->setSpacing( 0 ); legendLayout->setSpacing( 0 ); legendLayout->setContentsMargins( 0, 0, 0, 0 );
    legendLayout->addWidget(lbl_legend1,0,0);
-   legendLayout->setColSpacing(0,column1+column5);
+   legendLayout->setColumnMinimumWidth(0,column1+column5);
    legendLayout->addWidget(lbl_legend2,0,1);
-   legendLayout->setColSpacing(1,column2);
+   legendLayout->setColumnMinimumWidth(1,column2);
    legendLayout->addWidget(lbl_legend3,0,2);
-   legendLayout->setColSpacing(2,column3);
+   legendLayout->setColumnMinimumWidth(2,column3);
    legendLayout->addWidget(lbl_legend4,0,3);
-   //   legendLayout->setColSpacing(3,column5);
+   //   legendLayout->setColumnMinimumWidth(3,column5);
    legendLayout->addWidget(lbl_legend5,0,4);
-   //   legendLayout->setColSpacing(4,column6);
+   //   legendLayout->setColumnMinimumWidth(4,column6);
    legendLayout->addWidget(lbl_legend6,0,5);
-   //   legendLayout->setColSpacing(5,column6);
+   //   legendLayout->setColumnMinimumWidth(5,column6);
    
 }
 
@@ -303,7 +303,7 @@ QString getToken(QString *str, const QString &separator)
 // without the separator in *str.
    int pos;
    QString token;
-   pos = str->find(separator, 0, false);
+   pos = str->indexOf(separator, 0, Qt::CaseInsensitive );
    if (pos < 0)
    {
       if (str->length() > 0)
@@ -320,7 +320,7 @@ QString getToken(QString *str, const QString &separator)
    while (pos == 0)
    {
       (*str) = str->mid(pos + 1, str->length());   
-      pos = str->find(separator, 0, false);
+      pos = str->indexOf(separator, 0, Qt::CaseInsensitive );
       if (pos < 0)
       {
          if (str->length() > 0)
@@ -354,7 +354,7 @@ bool readCenterpieceInfo(vector <struct centerpieceInfo> *cp_info_vector)
 #endif
    if(cp_file.open(QIODevice::ReadOnly))
    {
-      Q3TextStream ts(&cp_file);
+      QTextStream ts(&cp_file);
       while(!ts.atEnd())
       {
          str1 = ts.readLine();   // process line by line
@@ -405,7 +405,7 @@ bool readRotorInfo(vector <struct rotorInfo> *rotor_info_vector)
    delete USglobal;
    if(rotor_file.open(QIODevice::ReadOnly))
    {
-      Q3TextStream ts(&rotor_file);
+      QTextStream ts(&rotor_file);
       while(!ts.atEnd())
       {
          str1 = ts.readLine();   // process line by line
@@ -436,8 +436,8 @@ int Move (const QString &sourcefile, const QString &destfile)
    QFile f1, f2;
    char *buf;
    buf = new char[1024];
-   f1.setName(sourcefile);
-   f2.setName(destfile);
+   f1.setFileName(sourcefile);
+   f2.setFileName(destfile);
 
    if (f1.exists())
    {
@@ -450,9 +450,9 @@ int Move (const QString &sourcefile, const QString &destfile)
          return -2;
       }
       int size;
-      while((size = f1.readBlock(buf,1024)) != 0)
+      while((size = f1.read(buf,1024)) != 0)
       {
-         f2.writeBlock(buf, size);
+         f2.write(buf, size);
       }      
       f1.close();
       f2.close();
@@ -476,8 +476,8 @@ int copy(const QString &sourcefile, const QString &destfile)
    QFile f1, f2;
    char *buf;
    buf = new char[1024];
-   f1.setName(sourcefile);
-   f2.setName(destfile);
+   f1.setFileName(sourcefile);
+   f2.setFileName(destfile);
    if (f1.exists())
    {
       if(!f1.open(QIODevice::ReadOnly))
@@ -489,9 +489,9 @@ int copy(const QString &sourcefile, const QString &destfile)
          return -2;
       }
       int size;
-      while((size = f1.readBlock(buf, 1024)) != 0)
+      while((size = f1.read(buf, 1024)) != 0)
       {
-         f2.writeBlock(buf, size);
+         f2.write(buf, size);
       }      
       f1.close();
       f2.close();
@@ -578,3 +578,136 @@ for (int i=0; i<8; i++)
 }
 }*/
 
+
+bool US_Static::lv_any_selected( QTreeWidget *lv ) {
+   bool any_selected = false;
+#if QT_VERSION < 0x040000
+   QTreeWidgetItem *lvi = lv->firstChild();
+   if ( lvi )
+   {
+      do {
+         if ( lvi->isSelected() )
+         {
+            any_selected = true;
+         }
+
+      } while ( ( lvi = lvi->nextSibling() ) );
+   }
+#else
+   any_selected = lv->selectedItems().count() > 0;
+#endif
+   return any_selected;
+}
+
+bool US_Static::lv_any_unselected( QTreeWidget *lv ) {
+   bool any_unselected = false;
+#if QT_VERSION < 0x040000
+   QTreeWidgetItem *lvi = lv->firstChild();
+   if ( lvi )
+   {
+      do {
+         if ( !lvi->isSelected() )
+         {
+            any_unselected = true;
+         }
+
+      } while ( ( lvi = lvi->nextSibling() ) );
+   }
+#else
+   QTreeWidgetItemIterator it( lv , QTreeWidgetItemIterator::Unselected );
+   any_unselected = *it;
+#endif
+   return any_unselected;
+}
+
+void US_Static::lv_select_all_or_none( QTreeWidget *lv ) {
+   bool any_not_selected = US_Static::lv_any_unselected( lv );
+#if QT_VERSION < 0x040000
+   QTreeWidgetItem *lvi = lv->firstChild();
+   if ( lvi )
+   {
+      do {
+         lv->setSelected( lvi, any_not_selected );
+      } while ( ( lvi = lvi->nextSibling() ) );
+   }
+#else
+   if ( any_not_selected ) {
+      lv->selectAll();
+   } else {
+      lv->clearSelection();
+   }
+#endif
+}
+      
+int US_Static::lvi_depth( QTreeWidgetItem *lvi ) {
+#if QT_VERSION < 0x040000
+   return lvi->depth();
+#else
+   int depth = 0;
+   while ( lvi ) {
+      depth++;
+      lvi = lvi->parent();
+   }
+   if ( depth ) {
+      --depth;
+   }
+   return depth;
+#endif
+}
+
+QTreeWidgetItem * US_Static::lv_lastItem( QTreeWidget *lv ) {
+#if QT_VERSION < 0x040000
+   return lv->lastItem();
+#else
+   QTreeWidgetItemIterator it( lv );
+   QTreeWidgetItem *lvi = (QTreeWidgetItem *)0;
+
+   while ( *it ) {
+      lvi = *it;
+      ++it;
+   }
+   return lvi;
+#endif
+}
+
+#if QT_VERSION >= 0x040000
+// QString us_tr( QString qs ) {
+//    return QObject::tr( qPrintable( qs ) );
+// }
+
+// const char * us_trp( QString qs ) {
+//    return qPrintable( us_tr( qPrintable( qs ) ) );
+// }
+
+// void us_qdebug( QString qs ) {
+//    qDebug() << qPrintable( qs );
+// }
+
+// FILE * US_Static::us_fopen( QString f, const char *mode ) {
+//    return fopen( qPrintable( f ), mode );
+// }
+
+
+double US_Static::getDouble(const QString & title, const QString & label, double value, double min, double max, int decimals, bool * ok, QWidget * parent, const char * name, Qt::WindowFlags flags) {
+    return QInputDialog::getDouble(parent, title, label, value, min, max, decimals, ok, flags);
+}
+
+int US_Static::getInteger(const QString & title, const QString & label, int value, int min, int max, int step, bool * ok, QWidget * parent, const char * name, Qt::WindowFlags flags) {
+   return QInputDialog::getInteger(parent, title, label, value, min, max, step, ok, flags);
+}
+
+QString US_Static::getItem(const QString & title, const QString & label, const QStringList & list, int current, bool editable, bool * ok, QWidget * parent, const char * name, Qt::WindowFlags flags) {
+   return QInputDialog::getItem(parent, title, label, list, current, editable, ok, flags) ;
+}
+
+QString US_Static::getText(const QString & title, const QString & label, QLineEdit::EchoMode echo, const QString & text, bool * ok, QWidget * parent, const char * name, Qt::WindowFlags flags) {
+   return QInputDialog::getText(parent, title, label, echo, text, ok, flags);
+}
+
+int US_Static::us_message(const QString & title, const QString & text, const QString & buttonText, QWidget * parent, const char * name) {
+   if ( !buttonText.isEmpty() ) {
+      qDebug() << "us_message title: '" << title << "' text '" << text << "' has buttonText '" << buttonText << "'";
+   }
+   return QMessageBox::information( parent, title, text );
+}
+#endif

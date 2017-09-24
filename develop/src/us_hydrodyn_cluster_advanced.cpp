@@ -2,14 +2,14 @@
 #include "../include/us_hydrodyn_cluster.h"
 #include "../include/us_hydrodyn_cluster_advanced.h"
 //Added by qt3to4:
-#include <Q3TextStream>
-#include <Q3HBoxLayout>
+#include <QTextStream>
+#include <QHBoxLayout>
 #include <QCloseEvent>
-#include <Q3BoxLayout>
-#include <Q3Frame>
+#include <QBoxLayout>
+#include <QFrame>
 #include <QLabel>
-#include <Q3PopupMenu>
-#include <Q3VBoxLayout>
+ //#include <Q3PopupMenu>
+#include <QVBoxLayout>
 
 #define SLASH QDir::separator()
 
@@ -18,7 +18,7 @@ US_Hydrodyn_Cluster_Advanced::US_Hydrodyn_Cluster_Advanced(
                                                void *us_hydrodyn, 
                                                QWidget *p, 
                                                const char *name
-                                               ) : QDialog(p, name)
+                                               ) : QDialog( p )
 {
    this->csv1 = csv1;
    this->original_csv1 = &csv1;
@@ -30,7 +30,7 @@ US_Hydrodyn_Cluster_Advanced::US_Hydrodyn_Cluster_Advanced(
    this->us_hydrodyn = us_hydrodyn;
    USglobal = new US_Config();
    setPalette( PALET_FRAME );
-   setCaption(tr("US-SOMO: Cluster Advanced Options"));
+   setWindowTitle(us_tr("US-SOMO: Cluster Advanced Options"));
 
    QDir::setCurrent( USglobal->config_list.root_dir + SLASH +  "somo" + SLASH + "cluster" );
 
@@ -43,11 +43,11 @@ US_Hydrodyn_Cluster_Advanced::US_Hydrodyn_Cluster_Advanced(
 
    unsigned int csv_height = t_csv->rowHeight(0) + 30;
    unsigned int csv_width = t_csv->columnWidth(0) + 45;
-   for ( int i = 0; i < t_csv->numRows(); i++ )
+   for ( int i = 0; i < t_csv->rowCount(); i++ )
    {
       csv_height += t_csv->rowHeight(i);
    }
-   for ( int i = 1; i < t_csv->numCols(); i++ )
+   for ( int i = 1; i < t_csv->columnCount(); i++ )
    {
       csv_width += t_csv->columnWidth(i);
    }
@@ -77,22 +77,22 @@ void US_Hydrodyn_Cluster_Advanced::setupGUI()
 #endif
 
    lbl_title = new QLabel(csv1.name.left(80), this);
-   lbl_title->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Raised);
+   lbl_title->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_title->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_title->setMinimumHeight(minHeight1);
    lbl_title->setPalette( PALET_FRAME );
    AUTFBACK( lbl_title );
    lbl_title->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
 
-   t_csv = new Q3Table(csv1.data.size(), csv1.header.size(), this);
-   t_csv->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Raised);
+   t_csv = new QTableWidget(csv1.data.size(), csv1.header.size(), this);
+   t_csv->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    // t_csv->setMinimumHeight(minHeight1 * 3);
    // t_csv->setMinimumWidth(minWidth1);
    t_csv->setPalette( PALET_EDIT );
    AUTFBACK( t_csv );
    t_csv->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
    t_csv->setEnabled(true);
-   t_csv->setSelectionMode( Q3Table::NoSelection );
+   t_csv->setSelectionMode( QTableWidget::NoSelection );
 
    interval_starting_row = 0;
    for ( unsigned int i = 0; i < csv1.data.size(); i++ )
@@ -105,89 +105,117 @@ void US_Hydrodyn_Cluster_Advanced::setupGUI()
       {
          if ( csv1.data[i][j] == "Y" || csv1.data[i][j] == "N" )
          {
-            t_csv->setItem( i, j, new Q3CheckTableItem( t_csv, "" ) );
-            ((Q3CheckTableItem *)(t_csv->item( i, j )))->setChecked( csv1.data[i][j] == "Y" );
+            t_csv->setCellWidget( i, j, new QCheckBox() );
+            ((QCheckBox *)(t_csv->cellWidget( i, j )))->setChecked( csv1.data[i][j] == "Y" );
          } else {
-            t_csv->setText( i, j, csv1.data[i][j] );
+            t_csv->setItem( i, j, new QTableWidgetItem( csv1.data[i][j] ) );
          }
       }
       if ( csv1.data[ i ].size() < 3 ||
            ( csv1.data[ i ][ 1 ].isEmpty() &&
              csv1.data[ i ][ 2 ].isEmpty() ) )
       {
-         t_csv->setRowReadOnly( i, true );
+         { for ( int i = 0; i < t_csv->columnCount(); ++i ) { t_csv->item(  i, i )->setFlags( t_csv->item(  i, i )->flags() ^ Qt::ItemIsEditable ); } };
       }
    }
 
    for ( unsigned int i = 0; i < csv1.header.size(); i++ )
    {
-      t_csv->horizontalHeader()->setLabel(i, csv1.header[i]);
+      t_csv->setHorizontalHeaderItem(i, new QTableWidgetItem( csv1.header[i]));
    }
-   t_csv->setSorting(false);
-   t_csv->setRowMovingEnabled(false);
-   t_csv->setColumnMovingEnabled(false);
-   t_csv->setReadOnly(false);
+   t_csv->setSortingEnabled(false);
+    t_csv->verticalHeader()->setMovable(false);
+    t_csv->horizontalHeader()->setMovable(false);
+   //  t_csv->setReadOnly(false);
 
    t_csv->setColumnWidth( 0, 350 );
-   t_csv->setColumnReadOnly( 0, true );
+   { for ( int i = 0; i < t_csv->rowCount(); ++i ) { t_csv->item( i,  0 )->setFlags( t_csv->item( i,  0 )->flags() ^ Qt::ItemIsEditable ); } };
 
    // probably I'm not understanding something, but these next two lines don't seem to do anything
-   t_csv->horizontalHeader()->adjustHeaderSize();
+   // t_csv->horizontalHeader()->adjustHeaderSize();
    t_csv->adjustSize();
 
    recompute_interval_from_points();
 
    connect(t_csv, SIGNAL(valueChanged(int, int)), SLOT(table_value(int, int )));
 
-   editor = new Q3TextEdit(this);
+   editor = new QTextEdit(this);
    editor->setPalette( PALET_NORMAL );
    AUTFBACK( editor );
    editor->setReadOnly(true);
 
-#if defined(QT4) && defined(Q_WS_MAC)
+#if QT_VERSION < 0x040000
+# if defined(QT4) && defined(Q_WS_MAC)
    {
-      Q3PopupMenu * file = new Q3PopupMenu;
-      file->insertItem( tr("&Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
-      file->insertItem( tr("&Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
-      file->insertItem( tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
+ //      Q3PopupMenu * file = new Q3PopupMenu;
+      file->insertItem( us_tr("&Font"),  this, SLOT(update_font( )),    Qt::ALT+Qt::Key_F );
+      file->insertItem( us_tr("&Save"),  this, SLOT(save( )),    Qt::ALT+Qt::Key_S );
+      file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display( )),   Qt::ALT+Qt::Key_X );
 
       QMenuBar *menu = new QMenuBar( this );
       AUTFBACK( menu );
 
-      menu->insertItem(tr("&Messages"), file );
+      menu->insertItem(us_tr("&Messages"), file );
    }
-#else
-   Q3Frame *frame;
-   frame = new Q3Frame(this);
+# else
+   QFrame *frame;
+   frame = new QFrame(this);
    frame->setMinimumHeight(minHeight3);
 
-   m = new QMenuBar(frame, "menu" );
+   m = new QMenuBar( frame );    m->setObjectName( "menu" );
    m->setMinimumHeight(minHeight1 - 5);
    m->setPalette( PALET_NORMAL );
    AUTFBACK( m );
-   Q3PopupMenu * file = new Q3PopupMenu(editor);
-   m->insertItem( tr("&File"), file );
-   file->insertItem( tr("Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
-   file->insertItem( tr("Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
-   file->insertItem( tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
+ //   Q3PopupMenu * file = new Q3PopupMenu(editor);
+   m->insertItem( us_tr("&File"), file );
+   file->insertItem( us_tr("Font"),  this, SLOT(update_font( )),    Qt::ALT+Qt::Key_F );
+   file->insertItem( us_tr("Save"),  this, SLOT(save( )),    Qt::ALT+Qt::Key_S );
+   file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display( )),   Qt::ALT+Qt::Key_X );
+# endif
+#else
+   QFrame *frame;
+   frame = new QFrame(this);
+   frame->setMinimumHeight(minHeight3);
+
+   m = new QMenuBar( frame );    m->setObjectName( "menu" );
+   m->setMinimumHeight(minHeight1 - 5);
+   m->setPalette( PALET_NORMAL );
+   AUTFBACK( m );
+
+   {
+      QMenu * new_menu = m->addMenu( us_tr( "&File" ) );
+
+      QAction *qa1 = new_menu->addAction( us_tr( "Font" ) );
+      qa1->setShortcut( Qt::ALT+Qt::Key_F );
+      connect( qa1, SIGNAL(triggered()), this, SLOT( update_font() ) );
+
+      QAction *qa2 = new_menu->addAction( us_tr( "Save" ) );
+      qa2->setShortcut( Qt::ALT+Qt::Key_S );
+      connect( qa2, SIGNAL(triggered()), this, SLOT( save() ) );
+
+      QAction *qa3 = new_menu->addAction( us_tr( "Clear Display" ) );
+      qa3->setShortcut( Qt::ALT+Qt::Key_X );
+      connect( qa3, SIGNAL(triggered()), this, SLOT( clear_display() ) );
+   }
 #endif
 
-   editor->setWordWrap (Q3TextEdit::WidgetWidth);
+
+   editor->setWordWrapMode (QTextOption::WordWrap);
    editor->setMinimumHeight( 50 );
    
-   pb_cancel = new QPushButton(tr("Cancel"), this);
+   pb_cancel = new QPushButton(us_tr("Cancel"), this);
    pb_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_cancel->setMinimumHeight(minHeight1);
    pb_cancel->setPalette( PALET_PUSHB );
    connect(pb_cancel, SIGNAL(clicked()), SLOT(cancel()));
 
-   pb_help = new QPushButton(tr("Help"), this);
+   pb_help = new QPushButton(us_tr("Help"), this);
    pb_help->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_help->setMinimumHeight(minHeight1);
    pb_help->setPalette( PALET_PUSHB );
    connect(pb_help, SIGNAL(clicked()), SLOT(help()));
 
-   pb_ok = new QPushButton( tr("Close"), this);
+   pb_ok = new QPushButton( us_tr("Close"), this);
    pb_ok->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_ok->setMinimumHeight(minHeight1);
    pb_ok->setPalette( PALET_PUSHB );
@@ -195,13 +223,13 @@ void US_Hydrodyn_Cluster_Advanced::setupGUI()
 
    // build layout
 
-   Q3BoxLayout *vbl_editor_group = new Q3VBoxLayout(0);
+   QBoxLayout *vbl_editor_group = new QVBoxLayout(0);
 #if !defined(QT4) || !defined(Q_WS_MAC)
    vbl_editor_group->addWidget( frame );
 #endif
    vbl_editor_group->addWidget( editor );
 
-   Q3HBoxLayout *hbl_bottom = new Q3HBoxLayout(0);
+   QHBoxLayout * hbl_bottom = new QHBoxLayout(); hbl_bottom->setContentsMargins( 0, 0, 0, 0 ); hbl_bottom->setSpacing( 0 );
    hbl_bottom->addSpacing( 4 );
    hbl_bottom->addWidget ( pb_cancel );
    hbl_bottom->addSpacing( 4 );
@@ -211,7 +239,7 @@ void US_Hydrodyn_Cluster_Advanced::setupGUI()
    hbl_bottom->addSpacing( 4 );
 
 
-   Q3VBoxLayout *background = new Q3VBoxLayout(this);
+   QVBoxLayout * background = new QVBoxLayout(this); background->setContentsMargins( 0, 0, 0, 0 ); background->setSpacing( 0 );
    background->addSpacing( 4 );
    background->addWidget ( lbl_title );
    background->addSpacing( 4 );
@@ -251,7 +279,7 @@ void US_Hydrodyn_Cluster_Advanced::table_value( int row, int col )
 {
    if ( (unsigned int) row < interval_starting_row && col > 1 )
    {
-      t_csv->setText( row, col, "" );
+      t_csv->setItem( row, col, new QTableWidgetItem( "" ) );
       return;
    }
 
@@ -287,20 +315,20 @@ void US_Hydrodyn_Cluster_Advanced::update_font()
 void US_Hydrodyn_Cluster_Advanced::save()
 {
    QString fn;
-   fn = QFileDialog::getSaveFileName( this , caption() , QString::null , QString::null );
+   fn = QFileDialog::getSaveFileName( this , windowTitle() , QString::null , QString::null );
    if(!fn.isEmpty() )
    {
-      QString text = editor->text();
+      QString text = editor->toPlainText();
       QFile f( fn );
       if ( !f.open( QIODevice::WriteOnly | QIODevice::Text) )
       {
          return;
       }
-      Q3TextStream t( &f );
+      QTextStream t( &f );
       t << text;
       f.close();
-      editor->setModified( false );
-      setCaption( fn );
+ //      editor->setModified( false );
+      setWindowTitle( fn );
    }
 }
 
@@ -314,9 +342,9 @@ csv US_Hydrodyn_Cluster_Advanced::current_csv()
       {
          if ( csv1.data[i][j] == "Y" || csv1.data[i][j] == "N" )
          {
-            tmp_csv.data[i][j] = ((Q3CheckTableItem *)(t_csv->item( i, j )))->isChecked() ? "Y" : "N";
+            tmp_csv.data[i][j] = ((QCheckBox *)(t_csv->cellWidget( i, j )))->isChecked() ? "Y" : "N";
          } else {
-            tmp_csv.data[i][j] = t_csv->text( i, j );
+            tmp_csv.data[i][j] = t_csv->item( i, j )->text();
          }
          tmp_csv.num_data[i][j] = tmp_csv.data[i][j].toDouble();
       }
@@ -326,49 +354,46 @@ csv US_Hydrodyn_Cluster_Advanced::current_csv()
   
 void US_Hydrodyn_Cluster_Advanced::recompute_interval_from_points()
 {
-   for ( unsigned int i = 0; i < (unsigned int)t_csv->numRows(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int)t_csv->rowCount(); i++ )
    {
-      t_csv->setText(
-                     i, 5, 
-                     ( 
-                      t_csv->text(i, 4).toDouble() == 0e0 ?
+      QString toset =
+                      t_csv->item(i, 4)->text().toDouble() == 0e0 ?
                       ""
                       :
                       QString("%1")
-                      .arg( ( t_csv->text(i, 3).toDouble() -
-                              t_csv->text(i, 2).toDouble() )
-                             / ( t_csv->text(i, 4).toDouble() - 1e0 ) ) 
-                      )
-                     );
+                      .arg( ( t_csv->item(i, 3)->text().toDouble() -
+                              t_csv->item(i, 2)->text().toDouble() )
+                             / ( t_csv->item(i, 4)->text().toDouble() - 1e0 ) ) 
+         ;
+      
+      t_csv->setItem( i, 5, new QTableWidgetItem( toset ) );
    }
 }
 
 void US_Hydrodyn_Cluster_Advanced::recompute_points_from_interval()
 {
-   for ( unsigned int i = 0; i < (unsigned int)t_csv->numRows(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int)t_csv->rowCount(); i++ )
    {
-      t_csv->setText(
-                     i, 4, 
-                     ( 
-                      t_csv->text(i, 5).toDouble() == 0e0 ?
+      QString toset =
+                      t_csv->item(i, 5)->text().toDouble() == 0e0 ?
                       ""
                       :
                       QString("%1")
-                      .arg( 1 + (unsigned int)(( t_csv->text(i, 3).toDouble() -
-                                                 t_csv->text(i, 2).toDouble() )
-                                               / t_csv->text(i, 5).toDouble() + 0.5) ) 
-                      )
-                     );
+                      .arg( 1 + (unsigned int)(( t_csv->item(i, 3)->text().toDouble() -
+                                                 t_csv->item(i, 2)->text().toDouble() )
+                                               / t_csv->item(i, 5)->text().toDouble() + 0.5) )
+         ;
+      t_csv->setItem( i, 4, new QTableWidgetItem( toset ) );
    }
 }
 
 void US_Hydrodyn_Cluster_Advanced::editor_msg( QString color, QString msg )
 {
-   QColor save_color = editor->color();
-   editor->setColor(color);
+   QColor save_color = editor->textColor();
+   editor->setTextColor(color);
    editor->append(msg);
-   editor->setColor(save_color);
-   editor->scrollToBottom();
+   editor->setTextColor(save_color);
+   editor->verticalScrollBar()->setValue(editor->verticalScrollBar()->maximum());
 }
 
 void US_Hydrodyn_Cluster_Advanced::reset_csv()
@@ -390,7 +415,7 @@ void US_Hydrodyn_Cluster_Advanced::reset_csv()
 
    vector < QString > tmp_data;
 
-   tmp_data.push_back( tr( "--- Multiple I(q) methods are selectable ---" ) );
+   tmp_data.push_back( us_tr( "--- Multiple I(q) methods are selectable ---" ) );
    tmp_data.push_back("");
    tmp_data.push_back("");
    tmp_data.push_back("");
@@ -470,7 +495,7 @@ void US_Hydrodyn_Cluster_Advanced::reset_csv()
    csv1.data.push_back(tmp_data);
 
    tmp_data.clear();
-   tmp_data.push_back( tr( "--- Parameter sweeps ---" ) );
+   tmp_data.push_back( us_tr( "--- Parameter sweeps ---" ) );
    tmp_data.push_back("");
    tmp_data.push_back("");
    tmp_data.push_back("");

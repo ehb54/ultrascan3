@@ -7,10 +7,10 @@
 #include <qstring.h>
 #include <qlayout.h>
 #include <qpushbutton.h>
-#include <q3frame.h>
+//#include <q3frame.h>
 #include <qcheckbox.h>
 #include <qwt_counter.h>
-#include <q3buttongroup.h>
+#include <qgroupbox.h>
 //Added by qt3to4:
 #include <QCloseEvent>
 
@@ -37,7 +37,7 @@ struct DMD_Options
    bool pdb_static_pairs;
 };
 
-class US_EXTERN US_Hydrodyn_DMD_Options : public Q3Frame
+class US_EXTERN US_Hydrodyn_DMD_Options : public QFrame
 {
    Q_OBJECT
 

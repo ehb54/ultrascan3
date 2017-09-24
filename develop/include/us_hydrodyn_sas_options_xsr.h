@@ -7,7 +7,7 @@
 #include <qstring.h>
 #include <qlayout.h>
 #include <qpushbutton.h>
-#include <q3frame.h>
+//#include <q3frame.h>
 #include <qlineedit.h>
 //Added by qt3to4:
 #include <QCloseEvent>
@@ -24,7 +24,7 @@
 
 using namespace std;
 
-class US_EXTERN US_Hydrodyn_SasOptionsXsr : public Q3Frame
+class US_EXTERN US_Hydrodyn_SasOptionsXsr : public QFrame
 {
    Q_OBJECT
 

@@ -19,7 +19,7 @@
 #include <qregexp.h>
 #include <qfont.h>
 //Added by qt3to4:
-#include <Q3TextStream>
+#include <QTextStream>
 #include <QCloseEvent>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -59,8 +59,8 @@ void US_Hydrodyn::read_residue_file()
    QFile f(residue_filename);
    int error_count = 0;
    int line_count = 1;
-   QString error_msg = tr("Residue file errors:\n");
-   QString error_text = tr("Residue file errors:\n");
+   QString error_msg = us_tr("Residue file errors:\n");
+   QString error_text = us_tr("Residue file errors:\n");
    if ( advanced_config.debug_1 )
    {
       cout << "residue file name: " << residue_filename << endl;
@@ -81,7 +81,7 @@ void US_Hydrodyn::read_residue_file()
    // i=1;
    if (f.open(QIODevice::ReadOnly|QIODevice::Text))
    {
-      Q3TextStream ts(&f);
+      QTextStream ts(&f);
       while (!ts.atEnd())
       {
          new_residue.comment = ts.readLine();
@@ -158,7 +158,7 @@ void US_Hydrodyn::read_residue_file()
             {
                error_count++;
                QString tmp_msg =
-                  tr(QString(
+                  us_tr(QString(
                              "\nThe atom's bead assignment has exceeded the number of beads.\n"
                              "For residue: %1 and Atom: %2 "
                              "on line %3 of the residue file.\n")
@@ -212,8 +212,8 @@ void US_Hydrodyn::read_residue_file()
             }
             else
             {
-               QMessageBox::warning(this, tr("UltraScan Warning"),
-                                    tr("Please note:\n\nThere was an error reading\nthe selected Residue File!\n\nAtom "
+               QMessageBox::warning(this, us_tr("UltraScan Warning"),
+                                    us_tr("Please note:\n\nThere was an error reading\nthe selected Residue File!\n\nAtom "
                                        + new_atom.name + " cannot be read and will be deleted from List."),
                                     QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
             }
@@ -241,7 +241,7 @@ void US_Hydrodyn::read_residue_file()
             if ( advanced_config.debug_1 )
             {
                printf("residue name %s loading bead %d placing method %d\n",
-                      new_residue.name.ascii(),
+                      new_residue.name.toAscii().data(),
                       j, new_bead.placing_method); fflush(stdout);
             }
             new_residue.r_bead.push_back(new_bead);
@@ -259,8 +259,8 @@ void US_Hydrodyn::read_residue_file()
             if ( advanced_config.debug_1 )
             {
                printf("residue name %s unique name %s atom size %u alt size %u pos %u\n"
-                      ,new_residue.name.ascii()
-                      ,new_residue.unique_name.ascii()
+                      ,new_residue.name.toAscii().data()
+                      ,new_residue.unique_name.toAscii().data()
                       ,(unsigned int) new_residue.r_atom.size()
                       ,(unsigned int) alt_atoms.size()
                       ,(unsigned int) residue_list.size()
@@ -297,7 +297,7 @@ void US_Hydrodyn::read_residue_file()
       for (unsigned int i = 0; i < it->second.size(); i++)
       {
          printf("residue %s map pos %u\n",
-                it->first.ascii(), it->second[i]);
+                it->first.toAscii().data(), it->second[i]);
       }
    }
 #endif
@@ -358,7 +358,7 @@ void US_Hydrodyn::read_residue_file()
 
    if (error_count)
    {
-      QMessageBox::message(tr("ERRORS:"), error_msg);
+      US_Static::us_message(us_tr("ERRORS:"), error_msg);
       if (editor)
       {
          editor->append(error_text);
@@ -376,29 +376,29 @@ void US_Hydrodyn::read_residue_file()
       QFile f_radii( dir + "msroll_radii.txt" );
       if ( !f_radii.open( QIODevice::WriteOnly ) )
       {
-         editor_msg( "red", QString( tr( "Error: can not create MSROLL radii file: %1" ) ).arg( f_radii.name() ) );
+         editor_msg( "red", QString( us_tr( "Error: can not create MSROLL radii file: %1" ) ).arg( f_radii.fileName() ) );
       } else {
-         Q3TextStream ts( &f_radii );
+         QTextStream ts( &f_radii );
          for ( unsigned int i = 0; i < (unsigned int) msroll_radii.size(); i++ )
          {
             ts << msroll_radii[ i ];
          }
          f_radii.close();
-         editor_msg( "blue", QString( tr( "Notice: created MSROLL radii file: %1" ) ).arg( f_radii.name() ) );
+         editor_msg( "blue", QString( us_tr( "Notice: created MSROLL radii file: %1" ) ).arg( f_radii.fileName() ) );
       }
 
       QFile f_names( dir + "msroll_names.txt" );
       if ( !f_names.open( QIODevice::WriteOnly ) )
       {
-         editor_msg( "red", QString( tr( "Error: can not create MSROLL names file: %1" ) ).arg( f_names.name() ) );
+         editor_msg( "red", QString( us_tr( "Error: can not create MSROLL names file: %1" ) ).arg( f_names.fileName() ) );
       } else {
-         Q3TextStream ts( &f_names );
+         QTextStream ts( &f_names );
          for ( unsigned int i = 0; i < (unsigned int) msroll_names.size(); i++ )
          {
             ts << msroll_names[ i ];
          }
          f_names.close();
-         editor_msg( "blue", QString( tr( "Notice: created MSROLL names file: %1" ) ).arg( f_names.name() ) );
+         editor_msg( "blue", QString( us_tr( "Notice: created MSROLL names file: %1" ) ).arg( f_names.fileName() ) );
       }
    }
 }
@@ -421,7 +421,7 @@ void US_Hydrodyn::calc_vbar(struct PDB_model *model)
          mw_vbar_sum += mw * (*model).residue[i].vbar;
       }
    }
-   (*model).vbar = (mw_vbar_sum/mw_sum); //  - 0.002125;
+   (*model).vbar = (double)floor(0.5 + ( ( mw_vbar_sum / mw_sum ) * 1000e0 ) ) / 1000e0; //  - 0.002125;
    cout << "calc VBAR: " << (*model).vbar << endl;
 }
 
@@ -493,7 +493,7 @@ bool US_Hydrodyn::assign_atom(const QString &str1, struct PDB_chain *temp_chain,
 
    str2 = str1.mid(11, 5);
    temp_atom.orgName = str2;
-   temp_atom.name = str2.stripWhiteSpace();
+   temp_atom.name = str2.trimmed();
 
    if ( temp_atom.name == "OT1" )
    {
@@ -510,13 +510,13 @@ bool US_Hydrodyn::assign_atom(const QString &str1, struct PDB_chain *temp_chain,
    temp_atom.altLoc = str1.mid(16, 1);
 
    str2 = str1.mid(17,3);
-   temp_atom.resName = str2.stripWhiteSpace();
+   temp_atom.resName = str2.trimmed();
    if ( temp_atom.resName == "SWH" )
    {
       temp_atom.resName = "WAT";
    }
 
-   temp_atom.chainID = str1.mid(20, 2).stripWhiteSpace();
+   temp_atom.chainID = str1.mid(20, 2).trimmed();
 
    temp_atom.resSeq = str1.mid(22, 5);
    temp_atom.resSeq.replace(QRegExp(" *"),"");
@@ -576,7 +576,7 @@ bool US_Hydrodyn::assign_atom(const QString &str1, struct PDB_chain *temp_chain,
    }
    if (!found)
    {
-      //   printError(tr("The residue " + temp_atom.resName + " listed in this PDB file is not found in the residue table!"));
+      //   printError(us_tr("The residue " + temp_atom.resName + " listed in this PDB file is not found in the residue table!"));
    }
 
    return(flag);
@@ -606,8 +606,8 @@ int US_Hydrodyn::read_pdb( const QString &filename )
       switch (
               QMessageBox::question(
                                     this,
-                                    tr("Load PDB file"),
-                                    QString(tr("The default PDB unit is Angstrom (1e-10).\n"
+                                    us_tr("Load PDB file"),
+                                    QString(us_tr("The default PDB unit is Angstrom (1e-10).\n"
                                                "Your current setting is 1e%1\n"
                                                "Do you want to reset the unit to Angstrom?")).arg(hydro.unit),
                                     QMessageBox::Yes, 
@@ -625,19 +625,19 @@ int US_Hydrodyn::read_pdb( const QString &filename )
       }
    }
 
-   QRegExp rx_water_multiplier( "^REMARK Multiply water Iq by (\\d+)", false );
+   QRegExp rx_water_multiplier( "^REMARK Multiply water Iq by (\\d+)", Qt::CaseInsensitive );
    if ( f.open( QIODevice::ReadOnly ) )
    {
       multiply_iq_by_atomic_volume_last_water_multiplier = 0;      
       last_pdb_header.clear();
       last_pdb_title .clear();
-      last_pdb_filename = f.name();
-      Q3TextStream ts(&f);
+      last_pdb_filename = f.fileName();
+      QTextStream ts(&f);
       while ( !ts.atEnd() )
       {
          str1 = ts.readLine();
          if ( saxs_options.multiply_iq_by_atomic_volume &&
-              rx_water_multiplier.search( str1 ) != -1 )
+              rx_water_multiplier.indexIn( str1 ) != -1 )
          {
             multiply_iq_by_atomic_volume_last_water_multiplier = rx_water_multiplier.cap( 1 ).toUInt();
             cout << QString( "found water multiplier %1 in pdb\n" ).arg( multiply_iq_by_atomic_volume_last_water_multiplier );
@@ -650,7 +650,7 @@ int US_Hydrodyn::read_pdb( const QString &filename )
             {
                if ( advanced_config.debug_2 )
                {
-                  printf("ter break <%s>\n", str1.ascii());
+                  printf("ter break <%s>\n", str1.toAscii().data());
                }
                temp_model.molecule.push_back(temp_chain);
                clear_temp_chain(&temp_chain);
@@ -669,10 +669,10 @@ int US_Hydrodyn::read_pdb( const QString &filename )
             } else {
                last_pdb_header << tmp_str;
             }
-            QColor save_color = editor->color();
-            editor->setColor("dark green");
+            QColor save_color = editor->textColor();
+            editor->setTextColor("dark green");
             editor->append(QString("PDB %1: %2").arg(str1.left(6)).arg(tmp_str));
-            editor->setColor(save_color);
+            editor->setTextColor(save_color);
             qApp->processEvents();
          }
          if (str1.left(5) == "MODEL" ||
@@ -683,7 +683,7 @@ int US_Hydrodyn::read_pdb( const QString &filename )
             // str2 = str1.mid(6, 15);
             // temp_model.model_id = str2.toUInt();
             QRegExp rx_get_model( "^MODEL\\s+(\\S+)" );
-            if ( rx_get_model.search( str1 ) != -1 )
+            if ( rx_get_model.indexIn( str1 ) != -1 )
             {
                temp_model.model_id = rx_get_model.cap( 1 );
             } else {
@@ -733,7 +733,7 @@ int US_Hydrodyn::read_pdb( const QString &filename )
             {
                QFont save_font = editor->currentFont();
                QFont new_font = QFont("Courier");
-               editor->append(tr("\nSequence in one letter code:\n"));
+               editor->append(us_tr("\nSequence in one letter code:\n"));
                editor->setCurrentFont(new_font);
                editor->append(sstr + "\n\n");
                editor->setCurrentFont(save_font);
@@ -760,13 +760,13 @@ int US_Hydrodyn::read_pdb( const QString &filename )
                   {             // we don't have a chain yet, so let's start a new one
                      temp_chain.chainID = str1.mid(21, 1);
                      str2 = str1.mid(72, 4);
-                     temp_chain.segID = str2.stripWhiteSpace();
+                     temp_chain.segID = str2.trimmed();
                      chain_flag = true;
                   }
                   else // we have a chain, let's make sure the chain is still the same
                   {
                      bool break_chain = ( temp_chain.chainID != str1.mid(21, 1) );
-                     QString thisResName = str1.mid(17,3).stripWhiteSpace();
+                     QString thisResName = str1.mid(17,3).trimmed();
                      if ( thisResName == "SWH" )
                      {
                         thisResName = "WAT";
@@ -789,7 +789,7 @@ int US_Hydrodyn::read_pdb( const QString &filename )
                      {
                         if ( advanced_config.debug_2 )
                         {
-                           printf("chain break <%s>\n", str1.ascii());
+                           printf("chain break <%s>\n", str1.toAscii().data());
                         }
                         if ( temp_chain.atom.size() ) 
                         {
@@ -798,7 +798,7 @@ int US_Hydrodyn::read_pdb( const QString &filename )
                         clear_temp_chain(&temp_chain);
                         temp_chain.chainID = str1.mid(21, 1); // we have to start a new chain
                         str2 = str1.mid(72, 4);
-                        temp_chain.segID = str2.stripWhiteSpace();
+                        temp_chain.segID = str2.trimmed();
                      }
                      currently_aa_chain = (!known_residue || this_is_aa);
                   }
@@ -816,15 +816,17 @@ int US_Hydrodyn::read_pdb( const QString &filename )
       lb_model->clear();
       model_vector.clear();
       bead_model.clear();
-      QColor save_color = editor->color();
-      editor->setColor("red");
+      QColor save_color = editor->textColor();
+      editor->setTextColor("red");
       editor->append(QString("Error reading file %1").arg(filename));
-      editor->setColor(save_color);
+      editor->setTextColor(save_color);
       return -1;
    }
    if(!model_flag)   // there were no model definitions, just a single molecule,
    {                  // we still need to save the results
-      temp_model.molecule.push_back(temp_chain);
+      if ( temp_chain.atom.size() ) {
+         temp_model.molecule.push_back(temp_chain);
+      }
       editor->append("\nResidue sequence from " + project +".pdb:\n");
       str = "";
       QString sstr = "";
@@ -858,7 +860,7 @@ int US_Hydrodyn::read_pdb( const QString &filename )
       {
          QFont save_font = editor->currentFont();
          QFont new_font = QFont("Courier");
-         editor->append(tr("\nSequence in one letter code:\n"));
+         editor->append(us_tr("\nSequence in one letter code:\n"));
          editor->setCurrentFont(new_font);
          editor->append(sstr + "\n\n");
          editor->setCurrentFont(save_font);
@@ -871,10 +873,10 @@ int US_Hydrodyn::read_pdb( const QString &filename )
    }
    for (unsigned int i=0; i<model_vector.size(); i++)
    {
-      lb_model->insertItem( "Model: " + model_vector[i].model_id );
+      lb_model->addItem( "Model: " + model_vector[i].model_id );
    }
    lb_model->setEnabled(true);
-   lb_model->setSelected(0, true);
+   lb_model->item(0)->setSelected( true);
    current_model = 0;
    dna_rna_resolve();
    model_vector_as_loaded = model_vector;
@@ -912,22 +914,22 @@ void US_Hydrodyn::dna_rna_resolve()
          for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++) 
          {
             PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
-            QString thisres = this_atom->resName.stripWhiteSpace();
+            QString thisres = this_atom->resName.trimmed();
             chainID = this_atom->chainID;
-            if ( rx_dna_and_rna.search(thisres) == -1 )
+            if ( rx_dna_and_rna.indexIn(thisres) == -1 )
             {
                // not either:
                ask_convert = false;
                break;
             }
-            if ( rx_dna.search(thisres) != -1 )
+            if ( rx_dna.indexIn(thisres) != -1 )
             {
                // we definitely have DNA, correct this residue!
                ask_convert = false;
                convert_this = true;
                break;
             }
-            if ( rx_rna.search(thisres) != -1 )
+            if ( rx_rna.indexIn(thisres) != -1 )
             {
                // we definitely have RNA, the residue is ok
                ask_convert = false;
@@ -947,8 +949,8 @@ void US_Hydrodyn::dna_rna_resolve()
          if ( ask_convert )
          {
             switch( QMessageBox::information( this, 
-                                              tr("UltraScan"),
-                                              tr(QString("Chain %1 Molecule %2 only contains A, G & C residues (so far)\n"
+                                              us_tr("UltraScan"),
+                                              us_tr(QString("Chain %1 Molecule %2 only contains A, G & C residues (so far)\n"
                                                          "Is it DNA or RNA?")
                                                  .arg(chainID)
                                                  .arg(i+1))
@@ -971,7 +973,7 @@ void US_Hydrodyn::dna_rna_resolve()
             if ( !already_messaged.count(QString("%1|%2").arg(i).arg(chainID)) )
             {
                already_messaged[QString("%1|%2").arg(i).arg(chainID)] = true;
-               editor->append(tr(QString("Converting Chain %1 Molecule %2 to standard DNA residue names\n")
+               editor->append(us_tr(QString("Converting Chain %1 Molecule %2 to standard DNA residue names\n")
                                  .arg(chainID)
                                  .arg(i+1)
                                  ));
@@ -979,7 +981,7 @@ void US_Hydrodyn::dna_rna_resolve()
             for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++) 
             {
                PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
-               this_atom->resName = "D" + this_atom->resName.stripWhiteSpace();
+               this_atom->resName = "D" + this_atom->resName.trimmed();
             }
          }
       }
@@ -991,12 +993,12 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
    last_read_bead_model = filename;
    lb_model->clear();
    le_pdb_file_save_text = "not selected";
-   le_pdb_file->setText(tr( "not selected" ));
+   le_pdb_file->setText(us_tr( "not selected" ));
    project = filename;
    //   project.replace(QRegExp(".*(/|\\\\)"), "");
    //   project.replace(QRegExp("\\.(somo|SOMO)\\.(bead_model|BEAD_MODEL)$"), "");
    project = QFileInfo(QFileInfo(filename).fileName()).baseName();
-   QString ftype = QFileInfo(filename).extension(false).lower();
+   QString ftype = QFileInfo(filename).suffix().toLower();
    editor->setText("\n\nLoading bead model " + project + " of type " + ftype + "\n");
    bead_model.clear();
    PDB_atom tmp_atom;
@@ -1014,9 +1016,9 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
    {
       if ( f.open( QIODevice::ReadOnly ) )
       {
-         bool so_ovlp = QFileInfo( f ).baseName( true ).contains( "so_ovlp" );
-         qDebug( QString( "so_ovlp %1" ).arg( so_ovlp ? "true" : "false" ) );
-         Q3TextStream ts(&f);
+         bool so_ovlp = QFileInfo( f ).completeBaseName().contains( "so_ovlp" );
+         us_qdebug( QString( "so_ovlp %1" ).arg( so_ovlp ? "true" : "false" ) );
+         QTextStream ts(&f);
          if (!ts.atEnd()) {
             ts >> bead_count;
          }
@@ -1134,30 +1136,30 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
             while ( !ts.atEnd() )
             {
                QString str = ts.readLine();
-               if ( str.left( 6 ).lower().contains( "__json" ) )
+               if ( str.left( 6 ).toLower().contains( "__json" ) )
                {
                   continue;
                }
-               if ( str.left( 6 ).lower() == "saxs::" )
+               if ( str.left( 6 ).toLower() == "saxs::" )
                {
                   ssaxs << str;
                   continue;
                }
 
-               if ( str.left( 7 ).lower() == "bsaxs::" )
+               if ( str.left( 7 ).toLower() == "bsaxs::" )
                {
                   bsaxs << str;
                   continue;
                }
 
-               if ( str.left( 8 ).lower() == "bsaxsv::" )
+               if ( str.left( 8 ).toLower() == "bsaxsv::" )
                {
                   bsaxsv << str;
                   continue;
                }
 
                editor->append(str);
-               if ( rx.search(str) != -1 )
+               if ( rx.indexIn(str) != -1 )
                {
                   units_loaded = true;
                   hydro.unit = - rx.cap(1).toInt();
@@ -1170,7 +1172,7 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
             if ( ssaxs.size() && !saxs_options.iq_global_avg_for_bead_models && bsaxs.size() && ( bead_model.size() % ( bsaxs.size() / 2 ) ) )
             {
                editor_msg( "red", 
-                           QString( tr( "Overriding setting to use global structure factors since bead model doesn't contain the correct number of structure factors (%1) for the beads (%2)" ) )
+                           QString( us_tr( "Overriding setting to use global structure factors since bead model doesn't contain the correct number of structure factors (%1) for the beads (%2)" ) )
                            .arg( bsaxs.size() )
                            .arg( bead_model.size() )
                            );
@@ -1180,24 +1182,24 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
             if ( ssaxs.size() && ( saxs_options.iq_global_avg_for_bead_models || ( bsaxs.size() && ( bead_model.size() % ( bsaxs.size() / 2 ) ) ) ) )
             {
                editor_msg( "dark blue", 
-                           QString( tr( "Found %1 saxs coefficient lines in bead model file\n" ) )
+                           QString( us_tr( "Found %1 saxs coefficient lines in bead model file\n" ) )
                            .arg( ssaxs.size() ) );
                if ( ssaxs.size() > 2 )
                {
                   editor_msg( "red", 
-                              QString( tr( "Error: saxs coefficients found in file, but incorrect # of lines %1 vs 2 expected" ) )
+                              QString( us_tr( "Error: saxs coefficients found in file, but incorrect # of lines %1 vs 2 expected" ) )
                               .arg( ssaxs.size() ) );
                } else {
                   saxs tmp_saxs;
-                  QStringList qsl = QStringList::split( QRegExp( "\\s+" ), ssaxs[ 0 ] );
+                  QStringList qsl = (ssaxs[ 0 ] ).split( QRegExp( "\\s+" ) , QString::SkipEmptyParts );
                   if ( qsl.size() != 12 )
                   {
                      editor_msg( "red", 
-                                 QString( tr( "Error: saxs coefficients found in file, but incorrect # of tokens %1 vs 12 required" ) )
+                                 QString( us_tr( "Error: saxs coefficients found in file, but incorrect # of tokens %1 vs 12 required" ) )
                                  .arg( qsl.size() ) );
                   } else {
-                     // editor_msg( "dark blue",  tr( "Four term saxs coefficients found\n" ) );
-                     tmp_saxs.saxs_name = qsl[ 1 ].upper();
+                     // editor_msg( "dark blue",  us_tr( "Four term saxs coefficients found\n" ) );
+                     tmp_saxs.saxs_name = qsl[ 1 ].toUpper();
                      for ( unsigned int i = 0; i < 4; i++ )
                      {
                         tmp_saxs.a[ i ] = qsl[ 2 + i * 2 ].toFloat();
@@ -1212,15 +1214,15 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
                      tmp_saxs.volume = qsl[ 11 ].toFloat();
                      if ( ssaxs.size() == 2 )
                      {
-                        qsl = QStringList::split( QRegExp( "\\s+" ), ssaxs[ 1 ] );
+                        qsl = (ssaxs[ 1 ] ).split( QRegExp( "\\s+" ) , QString::SkipEmptyParts );
 
                         if ( qsl.size() != 14 )
                         {
                            editor_msg( "red", 
-                                       QString( tr( "Error: saxs coefficients found in file, but incorrect # of tokens %1 vs 14 required" ) )
+                                       QString( us_tr( "Error: saxs coefficients found in file, but incorrect # of tokens %1 vs 14 required" ) )
                                        .arg( qsl.size() ) );
                         } else {
-                           // editor_msg( "dark blue",  tr( "Five term saxs coefficients found\n" ) );
+                           // editor_msg( "dark blue",  us_tr( "Five term saxs coefficients found\n" ) );
                            for ( unsigned int i = 0; i < 5; i++ )
                            {
                               tmp_saxs.a5[ i ] = qsl[ 2 + i * 2 ].toFloat();
@@ -1242,12 +1244,12 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
                      if ( saxs_util->saxs_map.count( tmp_saxs.saxs_name ) )
                      {
                         editor_msg( "dark red", 
-                                    QString( tr( "Notice: saxs coefficients for %1 replaced by newly loaded values\n" ) )
+                                    QString( us_tr( "Notice: saxs coefficients for %1 replaced by newly loaded values\n" ) )
                                     .arg( tmp_saxs.saxs_name ) );
                      } else {
                         saxs_util->saxs_list.push_back( tmp_saxs );
                         editor_msg( "dark blue", 
-                                    QString( tr( "Notice: added coefficients for %1 from newly loaded values\n" ) )
+                                    QString( us_tr( "Notice: added coefficients for %1 from newly loaded values\n" ) )
                                     .arg( tmp_saxs.saxs_name ) );
                      }
                      saxs_util->saxs_map[ tmp_saxs.saxs_name ] = tmp_saxs;
@@ -1257,12 +1259,12 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
                         if ( saxs_plot_window->saxs_map.count( tmp_saxs.saxs_name ) )
                         {
                            editor_msg( "dark red", 
-                                       QString( tr( "Notice: saxs window: saxs coefficients for %1 replaced by newly loaded values\n" ) )
+                                       QString( us_tr( "Notice: saxs window: saxs coefficients for %1 replaced by newly loaded values\n" ) )
                                        .arg( tmp_saxs.saxs_name ) );
                         } else {
                            saxs_plot_window->saxs_list.push_back( tmp_saxs );
                            editor_msg( "dark blue", 
-                                       QString( tr( "Notice: saxs window: added coefficients for %1 from newly loaded values\n" ) )
+                                       QString( us_tr( "Notice: saxs window: added coefficients for %1 from newly loaded values\n" ) )
                                        .arg( tmp_saxs.saxs_name ) );
                         }
                         saxs_plot_window->saxs_map[ tmp_saxs.saxs_name ] = tmp_saxs;
@@ -1273,10 +1275,10 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
                      {
                         if ( !saxs_util->saxs_map.count( saxs_options.dummy_saxs_name ) )
                         {
-                           editor_msg( "red", QString( tr("Warning: No '%1' SAXS atom found. Bead model SAXS disabled.\n" ) )
+                           editor_msg( "red", QString( us_tr("Warning: No '%1' SAXS atom found. Bead model SAXS disabled.\n" ) )
                                        .arg( saxs_options.dummy_saxs_name ) );
                         } else {
-                           editor_msg( "blue", QString( tr("Notice: Loading dummy atoms with saxs coefficients '%1'" ) )
+                           editor_msg( "blue", QString( us_tr("Notice: Loading dummy atoms with saxs coefficients '%1'" ) )
                                        .arg( saxs_options.dummy_saxs_name ) );
                         }               
                         for ( unsigned int i = 0; i < ( unsigned int ) bead_model.size(); i++ )
@@ -1290,32 +1292,32 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
             }
             if ( bsaxs.size() && !saxs_options.iq_global_avg_for_bead_models )
             {
-               editor_msg( "blue", tr( "Notice: using individual bead structure factors\n" ) );
+               editor_msg( "blue", us_tr( "Notice: using individual bead structure factors\n" ) );
                sf_bead_factors.resize( bsaxs.size() );
                bool do_bsaxsv = false;
                if ( bsaxsv.size() )
                {
                   if ( bsaxsv.size() * 2 == bsaxs.size() )
                   {
-                     editor_msg( "blue", tr( "Notice: found correct # of variable length structure factors\n" ) );
+                     editor_msg( "blue", us_tr( "Notice: found correct # of variable length structure factors\n" ) );
                      do_bsaxsv = true;
                   } else {
-                     editor_msg( "red", tr( "Notice: found incorrect # of variable length structure factors, variable length not loaded\n" ) );
+                     editor_msg( "red", us_tr( "Notice: found incorrect # of variable length structure factors, variable length not loaded\n" ) );
                   }
                }
                      
                for ( unsigned int j = 0; j < ( unsigned int ) bsaxs.size(); j += 2 )
                {
                   saxs tmp_saxs;
-                  QStringList qsl = QStringList::split( QRegExp( "\\s+" ), bsaxs[ j ] );
+                  QStringList qsl = (bsaxs[ j ] ).split( QRegExp( "\\s+" ) , QString::SkipEmptyParts );
                   if ( qsl.size() != 12 )
                   {
                      editor_msg( "red", 
-                                 QString( tr( "Error: saxs coefficients found in file, but incorrect # of tokens %1 vs 12 required" ) )
+                                 QString( us_tr( "Error: saxs coefficients found in file, but incorrect # of tokens %1 vs 12 required" ) )
                                  .arg( qsl.size() ) );
                   } else {
-                     // editor_msg( "dark blue",  tr( "Four term saxs coefficients found\n" ) );
-                     tmp_saxs.saxs_name = qsl[ 1 ].upper();
+                     // editor_msg( "dark blue",  us_tr( "Four term saxs coefficients found\n" ) );
+                     tmp_saxs.saxs_name = qsl[ 1 ].toUpper();
                      for ( unsigned int i = 0; i < 4; i++ )
                      {
                         tmp_saxs.a[ i ] = qsl[ 2 + i * 2 ].toFloat();
@@ -1330,18 +1332,18 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
                      tmp_saxs.volume = qsl[ 11 ].toFloat();
                      if ( (unsigned int) bsaxs.size() > j + 1 )
                      {
-                        qsl = QStringList::split( QRegExp( "\\s+" ), bsaxs[ j + 1 ] );
-                        if ( tmp_saxs.saxs_name != qsl[ 1 ].upper() )
+                        qsl = (bsaxs[ j + 1 ] ).split( QRegExp( "\\s+" ) , QString::SkipEmptyParts );
+                        if ( tmp_saxs.saxs_name != qsl[ 1 ].toUpper() )
                         {
-                           editor_msg( "red", tr( "Error: bead saxs coefficients bead number inconsistancy" ) );
+                           editor_msg( "red", us_tr( "Error: bead saxs coefficients bead number inconsistancy" ) );
                         } else {
                            if ( qsl.size() != 14 )
                            {
                               editor_msg( "red", 
-                                          QString( tr( "Error: saxs coefficients found in file, but incorrect # of tokens %1 vs 14 required" ) )
+                                          QString( us_tr( "Error: saxs coefficients found in file, but incorrect # of tokens %1 vs 14 required" ) )
                                           .arg( qsl.size() ) );
                            } else {
-                              // editor_msg( "dark blue",  tr( "Five term saxs coefficients found\n" ) );
+                              // editor_msg( "dark blue",  us_tr( "Five term saxs coefficients found\n" ) );
                               for ( unsigned int i = 0; i < 5; i++ )
                               {
                                  tmp_saxs.a5[ i ] = qsl[ 2 + i * 2 ].toFloat();
@@ -1357,7 +1359,7 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
                      tmp_saxs.vcoeff.clear();
                      if ( do_bsaxsv )
                      {
-                        qsl = QStringList::split( QRegExp( "\\s+" ), bsaxsv[ j / 2 ] );
+                        qsl = (bsaxsv[ j / 2 ] ).split( QRegExp( "\\s+" ) , QString::SkipEmptyParts );
                         cout << QString( "loading: bvsaxs qsl size %1\n" ).arg( qsl.size() );
                         for ( int i = 2; i < (int) qsl.size() - 1; i++ )
                         {
@@ -1379,13 +1381,13 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
                   }
                }
                      
-               editor_msg( "dark blue", tr( "Bead model structure factors saved for reapplication" ) );
+               editor_msg( "dark blue", us_tr( "Bead model structure factors saved for reapplication" ) );
             }
 
             if ( !units_loaded )
             {
                editor_msg("red", 
-                          tr("\nNote: The model scale (nm, angstrom, etc.) was not found in this bead model file.\n"
+                          us_tr("\nNote: The model scale (nm, angstrom, etc.) was not found in this bead model file.\n"
                              "Please make sure the scale is correct before computing hydrodynamic parameters.\n"));
                editor_msg("dark red", 
                           QString("Current model scale (10^-x m) (10 = Angstrom, 9 = nanometer), where x is : %1\n").arg(-hydro.unit));
@@ -1406,13 +1408,13 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
          //          QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "") +
          //          DOTSOMO, &bead_model, true);
          lb_model->clear();
-         lb_model->insertItem("Model 1 from bead_model file");
-         lb_model->setSelected(0, true);
+         lb_model->addItem("Model 1 from bead_model file");
+         lb_model->item(0)->setSelected( true);
          lb_model->setEnabled(false);
          model_vector.resize(1);
          model_vector[0].vbar = results.vbar;
-         somo_processed.resize(lb_model->numRows());
-         bead_models.resize(lb_model->numRows());
+         somo_processed.resize(lb_model->count());
+         bead_models.resize(lb_model->count());
          current_model = 0;
          bead_models[0] = bead_model;
          somo_processed[0] = 1;
@@ -1434,7 +1436,7 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
    {
       if (f.open(QIODevice::ReadOnly))
       {
-         Q3TextStream ts(&f);
+         QTextStream ts(&f);
          if (!ts.atEnd()) {
             ts >> bead_count;
          }
@@ -1475,10 +1477,10 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
                return 1;
             }
          }
-         QFile frmc(QFileInfo(filename).dirPath() + SLASH + rmcfile);
+         QFile frmc(QFileInfo(filename).path() + SLASH + rmcfile);
          if (frmc.open(QIODevice::ReadOnly))
          {
-            Q3TextStream tsrmc(&frmc);
+            QTextStream tsrmc(&frmc);
 
             editor->append(QString("Beads %1\n").arg(bead_count));
             while (!tsrmc.atEnd() && !ts.atEnd() && linepos < bead_count)
@@ -1565,14 +1567,14 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
          //          DOTSOMO, &bead_model, true);
 
          lb_model->clear();
-         lb_model->insertItem("Model 1 from beams file");
-         lb_model->setSelected(0, true);
+         lb_model->addItem("Model 1 from beams file");
+         lb_model->item(0)->setSelected( true);
          lb_model->setEnabled(false);
          model_vector.resize(1);
          model_vector[0].vbar = results.vbar;
          model_vector[0].Rg = results.rg;
-         somo_processed.resize(lb_model->numRows());
-         bead_models.resize(lb_model->numRows());
+         somo_processed.resize(lb_model->count());
+         bead_models.resize(lb_model->count());
          current_model = 0;
          bead_models[0] = bead_model;
          somo_processed[0] = 1;
@@ -1593,10 +1595,10 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
       {
          if ( !saxs_util->saxs_map.count( saxs_options.dummy_saxs_name ) )
          {
-            editor_msg( "red", QString( tr("Warning: No '%1' SAXS atom found. Bead model SAXS disabled.\n" ) )
+            editor_msg( "red", QString( us_tr("Warning: No '%1' SAXS atom found. Bead model SAXS disabled.\n" ) )
                         .arg( saxs_options.dummy_saxs_name ) );
          } else {
-            editor_msg( "blue", QString( tr("Notice: Loading dummy atoms with saxs coefficients '%1'" ) )
+            editor_msg( "blue", QString( us_tr("Notice: Loading dummy atoms with saxs coefficients '%1'" ) )
                         .arg( saxs_options.dummy_saxs_name ) );
          }               
       }
@@ -1610,10 +1612,10 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
       if (f.open(QIODevice::ReadOnly))
       {
 
-         QRegExp rx_psv( "^REMARK\\s+PSV(\\s*:|)\\s+(\\S+)", false );
-         QRegExp rx_mw ( "^REMARK\\s+MW(\\s*:|)\\s+(\\S+)", false );
-         QRegExp rx_unit( "^REMARK\\s+Units exponent(\\s*:|)\\s+(\\S+)", false );
-         QRegExp rx_mult( "^REMARK\\s+Units conversion factor(\\s*:|)\\s+(\\S+)", false );
+         QRegExp rx_psv( "^REMARK\\s+PSV(\\s*:|)\\s+(\\S+)", Qt::CaseInsensitive );
+         QRegExp rx_mw ( "^REMARK\\s+MW(\\s*:|)\\s+(\\S+)", Qt::CaseInsensitive );
+         QRegExp rx_unit( "^REMARK\\s+Units exponent(\\s*:|)\\s+(\\S+)", Qt::CaseInsensitive );
+         QRegExp rx_mult( "^REMARK\\s+Units conversion factor(\\s*:|)\\s+(\\S+)", Qt::CaseInsensitive );
          double loaded_psv = 0e0;
          double loaded_mw  = 0e0;
          unsigned int loaded_unit = 0;
@@ -1621,29 +1623,29 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
 
          QStringList qsl;
          {
-            Q3TextStream ts(&f);
+            QTextStream ts(&f);
             do {
                QString qs = ts.readLine();
                qsl << qs;
-               if ( rx_model.search( qs ) != -1 )
+               if ( rx_model.indexIn( qs ) != -1 )
                {
                   model_count++;
                   model_names.push_back( rx_model.cap( 1 ) );
                }
-               if ( rx_psv.search( qs ) != -1 )
+               if ( rx_psv.indexIn( qs ) != -1 )
                {
                   loaded_psv = rx_psv.cap( 2 ).toDouble();
-                  editor_msg( "blue", QString( tr( "Found PSV %1 in PDB" ) ).arg( loaded_psv ) );
+                  editor_msg( "blue", QString( us_tr( "Found PSV %1 in PDB" ) ).arg( loaded_psv ) );
                }
-               if ( rx_mw.search( qs ) != -1 )
+               if ( rx_mw.indexIn( qs ) != -1 )
                {
                   loaded_mw = rx_mw.cap( 2 ).toDouble();
-                  editor_msg( "blue", QString( tr( "Found MW %1 in PDB" ) ).arg( loaded_mw ) );
+                  editor_msg( "blue", QString( us_tr( "Found MW %1 in PDB" ) ).arg( loaded_mw ) );
                }
-               if ( rx_unit.search( qs ) != -1 )
+               if ( rx_unit.indexIn( qs ) != -1 )
                {
                   loaded_unit = rx_unit.cap( 2 ).toUInt();
-                  editor_msg( "blue", QString( tr( "Found Units exponent %1 in PDB" ) ).arg( loaded_unit ) );
+                  editor_msg( "blue", QString( us_tr( "Found Units exponent %1 in PDB" ) ).arg( loaded_unit ) );
                   if ( loaded_unit == 10 )
                   {
                      saxs_options.dummy_atom_pdbs_in_nm = true;
@@ -1653,11 +1655,11 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
                      saxs_options.dummy_atom_pdbs_in_nm = false;
                   }
                }
-               if ( rx_mult.search( qs ) != -1 )
+               if ( rx_mult.indexIn( qs ) != -1 )
                {
                   loaded_mult = true;
                   unit_mult = rx_mult.cap( 2 ).toUInt();
-                  editor_msg( "blue", QString( tr( "Found Units conversion %1 in PDB" ) ).arg( unit_mult ) );
+                  editor_msg( "blue", QString( us_tr( "Found Units conversion %1 in PDB" ) ).arg( unit_mult ) );
                }
             } while (!ts.atEnd());
          }
@@ -1668,13 +1670,13 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
               !loaded_unit &&
               saxs_options.dummy_atom_pdbs_in_nm )
          {
-            editor_msg( "blue", tr( "Notice: Unit conversion factor in PDB forces Angstrom units" ) );
+            editor_msg( "blue", us_tr( "Notice: Unit conversion factor in PDB forces Angstrom units" ) );
             saxs_options.dummy_atom_pdbs_in_nm = false;
          }
 
          if ( saxs_options.dummy_atom_pdbs_in_nm )
          {
-            editor_msg( "blue", tr("Notice: This PDB is being loaded in NM units" ) );
+            editor_msg( "blue", us_tr("Notice: This PDB is being loaded in NM units" ) );
          }
 
          model_count = model_count ? model_count : 1;
@@ -1688,14 +1690,14 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
          
          // make sure it is a valid file
 
-         bool damaver = (qsl.grep("Number of atoms written").count() > 0 &&
-                         !qsl.grep("Atomic radius").count() );
-         bool dammin = (qsl.grep("Number of particle atoms").count() > 0);
-         bool dammif = (qsl.grep("Dummy atoms in output phase").count() > 0);
-         bool damfilt = (qsl.grep("Number of atoms written").count() > 0 &&
-                         qsl.grep("Atomic radius").count() );
-         bool damfilt5 = (qsl.grep("Filtered number of atoms").count() > 0 &&
-                          qsl.grep("Atomic Radius").count() );
+         bool damaver = (qsl.filter("Number of atoms written").count() > 0 &&
+                         !qsl.filter("Atomic radius").count() );
+         bool dammin = (qsl.filter("Number of particle atoms").count() > 0);
+         bool dammif = (qsl.filter("Dummy atoms in output phase").count() > 0);
+         bool damfilt = (qsl.filter("Number of atoms written").count() > 0 &&
+                         qsl.filter("Atomic radius").count() );
+         bool damfilt5 = (qsl.filter("Filtered number of atoms").count() > 0 &&
+                          qsl.filter("Atomic Radius").count() );
 
          if ( !damaver &&
               !dammin &&
@@ -1712,7 +1714,7 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
          // find last atom number
          QRegExp rx;
 
-         QStringList qsl_atom = qsl.grep(QRegExp("^ATOM "));
+         QStringList qsl_atom = qsl.filter(QRegExp("^ATOM "));
          QString last_atom = "";
          if ( !qsl_atom.empty() )
          {
@@ -1724,7 +1726,7 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
          }
 
          rx.setPattern("^ATOM\\s*(\\d+)\\s*CA");
-         if ( rx.search(last_atom) ) 
+         if ( rx.indexIn(last_atom) ) 
          {
             editor->append("Couldn't find a last atom number in the DAMMIN/DAMMIF/DAMAVER file\n");
             f.close();
@@ -1736,13 +1738,13 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
          printf("read bead count %d\n", tmp_bead_count);
 
          // count atom lines
-         int atom_line_count = qsl.grep(QRegExp("^ATOM ")).count();
+         int atom_line_count = qsl.filter(QRegExp("^ATOM ")).count();
          printf("atom line count %d\n", atom_line_count);
 
          bead_count = atom_line_count;
          bead_count /= model_count;
 
-         Q3TextStream ts(&f);
+         QTextStream ts(&f);
          QString tmp;
          if ( dammin || dammif )
          {
@@ -1761,7 +1763,7 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
          {
             puts("dammin");
             rx.setPattern( "Number of particle atoms \\.*\\s*:\\s*(\\d+)\\s*" );
-            if ( rx.search(tmp) == -1 ) 
+            if ( rx.indexIn(tmp) == -1 ) 
             {
                editor->append("Error in DAMMIN file: couldn't find number of atoms in 'Number of particle atoms' line\n");
                f.close();
@@ -1785,7 +1787,7 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
             
             rx.setPattern("DAM packing radius \\.*\\s*:\\s*(\\d+\\.\\d+)\\s*");
             
-            if ( rx.search(tmp) == -1 ) 
+            if ( rx.indexIn(tmp) == -1 ) 
             {
                editor->append("Error in DAMMIN file: couldn't find radius in 'Dummy atom radius' line\n");
                f.close();
@@ -1797,7 +1799,7 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
          if ( dammif ) {
             puts("dammif");
             rx.setPattern( "Dummy atoms in output phase\\s*:\\s*(\\d+)\\s*" );
-            if ( rx.search(tmp) == -1 ) 
+            if ( rx.indexIn(tmp) == -1 ) 
             {
                editor->append("Error in DAMMIF file: couldn't find number of atoms in 'Dummy atoms in output phase' line\n");
                f.close();
@@ -1821,7 +1823,7 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
             
             rx.setPattern("Dummy atom radius\\s *:\\s*(\\d+\\.\\d+)\\s*");
             
-            if ( rx.search(tmp) == -1 ) 
+            if ( rx.indexIn(tmp) == -1 ) 
             {
                editor->append("Error in DAMMIF file: couldn't find radius in 'Dummy atom radius' line\n");
                f.close();
@@ -1847,7 +1849,7 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
             
             rx.setPattern("DAM packing radius \\.*\\s*:\\s*(\\d+\\.\\d+)\\s*");
             
-            if ( rx.search(tmp) == -1 ) 
+            if ( rx.indexIn(tmp) == -1 ) 
             {
                editor->append("Error in DAMAVER file: couldn't find radius in 'DAM packing radius' line\n");
                return 1;
@@ -1862,7 +1864,7 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
                tmp = ts.readLine();
                ++linepos;
             } while ( !ts.atEnd() && 
-                      !tmp.lower().contains("atomic radius") );
+                      !tmp.toLower().contains("atomic radius") );
                
             if ( ts.atEnd() )
             {
@@ -1872,7 +1874,7 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
             
             rx.setPattern("atomic radius \\.*\\s*:\\s*(\\d+\\.\\d+)\\s*");
             
-            if ( rx.search(tmp.lower()) == -1 ) 
+            if ( rx.indexIn(tmp.toLower()) == -1 ) 
             {
                editor->append("Error in DAMFILT file: couldn't find radius in 'Atomic radius' line\n");
                return 1;
@@ -1896,9 +1898,9 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
          bool remember = true;
          bool use_partial = false;
          QString partial = filename;
-         // QString msg = QString(tr("\n  DAMMIN/DAMMIF file %1  \n  Enter values for vbar and total molecular weight:  \n"))
+         // QString msg = QString(us_tr("\n  DAMMIN/DAMMIF file %1  \n  Enter values for vbar and total molecular weight:  \n"))
          // .arg(filename);
-         QString msg = QString(tr(" Enter values for vbar and total molecular weight: "));
+         QString msg = QString(us_tr(" Enter values for vbar and total molecular weight: "));
 
          bool found = false;
          if ( dammix_remember_psv.count(filename) )
@@ -1915,7 +1917,7 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
                     it != dammix_match_remember_psv.end();
                     it++)
                {
-                  printf("iterator first %s\n", it->first.ascii());
+                  printf("iterator first %s\n", it->first.toAscii().data());
                   printf("iterator second %f\n", it->second);
 
                   if ( filename.contains(it->first) )
@@ -1984,13 +1986,13 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
             saxs_options.compute_saxs_coeff_for_bead_models;
          if ( do_bead_saxs_assign && !sf_bead_factors.size() )
          {
-            editor_msg( "red", tr( "Warning: application of preloaded structure factors requested but no factors are loaded" ) );
+            editor_msg( "red", us_tr( "Warning: application of preloaded structure factors requested but no factors are loaded" ) );
             do_bead_saxs_assign = false;
          }
          if ( do_bead_saxs_assign && bead_count % sf_bead_factors.size() )
          {
             editor_msg( "red", 
-                        QString( tr( "Warning: application of preloaded structure factors requested but the number of factors loaded %1 does not divide the number of beads %2" ) )
+                        QString( us_tr( "Warning: application of preloaded structure factors requested but the number of factors loaded %1 does not divide the number of beads %2" ) )
                         .arg( sf_bead_factors.size() )
                         .arg( bead_count )
                         );
@@ -1998,7 +2000,7 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
          }
          if ( do_bead_saxs_assign )
          {
-            editor_msg( "blue", tr( "applying preloaded structure factors" ) );
+            editor_msg( "blue", us_tr( "applying preloaded structure factors" ) );
          }
 
          while ( (unsigned int )model_names.size() < model_count )
@@ -2007,7 +2009,7 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
          }
          for ( unsigned int i = 0; i < model_count; i++ )
          {
-            editor_msg( "gray", QString( tr( "Loading from model %1" ) ).arg( model_names[ i ] ) );
+            editor_msg( "gray", QString( us_tr( "Loading from model %1" ) ).arg( model_names[ i ] ) );
             int beads_loaded = 0;
             bead_model.clear();
             while (!ts.atEnd() && beads_loaded < bead_count)
@@ -2120,13 +2122,13 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
          bead_models.resize( model_count );
          for ( unsigned int i = 0; i < model_count; i++ )
          {
-            lb_model->insertItem( QString( "Model %1 (from bead model)" ).arg( model_names[ i ] ) );
+            lb_model->addItem( QString( "Model %1 (from bead model)" ).arg( model_names[ i ] ) );
             model_vector[ i ].vbar = results.vbar;
             model_vector[ i ].model_id = model_names[ i ];
             model_vector[ i ].mw = mw;
             somo_processed[ i ] = 1;
          }
-         lb_model->setSelected(0, true);
+         lb_model->item(0)->setSelected( true);
          lb_model->setEnabled( model_count > 1 );
          current_model = 0;
          if ( model_count > 1 )
@@ -2167,7 +2169,7 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
          int overlap_check_results = 0;
          for ( unsigned int i = 0; i < model_count; i++ )
          {
-            editor_msg( "gray", QString( tr( "checking overlap for Model %1" ) ).arg( model_names[ i ] ) );
+            editor_msg( "gray", QString( us_tr( "checking overlap for Model %1" ) ).arg( model_names[ i ] ) );
             bead_model = bead_models[ i ];
             overlap_check_results += overlap_check( true, true, true,
                                                     hydro.overlap_cutoff ? hydro.overlap : overlap_tolerance, 20 );
@@ -2205,8 +2207,8 @@ int US_Hydrodyn::read_config(QFile& f)
 {
    QString str;
    cout << "read config\n";
-   if ( f.name() == QString::null ||
-        f.name().isEmpty() )
+   if ( f.fileName() == QString::null ||
+        f.fileName().isEmpty() )
    {
       return -1;
    }
@@ -2215,7 +2217,7 @@ int US_Hydrodyn::read_config(QFile& f)
       return -2;
    }
 
-   Q3TextStream ts(&f);
+   QTextStream ts(&f);
 
    // this is a really silly way to do this, carried over from legacy code
    // the config file should be free format
@@ -3455,11 +3457,11 @@ int US_Hydrodyn::read_config(const QString& fname)
    QString str;
    if (fname.isEmpty()) // this is true if we don't explicitely set a user-defined file name
    {
-      f.setName(USglobal->config_list.root_dir + "/etc/somo.config");
+      f.setFileName(USglobal->config_list.root_dir + "/etc/somo.config");
    }
    else
    {
-      f.setName(fname);
+      f.setFileName(fname);
    }
    if (!f.open(QIODevice::ReadOnly)) // first try user's directory for default settings
    {
@@ -3467,7 +3469,7 @@ int US_Hydrodyn::read_config(const QString& fname)
       {
          return -1;
       }
-      f.setName(USglobal->config_list.system_dir + "/etc/somo.config");
+      f.setFileName(USglobal->config_list.system_dir + "/etc/somo.config");
       if (!f.open(QIODevice::ReadOnly)) // read system directory
       {
          reset(); // no file available, reset and return
@@ -3480,7 +3482,7 @@ int US_Hydrodyn::read_config(const QString& fname)
 void US_Hydrodyn::write_config(const QString& fname)
 {
    if ( misc.restore_pb_rule ) {
-      // qDebug( "write_config() restoring pb rule" );
+      // us_qdebug( "write_config() restoring pb rule" );
       if ( misc_widget ) {
          misc_window->close();
          delete misc_window;
@@ -3493,11 +3495,11 @@ void US_Hydrodyn::write_config(const QString& fname)
 
    QFile f;
    QString str;
-   f.setName( fname );
+   f.setFileName( fname );
    cout << fname << endl;
    if ( f.open( QIODevice::WriteOnly ) ) // first try user's directory for default settings
    {
-      Q3TextStream ts(&f);
+      QTextStream ts(&f);
       
       map < QString, QString > parameters;
 
@@ -4411,7 +4413,7 @@ bool US_Hydrodyn::load_config_json ( QString &json )
    saxs_options.dummy_saxs_names.clear();
    if ( parameters.count( "saxs_options.dummy_saxs_names" ) )
    {
-      QStringList qsl_tmp = QStringList::split( "\n", parameters[ "saxs_options.dummy_saxs_names" ] );
+      QStringList qsl_tmp = (parameters[ "saxs_options.dummy_saxs_names" ] ).split( "\n" , QString::SkipEmptyParts );
       for ( unsigned int i = 0; i < ( unsigned int ) qsl_tmp.size(); i++ )
       {
          saxs_options.dummy_saxs_names.push_back( qsl_tmp[ i ] );
@@ -4421,7 +4423,7 @@ bool US_Hydrodyn::load_config_json ( QString &json )
    batch.file.clear();
    if ( parameters.count( "batch.file" ) )
    {
-      QStringList qsl_tmp = QStringList::split( "\n", parameters[ "batch.file" ] );
+      QStringList qsl_tmp = (parameters[ "batch.file" ] ).split( "\n" , QString::SkipEmptyParts );
       for ( unsigned int i = 0; i < ( unsigned int ) qsl_tmp.size(); i++ )
       {
          batch.file.push_back( qsl_tmp[ i ] );
@@ -4431,7 +4433,7 @@ bool US_Hydrodyn::load_config_json ( QString &json )
    save_params.field.clear();
    if ( parameters.count( "save_params.field" ) )
    {
-      QStringList qsl_tmp = QStringList::split( "\n", parameters[ "save_params.field" ] );
+      QStringList qsl_tmp = (parameters[ "save_params.field" ] ).split( "\n" , QString::SkipEmptyParts );
       for ( unsigned int i = 0; i < ( unsigned int ) qsl_tmp.size(); i++ )
       {
          save_params.field.push_back( qsl_tmp[ i ] );
@@ -4446,7 +4448,7 @@ bool US_Hydrodyn::load_config_json ( QString &json )
             it != parameters.end();
             it++ )
       {
-         if ( rx_gparam.search( it->first ) != -1 )
+         if ( rx_gparam.indexIn( it->first ) != -1 )
          {
             gparams[ rx_gparam.cap( 1 ) ] = it->second;
          }
@@ -4459,15 +4461,15 @@ bool US_Hydrodyn::load_config_json ( QString &json )
       directory_history      .clear();
       directory_last_access  .clear();
       directory_last_filetype.clear();
-      QStringList qsl_tmp1 = QStringList::split( "\n", parameters[ "directory_history"     ] );
-      QStringList qsl_tmp2 = QStringList::split( "\n", parameters[ "directory_last_access" ] );
+      QStringList qsl_tmp1 = (parameters[ "directory_history"     ] ).split( "\n" , QString::SkipEmptyParts );
+      QStringList qsl_tmp2 = (parameters[ "directory_last_access" ] ).split( "\n" , QString::SkipEmptyParts );
       QStringList qsl_tmp3;
       if ( parameters.count( "directory_last_filetype" ) )
       {
-         qsl_tmp3 = QStringList::split( "\n", parameters[ "directory_last_filetype" ] );
+         qsl_tmp3 = (parameters[ "directory_last_filetype" ] ).split( "\n" , QString::SkipEmptyParts );
          if ( qsl_tmp3.size() != qsl_tmp2.size() )
          {
-            // qDebug( QString( "tmp3 cleared %1 %2" ).arg( qsl_tmp3.size() ).arg( qsl_tmp2.size() ) );
+            // us_qdebug( QString( "tmp3 cleared %1 %2" ).arg( qsl_tmp3.size() ).arg( qsl_tmp2.size() ) );
             qsl_tmp3.clear();
          }
       }
@@ -4482,7 +4484,7 @@ bool US_Hydrodyn::load_config_json ( QString &json )
             directory_last_access[ directory_history.back() ] = dt;
             if ( qsl_tmp3.size() )
             {
-               // qDebug( QString( "adding to history tmp3 %1" ).arg( qsl_tmp3[ i ] ) );
+               // us_qdebug( QString( "adding to history tmp3 %1" ).arg( qsl_tmp3[ i ] ) );
                directory_last_filetype[ directory_history.back() ] = qsl_tmp3[ i ].replace( "____", "" );
             }
          }
@@ -5436,6 +5438,10 @@ void US_Hydrodyn::hard_coded_defaults()
    gparams[ "hplc_cormap_maxq"           ]         = "0.05";
    gparams[ "hplc_cormap_alpha"          ]         = "0.01";
    gparams[ "save_csv_on_load_pdb"       ]         = "false";
+   gparams[ "hplc_cb_makeiq_cutmax_pct"  ]         = "true";
+   gparams[ "hplc_makeiq_cutmax_pct"     ]         = "1";
+   gparams[ "hplc_cb_makeiq_avg_peaks"   ]         = "false";
+   gparams[ "hplc_makeiq_avg_peaks"      ]         = "5";
 }
 
 void US_Hydrodyn::set_default()
@@ -5444,7 +5450,7 @@ void US_Hydrodyn::set_default()
    QString str;
    int j;
    // only keep one copy of defaults in system root dir
-   f.setName(USglobal->config_list.system_dir + "/etc/somo.defaults");
+   f.setFileName(USglobal->config_list.system_dir + "/etc/somo.defaults");
    bool config_read = false;
    if (f.open(QIODevice::ReadOnly)) // read system directory
    {
@@ -5452,8 +5458,8 @@ void US_Hydrodyn::set_default()
       if ( j )
       {
          cout << "read config returned " << j << endl;
-         QMessageBox::message(tr("Please note:"),
-                              tr("The somo.default configuration file was found to be corrupt.\n"
+         US_Static::us_message(us_tr("Please note:"),
+                              us_tr("The somo.default configuration file was found to be corrupt.\n"
                                  "Resorting to hard-coded defaults."));
       }
       else
@@ -5463,9 +5469,9 @@ void US_Hydrodyn::set_default()
    }
    else
    {
-      QMessageBox::message(tr("Notice:"),
-                           tr("Configuration defaults file ") +
-                           f.name() + tr(" not found\nUsing hard-coded defaults."));
+      US_Static::us_message(us_tr("Notice:"),
+                           us_tr("Configuration defaults file ") +
+                           f.fileName() + us_tr(" not found\nUsing hard-coded defaults."));
    }
 
    if ( !config_read )
@@ -5537,20 +5543,24 @@ void US_Hydrodyn::view_file(const QString &filename, QString title)
    AUTFBACK( edit );
    edit->setGeometry(global_Xpos + 30, global_Ypos + 30, 685, 600);
    //   edit->setTitle(title);
+#if QT_VERSION < 0x040000
    edit->load(filename, title, true, Qt::PlainText);
+#else
+   edit->load(filename, title, true );
+#endif
    //   edit->setTextFormat( PlainText );
    edit->show();
 }
 
 void US_Hydrodyn::closeEvent(QCloseEvent *e)
 {
-   QMessageBox mb(tr("UltraScan"), tr("Attention:\nAre you sure you want to exit?"),
+   QMessageBox mb(us_tr("UltraScan"), us_tr("Attention:\nAre you sure you want to exit?"),
                   QMessageBox::Information,
                   QMessageBox::Yes | QMessageBox::Default,
                   QMessageBox::Cancel | QMessageBox::Escape,
                   Qt::NoButton);
-   mb.setButtonText(QMessageBox::Yes, tr("Yes"));
-   mb.setButtonText(QMessageBox::Cancel, tr("Cancel"));
+   mb.setButtonText(QMessageBox::Yes, us_tr("Yes"));
+   mb.setButtonText(QMessageBox::Cancel, us_tr("Cancel"));
    switch(mb.exec())
    {
    case QMessageBox::Cancel:
@@ -5566,7 +5576,7 @@ void US_Hydrodyn::closeEvent(QCloseEvent *e)
    // tmp_dir.rmdir(USglobal->config_list.root_dir + "/tmp");
    if (rasmol != NULL)
    {
-      if (rasmol->isRunning())
+      if (rasmol->state() == QProcess::Running)
       {
          closeAttnt(rasmol, "RASMOL");
       }
@@ -5582,23 +5592,23 @@ void US_Hydrodyn::printError(const QString &str)
       if ( batch_widget &&
            batch_window->batch_job_running )
       {
-         QColor save_color = editor->color();
-         editor->setColor("red");
+         QColor save_color = editor->textColor();
+         editor->setTextColor("red");
          editor->append(str);
-         editor->setColor(save_color);
+         editor->setTextColor(save_color);
       } else {
-         QMessageBox::warning(this, tr("UltraScan Warning"), tr("Please note:\n\n") +
-                              tr(str), QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
+         QMessageBox::warning(this, us_tr("UltraScan Warning"), us_tr("Please note:\n\n") +
+                              us_tr(str), QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
       }
    }
 }
 
-void US_Hydrodyn::closeAttnt(Q3Process *proc, QString message)
+void US_Hydrodyn::closeAttnt(QProcess *proc, QString message)
 {
    switch( QMessageBox::information( this,
-                                     tr("Attention!"),   message + tr(" is still running.\n"
+                                     us_tr("Attention!"),   message + us_tr(" is still running.\n"
                                                                       "Do you want to close it?"),
-                                     tr("&Kill"), tr("&Close gracefully"), tr("Leave running"),
+                                     us_tr("&Kill"), us_tr("&Close gracefully"), us_tr("Leave running"),
                                      0,      // Enter == button 0
                                      2 ) )   // Escape == button 2
    {
@@ -5609,7 +5619,7 @@ void US_Hydrodyn::closeAttnt(Q3Process *proc, QString message)
       }
    case 1:
       {
-         proc->tryTerminate();
+         proc->terminate();
          break;
       }
    case 2:
@@ -5678,11 +5688,11 @@ void US_Hydrodyn::write_bead_spt(QString fname,
       };
 
 #if defined(DEBUG)
-   printf("write bead spt %s\n", fname.ascii()); fflush(stdout);
+   printf("write bead spt %s\n", fname.toAscii().data()); fflush(stdout);
 #endif
 
-   FILE *fspt = fopen(QString("%1.spt").arg(fname).ascii(), "w");
-   FILE *fbms = fopen(QString("%1.bms").arg(fname).ascii(), "w");
+   FILE *fspt = us_fopen(QString("%1.spt").arg(fname).toAscii().data(), "w");
+   FILE *fbms = us_fopen(QString("%1.bms").arg(fname).toAscii().data(), "w");
 
    int beads = 0;
    if(!(fspt) ||
@@ -5709,16 +5719,16 @@ void US_Hydrodyn::write_bead_spt(QString fname,
    fprintf(fbms,
            "%d\n%s\n",
            beads + 1,
-           QFileInfo(fname).fileName().ascii()
+           QFileInfo(fname).fileName().toAscii().data()
            );
    //   fprintf(fspt,
    //           "load xyz %s\nselect all\nwireframe off\nset background white\n",
-   //           QString("%1.bms").arg(QFileInfo(fname).fileName()).ascii()
+   //           QString("%1.bms").arg(QFileInfo(fname).fileName()).toAscii().data()
    //           );
 
    last_spt_text = 
       QString("").sprintf("load xyz %s\nselect all\nwireframe off\nset background %s\n",
-                          QString("%1.bms").arg(QFileInfo(fname).fileName()).ascii(),
+                          QString("%1.bms").arg(QFileInfo(fname).fileName()).toAscii().data(),
                           black_background ? "black" : "white"
                           );
 
@@ -5762,17 +5772,17 @@ void US_Hydrodyn::write_bead_spt(QString fname,
          .sprintf(
                   "write ppm %s.ppm\n"
                   "exit\n",
-                  fname.ascii()
+                  fname.toAscii().data()
                   );
       movie_text.push_back(fname);
    }
-   fprintf(fspt, ( last_spt_text.isNull() ? "" : last_spt_text.ascii() ) );
+   fprintf(fspt, ( last_spt_text.isNull() ? "" : last_spt_text.toAscii().data() ) );
    fclose(fspt);
    fclose(fbms);
 }
 
 void US_Hydrodyn::write_bead_tsv(QString fname, vector<PDB_atom> *model) {
-   FILE *f = fopen(fname.ascii(), "w");
+   FILE *f = us_fopen(fname.toAscii().data(), "w");
    fprintf(f, "name~residue~chainID~"
            "position~active~radius~asa~mw~"
            "bead #~chain~serial~is_bead~bead_asa~visible~code/color~"
@@ -5805,9 +5815,9 @@ void US_Hydrodyn::write_bead_tsv(QString fname, vector<PDB_atom> *model) {
                  "%f~%f~%f~"
                  "[%f,%f,%f]~[%f,%f,%f]~[%f, %f, %f]~%u~%s\n",
 
-                 (*model)[i].name.ascii(),
-                 (*model)[i].resName.ascii(),
-                 (*model)[i].chainID.ascii(),
+                 (*model)[i].name.toAscii().data(),
+                 (*model)[i].resName.toAscii().data(),
+                 (*model)[i].chainID.toAscii().data(),
 
                  (*model)[i].coordinate.axis[0],
                  (*model)[i].coordinate.axis[1],
@@ -5846,7 +5856,7 @@ void US_Hydrodyn::write_bead_tsv(QString fname, vector<PDB_atom> *model) {
                  (*model)[i].bead_coordinate.axis[1],
                  (*model)[i].bead_coordinate.axis[2],
                  (unsigned int)(*model)[i].all_beads.size(),
-                 beads_referenced.ascii()
+                 beads_referenced.toAscii().data()
                  );
       }
    }
@@ -5854,7 +5864,7 @@ void US_Hydrodyn::write_bead_tsv(QString fname, vector<PDB_atom> *model) {
 }
 
 void US_Hydrodyn::write_bead_asa(QString fname, vector<PDB_atom> *model) {
-   FILE *f = fopen(fname.ascii(), "w");
+   FILE *f = us_fopen(fname.toAscii().data(), "w");
    fprintf(f, " N.      Res.       ASA        MAX ASA         %%\n");
 
    float total_asa = 0.0;
@@ -5884,7 +5894,7 @@ void US_Hydrodyn::write_bead_asa(QString fname, vector<PDB_atom> *model) {
             if (last_residue != "") {
                fprintf(f,
                        " [ %-6d %s ]\t%.0f\t%.0f\t%.2f\n",
-                       seqno, last_residue.ascii(), residue_asa, residue_ref_asa, 100.0 * residue_asa / residue_ref_asa);
+                       seqno, last_residue.toAscii().data(), residue_asa, residue_ref_asa, 100.0 * residue_asa / residue_ref_asa);
             }
             residue_asa = 0;
             residue_ref_asa = 0;
@@ -5898,7 +5908,7 @@ void US_Hydrodyn::write_bead_asa(QString fname, vector<PDB_atom> *model) {
    if (last_residue != "") {
       fprintf(f,
               " [ %-6d %s ]\t%.0f\t%.0f\t%.2f\n",
-              seqno, last_residue.ascii(), residue_asa, residue_ref_asa, 100.0 * residue_asa / residue_ref_asa);
+              seqno, last_residue.toAscii().data(), residue_asa, residue_ref_asa, 100.0 * residue_asa / residue_ref_asa);
    }
 
    fprintf(f,
@@ -5927,7 +5937,7 @@ void US_Hydrodyn::write_bead_asa(QString fname, vector<PDB_atom> *model) {
 void US_Hydrodyn::write_corr( QString fname, vector<PDB_atom> *model ) 
 {
    FILE *fcorr = (FILE *)0;
-   fcorr = fopen(QString("%1.corr").arg(fname).ascii(), "w");
+   fcorr = us_fopen(QString("%1.corr").arg(fname).toAscii().data(), "w");
    vector <PDB_atom *> use_model;
    for (unsigned int i = 0; i < model->size(); i++) {
       use_model.push_back(&(*model)[i]);
@@ -5974,11 +5984,11 @@ void US_Hydrodyn::write_corr( QString fname, vector<PDB_atom> *model )
          if (fcorr) {
             fprintf(fcorr,
                     "%s\n%s\n%s\n%s\n%s\n%f\n%f\n%f\n%d\n%u\n%d\n%u\n",
-                    use_model[i]->name.ascii(),
-                    use_model[i]->resName.ascii(),
-                    use_model[i]->chainID.ascii(),
-                    use_model[i]->resSeq.ascii(),
-                    use_model[i]->iCode.ascii(),
+                    use_model[i]->name.toAscii().data(),
+                    use_model[i]->resName.toAscii().data(),
+                    use_model[i]->chainID.toAscii().data(),
+                    use_model[i]->resSeq.toAscii().data(),
+                    use_model[i]->iCode.toAscii().data(),
                     use_model[i]->bead_ref_mw,
                     use_model[i]->bead_ref_volume,
                     use_model[i]->bead_recheck_asa,
@@ -6001,7 +6011,7 @@ bool US_Hydrodyn::read_corr(QString fname, vector<PDB_atom> *model) {
    if ( f.open(QIODevice::ReadOnly) )
    {
       editor->append(QString("Reading correspondence file %1\n").arg(fname));
-      Q3TextStream ts(&f);
+      QTextStream ts(&f);
       results.vbar = ts.readLine().toFloat();
       unsigned int i = 0;
       while( !ts.atEnd() && i < model->size() )
@@ -6095,7 +6105,7 @@ void US_Hydrodyn::write_bead_model( QString fname,
       arg(decpts);
 
 #if defined(DEBUG)
-   printf("write bead model %s\n", fname.ascii()); fflush(stdout);
+   printf("write bead model %s\n", fname.toAscii().data()); fflush(stdout);
    printf("decimal points to use: %d\n", decpts);
 #endif
 
@@ -6157,15 +6167,15 @@ void US_Hydrodyn::write_bead_model( QString fname,
    FILE *fhydro = (FILE *)0;
 
    if (bead_output.output & US_HYDRODYN_OUTPUT_SOMO) {
-      fsomo = fopen(QString("%1.bead_model").arg(fname).ascii(), "w");
+      fsomo = us_fopen(QString("%1.bead_model").arg(fname).toAscii().data(), "w");
    }
    if (bead_output.output & US_HYDRODYN_OUTPUT_BEAMS) {
-      fbeams = fopen(QString("%1.beams").arg(fname).ascii(), "w");
-      frmc = fopen(QString("%1.rmc").arg(fname).ascii(), "w");
-      frmc1 = fopen(QString("%1.rmc1").arg(fname).ascii(), "w");
+      fbeams = us_fopen(QString("%1.beams").arg(fname).toAscii().data(), "w");
+      frmc = us_fopen(QString("%1.rmc").arg(fname).toAscii().data(), "w");
+      frmc1 = us_fopen(QString("%1.rmc1").arg(fname).toAscii().data(), "w");
    }
    if (bead_output.output & US_HYDRODYN_OUTPUT_HYDRO) {
-      fhydro = fopen(QString("%1.dat").arg(fname).ascii(), "w");
+      fhydro = us_fopen(QString("%1.dat").arg(fname).toAscii().data(), "w");
    }
 
    int beads = 0;
@@ -6188,7 +6198,7 @@ void US_Hydrodyn::write_bead_model( QString fname,
       fprintf(fbeams,
               "%d\t-2.000000\t%s.rmc\t%.3f\n",
               beads,
-              QFileInfo(fname).fileName().ascii(),
+              QFileInfo(fname).fileName().toAscii().data(),
               results.vbar
               );
    }
@@ -6237,40 +6247,40 @@ void US_Hydrodyn::write_bead_model( QString fname,
          }
          if (fsomo) {
             fprintf(fsomo,
-                    fstring_somo.ascii(),
+                    fstring_somo.toAscii().data(),
                     use_model[i]->bead_coordinate.axis[0],
                     use_model[i]->bead_coordinate.axis[1],
                     use_model[i]->bead_coordinate.axis[2],
                     use_model[i]->bead_computed_radius,
                     use_model[i]->bead_ref_mw,
                     get_color(use_model[i]),
-                    residues.ascii(),
+                    residues.toAscii().data(),
                     use_model[i]->bead_recheck_asa
                     );
          }
          if (fbeams) {
             fprintf(fbeams,
-                    fstring_beams.ascii(),
+                    fstring_beams.toAscii().data(),
                     use_model[i]->bead_coordinate.axis[0],
                     use_model[i]->bead_coordinate.axis[1],
                     use_model[i]->bead_coordinate.axis[2]
                     );
             fprintf(frmc,
-                    fstring_rmc.ascii(),
+                    fstring_rmc.toAscii().data(),
                     use_model[i]->bead_computed_radius,
                     use_model[i]->bead_ref_mw,
                     get_color(use_model[i]));
             fprintf(frmc1,
-                    fstring_rmc1.ascii(),
+                    fstring_rmc1.toAscii().data(),
                     use_model[i]->bead_computed_radius,
                     use_model[i]->bead_ref_mw,
                     get_color(use_model[i]),
-                    residues.ascii()
+                    residues.toAscii().data()
                     );
          }
          if (fhydro) {
             fprintf(fhydro,
-                    fstring_hydro.ascii(),
+                    fstring_hydro.toAscii().data(),
                     use_model[i]->bead_coordinate.axis[0],
                     use_model[i]->bead_coordinate.axis[1],
                     use_model[i]->bead_coordinate.axis[2],
@@ -6299,12 +6309,12 @@ void US_Hydrodyn::write_bead_model( QString fname,
               "as in original PDB file"
               ,-hydro.unit
               );
-      fprintf(fsomo, ( options_log.isNull() ? "" : options_log.ascii() ) );
-      fprintf(fsomo, ( last_abb_msgs.isNull() ? "" : last_abb_msgs.ascii() ) );
+      fprintf(fsomo, ( options_log.isNull() ? "" : options_log.toAscii().data() ) );
+      fprintf(fsomo, ( last_abb_msgs.isNull() ? "" : last_abb_msgs.toAscii().data() ) );
 
       if ( !extra_text.isEmpty() )
       {
-         fprintf(fsomo, extra_text.ascii() );
+         fprintf(fsomo, extra_text.toAscii().data() );
       }
 
       fclose(fsomo);
@@ -7311,18 +7321,18 @@ void US_Hydrodyn::display_default_differences()
 
    if ( str != "" )
    {
-      QColor save_color = editor->color();
-      editor->setColor("dark red");
+      QColor save_color = editor->textColor();
+      editor->setTextColor("dark red");
       editor->append("\nNon-default options:\n" + str );
-      editor->setColor(save_color);
+      editor->setTextColor(save_color);
       editor->append( "\nTo reset to default: Menu bar -> Configuration -> Reset to Default Configuration\n" );
    }
    else
    {
-      QColor save_color = editor->color();
-      editor->setColor("dark green");
+      QColor save_color = editor->textColor();
+      editor->setTextColor("dark green");
       editor->append("\nAll options set to default values\n");
-      editor->setColor(save_color);
+      editor->setTextColor(save_color);
    }
    le_bead_model_suffix->setText(
                                  setSuffix ? (getExtendedSuffix(true, true) + " / " +
@@ -7337,7 +7347,7 @@ void US_Hydrodyn::display_default_differences()
 void US_Hydrodyn::play_sounds(int type)
 {
    if ( advanced_config.use_sounds &&
-        QSound::available() )
+        QSound::isAvailable() )
    {
       QString sound_base = USglobal->config_list.root_dir + "sounds/";
       switch (type)
@@ -7348,9 +7358,9 @@ void US_Hydrodyn::play_sounds(int type)
             if ( QFileInfo(sf).exists() )
             {
 #if defined(USE_MPLAYER)
-	      QString cmd = QString("mplayer %1&").arg(sf).ascii();
+	      QString cmd = QString("mplayer %1&").arg(sf).toAscii().data();
 	      cout << cmd << endl;
-	      system(cmd);
+	      system( qPrintable( cmd ) );
 #else
 	      QSound::play(sf);
 #endif
@@ -7384,11 +7394,11 @@ void US_Hydrodyn::list_model_vector(vector < PDB_model > *mv)
          {
             printf("model %u chain %u atom %u atom %s seq %u resName %s chainId %s resSeq %s\n",
                    i, j, k, 
-                   (*mv)[i].molecule[j].atom[k].name.ascii(),
+                   (*mv)[i].molecule[j].atom[k].name.toAscii().data(),
                    (*mv)[i].molecule[j].atom[k].serial,
-                   (*mv)[i].molecule[j].atom[k].resName.ascii(),
-                   (*mv)[i].molecule[j].atom[k].chainID.ascii(),
-                   (*mv)[i].molecule[j].atom[k].resSeq.ascii()
+                   (*mv)[i].molecule[j].atom[k].resName.toAscii().data(),
+                   (*mv)[i].molecule[j].atom[k].chainID.toAscii().data(),
+                   (*mv)[i].molecule[j].atom[k].resSeq.toAscii().data()
                    );
          }
       }
@@ -7468,9 +7478,9 @@ bool US_Hydrodyn::install_new_version()
 
    // ask to proceed
 
-   QString msg = tr("New versions will be installed for the following files:\n");
+   QString msg = us_tr("New versions will be installed for the following files:\n");
 #ifdef WIN32
-   msg += tr("Note: This step may require you to run as Administrator.\n");
+   msg += us_tr("Note: This step may require you to run as Administrator.\n");
 #endif
    for ( unsigned int i = 0; i < names.size(); i++ )
    {
@@ -7482,7 +7492,7 @@ bool US_Hydrodyn::install_new_version()
 
    if ( any_backup )
    {
-      msg += tr("\nThe existing versions of these files will be backed up as:\n");
+      msg += us_tr("\nThe existing versions of these files will be backed up as:\n");
       for ( unsigned int i = 0; i < names.size(); i++ )
       {
          if ( backup[i] )
@@ -7497,14 +7507,14 @@ bool US_Hydrodyn::install_new_version()
       }
    }
 
-   msg += tr("\nDo you wish to proceed?");
+   msg += us_tr("\nDo you wish to proceed?");
 
    switch( QMessageBox::warning( 
                                 this, 
-                                tr("New version detected"),
+                                us_tr("New version detected"),
                                 msg,
-                                tr("&OK"),
-                                tr("&Cancel"),
+                                us_tr("&OK"),
+                                us_tr("&Cancel"),
                                 0, 0, 1 ) ) 
    {
    case 0: 
@@ -7514,11 +7524,11 @@ bool US_Hydrodyn::install_new_version()
          {
             if ( backup[i] )
             {
-               printf("backing up %u (<%s> to <%s>\n", i, fcur[i].ascii(), fprev[i].ascii());
+               printf("backing up %u (<%s> to <%s>\n", i, fcur[i].toAscii().data(), fprev[i].toAscii().data());
                if (!qd.rename(fcur[i], fprev[i]) )
                {
                   QMessageBox::critical( 0, 
-                                         tr("Could not rename file"),
+                                         us_tr("Could not rename file"),
                                          QString("An error occured when trying to rename file\n"
                                                  "%1 to %2\n"
                                                  "Please check your permissions and try again\n")
@@ -7530,11 +7540,11 @@ bool US_Hydrodyn::install_new_version()
             }
             if ( install[i] )
             {
-               printf("installing %u (<%s> to <%s>\n", i, fnew[i].ascii(), fcur[i].ascii());
+               printf("installing %u (<%s> to <%s>\n", i, fnew[i].toAscii().data(), fcur[i].toAscii().data());
                if (!qd.rename(fnew[i], fcur[i]) )
                {
                   QMessageBox::critical( 0, 
-                                         tr("Could not rename file"),
+                                         us_tr("Could not rename file"),
                                          QString("An error occured when trying to rename file\n"
                                                  "%1 to %2\n"
                                                  "Please check your permissions and try again\n")
@@ -7557,10 +7567,10 @@ bool US_Hydrodyn::install_new_version()
 
 void US_Hydrodyn::editor_msg( QString color, QString msg )
 {
-   QColor save_color = editor->color();
-   editor->setColor(color);
+   QColor save_color = editor->textColor();
+   editor->setTextColor(color);
    editor->append(msg);
-   editor->setColor(save_color);
+   editor->setTextColor(save_color);
 }
 
 bool US_Hydrodyn::check_bead_model_for_nan()
@@ -7589,14 +7599,14 @@ bool US_Hydrodyn::is_dammin_dammif(QString filename)
    if ( !filename.isEmpty() )
    {
       QFileInfo fi(filename);
-      QString dir = fi.dirPath();
+      QString dir = fi.path();
       // check for file format
       QFile f( filename );
       if ( !f.open( QIODevice::ReadOnly ) )
       {
          return false;
       }
-      Q3TextStream ts( &f );
+      QTextStream ts( &f );
 
       QString tmp;
       do {
@@ -7734,9 +7744,9 @@ void US_Hydrodyn::save_state()
    state_lbl_pdb_file = le_pdb_file->text();
 
    state_lb_model_rows.clear();
-   for ( unsigned int i = 0; i < (unsigned int)lb_model->numRows(); i++ )
+   for ( unsigned int i = 0; i < (unsigned int)lb_model->count(); i++ )
    {
-      state_lb_model_rows.push_back(lb_model->text(i));
+      state_lb_model_rows.push_back(lb_model->item(i)->text());
    }
    editor_msg("dark blue", "State saved\n");
 }
@@ -7790,11 +7800,11 @@ void US_Hydrodyn::restore_state()
    lb_model->clear();
    for ( unsigned int i = 0; i < state_lb_model_rows.size(); i++ )
    {
-      lb_model->insertItem(state_lb_model_rows[i]);
+      lb_model->addItem(state_lb_model_rows[i]);
    }
    if ( state_lb_model_rows.size() )
    {
-      lb_model->setSelected(0, true);
+      lb_model->item(0)->setSelected( true);
    }
    editor_msg("dark blue", "Saved state restored\n");
 }
@@ -7850,9 +7860,9 @@ void US_Hydrodyn::clear_state()
 
 void US_Hydrodyn::rescale_bead_model()
 {
-   for ( current_model = 0; current_model < (unsigned int)lb_model->numRows(); current_model++ ) 
+   for ( current_model = 0; current_model < (unsigned int)lb_model->count(); current_model++ ) 
    {
-      if ( lb_model->isSelected(current_model) &&
+      if ( lb_model->item(current_model)->isSelected( ) &&
            somo_processed[current_model] ) 
       {
          bead_model = bead_models[current_model];
@@ -7861,12 +7871,12 @@ void US_Hydrodyn::rescale_bead_model()
             editor->append(QString("Rescaling bead model %1\n").arg( model_name( current_model ) ) );
             double current_volume = total_volume_of_bead_model( bead_model );
             editor_msg("black", 
-                       QString( tr( "Current volume %1 A^3, target volume %2 A^3\n") )
+                       QString( us_tr( "Current volume %1 A^3, target volume %2 A^3\n") )
                        .arg( current_volume )
                        .arg( misc.target_volume ) );
             if ( QString("%1").arg( current_volume ) == QString("%1").arg( misc.target_volume ) )
             {
-               editor_msg("blue", tr("Skipped, volume already equal") );
+               editor_msg("blue", us_tr("Skipped, volume already equal") );
             } else {
                double multiplier = pow( misc.target_volume / current_volume, 1e0 / 3e0 );
                for ( unsigned int i = 0; i < bead_model.size(); i++ )
@@ -7878,7 +7888,7 @@ void US_Hydrodyn::rescale_bead_model()
                }
                current_volume = total_volume_of_bead_model( bead_model );
                editor_msg("black", 
-                          QString( tr( "After rescaling: current volume %1 A^3, target volume %2 A^3\n") )
+                          QString( us_tr( "After rescaling: current volume %1 A^3, target volume %2 A^3\n") )
                           .arg( current_volume )
                           .arg( misc.target_volume ) );
                bead_models[ current_model ] = bead_model;
@@ -7889,7 +7899,7 @@ void US_Hydrodyn::rescale_bead_model()
             editor->append(QString("Equalizing radii for bead model %1\n").arg( model_name( current_model ) ) );
             if ( radii_all_equal( bead_model ) )
             {
-               editor_msg("blue", tr("Skipped, radii already equalized") );
+               editor_msg("blue", us_tr("Skipped, radii already equalized") );
             } else {
                double current_volume = total_volume_of_bead_model( bead_model );
                unsigned int beads    = number_of_active_beads( bead_model );
@@ -7899,7 +7909,7 @@ void US_Hydrodyn::rescale_bead_model()
                float radius = (float)pow( current_volume / ( beads * pi43 ), 1e0 / 3e0 );
                
                editor_msg("black", 
-                          QString( tr( "Volume %1 A^3, Number of beads %2, Radius %3 A\n" ) )
+                          QString( us_tr( "Volume %1 A^3, Number of beads %2, Radius %3 A\n" ) )
                           .arg( current_volume )
                           .arg( beads )
                           .arg( radius )
@@ -7915,7 +7925,7 @@ void US_Hydrodyn::rescale_bead_model()
             
                current_volume = total_volume_of_bead_model( bead_model );
                editor_msg("black", 
-                          QString( tr( "After equalizing: current volume %1 A^3\n" ) )
+                          QString( us_tr( "After equalizing: current volume %1 A^3\n" ) )
                           .arg( current_volume ) );
                bead_models[ current_model ] = bead_model;
             }
@@ -7989,7 +7999,7 @@ void US_Hydrodyn::save_pdb_csv( csv &csv1 )
 
    QString use_dir = 
       USglobal->config_list.root_dir + SLASH + "somo" + SLASH + "structures";
-   QString filename = QFileDialog::getSaveFileName( this , tr("Choose a filename to save the pdc") , use_dir , "*.pdc *.pdc" );
+   QString filename = QFileDialog::getSaveFileName( this , us_tr("Choose a filename to save the pdc") , use_dir , "*.pdc *.pdc" );
 
 
 
@@ -7998,7 +8008,7 @@ void US_Hydrodyn::save_pdb_csv( csv &csv1 )
       return;
    }
 
-   if ( !filename.contains(QRegExp(".pdc$",false)) )
+   if ( !filename.contains(QRegExp(".pdc$", Qt::CaseInsensitive )) )
    {
       filename += ".pdc";
    }
@@ -8013,11 +8023,11 @@ void US_Hydrodyn::save_pdb_csv( csv &csv1 )
    if ( !f.open( QIODevice::WriteOnly ) )
    {
       QMessageBox::warning( this, "UltraScan",
-                            QString(tr("Could not open %1 for writing!")).arg(filename) );
+                            QString(us_tr("Could not open %1 for writing!")).arg(filename) );
       return;
    }
 
-   Q3TextStream t( &f );
+   QTextStream t( &f );
 
    QString qs;
 
@@ -8058,36 +8068,36 @@ void US_Hydrodyn::config()
    static int last_menu = 0;
 
    menu_opts
-      << tr( "Lookup Tables -> Add/Edit Hybridization" ) // hybrid()
-      << tr( "Lookup Tables -> Add/Edit Atom" ) // edit_atom()
-      << tr( "Lookup Tables -> Add/Edit Residue" ) // residue()
-      << tr( "Lookup Tables -> Add/Edit SAXS coefficients" ) // saxs()
-      << tr( "SOMO Options -> ASA Calculation" ) // show_asa()
-      << tr( "SOMO Options -> SoMo Overlap Reduction" ) // show_overlap()
-      << tr( "SOMO Options -> AtoB (Grid) Overlap Reduction" ) // show_grid_overlap()
-      << tr( "SOMO Options -> Hydrodynamic Calculations" ) // show_hydro()
-      << tr( "SOMO Options -> Hydrodynamic Calculations Zeno" ) // show_zeno_options()
-      << tr( "SOMO Options -> Miscellaneous Options" ) // show_misc()
-      << tr( "SOMO Options -> Bead Model Output" ) // show_bead_output()
-      << tr( "SOMO Options -> Grid Functions (AtoB)" ) // show_grid()
-      << tr( "SOMO Options -> SAXS/SANS Options" ) // show_saxs_options()
-      // << tr( "MD Options -> DMD Options" ) // show_dmd_options()
-      << tr( "MD Options -> Browflex Options" ) // show_bd_options()
-      << tr( "MD Options -> Anaflex Options" ) // show_anaflex_options()
-      << tr( "PDB Options -> Parsing" ) // pdb_parsing()
-      << tr( "PDB Options -> Visualization" ) // pdb_visualization()
-      << tr( "Configuration -> Load Configuration" ) // load_config()
-      << tr( "Configuration -> Save Current Configuration" ) // write_config()
-      << tr( "Configuration -> Reset to Default Configuration" ) // reset()
-      << tr( "Configuration -> Advanced Configuration" ) // show_advanced_config()
-      << tr( "Configuration -> System Configuration" ) // run_us_config()
-      << tr( "Configuration -> Administrator" ) // run us_admin()
+      << us_tr( "Lookup Tables -> Add/Edit Hybridization" ) // hybrid()
+      << us_tr( "Lookup Tables -> Add/Edit Atom" ) // edit_atom()
+      << us_tr( "Lookup Tables -> Add/Edit Residue" ) // residue()
+      << us_tr( "Lookup Tables -> Add/Edit SAXS coefficients" ) // saxs()
+      << us_tr( "SOMO Options -> ASA Calculation" ) // show_asa()
+      << us_tr( "SOMO Options -> SoMo Overlap Reduction" ) // show_overlap()
+      << us_tr( "SOMO Options -> AtoB (Grid) Overlap Reduction" ) // show_grid_overlap()
+      << us_tr( "SOMO Options -> Hydrodynamic Calculations" ) // show_hydro()
+      << us_tr( "SOMO Options -> Hydrodynamic Calculations Zeno" ) // show_zeno_options()
+      << us_tr( "SOMO Options -> Miscellaneous Options" ) // show_misc()
+      << us_tr( "SOMO Options -> Bead Model Output" ) // show_bead_output()
+      << us_tr( "SOMO Options -> Grid Functions (AtoB)" ) // show_grid()
+      << us_tr( "SOMO Options -> SAXS/SANS Options" ) // show_saxs_options()
+      // << us_tr( "MD Options -> DMD Options" ) // show_dmd_options()
+      << us_tr( "MD Options -> Browflex Options" ) // show_bd_options()
+      << us_tr( "MD Options -> Anaflex Options" ) // show_anaflex_options()
+      << us_tr( "PDB Options -> Parsing" ) // pdb_parsing()
+      << us_tr( "PDB Options -> Visualization" ) // pdb_visualization()
+      << us_tr( "Configuration -> Load Configuration" ) // load_config()
+      << us_tr( "Configuration -> Save Current Configuration" ) // write_config()
+      << us_tr( "Configuration -> Reset to Default Configuration" ) // reset()
+      << us_tr( "Configuration -> Advanced Configuration" ) // show_advanced_config()
+      << us_tr( "Configuration -> System Configuration" ) // run_us_config()
+      << us_tr( "Configuration -> Administrator" ) // run us_admin()
       ;
 
    bool ok;
-   QString res = QInputDialog::getItem(
-                                       tr( "US-SOMO Configuration Options" ), 
-                                       tr( "Make a selection or press CANCEL" ),
+   QString res = US_Static::getItem(
+                                       us_tr( "US-SOMO Configuration Options" ), 
+                                       us_tr( "Make a selection or press CANCEL" ),
                                        menu_opts, 
                                        last_menu, 
                                        TRUE, 
@@ -8096,145 +8106,145 @@ void US_Hydrodyn::config()
 
    if ( ok ) {
       int pos   = 0;
-      if ( res == tr( "Lookup Tables -> Add/Edit Hybridization" ) )
+      if ( res == us_tr( "Lookup Tables -> Add/Edit Hybridization" ) )
       {
          last_menu = pos;
          hybrid();
       }
       pos++;
-      if ( res == tr( "Lookup Tables -> Add/Edit Atom" ) )
+      if ( res == us_tr( "Lookup Tables -> Add/Edit Atom" ) )
       {
          last_menu = pos;
          edit_atom();
       }
       pos++;
-      if ( res == tr( "Lookup Tables -> Add/Edit Residue" ) )
+      if ( res == us_tr( "Lookup Tables -> Add/Edit Residue" ) )
       {
          last_menu = pos;
          residue();
       }
       pos++;
-      if ( res == tr( "Lookup Tables -> Add/Edit SAXS coefficients" ) )
+      if ( res == us_tr( "Lookup Tables -> Add/Edit SAXS coefficients" ) )
       {
          last_menu = pos;
          saxs();
       }
       pos++;
-      if ( res == tr( "SOMO Options -> ASA Calculation" ) )
+      if ( res == us_tr( "SOMO Options -> ASA Calculation" ) )
       {
          last_menu = pos;
          show_asa();
       }
       pos++;
-      if ( res == tr( "SOMO Options -> SoMo Overlap Reduction" ) )
+      if ( res == us_tr( "SOMO Options -> SoMo Overlap Reduction" ) )
       {
          last_menu = pos;
          show_overlap();
       }
       pos++;
-      if ( res == tr( "SOMO Options -> AtoB (Grid) Overlap Reduction" ) )
+      if ( res == us_tr( "SOMO Options -> AtoB (Grid) Overlap Reduction" ) )
       {
          last_menu = pos;
          show_grid_overlap();
       }
       pos++;
-      if ( res == tr( "SOMO Options -> Hydrodynamic Calculations" ) )
+      if ( res == us_tr( "SOMO Options -> Hydrodynamic Calculations" ) )
       {
          last_menu = pos;
          show_hydro();
       }
       pos++;
-      if ( res == tr( "SOMO Options -> Hydrodynamic Calculations Zeno" ) )
+      if ( res == us_tr( "SOMO Options -> Hydrodynamic Calculations Zeno" ) )
       {
          last_menu = pos;
          show_zeno_options();
       }
       pos++;
-      if ( res == tr( "SOMO Options -> Miscellaneous Options" ) )
+      if ( res == us_tr( "SOMO Options -> Miscellaneous Options" ) )
       {
          last_menu = pos;
          show_misc();
       }
       pos++;
-      if ( res == tr( "SOMO Options -> Bead Model Output" ) )
+      if ( res == us_tr( "SOMO Options -> Bead Model Output" ) )
       {
          last_menu = pos;
          show_bead_output();
       }
       pos++;
-      if ( res == tr( "SOMO Options -> Grid Functions (AtoB)" ) )
+      if ( res == us_tr( "SOMO Options -> Grid Functions (AtoB)" ) )
       {
          last_menu = pos;
          show_grid();
       }
       pos++;
-      if ( res == tr( "SOMO Options -> SAXS/SANS Options" ) )
+      if ( res == us_tr( "SOMO Options -> SAXS/SANS Options" ) )
       {
          last_menu = pos;
          show_saxs_options();
       }
       pos++;
-      if ( res == tr( "MD Options -> DMD Options" ) )
+      if ( res == us_tr( "MD Options -> DMD Options" ) )
       {
          last_menu = pos;
          show_dmd_options();
       }
       pos++;
-      if ( res == tr( "MD Options -> Browflex Options" ) )
+      if ( res == us_tr( "MD Options -> Browflex Options" ) )
       {
          last_menu = pos;
          show_bd_options();
       }
       pos++;
-      if ( res == tr( "MD Options -> Anaflex Options" ) )
+      if ( res == us_tr( "MD Options -> Anaflex Options" ) )
       {
          last_menu = pos;
          show_anaflex_options();
       }
       pos++;
-      if ( res == tr( "PDB Options -> Parsing" ) )
+      if ( res == us_tr( "PDB Options -> Parsing" ) )
       {
          last_menu = pos;
          pdb_parsing();
       }
       pos++;
-      if ( res == tr( "PDB Options -> Visualization" ) )
+      if ( res == us_tr( "PDB Options -> Visualization" ) )
       {
          last_menu = pos;
          pdb_visualization();
       }
       pos++;
-      if ( res == tr( "Configuration -> Load Configuration" ) )
+      if ( res == us_tr( "Configuration -> Load Configuration" ) )
       {
          last_menu = pos;
          load_config();
       }
       pos++;
-      if ( res == tr( "Configuration -> Save Current Configuration" ) )
+      if ( res == us_tr( "Configuration -> Save Current Configuration" ) )
       {
          last_menu = pos;
          write_config();
       }
       pos++;
-      if ( res == tr( "Configuration -> Reset to Default Configuration" ) )
+      if ( res == us_tr( "Configuration -> Reset to Default Configuration" ) )
       {
          last_menu = pos;
          reset();
       }
       pos++;
-      if ( res == tr( "Configuration -> Advanced Configuration" ) )
+      if ( res == us_tr( "Configuration -> Advanced Configuration" ) )
       {
          last_menu = pos;
          show_advanced_config();
       }
       pos++;
-      if ( res == tr( "Configuration -> System Configuration" ) )
+      if ( res == us_tr( "Configuration -> System Configuration" ) )
       {
          last_menu = pos;
          run_us_config();
       }
       pos++;
-      if ( res == tr( "Configuration -> Administrator" ) )
+      if ( res == us_tr( "Configuration -> Administrator" ) )
       {
          last_menu = pos;
          run_us_admin();
@@ -8257,7 +8267,7 @@ void US_Hydrodyn::reset_chain_residues( PDB_model *model )
          {
             checked[ idx ] = true;
 #if defined( DEBUG_TESTING_JML )
-            qDebug( QString( "rcr idx %1 p_r %2 %3 %4" ).arg( idx ).arg( (long) this_atom->p_residue ).arg( this_atom->model_residue_pos ).arg( model->residue.size() ) );
+            us_qdebug( QString( "rcr idx %1 p_r %2 %3 %4" ).arg( idx ).arg( (long) this_atom->p_residue ).arg( this_atom->model_residue_pos ).arg( model->residue.size() ) );
 #endif
             if ( this_atom->p_residue &&
                  this_atom->model_residue_pos != -1 &&
@@ -8286,7 +8296,7 @@ void US_Hydrodyn::make_test_set()
    QDir dir1( test_dir );
    if ( !dir1.exists() )
    {
-      editor_msg( "black", QString( tr( "Created directory %1" ) ).arg( test_dir ) );
+      editor_msg( "black", QString( us_tr( "Created directory %1" ) ).arg( test_dir ) );
       dir1.mkdir( test_dir );
    }
 
@@ -8320,7 +8330,7 @@ void US_Hydrodyn::make_test_set()
                {
                   QString atom_name_1 = atom_name.left( 1 );
                   QString hybrid_name = residue_list[ i ].r_atom[ j ].hybrid.name;
-                  if ( count_hydrogens.search( hybrid_name ) != -1 )
+                  if ( count_hydrogens.indexIn( hybrid_name ) != -1 )
                   {
                      hydrogens = count_hydrogens.cap( 1 ).toInt();
                   }
@@ -8332,7 +8342,7 @@ void US_Hydrodyn::make_test_set()
                      QDir dir1( atom_dir );
                      if ( !dir1.exists() )
                      {
-                        editor_msg( "black", QString( tr( "Created directory %1" ) ).arg( atom_dir ) );
+                        editor_msg( "black", QString( us_tr( "Created directory %1" ) ).arg( atom_dir ) );
                         dir1.mkdir( atom_dir );
                      }
                      QDir::setCurrent( atom_dir );
@@ -8343,7 +8353,7 @@ void US_Hydrodyn::make_test_set()
                      QDir dir1( hydrogen_dir  );
                      if ( !dir1.exists() )
                      {
-                        editor_msg( "black", QString( tr( "Created directory %1" ) ).arg( hydrogen_dir ) );
+                        editor_msg( "black", QString( us_tr( "Created directory %1" ) ).arg( hydrogen_dir ) );
                         dir1.mkdir( hydrogen_dir );
                      }
                
@@ -8352,7 +8362,7 @@ void US_Hydrodyn::make_test_set()
 
                   QString fname = QString( "%1%2%3%4.pdb" )
                      .arg( hydrogens )
-                     .arg( QString( "%1" ).arg( ds[ d ] ).stripWhiteSpace() )
+                     .arg( QString( "%1" ).arg( ds[ d ] ).trimmed() )
                      .arg( residue_short_name )
                      .arg( atom_name )
                      ;
@@ -8369,23 +8379,23 @@ void US_Hydrodyn::make_test_set()
                   QFile f( fname );
                   if ( f.open( QIODevice::WriteOnly ) )
                   {
-                     Q3TextStream ts( &f );
+                     QTextStream ts( &f );
                      ts << 
                         QString( "" )
                         .sprintf(     
                                  "ATOM      1  %-3s %3s     1       0.000   0.000   0.000  1.00 14.00           %1s\n"
-                                 , atom_name.ascii()
-                                 , residue_name.ascii()
-                                 , atom_name_1.ascii() );
+                                 , atom_name.toAscii().data()
+                                 , residue_name.toAscii().data()
+                                 , atom_name_1.toAscii().data() );
 
                      ts << 
                         QString( "" )
                         .sprintf(     
                                  "ATOM      2  %-3s %3s     2      %2s.000   0.000   0.000  1.00 14.00           %1s\n"
-                                 , atom_name.ascii()
-                                 , residue_name.ascii()
-                                 , ds[ d ].ascii()
-                                 , atom_name_1.ascii() );
+                                 , atom_name.toAscii().data()
+                                 , residue_name.toAscii().data()
+                                 , ds[ d ].toAscii().data()
+                                 , atom_name_1.toAscii().data() );
                      f.close();
                   }
                   if ( !d )
@@ -8404,7 +8414,7 @@ void US_Hydrodyn::make_test_set()
    QFile f( "pair_summary" );
    if ( f.open( QIODevice::WriteOnly ) )
    {
-      Q3TextStream ts( &f );
+      QTextStream ts( &f );
       for ( map < QString, vector < QString > >::iterator it = pair_summary.begin();
             it != pair_summary.end();
             it++ )
@@ -8480,7 +8490,7 @@ bool US_Hydrodyn::select_from_directory_history( QString &dir, QWidget *parent, 
    QFileInfo fi( dir );
    if ( fi.exists() )
    {
-      selected = QDir::cleanDirPath( fi.isDir() ? fi.filePath() : fi.dirPath() );
+      selected = QDir::cleanPath( fi.isDir() ? fi.filePath() : fi.path() );
    }
          
    for ( unsigned int i = 0; i < (unsigned int) directory_history.size(); i++ )
@@ -8519,9 +8529,9 @@ bool US_Hydrodyn::select_from_directory_history( QString &dir, QWidget *parent, 
    return false;
 
    // bool ok;
-   // QString res = QInputDialog::getItem(
-   //                                     tr("Previous directories"),
-   //                                     QString( tr("Select the directory or Cancel for the default directory of\n%1") )
+   // QString res = US_Static::getItem(
+   //                                     us_tr("Previous directories"),
+   //                                     QString( us_tr("Select the directory or Cancel for the default directory of\n%1") )
    //                                     .arg( dir )
    //                                     , 
    //                                     use_history,
@@ -8540,9 +8550,9 @@ void US_Hydrodyn::add_to_directory_history( QString filename, bool accessed )
 {
    QFileInfo fi( filename );
 
-   QString dir = QDir::cleanDirPath( fi.isDir() ? fi.filePath() : fi.dirPath() );
+   QString dir = QDir::cleanPath( fi.isDir() ? fi.filePath() : fi.path() );
 
-   // qDebug( QString( "add to dir history %1 %2 %3 %4" ).arg( filename ).arg( dir ).arg( fi.extension( false ) ).arg( accessed ? "true" : "false" ) );
+   // us_qdebug( QString( "add to dir history %1 %2 %3 %4" ).arg( filename ).arg( dir ).arg( fi.suffix() ).arg( accessed ? "true" : "false" ) );
    if ( dir.isEmpty() ||
         dir.contains( QRegExp( "^\\." ) ) )
    {
@@ -8555,7 +8565,7 @@ void US_Hydrodyn::add_to_directory_history( QString filename, bool accessed )
    if ( accessed )
    {
       directory_last_access  [ dir ] = QDateTime::currentDateTime();
-      directory_last_filetype[ dir ] = fi.extension( false );
+      directory_last_filetype[ dir ] = fi.suffix();
    }
    for ( unsigned int i = 0; i < (unsigned int) directory_history.size(); i++ )
    {
@@ -8565,5 +8575,59 @@ void US_Hydrodyn::add_to_directory_history( QString filename, bool accessed )
       }
    }
    directory_history = new_dir_history;
-   //   qDebug( "new directory history: " + directory_history.join(":") );
+   //   us_qdebug( "new directory history: " + directory_history.join(":") );
 }
+
+void US_Hydrodyn::model_viewer( QString file,
+                                QString prefix ) {
+   QStringList args;
+   
+   QString prog = 
+#  if defined(BIN64)
+      USglobal->config_list.system_dir + SLASH + "bin64" + SLASH + "rasmol"
+#  else
+      USglobal->config_list.system_dir + SLASH + "bin" + SLASH + "rasmol"
+#  endif
+      ;
+
+#if QT_VERSION < 0x040000
+# if !defined(WIN32) && !defined(MAC)
+   args.append( "xterm" );
+   args.append( "-e" );
+# endif
+   args.append( prog );
+   if ( prefix != "" ) {
+      args.append( prefix );
+   }
+      
+   args.append( QFileInfo( file ).fileName() );
+   rasmol->setWorkingDirectory( QFileInfo( file ).path() );
+   rasmol->setArguments( args );
+   if ( !rasmol->start() ) {
+      US_Static::us_message(us_tr("Please note:"), us_tr("There was a problem starting RASMOL\n"
+                                                  "Please check to make sure RASMOL is properly installed..."));
+   }
+#else
+   {
+      QProcess * process = new QProcess( this );
+# if !defined(WIN32) && !defined(MAC)
+      args
+         << "-e"
+         << prog
+         ;
+      prog = "xterm";
+# endif
+      if ( prefix != "" ) {
+         args << prefix;
+      }
+      args << 
+         QFileInfo( file ).fileName();
+
+      if ( !process->startDetached( prog, args, QFileInfo( file ).path() ) ) {
+         US_Static::us_message(us_tr("Please note:"), us_tr("There was a problem starting RASMOL\n"
+                                                     "Please check to make sure RASMOL is properly installed..."));
+      }
+   }
+#endif
+}
+

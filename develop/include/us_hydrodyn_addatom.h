@@ -12,10 +12,10 @@
 #include <qlineedit.h>
 #include <qlabel.h>
 #include <qwidget.h>
-#include <Q3ComboBox>
+#include <QComboBox>
 #include <qcheckbox.h>
 #include <qpushbutton.h>
-#include <q3frame.h>
+//#include <q3frame.h>
 //Added by qt3to4:
 #include <QCloseEvent>
 
@@ -58,8 +58,8 @@ class US_AddAtom : public QWidget
       QLabel *lbl_number_of_atoms;
       QLabel *lbl_number_of_hybrids;
 
-      Q3ComboBox *cmb_atom;
-      Q3ComboBox *cmb_hybrid;
+      QComboBox *cmb_atom;
+      QComboBox *cmb_hybrid;
       QCheckBox *cb_excl_vol;
       QLineEdit *le_name;
       QLineEdit *le_excl_vol;

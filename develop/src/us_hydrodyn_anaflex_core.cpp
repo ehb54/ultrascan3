@@ -10,7 +10,7 @@
 #include "../include/us_hydrodyn.h"
 #include <qregexp.h>
 //Added by qt3to4:
-#include <Q3TextStream>
+#include <QTextStream>
 
 #ifndef WIN32
 #   include <unistd.h>
@@ -97,7 +97,7 @@ int US_Hydrodyn::create_anaflex_files()
 
 int US_Hydrodyn::create_anaflex_files( int use_mode, int sub_mode )
 {
-   editor->append(tr(QString("Creating anaflex files (mode %1)\n").arg(use_mode)));
+   editor->append(us_tr(QString("Creating anaflex files (mode %1)\n").arg(use_mode)));
 
    project = bd_project;
    current_model = bd_current_model;
@@ -113,7 +113,7 @@ int US_Hydrodyn::create_anaflex_files( int use_mode, int sub_mode )
    int no_of_beads = browflex_get_no_of_beads(bd_last_file);
 
    QFileInfo fi(bd_last_traj_file);
-   QString dir = fi.dirPath();
+   QString dir = fi.path();
    QString trajfile = fi.fileName();
 
    QString filename = 
@@ -132,14 +132,14 @@ int US_Hydrodyn::create_anaflex_files( int use_mode, int sub_mode )
    QFile f;
    // main file
    {
-      f.setName(basename + "m.txt");
+      f.setFileName(basename + "m.txt");
       if ( !f.open(QIODevice::WriteOnly) )
       {
-         editor->append(QString("File write error: can't create %1\n").arg(f.name()));
+         editor->append(QString("File write error: can't create %1\n").arg(f.fileName()));
          return -1;
       }
-      anaflex_last_file = f.name();
-      Q3TextStream ts(&f);
+      anaflex_last_file = f.fileName();
+      QTextStream ts(&f);
       ts <<
          QString(
                  "%1l.txt            !outputfile 1\n"
@@ -339,14 +339,14 @@ int US_Hydrodyn::create_anaflex_files( int use_mode, int sub_mode )
                   if ( use_last_bead > no_of_beads )
                   {
                      if ( !QMessageBox::question( this, QString("Number of beads"),
-                                                  QString(tr("You have selected an Anaflex"
+                                                  QString(us_tr("You have selected an Anaflex"
                                                              " option which requires a last bead number.\n"
                                                              "There appear to be %1 beads in your Browflex file\n"
                                                              "And your last bead number is set to %2.\n"))
                                                   .arg(no_of_beads)
                                                   .arg(use_last_bead),
-                                                  tr(QString("&Use %1 as last bead").arg(no_of_beads)),
-                                                  tr(QString("&Accept %1 as last bead").arg(use_last_bead)),
+                                                  us_tr(QString("&Use %1 as last bead").arg(no_of_beads)),
+                                                  us_tr(QString("&Accept %1 as last bead").arg(use_last_bead)),
                                                   QString::null,
                                                   0, 1 ) )
                      {
@@ -372,14 +372,14 @@ int US_Hydrodyn::create_anaflex_files( int use_mode, int sub_mode )
                   if ( use_last_bead > no_of_beads )
                   {
                      if ( !QMessageBox::question( this, QString("Number of beads"),
-                                                  QString(tr("You have selected an Anaflex"
+                                                  QString(us_tr("You have selected an Anaflex"
                                                              " option which requires a last bead number.\n"
                                                              "There appear to be %1 beads in your Browflex file\n"
                                                              "And your last bead number is set to %2.\n"))
                                                   .arg(no_of_beads)
                                                   .arg(use_last_bead),
-                                                  tr(QString("&Use %1 as last bead").arg(no_of_beads)),
-                                                  tr(QString("&Accept %1 as last bead").arg(use_last_bead)),
+                                                  us_tr(QString("&Use %1 as last bead").arg(no_of_beads)),
+                                                  us_tr(QString("&Accept %1 as last bead").arg(use_last_bead)),
                                                   QString::null,
                                                   0, 1 ) )
                      {
@@ -525,18 +525,18 @@ int US_Hydrodyn::run_anaflex( int /* use_mode */, int /* sub_mode */ )
       QFileInfo qfi(prog);
       if ( !qfi.exists() )
       {
-         QColor save_color = editor->color();
-         editor->setColor("red");
+         QColor save_color = editor->textColor();
+         editor->setTextColor("red");
          editor->append(QString("Anaflex program '%1' does not exist\n").arg(prog));
-         editor->setColor(save_color);
+         editor->setTextColor(save_color);
          return -1;
       }
       if ( !qfi.isExecutable() )
       {
-         QColor save_color = editor->color();
-         editor->setColor("red");
+         QColor save_color = editor->textColor();
+         editor->setTextColor("red");
          editor->append(QString("Anaflex program '%1' is not executable\n").arg(prog));
-         editor->setColor(save_color);
+         editor->setTextColor(save_color);
          return -1;
       }
    }
@@ -546,7 +546,7 @@ int US_Hydrodyn::run_anaflex( int /* use_mode */, int /* sub_mode */ )
       //      project + QString("_%1").arg(current_model + 1) +
       //      QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "")
       //      + "-bf-main.txt\n" ;
-   QString dir = fi.dirPath();
+   QString dir = fi.path();
 
    //   QString anafile = 
    //      project + QString("%1").arg(current_model + 1) +
@@ -559,50 +559,72 @@ int US_Hydrodyn::run_anaflex( int /* use_mode */, int /* sub_mode */ )
       .arg(prog)
       .arg(anafile);
 #endif
-   anaflex = new Q3Process( this );
+   anaflex = new QProcess( this );
    anaflex->setWorkingDirectory( dir );
-   anaflex->addArgument( prog );
-   connect( anaflex, SIGNAL(readyReadStdout()), this, SLOT(anaflex_readFromStdout()) );
-   connect( anaflex, SIGNAL(readyReadStderr()), this, SLOT(anaflex_readFromStderr()) );
-   connect( anaflex, SIGNAL(processExited()), this, SLOT(anaflex_processExited()) );
-   connect( anaflex, SIGNAL(launchFinished()), this, SLOT(anaflex_launchFinished()) );
 
+#if QT_VERSION < 0x040000
+   anaflex->addArgument( prog );
+#else
+   QStringList args;
+   args
+      << "<"
+      << anafile
+      ;
+#endif
+
+   connect( anaflex, SIGNAL(readyReadStandardOutput()), this, SLOT(anaflex_readFromStdout()) );
+   connect( anaflex, SIGNAL(readyReadStandardError()), this, SLOT(anaflex_readFromStderr()) );
+   connect( anaflex, SIGNAL(finished( int, QProcess::ExitStatus )), this, SLOT(anaflex_finished( int, QProcess::ExitStatus )) );
+   connect( anaflex, SIGNAL(started()), this, SLOT(anaflex_started()) );
+
+#if QT_VERSION < 0x040000
    anaflex->launch( anafile );
+#else
+   anaflex->start( prog, args, QIODevice::ReadOnly );
+#endif
 
    return 0;
 }
 
 void US_Hydrodyn::anaflex_readFromStdout()
 {
+#if QT_VERSION < 0x040000
    while ( anaflex->canReadLineStdout() )
    {
       editor_msg("brown", anaflex->readLineStdout() + "\n");
    }
+#else
+   editor_msg( "brown", QString( anaflex->readAllStandardOutput() ) );
+#endif   
 }
    
 void US_Hydrodyn::anaflex_readFromStderr()
 {
+#if QT_VERSION < 0x040000
    while ( anaflex->canReadLineStderr() )
    {
       editor_msg("red", anaflex->readLineStderr() + "\n");
    }
+#else
+   editor_msg( "red", QString( anaflex->readAllStandardError() ) );
+#endif   
 }
    
-void US_Hydrodyn::anaflex_processExited()
+void US_Hydrodyn::anaflex_finished( int, QProcess::ExitStatus )
 {
    anaflex_readFromStderr();
    anaflex_readFromStdout();
-   disconnect( anaflex, SIGNAL(readyReadStdout()), 0, 0);
-   disconnect( anaflex, SIGNAL(readyReadStderr()), 0, 0);
-   disconnect( anaflex, SIGNAL(processExited()), 0, 0);
+   disconnect( anaflex, SIGNAL(readyReadStandardOutput()), 0, 0);
+   disconnect( anaflex, SIGNAL(readyReadStandardError()), 0, 0);
+   disconnect( anaflex, SIGNAL(finished( int, QProcess::ExitStatus )), 0, 0);
    editor_msg("brown", "Anaflex process exited\n");
    if ( !anaflex_return_to_bd_load_results )
    {
       for ( current_model = 0; 
-            current_model < (unsigned int)lb_model->numRows(); 
+            current_model < (unsigned int)lb_model->count(); 
             current_model++)
       {
-         if ( lb_model->isSelected(current_model) )
+         if ( lb_model->item(current_model)->isSelected() )
          {
             bd_anaflex_enables( true );
             break;
@@ -616,10 +638,10 @@ void US_Hydrodyn::anaflex_processExited()
    }
 }
    
-void US_Hydrodyn::anaflex_launchFinished()
+void US_Hydrodyn::anaflex_started()
 {
    editor_msg("brown","Anaflex launch exited\n");
-   disconnect( anaflex, SIGNAL(launchFinished()), 0, 0);
+   disconnect( anaflex, SIGNAL(started()), 0, 0);
 }
 
 void US_Hydrodyn::anaflex_prepare()
@@ -629,7 +651,7 @@ void US_Hydrodyn::anaflex_prepare()
 
 void US_Hydrodyn::anaflex_load_error( QString filename )
 {
-   editor_msg("red", QString(tr("\nFile %1 does not look like an Anaflex file.\n")).arg(filename));
+   editor_msg("red", QString(us_tr("\nFile %1 does not look like an Anaflex file.\n")).arg(filename));
 }
 
 void US_Hydrodyn::anaflex_load()
@@ -642,15 +664,15 @@ void US_Hydrodyn::anaflex_load()
       switch (
               QMessageBox::question(
                                     this,
-                                    tr("Load Anaflex Files"),
-                                    QString(tr("Replace current Anaflex file ") + fi.fileName() + "?"),
+                                    us_tr("Load Anaflex Files"),
+                                    QString(us_tr("Replace current Anaflex file ") + fi.fileName() + "?"),
                                     QMessageBox::Yes, 
                                     QMessageBox::No,
                                     QMessageBox::NoButton
                                     ) )
       {
       case QMessageBox::Yes : 
-         filename = QFileDialog::getOpenFileName( this , caption() , somo_dir + SLASH + "bd" , "*.txt *.TXT" );
+         filename = QFileDialog::getOpenFileName( this , windowTitle() , somo_dir + SLASH + "bd" , "*.txt *.TXT" );
          break;
       case QMessageBox::No : 
          return;
@@ -661,19 +683,19 @@ void US_Hydrodyn::anaflex_load()
          break;
       }
    } else {
-      filename = QFileDialog::getOpenFileName( this , caption() , somo_dir + SLASH + "bd" , "*.txt *.TXT" );
+      filename = QFileDialog::getOpenFileName( this , windowTitle() , somo_dir + SLASH + "bd" , "*.txt *.TXT" );
    }
    // check to make sure it is a good anaflex file
    if ( !filename.isEmpty() )
    {
       QFileInfo fi(filename);
-      QString dir = fi.dirPath();
+      QString dir = fi.path();
       QString name = fi.fileName();
       // check for file format
       QFile f( filename );
       if ( !f.open( QIODevice::ReadOnly ) )
       {
-         editor_msg("red",QString(tr("\nCould not open file %1 for reading. Check permissions.\n")).arg(filename));
+         editor_msg("red",QString(us_tr("\nCould not open file %1 for reading. Check permissions.\n")).arg(filename));
          return;
       }
       if ( !anaflex_valid_anaflex_main( filename ) )
@@ -709,14 +731,14 @@ DNAdoubhel20bp-tra.txt                    !trajectory file
    if ( !filename.isEmpty() )
    {
       QFileInfo fi(filename);
-      QString dir = fi.dirPath();
+      QString dir = fi.path();
       // check for file format
       QFile f( filename );
       if ( !f.open( QIODevice::ReadOnly ) )
       {
          return false;
       }
-      Q3TextStream ts( &f );
+      QTextStream ts( &f );
       QString tmp_filename;
       // outputfile 1
       if ( !ts.atEnd() )
@@ -778,8 +800,8 @@ void US_Hydrodyn::anaflex_edit()
       switch (
               QMessageBox::question(
                                     this,
-                                    tr("View/Edit Anaflex Files"),
-                                    QString(tr("View/Edit current file ") + fi.fileName() + "?"),
+                                    us_tr("View/Edit Anaflex Files"),
+                                    QString(us_tr("View/Edit current file ") + fi.fileName() + "?"),
                                     QMessageBox::Yes, 
                                     QMessageBox::No,
                                     QMessageBox::Cancel
@@ -789,7 +811,7 @@ void US_Hydrodyn::anaflex_edit()
          filename = anaflex_last_file;
          break;
       case QMessageBox::No : 
-         filename = QFileDialog::getOpenFileName( this , caption() , somo_dir + SLASH + "bd" , "*.txt *.TXT" );
+         filename = QFileDialog::getOpenFileName( this , windowTitle() , somo_dir + SLASH + "bd" , "*.txt *.TXT" );
          break;
       case QMessageBox::Cancel :
       default :
@@ -797,17 +819,17 @@ void US_Hydrodyn::anaflex_edit()
          break;
       }
    } else {
-      filename = QFileDialog::getOpenFileName( this , caption() , somo_dir + SLASH + "bd" , "*.txt *.TXT" );
+      filename = QFileDialog::getOpenFileName( this , windowTitle() , somo_dir + SLASH + "bd" , "*.txt *.TXT" );
    }
    if ( !filename.isEmpty() )
    {
       QFileInfo fi(filename);
-      QString dir = fi.dirPath();
+      QString dir = fi.path();
       // open file and view this and all associated files if first line ends with .txt or .TXT
       QFile f( filename );
       if ( !f.open( QIODevice::ReadOnly ) )
       {
-         editor_msg("red", QString(tr("\nCould not open file %1 for reading. Check permissions.\n")).arg(filename));
+         editor_msg("red", QString(us_tr("\nCould not open file %1 for reading. Check permissions.\n")).arg(filename));
          return;
       }
       view_file( filename );
@@ -830,8 +852,8 @@ void US_Hydrodyn::anaflex_load_results()
       switch (
               QMessageBox::question(
                                     this,
-                                    tr("Load Anaflex Results"),
-                                    QString(tr("View/Edit current file ") + fi.fileName() + "?"),
+                                    us_tr("Load Anaflex Results"),
+                                    QString(us_tr("View/Edit current file ") + fi.fileName() + "?"),
                                     QMessageBox::Yes, 
                                     QMessageBox::No,
                                     QMessageBox::Cancel
@@ -841,7 +863,7 @@ void US_Hydrodyn::anaflex_load_results()
          filename = anaflex_last_file;
          break;
       case QMessageBox::No : 
-         filename = QFileDialog::getOpenFileName( this , caption() , somo_dir + SLASH + "bd" , "*.txt *.TXT" );
+         filename = QFileDialog::getOpenFileName( this , windowTitle() , somo_dir + SLASH + "bd" , "*.txt *.TXT" );
          break;
       case QMessageBox::Cancel :
       default :
@@ -849,17 +871,17 @@ void US_Hydrodyn::anaflex_load_results()
          break;
       }
    } else {
-      filename = QFileDialog::getOpenFileName( this , caption() , somo_dir + SLASH + "bd" , "*.txt *.TXT" );
+      filename = QFileDialog::getOpenFileName( this , windowTitle() , somo_dir + SLASH + "bd" , "*.txt *.TXT" );
    }
    if ( !filename.isEmpty() )
    {
       QFileInfo fi(filename);
-      QString dir = fi.dirPath();
+      QString dir = fi.path();
       // open file and view this and all associated files if first line ends with .txt or .TXT
       QFile f( filename );
       if ( !f.open( QIODevice::ReadOnly ) )
       {
-         editor_msg("red", QString(tr("\nCould not open file %1 for reading. Check permissions.\n")).arg(filename));
+         editor_msg("red", QString(us_tr("\nCould not open file %1 for reading. Check permissions.\n")).arg(filename));
          return;
       }
       view_file( filename );
@@ -871,8 +893,8 @@ void US_Hydrodyn::anaflex_load_results()
       switch (
               QMessageBox::question(
                                     this,
-                                    tr("Load Anaflex Files"),
-                                    QString(tr(fi.fileName() + " appears to be a 'main' Anaflex file, open all ancillary files? ")),
+                                    us_tr("Load Anaflex Files"),
+                                    QString(us_tr(fi.fileName() + " appears to be a 'main' Anaflex file, open all ancillary files? ")),
                                     QMessageBox::Yes, 
                                     QMessageBox::No,
                                     QMessageBox::NoButton
@@ -887,7 +909,7 @@ void US_Hydrodyn::anaflex_load_results()
          break;
       }
       
-      Q3TextStream ts( &f );
+      QTextStream ts( &f );
       QString tmp_filename;
       // outputfile 1
       if ( !ts.atEnd() )

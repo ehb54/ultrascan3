@@ -1,6 +1,6 @@
 #include "../include/us_pm.h"
 //Added by qt3to4:
-#include <Q3TextStream>
+#include <QTextStream>
 
 #define MAKE_MODEL    0
 
@@ -86,11 +86,11 @@ QString US_PM::test( QString name, QString oname )
       params.push_back( 88e0 / gcf );  // +x
       params.push_back( 37e0 / gcf ); // +y
 
-      qDebug( "mm0" );
+      us_qdebug( "mm0" );
       set < pm_point > model;
-      qDebug( "mm1" );
+      us_qdebug( "mm1" );
       test_pm.create_model( params, model );
-      qDebug( "mm2" );
+      us_qdebug( "mm2" );
       test_pm.write_model( oname, model );
       
       cout << "testpm wrote model" << oname;
@@ -110,19 +110,19 @@ QString US_PM::test( QString name, QString oname )
 
    if ( f.exists() && f.open( QIODevice::ReadOnly ) )
    {
-      Q3TextStream ts( &f );
-      grid_conversion_factor = ts.readLine().stripWhiteSpace().toDouble();
-      max_dimension          = ts.readLine().stripWhiteSpace().toInt   ();
-      drho                   = ts.readLine().stripWhiteSpace().toDouble();
-      /* buffer_e_density       = */ ts.readLine().stripWhiteSpace().toDouble();
-      /* ev                     = */ ts.readLine().stripWhiteSpace().toDouble();
-      max_harmonics          = ts.readLine().stripWhiteSpace().toUInt();
-      // fibonacci_grid         = ts.readLine().stripWhiteSpace().toUInt();
-      only_last_model        = ts.readLine().stripWhiteSpace().lower() == "only_last";
+      QTextStream ts( &f );
+      grid_conversion_factor = ts.readLine().trimmed().toDouble();
+      max_dimension          = ts.readLine().trimmed().toInt   ();
+      drho                   = ts.readLine().trimmed().toDouble();
+      /* buffer_e_density       = */ ts.readLine().trimmed().toDouble();
+      /* ev                     = */ ts.readLine().trimmed().toDouble();
+      max_harmonics          = ts.readLine().trimmed().toUInt();
+      // fibonacci_grid         = ts.readLine().trimmed().toUInt();
+      only_last_model        = ts.readLine().trimmed().toLower() == "only_last";
 
       while( !ts.atEnd() )
       {
-         QString qs = ts.readLine().stripWhiteSpace();
+         QString qs = ts.readLine().trimmed();
          if ( qs == "__END__" )
          {
             cout << "end in data\n";
@@ -132,14 +132,14 @@ QString US_PM::test( QString name, QString oname )
          {
             while( !ts.atEnd() )
             {
-               qs = ts.readLine().stripWhiteSpace();
+               qs = ts.readLine().trimmed();
                if ( !qs.isEmpty() )
                {
                   if ( qs == "__data_end__" )
                   {
                      break;
                   }
-                  QStringList qsl = QStringList::split( QRegExp( "\\s+" ), qs );
+                  QStringList qsl = (qs ).split( QRegExp( "\\s+" ) , QString::SkipEmptyParts );
                   if ( qsl.size() < 2 )
                   {
                      cout << QString( "error: data has only %1 parameters\n" ).arg( qsl.size() );
@@ -843,7 +843,7 @@ QString US_PM::test( QString name, QString oname )
          {
             for ( int d = 0; d < dups; d++ )
             {
-               cout << QString( "---------- fully cached Sphere radius %1 -----------\n" ).arg( params[ 1 ] ).ascii();
+               cout << QString( "---------- fully cached Sphere radius %1 -----------\n" ).arg( params[ 1 ] ).toAscii().data();
                /*
                  US_PM sphere_pm( grid_conversion_factor, 
                  max_dimension, 
@@ -904,7 +904,7 @@ QString US_PM::test( QString name, QString oname )
 
          for ( params[ 1 ] = spheretest_min; params[ 1 ] <= spheretest_max; ++params[ 1 ] )
          {
-            cout << QString( "---------- delta Sphere radius %1 -----------\n" ).arg( params[ 1 ] ).ascii();
+            cout << QString( "---------- delta Sphere radius %1 -----------\n" ).arg( params[ 1 ] ).toAscii().data();
             model.clear();
             sphere_pm.create_model( params, model );
             sphere_pm.compute_delta_I( model, prev_model, Av, I_result );
@@ -949,7 +949,7 @@ QString US_PM::test( QString name, QString oname )
          {
             for ( int d = 0; d < dups; d++ )
             {
-               cout << QString( "---------- standard Sphere radius %1 -----------\n" ).arg( params[ 1 ] ).ascii();
+               cout << QString( "---------- standard Sphere radius %1 -----------\n" ).arg( params[ 1 ] ).toAscii().data();
                model.clear();
                sphere_pm.create_model( params, model );
                sphere_pm.compute_CYJ_I( model, I_result );
@@ -992,7 +992,7 @@ QString US_PM::test( QString name, QString oname )
 
          for ( params[ 1 ] = spheretest_max; params[ 1 ] >= spheretest_min; --params[ 1 ] )
          {
-            cout << QString( "---------- delta descending Sphere radius %1 -----------\n" ).arg( params[ 1 ] ).ascii();
+            cout << QString( "---------- delta descending Sphere radius %1 -----------\n" ).arg( params[ 1 ] ).toAscii().data();
             model.clear();
             sphere_pm.create_model( params, model );
             sphere_pm.compute_delta_I( model, prev_model, Av, I_result );
@@ -1007,7 +1007,7 @@ QString US_PM::test( QString name, QString oname )
          us_timers.end_timer( "deeesc sphere delta" );
          log += sphere_pm.msg_log;
       }
-      cout << log.ascii();
+      cout << log.toAscii().data();
       cout << us_timers.list_times();
    }
 
@@ -1083,7 +1083,7 @@ QString US_PM::test( QString name, QString oname )
 
       if ( !test_pm.create_model( params, model, only_last_model ) )
       {
-         cout << test_pm.error_msg.ascii() << endl;
+         cout << test_pm.error_msg.toAscii().data() << endl;
       }
 
       vector < int    > types;
@@ -1091,7 +1091,7 @@ QString US_PM::test( QString name, QString oname )
       US_Vector::printvector( "before split: params", params ); 
       if ( !test_pm.split( params, types, fparams ) )
       {
-         cout << test_pm.error_msg.ascii() << endl;
+         cout << test_pm.error_msg.toAscii().data() << endl;
       }
       US_Vector::printvector( "split: types", types ); 
       US_Vector::printvector( "split: fparams", fparams ); 
@@ -1099,7 +1099,7 @@ QString US_PM::test( QString name, QString oname )
       vector < double > new_params;
       if ( !test_pm.join( new_params, types, fparams ) )
       {
-         cout << test_pm.error_msg.ascii() << endl;
+         cout << test_pm.error_msg.toAscii().data() << endl;
       }
       US_Vector::printvector( "after join: new_params", new_params ); 
       if ( new_params != params )
@@ -1128,7 +1128,7 @@ QString US_PM::test( QString name, QString oname )
             return "could not create output file";
          }
    
-         Q3TextStream ts( &of );
+         QTextStream ts( &of );
          ts << output;
          of.close();
       }
@@ -1160,7 +1160,7 @@ QString US_PM::test( QString name, QString oname )
             return "could not create output file";
          }
    
-         Q3TextStream ts( &of );
+         QTextStream ts( &of );
          ts << "# US-SOMO PM .dat file containing I(q) computed on bead model\n";
          for ( unsigned int i = 0; i < ( unsigned int ) q.size(); i++ )
          {

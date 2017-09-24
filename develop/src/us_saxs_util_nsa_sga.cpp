@@ -1,6 +1,6 @@
 #include "../include/us_saxs_util.h"
 //Added by qt3to4:
-#include <Q3TextStream>
+#include <QTextStream>
 
 // note: this program uses cout and/or cerr and this should be replaced
 
@@ -276,7 +276,7 @@ double US_Saxs_Util::nsa_sga_fitness( nsa_sga_individual individual )
       QFile f( "nan_fitness_model.bead_model" );
       if ( f.open( QIODevice::WriteOnly ) )
       {
-         Q3TextStream ts( &f );
+         QTextStream ts( &f );
          ts << nsa_qs_bead_model();
          f.close();
       }
@@ -325,11 +325,11 @@ bool US_Saxs_Util::nsa_sga( double & nrmsd )
       
       if ( f.open( QIODevice::WriteOnly ) )
       {
-         Q3TextStream ts( &f );
+         QTextStream ts( &f );
          ts << nsa_qs_bead_model();
          ts << nsa_physical_stats();
          f.close();
-         cout << QString( "written: %1\n" ).arg( f.name() );
+         cout << QString( "written: %1\n" ).arg( f.fileName() );
       }
 
       map < unsigned int, bool > has_been_duplicated;
@@ -510,7 +510,7 @@ bool US_Saxs_Util::nsa_sga_run()
 
    if ( f.open( QIODevice::WriteOnly ) )
    {
-      Q3TextStream ts( &f );
+      QTextStream ts( &f );
       ts << nsa_qs_bead_model();
       ts << nsa_physical_stats();
       ts << 
@@ -546,8 +546,8 @@ bool US_Saxs_Util::nsa_sga_run()
          ;
       
       f.close();
-      cout << QString( "written: %1\n" ).arg( f.name() );
-      output_files << f.name();
+      cout << QString( "written: %1\n" ).arg( f.fileName() );
+      output_files << f.fileName();
    }
    control_parameters[ "outputfile" ] = outname;
    nsa_sga_fitness( nsa_sga_last_individual );

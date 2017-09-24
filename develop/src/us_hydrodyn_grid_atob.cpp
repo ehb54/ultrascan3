@@ -10,7 +10,7 @@ static std::basic_ostream<char>& operator<<(std::basic_ostream<char>& os, const 
 #ifdef OSX
 #  include <sys/malloc.h>
 //Added by qt3to4:
-#include <Q3TextStream>
+#include <QTextStream>
 #endif
 
 #undef DEBUG
@@ -18,8 +18,8 @@ static std::basic_ostream<char>& operator<<(std::basic_ostream<char>& os, const 
 /*Declaration of new structure types*/
 
 /* Declaration of prototypes...*/
-static Q3ProgressBar *progress;
-static Q3TextEdit *editor;
+static QProgressBar *progress;
+static QTextEdit *editor;
 static US_Hydrodyn *us_hydrodyn;
 
 #define NR_END 1
@@ -312,7 +312,7 @@ AtoB(PDB * pdb,
 
    strcpy(log_filename, input_file);
    strcat(log_filename, ".log");
-   if ((fptr = fopen(log_filename, "w")) == NULL)
+   if ((fptr = us_fopen(log_filename, "w")) == NULL)
    {
       fprintf(stderr, "\n No se puede abrir archivo para escribir!!");
       exit(1);
@@ -529,7 +529,7 @@ AtoB(PDB * pdb,
 
    strcpy(log_filename, input_file);
    strcat(log_filename, ".rmcoresp");
-   if ((fptr = fopen(log_filename, "w")) == NULL)
+   if ((fptr = us_fopen(log_filename, "w")) == NULL)
    {
       fprintf(stderr, "\n No se puede abrir archivo para escribir!!");
       exit(1);
@@ -574,7 +574,7 @@ AtoB(PDB * pdb,
                                QString( "Could not open %1 for writing!" ).arg( fn ) );
       } else {
                   
-         Q3TextStream tso( &fn_out );
+         QTextStream tso( &fn_out );
 
          tso << QString( "REMARK bead model correspondence file\n" );
 
@@ -657,8 +657,8 @@ AtoB(PDB * pdb,
 
 vector < PDB_atom > us_hydrodyn_grid_atob(vector < PDB_atom > *bead_model,
                                           grid_options * use_grid_options, 
-                                          Q3ProgressBar * use_progress, 
-                                          Q3TextEdit * use_editor,
+                                          QProgressBar * use_progress, 
+                                          QTextEdit * use_editor,
                                           US_Hydrodyn * use_us_hydrodyn)
 {
    // do our stuff
@@ -711,16 +711,16 @@ vector < PDB_atom > us_hydrodyn_grid_atob(vector < PDB_atom > *bead_model,
 #if defined(DEBUG)
          puts("grid_atob 1 b"); fflush(stdout);
 #endif
-         strncpy(tmp_pdb.atnam, (*bead_model)[i].name.ascii(), 7);
+         strncpy(tmp_pdb.atnam, (*bead_model)[i].name.toAscii().data(), 7);
          tmp_pdb.atnam[7] = 0;
 
-         strncpy(tmp_pdb.resnam, (*bead_model)[i].resName.ascii(), 7);
+         strncpy(tmp_pdb.resnam, (*bead_model)[i].resName.toAscii().data(), 7);
          tmp_pdb.resnam[7] = 0;
 
-         strncpy(tmp_pdb.insert, (*bead_model)[i].iCode.ascii(), 7);
+         strncpy(tmp_pdb.insert, (*bead_model)[i].iCode.toAscii().data(), 7);
          tmp_pdb.insert[7] = 0;
 
-         strncpy(tmp_pdb.chain, (*bead_model)[i].chainID.ascii(), 7);
+         strncpy(tmp_pdb.chain, (*bead_model)[i].chainID.toAscii().data(), 7);
          tmp_pdb.chain[7] = 0;
          pdb.push_back(tmp_pdb);
 
@@ -851,10 +851,10 @@ vector < PDB_atom > us_hydrodyn_grid_atob(vector < PDB_atom > *bead_model,
    // nprop.resize((int)(npoints_x * npoints_y * npoints_z));
    if (!(nprop = (PHYSPROP *) malloc((int) (npoints_x * npoints_y * npoints_z)* sizeof(PHYSPROP)) ))
    {
-      QColor save_color = us_hydrodyn->editor->color();
-      us_hydrodyn->editor->setColor("red");
+      QColor save_color = us_hydrodyn->editor->textColor();
+      us_hydrodyn->editor->setTextColor("red");
       us_hydrodyn->editor->append("ERROR: Memory allocation failure.  Please try a larger grid cube size and/or close all other applications");
-      us_hydrodyn->editor->setColor(save_color);
+      us_hydrodyn->editor->setTextColor(save_color);
       us_hydrodyn->errorFlag = true;
       vector < PDB_atom > empty_result;
       return empty_result;
@@ -948,7 +948,7 @@ vector < PDB_atom > us_hydrodyn_grid_atob(vector < PDB_atom > *bead_model,
       if ( !us_hydrodyn->compute_structure_factors( fn, error_msg ) )
       {
          us_hydrodyn->editor_msg( "red", error_msg );
-         us_hydrodyn->editor->scrollToBottom();
+         us_hydrodyn->editor->verticalScrollBar()->setValue(editor->verticalScrollBar()->maximum());
          us_hydrodyn->raise();
       }
    }
@@ -957,10 +957,10 @@ vector < PDB_atom > us_hydrodyn_grid_atob(vector < PDB_atom > *bead_model,
    if ( !result_pdb ) 
    {
       free(nprop);
-      QColor save_color = us_hydrodyn->editor->color();
-      us_hydrodyn->editor->setColor("red");
+      QColor save_color = us_hydrodyn->editor->textColor();
+      us_hydrodyn->editor->setTextColor("red");
       us_hydrodyn->editor->append("ERROR: Memory allocation failure.  Please try a larger grid cube size and/or close all other applications");
-      us_hydrodyn->editor->setColor(save_color);
+      us_hydrodyn->editor->setTextColor(save_color);
       us_hydrodyn->errorFlag = true;
       vector < PDB_atom > empty_result;
       return empty_result;
@@ -1102,11 +1102,11 @@ bool US_Hydrodyn::compute_structure_factors( QString filename,
       // created_batch = true;
       batch_window = new US_Hydrodyn_Batch(&batch, &batch_widget, this);
       fixWinButtons( batch_window );
-      batch_window->lb_files->setSelected( 0, true );
+      batch_window->lb_files->item( 0)->setSelected( true );
    } else {
       batch_window->lb_files->clear();
-      batch_window->lb_files->insertItem(batch.file[0]);
-      batch_window->lb_files->setSelected( 0, true );
+      batch_window->lb_files->addItem(batch.file[0]);
+      batch_window->lb_files->item( 0)->setSelected( true );
    }
    batch.mm_all = true;
    batch.dmd = false;
@@ -1170,7 +1170,7 @@ bool US_Hydrodyn::compute_structure_factors( QString filename,
    QString csvfile = 
       us_hydrodyn->somo_dir + QDir::separator() +
       "saxs" + QDir::separator() + 
-      QFileInfo( filename ).baseName( TRUE ) + 
+      QFileInfo( filename ).completeBaseName() + 
       csv_addendum +
       "_iqq" +
       batch_window->iqq_suffix() +
@@ -1193,7 +1193,7 @@ bool US_Hydrodyn::compute_structure_factors( QString filename,
    }
    // read csv file (should only contain average
          
-   Q3TextStream ts( &f );
+   QTextStream ts( &f );
 
    QString qsq;
    QStringList qslIs;
@@ -1211,7 +1211,7 @@ bool US_Hydrodyn::compute_structure_factors( QString filename,
 
    f.close();
 
-   QStringList qslq = QStringList::split( ",",  qsq );
+   QStringList qslq = (qsq ).split( "," , QString::SkipEmptyParts );
    if ( qslq.size() < 3 ||
         qslq[ 0 ] != "\"Name\"" ||
         qslq[ 1 ] != "\"Type; q:\"" 
@@ -1244,7 +1244,7 @@ bool US_Hydrodyn::compute_structure_factors( QString filename,
    // first beads, last average
    for ( unsigned int i = 0; i < ( unsigned int ) qslIs.size(); i++ )
    {
-      QStringList qslI = QStringList::split( ",",  qslIs[ i ] );
+      QStringList qslI = (qslIs[ i ] ).split( "," , QString::SkipEmptyParts );
 
       if ( qslI.size() < 3 || qslI[ 1 ] != "\"I(q)\"" )
       {
@@ -1271,8 +1271,8 @@ bool US_Hydrodyn::compute_structure_factors( QString filename,
       Is[ i ] = I;
    }
 
-   editor_msg( "blue", tr( "Computing 4 & 5 term exponentials\nThis can take awhile & the program may seem unresponsive" ) );
-   editor->scrollToBottom();
+   editor_msg( "blue", us_tr( "Computing 4 & 5 term exponentials\nThis can take awhile & the program may seem unresponsive" ) );
+   editor->verticalScrollBar()->setValue(editor->verticalScrollBar()->maximum());
    raise();
    qApp->processEvents();
 
@@ -1281,8 +1281,8 @@ bool US_Hydrodyn::compute_structure_factors( QString filename,
 
    for ( unsigned int j = 0; j < ( unsigned int ) Is.size(); j++ )
    {
-      editor_msg( "blue", QString( tr( "Computing 4 & 5 term exponentials for bead %1" ) ).arg( j == last_bead ? "Global average" : QString( "%1" ).arg( j + 1 ) ) );
-      editor->scrollToBottom();
+      editor_msg( "blue", QString( us_tr( "Computing 4 & 5 term exponentials for bead %1" ) ).arg( j == last_bead ? "Global average" : QString( "%1" ).arg( j + 1 ) ) );
+      editor->verticalScrollBar()->setValue(editor->verticalScrollBar()->maximum());
       qApp->processEvents();
       
       vector < double > coeff4;
@@ -1376,7 +1376,7 @@ bool US_Hydrodyn::compute_structure_factors( QString filename,
          norm5tag = "amazingly excellent";
       }
 
-      sf_factors.saxs_name = QFileInfo( csvfile ).baseName().upper();
+      sf_factors.saxs_name = QFileInfo( csvfile ).baseName().toUpper();
       sf_4term_notes = norm4tag;
       sf_5term_notes = norm5tag;
 
@@ -1408,7 +1408,7 @@ bool US_Hydrodyn::compute_structure_factors( QString filename,
                   .arg( norm5tag )
                   .arg( qs5 ) );
 
-      editor->setColor( QColor( "black" ) );
+      editor->setTextColor( QColor( "black" ) );
       for ( unsigned int i = 0; i < 4; i++ )
       {
          sf_factors.a[ i ] = coeff4[ 1 + i * 2 ];

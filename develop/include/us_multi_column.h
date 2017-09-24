@@ -7,7 +7,7 @@
 #endif
 #include "us_vector.h"
 //Added by qt3to4:
-#include <Q3TextStream>
+#include <QTextStream>
 
 #ifdef WIN32
 # if !defined( QT4 )
@@ -40,7 +40,7 @@ class US_Multi_Column
       {
          clear();
          this->filename = filename;
-         is_csv = filename.right( 4 ).contains( ".csv", false );
+         is_csv = filename.right( 4 ).contains( ".csv", Qt::CaseInsensitive );
       }
 
    QString filename;
@@ -136,12 +136,12 @@ class US_Multi_Column
             errormsg = QString( "Error: file %1 can not be opened" ).arg( filename );
             return false;
          }
-         Q3TextStream ts( &f );
+         QTextStream ts( &f );
          unsigned int pos = 0;
          while ( !ts.atEnd() )
          {
             QString     qs  = ts.readLine();
-            QStringList qsl = QStringList::split( QRegExp( is_csv ? "," : "\\s+" ), qs );
+            QStringList qsl = qs.split( QRegExp( is_csv ? "," : "\s+" ), QString::SkipEmptyParts );
             if ( !pos &&
                  qsl.size() &&
                  qsl[ 0 ].contains( QRegExp( "^\\D" ) ) )
@@ -157,7 +157,7 @@ class US_Multi_Column
 
             for ( unsigned int i = 0; i < (unsigned int) qsl.size(); i++ )
             {
-               tmp_data.push_back( qsl[ i ].stripWhiteSpace().toDouble() );
+               tmp_data.push_back( qsl[ i ].trimmed().toDouble() );
             }
             data.push_back( tmp_data );
          }
@@ -309,7 +309,7 @@ class US_Multi_Column
             return false;
          }
 
-         bool is_write_csv = use_filename.right( 4 ).contains( ".csv", false );
+         bool is_write_csv = use_filename.right( 4 ).contains( ".csv", Qt::CaseInsensitive );
 
          QFile f( use_filename );
          if ( !overwrite && f.exists() )
@@ -323,7 +323,7 @@ class US_Multi_Column
             return false;
          }
 
-         Q3TextStream ts( &f );
+         QTextStream ts( &f );
          if ( header.size() )
          {
             for ( unsigned int i = 0; i < header.size(); i++ )
@@ -569,7 +569,7 @@ class US_Multi_Column
             tmp_data.push_back( pos );
             if ( !usu.apply_natural_spline( x, y, y2, pos, new_val ) )
             {
-               qDebug( usu.errormsg );
+               us_qdebug( usu.errormsg );
             }
             tmp_data.push_back( new_val );
             mcx.data.push_back( tmp_data );
@@ -1189,7 +1189,7 @@ class US_Multi_Column
             data[ i ][ col ] *= mult;
          }
 
-         qDebug( QString( "scale %1" ).arg( mult ) );
+         us_qdebug( QString( "scale %1" ).arg( mult ) );
             
          return true;
       }      
@@ -1466,7 +1466,7 @@ class US_Multi_Column
             }
          }                 
          data = new_data;
-         qDebug( QString( "rows %1 from %2" ).arg( rows ).arg( tot ) );
+         us_qdebug( QString( "rows %1 from %2" ).arg( rows ).arg( tot ) );
          return true;
       }      
 
@@ -1481,7 +1481,7 @@ class US_Multi_Column
          vector < double > result;
          if ( !points )
          {
-            qDebug( "Internal error: getnormal called with zero points" );
+            us_qdebug( "Internal error: getnormal called with zero points" );
             return result;
          }
          points++;

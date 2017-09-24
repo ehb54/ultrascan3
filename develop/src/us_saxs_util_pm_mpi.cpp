@@ -97,7 +97,7 @@ bool US_Saxs_Util::run_json_mpi( QString & json )
          it != parameters.end();
          ++it )
    {
-      // qDebug( QString( "%1 : %2" ).arg( it->first ).arg( it->second ) );
+      // us_qdebug( QString( "%1 : %2" ).arg( it->first ).arg( it->second ) );
       if ( it->first.left( 1 ) == "_" )
       {
          results[ it->first ] = it->second;
@@ -111,7 +111,7 @@ bool US_Saxs_Util::run_json_mpi( QString & json )
    {
       map < QString, QString > msging;
       msging[ "_uuid" ] = results[ "_uuid" ];
-      us_udp_msg = new US_Udp_Msg( parameters[ "_udphost" ], (Q_UINT16) parameters[ "_udpport" ].toUInt() );
+      us_udp_msg = new US_Udp_Msg( parameters[ "_udphost" ], (quint16) parameters[ "_udpport" ].toUInt() );
       us_udp_msg->set_default_json( msging );
    }
 
@@ -134,7 +134,7 @@ bool US_Saxs_Util::run_json_mpi( QString & json )
          if ( !myrank )
          {
             results[ "errors" ] = "no supported runtype found in input json";
-            cout << MPI_JSON_SNIP_START << US_Json::compose( results ).ascii() << endl << MPI_JSON_SNIP_END << flush;
+            cout << MPI_JSON_SNIP_START << US_Json::compose( results ).toAscii().data() << endl << MPI_JSON_SNIP_END << flush;
          }
          return true;
       }
@@ -143,7 +143,7 @@ bool US_Saxs_Util::run_json_mpi( QString & json )
          if ( !myrank )
          {
             results[ "errors" ] = "only one run type currently allowed per input json";
-            cout << MPI_JSON_SNIP_START << US_Json::compose( results ).ascii() << endl << MPI_JSON_SNIP_END << flush;
+            cout << MPI_JSON_SNIP_START << US_Json::compose( results ).toAscii().data() << endl << MPI_JSON_SNIP_END << flush;
          }
          return true;
       }
@@ -205,7 +205,7 @@ bool US_Saxs_Util::run_json_mpi( QString & json )
       }
    }
 
-   cout << MPI_JSON_SNIP_START << US_Json::compose( results ).ascii() << endl << MPI_JSON_SNIP_END << flush;
+   cout << MPI_JSON_SNIP_START << US_Json::compose( results ).toAscii().data() << endl << MPI_JSON_SNIP_END << flush;
    return true;
 }
 

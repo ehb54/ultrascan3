@@ -7,8 +7,9 @@
 #include <qstring.h>
 #include <qlayout.h>
 #include <qpushbutton.h>
-#include <q3buttongroup.h>
-#include <q3frame.h>
+#include <qradiobutton.h>
+#include <qgroupbox.h>
+//#include <q3frame.h>
 #include <qcheckbox.h>
 //Added by qt3to4:
 #include <QCloseEvent>
@@ -41,7 +42,7 @@ struct bead_output_options
                               // can only be selected when BEAMS output format is selected
 };
 
-class US_EXTERN US_Hydrodyn_Bead_Output : public Q3Frame
+class US_EXTERN US_Hydrodyn_Bead_Output : public QFrame
 {
    Q_OBJECT
 
@@ -62,22 +63,31 @@ class US_EXTERN US_Hydrodyn_Bead_Output : public Q3Frame
       QPushButton *pb_help;
       QPushButton *pb_cancel;
       
-      Q3ButtonGroup *bg_output;
-      Q3ButtonGroup *bg_sequence;
-      Q3ButtonGroup *bg_beams;
+      QGroupBox *bg_output;
+      QGroupBox *bg_sequence;
+      QGroupBox *bg_beams;
 
       QCheckBox *cb_somo_output;
       QCheckBox *cb_beams_output;
       QCheckBox *cb_hydro_output;
+
       QCheckBox *cb_pdb_sequence;
       QCheckBox *cb_chain_sequence;
+
+      QRadioButton *rb_pdb_sequence;
+      QRadioButton *rb_chain_sequence;
+
       QCheckBox *cb_correspondence;
       
       
    private slots:
       
       void setupGUI();
+      void select_output_somo();
+      void select_output_beams();
+      void select_output_hydro();
       void select_output(int);
+      void select_sequence();
       void select_sequence(int);
       void select_correspondence();
       void cancel();

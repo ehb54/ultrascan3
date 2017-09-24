@@ -2,10 +2,10 @@
 #include "../include/us_hydrodyn_asa.h"
 #include "../include/us_hydrodyn.h"
 //Added by qt3to4:
-#include <Q3HBoxLayout>
+#include <QHBoxLayout>
 #include <QCloseEvent>
-#include <Q3GridLayout>
-#include <Q3Frame>
+#include <QGridLayout>
+#include <QFrame>
 #include <QLabel>
 
 #define SLASH "/"
@@ -14,7 +14,7 @@
 #  define SLASH "\\"
 #endif
 
-US_Hydrodyn_SasOptionsHydration::US_Hydrodyn_SasOptionsHydration(struct saxs_options *saxs_options, bool *sas_options_hydration_widget, void *us_hydrodyn, QWidget *p, const char *name) : Q3Frame(p, name)
+US_Hydrodyn_SasOptionsHydration::US_Hydrodyn_SasOptionsHydration(struct saxs_options *saxs_options, bool *sas_options_hydration_widget, void *us_hydrodyn, QWidget *p, const char *name) : QFrame( p )
 {
    this->sas_options_hydration_widget = sas_options_hydration_widget;
    this->saxs_options = saxs_options;
@@ -22,7 +22,7 @@ US_Hydrodyn_SasOptionsHydration::US_Hydrodyn_SasOptionsHydration(struct saxs_opt
    *sas_options_hydration_widget = true;
    USglobal=new US_Config();
    setPalette( PALET_FRAME );
-   setCaption(tr("US-SOMO SAS Hydration Options"));
+   setWindowTitle(us_tr("US-SOMO SAS Hydration Options"));
    setupGUI();
    global_Xpos += 30;
    global_Ypos += 30;
@@ -37,8 +37,8 @@ US_Hydrodyn_SasOptionsHydration::~US_Hydrodyn_SasOptionsHydration()
 void US_Hydrodyn_SasOptionsHydration::setupGUI()
 {
    int minHeight1 = 30;
-   lbl_info = new QLabel(tr("US-SOMO SAS Hydration Options:"), this);
-   lbl_info->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Raised);
+   lbl_info = new QLabel(us_tr("US-SOMO SAS Hydration Options:"), this);
+   lbl_info->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_info->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_info->setMinimumHeight(minHeight1);
    lbl_info->setPalette( PALET_FRAME );
@@ -46,7 +46,7 @@ void US_Hydrodyn_SasOptionsHydration::setupGUI()
    lbl_info->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
 
    cb_hydrate_pdb = new QCheckBox(this);
-   cb_hydrate_pdb->setText(tr(" Hydrate the Original Model (PDB files only)"));
+   cb_hydrate_pdb->setText(us_tr(" Hydrate the Original Model (PDB files only)"));
    cb_hydrate_pdb->setEnabled(true);
    cb_hydrate_pdb->setChecked((*saxs_options).hydrate_pdb);
    cb_hydrate_pdb->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -55,13 +55,13 @@ void US_Hydrodyn_SasOptionsHydration::setupGUI()
    connect(cb_hydrate_pdb, SIGNAL(clicked()), this, SLOT(set_hydrate_pdb()));
    set_hydrate_pdb();
 
-   pb_default_rotamer_filename = new QPushButton(tr("Set Hydrated Rotamer File"), this);
+   pb_default_rotamer_filename = new QPushButton(us_tr("Set Hydrated Rotamer File"), this);
    pb_default_rotamer_filename->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_default_rotamer_filename->setMinimumHeight(minHeight1);
    pb_default_rotamer_filename->setPalette( PALET_PUSHB );
    connect(pb_default_rotamer_filename, SIGNAL(clicked()), SLOT(default_rotamer_filename()));
 
-   le_default_rotamer_filename = new QLineEdit(this, "");
+   le_default_rotamer_filename = new QLineEdit( this );    le_default_rotamer_filename->setObjectName( "" );
    le_default_rotamer_filename->setText(QFileInfo((*saxs_options).default_rotamer_filename).fileName());
    // le_default_rotamer_filename->setMinimumHeight(minHeight1);
    // le_default_rotamer_filename->setMaximumHeight(minHeight1);
@@ -71,7 +71,7 @@ void US_Hydrodyn_SasOptionsHydration::setupGUI()
    le_default_rotamer_filename->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    le_default_rotamer_filename->setReadOnly(true);
 
-   lbl_steric_clash_distance = new QLabel(tr(" Steric clash tolerance % : "), this);
+   lbl_steric_clash_distance = new QLabel(us_tr(" Steric clash tolerance % : "), this);
    lbl_steric_clash_distance->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_steric_clash_distance->setMinimumHeight(minHeight1);
    lbl_steric_clash_distance->setPalette( PALET_LABEL );
@@ -90,7 +90,7 @@ void US_Hydrodyn_SasOptionsHydration::setupGUI()
    AUTFBACK( cnt_steric_clash_distance );
    connect(cnt_steric_clash_distance, SIGNAL(valueChanged(double)), SLOT(update_steric_clash_distance(double)));
 
-   lbl_steric_clash_recheck_distance = new QLabel(tr(" Steric clash recheck tolerance % : "), this);
+   lbl_steric_clash_recheck_distance = new QLabel(us_tr(" Steric clash recheck tolerance % : "), this);
    lbl_steric_clash_recheck_distance->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_steric_clash_recheck_distance->setMinimumHeight(minHeight1);
    lbl_steric_clash_recheck_distance->setPalette( PALET_LABEL );
@@ -110,7 +110,7 @@ void US_Hydrodyn_SasOptionsHydration::setupGUI()
    connect(cnt_steric_clash_recheck_distance, SIGNAL(valueChanged(double)), SLOT(update_steric_clash_recheck_distance(double)));
 
    cb_alt_hydration = new QCheckBox(this);
-   cb_alt_hydration->setText(tr(" Alt hydration"));
+   cb_alt_hydration->setText(us_tr(" Alt hydration"));
    cb_alt_hydration->setEnabled(true);
    cb_alt_hydration->setChecked((*saxs_options).alt_hydration);
    cb_alt_hydration->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -119,7 +119,7 @@ void US_Hydrodyn_SasOptionsHydration::setupGUI()
    connect(cb_alt_hydration, SIGNAL(clicked()), this, SLOT(set_alt_hydration()));
 
    cb_hydration_rev_asa = new QCheckBox(this);
-   cb_hydration_rev_asa->setText(tr(" Alt hydration reverse ASA sorting"));
+   cb_hydration_rev_asa->setText(us_tr(" Alt hydration reverse ASA sorting"));
    cb_hydration_rev_asa->setEnabled(true);
    cb_hydration_rev_asa->setChecked((*saxs_options).hydration_rev_asa);
    cb_hydration_rev_asa->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -127,27 +127,27 @@ void US_Hydrodyn_SasOptionsHydration::setupGUI()
    AUTFBACK( cb_hydration_rev_asa );
    connect(cb_hydration_rev_asa, SIGNAL(clicked()), this, SLOT(set_hydration_rev_asa()));
 
-   pb_cancel = new QPushButton(tr("Close"), this);
+   pb_cancel = new QPushButton(us_tr("Close"), this);
    pb_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_cancel->setMinimumHeight(minHeight1);
    pb_cancel->setPalette( PALET_PUSHB );
    connect(pb_cancel, SIGNAL(clicked()), SLOT(cancel()));
 
-   pb_help = new QPushButton(tr("Help"), this);
+   pb_help = new QPushButton(us_tr("Help"), this);
    pb_help->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_help->setMinimumHeight(minHeight1);
    pb_help->setPalette( PALET_PUSHB );
    connect(pb_help, SIGNAL(clicked()), SLOT(help()));
 
    int rows = 0, columns = 2, spacing = 2, j=0, margin=4;
-   Q3GridLayout *background=new Q3GridLayout(this, rows, columns, margin, spacing);
+   QGridLayout * background = new QGridLayout( this ); background->setContentsMargins( 0, 0, 0, 0 ); background->setSpacing( 0 ); background->setSpacing( spacing ); background->setContentsMargins( margin, margin, margin, margin );
 
-   background->addMultiCellWidget(lbl_info, j, j, 0, 1);
+   background->addWidget( lbl_info , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
    j++;
 
-   Q3HBoxLayout *hbl_curve_opts = new Q3HBoxLayout;
+   QHBoxLayout * hbl_curve_opts = new QHBoxLayout; hbl_curve_opts->setContentsMargins( 0, 0, 0, 0 ); hbl_curve_opts->setSpacing( 0 );
    hbl_curve_opts->addWidget(cb_hydrate_pdb);
-   background->addMultiCellLayout(hbl_curve_opts, j, j, 0, 1);
+   background->addLayout( hbl_curve_opts , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
    j++;
 
    background->addWidget(pb_default_rotamer_filename, j, 0 );
@@ -161,10 +161,10 @@ void US_Hydrodyn_SasOptionsHydration::setupGUI()
    background->addWidget(cnt_steric_clash_recheck_distance, j, 1);
    j++;
    
-   Q3HBoxLayout *hbl_various_2c = new Q3HBoxLayout;
+   QHBoxLayout * hbl_various_2c = new QHBoxLayout; hbl_various_2c->setContentsMargins( 0, 0, 0, 0 ); hbl_various_2c->setSpacing( 0 );
    hbl_various_2c->addWidget( cb_alt_hydration );
    hbl_various_2c->addWidget( cb_hydration_rev_asa );
-   background->addMultiCellLayout(hbl_various_2c, j, j, 0, 1);
+   background->addLayout( hbl_various_2c , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
    j++;
 
    background->addWidget( pb_help  , j, 0 );
@@ -202,7 +202,7 @@ void US_Hydrodyn_SasOptionsHydration::set_hydrate_pdb()
 
 void US_Hydrodyn_SasOptionsHydration::default_rotamer_filename()
 {
-   QString rotamer_filename = QFileDialog::getOpenFileName( this , caption() , USglobal->config_list.system_dir + SLASH + "etc" , "*.hydrated_rotamer *.HYDRATED_ROTAMER" );
+   QString rotamer_filename = QFileDialog::getOpenFileName( this , windowTitle() , USglobal->config_list.system_dir + SLASH + "etc" , "*.hydrated_rotamer *.HYDRATED_ROTAMER" );
    if (rotamer_filename.isEmpty())
    {
       return;

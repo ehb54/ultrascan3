@@ -15,7 +15,7 @@ static std::basic_ostream<char>& operator<<(std::basic_ostream<char>& os, const 
 #  include <stdlib.h>
 #  include <float.h>
 //Added by qt3to4:
-#include <Q3TextStream>
+#include <QTextStream>
 #  undef SLASH
 #  define SLASH "\\"
 // #  define isnan _isnan
@@ -68,7 +68,7 @@ bool US_Hydrodyn_Saxs::compute_scale_excl_vol()
                   {
                      our_saxs_options->iq_target_ev += our_saxs_options->swh_excl_vol * swh_count;
                      editor_msg( "blue", 
-                                 QString( tr( "Adding water to excluded volume using preset excl vol %1 number of waters %2 -> excluded volume %3\n" ) )
+                                 QString( us_tr( "Adding water to excluded volume using preset excl vol %1 number of waters %2 -> excluded volume %3\n" ) )
                                  .arg( our_saxs_options->swh_excl_vol )
                                  .arg( swh_count )
                                  .arg( our_saxs_options->swh_excl_vol * swh_count ) );
@@ -86,7 +86,7 @@ bool US_Hydrodyn_Saxs::compute_scale_excl_vol()
                      double swh_excl_vol = atom_map["OW~" + hybrid_name].saxs_excl_vol;
                      our_saxs_options->iq_target_ev += swh_excl_vol * swh_count;
                      editor_msg( "blue", 
-                                 QString( tr( "Adding water to excluded volume using defined excl vol %1 number of waters %2 -> excluded volume %3\n" ) )
+                                 QString( us_tr( "Adding water to excluded volume using defined excl vol %1 number of waters %2 -> excluded volume %3\n" ) )
                                  .arg( swh_excl_vol )
                                  .arg( swh_count )
                                  .arg( swh_excl_vol * swh_count ) );
@@ -94,13 +94,13 @@ bool US_Hydrodyn_Saxs::compute_scale_excl_vol()
                } else {
                   if ( swh_count )
                   {
-                     editor_msg( "red", tr( "Error: a chain with WAT/OW and other residues is currently unsupported\n" ) );
+                     editor_msg( "red", us_tr( "Error: a chain with WAT/OW and other residues is currently unsupported\n" ) );
                      return false;
                   }
                   
                   our_saxs_options->iq_target_ev += US_Hydrodyn::mw_to_volume( model_vector[current_model].molecule[j].mw, model_vector[i].vbar );
                   editor_msg( "blue", 
-                              QString( tr( "Adding molecule to excluded volume from mw/vbar computation: mw %1 vbar %2 -> excluded volume %3\n" ) )
+                              QString( us_tr( "Adding molecule to excluded volume from mw/vbar computation: mw %1 vbar %2 -> excluded volume %3\n" ) )
                               .arg( model_vector[current_model].molecule[j].mw )
                               .arg( model_vector[current_model].vbar )
                               .arg( US_Hydrodyn::mw_to_volume( model_vector[current_model].molecule[j].mw, model_vector[current_model].vbar ) ) );
@@ -111,7 +111,7 @@ bool US_Hydrodyn_Saxs::compute_scale_excl_vol()
    }
 
    editor_msg( "blue", 
-               QString( tr( "Total computed excluded volume: %1\n" ) ).arg( our_saxs_options->iq_target_ev ) );
+               QString( us_tr( "Total computed excluded volume: %1\n" ) ).arg( our_saxs_options->iq_target_ev ) );
 
    double tot_excl_vol      = 0e0;
    double tot_excl_vol_noh  = 0e0;
@@ -154,7 +154,7 @@ bool US_Hydrodyn_Saxs::compute_scale_excl_vol()
                qApp->processEvents();
                if ( stopFlag ) 
                {
-                  editor->append(tr("Terminated by user request.\n"));
+                  editor->append(us_tr("Terminated by user request.\n"));
                   progress_saxs->reset();
                   lbl_core_progress->setText("");
                   pb_plot_saxs_sans->setEnabled(true);
@@ -177,7 +177,7 @@ bool US_Hydrodyn_Saxs::compute_scale_excl_vol()
                qApp->processEvents();
                if ( stopFlag ) 
                {
-                  editor->append(tr("Terminated by user request.\n"));
+                  editor->append(us_tr("Terminated by user request.\n"));
                   progress_saxs->reset();
                   lbl_core_progress->setText("");
                   pb_plot_saxs_sans->setEnabled(true);
@@ -206,7 +206,7 @@ bool US_Hydrodyn_Saxs::compute_scale_excl_vol()
                qApp->processEvents();
                if ( stopFlag ) 
                {
-                  editor->append(tr("Terminated by user request.\n"));
+                  editor->append(us_tr("Terminated by user request.\n"));
                   progress_saxs->reset();
                   lbl_core_progress->setText("");
                   pb_plot_saxs_sans->setEnabled(true);
@@ -265,7 +265,7 @@ bool US_Hydrodyn_Saxs::compute_scale_excl_vol()
       our_saxs_options->scale_excl_vol = 1e0;
    }
 
-   editor_msg( "blue", QString( tr( "Scaling excluded volume to match target (%1), default scattering center sum without WAT %2, total %3, new scaler = %4" ) )
+   editor_msg( "blue", QString( us_tr( "Scaling excluded volume to match target (%1), default scattering center sum without WAT %2, total %3, new scaler = %4" ) )
                .arg( our_saxs_options->iq_target_ev )
                .arg( tot_excl_vol_noh )
                .arg( tot_excl_vol )
@@ -310,7 +310,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
       qApp->processEvents();
       if ( stopFlag ) 
       {
-         editor->append(tr("Terminated by user request.\n"));
+         editor->append(us_tr("Terminated by user request.\n"));
          progress_saxs->reset();
          lbl_core_progress->setText("");
          pb_plot_saxs_sans->setEnabled(true);
@@ -360,7 +360,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
                qApp->processEvents();
                if ( stopFlag ) 
                {
-                  editor->append(tr("Terminated by user request.\n"));
+                  editor->append(us_tr("Terminated by user request.\n"));
                   progress_saxs->reset();
                   lbl_core_progress->setText("");
                   pb_plot_saxs_sans->setEnabled(true);
@@ -384,7 +384,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
                qApp->processEvents();
                if ( stopFlag ) 
                {
-                  editor->append(tr("Terminated by user request.\n"));
+                  editor->append(us_tr("Terminated by user request.\n"));
                   progress_saxs->reset();
                   lbl_core_progress->setText("");
                   pb_plot_saxs_sans->setEnabled(true);
@@ -413,7 +413,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
                qApp->processEvents();
                if ( stopFlag ) 
                {
-                  editor->append(tr("Terminated by user request.\n"));
+                  editor->append(us_tr("Terminated by user request.\n"));
                   progress_saxs->reset();
                   lbl_core_progress->setText("");
                   pb_plot_saxs_sans->setEnabled(true);
@@ -426,7 +426,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
             new_atom.saxs_name = hybrid_map[hybrid_name].saxs_name; 
             new_atom.hybrid_name = hybrid_name;
             new_atom.hydrogens = 0;
-            if ( count_hydrogens.search(hybrid_name) != -1 )
+            if ( count_hydrogens.indexIn(hybrid_name) != -1 )
             {
                new_atom.hydrogens = count_hydrogens.cap(1).toInt();
             }
@@ -487,7 +487,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
                qApp->processEvents();
                if ( stopFlag ) 
                {
-                  editor->append(tr("Terminated by user request.\n"));
+                  editor->append(us_tr("Terminated by user request.\n"));
                   progress_saxs->reset();
                   lbl_core_progress->setText("");
                   pb_plot_saxs_sans->setEnabled(true);
@@ -521,7 +521,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
 
       if ( atoms.size() == 1 )
       {
-         editor_msg( "dark blue", tr( "Notice: using full Debye since only 1 atom available" ) );
+         editor_msg( "dark blue", us_tr( "Notice: using full Debye since only 1 atom available" ) );
          return calc_saxs_iq_native_debye();
       }
       
@@ -536,13 +536,13 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
          QString("_%1").arg( model_vector[ current_model ].model_id ) + 
          ".atoms";
 
-      FILE *fsaxs_atoms = fopen(fsaxs_atoms_name, "w");
+      FILE *fsaxs_atoms = us_fopen(fsaxs_atoms_name, "w");
       if ( fsaxs_atoms ) 
       {
          for ( unsigned int i = 0; i < atoms.size(); i++ )
          {
             fprintf(fsaxs_atoms, "%s %.3f %.3f %.3f %.2f\n"
-                    , atoms[i].saxs_name.ascii()
+                    , atoms[i].saxs_name.toAscii().data()
                     , atoms[i].pos[0]
                     , atoms[i].pos[1]
                     , atoms[i].pos[2]
@@ -557,10 +557,10 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
          
       if ( our_saxs_options->iq_exact_q )
       {
-         editor_msg( "blue", QString( tr( "Using exact q" ) ) );
+         editor_msg( "blue", QString( us_tr( "Using exact q" ) ) );
          if ( !exact_q.size() )
          {
-            editor_msg( "dark red", QString( tr( "Notice: exact q is empty, computing based upon current q range " ) ) );
+            editor_msg( "dark red", QString( us_tr( "Notice: exact q is empty, computing based upon current q range " ) ) );
             exact_q.resize( q_points );
             for ( unsigned int j = 0; j < q_points; j++ )
             {
@@ -581,7 +581,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
       qApp->processEvents();
       if ( stopFlag ) 
       {
-         editor->append(tr("Terminated by user request.\n"));
+         editor->append(us_tr("Terminated by user request.\n"));
          progress_saxs->reset();
          lbl_core_progress->setText("");
          pb_plot_saxs_sans->setEnabled(true);
@@ -738,7 +738,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
       contrib_file = ((US_Hydrodyn *)us_hydrodyn)->pdb_file;
       // cout << "contrib_file " << contrib_file << endl;
       
-      progress_saxs->setTotalSteps((int)(as1 * 1.15));
+      progress_saxs->setMaximum((int)(as1 * 1.15));
       if ( our_saxs_options->saxs_iq_native_fast_compute_pr )
       {
          pb_pr_contrib->setEnabled(false);
@@ -752,11 +752,11 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
                // QString lcp = QString("Atom %1 of %2").arg(i+1).arg(as);
                // cout << lcp << endl;
                // lbl_core_progress->setText(lcp);
-               progress_saxs->setProgress(i+1);
+               progress_saxs->setValue(i+1);
                qApp->processEvents();
                if ( stopFlag ) 
                {
-                  editor->append(tr("Terminated by user request.\n"));
+                  editor->append(us_tr("Terminated by user request.\n"));
                   progress_saxs->reset();
                   lbl_core_progress->setText("");
                   pb_plot_saxs_sans->setEnabled(true);
@@ -820,11 +820,11 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
                // QString lcp = QString("Atom %1 of %2").arg(i+1).arg(as);
                // cout << lcp << endl;
                // lbl_core_progress->setText(lcp);
-               progress_saxs->setProgress(i+1);
+               progress_saxs->setValue(i+1);
                qApp->processEvents();
                if ( stopFlag ) 
                {
-                  editor->append(tr("Terminated by user request.\n"));
+                  editor->append(us_tr("Terminated by user request.\n"));
                   progress_saxs->reset();
                   lbl_core_progress->setText("");
                   pb_plot_saxs_sans->setEnabled(true);
@@ -886,11 +886,11 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
             // QString lcp = QString("Atom %1 of %2").arg(i+1).arg(as);
             // cout << lcp << endl;
             // lbl_core_progress->setText(lcp);
-            progress_saxs->setProgress(i+1);
+            progress_saxs->setValue(i+1);
             qApp->processEvents();
             if ( stopFlag ) 
             {
-               editor->append(tr("Terminated by user request.\n"));
+               editor->append(us_tr("Terminated by user request.\n"));
                progress_saxs->reset();
                lbl_core_progress->setText("");
                pb_plot_saxs_sans->setEnabled(true);
@@ -955,14 +955,14 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
       // vector < float > save_hist = hist;
       // hist[0] = 0.0;
 
-      editor->append(QString(tr("Total excluded volume %1\n")).arg(tot_excl_vol));
-      editor->append(QString(tr("Average electron density %1\n")).arg(total_e / tot_excl_vol, 4));
+      editor->append(QString(us_tr("Total excluded volume %1\n")).arg(tot_excl_vol));
+      editor->append(QString(us_tr("Average electron density %1\n")).arg(total_e / tot_excl_vol, 4));
       if ( tot_excl_vol_noh != tot_excl_vol ||
            total_e_noh      != total_e )
       {
-         editor->append(QString(tr("Total unhydrated excluded volume %1\n")).arg(tot_excl_vol_noh));
-         editor->append(QString(tr("Average unhydrated electron density %1\n")).arg(total_e_noh / tot_excl_vol_noh));
-         editor->append(QString(tr("Electron density of hydration %1\n")).arg((total_e - total_e_noh) / (tot_excl_vol - tot_excl_vol_noh)));
+         editor->append(QString(us_tr("Total unhydrated excluded volume %1\n")).arg(tot_excl_vol_noh));
+         editor->append(QString(us_tr("Average unhydrated electron density %1\n")).arg(total_e_noh / tot_excl_vol_noh));
+         editor->append(QString(us_tr("Electron density of hydration %1\n")).arg((total_e - total_e_noh) / (tot_excl_vol - tot_excl_vol_noh)));
       }
 
       QString name = 
@@ -993,10 +993,10 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
             
             if ( ok_to_write )
             {
-               FILE *fpr = fopen(fpr_name, "w");
+               FILE *fpr = us_fopen(fpr_name, "w");
                if ( fpr ) 
                {
-                  editor->append(tr("P(r) curve file: ") + fpr_name + tr(" created.\n"));
+                  editor->append(us_tr("P(r) curve file: ") + fpr_name + us_tr(" created.\n"));
                   ((US_Hydrodyn *)us_hydrodyn)->last_saxs_r.clear();
                   ((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr.clear();
                   ((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr_norm.clear();
@@ -1022,15 +1022,15 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
                      QString("")
                      .sprintf(
                               "SOMO p(r) vs r data generated from %s by US_SOMO %s %s bin size %f mw %.2f Daltons area %.2f\n"
-                              , model_filename.ascii()
-                              , US_Version.ascii()
+                              , model_filename.toAscii().data()
+                              , US_Version.toAscii().data()
                               , REVISION
                               , delta
-                              , get_mw(te_filename2->text(), false)
+, get_mw(te_filename2->text(), false)
                               , compute_pr_area(pr, r)
                               );
                   fprintf(fpr, "%s",
-                          ((US_Hydrodyn *)us_hydrodyn)->last_saxs_header.ascii() );
+                          ((US_Hydrodyn *)us_hydrodyn)->last_saxs_header.toAscii().data() );
                   fprintf(fpr, "r\tp(r)\tnorm. p(r)\n");
                   for ( unsigned int i = 0; i < hist_pr.size(); i++ )
                   {
@@ -1048,12 +1048,16 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
 #if defined(PR_DEBUG)
                   cout << "can't create " << fpr_name << endl;
 #endif
-                  editor->append(tr("WARNING: Could not create PR curve file: ") + fpr_name + "\n");
-                  QMessageBox mb(tr("UltraScan Warning"),
-                                 tr("The output file ") + fpr_name + tr(" could not be created."), 
-                                 QMessageBox::Critical,
-                                 Qt::NoButton, Qt::NoButton, Qt::NoButton, 0, 0, 1);
-                  mb.exec();
+                  editor->append(us_tr("WARNING: Could not create PR curve file: ") + fpr_name + "\n");
+                  // QMessageBox mb(us_tr("UltraScan Warning"),
+                  //                us_tr("The output file ") + fpr_name + us_tr(" could not be created."), 
+                  //                QMessageBox::Critical,
+                  //                QMessageBox::NoButton, QMessageBox::NoButton, QMessageBox::NoButton, 0, 0, 1);
+                  // mb.exec();
+                  QMessageBox::critical( this,
+                                         us_tr("UltraScan Warning"),
+                                         us_tr("The output file ") + fpr_name + us_tr(" could not be created."), 
+                                         QMessageBox::NoButton, QMessageBox::NoButton, QMessageBox::NoButton );
                }
             }
          } else {
@@ -1082,11 +1086,11 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
                QString("")
                .sprintf(
                         "SOMO p(r) vs r data generated from %s by US_SOMO %s %s bin size %f mw %.2f Daltons area %.2f\n"
-                        , model_filename.ascii()
-                        , US_Version.ascii()
+                        , model_filename.toAscii().data()
+                        , US_Version.toAscii().data()
                         , REVISION
                         , delta
-                        , get_mw(te_filename2->text(), false)
+, get_mw(te_filename2->text(), false)
                         , compute_pr_area(pr, r)
                         );
             for ( unsigned int i = 0; i < hist_pr.size(); i++ )
@@ -1122,7 +1126,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
          
       } // compute_pr
 
-      progress_saxs->setProgress( 1, 2 );
+      progress_saxs->setValue( 1 ); progress_saxs->setMaximum( 2 );
 
       // hist = save_hist;
 
@@ -1170,9 +1174,9 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
       {
          if ( model_vector[ current_model ].volume == 0.0 )
          {
-            editor_msg("red", tr( "Volume is zero so NOT multiplying I(q) by atomic volume\n" ) );
+            editor_msg("red", us_tr( "Volume is zero so NOT multiplying I(q) by atomic volume\n" ) );
          } else {
-            editor_msg("blue", QString( tr( "Multiplying I(q) by atomic volume of %1\n" ) )
+            editor_msg("blue", QString( us_tr( "Multiplying I(q) by atomic volume of %1\n" ) )
                        .arg( model_vector[ current_model ].volume ) );
             for ( unsigned int i = 0; i < I.size(); i++ )
             {
@@ -1180,7 +1184,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
             }
             if ( is_only_one_swh && ((US_Hydrodyn *)us_hydrodyn)->multiply_iq_by_atomic_volume_last_water_multiplier > 0 )
             {
-               editor_msg("blue", QString( tr( "Multiplying I(q) by water multiplier of %1\n" ) )
+               editor_msg("blue", QString( us_tr( "Multiplying I(q) by water multiplier of %1\n" ) )
                           .arg( ((US_Hydrodyn *)us_hydrodyn)->multiply_iq_by_atomic_volume_last_water_multiplier ) );
                for ( unsigned int i = 0; i < I.size(); i++ )
                {
@@ -1327,10 +1331,10 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
             
 #if defined(OLD_WAY)
             switch( QMessageBox::information( this, 
-                                              tr("Overwrite file:") + "SAXS I(q) vs. q" + tr("output file"),
-                                              tr("The file named \"") + 
+                                              us_tr("Overwrite file:") + "SAXS I(q) vs. q" + us_tr("output file"),
+                                              us_tr("The file named \"") + 
                                               saxs_filestring() +
-                                              + tr("\" will be overwriten"),
+                                              + us_tr("\" will be overwriten"),
                                               "&Ok",  "&Cancel", 0,
                                               0,      // Enter == button 0
                                               1 ) ) { // Escape == button 1
@@ -1346,13 +1350,13 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
          
          if ( ok_to_write )
          {
-            FILE *fsaxs = fopen(fsaxs_name, "w");
+            FILE *fsaxs = us_fopen(fsaxs_name, "w");
             if ( fsaxs ) 
             {
 #if defined(SAXS_DEBUG)
                cout << "writing " << fsaxs_name << endl;
 #endif
-               editor->append(tr("SAXS curve file: ") + fsaxs_name + tr(" created.\n"));
+               editor->append(us_tr("SAXS curve file: ") + fsaxs_name + us_tr(" created.\n"));
                ((US_Hydrodyn *)us_hydrodyn)->last_saxs_r.clear();
                ((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr.clear();
                ((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr_norm.clear();
@@ -1364,15 +1368,15 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
                   QString("")
                   .sprintf(
                            "Simulated SAXS data generated from %s by US_SOMO %s %s q(%f:%f) step %f\n"
-                           , model_filename.ascii()
-                           , US_Version.ascii()
+                           , model_filename.toAscii().data()
+                           , US_Version.toAscii().data()
                            , REVISION
                            , our_saxs_options->start_q
                            , our_saxs_options->end_q
                            , our_saxs_options->delta_q
                            );
                fprintf(fsaxs, "%s",
-                       ((US_Hydrodyn *)us_hydrodyn)->last_saxs_header.ascii() );
+                       ((US_Hydrodyn *)us_hydrodyn)->last_saxs_header.toAscii().data() );
                for ( unsigned int i = 0; i < q.size(); i++ )
                {
                   fprintf(fsaxs, "%.6e\t%.6e\n", q[i], I[i]);
@@ -1386,12 +1390,16 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
 #if defined(SAXS_DEBUG)
                cout << "can't create " << fsaxs_name << endl;
 #endif
-               editor->append(tr("WARNING: Could not create SAXS curve file: ") + fsaxs_name + "\n");
-               QMessageBox mb(tr("UltraScan Warning"),
-                              tr("The output file ") + fsaxs_name + tr(" could not be created."), 
-                              QMessageBox::Critical,
-                              Qt::NoButton, Qt::NoButton, Qt::NoButton, 0, 0, 1);
-               mb.exec();
+               editor->append(us_tr("WARNING: Could not create SAXS curve file: ") + fsaxs_name + "\n");
+               // QMessageBox mb(us_tr("UltraScan Warning"),
+               //                us_tr("The output file ") + fsaxs_name + us_tr(" could not be created."), 
+               //                QMessageBox::Critical,
+               //                QMessageBox::NoButton, QMessageBox::NoButton, QMessageBox::NoButton, 0, 0, 1);
+               // mb.exec();
+               QMessageBox::critical( this,
+                                      us_tr("UltraScan Warning"),
+                                      us_tr("The output file ") + fsaxs_name + us_tr(" could not be created."), 
+                                      QMessageBox::NoButton, QMessageBox::NoButton, QMessageBox::NoButton );
             }
          }
       } else {
@@ -1406,8 +1414,8 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
             QString("")
             .sprintf(
                      "Simulated SAXS data generated from %s by US_SOMO %s %s q(%f:%f) step %f\n"
-                     , model_filename.ascii()
-                     , US_Version.ascii()
+                     , model_filename.toAscii().data()
+                     , US_Version.toAscii().data()
                      , REVISION
                      , our_saxs_options->start_q
                      , our_saxs_options->end_q
@@ -1474,7 +1482,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye()
       qApp->processEvents();
       if ( stopFlag ) 
       {
-         editor->append(tr("Terminated by user request.\n"));
+         editor->append(us_tr("Terminated by user request.\n"));
          progress_saxs->reset();
          lbl_core_progress->setText("");
          pb_plot_saxs_sans->setEnabled(true);
@@ -1524,7 +1532,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye()
                qApp->processEvents();
                if ( stopFlag ) 
                {
-                  editor->append(tr("Terminated by user request.\n"));
+                  editor->append(us_tr("Terminated by user request.\n"));
                   progress_saxs->reset();
                   lbl_core_progress->setText("");
                   pb_plot_saxs_sans->setEnabled(true);
@@ -1548,7 +1556,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye()
                qApp->processEvents();
                if ( stopFlag ) 
                {
-                  editor->append(tr("Terminated by user request.\n"));
+                  editor->append(us_tr("Terminated by user request.\n"));
                   progress_saxs->reset();
                   lbl_core_progress->setText("");
                   pb_plot_saxs_sans->setEnabled(true);
@@ -1577,7 +1585,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye()
                qApp->processEvents();
                if ( stopFlag ) 
                {
-                  editor->append(tr("Terminated by user request.\n"));
+                  editor->append(us_tr("Terminated by user request.\n"));
                   progress_saxs->reset();
                   lbl_core_progress->setText("");
                   pb_plot_saxs_sans->setEnabled(true);
@@ -1646,7 +1654,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye()
             new_atom.hybrid_name = hybrid_name;
             new_atom.hydrogens = 0;
             if ( !our_saxs_options->iqq_use_atomic_ff &&
-                 count_hydrogens.search(hybrid_name) != -1 )
+                 count_hydrogens.indexIn(hybrid_name) != -1 )
             {
                new_atom.hydrogens = count_hydrogens.cap(1).toInt();
             }
@@ -1670,7 +1678,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye()
                qApp->processEvents();
                if ( stopFlag ) 
                {
-                  editor->append(tr("Terminated by user request.\n"));
+                  editor->append(us_tr("Terminated by user request.\n"));
                   progress_saxs->reset();
                   lbl_core_progress->setText("");
                   pb_plot_saxs_sans->setEnabled(true);
@@ -1710,13 +1718,13 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye()
          QString("_%1").arg( model_vector[ current_model ].model_id ) + 
          ".atoms";
 
-      FILE *fsaxs_atoms = fopen(fsaxs_atoms_name, "w");
+      FILE *fsaxs_atoms = us_fopen(fsaxs_atoms_name, "w");
       if ( fsaxs_atoms ) 
       {
          for ( unsigned int i = 0; i < atoms.size(); i++ )
          {
             fprintf(fsaxs_atoms, "%s %.3f %.3f %.3f %.2f\n"
-                    , atoms[i].saxs_name.ascii()
+                    , atoms[i].saxs_name.toAscii().data()
                     , atoms[i].pos[0]
                     , atoms[i].pos[1]
                     , atoms[i].pos[2]
@@ -1731,10 +1739,10 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye()
 
       if ( our_saxs_options->iq_exact_q )
       {
-         editor_msg( "blue", QString( tr( "Using exact q" ) ) );
+         editor_msg( "blue", QString( us_tr( "Using exact q" ) ) );
          if ( !exact_q.size() )
          {
-            editor_msg( "dark red", QString( tr( "Notice: exact q is empty, computing based upon current q range " ) ) );
+            editor_msg( "dark red", QString( us_tr( "Notice: exact q is empty, computing based upon current q range " ) ) );
             exact_q.resize( q_points );
             for ( unsigned int j = 0; j < q_points; j++ )
             {
@@ -1755,7 +1763,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye()
       qApp->processEvents();
       if ( stopFlag ) 
       {
-         editor->append(tr("Terminated by user request.\n"));
+         editor->append(us_tr("Terminated by user request.\n"));
          progress_saxs->reset();
          lbl_core_progress->setText("");
          pb_plot_saxs_sans->setEnabled(true);
@@ -2066,10 +2074,10 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye()
          QFile f( ((US_Hydrodyn *)us_hydrodyn)->somo_dir + SLASH + "tmp" + SLASH + "last_iqq.csv" );
          if ( f.open( QIODevice::WriteOnly ) )
          {
-            Q3TextStream t( &f );
+            QTextStream t( &f );
             t << out;
             f.close();
-            editor->append(QString("created %1\n").arg(f.name()));
+            editor->append(QString("created %1\n").arg(f.fileName()));
          }
       }            
 
@@ -2077,7 +2085,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye()
       qApp->processEvents();
       if ( stopFlag ) 
       {
-         editor->append(tr("Terminated by user request.\n"));
+         editor->append(us_tr("Terminated by user request.\n"));
          progress_saxs->reset();
          lbl_core_progress->setText("");
          pb_plot_saxs_sans->setEnabled(true);
@@ -2101,17 +2109,17 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye()
       double rik; // distance from atom i to k 
       double qrik; // q * rik
       double sqrikd; // sin * q * rik / qrik
-      progress_saxs->setTotalSteps((int)(as1 * 1.15));
+      progress_saxs->setMaximum((int)(as1 * 1.15));
       for ( unsigned int i = 0; i < as1; i++ )
       {
          // QString lcp = QString("Atom %1 of %2").arg(i+1).arg(as);
          // cout << lcp << endl;
          // lbl_core_progress->setText(lcp);
-         progress_saxs->setProgress(i+1);
+         progress_saxs->setValue(i+1);
          qApp->processEvents();
          if ( stopFlag ) 
          {
-            editor->append(tr("Terminated by user request.\n"));
+            editor->append(us_tr("Terminated by user request.\n"));
             progress_saxs->reset();
             lbl_core_progress->setText("");
             pb_plot_saxs_sans->setEnabled(true);
@@ -2208,9 +2216,9 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye()
       {
          if ( model_vector[ current_model ].volume == 0.0 )
          {
-            editor_msg("red", tr( "Volume is zero so NOT multiplying I(q) by atomic volume\n" ) );
+            editor_msg("red", us_tr( "Volume is zero so NOT multiplying I(q) by atomic volume\n" ) );
          } else {
-            editor_msg("blue", QString( tr( "Multiplying I(q) by atomic volume of %1\n" ) )
+            editor_msg("blue", QString( us_tr( "Multiplying I(q) by atomic volume of %1\n" ) )
                        .arg( model_vector[ current_model ].volume ) );
             for ( unsigned int i = 0; i < I.size(); i++ )
             {
@@ -2218,7 +2226,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye()
             }
             if ( is_only_one_swh && ((US_Hydrodyn *)us_hydrodyn)->multiply_iq_by_atomic_volume_last_water_multiplier > 0 )
             {
-               editor_msg("blue", QString( tr( "Multiplying I(q) by water multiplier of %1\n" ) )
+               editor_msg("blue", QString( us_tr( "Multiplying I(q) by water multiplier of %1\n" ) )
                           .arg( ((US_Hydrodyn *)us_hydrodyn)->multiply_iq_by_atomic_volume_last_water_multiplier ) );
                for ( unsigned int i = 0; i < I.size(); i++ )
                {
@@ -2249,14 +2257,14 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye()
          rescale_iqq_curve( scaling_target, q, I );
       }
 
-      editor->append(QString(tr("Total excluded volume %1\n")).arg(tot_excl_vol));
-      editor->append(QString(tr("Average electron density %1\n")).arg(total_e / tot_excl_vol, 4));
+      editor->append(QString(us_tr("Total excluded volume %1\n")).arg(tot_excl_vol));
+      editor->append(QString(us_tr("Average electron density %1\n")).arg(total_e / tot_excl_vol, 4));
       if ( tot_excl_vol_noh != tot_excl_vol ||
            total_e_noh      != total_e )
       {
-         editor->append(QString(tr("Total unhydrated excluded volume %1\n")).arg(tot_excl_vol_noh));
-         editor->append(QString(tr("Average unhydrated electron density %1\n")).arg(total_e_noh / tot_excl_vol_noh));
-         editor->append(QString(tr("Electron density of hydration %1\n")).arg((total_e - total_e_noh) / (tot_excl_vol - tot_excl_vol_noh)));
+         editor->append(QString(us_tr("Total unhydrated excluded volume %1\n")).arg(tot_excl_vol_noh));
+         editor->append(QString(us_tr("Average unhydrated electron density %1\n")).arg(total_e_noh / tot_excl_vol_noh));
+         editor->append(QString(us_tr("Electron density of hydration %1\n")).arg((total_e - total_e_noh) / (tot_excl_vol - tot_excl_vol_noh)));
       }
 
       QString name = 
@@ -2367,10 +2375,10 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye()
             
 #if defined(OLD_WAY)
             switch( QMessageBox::information( this, 
-                                              tr("Overwrite file:") + "SAXS I(q) vs. q" + tr("output file"),
-                                              tr("The file named \"") + 
+                                              us_tr("Overwrite file:") + "SAXS I(q) vs. q" + us_tr("output file"),
+                                              us_tr("The file named \"") + 
                                               saxs_filestring() +
-                                              + tr("\" will be overwriten"),
+                                              + us_tr("\" will be overwriten"),
                                               "&Ok",  "&Cancel", 0,
                                               0,      // Enter == button 0
                                               1 ) ) { // Escape == button 1
@@ -2386,13 +2394,13 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye()
          
          if ( ok_to_write )
          {
-            FILE *fsaxs = fopen(fsaxs_name, "w");
+            FILE *fsaxs = us_fopen(fsaxs_name, "w");
             if ( fsaxs ) 
             {
 #if defined(SAXS_DEBUG)
                cout << "writing " << fsaxs_name << endl;
 #endif
-               editor->append(tr("SAXS curve file: ") + fsaxs_name + tr(" created.\n"));
+               editor->append(us_tr("SAXS curve file: ") + fsaxs_name + us_tr(" created.\n"));
                ((US_Hydrodyn *)us_hydrodyn)->last_saxs_r.clear();
                ((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr.clear();
                ((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr_norm.clear();
@@ -2404,15 +2412,15 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye()
                   QString("")
                   .sprintf(
                            "Simulated SAXS data generated from %s by US_SOMO %s %s q(%f:%f) step %f\n"
-                           , model_filename.ascii()
-                           , US_Version.ascii()
+                           , model_filename.toAscii().data()
+                           , US_Version.toAscii().data()
                            , REVISION
                            , our_saxs_options->start_q
                            , our_saxs_options->end_q
                            , our_saxs_options->delta_q
                            );
                fprintf(fsaxs, "%s",
-                       ((US_Hydrodyn *)us_hydrodyn)->last_saxs_header.ascii() );
+                       ((US_Hydrodyn *)us_hydrodyn)->last_saxs_header.toAscii().data() );
                for ( unsigned int i = 0; i < q.size(); i++ )
                {
                   fprintf(fsaxs, "%.6e\t%.6e\t%.6e\t%.6e\n", q[i], I[i], Ia[i], Ic[i]);
@@ -2428,12 +2436,16 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye()
 #if defined(SAXS_DEBUG)
                cout << "can't create " << fsaxs_name << endl;
 #endif
-               editor->append(tr("WARNING: Could not create SAXS curve file: ") + fsaxs_name + "\n");
-               QMessageBox mb(tr("UltraScan Warning"),
-                              tr("The output file ") + fsaxs_name + tr(" could not be created."), 
-                              QMessageBox::Critical,
-                              Qt::NoButton, Qt::NoButton, Qt::NoButton, 0, 0, 1);
-               mb.exec();
+               editor->append(us_tr("WARNING: Could not create SAXS curve file: ") + fsaxs_name + "\n");
+               // QMessageBox mb(us_tr("UltraScan Warning"),
+               //                us_tr("The output file ") + fsaxs_name + us_tr(" could not be created."), 
+               //                QMessageBox::Critical,
+               //                QMessageBox::NoButton, QMessageBox::NoButton, QMessageBox::NoButton, 0, 0, 1);
+               // mb.exec();
+               QMessageBox::critical( this,
+                                      us_tr("UltraScan Warning"),
+                                      us_tr("The output file ") + fsaxs_name + us_tr(" could not be created."), 
+                                      QMessageBox::NoButton, QMessageBox::NoButton, QMessageBox::NoButton );
             }
          }
       } else {
@@ -2448,8 +2460,8 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye()
             QString("")
             .sprintf(
                      "Simulated SAXS data generated from %s by US_SOMO %s %s q(%f:%f) step %f\n"
-                     , model_filename.ascii()
-                     , US_Version.ascii()
+                     , model_filename.toAscii().data()
+                     , US_Version.toAscii().data()
                      , REVISION
                      , our_saxs_options->start_q
                      , our_saxs_options->end_q
@@ -2502,7 +2514,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2()
       qApp->processEvents();
       if ( stopFlag ) 
       {
-         editor->append(tr("Terminated by user request.\n"));
+         editor->append(us_tr("Terminated by user request.\n"));
          progress_saxs->reset();
          lbl_core_progress->setText("");
          pb_plot_saxs_sans->setEnabled(true);
@@ -2552,7 +2564,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2()
                qApp->processEvents();
                if ( stopFlag ) 
                {
-                  editor->append(tr("Terminated by user request.\n"));
+                  editor->append(us_tr("Terminated by user request.\n"));
                   progress_saxs->reset();
                   lbl_core_progress->setText("");
                   pb_plot_saxs_sans->setEnabled(true);
@@ -2576,7 +2588,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2()
                qApp->processEvents();
                if ( stopFlag ) 
                {
-                  editor->append(tr("Terminated by user request.\n"));
+                  editor->append(us_tr("Terminated by user request.\n"));
                   progress_saxs->reset();
                   lbl_core_progress->setText("");
                   pb_plot_saxs_sans->setEnabled(true);
@@ -2605,7 +2617,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2()
                qApp->processEvents();
                if ( stopFlag ) 
                {
-                  editor->append(tr("Terminated by user request.\n"));
+                  editor->append(us_tr("Terminated by user request.\n"));
                   progress_saxs->reset();
                   lbl_core_progress->setText("");
                   pb_plot_saxs_sans->setEnabled(true);
@@ -2653,7 +2665,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2()
             new_atom.saxs_name = hybrid_map[hybrid_name].saxs_name; 
             new_atom.hybrid_name = hybrid_name;
             new_atom.hydrogens = 0;
-            if ( count_hydrogens.search(hybrid_name) != -1 )
+            if ( count_hydrogens.indexIn(hybrid_name) != -1 )
             {
                new_atom.hydrogens = count_hydrogens.cap(1).toInt();
             }
@@ -2677,7 +2689,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2()
                qApp->processEvents();
                if ( stopFlag ) 
                {
-                  editor->append(tr("Terminated by user request.\n"));
+                  editor->append(us_tr("Terminated by user request.\n"));
                   progress_saxs->reset();
                   lbl_core_progress->setText("");
                   pb_plot_saxs_sans->setEnabled(true);
@@ -2708,7 +2720,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2()
 
       if ( atoms.size() == 1 )
       {
-         editor_msg( "dark blue", tr( "Notice: using full Debye since only 1 atom available" ) );
+         editor_msg( "dark blue", us_tr( "Notice: using full Debye since only 1 atom available" ) );
          return calc_saxs_iq_native_debye();
       }
 
@@ -2723,13 +2735,13 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2()
          QString("_%1").arg(model_vector[ current_model ].model_id ) + 
          ".atoms";
 
-      FILE *fsaxs_atoms = fopen(fsaxs_atoms_name, "w");
+      FILE *fsaxs_atoms = us_fopen(fsaxs_atoms_name, "w");
       if ( fsaxs_atoms ) 
       {
          for ( unsigned int i = 0; i < atoms.size(); i++ )
          {
             fprintf(fsaxs_atoms, "%s %.3f %.3f %.3f %.2f\n"
-                    , atoms[i].saxs_name.ascii()
+                    , atoms[i].saxs_name.toAscii().data()
                     , atoms[i].pos[0]
                     , atoms[i].pos[1]
                     , atoms[i].pos[2]
@@ -2744,10 +2756,10 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2()
 
       if ( our_saxs_options->iq_exact_q )
       {
-         editor_msg( "blue", QString( tr( "Using exact q" ) ) );
+         editor_msg( "blue", QString( us_tr( "Using exact q" ) ) );
          if ( !exact_q.size() )
          {
-            editor_msg( "dark red", QString( tr( "Notice: exact q is empty, computing based upon current q range " ) ) );
+            editor_msg( "dark red", QString( us_tr( "Notice: exact q is empty, computing based upon current q range " ) ) );
             exact_q.resize( q_points );
             for ( unsigned int j = 0; j < q_points; j++ )
             {
@@ -2768,7 +2780,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2()
       qApp->processEvents();
       if ( stopFlag ) 
       {
-         editor->append(tr("Terminated by user request.\n"));
+         editor->append(us_tr("Terminated by user request.\n"));
          progress_saxs->reset();
          lbl_core_progress->setText("");
          pb_plot_saxs_sans->setEnabled(true);
@@ -2956,7 +2968,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2()
       qApp->processEvents();
       if ( stopFlag ) 
       {
-         editor->append(tr("Terminated by user request.\n"));
+         editor->append(us_tr("Terminated by user request.\n"));
          progress_saxs->reset();
          lbl_core_progress->setText("");
          pb_plot_saxs_sans->setEnabled(true);
@@ -2975,7 +2987,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2()
       unsigned int pos;
       vector < float > hist;
       
-      progress_saxs->setTotalSteps((int)(as * 2 + 2));
+      progress_saxs->setMaximum((int)(as * 2 + 2));
 
       // vector < vector < double > > rik_array(as);
 
@@ -2989,11 +3001,11 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2()
          // QString lcp = QString("Atom %1 of %2").arg(i+1).arg(as);
          // cout << lcp << endl;
          // lbl_core_progress->setText(lcp);
-         progress_saxs->setProgress(i+1);
+         progress_saxs->setValue(i+1);
          qApp->processEvents();
          if ( stopFlag ) 
          {
-            editor->append(tr("Terminated by user request.\n"));
+            editor->append(us_tr("Terminated by user request.\n"));
             progress_saxs->reset();
             lbl_core_progress->setText("");
             pb_plot_saxs_sans->setEnabled(true);
@@ -3134,11 +3146,11 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2()
          // QString lcp = QString("Atom %1 of %2").arg(i+1).arg(as);
          // cout << lcp << endl;
          // lbl_core_progress->setText(lcp);
-         progress_saxs->setProgress(as + i + 1);
+         progress_saxs->setValue(as + i + 1);
          qApp->processEvents();
          if ( stopFlag ) 
          {
-            editor->append(tr("Terminated by user request.\n"));
+            editor->append(us_tr("Terminated by user request.\n"));
             progress_saxs->reset();
             lbl_core_progress->setText("");
             pb_plot_saxs_sans->setEnabled(true);
@@ -3227,9 +3239,9 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2()
       {
          if ( model_vector[ current_model ].volume == 0.0 )
          {
-            editor_msg("red", tr( "Volume is zero so NOT multiplying I(q) by atomic volume\n" ) );
+            editor_msg("red", us_tr( "Volume is zero so NOT multiplying I(q) by atomic volume\n" ) );
          } else {
-            editor_msg("blue", QString( tr( "Multiplying I(q) by atomic volume of %1\n" ) )
+            editor_msg("blue", QString( us_tr( "Multiplying I(q) by atomic volume of %1\n" ) )
                        .arg( model_vector[ current_model ].volume ) );
             for ( unsigned int i = 0; i < I.size(); i++ )
             {
@@ -3237,7 +3249,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2()
             }
             if ( is_only_one_swh && ((US_Hydrodyn *)us_hydrodyn)->multiply_iq_by_atomic_volume_last_water_multiplier > 0 )
             {
-               editor_msg("blue", QString( tr( "Multiplying I(q) by water multiplier of %1\n" ) )
+               editor_msg("blue", QString( us_tr( "Multiplying I(q) by water multiplier of %1\n" ) )
                           .arg( ((US_Hydrodyn *)us_hydrodyn)->multiply_iq_by_atomic_volume_last_water_multiplier ) );
                for ( unsigned int i = 0; i < I.size(); i++ )
                {
@@ -3268,14 +3280,14 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2()
       }
 
 
-      editor->append(QString(tr("Total excluded volume %1\n")).arg(tot_excl_vol));
-      editor->append(QString(tr("Average electron density %1\n")).arg(total_e / tot_excl_vol, 4));
+      editor->append(QString(us_tr("Total excluded volume %1\n")).arg(tot_excl_vol));
+      editor->append(QString(us_tr("Average electron density %1\n")).arg(total_e / tot_excl_vol, 4));
       if ( tot_excl_vol_noh != tot_excl_vol ||
            total_e_noh      != total_e )
       {
-         editor->append(QString(tr("Total unhydrated excluded volume %1\n")).arg(tot_excl_vol_noh));
-         editor->append(QString(tr("Average unhydrated electron density %1\n")).arg(total_e_noh / tot_excl_vol_noh));
-         editor->append(QString(tr("Electron density of hydration %1\n")).arg((total_e - total_e_noh) / (tot_excl_vol - tot_excl_vol_noh)));
+         editor->append(QString(us_tr("Total unhydrated excluded volume %1\n")).arg(tot_excl_vol_noh));
+         editor->append(QString(us_tr("Average unhydrated electron density %1\n")).arg(total_e_noh / tot_excl_vol_noh));
+         editor->append(QString(us_tr("Electron density of hydration %1\n")).arg((total_e - total_e_noh) / (tot_excl_vol - tot_excl_vol_noh)));
       }
 
       QString name = 
@@ -3385,10 +3397,10 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2()
             
 #if defined(OLD_WAY)
             switch( QMessageBox::information( this, 
-                                              tr("Overwrite file:") + "SAXS I(q) vs. q" + tr("output file"),
-                                              tr("The file named \"") + 
+                                              us_tr("Overwrite file:") + "SAXS I(q) vs. q" + us_tr("output file"),
+                                              us_tr("The file named \"") + 
                                               saxs_filestring() +
-                                              + tr("\" will be overwriten"),
+                                              + us_tr("\" will be overwriten"),
                                               "&Ok",  "&Cancel", 0,
                                               0,      // Enter == button 0
                                               1 ) ) { // Escape == button 1
@@ -3404,13 +3416,13 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2()
          
          if ( ok_to_write )
          {
-            FILE *fsaxs = fopen(fsaxs_name, "w");
+            FILE *fsaxs = us_fopen(fsaxs_name, "w");
             if ( fsaxs ) 
             {
 #if defined(SAXS_DEBUG)
                cout << "writing " << fsaxs_name << endl;
 #endif
-               editor->append(tr("SAXS curve file: ") + fsaxs_name + tr(" created.\n"));
+               editor->append(us_tr("SAXS curve file: ") + fsaxs_name + us_tr(" created.\n"));
                ((US_Hydrodyn *)us_hydrodyn)->last_saxs_r.clear();
                ((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr.clear();
                ((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr_norm.clear();
@@ -3422,15 +3434,15 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2()
                   QString("")
                   .sprintf(
                            "Simulated SAXS data generated from %s by US_SOMO %s %s q(%f:%f) step %f\n"
-                           , model_filename.ascii()
-                           , US_Version.ascii()
+                           , model_filename.toAscii().data()
+                           , US_Version.toAscii().data()
                            , REVISION
                            , our_saxs_options->start_q
                            , our_saxs_options->end_q
                            , our_saxs_options->delta_q
                            );
                fprintf(fsaxs, "%s",
-                       ((US_Hydrodyn *)us_hydrodyn)->last_saxs_header.ascii() );
+                       ((US_Hydrodyn *)us_hydrodyn)->last_saxs_header.toAscii().data() );
                for ( unsigned int i = 0; i < q.size(); i++ )
                {
                   fprintf(fsaxs, "%.6e\t%.6e\n", q[i], I[i]);
@@ -3444,12 +3456,16 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2()
 #if defined(SAXS_DEBUG)
                cout << "can't create " << fsaxs_name << endl;
 #endif
-               editor->append(tr("WARNING: Could not create SAXS curve file: ") + fsaxs_name + "\n");
-               QMessageBox mb(tr("UltraScan Warning"),
-                              tr("The output file ") + fsaxs_name + tr(" could not be created."), 
-                              QMessageBox::Critical,
-                              Qt::NoButton, Qt::NoButton, Qt::NoButton, 0, 0, 1);
-               mb.exec();
+               editor->append(us_tr("WARNING: Could not create SAXS curve file: ") + fsaxs_name + "\n");
+               // QMessageBox mb(us_tr("UltraScan Warning"),
+               //                us_tr("The output file ") + fsaxs_name + us_tr(" could not be created."), 
+               //                QMessageBox::Critical,
+               //                QMessageBox::NoButton, QMessageBox::NoButton, QMessageBox::NoButton, 0, 0, 1);
+               // mb.exec();
+               QMessageBox::critical( this,
+                                      us_tr("UltraScan Warning"),
+                                      us_tr("The output file ") + fsaxs_name + us_tr(" could not be created."), 
+                                      QMessageBox::NoButton, QMessageBox::NoButton, QMessageBox::NoButton );
             }
          }
       } else {
@@ -3464,8 +3480,8 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2()
             QString("")
             .sprintf(
                      "Simulated SAXS data generated from %s by US_SOMO %s %s q(%f:%f) step %f\n"
-                     , model_filename.ascii()
-                     , US_Version.ascii()
+                     , model_filename.toAscii().data()
+                     , US_Version.toAscii().data()
                      , REVISION
                      , our_saxs_options->start_q
                      , our_saxs_options->end_q
@@ -3485,7 +3501,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2()
 void US_Hydrodyn_Saxs::set_scaling_target( QString &scaling_target )
 {
    if ( !our_saxs_options->iqq_default_scaling_target.isEmpty() &&
-        qsl_plotted_iq_names.grep(QRegExp(QString("^%1$").arg(our_saxs_options->iqq_default_scaling_target))).size() )
+        qsl_plotted_iq_names.filter(QRegExp(QString("^%1$").arg(our_saxs_options->iqq_default_scaling_target))).size() )
    {
       scaling_target = our_saxs_options->iqq_default_scaling_target;
    } else {
@@ -3493,9 +3509,9 @@ void US_Hydrodyn_Saxs::set_scaling_target( QString &scaling_target )
            qsl_plotted_iq_names.size() )
       {
          bool ok;
-         scaling_target = QInputDialog::getItem(
-                                                tr("Scale I(q) Curve"),
-                                                tr("Select the target plotted data set for scaling the loaded data:\n"
+         scaling_target = US_Static::getItem(
+                                                us_tr("Scale I(q) Curve"),
+                                                us_tr("Select the target plotted data set for scaling the loaded data:\n"
                                                    "or Cancel of you do not wish to scale")
                                                 , 
                                                 qsl_plotted_iq_names, 
@@ -3553,7 +3569,7 @@ double US_Hydrodyn_Saxs::compute_ff(
                                                           ff,
                                                           errormsg ) )
          {
-            editor_msg( "red", QString( tr( "Warning: error applying natural spline to %1 at %2 <%3>" ) )
+            editor_msg( "red", QString( us_tr( "Warning: error applying natural spline to %1 at %2 <%3>" ) )
                         .arg( ffkey ) 
                         .arg( q ) 
                         .arg( errormsg ) );
@@ -3564,7 +3580,7 @@ double US_Hydrodyn_Saxs::compute_ff(
       } else {
          if ( !ff_sent_msg1.count( ffkey ) )
          {
-            editor_msg( "dark red", QString( tr( "Warning: key %1 not found in ff_table" ) ).arg( ffkey ) );
+            editor_msg( "dark red", QString( us_tr( "Warning: key %1 not found in ff_table" ) ).arg( ffkey ) );
             ff_sent_msg1[ ffkey ] = true;
             qApp->processEvents();
          }
@@ -3705,18 +3721,18 @@ bool US_Hydrodyn_Saxs::load_ff_table( QString filename )
        // return true;
     }
 
-   editor_msg( "blue", QString( tr( "Loading ff table %1" ) ).arg( filename ) );
+   editor_msg( "blue", QString( us_tr( "Loading ff table %1" ) ).arg( filename ) );
 
    QFile f( filename );
    if ( !f.exists() )
    {
-      editor_msg( "red", QString( tr( "Error: load ff table %1 does not exist" ) ).arg( filename ) );
+      editor_msg( "red", QString( us_tr( "Error: load ff table %1 does not exist" ) ).arg( filename ) );
       return false;
    }
 
    if ( !f.open( QIODevice::ReadOnly ) )
    {
-      editor_msg( "red", QString( tr( "Error: load ff table %1 can not be opened" ) ).arg( filename ) );
+      editor_msg( "red", QString( us_tr( "Error: load ff table %1 can not be opened" ) ).arg( filename ) );
       return false;
    }
 
@@ -3728,7 +3744,7 @@ bool US_Hydrodyn_Saxs::load_ff_table( QString filename )
    ff_y2   .clear();
    ff_ev   .clear();
 
-   Q3TextStream ts( &f );
+   QTextStream ts( &f );
    
    unsigned int line = 0;
 
@@ -3746,7 +3762,7 @@ bool US_Hydrodyn_Saxs::load_ff_table( QString filename )
          continue;
       }
 
-      QStringList qsl = QStringList::split( QRegExp( "\\s+" ), qs );
+      QStringList qsl = (qs ).split( QRegExp( "\\s+" ) , QString::SkipEmptyParts );
 
       // expect:
       //   residueatom (possibly multiple)
@@ -3772,7 +3788,7 @@ bool US_Hydrodyn_Saxs::load_ff_table( QString filename )
          }
          if ( qsl.count() )
          {
-            editor_msg( "red", QString( tr( "Error: load_ff line %1, residue/atoms not paired" ) ).arg( line ) );
+            editor_msg( "red", QString( us_tr( "Error: load_ff line %1, residue/atoms not paired" ) ).arg( line ) );
             return false;
          }
          continue;
@@ -3783,13 +3799,13 @@ bool US_Hydrodyn_Saxs::load_ff_table( QString filename )
          qsl.pop_front();
          if ( qsl.count() !=  1 )
          {
-            editor_msg( "red", QString( tr( "Error: load_ff line %1, excluded volume requires exactly one parameter" ) ).arg( line ) );
+            editor_msg( "red", QString( us_tr( "Error: load_ff line %1, excluded volume requires exactly one parameter" ) ).arg( line ) );
             return false;
          }
 
          if ( ff_ev.size() != pos )
          {
-            editor_msg( "red", QString( tr( "Error: load_ff line %1, excluded volume multiply defined" ) ).arg( line ) );
+            editor_msg( "red", QString( us_tr( "Error: load_ff line %1, excluded volume multiply defined" ) ).arg( line ) );
             return false;
          }
          
@@ -3806,7 +3822,7 @@ bool US_Hydrodyn_Saxs::load_ff_table( QString filename )
 
          if ( ff_ev.size() != ff_ff.size() + 1 )
          {
-            editor_msg( "red", QString( tr( "Error: load_ff line %1, startdata with no excluded volume defined" ) ).arg( line ) );
+            editor_msg( "red", QString( us_tr( "Error: load_ff line %1, startdata with no excluded volume defined" ) ).arg( line ) );
             return false;
          }
 
@@ -3822,13 +3838,13 @@ bool US_Hydrodyn_Saxs::load_ff_table( QString filename )
                continue;
             }
 
-            QStringList qsl = QStringList::split( QRegExp( "\\s+" ), qs );
+            QStringList qsl = (qs ).split( QRegExp( "\\s+" ) , QString::SkipEmptyParts );
 
             if ( qsl[ 0 ] == "enddata" )
             {
                if ( new_q.size() < 10 )
                {
-                  editor_msg( "red", QString( tr( "Error: load_ff line %1, empty or insufficient data" ) ).arg( line ) );
+                  editor_msg( "red", QString( us_tr( "Error: load_ff line %1, empty or insufficient data" ) ).arg( line ) );
                   return false;
                }
                   
@@ -3844,7 +3860,7 @@ bool US_Hydrodyn_Saxs::load_ff_table( QString filename )
 
             if ( qsl.size() != 2 )
             {
-               editor_msg( "red", QString( tr( "Error: load_ff line %1, data lines must have exactly two fields" ) ).arg( line ) );
+               editor_msg( "red", QString( us_tr( "Error: load_ff line %1, data lines must have exactly two fields" ) ).arg( line ) );
                return false;
             }
 
@@ -3854,17 +3870,17 @@ bool US_Hydrodyn_Saxs::load_ff_table( QString filename )
          }
          if ( !ok )
          {
-            editor_msg( "red", QString( tr( "Error: load_ff line %1, permature eof: no enddata token found" ) ).arg( line ) );
+            editor_msg( "red", QString( us_tr( "Error: load_ff line %1, permature eof: no enddata token found" ) ).arg( line ) );
             return false;
          }
          continue;
       }
-      editor_msg( "red", QString( tr( "Error: load_ff line %1, unknown token %2" ) ).arg( line ).arg( qsl[ 0 ] ) );
+      editor_msg( "red", QString( us_tr( "Error: load_ff line %1, unknown token %2" ) ).arg( line ).arg( qsl[ 0 ] ) );
       return false;
    }
    f.close();
 
-   editor_msg( "blue", QString( tr( "ff table %1 loaded ok" ) ).arg( filename ) );
+   editor_msg( "blue", QString( us_tr( "ff table %1 loaded ok" ) ).arg( filename ) );
 
    ff_table_loaded  = true;
    last_ff_filename = filename;
@@ -3903,7 +3919,7 @@ double US_Hydrodyn_Saxs::get_ff_ev( QString res, QString atm )
    QString ffkey = res + "|" + atm;
    if ( !ff_table.count( ffkey ) )
    {
-      editor_msg( "dark red", QString( tr( "Warning: key %1 not found in ff_table" ) ).arg( ffkey ) );
+      editor_msg( "dark red", QString( us_tr( "Warning: key %1 not found in ff_table" ) ).arg( ffkey ) );
       return 0e0;
    }
 
@@ -3916,14 +3932,14 @@ bool US_Hydrodyn_Saxs::create_somo_ff()
    QFile f ( ((US_Hydrodyn *)us_hydrodyn)->somo_dir + SLASH + "tmp" + SLASH + "somo.ff.new" );
    if ( !f.open( QIODevice::WriteOnly ) )
    {
-      errormsg = QString( tr( "Error: can not create %1" ) ).arg( f.name() );
+      errormsg = QString( us_tr( "Error: can not create %1" ) ).arg( f.fileName() );
       return false;
    }
    
    bool save_somo_ff = our_saxs_options->use_somo_ff;
    our_saxs_options->use_somo_ff = false;
 
-   Q3TextStream ts( &f );
+   QTextStream ts( &f );
 
    unsigned int q_points = 
       (unsigned int)floor(((our_saxs_options->end_q - our_saxs_options->start_q) / our_saxs_options->delta_q) + .5) + 1;
@@ -4093,18 +4109,18 @@ void US_Hydrodyn_Saxs::create_shd( vector < saxs_atom > & org_atoms,
    {
       QString fname =  ((US_Hydrodyn *)us_hydrodyn)->somo_dir + SLASH + "saxs" + SLASH + "tmp" + SLASH + "shd.dat";
       fname.replace( "//", "/" );
-      ofstream ofs( fname.ascii(), ios::out | ios::binary );
+      ofstream ofs( fname.toAscii().data(), ios::out | ios::binary );
 
       if ( !ofs.is_open() )
       {
-         editor_msg( "red", QString( tr( "Error: could not open %1" ) ).arg( fname ) );
+         editor_msg( "red", QString( us_tr( "Error: could not open %1" ) ).arg( fname ) );
          return;
       }
 
       if ( !ofs.write( (char *)&id, sizeof( id ) ) )
       {
          ofs.close();
-         editor_msg( "red", QString( tr( "Error: could not write id to %1" ) ).arg( fname ) );
+         editor_msg( "red", QString( us_tr( "Error: could not write id to %1" ) ).arg( fname ) );
          return;
       }
 
@@ -4113,7 +4129,7 @@ void US_Hydrodyn_Saxs::create_shd( vector < saxs_atom > & org_atoms,
          if ( !ofs.write( (char *)(&F[ i ][ 0 ]), sizeof( double ) * id.q_size ) )
          {
             ofs.close();
-            editor_msg( "red", QString( tr( "Error: could not write F to %1" ) ).arg( fname ) );
+            editor_msg( "red", QString( us_tr( "Error: could not write F to %1" ) ).arg( fname ) );
             return;
          }
       }
@@ -4121,20 +4137,20 @@ void US_Hydrodyn_Saxs::create_shd( vector < saxs_atom > & org_atoms,
       if ( !ofs.write( (char*)(&q[ 0 ]), sizeof( double ) * id.q_size ) )
       {
          ofs.close();
-         editor_msg( "red", QString( tr( "Error: could not write q to %1" ) ).arg( fname ) );
+         editor_msg( "red", QString( us_tr( "Error: could not write q to %1" ) ).arg( fname ) );
          return;
       }
 
       if ( !ofs.write( (char *)(&model[ 0 ]), sizeof( struct shd_point ) * id.model_size ) )
       {
          ofs.close();
-         editor_msg( "red", QString( tr( "Error: could not write model to %1" ) ).arg( fname ) );
+         editor_msg( "red", QString( us_tr( "Error: could not write model to %1" ) ).arg( fname ) );
          return;
       }
 
       ofs.close();
 
-      editor_msg( "blue", QString( tr( "Created shd %1" ) ).arg( fname ) );
+      editor_msg( "blue", QString( us_tr( "Created shd %1" ) ).arg( fname ) );
       printf( "0: F (%d):\n", (int) F.size() );
       for ( int i = 0; i < (int) F.size(); i++ )
       {
@@ -4150,7 +4166,7 @@ void US_Hydrodyn_Saxs::create_shd( vector < saxs_atom > & org_atoms,
    {
       QString fname =  ((US_Hydrodyn *)us_hydrodyn)->somo_dir + SLASH + "saxs" + SLASH + "tmp" + SLASH + "shd_f.dat";
       fname.replace( "//", "/" );
-      ofstream ofs( fname.ascii(), ios::out | ios::binary );
+      ofstream ofs( fname.toAscii().data(), ios::out | ios::binary );
 
       vector < vector < float > > F_f( F.size() );
       vector < float >            q_f( q.size() );
@@ -4171,14 +4187,14 @@ void US_Hydrodyn_Saxs::create_shd( vector < saxs_atom > & org_atoms,
 
       if ( !ofs.is_open() )
       {
-         editor_msg( "red", QString( tr( "Error: could not open %1" ) ).arg( fname ) );
+         editor_msg( "red", QString( us_tr( "Error: could not open %1" ) ).arg( fname ) );
          return;
       }
 
       if ( !ofs.write( (char *)&id, sizeof( id ) ) )
       {
          ofs.close();
-         editor_msg( "red", QString( tr( "Error: could not write id to %1" ) ).arg( fname ) );
+         editor_msg( "red", QString( us_tr( "Error: could not write id to %1" ) ).arg( fname ) );
          return;
       }
 
@@ -4187,7 +4203,7 @@ void US_Hydrodyn_Saxs::create_shd( vector < saxs_atom > & org_atoms,
          if ( !ofs.write( (char *)(&F_f[ i ][ 0 ]), sizeof( float ) * id.q_size ) )
          {
             ofs.close();
-            editor_msg( "red", QString( tr( "Error: could not write F to %1" ) ).arg( fname ) );
+            editor_msg( "red", QString( us_tr( "Error: could not write F to %1" ) ).arg( fname ) );
             return;
          }
       }
@@ -4195,14 +4211,14 @@ void US_Hydrodyn_Saxs::create_shd( vector < saxs_atom > & org_atoms,
       if ( !ofs.write( (char*)(&q_f[ 0 ]), sizeof( float ) * id.q_size ) )
       {
          ofs.close();
-         editor_msg( "red", QString( tr( "Error: could not write q to %1" ) ).arg( fname ) );
+         editor_msg( "red", QString( us_tr( "Error: could not write q to %1" ) ).arg( fname ) );
          return;
       }
 
       if ( !ofs.write( (char *)(&model[ 0 ]), sizeof( struct shd_point ) * id.model_size ) )
       {
          ofs.close();
-         editor_msg( "red", QString( tr( "Error: could not write model to %1" ) ).arg( fname ) );
+         editor_msg( "red", QString( us_tr( "Error: could not write model to %1" ) ).arg( fname ) );
          return;
       }
 
@@ -4219,7 +4235,7 @@ void US_Hydrodyn_Saxs::create_shd( vector < saxs_atom > & org_atoms,
 
       ofs.close();
 
-      editor_msg( "blue", QString( tr( "Created shd %1" ) ).arg( fname ) );
+      editor_msg( "blue", QString( us_tr( "Created shd %1" ) ).arg( fname ) );
    }
 
    return;

@@ -8,11 +8,11 @@
 #include "qfontmetrics.h"
 #include "qfile.h"
 #include "qfiledialog.h"
-#include "q3textedit.h"
-#include "q3progressbar.h"
+#include "qtextedit.h"
+#include "qprogressbar.h"
 #include "qsplitter.h"
 //Added by qt3to4:
-#include <Q3Frame>
+#include <QFrame>
 #include <QCloseEvent>
 
 #include "us_util.h"
@@ -42,7 +42,7 @@ using namespace std;
 # endif
 #endif      
 
-class US_EXTERN US_Hydrodyn_Saxs_Hplc_Baseline_Best : public Q3Frame
+class US_EXTERN US_Hydrodyn_Saxs_Hplc_Baseline_Best : public QFrame
 {
    Q_OBJECT
 
@@ -97,13 +97,13 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Baseline_Best : public Q3Frame
 #endif
 
       QFont         ft;
-      Q3TextEdit     *editor;
-      QMenuBar      *m;
-      void          editor_msg( QString color, QString msg, Q3TextEdit *e = (Q3TextEdit *)0 );
-      void          editor_ec_msg( QString msg, Q3TextEdit *e = (Q3TextEdit *)0 );
+      QTextEdit     *editor;
+      // QMenuBar      *m;
+      void          editor_msg( QString color, QString msg, QTextEdit *e = (QTextEdit *)0 );
+      void          editor_ec_msg( QString msg, QTextEdit *e = (QTextEdit *)0 );
 
-      Q3TextEdit     *hb_editor;
-      QMenuBar      *hb_m;
+      QTextEdit     *hb_editor;
+      // QMenuBar      *hb_m;
 
       void          editor_hb_msg( QString color, QString msg );
       void          editor_hb_ec_msg( QString msg );

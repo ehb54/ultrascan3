@@ -1,13 +1,13 @@
 #ifndef US_REGISTER_H
 #define US_REGISTER_H
 
-#include <q3textstream.h>
+//#include <q3textstream.h>
 #include <qfile.h>
 #include <qmessagebox.h>
-#include <q3process.h>
+#include <qprocess.h>
 #include <iostream>
 #include <stdlib.h>
-#include <q3frame.h>
+//#include <q3frame.h>
 #include "us_extern.h"
 #include "us_util.h"
 
@@ -49,7 +49,7 @@ struct US_RegisterData
   Let you link to author to help you resolve it.
 */
 
-class US_EXTERN US_Register : public Q3Frame
+class US_EXTERN US_Register : public QFrame
 {
   Q_OBJECT
   
@@ -60,7 +60,7 @@ public:
   struct US_RegisterData register_list; /*!< A struct US_RegisterData for 
                                              storing register information. */
   
-  Q3Process* proc;                       /*! <A new process reference. */
+  QProcess* proc;                       /*! <A new process reference. */
   
 private:
 

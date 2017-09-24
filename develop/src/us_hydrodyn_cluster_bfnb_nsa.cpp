@@ -7,26 +7,26 @@
 
 #include "../include/us_hydrodyn_cluster_bfnb_nsa.h"
 //Added by qt3to4:
-#include <Q3TextStream>
-#include <Q3HBoxLayout>
+#include <QTextStream>
+#include <QHBoxLayout>
 #include <QCloseEvent>
-#include <Q3Frame>
+#include <QFrame>
 #include <QLabel>
-#include <Q3VBoxLayout>
+#include <QVBoxLayout>
 
 US_Hydrodyn_Cluster_Bfnb_Nsa::US_Hydrodyn_Cluster_Bfnb_Nsa(
                                                            void                     *              us_hydrodyn,
                                                            map < QString, QString > *              parameters,
                                                            QWidget *                               p,
                                                            const char *                            name
-                                                           ) : QDialog( p, name )
+                                                           ) : QDialog( p )
 {
    this->us_hydrodyn                          = us_hydrodyn;
    this->parameters                           = parameters;
 
    USglobal = new US_Config();
    setPalette( PALET_FRAME );
-   setCaption( tr( "US-SOMO: BNFB/NSA cluster interface" ) );
+   setWindowTitle( us_tr( "US-SOMO: BNFB/NSA cluster interface" ) );
 
    setupGUI();
 
@@ -44,8 +44,8 @@ void US_Hydrodyn_Cluster_Bfnb_Nsa::setupGUI()
 {
    int minHeight1  = 30;
 
-   lbl_title =  new QLabel      ( tr( "US-SOMO: BNFB/NSA cluster interface" ), this );
-   lbl_title -> setFrameStyle   ( Q3Frame::WinPanel | Q3Frame::Raised );
+   lbl_title =  new QLabel      ( us_tr( "US-SOMO: BNFB/NSA cluster interface" ), this );
+   lbl_title -> setFrameStyle   ( QFrame::WinPanel | QFrame::Raised );
    lbl_title -> setAlignment    ( Qt::AlignCenter | Qt::AlignVCenter );
    lbl_title -> setMinimumHeight( minHeight1 );
    lbl_title -> setPalette      ( PALET_FRAME );
@@ -59,7 +59,7 @@ void US_Hydrodyn_Cluster_Bfnb_Nsa::setupGUI()
    AUTFBACK( lbl_credits_1 );
    lbl_credits_1 -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1, QFont::Bold ) );
 
-   lbl_nsaspheres = new QLabel      ( tr( "Maximum number of spheres (count, optionally start end) " ), this );
+   lbl_nsaspheres = new QLabel      ( us_tr( "Maximum number of spheres (count, optionally start end) " ), this );
    lbl_nsaspheres ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_nsaspheres ->setMinimumHeight( minHeight1 );
    lbl_nsaspheres ->setPalette      ( PALET_LABEL );
@@ -67,7 +67,7 @@ void US_Hydrodyn_Cluster_Bfnb_Nsa::setupGUI()
    lbl_nsaspheres ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
    lbl_nsaspheres ->setMinimumWidth ( QFontMetrics( lbl_nsaspheres->font() ).maxWidth() * 13 );
 
-   le_nsaspheres = new QLineEdit     ( this, "nsaspheres Line Edit" );
+   le_nsaspheres = new QLineEdit     (  this );    le_nsaspheres->setObjectName( "nsaspheres Line Edit" );
    le_nsaspheres ->setText           ( parameters->count( "nsaspheres" ) ? ( *parameters )[ "nsaspheres" ] : "" );
    le_nsaspheres ->setAlignment      ( Qt::AlignCenter | Qt::AlignVCenter );
    le_nsaspheres ->setPalette        ( PALET_NORMAL );
@@ -77,7 +77,7 @@ void US_Hydrodyn_Cluster_Bfnb_Nsa::setupGUI()
    le_nsaspheres ->setMinimumWidth   ( 150 );
    connect( le_nsaspheres, SIGNAL( textChanged( const QString & ) ), SLOT( update_nsaspheres( const QString & ) ) );
 
-   lbl_nsaess = new QLabel      ( tr( "Every sphere the same size" ), this );
+   lbl_nsaess = new QLabel      ( us_tr( "Every sphere the same size" ), this );
    lbl_nsaess ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_nsaess ->setMinimumHeight( minHeight1 );
    lbl_nsaess ->setPalette      ( PALET_LABEL );
@@ -85,7 +85,7 @@ void US_Hydrodyn_Cluster_Bfnb_Nsa::setupGUI()
    lbl_nsaess ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
    lbl_nsaess ->setMinimumWidth ( QFontMetrics( lbl_nsaess->font() ).maxWidth() * 13 );
 
-   le_nsaess = new QLineEdit     ( this, "nsaess Line Edit" );
+   le_nsaess = new QLineEdit     (  this );    le_nsaess->setObjectName( "nsaess Line Edit" );
    le_nsaess ->setText           ( parameters->count( "nsaess" ) ? ( *parameters )[ "nsaess" ] : "" );
    le_nsaess ->setAlignment      ( Qt::AlignCenter | Qt::AlignVCenter );
    le_nsaess ->setPalette        ( PALET_NORMAL );
@@ -95,7 +95,7 @@ void US_Hydrodyn_Cluster_Bfnb_Nsa::setupGUI()
    le_nsaess ->setMinimumWidth   ( 150 );
    connect( le_nsaess, SIGNAL( textChanged( const QString & ) ), SLOT( update_nsaess( const QString & ) ) );
 
-   lbl_nsaexcl = new QLabel      ( tr( "Exclude overlaps {y|'blank'}" ), this );
+   lbl_nsaexcl = new QLabel      ( us_tr( "Exclude overlaps {y|'blank'}" ), this );
    lbl_nsaexcl ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_nsaexcl ->setMinimumHeight( minHeight1 );
    lbl_nsaexcl ->setPalette      ( PALET_LABEL );
@@ -103,7 +103,7 @@ void US_Hydrodyn_Cluster_Bfnb_Nsa::setupGUI()
    lbl_nsaexcl ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
    lbl_nsaexcl ->setMinimumWidth ( QFontMetrics( lbl_nsaexcl->font() ).maxWidth() * 13 );
 
-   le_nsaexcl = new QLineEdit     ( this, "nsaexcl Line Edit" );
+   le_nsaexcl = new QLineEdit     (  this );    le_nsaexcl->setObjectName( "nsaexcl Line Edit" );
    le_nsaexcl ->setText           ( parameters->count( "nsaexcl" ) ? ( *parameters )[ "nsaexcl" ] : "" );
    le_nsaexcl ->setAlignment      ( Qt::AlignCenter | Qt::AlignVCenter );
    le_nsaexcl ->setPalette        ( PALET_NORMAL );
@@ -113,7 +113,7 @@ void US_Hydrodyn_Cluster_Bfnb_Nsa::setupGUI()
    le_nsaexcl ->setMinimumWidth   ( 150 );
    connect( le_nsaexcl, SIGNAL( textChanged( const QString & ) ), SLOT( update_nsaexcl( const QString & ) ) );
 
-   lbl_nsaga = new QLabel      ( tr( "GA {y|'blank'}" ), this );
+   lbl_nsaga = new QLabel      ( us_tr( "GA {y|'blank'}" ), this );
    lbl_nsaga ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_nsaga ->setMinimumHeight( minHeight1 );
    lbl_nsaga ->setPalette      ( PALET_LABEL );
@@ -121,7 +121,7 @@ void US_Hydrodyn_Cluster_Bfnb_Nsa::setupGUI()
    lbl_nsaga ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
    lbl_nsaga ->setMinimumWidth ( QFontMetrics( lbl_nsaga->font() ).maxWidth() * 13 );
 
-   le_nsaga = new QLineEdit     ( this, "nsaga Line Edit" );
+   le_nsaga = new QLineEdit     (  this );    le_nsaga->setObjectName( "nsaga Line Edit" );
    le_nsaga ->setText           ( parameters->count( "nsaga" ) ? ( *parameters )[ "nsaga" ] : "" );
    le_nsaga ->setAlignment      ( Qt::AlignCenter | Qt::AlignVCenter );
    le_nsaga ->setPalette        ( PALET_NORMAL );
@@ -131,7 +131,7 @@ void US_Hydrodyn_Cluster_Bfnb_Nsa::setupGUI()
    le_nsaga ->setMinimumWidth   ( 150 );
    connect( le_nsaga, SIGNAL( textChanged( const QString & ) ), SLOT( update_nsaga( const QString & ) ) );
 
-   lbl_nsasga = new QLabel      ( tr( "SGA {y|'blank'}" ), this );
+   lbl_nsasga = new QLabel      ( us_tr( "SGA {y|'blank'}" ), this );
    lbl_nsasga ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_nsasga ->setMinimumHeight( minHeight1 );
    lbl_nsasga ->setPalette      ( PALET_LABEL );
@@ -139,7 +139,7 @@ void US_Hydrodyn_Cluster_Bfnb_Nsa::setupGUI()
    lbl_nsasga ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
    lbl_nsasga ->setMinimumWidth ( QFontMetrics( lbl_nsasga->font() ).maxWidth() * 13 );
 
-   le_nsasga = new QLineEdit     ( this, "nsasga Line Edit" );
+   le_nsasga = new QLineEdit     (  this );    le_nsasga->setObjectName( "nsasga Line Edit" );
    le_nsasga ->setText           ( parameters->count( "nsasga" ) ? ( *parameters )[ "nsasga" ] : "" );
    le_nsasga ->setAlignment      ( Qt::AlignCenter | Qt::AlignVCenter );
    le_nsasga ->setPalette        ( PALET_NORMAL );
@@ -149,7 +149,7 @@ void US_Hydrodyn_Cluster_Bfnb_Nsa::setupGUI()
    le_nsasga ->setMinimumWidth   ( 150 );
    connect( le_nsasga, SIGNAL( textChanged( const QString & ) ), SLOT( update_nsasga( const QString & ) ) );
 
-   lbl_nsaiterations = new QLabel      ( tr( "Iterations" ), this );
+   lbl_nsaiterations = new QLabel      ( us_tr( "Iterations" ), this );
    lbl_nsaiterations ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_nsaiterations ->setMinimumHeight( minHeight1 );
    lbl_nsaiterations ->setPalette      ( PALET_LABEL );
@@ -157,7 +157,7 @@ void US_Hydrodyn_Cluster_Bfnb_Nsa::setupGUI()
    lbl_nsaiterations ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
    lbl_nsaiterations ->setMinimumWidth ( QFontMetrics( lbl_nsaiterations->font() ).maxWidth() * 13 );
 
-   le_nsaiterations = new QLineEdit     ( this, "nsaiterations Line Edit" );
+   le_nsaiterations = new QLineEdit     (  this );    le_nsaiterations->setObjectName( "nsaiterations Line Edit" );
    le_nsaiterations ->setText           ( parameters->count( "nsaiterations" ) ? ( *parameters )[ "nsaiterations" ] : "" );
    le_nsaiterations ->setAlignment      ( Qt::AlignCenter | Qt::AlignVCenter );
    le_nsaiterations ->setPalette        ( PALET_NORMAL );
@@ -167,7 +167,7 @@ void US_Hydrodyn_Cluster_Bfnb_Nsa::setupGUI()
    le_nsaiterations ->setMinimumWidth   ( 150 );
    connect( le_nsaiterations, SIGNAL( textChanged( const QString & ) ), SLOT( update_nsaiterations( const QString & ) ) );
 
-   lbl_nsaepsilon = new QLabel      ( tr( "Epsilon" ), this );
+   lbl_nsaepsilon = new QLabel      ( us_tr( "Epsilon" ), this );
    lbl_nsaepsilon ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_nsaepsilon ->setMinimumHeight( minHeight1 );
    lbl_nsaepsilon ->setPalette      ( PALET_LABEL );
@@ -175,7 +175,7 @@ void US_Hydrodyn_Cluster_Bfnb_Nsa::setupGUI()
    lbl_nsaepsilon ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
    lbl_nsaepsilon ->setMinimumWidth ( QFontMetrics( lbl_nsaepsilon->font() ).maxWidth() * 13 );
 
-   le_nsaepsilon = new QLineEdit     ( this, "nsaepsilon Line Edit" );
+   le_nsaepsilon = new QLineEdit     (  this );    le_nsaepsilon->setObjectName( "nsaepsilon Line Edit" );
    le_nsaepsilon ->setText           ( parameters->count( "nsaepsilon" ) ? ( *parameters )[ "nsaepsilon" ] : "" );
    le_nsaepsilon ->setAlignment      ( Qt::AlignCenter | Qt::AlignVCenter );
    le_nsaepsilon ->setPalette        ( PALET_NORMAL );
@@ -185,7 +185,7 @@ void US_Hydrodyn_Cluster_Bfnb_Nsa::setupGUI()
    le_nsaepsilon ->setMinimumWidth   ( 150 );
    connect( le_nsaepsilon, SIGNAL( textChanged( const QString & ) ), SLOT( update_nsaepsilon( const QString & ) ) );
 
-   lbl_nsagsm = new QLabel      ( tr( "Gradient search method {cg|sd|ih}" ), this );
+   lbl_nsagsm = new QLabel      ( us_tr( "Gradient search method {cg|sd|ih}" ), this );
    lbl_nsagsm ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_nsagsm ->setMinimumHeight( minHeight1 );
    lbl_nsagsm ->setPalette      ( PALET_LABEL );
@@ -193,7 +193,7 @@ void US_Hydrodyn_Cluster_Bfnb_Nsa::setupGUI()
    lbl_nsagsm ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
    lbl_nsagsm ->setMinimumWidth ( QFontMetrics( lbl_nsagsm->font() ).maxWidth() * 13 );
 
-   le_nsagsm = new QLineEdit     ( this, "nsagsm Line Edit" );
+   le_nsagsm = new QLineEdit     (  this );    le_nsagsm->setObjectName( "nsagsm Line Edit" );
    le_nsagsm ->setText           ( parameters->count( "nsagsm" ) ? ( *parameters )[ "nsagsm" ] : "" );
    le_nsagsm ->setAlignment      ( Qt::AlignCenter | Qt::AlignVCenter );
    le_nsagsm ->setPalette        ( PALET_NORMAL );
@@ -203,7 +203,7 @@ void US_Hydrodyn_Cluster_Bfnb_Nsa::setupGUI()
    le_nsagsm ->setMinimumWidth   ( 150 );
    connect( le_nsagsm, SIGNAL( textChanged( const QString & ) ), SLOT( update_nsagsm( const QString & ) ) );
 
-   lbl_nsascale = new QLabel      ( tr( "Scale" ), this );
+   lbl_nsascale = new QLabel      ( us_tr( "Scale" ), this );
    lbl_nsascale ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_nsascale ->setMinimumHeight( minHeight1 );
    lbl_nsascale ->setPalette      ( PALET_LABEL );
@@ -211,7 +211,7 @@ void US_Hydrodyn_Cluster_Bfnb_Nsa::setupGUI()
    lbl_nsascale ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
    lbl_nsascale ->setMinimumWidth ( QFontMetrics( lbl_nsascale->font() ).maxWidth() * 13 );
 
-   le_nsascale = new QLineEdit     ( this, "nsascale Line Edit" );
+   le_nsascale = new QLineEdit     (  this );    le_nsascale->setObjectName( "nsascale Line Edit" );
    le_nsascale ->setText           ( parameters->count( "nsascale" ) ? ( *parameters )[ "nsascale" ] : "" );
    le_nsascale ->setAlignment      ( Qt::AlignCenter | Qt::AlignVCenter );
    le_nsascale ->setPalette        ( PALET_NORMAL );
@@ -221,7 +221,7 @@ void US_Hydrodyn_Cluster_Bfnb_Nsa::setupGUI()
    le_nsascale ->setMinimumWidth   ( 150 );
    connect( le_nsascale, SIGNAL( textChanged( const QString & ) ), SLOT( update_nsascale( const QString & ) ) );
 
-   lbl_nsagenerations = new QLabel      ( tr( "GA: Generations" ), this );
+   lbl_nsagenerations = new QLabel      ( us_tr( "GA: Generations" ), this );
    lbl_nsagenerations ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_nsagenerations ->setMinimumHeight( minHeight1 );
    lbl_nsagenerations ->setPalette      ( PALET_LABEL );
@@ -229,7 +229,7 @@ void US_Hydrodyn_Cluster_Bfnb_Nsa::setupGUI()
    lbl_nsagenerations ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
    lbl_nsagenerations ->setMinimumWidth ( QFontMetrics( lbl_nsagenerations->font() ).maxWidth() * 13 );
 
-   le_nsagenerations = new QLineEdit     ( this, "nsagenerations Line Edit" );
+   le_nsagenerations = new QLineEdit     (  this );    le_nsagenerations->setObjectName( "nsagenerations Line Edit" );
    le_nsagenerations ->setText           ( parameters->count( "nsagenerations" ) ? ( *parameters )[ "nsagenerations" ] : "" );
    le_nsagenerations ->setAlignment      ( Qt::AlignCenter | Qt::AlignVCenter );
    le_nsagenerations ->setPalette        ( PALET_NORMAL );
@@ -239,7 +239,7 @@ void US_Hydrodyn_Cluster_Bfnb_Nsa::setupGUI()
    le_nsagenerations ->setMinimumWidth   ( 150 );
    connect( le_nsagenerations, SIGNAL( textChanged( const QString & ) ), SLOT( update_nsagenerations( const QString & ) ) );
 
-   lbl_nsapopulation = new QLabel      ( tr( "GA: Population" ), this );
+   lbl_nsapopulation = new QLabel      ( us_tr( "GA: Population" ), this );
    lbl_nsapopulation ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_nsapopulation ->setMinimumHeight( minHeight1 );
    lbl_nsapopulation ->setPalette      ( PALET_LABEL );
@@ -247,7 +247,7 @@ void US_Hydrodyn_Cluster_Bfnb_Nsa::setupGUI()
    lbl_nsapopulation ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
    lbl_nsapopulation ->setMinimumWidth ( QFontMetrics( lbl_nsapopulation->font() ).maxWidth() * 13 );
 
-   le_nsapopulation = new QLineEdit     ( this, "nsapopulation Line Edit" );
+   le_nsapopulation = new QLineEdit     (  this );    le_nsapopulation->setObjectName( "nsapopulation Line Edit" );
    le_nsapopulation ->setText           ( parameters->count( "nsapopulation" ) ? ( *parameters )[ "nsapopulation" ] : "" );
    le_nsapopulation ->setAlignment      ( Qt::AlignCenter | Qt::AlignVCenter );
    le_nsapopulation ->setPalette        ( PALET_NORMAL );
@@ -257,7 +257,7 @@ void US_Hydrodyn_Cluster_Bfnb_Nsa::setupGUI()
    le_nsapopulation ->setMinimumWidth   ( 150 );
    connect( le_nsapopulation, SIGNAL( textChanged( const QString & ) ), SLOT( update_nsapopulation( const QString & ) ) );
 
-   lbl_nsaelitism = new QLabel      ( tr( "GA: Elitism" ), this );
+   lbl_nsaelitism = new QLabel      ( us_tr( "GA: Elitism" ), this );
    lbl_nsaelitism ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_nsaelitism ->setMinimumHeight( minHeight1 );
    lbl_nsaelitism ->setPalette      ( PALET_LABEL );
@@ -265,7 +265,7 @@ void US_Hydrodyn_Cluster_Bfnb_Nsa::setupGUI()
    lbl_nsaelitism ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
    lbl_nsaelitism ->setMinimumWidth ( QFontMetrics( lbl_nsaelitism->font() ).maxWidth() * 13 );
 
-   le_nsaelitism = new QLineEdit     ( this, "nsaelitism Line Edit" );
+   le_nsaelitism = new QLineEdit     (  this );    le_nsaelitism->setObjectName( "nsaelitism Line Edit" );
    le_nsaelitism ->setText           ( parameters->count( "nsaelitism" ) ? ( *parameters )[ "nsaelitism" ] : "" );
    le_nsaelitism ->setAlignment      ( Qt::AlignCenter | Qt::AlignVCenter );
    le_nsaelitism ->setPalette        ( PALET_NORMAL );
@@ -275,7 +275,7 @@ void US_Hydrodyn_Cluster_Bfnb_Nsa::setupGUI()
    le_nsaelitism ->setMinimumWidth   ( 150 );
    connect( le_nsaelitism, SIGNAL( textChanged( const QString & ) ), SLOT( update_nsaelitism( const QString & ) ) );
 
-   lbl_nsamutate = new QLabel      ( tr( "GA: Mutate" ), this );
+   lbl_nsamutate = new QLabel      ( us_tr( "GA: Mutate" ), this );
    lbl_nsamutate ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_nsamutate ->setMinimumHeight( minHeight1 );
    lbl_nsamutate ->setPalette      ( PALET_LABEL );
@@ -283,7 +283,7 @@ void US_Hydrodyn_Cluster_Bfnb_Nsa::setupGUI()
    lbl_nsamutate ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
    lbl_nsamutate ->setMinimumWidth ( QFontMetrics( lbl_nsamutate->font() ).maxWidth() * 13 );
 
-   le_nsamutate = new QLineEdit     ( this, "nsamutate Line Edit" );
+   le_nsamutate = new QLineEdit     (  this );    le_nsamutate->setObjectName( "nsamutate Line Edit" );
    le_nsamutate ->setText           ( parameters->count( "nsamutate" ) ? ( *parameters )[ "nsamutate" ] : "" );
    le_nsamutate ->setAlignment      ( Qt::AlignCenter | Qt::AlignVCenter );
    le_nsamutate ->setPalette        ( PALET_NORMAL );
@@ -293,7 +293,7 @@ void US_Hydrodyn_Cluster_Bfnb_Nsa::setupGUI()
    le_nsamutate ->setMinimumWidth   ( 150 );
    connect( le_nsamutate, SIGNAL( textChanged( const QString & ) ), SLOT( update_nsamutate( const QString & ) ) );
 
-   lbl_nsacrossover = new QLabel      ( tr( "GA: Crossover" ), this );
+   lbl_nsacrossover = new QLabel      ( us_tr( "GA: Crossover" ), this );
    lbl_nsacrossover ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_nsacrossover ->setMinimumHeight( minHeight1 );
    lbl_nsacrossover ->setPalette      ( PALET_LABEL );
@@ -301,7 +301,7 @@ void US_Hydrodyn_Cluster_Bfnb_Nsa::setupGUI()
    lbl_nsacrossover ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
    lbl_nsacrossover ->setMinimumWidth ( QFontMetrics( lbl_nsacrossover->font() ).maxWidth() * 13 );
 
-   le_nsacrossover = new QLineEdit     ( this, "nsacrossover Line Edit" );
+   le_nsacrossover = new QLineEdit     (  this );    le_nsacrossover->setObjectName( "nsacrossover Line Edit" );
    le_nsacrossover ->setText           ( parameters->count( "nsacrossover" ) ? ( *parameters )[ "nsacrossover" ] : "" );
    le_nsacrossover ->setAlignment      ( Qt::AlignCenter | Qt::AlignVCenter );
    le_nsacrossover ->setPalette        ( PALET_NORMAL );
@@ -311,7 +311,7 @@ void US_Hydrodyn_Cluster_Bfnb_Nsa::setupGUI()
    le_nsacrossover ->setMinimumWidth   ( 150 );
    connect( le_nsacrossover, SIGNAL( textChanged( const QString & ) ), SLOT( update_nsacrossover( const QString & ) ) );
 
-   lbl_nsaearlytermination = new QLabel      ( tr( "GA: Early Termination" ), this );
+   lbl_nsaearlytermination = new QLabel      ( us_tr( "GA: Early Termination" ), this );
    lbl_nsaearlytermination ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_nsaearlytermination ->setMinimumHeight( minHeight1 );
    lbl_nsaearlytermination ->setPalette      ( PALET_LABEL );
@@ -319,7 +319,7 @@ void US_Hydrodyn_Cluster_Bfnb_Nsa::setupGUI()
    lbl_nsaearlytermination ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
    lbl_nsaearlytermination ->setMinimumWidth ( QFontMetrics( lbl_nsaearlytermination->font() ).maxWidth() * 13 );
 
-   le_nsaearlytermination = new QLineEdit     ( this, "nsaearlytermination Line Edit" );
+   le_nsaearlytermination = new QLineEdit     (  this );    le_nsaearlytermination->setObjectName( "nsaearlytermination Line Edit" );
    le_nsaearlytermination ->setText           ( parameters->count( "nsaearlytermination" ) ? ( *parameters )[ "nsaearlytermination" ] : "" );
    le_nsaearlytermination ->setAlignment      ( Qt::AlignCenter | Qt::AlignVCenter );
    le_nsaearlytermination ->setPalette        ( PALET_NORMAL );
@@ -329,7 +329,7 @@ void US_Hydrodyn_Cluster_Bfnb_Nsa::setupGUI()
    le_nsaearlytermination ->setMinimumWidth   ( 150 );
    connect( le_nsaearlytermination, SIGNAL( textChanged( const QString & ) ), SLOT( update_nsaearlytermination( const QString & ) ) );
 
-   lbl_sgpdistancequantum = new QLabel      ( tr( "Spheres: Distance quantum" ), this );
+   lbl_sgpdistancequantum = new QLabel      ( us_tr( "Spheres: Distance quantum" ), this );
    lbl_sgpdistancequantum ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_sgpdistancequantum ->setMinimumHeight( minHeight1 );
    lbl_sgpdistancequantum ->setPalette      ( PALET_LABEL );
@@ -337,7 +337,7 @@ void US_Hydrodyn_Cluster_Bfnb_Nsa::setupGUI()
    lbl_sgpdistancequantum ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
    lbl_sgpdistancequantum ->setMinimumWidth ( QFontMetrics( lbl_sgpdistancequantum->font() ).maxWidth() * 13 );
 
-   le_sgpdistancequantum = new QLineEdit     ( this, "sgpdistancequantum Line Edit" );
+   le_sgpdistancequantum = new QLineEdit     (  this );    le_sgpdistancequantum->setObjectName( "sgpdistancequantum Line Edit" );
    le_sgpdistancequantum ->setText           ( parameters->count( "sgpdistancequantum" ) ? ( *parameters )[ "sgpdistancequantum" ] : "" );
    le_sgpdistancequantum ->setAlignment      ( Qt::AlignCenter | Qt::AlignVCenter );
    le_sgpdistancequantum ->setPalette        ( PALET_NORMAL );
@@ -347,7 +347,7 @@ void US_Hydrodyn_Cluster_Bfnb_Nsa::setupGUI()
    le_sgpdistancequantum ->setMinimumWidth   ( 150 );
    connect( le_sgpdistancequantum, SIGNAL( textChanged( const QString & ) ), SLOT( update_sgpdistancequantum( const QString & ) ) );
 
-   lbl_sgpdistancemin = new QLabel      ( tr( "Spheres: Minimum distance" ), this );
+   lbl_sgpdistancemin = new QLabel      ( us_tr( "Spheres: Minimum distance" ), this );
    lbl_sgpdistancemin ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_sgpdistancemin ->setMinimumHeight( minHeight1 );
    lbl_sgpdistancemin ->setPalette      ( PALET_LABEL );
@@ -355,7 +355,7 @@ void US_Hydrodyn_Cluster_Bfnb_Nsa::setupGUI()
    lbl_sgpdistancemin ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
    lbl_sgpdistancemin ->setMinimumWidth ( QFontMetrics( lbl_sgpdistancemin->font() ).maxWidth() * 13 );
 
-   le_sgpdistancemin = new QLineEdit     ( this, "sgpdistancemin Line Edit" );
+   le_sgpdistancemin = new QLineEdit     (  this );    le_sgpdistancemin->setObjectName( "sgpdistancemin Line Edit" );
    le_sgpdistancemin ->setText           ( parameters->count( "sgpdistancemin" ) ? ( *parameters )[ "sgpdistancemin" ] : "" );
    le_sgpdistancemin ->setAlignment      ( Qt::AlignCenter | Qt::AlignVCenter );
    le_sgpdistancemin ->setPalette        ( PALET_NORMAL );
@@ -365,7 +365,7 @@ void US_Hydrodyn_Cluster_Bfnb_Nsa::setupGUI()
    le_sgpdistancemin ->setMinimumWidth   ( 150 );
    connect( le_sgpdistancemin, SIGNAL( textChanged( const QString & ) ), SLOT( update_sgpdistancemin( const QString & ) ) );
 
-   lbl_sgpdistancemax = new QLabel      ( tr( "Spheres: Maximum distance" ), this );
+   lbl_sgpdistancemax = new QLabel      ( us_tr( "Spheres: Maximum distance" ), this );
    lbl_sgpdistancemax ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_sgpdistancemax ->setMinimumHeight( minHeight1 );
    lbl_sgpdistancemax ->setPalette      ( PALET_LABEL );
@@ -373,7 +373,7 @@ void US_Hydrodyn_Cluster_Bfnb_Nsa::setupGUI()
    lbl_sgpdistancemax ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
    lbl_sgpdistancemax ->setMinimumWidth ( QFontMetrics( lbl_sgpdistancemax->font() ).maxWidth() * 13 );
 
-   le_sgpdistancemax = new QLineEdit     ( this, "sgpdistancemax Line Edit" );
+   le_sgpdistancemax = new QLineEdit     (  this );    le_sgpdistancemax->setObjectName( "sgpdistancemax Line Edit" );
    le_sgpdistancemax ->setText           ( parameters->count( "sgpdistancemax" ) ? ( *parameters )[ "sgpdistancemax" ] : "" );
    le_sgpdistancemax ->setAlignment      ( Qt::AlignCenter | Qt::AlignVCenter );
    le_sgpdistancemax ->setPalette        ( PALET_NORMAL );
@@ -383,7 +383,7 @@ void US_Hydrodyn_Cluster_Bfnb_Nsa::setupGUI()
    le_sgpdistancemax ->setMinimumWidth   ( 150 );
    connect( le_sgpdistancemax, SIGNAL( textChanged( const QString & ) ), SLOT( update_sgpdistancemax( const QString & ) ) );
 
-   lbl_sgpradiusmin = new QLabel      ( tr( "Spheres: Minimum radius" ), this );
+   lbl_sgpradiusmin = new QLabel      ( us_tr( "Spheres: Minimum radius" ), this );
    lbl_sgpradiusmin ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_sgpradiusmin ->setMinimumHeight( minHeight1 );
    lbl_sgpradiusmin ->setPalette      ( PALET_LABEL );
@@ -391,7 +391,7 @@ void US_Hydrodyn_Cluster_Bfnb_Nsa::setupGUI()
    lbl_sgpradiusmin ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
    lbl_sgpradiusmin ->setMinimumWidth ( QFontMetrics( lbl_sgpradiusmin->font() ).maxWidth() * 13 );
 
-   le_sgpradiusmin = new QLineEdit     ( this, "sgpradiusmin Line Edit" );
+   le_sgpradiusmin = new QLineEdit     (  this );    le_sgpradiusmin->setObjectName( "sgpradiusmin Line Edit" );
    le_sgpradiusmin ->setText           ( parameters->count( "sgpradiusmin" ) ? ( *parameters )[ "sgpradiusmin" ] : "" );
    le_sgpradiusmin ->setAlignment      ( Qt::AlignCenter | Qt::AlignVCenter );
    le_sgpradiusmin ->setPalette        ( PALET_NORMAL );
@@ -401,7 +401,7 @@ void US_Hydrodyn_Cluster_Bfnb_Nsa::setupGUI()
    le_sgpradiusmin ->setMinimumWidth   ( 150 );
    connect( le_sgpradiusmin, SIGNAL( textChanged( const QString & ) ), SLOT( update_sgpradiusmin( const QString & ) ) );
 
-   lbl_sgpradiusmax = new QLabel      ( tr( "Spheres: Maximum radius" ), this );
+   lbl_sgpradiusmax = new QLabel      ( us_tr( "Spheres: Maximum radius" ), this );
    lbl_sgpradiusmax ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_sgpradiusmax ->setMinimumHeight( minHeight1 );
    lbl_sgpradiusmax ->setPalette      ( PALET_LABEL );
@@ -409,7 +409,7 @@ void US_Hydrodyn_Cluster_Bfnb_Nsa::setupGUI()
    lbl_sgpradiusmax ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
    lbl_sgpradiusmax ->setMinimumWidth ( QFontMetrics( lbl_sgpradiusmax->font() ).maxWidth() * 13 );
 
-   le_sgpradiusmax = new QLineEdit     ( this, "sgpradiusmax Line Edit" );
+   le_sgpradiusmax = new QLineEdit     (  this );    le_sgpradiusmax->setObjectName( "sgpradiusmax Line Edit" );
    le_sgpradiusmax ->setText           ( parameters->count( "sgpradiusmax" ) ? ( *parameters )[ "sgpradiusmax" ] : "" );
    le_sgpradiusmax ->setAlignment      ( Qt::AlignCenter | Qt::AlignVCenter );
    le_sgpradiusmax ->setPalette        ( PALET_NORMAL );
@@ -419,168 +419,168 @@ void US_Hydrodyn_Cluster_Bfnb_Nsa::setupGUI()
    le_sgpradiusmax ->setMinimumWidth   ( 150 );
    connect( le_sgpradiusmax, SIGNAL( textChanged( const QString & ) ), SLOT( update_sgpradiusmax( const QString & ) ) );
 
-   pb_save =  new QPushButton ( tr( "Save" ), this );
+   pb_save =  new QPushButton ( us_tr( "Save" ), this );
    pb_save -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1) );
    pb_save -> setMinimumHeight( minHeight1 );
    pb_save -> setPalette      ( PALET_PUSHB );
    connect( pb_save, SIGNAL( clicked() ), SLOT( save() ) );
 
-   pb_load =  new QPushButton ( tr( "Load" ), this );
+   pb_load =  new QPushButton ( us_tr( "Load" ), this );
    pb_load -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1) );
    pb_load -> setMinimumHeight( minHeight1 );
    pb_load -> setPalette      ( PALET_PUSHB );
    connect( pb_load, SIGNAL( clicked() ), SLOT( load() ) );
 
-   pb_help =  new QPushButton ( tr( "Help" ), this );
+   pb_help =  new QPushButton ( us_tr( "Help" ), this );
    pb_help -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1) );
    pb_help -> setMinimumHeight( minHeight1 );
    pb_help -> setPalette      ( PALET_PUSHB );
    connect( pb_help, SIGNAL( clicked() ), SLOT( help() ) );
 
-   pb_close =  new QPushButton ( tr( "Close" ), this );
+   pb_close =  new QPushButton ( us_tr( "Close" ), this );
    pb_close -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1) );
    pb_close -> setMinimumHeight( minHeight1 );
    pb_close -> setPalette      ( PALET_PUSHB );
    connect( pb_close, SIGNAL( clicked() ), SLOT( cancel() ) );
 
-   Q3VBoxLayout *background = new Q3VBoxLayout( this );
+   QVBoxLayout * background = new QVBoxLayout( this ); background->setContentsMargins( 0, 0, 0, 0 ); background->setSpacing( 0 );
    background->addSpacing(4);
 
    background->addWidget( lbl_title );
    background->addWidget( lbl_credits_1 );
    background->addSpacing( 4 );
-   Q3HBoxLayout * hbl = new Q3HBoxLayout( 0 );
+   QHBoxLayout * hbl = new QHBoxLayout(); hbl->setContentsMargins( 0, 0, 0, 0 ); hbl->setSpacing( 0 );
    hbl->addSpacing( 4 );
    hbl->addWidget( lbl_nsaspheres );
    hbl->addWidget( le_nsaspheres );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
    hbl->addWidget( lbl_nsaess );
    hbl->addWidget( le_nsaess );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
    hbl->addWidget( lbl_nsaexcl );
    hbl->addWidget( le_nsaexcl );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
    hbl->addWidget( lbl_nsaga );
    hbl->addWidget( le_nsaga );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
    hbl->addWidget( lbl_nsasga );
    hbl->addWidget( le_nsasga );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
    hbl->addWidget( lbl_nsaiterations );
    hbl->addWidget( le_nsaiterations );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
    hbl->addWidget( lbl_nsaepsilon );
    hbl->addWidget( le_nsaepsilon );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
    hbl->addWidget( lbl_nsagsm );
    hbl->addWidget( le_nsagsm );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
    hbl->addWidget( lbl_nsascale );
    hbl->addWidget( le_nsascale );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
    hbl->addWidget( lbl_nsagenerations );
    hbl->addWidget( le_nsagenerations );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
    hbl->addWidget( lbl_nsapopulation );
    hbl->addWidget( le_nsapopulation );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
    hbl->addWidget( lbl_nsaelitism );
    hbl->addWidget( le_nsaelitism );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
    hbl->addWidget( lbl_nsamutate );
    hbl->addWidget( le_nsamutate );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
    hbl->addWidget( lbl_nsacrossover );
    hbl->addWidget( le_nsacrossover );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
    hbl->addWidget( lbl_nsaearlytermination );
    hbl->addWidget( le_nsaearlytermination );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
    hbl->addWidget( lbl_sgpdistancequantum );
    hbl->addWidget( le_sgpdistancequantum );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
    hbl->addWidget( lbl_sgpdistancemin );
    hbl->addWidget( le_sgpdistancemin );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
    hbl->addWidget( lbl_sgpdistancemax );
    hbl->addWidget( le_sgpdistancemax );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
    hbl->addWidget( lbl_sgpradiusmin );
    hbl->addWidget( le_sgpradiusmin );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
    hbl->addWidget( lbl_sgpradiusmax );
    hbl->addWidget( le_sgpradiusmax );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
    hbl->addWidget( pb_save );
    hbl->addSpacing( 4 );
    hbl->addWidget( pb_load );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
 
 
-   Q3HBoxLayout *hbl_bottom = new Q3HBoxLayout( 0 );
+   QHBoxLayout * hbl_bottom = new QHBoxLayout(); hbl_bottom->setContentsMargins( 0, 0, 0, 0 ); hbl_bottom->setSpacing( 0 );
    hbl_bottom->addSpacing( 4 );
    hbl_bottom->addWidget ( pb_help );
    hbl_bottom->addSpacing( 4 );
@@ -817,7 +817,7 @@ void US_Hydrodyn_Cluster_Bfnb_Nsa::save()
 {
    QString use_dir = ((US_Hydrodyn *)us_hydrodyn)->somo_dir + QDir::separator() + "cluster" + QDir::separator() + "parameters";
    ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this, true );
-   QString filename = QFileDialog::getSaveFileName( this , tr( "Save the parameters" ) , use_dir , "*.cluster_bfnb_nsa" );
+   QString filename = QFileDialog::getSaveFileName( this , us_tr( "Save the parameters" ) , use_dir , "*.cluster_bfnb_nsa" );
 
 
    if( !filename.isEmpty() )
@@ -831,13 +831,13 @@ void US_Hydrodyn_Cluster_Bfnb_Nsa::save()
       if ( !f.open( QIODevice::WriteOnly ) )
       {
          QMessageBox::information( this,
-                                   tr( QString( "%1: Save" ).arg( "US-SOMO: BNFB/NSA cluster interface" ) ),
-                                   QString( tr( "Could not open file %1 for writing" ) )
+                                   us_tr( QString( "%1: Save" ).arg( "US-SOMO: BNFB/NSA cluster interface" ) ),
+                                   QString( us_tr( "Could not open file %1 for writing" ) )
                                    .arg( filename ) 
                                    );
          return;
       }
-      Q3TextStream ts( &f );
+      QTextStream ts( &f );
       ts << US_Json::compose( *parameters );
       f.close();
    }
@@ -847,7 +847,7 @@ void US_Hydrodyn_Cluster_Bfnb_Nsa::load()
 {
    QString use_dir = ((US_Hydrodyn *)us_hydrodyn)->somo_dir + QDir::separator() + "cluster" + QDir::separator() + "parameters";
    ((US_Hydrodyn *)us_hydrodyn)->select_from_directory_history( use_dir, this, true );
-   QString filename = QFileDialog::getOpenFileName( this , tr( "Load parameters" ) , use_dir , "*.cluster_bfnb_nsa" );
+   QString filename = QFileDialog::getOpenFileName( this , us_tr( "Load parameters" ) , use_dir , "*.cluster_bfnb_nsa" );
 
    if( !filename.isEmpty() )
    {
@@ -857,14 +857,14 @@ void US_Hydrodyn_Cluster_Bfnb_Nsa::load()
       {
           QMessageBox::information( 
                                     this,
-                                    tr( QString( "%1: Open" ).arg( "US-SOMO: BNFB/NSA cluster interface" ) ),
-                                    QString( tr( "Could not open file %1 for reading" ) )
+                                    us_tr( QString( "%1: Open" ).arg( "US-SOMO: BNFB/NSA cluster interface" ) ),
+                                    QString( us_tr( "Could not open file %1 for reading" ) )
                                     .arg( filename ) 
                                     );
           return;
       }
       QString qs;
-      Q3TextStream ts( &f );
+      QTextStream ts( &f );
       while ( !ts.atEnd() )
       {
           qs += ts.readLine();

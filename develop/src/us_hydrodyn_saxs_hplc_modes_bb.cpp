@@ -40,14 +40,14 @@ void US_Hydrodyn_Saxs_Hplc::blanks_start()
          bool files_are_time   = type_files      ( blanks_save_selected );
          if ( !files_are_time && files_compatible ) {
             switch ( QMessageBox::question(this, 
-                                           caption() + tr( " : Blanks analysis" )
-                                           ,tr( 
+                                           windowTitle() + us_tr( " : Blanks analysis" )
+                                           ,us_tr( 
                                                "There are available blanks data and selected files that could be blanks\n"
                                                "Which would you like to analyze?"
                                                 )
-                                           ,tr( tr( "&Available blanks data" ) )
-                                           ,tr( tr( "Currently &selected files" ) )
-                                           ,tr( "&Cancel" )
+                                           ,us_tr( us_tr( "&Available blanks data" ) )
+                                           ,us_tr( us_tr( "Currently &selected files" ) )
+                                           ,us_tr( "&Cancel" )
                                            ,0 // 
                                            ,-1 // 
                                            ) )
@@ -71,29 +71,29 @@ void US_Hydrodyn_Saxs_Hplc::blanks_start()
    }
 
    if ( use_default_blanks ) {
-      // qDebug( "use default blanks" );
+      // us_qdebug( "use default blanks" );
       for ( int i = 0; i < (int) default_blanks.size(); ++i ) {
          if ( !f_qs.count( default_blanks[ i ] ) ) {
-            // qDebug( QString( "loading %1" ).arg( default_blanks_files[ i ] ) );
+            // us_qdebug( QString( "loading %1" ).arg( default_blanks_files[ i ] ) );
             if ( !load_file( default_blanks_files[ i ] ) ) {
-               editor_msg( "red", QString( tr( "Error: could not load blank file %1" ) ).arg( default_blanks_files[ i ] ) );
+               editor_msg( "red", QString( us_tr( "Error: could not load blank file %1" ) ).arg( default_blanks_files[ i ] ) );
                remove_files( blanks_temporary_load_set );
                blanks_in_baseline_mode ? baseline_enables() : update_enables();
                return;
             } else {
                blanks_temporary_load_set.insert( default_blanks[ i ] );
-               lb_files->insertItem( default_blanks[ i ] );
+               lb_files->addItem( default_blanks[ i ] );
             }
          }
       }
       // now all blanks loaded
       set_selected( default_blanks_set );
    } else {
-      // qDebug( "Not use default blanks" );
+      // us_qdebug( "Not use default blanks" );
       if ( blanks_in_baseline_mode ) {
          return baseline_start();
-         // QMessageBox::warning( this, caption() + tr( " : Blanks analysis" ),
-         //                       tr( "You would now be asked to load files, but this is not yet implemented\n"
+         // QMessageBox::warning( this, windowTitle() + us_tr( " : Blanks analysis" ),
+         //                       us_tr( "You would now be asked to load files, but this is not yet implemented\n"
          //                           "You *can* exit and load blanks, run blanks analysis & 'keep' and then try again\n" )
          //                       ,QMessageBox::Ok | QMessageBox::Default
          //                       ,QMessageBox::NoButton
@@ -109,8 +109,8 @@ void US_Hydrodyn_Saxs_Hplc::blanks_start()
    blanks_created_set.clear();
 
    if ( blanks_selected.size() < IB_MIN_FRAMES ) {
-      QMessageBox::warning( this, caption() + tr( " : Blanks analysis" ),
-                            QString( tr( "You must have minimum of %1 frames for blanks" ) ).arg( IB_MIN_FRAMES )
+      QMessageBox::warning( this, windowTitle() + us_tr( " : Blanks analysis" ),
+                            QString( us_tr( "You must have minimum of %1 frames for blanks" ) ).arg( IB_MIN_FRAMES )
                             ,QMessageBox::Ok | QMessageBox::Default
                             ,QMessageBox::NoButton
                             );
@@ -147,7 +147,7 @@ void US_Hydrodyn_Saxs_Hplc::blanks_start()
       
       if ( any_differences )
       {
-         editor_msg( "red", tr( "Blanks analysis: curves must be on the same grid, try 'Crop Common' first." ) );
+         editor_msg( "red", us_tr( "Blanks analysis: curves must be on the same grid, try 'Crop Common' first." ) );
          update_enables();
          return;
       }
@@ -191,22 +191,22 @@ void US_Hydrodyn_Saxs_Hplc::blanks_start()
 
             if ( !f_qs.count( *qs ) )
             {
-               editor_msg( "red", QString( tr( "Internal error: request to use %1, but not found in data" ) ).arg( *qs ) );
+               editor_msg( "red", QString( us_tr( "Internal error: request to use %1, but not found in data" ) ).arg( *qs ) );
             } else {
                QString tmp = qs->mid( head.length() );
                tmp = tmp.mid( 0, tmp.length() - tail.length() );
-               if ( rx_clear_nonnumeric.search( tmp ) != -1 )
+               if ( rx_clear_nonnumeric.indexIn( tmp ) != -1 )
                {
                   tmp = rx_clear_nonnumeric.cap( 1 );
                }
 
-               if ( rx_cap.search( tmp ) != -1 )
+               if ( rx_cap.indexIn( tmp ) != -1 )
                {
                   tmp = rx_cap.cap( 1 ) + "." + rx_cap.cap( 2 );
                }
                double timestamp = tmp.toDouble();
 #ifdef DEBUG_LOAD_REORDER
-               qDebug( QString( "%1 tmp %2 value %3" ).arg( *qs ).arg( tmp ).arg( timestamp ) );
+               us_qdebug( QString( "%1 tmp %2 value %3" ).arg( *qs ).arg( tmp ).arg( timestamp ) );
 #endif
 
                Ivp = &(I_values[ timestamp ]);
@@ -258,9 +258,9 @@ void US_Hydrodyn_Saxs_Hplc::blanks_start()
       }
 
       map < QString, bool > current_files;
-      for ( int i = 0; i < lb_files->numRows(); ++i )
+      for ( int i = 0; i < lb_files->count(); ++i )
       {
-         current_files[ lb_files->text( i ) ] = true;
+         current_files[ lb_files->item( i )->text( ) ] = true;
       }
       QStringList created_files;
       set < QString > created_files_set;
@@ -329,10 +329,10 @@ void US_Hydrodyn_Saxs_Hplc::blanks_start()
             blanks_created_set.insert( fname );
             
          }      
-         lb_created_files->insertStringList( created_files );
-         lb_files->insertStringList        ( created_files );
-         lb_created_files->setBottomItem   ( lb_created_files->numRows() - 1 );
-         lb_files->setBottomItem           ( lb_files->numRows() - 1 );
+         lb_created_files->addItems( created_files );
+         lb_files->addItems( created_files );
+         lb_created_files->scrollToItem( lb_created_files->item( lb_created_files->count() - 1 ) );
+         lb_files->scrollToItem( lb_files->item( lb_files->count() - 1 ) );
       }
 
       // now select created files
@@ -348,35 +348,35 @@ void US_Hydrodyn_Saxs_Hplc::blanks_start()
    le_last_focus = (mQLineEdit *) 0;
 
 
-   for ( int i = 0; i < lb_files->numRows(); i++ )
+   for ( int i = 0; i < lb_files->count(); i++ )
    {
-      if ( lb_files->isSelected( i ) )
+      if ( lb_files->item( i )->isSelected() )
       {
-         wheel_file = lb_files->text( i );
+         wheel_file = lb_files->item( i )->text( );
          break;
       }
    }
    if ( !f_qs.count( wheel_file ) )
    {
-      editor_msg( "red", QString( tr( "Internal error (bm): %1 not found in data" ) ).arg( wheel_file ) );
+      editor_msg( "red", QString( us_tr( "Internal error (bm): %1 not found in data" ) ).arg( wheel_file ) );
       return;
    }
 
    if ( f_qs[ wheel_file ].size() < 2 )
    {
-      editor_msg( "red", QString( tr( "Internal error: %1 almost empty data" ) ).arg( wheel_file ) );
+      editor_msg( "red", QString( us_tr( "Internal error: %1 almost empty data" ) ).arg( wheel_file ) );
       return;
    }
 
    if ( !f_Is.count( wheel_file ) )
    {
-      editor_msg( "red", QString( tr( "Internal error: %1 not found in y data" ) ).arg( wheel_file ) );
+      editor_msg( "red", QString( us_tr( "Internal error: %1 not found in y data" ) ).arg( wheel_file ) );
       return;
    }
 
    if ( !f_Is[ wheel_file ].size() )
    {
-      editor_msg( "red", QString( tr( "Internal error: %1 empty y data" ) ).arg( wheel_file ) );
+      editor_msg( "red", QString( us_tr( "Internal error: %1 empty y data" ) ).arg( wheel_file ) );
       return;
    }
 
@@ -404,7 +404,7 @@ void US_Hydrodyn_Saxs_Hplc::blanks_start()
         le_baseline_end_s->text().toDouble() < f_qs[ wheel_file ].front() )
    {
       disconnect( le_baseline_end_s, SIGNAL( textChanged( const QString & ) ), 0, 0 );
-      le_baseline_end_s->setText( QString( "%1" ).arg( f_qs[ wheel_file ].front()) );
+      le_baseline_end_s->setText( QString( "%1" ).arg( f_qs[ wheel_file ].front( )) );
       connect( le_baseline_end_s, SIGNAL( textChanged( const QString & ) ), SLOT( baseline_end_s_text( const QString & ) ) );
    }
 
@@ -415,7 +415,7 @@ void US_Hydrodyn_Saxs_Hplc::blanks_start()
         le_baseline_end_e->text().toDouble() > f_qs[ wheel_file ].back() )
    {
       disconnect( le_baseline_end_e, SIGNAL( textChanged( const QString & ) ), 0, 0 );
-      le_baseline_end_e->setText( QString( "%1" ).arg( f_qs[ wheel_file ].back() ) );
+      le_baseline_end_e->setText( QString( "%1" ).arg( f_qs[ wheel_file ].back( ) ) );
       connect( le_baseline_end_e, SIGNAL( textChanged( const QString & ) ), SLOT( baseline_end_e_text( const QString & ) ) );
    }
 
@@ -475,16 +475,16 @@ void US_Hydrodyn_Saxs_Hplc::baseline_start( bool from_blanks_mode_save )
       if ( use_i_power ) {
          i_power = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_i_power" ].toDouble();
          switch ( QMessageBox::warning(this, 
-                                       caption() + tr( " : Baseline" ),
-                                       QString( tr( "Please note:\n\n"
+                                       windowTitle() + us_tr( " : Baseline" ),
+                                       QString( us_tr( "Please note:\n\n"
                                                     "You are using a non-unity intensity exponent of %1 for integral baseline correction.\n"
                                                     "The model of intensity proportional deposits is based on a unity intensity exponent.\n"
                                                     "It is possible that a specific capillary fouling mechanism may be correctly approximated with a non-unity exponent.\n"
                                                     "We urge you to use a non-unity intensity exponent with care.\n"
                                                     "What would you like to do?\n" ) )
                                        .arg( i_power ),
-                                       tr( "&Continue" ), 
-                                       tr( "&Quit" )
+                                       us_tr( "&Continue" ), 
+                                       us_tr( "&Quit" )
                                        ) )
          {
          case 0 : // continue
@@ -501,14 +501,14 @@ void US_Hydrodyn_Saxs_Hplc::baseline_start( bool from_blanks_mode_save )
       if ( reps < 5 )
       {
          switch ( QMessageBox::warning(this, 
-                                       caption() + tr( " : Baseline" ),
-                                       QString( tr( "Please note:\n\n"
+                                       windowTitle() + us_tr( " : Baseline" ),
+                                       QString( us_tr( "Please note:\n\n"
                                                     "You have selected the integral baseline method with maximum iterations of %1\n"
                                                     "It is recommended that a minimum of 5 iterations be used to approach convergence\n"
                                                     "What would you like to do?\n" ) )
                                        .arg( reps ),
-                                       tr( "&Continue" ), 
-                                       tr( "&Quit" )
+                                       us_tr( "&Continue" ), 
+                                       us_tr( "&Quit" )
                                        ) )
          {
          case 0 : // continue
@@ -540,42 +540,42 @@ void US_Hydrodyn_Saxs_Hplc::baseline_start( bool from_blanks_mode_save )
    baseline_ready_to_apply = false;
 
    le_last_focus = (mQLineEdit *) 0;
-   for ( int i = 0; i < lb_files->numRows(); i++ )
+   for ( int i = 0; i < lb_files->count(); i++ )
    {
-      if ( lb_files->isSelected( i ) )
+      if ( lb_files->item( i )->isSelected() )
       {
-         wheel_file = lb_files->text( i );
+         wheel_file = lb_files->item( i )->text( );
          break;
       }
    }
    if ( !f_qs.count( wheel_file ) )
    {
-      editor_msg( "red", QString( tr( "Internal error: %1 not found in data" ) ).arg( wheel_file ) );
+      editor_msg( "red", QString( us_tr( "Internal error: %1 not found in data" ) ).arg( wheel_file ) );
       return;
    }
 
    if ( f_qs[ wheel_file ].size() < 2 )
    {
-      editor_msg( "red", QString( tr( "Internal error: %1 almost empty data" ) ).arg( wheel_file ) );
+      editor_msg( "red", QString( us_tr( "Internal error: %1 almost empty data" ) ).arg( wheel_file ) );
       return;
    }
 
    if ( !f_Is.count( wheel_file ) )
    {
-      editor_msg( "red", QString( tr( "Internal error: %1 not found in y data" ) ).arg( wheel_file ) );
+      editor_msg( "red", QString( us_tr( "Internal error: %1 not found in y data" ) ).arg( wheel_file ) );
       return;
    }
 
    if ( !f_Is[ wheel_file ].size() )
    {
-      editor_msg( "red", QString( tr( "Internal error: %1 empty y data" ) ).arg( wheel_file ) );
+      editor_msg( "red", QString( us_tr( "Internal error: %1 empty y data" ) ).arg( wheel_file ) );
       return;
    }
 
    if ( f_qs[ wheel_file ].size() < IB_MIN_RANGE * 2 ) {
       QMessageBox::warning(this
-                           ,caption() + tr( " : Baseline" )
-                           ,QString( tr( "You must have a minimum of %1 frames in your data to perform baseline correction\n" ) )
+                           ,windowTitle() + us_tr( " : Baseline" )
+                           ,QString( us_tr( "You must have a minimum of %1 frames in your data to perform baseline correction\n" ) )
                            .arg( IB_MIN_RANGE * 2 )
                            ,QMessageBox::Ok | QMessageBox::Default
                            ,QMessageBox::NoButton
@@ -612,8 +612,8 @@ void US_Hydrodyn_Saxs_Hplc::baseline_start( bool from_blanks_mode_save )
       bool show_determination_info = true;
       if ( q_size < IB_MIN_FRAMES ) {
          QMessageBox::warning( this
-                               ,caption() + tr( " : Baseline" )
-                               ,tr( QString( "Insufficient frames (%1) for integral baseline analysis.\n"
+                               ,windowTitle() + us_tr( " : Baseline" )
+                               ,us_tr( QString( "Insufficient frames (%1) for integral baseline analysis.\n"
                                              "A minimum of %2 frames are required" )
                                     .arg( q_size )
                                     .arg( IB_MIN_FRAMES ) )
@@ -623,11 +623,11 @@ void US_Hydrodyn_Saxs_Hplc::baseline_start( bool from_blanks_mode_save )
       }
       if ( !from_blanks_mode_save || !blanks_brookesmap_sliding_results.size() ) {
          switch ( QMessageBox::question( this
-                                         ,caption() + tr( " : Utilize blanks in baseline analysis" )
-                                         ,tr( "Do you wish to utilize reference blanks for baseline analysis?\n"
+                                         ,windowTitle() + us_tr( " : Utilize blanks in baseline analysis" )
+                                         ,us_tr( "Do you wish to utilize reference blanks for baseline analysis?\n"
                                               "Without reference blanks, only the adjusted Holm-Bonferroni method can be used." )
-                                         ,tr( "&Yes, utilize blanks" )
-                                         ,tr( "&No, proceed without blanks" )
+                                         ,us_tr( "&Yes, utilize blanks" )
+                                         ,us_tr( "&No, proceed without blanks" )
                                          ,QString::null
                                          ) ) {
          case -1 : // escape
@@ -636,8 +636,8 @@ void US_Hydrodyn_Saxs_Hplc::baseline_start( bool from_blanks_mode_save )
          case 0 : 
             {
                switch ( QMessageBox::question( this
-                                               ,caption() + tr( " : Baseline mode blanks selection" )
-                                               ,QString( tr( "You must have blanks processed to proceed\n"
+                                               ,windowTitle() + us_tr( " : Baseline mode blanks selection" )
+                                               ,QString( us_tr( "You must have blanks processed to proceed\n"
                                                              "\n"
                                                              "The blanks should be non-averaged buffer frames (whose average value was then subtracted from the elution frames)\n"
                                                              "If you do not have the buffers corresponding to their present elution, then the preloaded blanks should have been chosen in a similar way:\n"
@@ -645,12 +645,12 @@ void US_Hydrodyn_Saxs_Hplc::baseline_start( bool from_blanks_mode_save )
                                                              "but at least blanks collected on the same beamline with a similar set-up (distance, pixel size, energy).\n"
                                                              "\n"
                                                              "You have the following options" ) )
-                                               ,tr( "Load blanks" )
-                                               ,tr( "Load previous analysis" )
+                                               ,us_tr( "Load blanks" )
+                                               ,us_tr( "Load previous analysis" )
                                                ,( blanks_brookesmap_sliding_results.size() &&
                                                   blanks_cormap_pvaluepairs.size() >= IB_MIN_FRAMES  ) ?
                                                // maybe should be qstring with currently analyzed name
-                                               QString( tr( "Accept currently analyzed blanks%1" ) )
+                                               QString( us_tr( "Accept currently analyzed blanks%1" ) )
                                                .arg( blanks_cormap_parameters.count( "name" ) ? 
                                                      QString( "\n%1" ).arg( blanks_cormap_parameters[ "name" ] ) : QString( "" ) )
                                                : QString::null
@@ -669,7 +669,7 @@ void US_Hydrodyn_Saxs_Hplc::baseline_start( bool from_blanks_mode_save )
                      QString use_dir = QDir::current().canonicalPath();
                      ((US_Hydrodyn  *)us_hydrodyn)->select_from_directory_history( use_dir, this );
 
-                     new_blanks_files = QFileDialog::getOpenFileNames( this , caption() + tr( " : Select blanks files" ) , use_dir , "dat files [foxs / other] (*.dat);;"
+                     new_blanks_files = QFileDialog::getOpenFileNames( this , windowTitle() + us_tr( " : Select blanks files" ) , use_dir , "dat files [foxs / other] (*.dat);;"
                                                                       "All files (*);;"
                                                                       "ssaxs files (*.ssaxs);;"
                                                                       "txt files [specify q, I, sigma columns] (*.txt)" );
@@ -681,7 +681,7 @@ void US_Hydrodyn_Saxs_Hplc::baseline_start( bool from_blanks_mode_save )
 
 
                      for ( int i = 0; i < (int) new_blanks_files.size(); ++i ) {
-                        QString basename = QFileInfo( new_blanks_files[ i ] ).baseName( true );
+                        QString basename = QFileInfo( new_blanks_files[ i ] ).completeBaseName();
                         new_blanks << basename;
                         new_blanks_set.insert( basename );
                      }
@@ -699,7 +699,7 @@ void US_Hydrodyn_Saxs_Hplc::baseline_start( bool from_blanks_mode_save )
                      QString use_dir = QDir::current().canonicalPath();
                      ((US_Hydrodyn  *)us_hydrodyn)->select_from_directory_history( use_dir, this );
 
-                     QString filename = QFileDialog::getOpenFileName( this , caption() , use_dir , "*.csv *.CSV" );
+                     QString filename = QFileDialog::getOpenFileName( this , windowTitle() , use_dir , "*.csv *.CSV" );
 
    
                      if ( filename.isEmpty() ) {
@@ -726,8 +726,8 @@ void US_Hydrodyn_Saxs_Hplc::baseline_start( bool from_blanks_mode_save )
                      }
 
                      if ( !load_parameters.count( "isblanks" ) ) {
-                        QMessageBox::warning( this, caption() + tr( " : Baseline" ),
-                                              QString( tr( "The loaded analysis does not appear to be a blanks analysis" ) )
+                        QMessageBox::warning( this, windowTitle() + us_tr( " : Baseline" ),
+                                              QString( us_tr( "The loaded analysis does not appear to be a blanks analysis" ) )
                                               ,QMessageBox::Ok | QMessageBox::Default
                                               ,QMessageBox::NoButton
                                               );
@@ -750,7 +750,7 @@ void US_Hydrodyn_Saxs_Hplc::baseline_start( bool from_blanks_mode_save )
                                         blanks_brookesmap_sliding_results, 
                                         this,
                                         progress ) ) {
-                           // qDebug( "sliding_results" );
+                           // us_qdebug( "sliding_results" );
                            // for ( map < QString, double >::iterator it = blanks_brookesmap_sliding_results.begin();
                            //       it != blanks_brookesmap_sliding_results.end();
                            //       ++it ) {
@@ -765,7 +765,7 @@ void US_Hydrodyn_Saxs_Hplc::baseline_start( bool from_blanks_mode_save )
                   }            
                   break;
                case 2 : // accept currently analyzed blanks
-                  // qDebug( "accept currently analyzed blanks" );
+                  // us_qdebug( "accept currently analyzed blanks" );
                   break;
                }
             }
@@ -793,16 +793,16 @@ void US_Hydrodyn_Saxs_Hplc::baseline_start( bool from_blanks_mode_save )
 
       if ( show_determination_info ) {
          if ( baseline_max_window_size < IB_MIN_FRAMES ) {
-            QMessageBox::warning( this, caption() + tr( " : Baseline" ),
-                                  QString( tr( "You must have minimum of %1 frames for blanks" ) ).arg( IB_MIN_FRAMES )
+            QMessageBox::warning( this, windowTitle() + us_tr( " : Baseline" ),
+                                  QString( us_tr( "You must have minimum of %1 frames for blanks" ) ).arg( IB_MIN_FRAMES )
                                   ,QMessageBox::Ok | QMessageBox::Default
                                   ,QMessageBox::NoButton
                                   );
             return current_mode != MODE_NORMAL ?  wheel_cancel() : update_enables();
          } else {
             QMessageBox::information( this
-                                      ,caption() + tr( " : Baseline" )
-                                      ,tr( "The first step of the integral baseline procedure is to determine a constant final baseline." )
+                                      ,windowTitle() + us_tr( " : Baseline" )
+                                      ,us_tr( "The first step of the integral baseline procedure is to determine a constant final baseline." )
                                       ,QMessageBox::Ok | QMessageBox::Default
                                       ,QMessageBox::NoButton
                                       );
@@ -811,7 +811,7 @@ void US_Hydrodyn_Saxs_Hplc::baseline_start( bool from_blanks_mode_save )
 
       // int use_default_range = IB_DEFAULT_RANGE > baseline_max_window_size ? baseline_max_window_size : IB_DEFAULT_RANGE;
 
-      // qDebug( QString( "use default range %1 IB_DEFAULT_RANGE %2 baseline_max_window_size %3 q_size %4" )
+      // us_qdebug( QString( "use default range %1 IB_DEFAULT_RANGE %2 baseline_max_window_size %3 q_size %4" )
       //         .arg( use_default_range )
       //         .arg( IB_DEFAULT_RANGE )
       //         .arg( baseline_max_window_size )
@@ -824,7 +824,7 @@ void US_Hydrodyn_Saxs_Hplc::baseline_start( bool from_blanks_mode_save )
       }
       default_baseline_end_s = f_qs[ wheel_file ][ pos ];
 
-      // qDebug( QString( "default_baseline_end_s %1 pos %2" )
+      // us_qdebug( QString( "default_baseline_end_s %1 pos %2" )
       //         .arg( default_baseline_end_s )
       //         .arg( pos ) );
 
@@ -838,7 +838,7 @@ void US_Hydrodyn_Saxs_Hplc::baseline_start( bool from_blanks_mode_save )
       }
       default_baseline_end_e = f_qs[ wheel_file ][ pos ];
 
-      // qDebug( QString( "default_baseline_end_e %1 pos %2" )
+      // us_qdebug( QString( "default_baseline_end_e %1 pos %2" )
       //         .arg( default_baseline_end_e )
       //         .arg( pos ) );
       force_endpoints_default = true;
@@ -931,7 +931,7 @@ void US_Hydrodyn_Saxs_Hplc::baseline_start( bool from_blanks_mode_save )
            le_baseline_end_s->text().toDouble() > f_qs[ wheel_file ].back() )
       {
          disconnect( le_baseline_end_s, SIGNAL( textChanged( const QString & ) ), 0, 0 );
-         // le_baseline_end_s->setText( QString( "%1" ).arg( f_qs[ wheel_file ].back() - 2e0 * q_len_delta ) );
+         // le_baseline_end_s->setText( QString( "%1" ).arg( f_qs[ wheel_file ].back( ) - 2e0 * q_len_delta ) );
          le_baseline_end_s->setText( QString( "%1" ).arg( f_qs[ wheel_file ][ q_size - 1 - 2 * pos_len_delta > 0 ?
                                                                               q_size - 1 - 2 * pos_len_delta : 0 ] ) );
          connect( le_baseline_end_s, SIGNAL( textChanged( const QString & ) ), SLOT( baseline_end_s_text( const QString & ) ) );
@@ -942,7 +942,7 @@ void US_Hydrodyn_Saxs_Hplc::baseline_start( bool from_blanks_mode_save )
            le_baseline_end->text().toDouble() > f_qs[ wheel_file ].back() )
       {
          disconnect( le_baseline_end, SIGNAL( textChanged( const QString & ) ), 0, 0 );
-         // le_baseline_end->setText( QString( "%1" ).arg( f_qs[ wheel_file ].back() - q_len_delta ) );
+         // le_baseline_end->setText( QString( "%1" ).arg( f_qs[ wheel_file ].back( ) - q_len_delta ) );
          le_baseline_end->setText( QString( "%1" ).arg( f_qs[ wheel_file ][ q_size - 1 - pos_len_delta > 0 ?
                                                                             q_size - 1 - pos_len_delta : 0 ] ) );
          connect( le_baseline_end, SIGNAL( textChanged( const QString & ) ), SLOT( baseline_end_text( const QString & ) ) );
@@ -953,7 +953,7 @@ void US_Hydrodyn_Saxs_Hplc::baseline_start( bool from_blanks_mode_save )
            le_baseline_end_e->text().toDouble() > f_qs[ wheel_file ].back() )
       {
          disconnect( le_baseline_end_e, SIGNAL( textChanged( const QString & ) ), 0, 0 );
-         le_baseline_end_e->setText( QString( "%1" ).arg( f_qs[ wheel_file ].back() ) );
+         le_baseline_end_e->setText( QString( "%1" ).arg( f_qs[ wheel_file ].back( ) ) );
          connect( le_baseline_end_e, SIGNAL( textChanged( const QString & ) ), SLOT( baseline_end_e_text( const QString & ) ) );
       }
    }
@@ -965,8 +965,8 @@ void US_Hydrodyn_Saxs_Hplc::baseline_start( bool from_blanks_mode_save )
       cb_baseline_start_zero->setChecked( false );
       cb_baseline_start_zero->show();
       QMessageBox::warning(this, 
-                           caption(),
-                           QString( tr( "Please note:\n\n"
+                           windowTitle(),
+                           QString( us_tr( "Please note:\n\n"
                                         "You are utilizing the linear baseline method.\n"
                                         "This method compensates for a systematic drift and can distort/hide the effects of capillary fouling.\n"
                                         "The linear baseline correction does not have an explicit physical basis and should be applied with care\n"
@@ -1081,8 +1081,8 @@ void US_Hydrodyn_Saxs_Hplc::set_baseline_start_zero()
    {
       // QMessageBox::warning(
       //                      this,
-      //                      this->caption() + tr(": Baseline setup: nonzero starting offset" ),
-      //                      tr(
+      //                      this->windowTitle() + us_tr(": Baseline setup: nonzero starting offset" ),
+      //                      us_tr(
       //                         "Having a non zero starting offset likely means problems with buffer subtraction which should be corrected before *any* analysis is done.\n"
       //                         ),
       //                      QMessageBox::Ok | QMessageBox::Default,
@@ -1123,31 +1123,31 @@ void US_Hydrodyn_Saxs_Hplc::baseline_init_markers()
    plotted_baseline.clear();
 
    if ( current_mode == MODE_BLANKS ) {
-      gauss_add_marker( le_baseline_end_s  ->text().toDouble(), Qt::magenta, tr( "\nStart" ), Qt::AlignRight | Qt::AlignTop );
-      gauss_add_marker( le_baseline_end_e  ->text().toDouble(), Qt::magenta, tr( "\nEnd"   ), Qt::AlignLeft  | Qt::AlignTop );
+      gauss_add_marker( le_baseline_end_s  ->text().toDouble(), Qt::magenta, us_tr( "\nStart" ), Qt::AlignRight | Qt::AlignTop );
+      gauss_add_marker( le_baseline_end_e  ->text().toDouble(), Qt::magenta, us_tr( "\nEnd"   ), Qt::AlignLeft  | Qt::AlignTop );
    } else {
       if ( baseline_integral ) {
          gauss_add_marker( le_baseline_end_s  ->text().toDouble(), Qt::red    ,
-                           tr( "\n  & Analysis;\nEnd Integral\n   Bas. calc." ), Qt::AlignLeft | Qt::AlignTop );
-         gauss_add_marker( le_baseline_end_s  ->text().toDouble(), Qt::magenta, 
-                           tr( "Start Bas. Window"                               ), Qt::AlignLeft | Qt::AlignTop );
-         gauss_add_marker( le_baseline_end    ->text().toDouble(), Qt::red,     
-                           tr( "\n\n\n\n\n\nEnd Bas.\nAnalysis"             ), Qt::AlignLeft | Qt::AlignTop );
-         gauss_add_marker( le_baseline_end_e  ->text().toDouble(), Qt::magenta, 
-                           tr( "\n\n\n\nEnd Bas.\n  Window"                     ), Qt::AlignLeft | Qt::AlignTop );
+                           us_tr( "\n  & Analysis;\nEnd Integral\n   Bas. calc." ), Qt::AlignLeft | Qt::AlignTop );
+         gauss_add_marker( le_baseline_end_s  ->text().toDouble(), Qt::magenta,
+                           us_tr( "Start Bas. Window"                               ), Qt::AlignLeft | Qt::AlignTop );
+         gauss_add_marker( le_baseline_end    ->text().toDouble(), Qt::red,
+                           us_tr( "\n\n\n\n\n\nEnd Bas.\nAnalysis"             ), Qt::AlignLeft | Qt::AlignTop );
+         gauss_add_marker( le_baseline_end_e  ->text().toDouble(), Qt::magenta,
+                           us_tr( "\n\n\n\nEnd Bas.\n  Window"                     ), Qt::AlignLeft | Qt::AlignTop );
       } else {
          if ( !cb_baseline_start_zero->isChecked() )
          {
-            gauss_add_marker( le_baseline_start_s->text().toDouble(), Qt::magenta, tr( "\nLFS  \nStart"   ) );
-            gauss_add_marker( le_baseline_start  ->text().toDouble(), Qt::red,     tr( "Start"          ) );
-            gauss_add_marker( le_baseline_start_e->text().toDouble(), Qt::magenta, tr( "\n\n\nLFS\nEnd" ) );
-            gauss_add_marker( le_baseline_end_s  ->text().toDouble(), Qt::magenta, tr( "\n  LFE\nStart"   ), Qt::AlignLeft | Qt::AlignTop );
-            gauss_add_marker( le_baseline_end    ->text().toDouble(), Qt::red,     tr( "End"            ), Qt::AlignLeft | Qt::AlignTop );
-            gauss_add_marker( le_baseline_end_e  ->text().toDouble(), Qt::magenta, tr( "\n\n\nLFE\nEnd" ), Qt::AlignLeft | Qt::AlignTop );
+            gauss_add_marker( le_baseline_start_s->text().toDouble(), Qt::magenta, us_tr( "\nLFS  \nStart"   ) );
+            gauss_add_marker( le_baseline_start  ->text().toDouble(), Qt::red,     us_tr( "Start"          ) );
+            gauss_add_marker( le_baseline_start_e->text().toDouble(), Qt::magenta, us_tr( "\n\n\nLFS\nEnd" ) );
+            gauss_add_marker( le_baseline_end_s  ->text().toDouble(), Qt::magenta, us_tr( "\n  LFE\nStart"   ), Qt::AlignLeft | Qt::AlignTop );
+            gauss_add_marker( le_baseline_end    ->text().toDouble(), Qt::red,     us_tr( "End"            ), Qt::AlignLeft | Qt::AlignTop );
+            gauss_add_marker( le_baseline_end_e  ->text().toDouble(), Qt::magenta, us_tr( "\n\n\nLFE\nEnd" ), Qt::AlignLeft | Qt::AlignTop );
          } else {
-            gauss_add_marker( le_baseline_end_s  ->text().toDouble(), Qt::magenta, tr( "\nStart"   ), Qt::AlignLeft | Qt::AlignTop );
-            gauss_add_marker( le_baseline_end    ->text().toDouble(), Qt::red,     tr( "End"            ), Qt::AlignLeft | Qt::AlignTop );
-            gauss_add_marker( le_baseline_end_e  ->text().toDouble(), Qt::magenta, tr( "\n\nEnd" ), Qt::AlignLeft | Qt::AlignTop );
+            gauss_add_marker( le_baseline_end_s  ->text().toDouble(), Qt::magenta, us_tr( "\nStart"   ), Qt::AlignLeft | Qt::AlignTop );
+            gauss_add_marker( le_baseline_end    ->text().toDouble(), Qt::red,     us_tr( "End"            ), Qt::AlignLeft | Qt::AlignTop );
+            gauss_add_marker( le_baseline_end_e  ->text().toDouble(), Qt::magenta, us_tr( "\n\nEnd" ), Qt::AlignLeft | Qt::AlignTop );
          }
       }
    }
@@ -1275,12 +1275,12 @@ void US_Hydrodyn_Saxs_Hplc::replot_baseline_integral()
    {
       plot_dist->replot();
    }
-   // qDebug( QString( "replot_baseline_integral() end current plotted_baseline curves size %1" ).arg( plotted_baseline.size() ) );
+   // us_qdebug( QString( "replot_baseline_integral() end current plotted_baseline curves size %1" ).arg( plotted_baseline.size() ) );
 }
 
 void US_Hydrodyn_Saxs_Hplc::replot_baseline( QString /* qs */ )
 {
-   // qDebug( QString( "replot_baseline( %1 ) current plotted_baseline curves size %2 %3" )
+   // us_qdebug( QString( "replot_baseline( %1 ) current plotted_baseline curves size %2 %3" )
    //         .arg( qs )
    //         .arg( plotted_baseline.size() ).arg( baseline_integral ? "integral mode" : "!integral mode" ) );
 
@@ -1650,31 +1650,31 @@ void US_Hydrodyn_Saxs_Hplc::baseline_apply( QStringList files,
    baseline_apply_created.clear();
 
    map < QString, bool > current_files;
-   for ( int i = 0; i < (int)lb_files->numRows(); i++ )
+   for ( int i = 0; i < (int)lb_files->count(); i++ )
    {
-      current_files[ lb_files->text( i ) ] = true;
+      current_files[ lb_files->item( i )->text( ) ] = true;
    }
 
    map < QString, bool > select_files;
 
    if ( integral ) {
-      check_zi_window( files, tr( "You may have already noticed this message when making I(t).\n\n" ) );
+      check_zi_window( files, us_tr( "You may have already noticed this message when making I(t).\n\n" ) );
    }
       
    if ( integral && save_bl && files.size() > 3 )
    {
       switch ( QMessageBox::warning(this, 
-                                    caption() + tr( " : Baseline Apply" ),
-                                    QString( tr( "Please note:\n\n"
+                                    windowTitle() + us_tr( " : Baseline Apply" ),
+                                    QString( us_tr( "Please note:\n\n"
                                                  "You have selected to produce separate baseline curves and have %1 files selected\n"
                                                  "This will generate upto %2 separate baseline curves in addition to your %3 baseline subtracted files\n"
                                                  "What would you like to do?\n" ) )
                                     .arg( files.size() )
                                     .arg( (int) reps * (int)  files.size() )
                                     .arg( files.size() ),
-                                    tr( "&Generate them anyway" ), 
-                                    tr( "&Temporarily turn off production of separate baseline curves" ), 
-                                    tr( "&Quit" ), 
+                                    us_tr( "&Generate them anyway" ), 
+                                    us_tr( "&Temporarily turn off production of separate baseline curves" ), 
+                                    us_tr( "&Quit" ), 
                                     0, // Stop == button 0
                                     0 // Escape == button 0
                                     ) )
@@ -1693,14 +1693,14 @@ void US_Hydrodyn_Saxs_Hplc::baseline_apply( QStringList files,
    // if ( integral && reps < 5 && !quiet )
    // {
    //    switch ( QMessageBox::warning(this, 
-   //                                  caption() + tr( " : Baseline Apply" ),
-   //                                  QString( tr( "Please note:\n\n"
+   //                                  windowTitle() + us_tr( " : Baseline Apply" ),
+   //                                  QString( us_tr( "Please note:\n\n"
    //                                               "You have selected the integral baseline method with maximum iterations of %1\n"
    //                                               "It is recommended that a minimum of 5 iterations be used to approach convergence\n"
    //                                               "What would you like to do?\n" ) )
    //                                  .arg( reps ),
-   //                                  tr( "&Continue anyway" ), 
-   //                                  tr( "&Quit" )
+   //                                  us_tr( "&Continue anyway" ), 
+   //                                  us_tr( "&Quit" )
    //                                  ) )
    //    {
    //    case 0 : // continue
@@ -1728,7 +1728,7 @@ void US_Hydrodyn_Saxs_Hplc::baseline_apply( QStringList files,
    bool test_alt_integral_bl = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_save" ] == "true";
    test_alt_integral_bl = true;
    // if ( test_alt_integral_bl ) {
-   //    editor_msg( "red", tr( "Using alternative baseline integral strategy" ) );
+   //    editor_msg( "red", us_tr( "Using alternative baseline integral strategy" ) );
    // }
 
    bool use_start_region = 
@@ -1747,19 +1747,19 @@ void US_Hydrodyn_Saxs_Hplc::baseline_apply( QStringList files,
 
    if ( use_i_power ) {
       i_power = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_i_power" ].toDouble();
-      editor_msg( "darkred", QString( tr( "Using power of intensity (%1) for distribution of delta baseline" ) ).arg( i_power ) );
+      editor_msg( "darkred", QString( us_tr( "Using power of intensity (%1) for distribution of delta baseline" ) ).arg( i_power ) );
       // if ( !quiet ) {
       //    switch ( QMessageBox::warning(this, 
-      //                                  caption() + tr( " : Baseline Apply" ),
-      //                                  QString( tr( "Please note:\n\n"
+      //                                  windowTitle() + us_tr( " : Baseline Apply" ),
+      //                                  QString( us_tr( "Please note:\n\n"
       //                                               "You are using a non-unity intensity exponent of %1 for integral baseline correction.\n"
       //                                               "The model of intesity proportional deposits is based on a unity intensity exponent.\n"
       //                                               "It is possible that a specific capillary fouling mechanism may be approximated corrected with a non-unity exponent.\n"
       //                                               "We urge you to use a non-unity intensity exponent with care.\n"
       //                                               "What would you like to do?\n" ) )
       //                                  .arg( i_power ),
-      //                                  tr( "&Continue" ), 
-      //                                  tr( "&Quit" )
+      //                                  us_tr( "&Continue" ), 
+      //                                  us_tr( "&Quit" )
       //                                  ) )
       //    {
       //    case 0 : // continue
@@ -1774,7 +1774,7 @@ void US_Hydrodyn_Saxs_Hplc::baseline_apply( QStringList files,
    for ( unsigned int i = 0; i < ( unsigned int ) files.size(); i++ )
    {
       if ( !quiet ) {
-         progress->setProgress( i, files.size() );
+         progress->setValue( i ); progress->setMaximum( files.size() );
          qApp->processEvents();
       }
 
@@ -2080,7 +2080,7 @@ void US_Hydrodyn_Saxs_Hplc::baseline_apply( QStringList files,
             end_y = avg_bl;
          }
 
-         // qDebug( QString( "integral baseline apply, start_y %1 end_y %2" ).arg( start_y ).arg( end_y ) );
+         // us_qdebug( QString( "integral baseline apply, start_y %1 end_y %2" ).arg( start_y ).arg( end_y ) );
 
          double delta_bl = end_y - start_y;
 
@@ -2090,7 +2090,7 @@ void US_Hydrodyn_Saxs_Hplc::baseline_apply( QStringList files,
             if ( !usu.smooth( f_Is[ files[ i ] ], bl_I, smoothing ) )
             {
                bl_I = f_Is[ files[ i ] ];
-               messages << QString( tr( "Error: smoothing error on %1" ) ).arg( files[ i ] );
+               messages << QString( us_tr( "Error: smoothing error on %1" ) ).arg( files[ i ] );
                editor_msg( "red", messages.back() );
             } else {
                if ( save_bl )
@@ -2121,8 +2121,8 @@ void US_Hydrodyn_Saxs_Hplc::baseline_apply( QStringList files,
          vector < double > bl = last_bl;
 
          if ( delta_bl < 0e0 ) {
-            // messages << QString( tr( "Notice: the overall change in baseline of %1 is negative (%2), so a constant baseline correction will be applied" ) ).arg( files[ i ] ).arg( delta_bl );
-            messages << QString( tr( "Notice: the overall change in baseline of %1 is negative (%2), so no baseline correction will be applied" ) ).arg( files[ i ] ).arg( delta_bl );
+            // messages << QString( us_tr( "Notice: the overall change in baseline of %1 is negative (%2), so a constant baseline correction will be applied" ) ).arg( files[ i ] ).arg( delta_bl );
+            messages << QString( us_tr( "Notice: the overall change in baseline of %1 is negative (%2), so no baseline correction will be applied" ) ).arg( files[ i ] ).arg( delta_bl );
             editor_msg( "dark red", messages.back() );
             new_I = f_Is[ files[ i ] ];
 
@@ -2159,7 +2159,7 @@ void US_Hydrodyn_Saxs_Hplc::baseline_apply( QStringList files,
                         break;
                      }
                      editor_msg( "dark blue", 
-                                 QString( tr( "iteration %1 delta_Bl %2 Itot %3 gamma %4 %5%6" ) )
+                                 QString( us_tr( "iteration %1 delta_Bl %2 Itot %3 gamma %4 %5%6" ) )
                                  .arg( this_reps )
                                  .arg( delta_bl )
                                  .arg( I_tot )
@@ -2209,21 +2209,21 @@ void US_Hydrodyn_Saxs_Hplc::baseline_apply( QStringList files,
                      }
                      if ( I_tot < 0e0 && delta_bl < 0e0 )
                      {
-                        messages << QString( tr( "Warning: the overall change in baseline of %1 is negative (%2) and the integral is less than zero, so no baseline correction will be applied" ) ).arg( files[ i ] ).arg( delta_bl );
+                        messages << QString( us_tr( "Warning: the overall change in baseline of %1 is negative (%2) and the integral is less than zero, so no baseline correction will be applied" ) ).arg( files[ i ] ).arg( delta_bl );
                         editor_msg( "dark red", messages.back() );
                         new_I = f_Is[ files[ i ] ];
                         alpha = 0e0;
                      } else {
                         if ( I_tot <= 0e0 && delta_bl > 0e0 )
                         {
-                           messages << QString( tr( "Warning: the integral of %1 was less than or equal to zero, so no baseline correction will be applied" ) ).arg( files[ i ] );
+                           messages << QString( us_tr( "Warning: the integral of %1 was less than or equal to zero, so no baseline correction will be applied" ) ).arg( files[ i ] );
                            editor_msg( "dark red", messages.back() );
                            new_I = f_Is[ files[ i ] ];
                            alpha = 0e0;
                         } else {
                            if ( delta_bl < 0e0 && I_tot > 0e0 )
                            {
-                              messages << QString( tr( "Warning: the overall change in baseline of %1 is negative (%2), so no baseline correction will be applied" ) ).arg( files[ i ] ).arg( delta_bl );
+                              messages << QString( us_tr( "Warning: the overall change in baseline of %1 is negative (%2), so no baseline correction will be applied" ) ).arg( files[ i ] ).arg( delta_bl );
                               editor_msg( "dark red", messages.back() );
                               new_I = f_Is[ files[ i ] ];
                               alpha = 0e0;
@@ -2246,7 +2246,7 @@ void US_Hydrodyn_Saxs_Hplc::baseline_apply( QStringList files,
                      alpha = delta_bl / I_tot;
 
                      editor_msg( "dark blue", 
-                                 QString( tr( "iteration %1 delta_Bl %2 Itot %3 gamma %4%5" ) )
+                                 QString( us_tr( "iteration %1 delta_Bl %2 Itot %3 gamma %4%5" ) )
                                  .arg( this_reps )
                                  .arg( delta_bl )
                                  .arg( I_tot )
@@ -2292,21 +2292,21 @@ void US_Hydrodyn_Saxs_Hplc::baseline_apply( QStringList files,
                      }
                      if ( I_tot < 0e0 && delta_bl < 0e0 )
                      {
-                        messages << QString( tr( "Warning: the overall change in baseline of %1 is negative (%2) and the integral is less than zero, so no baseline correction will be applied" ) ).arg( files[ i ] ).arg( delta_bl );
+                        messages << QString( us_tr( "Warning: the overall change in baseline of %1 is negative (%2) and the integral is less than zero, so no baseline correction will be applied" ) ).arg( files[ i ] ).arg( delta_bl );
                         editor_msg( "dark red", messages.back() );
                         new_I = f_Is[ files[ i ] ];
                         alpha = 0e0;
                      } else {
                         if ( I_tot <= 0e0 && delta_bl > 0e0 )
                         {
-                           messages << QString( tr( "Warning: the integral of %1 was less than or equal to zero, so no baseline correction will be applied" ) ).arg( files[ i ] );
+                           messages << QString( us_tr( "Warning: the integral of %1 was less than or equal to zero, so no baseline correction will be applied" ) ).arg( files[ i ] );
                            editor_msg( "dark red", messages.back() );
                            new_I = f_Is[ files[ i ] ];
                            alpha = 0e0;
                         } else {
                            if ( delta_bl < 0e0 && I_tot > 0e0 )
                            {
-                              messages << QString( tr( "Warning: the overall change in baseline of %1 is negative (%2), so no baseline correction will be applied" ) ).arg( files[ i ] ).arg( delta_bl );
+                              messages << QString( us_tr( "Warning: the overall change in baseline of %1 is negative (%2), so no baseline correction will be applied" ) ).arg( files[ i ] ).arg( delta_bl );
                               editor_msg( "dark red", messages.back() );
                               new_I = f_Is[ files[ i ] ];
                               alpha = 0e0;
@@ -2372,10 +2372,10 @@ void US_Hydrodyn_Saxs_Hplc::baseline_apply( QStringList files,
 
       select_files[ bl_name ] = true;
 
-      lb_created_files->insertItem( bl_name );
-      lb_created_files->setBottomItem( lb_created_files->numRows() - 1 );
-      lb_files->insertItem( bl_name );
-      lb_files->setBottomItem( lb_files->numRows() - 1 );
+      lb_created_files->addItem( bl_name );
+      lb_created_files->scrollToItem( lb_created_files->item( lb_created_files->count() - 1 ) );
+      lb_files->addItem( bl_name );
+      lb_files->scrollToItem( lb_files->item( lb_files->count() - 1 ) );
       created_files_not_saved[ bl_name ] = true;
    
       f_pos       [ bl_name ] = f_qs.size();
@@ -2405,13 +2405,13 @@ void US_Hydrodyn_Saxs_Hplc::baseline_apply( QStringList files,
 
       if ( qsl.size() < messages.size() )
       {
-         qsl << QString( tr( "... and %1 more not listed" ) ).arg( messages.size() - qsl.size() );
+         qsl << QString( us_tr( "... and %1 more not listed" ) ).arg( messages.size() - qsl.size() );
       }
 
       QMessageBox::warning(
                            this,
-                           this->caption() + tr(": Baseline apply" ),
-                           QString( tr( "Please note:\n\n"
+                           this->windowTitle() + us_tr(": Baseline apply" ),
+                           QString( us_tr( "Please note:\n\n"
                                         "These warnings were produced when performing the baseline correction\n"
                                         "%1\n"
                                         ) )
@@ -2438,11 +2438,11 @@ void US_Hydrodyn_Saxs_Hplc::baseline_apply( QStringList files,
          lb_files->clearSelection();
       }
 
-      for ( int i = 0; i < (int)lb_files->numRows(); i++ )
+      for ( int i = 0; i < (int)lb_files->count(); i++ )
       {
-         if ( select_files.count( lb_files->text( i ) ) )
+         if ( select_files.count( lb_files->item( i )->text( ) ) )
          {
-            lb_files->setSelected( i, true );
+            lb_files->item( i)->setSelected( true );
          }
       }
 
@@ -2454,7 +2454,7 @@ void US_Hydrodyn_Saxs_Hplc::baseline_apply( QStringList files,
 }
 
 void US_Hydrodyn_Saxs_Hplc::set_baseline_fix_width() {
-   // qDebug( "set baseline fix width" );
+   // us_qdebug( "set baseline fix width" );
    baseline_enables();
 }
 
@@ -2895,7 +2895,7 @@ void US_Hydrodyn_Saxs_Hplc::baseline_end_e_focus( bool hasFocus )
 void US_Hydrodyn_Saxs_Hplc::baseline_width_text( const QString & text )
 {
    int blw = text.toInt();
-   // qDebug( QString( "baseline_width_text %1 %2" ).arg( blw ).arg( le_baseline_width->hasFocus() ? "hasFocus" : "!hasFocus" ) );
+   // us_qdebug( QString( "baseline_width_text %1 %2" ).arg( blw ).arg( le_baseline_width->hasFocus() ? "hasFocus" : "!hasFocus" ) );
    if ( blw < 1 ) {
       le_baseline_width->setText( "1" );
       return;
@@ -2922,7 +2922,7 @@ void US_Hydrodyn_Saxs_Hplc::baseline_width_text( const QString & text )
             new_pos_e = q_size - 1;
             new_pos_s = new_pos_e - blw + 1;
          }
-         // qDebug( QString( "baseline width new pos s %1, e %2" ).arg( new_pos_s ).arg( new_pos_e ) );
+         // us_qdebug( QString( "baseline width new pos s %1, e %2" ).arg( new_pos_s ).arg( new_pos_e ) );
          disconnect( le_baseline_end_e, SIGNAL( textChanged( const QString & ) ), 0, 0 );
          le_baseline_end_e->setText( QString( "%1" ).arg( f_qs[ wheel_file ][ new_pos_e ] ) );
          connect( le_baseline_end_e, SIGNAL( textChanged( const QString & ) ), SLOT( baseline_end_e_text( const QString & ) ) );
@@ -2956,7 +2956,7 @@ void US_Hydrodyn_Saxs_Hplc::baseline_width_text( const QString & text )
 void US_Hydrodyn_Saxs_Hplc::baseline_width_focus( bool hasFocus )
 {
    if ( hasFocus ) {
-      // qDebug( QString( "baseline_width focus blw currently %1" ).arg( le_baseline_width->text() ) );
+      // us_qdebug( QString( "baseline_width focus blw currently %1" ).arg( le_baseline_width->text() ) );
       disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
       qwtw_wheel->setRange( IB_MIN_RANGE, baseline_max_window_size - 1, 1 );
       connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
@@ -2968,7 +2968,7 @@ void US_Hydrodyn_Saxs_Hplc::baseline_width_focus( bool hasFocus )
 void US_Hydrodyn_Saxs_Hplc::baseline_best() {
    disable_all();
 
-   // qDebug( "baseline best" );
+   // us_qdebug( "baseline best" );
    // run cormap on full system
 
    map < QString, QString > parameters;
@@ -2994,7 +2994,7 @@ void US_Hydrodyn_Saxs_Hplc::baseline_best() {
    }
 
    if ( blanks_cormap_parameters.count( "alpha" ) ) {
-      // qDebug( QString( "got alpha %1 from blanks" ).arg( blanks_cormap_parameters[ "alpha" ] ) );
+      // us_qdebug( QString( "got alpha %1 from blanks" ).arg( blanks_cormap_parameters[ "alpha" ] ) );
       parameters[ "alpha" ] = blanks_cormap_parameters[ "alpha" ];
    }
 
@@ -3039,7 +3039,7 @@ void US_Hydrodyn_Saxs_Hplc::baseline_best() {
                       this,
                       progress
                       ) ) {
-         // qDebug( "sliding_results" );
+         // us_qdebug( "sliding_results" );
          // for ( map < QString, double >::iterator it = baseline_brookesmap_sliding_results.begin();
          //       it != baseline_brookesmap_sliding_results.end();
          //       ++it ) {
@@ -3079,15 +3079,15 @@ void US_Hydrodyn_Saxs_Hplc::baseline_best() {
             }
 
             best_dparameters[ "width"  ] = baseline_best_last_window_size;
-            best_parameters[ "xlegend" ] = QString( tr( "Start Frame (window width %1 frames)" ) ).arg( baseline_best_last_window_size );
-            best_parameters[ "title"   ] = QString( tr( 
+            best_parameters[ "xlegend" ] = QString( us_tr( "Start Frame (window width %1 frames)" ) ).arg( baseline_best_last_window_size );
+            best_parameters[ "title"   ] = QString( us_tr( 
                                                        hb_mode 
                                                        ? "Baseline avg. I(q) and red pair % by start frame (window width %1 frames)." 
                                                        : "Baseline avg. I(q) and average red cluster size by start frame\n(window width %1 frames)." 
                                                         ) ).arg( baseline_best_last_window_size );
 
             if ( !hb_mode ) {
-               best_parameters[ "hb_title"   ] = QString( tr( "Baseline avg. I(q) and red pair % by start frame\n(window width %1 frames)." ) ).arg( baseline_best_last_window_size );
+               best_parameters[ "hb_title"   ] = QString( us_tr( "Baseline avg. I(q) and red pair % by start frame\n(window width %1 frames)." ) ).arg( baseline_best_last_window_size );
             }
 
             if ( baseline_cormap_parameters.count( "decimate" ) ) {
@@ -3100,9 +3100,9 @@ void US_Hydrodyn_Saxs_Hplc::baseline_best() {
                   default : nth_tag = "th"; break;
                   }
                
-                  best_parameters[ "title" ] += QString( tr( " Only every %1%2 q value selected." ) )
+                  best_parameters[ "title" ] += QString( us_tr( " Only every %1%2 q value selected." ) )
                      .arg( decimate ).arg( nth_tag );
-                  best_parameters[ "hb_title" ] += QString( tr( " Only every %1%2 q value selected." ) )
+                  best_parameters[ "hb_title" ] += QString( us_tr( " Only every %1%2 q value selected." ) )
                      .arg( decimate ).arg( nth_tag );
                }
             }
@@ -3121,7 +3121,7 @@ void US_Hydrodyn_Saxs_Hplc::baseline_best() {
             for ( map < QString, double >::iterator it = baseline_brookesmap_sliding_results.begin();
                   it != baseline_brookesmap_sliding_results.end();
                   ++it ) {
-               if ( rx_cap.search( it->first ) != -1 ) {
+               if ( rx_cap.indexIn( it->first ) != -1 ) {
                   int pos = rx_cap.cap( 1 ).toInt();
                   if ( pos > 0 && pos < q_size ) {
                      plotdata[ f_qs[ wheel_file ][ pos ] ] = it->second;
@@ -3135,7 +3135,7 @@ void US_Hydrodyn_Saxs_Hplc::baseline_best() {
                for ( map < QString, double >::iterator it = baseline_hb_brookesmap_sliding_results.begin();
                      it != baseline_hb_brookesmap_sliding_results.end();
                      ++it ) {
-                  if ( rx_cap.search( it->first ) != -1 ) {
+                  if ( rx_cap.indexIn( it->first ) != -1 ) {
                      int pos = rx_cap.cap( 1 ).toInt();
                      if ( pos > 0 && pos < q_size ) {
                         hb_plotdata[ f_qs[ wheel_file ][ pos ] ] = it->second;
@@ -3210,7 +3210,7 @@ void US_Hydrodyn_Saxs_Hplc::baseline_best() {
                   }
                }
 
-               // qDebug( QString( "ybest %1 pos %2" ).arg( ybest ).arg( ybestposx ) );
+               // us_qdebug( QString( "ybest %1 pos %2" ).arg( ybest ).arg( ybestposx ) );
 
                // US_Vector::printvector2( "sliding analysis data", x, y );
                // US_Vector::printvector2( "sliding analysis gy results", gx, gy );
@@ -3223,10 +3223,10 @@ void US_Hydrodyn_Saxs_Hplc::baseline_best() {
                   best_vdparameters[ "gy" ] = gy;
                }
 
-               // qDebug( QString( "ybest %1 pos %2" ).arg( ybest ).arg( ybestposx ) );
+               // us_qdebug( QString( "ybest %1 pos %2" ).arg( ybest ).arg( ybestposx ) );
                // if ( ybestposx != -1 ) {
                //    best_dparameters[ "bestpos" ] = ybestposx;
-               //    qDebug( "set as best_dparameters" );
+               //    us_qdebug( "set as best_dparameters" );
                // }
 
                if ( !hb_mode ) {
@@ -3263,7 +3263,7 @@ void US_Hydrodyn_Saxs_Hplc::baseline_best() {
                      hb_y.push_back( it->second );
                   }
 
-                  // qDebug( QString( "ybest %1 pos %2" ).arg( ybest ).arg( ybestposx ) );
+                  // us_qdebug( QString( "ybest %1 pos %2" ).arg( ybest ).arg( ybestposx ) );
 
                   // US_Vector::printvector2( "sliding analysis data", x, y );
                   // US_Vector::printvector2( "sliding analysis gy results", gx, gy );
@@ -3271,10 +3271,10 @@ void US_Hydrodyn_Saxs_Hplc::baseline_best() {
                   best_vdparameters[ "hb_x" ] = hb_x;
                   best_vdparameters[ "hb_y" ] = hb_y;
 
-                  // qDebug( QString( "ybest %1 pos %2" ).arg( hb_ybest ).arg( hb_ybestposx ) );
+                  // us_qdebug( QString( "ybest %1 pos %2" ).arg( hb_ybest ).arg( hb_ybestposx ) );
                   // if ( hb_ybestposx != -1 ) {
                   //    best_dparameters[ "hb_bestpos" ] = hb_ybestposx;
-                  //    qDebug( "set as best_dparameters" );
+                  //    us_qdebug( "set as best_dparameters" );
                   // }
                }
             }
@@ -3312,9 +3312,9 @@ void US_Hydrodyn_Saxs_Hplc::baseline_best() {
 
                if ( use_errors ) {
                   for ( int i = 0; i < (int) baseline_selected.size(); ++i ) {
-                     if ( rx_capqv.search( baseline_selected[ i ] ) == -1 ) {
+                     if ( rx_capqv.indexIn( baseline_selected[ i ] ) == -1 ) {
                         editor_msg( "red", 
-                                    QString( tr( "Baseline Find best region: Could not extract q value from file name %1" ) )
+                                    QString( us_tr( "Baseline Find best region: Could not extract q value from file name %1" ) )
                                     .arg( baseline_selected[ i ] ) );
                         baseline_enables();
                         return;
@@ -3348,9 +3348,9 @@ void US_Hydrodyn_Saxs_Hplc::baseline_best() {
                   // now msumq[ j ] and msumqmaxq[ j ] contains sd weighted xbar for each frame
                } else {
                   for ( int i = 0; i < (int) baseline_selected.size(); ++i ) {
-                     if ( rx_capqv.search( baseline_selected[ i ] ) == -1 ) {
+                     if ( rx_capqv.indexIn( baseline_selected[ i ] ) == -1 ) {
                         editor_msg( "red", 
-                                    QString( tr( "Baseline Find best region: Could not extract q value from file name %1" ) )
+                                    QString( us_tr( "Baseline Find best region: Could not extract q value from file name %1" ) )
                                     .arg( baseline_selected[ i ] ) );
                         baseline_enables();
                         return;
@@ -3398,7 +3398,7 @@ void US_Hydrodyn_Saxs_Hplc::baseline_best() {
                for ( map < QString, double >::iterator it = baseline_brookesmap_sliding_results.begin();
                      it != baseline_brookesmap_sliding_results.end();
                      ++it ) {
-                  if ( rx_cap.search( it->first ) != -1 ) {
+                  if ( rx_cap.indexIn( it->first ) != -1 ) {
                      int pos = rx_cap.cap( 1 ).toInt();
                      msumqx     [ pos ] = f_qs[ wheel_file ][ pos ];
                      msumqy     [ pos ] = 0e0;
@@ -3508,24 +3508,24 @@ void US_Hydrodyn_Saxs_Hplc::baseline_best() {
                      if ( best_dparameters[ "minsumqmaxqy" ] > best_dparameters[ "minsumqmaxqysd" ] ) {
                         if ( best_dparameters[ "minsumqmaxqy" ] > 5 * best_dparameters[ "minsumqmaxqysd" ] ) {
                            tmp_msg +=
-                              tr( "Integral baseline correction is recommended\n\n" );
+                              us_tr( "Integral baseline correction is recommended\n\n" );
                         } else {
                            if ( best_dparameters[ "minsumqmaxqy" ] > 3 * best_dparameters[ "minsumqmaxqysd" ] ) {
                               tmp_msg +=
-                                 tr( "Integral baseline correction is of borderline need\n\n" );
+                                 us_tr( "Integral baseline correction is of borderline need\n\n" );
                            } else {
                               tmp_msg +=
-                                 tr( "Integral baseline correction is of questionable use\n\n" );
+                                 us_tr( "Integral baseline correction is of questionable use\n\n" );
                            }
                         }
                      } else {
                         if ( best_dparameters[ "minsumqmaxqy" ] < -5 * best_dparameters[ "minsumqmaxqysd" ] ) {
                            tmp_msg +=
-                              tr( "It appears there is an issue with buffer subtraction resulting in negative data\n" ) +
-                              tr( "Integral baseline correction is not appropriate for this situation\n" ) +
-                              tr( "Perhaps a linear baseline correction would help, but we recommend you first verify the buffer subtraction\n\n" );
+                              us_tr( "It appears there is an issue with buffer subtraction resulting in negative data\n" ) +
+                              us_tr( "Integral baseline correction is not appropriate for this situation\n" ) +
+                              us_tr( "Perhaps a linear baseline correction would help, but we recommend you first verify the buffer subtraction\n\n" );
                         } else {
-                           tmp_msg += tr( "Integral baseline correction is not recommended\n\n" );
+                           tmp_msg += us_tr( "Integral baseline correction is not recommended\n\n" );
                         }
                      }
                   } else {
@@ -3533,11 +3533,11 @@ void US_Hydrodyn_Saxs_Hplc::baseline_best() {
                      if ( best_dparameters[ "minsumqmaxqy" ] > 0 ) {
                         tmp_msg +=
                            best_vdparameters.count( "yx" ) ?
-                           tr( "Integral baseline correction would be possible, but no steady state end region has been identified\n\n" ) 
+                           us_tr( "Integral baseline correction would be possible, but no steady state end region has been identified\n\n" ) 
                            :
-                           tr( "Integral baseline correction is possible\n\n" );
+                           us_tr( "Integral baseline correction is possible\n\n" );
                      } else {
-                        tmp_msg += tr( "Integral baseline correction is not recommended\n\n" );
+                        tmp_msg += us_tr( "Integral baseline correction is not recommended\n\n" );
                      }
                   }                     
                }
@@ -3669,11 +3669,11 @@ void US_Hydrodyn_Saxs_Hplc::baseline_best() {
                           "  Number of sliding windows of this width averaged     %5\n"
                           )
                   .arg( blanks_cormap_parameters.count( "name" ) ?
-                        blanks_cormap_parameters[ "name" ] : QString( tr( "unknown" ) ) )
+                        blanks_cormap_parameters[ "name" ] : QString( us_tr( "unknown" ) ) )
                   .arg( blanks_cormap_parameters.count( "decimate" ) ?
-                        blanks_cormap_parameters[ "decimate" ] : QString( tr( "none" )) )
+                        blanks_cormap_parameters[ "decimate" ] : QString( us_tr( "none" )) )
                   .arg( blanks_cormap_parameters.count( "frames" ) ?
-                        blanks_cormap_parameters[ "frames" ] : QString( tr( "unknown" ) ) )
+                        blanks_cormap_parameters[ "frames" ] : QString( us_tr( "unknown" ) ) )
                   .arg( baseline_best_last_window_size )
                   .arg( blanks_brookesmap_sliding_results.count( QString( "%1 count" ).arg( baseline_best_last_window_size ) ) ?
                         QString( "%1" ).arg( blanks_brookesmap_sliding_results[ QString( "%1 count" ).arg( baseline_best_last_window_size ) ] ) :
@@ -3705,7 +3705,7 @@ void US_Hydrodyn_Saxs_Hplc::baseline_best() {
                baseline_best_ok = true;
                cb_baseline_fix_width->setChecked( true );
             } else {
-               qDebug( "some error" );
+               us_qdebug( "some error" );
             }
          }
       } else {
@@ -3720,8 +3720,8 @@ void US_Hydrodyn_Saxs_Hplc::baseline_best() {
 void US_Hydrodyn_Saxs_Hplc::baseline_test()
 {
    // QMessageBox::warning(this, 
-   //                      caption() + tr( " : Test baseline" ),
-   //                      tr( "Test baseline is not currently functional" ), 
+   //                      windowTitle() + us_tr( " : Test baseline" ),
+   //                      us_tr( "Test baseline is not currently functional" ), 
    //                      QMessageBox::Ok | QMessageBox::Default,
    //                      QMessageBox::NoButton
    //                      );
@@ -3756,7 +3756,7 @@ void US_Hydrodyn_Saxs_Hplc::baseline_test()
 }
 
 void US_Hydrodyn_Saxs_Hplc::baseline_test_pos( int pos ) {
-   // qDebug( QString( "baseline_test_pos( %1 ) %2" ).arg( pos )
+   // us_qdebug( QString( "baseline_test_pos( %1 ) %2" ).arg( pos )
    //         .arg( 
    //              ( pos >= 0 && pos < (int) baseline_selected.size() ) ?  baseline_selected[ pos ] : QString( "outta limits" ) ) );
 
@@ -3778,7 +3778,7 @@ void US_Hydrodyn_Saxs_Hplc::baseline_test_pos( int pos ) {
 
    QStringList qsl;
    qsl << baseline_selected[ pos ];
-   // qDebug( QString( "smooth %1" ).arg( ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_smooth" ].toInt() ) );
+   // us_qdebug( QString( "smooth %1" ).arg( ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_bl_smooth" ].toInt() ) );
 
    baseline_apply( qsl
                    ,true

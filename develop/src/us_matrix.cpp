@@ -1224,7 +1224,7 @@ US_lsfit::US_lsfit(double *coeff, double *x, double *y, int ord, int n, bool mes
          str2.sprintf("%d order: %e\n", i, c[i]);
          str1.append(str2);
       }
-      QMessageBox::message("Coefficients: ", str1);
+      US_Static::us_message("Coefficients: ", str1);
    }
    for (i=0; i<order; i++)
    {
@@ -1339,7 +1339,7 @@ void conc_dep_s(float sigma, double **right, double **c_current,
    ca = new double [points];
    if (ca == NULL)
    {
-      qDebug("Not enough memory in conc_dep_s");
+      us_qdebug("Not enough memory in conc_dep_s");
       return;
    }
    for (i=0; i<points; i++)
@@ -1367,7 +1367,7 @@ void conc_dep_s(float sigma, float **right, float **c_current,
    ca = new float [points];
    if (ca == NULL)
    {
-      qDebug("Not enough memory in conc_dep_s");
+      us_qdebug("Not enough memory in conc_dep_s");
       return;
    }
    for (i=0; i<points; i++)
@@ -1396,7 +1396,7 @@ void conc_dep_s(adouble sigma, adouble **right, adouble **c_current,
    ca = new adouble [points];
    if (ca == NULL)
    {
-      qDebug("Not enough memory in conc_dep_s");
+      us_qdebug("Not enough memory in conc_dep_s");
       return;
    }
    for (i=0; i<points; i++)
@@ -1424,7 +1424,7 @@ void conc_dep_s(adouble sigma, adouble **right, adouble **c_current,
    ca = new adouble [points];
    if (ca == NULL)
    {
-      qDebug("Not enough memory in conc_dep_s");
+      us_qdebug("Not enough memory in conc_dep_s");
       return;
    }
    for (i=0; i<points; i++)

@@ -4,13 +4,13 @@
 #include "../include/us_hydrodyn_cluster.h"
 #include "../include/us_hydrodyn_cluster_status.h"
 //Added by qt3to4:
-#include <Q3TextStream>
-#include <Q3HBoxLayout>
+#include <QTextStream>
+#include <QHBoxLayout>
 #include <QLabel>
-#include <Q3Frame>
-#include <Q3PopupMenu>
-#include <Q3VBoxLayout>
-#include <Q3BoxLayout>
+#include <QFrame>
+ //#include <Q3PopupMenu>
+#include <QVBoxLayout>
+#include <QBoxLayout>
 #include <QCloseEvent>
 
 // note: this program uses cout and/or cerr and this should be replaced
@@ -25,10 +25,10 @@ US_Hydrodyn_Cluster_Status::US_Hydrodyn_Cluster_Status(
                                          void *us_hydrodyn, 
                                          QWidget *p, 
                                          const char *name
-                                         ) : QDialog(p, name)
+                                         ) : QDialog( p )
 {
    this->us_hydrodyn = us_hydrodyn;
-   setCaption(tr("US-SOMO: Cluster Status"));
+   setWindowTitle(us_tr("US-SOMO: Cluster Status"));
    cluster_window = (void *)p;
    USglobal = new US_Config();
 
@@ -68,8 +68,8 @@ US_Hydrodyn_Cluster_Status::US_Hydrodyn_Cluster_Status(
         cluster_pw.isEmpty() )
    {
       QMessageBox::information( this, 
-                                tr("US-SOMO: Cluster Jobs"),
-                                tr("Cluster credentials must be set in Cluster Config before continuing"),
+                                us_tr("US-SOMO: Cluster Jobs"),
+                                us_tr("Cluster credentials must be set in Cluster Config before continuing"),
                                 0 );
       return;
    }
@@ -77,8 +77,8 @@ US_Hydrodyn_Cluster_Status::US_Hydrodyn_Cluster_Status(
    if ( !update_files( false ) )
    {
       QMessageBox::information( this, 
-                                tr("US-SOMO: Cluster Status"),
-                                tr("No unretrieved submitted jobs found"),
+                                us_tr("US-SOMO: Cluster Status"),
+                                us_tr("No unretrieved submitted jobs found"),
                                 0 );
    }
 
@@ -108,16 +108,27 @@ unsigned int US_Hydrodyn_Cluster_Status::update_files( bool set_lv_files )
    // traverse directory and build up files
    QDir::setCurrent( submitted_dir );
    QDir qd;
-   QStringList tgz_files = qd.entryList( "*.tgz" );
-   QStringList tar_files = qd.entryList( "*.tar" );
-   QStringList all_files = QStringList::split( "\n", 
-                                               tgz_files.join("\n") + 
-                                               ( tgz_files.size() ? "\n" : "" ) +
-                                               tar_files.join("\n") );
+   QStringList tgz_files = qd.entryList( QStringList() << "*.tgz" );
+   QStringList tar_files = qd.entryList( QStringList() << "*.tar" );
+
+   // QStringList all_files = QStringList::split( "\n", 
+   //                                             tgz_files.join("\n") + 
+   //                                             ( tgz_files.size() ? "\n" : "" ) +
+   //                                             tar_files.join("\n") );
+
+   QStringList all_files;
+   {
+      QString qs =
+         tgz_files.join("\n") + 
+         ( tgz_files.size() ? "\n" : "" ) +
+         tar_files.join("\n")
+         ;
+      all_files = (qs ).split( "\n" , QString::SkipEmptyParts );
+   }
 
    for ( unsigned int i = 0; i < (unsigned int)all_files.size(); i++ )
    {
-      if ( !all_files[ i ].contains( "_out", false ) )
+      if ( !all_files[ i ].contains( "_out", Qt::CaseInsensitive ) )
       {
          files << all_files[ i ];
       }
@@ -128,7 +139,17 @@ unsigned int US_Hydrodyn_Cluster_Status::update_files( bool set_lv_files )
       lv_files->clear();
       for ( unsigned int i = 0; i < (unsigned int)files.size(); i++ )
       {
-         new Q3ListViewItem( lv_files, files[ i ], "unknown", "", QFileInfo( files[ i ] ).created().toString() );
+#if QT_VERSION < 0x040000
+         new QTreeWidgetItem( lv_files, files[ i ], "unknown", "", QFileInfo( files[ i ] ).created().toString() );
+#else
+         lv_files->addTopLevelItem( new QTreeWidgetItem(
+                                                        QStringList()
+                                                        << files[ i ]
+                                                        << "unknown"
+                                                        << ""
+                                                        << QFileInfo( files[ i ] ).created().toString()
+                                                        ) );
+#endif
       }
    }
 
@@ -140,115 +161,153 @@ void US_Hydrodyn_Cluster_Status::setupGUI()
 {
    int minHeight1 = 30;
 
-   lbl_title = new QLabel( tr( " Cluster job status" ), this);
-   lbl_title->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Raised);
+   lbl_title = new QLabel( us_tr( " Cluster job status" ), this);
+   lbl_title->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_title->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_title->setMinimumHeight(minHeight1);
    lbl_title->setPalette( PALET_FRAME );
    AUTFBACK( lbl_title );
    lbl_title->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
 
-   lv_files = new Q3ListView(this);
-   lv_files->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Raised);
+   lv_files = new QTreeWidget(this);
+   lv_files->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lv_files->setMinimumHeight(minHeight1 * 3);
    lv_files->setPalette( PALET_EDIT );
    AUTFBACK( lv_files );
    lv_files->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
    lv_files->setEnabled(true);
-   lv_files->setSelectionMode( Q3ListView::Multi );
+   lv_files->setSelectionMode( QAbstractItemView::MultiSelection );
 
-   lv_files->addColumn( tr( "Name" ) );
-   lv_files->addColumn( tr( "Status" ) );
-   lv_files->addColumn( tr( "Additional Info" ) );
-   lv_files->addColumn( tr( "Date created" ) );
-   connect( lv_files, SIGNAL( selectionChanged() ), SLOT( update_enables() ) );
+#if QT_VERSION < 0x040000
+   lv_files->addColumn( us_tr( "Name" ) );
+   lv_files->addColumn( us_tr( "Status" ) );
+   lv_files->addColumn( us_tr( "Additional Info" ) );
+   lv_files->addColumn( us_tr( "Date created" ) );
+#else
+   lv_files->setColumnCount( 4 );
+   lv_files->setHeaderLabels( QStringList()
+                              << us_tr( "Name" )
+                              << us_tr( "Status" )
+                              << us_tr( "Additional Info" )
+                              << us_tr( "Date created" )
+                              );
+#endif   
+   connect( lv_files, SIGNAL( itemSelectionChanged() ), SLOT( update_enables() ) );
 
-   pb_refresh = new QPushButton(tr("Refresh status"), this);
+   pb_refresh = new QPushButton(us_tr("Refresh status"), this);
    pb_refresh->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_refresh->setMinimumHeight(minHeight1);
    pb_refresh->setPalette( PALET_PUSHB );
    connect( pb_refresh, SIGNAL( clicked() ), SLOT( refresh() ) );
 
-   pb_remove = new QPushButton(tr("Cancel selected jobs"), this);
+   pb_remove = new QPushButton(us_tr("Cancel selected jobs"), this);
    pb_remove->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_remove->setMinimumHeight(minHeight1);
    pb_remove->setPalette( PALET_PUSHB );
    connect( pb_remove, SIGNAL( clicked() ), SLOT( remove() ) );
 
-   pb_retrieve_selected = new QPushButton( tr("Retrieve selected results" ), this);
+   pb_retrieve_selected = new QPushButton( us_tr("Retrieve selected results" ), this);
    pb_retrieve_selected->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_retrieve_selected->setMinimumHeight(minHeight1);
    pb_retrieve_selected->setPalette( PALET_PUSHB );
    connect( pb_retrieve_selected, SIGNAL( clicked() ), SLOT( retrieve_selected() ) );
 
-   pb_retrieve = new QPushButton( tr("Retrieve all available results" ), this);
+   pb_retrieve = new QPushButton( us_tr("Retrieve all available results" ), this);
    pb_retrieve->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_retrieve->setMinimumHeight(minHeight1);
    pb_retrieve->setPalette( PALET_PUSHB );
    connect( pb_retrieve, SIGNAL( clicked() ), SLOT( retrieve() ) );
 
-   progress = new Q3ProgressBar(this, "FTP Progress");
+   progress = new QProgressBar( this );
    progress->setMinimumHeight( minHeight1 );
    progress->setPalette( PALET_NORMAL );
    AUTFBACK( progress );
    progress->reset();
 
-   connect( &ftp, SIGNAL( dataTransferProgress ( int, int  ) ), progress, SLOT( setProgress        ( int, int  ) ) );
+   connect( &ftp, SIGNAL( dataTransferProgress ( int, int  ) ), progress, SLOT( setValue        ( int, int  ) ) );
    connect( &ftp, SIGNAL( stateChanged         ( int       ) ), this    , SLOT( ftp_stateChanged   ( int       ) ) );
    connect( &ftp, SIGNAL( commandStarted       ( int       ) ), this    , SLOT( ftp_commandStarted ( int       ) ) );
    connect( &ftp, SIGNAL( commandFinished      ( int, bool ) ), this    , SLOT( ftp_commandFinished( int, bool ) ) );
    connect( &ftp, SIGNAL( done                 ( bool      ) ), this    , SLOT( ftp_done           ( bool      ) ) );
 
-   editor = new Q3TextEdit(this);
+   editor = new QTextEdit(this);
    editor->setPalette( PALET_NORMAL );
    AUTFBACK( editor );
    editor->setReadOnly(true);
 
-#if defined(QT4) && defined(Q_WS_MAC)
+#if QT_VERSION < 0x040000
+# if defined(QT4) && defined(Q_WS_MAC)
    {
-      Q3PopupMenu * file = new Q3PopupMenu;
-      file->insertItem( tr("&Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
-      file->insertItem( tr("&Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
-      file->insertItem( tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
+ //      Q3PopupMenu * file = new Q3PopupMenu;
+      file->insertItem( us_tr("&Font"),  this, SLOT(update_font( )),    Qt::ALT+Qt::Key_F );
+      file->insertItem( us_tr("&Save"),  this, SLOT(save( )),    Qt::ALT+Qt::Key_S );
+      file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display( )),   Qt::ALT+Qt::Key_X );
 
       QMenuBar *menu = new QMenuBar( this );
       AUTFBACK( menu );
 
-      menu->insertItem(tr("&Messages"), file );
+      menu->insertItem(us_tr("&Messages"), file );
    }
-#else
-   Q3Frame *frame;
-   frame = new Q3Frame(this);
+# else
+   QFrame *frame;
+   frame = new QFrame(this);
    frame->setMinimumHeight(minHeight1);
 
-   m = new QMenuBar(frame, "menu" );
+   m = new QMenuBar( frame );    m->setObjectName( "menu" );
    m->setMinimumHeight(minHeight1 - 5);
    m->setPalette( PALET_NORMAL );
    AUTFBACK( m );
-   Q3PopupMenu * file = new Q3PopupMenu(editor);
-   m->insertItem( tr("&File"), file );
-   file->insertItem( tr("Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
-   file->insertItem( tr("Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
-   file->insertItem( tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
+ //   Q3PopupMenu * file = new Q3PopupMenu(editor);
+   m->insertItem( us_tr("&File"), file );
+   file->insertItem( us_tr("Font"),  this, SLOT(update_font( )),    Qt::ALT+Qt::Key_F );
+   file->insertItem( us_tr("Save"),  this, SLOT(save( )),    Qt::ALT+Qt::Key_S );
+   file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display( )),   Qt::ALT+Qt::Key_X );
+# endif
+#else
+   QFrame *frame;
+   frame = new QFrame(this);
+   frame->setMinimumHeight(minHeight1);
+
+   m = new QMenuBar( frame );    m->setObjectName( "menu" );
+   m->setMinimumHeight(minHeight1 - 5);
+   m->setPalette( PALET_NORMAL );
+   AUTFBACK( m );
+
+   {
+      QMenu * new_menu = m->addMenu( us_tr( "&File" ) );
+
+      QAction *qa1 = new_menu->addAction( us_tr( "Font" ) );
+      qa1->setShortcut( Qt::ALT+Qt::Key_F );
+      connect( qa1, SIGNAL(triggered()), this, SLOT( update_font() ) );
+
+      QAction *qa2 = new_menu->addAction( us_tr( "Save" ) );
+      qa2->setShortcut( Qt::ALT+Qt::Key_S );
+      connect( qa2, SIGNAL(triggered()), this, SLOT( save() ) );
+
+      QAction *qa3 = new_menu->addAction( us_tr( "Clear Display" ) );
+      qa3->setShortcut( Qt::ALT+Qt::Key_X );
+      connect( qa3, SIGNAL(triggered()), this, SLOT( clear_display() ) );
+   }
 #endif
 
-   editor->setWordWrap (Q3TextEdit::WidgetWidth);
+
+   editor->setWordWrapMode (QTextOption::WordWrap);
    editor->setMinimumHeight(100);
 
-   pb_stop = new QPushButton(tr("Stop"), this);
+   pb_stop = new QPushButton(us_tr("Stop"), this);
    pb_stop->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_stop->setMinimumHeight(minHeight1);
    pb_stop->setPalette( PALET_PUSHB );
    connect(pb_stop, SIGNAL(clicked()), SLOT(stop()));
    pb_stop->setEnabled( false );
 
-   pb_help = new QPushButton(tr("Help"), this);
+   pb_help = new QPushButton(us_tr("Help"), this);
    pb_help->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_help->setMinimumHeight(minHeight1);
    pb_help->setPalette( PALET_PUSHB );
    connect(pb_help, SIGNAL(clicked()), SLOT(help()));
 
-   pb_cancel = new QPushButton(tr("Close"), this);
+   pb_cancel = new QPushButton(us_tr("Close"), this);
    pb_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_cancel->setMinimumHeight(minHeight1);
    pb_cancel->setPalette( PALET_PUSHB );
@@ -256,7 +315,7 @@ void US_Hydrodyn_Cluster_Status::setupGUI()
 
    // build layout
 
-   Q3HBoxLayout *hbl_buttons1 = new Q3HBoxLayout( 0 );
+   QHBoxLayout * hbl_buttons1 = new QHBoxLayout(); hbl_buttons1->setContentsMargins( 0, 0, 0, 0 ); hbl_buttons1->setSpacing( 0 );
    hbl_buttons1->addSpacing( 4 );
    hbl_buttons1->addWidget ( pb_refresh );
    hbl_buttons1->addSpacing( 4 );
@@ -267,7 +326,7 @@ void US_Hydrodyn_Cluster_Status::setupGUI()
    hbl_buttons1->addWidget ( pb_retrieve );
    hbl_buttons1->addSpacing( 4 );
 
-   Q3HBoxLayout *hbl_bottom = new Q3HBoxLayout( 0 );
+   QHBoxLayout * hbl_bottom = new QHBoxLayout(); hbl_bottom->setContentsMargins( 0, 0, 0, 0 ); hbl_bottom->setSpacing( 0 );
    hbl_bottom->addSpacing( 4 );
    hbl_bottom->addWidget ( pb_stop );
    hbl_bottom->addSpacing( 4 );
@@ -276,13 +335,13 @@ void US_Hydrodyn_Cluster_Status::setupGUI()
    hbl_bottom->addWidget ( pb_cancel );
    hbl_bottom->addSpacing( 4 );
 
-   Q3BoxLayout *vbl_editor_group = new Q3VBoxLayout(0);
+   QBoxLayout *vbl_editor_group = new QVBoxLayout(0);
 #if !defined(QT4) || !defined(Q_WS_MAC)
    vbl_editor_group->addWidget(frame);
 #endif
    vbl_editor_group->addWidget(editor);
 
-   Q3VBoxLayout *background = new Q3VBoxLayout( this );
+   QVBoxLayout * background = new QVBoxLayout( this ); background->setContentsMargins( 0, 0, 0, 0 ); background->setSpacing( 0 );
    background->addSpacing( 4);
    background->addWidget ( lbl_title );
    background->addSpacing( 4 );
@@ -306,7 +365,7 @@ void US_Hydrodyn_Cluster_Status::cancel()
    }
    if ( system_proc_active )
    {
-      system_proc->tryTerminate();
+      system_proc->terminate();
       QTimer::singleShot( 2500, system_proc, SLOT( kill() ) );
    }
    close();
@@ -327,7 +386,7 @@ void US_Hydrodyn_Cluster_Status::closeEvent(QCloseEvent *e)
    }
    if ( system_proc_active )
    {
-      system_proc->tryTerminate();
+      system_proc->terminate();
       QTimer::singleShot( 2500, system_proc, SLOT( kill() ) );
    }
    global_Xpos -= 30;
@@ -357,30 +416,30 @@ void US_Hydrodyn_Cluster_Status::update_font()
 void US_Hydrodyn_Cluster_Status::save()
 {
    QString fn;
-   fn = QFileDialog::getSaveFileName( this , caption() , QString::null , QString::null );
+   fn = QFileDialog::getSaveFileName( this , windowTitle() , QString::null , QString::null );
    if(!fn.isEmpty() )
    {
-      QString text = editor->text();
+      QString text = editor->toPlainText();
       QFile f( fn );
       if ( !f.open( QIODevice::WriteOnly | QIODevice::Text) )
       {
          return;
       }
-      Q3TextStream t( &f );
+      QTextStream t( &f );
       t << text;
       f.close();
-      editor->setModified( false );
-      setCaption( fn );
+ //      editor->setModified( false );
+      setWindowTitle( fn );
    }
 }
 
 void US_Hydrodyn_Cluster_Status::editor_msg( QString color, QString msg )
 {
-   QColor save_color = editor->color();
-   editor->setColor(color);
+   QColor save_color = editor->textColor();
+   editor->setTextColor(color);
    editor->append(msg);
-   editor->setColor(save_color);
-   editor->scrollToBottom();
+   editor->setTextColor(save_color);
+   editor->verticalScrollBar()->setValue(editor->verticalScrollBar()->maximum());
    // qApp->processEvents();
 }
    
@@ -391,7 +450,8 @@ void US_Hydrodyn_Cluster_Status::update_enables()
       bool any_selected = false;
       bool any_completed = false;
       bool any_selected_completed = false;
-      Q3ListViewItem *lvi = lv_files->firstChild();
+#if QT_VERSION < 0x040000
+      QTreeWidgetItem *lvi = lv_files->firstChild();
       if ( lvi )
       {
          do {
@@ -413,6 +473,31 @@ void US_Hydrodyn_Cluster_Status::update_enables()
             }
          } while ( ( lvi = lvi->nextSibling() ) );
       }
+#else
+      QTreeWidgetItemIterator it( lv_files );
+      QTreeWidgetItem *lvi;
+
+      while ( *it ) {
+         lvi = *it;
+         if ( lvi->isSelected() )
+         {
+            any_selected = true;
+         }
+         if ( lvi->text( 1 ) == "COMPLETED" )
+         {
+            any_completed = true;
+            if ( lvi->isSelected() )
+            {
+               any_selected_completed = true;
+            }
+         }
+         if ( any_selected_completed )
+         {
+            break;
+         }
+         ++it;
+      }
+#endif      
       pb_refresh          ->setEnabled( !processing_active && !comm_active && !system_proc_active );
       pb_remove           ->setEnabled( !processing_active && !comm_active && !system_proc_active && any_selected  );
       pb_retrieve_selected->setEnabled( !processing_active && !comm_active && !system_proc_active && any_selected_completed );
@@ -435,7 +520,7 @@ void US_Hydrodyn_Cluster_Status::refresh()
    }
    if ( system_proc_active )
    {
-      system_proc->tryTerminate();
+      system_proc->terminate();
       QTimer::singleShot( 2500, system_proc, SLOT( kill() ) );
    }
    get_status();
@@ -456,7 +541,9 @@ void US_Hydrodyn_Cluster_Status::retrieve()
    jobs.clear();
    
    QStringList qsl_submit;
-   Q3ListViewItem *lvi = lv_files->firstChild();
+
+#if QT_VERSION < 0x040000
+   QTreeWidgetItem *lvi = lv_files->firstChild();
    if ( lvi )
    {
       do {
@@ -468,13 +555,37 @@ void US_Hydrodyn_Cluster_Status::retrieve()
       processing_active = true;
       stopFlag = false;
       pb_stop->setEnabled( true );
-      editor_msg( "black", tr( "retrieving results" ) );
+      editor_msg( "black", us_tr( "retrieving results" ) );
       update_enables();
       emit next_status();
    } else {
       stopFlag = false;
       pb_stop->setEnabled( false );
    }
+#else
+   QTreeWidgetItemIterator it( lv_files );
+   QTreeWidgetItem *lvi;
+   if ( *it )
+   {
+      while ( *it ) {
+         lvi = *it;
+         if ( lvi->text( 1 ) == "COMPLETED" )
+         {
+            jobs[ lvi ] = "retrieve results";
+         }
+         ++it;
+      }
+      processing_active = true;
+      stopFlag = false;
+      pb_stop->setEnabled( true );
+      editor_msg( "black", us_tr( "retrieving results" ) );
+      update_enables();
+      emit next_status();
+   } else {
+      stopFlag = false;
+      pb_stop->setEnabled( false );
+   }
+#endif
 }
 
 void US_Hydrodyn_Cluster_Status::retrieve_selected()
@@ -484,7 +595,8 @@ void US_Hydrodyn_Cluster_Status::retrieve_selected()
    jobs.clear();
    
    QStringList qsl_submit;
-   Q3ListViewItem *lvi = lv_files->firstChild();
+#if QT_VERSION < 0x040000
+   QTreeWidgetItem *lvi = lv_files->firstChild();
    if ( lvi )
    {
       do {
@@ -496,13 +608,37 @@ void US_Hydrodyn_Cluster_Status::retrieve_selected()
       processing_active = true;
       stopFlag = false;
       pb_stop->setEnabled( true );
-      editor_msg( "black", tr( "retrieving results" ) );
+      editor_msg( "black", us_tr( "retrieving results" ) );
       update_enables();
       emit next_status();
    } else {
       stopFlag = false;
       pb_stop->setEnabled( false );
    }
+#else
+   QTreeWidgetItemIterator it( lv_files, QTreeWidgetItemIterator::Selected );
+   QTreeWidgetItem *lvi;
+   if ( *it )
+   {
+      while ( *it ) {
+         lvi = *it;
+         if ( lvi->text( 1 ) == "COMPLETED" )
+         {
+            jobs[ lvi ] = "retrieve results";
+         }
+         ++it;
+      }
+      processing_active = true;
+      stopFlag = false;
+      pb_stop->setEnabled( true );
+      editor_msg( "black", us_tr( "retrieving results" ) );
+      update_enables();
+      emit next_status();
+   } else {
+      stopFlag = false;
+      pb_stop->setEnabled( false );
+   }
+#endif   
 }
 
 void US_Hydrodyn_Cluster_Status::cancel_selected()
@@ -512,7 +648,8 @@ void US_Hydrodyn_Cluster_Status::cancel_selected()
    jobs.clear();
    
    QStringList qsl_submit;
-   Q3ListViewItem *lvi = lv_files->firstChild();
+#if QT_VERSION < 0x040000
+   QTreeWidgetItem *lvi = lv_files->firstChild();
    if ( lvi )
    {
       do {
@@ -523,6 +660,19 @@ void US_Hydrodyn_Cluster_Status::cancel_selected()
       } while ( ( lvi = lvi->nextSibling() ) );
       emit next_status();
    }
+#else
+   QTreeWidgetItemIterator it( lv_files, QTreeWidgetItemIterator::Selected );
+   QTreeWidgetItem *lvi;
+   if ( *it )
+   {
+      while ( *it ) {
+         lvi = *it;
+         jobs[ lvi ] = "cancel job";
+         ++it;
+      };
+      emit next_status();
+   }
+#endif
 }
 
 void US_Hydrodyn_Cluster_Status::get_status()
@@ -532,7 +682,8 @@ void US_Hydrodyn_Cluster_Status::get_status()
    jobs.clear();
    
    QStringList qsl_submit;
-   Q3ListViewItem *lvi = lv_files->firstChild();
+#if QT_VERSION < 0x040000
+   QTreeWidgetItem *lvi = lv_files->firstChild();
    if ( lvi )
    {
       do {
@@ -542,13 +693,27 @@ void US_Hydrodyn_Cluster_Status::get_status()
       
       emit next_status();
    }
+#else
+   QTreeWidgetItemIterator it( lv_files );
+   QTreeWidgetItem *lvi;
+   if ( *it )
+   {
+      while ( *it ) {
+         lvi = *it;
+         jobs[ lvi ] = "get status";
+         lvi->setText( 2, "" );
+         ++it;
+      }
+      emit next_status();
+   }
+#endif
 }
 
 void US_Hydrodyn_Cluster_Status::next_status()
 {
    if ( stopFlag )
    {
-      editor_msg( "red", tr( "stopped by user request" ) );
+      editor_msg( "red", us_tr( "stopped by user request" ) );
       stopFlag = false;
       update_files();
       refresh();
@@ -565,7 +730,7 @@ void US_Hydrodyn_Cluster_Status::next_status()
    }
 
    bool ok = true;
-   for ( map < Q3ListViewItem *, QString >::iterator it = jobs.begin();
+   for ( map < QTreeWidgetItem *, QString >::iterator it = jobs.begin();
          it != jobs.end();
          it++ )
    {
@@ -592,30 +757,30 @@ void US_Hydrodyn_Cluster_Status::next_status()
    {
       if ( comm_mode == "status" )
       {
-         // editor_msg( "black", tr( "done refreshing job status" ) );
+         // editor_msg( "black", us_tr( "done refreshing job status" ) );
       } 
       if ( comm_mode == "cancel" )
       {
-         editor_msg( "black", tr( "done canceling jobs" ) );
+         editor_msg( "black", us_tr( "done canceling jobs" ) );
          complete_remove();
       } 
       if ( comm_mode == "retrieve" )
       {
-         editor_msg( "black", tr( "done retrieving jobs" ) );
+         editor_msg( "black", us_tr( "done retrieving jobs" ) );
          complete_retrieve();
       } 
    } else {
       if ( comm_mode == "status" )
       {
-         editor_msg( "red", tr( "job status refresh had errors" ) );
+         editor_msg( "red", us_tr( "job status refresh had errors" ) );
       } 
       if ( comm_mode == "cancel" )
       {
-         editor_msg( "red", tr( "cancel job had errors" ) );
+         editor_msg( "red", us_tr( "cancel job had errors" ) );
       } 
       if ( comm_mode == "retrieve" )
       {
-         editor_msg( "red", tr( "retrieve results had errors" ) );
+         editor_msg( "red", us_tr( "retrieve results had errors" ) );
       } 
    }
 
@@ -627,22 +792,22 @@ void US_Hydrodyn_Cluster_Status::complete_remove()
 {
    if ( QMessageBox::question(
                               this,
-                              tr( "US-SOMO: Cluster Status" ),
-                              tr( "What do you want to do with the canceled jobs?" ),
-                              tr( "&Push back to unsubmitted" ),
-                              tr( "&Remove completely" ),
+                              us_tr( "US-SOMO: Cluster Status" ),
+                              us_tr( "What do you want to do with the canceled jobs?" ),
+                              us_tr( "&Push back to unsubmitted" ),
+                              us_tr( "&Remove completely" ),
                               QString::null, 0, 1 ) )
    {
       editor_msg( "black", "completely removing" );
-      for ( map < Q3ListViewItem *, QString >::iterator it = jobs.begin();
+      for ( map < QTreeWidgetItem *, QString >::iterator it = jobs.begin();
             it != jobs.end();
             it++ )
       {
          it->first->setText( 2, "Removing" );
-         editor_msg( "black", QString( tr( "Removing %1" ) ).arg( it->first->text( 0 ) ) );
+         editor_msg( "black", QString( us_tr( "Removing %1" ) ).arg( it->first->text( 0 ) ) );
          if ( !QFile::remove( it->first->text( 0 ) ) )
          {
-            editor_msg( "red", QString( tr( "Error removing %1" ) ).arg( it->first->text( 0 ) ) );
+            editor_msg( "red", QString( us_tr( "Error removing %1" ) ).arg( it->first->text( 0 ) ) );
          }
       }
       editor_msg( "black", "Removing done" );
@@ -652,15 +817,15 @@ void US_Hydrodyn_Cluster_Status::complete_remove()
       
       US_File_Util ufu;
       
-      for ( map < Q3ListViewItem *, QString >::iterator it = jobs.begin();
+      for ( map < QTreeWidgetItem *, QString >::iterator it = jobs.begin();
             it != jobs.end();
             it++ )
       {
          it->first->setText( 2, "Pushing back to unsubmitted" );
-         editor_msg( "black", QString( tr( "Pushing back to unsubmitted %1" ) ).arg( it->first->text( 0 ) ) );
+         editor_msg( "black", QString( us_tr( "Pushing back to unsubmitted %1" ) ).arg( it->first->text( 0 ) ) );
          if ( !ufu.move( it->first->text( 0 ), pkg_dir + SLASH ) )
          {
-            editor_msg( "red", QString( tr( "Error pushing back to unsubmitted %1: %2" ) ).arg( it->first->text( 0 ) ).arg( ufu.errormsg ) );
+            editor_msg( "red", QString( us_tr( "Error pushing back to unsubmitted %1: %2" ) ).arg( it->first->text( 0 ) ).arg( ufu.errormsg ) );
          }
       }
       editor_msg( "black", "Pushing back done" );
@@ -669,8 +834,8 @@ void US_Hydrodyn_Cluster_Status::complete_remove()
    if ( !update_files() )
    {
       QMessageBox::information( this, 
-                                tr("US-SOMO: Cluster Status"),
-                                tr("No further unretrieved submitted jobs found"),
+                                us_tr("US-SOMO: Cluster Status"),
+                                us_tr("No further unretrieved submitted jobs found"),
                                 0 );
       close();
       return;
@@ -686,7 +851,7 @@ void US_Hydrodyn_Cluster_Status::complete_retrieve()
    QDir::setCurrent( submitted_dir );
    
    bool allok = true;
-   for ( map < Q3ListViewItem *, QString >::iterator it = jobs.begin();
+   for ( map < QTreeWidgetItem *, QString >::iterator it = jobs.begin();
          it != jobs.end();
          it++ )
    {
@@ -694,13 +859,13 @@ void US_Hydrodyn_Cluster_Status::complete_retrieve()
          .arg( it->first->text( 0 ) )
          .arg( it->first->text( 2 ) );
 
-      if ( !it->first->text( 2 ).contains( tr( "Error" ) ) )
+      if ( !it->first->text( 2 ).contains( us_tr( "Error" ) ) )
       {
          it->first->setText( 2, "Moving jobs to completed" );
-         editor_msg( "black", QString( tr( "Moving jobs to completed %1" ) ).arg( it->first->text( 0 ) ) );
+         editor_msg( "black", QString( us_tr( "Moving jobs to completed %1" ) ).arg( it->first->text( 0 ) ) );
          if ( !ufu.move( it->first->text( 0 ), completed_dir + SLASH ) )
          {
-            editor_msg( "red", QString( tr( "Error moving job to completed %1: %2" ) ).arg( it->first->text( 0 ) ).arg( ufu.errormsg ) );
+            editor_msg( "red", QString( us_tr( "Error moving job to completed %1: %2" ) ).arg( it->first->text( 0 ) ).arg( ufu.errormsg ) );
          }
       } else {
          allok = false;
@@ -711,16 +876,16 @@ void US_Hydrodyn_Cluster_Status::complete_retrieve()
    if ( !allok )
    {
       QMessageBox::information( this, 
-                                tr("US-SOMO: Cluster Status"),
-                                tr("Some job's results are missing"),
+                                us_tr("US-SOMO: Cluster Status"),
+                                us_tr("Some job's results are missing"),
                                 0 );
    }
 
    if ( !update_files() )
    {
       QMessageBox::information( this, 
-                                tr("US-SOMO: Cluster Status"),
-                                tr("No further unretrieved submitted jobs found"),
+                                us_tr("US-SOMO: Cluster Status"),
+                                us_tr("No further unretrieved submitted jobs found"),
                                 0 );
       close();
       return;
@@ -752,26 +917,27 @@ bool US_Hydrodyn_Cluster_Status::schedule_retrieve( QString file )
    errormsg = "";
    if ( !QDir::setCurrent( completed_dir ) )
    {
-      errormsg = QString( tr( "retrieve: can not change to directory %1" ) ).arg( completed_dir );
+      errormsg = QString( us_tr( "retrieve: can not change to directory %1" ) ).arg( completed_dir );
       return false;
    }
 
    cout << QString( "schedule retrieve <%1> <%2>\n" )
       .arg( next_to_process->text( 0 ) )
-      .arg( job_hostname.count( next_to_process->text( 0 ) ) ?
-            job_hostname[ next_to_process->text( 0 ) ] :
-            "unknown"
-            );
+      .arg(
+           job_hostname.count( next_to_process->text( 0 ) ) ?
+           job_hostname[ next_to_process->text( 0 ) ] :
+           "unknown"
+           );
 
    if ( !job_hostname.count( next_to_process->text( 0 ) ) )
    {
-      errormsg = QString( tr( "Error: can not determine system host for job %1" ) ).arg( next_to_process->text( 0 ) );
+      errormsg = QString( us_tr( "Error: can not determine system host for job %1" ) ).arg( next_to_process->text( 0 ) );
       return false;
    }
 
    if ( !((US_Hydrodyn_Cluster *) cluster_window )->cluster_stage_to_system.count( job_hostname[ next_to_process->text( 0 ) ] ) )
    {
-      errormsg = QString( tr( "Error: no configured hosts for job %1 running on %2" ) )
+      errormsg = QString( us_tr( "Error: no configured hosts for job %1 running on %2" ) )
          .arg( next_to_process->text( 0 ) )
          .arg( job_hostname[ next_to_process->text( 0 ) ] );
       return false;
@@ -780,7 +946,7 @@ bool US_Hydrodyn_Cluster_Status::schedule_retrieve( QString file )
    QString selected_system_name =  ((US_Hydrodyn_Cluster *) cluster_window )->cluster_stage_to_system[ job_hostname[ next_to_process->text( 0 ) ] ];
 
    cout << 
-      QString( tr( "hosts for job %1 running on %2 is %3\n" ) )
+      QString( us_tr( "hosts for job %1 running on %2 is %3\n" ) )
       .arg( next_to_process->text( 0 ) )
       .arg( job_hostname[ next_to_process->text( 0 ) ] )
       .arg( selected_system_name );
@@ -802,11 +968,11 @@ bool US_Hydrodyn_Cluster_Status::schedule_retrieve( QString file )
          ftp_url_host    .replace( QRegExp( ":.*$" ), "" );
          ftp_url_port    .replace( QRegExp( "^.*:" ), "" );
       } else {
-         errormsg = QString( tr( "The system %1 does not seem to have sufficient configuration information defined" ) ).arg( selected_system_name );
+         errormsg = QString( us_tr( "The system %1 does not seem to have sufficient configuration information defined" ) ).arg( selected_system_name );
          return false;
       }
    } else {
-      errormsg = QString( tr( "The system %1 does not seem to have any information" ) ).arg( selected_system_name );
+      errormsg = QString( us_tr( "The system %1 does not seem to have any information" ) ).arg( selected_system_name );
       return false;
    }            
 
@@ -815,7 +981,7 @@ bool US_Hydrodyn_Cluster_Status::schedule_retrieve( QString file )
       // are there any?
       QDir::setCurrent( completed_dir );
       QDir qd;
-      QStringList previously_retrieved = qd.entryList( QString( "%1_out.t??" )
+      QStringList previously_retrieved = qd.entryList( QStringList() << QString( "%1_out.t??" )
                                                        .arg( QString( "%1" )
                                                              .arg( next_to_process->text( 0 ) )
                                                              .replace( QRegExp( "\\.(tgz|tar|TGZ|TAR)$" ), "" ) ) );
@@ -823,13 +989,13 @@ bool US_Hydrodyn_Cluster_Status::schedule_retrieve( QString file )
       {
          switch ( QMessageBox::question(
                                         this,
-                                        tr( "US-SOMO: Cluster Status: Retrieve Results" ),
+                                        us_tr( "US-SOMO: Cluster Status: Retrieve Results" ),
                                         QString(
-                                                tr( "Results for %1 already exist\n"
+                                                us_tr( "Results for %1 already exist\n"
                                                     "What to you want to do?" ) ).arg( next_to_process->text( 0 ) ),
-                                        tr( "&Rename previous results" ),
-                                        tr( "&Delete previous results" ),
-                                        tr( "&Stop" ),
+                                        us_tr( "&Rename previous results" ),
+                                        us_tr( "&Delete previous results" ),
+                                        us_tr( "&Stop" ),
                                         0 ) )
          {
          case 0:
@@ -870,13 +1036,13 @@ bool US_Hydrodyn_Cluster_Status::schedule_retrieve( QString file )
                   QDir qd2;
                   if ( !qd2.rename( previously_retrieved[ i ], test_file ) )
                   {
-                     errormsg = QString( tr( "Error: failed renaming %1 to %2" ) )
+                     errormsg = QString( us_tr( "Error: failed renaming %1 to %2" ) )
                         .arg( previously_retrieved[ i ] )
                         .arg( test_file );
                      return false;
                   }
                }
-               editor_msg( "dark red", QString( tr( "Notice: previous results files renamed to %1-%2_out" ) )
+               editor_msg( "dark red", QString( us_tr( "Notice: previous results files renamed to %1-%2_out" ) )
                            .arg( QFileInfo( next_to_process->text( 0 ) ).baseName() )
                            .arg( ext ) );
             }
@@ -888,7 +1054,7 @@ bool US_Hydrodyn_Cluster_Status::schedule_retrieve( QString file )
                {
                   if ( !QFile::remove( previously_retrieved[ i ] ) )
                   {
-                     errormsg = QString( tr( "Error: failed to remove %1" ) )
+                     errormsg = QString( us_tr( "Error: failed to remove %1" ) )
                         .arg( previously_retrieved[ i ] );
                      return false;
                   }
@@ -896,7 +1062,7 @@ bool US_Hydrodyn_Cluster_Status::schedule_retrieve( QString file )
             }
             break;
          case 2:
-            errormsg = tr( "Stopped by user request" );
+            errormsg = us_tr( "Stopped by user request" );
             return false;
          }
       }
@@ -913,7 +1079,7 @@ bool US_Hydrodyn_Cluster_Status::schedule_retrieve( QString file )
    ftp_file = new QFile( get_file );
    if ( !ftp_file->open( QIODevice::WriteOnly ) )
    {
-      errormsg = QString( tr( "stage: can not open file %1" ) ).arg( file );
+      errormsg = QString( us_tr( "stage: can not open file %1" ) ).arg( file );
       delete ftp_file;
       ftp_file = ( QFile * ) 0;
       return false;
@@ -968,7 +1134,7 @@ void US_Hydrodyn_Cluster_Status::get_next_status()
    if ( comm_mode == "status" )
    {
       // editor_msg( "black", QString( "refreshing status for %1" ).arg( next_to_process->text( 0 ) ) );
-      next_to_process->setText( 2, tr( "refreshing status" ) );
+      next_to_process->setText( 2, us_tr( "refreshing status" ) );
    }
 
    if ( send_http_get( next_to_process->text( 0 ) ) )
@@ -999,8 +1165,8 @@ bool US_Hydrodyn_Cluster_Status::send_http_get( QString file )
    current_http_response = "";
 
    connect( &submit_http, SIGNAL( stateChanged ( int ) ), this, SLOT( http_stateChanged ( int ) ) );
-   connect( &submit_http, SIGNAL( responseHeaderReceived ( const Q3HttpResponseHeader & ) ), this, SLOT( http_responseHeaderReceived ( const Q3HttpResponseHeader & ) ) );
-   connect( &submit_http, SIGNAL( readyRead ( const Q3HttpResponseHeader & ) ), this, SLOT( http_readyRead ( const Q3HttpResponseHeader & ) ) );
+   connect( &submit_http, SIGNAL( responseHeaderReceived ( const QHttpResponseHeader & ) ), this, SLOT( http_responseHeaderReceived ( const QHttpResponseHeader & ) ) );
+   connect( &submit_http, SIGNAL( readyRead ( const QHttpResponseHeader & ) ), this, SLOT( http_readyRead ( const QHttpResponseHeader & ) ) );
    connect( &submit_http, SIGNAL( dataSendProgress ( int, int ) ), this, SLOT( http_dataSendProgress ( int, int ) ) );
    connect( &submit_http, SIGNAL( dataReadProgress ( int, int ) ), this, SLOT( http_dataReadProgress ( int, int ) ) );
    connect( &submit_http, SIGNAL( requestStarted ( int ) ), this, SLOT( http_requestStarted ( int ) ) );
@@ -1031,12 +1197,12 @@ void US_Hydrodyn_Cluster_Status::http_stateChanged ( int /* state */ )
    // editor_msg( "blue", QString( "http state %1" ).arg( state ) );
 }
 
-void US_Hydrodyn_Cluster_Status::http_responseHeaderReceived ( const Q3HttpResponseHeader & resp )
+void US_Hydrodyn_Cluster_Status::http_responseHeaderReceived ( const QHttpResponseHeader & resp )
 {
    cout << resp.reasonPhrase() << endl;
 }
 
-void US_Hydrodyn_Cluster_Status::http_readyRead( const Q3HttpResponseHeader & resp )
+void US_Hydrodyn_Cluster_Status::http_readyRead( const QHttpResponseHeader & resp )
 {
    cout << "http: readyRead\n" << endl << flush;
    cout << resp.reasonPhrase() << endl;
@@ -1099,8 +1265,8 @@ void US_Hydrodyn_Cluster_Status::http_requestFinished ( int id, bool error  )
 void US_Hydrodyn_Cluster_Status::http_done ( bool error )
 {
    disconnect( &submit_http, SIGNAL( stateChanged ( int ) ), 0, 0 );
-   disconnect( &submit_http, SIGNAL( responseHeaderReceived ( const Q3HttpResponseHeader & ) ), 0, 0 );
-   disconnect( &submit_http, SIGNAL( readyRead ( const Q3HttpResponseHeader & ) ), 0, 0 );
+   disconnect( &submit_http, SIGNAL( responseHeaderReceived ( const QHttpResponseHeader & ) ), 0, 0 );
+   disconnect( &submit_http, SIGNAL( readyRead ( const QHttpResponseHeader & ) ), 0, 0 );
    disconnect( &submit_http, SIGNAL( dataSendProgress ( int, int ) ), 0, 0 );
    disconnect( &submit_http, SIGNAL( dataReadProgress ( int, int ) ), 0, 0 );
    disconnect( &submit_http, SIGNAL( requestStarted ( int ) ), 0, 0 );
@@ -1112,48 +1278,48 @@ void US_Hydrodyn_Cluster_Status::http_done ( bool error )
    {
       switch( submit_http.error() )
       {
-      case Q3Http::NoError :
-         current_http_error = tr( "No error occurred." );
+      case QHttp::NoError :
+         current_http_error = us_tr( "No error occurred." );
          break;
 
-      case Q3Http::HostNotFound:
-         current_http_error = tr( "The host name lookup failed." );
+      case QHttp::HostNotFound:
+         current_http_error = us_tr( "The host name lookup failed." );
          break;
 
-      case Q3Http::ConnectionRefused:
-         current_http_error = tr( "The server refused the connection." );
+      case QHttp::ConnectionRefused:
+         current_http_error = us_tr( "The server refused the connection." );
          break;
 
-      case Q3Http::UnexpectedClose:
-         current_http_error = tr( "The server closed the connection unexpectedly." );
+      case QHttp::UnexpectedClose:
+         current_http_error = us_tr( "The server closed the connection unexpectedly." );
          break;
 
-      case Q3Http::InvalidResponseHeader:
-         current_http_error = tr( "The server sent an invalid response header." );
+      case QHttp::InvalidResponseHeader:
+         current_http_error = us_tr( "The server sent an invalid response header." );
          break;
 
-      case Q3Http::WrongContentLength:
-         current_http_error = tr( "The client could not read the content correctly because an error with respect to the content length occurred." );
+      case QHttp::WrongContentLength:
+         current_http_error = us_tr( "The client could not read the content correctly because an error with respect to the content length occurred." );
          break;
 
-      case Q3Http::Aborted:
-         current_http_error = tr( "The request was aborted with abort()." );
+      case QHttp::Aborted:
+         current_http_error = us_tr( "The request was aborted with abort()." );
          break;
 
-      case Q3Http::UnknownError:
+      case QHttp::UnknownError:
       default:
-         current_http_error = tr( "Unknown Error." );
+         current_http_error = us_tr( "Unknown Error." );
          break;
       }
       QMessageBox::warning( this,
-                            tr("US-SOMO: Cluster Config"), 
-                            tr( QString( "There was a error with the management server:\n%1" )
+                            us_tr("US-SOMO: Cluster Config"), 
+                            us_tr( QString( "There was a error with the management server:\n%1" )
                                 .arg( current_http_error ) ),
                             QMessageBox::Ok,
                             QMessageBox::NoButton
                             );
       processing_active = false;
-      editor_msg( "red", tr( "Error: " ) + current_http_error );
+      editor_msg( "red", us_tr( "Error: " ) + current_http_error );
       update_enables();
       return;
    }
@@ -1167,48 +1333,68 @@ bool US_Hydrodyn_Cluster_Status::system_cmd( QStringList cmd )
 
    if ( !cmd.size() )
    {
-      errormsg = tr( "system_cmd called with no command" );
+      errormsg = us_tr( "system_cmd called with no command" );
       return false;
    }
 
-   system_proc = new Q3Process( this );
+   system_proc = new QProcess( this );
 
+#if QT_VERSION < 0x040000
    system_proc->setArguments( cmd );
+#else
+   QString prog = cmd.front();
+   cmd.pop_front();
+   QStringList args = cmd;
+#endif
 
    system_proc_active = true;
 
-   connect( system_proc, SIGNAL(readyReadStdout()), this, SLOT(system_proc_readFromStdout()) );
-   connect( system_proc, SIGNAL(readyReadStderr()), this, SLOT(system_proc_readFromStderr()) );
-   connect( system_proc, SIGNAL(processExited()),   this, SLOT(system_proc_processExited()) );
-   connect( system_proc, SIGNAL(launchFinished()),  this, SLOT(system_proc_launchFinished()) );
+   connect( system_proc, SIGNAL(readyReadStandardOutput()), this, SLOT(system_proc_readFromStdout()) );
+   connect( system_proc, SIGNAL(readyReadStandardError()), this, SLOT(system_proc_readFromStderr()) );
+   connect( system_proc, SIGNAL(finished( int, QProcess::ExitStatus )),   this, SLOT(system_proc_finished( int, QProcess::ExitStatus )) );
+   connect( system_proc, SIGNAL(started()),  this, SLOT(system_proc_started()) );
 
+
+#if QT_VERSION < 0x040000
    return system_proc->start();
+#else
+   system_proc->start( prog, args );
+   return system_proc->waitForStarted();
+#endif
 }
 
 void US_Hydrodyn_Cluster_Status::system_proc_readFromStdout()
 {
+#if QT_VERSION < 0x040000
    while ( system_proc->canReadLineStdout() )
    {
       editor_msg("brown", system_proc->readLineStdout());
    }
+#else
+   editor_msg( "brown", QString( system_proc->readAllStandardOutput() ) );
+#endif   
 }
    
 void US_Hydrodyn_Cluster_Status::system_proc_readFromStderr()
 {
+#if QT_VERSION < 0x040000
    while ( system_proc->canReadLineStderr() )
    {
       editor_msg("red", system_proc->readLineStderr());
    }
+#else
+   editor_msg( "red", QString( system_proc->readAllStandardError() ) );
+#endif   
 }
    
-void US_Hydrodyn_Cluster_Status::system_proc_processExited()
+void US_Hydrodyn_Cluster_Status::system_proc_finished( int, QProcess::ExitStatus )
 {
    system_proc_readFromStderr();
    system_proc_readFromStdout();
 
-   // disconnect( system_proc, SIGNAL(readyReadStdout()), 0, 0);
-   // disconnect( system_proc, SIGNAL(readyReadStderr()), 0, 0);
-   // disconnect( system_proc, SIGNAL(processExited()), 0, 0);
+   // disconnect( system_proc, SIGNAL(readyReadStandardOutput()), 0, 0);
+   // disconnect( system_proc, SIGNAL(readyReadStandardError()), 0, 0);
+   // disconnect( system_proc, SIGNAL(finished( int, QProcess::ExitStatus )), 0, 0);
 
    // editor->append("System_Proc finished.");
    
@@ -1218,26 +1404,26 @@ void US_Hydrodyn_Cluster_Status::system_proc_processExited()
    // did we get any files ?
    QDir::setCurrent( completed_dir );
    QDir qd;
-   QStringList retrieved = qd.entryList( QString( "%1_out.t??" )
+   QStringList retrieved = qd.entryList( QStringList() << QString( "%1_out.t??" )
                                          .arg( QString( "%1" )
                                                .arg( next_to_process->text( 0 ) )
                                                .replace( QRegExp( "\\.(tgz|tar|TGZ|TAR)$" ), "" ) ) );
 
-   next_to_process->setText( 2, 
+   next_to_process->setText( 2,
                              retrieved.size() ? 
-                             QString( tr( "Retrieved %1 result file%2" ) )
+                             QString( us_tr( "Retrieved %1 result file%2" ) )
                              .arg( retrieved.size() ) 
                              .arg( retrieved.size() > 1 ? "s" : "" )
                              :
-                             tr( "Error: no results retrieved" )
+                             us_tr( "Error: no results retrieved" )
                              );
    emit next_status();
 }
    
-void US_Hydrodyn_Cluster_Status::system_proc_launchFinished()
+void US_Hydrodyn_Cluster_Status::system_proc_started()
 {
    // neditor_msg("brown", "System_Proc launch exited");
-   disconnect( system_proc, SIGNAL(launchFinished()), 0, 0);
+   disconnect( system_proc, SIGNAL(started()), 0, 0);
 }
 
 void US_Hydrodyn_Cluster_Status::stop()
@@ -1251,7 +1437,7 @@ void US_Hydrodyn_Cluster_Status::stop()
    }
    if ( system_proc_active )
    {
-      system_proc->tryTerminate();
+      system_proc->terminate();
       QTimer::singleShot( 2500, system_proc, SLOT( kill() ) );
    }
    update_enables();
@@ -1260,27 +1446,27 @@ void US_Hydrodyn_Cluster_Status::stop()
 void US_Hydrodyn_Cluster_Status::ftp_stateChanged ( int state )
 {
    cout << "ftp state changed: " << state << endl;
-   if ( state == Q3Ftp::Unconnected )
+   if ( state == QFtp::Unconnected )
    {
       cout << "- There is no connection to the host. \n";
    }
-   if ( state == Q3Ftp::HostLookup )
+   if ( state == QFtp::HostLookup )
    {
       cout << "- A host name lookup is in progress. \n";
    }
-   if ( state == Q3Ftp::Connecting )
+   if ( state == QFtp::Connecting )
    {
       cout << "- An attempt to connect to the host is in progress. \n";
    }
-   if ( state == Q3Ftp::Connected )
+   if ( state == QFtp::Connected )
    {
       cout << "- Connection to the host has been achieved. \n";
    }
-   if ( state == Q3Ftp::LoggedIn )
+   if ( state == QFtp::LoggedIn )
    {
       cout << "- Connection and user login have been achieved. \n";
    }
-   if ( state == Q3Ftp::Closing )
+   if ( state == QFtp::Closing )
    {
       cout << "- The connection is closing down, but it is not yet closed.\n";
    }

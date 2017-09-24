@@ -3,10 +3,10 @@
 #include "../include/us_revision.h"
 #include <qtabwidget.h>
 //Added by qt3to4:
-#include <Q3HBoxLayout>
+#include <QHBoxLayout>
 #include <QLabel>
-#include <Q3Frame>
-#include <Q3VBoxLayout>
+#include <QFrame>
+#include <QVBoxLayout>
 #include <QCloseEvent>
 
 // note: this program uses cout and/or cerr and this should be replaced
@@ -21,7 +21,7 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
                                    bool *save_widget, 
                                    QWidget *p, 
                                    const char *name
-                                   ) : Q3Frame(p, name)
+                                   ) : QFrame( p )
 {
    this->save = save;
    this->us_hydrodyn = us_hydrodyn;
@@ -326,7 +326,7 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
       {
          if ( ((US_Hydrodyn *)us_hydrodyn)->advanced_config.debug_4 )
          {
-            printf("in while, data[%u] is <%s>\n", i, data[i].ascii());
+            printf("in while, data[%u] is <%s>\n", i, data[i].toAscii().data());
          }
          if ( data[i].length() == 0 ) 
          {
@@ -341,7 +341,7 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             this_section = data[++i];
             if ( ((US_Hydrodyn *)us_hydrodyn)->advanced_config.debug_4 )
             {
-               printf("in while, section is <%s>\n", this_section.ascii());
+               printf("in while, section is <%s>\n", this_section.toAscii().data());
             }
             i++;
             is_section = true;
@@ -354,7 +354,7 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
          pos = field.size();
          if ( ((US_Hydrodyn *)us_hydrodyn)->advanced_config.debug_4 )
          {
-            printf("in while, field[%u] is <%s>\n", i, data[i].ascii());
+            printf("in while, field[%u] is <%s>\n", i, data[i].toAscii().data());
          }
          field.push_back(data[i++]);
          descriptive_name.push_back(data[i++]);
@@ -908,7 +908,7 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
    *save_widget = true;
    USglobal = new US_Config();
    setPalette( PALET_FRAME );
-   setCaption(tr("Hydrodynamic Parameters to be Saved"));
+   setWindowTitle(us_tr("Hydrodynamic Parameters to be Saved"));
    // for now:  until we save/restore
    //   save->field.clear();
    save->field_flag.clear();
@@ -920,7 +920,7 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
 
    for ( unsigned int i = 0; i < field.size(); i++ )
    {
-      printf("read field %u <%s>\n", i, field[i].ascii());
+      printf("read field %u <%s>\n", i, field[i].toAscii().data());
    }
 
    if ( !save->field_flag.count("Model name") )
@@ -948,9 +948,9 @@ void US_Hydrodyn_Save::setupGUI()
    int minHeight1 = 30;
    int minWidth1 = 150;
 
-   lbl_possible = new QLabel(tr("Parameters available"), this);
+   lbl_possible = new QLabel(us_tr("Parameters available"), this);
    Q_CHECK_PTR(lbl_possible);
-   lbl_possible->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Raised);
+   lbl_possible->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_possible->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_possible->setMinimumHeight(minHeight1);
    lbl_possible->setPalette( PALET_FRAME );
@@ -960,51 +960,54 @@ void US_Hydrodyn_Save::setupGUI()
    tw_possible = new QTabWidget(this);
    // tw_possible->setTabBar(tb_possible);
    // tw_possible->tabBar()
-   Q3ListBox *this_lb;
+   QListWidget *lb_this;
 
    for ( unsigned int i = 0; i < field.size(); i++ )
    {
       if ( section_name.count(field[i]) )
       {
-         this_lb = new Q3ListBox(this);
-         Q_CHECK_PTR(this_lb);
-         this_lb->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Raised);
-         this_lb->setMinimumHeight(minHeight1 * 3);
-         this_lb->setMinimumWidth(minWidth1);
-         this_lb->setPalette( PALET_EDIT );
-         this_lb->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
-         this_lb->setEnabled(true);
-         lb_possible.push_back(this_lb);
-         tw_possible->addTab(this_lb, section_name[field[i]]);
-         connect(this_lb, SIGNAL(selectionChanged()), SLOT(update_enables_possible()));
-         this_lb->setSelectionMode(Q3ListBox::Multi);
+         lb_this = new QListWidget(this);
+         Q_CHECK_PTR(lb_this);
+         lb_this->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
+         lb_this->setMinimumHeight(minHeight1 * 3);
+         lb_this->setMinimumWidth(minWidth1);
+         lb_this->setPalette( PALET_EDIT );
+         lb_this->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
+         lb_this->setEnabled(true);
+         lb_possible.push_back(lb_this);
+         tw_possible->addTab(lb_this, section_name[field[i]]);
+         connect(lb_this, SIGNAL(itemSelectionChanged()), SLOT(update_enables_possible()));
+         lb_this->setSelectionMode(QAbstractItemView::MultiSelection);
       }
       if ( !save->field_flag.count(field[i]) )
       {
-         this_lb->insertItem(descriptive_name[i]);
+         lb_this->addItem(descriptive_name[i]);
       }
    }
-   for ( unsigned int i = 0; i < lb_possible.size(); i++ )
-   {
-      lb_possible[i]->setCurrentItem(0);
-      lb_possible[i]->setSelected(0, false);
-   }
+   // not needed 
+   // for ( unsigned int i = 0; i < lb_possible.size(); i++ )
+   // {
+   //    if ( lb_possible[ i ]->count() ) {
+   //       lb_possible[i]->setCurrentItem( lb_possible[i]->item(0) );
+   //       lb_possible[i]->item(0)->setSelected( false);
+   //    }
+   // }
    tw_possible->setPalette( PALET_NORMAL );
    AUTFBACK( tw_possible );
    connect(tw_possible, SIGNAL(currentChanged(QWidget *)), SLOT(tab_changed(QWidget *)));
 
-   lbl_selected = new QLabel(tr("Parameters selected"), this);
+   lbl_selected = new QLabel(us_tr("Parameters selected"), this);
    Q_CHECK_PTR(lbl_selected);
-   lbl_selected->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Raised);
+   lbl_selected->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_selected->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_selected->setMinimumHeight(minHeight1);
    lbl_selected->setPalette( PALET_FRAME );
    AUTFBACK( lbl_selected );
    lbl_selected->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
 
-   lb_selected = new Q3ListBox(this);
+   lb_selected = new QListWidget(this);
    Q_CHECK_PTR(lb_selected);
-   lb_selected->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Raised);
+   lb_selected->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lb_selected->setMinimumHeight(minHeight1 * 3);
    lb_selected->setMinimumWidth(minWidth1);
    lb_selected->setPalette( PALET_EDIT );
@@ -1015,11 +1018,11 @@ void US_Hydrodyn_Save::setupGUI()
    {
       if ( save->field_flag.count(field[i]) )
       {
-         lb_selected->insertItem(descriptive_name[i]);
+         lb_selected->addItem(descriptive_name[i]);
       }
    }
-   lb_selected->setSelectionMode(Q3ListBox::Multi);
-   connect(lb_selected, SIGNAL(selectionChanged()), SLOT(update_enables_selected()));
+   lb_selected->setSelectionMode(QAbstractItemView::MultiSelection);
+   connect(lb_selected, SIGNAL(itemSelectionChanged()), SLOT(update_enables_selected()));
 
    pb_add = new QPushButton("-->", this);
    Q_CHECK_PTR(pb_add);
@@ -1035,14 +1038,14 @@ void US_Hydrodyn_Save::setupGUI()
    pb_remove->setPalette( PALET_PUSHB );
    connect(pb_remove, SIGNAL(clicked()), SLOT(remove()));
 
-   pb_help = new QPushButton(tr("Help"), this);
+   pb_help = new QPushButton(us_tr("Help"), this);
    Q_CHECK_PTR(pb_help);
    pb_help->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_help->setMinimumHeight(minHeight1);
    pb_help->setPalette( PALET_PUSHB );
    connect(pb_help, SIGNAL(clicked()), SLOT(help()));
 
-   pb_cancel = new QPushButton(tr("Close"), this);
+   pb_cancel = new QPushButton(us_tr("Close"), this);
    Q_CHECK_PTR(pb_cancel);
    pb_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_cancel->setMinimumHeight(minHeight1);
@@ -1052,21 +1055,21 @@ void US_Hydrodyn_Save::setupGUI()
    // build layout
    // left box / possible
 
-   Q3VBoxLayout *vbl_possible = new Q3VBoxLayout;
+   QVBoxLayout * vbl_possible = new QVBoxLayout; vbl_possible->setContentsMargins( 0, 0, 0, 0 ); vbl_possible->setSpacing( 0 );
    vbl_possible->addWidget(lbl_possible);
    vbl_possible->addWidget(tw_possible);
 
-   Q3VBoxLayout *vbl_add_remove = new Q3VBoxLayout;
+   QVBoxLayout * vbl_add_remove = new QVBoxLayout; vbl_add_remove->setContentsMargins( 0, 0, 0, 0 ); vbl_add_remove->setSpacing( 0 );
    vbl_add_remove->addSpacing(20);
    vbl_add_remove->addWidget(pb_add);
    vbl_add_remove->addWidget(pb_remove);
    vbl_add_remove->addSpacing(20);
 
-   Q3VBoxLayout *vbl_selected = new Q3VBoxLayout;
+   QVBoxLayout * vbl_selected = new QVBoxLayout; vbl_selected->setContentsMargins( 0, 0, 0, 0 ); vbl_selected->setSpacing( 0 );
    vbl_selected->addWidget(lbl_selected);
    vbl_selected->addWidget(lb_selected);
 
-   Q3HBoxLayout *hbl_top = new Q3HBoxLayout;
+   QHBoxLayout * hbl_top = new QHBoxLayout; hbl_top->setContentsMargins( 0, 0, 0, 0 ); hbl_top->setSpacing( 0 );
    hbl_top->addSpacing(5);
    hbl_top->addLayout(vbl_possible);
    hbl_top->addSpacing(20);
@@ -1075,14 +1078,14 @@ void US_Hydrodyn_Save::setupGUI()
    hbl_top->addLayout(vbl_selected);
    hbl_top->addSpacing(5);
 
-   Q3HBoxLayout *hbl_bottom = new Q3HBoxLayout;
+   QHBoxLayout * hbl_bottom = new QHBoxLayout; hbl_bottom->setContentsMargins( 0, 0, 0, 0 ); hbl_bottom->setSpacing( 0 );
    hbl_bottom->addSpacing(5);
    hbl_bottom->addWidget(pb_help);
    hbl_bottom->addSpacing(5);
    hbl_bottom->addWidget(pb_cancel);
    hbl_bottom->addSpacing(5);
 
-   Q3VBoxLayout *background = new Q3VBoxLayout(this);
+   QVBoxLayout * background = new QVBoxLayout(this); background->setContentsMargins( 0, 0, 0, 0 ); background->setSpacing( 0 );
    background->addSpacing(5);
    background->addLayout(hbl_top);
    background->addSpacing(5);
@@ -1116,11 +1119,11 @@ void US_Hydrodyn_Save::closeEvent(QCloseEvent *e)
 void US_Hydrodyn_Save::update_enables_possible()
 {
    bool any_selected = false;
-   int t = tw_possible->currentPageIndex();
+   int t = tw_possible->currentIndex();
 
-   for ( int i = 0; i < lb_possible[t]->numRows(); i++ )
+   for ( int i = 0; i < lb_possible[t]->count(); i++ )
    {
-      if ( lb_possible[t]->isSelected(i) )
+      if ( lb_possible[t]->item(i)->isSelected() )
       {
          any_selected = true;
          break;
@@ -1132,9 +1135,9 @@ void US_Hydrodyn_Save::update_enables_possible()
 void US_Hydrodyn_Save::update_enables_selected()
 {
    bool any_selected = false;
-   for ( int i = 0; i < lb_selected->numRows(); i++ )
+   for ( int i = 0; i < lb_selected->count(); i++ )
    {
-      if ( lb_selected->isSelected(i) )
+      if ( lb_selected->item(i)->isSelected() )
       {
          any_selected = true;
          break;
@@ -1146,13 +1149,13 @@ void US_Hydrodyn_Save::update_enables_selected()
 void US_Hydrodyn_Save::add()
 {
    
-   int t = tw_possible->currentPageIndex();
-   for ( int i = 0; i < lb_possible[t]->numRows(); i++ )
+   int t = tw_possible->currentIndex();
+   for ( int i = 0; i < lb_possible[t]->count(); i++ )
    {
-      if ( lb_possible[t]->isSelected(i) )
+      if ( lb_possible[t]->item(i)->isSelected() )
       {
-         lb_selected->insertItem(lb_possible[t]->text(i));
-         lb_possible[t]->removeItem(i);
+         lb_selected->addItem(lb_possible[t]->item(i)->text());
+         delete lb_possible[t]->takeItem(i);
          i--;
       }
    }
@@ -1161,13 +1164,14 @@ void US_Hydrodyn_Save::add()
 
 void US_Hydrodyn_Save::remove()
 {
-   for ( int i = 0; i < lb_selected->numRows(); i++ )
+   for ( int i = 0; i < lb_selected->count(); i++ )
    {
-      if ( lb_selected->isSelected(i) &&
-           lb_selected->text(i) != "Model name" )
+      if ( lb_selected->item(i)->isSelected( ) &&
+           lb_selected->item(i)->text( ) != "Model name" )
       {
-         lb_possible[descriptive_name_to_section[lb_selected->text(i)]]->insertItem(lb_selected->text(i));
-         lb_selected->removeItem(i);
+         unsigned int pos = descriptive_name_to_section[ lb_selected->item(i)->text( ) ];
+         lb_possible[pos]->addItem(lb_selected->item(i)->text());
+         delete lb_selected->takeItem(i);
          i--;
       }
    }
@@ -1185,17 +1189,17 @@ void US_Hydrodyn_Save::rebuild()
    // save possible selection status
    for ( unsigned int t = 0; t < lb_possible.size(); t++ )
    {
-      for ( int i = 0; i < lb_possible[t]->numRows(); i++ )
+      for ( int i = 0; i < lb_possible[t]->count(); i++ )
       {
-         possible_selected[lb_possible[t]->text(i)] = lb_possible[t]->isSelected(i);
+         possible_selected[ lb_possible[t]->item(i)->text() ] = lb_possible[t]->item(i)->isSelected( );
       }
    }
 
    // save current 'selected' list
 
-   for ( int i = 0; i < lb_selected->numRows(); i++ )
+   for ( int i = 0; i < lb_selected->count(); i++ )
    {
-      selected[lb_selected->text(i)] = lb_selected->isSelected(i);
+      selected[ lb_selected->item(i)->text() ] = lb_selected->item(i)->isSelected( );
    }
 
    // clear tab lists
@@ -1209,16 +1213,17 @@ void US_Hydrodyn_Save::rebuild()
    {
       if ( !selected.count(descriptive_name[i]) )
       {
-         lb_possible[descriptive_name_to_section[descriptive_name[i]]]->insertItem(descriptive_name[i]);
+         unsigned int pos = descriptive_name_to_section[descriptive_name[i]];
+         lb_possible[pos]->addItem(descriptive_name[i]);
       }
    }
 
    // restore selections
    for ( unsigned int t = 0; t < lb_possible.size(); t++ )
    {
-      for ( int i = 0; i < lb_possible[t]->numRows(); i++ )
+      for ( int i = 0; i < lb_possible[t]->count(); i++ )
       {
-         lb_possible[t]->setSelected(i, possible_selected[lb_possible[t]->text(i)]);
+         lb_possible[t]->item(i)->setSelected( possible_selected[ lb_possible[t]->item(i)->text() ]);
       }
    }
 
@@ -1226,11 +1231,11 @@ void US_Hydrodyn_Save::rebuild()
    save->field.clear();
    save->field_flag.clear();
    printf("save field list:\n");
-   for ( int i = 0; i < lb_selected->numRows(); i++ )
+   for ( int i = 0; i < lb_selected->count(); i++ )
    {
-      save->field_flag[field[descriptive_name_to_pos[lb_selected->text(i)]]] = true;
-      save->field.push_back(field[descriptive_name_to_pos[lb_selected->text(i)]]);
-      printf("%s\n", field[descriptive_name_to_pos[lb_selected->text(i)]].ascii());
+      save->field_flag[field[descriptive_name_to_pos[ lb_selected->item(i)->text( ) ]]] = true;
+      save->field.push_back(field[descriptive_name_to_pos[ lb_selected->item(i)->text() ]]);
+      printf("%s\n", field[descriptive_name_to_pos[ lb_selected->item(i)->text() ]].toAscii().data());
    }
    header();
 }
@@ -1265,12 +1270,12 @@ QString US_Hydrodyn_Save::header()
             .arg(this_field);
       }
    }
-   printf("header() <%s>\n", result.ascii());
+   printf("header() <%s>\n", result.toAscii().data());
    return result + "\n";
 }
 
 // #define ZARG(s) arg(s,0,field_to_format[save->field[i]],field_to_precision[save->field[i]]).replace(QRegExp("\\.0+$"),"")
-// #define DBFARG(s) printf("i = %u _field <%s> _format <%c> _precision <%d>\n",i,save->field[i].ascii(), field_to_format[save->field[i]],field_to_precision[save->field[i]]);fflush(stdout)
+// #define DBFARG(s) printf("i = %u _field <%s> _format <%c> _precision <%d>\n",i,save->field[i].toAscii().data(), field_to_format[save->field[i]],field_to_precision[save->field[i]]);fflush(stdout)
 #define FARG(s) arg(s,0,field_to_format[save->field[i]],field_to_precision[save->field[i]])
 
 QString US_Hydrodyn_Save::dataString(save_data *data)
@@ -1341,7 +1346,7 @@ QString US_Hydrodyn_Save::dataString(save_data *data)
          break;
       }
    }
-   printf("data() <%s>\n", result.ascii());
+   printf("data() <%s>\n", result.toAscii().data());
    return result + "\n";
 }
 
@@ -1352,8 +1357,8 @@ vector < save_data > US_Hydrodyn_Save::stats(vector < save_data > *data)
    for ( unsigned int i = 0; i < field.size(); i++ )
    {
       //      printf("stats field %u of %u\n", i, field.size()); fflush(stdout);
-      //      printf("field[i] %s type %d\n",field[i].ascii(), field_to_save_data_type[field[i]]); fflush(stdout);
-      //      printf("save->field[i] %s\n",save->field[i].ascii()); fflush(stdout);
+      //      printf("field[i] %s type %d\n",field[i].toAscii().data(), field_to_save_data_type[field[i]]); fflush(stdout);
+      //      printf("save->field[i] %s\n",save->field[i].toAscii().data()); fflush(stdout);
 
       switch(field_to_save_data_type[field[i]]) 
       {
@@ -1420,7 +1425,7 @@ vector < save_data > US_Hydrodyn_Save::stats(vector < save_data > *data)
             {
                *((QString *)(field_to_save_data[field[i]])) += ", ";
             } else {
-               *((QString *)(field_to_save_data[field[i]])) = tr("Average: ");
+               *((QString *)(field_to_save_data[field[i]])) = us_tr("Average: ");
             }
             *((QString *)(field_to_save_data[field[i]])) += tmp_qstring;
             sum = save->data;
@@ -1430,7 +1435,7 @@ vector < save_data > US_Hydrodyn_Save::stats(vector < save_data > *data)
             {
                *((QString *)(field_to_save_data[field[i]])) += ", ";
             } else {
-               *((QString *)(field_to_save_data[field[i]])) = tr("Standard deviation: ");
+               *((QString *)(field_to_save_data[field[i]])) = us_tr("Standard deviation: ");
             }
             *((QString *)(field_to_save_data[field[i]])) += tmp_qstring;
             sum2 = save->data;
@@ -1737,7 +1742,7 @@ QString US_Hydrodyn_Save::hydroFormatStats(vector < save_data > stats)
    //   if ((raflag == -2.0) || (raflag == -5.0) || (raflag == -3.0))
    //   {
    result += QString("").sprintf("- SED. COEFF. (psv %s) \t%.2f\t\t%.2f\t\t[S]\n", 
-                                 bead_model_source.ascii(),
+                                 bead_model_source.toAscii().data(),
                                  stats[0].results.s20w,
                                  stats[1].results.s20w);
    //   }

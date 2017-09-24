@@ -389,8 +389,8 @@ static float *a = 0;      // [3 * NMAX][3 * NMAX];
 
 static int nmax;
 // static QApplication *qApp;
-static Q3ProgressBar *progress;
-static Q3TextEdit *editor;
+static QProgressBar *progress;
+static QTextEdit *editor;
 static int ppos;
 static int mppos;
 static double overlap_tolerance;
@@ -713,7 +713,7 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
    {
       char s[30];
       sprintf(s, "supc_log-%d", log_cnt++);
-      logfx = fopen(s, "w");
+      logfx = us_fopen(s, "w");
    }
 #endif
    model_idx.clear();
@@ -738,8 +738,8 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
    //        lconv3);
 
 
-   // for (int current_model = 0; current_model < (int)lb_model->numRows(); current_model++) {
-   //    if (lb_model->isSelected(current_model)) {
+   // for (int current_model = 0; current_model < (int)lb_model->count(); current_model++) {
+   //    if (lb_model->item(current_model)->isSelected()) {
  
 
    for ( unsigned int current_model = 0; current_model < model_vector->size(); current_model++  )
@@ -817,7 +817,7 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
    supc_results->name.replace(QRegExp("\\.beams$"),"");
    supc_results->name.replace(QRegExp("_%1"),"");
 
-   //   if ( lb_model->numRows() > 1 && model_idx.size() ) 
+   //   if ( lb_model->count() > 1 && model_idx.size() ) 
    if ( model_vector->size() > 1 && model_idx.size() ) 
    {
       supc_results->name += 
@@ -842,7 +842,7 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
         } 
       }
    }
-   //printf("model result name <%s>\n", supc_results->name.ascii());
+   //printf("model result name <%s>\n", supc_results->name.toAscii().data());
 
    if (int retval = supc_alloc())
    {
@@ -872,17 +872,17 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
 
 #if defined(CREATE_TOT_MOL)
    //printf("Removing tot_mol\n");
-   unlink("tot_mol");
+   QFile::remove("tot_mol");
 #endif
 #if defined(OLD_WAY)
    //printf("Removing ifraxon\n");
-   unlink("ifraxon");
+   QFile::remove("ifraxon");
    //printf("Removing ofraxon\n");
-   unlink("ofraxon");
+   QFile::remove("ofraxon");
    //printf("Removing ifraxon1\n");
-   unlink("ifraxon1");
+   QFile::remove("ifraxon1");
    //printf("Removing ofraxon1\n");
-   unlink("ofraxon1");
+   QFile::remove("ofraxon1");
 #endif
 
    Gets_date(day, month, &year, &numday, hour);
@@ -986,7 +986,7 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
       getchar();
    }
 
-   new_mol = fopen(risultati, "r");
+   new_mol = us_fopen(risultati, "r");
     
 
    if (new_mol != NULL)
@@ -1162,12 +1162,12 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
    strncat(risultati, "hydro_res", SMAX - strlen(risultati));
    risultati[SMAX-1] = 0;
    //printf("risultati: %s\n", risultati);
-   unlink(risultati);
+   QFile::remove(risultati);
    flag_mem = 1;
     
    strncpy(molecola, use_filename.contains( "%1" ) ? 
-           QString( use_filename ).arg( model_names[ 0 ] ).ascii() :
-           use_filename.ascii() , SMAX); // first model
+           QString( use_filename ).arg( model_names[ 0 ] ).toAscii().data() :
+           use_filename.toAscii().data() , SMAX); // first model
    molecola[SMAX-1] = 0;
    strncpy(molecola_nb, molecola, SMAX);
    molecola_nb[SMAX-1] = 0;
@@ -1176,7 +1176,7 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
    }
    
 #if defined(DEBUG_FILES)
-   if(!(mol = fopen(molecola, "r"))) {
+   if(!(mol = us_fopen(molecola, "r"))) {
       supc_free_alloced();
       return US_HYDRODYN_SUPC_FILE_NOT_FOUND;
    }
@@ -1213,7 +1213,7 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
        // !(us_hydrodyn->batch_widget &&
        //   us_hydrodyn->batch_window->save_batch_active))
    {
-      ris = fopen(risultati, "wb");
+      ris = us_fopen(risultati, "wb");
       fprintf(ris, "\n%s", "BEAMS -           IST. CBA                - COEFF/SUPCW v. 5.0\n");
       fprintf(ris, "\n%s", "**************************************************************");
       fprintf(ris, "\n%s\n", "***** Computational Method : Supermatrix Inversion ***********");
@@ -1234,14 +1234,14 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
       {
          sprintf(molecola, "%s%d", fil001, num001);
          num001 = num001 + 1;
-         mol = fopen(molecola, "r");
+         mol = us_fopen(molecola, "r");
          while (mol == NULL)
          {
             //printf("\n");
             //printf("The Model(s) do not exist!!!\n");
             //printf("Insert the models' correct prefix :___");
             scanf("%s", molecola);
-            mol = fopen(molecola, "r");
+            mol = us_fopen(molecola, "r");
          }
          fscanf(mol, "%d", &nat);
          fclose(mol);
@@ -1267,7 +1267,7 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
          }
 
 #if defined(CREATE_TOT_MOL)
-         tot_mol = fopen("tot_mol", "wb");
+         tot_mol = us_fopen("tot_mol", "wb");
          fprintf(tot_mol, "%s\n", molecola);
          fprintf(tot_mol, "%d\t%d\t%d\n", nat, prima, ultima);
          fclose(tot_mol);
@@ -1303,12 +1303,12 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
 #endif
          // printf( "opening file: %s\n", 
          //         use_filename.contains( "%1" ) ? 
-         //         QString( use_filename ).arg( model_names[ k ] ).ascii() :
-         //         use_filename.ascii() );
+         //         QString( use_filename ).arg( model_names[ k ] ).toAscii().data() :
+         //         use_filename.toAscii().data() );
          strncpy( molecola, 
                   use_filename.contains( "%1" ) ? 
-                  QString( use_filename ).arg( model_names[ k ] ).ascii() :
-                  use_filename.ascii(), SMAX); // first model
+                  QString( use_filename ).arg( model_names[ k ] ).toAscii().data() :
+                  use_filename.toAscii().data(), SMAX); // first model
          molecola[SMAX-1] = 0;
          strncpy(molecola_nb, molecola, SMAX);
          molecola_nb[SMAX-1] = 0;
@@ -1322,15 +1322,15 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
    }
 
 #if defined(CREATE_TOT_MOL)
-   tot_mol = fopen("tot_mol", "r");
+   tot_mol = us_fopen("tot_mol", "r");
 #endif
 
    for (k = 0; k < num; k++)
    {
       active_model = k;
 
-      // QColor save_color = editor->color();
-      // editor->setColor("dark blue");
+      // QColor save_color = editor->textColor();
+      // editor->setTextColor("dark blue");
       
       us_log->log(QString("\nProcessing model %1 bead count %2 vbar %3%4%5%6\n")
 		  .arg(k+1)
@@ -1374,7 +1374,7 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
 		  .arg(hydro->volume_correction ? 
 		       QString(" Volume %1 (User Entered)").arg(hydro->volume) : ""));
       
-      // editor->setColor(save_color);
+      // editor->setTextColor(save_color);
 
       supc_free_alloced_2();
 
@@ -1416,8 +1416,8 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
       
       ppos = 1;
       mppos = (1 + 3 + 3) * nat + 17;
-      // progress->setTotalSteps(mppos);
-      // progress->setProgress(ppos++); // 1
+      // progress->setMaximum(mppos);
+      // progress->setValue(ppos++); // 1
       ppos++;      
       if ( us_udp_msg )
 	{
@@ -1481,7 +1481,7 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
             }
          }
          //printf("\n\n- End of PAT ...\n\n");
-         // progress->setProgress(ppos); // 2
+         // progress->setValue(ppos); // 2
 	 ppos++;
 	 if ( us_udp_msg )
 	   {
@@ -1504,13 +1504,13 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
          out_inter();
          
          //printf("Removing ifraxon\n");
-         unlink("ifraxon");
+         QFile::remove("ifraxon");
          //printf("Removing ofraxon\n");
-         unlink("ofraxon");
+         QFile::remove("ofraxon");
          //printf("Removing ifraxon1\n");
-         unlink("ifraxon1");
+         QFile::remove("ifraxon1");
          //printf("Removing ofraxon1\n");
-         unlink("ofraxon1");
+         QFile::remove("ofraxon1");
 #endif
          
          //printf("out_nat %d\n", out_nat); fflush(stdout);
@@ -1575,7 +1575,7 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
 # endif
          //printf("overlaps detected\n");
          supc_free_alloced();
-         // progress->setProgress(mppos); 
+         // progress->setValue(mppos); 
          // qApp->processEvents();
          // if (us_hydrodyn->stopFlag)
          // {
@@ -1591,7 +1591,7 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
               ragir(); 
               printf("\n End of function: ragir()\n"); */
 
-      // progress->setProgress(ppos); //3
+      // progress->setValue(ppos); //3
       // qApp->processEvents();
       ppos++;
       if ( us_udp_msg )
@@ -1636,7 +1636,7 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
       tsuda();
       //printf("\n End of function: tsuda()\n");
 #endif
-      // progress->setProgress(ppos); // 4
+      // progress->setValue(ppos); // 4
       // qApp->processEvents();
       ppos++;
       if ( us_udp_msg )
@@ -1660,7 +1660,7 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
       doublesum();
       //printf("\n End of function: doublesum()\n");
 #endif
-      // progress->setProgress(ppos); // 5
+      // progress->setValue(ppos); // 5
       // qApp->processEvents();
       ppos++;
       if ( us_udp_msg )
@@ -1682,7 +1682,7 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
       //printf("\n Starting function: calcqij()\n");
       calcqij();
       //printf("\n\n End of function: calcqij()\n");
-      // progress->setProgress(ppos); // 6
+      // progress->setValue(ppos); // 6
       // qApp->processEvents();
       ppos++;
       if ( us_udp_msg )
@@ -1705,7 +1705,7 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
 #if defined(CREATE_EXE_TIME)
       if (flag_mem == 1)
       {
-         exe_time = fopen("exe_time", "wb");
+         exe_time = us_fopen("exe_time", "wb");
          fprintf(exe_time, "\n%s\n", "BEAMS -           IST. CBA                    COEFF/SUPC");
          fprintf(exe_time, "\n%s\n\n", "*** Computational Method : SUPERMATRIX INVERSION chol ***");
          fprintf(exe_time, "Date: %s %d %s %d %s\n", day, numday, month, year, hour);
@@ -1725,7 +1725,7 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
 #endif
 
       primo = time(NULL);   /* Gets system time */
-      // progress->setProgress(ppos); // 7
+      // progress->setValue(ppos); // 7
       // qApp->processEvents();
       ppos++;
       if ( us_udp_msg )
@@ -1781,7 +1781,7 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
          
       riempimatrice();
 
-      // progress->setProgress(ppos); // 8
+      // progress->setValue(ppos); // 8
       // qApp->processEvents();
       ppos++;
       if ( us_udp_msg )
@@ -1863,7 +1863,7 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
 #if defined(TSUDA_DOUBLESUM)
       tsuda1();
 #endif
-      // progress->setProgress(ppos); // 9
+      // progress->setValue(ppos); // 9
       // qApp->processEvents();
       ppos++;
       if ( us_udp_msg )
@@ -1885,7 +1885,7 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
       sigmatcalc2();
       //printf("calculated\n");
 
-      // progress->setProgress(ppos); // 10
+      // progress->setValue(ppos); // 10
       // qApp->processEvents();
       ppos++;
       if ( us_udp_msg )
@@ -1906,7 +1906,7 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
       //printf("- Matrix KSI_OC : ");
       sigmaocalc1();
       //printf("calculated\n");
-      // progress->setProgress(ppos); // 11
+      // progress->setValue(ppos); // 11
       // qApp->processEvents();
       ppos++;
       if ( us_udp_msg )
@@ -1926,7 +1926,7 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
 
       calcR();
 
-      // progress->setProgress(ppos); // 12
+      // progress->setValue(ppos); // 12
       // qApp->processEvents();
       ppos++;
       if ( us_udp_msg )
@@ -1948,7 +1948,7 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
       sigmarRcalc1();
       //printf("calculated\n");
 
-      // progress->setProgress(ppos); // 13
+      // progress->setValue(ppos); // 13
       // qApp->processEvents();
       ppos++;
       if ( us_udp_msg )
@@ -1969,7 +1969,7 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
       //printf("- Matrix KSI_OR: ");
       sigmaoRcalc();
       //printf("calculated\n");
-      // progress->setProgress(ppos); // 14
+      // progress->setValue(ppos); // 14
       // qApp->processEvents();
       ppos++;
       if ( us_udp_msg )
@@ -1990,7 +1990,7 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
 
       diffcalc();
 
-      // progress->setProgress(ppos); // 15
+      // progress->setValue(ppos); // 15
       // qApp->processEvents();
       ppos++;
       if ( us_udp_msg )
@@ -2011,7 +2011,7 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
 
       relax_rigid_calc();
 
-      // progress->setProgress(ppos); // 16
+      // progress->setValue(ppos); // 16
       // qApp->processEvents();
       ppos++;
       if ( us_udp_msg )
@@ -2045,7 +2045,7 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
       if (flag_mem == 1)
       {
          // system("date >> exe_time");
-         exe_time = fopen("exe_time", "ab");
+         exe_time = us_fopen("exe_time", "ab");
          print_time_2IO((int) difftime(secondo, primo));
          /*
            Substitute the previous line with the following for compiling under SUN O.S.
@@ -2311,11 +2311,11 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
 
 #if defined(CREATE_TOT_MOL)
    fclose(tot_mol);
-   //   unlink("tot_mol");
+   //   QFile::remove("tot_mol");
 #endif
 
 #if defined(CREATE_EXE_TIME)
-   unlink("exe_time");
+   QFile::remove("exe_time");
 #endif
 
 #if defined(DEBUG_WW)
@@ -2324,7 +2324,7 @@ us_hydrodyn_supc_main_hydro(bool use_bead_model_from_file,
 #endif
 
    supc_free_alloced();
-   // progress->setProgress(mppos); 
+   // progress->setValue(mppos); 
    // qApp->processEvents();
 
 
@@ -2611,7 +2611,7 @@ stampa_ris()
       bc = 4;
 
    // // solvent area
-   // printf("Solvent:                %s\n", supc_results->solvent_name.ascii());
+   // printf("Solvent:                %s\n", supc_results->solvent_name.toAscii().data());
    // printf("Temperature:            %5.2f\n", supc_results->temperature);
    // printf("Solvent viscosity (cP): %f\n", supc_results->solvent_viscosity);
    // printf("Solvent density (g/ml): %f\n", supc_results->solvent_density);
@@ -2666,10 +2666,10 @@ stampa_ris()
 
    //printf("%s%.2f%s\n", "- Used BEADS Mass    = ", mascor1, "  [Da]");
    supc_results->mass = mascor1;
-   //printf("\n\n%s%.3e\t%s (%s)\n", "- TRANS. FRICT. COEFF.  = ", f * 1.0E-07 * fconv, "[g/s] ", tag1.ascii());
+   //printf("\n\n%s%.3e\t%s (%s)\n", "- TRANS. FRICT. COEFF.  = ", f * 1.0E-07 * fconv, "[g/s] ", tag1.toAscii().data());
    // supc_results->s20w = f * 1.0E-07 * fconv;
 
-   //printf("%s%.2e\t%s (%s)\n", "- TRANS. DIFF. COEFF.   = ", (KB * TE * 1.0E7) / f * fconv1, "[cm^2/s] ", tag2.ascii());
+   //printf("%s%.2e\t%s (%s)\n", "- TRANS. DIFF. COEFF.   = ", (KB * TE * 1.0E7) / f * fconv1, "[cm^2/s] ", tag2.toAscii().data());
    supc_results->D20w = (KB * TE * 1.0E7) / f * fconv1;
 
 
@@ -2684,8 +2684,8 @@ stampa_ris()
    if (raflag == -1.0) 
    {
       // printf("%s%.2f\t%s (%s)\n", "- SED. COEFF. (psv from unhydrated radii) = ",
-      //        (mascor1 * 1.0E20 * (1.0 - partvolc * DENS)) / (f * fconv * AVO), "[S] ", tag2.ascii());
-      // qDebug( QString( "ra -1 mascor1 is %1 partvolc %2 DENS %3 f %4" )
+      //        (mascor1 * 1.0E20 * (1.0 - partvolc * DENS)) / (f * fconv * AVO), "[S] ", tag2.toAscii().data());
+      // us_qdebug( QString( "ra -1 mascor1 is %1 partvolc %2 DENS %3 f %4" )
       //         .arg( mascor1 )
       //         .arg( partvolc )
       //         .arg( DENS )
@@ -2700,9 +2700,9 @@ stampa_ris()
       //        ( bead_model_from_file_int ?
       //          "from file" : "computed" ) : "user entered",
       //        (mascor1 * 1.0E20 * (1.0 - partvol * DENS)) / (f * fconv * AVO), "[S] ", 
-      //        tag2.ascii()
+      //        tag2.toAscii().data()
       //        );
-      // qDebug( QString( "ra -2 or -5 mascor1 is %1 partvol %2 DENS %3 f %4" )
+      // us_qdebug( QString( "ra -2 or -5 mascor1 is %1 partvol %2 DENS %3 f %4" )
       //         .arg( mascor1 )
       //         .arg( partvol )
       //         .arg( DENS )
@@ -2720,9 +2720,9 @@ stampa_ris()
       //        ( bead_model_from_file_int ?
       //          "from file" : "computed" ) : "user entered",
       //        (mascor1 * 1.0E20 * (1.0 - partvol * DENS)) / (f * fconv * AVO), "[S] ", 
-      //        tag2.ascii()
+      //        tag2.toAscii().data()
       //        );
-      // qDebug( QString( "ra -3 mascor1 is %1 partvol %2 DENS %3 f %4" )
+      // us_qdebug( QString( "ra -3 mascor1 is %1 partvol %2 DENS %3 f %4" )
       //         .arg( mascor1 )
       //         .arg( partvol )
       //         .arg( DENS )
@@ -2733,10 +2733,10 @@ stampa_ris()
       //       ("- !!WARNING: ONLY PART OF THE MODEL HAS BEEN ANALYZED, BUT THE PSV UTILIZED         IS THAT OF THE ENTIRE MODEL!! - \n");
 
       // printf("%s%.2f\t%s (%s)\n", "- SED. COEFF. (psv from unhydrated radii) = ",
-      //        (mascor1 * 1.0E20 * (1.0 - partvolc * DENS)) / (f * fconv * AVO), "[S] ", tag2.ascii());
+      //        (mascor1 * 1.0E20 * (1.0 - partvolc * DENS)) / (f * fconv * AVO), "[S] ", tag2.toAscii().data());
    }
 
-   //   qDebug( QString( "f is %1 ETAo %2 partvol %3 fconv %4 mass %5" ).arg( f ).arg( ETAo ).arg( partvol ).arg( fconv ).arg( supc_results->mass ) );
+   //   us_qdebug( QString( "f is %1 ETAo %2 partvol %3 fconv %4 mass %5" ).arg( f ).arg( ETAo ).arg( partvol ).arg( fconv ).arg( supc_results->mass ) );
    supc_results->ff0 = 
       f * 1.0E-07 * fconv / ( 6.0 * M_PI * ETAo *
       pow( 3.0 * supc_results->mass * partvol / (4.0 * M_PI * AVOGADRO), 1.0/3.0));
@@ -2746,26 +2746,26 @@ stampa_ris()
    temp = 0.0;
    for (i = 0; i < 3; i++)
       temp += 1.0E-21 / Dr[i * 4] * pow(fconv, 3);
-   //   printf("\n%s%.3e\t%s (%s)\n", "- ROT. FRICT. COEFF.    = ", temp / 3.0, "[g*cm^2/s] ", tag1.ascii());
+   //   printf("\n%s%.3e\t%s (%s)\n", "- ROT. FRICT. COEFF.    = ", temp / 3.0, "[g*cm^2/s] ", tag1.toAscii().data());
    temp = 0.0;
    for (i = 0; i < 3; i++)
       temp += (KB * TE * Dr[i * 4] / 1.0E-21) * pow(fconv1, 3);
-   //   printf("%s%.0f\t%s (%s)\n\n", "- ROT. DIFF. COEFF.     = ", temp / 3.0, "[1/s] ", tag2.ascii());
+   //   printf("%s%.0f\t%s (%s)\n\n", "- ROT. DIFF. COEFF.     = ", temp / 3.0, "[1/s] ", tag2.toAscii().data());
 
 // #if !defined( MINGW )
-//    printf("%s%.3Le\t%s (%s)\n", "- ROT. FRICT. COEFF. [ X ] = ", 1.0E-21 / Dr[0] * pow(fconv, 3), "[g*cm^2/s] ", tag1.ascii());
-//    printf("%s%.3Le\t%s (%s)\n", "- ROT. FRICT. COEFF. [ Y ] = ", 1.0E-21 / Dr[4] * pow(fconv, 3), "[g*cm^2/s] ", tag1.ascii());
-//    printf("%s%.3Le\t%s (%s)\n", "- ROT. FRICT. COEFF. [ Z ] = ", 1.0E-21 / Dr[8] * pow(fconv, 3), "[g*cm^2/s] ", tag1.ascii());
-//    printf("%s%.0Lf\t%s (%s)\n", "- ROT. DIFF. COEFF.  [ X ] = ", (KB * TE / 1.0E-21 * Dr[0]) * pow(fconv1, 3), "[1/s] ", tag2.ascii());
-//    printf("%s%.0Lf\t%s (%s)\n", "- ROT. DIFF. COEFF.  [ Y ] = ", (KB * TE / 1.0E-21 * Dr[4]) * pow(fconv1, 3), "[1/s] ", tag2.ascii());
-//    printf("%s%.0Lf\t%s (%s)\n\n", "- ROT. DIFF. COEFF.  [ Z ] = ", (KB * TE / 1.0E-21 * Dr[8]) * pow(fconv1, 3), "[1/s] ", tag2.ascii());
+//    printf("%s%.3Le\t%s (%s)\n", "- ROT. FRICT. COEFF. [ X ] = ", 1.0E-21 / Dr[0] * pow(fconv, 3), "[g*cm^2/s] ", tag1.toAscii().data());
+//    printf("%s%.3Le\t%s (%s)\n", "- ROT. FRICT. COEFF. [ Y ] = ", 1.0E-21 / Dr[4] * pow(fconv, 3), "[g*cm^2/s] ", tag1.toAscii().data());
+//    printf("%s%.3Le\t%s (%s)\n", "- ROT. FRICT. COEFF. [ Z ] = ", 1.0E-21 / Dr[8] * pow(fconv, 3), "[g*cm^2/s] ", tag1.toAscii().data());
+//    printf("%s%.0Lf\t%s (%s)\n", "- ROT. DIFF. COEFF.  [ X ] = ", (KB * TE / 1.0E-21 * Dr[0]) * pow(fconv1, 3), "[1/s] ", tag2.toAscii().data());
+//    printf("%s%.0Lf\t%s (%s)\n", "- ROT. DIFF. COEFF.  [ Y ] = ", (KB * TE / 1.0E-21 * Dr[4]) * pow(fconv1, 3), "[1/s] ", tag2.toAscii().data());
+//    printf("%s%.0Lf\t%s (%s)\n\n", "- ROT. DIFF. COEFF.  [ Z ] = ", (KB * TE / 1.0E-21 * Dr[8]) * pow(fconv1, 3), "[1/s] ", tag2.toAscii().data());
 // #else
-//    printf("%s%.3e\t%s (%s)\n", "- ROT. FRICT. COEFF. [ X ] = ", (double)(1.0E-21 / Dr[0] * pow(fconv, 3)), "[g*cm^2/s] ", tag1.ascii());
-//    printf("%s%.3e\t%s (%s)\n", "- ROT. FRICT. COEFF. [ Y ] = ", (double)(1.0E-21 / Dr[4] * pow(fconv, 3)), "[g*cm^2/s] ", tag1.ascii());
-//    printf("%s%.3e\t%s (%s)\n", "- ROT. FRICT. COEFF. [ Z ] = ", (double)(1.0E-21 / Dr[8] * pow(fconv, 3)), "[g*cm^2/s] ", tag1.ascii());
-//    printf("%s%.0f\t%s (%s)\n", "- ROT. DIFF. COEFF.  [ X ] = ", (double)((KB * TE / 1.0E-21 * Dr[0]) * pow(fconv1, 3)), "[1/s] ", tag2.ascii());
-//    printf("%s%.0f\t%s (%s)\n", "- ROT. DIFF. COEFF.  [ Y ] = ", (double)((KB * TE / 1.0E-21 * Dr[4]) * pow(fconv1, 3)), "[1/s] ", tag2.ascii());
-//    printf("%s%.0f\t%s (%s)\n\n", "- ROT. DIFF. COEFF.  [ Z ] = ", (double)((KB * TE / 1.0E-21 * Dr[8]) * pow(fconv1, 3)), "[1/s] ", tag2.ascii());
+//    printf("%s%.3e\t%s (%s)\n", "- ROT. FRICT. COEFF. [ X ] = ", (double)(1.0E-21 / Dr[0] * pow(fconv, 3)), "[g*cm^2/s] ", tag1.toAscii().data());
+//    printf("%s%.3e\t%s (%s)\n", "- ROT. FRICT. COEFF. [ Y ] = ", (double)(1.0E-21 / Dr[4] * pow(fconv, 3)), "[g*cm^2/s] ", tag1.toAscii().data());
+//    printf("%s%.3e\t%s (%s)\n", "- ROT. FRICT. COEFF. [ Z ] = ", (double)(1.0E-21 / Dr[8] * pow(fconv, 3)), "[g*cm^2/s] ", tag1.toAscii().data());
+//    printf("%s%.0f\t%s (%s)\n", "- ROT. DIFF. COEFF.  [ X ] = ", (double)((KB * TE / 1.0E-21 * Dr[0]) * pow(fconv1, 3)), "[1/s] ", tag2.toAscii().data());
+//    printf("%s%.0f\t%s (%s)\n", "- ROT. DIFF. COEFF.  [ Y ] = ", (double)((KB * TE / 1.0E-21 * Dr[4]) * pow(fconv1, 3)), "[1/s] ", tag2.toAscii().data());
+//    printf("%s%.0f\t%s (%s)\n\n", "- ROT. DIFF. COEFF.  [ Z ] = ", (double)((KB * TE / 1.0E-21 * Dr[8]) * pow(fconv1, 3)), "[1/s] ", tag2.toAscii().data());
 // #endif
 
    // printf("%s%.2f\t%s\n", "- MOLECULAR WEIGHT   (from file)         = ", pesmol, "[Da]");
@@ -2800,14 +2800,14 @@ stampa_ris()
 
    if ((raflag == -1.0) || (raflag == -3.0))
    {
-     //qDebug( QString( "ra -1 or -3 ro %1" ).arg( ro ) );
+     //us_qdebug( QString( "ra -1 or -3 ro %1" ).arg( ro ) );
       // printf("\n%s%.2f\t%s\n", "- RADIUS OF GYRATION (Hydrated Beads)   = ", ro * fconv, "[nm]");
       supc_results->rg = ro * fconv;
       // printf("%s%.2f\t%s\n", "- RADIUS OF GYRATION (Unhydrated Beads) = ", rou * fconv, "[nm]");
    }
    else
    {
-     //qDebug( QString( "ra !(-1 or -3) ro %1" ).arg( ro ) );
+     //us_qdebug( QString( "ra !(-1 or -3) ro %1" ).arg( ro ) );
       // printf("\n%s%.2f\t%s\n", "- RADIUS OF GYRATION              = ", ro * fconv, "[nm]");
       supc_results->rg = ro * fconv;
    }
@@ -2890,58 +2890,58 @@ stampa_ris()
 #if !defined( MINGW )
    if (taoflag == 1.0)
    {
-      printf("%s\t%.2Lf\t%s (%s)\n", " Tau(1) ", tao[0] * pow(fconv, 3.0f), "[ns] ", tag2.ascii());
-      printf("%s\t%.2Lf\t%s (%s)\n", " Tau(2) ", tao[1] * pow(fconv, 3.0f), "[ns] ", tag2.ascii());
-      printf("%s\t%.2Lf\t%s (%s)\n", " Tau(3) ", tao[1] * pow(fconv, 3.0f), "[ns] ", tag2.ascii());
-      printf("%s\t%.2Lf\t%s (%s)\n", " Tau(4) ", tao[3] * pow(fconv, 3.0f), "[ns] ", tag2.ascii());
-      printf("%s\t%.2Lf\t%s (%s)\n", " Tau(5) ", tao[3] * pow(fconv, 3.0f), "[ns] ", tag2.ascii());
+      printf("%s\t%.2Lf\t%s (%s)\n", " Tau(1) ", tao[0] * pow(fconv, 3.0f), "[ns] ", tag2.toAscii().data());
+      printf("%s\t%.2Lf\t%s (%s)\n", " Tau(2) ", tao[1] * pow(fconv, 3.0f), "[ns] ", tag2.toAscii().data());
+      printf("%s\t%.2Lf\t%s (%s)\n", " Tau(3) ", tao[1] * pow(fconv, 3.0f), "[ns] ", tag2.toAscii().data());
+      printf("%s\t%.2Lf\t%s (%s)\n", " Tau(4) ", tao[3] * pow(fconv, 3.0f), "[ns] ", tag2.toAscii().data());
+      printf("%s\t%.2Lf\t%s (%s)\n", " Tau(5) ", tao[3] * pow(fconv, 3.0f), "[ns] ", tag2.toAscii().data());
    }
    if (taoflag == 2.0)
    {
-      printf("%s\t%.2Lf\t%s (%s)\n", " Tau(1) ", tao[4] * pow(fconv, 3.0f), "[ns] ", tag2.ascii());
-      printf("%s\t%.2Lf\t%s (%s)\n", " Tau(2) ", tao[1] * pow(fconv, 3.0f), "[ns] ", tag2.ascii());
-      printf("%s\t%.2Lf\t%s (%s)\n", " Tau(3) ", tao[1] * pow(fconv, 3.0f), "[ns] ", tag2.ascii());
-      printf("%s\t%.2Lf\t%s (%s)\n", " Tau(4) ", tao[3] * pow(fconv, 3.0f), "[ns] ", tag2.ascii());
-      printf("%s\t%.2Lf\t%s (%s)\n", " Tau(5) ", tao[3] * pow(fconv, 3.0f), "[ns] ", tag2.ascii());
+      printf("%s\t%.2Lf\t%s (%s)\n", " Tau(1) ", tao[4] * pow(fconv, 3.0f), "[ns] ", tag2.toAscii().data());
+      printf("%s\t%.2Lf\t%s (%s)\n", " Tau(2) ", tao[1] * pow(fconv, 3.0f), "[ns] ", tag2.toAscii().data());
+      printf("%s\t%.2Lf\t%s (%s)\n", " Tau(3) ", tao[1] * pow(fconv, 3.0f), "[ns] ", tag2.toAscii().data());
+      printf("%s\t%.2Lf\t%s (%s)\n", " Tau(4) ", tao[3] * pow(fconv, 3.0f), "[ns] ", tag2.toAscii().data());
+      printf("%s\t%.2Lf\t%s (%s)\n", " Tau(5) ", tao[3] * pow(fconv, 3.0f), "[ns] ", tag2.toAscii().data());
    }
    if (taoflag == 0.0)
    {
-      printf("%s\t%.2Lf\t%s (%s)\n", " Tau(1) ", tao[0] * pow(fconv, 3.0f), "[ns] ", tag2.ascii());
-      printf("%s\t%.2Lf\t%s (%s)\n", " Tau(2) ", tao[1] * pow(fconv, 3.0f), "[ns] ", tag2.ascii());
-      printf("%s\t%.2Lf\t%s (%s)\n", " Tau(3) ", tao[2] * pow(fconv, 3.0f), "[ns] ", tag2.ascii());
-      printf("%s\t%.2Lf\t%s (%s)\n", " Tau(4) ", tao[3] * pow(fconv, 3.0f), "[ns] ", tag2.ascii());
-      printf("%s\t%.2Lf\t%s (%s)\n", " Tau(5) ", tao[4] * pow(fconv, 3.0f), "[ns] ", tag2.ascii());
+      printf("%s\t%.2Lf\t%s (%s)\n", " Tau(1) ", tao[0] * pow(fconv, 3.0f), "[ns] ", tag2.toAscii().data());
+      printf("%s\t%.2Lf\t%s (%s)\n", " Tau(2) ", tao[1] * pow(fconv, 3.0f), "[ns] ", tag2.toAscii().data());
+      printf("%s\t%.2Lf\t%s (%s)\n", " Tau(3) ", tao[2] * pow(fconv, 3.0f), "[ns] ", tag2.toAscii().data());
+      printf("%s\t%.2Lf\t%s (%s)\n", " Tau(4) ", tao[3] * pow(fconv, 3.0f), "[ns] ", tag2.toAscii().data());
+      printf("%s\t%.2Lf\t%s (%s)\n", " Tau(5) ", tao[4] * pow(fconv, 3.0f), "[ns] ", tag2.toAscii().data());
    }
 #else
    if (taoflag == 1.0)
    {
-      printf("%s\t%.2f\t%s (%s)\n", " Tau(1) ", (double)(tao[0] * pow(fconv, 3.0f)), "[ns] ", tag2.ascii());
-      printf("%s\t%.2f\t%s (%s)\n", " Tau(2) ", (double)(tao[1] * pow(fconv, 3.0f)), "[ns] ", tag2.ascii());
-      printf("%s\t%.2f\t%s (%s)\n", " Tau(3) ", (double)(tao[1] * pow(fconv, 3.0f)), "[ns] ", tag2.ascii());
-      printf("%s\t%.2f\t%s (%s)\n", " Tau(4) ", (double)(tao[3] * pow(fconv, 3.0f)), "[ns] ", tag2.ascii());
-      printf("%s\t%.2f\t%s (%s)\n", " Tau(5) ", (double)(tao[3] * pow(fconv, 3.0f)), "[ns] ", tag2.ascii());
+      printf("%s\t%.2f\t%s (%s)\n", " Tau(1) ", (double)(tao[0] * pow(fconv, 3.0f)), "[ns] ", tag2.toAscii().data());
+      printf("%s\t%.2f\t%s (%s)\n", " Tau(2) ", (double)(tao[1] * pow(fconv, 3.0f)), "[ns] ", tag2.toAscii().data());
+      printf("%s\t%.2f\t%s (%s)\n", " Tau(3) ", (double)(tao[1] * pow(fconv, 3.0f)), "[ns] ", tag2.toAscii().data());
+      printf("%s\t%.2f\t%s (%s)\n", " Tau(4) ", (double)(tao[3] * pow(fconv, 3.0f)), "[ns] ", tag2.toAscii().data());
+      printf("%s\t%.2f\t%s (%s)\n", " Tau(5) ", (double)(tao[3] * pow(fconv, 3.0f)), "[ns] ", tag2.toAscii().data());
    }
    if (taoflag == 2.0)
    {
-      printf("%s\t%.2f\t%s (%s)\n", " Tau(1) ", (double)(tao[4] * pow(fconv, 3.0f)), "[ns] ", tag2.ascii());
-      printf("%s\t%.2f\t%s (%s)\n", " Tau(2) ", (double)(tao[1] * pow(fconv, 3.0f)), "[ns] ", tag2.ascii());
-      printf("%s\t%.2f\t%s (%s)\n", " Tau(3) ", (double)(tao[1] * pow(fconv, 3.0f)), "[ns] ", tag2.ascii());
-      printf("%s\t%.2f\t%s (%s)\n", " Tau(4) ", (double)(tao[3] * pow(fconv, 3.0f)), "[ns] ", tag2.ascii());
-      printf("%s\t%.2f\t%s (%s)\n", " Tau(5) ", (double)(tao[3] * pow(fconv, 3.0f)), "[ns] ", tag2.ascii());
+      printf("%s\t%.2f\t%s (%s)\n", " Tau(1) ", (double)(tao[4] * pow(fconv, 3.0f)), "[ns] ", tag2.toAscii().data());
+      printf("%s\t%.2f\t%s (%s)\n", " Tau(2) ", (double)(tao[1] * pow(fconv, 3.0f)), "[ns] ", tag2.toAscii().data());
+      printf("%s\t%.2f\t%s (%s)\n", " Tau(3) ", (double)(tao[1] * pow(fconv, 3.0f)), "[ns] ", tag2.toAscii().data());
+      printf("%s\t%.2f\t%s (%s)\n", " Tau(4) ", (double)(tao[3] * pow(fconv, 3.0f)), "[ns] ", tag2.toAscii().data());
+      printf("%s\t%.2f\t%s (%s)\n", " Tau(5) ", (double)(tao[3] * pow(fconv, 3.0f)), "[ns] ", tag2.toAscii().data());
    }
    if (taoflag == 0.0)
    {
-      printf("%s\t%.2f\t%s (%s)\n", " Tau(1) ", (double)(tao[0] * pow(fconv, 3.0f)), "[ns] ", tag2.ascii());
-      printf("%s\t%.2f\t%s (%s)\n", " Tau(2) ", (double)(tao[1] * pow(fconv, 3.0f)), "[ns] ", tag2.ascii());
-      printf("%s\t%.2f\t%s (%s)\n", " Tau(3) ", (double)(tao[2] * pow(fconv, 3.0f)), "[ns] ", tag2.ascii());
-      printf("%s\t%.2f\t%s (%s)\n", " Tau(4) ", (double)(tao[3] * pow(fconv, 3.0f)), "[ns] ", tag2.ascii());
-      printf("%s\t%.2f\t%s (%s)\n", " Tau(5) ", (double)(tao[4] * pow(fconv, 3.0f)), "[ns] ", tag2.ascii());
+      printf("%s\t%.2f\t%s (%s)\n", " Tau(1) ", (double)(tao[0] * pow(fconv, 3.0f)), "[ns] ", tag2.toAscii().data());
+      printf("%s\t%.2f\t%s (%s)\n", " Tau(2) ", (double)(tao[1] * pow(fconv, 3.0f)), "[ns] ", tag2.toAscii().data());
+      printf("%s\t%.2f\t%s (%s)\n", " Tau(3) ", (double)(tao[2] * pow(fconv, 3.0f)), "[ns] ", tag2.toAscii().data());
+      printf("%s\t%.2f\t%s (%s)\n", " Tau(4) ", (double)(tao[3] * pow(fconv, 3.0f)), "[ns] ", tag2.toAscii().data());
+      printf("%s\t%.2f\t%s (%s)\n", " Tau(5) ", (double)(tao[4] * pow(fconv, 3.0f)), "[ns] ", tag2.toAscii().data());
    }
 #endif
    */
 
-   // printf("\n%s\t%.2f\t%s (%s)\n", " Tau(m) ", taom * pow(fconv, 3.0f), "[ns] ", tag2.ascii());
-   // printf("%s\t%.2f\t%s (%s)\n\n", " Tau(h) ", taoh * 1.0E+09 * pow(fconv, 3.0f), "[ns] ", tag2.ascii());
+   // printf("\n%s\t%.2f\t%s (%s)\n", " Tau(m) ", taom * pow(fconv, 3.0f), "[ns] ", tag2.toAscii().data());
+   // printf("%s\t%.2f\t%s (%s)\n\n", " Tau(h) ", taoh * 1.0E+09 * pow(fconv, 3.0f), "[ns] ", tag2.toAscii().data());
    supc_results->tau = taoh * 1.0E+09 * pow(fconv, 3.0f);
 
    // printf("\n%s", "- MAX EXTENSIONS:");
@@ -2989,7 +2989,7 @@ mem_ris(int model)
 
    // printf("create hydrores %s\n", create_hydro_res ? "true" : "false");
 
-   create_hydro_res && (ris = fopen(risultati, "ab"));
+   create_hydro_res && (ris = us_fopen(risultati, "ab"));
    // if ( create_hydro_res )
    // {
    //    us_hydrodyn->last_hydro_res = QString("%1").arg(risultati);
@@ -2997,7 +2997,7 @@ mem_ris(int model)
    // }
 
    hydro_res.sprintf("%s", "MODEL File Name  :___ ");
-   create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+   create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
    this_data.hydro_res += hydro_res;
 
 
@@ -3010,25 +3010,25 @@ mem_ris(int model)
 
 
    hydro_res.sprintf("%s\n", molecola_nb);
-   create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+   create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
    this_data.hydro_res += hydro_res;
 
    hydro_res.sprintf("%s%d\n", "TOTAL Beads in the MODEL :___ ", numero_sfere);
-   create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+   create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
    this_data.hydro_res += hydro_res;
    this_data.results.total_beads = numero_sfere;
 
    // hydro_res.sprintf("%s%.2f [nm^2]\n", "TOTAL ASA of Beads in the MODEL :___ ", total_asa[model]);
-   // create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+   // create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
    // this_data.hydro_res += hydro_res;
 
    hydro_res.sprintf("%s%.2f [nm^2]\n", "TOTAL Surface Area of Beads in the MODEL :___ ", total_s_a[model]);
-   create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+   create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
    this_data.hydro_res += hydro_res;
    this_data.tot_surf_area = total_s_a[model];
 
    hydro_res.sprintf("%s%.2f [nm^3]\n", "TOTAL Volume of Beads in the MODEL :___ ", total_vol[model]);
-   create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+   create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
    this_data.hydro_res += hydro_res;
    this_data.tot_volume_of = total_vol[model];
 
@@ -3039,36 +3039,36 @@ mem_ris(int model)
    this_data.results.vbar = partvol;
     
    // hydro_res.sprintf("%s%d\n", "FIRST Bead Included  :___ ", prima);
-   // create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+   // create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
    // this_data.hydro_res += hydro_res;
 
    // hydro_res.sprintf("%s%d\n\n", "LAST Bead Included :___ ", ultima);
-   // create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+   // create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
    // this_data.hydro_res += hydro_res;
 
    hydro_res.sprintf("\n");
-   create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+   create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
    this_data.hydro_res += hydro_res;
 
    // solvent area
-   hydro_res.sprintf("Solvent:                %s\n", supc_results->solvent_name.ascii());
-   create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+   hydro_res.sprintf("Solvent:                %s\n", supc_results->solvent_name.toAscii().data());
+   create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
    this_data.hydro_res += hydro_res;
 
    hydro_res.sprintf("Temperature:            %5.2f\n", supc_results->temperature);
-   create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+   create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
    this_data.hydro_res += hydro_res;
 
    hydro_res.sprintf("Solvent viscosity (cP): %f\n", supc_results->solvent_viscosity);
-   create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+   create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
    this_data.hydro_res += hydro_res;
 
    hydro_res.sprintf("Solvent density (g/ml): %f\n", supc_results->solvent_density);
-   create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+   create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
    this_data.hydro_res += hydro_res;
 
    hydro_res.sprintf("\n");
-   create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+   create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
    this_data.hydro_res += hydro_res;
 
    // temporary vbar area
@@ -3076,42 +3076,42 @@ mem_ris(int model)
                       org_vbar, 
 		     misc_int.compute_vbar ?  "(computed) "  : "user entered");
 
-   create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+   create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
 
    this_data.hydro_res += hydro_res;
 
    if ( !misc_int.compute_vbar )
    {
       hydro_res.sprintf("Original vbar temp (C): %5.2f\n", misc_int.vbar_temperature);
-      create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+      create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
       this_data.hydro_res += hydro_res;
    }
    hydro_res.sprintf("Temp corrected vbar:    %5.3f            \t[cm^3/g]\n", tc_vbar);
-   create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+   create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
    this_data.hydro_res += hydro_res;
    
    hydro_res.sprintf("\n");
-   create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+   create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
    this_data.hydro_res += hydro_res;
    
    if (colorzero == 1)
    {
       hydro_res.sprintf("%s%d%s\n", "- WARNING: THERE IS ", colorzero, " BEAD COLOR CODED '0' [RADIUS < 0.005 NM]");
-      create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+      create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
       this_data.hydro_res += hydro_res;
       
       hydro_res.sprintf("%s\n", "- THIS BEAD IS NOT USED IN THE HYDRODYNAMIC COMPUTATIONS\n");
-      create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+      create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
       this_data.hydro_res += hydro_res;
    }
    if (colorzero > 1)
    {
       hydro_res.sprintf("%s%d%s\n", "- WARNING: THERE ARE ", colorzero, " BEADS COLOR CODED '0' [RADIUS < 0.005 NM]");
-      create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+      create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
       this_data.hydro_res += hydro_res;
       
       hydro_res.sprintf("%s\n", "- THOSE BEADS ARE NOT USED IN THE HYDRODYNAMIC COMPUTATIONS\n");
-      create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+      create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
       this_data.hydro_res += hydro_res;
    }
    this_data.num_of_unused = colorzero;
@@ -3119,25 +3119,25 @@ mem_ris(int model)
    if (flag_norm == 1)
    {
       hydro_res.sprintf("%s\n", "- 'NORMALIZED' model -");
-      create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+      create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
       this_data.hydro_res += hydro_res;
    }
 
    if (cc == 1)
    {
       hydro_res.sprintf("- STICK BOUNDARY CONDITIONS (6*PI*ETAo)\n\n");
-      create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+      create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
       this_data.hydro_res += hydro_res;
    }
    else
    {
       hydro_res.sprintf("- SLIP BOUNDARY CONDITIONS (4*PI*ETAo)\n\n");
-      create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+      create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
       this_data.hydro_res += hydro_res;
    }
 
    hydro_res.sprintf("%s%d\n", "- Used BEADS Number       = ", nat);
-   create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+   create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
    this_data.hydro_res += hydro_res;
    
    this_data.results.used_beads = nat;
@@ -3147,41 +3147,41 @@ mem_ris(int model)
       {
          hydro_res.sprintf("%s%.2f%s\n", "- Used BEADS Volume       = ", volcor1 * pow(fconv, 3.0f),
                  "  [nm^3] (NO contribution from buried beads)");
-         create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+         create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
          this_data.hydro_res += hydro_res;         
       }
       if ((colorsixf == 1) && (sfecalc == 2))
       {
          hydro_res.sprintf("%s%.2f%s\n", "- Used BEADS Volume       = ", volcor1 * pow(fconv, 3.0f),
                  "  [nm^3] (contribution from buried beads only for Dr)");
-         create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+         create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
          this_data.hydro_res += hydro_res;
          
          hydro_res.sprintf("%s%.2f%s\n", "- Used BEADS Volume       = ", totvol * pow(fconv, 3.0f), "  [nm^3] (for [n])");
-         create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+         create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
          this_data.hydro_res += hydro_res;
       }
       if ((colorsixf == 2) && (sfecalc == 2))
       {
          hydro_res.sprintf("%s%.2f%s\n", "- Used BEADS Volume       = ", volcor1 * pow(fconv, 3.0f),
                  "  [nm^3] (contribution from buried beads only for [n])");
-         create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+         create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
          this_data.hydro_res += hydro_res;
          
          hydro_res.sprintf("%s%.2f%s\n", "- Used BEADS Volume       = ", totvol * pow(fconv, 3.0f), "  [nm^3] (for Dr)");
-         create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+         create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
          this_data.hydro_res += hydro_res;
       }
       if ((colorsixf == 3) && (sfecalc == 2)) 
       {
          hydro_res.sprintf("%s%.2f%s\n", "- Used BEADS Volume       = ", volcor1 * pow(fconv, 3.0f), "  [nm^3]");
-         create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+         create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
          this_data.hydro_res += hydro_res;
       }
       if (sfecalc == 1)
       {
          hydro_res.sprintf("%s%.2f%s\n", "- Used BEADS Volume       = ", volcor1 * pow(fconv, 3.0f), "  [nm^3]");
-         create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+         create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
          this_data.hydro_res += hydro_res;         
       }
       this_data.use_beads_vol =  volcor1 * pow(fconv, 3.0f);
@@ -3189,52 +3189,52 @@ mem_ris(int model)
    if (volcor == 2)
    {
       hydro_res.sprintf("%s%.2f%s\n", "- Used BEADS Volume       = ", volcor1 * pow(fconv, 3.0f), "  [nm^3]");
-      create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+      create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
       this_data.hydro_res += hydro_res;
       this_data.use_beads_vol =  volcor1 * pow(fconv, 3.0f);
    }
 
    // hydro_res.sprintf("%s%.2f [nm^2]\n", "- Used BEADS ASA          = ", used_asa[model]);
-   // create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+   // create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
    // this_data.hydro_res += hydro_res;
 
    hydro_res.sprintf("%s%.2f [nm^2]\n", "- Used BEADS Surface Area = ", used_s_a[model]);
-   create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+   create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
    this_data.hydro_res += hydro_res;
    this_data.use_beads_surf = used_s_a[model];
 
    // hydro_res.sprintf("%s%.2f [nm^3]\n", "- Used BEADS Volume       = ", used_vol[model]);
-   // create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+   // create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
    // this_data.hydro_res += hydro_res;   
 
    if (mascor == 1)
       mascor1 = (float) pesmol;
 
    hydro_res.sprintf("%s%.2f%s\n", "- Used BEAD Mass     = ", mascor1, "  [Da]");
-   create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+   create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
    this_data.hydro_res += hydro_res;
    this_data.use_bead_mass = mascor1;
 
    hydro_res.sprintf("%s%.2f\n", "- Conversion Factor  = ", fconv);
-   create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+   create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
    this_data.hydro_res += hydro_res;
    this_data.con_factor = fconv;
 
-   hydro_res.sprintf("\n%s%.3e\t%s (%s)\n", "- TRANS. FRICT. COEFF.  = ", f * 1.0E-07 * fconv, "[g/s] ", tag1.ascii());
-   create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+   hydro_res.sprintf("\n%s%.3e\t%s (%s)\n", "- TRANS. FRICT. COEFF.  = ", f * 1.0E-07 * fconv, "[g/s] ", tag1.toAscii().data());
+   create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
    this_data.hydro_res += hydro_res;
    this_data.tra_fric_coef = f * 1.0E-07 * fconv;
 
-   hydro_res.sprintf("%s%.2e\t%s (%s)\n", "- TRANS. DIFF. COEFF.   = ", (KB * TE * 1.0E7) / f * fconv1, "[cm^2/s] ", tag2.ascii());
-   create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+   hydro_res.sprintf("%s%.2e\t%s (%s)\n", "- TRANS. DIFF. COEFF.   = ", (KB * TE * 1.0E7) / f * fconv1, "[cm^2/s] ", tag2.toAscii().data());
+   create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
    this_data.hydro_res += hydro_res;
    this_data.results.D20w = (KB * TE * 1.0E7) / f * fconv1;
 
    if (raflag == -1.0)
    {
       hydro_res.sprintf("%s%.2f\t%s (%s)\n", "- SED. COEFF. (psv from unhydrated radii) = ",
-              (mascor1 * 1.0E20 * (1.0 - partvolc * DENS)) / (f * fconv * AVO), "[S] ", tag2.ascii());
-      create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+              (mascor1 * 1.0E20 * (1.0 - partvolc * DENS)) / (f * fconv * AVO), "[S] ", tag2.toAscii().data());
+      create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
       this_data.hydro_res += hydro_res;
       this_data.results.s20w = (mascor1 * 1.0E20 * (1.0 - partvolc * DENS)) / (f * fconv * AVO);
    }
@@ -3243,14 +3243,14 @@ mem_ris(int model)
    if ((raflag == -2.0) || (raflag == -5.0))
    {
       hydro_res.sprintf("%s%.2f\t%s (%s)\n", "- SED. COEFF.           = ",
-              (mascor1 * 1.0E20 * (1.0 - partvol * DENS)) / (f * fconv * AVO), "        [S] ", tag2.ascii());
-      create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+              (mascor1 * 1.0E20 * (1.0 - partvol * DENS)) / (f * fconv * AVO), "        [S] ", tag2.toAscii().data());
+      create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
       this_data.hydro_res += hydro_res;
       this_data.results.s20w = (mascor1 * 1.0E20 * (1.0 - partvol * DENS)) / (f * fconv * AVO);
       if ((nat + colorzero + colorsix) < numero_sfere)
       {
          hydro_res.sprintf(                 "- !!WARNING: ONLY PART OF THE MODEL HAS BEEN ANALYZED, BUT THE PSV UTILIZED         IS THAT OF THE ENTIRE MODEL!! - \n");
-         create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+         create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
          this_data.hydro_res += hydro_res;
       }
    }
@@ -3259,24 +3259,24 @@ mem_ris(int model)
    {
       hydro_res.sprintf("- SED. COEFF. (psv %s) = %.2f\t%s (%s)\n", 
               misc_int.compute_vbar ?  "computed"  : "user entered",
-              (mascor1 * 1.0E20 * (1.0 - partvol * DENS)) / (f * fconv * AVO), "[S] ", tag2.ascii());
+              (mascor1 * 1.0E20 * (1.0 - partvol * DENS)) / (f * fconv * AVO), "[S] ", tag2.toAscii().data());
 
 
 
-      create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+      create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
       this_data.hydro_res += hydro_res;
       this_data.results.s20w = (mascor1 * 1.0E20 * (1.0 - partvol * DENS)) / (f * fconv * AVO);
 
       if ((nat + colorzero + colorsix) < numero_sfere)
       {
          hydro_res.sprintf(                 "- !!WARNING: ONLY PART OF THE MODEL HAS BEEN ANALYZED, BUT THE PSV UTILIZED         IS THAT OF THE ENTIRE MODEL!! - \n");
-         create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+         create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
          this_data.hydro_res += hydro_res;
       }
 
       hydro_res.sprintf("%s%.2f\t%s (%s)\n", "- SED. COEFF. (psv from unhydrated radii) = ",
-              (mascor1 * 1.0E20 * (1.0 - partvolc * DENS)) / (f * fconv * AVO), "[S] ", tag2.ascii());
-      create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+              (mascor1 * 1.0E20 * (1.0 - partvolc * DENS)) / (f * fconv * AVO), "[S] ", tag2.toAscii().data());
+      create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
       this_data.hydro_res += hydro_res;      
    }
 
@@ -3284,7 +3284,7 @@ mem_ris(int model)
            f * 1.0E-07 * fconv / 
            ( 6.0 * M_PI * ETAo *
              pow( 3.0 * supc_results->mass * partvol / (4.0 * M_PI * AVOGADRO), 1.0/3.0)));
-   create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+   create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
    this_data.hydro_res += hydro_res;
    this_data.results.ff0 = 
       f * 1.0E-07 * fconv / 
@@ -3294,84 +3294,84 @@ mem_ris(int model)
    temp = 0.0;
    for (i = 0; i < 3; i++)
       temp += 1.0E-21 / Dr[i * 4] * pow(fconv, 3);
-   hydro_res.sprintf("%s%.3e\t%s (%s)\n", "- ROT. FRICT. COEFF.    = ", temp / 3.0, "[g*cm^2/s] ", tag1.ascii());
-   create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+   hydro_res.sprintf("%s%.3e\t%s (%s)\n", "- ROT. FRICT. COEFF.    = ", temp / 3.0, "[g*cm^2/s] ", tag1.toAscii().data());
+   create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
    this_data.hydro_res += hydro_res;
    this_data.rot_fric_coef = temp / 3.0;
 
    temp = 0.0;
    for (i = 0; i < 3; i++)
       temp += (KB * TE * Dr[i * 4] / 1.0E-21) * pow(fconv1, 3);
-   hydro_res.sprintf("%s%.0f\t%s (%s)\n\n", "- ROT. DIFF. COEFF.     = ", temp / 3.0, "[1/s] ", tag2.ascii());
-   create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+   hydro_res.sprintf("%s%.0f\t%s (%s)\n\n", "- ROT. DIFF. COEFF.     = ", temp / 3.0, "[1/s] ", tag2.toAscii().data());
+   create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
    this_data.hydro_res += hydro_res;
    this_data.rot_diff_coef = temp / 3.0;
 
 
 
 #if !defined( MINGW )
-   hydro_res.sprintf("%s%.3Le\t%s (%s)\n", "- ROT. FRICT. COEFF. [ X ] = ", 1.0E-21 / Dr[0] * pow(fconv, 3), "[g*cm^2/s] ", tag1.ascii());
+   hydro_res.sprintf("%s%.3Le\t%s (%s)\n", "- ROT. FRICT. COEFF. [ X ] = ", 1.0E-21 / Dr[0] * pow(fconv, 3), "[g*cm^2/s] ", tag1.toAscii().data());
 #else
-   hydro_res.sprintf("%s%.3e\t%s (%s)\n", "- ROT. FRICT. COEFF. [ X ] = ", (double)(1.0E-21 / Dr[0] * pow(fconv, 3)), "[g*cm^2/s] ", tag1.ascii());
+   hydro_res.sprintf("%s%.3e\t%s (%s)\n", "- ROT. FRICT. COEFF. [ X ] = ", (double)(1.0E-21 / Dr[0] * pow(fconv, 3)), "[g*cm^2/s] ", tag1.toAscii().data());
 #endif
-   create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+   create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
    this_data.hydro_res += hydro_res;
    this_data.rot_fric_coef_x = 1.0E-21 / Dr[0] * pow(fconv, 3);
 
    /* WORKS */
 #if !defined( MINGW )
-   hydro_res.sprintf("%s%.3Le\t%s (%s)\n", "- ROT. FRICT. COEFF. [ Y ] = ", 1.0E-21 / Dr[4] * pow(fconv, 3), "[g*cm^2/s] ", tag1.ascii());
+   hydro_res.sprintf("%s%.3Le\t%s (%s)\n", "- ROT. FRICT. COEFF. [ Y ] = ", 1.0E-21 / Dr[4] * pow(fconv, 3), "[g*cm^2/s] ", tag1.toAscii().data());
 #else
-   hydro_res.sprintf("%s%.3e\t%s (%s)\n", "- ROT. FRICT. COEFF. [ Y ] = ", (double)(1.0E-21 / Dr[4] * pow(fconv, 3)), "[g*cm^2/s] ", tag1.ascii());
+   hydro_res.sprintf("%s%.3e\t%s (%s)\n", "- ROT. FRICT. COEFF. [ Y ] = ", (double)(1.0E-21 / Dr[4] * pow(fconv, 3)), "[g*cm^2/s] ", tag1.toAscii().data());
 #endif
-   create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+   create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
    this_data.hydro_res += hydro_res;
    this_data.rot_fric_coef_y = 1.0E-21 / Dr[4] * pow(fconv, 3);
 
 #if !defined( MINGW )
-   hydro_res.sprintf("%s%.3Le\t%s (%s)\n", "- ROT. FRICT. COEFF. [ Z ] = ", 1.0E-21 / Dr[8] * pow(fconv, 3), "[g*cm^2/s] ", tag1.ascii());
+   hydro_res.sprintf("%s%.3Le\t%s (%s)\n", "- ROT. FRICT. COEFF. [ Z ] = ", 1.0E-21 / Dr[8] * pow(fconv, 3), "[g*cm^2/s] ", tag1.toAscii().data());
 #else
-   hydro_res.sprintf("%s%.3e\t%s (%s)\n", "- ROT. FRICT. COEFF. [ Z ] = ", (double)(1.0E-21 / Dr[8] * pow(fconv, 3)), "[g*cm^2/s] ", tag1.ascii());
+   hydro_res.sprintf("%s%.3e\t%s (%s)\n", "- ROT. FRICT. COEFF. [ Z ] = ", (double)(1.0E-21 / Dr[8] * pow(fconv, 3)), "[g*cm^2/s] ", tag1.toAscii().data());
 #endif
-   create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+   create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
    this_data.hydro_res += hydro_res;
    this_data.rot_fric_coef_z = 1.0E-21 / Dr[8] * pow(fconv, 3);
 
 #if !defined( MINGW )
    hydro_res.sprintf("%s%.2Lf\t%s (%s)\n", "- ROT. DIFF. COEFF.  [ X ] = ", KB * TE * Dr[0] / 1.0e-21 * pow(fconv1, 3),
-           "[1/s] ", tag2.ascii());
+           "[1/s] ", tag2.toAscii().data());
 #else
    hydro_res.sprintf("%s%.2f\t%s (%s)\n", "- ROT. DIFF. COEFF.  [ X ] = ", (double)(KB * TE * Dr[0] / 1.0e-21 * pow(fconv1, 3)),
-           "[1/s] ", tag2.ascii());
+           "[1/s] ", tag2.toAscii().data());
 #endif
-   create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+   create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
    this_data.hydro_res += hydro_res;
    this_data.rot_diff_coef_x = KB * TE * Dr[0] / 1.0e-21 * pow(fconv1, 3);
 
 #if !defined( MINGW )
    hydro_res.sprintf("%s%.2Lf\t%s (%s)\n", "- ROT. DIFF. COEFF.  [ Y ] = ", KB * TE * Dr[4] / 1.0e-21 * pow(fconv1, 3),
-           "[1/s] ", tag2.ascii());
+           "[1/s] ", tag2.toAscii().data());
 #else
    hydro_res.sprintf("%s%.2f\t%s (%s)\n", "- ROT. DIFF. COEFF.  [ Y ] = ", (double)(KB * TE * Dr[4] / 1.0e-21 * pow(fconv1, 3)),
-           "[1/s] ", tag2.ascii());
+           "[1/s] ", tag2.toAscii().data());
 #endif
-   create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+   create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
    this_data.hydro_res += hydro_res;
    this_data.rot_diff_coef_y = KB * TE * Dr[4] / 1.0e-21 * pow(fconv1, 3);
 
 #if !defined( MINGW )
    hydro_res.sprintf("%s%.2Lf\t%s (%s)\n\n", "- ROT. DIFF. COEFF.  [ Z ] = ", KB * TE * Dr[8] / 1.0e-21 * pow(fconv1, 3),
-           "[1/s] ", tag2.ascii());
+           "[1/s] ", tag2.toAscii().data());
 #else
    hydro_res.sprintf("%s%.2f\t%s (%s)\n\n", "- ROT. DIFF. COEFF.  [ Z ] = ", (double)(KB * TE * Dr[8] / 1.0e-21 * pow(fconv1, 3)),
-           "[1/s] ", tag2.ascii());
+           "[1/s] ", tag2.toAscii().data());
 #endif
-   create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+   create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
    this_data.hydro_res += hydro_res;
    this_data.rot_diff_coef_z = KB * TE * Dr[8] / 1.0e-21 * pow(fconv1, 3);
 
    hydro_res.sprintf("%s%.2f\t%s\n", "- MOLECULAR WEIGHT (from file)           = ", pesmol, "[Da]");
-   create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+   create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
    this_data.hydro_res += hydro_res;
    this_data.results.mass = pesmol;
 
@@ -3380,7 +3380,7 @@ mem_ris(int model)
    //   if (sfecalc == 2)
    //   {
    //      hydro_res.sprintf("%s%.2f\t%s\n", "- BEADS TOTAL VOLUME (from file) = ", interm1 / (6.0 * ETAo) * pow(fconv, 3), "[nm^3]");
-   //      create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+   //      create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
    //      this_data.hydro_res += hydro_res;
    //   }
    
@@ -3395,7 +3395,7 @@ mem_ris(int model)
    if (raflag == -1.0)
    {
       hydro_res.sprintf("%s%.3f\t%s\n", "- PARTIAL SPECIFIC VOLUME (from unhydrated radii) = ", partvolc, "[cm^3/g]");
-      create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+      create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
       this_data.hydro_res += hydro_res;      
    }
 
@@ -3406,7 +3406,7 @@ mem_ris(int model)
                partvol, "[cm^3/g]");
 
       
-      create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+      create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
       this_data.hydro_res += hydro_res;      
    }
 
@@ -3417,65 +3417,65 @@ mem_ris(int model)
                misc_int.compute_vbar ? "(computed)    ": "(user entered)", 
                partvol, "[cm^3/g]");
 
-      create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+      create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
       this_data.hydro_res += hydro_res;
       
       hydro_res.sprintf("%s%.3f\t%s\n", "- PARTIAL SPECIFIC VOLUME (from unhydrated radii) = ", partvolc, "[cm^3/g]");
-      create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+      create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
       this_data.hydro_res += hydro_res;
    }
 
    if ((raflag == -1.0) || (raflag == -3.0))
    {
       hydro_res.sprintf("\n%s%.2f\t%s\n", "- RADIUS OF GYRATION (Hydrated Beads)  = ", ro * fconv, "[nm]");
-      create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+      create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
       this_data.hydro_res += hydro_res;
       
       this_data.results.rg = ro * fconv;
       hydro_res.sprintf("%s%.2f\t%s\n", "- RADIUS OF GYRATION (Unydrated Beads) = ", rou * fconv, "[nm]");
-      create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+      create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
       this_data.hydro_res += hydro_res;
    }
    else
    {
       hydro_res.sprintf("\n%s%.2f\t%s\n", "- RADIUS OF GYRATION              = ", ro * fconv, "[nm]");
-      create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+      create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
       this_data.hydro_res += hydro_res;
       this_data.results.rg = ro * fconv;
    }
    hydro_res.sprintf("%s%.2f\t%s\n", "- TRANSLATIONAL STOKES' RADIUS    = ", f * fconv / (bc * M_PI * ETAo), "[nm]");
-   create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+   create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
    this_data.hydro_res += hydro_res;
    this_data.results.rs =  f * fconv / (bc * M_PI * ETAo);
 
    hydro_res.sprintf("%s%.2f\t%s\n", "- ROTATIONAL STOKES' RADIUS [ X ] = ",
            (double)( pow((3.0 / Dr[0] / bc / 4.0 / M_PI / ETAo), (long double)(0.33333)) * fconv ), "[nm]");
-   create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+   create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
    this_data.hydro_res += hydro_res;
    this_data.rot_stokes_rad_x = pow((3.0 / Dr[0] / bc / 4.0 / M_PI / ETAo), (long double)(0.33333)) * fconv;
 
    hydro_res.sprintf("%s%.2f\t%s\n", "- ROTATIONAL STOKES' RADIUS [ Y ] = ",
                      ( double )( pow((3.0 / Dr[4] / bc / 4.0 / M_PI / ETAo), (long double)(0.33333)) * fconv ), "[nm]");
-   create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+   create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
    this_data.hydro_res += hydro_res;
    this_data.rot_stokes_rad_y = pow((3.0 / Dr[4] / bc / 4.0 / M_PI / ETAo), (long double)(0.33333)) * fconv;
 
    hydro_res.sprintf("%s%.2f\t%s\n\n", "- ROTATIONAL STOKES' RADIUS [ Z ] = ",
                      ( double )( pow((3.0 / Dr[8] / bc / 4.0 / M_PI / ETAo),(long double) (0.33333)) * fconv ), "[nm]");
-   create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+   create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
    this_data.hydro_res += hydro_res;
    this_data.rot_stokes_rad_z = pow((3.0 / Dr[8] / bc / 4.0 / M_PI / ETAo), (long double)(0.33333)) * fconv;
 
    hydro_res.sprintf("%s%5.2f\t%5.2f\t%5.2f\t%s\n", "- CENTRE OF RESISTANCE   :  ", roR[0] * fconv, roR[1] * fconv, roR[2] * fconv,
            "[nm]");
-   create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+   create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
    this_data.hydro_res += hydro_res;
    this_data.cen_of_res_x = roR[0] * fconv;
    this_data.cen_of_res_y = roR[1] * fconv;
    this_data.cen_of_res_z = roR[2] * fconv;
 
    hydro_res.sprintf("%s%5.2f\t%5.2f\t%5.2f\t%s\n", "- CENTRE OF MASS         :  ", xm * fconv, ym * fconv, zm * fconv, "[nm]");
-   create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+   create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
    this_data.hydro_res += hydro_res;
    this_data.cen_of_mass_x = xm * fconv;
    this_data.cen_of_mass_y = ym * fconv;
@@ -3485,7 +3485,7 @@ mem_ris(int model)
    {
       hydro_res.sprintf("%s%5.2f\t%5.2f\t%5.2f\t%s\n", "- CENTRE OF DIFFUSION    :  ", roD[0] * fconv, roD[1] * fconv,
               roD[2] * fconv, "[nm]");
-      create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+      create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
       this_data.hydro_res += hydro_res;
       this_data.cen_of_diff_x = roD[0] * fconv;
       this_data.cen_of_diff_y = roD[1] * fconv;
@@ -3494,7 +3494,7 @@ mem_ris(int model)
 
    hydro_res.sprintf("%s%5.2f\t%5.2f\t%5.2f\t%s\n\n", "- CENTRE OF VISCOSITY    :  ", vc[0] * fconv, vc[1] * fconv, vc[2] * fconv,
            "[nm]");
-   create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+   create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
    this_data.hydro_res += hydro_res;
    this_data.cen_of_visc_x = vc[0] * fconv;
    this_data.cen_of_visc_y = vc[1] * fconv;
@@ -3512,22 +3512,22 @@ mem_ris(int model)
    }
 
    // hydro_res.sprintf("%s%.2f\t%s\n", "- INTRINSIC VISCOSITY                  = ", vis * correz * pow(fconv, 3.0f), "[cm^3/g]");
-   //   create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+   //   create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
    // this_data.hydro_res += hydro_res;
 
    hydro_res.sprintf("%s%.2f\t%s\n", "- UNCORRECTED INTRINSIC VISCOSITY      = ", vis * correz * pow(fconv, 3.0f), "[cm^3/g]");
-   create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+   create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
    this_data.hydro_res += hydro_res;
    this_data.unc_int_visc = vis * correz * pow(fconv, 3.0f);
 
    einst = pow(0.3 * pesmol * vis / ( M_PI * AVO), 0.33333);
    einst = 1E7 * einst;
    // hydro_res.sprintf("%s%.2f\t%s\n", "- EINSTEIN'S RADIUS                    = ", einst * fconv, "[nm]");
-   // create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+   // create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
    // this_data.hydro_res += hydro_res;   
 
    hydro_res.sprintf("%s%.2f\t%s\n", "- UNCORRECTED EINSTEIN'S RADIUS        = ", einst * fconv, "[nm]");
-   create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+   create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
    this_data.hydro_res += hydro_res;
    this_data.unc_einst_rad = einst * fconv;
 
@@ -3536,7 +3536,7 @@ mem_ris(int model)
       // hydro_res.sprintf("%s%.2f\t%s\n", "- INTRINSIC VISCOSITY (GDLT corrected) = ",
       hydro_res.sprintf("%s%.2f\t%s\n", "- CORRECTED INTRINSIC VISCOSITY        = ",
               (vis * correz + vis3 * totvol / vol_mas) * pow(fconv, 3), "[cm^3/g]");
-      create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+      create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
       this_data.hydro_res += hydro_res;
       this_data.results.viscosity =  (vis * correz + vis3 * totvol / vol_mas) * pow(fconv, 3);
       this_data.cor_int_visc = (vis * correz + vis3 * totvol / vol_mas) * pow(fconv, 3);
@@ -3544,11 +3544,11 @@ mem_ris(int model)
       einst = pow(0.3 * vol_mas * (vis * correz + vis3 * totvol / vol_mas) / ( M_PI * AVO), 0.33333);
       einst = 1E7 * einst;
       // hydro_res.sprintf("%s%.2f\t%s\n", "- EINSTEIN'S RADIUS (GDLT corrected)   = ", einst * fconv, "[nm]");
-      // create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+      // create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
       // this_data.hydro_res += hydro_res;
       
       hydro_res.sprintf("%s%.2f\t%s\n", "- CORRECTED EINSTEIN'S RADIUS          = ", einst * fconv, "[nm]");
-      create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+      create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
       this_data.hydro_res += hydro_res;
       this_data.cor_einst_rad = einst * fconv;
    }
@@ -3557,7 +3557,7 @@ mem_ris(int model)
       // hydro_res.sprintf("%s%.2f\t%s\n", "- INTRINSIC VISCOSITY (GDLT corrected)  = ",
       hydro_res.sprintf("%s%.2f\t%s\n", "- CORRECTED INTRINSIC VISCOSITY         = ",
               (vis * correz + vis3 * volcor1 / vol_mas) * pow(fconv, 3), "[cm^3/g]");
-      create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+      create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
       this_data.hydro_res += hydro_res;
       this_data.results.viscosity = (vis * correz + vis3 * volcor1 / vol_mas) * pow(fconv, 3);
       this_data.cor_int_visc = (vis * correz + vis3 * volcor1 / vol_mas) * pow(fconv, 3);
@@ -3565,49 +3565,49 @@ mem_ris(int model)
       einst = pow(0.3 * vol_mas * (vis * correz + vis3 * volcor1 / vol_mas) / ( M_PI * AVO), 0.33333);
       einst = 1E7 * einst;
       // hydro_res.sprintf("%s%.2f\t%s\n", "- EINSTEIN'S RADIUS (GDLT corrected)   = ", einst * fconv, "[nm]");
-      // create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+      // create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
       // this_data.hydro_res += hydro_res;
       
       hydro_res.sprintf("%s%.2f\t%s\n", "- CORRECTED EINSTEIN'S RADIUS          = ", einst * fconv, "[nm]");
-      create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+      create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
       this_data.hydro_res += hydro_res;
       this_data.cor_einst_rad = einst * fconv;
    }
 
 #if defined(TSUDA_DOUBLESUM)
    hydro_res.sprintf("%s%.2f\t%s\n", "- INTRINSIC VISCOSITY(DoubleSum CM)    = ", vis4 * correz * pow(fconv, 3), "[cm^3/g]");
-   create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+   create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
    this_data.hydro_res += hydro_res;
    
    einst = pow(0.3 * pesmol * vis4 / ( M_PI * AVO), 0.33333);
    einst = 1E7 * einst;
    hydro_res.sprintf("%s%.2f\t%s\n", "- EINSTEIN'S RADIUS (DoubleSum CM)     = ", einst * fconv, "[nm]");
-   create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+   create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
    this_data.hydro_res += hydro_res;
    
    hydro_res.sprintf("%s%.2f\t%s\n", "- INTRINSIC VISCOSITY(Tsuda CM)        = ", vis1 * correz * pow(fconv, 3), "[cm^3/g]");
-   create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+   create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
    this_data.hydro_res += hydro_res;
    
    einst = pow(0.3 * pesmol * vis1 / ( M_PI * AVO), 0.33333);
    einst = 1E7 * einst;
    hydro_res.sprintf("%s%.2f\t%s\n", "- EINSTEIN'S RADIUS (Tsuda CM)         = ", einst * fconv, "[nm]");
-   create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+   create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
    this_data.hydro_res += hydro_res;
    
    hydro_res.sprintf("%s%.2f\t%s\n", "- INTRINSIC VISCOSITY(Tsuda CV)        = ", vis2 * correz * pow(fconv, 3), "[cm^3/g]");
-   create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+   create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
    this_data.hydro_res += hydro_res;
    
    einst = pow(0.3 * pesmol * vis2 / ( M_PI * AVO), 0.33333);
    einst = 1E7 * einst;
    hydro_res.sprintf("%s%.2f\t%s\n", "- EINSTEIN'S RADIUS (Tsuda CV)         = ", einst * fconv, "[nm]");
-   create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+   create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
    this_data.hydro_res += hydro_res;
 #endif
 
    hydro_res.sprintf("\nRELAXATION TIMES\n\n");
-   create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+   create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
    this_data.hydro_res += hydro_res;   
 
 
@@ -3615,187 +3615,187 @@ mem_ris(int model)
 #if !defined( MINGW )
    if (taoflag == 1.0)
    {
-      hydro_res.sprintf("%s\t%.2Lf\t%s (%s)\n", " Tau(1) ", tao[0] * pow(fconv, 3.0f), "[ns] ", tag2.ascii());
-      create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+      hydro_res.sprintf("%s\t%.2Lf\t%s (%s)\n", " Tau(1) ", tao[0] * pow(fconv, 3.0f), "[ns] ", tag2.toAscii().data());
+      create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
       this_data.hydro_res += hydro_res;
       this_data.rel_times_tau_1 = tao[0] * pow(fconv, 3.0f);
 
-      hydro_res.sprintf("%s\t%.2Lf\t%s (%s)\n", " Tau(2) ", tao[1] * pow(fconv, 3.0f), "[ns] ", tag2.ascii());
-      create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+      hydro_res.sprintf("%s\t%.2Lf\t%s (%s)\n", " Tau(2) ", tao[1] * pow(fconv, 3.0f), "[ns] ", tag2.toAscii().data());
+      create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
       this_data.hydro_res += hydro_res;
       this_data.rel_times_tau_2 = tao[1] * pow(fconv, 3.0f);
 
-      hydro_res.sprintf("%s\t%.2Lf\t%s (%s)\n", " Tau(3) ", tao[1] * pow(fconv, 3.0f), "[ns] ", tag2.ascii());
-      create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+      hydro_res.sprintf("%s\t%.2Lf\t%s (%s)\n", " Tau(3) ", tao[1] * pow(fconv, 3.0f), "[ns] ", tag2.toAscii().data());
+      create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
       this_data.hydro_res += hydro_res;
       this_data.rel_times_tau_3 = tao[1] * pow(fconv, 3.0f);
 
-      hydro_res.sprintf("%s\t%.2Lf\t%s (%s)\n", " Tau(4) ", tao[3] * pow(fconv, 3.0f), "[ns] ", tag2.ascii());
-      create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+      hydro_res.sprintf("%s\t%.2Lf\t%s (%s)\n", " Tau(4) ", tao[3] * pow(fconv, 3.0f), "[ns] ", tag2.toAscii().data());
+      create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
       this_data.hydro_res += hydro_res;
       this_data.rel_times_tau_4 = tao[3] * pow(fconv, 3.0f);
 
-      hydro_res.sprintf("%s\t%.2Lf\t%s (%s)\n", " Tau(5) ", tao[3] * pow(fconv, 3.0f), "[ns] ", tag2.ascii());
-      create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+      hydro_res.sprintf("%s\t%.2Lf\t%s (%s)\n", " Tau(5) ", tao[3] * pow(fconv, 3.0f), "[ns] ", tag2.toAscii().data());
+      create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
       this_data.hydro_res += hydro_res;
       this_data.rel_times_tau_5 = tao[3] * pow(fconv, 3.0f);
    }
    if (taoflag == 2.0)
    {
-      hydro_res.sprintf("%s\t%.2Lf\t%s (%s)\n", " Tau(1) ", tao[4] * pow(fconv, 3.0f), "[ns] ", tag2.ascii());
-      create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+      hydro_res.sprintf("%s\t%.2Lf\t%s (%s)\n", " Tau(1) ", tao[4] * pow(fconv, 3.0f), "[ns] ", tag2.toAscii().data());
+      create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
       this_data.hydro_res += hydro_res;
       this_data.rel_times_tau_1 = tao[4] * pow(fconv, 3.0f);
 
-      hydro_res.sprintf("%s\t%.2Lf\t%s (%s)\n", " Tau(2) ", tao[1] * pow(fconv, 3.0f), "[ns] ", tag2.ascii());
-      create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+      hydro_res.sprintf("%s\t%.2Lf\t%s (%s)\n", " Tau(2) ", tao[1] * pow(fconv, 3.0f), "[ns] ", tag2.toAscii().data());
+      create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
       this_data.hydro_res += hydro_res;
       this_data.rel_times_tau_2 = tao[1] * pow(fconv, 3.0f);
 
-      hydro_res.sprintf("%s\t%.2Lf\t%s (%s)\n", " Tau(3) ", tao[1] * pow(fconv, 3.0f), "[ns] ", tag2.ascii());
-      create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+      hydro_res.sprintf("%s\t%.2Lf\t%s (%s)\n", " Tau(3) ", tao[1] * pow(fconv, 3.0f), "[ns] ", tag2.toAscii().data());
+      create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
       this_data.hydro_res += hydro_res;
       this_data.rel_times_tau_3 = tao[1] * pow(fconv, 3.0f);
 
-      hydro_res.sprintf("%s\t%.2Lf\t%s (%s)\n", " Tau(4) ", tao[3] * pow(fconv, 3.0f), "[ns] ", tag2.ascii());
-      create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+      hydro_res.sprintf("%s\t%.2Lf\t%s (%s)\n", " Tau(4) ", tao[3] * pow(fconv, 3.0f), "[ns] ", tag2.toAscii().data());
+      create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
       this_data.hydro_res += hydro_res;
       this_data.rel_times_tau_4 = tao[3] * pow(fconv, 3.0f);
 
-      hydro_res.sprintf("%s\t%.2Lf\t%s (%s)\n", " Tau(5) ", tao[3] * pow(fconv, 3.0f), "[ns] ", tag2.ascii());
-      create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+      hydro_res.sprintf("%s\t%.2Lf\t%s (%s)\n", " Tau(5) ", tao[3] * pow(fconv, 3.0f), "[ns] ", tag2.toAscii().data());
+      create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
       this_data.hydro_res += hydro_res;
       this_data.rel_times_tau_5 = tao[3] * pow(fconv, 3.0f);
    }
    if (taoflag == 0.0)
    {
-      hydro_res.sprintf("%s\t%.2Lf\t%s (%s)\n", " Tau(1) ", tao[0] * pow(fconv, 3.0f), "[ns] ", tag2.ascii());
-      create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+      hydro_res.sprintf("%s\t%.2Lf\t%s (%s)\n", " Tau(1) ", tao[0] * pow(fconv, 3.0f), "[ns] ", tag2.toAscii().data());
+      create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
       this_data.hydro_res += hydro_res;
       this_data.rel_times_tau_1 = tao[0] * pow(fconv, 3.0f);
 
-      hydro_res.sprintf("%s\t%.2Lf\t%s (%s)\n", " Tau(2) ", tao[1] * pow(fconv, 3.0f), "[ns] ", tag2.ascii());
-      create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+      hydro_res.sprintf("%s\t%.2Lf\t%s (%s)\n", " Tau(2) ", tao[1] * pow(fconv, 3.0f), "[ns] ", tag2.toAscii().data());
+      create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
       this_data.hydro_res += hydro_res;
       this_data.rel_times_tau_2 = tao[1] * pow(fconv, 3.0f);
 
-      hydro_res.sprintf("%s\t%.2Lf\t%s (%s)\n", " Tau(3) ", tao[2] * pow(fconv, 3.0f), "[ns] ", tag2.ascii());
-      create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+      hydro_res.sprintf("%s\t%.2Lf\t%s (%s)\n", " Tau(3) ", tao[2] * pow(fconv, 3.0f), "[ns] ", tag2.toAscii().data());
+      create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
       this_data.hydro_res += hydro_res;
       this_data.rel_times_tau_3 = tao[2] * pow(fconv, 3.0f);
 
-      hydro_res.sprintf("%s\t%.2Lf\t%s (%s)\n", " Tau(4) ", tao[3] * pow(fconv, 3.0f), "[ns] ", tag2.ascii());
-      create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+      hydro_res.sprintf("%s\t%.2Lf\t%s (%s)\n", " Tau(4) ", tao[3] * pow(fconv, 3.0f), "[ns] ", tag2.toAscii().data());
+      create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
       this_data.hydro_res += hydro_res;
       this_data.rel_times_tau_4 = tao[3] * pow(fconv, 3.0f);
 
-      hydro_res.sprintf("%s\t%.2Lf\t%s (%s)\n", " Tau(5) ", tao[4] * pow(fconv, 3.0f), "[ns] ", tag2.ascii());
-      create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+      hydro_res.sprintf("%s\t%.2Lf\t%s (%s)\n", " Tau(5) ", tao[4] * pow(fconv, 3.0f), "[ns] ", tag2.toAscii().data());
+      create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
       this_data.hydro_res += hydro_res;
       this_data.rel_times_tau_5 = tao[4] * pow(fconv, 3.0f);
    }
 #else
    if (taoflag == 1.0)
    {
-      hydro_res.sprintf("%s\t%.2f\t%s (%s)\n", " Tau(1) ", (double)(tao[0] * pow(fconv, 3.0f)), "[ns] ", tag2.ascii());
-      create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+      hydro_res.sprintf("%s\t%.2f\t%s (%s)\n", " Tau(1) ", (double)(tao[0] * pow(fconv, 3.0f)), "[ns] ", tag2.toAscii().data());
+      create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
       this_data.hydro_res += hydro_res;
       this_data.rel_times_tau_1 = tao[0] * pow(fconv, 3.0f);
 
-      hydro_res.sprintf("%s\t%.2f\t%s (%s)\n", " Tau(2) ", (double)(tao[1] * pow(fconv, 3.0f)), "[ns] ", tag2.ascii());
-      create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+      hydro_res.sprintf("%s\t%.2f\t%s (%s)\n", " Tau(2) ", (double)(tao[1] * pow(fconv, 3.0f)), "[ns] ", tag2.toAscii().data());
+      create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
       this_data.hydro_res += hydro_res;
       this_data.rel_times_tau_2 = tao[1] * pow(fconv, 3.0f);
 
-      hydro_res.sprintf("%s\t%.2f\t%s (%s)\n", " Tau(3) ", (double)(tao[1] * pow(fconv, 3.0f)), "[ns] ", tag2.ascii());
-      create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+      hydro_res.sprintf("%s\t%.2f\t%s (%s)\n", " Tau(3) ", (double)(tao[1] * pow(fconv, 3.0f)), "[ns] ", tag2.toAscii().data());
+      create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
       this_data.hydro_res += hydro_res;
       this_data.rel_times_tau_3 = tao[1] * pow(fconv, 3.0f);
 
-      hydro_res.sprintf("%s\t%.2f\t%s (%s)\n", " Tau(4) ", (double)(tao[3] * pow(fconv, 3.0f)), "[ns] ", tag2.ascii());
-      create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+      hydro_res.sprintf("%s\t%.2f\t%s (%s)\n", " Tau(4) ", (double)(tao[3] * pow(fconv, 3.0f)), "[ns] ", tag2.toAscii().data());
+      create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
       this_data.hydro_res += hydro_res;
       this_data.rel_times_tau_4 = tao[3] * pow(fconv, 3.0f);
 
-      hydro_res.sprintf("%s\t%.2f\t%s (%s)\n", " Tau(5) ", (double)(tao[3] * pow(fconv, 3.0f)), "[ns] ", tag2.ascii());
-      create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+      hydro_res.sprintf("%s\t%.2f\t%s (%s)\n", " Tau(5) ", (double)(tao[3] * pow(fconv, 3.0f)), "[ns] ", tag2.toAscii().data());
+      create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
       this_data.hydro_res += hydro_res;
       this_data.rel_times_tau_5 = tao[3] * pow(fconv, 3.0f);
    }
    if (taoflag == 2.0)
    {
-      hydro_res.sprintf("%s\t%.2f\t%s (%s)\n", " Tau(1) ", (double)(tao[4] * pow(fconv, 3.0f)), "[ns] ", tag2.ascii());
-      create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+      hydro_res.sprintf("%s\t%.2f\t%s (%s)\n", " Tau(1) ", (double)(tao[4] * pow(fconv, 3.0f)), "[ns] ", tag2.toAscii().data());
+      create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
       this_data.hydro_res += hydro_res;
       this_data.rel_times_tau_1 = tao[4] * pow(fconv, 3.0f);
 
-      hydro_res.sprintf("%s\t%.2f\t%s (%s)\n", " Tau(2) ", (double)(tao[1] * pow(fconv, 3.0f)), "[ns] ", tag2.ascii());
-      create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+      hydro_res.sprintf("%s\t%.2f\t%s (%s)\n", " Tau(2) ", (double)(tao[1] * pow(fconv, 3.0f)), "[ns] ", tag2.toAscii().data());
+      create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
       this_data.hydro_res += hydro_res;
       this_data.rel_times_tau_2 = tao[1] * pow(fconv, 3.0f);
 
-      hydro_res.sprintf("%s\t%.2f\t%s (%s)\n", " Tau(3) ", (double)(tao[1] * pow(fconv, 3.0f)), "[ns] ", tag2.ascii());
-      create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+      hydro_res.sprintf("%s\t%.2f\t%s (%s)\n", " Tau(3) ", (double)(tao[1] * pow(fconv, 3.0f)), "[ns] ", tag2.toAscii().data());
+      create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
       this_data.hydro_res += hydro_res;
       this_data.rel_times_tau_3 = tao[1] * pow(fconv, 3.0f);
 
-      hydro_res.sprintf("%s\t%.2f\t%s (%s)\n", " Tau(4) ", (double)(tao[3] * pow(fconv, 3.0f)), "[ns] ", tag2.ascii());
-      create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+      hydro_res.sprintf("%s\t%.2f\t%s (%s)\n", " Tau(4) ", (double)(tao[3] * pow(fconv, 3.0f)), "[ns] ", tag2.toAscii().data());
+      create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
       this_data.hydro_res += hydro_res;
       this_data.rel_times_tau_4 = tao[3] * pow(fconv, 3.0f);
 
-      hydro_res.sprintf("%s\t%.2f\t%s (%s)\n", " Tau(5) ", (double)(tao[3] * pow(fconv, 3.0f)), "[ns] ", tag2.ascii());
-      create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+      hydro_res.sprintf("%s\t%.2f\t%s (%s)\n", " Tau(5) ", (double)(tao[3] * pow(fconv, 3.0f)), "[ns] ", tag2.toAscii().data());
+      create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
       this_data.hydro_res += hydro_res;
       this_data.rel_times_tau_5 = tao[3] * pow(fconv, 3.0f);
    }
    if (taoflag == 0.0)
    {
-      hydro_res.sprintf("%s\t%.2f\t%s (%s)\n", " Tau(1) ", (double)(tao[0] * pow(fconv, 3.0f)), "[ns] ", tag2.ascii());
-      create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+      hydro_res.sprintf("%s\t%.2f\t%s (%s)\n", " Tau(1) ", (double)(tao[0] * pow(fconv, 3.0f)), "[ns] ", tag2.toAscii().data());
+      create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
       this_data.hydro_res += hydro_res;
       this_data.rel_times_tau_1 = tao[0] * pow(fconv, 3.0f);
 
-      hydro_res.sprintf("%s\t%.2f\t%s (%s)\n", " Tau(2) ", (double)(tao[1] * pow(fconv, 3.0f)), "[ns] ", tag2.ascii());
-      create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+      hydro_res.sprintf("%s\t%.2f\t%s (%s)\n", " Tau(2) ", (double)(tao[1] * pow(fconv, 3.0f)), "[ns] ", tag2.toAscii().data());
+      create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
       this_data.hydro_res += hydro_res;
       this_data.rel_times_tau_2 = tao[1] * pow(fconv, 3.0f);
 
-      hydro_res.sprintf("%s\t%.2f\t%s (%s)\n", " Tau(3) ", (double)(tao[2] * pow(fconv, 3.0f)), "[ns] ", tag2.ascii());
-      create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+      hydro_res.sprintf("%s\t%.2f\t%s (%s)\n", " Tau(3) ", (double)(tao[2] * pow(fconv, 3.0f)), "[ns] ", tag2.toAscii().data());
+      create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
       this_data.hydro_res += hydro_res;
       this_data.rel_times_tau_3 = tao[2] * pow(fconv, 3.0f);
 
-      hydro_res.sprintf("%s\t%.2f\t%s (%s)\n", " Tau(4) ", (double)(tao[3] * pow(fconv, 3.0f)), "[ns] ", tag2.ascii());
-      create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+      hydro_res.sprintf("%s\t%.2f\t%s (%s)\n", " Tau(4) ", (double)(tao[3] * pow(fconv, 3.0f)), "[ns] ", tag2.toAscii().data());
+      create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
       this_data.hydro_res += hydro_res;
       this_data.rel_times_tau_4 = tao[3] * pow(fconv, 3.0f);
 
-      hydro_res.sprintf("%s\t%.2f\t%s (%s)\n", " Tau(5) ", (double)(tao[4] * pow(fconv, 3.0f)), "[ns] ", tag2.ascii());
-      create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+      hydro_res.sprintf("%s\t%.2f\t%s (%s)\n", " Tau(5) ", (double)(tao[4] * pow(fconv, 3.0f)), "[ns] ", tag2.toAscii().data());
+      create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
       this_data.hydro_res += hydro_res;
       this_data.rel_times_tau_5 = tao[4] * pow(fconv, 3.0f);
    }
 #endif
 
-   hydro_res.sprintf("\n%s\t%.2f\t%s (%s)\n", " Tau(m) ", taom * pow(fconv, 3.0f), "[ns] ", tag2.ascii());
-   create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+   hydro_res.sprintf("\n%s\t%.2f\t%s (%s)\n", " Tau(m) ", taom * pow(fconv, 3.0f), "[ns] ", tag2.toAscii().data());
+   create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
    this_data.hydro_res += hydro_res;
    this_data.rel_times_tau_m = taom * pow(fconv, 3.0f);
 
-   hydro_res.sprintf("%s\t%.2f\t%s (%s)\n", " Tau(h) ", taoh * 1.0E+09 * pow(fconv, 3.0f), "[ns] ", tag2.ascii());
-   create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+   hydro_res.sprintf("%s\t%.2f\t%s (%s)\n", " Tau(h) ", taoh * 1.0E+09 * pow(fconv, 3.0f), "[ns] ", tag2.toAscii().data());
+   create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
    this_data.hydro_res += hydro_res;
    this_data.results.tau = taoh * 1.0E+09 * pow(fconv, 3.0f);
    this_data.rel_times_tau_h = taoh * 1.0E+09 * pow(fconv, 3.0f);
 
    hydro_res.sprintf("\n%s", "- MAX EXTENSIONS:");
-   create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+   create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
    this_data.hydro_res += hydro_res;
    
    hydro_res.sprintf("\n%s%.2f%s%s%.2f%s%s%.2f%s\n", "[X axis] = ", (maxx * fconv), " [nm];  ", "[Y axis] = ", (maxy * fconv),
                      " [nm];  ", "[Z axis] = ", (maxz * fconv), " [nm]");
-   create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+   create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
    this_data.hydro_res += hydro_res;
    this_data.max_ext_x = (maxx * fconv);
    this_data.max_ext_y = (maxy * fconv);
@@ -3803,14 +3803,14 @@ mem_ris(int model)
 
    hydro_res.sprintf("%s%.1f%s%.1f%s%.1f%s\n\n", "- AXIAL RATIOS : [X:Z] = ", (maxx / maxz), "; [X:Y] = ", (maxx / maxy),
            "; [Y:Z] = ", (maxy / maxz), "");
-   create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+   create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
    this_data.hydro_res += hydro_res;
    this_data.axi_ratios_xz = (maxx /maxz);
    this_data.axi_ratios_xy = (maxx /maxy);
    this_data.axi_ratios_yz = (maxy /maxz);
 
    hydro_res.sprintf("\n********************************************************************************\n");
-   create_hydro_res && fprintf(ris, "%s", hydro_res.ascii());
+   create_hydro_res && fprintf(ris, "%s", hydro_res.toAscii().data());
    this_data.hydro_res += hydro_res;
 
   
@@ -3842,11 +3842,11 @@ mem_ris(int model)
   //       create_hydro_res )
   //  {
   //     QString fname = this_data.results.name + ".csv";
-  //     FILE *of = fopen(fname, "wb");
+  //     FILE *of = us_fopen(fname, "wb");
   //     if ( of )
   //     {
-  //        fprintf(of, "%s", us_hydrodyn->save_util->header().ascii());
-  //        fprintf(of, "%s", us_hydrodyn->save_util->dataString(&this_data).ascii());
+  //        fprintf(of, "%s", us_hydrodyn->save_util->header().toAscii().data());
+  //        fprintf(of, "%s", us_hydrodyn->save_util->dataString(&this_data).toAscii().data());
   //        fclose(of);
   //     }
   //  }
@@ -3866,7 +3866,7 @@ val_med()
 
    float temp;
 
-   ris = fopen(risultati, "ab");
+   ris = us_fopen(risultati, "ab");
    // us_hydrodyn->last_hydro_res = QString("%1").arg(risultati);
    //cout << "last_hydro_res " << us_hydrodyn->last_hydro_res << endl;
 
@@ -4162,8 +4162,8 @@ inp_inter()
 
    int i;
 
-   interinp = fopen("ifraxon", "wb");
-   interinp1 = fopen("ifraxon1", "wb");
+   interinp = us_fopen("ifraxon", "wb");
+   interinp1 = us_fopen("ifraxon1", "wb");
 
    fprintf(interinp, "%d\n", nat);
    fprintf(interinp, "%f\n", 0.0);
@@ -4208,7 +4208,7 @@ out_inter()
    int n;
    char ramaco[20];
 
-   interout = fopen("ofraxon", "r");
+   interout = us_fopen("ofraxon", "r");
 
    fscanf(interout, "%d", &n);
    fscanf(interout, "%f", &raggio);
@@ -4250,7 +4250,7 @@ mem_mol()
    scanf("%s", nmolecola);
    getchar();
 
-   new_mol1 = fopen(nmolecola, "r");
+   new_mol1 = us_fopen(nmolecola, "r");
 
    if (new_mol1 != NULL)
    {
@@ -4280,7 +4280,7 @@ mem_mol()
      //printf("** Insert file name r_m_c :___ ");
       scanf("%s", nragcol);
       getchar();
-      new_mol1 = fopen(nragcol, "r");
+      new_mol1 = us_fopen(nragcol, "r");
 
       if (new_mol1 != NULL)
       {
@@ -4297,7 +4297,7 @@ mem_mol()
    }
    else
    {
-      mol = fopen(molecola, "r");
+      mol = us_fopen(molecola, "r");
       fscanf(mol, "%d", &n);
       fscanf(mol, "%f", &raggio);
       fscanf(mol, "%s", nragcol);
@@ -4305,7 +4305,7 @@ mem_mol()
       raflag = raggio; // ?? ==
    }
 
-   new_mol1 = fopen(nmolecola, "w");
+   new_mol1 = us_fopen(nmolecola, "w");
 
    fprintf(new_mol1, "%d\t", nat);
    if (raflag == 0.0)
@@ -4339,7 +4339,7 @@ mem_mol()
 
    if (risp1 == 'n')
    {
-      new_rmc = fopen(nragcol, "w");
+      new_rmc = us_fopen(nragcol, "w");
       if ((raflag == 0.0) || (raflag == -2.0))
       {
          for (i = 0; i < nat; i++)
@@ -4501,7 +4501,7 @@ riempimatrice()
    for (i = 0; i < nat; i++)
    {
 
-      // progress->setProgress(ppos);
+      // progress->setValue(ppos);
       // qApp->processEvents();
  
     ppos++;
@@ -4586,7 +4586,7 @@ choldc(int N)
    for (i = 0; i < 3 * N; i++)
    {
 
-      // progress->setProgress(ppos);
+      // progress->setValue(ppos);
       // qApp->processEvents();
 
      ppos++;
@@ -4823,7 +4823,7 @@ relax_rigid_calc()
 
    {
 
-      // qDebug( QString( "supc compute_tau: input ev's: %1 %2 %3 fconv %4" )
+      // us_qdebug( QString( "supc compute_tau: input ev's: %1 %2 %3 fconv %4" )
       //         .arg( (double)dl1 )
       //         .arg( (double)dl2 )
       //         .arg( (double)dl3 )
@@ -5033,10 +5033,10 @@ relax_rigid_calc()
 
    // for ( int i = 0; i < 5; ++i )
    // {
-   //    qDebug( QString( "supc tau results %1 %2" ).arg( i+1 ).arg( (double)tao[ i ] ) );
+   //    us_qdebug( QString( "supc tau results %1 %2" ).arg( i+1 ).arg( (double)tao[ i ] ) );
    // }
-   // qDebug( QString( "supc tau results %1 %2" ).arg( 5 ).arg( taoh ) );
-   // qDebug( QString( "supc tau results %1 %2" ).arg( 6 ).arg( taom ) );
+   // us_qdebug( QString( "supc tau results %1 %2" ).arg( 5 ).arg( taoh ) );
+   // us_qdebug( QString( "supc tau results %1 %2" ).arg( 6 ).arg( taom ) );
 
 }
 
@@ -5212,7 +5212,7 @@ init_da_a()
 {
 
 #if defined(DEBUG_FILES)
-   mol = fopen(molecola, "r");   /* Check for the file existence  */
+   mol = us_fopen(molecola, "r");   /* Check for the file existence  */
    // this is the .beams_file
 
    while (mol == NULL)
@@ -5221,7 +5221,7 @@ init_da_a()
       // printf("** The Model does NOT exist !!\n");
       // printf("** Insert the correct name :___");
       scanf("%s", molecola);
-      mol = fopen(molecola, "r");
+      mol = us_fopen(molecola, "r");
    }
 
    fscanf(mol, "%d", &nat);
@@ -5264,7 +5264,7 @@ init_da_a()
 
    //  printf("adding file: %s to tot_mol\n",  molecola);
 #if defined(CREATE_TOT_MOL)
-   tot_mol = fopen("tot_mol", "ab");
+   tot_mol = us_fopen("tot_mol", "ab");
    fprintf(tot_mol, "%s\n", molecola);
    fprintf(tot_mol, "%d\t%d\t%d\t%f\n", nat, prima, ultima, raggio);
    fclose(tot_mol);
@@ -5294,7 +5294,7 @@ initarray(int k)
    fscanf(tot_mol, "%d", &prima);
    fscanf(tot_mol, "%d", &ultima);
 #else
-   strcpy(molecola, molecola_v[k].ascii());
+   strcpy(molecola, molecola_v[k].toAscii().data());
    strcpy(ricorda, molecola);
    nat = nat_v[k];
    prima = prima_v[k];
@@ -5337,7 +5337,7 @@ initarray(int k)
    vt = 0;
 
 #if defined(DEBUG_FILES)
-   mol = fopen(molecola, "r");
+   mol = us_fopen(molecola, "r");
    fscanf(mol, "%d", &nat);
    fscanf(mol, "%f", &raggio);
    printf("!! opening molecola == '%s' nat == %d raggio == %f\n",
@@ -5349,7 +5349,7 @@ initarray(int k)
    {
       fscanf(mol, "%s", ragcol);
 
-      rmc = fopen(ragcol, "r");
+      rmc = us_fopen(ragcol, "r");
 
       for (i = 0; i < nat; i++)
       {
@@ -5381,7 +5381,7 @@ initarray(int k)
 
       fscanf(mol, "%s", ragcol);
 
-      rmc = fopen(ragcol, "r");
+      rmc = us_fopen(ragcol, "r");
 
       for (i = 0; i < nat; i++)
       {
@@ -5409,7 +5409,7 @@ initarray(int k)
              misc_int.compute_vbar ? "computed-vbar" : "user vbar",
              misc_int.vbar
              );
-      rmc = fopen(ragcol, "r");
+      rmc = us_fopen(ragcol, "r");
 #endif
 
       org_vbar = (*model_vector)[model_idx[active_model]].vbar;
@@ -5527,7 +5527,7 @@ initarray(int k)
 
       fscanf(mol, "%f", &partvol);
 
-      rmc = fopen(ragcol, "r");
+      rmc = us_fopen(ragcol, "r");
 
       for (i = 0; i < nat; i++)
       {
@@ -5549,7 +5549,7 @@ initarray(int k)
 
       fscanf(mol, "%s", ragcol);
 
-      rmc = fopen(ragcol, "r");
+      rmc = us_fopen(ragcol, "r");
 
       for (i = 0; i < nat; i++)
       {
@@ -5574,7 +5574,7 @@ initarray(int k)
 
       fscanf(mol, "%f", &partvol);
 
-      rmc = fopen(ragcol, "r");
+      rmc = us_fopen(ragcol, "r");
 
       for (i = 0; i < nat; i++)
       {
@@ -5945,7 +5945,7 @@ inverti(int N)
       
    for (j = 1; j <= 3 * N; j++)
    {
-      // progress->setProgress(ppos);
+      // progress->setValue(ppos);
       // qApp->processEvents();
 
 

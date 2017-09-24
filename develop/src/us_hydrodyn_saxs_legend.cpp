@@ -1,7 +1,7 @@
 #include "../include/us_hydrodyn_saxs.h"
 #include <qwt_legend.h>
 //Added by qt3to4:
-#include <Q3Frame>
+#include <QFrame>
 
 void US_Hydrodyn_Saxs::plot_saxs_clicked( long 
 #ifndef QT4
@@ -22,11 +22,11 @@ void US_Hydrodyn_Saxs::plot_saxs_clicked( long
    if ( pos < 0 )
    {
       editor_msg( "red",
-            tr( "Internal error: plot_saxs_clicked: curve not found\n" ) );
+            us_tr( "Internal error: plot_saxs_clicked: curve not found\n" ) );
       return;
    }
    editor_msg( "black", 
-               QString( tr( "Curve information: " 
+               QString( us_tr( "Curve information: " 
                             "Name: %1\n"
                             "q: [%2:%3] %4 points" ) )
                .arg( qsl_plotted_iq_names[ pos ] )
@@ -43,7 +43,7 @@ void US_Hydrodyn_Saxs::plot_saxs_clicked( long
          }
          avg_std_dev_pct /= (double) plotted_I_error[ pos ].size();
          editor_msg( "black", 
-                     QString( tr( "Errors present %1 points, s.d. average %2 %" ) )
+                     QString( us_tr( "Errors present %1 points, s.d. average %2 %" ) )
                      .arg( plotted_I_error[ pos ].size() )
                      .arg( avg_std_dev_pct ) );
       }
@@ -65,14 +65,14 @@ void US_Hydrodyn_Saxs::plot_saxs_clicked( long
          }
          avg_std_dev_pct /= (double) count;
          editor_msg( "black", 
-                     QString( tr( "Currently visible %1 points in (%2:%3), s.d. average %4 %" ) )
+                     QString( us_tr( "Currently visible %1 points in (%2:%3), s.d. average %4 %" ) )
                      .arg( count )
                      .arg( minx )
                      .arg( maxx )
                      .arg( avg_std_dev_pct ) );
       }
    } else {
-      editor_msg( "black", tr( "No errors present" ) );
+      editor_msg( "black", us_tr( "No errors present" ) );
    }
 #endif
 }
@@ -93,7 +93,7 @@ void US_Hydrodyn_Saxs::plot_saxs_item_clicked( QwtPlotItem*
    }
 
    editor_msg( "black", 
-               QString( tr( "Curve information: " 
+               QString( us_tr( "Curve information: " 
                             "Name: %1\n"
                             "q: [%2:%3] [%4:%5] %6 points" ) )
                .arg( pcurve->title().text() )
@@ -130,7 +130,7 @@ void US_Hydrodyn_Saxs::plot_pr_item_clicked( QwtPlotItem*
    }
 
    editor_msg( "black", 
-               QString( tr( "Curve information: " 
+               QString( us_tr( "Curve information: " 
                             "Name: %1\n"
                             "q: [%2:%3] [%4:%5] %6 points" ) )
                .arg( pcurve->title().text() )
@@ -164,7 +164,7 @@ void US_Hydrodyn_Saxs::set_saxs_legend()
    {
       QwtLegend* legend_saxs = new QwtLegend;
       legend_saxs->setItemMode( QwtLegend::ClickableItem );
-      legend_saxs->setFrameStyle( Q3Frame::Box | Q3Frame::Sunken );
+      legend_saxs->setFrameStyle( QFrame::Box | QFrame::Sunken );
       plot_saxs->insertLegend( legend_saxs, QwtPlot::BottomLegend );
       connect( plot_saxs, SIGNAL( legendClicked( QwtPlotItem* ) ),
                SLOT( plot_saxs_item_clicked( QwtPlotItem* ) ) );
@@ -198,7 +198,7 @@ void US_Hydrodyn_Saxs::set_pr_legend()
    {
       QwtLegend* legend_pr = new QwtLegend;
       legend_pr->setItemMode( QwtLegend::ClickableItem );
-      legend_pr->setFrameStyle( Q3Frame::Box | Q3Frame::Sunken );
+      legend_pr->setFrameStyle( QFrame::Box | QFrame::Sunken );
       plot_pr->insertLegend( legend_pr, QwtPlot::BottomLegend );
       connect( plot_pr, SIGNAL( legendClicked( QwtPlotItem* ) ),
                SLOT( plot_pr_item_clicked( QwtPlotItem* ) ) );

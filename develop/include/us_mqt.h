@@ -5,8 +5,8 @@
 #include <qlineedit.h>
 #include <qpushbutton.h>
 #include <qthread.h>
-#include <q3listbox.h>
-#include <q3grid.h>
+#include <qlistwidget.h>
+//#include <q3grid.h>
 //Added by qt3to4:
 #include <QResizeEvent>
 #include <QMouseEvent>
@@ -21,8 +21,8 @@ class mQLabel : public QLabel
 
    public:
 
-      mQLabel ( QWidget *parent = 0 , const char * name = 0 );
-      mQLabel ( const QString & text, QWidget *parent = 0 , const char * name = 0 );
+      mQLabel ( QWidget *parent = 0 );
+      mQLabel ( const QString & text, QWidget *parent = 0 );
       ~mQLabel();
 
    signals:
@@ -34,31 +34,13 @@ class mQLabel : public QLabel
       virtual void resizeEvent ( QResizeEvent *e );
 };
 
-class mQGrid : public Q3Grid
-{
-   Q_OBJECT
-
-   public:
-
-      mQGrid( int n, QWidget* parent=0, const char* name=0, Qt::WFlags f = 0 );
-      mQGrid( int n, Qt::Orientation orient, QWidget* parent=0, const char* name=0, Qt::WFlags f = 0 );
-
-      ~mQGrid();
-
-   signals:
-      void resized();
-
-   protected:
-      virtual void resizeEvent ( QResizeEvent *e );
-};
-
 class mQLineEdit : public QLineEdit
 {
    Q_OBJECT
 
    public:
 
-      mQLineEdit ( QWidget *parent = 0 , const char * name = 0 );
+      mQLineEdit ( QWidget *parent = 0 );
       ~mQLineEdit();
 
    signals:
@@ -77,8 +59,8 @@ class mQPushButton : public QPushButton
 
    public:
 
-      mQPushButton ( QWidget *parent = 0 , const char * name = 0 );
-      mQPushButton ( const QString & text, QWidget *parent = 0 , const char * name = 0 );
+      mQPushButton ( QWidget *parent = 0 );
+      mQPushButton ( const QString & text, QWidget *parent = 0 );
       ~mQPushButton();
 
    signals:
@@ -115,7 +97,7 @@ class ShowHide
 class MQT
 {
  public:
-   static QStringList get_lb_qsl( Q3ListBox * lb, bool only_selected = false );
+   static QStringList get_lb_qsl( QListWidget * lb, bool only_selected = false );
 };
 
 // plot colors

@@ -6,7 +6,7 @@
 #include "us_extern.h"
 #include "us_util.h"
 
-#include <q3buttongroup.h>
+#include <qgroupbox.h>
 #include <qradiobutton.h>
 #include <qwidget.h>
 #include <qpushbutton.h>
@@ -14,10 +14,10 @@
 #include <qlabel.h>
 #include <qwidget.h>
 #include <qpushbutton.h>
-#include <q3frame.h>
-#include <Q3ComboBox>
+//#include <q3frame.h>
+#include <QComboBox>
 #include <qcheckbox.h>
-#include <q3listbox.h>
+#include <qlistwidget.h>
 #include <qmessagebox.h>
 #include <qpixmap.h>
 #include <qwt_counter.h>
@@ -94,24 +94,24 @@ class US_AddResidue : public QWidget
       QLabel *lbl_list_beadatom;
       QLabel *lbl_positioning;
 
-      Q3ComboBox *cmb_type;
-      Q3ComboBox *cmb_r_atoms;
-      Q3ComboBox *cmb_atoms;
-      Q3ComboBox *cmb_hybrids;
-      Q3ComboBox *cmb_r_beads;
-      Q3ComboBox *cmb_bead_color;
-      Q3ComboBox *cmb_placing;
+      QComboBox *cmb_type;
+      QComboBox *cmb_r_atoms;
+      QComboBox *cmb_atoms;
+      QComboBox *cmb_hybrids;
+      QComboBox *cmb_r_beads;
+      QComboBox *cmb_bead_color;
+      QComboBox *cmb_placing;
 
       QCheckBox *cb_positioning;
       QCheckBox *cb_hydration;
 
       QRadioButton *rb_sidechain;
       QRadioButton *rb_backbone;
-      Q3ButtonGroup *bg_chain;
+      QGroupBox *bg_chain;
 
-      Q3ListBox *lb_residues;
-      Q3ListBox *lb_select_beadatom;
-      Q3ListBox *lb_list_beadatom;
+      QListWidget *lb_residues;
+      QListWidget *lb_select_beadatom;
+      QListWidget *lb_list_beadatom;
 
       QwtCounter *cnt_atom_hydration;
       QwtCounter *cnt_hydration;
@@ -169,6 +169,7 @@ class US_AddResidue : public QWidget
       void update_hybrid(int);
       void set_positioning();
       void set_hydration();
+      void set_chain();
       void set_chain(int);
       void atom_continue();
       void write_residue_file();

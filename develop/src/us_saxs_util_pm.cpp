@@ -7,7 +7,7 @@
 #else
 # include <sys/time.h>
 //Added by qt3to4:
-#include <Q3TextStream>
+#include <QTextStream>
 #endif
 
 QString US_Saxs_Util::run_json( QString & json )
@@ -30,7 +30,7 @@ QString US_Saxs_Util::run_json( QString & json )
          it != parameters.end();
          ++it )
    {
-      // qDebug( QString( "%1 : %2" ).arg( it->first ).arg( it->second ) );
+      // us_qdebug( QString( "%1 : %2" ).arg( it->first ).arg( it->second ) );
       if ( it->first.left( 1 ) == "_" )
       {
          results[ it->first ] = it->second;
@@ -45,7 +45,7 @@ QString US_Saxs_Util::run_json( QString & json )
      map < QString, QString > msging;
       msging[ "_uuid" ] = results[ "_uuid" ];
       //msging[ "status" ] = results[ "_textarea" ];
-      us_udp_msg = new US_Udp_Msg( parameters[ "_udphost" ], (Q_UINT16) parameters[ "_udpport" ].toUInt() );
+      us_udp_msg = new US_Udp_Msg( parameters[ "_udphost" ], (quint16) parameters[ "_udpport" ].toUInt() );
       us_udp_msg->set_default_json( msging );
    }
 
@@ -132,10 +132,14 @@ bool US_Saxs_Util::run_pm(
    QStringList files;
 
    {
-      QStringList files_try = QStringList::split( "\",\"", parameters[ "pmfiles" ] );
+      QStringList files_try;
+      {
+         QString qs = "\",\"";
+         files_try = (parameters[ "pmfiles" ] ).split( qs , QString::SkipEmptyParts );
+      }
       for ( int i = 0; i < (int) files_try.size(); ++i )
       {
-         // qDebug( QString( "file %1" ).arg( files_try[ i ] ) );
+         // us_qdebug( QString( "file %1" ).arg( files_try[ i ] ) );
          QFileInfo fi( files_try[ i ] );
          if ( !fi.exists() )
          {
@@ -235,7 +239,7 @@ bool US_Saxs_Util::run_pm(
       map < QString, vector < double > > produced_I;
       map < QString, QString >           produced_model;
 
-      parameters[ "pmoutname" ] = QFileInfo( files[ i ] ).baseName( true );
+      parameters[ "pmoutname" ] = QFileInfo( files[ i ] ).completeBaseName();
 
       if ( !run_pm( produced_q,
                     produced_I,
@@ -326,7 +330,7 @@ bool US_Saxs_Util::flush_pm_csv(
       return false;
    }
 
-   Q3TextStream ts( &of );
+   QTextStream ts( &of );
 
    ts << QString( "\"Name\",\"Type; q:\",%1,\"PM models %2\"\n" )
       .arg( vector_double_to_csv( csv_q ) )
@@ -361,7 +365,7 @@ bool US_Saxs_Util::run_pm( QString controlfile )
    pm_ga_fitness_secs = 0e0;
    pm_ga_fitness_calls = 0;
 
-   QString qs_base_dir = QDir::currentDirPath();
+   QString qs_base_dir = QDir::currentPath();
 
    QString outputData = QString( "%1" ).arg( getenv( "outputData" ) );
    if ( outputData.isEmpty() )
@@ -387,20 +391,20 @@ bool US_Saxs_Util::run_pm( QString controlfile )
 
    // copy here
    QDir qd1 = QDir::current();
-   qd1.convertToAbs();
-   QDir qd2( QFileInfo( controlfile ).dir( true ) );
+   qd1.makeAbsolute();
+   QDir qd2( QFileInfo( controlfile ).absoluteDir() );
    
    US_File_Util ufu;
 
    if ( qd1 != qd2 )
    {
-      ufu.copy( controlfile, QDir::currentDirPath() + QDir::separator() + QFileInfo( controlfile ).fileName() );
+      ufu.copy( controlfile, QDir::currentPath() + QDir::separator() + QFileInfo( controlfile ).fileName() );
       if ( us_log )
       {
          us_log->log( 
                      QString( "copying %1 %2 <%3>\n" )
                      .arg( controlfile )
-                     .arg( QDir::currentDirPath() + QDir::separator() + QFileInfo( controlfile ).fileName() )
+                     .arg( QDir::currentPath() + QDir::separator() + QFileInfo( controlfile ).fileName() )
                      .arg( ufu.errormsg ) );
       }
       dest = QFileInfo( controlfile ).fileName();
@@ -508,7 +512,7 @@ bool US_Saxs_Util::run_pm( QString controlfile )
    QFile f( runinfo );
    if ( f.open( QIODevice::WriteOnly ) )
    {
-      Q3TextStream ts( &f );
+      QTextStream ts( &f );
       ts << "timings:\n";
       ts << usupm_timer.list_times();;
       ts << QString( "ga fit calls %1 time %2 sec_per_fit %3 fit_per_sec %4 fit_per_sec_per_worker_proc %5\n" )
@@ -528,7 +532,7 @@ bool US_Saxs_Util::run_pm( QString controlfile )
       QFile fc( controlfile );
       if ( fc.open( QIODevice::ReadOnly ) )
       {
-         Q3TextStream tsc( &fc );
+         QTextStream tsc( &fc );
          ts << "controlfile:\n";
          while( !tsc.atEnd() )
          {
@@ -571,7 +575,7 @@ bool US_Saxs_Util::run_pm( QString controlfile )
          }
          QDir::setCurrent( current.path() );
          QDir ndod;
-         if ( !ndod.mkdir( newdir, true ) )
+         if ( !ndod.mkdir( newdir ) )
          {
             if ( us_log )
             {
@@ -753,17 +757,17 @@ bool US_Saxs_Util::run_pm( QStringList qsl_commands )
          continue;
       }
 
-      QStringList qsl = QStringList::split( QRegExp("\\s+"), qs );
+      QStringList qsl = (qs ).split( QRegExp("\\s+") , QString::SkipEmptyParts );
 
       if ( !qsl.size() )
       {
          continue;
       }
 
-      QString option = qsl[ 0 ].lower();
+      QString option = qsl[ 0 ].toLower();
       qsl.pop_front();
 
-      if ( rx_valid.search( option ) == -1 )
+      if ( rx_valid.indexIn( option ) == -1 )
       {
          errormsg = QString( "Error controlfile line %1 : Unrecognized token %2" )
             .arg( i + 1 )
@@ -771,7 +775,7 @@ bool US_Saxs_Util::run_pm( QStringList qsl_commands )
          return false;
       }
 
-      if ( rx_arg.search( option ) != -1 && 
+      if ( rx_arg.indexIn( option ) != -1 && 
            qsl.size() < 1 )
       {
          errormsg = QString( "Error reading controlfile line %1 : Missing argument " )
@@ -779,12 +783,12 @@ bool US_Saxs_Util::run_pm( QStringList qsl_commands )
          return false;
       }
 
-      if ( rx_arg.search( option ) != -1 )
+      if ( rx_arg.indexIn( option ) != -1 )
       {
          control_parameters[ option ] = qsl.join( " " );
       }
 
-      if ( rx_vector.search( option ) != -1 )
+      if ( rx_vector.indexIn( option ) != -1 )
       {
          control_vectors[ option ].clear();
          if ( us_log )
@@ -793,7 +797,11 @@ bool US_Saxs_Util::run_pm( QStringList qsl_commands )
          }
          for ( int j = 0; j < (int) qsl.size(); j++ )
          {
-            QStringList qsl2 = QStringList::split( QRegExp( "(\\s+|(\\s*(,|:)\\s*))" ), qsl[ j ] );
+            QStringList qsl2;
+            {
+               QRegExp rx = QRegExp( "(\\s+|(\\s*(,|:)\\s*))" );
+               qsl2 = (qsl[ j ] ).split( rx , QString::SkipEmptyParts );
+            }
             if ( us_log )
             {
                us_log->log( QString( "qsl2 currently: %1\n" ).arg( qsl2.join( "~" ) ) );
@@ -1711,7 +1719,7 @@ bool US_Saxs_Util::run_pm(
             srand48_done = true;
          }
 
-         qDebug( QString( "uspm bestmd0 %1" ).arg( control_parameters [ "pmgridsize"     ].toDouble() ) );
+         us_qdebug( QString( "uspm bestmd0 %1" ).arg( control_parameters [ "pmgridsize"     ].toDouble() ) );
 
          US_PM pm(
                   control_parameters [ "pmgridsize"     ].toDouble(),

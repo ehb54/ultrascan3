@@ -7,7 +7,7 @@
 #include <qstring.h>
 #include <qlayout.h>
 #include <qpushbutton.h>
-#include <q3frame.h>
+//#include <q3frame.h>
 #include <qcheckbox.h>
 #include <qtabwidget.h>
 #include <qwt_counter.h>
@@ -26,7 +26,7 @@
 #include <iostream>
 using namespace std;
 
-class US_EXTERN US_Hydrodyn_Overlap : public Q3Frame
+class US_EXTERN US_Hydrodyn_Overlap : public QFrame
 {
    Q_OBJECT
 

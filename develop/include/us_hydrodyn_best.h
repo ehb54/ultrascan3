@@ -5,9 +5,9 @@
 #include "us_hydrodyn_saxs.h"
 #include "us_csv.h"
 //Added by qt3to4:
-#include <Q3HBoxLayout>
+#include <QHBoxLayout>
 #include <QCloseEvent>
-#include <Q3Frame>
+#include <QFrame>
 #include <QLabel>
 
 using namespace std;
@@ -18,7 +18,7 @@ using namespace std;
 # endif
 #endif
 
-class US_EXTERN US_Hydrodyn_Best : public Q3Frame
+class US_EXTERN US_Hydrodyn_Best : public QFrame
 {
    Q_OBJECT
 
@@ -42,7 +42,7 @@ class US_EXTERN US_Hydrodyn_Best : public Q3Frame
       QLabel *                                lbl_credits_2;
 
       mQLabel *                               lbl_input;
-      Q3ListBox *                              lb_data;
+      QListWidget *                              lb_data;
       QPushButton *                           pb_load;
       QPushButton *                           pb_join_results;
       QPushButton *                           pb_save_results;
@@ -52,7 +52,7 @@ class US_EXTERN US_Hydrodyn_Best : public Q3Frame
       QCheckBox             *                 cb_plus_lm;
       QCheckBox             *                 cb_errorlines;
       QCheckBox             *                 cb_manual_rejection;
-      QButtonGroup          *                 bg_qtest_level;
+      QGroupBox          *                 bg_qtest_level;
       QRadioButton          *                 rb_90_qtest;
       QRadioButton          *                 rb_80_qtest;
       QRadioButton          *                 rb_70_qtest;
@@ -61,7 +61,7 @@ class US_EXTERN US_Hydrodyn_Best : public Q3Frame
 
       mQLabel               *                 lbl_editor;
       QFont                                   ft;
-      Q3TextEdit             *                 editor;
+      QTextEdit             *                 editor;
       QMenuBar              *                 mb_editor;
 
       // ------ plot section
@@ -70,13 +70,13 @@ class US_EXTERN US_Hydrodyn_Best : public Q3Frame
 #ifdef QT4
       QwtPlotGrid           *                 grid_data;
 #endif
-      Q3HBoxLayout           *                 hbl_points;
+      QHBoxLayout           *                 hbl_points;
       mQLabel               *                 lbl_points;
       vector < QCheckBox * >                  cb_points;
-      Q3HBoxLayout           *                 hbl_points_ln;
+      QHBoxLayout           *                 hbl_points_ln;
       mQLabel               *                 lbl_points_ln;
       vector < QCheckBox * >                  cb_points_ln;
-      Q3HBoxLayout           *                 hbl_points_exp;
+      QHBoxLayout           *                 hbl_points_exp;
       mQLabel               *                 lbl_points_exp;
       vector < QCheckBox * >                  cb_points_exp;
 
@@ -91,7 +91,7 @@ class US_EXTERN US_Hydrodyn_Best : public Q3Frame
       map < QString, set < int > >            cb_checked_ln;
       map < QString, set < int > >            cb_checked_exp;
 
-      QColorGroup                             cg_red;
+      QPalette                             cg_red;
 
       void                                    editor_msg( QString color, QString msg );
 

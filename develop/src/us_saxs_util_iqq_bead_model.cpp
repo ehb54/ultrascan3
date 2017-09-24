@@ -987,7 +987,7 @@ bool US_Saxs_Util::compute_exponential(
       unsigned int n_par = 1 + 2 * terms;
       unsigned int m_dat = ( unsigned int ) q.size();
       cout << QString( "compute exponential terms %1 n_par %2 m_dat %3\n" )
-         .arg( terms ).arg( n_par ).arg( m_dat ).ascii();
+         .arg( terms ).arg( n_par ).arg( m_dat ).toAscii().data();
 
       minusoneoverfourpisq  = -1e0 / ( 16e0 * M_PI * M_PI );
 
@@ -1469,7 +1469,7 @@ bool US_Saxs_Util::set_excluded_volume(
    scattering_intensity = 0e0;
    QRegExp count_hydrogens("H(\\d)");
    unsigned int hydrogens = 0;
-   if ( count_hydrogens.search(hybrid_name) != -1 )
+   if ( count_hydrogens.indexIn(hybrid_name) != -1 )
    {
       hydrogens = count_hydrogens.cap(1).toInt();
    }

@@ -1,7 +1,7 @@
 #include "../include/us_saxs_util.h"
 #include "../include/us_hydrodyn_pat.h"
 //Added by qt3to4:
-#include <Q3TextStream>
+#include <QTextStream>
 
 bool US_Saxs_Util::pat_model( PDB_model & model )
 {
@@ -32,7 +32,7 @@ bool US_Saxs_Util::pat_model( PDB_model & model )
             
             in_dt.push_back( dt );
 
-            // qDebug( QString( "atom %1 coords %2 %3 %4 radius %5 mw %6" )
+            // us_qdebug( QString( "atom %1 coords %2 %3 %4 radius %5 mw %6" )
             //         .arg( dt_pos )
             //         .arg( dt.x )
             //         .arg( dt.y )
@@ -65,7 +65,7 @@ bool US_Saxs_Util::pat_model( PDB_model & model )
                this_atom->coordinate.axis[ 0 ] = out_dt[ dt_pos ].x;
                this_atom->coordinate.axis[ 1 ] = out_dt[ dt_pos ].y;
                this_atom->coordinate.axis[ 2 ] = out_dt[ dt_pos ].z;
-               // qDebug( QString( "results atom %1 coords %2 %3 %4" )
+               // us_qdebug( QString( "results atom %1 coords %2 %3 %4" )
                //         .arg( dt_pos )
                //         .arg( out_dt[ dt_pos ].x )
                //         .arg( out_dt[ dt_pos ].y )
@@ -89,7 +89,7 @@ bool US_Saxs_Util::write_model( PDB_model & model, QString filename )
       return false;
    }
 
-   Q3TextStream ts( &f );
+   QTextStream ts( &f );
 
    for ( int j = 0; j < (int) model.molecule.size (); ++j ) 
    {
@@ -101,16 +101,16 @@ bool US_Saxs_Util::write_model( PDB_model & model, QString filename )
             .sprintf(     
                      "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
                      this_atom->serial,
-                     this_atom->orgName.ascii(),
-                     this_atom->resName.ascii(),
-                     this_atom->chainID.ascii(),
+                     this_atom->orgName.toAscii().data(),
+                     this_atom->resName.toAscii().data(),
+                     this_atom->chainID.toAscii().data(),
                      this_atom->resSeq.toUInt(),
                      this_atom->coordinate.axis[ 0 ],
                      this_atom->coordinate.axis[ 1 ],
                      this_atom->coordinate.axis[ 2 ],
                      this_atom->occupancy,
                      this_atom->tempFactor,
-                     this_atom->element.ascii()
+                     this_atom->element.toAscii().data()
                           );
       }
    }
@@ -139,7 +139,7 @@ void US_Saxs_Util::compute_tau( double drrev1,
 
    // autovalori();
 
-   // qDebug( QString( "compute_tau: input ev's: %1 %2 %3 fconv %4" )
+   // us_qdebug( QString( "compute_tau: input ev's: %1 %2 %3 fconv %4" )
    //         .arg( drrev1 )
    //         .arg( drrev2 )
    //         .arg( drrev3 )
@@ -342,6 +342,6 @@ void US_Saxs_Util::compute_tau( double drrev1,
 
    // for ( int i = 0; i < (int) tau.size(); ++i )
    // {
-   //    qDebug( QString( "compute_tau: tau results %1 %2" ).arg( i+1 ).arg( tau[ i ] ) );
+   //    us_qdebug( QString( "compute_tau: tau results %1 %2" ).arg( i+1 ).arg( tau[ i ] ) );
    // }
 }

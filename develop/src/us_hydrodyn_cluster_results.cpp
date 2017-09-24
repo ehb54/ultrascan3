@@ -4,13 +4,13 @@
 #include "../include/us_hydrodyn_cluster.h"
 #include "../include/us_hydrodyn_cluster_results.h"
 //Added by qt3to4:
-#include <Q3TextStream>
-#include <Q3HBoxLayout>
+#include <QTextStream>
+#include <QHBoxLayout>
 #include <QLabel>
-#include <Q3Frame>
-#include <Q3PopupMenu>
-#include <Q3VBoxLayout>
-#include <Q3BoxLayout>
+#include <QFrame>
+ //#include <Q3PopupMenu>
+#include <QVBoxLayout>
+#include <QBoxLayout>
 #include <QCloseEvent>
 
 // note: this program uses cout and/or cerr and this should be replaced
@@ -25,10 +25,10 @@ US_Hydrodyn_Cluster_Results::US_Hydrodyn_Cluster_Results(
                                          void *us_hydrodyn, 
                                          QWidget *p, 
                                          const char *name
-                                         ) : QDialog(p, name)
+                                         ) : QDialog( p )
 {
    this->us_hydrodyn = us_hydrodyn;
-   setCaption(tr("US-SOMO: Cluster Results"));
+   setWindowTitle(us_tr("US-SOMO: Cluster Results"));
    USglobal = new US_Config();
    disable_updates = false;
 
@@ -46,8 +46,8 @@ US_Hydrodyn_Cluster_Results::US_Hydrodyn_Cluster_Results(
    if ( !update_files( false ) )
    {
       QMessageBox::information( this, 
-                                tr("US-SOMO: Cluster Results"),
-                                tr("No results found"),
+                                us_tr("US-SOMO: Cluster Results"),
+                                us_tr("No results found"),
                                 0 );
    }
 
@@ -58,7 +58,7 @@ US_Hydrodyn_Cluster_Results::US_Hydrodyn_Cluster_Results(
       QDir dir1( tmp_dir );
       if ( !dir1.exists() )
       {
-         editor_msg( "black", QString( tr( "Created directory %1" ) ).arg( tmp_dir ) );
+         editor_msg( "black", QString( us_tr( "Created directory %1" ) ).arg( tmp_dir ) );
          dir1.mkdir( tmp_dir );
       }
    }
@@ -67,7 +67,7 @@ US_Hydrodyn_Cluster_Results::US_Hydrodyn_Cluster_Results(
       QDir dir1( results_dir );
       if ( !dir1.exists() )
       {
-         editor_msg( "black", QString( tr( "Created directory %1" ) ).arg( results_dir ) );
+         editor_msg( "black", QString( us_tr( "Created directory %1" ) ).arg( results_dir ) );
          dir1.mkdir( results_dir );
       }
    }
@@ -89,96 +89,132 @@ void US_Hydrodyn_Cluster_Results::setupGUI()
 {
    int minHeight1 = 30;
 
-   lbl_title = new QLabel( tr( "Manage results from cluster jobs" ), this);
-   lbl_title->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Raised);
+   lbl_title = new QLabel( us_tr( "Manage results from cluster jobs" ), this);
+   lbl_title->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_title->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_title->setMinimumHeight(minHeight1);
    lbl_title->setPalette( PALET_FRAME );
    AUTFBACK( lbl_title );
    lbl_title->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
 
-   lbl_files = new QLabel(tr("Available results:"), this);
+   lbl_files = new QLabel(us_tr("Available results:"), this);
    lbl_files->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_files->setMinimumHeight(minHeight1);
    lbl_files->setPalette( PALET_LABEL );
    AUTFBACK( lbl_files );
    lbl_files->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1, QFont::Bold));
 
-   lv_files = new Q3ListView(this);
-   lv_files->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Raised);
+   lv_files = new QTreeWidget(this);
+   lv_files->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lv_files->setMinimumHeight(minHeight1 * 3);
    lv_files->setPalette( PALET_EDIT );
    AUTFBACK( lv_files );
    lv_files->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
    lv_files->setEnabled(true);
-   lv_files->setSelectionMode( Q3ListView::Multi );
+   lv_files->setSelectionMode( QAbstractItemView::MultiSelection );
 
-   lv_files->addColumn( tr( "Name" ) );
-   lv_files->addColumn( tr( "Date created" ) );
-   lv_files->addColumn( tr( "Size" ) );
-   connect( lv_files, SIGNAL( selectionChanged() ), SLOT( update_enables() ) );
-
-   pb_select_all = new QPushButton(tr("Select all"), this);
+#if QT_VERSION < 0x040000
+   lv_files->addColumn( us_tr( "Name" ) );
+   lv_files->addColumn( us_tr( "Date created" ) );
+   lv_files->addColumn( us_tr( "Size" ) );
+#else
+   lv_files->setColumnCount( 3 );
+   lv_files->setHeaderLabels( QStringList()
+                              << us_tr( "Name" )
+                              << us_tr( "Date created" )
+                              << us_tr( "Size" ) );
+#endif   
+   connect( lv_files, SIGNAL( itemSelectionChanged() ), SLOT( update_enables() ) );
+   
+   pb_select_all = new QPushButton(us_tr("Select all"), this);
    pb_select_all->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_select_all->setMinimumHeight(minHeight1);
    pb_select_all->setPalette( PALET_PUSHB );
    connect(pb_select_all, SIGNAL(clicked()), SLOT(select_all()));
 
-   pb_purge = new QPushButton(tr("Purge results"), this);
+   pb_purge = new QPushButton(us_tr("Purge results"), this);
    pb_purge->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_purge->setMinimumHeight(minHeight1);
    pb_purge->setPalette( PALET_PUSHB );
    connect(pb_purge, SIGNAL(clicked()), SLOT(purge()));
 
-   pb_load_results = new QPushButton(tr("Extract results"), this);
+   pb_load_results = new QPushButton(us_tr("Extract results"), this);
    pb_load_results->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_load_results->setMinimumHeight(minHeight1);
    pb_load_results->setPalette( PALET_PUSHB );
    connect( pb_load_results, SIGNAL( clicked() ), SLOT( load_results() ) );
    
-   editor = new Q3TextEdit(this);
+   editor = new QTextEdit(this);
    editor->setPalette( PALET_NORMAL );
    AUTFBACK( editor );
    editor->setReadOnly(true);
 
-#if defined(QT4) && defined(Q_WS_MAC)
+#if QT_VERSION < 0x040000
+# if defined(QT4) && defined(Q_WS_MAC)
    {
-      Q3PopupMenu * file = new Q3PopupMenu;
-      file->insertItem( tr("&Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
-      file->insertItem( tr("&Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
-      file->insertItem( tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
+ //      Q3PopupMenu * file = new Q3PopupMenu;
+      file->insertItem( us_tr("&Font"),  this, SLOT(update_font( )),    Qt::ALT+Qt::Key_F );
+      file->insertItem( us_tr("&Save"),  this, SLOT(save( )),    Qt::ALT+Qt::Key_S );
+      file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display( )),   Qt::ALT+Qt::Key_X );
 
       QMenuBar *menu = new QMenuBar( this );
       AUTFBACK( menu );
 
-      menu->insertItem(tr("&Messages"), file );
+      menu->insertItem(us_tr("&Messages"), file );
    }
-#else
-   Q3Frame *frame;
-   frame = new Q3Frame(this);
+# else
+   QFrame *frame;
+   frame = new QFrame(this);
    frame->setMinimumHeight(minHeight1);
 
-   m = new QMenuBar(frame, "menu" );
+   m = new QMenuBar( frame );    m->setObjectName( "menu" );
    m->setMinimumHeight(minHeight1 - 5);
    m->setPalette( PALET_NORMAL );
    AUTFBACK( m );
-   Q3PopupMenu * file = new Q3PopupMenu(editor);
-   m->insertItem( tr("&File"), file );
-   file->insertItem( tr("Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
-   file->insertItem( tr("Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
-   file->insertItem( tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
+ //   Q3PopupMenu * file = new Q3PopupMenu(editor);
+   m->insertItem( us_tr("&File"), file );
+   file->insertItem( us_tr("Font"),  this, SLOT(update_font( )),    Qt::ALT+Qt::Key_F );
+   file->insertItem( us_tr("Save"),  this, SLOT(save( )),    Qt::ALT+Qt::Key_S );
+   file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display( )),   Qt::ALT+Qt::Key_X );
+# endif
+#else
+   QFrame *frame;
+   frame = new QFrame(this);
+   frame->setMinimumHeight(minHeight1);
+
+   m = new QMenuBar( frame );    m->setObjectName( "menu" );
+   m->setMinimumHeight(minHeight1 - 5);
+   m->setPalette( PALET_NORMAL );
+   AUTFBACK( m );
+
+   {
+      QMenu * new_menu = m->addMenu( us_tr( "&File" ) );
+
+      QAction *qa1 = new_menu->addAction( us_tr( "Font" ) );
+      qa1->setShortcut( Qt::ALT+Qt::Key_F );
+      connect( qa1, SIGNAL(triggered()), this, SLOT( update_font() ) );
+
+      QAction *qa2 = new_menu->addAction( us_tr( "Save" ) );
+      qa2->setShortcut( Qt::ALT+Qt::Key_S );
+      connect( qa2, SIGNAL(triggered()), this, SLOT( save() ) );
+
+      QAction *qa3 = new_menu->addAction( us_tr( "Clear Display" ) );
+      qa3->setShortcut( Qt::ALT+Qt::Key_X );
+      connect( qa3, SIGNAL(triggered()), this, SLOT( clear_display() ) );
+   }
 #endif
 
-   editor->setWordWrap (Q3TextEdit::WidgetWidth);
+
+   editor->setWordWrapMode (QTextOption::WordWrap);
    editor->setMinimumHeight(100);
 
-   pb_help = new QPushButton(tr("Help"), this);
+   pb_help = new QPushButton(us_tr("Help"), this);
    pb_help->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_help->setMinimumHeight(minHeight1);
    pb_help->setPalette( PALET_PUSHB );
    connect(pb_help, SIGNAL(clicked()), SLOT(help()));
 
-   pb_cancel = new QPushButton(tr("Close"), this);
+   pb_cancel = new QPushButton(us_tr("Close"), this);
    Q_CHECK_PTR(pb_cancel);
    pb_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_cancel->setMinimumHeight(minHeight1);
@@ -187,7 +223,7 @@ void US_Hydrodyn_Cluster_Results::setupGUI()
 
    // build layout
 
-   Q3HBoxLayout *hbl_buttons1 = new Q3HBoxLayout( 0 );
+   QHBoxLayout * hbl_buttons1 = new QHBoxLayout(); hbl_buttons1->setContentsMargins( 0, 0, 0, 0 ); hbl_buttons1->setSpacing( 0 );
    hbl_buttons1->addSpacing( 4 );
    hbl_buttons1->addWidget ( pb_select_all);
    hbl_buttons1->addSpacing( 4 );
@@ -196,20 +232,20 @@ void US_Hydrodyn_Cluster_Results::setupGUI()
    hbl_buttons1->addWidget ( pb_load_results );
    hbl_buttons1->addSpacing( 4 );
 
-   Q3HBoxLayout *hbl_bottom = new Q3HBoxLayout( 0 );
+   QHBoxLayout * hbl_bottom = new QHBoxLayout(); hbl_bottom->setContentsMargins( 0, 0, 0, 0 ); hbl_bottom->setSpacing( 0 );
    hbl_bottom->addSpacing( 4 );
    hbl_bottom->addWidget ( pb_help );
    hbl_bottom->addSpacing( 4 );
    hbl_bottom->addWidget ( pb_cancel );
    hbl_bottom->addSpacing( 4 );
 
-   Q3BoxLayout *vbl_editor_group = new Q3VBoxLayout(0);
+   QBoxLayout *vbl_editor_group = new QVBoxLayout(0);
 #if !defined(QT4) || !defined(Q_WS_MAC)
    vbl_editor_group->addWidget(frame);
 #endif
    vbl_editor_group->addWidget(editor);
 
-   Q3VBoxLayout *background = new Q3VBoxLayout( this );
+   QVBoxLayout * background = new QVBoxLayout( this ); background->setContentsMargins( 0, 0, 0, 0 ); background->setSpacing( 0 );
    background->addSpacing( 4 );
    background->addWidget ( lbl_title );
    background->addSpacing( 4 );
@@ -266,48 +302,37 @@ void US_Hydrodyn_Cluster_Results::update_font()
 void US_Hydrodyn_Cluster_Results::save()
 {
    QString fn;
-   fn = QFileDialog::getSaveFileName( this , caption() , QString::null , QString::null );
+   fn = QFileDialog::getSaveFileName( this , windowTitle() , QString::null , QString::null );
    if(!fn.isEmpty() )
    {
-      QString text = editor->text();
+      QString text = editor->toPlainText();
       QFile f( fn );
       if ( !f.open( QIODevice::WriteOnly | QIODevice::Text) )
       {
          return;
       }
-      Q3TextStream t( &f );
+      QTextStream t( &f );
       t << text;
       f.close();
-      editor->setModified( false );
-      setCaption( fn );
+ //      editor->setModified( false );
+      setWindowTitle( fn );
    }
 }
 
 void US_Hydrodyn_Cluster_Results::editor_msg( QString color, QString msg )
 {
-   QColor save_color = editor->color();
-   editor->setColor(color);
+   QColor save_color = editor->textColor();
+   editor->setTextColor(color);
    editor->append(msg);
-   editor->setColor(save_color);
-   editor->scrollToBottom();
+   editor->setTextColor(save_color);
+   editor->verticalScrollBar()->setValue(editor->verticalScrollBar()->maximum());
 }
    
 void US_Hydrodyn_Cluster_Results::update_enables()
 {
    if ( !disable_updates )
    {
-      bool any_selected = false;
-      Q3ListViewItem *lvi = lv_files->firstChild();
-      if ( lvi )
-      {
-         do {
-            if ( lvi->isSelected() )
-            {
-               any_selected = true;
-            }
-
-         } while ( ( lvi = lvi->nextSibling() ) );
-      }
+      bool any_selected = US_Static::lv_any_selected( lv_files );
       pb_purge->setEnabled( any_selected );
       pb_load_results->setEnabled( any_selected );
    } else {
@@ -317,27 +342,14 @@ void US_Hydrodyn_Cluster_Results::update_enables()
 
 void US_Hydrodyn_Cluster_Results::purge()
 {
-   bool any_selected = false;
-   Q3ListViewItem *lvi = lv_files->firstChild();
-   if ( lvi )
-   {
-      do {
-         if ( lvi->isSelected() )
-         {
-            any_selected = true;
-         }
-         
-      } while ( ( lvi = lvi->nextSibling() ) );
-   }
-
-   if ( any_selected )
+   if ( US_Static::lv_any_selected( lv_files ) )
    {
       if ( QMessageBox::question(
                                  this,
-                                 tr( "US-SOMO: Cluster Results" ),
-                                 tr( "Do you want purge these job results?" ),
-                                 tr( "&Yes" ),
-                                 tr( "&No" ),
+                                 us_tr( "US-SOMO: Cluster Results" ),
+                                 us_tr( "Do you want purge these job results?" ),
+                                 us_tr( "&Yes" ),
+                                 us_tr( "&No" ),
                                  QString::null, 0, 1 | QMessageBox::Default ) )
       {
          return;
@@ -348,7 +360,8 @@ void US_Hydrodyn_Cluster_Results::purge()
 
       lv_files->setEnabled( false );
 
-      Q3ListViewItem *lvi = lv_files->firstChild();
+#if QT_VERSION < 0x040000
+      QTreeWidgetItem *lvi = lv_files->firstChild();
       if ( lvi )
       {
          do {
@@ -357,9 +370,9 @@ void US_Hydrodyn_Cluster_Results::purge()
             {
                if ( !QFile::remove( lvi->text( 0 ) ) )
                {
-                  editor_msg( "red", QString( tr( "Error: can not remove %1" ) ).arg( lvi->text( 0 ) ) );
+                  editor_msg( "red", QString( us_tr( "Error: can not remove %1" ) ).arg( lvi->text( 0 ) ) );
                } else {
-                  editor_msg( "black", QString( tr( "Removed %1" ) ).arg( lvi->text( 0 ) ) );
+                  editor_msg( "black", QString( us_tr( "Removed %1" ) ).arg( lvi->text( 0 ) ) );
                }
                QString qs = lvi->text( 0 );
                qs.replace( QRegExp( "_out.t..$" ), "" );
@@ -377,22 +390,59 @@ void US_Hydrodyn_Cluster_Results::purge()
                   {
                      if ( !QFile::remove( qscheck[ i ] ) )
                      {
-                        editor_msg( "red", QString( tr( "Error: can not remove %1" ) ).arg( qscheck[ i ] ) );
+                        editor_msg( "red", QString( us_tr( "Error: can not remove %1" ) ).arg( qscheck[ i ] ) );
                      } else {
-                        editor_msg( "black", QString( tr( "Removed %1" ) ).arg( qscheck[ i ] ) );
+                        editor_msg( "black", QString( us_tr( "Removed %1" ) ).arg( qscheck[ i ] ) );
                      }
                   }
                }
             }
          } while ( ( lvi = lvi->nextSibling() ) );
       }
+#else
+      QTreeWidgetItemIterator it( lv_files, QTreeWidgetItemIterator::Selected );
+      QTreeWidgetItem *lvi;
+      while ( *it ) {
+         // purge
+         lvi = *it;
+         if ( !QFile::remove( lvi->text( 0 ) ) )
+         {
+            editor_msg( "red", QString( us_tr( "Error: can not remove %1" ) ).arg( lvi->text( 0 ) ) );
+         } else {
+            editor_msg( "black", QString( us_tr( "Removed %1" ) ).arg( lvi->text( 0 ) ) );
+         }
+         QString qs = lvi->text( 0 );
+         qs.replace( QRegExp( "_out.t..$" ), "" );
+         QStringList qscheck;
+         qscheck 
+            <<  qs + ".tar"
+            <<  qs + ".tgz"
+            <<  qs + ".TAR"
+            <<  qs + ".TGZ"
+            ;
+                  
+         for ( int i = 0; i < (int) qscheck.size(); ++i )
+         {
+            if ( QFile::exists( qscheck[ i ] ) )
+            {
+               if ( !QFile::remove( qscheck[ i ] ) )
+               {
+                  editor_msg( "red", QString( us_tr( "Error: can not remove %1" ) ).arg( qscheck[ i ] ) );
+               } else {
+                  editor_msg( "black", QString( us_tr( "Removed %1" ) ).arg( qscheck[ i ] ) );
+               }
+            }
+         }
+         ++it;
+      }
+#endif      
 
-      editor_msg( "black", tr( "purge complete" ) );
+      editor_msg( "black", us_tr( "purge complete" ) );
       if ( !update_files() )
       {
          QMessageBox::information( this, 
-                                   tr("US-SOMO: Cluster Results"),
-                                   tr("No further job results found"),
+                                   us_tr("US-SOMO: Cluster Results"),
+                                   us_tr("No further job results found"),
                                    0 );
          close();
          return;
@@ -406,44 +456,26 @@ void US_Hydrodyn_Cluster_Results::purge()
 
 void US_Hydrodyn_Cluster_Results::select_all()
 {
-   bool any_not_selected = false;
-   Q3ListViewItem *lvi = lv_files->firstChild();
-   if ( lvi )
-   {
-      do {
-         if ( !lvi->isSelected() )
-         {
-            any_not_selected = true;
-         }
-      } while ( ( lvi = lvi->nextSibling() ) );
-   }
-
    disable_updates = true;
-   lvi = lv_files->firstChild();
-   if ( lvi )
-   {
-      do {
-         lv_files->setSelected( lvi, any_not_selected );
-      } while ( ( lvi = lvi->nextSibling() ) );
-   }
+   US_Static::lv_select_all_or_none( lv_files );
    disable_updates = false;
    update_enables();
 }
 
 bool US_Hydrodyn_Cluster_Results::clean_dir( QString dir ) 
 {
-   // qDebug( QString( "clean_dir %1" ).arg( dir ) );
+   // us_qdebug( QString( "clean_dir %1" ).arg( dir ) );
    system( "pwd" );
    errormsg = "";
    if ( !QDir::setCurrent( dir ) )
    {
-      errormsg = QString( tr( "Error: can not change to directory %1 (clean_dir)" ) ).arg( dir );
+      errormsg = QString( us_tr( "Error: can not change to directory %1 (clean_dir)" ) ).arg( dir );
       return false;
    }
 
    // clean up tmp_dir first
    QDir qd;
-   QStringList tmp_files = qd.entryList( "*" );
+   QStringList tmp_files = qd.entryList( QStringList() << "*" );
    for ( unsigned int i = 0; i < (unsigned int)tmp_files.size() ; i++ )
    {
       if ( tmp_files[ i ] != "." &&
@@ -457,19 +489,19 @@ bool US_Hydrodyn_Cluster_Results::clean_dir( QString dir )
             }
             if ( !QDir::setCurrent( dir ) )
             {
-               errormsg = QString( tr( "Error: can not change to directory %1 (clean_dir2)" ) ).arg( dir );
+               errormsg = QString( us_tr( "Error: can not change to directory %1 (clean_dir2)" ) ).arg( dir );
                return false;
             }
             QDir qd;
             if ( !qd.rmdir( tmp_files[ i ] ) )
             {
-               errormsg = QString( tr( "Error: can not remove directory %1 in %2" ) ).arg( tmp_files[ i ] ).arg( tmp_dir );
+               errormsg = QString( us_tr( "Error: can not remove directory %1 in %2" ) ).arg( tmp_files[ i ] ).arg( tmp_dir );
                return false;
             }
          } else {
             if ( !QFile::remove( tmp_files[ i ] ) ) 
             {
-               errormsg = QString( tr( "Error: can not remove file %1 in %2" ) ).arg( tmp_files[ i ] ).arg( tmp_dir );
+               errormsg = QString( us_tr( "Error: can not remove file %1 in %2" ) ).arg( tmp_files[ i ] ).arg( tmp_dir );
                return false;
             }
          }
@@ -481,26 +513,16 @@ bool US_Hydrodyn_Cluster_Results::clean_dir( QString dir )
    
 void US_Hydrodyn_Cluster_Results::load_results()
 {
-   bool any_selected = false;
-   Q3ListViewItem *lvi = lv_files->firstChild();
-   if ( lvi )
-   {
-      do {
-         if ( lvi->isSelected() )
-         {
-            any_selected = true;
-         }
-         
-      } while ( ( lvi = lvi->nextSibling() ) );
-   }
+   bool any_selected = US_Static::lv_any_selected( lv_files );
 
    if ( !any_selected )
    {
       return;
    }
 
-   lvi = lv_files->firstChild();
    lv_files->setEnabled( false );
+#if QT_VERSION < 0x040000
+   QTreeWidgetItem *lvi = lv_files->firstChild();
    if ( lvi )
    {
       do {
@@ -515,7 +537,19 @@ void US_Hydrodyn_Cluster_Results::load_results()
          }
       } while ( ( lvi = lvi->nextSibling() ) );
    }
-
+#else
+   QTreeWidgetItemIterator it( lv_files, QTreeWidgetItemIterator::Selected );
+   while ( *it ) {
+      if ( !load_one_result( (*it)->text( 0 ) ) )
+      {
+         editor_msg( "red", errormsg );
+         lv_files->setEnabled( true );
+         return;
+      }
+      ++it;
+   }
+#endif
+   
    purge();
 
    lv_files->setEnabled( true );
@@ -535,13 +569,13 @@ bool US_Hydrodyn_Cluster_Results::load_one_result( QString file )
 
    if ( !QDir::setCurrent( completed_dir ) )
    {
-      errormsg = QString( tr( "Error: can not change to directory %1 (load_one_result)" ) ).arg( completed_dir );
+      errormsg = QString( us_tr( "Error: can not change to directory %1 (load_one_result)" ) ).arg( completed_dir );
       return false;
    }
 
    if ( !QFile::exists( file ) )
    {
-      errormsg = QString( tr( "Error: file %1 does not exist in %2" ) ).arg( file ).arg( completed_dir );
+      errormsg = QString( us_tr( "Error: file %1 does not exist in %2" ) ).arg( file ).arg( completed_dir );
       return false;
    }
       
@@ -554,7 +588,7 @@ bool US_Hydrodyn_Cluster_Results::load_one_result( QString file )
 
    if ( !QDir::setCurrent( tmp_dir ) )
    {
-      errormsg = QString( tr( "Error: can not change to directory %1 (load_one_result2)" ) ).arg( tmp_dir );
+      errormsg = QString( us_tr( "Error: can not change to directory %1 (load_one_result2)" ) ).arg( tmp_dir );
       return false;
    }
 
@@ -567,7 +601,7 @@ bool US_Hydrodyn_Cluster_Results::load_one_result( QString file )
       qd.remove( dest );
       if ( !qd.rename( file, dest ) )
       {
-         errormsg = QString( tr( "Error: renaming %1 to %2 " ) ).arg( file ).arg( dest );
+         errormsg = QString( us_tr( "Error: renaming %1 to %2 " ) ).arg( file ).arg( dest );
          return false;
       }
 
@@ -577,7 +611,7 @@ bool US_Hydrodyn_Cluster_Results::load_one_result( QString file )
       int result = usg.gunzip( file );
       if ( GZIP_OK != result )
       {
-         errormsg = QString( tr( "Error: %1 problem ungzipping (%2)" ) ).arg( file ).arg( usg.explain( result ) );
+         errormsg = QString( us_tr( "Error: %1 problem ungzipping (%2)" ) ).arg( file ).arg( usg.explain( result ) );
          return false;
       }
       file = usg.last_written_name;
@@ -589,7 +623,7 @@ bool US_Hydrodyn_Cluster_Results::load_one_result( QString file )
          dest.replace( QRegExp( "\\.(tgz|TGZ)$" ), ".tar" );
          if ( !qd.rename( file, dest ) )
          {
-            errormsg = QString( tr( "Error: renaming %1 to %2 " ) ).arg( file ).arg( dest );
+            errormsg = QString( us_tr( "Error: renaming %1 to %2 " ) ).arg( file ).arg( dest );
             return false;
          }
          file = dest;
@@ -600,7 +634,7 @@ bool US_Hydrodyn_Cluster_Results::load_one_result( QString file )
 
    if ( !file.contains( QRegExp( "\\.(tar|TAR)$" ) ) )
    {
-      errormsg = QString( tr( "Error: file %1 is not .tar" ) ).arg( file );
+      errormsg = QString( us_tr( "Error: file %1 is not .tar" ) ).arg( file );
       return false;
    }
 
@@ -613,16 +647,16 @@ bool US_Hydrodyn_Cluster_Results::load_one_result( QString file )
    int result = ust.list( file, tar_list, true );
    if ( TAR_OK != result )
    {
-      errormsg = QString( tr( "Error: %1 problem list tar archive (%2)" ) ) .arg( file ).arg( ust.explain( result ) );
+      errormsg = QString( us_tr( "Error: %1 problem list tar archive (%2)" ) ) .arg( file ).arg( ust.explain( result ) );
       return false;
    }
 
    QStringList mkdirs;
    for ( unsigned int i = 0; i < (unsigned int)tar_list.size(); i++ )
    {
-      if ( QFileInfo( tar_list[ i ] ).dirPath().length() )
+      if ( QFileInfo( tar_list[ i ] ).path().length() )
       {
-         QString dirPath = QFileInfo( tar_list[ i ] ).dirPath();
+         QString dirPath = QFileInfo( tar_list[ i ] ).path();
          if ( dirPath != "." )
          {
             QDir qd;
@@ -634,7 +668,7 @@ bool US_Hydrodyn_Cluster_Results::load_one_result( QString file )
    result = ust.extract( file );
    if ( TAR_OK != result )
    {
-      errormsg = QString( tr( "Error: %1 problem extracting tar archive (%2)" ) ).arg( file ).arg( ust.explain( result ) );
+      errormsg = QString( us_tr( "Error: %1 problem extracting tar archive (%2)" ) ).arg( file ).arg( ust.explain( result ) );
       return false;
    }
 
@@ -642,7 +676,7 @@ bool US_Hydrodyn_Cluster_Results::load_one_result( QString file )
 
    if ( !QFile::remove( file ) ) 
    {
-      errormsg = QString( tr( "Error: can not remove file %1 in %2" ) ).arg( file ).arg( tmp_dir );
+      errormsg = QString( us_tr( "Error: can not remove file %1 in %2" ) ).arg( file ).arg( tmp_dir );
       return false;
    }
    
@@ -650,7 +684,7 @@ bool US_Hydrodyn_Cluster_Results::load_one_result( QString file )
 
    if ( !tar_list.size() )
    {
-      errormsg = QString( tr( "Error: job results are empty for %1 " ) ).arg( org_file );
+      errormsg = QString( us_tr( "Error: job results are empty for %1 " ) ).arg( org_file );
       return false;
    }
 
@@ -673,11 +707,11 @@ bool US_Hydrodyn_Cluster_Results::load_one_result( QString file )
       for ( unsigned int i = 0; i < (unsigned int)further_extraction.size(); i++ )
       {
          QString file = QFileInfo( further_extraction[ i ] ).fileName();
-         QString subDirPath = QFileInfo( further_extraction[ i ] ).dirPath();
+         QString subDirPath = QFileInfo( further_extraction[ i ] ).path();
          QString dirPath = tmp_dir + SLASH + subDirPath;
          if ( !QDir::setCurrent( dirPath ) )
          {
-            errormsg = QString( tr( "Error: can not change to directory %1 (load_one_result3)" ) ).arg( dirPath );
+            errormsg = QString( us_tr( "Error: can not change to directory %1 (load_one_result3)" ) ).arg( dirPath );
             return false;
          }
 
@@ -690,7 +724,7 @@ bool US_Hydrodyn_Cluster_Results::load_one_result( QString file )
             qd.remove( dest );
             if ( !qd.rename( file, dest ) )
             {
-               errormsg = QString( tr( "Error: renaming %1 to %2 " ) ).arg( file ).arg( dest );
+               errormsg = QString( us_tr( "Error: renaming %1 to %2 " ) ).arg( file ).arg( dest );
                return false;
             }
             
@@ -700,7 +734,7 @@ bool US_Hydrodyn_Cluster_Results::load_one_result( QString file )
             int result = usg.gunzip( file );
             if ( GZIP_OK != result )
             {
-               errormsg = QString( tr( "Error: %1 problem ungzipping (%2)" ) ).arg( file ).arg( usg.explain( result ) );
+               errormsg = QString( us_tr( "Error: %1 problem ungzipping (%2)" ) ).arg( file ).arg( usg.explain( result ) );
                return false;
             }
             file = usg.last_written_name;
@@ -714,7 +748,7 @@ bool US_Hydrodyn_Cluster_Results::load_one_result( QString file )
                qd.remove( dest );
                if ( !qd.rename( file, dest ) )
                {
-                  errormsg = QString( tr( "Error: renaming %1 to %2 " ) ).arg( file ).arg( dest );
+                  errormsg = QString( us_tr( "Error: renaming %1 to %2 " ) ).arg( file ).arg( dest );
                   return false;
                }
                
@@ -726,7 +760,7 @@ bool US_Hydrodyn_Cluster_Results::load_one_result( QString file )
          
          if ( !file.contains( QRegExp( "\\.(tar|TAR)$" ) ) )
          {
-            errormsg = QString( tr( "Error: file %1 is not .tar" ) ).arg( file );
+            errormsg = QString( us_tr( "Error: file %1 is not .tar" ) ).arg( file );
             return false;
          }
 
@@ -739,19 +773,19 @@ bool US_Hydrodyn_Cluster_Results::load_one_result( QString file )
          int result = ust.list( file, tar_list, true );
          if ( TAR_OK != result )
          {
-            errormsg = QString( tr( "Error: %1 problem list tar archive (%2)" ) ) .arg( file ).arg( ust.explain( result ) );
+            errormsg = QString( us_tr( "Error: %1 problem list tar archive (%2)" ) ) .arg( file ).arg( ust.explain( result ) );
             return false;
          }
          
          QStringList mkdirs;
          for ( unsigned int i = 0; i < (unsigned int)tar_list.size(); i++ )
          {
-            if ( QFileInfo( tar_list[ i ] ).dirPath().length() &&
-                 QFileInfo( tar_list[ i ] ).dirPath() != "." )
+            if ( QFileInfo( tar_list[ i ] ).path().length() &&
+                 QFileInfo( tar_list[ i ] ).path() != "." )
             {
-               errormsg = QString( tr( "Error: Subdirectories now allowed in results (<%1> %2 %3 %4 %5)" ) )
-                  .arg( QFileInfo( tar_list[ i ] ).dirPath() )
-                  .arg( QFileInfo( tar_list[ i ] ).dirPath().length() )
+               errormsg = QString( us_tr( "Error: Subdirectories now allowed in results (<%1> %2 %3 %4 %5)" ) )
+                  .arg( QFileInfo( tar_list[ i ] ).path() )
+                  .arg( QFileInfo( tar_list[ i ] ).path().length() )
                   .arg( org_file ).arg( file ).arg( tar_list[ i ] );
                return false;
             }
@@ -761,7 +795,7 @@ bool US_Hydrodyn_Cluster_Results::load_one_result( QString file )
          result = ust.extract( file );
          if ( TAR_OK != result )
          {
-            errormsg = QString( tr( "Error: %1 problem extracting tar archive (%2)" ) ).arg( file ).arg( ust.explain( result ) );
+            errormsg = QString( us_tr( "Error: %1 problem extracting tar archive (%2)" ) ).arg( file ).arg( ust.explain( result ) );
             return false;
          }
          
@@ -769,7 +803,7 @@ bool US_Hydrodyn_Cluster_Results::load_one_result( QString file )
          
          if ( !QFile::remove( file ) ) 
          {
-            errormsg = QString( tr( "Error: can not remove file %1 in %2" ) ).arg( file ).arg( tmp_dir );
+            errormsg = QString( us_tr( "Error: can not remove file %1 in %2" ) ).arg( file ).arg( tmp_dir );
             return false;
          }
       }
@@ -777,7 +811,7 @@ bool US_Hydrodyn_Cluster_Results::load_one_result( QString file )
 
    if ( !QDir::setCurrent( tmp_dir ) )
    {
-      errormsg = QString( tr( "Error: can not change to directory %1 (load_one_result4)" ) ).arg( tmp_dir );
+      errormsg = QString( us_tr( "Error: can not change to directory %1 (load_one_result4)" ) ).arg( tmp_dir );
       return false;
    }
 
@@ -797,7 +831,7 @@ bool US_Hydrodyn_Cluster_Results::load_one_result( QString file )
 
 bool US_Hydrodyn_Cluster_Results::merge_csvs( QStringList &final_results )
 {
-   QStringList csvs = final_results.grep( QRegExp( "\\.(csv|CSV)$" ) );
+   QStringList csvs = final_results.filter( QRegExp( "\\.(csv|CSV)$" ) );
    if ( !csvs.size() )
    {
       // no csvs
@@ -858,7 +892,7 @@ bool US_Hydrodyn_Cluster_Results::merge_this_csv( QString dest, vector < QString
 
    if ( !QDir::setCurrent( tmp_dir ) )
    {
-      errormsg = QString( tr( "Error: can not change to directory %1 (merge_this_csv)" ) ).arg( tmp_dir );
+      errormsg = QString( us_tr( "Error: can not change to directory %1 (merge_this_csv)" ) ).arg( tmp_dir );
       return false;
    }
 
@@ -868,17 +902,17 @@ bool US_Hydrodyn_Cluster_Results::merge_this_csv( QString dest, vector < QString
    QFile fo( dest );
    if ( !fo.open( QIODevice::WriteOnly ) )
    {
-      errormsg = QString( tr( "Error: can not create file %1 for merged csvs" ) ).arg( dest );
+      errormsg = QString( us_tr( "Error: can not create file %1 for merged csvs" ) ).arg( dest );
       return false;
    }
       
-   Q3TextStream tso( &fo );
+   QTextStream tso( &fo );
 
    for ( unsigned int i = 0; i < (unsigned int)csvs.size(); i++ )
    {
       if ( !QFile::exists( csvs[ i ] ) )
       {
-         errormsg = QString( tr( "Error: csv file %1 does not exist for merging" ) ).arg( csvs[ i ] );
+         errormsg = QString( us_tr( "Error: csv file %1 does not exist for merging" ) ).arg( csvs[ i ] );
          fo.close();
          return false;
       }
@@ -886,12 +920,12 @@ bool US_Hydrodyn_Cluster_Results::merge_this_csv( QString dest, vector < QString
       QFile fi( csvs[ i ] );
       if ( !fi.open( QIODevice::ReadOnly ) )
       {
-         errormsg = QString( tr( "Error: can not open file %1 for merging" ) ).arg( csvs[ i ] );
+         errormsg = QString( us_tr( "Error: can not open file %1 for merging" ) ).arg( csvs[ i ] );
          fo.close();
          return false;
       }
       
-      Q3TextStream tsi( &fi );
+      QTextStream tsi( &fi );
 
       while( !tsi.atEnd() )
       {
@@ -916,13 +950,13 @@ bool US_Hydrodyn_Cluster_Results::move_to_results( QString jobname, QStringList 
    {
       switch ( QMessageBox::question(
                                      this,
-                                     tr( "US-SOMO: Cluster Results" ),
+                                     us_tr( "US-SOMO: Cluster Results" ),
                                      QString(
-                                             tr( "Results directory %1 already exists\n"
+                                             us_tr( "Results directory %1 already exists\n"
                                                  "What to you want to do?" ) ).arg( output_dir ),
-                                     tr( "&Rename to a unique results directory" ),
-                                     tr( "&Overwrite the results into the existing directory" ),
-                                     tr( "&Clear the existing directory first" ),
+                                     us_tr( "&Rename to a unique results directory" ),
+                                     us_tr( "&Overwrite the results into the existing directory" ),
+                                     us_tr( "&Clear the existing directory first" ),
                                      0 ) )
       {
       case 0 : 
@@ -952,7 +986,7 @@ bool US_Hydrodyn_Cluster_Results::move_to_results( QString jobname, QStringList 
    {
       if ( !qd.mkdir( output_dir ) )
       {
-         errormsg = QString( tr( "Error: can not make directory %1" ) ).arg( output_dir );
+         errormsg = QString( us_tr( "Error: can not make directory %1" ) ).arg( output_dir );
          return false;
       }
    }
@@ -964,9 +998,9 @@ bool US_Hydrodyn_Cluster_Results::move_to_results( QString jobname, QStringList 
    for ( unsigned int i = 0; i < (unsigned int)final_results.size(); i++ )
    {
       QString from_dir = tmp_dir;
-      if ( QFileInfo( final_results[ i ] ).dirPath().length() )
+      if ( QFileInfo( final_results[ i ] ).path().length() )
       {
-         QString dirPath = QFileInfo( final_results[ i ] ).dirPath();
+         QString dirPath = QFileInfo( final_results[ i ] ).path();
          if ( dirPath != "." )
          {
             from_dir += SLASH + dirPath;
@@ -974,13 +1008,13 @@ bool US_Hydrodyn_Cluster_Results::move_to_results( QString jobname, QStringList 
       }
       if ( !QDir::setCurrent( from_dir ) )
       {
-         errormsg = QString( tr( "Error: can not change to directory %1 (move_to_results)" ) ).arg( from_dir );
+         errormsg = QString( us_tr( "Error: can not change to directory %1 (move_to_results)" ) ).arg( from_dir );
          return false;
       }
 
       QString source_file = QFileInfo( final_results[ i ] ).fileName();
-      QString base_name   = QFileInfo( source_file ).baseName ( true  );
-      QString extension   = QFileInfo( source_file ).extension( false );
+      QString base_name   = QFileInfo( source_file ).completeBaseName();
+      QString extension   = QFileInfo( source_file ).suffix();
       if ( !extension.isEmpty() )
       {
          extension = "." + extension;
@@ -1002,7 +1036,7 @@ bool US_Hydrodyn_Cluster_Results::move_to_results( QString jobname, QStringList 
          return false;
       }
    }      
-   editor_msg( "dark blue", QString( tr( "Results for job %1 are now in %2" ) ).arg( jobname ).arg( output_dir ) );
+   editor_msg( "dark blue", QString( us_tr( "Results for job %1 are now in %2" ) ).arg( jobname ).arg( output_dir ) );
    return true;
 }
 
@@ -1014,23 +1048,43 @@ unsigned int US_Hydrodyn_Cluster_Results::update_files( bool set_lv_files )
    // traverse directory and build up files
    QDir::setCurrent( completed_dir );
    QDir qd;
-   QStringList tgz_files = qd.entryList( "*_out.tgz" );
-   QStringList tar_files = qd.entryList( "*_out.tar" );
-   files = QStringList::split( "\n", 
-                               tgz_files.join("\n") + 
-                               ( tgz_files.size() ? "\n" : "" ) +
-                               tar_files.join("\n") );
+   QStringList tgz_files = qd.entryList( QStringList() << "*_out.tgz" );
+   QStringList tar_files = qd.entryList( QStringList() << "*_out.tar" );
+
+   // files = QStringList::split( "\n", 
+   //                             tgz_files.join("\n") + 
+   //                             ( tgz_files.size() ? "\n" : "" ) +
+   //                             tar_files.join("\n") );
    
+   QStringList files;
+   {
+      QString qs =
+         tgz_files.join("\n") + 
+         ( tgz_files.size() ? "\n" : "" ) +
+         tar_files.join("\n")
+         ;
+      files = (qs ).split( "\n" , QString::SkipEmptyParts );
+   }
+
    if ( set_lv_files )
    {
       lv_files->clear();
       for ( unsigned int i = 0; i < (unsigned int)files.size(); i++ )
       {
-         new Q3ListViewItem( lv_files, 
+#if QT_VERSION < 0x040000
+         new QTreeWidgetItem( lv_files, 
                             files[ i ], 
                             QString( " %1 " ).arg( QFileInfo( files[ i ] ).created().toString() ),
                             QString( " %1 bytes " ).arg( QFileInfo( files[ i ] ).size() )
                             );
+#else
+         lv_files->addTopLevelItem( new QTreeWidgetItem(
+                                                        QStringList()
+                                                        << files[ i ]
+                                                        << QString( " %1 " ).arg( QFileInfo( files[ i ] ).created().toString() )
+                                                        << QString( " %1 bytes " ).arg( QFileInfo( files[ i ] ).size() )
+                                                        ) );
+#endif
       }
    }
 

@@ -5,24 +5,28 @@
 
 #include <qfile.h>
 #include <qfiledialog.h>
-#include <q3textstream.h>
+//#include <q3textstream.h>
 #include <qpushbutton.h>
-#include <q3buttongroup.h>
+#include <qgroupbox.h>
 #include <qlineedit.h>
 #include <qlabel.h>
 #include <qstring.h>
 #include <qlayout.h>
-#include <q3frame.h>
-#include <q3progressbar.h>
-#include <q3process.h>
+//#include <q3frame.h>
+#include <qprogressbar.h>
+#include <qprocess.h>
 #include <qdir.h>
-#include <q3textedit.h>
+#include <qtextedit.h>
 #include <qmenubar.h>
-#include <q3popupmenu.h>
+//#include <q3popupmenu.h>
 #include <qprinter.h>
 #include "qwt_counter.h"
+#include <qtreewidget.h>
 //Added by qt3to4:
 #include <QCloseEvent>
+#if QT_VERSION >= 0x040000
+# include <QHeaderView>
+#endif
 
 #include "us.h"
 #include "us_timer.h"
@@ -99,7 +103,7 @@ using namespace std;
 # endif
 #endif
 
-class US_EXTERN US_Hydrodyn : public Q3Frame
+class US_EXTERN US_Hydrodyn : public QFrame
 {
    Q_OBJECT
 
@@ -153,7 +157,7 @@ class US_EXTERN US_Hydrodyn : public Q3Frame
       bool guiFlag;
       QLabel *lbl_core_progress;
       void set_disabled();
-      Q3TextEdit *editor;
+      QTextEdit *editor;
       void play_sounds(int);
       struct pdb_parsing pdb_parse;
       bool bead_model_from_file;
@@ -167,7 +171,7 @@ class US_EXTERN US_Hydrodyn : public Q3Frame
       QPushButton *pb_stop_calc;
       struct hydro_options hydro;
       QCheckBox *cb_saveParams;
-      Q3ListBox *lb_model;
+      QListWidget *lb_model;
       US_Hydrodyn_Save *save_util; // to enable calling of save routines regardless of whether or not widget is available
       bool batch_widget;
       US_Hydrodyn_Batch *batch_window;
@@ -231,6 +235,11 @@ class US_EXTERN US_Hydrodyn : public Q3Frame
       map < QString, QString >            gparams;
 
       US_Config *USglobal;
+
+      // view a pdb or bead model file running in directory of file
+
+      void model_viewer( QString file,
+                         QString prefix = "" );  
 
    private:
 
@@ -325,11 +334,11 @@ class US_EXTERN US_Hydrodyn : public Q3Frame
       QCheckBox *cb_calcAutoHydro;
       QCheckBox *cb_setSuffix;
 
-      Q3PopupMenu *lookup_tables;
-      Q3PopupMenu *somo_options;
-      Q3PopupMenu *md_options;
-      Q3PopupMenu *pdb_options;
-      Q3PopupMenu *configuration;
+ //      Q3PopupMenu *lookup_tables;
+ //      Q3PopupMenu *somo_options;
+ //      Q3PopupMenu *md_options;
+ //      Q3PopupMenu *pdb_options;
+ //      Q3PopupMenu *configuration;
       QMenuBar *menu;
 
       QLineEdit *le_bead_model_file;
@@ -384,7 +393,7 @@ class US_EXTERN US_Hydrodyn : public Q3Frame
       QPushButton *pb_comparative;
       QPushButton *pb_best;
 
-      Q3ProgressBar *progress;
+      QProgressBar *progress;
       // TextEdit *e;
 
       US_AddAtom *addAtom;
@@ -420,7 +429,7 @@ class US_EXTERN US_Hydrodyn : public Q3Frame
 
       US_Hydrodyn_AdvancedConfig *advanced_config_window;
       US_Hydrodyn_Save *save_window;
-      Q3Process *rasmol;
+      QProcess *rasmol;
 
       QString getExtendedSuffix(bool prerun = true, bool somo = true, bool no_ovlp_removal = false ); 
       
@@ -516,8 +525,8 @@ class US_EXTERN US_Hydrodyn : public Q3Frame
       map < QString, int > connection_pair_type; // 0 mc-mc, 1 mc-sc, 2 sc-sc
       map < QString, bool > connection_forced;  // chemical connections
 
-      Q3Process *browflex;
-      Q3Process *anaflex;
+      QProcess *browflex;
+      QProcess *anaflex;
 
       QString bd_project;
       unsigned int bd_current_model;
@@ -880,13 +889,13 @@ class US_EXTERN US_Hydrodyn : public Q3Frame
 
       void browflex_readFromStdout();
       void browflex_readFromStderr();
-      void browflex_launchFinished();
-      void browflex_processExited();
+      void browflex_started();
+      void browflex_finished( int, QProcess::ExitStatus );
 
       void anaflex_readFromStdout();
       void anaflex_readFromStderr();
-      void anaflex_launchFinished();
-      void anaflex_processExited();
+      void anaflex_started();
+      void anaflex_finished( int, QProcess::ExitStatus );
 
       void load_pdb();
       void show_batch();
@@ -949,7 +958,7 @@ class US_EXTERN US_Hydrodyn : public Q3Frame
       void write_corr(QString, vector <PDB_atom> *);
       bool read_corr(QString, vector <PDB_atom> *);
       void printError(const QString &);
-      void closeAttnt(Q3Process *, QString);
+      void closeAttnt(QProcess *, QString);
       void calc_vbar(struct PDB_model *);
       void update_vbar(); // update the results.vbar everytime something changes the vbar in options or calculation
       void append_options_log_somo(); // append somo options to options_log
@@ -1077,6 +1086,7 @@ class radial_reduction_thr_t : public QThread
   int work_to_do_waiters;
   int work_done_waiters;
 };
+
 
 #ifdef WIN32
 # if !defined( QT4 )

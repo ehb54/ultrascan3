@@ -7,13 +7,13 @@
 #include <qstring.h>
 #include <qlayout.h>
 #include <qpushbutton.h>
-#include <q3frame.h>
+//#include <q3frame.h>
 #include <qcheckbox.h>
-#include <q3listview.h>
-#include <q3process.h>
-#include <q3cstring.h>
+#include <qtreewidget.h>
+#include <qprocess.h>
+//#include <q3cstring.h>
 #include <qiodevice.h>
-#include <q3progressbar.h>
+#include <qprogressbar.h>
 //Added by qt3to4:
 #include <QCloseEvent>
 
@@ -21,8 +21,8 @@
 #include "us_hydrodyn_pdbdefs.h"
 #include "us_hydrodyn_batch.h"
 
-#include <q3http.h>
-#include <q3ftp.h>
+#include <qhttp.h>
+#include <qftp.h>
 
 //standard C and C++ defs:
 
@@ -49,19 +49,19 @@ class US_EXTERN US_Hydrodyn_Cluster_Submit : public QDialog
       QLabel        *lbl_title;
 
       QLabel        *lbl_files;
-      Q3ListView     *lv_files;
+      QTreeWidget     *lv_files;
 
       QLabel        *lbl_systems;
-      Q3ListBox      *lb_systems;
+      QListWidget      *lb_systems;
 
       QPushButton   *pb_select_all;
       QPushButton   *pb_remove;
       QPushButton   *pb_submit;
 
-      Q3ProgressBar  *progress;
+      QProgressBar  *progress;
 
       QFont         ft;
-      Q3TextEdit     *editor;
+      QTextEdit     *editor;
       QMenuBar      *m;
 
       QPushButton   *pb_stop;
@@ -107,9 +107,9 @@ class US_EXTERN US_Hydrodyn_Cluster_Submit : public QDialog
 
       bool          submit_active;
       bool          comm_active;
-      Q3Http         submit_http;
+      QHttp         submit_http;
 
-      Q3Ftp          ftp;
+      QFtp          ftp;
 
       QString       current_xml;
       QString       current_xml_response;
@@ -127,7 +127,7 @@ class US_EXTERN US_Hydrodyn_Cluster_Submit : public QDialog
   #pragma warning ( disable: 4251 )
 # endif
 #endif
-      map < Q3ListViewItem *, QString > jobs;
+      map < QTreeWidgetItem *, QString > jobs;
 
       map < QString, QString >         selected_system;
 #ifdef WIN32
@@ -137,7 +137,7 @@ class US_EXTERN US_Hydrodyn_Cluster_Submit : public QDialog
 #endif
       QString       selected_system_name;
 
-      Q3ListViewItem *next_to_process;
+      QTreeWidgetItem *next_to_process;
 
       bool          job_submit( QString file );
       void          process_list();
@@ -146,7 +146,7 @@ class US_EXTERN US_Hydrodyn_Cluster_Submit : public QDialog
       bool          system_cmd( QStringList cmd );
 
       bool          system_proc_active;
-      Q3Process      *system_proc;
+      QProcess      *system_proc;
 
    private slots:
 
@@ -174,8 +174,8 @@ class US_EXTERN US_Hydrodyn_Cluster_Submit : public QDialog
       void help();
 
       void http_stateChanged ( int state );
-      void http_responseHeaderReceived ( const Q3HttpResponseHeader & resp );
-      void http_readyRead ( const Q3HttpResponseHeader & resp );
+      void http_responseHeaderReceived ( const QHttpResponseHeader & resp );
+      void http_readyRead ( const QHttpResponseHeader & resp );
       void http_dataSendProgress ( int done, int total );
       void http_dataReadProgress ( int done, int total );
       void http_requestStarted ( int id );
@@ -193,8 +193,8 @@ class US_EXTERN US_Hydrodyn_Cluster_Submit : public QDialog
 
       void system_proc_readFromStdout();
       void system_proc_readFromStderr();
-      void system_proc_processExited();
-      void system_proc_launchFinished();
+      void system_proc_finished( int, QProcess::ExitStatus );
+      void system_proc_started();
 
    protected slots:
 

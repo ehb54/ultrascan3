@@ -125,7 +125,7 @@ us_hydrodyn_pat_main(int                 use_nmax,
    {
       char s[30];
       sprintf(s, "pat_log-%d", log_cnt++);
-      logfx = fopen(s, "w");
+      logfx = us_fopen(s, "w");
    }
 #endif
 
@@ -172,8 +172,8 @@ us_hydrodyn_pat_main(int                 use_nmax,
       
       int i;
       
-      FILE *interinp = fopen("p_in_ifraxon", "wb");
-      FILE *interinp1 = fopen("p_in_ifraxon1", "wb");
+      FILE *interinp = us_fopen("p_in_ifraxon", "wb");
+      FILE *interinp1 = us_fopen("p_in_ifraxon1", "wb");
 
       fprintf(interinp, "%d\n", nat);
       fprintf(interinp, "%f\n", 0.0);
@@ -487,13 +487,13 @@ us_hydrodyn_pat_main(int                 use_nmax,
       }
 
 #if defined(OLD_WAY_CHECK)
-      omol = fopen("ofraxon", "w");
+      omol = us_fopen("ofraxon", "w");
 
       fprintf(omol, "%d\t", nat);
       fprintf(omol, "%f\t", raggio);
       fprintf(omol, "%s\n", "ofraxon1");
 
-      ormc = fopen("ofraxon1", "w");
+      ormc = us_fopen("ofraxon1", "w");
 
       for (i = 0; i < nat; i++)
       {
@@ -532,13 +532,13 @@ us_hydrodyn_pat_main(int                 use_nmax,
          }
 #if defined(OLD_WAY_CHECK)
 
-         omol = fopen("ofraxon", "w");
+         omol = us_fopen("ofraxon", "w");
 
          fprintf(omol, "%d\t", nat);
          fprintf(omol, "%f\t", raggio);
          fprintf(omol, "%s\n", "ofraxon1");
 
-         ormc = fopen("ofraxon1", "w");
+         ormc = us_fopen("ofraxon1", "w");
 
          for (i = 0; i < nat; i++)
          {
@@ -593,8 +593,8 @@ inp_inter()
 
    int i;
 
-   FILE *interinp = fopen("p_ifraxon", "wb");
-   FILE *interinp1 = fopen("p_ifraxon1", "wb");
+   FILE *interinp = us_fopen("p_ifraxon", "wb");
+   FILE *interinp1 = us_fopen("p_ifraxon1", "wb");
 
    fprintf(interinp, "%d\n", nat);
    fprintf(interinp, "%f\n", 0.0);
@@ -704,7 +704,7 @@ initarray()
 {
    int i;
 
-   //   mol = fopen("ifraxon", "r");
+   //   mol = us_fopen("ifraxon", "r");
 
    //   fscanf(mol, "%d", &nat);
    //   fscanf(mol, "%f", &raggio);
@@ -712,7 +712,7 @@ initarray()
    if (raggio == 0.0)
    {
       fscanf(mol, "%s", ragcol);
-      rmc = fopen(ragcol, "r");   /* opening the file containing the unhydrated radii, the masses and the colors of the beads */
+      rmc = us_fopen(ragcol, "r");   /* opening the file containing the unhydrated radii, the masses and the colors of the beads */
 
       for (i = 0; i < nat; i++)
       {
@@ -728,7 +728,7 @@ initarray()
    else if ((raggio == -1.0) || (raggio == -3.0))
    {
       fscanf(mol, "%s", ragcol);
-      rmc = fopen(ragcol, "r");   /* opening the file containg both the hydrated and unhydrated radii, the masses and the colors of the beads */
+      rmc = us_fopen(ragcol, "r");   /* opening the file containg both the hydrated and unhydrated radii, the masses and the colors of the beads */
 
       for (i = 0; i < nat; i++)
       {

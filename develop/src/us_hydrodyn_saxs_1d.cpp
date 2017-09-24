@@ -11,15 +11,15 @@
 #ifdef QT4
 # include <qwt_scale_engine.h>
 //Added by qt3to4:
-#include <Q3BoxLayout>
+#include <QBoxLayout>
 #include <QLabel>
 #include <QCloseEvent>
-#include <Q3GridLayout>
-#include <Q3TextStream>
-#include <Q3HBoxLayout>
-#include <Q3VBoxLayout>
-#include <Q3Frame>
-#include <Q3PopupMenu>
+#include <QGridLayout>
+#include <QTextStream>
+#include <QHBoxLayout>
+#include <QVBoxLayout>
+#include <QFrame>
+ //#include <Q3PopupMenu>
 #endif
 
 #if defined( HAS_CBF )
@@ -49,12 +49,12 @@ US_Hydrodyn_Saxs_1d::US_Hydrodyn_Saxs_1d(
                                          void *us_hydrodyn, 
                                          QWidget *p, 
                                          const char *name
-                                         ) : Q3Frame(p, name)
+                                         ) : QFrame( p )
 {
    this->us_hydrodyn = us_hydrodyn;
    USglobal = new US_Config();
    setPalette( PALET_FRAME );
-   setCaption( tr( "US-SOMO: SAXS 1D Simulation" ) );
+   setWindowTitle( us_tr( "US-SOMO: SAXS 1D Simulation" ) );
 
    saxs_widget = &(((US_Hydrodyn *) us_hydrodyn)->saxs_plot_widget);
    saxs_window = ((US_Hydrodyn *) us_hydrodyn)->saxs_plot_window;
@@ -131,8 +131,8 @@ void US_Hydrodyn_Saxs_1d::setupGUI()
    int minHeight3 = 30;
 #endif
 
-   lbl_title = new QLabel( tr( "US-SOMO: SAXS 1D Simulation" ), this);
-   lbl_title->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Raised);
+   lbl_title = new QLabel( us_tr( "US-SOMO: SAXS 1D Simulation" ), this);
+   lbl_title->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_title->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_title->setMinimumHeight(minHeight1);
    lbl_title->setPalette( PALET_FRAME );
@@ -145,7 +145,7 @@ void US_Hydrodyn_Saxs_1d::setupGUI()
    AUTFBACK( lbl_atom_file );
    lbl_atom_file->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
-   le_atom_file = new QLineEdit( this, "Atom_File Line Edit");
+   le_atom_file = new QLineEdit(  this );    le_atom_file->setObjectName( "Atom_File Line Edit" );
    le_atom_file->setText( saxs_window->te_filename2->text() );
    le_atom_file->setReadOnly( true );
    le_atom_file->setAlignment(Qt::AlignVCenter);
@@ -154,13 +154,13 @@ void US_Hydrodyn_Saxs_1d::setupGUI()
    le_atom_file->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    le_atom_file->setMinimumWidth( 100 );
 
-   lbl_lambda = new QLabel(tr(" Wavelength of beam (A):"), this );
+   lbl_lambda = new QLabel(us_tr(" Wavelength of beam (A):"), this );
    lbl_lambda->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_lambda->setPalette( PALET_LABEL );
    AUTFBACK( lbl_lambda );
    lbl_lambda->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
-   le_lambda = new QLineEdit( this, "Lambda Line Edit");
+   le_lambda = new QLineEdit(  this );    le_lambda->setObjectName( "Lambda Line Edit" );
    le_lambda->setText( QString( "" ).sprintf("%g", 1.54 ));
    le_lambda->setAlignment(Qt::AlignVCenter);
    le_lambda->setPalette( PALET_NORMAL );
@@ -168,13 +168,13 @@ void US_Hydrodyn_Saxs_1d::setupGUI()
    le_lambda->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_lambda, SIGNAL(textChanged(const QString &)), SLOT(update_lambda(const QString &)));
 
-   lbl_detector_distance = new QLabel(tr(" Detector distance from sample (m):"), this );
+   lbl_detector_distance = new QLabel(us_tr(" Detector distance from sample (m):"), this );
    lbl_detector_distance->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_detector_distance->setPalette( PALET_LABEL );
    AUTFBACK( lbl_detector_distance );
    lbl_detector_distance->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
-   le_detector_distance = new QLineEdit( this, "Detector_Distance Line Edit");
+   le_detector_distance = new QLineEdit(  this );    le_detector_distance->setObjectName( "Detector_Distance Line Edit" );
    le_detector_distance->setText( QString( "" ).sprintf("%g", 1.33 ));
    le_detector_distance->setAlignment(Qt::AlignVCenter);
    le_detector_distance->setPalette( PALET_NORMAL );
@@ -182,13 +182,13 @@ void US_Hydrodyn_Saxs_1d::setupGUI()
    le_detector_distance->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_detector_distance, SIGNAL(textChanged(const QString &)), SLOT(update_detector_distance(const QString &)));
 
-   lbl_detector_geometry = new QLabel(tr(" Detector width (mm):"), this );
+   lbl_detector_geometry = new QLabel(us_tr(" Detector width (mm):"), this );
    lbl_detector_geometry->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_detector_geometry->setPalette( PALET_LABEL );
    AUTFBACK( lbl_detector_geometry );
    lbl_detector_geometry->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
-   le_detector_width = new QLineEdit( this, "Detector_Width Line Edit");
+   le_detector_width = new QLineEdit(  this );    le_detector_width->setObjectName( "Detector_Width Line Edit" );
    le_detector_width->setText( QString( "" ).sprintf("%g", 341.0 ));
    le_detector_width->setAlignment(Qt::AlignVCenter);
    le_detector_width->setPalette( PALET_NORMAL );
@@ -196,13 +196,13 @@ void US_Hydrodyn_Saxs_1d::setupGUI()
    le_detector_width->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_detector_width, SIGNAL(textChanged(const QString &)), SLOT(update_detector_width(const QString &)));
 
-   lbl_detector_pixels = new QLabel(tr(" Detector pixels count:"), this );
+   lbl_detector_pixels = new QLabel(us_tr(" Detector pixels count:"), this );
    lbl_detector_pixels->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_detector_pixels->setPalette( PALET_LABEL );
    AUTFBACK( lbl_detector_pixels );
    lbl_detector_pixels->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
-   le_detector_pixels_width = new QLineEdit( this, "Detector_Pixels_Width Line Edit");
+   le_detector_pixels_width = new QLineEdit(  this );    le_detector_pixels_width->setObjectName( "Detector_Pixels_Width Line Edit" );
    // le_detector_pixels_width->setText(QString( "" ).sprintf("%u",(*hydro).detector_pixels_width));
    le_detector_pixels_width->setText( QString( "" ).sprintf( "%d", 50 ) );
    le_detector_pixels_width->setAlignment(Qt::AlignVCenter);
@@ -211,13 +211,13 @@ void US_Hydrodyn_Saxs_1d::setupGUI()
    le_detector_pixels_width->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_detector_pixels_width, SIGNAL(textChanged(const QString &)), SLOT(update_detector_pixels_width(const QString &)));
 
-   lbl_rho0 = new QLabel(tr("rho0 (1/A^3):"), this );
+   lbl_rho0 = new QLabel(us_tr("rho0 (1/A^3):"), this );
    lbl_rho0->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_rho0->setPalette( PALET_LABEL );
    AUTFBACK( lbl_rho0 );
    lbl_rho0->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
-   le_rho0 = new QLineEdit( this, "rho0 (1/A^3):");
+   le_rho0 = new QLineEdit(  this );    le_rho0->setObjectName( "rho0 (1/A^3):" );
    le_rho0->setText( QString( "" ).sprintf( "%g", our_saxs_options->water_e_density ) );
    le_rho0->setAlignment(Qt::AlignVCenter);
    le_rho0->setPalette( PALET_NORMAL );
@@ -226,7 +226,7 @@ void US_Hydrodyn_Saxs_1d::setupGUI()
    connect(le_rho0, SIGNAL(textChanged(const QString &)), SLOT(update_rho0(const QString &)));
 
    cb_only_ev = new QCheckBox( this );
-   cb_only_ev->setText(tr(" Only compute excluded volume component"));
+   cb_only_ev->setText(us_tr(" Only compute excluded volume component"));
    cb_only_ev->setEnabled( true );
    cb_only_ev->setChecked( false );
    cb_only_ev->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -234,20 +234,20 @@ void US_Hydrodyn_Saxs_1d::setupGUI()
    AUTFBACK( cb_only_ev );
 
    cb_vvv = new QCheckBox( this );
-   cb_vvv->setText(tr(" Use VVV"));
+   cb_vvv->setText(us_tr(" Use VVV"));
    cb_vvv->setEnabled( true );
    cb_vvv->setChecked( false );
    cb_vvv->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_vvv->setPalette( PALET_NORMAL );
    AUTFBACK( cb_vvv );
 
-   lbl_deltaR = new QLabel(tr(" Delta x,y,z for integration (A)"), this );
+   lbl_deltaR = new QLabel(us_tr(" Delta x,y,z for integration (A)"), this );
    lbl_deltaR->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_deltaR->setPalette( PALET_LABEL );
    AUTFBACK( lbl_deltaR );
    lbl_deltaR->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
-   le_deltaR = new QLineEdit( this, "DeltaR Line Edit");
+   le_deltaR = new QLineEdit(  this );    le_deltaR->setObjectName( "DeltaR Line Edit" );
    le_deltaR->setText( QString( "" ).sprintf( "%g", 1.0 ) );
    le_deltaR->setAlignment(Qt::AlignVCenter);
    le_deltaR->setPalette( PALET_NORMAL );
@@ -255,13 +255,13 @@ void US_Hydrodyn_Saxs_1d::setupGUI()
    le_deltaR->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_deltaR, SIGNAL(textChanged(const QString &)), SLOT(update_deltaR(const QString &)));
 
-   lbl_probe_radius = new QLabel(tr(" Excluded volume LR probe radius(A)"), this );
+   lbl_probe_radius = new QLabel(us_tr(" Excluded volume LR probe radius(A)"), this );
    lbl_probe_radius->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_probe_radius->setPalette( PALET_LABEL );
    AUTFBACK( lbl_probe_radius );
    lbl_probe_radius->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
-   le_probe_radius = new QLineEdit( this, "probe radius Line Edit");
+   le_probe_radius = new QLineEdit(  this );    le_probe_radius->setObjectName( "probe radius Line Edit" );
    le_probe_radius->setText( QString( "" ).sprintf( "%g", 1.4 ) );
    le_probe_radius->setAlignment(Qt::AlignVCenter);
    le_probe_radius->setPalette( PALET_NORMAL );
@@ -270,13 +270,13 @@ void US_Hydrodyn_Saxs_1d::setupGUI()
    connect(le_probe_radius, SIGNAL(textChanged(const QString &)), SLOT(update_probe_radius(const QString &)));
 
 
-   pb_set_target_ev = new QPushButton(tr("Set target excluded volume:"), this);
+   pb_set_target_ev = new QPushButton(us_tr("Set target excluded volume:"), this);
    pb_set_target_ev->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize  - 1));
    // pb_set_target_ev->setMinimumHeight(minHeight1);
    pb_set_target_ev->setPalette( PALET_PUSHB );
    connect(pb_set_target_ev, SIGNAL(clicked()), SLOT(set_target_ev()));
 
-   le_target_ev = new QLineEdit( this, "target_ev Line Edit");
+   le_target_ev = new QLineEdit(  this );    le_target_ev->setObjectName( "target_ev Line Edit" );
    le_target_ev->setText( QString( "" ).sprintf( "%g", 1.0 ) );
    le_target_ev->setAlignment(Qt::AlignVCenter);
    le_target_ev->setPalette( PALET_NORMAL );
@@ -284,13 +284,13 @@ void US_Hydrodyn_Saxs_1d::setupGUI()
    le_target_ev->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_target_ev, SIGNAL(textChanged(const QString &)), SLOT(update_target_ev(const QString &)));
 
-   pb_find_target_ev_thresh = new QPushButton(tr("Recompute SV thresh:"), this);
+   pb_find_target_ev_thresh = new QPushButton(us_tr("Recompute SV thresh:"), this);
    pb_find_target_ev_thresh->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    //   pb_find_target_ev_thresh->setMinimumHeight(minHeight1);
    pb_find_target_ev_thresh->setPalette( PALET_PUSHB );
    connect(pb_find_target_ev_thresh, SIGNAL(clicked()), SLOT(find_target_ev_thresh()));
 
-   le_threshold = new QLineEdit( this, "threshold Line Edit");
+   le_threshold = new QLineEdit(  this );    le_threshold->setObjectName( "threshold Line Edit" );
    le_threshold->setText( QString( "" ).sprintf( "%g", 1.0 ) );
    le_threshold->setAlignment(Qt::AlignVCenter);
    le_threshold->setPalette( PALET_NORMAL );
@@ -298,13 +298,13 @@ void US_Hydrodyn_Saxs_1d::setupGUI()
    le_threshold->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_threshold, SIGNAL(textChanged(const QString &)), SLOT(update_threshold(const QString &)));
 
-   lbl_sample_rotations = new QLabel( tr(" Sample rotations (best equalized over sphere):"), this );
+   lbl_sample_rotations = new QLabel( us_tr(" Sample rotations (best equalized over sphere):"), this );
    lbl_sample_rotations->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_sample_rotations->setPalette( PALET_LABEL );
    AUTFBACK( lbl_sample_rotations );
    lbl_sample_rotations->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
-   le_sample_rotations = new QLineEdit( this, "Sample_Rotations Line Edit");
+   le_sample_rotations = new QLineEdit(  this );    le_sample_rotations->setObjectName( "Sample_Rotations Line Edit" );
    le_sample_rotations->setText( QString( "" ).sprintf( "%u", 1 ) );
    le_sample_rotations->setAlignment(Qt::AlignVCenter);
    le_sample_rotations->setPalette( PALET_NORMAL );
@@ -312,13 +312,13 @@ void US_Hydrodyn_Saxs_1d::setupGUI()
    le_sample_rotations->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_sample_rotations, SIGNAL(textChanged(const QString &)), SLOT(update_sample_rotations(const QString &)));
 
-   lbl_axis_rotations = new QLabel( tr(" Axis rotations:"), this );
+   lbl_axis_rotations = new QLabel( us_tr(" Axis rotations:"), this );
    lbl_axis_rotations->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_axis_rotations->setPalette( PALET_LABEL );
    AUTFBACK( lbl_axis_rotations );
    lbl_axis_rotations->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
-   le_axis_rotations = new QLineEdit( this, "Axis_Rotations Line Edit");
+   le_axis_rotations = new QLineEdit(  this );    le_axis_rotations->setObjectName( "Axis_Rotations Line Edit" );
    le_axis_rotations->setText( QString( "" ).sprintf( "%u", 1 ) );
    le_axis_rotations->setAlignment(Qt::AlignVCenter);
    le_axis_rotations->setPalette( PALET_NORMAL );
@@ -326,13 +326,13 @@ void US_Hydrodyn_Saxs_1d::setupGUI()
    le_axis_rotations->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_axis_rotations, SIGNAL(textChanged(const QString &)), SLOT(update_axis_rotations(const QString &)));
 
-   lbl_spec_multiplier = new QLabel( tr(" Scale ev q dot r:"), this );
+   lbl_spec_multiplier = new QLabel( us_tr(" Scale ev q dot r:"), this );
    lbl_spec_multiplier->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_spec_multiplier->setPalette( PALET_LABEL );
    AUTFBACK( lbl_spec_multiplier );
    lbl_spec_multiplier->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
-   le_spec_multiplier = new QLineEdit( this, "Spec_Multiplier Line Edit");
+   le_spec_multiplier = new QLineEdit(  this );    le_spec_multiplier->setObjectName( "Spec_Multiplier Line Edit" );
    le_spec_multiplier->setText( QString( "" ).sprintf( "%g", 1.0f ) );
    le_spec_multiplier->setAlignment(Qt::AlignVCenter);
    le_spec_multiplier->setPalette( PALET_NORMAL );
@@ -341,7 +341,7 @@ void US_Hydrodyn_Saxs_1d::setupGUI()
    connect(le_spec_multiplier, SIGNAL(textChanged(const QString &)), SLOT(update_spec_multiplier(const QString &)));
 
    cb_planar_method = new QCheckBox( this );
-   cb_planar_method->setText(tr(" Planar method"));
+   cb_planar_method->setText(us_tr(" Planar method"));
    cb_planar_method->setEnabled( true );
    cb_planar_method->setChecked( false );
    cb_planar_method->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -350,7 +350,7 @@ void US_Hydrodyn_Saxs_1d::setupGUI()
    connect( cb_planar_method, SIGNAL( clicked() ), SLOT( set_planar_method() ) );
 
    cb_random_rotations = new QCheckBox( this );
-   cb_random_rotations->setText(tr(" Random rotations"));
+   cb_random_rotations->setText(us_tr(" Random rotations"));
    cb_random_rotations->setEnabled( true );
    cb_random_rotations->setChecked( false );
    cb_random_rotations->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -359,52 +359,52 @@ void US_Hydrodyn_Saxs_1d::setupGUI()
    connect( cb_random_rotations, SIGNAL( clicked() ), SLOT( set_random_rotations() ) );
 
    cb_save_pdbs = new QCheckBox( this );
-   cb_save_pdbs->setText(tr(" Save rotated PDBs and excluded volume maps"));
+   cb_save_pdbs->setText(us_tr(" Save rotated PDBs and excluded volume maps"));
    cb_save_pdbs->setEnabled(true);
    cb_save_pdbs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_save_pdbs->setPalette( PALET_NORMAL );
    AUTFBACK( cb_save_pdbs );
 
    cb_memory_conserve = new QCheckBox( this );
-   cb_memory_conserve->setText(tr(" Disable plot display (faster)"));
+   cb_memory_conserve->setText(us_tr(" Disable plot display (faster)"));
    cb_memory_conserve->setEnabled(true);
    cb_memory_conserve->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_memory_conserve->setPalette( PALET_NORMAL );
    AUTFBACK( cb_memory_conserve );
 
    cb_ev_from_file = new QCheckBox( this );
-   cb_ev_from_file->setText(tr(" Excluded volume map from file"));
+   cb_ev_from_file->setText(us_tr(" Excluded volume map from file"));
    cb_ev_from_file->setEnabled( true );
    cb_ev_from_file->setChecked( false );
    cb_ev_from_file->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_ev_from_file->setPalette( PALET_NORMAL );
    AUTFBACK( cb_ev_from_file );
 
-   pb_info = new QPushButton(tr("Compute q range"), this);
+   pb_info = new QPushButton(us_tr("Compute q range"), this);
    pb_info->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_info->setMinimumHeight(minHeight1);
    pb_info->setPalette( PALET_PUSHB );
    connect(pb_info, SIGNAL(clicked()), SLOT(info()));
 
-   pb_save_data = new QPushButton(tr("Average and save results"), this);
+   pb_save_data = new QPushButton(us_tr("Average and save results"), this);
    pb_save_data->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_save_data->setMinimumHeight(minHeight1);
    pb_save_data->setPalette( PALET_PUSHB );
    connect(pb_save_data, SIGNAL(clicked()), SLOT(save_data()));
 
-   pb_to_somo = new QPushButton(tr("To main SAS window"), this);
+   pb_to_somo = new QPushButton(us_tr("To main SAS window"), this);
    pb_to_somo->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_to_somo->setMinimumHeight(minHeight1);
    pb_to_somo->setPalette( PALET_PUSHB );
    connect(pb_to_somo, SIGNAL(clicked()), SLOT(to_somo()));
 
-   pb_start = new QPushButton(tr("Start"), this);
+   pb_start = new QPushButton(us_tr("Start"), this);
    pb_start->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_start->setMinimumHeight(minHeight1);
    pb_start->setPalette( PALET_PUSHB );
    connect(pb_start, SIGNAL(clicked()), SLOT(start()));
 
-   pb_stop = new QPushButton(tr("Stop"), this);
+   pb_stop = new QPushButton(us_tr("Stop"), this);
    pb_stop->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_stop->setMinimumHeight(minHeight1);
    pb_stop->setPalette( PALET_PUSHB );
@@ -412,55 +412,82 @@ void US_Hydrodyn_Saxs_1d::setupGUI()
 
    lbl_1d = new QLabel( this );
 
-   progress = new Q3ProgressBar(this, "Progress");
+   progress = new QProgressBar( this );
    progress->setMinimumHeight(minHeight1);
    progress->setPalette( PALET_NORMAL );
    AUTFBACK( progress );
    progress->reset();
 
-   editor = new Q3TextEdit(this);
+   editor = new QTextEdit(this);
    editor->setPalette( PALET_NORMAL );
    AUTFBACK( editor );
    editor->setReadOnly(true);
 
-#if defined(QT4) && defined(Q_WS_MAC)
+#if QT_VERSION < 0x040000
+# if defined(QT4) && defined(Q_WS_MAC)
    {
-      Q3PopupMenu * file = new Q3PopupMenu;
-      file->insertItem( tr("&Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
-      file->insertItem( tr("&Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
-      file->insertItem( tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
+ //      Q3PopupMenu * file = new Q3PopupMenu;
+      file->insertItem( us_tr("&Font"),  this, SLOT(update_font( )),    Qt::ALT+Qt::Key_F );
+      file->insertItem( us_tr("&Save"),  this, SLOT(save( )),    Qt::ALT+Qt::Key_S );
+      file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display( )),   Qt::ALT+Qt::Key_X );
 
       QMenuBar *menu = new QMenuBar( this );
       AUTFBACK( menu );
 
-      menu->insertItem(tr("&Messages"), file );
+      menu->insertItem(us_tr("&Messages"), file );
    }
-#else
-   Q3Frame *frame;
-   frame = new Q3Frame(this);
+# else
+   QFrame *frame;
+   frame = new QFrame(this);
    frame->setMinimumHeight(minHeight3);
 
-   m = new QMenuBar(frame, "menu" );
+   m = new QMenuBar( frame );    m->setObjectName( "menu" );
    m->setMinimumHeight(minHeight1 - 5);
    m->setPalette( PALET_NORMAL );
    AUTFBACK( m );
-   Q3PopupMenu * file = new Q3PopupMenu(editor);
-   m->insertItem( tr("&File"), file );
-   file->insertItem( tr("Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
-   file->insertItem( tr("Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
-   file->insertItem( tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
+ //   Q3PopupMenu * file = new Q3PopupMenu(editor);
+   m->insertItem( us_tr("&File"), file );
+   file->insertItem( us_tr("Font"),  this, SLOT(update_font( )),    Qt::ALT+Qt::Key_F );
+   file->insertItem( us_tr("Save"),  this, SLOT(save( )),    Qt::ALT+Qt::Key_S );
+   file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display( )),   Qt::ALT+Qt::Key_X );
+# endif
+#else
+   QFrame *frame;
+   frame = new QFrame(this);
+   frame->setMinimumHeight(minHeight3);
+
+   m = new QMenuBar( frame );    m->setObjectName( "menu" );
+   m->setMinimumHeight(minHeight1 - 5);
+   m->setPalette( PALET_NORMAL );
+   AUTFBACK( m );
+
+   {
+      QMenu * new_menu = m->addMenu( us_tr( "&File" ) );
+
+      QAction *qa1 = new_menu->addAction( us_tr( "Font" ) );
+      qa1->setShortcut( Qt::ALT+Qt::Key_F );
+      connect( qa1, SIGNAL(triggered()), this, SLOT( update_font() ) );
+
+      QAction *qa2 = new_menu->addAction( us_tr( "Save" ) );
+      qa2->setShortcut( Qt::ALT+Qt::Key_S );
+      connect( qa2, SIGNAL(triggered()), this, SLOT( save() ) );
+
+      QAction *qa3 = new_menu->addAction( us_tr( "Clear Display" ) );
+      qa3->setShortcut( Qt::ALT+Qt::Key_X );
+      connect( qa3, SIGNAL(triggered()), this, SLOT( clear_display() ) );
+   }
 #endif
 
-   editor->setWordWrap (Q3TextEdit::WidgetWidth);
+   editor->setWordWrapMode (QTextOption::WordWrap);
    // editor->setMinimumHeight(300);
    
-   pb_help = new QPushButton(tr("Help"), this);
+   pb_help = new QPushButton(us_tr("Help"), this);
    pb_help->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_help->setMinimumHeight(minHeight1);
    pb_help->setPalette( PALET_PUSHB );
    connect(pb_help, SIGNAL(clicked()), SLOT(help()));
 
-   pb_cancel = new QPushButton(tr("Close"), this);
+   pb_cancel = new QPushButton(us_tr("Close"), this);
    pb_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_cancel->setMinimumHeight(minHeight1);
    pb_cancel->setPalette( PALET_PUSHB );
@@ -488,8 +515,8 @@ void US_Hydrodyn_Saxs_1d::setupGUI()
    grid_saxs->setMinPen( QPen( USglobal->global_colors.minor_ticks, 0, Qt::DotLine ) );
    grid_saxs->attach( plot_saxs );
 #endif
-   plot_saxs->setAxisTitle( QwtPlot::xBottom, false /* cb_guinier->isChecked() */ ? tr( "q^2 (1/Angstrom^2)" ) : tr( "q (1/Angstrom)" ) );
-   plot_saxs->setAxisTitle( QwtPlot::yLeft,   false /* cb_kratky ->isChecked() */ ? tr( " q^2 * I(q)"        ) : tr( "Log10 I(q)"     ) );
+   plot_saxs->setAxisTitle( QwtPlot::xBottom, false /* cb_guinier->isChecked() */ ? us_tr( "q^2 (1/Angstrom^2)" ) : us_tr( "q (1/Angstrom)" ) );
+   plot_saxs->setAxisTitle( QwtPlot::yLeft,   false /* cb_kratky ->isChecked() */ ? us_tr( " q^2 * I(q)"        ) : us_tr( "Log10 I(q)"     ) );
 #ifndef QT4
    plot_saxs->setTitleFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 3, QFont::Bold));
    plot_saxs->setAxisTitleFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
@@ -522,7 +549,7 @@ void US_Hydrodyn_Saxs_1d::setupGUI()
    // build layout
    // grid for options
 
-   Q3GridLayout *gl_options = new Q3GridLayout( 0 );
+   QGridLayout * gl_options = new QGridLayout( 0 ); gl_options->setContentsMargins( 0, 0, 0, 0 ); gl_options->setSpacing( 0 );
    {
       int j = 0;
       gl_options->addWidget         ( lbl_atom_file                   , j, 0 );
@@ -543,9 +570,9 @@ void US_Hydrodyn_Saxs_1d::setupGUI()
       gl_options->addWidget         ( lbl_rho0                        , j, 0 );
       gl_options->addWidget         ( le_rho0                         , j, 1 );
       j++;
-      gl_options->addMultiCellWidget( cb_only_ev                      , j, j, 0, 1 );
+      gl_options->addWidget( cb_only_ev                       , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1  ) - ( 0 ) );
       j++;
-      gl_options->addMultiCellWidget( cb_vvv                          , j, j, 0, 1 );
+      gl_options->addWidget( cb_vvv                           , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1  ) - ( 0 ) );
       j++;
       gl_options->addWidget         ( lbl_deltaR                      , j, 0 );
       gl_options->addWidget         ( le_deltaR                       , j, 1 );
@@ -568,44 +595,44 @@ void US_Hydrodyn_Saxs_1d::setupGUI()
       gl_options->addWidget         ( lbl_spec_multiplier             , j, 0 );
       gl_options->addWidget         ( le_spec_multiplier              , j, 1 );
       j++;
-      gl_options->addMultiCellWidget( cb_planar_method                , j, j, 0, 1 );
+      gl_options->addWidget( cb_planar_method                 , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1  ) - ( 0 ) );
       j++;
-      gl_options->addMultiCellWidget( cb_random_rotations             , j, j, 0, 1 );
+      gl_options->addWidget( cb_random_rotations              , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1  ) - ( 0 ) );
       j++;
-      gl_options->addMultiCellWidget( cb_ev_from_file                 , j, j, 0, 1 );
+      gl_options->addWidget( cb_ev_from_file                  , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1  ) - ( 0 ) );
       j++;
-      gl_options->addMultiCellWidget( cb_save_pdbs                    , j, j, 0, 1 );
+      gl_options->addWidget( cb_save_pdbs                     , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1  ) - ( 0 ) );
       j++;
-      gl_options->addMultiCellWidget( cb_memory_conserve              , j, j, 0, 1 );
+      gl_options->addWidget( cb_memory_conserve               , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1  ) - ( 0 ) );
       j++;
-      gl_options->addMultiCellWidget( pb_info                         , j, j, 0, 1 );
+      gl_options->addWidget( pb_info                          , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1  ) - ( 0 ) );
       j++;
    }
 
-   Q3BoxLayout *vbl_editor_group = new Q3VBoxLayout( 0 );
+   QBoxLayout *vbl_editor_group = new QVBoxLayout( 0 );
    vbl_editor_group->addLayout( gl_options );
 #if !defined(QT4) || !defined(Q_WS_MAC)
    vbl_editor_group->addWidget( frame      );
 #endif
    vbl_editor_group->addWidget( editor     );
 
-   Q3BoxLayout *hbl_plot_buttons     = new Q3HBoxLayout( 0 );
+   QBoxLayout *hbl_plot_buttons     = new QHBoxLayout();
    hbl_plot_buttons->addSpacing( 4 );
    hbl_plot_buttons->addWidget ( pb_save_data );
    hbl_plot_buttons->addSpacing( 4 );
    hbl_plot_buttons->addWidget ( pb_to_somo   );
    hbl_plot_buttons->addSpacing( 4 );
 
-   Q3BoxLayout *vbl_plot_area     = new Q3VBoxLayout( 0 );
+   QBoxLayout *vbl_plot_area     = new QVBoxLayout( 0 );
    vbl_plot_area->addWidget( lbl_1d );
    vbl_plot_area->addWidget( plot_saxs );
    vbl_plot_area->addLayout( hbl_plot_buttons );
 
-   Q3HBoxLayout *hbl_editor_1d = new Q3HBoxLayout( 0 );
+   QHBoxLayout * hbl_editor_1d = new QHBoxLayout(); hbl_editor_1d->setContentsMargins( 0, 0, 0, 0 ); hbl_editor_1d->setSpacing( 0 );
    hbl_editor_1d->addLayout( vbl_editor_group );
    hbl_editor_1d->addLayout( vbl_plot_area );
 
-   Q3HBoxLayout *hbl_controls = new Q3HBoxLayout( 0 );
+   QHBoxLayout * hbl_controls = new QHBoxLayout(); hbl_controls->setContentsMargins( 0, 0, 0, 0 ); hbl_controls->setSpacing( 0 );
    hbl_controls->addSpacing(4);
    hbl_controls->addWidget(pb_start);
    hbl_controls->addSpacing(4);
@@ -614,17 +641,17 @@ void US_Hydrodyn_Saxs_1d::setupGUI()
    hbl_controls->addWidget(pb_stop);
    hbl_controls->addSpacing(4);
 
-   Q3VBoxLayout *vbl_target_controls = new Q3VBoxLayout( 0 );
+   QVBoxLayout * vbl_target_controls = new QVBoxLayout( 0 ); vbl_target_controls->setContentsMargins( 0, 0, 0, 0 ); vbl_target_controls->setSpacing( 0 );
    vbl_target_controls->addLayout( hbl_controls );
 
-   Q3HBoxLayout *hbl_bottom = new Q3HBoxLayout( 0 );
+   QHBoxLayout * hbl_bottom = new QHBoxLayout(); hbl_bottom->setContentsMargins( 0, 0, 0, 0 ); hbl_bottom->setSpacing( 0 );
    hbl_bottom->addSpacing( 4 );
    hbl_bottom->addWidget ( pb_help );
    hbl_bottom->addSpacing( 4 );
    hbl_bottom->addWidget ( pb_cancel );
    hbl_bottom->addSpacing( 4 );
 
-   Q3VBoxLayout *background = new Q3VBoxLayout(this);
+   QVBoxLayout * background = new QVBoxLayout(this); background->setContentsMargins( 0, 0, 0, 0 ); background->setSpacing( 0 );
    background->addSpacing( 4 );
    background->addWidget ( lbl_title );
    background->addSpacing( 4 );
@@ -678,20 +705,20 @@ void US_Hydrodyn_Saxs_1d::update_font()
 void US_Hydrodyn_Saxs_1d::save()
 {
    QString fn;
-   fn = QFileDialog::getSaveFileName( this , caption() , QString::null , QString::null );
+   fn = QFileDialog::getSaveFileName( this , windowTitle() , QString::null , QString::null );
    if(!fn.isEmpty() )
    {
-      QString text = editor->text();
+      QString text = editor->toPlainText();
       QFile f( fn );
       if ( !f.open( QIODevice::WriteOnly | QIODevice::Text) )
       {
          return;
       }
-      Q3TextStream t( &f );
+      QTextStream t( &f );
       t << text;
       f.close();
-      editor->setModified( false );
-      setCaption( fn );
+ //      editor->setModified( false );
+      setWindowTitle( fn );
    }
 }
 
@@ -832,7 +859,7 @@ void US_Hydrodyn_Saxs_1d::start()
    vector < vector < double > > rotations;
 
    editor_msg( "gray", "computing rotations\n" );
-   progress->setProgress( 0, 1 );
+   progress->setValue( 0 ); progress->setMaximum( 1 );
    qApp->processEvents();
 
    double deltaphi = 0e0;
@@ -844,7 +871,7 @@ void US_Hydrodyn_Saxs_1d::start()
       if ( cb_planar_method->isChecked() )
       {
          deltaphi = M_PI / ( double ) le_sample_rotations->text().toInt();
-         editor_msg( "blue", QString( tr( "Using planar method.  deltaPhi = %1" ) ).arg( deltaphi ) );
+         editor_msg( "blue", QString( us_tr( "Using planar method.  deltaPhi = %1" ) ).arg( deltaphi ) );
          vector < double > x( 3 );
          x[ 1 ] = 0e0;
          for ( double phi = - M_PI / 2.0; phi <= M_PI / 2.0; phi += deltaphi )
@@ -925,7 +952,7 @@ void US_Hydrodyn_Saxs_1d::start()
    vector < saxs_atom > atoms;
    vector < PDB_atom >  model;
 
-   progress->setProgress( 0, 1 );
+   progress->setValue( 0 ); progress->setMaximum( 1 );
 
    double atomic_scaler     = pow( 10e0, unit );
    atomic_scaler = 1e0; // pdbs and Q in Angstrom units
@@ -934,7 +961,7 @@ void US_Hydrodyn_Saxs_1d::start()
    cout << QString( "atomic scaler %1\n"
                     "atomic scaler inv %2\n" )
       .arg( atomic_scaler )
-      .arg( atomic_scaler_inv ).ascii();
+      .arg( atomic_scaler_inv ).toAscii().data();
 
    for ( unsigned int i = 0; i < selected_models.size(); i++ )
    {
@@ -946,7 +973,7 @@ void US_Hydrodyn_Saxs_1d::start()
       unsigned int total_e_noh = 0;
 
       editor_msg( "gray", 
-                  QString( tr( "Preparing file %1 model %2." ) )
+                  QString( us_tr( "Preparing file %1 model %2." ) )
                   .arg( le_atom_file->text() )
                   .arg(current_model + 1) );
 
@@ -1120,7 +1147,7 @@ void US_Hydrodyn_Saxs_1d::start()
             new_atom.hybrid_name = hybrid_name;
             new_atom.hydrogens = 0;
             if ( !our_saxs_options->iqq_use_atomic_ff &&
-                 count_hydrogens.search(hybrid_name) != -1 )
+                 count_hydrogens.indexIn(hybrid_name) != -1 )
             {
                new_atom.hydrogens = count_hydrogens.cap(1).toInt();
             }
@@ -1161,7 +1188,7 @@ void US_Hydrodyn_Saxs_1d::start()
 
    if ( !atoms.size() )
    {
-      editor_msg( "red", QString( tr( "Error: no atoms found!\n" ) ) );
+      editor_msg( "red", QString( us_tr( "Error: no atoms found!\n" ) ) );
       return;
    }
 
@@ -1276,7 +1303,7 @@ void US_Hydrodyn_Saxs_1d::start()
 
       if ( !r )
       {
-         editor_msg( "gray", QString( tr( "Total excluded volume %1 Angstrom^3" ) )
+         editor_msg( "gray", QString( us_tr( "Total excluded volume %1 Angstrom^3" ) )
                      .arg( excluded_volume.size() *
                            deltaR * deltaR * deltaR ) );
       }
@@ -1291,7 +1318,7 @@ void US_Hydrodyn_Saxs_1d::start()
 
       if ( !cb_memory_conserve->isChecked() )
       {
-         editor_msg( "gray", tr( "Initializing data" ) );
+         editor_msg( "gray", us_tr( "Initializing data" ) );
          qApp->processEvents();
       }
       //       data.resize( detector_pixels_width );
@@ -1379,7 +1406,7 @@ void US_Hydrodyn_Saxs_1d::start()
             // and rotate excluded volume (this may have to be done piecemeal to save memory
             if ( !cb_memory_conserve->isChecked() )
             {
-               editor_msg( "gray", tr( "Rotating excluded volume" ) );
+               editor_msg( "gray", us_tr( "Rotating excluded volume" ) );
                qApp->processEvents();
             }
 
@@ -1399,7 +1426,7 @@ void US_Hydrodyn_Saxs_1d::start()
 
             if ( !cb_memory_conserve->isChecked() )
             {
-               editor_msg( "gray", tr( "Done rotating excluded volume" ) );
+               editor_msg( "gray", us_tr( "Done rotating excluded volume" ) );
                qApp->processEvents();
             } 
             excluded_volume = result;
@@ -1415,20 +1442,20 @@ void US_Hydrodyn_Saxs_1d::start()
                {
                   if ( !f.open( QIODevice::WriteOnly ) )
                   {
-                     editor_msg( "red", QString( tr( "Error: can not create file %1\n" ) ).arg( fname ) );
+                     editor_msg( "red", QString( us_tr( "Error: can not create file %1\n" ) ).arg( fname ) );
                      ok_to_write = false;
                   }                  
                } else {
                   if ( !f.open( QIODevice::WriteOnly | QIODevice::Append ) )
                   {
-                     editor_msg( "red", QString( tr( "Error: can not append to file %1\n" ) ).arg( fname ) );
+                     editor_msg( "red", QString( us_tr( "Error: can not append to file %1\n" ) ).arg( fname ) );
                      ok_to_write = false;
                   }
                }
             
                if ( ok_to_write )
                {
-                  Q3TextStream ts( &f );
+                  QTextStream ts( &f );
                   if ( !r )
                   {
                      ts << QString( "MODEL     0\n" );
@@ -1497,7 +1524,7 @@ void US_Hydrodyn_Saxs_1d::start()
                   }
                   ts << "ENDMDL\n";
                   f.close();
-                  editor_msg( "blue", QString( tr( "Added rotated model %1 to %2" ) ).arg( r + 1 ).arg( fname ) );
+                  editor_msg( "blue", QString( us_tr( "Added rotated model %1 to %2" ) ).arg( r + 1 ).arg( fname ) );
                }
 
                // save ev
@@ -1511,20 +1538,20 @@ void US_Hydrodyn_Saxs_1d::start()
                   {
                      if ( !f.open( QIODevice::WriteOnly ) )
                      {
-                        editor_msg( "red", QString( tr( "Error: can not create file %1\n" ) ).arg( fname ) );
+                        editor_msg( "red", QString( us_tr( "Error: can not create file %1\n" ) ).arg( fname ) );
                         ok_to_write = false;
                      }                  
                   } else {
                      if ( !f.open( QIODevice::WriteOnly | QIODevice::Append ) )
                      {
-                        editor_msg( "red", QString( tr( "Error: can not append to file %1\n" ) ).arg( fname ) );
+                        editor_msg( "red", QString( us_tr( "Error: can not append to file %1\n" ) ).arg( fname ) );
                         ok_to_write = false;
                      }
                   }
             
                   if ( ok_to_write )
                   {
-                     Q3TextStream ts( &f );
+                     QTextStream ts( &f );
                      if ( !r )
                      {
                         ts << QString( "MODEL     0\n" );
@@ -1593,7 +1620,7 @@ void US_Hydrodyn_Saxs_1d::start()
                      }
                      ts << "ENDMDL\n";
                      f.close();
-                     editor_msg( "blue", QString( tr( "Added rotated excluded volume %1 to %2" ) ).arg( r + 1 ).arg( fname ) );
+                     editor_msg( "blue", QString( us_tr( "Added rotated excluded volume %1 to %2" ) ).arg( r + 1 ).arg( fname ) );
                   }
                }
 
@@ -1612,13 +1639,13 @@ void US_Hydrodyn_Saxs_1d::start()
                   bool ok_to_write = true;
                   if ( !f.open( QIODevice::WriteOnly ) )
                   {
-                     editor_msg( "red", QString( tr( "Error: can not create file %1\n" ) ).arg( fname ) );
+                     editor_msg( "red", QString( us_tr( "Error: can not create file %1\n" ) ).arg( fname ) );
                      ok_to_write = false;
                   }                  
 
                   if ( ok_to_write )
                   {
-                     Q3TextStream ts( &f );
+                     QTextStream ts( &f );
 
                      ts << QString( "MODEL     %1\n" ).arg( r + 1 );
                      ts << QString( "REMARK    Axis for rotation from original ( %1 , %2 , %3 )\n" )
@@ -1632,16 +1659,16 @@ void US_Hydrodyn_Saxs_1d::start()
                            .sprintf(     
                                     "ATOM  %5d%5s%4s %1s%4s    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
                                     model[ a ].serial,
-                                    model[ a ].orgName.ascii(),
-                                    model[ a ].resName.ascii(),
-                                    model[ a ].chainID == " " ? "a" : model[ a ].chainID.ascii(),
-                                    model[ a ].resSeq.ascii(),
+                                    model[ a ].orgName.toAscii().data(),
+                                    model[ a ].resName.toAscii().data(),
+                                    model[ a ].chainID == " " ? "a" : model[ a ].chainID.toAscii().data(),
+                                    model[ a ].resSeq.toAscii().data(),
                                     atoms[ a ].pos[ 0 ] * atomic_scaler_inv,
                                     atoms[ a ].pos[ 1 ] * atomic_scaler_inv,
                                     atoms[ a ].pos[ 2 ] * atomic_scaler_inv,
                                     0.0f,
                                     0.0f,
-                                    model[ a ].element.ascii()
+                                    model[ a ].element.toAscii().data()
                                     );
                      }
                      ts << "ENDMDL\n";
@@ -1682,7 +1709,7 @@ void US_Hydrodyn_Saxs_1d::start()
                      }
                      ts << "ENDMDL\n";
                      f.close();
-                     editor_msg( "blue", QString( tr( "Created atoms & excluded volume in %1" ) ).arg( fname ) );
+                     editor_msg( "blue", QString( us_tr( "Created atoms & excluded volume in %1" ) ).arg( fname ) );
                   }
                }
             }
@@ -1839,20 +1866,20 @@ void US_Hydrodyn_Saxs_1d::start()
                {
                   if ( !f.open( QIODevice::WriteOnly ) )
                   {
-                     editor_msg( "red", QString( tr( "Error: can not create file %1\n" ) ).arg( fname ) );
+                     editor_msg( "red", QString( us_tr( "Error: can not create file %1\n" ) ).arg( fname ) );
                      ok_to_write = false;
                   }                  
                } else {
                   if ( !f.open( QIODevice::WriteOnly | QIODevice::Append ) )
                   {
-                     editor_msg( "red", QString( tr( "Error: can not append to file %1\n" ) ).arg( fname ) );
+                     editor_msg( "red", QString( us_tr( "Error: can not append to file %1\n" ) ).arg( fname ) );
                      ok_to_write = false;
                   }
                }
             
                if ( ok_to_write )
                {
-                  Q3TextStream ts( &f );
+                  QTextStream ts( &f );
                   if ( !r )
                   {
                      ts << QString( "MODEL     0\n" );
@@ -1921,7 +1948,7 @@ void US_Hydrodyn_Saxs_1d::start()
                   }
                   ts << "ENDMDL\n";
                   f.close();
-                  editor_msg( "blue", QString( tr( "Added rotated model %1 to %2" ) ).arg( r + 1 ).arg( fname ) );
+                  editor_msg( "blue", QString( us_tr( "Added rotated model %1 to %2" ) ).arg( r + 1 ).arg( fname ) );
                }
             }
          }
@@ -1929,8 +1956,8 @@ void US_Hydrodyn_Saxs_1d::start()
 
       if ( !cb_memory_conserve->isChecked() )
       {
-         editor_msg( "blue", QString( tr( "Processing rotation %1 of %2" ) ).arg( r + 1 ).arg( rotations.size() ) );
-         cout << QString( tr( "Processing rotation %1 of %2\n" ) ).arg( r + 1 ).arg( rotations.size() );
+         editor_msg( "blue", QString( us_tr( "Processing rotation %1 of %2" ) ).arg( r + 1 ).arg( rotations.size() ) );
+         cout << QString( us_tr( "Processing rotation %1 of %2\n" ) ).arg( r + 1 ).arg( rotations.size() );
       } 
 
       // planar rotations
@@ -1942,7 +1969,7 @@ void US_Hydrodyn_Saxs_1d::start()
          double length_of_slice = 2e0 * M_PI * rotations[ r ][ 0 ];
          double steps_in_slice  = length_of_slice / deltaphi;
          deltatheta = 2.0 * M_PI / steps_in_slice;
-         editor_msg( "blue", QString( tr( "Planar rotations: steps in slice %1, deltatheta %2\n" ) )
+         editor_msg( "blue", QString( us_tr( "Planar rotations: steps in slice %1, deltatheta %2\n" ) )
                      .arg( steps_in_slice ) 
                      .arg( deltatheta ) 
                      );
@@ -1957,7 +1984,7 @@ void US_Hydrodyn_Saxs_1d::start()
 
          if ( !cb_memory_conserve->isChecked() )
          {
-            editor_msg( "gray", QString( tr( "Planar angle %1 radians" ) )
+            editor_msg( "gray", QString( us_tr( "Planar angle %1 radians" ) )
                         .arg( planar_angle ) );
             qApp->processEvents();
          }
@@ -1971,7 +1998,7 @@ void US_Hydrodyn_Saxs_1d::start()
 
             if ( !cb_memory_conserve->isChecked() )
             {
-               editor_msg( "gray", QString( tr( "Axis rotation %1 of %2 deltapsi %3 psi %4" ) )
+               editor_msg( "gray", QString( us_tr( "Axis rotation %1 of %2 deltapsi %3 psi %4" ) )
                            .arg( t + 1 ) 
                            .arg( le_axis_rotations->text().toInt() ) 
                            .arg( deltapsi )
@@ -1993,10 +2020,10 @@ void US_Hydrodyn_Saxs_1d::start()
                {
                   if ( !t ) 
                   {
-                     progress->setProgress( a + r * ( atoms.size() + detector_pixels_width ), ( atoms.size() + detector_pixels_width ) * rotations.size() );
+                     progress->setValue( a + r * ( atoms.size() + detector_pixels_width ) ); progress->setMaximum( ( atoms.size() + detector_pixels_width ) * rotations.size() );
                      qApp->processEvents();
                   }
-                  // editor_msg( "gray", QString( tr( "Computing atom %1\n" ) ).arg( atoms[ a ].hybrid_name ) );
+                  // editor_msg( "gray", QString( us_tr( "Computing atom %1\n" ) ).arg( atoms[ a ].hybrid_name ) );
 
                   for ( unsigned int i = 0; i < data.size(); i++ )
                   {
@@ -2060,7 +2087,7 @@ void US_Hydrodyn_Saxs_1d::start()
                         .arg( pixpos[ 0 ] ).arg( pixpos[ 1 ] )
                         .arg( pix_dist_from_beam_center )
                         .arg( q )
-                        .ascii();
+                        .toAscii().data();
                
                      cout << expiQdotR << endl;
 #endif
@@ -2110,7 +2137,7 @@ void US_Hydrodyn_Saxs_1d::start()
                   complex < double > testsum2 = complex < double > ( 0, 0 );
                   if ( !t )
                   {
-                     progress->setProgress( atoms.size() + i + r * ( atoms.size() + detector_pixels_width ), ( atoms.size() + detector_pixels_width ) * rotations.size() );
+                     progress->setValue( atoms.size() + i + r * ( atoms.size() + detector_pixels_width ) ); progress->setMaximum( ( atoms.size() + detector_pixels_width ) * rotations.size() );
                      qApp->processEvents();
                   }
 
@@ -2229,7 +2256,7 @@ void US_Hydrodyn_Saxs_1d::start()
    }
 #endif
 
-   editor_msg( "black", tr( "Completed" ) );
+   editor_msg( "black", us_tr( "Completed" ) );
    if ( cb_random_rotations->isChecked() )
    {
       editor_msg( "gray", QString( "reflections %1 %2 %3 %4\n" )
@@ -2246,7 +2273,7 @@ void US_Hydrodyn_Saxs_1d::start()
                   .arg( ord6 )
                   );
    }
-   progress->setProgress(1, 1);
+   progress->setValue( 1 ); progress->setMaximum( 1 );
    running = false;
    update_enables();
 }
@@ -2264,7 +2291,7 @@ bool US_Hydrodyn_Saxs_1d::validate( bool quiet )
       if ( !quiet )
       {
          editor_msg( "red", 
-                     QString( tr( "Exactly one model must be selected to process\n"
+                     QString( us_tr( "Exactly one model must be selected to process\n"
                                   "Currently there are %1 models selected" ) )
                      .arg( selected_models.size() ) );
       }
@@ -2277,7 +2304,7 @@ bool US_Hydrodyn_Saxs_1d::validate( bool quiet )
    {
       if ( !quiet )
       {
-         editor_msg( "red", tr( "Detector pixel count must be positive" ) );
+         editor_msg( "red", us_tr( "Detector pixel count must be positive" ) );
       }
       is_ok = false;
    }
@@ -2286,7 +2313,7 @@ bool US_Hydrodyn_Saxs_1d::validate( bool quiet )
    {
       if ( !quiet )
       {
-         editor_msg( "red", tr( "The wavelength must be positive" ) );
+         editor_msg( "red", us_tr( "The wavelength must be positive" ) );
       }
       is_ok = false;
    }
@@ -2295,7 +2322,7 @@ bool US_Hydrodyn_Saxs_1d::validate( bool quiet )
    {
       if ( !quiet )
       {
-         editor_msg( "red", tr( "Detector width must be positive" ) );
+         editor_msg( "red", us_tr( "Detector width must be positive" ) );
       }
       is_ok = false;
    }
@@ -2304,7 +2331,7 @@ bool US_Hydrodyn_Saxs_1d::validate( bool quiet )
    {
       if ( !quiet )
       {
-         editor_msg( "red", tr( "Detector distance must be positive" ) );
+         editor_msg( "red", us_tr( "Detector distance must be positive" ) );
       }
       is_ok = false;
    }
@@ -2334,10 +2361,10 @@ void US_Hydrodyn_Saxs_1d::update_enables()
 
 void US_Hydrodyn_Saxs_1d::editor_msg( QString color, QString msg )
 {
-   QColor save_color = editor->color();
-   editor->setColor(color);
+   QColor save_color = editor->textColor();
+   editor->setTextColor(color);
    editor->append(msg);
-   editor->setColor(save_color);
+   editor->setTextColor(save_color);
 }
 
 void US_Hydrodyn_Saxs_1d::update_lambda( const QString & /* str */ )
@@ -2395,9 +2422,9 @@ void US_Hydrodyn_Saxs_1d::update_axis_rotations( const QString & /* str */ )
 
 void US_Hydrodyn_Saxs_1d::set_planar_method()
 {
-   lbl_sample_rotations->setText( cb_planar_method->isChecked() ?
-                                  tr( " Sphere horizontal slices: " ) :
-                                  tr( " Sample rotations (best equalized over sphere):" ) );
+   lbl_sample_rotations->setText( cb_planar_method->isChecked( ) ?
+                                  us_tr( " Sphere horizontal slices: " ) :
+                                  us_tr( " Sample rotations (best equalized over sphere):" ) );
    if ( cb_planar_method->isChecked() )
    {
       cb_random_rotations->setChecked( false );
@@ -2461,22 +2488,22 @@ void US_Hydrodyn_Saxs_1d::compute_variables()
 
 void US_Hydrodyn_Saxs_1d::report_variables()
 {
-   editor_msg( "black", QString( tr( "Detector width per pixel %1 m" ) )
+   editor_msg( "black", QString( us_tr( "Detector width per pixel %1 m" ) )
                .arg( detector_width_per_pixel ) );
 
    editor_msg( "black", 
-               QString( tr( "detector distance %1 m\n"
+               QString( us_tr( "detector distance %1 m\n"
                             "lambda            %2 A" ) )
                .arg( detector_distance )
                .arg( lambda ) );
 
    editor_msg( "black",
-               QString( tr( "q of pixel 0: %1\n" ) )
+               QString( us_tr( "q of pixel 0: %1\n" ) )
                .arg( q_of_pixel( (int) 0 ) )
                );
 
    editor_msg( "black",
-               QString( tr( "q of pixel %1: %2 (1/A)\n" ) )
+               QString( us_tr( "q of pixel %1: %2 (1/A)\n" ) )
                .arg( detector_pixels_width - 1 )
                .arg( q_of_pixel( detector_pixels_width - 1 ) )
                );
@@ -2514,7 +2541,7 @@ void US_Hydrodyn_Saxs_1d::save_data()
       I[ i ] /= ( double ) plot_count;
    }
 
-   QString fname = QFileDialog::getSaveFileName( this , caption() , QString::null , QString::null );
+   QString fname = QFileDialog::getSaveFileName( this , windowTitle() , QString::null , QString::null );
    bool ok_to_write = true;
    if ( fname.isEmpty() )
    {
@@ -2537,11 +2564,11 @@ void US_Hydrodyn_Saxs_1d::save_data()
    QFile f( fname );
    if ( !f.open( QIODevice::WriteOnly ) )
    {
-      editor_msg( "red", QString( tr( "can not open %1 for writing" ) ).arg( fname ) );
+      editor_msg( "red", QString( us_tr( "can not open %1 for writing" ) ).arg( fname ) );
       return;
    }
 
-   Q3TextStream ts( &f );
+   QTextStream ts( &f );
 
    ts << QString( "# Computed saxs data of %1 using %2 %3 %4 rotations deltaR %5 rho0 %6 probe radius %7 threshold %8\n" )
       .arg( le_atom_file->text() )
@@ -2598,7 +2625,7 @@ bool US_Hydrodyn_Saxs_1d::activate_saxs_window()
       setFocus();
       if ( !*saxs_widget )
       {
-         editor_msg("red", tr("Could not activate SAXS window!\n"));
+         editor_msg("red", us_tr("Could not activate SAXS window!\n"));
          return false;
       }
    }
@@ -2621,7 +2648,7 @@ bool US_Hydrodyn_Saxs_1d::setup_excluded_volume_map()
       // write atoms, radius into 
       if ( selected_models.size() != 1 )
       {
-         editor_msg( "red", QString( tr( "Error: selected models count (%1) is not exactly 1" ) ).arg( selected_models.size() ) );
+         editor_msg( "red", QString( us_tr( "Error: selected models count (%1) is not exactly 1" ) ).arg( selected_models.size() ) );
          return false;
       }
 
@@ -2634,11 +2661,11 @@ bool US_Hydrodyn_Saxs_1d::setup_excluded_volume_map()
                       QString( "_%1.xyzr" ).arg( model_vector[ current_model  ].model_id ) );
       if ( !vvv_file.open( QIODevice::WriteOnly ) )
       {
-         editor_msg( "red", QString( tr( "Error: VVV requested but can not open %1 for writing" ) ).arg( vvv_file.name() ) );
+         editor_msg( "red", QString( us_tr( "Error: VVV requested but can not open %1 for writing" ) ).arg( vvv_file.fileName() ) );
          return false;
       }
 
-      Q3TextStream vvv_ts( &vvv_file );
+      QTextStream vvv_ts( &vvv_file );
 
       for ( unsigned int j = 0; j < model_vector[ current_model ].molecule.size (); j++) 
       {
@@ -2658,7 +2685,7 @@ bool US_Hydrodyn_Saxs_1d::setup_excluded_volume_map()
       vvv_file.close();
       double volume;
       double surf;
-      if ( !vvv::setup_vol_surf( vvv_file.name().ascii(),
+      if ( !vvv::setup_vol_surf( vvv_file.fileName().toAscii().data(),
                                  ( float ) probe_radius,
                                  ( float ) deltaR,
                                  volume,
@@ -2725,7 +2752,7 @@ bool US_Hydrodyn_Saxs_1d::setup_excluded_volume_map()
          errormsg = QString( "Error: can not open pdb (%1)" ).arg( filepathname );
          return false;
       }
-      Q3TextStream ts( &f );
+      QTextStream ts( &f );
       QRegExp rx_end("^END");
       QRegExp rx_atom ("^("
                        "ATOM|"
@@ -2735,12 +2762,12 @@ bool US_Hydrodyn_Saxs_1d::setup_excluded_volume_map()
       while ( !ts.atEnd() )
       {
          QString qs = ts.readLine();
-         if ( rx_end.search( qs ) != -1 )
+         if ( rx_end.indexIn( qs ) != -1 )
          {
             qsl << "END\n";
             break;
          }
-         if ( rx_atom.search( qs ) != -1 &&
+         if ( rx_atom.indexIn( qs ) != -1 &&
               qs.mid( 17, 3 ) == "HOH" )
          {
             continue;
@@ -2755,10 +2782,10 @@ bool US_Hydrodyn_Saxs_1d::setup_excluded_volume_map()
    
    if ( !f.open( QIODevice::WriteOnly ) )
    {
-      errormsg = QString( "Error: can not open pdb (%1) for writing" ).arg( f.name() );
+      errormsg = QString( "Error: can not open pdb (%1) for writing" ).arg( f.fileName() );
       return false;
    }
-   Q3TextStream ts( &f );
+   QTextStream ts( &f );
    for ( unsigned int i = 0; i < ( unsigned int ) qsl.size(); i++ )
    {
       ts << qsl[ i ];
@@ -2781,9 +2808,9 @@ bool US_Hydrodyn_Saxs_1d::setup_excluded_volume_map()
       errormsg = QString( "Error: rasmol not found (%1)" ).arg( rasmol );
    }
 
-   if ( !QFile::exists( f.name() ) )
+   if ( !QFile::exists( f.fileName() ) )
    {
-      errormsg = QString( "Error: pdb file not found (%1)" ).arg( f.name() );
+      errormsg = QString( "Error: pdb file not found (%1)" ).arg( f.fileName() );
    }
 
    mapname = QString( "%1_p%2_t%3_r%4.rasmol_map" )
@@ -2801,7 +2828,7 @@ bool US_Hydrodyn_Saxs_1d::setup_excluded_volume_map()
                           "exit\n"
                           "__EOF\n" )
       .arg( rasmol )
-      .arg( f.name() )
+      .arg( f.fileName() )
       .arg( QString( "" ).sprintf( "%.5f", probe_radius ) )
       .arg( QString( "" ).sprintf( "%.5f", deltaR ) )
       .arg( mapname );
@@ -2809,7 +2836,7 @@ bool US_Hydrodyn_Saxs_1d::setup_excluded_volume_map()
    cout << cmd;
    editor_msg( "gray", "starting RasMol to compute excluded volume\n" );
    qApp->processEvents();
-   system( cmd.ascii() );
+   system( cmd.toAscii().data() );
    editor_msg( "gray", "RasMol done\n" );
    qApp->processEvents();
    return true;
@@ -2866,7 +2893,7 @@ bool US_Hydrodyn_Saxs_1d::get_excluded_volume_map()
       }
       
       // later can be binary 
-      Q3TextStream ts( &f );
+      QTextStream ts( &f );
       
       int line = 0;
       point tmp_point;
@@ -2891,7 +2918,7 @@ bool US_Hydrodyn_Saxs_1d::get_excluded_volume_map()
       {
          QString qs = ts.readLine();
          line++;
-         QStringList qsl = QStringList::split( QRegExp( "\\s+" ), qs );
+         QStringList qsl = (qs ).split( QRegExp( "\\s+" ) , QString::SkipEmptyParts );
          if ( qsl.size() != 3 )
          {
             f.close();
@@ -2919,7 +2946,7 @@ bool US_Hydrodyn_Saxs_1d::get_excluded_volume_map()
       qApp->processEvents();
    }
 
-   FILE *fp = fopen( mapname.ascii(), "rb");
+   FILE *fp = us_fopen( mapname.toAscii().data(), "rb");
    if (  (FILE *)NULL == fp )
    {
       errormsg = QString( "Error: could not open file %1\n" ).arg( mapname );
@@ -3258,18 +3285,18 @@ bool US_Hydrodyn_Saxs_1d::save_rotations( vector < vector < double > > &rotation
 
    if ( !f.open( QIODevice::WriteOnly ) )
    {
-      editor_msg( "dark red", QString( tr( "Notice: could not create cached rotations file %1" ) )
-                  .arg( f.name() ) );
+      editor_msg( "dark red", QString( us_tr( "Notice: could not create cached rotations file %1" ) )
+                  .arg( f.fileName() ) );
       return false;
    }
 
-   Q3TextStream ts( &f );
+   QTextStream ts( &f );
    for ( unsigned int i = 0; i < ( unsigned int )rotations.size(); i++ )
    {
       if ( rotations[ i ].size() != 3 )
       {
-         editor_msg( "dark red", QString( tr( "Notice: error creating cached rotations file %1: expected 3 doubles at pos %2 but only found %3" ) )
-                     .arg( f.name() ) 
+         editor_msg( "dark red", QString( us_tr( "Notice: error creating cached rotations file %1: expected 3 doubles at pos %2 but only found %3" ) )
+                     .arg( f.fileName() ) 
                      .arg( i )
                      .arg( rotations[ i ].size() ) 
                      );
@@ -3284,8 +3311,8 @@ bool US_Hydrodyn_Saxs_1d::save_rotations( vector < vector < double > > &rotation
    }
    f.close();
    editor_msg( "blue", 
-               QString( tr( "Notice: created cached rotations file %1" ) )
-               .arg( f.name() ) );
+               QString( us_tr( "Notice: created cached rotations file %1" ) )
+               .arg( f.fileName() ) );
                
    return true;
 }
@@ -3299,19 +3326,19 @@ bool US_Hydrodyn_Saxs_1d::load_rotations( int number,
             QString( "rots1d_%1.dat" ).arg( number ) );
    if ( !f.exists() )
    {
-      editor_msg( "dark red", QString( tr( "Notice: cached rotations file %1 does not exist, so computing it" ) )
-                  .arg( f.name() ) );
+      editor_msg( "dark red", QString( us_tr( "Notice: cached rotations file %1 does not exist, so computing it" ) )
+                  .arg( f.fileName() ) );
       return false;
    }
 
    if ( !f.open( QIODevice::ReadOnly ) )
    {
-      editor_msg( "dark red", QString( tr( "Notice: found cached rotations file %1 but could not open it" ) )
-                  .arg( f.name() ) );
+      editor_msg( "dark red", QString( us_tr( "Notice: found cached rotations file %1 but could not open it" ) )
+                  .arg( f.fileName() ) );
       return false;
    }
 
-   Q3TextStream ts( &f );
+   QTextStream ts( &f );
 
    unsigned int line = 0;
 
@@ -3323,12 +3350,12 @@ bool US_Hydrodyn_Saxs_1d::load_rotations( int number,
       QString     qs  = ts.readLine();
       line++;
 
-      QStringList qsl = QStringList::split( QRegExp( "\\s+" ), qs );
+      QStringList qsl = (qs ).split( QRegExp( "\\s+" ) , QString::SkipEmptyParts );
 
       if ( qsl.size() != 3 )
       {
-         editor_msg( "dark red", QString( tr( "Notice: error in found cached rotations file %1 line %2, does not contain 3 tokens" ) )
-                     .arg( f.name() )
+         editor_msg( "dark red", QString( us_tr( "Notice: error in found cached rotations file %1 line %2, does not contain 3 tokens" ) )
+                     .arg( f.fileName() )
                      .arg( line )
                      );
          f.close();
@@ -3343,8 +3370,8 @@ bool US_Hydrodyn_Saxs_1d::load_rotations( int number,
    if ( ( int )rotations.size() != number )
    {
       editor_msg( "dark red", 
-                  QString( tr( "Notice: error:  cached rotations file %1 line %2, does not contains the expected number of rotations (%3 requested vs %4 found)" ) )
-                  .arg( f.name() )
+                  QString( us_tr( "Notice: error:  cached rotations file %1 line %2, does not contains the expected number of rotations (%3 requested vs %4 found)" ) )
+                  .arg( f.fileName() )
                   .arg( line )
                   .arg( number )
                   .arg( rotations.size() )
@@ -3353,8 +3380,8 @@ bool US_Hydrodyn_Saxs_1d::load_rotations( int number,
       return false;
    }
    editor_msg( "blue", 
-               QString( tr( "Notice: loaded cached rotations file %1" ) )
-               .arg( f.name() ) );
+               QString( us_tr( "Notice: loaded cached rotations file %1" ) )
+               .arg( f.fileName() ) );
    return true;
 }
 
@@ -3428,7 +3455,7 @@ bool US_Hydrodyn_Saxs_1d::save_copy_excluded_volume_map( QString
       return false;
    }
 
-   FILE *fp = fopen( name.ascii(), "rb+");
+   FILE *fp = us_fopen( name.toAscii().data(), "rb+");
    if (  (FILE *)NULL == fp )
    {
       errormsg = QString( "Error: could not open file %1\n" ).arg( name );
@@ -3772,7 +3799,7 @@ void US_Hydrodyn_Saxs_1d::set_target_ev()
       editor_msg( "dark red", "using explicit hydrogens" );
    }
 
-   progress->setProgress( 0, 1 );
+   progress->setValue( 0 ); progress->setMaximum( 1 );
    for ( unsigned int i = 0; i < selected_models.size(); i++ )
    {
       unsigned int current_model = selected_models[ i ];
@@ -3783,7 +3810,7 @@ void US_Hydrodyn_Saxs_1d::set_target_ev()
       unsigned int total_e_noh = 0;
 
       editor_msg( "gray", 
-                  QString( tr( "Preparing file %1 model %2." ) )
+                  QString( us_tr( "Preparing file %1 model %2." ) )
                   .arg( le_atom_file->text() )
                   .arg(current_model + 1) );
 
@@ -3943,7 +3970,7 @@ void US_Hydrodyn_Saxs_1d::set_target_ev()
             new_atom.hybrid_name = hybrid_name;
             new_atom.hydrogens = 0;
             if ( !our_saxs_options->iqq_use_atomic_ff &&
-                 count_hydrogens.search(hybrid_name) != -1 )
+                 count_hydrogens.indexIn(hybrid_name) != -1 )
             {
                new_atom.hydrogens = count_hydrogens.cap(1).toInt();
             }
@@ -3988,21 +4015,21 @@ void US_Hydrodyn_Saxs_1d::set_target_ev()
 bool US_Hydrodyn_Saxs_1d::find_target_ev_thresh()
 {
 #if !defined( HAS_CBF )
-   editor_msg( "red", QString( tr( "CBF required for this feature" ) ) );
+   editor_msg( "red", QString( us_tr( "CBF required for this feature" ) ) );
    return false;
 #else
 
    double target_ev = le_target_ev->text().toDouble();
    if ( target_ev <= 0e0 )
    {
-      editor_msg( "red", QString( tr( "target ev must be positive" ) ) );
+      editor_msg( "red", QString( us_tr( "target ev must be positive" ) ) );
       return false;
    }
 
    compute_variables();
    if ( rho0 == 0 )
    {
-      editor_msg( "red", QString( tr( "rho0 must be nonzero" ) ) );
+      editor_msg( "red", QString( us_tr( "rho0 must be nonzero" ) ) );
       return false;
    }
 
@@ -4067,14 +4094,14 @@ bool US_Hydrodyn_Saxs_1d::find_target_ev_thresh()
 
    if ( fabs( ev - target_ev ) < 5e-1 )
    {
-      editor_msg( "blue", QString( tr( "Found threshold %1 to match excl vol %2 within %3" ) )
+      editor_msg( "blue", QString( us_tr( "Found threshold %1 to match excl vol %2 within %3" ) )
                   .arg( threshold )
                   .arg( target_ev )
                   .arg(  fabs( ev - target_ev ) )
                   );
       return true;
    } else {
-      editor_msg( "red", QString( tr( "Could NOT find good threshold to match excl vol %1 best found %2 within %3" ) )
+      editor_msg( "red", QString( us_tr( "Could NOT find good threshold to match excl vol %1 best found %2 within %3" ) )
                   .arg( target_ev )
                   .arg( threshold )
                   .arg( fabs( ev - target_ev ) )

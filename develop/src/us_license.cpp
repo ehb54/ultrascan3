@@ -1,8 +1,8 @@
 #include "../include/us_license.h"
 //Added by qt3to4:
-#include <Q3TextStream>
+#include <QTextStream>
 #include <QCloseEvent>
-#include <Q3Frame>
+#include <QFrame>
 #include <QLabel>
 
 // note: this program uses cout and/or cerr and this should be replaced
@@ -11,7 +11,7 @@ static std::basic_ostream<char>& operator<<(std::basic_ostream<char>& os, const 
    return os << qPrintable(str);
 }
 
-US_License::US_License(QWidget *parent, const char *name) : QDialog( parent, name, false)
+US_License::US_License(QWidget *parent, const char *name) : QDialog( parent )
 {
    int spacing=5, column1 = 90, column2 = 10, column3=110;
    int xpos=spacing, ypos=spacing;
@@ -22,18 +22,18 @@ US_License::US_License(QWidget *parent, const char *name) : QDialog( parent, nam
    int full_buttonw = buttonw + 2*column1 + 2*column3 + 4*spacing;
    int pushbutton = (int) (buttonw+span)/5;
 
-   setCaption("UltraScan License Configuration");
+   setWindowTitle("UltraScan License Configuration");
 
    lbl_blank = new QLabel(
-                          tr( "Please enter all fields exactly as shown in the issued license,\n"
+                          us_tr( "Please enter all fields exactly as shown in the issued license,\n"
                               "or import a license from an E-mail text file:" ), this );
    lbl_blank->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_blank->setGeometry(xpos, ypos, span+buttonw+spacing, 2*buttonh+spacing);
-   lbl_blank->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Raised);
+   lbl_blank->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
 
    ypos += spacing + 3*buttonh;
 
-   lbl_firstname = new QLabel(tr("Name (first, last):"),this);
+   lbl_firstname = new QLabel(us_tr("Name (first, last):"),this);
    lbl_firstname->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_firstname->setGeometry(xpos, ypos, buttonw, buttonh);
 
@@ -46,7 +46,7 @@ US_License::US_License(QWidget *parent, const char *name) : QDialog( parent, nam
 
    xpos += half_buttonw + spacing;
 
-   lbl_lastname = new QLabel(tr(","),this);
+   lbl_lastname = new QLabel(us_tr(","),this);
    lbl_lastname->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_lastname->setGeometry(xpos, ypos, column2, buttonh);
 
@@ -60,7 +60,7 @@ US_License::US_License(QWidget *parent, const char *name) : QDialog( parent, nam
    xpos = spacing;
    ypos += buttonh + spacing;
 
-   lbl_email = new QLabel(tr("E-mail Address:"),this);
+   lbl_email = new QLabel(us_tr("E-mail Address:"),this);
    lbl_email->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_email->setGeometry(xpos, ypos, buttonw, buttonh);
 
@@ -74,7 +74,7 @@ US_License::US_License(QWidget *parent, const char *name) : QDialog( parent, nam
    xpos = spacing;
    ypos += buttonh + spacing;
 
-   lbl_institution = new QLabel(tr("Institution:"),this);
+   lbl_institution = new QLabel(us_tr("Institution:"),this);
    lbl_institution->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_institution->setGeometry(xpos, ypos, buttonw, buttonh);
 
@@ -88,7 +88,7 @@ US_License::US_License(QWidget *parent, const char *name) : QDialog( parent, nam
    xpos = spacing;
    ypos += buttonh + spacing;
 
-   lbl_address = new QLabel(tr("Address:"),this);
+   lbl_address = new QLabel(us_tr("Address:"),this);
    lbl_address->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_address->setGeometry(xpos, ypos, buttonw, buttonh);
 
@@ -102,7 +102,7 @@ US_License::US_License(QWidget *parent, const char *name) : QDialog( parent, nam
    xpos = spacing;
    ypos += buttonh + spacing;
 
-   lbl_city = new QLabel(tr("City:"),this);
+   lbl_city = new QLabel(us_tr("City:"),this);
    lbl_city->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_city->setGeometry(xpos, ypos, buttonw, buttonh);
 
@@ -115,73 +115,73 @@ US_License::US_License(QWidget *parent, const char *name) : QDialog( parent, nam
 
    xpos += buttonw + spacing;
 
-   lbl_state = new QLabel(tr(" State:"),this);
+   lbl_state = new QLabel(us_tr(" State:"),this);
    lbl_state->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_state->setGeometry(xpos, ypos, column1, buttonh);
 
    xpos += spacing + column1;
 
-   cbb_state = new Q3ComboBox(this, "state");
-   cbb_state->insertItem("NON-US");
-   cbb_state->insertItem("AL");
-   cbb_state->insertItem("AR");
-   cbb_state->insertItem("AZ");
-   cbb_state->insertItem("CA");
-   cbb_state->insertItem("CO");
-   cbb_state->insertItem("CT");
-   cbb_state->insertItem("DC");
-   cbb_state->insertItem("DE");
-   cbb_state->insertItem("FL");
-   cbb_state->insertItem("GA");
-   cbb_state->insertItem("HI");
-   cbb_state->insertItem("IA");
-   cbb_state->insertItem("ID");
-   cbb_state->insertItem("IL");
-   cbb_state->insertItem("IN");
-   cbb_state->insertItem("KS");
-   cbb_state->insertItem("KY");
-   cbb_state->insertItem("LA");
-   cbb_state->insertItem("MA");
-   cbb_state->insertItem("MD");
-   cbb_state->insertItem("ME");
-   cbb_state->insertItem("MI");
-   cbb_state->insertItem("MN");
-   cbb_state->insertItem("MO");
-   cbb_state->insertItem("MS");
-   cbb_state->insertItem("MT");
-   cbb_state->insertItem("NC");
-   cbb_state->insertItem("ND");
-   cbb_state->insertItem("NE");
-   cbb_state->insertItem("NH");
-   cbb_state->insertItem("NJ");
-   cbb_state->insertItem("NM");
-   cbb_state->insertItem("NV");
-   cbb_state->insertItem("NY");
-   cbb_state->insertItem("OH");
-   cbb_state->insertItem("OK");
-   cbb_state->insertItem("OR");
-   cbb_state->insertItem("PA");
-   cbb_state->insertItem("PR");
-   cbb_state->insertItem("RI");
-   cbb_state->insertItem("SC");
-   cbb_state->insertItem("SD");
-   cbb_state->insertItem("TN");
-   cbb_state->insertItem("TX");
-   cbb_state->insertItem("UT");
-   cbb_state->insertItem("VA");
-   cbb_state->insertItem("VI");
-   cbb_state->insertItem("VT");
-   cbb_state->insertItem("WA");
-   cbb_state->insertItem("WI");
-   cbb_state->insertItem("WV");
-   cbb_state->insertItem("WY");
+   cbb_state = new QComboBox( this );    cbb_state->setObjectName( "state" );
+   cbb_state->addItem("NON-US");
+   cbb_state->addItem("AL");
+   cbb_state->addItem("AR");
+   cbb_state->addItem("AZ");
+   cbb_state->addItem("CA");
+   cbb_state->addItem("CO");
+   cbb_state->addItem("CT");
+   cbb_state->addItem("DC");
+   cbb_state->addItem("DE");
+   cbb_state->addItem("FL");
+   cbb_state->addItem("GA");
+   cbb_state->addItem("HI");
+   cbb_state->addItem("IA");
+   cbb_state->addItem("ID");
+   cbb_state->addItem("IL");
+   cbb_state->addItem("IN");
+   cbb_state->addItem("KS");
+   cbb_state->addItem("KY");
+   cbb_state->addItem("LA");
+   cbb_state->addItem("MA");
+   cbb_state->addItem("MD");
+   cbb_state->addItem("ME");
+   cbb_state->addItem("MI");
+   cbb_state->addItem("MN");
+   cbb_state->addItem("MO");
+   cbb_state->addItem("MS");
+   cbb_state->addItem("MT");
+   cbb_state->addItem("NC");
+   cbb_state->addItem("ND");
+   cbb_state->addItem("NE");
+   cbb_state->addItem("NH");
+   cbb_state->addItem("NJ");
+   cbb_state->addItem("NM");
+   cbb_state->addItem("NV");
+   cbb_state->addItem("NY");
+   cbb_state->addItem("OH");
+   cbb_state->addItem("OK");
+   cbb_state->addItem("OR");
+   cbb_state->addItem("PA");
+   cbb_state->addItem("PR");
+   cbb_state->addItem("RI");
+   cbb_state->addItem("SC");
+   cbb_state->addItem("SD");
+   cbb_state->addItem("TN");
+   cbb_state->addItem("TX");
+   cbb_state->addItem("UT");
+   cbb_state->addItem("VA");
+   cbb_state->addItem("VI");
+   cbb_state->addItem("VT");
+   cbb_state->addItem("WA");
+   cbb_state->addItem("WI");
+   cbb_state->addItem("WV");
+   cbb_state->addItem("WY");
    cbb_state->setGeometry(xpos, ypos, column3, buttonh);
    connect(cbb_state, SIGNAL(activated(int)), SLOT(update_state(int)));
    connect(cbb_state, SIGNAL(highlighted(int)), SLOT(update_state(int)));
 
    xpos += column3 + spacing;
 
-   lbl_zip = new QLabel(tr(" Zip:"),this);
+   lbl_zip = new QLabel(us_tr(" Zip:"),this);
    lbl_zip->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_zip->setGeometry(xpos, ypos, column1, buttonh);
 
@@ -195,7 +195,7 @@ US_License::US_License(QWidget *parent, const char *name) : QDialog( parent, nam
    xpos = spacing;
    ypos += buttonh + spacing;
 
-   lbl_phone = new QLabel(tr("Phone Number:"),this);
+   lbl_phone = new QLabel(us_tr("Phone Number:"),this);
    lbl_phone->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_phone->setGeometry(xpos, ypos, buttonw, buttonh);
 
@@ -208,17 +208,17 @@ US_License::US_License(QWidget *parent, const char *name) : QDialog( parent, nam
 
    xpos += buttonw + spacing;
 
-   lbl_licensetype = new QLabel(tr(" License:"),this);
+   lbl_licensetype = new QLabel(us_tr(" License:"),this);
    lbl_licensetype->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_licensetype->setGeometry(xpos, ypos, column1, buttonh);
 
    xpos += spacing + column1;
 
-   cbb_licensetype = new Q3ComboBox(this, "licensetype");
+   cbb_licensetype = new QComboBox( this );    cbb_licensetype->setObjectName( "licensetype" );
    cbb_licensetype->setGeometry(xpos, ypos, column3, buttonh);
-   cbb_licensetype->insertItem("academic");
-   cbb_licensetype->insertItem("commercial");
-   cbb_licensetype->insertItem("trial");
+   cbb_licensetype->addItem("academic");
+   cbb_licensetype->addItem("commercial");
+   cbb_licensetype->addItem("trial");
   
    connect(cbb_licensetype, SIGNAL(activated(int)), 
            SLOT(update_licensetype(int)));
@@ -228,86 +228,86 @@ US_License::US_License(QWidget *parent, const char *name) : QDialog( parent, nam
 
    xpos += spacing + column3;
 
-   lbl_version = new QLabel(tr(" Version:"),this);
+   lbl_version = new QLabel(us_tr(" Version:"),this);
    lbl_version->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_version->setGeometry(xpos, ypos, column1, buttonh);
 
    xpos += spacing + column1;
 
-   cbb_version = new Q3ComboBox(this, "version");
+   cbb_version = new QComboBox( this );    cbb_version->setObjectName( "version" );
    cbb_version->setGeometry(xpos, ypos, column3, buttonh);
-   cbb_version->insertItem("6.0");
-   cbb_version->insertItem("6.2");
-   cbb_version->insertItem("7.0");
-   cbb_version->insertItem("7.1");
-   cbb_version->insertItem("7.2");
-   cbb_version->insertItem("7.3");
-   cbb_version->insertItem("7.4");
-   cbb_version->insertItem("8.0");
-   cbb_version->insertItem("8.1");
-   cbb_version->insertItem("9.0");
-   cbb_version->insertItem("9.2");
-   cbb_version->insertItem("9.3");
-   cbb_version->insertItem("9.4");
-   cbb_version->insertItem("9.5");
-   cbb_version->insertItem("9.6");
-   cbb_version->insertItem("9.7");
-   cbb_version->insertItem("9.8");
-   cbb_version->insertItem("9.9");
+   cbb_version->addItem("6.0");
+   cbb_version->addItem("6.2");
+   cbb_version->addItem("7.0");
+   cbb_version->addItem("7.1");
+   cbb_version->addItem("7.2");
+   cbb_version->addItem("7.3");
+   cbb_version->addItem("7.4");
+   cbb_version->addItem("8.0");
+   cbb_version->addItem("8.1");
+   cbb_version->addItem("9.0");
+   cbb_version->addItem("9.2");
+   cbb_version->addItem("9.3");
+   cbb_version->addItem("9.4");
+   cbb_version->addItem("9.5");
+   cbb_version->addItem("9.6");
+   cbb_version->addItem("9.7");
+   cbb_version->addItem("9.8");
+   cbb_version->addItem("9.9");
    connect(cbb_version, SIGNAL(activated(int)), SLOT(update_version(int)));
    connect(cbb_version, SIGNAL(highlighted(int)), SLOT(update_version(int)));
 
    xpos = spacing;
    ypos += 2*buttonh + spacing;
 
-   //lbl_platform = new QLabel(tr("Platform:"),this);
+   //lbl_platform = new QLabel(us_tr("Platform:"),this);
    //lbl_platform->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    //lbl_platform->setGeometry(xpos, ypos, buttonw, buttonh);
 
    xpos += buttonw + spacing;
 
-   //rb_intel = new QRadioButton(tr("Intel"), this);
+   //rb_intel = new QRadioButton(us_tr("Intel"), this);
    //rb_intel->setGeometry(xpos, ypos, buttonw, buttonh);
    //connect(rb_intel, SIGNAL(clicked()), SLOT(update_intel_rb()));
 
    xpos += spacing*4 + buttonw;
 
-   lb_os = new Q3ListBox(this, "software");
+   lb_os = new QListWidget( this );
    lb_os->setGeometry(xpos, ypos, half_buttonw, buttonh*5 + 4*spacing);
-   lb_os->insertItem("Linux");
-   lb_os->insertItem("Windows");
-   lb_os->insertItem("Mac OS-X");
-   lb_os->insertItem("Irix 6.5");
-   lb_os->insertItem("Solaris");
-   lb_os->insertItem("FreeBSD");
-   lb_os->insertItem("NetBSD");
-   lb_os->insertItem("OpenBSD");
+   lb_os->addItem("Linux");
+   lb_os->addItem("Windows");
+   lb_os->addItem("Mac OS-X");
+   lb_os->addItem("Irix 6.5");
+   lb_os->addItem("Solaris");
+   lb_os->addItem("FreeBSD");
+   lb_os->addItem("NetBSD");
+   lb_os->addItem("OpenBSD");
 
-   connect(lb_os, SIGNAL(selected(int)), SLOT(update_os(int)));
+   connect(lb_os, SIGNAL(currentRowChanged(int)), SLOT(update_os(int)));
    connect(lb_os, SIGNAL(highlighted(int)), SLOT(update_os(int)));
 
    ypos += spacing + buttonh;
    xpos = buttonw + 2*spacing;
 
-   //rb_sparc = new QRadioButton(tr("Sparc"), this);
+   //rb_sparc = new QRadioButton(us_tr("Sparc"), this);
    //rb_sparc->setGeometry(xpos, ypos, buttonw, buttonh);
    //connect(rb_sparc, SIGNAL(clicked()), SLOT(update_sparc_rb()));
 
    ypos += buttonh + spacing;
 
-   //rb_mac = new QRadioButton(tr("Macintosh"), this);
+   //rb_mac = new QRadioButton(us_tr("Macintosh"), this);
    //rb_mac->setGeometry(xpos, ypos, buttonw, buttonh);
    //connect(rb_mac, SIGNAL(clicked()), SLOT(update_mac_rb()));
 
    ypos += buttonh + spacing;
 
-   //rb_opteron = new QRadioButton(tr("Opteron"), this);
+   //rb_opteron = new QRadioButton(us_tr("Opteron"), this);
    //rb_opteron->setGeometry(xpos, ypos, buttonw, buttonh);
    //connect(rb_opteron, SIGNAL(clicked()), SLOT(update_opteron_rb()));
 
    ypos += buttonh + spacing;
 
-   //rb_sgi = new QRadioButton(tr("Silicon Graphics"), this);
+   //rb_sgi = new QRadioButton(us_tr("Silicon Graphics"), this);
    //rb_sgi->setGeometry(xpos, ypos, buttonw, buttonh);
    //connect(rb_sgi, SIGNAL(clicked()), SLOT(update_sgi_rb()));
 
@@ -315,7 +315,7 @@ US_License::US_License(QWidget *parent, const char *name) : QDialog( parent, nam
    ypos += spacing + 2*buttonh;
    xpos = spacing;
 
-   lbl_code = new QLabel(tr("License Code:"),this);
+   lbl_code = new QLabel(us_tr("License Code:"),this);
    lbl_code->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_code->setGeometry(xpos, ypos, buttonw, buttonh);
 
@@ -329,7 +329,7 @@ US_License::US_License(QWidget *parent, const char *name) : QDialog( parent, nam
    ypos += spacing + buttonh;
    xpos = spacing;
 
-   lbl_expiration = new QLabel(tr("Expiration Date:"),this);
+   lbl_expiration = new QLabel(us_tr("Expiration Date:"),this);
    lbl_expiration->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_expiration->setGeometry(xpos, ypos, buttonw, buttonh);
 
@@ -343,7 +343,7 @@ US_License::US_License(QWidget *parent, const char *name) : QDialog( parent, nam
    xpos = spacing;
    ypos += spacing + 2*buttonh;
 
-   pb_help = new QPushButton(tr("Help"), this);
+   pb_help = new QPushButton(us_tr("Help"), this);
    Q_CHECK_PTR(pb_help);
    pb_help->setAutoDefault(false);
    pb_help->setGeometry(xpos, ypos, pushbutton, 26);
@@ -351,7 +351,7 @@ US_License::US_License(QWidget *parent, const char *name) : QDialog( parent, nam
 
    xpos += pushbutton + spacing;
 
-   pb_import = new QPushButton(tr("E-mail Import"), this);
+   pb_import = new QPushButton(us_tr("E-mail Import"), this);
    Q_CHECK_PTR(pb_import);
    pb_import->setAutoDefault(false);
    pb_import->setGeometry(xpos, ypos, pushbutton, 26);
@@ -359,7 +359,7 @@ US_License::US_License(QWidget *parent, const char *name) : QDialog( parent, nam
 
    xpos += pushbutton + spacing;
 
-   pb_request = new QPushButton(tr("Request New"), this);
+   pb_request = new QPushButton(us_tr("Request New"), this);
    Q_CHECK_PTR(pb_request);
    pb_request->setAutoDefault(false);
    pb_request->setGeometry(xpos, ypos, pushbutton, 26);
@@ -367,7 +367,7 @@ US_License::US_License(QWidget *parent, const char *name) : QDialog( parent, nam
 
    xpos += pushbutton + spacing;
 
-   pb_save = new QPushButton(tr("Save"), this);
+   pb_save = new QPushButton(us_tr("Save"), this);
    Q_CHECK_PTR(pb_save);
    pb_save->setAutoDefault(false);
    pb_save->setGeometry(xpos, ypos, pushbutton, 26);
@@ -375,7 +375,7 @@ US_License::US_License(QWidget *parent, const char *name) : QDialog( parent, nam
 
    xpos += pushbutton + spacing;
 
-   pb_cancel = new QPushButton(tr("Cancel"), this);
+   pb_cancel = new QPushButton(us_tr("Cancel"), this);
    Q_CHECK_PTR(pb_cancel);
    pb_cancel->setAutoDefault(false);
    pb_cancel->setGeometry(xpos, ypos, pushbutton, 26);
@@ -434,7 +434,7 @@ void US_License::save()
    QFile f( lcfile );
    if( f.open( QIODevice::WriteOnly | QIODevice::Text ) )
    {
-      Q3TextStream ts (&f);
+      QTextStream ts (&f);
       ts<<lastname<<"\n";
       ts<<firstname<<"\n";
       ts<<institution<<"\n";
@@ -451,17 +451,17 @@ void US_License::save()
       ts<<code<<"\n";
       ts<<expiration<<"\n";
 
-      QMessageBox::message(
-                           tr( "Thanks!" ), 
-                           tr( "Your license information was saved to the following file:\n\n"
+      US_Static::us_message(
+                           us_tr( "Thanks!" ), 
+                           us_tr( "Your license information was saved to the following file:\n\n"
                                + QDir::convertSeparators( lcfile ) ) );
       pb_cancel->setText("Close");
    }
    else
    {
-      QMessageBox::message(
-                           tr( "Error" ), 
-                           tr( "Could not save license file - "
+      US_Static::us_message(
+                           us_tr( "Error" ), 
+                           us_tr( "Could not save license file - "
                                "please make sure you have write permission" ) );
       return;
    }
@@ -470,17 +470,16 @@ void US_License::save()
 
 void US_License::import()
 {
-   QFileDialog fd;
+   // QFileDialog fd;
    int count=0;
    QFile texfile;
    QString filename, line="";
-   filename = fd.getOpenFileName( "", "", this, "", 
-                                  "Please select an e-mail file containing an UltraScan license..." );
-   texfile.setName(filename);
+   filename = QFileDialog::getOpenFileName( this , "Please select an e-mail file containing an UltraScan license..." , "" , "" );
+   texfile.setFileName(filename);
 
    if (texfile.open(QIODevice::ReadOnly))
    {
-      Q3TextStream ts(&texfile);
+      QTextStream ts(&texfile);
       lastname = ts.readLine();
       le_lastname->setText(lastname);
       count++;
@@ -508,11 +507,11 @@ void US_License::import()
       {
          state = ts.readLine();
          int i=0;
-         while (i<cbb_state->count() && state != cbb_state->text(i))
+         while (i<cbb_state->count() && state != cbb_state->itemText(i))
          {
             i++;
          }
-         cbb_state->setCurrentItem(i);
+         cbb_state->setCurrentIndex(i);
       }
       if (!ts.atEnd())
       {
@@ -559,56 +558,56 @@ void US_License::import()
          }
          if (os == "linux")
          {
-            lb_os->setCurrentItem(0);
+            lb_os->setCurrentItem( lb_os->item(0) );
          }
          if (os == "win32")
          {
-            lb_os->setCurrentItem(1);
+            lb_os->setCurrentItem( lb_os->item(1) );
          }
          if (os == "osx")
          {
-            lb_os->setCurrentItem(2);
+            lb_os->setCurrentItem( lb_os->item(2) );
          }
          if (os == "irix")
          {
-            lb_os->setCurrentItem(3);
+            lb_os->setCurrentItem( lb_os->item(3) );
          }
          if (os == "solaris")
          {
-            lb_os->setCurrentItem(4);
+            lb_os->setCurrentItem( lb_os->item(4) );
          }
          if (os == "freebsd")
          {
-            lb_os->setCurrentItem(5);
+            lb_os->setCurrentItem( lb_os->item(5) );
          }
          if (os == "netbsd")
          {
-            lb_os->setCurrentItem(6);
+            lb_os->setCurrentItem( lb_os->item(6) );
          }
          if (os == "openbsd")
          {
-            lb_os->setCurrentItem(7);
+            lb_os->setCurrentItem( lb_os->item(7) );
          }
       }
       if (!ts.atEnd())
       {
          version = ts.readLine();
          int i=0;
-         while (i<cbb_version->count() && version != cbb_version->text(i))
+         while (i<cbb_version->count() && version != cbb_version->itemText(i))
          {
             i++;
          }
-         cbb_version->setCurrentItem(i);
+         cbb_version->setCurrentIndex(i);
       }
       if (!ts.atEnd())
       {
          licensetype = ts.readLine();
          int i=0;
-         while (i<cbb_licensetype->count() && licensetype != cbb_licensetype->text(i))
+         while (i<cbb_licensetype->count() && licensetype != cbb_licensetype->itemText(i))
          {
             i++;
          }
-         cbb_licensetype->setCurrentItem(i);
+         cbb_licensetype->setCurrentIndex(i);
       }
       if (!ts.atEnd())
       {
@@ -627,11 +626,13 @@ void US_License::import()
 
 void US_License::request()
 {
-   proc = new Q3Process(this);
+   proc = new QProcess(this);
+#if QT_VERSION < 0x040000
    proc->clearArguments();
-   connect(proc, SIGNAL(readyReadStdout()), this, SLOT(captureStdout()));
-   connect(proc, SIGNAL(readyReadStderr()), this, SLOT(captureStderr()));
-   connect(proc, SIGNAL(processExited())  , this, SLOT(endProcess()));
+#endif
+   connect(proc, SIGNAL(readyReadStandardOutput()), this, SLOT(captureStdout()));
+   connect(proc, SIGNAL(readyReadStandardError()), this, SLOT(captureStderr()));
+   connect(proc, SIGNAL(finished( int, QProcess::ExitStatus ))  , this, SLOT(endProcess()));
 
    stderrSize = 0;
    trials = 0;
@@ -676,7 +677,7 @@ void US_License::request()
       }; 
 
    int i = 0;
-   while ( strlen( browser[i].program ) != 0 )
+   while ( strlen( qPrintable( browser[i].program ) ) != 0 )
    {
       if ( start_browser( browser[i].program, browser[i].remote, browser[i].url ) )
       {
@@ -694,10 +695,10 @@ void US_License::request()
          "Please visit http://www.ultrascan.uthscsa.edu/register.html "
          "to register manually\n";
     
-      QMessageBox::message(
-                           tr( "UltraScan Error:" ), 
-                           tr( "Couldn't start " BROWSERS "\n\n"
-                               "Please make sure you have the appropriate ibrowser installed.\n\n"
+      US_Static::us_message(
+                           us_tr( "UltraScan Error:" ), 
+                           us_tr( "Couldn't start " BROWSERS "\n\n"
+                               "Please make sure you have the appropriate browser installed.\n\n"
                                "You can visit http://www.ultrascan.uthscsa.edu/register.html\n"
                                "to register your UltraScan copy manually." ) );
       exit(-1);
@@ -708,27 +709,59 @@ void US_License::request()
 bool US_License::start_browser( const QString& browser, 
                                 const QString& remote, const QString& url )
 {
+#if QT_VERSION < 0x040000
    proc->clearArguments();
-#ifdef Q_WS_MAC
+# ifdef Q_WS_MAC
    proc->addArgument( "open" );
    proc->addArgument( "-a" );
-#endif
+# endif
    proc->addArgument( browser );
    if ( remote != "" ) proc->addArgument( remote );
    proc->addArgument( url );
 
    return ( proc->start() );
+#else
+   QStringList args;
+   QString prog = browser;
+   
+# ifdef Q_WS_MAC
+   args
+      << "-a"
+      << prog
+      ;
+   prog = "open";
+# endif
+   if ( remote != "" ) {
+      args
+         << remote
+         ;
+   }
+   args
+      << url
+      ;
+   proc->start( prog, args );
+   return ( proc->waitForStarted() );
+#endif
 }
 
 
 void US_License::captureStdout()
 {
+#if QT_VERSION < 0x040000
    cout << proc->readLineStdout() << endl;
+#else
+   cout << QString( proc->readAllStandardOutput() ) << endl;
+#endif
 }
 
 void US_License::captureStderr()
 {
+#if QT_VERSION < 0x040000
    QByteArray list = proc->readStderr();
+#else
+   QByteArray list = proc->readAllStandardError();
+#endif
+   
    stderrSize = list.size();
    cout << "The following error occured while attempting to run Mozilla:\n" 
         << QString(list) << endl;
@@ -741,6 +774,7 @@ void US_License::endProcess()
    // error attaching to already running process, start new$
    if ( trials == 1 && stderrSize > 0 )
    {
+#if QT_VERSION < 0x040000
       proc->clearArguments();
       proc->addArgument( "mozilla" );
       proc->addArgument( "http://www.ultrascan.uthscsa.edu/register.html" );
@@ -749,12 +783,21 @@ void US_License::endProcess()
       {
          cout << "Error: Can't start browser window\n";
 
-         QMessageBox::message(
-                              tr( "UltraScan Error:" ), 
-                              tr( "Can't start browser window..." ) );
+         US_Static::us_message(
+                              us_tr( "UltraScan Error:" ), 
+                              us_tr( "Can't start browser window..." ) );
       
          return;
       }
+#else
+      cout << "Error: Can't start browser window\n";
+
+      US_Static::us_message(
+                           us_tr( "UltraScan Error:" ), 
+                           us_tr( "Can't start browser window..." ) );
+      
+      return;
+#endif
    }
    else
    {
@@ -793,7 +836,7 @@ void US_License::update_city(const QString &str)
 
 void US_License::update_state(int val)
 {
-   state = cbb_state->text(val);
+   state = cbb_state->itemText(val);
 }
 
 void US_License::update_zip(const QString &str)
@@ -813,12 +856,12 @@ void US_License::update_email(const QString &str)
 
 void US_License::update_version(int val)
 {
-   version = cbb_version->text(val);
+   version = cbb_version->itemText(val);
 }
 
 void US_License::update_licensetype(int item)
 {
-   licensetype = cbb_licensetype->text(item);
+   licensetype = cbb_licensetype->itemText(item);
 }
 
 void US_License::update_code(const QString &str)

@@ -1,8 +1,8 @@
 #include "../include/us3_defines.h"
 #include "../include/us_hydrodyn_saxs_hplc_p3d.h"
 //Added by qt3to4:
-#include <Q3HBoxLayout>
-#include <Q3VBoxLayout>
+#include <QHBoxLayout>
+#include <QVBoxLayout>
 #include <QLabel>
 #include <QCloseEvent>
 
@@ -11,14 +11,14 @@ US_Hydrodyn_Saxs_Hplc_P3d::US_Hydrodyn_Saxs_Hplc_P3d(
                                                      map < QString, QString > *              parameters,
                                                      QWidget *                               p,
                                                      const char *                            name
-                                                     ) : QDialog( p, name )
+                                                     ) : QDialog( p )
 {
    this->us_hydrodyn_saxs_hplc                = us_hydrodyn_saxs_hplc;
    this->parameters                           = parameters;
 
    USglobal = new US_Config();
    setPalette( PALET_FRAME );
-   setCaption( tr( "US-SOMO: SAXS HPLC : Plot 3D" ) );
+   setWindowTitle( us_tr( "US-SOMO: SAXS HPLC : Plot 3D" ) );
 
    setupGUI();
    update_enables();
@@ -37,14 +37,14 @@ void US_Hydrodyn_Saxs_Hplc_P3d::setupGUI()
 {
    int minHeight1  = 30;
 
-   lbl_title =  new QLabel      ( tr( "US-SOMO: SAXS HPLC : Plot 3D" ), this );
+   lbl_title =  new QLabel      ( us_tr( "US-SOMO: SAXS HPLC : Plot 3D" ), this );
    lbl_title -> setAlignment    ( Qt::AlignCenter | Qt::AlignVCenter );
    lbl_title -> setMinimumHeight( minHeight1 );
    lbl_title -> setPalette( PALET_LABEL );
    AUTFBACK( lbl_title );
    lbl_title -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold ) );
 
-   lbl_plot_curves = new QLabel(tr(" Include Gaussians: "), this);
+   lbl_plot_curves = new QLabel(us_tr(" Include Gaussians: "), this);
    lbl_plot_curves->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_plot_curves->setPalette( PALET_LABEL );
    AUTFBACK( lbl_plot_curves );
@@ -64,34 +64,34 @@ void US_Hydrodyn_Saxs_Hplc_P3d::setupGUI()
       cb_plot_curves.push_back( cb_tmp );
    }
 
-   pb_plot_all =  new QPushButton ( tr( "Plot all" ), this );
+   pb_plot_all =  new QPushButton ( us_tr( "Plot all" ), this );
    pb_plot_all -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1) );
    pb_plot_all -> setMinimumHeight( minHeight1 );
    pb_plot_all -> setPalette      ( PALET_PUSHB );
    connect( pb_plot_all, SIGNAL( clicked() ), SLOT( plot_all() ) );
 
-   pb_help =  new QPushButton ( tr( "Help" ), this );
+   pb_help =  new QPushButton ( us_tr( "Help" ), this );
    pb_help -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1) );
    pb_help -> setMinimumHeight( minHeight1 );
    pb_help -> setPalette      ( PALET_PUSHB );
    connect( pb_help, SIGNAL( clicked() ), SLOT( help() ) );
 
-   pb_quit =  new QPushButton ( tr( "Quit" ), this );
+   pb_quit =  new QPushButton ( us_tr( "Quit" ), this );
    pb_quit -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1) );
    pb_quit -> setMinimumHeight( minHeight1 );
    pb_quit -> setPalette      ( PALET_PUSHB );
    connect( pb_quit, SIGNAL( clicked() ), SLOT( quit() ) );
 
-   pb_plot =  new QPushButton ( tr( "Plot selected" ), this );
+   pb_plot =  new QPushButton ( us_tr( "Plot selected" ), this );
    pb_plot -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1) );
    pb_plot -> setMinimumHeight( minHeight1 );
    pb_plot -> setPalette      ( PALET_PUSHB );
    connect( pb_plot, SIGNAL( clicked() ), SLOT( plot() ) );
 
-   Q3VBoxLayout *background = new Q3VBoxLayout( this );
+   QVBoxLayout * background = new QVBoxLayout( this ); background->setContentsMargins( 0, 0, 0, 0 ); background->setSpacing( 0 );
    background->addWidget( lbl_title );
 
-   Q3HBoxLayout *hbl_plot_curves = new Q3HBoxLayout( 0 );
+   QHBoxLayout * hbl_plot_curves = new QHBoxLayout(); hbl_plot_curves->setContentsMargins( 0, 0, 0, 0 ); hbl_plot_curves->setSpacing( 0 );
    hbl_plot_curves->addWidget( lbl_plot_curves );
    for ( unsigned int i = 0; i < ( unsigned int ) cb_plot_curves.size(); i++ )
    {
@@ -100,7 +100,7 @@ void US_Hydrodyn_Saxs_Hplc_P3d::setupGUI()
 
    background->addLayout( hbl_plot_curves );
 
-   Q3HBoxLayout *hbl_bottom = new Q3HBoxLayout( 0 );
+   QHBoxLayout * hbl_bottom = new QHBoxLayout(); hbl_bottom->setContentsMargins( 0, 0, 0, 0 ); hbl_bottom->setSpacing( 0 );
    hbl_bottom->addWidget ( pb_help );
    hbl_bottom->addWidget ( pb_quit );
    hbl_bottom->addWidget ( pb_plot_all );

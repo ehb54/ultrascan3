@@ -19,12 +19,12 @@ bool US_Hydrodyn::atom_align( vector < point > transform_from,
 
    if ( transform_from.size() < 3 )
    {
-      error_msg = tr( "At least 3 points are needed to align atoms" );
+      error_msg = us_tr( "At least 3 points are needed to align atoms" );
       return false;
    }
    if ( transform_from.size() != transform_to.size() )
    {
-      error_msg = QString( tr( "Size of transform from (%1) does not equal size of transform to (%2)" ) )
+      error_msg = QString( us_tr( "Size of transform from (%1) does not equal size of transform to (%2)" ) )
          .arg( transform_from.size() )
          .arg( transform_to.size() );
       return false;

@@ -2,7 +2,7 @@
 #include "../include/us_hydrodyn.h"
 #include "../include/us_lm.h"
 //Added by qt3to4:
-#include <Q3TextStream>
+#include <QTextStream>
 
 // note: this program uses cout and/or cerr and this should be replaced
 
@@ -249,9 +249,9 @@ void US_Hydrodyn_Saxs::plot_one_iqq( vector < double > q,
          QString dupmsg;
          do {
             dupmsg = "";
-            text = QInputDialog::getText(
-                                         tr("US-SOMO: Compute structure factors"),
-                                         tr( "If you want to compute structure factors for this curve\n"
+            text = US_Static::getText(
+                                         us_tr("US-SOMO: Compute structure factors"),
+                                         us_tr( "If you want to compute structure factors for this curve\n"
                                              "Please define a dummy saxs name or press CANCEL to skip this computation.\n"
                                              + dupmsg +
                                              "Name for these structure factors:" )
@@ -261,7 +261,7 @@ void US_Hydrodyn_Saxs::plot_one_iqq( vector < double > q,
                                          &ok, 
                                          this );
             text.replace( QRegExp( "\\s" ), "_" );
-            text = text.upper();
+            text = text.toUpper();
             if ( ok && !text.isEmpty() )
             {
                // user entered something and pressed OK
@@ -269,11 +269,11 @@ void US_Hydrodyn_Saxs::plot_one_iqq( vector < double > q,
                if ( saxs_map.count( text ) )
                {
                   switch ( QMessageBox::question(this, 
-                                                 tr( "US-SOMO: Compute structure factors : duplicate name" ),
-                                                 QString( tr( "The name %1 was previously defined\n"
+                                                 us_tr( "US-SOMO: Compute structure factors : duplicate name" ),
+                                                 QString( us_tr( "The name %1 was previously defined\n"
                                                               "Do you want to overwrite the values?" ) ).arg( text ),
-                                                 tr( "&Overwrite" ), 
-                                                 tr( "&Try again" ),
+                                                 us_tr( "&Overwrite" ), 
+                                                 us_tr( "&Try again" ),
                                                  QString::null,
                                                  1,
                                                  0
@@ -282,7 +282,7 @@ void US_Hydrodyn_Saxs::plot_one_iqq( vector < double > q,
                   case 0 : 
                      break;
                   case 1 : 
-                     dupmsg = tr( "Name already exists, choose a unique name\n" );
+                     dupmsg = us_tr( "Name already exists, choose a unique name\n" );
                      break;
                   default :
                      break;
@@ -303,10 +303,10 @@ void US_Hydrodyn_Saxs::plot_one_iqq( vector < double > q,
             double            nnorm5;
             US_Saxs_Util usu;
             cout << "compute exponentials\n" << flush;
-            editor_msg( "blue", tr( "Computing 4 & 5 term exponentials" ) );
+            editor_msg( "blue", us_tr( "Computing 4 & 5 term exponentials" ) );
             QMessageBox::information( this, 
-                                      tr( "US-SOMO: Compute structure factors : start computation" ),
-                                      QString( tr( "Start computation\n"
+                                      us_tr( "US-SOMO: Compute structure factors : start computation" ),
+                                      QString( us_tr( "Start computation\n"
                                                    "NOTE: This could take some time and the program will appear unresponsive" ) ) );
             
             if ( !usu.compute_exponential( q,
@@ -415,8 +415,8 @@ void US_Hydrodyn_Saxs::plot_one_iqq( vector < double > q,
                            .arg( norm5tag )
                            .arg( qs5 ) );
                switch ( QMessageBox::question(this, 
-                                              tr( "US-SOMO: Compute structure factors : computed" ),
-                                              QString( tr( "Saxs name %1\n"
+                                              us_tr( "US-SOMO: Compute structure factors : computed" ),
+                                              QString( us_tr( "Saxs name %1\n"
                                                            "4 term exponentials: norm %2 nnorm %3 %4\n"
                                                            "5 term exponentials: norm %5 nnorm %6 %7\n"
                                                            "Do you want to overwrite the values?" ) )
@@ -428,8 +428,8 @@ void US_Hydrodyn_Saxs::plot_one_iqq( vector < double > q,
                                               .arg( nnorm5 )
                                               .arg( norm5tag )
                                               ,
-                                              tr("&Save to file"), 
-                                              tr("&Forget them") 
+                                              us_tr("&Save to file"), 
+                                              us_tr("&Forget them") 
                                               ) )
                {
                case 0 : 
@@ -455,8 +455,8 @@ void US_Hydrodyn_Saxs::plot_one_iqq( vector < double > q,
                      // get excluded volume
                      {
                         bool ok;
-                        double res = QInputDialog::getDouble(
-                                                             tr( "US-SOMO: Compute structure factors : enter excluded volume" ),
+                        double res = US_Static::getDouble(
+                                                             us_tr( "US-SOMO: Compute structure factors : enter excluded volume" ),
                                                              "Enter a default excluded volume in Angstroms^3 (can be zero):", 
                                                              0, 
                                                              0,
@@ -474,8 +474,8 @@ void US_Hydrodyn_Saxs::plot_one_iqq( vector < double > q,
                               // leave alone
                            }
                            QMessageBox::information( this, 
-                                                     tr( "US-SOMO: Compute structure factors : excluded volume" ),
-                                                     QString( tr( "Excluded volume is set to %1\n" ) ).arg( saxs_map[ text ].volume ) );
+                                                     us_tr( "US-SOMO: Compute structure factors : excluded volume" ),
+                                                     QString( us_tr( "Excluded volume is set to %1\n" ) ).arg( saxs_map[ text ].volume ) );
                         }
                      }
 
@@ -501,20 +501,20 @@ void US_Hydrodyn_Saxs::plot_one_iqq( vector < double > q,
 
                         do {
                            ok = false;
-                           filename = QFileDialog::getSaveFileName( this , tr( "US-SOMO: Compute structure factors : save data" ) , org_filename , "*.saxs_atoms *.SAXS_ATOMS" );
+                           filename = QFileDialog::getSaveFileName( this , us_tr( "US-SOMO: Compute structure factors : save data" ) , org_filename , "*.saxs_atoms *.SAXS_ATOMS" );
 
                            cout << QString( "filename is %1\n" ).arg( filename );
                            if ( !filename.isEmpty() )
                            {
-                              f.setName( filename );
+                              f.setFileName( filename );
                               switch ( QMessageBox::question(
                                                             this,
-                                                            tr( "US-SOMO: Compute structure factors : save data" ),
-                                                            tr( "A file called %1 already exists."
+                                                            us_tr( "US-SOMO: Compute structure factors : save data" ),
+                                                            us_tr( "A file called %1 already exists."
                                                                 "Do you want to overwrite it?" )
                                                             .arg( filename ),
-                                                            tr( "&Yes" ), 
-                                                            tr( "&No" ),
+                                                            us_tr( "&Yes" ), 
+                                                            us_tr( "&No" ),
                                                             QString::null, 
                                                             1, 
                                                             0 ) )
@@ -533,8 +533,8 @@ void US_Hydrodyn_Saxs::plot_one_iqq( vector < double > q,
                               if ( ok && !filename.isEmpty() && !f.open( QIODevice::WriteOnly | QIODevice::Text ) )
                               {
                                  QMessageBox::warning( this, 
-                                                       tr( "US-SOMO: Compute structure factors : save data" ),
-                                                       QString( tr( "Error trying to write the file %1 (possibly permissions)\n" ) )
+                                                       us_tr( "US-SOMO: Compute structure factors : save data" ),
+                                                       QString( us_tr( "Error trying to write the file %1 (possibly permissions)\n" ) )
                                                        .arg( filename ) );
 
                                  ok = false;
@@ -547,10 +547,10 @@ void US_Hydrodyn_Saxs::plot_one_iqq( vector < double > q,
                         if ( ok && !filename.isEmpty() )
                         {
                            
-                           Q3TextStream ts( &f );
+                           QTextStream ts( &f );
                            for ( unsigned int i=0; i < saxs_list.size(); i++ )
                            {
-                              ts << saxs_list[i].saxs_name.upper() << "\t"
+                              ts << saxs_list[i].saxs_name.toUpper() << "\t"
                                  << saxs_list[i].a[0] << "\t"
                                  << saxs_list[i].b[0] << "\t"
                                  << saxs_list[i].a[1] << "\t"
@@ -561,7 +561,7 @@ void US_Hydrodyn_Saxs::plot_one_iqq( vector < double > q,
                                  << saxs_list[i].b[3] << "\t"
                                  << saxs_list[i].c << "\t"
                                  << saxs_list[i].volume << endl;
-                              ts << saxs_list[i].saxs_name.upper() << "\t"
+                              ts << saxs_list[i].saxs_name.toUpper() << "\t"
                                  << saxs_list[i].a5[0] << "\t"
                                  << saxs_list[i].b5[0] << "\t"
                                  << saxs_list[i].a5[1] << "\t"
@@ -580,8 +580,8 @@ void US_Hydrodyn_Saxs::plot_one_iqq( vector < double > q,
                            {
                               our_saxs_options->default_saxs_filename = filename;
                               QMessageBox::information( this, 
-                                                        tr( "US-SOMO: Compute structure factors : new default saxs filename" ),
-                                                        QString( tr( 
+                                                        us_tr( "US-SOMO: Compute structure factors : new default saxs filename" ),
+                                                        QString( us_tr( 
                                                                     "The default saxs atoms file is now %1\n" 
                                                                     ) )
                                                         .arg( filename ) 
@@ -592,8 +592,8 @@ void US_Hydrodyn_Saxs::plot_one_iqq( vector < double > q,
                            {
                               our_saxs_options->dummy_saxs_name = text;
                               QMessageBox::information( this, 
-                                                        tr( "US-SOMO: Compute structure factors : new default saxs dummy atom name" ),
-                                                        QString( tr( 
+                                                        us_tr( "US-SOMO: Compute structure factors : new default saxs dummy atom name" ),
+                                                        QString( us_tr( 
                                                                     "The default dummy atom name is now %1\n" 
                                                                     ) )
                                                         .arg( text ) 
@@ -607,7 +607,7 @@ void US_Hydrodyn_Saxs::plot_one_iqq( vector < double > q,
 
                   break;
                case 2 : 
-                  dupmsg = tr( "Name already exists, choose a unique name\n" );
+                  dupmsg = us_tr( "Name already exists, choose a unique name\n" );
                   break;
                default :
                   break;
@@ -615,7 +615,7 @@ void US_Hydrodyn_Saxs::plot_one_iqq( vector < double > q,
             }
          }
       } else {
-         editor_msg( "dark red", QString( tr( "Skipped: Computing %1 term exponentials, since I(q) has errors" ) )
+         editor_msg( "dark red", QString( us_tr( "Skipped: Computing %1 term exponentials, since I(q) has errors" ) )
                      .arg( our_saxs_options->compute_exponential_terms ) );
       }
    }
@@ -1323,13 +1323,13 @@ void US_Hydrodyn_Saxs::do_plot_resid()
 
    if ( some_pts_skipped )
    {
-      editor_msg( "dark red", tr( "Warning: points with zero s.d.'s or I(q)'s are not displayed" ) );
+      editor_msg( "dark red", us_tr( "Warning: points with zero s.d.'s or I(q)'s are not displayed" ) );
    }
 
    if ( any_plotted )
    {
       plot_resid->setAxisTitle(QwtPlot::yLeft,
-                               tr(
+                               us_tr(
                                   cb_cs_guinier->isChecked() ?
                                   (  cb_resid_pct->isChecked() ?
                                      "% difference [100*(ln(q*I(q)) - Guinier)/ln(q*I(q))]" :
@@ -1637,17 +1637,17 @@ void US_Hydrodyn_Saxs::do_plot_resid( vector < double > & x,
 
 void US_Hydrodyn_Saxs::pp() 
 {
-   QString use_dir = QDir::currentDirPath();
+   QString use_dir = QDir::currentPath();
    ((US_Hydrodyn  *)us_hydrodyn)->select_from_directory_history( use_dir, this );
    QString fn = 
-      QFileDialog::getSaveFileName( this , tr( "Select a prefix name to save the plot data" ) , use_dir , "*.csv" );
+      QFileDialog::getSaveFileName( this , us_tr( "Select a prefix name to save the plot data" ) , use_dir , "*.csv" );
 
    if ( fn.isEmpty() )
    {
       return;
    }
 
-   fn = QFileInfo( fn ).dirPath() + QDir::separator() + QFileInfo( fn ).baseName( true );
+   fn = QFileInfo( fn ).path() + QDir::separator() + QFileInfo( fn ).completeBaseName();
 
    QString errors;
    QString messages;
@@ -1675,7 +1675,7 @@ void US_Hydrodyn_Saxs::pp()
 
 void US_Hydrodyn_Saxs::set_eb() 
 {
-   // qDebug( "set_eb(), calling set_guinier()" );
+   // us_qdebug( "set_eb(), calling set_guinier()" );
    set_guinier();
 }
 

@@ -1,7 +1,7 @@
 #include "../include/us_write_config.h"
 #include <qmessagebox.h>
 //Added by qt3to4:
-#include <Q3TextStream>
+#include <QTextStream>
 
 // note: this program uses cout and/or cerr and this should be replaced
 
@@ -10,7 +10,7 @@ static std::basic_ostream<char>& operator<<(std::basic_ostream<char>& os, const 
 }
 
 US_Write_Config::US_Write_Config( QObject* parent, const char* name) 
-   : QObject( parent, name) 
+   : QObject( parent ) 
 {
 }
 
@@ -20,13 +20,13 @@ US_Write_Config::~US_Write_Config()
 
 bool US_Write_Config::write_config( struct Config config_list )
 {
-   QString warning=tr("Warning"), message;
+   QString warning=us_tr("Warning"), message;
    QDir temp_dir = config_list.help_dir;
    if ( ! temp_dir.exists() )
    {
-      if ( ! temp_dir.mkdir( config_list.help_dir, true ) )
+      if ( ! temp_dir.mkdir( config_list.help_dir ) )
       {
-         message = tr("Could not create the Help File Directory!\n\n"
+         message = us_tr("Could not create the Help File Directory!\n\n"
                       + config_list.help_dir + "\nPlease check your write permissions!");
          errorMessage(warning, message);
          cerr << warning << ":\n" << message << endl;
@@ -37,9 +37,9 @@ bool US_Write_Config::write_config( struct Config config_list )
    temp_dir = config_list.root_dir;
    if ( ! temp_dir.exists() )
    {
-      if (!temp_dir.mkdir(config_list.root_dir, true))
+      if (!temp_dir.mkdir(config_list.root_dir ))
       {
-         message = tr("Could not create the Root Directory!\n\n"
+         message = us_tr("Could not create the Root Directory!\n\n"
                       + config_list.root_dir + "\nPlease check your write permissions!");
          errorMessage(warning, message);
          cerr << warning << ":\n" << message << endl;
@@ -50,9 +50,9 @@ bool US_Write_Config::write_config( struct Config config_list )
    temp_dir = config_list.data_dir;
    if ( ! temp_dir.exists() )
    {
-      if (!temp_dir.mkdir(config_list.data_dir, true))
+      if (!temp_dir.mkdir(config_list.data_dir ))
       {
-         message = tr("Could not create the Data Directory!\n\n"
+         message = us_tr("Could not create the Data Directory!\n\n"
                       + config_list.data_dir + "\nPlease check your write permissions!");
          errorMessage(warning, message);
          cerr << warning << ":\n" << message << endl;
@@ -63,9 +63,9 @@ bool US_Write_Config::write_config( struct Config config_list )
    temp_dir = config_list.tmp_dir;
    if ( ! temp_dir.exists() )
    {
-      if (!temp_dir.mkdir(config_list.tmp_dir, true))
+      if (!temp_dir.mkdir(config_list.tmp_dir ))
       {
-         message = tr("Could not create the Temporary Directory!\n\n"
+         message = us_tr("Could not create the Temporary Directory!\n\n"
                       + config_list.tmp_dir + "\nPlease check your write permissions!");
          errorMessage(warning, message);
          cerr << warning << ":\n" << message << endl;
@@ -76,9 +76,9 @@ bool US_Write_Config::write_config( struct Config config_list )
    temp_dir = config_list.archive_dir;
    if ( ! temp_dir.exists() )
    {
-      if (!temp_dir.mkdir(config_list.archive_dir, true))
+      if (!temp_dir.mkdir(config_list.archive_dir ))
       {
-         message = tr("Could not create the Archive Directory!\n\n"
+         message = us_tr("Could not create the Archive Directory!\n\n"
                       + config_list.archive_dir + "\nPlease check your write permissions!");
          errorMessage(warning, message);
          cerr << warning << ":\n" << message << endl;
@@ -89,7 +89,7 @@ bool US_Write_Config::write_config( struct Config config_list )
    temp_dir = config_list.system_dir;
    if ( ! temp_dir.exists() )
    {
-      message = tr("The UltraScan System Directory could not be found!\n\n"
+      message = us_tr("The UltraScan System Directory could not be found!\n\n"
                    + config_list.system_dir + "\nPlease check your settings!");
       errorMessage(warning, message);
       cerr << warning << ":\n" << message << endl;
@@ -99,9 +99,9 @@ bool US_Write_Config::write_config( struct Config config_list )
    temp_dir = config_list.html_dir;
    if ( ! temp_dir.exists() )
    {
-      if ( ! temp_dir.mkdir(config_list.html_dir, true) )
+      if ( ! temp_dir.mkdir(config_list.html_dir ) )
       {
-         message = tr("Could not create the Reports Directory!\n\n"
+         message = us_tr("Could not create the Reports Directory!\n\n"
                       + config_list.html_dir + "\nPlease check your write permissions!");
          errorMessage(warning, message);
          cerr << warning << ":\n" << message << endl;
@@ -112,9 +112,9 @@ bool US_Write_Config::write_config( struct Config config_list )
    temp_dir = config_list.result_dir;
    if ( ! temp_dir.exists() )
    {
-      if ( ! temp_dir.mkdir( config_list.result_dir, true ) )
+      if ( ! temp_dir.mkdir( config_list.result_dir ) )
       {
-         message = tr("Could not create the Results Directory!\n\n"
+         message = us_tr("Could not create the Results Directory!\n\n"
                       + config_list.result_dir + "\nPlease check your write permissions!");
          errorMessage(warning, message);
          cerr << warning << ":\n" << message << endl;
@@ -127,9 +127,9 @@ bool US_Write_Config::write_config( struct Config config_list )
    temp_dir       = QDir( rcdir );
    if ( ! temp_dir.exists() )
    {
-      if ( ! temp_dir.mkdir( rcdir, true ) )
+      if ( ! temp_dir.mkdir( rcdir ) )
       {
-         message = tr("Could not create the Configuration Directory!\n\n"
+         message = us_tr("Could not create the Configuration Directory!\n\n"
                       + rcdir + "\nPlease check your write permissions!");
          errorMessage(warning, message);
          cerr << warning << ":\n" << message << endl;
@@ -138,11 +138,11 @@ bool US_Write_Config::write_config( struct Config config_list )
    }
 
    QFile f( rcfile );
-   Q3TextStream ts ( &f );
+   QTextStream ts ( &f );
    
    if ( f.open( QIODevice::WriteOnly | QIODevice::Text ) )
    {
-      Q3TextStream ts ( &f );
+      QTextStream ts ( &f );
       ts << config_list.version         << "\n";
       ts << config_list.browser         << "\n";
       ts << "tar_dummy"                 << "\n";
@@ -165,7 +165,7 @@ bool US_Write_Config::write_config( struct Config config_list )
    }
    else
    {
-      message = tr( "Could not open Configuration File for update.\n\n"
+      message = us_tr( "Could not open Configuration File for update.\n\n"
                     "$HOME/ultrascan/etc/usrc.conf\nPlease check your write permissions!" );
       errorMessage( warning, message );
       cerr << warning << ":\n" << message << endl;
@@ -176,6 +176,6 @@ bool US_Write_Config::write_config( struct Config config_list )
 
 void US_Write_Config::errorMessage( QString& str1, QString& str2 )
 {
-   QMessageBox::message( str1, str2 ); 
+   US_Static::us_message( str1, str2 ); 
 }
 

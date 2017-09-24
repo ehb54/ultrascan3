@@ -3,7 +3,9 @@
 
 #include <map>
 #include <vector>
+#include <set>
 #include "us_file_util.h"
+#include "us_vector.h"
 #include <qwt_plot.h>
 
 using namespace std;

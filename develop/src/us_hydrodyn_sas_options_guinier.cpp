@@ -3,10 +3,10 @@
 #include "../include/us_hydrodyn.h"
 #include "../include/us_hydrodyn_saxs_conc.h"
 //Added by qt3to4:
-#include <Q3HBoxLayout>
+#include <QHBoxLayout>
 #include <QCloseEvent>
-#include <Q3GridLayout>
-#include <Q3Frame>
+#include <QGridLayout>
+#include <QFrame>
 #include <QLabel>
 
 #define SLASH "/"
@@ -15,7 +15,7 @@
 #  define SLASH "\\"
 #endif
 
-US_Hydrodyn_SasOptionsGuinier::US_Hydrodyn_SasOptionsGuinier(struct saxs_options *saxs_options, bool *sas_options_guinier_widget, void *us_hydrodyn, QWidget *p, const char *name) : Q3Frame(p, name)
+US_Hydrodyn_SasOptionsGuinier::US_Hydrodyn_SasOptionsGuinier(struct saxs_options *saxs_options, bool *sas_options_guinier_widget, void *us_hydrodyn, QWidget *p, const char *name) : QFrame( p )
 {
    this->sas_options_guinier_widget = sas_options_guinier_widget;
    this->saxs_options = saxs_options;
@@ -23,7 +23,7 @@ US_Hydrodyn_SasOptionsGuinier::US_Hydrodyn_SasOptionsGuinier(struct saxs_options
    *sas_options_guinier_widget = true;
    USglobal=new US_Config();
    setPalette( PALET_FRAME );
-   setCaption(tr("US-SOMO SAS Guinier Options"));
+   setWindowTitle(us_tr("US-SOMO SAS Guinier Options"));
    setupGUI();
    global_Xpos += 30;
    global_Ypos += 30;
@@ -39,14 +39,14 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
 {
    int minHeight1 = 30;
 
-   lbl_guinier_and_cs_guinier = new QLabel(tr("Guinier, CS Guinier and TV Guinier Options:"), this);
-   lbl_guinier_and_cs_guinier->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Raised);
+   lbl_guinier_and_cs_guinier = new QLabel(us_tr("Guinier, CS Guinier and TV Guinier Options:"), this);
+   lbl_guinier_and_cs_guinier->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_guinier_and_cs_guinier->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_guinier_and_cs_guinier->setPalette( PALET_FRAME );
    AUTFBACK( lbl_guinier_and_cs_guinier );
    lbl_guinier_and_cs_guinier->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
 
-   lbl_qRgmax = new QLabel(tr(" Guinier: Maximum q * Rg : "), this);
+   lbl_qRgmax = new QLabel(us_tr(" Guinier: Maximum q * Rg : "), this);
    lbl_qRgmax->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_qRgmax->setPalette( PALET_LABEL );
    AUTFBACK( lbl_qRgmax );
@@ -62,13 +62,13 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
    AUTFBACK( le_qRgmax );
    connect(le_qRgmax, SIGNAL( textChanged( const QString & )), SLOT(update_qRgmax( const QString & )));
 
-   //    lbl_cs_guinier = new QLabel(tr("CS and TV Guinier Options:"), this);
+   //    lbl_cs_guinier = new QLabel(us_tr("CS and TV Guinier Options:"), this);
    //    lbl_cs_guinier->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    //    lbl_cs_guinier->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
-   //    lbl_cs_guinier->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
+   //    lbl_cs_guinier->setPalette( USglobal->global_colors.cg_frame );
    //    lbl_cs_guinier->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
 
-   lbl_cs_qRgmax = new QLabel(tr(" CS Guinier: Maximum q * Rc : "), this);
+   lbl_cs_qRgmax = new QLabel(us_tr(" CS Guinier: Maximum q * Rc : "), this);
    lbl_cs_qRgmax->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_cs_qRgmax->setPalette( PALET_LABEL );
    AUTFBACK( lbl_cs_qRgmax );
@@ -84,7 +84,7 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
    AUTFBACK( le_cs_qRgmax );
    connect(le_cs_qRgmax, SIGNAL( textChanged( const QString & )), SLOT(update_cs_qRgmax( const QString & )));
 
-   lbl_Rt_qRtmax = new QLabel(tr(" TV Guinier: Maximum q * Rt : "), this);
+   lbl_Rt_qRtmax = new QLabel(us_tr(" TV Guinier: Maximum q * Rt : "), this);
    lbl_Rt_qRtmax->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_Rt_qRtmax->setPalette( PALET_LABEL );
    AUTFBACK( lbl_Rt_qRtmax );
@@ -100,7 +100,7 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
    AUTFBACK( le_Rt_qRtmax );
    connect(le_Rt_qRtmax, SIGNAL( textChanged( const QString & )), SLOT(update_Rt_qRtmax( const QString & )));
 
-   lbl_cs_qstart = new QLabel(tr(" Minimum q^2 value : "), this);
+   lbl_cs_qstart = new QLabel(us_tr(" Minimum q^2 value : "), this);
    lbl_cs_qstart->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_cs_qstart->setPalette( PALET_LABEL );
    AUTFBACK( lbl_cs_qstart );
@@ -116,7 +116,7 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
    AUTFBACK( le_cs_qstart );
    connect(le_cs_qstart, SIGNAL( textChanged( const QString & )), SLOT(update_cs_qstart( const QString & )));
 
-   lbl_cs_qend = new QLabel(tr(" Maximum q^2 value : "), this);
+   lbl_cs_qend = new QLabel(us_tr(" Maximum q^2 value : "), this);
    lbl_cs_qend->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_cs_qend->setPalette( PALET_LABEL );
    AUTFBACK( lbl_cs_qend );
@@ -133,7 +133,7 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
    connect(le_cs_qend, SIGNAL( textChanged( const QString & )), SLOT(update_cs_qend( const QString & )));
 
 
-   lbl_qstart = new QLabel(tr(" Minimum q value : "), this);
+   lbl_qstart = new QLabel(us_tr(" Minimum q value : "), this);
    lbl_qstart->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_qstart->setPalette( PALET_LABEL );
    AUTFBACK( lbl_qstart );
@@ -149,7 +149,7 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
    AUTFBACK( le_qstart );
    connect(le_qstart, SIGNAL( textChanged( const QString & )), SLOT(update_qstart( const QString & )));
 
-   lbl_qend = new QLabel(tr(" Maximum q value : "), this);
+   lbl_qend = new QLabel(us_tr(" Maximum q value : "), this);
    lbl_qend->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_qend->setPalette( PALET_LABEL );
    AUTFBACK( lbl_qend );
@@ -166,7 +166,7 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
    connect(le_qend, SIGNAL( textChanged( const QString & )), SLOT(update_qend( const QString & )));
 
    cb_guinier_auto_fit = new QCheckBox(this);
-   cb_guinier_auto_fit->setText(tr(" Search for best Guinier range "));
+   cb_guinier_auto_fit->setText(us_tr(" Search for best Guinier range "));
    cb_guinier_auto_fit->setEnabled(true);
    cb_guinier_auto_fit->setChecked( ( ( US_Hydrodyn * )us_hydrodyn)->gparams.count( "guinier_auto_fit" ) &&
                                     ( ( US_Hydrodyn * )us_hydrodyn)->gparams[ "guinier_auto_fit" ] == "1" );
@@ -175,7 +175,7 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
    AUTFBACK( cb_guinier_auto_fit );
    connect(cb_guinier_auto_fit, SIGNAL(clicked()), this, SLOT(set_guinier_auto_fit()));
 
-   lbl_pointsmin = new QLabel(tr(" Minimum number of points : "), this);
+   lbl_pointsmin = new QLabel(us_tr(" Minimum number of points : "), this);
    lbl_pointsmin->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_pointsmin->setPalette( PALET_LABEL );
    AUTFBACK( lbl_pointsmin );
@@ -191,7 +191,7 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
    AUTFBACK( le_pointsmin );
    connect(le_pointsmin, SIGNAL( textChanged( const QString & )), SLOT(update_pointsmin( const QString & )));
 
-   lbl_pointsmax = new QLabel(tr(" Maximum number of points : "), this);
+   lbl_pointsmax = new QLabel(us_tr(" Maximum number of points : "), this);
    lbl_pointsmax->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_pointsmax->setPalette( PALET_LABEL );
    AUTFBACK( lbl_pointsmax );
@@ -208,7 +208,7 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
    connect(le_pointsmax, SIGNAL( textChanged( const QString & ) ), SLOT(update_pointsmax( const QString & )));
 
    cb_guinier_use_qRlimit = new QCheckBox(this);
-   cb_guinier_use_qRlimit->setText(tr(" Limit maximum q to maximum q*Rg, q*Rc or q*Rg (not active in Search mode)"));
+   cb_guinier_use_qRlimit->setText(us_tr(" Limit maximum q to maximum q*Rg, q*Rc or q*Rg (not active in Search mode)"));
    cb_guinier_use_qRlimit->setEnabled(true);
    cb_guinier_use_qRlimit->setChecked( ( ( US_Hydrodyn * )us_hydrodyn)->gparams.count( "guinier_use_qRlimit" ) &&
                                        ( ( US_Hydrodyn * )us_hydrodyn)->gparams[ "guinier_use_qRlimit" ] == "1" );
@@ -218,7 +218,7 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
    connect(cb_guinier_use_qRlimit, SIGNAL(clicked()), this, SLOT(set_guinier_use_qRlimit()));
 
    cb_guinier_use_sd = new QCheckBox(this);
-   cb_guinier_use_sd->setText(tr(" Use SDs for fitting "));
+   cb_guinier_use_sd->setText(us_tr(" Use SDs for fitting "));
    cb_guinier_use_sd->setEnabled(true);
    cb_guinier_use_sd->setChecked((*saxs_options).guinier_use_sd);
    cb_guinier_use_sd->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -227,7 +227,7 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
    connect(cb_guinier_use_sd, SIGNAL(clicked()), this, SLOT(set_guinier_use_sd()));
 
    cb_guinier_outlier_reject = new QCheckBox(this);
-   cb_guinier_outlier_reject->setText(tr(" Repeat the analysis after discarding points\n over the regression line by more than SD of "));
+   cb_guinier_outlier_reject->setText(us_tr(" Repeat the analysis after discarding points\n over the regression line by more than SD of "));
    cb_guinier_outlier_reject->setEnabled(true);
    cb_guinier_outlier_reject->setChecked((*saxs_options).guinier_outlier_reject);
    cb_guinier_outlier_reject->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -246,7 +246,7 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
    connect(le_guinier_outlier_reject_dist, SIGNAL( textChanged( const QString & )), SLOT(update_guinier_outlier_reject_dist( const QString & )));
 
    cb_guinier_csv = new QCheckBox(this);
-   cb_guinier_csv->setText(tr(" Save Guinier results to csv file: "));
+   cb_guinier_csv->setText(us_tr(" Save Guinier results to csv file: "));
    cb_guinier_csv->setEnabled(true);
    cb_guinier_csv->setChecked((*saxs_options).guinier_csv);
    cb_guinier_csv->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -254,7 +254,7 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
    AUTFBACK( cb_guinier_csv );
    connect(cb_guinier_csv, SIGNAL(clicked()), this, SLOT(set_guinier_csv()));
 
-   le_guinier_csv_filename = new QLineEdit(this, "guinier_csv_filename Line Edit");
+   le_guinier_csv_filename = new QLineEdit( this );    le_guinier_csv_filename->setObjectName( "guinier_csv_filename Line Edit" );
    le_guinier_csv_filename->setText((*saxs_options).guinier_csv_filename);
    le_guinier_csv_filename->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_guinier_csv_filename->setPalette( PALET_NORMAL );
@@ -263,7 +263,7 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
    connect(le_guinier_csv_filename, SIGNAL(textChanged(const QString &)), SLOT(update_guinier_csv_filename(const QString &)));
 
    cb_guinier_csv_save_data = new QCheckBox(this);
-   cb_guinier_csv_save_data->setText(tr(" Save processed q, I(q) data to csv file"));
+   cb_guinier_csv_save_data->setText(us_tr(" Save processed q, I(q) data to csv file"));
    cb_guinier_csv_save_data->setEnabled(true);
    cb_guinier_csv_save_data->setChecked( ( ( US_Hydrodyn * )us_hydrodyn)->gparams.count( "guinier_csv_save_data" ) &&
                                          ( ( US_Hydrodyn * )us_hydrodyn)->gparams[ "guinier_csv_save_data" ] == "1" );
@@ -272,20 +272,20 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
    AUTFBACK( cb_guinier_csv_save_data );
    connect(cb_guinier_csv_save_data, SIGNAL(clicked()), this, SLOT(set_guinier_csv_save_data()));
 
-   lbl_conc_header = new QLabel(tr("MW and M/L computation options:"), this);
-   lbl_conc_header->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Raised);
+   lbl_conc_header = new QLabel(us_tr("MW and M/L computation options:"), this);
+   lbl_conc_header->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_conc_header->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_conc_header->setPalette( PALET_FRAME );
    AUTFBACK( lbl_conc_header );
    lbl_conc_header->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
 
-   pb_curve_conc = new QPushButton(tr("Set Curve Concentration, PSV, I0 standard experimental"), this);
+   pb_curve_conc = new QPushButton(us_tr("Set Curve Concentration, PSV, I0 standard experimental"), this);
    pb_curve_conc->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    // pb_curve_conc->setMinimumHeight(minHeight1);
    pb_curve_conc->setPalette( PALET_PUSHB );
    connect(pb_curve_conc, SIGNAL(clicked()), SLOT(curve_conc()));
 
-   lbl_conc = new QLabel(tr(" Default concentration (mg/ml) : "), this);
+   lbl_conc = new QLabel(us_tr(" Default concentration (mg/ml) : "), this);
    lbl_conc->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_conc->setPalette( PALET_LABEL );
    AUTFBACK( lbl_conc );
@@ -300,7 +300,7 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
    AUTFBACK( le_conc );
    connect(le_conc, SIGNAL( textChanged( const QString & )), SLOT(update_conc( const QString &)));
 
-   lbl_psv = new QLabel( tr(" Default partial specific volume (ml/g): "), this);
+   lbl_psv = new QLabel( us_tr(" Default partial specific volume (ml/g): "), this);
    lbl_psv->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_psv->setPalette( PALET_LABEL );
    AUTFBACK( lbl_psv );
@@ -316,7 +316,7 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
    connect(le_psv, SIGNAL( textChanged( const QString & )), SLOT(update_psv( const QString &)));
 
    cb_use_cs_psv = new QCheckBox(this);
-   cb_use_cs_psv->setText( tr(" Partial specific volume override for CS (ml/g): ") );
+   cb_use_cs_psv->setText( us_tr(" Partial specific volume override for CS (ml/g): ") );
    cb_use_cs_psv->setEnabled( true );
    connect( cb_use_cs_psv, SIGNAL( clicked() ), SLOT( set_use_cs_psv() ) );
    cb_use_cs_psv->setChecked((*saxs_options).use_cs_psv );
@@ -333,7 +333,7 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
    AUTFBACK( le_cs_psv );
    connect(le_cs_psv, SIGNAL( textChanged( const QString & )), SLOT(update_cs_psv( const QString &)));
 
-   lbl_diffusion_len = new QLabel(tr(" Diffusion length (cm) : "), this);
+   lbl_diffusion_len = new QLabel(us_tr(" Diffusion length (cm) : "), this);
    lbl_diffusion_len->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_diffusion_len->setPalette( PALET_LABEL );
    AUTFBACK( lbl_diffusion_len );
@@ -348,7 +348,7 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
    AUTFBACK( le_diffusion_len );
    connect(le_diffusion_len, SIGNAL( textChanged( const QString & )), SLOT(update_diffusion_len( const QString &)));
 
-   lbl_electron_nucleon_ratio = new QLabel(tr(" Electron/nucleon ratio Z/A : "), this);
+   lbl_electron_nucleon_ratio = new QLabel(us_tr(" Electron/nucleon ratio Z/A : "), this);
    lbl_electron_nucleon_ratio->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_electron_nucleon_ratio->setPalette( PALET_LABEL );
    AUTFBACK( lbl_electron_nucleon_ratio );
@@ -365,7 +365,7 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
    AUTFBACK( le_electron_nucleon_ratio );
    connect(le_electron_nucleon_ratio, SIGNAL( textChanged( const QString & )), SLOT(update_electron_nucleon_ratio( const QString &)));
 
-   lbl_nucleon_mass = new QLabel(tr(" Nucleon mass (g) : "), this);
+   lbl_nucleon_mass = new QLabel(us_tr(" Nucleon mass (g) : "), this);
    lbl_nucleon_mass->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_nucleon_mass->setPalette( PALET_LABEL );
    AUTFBACK( lbl_nucleon_mass );
@@ -380,7 +380,7 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
    AUTFBACK( le_nucleon_mass );
    connect(le_nucleon_mass, SIGNAL( textChanged( const QString & )), SLOT(update_nucleon_mass( const QString &)));
 
-   lbl_mwt_k = new QLabel(tr(" MW[RT] k : "), this);
+   lbl_mwt_k = new QLabel(us_tr(" MW[RT] k : "), this);
    lbl_mwt_k->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_mwt_k->setPalette( PALET_LABEL );
    AUTFBACK( lbl_mwt_k );
@@ -398,7 +398,7 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
    AUTFBACK( le_mwt_k );
    connect(le_mwt_k, SIGNAL( textChanged( const QString & )), SLOT(update_mwt_k( const QString &)));
 
-   lbl_mwt_c = new QLabel(tr(" MW[RT] c : "), this);
+   lbl_mwt_c = new QLabel(us_tr(" MW[RT] c : "), this);
    lbl_mwt_c->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_mwt_c->setPalette( PALET_LABEL );
    AUTFBACK( lbl_mwt_c );
@@ -415,7 +415,7 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
    AUTFBACK( le_mwt_c );
    connect(le_mwt_c, SIGNAL( textChanged( const QString & )), SLOT(update_mwt_c( const QString &)));
 
-   lbl_mwt_qmax = new QLabel(tr(" MW[RT] qmax cut-off : "), this);
+   lbl_mwt_qmax = new QLabel(us_tr(" MW[RT] qmax cut-off : "), this);
    lbl_mwt_qmax->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_mwt_qmax->setPalette( PALET_LABEL );
    AUTFBACK( lbl_mwt_qmax );
@@ -432,7 +432,7 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
    connect(le_mwt_qmax, SIGNAL( textChanged( const QString & )), SLOT(update_mwt_qmax( const QString &)));
 
    cb_guinier_use_standards = new QCheckBox(this);
-   cb_guinier_use_standards->setText( tr(" Use I0 standards for normalization") );
+   cb_guinier_use_standards->setText( us_tr(" Use I0 standards for normalization") );
    cb_guinier_use_standards->setEnabled( true );
    connect( cb_guinier_use_standards, SIGNAL( clicked() ), SLOT( set_guinier_use_standards() ) );
    cb_guinier_use_standards->setChecked((*saxs_options).guinier_use_standards );
@@ -440,7 +440,7 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
    cb_guinier_use_standards->setPalette( PALET_NORMAL );
    AUTFBACK( cb_guinier_use_standards );
 
-   lbl_I0_exp = new QLabel(tr(" Default I0 standard experimental (a.u.) : "), this);
+   lbl_I0_exp = new QLabel(us_tr(" Default I0 standard experimental (a.u.) : "), this);
    lbl_I0_exp->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_I0_exp->setPalette( PALET_LABEL );
    AUTFBACK( lbl_I0_exp );
@@ -455,7 +455,7 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
    AUTFBACK( le_I0_exp );
    connect(le_I0_exp, SIGNAL( textChanged( const QString & )), SLOT(update_I0_exp( const QString &)));
 
-   lbl_I0_theo = new QLabel(tr(" I0 standard theoretical (cm^-1) : "), this);
+   lbl_I0_theo = new QLabel(us_tr(" I0 standard theoretical (cm^-1) : "), this);
    lbl_I0_theo->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_I0_theo->setPalette( PALET_LABEL );
    AUTFBACK( lbl_I0_theo );
@@ -470,46 +470,46 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
    AUTFBACK( le_I0_theo );
    connect(le_I0_theo, SIGNAL( textChanged( const QString & )), SLOT(update_I0_theo( const QString &)));
 
-   pb_guinier = new QPushButton(tr("Process Guinier"), this);
+   pb_guinier = new QPushButton(us_tr("Process Guinier"), this);
    pb_guinier->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_guinier->setMinimumHeight(minHeight1);
    pb_guinier->setPalette( PALET_PUSHB );
    connect(pb_guinier, SIGNAL(clicked()), SLOT(guinier()));
 
-   pb_cs_guinier = new QPushButton(tr("Process CS Guinier"), this);
+   pb_cs_guinier = new QPushButton(us_tr("Process CS Guinier"), this);
    pb_cs_guinier->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_cs_guinier->setMinimumHeight(minHeight1);
    pb_cs_guinier->setPalette( PALET_PUSHB );
    connect(pb_cs_guinier, SIGNAL(clicked()), SLOT(cs_guinier()));
 
-   pb_Rt_guinier = new QPushButton(tr("Process TV Guinier"), this);
+   pb_Rt_guinier = new QPushButton(us_tr("Process TV Guinier"), this);
    pb_Rt_guinier->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_Rt_guinier->setMinimumHeight(minHeight1);
    pb_Rt_guinier->setPalette( PALET_PUSHB );
    connect(pb_Rt_guinier, SIGNAL(clicked()), SLOT(Rt_guinier()));
 
-   pb_cancel = new QPushButton(tr("Close"), this);
+   pb_cancel = new QPushButton(us_tr("Close"), this);
    pb_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_cancel->setMinimumHeight(minHeight1);
    pb_cancel->setPalette( PALET_PUSHB );
    connect(pb_cancel, SIGNAL(clicked()), SLOT(cancel()));
 
-   pb_help = new QPushButton(tr("Help"), this);
+   pb_help = new QPushButton(us_tr("Help"), this);
    pb_help->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_help->setMinimumHeight(minHeight1);
    pb_help->setPalette( PALET_PUSHB );
    connect(pb_help, SIGNAL(clicked()), SLOT(help()));
 
    int rows = 0, columns = 2, spacing = 2, j=0, margin=4;
-   Q3GridLayout *background=new Q3GridLayout(this, rows, columns, margin, spacing);
+   QGridLayout * background = new QGridLayout( this ); background->setContentsMargins( 0, 0, 0, 0 ); background->setSpacing( 0 ); background->setSpacing( spacing ); background->setContentsMargins( margin, margin, margin, margin );
 
-   background->addMultiCellWidget(lbl_guinier_and_cs_guinier, j, j, 0, 1);
+   background->addWidget( lbl_guinier_and_cs_guinier , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
    j++;
    background->addWidget(lbl_qRgmax, j, 0);
    background->addWidget(le_qRgmax, j, 1);
    j++;
 
-   // background->addMultiCellWidget(lbl_cs_guinier, j, j, 0, 1);
+   // background->addWidget( lbl_cs_guinier , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
    // j++;
    background->addWidget(lbl_cs_qRgmax, j, 0);
    background->addWidget(le_cs_qRgmax, j, 1);
@@ -531,9 +531,9 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
    background->addWidget(lbl_cs_qend, j, 0);
    background->addWidget(le_cs_qend, j, 1);
    j++;
-   background->addMultiCellWidget(cb_guinier_use_qRlimit, j, j, 0, 1);
+   background->addWidget( cb_guinier_use_qRlimit , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
    j++;
-   background->addMultiCellWidget(cb_guinier_use_sd, j, j, 0, 1);
+   background->addWidget( cb_guinier_use_sd , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
    j++;
    background->addWidget(cb_guinier_outlier_reject, j, 0);
    background->addWidget(le_guinier_outlier_reject_dist, j, 1);
@@ -542,10 +542,10 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
    background->addWidget(le_guinier_csv_filename, j, 1);
    j++;
 
-   background->addMultiCellWidget(cb_guinier_csv_save_data, j, j, 0, 1);
+   background->addWidget( cb_guinier_csv_save_data , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
    j++;
 
-   background->addMultiCellWidget(cb_guinier_auto_fit, j, j, 0, 1);
+   background->addWidget( cb_guinier_auto_fit , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
    j++;
    background->addWidget(lbl_pointsmin, j, 0);
    background->addWidget(le_pointsmin, j, 1);
@@ -554,10 +554,10 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
    background->addWidget(le_pointsmax, j, 1);
    j++;
 
-   background->addMultiCellWidget(lbl_conc_header, j, j, 0, 1);
+   background->addWidget( lbl_conc_header , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
    j++;
 
-   background->addMultiCellWidget(pb_curve_conc, j, j, 0, 1);
+   background->addWidget( pb_curve_conc , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
    j++;
 
    background->addWidget(lbl_conc, j, 0);
@@ -584,7 +584,7 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
    background->addWidget(le_nucleon_mass, j, 1);
    j++;
 
-   background->addMultiCellWidget( cb_guinier_use_standards, j, j, 0, 1);
+   background->addWidget( cb_guinier_use_standards , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
    j++;
 
    background->addWidget(lbl_I0_exp, j, 0);
@@ -608,18 +608,18 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
    j++;
 
    {
-      Q3GridLayout * gl2 = new Q3GridLayout( 0 );
+      QGridLayout * gl2 = new QGridLayout( 0 ); gl2->setContentsMargins( 0, 0, 0, 0 ); gl2->setSpacing( 0 );
       
-      Q3HBoxLayout *hbl = new Q3HBoxLayout;
+      QHBoxLayout * hbl = new QHBoxLayout; hbl->setContentsMargins( 0, 0, 0, 0 ); hbl->setSpacing( 0 );
       hbl->addWidget( pb_guinier );
       hbl->addWidget( pb_cs_guinier );
       hbl->addWidget( pb_Rt_guinier );
-      gl2->addMultiCellLayout( hbl, 0, 0, 0, 1 );
+      gl2->addLayout( hbl , 0 , 0 , 1 + ( 0 ) - ( 0 ) , 1 + ( 1  ) - ( 0 ) );
 
       gl2->addWidget( pb_help       , 1, 0 );
       gl2->addWidget( pb_cancel     , 1, 1 );
 
-      background->addMultiCellLayout( gl2, j, j, 0, 1);
+      background->addLayout( gl2 , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
       j++;
    }
 
@@ -902,8 +902,8 @@ void US_Hydrodyn_SasOptionsGuinier::guinier()
       }
       ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_window->run_guinier_analysis();
    } else {
-      QMessageBox::message( caption() + ": Process Guinier",
-                            tr( "The main SAS window is not active" ) );
+      US_Static::us_message( windowTitle() + ": Process Guinier",
+                            us_tr( "The main SAS window is not active" ) );
    }
 }
 
@@ -921,8 +921,8 @@ void US_Hydrodyn_SasOptionsGuinier::cs_guinier()
       }
       ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_window->run_guinier_cs();
    } else {
-      QMessageBox::message( caption() + ": Process Guinier",
-                            tr( "The main SAS window is not active" ) );
+      US_Static::us_message( windowTitle() + ": Process Guinier",
+                            us_tr( "The main SAS window is not active" ) );
    }
 }
 
@@ -940,8 +940,8 @@ void US_Hydrodyn_SasOptionsGuinier::Rt_guinier()
       }
       ((US_Hydrodyn *)us_hydrodyn)->saxs_plot_window->run_guinier_Rt();
    } else {
-      QMessageBox::message( caption() + ": Process Guinier",
-                            tr( "The main SAS window is not active" ) );
+      US_Static::us_message( windowTitle() + ": Process Guinier",
+                            us_tr( "The main SAS window is not active" ) );
    }
 }
 
@@ -960,8 +960,8 @@ void US_Hydrodyn_SasOptionsGuinier::curve_conc()
       hsc->exec();
       delete hsc;
    } else {
-      QMessageBox::message( caption() + ": Process Guinier",
-                            tr( "The main SAS window is not active" ) );
+      US_Static::us_message( windowTitle() + ": Process Guinier",
+                            us_tr( "The main SAS window is not active" ) );
    }
 }
 

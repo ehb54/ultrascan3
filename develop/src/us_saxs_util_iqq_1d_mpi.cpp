@@ -4,7 +4,7 @@
 #include "../include/us_timer.h"
 #include <sys/time.h>
 //Added by qt3to4:
-#include <Q3TextStream>
+#include <QTextStream>
 extern int npes;
 extern int myrank;
 extern QString outputData;
@@ -35,7 +35,7 @@ bool US_Saxs_Util::run_1d_mpi( QString controlfile )
       usui1m_timer.start_timer ( "1d init" );
    }
 
-   QString qs_base_dir = QDir::currentDirPath();
+   QString qs_base_dir = QDir::currentPath();
 
    outputData = QString( "%1" ).arg( getenv( "outputData" ) );
    if ( outputData.isEmpty() )
@@ -117,7 +117,11 @@ bool US_Saxs_Util::run_1d_mpi( QString controlfile )
       }         
       errorno--;
 
-      qslt = QStringList::split( "\n", QString( "%1" ).arg( char_files ) );
+      // qslt = (QString( "%1" ).split( "\n" , QString::SkipEmptyParts ).arg( char_files ) );
+      {
+         QString qs = QString( "%1" ).arg( char_files );
+         qslt = (qs ).split( "\n" , QString::SkipEmptyParts );
+      }
    } else {
       // cout << QString("%1: extracting job files\n").arg( myrank ) << flush;
       
@@ -126,10 +130,10 @@ bool US_Saxs_Util::run_1d_mpi( QString controlfile )
 
       // copy here
       US_File_Util usu;
-      usu.copy( controlfile, QDir::currentDirPath() + QDir::separator() + QFileInfo( controlfile ).fileName() );
+      usu.copy( controlfile, QDir::currentPath() + QDir::separator() + QFileInfo( controlfile ).fileName() );
       cout << QString( "copying %1 %2 <%3>\n" )
          .arg( controlfile )
-         .arg( QDir::currentDirPath() + QDir::separator() + QFileInfo( controlfile ).fileName() )
+         .arg( QDir::currentPath() + QDir::separator() + QFileInfo( controlfile ).fileName() )
          .arg( usu.errormsg );
       dest = QFileInfo( controlfile ).fileName();
 
@@ -280,12 +284,12 @@ bool US_Saxs_Util::run_1d_mpi( QString controlfile )
             {
                cout << QString( "%1: expected output file %2 does not exist\n" )
                   .arg( myrank )
-                  .arg( f.name() )
+                  .arg( f.fileName() )
                        << flush;
                MPI_Abort( MPI_COMM_WORLD, -5001 );
                exit( -5001 );
             }
-            if ( !set_control_parameters_from_experiment_file( f.name(), true ) )
+            if ( !set_control_parameters_from_experiment_file( f.fileName(), true ) )
             {
                errors +=  QString( "%1: Error trying to get grid, ignorming this processor%2\n" ).arg( myrank ).arg( errormsg );
                continue;
@@ -344,7 +348,7 @@ bool US_Saxs_Util::run_1d_mpi( QString controlfile )
             exit( -5002 );
          }
 
-         Q3TextStream ts( &f );
+         QTextStream ts( &f );
          ts << errors;
          f.close();
          output_files << "errors";
@@ -356,7 +360,7 @@ bool US_Saxs_Util::run_1d_mpi( QString controlfile )
       QFile f( "runinfo" );
       if ( f.open( QIODevice::WriteOnly ) )
       {
-         Q3TextStream ts( &f );
+         QTextStream ts( &f );
          ts << QString( "number of processors %1\n" ).arg( npes );
          ts << "timings:\n";
          ts << usui1m_timer.list_times();;
@@ -364,7 +368,7 @@ bool US_Saxs_Util::run_1d_mpi( QString controlfile )
          QFile fc( controlfile );
          if ( fc.open( QIODevice::ReadOnly ) )
          {
-            Q3TextStream tsc( &fc );
+            QTextStream tsc( &fc );
             ts << "controlfile:\n";
             while( !tsc.atEnd() )
             {
@@ -410,7 +414,7 @@ bool US_Saxs_Util::run_1d_mpi( QString controlfile )
          }
          QDir::setCurrent( current.path() );
          QDir ndod;
-         if ( !ndod.mkdir( newdir, true ) )
+         if ( !ndod.mkdir( newdir ) )
          {
             cout << QString("Warning: could not create outputData \"%1\" directory\n" ).arg( ndod.path() );
          }
@@ -506,8 +510,8 @@ bool US_Saxs_Util::compute_1d_mpi()
    {
       QString     qs  = control_parameters[ "1dintermediatesaves" ];
       qs.replace( ",", " " );
-      qs.stripWhiteSpace();
-      QStringList qsl = QStringList::split( QRegExp( "\\s+" ), qs );
+      qs.trimmed();
+      QStringList qsl = (qs ).split( QRegExp( "\\s+" ) , QString::SkipEmptyParts );
       for ( unsigned int i = 0; i < ( unsigned int ) qsl.size(); i++ )
       {
          unsigned int pos = npes * ( int ) ( qsl[ i ].toUInt() / npes );
@@ -754,7 +758,7 @@ bool US_Saxs_Util::compute_1d_mpi()
             new_atom.hybrid_name = hybrid_name;
             new_atom.hydrogens = 0;
             if ( !our_saxs_options.iqq_use_atomic_ff &&
-                 count_hydrogens.search(hybrid_name) != -1 )
+                 count_hydrogens.indexIn(hybrid_name) != -1 )
             {
                new_atom.hydrogens = count_hydrogens.cap(1).toInt();
             }
@@ -1247,18 +1251,18 @@ bool US_Saxs_Util::load_rotations_mpi( unsigned int number, vector < vector < do
    if ( !f.exists() )
    {
       errormsg = QString( "Notice: cached rotations file %1 does not exist" )
-         .arg( f.name() );
+         .arg( f.fileName() );
       return false;
    }
 
    if ( !f.open( QIODevice::ReadOnly ) )
    {
       errormsg = QString( "Notice: found cached rotations file %1 but could not open it" )
-         .arg( f.name() );
+         .arg( f.fileName() );
       return false;
    }
 
-   Q3TextStream ts( &f );
+   QTextStream ts( &f );
 
    unsigned int line = 0;
 
@@ -1270,12 +1274,12 @@ bool US_Saxs_Util::load_rotations_mpi( unsigned int number, vector < vector < do
       QString     qs  = ts.readLine();
       line++;
 
-      QStringList qsl = QStringList::split( QRegExp( "\\s+" ), qs );
+      QStringList qsl = (qs ).split( QRegExp( "\\s+" ) , QString::SkipEmptyParts );
 
       if ( qsl.size() != 3 )
       {
          errormsg =  QString( "Notice: error in found cached rotations file %1 line %2, does not contain 3 tokens" )
-            .arg( f.name() )
+            .arg( f.fileName() )
             .arg( line )
             ;
          f.close();
@@ -1295,7 +1299,7 @@ bool US_Saxs_Util::load_rotations_mpi( unsigned int number, vector < vector < do
    {
       errormsg = 
          QString( "Notice: error:  cached rotations file %1 line %2, does not contain sufficient rotations (%3 requested vs %4 found)" )
-         .arg( f.name() )
+         .arg( f.fileName() )
          .arg( line )
          .arg( number )
          .arg( rotations.size() )

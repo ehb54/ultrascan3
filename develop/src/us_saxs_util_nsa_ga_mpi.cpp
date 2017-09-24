@@ -2,7 +2,7 @@
 
 #include "../include/us_saxs_util.h"
 //Added by qt3to4:
-#include <Q3TextStream>
+#include <QTextStream>
 
 extern int npes;
 extern int myrank;
@@ -55,7 +55,7 @@ bool US_Saxs_Util::nsa_run()
       QRegExp rx( "^(\\d+)\\s+(\\d+)$" );
       QString qs = control_parameters[ "nsaspheres" ];
       qs.replace( QRegExp( "(:|,|-)" ), " " );
-      if ( rx.search( qs ) != -1 )
+      if ( rx.indexIn( qs ) != -1 )
       {
          startloop = rx.cap( 1 ).toUInt();
          endloop   = rx.cap( 2 ).toUInt();
@@ -174,7 +174,7 @@ bool US_Saxs_Util::nsa_run()
             
          if ( f.open( QIODevice::WriteOnly ) )
          {
-            Q3TextStream ts( &f );
+            QTextStream ts( &f );
             ts << nsa_qs_bead_model();
             ts << nsa_physical_stats();
             ts << 
@@ -255,8 +255,8 @@ bool US_Saxs_Util::nsa_run()
             }
 
             f.close();
-            cout << QString( "written: %1\n" ).arg( f.name() );
-            output_files << f.name();
+            cout << QString( "written: %1\n" ).arg( f.fileName() );
+            output_files << f.fileName();
          }
          control_parameters[ "outputfile" ] = outname;
          nsa_fitness();

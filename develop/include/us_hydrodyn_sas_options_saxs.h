@@ -7,10 +7,10 @@
 #include <qstring.h>
 #include <qlayout.h>
 #include <qpushbutton.h>
-#include <q3frame.h>
+//#include <q3frame.h>
 #include <qcheckbox.h>
 #include <qwt_counter.h>
-#include <qbuttongroup.h>
+#include <qgroupbox.h>
 #include <qradiobutton.h>
 //Added by qt3to4:
 #include <QCloseEvent>
@@ -27,7 +27,7 @@
 
 using namespace std;
 
-class US_EXTERN US_Hydrodyn_SasOptionsSaxs : public Q3Frame
+class US_EXTERN US_Hydrodyn_SasOptionsSaxs : public QFrame
 {
    Q_OBJECT
 
@@ -94,7 +94,7 @@ class US_EXTERN US_Hydrodyn_SasOptionsSaxs : public Q3Frame
       QLineEdit   *le_crysol_target;
 
       QLabel       *lbl_sastbx_method;
-      QButtonGroup *bg_sastbx_method;
+      QGroupBox *bg_sastbx_method;
       QRadioButton *rb_sastbx_method_she;
       QRadioButton *rb_sastbx_method_debye;
       QRadioButton *rb_sastbx_method_zernike;
@@ -137,6 +137,7 @@ class US_EXTERN US_Hydrodyn_SasOptionsSaxs : public Q3Frame
 
       void crysol_target();
 
+      void set_sastbx_method();
       void set_sastbx_method( int );
 
       void set_ra ( const QString & );

@@ -1,6 +1,6 @@
 #include "../include/us_saxs_util.h"
 //Added by qt3to4:
-#include <Q3TextStream>
+#include <QTextStream>
 
 // note: this program uses cout and/or cerr and this should be replaced
 
@@ -40,7 +40,7 @@ bool US_Saxs_Util::select_residue_file( QString filename )
 
    if ( f.open( QIODevice::ReadOnly ) )
    {
-      Q3TextStream ts(&f);
+      QTextStream ts(&f);
       while (!ts.atEnd())
       {
          new_residue.comment = ts.readLine();
@@ -286,7 +286,7 @@ bool US_Saxs_Util::select_atom_file( QString filename )
    QFile f(filename);
    if ( f.open(QIODevice::ReadOnly ) )
    {
-      Q3TextStream ts(&f);
+      QTextStream ts(&f);
       while (!ts.atEnd())
       {
          ts >> current_atom.name;
@@ -319,7 +319,7 @@ bool US_Saxs_Util::select_hybrid_file( QString filename )
    hybrid_map.clear();
    if ( f.open(QIODevice::ReadOnly) )
    {
-      Q3TextStream ts(&f);
+      QTextStream ts(&f);
       while (!ts.atEnd())
       {
          ts >> current_hybrid.saxs_name;
@@ -354,7 +354,7 @@ bool US_Saxs_Util::select_saxs_file( QString filename )
    saxs_map.clear();
    if (f.open(QIODevice::ReadOnly|QIODevice::Text))
    {
-      Q3TextStream ts(&f);
+      QTextStream ts(&f);
       int line = 0;
       while (!ts.atEnd())
       {
@@ -364,8 +364,8 @@ bool US_Saxs_Util::select_saxs_file( QString filename )
          {
             continue;
          }
-         qs.stripWhiteSpace();
-         QStringList qsl = QStringList::split( QRegExp( "\\s+" ), qs );
+         qs.trimmed();
+         QStringList qsl = (qs ).split( QRegExp( "\\s+" ) , QString::SkipEmptyParts );
          int pos = 0;
          if ( qsl.size() == 11 )
          {
@@ -499,7 +499,7 @@ bool US_Saxs_Util::read_pdb( QStringList &qsl )
          QRegExp rx_get_model( "^MODEL\\s+(\\S+)" );
          // str2 = str1.mid(6, 15);
          // temp_model.model_id = str2.toUInt();
-         if ( rx_get_model.search( str1 ) != -1 )
+         if ( rx_get_model.indexIn( str1 ) != -1 )
          {
             temp_model.model_id = rx_get_model.cap( 1 );
          } else {
@@ -558,13 +558,13 @@ bool US_Saxs_Util::read_pdb( QStringList &qsl )
                {             // we don't have a chain yet, so let's start a new one
                   temp_chain.chainID = str1.mid(21, 1);
                   str2 = str1.mid(72, 4);
-                  temp_chain.segID = str2.stripWhiteSpace();
+                  temp_chain.segID = str2.trimmed();
                   chain_flag = true;
                }
                else // we have a chain, let's make sure the chain is still the same
                {
                   bool break_chain = ( temp_chain.chainID != str1.mid(21, 1) );
-                  QString thisResName = str1.mid(17,3).stripWhiteSpace();
+                  QString thisResName = str1.mid(17,3).trimmed();
                   bool known_residue = ( multi_residue_map.count(thisResName) );
                   bool this_is_aa =  ( known_residue &&
                                        residue_list[multi_residue_map[thisResName][0]].type == 0 );
@@ -584,7 +584,7 @@ bool US_Saxs_Util::read_pdb( QStringList &qsl )
                      clear_temp_chain(&temp_chain);
                      temp_chain.chainID = str1.mid(21, 1); // we have to start a new chain
                      str2 = str1.mid(72, 4);
-                     temp_chain.segID = str2.stripWhiteSpace();
+                     temp_chain.segID = str2.trimmed();
                   }
                   currently_aa_chain = (!known_residue || this_is_aa);
                }
@@ -677,8 +677,8 @@ bool US_Saxs_Util::read_pdb( QString filename )
    {
       last_pdb_header.clear();
       last_pdb_title .clear();
-      last_pdb_filename = f.name();
-      Q3TextStream ts(&f);
+      last_pdb_filename = f.fileName();
+      QTextStream ts(&f);
       while (!ts.atEnd())
       {
          str1 = ts.readLine();
@@ -713,7 +713,7 @@ bool US_Saxs_Util::read_pdb( QString filename )
             // str2 = str1.mid(6, 15);
             // temp_model.model_id = str2.toUInt();
             QRegExp rx_get_model( "^MODEL\\s+(\\S+)" );
-            if ( rx_get_model.search( str1 ) != -1 )
+            if ( rx_get_model.indexIn( str1 ) != -1 )
             {
                temp_model.model_id = rx_get_model.cap( 1 );
             } else {
@@ -772,13 +772,13 @@ bool US_Saxs_Util::read_pdb( QString filename )
                   {             // we don't have a chain yet, so let's start a new one
                      temp_chain.chainID = str1.mid(21, 1);
                      str2 = str1.mid(72, 4);
-                     temp_chain.segID = str2.stripWhiteSpace();
+                     temp_chain.segID = str2.trimmed();
                      chain_flag = true;
                   }
                   else // we have a chain, let's make sure the chain is still the same
                   {
                      bool break_chain = ( temp_chain.chainID != str1.mid(21, 1) );
-                     QString thisResName = str1.mid(17,3).stripWhiteSpace();
+                     QString thisResName = str1.mid(17,3).trimmed();
                      bool known_residue = ( multi_residue_map.count(thisResName) );
                      bool this_is_aa =  ( known_residue &&
                                          residue_list[multi_residue_map[thisResName][0]].type == 0 );
@@ -798,7 +798,7 @@ bool US_Saxs_Util::read_pdb( QString filename )
                         clear_temp_chain(&temp_chain);
                         temp_chain.chainID = str1.mid(21, 1); // we have to start a new chain
                         str2 = str1.mid(72, 4);
-                        temp_chain.segID = str2.stripWhiteSpace();
+                        temp_chain.segID = str2.trimmed();
                      }
                      currently_aa_chain = (!known_residue || this_is_aa);
                   }
@@ -895,22 +895,22 @@ bool US_Saxs_Util::dna_rna_resolve()
          for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++) 
          {
             PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
-            QString thisres = this_atom->resName.stripWhiteSpace();
+            QString thisres = this_atom->resName.trimmed();
             chainID = this_atom->chainID;
-            if ( rx_dna_and_rna.search(thisres) == -1 )
+            if ( rx_dna_and_rna.indexIn(thisres) == -1 )
             {
                // not either:
                ask_convert = false;
                break;
             }
-            if ( rx_dna.search(thisres) != -1 )
+            if ( rx_dna.indexIn(thisres) != -1 )
             {
                // we definitely have DNA, correct this residue!
                ask_convert = false;
                convert_this = true;
                break;
             }
-            if ( rx_rna.search(thisres) != -1 )
+            if ( rx_rna.indexIn(thisres) != -1 )
             {
                // we definitely have RNA, the residue is ok
                ask_convert = false;
@@ -948,7 +948,7 @@ bool US_Saxs_Util::dna_rna_resolve()
             for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++) 
             {
                PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
-               this_atom->resName = "D" + this_atom->resName.stripWhiteSpace();
+               this_atom->resName = "D" + this_atom->resName.trimmed();
             }
          }
       }
@@ -989,15 +989,15 @@ bool US_Saxs_Util::assign_atom(const QString &str1, struct PDB_chain *temp_chain
 
    str2 = str1.mid(11, 5);
    temp_atom.orgName = str2;
-   temp_atom.name = str2.stripWhiteSpace();
+   temp_atom.name = str2.trimmed();
 
    temp_atom.altLoc = str1.mid(16, 1);
 
    str2 = str1.mid(17, 3);
    temp_atom.orgResName = str2;
-   temp_atom.resName = str2.stripWhiteSpace();
+   temp_atom.resName = str2.trimmed();
 
-   temp_atom.chainID = str1.mid(20, 2).stripWhiteSpace();
+   temp_atom.chainID = str1.mid(20, 2).trimmed();
    temp_atom.orgChainID = str1.mid(21, 1);
 
    temp_atom.resSeq = str1.mid(22, 5);
@@ -1059,7 +1059,7 @@ bool US_Saxs_Util::assign_atom(const QString &str1, struct PDB_chain *temp_chain
    }
    if (!found)
    {
-      //   printError(tr("The residue " + temp_atom.resName + " listed in this PDB file is not found in the residue table!"));
+      //   printError(us_tr("The residue " + temp_atom.resName + " listed in this PDB file is not found in the residue table!"));
    }
 
    return(flag);
@@ -1305,7 +1305,7 @@ bool US_Saxs_Util::load_mw_json( QString filename )
       return false;
    }
    QString qs;
-   Q3TextStream ts( &f );
+   QTextStream ts( &f );
    while ( !ts.atEnd() )
    {
       qs += ts.readLine();
@@ -1318,7 +1318,7 @@ bool US_Saxs_Util::load_mw_json( QString filename )
          it++ )
    {
       atom_mw[ it->first ] = it->second.toDouble();
-      // qDebug( QString( "atom '%1' mw '%2'" ).arg( it->first ).arg( it->second.toDouble() ) );
+      // us_qdebug( QString( "atom '%1' mw '%2'" ).arg( it->first ).arg( it->second.toDouble() ) );
    }
    return true;
 }
@@ -1332,7 +1332,7 @@ bool US_Saxs_Util::load_vdw_json( QString filename )
       return false;
    }
    QString qs;
-   Q3TextStream ts( &f );
+   QTextStream ts( &f );
    while ( !ts.atEnd() )
    {
       qs += ts.readLine();
@@ -1360,7 +1360,7 @@ bool US_Saxs_Util::load_vcm_json( QString filename )
       return false;
    }
    QString qs;
-   Q3TextStream ts( &f );
+   QTextStream ts( &f );
    while ( !ts.atEnd() )
    {
       qs += ts.readLine();
@@ -1375,8 +1375,8 @@ bool US_Saxs_Util::load_vcm_json( QString filename )
          it++ )
    {
       // split it->second to double
-      //      qDebug( QString( "vcm json first <%1>\n second <%2>\n" ).arg( it->first ).arg( it->second ) );
-      QStringList qsl = QStringList::split( ",", it->second );
+      //      us_qdebug( QString( "vcm json first <%1>\n second <%2>\n" ).arg( it->first ).arg( it->second ) );
+      QStringList qsl = (it->second ).split( "," , QString::SkipEmptyParts );
       if ( vcm.count( it->first ) )
       {
          vcm[ it->first ].clear();
@@ -1390,7 +1390,7 @@ bool US_Saxs_Util::load_vcm_json( QString filename )
          to_spline.insert( it->first );
       }
 
-      // qDebug( US_Vector::qs_vector( "vcm[" + it->first + "]", vcm[ it->first ] ) );
+      // us_qdebug( US_Vector::qs_vector( "vcm[" + it->first + "]", vcm[ it->first ] ) );
    }
 
    // compute minimum point ?
@@ -1409,7 +1409,7 @@ bool US_Saxs_Util::load_vcm_json( QString filename )
                       vcm[ *it ],
                       vcm[ *it + ":y2" ]  );
 
-      // qDebug( US_Vector::qs_vector( "vcm[" + *it + ":y2]", vcm[ *it + ":y2" ] ) );
+      // us_qdebug( US_Vector::qs_vector( "vcm[" + *it + ":y2]", vcm[ *it + ":y2" ] ) );
    }
 
    return true;

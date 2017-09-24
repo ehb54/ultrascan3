@@ -43,8 +43,8 @@ static int ned;
 static int atomnumber;
 static int calcmode;
 
-static Q3ProgressBar *progress;
-static Q3TextEdit *editor;
+static QProgressBar *progress;
+static QTextEdit *editor;
 
 #define MAXCYCLES 40
 // #define DEBUGMSG
@@ -1330,8 +1330,8 @@ int
 surfracer_main(float prober, 
                vector <PDB_atom *> active_atoms,
                bool recheck,
-               Q3ProgressBar *use_progress,
-               Q3TextEdit *use_editor)
+               QProgressBar *use_progress,
+               QTextEdit *use_editor)
 {
    progress = use_progress;
    editor = use_editor;
@@ -1460,8 +1460,8 @@ surfracer_main(float prober,
    {
       printf("active atom %d %s %s rad %f resseq %d\n",
              i,
-             active_atoms[i]->name.ascii(),
-             active_atoms[i]->resName.ascii(), active_atoms[i]->radius, active_atoms[i]->resSeq); fflush(stdout);
+             active_atoms[i]->name.toAscii().data(),
+             active_atoms[i]->resName.toAscii().data(), active_atoms[i]->radius, active_atoms[i]->resSeq); fflush(stdout);
    }
 #endif
 
@@ -1562,9 +1562,9 @@ surfracer_main(float prober,
 
 
    if (!recheck) {
-      unlink("bead_model.asa");
+      QFile::remove("bead_model.asa");
    } else {
-      unlink("bead_model_recheck.asa");
+      QFile::remove("bead_model_recheck.asa");
    }
 
 
@@ -1592,7 +1592,7 @@ surfracer_main(float prober,
                 QString("Group %1 contains %2 %3%4").
                 arg(i).arg(atom_groups[i].size()).
                 arg(recheck ? "beads" : "atoms").
-                arg((recheck && any_buried[i]) ? " with buried beads" : " no buried beads").ascii());
+                arg((recheck && any_buried[i]) ? " with buried beads" : " no buried beads").toAscii().data());
          fflush(stdout);
       }
    }
@@ -1603,7 +1603,7 @@ surfracer_main(float prober,
           (!recheck || any_buried[atom_group])) {
          editor->append(QString("Computing ASA for group %1\n").arg(atom_group));
          qApp->processEvents();
-         printf("%s",QString("Computing ASA for group %1\n").arg(atom_group).ascii());
+         printf("%s",QString("Computing ASA for group %1\n").arg(atom_group).toAscii().data());
          fflush(stdout);
     
          memset(cycles, 0, MAXCYCLES * MAXCYCLES * sizeof(int));
@@ -1688,22 +1688,22 @@ surfracer_main(float prober,
                .arg(atom_group)
                .arg(recheck ? "bead" : "atom");
 
-            FILE *fout = fopen(outfile.ascii(), "w");
+            FILE *fout = us_fopen(outfile.toAscii().data(), "w");
             fprintf(fout, "\tatomnumber = %d;\n", atomnumber);
             fprintf(fout, "\tint apos = 0;\n");
 
             QString bmsfile = QString("group_%1_%2.bms")
                .arg(atom_group)
                .arg(recheck ? "bead" : "atom");
-            FILE *fbms = fopen(bmsfile.ascii(), "w");
+            FILE *fbms = us_fopen(bmsfile.toAscii().data(), "w");
             fprintf(fbms, "%d\nmodel\n",atomnumber);
 
             QString sptfile = QString("group_%1_%2.spt")
                .arg(atom_group)
                .arg(recheck ? "bead" : "atom");
-            FILE *fspt = fopen(sptfile.ascii(), "w");
+            FILE *fspt = us_fopen(sptfile.toAscii().data(), "w");
             fprintf(fspt, "load xyz %s\nselect all\nwireframe off\nset background white\n",
-                    bmsfile.ascii());
+                    bmsfile.toAscii().data());
 
             if (!recheck) 
             {
@@ -2375,9 +2375,9 @@ surfracer_main(float prober,
          // fflush(stdout);
          FILE *aafile;
          if (!recheck) {
-            aafile = fopen("bead_model.asa", "a");
+            aafile = us_fopen("bead_model.asa", "a");
          } else {
-            aafile = fopen("bead_model_recheck.asa", "a");
+            aafile = us_fopen("bead_model_recheck.asa", "a");
          }
 
          fprintf(aafile, "atom group %d\n", atom_group);
@@ -2401,7 +2401,7 @@ surfracer_main(float prober,
    return (0);
 
 #if defined(US_SURFRACER_COMPUTE_EXTRAS)
-   resfile = fopen("result.txt", "a");   /*resfile will have the breakdown of all areas */
+   resfile = us_fopen("result.txt", "a");   /*resfile will have the breakdown of all areas */
    /*calculating the curvatures*/
    if (calcmode == 3)
       for (i = 0; i <= atomnumber - 1; i++)
@@ -2414,7 +2414,7 @@ surfracer_main(float prober,
       }
    /*saving the surface areas in the file *.asa */
 
-   pdbfile = fopen(pdbf, "r");   /*opening pdb file for reading */
+   pdbfile = us_fopen(pdbf, "r");   /*opening pdb file for reading */
 
    for (i = 0; pdbf[i] != '.'; i++);   /*found the period */
    i++;
@@ -2423,7 +2423,7 @@ surfracer_main(float prober,
    pdbf[i + 1] = 'x';
    pdbf[i + 2] = 't';      /* creating the same name with the txt suffix */
 
-   asafile = fopen(pdbf, "w");   /*opening asa file for writing */
+   asafile = us_fopen(pdbf, "w");   /*opening asa file for writing */
 
    polarea = 0.;
    nparea = 0.;
@@ -2576,7 +2576,7 @@ surfracer_main(float prober,
 
    fclose(asafile);      /*closing the file */
 
-   asafile = fopen(pdbf, "r");   /*opening asa file for reading */
+   asafile = us_fopen(pdbf, "r");   /*opening asa file for reading */
 
    for (i = 0; pdbf[i] != '.'; i++);   /*found the period */
    i++;
@@ -2585,7 +2585,7 @@ surfracer_main(float prober,
    pdbf[i + 1] = 'a';
    pdbf[i + 2] = 'v';      /* creating the same name with the txt suffix */
 
-   cavfile = fopen(pdbf, "w");   /*opening cav file for writing */
+   cavfile = us_fopen(pdbf, "w");   /*opening cav file for writing */
 
    /*cavity calculation */
 
@@ -2743,7 +2743,7 @@ surfracer_main(float prober,
    fclose(cavfile);
    fclose(pdbfile);
 
-   cavfile = fopen(pdbf, "r");   /*opening cav file for reading */
+   cavfile = us_fopen(pdbf, "r");   /*opening cav file for reading */
 
    for (i = 0; pdbf[i] != '.'; i++);   /*found the period */
    i++;
@@ -2752,7 +2752,7 @@ surfracer_main(float prober,
    pdbf[i + 1] = 'x';
    pdbf[i + 2] = 't';      /* creating the same name with the txt suffix */
 
-   asafile = fopen(pdbf, "a");   /*opening area file for appending */
+   asafile = us_fopen(pdbf, "a");   /*opening area file for appending */
 
    while (fgets(str1, 162, cavfile) != NULL)   /*read a string */
       fputs(str1, asafile);   /*append cavity info at the end */

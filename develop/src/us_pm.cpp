@@ -1,6 +1,6 @@
 #include "../include/us_pm.h"
 //Added by qt3to4:
-#include <Q3TextStream>
+#include <QTextStream>
 
 bool US_PM::set_grid_size( double grid_conversion_factor, bool quiet )
 {
@@ -246,13 +246,13 @@ US_PM::US_PM(
 
    if ( !quiet && us_log )
    {
-      us_log->log( QString( "bytes per pm_data %1\n" ).arg( bytes_per_pm_data ).ascii() );
-      us_log->log( QString( "bytes per pmc data %1\n" ).arg( bytes_per_pmc_data ).ascii() );
+      us_log->log( QString( "bytes per pm_data %1\n" ).arg( bytes_per_pm_data ).toAscii().data() );
+      us_log->log( QString( "bytes per pmc data %1\n" ).arg( bytes_per_pmc_data ).toAscii().data() );
 
-      us_log->log( QString( "Memory max %1 MB\n" ).arg( max_mem_in_MB ).ascii() );
-      us_log->log( QString( "Memory available %1 MB\n" ).arg( max_mem_in_MB - base_mem ).ascii() );
-      us_log->log( QString( "max beads CYJ %1\n" ).arg( max_beads_CYJ ).ascii() );
-      us_log->log( QString( "max beads CA %1\n" ).arg( max_beads_CA ).ascii() );
+      us_log->log( QString( "Memory max %1 MB\n" ).arg( max_mem_in_MB ).toAscii().data() );
+      us_log->log( QString( "Memory available %1 MB\n" ).arg( max_mem_in_MB - base_mem ).toAscii().data() );
+      us_log->log( QString( "max beads CYJ %1\n" ).arg( max_beads_CYJ ).toAscii().data() );
+      us_log->log( QString( "max beads CA %1\n" ).arg( max_beads_CA ).toAscii().data() );
    }
 
    use_CYJ = false;
@@ -417,7 +417,7 @@ void US_PM::debug( int level, QString qs )
 {
    if ( us_log && level <= debug_level )
    {
-      us_log->log( qs.ascii() );
+      us_log->log( qs.toAscii().data() );
    }
 }
 
@@ -461,7 +461,7 @@ set < pm_point > US_PM::recenter( set < pm_point > & model )
    us_timers.end_timer( "recenter" );
    if ( us_log )
    {
-      us_log->log( us_timers.list_time( "recenter" ).ascii() );
+      us_log->log( us_timers.list_time( "recenter" ).toAscii().data() );
    }
    us_timers.clear_timer( "recenter" );
    return result;
@@ -585,7 +585,7 @@ bool US_PM::write_model( QString & filename, set < pm_point > & model, bool over
       return false;
    }
    
-   Q3TextStream ts( &of );
+   QTextStream ts( &of );
    ts << qs_bead_model( model );
    ts << "Model scale (10^-x m) (10 = Angstrom, 9 = nanometer), where x is : 10\n";
    ts << QString( "Rg: %1\n" ).arg( rg );
@@ -626,7 +626,7 @@ bool US_PM::write_model( QString & filename, set < pm_point > & model, vector < 
       return false;
    }
    
-   Q3TextStream ts( &of );
+   QTextStream ts( &of );
    ts << qs_bead_model( model );
    ts << "Model scale (10^-x m) (10 = Angstrom, 9 = nanometer), where x is : 10\n";
    ts << QString( "Rg: %1\n" ).arg( rg );
@@ -677,7 +677,7 @@ bool US_PM::write_I( QString & filename, set < pm_point > & model, bool overwrit
       return false;
    }
    
-   Q3TextStream ts( &of );
+   QTextStream ts( &of );
    ts << "# US-SOMO PM .dat file containing I(q) computed on bead model\n";
    for ( unsigned int i = 0; i < ( unsigned int ) q.size(); i++ )
    {
@@ -1435,7 +1435,13 @@ bool  US_PM::expand_types(
    types_vector.clear();
 
    error_msg = "";
-   QStringList qsl_types = QStringList::split( QRegExp( "(\\s+|(\\s*(,|:)\\s*))" ), types );
+
+   QStringList qsl_types;
+   {
+      QRegExp rx = QRegExp( "(\\s+|(\\s*(,|:)\\s*))" );
+      qsl_types = (types ).split( rx , QString::SkipEmptyParts );
+   }
+
    for ( int i = 0; i < (int) qsl_types.size(); ++i )
    {
       if ( qsl_types[ i ].toInt() < OBJECTS_FIRST || 

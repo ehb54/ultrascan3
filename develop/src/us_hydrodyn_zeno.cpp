@@ -1,10 +1,12 @@
 #include "../include/us_hydrodyn_zeno.h"
 //Added by qt3to4:
-#include <Q3TextStream>
+#include <QTextStream>
 
 static US_Hydrodyn  * zeno_us_hydrodyn;
-Q3ProgressBar * zeno_progress;
+QProgressBar * zeno_progress;
 bool * zeno_stop_flag;
+
+static US_Udp_Msg  * zeno_us_udp_msg;
 
 // note: this program uses cout and/or cerr and this should be replaced
 
@@ -9029,7 +9031,7 @@ namespace zeno {
          //          }
          if ( zeno_progress && !( jax % steps ) )
          {
-            zeno_progress->setProgress( zeno_progress->progress() + 1 );
+            zeno_progress->setValue( zeno_progress->value() + 1 );
             qApp->processEvents();
             if ( zeno_us_hydrodyn->stopFlag )
             {
@@ -9310,7 +9312,7 @@ namespace zeno {
 //          }
          if ( zeno_progress && !( jax % steps ) )
          {
-            zeno_progress->setProgress( zeno_progress->progress() + 1 );
+            zeno_progress->setValue( zeno_progress->value() + 1 );
             qApp->processEvents();
             if ( zeno_us_hydrodyn->stopFlag )
             {
@@ -10720,7 +10722,7 @@ namespace zeno {
 //       ftnscopy((start+5),2,(datest),2,NULL);
 //       ftnscopy((start+2),2,(datest+6),2,NULL);
       QString time = QDateTime::currentDateTime().toString( "ddd MMM dd hh:mm:ss.zzz yyyy" );
-      strncpy( start, time.ascii(), 28 );
+      strncpy( start, time.toAscii().data(), 28 );
       start[28] = 0;
       return;
    }
@@ -11063,7 +11065,7 @@ that is less than 1.
          if ( zeno_progress && !( i % steps ) )
          {
             {
-               zeno_progress->setProgress( zeno_progress->progress() + 1 );
+               zeno_progress->setValue( zeno_progress->value() + 1 );
                qApp->processEvents();
                if ( zeno_us_hydrodyn->stopFlag )
                {
@@ -11703,7 +11705,7 @@ that is less than 1.
 //          }
          if ( zeno_progress && !( i % steps ) )
          {
-            zeno_progress->setProgress( zeno_progress->progress() + 1 );
+            zeno_progress->setValue( zeno_progress->value() + 1 );
             qApp->processEvents();
             if ( zeno_us_hydrodyn->stopFlag )
             {
@@ -12110,7 +12112,7 @@ that is less than 1.
          if ( zeno_progress && !( i % steps ) )
          {
             {
-               zeno_progress->setProgress( zeno_progress->progress() + 1 );
+               zeno_progress->setValue( zeno_progress->value() + 1 );
                qApp->processEvents();
                if ( zeno_us_hydrodyn->stopFlag )
                {
@@ -13454,10 +13456,10 @@ bool US_Hydrodyn_Zeno::test()
       cout << 
          QString( "error: %1 %2 does not exist" )
          .arg( QDir::current().path() )
-         .arg( QString( "%1.bod" ).arg( argv1 ) ).ascii();
+         .arg( QString( "%1.bod" ).arg( argv1 ) ).toAscii().data();
       return false;
    }
-   zeno_progress->setTotalSteps( 108 * 3 );
+   zeno_progress->setMaximum( 108 * 3 );
    zeno_main( argc, argv );
    return true;
 }
@@ -13481,11 +13483,11 @@ bool US_Hydrodyn_Zeno::run(
    if ( !QDir::setCurrent( QFileInfo( filename ).filePath() ) )
    {
       // cout << QString( "current dir is %1\n" ).arg( QDir::current().path() );
-      // error_msg = QString( "Error: can not change to directory: %1" ).arg( QFileInfo( filename ).dirPath() );
+      // error_msg = QString( "Error: can not change to directory: %1" ).arg( QFileInfo( filename ).path() );
       // return false;
    }
 
-   cout << QString( "current dir is %1\n" ).arg( QDir::current().path() ).ascii();
+   cout << QString( "current dir is %1\n" ).arg( QDir::current().path() ).toAscii().data();
 
    if ( options->unit != -9 &&
         options->unit != -10 )
@@ -13514,7 +13516,7 @@ bool US_Hydrodyn_Zeno::run(
     
    // output bead model
 
-   Q3TextStream tso( &fout );
+   QTextStream tso( &fout );
 
    sum_mass = 0e0;
 
@@ -13550,7 +13552,7 @@ bool US_Hydrodyn_Zeno::run(
    }
 
    fout.close();
-   cout << QString( "created: %1\n" ).arg( outname ).ascii();
+   cout << QString( "created: %1\n" ).arg( outname ).toAscii().data();
 
    if ( zeno_cxx ) {
       int argc = 0;
@@ -13559,24 +13561,24 @@ bool US_Hydrodyn_Zeno::run(
       argv[ argc++ ] = strdup( "us_zeno_cxx" );
 
       argv[ argc++ ] = strdup( "-i" );
-      argv[ argc++ ] = strdup( outname.ascii() );
+      argv[ argc++ ] = strdup( outname.toAscii().data() );
       
       argv[ argc++ ] = strdup( "-n" );
-      argv[ argc++ ] = strdup( QString( "%1" ).arg(options->zeno_zeno_steps * 1000 ).ascii() );
+      argv[ argc++ ] = strdup( QString( "%1" ).arg(options->zeno_zeno_steps * 1000 ).toAscii().data() );
       
-      qDebug( QString( "zeno steps %1" ).arg( options->zeno_zeno_steps * 1000 ) );
+      us_qdebug( QString( "zeno steps %1" ).arg( options->zeno_zeno_steps * 1000 ) );
 
       argv[ argc++ ] = strdup( "-t" );
-      argv[ argc++ ] = strdup( QString( "%1" ).arg( threads ).ascii() );
+      argv[ argc++ ] = strdup( QString( "%1" ).arg( threads ).toAscii().data() );
 
-      argv[ argc++ ] = strdup( QString( "--seed=%1" ).arg( QDateTime::currentDateTime().toTime_t() ).ascii() );
-      qDebug( QString( "current datetime %1" ).arg( argv[ argc - 1 ] ) );
+      argv[ argc++ ] = strdup( QString( "--seed=%1" ).arg( QDateTime::currentDateTime().toTime_t() ).toAscii().data() );
+      us_qdebug( QString( "current datetime %1" ).arg( argv[ argc - 1 ] ) );
 
       int progress_steps = 100;
 
-      zeno_progress->setProgress( 0, progress_steps );
+      zeno_progress->setValue( 0 ); zeno_progress->setMaximum( progress_steps );
 #if __cplusplus >= 201103L
-      zeno_cxx_main( argc, argv, QString( "%1.zno" ).arg( filename ).ascii() );
+      zeno_cxx_main( argc, argv, QString( "%1.zno" ).arg( filename ).toAscii().data(), false, zeno_us_udp_msg );
 #endif
       zeno_progress->reset();
 
@@ -13592,12 +13594,12 @@ bool US_Hydrodyn_Zeno::run(
       argv[ argc++ ] = "us_zeno";
 
       QString cmdfile = QFileInfo( filename ).fileName();
-      argv[ argc++ ] = cmdfile.ascii();
+      argv[ argc++ ] = cmdfile.toAscii().data();
 
       cout << QString ( " zeno <%1> <%2> <%3>\n" )
          .arg( options->zeno_zeno_steps )
          .arg( options->zeno_interior_steps )
-         .arg( options->zeno_surface_steps ).ascii();
+         .arg( options->zeno_surface_steps ).toAscii().data();
 
 
       QString qs_zeno     = QString( "" ).sprintf( "z%ut", options->zeno_zeno_steps     );
@@ -13609,20 +13611,20 @@ bool US_Hydrodyn_Zeno::run(
       if ( options->zeno_zeno )
       {
          progress_steps += 108;
-         argv[ argc++ ] = qs_zeno.ascii();
+         argv[ argc++ ] = qs_zeno.toAscii().data();
       }
       if ( options->zeno_interior )
       {
          progress_steps += 108;
-         argv[ argc++ ] = qs_interior.ascii();
+         argv[ argc++ ] = qs_interior.toAscii().data();
       }
       if ( options->zeno_surface )
       {
          progress_steps += 108;
-         argv[ argc++ ] = qs_surface.ascii();
+         argv[ argc++ ] = qs_surface.toAscii().data();
       }
 
-      zeno_progress->setProgress( 0, progress_steps );
+      zeno_progress->setValue( 0 ); zeno_progress->setMaximum( progress_steps );
       zeno_main( argc, argv );
       zeno_progress->reset();
 
@@ -13643,7 +13645,7 @@ bool US_Hydrodyn::calc_zeno()
         !hydro.zeno_interior &&
         !hydro.zeno_surface )
    {
-      editor_msg( "dark red", tr( "No Zeno methods selected.  Select in SOMO->Hydrodynamic Calculations Zeno" ) );
+      editor_msg( "dark red", us_tr( "No Zeno methods selected.  Select in SOMO->Hydrodynamic Calculations Zeno" ) );
       return false;
    }
 
@@ -13652,7 +13654,7 @@ bool US_Hydrodyn::calc_zeno()
    if ( hydro.zeno_zeno )
    {
       editor_msg( "dark blue", 
-                  QString( tr( "Zeno integration selected with %1 thousand MC iterations" ) )
+                  QString( us_tr( "Zeno integration selected with %1 thousand MC iterations" ) )
                   .arg( hydro.zeno_zeno_steps ) );
    }
 
@@ -13660,14 +13662,14 @@ bool US_Hydrodyn::calc_zeno()
    if ( hydro.zeno_interior )
    {
       editor_msg( "dark blue", 
-                  QString( tr( "Zeno interior integration selected with %1 thousand MC iterations" ) )
+                  QString( us_tr( "Zeno interior integration selected with %1 thousand MC iterations" ) )
                   .arg( hydro.zeno_interior_steps ) );
    }
 
    if ( hydro.zeno_surface )
    {
       editor_msg( "dark blue", 
-                  QString( tr( "Zeno surface integration selected with %1 thousand MC iterations" ) )
+                  QString( us_tr( "Zeno surface integration selected with %1 thousand MC iterations" ) )
                   .arg( hydro.zeno_surface_steps ) );
    }
 
@@ -13684,8 +13686,8 @@ bool US_Hydrodyn::calc_zeno()
 
    int models_to_proc = 0;
    int first_model_no = 0;
-   for (current_model = 0; current_model < (unsigned int)lb_model->numRows(); current_model++) {
-      if (lb_model->isSelected(current_model)) {
+   for (current_model = 0; current_model < (unsigned int)lb_model->count(); current_model++) {
+      if (lb_model->item(current_model)->isSelected()) {
          if (somo_processed[current_model]) {
             if (!first_model_no) {
                first_model_no = current_model + 1;
@@ -13773,8 +13775,8 @@ bool US_Hydrodyn::calc_zeno()
    double sum_mass   = 0e0;
    double sum_volume = 0e0;
 
-   for (current_model = 0; current_model < (unsigned int)lb_model->numRows(); current_model++) {
-      if (lb_model->isSelected(current_model)) {
+   for (current_model = 0; current_model < (unsigned int)lb_model->count(); current_model++) {
+      if (lb_model->item(current_model)->isSelected()) {
          if (somo_processed[current_model]) {
             if (!first_model_no) {
                first_model_no = current_model + 1;
@@ -13808,7 +13810,7 @@ bool US_Hydrodyn::calc_zeno()
             if ( !result )
             {
                editor_msg( "red", "ZENO computation failed" );
-               editor_msg( "red", tr( uhz.error_msg ) );
+               editor_msg( "red", us_tr( uhz.error_msg ) );
                pb_calc_hydro->setEnabled( was_hydro_enabled );
                pb_calc_zeno->setEnabled(true);
                pb_bead_saxs->setEnabled(true);
@@ -13897,7 +13899,7 @@ bool US_Hydrodyn::calc_zeno()
                this_data.hydro                         = hydro;
                this_data.model_idx                     = model_vector[ current_model ].model_id;
                this_data.results.num_models            = 1;
-               this_data.results.name                  = QFileInfo( last_hydro_res ).baseName( true );
+               this_data.results.name                  = QFileInfo( last_hydro_res ).completeBaseName();
                this_data.results.used_beads            = bead_models [ current_model ].size();
                this_data.results.used_beads_sd         = 0e0;
                this_data.results.total_beads           = bead_models [ current_model ].size();
@@ -13919,7 +13921,7 @@ bool US_Hydrodyn::calc_zeno()
                   progress->reset();
                   return false;
                }
-               Q3TextStream ts( &f );
+               QTextStream ts( &f );
 
                QStringList qsl;
                while( !ts.atEnd() )
@@ -13993,7 +13995,7 @@ bool US_Hydrodyn::calc_zeno()
 
                for ( unsigned int i = 0; i < ( unsigned int ) param_rx.size(); i++ )
                {
-                  param_qsl.push_back( qsl.grep( param_rx[ i ] ) );
+                  param_qsl.push_back( qsl.filter( param_rx[ i ] ) );
                }               
 
                for ( unsigned int i = 0; i < ( unsigned int ) param_rx.size(); i++ )
@@ -14002,11 +14004,11 @@ bool US_Hydrodyn::calc_zeno()
                   {
                   case 1 :
                      {
-                        param_rx[ i ].search( param_qsl[ i ][ 0 ] );
+                        param_rx[ i ].indexIn( param_qsl[ i ][ 0 ] );
                         QString qs = param_rx[ i ].cap( param_cap_pos[ i ] );
                         
                         // QRegExp rx( param_rx[ i ] );
-                        // rx.search( param_qsl[ i ][ 0 ] );                        
+                        // rx.indexIn( param_qsl[ i ][ 0 ] );                        
                         // QString qs = rx.cap( param_cap_pos[ i ] );
 
                         qs.replace( QRegExp( "\\(\\d+\\)" ), "" );
@@ -14072,7 +14074,7 @@ bool US_Hydrodyn::calc_zeno()
                   }
                }
 
-               qDebug( QString( "volume %1" ).arg( this_data.use_beads_vol ) );
+               us_qdebug( QString( "volume %1" ).arg( this_data.use_beads_vol ) );
 
                // computed
 
@@ -14089,8 +14091,9 @@ bool US_Hydrodyn::calc_zeno()
                      this_data.results.viscosity = 0e0;
                   }
 
-                  this_data.tra_fric_coef = 6 * M_PI * hydro.solvent_viscosity * this_data.results.rs * 1e-1;
+                  this_data.tra_fric_coef = 6e0 * M_PI * hydro.solvent_viscosity * this_data.results.rs * 1e-1;
                   if ( this_data.tra_fric_coef ) {
+                     // 1.3864852e-8 is  boltzman's constant with a conversion, probably needs fconv
                      this_data.results.D20w = ( K0 + hydro.temperature ) * 1.38064852e-8 / this_data.tra_fric_coef;
                   } else {
                      this_data.results.D20w = 0e0;
@@ -14098,16 +14101,16 @@ bool US_Hydrodyn::calc_zeno()
                }
 
                
-               // qDebug( QString( "fric coeff %1" ).arg( this_data.tra_fric_coef ) );
+               // us_qdebug( QString( "fric coeff %1" ).arg( this_data.tra_fric_coef ) );
 
 
                {
                   double fconv = pow(10.0, this_data.hydro.unit + 9);
-                  // qDebug( QString( "fconv %1" ).arg( fconv ) );
+                  // us_qdebug( QString( "fconv %1" ).arg( fconv ) );
 
                   // frictional ratio
 
-                  // qDebug(
+                  // us_qdebug(
                   //        QString( "tra_fric_coeff %1\nrs             %2\nvisc           %3\n" )
                   //        .arg( this_data.tra_fric_coef )
                   //        .arg( this_data.results.rs )
@@ -14122,7 +14125,7 @@ bool US_Hydrodyn::calc_zeno()
                        ) {
                      //                  this_data.results.ff0 = this_data.tra_fric_coef / ( 6e0 * M_PI *  this_data.results.viscosity * this_data.results.rs );
 
-                     // qDebug( 
+                     // us_qdebug( 
                      //        QString( "f is %1 ETAo %2 partvol %3 fconv %4 mass %5" )
                      //        .arg( this_data.tra_fric_coef )
                      //        .arg( this_data.hydro.solvent_viscosity * 1e-2 )
@@ -14136,23 +14139,36 @@ bool US_Hydrodyn::calc_zeno()
                         ( 6e0 * M_PI *  this_data.hydro.solvent_viscosity * 1e-2 * 
                           pow( 3.0 * this_data.results.mass * this_data.results.vbar / (4.0 * M_PI * AVOGADRO), 1.0/3.0 ) );
 
-                     qDebug( QString( "computed ff0 %1" ).arg( this_data.results.ff0 ) );
+                     us_qdebug( QString( "computed ff0 %1" ).arg( this_data.results.ff0 ) );
                   }
 
                   // s20w
 
                   if (this_data.tra_fric_coef ) {
-                     // qDebug( 
-                     //        QString( "s20w mass is %1 partvol %2 DENS %3 f %4" )
+                     // us_qdebug( 
+                     //        QString( "s20w mass is %1 partvol %2 DENS %3 f %4 d20w %5" )
                      //        .arg( this_data.results.mass )
                      //        .arg( this_data.results.vbar )
                      //        .arg( this_data.hydro.solvent_density )
                      //        .arg( this_data.tra_fric_coef ) 
+                     //        .arg( this_data.results.D20w ) 
                      //         );
                      this_data.results.s20w = 
-                        ( this_data.results.mass * 1e20 * 
-                          ( 1e0 - this_data.results.vbar * this_data.hydro.solvent_density ) / 
-                          ( this_data.tra_fric_coef * fconv * AVOGADRO ) );
+                        // previous way
+                        //    ( this_data.results.mass * 1e20 * 
+                        //      ( 1e0 - this_data.results.vbar * this_data.hydro.solvent_density ) / 
+                        //      ( this_data.tra_fric_coef * fconv * AVOGADRO ) );
+                        
+                        this_data.results.mass * 1e21 *
+                        ( 1e0 - ( this_data.results.vbar * this_data.hydro.solvent_density ) ) /
+                        ( 6e0 * M_PI * hydro.solvent_viscosity * this_data.results.rs * AVOGADRO * fconv );
+
+                     // alternate way via Dt
+                     // double alt_s20w = 
+                     //    1e13 * ( this_data.results.mass * this_data.results.D20w * 
+                     //             ( 1e0 - ( this_data.results.vbar * this_data.hydro.solvent_density ) ) ) /
+                     //    ( R * ( this_data.hydro.temperature + K0 ) );
+                     // us_qdebug( QString( "s20w old way %1, dt way %2\n" ).arg( this_data.results.s20w ).arg( alt_s20w ) );
                   }
                   
                   // bead model rg
@@ -14198,7 +14214,7 @@ bool US_Hydrodyn::calc_zeno()
                      double Rg = sqrt( Rg2 / total_cm_mw );
 
                      this_data.results.rg = Rg * fconv;
-                     qDebug( QString( "rg %1 fconv %2 rg2 %3 total_cm_mw %4" ).arg( Rg ).arg( fconv ).arg( Rg2 ).arg( total_cm_mw ) );
+                     us_qdebug( QString( "rg %1 fconv %2 rg2 %3 total_cm_mw %4" ).arg( Rg ).arg( fconv ).arg( Rg2 ).arg( total_cm_mw ) );
                   }
                }
 
@@ -14206,7 +14222,7 @@ bool US_Hydrodyn::calc_zeno()
                {
                   QString add_to_zeno = 
                      QString( 
-                             tr( 
+                             us_tr( 
                                 "\n"
                                 "Additional US-SOMO Computed Parameters:\n"
                                 "\n"
@@ -14235,7 +14251,7 @@ bool US_Hydrodyn::calc_zeno()
                   QFile f( last_hydro_res );
                   if ( f.exists() && f.open( QIODevice::WriteOnly | QIODevice::Append ) )
                   {
-                     Q3TextStream ts( &f );
+                     QTextStream ts( &f );
                      ts << add_to_zeno;
                      f.close();
                   }
@@ -14308,12 +14324,12 @@ bool US_Hydrodyn::calc_zeno()
                if ( saveParams && create_hydro_res )
                {
                   QString fname = this_data.results.name + ".zeno.csv";
-                  FILE *of = fopen(fname, "wb");
+                  FILE *of = us_fopen(fname, "wb");
                   if ( of )
                   {
-                     fprintf(of, "%s", save_util->header().ascii());
+                     fprintf(of, "%s", save_util->header().toAscii().data());
 
-                     fprintf(of, "%s", save_util->dataString(&this_data).ascii());
+                     fprintf(of, "%s", save_util->dataString(&this_data).toAscii().data());
                      fclose(of);
                   }
                }

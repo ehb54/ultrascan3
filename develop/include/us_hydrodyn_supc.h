@@ -14,7 +14,7 @@ struct dati1_supc
 #include "../include/us_hydrodyn.h"
 #include "../include/us_hydrodyn_hydro.h"
 #include "../include/us_hydrodyn_pdbdefs.h"
-#include <q3listbox.h>
+#include <qlistwidget.h>
 
 #include <stdio.h>
 #include <math.h>
@@ -31,12 +31,12 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
                       vector < vector <PDB_atom> > *bead_models, 
                       vector <int> *somo_processed,
                       vector <PDB_model> *model_vector,
-                      Q3ListBox *lb_model,
+                      QListWidget *lb_model,
                       const char *filename,
                       const char *res_filename,
                       vector < QString > model_names,
-                      Q3ProgressBar *progress,
-                      Q3TextEdit *editor,
+                      QProgressBar *progress,
+                      QTextEdit *editor,
                       US_Hydrodyn *us_hydrodyn);
 
 #define US_HYDRODYN_SUPC_ERR_MEMORY_ALLOC   -1

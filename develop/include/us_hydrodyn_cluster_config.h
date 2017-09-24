@@ -7,10 +7,10 @@
 #include <qstring.h>
 #include <qlayout.h>
 #include <qpushbutton.h>
-#include <q3frame.h>
+//#include <q3frame.h>
 #include <qcheckbox.h>
-#include <q3listbox.h>
-#include <q3http.h>
+#include <qlistwidget.h>
+#include <qhttp.h>
 //Added by qt3to4:
 #include <QCloseEvent>
 
@@ -63,7 +63,7 @@ class US_EXTERN US_Hydrodyn_Cluster_Config : public QDialog
       QPushButton   *pb_add_user;
 
       QLabel        *lbl_systems;
-      Q3ListBox      *lb_systems;
+      QListWidget      *lb_systems;
 
       QPushButton   *pb_edit;
       QPushButton   *pb_add_new;
@@ -90,7 +90,7 @@ class US_EXTERN US_Hydrodyn_Cluster_Config : public QDialog
 
       bool          comm_active;
       QString       comm_mode;
-      Q3Http         submit_http;
+      QHttp         submit_http;
       QString       current_http;
       QString       current_http_response;
       QString       current_http_error;
@@ -99,7 +99,7 @@ class US_EXTERN US_Hydrodyn_Cluster_Config : public QDialog
       bool          check_not_ok;
       void          update_enables();
       
-      Q3Socket       test_socket;
+      QTcpSocket       test_socket;
       void          check_socket( QString name, QString port );
       bool          socket_hostfound;
       bool          socket_is_connected;
@@ -129,8 +129,8 @@ class US_EXTERN US_Hydrodyn_Cluster_Config : public QDialog
       void help();
 
       void http_stateChanged ( int state );
-      void http_responseHeaderReceived ( const Q3HttpResponseHeader & resp );
-      void http_readyRead ( const Q3HttpResponseHeader & resp );
+      void http_responseHeaderReceived ( const QHttpResponseHeader & resp );
+      void http_readyRead ( const QHttpResponseHeader & resp );
       void http_dataSendProgress ( int done, int total );
       void http_dataReadProgress ( int done, int total );
       void http_requestStarted ( int id );

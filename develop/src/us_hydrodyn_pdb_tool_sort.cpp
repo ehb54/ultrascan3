@@ -6,10 +6,10 @@
 
 #include "../include/us_hydrodyn_pdb_tool_sort.h"
 //Added by qt3to4:
-#include <Q3HBoxLayout>
-#include <Q3VBoxLayout>
+#include <QHBoxLayout>
+#include <QVBoxLayout>
 #include <QLabel>
-#include <Q3Frame>
+#include <QFrame>
 #include <QCloseEvent>
 
 US_Hydrodyn_Pdb_Tool_Sort::US_Hydrodyn_Pdb_Tool_Sort(
@@ -17,14 +17,14 @@ US_Hydrodyn_Pdb_Tool_Sort::US_Hydrodyn_Pdb_Tool_Sort(
                                                      map < QString, QString > *              parameters,
                                                      QWidget *                               p,
                                                      const char *                            name
-                                                     ) : QDialog( p, name )
+                                                     ) : QDialog( p )
 {
    this->us_hydrodyn                          = us_hydrodyn;
    this->parameters                           = parameters;
 
    USglobal = new US_Config();
-   setPalette( QPalette( USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame ) );
-   setCaption( tr( "US-SOMO: PDB Editor: Sort by residue aggregate distance" ) );
+   setPalette( USglobal->global_colors.cg_frame );
+   setWindowTitle( us_tr( "US-SOMO: PDB Editor: Sort by residue aggregate distance" ) );
 
    setupGUI();
 
@@ -42,136 +42,136 @@ void US_Hydrodyn_Pdb_Tool_Sort::setupGUI()
 {
    int minHeight1  = 30;
 
-   lbl_title =  new QLabel      ( tr( "US-SOMO: PDB Editor: Sort by residue aggregate distance" ), this );
-   lbl_title -> setFrameStyle   ( Q3Frame::WinPanel | Q3Frame::Raised );
+   lbl_title =  new QLabel      ( us_tr( "US-SOMO: PDB Editor: Sort by residue aggregate distance" ), this );
+   lbl_title -> setFrameStyle   ( QFrame::WinPanel | QFrame::Raised );
    lbl_title -> setAlignment    ( Qt::AlignCenter | Qt::AlignVCenter );
    lbl_title -> setMinimumHeight( minHeight1 );
-   lbl_title -> setPalette      ( QPalette( USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame ) );
+   lbl_title -> setPalette      ( USglobal->global_colors.cg_frame );
    lbl_title -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold ) );
 
    lbl_credits_1 =  new QLabel      ( "Cite: US-SOMO", this );
    lbl_credits_1 -> setAlignment    ( Qt::AlignCenter | Qt::AlignVCenter );
    lbl_credits_1 -> setMinimumHeight( minHeight1 );
-   lbl_credits_1 -> setPalette      ( QPalette( USglobal->global_colors.cg_label, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal ) );
+   lbl_credits_1 -> setPalette      ( USglobal->global_colors.cg_label );
    lbl_credits_1 -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1, QFont::Bold ) );
 
-   lbl_residuesa = new QLabel      ( tr( "Residue list A (chain:residue{-residue}{,..}" ), this );
+   lbl_residuesa = new QLabel      ( us_tr( "Residue list A (chain:residue{-residue}{,..}" ), this );
    lbl_residuesa ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_residuesa ->setMinimumHeight( minHeight1 );
-   lbl_residuesa ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
+   lbl_residuesa ->setPalette      ( USglobal->global_colors.cg_label );
    lbl_residuesa ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
    lbl_residuesa ->setMinimumWidth ( QFontMetrics( lbl_residuesa->font() ).maxWidth() * 15 );
 
-   le_residuesa = new QLineEdit     ( this, "residuesa Line Edit" );
+   le_residuesa = new QLineEdit     (  this );    le_residuesa->setObjectName( "residuesa Line Edit" );
    le_residuesa ->setText           ( parameters->count( "residuesa" ) ? ( *parameters )[ "residuesa" ] : "" );
    le_residuesa ->setAlignment      ( Qt::AlignCenter | Qt::AlignVCenter );
-   le_residuesa ->setPalette        ( QPalette( USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal ) );
+   le_residuesa ->setPalette        ( USglobal->global_colors.cg_normal );
    le_residuesa ->setFont           ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    le_residuesa ->setMinimumHeight  ( minHeight1 );
    le_residuesa ->setMinimumWidth   ( 150 );
    connect( le_residuesa, SIGNAL( textChanged( const QString & ) ), SLOT( update_residuesa( const QString & ) ) );
 
-   lbl_residuesb = new QLabel      ( tr( "Residue list B (chain:residue{-residue}{,..}" ), this );
+   lbl_residuesb = new QLabel      ( us_tr( "Residue list B (chain:residue{-residue}{,..}" ), this );
    lbl_residuesb ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_residuesb ->setMinimumHeight( minHeight1 );
-   lbl_residuesb ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
+   lbl_residuesb ->setPalette      ( USglobal->global_colors.cg_label );
    lbl_residuesb ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
    lbl_residuesb ->setMinimumWidth ( QFontMetrics( lbl_residuesb->font() ).maxWidth() * 15 );
 
-   le_residuesb = new QLineEdit     ( this, "residuesb Line Edit" );
+   le_residuesb = new QLineEdit     (  this );    le_residuesb->setObjectName( "residuesb Line Edit" );
    le_residuesb ->setText           ( parameters->count( "residuesb" ) ? ( *parameters )[ "residuesb" ] : "" );
    le_residuesb ->setAlignment      ( Qt::AlignCenter | Qt::AlignVCenter );
-   le_residuesb ->setPalette        ( QPalette( USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal ) );
+   le_residuesb ->setPalette        ( USglobal->global_colors.cg_normal );
    le_residuesb ->setFont           ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    le_residuesb ->setMinimumHeight  ( minHeight1 );
    le_residuesb ->setMinimumWidth   ( 150 );
    connect( le_residuesb, SIGNAL( textChanged( const QString & ) ), SLOT( update_residuesb( const QString & ) ) );
 
-   lbl_reportcount = new QLabel      ( tr( "Number to list (default:blank=""All"")" ), this );
+   lbl_reportcount = new QLabel      ( us_tr( "Number to list (default:blank=""All"")" ), this );
    lbl_reportcount ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_reportcount ->setMinimumHeight( minHeight1 );
-   lbl_reportcount ->setPalette      ( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label ) );
+   lbl_reportcount ->setPalette      ( USglobal->global_colors.cg_label );
    lbl_reportcount ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
    lbl_reportcount ->setMinimumWidth ( QFontMetrics( lbl_reportcount->font() ).maxWidth() * 15 );
 
-   le_reportcount = new QLineEdit     ( this, "reportcount Line Edit" );
+   le_reportcount = new QLineEdit     (  this );    le_reportcount->setObjectName( "reportcount Line Edit" );
    le_reportcount ->setText           ( parameters->count( "reportcount" ) ? ( *parameters )[ "reportcount" ] : "" );
    le_reportcount ->setAlignment      ( Qt::AlignCenter | Qt::AlignVCenter );
-   le_reportcount ->setPalette        ( QPalette( USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal ) );
+   le_reportcount ->setPalette        ( USglobal->global_colors.cg_normal );
    le_reportcount ->setFont           ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    le_reportcount ->setMinimumHeight  ( minHeight1 );
    le_reportcount ->setMinimumWidth   ( 150 );
    connect( le_reportcount, SIGNAL( textChanged( const QString & ) ), SLOT( update_reportcount( const QString & ) ) );
 
-   cb_order = new QCheckBox    ( tr( "Sort by maximum aggregate distance first" ), this );
+   cb_order = new QCheckBox    ( us_tr( "Sort by maximum aggregate distance first" ), this );
    cb_order ->setMinimumHeight ( minHeight1 );
-   cb_order ->setPalette       ( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal ) );
+   cb_order ->setPalette       ( USglobal->global_colors.cg_normal );
    cb_order ->setFont          ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
    cb_order ->setMinimumWidth  ( QFontMetrics( cb_order->font() ).maxWidth() * 15 );
 
    cb_order ->setChecked        ( parameters->count( "order" ) && ( *parameters )[ "order" ] == "true" ? true : false );
    connect( cb_order, SIGNAL( clicked() ), SLOT( set_order() ) );
 
-   cb_caonly = new QCheckBox    ( tr( "Only use CA for distances" ), this );
+   cb_caonly = new QCheckBox    ( us_tr( "Only use CA for distances" ), this );
    cb_caonly ->setMinimumHeight ( minHeight1 );
-   cb_caonly ->setPalette       ( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal ) );
+   cb_caonly ->setPalette       ( USglobal->global_colors.cg_normal );
    cb_caonly ->setFont          ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
    cb_caonly ->setMinimumWidth  ( QFontMetrics( cb_caonly->font() ).maxWidth() * 15 );
 
    cb_caonly ->setChecked        ( parameters->count( "caonly" ) && ( *parameters )[ "caonly" ] == "true" ? true : false );
    connect( cb_caonly, SIGNAL( clicked() ), SLOT( set_caonly() ) );
 
-   pb_help =  new QPushButton ( tr( "Help" ), this );
+   pb_help =  new QPushButton ( us_tr( "Help" ), this );
    pb_help -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1) );
    pb_help -> setMinimumHeight( minHeight1 );
-   pb_help -> setPalette      ( QPalette( USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active ) );
+   pb_help -> setPalette      ( USglobal->global_colors.cg_pushb );
    connect( pb_help, SIGNAL( clicked() ), SLOT( help() ) );
 
-   pb_close =  new QPushButton ( tr( "Close" ), this );
+   pb_close =  new QPushButton ( us_tr( "Close" ), this );
    pb_close -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1) );
    pb_close -> setMinimumHeight( minHeight1 );
-   pb_close -> setPalette      ( QPalette( USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active ) );
+   pb_close -> setPalette      ( USglobal->global_colors.cg_pushb );
    connect( pb_close, SIGNAL( clicked() ), SLOT( cancel() ) );
 
-   Q3VBoxLayout *background = new Q3VBoxLayout( this );
+   QVBoxLayout * background = new QVBoxLayout( this ); background->setContentsMargins( 0, 0, 0, 0 ); background->setSpacing( 0 );
    background->addSpacing(4);
 
    background->addWidget( lbl_title );
    background->addWidget( lbl_credits_1 );
    background->addSpacing( 4 );
-   Q3HBoxLayout * hbl = new Q3HBoxLayout( 0 );
+   QHBoxLayout * hbl = new QHBoxLayout(); hbl->setContentsMargins( 0, 0, 0, 0 ); hbl->setSpacing( 0 );
    hbl->addSpacing( 4 );
    hbl->addWidget( lbl_residuesa );
    hbl->addWidget( le_residuesa );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
    hbl->addWidget( lbl_residuesb );
    hbl->addWidget( le_residuesb );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
    hbl->addWidget( lbl_reportcount );
    hbl->addWidget( le_reportcount );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
    hbl->addWidget( cb_order );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
    hbl->addWidget( cb_caonly );
    hbl->addSpacing( 4 );
    background->addLayout( hbl );
-   hbl = new Q3HBoxLayout( 0 );
+   hbl = new QHBoxLayout();
    hbl->addSpacing( 4 );
 
 
-   Q3HBoxLayout *hbl_bottom = new Q3HBoxLayout( 0 );
+   QHBoxLayout * hbl_bottom = new QHBoxLayout(); hbl_bottom->setContentsMargins( 0, 0, 0, 0 ); hbl_bottom->setSpacing( 0 );
    hbl_bottom->addSpacing( 4 );
    hbl_bottom->addWidget ( pb_help );
    hbl_bottom->addSpacing( 4 );

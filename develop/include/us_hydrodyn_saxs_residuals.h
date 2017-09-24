@@ -7,11 +7,11 @@
 #include <qstring.h>
 #include <qlayout.h>
 #include <qpushbutton.h>
-#include <q3frame.h>
+//#include <q3frame.h>
 #include <qcheckbox.h>
 #include <qwt_plot.h>
 #include <qwt_counter.h>
-#include <q3textedit.h>
+#include <qtextedit.h>
 #include <qpen.h>
 //Added by qt3to4:
 #include <QCloseEvent>
@@ -34,7 +34,7 @@
 
 using namespace std;
 
-class US_EXTERN US_Hydrodyn_Saxs_Residuals : public Q3Frame
+class US_EXTERN US_Hydrodyn_Saxs_Residuals : public QFrame
 {
    Q_OBJECT
 

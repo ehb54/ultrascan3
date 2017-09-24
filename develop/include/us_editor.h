@@ -1,48 +1,51 @@
+//Added by qt3to4:
+#include <QResizeEvent>
 #ifndef US_EDITOR_H
 #define US_EDITOR_H
+
+#if QT_VERSION < 0x040000
 
 #include <qaction.h>
 #include <qapplication.h>
 #include <qcolordialog.h>
-#include <Q3ComboBox>
+#include <QComboBox>
 #include <qfile.h>
 #include <qfiledialog.h>
 #include <qfileinfo.h>
 #include <qfontdatabase.h>
 #include <qfontdialog.h>
-#include <q3frame.h>
+//#include <q3frame.h>
 #include <qnamespace.h>
 #include <qlineedit.h>
 #include <qlist.h>
-#include <q3mainwindow.h>
+//#include <q3mainwindow.h>
 #include <qmap.h>
 #include <qmenubar.h>
 #include <qmessagebox.h>
-#include <q3paintdevicemetrics.h>
+//#include <q3paintdevicemetrics.h>
 #include <qpainter.h>
 #ifndef QT4
 # include <qpdevmet.h>
 #endif
-#include <q3popupmenu.h>
+//#include <q3popupmenu.h>
 #include <qprinter.h>
-#include <q3simplerichtext.h>
+//#include <q3simplerichtext.h>
 #include <qtabwidget.h>
-#include <q3textedit.h>
-#include <q3toolbar.h>
+#include <qtextedit.h>
+//#include <q3toolbar.h>
 #include <qtextstream.h>
-//Added by qt3to4:
-#include <QResizeEvent>
 #ifndef NO_DB
 # include "us_db.h"
 #endif
 
-class US_Editor : public Q3Frame
+
+class US_Editor : public QFrame
 {
    Q_OBJECT
 public:
    US_Editor(int flag, QWidget *parent=0, const char *name=0 );
    ~US_Editor();
-   Q3TextEdit *e;
+   QTextEdit *e;
    QFont ft;
    QString fileName;
    
@@ -80,9 +83,9 @@ private:
 
 
 class QAction;
-class Q3ComboBox;
+class QComboBox;
 class QTabWidget;
-class Q3TextEdit;
+class QTextEdit;
 
 class TextEdit : public Q3MainWindow
 {
@@ -99,8 +102,8 @@ private:
     void setupFileActions();
     void setupEditActions();
     void setupTextActions();
-    Q3TextEdit *currentEditor() const;
-    void doConnections( Q3TextEdit *e );
+    QTextEdit *currentEditor() const;
+    void doConnections( QTextEdit *e );
     Qt::TextFormat fmt;
     QString title;
 
@@ -146,13 +149,28 @@ private:
    *actionAlignCenter,
    *actionAlignRight,
    *actionAlignJustify;
-    Q3ComboBox *comboStyle,
+    QComboBox *comboStyle,
    *comboFont,
    *comboSize;
     QTabWidget *tabWidget;
-    QMap<Q3TextEdit*, QString> filenames;
+    QMap<QTextEdit*, QString> filenames;
 
 };
+#else
+#include <QtGui>
+#include "us_extern.h"
+
+class US_EXTERN TextEdit : public QFrame
+{
+    Q_OBJECT
+
+public:
+    TextEdit( QWidget *parent = 0, const char *name = 0 );
+    TextEdit(int id, QWidget *parent = 0, const char *name = 0);
+    void load( const QString &f, QString title = "", bool ourfmt = false /*, TextFormat fmt = RichText */ );
+    void load_text( QString text, QString title = "" );
+};
+#endif
 
 #endif
 

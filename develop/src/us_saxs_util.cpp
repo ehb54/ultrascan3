@@ -19,7 +19,7 @@
 #   include <stdlib.h>
 #   include <float.h>
 //Added by qt3to4:
-#include <Q3TextStream>
+#include <QTextStream>
 // #   define isnan _isnan
 #   undef SHOW_TIMING
 #endif
@@ -93,7 +93,7 @@ bool US_Saxs_Util::read( QString filename, QString tag )
    
    if ( f.open(QIODevice::ReadOnly) )
    {
-      Q3TextStream ts(&f);
+      QTextStream ts(&f);
 
       QString firstline;
 
@@ -107,14 +107,14 @@ bool US_Saxs_Util::read( QString filename, QString tag )
       while ( !ts.atEnd() )
       {
          firstline = ts.readLine();
-         if ( rxskip.search(firstline) == -1 )
+         if ( rxskip.indexIn(firstline) == -1 )
          {
             break;
          }
       }
 
       wave[tag].header = firstline;
-      if ( rxdigits.search(firstline) != -1 )
+      if ( rxdigits.indexIn(firstline) != -1 )
       { 
          // line is 3 numbers force a new header
          cout << "force default header\n";
@@ -123,7 +123,7 @@ bool US_Saxs_Util::read( QString filename, QString tag )
          firstline = "";
       }
 
-      if ( rx3.search(wave[tag].header) == -1 )
+      if ( rx3.indexIn(wave[tag].header) == -1 )
       {
          errormsg = "could not find 3 columns in file header " + filename;
          f.close();
@@ -146,12 +146,12 @@ bool US_Saxs_Util::read( QString filename, QString tag )
             line = ts.readLine();
          }
 
-         if ( rxskip.search(line) != -1 )
+         if ( rxskip.indexIn(line) != -1 )
          {
             continue;
          }
 
-         if ( rx3.search(line) == -1 )
+         if ( rx3.indexIn(line) == -1 )
          {
             errormsg = "could not find 3 columns in file line " + filename;
             f.close();
@@ -178,7 +178,7 @@ bool US_Saxs_Util::write(QString filename, QString tag)
 
    if ( f.open(QIODevice::WriteOnly ) )
    {
-      Q3TextStream ts(&f);
+      QTextStream ts(&f);
       ts << wave[tag].header << "\n";
       for ( unsigned int i = 0; i < wave[tag].q.size(); i++ )
       {
@@ -2663,7 +2663,7 @@ bool US_Saxs_Util::read_project( QString subdir )
    unsigned int linepos = 0;
    QString last_wave_name = "";
 
-   Q3TextStream ts(&f);
+   QTextStream ts(&f);
 
    while ( !ts.atEnd() )
    {
@@ -2676,7 +2676,7 @@ bool US_Saxs_Util::read_project( QString subdir )
          continue;
       }
 
-      if ( rx.search(line) == -1 )
+      if ( rx.indexIn(line) == -1 )
       {
          errormsg = QString("error in project file line %1.  At least two tokens not found <%2>\n")
             .arg(linepos)
@@ -2684,7 +2684,7 @@ bool US_Saxs_Util::read_project( QString subdir )
          return false;
       }
 
-      QString token = rx.cap(1).lower();
+      QString token = rx.cap(1).toLower();
       QString data = rx.cap(2);
 
       if ( !token.contains(rxvalid) )
@@ -3120,7 +3120,7 @@ bool US_Saxs_Util::build_wiki()
       errormsg = "error: can not create " + wiki_file_name() + " for writing\n";
       return false;
    }
-   Q3TextStream ts(&f);
+   QTextStream ts(&f);
    QString result;
    if ( !wiki(result) )
    {
@@ -3608,7 +3608,7 @@ bool US_Saxs_Util::wiki(QString &result)
       result += QString("[[Image(htdocs:pngs%1%2)]]\n").arg(QDir::separator()).arg(pngfile);
       cmd += "\n";
       cout << cmd;
-      system(cmd.ascii());
+      system(cmd.toAscii().data());
    }
 
    for ( unsigned int i = 0; i < wave_names_vector.size(); i++ )
@@ -3675,7 +3675,7 @@ bool US_Saxs_Util::wiki(QString &result)
             .arg(get_file_name(wave_names_vector[i],"bsub"))
             ;
          cout << cmd;
-         system(cmd.ascii());
+         system(cmd.toAscii().data());
       }
    }
 
@@ -3831,7 +3831,7 @@ bool US_Saxs_Util::wiki(QString &result)
    }
    result += QString("[[Image(htdocs:%1)]]\n").arg(pngfile);
    cout << cmd << endl;
-   system(cmd.ascii());
+   system(cmd.toAscii().data());
 
    if ( exposure_times.size() > 1 )
    {
@@ -3875,7 +3875,7 @@ bool US_Saxs_Util::wiki(QString &result)
          }
          result += QString("[[Image(htdocs:%1)]]\n").arg(pngfile);
          cout << cmd << endl;
-         system(cmd.ascii());
+         system(cmd.toAscii().data());
       }
    }
 
@@ -3921,7 +3921,7 @@ bool US_Saxs_Util::wiki(QString &result)
       }
       result += QString("[[Image(htdocs:%1)]]\n").arg(pngfile);
       cout << cmd << endl;
-      system(cmd.ascii());
+      system(cmd.toAscii().data());
 
       if ( concs.size() > 1 )
       {
@@ -3965,7 +3965,7 @@ bool US_Saxs_Util::wiki(QString &result)
             }
             result += QString("[[Image(htdocs:%1)]]\n").arg(pngfile);
             cout << cmd << endl;
-            system(cmd.ascii());
+            system(cmd.toAscii().data());
          }
       }
    }
@@ -4060,8 +4060,8 @@ bool US_Saxs_Util::wiki(QString &result)
          .arg(smax)
          .arg(pngfile)
          .arg(guinier);
-      cout << cmd.ascii();
-      system(cmd.ascii());
+      cout << cmd.toAscii().data();
+      system(cmd.toAscii().data());
 
       QString this_data_line = 
          QString(
@@ -4160,7 +4160,7 @@ bool US_Saxs_Util::wiki(QString &result)
       result += QString("[[Image(htdocs:pngs%1%2)]]\n").arg(QDir::separator()).arg(pngfile);
       cmd += "\n";
       cout << cmd;
-      system(cmd.ascii());
+      system(cmd.toAscii().data());
    }
       
    // for each waxs sample with nonzero concentration
@@ -4375,18 +4375,18 @@ bool US_Saxs_Util::wiki(QString &result)
 
          cmd += "\n";
          cout << cmd;
-         system(cmd.ascii());
+         system(cmd.toAscii().data());
          cmdz += "\n";
          cout << cmdz;
-         system(cmdz.ascii());
+         system(cmdz.toAscii().data());
          if ( hasPresetAlpha )
          {
             cmda += "\n";
             cout << cmda;
-            system(cmda.ascii());
+            system(cmda.toAscii().data());
             cmdaz += "\n";
             cout << cmdaz;
-            system(cmdaz.ascii());
+            system(cmdaz.toAscii().data());
          }
       }
    }
@@ -4596,10 +4596,10 @@ bool US_Saxs_Util::wiki(QString &result)
 
                   cmd += "\n";
                   cout << cmd;
-                  system(cmd.ascii());
+                  system(cmd.toAscii().data());
                   cmdz += "\n";
                   cout << cmdz;
-                  system(cmdz.ascii());
+                  system(cmdz.toAscii().data());
 
                   // join waves
                   cout << "joining waves\n";
@@ -4679,11 +4679,11 @@ bool US_Saxs_Util::wiki(QString &result)
       }
       result += QString("[[Image(htdocs:%1)]]\n").arg(pngfile);
       cout << cmd << endl;
-      system(cmd.ascii());
+      system(cmd.toAscii().data());
 
       result += QString("[[Image(htdocs:%1)]]\n").arg(pngfilez);
       cout << cmdz << endl;
-      system(cmdz.ascii());
+      system(cmdz.toAscii().data());
       
       // wgsbs Rg/I0 series
       
@@ -4780,8 +4780,8 @@ bool US_Saxs_Util::wiki(QString &result)
                .arg(smax)
                .arg(pngfile)
                .arg(guinier);
-            cout << cmd.ascii();
-            system(cmd.ascii());
+            cout << cmd.toAscii().data();
+            system(cmd.toAscii().data());
             
             QString this_data_line = 
                QString(
@@ -4869,7 +4869,7 @@ bool US_Saxs_Util::wiki(QString &result)
       }
       result += QString("[[Image(htdocs:%1)]]\n").arg(pngfile);
       cout << cmd << endl;
-      system(cmd.ascii());
+      system(cmd.toAscii().data());
       
       // wgsbs Rg/I0 series
       
@@ -4966,8 +4966,8 @@ bool US_Saxs_Util::wiki(QString &result)
                .arg(smax)
                .arg(pngfile)
                .arg(guinier);
-            cout << cmd.ascii();
-            system(cmd.ascii());
+            cout << cmd.toAscii().data();
+            system(cmd.toAscii().data());
             
             QString this_data_line = 
                QString(
@@ -5062,26 +5062,26 @@ bool US_Saxs_Util::merge_projects(
          QRegExp rxcrop("^\\s*crop");
          QRegExp rx3crop("^\\s*crop\\s+(\\S+)\\s+(\\S+)\\s+(\\S+)\\s*$");
 
-         Q3TextStream ts(&f);
+         QTextStream ts(&f);
          while ( !ts.atEnd() )
          {
             QString line = ts.readLine();
-            if ( rxskip.search(line) != -1 ||
-                 rxempty.search(line) != -1 )
+            if ( rxskip.indexIn(line) != -1 ||
+                 rxempty.indexIn(line) != -1 )
             {
                continue;
             }
 
-            if ( rxrmax.search(line) != -1 )
+            if ( rxrmax.indexIn(line) != -1 )
             {
-               if ( rx4rmax.search(line) == -1 &&
-                    rx1rmax.search(line) == -1 )
+               if ( rx4rmax.indexIn(line) == -1 &&
+                    rx1rmax.indexIn(line) == -1 )
                {
                   errormsg = "merge_gnom rmax lines must contain either two or five columns";
                   return false;
                }
                
-               if ( rx4rmax.search(line) != -1 )
+               if ( rx4rmax.indexIn(line) != -1 )
                {
                   gnom_file_map[rx4rmax.cap(1)] = gnom_files.size();
                   gnom_files.push_back(rx4rmax.cap(1));
@@ -5099,9 +5099,9 @@ bool US_Saxs_Util::merge_projects(
                continue;
             }
 
-            if ( rxcrop.search(line) != -1 )
+            if ( rxcrop.indexIn(line) != -1 )
             {
-               if ( rx3crop.search(line) == -1 )
+               if ( rx3crop.indexIn(line) == -1 )
                {
                   errormsg = "merge_gnom crop lines must contain four columns";
                   return false;
@@ -5169,10 +5169,10 @@ bool US_Saxs_Util::merge_projects(
 
       if ( !f.open(QIODevice::ReadOnly) )
       {
-         errormsg = "error: can not open file " + f.name();
+         errormsg = "error: can not open file " + f.fileName();
          return false;
       }
-      Q3TextStream ts(&f);
+      QTextStream ts(&f);
       QString prefix;
       QString name;
 
@@ -5180,17 +5180,17 @@ bool US_Saxs_Util::merge_projects(
       {
          QString line = ts.readLine().replace(rxtrailingspaces,"");
 
-         if ( rx.search(line) == -1 )
+         if ( rx.indexIn(line) == -1 )
          {
             continue;
          }
 
-         if ( rx.cap(1).lower() == "wikiprefix" ) 
+         if ( rx.cap(1).toLower() == "wikiprefix" ) 
          {
             prefix = rx.cap(2);
          }
 
-         if ( rx.cap(1).lower() == "name" ) 
+         if ( rx.cap(1).toLower() == "name" ) 
          {
             name = rx.cap(2);
          }
@@ -5200,22 +5200,22 @@ bool US_Saxs_Util::merge_projects(
 
       if ( prefix.isEmpty() )
       {
-         errormsg = "error: no 'wikiPrefix' line found in " + f.name();
+         errormsg = "error: no 'wikiPrefix' line found in " + f.fileName();
          return false;
       }
       if ( name.isEmpty() )
       {
-         errormsg = "error: no 'name' line found in " + f.name();
+         errormsg = "error: no 'name' line found in " + f.fileName();
          return false;
       }
 
       QFile f2a(projects[i] + QDir::separator() + prefix + name);
       if ( !f2a.open(QIODevice::ReadOnly) )
       {
-         errormsg = "error: can not open file " + f2a.name();
+         errormsg = "error: can not open file " + f2a.fileName();
          return false;
       }
-      Q3TextStream ts2a(&f2a);
+      QTextStream ts2a(&f2a);
       QStringList count_guinier;
 
       while ( !ts2a.atEnd() )
@@ -5225,7 +5225,7 @@ bool US_Saxs_Util::merge_projects(
       f2a.close();
 
       int collect_limit = 1;
-      if ( count_guinier.grep("Guinier Summary").size() == 1 )
+      if ( count_guinier.filter("Guinier Summary").size() == 1 )
       {
          collect_limit = 0;
       }
@@ -5233,11 +5233,11 @@ bool US_Saxs_Util::merge_projects(
       QFile f2(projects[i] + QDir::separator() + prefix + name);
       if ( !f2.open(QIODevice::ReadOnly) )
       {
-         errormsg = "error: can not open file " + f2.name();
+         errormsg = "error: can not open file " + f2.fileName();
          return false;
       }
 
-      Q3TextStream ts2(&f2);
+      QTextStream ts2(&f2);
 
       QString saxs_guinier;
       // bool start_collecting_saxs_guinier = false;
@@ -5261,10 +5261,10 @@ bool US_Saxs_Util::merge_projects(
          if ( start_collecting < 0 )
          {
             if ( !link_done &&
-                 rxheadertowiki.search(line) != -1 )
+                 rxheadertowiki.indexIn(line) != -1 )
             {
                link_done = true;
-               result += QString("= [wiki:%1 %2] =\n").arg(QFileInfo(f2a.name()).fileName()).arg(rxheadertowiki.cap(1));
+               result += QString("= [wiki:%1 %2] =\n").arg(QFileInfo(f2a.fileName()).fileName()).arg(rxheadertowiki.cap(1));
             } else {
                result += line + "\n";
             }
@@ -5280,12 +5280,12 @@ bool US_Saxs_Util::merge_projects(
                {
                   result += "|| sample " + line + " computed mw (Da) ||\n";
                } else {
-                  if ( rxcapturefields.search(line) == -1 )
+                  if ( rxcapturefields.indexIn(line) == -1 )
                   {
                      errormsg = QString("can not find correct number of fields in line %1").arg(line);
                      return false;
                   }
-                  double estmw = rxcapturefields.cap(10).stripWhiteSpace().toDouble() * reference_mw_multiplier;
+                  double estmw = rxcapturefields.cap(10).trimmed().toDouble() * reference_mw_multiplier;
                   if ( gnom_run )
                   {
                      bool gnom_this_file = false;
@@ -5296,7 +5296,7 @@ bool US_Saxs_Util::merge_projects(
                            if ( rxcapturefields.cap(6).contains(QRegExp(gnom_files[g])) )
                            {
                               gnom_this_file = true;
-                              files.push_back(rxcapturefields.cap(6).stripWhiteSpace());
+                              files.push_back(rxcapturefields.cap(6).trimmed());
                               use_rmax_start.push_back(gnom_files_rmax_start[g] ? gnom_files_rmax_start[g] : p_rmax_start);
                               use_rmax_end.push_back(gnom_files_rmax_end[g] ? gnom_files_rmax_end[g] : p_rmax_end);
                               use_rmax_inc.push_back(gnom_files_rmax_inc[g] ? gnom_files_rmax_inc[g] : p_rmax_inc);
@@ -5323,7 +5323,7 @@ bool US_Saxs_Util::merge_projects(
                         }
                      } else {
                         gnom_this_file = true;
-                        files.push_back(rxcapturefields.cap(6).stripWhiteSpace());
+                        files.push_back(rxcapturefields.cap(6).trimmed());
                         use_rmax_start.push_back(p_rmax_start);
                         use_rmax_end.push_back(p_rmax_end);
                         use_rmax_inc.push_back(p_rmax_inc);
@@ -5335,14 +5335,14 @@ bool US_Saxs_Util::merge_projects(
                      if ( gnom_this_file )
                      {
                         // cout << "cap.6 is " + rxcapturefields.cap(6) + "\n";
-                        line.replace(QString("|| %1 ||").arg(rxcapturefields.cap(6).stripWhiteSpace()),
+                        line.replace(QString("|| %1 ||").arg(rxcapturefields.cap(6).trimmed()),
                                      QString("|| [wiki:%1%2_gnom_%3_c%4-%5 %6] ||")
                                      .arg(prefix)
                                      .arg(projects[i])
-                                     .arg(QString("%1").arg(rxcapturefields.cap(6).stripWhiteSpace()).replace(QRegExp("\\.(dat|DAT)$"),""))
+                                     .arg(QString("%1").arg(rxcapturefields.cap(6).trimmed()).replace(QRegExp("\\.(dat|DAT)$"),""))
                                      .arg(use_crop_low.back())
                                      .arg(use_crop_high.back())
-                                     .arg(rxcapturefields.cap(6).stripWhiteSpace()));
+                                     .arg(rxcapturefields.cap(6).trimmed()));
                      }
                   }
                   
@@ -5387,11 +5387,11 @@ bool US_Saxs_Util::merge_projects(
    QFile f(outfile);
    if ( !f.open(QIODevice::WriteOnly) )
    {
-      errormsg = "error: can not create file " + f.name();
+      errormsg = "error: can not create file " + f.fileName();
       return false;
    }
 
-   Q3TextStream ts(&f);
+   QTextStream ts(&f);
    ts << result;
    f.close();
    return true;
@@ -5404,7 +5404,7 @@ bool US_Saxs_Util::project_1d(
 {
    errormsg = "";
 
-   QString dir = QDir::currentDirPath() + QDir::separator() + "1d";
+   QString dir = QDir::currentPath() + QDir::separator() + "1d";
 
    QString pngdir = dir + QDir::separator() + "pngs";
    QString avgdir = dir + QDir::separator() + "averages";
@@ -5449,7 +5449,7 @@ bool US_Saxs_Util::project_1d(
    
    // get a list of data files in directory
 
-   QStringList files = p1d.entryList("*.dat;*.DAT", QDir::Files, QDir::Name);
+   QStringList files = p1d.entryList( QStringList() << "*.dat" << "*.DAT", QDir::Files, QDir::Name);
 
    if ( !files.size() )
    {
@@ -5470,7 +5470,7 @@ bool US_Saxs_Util::project_1d(
    cout << "reading files:\n";
    for ( unsigned int i = 0; i < (unsigned int)files.size(); i++ )
    {
-      if ( rxgetbasename.search(files[i]) == -1 )
+      if ( rxgetbasename.indexIn(files[i]) == -1 )
       {
          errormsg = "error parsing file name: " + files[i];
          return false;
@@ -5598,16 +5598,16 @@ bool US_Saxs_Util::project_1d(
       result += QString("[[Image(htdocs:%1)]]\n").arg(pngfile);
 
       cmd += "\n";
-      cout << cmd.ascii();
-      system(cmd.ascii());
+      cout << cmd.toAscii().data();
+      system(cmd.toAscii().data());
       if ( pngsplits > 1 )
       {
          for ( unsigned int k = 0; k < pngsplits; k++ )
          {
             result += QString("[[Image(htdocs:%1)]]\n").arg(pngfiles[k]);
             cmds[k] += "\n";
-            cout << cmds[k].ascii();
-            system(cmds[k].ascii());
+            cout << cmds[k].toAscii().data();
+            system(cmds[k].toAscii().data());
          }
       }
    }
@@ -5615,11 +5615,11 @@ bool US_Saxs_Util::project_1d(
    QFile f(QString("wiki_1d_average_%1").arg(wikitag));
    if ( !f.open( QIODevice::WriteOnly ) )
    {
-      errormsg = "error: can not create file " + f.name();
+      errormsg = "error: can not create file " + f.fileName();
       return false;
    }
    
-   Q3TextStream ts(&f);
+   QTextStream ts(&f);
    ts << result;
    f.close();
    return true;
@@ -5649,7 +5649,7 @@ bool US_Saxs_Util::run_gnom(
    }
 
    // make gnom subdir
-   QString dir = QDir::currentDirPath() + QDir::separator() + project + QDir::separator() + "gnom";
+   QString dir = QDir::currentPath() + QDir::separator() + project + QDir::separator() + "gnom";
    QString pdir = dir + QDir::separator() + "pngs";
 
    QDir qdir(dir);
@@ -5685,7 +5685,7 @@ bool US_Saxs_Util::run_gnom(
       
       if ( !f.exists() )
       {
-         errormsg = "error: file " + f.name() + " does not exist";
+         errormsg = "error: file " + f.fileName() + " does not exist";
          return false;
       }
 
@@ -5702,7 +5702,7 @@ bool US_Saxs_Util::run_gnom(
          .arg(dir)
          .arg(prefix)
          .arg(project)
-         .arg(f.name())
+         .arg(f.fileName())
          .arg(use_rmax_start[i])
          .arg(use_rmax_end[i])
          .arg(use_rmax_inc[i])
@@ -5716,7 +5716,7 @@ bool US_Saxs_Util::run_gnom(
          .arg(QDir::separator())
          ;
       cout << cmd;
-      system(cmd.ascii());
+      system(cmd.toAscii().data());
    }
    return true;
 }
@@ -6476,10 +6476,10 @@ bool US_Saxs_Util::iqq_sphere_fit(
       
       if ( !f.open( QIODevice::WriteOnly ) )
       {
-         errormsg = "US_Saxs_Util::iqq_sphere_fit can not create file " + f.name();
+         errormsg = "US_Saxs_Util::iqq_sphere_fit can not create file " + f.fileName();
          return false;
       }
-      Q3TextStream ts(&f);
+      QTextStream ts(&f);
       ts << out_radius;
       f.close();      
    }
@@ -6489,10 +6489,10 @@ bool US_Saxs_Util::iqq_sphere_fit(
       
       if ( !f.open( QIODevice::WriteOnly ) )
       {
-         errormsg = "US_Saxs_Util::iqq_sphere_fit can not create file " + f.name();
+         errormsg = "US_Saxs_Util::iqq_sphere_fit can not create file " + f.fileName();
          return false;
       }
-      Q3TextStream ts(&f);
+      QTextStream ts(&f);
       ts << out_delta_rho;
       f.close();
    }
@@ -6502,10 +6502,10 @@ bool US_Saxs_Util::iqq_sphere_fit(
       
       if ( !f.open( QIODevice::WriteOnly ) )
       {
-         errormsg = "US_Saxs_Util::iqq_sphere_fit can not create file " + f.name();
+         errormsg = "US_Saxs_Util::iqq_sphere_fit can not create file " + f.fileName();
          return false;
       }
-      Q3TextStream ts(&f);
+      QTextStream ts(&f);
       ts << out;
       f.close();
    }

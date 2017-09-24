@@ -2,21 +2,21 @@
 #include "../include/us_hydrodyn_results.h"
 //Added by qt3to4:
 #include <QCloseEvent>
-#include <Q3GridLayout>
-#include <Q3Frame>
+#include <QGridLayout>
+#include <QFrame>
 #include <QLabel>
 #define DOTSOMO      ""
 #define DOTSOMOCAP   ""
 
 US_Hydrodyn_Results::US_Hydrodyn_Results(struct hydro_results *results,
-                                         bool *result_widget, QWidget *p, const char *name) : Q3Frame(p, name)
+                                         bool *result_widget, QWidget *p, const char *name) : QFrame( p )
 {
    this->results = results;
    this->result_widget = result_widget;
    *result_widget = true;
    USglobal=new US_Config();
    setPalette( PALET_FRAME );
-   setCaption(tr("SOMO Hydrodynamic Results"));
+   setWindowTitle(us_tr("SOMO Hydrodynamic Results"));
    setupGUI();
    global_Xpos += 30;
    global_Ypos += 30;
@@ -35,7 +35,7 @@ void US_Hydrodyn_Results::setupGUI()
    int minHeight2 = 30;
    QString str;
 
-   lbl_info = new QLabel(tr(QString("SOMO Hydrodynamic Results\n"
+   lbl_info = new QLabel(us_tr(QString("SOMO Hydrodynamic Results\n"
                                     "(%1 at %2ºC)\n(Density %3 cP, Viscosity %4 g/ml)")
                             .arg(results->solvent_name)
                             .arg(results->temperature)
@@ -43,14 +43,14 @@ void US_Hydrodyn_Results::setupGUI()
                             .arg(results->solvent_density)
                             ), this);
    Q_CHECK_PTR(lbl_info);
-   lbl_info->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Raised);
+   lbl_info->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_info->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_info->setMinimumHeight(minHeight1);
    lbl_info->setPalette( PALET_FRAME );
    AUTFBACK( lbl_info );
    lbl_info->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
 
-   lbl_name = new QLabel(tr(" Model: "), this);
+   lbl_name = new QLabel(us_tr(" Model: "), this);
    Q_CHECK_PTR(lbl_name);
    lbl_name->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_name->setMinimumWidth(200);
@@ -58,7 +58,7 @@ void US_Hydrodyn_Results::setupGUI()
    AUTFBACK( lbl_name );
    lbl_name->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
-   le_name = new QLineEdit(this, "name Line Edit");
+   le_name = new QLineEdit( this );    le_name->setObjectName( "name Line Edit" );
    le_name->setText(results->name);
    le_name->setReadOnly(true);
    le_name->setMinimumWidth(200);
@@ -67,7 +67,7 @@ void US_Hydrodyn_Results::setupGUI()
    AUTFBACK( le_name );
    le_name->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 
-   lbl_method = new QLabel(tr(" Method: "), this);
+   lbl_method = new QLabel(us_tr(" Method: "), this);
    Q_CHECK_PTR(lbl_method);
    lbl_method->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_method->setMinimumWidth(200);
@@ -75,7 +75,7 @@ void US_Hydrodyn_Results::setupGUI()
    AUTFBACK( lbl_method );
    lbl_method->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
-   le_method = new QLineEdit(this, "method Line Edit");
+   le_method = new QLineEdit( this );    le_method->setObjectName( "method Line Edit" );
    le_method->setText(results->method);
    le_method->setReadOnly(true);
    le_method->setMinimumWidth(200);
@@ -84,7 +84,7 @@ void US_Hydrodyn_Results::setupGUI()
    AUTFBACK( le_method );
    le_method->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 
-   lbl_total_beads = new QLabel(tr(" Total Beads in Model: "), this);
+   lbl_total_beads = new QLabel(us_tr(" Total Beads in Model: "), this);
    Q_CHECK_PTR(lbl_total_beads);
    lbl_total_beads->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_total_beads->setMinimumWidth(200);
@@ -92,14 +92,14 @@ void US_Hydrodyn_Results::setupGUI()
    AUTFBACK( lbl_total_beads );
    lbl_total_beads->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
-   le_total_beads = new QLineEdit(this, "total_beads Line Edit");
+   le_total_beads = new QLineEdit( this );    le_total_beads->setObjectName( "total_beads Line Edit" );
    if ( fabs(results->total_beads_sd) <= 1e-100 )
    {
       le_total_beads->setText(QString("%1").arg(results->total_beads));
    }
    else
    {
-      le_total_beads->setText(QString("").sprintf("%u (%4.2e)", 
+      le_total_beads->setText(QString("").sprintf("%u (%4.2e)",
                                                   (int)(results->total_beads + .5),
                                                   results->total_beads_sd));
    }
@@ -112,21 +112,21 @@ void US_Hydrodyn_Results::setupGUI()
    AUTFBACK( le_total_beads );
    le_total_beads->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 
-   lbl_used_beads = new QLabel(tr(" Used Beads in Model: "), this);
+   lbl_used_beads = new QLabel(us_tr(" Used Beads in Model: "), this);
    Q_CHECK_PTR(lbl_used_beads);
    lbl_used_beads->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_used_beads->setPalette( PALET_LABEL );
    AUTFBACK( lbl_used_beads );
    lbl_used_beads->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
-   le_used_beads = new QLineEdit(this, "used_beads Line Edit");
+   le_used_beads = new QLineEdit( this );    le_used_beads->setObjectName( "used_beads Line Edit" );
    if ( fabs(results->used_beads_sd) <= 1e-100 )
    {
       le_used_beads->setText(QString("%1").arg(results->used_beads));
    }
    else
    {
-      le_used_beads->setText(QString("").sprintf("%u (%4.2e)", 
+      le_used_beads->setText(QString("").sprintf("%u (%4.2e)",
                                                   (int)(results->used_beads + .5),
                                                   results->used_beads_sd));
    }
@@ -136,14 +136,14 @@ void US_Hydrodyn_Results::setupGUI()
    AUTFBACK( le_used_beads );
    le_used_beads->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 
-   lbl_mass = new QLabel(tr(" Molecular Mass: "), this);
+   lbl_mass = new QLabel(us_tr(" Molecular Mass: "), this);
    Q_CHECK_PTR(lbl_mass);
    lbl_mass->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_mass->setPalette( PALET_LABEL );
    AUTFBACK( lbl_mass );
    lbl_mass->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
-   le_mass = new QLineEdit(this, "mass Line Edit");
+   le_mass = new QLineEdit( this );    le_mass->setObjectName( "mass Line Edit" );
    le_mass->setText(str.sprintf("%6.4e Da", (*results).mass));
    le_mass->setReadOnly(true);
    le_mass->setAlignment(Qt::AlignVCenter);
@@ -151,14 +151,14 @@ void US_Hydrodyn_Results::setupGUI()
    AUTFBACK( le_mass );
    le_mass->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 
-   lbl_vbar = new QLabel(tr(" Part. Specif. Volume: "), this);
+   lbl_vbar = new QLabel(us_tr(" Part. Specif. Volume: "), this);
    Q_CHECK_PTR(lbl_vbar);
    lbl_vbar->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_vbar->setPalette( PALET_LABEL );
    AUTFBACK( lbl_vbar );
    lbl_vbar->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
-   le_vbar = new QLineEdit(this, "vbar Line Edit");
+   le_vbar = new QLineEdit( this );    le_vbar->setObjectName( "vbar Line Edit" );
    le_vbar->setText(str.sprintf("%5.3f cm^3/g", (*results).vbar));
    le_vbar->setReadOnly(true);
    le_vbar->setAlignment(Qt::AlignVCenter);
@@ -166,14 +166,14 @@ void US_Hydrodyn_Results::setupGUI()
    AUTFBACK( le_vbar );
    le_vbar->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 
-   lbl_s20w = new QLabel(tr(" Sedimentation Coefficient s: "), this);
+   lbl_s20w = new QLabel(us_tr(" Sedimentation Coefficient s: "), this);
    Q_CHECK_PTR(lbl_s20w);
    lbl_s20w->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_s20w->setPalette( PALET_LABEL );
    AUTFBACK( lbl_s20w );
    lbl_s20w->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
-   le_s20w = new QLineEdit(this, "s20w Line Edit");
+   le_s20w = new QLineEdit( this );    le_s20w->setObjectName( "s20w Line Edit" );
    if (fabs((*results).s20w_sd) <= 1e-100)
    {
       le_s20w->setText(str.sprintf("%4.2e S", (*results).s20w));
@@ -188,14 +188,14 @@ void US_Hydrodyn_Results::setupGUI()
    AUTFBACK( le_s20w );
    le_s20w->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 
-   lbl_D20w = new QLabel(tr(" Tr. Diffusion Coefficient D: "), this);
+   lbl_D20w = new QLabel(us_tr(" Tr. Diffusion Coefficient D: "), this);
    Q_CHECK_PTR(lbl_D20w);
    lbl_D20w->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_D20w->setPalette( PALET_LABEL );
    AUTFBACK( lbl_D20w );
    lbl_D20w->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
-   le_D20w = new QLineEdit(this, "D20w Line Edit");
+   le_D20w = new QLineEdit( this );    le_D20w->setObjectName( "D20w Line Edit" );
    if (fabs((*results).D20w_sd) <= 1e-100)
    {
       le_D20w->setText(str.sprintf("%4.2e cm/sec^2", (*results).D20w));
@@ -210,14 +210,14 @@ void US_Hydrodyn_Results::setupGUI()
    AUTFBACK( le_D20w );
    le_D20w->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 
-   lbl_tau = new QLabel(tr(" Relaxation Time, tau(h): "), this);
+   lbl_tau = new QLabel(us_tr(" Relaxation Time, tau(h): "), this);
    Q_CHECK_PTR(lbl_tau);
    lbl_tau->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_tau->setPalette( PALET_LABEL );
    AUTFBACK( lbl_tau );
    lbl_tau->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
-   le_tau = new QLineEdit(this, "tau Line Edit");
+   le_tau = new QLineEdit( this );    le_tau->setObjectName( "tau Line Edit" );
    if ( le_method->text() == "Zeno" ) {
       le_tau->setText( "n/a" ); 
    } else {
@@ -234,14 +234,14 @@ void US_Hydrodyn_Results::setupGUI()
    AUTFBACK( le_tau );
    le_tau->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 
-   lbl_viscosity = new QLabel(tr(" Intrinsic Viscosity: "), this);
+   lbl_viscosity = new QLabel(us_tr(" Intrinsic Viscosity: "), this);
    Q_CHECK_PTR(lbl_viscosity);
    lbl_viscosity->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_viscosity->setPalette( PALET_LABEL );
    AUTFBACK( lbl_viscosity );
    lbl_viscosity->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
-   le_viscosity = new QLineEdit(this, "viscosity Line Edit");
+   le_viscosity = new QLineEdit( this );    le_viscosity->setObjectName( "viscosity Line Edit" );
    if (fabs((*results).viscosity_sd) <= 1e-100)
    {
       le_viscosity->setText(str.sprintf("%4.2e cm^3/g", (*results).viscosity));
@@ -256,14 +256,14 @@ void US_Hydrodyn_Results::setupGUI()
    AUTFBACK( le_viscosity );
    le_viscosity->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 
-   lbl_rs = new QLabel(tr(" Stokes Radius: "), this);
+   lbl_rs = new QLabel(us_tr(" Stokes Radius: "), this);
    Q_CHECK_PTR(lbl_rs);
    lbl_rs->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_rs->setPalette( PALET_LABEL );
    AUTFBACK( lbl_rs );
    lbl_rs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
-   le_rs = new QLineEdit(this, "rs Line Edit");
+   le_rs = new QLineEdit( this );    le_rs->setObjectName( "rs Line Edit" );
    if (fabs((*results).rs_sd) <= 1e-100)
    {
       le_rs->setText(str.sprintf("%4.2e nm", (*results).rs));
@@ -278,14 +278,14 @@ void US_Hydrodyn_Results::setupGUI()
    AUTFBACK( le_rs );
    le_rs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 
-   lbl_ff0 = new QLabel(tr(" Frictional Ratio: "), this);
+   lbl_ff0 = new QLabel(us_tr(" Frictional Ratio: "), this);
    Q_CHECK_PTR(lbl_ff0);
    lbl_ff0->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_ff0->setPalette( PALET_LABEL );
    AUTFBACK( lbl_ff0 );
    lbl_ff0->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
-   le_ff0 = new QLineEdit(this, "ff0 Line Edit");
+   le_ff0 = new QLineEdit( this );    le_ff0->setObjectName( "ff0 Line Edit" );
    if (fabs((*results).ff0_sd) <= 1e-100)
    {
       le_ff0->setText(str.sprintf("%3.2f", (*results).ff0));
@@ -300,14 +300,14 @@ void US_Hydrodyn_Results::setupGUI()
    AUTFBACK( le_ff0 );
    le_ff0->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 
-   lbl_rg = new QLabel(tr(" Radius of Gyration: "), this);
+   lbl_rg = new QLabel(us_tr(" Radius of Gyration: "), this);
    Q_CHECK_PTR(lbl_rg);
    lbl_rg->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_rg->setPalette( PALET_LABEL );
    AUTFBACK( lbl_rg );
    lbl_rg->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
-   le_rg = new QLineEdit(this, "rg Line Edit");
+   le_rg = new QLineEdit( this );    le_rg->setObjectName( "rg Line Edit" );
    if (fabs((*results).rg_sd) <= 1e-100)
    {
       le_rg->setText(str.sprintf("%4.2e nm", (*results).rg));
@@ -322,35 +322,35 @@ void US_Hydrodyn_Results::setupGUI()
    AUTFBACK( le_rg );
    le_rg->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 
-   pb_load_asa = new QPushButton(tr("View ASA Results File"), this);
+   pb_load_asa = new QPushButton(us_tr("View ASA Results File"), this);
    Q_CHECK_PTR(pb_load_asa);
    pb_load_asa->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_load_asa->setMinimumHeight(minHeight2);
    pb_load_asa->setPalette( PALET_PUSHB );
    connect(pb_load_asa, SIGNAL(clicked()), SLOT(load_asa()));
 
-   pb_load_results = new QPushButton(tr("View Full Hydrodynamics Results File"), this);
+   pb_load_results = new QPushButton(us_tr("View Full Hydrodynamics Results File"), this);
    Q_CHECK_PTR(pb_load_results);
    pb_load_results->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_load_results->setMinimumHeight(minHeight2);
    pb_load_results->setPalette( PALET_PUSHB );
    connect(pb_load_results, SIGNAL(clicked()), SLOT(load_results()));
 
-   pb_load_beadmodel = new QPushButton(tr("View Bead Model File"), this);
+   pb_load_beadmodel = new QPushButton(us_tr("View Bead Model File"), this);
    Q_CHECK_PTR(pb_load_beadmodel);
    pb_load_beadmodel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_load_beadmodel->setMinimumHeight(minHeight2);
    pb_load_beadmodel->setPalette( PALET_PUSHB );
    connect(pb_load_beadmodel, SIGNAL(clicked()), SLOT(load_beadmodel()));
 
-   pb_cancel = new QPushButton(tr("Close"), this);
+   pb_cancel = new QPushButton(us_tr("Close"), this);
    Q_CHECK_PTR(pb_cancel);
    pb_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_cancel->setMinimumHeight(minHeight2);
    pb_cancel->setPalette( PALET_PUSHB );
    connect(pb_cancel, SIGNAL(clicked()), SLOT(cancel()));
 
-   pb_help = new QPushButton(tr("Help"), this);
+   pb_help = new QPushButton(us_tr("Help"), this);
    Q_CHECK_PTR(pb_help);
    pb_help->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_help->setMinimumHeight(minHeight2);
@@ -358,9 +358,9 @@ void US_Hydrodyn_Results::setupGUI()
    connect(pb_help, SIGNAL(clicked()), SLOT(help()));
 
    int rows=13, columns = 2, spacing = 2, j=0, margin=4;
-   Q3GridLayout *background=new Q3GridLayout(this, rows, columns, margin, spacing);
+   QGridLayout * background = new QGridLayout( this ); background->setContentsMargins( 0, 0, 0, 0 ); background->setSpacing( 0 ); background->setSpacing( spacing ); background->setContentsMargins( margin, margin, margin, margin );
 
-   background->addMultiCellWidget(lbl_info, j, j, 0, 1);
+   background->addWidget( lbl_info , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
    j++;
    background->addWidget(lbl_name, j, 0);
    background->addWidget(le_name, j, 1);
@@ -404,7 +404,7 @@ void US_Hydrodyn_Results::setupGUI()
    background->addWidget(pb_load_asa, j, 0);
    background->addWidget(pb_load_beadmodel, j, 1);
    j++;
-   background->addMultiCellWidget(pb_load_results, j, j, 0, 1);
+   background->addWidget( pb_load_results , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
    j++;
    background->addWidget(pb_help, j, 0);
    background->addWidget(pb_cancel, j, 1);
@@ -424,7 +424,7 @@ void US_Hydrodyn_Results::help()
 
 void US_Hydrodyn_Results::load_results()
 {
-   QString filename = QFileDialog::getOpenFileName( this , caption() , somo_dir , le_method->text() == "Zeno" ? "*.zno *.ZNO" : "*.hydro_res *.HYDRO_RES" );
+   QString filename = QFileDialog::getOpenFileName( this , windowTitle() , somo_dir , le_method->text() == "Zeno" ? "*.zno *.ZNO" : "*.hydro_res *.HYDRO_RES" );
    if (!filename.isEmpty())
    {
       view_file(filename);
@@ -433,7 +433,7 @@ void US_Hydrodyn_Results::load_results()
 
 void US_Hydrodyn_Results::load_beadmodel()
 {
-   QString filename = QFileDialog::getOpenFileName( this , caption() , somo_dir , "*.bead_model* *.BEAD_MODEL*" );
+   QString filename = QFileDialog::getOpenFileName( this , windowTitle() , somo_dir , "*.bead_model* *.BEAD_MODEL*" );
    if (!filename.isEmpty())
    {
       view_file(filename);
@@ -442,7 +442,7 @@ void US_Hydrodyn_Results::load_beadmodel()
 
 void US_Hydrodyn_Results::load_asa()
 {
-   QString filename = QFileDialog::getOpenFileName( this , caption() , somo_dir , "*.asa_res *.ASA_RES" );
+   QString filename = QFileDialog::getOpenFileName( this , windowTitle() , somo_dir , "*.asa_res *.ASA_RES" );
    if (!filename.isEmpty())
    {
       view_file(filename);

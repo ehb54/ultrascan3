@@ -15,7 +15,7 @@ double US_Hydrodyn_Saxs::get_mw( QString filename, bool display_mw_msg )
    bool remember = true;
    bool use_partial = false;
    QString partial = filename;
-   QString msg = QString(tr(" Enter values for total molecular weight: "));
+   QString msg = QString(us_tr(" Enter values for total molecular weight: "));
    QString source = "";
    bool found = false;
    if ( (*remember_mw).count(filename) )
@@ -34,13 +34,13 @@ double US_Hydrodyn_Saxs::get_mw( QString filename, bool display_mw_msg )
               it != (*match_remember_mw).end();
               it++)
          {
-            // printf("iterator first %s\n", it->first.ascii());
+            // printf("iterator first %s\n", it->first.toAscii().data());
             // printf("iterator second %f\n", it->second);
             
             if ( filename.contains(it->first) )
             {
                mw = (*match_remember_mw)[it->first];
-               source = QString(tr("file name matched \"%1\"")).arg(it->first);
+               source = QString(us_tr("file name matched \"%1\"")).arg(it->first);
                found = true;
                break;
             }
@@ -88,7 +88,7 @@ double US_Hydrodyn_Saxs::get_mw( QString filename, bool display_mw_msg )
          (*match_remember_mw)[partial] = mw;
       }
    }
-   //   printf( "%s is %g\n",  QString( "get mw filename %1" ).arg( filename ).ascii(), mw );
+   //   printf( "%s is %g\n",  QString( "get mw filename %1" ).arg( filename ).toAscii().data(), mw );
    return mw;
 }
 
@@ -256,7 +256,7 @@ void US_Hydrodyn_Saxs::check_pr_grid( vector < double > &r, vector < double > &p
       if ( !usu.apply_natural_spline( r, pr, y2, new_r[ i ], new_pr[ i ] ) )
       {
          editor_msg( "red", usu.errormsg );
-         editor_msg( "red", tr( "Error attempting to interpolate" ) );
+         editor_msg( "red", us_tr( "Error attempting to interpolate" ) );
          return;
       }
    }
@@ -287,7 +287,7 @@ bool US_Hydrodyn_Saxs::mw_from_I0( QString name, double I0_exp, double &MW, doub
       // cout << "mw_from_I0: using standards\n";
       if ( I0_std_exp == 0e0 )
       {
-         errormsg = tr( "Error: I0 standard experimental is 0, can not compute MW" );
+         errormsg = us_tr( "Error: I0 standard experimental is 0, can not compute MW" );
          MW = 0e0;
          return false;
       }
@@ -300,14 +300,14 @@ bool US_Hydrodyn_Saxs::mw_from_I0( QString name, double I0_exp, double &MW, doub
 
    if ( our_saxs_options->nucleon_mass == 0e0 )
    {
-      errormsg = tr( "Error: Mass of nucleon is 0, can not compute MW" );
+      errormsg = us_tr( "Error: Mass of nucleon is 0, can not compute MW" );
       MW = 0e0;
       return false;
    }
 
    if ( conc == 0e0 )
    {
-      errormsg = tr( "Error: Concentration is 0, can not compute MW" );
+      errormsg = us_tr( "Error: Concentration is 0, can not compute MW" );
       MW = 0e0;
       return false;
    }
@@ -376,7 +376,7 @@ bool US_Hydrodyn_Saxs::ml_from_qI0( QString name, double I0_exp, double &ML, dou
    {
       if ( I0_std_exp == 0e0 )
       {
-         errormsg = tr( "Error: I0 standard experimental is 0, can not compute MW" );
+         errormsg = us_tr( "Error: I0 standard experimental is 0, can not compute MW" );
          ML = 0e0;
          return false;
       }
@@ -387,14 +387,14 @@ bool US_Hydrodyn_Saxs::ml_from_qI0( QString name, double I0_exp, double &ML, dou
 
    if ( our_saxs_options->nucleon_mass == 0e0 )
    {
-      errormsg = tr( "Error: Mass of nucleon is 0, can not compute MW" );
+      errormsg = us_tr( "Error: Mass of nucleon is 0, can not compute MW" );
       ML = 0e0;
       return false;
    }
 
    if ( conc == 0e0 )
    {
-      errormsg = tr( "Error: Concentration is 0, can not compute MW" );
+      errormsg = us_tr( "Error: Concentration is 0, can not compute MW" );
       ML = 0e0;
       return false;
    }
@@ -469,7 +469,7 @@ bool US_Hydrodyn_Saxs::ma_from_q2I0( QString name, double I0_exp, double &MA, do
    {
       if ( I0_std_exp == 0e0 )
       {
-         errormsg = tr( "Error: I0 standard experimental is 0, can not compute MW" );
+         errormsg = us_tr( "Error: I0 standard experimental is 0, can not compute MW" );
          MA = 0e0;
          return false;
       }
@@ -480,14 +480,14 @@ bool US_Hydrodyn_Saxs::ma_from_q2I0( QString name, double I0_exp, double &MA, do
 
    if ( our_saxs_options->nucleon_mass == 0e0 )
    {
-      errormsg = tr( "Error: Mass of nucleon is 0, can not compute MW" );
+      errormsg = us_tr( "Error: Mass of nucleon is 0, can not compute MW" );
       MA = 0e0;
       return false;
    }
 
    if ( conc == 0e0 )
    {
-      errormsg = tr( "Error: Concentration is 0, can not compute MW" );
+      errormsg = us_tr( "Error: Concentration is 0, can not compute MW" );
       MA = 0e0;
       return false;
    }

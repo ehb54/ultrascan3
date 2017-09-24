@@ -24,7 +24,7 @@ bool US_PM::compute_I( set < pm_point > & model, vector < double > & I_result )
       {
          if ( us_log )
          {
-            us_log->log( QString( "switching to CYJ mode\n" ).ascii() );
+            us_log->log( QString( "switching to CYJ mode\n" ).toAscii().data() );
          }
          pcdata.clear();
          use_CYJ = true;
@@ -160,7 +160,7 @@ us_log->log( QString( "point %1 r %2 t %3 p %4\n" )
 .arg( tmp_pm_data->rtp[ 0 ] )
 .arg( tmp_pm_data->rtp[ 1 ] )
 .arg( tmp_pm_data->rtp[ 2 ] )
-.ascii() );
+.toAscii().data() );
 }
          */
          complex < float > *Yp = &( tmp_pm_data->Y[ 0 ] );
@@ -468,7 +468,7 @@ us_log->log( QString( "xyz %1 %2 %3 rtp %4 %5 %6\n" )
          //                 .arg( tmp_pm_data->rtp[ 0 ] )
          //                 .arg( tmp_pm_data->rtp[ 1 ] )
          //                 .arg( tmp_pm_data->rtp[ 2 ] )
-         //                 .ascii() );
+         //                 .toAscii().data() );
          // }
 
          complex < float > *Yp = &( tmp_pm_data->Y[ 0 ] );

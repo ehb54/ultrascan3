@@ -3,11 +3,11 @@
 #include "../include/us_hydrodyn.h"
 //Added by qt3to4:
 #include <QCloseEvent>
-#include <Q3GridLayout>
-#include <Q3Frame>
+#include <QGridLayout>
+#include <QFrame>
 #include <QLabel>
 
-US_Hydrodyn_ASA::US_Hydrodyn_ASA(struct asa_options *asa, bool *asa_widget, void *us_hydrodyn, QWidget *p, const char *name) : Q3Frame(p, name)
+US_Hydrodyn_ASA::US_Hydrodyn_ASA(struct asa_options *asa, bool *asa_widget, void *us_hydrodyn, QWidget *p, const char *name) : QFrame( p )
 {
    this->asa = asa;
    this->asa_widget = asa_widget;
@@ -15,7 +15,7 @@ US_Hydrodyn_ASA::US_Hydrodyn_ASA(struct asa_options *asa, bool *asa_widget, void
    *asa_widget = true;
    USglobal=new US_Config();
    setPalette( PALET_FRAME );
-   setCaption(tr("SOMO Accessible Surface Area Options"));
+   setWindowTitle(us_tr("SOMO Accessible Surface Area Options"));
    setupGUI();
    global_Xpos += 30;
    global_Ypos += 30;
@@ -30,36 +30,71 @@ US_Hydrodyn_ASA::~US_Hydrodyn_ASA()
 void US_Hydrodyn_ASA::setupGUI()
 {
    int minHeight1 = 30;
-   lbl_info = new QLabel(tr("Accessible Surface Area Options:"), this);
+   lbl_info = new QLabel(us_tr("Accessible Surface Area Options:"), this);
    Q_CHECK_PTR(lbl_info);
-   lbl_info->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Raised);
+   lbl_info->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_info->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_info->setMinimumHeight(minHeight1);
    lbl_info->setPalette( PALET_FRAME );
    AUTFBACK( lbl_info );
    lbl_info->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
 
-   bg_asa_method = new Q3ButtonGroup(2, Qt::Vertical, "ASA Method:", this);
+#if QT_VERSION < 0x040000
+   bg_asa_method = new QGroupBox(2, Qt::Vertical, "ASA Method:", this);
    bg_asa_method->setExclusive(true);
    connect(bg_asa_method, SIGNAL(clicked(int)), this, SLOT(select_asa_method(int)));
 
    cb_surfracer = new QCheckBox(bg_asa_method);
-   cb_surfracer->setText(tr(" Voronoi Tesselation (Surfrace, Tsodikov et al.)"));
+   cb_surfracer->setText(us_tr(" Voronoi Tesselation (Surfrace, Tsodikov et al.)"));
    cb_surfracer->setEnabled(true);
    cb_surfracer->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_surfracer->setPalette( PALET_NORMAL );
    AUTFBACK( cb_surfracer );
 
    cb_asab1 = new QCheckBox(bg_asa_method);
-   cb_asab1->setText(tr(" Rolling Sphere (ASAB1, Lee && Richards' Method)"));
+   cb_asab1->setText(us_tr(" Rolling Sphere (ASAB1, Lee && Richards' Method)"));
    cb_asab1->setEnabled(true);
    cb_asab1->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_asab1->setPalette( PALET_NORMAL );
    AUTFBACK( cb_asab1 );
 
    bg_asa_method->setButton((*asa).method);
+#else
+   bg_asa_method = new QGroupBox("ASA Method:");
 
-   lbl_probe_radius = new QLabel(tr(" ASA Probe Radius (A): "), this);
+   rb_surfracer = new QRadioButton();
+   rb_surfracer->setText(us_tr(" Voronoi Tesselation (Surfrace, Tsodikov et al.)"));
+   rb_surfracer->setEnabled(true);
+   rb_surfracer->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   rb_surfracer->setPalette( PALET_NORMAL );
+   AUTFBACK( rb_surfracer );
+   connect( rb_surfracer, SIGNAL( clicked() ), this, SLOT( select_asa_method() ) );
+   
+
+   rb_asab1 = new QRadioButton();
+   rb_asab1->setText(us_tr(" Rolling Sphere (ASAB1, Lee && Richards' Method)"));
+   rb_asab1->setEnabled(true);
+   rb_asab1->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   rb_asab1->setPalette( PALET_NORMAL );
+   AUTFBACK( rb_asab1 );
+   connect( rb_asab1, SIGNAL( clicked() ), this, SLOT( select_asa_method() ) );
+
+   {
+      QVBoxLayout * bl = new QVBoxLayout; bl->setContentsMargins( 0, 0, 0, 0 ); bl->setSpacing( 0 );
+      bl->addWidget( rb_surfracer );
+      bl->addWidget( rb_asab1 );
+      bg_asa_method->setLayout( bl );
+   }
+
+   switch( (*asa).method ) {
+   case 0 : rb_surfracer->setChecked( true ); break;
+   case 1 : rb_asab1->setChecked( true ); break;
+   default : qDebug() << "asa missing asa method selection error"; break;
+   }
+   
+#endif
+   
+   lbl_probe_radius = new QLabel(us_tr(" ASA Probe Radius (A): "), this);
    Q_CHECK_PTR(lbl_probe_radius);
    lbl_probe_radius->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_probe_radius->setMinimumHeight(minHeight1);
@@ -80,7 +115,7 @@ void US_Hydrodyn_ASA::setupGUI()
    AUTFBACK( cnt_probe_radius );
    connect(cnt_probe_radius, SIGNAL(valueChanged(double)), SLOT(update_probe_radius(double)));
 
-   lbl_probe_recheck_radius = new QLabel(tr(" ASA Probe Recheck Radius (A): "), this);
+   lbl_probe_recheck_radius = new QLabel(us_tr(" ASA Probe Recheck Radius (A): "), this);
    Q_CHECK_PTR(lbl_probe_recheck_radius);
    lbl_probe_recheck_radius->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_probe_recheck_radius->setMinimumHeight(minHeight1);
@@ -101,7 +136,7 @@ void US_Hydrodyn_ASA::setupGUI()
    AUTFBACK( cnt_probe_recheck_radius );
    connect(cnt_probe_recheck_radius, SIGNAL(valueChanged(double)), SLOT(update_probe_recheck_radius(double)));
 
-   lbl_asa_threshold = new QLabel(tr(" SOMO ASA Threshold (A^2): "), this);
+   lbl_asa_threshold = new QLabel(us_tr(" SOMO ASA Threshold (A^2): "), this);
    Q_CHECK_PTR(lbl_asa_threshold);
    lbl_asa_threshold->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_asa_threshold->setMinimumHeight(minHeight1);
@@ -122,7 +157,7 @@ void US_Hydrodyn_ASA::setupGUI()
    AUTFBACK( cnt_asa_threshold );
    connect(cnt_asa_threshold, SIGNAL(valueChanged(double)), SLOT(update_asa_threshold(double)));
 
-   lbl_asa_threshold_percent = new QLabel(tr(" SOMO Bead ASA Threshold %: "), this);
+   lbl_asa_threshold_percent = new QLabel(us_tr(" SOMO Bead ASA Threshold %: "), this);
    Q_CHECK_PTR(lbl_asa_threshold_percent);
    lbl_asa_threshold_percent->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_asa_threshold_percent->setMinimumHeight(minHeight1);
@@ -143,7 +178,7 @@ void US_Hydrodyn_ASA::setupGUI()
    AUTFBACK( cnt_asa_threshold_percent );
    connect(cnt_asa_threshold_percent, SIGNAL(valueChanged(double)), SLOT(update_asa_threshold_percent(double)));
 
-   lbl_asa_grid_threshold = new QLabel(tr(" Grid ASA Threshold (A^2): "), this);
+   lbl_asa_grid_threshold = new QLabel(us_tr(" Grid ASA Threshold (A^2): "), this);
    Q_CHECK_PTR(lbl_asa_grid_threshold);
    lbl_asa_grid_threshold->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_asa_grid_threshold->setMinimumHeight(minHeight1);
@@ -164,7 +199,7 @@ void US_Hydrodyn_ASA::setupGUI()
    AUTFBACK( cnt_asa_grid_threshold );
    connect(cnt_asa_grid_threshold, SIGNAL(valueChanged(double)), SLOT(update_asa_grid_threshold(double)));
 
-   lbl_asa_grid_threshold_percent = new QLabel(tr(" Grid Bead ASA Threshold %: "), this);
+   lbl_asa_grid_threshold_percent = new QLabel(us_tr(" Grid Bead ASA Threshold %: "), this);
    Q_CHECK_PTR(lbl_asa_grid_threshold_percent);
    lbl_asa_grid_threshold_percent->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_asa_grid_threshold_percent->setMinimumHeight(minHeight1);
@@ -185,7 +220,7 @@ void US_Hydrodyn_ASA::setupGUI()
    AUTFBACK( cnt_asa_grid_threshold_percent );
    connect(cnt_asa_grid_threshold_percent, SIGNAL(valueChanged(double)), SLOT(update_asa_grid_threshold_percent(double)));
 
-   lbl_hydrate_probe_radius = new QLabel(tr(" Hydrate ASA Probe Radius (A): "), this);
+   lbl_hydrate_probe_radius = new QLabel(us_tr(" Hydrate ASA Probe Radius (A): "), this);
    lbl_hydrate_probe_radius->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_hydrate_probe_radius->setMinimumHeight(minHeight1);
    lbl_hydrate_probe_radius->setPalette( PALET_LABEL );
@@ -204,7 +239,7 @@ void US_Hydrodyn_ASA::setupGUI()
    AUTFBACK( cnt_hydrate_probe_radius );
    connect(cnt_hydrate_probe_radius, SIGNAL(valueChanged(double)), SLOT(update_hydrate_probe_radius(double)));
 
-   lbl_hydrate_threshold = new QLabel(tr(" Hydrate Threshold (A^2): "), this);
+   lbl_hydrate_threshold = new QLabel(us_tr(" Hydrate Threshold (A^2): "), this);
    lbl_hydrate_threshold->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_hydrate_threshold->setMinimumHeight(minHeight1);
    lbl_hydrate_threshold->setPalette( PALET_LABEL );
@@ -223,7 +258,7 @@ void US_Hydrodyn_ASA::setupGUI()
    AUTFBACK( cnt_hydrate_threshold );
    connect(cnt_hydrate_threshold, SIGNAL(valueChanged(double)), SLOT(update_hydrate_threshold(double)));
 
-   lbl_asab1_step = new QLabel(tr(" ASAB1 Step Size (A): "), this);
+   lbl_asab1_step = new QLabel(us_tr(" ASAB1 Step Size (A): "), this);
    Q_CHECK_PTR(lbl_asab1_step);
    lbl_asab1_step->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_asab1_step->setMinimumHeight(minHeight1);
@@ -245,7 +280,7 @@ void US_Hydrodyn_ASA::setupGUI()
    connect(cnt_asab1_step, SIGNAL(valueChanged(double)), SLOT(update_asab1_step(double)));
 
    cb_vvv = new QCheckBox(this);
-   cb_vvv->setText(tr(" Compute VVV volume, surface area on load PDB"));
+   cb_vvv->setText(us_tr(" Compute VVV volume, surface area on load PDB"));
    cb_vvv->setChecked((*asa).vvv);
    cb_vvv->setEnabled(true);
    cb_vvv->setMinimumHeight(minHeight1);
@@ -254,7 +289,7 @@ void US_Hydrodyn_ASA::setupGUI()
    AUTFBACK( cb_vvv );
    connect(cb_vvv, SIGNAL(clicked()), SLOT(set_vvv()));
 
-   lbl_vvv_probe_radius = new QLabel(tr(" VVV probe radius (A): "), this);
+   lbl_vvv_probe_radius = new QLabel(us_tr(" VVV probe radius (A): "), this);
    lbl_vvv_probe_radius->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_vvv_probe_radius->setMinimumHeight(minHeight1);
    lbl_vvv_probe_radius->setPalette( PALET_LABEL );
@@ -273,7 +308,7 @@ void US_Hydrodyn_ASA::setupGUI()
    AUTFBACK( cnt_vvv_probe_radius );
    connect(cnt_vvv_probe_radius, SIGNAL(valueChanged(double)), SLOT(update_vvv_probe_radius(double)));
 
-   lbl_vvv_grid_dR = new QLabel(tr(" VVV grid edge size (A): "), this);
+   lbl_vvv_grid_dR = new QLabel(us_tr(" VVV grid edge size (A): "), this);
    lbl_vvv_grid_dR->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_vvv_grid_dR->setMinimumHeight(minHeight1);
    lbl_vvv_grid_dR->setPalette( PALET_LABEL );
@@ -293,7 +328,7 @@ void US_Hydrodyn_ASA::setupGUI()
    connect(cnt_vvv_grid_dR, SIGNAL(valueChanged(double)), SLOT(update_vvv_grid_dR(double)));
 
    cb_asa_calculation = new QCheckBox(this);
-   cb_asa_calculation->setText(tr(" Perform ASA Calculation "));
+   cb_asa_calculation->setText(us_tr(" Perform ASA Calculation "));
    cb_asa_calculation->setChecked((*asa).calculation);
    cb_asa_calculation->setEnabled(true);
    cb_asa_calculation->setMinimumHeight(minHeight1);
@@ -303,7 +338,7 @@ void US_Hydrodyn_ASA::setupGUI()
    connect(cb_asa_calculation, SIGNAL(clicked()), SLOT(set_asa_calculation()));
 
    cb_bead_check = new QCheckBox(this);
-   cb_bead_check->setText(tr(" Re-check bead ASA "));
+   cb_bead_check->setText(us_tr(" Re-check bead ASA "));
    cb_bead_check->setChecked((*asa).recheck_beads);
    cb_bead_check->setEnabled(true);
    cb_bead_check->setMinimumHeight(minHeight1);
@@ -312,14 +347,14 @@ void US_Hydrodyn_ASA::setupGUI()
    AUTFBACK( cb_bead_check );
    connect(cb_bead_check, SIGNAL(clicked()), SLOT(set_bead_check()));
 
-   pb_cancel = new QPushButton(tr("Close"), this);
+   pb_cancel = new QPushButton(us_tr("Close"), this);
    Q_CHECK_PTR(pb_cancel);
    pb_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_cancel->setMinimumHeight(minHeight1);
    pb_cancel->setPalette( PALET_PUSHB );
    connect(pb_cancel, SIGNAL(clicked()), SLOT(cancel()));
 
-   pb_help = new QPushButton(tr("Help"), this);
+   pb_help = new QPushButton(us_tr("Help"), this);
    Q_CHECK_PTR(pb_help);
    pb_help->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_help->setMinimumHeight(minHeight1);
@@ -327,14 +362,14 @@ void US_Hydrodyn_ASA::setupGUI()
    connect(pb_help, SIGNAL(clicked()), SLOT(help()));
 
    int rows=8, columns = 2, spacing = 2, j=0, margin=4;
-   Q3GridLayout *background=new Q3GridLayout(this, rows, columns, margin, spacing);
+   QGridLayout * background = new QGridLayout( this ); background->setContentsMargins( 0, 0, 0, 0 ); background->setSpacing( 0 ); background->setSpacing( spacing ); background->setContentsMargins( margin, margin, margin, margin );
 
-   background->addMultiCellWidget(lbl_info, j, j, 0, 1);
+   background->addWidget( lbl_info , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
    j++;
    background->addWidget(cb_asa_calculation, j, 0);
    background->addWidget(cb_bead_check, j, 1);
    j++;
-   background->addMultiCellWidget(bg_asa_method, j, j+3, 0, 1);
+   background->addWidget( bg_asa_method , j , 0 , 1 + ( j+3 ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
    j+=4;
    background->addWidget(lbl_probe_radius, j, 0);
    background->addWidget(cnt_probe_radius, j, 1);
@@ -363,7 +398,7 @@ void US_Hydrodyn_ASA::setupGUI()
    background->addWidget(lbl_asab1_step, j, 0);
    background->addWidget(cnt_asab1_step, j, 1);
    j++;
-   background->addMultiCellWidget( cb_vvv, j, j, 0, 1);
+   background->addWidget( cb_vvv , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
    j++;
    background->addWidget(lbl_vvv_probe_radius, j, 0);
    background->addWidget(cnt_vvv_probe_radius, j, 1);
@@ -459,6 +494,16 @@ void US_Hydrodyn_ASA::set_bead_check()
 {
    (*asa).recheck_beads = cb_bead_check->isChecked();
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_ASA::select_asa_method()
+{
+   if ( rb_surfracer->isChecked() ) {
+      return select_asa_method( 0 );
+   }
+   if ( rb_asab1->isChecked() ) {
+      return select_asa_method( 1 );
+   }
 }
 
 void US_Hydrodyn_ASA::select_asa_method(int val)

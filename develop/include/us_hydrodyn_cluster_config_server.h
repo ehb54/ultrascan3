@@ -7,9 +7,9 @@
 #include <qstring.h>
 #include <qlayout.h>
 #include <qpushbutton.h>
-#include <q3frame.h>
+//#include <q3frame.h>
 #include <qcheckbox.h>
-#include <q3listbox.h>
+#include <qlistwidget.h>
 //Added by qt3to4:
 #include <QCloseEvent>
 

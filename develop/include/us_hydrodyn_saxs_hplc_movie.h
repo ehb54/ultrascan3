@@ -55,7 +55,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Movie : public QDialog
 
       QCheckBox             * cb_save_overwrite;
 
-      QButtonGroup          * bg_save;
+      QGroupBox          * bg_save;
       QRadioButton          * rb_save_png;
       QRadioButton          * rb_save_jpeg;
       QRadioButton          * rb_save_bmp;

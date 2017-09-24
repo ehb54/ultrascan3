@@ -179,8 +179,8 @@ static float *asa = 0;             // [NMAX];
 
 static int nmax;
 static int nmax1;
-static Q3ProgressBar *progress;
-static Q3TextEdit *editor;
+static QProgressBar *progress;
+static QTextEdit *editor;
 static asa_options *asa_opts;
 static hydro_results *results;
 static bool recheck;
@@ -323,8 +323,8 @@ us_hydrodyn_asab1_main(vector <PDB_atom *> use_active_atoms,
                        asa_options *use_asa_opts,
                        hydro_results *use_results,
                        bool use_recheck,
-                       Q3ProgressBar *use_progress,
-                       Q3TextEdit *use_editor,
+                       QProgressBar *use_progress,
+                       QTextEdit *use_editor,
                        US_Hydrodyn *use_us_hydrodyn
                        )
 {
@@ -391,31 +391,31 @@ us_hydrodyn_asab1_main(vector <PDB_atom *> use_active_atoms,
    {
       /* emptying the files     SOME MOVED INSIDE INIT3.C */
 
-      /*   mol=fopen("asaris","w");
+      /*   mol=us_fopen("asaris","w");
            fprintf(mol,"");
            fclose(mol);  */
 
-      mol = fopen("plotter", "w");
+      mol = us_fopen("plotter", "w");
       //fprintf(mol, "");
       fclose(mol);
 
-      mol = fopen("plotter1", "w");
+      mol = us_fopen("plotter1", "w");
       //fprintf(mol, "");
       fclose(mol);
 
-      mol = fopen("controll", "w");
+      mol = us_fopen("controll", "w");
       //fprintf(mol, "");
       fclose(mol);
 
-      /*   mol=fopen("provaly","w");
+      /*   mol=us_fopen("provaly","w");
            fprintf(mol,"");
            fclose(mol);
 
-           mol=fopen("provaly1","w");
+           mol=us_fopen("provaly1","w");
            fprintf(mol,"");
            fclose(mol);
 
-           mol=fopen("provaly2","w");
+           mol=us_fopen("provaly2","w");
            fprintf(mol,"");
            fclose(mol);  */
    }
@@ -494,7 +494,7 @@ us_hydrodyn_asab1_main(vector <PDB_atom *> use_active_atoms,
       return -1;
    }
 
-   mol1 = fopen("controll", "w");
+   mol1 = us_fopen("controll", "w");
    for (l = 0; l < nat; l++)
    {
       fprintf(mol1, "%s\t", dt[l].amin);
@@ -688,7 +688,7 @@ us_hydrodyn_asab1_main(vector <PDB_atom *> use_active_atoms,
    ordcol();
 
    if (check_asa != 1)
-      pippa = fopen(outris, "w");
+      pippa = us_fopen(outris, "w");
    else
       goto a300;
 
@@ -914,9 +914,9 @@ us_hydrodyn_asab1_main(vector <PDB_atom *> use_active_atoms,
 
    if (check_asa != 1)
    {
-      mol = fopen(outfile, "w");
-      mol1 = fopen(outfile1, "w");
-      mol2 = fopen(outfile2, "w");
+      mol = us_fopen(outfile, "w");
+      mol1 = us_fopen(outfile1, "w");
+      mol2 = us_fopen(outfile2, "w");
 
       fprintf(mol, "%d\t%f\t%s\n", nat, 0.0, outfile1);
    }
@@ -1107,7 +1107,7 @@ us_hydrodyn_asab1_main(vector <PDB_atom *> use_active_atoms,
    if (check_asa == 1)
    {
       printf("\n\nRE-CHECK\n");
-      /*   pippa=fopen(outfile1,"w");   */
+      /*   pippa=us_fopen(outfile1,"w");   */
       dd2 = dt;
       countb = 0;
 
@@ -1174,13 +1174,13 @@ us_hydrodyn_asab1_main(vector <PDB_atom *> use_active_atoms,
            i++;
            }
       */
-      mol = fopen(ridotto, "w");
+      mol = us_fopen(ridotto, "w");
       if ((raggio >= ((float) -2.1)) && (raggio <= ((float) -1.9)))
          fprintf(mol, "%d\t%f\t%s\t%f\n", nat, raggio, ridotto_rmc, psv);
       else
          fprintf(mol, "%d\t%f\t%s\n", nat, raggio, ridotto_rmc);
 
-      mol1 = fopen(ridotto_rmc, "w");
+      mol1 = us_fopen(ridotto_rmc, "w");
       for (l = 0; l < nat; l++)
       {
          /*      if(dt[l].col!=8)
@@ -1197,9 +1197,9 @@ us_hydrodyn_asab1_main(vector <PDB_atom *> use_active_atoms,
    }
    printf("\n\n\n");
    asab1_free_alloced();
-   unlink("controll");
-   unlink("plotter");
-   unlink("plotter1");
+   QFile::remove("controll");
+   QFile::remove("plotter");
+   QFile::remove("plotter1");
 
    qApp->processEvents();
    if (us_hydrodyn->stopFlag)
@@ -1629,14 +1629,14 @@ init()
 
    pulisci();
 
-   init1_mol = fopen("test", "r");
-   init1_mol1 = fopen("provaly2", "r");
+   init1_mol = us_fopen("test", "r");
+   init1_mol1 = us_fopen("provaly2", "r");
 
    fscanf(init1_mol, "%d", &nat);
    fscanf(init1_mol, "%f", &raggio);
    fscanf(init1_mol, "%s", ragcol);
 
-   init1_rmc = fopen(ragcol, "r");   /* opening the file containing the radii, masses and colors */
+   init1_rmc = us_fopen(ragcol, "r");   /* opening the file containing the radii, masses and colors */
 
    for (i = 0; i < nat; i++)
    {
@@ -1700,7 +1700,7 @@ init2()
       /*   pulisci();  */
       printf("\n\n\t%s", "Insert the bead model filename: ");
       scanf("%s", nome);
-      init2_mol = fopen(nome, "r");
+      init2_mol = us_fopen(nome, "r");
 
    }
    /*init2_mol1=NULL;
@@ -1710,7 +1710,7 @@ init2()
  a50:
    printf("\n\n\t%s", "Insert the re-checked bead model filename: ");
    scanf("%s", ridotto);
-   init2_mol1 = fopen(ridotto, "r");
+   init2_mol1 = us_fopen(ridotto, "r");
    if (init2_mol1 != NULL)
    {
       printf("\n");
@@ -1724,14 +1724,14 @@ init2()
       fclose(init2_mol1);
       if (fe == 1)
       {
-         unlink(ridotto);
+         QFile::remove(ridotto);
       }
       if (fe == 2)
          goto a50;
    }
 #endif
    strcpy(ridotto, "asab1_output");
-   init2_mol1 = fopen(ridotto, "w");
+   init2_mol1 = us_fopen(ridotto, "w");
    /*   }   */
    fclose(init2_mol1);
 
@@ -1753,7 +1753,7 @@ init2()
 
 #if defined(NOT_USED)
  a55:
-   init2_mol1 = fopen(ridotto_rmc, "r");
+   init2_mol1 = us_fopen(ridotto_rmc, "r");
    if (init2_mol1 != NULL)
    {
       printf("\n");
@@ -1767,7 +1767,7 @@ init2()
       fclose(init2_mol1);
       if (fe1 == 1)
       {
-         unlink(ridotto_rmc);
+         QFile::remove(ridotto_rmc);
       }
       if (fe1 == 2)
       {
@@ -1780,7 +1780,7 @@ init2()
 
    /*   printf("\n\n\t%s","Insert the filename for the rmc file of the re-checked bead model: ");
         scanf("%s",ridotto_rmc); */
-   //    init2_mol1 = fopen(ridotto_rmc, "w");
+   //    init2_mol1 = us_fopen(ridotto_rmc, "w");
    /*   } */
    //    fclose(init2_mol1);
 
@@ -1789,7 +1789,7 @@ init2()
         getchar(); */
 
    //    if (flag1 != 1)
-   //   init2_mol1 = fopen("provaly2", "r");
+   //   init2_mol1 = us_fopen("provaly2", "r");
 
    nat = active_atoms.size();
    // fscanf(init2_mol, "%d", &nat);
@@ -1800,7 +1800,7 @@ init2()
    // if ((raggio >= ((float) -2.1)) && (raggio <= ((float) -1.9)))
    //   fscanf(init2_mol, "%f", &psv);
 
-   // init2_rmc = fopen(ragcol, "r");   /* opening the file containing the radii, masses and colors */
+   // init2_rmc = us_fopen(ragcol, "r");   /* opening the file containing the radii, masses and colors */
 
    dd = dt;
 
@@ -1864,8 +1864,8 @@ init2()
    for(int i = 0; i < nat; i++) {
       printf("%d %s %s %.4f %.4f %.4f %.4f %d %d\n", 
              i,
-             active_atoms[i]->name.ascii(),
-             active_atoms[i]->resName.ascii(),
+             active_atoms[i]->name.toAscii().data(),
+             active_atoms[i]->resName.toAscii().data(),
              dt[i].r, 
              dt[i].x, 
              dt[i].y, 
@@ -1931,10 +1931,10 @@ initarray()
    fprintf(stderr, "\nInput tabella: %s", filename);
    em("i3_4");
 
-   init3_pippa = fopen(filename, "r");
+   init3_pippa = us_fopen(filename, "r");
    em("i3_5");
 
-   /*init3_pippa=fopen("tabella1.cor","r");*/
+   /*init3_pippa=us_fopen("tabella1.cor","r");*/
 
    /* IMPORTING FROM A TABLE (tabella.cor) THE VALUES FOR THE ACCESSIBLE SURFACE AREA OF RESIDUES */
    /* THE VALUES IN ROWS 1-25 HAVE BEEN CALCULATED FOR A PROBE RADIUS OF 0 FROM THOSE IN ROWS 29-48 (WRONG VALUES!) */
@@ -1953,14 +1953,14 @@ initarray()
    nat = 0;
    flagr1 = 0;
 
-   init3_brook = fopen(nome, "r");
+   init3_brook = us_fopen(nome, "r");
 
-   init3_mol1 = fopen("contrall", "w");
+   init3_mol1 = us_fopen("contrall", "w");
    //fprintf(init3_mol1, "");
    fclose(init3_mol1);
    em("i3_8");
 
-   init3_mol1 = fopen("contrall", "ab");
+   init3_mol1 = us_fopen("contrall", "ab");
 
    em("i3_9");
    while (init3_brook == NULL)
@@ -1968,7 +1968,7 @@ initarray()
       pulisci();
       printf("\n\n\tInsert the PDB filename : ");
       scanf("%s", nome);
-      init3_brook = fopen(nome, "r");
+      init3_brook = us_fopen(nome, "r");
    }
 
    printf("\n\n\t%s", "Output files: Enter '0' for default (provaly, provaly1, provaly2, asaris)");
@@ -1986,19 +1986,19 @@ initarray()
                  printf("\n outfile1= %s",outfile1); 
                  printf("\n outfile2= %s",outfile2); 
                  printf("\n outris= %s",outris); */
-      init3_mol = fopen(outfile, "w");
+      init3_mol = us_fopen(outfile, "w");
       //fprintf(init3_mol, "");
       fclose(init3_mol);
 
-      init3_mol = fopen(outfile1, "w");
+      init3_mol = us_fopen(outfile1, "w");
       //fprintf(init3_mol, "");
       fclose(init3_mol);
 
-      init3_mol = fopen(outfile2, "w");
+      init3_mol = us_fopen(outfile2, "w");
       //fprintf(init3_mol, "");
       fclose(init3_mol);
 
-      init3_mol = fopen(outris, "w");
+      init3_mol = us_fopen(outris, "w");
       //fprintf(init3_mol, "");
       fclose(init3_mol);
 
@@ -2023,25 +2023,25 @@ initarray()
       strcat(outfile2, "2");
       /*         printf("\n outfile2= %s",outfile2); */
 
-      new_mol = fopen(outfile, "r");
+      new_mol = us_fopen(outfile, "r");
 
       if (new_mol != NULL)
       {
          printf("\n");
          printf("\t*** CAUTION : Root file %s already exists ! ***\n\n", outfile);
-         new_mol1 = fopen(outfile1, "r");
+         new_mol1 = us_fopen(outfile1, "r");
 
          if (new_mol1 != NULL)
          {
             printf("\t*** File %s also already exists ! ***\n", outfile1);
          }
-         new_mol2 = fopen(outfile2, "r");
+         new_mol2 = us_fopen(outfile2, "r");
 
          if (new_mol2 != NULL)
          {
             printf("\t*** File %s also already exists ! ***\n", outfile2);
          }
-         new_mol3 = fopen(outris, "r");
+         new_mol3 = us_fopen(outris, "r");
 
          if (new_mol3 != NULL)
          {
@@ -2059,10 +2059,10 @@ initarray()
          fclose(new_mol3);
          if (fe3 == 1)
          {
-            unlink(outfile);
-            unlink(outfile1);
-            unlink(outfile2);
-            unlink(outris);
+            QFile::remove(outfile);
+            QFile::remove(outfile1);
+            QFile::remove(outfile2);
+            QFile::remove(outris);
          }
          if (fe3 == 2)
          {
@@ -2116,7 +2116,7 @@ initarray()
    fclose(init3_brook);
    fclose(init3_mol1);
 
-   init3_pippa = fopen("asaris", "ab");
+   init3_pippa = us_fopen("asaris", "ab");
    fprintf(init3_pippa, "\n\n\t%s\n\n\n", nome);
    fclose(init3_pippa);
 }
@@ -3572,8 +3572,8 @@ ordcol()
    fine[1] = 'P';
    fine[2] = ';';
 
-   ordcol_ord = fopen("plotter", "rb");
-   ord1 = fopen("plotter1", "ab");
+   ordcol_ord = us_fopen("plotter", "rb");
+   ord1 = us_fopen("plotter1", "ab");
 
    fscanf(ordcol_ord, "%s", key);
    fprintf(ord1, "%s%c", key, ' ');
@@ -3676,7 +3676,7 @@ static void plotend();
 static void
 plotinit()
 {
-   plotter_pl = fopen("plotter", "ab");
+   plotter_pl = us_fopen("plotter", "ab");
    if (form == 1)
    {
       fprintf(plotter_pl, "%s%d%c", "DF;IN;IP;VS", vel, ';');
@@ -3727,7 +3727,7 @@ plotcircle()
    dd = dts;
    dd += nc;
 
-   plotter_pl = fopen("plotter", "ab");
+   plotter_pl = us_fopen("plotter", "ab");
 
    d = dd->r - (fl * (((float) 1.0) + ((float) ceil(nat / 15.)) / ((float) 2.0)));
 
@@ -3748,7 +3748,7 @@ plotarc(int i)
    dd = dts;
    dd += nc;
 
-   plotter_pl = fopen("plotter", "ab");
+   plotter_pl = us_fopen("plotter", "ab");
    fprintf(plotter_pl, "%s%d%c", "SP", dd->col, ';');
    fprintf(plotter_pl, "%s%f%c%f%c", "PA", dis[i].xi, ',', dis[i].yi, ';');
    fprintf(plotter_pl, "%s%f%c%f%c%f%c", "PD;AA", dd->x, ',', dd->y, ',', dis[i].ai, ';');
@@ -3760,7 +3760,7 @@ plotarc(int i)
 static void
 plotend()
 {
-   plotter_pl = fopen("plotter", "ab");
+   plotter_pl = us_fopen("plotter", "ab");
    fprintf(plotter_pl, "%s", "SP;");
    fclose(plotter_pl);
 }

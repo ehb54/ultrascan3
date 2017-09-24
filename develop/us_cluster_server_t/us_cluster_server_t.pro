@@ -10,5 +10,3 @@ HEADERS += us_cluster_server_config.h \
            us_cluster_server_global.h \
            us_cluster_server_sockets.h
 SOURCES += main.cpp
-#The following line was inserted by qt3to4
-QT +=  qt3support 

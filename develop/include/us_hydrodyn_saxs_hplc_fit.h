@@ -7,14 +7,14 @@
 #include <qstring.h>
 #include <qlayout.h>
 #include <qpushbutton.h>
-#include <q3frame.h>
+//#include <q3frame.h>
 #include <qcheckbox.h>
-#include <q3textedit.h>
-#include <q3progressbar.h>
+#include <qtextedit.h>
+#include <qprogressbar.h>
 #include <qmenubar.h>
 #include <qfileinfo.h>
 #include <qprinter.h>
-#include <q3table.h>
+#include <qtablewidget.h>
 //Added by qt3to4:
 #include <QCloseEvent>
 
@@ -115,7 +115,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Fit : public QDialog
       QPushButton   *pb_ga;
       QPushButton   *pb_grid;
 
-      Q3ProgressBar  *progress;
+      QProgressBar  *progress;
       QPushButton   *pb_stop;
 
       QPushButton   *pb_help;

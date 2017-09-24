@@ -121,7 +121,7 @@ int US_Tar::create( const QString& archive, const QStringList& files,
 #endif
 
    //umask( 0133 );  // Permissions should be 644
-   ofd = open( archive.latin1(), O_WRONLY | O_CREAT | O_BINARY, 0644 );
+   ofd = open( archive.toLatin1().data(), O_WRONLY | O_CREAT | O_BINARY, 0644 );
    //cout << "ofd=" << ofd << endl;
    if ( ofd < 0 ) return TAR_CANNOTCREATE;
 
@@ -142,7 +142,7 @@ int US_Tar::create( const QString& archive, const QStringList& files,
    {
       close( ifd );
       close( ofd );
-      unlink( archive.latin1() );
+      QFile::remove( archive.toLatin1().data() );
       return error;
    }
 
@@ -199,7 +199,7 @@ void US_Tar::write_file( const QString& file )
    QFileInfo f( file );
 
    struct stat stats;
-   int ret = stat( file.latin1(), &stats );
+   int ret = stat( file.toLatin1().data(), &stats );
    if ( ret < 0 ) throw TAR_CANTSTAT;
 
    memset( (void*) tar_header.h, 0, sizeof( tar_header ) );
@@ -209,7 +209,7 @@ void US_Tar::write_file( const QString& file )
       //throw TAR_FILENAMETOOLONG;
       write_long_filename( file );
 
-   strcpy( tar_header.header.name, file.latin1() );
+   strcpy( tar_header.header.name, file.toLatin1().data() );
 
    int perms = TSUID  | TSGID   | TSVTX  |
       TUREAD | TUWRITE | TUEXEC |
@@ -275,7 +275,7 @@ void US_Tar::write_file( const QString& file )
    // Output the file
    if ( ! f.isDir() )
    {
-      ifd = open( file.latin1(), O_RDONLY | O_BINARY );
+      ifd = open( file.toLatin1().data(), O_RDONLY | O_BINARY );
       if ( ifd < 0 ) throw TAR_READERROR;
 
       ssize_t input;
@@ -415,7 +415,7 @@ void US_Tar::write_long_filename( const QString& filename )
       memset( (void*) tar_header.h, 0, sizeof tar_header );
       
       memcpy( (void*) tar_header.h,
-              (void*) filename.mid( i * BLOCK_SIZE, BLOCK_SIZE ).latin1(),
+              (void*) filename.mid( i * BLOCK_SIZE, BLOCK_SIZE ).toLatin1().data(),
               BLOCK_SIZE );
 
       // Copy the header to the buffer
@@ -434,7 +434,7 @@ void US_Tar::write_long_filename( const QString& filename )
       memset( (void*) tar_header.h, 0, sizeof tar_header );
 
       memcpy( (void*) tar_header.h, 
-              (void*) filename.mid( full_blocks * BLOCK_SIZE ).latin1(),
+              (void*) filename.mid( full_blocks * BLOCK_SIZE ).toLatin1().data(),
               length % BLOCK_SIZE );
 
       // Copy the header to the buffer
@@ -449,7 +449,7 @@ void US_Tar::write_long_filename( const QString& filename )
 
    // Finally write the first 100 bytes of the original filename
    memset( (void*) tar_header.h, 0, sizeof( tar_header ) );
-   memcpy( (void*) tar_header.h, filename.latin1(), 100 ); 
+   memcpy( (void*) tar_header.h, filename.toLatin1().data(), 100 ); 
 }
 
 void US_Tar::archive_end( void )
@@ -509,7 +509,7 @@ int US_Tar::extract( const QString& archive, QStringList* list )
     */
   
    ofd = -1;  // Initialize output file to closed
-   ifd = open( archive.latin1(), O_RDONLY | O_BINARY );
+   ifd = open( archive.toLatin1().data(), O_RDONLY | O_BINARY );
    if ( ifd < 0 ) return TAR_NOTFOUND;
 
    if ( list ) list->clear();
@@ -608,7 +608,7 @@ int US_Tar::extract( const QString& archive, QStringList* list )
          }
          else // It's a file.  Create it.
          {
-            ofd = open( filename.latin1(), O_WRONLY | O_CREAT | O_BINARY, 0644 );
+            ofd = open( filename.toLatin1().data(), O_WRONLY | O_CREAT | O_BINARY, 0644 );
             if ( ofd < 0 ) throw TAR_WRITEERROR;
 
             // Copy from archive to file
@@ -663,15 +663,15 @@ int US_Tar::extract( const QString& archive, QStringList* list )
          struct utimbuf time;
          time.actime  = tv.tv_sec;  // now
          time.modtime = mtime;
-         utime( filename.latin1(), &time );
+         utime( filename.toLatin1().data(), &time );
 
 #ifndef WIN32
          // Update permissions
-         chmod( filename.latin1(), mode );
+         chmod( filename.toLatin1().data(), mode );
 
          // Update owner/group
          if ( geteuid() != 0 ) uid = (uid_t) -1;
-         chown( filename.ascii(), uid, gid );
+         chown( filename.toAscii().data(), uid, gid );
 #endif
       }  // while ( true )
    }
@@ -683,7 +683,7 @@ int US_Tar::extract( const QString& archive, QStringList* list )
       // Cycle through files and delete everything created
       for ( size_t i = files.size() -1 ; i <= 0; i++ )
       {
-         unlink( files[i].latin1() );
+         QFile::remove( files[i].toLatin1().data() );
       }
 
       return error;
@@ -701,7 +701,7 @@ int US_Tar::extract( const QString& archive, QStringList* list )
       time.actime  = times[ i ];  
       time.modtime = times[ i ];
 
-      utime( dirs[ i ].latin1(), &time );
+      utime( dirs[ i ].toLatin1().data(), &time );
    }
 
    return TAR_OK;
@@ -710,7 +710,7 @@ int US_Tar::extract( const QString& archive, QStringList* list )
 /////////////////////////////
 int US_Tar::list( const QString& archive, QStringList& files, bool brief )
 {
-   ifd = open( archive.latin1(), O_RDONLY | O_BINARY );
+   ifd = open( archive.toLatin1().data(), O_RDONLY | O_BINARY );
    if ( ifd < 0 ) return TAR_NOTFOUND;
 
    blocks_read = 0;

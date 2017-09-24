@@ -32,17 +32,18 @@ static const uint qt_meta_data_US_Cmdline_App[] = {
  // slots: signature, parameters, type, tag, flags
       16,   15,   15,   15, 0x08,
       33,   15,   15,   15, 0x08,
-      50,   15,   15,   15, 0x08,
-      66,   15,   15,   15, 0x08,
-      83,   15,   15,   15, 0x08,
+      52,   50,   15,   15, 0x08,
+      87,   15,   15,   15, 0x08,
+      97,   15,   15,   15, 0x08,
 
        0        // eod
 };
 
 static const char qt_meta_stringdata_US_Cmdline_App[] = {
     "US_Cmdline_App\0\0readFromStdout()\0"
-    "readFromStderr()\0processExited()\0"
-    "launchFinished()\0timeout()\0"
+    "readFromStderr()\0,\0"
+    "finished(int,QProcess::ExitStatus)\0"
+    "started()\0timeout()\0"
 };
 
 void US_Cmdline_App::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, void **_a)
@@ -53,13 +54,12 @@ void US_Cmdline_App::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _
         switch (_id) {
         case 0: _t->readFromStdout(); break;
         case 1: _t->readFromStderr(); break;
-        case 2: _t->processExited(); break;
-        case 3: _t->launchFinished(); break;
+        case 2: _t->finished((*reinterpret_cast< int(*)>(_a[1])),(*reinterpret_cast< QProcess::ExitStatus(*)>(_a[2]))); break;
+        case 3: _t->started(); break;
         case 4: _t->timeout(); break;
         default: ;
         }
     }
-    Q_UNUSED(_a);
 }
 
 const QMetaObjectExtraData US_Cmdline_App::staticMetaObjectExtraData = {

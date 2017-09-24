@@ -5,25 +5,25 @@
 #include "../include/us_hydrodyn_saxs_buffer_conc.h"
 #include "../include/us_hydrodyn_saxs_buffer_conc_load.h"
 //Added by qt3to4:
-#include <Q3HBoxLayout>
+#include <QHBoxLayout>
 #include <QCloseEvent>
-#include <Q3Frame>
+#include <QFrame>
 #include <QLabel>
-#include <Q3VBoxLayout>
+#include <QVBoxLayout>
 
 US_Hydrodyn_Saxs_Buffer_Conc_Load::US_Hydrodyn_Saxs_Buffer_Conc_Load(
                                                                      QStringList &qsl_text,
                                                                      csv &csv1,
                                                                      QWidget *p, 
                                                                      const char *name
-                                                                     ) : QDialog(p, name)
+                                                                     ) : QDialog( p )
 {
    this->text = &qsl_text;
    this->csv1 = &csv1;
 
    USglobal = new US_Config();
    setPalette( PALET_FRAME );
-   setCaption( tr( "US-SOMO: SAXS Buffer: File Concentration Loader"));
+   setWindowTitle( us_tr( "US-SOMO: SAXS Buffer: File Concentration Loader"));
 
    disable_updates = false;
 
@@ -39,8 +39,8 @@ US_Hydrodyn_Saxs_Buffer_Conc_Load::US_Hydrodyn_Saxs_Buffer_Conc_Load(
 
    for ( unsigned int i = 0; i < (unsigned int) qsl_text.size(); i++ )
    {
-      QString qs = qsl_text[ i ].stripWhiteSpace();
-      QStringList line = QStringList::split( rx_split, qs );
+      QString qs = qsl_text[ i ].trimmed();
+      QStringList line = (qs ).split( rx_split , QString::SkipEmptyParts );
       if ( line.size() > 1 )
       {
          lines.push_back( line );
@@ -48,9 +48,9 @@ US_Hydrodyn_Saxs_Buffer_Conc_Load::US_Hydrodyn_Saxs_Buffer_Conc_Load(
          bool all_numeric = true;
          for ( unsigned int j = 0; j < (unsigned int) line.size(); j++ )
          {
-            if ( rx_numeric.search( line[ j ].stripWhiteSpace() ) != -1 )
+            if ( rx_numeric.indexIn( line[ j ].trimmed() ) != -1 )
             {
-               tmp_data.push_back( line[ j ].stripWhiteSpace() );
+               tmp_data.push_back( line[ j ].trimmed() );
             } else {
                all_numeric = false;
                break;
@@ -74,11 +74,11 @@ US_Hydrodyn_Saxs_Buffer_Conc_Load::US_Hydrodyn_Saxs_Buffer_Conc_Load(
 
    unsigned int csv_height = t_csv->rowHeight(0) + 125;
    unsigned int csv_width = t_csv->columnWidth(0) + 60;
-   for ( int i = 1; i < t_csv->numRows(); i++ )
+   for ( int i = 1; i < t_csv->rowCount(); i++ )
    {
       csv_height += t_csv->rowHeight(i);
    }
-   for ( int i = 1; i < t_csv->numCols(); i++ )
+   for ( int i = 1; i < t_csv->columnCount(); i++ )
    {
       csv_width += t_csv->columnWidth(i);
    }
@@ -105,7 +105,7 @@ void US_Hydrodyn_Saxs_Buffer_Conc_Load::setupGUI()
    int minHeight1 = 30;
 
    lbl_title = new QLabel(disp_csv.name.left(80), this);
-   lbl_title->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Raised);
+   lbl_title->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_title->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_title->setMinimumHeight(minHeight1);
    lbl_title->setPalette( PALET_FRAME );
@@ -114,8 +114,8 @@ void US_Hydrodyn_Saxs_Buffer_Conc_Load::setupGUI()
 
    // cout << csv_to_qstring( disp_csv );
 
-   t_csv = new Q3Table(disp_csv.data.size(), disp_csv.header.size(), this);
-   t_csv->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Raised);
+   t_csv = new QTableWidget(disp_csv.data.size(), disp_csv.header.size(), this);
+   t_csv->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    t_csv->setPalette( PALET_EDIT );
    AUTFBACK( t_csv );
    t_csv->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
@@ -126,25 +126,25 @@ void US_Hydrodyn_Saxs_Buffer_Conc_Load::setupGUI()
    {
       for ( unsigned int j = 0; j < disp_csv.data[ i ].size(); j++ )
       {
-         t_csv->setText( i, j, disp_csv.data[ i ][ j ]);
+         t_csv->setItem( i, j, new QTableWidgetItem( disp_csv.data[ i ][ j ]) );
       }
    }
 
-   t_csv->setSorting            ( false );
-   t_csv->setRowMovingEnabled   ( true );
-   t_csv->setColumnMovingEnabled( false );
+   t_csv->setSortingEnabled            ( false );
+    t_csv->verticalHeader()->setMovable( true );
+    t_csv->horizontalHeader()->setMovable( false );
    
    t_csv->adjustSize();
-   connect( t_csv, SIGNAL( selectionChanged() ), SLOT( update_enables() ) );
+   connect( t_csv, SIGNAL( itemSelectionChanged() ), SLOT( update_enables() ) );
    connect( t_csv->horizontalHeader(), SIGNAL( released( int ) ), SLOT( col_header_released( int ) ) );
    
-   pb_del_row = new QPushButton(tr("Delete Rows"), this);
+   pb_del_row = new QPushButton(us_tr("Delete Rows"), this);
    pb_del_row->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_del_row->setMinimumHeight(minHeight1);
    pb_del_row->setPalette( PALET_PUSHB );
    connect(pb_del_row, SIGNAL(clicked()), SLOT(del_row()));
 
-   pb_set_name = new QPushButton(tr("Set column for frame timecode"), this);
+   pb_set_name = new QPushButton(us_tr("Set column for frame timecode"), this);
    pb_set_name->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_set_name->setMinimumHeight(minHeight1);
    pb_set_name->setPalette( PALET_PUSHB );
@@ -157,13 +157,13 @@ void US_Hydrodyn_Saxs_Buffer_Conc_Load::setupGUI()
    AUTFBACK( lbl_name );
    lbl_name->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1, QFont::Bold));
 
-   pb_adjust = new QPushButton(tr("Adjust frame timecode"), this);
+   pb_adjust = new QPushButton(us_tr("Adjust frame timecode"), this);
    pb_adjust->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_adjust->setMinimumHeight(minHeight1);
    pb_adjust->setPalette( PALET_PUSHB );
    connect(pb_adjust, SIGNAL(clicked()), SLOT(adjust()));
 
-   pb_set_conc = new QPushButton(tr("Set column for concentration"), this);
+   pb_set_conc = new QPushButton(us_tr("Set column for concentration"), this);
    pb_set_conc->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_set_conc->setMinimumHeight(minHeight1);
    pb_set_conc->setPalette( PALET_PUSHB );
@@ -176,7 +176,7 @@ void US_Hydrodyn_Saxs_Buffer_Conc_Load::setupGUI()
    AUTFBACK( lbl_conc );
    lbl_conc->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1, QFont::Bold));
 
-   pb_trial = new QPushButton(tr("Trial set"), this);
+   pb_trial = new QPushButton(us_tr("Trial set"), this);
    pb_trial->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_trial->setMinimumHeight(minHeight1);
    pb_trial->setPalette( PALET_PUSHB );
@@ -189,47 +189,47 @@ void US_Hydrodyn_Saxs_Buffer_Conc_Load::setupGUI()
    AUTFBACK( lbl_trial );
    lbl_trial->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1, QFont::Bold));
 
-   pb_cancel = new QPushButton(tr("Cancel"), this);
+   pb_cancel = new QPushButton(us_tr("Cancel"), this);
    pb_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_cancel->setMinimumHeight(minHeight1);
    pb_cancel->setPalette( PALET_PUSHB );
    connect(pb_cancel, SIGNAL(clicked()), SLOT(cancel()));
 
-   pb_help = new QPushButton(tr("Help"), this);
+   pb_help = new QPushButton(us_tr("Help"), this);
    pb_help->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_help->setMinimumHeight(minHeight1);
    pb_help->setPalette( PALET_PUSHB );
    connect(pb_help, SIGNAL(clicked()), SLOT(help()));
 
-   pb_set_ok = new QPushButton(tr("Save values"), this);
+   pb_set_ok = new QPushButton(us_tr("Save values"), this);
    pb_set_ok->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_set_ok->setMinimumHeight(minHeight1);
    pb_set_ok->setPalette( PALET_PUSHB );
    connect(pb_set_ok, SIGNAL(clicked()), SLOT(set_ok()));
 
    // build layout
-   Q3HBoxLayout *hbl_name = new Q3HBoxLayout;
+   QHBoxLayout * hbl_name = new QHBoxLayout; hbl_name->setContentsMargins( 0, 0, 0, 0 ); hbl_name->setSpacing( 0 );
    hbl_name->addSpacing( 4 );
    hbl_name->addWidget ( pb_set_name );
    hbl_name->addSpacing( 4 );
    hbl_name->addWidget ( lbl_name );
    hbl_name->addSpacing( 4 );
 
-   Q3HBoxLayout *hbl_conc = new Q3HBoxLayout;
+   QHBoxLayout * hbl_conc = new QHBoxLayout; hbl_conc->setContentsMargins( 0, 0, 0, 0 ); hbl_conc->setSpacing( 0 );
    hbl_conc->addSpacing( 4 );
    hbl_conc->addWidget ( pb_set_conc );
    hbl_conc->addSpacing( 4 );
    hbl_conc->addWidget ( lbl_conc );
    hbl_conc->addSpacing( 4 );
 
-   Q3HBoxLayout *hbl_trial = new Q3HBoxLayout;
+   QHBoxLayout * hbl_trial = new QHBoxLayout; hbl_trial->setContentsMargins( 0, 0, 0, 0 ); hbl_trial->setSpacing( 0 );
    hbl_trial->addSpacing( 4 );
    hbl_trial->addWidget ( pb_trial );
    hbl_trial->addSpacing( 4 );
    hbl_trial->addWidget ( lbl_trial );
    hbl_trial->addSpacing( 4 );
 
-   Q3HBoxLayout *hbl_bottom = new Q3HBoxLayout;
+   QHBoxLayout * hbl_bottom = new QHBoxLayout; hbl_bottom->setContentsMargins( 0, 0, 0, 0 ); hbl_bottom->setSpacing( 0 );
    hbl_bottom->addSpacing( 4 );
    hbl_bottom->addWidget ( pb_cancel );
    hbl_bottom->addSpacing( 4 );
@@ -238,7 +238,7 @@ void US_Hydrodyn_Saxs_Buffer_Conc_Load::setupGUI()
    hbl_bottom->addWidget ( pb_set_ok );
    hbl_bottom->addSpacing( 4 );
 
-   Q3VBoxLayout *background = new Q3VBoxLayout( this );
+   QVBoxLayout * background = new QVBoxLayout( this ); background->setContentsMargins( 0, 0, 0, 0 ); background->setSpacing( 0 );
    background->addSpacing( 4 );
    background->addWidget ( lbl_title );
    background->addSpacing( 4 );
@@ -293,7 +293,7 @@ csv US_Hydrodyn_Saxs_Buffer_Conc_Load::current_csv()
    {
       for ( unsigned int j = 0; j < (unsigned int) disp_csv.data[i].size(); j++ )
       {
-         tmp_csv.data[i][j] = t_csv->text( i, j );
+         tmp_csv.data[i][j] = t_csv->item( i, j )->text();
       }
    }
    return tmp_csv;
@@ -306,17 +306,17 @@ void US_Hydrodyn_Saxs_Buffer_Conc_Load::update_enables()
       disable_updates = true;
       unsigned int selected_rows = 0;
       unsigned int selected_cols = 0;
-      for ( int i = 0; i < t_csv->numRows(); i++ )
+      for ( int i = 0; i < t_csv->rowCount(); i++ )
       {
-         if ( t_csv->isRowSelected( i ) )
+         if ( t_csv->item( i , 0 )->isSelected() )
          {
             selected_rows++;
          }
       }
 
-      for ( int i = 0; i < t_csv->numCols(); i++ )
+      for ( int i = 0; i < t_csv->columnCount(); i++ )
       {
-         if ( t_csv->isColumnSelected( i ) )
+         if ( t_csv->item( 0,  i  )->isSelected() )
          {
             selected_cols++;
          }
@@ -328,7 +328,7 @@ void US_Hydrodyn_Saxs_Buffer_Conc_Load::update_enables()
       pb_set_conc  ->setEnabled( selected_cols == 1 );
       pb_set_ok    ->setEnabled( !lbl_name->text().isEmpty() &&
                                  !lbl_conc->text().isEmpty() &&
-                                 lbl_trial->text().contains( tr( "Match ok" ) ) );
+                                 lbl_trial->text().contains( us_tr( "Match ok" ) ) );
       pb_trial     ->setEnabled( !lbl_name->text().isEmpty() && 
                                  !lbl_conc->text().isEmpty() );
 
@@ -344,9 +344,9 @@ void US_Hydrodyn_Saxs_Buffer_Conc_Load::del_row()
    csv_new.num_data.clear();
    csv_new.prepended_names.clear();
    
-   for ( int i = 0; i < t_csv->numRows(); i++ )
+   for ( int i = 0; i < t_csv->rowCount(); i++ )
    {
-      if ( !t_csv->isRowSelected( i ) )
+      if ( !t_csv->item( i , 0 )->isSelected() )
       {
          csv_new.data.push_back( disp_csv.data[ i ] );
          if ( csv_new.header.size() < disp_csv.data[ i ].size() )
@@ -361,11 +361,11 @@ void US_Hydrodyn_Saxs_Buffer_Conc_Load::del_row()
 
    unsigned int csv_height = t_csv->rowHeight(0) + 125;
    unsigned int csv_width = t_csv->columnWidth(0) + 60;
-   for ( int i = 1; i < t_csv->numRows(); i++ )
+   for ( int i = 1; i < t_csv->rowCount(); i++ )
    {
       csv_height += t_csv->rowHeight(i);
    }
-   for ( int i = 1; i < t_csv->numCols(); i++ )
+   for ( int i = 1; i < t_csv->columnCount(); i++ )
    {
       csv_width += t_csv->columnWidth(i);
    }
@@ -389,9 +389,9 @@ void US_Hydrodyn_Saxs_Buffer_Conc_Load::del_row()
 
 void US_Hydrodyn_Saxs_Buffer_Conc_Load::set_name()
 {
-   for ( int i = 0; i < t_csv->numCols(); i++ )
+   for ( int i = 0; i < t_csv->columnCount(); i++ )
    {
-      if ( t_csv->isColumnSelected( i ) )
+      if ( t_csv->item( 0,  i  )->isSelected() )
       {
          lbl_name->setText( QString( "%1" ).arg( i + 1 ) );
       }
@@ -402,9 +402,9 @@ void US_Hydrodyn_Saxs_Buffer_Conc_Load::set_name()
 
 void US_Hydrodyn_Saxs_Buffer_Conc_Load::set_conc()
 {
-   for ( int i = 0; i < t_csv->numCols(); i++ )
+   for ( int i = 0; i < t_csv->columnCount(); i++ )
    {
-      if ( t_csv->isColumnSelected( i ) )
+      if ( t_csv->item( 0,  i  )->isSelected() )
       {
          lbl_conc->setText( QString( "%1" ).arg( i + 1 ) );
       }
@@ -435,13 +435,13 @@ QString US_Hydrodyn_Saxs_Buffer_Conc_Load::csv_to_qstring( csv from_csv )
 void US_Hydrodyn_Saxs_Buffer_Conc_Load::reload_csv()
 {
    // cout << csv_to_qstring( disp_csv );
-   t_csv->setNumRows( disp_csv.data.size() );
-   t_csv->setNumCols( disp_csv.header.size() );
+   t_csv->setRowCount( disp_csv.data.size() );
+   t_csv->setColumnCount( disp_csv.header.size() );
    for ( unsigned int i = 0; i < (unsigned int) disp_csv.data.size(); i++ )
    {
       for ( unsigned int j = 0; j < (unsigned int) disp_csv.data[ i ].size(); j++ )
       {
-         t_csv->setText( i, j, disp_csv.data[ i ][ j ]);
+         t_csv->setItem( i, j, new QTableWidgetItem( disp_csv.data[ i ][ j ]) );
       }
    }
 }
@@ -485,7 +485,7 @@ void US_Hydrodyn_Saxs_Buffer_Conc_Load::trial()
          it != concs.end();
          it++ )
    {
-      QStringList qsl = QStringList::split( rx_nondigit, it->first );
+      QStringList qsl = (it->first ).split( rx_nondigit , QString::SkipEmptyParts );
       // cout << QString( "ref <%1>  qsl: <%2>\n" )
       // .arg( it->first )
       // .arg( qsl.join( ":" ) );
@@ -513,8 +513,8 @@ void US_Hydrodyn_Saxs_Buffer_Conc_Load::trial()
       }
    }
    lbl_trial->setText( ( found > 0 ?
-                         tr( "Match ok" ) : tr( "No matches found" ) ) +
-                       QString( tr( " %1 files matched, %2 not matched" ).arg( found ).arg( not_found ) ) );
+                         us_tr( "Match ok" ) : us_tr( "No matches found" ) ) +
+                       QString( us_tr( " %1 files matched, %2 not matched" ).arg( found ).arg( not_found ) ) );
    update_enables();
 }
 
@@ -522,9 +522,9 @@ void US_Hydrodyn_Saxs_Buffer_Conc_Load::adjust()
 {
    // ask & add or subtract
    bool ok;
-   int res = QInputDialog::getInteger(
-                                      tr( "US-SOMO: SAXS Buffer: File Concentration Loader: Adjust timecode" ),
-                                      tr( "Enter a timecode correction:" ), 
+   int res = US_Static::getInteger(
+                                      us_tr( "US-SOMO: SAXS Buffer: File Concentration Loader: Adjust timecode" ),
+                                      us_tr( "Enter a timecode correction:" ), 
                                       0, 
                                       -1000, 
                                       +1000,
@@ -535,11 +535,9 @@ void US_Hydrodyn_Saxs_Buffer_Conc_Load::adjust()
    if ( ok && res ) 
    {
       // user entered something and pressed OK
-      for ( int i = 0; i < t_csv->numRows(); i++ )
+      for ( int i = 0; i < t_csv->rowCount(); i++ )
       {
-         t_csv->setText( i, 0, 
-                         QString( "%1" ).
-                         arg( t_csv->text( i, 0 ).toInt() + res ) );
+         t_csv->setItem( i, 0, new QTableWidgetItem( QString( "%1" ).arg( t_csv->item( i, 0 )->text( ).toInt( ) + res ) ) );
       }
    }
 }
@@ -547,8 +545,8 @@ void US_Hydrodyn_Saxs_Buffer_Conc_Load::adjust()
 void US_Hydrodyn_Saxs_Buffer_Conc_Load::col_header_released( int col )
 {
    t_csv->clearSelection();
-   Q3TableSelection qts( 0, col, t_csv->numRows(), col );
+   QTableWidgetSelectionRange qts( 0, col, t_csv->rowCount(), col );
    
-   t_csv->addSelection( qts );
+   t_csv->setRangeSelected( qts, true );
    update_enables();
 }

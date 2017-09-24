@@ -3,8 +3,8 @@
 #include "../include/us_hydrodyn.h"
 //Added by qt3to4:
 #include <QCloseEvent>
-#include <Q3GridLayout>
-#include <Q3Frame>
+#include <QGridLayout>
+#include <QFrame>
 #include <QLabel>
 
 #define SLASH "/"
@@ -13,7 +13,7 @@
 #  define SLASH "\\"
 #endif
 
-US_Hydrodyn_SasOptionsBeadModel::US_Hydrodyn_SasOptionsBeadModel(struct saxs_options *saxs_options, bool *sas_options_bead_model_widget, void *us_hydrodyn, QWidget *p, const char *name) : Q3Frame(p, name)
+US_Hydrodyn_SasOptionsBeadModel::US_Hydrodyn_SasOptionsBeadModel(struct saxs_options *saxs_options, bool *sas_options_bead_model_widget, void *us_hydrodyn, QWidget *p, const char *name) : QFrame( p )
 {
    this->sas_options_bead_model_widget = sas_options_bead_model_widget;
    this->saxs_options = saxs_options;
@@ -21,7 +21,7 @@ US_Hydrodyn_SasOptionsBeadModel::US_Hydrodyn_SasOptionsBeadModel(struct saxs_opt
    *sas_options_bead_model_widget = true;
    USglobal=new US_Config();
    setPalette( PALET_FRAME );
-   setCaption(tr("US-SOMO SAS Bead Model Options"));
+   setWindowTitle(us_tr("US-SOMO SAS Bead Model Options"));
    setupGUI();
    global_Xpos += 30;
    global_Ypos += 30;
@@ -38,8 +38,8 @@ void US_Hydrodyn_SasOptionsBeadModel::setupGUI()
    started_in_expert_mode = U_EXPT;
 
    int minHeight1 = 30;
-   lbl_info = new QLabel(tr("US-SOMO SAS Bead Model Options:"), this);
-   lbl_info->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Raised);
+   lbl_info = new QLabel(us_tr("US-SOMO SAS Bead Model Options:"), this);
+   lbl_info->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_info->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_info->setMinimumHeight(minHeight1);
    lbl_info->setPalette( PALET_FRAME );
@@ -47,7 +47,7 @@ void US_Hydrodyn_SasOptionsBeadModel::setupGUI()
    lbl_info->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
 
    cb_compute_saxs_coeff_for_bead_models = new QCheckBox(this);
-   cb_compute_saxs_coeff_for_bead_models->setText(tr(" Compute SAXS coefficients for bead models"));
+   cb_compute_saxs_coeff_for_bead_models->setText(us_tr(" Compute SAXS coefficients for bead models"));
    cb_compute_saxs_coeff_for_bead_models->setEnabled(true);
    cb_compute_saxs_coeff_for_bead_models->setChecked((*saxs_options).compute_saxs_coeff_for_bead_models);
    cb_compute_saxs_coeff_for_bead_models->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -56,7 +56,7 @@ void US_Hydrodyn_SasOptionsBeadModel::setupGUI()
    connect(cb_compute_saxs_coeff_for_bead_models, SIGNAL(clicked()), this, SLOT(set_compute_saxs_coeff_for_bead_models()));
 
    cb_compute_sans_coeff_for_bead_models = new QCheckBox(this);
-   cb_compute_sans_coeff_for_bead_models->setText(tr(" Compute SANS coefficients for bead models"));
+   cb_compute_sans_coeff_for_bead_models->setText(us_tr(" Compute SANS coefficients for bead models"));
    cb_compute_sans_coeff_for_bead_models->setEnabled(true);
    cb_compute_sans_coeff_for_bead_models->setChecked((*saxs_options).compute_sans_coeff_for_bead_models);
    cb_compute_sans_coeff_for_bead_models->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -65,7 +65,7 @@ void US_Hydrodyn_SasOptionsBeadModel::setupGUI()
    connect(cb_compute_sans_coeff_for_bead_models, SIGNAL(clicked()), this, SLOT(set_compute_sans_coeff_for_bead_models()));
 
    cb_bead_model_rayleigh = new QCheckBox(this);
-   cb_bead_model_rayleigh->setText(tr(" Use Rayleigh (1911) for structure factors"));
+   cb_bead_model_rayleigh->setText(us_tr(" Use Rayleigh (1911) for structure factors"));
    cb_bead_model_rayleigh->setEnabled(true);
    cb_bead_model_rayleigh->setChecked((*saxs_options).bead_model_rayleigh);
    cb_bead_model_rayleigh->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -76,7 +76,7 @@ void US_Hydrodyn_SasOptionsBeadModel::setupGUI()
    if ( started_in_expert_mode )
    {
       cb_bead_models_use_bead_radius_ev = new QCheckBox(this);
-      cb_bead_models_use_bead_radius_ev->setText(tr(" Use bead radius for excluded volume"));
+      cb_bead_models_use_bead_radius_ev->setText(us_tr(" Use bead radius for excluded volume"));
       cb_bead_models_use_bead_radius_ev->setEnabled(true);
       cb_bead_models_use_bead_radius_ev->setChecked((*saxs_options).bead_models_use_bead_radius_ev);
       cb_bead_models_use_bead_radius_ev->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -85,7 +85,7 @@ void US_Hydrodyn_SasOptionsBeadModel::setupGUI()
       connect(cb_bead_models_use_bead_radius_ev, SIGNAL(clicked()), this, SLOT(set_bead_models_use_bead_radius_ev()));
 
       cb_bead_models_rho0_in_scat_factors = new QCheckBox(this);
-      cb_bead_models_rho0_in_scat_factors->setText(tr(" rho0 included in computed scattering factors"));
+      cb_bead_models_rho0_in_scat_factors->setText(us_tr(" rho0 included in computed scattering factors"));
       cb_bead_models_rho0_in_scat_factors->setEnabled(true);
       cb_bead_models_rho0_in_scat_factors->setChecked((*saxs_options).bead_models_rho0_in_scat_factors);
       cb_bead_models_rho0_in_scat_factors->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -94,7 +94,7 @@ void US_Hydrodyn_SasOptionsBeadModel::setupGUI()
       connect(cb_bead_models_rho0_in_scat_factors, SIGNAL(clicked()), this, SLOT(set_bead_models_rho0_in_scat_factors()));
 
       cb_iq_global_avg_for_bead_models = new QCheckBox(this);
-      cb_iq_global_avg_for_bead_models->setText(tr(" Use global average scattering factors for loading bead models"));
+      cb_iq_global_avg_for_bead_models->setText(us_tr(" Use global average scattering factors for loading bead models"));
       cb_iq_global_avg_for_bead_models->setEnabled(true);
       cb_iq_global_avg_for_bead_models->setChecked((*saxs_options).iq_global_avg_for_bead_models);
       cb_iq_global_avg_for_bead_models->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -103,7 +103,7 @@ void US_Hydrodyn_SasOptionsBeadModel::setupGUI()
       connect(cb_iq_global_avg_for_bead_models, SIGNAL(clicked()), this, SLOT(set_iq_global_avg_for_bead_models()));
 
       cb_bead_models_use_quick_fitting = new QCheckBox(this);
-      cb_bead_models_use_quick_fitting->setText(tr(" Use quick method for computing scattering factors"));
+      cb_bead_models_use_quick_fitting->setText(us_tr(" Use quick method for computing scattering factors"));
       cb_bead_models_use_quick_fitting->setEnabled(true);
       cb_bead_models_use_quick_fitting->setChecked((*saxs_options).bead_models_use_quick_fitting);
       cb_bead_models_use_quick_fitting->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -112,7 +112,7 @@ void US_Hydrodyn_SasOptionsBeadModel::setupGUI()
       connect(cb_bead_models_use_quick_fitting, SIGNAL(clicked()), this, SLOT(set_bead_models_use_quick_fitting()));
 
       cb_bead_models_use_gsm_fitting = new QCheckBox(this);
-      cb_bead_models_use_gsm_fitting->setText(tr(" Use gsm method for computing scattering factors"));
+      cb_bead_models_use_gsm_fitting->setText(us_tr(" Use gsm method for computing scattering factors"));
       cb_bead_models_use_gsm_fitting->setEnabled(true);
       cb_bead_models_use_gsm_fitting->setChecked((*saxs_options).bead_models_use_gsm_fitting);
       cb_bead_models_use_gsm_fitting->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -121,7 +121,7 @@ void US_Hydrodyn_SasOptionsBeadModel::setupGUI()
       connect(cb_bead_models_use_gsm_fitting, SIGNAL(clicked()), this, SLOT(set_bead_models_use_gsm_fitting()));
 
       cb_apply_loaded_sf_repeatedly_to_pdb = new QCheckBox(this);
-      cb_apply_loaded_sf_repeatedly_to_pdb->setText(tr(" Apply preloaded individual bead structure factors to bead model PDB"));
+      cb_apply_loaded_sf_repeatedly_to_pdb->setText(us_tr(" Apply preloaded individual bead structure factors to bead model PDB"));
       cb_apply_loaded_sf_repeatedly_to_pdb->setEnabled(true);
       cb_apply_loaded_sf_repeatedly_to_pdb->setChecked((*saxs_options).apply_loaded_sf_repeatedly_to_pdb);
       cb_apply_loaded_sf_repeatedly_to_pdb->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -130,7 +130,7 @@ void US_Hydrodyn_SasOptionsBeadModel::setupGUI()
       connect(cb_apply_loaded_sf_repeatedly_to_pdb, SIGNAL(clicked()), this, SLOT(set_apply_loaded_sf_repeatedly_to_pdb()));
 
       cb_bead_models_use_var_len_sf = new QCheckBox(this);
-      cb_bead_models_use_var_len_sf->setText(tr(" Compute and use variable length scattering factors"));
+      cb_bead_models_use_var_len_sf->setText(us_tr(" Compute and use variable length scattering factors"));
       cb_bead_models_use_var_len_sf->setEnabled(true);
       cb_bead_models_use_var_len_sf->setChecked((*saxs_options).bead_models_use_var_len_sf);
       cb_bead_models_use_var_len_sf->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -138,14 +138,14 @@ void US_Hydrodyn_SasOptionsBeadModel::setupGUI()
       AUTFBACK( cb_bead_models_use_var_len_sf );
       connect(cb_bead_models_use_var_len_sf, SIGNAL(clicked()), this, SLOT(set_bead_models_use_var_len_sf()));
 
-      lbl_bead_models_var_len_sf_max = new QLabel(tr(" Variable length scattering factors max length: "), this);
+      lbl_bead_models_var_len_sf_max = new QLabel(us_tr(" Variable length scattering factors max length: "), this);
       lbl_bead_models_var_len_sf_max->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
       lbl_bead_models_var_len_sf_max->setMinimumHeight(minHeight1);
       lbl_bead_models_var_len_sf_max->setPalette( PALET_LABEL );
       AUTFBACK( lbl_bead_models_var_len_sf_max );
       lbl_bead_models_var_len_sf_max->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
-      le_bead_models_var_len_sf_max = new QLineEdit( this, "" );
+      le_bead_models_var_len_sf_max = new QLineEdit(  this );       le_bead_models_var_len_sf_max->setObjectName( "" );
       le_bead_models_var_len_sf_max->setText( QString( "%1" ).arg( (*saxs_options).bead_models_var_len_sf_max ) );
       le_bead_models_var_len_sf_max->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
       le_bead_models_var_len_sf_max->setPalette( PALET_EDIT );
@@ -155,14 +155,14 @@ void US_Hydrodyn_SasOptionsBeadModel::setupGUI()
       le_bead_models_var_len_sf_max->setValidator( le_bead_models_var_len_sf_max_qv );
       connect( le_bead_models_var_len_sf_max, SIGNAL( textChanged ( const QString & ) ), this, SLOT( update_bead_models_var_len_sf_max( const QString & ) ) );
 
-      lbl_dummy_saxs_name = new QLabel(tr(" Saxs name for dummy atom models: "), this);
+      lbl_dummy_saxs_name = new QLabel(us_tr(" Saxs name for dummy atom models: "), this);
       lbl_dummy_saxs_name->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
       lbl_dummy_saxs_name->setMinimumHeight(minHeight1);
       lbl_dummy_saxs_name->setPalette( PALET_LABEL );
       AUTFBACK( lbl_dummy_saxs_name );
       lbl_dummy_saxs_name->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
-      le_dummy_saxs_name = new QLineEdit( this, "" );
+      le_dummy_saxs_name = new QLineEdit(  this );       le_dummy_saxs_name->setObjectName( "" );
       le_dummy_saxs_name->setText( (*saxs_options).dummy_saxs_name );
       le_dummy_saxs_name->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
       le_dummy_saxs_name->setPalette( PALET_EDIT );
@@ -172,7 +172,7 @@ void US_Hydrodyn_SasOptionsBeadModel::setupGUI()
    }
 
    cb_dummy_atom_pdbs_in_nm = new QCheckBox(this);
-   cb_dummy_atom_pdbs_in_nm->setText(tr(" Dummy atom PDB's in NM " ) );
+   cb_dummy_atom_pdbs_in_nm->setText(us_tr(" Dummy atom PDB's in NM " ) );
    cb_dummy_atom_pdbs_in_nm->setEnabled(true);
    cb_dummy_atom_pdbs_in_nm->setChecked((*saxs_options).dummy_atom_pdbs_in_nm);
    cb_dummy_atom_pdbs_in_nm->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -180,45 +180,45 @@ void US_Hydrodyn_SasOptionsBeadModel::setupGUI()
    AUTFBACK( cb_dummy_atom_pdbs_in_nm );
    connect(cb_dummy_atom_pdbs_in_nm, SIGNAL(clicked()), this, SLOT(set_dummy_atom_pdbs_in_nm()));
 
-   pb_cancel = new QPushButton(tr("Close"), this);
+   pb_cancel = new QPushButton(us_tr("Close"), this);
    pb_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_cancel->setMinimumHeight(minHeight1);
    pb_cancel->setPalette( PALET_PUSHB );
    connect(pb_cancel, SIGNAL(clicked()), SLOT(cancel()));
 
-   pb_help = new QPushButton(tr("Help"), this);
+   pb_help = new QPushButton(us_tr("Help"), this);
    pb_help->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_help->setMinimumHeight(minHeight1);
    pb_help->setPalette( PALET_PUSHB );
    connect(pb_help, SIGNAL(clicked()), SLOT(help()));
 
    int rows = 0, columns = 2, spacing = 2, j=0, margin=4;
-   Q3GridLayout *background=new Q3GridLayout(this, rows, columns, margin, spacing);
+   QGridLayout * background = new QGridLayout( this ); background->setContentsMargins( 0, 0, 0, 0 ); background->setSpacing( 0 ); background->setSpacing( spacing ); background->setContentsMargins( margin, margin, margin, margin );
 
-   background->addMultiCellWidget( lbl_info, j, j, 0, 1 );
+   background->addWidget( lbl_info , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1  ) - ( 0 ) );
    j++;
 
-   background->addMultiCellWidget( cb_compute_saxs_coeff_for_bead_models, j, j, 0, 1 );
+   background->addWidget( cb_compute_saxs_coeff_for_bead_models , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1  ) - ( 0 ) );
    j++;
-   background->addMultiCellWidget( cb_compute_sans_coeff_for_bead_models, j, j, 0, 1 );
+   background->addWidget( cb_compute_sans_coeff_for_bead_models , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1  ) - ( 0 ) );
    j++;
-   background->addMultiCellWidget( cb_bead_model_rayleigh               , j, j, 0, 1 );
+   background->addWidget( cb_bead_model_rayleigh                , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1  ) - ( 0 ) );
    j++;
    if ( started_in_expert_mode )
    {
-      background->addMultiCellWidget( cb_bead_models_use_bead_radius_ev    , j, j, 0, 1 );
+      background->addWidget( cb_bead_models_use_bead_radius_ev     , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1  ) - ( 0 ) );
       j++;
-      background->addMultiCellWidget( cb_bead_models_rho0_in_scat_factors  , j, j, 0, 1 );
+      background->addWidget( cb_bead_models_rho0_in_scat_factors   , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1  ) - ( 0 ) );
       j++;
-      background->addMultiCellWidget( cb_iq_global_avg_for_bead_models     , j, j, 0, 1 );
+      background->addWidget( cb_iq_global_avg_for_bead_models      , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1  ) - ( 0 ) );
       j++;
-      background->addMultiCellWidget( cb_bead_models_use_quick_fitting     , j, j, 0, 1 );
+      background->addWidget( cb_bead_models_use_quick_fitting      , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1  ) - ( 0 ) );
       j++;
-      background->addMultiCellWidget( cb_bead_models_use_gsm_fitting       , j, j, 0, 1 );
+      background->addWidget( cb_bead_models_use_gsm_fitting        , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1  ) - ( 0 ) );
       j++;
-      background->addMultiCellWidget( cb_apply_loaded_sf_repeatedly_to_pdb , j, j, 0, 1 );
+      background->addWidget( cb_apply_loaded_sf_repeatedly_to_pdb  , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1  ) - ( 0 ) );
       j++;
-      background->addMultiCellWidget( cb_bead_models_use_var_len_sf        , j, j, 0, 1 );
+      background->addWidget( cb_bead_models_use_var_len_sf         , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1  ) - ( 0 ) );
       j++;
 
       background->addWidget         ( lbl_bead_models_var_len_sf_max       , j, 0 );
@@ -230,7 +230,7 @@ void US_Hydrodyn_SasOptionsBeadModel::setupGUI()
       j++;
    }
 
-   background->addMultiCellWidget( cb_dummy_atom_pdbs_in_nm             , j, j, 0, 1 );
+   background->addWidget( cb_dummy_atom_pdbs_in_nm              , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1  ) - ( 0 ) );
    j++;
 
    background->addWidget( pb_help  , j, 0 );
@@ -348,9 +348,9 @@ void US_Hydrodyn_SasOptionsBeadModel::update_dummy_saxs_name( const QString & )
    QString qs;
    if ( (*saxs_options).dummy_saxs_names.size() )
    {
-      qs = QInputDialog::getItem(
-                                 tr( "US-SOMO SAS Bead Model Options : Select dummy atom name" ) ,
-                                 tr( "Select a defined dummy atom name" ),
+      qs = US_Static::getItem(
+                                 us_tr( "US-SOMO SAS Bead Model Options : Select dummy atom name" ) ,
+                                 us_tr( "Select a defined dummy atom name" ),
                                  (*saxs_options).dummy_saxs_names, 
                                  0, 
                                  FALSE, 

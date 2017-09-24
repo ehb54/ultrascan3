@@ -1,6 +1,6 @@
 #include "../include/us_saxs_util.h"
 //Added by qt3to4:
-#include <Q3TextStream>
+#include <QTextStream>
 
 // note: this program uses cout and/or cerr and this should be replaced
 
@@ -23,7 +23,7 @@ bool US_Saxs_Util::read_sas_data(
       error_msg = QString("Error: %1 does not exist").arg( filename );
       return false;
    }
-   QString ext = QFileInfo( filename ).extension( false ).lower();
+   QString ext = QFileInfo( filename ).suffix().toLower();
 
    QRegExp rx_valid_ext (
                          "^("
@@ -33,7 +33,7 @@ bool US_Saxs_Util::read_sas_data(
                          // "out|"
                          "ssaxs)$" );
 
-   if ( rx_valid_ext.search( ext ) == -1 )
+   if ( rx_valid_ext.indexIn( ext ) == -1 )
    {
       error_msg = QString("Error: %1 unsupported file extension %2").arg( filename ).arg( ext );
       return false;
@@ -49,7 +49,7 @@ bool US_Saxs_Util::read_sas_data(
    I.clear();
    e.clear();
    
-   Q3TextStream ts(&f);
+   QTextStream ts(&f);
    vector < QString > qv;
    QStringList qsl;
 
@@ -80,12 +80,17 @@ bool US_Saxs_Util::read_sas_data(
    for ( int i = 1; i < (int) qv.size(); i++ )
    {
       if ( qv[i].contains(QRegExp("^#")) ||
-           rx_ok_line.search( qv[i] ) == -1 )
+           rx_ok_line.indexIn( qv[i] ) == -1 )
       {
          continue;
       }
       
-      QStringList tokens = QStringList::split(QRegExp("\\s+"), qv[i].replace(QRegExp("^\\s+"),""));
+      // QStringList tokens = (qv[i].replace(QRegExp("^\\s+").split( QRegExp("\\s+") , QString::SkipEmptyParts ),""));
+      QStringList tokens;
+      {
+         QString qs = qv[i].replace(QRegExp("^\\s+"),"");
+         tokens = (qs ).split( QRegExp("\\s+") , QString::SkipEmptyParts );
+      }
 
       if ( (int)tokens.size() > 1 + offset )
       {
@@ -10909,16 +10914,16 @@ bool US_Saxs_Util::pdb2fasta( QString outfile, QStringList & files, int max_line
    QFile of( outfile );
    if ( of.exists() )
    {
-      cout << QString( "pdb2fasta: output file %1 already exists, please manually remove and try again\n" ).arg( of.name() );
+      cout << QString( "pdb2fasta: output file %1 already exists, please manually remove and try again\n" ).arg( of.fileName() );
       return false;
    }
    if ( !of.open( QIODevice::WriteOnly ) )
    {
-      cout << QString( "pdb2fasta: could not open output file %1, please check permissions and existence of directory if specified\n" ).arg( of.name() );
+      cout << QString( "pdb2fasta: could not open output file %1, please check permissions and existence of directory if specified\n" ).arg( of.fileName() );
       return false;
    }
    
-   Q3TextStream tso( &of );
+   QTextStream tso( &of );
 
    QRegExp rx_atom ("^ATOM");
    QRegExp rx_model("^MODEL");
@@ -10952,13 +10957,13 @@ bool US_Saxs_Util::pdb2fasta( QString outfile, QStringList & files, int max_line
       QFile f( files[ i ] );
       if ( !f.exists() )
       {
-         cout << QString( "pdb2fasta: file not found %1\n" ).arg( f.name() );
+         cout << QString( "pdb2fasta: file not found %1\n" ).arg( f.fileName() );
          of.close();
          return false;
       }
       if ( !f.open( QIODevice::ReadOnly ) )
       {
-         cout << QString( "pdb2fasta: file could not be opened %1\n" ).arg( f.name() );
+         cout << QString( "pdb2fasta: file could not be opened %1\n" ).arg( f.fileName() );
          of.close();
          return false;
       }
@@ -10968,9 +10973,9 @@ bool US_Saxs_Util::pdb2fasta( QString outfile, QStringList & files, int max_line
       // >pdb|model|chain
       // ; original full path
 
-      QString pdb = QFileInfo( f ).baseName( true );
+      QString pdb = QFileInfo( f ).completeBaseName();
 
-      Q3TextStream ts ( &f );
+      QTextStream ts ( &f );
 
       QString last_chain;
 
@@ -10987,7 +10992,11 @@ bool US_Saxs_Util::pdb2fasta( QString outfile, QStringList & files, int max_line
          QString qs = ts.readLine();
          if ( qs.contains( rx_model ) )
          {
-            QStringList qsl = QStringList::split( QRegExp("\\s+"), qs.left(20) );
+            QStringList qsl;
+            {
+               QString qs2 = qs.left(20);
+               qsl = (qs2 ).split( QRegExp("\\s+") , QString::SkipEmptyParts );
+            }
             if ( qsl.size() == 1 )
             {
                model = QString( "%1" ).arg( model_count );
@@ -11000,7 +11009,7 @@ bool US_Saxs_Util::pdb2fasta( QString outfile, QStringList & files, int max_line
 
          if ( qs.contains( rx_atom ) )
          {
-            if ( qs.mid( 12, 4 ).stripWhiteSpace() == "CA" )
+            if ( qs.mid( 12, 4 ).trimmed() == "CA" )
             {
                chain   = qs.mid( 22, 1 );
                resname = qs.mid( 17, 3 );
@@ -11013,7 +11022,7 @@ bool US_Saxs_Util::pdb2fasta( QString outfile, QStringList & files, int max_line
                      .arg( pdb )
                      .arg( model )
                      .arg( chain )
-                     .arg( f.name() )
+                     .arg( f.fileName() )
                      ;
                   last_chain = chain;
                   line_size = 0;
@@ -11058,7 +11067,7 @@ bool US_Saxs_Util::write_iq( QString & name, QString &msg, vector < double > &q,
       return false;
    }
 
-   Q3TextStream ts( &f );
+   QTextStream ts( &f );
    
    ts << QString( "# US-SOMO iq data from %1\n" ).arg( name );
 
@@ -11074,13 +11083,16 @@ bool US_Saxs_Util::mwt(
                        const vector < double > & q_in,
                        const vector < double > & I_in,
                        double                    Rg,
+                       double                    sigRg,
                        double                    I0,
+                       double                    sigI0,
                        double                    k,
                        double                    c,
                        double                    qmax,
                        double                  & Vc,
                        double                  & Qr,
                        double                  & mwt,
+                       double                  & mwt_sd,
                        QString                 & messages,
                        QString                 & notes,
                        QString                 & warning
@@ -11107,7 +11119,7 @@ bool US_Saxs_Util::mwt(
       if ( osize != i ) {
          q.resize( i + 1 );
          I.resize( i + 1 );
-         // qDebug( QString( "mwt q resized from %1 to %2" ).arg( osize + 1 ).arg( i + 1 ) );
+         // us_qdebug( QString( "mwt q resized from %1 to %2" ).arg( osize + 1 ).arg( i + 1 ) );
       }
    }
 
@@ -11178,6 +11190,68 @@ bool US_Saxs_Util::mwt(
    
    mwt = pow( ( Qr / exp( c ) ), 1e0 / k );
 
+   // compute sd
+   {
+      // using p.d.'s to propagate uncertainty from maxima:
+      //
+      //                1   2/k        4/k      2        1   2/k        4/k      2
+      //             (-----)    abs(I0)    sigRg    4 (-----)    abs(I0)    sigI0
+      //               c                                c
+      //              e  Rg                            e  Rg
+      // (%o19) sqrt(---------------------------- + ------------------------------)
+      //                 2   2            4/k            2            4/k   2
+      //                k  Rg  abs(sqiqdq)              k  abs(sqiqdq)    I0
+      //
+      // or as fortran
+      //
+      // sqrt(((1/(e**c*Rg))**(2/k)*abs(I0)**(4/k)*sigRg**2)/(k**2*Rg**2*abs(sqiqdq)**(4/k))+(4*(1/(e**c*Rg))**(2/k)*abs(I0)**(4/k)*sigI0**2)/(k**2*abs(sqiqdq)**(4/k)*I0**2))
+      // or in c
+      // mwt_sd =
+      //   sqrt(((pow(1e0/(exp(c)*Rg),2e0/k)*pow(I0,4e0/k)*sigRg*sigRg))/(k*k*Rg*Rg*pow(sqiqdq,4e0/k))+
+      //        ((4*pow(1e0/(exp(c)*Rg),2e0/k)*pow(I0,4e0/k)*sigI0*sigI0)/(k*k*pow(sqiqdq,4e0/k)*I0*I0)));
+      //
+      // factored:
+      //                1   2/k         2/k - 1        2      2       2      2
+      //        sqrt((-----)   ) abs(I0)        sqrt(I0  sigRg  + 4 Rg  sigI0 )
+      //               c
+      //              e  Rg
+      //(%o21)  ---------------------------------------------------------------
+      //                                                   2/k
+      //                         abs(k) abs(Rg) abs(sqiqdq)
+      //
+      // or as fortran
+      //
+      // (sqrt((1/(e**c*Rg))**(2/k))*abs(I0)**(2/k-1)*sqrt(I0**2*sigRg**2+4*Rg**2*sigI0**2))/(abs(k)*abs(Rg)*abs(sqiqdq)**(2/k))
+      // 
+      // or in c:
+      //
+      // mwt_sd = 
+      //    ( sqrt( pow( 1e0 / ( exp(c) * Rg ) , ( 2e0 / k ) ) ) *
+      //      pow( I0 , ( 2e0 / k - 1 ) ) *
+      //      sqrt( I0 * I0 * sigRg * sigRg + 4 * Rg * Rg * sigI0 * sigI0 ) )
+      //    /
+      //    ( k * Rg * pow( sqiqdq , 2e0 / k ) )
+      //    ;
+
+
+      // slightly improved:
+
+      double twooverk = 2e0 / k;
+
+      mwt_sd = 
+         ( sqrt( pow( 1e0 / ( exp(c) * Rg ) , twooverk ) ) *
+           pow( I0 , ( twooverk - 1 ) ) *
+           sqrt( I0 * I0 * sigRg * sigRg + 4 * Rg * Rg * sigI0 * sigI0 ) )
+         /
+         ( k * Rg * pow( sqiqdq , twooverk ) )
+         ;
+      
+      // us_qdebug( QString( "mwt %1 mwt_sd %1 mwt_sd_org %1 rg %1 sigRg %1 I0 %1 sigI0 %1" )
+      //         .arg( mwt ).arg( mwt_sd ).arg( mwt_sd_org ).arg( Rg ).arg( sigRg ).arg( I0 ).arg( sigI0 ) );
+   }
+         
+   //   us_qdebug( QString( "mwt %1 mwt_sd %2 rg %3 sigRg %4 I0 %5 sigI0 %6" )
+   
    return true;
 }
 
@@ -11294,7 +11368,7 @@ double US_Saxs_Util::holm_bonferroni( vector < double > P, double alpha ) {
 
    for ( int k = 0; k < m; ++k ) {
       double kalpha = alpha / ( m - k );
-      // qDebug( QString(  "kalpha %1 m %2 k %3 P[k] %4" ).arg( kalpha ).arg( m ).arg( k ).arg( P[k] ) );
+      // us_qdebug( QString(  "kalpha %1 m %2 k %3 P[k] %4" ).arg( kalpha ).arg( m ).arg( k ).arg( P[k] ) );
       if ( P[ k ] > kalpha ) {
          return kalpha;
       }
@@ -11302,3 +11376,20 @@ double US_Saxs_Util::holm_bonferroni( vector < double > P, double alpha ) {
 
    return 1e0;
 }
+#if QT_VERSION >= 0x040000
+QString us_tr( QString qs ) {
+   return QObject::tr( qPrintable( qs ) );
+}
+
+const char * us_trp( QString qs ) {
+   return qPrintable( us_tr( qPrintable( qs ) ) );
+}
+
+void us_qdebug( QString qs ) {
+   qDebug() << qPrintable( qs );
+}
+
+FILE * us_fopen( QString f, const char *mode ) {
+   return fopen( qPrintable( f ), mode );
+}
+#endif

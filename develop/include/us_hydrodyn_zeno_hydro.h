@@ -10,10 +10,15 @@ zeno_main(
 #include "qdatetime.h"
 #include "qfile.h"
 #include "qdir.h"
+#include "qtimer.h"
 
 #include "../include/us_hydrodyn.h"
 #include "../include/us_file_util.h"
 #include "../include/us_json.h"
+
+#if __cplusplus >= 201103L
+int zeno_cxx_main(int argc, char **argv, const char * fname, bool cmdline_temp, US_Udp_Msg * zeno_us_udp_msg );
+#endif
 
 class US_Hydrodyn_Zeno
 {
@@ -34,6 +39,16 @@ class US_Hydrodyn_Zeno
                vector < PDB_atom > *   bead_model,
                bool                    keep_files = false
                );
+   bool    run(
+               QString                 filename,
+               vector < PDB_atom > *   bead_model,
+               double              &   sum_mass,
+               double              &   sum_volume,
+               bool                    keep_files,
+               bool                    zeno_cxx,
+               int                     threads
+               );
+
    QString error_msg;
 
  private:

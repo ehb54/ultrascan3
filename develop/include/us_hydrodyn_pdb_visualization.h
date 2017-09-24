@@ -8,8 +8,9 @@
 #include <qlayout.h>
 #include <qlineedit.h>
 #include <qpushbutton.h>
-#include <q3buttongroup.h>
-#include <q3frame.h>
+#include <qradiobutton.h>
+#include <qgroupbox.h>
+//#include <q3frame.h>
 #include <qcheckbox.h>
 //Added by qt3to4:
 #include <QCloseEvent>
@@ -35,7 +36,7 @@ struct pdb_visualization
    QString filename;      // custom file name
 };
 
-class US_EXTERN US_Hydrodyn_PDB_Visualization : public Q3Frame
+class US_EXTERN US_Hydrodyn_PDB_Visualization : public QFrame
 {
    Q_OBJECT
 
@@ -56,11 +57,15 @@ class US_EXTERN US_Hydrodyn_PDB_Visualization : public Q3Frame
       QPushButton *pb_cancel;
       QPushButton *pb_filename;
       
-      Q3ButtonGroup *bg_visualization;
+      QGroupBox *bg_visualization;
 
       QCheckBox *cb_default;
       QCheckBox *cb_spacefilling;
       QCheckBox *cb_custom;
+
+      QRadioButton *rb_default;
+      QRadioButton *rb_spacefilling;
+      QRadioButton *rb_custom;
 
       QLineEdit *le_filename;
       
@@ -68,6 +73,7 @@ class US_EXTERN US_Hydrodyn_PDB_Visualization : public Q3Frame
    private slots:
       
       void setupGUI();
+      void select_option();
       void select_option(int);
       void select_filename();
       void update_filename(const QString &);

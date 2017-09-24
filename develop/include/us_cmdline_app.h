@@ -5,7 +5,7 @@
 #include "qobject.h"
 #include "qstring.h"
 #include "qstringlist.h"
-#include "q3process.h"
+#include "qprocess.h"
 #include "qtimer.h"
 
 #include <iostream>
@@ -49,13 +49,13 @@ class US_Cmdline_App : public QObject
    private slots:
       void readFromStdout();
       void readFromStderr();
-      void processExited();
-      void launchFinished();
+      void finished( int, QProcess::ExitStatus );
+      void started();
 
       void timeout();
 
    private:
-      Q3Process       process;
+      QProcess       process;
       QApplication * qa;
       QString        dir;
       QStringList    args;

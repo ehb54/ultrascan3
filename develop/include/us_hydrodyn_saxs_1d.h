@@ -7,14 +7,14 @@
 #include <qstring.h>
 #include <qlayout.h>
 #include <qpushbutton.h>
-#include <q3frame.h>
+//#include <q3frame.h>
 #include <qcheckbox.h>
-#include <q3textedit.h>
-#include <q3progressbar.h>
+#include <qtextedit.h>
+#include <qprogressbar.h>
 #include <qmenubar.h>
 #include <qfileinfo.h>
 #include <qprinter.h>
-#include <q3table.h>
+#include <qtablewidget.h>
 //Added by qt3to4:
 #include <QCloseEvent>
 
@@ -41,7 +41,7 @@
 
 using namespace std;
 
-class US_EXTERN US_Hydrodyn_Saxs_1d : public Q3Frame
+class US_EXTERN US_Hydrodyn_Saxs_1d : public QFrame
 {
    Q_OBJECT
 
@@ -109,7 +109,7 @@ class US_EXTERN US_Hydrodyn_Saxs_1d : public Q3Frame
       QCheckBox     *cb_only_ev;
       QCheckBox     *cb_vvv;
 
-      Q3ProgressBar  *progress;
+      QProgressBar  *progress;
 
       QLabel        *lbl_1d;
 
@@ -118,7 +118,7 @@ class US_EXTERN US_Hydrodyn_Saxs_1d : public Q3Frame
       QPushButton   *pb_stop;
 
       QFont         ft;
-      Q3TextEdit     *editor;
+      QTextEdit     *editor;
       QMenuBar      *m;
 
       QwtPlot       *plot_saxs;

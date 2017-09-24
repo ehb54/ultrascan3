@@ -17,7 +17,7 @@ struct dati1_supc
 #include "../include/us_file_util.h"
 #include "../include/us_json.h"
 
-#include <q3listbox.h>
+#include <qlistwidget.h>
 
 #include <stdio.h>
 #include <math.h>

@@ -11,7 +11,7 @@
 #include <math.h>
 #include <qstring.h>
 #include <qfile.h>
-#include <q3textstream.h>
+//#include <q3textstream.h>
 #include <algorithm>
 #include <iterator>
 #include <set>

@@ -33,10 +33,10 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Nth : public QDialog
 
 
       QLabel *                                lbl_files;
-      Q3ListBox *                              lb_files;
+      QListWidget *                              lb_files;
 
       QLabel *                                lbl_files_sel;
-      Q3ListBox *                              lb_files_sel;
+      QListWidget *                              lb_files_sel;
       QLabel *                                lbl_files_selected;
 
       QLabel *                                lbl_select_nth;

@@ -6,8 +6,8 @@
 int surfracer_main(float probe_radius, 
          vector <PDB_atom *> active_atoms,
          bool recheck,
-         Q3ProgressBar *progress,
-         Q3TextEdit *editor
+         QProgressBar *progress,
+         QTextEdit *editor
          );
 
 #define US_SURFRACER_ERR_MISSING_RESIDUE     1

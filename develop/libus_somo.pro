@@ -80,12 +80,12 @@ macx {
 
 SOURCES += \
   us_admin.cpp \
-  3dplot/mesh2mainwindowbase.cpp \
-  3dplot/mesh2mainwindow.cpp \
-  3dplot/colormapreader.cpp \
-  3dplot/lightingdlgbase.cpp \
-  3dplot/lightingdlg.cpp \
-  3dplot/mesh.cpp \
+#  3dplot/mesh2mainwindowbase.cpp \
+#  3dplot/mesh2mainwindow.cpp \
+#  3dplot/colormapreader.cpp \
+#  3dplot/lightingdlgbase.cpp \
+#  3dplot/lightingdlg.cpp \
+#  3dplot/mesh.cpp \
 #  D_calc.cpp \
 #  us_2dplot.cpp \
 #  us_3dsolutes.cpp \
@@ -433,12 +433,12 @@ SOURCES += \
 #  us_laser.cpp \
 
 HEADERS += \
-  3dplot/mesh2mainwindowbase.h \
-  3dplot/mesh2mainwindow.h \
-  3dplot/functions.h \
-  3dplot/colormapreader.h \
-  3dplot/lightingdlgbase.h \
-  3dplot/lightingdlg.h \
+#  3dplot/mesh2mainwindowbase.h \
+#  3dplot/mesh2mainwindow.h \
+#  3dplot/functions.h \
+#  3dplot/colormapreader.h \
+#  3dplot/lightingdlgbase.h \
+#  3dplot/lightingdlg.h \
 #  femreader.h \
 #  D_calc.h \
 #?  bluearrow.xpm \
@@ -723,22 +723,22 @@ HEADERS += \
   us_plot_util.h \
   shd_mpi/shs_data.h
 
-IMAGES = \
-  include/editcopy.xpm \
-  include/editcut.xpm \
-  include/editpaste.xpm \
-  include/editredo.xpm \
-  include/editundo.xpm \
-  include/filenew.xpm \
-  include/fileopen.xpm \
-  include/fileprint.xpm \
-  include/filesave.xpm \
-  include/textbold.xpm \
-  include/textcenter.xpm \
-  include/textitalic.xpm \
-  include/textjustify.xpm \
-  include/textleft.xpm \
-  include/textright.xpm \
-  include/textunder.xpm
+# IMAGES = \
+#   include/editcopy.xpm \
+#   include/editcut.xpm \
+#   include/editpaste.xpm \
+#   include/editredo.xpm \
+#   include/editundo.xpm \
+#   include/filenew.xpm \
+#   include/fileopen.xpm \
+#   include/fileprint.xpm \
+#   include/filesave.xpm \
+#   include/textbold.xpm \
+#   include/textcenter.xpm \
+#   include/textitalic.xpm \
+#   include/textjustify.xpm \
+#   include/textleft.xpm \
+#   include/textright.xpm \
+#   include/textunder.xpm
 
-QT += qt3support opengl network
+QT += opengl network

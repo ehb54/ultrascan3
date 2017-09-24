@@ -3,12 +3,12 @@
 #include "../include/us_hydrodyn.h"
 //Added by qt3to4:
 #include <QCloseEvent>
-#include <Q3GridLayout>
-#include <Q3Frame>
+#include <QGridLayout>
+#include <QFrame>
 #include <QLabel>
 
 US_Hydrodyn_Misc::US_Hydrodyn_Misc(struct misc_options *misc,
-                                   bool *misc_widget, void *us_hydrodyn, QWidget *p, const char *name) : Q3Frame(p, name)
+                                   bool *misc_widget, void *us_hydrodyn, QWidget *p, const char *name) : QFrame( p )
 {
    this->misc = misc;
    this->misc_widget = misc_widget;
@@ -16,7 +16,7 @@ US_Hydrodyn_Misc::US_Hydrodyn_Misc(struct misc_options *misc,
    this->us_hydrodyn = us_hydrodyn;
    USglobal=new US_Config();
    setPalette( PALET_FRAME );
-   setCaption(tr("Misceallaneous SOMO Options"));
+   setWindowTitle(us_tr("Misceallaneous SOMO Options"));
    setupGUI();
    global_Xpos += 30;
    global_Ypos += 30;
@@ -32,16 +32,16 @@ void US_Hydrodyn_Misc::setupGUI()
 {
    int minHeight1 = 30;
    QString str;
-   lbl_info = new QLabel(tr("Miscellaneous SOMO Options:"), this);
+   lbl_info = new QLabel(us_tr("Miscellaneous SOMO Options:"), this);
    Q_CHECK_PTR(lbl_info);
-   lbl_info->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Raised);
+   lbl_info->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_info->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_info->setMinimumHeight(minHeight1);
    lbl_info->setPalette( PALET_FRAME );
    AUTFBACK( lbl_info );
    lbl_info->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
 
-   lbl_hydrovol = new QLabel(tr(" Hydration Water Vol. (A^3): "), this);
+   lbl_hydrovol = new QLabel(us_tr(" Hydration Water Vol. (A^3): "), this);
    Q_CHECK_PTR(lbl_hydrovol);
    lbl_hydrovol->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_hydrovol->setMinimumWidth(200);
@@ -65,7 +65,7 @@ void US_Hydrodyn_Misc::setupGUI()
    connect(cnt_hydrovol, SIGNAL(valueChanged(double)), SLOT(update_hydrovol(double)));
 
    cb_vbar = new QCheckBox(this);
-   cb_vbar->setText(tr(" Calculate vbar "));
+   cb_vbar->setText(us_tr(" Calculate vbar "));
    cb_vbar->setChecked((*misc).compute_vbar);
    cb_vbar->setMinimumHeight(minHeight1);
    cb_vbar->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -73,7 +73,7 @@ void US_Hydrodyn_Misc::setupGUI()
    AUTFBACK( cb_vbar );
    connect(cb_vbar, SIGNAL(clicked()), SLOT(set_vbar()));
 
-   pb_vbar = new QPushButton(tr("Select vbar"), this);
+   pb_vbar = new QPushButton(us_tr("Select vbar"), this);
    Q_CHECK_PTR(pb_vbar);
    pb_vbar->setEnabled(!(*misc).compute_vbar);
    pb_vbar->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
@@ -82,7 +82,7 @@ void US_Hydrodyn_Misc::setupGUI()
    connect(pb_vbar, SIGNAL(clicked()), SLOT(select_vbar()));
 
 
-   lbl_vbar = new QLabel(tr(" Enter a vbar value: "), this);
+   lbl_vbar = new QLabel(us_tr(" Enter a vbar value: "), this);
    Q_CHECK_PTR(lbl_vbar);
    lbl_vbar->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_vbar->setMinimumHeight(minHeight1);
@@ -90,7 +90,7 @@ void US_Hydrodyn_Misc::setupGUI()
    AUTFBACK( lbl_vbar );
    lbl_vbar->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
-   le_vbar = new QLineEdit(this, "vbar Line Edit");
+   le_vbar = new QLineEdit( this );    le_vbar->setObjectName( "vbar Line Edit" );
    le_vbar->setMinimumHeight(minHeight1);
    le_vbar->setEnabled(!(*misc).compute_vbar);
    le_vbar->setText(str.sprintf("%5.3f", (*misc).vbar));
@@ -99,7 +99,7 @@ void US_Hydrodyn_Misc::setupGUI()
    le_vbar->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_vbar, SIGNAL(textChanged(const QString &)), SLOT(update_vbar(const QString &)));
 
-   lbl_vbar_temperature = new QLabel(tr(" Vbar measured/computed at T=(ºC): "), this);
+   lbl_vbar_temperature = new QLabel(us_tr(" Vbar measured/computed at T=(ºC): "), this);
    Q_CHECK_PTR(lbl_vbar_temperature);
    lbl_vbar_temperature->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_vbar_temperature->setMinimumHeight(minHeight1);
@@ -107,7 +107,7 @@ void US_Hydrodyn_Misc::setupGUI()
    AUTFBACK( lbl_vbar_temperature );
    lbl_vbar_temperature->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
-   le_vbar_temperature = new QLineEdit(this, "vbar_temperature Line Edit");
+   le_vbar_temperature = new QLineEdit( this );    le_vbar_temperature->setObjectName( "vbar_temperature Line Edit" );
    le_vbar_temperature->setMinimumHeight(minHeight1);
    le_vbar_temperature->setEnabled(!(*misc).compute_vbar);
    le_vbar_temperature->setText(str.sprintf("%5.2f", (*misc).vbar_temperature));
@@ -117,7 +117,7 @@ void US_Hydrodyn_Misc::setupGUI()
    connect(le_vbar_temperature, SIGNAL(textChanged(const QString &)), SLOT(update_vbar_temperature(const QString &)));
 
    cb_pb_rule_on = new QCheckBox(this);
-   cb_pb_rule_on->setText(tr(" Enable Peptide Bond Rule "));
+   cb_pb_rule_on->setText(us_tr(" Enable Peptide Bond Rule "));
    cb_pb_rule_on->setChecked((*misc).pb_rule_on);
    cb_pb_rule_on->setMinimumHeight(minHeight1);
    cb_pb_rule_on->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -125,16 +125,16 @@ void US_Hydrodyn_Misc::setupGUI()
    AUTFBACK( cb_pb_rule_on );
    connect(cb_pb_rule_on, SIGNAL(clicked()), SLOT(set_pb_rule_on()));
 
-   lbl_avg_banner = new QLabel(tr("Average Parameters for Automatic Bead Builder:"), this);
+   lbl_avg_banner = new QLabel(us_tr("Average Parameters for Automatic Bead Builder:"), this);
    Q_CHECK_PTR(lbl_avg_banner);
-   lbl_avg_banner->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Raised);
+   lbl_avg_banner->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_avg_banner->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_avg_banner->setMinimumHeight(minHeight1);
    lbl_avg_banner->setPalette( PALET_FRAME );
    AUTFBACK( lbl_avg_banner );
    lbl_avg_banner->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
 
-   lbl_avg_radius = new QLabel(tr(" Average atomic radius (A): "), this);
+   lbl_avg_radius = new QLabel(us_tr(" Average atomic radius (A): "), this);
    Q_CHECK_PTR(lbl_avg_radius);
    lbl_avg_radius->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_avg_radius->setMinimumWidth(200);
@@ -157,7 +157,7 @@ void US_Hydrodyn_Misc::setupGUI()
    AUTFBACK( cnt_avg_radius );
    connect(cnt_avg_radius, SIGNAL(valueChanged(double)), SLOT(update_avg_radius(double)));
 
-   lbl_avg_mass = new QLabel(tr(" Average atomic mass (Da): "), this);
+   lbl_avg_mass = new QLabel(us_tr(" Average atomic mass (Da): "), this);
    Q_CHECK_PTR(lbl_avg_mass);
    lbl_avg_mass->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_avg_mass->setMinimumWidth(200);
@@ -180,7 +180,7 @@ void US_Hydrodyn_Misc::setupGUI()
    AUTFBACK( cnt_avg_mass );
    connect(cnt_avg_mass, SIGNAL(valueChanged(double)), SLOT(update_avg_mass(double)));
 
-   lbl_avg_hydration = new QLabel(tr(" Average atomic hydration: "), this);
+   lbl_avg_hydration = new QLabel(us_tr(" Average atomic hydration: "), this);
    Q_CHECK_PTR(lbl_avg_hydration);
    lbl_avg_hydration->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_avg_hydration->setMinimumWidth(200);
@@ -203,7 +203,7 @@ void US_Hydrodyn_Misc::setupGUI()
    AUTFBACK( cnt_avg_hydration );
    connect(cnt_avg_hydration, SIGNAL(valueChanged(double)), SLOT(update_avg_hydration(double)));
 
-   lbl_avg_volume = new QLabel(tr(" Average bead/atom volume (A^3): "), this);
+   lbl_avg_volume = new QLabel(us_tr(" Average bead/atom volume (A^3): "), this);
    Q_CHECK_PTR(lbl_avg_volume);
    lbl_avg_volume->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_avg_volume->setMinimumWidth(200);
@@ -226,7 +226,7 @@ void US_Hydrodyn_Misc::setupGUI()
    AUTFBACK( cnt_avg_volume );
    connect(cnt_avg_volume, SIGNAL(valueChanged(double)), SLOT(update_avg_volume(double)));
 
-   lbl_avg_vbar = new QLabel(tr(" Average Residue vbar: "), this);
+   lbl_avg_vbar = new QLabel(us_tr(" Average Residue vbar: "), this);
    Q_CHECK_PTR(lbl_avg_vbar);
    lbl_avg_vbar->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_avg_vbar->setMinimumWidth(200);
@@ -249,15 +249,15 @@ void US_Hydrodyn_Misc::setupGUI()
    AUTFBACK( cnt_avg_vbar );
    connect(cnt_avg_vbar, SIGNAL(valueChanged(double)), SLOT(update_avg_vbar(double)));
 
-   lbl_bead_model_controls = new QLabel(tr("Bead model controls:"), this);
-   lbl_bead_model_controls->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Raised);
+   lbl_bead_model_controls = new QLabel(us_tr("Bead model controls:"), this);
+   lbl_bead_model_controls->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_bead_model_controls->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_bead_model_controls->setMinimumHeight(minHeight1);
    lbl_bead_model_controls->setPalette( PALET_FRAME );
    AUTFBACK( lbl_bead_model_controls );
    lbl_bead_model_controls->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
 
-   lbl_target_e_density = new QLabel(tr(" Target electron density (A^-3): "), this);
+   lbl_target_e_density = new QLabel(us_tr(" Target electron density (A^-3): "), this);
    lbl_target_e_density->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_target_e_density->setMinimumWidth(200);
    lbl_target_e_density->setMinimumHeight(minHeight1);
@@ -265,7 +265,7 @@ void US_Hydrodyn_Misc::setupGUI()
    AUTFBACK( lbl_target_e_density );
    lbl_target_e_density->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
-   le_target_e_density = new QLineEdit(this, "target_e_density Line Edit");
+   le_target_e_density = new QLineEdit( this );    le_target_e_density->setObjectName( "target_e_density Line Edit" );
    le_target_e_density->setMinimumHeight(minHeight1);
    le_target_e_density->setEnabled(true);
    le_target_e_density->setText(QString("%1").arg((*misc).target_e_density));
@@ -274,7 +274,7 @@ void US_Hydrodyn_Misc::setupGUI()
    le_target_e_density->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_target_e_density, SIGNAL(textChanged(const QString &)), SLOT(update_target_e_density(const QString &)));
 
-   lbl_target_volume = new QLabel(tr(" Target volume (A^3): "), this);
+   lbl_target_volume = new QLabel(us_tr(" Target volume (A^3): "), this);
    lbl_target_volume->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_target_volume->setMinimumWidth(200);
    lbl_target_volume->setMinimumHeight(minHeight1);
@@ -282,7 +282,7 @@ void US_Hydrodyn_Misc::setupGUI()
    AUTFBACK( lbl_target_volume );
    lbl_target_volume->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
-   le_target_volume = new QLineEdit(this, "target_volume Line Edit");
+   le_target_volume = new QLineEdit( this );    le_target_volume->setObjectName( "target_volume Line Edit" );
    le_target_volume->setMinimumHeight(minHeight1);
    le_target_volume->setEnabled(true);
    le_target_volume->setText(QString("%1").arg((*misc).target_volume));
@@ -292,7 +292,7 @@ void US_Hydrodyn_Misc::setupGUI()
    connect(le_target_volume, SIGNAL(textChanged(const QString &)), SLOT(update_target_volume(const QString &)));
 
    cb_set_target_on_load_pdb = new QCheckBox(this);
-   cb_set_target_on_load_pdb->setText(tr(" Set targets on load PDB "));
+   cb_set_target_on_load_pdb->setText(us_tr(" Set targets on load PDB "));
    cb_set_target_on_load_pdb->setChecked((*misc).set_target_on_load_pdb);
    cb_set_target_on_load_pdb->setMinimumHeight(minHeight1);
    cb_set_target_on_load_pdb->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -301,7 +301,7 @@ void US_Hydrodyn_Misc::setupGUI()
    connect(cb_set_target_on_load_pdb, SIGNAL(clicked()), SLOT(set_set_target_on_load_pdb()));
 
    cb_equalize_radii = new QCheckBox(this);
-   cb_equalize_radii->setText(tr(" Equalize radii (constant volume)"));
+   cb_equalize_radii->setText(us_tr(" Equalize radii (constant volume)"));
    cb_equalize_radii->setChecked((*misc).equalize_radii);
    cb_equalize_radii->setMinimumHeight(minHeight1);
    cb_equalize_radii->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -309,31 +309,31 @@ void US_Hydrodyn_Misc::setupGUI()
    AUTFBACK( cb_equalize_radii );
    connect(cb_equalize_radii, SIGNAL(clicked()), SLOT(set_equalize_radii()));
 
-   // lbl_hydro_method = new QLabel(tr("Hydrodynamic Method:"), this);
+   // lbl_hydro_method = new QLabel(us_tr("Hydrodynamic Method:"), this);
    // lbl_hydro_method->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    // lbl_hydro_method->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    // lbl_hydro_method->setMinimumHeight(minHeight1);
-   // lbl_hydro_method->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
+   // lbl_hydro_method->setPalette( USglobal->global_colors.cg_frame );
    // lbl_hydro_method->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
 
    // cb_hydro_supc = new QCheckBox(this);
-   // cb_hydro_supc->setText(tr(" Standard matrix inversion"));
+   // cb_hydro_supc->setText(us_tr(" Standard matrix inversion"));
    // cb_hydro_supc->setChecked((*misc).hydro_supc);
    // cb_hydro_supc->setMinimumHeight(minHeight1);
    // cb_hydro_supc->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   // cb_hydro_supc->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   // cb_hydro_supc->setPalette( USglobal->global_colors.cg_normal );
    // connect(cb_hydro_supc, SIGNAL(clicked()), SLOT(set_hydro_supc()));
 
    // cb_hydro_zeno = new QCheckBox(this);
-   // cb_hydro_zeno->setText(tr(" Zeno method"));
+   // cb_hydro_zeno->setText(us_tr(" Zeno method"));
    // cb_hydro_zeno->setChecked((*misc).hydro_zeno);
    // cb_hydro_zeno->setMinimumHeight(minHeight1);
    // cb_hydro_zeno->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   // cb_hydro_zeno->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   // cb_hydro_zeno->setPalette( USglobal->global_colors.cg_normal );
    // connect(cb_hydro_zeno, SIGNAL(clicked()), SLOT(set_hydro_zeno()));
 
-   lbl_other = new QLabel(tr("Other options:"), this);
-   lbl_other->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Raised);
+   lbl_other = new QLabel(us_tr("Other options:"), this);
+   lbl_other->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_other->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_other->setMinimumHeight(minHeight1);
    lbl_other->setPalette( PALET_FRAME );
@@ -341,7 +341,7 @@ void US_Hydrodyn_Misc::setupGUI()
    lbl_other->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
 
    cb_export_msroll = new QCheckBox(this);
-   cb_export_msroll->setText(tr(" Create MSROLL atomic radii and name files on load residue file"));
+   cb_export_msroll->setText(us_tr(" Create MSROLL atomic radii and name files on load residue file"));
    cb_export_msroll->setChecked((*misc).export_msroll);
    cb_export_msroll->setMinimumHeight(minHeight1);
    cb_export_msroll->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -349,13 +349,13 @@ void US_Hydrodyn_Misc::setupGUI()
    AUTFBACK( cb_export_msroll );
    connect(cb_export_msroll, SIGNAL(clicked()), SLOT(set_export_msroll()));
 
-   pb_cancel = new QPushButton(tr("Close"), this);
+   pb_cancel = new QPushButton(us_tr("Close"), this);
    pb_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_cancel->setMinimumHeight(minHeight1);
    pb_cancel->setPalette( PALET_PUSHB );
    connect(pb_cancel, SIGNAL(clicked()), SLOT(cancel()));
 
-   pb_help = new QPushButton(tr("Help"), this);
+   pb_help = new QPushButton(us_tr("Help"), this);
    Q_CHECK_PTR(pb_help);
    pb_help->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_help->setMinimumHeight(minHeight1);
@@ -363,9 +363,9 @@ void US_Hydrodyn_Misc::setupGUI()
    connect(pb_help, SIGNAL(clicked()), SLOT(help()));
 
    int rows=8, columns = 2, spacing = 2, j=0, margin=4;
-   Q3GridLayout *background=new Q3GridLayout(this, rows, columns, margin, spacing);
+   QGridLayout * background = new QGridLayout( this ); background->setContentsMargins( 0, 0, 0, 0 ); background->setSpacing( 0 ); background->setSpacing( spacing ); background->setContentsMargins( margin, margin, margin, margin );
 
-   background->addMultiCellWidget(lbl_info, j, j, 0, 1);
+   background->addWidget( lbl_info , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
    j++;
    background->addWidget(cb_vbar, j, 0);
    background->addWidget(pb_vbar, j, 1);
@@ -379,9 +379,9 @@ void US_Hydrodyn_Misc::setupGUI()
    background->addWidget(lbl_hydrovol, j, 0);
    background->addWidget(cnt_hydrovol, j, 1);
    j++;
-   background->addMultiCellWidget(cb_pb_rule_on, j, j, 0, 1);
+   background->addWidget( cb_pb_rule_on , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
    j++;
-   background->addMultiCellWidget(lbl_avg_banner, j, j, 0, 1);
+   background->addWidget( lbl_avg_banner , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
    j++;
    background->addWidget(lbl_avg_radius, j, 0);
    background->addWidget(cnt_avg_radius, j, 1);
@@ -399,7 +399,7 @@ void US_Hydrodyn_Misc::setupGUI()
    background->addWidget(cnt_avg_vbar, j, 1);
    j++;
 
-   background->addMultiCellWidget(lbl_bead_model_controls, j, j, 0, 1);
+   background->addWidget( lbl_bead_model_controls , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
    j++;
    background->addWidget(lbl_target_e_density, j, 0);
    background->addWidget(le_target_e_density, j, 1);
@@ -411,15 +411,15 @@ void US_Hydrodyn_Misc::setupGUI()
    background->addWidget(cb_equalize_radii, j, 1);
    j++;
 
-   // background->addMultiCellWidget(lbl_hydro_method, j, j, 0, 1);
+   // background->addWidget( lbl_hydro_method , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
    // j++;
    // background->addWidget(cb_hydro_supc, j, 0);
    // background->addWidget(cb_hydro_zeno, j, 1);
    // j++;
 
-   background->addMultiCellWidget( lbl_other, j, j, 0, 1);
+   background->addWidget( lbl_other , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
    j++;
-   background->addMultiCellWidget( cb_export_msroll, j, j, 0, 1 );
+   background->addWidget( cb_export_msroll , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1  ) - ( 0 ) );
    j++;
 
    background->addWidget(pb_help, j, 0);
@@ -456,7 +456,7 @@ void US_Hydrodyn_Misc::select_vbar()
    vbar_dlg = new US_Vbar_DB(20.0, &val, &val, true, false, 0);
    vbar_dlg->setPalette( PALET_FRAME );
    AUTFBACK( vbar_dlg );
-   vbar_dlg->setCaption(tr("V-bar Calculation"));
+   vbar_dlg->setWindowTitle(us_tr("V-bar Calculation"));
    connect(vbar_dlg, SIGNAL(valueChanged(float, float)), SLOT(update_vbar_signal(float, float)));
    vbar_dlg->exec();
    emit vbar_changed();

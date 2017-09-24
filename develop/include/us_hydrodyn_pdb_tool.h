@@ -7,14 +7,14 @@
 #include <qstring.h>
 #include <qlayout.h>
 #include <qpushbutton.h>
-#include <q3frame.h>
+//#include <q3frame.h>
 #include <qcheckbox.h>
-#include <q3textedit.h>
-#include <q3progressbar.h>
+#include <qtextedit.h>
+#include <qprogressbar.h>
 #include <qmenubar.h>
 #include <qfileinfo.h>
 #include <qprinter.h>
-#include <q3listview.h>
+#include <qtreewidget.h>
 //Added by qt3to4:
 #include <QCloseEvent>
 
@@ -46,7 +46,7 @@ using namespace std;
 # endif
 #endif
 
-class US_EXTERN US_Hydrodyn_Pdb_Tool : public Q3Frame
+class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
 {
 
    Q_OBJECT
@@ -71,7 +71,7 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public Q3Frame
       QLabel        *lbl_title;
 
       QFont         ft;
-      Q3TextEdit     *editor;
+      QTextEdit     *editor;
       QMenuBar      *m;
 
       QPushButton   *pb_split_pdb;
@@ -82,8 +82,8 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public Q3Frame
       QPushButton   *pb_h_to_chainX;
 
       mQLabel        *lbl_csv;
-      Q3ListView     *lv_csv;
-      Q3TextEdit     *te_csv;
+      QTreeWidget     *lv_csv;
+      QTextEdit     *te_csv;
       QPushButton   *pb_csv_load_1;
       QPushButton   *pb_csv_load;
       QPushButton   *pb_csv_visualize;
@@ -112,8 +112,8 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public Q3Frame
       QLabel        *lbl_csv_sel_msg;
 
       mQLabel        *lbl_csv2;
-      Q3ListView     *lv_csv2;
-      Q3TextEdit     *te_csv2;
+      QTreeWidget     *lv_csv2;
+      QTextEdit     *te_csv2;
       QwtWheel      *qwtw_wheel;
       QLabel        *lbl_pos_range;
       QPushButton   *pb_csv2_load_1;
@@ -172,18 +172,18 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public Q3Frame
       bool          selection_since_clean_csv2;
       pdb_sel_count last_count_csv2;
 
-      pdb_sel_count count_selected         ( Q3ListView *lv );
-      bool          any_selected           ( Q3ListView *lv );
-      void          clean_selection        ( Q3ListView *lv );
-      void          sel                    ( Q3ListView *lv );
-      void          invert_selection       ( Q3ListView *lv );
+      pdb_sel_count count_selected         ( QTreeWidget *lv );
+      bool          any_selected           ( QTreeWidget *lv );
+      void          clean_selection        ( QTreeWidget *lv );
+      void          sel                    ( QTreeWidget *lv );
+      void          invert_selection       ( QTreeWidget *lv );
       QString       pdb_sel_count_msg      ( pdb_sel_count &counts );
-      csv           to_csv                 ( Q3ListView *lv, csv &ref_csv, bool only_selected = false );
-      bool          is_selected            ( Q3ListViewItem *lvi );
-      bool          child_selected         ( Q3ListViewItem *lvi );
-      bool          all_children_selected  ( Q3ListViewItem *lvi );
-      QString       key                    ( Q3ListViewItem *lvi );
-      void          csv_to_lv              ( csv &csv1, Q3ListView *lv );
+      csv           to_csv                 ( QTreeWidget *lv, csv &ref_csv, bool only_selected = false );
+      bool          is_selected            ( QTreeWidgetItem *lvi );
+      bool          child_selected         ( QTreeWidgetItem *lvi );
+      bool          all_children_selected  ( QTreeWidgetItem *lvi );
+      QString       key                    ( QTreeWidgetItem *lvi );
+      void          csv_to_lv              ( csv &csv1, QTreeWidget *lv );
       void          csv_setup_keys         ( csv &csv1 );
       void          list_csv_keys          ( csv &csv1 );
       csv           csv_clipboard;
@@ -197,12 +197,12 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public Q3Frame
       QStringList   csv_to_pdb_qsl         ( csv &csv1, bool only_atoms = false );
       QString       data_to_key            ( vector < QString > &data );
       QString       key_to_bottom_key      ( csv &csv1 );
-      void          save_csv               ( Q3ListView *lv );
+      void          save_csv               ( QTreeWidget *lv );
 
-      void          visualize              ( Q3ListView *lv );
+      void          visualize              ( QTreeWidget *lv );
 
-      void          load                   ( Q3ListView *lv, QString &filename, bool only_first_nmr = false );
-      void          load_from_qsl          ( Q3ListView *lv, QStringList &pdb_text, QString title );
+      void          load                   ( QTreeWidget *lv, QString &filename, bool only_first_nmr = false );
+      void          load_from_qsl          ( QTreeWidget *lv, QStringList &pdb_text, QString title );
 
       void          csv2_redisplay         ( unsigned int pos );
       void          csv2_push              ( bool save_current = false );
@@ -210,12 +210,12 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public Q3Frame
       void          csv_sel_msg            ();
       void          csv2_sel_msg           ();
 
-      void          sel_nearest_atoms      ( Q3ListView *lv );
-      void          sel_nearest_residues   ( Q3ListView *lv );
-      double        pair_dist              ( Q3ListViewItem *item1, Q3ListViewItem *item2 );
+      void          sel_nearest_atoms      ( QTreeWidget *lv );
+      void          sel_nearest_residues   ( QTreeWidget *lv );
+      double        pair_dist              ( QTreeWidgetItem *item1, QTreeWidgetItem *item2 );
 
       // compute minimum pair distance between chains return respective keys in key_1, key_2
-      double        minimum_pair_distance  ( Q3ListView *lv,
+      double        minimum_pair_distance  ( QTreeWidget *lv,
                                              QString    chain_1,
                                              QString    chain_2,
                                              QString  & key_1,
@@ -229,54 +229,54 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public Q3Frame
       QString       errormsg;
       US_Saxs_Util  *usu;
 
-      void          select_these           ( Q3ListView *lv, vector < QString > &error_keys );
+      void          select_these           ( QTreeWidget *lv, vector < QString > &error_keys );
 
-      void          replace_selected_residues ( Q3ListView *lv, csv &csv_use, QString from, QString to );
-      void          distances              ( Q3ListView *lv );
-      QString       get_atom_name          ( Q3ListViewItem *lvi );
-      QString       get_atom_number        ( Q3ListViewItem *lvi );
-      QString       get_chain_id           ( Q3ListViewItem *lvi );
-      QString       get_model_id           ( Q3ListViewItem *lvi );
-      QString       get_residue_name       ( Q3ListViewItem *lvi );
-      QString       get_residue_number     ( Q3ListViewItem *lvi );
-      QStringList   atom_set               ( Q3ListView *lv ); // returns a list of selected atoms
-      QStringList   chain_set              ( Q3ListView *lv ); // returns a list of selected chains
-      QStringList   model_set              ( Q3ListView *lv ); // returns a list of selected models
-      QStringList   atom_sel_rasmol        ( Q3ListView *lv ); // returns a list of selected atoms with chain and atom
-      void          select_model           ( Q3ListView *lv, QString model ); // selects just that model
-      void          select_model           ( Q3ListView *lv, const set < QString > & models );
-      void          select_chain           ( Q3ListView *lv ); // selected a set of chains
-      void          select_chain           ( Q3ListView *lv, QStringList chains ); // selected a set of chains
-      void          select_chain           ( Q3ListView *lv, QString chain ); // selected one chain
-      void          compute_angle          ( Q3ListView *lv );
+      void          replace_selected_residues ( QTreeWidget *lv, csv &csv_use, QString from, QString to );
+      void          distances              ( QTreeWidget *lv );
+      QString       get_atom_name          ( QTreeWidgetItem *lvi );
+      QString       get_atom_number        ( QTreeWidgetItem *lvi );
+      QString       get_chain_id           ( QTreeWidgetItem *lvi );
+      QString       get_model_id           ( QTreeWidgetItem *lvi );
+      QString       get_residue_name       ( QTreeWidgetItem *lvi );
+      QString       get_residue_number     ( QTreeWidgetItem *lvi );
+      QStringList   atom_set               ( QTreeWidget *lv ); // returns a list of selected atoms
+      QStringList   chain_set              ( QTreeWidget *lv ); // returns a list of selected chains
+      QStringList   model_set              ( QTreeWidget *lv ); // returns a list of selected models
+      QStringList   atom_sel_rasmol        ( QTreeWidget *lv ); // returns a list of selected atoms with chain and atom
+      void          select_model           ( QTreeWidget *lv, QString model ); // selects just that model
+      void          select_model           ( QTreeWidget *lv, const set < QString > & models );
+      void          select_chain           ( QTreeWidget *lv ); // selected a set of chains
+      void          select_chain           ( QTreeWidget *lv, QStringList chains ); // selected a set of chains
+      void          select_chain           ( QTreeWidget *lv, QString chain ); // selected one chain
+      void          compute_angle          ( QTreeWidget *lv );
 
-      csv           reseq_csv              ( Q3ListView *lv, csv &ref_csv, bool only_selected = false );
+      csv           reseq_csv              ( QTreeWidget *lv, csv &ref_csv, bool only_selected = false );
 
       void          split_pdb_by_residue   ( QFile &f );
 
-      void          select_residues_with_atoms_selected( Q3ListView *lv );
+      void          select_residues_with_atoms_selected( QTreeWidget *lv );
 
-      set    < Q3ListViewItem * >            get_exposed_set         ( Q3ListView *lv, 
+      set    < QTreeWidgetItem * >            get_exposed_set         ( QTreeWidget *lv, 
                                                                       double max_asa,
                                                                       bool only_selected = false );
-      set    < Q3ListViewItem * >            get_exposed_set_naccess ( Q3ListView *lv, 
+      set    < QTreeWidgetItem * >            get_exposed_set_naccess ( QTreeWidget *lv, 
                                                                       double max_asa, 
                                                                       bool either_sc_or_mc,
                                                                       bool only_selected = false );
       
-      vector < QString >                    get_models              ( Q3ListView *lv );
-      vector < vector < Q3ListViewItem * > > separate_models         ( Q3ListView *lv );
+      vector < QString >                    get_models              ( QTreeWidget *lv );
+      vector < vector < QTreeWidgetItem * > > separate_models         ( QTreeWidget *lv );
       vector < QStringList >                separate_models         ( csv &ref_csv );
 
-      Q3Process  * naccess;
+      QProcess  * naccess;
       QString     naccess_last_pdb;
       QStringList naccess_result_data;
       bool        naccess_running;
       bool        naccess_run                    ( QString pdb );
       
-      void        do_sort( Q3ListView *lv );
+      void        do_sort( QTreeWidget *lv );
 
-      void        do_bm( Q3ListView *lv );
+      void        do_bm( QTreeWidget *lv );
 
       vector < QWidget * > panel1_widgets;
       vector < QWidget * > panel2_widgets;
@@ -361,10 +361,10 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public Q3Frame
 
       void adjust_wheel( double );
 
-      void        naccess_readFromStdout         ();
-      void        naccess_readFromStderr         ();
-      void        naccess_launchFinished         ();
-      void        naccess_processExited          ();
+      void        naccess_readFromStdout();
+      void        naccess_readFromStderr();
+      void        naccess_started();
+      void        naccess_finished( int, QProcess::ExitStatus );
 
       void cancel();
       void help();

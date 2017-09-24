@@ -1,7 +1,7 @@
 #include "../include/us_saxs_util.h"
 #include "../include/us_revision.h"
 //Added by qt3to4:
-#include <Q3TextStream>
+#include <QTextStream>
 
 // note: this program uses cout and/or cerr and this should be replaced
 
@@ -77,7 +77,7 @@ bool US_Saxs_Util::dmd_findSS()
 
    cout << "Starting " + prog + "\n";
    cout << cmd << endl;
-   system( cmd.ascii() );
+   system( cmd.toAscii().data() );
    cout << "Finished " + prog + "\n";
 
    // findSS creates 1 file: constraints_file
@@ -103,7 +103,7 @@ bool US_Saxs_Util::dmd_findSS()
       }
 
       control_parameters[ "dmd:ss" ] = "";
-      Q3TextStream ts( &f );
+      QTextStream ts( &f );
       while ( !ts.atEnd() )
       {
          QString qs = ts.readLine();
@@ -179,7 +179,7 @@ bool US_Saxs_Util::dmd_prepare()
          return false;
       }
          
-      Q3TextStream ts( &f );
+      QTextStream ts( &f );
       if ( control_parameters.count( "dmd:ss" ) )
       {
          ts << control_parameters[ "dmd:ss" ];
@@ -188,7 +188,7 @@ bool US_Saxs_Util::dmd_prepare()
            !control_parameters[ "dmdstatic" ].isEmpty() &&
            control_parameters[ "dmdstatic" ] != "none" )
       {
-         QStringList qsl = QStringList::split( ",", control_parameters[ "dmdstatic" ] );
+         QStringList qsl = (control_parameters[ "dmdstatic" ] ).split( "," , QString::SkipEmptyParts );
          for ( unsigned int i = 0; i < (unsigned int) qsl.size(); i++ )
          {
             ts << QString( "Static %1\n" ).arg( qsl[ i ] );
@@ -233,7 +233,7 @@ bool US_Saxs_Util::dmd_prepare()
    
    cout << "Starting " + prog + "\n";
    cout << cmd << endl;
-   system( cmd.ascii() );
+   system( cmd.toAscii().data() );
    cout << "Finished " + prog + "\n";
 
    if ( !QFile::exists( param_file ) )
@@ -323,7 +323,7 @@ bool US_Saxs_Util::input_dimensions( point &range )
 
    if ( control_parameters.count( "dmdboxspacing" ) )
    {
-      if ( control_parameters[ "dmdboxspacing" ].lower().contains( QRegExp( "^cubic" ) ) )
+      if ( control_parameters[ "dmdboxspacing" ].toLower().contains( QRegExp( "^cubic" ) ) )
       {
          float max_range = range.axis[ 0 ];
          for ( unsigned int m = 1; m < 3; m++ ) 
@@ -334,7 +334,7 @@ bool US_Saxs_Util::input_dimensions( point &range )
             }
          }
          QRegExp rx_cap( "^cubic\\s+(\\+|)(\\S+)$" );
-         if ( rx_cap.search( control_parameters[ "dmdboxspacing" ].lower() ) != -1 )
+         if ( rx_cap.indexIn( control_parameters[ "dmdboxspacing" ].toLower() ) != -1 )
          {
             if ( rx_cap.cap( 1 ) == "+" )
             {
@@ -350,13 +350,13 @@ bool US_Saxs_Util::input_dimensions( point &range )
       } else {
          QRegExp rx_cap_1( "^\\+(\\S+)$" );
          QRegExp rx_cap_3( "^(\\S+),(\\S+),(\\S+)$" );
-         if ( rx_cap_1.search( control_parameters[ "dmdboxspacing" ].lower() ) == -1 &&
-              rx_cap_3.search( control_parameters[ "dmdboxspacing" ].lower() ) == -1 )
+         if ( rx_cap_1.indexIn( control_parameters[ "dmdboxspacing" ].toLower() ) == -1 &&
+              rx_cap_3.indexIn( control_parameters[ "dmdboxspacing" ].toLower() ) == -1 )
          {
             errormsg = "Parameter for DMDBoxSpacing recognized, must in #,#,# or +#: was: " + control_parameters[ "dmdboxspacing" ];
             return false;
          }
-         if ( rx_cap_1.search( control_parameters[ "dmdboxspacing" ].lower() ) != -1 )
+         if ( rx_cap_1.indexIn( control_parameters[ "dmdboxspacing" ].toLower() ) != -1 )
          {
             for ( unsigned int m = 0; m < 3; m++ ) 
             {
@@ -468,9 +468,9 @@ bool US_Saxs_Util::dmd_strip_pdb()
       exclude_residues[ exclude_residues_list[ i ] ] = true;
    }
 
-   Q3TextStream tsi ( &fi );
-   Q3TextStream tso ( &fo );
-   Q3TextStream tsol( &fol );
+   QTextStream tsi ( &fi );
+   QTextStream tso ( &fo );
+   QTextStream tsol( &fol );
 
    QRegExp rx_check_line( "^(ATOM|HETATM)" );
 
@@ -484,7 +484,7 @@ bool US_Saxs_Util::dmd_strip_pdb()
    {
       QString qs = tsi.readLine();
       bool keep = true;
-      if ( rx_check_line.search( qs ) != -1 )
+      if ( rx_check_line.indexIn( qs ) != -1 )
       {
          QString residue = qs.mid( 17, 3 );
          QString atom    = qs.mid( 12, 4 );
@@ -494,17 +494,17 @@ bool US_Saxs_Util::dmd_strip_pdb()
             keep = false;
          }
       }
-      if ( rx_ter.search( qs ) != -1 )
+      if ( rx_ter.indexIn( qs ) != -1 )
       {
          keep = false;
       }
       if ( keep )
       {
-         if ( rx_check_line.search( qs ) != -1 )
+         if ( rx_check_line.indexIn( qs ) != -1 )
          {
             QString      chain_id   = qs.mid( 21, 1 );
-            unsigned int residue_no = qs.mid( 22, 4 ).stripWhiteSpace().toUInt();
-            QString      this_key   = chain_id + qs.mid( 22, 4 ).stripWhiteSpace();
+            unsigned int residue_no = qs.mid( 22, 4 ).trimmed().toUInt();
+            QString      this_key   = chain_id + qs.mid( 22, 4 ).trimmed();
             cout << QString( "chain_id [%1] last [%2] residue_no [%3] last [%4] key [%5] last [%6]\n" )
                .arg( chain_id )
                .arg( last_chain_id )
@@ -571,7 +571,7 @@ bool US_Saxs_Util::dmd_run( QString run_description )
    }
       
    QString dmd_heat_xc;
-   if ( run_description.lower() == "relax" )
+   if ( run_description.toLower() == "relax" )
    {
       if ( control_parameters.count( "dmdrelaxheatxc" ) )
       {
@@ -581,7 +581,7 @@ bool US_Saxs_Util::dmd_run( QString run_description )
          dmd_heat_xc = "10.0";
       }
    } else {
-      if ( run_description.lower() == "equi" )
+      if ( run_description.toLower() == "equi" )
       {
          if ( control_parameters.count( "dmdequiheatxc" ) )
          {
@@ -773,7 +773,7 @@ bool US_Saxs_Util::dmd_run( QString run_description )
                  )
          .arg( control_parameters[ "dmdtime" ] );
       
-      Q3TextStream ts( &f );
+      QTextStream ts( &f );
       ts << task;
       f.close();
    }
@@ -791,7 +791,7 @@ bool US_Saxs_Util::dmd_run( QString run_description )
    
    cout << "Starting " + prog + "\n";
    cout << cmd << endl;
-   system( cmd.ascii() );
+   system( cmd.toAscii().data() );
    cout << "Finished " + prog + "\n";
 
    if ( !QFile::exists( restart_file ) )
@@ -866,7 +866,7 @@ bool US_Saxs_Util::dmd_run( QString run_description )
       
       cout << "Starting " + prog + "\n";
       cout << cmd << endl;
-      system( cmd.ascii() );
+      system( cmd.toAscii().data() );
       cout << "Finished " + prog + "\n";
       
       if ( !QFile::exists( pdb_out_to_fix_file ) )
@@ -914,9 +914,9 @@ bool US_Saxs_Util::dmd_run( QString run_description )
             return false;
          }
 
-         Q3TextStream tsi( &fi );
-         Q3TextStream *tso;
-         tso = new Q3TextStream( fo );
+         QTextStream tsi( &fi );
+         QTextStream *tso;
+         tso = new QTextStream( fo );
 
          *tso << QString( "MODEL        %1\n" ).arg( models );
          
@@ -948,7 +948,7 @@ bool US_Saxs_Util::dmd_run( QString run_description )
                      delete fo;
                      return false;
                   }
-                  tso = new Q3TextStream( fo );
+                  tso = new QTextStream( fo );
                   *tso << QString( "MODEL        %1\n" ).arg( models );
                }
             }

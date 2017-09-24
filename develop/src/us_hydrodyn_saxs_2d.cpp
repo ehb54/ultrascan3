@@ -3,15 +3,15 @@
 #include "../include/us_revision.h"
 #include "../include/us_hydrodyn_saxs_2d.h"
 //Added by qt3to4:
-#include <Q3TextStream>
-#include <Q3HBoxLayout>
+#include <QTextStream>
+#include <QHBoxLayout>
 #include <QLabel>
-#include <Q3GridLayout>
+#include <QGridLayout>
 #include <QPixmap>
-#include <Q3Frame>
-#include <Q3PopupMenu>
-#include <Q3VBoxLayout>
-#include <Q3BoxLayout>
+#include <QFrame>
+ //#include <Q3PopupMenu>
+#include <QVBoxLayout>
+#include <QBoxLayout>
 #include <QCloseEvent>
 
 #define SLASH QDir::separator()
@@ -195,12 +195,12 @@ US_Hydrodyn_Saxs_2d::US_Hydrodyn_Saxs_2d(
                                          void *us_hydrodyn, 
                                          QWidget *p, 
                                          const char *name
-                                         ) : Q3Frame(p, name)
+                                         ) : QFrame( p )
 {
    this->us_hydrodyn = us_hydrodyn;
    USglobal = new US_Config();
    setPalette( PALET_FRAME );
-   setCaption( tr( "US-SOMO: SAXS 2D Simulation" ) );
+   setWindowTitle( us_tr( "US-SOMO: SAXS 2D Simulation" ) );
 
    saxs_widget = &(((US_Hydrodyn *) us_hydrodyn)->saxs_plot_widget);
    saxs_window = ((US_Hydrodyn *) us_hydrodyn)->saxs_plot_window;
@@ -245,8 +245,8 @@ void US_Hydrodyn_Saxs_2d::setupGUI()
    int minHeight3 = 30;
 #endif
 
-   lbl_title = new QLabel( tr( "US-SOMO: SAXS 2D Simulation" ), this);
-   lbl_title->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Raised);
+   lbl_title = new QLabel( us_tr( "US-SOMO: SAXS 2D Simulation" ), this);
+   lbl_title->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_title->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_title->setMinimumHeight(minHeight1);
    lbl_title->setPalette( PALET_FRAME );
@@ -259,7 +259,7 @@ void US_Hydrodyn_Saxs_2d::setupGUI()
    AUTFBACK( lbl_atom_file );
    lbl_atom_file->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
-   le_atom_file = new QLineEdit( this, "Atom_File Line Edit");
+   le_atom_file = new QLineEdit(  this );    le_atom_file->setObjectName( "Atom_File Line Edit" );
    le_atom_file->setText( saxs_window->te_filename2->text() );
    le_atom_file->setReadOnly( true );
    le_atom_file->setAlignment(Qt::AlignVCenter);
@@ -267,13 +267,13 @@ void US_Hydrodyn_Saxs_2d::setupGUI()
    AUTFBACK( le_atom_file );
    le_atom_file->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 
-   lbl_lambda = new QLabel(tr(" Wavelength of beam (A):"), this );
+   lbl_lambda = new QLabel(us_tr(" Wavelength of beam (A):"), this );
    lbl_lambda->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_lambda->setPalette( PALET_LABEL );
    AUTFBACK( lbl_lambda );
    lbl_lambda->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
-   le_lambda = new QLineEdit( this, "Lambda Line Edit");
+   le_lambda = new QLineEdit(  this );    le_lambda->setObjectName( "Lambda Line Edit" );
    le_lambda->setText( QString( "" ).sprintf("%g", 1.54 ));
    le_lambda->setAlignment(Qt::AlignVCenter);
    le_lambda->setPalette( PALET_NORMAL );
@@ -281,13 +281,13 @@ void US_Hydrodyn_Saxs_2d::setupGUI()
    le_lambda->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_lambda, SIGNAL(textChanged(const QString &)), SLOT(update_lambda(const QString &)));
 
-   lbl_detector_distance = new QLabel(tr(" Detector distance from sample (m):"), this );
+   lbl_detector_distance = new QLabel(us_tr(" Detector distance from sample (m):"), this );
    lbl_detector_distance->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_detector_distance->setPalette( PALET_LABEL );
    AUTFBACK( lbl_detector_distance );
    lbl_detector_distance->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
-   le_detector_distance = new QLineEdit( this, "Detector_Distance Line Edit");
+   le_detector_distance = new QLineEdit(  this );    le_detector_distance->setObjectName( "Detector_Distance Line Edit" );
    le_detector_distance->setText( QString( "" ).sprintf("%g", 10.0 ));
    le_detector_distance->setAlignment(Qt::AlignVCenter);
    le_detector_distance->setPalette( PALET_NORMAL );
@@ -295,13 +295,13 @@ void US_Hydrodyn_Saxs_2d::setupGUI()
    le_detector_distance->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_detector_distance, SIGNAL(textChanged(const QString &)), SLOT(update_detector_distance(const QString &)));
 
-   lbl_detector_geometry = new QLabel(tr(" Detector height, width (mm):"), this );
+   lbl_detector_geometry = new QLabel(us_tr(" Detector height, width (mm):"), this );
    lbl_detector_geometry->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_detector_geometry->setPalette( PALET_LABEL );
    AUTFBACK( lbl_detector_geometry );
    lbl_detector_geometry->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
-   le_detector_height = new QLineEdit( this, "Detector_Height Line Edit");
+   le_detector_height = new QLineEdit(  this );    le_detector_height->setObjectName( "Detector_Height Line Edit" );
    le_detector_height->setText( QString( "" ).sprintf("%g", 10.0 ));
    le_detector_height->setAlignment(Qt::AlignVCenter);
    le_detector_height->setPalette( PALET_NORMAL );
@@ -309,7 +309,7 @@ void US_Hydrodyn_Saxs_2d::setupGUI()
    le_detector_height->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_detector_height, SIGNAL(textChanged(const QString &)), SLOT(update_detector_height(const QString &)));
 
-   le_detector_width = new QLineEdit( this, "Detector_Width Line Edit");
+   le_detector_width = new QLineEdit(  this );    le_detector_width->setObjectName( "Detector_Width Line Edit" );
    le_detector_width->setText( QString( "" ).sprintf("%g", 10.0 ));
    le_detector_width->setAlignment(Qt::AlignVCenter);
    le_detector_width->setPalette( PALET_NORMAL );
@@ -317,13 +317,13 @@ void US_Hydrodyn_Saxs_2d::setupGUI()
    le_detector_width->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_detector_width, SIGNAL(textChanged(const QString &)), SLOT(update_detector_width(const QString &)));
 
-   lbl_detector_pixels = new QLabel(tr(" Detector pixels count height, width:"), this );
+   lbl_detector_pixels = new QLabel(us_tr(" Detector pixels count height, width:"), this );
    lbl_detector_pixels->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_detector_pixels->setPalette( PALET_LABEL );
    AUTFBACK( lbl_detector_pixels );
    lbl_detector_pixels->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
-   le_detector_pixels_height = new QLineEdit( this, "Detector_Pixels_Height Line Edit");
+   le_detector_pixels_height = new QLineEdit(  this );    le_detector_pixels_height->setObjectName( "Detector_Pixels_Height Line Edit" );
    // le_detector_pixels_height->setText(QString( "" ).sprintf("%u",(*hydro).detector_pixels_height));
    le_detector_pixels_height->setAlignment(Qt::AlignVCenter);
    le_detector_pixels_height->setPalette( PALET_NORMAL );
@@ -331,7 +331,7 @@ void US_Hydrodyn_Saxs_2d::setupGUI()
    le_detector_pixels_height->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_detector_pixels_height, SIGNAL(textChanged(const QString &)), SLOT(update_detector_pixels_height(const QString &)));
 
-   le_detector_pixels_width = new QLineEdit( this, "Detector_Pixels_Width Line Edit");
+   le_detector_pixels_width = new QLineEdit(  this );    le_detector_pixels_width->setObjectName( "Detector_Pixels_Width Line Edit" );
    // le_detector_pixels_width->setText(QString( "" ).sprintf("%u",(*hydro).detector_pixels_width));
    le_detector_pixels_width->setAlignment(Qt::AlignVCenter);
    le_detector_pixels_width->setPalette( PALET_NORMAL );
@@ -339,13 +339,13 @@ void US_Hydrodyn_Saxs_2d::setupGUI()
    le_detector_pixels_width->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_detector_pixels_width, SIGNAL(textChanged(const QString &)), SLOT(update_detector_pixels_width(const QString &)));
 
-   lbl_beam_center = new QLabel(tr(" Beam center over height, width (pixels):"), this );
+   lbl_beam_center = new QLabel(us_tr(" Beam center over height, width (pixels):"), this );
    lbl_beam_center->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_beam_center->setPalette( PALET_LABEL );
    AUTFBACK( lbl_beam_center );
    lbl_beam_center->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
-   le_beam_center_pixels_height = new QLineEdit( this, "Beam_Center_Pixels_Height Line Edit");
+   le_beam_center_pixels_height = new QLineEdit(  this );    le_beam_center_pixels_height->setObjectName( "Beam_Center_Pixels_Height Line Edit" );
    le_beam_center_pixels_height->setText( "" );
    le_beam_center_pixels_height->setAlignment(Qt::AlignVCenter);
    le_beam_center_pixels_height->setPalette( PALET_NORMAL );
@@ -353,7 +353,7 @@ void US_Hydrodyn_Saxs_2d::setupGUI()
    le_beam_center_pixels_height->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_beam_center_pixels_height, SIGNAL(textChanged(const QString &)), SLOT(update_beam_center_pixels_height(const QString &)));
 
-   le_beam_center_pixels_width = new QLineEdit( this, "Beam_Center_Pixels_Width Line Edit");
+   le_beam_center_pixels_width = new QLineEdit(  this );    le_beam_center_pixels_width->setObjectName( "Beam_Center_Pixels_Width Line Edit" );
    le_beam_center_pixels_width->setText( "" );
    le_beam_center_pixels_width->setAlignment(Qt::AlignVCenter);
    le_beam_center_pixels_width->setPalette( PALET_NORMAL );
@@ -361,26 +361,26 @@ void US_Hydrodyn_Saxs_2d::setupGUI()
    le_beam_center_pixels_width->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_beam_center_pixels_width, SIGNAL(textChanged(const QString &)), SLOT(update_beam_center_pixels_width(const QString &)));
 
-   lbl_atomic_scaling = new QLabel(tr(" Atomic scaling (multiplier):"), this );
+   lbl_atomic_scaling = new QLabel(us_tr(" Atomic scaling (multiplier):"), this );
    lbl_atomic_scaling->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_atomic_scaling->setPalette( PALET_LABEL );
    AUTFBACK( lbl_atomic_scaling );
    lbl_atomic_scaling->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
-   le_atomic_scaling = new QLineEdit( this, "Atomic_Scaling Line Edit");
+   le_atomic_scaling = new QLineEdit(  this );    le_atomic_scaling->setObjectName( "Atomic_Scaling Line Edit" );
    le_atomic_scaling->setText( QString( "" ).sprintf( "%u", 1 ) );
    le_atomic_scaling->setAlignment(Qt::AlignVCenter);
    le_atomic_scaling->setPalette( PALET_NORMAL );
    AUTFBACK( le_atomic_scaling );
    le_atomic_scaling->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 
-   lbl_sample_rotations = new QLabel(tr(" Sample rotations (best equalized over sphere):"), this );
+   lbl_sample_rotations = new QLabel(us_tr(" Sample rotations (best equalized over sphere):"), this );
    lbl_sample_rotations->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_sample_rotations->setPalette( PALET_LABEL );
    AUTFBACK( lbl_sample_rotations );
    lbl_sample_rotations->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
-   le_sample_rotations = new QLineEdit( this, "Sample_Rotations Line Edit");
+   le_sample_rotations = new QLineEdit(  this );    le_sample_rotations->setObjectName( "Sample_Rotations Line Edit" );
    le_sample_rotations->setText( QString( "" ).sprintf( "%u", 1 ) );
    le_sample_rotations->setAlignment(Qt::AlignVCenter);
    le_sample_rotations->setPalette( PALET_NORMAL );
@@ -389,31 +389,31 @@ void US_Hydrodyn_Saxs_2d::setupGUI()
    connect(le_sample_rotations, SIGNAL(textChanged(const QString &)), SLOT(update_sample_rotations(const QString &)));
 
    cb_save_pdbs = new QCheckBox( this );
-   cb_save_pdbs->setText(tr(" Save rotated PDBs"));
+   cb_save_pdbs->setText(us_tr(" Save rotated PDBs"));
    cb_save_pdbs->setEnabled(true);
    cb_save_pdbs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_save_pdbs->setPalette( PALET_NORMAL );
    AUTFBACK( cb_save_pdbs );
 
-   pb_info = new QPushButton(tr("Compute q range"), this);
+   pb_info = new QPushButton(us_tr("Compute q range"), this);
    pb_info->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_info->setMinimumHeight(minHeight1);
    pb_info->setPalette( PALET_PUSHB );
    connect(pb_info, SIGNAL(clicked()), SLOT(info()));
 
-   pb_start = new QPushButton(tr("Start"), this);
+   pb_start = new QPushButton(us_tr("Start"), this);
    pb_start->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_start->setMinimumHeight(minHeight1);
    pb_start->setPalette( PALET_PUSHB );
    connect(pb_start, SIGNAL(clicked()), SLOT(start()));
 
-   pb_stop = new QPushButton(tr("Stop"), this);
+   pb_stop = new QPushButton(us_tr("Stop"), this);
    pb_stop->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_stop->setMinimumHeight(minHeight1);
    pb_stop->setPalette( PALET_PUSHB );
    connect(pb_stop, SIGNAL(clicked()), SLOT(stop()));
 
-   pb_integrate = new QPushButton(tr("Integrate and save as 1d .DAT file"), this);
+   pb_integrate = new QPushButton(us_tr("Integrate and save as 1d .DAT file"), this);
    pb_integrate->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_integrate->setMinimumHeight(minHeight1);
    pb_integrate->setPalette( PALET_PUSHB );
@@ -422,7 +422,7 @@ void US_Hydrodyn_Saxs_2d::setupGUI()
 
    lbl_2d = new QLabel( this );
 
-   progress = new Q3ProgressBar(this, "Progress");
+   progress = new QProgressBar( this );
    progress->setMinimumHeight(minHeight1);
    progress->setPalette( PALET_NORMAL );
    AUTFBACK( progress );
@@ -440,49 +440,76 @@ void US_Hydrodyn_Saxs_2d::setupGUI()
    qwtw_wheel->setMinimumWidth ( 2 * minHeight1 );
    connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
 
-   editor = new Q3TextEdit(this);
+   editor = new QTextEdit(this);
    editor->setPalette( PALET_NORMAL );
    AUTFBACK( editor );
    editor->setReadOnly(true);
 
-#if defined(QT4) && defined(Q_WS_MAC)
+#if QT_VERSION < 0x040000
+# if defined(QT4) && defined(Q_WS_MAC)
    {
-      Q3PopupMenu * file = new Q3PopupMenu;
-      file->insertItem( tr("&Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
-      file->insertItem( tr("&Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
-      file->insertItem( tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
+ //      Q3PopupMenu * file = new Q3PopupMenu;
+      file->insertItem( us_tr("&Font"),  this, SLOT(update_font( )),    Qt::ALT+Qt::Key_F );
+      file->insertItem( us_tr("&Save"),  this, SLOT(save( )),    Qt::ALT+Qt::Key_S );
+      file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display( )),   Qt::ALT+Qt::Key_X );
 
       QMenuBar *menu = new QMenuBar( this );
       AUTFBACK( menu );
 
-      menu->insertItem(tr("&Messages"), file );
+      menu->insertItem(us_tr("&Messages"), file );
    }
-#else
-   Q3Frame *frame;
-   frame = new Q3Frame(this);
+# else
+   QFrame *frame;
+   frame = new QFrame(this);
    frame->setMinimumHeight(minHeight3);
 
-   m = new QMenuBar(frame, "menu" );
+   m = new QMenuBar( frame );    m->setObjectName( "menu" );
    m->setMinimumHeight(minHeight1 - 5);
    m->setPalette( PALET_NORMAL );
    AUTFBACK( m );
-   Q3PopupMenu * file = new Q3PopupMenu(editor);
-   m->insertItem( tr("&File"), file );
-   file->insertItem( tr("Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
-   file->insertItem( tr("Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
-   file->insertItem( tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
+ //   Q3PopupMenu * file = new Q3PopupMenu(editor);
+   m->insertItem( us_tr("&File"), file );
+   file->insertItem( us_tr("Font"),  this, SLOT(update_font( )),    Qt::ALT+Qt::Key_F );
+   file->insertItem( us_tr("Save"),  this, SLOT(save( )),    Qt::ALT+Qt::Key_S );
+   file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display( )),   Qt::ALT+Qt::Key_X );
+# endif
+#else
+   QFrame *frame;
+   frame = new QFrame(this);
+   frame->setMinimumHeight(minHeight3);
+
+   m = new QMenuBar( frame );    m->setObjectName( "menu" );
+   m->setMinimumHeight(minHeight1 - 5);
+   m->setPalette( PALET_NORMAL );
+   AUTFBACK( m );
+
+   {
+      QMenu * new_menu = m->addMenu( us_tr( "&File" ) );
+
+      QAction *qa1 = new_menu->addAction( us_tr( "Font" ) );
+      qa1->setShortcut( Qt::ALT+Qt::Key_F );
+      connect( qa1, SIGNAL(triggered()), this, SLOT( update_font() ) );
+
+      QAction *qa2 = new_menu->addAction( us_tr( "Save" ) );
+      qa2->setShortcut( Qt::ALT+Qt::Key_S );
+      connect( qa2, SIGNAL(triggered()), this, SLOT( save() ) );
+
+      QAction *qa3 = new_menu->addAction( us_tr( "Clear Display" ) );
+      qa3->setShortcut( Qt::ALT+Qt::Key_X );
+      connect( qa3, SIGNAL(triggered()), this, SLOT( clear_display() ) );
+   }
 #endif
 
-   editor->setWordWrap (Q3TextEdit::WidgetWidth);
+   editor->setWordWrapMode (QTextOption::WordWrap);
    // editor->setMinimumHeight(300);
    
-   pb_help = new QPushButton(tr("Help"), this);
+   pb_help = new QPushButton(us_tr("Help"), this);
    pb_help->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_help->setMinimumHeight(minHeight1);
    pb_help->setPalette( PALET_PUSHB );
    connect(pb_help, SIGNAL(clicked()), SLOT(help()));
 
-   pb_cancel = new QPushButton(tr("Close"), this);
+   pb_cancel = new QPushButton(us_tr("Close"), this);
    pb_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_cancel->setMinimumHeight(minHeight1);
    pb_cancel->setPalette( PALET_PUSHB );
@@ -491,17 +518,17 @@ void US_Hydrodyn_Saxs_2d::setupGUI()
    // build layout
    // grid for options
 
-   Q3GridLayout *gl_options = new Q3GridLayout( 0 );
+   QGridLayout * gl_options = new QGridLayout( 0 ); gl_options->setContentsMargins( 0, 0, 0, 0 ); gl_options->setSpacing( 0 );
    {
       int j = 0;
       gl_options->addWidget         ( lbl_atom_file                   , j, 0 );
-      gl_options->addMultiCellWidget( le_atom_file                    , j, j, 1, 2 );
+      gl_options->addWidget( le_atom_file                     , j , 1 , 1 + ( j ) - ( j ) , 1 + ( 2  ) - ( 1 ) );
       j++;
       gl_options->addWidget         ( lbl_lambda                      , j, 0 );
-      gl_options->addMultiCellWidget( le_lambda                       , j, j, 1, 2 );
+      gl_options->addWidget( le_lambda                        , j , 1 , 1 + ( j ) - ( j ) , 1 + ( 2  ) - ( 1 ) );
       j++;
       gl_options->addWidget         ( lbl_detector_distance           , j, 0 );
-      gl_options->addMultiCellWidget( le_detector_distance            , j, j, 1, 2 );
+      gl_options->addWidget( le_detector_distance             , j , 1 , 1 + ( j ) - ( j ) , 1 + ( 2  ) - ( 1 ) );
       j++;
       gl_options->addWidget         ( lbl_detector_geometry           , j, 0 );
       gl_options->addWidget         ( le_detector_height              , j, 1 );
@@ -516,37 +543,37 @@ void US_Hydrodyn_Saxs_2d::setupGUI()
       gl_options->addWidget         ( le_beam_center_pixels_width     , j, 2 );
       j++;
       gl_options->addWidget         ( lbl_atomic_scaling              , j, 0 );
-      gl_options->addMultiCellWidget( le_atomic_scaling               , j, j, 1, 2 );
+      gl_options->addWidget( le_atomic_scaling                , j , 1 , 1 + ( j ) - ( j ) , 1 + ( 2  ) - ( 1 ) );
       j++;
       gl_options->addWidget         ( lbl_sample_rotations            , j, 0 );
-      gl_options->addMultiCellWidget( le_sample_rotations             , j, j, 1, 2 );
+      gl_options->addWidget( le_sample_rotations              , j , 1 , 1 + ( j ) - ( j ) , 1 + ( 2  ) - ( 1 ) );
       j++;
-      gl_options->addMultiCellWidget( cb_save_pdbs                    , j, j, 0, 2 );
+      gl_options->addWidget( cb_save_pdbs                     , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 2  ) - ( 0 ) );
       j++;
-      gl_options->addMultiCellWidget( pb_info                         , j, j, 0, 2 );
+      gl_options->addWidget( pb_info                          , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 2  ) - ( 0 ) );
       j++;
    }
 
-   Q3BoxLayout *vbl_editor_group = new Q3VBoxLayout( 0 );
+   QBoxLayout *vbl_editor_group = new QVBoxLayout( 0 );
    vbl_editor_group->addLayout( gl_options );
 #if !defined(QT4) || !defined(Q_WS_MAC)
    vbl_editor_group->addWidget( frame      );
 #endif
    vbl_editor_group->addWidget( editor     );
 
-   Q3BoxLayout *hbl_wheel     = new Q3HBoxLayout( 0 );
+   QBoxLayout *hbl_wheel     = new QHBoxLayout();
    hbl_wheel->addWidget( qwtw_wheel );
    hbl_wheel->addWidget( lbl_wheel_pos );
 
-   Q3BoxLayout *vbl_image_wheel     = new Q3VBoxLayout( 0 );
+   QBoxLayout *vbl_image_wheel     = new QVBoxLayout( 0 );
    vbl_image_wheel->addWidget( lbl_2d );
    vbl_image_wheel->addLayout( hbl_wheel );
 
-   Q3HBoxLayout *hbl_editor_2d = new Q3HBoxLayout( 0 );
+   QHBoxLayout * hbl_editor_2d = new QHBoxLayout(); hbl_editor_2d->setContentsMargins( 0, 0, 0, 0 ); hbl_editor_2d->setSpacing( 0 );
    hbl_editor_2d->addLayout( vbl_editor_group );
    hbl_editor_2d->addLayout( vbl_image_wheel );
 
-   Q3HBoxLayout *hbl_controls = new Q3HBoxLayout( 0 );
+   QHBoxLayout * hbl_controls = new QHBoxLayout(); hbl_controls->setContentsMargins( 0, 0, 0, 0 ); hbl_controls->setSpacing( 0 );
    hbl_controls->addSpacing(4);
    hbl_controls->addWidget(pb_start);
    hbl_controls->addSpacing(4);
@@ -556,17 +583,17 @@ void US_Hydrodyn_Saxs_2d::setupGUI()
    hbl_controls->addWidget(pb_integrate);
    hbl_controls->addSpacing(4);
 
-   Q3VBoxLayout *vbl_target_controls = new Q3VBoxLayout( 0 );
+   QVBoxLayout * vbl_target_controls = new QVBoxLayout( 0 ); vbl_target_controls->setContentsMargins( 0, 0, 0, 0 ); vbl_target_controls->setSpacing( 0 );
    vbl_target_controls->addLayout( hbl_controls );
 
-   Q3HBoxLayout *hbl_bottom = new Q3HBoxLayout( 0 );
+   QHBoxLayout * hbl_bottom = new QHBoxLayout(); hbl_bottom->setContentsMargins( 0, 0, 0, 0 ); hbl_bottom->setSpacing( 0 );
    hbl_bottom->addSpacing( 4 );
    hbl_bottom->addWidget ( pb_help );
    hbl_bottom->addSpacing( 4 );
    hbl_bottom->addWidget ( pb_cancel );
    hbl_bottom->addSpacing( 4 );
 
-   Q3VBoxLayout *background = new Q3VBoxLayout(this);
+   QVBoxLayout * background = new QVBoxLayout(this); background->setContentsMargins( 0, 0, 0, 0 ); background->setSpacing( 0 );
    background->addSpacing( 4 );
    background->addWidget ( lbl_title );
    background->addSpacing( 4 );
@@ -620,20 +647,20 @@ void US_Hydrodyn_Saxs_2d::update_font()
 void US_Hydrodyn_Saxs_2d::save()
 {
    QString fn;
-   fn = QFileDialog::getSaveFileName( this , caption() , QString::null , QString::null );
+   fn = QFileDialog::getSaveFileName( this , windowTitle() , QString::null , QString::null );
    if(!fn.isEmpty() )
    {
-      QString text = editor->text();
+      QString text = editor->toPlainText();
       QFile f( fn );
       if ( !f.open( QIODevice::WriteOnly | QIODevice::Text) )
       {
          return;
       }
-      Q3TextStream t( &f );
+      QTextStream t( &f );
       t << text;
       f.close();
-      editor->setModified( false );
-      setCaption( fn );
+ //      editor->setModified( false );
+      setWindowTitle( fn );
    }
 }
 
@@ -688,7 +715,7 @@ bool US_Hydrodyn_Saxs_2d::update_image()
    double scaling = 256 / ( max_modulii - min_modulii );
 
    editor_msg( "gray", 
-               QString( tr( "update_image(): max modulii %1 scaling factor %2\n" ) )
+               QString( us_tr( "update_image(): max modulii %1 scaling factor %2\n" ) )
                .arg( max_modulii ).arg( scaling ) );
 
    for ( unsigned int i = 0; i < data.size(); i++ )
@@ -748,6 +775,7 @@ bool US_Hydrodyn_Saxs_2d::update_image()
    }
       
    QPixmap pm;
+#if QT_VERSION < 0x040000
    pm.convertFromImage( i_2d.smoothScale( 
                                           i_2d.width() > US_SAXS_2D_PIXMAX ?
                                           US_SAXS_2D_PIXMAX : 
@@ -759,6 +787,20 @@ bool US_Hydrodyn_Saxs_2d::update_image()
                                             US_SAXS_2D_PIXMIN : i_2d.height() ) ,
                                           Qt::KeepAspectRatio 
                                           ) );
+#else
+   pm.convertFromImage( i_2d.scaled( 
+                                    i_2d.width() > US_SAXS_2D_PIXMAX ?
+                                    US_SAXS_2D_PIXMAX : 
+                                    ( i_2d.width() < US_SAXS_2D_PIXMIN ?
+                                      US_SAXS_2D_PIXMIN : i_2d.width() ) ,
+                                    i_2d.height() > US_SAXS_2D_PIXMAX ?
+                                    US_SAXS_2D_PIXMAX : 
+                                    ( i_2d.height() < US_SAXS_2D_PIXMIN ?
+                                      US_SAXS_2D_PIXMIN : i_2d.height() ) ,
+                                    Qt::KeepAspectRatio,
+                                    Qt::SmoothTransformation
+                                     ) );
+#endif
    lbl_2d->setPixmap( pm );
    return true;
 }
@@ -841,7 +883,7 @@ void US_Hydrodyn_Saxs_2d::start()
 
    vector < saxs_atom > atoms;
 
-   progress->setProgress( 0, 1 );
+   progress->setValue( 0 ); progress->setMaximum( 1 );
 
    double atomic_scaler     = pow( 10e0, unit ) * atomic_scaling;
    double atomic_scaler_inv = 1e0 / atomic_scaler;
@@ -849,7 +891,7 @@ void US_Hydrodyn_Saxs_2d::start()
    cout << QString( "atomic scaler %1\n"
                     "atomic scaler inv %2\n" )
       .arg( atomic_scaler )
-      .arg( atomic_scaler_inv ).ascii();
+      .arg( atomic_scaler_inv ).toAscii().data();
 
    for ( unsigned int i = 0; i < selected_models.size(); i++ )
    {
@@ -861,7 +903,7 @@ void US_Hydrodyn_Saxs_2d::start()
       unsigned int total_e_noh = 0;
 
       editor_msg( "gray", 
-                  QString( tr( "Preparing file %1 model %2." ) )
+                  QString( us_tr( "Preparing file %1 model %2." ) )
                   .arg( le_atom_file->text() )
                   .arg(current_model + 1) );
 
@@ -1035,7 +1077,7 @@ void US_Hydrodyn_Saxs_2d::start()
             new_atom.hybrid_name = hybrid_name;
             new_atom.hydrogens = 0;
             if ( !our_saxs_options->iqq_use_atomic_ff &&
-                 count_hydrogens.search(hybrid_name) != -1 )
+                 count_hydrogens.indexIn(hybrid_name) != -1 )
             {
                new_atom.hydrogens = count_hydrogens.cap(1).toInt();
             }
@@ -1138,8 +1180,8 @@ void US_Hydrodyn_Saxs_2d::start()
 
    for ( unsigned int r = 0; r < rotations.size(); r++ )
    {
-      editor_msg( "gray", tr( "Initializing data" ) );
-      // cout << tr( "Initializing data" ) << endl;
+      editor_msg( "gray", us_tr( "Initializing data" ) );
+      // cout << us_tr( "Initializing data" ) << endl;
       data.resize( i_2d.width() );
       for ( int i = 0; i < i_2d.width(); i++ )
       {
@@ -1231,20 +1273,20 @@ void US_Hydrodyn_Saxs_2d::start()
             {
                if ( !f.open( QIODevice::WriteOnly ) )
                {
-                  editor_msg( "red", QString( tr( "Error: can not create file %1\n" ) ).arg( fname ) );
+                  editor_msg( "red", QString( us_tr( "Error: can not create file %1\n" ) ).arg( fname ) );
                   ok_to_write = false;
                }                  
             } else {
                if ( !f.open( QIODevice::WriteOnly | QIODevice::Append ) )
                {
-                  editor_msg( "red", QString( tr( "Error: can not append to file %1\n" ) ).arg( fname ) );
+                  editor_msg( "red", QString( us_tr( "Error: can not append to file %1\n" ) ).arg( fname ) );
                   ok_to_write = false;
                }
             }
             
             if ( ok_to_write )
             {
-               Q3TextStream ts( &f );
+               QTextStream ts( &f );
                if ( !r )
                {
                   ts << QString( "MODEL     0\n" );
@@ -1313,24 +1355,24 @@ void US_Hydrodyn_Saxs_2d::start()
                }
                ts << "ENDMDL\n";
                f.close();
-               editor_msg( "blue", QString( tr( "Added rotated model %1 to %2" ) ).arg( r + 1 ).arg( fname ) );
-               // cout << QString( tr( "Added rotated model %1 to %2" ) ).arg( r + 1 ).arg( fname ) << endl;
+               editor_msg( "blue", QString( us_tr( "Added rotated model %1 to %2" ) ).arg( r + 1 ).arg( fname ) );
+               // cout << QString( us_tr( "Added rotated model %1 to %2" ) ).arg( r + 1 ).arg( fname ) << endl;
                
             }
          }
       }
 
-      editor_msg( "blue", QString( tr( "Processing rotation %1 of %2" ) ).arg( r + 1 ).arg( rotations.size() ) );
+      editor_msg( "blue", QString( us_tr( "Processing rotation %1 of %2" ) ).arg( r + 1 ).arg( rotations.size() ) );
 
-      // cout << QString( tr( "Processing rotation %1 of %2" ) ).arg( r + 1 ).arg( rotations.size() ) << endl;
+      // cout << QString( us_tr( "Processing rotation %1 of %2" ) ).arg( r + 1 ).arg( rotations.size() ) << endl;
 
       // for each atom, compute scattering factor for each element on the detector
 
       for ( unsigned int a = 0; a < atoms.size(); a++ )
       {
-         progress->setProgress( a + r * atoms.size(), atoms.size() * rotations.size() );
-         editor_msg( "gray", QString( tr( "Computing atom %1\n" ) ).arg( atoms[ a ].hybrid_name ) );
-         // cout << QString( tr( "Computing atom %1\n" ) ).arg( atoms[ a ].hybrid_name ) << endl;
+         progress->setValue( a + r * atoms.size() ); progress->setMaximum( atoms.size() * rotations.size() );
+         editor_msg( "gray", QString( us_tr( "Computing atom %1\n" ) ).arg( atoms[ a ].hybrid_name ) );
+         // cout << QString( us_tr( "Computing atom %1\n" ) ).arg( atoms[ a ].hybrid_name ) << endl;
          qApp->processEvents();
          for ( unsigned int i = 0; i < data.size(); i++ )
          {
@@ -1379,7 +1421,7 @@ void US_Hydrodyn_Saxs_2d::start()
                   .arg( pixpos[ 0 ] ).arg( pixpos[ 1 ] )
                   .arg( pix_dist_from_beam_center )
                   .arg( q )
-                  .ascii();
+                  .toAscii().data();
                
                cout << expiQdotR << endl;
 #endif
@@ -1448,8 +1490,8 @@ void US_Hydrodyn_Saxs_2d::start()
       return;
    }
 
-   editor_msg( "black", tr( "Completed" ) );
-   progress->setProgress(1, 1);
+   editor_msg( "black", us_tr( "Completed" ) );
+   progress->setValue( 1 ); progress->setMaximum( 1 );
    running = false;
    update_enables();
 }
@@ -1467,7 +1509,7 @@ bool US_Hydrodyn_Saxs_2d::validate( bool quiet )
       if ( !quiet )
       {
          editor_msg( "red", 
-                     QString( tr( "Exactly one model must be selected to process\n"
+                     QString( us_tr( "Exactly one model must be selected to process\n"
                                   "Currently there are %1 models selected" ) )
                      .arg( selected_models.size() ) );
       }
@@ -1480,7 +1522,7 @@ bool US_Hydrodyn_Saxs_2d::validate( bool quiet )
    {
       if ( !quiet )
       {
-         editor_msg( "red", tr( "Detector pixel counts must be positive" ) );
+         editor_msg( "red", us_tr( "Detector pixel counts must be positive" ) );
       }
       is_ok = false;
    }
@@ -1489,7 +1531,7 @@ bool US_Hydrodyn_Saxs_2d::validate( bool quiet )
    {
       if ( !quiet )
       {
-         editor_msg( "red", tr( "The wavelength must be positive" ) );
+         editor_msg( "red", us_tr( "The wavelength must be positive" ) );
       }
       is_ok = false;
    }
@@ -1498,7 +1540,7 @@ bool US_Hydrodyn_Saxs_2d::validate( bool quiet )
    {
       if ( !quiet )
       {
-         editor_msg( "red", tr( "Detector geometry must be positive" ) );
+         editor_msg( "red", us_tr( "Detector geometry must be positive" ) );
       }
       is_ok = false;
    }
@@ -1507,7 +1549,7 @@ bool US_Hydrodyn_Saxs_2d::validate( bool quiet )
    {
       if ( !quiet )
       {
-         editor_msg( "red", tr( "Detector distance must be positive" ) );
+         editor_msg( "red", us_tr( "Detector distance must be positive" ) );
       }
       is_ok = false;
    }
@@ -1517,7 +1559,7 @@ bool US_Hydrodyn_Saxs_2d::validate( bool quiet )
    {
       if ( !quiet )
       {
-         editor_msg( "dark red", tr( "Note: The beam center is outside of the detector" ) );
+         editor_msg( "dark red", us_tr( "Note: The beam center is outside of the detector" ) );
       }
    }
         
@@ -1539,10 +1581,10 @@ void US_Hydrodyn_Saxs_2d::update_enables()
 
 void US_Hydrodyn_Saxs_2d::editor_msg( QString color, QString msg )
 {
-   QColor save_color = editor->color();
-   editor->setColor(color);
+   QColor save_color = editor->textColor();
+   editor->setTextColor(color);
    editor->append(msg);
-   editor->setColor(save_color);
+   editor->setTextColor(save_color);
 }
 
 void US_Hydrodyn_Saxs_2d::update_lambda( const QString & /* str */ )
@@ -1582,6 +1624,7 @@ void US_Hydrodyn_Saxs_2d::reset_2d()
         detector_pixels_height != i_2d.height() ||
         detector_pixels_width  != i_2d.width() ) )
    {
+#if QT_VERSION < 0x040000
       i_2d.reset();
       
       i_2d.create(
@@ -1589,8 +1632,16 @@ void US_Hydrodyn_Saxs_2d::reset_2d()
                    detector_pixels_height,
                    32
                    );
+#else
+      i_2d = QImage(
+                    detector_pixels_width,
+                    detector_pixels_height,
+                    QImage::Format_RGB32
+                    );
+#endif
       i_2d.fill( qRgb( 0, 0, 0 ) );
       QPixmap pm;
+#if QT_VERSION < 0x040000
       pm.convertFromImage( i_2d.smoothScale( 
                                              i_2d.width() > US_SAXS_2D_PIXMAX ?
                                              US_SAXS_2D_PIXMAX : i_2d.width(),
@@ -1598,6 +1649,16 @@ void US_Hydrodyn_Saxs_2d::reset_2d()
                                              US_SAXS_2D_PIXMAX : i_2d.height(),
                                              Qt::KeepAspectRatio 
                                              ) );
+#else
+      pm.convertFromImage( i_2d.scaled( 
+                                       i_2d.width() > US_SAXS_2D_PIXMAX ?
+                                       US_SAXS_2D_PIXMAX : i_2d.width(),
+                                       i_2d.height() > US_SAXS_2D_PIXMAX ?
+                                       US_SAXS_2D_PIXMAX : i_2d.height(),
+                                       Qt::KeepAspectRatio,
+                                       Qt::SmoothTransformation
+                                             ) );
+#endif
       lbl_2d->setPixmap( pm );
    }
 }
@@ -1667,41 +1728,41 @@ void US_Hydrodyn_Saxs_2d::compute_variables()
 
 void US_Hydrodyn_Saxs_2d::report_variables()
 {
-   editor_msg( "black", QString( tr( "Detector height per pixel %1 m, width %2 m" ) )
+   editor_msg( "black", QString( us_tr( "Detector height per pixel %1 m, width %2 m" ) )
                .arg( detector_height_per_pixel )
                .arg( detector_width_per_pixel ) );
 
-   editor_msg( "black", QString( tr( "Pixel zero, zero (top, left!) is at %1 m, %2 m from beam center" ) )
+   editor_msg( "black", QString( us_tr( "Pixel zero, zero (top, left!) is at %1 m, %2 m from beam center" ) )
                .arg( -beam_center_height )
                .arg( -beam_center_width  ) );
 
    editor_msg( "black", 
-               QString( tr( "detector distance %1 m\n"
+               QString( us_tr( "detector distance %1 m\n"
                             "lambda            %2 A" ) )
                .arg( detector_distance )
                .arg( lambda ) );
 
 
    editor_msg( "black",
-               QString( tr( "q of pixel 0, 0: %1\n" ) )
+               QString( us_tr( "q of pixel 0, 0: %1\n" ) )
                .arg( q_of_pixel( (int) 0, (int) 0 ) )
                );
 
    editor_msg( "black",
-               QString( tr( "q of pixel 0, %1: %2 (1/A)\n" ) )
+               QString( us_tr( "q of pixel 0, %1: %2 (1/A)\n" ) )
                .arg( detector_pixels_width - 1 )
                .arg( q_of_pixel( ( int ) 0, detector_pixels_width - 1 ) )
                );
 
    editor_msg( "black",
-               QString( tr( "q of pixel %1, 0: %2 (1/A)\n" ) )
+               QString( us_tr( "q of pixel %1, 0: %2 (1/A)\n" ) )
                .arg( detector_pixels_height - 1 )
                .arg( q_of_pixel( detector_pixels_height - 1, ( int ) 0 ) )
                );
 
 
    editor_msg( "black",
-               QString( tr( "q of pixel %1, %2: %3 (1/A)\n" ) )
+               QString( us_tr( "q of pixel %1, %2: %3 (1/A)\n" ) )
                .arg( detector_pixels_height - 1 )
                .arg( detector_pixels_width  - 1 )
                .arg( q_of_pixel( detector_pixels_height - 1, 
@@ -1709,7 +1770,7 @@ void US_Hydrodyn_Saxs_2d::report_variables()
                );
 
    editor_msg( "black",
-               QString( tr( "q of beam center: %1 (1/A)\n" ) )
+               QString( us_tr( "q of beam center: %1 (1/A)\n" ) )
                .arg( q_of_pixel( beam_center_pixels_height * detector_height_per_pixel,
                                  beam_center_pixels_width  * detector_height_per_pixel ) )
                );
@@ -1823,7 +1884,7 @@ void US_Hydrodyn_Saxs_2d::set_pos( unsigned int i )
 
 void US_Hydrodyn_Saxs_2d::adjust_wheel( double pos )
 {
-   // cout << QString( "adjust wheel to %1\n" ).arg( pos ).ascii();
+   // cout << QString( "adjust wheel to %1\n" ).arg( pos ).toAscii().data();
    if ( pos < 1e0 )
    {
       pos = 1e0;

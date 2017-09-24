@@ -209,13 +209,13 @@ void US_Hydrodyn_Saxs_Hplc::update_plot_errors_group()
       cout << "upeg: recreating axis\n";
       if ( current_mode == MODE_GGAUSSIAN ||
            current_mode == MODE_GAUSSIAN ) {
-         plot_errors->setAxisTitle(QwtPlot::yLeft, tr( cb_plot_errors_pct->isChecked() ?
+         plot_errors->setAxisTitle(QwtPlot::yLeft, us_tr( cb_plot_errors_pct->isChecked() ?
                                                        "% difference" :
                                                        ( cb_plot_errors_sd->isChecked() ?
                                                          "delta I(t)/sd" : "delta I(t)" 
                                                          ) ) );
       } else {
-         plot_errors->setAxisTitle(QwtPlot::yLeft, tr( cb_plot_errors_pct->isChecked() ?
+         plot_errors->setAxisTitle(QwtPlot::yLeft, us_tr( cb_plot_errors_pct->isChecked() ?
                                                        "% difference" :
                                                        ( cb_plot_errors_sd->isChecked() ?
                                                          "delta I(q)/sd" : "delta I(q)" 
@@ -427,13 +427,13 @@ void US_Hydrodyn_Saxs_Hplc::update_plot_errors( vector < double > &grid,
 
       if ( current_mode == MODE_GGAUSSIAN ||
            current_mode == MODE_GAUSSIAN ) {
-         plot_errors->setAxisTitle(QwtPlot::yLeft, tr( cb_plot_errors_pct->isChecked() ?
+         plot_errors->setAxisTitle(QwtPlot::yLeft, us_tr( cb_plot_errors_pct->isChecked() ?
                                                        "% difference" :
                                                        ( cb_plot_errors_sd->isChecked() ?
                                                          "delta I(t)/sd" : "delta I(t)" 
                                                          ) ) );
       } else {
-         plot_errors->setAxisTitle(QwtPlot::yLeft, tr( cb_plot_errors_pct->isChecked() ?
+         plot_errors->setAxisTitle(QwtPlot::yLeft, us_tr( cb_plot_errors_pct->isChecked() ?
                                                        "% difference" :
                                                        ( cb_plot_errors_sd->isChecked() ?
                                                          "delta I(q)/sd" : "delta I(q)" 
@@ -461,13 +461,13 @@ void US_Hydrodyn_Saxs_Hplc::redo_plot_errors()
 {
    if ( current_mode == MODE_GGAUSSIAN ||
         current_mode == MODE_GAUSSIAN ) {
-      plot_errors->setAxisTitle(QwtPlot::yLeft, tr( cb_plot_errors_pct->isChecked() ?
+      plot_errors->setAxisTitle(QwtPlot::yLeft, us_tr( cb_plot_errors_pct->isChecked() ?
                                                     "% difference" :
                                                     ( cb_plot_errors_sd->isChecked() ?
                                                       "delta I(t)/sd" : "delta I(t)" 
                                                       ) ) );
    } else {
-      plot_errors->setAxisTitle(QwtPlot::yLeft, tr( cb_plot_errors_pct->isChecked() ?
+      plot_errors->setAxisTitle(QwtPlot::yLeft, us_tr( cb_plot_errors_pct->isChecked() ?
                                                     "% difference" :
                                                     ( cb_plot_errors_sd->isChecked() ?
                                                       "delta I(q)/sd" : "delta I(q)" 
@@ -610,7 +610,7 @@ void US_Hydrodyn_Saxs_Hplc::errors()
             // bool use_errors = true;
             // for ( int i = 0; i < (int) files.size(); ++i )
             // {
-            //    qDebug( files[ i ] );
+            //    us_qdebug( files[ i ] );
             //    if ( !f_errors.count( files[ i ] ) ||
             //         !is_nonzero_vector( f_errors[ files[ i ] ] ) ||
             //         f_errors[ files[ i ] ].size() != f_Is[ files[ i ] ].size() )
@@ -656,12 +656,12 @@ void US_Hydrodyn_Saxs_Hplc::errors()
             }
             if ( files.size() != 2 )
             {
-               editor_msg( "red", tr( "Internal error: plot residuals, not 2 selected files" ) );
+               editor_msg( "red", us_tr( "Internal error: plot residuals, not 2 selected files" ) );
                return;
             }
             if ( f_qs[ files[ 0 ] ] != f_qs[ files[ 1 ] ] )
             {
-               editor_msg( "red", tr( "Error: Residuals incompatible grids, you could try 'crop common'" ) );
+               editor_msg( "red", us_tr( "Error: Residuals incompatible grids, you could try 'crop common'" ) );
                return;
             }
             vector < double > errors;
@@ -716,7 +716,7 @@ void US_Hydrodyn_Saxs_Hplc::errors_multi_file( QStringList files )
    // check 
    if ( !compatible_grids( files ) )
    {
-      editor_msg( "red", tr( "Residuals: curves must be on the same grid, try 'Crop Common' first." ) );
+      editor_msg( "red", us_tr( "Residuals: curves must be on the same grid, try 'Crop Common' first." ) );
       return;
    }
 }
@@ -801,12 +801,12 @@ void US_Hydrodyn_Saxs_Hplc::plot_files()
       update_ref();
    }
 
-   for ( int i = 0; i < lb_files->numRows(); i++ )
+   for ( int i = 0; i < lb_files->count(); i++ )
    {
-      if ( lb_files->isSelected( i ) )
+      if ( lb_files->item( i )->isSelected() )
       {
          //any_selected = true;
-         if ( plot_file( lb_files->text( i ), file_minx, file_maxx, file_miny, file_maxy ) )
+         if ( plot_file( lb_files->item( i )->text(), file_minx, file_maxx, file_miny, file_maxy ) )
          {
             if ( first )
             {
@@ -835,7 +835,7 @@ void US_Hydrodyn_Saxs_Hplc::plot_files()
             }
          }
       } else {
-         if ( get_min_max( lb_files->text( i ), file_minx, file_maxx, file_miny, file_maxy ) )
+         if ( get_min_max( lb_files->item( i )->text(), file_minx, file_maxx, file_miny, file_maxy ) )
          {
             if ( first )
             {
@@ -898,12 +898,12 @@ bool US_Hydrodyn_Saxs_Hplc::get_min_max( QString file,
 {
    if ( current_mode == MODE_SCALE )
    {
-      //    qDebug( QString("get min max mode scale %1" ).arg( file ) );
+      //    us_qdebug( QString("get min max mode scale %1" ).arg( file ) );
       if ( !scale_q     .count( file ) ||
            !scale_I     .count( file ) ||
            !f_pos       .count( file ) )
       {
-         // editor_msg( "red", QString( tr( "Internal error: requested %1, but not found in data" ) ).arg( file ) );
+         // editor_msg( "red", QString( us_tr( "Internal error: requested %1, but not found in data" ) ).arg( file ) );
          return false;
       }
 
@@ -956,14 +956,14 @@ bool US_Hydrodyn_Saxs_Hplc::get_min_max( QString file,
             }
          }
       }
-      // qDebug( QString("get min max mode scale %1 x %2:%3 x %4:%5" ).arg( file ).arg( minx ).arg( maxx ).arg( miny ).arg( maxy ) );
+      // us_qdebug( QString("get min max mode scale %1 x %2:%3 x %4:%5" ).arg( file ).arg( minx ).arg( maxx ).arg( miny ).arg( maxy ) );
    } else {
       if ( !f_qs_string .count( file ) ||
            !f_qs        .count( file ) ||
            !f_Is        .count( file ) ||
            !f_pos       .count( file ) )
       {
-         // editor_msg( "red", QString( tr( "Internal error: requested %1, but not found in data" ) ).arg( file ) );
+         // editor_msg( "red", QString( us_tr( "Internal error: requested %1, but not found in data" ) ).arg( file ) );
          return false;
       }
 
@@ -1031,7 +1031,7 @@ bool US_Hydrodyn_Saxs_Hplc::plot_file( QString file,
         !f_Is        .count( file ) ||
         !f_pos       .count( file ) )
    {
-      editor_msg( "red", QString( tr( "Internal error: request to plot %1, but not found in data" ) ).arg( file ) );
+      editor_msg( "red", QString( us_tr( "Internal error: request to plot %1, but not found in data" ) ).arg( file ) );
       return false;
    }
 

@@ -5,9 +5,9 @@
 #include "../include/us_hydrodyn_cluster_config.h"
 #include "../include/us_hydrodyn_cluster_config_server.h"
 //Added by qt3to4:
-#include <Q3GridLayout>
+#include <QGridLayout>
 #include <QLabel>
-#include <Q3Frame>
+#include <QFrame>
 #include <QCloseEvent>
 
 #define SLASH QDir::separator()
@@ -18,14 +18,14 @@ US_Hydrodyn_Cluster_Config_Server::US_Hydrodyn_Cluster_Config_Server(
                                                                      void *us_hydrodyn, 
                                                                      QWidget *p, 
                                                                      const char *name
-                                                                     ) : QDialog(p, name)
+                                                                     ) : QDialog( p )
 {
    this->system_map  = &system_map;
    our_system_map    = system_map;
    this->server_name = server_name;
    this->us_hydrodyn = us_hydrodyn;
 
-   setCaption(tr("US-SOMO: Cluster Config: Systems"));
+   setWindowTitle(us_tr("US-SOMO: Cluster Config: Systems"));
    USglobal = new US_Config();
    cluster_window = (void *)( p->parentWidget() );
 
@@ -48,8 +48,8 @@ void US_Hydrodyn_Cluster_Config_Server::setupGUI()
 {
    int minHeight1 = 30;
 
-   lbl_title = new QLabel( QString( tr( "Cluster System: %1" ) ).arg( server_name ), this);
-   lbl_title->setFrameStyle(Q3Frame::WinPanel|Q3Frame::Raised);
+   lbl_title = new QLabel( QString( us_tr( "Cluster System: %1" ) ).arg( server_name ), this);
+   lbl_title->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_title->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_title->setMinimumHeight(minHeight1);
    lbl_title->setPalette( PALET_FRAME );
@@ -60,7 +60,7 @@ void US_Hydrodyn_Cluster_Config_Server::setupGUI()
          it != our_system_map.end();
          it++ )
    {
-      QLabel *lbl_tmp = new QLabel( it->first, this);
+      QLabel * lbl_tmp = new QLabel( it->first, this);
       lbl_tmp->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
       lbl_tmp->setMinimumHeight(minHeight1);
       lbl_tmp->setPalette( PALET_LABEL );
@@ -68,7 +68,7 @@ void US_Hydrodyn_Cluster_Config_Server::setupGUI()
       lbl_tmp->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1, QFont::Bold));
       lbls.push_back( lbl_tmp );
 
-      QLineEdit *le_tmp = new QLineEdit(this, "csv_filename Line Edit");
+      QLineEdit * le_tmp = new QLineEdit( this );  le_tmp->setObjectName( "csv_filename Line Edit" );
       le_tmp->setText( it->second );
       le_tmp->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
       le_tmp->setMinimumWidth(450);
@@ -78,20 +78,20 @@ void US_Hydrodyn_Cluster_Config_Server::setupGUI()
       les.push_back( le_tmp );
    }
 
-   pb_cancel = new QPushButton(tr("Cancel"), this);
+   pb_cancel = new QPushButton(us_tr("Cancel"), this);
    Q_CHECK_PTR(pb_cancel);
    pb_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_cancel->setMinimumHeight(minHeight1);
    pb_cancel->setPalette( PALET_PUSHB );
    connect(pb_cancel, SIGNAL(clicked()), SLOT(cancel()));
 
-   pb_help = new QPushButton(tr("Help"), this);
+   pb_help = new QPushButton(us_tr("Help"), this);
    pb_help->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_help->setMinimumHeight(minHeight1);
    pb_help->setPalette( PALET_PUSHB );
    connect(pb_help, SIGNAL(clicked()), SLOT(help()));
 
-   pb_save_config = new QPushButton(tr("Close"), this);
+   pb_save_config = new QPushButton(us_tr("Close"), this);
    pb_save_config->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_save_config->setMinimumHeight(minHeight1);
    pb_save_config->setPalette( PALET_PUSHB );
@@ -99,17 +99,17 @@ void US_Hydrodyn_Cluster_Config_Server::setupGUI()
 
    // build layout
 
-   Q3GridLayout *background = new Q3GridLayout( this, 0, 0, 4, 2 );
+   QGridLayout * background = new QGridLayout( this ); background->setContentsMargins( 0, 0, 0, 0 ); background->setSpacing( 0 ); background->setSpacing( 2  ); background->setContentsMargins( 4, 4, 4, 4 );
 
    unsigned int pos = 0;
 
-   background->addMultiCellWidget( lbl_title, pos, pos, 0, 2 );
+   background->addWidget( lbl_title , pos , 0 , 1 + ( pos ) - ( pos ) , 1 + ( 2  ) - ( 0 ) );
    pos++;
 
    for ( unsigned int i = 0; i < lbls.size(); i++ )
    {
       background->addWidget         ( lbls[ i ], pos, 0 );
-      background->addMultiCellWidget( les [ i ], pos, pos, 1, 2 );
+      background->addWidget( les [ i ] , pos , 1 , 1 + ( pos ) - ( pos ) , 1 + ( 2  ) - ( 1 ) );
       pos++;
    }
    
