@@ -82,6 +82,11 @@
 #include "us_hydrodyn_cluster.h"
 #include "us_saxs_util.h"
 
+#if QT_VERSION >= 0x040000
+#include "us3i_gui_settings.h"
+#include "us3i_editor.h"
+#endif
+
 //standard C and C++ defs:
 
 #include <vector>

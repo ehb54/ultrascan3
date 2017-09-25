@@ -4917,6 +4917,8 @@ void US_Hydrodyn_Saxs_Hplc::crop_undo()
 
 void US_Hydrodyn_Saxs_Hplc::view()
 {
+   int dsp_count = 0;
+
    for ( int i = 0; i < lb_files->count(); i++ )
    {
       if ( lb_files->item( i )->isSelected() )
@@ -4953,6 +4955,7 @@ void US_Hydrodyn_Saxs_Hplc::view()
             }
          }
 
+#if QT_VERSION < 0x040000
          TextEdit *edit;
          edit = new TextEdit( this, qPrintable( file ) );
          edit->setFont    ( QFont( "Courier" ) );
@@ -4968,6 +4971,19 @@ void US_Hydrodyn_Saxs_Hplc::view()
          }
          //   edit->setTextFormat( PlainText );
          edit->show();
+#else
+         US3i_Editor * edit = new US3i_Editor( US3i_Editor::DEFAULT, true, QString(), this );
+         edit->setWindowTitle( file );
+         edit->resize( 685, 700 );
+         // QPoint p = g.global_position();
+         // edit->move( p.x() + 30, p.y() + 30 );
+         ++dsp_count;
+         edit->move( this->pos().x() + 10 + 7 * dsp_count, this->pos().y() + 10 + 7 * dsp_count );
+         edit->e->setFont( QFont( "monospace",
+                                  US3i_GuiSettings::fontSize() ) );
+         edit->e->setText( text );
+         edit->show();
+#endif
       }
    }
 }

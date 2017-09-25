@@ -5534,6 +5534,7 @@ void US_Hydrodyn::set_default()
 
 void US_Hydrodyn::view_file(const QString &filename, QString title)
 {
+#if QT_VERSION < 0x040000
    //   US_Editor *edit;
    //   edit = new US_Editor(1);
    TextEdit *edit;
@@ -5543,13 +5544,28 @@ void US_Hydrodyn::view_file(const QString &filename, QString title)
    AUTFBACK( edit );
    edit->setGeometry(global_Xpos + 30, global_Ypos + 30, 685, 600);
    //   edit->setTitle(title);
-#if QT_VERSION < 0x040000
    edit->load(filename, title, true, Qt::PlainText);
-#else
-   edit->load(filename, title, true );
-#endif
    //   edit->setTextFormat( PlainText );
    edit->show();
+#else
+   {
+      QFile f( filename );
+      if ( f.open( QIODevice::ReadOnly ) ) {
+         QString text;
+         QTextStream ts( &f );
+         text = ts.readAll();
+         f.close();
+         US3i_Editor * edit = new US3i_Editor( US3i_Editor::DEFAULT, true, QString(), this );
+         edit->setWindowTitle( title );
+         edit->resize( 685, 700 );
+         edit->move( this->pos().x() + 30, this->pos().y() + 30 );
+         edit->e->setFont( QFont( "monospace",
+                                  US3i_GuiSettings::fontSize() ) );
+         edit->e->setText( text );
+         edit->show();
+      }
+   }
+#endif
 }
 
 void US_Hydrodyn::closeEvent(QCloseEvent *e)

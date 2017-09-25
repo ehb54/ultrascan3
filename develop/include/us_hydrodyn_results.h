@@ -14,6 +14,11 @@
 #include "us_util.h"
 #include "us_editor.h"
 
+#if QT_VERSION >= 0x040000
+#include "us3i_gui_settings.h"
+#include "us3i_editor.h"
+#endif
+
 //standard C and C++ defs:
 
 #include <vector>

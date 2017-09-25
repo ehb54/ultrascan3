@@ -8,6 +8,7 @@
 
 TEMPLATE        = app
 DEPENDPATH     += $$US3SOMOPATH/src $$US3SOMOPATH/include
+INCLUDEPATH    += $$US3SOMOPATH/include
 SOURCES         = main.cpp 
 DESTDIR         = $$US3SOMOPATH/bin
 

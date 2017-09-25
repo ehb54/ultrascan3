@@ -141,7 +141,7 @@ class US_Multi_Column
          while ( !ts.atEnd() )
          {
             QString     qs  = ts.readLine();
-            QStringList qsl = qs.split( QRegExp( is_csv ? "," : "\s+" ), QString::SkipEmptyParts );
+            QStringList qsl = qs.split( QRegExp( is_csv ? "," : "\\s+" ), QString::SkipEmptyParts );
             if ( !pos &&
                  qsl.size() &&
                  qsl[ 0 ].contains( QRegExp( "^\\D" ) ) )

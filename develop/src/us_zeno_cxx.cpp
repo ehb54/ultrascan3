@@ -2346,7 +2346,7 @@ doWalkOnSpheresThread(Sphere<double> const * boundingSphere,
 	
 	if ( !threadNum && !( walkNum % 10000 ) ) {
 	  if (!cmdline){
-             // zeno_progress->setValue( walkNum ); zeno_progress->setMaximum( numWalks );
+	    zeno_progress->setValue( walkNum ); zeno_progress->setMaximum( numWalks );
 	  }
 	  else {
 	    if ( zeno_us_udp_msg )

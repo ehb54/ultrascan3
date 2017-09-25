@@ -422,6 +422,17 @@ SOURCES += \
   us_hydrodyn_saxs_guinier_frames.cpp \
   us_hydrodyn_saxs_hplc_scale_trend.cpp \
   us_plot_util.cpp \
+  us3i_editor.cpp \
+  us3i_editor_gui.cpp \
+  us3i_gui_settings.cpp \
+  us3i_settings.cpp \
+  us3i_widgets.cpp \
+  us3i_widgets_dialog.cpp \
+  us3i_images.cpp \
+  us3i_global.cpp \
+  us3i_gui_util.cpp \
+  us3i_util.cpp \
+  us3i_gzip.cpp \
   shd_mpi/shs_use.cpp
 #  us_db_rst_channel.cpp \
 #  us_db_rst_equil.cpp \
@@ -721,6 +732,18 @@ HEADERS += \
   us_hydrodyn_saxs_hplc_baseline_best.h \
   us_hydrodyn_saxs_hplc_simulate.h \
   us_plot_util.h \
+  us3i_extern.h \
+  us3i_editor.h \
+  us3i_editor_gui.h \
+  us3i_gui_settings.h \
+  us3i_settings.h \
+  us3i_widgets.h \
+  us3i_widgets_dialog.h \
+  us3i_images.h \
+  us3i_global.h \
+  us3i_gui_util.h \
+  us3i_util.h \
+  us3i_gzip.h \
   shd_mpi/shs_data.h
 
 # IMAGES = \

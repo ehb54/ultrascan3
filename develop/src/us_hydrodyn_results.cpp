@@ -1,6 +1,7 @@
 #include "../include/us3_defines.h"
 #include "../include/us_hydrodyn_results.h"
 //Added by qt3to4:
+#include <QTextStream>
 #include <QCloseEvent>
 #include <QGridLayout>
 #include <QFrame>
@@ -451,6 +452,7 @@ void US_Hydrodyn_Results::load_asa()
 
 void US_Hydrodyn_Results::view_file(const QString &filename)
 {
+#if QT_VERSION < 0x040000
    e = new TextEdit();
    e->setFont(QFont("Courier"));
    e->setPalette( PALET_NORMAL );
@@ -458,6 +460,25 @@ void US_Hydrodyn_Results::view_file(const QString &filename)
    e->setGeometry(global_Xpos + 30, global_Ypos + 30, 685, 600);
    e->load(filename);
    e->show();
+#else
+   {
+      QFile f( filename );
+      if ( f.open( QIODevice::ReadOnly ) ) {
+         QString text;
+         QTextStream ts( &f );
+         text = ts.readAll();
+         f.close();
+         US3i_Editor * edit = new US3i_Editor( US3i_Editor::DEFAULT, true, QString(), this );
+         edit->setWindowTitle( "US-SOMO Results" );
+         edit->resize( 685, 700 );
+         edit->move( this->pos().x() + 30, this->pos().y() + 30 );
+         edit->e->setFont( QFont( "monospace",
+                                  US3i_GuiSettings::fontSize() ) );
+         edit->e->setText( text );
+         edit->show();
+      }
+   }
+#endif
 }
 
 void US_Hydrodyn_Results::closeEvent(QCloseEvent *e)
