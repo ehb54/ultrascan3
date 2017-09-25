@@ -747,7 +747,6 @@ void US_Hydrodyn_Saxs_Hplc::testiq()
             rb->show();
             rb_testiq_gaussians .push_back( rb );
             hbl_testiq_gaussians->addWidget( rb );
-            bg_testiq_gaussians ->addButton( rb );
 #if QT_VERSION < 0x040000
             bg_testiq_gaussians ->insert( rb );
 #else
