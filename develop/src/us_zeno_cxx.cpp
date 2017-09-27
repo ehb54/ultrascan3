@@ -2346,7 +2346,10 @@ doWalkOnSpheresThread(Sphere<double> const * boundingSphere,
 	
 	if ( !threadNum && !( walkNum % 10000 ) ) {
 	  if (!cmdline){
+#if QT_VERSION < 0x040000
+             // need to fix how this is done
 	    zeno_progress->setValue( walkNum ); zeno_progress->setMaximum( numWalks );
+#endif
 	  }
 	  else {
 	    if ( zeno_us_udp_msg )
