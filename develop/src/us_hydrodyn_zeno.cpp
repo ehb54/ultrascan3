@@ -13777,11 +13777,13 @@ bool US_Hydrodyn::calc_zeno()
 # endif
 #endif
    
+# if QT_VERSION < 0x040000
    if ( zeno_cxx ) {
       editor_msg( "darkRed", "Notice: the new ZENO method is active" );
       qApp->processEvents();
    }
-
+#endif
+   
    double sum_mass   = 0e0;
    double sum_volume = 0e0;
 
@@ -14230,15 +14232,26 @@ bool US_Hydrodyn::calc_zeno()
 
                // append to zno file
                {
-                  QString add_to_zeno = 
+                  QString add_to_zeno;
+                  if ( zeno_cxx ) {
+                     add_to_zeno =
+                        "---------------------------------------------------------\n" 
+                        + us_tr( "N.B. The above parameters, directly calculated by ZENO,\n"
+                              "are not linked to the model's physical dimensions,\n"
+                              "in contrast to the US-SOMO Derived parameters below.\n" )
+                        + "---------------------------------------------------------\n"
+                        ;
+                  }
+
+                  add_to_zeno += 
                      QString( 
                              us_tr( 
                                 "\n"
-                                "Additional US-SOMO Computed Parameters:\n"
+                                "US-SOMO Derived Parameters:\n"
                                 "\n"
-                                " Sedimentation Coefficient s: %1\n"
-                                " Frictional Ratio           : %2\n"
-                                " Radius of Gyration         : %3\n"
+                                " Sedimentation Coefficient  s : %1\n"
+                                " Frictional Ratio        f/f0 : %2\n"
+                                " Radius of Gyration        Rg : %3\n"
                                  ) )
                      .arg( QString( "" ).sprintf( "%4.2e S" , this_data.results.s20w ) )
                      .arg( QString( "" ).sprintf( "%3.2f"   , this_data.results.ff0  ) )
@@ -14248,10 +14261,12 @@ bool US_Hydrodyn::calc_zeno()
                   if ( zeno_cxx ) {
                      add_to_zeno +=
                         QString( 
-                                " Intrinsic Viscosity M      : %1\n"
-                                " Tr. Frictional coefficient : %2\n"
-                                " Tr. Diffusion Coefficient D: %3\n"
+                                " Stokes Radius             Rs : %1\n"
+                                " Intrinsic Viscosity    [eta] : %1\n"
+                                " Tr. Frictional coefficient f : %2\n"
+                                " Tr. Diffusion Coefficient Dt : %3\n"
                                  )
+                        .arg( QString( "" ).sprintf( "%4.2e nm"      , this_data.results.rs ) )
                         .arg( QString( "" ).sprintf( "%4.2e cm^3/g"  , this_data.results.viscosity ) )
                         .arg( QString( "" ).sprintf( "%4.2e g/s"     , this_data.tra_fric_coef ) )
                         .arg( QString( "" ).sprintf( "%4.2e cm/sec^2", this_data.results.D20w ) )
