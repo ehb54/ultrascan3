@@ -43,7 +43,7 @@ int main( int argc, char* argv[] )
    #include "main1.inc"
 
    // License is OK.  Start up.
-   
+
    US_FeMatch w;
    w.show();                   //!< \memberof QWidget
    return application.exec();  //!< \memberof QApplication
@@ -70,7 +70,7 @@ US_FeMatch::US_FeMatch() : US_Widgets()
 
    leftLayout      = new QVBoxLayout();
    rightLayout     = new QVBoxLayout();
-   
+
    analysisLayout  = new QGridLayout();
    runInfoLayout   = new QGridLayout();
    parameterLayout = new QGridLayout();
@@ -196,7 +196,7 @@ US_FeMatch::US_FeMatch() : US_Widgets()
    lb_compress->setMinimumWidth( pwid );
    le_compress->setMinimumWidth( lwid );
 
-   QLabel* lb_experiment   = us_banner( tr( "Experimental Parameters (at 20" ) 
+   QLabel* lb_experiment   = us_banner( tr( "Experimental Parameters (at 20" )
       + DEGC + "):" );
    QLabel* lb_variance     = us_label ( tr( "Variance:" ) );
 
@@ -254,7 +254,7 @@ US_FeMatch::US_FeMatch() : US_Widgets()
 
    // Scan Controls
 
-   QLabel* lb_scan    = us_banner( tr( "Scan Control"       ) ); 
+   QLabel* lb_scan    = us_banner( tr( "Scan Control"       ) );
    QLabel* lb_from    = us_label ( tr( "Scan focus from:" ) );
    ct_from            = us_counter( 3, 0, 500, 1 );
    QLabel* lb_to      = us_label ( tr( "to:"   ) );
@@ -288,7 +288,7 @@ US_FeMatch::US_FeMatch() : US_Widgets()
    controlsLayout->addWidget( ct_to             , row++, 2, 1, 2 );
    controlsLayout->addWidget( pb_exclude        , row,   0, 1, 2 );
    controlsLayout->addWidget( pb_reset_exclude  , row++, 2, 1, 2 );
-   
+
    // Plots
    plotLayout1 = new US_Plot( data_plot1,
             tr( "Residuals" ),
@@ -470,15 +470,15 @@ void US_FeMatch::load( void )
             this,   SLOT( update_disk_db( bool ) ) );
    connect( dialog, SIGNAL( progress(     const QString ) ),
             this,   SLOT( set_progress(   const QString ) ) );
-
-   DbgLv(1) << "LD: exec dialog";
+DbgLv(1) << "LD: exec dialog";
 
    if ( dialog->exec() != QDialog::Accepted )  return;
 
    edata     = &dataList[ 0 ];
    runID     = edata->runID;
 
-   // Get speed steps from disk or DB experiment
+   // Get speed steps from disk or DB experiment (and maybe timestate)
+
    if ( local == US_Disk_DB_Controls::DB )
    {  // Fetch the speed steps for the experiment from the database
       workingDir = tr( "(database)" );
@@ -495,11 +495,19 @@ void US_FeMatch::load( void )
 
       if ( dbP->lastErrno() == US_DB2::OK )
       {
-        dbP->next();
-        idExp              = dbP->value( 1 ).toInt();
-        US_SimulationParameters::speedstepsFromDB( dbP, idExp, speed_steps );
+         dbP->next();
+         idExp              = dbP->value( 1 ).toInt();
+         US_SimulationParameters::speedstepsFromDB( dbP, idExp, speed_steps );
       }
-      qDebug()<<"Fematch:Hi I am from database";
+DbgLv(1)<<"Fematch:Hi I am from database";
+
+      // Check out whether we need to read TimeState from the DB
+      QString tmst_fpath = US_Settings::resultDir() + "/" + runID + "/"
+                           + runID + ".time_state.tmst";
+
+      bool newfile       = US_TimeState::dbSyncToLF( dbP, tmst_fpath, idExp );
+DbgLv(0) << "FEM:LD: newfile" << newfile << "idExp" << idExp
+ << "tmst_fpath" << tmst_fpath;
    }
 
    else
@@ -508,8 +516,8 @@ void US_FeMatch::load( void )
       workingDir = workingDir.left( workingDir.lastIndexOf( "/" ) );
       QString expfpath = workingDir + "/" + runID + "."
                        + edata->dataType + ".xml";
-      QFile xfi( expfpath )
-         ;
+      QFile xfi( expfpath );
+
       if ( xfi.open( QIODevice::ReadOnly ) )
       {  // Read and parse "<speedstep>" lines in the XML
          QXmlStreamReader xmli( &xfi );
@@ -535,18 +543,19 @@ void US_FeMatch::load( void )
    //------------------------------------------
    qDebug()<< "Hi:Load:no of speed step"    << nssp;
    //------------------------------------------
-   /*if ( nssp > 0 )
+#if 0
+   if ( nssp > 0 )
    {
       int stm1   = speed_steps[ nssp - 1 ].time_first;
       int stm2   = speed_steps[ nssp - 1 ].time_last;
-      qDebug()<<"Load: ntriples=	"<< ntriples<< "no of speed step"    << nssp ;
+      qDebug()<<"Load: ntriples=	"<< ntriples<< "no of speed step"    << nssp;
       for ( int ds = 0; ds < ntriples; ds++ )
       {  // Scan data time ranges and compare to experiment speed steps
          edata      = &dataList[ ds ];
          int lesc   = edata->scanCount() - 1;
          int etm1   = edata->scanData[    0 ].seconds;
          int etm2   = edata->scanData[ lesc ].seconds;
-         qDebug()<< "Time limit for current speed"<< etm1<< etm2 ;
+         qDebug()<< "Time limit for current speed"<< etm1<< etm2;
          if ( etm1 < stm1  ||  etm2 > stm2 )
          {  // Data times beyond speed step ranges, so flag use of data ranges
             nssp       = 0;
@@ -555,32 +564,34 @@ void US_FeMatch::load( void )
             break;
          }
       }
-   }*/
-   int nbr_scans1 = 0;
-   int nbr_scans2 =0;
+   }
+#endif
+
    if ( nssp > 0 )
-   {  for ( int i = 0; i< nssp ; i++)
-      {   int stm1   = speed_steps[ i ].time_first;
-          int stm2   = speed_steps[ i ].time_last;
-          for ( int ds = 0; ds < ntriples; ds++ )
-          {   // Scan data time ranges and compare to experiment speed steps
-              edata      = &dataList[ ds ];
-              int lesc   = edata->scanCount() - 1;
-              int etm1 = edata->scanData[ 0 ].seconds; 
-              int etm2   = edata->scanData[ lesc ].seconds;
-              if ( etm1 < stm1  ||  etm2 > stm2 )
-              {  // Data times beyond speed step ranges, so flag use of data ranges
-                 //nssp       = 0;
-                 qDebug()<<"Data is beyond range"<< etm1 << etm2 << stm1 << stm2 ;
-                 //speed_steps.clear();
-                 break;
-              }
-           }
+   {
+      for ( int ii = 0; ii < nssp; ii++ )
+      {
+         int stm1   = speed_steps[ ii ].time_first;
+         int stm2   = speed_steps[ ii ].time_last;
+         for ( int ds = 0; ds < ntriples; ds++ )
+         {   // Scan data time ranges and compare to experiment speed steps
+            edata      = &dataList[ ds ];
+            int lesc   = edata->scanCount() - 1;
+            int etm1 = edata->scanData[ 0 ].seconds;
+            int etm2   = edata->scanData[ lesc ].seconds;
+            if ( etm1 < stm1  ||  etm2 > stm2 )
+            {  // Data times beyond speed step ranges, so flag use of data ranges
+               //nssp       = 0;
+               qDebug() << "Data is beyond range" << etm1 << etm2 << stm1 << stm2;
+               //speed_steps.clear();
+               break;
+            }
+         }
       }
    }
 
    //----------------------------------------------
-   qDebug()<<"nssp after if block"<< nssp;
+DbgLv(0) << "nssp after if block" << nssp;
 
    exp_steps  = ( nssp > 0 );
    dat_steps  = !exp_steps;
@@ -631,9 +642,9 @@ void US_FeMatch::load( void )
    bmd_pos    = this->pos() + QPoint( 100, 100 );
    epd_pos    = this->pos() + QPoint( 200, 200 );
    rpd_pos    = this->pos() + QPoint( 300, 300 );
-   qDebug()<<"---------------------------------------";
-   qDebug()<<"Loading of experimental data is over";
-   qDebug()<<"---------------------------------------";
+DbgLv(0) << "---------------------------------------";
+DbgLv(0) << "Loading of experimental data is over";
+DbgLv(0) << "---------------------------------------";
 }
 
 // Details
@@ -681,7 +692,7 @@ void US_FeMatch::update( int drow )
    QString bmanu = manual ? "1" : "0";
    QString svbar = le_vbar     ->text();
    bool    bufvl = false;
-   DbgLv(1) << "Fem:Upd: (0)svbar" << svbar;
+DbgLv(1) << "Fem:Upd: (0)svbar" << svbar;
 
    QString errmsg;
    US_Passwd pw;
@@ -718,7 +729,7 @@ void US_FeMatch::update( int drow )
       {
          solution_rec.readFromDisk( solID );
       }
-   
+
       le_solution ->setText( solution_rec.solutionDesc );
       vbar          = solution_rec.commonVbar20;
       svbar         = QString::number( vbar );
@@ -822,7 +833,7 @@ void US_FeMatch::data_plot( void )
    double* rr        = vecr.data();
    double* vv        = vecv.data();
 
-   QString       title; 
+   QString       title;
    QwtPlotCurve* cc;
    QPen          pen_red(  Qt::red );
    QPen          pen_plot( US_GuiSettings::plotCurve() );
@@ -871,7 +882,7 @@ void US_FeMatch::data_plot( void )
          cc->setPen( pen_red );
       else
          cc->setPen( pen_plot );
-         
+
       cc->setSamples( rr, vv, points );
    }
 
@@ -887,8 +898,8 @@ void US_FeMatch::data_plot( void )
       bool   have_ri = ri_noise.count > 0;
       bool   have_ti = ti_noise.count > 0;
 
-      int nscan=scanCount;
-      int nconc=sdata->pointCount();
+//      int nscan   = scanCount;
+//      int nconc   = sdata->pointCount();
       double rmsd = 0.0;
       int    kpts = 0;
 
@@ -935,18 +946,15 @@ void US_FeMatch::data_plot( void )
              for( int jj=0; jj<points; jj++ )
                 vsum += sq(sdata->value(ii,jj));
       }
-      DbgLv(1) << "VSUM=" << vsum;
-      int hh=sdata->pointCount()/2;
-      int ss=sdata->scanCount();
-      DbgLv(1) << "SDAT 0-3"<< sdata->value(0,hh) << sdata->value(1,hh)
-               << sdata->value(2,hh) << sdata->value(3,hh);
-      DbgLv(1) << "SDAT *-n" << sdata->value(ss-4,hh) << sdata->value(ss-3,hh)
-               << sdata->value(ss-2,hh) << sdata->value(ss-1,hh);
+DbgLv(1) << "VSUM=" << vsum;
+int hh=sdata->pointCount()/2;
+int ss=sdata->scanCount();
+DbgLv(1) << "SDAT 0-3"<< sdata->value(0,hh) << sdata->value(1,hh)
+ << sdata->value(2,hh) << sdata->value(3,hh);
+DbgLv(1) << "SDAT *-n" << sdata->value(ss-4,hh) << sdata->value(ss-3,hh)
+ << sdata->value(ss-2,hh) << sdata->value(ss-1,hh);
 
-      US_SimulationParameters* simpar = &simparams;
-
-      US_SimulationParameters::SpeedProfile* spstep = &simpar->speed_step[0];
-      //DbgLv(1) << "STEP0 durmin dlymin w2tf w2tl timf timl"
+//DbgLv(1) << "STEP0 durmin dlymin w2tf w2tl timf timl"
    }
 
    else
@@ -1059,7 +1067,7 @@ void US_FeMatch::save_data( void )
       img06File.replace( "ff0", "vbar" );
       img07File.replace( "ff0", "vbar" );
    }
-   DbgLv(1) << "cnstvb" << cnstvb << "img06File" << img06File;
+DbgLv(1) << "cnstvb" << cnstvb << "img06File" << img06File;
 
    // Save image files from main window
    write_plot( img01File, data_plot2 );
@@ -1201,14 +1209,9 @@ void US_FeMatch::save_data( void )
    {  // Copy report files to the database
       reportFilesToDB( files );
 
-      umsg = umsg + tr( "\nFiles were also saved to the database.\n" );
+      umsg          = umsg + tr( "\nFiles were also saved to the database.\n" );
    }
-   QDateTime time2=QDateTime::currentDateTime();
-   int etim1=time0.msecsTo(time1);
-   int etim2=time1.msecsTo(time2);
-   int etimt=etim1+etim2;
-   int et1pc=(etim1*100)/etimt;
-   int et2pc=(etim2*100)/etimt;
+   QDateTime time2 = QDateTime::currentDateTime();
    QApplication::restoreOverrideCursor();
    QMessageBox::information( this, tr( "Successfully Written" ), umsg );
 }
@@ -1303,7 +1306,7 @@ void US_FeMatch::exclude( void )
 // Respond to click of current type of distribution plot
 void US_FeMatch::distrib_type( )
 {
-   const char* dptyp[] = 
+   const char* dptyp[] =
    {
       "s20,w distribution",
       "MW distribution",
@@ -1329,7 +1332,7 @@ void US_FeMatch::distrib_type( )
    ii      = (  cnstvb && ii == 5 ) ? 7 : ii;
    ii      = ( !cnstvb && ii == 3 ) ? 5 : ii;
    pb_distrib->setText( QString( dptyp[ ii ] ) );
- 
+
    switch( itype )
    {
       case 0:     // s20,w distribution
@@ -1748,9 +1751,9 @@ void US_FeMatch::load_model( )
 
    qApp->processEvents();
 
-   DbgLv(1) << "post-Load m,e,r GUIDs" << model.modelGUID << model.editGUID
-            << model.requestGUID;
-   DbgLv(1) << "post-Load loadDB" << dkdb_cntrls->db();
+DbgLv(1) << "post-Load m,e,r GUIDs" << model.modelGUID << model.editGUID
+ << model.requestGUID;
+DbgLv(1) << "post-Load loadDB" << dkdb_cntrls->db();
 
    model_loaded = model;   // Save model exactly as loaded
    model_used   = model;   // Make that the working model
@@ -1821,7 +1824,7 @@ void US_FeMatch::adjust_model()
    {  // Use vbar from the model component, instead of from the solution
       sd.vbar20    = mc_vbar;
       sd.vbar      = US_Math2::adjust_vbar20( sd.vbar20, avgTemp );
-      DbgLv(1) << "Fem:Adj:  avgT" << avgTemp << "vb20 vb" << sd.vbar20 << sd.vbar;
+DbgLv(1) << "Fem:Adj:  avgT" << avgTemp << "vb20 vb" << sd.vbar20 << sd.vbar;
       US_Math2::data_correction( avgTemp, sd );
       scorrec      = sd.s20w_correction;
       dcorrec      = sd.D20w_correction;
@@ -1899,7 +1902,7 @@ void US_FeMatch::load_noise( )
             else
                ri_noise.load( loadDB, noiID, dbP );
          }
-         
+
       }
 
       else if ( nenois > 1  &&  noisdf > 0 )
@@ -1995,8 +1998,6 @@ void US_FeMatch::simulate_model( )
    US_DataIO::RawData*    rdata   = &rawList[  drow ];
    US_DataIO::EditedData* edata   = &dataList[ drow ];
 
-   int    kscan   = rdata->scanCount();
-   int    nscan   = edata->scanCount();
    int    nconc   = edata->pointCount();
    double radlo   = edata->radius( 0 );
    double radhi   = edata->radius( nconc - 1 );
@@ -2006,7 +2007,7 @@ void US_FeMatch::simulate_model( )
 
    // Initialize simulation parameters using edited data information
    US_Passwd pw;
-   US_DB2* dbP = dkdb_cntrls->db() ? new US_DB2( pw.getPasswd() ) : NULL;     
+   US_DB2* dbP = dkdb_cntrls->db() ? new US_DB2( pw.getPasswd() ) : NULL;
 
   //------------------------------------------------------
   // Calls from us_simparams.cpp
@@ -2036,17 +2037,19 @@ void US_FeMatch::simulate_model( )
    QString gtyp = adv_vals[ "gridtype"  ];
    QString bvol = adv_vals[ "bndvolume" ];
 
-/*   if ( mtyp.contains( "Claverie" ) )
+#if 0
+   if ( mtyp.contains( "Claverie" ) )
       simparams.meshType = US_SimulationParameters::CLAVERIE;
    else if ( mtyp.contains( "Moving Hat" ) )
       simparams.meshType = US_SimulationParameters::MOVING_HAT;
    else if ( mtyp.contains( "File:"      ) )
       simparams.meshType = US_SimulationParameters::USER;
    else if ( mtyp.contains( "ASTFVM"     ) )
-   {   simparams.meshType = US_SimulationParameters::ASTFVM;
-       qDebug()<<"meshtype= fvm";
+   {
+      simparams.meshType = US_SimulationParameters::ASTFVM;
+      qDebug() << "meshtype= fvm";
    }
-*/
+#endif
    if ( gtyp.contains( "Constant" ) )
       simparams.gridType = US_SimulationParameters::FIXED;
 
@@ -2055,7 +2058,7 @@ void US_FeMatch::simulate_model( )
         simparams.meshType = US_SimulationParameters::ASTFEM;
     else
         simparams.meshType = US_SimulationParameters::ASTFVM;
-   
+
    simparams.firstScanIsConcentration = false;
 
    double concval1                    = 0.0;
@@ -2071,37 +2074,59 @@ void US_FeMatch::simulate_model( )
 
    // Make a simulation copy of the experimental data without actual readings
 
-//   US_AstfemMath::initSimData( *sdata, *edata, 0.0 );
    US_AstfemMath::initSimData( *sdata, *edata, concval1 );// Gets experimental time grid set
-   //---------------------------------------------- 
-   simparams.sim = false ;
-   QString tmst_fpath = US_Settings::resultDir() +"/" + runID +"/" + runID + ".time_state.tmst";  
-   QFileInfo check_file(tmst_fpath);
 
-   if ( (check_file.exists()) && (check_file.isFile()) )
-   {  
-      //simparams.tsobj->open_read_data( tmst_fpath, true ); 
-      simparams.simSpeedsFromTimeState( tmst_fpath );
-      qDebug()<<"timestate file exists"<< tmst_fpath << " timestateobject = "<<simparams.tsobj;
-     
+   QString tmst_fpath = US_Settings::resultDir() + "/" + runID + "/"
+                        + runID + ".time_state.tmst";
+   QFileInfo check_file( tmst_fpath );
+
+   if ( ( check_file.exists() ) && ( check_file.isFile() ) )
+   {
+      if ( US_AstfemMath::timestate_onesec( tmst_fpath, *sdata ) )
+      {  // Load timestate that is already at 1-second-intervals
+         simparams.simSpeedsFromTimeState( tmst_fpath );
+DbgLv(1) << "FEM1: timestate file exists" << tmst_fpath << " timestateobject,count = "
+ << simparams.tsobj << simparams.sim_speed_prof.count();
+      }
+
+      else
+      {  // Replace timestate with a new one that is at 1-second-intervals
+         if ( drow == 0 )
+         {
+            QString tmst_fdefs = QString( tmst_fpath ).replace( ".tmst", ".xml" );
+            QString tmst_fpsav = tmst_fpath + "-orig";
+            QString tmst_fdsav = tmst_fdefs + "-orig";
+            simparams.sim      = ( edata->channel == "S" );
+
+            // Rename existing (non-1sec-intv) files
+            QFile::rename( tmst_fpath, tmst_fpsav );
+            QFile::rename( tmst_fdefs, tmst_fdsav );
+            // Create a new 1-second-interval file set
+            US_AstfemMath::writetimestate( tmst_fpath, simparams, *sdata );
+DbgLv(1) << "FEM1: 1-sec-intv file created";
+         }
+
+         simparams.simSpeedsFromTimeState( tmst_fpath );
+      }
    }
    else
-      qDebug()<<"timestate file does not exist";
-   //---------------------------------------------        
-   int step; // Used to determine dataset is from which step in case of multi-speed cases
+DbgLv(1) << "timestate file does not exist";
+#if 0
+   // Determine dataset is from which step in case of multi-speed cases
+   int step = 0;
+   int lssx = sdata->scanCount() - 1;
+   int mm   = lssx / 2;
 
-   for ( int i =0; i < simparams.speed_step.size() ; i++ ) 
- 
-   {    
-   
-    if ( ( sdata->scanData[i].rpm == simparams.speed_step[i].rotorspeed) 
-            && (sdata->scanData[sdata->scanCount()-1]. seconds > simparams.speed_step[i].time_first ) )
-        {
-           step = i;
-           break ;
-        }
+   for ( int ii = 0; ii < simparams.speed_step.size(); ii++ )
+   {
+      if ( ( sdata->scanData[ mm ].rpm == simparams.speed_step[ ii ].rotorspeed )  &&
+           ( sdata->scanData[ lssx ].seconds > simparams.speed_step[ ii ].time_first ) )
+      {
+         step = ii;
+         break;
+      }
    }
-    
+#endif
 
    sdata->cell        = rdata->cell;
    sdata->channel     = rdata->channel;
@@ -2114,8 +2139,8 @@ void US_FeMatch::simulate_model( )
    int ncomp  = model.components.size();
    compress   = le_compress->text().toDouble();
    progress->setRange( 1, ncomp );
-   progress->reset();  
-//=================================================
+   progress->reset();
+
    nthread    = US_Settings::threads();
    int ntc    = ( ncomp + nthread - 1 ) / nthread;
    nthread    = ( ntc > MIN_NTC ) ? nthread : 1;
@@ -2124,7 +2149,7 @@ void US_FeMatch::simulate_model( )
 
    // Do simulation by several possible ways: 1-/Multi-thread, ASTFEM/ASTFVM
    if ( nthread < 2 )
-   {  
+   {
       if ( model.components[ 0 ].sigma == 0.0  &&
            model.components[ 0 ].delta == 0.0  &&
            model.coSedSolute           <  0.0  &&
@@ -2152,7 +2177,7 @@ void US_FeMatch::simulate_model( )
       //-----------------------
       //Simulation part is over
       //-----------------------
-   
+
       show_results();
    }
 
@@ -2208,18 +2233,15 @@ void US_FeMatch::simulate_model( )
          wthread->start();
       }
    }
-   
+
 }
 
-      
+
 // Show simulation and residual when the simulation is complete
 void US_FeMatch::show_results( )
 {
-   long dur_calc = start_time.msecsTo( QDateTime::currentDateTime() );
    progress->setValue( progress->maximum() );
 
-   int nscan = sdata->scanCount();
-   int nconc = sdata->pointCount();
    double rmsd = 0.0;
    rmsd        = US_AstfemMath::variance( *sdata, *edata, excludedScans );
    le_variance->setText( QString::number( rmsd ) );
@@ -2597,10 +2619,10 @@ QString US_FeMatch::table_row( const QString& s1, const QString& s2 ) const
 }
 
 // Table row HTML with 3 columns
-QString US_FeMatch::table_row( const QString& s1, const QString& s2, 
+QString US_FeMatch::table_row( const QString& s1, const QString& s2,
                                const QString& s3 ) const
 {
-   return ( indent( 6 ) + "<tr><td>" + s1 + "</td><td>" + s2 + "</td><td>" + s3 
+   return ( indent( 6 ) + "<tr><td>" + s1 + "</td><td>" + s2 + "</td><td>" + s3
             + "</td></tr>\n" );
 }
 
@@ -2674,7 +2696,7 @@ QString US_FeMatch::run_details( void )
       + indent( 4 ) + "<table>\n"
       + table_row( tr( "Cell Description:" ), d->description )
       + table_row( tr( "Data Directory:"   ), workingDir )
-      + table_row( tr( "Rotor Speed:"      ),  
+      + table_row( tr( "Rotor Speed:"      ),
             QString::number( (int)d->scanData[ 0 ].rpm ) + " rpm" );
 
    // Temperature data
@@ -2696,8 +2718,8 @@ QString US_FeMatch::run_details( void )
 
    if ( maxTemp - minTemp <= US_Settings::tempTolerance() )
       s += table_row( tr( "Temperature Variation:" ), tr( "Within tolerance" ) );
-   else 
-      s += table_row( tr( "Temperature Variation:" ), 
+   else
+      s += table_row( tr( "Temperature Variation:" ),
                       tr( "(!) OUTSIDE TOLERANCE (!)" ) );
 
    // Time data
@@ -2707,7 +2729,7 @@ QString US_FeMatch::run_details( void )
 
    QString m   = ( minutes == 1 ) ? tr( " minute " ) : tr( " minutes " );
    QString sec = ( seconds == 1 ) ? tr( " second"  ) : tr( " seconds"  );
-   s += table_row( tr( "Time Correction:" ), 
+   s += table_row( tr( "Time Correction:" ),
                    QString::number( minutes ) + m +
                    QString::number( seconds ) + sec );
 
@@ -2723,24 +2745,24 @@ QString US_FeMatch::run_details( void )
    sec = ( seconds == 1 ) ? tr( " second " ) : tr( " seconds " );
 
    s += table_row( tr( "Run Duration:" ),
-                   QString::number( hours   ) + h + 
-                   QString::number( minutes ) + m + 
+                   QString::number( hours   ) + h +
+                   QString::number( minutes ) + m +
                    QString::number( seconds ) + sec );
 
    // Wavelength, baseline, meniscus, range
    s += table_row( tr( "Wavelength:" ), d->wavelength + " nm" )  +
         table_row( tr( "Baseline " ) + dataType + ":",
-                   QString::number( baseline,    'f', 6 ) + " OD" ) + 
-        table_row( tr( "Meniscus Position:     " ),           
+                   QString::number( baseline,    'f', 6 ) + " OD" ) +
+        table_row( tr( "Meniscus Position:     " ),
                    QString::number( d->meniscus, 'f', 3 ) + " cm" );
 
    int    rrx   =  d->xvalues.size() - 1;
    double left  =  d->xvalues[ 0   ];
    double right =  d->xvalues[ rrx ];
 
-   s += table_row( tr( "Edited Data starts at: " ), 
+   s += table_row( tr( "Edited Data starts at: " ),
                    QString::number( left,  'f', 3 ) + " cm" ) +
-        table_row( tr( "Edited Data stops at:  " ), 
+        table_row( tr( "Edited Data stops at:  " ),
                    QString::number( right, 'f', 3 ) + " cm" );
    s += indent( 4 ) + "</table>\n";
    return s;
@@ -2762,8 +2784,8 @@ QString US_FeMatch::hydrodynamics( void ) const
 
    QString s = "\n" + indent( 4 ) + tr( "<h3>Hydrodynamic Settings:</h3>\n" )
                + indent( 4 ) + "<table>\n";
-  
-   s += table_row( tr( "Viscosity corrected:" ), 
+
+   s += table_row( tr( "Viscosity corrected:" ),
                    QString::number( solution.viscosity, 'f', 5 ) ) +
         table_row( tr( "Viscosity (absolute):" ),
                    QString::number( solution.viscosity_tb, 'f', 5 ) ) +
@@ -2771,7 +2793,7 @@ QString US_FeMatch::hydrodynamics( void ) const
                    QString::number( solution.density, 'f', 6 ) + " g/ccm" ) +
         table_row( tr( "Density (absolute):" ),
                    QString::number( solution.density_tb, 'f', 6 ) + " g/ccm" ) +
-        table_row( tr( "Vbar:" ), 
+        table_row( tr( "Vbar:" ),
                    QString::number( solution.vbar, 'f', 6 ) + " ccm/g" ) +
         table_row( tr( "Vbar corrected for 20 " ) + MLDEGC + ":",
                    QString::number( solution.vbar20, 'f', 6 ) + " ccm/g" ) +
@@ -2780,9 +2802,9 @@ QString US_FeMatch::hydrodynamics( void ) const
         table_row( tr( "Buoyancy (absolute)" ),
                    QString::number( solution.buoyancyb, 'f', 6 ) ) +
         table_row( tr( "Correction Factor (s):" ),
-                   QString::number( solution.s20w_correction, 'f', 6 ) ) + 
+                   QString::number( solution.s20w_correction, 'f', 6 ) ) +
         table_row( tr( "Correction Factor (D):" ),
-                   QString::number( solution.D20w_correction, 'f', 6 ) ) + 
+                   QString::number( solution.D20w_correction, 'f', 6 ) ) +
         indent( 4 ) + "</table>\n";
 
    return s;
@@ -2796,9 +2818,9 @@ QString US_FeMatch::scan_info( void ) const
    double time_correction  = US_Math2::time_correction( dataList );
 
    QString s = "\n" + indent( 4 ) + tr( "<h3>Scan Information:</h3>\n" )
-               + indent( 4 ) + "<table>\n"; 
-         
-   s += table_row( tr( "Scan" ), tr( "Corrected Time" ), 
+               + indent( 4 ) + "<table>\n";
+
+   s += table_row( tr( "Scan" ), tr( "Corrected Time" ),
                    tr( "Plateau Concentration" ),
                    tr( "Seconds" ), tr( "Omega^2T" ) );
 
@@ -2813,19 +2835,19 @@ QString US_FeMatch::scan_info( void ) const
       double od    = d->scanData[ i ].plateau;
       double time  = d->scanData[ i ].seconds;
       double omg2t = d->scanData[ i ].omega2t;
-      int    ctime = (int)( time - time_correction ); 
+      int    ctime = (int)( time - time_correction );
 
       s1 = s1.sprintf( "%4d",             i + 1 );
       s2 = s2.sprintf( "%4d min %2d sec", ctime / 60, ctime % 60 );
-      s3 = s3.sprintf( "%.6f OD",         od ); 
-      s4 = s4.sprintf( "%5d",             (int)time ); 
+      s3 = s3.sprintf( "%.6f OD",         od );
+      s4 = s4.sprintf( "%5d",             (int)time );
       s5 = s5.sprintf( "%.5e",            omg2t );
 
       s += table_row( s1, s2, s3, s4, s5 );
    }
 
    s += indent( 4 ) + "</table>\n";
-   
+
    return s;
 }
 
@@ -2835,7 +2857,7 @@ QString US_FeMatch::distrib_info()
    int  ncomp     = model_used.components.size();
    double vari_m  = model_used.variance;
    double rmsd_m  = ( vari_m == 0.0 ) ? 0.0 : sqrt( vari_m );
-   
+
    if ( ncomp == 0 )
       return "";
 
@@ -3379,13 +3401,13 @@ bool US_FeMatch::mkdir( const QString& baseDir, const QString& subdir )
    QDir folder( baseDir );
 
    if ( folder.exists( subdir ) ) return true;
-           
+
    if ( folder.mkdir( subdir ) ) return true;
-   
+
    QMessageBox::warning( this,
       tr( "File error" ),
       tr( "Could not create the directory:\n" ) + baseDir + "/" + subdir );
-   
+
    return false;
 }
 
@@ -3461,7 +3483,7 @@ void US_FeMatch::updateSolution( US_Solution solution_sel )
    QString bmanu   = solution_rec.buffer.manual ? "1" : "0";
    QString errmsg  = "";
    QString bufGUID = solution_rec.buffer.GUID;
-   
+
    if ( dkdb_cntrls->db() )
    {
       US_Passwd pw;
@@ -3538,7 +3560,7 @@ void US_FeMatch::reset( void )
 
    connect( ct_from,            SIGNAL( valueChanged( double ) ),
                                 SLOT  ( exclude_from( double ) ) );
-                                
+
    connect( ct_to,              SIGNAL( valueChanged( double ) ),
                                 SLOT  ( exclude_to  ( double ) ) );
 
@@ -3580,7 +3602,7 @@ void US_FeMatch::reset( void )
 // Return index to type of distribution plot currently displayed
 int US_FeMatch::type_distrib( )
 {
-   const char* dptyp[] = 
+   const char* dptyp[] =
    {
       "s20,w distribution",
       "MW distribution",

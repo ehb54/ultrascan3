@@ -195,6 +195,13 @@ class US_UTIL_EXTERN US_TimeState : public QObject
       //! \return        Status of action (US_DB2::OK,...)
       static int dbUpload  ( US_DB2*, const int, const QString );
 
+      //! \brief Static function to sync TMST from DB to local file
+      //! \param dbP     Pointer to opened DB connection
+      //! \param fpath   Full path to local file to possibly create
+      //! \param expID   The experiment ID of timestate to examine
+      //! \return        Flag if new file was created
+      static bool dbSyncToLF( US_DB2*, const QString, const int );
+
    private:
 
       QFile*       fileo;           //!< Output file pointer.

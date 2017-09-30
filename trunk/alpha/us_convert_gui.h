@@ -36,10 +36,10 @@ class US_ConvertGui : public US_Widgets
       //! \brief  Generic constructor for the US_ConvertGui() program.
       US_ConvertGui();
 
-      US_Disk_DB_Controls* disk_controls;  //!< Radiobuttons for disk/db choice
-      bool                 save_diskDB;    //!< To keep track of changes
-      US_SimulationParameters       simparams;
-      QList< double >      subsets;        //!< A list of subset boundaries
+      US_Disk_DB_Controls*    disk_controls;  //!< Radiobuttons for disk/db choice
+      bool                    save_diskDB;    //!< To keep track of changes
+      US_SimulationParameters simparams;      //!< Simulation parameters
+      QList< double >         subsets;        //!< A list of subset boundaries
 
   signals:
 

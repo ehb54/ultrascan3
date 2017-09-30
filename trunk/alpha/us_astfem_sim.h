@@ -31,19 +31,9 @@ class US_Astfem_Sim : public US_Widgets
       //! \param f - Window flags, normally not specified  
       US_Astfem_Sim( QWidget* = 0, Qt::WindowFlags = 0 );
       
-          // class init_simparams 
-           // {
-            //  public:
-             // init_simparams( );
-            //} ;   
-      //void   load_mfem_data ( US_DataIO::RawData&, US_AstfemMath::MfemData& );
-      // US_AstfemMath::AstFemParameters af_params;
-      //US_AstfemMath::MfemData         afdata;
+      // Write a timestate file based on auc data
       int  writetimestate( const QString&,  US_DataIO::RawData&);
-      //int  writetimestate( QString &,const QString& );
 
-     // US_AstfemMath::MfemInitial      af_c0;
-    //  void simulate_simulationgrid( US_DataIO::RawData&, US_SimulationParameters&, US_Model&);
     signals:
        void new_time         ( double );
 
@@ -59,8 +49,8 @@ class US_Astfem_Sim : public US_Widgets
       QString        imagedir;
       QString        imageName;
 
-      QString       tmst_fnamei;
-      QString       currentDir;
+      QString        tmst_fnamei;
+      QString        currentDir;
       
       QCheckBox*     ck_movie;
       QCheckBox*     ck_savemovie;
@@ -103,13 +93,8 @@ class US_Astfem_Sim : public US_Widgets
       US_SimulationParameters simparams;
       US_SimulationParameters working_simparams;
       US_DataIO::RawData      sim_data;
-//      US_AstfemMath::AstFemParameters af_params;
-//      US_AstfemMath::MfemData         af_data;
 
-//      US_AstfemMath::MfemInitial      af_c0;      
       void init_simparams  ( void );
-      //void simulate_simulationgrid( US_DataIO::RawData&);
-      // US_Astfem_Sim ();  
       void save_xla        ( const QString& );  
       void save_ultrascan  ( const QString& );  
       void finish          ( void );
@@ -117,7 +102,6 @@ class US_Astfem_Sim : public US_Widgets
       void random_noise    ( void );
       void ti_noise        ( void );
       void plot            ( void );
-      //const double set_minimum (const double):     
 // debug
       void dump_system     ( void );
       void dump_simparms   ( void );
@@ -127,9 +111,6 @@ class US_Astfem_Sim : public US_Widgets
       void dump_mfem_initial( US_Model::MfemInitial& );
       void dump_ss          ( US_SimulationParameters::SpeedProfile& );
       void dump_mfem_scan   ( US_DataIO::Scan& );
-      //void   load_mfem_data ( US_DataIO::RawData&, US_AstfemMath::MfemData& );
-      //void   store_mfem_data( US_DataIO::RawData&, US_AstfemMath::MfemData& );
-      //void   initializeconc( int, US_AstfemMath::MfemInitial&, bool );
 
    private slots:
       

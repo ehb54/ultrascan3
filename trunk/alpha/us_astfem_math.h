@@ -18,15 +18,6 @@ class US_UTIL_EXTERN US_AstfemMath
       class MfemScan;
       class MfemData;
 
-      //US_TimeState timestate;
-      //US_Astfem_RSA*          astfem;
-      //US_LammAstfvm*          astfvm;
-      //US_Model                system;
-      //US_SimulationParameters simparams;
-      // static void get_af_params( US_DataIO::RawData& , US_SimulationParameters&,US_Model&);
-      //static void interpolate_subha (int ,double* ,double*, int, QVector< double >&  ,double*);
-        //QVector< SP_SPEEDPROFILE >         speedsteps;   //!< Speed steps
-
       //! \brief Interpolate first onto second
       //! \param C0    Input MfemInitial
       //! \param C1    MfemInitial with interpolated concentrations
@@ -38,7 +29,19 @@ class US_UTIL_EXTERN US_AstfemMath
       //! \param xvec  Start x (radius) values for each scan
       static void interpolate_C0( MfemInitial&, double*, QVector< double >& );
 
-      static int  writetimestate( const QString&, US_SimulationParameters&, US_DataIO::RawData& );
+      //! \brief Create a timestate file from speed_step and scan information
+      //! \param tmst_fpath  Full path to timestate file to examine
+      //! \param simparams   Simulation parameters, including speed steps info
+      //! \param sim_data    Raw data with scans to examine
+      //! \returns Flag:  0 if the file write succeeded
+      static int  writetimestate( const QString&, US_SimulationParameters&,
+                                  US_DataIO::RawData& );
+
+      //! \brief Determine if a timestate file holds one-second-interval records
+      //! \param tmst_fpath  Full path to timestate file to examine
+      //! \param sim_data    Raw data with scans to examine
+      //! \returns Flag:  true iff timestate holds values at one-second interval
+      static bool timestate_onesec( const QString&, US_DataIO::RawData& );
 
       //! \brief Initialize a 2d matrix in memory to all zeros.
       //! \param val1   First dimension

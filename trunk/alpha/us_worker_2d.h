@@ -35,7 +35,7 @@ typedef struct work_packet_2d_s
    QVector< US_Solute >     csolutes;  //!< computed solutes
    QVector< double >        ti_noise;  //!< computed ti noise
    QVector< double >        ri_noise;  //!< computed ri noise
-   QVector< double >        Anorm   ;  //!< computed A matrix norm
+   QVector< double >        Anorm;     //!< computed A matrix norm
 
 
    QList< US_SolveSim::DataSet* > dsets; //!< list of data set object pointers
@@ -56,7 +56,9 @@ class WorkerThread2D : public QThread
    public:
       WorkerThread2D( QObject* parent = 0 );
       ~WorkerThread2D();
-      QVector< double > norms ;
+
+      QVector< double >        norms;
+
    public slots:
       //! \brief Define the work packet for a worker thread
       //! \param workin   Input work definition packet
@@ -79,7 +81,7 @@ class WorkerThread2D : public QThread
 
       void calc_residuals   ( void );
       void calc_resids_ratio( void );
-      void calculate_norm (  QVector< double > , QVector< double >  ) ;
+//      void calculate_norm   ( QVector< double >, QVector< double >  );
       long int max_rss      ( void );
 
       long int maxrss;
@@ -117,7 +119,6 @@ class WorkerThread2D : public QThread
 
       QVector< US_Solute >    solutes_i;   // solutes input
       QVector< US_Solute >    solutes_c;   // solutes computed
-     // QVector<double>                norms ;
 };
 
 #endif

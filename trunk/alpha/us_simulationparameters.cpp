@@ -34,21 +34,21 @@ US_SimulationParametersGui::US_SimulationParametersGui(
 
    cnt_speeds = us_counter( 2, 1, 100, 1 );
    cnt_speeds->setSingleStep  ( 1 );
-   
-   main->addWidget( cnt_speeds, row++, 3, 1, 1 );
-   connect( cnt_speeds, SIGNAL( valueChanged ( double ) ),  
-                        SLOT  ( update_speeds( double ) ) );
 
-    connect( cnt_speeds, SIGNAL( valueChanged        ( double ) ),
-                                SLOT  ( update_speed_profile( int ) ) );
-    connect( cnt_speeds, SIGNAL( activated           ( int ) ),
-                        SLOT  ( select_speed_profile( int ) ) );
+   main->addWidget( cnt_speeds, row++, 3, 1, 1 );
+   connect( cnt_speeds, SIGNAL( valueChanged        ( double ) ),
+                        SLOT  ( update_speeds       ( double ) ) );
+   connect( cnt_speeds, SIGNAL( valueChanged        ( double ) ),
+                        SLOT  ( update_speed_profile( int    ) ) );
+   connect( cnt_speeds, SIGNAL( activated           ( int    ) ),
+                        SLOT  ( select_speed_profile( int    ) ) );
+
    // Speeds combo box
    cmb_speeds = us_comboBox();
 
    US_SimulationParameters::SpeedProfile* sp = &simparams.speed_step[ 0 ];
 
-   for ( int i = 0; i < simparams.speed_step.size(); i++ ) 
+   for ( int i = 0; i < simparams.speed_step.size(); i++ )
    {
       US_SimulationParameters::SpeedProfile* spi = &simparams.speed_step[ i ];
 
@@ -62,14 +62,12 @@ US_SimulationParametersGui::US_SimulationParametersGui(
                                 SLOT  ( update_speed_profile( int ) ) );
    }
 
-   
-
    main->addWidget( cmb_speeds, row++, 0, 1, 4 );
- 
+
    connect( cmb_speeds, SIGNAL( valueChanged        ( double ) ),
                                 SLOT  ( update_speed_profile( double ) ) );
 
-   connect( cmb_speeds, SIGNAL( activated           ( int ) ), 
+   connect( cmb_speeds, SIGNAL( activated           ( int ) ),
                         SLOT  ( select_speed_profile( int ) ) );
 
    // Experiment hours
@@ -81,9 +79,9 @@ US_SimulationParametersGui::US_SimulationParametersGui(
    cnt_duration_hours->setIncSteps( QwtCounter::Button1,   1 );
    cnt_duration_hours->setIncSteps( QwtCounter::Button2,  10 );
    cnt_duration_hours->setIncSteps( QwtCounter::Button3, 100 );
-   
+
    main->addWidget( cnt_duration_hours, row++, 3, 1, 1 );
-   connect( cnt_duration_hours, SIGNAL( valueChanged         ( double ) ), 
+   connect( cnt_duration_hours, SIGNAL( valueChanged         ( double ) ),
                                 SLOT  ( update_duration_hours( double ) ) );
 
    // Experiment minutes
@@ -95,9 +93,9 @@ US_SimulationParametersGui::US_SimulationParametersGui(
    cnt_duration_mins->setIncSteps( QwtCounter::Button1,   1 );
    cnt_duration_mins->setIncSteps( QwtCounter::Button2,  10 );
    cnt_duration_mins->setIncSteps( QwtCounter::Button3,  10 );
-   
+
    main->addWidget( cnt_duration_mins, row++, 3, 1, 1 );
-   connect( cnt_duration_mins, SIGNAL( valueChanged        ( double ) ), 
+   connect( cnt_duration_mins, SIGNAL( valueChanged        ( double ) ),
                                SLOT  ( update_duration_mins( double ) ) );
 
    // Delay hours
@@ -109,9 +107,9 @@ US_SimulationParametersGui::US_SimulationParametersGui(
    cnt_delay_hours->setIncSteps( QwtCounter::Button1,   1 );
    cnt_delay_hours->setIncSteps( QwtCounter::Button2,  10 );
    cnt_delay_hours->setIncSteps( QwtCounter::Button3, 100 );
-   
+
    main->addWidget( cnt_delay_hours, row++, 3, 1, 1 );
-   connect( cnt_delay_hours, SIGNAL( valueChanged      ( double ) ), 
+   connect( cnt_delay_hours, SIGNAL( valueChanged      ( double ) ),
                              SLOT  ( update_delay_hours( double ) ) );
 
    // Delay minutes
@@ -119,14 +117,14 @@ US_SimulationParametersGui::US_SimulationParametersGui(
    main->addWidget( lb_delay_mins, row, 0, 1, 3 );
 
    cnt_delay_mins = us_counter( 3, sp->delay_minutes, 59, sp->delay_minutes );
-   
+
    cnt_delay_mins->setSingleStep    ( 0.1 );
    cnt_delay_mins->setIncSteps( QwtCounter::Button1,   1 );
    cnt_delay_mins->setIncSteps( QwtCounter::Button2,  10 );
    cnt_delay_mins->setIncSteps( QwtCounter::Button3, 100 );
 
    main->addWidget( cnt_delay_mins, row++, 3, 1, 1 );
-   connect( cnt_delay_mins, SIGNAL( valueChanged     ( double ) ), 
+   connect( cnt_delay_mins, SIGNAL( valueChanged     ( double ) ),
                             SLOT  ( update_delay_mins( double ) ) );
 
    // Rotor Speed
@@ -141,21 +139,21 @@ US_SimulationParametersGui::US_SimulationParametersGui(
 
    QFontMetrics fm( cnt_rotorspeed->font() );
    cnt_rotorspeed->setMinimumWidth( fm.maxWidth() * 12 );
-   
+
    main->addWidget( cnt_rotorspeed, row++, 3, 1, 1 );
-   connect( cnt_rotorspeed, SIGNAL( valueChanged     ( double ) ), 
+   connect( cnt_rotorspeed, SIGNAL( valueChanged     ( double ) ),
                             SLOT  ( update_rotorspeed( double ) ) );
 
    // Simulate rotor accel checkbox
    QLabel* lb_rotorAccel = us_label( tr( "Simulate Rotor Acceleration:" ) );
    main->addWidget( lb_rotorAccel, row, 0, 1, 3 );
 
-   QGridLayout* acceleration_flag = us_checkbox( tr( "(Check to enable)" ), 
+   QGridLayout* acceleration_flag = us_checkbox( tr( "(Check to enable)" ),
          cb_acceleration_flag, sp->acceleration_flag );
 
    main->addLayout( acceleration_flag, row++, 3, 1, 1 );
-   
-   connect( cb_acceleration_flag, SIGNAL( clicked          () ), 
+
+   connect( cb_acceleration_flag, SIGNAL( clicked          () ),
                                   SLOT  ( acceleration_flag() ) );
 
    // Acceleration Profile
@@ -169,9 +167,9 @@ US_SimulationParametersGui::US_SimulationParametersGui(
    cnt_acceleration->setIncSteps( QwtCounter::Button3, 100 );
 
    cnt_acceleration->setValue( sp->acceleration );
-   
+
    main->addWidget( cnt_acceleration, row++, 3, 1, 1 );
-   connect( cnt_acceleration, SIGNAL( valueChanged       ( double ) ), 
+   connect( cnt_acceleration, SIGNAL( valueChanged       ( double ) ),
                               SLOT  ( update_acceleration( double ) ) );
 
    // Scans to be saved
@@ -185,7 +183,7 @@ US_SimulationParametersGui::US_SimulationParametersGui(
    cnt_scans->setIncSteps( QwtCounter::Button3, 100 );
 
    main->addWidget( cnt_scans, row++, 3, 1, 1 );
-   connect( cnt_scans, SIGNAL( valueChanged( double ) ), 
+   connect( cnt_scans, SIGNAL( valueChanged( double ) ),
                        SLOT  ( update_scans( double ) ) );
 
    // Speed profile
@@ -201,7 +199,7 @@ US_SimulationParametersGui::US_SimulationParametersGui(
    cnt_selected_speed->setValue( sp->rotorspeed );
    main->addWidget( cnt_selected_speed, row++, 3, 1, 1 );
 
-   connect( cnt_selected_speed, SIGNAL( valueChanged        ( double ) ), 
+   connect( cnt_selected_speed, SIGNAL( valueChanged        ( double ) ),
                                 SLOT  ( update_speed_profile( double ) ) );
 
    // Mesh combo box
@@ -215,23 +213,23 @@ US_SimulationParametersGui::US_SimulationParametersGui(
    cmb_mesh->setCurrentIndex( (int)simparams.meshType );
    main->addWidget( cmb_mesh, row++, 0, 1, 4 );
 
-   connect( cmb_mesh, SIGNAL( activated  ( int ) ), 
+   connect( cmb_mesh, SIGNAL( activated  ( int ) ),
                       SLOT  ( update_mesh( int ) ) );
    // Right Column
    row = 1;
    // Centerpiece
-  
-   QGridLayout* rb1 = us_radiobutton( tr( "Standard Centerpiece" ), 
-         rb_standard, ! simparams.band_forming ); 
+
+   QGridLayout* rb1 = us_radiobutton( tr( "Standard Centerpiece" ),
+         rb_standard, ! simparams.band_forming );
 
    main->addLayout( rb1, row,   4, 1, 2 );
 
-   QGridLayout* rb2 = us_radiobutton( tr( "Band-forming Centerpiece" ), 
+   QGridLayout* rb2 = us_radiobutton( tr( "Band-forming Centerpiece" ),
          rb_band, simparams.band_forming );
-   
+
    main->addLayout( rb2, row++, 6, 1, 2 );
-   
-   connect( rb_standard, SIGNAL( toggled           ( bool ) ), 
+
+   connect( rb_standard, SIGNAL( toggled           ( bool ) ),
                          SLOT  ( select_centerpiece( bool ) ) );
 
    // Band loading
@@ -246,10 +244,10 @@ US_SimulationParametersGui::US_SimulationParametersGui(
    cnt_lamella->setEnabled( false );
 
    main->addWidget( cnt_lamella, row++, 7, 1, 1 );
-   connect( cnt_lamella, SIGNAL( valueChanged  ( double ) ), 
+   connect( cnt_lamella, SIGNAL( valueChanged  ( double ) ),
                          SLOT  ( update_lamella( double ) ) );
 
-   // Meniscus position 
+   // Meniscus position
    QLabel* lb_meniscus = us_label( tr( "Meniscus Position (cm):" ) );
    main->addWidget( lb_meniscus, row, 4, 1, 3 );
 
@@ -261,9 +259,9 @@ US_SimulationParametersGui::US_SimulationParametersGui(
    cnt_meniscus->setIncSteps( QwtCounter::Button3, 100 );
 
    main->addWidget( cnt_meniscus, row++, 7, 1, 1 );
-   connect( cnt_meniscus, SIGNAL( valueChanged   ( double ) ), 
+   connect( cnt_meniscus, SIGNAL( valueChanged   ( double ) ),
                           SLOT  ( update_meniscus( double ) ) );
-   
+
    // Cell bottom
    QLabel* lb_bottom = us_label( tr( "Bottom of Cell Position (cm):" ) );
    main->addWidget( lb_bottom, row, 4, 1, 3 );
@@ -276,9 +274,9 @@ US_SimulationParametersGui::US_SimulationParametersGui(
    cnt_bottom->setIncSteps( QwtCounter::Button3, 100 );
 
    main->addWidget( cnt_bottom, row++, 7, 1, 1 );
-   connect( cnt_bottom, SIGNAL( valueChanged ( double ) ), 
+   connect( cnt_bottom, SIGNAL( valueChanged ( double ) ),
                         SLOT  ( update_bottom( double ) ) );
-   
+
    // Radial Discretization
    QLabel* lb_simpoints = us_label( tr( "Radial Discretization (points):" ) );
    main->addWidget( lb_simpoints, row, 4, 1, 3 );
@@ -288,9 +286,9 @@ US_SimulationParametersGui::US_SimulationParametersGui(
    cnt_simpoints->setValue( simparams.simpoints );
 
    main->addWidget( cnt_simpoints, row++, 7, 1, 1 );
-   connect( cnt_simpoints, SIGNAL( valueChanged    ( double ) ), 
+   connect( cnt_simpoints, SIGNAL( valueChanged    ( double ) ),
                            SLOT  ( update_simpoints( double ) ) );
-   
+
    // Radial Resolution
    QLabel* lb_radial_res = us_label( tr( "Radial Resolution (cm):" ) );
    main->addWidget( lb_radial_res, row, 4, 1, 3 );
@@ -302,9 +300,9 @@ US_SimulationParametersGui::US_SimulationParametersGui(
    cnt_radial_res->setIncSteps( QwtCounter::Button3, 100 );
 
    main->addWidget( cnt_radial_res, row++, 7, 1, 1 );
-   connect( cnt_radial_res, SIGNAL( valueChanged     ( double ) ), 
+   connect( cnt_radial_res, SIGNAL( valueChanged     ( double ) ),
                             SLOT  ( update_radial_res( double ) ) );
-   
+
    // Random noise, proportional to total concentration
    QLabel* lb_rnoise = us_label( tr( "Random Noise (% total Conc.):" ) );
    main->addWidget( lb_rnoise, row, 4, 1, 3 );
@@ -316,7 +314,7 @@ US_SimulationParametersGui::US_SimulationParametersGui(
    cnt_rnoise->setIncSteps( QwtCounter::Button3, 100 );
 
    main->addWidget( cnt_rnoise, row++, 7, 1, 1 );
-   connect( cnt_rnoise, SIGNAL( valueChanged ( double ) ), 
+   connect( cnt_rnoise, SIGNAL( valueChanged ( double ) ),
                         SLOT  ( update_rnoise( double ) ) );
 
    // Random noise, proportional to local concentration
@@ -330,7 +328,7 @@ US_SimulationParametersGui::US_SimulationParametersGui(
    cnt_lrnoise->setIncSteps( QwtCounter::Button3, 100 );
 
    main->addWidget( cnt_lrnoise, row++, 7, 1, 1 );
-   connect( cnt_lrnoise, SIGNAL( valueChanged ( double ) ), 
+   connect( cnt_lrnoise, SIGNAL( valueChanged ( double ) ),
                         SLOT  ( update_lrnoise( double ) ) );
 
    // Time invariant noise
@@ -344,9 +342,9 @@ US_SimulationParametersGui::US_SimulationParametersGui(
    cnt_tinoise->setIncSteps( QwtCounter::Button3, 100 );
 
    main->addWidget( cnt_tinoise, row++, 7, 1, 1 );
-   connect( cnt_tinoise, SIGNAL( valueChanged  ( double ) ), 
+   connect( cnt_tinoise, SIGNAL( valueChanged  ( double ) ),
                          SLOT  ( update_tinoise( double ) ) );
-   
+
    // Radially invariant noise
    QLabel* lb_rinoise = us_label( tr( "Radially Invar. Noise (% Conc.):" ) );
    main->addWidget( lb_rinoise, row, 4, 1, 3 );
@@ -358,9 +356,9 @@ US_SimulationParametersGui::US_SimulationParametersGui(
    cnt_rinoise->setIncSteps( QwtCounter::Button3, 100 );
 
    main->addWidget( cnt_rinoise, row++, 7, 1, 1 );
-   connect( cnt_rinoise, SIGNAL( valueChanged  ( double ) ), 
+   connect( cnt_rinoise, SIGNAL( valueChanged  ( double ) ),
                          SLOT  ( update_rinoise( double ) ) );
-  
+
    // Temperature
    QLabel* lb_temperature  = us_label( tr( "Temperature (%1):" )
          .arg( DEGC ) );
@@ -373,7 +371,7 @@ US_SimulationParametersGui::US_SimulationParametersGui(
    cnt_temperature->setIncSteps( QwtCounter::Button3, 100 );
    cnt_temperature->setValue   ( simparams.temperature );
    main->addWidget( cnt_temperature, row++, 7, 1, 1 );
-   connect( cnt_temperature, SIGNAL( valueChanged( double ) ), 
+   connect( cnt_temperature, SIGNAL( valueChanged( double ) ),
                              SLOT  ( update_temp(  double ) ) );
 
    // Moving Grid Combo Box
@@ -382,9 +380,9 @@ US_SimulationParametersGui::US_SimulationParametersGui(
    cmb_moving->addItem( "Constant Time Grid (Claverie/Acceleration)" );
    cmb_moving->addItem( "Moving Time Grid (ASTFEM/Moving Hat)" );
    cmb_moving->setCurrentIndex( (int)simparams.gridType );
-   connect( cmb_moving, SIGNAL( activated    ( int ) ), 
+   connect( cmb_moving, SIGNAL( activated    ( int ) ),
                         SLOT  ( update_moving( int ) ) );
-   
+
    main->addWidget( cmb_moving, row++, 4, 1, 4 );
 
    // Button bar
@@ -491,39 +489,36 @@ void US_SimulationParametersGui::update_speeds( double value )
 {
    int                 old_size = simparams.speed_step.size();
    US_SimulationParameters::SpeedProfile sp;
-   if ( value >= old_size )  
+   if ( value >= old_size )
    {  for ( int i = old_size; i < (int) value; i++ )
       {
-          simparams.speed_step .push_back( sp );
-          // Only initialize the new elements, leave the previously assigned
-          // elements alone.  New elements simply get copies of the last old
-          // element if old_size > new_size then we won't go through this loop and
-          // simply truncate the list
-          US_SimulationParameters::SpeedProfile* ss     = &simparams.speed_step[ i ];
-          US_SimulationParameters::SpeedProfile* ss_old = &simparams.speed_step[ old_size - 1 ];      
-          ss->duration_hours    = ss_old->duration_hours;
-          ss->duration_minutes  = ss_old->duration_minutes;
-          ss->delay_hours       = ss_old->delay_hours;
-          ss->delay_minutes     = 0.0;
-          //-----------------------------------
-          ss->rotorspeed        = ss_old->rotorspeed;
-          ss->scans             = ss_old->scans;
-          ss->acceleration      = ss_old->acceleration;
+         simparams.speed_step .push_back( sp );
+         // Only initialize the new elements, leave the previously assigned
+         // elements alone.  New elements simply get copies of the last old
+         // element if old_size > new_size then we won't go through this loop and
+         // simply truncate the list
+         US_SimulationParameters::SpeedProfile* ss     = &simparams.speed_step[ i ];
+         US_SimulationParameters::SpeedProfile* ss_old = &simparams.speed_step[ old_size - 1 ];
+         ss->duration_hours    = ss_old->duration_hours;
+         ss->duration_minutes  = ss_old->duration_minutes;
+         ss->delay_hours       = ss_old->delay_hours;
+         ss->delay_minutes     = 0.0;
+         ss->rotorspeed        = ss_old->rotorspeed;
+         ss->scans             = ss_old->scans;
+         ss->acceleration      = ss_old->acceleration;
          ss->acceleration_flag = ss_old->acceleration_flag;
          //update_combobox();
-     }
+      }
    }
    else
    {
-
      for ( int i = value; i < (int) old_size; i++ )
      {
-      //simparams.speed_step.resize( value);
-      simparams.speed_step.pop_back();
+        //simparams.speed_step.resize( value);
+        simparams.speed_step.pop_back();
      }
 
    }
-//   cnt_selected_speed->setMaximum( simparams.speed_step.size() );
    cnt_selected_speed->setMinimum( value );
    cnt_selected_speed->setMaximum( value );
 //   connect( cnt_selected_speed, SIGNAL( valueChanged        ( double ) ),
@@ -537,7 +532,7 @@ void US_SimulationParametersGui::update_combobox( void )
 {
    cmb_speeds->disconnect();
    cmb_speeds->clear();
-   
+
    for ( int i = 0; i < simparams.speed_step.size(); i++ )
    {
       US_SimulationParameters::SpeedProfile* spi = &simparams.speed_step[ i ];
@@ -548,11 +543,11 @@ void US_SimulationParametersGui::update_combobox( void )
             QString::number( spi->duration_minutes ) + " min, " +
             QString::number( spi->rotorspeed       ) + " rpm" );
    }
-  
+
    connect( cnt_speeds, SIGNAL( valueChanged        ( double ) ),
                                 SLOT  ( update_speed_profile( double ) ) );
    connect( cmb_speeds, SIGNAL( activated           ( int ) ),
-                        SLOT  ( select_speed_profile( int ) ) ); 
+                        SLOT  ( select_speed_profile( int ) ) );
    cmb_speeds->setCurrentIndex( current_speed_step );
 }
 
@@ -565,14 +560,14 @@ void US_SimulationParametersGui::select_speed_profile( int index )
 {
    current_speed_step = index;
    cnt_speeds->setValue( index + 1 );
-   
+
    if ( cb_acceleration_flag->isChecked() )
    {
       cnt_acceleration->setEnabled( true );
 
       // If there is acceleration we need to set the scan delay
       // minimum to the time it takes to accelerate:
-    
+
       check_delay();
    }
    else
@@ -581,7 +576,7 @@ void US_SimulationParametersGui::select_speed_profile( int index )
    }
 
    cmb_speeds->setCurrentIndex( index );
-   
+
    US_SimulationParameters::SpeedProfile* sp = &simparams.speed_step[ index ];
 
    cnt_duration_hours->setValue( sp->duration_hours   );
@@ -599,7 +594,7 @@ void US_SimulationParametersGui::select_speed_profile( int index )
 // User can Not choose duration of the delay less than
 // minimum delay, however if user has option to choose
 // delay more than minimum delay.
-// For single speed case : 
+// For single speed case:
 // minimum delay = Desired rotorspeed/(60.0*Acceleration rate)
 // For multi speed case :
 // minimum delay =( Current desired rotorspeed - Previous rotorspeed )/(60.0*Acceleration rate)
@@ -609,13 +604,12 @@ void US_SimulationParametersGui::check_delay( void )
    QVector< int >    hours;
    QVector< double > minutes;
    QVector< int >    speed;
-   
+
 //   speed.clear();
 //   speed .push_back( 0 );
-
    int nsteps = simparams.speed_step.size();
-   
-   double b, delay; 
+
+   double b, delay;
    US_SimulationParameters::SpeedProfile* sp = &simparams.speed_step[ current_speed_step ];
    if ( nsteps > 1 )
    {
@@ -623,39 +617,43 @@ void US_SimulationParametersGui::check_delay( void )
       b = sp_prev->rotorspeed;
       delay =abs(sp->rotorspeed -b )/(60.0*sp->acceleration);
    }
+
    else
-   {  
-          delay = sp->rotorspeed/(60.0*sp->acceleration);
-   } 
+   {
+      delay = sp->rotorspeed / ( 60.0 * sp->acceleration );
+   }
+
    double m1 = sp->delay_minutes+(sp->delay_hours*60);
+
    if  ( m1 >= 60 )
    {
-           sp->delay_hours = int (m1/60.0);
-           cnt_delay_hours->setValue( sp->delay_hours );
-           connect( cnt_delay_hours, SIGNAL( valueChanged        ( double ) ),
-                                   SLOT  ( update_delay_hours( double ) ) );
-           double m2 = m1- (sp->delay_hours*60.0);
-           cnt_delay_mins->setValue( m2);
-           connect( cnt_delay_mins, SIGNAL( valueChanged        ( double ) ),
-                              SLOT  ( update_delay_mins( double ) ) );
-   }            
+      sp->delay_hours = int (m1/60.0);
+      cnt_delay_hours->setValue( sp->delay_hours );
+      connect( cnt_delay_hours, SIGNAL( valueChanged      ( double ) ),
+                                SLOT  ( update_delay_hours( double ) ) );
+      double m2 = m1- (sp->delay_hours*60.0);
+      cnt_delay_mins->setValue( m2);
+      connect( cnt_delay_mins,  SIGNAL( valueChanged      ( double ) ),
+                                SLOT  ( update_delay_mins ( double ) ) );
+   }
+
    else
    {
-           if  ( m1 > delay )
-           {    
-               cnt_delay_mins->setValue( m1);
-               cnt_delay_mins->setMinimum(delay );
-               connect( cnt_delay_mins, SIGNAL( valueChanged        ( double ) ),
+      if  ( m1 > delay )
+      {
+         cnt_delay_mins->setValue( m1);
+         cnt_delay_mins->setMinimum(delay );
+         connect( cnt_delay_mins, SIGNAL( valueChanged     ( double ) ),
                                   SLOT  ( update_delay_mins( double ) ) );
-           }
-           else
-           {
-               cnt_delay_mins->setValue( delay);
-               cnt_delay_mins->setMinimum(delay);
-               connect( cnt_delay_mins, SIGNAL( valueChanged        ( double ) ),
+      }
+      else
+      {
+         cnt_delay_mins->setValue( delay);
+         cnt_delay_mins->setMinimum(delay);
+         connect( cnt_delay_mins, SIGNAL( valueChanged     ( double ) ),
                                   SLOT  ( update_delay_mins( double ) ) );
-           }          
-       }
+      }
+   }
 }
 
 void US_SimulationParametersGui::update_duration_hours( double hours )
@@ -697,7 +695,7 @@ void US_SimulationParametersGui::update_rotorspeed( double speed )
    US_SimulationParameters::SpeedProfile* sp = &simparams.speed_step[ current_speed_step ];
    sp->rotorspeed = (long) speed;
    update_combobox();
- 
+
    // If there is acceleration we need to set the scan delay
    // minimum to the time it takes to accelerate:
    if ( cb_acceleration_flag->isChecked() ) check_delay();
@@ -708,10 +706,10 @@ void US_SimulationParametersGui::acceleration_flag( void )
    US_SimulationParameters::SpeedProfile* sp = &simparams.speed_step[ current_speed_step ];
 
    bool state = cb_acceleration_flag->isChecked();
-   
+
    sp->acceleration_flag = state;
    cnt_acceleration->setEnabled( state );
-   
+
    // If there is acceleration we need to set the scan delay
    // minimum to the time it takes to accelerate:
    if ( state ) check_delay();
@@ -721,7 +719,7 @@ void US_SimulationParametersGui::update_acceleration( double accel )
 {
    US_SimulationParameters::SpeedProfile* sp = &simparams.speed_step[ current_speed_step ];
    sp->acceleration = accel;
- 
+
    // If there is acceleration we need to set the scan delay
    // minimum to the time it takes to accelerate:
    if ( cb_acceleration_flag->isChecked() ) check_delay();
@@ -737,18 +735,18 @@ void US_SimulationParametersGui::save( void )
 {
    QString fn = QFileDialog::getSaveFileName( this,
          tr( "Save Simulation Parameters in:" ),
-         US_Settings::etcDir(), 
+         US_Settings::etcDir(),
          tr( "SimParams files (sp_*.xml);;"
              "All XML files (*.xml);;"
              "All files (*)" ) );
-        
+
    if ( fn.isEmpty() ) return;
 
    fn   = fn.replace( "\\", "/" );
    int     jj   = fn.lastIndexOf( "/" ) + 1;
    QString fdir = fn.left( jj );
    QString fnam = fn.mid( jj );
-   
+
    // Make sure file name is in "sp_<name>.xml" form
 
    if ( fn.endsWith( "." ) )
@@ -778,10 +776,10 @@ void US_SimulationParametersGui::save( void )
    if ( f.exists() )
    {
       if(  QMessageBox::No == QMessageBox::warning( this,
-               tr( "Warning" ), 
+               tr( "Warning" ),
                tr( "Attention:\n"
                     "This file exists already!\n\n"
-                    "Do you want to overwrite it?" ), 
+                    "Do you want to overwrite it?" ),
                QMessageBox::Yes, QMessageBox::No ) )
       {
          return;
@@ -790,19 +788,18 @@ void US_SimulationParametersGui::save( void )
 
    if ( simparams.save_simparms( fn ) == 0 )
    {
-      QMessageBox::information( this, 
+      QMessageBox::information( this,
             tr( "UltraScan Information" ),
             tr( "Please note:\n\n"
-                "The Simulation Profile was successfully saved to:\n\n" ) + 
+                "The Simulation Profile was successfully saved to:\n\n" ) +
                 fn );
-     qDebug()<<"Hi I am from save_simparams us_astfem_sim directory"<<simparams.meshType;
    }
    else
    {
-      QMessageBox::information( this, 
+      QMessageBox::information( this,
             tr( "UltraScan Error" ),
             tr( "Please note:\n\n"
-                "The Simulation Profile could not be saved to:\n\n" ) + 
+                "The Simulation Profile could not be saved to:\n\n" ) +
                 fn );
    }
 }
@@ -811,11 +808,11 @@ void US_SimulationParametersGui::load( void )
 {
    QString fn = QFileDialog::getOpenFileName( this,
          tr( "Load Simulation Parameters from:" ),
-         US_Settings::etcDir(), 
+         US_Settings::etcDir(),
          tr( "SimParams files (sp_*.xml);;"
              "All XML files (*.xml);;"
              "All files (*)" ) );
-   
+
    if ( fn.isEmpty() ) return;
    if ( simparams.load_simparms( fn ) == 0 )
    {
@@ -853,10 +850,10 @@ void US_SimulationParametersGui::load( void )
       cnt_rotorspeed      ->setValue( sp->rotorspeed       );
       cnt_acceleration    ->setValue( sp->acceleration     );
       cnt_scans           ->setValue( sp->scans            );
-      
+
       cb_acceleration_flag->setChecked( sp->acceleration_flag );
       cnt_acceleration    ->setEnabled( sp->acceleration_flag );
-      
+
       cnt_lamella         ->setValue( simparams.band_volume * 1000.0  );
       cnt_simpoints       ->setValue( simparams.simpoints         );
       cnt_radial_res      ->setValue( simparams.radial_resolution );
@@ -870,7 +867,7 @@ void US_SimulationParametersGui::load( void )
 
       //cmb_mesh            ->setCurrentIndex( (int)simparams.meshType );
       //cmb_moving          ->setCurrentIndex( (int)simparams.gridType );
-      //update_mesh(simparams.meshType );     
+      //update_mesh(simparams.meshType );
 
       cmb_mesh            ->setCurrentIndex((int) simparams.meshType );
       cmb_moving          ->setCurrentIndex( (int) simparams.gridType );
@@ -882,33 +879,33 @@ void US_SimulationParametersGui::load( void )
       //US_Astfem_Sim::change_model( US_Model m );
 
       reconnect_all();
-      QMessageBox::information( this, 
+      QMessageBox::information( this,
             tr( "UltraScan Information" ),
             tr( "Please note:\n\n"
-                "The Simulation Profile was successfully loaded from:\n\n" ) + 
+                "The Simulation Profile was successfully loaded from:\n\n" ) +
                 fn );
    }
 
    else
    {
-      QMessageBox::information( this, 
+      QMessageBox::information( this,
             tr( "UltraScan Error" ),
             tr( "Please note:\n\n"
-                "Could not read the Simulation Profile:\n\n" ) + 
+                "Could not read the Simulation Profile:\n\n" ) +
                 fn );
    }
 }
-   
+
 void US_SimulationParametersGui::update_mesh( int mesh )
 {
    simparams.meshType = (US_SimulationParameters::MeshType)mesh;
-   qDebug()<<"********Hi I am mesh type*********"<<simparams.meshType ;
+qDebug() << "mesh type" << simparams.meshType ;
    // By default, the simpoints can be set by the user
    cnt_simpoints->setEnabled( true );
 
    if ( mesh == 3 )
    {
-      QMessageBox::information( this, 
+      QMessageBox::information( this,
             tr( "UltraScan Information" ),
             tr( "Please note:\n\n"
                 "The radial mesh file should have\n"
@@ -922,20 +919,20 @@ void US_SimulationParametersGui::update_mesh( int mesh )
                 "excluded from the concentration vector." ) );
 
       QFile meshfile( US_Settings::appBaseDir() + "/mesh.dat");
-      
+
       if ( meshfile.open( QIODevice::ReadOnly | QIODevice::Text ) )
       {
          QTextStream ts( &meshfile );
          simparams.mesh_radius.clear();
 
          bool first = true;
-         
+
          while ( ! ts.atEnd() )
          {
             double value;
             ts >> value;
 
-            // Ignore values outside the meniscus/bottom range 
+            // Ignore values outside the meniscus/bottom range
             if ( value >= simparams.meniscus && value <= simparams.bottom )
             {
                if ( first )
@@ -961,27 +958,27 @@ void US_SimulationParametersGui::update_mesh( int mesh )
             simparams.mesh_radius .push_back( simparams.bottom );
          }
 
-         
+
          simparams.simpoints = simparams.mesh_radius.size();
          cnt_simpoints->setValue( (double) simparams.simpoints );
-     
-         // Can't change the simulation points after defining a mesh 
-         cnt_simpoints->setEnabled( false ); 
+
+         // Can't change the simulation points after defining a mesh
+         cnt_simpoints->setEnabled( false );
       }
       else
       {
          //simparams.meshType =  0; // Set to default mesh
          cmb_mesh->setCurrentIndex( 0 );
         //cnt_simpoints->setValue( (double) simparams.simpoints );
-        
-         // By default, the simpoints can be set by the user 
-         cnt_simpoints->setEnabled( true ); 
-         
-         QMessageBox::warning( this, 
+
+         // By default, the simpoints can be set by the user
+         cnt_simpoints->setEnabled( true );
+
+         QMessageBox::warning( this,
                tr( "UltraScan Warning" ),
                tr( "Please note:\n\n"
                    "UltraScan could not open the mesh file!\n"
-                   "The file:\n\n" ) +  
+                   "The file:\n\n" ) +
                    US_Settings::appBaseDir() + tr( "/mesh.dat\n\n"
                    "could not be opened." ) );
       }
@@ -1016,49 +1013,49 @@ void US_SimulationParametersGui::disconnect_all( )
 
 void US_SimulationParametersGui::reconnect_all( )
 {
-   connect( cnt_speeds,           SIGNAL( valueChanged (         double ) ), 
+   connect( cnt_speeds,           SIGNAL( valueChanged (         double ) ),
                                   SLOT  ( update_speeds(         double ) ) );
-   connect( cmb_speeds,           SIGNAL( activated           (  int ) ), 
+   connect( cmb_speeds,           SIGNAL( activated           (  int ) ),
                                   SLOT  ( select_speed_profile(  int ) ) );
-   connect( cnt_duration_hours,   SIGNAL( valueChanged         ( double ) ), 
+   connect( cnt_duration_hours,   SIGNAL( valueChanged         ( double ) ),
                                   SLOT  ( update_duration_hours( double ) ) );
-   connect( cnt_duration_mins,    SIGNAL( valueChanged        (  double ) ), 
+   connect( cnt_duration_mins,    SIGNAL( valueChanged        (  double ) ),
                                   SLOT  ( update_duration_mins(  double ) ) );
-   connect( cnt_delay_hours,      SIGNAL( valueChanged      (    double ) ), 
+   connect( cnt_delay_hours,      SIGNAL( valueChanged      (    double ) ),
                                   SLOT  ( update_delay_hours(    double ) ) );
-   connect( cnt_delay_mins,       SIGNAL( valueChanged     (     double ) ), 
+   connect( cnt_delay_mins,       SIGNAL( valueChanged     (     double ) ),
                                   SLOT  ( update_delay_mins(     double ) ) );
-   connect( cnt_rotorspeed,       SIGNAL( valueChanged     (     double ) ), 
+   connect( cnt_rotorspeed,       SIGNAL( valueChanged     (     double ) ),
                                   SLOT  ( update_rotorspeed(     double ) ) );
-   connect( cb_acceleration_flag, SIGNAL( clicked          () ), 
+   connect( cb_acceleration_flag, SIGNAL( clicked          () ),
                                   SLOT  ( acceleration_flag() ) );
-   connect( cnt_acceleration,     SIGNAL( valueChanged       (   double ) ), 
+   connect( cnt_acceleration,     SIGNAL( valueChanged       (   double ) ),
                                   SLOT  ( update_acceleration(   double ) ) );
-   connect( cnt_scans,            SIGNAL( valueChanged(          double ) ), 
+   connect( cnt_scans,            SIGNAL( valueChanged(          double ) ),
                                   SLOT  ( update_scans(          double ) ) );
-   connect( cnt_selected_speed,   SIGNAL( valueChanged        (  double ) ), 
+   connect( cnt_selected_speed,   SIGNAL( valueChanged        (  double ) ),
                                   SLOT  ( update_speed_profile(  double ) ) );
-   connect( cnt_lamella,          SIGNAL( valueChanged  (        double ) ), 
+   connect( cnt_lamella,          SIGNAL( valueChanged  (        double ) ),
                                   SLOT  ( update_lamella(        double ) ) );
-   connect( cnt_meniscus,         SIGNAL( valueChanged   (       double ) ), 
+   connect( cnt_meniscus,         SIGNAL( valueChanged   (       double ) ),
                                   SLOT  ( update_meniscus(       double ) ) );
-   connect( cnt_bottom,           SIGNAL( valueChanged (         double ) ), 
+   connect( cnt_bottom,           SIGNAL( valueChanged (         double ) ),
                                   SLOT  ( update_bottom(         double ) ) );
-   connect( cnt_simpoints,        SIGNAL( valueChanged    (      double ) ), 
+   connect( cnt_simpoints,        SIGNAL( valueChanged    (      double ) ),
                                   SLOT  ( update_simpoints(      double ) ) );
-   connect( cnt_radial_res,       SIGNAL( valueChanged     (     double ) ), 
+   connect( cnt_radial_res,       SIGNAL( valueChanged     (     double ) ),
                                   SLOT  ( update_radial_res(     double ) ) );
-   connect( cnt_rnoise,           SIGNAL( valueChanged (         double ) ), 
+   connect( cnt_rnoise,           SIGNAL( valueChanged (         double ) ),
                                   SLOT  ( update_rnoise(         double ) ) );
-   connect( cnt_lrnoise,          SIGNAL( valueChanged (         double ) ), 
+   connect( cnt_lrnoise,          SIGNAL( valueChanged (         double ) ),
                                   SLOT  ( update_lrnoise(        double ) ) );
-   connect( cnt_tinoise,          SIGNAL( valueChanged  (        double ) ), 
+   connect( cnt_tinoise,          SIGNAL( valueChanged  (        double ) ),
                                   SLOT  ( update_tinoise(        double ) ) );
-   connect( cnt_rinoise,          SIGNAL( valueChanged  (        double ) ), 
+   connect( cnt_rinoise,          SIGNAL( valueChanged  (        double ) ),
                                   SLOT  ( update_rinoise(        double ) ) );
-   connect( cmb_mesh,             SIGNAL( activated  (           int ) ), 
+   connect( cmb_mesh,             SIGNAL( activated  (           int ) ),
                                   SLOT  ( update_mesh(           int ) ) );
-   connect( cmb_moving,           SIGNAL( activated    (         int ) ), 
+   connect( cmb_moving,           SIGNAL( activated    (         int ) ),
                                   SLOT  ( update_moving(         int ) ) );
 }
 

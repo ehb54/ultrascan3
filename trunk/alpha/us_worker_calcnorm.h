@@ -41,7 +41,7 @@ typedef struct work_packet_cn_s
 
 //! \class WorkerThreadCalcNorm
 //! This class is for each of the individual worker threads that do the
-//! actual computational work of 2DSA analysis.
+//! actual computational work of calculating norm values
 class WorkerThreadCalcNorm : public QThread
 {
    Q_OBJECT
@@ -51,10 +51,6 @@ class WorkerThreadCalcNorm : public QThread
       ~WorkerThreadCalcNorm();
 
       enum attr_type { ATTR_S, ATTR_K, ATTR_W, ATTR_V, ATTR_D, ATTR_F };
-      //QList< int >            solxs;       // list of solute indexes for thread
-      //QVector< US_Solute >    solutes_i;   // solutes input
-      //QVector< US_Solute >    solutes_c;   // solutes computed
-      //int  nwsols ;
 
    public slots:
       //! \brief Define the work packet for a worker thread
@@ -65,11 +61,7 @@ class WorkerThreadCalcNorm : public QThread
       void get_result      ( WorkPacketCN& );
       //! \brief Run the worker thread
       void run             ();
-      //QList< int >            solxs;       // list of solute indexes for thread
 
-      //QVector< US_Solute >    solutes_i;   // solutes input
-      //QVector< US_Solute >    solutes_c;   // solutes computed
-     // int  nwsols;
    signals:
       void work_progress   ( int );
       void work_complete   ( WorkerThreadCalcNorm* );
@@ -90,7 +82,7 @@ class WorkerThreadCalcNorm : public QThread
       int  attr_z;        // z attribute flag
       int  dbg_level;     // debug flag
 
-      double  cff0;       //!< constant f/f0 (or zero)
+      double  cff0;       // constant f/f0 (or zero)
 
       US_DataIO::EditedData*  edata;       // experiment data (pointer)
       US_Model                model1;      // output model

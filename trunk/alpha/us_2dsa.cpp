@@ -55,9 +55,6 @@ US_2dsa::US_2dsa() : US_AnalysisBase2()
    // Build local and 2dsa-specific GUI elements
    te_results = NULL;
    baserss    = 0;
-   //norms = 0.0 ;
-
-
 
    QLabel* lb_analysis = us_banner( tr( "Analysis Controls" ) );
    QLabel* lb_scan     = us_banner( tr( "Scan Control"       ) );
@@ -69,26 +66,19 @@ US_2dsa::US_2dsa() : US_AnalysisBase2()
 
    pb_exclude   = us_pushbutton( tr( "Exclude Scan Range" ) );
    pb_exclude->setEnabled( false );
-   connect( pb_exclude, SIGNAL( clicked() ), SLOT( exclude() ) );
-
-   connect( ct_from, SIGNAL( valueChanged( double ) ),
-                     SLOT  ( exclude_from( double ) ) );
-   connect( ct_to,   SIGNAL( valueChanged( double ) ),
-                     SLOT  ( exclude_to  ( double ) ) );
    pb_fitcntl   = us_pushbutton( tr( "Fit Control"   ) );
    pb_plt3d     = us_pushbutton( tr( "3-D Plot"      ) );
    pb_pltres    = us_pushbutton( tr( "Residual Plot" ) );
-   //-----------
-   //pb_shownorm  = us_pushbutton( tr( "Norm on grids" ) );
-   //-----------
+
+   connect( pb_exclude, SIGNAL( clicked() ), SLOT( exclude() ) );
    connect( pb_fitcntl, SIGNAL( clicked() ), SLOT( open_fitcntl() ) );
    connect( pb_plt3d,   SIGNAL( clicked() ), SLOT( open_3dplot()  ) );
    connect( pb_pltres,  SIGNAL( clicked() ), SLOT( open_resplot() ) );
    connect( pb_close,   SIGNAL( clicked() ), SLOT( close_all()    ) );
-
-   //---------------
-   //connect( pb_shownorm,   SIGNAL( clicked() ), SLOT( show_norm()    ) );
-   //--------------
+   connect( ct_from,    SIGNAL( valueChanged( double ) ),
+                        SLOT  ( exclude_from( double ) ) );
+   connect( ct_to,      SIGNAL( valueChanged( double ) ),
+                        SLOT  ( exclude_to  ( double ) ) );
 
    // To modify controls layout, first make Base elements invisible
    
@@ -140,16 +130,10 @@ US_2dsa::US_2dsa() : US_AnalysisBase2()
    controlsLayout->addWidget( pb_fitcntl,   row,   0, 1, 1 );
    controlsLayout->addWidget( pb_plt3d,     row,   1, 1, 1 );
    controlsLayout->addWidget( pb_pltres,    row++, 2, 1, 1 );
-   //controlsLayout->addWidget( pb_shownorm,  row++,   0, 1, 1 );
 
    controlsLayout->addWidget( lb_status,    row,   0, 1, 1 );
    controlsLayout->addWidget( te_status,    row,   1, 1, 2 );
    row      += 3;
-
-   //norms.resize(100) ;
-   //for ( int i = 0; i < 100; i++ )
-   //    norms [i] = double (i) ;
-
 
    // Set initial status text
    te_status->setAlignment( Qt::AlignCenter | Qt::AlignVCenter );
@@ -185,20 +169,7 @@ US_2dsa::US_2dsa() : US_AnalysisBase2()
    dsets.clear();
    dsets << &dset;
 }
-/*
-void US_2dsa::show_norm(  )
-{
-  analcd1  = new US_show_norm( normvA, model, this );
 
-  DbgLv(1)<< "norm_size_2dsa = "<< normvA.size() ;
-
-  for ( int i = 0; i < normvA.size(); i++ )
-      DbgLv(1)<< "norm_values_2dsa = "<< normvA[i] ;
-
-  analcd1->move( acd_pos );
-  analcd1->show(); 
-}
-*/
 // slot to handle the completion of a 2-D spectrum analysis stage
 void US_2dsa::analysis_done( int updflag )
 {
@@ -232,8 +203,8 @@ void US_2dsa::analysis_done( int updflag )
       double  rmsd  = sqrt( vari );
       le_vari->setText( QString::number( vari ) );
       le_rmsd->setText( QString::number( rmsd ) );
-      DbgLv(1) << "Analysis Done VARI" << vari << "model,noise counts"
-                                       << models.count() << ti_noises.count();
+DbgLv(1) << "Analysis Done VARI" << vari << "model,noise counts"
+ << models.count() << ti_noises.count();
 
       qApp->processEvents();
       return;
@@ -244,11 +215,11 @@ void US_2dsa::analysis_done( int updflag )
    bool plotdata     = updflag == 1;
    bool savedata     = updflag == 2;
 
-   DbgLv(1) << "Analysis Done" << updflag;
-   DbgLv(1) << "  model components size" << model.components.size();
-   DbgLv(1) << "  edat0 sdat0 rdat0 tnoi0"
-            << edata->value(0,0) << sdata.value(0,0) << rdata.value(0,0)
-            << ((ti_noise.count>0)?ti_noise.values[0]:0.0);
+DbgLv(1) << "Analysis Done" << updflag;
+DbgLv(1) << "  model components size" << model.components.size();
+DbgLv(1) << "  edat0 sdat0 rdat0 tnoi0"
+ << edata->value(0,0) << sdata.value(0,0) << rdata.value(0,0)
+ << ((ti_noise.count>0)?ti_noise.values[0]:0.0);
 
    pb_plt3d ->setEnabled( true );
    pb_pltres->setEnabled( true );
@@ -301,15 +272,23 @@ void US_2dsa::load( void )
 
       if ( dbP->lastErrno() == US_DB2::OK )
       {
-        dbP->next();
-        idExp              = dbP->value( 1 ).toInt();
-        US_SimulationParameters::speedstepsFromDB( dbP, idExp, speed_steps );
+         dbP->next();
+         idExp              = dbP->value( 1 ).toInt();
+         US_SimulationParameters::speedstepsFromDB( dbP, idExp, speed_steps );
 
-        DbgLv(1)<< "2dsa_load: speed step count" << speed_steps.count() << "idExp" << idExp;
-        if ( speed_steps.count()>0 )
-        DbgLv(1) << "2dsa_load:  speed step_ w2tfirst w2tlast timefirst timelast"
-                 << speed_steps[0].w2t_first << speed_steps[0].w2t_last
-                 << speed_steps[0].time_first << speed_steps[0].time_last;
+DbgLv(1)<< "2dsa_load: speed step count" << speed_steps.count() << "idExp" << idExp;
+if ( speed_steps.count()>0 )
+ DbgLv(1) << "2dsa_load:  speed step_ w2tfirst w2tlast timefirst timelast"
+  << speed_steps[0].w2t_first << speed_steps[0].w2t_last
+  << speed_steps[0].time_first << speed_steps[0].time_last;
+
+         // Check out whether we need to read TimeState from the DB
+         QString tmst_fpath = US_Settings::resultDir() + "/" + runID + "/"
+                              + runID + ".time_state.tmst";
+
+         bool newfile       = US_TimeState::dbSyncToLF( dbP, tmst_fpath, idExp );
+DbgLv(0) << "2DS:LD: newfile" << newfile << "idExp" << idExp
+ << "tmst_fpath" << tmst_fpath;
       }
    }
 
@@ -317,7 +296,7 @@ void US_2dsa::load( void )
    {  // Read run experiment file and parse out speed steps
       QString expfpath = directory + "/" + runID + "."
                        + edata->dataType + ".xml";
-      DbgLv(1) << "LD: expf path" << expfpath;
+DbgLv(1) << "LD: expf path" << expfpath;
       QFile xfi( expfpath )
          ;
       if ( xfi.open( QIODevice::ReadOnly ) )
@@ -333,7 +312,7 @@ void US_2dsa::load( void )
                SP_SPEEDPROFILE  sp;
                US_SimulationParameters::speedstepFromXml( xmli, sp );
                speed_steps << sp;
-               DbgLv(1) << "LD:  sp: rotspeed" << sp.rotorspeed << "t1" << sp.time_first;
+DbgLv(1) << "LD:  sp: rotspeed" << sp.rotorspeed << "t1" << sp.time_first;
             }
          }
 
@@ -344,66 +323,36 @@ void US_2dsa::load( void )
    int nssp      = speed_steps.count();
    int nssc      = ( nssp < 1 ) ? 0 : speed_steps[ nssp - 1 ].scans;
 
-   DbgLv(1)<< "2dsa_no. of speeds " << nssp <<"no of scans "<< nssc
-            <<" triple_count= "<< lw_triples->count();
-/*
-   for ( int ds = 0; ds < lw_triples->count(); ds++ )
-   {
-      edata         = &dataList[ ds ];
-      int nesc      = edata->scanData.size();
-      int etm1      = edata->scanData[        0 ].seconds;
-      int etm2      = edata->scanData[ nesc - 1 ].seconds;
-      double eom1   = edata->scanData[        0 ].omega2t;
-      double eom2   = edata->scanData[ nesc - 1 ].omega2t;
-      qDebug( ) << "2dsa_sp:inside triple count  etm1 etm2 eom1 eom2" << etm1 << etm2 << eom1 << eom2
-                << "nesc" << nesc << "ds" << ds;
-//-------------------------
-      if ( nssp > 0 )
+DbgLv(1)<< "2dsa_no. of speeds " << nssp <<"no of scans "<< nssc
+ <<" triple_count= "<< lw_triples->count();
+
+   if ( nssp > 0 )
+   {  
+      for  ( int ii = 0; ii < nssp ; ii++)
       {
-         int stm1      = speed_steps[ nssp - 1 ].time_first;
-         int stm2      = speed_steps[ nssp - 1 ].time_last;
-         double som1   = speed_steps[ nssp - 1 ].w2t_first;
-         double som2   = speed_steps[ nssp - 1 ].w2t_last;
-
-         if ( etm1 < stm1  ||  etm2 > stm2 )
-         {
-           nssp          = 0;
-            speed_steps.clear();
-            break;
-         }
-DbgLv(1) << "LD:sp:  stm1 stm2 som1 som2" << stm1 << stm2 << som1 << som2
- << "nssp" << nssp;
-      }
-   }
-*/
-
- if ( nssp >0 )
- {  
-    for  ( int i = 0; i< nssp ; i++)
-    {
-         int stm1   = speed_steps[ i ].time_first;
-         int stm2   = speed_steps[ i ].time_last;
+         int stm1   = speed_steps[ ii ].time_first;
+         int stm2   = speed_steps[ ii ].time_last;
          for ( int ds = 0; ds  < lw_triples->count(); ds++ )
          {
-             edata      = &dataList[ ds ];
-             int lesc   = edata->scanCount() - 1;
-             int etm1 = edata->scanData[ 0 ].seconds;
-             int etm2   = edata->scanData[ lesc ].seconds;
-             if ( etm1 < stm1  ||  etm2 > stm2 )
-             {  // Data times beyond speed step ranges, so flag use of data ranges
-                DbgLv(1)<<"Data is beyond range"<<"limits from scans" << etm1<< etm2<< ds;
-                DbgLv(1)<<"Data is beyond range"<<"limits from speed_profs " << stm1<< stm2<< ds;
-                //nssp = 0 ;
-                //speed_steps.clear();            
-                break;
-             }
-        }
-    }   
-  }
+            edata      = &dataList[ ds ];
+            int lesc   = edata->scanCount() - 1;
+            int etm1 = edata->scanData[ 0 ].seconds;
+            int etm2   = edata->scanData[ lesc ].seconds;
+            if ( etm1 < stm1  ||  etm2 > stm2 )
+            {  // Data times beyond speed step ranges, so flag use of data ranges
+DbgLv(1) << "2dsa: Data is beyond range" << "limits from scans" << etm1 << etm2 << ds;
+DbgLv(1) << "2dsa: Data is beyond range" << "limits from speed_profs " << stm1 << stm2 << ds;
+               //nssp = 0 ;
+               //speed_steps.clear();            
+               break;
+            }
+         }
+      }   
+   }
 
    exp_steps     = ( nssp > 0 );      // Flag use of experiment speed steps
    edata         = &dataList[ 0 ];    // Point to first loaded data
-   DbgLv(1) << " 2dsa: exp_steps & nssp" << exp_steps << nssp ;
+DbgLv(1) << " 2dsa: exp_steps & nssp" << exp_steps << nssp ;
 }
 
 // plot the data
@@ -413,9 +362,7 @@ void US_2dsa::data_plot( void )
    ct_boundaryPercent->setValue( 300.0 );
    ct_boundaryPos    ->setValue( -50.0 );
 
-   DbgLv(1) << "Data Plot by Base";
    US_AnalysisBase2::data_plot();      // plot experiment data
-   DbgLv(1) << "Data Plot from Base";
 
    pb_fitcntl->setEnabled( true );
    ct_from   ->setEnabled( true );
@@ -423,16 +370,17 @@ void US_2dsa::data_plot( void )
 
    if ( ! dataLoaded  ||
         sdata.scanData.size() != edata->scanData.size() )
-   {  DbgLv(1) <<"subha_from data plot :data are different "<< "edata:"<<edata->scanData.size() 
-                                                            <<"sdata:"<< sdata.scanData.size();
-     return;
+   {
+DbgLv(1) << "2dsa: from data plot : data are different  edata:" << edata->scanData.size() 
+ << "sdata:" << sdata.scanData.size();
+      return;
    }
 
    // set up to plot simulation data and residuals
    int npoints = edata->pointCount();
    int nscans  = edata->scanCount();
 
-   DbgLv(1) <<"edited data size "<< npoints << nscans ;
+DbgLv(1) << "edited data size " << npoints << nscans;
    int count   = ( npoints > nscans ) ? npoints : nscans;
 
    QVector< double > rvec( count, 0.0 );
@@ -539,7 +487,7 @@ void US_2dsa::data_plot( void )
    rmsd     = sqrt( vari );
    le_vari->setText( QString::number( vari ) );
    le_rmsd->setText( QString::number( rmsd ) );
-   DbgLv(1) << "Data Plot VARI" << vari;
+DbgLv(1) << "Data Plot VARI" << vari;
 }
 
 // view data report
@@ -578,7 +526,7 @@ void US_2dsa::save( void )
    QString dates        = "e" + editID + "_a" + analysisDate;
    bool    cusGrid      = model.description.contains( "CUSTOMGRID" );
    bool    refIter      = model.description.contains( "REFITERS" );
-   DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
+DbgLv(1) << "2DSA:SV: cusGrid" << cusGrid << "desc" << model.description;
    bool    fitMeni      = ( model.global == US_Model::MENISCUS );
    bool    montCar      = model.monteCarlo;
    QString analysisType = QString( cusGrid ? "2DSA-CG" : "2DSA" )
@@ -786,7 +734,7 @@ void US_2dsa::save( void )
    }
    //tino = ti_noise.count > 0 ? ti_noise.values[0] : 0.0;
    //rino = ri_noise.count > 0 ? ri_noise.values[0] : 0.0;
-   //DbgLv(1) << "  Post-sum tno rno" << tino << rino;
+//DbgLv(1) << "  Post-sum tno rno" << tino << rino;
    mname          = mdlpath + mnames[ 0 ];
 
    if ( montCar )
@@ -955,7 +903,7 @@ US_DataIO::EditedData* US_2dsa::mw_editdata()
 {
    int drow = lw_triples->currentRow();
    edata    = ( drow >= 0 ) ? &dataList[ drow ] : 0;
-   DbgLv(1) << "(M)mw_ed" << edata;
+DbgLv(1) << "(M)mw_ed" << edata;
    return edata;
 }
 
@@ -981,6 +929,7 @@ void US_2dsa::open_resplot()
      }
      else
         rbd_pos  = this->pos() + QPoint(  100, 100 );
+
      resplotd = new US_ResidPlot2D( this );
      resplotd->move( rbd_pos );
      resplotd->setVisible( true );
@@ -1033,42 +982,59 @@ void US_2dsa::open_fitcntl()
      sd.vbar         = vbartb;
      sd.manual       = manual;
      US_Math2::data_correction( avTemp, sd );
-     DbgLv(0) << "2DSA s_corr D_corr" << sd.s20w_correction << sd.D20w_correction
-              << "manual" << sd.manual << "vbar20" << vbar20;
-     DbgLv(0) << "2DSA d_corr v vW vT d dW dT" << sd.viscosity << sd.viscosity_wt
-              << sd.viscosity_tb << sd.density << sd.density_wt << sd.density_tb;
+DbgLv(0) << "2DSA s_corr D_corr" << sd.s20w_correction << sd.D20w_correction
+ << "manual" << sd.manual << "vbar20" << vbar20;
+DbgLv(0) << "2DSA d_corr v vW vT d dW dT" << sd.viscosity << sd.viscosity_wt
+ << sd.viscosity_tb << sd.density << sd.density_wt << sd.density_tb;
      US_Passwd pw;
      loadDB                  = disk_controls->db();
      US_DB2* dbP             = loadDB ? new US_DB2( pw.getPasswd() ) : NULL;
+
      // Initialize simulation parameters from data.
      // Skip adding speed steps if this is multi-speed, initially,
      // but set speed steps to the experiment vector.
      dset.simparams.initFromData( dbP, dataList[ drow ], !exp_steps );
+
      if ( exp_steps )
      {
         dset.simparams.speed_step  = speed_steps;
      }
-     QString tmst_fpath = US_Settings::resultDir() +"/" + runID +"/" + runID + ".time_state.tmst";
+
+     // Build a TimeState object now if possible
+DbgLv(1) << "2dsa : checking timestate object need";
+     bool need_tsfile   = true;
+     QString tmst_fpath = US_Settings::resultDir() + "/" + runID + "/"
+                          + runID + ".time_state.tmst";
      QFileInfo check_file( tmst_fpath );
-     sdata = rawList[ drow ] ;
+
      US_AstfemMath::initSimData( sdata, dataList[ drow ], 0.0 );
 
      if ( check_file.exists()  &&  check_file.isFile() )
      {
-        dset.simparams.simSpeedsFromTimeState( tmst_fpath );
-DbgLv(1)<<"2dsa : timestate file exists"<< tmst_fpath 
- << " timestateobject = "<<dset.simparams.tsobj
- << "stepscount=" << dset.simparams.speed_step.size();
+        bool intv_1sec  = US_AstfemMath::timestate_onesec( tmst_fpath, sdata );
+DbgLv(1) << "2dsa :  intv_1sec" << intv_1sec;
 
+        if ( intv_1sec )
+        {
+           dset.simparams.simSpeedsFromTimeState( tmst_fpath );
+DbgLv(1) << "2dsa :   tsobj,ssp created";
+           need_tsfile             = false;
+        }
+DbgLv(1) << "2dsa : timestate file exists" << tmst_fpath 
+ << " timestateobject = " << dset.simparams.tsobj
+ << "stepscount=" << dset.simparams.speed_step.size();
      }
-     else
+
+     if ( need_tsfile )
      {
         QString tmst_fpath = US_Settings::tmpDir() + "/" + temp_Id_name() + ".time_state.tmst";
+        dset.simparams.sim = true;
         US_AstfemMath::writetimestate( tmst_fpath, dset.simparams, sdata );
 
         dset.simparams.simSpeedsFromTimeState( tmst_fpath );
-DbgLv(1)<<"2dsa : timestate file does not exist and  timestateobject = "
- << dset.simparams.tsobj << "exp_steps=" << exp_steps << tmst_fpath ;
+DbgLv(1)<<"2dsa : timestate newly created.  timestateobject = "
+ << dset.simparams.tsobj << "exp_steps=" << exp_steps
+ << "sspknt" << dset.simparams.sim_speed_prof.count();
      }
 
      dset.run_data           = dataList[ drow ];
@@ -1080,12 +1046,11 @@ DbgLv(1)<<"2dsa : timestate file does not exist and  timestateobject = "
      dset.s20w_correction    = sd.s20w_correction;
      dset.D20w_correction    = sd.D20w_correction;
      dset.manual             = manual;
+DbgLv(1) << "Bottom" << dset.simparams.bottom << "rotorcoeffs"
+ << dset.simparams.rotorcoeffs[0] << dset.simparams.rotorcoeffs[1];
+DbgLv(1) << "SimulationParameter --";
+if(dbg_level>0) dset.simparams.debug();
 
-     DbgLv(1) << "Bottom" << dset.simparams.bottom << "rotorcoeffs"
-              << dset.simparams.rotorcoeffs[0] << dset.simparams.rotorcoeffs[1];
-
-     DbgLv(1) << "SimulationParameter --";
-     if(dbg_level>0) dset.simparams.debug();
      if ( dbP != NULL )
      {
         delete dbP;
@@ -1099,6 +1064,7 @@ DbgLv(1)<<"2dsa : timestate file does not exist and  timestateobject = "
      }
      else
         acd_pos  = this->pos() + QPoint(  500,  50 );
+
      analcd  = new US_AnalysisControl2D( dsets, loadDB, this );
      analcd->move( acd_pos );
      analcd->show();
@@ -1213,7 +1179,7 @@ QString US_2dsa::distrib_info()
    sd.vbar20       = vbar20;
    sd.vbar         = vbartb;
    sd.manual       = manual;
-   DbgLv(1) << "Data_Corr manual" << sd.manual;
+DbgLv(1) << "Data_Corr manual" << sd.manual;
    US_Math2::data_correction( avTemp, sd );
 
    for ( int ii = 0; ii < ncomp; ii++ )
@@ -1472,11 +1438,10 @@ void US_2dsa::close_all()
    close();
 }
 
-//------------------------------
+// Construct a temporary filename based on pid and time
 QString US_2dsa::temp_Id_name()
-       {
-         return  ( "p" + QString::number( getpid() ) +
-             "t" + QDateTime::currentDateTime().toUTC()
-                   .toString( "yyMMddhhmmss" ) );
-       }
+{
+   return ( "p" + QString::number( getpid() ) + "t" +
+            QDateTime::currentDateTime().toUTC().toString( "yyMMddhhmmss" ) );
+}
 

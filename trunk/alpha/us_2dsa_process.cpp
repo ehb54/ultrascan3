@@ -406,14 +406,13 @@ void US_2dsaProcess::final_computes()
    wtask.csolutes.clear();
    wtask.ti_noise.clear();
    wtask.ri_noise.clear();
-   //wtask.Anorm.clear();
 
    tkdepths << wtask.depth;
 
    // This time, input solutes are all the subgrid-computed ones where
    // the concentration is positive.
    qSort( c_solutes[ depth ] );
-   DbgLv(1) << "FinalComp: szSoluC" << c_solutes[ depth ].size();
+DbgLv(1) << "FinalComp: szSoluC" << c_solutes[ depth ].size();
    wtask.isolutes.clear();
 
    for ( int ii = 0; ii < c_solutes[ depth ].size(); ii++ )
@@ -422,7 +421,7 @@ void US_2dsaProcess::final_computes()
          wtask.isolutes << c_solutes[ depth ][ ii ];
          
    }
-   //DbgLv(1) << "norm_size_final_compute" << wtask.isolutes.size() << wtask.Anorm.size();
+//DbgLv(1) << "norm_size_final_compute" << wtask.isolutes.size() << wtask.Anorm.size();
 
    c_solutes[ depth ].clear();
 
@@ -495,35 +494,25 @@ void US_2dsaProcess::process_final( WorkerThread2D* wthrd )
          rinvec         [ ss ] = wresult.ri_noise[ ss ];
       }
    }
-   
-   //normv =  wresult.Anorm ;
+DbgLv(1) << "norm_size_get_results" << wresult.isolutes.size() << wresult.Anorm.size();
 
-   DbgLv(1) << "norm_size_get_results" << wresult.isolutes.size() << wresult.Anorm.size();
-
-   //for ( int i = 0 ; i < nsolutes ; i++ )
-   //    normv[i] = wresult.Anorm[i];
-   //normv<< wresult.Anorm ;
-
-   DbgLv(1) << "FIN_FIN:    ti,ri counts" << ti_noise.count << ri_noise.count;
+DbgLv(1) << "FIN_FIN:    ti,ri counts" << ti_noise.count << ri_noise.count;
 
    SS_DATASET* dset   = dsets[ 0 ];
    double sfactor     = 1.0 / dset->s20w_correction;
    double dfactor     = 1.0 / dset->D20w_correction;
    double vbar20      = dset->vbar20;
-   DbgLv(1) << "FIN_FIN: s20w,D20w_corr" << dset->s20w_correction
-            << dset->D20w_correction << "sfac dfac" << sfactor << dfactor;
+DbgLv(1) << "FIN_FIN: s20w,D20w_corr" << dset->s20w_correction
+ << dset->D20w_correction << "sfac dfac" << sfactor << dfactor;
    model.components.resize( nsolutes );
-   //normv.resize( nsolutes );
+
    qSort( c_solutes[ maxdepth ] );
-   //double bf_mult     = simparms->band_forming
-   //                   ? simparms->cp_width
-   //                   : 1.0;
 
    // build the final model
 
    if ( dset->solute_type == 0 )
    {  // Normal case of varying f/f0
-      DbgLv(1) << "solute_process_value" << dset->solute_type<< nsolutes ;
+DbgLv(1) << "solute_process_value" << dset->solute_type<< nsolutes;
       for ( int cc = 0; cc < nsolutes; cc++ )
       {
          // Get standard-space solute values (20,W)
@@ -534,23 +523,22 @@ void US_2dsaProcess::process_final( WorkerThread2D* wthrd )
          mcomp.mw     = 0.0;
          mcomp.f      = 0.0;
          mcomp.f_f0   = c_solutes[ maxdepth ][ cc ].k;
-         //mcomp.signal_concentration
-         //             = c_solutes[ maxdepth ][ cc ].c * bf_mult;
          mcomp.signal_concentration
                       = c_solutes[ maxdepth ][ cc ].c;
-         //normv= wresult.Anorm ;
+
          // Complete other coefficients in standard-space
          model.calc_coefficients( mcomp );
-         DbgLv(1) << " Bcc comp D" << mcomp.D << "comp ff0" << mcomp.f_f0;
-         DbgLv(1) << "norms_process_value"<< wthrd->norms [cc] ;
+DbgLv(1) << " Bcc comp D" << mcomp.D << "comp ff0" << mcomp.f_f0;
+DbgLv(1) << "norms_process_value"<< wthrd->norms [cc];
+
          // Convert to experiment-space for simulation below
          mcomp.s     *= sfactor;
          mcomp.D     *= dfactor;
-         DbgLv(1) << "  Bcc 20w comp D" << mcomp.D;
+DbgLv(1) << "  Bcc 20w comp D" << mcomp.D;
 
          model.components[ cc ]  = mcomp;
       }
-      normv= wresult.Anorm ;
+      normv         = wresult.Anorm ;
    }  // Constant vbar
 
    else if ( dset->solute_type == 1 )
@@ -576,7 +564,7 @@ void US_2dsaProcess::process_final( WorkerThread2D* wthrd )
 
          // Complete other coefficients in standard-space
          model.calc_coefficients( mcomp );
-         DbgLv(1) << " Bcc comp D" << mcomp.D << "comp vbar" << mcomp.vbar20;
+DbgLv(1) << " Bcc comp D" << mcomp.D << "comp vbar" << mcomp.vbar20;
 
          // Convert to experiment-space for simulation below
          sd.vbar20    = mcomp.vbar20;
@@ -585,7 +573,7 @@ void US_2dsaProcess::process_final( WorkerThread2D* wthrd )
 
          mcomp.s     /= sd.s20w_correction;
          mcomp.D     /= sd.D20w_correction;
-         DbgLv(1) << "  Bcc 20w comp D" << mcomp.D;
+DbgLv(1) << "  Bcc 20w comp D" << mcomp.D;
 
          model.components[ cc ]  = mcomp;
       }
@@ -614,7 +602,7 @@ void US_2dsaProcess::process_final( WorkerThread2D* wthrd )
 
          // Complete other coefficients in standard-space
          model.calc_coefficients( mcomp );
-         DbgLv(1) << " Bcc comp D" << mcomp.D;
+DbgLv(1) << " Bcc comp D" << mcomp.D;
 
          // Convert to experiment-space for simulation below
          sd.vbar20    = mcomp.vbar20;
@@ -623,20 +611,20 @@ void US_2dsaProcess::process_final( WorkerThread2D* wthrd )
 
          mcomp.s     /= sd.s20w_correction;
          mcomp.D     /= sd.D20w_correction;
-         DbgLv(1) << "  Bcc 20w comp D" << mcomp.D;
+DbgLv(1) << "  Bcc 20w comp D" << mcomp.D;
 
          model.components[ cc ]  = mcomp;
       }
    }  // Custom grid
 
-   DbgLv(1) << "FIN_FIN:    c0 cn" << c_solutes[maxdepth][0].c
+DbgLv(1) << "FIN_FIN:    c0 cn" << c_solutes[maxdepth][0].c
             << c_solutes[maxdepth][qMax(0,nsolutes-1)].c << "  nsols" << nsolutes;
 
    nscans           = edata->scanCount();
    npoints          = edata->pointCount();
    double vari      = wresult.sim_vals.variances[ 0 ];
 
-   DbgLv(1) << "FIN_FIN: vari" << vari;
+DbgLv(1) << "FIN_FIN: vari" << vari;
    US_AstfemMath::initSimData( sdata, *edata, 0.0 );
    US_AstfemMath::initSimData( rdata, *edata, 0.0 );
    US_DataIO::RawData* simdat = &wresult.sim_vals.sim_data;
@@ -655,7 +643,7 @@ void US_2dsaProcess::process_final( WorkerThread2D* wthrd )
    int mms=nscans/2;
    int mmr=npoints/2;
 
-   DbgLv(1) << "FIN_FIN: edatm sdatm rdatm" << edata->value(mms,mmr)
+DbgLv(1) << "FIN_FIN: edatm sdatm rdatm" << edata->value(mms,mmr)
             << sdata.value(mms,mmr) << rdata.value(mms,mmr);
 
    // set variance and communicate to control through residual's scan 0
@@ -667,7 +655,7 @@ void US_2dsaProcess::process_final( WorkerThread2D* wthrd )
    rscan0->seconds    = ( mmtype == 0 ) ? 0.0 : (double)( mm_iter + 1 );
    rscan0->plateau    = ( mmtype != 1 ) ? 0.0 : edata->meniscus;
 
-   DbgLv(1) << "FIN_FIN: vari riter miter menisc" << rscan0->delta_r
+DbgLv(1) << "FIN_FIN: vari riter miter menisc" << rscan0->delta_r
             << rscan0->rpm << rscan0->seconds << rscan0->plateau;
 
    // determine elapsed time
@@ -677,7 +665,7 @@ void US_2dsaProcess::process_final( WorkerThread2D* wthrd )
    double bvol = dsets[0]->simparams.band_volume;
    bvol=dsets[0]->simparams.band_forming?bvol:0.0;
 
-   DbgLv(1) << "done: vari bvol" << vari << bvol
+DbgLv(1) << "done: vari bvol" << vari << bvol
             << "slun klun ngr" << slolim << suplim << nssteps << klolim << kuplim
             << nksteps << ngrefine << "ets" << ktimes;
 
@@ -711,10 +699,10 @@ void US_2dsaProcess::process_final( WorkerThread2D* wthrd )
 
    int thrx   = wresult.thrn - 1;
    free_worker( thrx );
-   DbgLv(1) << "FIN_FIN: Run Time: hr min sec" << ktimeh << ktimem << ktimes;
-   DbgLv(1) << "FIN_FIN: maxrss memmb nthr" << maxrss << memmb << nthreads
-            << " nsubg nsst nkst noisf" << nsubgrid << nssteps << nksteps << noisflag;
-   DbgLv(1) << "FIN_FIN:   kcsteps nctotal" << kcsteps << nctotal;
+DbgLv(1) << "FIN_FIN: Run Time: hr min sec" << ktimeh << ktimem << ktimes;
+DbgLv(1) << "FIN_FIN: maxrss memmb nthr" << maxrss << memmb << nthreads
+ << " nsubg nsst nkst noisf" << nsubgrid << nssteps << nksteps << noisflag;
+DbgLv(1) << "FIN_FIN:   kcsteps nctotal" << kcsteps << nctotal;
 
    bool   neediter = false;       // need-more-iterations false by default
 
@@ -751,8 +739,8 @@ void US_2dsaProcess::process_final( WorkerThread2D* wthrd )
 
          // iterate if solutes different and variance change large enough
          neediter     = ( sdiffs  &&  dvari > varitol ); 
-         DbgLv(1) << "FIN_FIN: neediter" << neediter << "  sdiffs" << sdiffs
-                  << " dvari varitol" << dvari << varitol << " iter" << r_iter;
+DbgLv(1) << "FIN_FIN: neediter" << neediter << "  sdiffs" << sdiffs
+ << " dvari varitol" << dvari << varitol << " iter" << r_iter;
       }
    }
 
@@ -768,10 +756,10 @@ void US_2dsaProcess::process_final( WorkerThread2D* wthrd )
    {  // Constant vbar
       for ( int cc = 0; cc < nsolutes; cc++ )
       {
-         DbgLv(1) << "cc comp D" << model.components[ cc ].D;
+DbgLv(1) << "cc comp D" << model.components[ cc ].D;
          model.components[ cc ].s *= dset->s20w_correction;
          model.components[ cc ].D *= dset->D20w_correction;
-         DbgLv(1) << " cc 20w comp D" << model.components[ cc ].D;
+DbgLv(1) << " cc 20w comp D" << model.components[ cc ].D;
       }
    }
    else
@@ -831,11 +819,8 @@ bool US_2dsaProcess::get_results( US_DataIO::RawData* da_sim,
    if ( ( noisflag & 2 ) != 0  &&  da_rin != 0 )
       *da_rin     = ri_noise;                     // copy any ri noise
 
-   //*da_nrm  = normv;
-
-   //DbgLv(1) << " get_result_2dsa_process" << da_nrm->size() ;
-   DbgLv(1) << " GET_RES:    VARI" << rdata.scanData[0].delta_r
-            << da_res->scanData[0].delta_r;
+DbgLv(1) << " GET_RES:    VARI" << rdata.scanData[0].delta_r
+ << da_res->scanData[0].delta_r;
    return all_ok;
 }
 
@@ -856,8 +841,8 @@ void US_2dsaProcess::submit_job( WorkPacket2D& wtask, int thrx )
             this, SLOT(   process_job(   WorkerThread2D* ) ) );
    connect( wthr, SIGNAL( work_progress( int             ) ),
             this, SLOT(   step_progress( int             ) ) );
-   DbgLv(1) << "SUBMIT_JOB taskx" << wtask.taskx << "depth" << wtask.depth;
-   DbgLv(1) << "SUBMIT_JOB AvailPercent" << US_Memory::memory_profile();
+DbgLv(1) << "SUBMIT_JOB taskx" << wtask.taskx << "depth" << wtask.depth;
+DbgLv(1) << "SUBMIT_JOB AvailPercent" << US_Memory::memory_profile();
 
    wthr->start();
 }
@@ -875,39 +860,37 @@ void US_2dsaProcess::process_job( WorkerThread2D* wthrd )
    int taskx  = wresult.taskx;     // task index of task
    int depth  = wresult.depth;     // depth of result
    maxrss     = qMax( maxrss, wresult.sim_vals.maxrss );
-   DbgLv(1) << "PROCESS_JOB thrn" << thrn << "taskx" << taskx
-            << "depth" << wresult.depth;
+DbgLv(1) << "PROCESS_JOB thrn" << thrn << "taskx" << taskx
+ << "depth" << wresult.depth;
    int nrcso  = wresult.csolutes.size();
    ntcsols   += nrcso;
-   if ( taskx < 9 || taskx > (nsubgrid-4) )
-      DbgLv(1) << "PJ: taskx csolutes size tot" << taskx << nrcso << ntcsols
-               << QDateTime::currentDateTime().toMSecsSinceEpoch();
-   //DBG-CONC
-   if (dbg_level>0) for (int mm=0; mm<wresult.csolutes.size(); mm++ ) {
-   if ( wresult.csolutes[mm].c > 100.0 ) {
-   DbgLv(1) << "PJ:  CONC=" << wresult.csolutes[mm].c
-    << " s,ff0" << wresult.csolutes[mm].s*1.0e+13
-    << wresult.csolutes[mm].k; } }
-   //DBG-CONC
-   //DBG-DATA
-   #if 1
-    if ( dbg_level>0 )
-    {
-       double dtot=0.0;
-       double ntot=0.0;
-       int    nnoi=wresult.ti_noise.count();
-       for ( int ii=0; ii<nscans; ii++ )
-           for (int jj=0; jj<npoints; jj++ )
-               dtot += edata->value(ii,jj);
- 
-       for ( int jj=0; jj<nnoi; jj++ )
-           ntot += wresult.ti_noise[jj];
 
-       DbgLv(1) << "PJ:DA DTOT" << dtot << "thr,tsk,ncso" << thrn << taskx << nrcso
-                << "edata" << edata << "nti,NTOT" << nnoi << ntot;
-    }
-   #endif
-   //DBG-DATA
+//DBG-CONC
+if ( taskx < 9 || taskx > (nsubgrid-4) )
+ DbgLv(1) << "PJ: taskx csolutes size tot" << taskx << nrcso << ntcsols
+  << QDateTime::currentDateTime().toMSecsSinceEpoch();
+if (dbg_level>0) for (int mm=0; mm<wresult.csolutes.size(); mm++ ) {
+ if ( wresult.csolutes[mm].c > 100.0 ) {
+ DbgLv(1) << "PJ:  CONC=" << wresult.csolutes[mm].c
+  << " s,ff0" << wresult.csolutes[mm].s*1.0e+13 << wresult.csolutes[mm].k; }
+}
+//DBG-CONC
+
+//DBG-DATA
+if ( dbg_level>0 ) {
+ double dtot=0.0;
+ double ntot=0.0;
+ int    nnoi=wresult.ti_noise.count();
+ for ( int ii=0; ii<nscans; ii++ )
+  for (int jj=0; jj<npoints; jj++ )
+   dtot += edata->value(ii,jj);
+  for ( int jj=0; jj<nnoi; jj++ )
+   ntot += wresult.ti_noise[jj];
+DbgLv(1) << "PJ:DA DTOT" << dtot << "thr,tsk,ncso" << thrn << taskx << nrcso
+ << "edata" << edata << "nti,NTOT" << nnoi << ntot;
+}
+//DBG-DATA
+//
    max_rss();                      // Compute max memory used
    if ( taskx <= nthreads )
       memory_check();              // Check for memory use too high
@@ -943,16 +926,16 @@ void US_2dsaProcess::process_job( WorkerThread2D* wthrd )
 
       maxdepth     = qMax( maxdepth, depthn );
       c_solutes[ depth ].clear();
-      DbgLv(1) << "THR_FIN: depth" << wtask.depth << " #solutes"
-               << wtask.isolutes.size() << " nextc maxtsols" << nextc << maxtsols
-               << "wres#sols" << wresult.csolutes.size();;
+DbgLv(1) << "THR_FIN: depth" << wtask.depth << " #solutes"
+ << wtask.isolutes.size() << " nextc maxtsols" << nextc << maxtsols
+ << "wres#sols" << wresult.csolutes.size();
    }
 
    if ( depth == 0 )
    {  // this result is from depth 0, it is from initial subgrids pass
       kctask++;                      // bump count of completed subgrid tasks
-      DbgLv(1) << "THR_FIN: thrn" << thrn << " taskx" << taskx
-               << " kct kst" << kctask << kstask << "csols size" << c_solutes.size();
+DbgLv(1) << "THR_FIN: thrn" << thrn << " taskx" << taskx
+ << " kct kst" << kctask << kstask << "csols size" << c_solutes.size();
       emit message_update( pmessage_head() +
          tr( "Computations for %1 of %2 subgrids are complete" )
          .arg( kctask ).arg( nsubgrid ), false );
@@ -967,12 +950,12 @@ void US_2dsaProcess::process_job( WorkerThread2D* wthrd )
             int todoest   = estimate_steps( nsolest );
             int todoact   = estimate_steps( nsolact );
 
-            DbgLv(1) << "THR_FIN:   (est)kcst ncto" <<  kcsteps << nctotal
-                     << " nsol ntodo" << nsolest << todoest;
+DbgLv(1) << "THR_FIN:   (est)kcst ncto" <<  kcsteps << nctotal
+ << " nsol ntodo" << nsolest << todoest;
             // adjust the estimate of total progress steps
             nctotal       = kcsteps + todoact;
-            DbgLv(1) << "THR_FIN:   (new)kcst ncto" <<  kcsteps << nctotal
-                     << " nsol ntodo" << nsolact << todoact;
+DbgLv(1) << "THR_FIN:   (new)kcst ncto" <<  kcsteps << nctotal
+ << " nsol ntodo" << nsolact << todoact;
          }
 
          emit stage_complete( kcsteps, nctotal );
@@ -983,7 +966,6 @@ void US_2dsaProcess::process_job( WorkerThread2D* wthrd )
          int maxdepsv   = maxdepth;
          maxdepth       = 1;
 
-         //if ( nextc <= maxtsols  &&  jobs_at_depth( 1 ) == 0 )
          if ( nextc <= maxtsols  &&  maxdepsv < 1 )
             maxdepth       = 0;  // handle no depth 1 jobs yet submitted
       }
@@ -1003,7 +985,7 @@ void US_2dsaProcess::process_job( WorkerThread2D* wthrd )
          WorkPacket2D wtask = wresult;
          int taskx    = tkdepths.size();
          int depthn   = dd + 1;
-         DbgLv(1) << "THR_FIN:    QT: taskx depth solsz" << taskx << depth << c_solutes[dd].size();
+DbgLv(1) << "THR_FIN:    QT: taskx depth solsz" << taskx << depth << c_solutes[dd].size();
          queue_task( wtask, slolim, klolim, taskx, depthn, jnois,
                      c_solutes[ dd ] );
          c_solutes[ dd ].clear();
@@ -1012,8 +994,8 @@ void US_2dsaProcess::process_job( WorkerThread2D* wthrd )
 
    // Is anyone working?
    bool no_working = wkstates.indexOf( WORKING ) < 0;
-   DbgLv(1) << "THR_FIN: nowk dep mxdp cssz wrsz" << no_working << depth
-           << maxdepth << c_solutes[depth].size() << wresult.csolutes.size();
+DbgLv(1) << "THR_FIN: nowk dep mxdp cssz wrsz" << no_working << depth
+ << maxdepth << c_solutes[depth].size() << wresult.csolutes.size();
 
    // Submit one last time with all solutes if necessary
    if ( depth == maxdepth    &&
@@ -1024,7 +1006,7 @@ void US_2dsaProcess::process_job( WorkerThread2D* wthrd )
       final_computes();
       return;
    }
-   DbgLv(1) << "THR_FIN: jqempty" << job_queue.isEmpty() << "ReadyWorkerNdx"
+DbgLv(1) << "THR_FIN: jqempty" << job_queue.isEmpty() << "ReadyWorkerNdx"
             << wkstates.indexOf( READY );
    int kstsksv  = kstask;
 
@@ -1452,10 +1434,12 @@ DbgLv(1) << "MCARLO:setgau ns np" << nscans << npoints << "gausmoo" << gausmoo;
             vv[ rr ]        = qAbs( rval );
          }
 
-if ( ss < 2 ) DbgLv(1) << "MCARLO:setgau:gausmoo vv9" << vv[9] << "ss" << ss;
+if ( ss < 2 )
+ DbgLv(1) << "MCARLO:setgau:gausmoo vv9" << vv[9] << "ss" << ss;
          // Smooth using 5 points to the left and right of each point
          US_Math2::gaussian_smoothing( vv, 5 );
-if ( ss < 2 ) DbgLv(1) << "MCARLO:setgau: smoothd vv9" << vv[9];
+if ( ss < 2 )
+ DbgLv(1) << "MCARLO:setgau: smoothd vv9" << vv[9];
 
          sigmas << vv;
       }

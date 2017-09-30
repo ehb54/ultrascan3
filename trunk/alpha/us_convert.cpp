@@ -15,12 +15,12 @@ US_Convert::US_Convert( void )
 {
 }
 
-void US_Convert::readLegacyData( 
+void US_Convert::readLegacyData(
      QString                              dir,
      QList< US_DataIO::BeckmanRawScan >&  rawLegacyData,
-     QString&                             runType ) 
+     QString&                             runType )
 {
-   if ( dir.isEmpty() ) return; 
+   if ( dir.isEmpty() ) return;
 
    // Get legacy file names and set channels
    QDir d( dir, "*", QDir::Name, QDir::Files | QDir::Readable );
@@ -45,11 +45,11 @@ void US_Convert::readLegacyData(
       // Optional channel + 4 to 6 digits + dot + file type + cell number
 
       QRegExp rx( "^[A-J]?\\d{4,6}\\.(?:RA|RI|IP|FI|WA|WI)\\d$" );
-      
+
       if ( rx.indexIn( f.toUpper() ) >= 0 )
       {
          fileList << f;
- 
+
          // Parse the filtered file list to determine cells and channels
          QChar c = f.at( 0 ).toUpper();
          if ( c.isLetter() && ! channels.contains( c ) )
@@ -104,7 +104,7 @@ qDebug() << "CVT: runType chosen: " << status;
          // Optional channel + 4 to 6 digits + dot + file type + cell number
 
          QRegExp rx( "^[A-J]?\\d{4,6}\\.(?:RA|RI|IP|FI|WA|WI)\\d$" );
-      
+
          if ( rx.indexIn( f.toUpper() ) >= 0 )
          {
             QString frunType = f.right( 3 ).left( 2 ).toUpper();
@@ -112,7 +112,7 @@ qDebug() << "CVT: runType chosen: " << status;
                continue;
 
             fileList << f;
- 
+
             // Parse the filtered file list to determine cells and channels
             QChar c = f.at( 0 ).toUpper();
             if ( c.isLetter() && ! channels.contains( c ) )
@@ -186,13 +186,13 @@ qDebug() << "CVT: runType chosen: " << status;
    }
 }
 
-void US_Convert::convertLegacyData( 
+void US_Convert::convertLegacyData(
      QList< US_DataIO::BeckmanRawScan >& rawLegacyData,
      QVector< US_DataIO::RawData  >&     rawConvertedData,
      QList< TripleInfo >&     triples,
      QString                              runType,
-     double                               tolerance 
-     ) 
+     double                               tolerance
+     )
 {
    setTriples( rawLegacyData, triples, runType, tolerance );
 
@@ -234,7 +234,7 @@ int US_Convert::saveToDisk(
     bool saveGUIDs
     )
 {
-   if ( rawConvertedData[ 0 ]->scanData.empty() ) 
+   if ( rawConvertedData[ 0 ]->scanData.empty() )
       return NODATA;
 
    // Write the data
@@ -265,10 +265,10 @@ int US_Convert::saveToDisk(
       {
           double r       = parts[ 2 ].toDouble() * 1000.0;
           QString radius = QString::number( (int) round( r ) );
-          filename       = runID      + "." 
-                         + runType    + "." 
-                         + cell       + "." 
-                         + channel    + "." 
+          filename       = runID      + "."
+                         + runType    + "."
+                         + cell       + "."
+                         + channel    + "."
                          + radius     + ".auc";
       }
 
@@ -283,10 +283,10 @@ int US_Convert::saveToDisk(
                 wavelength      = wavelength + "b";
           }
           wavelnp            = wavelength;
-          filename           = runID      + "." 
-                             + runType    + "." 
-                             + cell       + "." 
-                             + channel    + "." 
+          filename           = runID      + "."
+                             + runType    + "."
+                             + cell       + "."
+                             + channel    + "."
                              + wavelength + ".auc";
       }
 
@@ -295,7 +295,7 @@ int US_Convert::saveToDisk(
       QString uuidc = US_Util::uuid_unparse(
             (unsigned char*) rawConvertedData[ i ]->rawGUID );
 
-      if ( saveGUIDs && uuidc != "00000000-0000-0000-0000-000000000000" ) 
+      if ( saveGUIDs && uuidc != "00000000-0000-0000-0000-000000000000" )
       {
          // Make sure xml file matches
          memcpy( triples [ i ].tripleGUID,
@@ -314,10 +314,10 @@ int US_Convert::saveToDisk(
 
       // Same with solutionGUID
       QRegExp rx( "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$" );
-      if ( ( triples[ i ].solution.saveStatus == US_Solution::NOT_SAVED  ) || 
+      if ( ( triples[ i ].solution.saveStatus == US_Solution::NOT_SAVED  ) ||
            ( ! rx.exactMatch( triples[ i ].solution.solutionGUID )       ) )
       {
-         qDebug()<<"It is not saving"; 
+         qDebug() << "It is not saving";
          triples[ i ].solution.solutionGUID = US_Util::new_guid();
          triples[ i ].solution.solutionDesc = "New Solution";
       }
@@ -349,21 +349,18 @@ int US_Convert::saveToDisk(
 
    if ( status != US_DataIO::OK )
    {
-      qDebug()<<"Status is not ok";
+      qDebug() << "Status is not ok";
       // Try to delete the files and tell the user
       return NOT_WRITTEN;
    }
 
-   
+
    return OK;
 }
 
-int  US_Convert::readUS3Disk(
-     QString dir,
-     QVector< US_DataIO::RawData >& rawConvertedData,
-     QList< TripleInfo >& triples,
-     QString& runType 
-     )
+int US_Convert::readUS3Disk( QString dir,
+      QVector< US_DataIO::RawData >& rawConvertedData,
+      QList< TripleInfo >& triples, QString& runType )
 {
    rawConvertedData.clear();
 
@@ -371,7 +368,7 @@ int  US_Convert::readUS3Disk(
 
    QDir d( dir );
 
-   QStringList files =  d.entryList( nameFilters, 
+   QStringList files =  d.entryList( nameFilters,
          QDir::Files | QDir::Readable, QDir::Name );
 
    if ( files.size() == 0 )
@@ -406,7 +403,7 @@ int  US_Convert::readUS3Disk(
    {
       QString filename = dir + file;
       US_DataIO::RawData data;
-      
+
       int result = US_DataIO::readRawData( filename, data );
       if ( result != US_DataIO::OK )
          return NOAUC;
@@ -418,7 +415,7 @@ int  US_Convert::readUS3Disk(
    return OK;
 }
 
-void US_Convert::convert( 
+void US_Convert::convert(
      QList< US_DataIO::BeckmanRawScan >&  rawLegacyData,
      US_DataIO::RawData&                  newRawData,
      QString                              triple,
@@ -454,19 +451,19 @@ qDebug() << "Cvt:cnvt: IN";
    {
       for ( int j = i + 1; j < ccwLegacyData.size(); j++ )
       {
-         if ( ccwLegacyData[ j ].seconds < ccwLegacyData[ i ].seconds ) 
+         if ( ccwLegacyData[ j ].seconds < ccwLegacyData[ i ].seconds )
             ccwLegacyData.swap( i, j );
       }
    }
 
-   if ( ccwLegacyData.isEmpty() ) return ; 
+   if ( ccwLegacyData.isEmpty() ) return;
 
    strncpy( newRawData.type, runType.toLatin1().constData(), 2 );
    memset( newRawData.rawGUID, 0, 16 );           // Initialize to 0's
    newRawData.cell        = cell;
    newRawData.channel     = channel;
    newRawData.description = ccwLegacyData[ 0 ].description;
-   
+
    // Get the min and max radius
    double min_radius = 1.0e99;
    double max_radius = 0.0;
@@ -477,7 +474,7 @@ qDebug() << "Cvt:cnvt: IN";
    {
       double first = rawLegacyData[ i ].xvalues[ 0 ];
       int    size  = rawLegacyData[ i ].xvalues.size();
-      double last  = rawLegacyData[ i ].xvalues[ size - 1 ]; 
+      double last  = rawLegacyData[ i ].xvalues[ size - 1 ];
 
       min_radius = qMin( min_radius, first );
       max_radius = qMax( max_radius, last  );
@@ -494,7 +491,7 @@ qDebug() << "Cvt:  runType" << runType;
             .description.split( " ", QString::SkipEmptyParts );
       QString proto = descriptionParts[ 1 ].toLatin1();
       proto.remove( "," );
-   
+
       // Some IP data doesn't have this
       if ( proto.toDouble() == 0.0 )
          delta_r = ( max_radius - min_radius ) / ( max_size - 1 );
@@ -519,7 +516,7 @@ qDebug() << "Cvt:  rad_cnt delta_r" << radius_count << delta_r;
       newRawData.xvalues << radius;
       radius += delta_r;
    }
-      
+
    // Convert the scans
    for ( int i = 0; i < ccwLegacyData.size(); i++ )
    {
@@ -541,8 +538,8 @@ qDebug() << "Cvt:   sc i" << i << "interp set";
 
       /*
       There are two indexes needed here.  The new radius as iterated
-      from min_radius to max_radius and the pointer to the current 
-      scan readings is j.  
+      from min_radius to max_radius and the pointer to the current
+      scan readings is j.
 
       The old scan reading is ccwLegacyData[ i ]->readings[ j ]
 
@@ -554,19 +551,19 @@ qDebug() << "Cvt:   sc i" << i << "interp set";
 
       If the current new radius is less than i
       ccwLegacyData[ i ]->readings[ 0 ].d.radius,
-      then 
+      then
          copy ccwLegacyData[ i ]->readings[ 0 ].value into the new reading
          set the std dev to 0.0.
          set the interpolated flag
-      
-      If the current new radius is greater than 
+
+      If the current new radius is greater than
       ccwLegacyData[ i ]->readings[ last() ].d.radius
          copy ccwLegacyData[ i ]->readings[ last ].value into the new reading
          set the std dev to 0.0.
          set the interpolated flag
 
       else
-         interplate between ccwLegacyData[ i ]->readings[ j ] and 
+         interplate between ccwLegacyData[ i ]->readings[ j ] and
                             ccwLegacyData[ i ]->readings[ j -1 ]
          set the std dev to 0.0.
          set the interpolated flag
@@ -575,10 +572,10 @@ qDebug() << "Cvt:   sc i" << i << "interp set";
       */
 
       radius        = min_radius;
-      int    rCount = ccwLegacyData[ i ].xvalues.size();       
+      int    rCount = ccwLegacyData[ i ].xvalues.size();
       double r0     = ccwLegacyData[ i ].xvalues[ 0 ];
       double rLast  = ccwLegacyData[ i ].xvalues[ rCount - 1 ];
-      
+
       int    k      = 0;
       int    nnz    = 0;
 qDebug() << "Cvt:  rad" << radius << "rCount" << rCount << radius_count;
@@ -641,9 +638,9 @@ qDebug() << "Cvt:  rad" << radius << "rCount" << rCount << radius_count;
          }
          else  // Interpolate the value
          {
-            double dv = ccwLegacyData[ i ].rvalues[ k     ] - 
+            double dv = ccwLegacyData[ i ].rvalues[ k     ] -
                         ccwLegacyData[ i ].rvalues[ k - 1 ];
-            
+
             double dR = ccwLegacyData[ i ].xvalues[ k     ] -
                         ccwLegacyData[ i ].xvalues[ k - 1 ];
 
@@ -677,7 +674,7 @@ qDebug() << "Cvt:cnvt: RTN";
 }
 
 // Subdivides existing RA triple into subsets
-void US_Convert::splitRAData( 
+void US_Convert::splitRAData(
      QVector< US_DataIO::RawData >&  rawConvertedData,
      QList< TripleInfo >& triples,
      int                              currentTriple,
@@ -747,7 +744,7 @@ qDebug() << "Cvt:splRA:  tDesc" << t.tripleDesc;
 
             // Avoid duplication of GUID's
             QString uuidc = US_Util::uuid_unparse( (unsigned char*)t.tripleGUID );
-            if ( uuidc != "00000000-0000-0000-0000-000000000000" ) 
+            if ( uuidc != "00000000-0000-0000-0000-000000000000" )
             {
                uchar uuid[ 16 ];
                QString uuid_string = US_Util::new_guid();
@@ -775,7 +772,7 @@ qDebug() << "Cvt:splRA:  tDesc" << t.tripleDesc;
 // Returns a new scan, but only with readings in a specified range
 US_DataIO::Scan US_Convert::newScanSubset(
      US_DataIO::Scan& oldScan,
-     QVector< double >& xvalues, 
+     QVector< double >& xvalues,
      double r_start,
      double r_end )
 {
@@ -817,14 +814,14 @@ US_DataIO::Scan US_Convert::newScanSubset(
       if ( ( oldScan.interpolated[ byte ] & mask ) != 0x00 )
          setInterpolated( interpolated, i - first_reading );
    }
-      
+
    s.interpolated = QByteArray( (char*)interpolated, bitmap_size );
    delete [] interpolated;
 
    return s;
 }
 
-void US_Convert::setTriples( 
+void US_Convert::setTriples(
      QList< US_DataIO::BeckmanRawScan >& rawLegacyData,
      QList< TripleInfo >&                triples,
      QString                             runType,
@@ -838,7 +835,7 @@ void US_Convert::setTriples(
 
 }
 
-void US_Convert::setCcwTriples( 
+void US_Convert::setCcwTriples(
      QList< US_DataIO::BeckmanRawScan >& rawLegacyData,
      QList< TripleInfo >&     triples,
      double                               tolerance )
@@ -860,7 +857,7 @@ void US_Convert::setCcwTriples(
 
    QList< QList< double > > modes;
    QList< double >          mode;
-   
+
    for ( int i = 0; i < wavelengths.size(); i++ )
    {
       double wl = wavelengths[ i ].toDouble();
@@ -871,12 +868,12 @@ void US_Convert::setCcwTriples(
          mode.clear();
       }
 
-      mode << wl;   
+      mode << wl;
    }
 
    if ( mode.size() > 0 ) modes << mode;
 
-   // Now we have a list of modes.  
+   // Now we have a list of modes.
    // Average each list and round to the closest integer.
    QList< double > wl_average;
 
@@ -884,7 +881,7 @@ void US_Convert::setCcwTriples(
    {
       double sum = 0.0;
 
-      for ( int j = 0; j < modes[ i ].size(); j++ ) sum += modes[ i ][ j ]; 
+      for ( int j = 0; j < modes[ i ].size(); j++ ) sum += modes[ i ][ j ];
 
       wl_average << (double) round( 10.0 * sum / modes[ i ].size() ) / 10.0;
    }
@@ -925,7 +922,7 @@ void US_Convert::setCcwTriples(
    }
 }
 
-void US_Convert::setCcrTriples( 
+void US_Convert::setCcrTriples(
      QList< US_DataIO::BeckmanRawScan >& rawLegacyData,
      QList< TripleInfo >&     triples,
      double                               tolerance )
@@ -949,7 +946,7 @@ qDebug() << "CCR:   i, r" << i << r;
 
    QList< QList< double > > modes;
    QList< double >          mode;
-   
+
    for ( int i = 0; i < radii.size(); i++ )
    {
       double r = radii[ i ].toDouble();
@@ -960,13 +957,13 @@ qDebug() << "CCR:   i, r" << i << r;
          mode.clear();
       }
 
-      mode << r;   
+      mode << r;
    }
 
    if ( mode.size() > 0 ) modes << mode;
 qDebug() << "CCR: mode" << mode;
 
-   // Now we have a list of modes.  
+   // Now we have a list of modes.
    // Average each list and round to the closest integer.
    QList< double > r_average;
 
@@ -974,7 +971,7 @@ qDebug() << "CCR: mode" << mode;
    {
       double sum = 0.0;
 
-      for ( int j = 0; j < modes[ i ].size(); j++ ) sum += modes[ i ][ j ]; 
+      for ( int j = 0; j < modes[ i ].size(); j++ ) sum += modes[ i ][ j ];
 
       r_average << (double) round( 10.0 * sum / modes[ i ].size() ) / 10.0;
    }
@@ -1050,7 +1047,7 @@ void US_Convert::TripleInfo::clear( void )
 void US_Convert::TripleInfo::show( void )
 {
    QString uuidc = US_Util::uuid_unparse( (unsigned char*)tripleGUID );
-   
+
    qDebug() << "tripleID     = " << tripleID     << '\n'
             << "tripleDesc   = " << tripleDesc   << '\n'
             << "description  = " << description  << '\n'

@@ -20,13 +20,10 @@
 #include "qwt_scale_draw.h"
 #include "qwt_color_map.h"
 
-//---------------------------------------
 //! \brief Less-than function for sorting distributions
 bool distro_lessthan( const S_Solute&, const S_Solute& );
    
-//--------------------------------------
 //! \brief A class to provide a window with 2DSA analysis controls
- 
 class US_show_norm : public US_WidgetsDialog
 {
    Q_OBJECT
@@ -44,7 +41,7 @@ class US_show_norm : public US_WidgetsDialog
 
       QHBoxLayout*  mainLayout;
 
-      QWidget*                         parentw;
+      QWidget*      parentw;
     
       QPushButton*  pb_plot;
       QPushButton*  pb_save;
@@ -58,8 +55,6 @@ class US_show_norm : public US_WidgetsDialog
 
       QLineEdit*    le_cmap_name;
       QLineEdit*    le_prefilt;
-
-
 
       QwtCounter*   ct_resolu;
       QwtCounter*   ct_xreso;
@@ -132,7 +127,6 @@ class US_show_norm : public US_WidgetsDialog
       int           plot_x;
       int           plot_y;
 
-      //bool          cnst_vbar;
       bool          auto_sxy;
       bool          auto_scz;
       bool          cont_loop;
@@ -150,36 +144,27 @@ class US_show_norm : public US_WidgetsDialog
       QStringList   pfilts;
 
    private slots: 
-      //void plot(             void );
-      //void save(             void );
-      //void close_all(        void );
-      //void load_model(       void );
-      //void show_norm   (     void );
-      void select_x_axis( int  );
-      void select_y_axis( int  );
+      void select_x_axis   ( int  );
+      void select_y_axis   ( int  );
       void sort_distro( QList< S_Solute >&, bool );
-      //void load_distro(    void );
-      //void load_distro(    US_Model, QString );
-      void load_color(     void );
-      void update_resolu(     double );
-      void update_xreso(      double );
-      void update_yreso(      double );
-      void update_zfloor(     double );
-      //void update_curr_distr( double );
-      void update_plot_smin(  double );
-      void update_plot_smax(  double );
-      void update_plot_kmin(  double );
-      void update_plot_kmax(  double );
-      void set_limits(  void );
-      //void stop(        void );
-      void reset(       void );
-      void plot_data(      int );
-      void plot_data(      void );
-      void select_autosxy( void );
-      void select_autoscz( void ) ;
-      QString anno_title  ( int );
+      void load_color      ( void );
+      void update_resolu   ( double );
+      void update_xreso    ( double );
+      void update_yreso    ( double );
+      void update_zfloor   ( double );
+      void update_plot_smin( double );
+      void update_plot_smax( double );
+      void update_plot_kmin( double );
+      void update_plot_kmax( double );
+      void set_limits      ( void );
+      void reset           ( void );
+      void plot_data       ( int  );
+      void plot_data       ( void );
+      void select_autosxy  ( void );
+      void select_autoscz  ( void ) ;
+      void build_xy_distro ( void );
+      QString anno_title   ( int  );
       QwtLinearColorMap* ColorMapCopy( QwtLinearColorMap* );
-      void build_xy_distro( void );
 
 };
 #endif

@@ -25,13 +25,12 @@
 #define setSamples(a,b,c)  setData(a,b,c)
 #endif
 
-/*! \brief Main program for US_Astfem_Sim.  Loads translators and starts
-    the class US_Astfem_Sim.
-*/
+//! \brief Main program for US_Astfem_Sim.  Loads translators and starts
+//! the class US_Astfem_Sim.
 int main( int argc, char* argv[] )
 {
    QApplication application( argc, argv );
-  
+
    #include "main1.inc"
 
    // License is OK.  Start up.
@@ -40,7 +39,8 @@ int main( int argc, char* argv[] )
    return application.exec();  //!< \memberof QApplication
 }
 
-US_Astfem_Sim::US_Astfem_Sim( QWidget* p, Qt::WindowFlags f ) 
+// US_Astfem_Sim constructor
+US_Astfem_Sim::US_Astfem_Sim( QWidget* p, Qt::WindowFlags f )
    : US_Widgets( true, p, f )
 {
    dbg_level           = US_Settings::us_debug();
@@ -64,7 +64,7 @@ US_Astfem_Sim::US_Astfem_Sim( QWidget* p, Qt::WindowFlags f )
    main->setSpacing( 2 );
    main->setContentsMargins ( 2, 2, 2, 2 );
    main->setColumnStretch( 1, 1 );
-   
+
    QBoxLayout* buttonbox = new QVBoxLayout;
 
    QPushButton* pb_new = us_pushbutton( tr( "Model Control") );
@@ -89,7 +89,7 @@ US_Astfem_Sim::US_Astfem_Sim( QWidget* p, Qt::WindowFlags f )
 
    QGridLayout* timeCorr = us_checkbox( "Use Time Correction", ck_timeCorr,
          time_correctionFlag );
-   
+
    connect( ck_timeCorr, SIGNAL( clicked() ), SLOT( update_time_corr() ) );
    buttonbox->addLayout( timeCorr );
 
@@ -132,7 +132,7 @@ US_Astfem_Sim::US_Astfem_Sim( QWidget* p, Qt::WindowFlags f )
    QBoxLayout* plot = new QVBoxLayout;
 
    // Simulation Plot
-   plot1 = new US_Plot( moviePlot, tr( "Simulation Window" ), 
+   plot1 = new US_Plot( moviePlot, tr( "Simulation Window" ),
          tr( "Radius (cm)" ), tr( "Concentration" ) );
    us_grid  ( moviePlot );
    moviePlot->setMinimumSize( 600, 275);
@@ -149,18 +149,18 @@ US_Astfem_Sim::US_Astfem_Sim( QWidget* p, Qt::WindowFlags f )
 
    lcd_time = us_lcd( 5, 0 );
    timeSpeed->addWidget( lcd_time );
-   
+
    QLabel* lb_speed = us_label( tr( "Current Speed:" ) );
    lb_speed->setAlignment ( Qt::AlignCenter );
    timeSpeed->addWidget( lb_speed );
 
    lcd_speed = us_lcd( 5, 0 );
    timeSpeed->addWidget( lcd_speed );
-   
+
    plot->addLayout( timeSpeed );
 
    // Saved Scans
-   plot2 = new US_Plot( scanPlot, tr( "Saved Scans" ), 
+   plot2 = new US_Plot( scanPlot, tr( "Saved Scans" ),
          tr( "Radius (cm)" ), tr( "Concentration" ) );
    QwtPlotGrid* grid2 = us_grid  ( scanPlot );
    grid2->enableX(    true );
@@ -191,17 +191,13 @@ US_Astfem_Sim::US_Astfem_Sim( QWidget* p, Qt::WindowFlags f )
    main->addLayout( plot, 0, 1 );
 }
 
-//----------------------------------------------------
-//Initialization of simulation parameters is done here
-//----------------------------------------------------
-
+// Initialize simulation parameters
 void US_Astfem_Sim::init_simparams( void )
 {
    US_SimulationParameters::SpeedProfile sp;
    QString rotor_calibr = "0";
    double  rpm          = 45000.0; // Initialized rotor speed
-   //simparams.rotorcoeffs[0] = 1.20642e-08 ;
-  // simparams.rotorcoeffs[1] = 5.29077e-12 ;
+
    // set up bottom start and rotor coefficients from hardware file
    simparams.setHardware( NULL, rotor_calibr, 0, 0 );
 
@@ -218,7 +214,7 @@ void US_Astfem_Sim::init_simparams( void )
    sp.duration_minutes  = 30.0; //Initialized experiment duration minutes
    sp.delay_hours       = 0;    //Initialized time for accelerating from current rotor speed to next rotor speed in hours
    sp.delay_minutes     = 20.0; //Initialized time for accelerating from current rotor speed to next rotor speed in minutes
-   sp.rotorspeed        = (int)rpm; // Initialized rotor speed 
+   sp.rotorspeed        = (int)rpm; // Initialized rotor speed
    sp.scans             = 30;  // Initialized number of scans
    sp.acceleration      = 400; // Acceleration speed of the rotor
    sp.acceleration_flag = true; // Flag used for acceleration zone
@@ -226,7 +222,7 @@ void US_Astfem_Sim::init_simparams( void )
    simparams.speed_step << sp;
 
    simparams.simpoints         = 500; // Initialized number of radial grid points
-   simparams.radial_resolution = 0.001; // Increment in radial experimental grid 
+   simparams.radial_resolution = 0.001; // Increment in radial experimental grid
    simparams.meshType          = US_SimulationParameters::ASTFEM;// Used for solver option
    simparams.gridType          = US_SimulationParameters::MOVING;// Used for grid option
    simparams.meniscus          = 5.8; // Meniscus for simulation
@@ -243,7 +239,7 @@ void US_Astfem_Sim::init_simparams( void )
 void US_Astfem_Sim::new_model( void )
 {
    US_ModelGui* dialog = new US_ModelGui( system );
-   connect( dialog, SIGNAL( valueChanged( US_Model ) ), 
+   connect( dialog, SIGNAL( valueChanged( US_Model ) ),
                     SLOT  ( change_model( US_Model ) ) );
    dialog->exec();
 }
@@ -271,7 +267,7 @@ void US_Astfem_Sim::new_buffer( void )
 {
    US_BufferGui* dialog = new US_BufferGui( true, buffer );
 
-   connect( dialog, SIGNAL( valueChanged( US_Buffer ) ), 
+   connect( dialog, SIGNAL( valueChanged( US_Buffer ) ),
                     SLOT  ( change_buffer( US_Buffer ) ) );
 
    dialog->exec();
@@ -328,9 +324,9 @@ void US_Astfem_Sim::sim_parameters( void )
 {
    working_simparams = simparams;
 
-   US_SimulationParametersGui* dialog = 
+   US_SimulationParametersGui* dialog =
       new US_SimulationParametersGui( working_simparams );
-   
+
    connect( dialog, SIGNAL( complete() ), SLOT( set_parameters() ) );
 
    dialog->exec();
@@ -353,36 +349,31 @@ void US_Astfem_Sim::stop_simulation( void )
       astfem->setStopFlag( stopFlag );
 
    if ( astfvm )
-      astfvm    ->setStopFlag( stopFlag );
+      astfvm->setStopFlag( stopFlag );
 }
 
 
 //-------------------------------------------
 //----------Does simulation here-------------
-//-------------------------------------------      
+//-------------------------------------------
 
 void US_Astfem_Sim::start_simulation( void )
 {
    double current_time;  // Used for current time
-   double current_speed; // Used for current speed of the rotor
-   double accel_time;    // Acceleration time of the rotor from one speed to other
-   double current_om2t;  // Current omega_square _t
-   double dr;            // Gap between two radial grid points
    double delay;         // Acceleration time of the rotor from one speed to other
    double increment;     // Used to update omega_2_t in experimental grid
    double duration;      // Used for time left after acceleration zone
-  
+
    int           size_cv         = system.components.size();// Number of components in the system
    QVector< bool >                 reactVec( size_cv );     // Boolean array showing reaction case between system
-   bool*         reacting        = reactVec.data(); // Used to check reacting or non_reacting case
 
    //moviePlot->autoRefresh();
-   
+
    moviePlot->replot();
    curve_count = 0;
    image_count = 0;
    double rpm  = simparams.speed_step[ 0 ].rotorspeed; // Rotor speed for first speed step
-   
+
    //scanPlot->clear();
    scanPlot->setAxisAutoScale( QwtPlot::xBottom );
    scanPlot->replot();
@@ -406,58 +397,43 @@ void US_Astfem_Sim::start_simulation( void )
 
    QString guid = US_Util::new_guid();
    US_Util::uuid_parse( guid, (uchar*)sim_data.rawGUID );
-   
+
    sim_data.cell        = 1;
    sim_data.channel     = 'S';
    sim_data.description = "Simulation";
-   
-   //----------------------------------------------------------
-   // Array having radial grid points for the experimental grid 
-   // is set here.
-   // ---------------------------------------------------------
-   //int speed = simparams.speed_step[0].rotorspeed ;
 
-   //simparams.rotorcoeffs[ 0 ] = 1.20642e-08 ;
-   //simparams.rotorcoeffs[ 1 ] = 5.29077e-12 ;
-
-   //double stretch =  ( simparams.rotorcoeffs[ 0 ] * rpm + simparams.rotorcoeffs[ 1 ] * sq( rpm );
-
-   //simparams.meniscus += stretch ;
-   //simparams.bottom   += stretch ;   
-
-   int points = qRound( ( simparams.bottom - simparams.meniscus ) / 
-                          simparams.radial_resolution ) + 1; // Number of radial grid points on the experimental grid
+   // Number of radial grid points on the experimental grid
+   int points = qRound( ( simparams.bottom - simparams.meniscus ) /
+                          simparams.radial_resolution ) + 1;
 
    sim_data.xvalues.resize( points ); // Sets the size of radial grid points array
 
-   for ( int i = 0; i < points; i++ ) 
-      sim_data.xvalues[ i ] = simparams.meniscus
-                              + i * simparams.radial_resolution;// Calculates the radial grid points
-   //----------------------------------------------------------
+   for ( int ii = 0; ii < points; ii++ )
+   {  // Calculate the radial grid points
+      sim_data.xvalues[ ii ] = simparams.meniscus
+                              + ii * simparams.radial_resolution;
+   }
 
-   //--------------------------------------------------------
-   //Sets the total number of scans on the experimental grid
-   //for all the speed step
-   //-------------------------------------------------------
+   // Set the total number of scans on the experimental grid
+   // for all the speed step
 
    int total_scans = 0; // Initialize total number of scans
 
-   for ( int i = 0; i < simparams.speed_step.size(); i++ ) 
-      total_scans += simparams.speed_step[ i ].scans; // Add for all the speed steps to get total number of scans
+   for ( int ii = 0; ii < simparams.speed_step.size(); ii++ )
+   {  // Add for all the speed steps to get total number of scans
+      total_scans += simparams.speed_step[ ii ].scans;
+   }
 
-   sim_data.scanData.resize( total_scans ); // Sets the total size of scans for simulation
+   // Set the total size of scans for simulation
+   sim_data.scanData.resize( total_scans );
 
-   //------------------------------------------------------
    int terpsize    = ( points + 7 ) / 8;
- 
-   //-----------------------------------------------------
-   //For each scan sets the informations for each scan on 
-   //the experimental grid.
-   //-----------------------------------------------------
 
-   for ( int i = 0; i < total_scans; i++ ) 
+   // For each scan set the informations for each scan on
+   // the experimental grid.
+   for ( int ii = 0; ii < total_scans; ii++ )
    {
-      US_DataIO::Scan* scan = &sim_data.scanData[ i ];
+      US_DataIO::Scan* scan = &sim_data.scanData[ ii ];
 
       scan->temperature = simparams.temperature;
       scan->rpm         = rpm;
@@ -470,8 +446,6 @@ void US_Astfem_Sim::start_simulation( void )
       scan->interpolated.fill( 0,   terpsize );
    }
 
-   //----------------------------------------------------
- 
    double w2t_sum      = 0.0; // Initialize omega_2_t
 
    // Initialize delay
@@ -482,147 +456,129 @@ void US_Astfem_Sim::start_simulation( void )
    duration            =  0.0;    // Initialize total duration
    increment           = 0.0; // Initial increment in time
    int    scan_number  = 0;   // Counter for each scan and initialized to zero
-
-   //-----------------------------------------------------------
-   // For each speed step set the experimental time grid, assign
-   // time and omega_2_t to each scan.
-   // -----------------------------------------------------------
    double acc_time;
 
+   // For each speed step set the experimental time grid, assign
+   // time and omega_2_t to each scan.
    for ( int ii = 0; ii < simparams.speed_step.size(); ii++ )
    {
       // To get the right time, we need to take the last scan time from the
       // previous speed step and add the delays to it
       double rs_prev = 0.0 ; // Used for previous rotor speed
-      //-----------------------------
-      //Puts pointer for each step
-      //-----------------------------
+
+      // Pointer for each step
        US_SimulationParameters::SpeedProfile* sp = &simparams.speed_step[ ii ];
+
        if ( ii > 0 )
        {   US_SimulationParameters::SpeedProfile* sp_prev = &simparams.speed_step[ ii-1 ];
           rs_prev = sp_prev->rotorspeed ;
        }
-      //-----------------------------
 
-      double a = 0.0;
-      double b;
       int acc_steps;  // Number of time steps for acceleration
       double rpm_inc; // Increment in rpm
       double w2t     = sq( sp->rotorspeed * M_PI / 30.0 );
 
       delay          = (qCeil) (sp->delay_hours    * 3600. + sp->delay_minutes    * 60.);
 
-      //qDebug()<<"Delay_astfem_sim is: "<<  delay  << "step= " << ii ;
-      //-------------------------------------------------------------
+//qDebug()<<"Delay_astfem_sim is: "<<  delay  << "step= " << ii ;
 
       acc_time = ( sp-> rotorspeed - rs_prev )/(double)(sp->acceleration) ;
       acc_steps  = (qCeil) ( acc_time ) ;
 
-      //qDebug()<<"Delay_astfem_sim is: "<<  delay  << "step= " << ii << acc_time << acc_steps;
+//qDebug()<<"Delay_astfem_sim is: "<<  delay  << "step= " << ii << acc_time << acc_steps;
 
-      if ( ii == 0 )
-         b = 0.0;
-      else
-         b = simparams.speed_step[ ii-1 ].rotorspeed;
-
-      rpm_inc = (double) (sp->rotorspeed - rs_prev) /(double) acc_steps;
-      //-----------------------------------------------------------------------
+      rpm_inc        = (double) (sp->rotorspeed - rs_prev) /(double) acc_steps;
       duration       = sp->duration_hours * 3600. + sp->duration_minutes * 60.;
-      
       increment      = ( duration - delay ) / (double)( sp->scans -1 );
 
-      double rpm_current;
-
       if ( ii == 0 )
-      {  double rpm_current = 0;      
-         for ( int i =0; i< delay; i++ )
-         {   rpm_current += rpm_inc;
-             w2t_sum += sq (rpm_current*M_PI / 30.0 );
+      {
+         double rpm_current = 0.0;
+
+         for ( int jj = 0; jj < delay; jj++ )
+         {
+             rpm_current += rpm_inc;
+             w2t_sum     += sq ( rpm_current * M_PI / 30.0 );
          }
       }
       else
-      {  double rpm_current = simparams.speed_step[ ii-1 ].rotorspeed;
-         for ( int i =0; i< delay; i++ )
-         {   rpm_current += rpm_inc;
-             w2t_sum += sq (rpm_current*M_PI / 30.0 );
+      {
+        double rpm_current = simparams.speed_step[ ii-1 ].rotorspeed;
+
+        for ( int jj = 0; jj < delay; jj++ )
+         {
+             rpm_current += rpm_inc;
+             w2t_sum     += sq ( rpm_current * M_PI / 30.0 );
          }
       }
-     
+
       double w2t_inc = increment * w2t;
 
 //      w2t_sum        = ( ii == 0 ) ? ( current_time * w2t ) : w2t_sum;
 
-      //=================================================================
-      // Experimental time grid is set here. Total duration is divided by 
+      // Experimental time grid is set here. Total duration is divided by
       // number of scans and each scan is assigned with a time
       // Hence the time grid is regular. Time and omega_2_t are assigned
       // to each scan on the experimental grid.
-      //================================================================
-
       for ( int jj = 0; jj < sp->scans; jj++ )
       {
          US_DataIO::Scan* scan = &sim_data.scanData[ scan_number ];
 
          if ( jj == 0 )
-         {   
+         {
             current_time += delay; // For first scan update time with the acceleration time
          }
          else
-         {   
+         {
             current_time += increment; // Update time with regular time increment
             w2t_sum      += w2t_inc;
 
          }
-     
+
 //         w2t_sum      += w2t_inc;
 //          qDebug()<<"Scans w2t and increment on expwerimental grid "<<         w2t_sum <<         w2t_inc;
 
-         //-------------------------------------------------
          //Assign time to each scan on the experimental grid
-         //-------------------------------------------------
         // if ( jj == 0)
             //scan->seconds = ( int) current_time +1  ; // Round up to next integer in any case
-          //   scan->seconds =  current_time   ; 
+          //   scan->seconds =  current_time;
          //else
          scan->seconds = (qRound)( current_time );
-         //------------------------------------------------
-         scan->rpm = sp->rotorspeed;
+         scan->rpm     = sp->rotorspeed;
          scan->omega2t = w2t_sum;
-         qDebug()<<"Scans w2t and time on expwerimental grid "<< 	scan->omega2t<<		
-                   scan->seconds<<		scan->rpm; 
          scan_number++;
+qDebug() << "Scans w2t and time on expwerimental grid "<< scan->omega2t
+ << scan->seconds << scan->rpm;
       }
-    
+
       int j1           = scan_number - sp->scans; // Counter for first scan
       int j2           = scan_number - 1; // Counter for last scan
       sp->w2t_first    = sim_data.scanData[ j1 ].omega2t;// omega_2_t for first scan on experimental grid
       sp->w2t_last     = sim_data.scanData[ j2 ].omega2t;// omega_2_t for last scan on experimental grid
       sp->time_first   = sim_data.scanData[ j1 ].seconds;// Time for first scan on experimental grid
       sp->time_last    = sim_data.scanData[ j2 ].seconds;// Time for last scan on experimental grid
-      qDebug()<<"First & last data for the step"<< sp->time_first<< sp->time_last<< sp->w2t_first<< sp->w2t_last << j1 << j2; 
+qDebug() << "First & last data for the step" << sp->time_first << sp->time_last
+ << sp->w2t_first << sp->w2t_last << j1 << j2;
+  }
+  //for ( int i =0; i< sim_data.scanData.size();i++ )
+//qDebug()<<"time="<<sim_data.scanData[i].seconds<<"omega2t="<< sim_data.scanData[i].omega2t;
 
-  } 
-  //for ( int i =0; i< sim_data.scanData.size();i++ )                                                                                
-  //qDebug()<<"time=	"<<sim_data.scanData[i].seconds<<"omega2t=	"<< sim_data.scanData[i].omega2t;                
-                                                                                                                               
    lb_progress->setText( tr( "% Completed:" ) );
-   progress->setRange( 1, system.components.size() ); 
+   progress->setRange( 1, system.components.size() );
    progress->reset();
    lcd_component->display( 0 );
 
-   stopFlag  = false;
+   stopFlag         = false;
 
    simparams.mesh_radius.clear();
-   simparams.sim = false ;
+   simparams.sim    = true;
    simparams.firstScanIsConcentration = false;
-   //US_Settings::tmpDir() ;
-   //----------------------------------------
-   //Here we simulate on simulation grid and get 
-   //back the scans on desired grid i.e. either
-   //experimental or simulation
-   //----------------------------------------
-    if ( simparams.meshType != US_SimulationParameters::ASTFVM )
-   {   // the normal case:  ASTFEM (finite element)
+
+   // Here we simulate on simulation grid and get
+   // back the scans on desired grid i.e. either
+   // experimental or simulation
+   if ( simparams.meshType != US_SimulationParameters::ASTFVM )
+   {  // the normal case:  ASTFEM (finite element)
       if ( system.associations.size() > 0 )
          lb_component->setText( tr( "RA Step:"   ) );
       else
@@ -651,7 +607,8 @@ void US_Astfem_Sim::start_simulation( void )
       astfem->calculate( sim_data);
    }
    else
-   {  astfvm = new US_LammAstfvm( system, simparams );
+   {
+      astfvm = new US_LammAstfvm( system, simparams );
 
       connect( astfvm, SIGNAL( new_scan( QVector< double >*, double* ) ),
                     SLOT( update_movie_plot( QVector< double >*, double* ) ) );
@@ -669,17 +626,9 @@ void US_Astfem_Sim::start_simulation( void )
 
    }
 
-   //writetimestate( ) ;
    finish();
-
-
-//  simulate_simulationgrid ( sim_data, simparams, system );
-   //----------------------------------------
-
 }
 
-        
-        
 void US_Astfem_Sim::finish( void )
 {
    total_conc = 0.0;
@@ -731,7 +680,7 @@ void US_Astfem_Sim::ri_noise( void )
    // Add radially invariant noise
    for ( int j = 0; j < sim_data.scanData.size(); j++ )
    {
-      double rinoise = 
+      double rinoise =
          US_Math2::box_muller( 0, total_conc * simparams.rinoise / 100 );
 
       for ( int k = 0; k < sim_data.pointCount(); k++ )
@@ -743,38 +692,38 @@ void US_Astfem_Sim::random_noise( void )
 {
    if ( simparams.rnoise == 0.0 && simparams.lrnoise == 0.0) return;
    // Add random noise
-	if ( simparams.rnoise != 0.0 && simparams.lrnoise != 0.0)
-	{
-   	for ( int j = 0; j < sim_data.scanData.size(); j++ )
-   	{
-      	for ( int k = 0; k < sim_data.pointCount(); k++ )
-      	{
-         	sim_data.scanData[ j ].rvalues[ k ] +=
+   if ( simparams.rnoise != 0.0 && simparams.lrnoise != 0.0)
+   {
+      for ( int j = 0; j < sim_data.scanData.size(); j++ )
+      {
+         for ( int k = 0; k < sim_data.pointCount(); k++ )
+         {
+            sim_data.scanData[ j ].rvalues[ k ] +=
             US_Math2::box_muller( 0, total_conc * simparams.rnoise / 100 ) + // based on total concentration
             US_Math2::box_muller( 0, sim_data.scanData[ j ].rvalues[ k ] * simparams.lrnoise / 100 ); // based on local concentration
-			}
+         }
       }
    }
-	if ( simparams.rnoise != 0.0 && simparams.lrnoise == 0.0)
-	{
-   	for ( int j = 0; j < sim_data.scanData.size(); j++ )
-   	{
-      	for ( int k = 0; k < sim_data.pointCount(); k++ )
-      	{
-         	sim_data.scanData[ j ].rvalues[ k ] +=
+   if ( simparams.rnoise != 0.0 && simparams.lrnoise == 0.0)
+   {
+      for ( int j = 0; j < sim_data.scanData.size(); j++ )
+      {
+         for ( int k = 0; k < sim_data.pointCount(); k++ )
+         {
+            sim_data.scanData[ j ].rvalues[ k ] +=
             US_Math2::box_muller( 0, total_conc * simparams.rnoise / 100 ); // based on total concentration
-			}
+         }
       }
    }
-	if ( simparams.rnoise == 0.0 && simparams.lrnoise != 0.0)
-	{
-   	for ( int j = 0; j < sim_data.scanData.size(); j++ )
-   	{
-      	for ( int k = 0; k < sim_data.pointCount(); k++ )
-      	{
-         	sim_data.scanData[ j ].rvalues[ k ] +=
+   if ( simparams.rnoise == 0.0 && simparams.lrnoise != 0.0)
+   {
+      for ( int j = 0; j < sim_data.scanData.size(); j++ )
+      {
+         for ( int k = 0; k < sim_data.pointCount(); k++ )
+         {
+            sim_data.scanData[ j ].rvalues[ k ] +=
             US_Math2::box_muller( 0, sim_data.scanData[ j ].rvalues[ k ] * simparams.lrnoise / 100 ); // based on local concentration
-			}
+         }
       }
    }
 }
@@ -787,9 +736,9 @@ void US_Astfem_Sim::ti_noise( void )
    int points = sim_data.pointCount();
    QVector< double > tinoise;
    tinoise.resize( points );
-      
+
    double val = US_Math2::box_muller( 0, total_conc * simparams.tinoise / 100 );
-   
+
    for ( int k = 0; k < points; k++ )
    {
       val += US_Math2::box_muller( 0, total_conc * simparams.tinoise / 100 );
@@ -832,7 +781,7 @@ void US_Astfem_Sim::plot( void )
       int   scan_count = sim_data.scanCount();
       int   points     = sim_data.pointCount();
       int*  curve      = new int[ scan_count ];
-   
+
       double*  x;
       double** y;
 
@@ -844,7 +793,7 @@ void US_Astfem_Sim::plot( void )
 
       for ( int j = 0; j < scan_count; j++ )
          y[ j ] = new double [ points ];
-      
+
       for ( int j = 0; j < scan_count; j++ )
       {
          for ( int k = 0; k < points; k++ )
@@ -855,14 +804,14 @@ void US_Astfem_Sim::plot( void )
       {
          QString title = "Concentration" + QString::number( j );
          QwtPlotCurve* plotCurve = new QwtPlotCurve( title );
-         
+
          plotCurve->setPen    ( QPen( Qt::yellow ) );
          plotCurve->attach    ( scanPlot );
          plotCurve->setSamples( x, y[ j ], points );
       }
 
       delete [] x;
-      
+
       for ( int j = 0; j < scan_count; j++ ) delete [] y[ j ];
       delete [] y;
 
@@ -873,30 +822,24 @@ void US_Astfem_Sim::plot( void )
 
 void US_Astfem_Sim::save_scans( void )
 {
-   QString fn = QFileDialog::getExistingDirectory( this,
+   QString fn         = QFileDialog::getExistingDirectory( this,
          tr( "Select a directory for the simulated data:" ),
          US_Settings::importDir() );
 
-   // The user gave a directory name, save in openAUC format
-
    if ( ! fn.isEmpty() )
-   {
-      fn = fn.replace( "\\", "/" );
+   {  // The user gave a directory name, save in openAUC format
+      fn                 = fn.replace( "\\", "/" );
+
       save_xla( fn );
-      US_AstfemMath astfem_math ;
 
-      QString run_id    = fn.section( "/", -1, -1 );
-      QString tmst_fbase   = run_id  + ".time_state.tmst";
-      QString defs_fbase   = run_id  + ".time_state.xml";  
-      QString tmst_fdir    = fn;
-      tmst_fdir =  tmst_fdir + "/";   
-      QString tmst_fname   = tmst_fdir + tmst_fbase;
+      // Create a timestate in the same directory
+      QString run_id     = fn.section( "/", -1, -1 );
+      QString tmst_fbase = run_id  + ".time_state.tmst";
+      QString tmst_fpath = fn + "/" + tmst_fbase;
+      simparams.sim      = true;
+DbgLv(1)<< "filenamefrom us_astfem_sim"<<  fn << tmst_fpath ;
 
-     // QString fn_results = QFileDialog::getExistingDirectory( this,
-     //    tr( "Select a directory for the simulated data:" ),
-     //    US_Settings::resultDir() );
-//qDebug()<< "filenamefrom us_astfem_sim"<<  fn << fn_results ;
-      astfem_math.writetimestate( tmst_fname ,simparams, sim_data );
+      US_AstfemMath::writetimestate( tmst_fpath, simparams, sim_data );
    }
 }
 
@@ -906,9 +849,9 @@ void US_Astfem_Sim::save_xla( const QString& dirname )
    double mrad      = simparams.meniscus;
    double grid_res  = simparams.radial_resolution;
 
-   // Add 30 points in front of meniscus                                                               
-   int    points      = (int)( ( brad - mrad ) / grid_res ) + 31; 
-   
+   // Add 30 points in front of meniscus
+   int    points      = (int)( ( brad - mrad ) / grid_res ) + 31;
+
    double maxc        = 0.0;
    int    total_scans = sim_data.scanCount();
    int    old_points  = sim_data.pointCount();
@@ -1014,13 +957,13 @@ DbgLv(1) << "Sim:SV: OD-Limit nchange nmodscn" << nchange << nmodscn
 
    progress->setRange( 1, total_scans );
    progress->reset();
- 
+
    QVector< double > tconc_v( points );
    double* temp_conc  = tconc_v.data();
    double  rad        = mrad - 30.0 * grid_res;
    sim_data.xvalues.resize( points );
    lb_progress->setText( "Writing..." );
-   
+
    for ( int jj = 0; jj < points; jj++ )
    {
       sim_data.xvalues[ jj ] = rad;
@@ -1070,12 +1013,12 @@ DbgLv(1) << "Sim:SV: OD-Limit nchange nmodscn" << nchange << nmodscn
    QString ofname    = QString( "%1/%2.%3.%4.%5.%6.auc" )
       .arg( dirname ).arg( run_id ).arg( stype ).arg( cell )
       .arg( schann  ).arg( wvlen  );
-   
+
    US_DataIO::writeRawData( ofname, sim_data );
-  
+
    progress->setValue( total_scans );
    lb_progress->setText( tr( "Completed" ) );
-   
+
    pb_saveSim->setEnabled( false );
 }
 
@@ -1165,19 +1108,19 @@ void US_Astfem_Sim::update_movie_plot( QVector< double >* x, double* c )
 
    moviePlot->setAxisScale( QwtPlot::yLeft, 0, yscale );
    //moviePlot->setAxisAutoScale( QwtPlot::yLeft );
-	moviePlot->setAxisAutoScale( QwtPlot::xBottom );
-   
-   double* r = new double [ x->size() ];
-   
-   for ( int i = 0; i < x->size(); i++ ) r[ i ] = (*x)[ i ]; 
+   moviePlot->setAxisAutoScale( QwtPlot::xBottom );
 
-   QwtPlotCurve* curve = 
+   double* r = new double [ x->size() ];
+
+   for ( int i = 0; i < x->size(); i++ ) r[ i ] = (*x)[ i ];
+
+   QwtPlotCurve* curve =
       new QwtPlotCurve( "Scan Number " + QString::number( curve_count++ ) );
 
    curve->setPen    ( QPen( Qt::yellow, 3 ) );
    curve->setSamples(r, c, x->size() );
    curve->attach ( moviePlot );
-   
+
    moviePlot->replot();
 
    if ( save_movie )
@@ -1193,10 +1136,10 @@ void US_Astfem_Sim::update_movie_plot( QVector< double >* x, double* c )
 //int h=x->size()/2;
 //DbgLv(1) << "UpdMovie: r0 rh rn c0 ch cn" << r[0] << r[h] << r[k]
 //   << c[0] << c[h] << c[k];
-   
+
    delete [] r;
    moviePlot->detachItems();
-  
+
 }
 
 // slot to update movie plot
@@ -1226,7 +1169,7 @@ void US_Astfem_Sim::dump_system( void )
    qDebug() << "description" <<system.description;
    qDebug() << "modelGUID" << system.modelGUID;
    qDebug() << "component vector size" << system.components.size();
-   for ( int i = 0; i < system.components.size(); i++ ) 
+   for ( int i = 0; i < system.components.size(); i++ )
    {
       qDebug() << "component " << i + 1;
       dump_simComponent( system.components[ i ] );
@@ -1319,8 +1262,9 @@ void US_Astfem_Sim::dump_ss( US_SimulationParameters::SpeedProfile& sp )
 
 void US_Astfem_Sim::dump_astfem_data( void )
 {
+#if 0
    qDebug() << "astfem_data---- list size " << astfem_data.size();
-   for ( int j = 0; j < astfem_data.size(); j++ ) 
+   for ( int j = 0; j < astfem_data.size(); j++ )
    {
       qDebug() << "id " << astfem_data[ j ].id;
       qDebug() << "cell " << astfem_data[ j ].cell;
@@ -1339,13 +1283,15 @@ void US_Astfem_Sim::dump_astfem_data( void )
       qDebug() << "radius list size " << astfem_data[ j ].radius.size();
       //qDebug() << "radius list " << astfem_data[ j ].radius;;
       qDebug() << "scan list size " << astfem_data[ j ].scan.size();
-      for ( int i = 0; i < astfem_data[ j ].scan.size(); i++ ) 
+      for ( int i = 0; i < astfem_data[ j ].scan.size(); i++ )
          dump_mfem_scan( astfem_data[ j ].scan [ i ] );
    }
+#endif
 }
 
-void US_Astfem_Sim::dump_mfem_scan( US_DataIO::Scan& )
+void US_Astfem_Sim::dump_mfem_scan( US_DataIO::Scan& /*ms*/ )
 {
+#if 0
    qDebug() << "mfem_scan----";
    qDebug() << "time " << ms.time;
    qDebug() << "omega_s_t " << ms.omega_s_t;
@@ -1354,5 +1300,6 @@ void US_Astfem_Sim::dump_mfem_scan( US_DataIO::Scan& )
    qDebug() << "time " << ms.time;
    qDebug() << "conc list size " << ms.conc.size();
    //qDebug() << "conc " << ms.conc;
+#endif
 }
 

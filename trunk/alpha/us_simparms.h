@@ -137,9 +137,6 @@ class US_UTIL_EXTERN US_SimulationParameters
    //! \returns           The number of speed steps created internally
    int simSpeedsFromTimeState( const QString );
 
-   void get_rpm_w2t_from_timestate ( const QString , QVector< SimSpeedProf >&  )
-   {};
-
    //! \brief Dump class contents to stderr
    void debug( void );
 
@@ -236,7 +233,6 @@ class US_UTIL_EXTERN US_SimulationParameters
       double w2t_b_accel;       //!< omega2t at beginning of acceleration zone
       double w2t_e_accel;       //!< omega2t at end of acceleration zone
       double w2t_e_step;        //!< omega2t at end of step (next w2t_b_accel)
-      int     time_e_step;       // time at end of step 
       double avg_speed;         //!< Unrounded average speed in speed step
       int    rotorspeed;        //!< RPM for this step
       int    duration;          //!< Step duration in seconds
@@ -244,6 +240,7 @@ class US_UTIL_EXTERN US_SimulationParameters
       int    time_e_accel;      //!< time at end of acceleration zone
       int    time_f_scan;       //!< time at first scan of step
       int    time_l_scan;       //!< time at last scan of step
+      int    time_e_step;       //!< time at end of step 
       QVector< double > rpm_timestate; //!< rpms from timestate reading 
       QVector< double > w2t_timestate; //!< w2ts from timestate reading
    };
