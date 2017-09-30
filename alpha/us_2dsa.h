@@ -19,6 +19,7 @@
 #include "qwt_plot_marker.h"
 #include "us_analysis_base2.h"
 #include "us_show_norm.h"
+
 #ifndef DbgLv
 #define DbgLv(a) if(dbg_level>=a)qDebug()
 #endif
@@ -58,19 +59,19 @@ class US_2dsa : public US_AnalysisBase2
 
       SS_DATASET           dset;
 
-      QList< SS_DATASET* >            dsets;
+      QList< SS_DATASET* >       dsets;
 
-      QVector< SP_SPEEDPROFILE >      speed_steps;
-      QVector<double>                 normvA  ;
+      QVector< SP_SPEEDPROFILE > speed_steps;
+      QVector< double >          normvA  ;
 
-      US_DataIO::EditedData*          edata;
-      US_DataIO::RawData              sdata;
-      US_DataIO::RawData              rdata;
+      US_DataIO::EditedData*     edata;
+      US_DataIO::RawData         sdata;
+      US_DataIO::RawData         rdata;
 
-      QPointer< US_ResidPlot2D >      resplotd;
-      QPointer< US_PlotControl2D >    eplotcd;
+      QPointer< US_ResidPlot2D >        resplotd;
+      QPointer< US_PlotControl2D >      eplotcd;
       QPointer< US_AnalysisControl2D >  analcd;
-       QPointer< US_show_norm >  analcd1;
+      QPointer< US_show_norm >          analcd1;
 
       US_Model             model;
       US_Noise             ri_noise_in;
@@ -105,7 +106,6 @@ class US_2dsa : public US_AnalysisBase2
    private slots:
       void open_resplot( void );
       void open_3dplot(  void );
-      //void show_norm (void) ;
       void open_fitcntl( void );
       QString distrib_info(      void );
       QString iteration_info(    void );

@@ -67,7 +67,6 @@ class US_UTIL_EXTERN US_SolveSim : public QObject
          double                variance;   //!< Total variance
          double                xnormsq;    //!< X-norm squared
          double                alpha;      //!< Tikhonov regularization factor
-         QVector< double >     norms;   //!< Radially-invariant noise
          QVector< double >     variances;  //!< Variances for data sets
          QVector< double >     ti_noise;   //!< Time-invariant noise 
          QVector< double >     ri_noise;   //!< Radially-invariant noise
@@ -111,8 +110,10 @@ class US_UTIL_EXTERN US_SolveSim : public QObject
     //! \param padAB          Optional flag to pad saved A and B
     //! \param ASave          Optional pointer for saving A matrix
     //! \param BSave          Optional pointer for saving B matrix
-    void calc_residuals( int, int, Simulation&, bool = false, 
-                         QVector< double >* = 0, QVector< double >*  = 0 , QVector< double >* =  0);
+    //! \param NSave          Optional pointer for saving norm vector
+    void calc_residuals( int, int, Simulation&, bool = false,
+                         QVector< double >* = 0, QVector< double >*  = 0,
+                         QVector< double >* = 0 );
 
     //! \brief Set a flag so that the worker aborts at the earliest opportunity
     void abort_work    ( void );
@@ -208,7 +209,8 @@ class US_UTIL_EXTERN US_SolveSim : public QObject
     // Output a debug print of time for a labelled event
     void DebugTime         ( QString );
 
-    double angle_vectors(QVector<double>& , QVector<double>& , int ,double ) ;
+    double angle_vectors( QVector<double>&, QVector<double>&, int );
+    double angle_vectors( double*, double*, int );
 
 
 };

@@ -43,6 +43,7 @@ class US_FeMatch : public US_Widgets
       US_Noise*                   fem_ti_noise();
       US_Noise*                   fem_ri_noise();
       QPointer< US_ResidsBitmap > fem_resbmap();
+
    public slots:
       void    thread_progress( int, int );
       void    thread_complete( int );
@@ -50,9 +51,6 @@ class US_FeMatch : public US_Widgets
       void    resplot_done( void );
 
    private:
-
-      QString       tmst_fnamei;
-      QString       currentDir;
 
       QLabel*       lb_tolerance;
       QLabel*       lb_division;

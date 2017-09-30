@@ -90,7 +90,7 @@ US_AnalysisControl2D::US_AnalysisControl2D( QList< SS_DATASET* >& dsets,
    QLabel* lb_mciters      = us_label(  tr( "Monte Carlo Iterations:" ) );
    QLabel* lb_iters        = us_label(  tr( "Maximum Iterations:" ) );
    QLabel* lb_statinfo     = us_banner( tr( "Status Information:" ) );
-   QLabel* lb_tolnorm      = us_banner( tr( "Tol. on norms" ) );
+   QLabel* lb_tolnorm      = us_label( tr( "Norm Tolerance" ) );
 
    pb_strtfit              = us_pushbutton( tr( "Start Fit" ),    true  );
    pb_stopfit              = us_pushbutton( tr( "Stop Fit" ),     false );
@@ -99,8 +99,8 @@ US_AnalysisControl2D::US_AnalysisControl2D( QList< SS_DATASET* >& dsets,
    pb_ldmodel              = us_pushbutton( tr( "Load Model"   ), false );
    QPushButton* pb_help    = us_pushbutton( tr( "Help" ) );
    QPushButton* pb_close   = us_pushbutton( tr( "Close" ) );
-   QPushButton* pb_advance = us_pushbutton( tr( "Advanced Analysis Controls" ));
-   QPushButton* pb_anorm   = us_pushbutton( tr( "Norm on the grids" ));
+   QPushButton* pb_advance = us_pushbutton( tr( "Advanced Analysis Controls" ) );
+   QPushButton* pb_anorm   = us_pushbutton( tr( "Plot Norm Grid" ) );
 
    te_status               = us_textedit();
    us_setReadOnly( te_status, true );
@@ -113,18 +113,16 @@ US_AnalysisControl2D::US_AnalysisControl2D( QList< SS_DATASET* >& dsets,
       us_checkbox( tr( "Automatically Plot"           ), ck_autoplt );
    QLayout* lo_varvbar     =
       us_checkbox( tr( "Vary Vbar with Constant f/f0" ), ck_varvbar );
-   //QLayout* lo_anorm     =
-   //   us_checkbox( tr( "Show norms " ), ck_norm );
 
    int nthr     = US_Settings::threads();
    nthr         = ( nthr > 1 ) ? nthr : QThread::idealThreadCount();
-   DbgLv(1) << "idealThrCout" << nthr;
+DbgLv(1) << "idealThrCout" << nthr;
    ct_lolimits  = us_counter( 3, -10000, 10000,   1 );
    ct_uplimits  = us_counter( 3, -10000, 10000,  10 );
-   ct_nstepss   = us_counter( 3,      1,  1000,  36 );
+   ct_nstepss   = us_counter( 3,      1,  1000,  64 );
    ct_lolimitk  = us_counter( 3,      1,     8,   1 );
    ct_uplimitk  = us_counter( 3,      1,    20,   4 );
-   ct_nstepsk   = us_counter( 3,      1,  1000,  36 );
+   ct_nstepsk   = us_counter( 3,      1,  1000,  64 );
    ct_thrdcnt   = us_counter( 2,      1,    64, nthr );
    ct_constff0  = us_counter( 3,      1,    10,   1  );
    ct_lolimits->setSingleStep(  0.1 );
@@ -159,10 +157,10 @@ US_AnalysisControl2D::US_AnalysisControl2D( QList< SS_DATASET* >& dsets,
 
 
    ct_iters     = us_counter( 2,    1,   16,    1 );
-   ct_tol       = us_counter( -15,  0,   1, 1 );
+   ct_tol       = us_counter( 2,  -15,    0,    1 );
    ct_tol->setSingleStep    ( 1 );
-   ct_tol->setMaximum    ( 0 );
-   ct_tol->setMinimum    ( -15 );
+   ct_tol->setMaximum       ( 0 );
+   ct_tol->setMinimum       ( -15 );
 
    ct_tol->setIncSteps( QwtCounter::Button1,   1 );
    ct_tol->setIncSteps( QwtCounter::Button2,  10 );
@@ -174,6 +172,7 @@ US_AnalysisControl2D::US_AnalysisControl2D( QList< SS_DATASET* >& dsets,
    ct_menispts ->setSingleStep(    1 );
    ct_mciters  ->setSingleStep(    1 );
    ct_iters    ->setSingleStep(    1 );
+   QLabel* lb_optspace1    = us_banner( "" );
 
    int row       = 0;
    controlsLayout->addWidget( lb_fitting,    row++, 0, 1, 4 );
@@ -213,12 +212,8 @@ US_AnalysisControl2D::US_AnalysisControl2D( QList< SS_DATASET* >& dsets,
    controlsLayout->addWidget( le_newvari,    row++, 2, 1, 2 );
    controlsLayout->addWidget( lb_improve,    row,   0, 1, 2 );
    controlsLayout->addWidget( le_improve,    row++, 2, 1, 2 );
-
-   //controlsLayout->addWidget( lo_anorm,    row++, 0, 1, 2 );
-
    controlsLayout->addWidget( lb_status,     row,   0, 1, 1 );
    controlsLayout->addWidget( b_progress,    row++, 1, 1, 3 );
-   QLabel* lb_optspace1    = us_banner( "" );
    controlsLayout->addWidget( lb_optspace1,  row,   0, 1, 4 );
    controlsLayout->setRowStretch( row, 2 );
 
@@ -238,15 +233,12 @@ US_AnalysisControl2D::US_AnalysisControl2D( QList< SS_DATASET* >& dsets,
    optimizeLayout->addWidget( lb_mciters,    row,   0, 1, 2 );
    optimizeLayout->addWidget( ct_mciters,    row++, 2, 1, 2 );
    optimizeLayout->addWidget( pb_advance,    row++, 0, 1, 4 );
-  
-//   optimizeLayout->addWidget( pb_anorm,      row, 0, 2, 4);
-
    optimizeLayout->addLayout( lo_iters,      row++, 0, 1, 4 );
    optimizeLayout->addWidget( lb_iters,      row,   0, 1, 2 );
    optimizeLayout->addWidget( ct_iters,      row++, 2, 1, 2 );
-   optimizeLayout->addWidget( pb_anorm,      row++, 0, 1, 4);
-   optimizeLayout->addWidget( lb_tolnorm,    row ,  0, 1, 2);
-   optimizeLayout->addWidget( ct_tol,        row,   2, 1, 2);
+   optimizeLayout->addWidget( pb_anorm,      row++, 0, 1, 4 );
+   optimizeLayout->addWidget( lb_tolnorm,    row ,  0, 1, 1 );
+   optimizeLayout->addWidget( ct_tol,        row++, 1, 1, 3 );
 
    optimizeLayout->addWidget( lb_statinfo,   row++, 0, 1, 4 );
    optimizeLayout->addWidget( te_status,     row,   0, 2, 4 );
@@ -310,21 +302,14 @@ US_AnalysisControl2D::US_AnalysisControl2D( QList< SS_DATASET* >& dsets,
             this,       SLOT(   close_all() ) );
    connect( pb_advance, SIGNAL( clicked()   ),
             this,       SLOT(   advanced()  ) );
-
-   //connect( pb_anorm, SIGNAL( clicked()   ),
-   //         this,       SLOT(  US_Pseudo3D_Combine::US_Pseudo3D_Combine() 
-   //         : US_Widgets()  ) );
-
-   connect( pb_anorm, SIGNAL( clicked()   ),
-            this,       SLOT(  calculate_norms( ) ) );
+   connect( pb_anorm,   SIGNAL( clicked()          ),
+            this,       SLOT(   calculate_norms( ) ) );
 
    edata          = &dsets[ 0 ]->run_data;
 
    grid_change();
 
-//DbgLv(2) << "Pre-resize AC size" << size();
    resize( 710, 440 );
-//DbgLv(2) << "Post-resize AC size" << size();
 }
 
 // enable/disable optimize counters based on chosen method
@@ -506,7 +491,6 @@ void US_AnalysisControl2D::checkVaryVbar(  bool checked )
 // start fit button clicked
 void US_AnalysisControl2D::start()
 {
-   DbgLv(1)<<"calc_norms from start" ;
    if ( parentw )
    {  // Get pointers to needed objects from the main
       US_2dsa* mainw = (US_2dsa*)parentw;
@@ -516,7 +500,6 @@ void US_AnalysisControl2D::start()
       model          = mainw->mw_model();
       ti_noise       = mainw->mw_ti_noise();
       ri_noise       = mainw->mw_ri_noise();
-      //normvA         = mainw->mw_Anorm();
       mw_stattext    = mainw->mw_status_text();
       mw_baserss     = mainw->mw_base_rss();
       baserss        = *mw_baserss;
@@ -528,8 +511,8 @@ void US_AnalysisControl2D::start()
       }
 
       mainw->analysis_done( -1 );   // reset counters to zero
-      DbgLv(1) << "AnaC: edata scans, baserss" << edata->scanData.size() << baserss;
-      DbgLv(1) << "AnaC: edata" << edata;
+DbgLv(1) << "AnaC: edata scans, baserss" << edata->scanData.size() << baserss;
+DbgLv(1) << "AnaC: edata" << edata;
    }
 
    // Make sure that ranges are reasonable
@@ -581,7 +564,7 @@ void US_AnalysisControl2D::start()
       //      return;
    }
 
-   DbgLv(1) << "AnaC:St:MEM (1)rssnow,proc" << US_Memory::rss_now() << processor;
+DbgLv(1) << "AnaC:St:MEM (1)rssnow,proc" << US_Memory::rss_now() << processor;
    // Start a processing object if need be
    if ( processor == 0 )
       processor   = new US_2dsaProcess( dsets, this );
@@ -592,7 +575,7 @@ void US_AnalysisControl2D::start()
       processor->stop_fit();
       processor->clear_data();
    }
-   DbgLv(1) << "AnaC:St:MEM (2)rssnow" << US_Memory::rss_now();
+DbgLv(1) << "AnaC:St:MEM (2)rssnow" << US_Memory::rss_now();
 
    // Set up for the start of fit processing
    le_iteration->setText( "0" );
@@ -659,19 +642,19 @@ void US_AnalysisControl2D::start()
 // stop fit button clicked
 void US_AnalysisControl2D::stop_fit()
 {
-     DbgLv(1) << "AC:SF:StopFit";
+DbgLv(1) << "AC:SF:StopFit";
      if ( processor != 0 )
      {
-        DbgLv(1) << "AC:SF: processor stopping...";
+DbgLv(1) << "AC:SF: processor stopping...";
         processor->disconnect();
         processor->stop_fit();
-        DbgLv(1) << "AC:SF: processor stopped";
+DbgLv(1) << "AC:SF: processor stopped";
         delete processor;
-        DbgLv(1) << "AC:SF: processor deleted";
+DbgLv(1) << "AC:SF: processor deleted";
      }
      //delete processor;
      processor = 0;
-     //DbgLv(1) << "AC:SF: processor deleted";
+//DbgLv(1) << "AC:SF: processor deleted";
      qApp->processEvents();
      b_progress->reset();
 
@@ -693,10 +676,9 @@ void US_AnalysisControl2D::load_model()
 {
    const int minsgsz = 10;
    const int maxsgsz = 800;
-   QString  mdesc( "" );
-   QString  mfilter( "" );
-   //US_Model cusmodel;
-   US_2dsa* mainw  = NULL;
+   QString   mdesc( "" );
+   QString   mfilter( "" );
+   US_2dsa*  mainw   = NULL;
 
    if ( parentw )
    {
@@ -720,8 +702,8 @@ void US_AnalysisControl2D::load_model()
          sgsize         = qMax( minsgsz, qMin( maxsgsz, sgsize ) );
          nsubg          = ( nsol / sgsize + 1 ) | 1;
          sgsize         = nsol / nsubg;
-         DbgLv(0) << "Subgrid count adjusted from" << ksubg << "to" << nsubg;
-         DbgLv(0) << "Subgrid size adjusted from" << kssiz << "to" << sgsize;
+DbgLv(0) << "Subgrid count adjusted from" << ksubg << "to" << nsubg;
+DbgLv(0) << "Subgrid size adjusted from" << kssiz << "to" << sgsize;
          cusmodel.subGrids = nsubg;
       }
 
@@ -954,7 +936,7 @@ DbgLv(1) << "AC:cs: prmx nct kcs" << b_progress->maximum() << nct << kcs;
 void US_AnalysisControl2D::completed_process( int stage )
 {
    bool alldone = ( stage == 9 );
-   DbgLv(1) << "AC:cp: stage alldone" << stage << alldone;
+DbgLv(1) << "AC:cp: stage alldone" << stage << alldone;
 
    b_progress->setValue( nctotal );
    qApp->processEvents();
@@ -966,9 +948,8 @@ void US_AnalysisControl2D::completed_process( int stage )
    }
 
    processor->get_results( sdata, rdata, model, ti_noise, ri_noise );
-   DbgLv(1) << "norm_size_anal_control" << ti_noise->count << ri_noise->count ;
+DbgLv(1) << "norm_size_anal_control" << ti_noise->count << ri_noise->count ;
 //DBG-DATA
-#if 1
 if (dbg_level>0)
 {
  double dtot=0.0;
@@ -987,7 +968,6 @@ if (dbg_level>0)
  DbgLv(1) << "AC:cp DTOT" << dtot << "edata" << edata << "NTOT" << ntot
   << "nnoi knoi" << nnoi << knoi << "STOT" << stot;
 }
-#endif
 //DBG-DATA
 
    US_DataIO::Scan* rscan0 = &rdata->scanData[ 0 ];
@@ -1052,202 +1032,20 @@ if (dbg_level>0)
       mainw->analysis_done( -2 );
    }
 }
-//---------------------------------------
-#if 0
-void US_AnalysisControl2D::calculate_norms( US_Model& model2)
-{ 
-   US_2dsa* mainw = (US_2dsa*)parentw;
-   edata          = mainw->mw_editdata(); // edited data
 
-   int nscans     = edata->scanCount();  // no of scans
-   int npoints    = edata->pointCount(); // no of points in scan
-
-   double sum1; 
-
-   int attr_x     = 0;      // Default X is s
-   int attr_y     = 1;      // Default Y is f/f0
-   int attr_z     = 3;      // Default Z is vbar
-   int smask      = ( attr_x << 6 ) | ( attr_y << 3 ) | attr_z;
-
-   //---------------------------------------
-
-   double slo    = ct_lolimits->value()*1.0e-13; // s_lower_limit
-   double sup    = ct_uplimits->value()*1.0e-13; // s_upper_limit
-   int    nss    = (int)ct_nstepss->value(); // steps in s grid
-   double klo    = ct_lolimitk->value(); // k_lower_limit
-   double kup    = ct_uplimitk->value(); // k_upper_limit
-   int    nks    = (int)ct_nstepsk->value();//steps in k grid
-   double cff0   = ck_varvbar->isChecked() ? ct_constff0->value() : 0.0;//constant vbar
-
-   int    ngrr = 0 ;//grid refinement
-
-DbgLv(1)<< "CN: slo="<<slo << "sup="<<sup <<"nss="<< nss << "klo="<<klo << "kup="<<kup 
-        <<"nks="<< nks << "cff0="<<cff0 << "ngrr="<<ngrr ;
-
-   int grid_reps = 1;
-
-   int    nprs     = qMax( 1, ( nss - 1 ) );
-   int    nprk     = qMax( 1, ( nks - 1 ) );
-   double s_step   = qAbs( sup   - slo   ) / (double)nprs;
-   double ff0_step = qAbs( kup   - klo ) / (double)nprk;
-          s_step   = ( s_step    > 0.0 ) ? s_step   : ( slo   * 1.001 );
-          ff0_step = ( ff0_step  > 0.0 ) ? ff0_step : ( klo * 1.001 );
-DbgLv(1)<< "CN: nprs nprk" << nprs << nprk << "s_step" << s_step << "ff0_step" << ff0_step;
-
-   //QList< QVector< US_Solute > > solutes ;
-   QVector< US_Solute >  solutes ;
-
-   //--------------------------------------
-   double sup2 = sup + s_step;
-   double kup2 = kup + ff0_step;
-   solutes = US_Solute::create_solutes( slo, sup2, s_step, klo, kup2, ff0_step, cff0 );
-   //----------------------------------------
-   int nsolutes = solutes.size();
-  // int k1       = -1 ;
-
-   //DbgLv(1)<<"no_of_solutes_calculate"<< nsolutes;
-DbgLv(1)<< "CN: s0" << solutes[0].s << "sn" << solutes[nsolutes-1].s;
-DbgLv(1)<< "CN: k0" << solutes[0].k << "kn" << solutes[nsolutes-1].k;
- 
-   US_SimulationParameters simparms = dsets[ 0 ]->simparams;
-
-
-   //-------------------------------------
-   //Checks timestate file exists or not
-   //------------------------------------
-   QString runID     = edata->runID;
-   QString tmst_fpath = US_Settings::resultDir() +"/" + runID +"/" + runID + ".time_state.tmst";
-   QFileInfo check_file(tmst_fpath);
-
-   if ( (check_file.exists()) && (check_file.isFile()) )
-   {
-       simparms.simSpeedsFromTimeState( tmst_fpath);
-       DbgLv(1)<< "adv_anal_control_2d : timestate file exists"
-               << tmst_fpath << " timestateobject = "<<simparms.tsobj << solutes.size() 
-               << simparms.speed_step.size() << simparms.speed_step[0].rotorspeed << simparms.speed_step[0].time_first
-               << simparms.speed_step[0].time_last;
-   }
-   else
-   {   DbgLv(1)<<"adv_anal_control_2d: timestate file does not exist"<<  solutes.size() ;}
-   //-----------------------------------------
-
-
-   US_DataIO::RawData     simdat;
-   US_Model               model1;
-
-   //------------------------------------------------
-//   US_AstfemMath::initSimData( simdat, *edata, 0.0 );
-   //------------------------------------------------      
-    
-   US_Model::SimulationComponent zcomponent; // Zeroed component to init models
-   zcomponent.s     = 0.0;
-   zcomponent.D     = 0.0;
-   zcomponent.mw    = 0.0;
-   zcomponent.f     = 0.0;
-   zcomponent.f_f0  = 0.0;
-   zcomponent.vbar20     = dsets[0]->vbar20;
-
-   model1.components.resize( 1 );
-   nsolutes = solutes.count();
-   model2.components.resize( nsolutes );
-   int k1       = -1 ;
-
-   DbgLv(1)<<"no_of_solutes_calculate"<< nsolutes;   
-   normvA.resize(nsolutes); 
-   b_progress->reset();
-   b_progress->setPBMaximum( nsolutes );         // Set progress bar 100% value
-   normstep       = 0;
-   QString psmsg  = te_status->toPlainText();    // Save previous status text
-   int psmlen     = psmsg.indexOf( "\n\n" );
-   if ( psmlen > 0 )
-   {
-      psmsg          = psmsg.left( psmlen );
-   }
-
-   for ( int i = 0 ; i< nsolutes ; i++ )
-   {  
-           normvA[i] = 0.0 ;
-           model1.components[ 0 ] = zcomponent;
-           set_comp_attr( model1.components[ 0 ], solutes[ i ], attr_x );
-           set_comp_attr( model1.components[ 0 ], solutes[ i ], attr_y );
-           //set_comp_attr( model1.components[ 0 ], solutes[ i ], 2 );
-           //set_comp_attr( model1.components[ 0 ], solutes[ i ], 4 );
-           //model1.components[ 0 ].s = model1.components[ 0 ].s*1.0e-13 ;
-           model1.update_coefficients(); 
-           model2.components[i]    = model1.components[0] ;
-           //model2.components.resize( nsolutes );
-           //model1.components[ 0 ].s = model1.components[ 0 ].s*1.0e-13 ; 
-
-            model1.components[ 0 ].s   /= dsets[0]->s20w_correction;
-            model1.components[ 0 ].D   /= dsets[0]->D20w_correction;
-            
-            //model1.components[ 0 ].s = model1.components[ 0 ].s*1.0e-13 ;
-//            DbgLv(1)<<"grid_values"<< model1.components[ 0 ].s << "  "<< model1.components[ 0 ].f_f0 
-//                   << model1.components[ 0 ].D  << 	model1.components[ 0 ].vbar20 
-//                   << model1.components[ 0 ].mw << 	model1.components[ 0 ].f ;
-          
-
-           US_AstfemMath::initSimData( simdat, *edata, 0.0 );
-
-           US_Astfem_RSA astfem_rsa( model1, simparms );
-           astfem_rsa.calculate( simdat );
-
-           sum1 = 0.0 ;
-           for ( int ss = 0; ss < nscans; ss++ )
-           {
-               for ( int rr = 0; rr < npoints; rr++ )
-               {
-                   sum1 += ( simdat.value( ss, rr ) * simdat.value( ss, rr ) ) ;
-//                   DbgLv(1)<<"fem_values"<< simdat.value( ss, rr )<< nscans << npoints ;
-               }
-           }          
-           normvA[i] = sqrt(sum1) ;
-//           model2.components[i]    = model1.components[0] ;
-           model2.components[i].s *= 1.0e13;
-           model2.components[i].signal_concentration     = normvA[i];
-           int solnum     = i + 1;             // Current solute number
-//           b_progress->setValue( solnum );     // Update progress bar
-           norm_progress( 1 );                 // Update progress bar
-           QString smsg   = psmsg + tr( "\n\nNorm value calculated for solute:   %1" )
-                                    .arg( solnum );
-           te_status->setText( smsg );         // Update status message
-double sval=model2.components[i].s;
-double kval=model2.components[i].f_f0;
-DbgLv(1) << "CN: Norm_of_vector_analysis_control  norm" << normvA[i] << "s k" << sval << kval;
-   }
-
-   QString smsg   = psmsg + tr( "\n\n%1 norm value calculations complete." )
-                              .arg( nsolutes );
-   te_status->setText( smsg );                // Report norm calcs complete
-   //model2.components.resize( nsolutes );
-
-   //for ( int i=0; i< nsolutes; i++ )
-   //{
-   //   model2.components[i].s    = solutes[i].s ;
-   //   model2.components[i].f_f0 = solutes[i].k ;
-   //   model2.components[i].D     = solutes[i].d ;
-   //   model2.components[i].signal_concentration     = normvA[i];
-   //   model2.components[i].vbar20=  solutes[i].v;
-
-   //}  
-}
-#endif
-
-#if 1
-//void US_AnalysisControl2D::calculate_norms( US_Model& model2)
 void US_AnalysisControl2D::calculate_norms( )
 {
    QVector< US_Solute >  solutes;
    US_SolveSim::DataSet* dset;
 
    int nthrd       = (int)ct_thrdcnt->value();
-   DbgLv(1)<< " calculate_norms is called" << nthrd ; 
+DbgLv(1) << " calculate_norms is called" << nthrd; 
    normstep = 0;
    int attr_x      = 0;      // Default X is s
    int attr_y      = 1;      // Default Y is f/f0
    int attr_z      = 3;      // Default Z is vbar
    int smask       = ( attr_x << 6 ) | ( attr_y << 3 ) | attr_z;
-   DbgLv(1)<< "smask_calculate_norms" << smask ;
+DbgLv(1) << "smask_calculate_norms" << smask;
 
    US_2dsa* mainw  = (US_2dsa*)parentw;
    edata           = mainw->mw_editdata(); // edited data
@@ -1262,8 +1060,8 @@ void US_AnalysisControl2D::calculate_norms( )
    int    nks      = (int)ct_nstepsk->value();//steps in k grid
    double cff0     = ck_varvbar->isChecked() ? ct_constff0->value() : 0.0;//constant vbar
 
-   DbgLv(1)<< "CN: slo="<<slo << "sup="<<sup <<"nss="<< nss << "klo="<<klo << "kup="<<kup 
-           <<"nks="<< nks << "cff0="<<cff0;
+DbgLv(1)<< "CN: slo="<<slo << "sup="<<sup <<"nss="<< nss << "klo="<<klo << "kup="<<kup 
+ <<"nks="<< nks << "cff0="<<cff0;
 
    int    nprs     = qMax( 1, ( nss - 1 ) );
    int    nprk     = qMax( 1, ( nks - 1 ) );
@@ -1274,7 +1072,7 @@ void US_AnalysisControl2D::calculate_norms( )
    sup            += (   s_step * 0.001 );
    kup            += ( ff0_step * 0.001 );
 
-   DbgLv(1)<< "CN: nprs nprk" << nprs << nprk << "s_step" << s_step << "ff0_step" << ff0_step;
+DbgLv(1)<< "CN: nprs nprk" << nprs << nprk << "s_step" << s_step << "ff0_step" << ff0_step;
 
    solutes         = US_Solute::create_solutes( slo, sup, s_step, klo, kup, ff0_step, cff0 );
 
@@ -1282,8 +1080,8 @@ void US_AnalysisControl2D::calculate_norms( )
    kthrdr          = nthrd;          // Threads remaining
    dset            = dsets[ 0 ];
 
-   DbgLv(1)<< "CN: s0" << solutes[0].s << "sn" << solutes[nsolutes-1].s;
-   DbgLv(1)<< "CN: k0" << solutes[0].k << "kn" << solutes[nsolutes-1].k;
+DbgLv(1)<< "CN: s0" << solutes[0].s << "sn" << solutes[nsolutes-1].s;
+DbgLv(1)<< "CN: k0" << solutes[0].k << "kn" << solutes[nsolutes-1].k;
  
    US_SimulationParameters simparms = dset->simparams;
   
@@ -1295,31 +1093,25 @@ void US_AnalysisControl2D::calculate_norms( )
    if ( check_file.exists() && check_file.isFile() )
    {
       simparms.simSpeedsFromTimeState( tmst_fpath);
-      DbgLv(1)<< "adv_anal_control_2d : timestate file exists"
-              << tmst_fpath << " timestateobject = "<<simparms.tsobj << solutes.size() 
-              << simparms.speed_step.size() << simparms.speed_step[0].rotorspeed 
-              << simparms.speed_step[0].time_first<< simparms.speed_step[0].time_last;
+DbgLv(1) << "adv_anal_control_2d : timestate file exists"
+ << tmst_fpath << " timestateobject=" << simparms.tsobj << solutes.size() 
+ << simparms.speed_step.size() << simparms.speed_step[0].rotorspeed 
+ << simparms.speed_step[0].time_first << simparms.speed_step[0].time_last;
    }
    else
    {
-      DbgLv(1)<<"adv_anal_control_2d: timestate file does not exist"<<  solutes.size();
+DbgLv(1) << "adv_anal_control_2d: timestate file does not exist" << solutes.size();
    }
    model2.components.resize( nsolutes ) ;
    b_progress->reset();
-   //b_progress->setPBMinimum( 0 );
    b_progress->setPBMaximum( nsolutes );
    norm_progress( 1 );                 // Update progress bar
-   //        QString smsg   = psmsg + tr( "\n\nNorm value calculated for solute:   %1" )
-   //                                 .arg( solnum );
-   //        te_status->setText( smsg );         // Update status message
 
    // Create and start calc-norm worker threads
-   //DbgLv(1)<<"time =" <<QDateTime.toString( "hh:mm:ss") ;
    for ( int ii = 0; ii < nthrd; ii++ )
    {
-      //DbgLv(1)<<"aac2:  ii" << ii << "create thread";
       WorkerThreadCalcNorm* wthr = new WorkerThreadCalcNorm( this );
-      DbgLv(1)<<"aac2:  ii" << ii << "create thread";
+DbgLv(1) << "aac2:  ii" << ii << "create thread";
       WorkPacketCN workin;
       workin.thrn     = ii + 1;
       workin.nthrd    = nthrd;
@@ -1329,7 +1121,7 @@ void US_AnalysisControl2D::calculate_norms( )
       workin.cff0     = cff0;
       workin.isolutes = solutes;
       workin.dset     = dset;
-      DbgLv(1)<<"aac2:define_work"<< workin.thrn << workin.nthrd ;
+DbgLv(1) << "aac2:define_work" << workin.thrn << workin.nthrd;
       
       wthr->define_work( workin );
 
@@ -1340,47 +1132,15 @@ void US_AnalysisControl2D::calculate_norms( )
                this, SLOT  ( norm_complete( WorkerThreadCalcNorm* ) ) );
 
       wthr->start();
-      //connect( wthr, SIGNAL( work_progress( int ) ),
-      //         this, SLOT  ( norm_progress( int ) ) );
-      //emit wthr->work_complete( wthr );
-
    }
-
-   // Wait around until all worker threads have completed
-   //while ( kthrdr > 0 )
-   //{
-   //   DbgLv(1)<< "kthrdr= " << kthrdr ;  
-   //   for ( int i = 0 ; i< kthrdr; i++)
-   //   US_Sleep::msleep( 500 );
-   //}
-
-   DbgLv(1)<<"model2_components_count"<<model2.components.count();
-
-   // All done:  display norms
-   /*#if 1
-     if (kthrdr == 0 )
-     {bool cnst_vbr     = ( cff0 == 0.0 );
-
-     for ( int ii = 0; ii < model2.components.count(); ii++ )
-     {   // For plotting purposes, scale sedimentation coefficients
-         model2.components[ ii ].s *= 1.0e+13;
-         DbgLv(1)<<"model2_components_s" << model2.components[ ii ].s ;
-     }
-
-     analcd1  = new US_show_norm( &model2, cnst_vbr, parentw );
-
-     analcd1->show();
-    }
-   #endif*/
 }
-#endif
 
 //---------------------------------------
 // slot to handle advanced analysis controls
 void US_AnalysisControl2D::advanced()
 {
    US_SimulationParameters* sparms = &dsets[ 0 ]->simparams;
-   DbgLv(1) << "Adv sparms.bf sect" << sparms->band_forming << sparms->cp_sector;
+DbgLv(1) << "Adv sparms.bf sect" << sparms->band_forming << sparms->cp_sector;
    US_AdvAnalysis2D* aadiag = new US_AdvAnalysis2D( sparms, loadDB, this );
    if ( aadiag->exec() == QDialog::Accepted )
    {
@@ -1394,11 +1154,11 @@ void US_AnalysisControl2D::advanced()
 
       aadiag->get_parameters( grtype, grpar1, grpar2, grpar3,
                               modpar, reg,    repar1 );
-      DbgLv(1) << "Adv ACCEPT";
-      DbgLv(1) << "Adv grtype par123" << grtype << grpar1 << grpar2 << grpar3;
-      DbgLv(1) << "Adv modpar size  " << modpar.components.size();
-      DbgLv(1) << "Adv reg    par1  " << reg    << repar1;
-      DbgLv(1) << "Adv BANDVOL"  << sparms->band_volume << " MUL" << sparms->cp_width;
+DbgLv(1) << "Adv ACCEPT";
+DbgLv(1) << "Adv grtype par123" << grtype << grpar1 << grpar2 << grpar3;
+DbgLv(1) << "Adv modpar size  " << modpar.components.size();
+DbgLv(1) << "Adv reg    par1  " << reg    << repar1;
+DbgLv(1) << "Adv BANDVOL"  << sparms->band_volume << " MUL" << sparms->cp_width;
       if ( grtype < 0 )
       {
          int     nsol   = modpar.components.size();
@@ -1411,8 +1171,8 @@ void US_AnalysisControl2D::advanced()
             int kssiz      = sgsize;
             nsubg          = ( nsol / 100 + 1 ) | 1;
             sgsize         = nsol / nsubg;
-            DbgLv(0) << "Subgrid count adjusted from" << ksubg << "to" << nsubg;
-            DbgLv(0) << "Subgrid size adjusted from" << kssiz << "to" << sgsize;
+DbgLv(0) << "Subgrid count adjusted from" << ksubg << "to" << nsubg;
+DbgLv(0) << "Subgrid size adjusted from" << kssiz << "to" << sgsize;
             modpar.subGrids = nsubg;
          }
 
@@ -1508,28 +1268,7 @@ int US_AnalysisControl2D::memory_check( )
    return status;
 }
 
-/*void US_AnalysisControl2D::show_norm( )
-{
-
-  bool cnst_vbr     =  true;
-  //ck_varvbar ->setChecked( cnst_vbr );
-  calculate_norms( model2 ) ;
-
-//  for ( int ii = 0; ii < model2.components.count(); ii++ )
-//     model2.components[ ii ].s *= 1.0e+13;
-
-  analcd1  = new US_show_norm(&model2, cnst_vbr , parentw );
-
-  DbgLv(1)<< "norm_size_2dsa = "<< model2.components.size() ;
-
-  for ( int i = 0; i < normvA.size(); i++ )
-      DbgLv(1)<< "norm_values_2dsa = "<< normvA[i] 
-              << model2.components[i].s <<  model2.components[i].f_f0;
-
-  //analcd1->move( acd_pos );
-  analcd1->show();
-}*/
-
+// Set component attribute from a solute parameter
 void US_AnalysisControl2D::set_comp_attr( US_Model::SimulationComponent& component,
       US_Solute& solute, int attr_type )
 {  
@@ -1561,14 +1300,8 @@ void US_AnalysisControl2D::set_comp_attr( US_Model::SimulationComponent& compone
 void US_AnalysisControl2D::norm_progress( int kstep )
 {
    normstep      += kstep;
-   //if ( normstep > nsolutes )
-   //{
-   //   nsolutes  = ( nsolutes * 11 ) / 10;
-   //   b_progress->setPBMaximum( nsolutes );
-   //}
+DbgLv(1) << "uac2: NP:     kstep" << kstep << "normstep" << normstep;
 
-
-   DbgLv(1) << "uac2: NP:     kstep" << kstep << "normstep" << normstep;
    b_progress->setValue( normstep );   // Update progress bar
 }
 
@@ -1587,26 +1320,18 @@ void US_AnalysisControl2D::norm_complete( WorkerThreadCalcNorm* wthr )
    zcomponent.f_f0   = 0.0;
    zcomponent.vbar20 = 0.0;
    zcomponent.signal_concentration = 0.0;
+   int kk;
   
-   DbgLv(1)<<"norm_complete is called "<<workout.nwsols<< workout.csolutes.size();
-  // model2.components.resize( 256 ) ;// subha added
-   int kk ;
+DbgLv(1)<<"norm_complete is called "<<workout.nwsols<< workout.csolutes.size();
    for ( int ii = 0; ii < workout.nwsols; ii++ )
    {
-      kk         = workout.solxs[ii];
-      DbgLv(1)<<"kk="<< kk ;
+      kk         = workout.solxs[ ii ];
+DbgLv(1)<<"kk="<< kk ;
       model2.components[ kk ]        = zcomponent;
       model2.components[ kk ].s      = workout.csolutes[ ii ].s;
       model2.components[ kk ].f_f0   = workout.csolutes[ ii ].k;
       model2.components[ kk ].vbar20 = workout.csolutes[ ii ].v;
       model2.components[ kk ].signal_concentration = workout.csolutes[ ii ].c;
-      //model2.calc_coefficients( model2.components[kk] ) ;
-      //DbgLv(1)<<"workout_s_values_from_norm_complete"<< workout.csolutes[ ii ].s << 
-      //           workout.csolutes[ ii ].c << workout.csolutes[ ii ].k;
-      //DbgLv(1)<<"model2_values_from_norm_complete"<< model2.components[ kk ].s <<
-      //           model2.components[ kk ].signal_concentration  << model2.components[ kk ].f_f0;
-      //model2.update_coefficients();
-
    }
 
    model2.update_coefficients();

@@ -99,8 +99,8 @@ void US_SimulationParameters::initFromData( US_DB2* db,
    QString ecell       = QString::number(rawdata.cell);
    int     iecell      = ecell.toInt();
 
-   DbgLv(1) << "SP:iFD: cell chan ch" << ecell << channel << ch
-            << rawdata.channel << (ch+1);
+DbgLv(1) << "SP:iFD: cell chan ch" << ecell << channel << ch
+ << rawdata.channel << (ch+1);
 
    rotorCalID          = "0";
    QString fn          = US_Settings::resultDir() + "/" + runID + "/"
@@ -137,11 +137,11 @@ void US_SimulationParameters::initFromData( US_DB2* db,
          {  // Pick up centerpiece ID from  <centerpiece ... id=...
             QXmlStreamAttributes a = xml.attributes();
             dcp_id           = a.value( "id"      ).toString().toInt();
-            DbgLv(1) << "SP:iFD:  dcell dchan" << dcell << dchan;
+DbgLv(1) << "SP:iFD:  dcell dchan" << dcell << dchan;
             if ( dcell == iecell  &&  dchan == channel )
             { // If cell,channel match edit, pick up CpID
                cp_id            = dcp_id;
-               DbgLv(1) << "SP:iFD:    cp_id" << cp_id;
+DbgLv(1) << "SP:iFD:    cp_id" << cp_id;
             }
          }
       }
@@ -151,7 +151,7 @@ void US_SimulationParameters::initFromData( US_DB2* db,
       if ( cp_id == 0 )    // If no cell,chan match; use last CP ID
          cp_id            = dcp_id;
    }
-   //DbgLv(2) << "SP:iFD: cp_id ch" << cp_id << ch;
+//DbgLv(2) << "SP:iFD: cp_id ch" << cp_id << ch;
 
    bottom_position     = 7.2;
 
@@ -246,7 +246,7 @@ DbgLv(1) << "Sim parms:        cp_id" << cp_id << "sv" << cpIDsv;
    // For NO_DB (back end) the bottom needs to be set after this function
    bottom = bottom_position;
    db     = NULL; // Stop compiler warning
-   DbgLv(2) << "SP:iFD: db" << db;
+DbgLv(2) << "SP:iFD: db" << db;
 #endif
 DbgLv(2) << "SP:iFD: bottom" << bottom;
 }
@@ -266,8 +266,8 @@ void US_SimulationParameters::initFromData( US_DB2* db,
    QString ecell       = editdata.cell;
    int     iecell      = ecell.toInt();
 
-   DbgLv(1) << "SP:iFD: cell chan ch" << ecell << channel << ch
-            << editdata.channel << (ch+1);
+DbgLv(1) << "SP:iFD: cell chan ch" << ecell << channel << ch
+ << editdata.channel << (ch+1);
 
    rotorCalID          = "0";
    QString fn          = US_Settings::resultDir() + "/" + editdata.runID + "/"
@@ -304,11 +304,12 @@ void US_SimulationParameters::initFromData( US_DB2* db,
          {  // Pick up centerpiece ID from  <centerpiece ... id=...
             QXmlStreamAttributes a = xml.attributes();
             dcp_id           = a.value( "id"      ).toString().toInt();
-            DbgLv(1) << "SP:iFD:  dcell dchan" << dcell << dchan;
+DbgLv(1) << "SP:iFD:  dcell dchan" << dcell << dchan;
             if ( dcell == iecell  &&  dchan == channel )
             { // If cell,channel match edit, pick up CpID
-              cp_id            = dcp_id;
-              DbgLv(1) << "SP:iFD:    cp_id" << cp_id;
+               cp_id            = dcp_id;
+// x  x  x  x  x  x  x  x
+DbgLv(1) << "SP:iFD:    cp_id" << cp_id;
             }
          }
       }
@@ -318,7 +319,7 @@ void US_SimulationParameters::initFromData( US_DB2* db,
       if ( cp_id == 0 )    // If no cell,chan match; use last CP ID
          cp_id            = dcp_id;
    }
-   //DbgLv(2) << "SP:iFD: cp_id ch" << cp_id << ch;
+//DbgLv(2) << "SP:iFD: cp_id ch" << cp_id << ch;
 
    bottom_position     = 7.2;
    meniscus            = editdata.meniscus;
@@ -1004,13 +1005,13 @@ void US_SimulationParameters::speedstepToXml( QXmlStreamWriter& xmlo,
       QString::number( spi->rotorspeed       ) );
    xmlo.writeAttribute   ( "scans",
       QString::number( spi->scans            ) );
-   xmlo.writeAttribute   ( "timefirst", 
+   xmlo.writeAttribute   ( "timefirst",
       QString::number( spi->time_first       ) );
-   xmlo.writeAttribute   ( "timelast",  
+   xmlo.writeAttribute   ( "timelast",
       QString::number( spi->time_last        ) );
-   xmlo.writeAttribute   ( "w2tfirst",  
+   xmlo.writeAttribute   ( "w2tfirst",
       QString::number( spi->w2t_first        ) );
-   xmlo.writeAttribute   ( "w2tlast",   
+   xmlo.writeAttribute   ( "w2tlast",
       QString::number( spi->w2t_last         ) );
    xmlo.writeAttribute   ( "duration_hrs",
       QString::number( spi->duration_hours   ) );
@@ -1028,12 +1029,12 @@ void US_SimulationParameters::speedstepToXml( QXmlStreamWriter& xmlo,
    // Possible MWL enhancements
    if ( spi->set_speed > 0 )
    {
-      xmlo.writeAttribute   ( "set_speed", 
-         QString::number( spi->set_speed        ) );
-      xmlo.writeAttribute   ( "avg_speed", 
-         QString::number( spi->avg_speed        ) );
+      xmlo.writeAttribute   ( "set_speed",
+         QString::number( spi->set_speed     ) );
+      xmlo.writeAttribute   ( "avg_speed",
+         QString::number( spi->avg_speed     ) );
       xmlo.writeAttribute   ( "speed_stddev",
-         QString::number( spi->speed_stddev     ) );
+         QString::number( spi->speed_stddev  ) );
    }
 
    xmlo.writeEndElement  ();  // speedstep
@@ -1137,8 +1138,10 @@ int US_SimulationParameters::simSpeedsFromTimeState( const QString tmst_fpath )
 int US_SimulationParameters::ssProfFromTimeState( US_TimeState* tsobj,
       QVector< SimSpeedProf >& ssps )
 {
+   int dbg_level    = US_Settings::us_debug();
    ssps.clear();                              // Clear speed prof vector
    SimSpeedProf ssp;                          // Work sim speed profile
+DbgLv(1) << "Sim parms:ssProf: ssps.count" << ssps.count();
 
    // Insure we have needed keys and get formats
    QStringList fkeys;
@@ -1157,172 +1160,225 @@ int US_SimulationParameters::ssProfFromTimeState( US_TimeState* tsobj,
    // Do we have the keys we need?
    bool have_keys   = ( tmkx >= 0 )  &&  ( sskx >= 0 )  &&
                       ( rskx >= 0 )  &&  ( w2kx >= 0 );
+DbgLv(1) << "Sim parms:ssProf: have_keys" << have_keys;
    if ( ! have_keys )
-      return -1;                              // Do not have needed keys
+      return -1;                           // Do not have needed keys
 
-   int nrec         = tsobj->time_count();    // Total time record count
-   tsobj->read_record();                      // Read the first record
-   int tm_p         = 0;                      // Previous acceleration time
+   int nrec         = tsobj->time_count(); // Total time record count
+   QList< int >  cspeeds;                  // Constant speeds list
+
+   // Do an initial pass through timestate records to get constant speeds
+   tsobj->read_record( 0 );
+   int ss1          = 0;
+   int ss2          = 0;
+   int ss3          = 0;
+   for ( int tsx = 1; tsx < nrec; tsx++ )
+   {
+      ss1              = ss2;              // Set-speed two back
+      ss2              = ss3;              // Previous set-speed
+      tsobj->read_record();
+      ss3              = ssfm == "F4" ?
+            (int)qRound( tsobj->time_dvalue( "SetSpeed" ) ) :
+                         tsobj->time_ivalue( "SetSpeed" );  // Current set speed
+
+      if ( ss3 == ss2  &&  ss2 == ss1  &&  ss3 > 0 )
+      { // This non-zero set-speed and both previous are the same
+         if ( ! cspeeds.contains( ss3 ) )
+            cspeeds << ss3;                // Save it if first time encountered
+      }
+   }
+DbgLv(1) << "Sim parms:ssProf: cspeeds" << cspeeds;
+
+   // Now do a pass through records to accumulate full step records
+   tsobj->read_record( 0 );                // Read the first record
+DbgLv(1) << "Sim parms:ssProf: nrec" << nrec;
+   int tm_p         = 0;                   // Previous acceleration time
    int tm_c         = tmfm == "F4" ?
          (int)qRound( tsobj->time_dvalue( "Time" ) ) :
                       tsobj->time_ivalue( "Time" );
-   bool in_accel    = true;                   // Flag in acceleration zone
-   int naintvs      = 0;                      // Initial accel intervals
-   int ndtimes      = 0;                      // Initial duration times
-   int tsx1         = 1;                      // Initial time state index
-   double w2_p      = 0.0;                    // Initial prev. omega2t
-   int    ss_p      = 0;                      // Initial prev. set speed
+   bool in_accel    = true;                // Flag in acceleration zone
+   int naintvs      = 0;                   // Initial accel intervals
+   int ndtimes      = 0;                   // Initial duration times
+   int tsx1         = 0;                   // Initial time state index
+   double w2_p      = 0.0;                 // Initial prev. omega2t
+   int    ss_p      = 0;                   // Initial prev. set speed
    double w2_c      = tsobj->time_dvalue( "Omega2T" );   // 1st omega2t
-   double rs_c      = tsobj->time_dvalue( "RawSpeed" );  // 1st raw speed
-   int    ss_c      = tsobj->time_ivalue( "SetSpeed" );  // 1st set speed
-   double rs_p      = 0.0;                    // Initial prev. raw_speed
-   ssp.w2t_b_accel  = 0.0;                    // Set some SimSpeedProf values
+   double rs_c      = rsfm == "F4" ?
+                      tsobj->time_dvalue( "RawSpeed" ) :
+              (double)tsobj->time_ivalue( "RawSpeed" );  // 1st raw speed
+   int    ss_c      = ssfm == "F4" ?
+         (int)qRound( tsobj->time_dvalue( "SetSpeed" ) ) :
+                      tsobj->time_ivalue( "SetSpeed" );  // 1st set speed
+   double rs_p      = 0.0;                 // Initial prev. raw_speed
+   ssp.w2t_b_accel  = 0.0;                 // Set some SimSpeedProf values
    ssp.rotorspeed   = 0.0;
    ssp.time_b_accel = 0;
-   int iscan        = 0;                      // On-scan flag/scan-number
-   double sum_speed = 0.0;                    // Initial raw speed sum
-   double sum_accel = 0.0;                    // Initial accel sum
-   double accel_c   = 0.0;                    // Current acceleration
-   double accel_p   = 0.0;                    // Previous acceleration
-  
-//    SimSpeedProf();
-//
-//    double acceleration;      //!< Acceleration in rpm/seconds
-//    double w2t_b_accel;       //!< omega2t at beginning of acceleration zone
-//    double w2t_e_accel;       //!< omega2t at end of acceleration zone
-//    double w2t_e_step         //!< omega2t at end of step (next w2t_b_accel)
-//    double avg_speed;         //!< Unrounded average speed in speed step
-//    int    rotorspeed;        //!< RPM for this step
-//    int    duration;          //!< Step duration in seconds
-//    int    time_b_accel;      //!< time at beginning of acceleration zone
-//    int    time_e_accel;      //!< time at end of acceleration zone
-//    int    time_f_scan;       //!< time at first scan of step
-//    int    time_l_scan;       //!< time at last scan of step
+   int iscan        = 0;                   // On-scan flag/scan-number
+   double sum_speed = 0.0;                 // Initial raw speed sum
+   double sum_accel = 0.0;                 // Initial accel sum
+   double accel_c   = 0.0;                 // Current acceleration
+   double accel_p   = 0.0;                 // Previous acceleration
 
-   if ( tm_c == 0 )
-   {  // First record's time is zero
+   while ( ss_c == 0 )
+   {  // Skipping until set speed is non-zero
       tsx1++;
       naintvs++;
-      tsobj->read_record();                   // Read the second record
+      tsobj->read_record();                // Read the second record
       tm_c             = tmfm == "F4" ?                    // Current time
             (int)qRound( tsobj->time_dvalue( "Time" ) ) :
                          tsobj->time_ivalue( "Time" );
       w2_c             = tsobj->time_dvalue( "Omega2T" );  // Current omega2t
-      rs_c             = tsobj->time_dvalue( "RawSpeed" ); // Current raw speed
-      ss_c             = tsobj->time_ivalue( "SetSpeed" ); // Current set speed
-      accel_c          = rs_c;                // First acceleration value
-      sum_accel        = accel_c;             // Initial acceleration sum
+      rs_c             = rsfm == "F4" ?
+                         tsobj->time_dvalue( "RawSpeed" ) :
+                 (double)tsobj->time_ivalue( "RawSpeed" );  // Current raw speed
+      ss_c             = ssfm == "F4" ?
+            (int)qRound( tsobj->time_dvalue( "SetSpeed" ) ) :
+                         tsobj->time_ivalue( "SetSpeed" );  // Current set speed
+      accel_c          = rs_c;             // First acceleration value
+      sum_accel        = accel_c;          // Initial acceleration sum
    }
+   naintvs          = qMin( naintvs, 1 );  // Number accel zone intervals
+   ssp.time_b_accel = tm_c;                // Accel begin time
+DbgLv(1) << "Sim parms:ssProf: initial tm_c" << tm_c << "naintvs" << naintvs
+ << "tsx1" << tsx1 << "w2 rs ss" << w2_c << rs_c << ss_c;
+int tm_ci=tm_c;
+int tm_cep=tm_ci+150;
 
-   // Loop through all the TimeState records
-   for ( int tsx = tsx1; tsx <= nrec; tsx++ )
+   // Loop through all the remaining TimeState records
+   for ( int tsx = tsx1; tsx < nrec; tsx++ )
    {
-      tm_p             = tm_c;                // Set previous iter values
+      tm_p             = tm_c;             // Set previous iter values
       w2_p             = w2_c;
       ss_p             = ss_c;
       rs_p             = rs_c;
       accel_p          = accel_c;
 
-      tsobj->read_record();                   // Read the next record
- 
+      tsobj->read_record();                // Read the next record
+
       // Get current record's values
       tm_c             = tmfm == "F4" ?
             (int)qRound( tsobj->time_dvalue( "Time" ) ) :
                          tsobj->time_ivalue( "Time" );
       w2_c             = tsobj->time_dvalue( "Omega2T" );
-      rs_c             = tsobj->time_dvalue( "RawSpeed" );
-      ss_c             = tsobj->time_ivalue( "SetSpeed" );
+      rs_c             = rsfm == "F4" ?
+                         tsobj->time_dvalue( "RawSpeed" ) :
+                 (double)tsobj->time_ivalue( "RawSpeed" );
+      ss_c             = ssfm == "F4" ?
+            (int)qRound( tsobj->time_dvalue( "SetSpeed" ) ) :
+                         tsobj->time_ivalue( "SetSpeed" );
       iscan            = tsobj->time_ivalue( "Scan" );
-      accel_c          = rs_c - rs_p;         // Current acceleration
+      accel_c          = rs_c - rs_p;      // Current acceleration
+      int ss_c_ts      = ss_c;
+if (tm_c<tm_cep || (tsx+5)>nrec)
+ DbgLv(1) << "Sim parms:ssProf:   tm_c" << tm_c << "rs_c" << rs_c << "ss_c" << ss_c;
 
       if ( in_accel )
       {  // In acceleration, looking for its end
-         if ( ss_c == ss_p )
-         {  // Set speeds equal:  out of acceleration
-            ssp.w2t_e_accel  = w2_p;          // Accel end omega2t
-            ssp.time_e_accel = tm_p;          // Accel end time
+         ss_c             = (int)qRound( rs_c / 10.0 ) * 10;
+         if ( ss_c == ss_p  &&  cspeeds.contains( ss_c ) )
+         {  // Found a constant speed:  out of acceleration
+DbgLv(1) << "Sim parms:ssProf: accel-end ss_p ss_c" << ss_p << ss_c
+ << "tm_c" << tm_c << "rs_p rs_c" << rs_p << rs_c << "ss_c_ts" << ss_c_ts
+ << "naintvs" << naintvs;
+            ssp.w2t_e_accel  = w2_p;       // Accel end omega2t
+            ssp.time_e_accel = tm_p;       // Accel end time
             //qDebug()<<"accln times"<<ssp.time_e_accel<< ss_c<<ss_p<<rs_c<<rs_p ;
-            sum_accel       -= accel_p;       // Back off 1 second
-            double tmi_accel = naintvs > 1    // Accel time intervals minus 1
+            sum_accel       -= accel_p;    // Back off 1 second
+            double tmi_accel = naintvs > 1 // Accel time intervals minus 1
                               ? (double)( naintvs - 1 )
                               : 1.0;
-            ssp.acceleration = sum_accel      // Average acceleration
+            ssp.acceleration = sum_accel   // Average acceleration
                              / tmi_accel;
-                                
-            sum_accel        = 0.0;           // Re-init acceleration sum
-            sum_speed        = rs_c;          // Initialize raw speed sum
-            ndtimes          = 1;             // Initial duration times count
-            in_accel         = false;         // No longer in acceleration
+
+            sum_accel        = 0.0;        // Re-init acceleration sum
+            sum_speed        = rs_c;       // Initialize raw speed sum
+            ndtimes          = 1;          // Initial duration times count
+            in_accel         = false;      // No longer in acceleration
          }
          else
          {  // We remain in acceleration
-            naintvs++;                        // Bump accel intervals count
-            sum_accel       += accel_c;       // Build acceleration sum
+            naintvs++;                     // Bump accel intervals count
+            sum_accel       += accel_c;    // Build acceleration sum
          }
       }
 
       else
       {  // In constant speed, looking for its end
-         if ( ss_c != ss_p )
+         ss_c             = (int)qRound( rs_c / 10.0 ) * 10;
+         if ( ss_c != ss_p  &&  !cspeeds.contains( ss_c ) )
          {  // Set speeds unequal:  back into acceleration
-            ssp.avg_speed    = sum_speed / (double)( ndtimes - 1 );
+DbgLv(1) << "Sim parms:ssProf: const-end ss_p ss_c" << ss_p << ss_c
+ << "ndtimes" << ndtimes << "tm_c" << tm_c
+ << "rs_p rs_c" << rs_p << rs_c << "ss_c_ts" << ss_c_ts;
+            ssp.avg_speed    = sum_speed / (double)( ndtimes  );
             ssp.w2t_e_step   = w2_p;
-            ssp.time_e_step   = tm_p;
+            ssp.time_e_step  = tm_p;
             ssp.rotorspeed   = ss_p;
-            ssp.duration     = tm_p - ssp.time_b_accel;
+            ssp.duration     = tm_c - ssp.time_b_accel;
             ssp.rpm_timestate.resize( ssp.duration );
             ssp.w2t_timestate.resize( ssp.duration );
-            ssps << ssp;                      // Save speed step
+            ssps << ssp;                   // Save speed step
 
-            ssp.time_b_accel = tm_c;          // Start a new one
+            ssp.time_b_accel = tm_c;       // Start a new one
             ssp.w2t_b_accel  = w2_c;
             ssp.time_f_scan  = 0;
             ssp.time_l_scan  = 0;
-            naintvs          = 1;             // Initialize intervals counts
-            sum_accel        = accel_c;       // Re-init acceleration sum
-            ndtimes          = 0;             // Re-init duration times
-            sum_speed        = 0.0;           // Initial raw speed sum
-            in_accel         = true;          // Flag in accel zone
+            naintvs          = 1;          // Initialize intervals counts
+            sum_accel        = accel_c;    // Re-init acceleration sum
+            ndtimes          = 0;          // Re-init duration times
+            sum_speed        = 0.0;        // Initial raw speed sum
+            in_accel         = true;       // Flag in accel zone
 
          }
          else
          {  // We remain in constant-speed
-            sum_speed       += rs_c;          // Add to raw speed sum
-            ndtimes++;                        // Bump constant speed times
+            sum_speed       += rs_c;       // Add to raw speed sum
+            ndtimes++;                     // Bump constant speed times
 
             if ( iscan > 0 )
             {  // On a scan:  save first,last scan times
-               ssp.time_l_scan  = tm_c;       // Keep updating last scan time
+               ssp.time_l_scan  = tm_c;    // Keep updating last scan time
 
                if ( ssp.time_f_scan == 0 )
-                  ssp.time_f_scan  = tm_c;    // Capture first scan time
+                  ssp.time_f_scan  = tm_c; // Capture first scan time
             }
          }
       }
    }
 
    // Finish off final speed step and save it
-   ssp.avg_speed       = sum_speed / (double)( ndtimes - 1 );
+   ssp.avg_speed       = sum_speed / (double)( ndtimes  );
    ssp.w2t_e_step      = w2_c;
    ssp.time_e_step     = tm_c;
    ssp.rotorspeed      = ss_c;
    ssp.duration        = tm_c - ssp.time_b_accel;
    ssp.rpm_timestate.resize( ssp.duration );
    ssp.w2t_timestate.resize( ssp.duration );
-   ssps << ssp;                               // Save speed step
+   ssps << ssp;                            // Save speed step
 
    //-----------------------------------------------------------------
    // update simspeedprofile structure with timestate rpms and w2ts
    //-----------------------------------------------------------------
-   int rtimex          = 0;
+   int rtimex          = qMax( 0, tsx1 - 1 );
 
+DbgLv(1) << "Sim parms:ssProf: ssps.count" << ssps.count();
    for ( int i1 = 0; i1 < ssps.count(); i1++ )
    {
+DbgLv(1) << "Sim parms:ssProf:  i1" << i1 << "duration" << ssps[i1].duration;
+DbgLv(1) << "Sim parms:ssProf:   rpmsz" << ssps[i1].rpm_timestate.count()
+ << "w2tsz" << ssps[i1].w2t_timestate.count();
       for ( int i2 = 0; i2 < ssps[ i1 ].duration; i2++ )
-      {   
+      {
+int rst=
          tsobj->read_record( rtimex );
-         ssps[ i1 ].rpm_timestate[ i2 ] = tsobj->time_dvalue( "RawSpeed" );
+         ssps[ i1 ].rpm_timestate[ i2 ] = rsfm == "F4" ?
+                                          tsobj->time_dvalue( "RawSpeed" ) :
+                                  (double)tsobj->time_ivalue( "RawSpeed" );
          ssps[ i1 ].w2t_timestate[ i2 ] = tsobj->time_dvalue( "Omega2T" );
+if(i2<4 || (i2+5)>ssps[i1].duration)
+ DbgLv(1) << "Sim parms:ssProf:    i2" << i2 << "rtimex" << rtimex
+  << "rpm" << ssps[ i1 ].rpm_timestate[ i2 ]
+  << "w2t" << ssps[ i1 ].w2t_timestate[ i2 ] << "rd_stat" << rst;
          rtimex              = -1;
       }
    }

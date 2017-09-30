@@ -76,7 +76,6 @@ class US_2dsaProcess : public QObject
       //! \param da_mdl  Composite model
       //! \param da_tin  Time-invariant noise (or null)
       //! \param da_rin  Radially-invariant noise (or null)
-      //! \param da_nrm  Norm of A matrix before NNLS 
       //! \returns       Success flag:  true if successful
       bool get_results( US_DataIO::RawData*, US_DataIO::RawData*,
                         US_Model*, US_Noise*, US_Noise* );
@@ -122,7 +121,7 @@ private:
       QVector< int >             tkdepths;   // task packet depths
 
       QVector< double >          sigmas;     // monte carlo sigma variations
-      QVector< double >          normv;
+      QVector< double >          normv;      // norm values for A columns
       QList< double >            itvaris;    // iteration variances
 
       QList< QVector< US_Solute > > c_solutes;  // calculated solutes

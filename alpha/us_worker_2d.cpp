@@ -9,7 +9,7 @@
 #include "us_math2.h"
 #include "us_constants.h"
 #include "us_memory.h"
-//#include "us_gui_settings.h"
+
 // construct worker thread
 WorkerThread2D::WorkerThread2D( QObject* parent )
    : QThread( parent )
@@ -18,7 +18,7 @@ WorkerThread2D::WorkerThread2D( QObject* parent )
    abort      = false;
    solvesim   = NULL;
    thrn       = -1;
-   DbgLv(1) << "2P(WT): Thread created";
+DbgLv(1) << "2P(WT): Thread created";
 }
 
 // worker thread destructor
@@ -27,13 +27,13 @@ WorkerThread2D::~WorkerThread2D()
    //if ( solvesim != NULL )
    //   delete solvesim;
 
-   DbgLv(1) << "2P(WT):   Thread destroy - (1)finished?" << isFinished() << thrn;
+DbgLv(1) << "2P(WT):   Thread destroy - (1)finished?" << isFinished() << thrn;
    if ( ! wait( 2000 ) )
    {
       qDebug() << "Thread destroy wait timeout(2secs) : Thread" << thrn;
    }
-   DbgLv(1) << "2P(WT):   Thread destroy - (2)finished?" << isFinished() << thrn;
-   DbgLv(1) << "2P(WT):    Thread destroyed" << thrn;
+DbgLv(1) << "2P(WT):   Thread destroy - (2)finished?" << isFinished() << thrn;
+DbgLv(1) << "2P(WT):    Thread destroyed" << thrn;
 }
 
 // define work for a worker thread
@@ -61,6 +61,11 @@ void WorkerThread2D::define_work( WorkPacket2D& workin )
    dset_wk.solution_rec = workin.dsets[ 0 ]->solution_rec;
    dsets.clear();
    dsets << &dset_wk;                        // save its pointer
+DbgLv(1) << "WT:DWk: " 
+ << "dsi:tsobj" << workin.dsets[0]->simparams.tsobj
+ << "dsw:tsobj" << dset_wk.simparams.tsobj
+ << "dsi:sspk" << workin.dsets[0]->simparams.sim_speed_prof.count()
+ << "dsw:sspk" << dset_wk.simparams.sim_speed_prof.count();
 
    sim_vals             = workin.sim_vals;
    sim_vals.variances   = workin.sim_vals.variances;
@@ -81,18 +86,18 @@ void WorkerThread2D::get_result( WorkPacket2D& workout )
    workout.menmcx   = menmcx;
    workout.noisf    = noisflag;
    workout.Anorm    = norms ;
-   DbgLv(1) << "norm_size_from_get_result_worker_2d"<< workout.Anorm.size() ;
+DbgLv(1) << "norm_size_from_get_result_worker_2d"<< workout.Anorm.size() ;
    workout.csolutes = solutes_c;
    workout.ti_noise = ti_noise.values;
    workout.ri_noise = ri_noise.values;
    workout.sim_vals = sim_vals;
-   int nn=workout.csolutes.size();
-   int kk=nn/2;
-   int ni=solutes_i.size();
-   DbgLv(1) << "2P(WT): thr nn" << thrn << nn << "out sol0 solk soln"
-            << workout.csolutes[0].c << workout.csolutes[kk].c << workout.csolutes[nn-1].c
-            << "in sol0 soln" << ni << solutes_i[0].s*1.e13 << solutes_i[ni-1].s*1.e13
-            << solutes_i[0].c << solutes_i[ni-1].c;
+int nn=workout.csolutes.size();
+int kk=nn/2;
+int ni=solutes_i.size();
+DbgLv(1) << "2P(WT): thr nn" << thrn << nn << "out sol0 solk soln"
+ << workout.csolutes[0].c << workout.csolutes[kk].c << workout.csolutes[nn-1].c
+ << "in sol0 soln" << ni << solutes_i[0].s*1.e13 << solutes_i[ni-1].s*1.e13
+ << solutes_i[0].c << solutes_i[ni-1].c;
 }
 
 // run the worker thread
@@ -122,8 +127,6 @@ void WorkerThread2D::calc_residuals()
       calc_resids_ratio();
       return;
    }
-   QVector< double > ASave ;
-   QVector< double > BSave ;
 
    solvesim            = new US_SolveSim( dsets, thrn, true );
 
@@ -136,15 +139,7 @@ void WorkerThread2D::calc_residuals()
    sim_vals.dbg_level  = dbg_level;
    sim_vals.dbg_timing = US_Settings::debug_match( "2dsaTiming" );
 
-   int norows = (dsets[0]->run_data.scanCount() )* (dsets[0]->run_data.pointCount());
-   int nocols = sim_vals.solutes.count();
-
-   //solvesim->calc_residuals( 0, 1, sim_vals,&norms);
-
-   solvesim->calc_residuals( 0, 1, sim_vals, 0, &ASave, &BSave, &norms);
-
-   for ( int i=0 ; i < nocols ; i++ )
-       DbgLv(1)<< " norm_worker_2d " <<   norms[i] << "      "<< solutes_i[ i ].s <<"      "<< solutes_i[ i ].k;
+   solvesim->calc_residuals( 0, 1, sim_vals );
 
    solutes_c           = sim_vals.solutes;
    ti_noise.values     = sim_vals.ti_noise;

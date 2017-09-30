@@ -14,6 +14,10 @@
 #define DbgLv(a) if(dbg_level>=a)qDebug()<<"SS-w:"<<thrnrank<<":"
 #endif
 
+// Define the default norm cutoff value
+#define _NORM_CUTOFF_   1.00
+
+
 double zerothr = 0.020;    //!< zero threshold OD value
 double linethr = 0.050;    //!< linear threshold OD value
 double maxod   = 1.50;     //!< maximum OD value
@@ -22,8 +26,9 @@ double mfactex = 1.00;     //!< peak multiplier - experiment
 double minnzsc = 0.005;    //!< minimum non-zero scale factor
 
 // Create a Solve-Simulation object
-US_SolveSim::US_SolveSim( QList< DataSet* >& data_sets, int thrnrank,bool signal_wanted ) :
-                         QObject(), data_sets( data_sets ),thrnrank( thrnrank ), signal_wanted( signal_wanted )
+US_SolveSim::US_SolveSim( QList< DataSet* >& data_sets, int thrnrank,
+   bool signal_wanted ) : QObject(), data_sets( data_sets ),
+   thrnrank( thrnrank ), signal_wanted( signal_wanted )
 {
    abort        = false;     // Default: no abort
    dbg_level    = 0;         // Default: no debug prints
@@ -65,9 +70,9 @@ US_SolveSim::US_SolveSim( QList< DataSet* >& data_sets, int thrnrank,bool signal
          banddthr    = true;
       }
 
-      if(thrnrank==1) DbgLv(1) << "CR:zthr lthr mxod mnzc mfac mfex bthr"
-                               << zerothr << linethr << maxod << minnzsc 
-                               << mfactor << mfactex << banddthr;
+if(thrnrank==1) DbgLv(1) << "CR:zthr lthr mxod mnzc mfac mfex bthr"
+ << zerothr << linethr << maxod << minnzsc
+ << mfactor << mfactex << banddthr;
    }
 }
 
@@ -91,7 +96,7 @@ US_SolveSim::Simulation::Simulation()
 bool US_SolveSim::checkGridSize( QList< DataSet* >& data_sets,
                                  double s_max, QString& smsg )
 {
-   const long tstep_max = 10000L;
+   const long tstep_max = 500000L;
    bool   too_large = false;
    double s_show    = s_max * 1.0e13;
    smsg             = QString( "" );
@@ -121,14 +126,15 @@ bool US_SolveSim::checkGridSize( QList< DataSet* >& data_sets,
       double somgfac  = s_max * omega_s;
       double dt       = lgbmrat / ( somgfac * rsimpts );
       long   tsteps   = (long)( time_max / dt ) + 1L;
-      //if(thrnrank==1) DbgLv(1) << "CK: tsteps" << tsteps << "dt omg rpm" << dt << omega_s << rpm_max
-      // << "bot men rat sfac spts tmax" << bottom << meniscus << lgbmrat << somgfac << rsimpts << time_max;
+//if(thrnrank==1) DbgLv(1) << "CK: tsteps" << tsteps << "tstep_max" << tstep_max << "dt omg rpm"
+// << dt << omega_s << rpm_max << "bot men rat sfac spts tmax" << bottom << meniscus << lgbmrat
+// << somgfac << rsimpts << time_max;
 
       if ( tsteps > tstep_max )
       {
-         qDebug() << "CK: tsteps" << tsteps << "dt omg rpm" << dt << omega_s << rpm_max
-                  << "bot men rat sfac spts tmax" << bottom << meniscus << lgbmrat
-                  << somgfac << rsimpts << time_max;
+qDebug() << "CK: tsteps" << tsteps << "dt omg rpm" << dt << omega_s << rpm_max
+ << "bot men rat sfac spts tmax" << bottom << meniscus << lgbmrat
+ << somgfac << rsimpts << time_max;
          too_large       = true;
          smsg += tr( "The combination of rotor speed, the ratio of sedimentation\n"
                      "over diffusion coefficient, and length of experiment\n"
@@ -154,9 +160,9 @@ bool US_SolveSim::check_grid_size( double s_max, QString& smsg )
 }
 
 // Do the real work of a 2dsa/ga thread/processor:  simulation from solutes set
-void US_SolveSim::calc_residuals( int offset, int dataset_count,
-                                  Simulation& sim_vals, bool padAB,
-                                  QVector< double >* ASave, QVector< double >* BSave , QVector< double >* NSave)
+void US_SolveSim::calc_residuals( int offset, int dataset_count, Simulation& sim_vals,
+   bool padAB, QVector< double >* ASave, QVector< double >* BSave,
+   QVector< double >* NSave )
 {
    QVector< double > sv_nnls_a;
    QVector< double > sv_nnls_b;
@@ -177,13 +183,30 @@ void US_SolveSim::calc_residuals( int offset, int dataset_count,
    d_offs        = offset;                        // Initial data offset
    bool use_zsol = ( nzsol > 0 );                 // Flag use ZSolutes
    nsolutes      = use_zsol ? nzsol : nsolutes;   // Count of used solutes
-   int npoints, nscans ;
+   int npoints   = data_sets[ 0 ]->run_data.pointCount();
+   int nscans    = data_sets[ 0 ]->run_data.scanCount();
+   double norm_cut  = _NORM_CUTOFF_;              // Default norm_cutoff value
 
-   #if 0
-    #ifdef NO_DB
-     US_Settings::set_us_debug( dbg_level );
-    #endif
-   #endif
+   // If debug text modifies norm_cut factor, apply it
+   QStringList dbgtxt = US_Settings::debug_text();
+if(thrnrank<2) DbgLv(1) << "CR: NCUTOFF dbgtxt count" << dbgtxt.count();
+
+   for ( int ii = 0; ii < dbgtxt.count(); ii++ )
+   {  // If debug text modifies norm_cutoff, apply it
+      if ( dbgtxt[ ii ].startsWith( "normCutoff=" ) )
+         norm_cut      = QString( dbgtxt[ ii ] ).section( "=", 1, 1 ).toDouble();
+if(thrnrank<2) DbgLv(1) << "CR:   NORMCUT  ii" << ii << "dbgtii" << dbgtxt[ii]
+ << "norm_cut" << norm_cut;
+   }
+if(thrnrank<2) DbgLv(1) << "CR: NORMCUT=" << norm_cut;
+
+//   double norm_cs   = norm_cut;
+
+#if 0
+#ifdef NO_DB
+US_Settings::set_us_debug( dbg_level );
+#endif
+#endif
    //-----------------------------------------------------------
    if ( banddthr )
    {
@@ -195,8 +218,8 @@ void US_SolveSim::calc_residuals( int offset, int dataset_count,
          linethr       = 0.0;
          maxod         = 1.0e+20;
       }
-     if(thrnrank<2) DbgLv(1) << "CR:zthr lthr mxod mfac"
-                             << zerothr << linethr << maxod << mfactor;
+if(thrnrank<2) DbgLv(1) << "CR:zthr lthr mxod mfac"
+ << zerothr << linethr << maxod << mfactor;
    }
    //----------------------------------------------------------
 
@@ -205,20 +228,20 @@ void US_SolveSim::calc_residuals( int offset, int dataset_count,
    for ( int ee = offset; ee < lim_offs; ee++ )
    {  // Count scan,point totals for all data sets
       DataSet* dset = data_sets[ ee ];
-      npoints   = dset->run_data.pointCount();
-      nscans    = dset->run_data.scanCount();
+      nscans        = dset->run_data.scanCount();
+      npoints       = dset->run_data.pointCount();
       ntotal       += ( nscans * npoints );
       ntinois      += npoints;
       nrinois      += nscans;
    }
    //----------------------------------------------------------
-   bool tikreg      = ( sim_vals.alpha != 0.0 );
-   int  narows      = tikreg ? ( ntotal + nsolutes ) : ntotal;
+   bool tikreg   = ( sim_vals.alpha != 0.0 );
+   int  narows   = tikreg ? ( ntotal + nsolutes ) : ntotal;
 
    // Set up and clear work vectors
-   int  navals      = narows * nsolutes;   // Size of "A" matrix
-   DbgLv(1) << "   CR:na nb nx" << navals << narows << nsolutes
-            << "  nt ns" << ntotal << nsolutes;
+   int  navals   = narows * nsolutes;   // Size of "A" matrix
+DbgLv(1) << "   CR:na nb nx" << navals << narows << nsolutes
+ << "  nt ns" << ntotal << nsolutes;
 
    QVector< double > nnls_a( navals,   0.0 );
    QVector< double > nnls_b( narows,   0.0 );
@@ -226,7 +249,7 @@ void US_SolveSim::calc_residuals( int offset, int dataset_count,
    QVector< double > tinvec( ntinois,  0.0 );
    QVector< double > rinvec( nrinois,  0.0 );
 
-   QVector< double > sv_norm( nsolutes,  0.0 );   
+   QVector< double > sv_norm( nsolutes, 0.0 );
 
    // Set up for a single-component model
    US_Model model;
@@ -246,34 +269,36 @@ void US_SolveSim::calc_residuals( int offset, int dataset_count,
       data_threshold( &wdata, zerothr, linethr, maxod, mfactex );
    }
    //-------------------------------------------------------------
-   DebugTime("BEG:calcres");
+DebugTime("BEG:calcres");
    // Populate b array with experiment data concentrations
-   int    kb     = 0;
-   int    kodl   = 0;
-   #if 0
-     double s0max  = 0.0;
-   #endif
+   int    kb      = 0;
+   int    kodl    = 0;
+   double norm_b  = 0.0;
+#if 0
+   double s0max  = 0.0;
+#endif
    //==================================================================
    for ( int ee = offset; ee < lim_offs; ee++ )
    {
       US_DataIO::EditedData* edata = &data_sets[ ee ]->run_data;
-      edata       = banddthr ? &wdata : edata;
-      npoints = edata->pointCount();
-      nscans  = edata->scanCount();
-      double odlim = edata->ODlimit;
+      edata          = banddthr ? &wdata : edata;
+      npoints        = edata->pointCount();
+      nscans         = edata->scanCount();
+      double odlim   = edata->ODlimit;
+
       for ( int ss = 0; ss < nscans; ss++ )
       {
          for ( int rr = 0; rr < npoints; rr++ )
          {  // Fill the B matrix with experiment data (or zero)
             double evalue  = edata->value( ss, rr );
-            //qDebug()<<"subha_OD limit for scan "<< ss << rr << evalue << odlim ;
+//DbgLv(1)<<"subha_OD limit for scan "<< ss << rr << evalue << odlim;
+
             if ( evalue >= odlim )
             {  // Where ODlimit is exceeded, substitute 0.0 and bump count
                evalue         = 0.0;
-               //qDebug()<<"subha_OD limit exceeded for scan no "<< ss << rr << odlim ;
                kodl++;
-            }// if loop
-
+DbgLv(1)<<"subha_OD limit exceeded for scan no " << ss << rr << odlim << kodl;
+            }
 #if 0
             else if ( ss == 0 )
             {  // Find max of scan 0 values
@@ -281,17 +306,18 @@ void US_SolveSim::calc_residuals( int offset, int dataset_count,
             }
 #endif
 
+            // Store the B value in a row for a dataset
             nnls_b[ kb++ ] = evalue;
+            norm_b        += sq( evalue );
+
          }  //"rr"-based for loop
-
       }  // "ss"-based for loop
-
    } // "ee"-based for loop
+//DebugTime("END:clcr-NB");
 
-   DbgLv(1)<<"kodl= " << kodl ;
-   //====================================================================
-   DbgLv(1) << "   CR:B fill kodl" << kodl;
-
+   norm_b         = norm_b > 0.0 ? sqrt( norm_b ) : 0.0;
+DbgLv(1)<<"kodl= " << kodl << "norm_b" << norm_b;
+DbgLv(1) << "   CR:B fill kodl" << kodl;
 #if 0
    // If needed, scale the alpha used in A-matrix appendix diagonals
    if ( tikreg )
@@ -301,66 +327,76 @@ void US_SolveSim::calc_residuals( int offset, int dataset_count,
    }
 #endif
 
-   if ( abort ) return ;
+   if ( abort ) return;
 
-   QList< US_DataIO::RawData > simulations;
+   QList< US_DataIO::RawData > simulations;       // All simulations, this run
    simulations.reserve( nsolutes * dataset_count );
 
    // Simulate data using models, each with a single s,f/f0 component
-   int    increp  = nsolutes / 10;                 // Progress report increment
-          increp  = ( increp < 10 ) ? 10 : increp;
-   int    kstep   = 0;                             // Progress step count
-   int    ka      = 0;                             // nnls_a output index
-   int    ksols   = 0;
-   int    stype   = data_sets[ offset ]->solute_type;
+   int increp    = nsolutes / 10;                 // Progress report increment
+       increp    = ( increp < 10 ) ? 10 : increp;
+   int kstep     = 0;                             // Progress step count
+   int ka        = 0;                             // nnls_a output index
+   int ksols     = 0;
+   int stype     = data_sets[ offset ]->solute_type;
 
    if ( use_zsol )
       qSort( sim_vals.zsolutes );
    else
       qSort( sim_vals.solutes );
 
-    double** Amatrix ; 
+   int count_cut  = 0;         // Count of A columns cut by norm tolerance
+   int ksolutes   = nsolutes;  // Saved original number of solutes (columns)
+   QList< int > cutsols;       // List of original solute indecies for cuts
+   QList< int > usesols;       // List of original solute indecies for used
 
-    QVector< double > nnlsa1;
-    int m1 = 0;
-    int count = 0 ;
-   //=============================================================================
+   //=========================================================================
+   // Build up the A matrix for one of three cases:
+   //  (1) Normal:      stype=0;    s,k,constant-vbar
+   //  (2) Stype mask:  stype=1|>9; any x,y,z  (e.g, s,v,constant-k)
+   //  (3) Custom:      stype=2;    custom grid
+   //=========================================================================
+
    if ( stype == 0 )
-   { 
-      DbgLv(1)<<"stype == 0 case" <<"nsolutes="<< nsolutes << "offset="<< offset << "lim_offs"<< lim_offs;  
+   {
+DbgLv(1)<<"stype == 0 case" <<"nsolutes="<< nsolutes << "offset="<< offset << "lim_offs"<< lim_offs;
+      //======================================================================
       // Normal case of varying f/f0 with constant vbar
+      //======================================================================
       int attr_x     = 0;      // Default X is s
       int attr_y     = 1;      // Default Y is f/f0
       int attr_z     = 3;      // Default Z is vbar
       int smask      = ( attr_x << 6 ) | ( attr_y << 3 ) | attr_z;
-      DataSet* dset=data_sets[0];
+      DataSet* dset  = data_sets[ 0 ];
 
-      DbgLv(2) << "   CR:BF s20wcorr D20wcorr" << dset->s20w_correction
-               << dset->D20w_correction << "manual" << dset->solution_rec.buffer.manual
-               << "vbar20" << dset->vbar20;
-      int cc1 = 0;
-      for ( int cc = 0; cc < nsolutes; cc++ )
+DbgLv(2) << "   CR:BF s20wcorr D20wcorr" << dset->s20w_correction
+ << dset->D20w_correction << "manual" << dset->solution_rec.buffer.manual
+ << "vbar20" << dset->vbar20;
+
+//DebugTime("BEG:clcr-NA");
+      for ( int cc = 0; cc < ksolutes; cc++ )
       {  // Solve for each solute
-         if ( abort ) return ;
-         int bx   = 0;
+         if ( abort ) return;
+         int bx         = 0;
+         int kacol      = ka;
+         double norm_a  = 0.0;
+#if 0
+         double norm_s  = norm_cs;
+         QList< double > enorms;
+#endif
+
+//DebugTime("BEG: clcr-NA-eeloop");
          for ( int ee = offset; ee < lim_offs; ee++ )
          {  // Solve for each data set
             DataSet*               dset  = data_sets[ ee ];
             US_DataIO::EditedData* edata = banddthr ? &wdata : &dset->run_data;
             US_DataIO::RawData     simdat;
-            int npoints = edata->pointCount();
-            int nscans  = edata->scanCount();
+            npoints     = edata->pointCount();
+            nscans      = edata->scanCount();
             zcomponent.vbar20     = dset->vbar20;
-      
-            m1 = nscans*npoints ;
+//            int kasub      = ka;
+            double norm_e  = 0.0;
 
-            double **Amatrix = new double* [nsolutes];
-
-            for ( int count = 0; count < nsolutes; count++ )
-	        Amatrix[count] = new double [ m1 ];
-
-            DbgLv(1)<< "after multipln m1=" << m1 ;
-            nnlsa1.resize(m1) ;  
             // Set model with standard space s and k
             if ( use_zsol )
             {
@@ -378,216 +414,234 @@ void US_SolveSim::calc_residuals( int offset, int dataset_count,
 
             // Fill in the missing component values
             model.update_coefficients();
-            //DbgLv(1) << "CR:   cc" << cc << "model s,k,w,v,d,c"
-            // << model.components[0].s << model.components[0].f_f0
-            // << model.components[0].mw << model.components[0].vbar20
-            // << model.components[0].D << model.components[0].signal_concentration;
+//DbgLv(1) << "CR:   cc" << cc << "model s,k,w,v,d,c"
+// << model.components[0].s << model.components[0].f_f0
+// << model.components[0].mw << model.components[0].vbar20
+// << model.components[0].D << model.components[0].signal_concentration;
 
             // Convert to experimental space
             model.components[ 0 ].s   /= dset->s20w_correction;
             model.components[ 0 ].D   /= dset->D20w_correction;
-            //DbgLv(1) << "CR:     exp.space model s,k,w,v,d,c"
-            // << model.components[0].s << model.components[0].f_f0
-            // << model.components[0].mw << model.components[0].vbar20
-            // << model.components[0].D << model.components[0].signal_concentration;
+//DbgLv(1) << "CR:     exp.space model s,k,w,v,d,c"
+// << model.components[0].s << model.components[0].f_f0
+// << model.components[0].mw << model.components[0].vbar20
+// << model.components[0].D << model.components[0].signal_concentration;
 
             // Initialize simulation data with the experiment's grid
-            DbgLv(2) << "   CR:111  rss now" << US_Memory::rss_now() << "cc" << cc;
-
-            //--------------------------------------------------
+DbgLv(2) << "   CR:111  rss now" << US_Memory::rss_now() << "cc" << cc;
             US_AstfemMath::initSimData( simdat, *edata, 0.0 );
-            //---------------------------------------------------
 
-            DbgLv(2) << "   CR:112  rss now" << US_Memory::rss_now() << "cc" << cc;
-            if (dbg_level>1 && thrnrank<2 && cc==0) {model.debug(); dset->simparams.debug(); }      
-            //-------------------------------------
-            //Check if timestate file exists or not
-            //-------------------------------------
-            QString runID     = edata->runID;
-            QString tmst_fpath = US_Settings::resultDir() +"/" + runID +"/" + runID + ".time_state.tmst";
-            QFileInfo check_file(tmst_fpath);
+DbgLv(2) << "   CR:112  rss now" << US_Memory::rss_now() << "cc" << cc;
+if (dbg_level>1 && thrnrank<2 && cc==0) { model.debug(); dset->simparams.debug(); }
 
-            if ( (check_file.exists()) && (check_file.isFile()) )
-            {
-              dset->simparams.simSpeedsFromTimeState( tmst_fpath);
-              DbgLv(1)<< "solve_sim_calc_residuals_1 : timestate file exists"
-                      << tmst_fpath << " timestateobject = "<<dset->simparams.tsobj;
+            // Check if timestate file exists or not
+            if ( dset->simparams.tsobj == NULL  ||
+                 dset->simparams.sim_speed_prof.count() < 1 )
+            {  // Simparms does not yet have a loaded timestate
+DbgLv(0) << "solve_sim_calc_residuals_1 : TSOBJ" << dset->simparams.tsobj
+ << "ssprof count" << dset->simparams.sim_speed_prof.count();
+               dset->simparams.tsobj = NULL;           // Insure TimeState object and
+               dset->simparams.sim_speed_prof.clear(); //  speed prof are both cleared.
+               QString runID     = edata->runID;
+#ifdef NO_DB
+               QString tmst_fpath = ( dset->tmst_file.isEmpty() ) ?
+                                    "../" + runID + ".time_state.tmst" :
+                                    dset->tmst_file;
+#else
+               QString tmst_fpath = US_Settings::resultDir() +"/" + runID +"/" + runID + ".time_state.tmst";
+#endif
+               QFileInfo check_file( tmst_fpath );
+
+               if ( ( check_file.exists() )  &&  ( check_file.isFile() ) )
+               {  // Timestate file exists
+                  bool intv_1sec  = US_AstfemMath::timestate_onesec( tmst_fpath, simdat );
+DbgLv(0) << "solve_sim_calc_residuals_1 : intv_1sec" << intv_1sec;
+
+                  if ( intv_1sec )
+                  {  // Timestate is already at 1-second interval, so load it
+                     dset->simparams.simSpeedsFromTimeState( tmst_fpath );
+DbgLv(0) << "solve_sim_calc_residuals_1 : sim_speed_prof count" << dset->simparams.sim_speed_prof.count()
+ << " intv_1sec" << intv_1sec;
+                  }
+DbgLv(0) << "solve_sim_calc_residuals_1 : timestate file exists" << tmst_fpath
+ << " timestateobject=" << dset->simparams.tsobj << "sspknt=" << dset->simparams.sim_speed_prof.count();
+DbgLv(0) << "solve_sim_calc_residuals_1 : ntimes" << dset->simparams.tsobj->time_count();
+               }
+               else
+               {  // Timestate file does not exist (will be created in astfem_rsa)
+DbgLv(0) << "solve_sim_1: timestate file does not exist" << tmst_fpath << dset->tmst_file;
+               }
             }
-            else
-            {   DbgLv(1)<<"solve_sim_1: timestate file does not exist";
-            }
-            //---------------------------------------
+else
+ DbgLv(1) << "solve_sim_1: timestate object exists  sspknt=" << dset->simparams.sim_speed_prof.count()
+  << " timestateobject=" << dset->simparams.tsobj;
 
+//DebugTime("BEG: clcr-NA-astfem");
             US_Astfem_RSA astfem_rsa( model, dset->simparams );
+DbgLv(2) << "   CR:113  rss now" << US_Memory::rss_now() << "cc" << cc;
 
-            DbgLv(2) << "   CR:113  rss now" << US_Memory::rss_now() << "cc" << cc;
-
-            //astfem_rsa.set_debug_flag( dbg_level );
+            astfem_rsa.set_debug_flag( dbg_level );
 
             astfem_rsa.calculate( simdat );
-
-            DbgLv(2) << "   CR:114  rss now" << US_Memory::rss_now() << "cc" << cc;
-            if ( abort ) return ;
+//DebugTime("END: clcr-NA-astfem");
+DbgLv(2) << "   CR:114  rss now" << US_Memory::rss_now() << "cc" << cc;
+            if ( abort ) return;
 
             if ( banddthr )
             {  // If band forming, hold data within thresholds; skip if all-zero
-               if ( data_threshold( &simdat, zerothr, linethr, maxod, mfactor) )
+               if ( data_threshold( &simdat, zerothr, linethr, maxod, mfactor ) )
                   continue;
 
                ksols++;
             }
 
             simulations << simdat;   // Save simulation (each dataset,solute)
-            DbgLv(2) << "   CR:115  rss now" << US_Memory::rss_now() << "cc" << cc;
+DbgLv(2) << "   CR:115  rss now" << US_Memory::rss_now() << "cc" << cc;
 
             // Populate the A matrix for the NNLS routine with simulation
-            int ks=ka;
-            DbgLv(1) << "   CR: A fill kodl" << kodl << "bndthr ksol" << banddthr << ksols
-                     << "  ks" << ks;
-            double nnls_a_norm1 = 0.0, nnls_a_norm2 = 0.0 ;
+DbgLv(1) << "   CR: A fill kodl" << kodl << "bndthr ksol" << banddthr << ksols
+ << "  kacol" << kacol;
 
             if ( kodl == 0 )
             {  // Normal case of no ODlimit substitutions
-               int ka1 = 0 ;
-               for ( int ss = 0; ss < nscans; ss++ )
-               {   
-                   for ( int rr = 0; rr < npoints; rr++ )
-                   {   
-                       nnls_a[ ka++ ] = simdat.value( ss, rr );
-                       nnlsa1[ ka1 ]  = simdat.value( ss, rr );
-                       ka1++ ;
-                   }
-               } 
-               //------------------------------------                                 
-               for ( int i = 0 ; i < m1 ; i++)
-               {   Amatrix[cc][i] = nnlsa1 [i] ;
-                   nnlsa1 [i]     = 0.0 ;
-               } 
-        
-               QVector<double>v1 ;
-               QVector<double>v2 ;
-               v1.resize( m1 );
-               v2.resize( m1 );
-               double angle ;
-               
-               for ( int i = 0; i < m1 ; i++ )
-               {
-                    v1 [ i ] = Amatrix[cc][i] ;
-               }
-               double sum1 = 0.0 ;
-               double sum2 = 0.0 ;
-               for ( int i = 0; i < m1 ; i++ )
-               {
-                   sum1 += ( v1[i]*v1[i] ) ;
-               }
-               sum2 = sqrt( sum1 ) ;
 
-               sv_norm [cc] = sum2 ;
-               if ( sum2 < 1.0e-05 )
-               { ka -= m1 ;
-                 nsolutes -- ;
-                 count ++ ;
-                 DbgLv(1)<< " norm is becoming zero" ;
+               for ( int ss = 0; ss < nscans; ss++ )
+               {
+                  for ( int rr = 0; rr < npoints; rr++ )
+                  {
+                     double sval    = simdat.value( ss, rr );
+                     nnls_a[ ka++ ] = sval;
+                     norm_a        += sq( sval );
+                     norm_e        += sq( sval );
+                  }
                }
-               DbgLv(1)<< " norm_of_the_vector" << sum2  << sim_vals.solutes[ cc ].s<< sim_vals.solutes[ cc ].k;
-               //----------------------------------------------
+DbgLv(1) << " T0O0:norm_of_the_vector" << norm_a << sim_vals.solutes[cc].s << sim_vals.solutes[cc].k;
                //------------------------------------------------
-                   
-               //DbgLv(2) << "   CR:116  rss now" << US_Memory::rss_now() << "cc" << cc;
-               //if(lim_offs>1&&(thrnrank==1||thrnrank==11))
-               //DbgLv(1) << "CR: ks ka" << ks << ka
-               //         << "nnA s...k" << nnls_a[ks] << nnls_a[ks+1] 
-               //         << nnls_a[ka-2] << nnls_a[ka-1]
-               //         << "cc ee" << cc << ee;
+
+//DbgLv(2) << "   CR:116  rss now" << US_Memory::rss_now() << "cc" << cc;
+//if(lim_offs>1&&(thrnrank==1||thrnrank==11))
+// DbgLv(1) << "CR: kacol ka" << kacol << ka
+//  << "nnA s...k" << nnls_a[ks] << nnls_a[ks+1]
+//  << nnls_a[ka-2] << nnls_a[ka-1]
+//  << "cc ee" << cc << ee;
             }
+
             else
             {  // Special case where ODlimit substitutions are in B matrix
-               DbgLv(1)<<"stype==0 but from else part" ;
-               int ka1 = 0 ;
+DbgLv(1)<<"stype==0 but from else part";
+
                for ( int ss = 0; ss < nscans; ss++ )
                {
                   for ( int rr = 0; rr < npoints; rr++ )
                   {  // Fill A with simulations (or zero where B has zero)
+// x  x  x  x  x  x  x  x
                      if ( nnls_b[ bx++ ] != 0.0 )
-                     {   nnls_a[ ka++ ] = simdat.value( ss, rr );
-                         nnlsa1[ ka1 ] = simdat.value( ss, rr );
-                         ka1++ ;
+                     {
+                        double sval    = simdat.value( ss, rr );
+                        nnls_a[ ka++ ] = sval;
+                        norm_a        += sq( sval );
+                        norm_e        += sq( sval );
                      }
+
                      else
-                     {   nnls_a[ ka++ ] = 0.0;
-                         nnlsa1[ ka1 ]  = 0.0;
-                         ka1++ ;
+                     {
+                        nnls_a[ ka++ ] = 0.0;
                      }
                   }
                }
-               for ( int i = 0 ; i < m1 ; i++)
-               {   Amatrix[cc][i] = nnlsa1 [i] ;
-                   nnlsa1 [i]     = 0.0 ;
-               }
-               QVector<double>v1 ;
-               QVector<double>v2 ;
-               v1.resize( m1 );
-               v2.resize( m1 );
-               double angle ;
-
-               for ( int i = 0; i < m1 ; i++ )
-               {    
-                    v1 [ i ] = Amatrix[cc][i] ;
-               }
-               double sum1 = 0.0 ;
-               double sum2 = 0.0 ;
-               for ( int i = 0; i < m1 ; i++ )
-               {   
-                   sum1 += ( v1[i]*v1[i] ) ;
-               }
-               sum2 = sqrt( sum1 ) ;
-
-               if ( sum2 < 1.0e-05 )
-               { ka -= m1 ;
-                 nsolutes -- ;
-                 count ++ ; 
-                // DbgLv(1)<< " removed_vector" << sum2  <<  model.components[ 0 ].s << model.components[ 0 ].D;
-                // if ( nsolutes == 0)
-                // DbgLv(1)<< " nsolute is becoming zero" ;
-               }
-              DbgLv(1)<< " norm_of_the_vector" << sum2  << sim_vals.solutes[ cc ].s<< sim_vals.solutes[ cc ].k;
-
+DbgLv(1) << " T0O1:norm_of_the_vector" << norm_a << sim_vals.solutes[cc].s << sim_vals.solutes[cc].k;
             }
-            
-            DbgLv(1) << "CR: NNLS A filled ee" << ee << lim_offs;
-            DbgLv(1) << "CR: NNLS  &simdat" << &simdat;
-            DbgLv(1) << "CR: NNLS  &model " << &model;
-            DbgLv(1) << "CR: NNLS  &nnls_a" << &nnls_a;
-            DbgLv(1) << "CR: NNLS  &simulations" << &simulations;
-            DbgLv(1) << "CR: NNLS  astfem_rsa" << &astfem_rsa;
-       }  // Each data set
-            DbgLv(1) << "CR: NNLS A filled lo" << lim_offs;
-       //NSave = v2 ;
-       //----------------------------------------
+
+#if 0
+            if ( dataset_count > 1 )
+            {  // Global-fit:  test each dataset portion of a column
+               // Compute Norm of A sub-column:  square root of sum-of-squares
+               norm_e         = norm_e > 0.0 ? sqrt( norm_e ) : 0.0;
+               enorms << norm_e;
+//               if ( norm_e < norm_cut )
+               if ( norm_e < norm_cs )
+               {  // Sub-column for dataset to be zeroed
+DbgLv(0) << "CR: NORM_E" << norm_e << norm_cut << "cc ee" << cc << ee;
+                  norm_s         = qMin( norm_s, norm_e );
+#if 0
+                  double sval    = norm_cut;
+                  int ksend      = kasub + ( nscans * npoints );
+                  for ( int ksa = kasub; ksa < ksend; ksa++ )
+                  {
+                     nnls_a[ ksa ]  = sval;
+                  }
+#endif
+               }
+            }
+#endif
+DbgLv(1) << "CR: NNLS A filled ee" << ee << lim_offs;
+DbgLv(1) << "CR: NNLS  &simdat" << &simdat;
+DbgLv(1) << "CR: NNLS  &model " << &model;
+DbgLv(1) << "CR: NNLS  &nnls_a" << &nnls_a;
+DbgLv(1) << "CR: NNLS  &simulations" << &simulations;
+DbgLv(1) << "CR: NNLS  astfem_rsa" << &astfem_rsa;
+//DebugTime("END:   clcr-NA-eeiter");
+         }  // Each data set of constant vbar (stype=1)
+//DebugTime("END: clcr-NA-eeloop");
+DbgLv(1) << "CR: NNLS A filled lo" << lim_offs;
+         //NSave = v2;
+         //----------------------------------------
          if ( tikreg )
          {  // For Tikhonov Regularization append to each column
-            for ( int aa = 0; aa < nsolutes; aa++ )
+            int colx       = cc - count_cut;
+
+            for ( int aa = 0; aa < ksolutes; aa++ )
             {
-               nnls_a[ ka++ ] = ( aa == cc ) ? alphad : 0.0;
+               nnls_a[ ka++ ] = ( aa == colx ) ? alphad : 0.0;
             }
          }
+
+         // Compute Norm of A column:  square root of sum-of-squares
+         norm_a         = norm_a > 0.0 ? sqrt( norm_a ) : 0.0;
+#if 0
+         if ( norm_s < norm_cs )
+         {
+DbgLv(0)<< " norm_s norm_a norm_b" << norm_s << norm_a << norm_b
+ << "enorms" << enorms;
+            norm_a         = norm_s;
+         }
+#endif
+
+         if ( norm_a < norm_cut )
+         {  // Norm for A column falls below cutoff:  skip column
+            ka             = kacol;  // Reset to replace this column
+            nsolutes--;              // Decrement solutes count
+            count_cut++;             // Bump count of cut columns
+            cutsols << cc;           // Save original index of cut solute
+DbgLv(0)<< " norm is becoming zero -- norm_a" << norm_a
+ << "count_cut" << count_cut << "cc" << cc;
+         }
+         else
+         {
+            usesols << cc;           // Save original index of used solute
+         }
+DbgLv(1)<< " T0:NCt: norm_of_the_vector" << norm_a  << "s k"
+ << sim_vals.solutes[cc].s << sim_vals.solutes[cc].k;
 
          if ( signal_wanted  &&  ++kstep == increp )
          {  // If asked for and step at increment, signal progress
             emit work_progress( increp );
-            kstep = 0;                     // Reset step count
+            kstep = 0;               // Reset step count
          }
-         DbgLv(1) << "CR: NNLS A filled cc" << cc << nsolutes;
-      }   // Each solute
-      //==============================================
-      DbgLv(1) << "CR: NNLS A filled";
+DbgLv(1) << "CR: NNLS A filled cc" << cc << nsolutes;
+      }   // Each solute of constant vbar
+//DebugTime("END:clcr-NA");
+// x  x  x  x  x  x  x  x
+DbgLv(1) << "CR: NNLS A filled nsol ksol cutsol[n]"
+ << nsolutes << ksolutes << cutsols[cutsols.size()-1];
    }   // Constant vbar
-   //=======================================
+
    else if ( stype == 1  ||  stype > 9 )
-   //=======================================
-   { 
-      //qDebug()<< "stype == 1  ||  stype > 9 case :" ;
+   {
+      //======================================================================
       // Special case of varying vbar with constant f/f0  (or other)
+      //======================================================================
+//DbgLv(1) << "stype == 1  ||  stype > 9 case :";
       int attr_x     = 0;      // Default X is s
       int attr_y     = 3;      // Default Y is vbar
       int attr_z     = 1;      // Default fixed is f/f0
@@ -600,8 +654,8 @@ void US_SolveSim::calc_residuals( int offset, int dataset_count,
           attr_z     =   stype        & 7;
           smask      = stype;
       }
-      DbgLv(1) << "CR: attr_ x,y,z" << attr_x << attr_y << attr_z << stype << smask
-               << "use_zsol" << use_zsol;
+DbgLv(1) << "CR: attr_ x,y,z" << attr_x << attr_y << attr_z << stype << smask
+ << "use_zsol" << use_zsol;
 
       if ( ! use_zsol )
       {
@@ -609,11 +663,13 @@ void US_SolveSim::calc_residuals( int offset, int dataset_count,
          set_comp_attr( zcomponent, sim_vals.solutes[ 0 ], attr_z );
       }
 
-      for ( int cc = 0; cc < nsolutes; cc++ )
+      for ( int cc = 0; cc < ksolutes; cc++ )
       {  // Solve for each solute
-         if ( abort ) return ;
-         int bx   = 0;
-         DbgLv(1) << "CR: cc" << cc << " use_zsol" << use_zsol;
+         if ( abort ) return;
+         int bx         = 0;
+         int kacol      = ka;
+         double norm_a  = 0.0;
+DbgLv(1) << "CR: cc" << cc << " use_zsol" << use_zsol;
 
          for ( int ee = offset; ee < lim_offs; ee++ )
          {  // Solve for each data set
@@ -621,21 +677,19 @@ void US_SolveSim::calc_residuals( int offset, int dataset_count,
             DataSet*               dset  = data_sets[ ee ];
             US_DataIO::EditedData* edata = banddthr ? &wdata : &dset->run_data;
             US_DataIO::RawData     simdat;
-            int nscans     = edata->scanCount();
-            int npoints    = edata->pointCount();
+            nscans         = edata->scanCount();
+            npoints        = edata->pointCount();
             model.components[ 0 ]  = zcomponent;
-
-            //double Amatrix[nscans][npoints];
 
             // Set model with standard space s,k,v  (or other 3 attributes)
             if ( use_zsol )
             {
                US_ZSolute::set_mcomp_values( model.components[ 0 ],
                                              sim_vals.zsolutes[ cc ], smask );
-               //DbgLv(1) << "CR:   cc" << cc << "model s,k,w,v,d,c"
-               // << model.components[0].s << model.components[0].f_f0
-               // << model.components[0].mw << model.components[0].vbar20
-               // << model.components[0].D << model.components[0].signal_concentration;
+//DbgLv(1) << "CR:   cc" << cc << "model s,k,w,v,d,c"
+// << model.components[0].s << model.components[0].f_f0
+// << model.components[0].mw << model.components[0].vbar20
+// << model.components[0].D << model.components[0].signal_concentration;
             }
             else
             {
@@ -661,63 +715,80 @@ void US_SolveSim::calc_residuals( int offset, int dataset_count,
 
             model.components[ 0 ].s   /= sd.s20w_correction;
             model.components[ 0 ].D   /= sd.D20w_correction;
-
-            //DbgLv(1) << "CR:     exp.space model s,k,w,v,d,c"
-            // << model.components[0].s << model.components[0].f_f0
-            // << model.components[0].mw << model.components[0].vbar20
-            // << model.components[0].D << model.components[0].signal_concentration;
+//DbgLv(1) << "CR:     exp.space model s,k,w,v,d,c"
+// << model.components[0].s << model.components[0].f_f0
+// << model.components[0].mw << model.components[0].vbar20
+// << model.components[0].D << model.components[0].signal_concentration;
 
             // Initialize simulation data with the experiment's grid
             US_AstfemMath::initSimData( simdat, *edata, 0.0 );
 
-            if ( dbg_level>1 && thrnrank<2 && cc==0 ) 
+            if ( dbg_level>1 && thrnrank<2 && cc==0 )
             {
-                model.debug(); dset->simparams.debug(); 
+                model.debug(); dset->simparams.debug();
             }
-
-            DbgLv(1) << "CR:  simdat nsc npt" << simdat.scanCount() << simdat.pointCount();
+DbgLv(1) << "CR:  simdat nsc npt" << simdat.scanCount() << simdat.pointCount();
 
             // Calculate Astfem_RSA solution (Lamm equations)
             //
-            QString runID     = edata->runID;
-            QString tmst_fpath = US_Settings::resultDir() +"/" + runID +"/" + runID + ".time_state.tmst";
-            QFileInfo check_file(tmst_fpath);
+            if ( dset->simparams.tsobj == NULL  ||
+                 dset->simparams.sim_speed_prof.count() < 1 )
+            {  // Simparms does not yet have a loaded timestate
+DbgLv(0) << "solve_sim_calc_residuals_2 : TSOBJ" << dset->simparams.tsobj
+ << "ssprof count" << dset->simparams.sim_speed_prof.count();
+               QString runID     = edata->runID;
+#ifdef NO_DB
+               QString tmst_fpath = ( dset->tmst_file.isEmpty() ) ?
+                                    "../" + runID + ".time_state.tmst" :
+                                    dset->tmst_file;
+#else
+               QString tmst_fpath = US_Settings::resultDir() +"/" + runID +"/" + runID + ".time_state.tmst";
+#endif
+               QFileInfo check_file( tmst_fpath );
 
-            if ( (check_file.exists()) && (check_file.isFile()) )
-            {
-               dset->simparams.simSpeedsFromTimeState( tmst_fpath);
-               DbgLv(1)<<"solve_sim : timestate file exists"<< tmst_fpath 
-                        << " timestateobject = "<<dset->simparams.tsobj;
-            }
-            else
-            {    DbgLv(1)<<"solve_sim: timestate file does not exist";
-               // US_AstfemMath::writetimestate( tmst_fpath,dset->simparams, sim_vals.sim_data );
-               // dset->simparams.simSpeedsFromTimeState( tmst_fpath);
+               if ( ( check_file.exists() )  &&  ( check_file.isFile() ) )
+               {  // Timestate file exists
+                  bool intv_1sec  = US_AstfemMath::timestate_onesec( tmst_fpath, simdat );
+DbgLv(1) << "solve_sim_calc_residuals_2 : intv_1sec" << intv_1sec;
 
+                  if ( intv_1sec )
+                  {
+                     dset->simparams.simSpeedsFromTimeState( tmst_fpath );
+DbgLv(0) << "solve_sim_calc_residuals_2 : sim_speed_prof count" << dset->simparams.sim_speed_prof.count()
+ << " intv_1sec" << intv_1sec;
+                  }
+DbgLv(1) << "solve_sim_calc_residuals_2 : timestate file exists" << tmst_fpath
+ << " timestateobject=" << dset->simparams.tsobj << "sspknt=" << dset->simparams.sim_speed_prof.count();
+DbgLv(1) << "solve_sim_calc_residuals_2 : ntimes" << dset->simparams.tsobj->time_count();
+               }
+               else
+               {  // Timestate file does not exist (will be created in astfem_rsa)
+DbgLv(1) << "solve_sim_2: timestate file does not exist" << tmst_fpath << dset->tmst_file;
+               }
             }
-      
+
             US_Astfem_RSA astfem_rsa( model, dset->simparams );
 
             astfem_rsa.set_debug_flag( dbg_level );
 
             astfem_rsa.calculate( simdat );
-            #if 0
-             int nsc=simdat.scanCount();
-             int npt=simdat.pointCount();
-             int ms=nsc/2;
-             int ls=nsc-1;
-             int mp=npt/2;
-             int lp=npt-1;
-             DbgLv(1) << "CR: edat:"
-                      << edata->value( 0, 0) << edata->value( 0,mp) << edata->value( 0,lp)
-                      << edata->value(ms, 0) << edata->value(ms,mp) << edata->value(ms,lp)
-                      << edata->value(ls, 0) << edata->value(ls,mp) << edata->value(ls,lp);
-             DbgLv(1) << "CR: sdat:"
-                      << simdat.value( 0, 0) << simdat.value( 0,mp) << simdat.value( 0,lp)
-                      << simdat.value(ms, 0) << simdat.value(ms,mp) << simdat.value(ms,lp)
-                      << simdat.value(ls, 0) << simdat.value(ls,mp) << simdat.value(ls,lp);
-            #endif
-            if ( abort ) return ;
+#if 0
+int nsc=simdat.scanCount();
+int npt=simdat.pointCount();
+int ms=nsc/2;
+int ls=nsc-1;
+int mp=npt/2;
+int lp=npt-1;
+DbgLv(1) << "CR: edat:"
+ << edata->value( 0, 0) << edata->value( 0,mp) << edata->value( 0,lp)
+ << edata->value(ms, 0) << edata->value(ms,mp) << edata->value(ms,lp)
+ << edata->value(ls, 0) << edata->value(ls,mp) << edata->value(ls,lp);
+DbgLv(1) << "CR: sdat:"
+ << simdat.value( 0, 0) << simdat.value( 0,mp) << simdat.value( 0,lp)
+ << simdat.value(ms, 0) << simdat.value(ms,mp) << simdat.value(ms,lp)
+ << simdat.value(ls, 0) << simdat.value(ls,mp) << simdat.value(ls,lp);
+#endif
+            if ( abort ) return;
 
             if ( banddthr )
             {  // If band forming, hold data within thresholds; skip if all-zero
@@ -730,16 +801,20 @@ void US_SolveSim::calc_residuals( int offset, int dataset_count,
             simulations << simdat;   // Save simulation (each datset,solute)
 
             // Populate the A matrix for the NNLS routine with simulation
-            DbgLv(1) << "   CR: A-fill  bndthr" << banddthr << "kodl ksols" << kodl << ksols;
-            int ks=ka;
+DbgLv(1) << "   CR: A-fill  bndthr" << banddthr << "kodl ksols" << kodl << ksols;
+            int ks         = ka;
+
             if ( kodl == 0 )
             {  // Normal case of no ODlimit substitutions
                for ( int ss = 0; ss < nscans; ss++ )
-               {   
-                   for ( int rr = 0; rr < npoints; rr++ )
-                   {   nnls_a[ ka++ ] = simdat.value( ss, rr );
-                       //Amatrix[ss][rr] = simdat.value( ss, rr ) ;
-                   }
+               {
+                  for ( int rr = 0; rr < npoints; rr++ )
+                  {
+                     double sval    = simdat.value( ss, rr );
+                     nnls_a[ ka++ ] = sval;
+                     norm_a        += sq( sval );
+                  }
+// x  x  x  x  x  x  x  x
                }
             }
             else
@@ -749,36 +824,54 @@ void US_SolveSim::calc_residuals( int offset, int dataset_count,
                   for ( int rr = 0; rr < npoints; rr++ )
                   {  // Fill A with simulations (or zero where B has zero)
                      if ( nnls_b[ bx++ ] != 0.0 )
-                     {   nnls_a[ ka++ ] = simdat.value( ss, rr );
-                         //Amatrix[ss][rr] = simdat.value( ss, rr ) ;
+                     {
+                        double sval    = simdat.value( ss, rr );
+                        nnls_a[ ka++ ] = sval;
+                        norm_a        += sq( sval );
                      }
                      else
                      {
-                         nnls_a[ ka++ ] = 0.0;
-                         //Amatrix[ss][rr] = 0.0 ;
+                        nnls_a[ ka++ ] = 0.0;
+// x  x  x  x  x  x  x  x
                      }
                   }
                }
             }
 
-            //DbgLv(1) << "CR: ks ka" << ks << ka
-            // << "nnA s...k" << nnls_a[ks] << nnls_a[ks+1] << nnls_a[ka-2] << nnls_a[ka-1]
-            // << "cc ee" << cc << ee << "kodl" << kodl;
-            DbgLv(1) << "CR: cc ee" << cc << ee << "ks ka" << ks << ka << "nnls_a sz"
-                 << nnls_a.count() << "  sz-kd" << (nnls_a.count()-ka);
+//DbgLv(1) << "CR: ks ka" << ks << ka
+// << "nnA s...k" << nnls_a[ks] << nnls_a[ks+1] << nnls_a[ka-2] << nnls_a[ka-1]
+// << "cc ee" << cc << ee << "kodl" << kodl;
+DbgLv(1) << "CR: cc ee" << cc << ee << "ks ka" << ks << ka << "nnls_a sz"
+ << nnls_a.count() << "  sz-kd" << (nnls_a.count()-ka);
          }  // Each data set
 
          if ( tikreg )
          {  // For Tikhonov Regularization append to each column
-            DbgLv(1) << "CR: cc" << cc << " (PRE-tikreg)";
+DbgLv(1) << "CR: cc" << cc << " (PRE-tikreg)";
+            int colx       = cc - count_cut;
+
             for ( int aa = 0; aa < nsolutes; aa++ )
             {
-               nnls_a[ ka++ ] = ( aa == cc ) ? alphad : 0.0;
+               nnls_a[ ka++ ] = ( aa == colx ) ? alphad : 0.0;
             }
          }
-         DbgLv(1) << "CR:  cc" << cc << " ka" << ka << "nnls_a sz"
-                  << nnls_a.count() << "  sz-kd" << (nnls_a.count()-ka);
+DbgLv(1) << "CR:  cc" << cc << " ka" << ka << "nnls_a sz"
+ << nnls_a.count() << "  sz-kd" << (nnls_a.count()-ka);
 
+         norm_a         = norm_a > 0.0 ? sqrt( norm_a ) : 0.0;
+
+         if ( norm_a < norm_cut )
+         {
+            ka             = kacol;
+            nsolutes--;
+            count_cut++;
+            cutsols << cc;
+DbgLv(1)<< " norm is becoming zero -- norm_a" << norm_a << "count_cut" << count_cut;
+         }
+         else
+            usesols << cc;
+DbgLv(1)<< " norm_of_the_vector" << norm_a  << "s k"
+ << sim_vals.solutes[cc].s << sim_vals.solutes[cc].k;
          if ( signal_wanted  &&  ++kstep == increp )
          {  // If asked for and step at increment, signal progress
             emit work_progress( increp );
@@ -786,21 +879,24 @@ void US_SolveSim::calc_residuals( int offset, int dataset_count,
          }
       }   // Each solute
    }  // Constant f/f0  (or other stype>9)
-   //=====
-   else
-   //=====
 
-   {  DbgLv(1)<<" Special case of custom grid" ;
+   else
+   {
+DbgLv(1)<<" Special case of custom grid";
+      //======================================================================
       // Special case of custom grid
+      //======================================================================
       int attr_x     = 0;      // Set X is s
       int attr_y     = 4;      // Set Y is D
       int attr_z     = 3;      // Set Z is vbar
       int smask      = ( attr_x << 6 ) | ( attr_y << 3 ) | attr_z;
 
-      for ( int cc = 0; cc < nsolutes; cc++ )
+      for ( int cc = 0; cc < ksolutes; cc++ )
       {  // Solve for each solute
-         if ( abort ) return ;
-         int bx   = 0;
+         if ( abort ) return;
+         int bx         = 0;
+         int kacol      = ka;
+         double norm_a  = 0.0;
 
          for ( int ee = offset; ee < lim_offs; ee++ )
          {  // Solve for each data set
@@ -808,13 +904,11 @@ void US_SolveSim::calc_residuals( int offset, int dataset_count,
             DataSet*               dset   = data_sets[ ee ];
             US_DataIO::EditedData* edata  = banddthr ? &wdata : &dset->run_data;
             US_DataIO::RawData     simdat;
-            int npoints    = edata->pointCount();
-            int nscans     = edata->scanCount();
+            npoints        = edata->pointCount();
+            nscans         = edata->scanCount();
             double avtemp  = dset->temperature;
             zcomponent.vbar20     = dset->vbar20;
             model.components[ 0 ] = zcomponent;
-
-            //double Amatrix[nscans][npoints];
 
             if ( use_zsol )
             {
@@ -849,26 +943,46 @@ void US_SolveSim::calc_residuals( int offset, int dataset_count,
             // Initialize simulation data with the experiment's grid
             US_AstfemMath::initSimData( simdat, *edata, 0.0 );
 
-            if ( dbg_level>1 && thrnrank<2 && cc==0 ) 
+            if ( dbg_level>1 && thrnrank<2 && cc==0 )
             {
-               model.debug(); dset->simparams.debug(); 
+               model.debug(); dset->simparams.debug();
             }
 
-            QString runID     = edata->runID;
-            QString tmst_fpath = US_Settings::resultDir() +"/" + runID +"/" + runID + ".time_state.tmst";
-            QFileInfo check_file(tmst_fpath);
+            // Check if timestate file exists or not
+            if ( dset->simparams.tsobj == NULL  ||
+                 dset->simparams.sim_speed_prof.count() < 1 )
+            {  // Simparms does not yet have a loaded timestate
+DbgLv(0) << "solve_sim_calc_residuals_3 : TSOBJ" << dset->simparams.tsobj
+ << "ssprof count" << dset->simparams.sim_speed_prof.count();
+               QString runID     = edata->runID;
+#ifdef NO_DB
+               QString tmst_fpath = ( dset->tmst_file.isEmpty() ) ?
+                                    "../" + runID + ".time_state.tmst" :
+                                    dset->tmst_file;
+#else
+               QString tmst_fpath = US_Settings::resultDir() +"/" + runID +"/" + runID + ".time_state.tmst";
+#endif
+               QFileInfo check_file( tmst_fpath );
 
-            // Calculate Astfem_RSA solution (Lamm equations)
-            if ( (check_file.exists()) && (check_file.isFile()) )
-            {
-                dset->simparams.simSpeedsFromTimeState( tmst_fpath);
-                DbgLv(1)<< "solve_sim_calc_residuals_2 : timestate file exists"
-                        << tmst_fpath << " timestateobject = "<<dset->simparams.tsobj;
-            }
-            else
-            {   DbgLv(1)<<"solve_sim_2: timestate file does not exist";                                                  
-                //US_AstfemMath::writetimestate( tmst_fpath,dset->simparams, sim_vals.sim_data ) ;
-                //dset->simparams.simSpeedsFromTimeState( tmst_fpath);        
+               if ( ( check_file.exists() )  &&  ( check_file.isFile() ) )
+               {  // Timestate file exists
+                  bool intv_1sec  = US_AstfemMath::timestate_onesec( tmst_fpath, simdat );
+DbgLv(1) << "solve_sim_calc_residuals_3 : intv_1sec" << intv_1sec;
+
+                  if ( intv_1sec )
+                  {
+                     dset->simparams.simSpeedsFromTimeState( tmst_fpath );
+DbgLv(0) << "solve_sim_calc_residuals_3 : sim_speed_prof count" << dset->simparams.sim_speed_prof.count()
+ << " intv_1sec" << intv_1sec;
+                  }
+DbgLv(1) << "solve_sim_calc_residuals_3 : timestate file exists" << tmst_fpath
+ << " timestateobject=" << dset->simparams.tsobj << "sspknt=" << dset->simparams.sim_speed_prof.count();
+DbgLv(1) << "solve_sim_calc_residuals_3 : ntimes" << dset->simparams.tsobj->time_count();
+               }
+               else
+               {  // Timestate file does not exist (will be created in astfem_rsa)
+DbgLv(1) << "solve_sim_3: timestate file does not exist" << tmst_fpath << dset->tmst_file;
+               }
             }
 
             US_Astfem_RSA astfem_rsa( model, dset->simparams );
@@ -876,7 +990,7 @@ void US_SolveSim::calc_residuals( int offset, int dataset_count,
             astfem_rsa.set_debug_flag( dbg_level );
 
             astfem_rsa.calculate( simdat );
-            if ( abort ) return ;
+            if ( abort ) return;
 
             if ( banddthr )
             {  // If band forming, hold data within thresholds; skip if all-zero
@@ -888,20 +1002,22 @@ void US_SolveSim::calc_residuals( int offset, int dataset_count,
 
             simulations << simdat;   // Save simulation (each datset,solute)
 
-            int ks=ka;
-            //double Amatrix[nscans][npoints];
+/*DEBUG*/
+int ks=ka;
+/*DEBUG*/
 
             // Populate the A matrix for the NNLS routine with simulation
             if ( kodl == 0 )
             {  // Normal case of no ODlimit substitutions
                for ( int ss = 0; ss < nscans; ss++ )
-               {   
-                   for ( int rr = 0; rr < npoints; rr++ )
-                   {   nnls_a[ ka++ ] = simdat.value( ss, rr );
-                       //Amatrix[ss][rr] = simdat.value( ss, rr ) ;
-                       //qDebug() << "amatrix" << Amatrix[ss][rr] ;
-                   }
-               }  
+               {
+                  for ( int rr = 0; rr < npoints; rr++ )
+                  {
+                     double sval    = simdat.value( ss, rr );
+                     nnls_a[ ka++ ] = sval;
+                     norm_a        += sq( sval );
+                  }
+               }
             }
             else
             {  // Special case where ODlimit substitutions are in B matrix
@@ -910,46 +1026,121 @@ void US_SolveSim::calc_residuals( int offset, int dataset_count,
                   for ( int rr = 0; rr < npoints; rr++ )
                   {  // Fill A with simulations (or zero where B has zero)
                      if ( nnls_b[ bx++ ] != 0.0 )
-                     {  nnls_a[ ka++ ] = simdat.value( ss, rr );
-                        //Amatrix[ss][rr] = simdat.value( ss, rr ) ;
+                     {
+                        double sval    = simdat.value( ss, rr );
+                        nnls_a[ ka++ ] = sval;
+                        norm_a        += sq( sval );
                      }
                      else
-                     { 
+                     {
                         nnls_a[ ka++ ] = 0.0;
-                        //Amatrix[ss][rr] = 0.0;
                      }
                   }
                }
             }
-            //-------------------------------------------------
-            DbgLv(1) << "CR: ks ka" << ks << ka
-                     << "nnA s...k" << nnls_a[ks] << nnls_a[ks+1] 
-                     << nnls_a[ka-2] << nnls_a[ka-1]
-                     << "cc ee" << cc << ee << "kodl" << kodl;
-            //-------------------------------------------------
-         }  // Each data set
+DbgLv(1) << "CR: ks ka" << ks << ka
+ << "nnA s...k" << nnls_a[ks] << nnls_a[ks+1]
+ << nnls_a[ka-2] << nnls_a[ka-1]
+ << "cc ee" << cc << ee << "kodl" << kodl;
+         }  // Each data set, custom grid
 
          if ( tikreg )
          {  // For Tikhonov Regularization append to each column
+            int colx       = cc - count_cut;
+
             for ( int aa = 0; aa < nsolutes; aa++ )
             {
-               nnls_a[ ka++ ] = ( aa == cc ) ? alphad : 0.0;
+               nnls_a[ ka++ ] = ( aa == colx ) ? alphad : 0.0;
             }
          }
 
+         norm_a         = norm_a > 0.0 ? sqrt( norm_a ) : 0.0;
+
+         if ( norm_a < norm_cut )
+         {
+            ka             = kacol;
+            nsolutes--;
+            count_cut++;
+            cutsols << cc;
+DbgLv(1)<< " norm is becoming zero -- norm_a" << norm_a << "count_cut" << count_cut;
+         }
+         else
+            usesols << cc;
+DbgLv(1)<< " norm_of_the_vector" << norm_a  << "s k"
+ << sim_vals.solutes[cc].s << sim_vals.solutes[cc].k;
          if ( signal_wanted  &&  ++kstep == increp )
          {  // If asked for and step at increment, signal progress
             emit work_progress( increp );
             kstep = 0;                     // Reset step count
          }
-      }   // Each solute
+      }   // Each solute, custom grid
    }   // Custom grid
 
-   if ( NSave!= NULL )
-   {   DbgLv(1) << "saving_norms" << sv_norm.size();
-       *NSave << sv_norm ;
-       for ( int i = 0; i< sv_norm.size() ; i++ )
-          DbgLv(1) << "norm_value" << sv_norm[i];
+   if ( NSave != NULL )
+   {
+      sv_norm.resize( nsolutes );
+      *NSave       = sv_norm;
+DbgLv(1) << "saving_norms  size=" << sv_norm.size() << nsolutes;
+for ( int ii = 0; ii< sv_norm.size(); ii++ )
+ DbgLv(1) << "ii" << ii << "norm_value" << sv_norm[ii] << (*NSave)[ii];
+   }
+
+//DebugTime("BEG:clcr-so");
+   if ( count_cut > 0 )
+   {  // Compress solutes down to those uncut by norm comparison
+      int kk       = 0;
+
+      if ( use_zsol )
+      {
+         for ( int cc = 0; cc < ksolutes; cc++ )
+         {
+            if ( cutsols.contains( cc ) )  continue;
+
+            sim_vals.zsolutes[ kk++ ] = sim_vals.zsolutes[ cc ];
+         }
+      }
+
+      else
+      {
+         for ( int cc = 0; cc < ksolutes; cc++ )
+         {
+            if ( cutsols.contains( cc ) )  continue;
+
+            sim_vals.solutes[ kk++ ]  = sim_vals.solutes[ cc ];
+         }
+      }
+
+      if ( kk != nsolutes )
+      {
+         qDebug() << "KK!=NSOLUTES:  kk" << kk << "nsolutes" << nsolutes
+                  << "ksolutes" << ksolutes
+                  << "count_cut" << count_cut << cutsols.count();
+      }
+   }
+
+   if ( tikreg  &&  ( nsolutes != ksolutes ) )
+   {  // For regularization and norm-tolerance change in solutes, redo A
+      narows       = ntotal + nsolutes;
+      int ja       = 0;
+      int ka       = 0;
+
+      for ( int cc = 0; cc < nsolutes; cc++ )
+      {
+         // Copy simulation point row values
+         for ( int aa = 0; aa < ntotal; aa++ )
+         {
+            nnls_a[ ka++ ] = nnls_a[ ja++ ];
+         }
+
+         // Rebuild alpha-diagonal part of row
+         for ( int aa = 0; aa < nsolutes; aa++ )
+         {
+            nnls_a[ ka++ ] = ( aa == cc ) ? alphad : 0.0;
+         }
+
+         // Bump past old alpha-diagonal rows of input
+         ja          += ksolutes;
+      }
    }
 
    nsolutes     = banddthr ? ksols : nsolutes;
@@ -960,21 +1151,70 @@ void US_SolveSim::calc_residuals( int offset, int dataset_count,
    if ( signal_wanted  &&  kstep > 0 )  // If signals and steps done, report
       emit work_progress( kstep );
 
-   if ( abort ) return ;
+   if ( abort ) return;
 
-   int kstodo = nsolutes / 50;          // Set steps count for NNLS
-   kstodo     = max( kstodo, 2 );
-   DbgLv(1) << "   CR:200  rss now" << US_Memory::rss_now() << "thrn" << thrnrank;
-   DebugTime("BEG:clcr-nn");
+#if 0
+   /////////////////////////////////////////////////////
+   // Build the nsolutes x nsolutes angles vector
+   /////////////////////////////////////////////////////
+   int nangles  = nsolutes * nsolutes;
+   double angle = 0.0;
+   QVector< double > angles( nangles, 0.0 );
+   double* mav  = nnls_a.data();
+   for( int ii = 0; ii < nsolutes; ii++ )
+   {  // Compute angles for this column compared to ones beyond it
+      double* av1  = mav + ( ii * narows );
+      int aa       = ii * nsolutes + ii + 1;
+      for ( int jj = ii + 1; jj < nsolutes; jj++, aa++ )
+      {
+         double* av2  = mav + ( jj * narows );
+         angle        = angle_vectors( av1, av2, ntotal );
+         angles[ aa ] = angle;
+      }
+   }
+   // Fill in angles in lower half that are already computed
+   for( int ii = 1; ii < nsolutes; ii++ )
+   {  // Copy angles for columns before this one
+      for ( int jj = 0; jj < ii; jj++ )
+      {
+         int aa       = ii * nsolutes + jj;
+         int aa1      = jj * nsolutes + ii;
+         angles[ aa ] = angles[ aa1 ];
+      }
+   }
+   // Now print all the angles
+   int aa       = 0;
+   double afact = 180.0 / M_PI;
+   for( int ii = 0; ii < nsolutes; ii++ )
+   {  // Print the angles for solute ii
+      qDebug() << thrnrank << "w:ANGL: row=" << ii
+               << "s=" << ( sim_vals.solutes[ ii ].s * 1e+13 )
+               << "k=" << sim_vals.solutes[ ii ].k
+               << "nsol=" << nsolutes;
+      QString arow( " angles=" );
+      for ( int jj = 0; jj < nsolutes; jj++ )
+      {  // Compose each angle value string for each column of the row
+         double aval  = angles[ aa++ ] * afact;
+         arow        += QString().sprintf( "%6.1f", aval );
+      }
+      qDebug() << thrnrank << "w:ANGL:" << arow;
+   }
+#endif
+
+
+   int kstodo   = nsolutes / 50;          // Set steps count for NNLS
+   kstodo       = max( kstodo, 2 );
+DbgLv(1) << "   CR:200  rss now" << US_Memory::rss_now() << "thrn" << thrnrank;
+//DebugTime("BEG:clcr-cn");
 //------------------------------------------
 //Check linear independence of nnls_a matrix
 //------------------------------------------
-    DbgLv(1)<<"subha_nnls_a size: "<< nnls_a.size()<< nscans << npoints << "nsolutes=" << nsolutes ;
+DbgLv(1)<<"subha_nnls_a size: " << nnls_a.size() << nscans << npoints << "nsolutes=" << nsolutes;
 //------------------------------------------
 
    if ( calc_ti )
    {  // Compute TI Noise (and, optionally, RI Noise)
-      if ( abort ) return ;
+      if ( abort ) return;
       QVector< double > a_tilde ( nrinois,  0.0 );
       QVector< double > a_bar   ( ntinois,  0.0 );
       QVector< double > L_tildes( ntorinoi, 0.0 );
@@ -1001,19 +1241,15 @@ void US_SolveSim::calc_residuals( int offset, int dataset_count,
                       L_bars, nnls_a, L_tildes );
 
       // Set up small_a, small_b for alternate nnls
-      DbgLv(1) << "  set SMALL_A+B";
-
+DbgLv(1) << "  set SMALL_A+B";
       ti_small_a_and_b( nsolutes, ntotal, ntinois, small_a, small_b, a_bar, L_bars, nnls_a, nnls_b );
-      if ( abort ) return ;
+      if ( abort ) return;
 
       // Do NNLS to compute concentrations (nnls_x)
-      DbgLv(1) << "  noise small NNLS";
+DbgLv(1) << "  noise small NNLS";
+      US_Math2::nnls( small_a.data(), nsolutes, nsolutes, nsolutes, small_b.data(), nnls_x.data() );
 
-      //-------------------------------------------
-      US_Math2::nnls( small_a.data(), nsolutes, nsolutes, nsolutes,small_b.data(), nnls_x.data() );
-      //-------------------------------------------
-
-      if ( abort ) return ;
+      if ( abort ) return;
 
       // This is Sum( concentration * Lamm ) for the models after NNLS
       compute_L( ntotal, nsolutes, L, nnls_a, nnls_x );
@@ -1043,7 +1279,7 @@ void US_SolveSim::calc_residuals( int offset, int dataset_count,
 
    else if ( calc_ri )
    {  // Compute RI noise (when RI only)
-      if ( abort ) return ;
+      if ( abort ) return;
       QVector< double > a_tilde ( nrinois,  0.0 );
       QVector< double > L_tildes( ntorinoi, 0.0 );
       QVector< double > small_a ( nsolutsq, 0.0 );
@@ -1058,15 +1294,15 @@ void US_SolveSim::calc_residuals( int offset, int dataset_count,
       compute_L_tildes( nrinois, nsolutes, L_tildes, nnls_a );
 
       // Set up small_a, small_b for the nnls
-      if ( abort ) return ;
+      if ( abort ) return;
 
       ri_small_a_and_b( nsolutes, ntotal, nrinois,
                         small_a, small_b, a_tilde, L_tildes, nnls_a, nnls_b );
-      if ( abort ) return ;
+      if ( abort ) return;
 
       US_Math2::nnls( small_a.data(), nsolutes, nsolutes, nsolutes,
                       small_b.data(), nnls_x.data() );
-      if ( abort ) return ;
+      if ( abort ) return;
 
       // This is sum( concentration * Lamm ) for the models after NNLS
       compute_L( ntotal, nsolutes, L, nnls_a, nnls_x );
@@ -1085,25 +1321,32 @@ void US_SolveSim::calc_residuals( int offset, int dataset_count,
 
    else
    {  // No TI or RI noise
-      if ( abort ) return ;
-      DbgLv(2) << "   CR:210  rss now" << US_Memory::rss_now() << "thrn" << thrnrank;
-      
+      if ( abort ) return;
+DbgLv(2) << "   CR:210  rss now" << US_Memory::rss_now() << "thrn" << thrnrank;
+
       if ( ASave != NULL  &&  BSave != NULL )
       {
+         narows    = tikreg ? ( ntotal + nsolutes ) : ntotal;
+         navals    = narows * nsolutes;
+         nnls_a.resize( navals );
          sv_nnls_a = nnls_a;
          sv_nnls_b = nnls_b;
-         DbgLv(1) << "no_ti_or_ri: CR: sv_nnls_a size" << sv_nnls_a.size() << nnls_a.size();
+DbgLv(1) << "no_ti_or_ri: CR: sv_nnls_a size" << sv_nnls_a.size() << nnls_a.size();
       }
 
+//DebugTime("BEG:clcr-nl");
       US_Math2::nnls( nnls_a.data(), narows, narows, nsolutes,
                       nnls_b.data(), nnls_x.data() );
+//DebugTime("END:clcr-nl");
 
-      DbgLv(2) << "   CR:211  rss now" << US_Memory::rss_now() << "thrn" << thrnrank;
-      if(lim_offs>1&&(thrnrank==1||thrnrank==11)) DbgLv(1) << "CR: narows nsolutes" << narows << nsolutes;
-      if(lim_offs>1&&(thrnrank==1||thrnrank==11)) DbgLv(1) << "CR:  a0 a1 b0 b1"
-                                                           << nnls_a[0] << nnls_a[1] << nnls_b[0] << nnls_b[1];
+DbgLv(2) << "   CR:211  rss now" << US_Memory::rss_now() << "thrn" << thrnrank;
+if(lim_offs>1&&(thrnrank==1||thrnrank==11))
+{
+ DbgLv(1) << "CR: narows nsolutes" << narows << nsolutes;
+ DbgLv(1) << "CR:  a0 a1 b0 b1" << nnls_a[0] << nnls_a[1] << nnls_b[0] << nnls_b[1];
+}
 
-      if ( abort ) return ;
+      if ( abort ) return;
 
       if ( signal_wanted )
          emit work_progress( kstodo );     // Report no-noise NNLS steps done
@@ -1112,16 +1355,16 @@ void US_SolveSim::calc_residuals( int offset, int dataset_count,
    }  // End of core calculations
 
    sim_vals.maxrss = US_Memory::rss_max( sim_vals.maxrss );
-   //DbgLv(1) << "   CR:na  rss now,max" << US_Memory::rss_now() << sim_vals.maxrss;
-   DbgLv(1) << "   CR:na  rss now,max" << US_Memory::rss_now() << sim_vals.maxrss
-            << &sim_vals;
+//DbgLv(1) << "   CR:na  rss now,max" << US_Memory::rss_now() << sim_vals.maxrss;
+DbgLv(1) << "   CR:na  rss now,max" << US_Memory::rss_now() << sim_vals.maxrss
+ << &sim_vals;
 
    nnls_a.clear();
    nnls_b.clear();
-   DebugTime("END:clcr-nn");
+//DebugTime("END:clcr-nn");
 
-   DbgLv(1) << "CR: kstodo" << kstodo;
-   if ( abort ) return ;
+DbgLv(1) << "CR: kstodo" << kstodo;
+   if ( abort ) return;
 
    // Size simulation data and initialize concentrations to zero
    int kscans = 0;
@@ -1145,24 +1388,24 @@ void US_SolveSim::calc_residuals( int offset, int dataset_count,
       {
          for ( int ss = 0; ss < nscans; ss++ )
          {  // Append zeroed-scans sim_data for multiple data sets
-            DbgLv(1) << "CR:     ss jscan" << ss << jscan << "ee kscans nscans" << ee << kscans << nscans;
+DbgLv(1) << "CR:     ss jscan" << ss << jscan << "ee kscans nscans" << ee << kscans << nscans;
             sim_vals.sim_data.scanData[ jscan++ ] = tdata.scanData[ ss ];
          }
       }
-      DbgLv(2) << "   CR:221  rss now" << US_Memory::rss_now() << "thrn" << thrnrank;
+DbgLv(2) << "   CR:221  rss now" << US_Memory::rss_now() << "thrn" << thrnrank;
    }
 
-   if( lim_offs>1&&( thrnrank==1||thrnrank==11 ) )
-   DbgLv(1) << "CR:       jscan kscans" << jscan << kscans;
+if( lim_offs>1&&( thrnrank==1||thrnrank==11 ) )
+ DbgLv(1) << "CR:       jscan kscans" << jscan << kscans;
 
    // This is a little tricky.  The simulations structure was created above
    // in a loop that alternates experiments with each solute.  In the loop
    // below, the simulation structure alters that order to group all solutes
    // for each experiment together
 
-   if(thrnrank==1) DbgLv(1) << "CR: nsolutes" << nsolutes;
+if(thrnrank==1) DbgLv(1) << "CR: nsolutes" << nsolutes;
+if( lim_offs>1&&( thrnrank==1||thrnrank==11 ) ) DbgLv(1) << "CR: nsolutes" << nsolutes;
 
-   if( lim_offs>1&&( thrnrank==1||thrnrank==11 ) ) DbgLv(1) << "CR: nsolutes" << nsolutes;
    for ( int cc = 0; cc < nsolutes; cc++ )
    {
       double soluval = nnls_x[ cc ];  // Computed concentration, this solute
@@ -1171,71 +1414,77 @@ void US_SolveSim::calc_residuals( int offset, int dataset_count,
 
       if ( soluval > 0.0 )
       {  // If concentration non-zero, need to sum in simulation data
-         if( lim_offs>1&&(thrnrank==1||thrnrank==11) )
-         DbgLv(1) << "CR: cc soluval" << cc << soluval;
+if( lim_offs>1&&(thrnrank==1||thrnrank==11) )
+ DbgLv(1) << "CR: cc soluval" << cc << soluval << "cc-old" << usesols[cc];
          int scnx    = 0;
+         int sim_ix  = usesols[ cc ] * dataset_count;
+if(soluval>1.0)
+ DbgLv(0) << thrnrank << ": SOLUVAL" << soluval << "cc" << cc << "sim_ix" << sim_ix
+  << "ksol nsol" << ksolutes << nsolutes;
 
-         for ( int ee = offset; ee < lim_offs; ee++ )
+         for ( int ee = offset; ee < lim_offs; ee++, sim_ix++ )
          {
             // Input sims (ea.dset, ea.solute); out sims (sum.solute, ea.dset)
-            int sim_ix  = cc * dataset_count + ee - offset;
+//            int sim_ix  = cc * dataset_count + ee - offset;
             US_DataIO::RawData*     idata = &simulations[ sim_ix ];
             US_DataIO::RawData*     sdata = &sim_vals.sim_data;
             int nscans  = idata->scanCount();
             int npoints = idata->pointCount();
-            if(lim_offs>1&&(thrnrank==1||thrnrank==11))
-            DbgLv(1) << "CR:    ee sim_ix np ns scnx" << ee << sim_ix << npoints << nscans << scnx;
+if(lim_offs>1&&(thrnrank==1||thrnrank==11))
+ DbgLv(1) << "CR:    ee sim_ix np ns scnx" << ee << sim_ix << npoints << nscans << scnx;
+if(soluval>1.0)
+ DbgLv(0) << thrnrank << ":  SOLUVAL>1  ee nscans npoints" << ee << nscans << npoints
+  << "idatamm" << idata->value(nscans/2,npoints/2);
 
             for ( int ss = 0; ss < nscans; ss++, scnx++ )
             {
                for ( int rr = 0; rr < npoints; rr++ )
                {
-                  sdata->scanData[ scnx ].rvalues[ rr ] += 
+                  sdata->scanData[ scnx ].rvalues[ rr ] +=
                      ( soluval * idata->value( ss, rr ) );
                }
             }
-            DbgLv(2) << "   CR:231  rss now" << US_Memory::rss_now() << "thrn" << thrnrank;
+DbgLv(2) << "   CR:231  rss now" << US_Memory::rss_now() << "thrn" << thrnrank;
 //*DEBUG*
-            int ss=nscans/2;
-            int rr=npoints/2;
-            if ( thrnrank==1 ) 
-            {
-               DbgLv(1) << "CR:   scnx ss rr" << scnx << ss << rr;
-               if( use_zsol ) 
-               {
-                 DbgLv(1) << "CR:     x y z" << sim_vals.zsolutes[cc].x*1.0e+13
-                          << sim_vals.zsolutes[cc].y << sim_vals.zsolutes[cc].z << "sval" << soluval
-                          << "idat sdat" << idata->value(ss,rr) << sdata->value(ss,rr);
-                 if ( soluval>100.0 ) 
-                 {
-                    double drval=0.0; double dmax=0.0; double dsum=0.0;
-                    for ( int ss=0;ss<nscans;ss++ ) 
-                    {   for ( int rr=0; rr<npoints; rr++ ) 
-                        {
-                            drval=idata->value(ss,rr); dmax=qMax(dmax,drval); dsum+=drval; 
-                        }
-                    }
-                    DbgLv(1) << "CR:B x y" << sim_vals.zsolutes[cc].x*1.0e+13
-                             << sim_vals.zsolutes[cc].y << "sval" << soluval << "amax asum" << dmax << dsum; }
-               } 
-               else 
-               {
-                    DbgLv(1) << "CR:     s k v" << sim_vals.solutes[cc].s*1.0e+13
-                             << sim_vals.solutes[cc].k << sim_vals.solutes[cc].v << "sval" << soluval
-                             << "idat sdat" << idata->value(ss,rr) << sdata->value(ss,rr);
-                    if ( soluval>100.0 ) 
-                    {
-                       double drval=0.0; double dmax=0.0; double dsum=0.0;
-                       for ( int ss=0;ss<nscans;ss++ ) 
-                       {   for ( int rr=0; rr<npoints; rr++ ) 
-                           {
-                               drval=idata->value(ss,rr); dmax=qMax(dmax,drval); dsum+=drval; 
-                           }
-                       }
-                       DbgLv(1) << "CR:B s k" << sim_vals.solutes[cc].s*1.0e+13
-                                << sim_vals.solutes[cc].k << "sval" << soluval << "amax asum" << dmax << dsum; 
-                    }
-                }
+int ss=nscans/2;
+int rr=npoints/2;
+if ( thrnrank==1 )
+{
+ DbgLv(1) << "CR:   scnx ss rr" << scnx << ss << rr;
+ if( use_zsol )
+ {
+DbgLv(1) << "CR:     x y z" << sim_vals.zsolutes[cc].x*1.0e+13
+ << sim_vals.zsolutes[cc].y << sim_vals.zsolutes[cc].z << "sval" << soluval
+ << "idat sdat" << idata->value(ss,rr) << sdata->value(ss,rr);
+  if ( soluval>100.0 )
+  {
+   double drval=0.0; double dmax=0.0; double dsum=0.0;
+   for ( int ss=0;ss<nscans;ss++ )
+   {
+    for ( int rr=0; rr<npoints; rr++ )
+     { drval=idata->value(ss,rr); dmax=qMax(dmax,drval); dsum+=drval; }
+   }
+DbgLv(1) << "CR:B x y" << sim_vals.zsolutes[cc].x*1.0e+13
+ << sim_vals.zsolutes[cc].y << "sval" << soluval << "amax asum" << dmax << dsum;
+  }
+ }
+ else
+ {
+DbgLv(1) << "CR:     s k v" << sim_vals.solutes[cc].s*1.0e+13
+ << sim_vals.solutes[cc].k << sim_vals.solutes[cc].v << "sval" << soluval
+ << "idat sdat" << idata->value(ss,rr) << sdata->value(ss,rr);
+  if ( soluval>100.0 )
+  {
+   double drval=0.0; double dmax=0.0; double dsum=0.0;
+   for ( int ss=0;ss<nscans;ss++ )
+   {
+    for ( int rr=0; rr<npoints; rr++ )
+    { drval=idata->value(ss,rr); dmax=qMax(dmax,drval); dsum+=drval; }
+   }
+DbgLv(1) << "CR:B s k" << sim_vals.solutes[cc].s*1.0e+13
+ << sim_vals.solutes[cc].k << "sval" << soluval << "amax asum" << dmax << dsum;
+  }
+ }
 }
 //*DEBUG*
          }
@@ -1253,7 +1502,7 @@ void US_SolveSim::calc_residuals( int offset, int dataset_count,
    US_DataIO::RawData*     sdata = &sim_vals.sim_data;
    US_DataIO::RawData*     resid = &sim_vals.residuals;
    sim_vals.residuals            =  sim_vals.sim_data;
-   DbgLv(2) << "   CR:301  rss now" << US_Memory::rss_now() << "thrn" << thrnrank;
+DbgLv(2) << "   CR:301  rss now" << US_Memory::rss_now() << "thrn" << thrnrank;
 
    // Calculate residuals and rmsd values
    for ( int ee = offset; ee < lim_offs; ee++, kdsx++ )
@@ -1289,7 +1538,7 @@ void US_SolveSim::calc_residuals( int offset, int dataset_count,
       ktotal        += kntcs;
       tinoffs       += npoints;
       rinoffs       += nscans;
-      DbgLv(1) << "CR: kdsx variance" << kdsx << varidset << variance;
+DbgLv(1) << "CR: kdsx variance" << kdsx << varidset << variance;
    }
 
    sim_vals.variances.resize( dataset_count );
@@ -1300,7 +1549,7 @@ void US_SolveSim::calc_residuals( int offset, int dataset_count,
    for ( int ee = offset; ee < lim_offs; ee++ )
    {  // Scale variances for each data set
       sim_vals.variances[ kk ] = rmsds[ kk ] / (double)( kntva[ kk ] );
-      DbgLv(1) << "CR:     kk variance" <<  sim_vals.variances[kk];
+DbgLv(1) << "CR:     kk variance" <<  sim_vals.variances[kk];
       kk++;
    }
 
@@ -1329,56 +1578,55 @@ void US_SolveSim::calc_residuals( int offset, int dataset_count,
          }
       }
    }
-   DbgLv(2) << "   CR:310  rss now" << US_Memory::rss_now() << "thrn" << thrnrank;
+DbgLv(2) << "   CR:310  rss now" << US_Memory::rss_now() << "thrn" << thrnrank;
 
    // Truncate solutes at non-zero count
-   DbgLv(1) << "CR: out solutes size" << kk;
+DbgLv(1) << "CR: out solutes size" << kk;
 
    if ( use_zsol )
    {
       sim_vals.zsolutes.resize( qMax( kk, 1 ) );
-      DbgLv(1) << "CR:   jj solute-c" << 0 << sim_vals.zsolutes[0].c;
-      DbgLv(1) << "CR:   jj solute-c" << 1 << (kk>1?sim_vals.zsolutes[1].c:0.0);
-      DbgLv(1) << "CR:   jj solute-c" << kk-2 << (kk>1?sim_vals.zsolutes[kk-2].c:0.0);
-      DbgLv(1) << "CR:   jj solute-c" << kk-1 << (kk>0?sim_vals.zsolutes[kk-1].c:0.0);
+DbgLv(1) << "CR:   jj solute-c" << 0 << sim_vals.zsolutes[0].c;
+DbgLv(1) << "CR:   jj solute-c" << 1 << (kk>1?sim_vals.zsolutes[1].c:0.0);
+DbgLv(1) << "CR:   jj solute-c" << kk-2 << (kk>1?sim_vals.zsolutes[kk-2].c:0.0);
+DbgLv(1) << "CR:   jj solute-c" << kk-1 << (kk>0?sim_vals.zsolutes[kk-1].c:0.0);
    }
    else
    {
       sim_vals.solutes.resize( qMax( kk, 1 ) );
-      DbgLv(1) << "CR:   jj solute-c" << 0 << sim_vals.solutes[0].c;
-      DbgLv(1) << "CR:   jj solute-c" << 1 << (kk>1?sim_vals.solutes[1].c:0.0);
-      DbgLv(1) << "CR:   jj solute-c" << kk-2 << (kk>1?sim_vals.solutes[kk-2].c:0.0);
-      DbgLv(1) << "CR:   jj solute-c" << kk-1 << (kk>0?sim_vals.solutes[kk-1].c:0.0);
+DbgLv(1) << "CR:   jj solute-c" << 0 << sim_vals.solutes[0].c;
+DbgLv(1) << "CR:   jj solute-c" << 1 << (kk>1?sim_vals.solutes[1].c:0.0);
+DbgLv(1) << "CR:   jj solute-c" << kk-2 << (kk>1?sim_vals.solutes[kk-2].c:0.0);
+DbgLv(1) << "CR:   jj solute-c" << kk-1 << (kk>0?sim_vals.solutes[kk-1].c:0.0);
    }
-   if ( abort ) return ;
-   double sum3 = 0.0 ;
+   if ( abort ) return;
+   //double sum3 = 0.0;
    // Fill noise objects with any calculated vectors
    if ( calc_ti )
-   {  sim_vals.ti_noise << tinvec;
-      //double sum2 = 0.0,nnls_ti_norm = 0.0  ;
-      //for ( int i = 0 ; i <  sim_vals.ti_noise.size() ; i++ ) 
-      //    sum2 +=  pow ( sim_vals.ti_noise[i],2.0 ) ;
-      //sum3 = sqrt ( sum2 ) ;
-      //nnls_ti_norm +=  sum3 ;
-      //DbgLv(1)<<"nnls_ti_norm" <<  nnls_ti_norm ;
+   {
+      sim_vals.ti_noise << tinvec;
+      //double sum2 = 0.0,nnls_ti_norm = 0.0;
+      //for ( int i = 0; i <  sim_vals.ti_noise.size(); i++ )
+      //    sum2 +=  pow ( sim_vals.ti_noise[i],2.0 );
+      //sum3 = sqrt ( sum2 );
+      //nnls_ti_norm +=  sum3;
+//DbgLv(1)<<"nnls_ti_norm" <<  nnls_ti_norm;
    }
-  
+
    if ( calc_ri )
-   {  sim_vals.ri_noise << rinvec;
-      //double sum3 = 0.0,nnls_ri_norm ;
-      //for ( int i = 0 ; i <  sim_vals.ri_noise.size() ; i++ )
-      //    sum3 +=  pow ( sim_vals.ri_noise[i],2.0 ) ;
-      //nnls_ri_norm = sqrt ( sum3 ) ;
-      //DbgLv(1)<<"nnls_ri_norm" <<  nnls_ri_norm ;
+   {
+      sim_vals.ri_noise << rinvec;
+      //double sum3 = 0.0,nnls_ri_norm;
+      //for ( int i = 0; i <  sim_vals.ri_noise.size(); i++ )
+      //    sum3 +=  pow ( sim_vals.ri_noise[i],2.0 );
+      //nnls_ri_norm = sqrt ( sum3 );
+//DbgLv(1)<<"nnls_ri_norm" <<  nnls_ri_norm;
    }
-
-
-
 
    // Compute and return the xnorm-squared value of concentrations
    nsolutes = ( use_zsol ) ? sim_vals.zsolutes.size()
                            : sim_vals.solutes.size();
-   DbgLv(1) << "CR:     nsolutes" << nsolutes;
+DbgLv(1) << "CR:     nsolutes" << nsolutes;
    double xnorm = 0.0;
    for ( int jj = 0; jj < nsolutes; jj++ )
    {
@@ -1386,17 +1634,17 @@ void US_SolveSim::calc_residuals( int offset, int dataset_count,
                              : sim_vals.solutes [ jj ].c;
       xnorm      += sq( cval );
    }
-   DbgLv(2) << "   CR:320  rss now" << US_Memory::rss_now() << "thrn" << thrnrank;
+DbgLv(2) << "   CR:320  rss now" << US_Memory::rss_now() << "thrn" << thrnrank;
 
    sim_vals.xnormsq = xnorm;
-   DbgLv(1) << "CR:       xnormsq" << xnorm;
+DbgLv(1) << "CR:       xnormsq" << xnorm;
 
-   DbgLv(1) << "ASave=" << ASave << "BSave=" << BSave ;
+DbgLv(1) << "ASave=" << ASave << "BSave=" << BSave;
 
    // If specified, return the A and B matrices (with or without padding)
    if ( ASave != NULL  &&  BSave != NULL )
    {
-       DbgLv(1) << "entering for saving";
+DbgLv(1) << "entering for saving";
       if ( padAB )
       {  // Return A and B with padding for regularization
          if ( tikreg )
@@ -1481,20 +1729,20 @@ void US_SolveSim::calc_residuals( int offset, int dataset_count,
                (*BSave) << sv_nnls_b[ jj ];
             }
          }
-               
+
          else
          {  // If no regularization, return A and B as they are
             (*ASave)     = sv_nnls_a;
             (*BSave)     = sv_nnls_b;
-            DbgLv(1) << "CR: ASv: sv_nnls_a size" << sv_nnls_a.size() << ASave->size();
+DbgLv(1) << "CR: ASv: sv_nnls_a size" << sv_nnls_a.size() << ASave->size();
          }
       }
    }
-   DbgLv(2) << "   CR:777  rss now" << US_Memory::rss_now() << "thrn" << thrnrank;
-         
-   DebugTime("END:calcres");
+DbgLv(2) << "   CR:777  rss now" << US_Memory::rss_now() << "thrn" << thrnrank;
 
-   return  ;
+DebugTime("END:calcres");
+
+   return;
 }
 
 // Set abort flag
@@ -1604,7 +1852,7 @@ void US_SolveSim::ri_small_a_and_b( int                      nsolutes,
                                     QVector< double >&       small_b,
                                     const QVector< double >& a_tilde,
                                     const QVector< double >& L_tildes,
-                                    const QVector< double >& nnls_a, 
+                                    const QVector< double >& nnls_a,
                                     const QVector< double >& nnls_b )
 {
 DebugTime("BEG:ri_smab");
@@ -1632,7 +1880,7 @@ DebugTime("BEG:ri_smab");
          // small_b[ cc ] +=
          //    ( edata->value( ss, rr ) - a_tilde[ ss ] )
          //    *
-         //    ( nnls_a[ cc * ntotal + ss * npoints + rr ] 
+         //    ( nnls_a[ cc * ntotal + ss * npoints + rr ]
          //      -
          //      L_tildes[ cc * nrinois + ss ] );
          double atil  = a_tilde [ ss ];
@@ -1652,12 +1900,12 @@ DebugTime("BEG:ri_smab");
       {
          //small_a[ kk * nsolutes + cc ] +=
          //   ( nnls_a[ kk * ntotal + ss * npoints + rr ]
-         //     - 
+         //     -
          //     L_tildes[ kk * nrinois + ss  ]
-         //   ) 
+         //   )
          //   *
          //   ( nnls_a[ cc * ntotal + ss * npoints + rr ]
-         //     -  
+         //     -
          //     L_tildes[ cc * nrinois + ss ] );
          int    jjma  = kk * nsolutes + cc;
          int    jja1  = kk * ntotal;
@@ -1714,15 +1962,15 @@ void US_SolveSim::ti_small_a_and_b( int                      nsolutes,
    int incprg  = nsolutes / 20;         // increment between reports
    incprg      = max( incprg,  1 );
    incprg      = min( incprg, 10 );
-   
-   DbgLv(1)<< "ti_small_a_and_b: nsolutes=" << nsolutes ;
+
+DbgLv(1)<< "ti_small_a_and_b: nsolutes=" << nsolutes;
 
    int jstprg  = ( kstodo * incprg ) / nsolutes;  // steps for each report
    int kstep   = 0;                               // progress counter
-  //  DbgLv(1)<< "ti_small_ : np ns nn nso" << npoints << nscans << ntinois << nsolutes
-  // << "szb sza" << nnls_b.size() << nnls_a.size() << "nto" << ntotal;
+//DbgLv(1)<< "ti_small_ : np ns nn nso" << npoints << nscans << ntinois << nsolutes
+// << "szb sza" << nnls_b.size() << nnls_a.size() << "nto" << ntotal;
 
-   int svsa=0;
+//int svsa=0;
    small_a.fill( 0.0 );
    small_b.fill( 0.0 );
 
@@ -1734,7 +1982,7 @@ void US_SolveSim::ti_small_a_and_b( int                      nsolutes,
       int jjna  = jssa;
       int jjnb  = 0;
 
-      //small_b[ cc ] += 
+      //small_b[ cc ] +=
       //   ( edata->value( ss, rr ) - a_bar[ rr ] )
       //     *
       //   ( nnls_a[ cc * ntotal + ss * npoints + rr ]
@@ -1784,8 +2032,8 @@ void US_SolveSim::ti_small_a_and_b( int                      nsolutes,
          }
 
          small_a[ jjsa ] = sum_a;
-         svsa=jjsa;
-         jjsa     += nsolutes;  
+//svsa=jjsa;
+         jjsa     += nsolutes;
       }
 
       if ( signal_wanted  &&  ++kstep == incprg )
@@ -1798,9 +2046,9 @@ void US_SolveSim::ti_small_a_and_b( int                      nsolutes,
       if ( abort ) return;
    }
 
-   // DbgLv(1)<< "ti_small_:   nsb nsa" << small_b.size() << small_a.size()
-   //         << "jsb jsa" << nsolutes << svsa << "a0 an b0 bn"
-   //         << small_a[0] << small_a[svsa] << small_b[0] << small_b[nsolutes-1];
+//DbgLv(1)<< "ti_small_:   nsb nsa" << small_b.size() << small_a.size()
+// << "jsb jsa" << nsolutes << svsa << "a0 an b0 bn"
+// << small_a[0] << small_a[svsa] << small_b[0] << small_b[nsolutes-1];
 
    if ( signal_wanted  &&  kstodo > 0 )
       emit work_progress( kstodo );
@@ -1876,9 +2124,9 @@ void US_SolveSim::compute_L_bars( int                      nsolutes,
 
          for ( int ss = 0; ss < nscans; ss++ )
          {
-            // Note: L_tildes is always zero when rinoise has not been 
+            // Note: L_tildes is always zero when rinoise has not been
             // requested
-               
+
             int n_index = solute_offset + ss * npoints + rr;
             int s_index = cc * nrinois + ss;
 
@@ -1896,7 +2144,7 @@ void US_SolveSim::DebugTime( QString mtext )
    if ( dbg_timing )
    {
       qDebug() << "w" << thrnrank << "TM:" << mtext
-         << startCalc.msecsTo( QDateTime::currentDateTime() ) / 1000.0;
+               << startCalc.msecsTo( QDateTime::currentDateTime() ) / 1000.0;
    }
 }
 
@@ -2037,25 +2285,47 @@ void US_SolveSim::set_comp_attr( US_Model::SimulationComponent& component,
 }
 
 //-----------------------------------------
-//Subroutine to find angle between vectors
+// Subroutine to find angle between vectors
 //-----------------------------------------
-double US_SolveSim::angle_vectors(QVector<double>& v1, QVector<double>& v2, int n ,double angle)
-{  
-     double sum1 = 0.0 ;
-     double sum2 = 0.0 ;
-     double sum3 = 0.0 ;
+double US_SolveSim::angle_vectors( QVector<double>& v1, QVector<double>& v2, int nn )
+{
+   double angle = 0.0;
+   double sum1  = 0.0;
+   double sum2  = 0.0;
+   double sum3  = 0.0;
 
-     for ( int i = 0; i < n ; i++ )
-     {
-         sum1 += ( v1[i]*v2[i] ) ;
-         sum2 += ( v1[i]*v1[i] ) ;
-         sum3 += ( v2[i]*v2[i] ) ;
-     }
-     
-     angle = acos (sum1 /(sqrt(sum2)*sqrt(sum3)) ); 
-     DbgLv(1)<<"angle between two vectors: " << angle  << "sum1="<< sum1 <<"sum2="<< sum2 << "sum3=" <<  sum3; 
-     return angle ;
+   for ( int ii = 0; ii < nn; ii++ )
+   {
+      sum1        += ( v1[ ii ] * v2[ ii ] );
+      sum2        += ( v1[ ii ] * v1[ ii ] );
+      sum3        += ( v2[ ii ] * v2[ ii ] );
+   }
+
+   sum1         = ( sum1 != 0.0 ) ? sum1 : 1e-20;
+   sum2         = ( sum2 != 0.0 ) ? sum2 : 1e-20;
+   angle        = acos( sum1 / ( sqrt( sum2 ) * sqrt( sum3 ) ) );
+DbgLv(1)<<"angle between two vectors: " << angle  << "sum1="<< sum1 <<"sum2="<< sum2 << "sum3=" <<  sum3;
+   return angle;
 }
-     
 
-     
+double US_SolveSim::angle_vectors( double* v1, double* v2, int nn )
+{
+   double angle = 0.0;
+   double sum1  = 0.0;
+   double sum2  = 0.0;
+   double sum3  = 0.0;
+
+   for ( int ii = 0; ii < nn; ii++ )
+   {
+      sum1        += ( v1[ ii ] * v2[ ii ] );
+      sum2        += ( v1[ ii ] * v1[ ii ] );
+      sum3        += ( v2[ ii ] * v2[ ii ] );
+   }
+
+   sum1         = ( sum1 != 0.0 ) ? sum1 : 1e-20;
+   sum2         = ( sum2 != 0.0 ) ? sum2 : 1e-20;
+   angle        = acos( sum1 / ( sqrt( sum2 ) * sqrt( sum3 ) ) );
+DbgLv(1)<<"angle between two vectors: " << angle  << "sum1="<< sum1 <<"sum2="<< sum2 << "sum3=" <<  sum3;
+   return angle;
+}
+

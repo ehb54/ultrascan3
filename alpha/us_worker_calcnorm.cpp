@@ -7,7 +7,6 @@
 #include "us_sleep.h"
 #include "us_constants.h"
 #include "us_memory.h"
-//#include "us_2dsa.h"
 
 
 // construct worker thread to calculate norms
@@ -22,19 +21,19 @@ WorkerThreadCalcNorm::WorkerThreadCalcNorm( QObject* parent )
    amask      = 0;
    cff0       = 0.0;
    dbg_level  = US_Settings::us_debug();
-   DbgLv(1) << "CN(WT): Thread created";
+DbgLv(1) << "CN(WT): Thread created";
 }
 
 // worker thread destructor
 WorkerThreadCalcNorm::~WorkerThreadCalcNorm()
 {
-   DbgLv(1) << "CN(WT):   Thread destroy - (1)finished?" << isFinished() << thrn;
+DbgLv(1) << "CN(WT):   Thread destroy - (1)finished?" << isFinished() << thrn;
    if ( ! wait( 2000 ) )
    {
       qDebug() << "Thread destroy wait timeout(2secs) : Thread" << thrn;
    }
-   DbgLv(1) << "CN(WT):   Thread destroy - (2)finished?" << isFinished() << thrn;
-   DbgLv(1) << "CN(WT):    Thread destroyed" << thrn;
+DbgLv(1) << "CN(WT):   Thread destroy - (2)finished?" << isFinished() << thrn;
+DbgLv(1) << "CN(WT):    Thread destroyed" << thrn;
 }
 
 // define work for a worker thread
@@ -48,7 +47,7 @@ void WorkerThreadCalcNorm::define_work( WorkPacketCN& workin )
    attr_x      = ( amask >> 6 );        // attribute indecies
    attr_y      = ( amask >> 3 ) & 7;
    attr_z      = amask & 7;
-   DbgLv(1) << "define_work_threadno." << thrn << " of" << nthrd<< attr_x << attr_y << attr_z ;
+DbgLv(1) << "define_work_threadno." << thrn << " of" << nthrd<< attr_x << attr_y << attr_z ;
    solutes_i   = workin.isolutes;       // full solute points vector
    nsolutes    = solutes_i.count();     // total solute points
 }
@@ -64,16 +63,16 @@ void WorkerThreadCalcNorm::get_result( WorkPacketCN& workout )
    workout.solxs    = solxs;
    workout.nsolutes = nsolutes;
    workout.nwsols   = nwsols;
-   //*DEBUG*
-   int nn=workout.csolutes.size();
-   int kk=nn/2;
-   int ni=solutes_i.size();
-DbgLv(1) << "get_result"<<workout.csolutes.size() << workout.nthrd ;
+//*DEBUG*
+//int nn=workout.csolutes.size();
+//int kk=nn/2;
+//int ni=solutes_i.size();
 //DbgLv(1) << "CN(WT): thr nn" << thrn << nn << "out sol0 solk soln"
 // << workout.csolutes[0].c << workout.csolutes[kk].c << workout.csolutes[nn-1].c
 // << "in sol0 soln" << ni << solutes_i[0].s*1.e13 << solutes_i[ni-1].s*1.e13
 // << solutes_i[0].c << solutes_i[ni-1].c;
 //*DEBUG*
+DbgLv(1) << "get_result" << workout.csolutes.size() << workout.nthrd ;
 }
 
 // run the worker thread
@@ -88,10 +87,7 @@ void WorkerThreadCalcNorm::run()
 // Do the real work of a thread:  norm values for each of its solutes
 void WorkerThreadCalcNorm::calc_norms()
 {
-   //US_2dsa* mainw = (US_2dsa*)parent;
-   //edata          = mainw->mw_editdata(); // edited data
-
-   DbgLv(1) <<"calc_norms is called"<<  nsolutes << nthrd ;
+DbgLv(1) << "calc_norms is called" << nsolutes << nthrd ;
 
    for ( int ii = ( thrn - 1 ); ii < nsolutes; ii += nthrd )
    {  // fill list with this worker's solute point indecies
@@ -100,9 +96,8 @@ void WorkerThreadCalcNorm::calc_norms()
    }
 
    nwsols         = solxs.count();         // count of solutes for worker
-   DbgLv(1) << "nwsols_" << nwsols
-            << "solx0" << solxs[0] << "solx1" << solxs[1] 
-            << "solxn" << solxs[nwsols-1];
+DbgLv(1) << "nwsols_" << nwsols << "solx0" << solxs[0] << "solx1" << solxs[1] 
+ << "solxn" << solxs[nwsols-1];
 
    solutes_c.resize( nwsols );             // computed solute points
 
@@ -111,9 +106,8 @@ void WorkerThreadCalcNorm::calc_norms()
       solutes_c[ ii ]    = solutes_i[ solxs[ ii ] ];
       solutes_c[ ii ].c  = 0.0;
    }
-   DbgLv(1) << "CN(WT):  CN:  sol_c0.s" << solutes_c[0].s;
+DbgLv(1) << "CN(WT):  CN:  sol_c0.s" << solutes_c[0].s;
 
-   //edata          = &dset->run_data;       // edited data
    simparms       = dset->simparams;       // local simulation parameters
 
    US_DataIO::RawData simdat;              // simulation data set
@@ -125,7 +119,7 @@ void WorkerThreadCalcNorm::calc_norms()
 
    int nscan         = simdat.scanCount();
    int npoint        = simdat.pointCount();
-   DbgLv(1) << "CN(WT):  CN:  nscan" << nscan << "npoint" << npoint;
+DbgLv(1) << "CN(WT):  CN:  nscan" << nscan << "npoint" << npoint;
 
    // Zeroed model component for initialization
    US_Model::SimulationComponent zcomponent;
@@ -135,7 +129,6 @@ void WorkerThreadCalcNorm::calc_norms()
    zcomponent.f      = 0.0;
    zcomponent.f_f0   = cff0;
    zcomponent.vbar20 = dset->vbar20;
-
 
    // Do the work of finite element modeling, norm value from simulation
    for ( int ii = 0; ii < nwsols; ii++ )
@@ -158,9 +151,9 @@ void WorkerThreadCalcNorm::calc_norms()
          for ( int kk = 0; kk < npoint; kk++ )
             simdat.setValue( jj, kk, 0.0 );
 
-      DbgLv(1) << "CN(WT):  CN:   ii" << ii << "astfem_rsa:";
+DbgLv(1) << "CN(WT):  CN:   ii" << ii << "astfem_rsa:";
       // Perform finite element modeling to compute the simulation
-      US_Astfem_RSA astfem_rsa( model1, simparms);
+      US_Astfem_RSA astfem_rsa( model1, simparms );
 
       astfem_rsa.calculate( simdat );
 

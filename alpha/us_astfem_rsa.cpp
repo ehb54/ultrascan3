@@ -17,50 +17,49 @@
 #include <process.h>
 #endif
 
-//----------------------------------------
-//Constructor for US_Astfem_RSA structure
-//----------------------------------------
+#if 0                   // Set to 1 to enable RA timing prints
+#define TIMING_RA_INC 500
+#define TIMING_RA
+#endif
 
+#if 0                   // Set to 1 to enable NI timing prints
+#define TIMING_NI 1
+#endif
+
+// Constructor for US_Astfem_RSA structure
 US_Astfem_RSA::US_Astfem_RSA( US_Model&                model,
                               US_SimulationParameters& params,
                               QObject*                 parent )
    : QObject( parent ), system( model ), simparams( params )
 {
    stopFlag        = false ; // Flag used to stop the simulation.
-
-   use_time        = true ;  // Flag used for choosing interpolation option. 
+   use_time        = true ;  // Flag used for choosing interpolation option.
                              // True for time based interpolation and false for
                              // omega_square_t based interpolation.
-
    time_correction = false ;
-
-   simout_flag     = false ; // Flag used for choosing the display grid for scans. 
-                             //True refers to display on simulation grid and false 
-                             //refer to display on experimental grid.
-
-   show_movie      = true  ; // Flag used to see a movie i.e. movement of scans.
-
+   simout_flag     = false ; // Flag used for choosing the display grid for scans.
+                             // True refers to display on simulation grid and false
+                             // refer to display on experimental grid.
+   show_movie      = false;  // Flag used to see a movie i.e. movement of scans.
    dbg_level       = 0  ;    // Flag used to choose a debug level.
 }
-//------------------------------------------
 
-//-----------------------------------------------------------------------------------
-//!< Takes the experimental data i.e. 'exp_data' as input and updates the scans 
+//!< Takes the experimental data i.e. 'exp_data' as input and updates the scans
 //!< with concentration values.
 
-//!< We are solving for Lamm equation to get concentration values on the 
-//!< grid points. 
+//!< We are solving for Lamm equation to get concentration values on the
+//!< grid points.
 
 //!< Here we deal with two radial grid systems. One the user chooses
 //!< for the output and the other radial grid needed for finite element simulation.
 //!< Time grid spacing is different from radial grid spacing and defined in
-//!< Ref : Cao W, Demeler B, Modeling Analytical Ultracentrifugation Experiments 
-//         with an Adaptive Space-Time Finite Element Solution of the Lamm Equation, 
-//         (2005) Biophys J. 89(3):1589-602. 
+//!< Ref : Cao W, Demeler B, Modeling Analytical Ultracentrifugation Experiments
+//         with an Adaptive Space-Time Finite Element Solution of the Lamm Equation,
+//         (2005) Biophys J. 89(3):1589-602.
 
 //!< Concentrations can be obtained on either experimental grid or
 //!< finite element simulation grid based on user's choice. "simout_flag" is the
-//!< variable used to choose grid, true refers to simulation grid and false 
+//!< variable used to choose grid, true refers to simulation grid and false
 //!< refers to experimental grid.
 
 //!< If user wants solution on experimental grid, the simulated solution is inter-
@@ -68,360 +67,337 @@ US_Astfem_RSA::US_Astfem_RSA( US_Model&                model,
 
 //!< Both reacting and non-reacting systems are handeled here. calculate_ni takes
 //!< care for non-reacting systems and calculate_ra2 takes care for reacting systems.
-//-----------------------------------------------------------------------------------
-
 int US_Astfem_RSA::calculate( US_DataIO::RawData& exp_data )
 {
-    US_AstfemMath::MfemInitial* vC0 = NULL; // Initial concentration for multiple components
-    US_AstfemMath::MfemInitial  CT0;        // Initial  concentration vector
-    US_AstfemMath::MfemData     simdata;    // Contains scans on the simulation grid
-    double        current_time   = 0.0;     // Initialize time
-    double        current_om2t   = 0.0;     // Initialize omega square t
-    double        current_speed  = 0.0;     // Initialize rotor speed
-    double        duration       = 0.0;     // Initialize duration of the experiment
-    double        delay          = 0.0;     // Initialize delay
-    int           current_assoc = 0;        // Current association 
-    int           size_cv         = system.components.size(); // Number of components in the model
-   
-    QVector< bool >                 reactVec( size_cv );  // Reacting vectors
-    bool*         reacting        = reactVec.data();      // Used to check reacting or non_reacting case
-    double        accel_time;                             // Duration to reach at next rotor speed
-    double        dr;                                     // Increment on the initial radial grid
+   US_AstfemMath::MfemInitial* vC0 = NULL; // Initial concentration for multiple components
+   US_AstfemMath::MfemInitial  CT0;        // Initial  concentration vector
+   US_AstfemMath::MfemData     simdata;    // Contains scans on the simulation grid
+   double        current_time   = 0.0;     // Initialize time
+   double        current_om2t   = 0.0;     // Initialize omega square t
+   double        current_speed  = 0.0;     // Initialize rotor speed
+   double        duration       = 0.0;     // Initialize duration of the experiment
+//   double        delay          = 0.0;     // Initialize delay
+//   int           current_assoc  = 0;       // Current association
+   int           size_cv        = system.components.size(); // Number of components in the model
 
-    #if 0
-     #define TIMING_RA_INC 500
-     #define TIMING_RA
-    #endif
+   QVector< bool > reactVec( size_cv );    // Reacting vectors
+   bool*         reacting       = reactVec.data();  // Used to check reacting or non_reacting case
+   double        accel_time     = 0.0;              // Duration to reach at next rotor speed
+   double        dr;                                // Increment on the initial radial grid
 
-    #ifdef TIMING_RA
-     QDateTime calcStart = QDateTime::currentDateTime();
-     static int ncalls=0;
-     static int totTC=0;
-     static int totT1=0;
-     static int totT2=0;
-     static int totT3=0;
-     static int totT4=0;
-     static int totT5=0;
-     static int totT6=0;
-     static int totT7=0;
-     static int totT8=0;
-    #endif
+#ifdef TIMING_RA
+QDateTime calcStart = QDateTime::currentDateTime();
+static int ncalls=0;
+static int totTC=0;
+static int totT1=0;
+static int totT2=0;
+static int totT3=0;
+static int totT4=0;
+static int totT5=0;
+static int totT6=0;
+static int totT7=0;
+static int totT8=0;
+#endif
 
-    //-------------------------------------------------------------------
-    //-Initialization of different parameters for simulation begins here-
-    //-------------------------------------------------------------------
+   // Initialization of different parameters for simulation begins here-
+   af_params.simpoints   = simparams.simpoints;     // Number of simulation i.e. radial grid points
+   af_params.pathlength  = simparams.cp_pathlen;    // Pathlength
+   af_params.dt          = 1.0;                     // Time gap between two time steps
+   af_params.time_steps  = simparams.simpoints;     // Number of time steps
+   af_params.first_speed = simparams.speed_step[ 0 ].rotorspeed ; // Rotor speed for first speed
+   af_params.omega_s     = sq( (double)af_params.first_speed * M_PI / 30.0 ); // omega_square
+   af_params.start_om2t  = af_params.omega_s;       // Starting omega square t
+   af_params.start_time  = 0.0;                     // Starting time
+   af_params.current_meniscus = simparams.meniscus; // Meniscus from simparams structure
+   af_params.current_bottom   = simparams.bottom;   //  Bottom from simparams structure
 
-    af_params.simpoints   = simparams.simpoints; // Number of simulation i.e. radial grid points
-    af_params.pathlength  = simparams.cp_pathlen;// Pathlength
-    af_params.dt          = 1.0;                 // Time gap between two time steps
-    af_params.time_steps  = simparams.simpoints; // Number of time steps   
-    af_params.first_speed = simparams.speed_step[ 0 ].rotorspeed ; // Rotor speed for first speed
-    af_params.omega_s     = sq( (double)af_params.first_speed * M_PI / 30.0 ); // omega_square
-    af_params.start_om2t  = af_params.omega_s; // Starting omega square t
-    af_params.start_time  = 0.0; // Starting time
-    af_params.current_meniscus = simparams.meniscus;// Meniscus from simparams structure
-    af_params.current_bottom   = simparams.bottom; //  Bottom from simparams structure
- 
-    //-------------------------------------------------------------------
-    //-Initialization of different parameters for simulation ends here-
-    //-------------------------------------------------------------------
+   // Loads the experimental data exp_data of 'RawData'type
+   // to af_data of 'MfemData' type and 'af_data' is used for
+   // getting scans on experimental grid
+   load_mfem_data( exp_data, af_data );
 
-    //-------------------------------------------------------
-    // Loads the experimental data exp_data of 'RawData'type
-    // to af_data of 'MfemData' type and 'af_data' is used for
-    // getting scans on experimental grid
-    //-------------------------------------------------------
-    load_mfem_data( exp_data, af_data );
-    //---------------------------------------
-    int initial_npts      = af_data.scan[ 0 ].conc.size(); // Size of the concentration vector on radial grid
+   int initial_npts      = af_data.scan[ 0 ].conc.size(); // Size of the concentration vector on radial grid
 
-    //--------------------------
-    //--Set up reaction groups--
-    //--------------------------
-      initialize_rg();
-    //--------------------------
-   
-    //-------------------------------------------------------------
-    //----Updates the bottom and meniscus for experimental grid----
-    //-------------------------------------------------------------
-      af_data.meniscus = af_params.current_meniscus;
-      af_data.bottom   = af_params.current_bottom;
-    //-------------------------------------------------------------
-      double omeg0, omeg2 ;
-      
-      QList< int > accel_times;   // time when acceleration ended
-      QList< double > accel_w2ts; // w2t at end of acceleration
+   // Set up reaction groups--
+   initialize_rg();
 
-      QList< int > time_end ;   //time at end of the step
-      QList< double > w2t_end ; //w2t  at end of the step
-    
-    //----------------------------------------------------------------------------
-    // For each component vector find the scans. "af_data" i.e. scans on the
-    // experimental grid or simdata i.e. scans on the simulation grid as required.
-    // Here size_cv refers to  number of components in the component vector.
-    // ---------------------------------------------------------------------------
+   // Updates the bottom and meniscus for experimental grid
+   af_data.meniscus = af_params.current_meniscus;
+   af_data.bottom   = af_params.current_bottom;
+   double omeg0     = 0.0;
+   double omeg2     = 0.0;
 
+   QList< int >    accel_times;   // time when acceleration ended
+   QList< double > accel_w2ts;    // w2t at end of acceleration
 
-    for ( int cc = 0; cc < size_cv; cc++ )
-    {
-        #ifdef TIMING_RA
-         QDateTime clcSt1 = QDateTime::currentDateTime();
-        #endif
+   QList< int >    time_end ;     // time at end of the step
+   QList< double > w2t_end;       // w2t  at end of the step
 
-        US_Model::SimulationComponent* sc = &system.components[ cc ];
-        US_Model::Association*         as;
+   //----------------------------------------------------------------------------
+   // For each component vector find the scans. "af_data" i.e. scans on the
+   // experimental grid or simdata i.e. scans on the simulation grid as required.
+   // Here size_cv refers to  number of components in the component vector.
+   // ---------------------------------------------------------------------------
 
-        reacting[ cc ] = false;
-               
-        for ( int aa = 0; aa <  system.associations.size(); aa++ )
-        {
-            as  = &system.associations[ aa ];
-            for ( int jj = 0; jj < as->rcomps.size(); jj++ )
-            {
-                if ( cc == (int)as->rcomps[ jj ] )
-                {
-                   reacting[ cc ] = true;
-                   current_assoc  = aa;
-                   break;   // Since a comp appears at most once in an assoc rule
-                }
-            }
-        }
-        
-        current_time  = 0.0;
-        current_om2t  = 0.0;
-        last_time     = 0.0;
-        current_speed = 0.0;
-        w2t_integral  = 0.0;
+   for ( int cc = 0; cc < size_cv; cc++ )
+   {
+#ifdef TIMING_RA
+QDateTime clcSt1 = QDateTime::currentDateTime();
+#endif
 
-        //------------------------------------------------------------
-        //Clears any previous initial concentration and radius vector 
-        //and does memory allocations for the vector having radial points 
-        //and initial concentration vector of size initial_npts.
-        //------------------------------------------------------------
-        CT0.radius       .clear();
-        CT0.concentration.clear();
-        CT0.radius       .reserve( initial_npts );
-        CT0.concentration.reserve( initial_npts );
-        //-------------------------------------------------------------
+      US_Model::SimulationComponent* sc = &system.components[ cc ];
+      US_Model::Association*         as;
+DbgLv(2)<< "s_n_D_values are" << sc->s << sc->D  << cc ;
 
-        //------------------------------------------------------------
-        //---Gap between two radial grid points on the initial grid---
-        //-----------------------------------------------------------
-        dr = ( af_params.current_bottom - af_params.current_meniscus ) /
-             ( initial_npts - 1 );
-        //-----------------------------------------------------------
+      reacting[ cc ] = false;
 
-       //--------------------------------------------------------------------
-       // Update the radial grid and concentration vector on the initial grid
-       //--------------------------------------------------------------------
-        for ( int jj = 0; jj < initial_npts; jj++ )
-        {
-            CT0.radius.append( af_params.current_meniscus + jj * dr );
-            CT0.concentration.append( 0.0 );
-        }
-       //--------------------------------------------------------------------
-
-        af_c0.radius       .clear();
-        af_c0.concentration.clear();
-
-        // Once time invariant noise has been removed in a band experiment, we
-        // can use the first scan of the first speed step of the experiment as
-        // the initial concentration of the simulation. The approach will copy
-        // the 1st scan concentration vector into each component's c0 vector.
-        // NNLS will scale the appropriate concentration for each component. The
-        // assumption is made that any potential differentiation of components in
-        // the initial scan is minimal compared to any solute flow disturbances
-        // at the meniscus. For this approach to work well it is necessary to
-        // pick the first data point close to the meniscus and to include the
-        // earliest possible scan in the experiment. Also, time invariant noise
-        // should be subtracted first.
-        
-        /*if ( simparams.firstScanIsConcentration )
-        {
-            US_AstfemMath::MfemScan*   scan0 = &af_data.scan[ 0 ];
-            US_AstfemMath::MfemInitial scan1;
-            scan1.radius       .clear();
-            scan1.concentration.clear();
-            scan1.radius       .reserve( af_data.radius.size() );
-            scan1.concentration.reserve( af_data.radius.size() );
-            for ( int jj = 0; jj < af_data.radius.size(); jj++ )
-            {
-                scan1.radius       .append( af_data.radius[ jj ] );
-                scan1.concentration.append( scan0->conc   [ jj ] );
-            }
-            US_AstfemMath::interpolate_C0( scan1, af_c0 );
-        }
-        */
-       //QList< int > accel_times;   // time when acceleration ended
-       //QList< double > accel_w2ts; // w2t at end of acceleration
-
-       //QList< int > time_end ;   //time at end of the step
-       //QList< double > w2t_end ; //w2t  at end of the step
-
-       //--------------------------------
-       int t_acc ;
-       US_SimulationParameters::SpeedProfile* sp;// Pointer used for current speed step 'SpeedProfile'
-
-       //-------------------------------------------------------------
-       //Check if  timestate information  exists or  not !
-       //Create a temporary timestate file if it does not exist !
-       //-------------------------------------------------------------
-
-       if ( simparams.tsobj != NULL )  // if timestate file exists
-       {
-DbgLv(1)<<"rsa : timestate file exists and timestateobject = "
- <<simparams.tsobj<< simparams.sim_speed_prof.count();
-       }
-       else                           // if timestate file does not exist
-       {  
-DbgLv(1)<<"timestate file does not exist";
-          QString tmst_fpath = US_Settings::tmpDir() + "/" + temp_Id_name() + ".time_state.tmst";
-          US_AstfemMath::writetimestate( tmst_fpath, simparams, exp_data );    
-          simparams.simSpeedsFromTimeState( tmst_fpath );
-       }   
-       
-       //-----------------------------------------------
-       for ( int istep = 0; istep < simparams.speed_step.size(); istep++ )
-       { 
-           time_end << simparams.sim_speed_prof[ istep ].time_e_step;
-           w2t_end  << simparams.sim_speed_prof[ istep ].w2t_e_step;
-           accel_times << simparams.sim_speed_prof[ istep ].time_e_accel;
-           accel_w2ts << simparams.sim_speed_prof[ istep ].w2t_e_accel;
-DbgLv(1)<< "rsa readinngs:from timestate file "<<accel_times [istep] <<  accel_w2ts [istep];
-       }
-       //-------------------------------------------------------------------
-       //     timestate information update is over
-       //-------------------------------------------------------------------
-
-      //------------------------------------------------------------
-      //------Non-reacting case for the components starts here------
-      //------------------------------------------------------------
-      if ( ! reacting[ cc ] ) // noninteracting
+      for ( int aa = 0; aa <  system.associations.size(); aa++ )
+      {
+         as  = &system.associations[ aa ];
+         for ( int jj = 0; jj < as->rcomps.size(); jj++ )
          {
-            initialize_conc( cc, CT0, true );// Initialize the concentration vector on initial grid
-
-            //--------------------------------
-            //-Resizes for the s and D values-
-            //--------------------------------
-             af_params.s   .resize( 1 );
-             af_params.D   .resize( 1 );
-             af_params.kext.resize( 1 );
-            //--------------------------------
-
-            //--------------------------------
-            //-----Updates s and D values-----
-            //--------------------------------
-            af_params.s   [ 0 ] = sc->s;
-            af_params.D   [ 0 ] = sc->D;
-            af_params.kext[ 0 ] = sc->extinction * af_params.pathlength;
-            //--------------------------------
-            #ifdef TIMING_RA
-              totT1+=(clcSt1.msecsTo(QDateTime::currentDateTime()));
-            #endif
-            //------------------------------------------------------------------
-            // Initializes first and last scans, times, omega_square_t and number 
-            // of speed steps
-            // -----------------------------------------------------------------
-
-            int    lscan = 0; // Used for last scan
-            int    fscan = 0; // Used for first scan
-            int    nstep = simparams.speed_step.size(); // Number of speed steps
-            double time0 = 0.0; // Last time of the previous speed step
-            double time1 = 0.0; // First time of the current speed step
-            double time2 = 0.0; // Last time of the current speed step
-            double omeg0 = 0.0; // Last omega_square_t of the previous speed step
-            double omeg1 = 0.0; // First omega_square_t of the current speed step
-            double omeg2 = 0.0; // Last omega_square_t of the current speed step
-            double next_speed;  // Rotor speed in next speed step
-            double dw2,wfac,crpm, rpmi; // Increment in omega_2_t over acceleration zone
-            //------------------------------------------------------------------
-            double prvs_speed = 0.0; // Starting previous speed
-            US_SimulationParameters::SpeedProfile* sp_prev;// Pointer used for previous speed step
-            US_AstfemMath::MfemData*               ed;// Pointer used for af_data i.e. on experimental grid 
-            //----------------------------------------------------------------
-            //----------Calculation for each speed step starts here-----------
-            //'nstep' is the total number of speed_steps in the speed profile
-            //----------------------------------------------------------------
-            //printsimComponent(*sc); 
-            // qDebug()<<"before calculate_ni" ;  
-            for ( int speed_step = 0; speed_step < nstep; speed_step++ )
+            if ( cc == (int)as->rcomps[ jj ] )
             {
-                #ifdef TIMING_RA
-                 QDateTime clcSt2 = QDateTime::currentDateTime();
-                #endif 
-                sp           = &simparams.speed_step[ speed_step ];
-                if ( speed_step > 0 )
-                {   sp_prev     = &simparams.speed_step[ speed_step-1 ];
-                    prvs_speed  = sp_prev->rotorspeed;
-                }
-                else
-                    prvs_speed  = 0.0;
-                //--------------------------
-                //printspeedprofile( *sp );
-                //printsimparams( );
-                //--------------------------
-                ed           = &af_data;
-                next_speed   = (double)sp->rotorspeed;
-                fscan        = 0;
-                lscan        = fscan + af_data.scan.count() - 1;
-                bool in_step = ( ed->scan[ fscan ].time <= sp->time_last  &&
-                             ed->scan[ lscan ].time >= sp->time_first ); 
-                //----------------------------------------------------------------
-                // For multi-speed, break out once speed step is beyond data
-                //----------------------------------------------------------------
-                if ( speed_step > 0  &&  ed->scan[ lscan ].time < sp->time_first )
-                {  DbgLv(1)<<"breaking inside astfem_rsa" ;
-                   break;
-                }
-                //----------------------------------------------------------------                      
-                time0        = time2;           // Last time of last speed step is assigned 
-                                                // as first time of the current speed step
-                                                // First time is zero if it is the first
-                                                // speed step.
+               reacting[ cc ] = true;
+//               current_assoc  = aa;
+               break;   // Since a comp appears at most once in an assoc rule
+            }
+         }
+      }
 
-                omeg0        = omeg2;           // Last time of w^2_t speed step is assigned 
-                                                // as first w^2_t of the current speed step
-                                                // First w^2_t is zero if it is the first
-                                                // speed step.
-                   
-                time2  = ( double )( time_end[ speed_step ] );// Last time of the current speed step
-                omeg2  = w2t_end [ speed_step ] ;             // Last omega_square_t of the current speed step
-      
-                ed->meniscus = af_params.current_meniscus; // Update meniscus for experimental grid
-                ed->bottom   = af_params.current_bottom; // Update bottom for experimental grid
-                 
-                // We need to simulate on acceleration zone 
+      current_time  = 0.0;
+      current_om2t  = 0.0;
+      last_time     = 0.0;
+      current_speed = 0.0;
+      w2t_integral  = 0.0;
 
-                if  ( sp->acceleration_flag )// Accln flag is used to accelerate the rotor speed.
-                {   
-                    // -----------------------------------------------------------------                                              // Calculates number of time steps for acceleration simulation grid
-                    //-----------------------------------------------------------------
-                    //!< Number of time steps for acceleration zones is equal to time 
-                    //!< when acceleration ended minus last time of last timestep. Time
-                    //!< when acceleration process ended is obtained from timestate readings. 
-                    //!< And simulation is done for acceleration zone for each second.
+      // Clears any previous initial concentration and radius vector
+      // and does memory allocations for the vector having radial points
+      // and initial concentration vector of size initial_npts.
+      CT0.radius       .clear();
+      CT0.concentration.clear();
+      CT0.radius       .reserve( initial_npts );
+      CT0.concentration.reserve( initial_npts );
 
-                    af_params.time_steps = accel_times[speed_step] - (int)(time0);                         
-                    af_params.dt         = 1.0;
-                    af_params.simpoints  = 2 * simparams.simpoints;    
-                    af_params.start_time = time0 ;
-                    af_params.start_om2t = omeg0;        
-                    //-----------------------------------------------------------------------
-                    //--------------------Simulate for the acceleration zone-----------------               
-                    calculate_ni( current_speed, next_speed,speed_step, CT0, simdata, true );           
-                    //------------------------------------------------------------------------
-                    qApp->processEvents();
-                    if ( stopFlag ) return 1;
-                    //------------------------------------------------
-                    //---------Update time and omega_2t--------------
-                    current_om2t  = accel_w2ts[speed_step] ;
-                    current_time  = (double) ( accel_times[speed_step] ) ;
-                    accel_time    = (double) af_params.time_steps ;
-                    //-----------------------------------------------      
-                    #ifndef NO_DB
-                     emit new_time( current_time );
-                     qApp->processEvents();
-                    #endif
+      // Gap between two radial grid points on the initial grid---
+      dr = ( af_params.current_bottom - af_params.current_meniscus ) /
+           ( initial_npts - 1 );
+
+      // Update the radial grid and concentration vector on the initial grid
+      for ( int jj = 0; jj < initial_npts; jj++ )
+      {
+         CT0.radius.append( af_params.current_meniscus + jj * dr );
+         CT0.concentration.append( 0.0 );
+      }
+
+      af_c0.radius       .clear();
+      af_c0.concentration.clear();
+
+      // Once time invariant noise has been removed in a band experiment, we
+      // can use the first scan of the first speed step of the experiment as
+      // the initial concentration of the simulation. The approach will copy
+      // the 1st scan concentration vector into each component's c0 vector.
+      // NNLS will scale the appropriate concentration for each component. The
+      // assumption is made that any potential differentiation of components in
+      // the initial scan is minimal compared to any solute flow disturbances
+      // at the meniscus. For this approach to work well it is necessary to
+      // pick the first data point close to the meniscus and to include the
+      // earliest possible scan in the experiment. Also, time invariant noise
+      // should be subtracted first.
+
+      if ( simparams.firstScanIsConcentration )
+      {
+         US_AstfemMath::MfemScan*   scan0 = &af_data.scan[ 0 ];
+         US_AstfemMath::MfemInitial scan1;
+         scan1.radius       .clear();
+         scan1.concentration.clear();
+         scan1.radius       .reserve( af_data.radius.size() );
+         scan1.concentration.reserve( af_data.radius.size() );
+         for ( int jj = 0; jj < af_data.radius.size(); jj++ )
+         {
+            scan1.radius       .append( af_data.radius[ jj ] );
+            scan1.concentration.append( scan0->conc   [ jj ] );
+         }
+         US_AstfemMath::interpolate_C0( scan1, af_c0 );
+      }
+
+      // Pointer used for current speed step 'SpeedProfile'
+      US_SimulationParameters::SpeedProfile* sp;
+
+      // Check if  timestate information  exists or  not !
+      // Create a temporary timestate file if it does not exist !
+
+      if ( simparams.tsobj == NULL  ||
+           simparams.sim_speed_prof.count() < 1 )
+      {  // Timestate is not properly loaded
+DbgLv(1)<<"rsa1: timestate does not exist";
+         simparams.sim      = ( exp_data.channel == 'S' );
+#ifdef NO_DB
+         QString tmst_fpath = "../" + temp_Id_name() + ".time_state.tmst";
+
+         if ( ! QFile( tmst_fpath ).exists() )
+            US_AstfemMath::writetimestate( tmst_fpath, simparams, exp_data );
+#else
+         QString tmst_fpath = US_Settings::tmpDir() + "/" + temp_Id_name() + ".time_state.tmst";
+         US_AstfemMath::writetimestate( tmst_fpath, simparams, exp_data );
+#endif
+         simparams.simSpeedsFromTimeState( tmst_fpath );
+      }
+      else
+      {  // Timestate object and speed profile exist are properly loaded
+DbgLv(1) << "rsa1 : timestate exists and timestateobject,sscount="
+ << simparams.tsobj << simparams.sim_speed_prof.count();
+      }
+DbgLv(1) << "SS1: ss size" << simparams.speed_step.size()
+ << "ssp size" << simparams.sim_speed_prof.size();
+
+      for ( int istep = 0; istep < simparams.sim_speed_prof.size(); istep++ )
+      {  // Fill time,omega2t work vectors for each step
+         time_end    << simparams.sim_speed_prof[ istep ].time_e_step;
+         w2t_end     << simparams.sim_speed_prof[ istep ].w2t_e_step;
+         accel_times << simparams.sim_speed_prof[ istep ].time_e_accel;
+         accel_w2ts  << simparams.sim_speed_prof[ istep ].w2t_e_accel;
+
+if(dbg_level>0) {
+ DbgLv(1) << "rsa1 readings:from timestate file (st tea te wea ns)"
+  << istep << accel_times[istep] << time_end[istep] << accel_w2ts [istep]
+  << simparams.sim_speed_prof.count();
+ for ( int i = 0; i< simparams.sim_speed_prof[ istep ].duration ; i++ ) {
+  if(i<4 || (i+4)>simparams.sim_speed_prof[istep].duration)
+   DbgLv(1) << "rsa1: rpm_from_timestate" << simparams.sim_speed_prof[ istep ].rpm_timestate [i]
+    << "w2t_from_timestate" << simparams.sim_speed_prof[ istep ].w2t_timestate [i]
+    << "duration" << simparams.sim_speed_prof[ istep ].duration; }
+}
+      }
+
+      // Non-reacting case for the components starts here
+
+      if ( ! reacting[ cc ] ) // noninteracting
+      {
+         initialize_conc( cc, CT0, true );// Initialize the concentration vector on initial grid
+
+         // Resizes for the s and D values
+         af_params.s   .resize( 1 );
+         af_params.D   .resize( 1 );
+         af_params.kext.resize( 1 );
+
+         // Updates s and D values
+         af_params.s   [ 0 ] = sc->s;
+         af_params.D   [ 0 ] = sc->D;
+         af_params.kext[ 0 ] = sc->extinction * af_params.pathlength;
+#ifdef TIMING_RA
+totT1+=(clcSt1.msecsTo(QDateTime::currentDateTime()));
+#endif
+         // Initializes first and last scans, times, omega_square_t and number
+         // of speed steps
+         int    lscan = 0;    // Used for last scan
+         int    fscan = 0;    // Used for first scan
+         int    nstep = simparams.speed_step.size(); // Number of speed steps
+         double time0 = 0.0;  // Last time of the previous speed step
+         double time1 = 0.0;  // First time of the current speed step
+         double time2 = 0.0;  // Last time of the current speed step
+         double omeg0 = 0.0;  // Last omega_square_t of the previous speed step
+         double omeg1 = 0.0;  // First omega_square_t of the current speed step
+         double omeg2 = 0.0;  // Last omega_square_t of the current speed step
+         double next_speed;   // Rotor speed in next speed step
+         US_AstfemMath::MfemData* ed;      // Pointer used for af_data i.e. on experimental grid
+
+#if 0
+         if ( simparams.sim_speed_prof.count() > 0 )
+         {
+            time2        = (double)simparams.sim_speed_prof[ 0 ].time_b_accel;
+         }
+#endif
+
+         // Calculation for each speed step starts here
+         //   'nstep' is the total number of speed_steps in the speed profile
+         //printsimComponent(*sc);
+//qDebug()<<"before calculate_ni" ;
+         for ( int speed_step = 0; speed_step < nstep; speed_step++ )
+         {
+#ifdef TIMING_RA
+QDateTime clcSt2 = QDateTime::currentDateTime();
+#endif
+            sp           = &simparams.speed_step[ speed_step ];
+#if 0
+            if ( speed_step > 0 )
+            {
+               sp_prev     = &simparams.speed_step[ speed_step-1 ];
+               prvs_speed  = sp_prev->rotorspeed;
+            }
+            else
+               prvs_speed  = 0.0;
+#endif
+            //--------------------------
+            //printspeedprofile( *sp );
+            //printsimparams( );
+            //--------------------------
+            ed           = &af_data;
+            next_speed   = (double)sp->rotorspeed;
+            fscan        = 0;
+            lscan        = fscan + af_data.scan.count() - 1;
+            bool in_step = ( ed->scan[ fscan ].time <= sp->time_last  &&
+                             ed->scan[ lscan ].time >= sp->time_first );
+
+            //----------------------------------------------------------------
+            // For multi-speed, break out once speed step is beyond data
+            //----------------------------------------------------------------
+            if ( speed_step > 0  &&  ed->scan[ lscan ].time < sp->time_first )
+            {
+DbgLv(1) << "breaking inside astfem_rsa (step-time beyond last scan-time)" ;
+               break;
+            }
+
+            time0        = time2;           // Last time of last speed step is assigned
+                                            // as first time of the current speed step
+                                            // First time is zero if it is the first
+                                            // speed step.
+
+            omeg0        = omeg2;           // Last time of w^2_t speed step is assigned
+                                            // as first w^2_t of the current speed step
+                                            // First w^2_t is zero if it is the first
+                                            // speed step.
+
+            // Last time and omega_square_t of the current speed step
+            time2        = ( double )( time_end[ speed_step ] );
+            omeg2        = w2t_end[ speed_step ];
+
+            ed->meniscus = af_params.current_meniscus; // Update meniscus for experimental grid
+            ed->bottom   = af_params.current_bottom;   // Update bottom for experimental grid
+
+            // We need to simulate on acceleration zone
+
+            if  ( sp->acceleration_flag ) // Accel flag is used to accelerate the rotor speed.
+            {
+               // Calculates number of time steps for acceleration simulation grid
+
+               // Number of time steps for acceleration zones is equal to time
+               // when acceleration ended minus last time of last timestep. Time
+               // when acceleration process ended is obtained from timestate readings.
+               // And simulation is done for acceleration zone for each second.
+
+               af_params.time_steps = accel_times[speed_step] - (int)(time0);
+               af_params.dt         = 1.0;
+               af_params.simpoints  = 2 * simparams.simpoints;
+               af_params.start_time = time0 ;
+               af_params.start_om2t = omeg0;
+
+               // Simulate for the acceleration zone
+               calculate_ni( current_speed, next_speed, speed_step, CT0, simdata, true );
+
+               qApp->processEvents();
+               if ( stopFlag ) return 1;
+
+               // Update time and omega_2t
+               current_om2t  = accel_w2ts[speed_step] ;
+               current_time  = (double) ( accel_times[speed_step] ) ;
+               accel_time    = (double) af_params.time_steps;
+               time1         = current_time;
+               omeg1         = current_om2t;
+#ifndef NO_DB
+               emit new_time( current_time );
+               qApp->processEvents();
+#endif
             }  // End of acceleration
 
             else
@@ -429,19 +405,22 @@ DbgLv(1)<< "rsa readinngs:from timestate file "<<accel_times [istep] <<  accel_w
                current_time  = time1;
                current_om2t  = omeg1;
             }
+#ifdef TIMING_RA
+QDateTime clcSt3 = QDateTime::currentDateTime();
+totT2+=(clcSt2.msecsTo(clcSt3));
+#endif
 
-            #ifdef TIMING_RA
-             QDateTime clcSt3 = QDateTime::currentDateTime();
-             totT2+=(clcSt2.msecsTo(clcSt3));
-            #endif
-
-           //-----------------------------------------------------
-           //--time left to be simulated after accelaration zone--
-           //--------------with constant speed--------------------
+            // Time left to be simulated after acceleration zone
+            //  with constant speed
             duration   = time2 - current_time;
-           //-----------------------------------------------------
+
+            // Insure that the last speed step's simulation extends
+            //  well beyond the last experiment scan time
+            if ( speed_step == ( nstep - 1 ) )
+               duration += (double)( (int)( duration * 0.05 ) );  // +5%
+
             adjust_limits( sp->rotorspeed ); // Does rotor stretch
-           //----------------------------------------
+
             if ( accel_time > duration )
             {
                DbgErr() << "Attention: acceleration time exceeds duration - "
@@ -449,108 +428,103 @@ DbgLv(1)<< "rsa readinngs:from timestate file "<<accel_times [istep] <<  accel_w
                return -1;
             }
 
-            //-------------------------------------------------
-            //Variables needed to calculate length of time 
-            //grid on simulation grid
-            //-------------------------------------------------
+            // Variables needed to calculate length of time
+            // grid on simulation grid
             double omega        = next_speed * M_PI / 30.0;
             af_params.omega_s   = sq( omega );
             double lg_bm_rat    = log(af_params.current_bottom / af_params.current_meniscus );
             double s_omg_fac    = qAbs( sc->s ) * af_params.omega_s;
-            //--------------------------------------------------
-            //--------------------------------------------------------------
-            //Length of time grid on simulation grid for constant speed zone
-            //--------------------------------------------------------------
-            af_params.dt        = lg_bm_rat / ( s_omg_fac * ( simparams.simpoints  ) );
 
-            //-------------------------------------------------
+            // Length of time grid on simulation grid for constant speed zone
+            af_params.dt        = lg_bm_rat / ( s_omg_fac * ( simparams.simpoints  ) );
+DbgLv(1) << "simulation_rsa:  dt" << af_params.dt << "rat omgf simp"
+ << lg_bm_rat << s_omg_fac << simparams.simpoints
+ << "b m omgs s" << af_params.current_bottom << af_params.current_meniscus
+ << af_params.omega_s << sc->s; 
+
             if ( af_params.dt > duration)
             {
-               double dtsv=af_params.dt;
+//double dtsv=af_params.dt;
                af_params.dt        = duration;
                af_params.simpoints = 1 + (int)( lg_bm_rat / ( s_omg_fac * af_params.dt ) );
-               
+
             }
-            
+
             af_params.time_steps = qCeil ( duration / af_params.dt );
-            
+
             af_params.start_time = current_time;// Update starting time for constant speed zone
             af_params.start_om2t = current_om2t;// Update starting w2t for constant speed zone
 
-            //--------------------------------------------------
-            #ifdef TIMING_RA
-             QDateTime clcSt4 = QDateTime::currentDateTime();
-             totT3+=(clcSt3.msecsTo(clcSt4));
-            #endif
-         
-            US_AstfemMath::MfemData* ed = &af_data;
-            //--------------------------------------------------
-            // Calculate the simulation for constant  speed zone
-            calculate_ni( next_speed, next_speed,speed_step,CT0, simdata, false );
-            //--------------------------------------------------
+#ifdef TIMING_RA
+QDateTime clcSt4 = QDateTime::currentDateTime();
+totT3+=(clcSt3.msecsTo(clcSt4));
+#endif
+//            US_AstfemMath::MfemData* ed = &af_data;
+
+            // Calculate the average of rpms from timestate readings
+            //  and use it for constant speed zone
+            double avg_speed = simparams.sim_speed_prof[speed_step].avg_speed ;
+DbgLv(2) <<" avg_speed= " << avg_speed ;
+
+            // Calculate the simulation for constant speed zone
+            calculate_ni( avg_speed, avg_speed, speed_step, CT0, simdata, false );
+
             qApp->processEvents();
             if ( stopFlag ) return 1;
+
             // Set the current time to the last scan of this speed step
             current_time  = time2;
             current_om2t  = omeg2;
-           
-            #ifdef TIMING_RA
-             QDateTime clcSt5 = QDateTime::currentDateTime();
-             totT4+=(clcSt4.msecsTo(clcSt5));
-            #endif
-            //-----------------------------------------------------------
+
+#ifdef TIMING_RA
+QDateTime clcSt5 = QDateTime::currentDateTime();
+totT4+=(clcSt4.msecsTo(clcSt5));
+#endif
             // Interpolate the simulated data onto  the experimental time
-            // and radius grid, if the experimental time range fits in 
+            // and radius grid, if the experimental time range fits in
             // this speed step.
-            //-----------------------------------------------------------
 
             if  ( in_step )
             {
-                US_AstfemMath::interpolate( af_data, simdata, use_time );
-                DbgLv(1)<<"Hi I have finished step = "<<speed_step << simout_flag ;
+               US_AstfemMath::interpolate( af_data, simdata, use_time );
+DbgLv(1) << "Hi I have finished step = " << speed_step << simout_flag;
             }
-            //-----------------------------------------------------------
+
             if ( !simout_flag )
             {
                simdata.radius.clear();
                simdata.scan  .clear();
             }
-            //--------------------------------------------
-            // Set the current speed to the constant rotor 
-            // speed of the current speed step
-            //--------------------------------------------
-            current_speed = next_speed;
-            
-            #ifndef NO_DB
-             qApp->processEvents();
-            #endif
 
-            #ifdef TIMING_RA
-             totT5+=(clcSt5.msecsTo(QDateTime::currentDateTime()));
-            #endif   
-    
+            // Set the current speed to the constant rotor
+            //  speed of the current speed step
+            current_speed = next_speed;
+
+#ifndef NO_DB
+            qApp->processEvents();
+#endif
+
+#ifdef TIMING_RA
+totT5+=(clcSt5.msecsTo(QDateTime::currentDateTime()));
+#endif
+
          } // Speed step loop
 
 #ifndef NO_DB
          emit current_component( cc + 1 );
          qApp->processEvents();
 #endif
-   //------------------------------------------
-   if ( !simout_flag )
-      store_mfem_data( exp_data, af_data );    // save to  experimental grid
-   else
-      store_mfem_data( exp_data, simdata );    // save to  simulation   grid
-
-     } // Non-interacting case
+      } // Non-interacting case
 
    } // Model Component loop
-   //------------------------------------------
-    #ifdef TIMING_RA
-     QDateTime clcSt6 = QDateTime::currentDateTime();
-    #endif
-//---------------------------------------------
-//-----Interacting part starts from here-------
-//---------------------------------------------    
+
+#ifdef TIMING_RA
+QDateTime clcSt6 = QDateTime::currentDateTime();
+#endif
+
+   //---------------------------------------------
+   //-----Interacting part starts from here-------
+   //---------------------------------------------
 
    // Resize af_params.local_index
    af_params.local_index.resize( size_cv );
@@ -576,13 +550,13 @@ DbgLv(1)<< "rsa readinngs:from timestate file "<<accel_times [istep] <<  accel_w
       for ( int jj = 0; jj < num_comp; jj++ )
       {
          int index = rg[ group ].GroupComponent[ jj ];
-         DbgLv(2) << "RSA:    jj index" << jj << index;
+ DbgLv(2) << "RSA:    jj index" << jj << index;
 
          US_Model::SimulationComponent* sc = &system.components[ index ];
          af_params.s   [ jj ] = sc->s;
          af_params.D   [ jj ] = sc->D;
          af_params.kext[ jj ] = sc->extinction * af_params.pathlength;
-         
+
          // Global to local index
          af_params.local_index[ index ] = jj;
 
@@ -597,13 +571,13 @@ DbgLv(1)<< "rsa readinngs:from timestate file "<<accel_times [istep] <<  accel_w
          {
             // Check all comp in rule
             int rule   = rg[ group ].association[ aa ];
-            DbgLv(2) << "RSA:     aa rule" << aa << rule;
+DbgLv(2) << "RSA:     aa rule" << aa << rule;
             US_Model::Association* as   = &system.associations[ rule ];
 
             for ( int rr = 0; rr < as->rcomps.size(); rr++ )
             {
-                DbgLv(2) << "RSA:      rr af-index as-react" << rr
-                         << af_params.role[jj].comp_index << as->rcomps[rr];
+DbgLv(2) << "RSA:      rr af-index as-react" << rr
+ << af_params.role[jj].comp_index << as->rcomps[rr];
                if ( af_params.role[ jj ].comp_index ==
                     as->rcomps[ rr ] )
                {
@@ -611,31 +585,30 @@ DbgLv(1)<< "rsa readinngs:from timestate file "<<accel_times [istep] <<  accel_w
                   af_params.role[ jj ].assocs .append( aa );
                   af_params.role[ jj ].stoichs.append( as->stoichs[ rr ] );
                   break;
-               }// if loop
-            }//  for "rr" loop
-         }//  for "aa" loop
-      }// for "jj" loop
-      
+               }
+            } //  for "rr" loop
+         } //  for "aa" loop
+      } // for "jj" loop
+
       for ( int aa = 0; aa < num_rule; aa++ )
       {
          US_Model::Association* as = &af_params.association[ aa ];
-          for ( int rr = 0; rr < as->rcomps.size(); rr++ )
-          {
+         for ( int rr = 0; rr < as->rcomps.size(); rr++ )
+         {
             as->rcomps[ rr ] =
                af_params.local_index[ as->rcomps[ rr ] ];
-            DbgLv(2) << "RSA:     aa rr rcn" << aa << rr << as->rcomps[rr];
-          } // for "rr" loop
-      }// for "aa" loop
-    
+DbgLv(2) << "RSA:     aa rr rcn" << aa << rr << as->rcomps[rr];
+         } // for "rr" loop
+      } // for "aa" loop
+
       current_time  = 0.0;
       current_speed = 0.0;
-      DbgLv(2) << "RSA: (3)AP.start_om2t" << af_params.start_om2t;
+DbgLv(2) << "RSA: (3)AP.start_om2t" << af_params.start_om2t;
+//      w2t_integral  = 0.0;
+//      last_time     = 0.0;
       w2t_integral  = af_params.start_om2t;
       last_time     = af_params.start_time;
 
-//      w2t_integral  = 0.0;
-//      last_time     = 0.0;
-      
       dr            =
          ( af_params.current_bottom - af_params.current_meniscus ) /
          ( initial_npts - 1 );
@@ -649,7 +622,7 @@ DbgLv(1)<< "rsa readinngs:from timestate file "<<accel_times [istep] <<  accel_w
          CT0.concentration.clear();
          CT0.radius       .reserve( initial_npts );
          CT0.concentration.reserve( initial_npts );
-         DbgLv(2) << "RSA:      jj in_npts" << jj << initial_npts;
+DbgLv(2) << "RSA:      jj in_npts" << jj << initial_npts;
 
          for ( int ii = 0; ii < initial_npts; ii++ )
          {
@@ -663,47 +636,65 @@ DbgLv(1)<< "rsa readinngs:from timestate file "<<accel_times [istep] <<  accel_w
       }
 
       decompose( vC0 );
-      //------------------------------
-     
 
-      DbgLv(2) << "RSA: decompose OUT";
-      #ifdef TIMING_RA
-       QDateTime clcSt5 = QDateTime::currentDateTime();
-      #endif
+
+DbgLv(2) << "RSA: decompose OUT";
+#ifdef TIMING_RA
+QDateTime clcSt5 = QDateTime::currentDateTime();
+#endif
 
       int    nstep = simparams.speed_step.size();
       int    lscan = 0;
       int    fscan = 0;
       double time0 = 0.0;
-      double time1 = 0.0;
+//      double time1 = 0.0;
       double time2 = 0.0;
       double step_speed;
       US_SimulationParameters::SpeedProfile* sp;
-      US_AstfemMath::MfemData*               ed;
-      ed = &af_data;
-      if ( simparams.tsobj != NULL )
-      {
-DbgLv(1)<<"rsa : timestate file exists and timestateobject = "
- <<simparams.tsobj<< simparams.sim_speed_prof.count() ;
+      US_AstfemMath::MfemData* ed = &af_data;
 
-      }
-      else
-      {
-DbgLv(1)<<"timestate file does not exist";
+      if ( simparams.tsobj == NULL  ||
+           simparams.sim_speed_prof.count() < 1 )
+      {  // Timestate is not properly loaded
+DbgLv(1) << "timestate file does not exist";
+         simparams.sim      = ( exp_data.channel == 'S' );
+#ifdef NO_DB
+         QString tmst_fpath = "../" + temp_Id_name() + ".time_state.tmst";
+
+         if ( ! QFile( tmst_fpath ).exists() )
+            US_AstfemMath::writetimestate( tmst_fpath, simparams, exp_data );
+#else
          QString tmst_fpath = US_Settings::tmpDir() + "/" + temp_Id_name() + ".time_state.tmst";
          US_AstfemMath::writetimestate( tmst_fpath, simparams, exp_data );
+#endif
          simparams.simSpeedsFromTimeState( tmst_fpath );
 DbgLv(1)<<"after writing timestate file" << simparams.sim_speed_prof.count();
       }
-      for ( int istep = 0; istep < simparams.speed_step.size(); istep++ )
-      {
-           time_end << simparams.sim_speed_prof[ istep ].time_e_step;
-           w2t_end  << simparams.sim_speed_prof[ istep ].w2t_e_step;
-           accel_times << simparams.sim_speed_prof[ istep ].time_e_accel;
-           accel_w2ts << simparams.sim_speed_prof[ istep ].w2t_e_accel;
-DbgLv(1)<< "subha: rsa readinngs: "<<accel_times [istep] <<  accel_w2ts [istep];
+
+      else
+      {  // Timestate exists and is loaded properly
+DbgLv(1) << "rsa : timestate file exists and timestateobject = "
+ << simparams.tsobj << simparams.sim_speed_prof.count() ;
+      }
+DbgLv(1) << "SS2: ss size" << simparams.speed_step.size()
+ << "ssp size" << simparams.sim_speed_prof.size();
+
+      for ( int istep = 0; istep < simparams.sim_speed_prof.size(); istep++ )
+      {  // Fill work time,omega2t vectors with values for each step
+         time_end    << simparams.sim_speed_prof[ istep ].time_e_step;
+         w2t_end     << simparams.sim_speed_prof[ istep ].w2t_e_step;
+         accel_times << simparams.sim_speed_prof[ istep ].time_e_accel;
+         accel_w2ts  << simparams.sim_speed_prof[ istep ].w2t_e_accel;
+DbgLv(1)<< "subha: rsa readings: " << accel_times [istep] << accel_w2ts [istep];
       }
 
+      if ( simparams.sim_speed_prof.count() > 0 )
+      {
+//          time2        = qMax( 0.0, (double)simparams.sim_speed_prof[ 0 ].time_b_accel - 1 );
+          time2        = (double)simparams.sim_speed_prof[ 0 ].time_b_accel;
+      }
+
+      // Walk through each speed step
 
       for ( int step = 0; step < nstep; step++ )
       {
@@ -717,12 +708,12 @@ DbgLv(1)<< "subha: rsa readinngs: "<<accel_times [istep] <<  accel_w2ts [istep];
          accel_time   = 0.0;
          fscan        = 0;
          lscan        = fscan + af_data.scan.count() - 1;
-      
+
          time0        = time2;           // First time of the current speed step
          omeg0        = omeg2;           // First omega_square_t of the current speed step
 
-         time2  = ( double )( time_end[ step ] );// Last time of the current speed step
-         omeg2  = w2t_end [ step ] ; // Last omega_square_t of the current speed step
+         time2        = ( double )( time_end[ step ] );// Last time of the current speed step
+         omeg2        = w2t_end [ step ] ; // Last omega_square_t of the current speed step
 
          ed->meniscus = af_params.current_meniscus; // Update meniscus for experimental grid
          ed->bottom   = af_params.current_bottom; // Update bottom for experimental grid
@@ -735,26 +726,23 @@ DbgLv(1)<< "subha: rsa readinngs: "<<accel_times [istep] <<  accel_w2ts [istep];
          // We need to simulate acceleration
          if ( sp->acceleration_flag )
          {
-            // -----------------------------------------------------------------                                
             // Calculates number of time steps for acceleration simulation grid
-            //-----------------------------------------------------------------
             af_params.time_steps = accel_times[step] - (int)(time0);
             af_params.dt         = 1.0;
             af_params.simpoints  = 2 * simparams.simpoints;
-            af_params.start_time = time0 ;
+            af_params.start_time = time0;
             af_params.start_om2t = omeg0;
 
-            //--------------------------------------------------------------
-            //----Calculate the simulation for the acceleration zone--------
+            // Calculate the simulation for the acceleration zone
             calculate_ra2( current_speed, step_speed, vC0, simdata, true );
-            //-------------------------------------------------------------
-            current_om2t  = accel_w2ts[step] ;
-            current_time  = (double) ( accel_times[step] ) ;
-            accel_time    = (double) af_params.time_steps ;
-            //-------------------------------------------------------------
 
-            /*// If the speed difference is larger than acceleration
-            // rate then we have at least 1 acceleration step
+            current_om2t  = accel_w2ts[ step ];
+            current_time  = (double)accel_times[ step ];
+            accel_time    = (double)af_params.time_steps;
+
+#if 0
+            // If the speed difference is larger than acceleration rate
+            //  then we have at least 1 acceleration step
 
             af_params.time_steps = (int) ( qAbs( step_speed - current_speed ) / sp->acceleration );
 
@@ -763,7 +751,7 @@ DbgLv(1)<< "subha: rsa readinngs: "<<accel_times [istep] <<  accel_w2ts [istep];
             af_params.simpoints = 2 * simparams.simpoints;
 
             // Use a fixed grid with refinement at both ends and with twice
-            // the number of points
+            //  the number of points
             duration      = time2 - time0;
             current_time  = time0;
             af_params.start_time = current_time;
@@ -772,31 +760,31 @@ DbgLv(1)<< "subha: rsa readinngs: "<<accel_times [istep] <<  accel_w2ts [istep];
 
             // Add the acceleration time:
             accel_time    = af_params.dt * af_params.time_steps;
-            current_time += accel_time;*/
+            current_time += accel_time;
+#endif
 
-            #ifndef NO_DB
-              emit new_time( current_time );
-              qApp->processEvents();
-            #endif
-
+#ifndef NO_DB
+            emit new_time( current_time );
             qApp->processEvents();
+#endif
+
             if ( stopFlag ) return 1;
          }  // End of for acceleration
 
-         //-----------------------------------------------------
-         //--time left to be simulated after accelaration zone--
+         // Time left to be simulated after accelaration zone
          duration   = time2 - current_time;
 
          adjust_limits( sp->rotorspeed ); // Does rotor stretch
-
 
          //duration      = time2 - time0;
          //delay         = time1 - time0;
          //duration      = ( sp->duration_hours * 3600.
          //                + sp->duration_minutes * 60. );
 
-         //if ( step == simparams.speed_step.size() - 1 )
-         //   duration += (double)( (int)( duration * 0.05 ) );  // +5%
+         // Insure that the last speed step's simulation extends
+         //  well beyond the last experiment scan time
+         if ( step == simparams.speed_step.size() - 1 )
+            duration += (double)( (int)( duration * 0.05 ) );  // +5%
 
          if ( accel_time > duration )
          {
@@ -816,14 +804,18 @@ DbgLv(1)<< "subha: rsa readinngs: "<<accel_times [istep] <<  accel_w2ts [istep];
 
          af_params.omega_s = sq( step_speed * M_PI / 30. );
 
-         DbgLv(2) << "RSA: ***COMPUTED(2) omega_s:" << af_params.omega_s << "step_speed"
-                  << step_speed << "s.size s_max" << af_params.s.size() << s_max;
+DbgLv(2) << "RSA: ***COMPUTED(2) omega_s:" << af_params.omega_s << "step_speed"
+ << step_speed << "s.size s_max" << af_params.s.size() << s_max;
 
          double lg_bm_rat  = log( af_params.current_bottom
                                  / af_params.current_meniscus );
          double s_omg_fac  = af_params.omega_s * s_max;
          af_params.dt      = lg_bm_rat
                              / ( s_omg_fac * ( simparams.simpoints - 1 ) );
+DbgLv(1) << "simulation_rsa:  dt" << af_params.dt << "rat omgf simp"
+ << lg_bm_rat << s_omg_fac << simparams.simpoints
+ << "b m omgs smax" << af_params.current_bottom << af_params.current_meniscus
+ << af_params.omega_s << s_max; 
 
          if ( af_params.dt > duration )
          {
@@ -831,18 +823,18 @@ DbgLv(1)<< "subha: rsa readinngs: "<<accel_times [istep] <<  accel_w2ts [istep];
             af_params.dt        = duration;
             af_params.simpoints = 1 +
                (int)( lg_bm_rat / ( s_omg_fac * af_params.dt ) );
-            DbgLv(1) << "RSA: ***CORRECTED(2) dt:" << duration << dtsv << af_params.simpoints;
+DbgLv(1) << "RSA: ***CORRECTED(2) dt:" << duration << dtsv << af_params.simpoints;
          }
 
          if ( af_params.simpoints > 10000 )
          {
-            DbgLv(1) << "RSA: ***COMPUTED simpoints:" << af_params.simpoints
-                     << "omg2t s_max dt dura" << af_params.omega_s << s_max << af_params.dt
-                     << duration << "** simpts set to 10000 **";
+DbgLv(1) << "RSA: ***COMPUTED simpoints:" << af_params.simpoints
+ << "omg2t s_max dt dura" << af_params.omega_s << s_max << af_params.dt
+ << duration << "** simpts set to 10000 **";
             af_params.simpoints = 10000;
          }
          else
-            DbgLv(1) << "RSA: ***COMPUTED simpoints:" << af_params.simpoints;
+DbgLv(1) << "RSA: ***COMPUTED simpoints:" << af_params.simpoints;
 
          // Find out the minimum number of simpoints needed to provide the
          // necessary dt:
@@ -851,40 +843,33 @@ DbgLv(1)<< "subha: rsa readinngs: "<<accel_times [istep] <<  accel_w2ts [istep];
          af_params.start_om2t = current_om2t;// Update starting w2t for constant speed zone
          US_AstfemMath::MfemData* ed = &af_data;
 
-         DbgLv(2) << "RSA:   tsteps sttime" << af_params.time_steps << current_time;
+DbgLv(2) << "RSA:   tsteps sttime" << af_params.time_steps << current_time;
 
-         //-------------------------------------------------------------
-          calculate_ra2( step_speed, step_speed, vC0, simdata, false );
-         //-------------------------------------------------------------
+         calculate_ra2( step_speed, step_speed, vC0, simdata, false );
+
          // Set the current time to the last scan of this speed step
          current_time  = time2;
          current_om2t  = omeg2;
-        
+
          // Set the current time to the last scan of this speed step
          //duration      = sp->duration_hours * 3600.0
          //              + sp->duration_minutes * 60.0;
-
          //delay         = sp->delay_hours * 3600.0
          //              + sp->delay_minutes * 60.0;
-
          //current_time  = time1;
-
          //current_time  = duration;
          //current_time  = time2;
 
-         DbgLv(2) << "RSA:    current_time" << current_time << "fscan lscan"
-                  << fscan << lscan << "speed" << step_speed;
+DbgLv(2) << "RSA:    current_time" << current_time << "fscan lscan"
+ << fscan << lscan << "speed" << step_speed;
 
          // Interpolate the simulated data onto the experimental
          // time and radius grid
-         //         if ( ed->scan[ fscan ].time <= sp->time_last )
 
          if ( ed->scan[ fscan ].time <= sp->time_last  &&
               ed->scan[ lscan ].time >= sp->time_first )
          {
-              //US_AstfemMath::interpolate( *ed, simdata, use_time,
-              //                                        fscan, ++lscan );
-              US_AstfemMath::interpolate( *ed, simdata, use_time );
+            US_AstfemMath::interpolate( *ed, simdata, use_time );
          }
 
          if ( !simout_flag )
@@ -897,30 +882,32 @@ DbgLv(1)<< "subha: rsa readinngs: "<<accel_times [istep] <<  accel_w2ts [istep];
          // current speed step
          current_speed = step_speed;
 
-         #ifndef NO_DB
+#ifndef NO_DB
            qApp->processEvents();
-         #endif
+#endif
          if ( stopFlag ) return 1;
       } // Speed step loop
-      #ifdef TIMING_RA
-        totT5+=(clcSt5.msecsTo(QDateTime::currentDateTime()));
-      #endif
+#ifdef TIMING_RA
+//totT5+=(clcSt5.msecsTo(QDateTime::currentDateTime()));
+totT6+=(clcSt5.msecsTo(QDateTime::currentDateTime()));
+#endif
    } // RG Group loop
 
-   DbgLv(2) << "RSA: Speed step OUT";
-   #ifdef TIMING_RA
-     QDateTime clcSt7 = QDateTime::currentDateTime();
-     totT6+=(clcSt6.msecsTo(clcSt7));
-   #endif
+DbgLv(2) << "RSA: Speed step OUT";
+#ifdef TIMING_RA
+QDateTime clcSt7 = QDateTime::currentDateTime();
+totT6+=(clcSt6.msecsTo(clcSt7));
+#endif
 
-   #ifndef NO_DB
-     //emit current_component( -1 );
-     qApp->processEvents();
-   #endif
+#ifndef NO_DB
+   //emit current_component( -1 );
+   qApp->processEvents();
+#endif
 
+#if 0
    US_AstfemMath::MfemData* ed = &af_data;
 
-   /*if ( time_correction  &&  !simout_flag )
+   if ( time_correction  &&  !simout_flag )
    {
       int nstep  = simparams.speed_step.size();
       double correction = 0.0;
@@ -932,15 +919,15 @@ DbgLv(1)<< "subha: rsa readinngs: "<<accel_times [istep] <<  accel_w2ts [istep];
                                    sp = &simparams.speed_step[ step ];
          US_AstfemMath::MfemData*  ed = &af_data;
          int nscans = ed->scan.size();
-         DbgLv(1) << "RSA: TimeCorr step" << step << "nscans" << nscans;
+DbgLv(1) << "RSA: TimeCorr step" << step << "nscans" << nscans;
 
          if ( nstep > 1 )
          {  // For multi-speed, skip steps outside experimental scan range
             int fscan  = 0;
             int lscan  = nscans - 1;
-            DbgLv(1) << "RSA: TimeCorr  nscans fscan lscan" << nscans << fscan << lscan;
-            DbgLv(1) << "RSA: TimeCorr   stimef stimel" << sp->time_first << sp->time_last
-                     << "etimef etimel" << ed->scan[ fscan ].time << ed->scan[ lscan ].time;
+DbgLv(1) << "RSA: TimeCorr  nscans fscan lscan" << nscans << fscan << lscan;
+DbgLv(1) << "RSA: TimeCorr   stimef stimel" << sp->time_first << sp->time_last
+ << "etimef etimel" << ed->scan[ fscan ].time << ed->scan[ lscan ].time;
 
             if ( ed->scan[ fscan ].time > sp->time_last )
                continue;
@@ -976,7 +963,7 @@ DbgLv(1)<< "subha: rsa readinngs: "<<accel_times [istep] <<  accel_w2ts [istep];
 
                correction = -intercept / slope;
             }
-            DbgLv(2) << "RSA: TimeCorr   correction" << correction << "nscans" << nscans;
+DbgLv(2) << "RSA: TimeCorr   correction" << correction << "nscans" << nscans;
 
             for ( int ii = 0; ii < nscans; ii++ )
                ed->scan[ ii ].time -= correction;
@@ -988,36 +975,42 @@ DbgLv(1)<< "subha: rsa readinngs: "<<accel_times [istep] <<  accel_w2ts [istep];
          if ( correction > 0.0 )
             break;
       }  // END: step loop
-   }  // END: ( time_correction && !simout_flag )*/
+   }  // END: ( time_correction && !simout_flag )
+#endif
 
-   DbgLv(2) << "RSA: Time Corr OUT";
-   #ifdef TIMING_RA
-    QDateTime clcSt8 = QDateTime::currentDateTime();
-    totT7+=(clcSt7.msecsTo(clcSt8));
-   #endif
- 
+DbgLv(2) << "RSA: Time Corr OUT";
+#ifdef TIMING_RA
+QDateTime clcSt8 = QDateTime::currentDateTime();
+totT7+=(clcSt7.msecsTo(clcSt8));
+#endif
+
    if ( !simout_flag )
       store_mfem_data( exp_data, af_data );    // normal experiment grid
    else
       store_mfem_data( exp_data, simdata );    // raw simulation grid
-    
+
    //for (int i = 0; i< af_data.scan.size(); i++)
    //    qDebug()<< af_data.scan[i].time;
 
-   //#ifdef TIMING_RA
-   // QDateTime clcSt9 = QDateTime::currentDateTime();
-   // totT8+=(clcSt8.msecsTo(clcSt9));
-   // int elapsedCalc = calcStart.msecsTo( clcSt9 );
-   // ncalls++;
-   // totTC+=elapsedCalc;
-   //#endif
- 
-   //qDebug() << "ASTFEM CALC DONE";
+#ifdef TIMING_RA
+QDateTime clcSt9 = QDateTime::currentDateTime();
+totT8+=(clcSt8.msecsTo(clcSt9));
+int elapsedCalc = calcStart.msecsTo( clcSt9 );
+ncalls++;
+totTC+=elapsedCalc;
+if((ncalls%TIMING_RA_INC)<1) {
+ DbgLv(0) << "  Elapsed fem-calc ms" << elapsedCalc << "nc totC" << ncalls << totTC << "  size_cv" << size_cv;
+ DbgLv(0) << "   t1 t2 t3 t4 t5 t6 t7 t8"
+  << totT1 << totT2 << totT3 << totT4 << totT5 << totT6 << totT7 << totT8;
+}
+#endif
+
+DbgLv(1) << "ASTFEM CALC DONE";
    return 0;
 }
 
 //----------------
-//Nowhere used !!
+// Nowhere used !!
 //----------------
 void US_Astfem_RSA::update_assocv( void )
 {
@@ -1027,7 +1020,7 @@ void US_Astfem_RSA::update_assocv( void )
       int ncomp   = as->rcomps.size();
       int stoich1 = as->stoichs[ 0 ];
       int stoich2 = as->stoichs[ 1 ];
-      DbgLv(2) << "AFRSA:  ncomp st1 st2" << ncomp << stoich1 << stoich2;
+DbgLv(2) << "AFRSA:  ncomp st1 st2" << ncomp << stoich1 << stoich2;
 
       if ( ncomp == 2 )
       {
@@ -1049,12 +1042,8 @@ void US_Astfem_RSA::update_assocv( void )
       }
    }
 }
-//---------------
 
-//-------------------------------------------------------
-//Adjusts meniscus and bottom position based on rotor 
-//coefficients
-// ------------------------------------------------------
+// Adjusts meniscus and bottom position based on rotor coefficients
 void US_Astfem_RSA::adjust_limits( int speed )
 {
    // First correct meniscus to theoretical position at rest:
@@ -1075,23 +1064,18 @@ void US_Astfem_RSA::adjust_limits( int speed )
    af_params.current_bottom    = simparams.bottom_position + stretch_value;
 }
 
-//----------------------------------------------------------
 // Calculates stretch for rotor coefficients array and rpm
-//---------------------------------------------------------- 
 double US_Astfem_RSA::stretch( double* rotorcoeffs, int rpm )
 {
    double speed    = (double)rpm;
    return ( rotorcoeffs[ 0 ] * speed
           + rotorcoeffs[ 1 ] * sq( speed ) );
 }
-//----------------------------------------------------------
 
-//-------------------------
 // Setup reaction groups
-//-------------------------
 void US_Astfem_RSA::initialize_rg( void )
 {
-   qDebug()<< "initialize_rg is called" ;
+   //qDebug()<< "initialize_rg is called" ;
    rg.clear();
 
    // If there are no reactions, then it is all noninteracting
@@ -1275,9 +1259,7 @@ void US_Astfem_RSA::initialize_rg( void )
    }
 }
 
-//----------------------------------------
-//-Initializes total concentration vector-
-//---------------------------------------- 
+// Initializes total concentration vector
 void US_Astfem_RSA::initialize_conc( int kk, US_AstfemMath::MfemInitial& CT0, bool noninteracting )
 {
     US_Model::SimulationComponent* sc = &system.components[ kk ];
@@ -1290,9 +1272,8 @@ void US_Astfem_RSA::initialize_conc( int kk, US_AstfemMath::MfemInitial& CT0, bo
     // concentration vector with constant concentration
     if  ( nval == 0 )
     {
-        double mxct=0.0;
-        int jmxc=0;
-        nval       = CT0.concentration.size();
+        double mxct = 0.0;
+        nval        = CT0.concentration.size();
         if  ( simparams.band_forming )
         {
             // Calculate the width of the lamella
@@ -1300,14 +1281,15 @@ void US_Astfem_RSA::initialize_conc( int kk, US_AstfemMath::MfemInitial& CT0, bo
             double plen = simparams.cp_pathlen != 0.0 ? simparams.cp_pathlen : 1.2;
             double base = sq( af_params.current_meniscus )+ simparams.band_volume * 360.0 / ( angl * plen * M_PI );
             double lamella_width = sqrt( base ) - af_params.current_meniscus;
+int mxct=0;
             // Calculate the spread of the lamella:
            for ( int j = 0; j < nval; j++ )
            {
                base = ( CT0.radius[ j ] - af_params.current_meniscus )/ lamella_width;
                CT0.concentration[ j ] += sc->signal_concentration * exp( -pow( base, 4.0 ) );
-               if (  j<2||j>(CT0.concentration.size()-3)||j==(CT0.concentration.size()/40))
-                     DbgLv(2) << "RSA:  j base conc" << j << base << CT0.concentration[j];
-               if(mxct<CT0.concentration[j]) {mxct=CT0.concentration[j];jmxc=j;}
+if (  j<2||j>(CT0.concentration.size()-3)||j==(CT0.concentration.size()/40))
+ DbgLv(2) << "RSA:  j base conc" << j << base << CT0.concentration[j];
+if(mxct<CT0.concentration[j]) {mxct=CT0.concentration[j];}
            }
         }
         else  // !simparams.band_forming
@@ -1315,8 +1297,8 @@ void US_Astfem_RSA::initialize_conc( int kk, US_AstfemMath::MfemInitial& CT0, bo
             for ( int j = 0; j < nval; j++ )
             {
                 CT0.concentration[j] += sc->signal_concentration;
-                qDebug()<<"CT0_conc"<< CT0.concentration[ j ] << sc->signal_concentration  << j << kk ;
-                if(mxct<CT0.concentration[j]) {mxct=CT0.concentration[j];jmxc=j;}
+                //qDebug()<<"CT0_conc"<< CT0.concentration[ j ] << sc->signal_concentration  << j << kk ;
+if(mxct<CT0.concentration[j]) {mxct=CT0.concentration[j];}
             }
         }
     }
@@ -1364,594 +1346,540 @@ void US_Astfem_RSA::initialize_conc( int kk, US_AstfemMath::MfemInitial& CT0, bo
         }
     }
 }
-    
+
 //-----------------------------------------
-//--Calculation for  non-interacting case-- 
+// Calculation for  non-interacting case
 //-----------------------------------------
 // rpm_start = current rotor speed
-// ----------------------
 // rpm_stop  = rotor speed to be reached after acceleration
-// (If acceleration zone is there then rpm_stop != rpm_start
-//  otherwise rpm_start = rpm_stop )
-//-----------------------
+// ( If acceleration zone is there then rpm_stop != rpm_start
+//   otherwise rpm_start = rpm_stop )
+//
 // step = speed step counter for the multiple speed profiles
 // ( step = 0 for single speed case)
-// ---------------------
-// C_init = Initial concentration vector, which needs to be updated 
+//
+// C_init = Initial concentration vector, which needs to be updated
 // at the end of the acceleration zone and at the end of each speed
 // step.
-// ----------------------
+//
 // simdata = structure containing all the informations i.e. scans
 // on the simulation grid which is interpolated to experimental grid
 // in "calculate" sub_routine.
-// ---------------------- 
-// accel = acceleration flag, it decides whether rotor needs to be 
+//
+// accel = acceleration flag, it decides whether rotor needs to be
 // accelerated or not i.e. accel = false for constant speed case.
-//------------------------------------------
-
-int US_Astfem_RSA::calculate_ni( double rpm_start, double rpm_stop,int step,
-                                 US_AstfemMath::MfemInitial& C_init, 
+int US_Astfem_RSA::calculate_ni( double rpm_start, double rpm_stop, int step,
+                                 US_AstfemMath::MfemInitial& C_init,
                                  US_AstfemMath::MfemData& simdata,
-                                 bool accel)
+                                 bool accel )
 {
-  
-    #ifdef NO_DB
-     static int      Nsave  = 0;
-     static int      Nsavea = 0;
-     static double** CA = NULL;     // stiffness matrix on left hand side
-                                  // CA[0...Ms-1][0...N-1][4]
+#ifdef NO_DB
+   static int      Nsave  = 0;
+   static int      Nsavea = 0;
+   static double** CA = NULL;   // stiffness matrix on left hand side
+                                // CA[0...Ms-1][0...N-1][4]
 
-     static double** CB = NULL;     // stiffness matrix on right hand side
-                                  // CB[0...Ms-1][0...N-1][4]
+   static double** CB = NULL;   // stiffness matrix on right hand side
+                                // CB[0...Ms-1][0...N-1][4]
 
-     static double** CA1;           // for matrices used in acceleration
-     static double** CA2;
-     static double** CB1;
-     static double** CB2;
-    #else
-     double** CA = NULL;          // stiffness matrix on left hand side
-                                  // CA[0...Ms-1][0...N-1][4]
+   static double** CA1;         // for matrices used in acceleration
+   static double** CA2;
+   static double** CB1;
+   static double** CB2;
+#else
+   double** CA = NULL;          // stiffness matrix on left hand side
+                                // CA[0...Ms-1][0...N-1][4]
 
-     double** CB = NULL;            // stiffness matrix on right hand side
-                                  // CB[0...Ms-1][0...N-1][4]
-     double** CA1;                  // for matrices used in acceleration
-     double** CA2;
-     double** CB1;
-     double** CB2;
-    #endif
-     double*         C0 = NULL;     // C[m][j]: current/next concentration of
-                                  // m-th component at x_j
-     double*         C1 = NULL;     // C[0...Ms-1][0....N-1]:
-    #if 0
-     #define TIMING_NI 1
-    #endif
-    #ifdef TIMING_NI
-     static int nccall=0;
-     static int ttTC=0;
-     static int ttT1=0;
-     static int ttT2=0;
-     static int ttT3=0;
-     static int ttT4=0;
-     static int ttT5=0;
-     static int ttT6=0;
-     static int ttT7=0;
-     static int ttT8=0;
-     QDateTime clcSt0 = QDateTime::currentDateTime();
-     QDateTime clcSt1 = clcSt0;
-     QDateTime clcSt2 = clcSt0;
-     QDateTime clcSt3 = clcSt0;
-     QDateTime clcSt4 = clcSt0;
-     QDateTime clcSt5 = clcSt0;
-     QDateTime clcSt6 = clcSt0;
-     QDateTime clcSt7 = clcSt0;
-     QDateTime clcSt8 = clcSt0;
-     QDateTime clcSt9 = clcSt0;
-    #endif
+   double** CB = NULL;          // stiffness matrix on right hand side
+                                // CB[0...Ms-1][0...N-1][4]
+   double** CA1;                // for matrices used in acceleration
+   double** CA2;
+   double** CB1;
+   double** CB2;
+#endif
+   double*  C0 = NULL;     // C[m][j]: current/next concentration of
+                           // m-th component at x_j
+   double*  C1 = NULL;     // C[0...Ms-1][0....N-1]:
+#ifdef TIMING_NI
+static int nccall=0;
+static int ttTC=0;
+static int ttT1=0;
+static int ttT2=0;
+static int ttT3=0;
+static int ttT4=0;
+static int ttT5=0;
+static int ttT6=0;
+static int ttT7=0;
+static int ttT8=0;
+QDateTime clcSt0 = QDateTime::currentDateTime();
+QDateTime clcSt1 = clcSt0;
+QDateTime clcSt2 = clcSt0;
+QDateTime clcSt3 = clcSt0;
+QDateTime clcSt4 = clcSt0;
+QDateTime clcSt5 = clcSt0;
+QDateTime clcSt6 = clcSt0;
+QDateTime clcSt7 = clcSt0;
+QDateTime clcSt8 = clcSt0;
+QDateTime clcSt9 = clcSt0;
+#endif
 
-    //---------------------------------------
-    //--Clears the previous simulation grid--
-    // --------------------------------------
-       simdata.radius.clear();
-       simdata.scan  .clear();
-    //---------------------------------------
+   // Clears the previous simulation grid
+   simdata.radius.clear();
+   simdata.scan  .clear();
 
-    //-------------------------------------------------
-    //Get the initial time and omega_2_t for simulation 
-    //-------------------------------------------------
-      w2t_integral  = af_params.start_om2t;
-      last_time     = af_params.start_time;
-    //-------------------------------------------------
-    
-    //--------------------------------
-    //--Declares the scan structure---
-    //--------------------------------
-      US_AstfemMath::MfemScan simscan;     
-    //---------------------------------
+   // Get the initial time and omega_2_t for simulation
+   w2t_integral  = af_params.start_om2t;
+   last_time     = af_params.start_time;
 
-    //---------------------------------------------------------
-    // Generate the adaptive mesh
-     xA         = x.data();
-     double sw2 = af_params.s[ 0 ] * sq( rpm_stop * M_PI / 30 );
+   // Declares the scan structure
+   US_AstfemMath::MfemScan simscan;
 
-     QVector< double > nu;
-     nu.clear();
-     nu .append( sw2 / af_params.D[ 0 ] );
-     mesh_gen( nu, simparams.meshType );
-    //---------------------------------------------------------
-    // Refine left hand side (when s > 0) or right hand side (when s < 0)
-    //  for acceleration
-    //---------------------------------------------------------
-    if  ( accel )
-    {
-        int   j;
-        double xc;
-        if  ( af_params.s[ 0 ] > 0 )
-        {
-            // Radial distance from meniscus how far the boundary will move during
-            // this acceleration step (without diffusion)
-            xc = af_params.current_meniscus +sw2 * ( af_params.time_steps * af_params.dt ) / 3.0;
-            for ( j = 0; j < Nx - 3; j++ )
-                if ( xA[ j ] > xc ) break;
-        }
-        else
-        {
-            xc = af_params.current_bottom + sw2 * ( af_params.time_steps * af_params.dt ) / 3.0;
-            for ( j = 0; j < Nx - 3; j++ )
-                if ( xA[ Nx - j - 1 ] < xc ) break;
-        }
-        mesh_gen_RefL( j + 1, 4 * j );
-    }
-    //----------------------------------------------------------
-    //--------------------------------------
-    // Initialize the coefficient matrices
-    // -------------------------------------
-    #ifdef NO_DB
-     if  ( Nx > Nsave )
-     {
-         if  ( Nsave > 0 )
+   // Generate the adaptive mesh
+   xA         = x.data();
+   double sw2 = af_params.s[ 0 ] * sq( rpm_stop * M_PI / 30.0 );
+
+   QVector< double > nu;
+   nu.clear();
+   nu .append( sw2 / af_params.D[ 0 ] );
+   mesh_gen( nu, simparams.meshType );
+
+   // Refine left hand side (when s > 0) or right hand side (when s < 0)
+   //  for acceleration
+   if  ( accel )
+   {
+      int   j;
+      double xc;
+      if  ( af_params.s[ 0 ] > 0 )
+      {
+         // Radial distance from meniscus how far the boundary will move during
+         // this acceleration step (without diffusion)
+         xc = af_params.current_meniscus +sw2 * ( af_params.time_steps * af_params.dt ) / 3.0;
+         for ( j = 0; j < Nx - 3; j++ )
+            if ( xA[ j ] > xc ) break;
+      }
+      else
+      {
+         xc = af_params.current_bottom + sw2 * ( af_params.time_steps * af_params.dt ) / 3.0;
+         for ( j = 0; j < Nx - 3; j++ )
+            if ( xA[ Nx - j - 1 ] < xc ) break;
+      }
+      mesh_gen_RefL( j + 1, 4 * j );
+   }
+
+   //--------------------------------------
+   // Initialize the coefficient matrices
+   // -------------------------------------
+#ifdef NO_DB
+   if  ( Nx > Nsave )
+   {
+      if  ( Nsave > 0 )
+      {
+         US_AstfemMath::clear_2d( 3, CA );
+         US_AstfemMath::clear_2d( 3, CB );
+      }
+      Nsave = Nx;
+      US_AstfemMath::initialize_2d( 3, Nsave, &CA );
+      US_AstfemMath::initialize_2d( 3, Nsave, &CB );
+   }
+   else
+   {
+      for ( int ii = 0; ii < 3; ii++ )
+      {
+         for ( int jj = 0; jj < Nx; jj++ )
          {
-             US_AstfemMath::clear_2d( 3, CA );
-             US_AstfemMath::clear_2d( 3, CB );
+            CA[ ii ][ jj ] = 0.0;
+            CB[ ii ][ jj ] = 0.0;
          }
-         Nsave = Nx;
-         US_AstfemMath::initialize_2d( 3, Nsave, &CA );
-         US_AstfemMath::initialize_2d( 3, Nsave, &CB );
-     }
-     else
-     {
+      }
+   }
+#else
+   US_AstfemMath::initialize_2d( 3, Nx, &CA );
+   US_AstfemMath::initialize_2d( 3, Nx, &CB );
+#endif
+
+   // Define the simulation grid type
+   bool fixedGrid = ( simparams.gridType == US_SimulationParameters::FIXED );
+
+#ifdef TIMING_NI
+clcSt2 = QDateTime::currentDateTime();
+ttT1+=(clcSt1.msecsTo(clcSt2));
+#endif
+
+   if ( ! accel ) // No acceleration
+   {
+      sw2 = af_params.s[ 0 ] * sq( rpm_stop * M_PI / 30.0 );
+      if  ( fixedGrid )
+      {
+         ComputeCoefMatrixFixedMesh  ( af_params.D[ 0 ], sw2, CA, CB );
+      }
+      else if ( af_params.s[ 0 ] > 0 )
+      {
+//qDebug()<<"MovingMeshR";
+         ComputeCoefMatrixMovingMeshR( af_params.D[ 0 ], sw2, CA, CB );
+      }
+      else
+      {
+//qDebug()<<"MovingMeshL";
+         ComputeCoefMatrixMovingMeshL( af_params.D[ 0 ], sw2, CA, CB );
+      }
+   }
+   else // For acceleration
+   {
+#ifdef NO_DB
+      if  ( Nx > Nsavea )
+      {
+         if  ( Nsavea > 0 )
+         {
+            US_AstfemMath::clear_2d( 3, CA1 );
+            US_AstfemMath::clear_2d( 3, CB1 );
+            US_AstfemMath::clear_2d( 3, CA2 );
+            US_AstfemMath::clear_2d( 3, CB2 );
+         }
+         US_AstfemMath::initialize_2d( 3, Nx, &CA1 );
+         US_AstfemMath::initialize_2d( 3, Nx, &CA2 );
+         US_AstfemMath::initialize_2d( 3, Nx, &CB1 );
+         US_AstfemMath::initialize_2d( 3, Nx, &CB2 );
+         Nsavea = Nx;
+      }
+      else
+      {
          for ( int ii = 0; ii < 3; ii++ )
          {
-             for ( int jj = 0; jj < Nx; jj++ )
-             {
-                 CA[ ii ][ jj ] = 0.0;
-                 CB[ ii ][ jj ] = 0.0;
-             }
-         }
-     }
-    #else
-     US_AstfemMath::initialize_2d( 3, Nx, &CA );
-     US_AstfemMath::initialize_2d( 3, Nx, &CB );
-    #endif
-    //----------------------------------------------------
-    
-    //----------------------------------------------------
-    //---------Define the simulation grid type------------
-    //----------------------------------------------------
-    bool fixedGrid = ( simparams.gridType == US_SimulationParameters::FIXED );
-    //----------------------------------------------------
-
-    #ifdef TIMING_NI
-     clcSt2 = QDateTime::currentDateTime();
-     ttT1+=(clcSt1.msecsTo(clcSt2));
-    #endif
-
-    if ( ! accel ) // No acceleration
-    {
-       sw2 = af_params.s[ 0 ] * sq( rpm_stop * M_PI / 30 );
-       if  ( fixedGrid )
-       {
-           //qDebug()<<"FixedMesh";
-           ComputeCoefMatrixFixedMesh  ( af_params.D[ 0 ], sw2, CA, CB );
-       }
-       else if ( af_params.s[ 0 ] > 0 )
-       {
-           //qDebug()<<"MovingMeshR";
-           ComputeCoefMatrixMovingMeshR( af_params.D[ 0 ], sw2, CA, CB );
-       }
-       else
-       {
-           //qDebug()<<"MovingMeshL";
-           ComputeCoefMatrixMovingMeshL( af_params.D[ 0 ], sw2, CA, CB );
-       }
-    }
-    else // For acceleration
-    {
-        #ifdef NO_DB
-        if  ( Nx > Nsavea )
-        {
-            if  ( Nsavea > 0 )
-            {
-                US_AstfemMath::clear_2d( 3, CA1 );
-                US_AstfemMath::clear_2d( 3, CB1 );
-                US_AstfemMath::clear_2d( 3, CA2 );
-                US_AstfemMath::clear_2d( 3, CB2 );
-            }
-            US_AstfemMath::initialize_2d( 3, Nx, &CA1 );
-            US_AstfemMath::initialize_2d( 3, Nx, &CA2 );
-            US_AstfemMath::initialize_2d( 3, Nx, &CB1 );
-            US_AstfemMath::initialize_2d( 3, Nx, &CB2 );
-            Nsavea = Nx;
-        }
-        else
-        {
-            for ( int ii = 0; ii < 3; ii++ )
-            {
-                for ( int jj = 0; jj < Nx; jj++ )
-                {
-                    CA1[ ii ][ jj ] = 0.0;
-                    CA2[ ii ][ jj ] = 0.0;
-                    CB1[ ii ][ jj ] = 0.0;
-                    CB2[ ii ][ jj ] = 0.0;
-                }
-            }
-        }
-        #else
-            US_AstfemMath::initialize_2d( 3, Nx, &CA1 );
-            US_AstfemMath::initialize_2d( 3, Nx, &CA2 );
-            US_AstfemMath::initialize_2d( 3, Nx, &CB1 );
-            US_AstfemMath::initialize_2d( 3, Nx, &CB2 );
-        #endif
-        sw2 = 0.0;
-        ComputeCoefMatrixFixedMesh( af_params.D[ 0 ], sw2, CA1, CB1);
-        sw2 = af_params.s[ 0 ] * sq( rpm_stop * M_PI / 30 );
-        ComputeCoefMatrixFixedMesh( af_params.D[ 0 ], sw2, CA2, CB2 );
-    }
-    #ifdef TIMING_NI
-     clcSt3 = QDateTime::currentDateTime();
-     ttT2+=(clcSt2.msecsTo(clcSt3));
-    #endif
-
-    // Initial condition
-    QVector< double > C0Vec( Nx );
-    QVector< double > C1Vec( Nx );
-    QVector< double > rhVec( Nx );
-    C0 = C0Vec.data(); // Used for concentration vector at current time step
-    C1 = C1Vec.data(); // Used for concentration vector at next time step*/
-
-    // Time evolution
-
-    double* right_hand_side = rhVec.data();
-    #ifdef TIMING_NI
-     ttT3+=(clcSt3.msecsTo(QDateTime::currentDateTime()));
-     clcSt3 = QDateTime::currentDateTime();
-    #endif
-
-    double time_dif    = ( af_params.time_steps > 1  &&  rpm_stop != rpm_start )
-                        ? (double)( af_params.time_steps ) : 1.0;
-
-
-    double rpm_inc     = ( rpm_stop - rpm_start ) / time_dif;// Increment in rotor speed
-    double rpm_current = rpm_start; // Update the rotor speed
-
-   
-    int    ntsteps     = af_params.time_steps; // Number of time steps
-    //simdata.scan  .reserve( ntsteps ); // Reserve number of scans for total time steps
-
-    for ( int i = 0; i < Nx; i++ )
-    {   C0 [i] = 0.0;
-        C1 [i] = 0.0;
-    }
-    //---------------------------------------
-    //Clears previous data on simulation grid
-    //and reserves the radial grid and scans
-    //---------------------------------------
-     simdata.radius.clear();
-     simdata.scan.clear();
-     simdata.radius.reserve(Nx);
-     simdata.scan.reserve( ntsteps );
-    //---------------------------------------
-    //--------------------------------------
-    //Reserve the radial grid for simulation
-     // simdata.radius.reserve( Nx );
-    //--------------------------------------
-    //--------------------------------------
-    //-----Update the radial grid-----------
-      for ( int i = 0; i < Nx; i++ )
-      { simdata.radius .append( xA[ i ] );
-        //qDebug()<< "radial values" << simdata.radius[i] ;
-        }
-    //-------------------------------------------------------
-    //-Interpolate initial concentration vector onto C0 grid-
-    //-------------------------------------------------------
-      US_AstfemMath::interpolate_C0( C_init, C0, x );
-      //qDebug()<<"after interpolation: conc. size "<< C_init.concentration.size()
-      //        << C_init.radius.size()<<"new radial size "<< x.size();
-    //--------------------------------------------
-    // Calculate all time steps
-    // -----------------------
-    for ( int ii = 0; ii < ntsteps; ii++ )
-    {
-
-        if (( ii == 0)&&( accel == false ))
-        {  simscan.conc.clear();
-           simscan.conc.reserve( Nx );
-           simscan.rpm   = (int) rpm_start;
-           simscan.time  = last_time;
-           simscan.omega_s_t   = w2t_integral;
-           simscan.temperature = af_data.scan[ 0 ].temperature;
-           for ( int jj = 0; jj < Nx; jj++ )
-           {   
-               simscan.conc.append(C0[jj]  );         
-           }
-           simdata.scan.append( simscan );
-           DbgLv(1)<<"Appending first scan" << af_params.s[0]<< af_params.D[0];
-
-        }
-        #ifdef TIMING_NI
-         clcSt4 = QDateTime::currentDateTime();
-         ttT3+=(clcSt3.msecsTo(clcSt4));
-        #endif
-
-        rpm_current   += rpm_inc; // Update rotor speed
-
-        #ifndef NO_DB
-         emit current_speed( (int) rpm_current );// Update current rotor speed in GUI window
-        #endif
-
-        //-----------------------------------------------------------
-        // Last time for the simulation grid i.e. time for last scan 
-        // should be equal to last time of the speed profile. Hence 
-        // the last increment for the time step is adjusted here.
-        // Increment = last time of the speed step - time of the
-        //             previous scan.
-        // ----------------------------------------------------------
-
-        if (( ii == ntsteps-1 ) && (accel == false))
-        { 
-           af_params.dt =  simparams.speed_step[step].time_last -  last_time;
-        }
-         //--------------------------------------------------------
-
-        if  ( accel ) // Then we have acceleration
-        {
-            double rpm_ratio = sq( rpm_current / rpm_stop );
-            for ( int j1 = 0; j1 < 3; j1++ )
-            {
-                double* CAj  = CA [ j1 ];
-                double* CBj  = CB [ j1 ];
-                double* CA1j = CA1[ j1 ];
-                double* CA2j = CA2[ j1 ];
-                double* CB1j = CB1[ j1 ];
-                double* CB2j = CB2[ j1 ];
-                for ( int j2 = 0; j2 < Nx; j2++ )
-                {
-                    CAj[ j2 ] = CA1j[ j2 ] + rpm_ratio * ( CA2j[ j2 ] - CA1j[ j2 ] );
-                    CBj[ j2 ] = CB1j[ j2 ] + rpm_ratio * ( CB2j[ j2 ] - CB1j[ j2 ] );
-                } 
-            }
-        } // accel based if loop
-
-       simscan.rpm   = (int) rpm_current; // Rotor speed of the scan
-
-       simscan.time = last_time + af_params.dt ; // Time of the scan
-
-       double b1 = ( simscan.time - last_time ) *sq( rpm_current * M_PI / 30.0 );//(Used to see increment in w2t)
-
-       w2t_integral += ( simscan.time - last_time ) *sq( rpm_current * M_PI / 30.0 ); // Incremented omega_2_t
-
-       last_time           = simscan.time; // Time of the scan used to update omega_2_t for next scan
-
-       simscan.omega_s_t   = w2t_integral; // omega_2_t of the scan
-
-       simscan.temperature = af_data.scan[ 0 ].temperature;
-       //qDebug()<<"---------------------------------------";
-       //qDebug()<<"scan_time="<<simscan.time<<"  w2t=     "<< w2t_integral
-       //        <<"              b1 ="<< b1 <<"           rpm ="<< rpm_current
-       //        <<  "            dt ="<< af_params.dt;
-       //qDebug()<<"---------------------------------------";
-       #ifdef TIMING_NI
-         clcSt5 = QDateTime::currentDateTime();
-         ttT4+=(clcSt4.msecsTo(clcSt5));
-       #endif
-
-        // Sedimentation part:
-        // Calculate the right hand side vector
-
-        if ( accel || fixedGrid )
-        {   
-            right_hand_side[ 0 ] = - CB[ 1 ][ 0 ] * C0[ 0 ]- CB[ 2 ][ 0 ] * C0[ 1 ];
-            for ( int jj = 1; jj < Nx - 1; jj++ )
-            {
-                right_hand_side[ jj ] = - CB[ 0 ][ jj ] * C0[ jj - 1 ]
-                                        - CB[ 1 ][ jj ] * C0[ jj     ]
-                                        - CB[ 2 ][ jj ] * C0[ jj + 1 ];
-                
-            }
-            int jj = Nx - 1;
-            right_hand_side[ jj ] = - CB[ 0 ][ jj ] * C0[ jj - 1 ]
-                                    - CB[ 1 ][ jj ] * C0[ jj     ];
-                  
-        }
-        else
-        {
-            if  ( af_params.s[ 0 ] > 0 )
-            {
-                right_hand_side[ 0 ] = - CB[ 2 ][ 0 ] * C0[ 0 ];
-                right_hand_side[ 1 ] = - CB[ 1 ][ 1 ] * C0[ 0 ]
-                                       - CB[ 2 ][ 1 ] * C0[ 1 ];
-
-                for ( int jj = 2; jj < Nx; jj++ )
-                {
-                    right_hand_side[ jj ] = - CB[ 0 ][ jj ] * C0[ jj - 2 ]
-                                            - CB[ 1 ][ jj ] * C0[ jj - 1 ]
-                                            - CB[ 2 ][ jj ] * C0[ jj     ];
-                }
-            }
-            else
-            {
-                for ( int jj = 0; jj < Nx - 2; jj++ )
-                {
-                    right_hand_side[ jj ] = - CB[ 0 ][ jj ] * C0[ jj     ]
-                                            - CB[ 1 ][ jj ] * C0[ jj + 1 ]
-                                            - CB[ 2 ][ jj ] * C0[ jj + 2 ];
-                   // qDebug()<<"rhs=	"<<right_hand_side[jj];
-                }
-                int jj = Nx - 2;
-                right_hand_side[ jj ] = - CB[ 0 ][ jj ] * C0[ jj     ]
-                                        - CB[ 1 ][ jj ] * C0[ jj + 1 ];
-                //qDebug()<<"rhs=     "<<right_hand_side[jj];
-                jj = Nx - 1;
-                right_hand_side[ jj ] = -CB[ 0 ][ jj ] * C0[ jj ];
-                //qDebug()<<"rhs=     "<<right_hand_side[jj];
-            }
-        } // accel || fixedGrid based if loop ends here
-        
-        #ifdef TIMING_NI
-         clcSt6 = QDateTime::currentDateTime();
-         ttT5+=(clcSt5.msecsTo(clcSt6));
-        #endif
-
-        //-----------------------------------------------
-        //Get the concentration vector for next time step
-        //-----------------------------------------------
-        US_AstfemMath::tridiag( CA[0], CA[1], CA[2], right_hand_side, C1, Nx );
-        //-----------------------------------------------
-
-        #ifdef TIMING_NI
-         clcSt7 = QDateTime::currentDateTime();
-         ttT6+=(clcSt6.msecsTo(clcSt7));
-        #endif
-
-       //-----------------------------------------------------
-       //-------------Update the 'C0' vector------------------
-         for ( int jj = 0; jj < Nx; jj++ ) 
-         {
-             C0[ jj ] = C1[ jj ];
-             
-         }
-       //-----------------------------------------------------
-       
-       //------------------------------------
-       //------Clears the previous scan------
-       //------------------------------------
-         simscan.conc.clear();
-         simscan.conc.reserve( Nx );
-       //------------------------------------
-
-
-       //------------------------------------------------
-       //Update the new scan with 'C0' and add to simdata
-       //------------------------------------------------
-         for ( int jj = 0; jj < Nx; jj++ )  
-             simscan.conc.append( C0[ jj ] );
-       //-----------------------------
-         simdata.scan.append( simscan );
-       //------------------------------------------------
- 
-       //----------------------------------------
-       //--Show the movie if movie_flag is true--
-       //----------------------------------------
-         show_movie = true ;
-         #ifndef NO_DB
-         if  ( show_movie )
-         {
-             qApp->processEvents();
-             if ( stopFlag ) break;
-             emit new_scan( &x, C0 );
-             emit new_time( simscan.time );
-             qApp->processEvents();
-         }
-        #endif
-       //----------------------------------------
-
-        #ifdef TIMING_NI
-         clcSt3 = QDateTime::currentDateTime();
-         ttT7+=(clcSt7.msecsTo(clcSt3));
-        #endif
-
-
-        //-----------------------------------------------------------
-        //Last concentration vector goes as initial concentration
-        //vector for the next speed case i.e. whenever speed changes,
-        //either at end of accelaration zone or end of one speed 
-        //step in case of multiple speed cases.
-        //----------------------------------------------------------
-
-        //--------------------------------
-        //-Clears previous initial vector-
-        //--------------------------------
-          C_init.radius       .clear();
-          C_init.concentration.clear();
-        //--------------------------------
-  
-        //-------------------------------------------------
-        //----Update the initial concentration vector------
-        //-------------------------------------------------
-
-        if  ( ii == ntsteps -1  ) 
-        {
-            C_init.radius       .clear();
-            C_init.concentration.clear();
-            C_init.radius       .reserve( Nx );
-            C_init.concentration.reserve( Nx );
             for ( int jj = 0; jj < Nx; jj++ )
             {
-                C_init.radius        .append( xA [ jj ] );
-                C_init.concentration .append( C0[ jj ] );
+               CA1[ ii ][ jj ] = 0.0;
+               CA2[ ii ][ jj ] = 0.0;
+               CB1[ ii ][ jj ] = 0.0;
+               CB2[ ii ][ jj ] = 0.0;
             }
-        }
-  
-       //-------------------------------------------------
-  
-    } // 'ii' i.e. 'time' based loop ends here
+         }
+      }
+#else
+      US_AstfemMath::initialize_2d( 3, Nx, &CA1 );
+      US_AstfemMath::initialize_2d( 3, Nx, &CA2 );
+      US_AstfemMath::initialize_2d( 3, Nx, &CB1 );
+      US_AstfemMath::initialize_2d( 3, Nx, &CB2 );
+#endif
+      sw2 = 0.0;
+      ComputeCoefMatrixFixedMesh( af_params.D[ 0 ], sw2, CA1, CB1 );
+      sw2 = af_params.s[ 0 ] * sq( rpm_stop * M_PI / 30 );
+      ComputeCoefMatrixFixedMesh( af_params.D[ 0 ], sw2, CA2, CB2 );
+   }
+#ifdef TIMING_NI
+clcSt3 = QDateTime::currentDateTime();
+ttT2+=(clcSt2.msecsTo(clcSt3));
+#endif
 
-    #ifdef TIMING_NI
-     clcSt8 = QDateTime::currentDateTime();
-    #endif
+   // Initial condition
+   QVector< double > C0Vec( Nx );
+   QVector< double > C1Vec( Nx );
+   QVector< double > rhVec( Nx );
+   C0 = C0Vec.data(); // Used for concentration vector at current time step
+   C1 = C1Vec.data(); // Used for concentration vector at next time step*/
 
-    #ifndef NO_DB
-     emit new_time( simscan.time );
-     qApp->processEvents();
-     US_AstfemMath::clear_2d( 3, CA );
-     US_AstfemMath::clear_2d( 3, CB );
+   // Time evolution
 
-     if ( accel )
-     {
-         US_AstfemMath::clear_2d( 3, CA1 );
-         US_AstfemMath::clear_2d( 3, CB1 );
-         US_AstfemMath::clear_2d( 3, CA2 );
-         US_AstfemMath::clear_2d( 3, CB2 );
-     }
-    #endif
+   double* right_hand_side = rhVec.data();
+#ifdef TIMING_NI
+ttT3+=(clcSt3.msecsTo(QDateTime::currentDateTime()));
+clcSt3 = QDateTime::currentDateTime();
+#endif
 
-    #ifdef TIMING_NI
-     clcSt9 = QDateTime::currentDateTime();
-     ttT8+=(clcSt8.msecsTo(clcSt9));
-     int elapsCalc=clcSt0.msecsTo(clcSt9);
-     nccall++;
-     ttTC+=elapsCalc;
-     if((nccall%1000)==0) 
-     {
-       int totTK=ttT1+ttT2+ttT3+ttT4+ttT5+ttT6+ttT7+ttT8;
-       int p0=totTK/2;
-       int p1=(ttT1*100+p0)/totTK;
-       int p2=(ttT2*100+p0)/totTK;
-       int p3=(ttT3*100+p0)/totTK;
-       int p4=(ttT4*100+p0)/totTK;
-       int p5=(ttT5*100+p0)/totTK;
-       int p6=(ttT6*100+p0)/totTK;
-       int p7=(ttT7*100+p0)/totTK;
-       int p8=(ttT8*100+p0)/totTK;
-     }
-    #endif
+   double time_dif    = ( af_params.time_steps > 1  &&  rpm_stop != rpm_start )
+                       ? (double)( af_params.time_steps ) : 1.0;
+
+
+   double rpm_inc     = ( rpm_stop - rpm_start ) / time_dif;// Increment in rotor speed
+   double rpm_current = rpm_start; // Update the rotor speed
+
+
+   int    ntsteps     = af_params.time_steps; // Number of time steps
+    //simdata.scan  .reserve( ntsteps ); // Reserve number of scans for total time steps
+
+   for ( int i = 0; i < Nx; i++ )
+   {
+      C0 [i] = 0.0;
+      C1 [i] = 0.0;
+   }
+
+   // Clears previous data on simulation grid
+   // and reserves the radial grid and scans
+   simdata.scan.clear();
+   simdata.scan.reserve( ntsteps );
+   simdata.radius.resize( Nx );
+   simscan.conc  .resize( Nx );
+   double* rA     = simdata.radius.data();
+
+   // Update the radial grid
+   for ( int ii = 0; ii < Nx; ii++ )
+   {
+      rA[ ii ] = xA[ ii ];
+   }     
+
+   // Interpolate initial concentration vector onto C0 grid-
+   US_AstfemMath::interpolate_C0( C_init, C0, x );
+
+   // Calculate all time steps
+   for ( int ii = 0; ii < ntsteps; ii++ )
+   {
+      if (( ii == 0)&&( accel == false ))
+      {
+         simscan.rpm         = (int) rpm_start;
+         simscan.time        = last_time;
+         simscan.omega_s_t   = w2t_integral;
+         simscan.temperature = af_data.scan[ 0 ].temperature;
+
+         for ( int jj = 0; jj < Nx; jj++ )
+            simscan.conc[ jj ] = C0[ jj ];
+
+         simdata.scan.append( simscan );
+
+      }
+
+      //if ( accel== true )
+      //{  simscan.rpm   = simparams.sim_speed_prof[step].rpm_timestate[ ii+2 ] ;
+      //   simscan.omega_s_t   = simparams.sim_speed_prof[step].w2t_timestate[ ii+2 ] ;
+      //}
+
+#ifdef TIMING_NI
+clcSt4 = QDateTime::currentDateTime();
+ttT3+=(clcSt3.msecsTo(clcSt4));
+#endif
+
+      rpm_current   += rpm_inc; // Update rotor speed
+
+#ifndef NO_DB
+      emit current_speed( (int) rpm_current );// Update current rotor speed in GUI window
+#endif
+
+      // Last time for the simulation grid i.e. time for last scan
+      // should be equal to last time of the speed profile. Hence
+      // the last increment for the time step is adjusted here.
+      // Increment = last time of the speed step - time of the
+      //             previous scan.
+
+      if ( ( ii == ntsteps - 1 )  &&  ( accel == false ) )
+      {
+         af_params.dt =  simparams.speed_step[step].time_last -  last_time;
+      }
+
+      if  ( accel )
+      {  // We have acceleration
+         double rpm_ratio = sq( rpm_current / rpm_stop );
+         for ( int j1 = 0; j1 < 3; j1++ )
+         {
+            double* CAj  = CA [ j1 ];
+            double* CBj  = CB [ j1 ];
+            double* CA1j = CA1[ j1 ];
+            double* CA2j = CA2[ j1 ];
+            double* CB1j = CB1[ j1 ];
+            double* CB2j = CB2[ j1 ];
+            for ( int j2 = 0; j2 < Nx; j2++ )
+            {
+               CAj[ j2 ] = CA1j[ j2 ] + rpm_ratio * ( CA2j[ j2 ] - CA1j[ j2 ] );
+               CBj[ j2 ] = CB1j[ j2 ] + rpm_ratio * ( CB2j[ j2 ] - CB1j[ j2 ] );
+            }
+         }
+      } // accel based if loop
+
+      if ( accel == false )                            // Constant speed zone
+      {
+         simscan.rpm       = (int) rpm_current;        // Rotor speed of scan
+         simscan.time      = last_time + af_params.dt; // Time of the scan
+         w2t_integral     += ( simscan.time - last_time )      // Omega_2_t
+                            * sq( rpm_current * M_PI / 30.0 ); //  increment
+         simscan.omega_s_t = w2t_integral;             // Omega_2_t of the scan
+      }
+
+      else if ( accel == true ) // Reads timestate recordings for rpm and
+      {                         //  omega_2t during acceleration zone
+         simscan.time      = last_time + af_params.dt ; // Time of the scan
+         simscan.rpm       = simparams.sim_speed_prof[step].rpm_timestate[ii];
+         simscan.omega_s_t = simparams.sim_speed_prof[step].w2t_timestate[ii];
+         w2t_integral      = simscan.omega_s_t;         // Omega_2_t
+      }
+
+      last_time            = simscan.time; // Time of the scan used to update
+                                            //  omega_2_t for next scan
+
+      simscan.temperature  = af_data.scan[ 0 ].temperature;
+if (ii<10 || (ii%500)==0 || (ii+10)>ntsteps) {
+int jt=(int)qRound(simscan.time) - simparams.sim_speed_prof[step].time_b_accel-1;
+DbgLv(1) << "simulation_rsa: ii" << ii << jt << "scan_time=" << simscan.time
+ << "w2t=" << simscan.omega_s_t << "accel=" << accel
+ << "dt=" << af_params.dt << "rpm" << simscan.rpm
+ << "tmst: rpm w2t" << simparams.sim_speed_prof[step].rpm_timestate[jt]
+ << simparams.sim_speed_prof[step].w2t_timestate[jt];
+}
+#ifdef TIMING_NI
+clcSt5 = QDateTime::currentDateTime();
+ttT4+=(clcSt4.msecsTo(clcSt5));
+#endif
+
+      // Sedimentation part:
+      // Calculate the right hand side vector
+
+      if ( accel || fixedGrid )
+      {
+         right_hand_side[ 0 ] = - CB[ 1 ][ 0 ] * C0[ 0 ]- CB[ 2 ][ 0 ] * C0[ 1 ];
+         for ( int jj = 1; jj < Nx - 1; jj++ )
+         {
+            right_hand_side[ jj ] = - CB[ 0 ][ jj ] * C0[ jj - 1 ]
+                                    - CB[ 1 ][ jj ] * C0[ jj     ]
+                                    - CB[ 2 ][ jj ] * C0[ jj + 1 ];
+
+         }
+         int jj = Nx - 1;
+         right_hand_side[ jj ] = - CB[ 0 ][ jj ] * C0[ jj - 1 ]
+                                 - CB[ 1 ][ jj ] * C0[ jj     ];
+
+      }
+      else
+      {
+         if  ( af_params.s[ 0 ] > 0 )
+         {
+            right_hand_side[ 0 ] = - CB[ 2 ][ 0 ] * C0[ 0 ];
+            right_hand_side[ 1 ] = - CB[ 1 ][ 1 ] * C0[ 0 ]
+                                   - CB[ 2 ][ 1 ] * C0[ 1 ];
+
+            for ( int jj = 2; jj < Nx; jj++ )
+            {
+               right_hand_side[ jj ] = - CB[ 0 ][ jj ] * C0[ jj - 2 ]
+                                       - CB[ 1 ][ jj ] * C0[ jj - 1 ]
+                                       - CB[ 2 ][ jj ] * C0[ jj     ];
+            }
+         }
+         else
+         {
+            for ( int jj = 0; jj < Nx - 2; jj++ )
+            {
+               right_hand_side[ jj ] = - CB[ 0 ][ jj ] * C0[ jj     ]
+                                       - CB[ 1 ][ jj ] * C0[ jj + 1 ]
+                                       - CB[ 2 ][ jj ] * C0[ jj + 2 ];
+//qDebug() << "rhs=" << right_hand_side[jj];
+            }
+            int jj = Nx - 2;
+            right_hand_side[ jj ] = - CB[ 0 ][ jj ] * C0[ jj     ]
+                                        - CB[ 1 ][ jj ] * C0[ jj + 1 ];
+//qDebug()<<"rhs=     "<<right_hand_side[jj];
+            jj = Nx - 1;
+            right_hand_side[ jj ] = -CB[ 0 ][ jj ] * C0[ jj ];
+//qDebug()<<"rhs=     "<<right_hand_side[jj];
+         }
+      } // accel || fixedGrid based if loop ends here
+
+#ifdef TIMING_NI
+clcSt6 = QDateTime::currentDateTime();
+ttT5+=(clcSt5.msecsTo(clcSt6));
+#endif
+
+      // Get the concentration vector for next time step
+      US_AstfemMath::tridiag( CA[0], CA[1], CA[2], right_hand_side, C1, Nx );
+
+#ifdef TIMING_NI
+clcSt7 = QDateTime::currentDateTime();
+ttT6+=(clcSt6.msecsTo(clcSt7));
+#endif
+
+      // Update the 'C0' vector
+      for ( int jj = 0; jj < Nx; jj++ )
+      {
+         C0[ jj ] = C1[ jj ];
+      }
+
+      double* cA     = simscan.conc.data();
+      for ( int jj = 0; jj < Nx; jj++ )
+         cA[ jj ] = C0[ jj ];
+
+      simdata.scan.append( simscan );
+
+#ifndef NO_DB
+      // Show the movie if movie_flag is true
+      if  ( show_movie )
+      {
+         qApp->processEvents();
+         if ( stopFlag ) break;
+         emit new_scan( &x, C0 );
+         emit new_time( simscan.time );
+         qApp->processEvents();
+      }
+#endif
+
+
+#ifdef TIMING_NI
+clcSt3 = QDateTime::currentDateTime();
+ttT7+=(clcSt7.msecsTo(clcSt3));
+#endif
+
+      // Last concentration vector goes as initial concentration
+      // vector for the next speed case i.e. whenever speed changes,
+      // either at end of accelaration zone or end of one speed
+      // step in case of multiple speed cases.
+
+      if ( ii == ( ntsteps - 1 ) )
+      { // Update the initial concentration vector
+         C_init.radius       .resize( Nx );
+         C_init.concentration.resize( Nx );
+
+         for ( int jj = 0; jj < Nx; jj++ )
+         {
+            C_init.radius       [ jj ] = xA[ jj ];
+            C_init.concentration[ jj ] = C0[ jj ];
+         }
+      }
+
+   } // 'ii' i.e. 'time' based loop ends here
+
+#ifdef TIMING_NI
+clcSt8 = QDateTime::currentDateTime();
+#endif
+
+#ifndef NO_DB
+   emit new_time( simscan.time );
+   qApp->processEvents();
+   US_AstfemMath::clear_2d( 3, CA );
+   US_AstfemMath::clear_2d( 3, CB );
+
+   if ( accel )
+   {
+      US_AstfemMath::clear_2d( 3, CA1 );
+      US_AstfemMath::clear_2d( 3, CB1 );
+      US_AstfemMath::clear_2d( 3, CA2 );
+      US_AstfemMath::clear_2d( 3, CB2 );
+   }
+#endif
+
+#ifdef TIMING_NI
+clcSt9 = QDateTime::currentDateTime();
+ttT8+=(clcSt8.msecsTo(clcSt9));
+int elapsCalc=clcSt0.msecsTo(clcSt9);
+nccall++;
+ttTC+=elapsCalc;
+if((nccall%1000)==0) {
+ int totTK=ttT1+ttT2+ttT3+ttT4+ttT5+ttT6+ttT7+ttT8;
+ qDebug() << "   ++Elapsed calc-ni ms" << elapsCalc << " nc totC totK" << nccall
+  << ttTC << totTK << " Nx" << Nx << " acc fixG" << accel << fixedGrid;
+ qDebug() << "     CN: t1 t2 t3 t4 t5 t6 t7 t8" << ttT1 << ttT2 << ttT3 << ttT4
+  << ttT5 << ttT6 << ttT7 << ttT8;
+ int p0=totTK/2;
+ int p1=(ttT1*100+p0)/totTK;
+ int p2=(ttT2*100+p0)/totTK;
+ int p3=(ttT3*100+p0)/totTK;
+ int p4=(ttT4*100+p0)/totTK;
+ int p5=(ttT5*100+p0)/totTK;
+ int p6=(ttT6*100+p0)/totTK;
+ int p7=(ttT7*100+p0)/totTK;
+ int p8=(ttT8*100+p0)/totTK;
+ qDebug() << "      CN: p1 p2 p3 p4 p5 p6 p7 p8" << p1 << p2 << p3 << p4
+  << p5 << p6 << p7 << p8;
+}
+#endif
    return 0;
 }
 
+// Generate adaptive grids for multi-component Lamm equations
 void US_Astfem_RSA::mesh_gen( QVector< double >& nu, int MeshOpt )
 {
-//------------------------------------------------------------------
-// Generate adaptive grids for multi-component Lamm equations
-
 // Here: Nx: Number of points in the ASTFEM
 //    m, b: meniscus, bottom
 //    nuMax, nuMin = max and min of nu=sw^2/D
@@ -1961,11 +1889,8 @@ void US_Astfem_RSA::mesh_gen( QVector< double >& nu, int MeshOpt )
 //              = 3 input from data file: "mesh_data.dat"
 //              = 4 ASTFVM grid (Finite Volume Method)
 //              = 10, acceleration mesh (left and right refinement)
-//------------------------------------------------------------------
-//------------------
-// generate the mesh
-//------------------
 
+// generate the mesh
    double m  = af_params.current_meniscus;
    double b  = af_params.current_bottom;
    int    Np = af_params.simpoints;
@@ -1985,7 +1910,7 @@ void US_Astfem_RSA::mesh_gen( QVector< double >& nu, int MeshOpt )
 
          if ( nu[ 0 ] > 0 )
          {
-            DbgLv(1)<< "refine in bottom"<< nu[ 0 ] ;
+DbgLv(1)<< "refine in bottom"<< nu[ 0 ] ;
             mesh_gen_s_pos( nu );
          }
 
@@ -2087,14 +2012,12 @@ void US_Astfem_RSA::mesh_gen( QVector< double >& nu, int MeshOpt )
    Nx = x.size();
    xA = x.data();
 
-   DbgLv(1) << "RSA: ***COMPUTED Nx" << Nx << "simpts" << af_params.simpoints
-            << "omg2t" << af_params.omega_s << "s0" << af_params.s[0]
-            << "dt" << af_params.dt;
+DbgLv(1) << "RSA: ***COMPUTED Nx" << Nx << "simpts" << af_params.simpoints
+ << "omg2t" << af_params.omega_s << "s0" << af_params.s[0]
+ << "dt" << af_params.dt;
 }
 
-//-----------------------------------------------------------
 // Generate exponential mesh and refine cell bottom (for s>0)
-//-----------------------------------------------------------
 void US_Astfem_RSA::mesh_gen_s_pos( const QVector< double >& nuvec )
 {
    double            tmp_Hstar;
@@ -2128,9 +2051,9 @@ void US_Astfem_RSA::mesh_gen_s_pos( const QVector< double >& nuvec )
    double bmNpow   = pow( bmratio, Npratio );
    double bmdiff   = bottom - meniscus * bmNpow;
    const double PIhalf   = M_PI / 2.0;
-   DbgLv(1) << "RSA:  msg_pos: nu0" << nu[0] << "nu1" << nu[1] << "Np" << Np << "uth" << uth;
-   DbgLv(1) << "RSA:  msg_pos:  m " << meniscus << " b " << bottom << " bmsqdf" << bmsqdf 
-            <<"af_parms_size"<< af_params.s.size();
+DbgLv(1) << "RSA:  msg_pos: nu0" << nu[0] << "nu1" << nu[1] << "Np" << Np << "uth" << uth;
+DbgLv(1) << "RSA:  msg_pos:  m " << meniscus << " b " << bottom << " bmsqdf" << bmsqdf
+ << "af_parms_size" << af_params.s.size();
 
    for ( int i = 0; i < af_params.s.size(); i++ ) // Markers for steep regions
    {
@@ -2144,7 +2067,7 @@ void US_Astfem_RSA::mesh_gen_s_pos( const QVector< double >& nuvec )
       // Step required by Pac(i) < 1
       tmp_Hstar       = ( bottom - tmp_xc ) / tmp_Nf * PIhalf;
 
-      DbgLv(1) << "RSA:  msg_pos: i " << i << "txc" << tmp_xc << "tNf" << tmp_Nf << "tHs" << tmp_Hstar;
+DbgLv(1) << "RSA:  msg_pos: i " << i << "txc" << tmp_xc << "tNf" << tmp_Nf << "tHs" << tmp_Hstar;
       if ( ( tmp_xc > meniscus ) && ( bmdiff > tmp_Hstar ) )
       {
          xc    .append( tmp_xc );
@@ -2217,7 +2140,7 @@ void US_Astfem_RSA::mesh_gen_s_pos( const QVector< double >& nuvec )
    else
    {  // IndLayer>0  and  indp greater than 1
       int NfTotal = indp;
-      DbgLv(1) << "RSA:  msg_pos: IndL>0  x sz" << x.size();
+DbgLv(1) << "RSA:  msg_pos: IndL>0  x sz" << x.size();
       // Reverse the order of y
       int jj = 0;
       int kk = NfTotal - 1;
@@ -2263,7 +2186,7 @@ void US_Astfem_RSA::mesh_gen_s_pos( const QVector< double >& nuvec )
       }
 
       Nm      = Mp;
-      DbgLv(1) << "RSA:  msg_pos: IndL>0  Js" << Js << "NfTotal" << NfTotal << "Nm" << Nm;
+DbgLv(1) << "RSA:  msg_pos: IndL>0  Js" << Js << "NfTotal" << NfTotal << "Nm" << Nm;
       // Regular region
       x .append( meniscus );
       yary    = y.data();
@@ -2273,19 +2196,17 @@ void US_Astfem_RSA::mesh_gen_s_pos( const QVector< double >& nuvec )
 
       for ( int j = NfTotal + Nm - 2; j >=0; j-- )
          x .append( yary[ j ] );
-      DbgLv(1) << "RSA:  msg_pos: IndL>0  y sz" << y.size() << "Mp" << Mp << "Nm" << Nm << "x sz" << x.size();
+DbgLv(1) << "RSA:  msg_pos: IndL>0  y sz" << y.size() << "Mp" << Mp << "Nm" << Nm << "x sz" << x.size();
    }
 
    xA      = x.data();
-   int mm=x.size()/2;
-   int ee=x.size()-1;
-   DbgLv(1) << "RSA:  mgs_pos: xA sme" << x[0] << x[1] << x[2]
-            << x[mm-1] << x[mm] << x[mm+1] << x[mm+2] << x[ee-2] << x[ee-1] << x[ee];
+int mm=x.size()/2;
+int ee=x.size()-1;
+DbgLv(1) << "RSA:  mgs_pos: xA sme" << x[0] << x[1] << x[2]
+ << x[mm-1] << x[mm] << x[mm+1] << x[mm+2] << x[ee-2] << x[ee-1] << x[ee];
 }
 
-//---------------------------------------------------------------
 // Generate exponential mesh and refine cell meniscus (for  s<0)
-//---------------------------------------------------------------
 void US_Astfem_RSA::mesh_gen_s_neg( const QVector< double >& nu )
 {
 
@@ -2390,14 +2311,11 @@ void US_Astfem_RSA::mesh_gen_s_neg( const QVector< double >& nu )
    } // if
 }
 
-//----------------------------------------------------------
-// mesh_gen_RefL: refine mesh near meniscus (for s>0) or near bottom (for s<0)
+// Refine mesh near meniscus (for s>0) or near bottom (for s<0)
 //                to be used for the acceleration stage
 //
 //  parameters: N0 = number of elements near meniscus (or bottom) to be refined
 //              M0 = number of elements to be used for the refined region
-//----------------------------------------------------------
-
 void US_Astfem_RSA::mesh_gen_RefL( int N0, int M0 )
 {
    const double PIhalf   = M_PI / 2.0;
@@ -2458,7 +2376,7 @@ zz << xAval + xAinc * 2.0;
 
       x.clear();
       x.reserve( zz.size() );
-      zA = zz.data();
+      zA         = zz.data();
 
       for ( int j = 0; j < zz.size(); j++ )
          x .append( zA[ j ] );
@@ -2467,16 +2385,15 @@ zz << xAval + xAinc * 2.0;
       DbgErr() << "No refinement at ends since sedimentation "
                   "and floating mixed ...\n" ;
 
-   Nx = x.size();
-   xA = x.data();
-   int mm=x.size()/2;
-   int ee=x.size()-1;
-   DbgLv(1) << "RSA:mgR: Nx xA sme" << Nx << x[0] << x[1] << x[2]
-            << x[mm-1] << x[mm] << x[mm+1] << x[mm+2] << x[ee-2] << x[ee-1] << x[ee];
+   Nx         = x.size();
+   xA         = x.data();
+int mm=x.size()/2;
+int ee=x.size()-1;
+DbgLv(1) << "RSA:mgR: Nx xA sme" << Nx << x[0] << x[1] << x[2]
+ << x[mm-1] << x[mm] << x[mm+1] << x[mm+2] << x[ee-2] << x[ee-1] << x[ee];
 }
-//-----------------------------------------------------
+
 // Compute the coefficient matrices based on fixed mesh
-//-----------------------------------------------------
 void US_Astfem_RSA::ComputeCoefMatrixFixedMesh(
       double D, double sw2, double** CA, double** CB )
 {
@@ -2553,19 +2470,21 @@ void US_Astfem_RSA::ComputeCoefMatrixFixedMesh(
 #ifndef NO_DB
    US_AstfemMath::clear_3d( Nx, 4, Stif );
 #endif
-   int mm=Nx/2;
-   DbgLv(1) << "RSA:CCMFM: CA0 sme" << CA[0][0] << CA[0][1] << CA[0][2]
-            << CA[0][mm-1] << CA[0][mm] << CA[0][mm+1] << CA[0][mm+2]
-            << CA[0][Nx-3] << CA[0][Nx-2] << CA[0][Nx-1];
-   DbgLv(1) << "RSA:CCMFM: CA1 sme" << CA[1][0] << CA[1][1] << CA[1][2]
-            << CA[1][mm-1] << CA[1][mm] << CA[1][mm+1] << CA[1][mm+2]
-            << CA[1][Nx-3] << CA[1][Nx-2] << CA[1][Nx-1];
-   DbgLv(1) << "RSA:CCMFM: CB0 sme" << CB[0][0] << CB[0][1] << CB[0][2]
-            << CB[0][mm-1] << CB[0][mm] << CB[0][mm+1] << CB[0][mm+2]
-            << CB[0][Nx-3] << CB[0][Nx-2] << CB[0][Nx-1];
-   DbgLv(1) << "RSA:CCMFM: CB1 sme" << CB[1][0] << CB[1][1] << CB[1][2]
-            << CB[1][mm-1] << CB[1][mm] << CB[1][mm+1] << CB[1][mm+2]
-            << CB[1][Nx-3] << CB[1][Nx-2] << CB[1][Nx-1];
+//*DEBUG
+int mm=Nx/2;
+DbgLv(1) << "RSA:CCMFM: CA0 sme" << CA[0][0] << CA[0][1] << CA[0][2]
+ << CA[0][mm-1] << CA[0][mm] << CA[0][mm+1] << CA[0][mm+2]
+ << CA[0][Nx-3] << CA[0][Nx-2] << CA[0][Nx-1];
+DbgLv(1) << "RSA:CCMFM: CA1 sme" << CA[1][0] << CA[1][1] << CA[1][2]
+ << CA[1][mm-1] << CA[1][mm] << CA[1][mm+1] << CA[1][mm+2]
+ << CA[1][Nx-3] << CA[1][Nx-2] << CA[1][Nx-1];
+DbgLv(1) << "RSA:CCMFM: CB0 sme" << CB[0][0] << CB[0][1] << CB[0][2]
+ << CB[0][mm-1] << CB[0][mm] << CB[0][mm+1] << CB[0][mm+2]
+ << CB[0][Nx-3] << CB[0][Nx-2] << CB[0][Nx-1];
+DbgLv(1) << "RSA:CCMFM: CB1 sme" << CB[1][0] << CB[1][1] << CB[1][2]
+ << CB[1][mm-1] << CB[1][mm] << CB[1][mm+1] << CB[1][mm+2]
+ << CB[1][Nx-3] << CB[1][Nx-2] << CB[1][Nx-1];
+//*DEBUG
 }
 
 void US_Astfem_RSA::ComputeCoefMatrixMovingMeshR(
@@ -2781,45 +2700,46 @@ void US_Astfem_RSA::decompose( US_AstfemMath::MfemInitial* C0 )
       int    st1     = af_params.association[ 0 ].stoichs[ 1 ];
       double k_d     = af_params.association[ 0 ].k_d;
       long double k_assoc = ( k_d != 0.0 ) ? ( 1.0 / k_d ) : 0.0;
-     
+
       // Extinction coefficient for the monomer, corrected for pathlength
       double ext_M   = af_params.kext[ 0 ];
-      DbgLv(1)<<"extinction_coefficient" << ext_M  ;
+DbgLv(1)<<"extinction_coefficient" << ext_M;
 
       // K_association converted from signal to molar units
       double k_assoc1= k_assoc ;
       k_assoc       /= pow(ext_M,st0-1);
 
-      #ifndef NO_DB
-       emit current_component( -Npts );
-      #endif
+#ifndef NO_DB
+      emit current_component( -Npts );
+#endif
 
       for ( int j = 0; j < Npts; j++ )
       {
          double c1 = 0.0;
          double ct = C0[ 0 ].concentration[ j ] + C0[ 1 ].concentration[ j ] ;
-         //-------------------------------------------
+
          //Get the root of polynomial equation
          double ct1 = ct ;
          ct1       /= pow(ext_M, 1.0);
          double c1r = US_AstfemMath::find_C1_mono_Nmer( st0, k_assoc1, ct1 );
-         DbgLv(1)<<"total_concentration" << ct1 << "root= " << c1r;
-         //-------------------------------------------
-       
+DbgLv(1)<<"total_concentration" << ct1 << "root= " << c1r;
+
          if ( st0 == 2 && st1 == -1 )                // mono <--> dimer
          {
             c1 = ( sqrt( 1.0 + 4.0 * k_assoc * ct ) - 1.0 ) / ( 2.0 * k_assoc );
-            DbgLv(1)<<"entering dimer case" << c1  << k_d;  
+DbgLv(1)<<"entering dimer case" << c1  << k_d;
          }
 
          else if ( st0 == 3 && st1 == -1 )           // mono <--> trimer
-         {   c1 = US_AstfemMath::cube_root( -ct / k_assoc, 1.0 / k_assoc, 0.0 );
-             DbgLv(1)<<"entering trimer case" << c1  << k_d;
-         }    
+         {
+            c1 = US_AstfemMath::cube_root( -ct / k_assoc, 1.0 / k_assoc, 0.0 );
+DbgLv(1)<<"entering trimer case" << c1  << k_d;
+         }
 
          else if ( st0 > 3 && st1 == -1 )           // mono <--> n-mer
-         {   c1 = US_AstfemMath::find_C1_mono_Nmer( st0, k_assoc, ct );
-             DbgLv(1)<<"entering polymer case" << c1  << k_d ;
+         {
+            c1 = US_AstfemMath::find_C1_mono_Nmer( st0, k_assoc, ct );
+DbgLv(1)<<"entering polymer case" << c1  << k_d ;
          }
          else
          {
@@ -2829,34 +2749,34 @@ void US_Astfem_RSA::decompose( US_AstfemMath::MfemInitial* C0 )
          }
 
          double c2 = k_assoc * pow( c1, (double)st0 );
-         qDebug()<<"c2=" << c2;
+         //qDebug()<<"c2=" << c2;
 
 
          if ( af_params.role[ 0 ].stoichs[ 0 ] > 0 )    // c1=reactant
          {
             C0[ 0 ].concentration[ j ] = c1 ;
             C0[ 1 ].concentration[ j ] = c2 ;
-            DbgLv(1)<<"reactant_case" << C0[ 0 ].concentration[ j ] << C0[ 1 ].concentration[ j ] 
-                    <<  C0[ 0 ].concentration[ j ]+ C0[ 1 ].concentration[ j ];
+DbgLv(1)<<"reactant_case" << C0[0].concentration[j] << C0[1].concentration[j]
+ << C0[0].concentration[j]+ C0[1].concentration[j];
          }
          else                                           // c1=product
          {
             C0[ 0 ].concentration[ j ] = c2 ;
             C0[ 1 ].concentration[ j ] = c1 ;
-            qDebug()<<"product_case" ;
+            //qDebug()<<"product_case" ;
          }
-         #ifndef NO_DB
+#ifndef NO_DB
           emit current_component( j + 1 );
-         #endif
+#endif
          qApp->processEvents();
          if ( stopFlag )  break;
       }
-      DbgLv(2) << "RSA:  decompose NCOMP=2 return";
+DbgLv(2) << "RSA:  decompose NCOMP=2 return";
       return;
    }
-/*---------------------------
- * Any no of components case
- *---------------------------*/
+
+   // Any no of components case
+
    // General cases
    double** C1;
    double** C2;    // Arrays for all components at all radius position
@@ -2890,18 +2810,18 @@ void US_Astfem_RSA::decompose( US_AstfemMath::MfemInitial* C0 )
    const int time_max     = 100;
    double timeStepSize    = - log( 1.0e-7 ) / ( k_min * time_max );
 
-   DbgLv(2) << "RSA:  decompose k_min time_max timeStepSize"
-            << k_min << time_max << timeStepSize;
+DbgLv(2) << "RSA:  decompose k_min time_max timeStepSize"
+ << k_min << time_max << timeStepSize;
 
    // time loop
-   #ifndef NO_DB
+#ifndef NO_DB
      emit calc_start( time_max );
      emit current_component( -time_max );
-   #endif
+#endif
 
    for ( int ti = 0; ti < time_max; ti++ )
    {
-       #ifndef NO_DB
+#ifndef NO_DB
        if ( show_movie  &&  (ti%8) == 0 )
        {
           //DbgLv(2) << "AR: calc_progr ti" << ti;
@@ -2909,10 +2829,9 @@ void US_Astfem_RSA::decompose( US_AstfemMath::MfemInitial* C0 )
           qApp->processEvents();
           //US_Sleep::msleep( 10 );
        }
-       #endif
-       //-------------------------------------------------
+#endif
+
        ReactionOneStep_Euler_imp( Npts, C1, timeStepSize );
-       //-------------------------------------------------
 
        if ( stopFlag )  break;
 
@@ -2929,30 +2848,30 @@ void US_Astfem_RSA::decompose( US_AstfemMath::MfemInitial* C0 )
            }
        }
 
-       #ifndef NO_DB
+#ifndef NO_DB
         emit current_component( ti + 1 );
         qApp->processEvents();
-      #endif
+#endif
 
       if ( diff < 1.0e-5 * ct )
       {
-         #ifndef NO_DB
+#ifndef NO_DB
           int step = ti + 1;
           emit current_component( -step );
           emit current_component( step );
-         #endif
+#endif
 
          break;
       }
    } // end time steps
 
-   #ifndef NO_DB
+#ifndef NO_DB
     if ( show_movie )
     {
        emit calc_done();
        qApp->processEvents();
     }
-   #endif
+#endif
 
    for ( int i = 0; i < num_comp; i++ )
    {
@@ -2964,14 +2883,12 @@ void US_Astfem_RSA::decompose( US_AstfemMath::MfemInitial* C0 )
    US_AstfemMath::clear_2d( num_comp, C2 );
 }
 
-//------------------------------------------------------
 // ReactionOneStep_Euler_imp:  implicit Mid-point Euler
-//------------------------------------------------------
 void US_Astfem_RSA::ReactionOneStep_Euler_imp( int Npts, double** C1, double timeStep )
 {
    int num_comp = af_params.role.size();
-   DbgLv(2) << "RSA:Eul: Npts timeStep" << Npts << timeStep
-            << "num_comp" << num_comp;
+DbgLv(2) << "RSA:Eul: Npts timeStep" << Npts << timeStep
+ << "num_comp" << num_comp;
 
    // Special case:  self-association  n A <--> An
    if ( num_comp == 2 )       // only  2 components and one association rule
@@ -2986,7 +2903,7 @@ void US_Astfem_RSA::ReactionOneStep_Euler_imp( int Npts, double** C1, double tim
       double k_d      = system.associations[ rule ].k_d;
       double k_assoc  = ( k_d == 0.0 ) ? 0.0 : ( 1.0 / ( k_d * extn ) );
       double k_off    = system.associations[ rule ].k_off;
-      
+
       for ( int j = 0; j < Npts; j++ )
       {
          double ct  = C1[ 0 ][ j ] + C1[ 1 ][ j ];
@@ -3163,8 +3080,8 @@ void US_Astfem_RSA::Reaction_dydt( double* y0, double* yt )
          // extinction coefficient of n'th component
          double extn   = af_params.kext[ rgp->GroupComponent[ ind_cn ] ];
          //if(m==0)
-         DbgLv(2) << "RSA:ReDydt:   m n ind_cn" << m << n << ind_cn
-                  << "rstoi react extn" << rstoi << react << extn;
+DbgLv(2) << "RSA:ReDydt:   m n ind_cn" << m << n << ind_cn
+ << "rstoi react extn" << rstoi << react << extn;
 
          if ( react > 0 ) // comp[n] here is reactant
          {
@@ -3192,7 +3109,7 @@ void US_Astfem_RSA::Reaction_dydt( double* y0, double* yt )
       // convert molar into signal concentration
       yt[ i ] *= af_params.kext[ rgp->GroupComponent[ i ] ];
    }
-   DbgLv(2) << "RSA:ReDydt: yt[0] yt[n]" << yt[0] << yt[num_comp-1];
+DbgLv(2) << "RSA:ReDydt: yt[0] yt[n]" << yt[0] << yt[num_comp-1];
 }
 
 void US_Astfem_RSA::Reaction_dfdy( double* y0, double** dfdy )
@@ -3281,10 +3198,9 @@ void US_Astfem_RSA::Reaction_dfdy( double* y0, double** dfdy )
    US_AstfemMath::clear_2d( num_rule, QC );
 }
 
-// *** this is the SNI version of operator scheme
+// This is the SNI version of operator scheme
 // This part is for reacting system
-
-int US_Astfem_RSA::calculate_ra2( double rpm_start, double rpm_stop, US_AstfemMath::MfemInitial* C_init, 
+int US_Astfem_RSA::calculate_ra2( double rpm_start, double rpm_stop, US_AstfemMath::MfemInitial* C_init,
                                   US_AstfemMath::MfemData& simdata,  bool accel )
 {
    int Mcomp = af_params.s.size();
@@ -3310,8 +3226,8 @@ int US_Astfem_RSA::calculate_ra2( double rpm_start, double rpm_stop, US_AstfemMa
    simdata.scan  .reserve( Nx );
    xA        = x.data();
 
-   DbgLv(1) << "RSA:_ra2: Mcomp Nx" << Mcomp << Nx << "x size" << x.size()
-            << "D0 nu0 D1 nu1" << af_params.D[0] << nu[0] << af_params.D[1] << nu[1];
+DbgLv(1) << "RSA:_ra2: Mcomp Nx" << Mcomp << Nx << "x size" << x.size()
+ << "D0 nu0 D1 nu1" << af_params.D[0] << nu[0] << af_params.D[1] << nu[1];
 
    bool   fixedGrid = ( simparams.gridType == US_SimulationParameters::FIXED );
    double meniscus  = af_params.current_meniscus;
@@ -3328,7 +3244,7 @@ int US_Astfem_RSA::calculate_ra2( double rpm_start, double rpm_stop, US_AstfemMa
    if ( accel )
    {
       double xc ;
-      DbgLv(1) << "RSA:_ra2:(2) Nx" << Nx << "x size" << x.size();
+DbgLv(1) << "RSA:_ra2:(2) Nx" << Nx << "x size" << x.size();
 
       if ( s_min > 0.0 )            // all sediment towards bottom
       {
@@ -3342,10 +3258,10 @@ int US_Astfem_RSA::calculate_ra2( double rpm_start, double rpm_stop, US_AstfemMa
          }
 
          mesh_gen_RefL( j + 1, 4 * j );
-         DbgLv(1) << "RSA:_ra2: s_min s_max" << s_min << s_max << "xc xAj"
-                  << xc << xA[j] << "j" << j << "N0 M0" << (j+1) << (j*4);
+DbgLv(1) << "RSA:_ra2: s_min s_max" << s_min << s_max << "xc xAj"
+ << xc << xA[j] << "j" << j << "N0 M0" << (j+1) << (j*4);
       }
- 
+
      else if ( s_max < 0.0 )    // all float towards meniscus
       {
          // s_min corresponds to fastest component
@@ -3365,9 +3281,9 @@ int US_Astfem_RSA::calculate_ra2( double rpm_start, double rpm_stop, US_AstfemMa
          DbgErr() << "Multicomponent system with sedimentation and "
                      "floating mixed, use uniform mesh";
       }
-      DbgLv(1) << "RSA:_ra2:(3) Nx" << Nx << "x size" << x.size();
+DbgLv(1) << "RSA:_ra2:(3) Nx" << Nx << "x size" << x.size();
    }
-   DbgLv(1) << "RSA:_ra2:(4) Nx" << Nx << "x size" << x.size();
+DbgLv(1) << "RSA:_ra2:(4) Nx" << Nx << "x size" << x.size();
 
    for ( int i = 0; i < Nx; i++ )
       simdata.radius .append( xA[ i ] );
@@ -3403,7 +3319,7 @@ int US_Astfem_RSA::calculate_ra2( double rpm_start, double rpm_stop, US_AstfemMa
          sw2 = af_params.s[ i ] * sq( rpm_stop * M_PI / 30 );
          ComputeCoefMatrixFixedMesh( af_params.D[ i ], sw2, CA2[ i ], CB2[ i ] );
       }
-      DbgLv(1) << "RSA:_ra2:(5) Nx" << Nx << "x size" << x.size();
+DbgLv(1) << "RSA:_ra2:(5) Nx" << Nx << "x size" << x.size();
    }
 
    else     // Constant sedimentation speed
@@ -3429,8 +3345,8 @@ int US_Astfem_RSA::calculate_ra2( double rpm_start, double rpm_stop, US_AstfemMa
                double sw2   = af_params.s[ i ] * stop_fact;
                double sw2D  = 0.5 * sw2 / af_params.D[ i ];
                double s_rat = af_params.s[ i ] / s_max;
-               DbgLv(1) << "RSA: smin>0:GlStf: i" << i << "Si Di sw2 sw2D sqb s_max"
-                        << af_params.s[i] << af_params.D[i] << sw2 << sw2D << sqb << s_max;
+DbgLv(1) << "RSA: smin>0:GlStf: i" << i << "Si Di sw2 sw2D sqb s_max"
+ << af_params.s[i] << af_params.D[i] << sw2 << sw2D << sqb << s_max;
 
                // Grid for moving adaptive FEM for faster sedimentation
 
@@ -3449,17 +3365,17 @@ int US_Astfem_RSA::calculate_ra2( double rpm_start, double rpm_stop, US_AstfemMa
                              pow( xA[ j     ], ( 1.0 - alpha ) ) );
                   //if((j+1)==Nx) xbvec[j]=af_params.current_bottom;
                   if(j<4 || j==(Nx/2) || (j+4)>Nx)
-                  DbgLv(1) << "RSA: smin>0:GlStf:   j" << j << "dval alpha xbj xAj"
-                           << dval << alpha << xbvec[j] << xA[j];
+DbgLv(1) << "RSA: smin>0:GlStf:   j" << j << "dval alpha xbj xAj"
+ << dval << alpha << xbvec[j] << xA[j];
                }
 
                double* xb   = xbvec.data();
 
                GlobalStiff( xb, CA[ i ], CB[ i ], af_params.D[ i ], sw2 );
-               DbgLv(1) << "RSA: smin>0:GlStf: CA[i]:" << CA[i][0][0] << CA[i][1][0]
-                        << CA[i][2][Nx-1];
-               DbgLv(1) << "RSA: smin>0:GlStf: CB[i]:" << CB[i][0][0] << CB[i][1][0]
-                        << CB[i][2][Nx-1];
+DbgLv(1) << "RSA: smin>0:GlStf: CA[i]:" << CA[i][0][0] << CA[i][1][0]
+ << CA[i][2][Nx-1];
+DbgLv(1) << "RSA: smin>0:GlStf: CB[i]:" << CB[i][0][0] << CB[i][1][0]
+ << CB[i][2][Nx-1];
             }
          }
 
@@ -3482,7 +3398,7 @@ int US_Astfem_RSA::calculate_ra2( double rpm_start, double rpm_stop, US_AstfemMa
    double** C0; // C[m][j]: current/next concentration of m-th component at x_j
    double** C1; // C[0...Ms-1][0....Nx-1]:
 
-   DbgLv(1) << "RSA:_ra2:(6) Nx" << Nx << "x size" << x.size();
+DbgLv(1) << "RSA:_ra2:(6) Nx" << Nx << "x size" << x.size();
    US_AstfemMath::initialize_2d( Mcomp, Nx, &C0 );
    US_AstfemMath::initialize_2d( Mcomp, Nx, &C1 );
 
@@ -3496,8 +3412,8 @@ int US_Astfem_RSA::calculate_ra2( double rpm_start, double rpm_stop, US_AstfemMa
    }
 
    // Total concentration at current and next time step
-   DbgLv(1) << "RSA: newX3 Nx" << Nx << "C0[00] C0[m0] C0[0n] C0[mn]"
-            << C0[0][0] << C0[Mcomp-1][0] << C0[0][Nx-1] << C0[Mcomp-1][Nx-1];
+DbgLv(1) << "RSA: newX3 Nx" << Nx << "C0[00] C0[m0] C0[0n] C0[mn]"
+ << C0[0][0] << C0[Mcomp-1][0] << C0[0][Nx-1] << C0[Mcomp-1][Nx-1];
 
    QVector< double > CT0vec( Nx );
    QVector< double > CT1vec( Nx );
@@ -3514,11 +3430,11 @@ int US_Astfem_RSA::calculate_ra2( double rpm_start, double rpm_stop, US_AstfemMa
 
        CT1[ jj ] = CT0[ jj ];
    }
-   DbgLv(1) << "RSA: newX3  CT0 CTn" << CT1[0] << CT1[Nx-1];
+DbgLv(1) << "RSA: newX3  CT0 CTn" << CT1[0] << CT1[Nx-1];
 
    // Time evolution
    double* right_hand_side = rhVec.data();
-   #ifndef NO_DB
+#ifndef NO_DB
     int     stepinc = 1000;
     int     stepmax = ( Nt + 2 ) / stepinc + 1;
     bool    repprog = stepmax > 1;
@@ -3528,18 +3444,18 @@ int US_Astfem_RSA::calculate_ra2( double rpm_start, double rpm_stop, US_AstfemMa
        emit current_component( -stepmax );
        emit current_component( 0 );
     }
-   #endif
+#endif
 
-   DbgLv(1) << "RSA: (5)AP.start_om2t" << af_params.start_om2t;
+DbgLv(1) << "RSA: (5)AP.start_om2t" << af_params.start_om2t;
    last_time       = af_params.start_time;
 
    for ( int kkk = 0; kkk < Nt + 2; kkk += 2 )   // two steps in together
    {
       double rpm_current = rpm_start + ( rpm_stop - rpm_start ) * ( kkk + 0.5 ) / Nt;
 
-      #ifndef NO_DB
+#ifndef NO_DB
        emit current_speed( (int) rpm_current);
-      #endif
+#endif
 
       simscan.time      = af_params.start_time + kkk * af_params.dt;
       simscan.rpm       = (int) rpm_current;
@@ -3549,19 +3465,19 @@ int US_Astfem_RSA::calculate_ra2( double rpm_start, double rpm_stop, US_AstfemMa
       last_time         = simscan.time;
       simscan.omega_s_t = w2t_integral;
 
-      DbgLv(2) << "TMS:RSA:ra: time omegast" << simscan.time << simscan.omega_s_t
-               << "step-scan" << simdata.scan.size();
+DbgLv(2) << "TMS:RSA:ra: time omegast" << simscan.time << simscan.omega_s_t
+ << "step-scan" << simdata.scan.size();
 
       simscan.conc.clear();
       simscan.conc.reserve( Nx );
-      DbgLv(2) << "RSA: Nx CT0size" << Nx << CT0vec.size() << "step-scan"
-               << simdata.scan.size() << "rss-now" << US_Memory::rss_now();
+DbgLv(2) << "RSA: Nx CT0size" << Nx << CT0vec.size() << "step-scan"
+ << simdata.scan.size() << "rss-now" << US_Memory::rss_now();
 
       for ( int jj = 0; jj < Nx; jj++ )
          simscan.conc.append( CT0[ jj ] );
 
-      DbgLv(2) << "TMS:RSA:ra:  kkk" << kkk << "CT0[0] CT0[n]"
-               << CT0[0] << CT0[Nx-1] << "accel fixedGrid" << accel << fixedGrid;
+DbgLv(2) << "TMS:RSA:ra:  kkk" << kkk << "CT0[0] CT0[n]"
+ << CT0[0] << CT0[Nx-1] << "accel fixedGrid" << accel << fixedGrid;
 
       simdata.scan.append( simscan );
 
@@ -3615,10 +3531,10 @@ int US_Astfem_RSA::calculate_ra2( double rpm_start, double rpm_stop, US_AstfemMa
 
       else // Moving grid
       {
-         //DbgLv(2) << "TMS:RSA:ra:   (0)MovGrid: C0[00] C0[0n] C0[m0] C0[1n]"
-         // << C0[0][0] << C0[0][Nx-1] << C0[Mcomp-1][0] << C0[Mcomp-1][Nx-1];
-         //DbgLv(2) << "TMS:RSA:ra:   (0)MovGrid: C1[00] C1[0n] C1[m0] C1[1n]"
-         // << C1[0][0] << C1[0][Nx-1] << C1[Mcomp-1][0] << C1[Mcomp-1][Nx-1];
+//DbgLv(2) << "TMS:RSA:ra:   (0)MovGrid: C0[00] C0[0n] C0[m0] C0[1n]"
+// << C0[0][0] << C0[0][Nx-1] << C0[Mcomp-1][0] << C0[Mcomp-1][Nx-1];
+//DbgLv(2) << "TMS:RSA:ra:   (0)MovGrid: C1[00] C1[0n] C1[m0] C1[1n]"
+// << C1[0][0] << C1[0][Nx-1] << C1[Mcomp-1][0] << C1[Mcomp-1][Nx-1];
          for ( int i = 0; i < Mcomp; i++ )
          {
             // Calculate the right hand side vector
@@ -3642,18 +3558,18 @@ int US_Astfem_RSA::calculate_ra2( double rpm_start, double rpm_stop, US_AstfemMa
                                    - CB[ i ][ 1 ][ j ] * C0[ i ][ j - 1 ]
                                    - CB[ i ][ 2 ][ j ] * C0[ i ][ j     ];
 
-            DbgLv(2) << "TMS:RSA:ra:   MovGrid:  i" << i << "CB[0]" << CB[i][2][0]
-                     << CB[i][3][0] << CB[i][1][1] << CB[i][2][1] << CB[i][3][1];
-            DbgLv(2) << "TMS:RSA:ra:   MovGrid:   i" << i << "CA[0]" << CA[i][0][0]
-                     << CA[i][1][0] << CA[i][0][0] << CA[i][1][0] << CA[i][2][0];
+DbgLv(2) << "TMS:RSA:ra:   MovGrid:  i" << i << "CB[0]" << CB[i][2][0]
+ << CB[i][3][0] << CB[i][1][1] << CB[i][2][1] << CB[i][3][1];
+DbgLv(2) << "TMS:RSA:ra:   MovGrid:   i" << i << "CA[0]" << CA[i][0][0]
+ << CA[i][1][0] << CA[i][0][0] << CA[i][1][0] << CA[i][2][0];
 
             US_AstfemMath::QuadSolver( CA[ i ][ 0 ], CA[ i ][ 1 ], CA[ i ][ 2 ],
                                        CA[ i ][ 3 ], right_hand_side, C1[ i ],
                                        Nx );
-            DbgLv(2) << "TMS:RSA:ra:   MovGrid:    i" << i << "C1[i]" << C1[i][0]
-                     << C1[i][Nx-4] << C1[i][Nx-3] << C1[i][Nx-2] << C1[i][Nx-1];
-            DbgLv(2) << "TMS:RSA:ra:   MovGrid:    i" << i << "C0[i]" << C0[i][0]
-                     << C0[i][Nx-4] << C0[i][Nx-3] << C0[i][Nx-2] << C0[i][Nx-1];
+DbgLv(2) << "TMS:RSA:ra:   MovGrid:    i" << i << "C1[i]" << C1[i][0]
+ << C1[i][Nx-4] << C1[i][Nx-3] << C1[i][Nx-2] << C1[i][Nx-1];
+DbgLv(2) << "TMS:RSA:ra:   MovGrid:    i" << i << "C0[i]" << C0[i][0]
+ << C0[i][Nx-4] << C0[i][Nx-3] << C0[i][Nx-2] << C0[i][Nx-1];
          }
          //DbgLv(2) << "TMS:RSA:ra:   MovGrid: CA[000] rs[0]" << CA[0][0][0]
          // << right_hand_side[0] << "CB[000]" << CB[0][0][0];
@@ -3668,13 +3584,13 @@ int US_Astfem_RSA::calculate_ra2( double rpm_start, double rpm_stop, US_AstfemMa
       //
       // Finite reaction rate: linear interpolation of instantaneous reaction
 
-      DbgLv(2) << "TMS:RSA:ra:   C1[10] C1[11] C1[1k] C1[1n]"
-               << C1[1][0] << C1[1][1] << C1[1][Nx-2] << C1[1][Nx-1];
+DbgLv(2) << "TMS:RSA:ra:   C1[10] C1[11] C1[1k] C1[1n]"
+ << C1[1][0] << C1[1][1] << C1[1][Nx-2] << C1[1][Nx-1];
 
       ReactionOneStep_Euler_imp( Nx, C1, 2 * af_params.dt );
 
-      DbgLv(2) << "TMS:RSA:ra(2):   C1[10] C1[11] C1[1k] C1[1n]"
-               << C1[1][0] << C1[1][1] << C1[1][Nx-2] << C1[1][Nx-1];
+DbgLv(2) << "TMS:RSA:ra(2):   C1[10] C1[11] C1[1k] C1[1n]"
+ << C1[1][0] << C1[1][1] << C1[1][Nx-2] << C1[1][Nx-1];
 
       // For next half time-step in SNI operator splitting scheme
 
@@ -3813,7 +3729,7 @@ int US_Astfem_RSA::calculate_ra2( double rpm_start, double rpm_stop, US_AstfemMa
    qApp->processEvents();
 #endif
 
-   DbgLv(2) << "TMS:RSA:ra2: Nx" << Nx;
+DbgLv(2) << "TMS:RSA:ra2: Nx" << Nx;
    for ( int i = 0; i < Mcomp; i++ )
    {
      C_init[ i ].radius       .clear();
@@ -3826,8 +3742,8 @@ int US_Astfem_RSA::calculate_ra2( double rpm_start, double rpm_stop, US_AstfemMa
         C_init[ i ].radius        .append( xA[ j ] );
         C_init[ i ].concentration .append( C1[ i ][ j ] );
      }
-     DbgLv(2) << "TMS:RSA:ra2: comp:" << i << "C1[i]:" << C1[i][0] << C1[i][1]
-              << C1[i][Nx/2] << C1[i][Nx-3] << C1[i][Nx-2] << C1[i][Nx-1];
+DbgLv(2) << "TMS:RSA:ra2: comp:" << i << "C1[i]:" << C1[i][0] << C1[i][1]
+ << C1[i][Nx/2] << C1[i][Nx-3] << C1[i][Nx-2] << C1[i][Nx-1];
    }
 
    US_AstfemMath::clear_2d(Mcomp, C0);
@@ -3967,14 +3883,14 @@ void US_Astfem_RSA::load_mfem_data( US_DataIO::RawData&      edata,
 {
    int  nscan  = edata.scanCount();
    int  nconc  = edata.pointCount();
-   DbgLv(2) << "RSA:f nscan nconc" << nscan << nconc;
+DbgLv(2) << "RSA:f nscan nconc" << nscan << nconc;
 
    fdata.id       = edata.description;
    fdata.cell     = edata.cell;
    fdata.scan  .resize( nscan );
    //fdata.radius.resize( nconc );
    fdata.radius   = edata.xvalues;
-   DbgLv(2) << "RSA:f  r0 rn" << fdata.radius[0] << fdata.radius[nconc-1];
+DbgLv(2) << "RSA:f  r0 rn" << fdata.radius[0] << fdata.radius[nconc-1];
 
    for ( int ii = 0; ii < nscan; ii++ )
    {
@@ -4009,9 +3925,8 @@ DbgLv(2) << "RSA:f sc0 temp" << fdata.scan[0].temperature;
 DbgLv(2) << "RSA:e sc0 temp" << edata.scanData[0].temperature;
 }
 
-//--------------------------------------------
-//Stores simulated data into experimental data
-//--------------------------------------------
+
+// Stores simulated data into experimental data
 void US_Astfem_RSA::store_mfem_data( US_DataIO::RawData&      edata,
                                      US_AstfemMath::MfemData& fdata )
 {
@@ -4019,8 +3934,8 @@ void US_Astfem_RSA::store_mfem_data( US_DataIO::RawData&      edata,
    int  nconc  = fdata.radius.size();
    int  escan  = edata.scanCount();
    int  econc  = edata.pointCount();
-   DbgLv(2) << "RSA:st_md: nscan nconc" << nscan << nconc;
-   DbgLv(2) << "RSA:st_md: escan econc" << escan << econc;
+DbgLv(2) << "RSA:st_md: nscan nconc" << nscan << nconc;
+DbgLv(2) << "RSA:st_md: escan econc" << escan << econc;
 
    if ( escan != nscan )
       edata.scanData.resize( nscan );
@@ -4042,12 +3957,11 @@ void US_Astfem_RSA::store_mfem_data( US_DataIO::RawData&      edata,
       escan->rvalues     = fscan->conc;
    }
 
-   DbgLv(2) << "RSA:o-f sc0 temp" << fdata.scan[0].temperature;
-   DbgLv(2) << "RSA:o-e sc0 temp" << edata.scanData[0].temperature;
+DbgLv(2) << "RSA:o-f sc0 temp" << fdata.scan[0].temperature;
+DbgLv(2) << "RSA:o-e sc0 temp" << edata.scanData[0].temperature;
 }
-//------------------------------
-//Prints speed profile structure
-//------------------------------
+
+// Prints speed profile structure
 void US_Astfem_RSA::printspeedprofile( US_SimulationParameters::SpeedProfile& sp )
 {
      DbgLv(1) << "---------------Speed profile parameters begins here------------------";
@@ -4064,13 +3978,12 @@ void US_Astfem_RSA::printspeedprofile( US_SimulationParameters::SpeedProfile& sp
      DbgLv(1) <<"omega2t first and last" << sp.w2t_first<< sp.w2t_last;
      DbgLv(1) << "----------------Speed profile parameters ends here--------------------";
 }
-//-----------------------------
-//Prints simulation components
-//-----------------------------
+
+// Prints simulation components
 void US_Astfem_RSA::printsimComponent( US_Model::SimulationComponent& sc )
 {
    DbgLv(1) << "---------------Simulation component parameters begins here----------------";
-   DbgLv(1) << "molar_concentration" << sc.molar_concentration;   
+   DbgLv(1) << "molar_concentration" << sc.molar_concentration;
    DbgLv(1) << "signal_concentration" << sc.signal_concentration;
    DbgLv(1)  << "vbar20" << sc.vbar20;
    DbgLv(1)  << "mw" << sc.mw;
@@ -4090,9 +4003,8 @@ void US_Astfem_RSA::printsimComponent( US_Model::SimulationComponent& sc )
    DbgLv(1) << "----------------Simulation component parameters ends here---------------";
  //   dump_mfem_initial( sc.c0 );
 }
-//---------------------------
-//Prints simparams structure
-//---------------------------
+
+// Prints simparams structure
 void US_Astfem_RSA::printsimparams( void )
 {
    DbgLv(1) << "speed profile list size " << simparams.speed_step.size();
@@ -4111,22 +4023,16 @@ void US_Astfem_RSA::printsimparams( void )
    DbgLv(1) << "band_volume " << simparams.band_volume;
    DbgLv(1) << "firstScanIsConcentration "<< simparams.firstScanIsConcentration;
 }
-//--------------------------------
 
-//---------------------------------------------------
-//Returns a string with curent date_hr+minute+seconds
-//---------------------------------------------------
+// Returns a string with curent date_hr+minute+seconds
 QString US_Astfem_RSA::temp_Id_name()
-       {
-         return  ( "p" + QString::number( getpid() ) +
+{
+   return  ( "p" + QString::number( getpid() ) +
              "t" + QDateTime::currentDateTime().toUTC()
                    .toString( "yyMMddhhmmss" ) );
-       }
-//----------------------------------------------------
+}
 
-//---------------
-//Sets the buffer
-//---------------
+// Sets the buffer
 void US_Astfem_RSA::set_buffer( US_Buffer buffer )
 {
    density     = buffer.density;             // for compressibility
@@ -4134,12 +4040,4 @@ void US_Astfem_RSA::set_buffer( US_Buffer buffer )
 
    buffer.compositeCoeffs( d_coeff, v_coeff );
 }
-//---------------
-       
-
-
-
-
-       
-
 
