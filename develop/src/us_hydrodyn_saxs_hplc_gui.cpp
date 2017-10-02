@@ -1002,9 +1002,6 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    pb_pp->setPalette( PALET_PUSHB );
    pb_pp->setEnabled( true );
    connect(pb_pp, SIGNAL(clicked()), SLOT(pp()));
-#ifdef QT4
-   pb_pp->hide();
-#endif
 
    pb_wheel_cancel = new QPushButton(us_tr("Cancel"), this);
    pb_wheel_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));

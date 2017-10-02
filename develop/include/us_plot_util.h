@@ -7,6 +7,9 @@
 #include "us_file_util.h"
 #include "us_vector.h"
 #include <qwt_plot.h>
+#ifdef QT4
+# include <qwt_plot_curve.h>
+#endif
 
 using namespace std;
 #ifdef WIN32

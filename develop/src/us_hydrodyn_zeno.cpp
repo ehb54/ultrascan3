@@ -14262,9 +14262,9 @@ bool US_Hydrodyn::calc_zeno()
                      add_to_zeno +=
                         QString( 
                                 " Stokes Radius             Rs : %1\n"
-                                " Intrinsic Viscosity    [eta] : %1\n"
-                                " Tr. Frictional coefficient f : %2\n"
-                                " Tr. Diffusion Coefficient Dt : %3\n"
+                                " Intrinsic Viscosity    [eta] : %2\n"
+                                " Tr. Frictional coefficient f : %3\n"
+                                " Tr. Diffusion Coefficient Dt : %4\n"
                                  )
                         .arg( QString( "" ).sprintf( "%4.2e nm"      , this_data.results.rs ) )
                         .arg( QString( "" ).sprintf( "%4.2e cm^3/g"  , this_data.results.viscosity ) )
