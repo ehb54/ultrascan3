@@ -3,7 +3,7 @@
 #include <QTextStream>
 //#include "../include/us_file_util.h"
 
-static US_Hydrodyn  * zeno_us_hydrodyn;
+US_Hydrodyn  * zeno_us_hydrodyn;
 QProgressBar * zeno_progress;
 bool * zeno_stop_flag;
 

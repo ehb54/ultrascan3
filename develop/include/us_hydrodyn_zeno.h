@@ -41,6 +41,7 @@ class US_Hydrodyn_Zeno
                int                     threads = 1
                );
    QString error_msg;
+   void        update_progress         ( int pos, int total );
 
  private:
    QString                 filename;
@@ -49,6 +50,9 @@ class US_Hydrodyn_Zeno
    vector < PDB_atom > *   bead_model;
    US_Hydrodyn *           us_hydrodyn;
    bool                    keep_files;
+
+ signals:
+    void                   progress_updated( int, int );
 };
 
 #endif

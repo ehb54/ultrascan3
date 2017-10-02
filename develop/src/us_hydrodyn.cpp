@@ -1352,6 +1352,8 @@ void US_Hydrodyn::setupGUI()
    background->addWidget(lbl_core_progress, j, 2);
 
    fixWinButtons( this );
+
+   connect( this, SIGNAL( progress_updated( int, int ) ), SLOT( update_progress( int, int ) ) );
 }
 
 void US_Hydrodyn::set_expert( bool expert )
@@ -5844,3 +5846,15 @@ void US_Hydrodyn::le_pdb_file_changed( const QString & )
    // us_qdebug( "changed" );
    le_pdb_file->setText( le_pdb_file_save_text );
 }
+
+void US_Hydrodyn::update_progress( int pos, int total )
+{
+   // us_qdebug( QString( "update progress %1 %2" ).arg( pos ).arg( total ) );
+   progress->setValue( pos ); progress->setMaximum( total );
+}
+
+void US_Hydrodyn::do_update_progress( int pos, int total ) {
+   // us_qdebug( QString( "do update progress %1 %2" ).arg( pos ).arg( total ) );
+   emit progress_updated( pos, total );
+}
+

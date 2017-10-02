@@ -10,6 +10,7 @@
 #include "qprogressbar.h"
 extern QProgressBar *zeno_progress;
 extern bool *zeno_stop_flag;
+extern US_Hydrodyn *zeno_us_hydrodyn;
 
 #include <fstream>
 class zeno_fout {
@@ -2346,9 +2347,12 @@ doWalkOnSpheresThread(Sphere<double> const * boundingSphere,
 	
 	if ( !threadNum && !( walkNum % 10000 ) ) {
 	  if (!cmdline){
-#if QT_VERSION < 0x040000
-             // need to fix how this is done
-	    zeno_progress->setValue( walkNum ); zeno_progress->setMaximum( numWalks );
+// #if QT_VERSION < 0x040000
+//              // need to fix how this is done
+//              zeno_progress->setValue( walkNum ); zeno_progress->setMaximum( numWalks );
+// #endif
+#ifndef CMDLINE
+             zeno_us_hydrodyn->do_update_progress( walkNum, numWalks );
 #endif
 	  }
 	  else {

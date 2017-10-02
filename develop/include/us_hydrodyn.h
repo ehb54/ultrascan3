@@ -838,7 +838,10 @@ class US_EXTERN US_Hydrodyn : public QFrame
 
       static QString fix_file_name( QString ); // remove spaces etc
 
+      void do_update_progress( int, int );
+
    public slots:
+      void update_progress( int, int );
       void show_zeno_options();
       void display_default_differences();
       void clear_display();
@@ -1037,6 +1040,11 @@ class US_EXTERN US_Hydrodyn : public QFrame
    protected slots:
 
       void closeEvent(QCloseEvent *);
+
+   signals:
+
+      void                   progress_updated( int, int );
+
 };
 
 

@@ -2,10 +2,9 @@
 //Added by qt3to4:
 #include <QTextStream>
 
-static US_Hydrodyn  * zeno_us_hydrodyn;
+US_Hydrodyn  * zeno_us_hydrodyn;
 QProgressBar * zeno_progress;
 bool * zeno_stop_flag;
-
 static US_Udp_Msg  * zeno_us_udp_msg;
 
 // note: this program uses cout and/or cerr and this should be replaced
@@ -14446,3 +14445,4 @@ void US_Hydrodyn::show_zeno_options()
       hydro_zeno_window->show();
    }
 }
+
