@@ -63,9 +63,9 @@ US_AdvancedFem::US_AdvancedFem( US_Model* amodel,
    mainLayout->addWidget( pb_cancel,     row,   2, 1, 2 );
    mainLayout->addWidget( pb_accept,     row++, 4, 1, 2 );
 
-   ct_simpoints->setValue( 200   );
-   ct_bldvolume->setValue( 0.015 );
-   ct_parameter->setValue( 0     );
+   ct_simpoints->setValue( parmap[ "simpoints" ].toDouble() );
+   ct_bldvolume->setValue( parmap[ "bldvolume" ].toDouble() );
+   ct_parameter->setValue( parmap[ "parameter" ].toDouble() );
    ct_simpoints->setSingleStep(     5 );
    ct_bldvolume->setSingleStep( 0.001 );
    ct_parameter->setSingleStep(     1 );

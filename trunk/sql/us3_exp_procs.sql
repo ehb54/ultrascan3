@@ -253,6 +253,7 @@ BEGIN
         label              = p_label,
         comment            = p_comment,
         centrifugeProtocol = p_centrifugeProtocol,
+        dateBegin          = NOW(),
         dateUpdated        = NOW() ;
   
       IF ( duplicate_key = 1 ) THEN
@@ -702,7 +703,7 @@ CREATE PROCEDURE delete_HPCRequest ( p_personGUID   CHAR(36),
 
 BEGIN
   DECLARE l_investigatorGUID CHAR(36);
-  DECLARE l_method           ENUM('2DSA','2DSA_MW','GA','GA_MW','GA_SC','DMGA');
+  DECLARE l_method           ENUM('2DSA','2DSA_MW','GA','GA_MW','GA_SC','DMGA','PCSA');
 
   CALL config();
   SET @US3_LAST_ERRNO = @OK;
@@ -711,6 +712,12 @@ BEGIN
   -- First find out the investigatorGUID, so we can see if this is the user's own data
   SELECT    investigatorGUID
   INTO      l_investigatorGUID
+  FROM      HPCAnalysisRequest
+  WHERE     HPCAnalysisRequestID = p_requestID;
+
+  -- Then get the method, so we can later delete appropriate settings table
+  SELECT    method
+  INTO      l_method
   FROM      HPCAnalysisRequest
   WHERE     HPCAnalysisRequestID = p_requestID;
 
@@ -775,6 +782,10 @@ BEGIN
 
     ELSEIF ( l_method = 'DMGA' ) THEN
       DELETE FROM DMGA_Settings
+      WHERE       HPCAnalysisRequestID = p_requestID;
+  
+    ELSEIF ( l_method = 'PCSA' ) THEN
+      DELETE FROM PCSA_Settings
       WHERE       HPCAnalysisRequestID = p_requestID;
   
     END IF;
