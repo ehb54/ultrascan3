@@ -187,7 +187,7 @@ void US_TmstPlot::plot_kdata()
    else if ( pkey.contains( "Tempera" ) )
       ytitle         = ytitle + "  (C)";
 
-   data_plot1->setAxisTitle( QwtPlot::yLeft, ytitle ); 
+   data_plot1->setAxisTitle( QwtPlot::yLeft, ytitle );
    us_grid( data_plot1 );                                  // Grid
    US_PlotPicker* pick = new US_PlotPicker( data_plot1 );  // Annotated cursor
    pick->setRubberBand( QwtPicker::RectRubberBand );
