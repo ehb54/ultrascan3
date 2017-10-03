@@ -1598,10 +1598,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       void axis_y                      ( bool nochange = false, bool no_replot = false );
       void legend_set                  ();
 
-      void rename_created( QListWidgetItem *, const QPoint & );
-#if QT_VERSION >= 0x040000
+      void rename_created              ( QListWidgetItem *, const QPoint & );
       void rename_from_context         ( const QPoint & pos );
-#endif
 
       void set_plot_errors_rev();
       void set_plot_errors_sd();

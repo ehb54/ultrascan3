@@ -466,9 +466,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       void guinier();
 
       void rename_created              ( QListWidgetItem *, const QPoint & );
-#if QT_VERSION >= 0x040000
       void rename_from_context         ( const QPoint & pos );
-#endif
 
    protected slots:
 

@@ -5858,3 +5858,10 @@ void US_Hydrodyn::do_update_progress( int pos, int total ) {
    emit progress_updated( pos, total );
 }
 
+void US_Hydrodyn::process_events() {
+   us_qdebug( QString( "process_events()?" ) );
+   //   qApp->processEvents();
+}
+
+
+

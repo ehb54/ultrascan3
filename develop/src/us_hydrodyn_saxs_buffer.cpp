@@ -6551,14 +6551,14 @@ void US_Hydrodyn_Saxs_Buffer::regex_load()
    }
 }
 
-#if QT_VERSION >= 0x040000
 void US_Hydrodyn_Saxs_Buffer::rename_from_context( const QPoint & pos ) {
+#if QT_VERSION >= 0x040000
    QListWidgetItem * lwi = lb_created_files->itemAt( pos );
    if ( lwi ) {
       return rename_created( lwi, pos );
    }
-}
 #endif
+}
 
 void US_Hydrodyn_Saxs_Buffer::rename_created( QListWidgetItem *lbi, const QPoint & )
 {

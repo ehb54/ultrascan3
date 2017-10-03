@@ -13786,6 +13786,9 @@ bool US_Hydrodyn::calc_zeno()
    double sum_mass   = 0e0;
    double sum_volume = 0e0;
 
+   // QTimer *t_pe = new QTimer(this);
+   // connect( t_pe, SIGNAL( timeout() ), SLOT( process_events() ) );
+           
    for (current_model = 0; current_model < (unsigned int)lb_model->count(); current_model++) {
       if (lb_model->item(current_model)->isSelected()) {
          if (somo_processed[current_model]) {
@@ -13793,13 +13796,27 @@ bool US_Hydrodyn::calc_zeno()
                first_model_no = current_model + 1;
             }
             bead_model = bead_models[current_model];
-            bool result = 
-               uhz.run( 
+            // t_pe->start( 1000 );
+
+            QString fname =
                        QString( somo_dir 
                                 + QDir::separator() 
                                 + project 
-                                + QString("_%1").arg(current_model + 1) 
-                                + QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "" ) ),
+                                + QString( "_%1" ).arg( current_model + 1 )
+                                + QString( "_MC%1" ).arg( hydro.zeno_zeno_steps )
+                                + QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "" )
+                                + ".zno" )
+               ;
+
+            if ( !overwrite ) {
+               fname = fileNameCheck( fname, 0, this );
+            }
+
+            fname = fname.replace( QRegExp( "\\.(zno)$" ), "" );
+
+            bool result = 
+               uhz.run( 
+                       fname,
                        &bead_models[ current_model ], 
                        sum_mass,
                        sum_volume,
@@ -13807,6 +13824,7 @@ bool US_Hydrodyn::calc_zeno()
                        zeno_cxx,
                        USglobal->config_list.numThreads
                         );
+            // t_pe->stop();
             if (stopFlag)
             {
                editor->append("Stopped by user\n\n");

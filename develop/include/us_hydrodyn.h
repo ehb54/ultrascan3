@@ -887,6 +887,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
       int pdb_hydrate_for_saxs( bool quiet = false );
       
    private slots:
+      void process_events();
+
       void le_pdb_file_changed( const QString & );
       void le_pdb_file_focus( bool );
 
