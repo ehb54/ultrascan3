@@ -1,0 +1,102 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta content="text/html;charset=ISO-8859-1" http-equiv="Content-Type">
+	<title>SOMO BEST Interface Results Analysis Module</title>
+	<link href="mainstyle3.css" rel="styleSheet" type="text/css">
+</head>
+<body>
+<table BORDER=0 CELLPADDING=5 >
+<tr>
+<td><img SRC="USSOMO-banner.png" BORDER="0" ALT="UltraScan Version"> </td>
+<td>
+<center>
+<h1>
+<i>Manual</i></h1></center>
+</td>
+</tr>
+</table>
+
+<hr>
+<center>
+<h2>
+US-SOMO - BEST Interface Results Analysis Module</h2>
+<p>
+</center>
+<center>
+<td><img SRC="somo_cluster_BEST_analysis.png" ALT="SOMO Cluster BEST Interface results analysis module"></td>
+</center>
+<p>
+This module was conceived to allow for an in depth evaluation of the hydrodynamic parameters computed by <b><i>BEST</i></b>, and to provide some useful tools for their further treatment. At the end of the computational phase in the supercompute cluster, the calculated hydrodynamic parameters for every triangulated model and their zero plates values as extrapolated by <b><i>BEST</i></b> are saved in a CSV file which is retrieved together with a series of other produced files as described in the <a href="somo_BEST_setup.html#results">BEST cluster setup help results section</a>.
+
+Furthermore, we have added the calculation of the 5 individual rotational correlation times [Tau(1), etc.], and of their normal and harmonic means [Tau(m) and Tau(h)] from the Eigenvalues of the rotational diffusion tensor (See Spotorno et al., Eur. Biophys. J. 25:373-384, 1997).<br>
+After launching the <b><i>BEST</i></b> data analysis module from the <b>US-SOMO</b> main panel, the first operation is then to upload one <b><i>BEST</i></b> results CSV file by pressing <b><i>Load CSV</i></b> and navigating through the files directory. When a CSV file is loaded, the <i>Data fields</i> space is populated by the complete list of all the available parameters, and by clicking on one of them the relative plot of that parameter's values vs. 1/triangles is shown in the right-side graphics window together with a linear regression line. The results of the regression are shown in the <i>Messages</i> section at the bottom left-side of this module, and are continuosly updated when changes are made to the number of points included in the regression (see below).<p>
+
+The two dotted lines above and below the solid regression line in the plot are plotted by selecting the <i>Display error lines (+/- 1 sigma of linear fit)</i> checkbox.<p>
+
+To see the effect of including or excluding points in the regression, an <i>Allow manual point rejection</i> checkbox is provided. If it is activated, the checkboxes relative to the points included in the regression, located at the bottom of the graphics display, become active, and will allow to deselect/select every point or combination of points. Obviously, a minimum of two points is required for the regression to take place, with its results displayed in the <i>Messages</i> section. <span style="color:#CC0000">WARNING: The use of the manual point rejection to produce final extrapolated results is severely discouraged! See the "<b><i>Apply Q test criterion</i></b>" below.</span><p>
+
+<center>
+<td><img SRC="somo_cluster_BEST_analysis_eta.png" ALT="SOMO Cluster BEST Interface results analysis module"></td>
+</center>
+<p>
+
+In some cases, one or more apparent outliers will appear in the calculated parameter vs. 1/triangles plot, as shown above for the [&eta;] values. In such a case, a statistical test called the Q-test [Dixon, WJ (1951) Ratios involving extreme values. Ann Math Stat 22:68-78]
+should be called by pressing the <b><i>Apply Q test criterion</i></b> button. This test will identify a <span style="color:#CC0000">single</span> true outlier, if it exists, matching the Q-test criterion, which will be indentified with a <span style="color:#CC0000"><b>X</b></span> on the plot, and its corresponding checkbox will be automatically deselected, as shown below:<p>
+
+<center>
+<td><img SRC="somo_cluster_BEST_analysis_eta1.png" ALT="SOMO Cluster BEST Interface results analysis module viscosity test"></td>
+</center>
+<p>
+
+Note that in the <i>Messages</i> section an updated extrapolated value for [&eta;] is reported. This type of analysis can be performed independently for every parameter listed in the <i>Data fields</i> section. If more than a single outlier is visually evident, it is strongly suggested to perform again a <i><b>BEST</i></b> computation by varying, for instance, the starting and ending number of triangles, or the number of files generated. Note also that the derivation of the rotational correlation times Tau(1), Tau(2), etc., and of their normal and harmonic means (Tau(m) and Tau(h), respectively) is originally made from the extrapolated values or the <i>D<sub>rr</sub></i> Eigenvalues provided by <b><i>BEST</i></b> and present in the uploaded CSV file. Therefore, it is better to first check the goodness of the extrapolation of the individual <i>D<sub>rr</sub></i> Eigenvalues before checking the individual Tau and their means. The <b>US-SOMO</b> <b><i>BEST Analysis Module</i></b> will recompute the individual Tau and their means each time the extrapolation of a  <i>D<sub>rr</sub></i> Eigenvalue is changed.<p>
+
+Once all the necessary extrapolation checks have been performed, and updated CSV file containing the final parameters can be saved by pressing <b><i>Save Results</b></i>. To the original filename, the "results" string will be appended before the ".csv" extension.<p>
+
+When NMR-style files are analyzed via the <b>US-SOMO</b> <b><i>BEST</i></b> implementation, a CSV file is produced for each model, that can then be analyzed with the  <b>US-SOMO</b> <b><i>BEST Analysis Module</i></b>. However, often an average value of one or more hydrodynamic parameters is sought across all the models contained in a NMR-style file. To help producing each average, the <b><i>Join results</b></i> button is provided. Pressing it will bring up the filesystem navigator, and after reaching the appropriate directory, files can be selected (ctrl-left click), followed by pressing "open":<p>
+
+<center>
+<td><img SRC="somo_cluster_BEST_analysis_join.png" ALT="SOMO Cluster BEST Interface results analysis module join files"></td>
+</center>
+<p>
+
+The filesystem will then allow for more files to be added, either in the same or in another directory. If no more files are to be added, pressing "cancel" will bring back the filesystem navigator so that an output directory filename can be entered:<p>
+
+<center>
+<td><img SRC="somo_cluster_BEST_analysis_join1.png" ALT="SOMO Cluster BEST Interface results analysis module join files"></td>
+</center>
+<p>
+
+The resulting CSV file will list all the values for the same parameter for each different model in contiguous lines, and for all the parameters, allowing to easily generate the required averages with any standard spreadsheet program. In the image below, a section of a spreadsheet with the results obtained for the Eigenvalues of <i>D<sub>tt</sub></i> from the <b>US-SOMO</b> <b><i>BEST Analysis Module</i></b> on 32 NMR models of RNase A is shown:<p>
+
+<center>
+<td><img SRC="somo_cluster_BEST_analysis_join2.png" ALT="SOMO Cluster BEST Interface results analysis module join files spreadsheet"></td>
+</center>
+<p>
+
+
+ Note that the last column lists the single points that have been dropped from each regression (in case of the non-recommended manual multiple points exclusion, all the discarded points will be listed separated by commas).<p>
+
+ <p>
+
+<p>
+<hr>
+<font face="helvetica" size="-1">
+www contact: <a href="mailto:emre@biochem.uthscsa.edu">Emre Brookes</a>
+</font>
+<p>
+<font face="helvetica" size="-1">
+This document is part of the <i><b>UltraScan</b></i> Software Documentation
+distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> The latest version of this document can always be found at:
+</font>
+<p>
+<font face="helvetica" size="-1">
+<a href="http://somo.uthscsa.edu">http://somo.uthscsa.edu</a>
+</font>
+<p>
+<font face="helvetica" size="-1">
+Last modified on May 11, 2014
+</font>
+</body>
+</html>
