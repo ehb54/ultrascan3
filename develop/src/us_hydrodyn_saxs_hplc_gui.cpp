@@ -465,9 +465,18 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    lb_created_files->setSelectionMode( QAbstractItemView::ExtendedSelection );
    lb_created_files->setMinimumHeight( minHeight1 * 3 );
    connect( lb_created_files, SIGNAL( itemSelectionChanged() ), SLOT( update_created_files() ) );
+
+#if QT_VERSION < 0x040000
    connect( lb_created_files, 
             SIGNAL( rightButtonClicked( QListWidgetItem *, const QPoint & ) ),
             SLOT  ( rename_created    ( QListWidgetItem *, const QPoint & ) ) );
+#else
+   connect( lb_created_files, 
+            SIGNAL( customContextMenuRequested( const QPoint & ) ),
+            SLOT  ( rename_from_context ( const QPoint & ) )
+            );
+   lb_created_files->setContextMenuPolicy( Qt::CustomContextMenu );
+#endif
 
    lbl_selected_created = new QLabel("0 files selected", this );
    lbl_selected_created->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);

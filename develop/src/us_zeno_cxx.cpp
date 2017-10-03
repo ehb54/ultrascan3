@@ -2345,12 +2345,8 @@ doWalkOnSpheresThread(Sphere<double> const * boundingSphere,
       }
 	//us_qdebug(QString("Walk number_2: %1").arg(walkNum));
 	
-	if ( !threadNum && !( walkNum % 10000 ) ) {
+	if ( !threadNum && !( walkNum % 1000 ) ) {
 	  if (!cmdline){
-// #if QT_VERSION < 0x040000
-//              // need to fix how this is done
-//              zeno_progress->setValue( walkNum ); zeno_progress->setMaximum( numWalks );
-// #endif
 #ifndef CMDLINE
              zeno_us_hydrodyn->do_update_progress( walkNum, numWalks );
 #endif

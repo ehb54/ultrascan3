@@ -568,9 +568,17 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    lb_created_files->setSelectionMode( QAbstractItemView::ExtendedSelection );
    lb_created_files->setMinimumHeight( minHeight1 * 3 );
    connect( lb_created_files, SIGNAL( itemSelectionChanged() ), SLOT( update_created_files() ) );
+#if QT_VERSION < 0x040000
    connect( lb_created_files, 
             SIGNAL( rightButtonClicked( QListWidgetItem *, const QPoint & ) ),
             SLOT  ( rename_created    ( QListWidgetItem *, const QPoint & ) ) );
+#else
+   connect( lb_created_files, 
+            SIGNAL( customContextMenuRequested( const QPoint & ) ),
+            SLOT  ( rename_from_context ( const QPoint & ) )
+            );
+   lb_created_files->setContextMenuPolicy( Qt::CustomContextMenu );
+#endif
 
    lbl_selected_created = new QLabel("0 files selected", this );
    lbl_selected_created->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
@@ -6542,6 +6550,15 @@ void US_Hydrodyn_Saxs_Buffer::regex_load()
       }
    }
 }
+
+#if QT_VERSION >= 0x040000
+void US_Hydrodyn_Saxs_Buffer::rename_from_context( const QPoint & pos ) {
+   QListWidgetItem * lwi = lb_created_files->itemAt( pos );
+   if ( lwi ) {
+      return rename_created( lwi, pos );
+   }
+}
+#endif
 
 void US_Hydrodyn_Saxs_Buffer::rename_created( QListWidgetItem *lbi, const QPoint & )
 {

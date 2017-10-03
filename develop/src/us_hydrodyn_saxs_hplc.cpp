@@ -5305,6 +5305,15 @@ void US_Hydrodyn_Saxs_Hplc::regex_load()
    }
 }
 
+#if QT_VERSION >= 0x040000
+void US_Hydrodyn_Saxs_Hplc::rename_from_context( const QPoint & pos ) {
+   QListWidgetItem * lwi = lb_created_files->itemAt( pos );
+   if ( lwi ) {
+      return rename_created( lwi, pos );
+   }
+}
+#endif
+
 void US_Hydrodyn_Saxs_Hplc::rename_created( QListWidgetItem *lbi, const QPoint & )
 {
    map < QString, bool > existing_items;
