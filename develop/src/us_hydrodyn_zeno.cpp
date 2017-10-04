@@ -13551,8 +13551,8 @@ bool US_Hydrodyn_Zeno::run(
    }
 
    fout.close();
-   zeno_us_hydrodyn->editor_msg( "black", QString( "Created %1\n" ).arg( outname ) );
-   zeno_us_hydrodyn->editor_msg( "black", QString( "Beads used %1\n" ).arg( bead_model->size() ) );
+   us_hydrodyn->editor_msg( "black", QString( "Created %1\n" ).arg( outname ) );
+   us_hydrodyn->editor_msg( "black", QString( "Beads used %1\n" ).arg( bead_model->size() ) );
 
    if ( zeno_cxx ) {
       int argc = 0;
@@ -13585,6 +13585,7 @@ bool US_Hydrodyn_Zeno::run(
       if ( !us_hydrodyn->stopFlag )
       {
          us_hydrodyn->last_hydro_res = QFileInfo( filename + ".zno" ).fileName();
+         us_hydrodyn->editor_msg( "black", QString( "Created %1\n" ).arg( filename + ".zno" ) );
       }
    } else {
 
@@ -13631,8 +13632,10 @@ bool US_Hydrodyn_Zeno::run(
       if ( !us_hydrodyn->stopFlag )
       {
          us_hydrodyn->last_hydro_res = QFileInfo( filename + ".zno" ).fileName();
+         us_hydrodyn->editor_msg( "black", QString( "Created %1\n" ).arg( filename + ".zno" ) );
       }
    }
+
 
    return true;
 }
