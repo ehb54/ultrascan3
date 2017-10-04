@@ -1952,7 +1952,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::add_i_of_q_or_t( QString source, QStringList fil
          } else {
             i_t_child = new QTreeWidgetItem( source_item, source_item );
          }
-         i_q_child->setText( 0, "I(t)" );
+         i_t_child->setText( 0, "I(t)" );
       }
    }
 #endif
