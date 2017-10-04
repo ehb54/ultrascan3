@@ -13551,7 +13551,8 @@ bool US_Hydrodyn_Zeno::run(
    }
 
    fout.close();
-   cout << QString( "created: %1\n" ).arg( outname ).toAscii().data();
+   zeno_us_hydrodyn->editor_msg( "black", QString( "Created %1\n" ).arg( outname ) );
+   zeno_us_hydrodyn->editor_msg( "black", QString( "Beads used %1\n" ).arg( bead_model->size() ) );
 
    if ( zeno_cxx ) {
       int argc = 0;
