@@ -6834,7 +6834,7 @@ int US_Saxs_Util::overlap_check(bool sc, bool mc, bool buried, double tolerance,
             {
                retval++;
                if ( limit && retval > limit ) {
-		 //editor_msg( "red", us_tr( "There are more than %1 overlaps greater than tolernace of %2\nWe suggest you use ZENO to calculate hydrodynamics for this model" ).arg( limit ).arg( tolerance ) );
+		 //editor_msg( "red", us_tr( "There are more than %1 overlaps greater than tolerance of %2\nWe suggest you use ZENO to calculate hydrodynamics for this model" ).arg( limit ).arg( tolerance ) );
                   return retval;
                }
                // QColor save_color = editor->textColor();

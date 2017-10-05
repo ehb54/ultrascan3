@@ -777,7 +777,9 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    legend_pd->setFrameStyle( QFrame::Box | QFrame::Sunken );
    plot_dist->insertLegend( legend_pd, QwtPlot::BottomLegend );
 #endif
-   connect( plot_dist->canvas(), SIGNAL( mouseReleased( const QMouseEvent & ) ), SLOT( plot_mouse(  const QMouseEvent & ) ) );
+#if QT_VERSION < 0x040000
+   connect( plot_dist->canvas(), SIGNAL( mouseReleased( const QMouseEvent & ) ), SLOT( plot_mouse( const QMouseEvent & ) ) );
+#endif
 
    t_csv = new QTableWidget(csv1.data.size(), csv1.header.size(), this);
    t_csv->setFrameStyle(QFrame::WinPanel|QFrame::Raised);

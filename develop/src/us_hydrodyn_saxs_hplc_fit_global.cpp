@@ -3183,12 +3183,12 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::lm()
          }
          if ( tol_ok )
          {
-            cout << QString( "NOTICE: gsums within tolernace %1\n" ).arg( TOL );
+            cout << QString( "NOTICE: gsums within tolerance %1\n" ).arg( TOL );
          } else {
             // US_Vector::printvector( "gsum", gsum );
             // US_Vector::printvector( "gsumf", gsumf );
             cout << "WARNING: gsums don't match\n";
-            cout << QString( "WARNING: gsums OUTSIDE tolernace %1\n" ).arg( TOL );
+            cout << QString( "WARNING: gsums OUTSIDE tolerance %1\n" ).arg( TOL );
          }
 #undef TOL
       } else {

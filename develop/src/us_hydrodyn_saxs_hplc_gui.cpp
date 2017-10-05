@@ -741,7 +741,9 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
       plot_dist->insertLegend( legend_pd, QwtPlot::BottomLegend );
    }
 #endif
+#if QT_VERSION < 0x040000
    connect( plot_dist->canvas(), SIGNAL( mouseReleased( const QMouseEvent & ) ), SLOT( plot_mouse(  const QMouseEvent & ) ) );
+#endif
 
    plot_ref = new QwtPlot( qs );
    plot_info[ "HPLC SAXS Reference" ] = plot_ref;
@@ -2133,7 +2135,9 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    //    guinier_plot->insertLegend( legend_pd, QwtPlot::BottomLegend );
    // }
 #endif
+#if QT_VERSION < 0x040000
    connect( guinier_plot->canvas(), SIGNAL( mouseReleased( const QMouseEvent & ) ), SLOT( plot_mouse(  const QMouseEvent & ) ) );
+#endif
 
    guinier_plot_rg = new QwtPlot( qs );
    plot_info[ "HPLC SAXS Guinier Rg" ] = guinier_plot_rg;
@@ -2189,7 +2193,9 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    //    guinier_plot_rg->insertLegend( legend_pd, QwtPlot::BottomLegend );
    // }
 #endif
+#if QT_VERSION < 0x040000
    connect( guinier_plot_rg->canvas(), SIGNAL( mouseReleased( const QMouseEvent & ) ), SLOT( plot_mouse(  const QMouseEvent & ) ) );
+#endif
 
 
    guinier_plot_mw = new QwtPlot( qs );
@@ -2246,7 +2252,9 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    //    guinier_plot_mw->insertLegend( legend_pd, QwtPlot::BottomLegend );
    // }
 #endif
+#if QT_VERSION < 0x040000
    connect( guinier_plot_mw->canvas(), SIGNAL( mouseReleased( const QMouseEvent & ) ), SLOT( plot_mouse(  const QMouseEvent & ) ) );
+#endif
 
    guinier_plot_summary = new QwtPlot( 0 );
    guinier_plot_summary->hide();
@@ -2446,8 +2454,9 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    //    guinier_plot_errors->insertLegend( legend_pd, QwtPlot::BottomLegend );
    // }
 #endif
+#if QT_VERSION < 0x040000
    connect( guinier_plot_errors->canvas(), SIGNAL( mouseReleased( const QMouseEvent & ) ), SLOT( plot_mouse(  const QMouseEvent & ) ) );
-
+#endif
 
    // rgc mode
 

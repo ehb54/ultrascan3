@@ -1704,7 +1704,7 @@ csv US_Hydrodyn_Pdb_Tool::to_csv( QTreeWidget *lv, csv &ref_csv, bool only_selec
                }
             }
          } else {
-            csv1.nd_key[ key( item ) ] = csv1.nd_visible.size();
+            csv1.nd_key[ key( item ) ] = csv1.nd_selected.size();
 #if QT_VERSION < 0x040000
             csv1.nd_visible.push_back( item->isVisible() );
 #endif
@@ -1877,7 +1877,31 @@ void US_Hydrodyn_Pdb_Tool::list_csv_keys( csv &csv1 )
       
 void US_Hydrodyn_Pdb_Tool::csv_to_lv( csv &csv1, QTreeWidget *lv )
 {
+   bool lv_is_csv = ( lv == lv_csv );
+
+   // qDebug() << "csv_to_lv start";
+   if ( lv_is_csv ) {
+      disconnect( lv_csv, SIGNAL(itemSelectionChanged()), 0, 0 );
+   } else {
+      disconnect( lv_csv2, SIGNAL(itemSelectionChanged()), 0, 0 );
+   }
+
    lv->clear();
+
+#if QT_VERSION >= 0x040000
+   vector < QString > to_select;
+   for ( map < QString, unsigned int >::iterator it = csv1.nd_key.begin();
+         it != csv1.nd_key.end();
+         it++ ) {
+      // qDebug() << "nd_key:" << it->first << " index:" << it->second << " "
+      //          << ( csv1.nd_selected.size() > it->second ? ( csv1.nd_selected[ it->second ] ? " isSelected" : "" ) : " missing_selected" )
+      //          << ( csv1.nd_open.size() > it->second ? ( csv1.nd_open[ it->second ] ? " isExpanded" : "" ) : " missing_expanded" )
+      //    ;
+      if ( csv1.nd_selected.size() > it->second && csv1.nd_selected[ it->second ] ) {
+         to_select.push_back( it->first );
+      }
+   }         
+#endif
 
    map < QString, QTreeWidgetItem * >   models;
    map < QString, QTreeWidgetItem * >   model_chains;
@@ -1927,7 +1951,7 @@ void US_Hydrodyn_Pdb_Tool::csv_to_lv( csv &csv1, QTreeWidget *lv )
          {
             QTreeWidgetItem *lvi = new QTreeWidgetItem( QStringList() << model );
             models[ model ] = lvi;
-            lv->addTopLevelItem( lvi );
+            lv->insertTopLevelItem( 0, lvi );
          }
 #endif
          if ( csv1.current_item_key == model )
@@ -1971,7 +1995,7 @@ void US_Hydrodyn_Pdb_Tool::csv_to_lv( csv &csv1, QTreeWidget *lv )
          model_chains[ model_chain ] = new QTreeWidgetItem( models[ model ], chain );
 #else
          model_chains[ model_chain ] = new QTreeWidgetItem( QStringList() << chain );
-         models[ model ]->addChild( model_chains[ model_chain ] );
+         models[ model ]->insertChild( 0, model_chains[ model_chain ] );
 #endif
          if ( csv1.current_item_key == model_chain )
          {
@@ -2013,7 +2037,7 @@ void US_Hydrodyn_Pdb_Tool::csv_to_lv( csv &csv1, QTreeWidget *lv )
          model_chain_residues[ model_chain_residue ] = new QTreeWidgetItem( model_chains[ model_chain ], residue );
 #else
          model_chain_residues[ model_chain_residue ] = new QTreeWidgetItem( QStringList() << residue );
-         model_chains[ model_chain ]->addChild( model_chain_residues[ model_chain_residue ] );
+         model_chains[ model_chain ]->insertChild( 0, model_chain_residues[ model_chain_residue ] );
 #endif
          if ( csv1.current_item_key == model_chain_residue )
          {
@@ -2064,7 +2088,7 @@ void US_Hydrodyn_Pdb_Tool::csv_to_lv( csv &csv1, QTreeWidget *lv )
                                       // << csv1.data[ i ][ 12 ]
                                       << csv1.data[ i ][ 13 ]
                                       );
-      model_chain_residues[ model_chain_residue ]->addChild( model_chain_residue_atoms[ model_chain_residue_atom ] );
+      model_chain_residues[ model_chain_residue ]->insertChild( 0, model_chain_residue_atoms[ model_chain_residue_atom ] );
 #endif      
       if ( csv1.current_item_key == model_chain_residue_atom )
       {
@@ -2092,11 +2116,20 @@ void US_Hydrodyn_Pdb_Tool::csv_to_lv( csv &csv1, QTreeWidget *lv )
    }
    lv->setCurrentItem( current );
 
-   if ( lv == lv_csv )
+   // qDebug() << "csv_to_lv end";
+   if ( lv_is_csv )
    {
+#if QT_VERSION >= 0x040000
+      select_these( lv_csv, to_select );
+#endif
+      connect(lv_csv, SIGNAL(itemSelectionChanged()), SLOT(csv_selection_changed()));
       lbl_csv->setText( csv1.name.isEmpty() ? us_tr( "Panel 1" ) : csv1.name );
       selection_since_count_csv1 = true;
    } else {
+#if QT_VERSION >= 0x040000
+      select_these( lv_csv2, to_select );
+#endif
+      connect(lv_csv2, SIGNAL(itemSelectionChanged()), SLOT(csv2_selection_changed()));
       lbl_csv2->setText( (unsigned int)csv2.size() > csv2_pos ? csv2[ csv2_pos ].name : us_tr( "Panel 2" ) );
       selection_since_count_csv2 = true;
    }
@@ -4004,9 +4037,11 @@ csv US_Hydrodyn_Pdb_Tool::merge_csvs( csv &csv1, csv &csv2 )
    {
       if ( !merged.nd_key.count( it->first ) )
       {
-         merged.nd_key[ it->first ] = (unsigned int)merged.nd_visible.size();
+         merged.nd_key[ it->first ] = (unsigned int)merged.nd_selected.size();
          
+#if QT_VERSION < 0x040000
          merged.nd_visible .push_back( csv2.nd_visible [ it->second ] );
+#endif
          merged.nd_selected.push_back( csv2.nd_selected[ it->second ] );
          merged.nd_open    .push_back( csv2.nd_open    [ it->second ] );
       }
