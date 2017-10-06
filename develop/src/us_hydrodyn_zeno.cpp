@@ -13787,6 +13787,10 @@ bool US_Hydrodyn::calc_zeno()
    }
 #endif
    
+   if ( zeno_cxx ) {
+      editor_msg( "black", QString( "ZENO will use %1 threads\n" ).arg( USglobal->config_list.numThreads ) );
+   }
+   
    double sum_mass   = 0e0;
    double sum_volume = 0e0;
 
@@ -14263,6 +14267,8 @@ bool US_Hydrodyn::calc_zeno()
                         + "---------------------------------------------------------\n"
                         ;
                   }
+
+                  add_to_zeno += QString( "\nZENO computed on %1 Model %2%3\n" ).arg( project ).arg( current_model + 1 ).arg( bead_model_suffix.length() ? (" Bead model suffix: " + bead_model_suffix) : "" );
 
                   add_to_zeno += 
                      QString( 
