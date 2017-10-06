@@ -14269,6 +14269,11 @@ bool US_Hydrodyn::calc_zeno()
                   }
 
                   add_to_zeno += QString( "\nZENO computed on %1 Model %2%3\n" ).arg( project ).arg( current_model + 1 ).arg( bead_model_suffix.length() ? (" Bead model suffix: " + bead_model_suffix) : "" );
+                  add_to_zeno += QString( "Number of beads used: %1\n" ).arg( bead_model.size() );
+                  add_to_zeno += QString( "MW: %1 [Da]\n" ).arg( sum_mass );
+                  if ( hydro.mass_correction ) {
+                     add_to_zeno += QString( "Manually corrected MW: %1 [Da]\n" ).arg( hydro.mass );
+                  }
 
                   add_to_zeno += 
                      QString( 
