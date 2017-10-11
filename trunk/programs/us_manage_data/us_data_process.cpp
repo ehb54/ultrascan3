@@ -79,7 +79,8 @@ DbgLv(1) << "REC_ULD:RAW: parentGUID" << cdesc.parentGUID;
    else if ( cdesc.recType == 2 )
    {  // upload an EditedData record
       QString runID    = filename.section( ".",  0,  0 );
-      QString label    = filename.section( ".",  0,  1 );
+      QString label    = runID;
+      QString comment  = filename.section( ".",  0,  2 );
       QString editGUID = cdesc.dataGUID;
       QString rawGUID  = cdesc.parentGUID;
       QString editID   = QString::number( idData );
@@ -108,7 +109,7 @@ DbgLv(1) << "REC_ULD:RAW: parentGUID" << cdesc.parentGUID;
          {
             query.clear();
             query << "new_editedData" << rawDataID << editGUID << runID
-               << filename << cdesc.description;
+               << filename << comment;
             db->query( query );
             idData   = db->lastInsertID();
             editID   = QString::number( idData );
@@ -117,7 +118,7 @@ DbgLv(1) << "REC_ULD:RAW: parentGUID" << cdesc.parentGUID;
 
          query.clear();
          query << "update_editedData" << editID << rawDataID << editGUID
-            << label << filename << cdesc.description;
+            << label << filename << comment;
          db->query( query );
          DbgLv(1) << "editUpld: label" << label;
 

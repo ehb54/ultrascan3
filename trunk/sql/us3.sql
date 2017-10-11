@@ -204,7 +204,7 @@ CREATE  TABLE IF NOT EXISTS experiment (
   comment TEXT NULL ,
   RIProfile LONGTEXT NULL ,
   centrifugeProtocol TEXT NULL ,
-  dateUpdated DATETIME NULL ,
+  dateUpdated TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP ,
   PRIMARY KEY (experimentID) ,
   INDEX ndx_experiment_projectID (projectID ASC) ,
   INDEX ndx_experiment_operatorID (operatorID ASC) ,
@@ -268,7 +268,7 @@ CREATE  TABLE IF NOT EXISTS abstractCenterpiece (
   canHoldSample INT NULL ,
   materialRefURI TEXT NULL ,
   centerpieceRefURI TEXT NULL ,
-  dataUpdated TIMESTAMP NULL ,
+  dataUpdated TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP ,
   PRIMARY KEY (abstractCenterpieceID) )
 ENGINE = InnoDB;
 
@@ -502,7 +502,7 @@ CREATE  TABLE IF NOT EXISTS rawData (
   experimentID int(11) NOT NULL ,
   solutionID int(11) NOT NULL ,
   channelID int(11) NOT NULL ,
-  lastUpdated DATETIME NULL ,
+  lastUpdated TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP ,
   PRIMARY KEY (rawDataID) ,
   INDEX ndx_rawData_experimentID (experimentID ASC) ,
   INDEX ndx_rawData_channelID (channelID ASC) ,
@@ -536,7 +536,7 @@ CREATE  TABLE IF NOT EXISTS editedData (
   data LONGBLOB NULL ,
   filename VARCHAR(255) NOT NULL DEFAULT '' ,
   comment TEXT NULL ,
-  lastUpdated DATETIME NULL ,
+  lastUpdated TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP ,
   PRIMARY KEY (editedDataID) ,
   INDEX ndx_editedData_rawDataID (rawDataID ASC) ,
   CONSTRAINT fk_editedData_rawDataID
@@ -1749,7 +1749,7 @@ CREATE  TABLE IF NOT EXISTS timestate (
   filename varchar(255) NOT NULL default '',
   definitions longtext,
   data longblob,
-  lastUpdated TIMESTAMP NULL ,
+  lastUpdated TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP ,
   PRIMARY KEY (timestateID) ,
   CONSTRAINT fk_timestate_experimentID
     FOREIGN KEY (experimentID)
