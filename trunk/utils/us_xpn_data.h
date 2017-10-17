@@ -413,6 +413,7 @@ class US_UTIL_EXTERN US_XpnData : public QObject
       int       mnscnn;              //!< Minimum scan number
       int       mxscnn;              //!< Maximum scan number
       int       ntscan;              //!< Total scans for all triples
+      int       etimoff;             //!< Experimental time offset
 
       double    radinc;              //!< Output AUC data radial increment
 
