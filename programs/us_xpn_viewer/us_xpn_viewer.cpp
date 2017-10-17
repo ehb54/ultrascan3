@@ -23,15 +23,18 @@
 #include "us_editor.h"
 #include "us_images.h"
 #include "us_colorgradIO.h"
+
 #if QT_VERSION < 0x050000
 #define setSamples(a,b,c)  setData(a,b,c)
 #define setMinimum(a)      setMinValue(a)
 #define setMaximum(a)      setMaxValue(a)
 #define setSymbol(a)       setSymbol(*a)
 #define AXISSCALEDIV(a)    data_plot->axisScaleDiv(a)
+#define dPlotClearAll(a) a->clear()
 #else
 #include "qwt_picker_machine.h"
 #define AXISSCALEDIV(a)    (QwtScaleDiv*)&data_plot->axisScaleDiv(a)
+#define dPlotClearAll(a) a->detachItems(QwtPlotItem::Rtti_PlotItem,true)
 #endif
 
 #ifdef WIN32
@@ -124,7 +127,7 @@ else
                 pb_plot2d   = us_pushbutton( tr( "Refresh Plot" ) );
                 pb_saveauc  = us_pushbutton( tr( "Export openAUC" )  );
                 pb_showtmst = us_pushbutton( tr( "Show Time State" )  );
-                pb_reload   = us_pushbutton( tr( "Reload Data" )      );
+                pb_reload   = us_pushbutton( tr( "Update Data" )      );
                 pb_colmap   = us_pushbutton( tr( "Color Map" )        );
 
    QLabel*      lb_dir      = us_label( tr( "Directory" ), -1 );
@@ -162,10 +165,10 @@ else
                 pb_prev     = us_pushbutton( tr( "Previous" ) );
                 pb_next     = us_pushbutton( tr( "Next" ) );
    us_checkbox( tr( "Always Auto-scale Y Axis" ), ck_autoscy, true );
-   us_checkbox( tr( "Auto Reload" ),              ck_autorld, false );
+   us_checkbox( tr( "Auto Update" ),              ck_autorld, false );
    pb_prev->setIcon( US_Images::getIcon( US_Images::ARROW_LEFT  ) );
    pb_next->setIcon( US_Images::getIcon( US_Images::ARROW_RIGHT ) );
-   QLabel*      lb_rinterv  = us_label( tr( "Reload Interval Seconds:" ), -1 );
+   QLabel*      lb_rinterv  = us_label( tr( "Update Interval Seconds:" ), -1 );
                 ct_rinterv  = us_counter( 2, 10, 3600, 1 );
    ct_rinterv->setFont( sfont );
    ct_rinterv->setMinimumWidth( lwid );
@@ -400,7 +403,7 @@ void US_XpnDataViewer::reset( void )
    triples   .clear();
    haveData      = false;
 
-   dataPlotClear( data_plot );
+   dPlotClearAll( data_plot );
    picker   ->disconnect();
    data_plot->setAxisScale( QwtPlot::xBottom, 5.8,  7.2 );
    data_plot->setAxisScale( QwtPlot::yLeft  , 0.0, 5e+4 );
@@ -1011,7 +1014,7 @@ DbgLv(1) << "pTit: prec" << prec << "isMWL" << isMWL << "wvln" << wvln;
 // Draw scan curves for the current plot record
 void US_XpnDataViewer::plot_all( void )
 {
-   dataPlotClear( data_plot );
+   dPlotClearAll( data_plot );
    grid           = us_grid( data_plot );
 
    // Make sure ranges are set up, then build an averaged data vector

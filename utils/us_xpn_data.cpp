@@ -289,6 +289,9 @@ bool US_XpnData::import_data( const int runId, const int scanMask )
    int irows     = 0;
    int wrows     = 0;
 
+   // Scan and build data for System Status Data
+   int srows     = scan_xpndata( runId, 'S' );
+
    if ( ascnf )
    {  // Scan and build data for Absorbance Scan Data
       arows      = scan_xpndata( runId, 'A' );
@@ -309,11 +312,8 @@ bool US_XpnData::import_data( const int runId, const int scanMask )
       wrows      = scan_xpndata( runId, 'W' );
    }
 
-   // Scan and build data for System Status Data
-   int srows  = scan_xpndata( runId, 'S' );
-
    // Scan and build data for Centrifuge Run Profile
-   int crows  = scan_xpndata( runId, 'C' );
+   int crows     = scan_xpndata( runId, 'C' );
 DbgLv(1) << "XpDa:i_d: arows frows irows wrows srows crows"
    << arows << frows << irows << wrows << srows << crows;
 
@@ -640,6 +640,28 @@ DbgLv(1) << "XpDa:scn:    RunId" << iRunId << "ExperimentId" << iExpId
 
       sstintv         = ( sstintv > 0.0 ) ? sstintv : sstintl;
 DbgLv(1) << "XpDa:scn:    FugId" << iFugId << "sstInterval" << sstintv;
+   }
+
+   if ( scantype == 'S' )
+   {  // Determine experiment time offset (time at last rms=0 point)
+      int ntssda        = tSydata.count();
+      int ftx           = 1;
+      int stgoff        = 0;
+
+      for ( int ii = 0; ii < ntssda; ii++ )
+      {  // Find the index to the first non-zero speed
+         int irSpeed       = (int)qRound( tSydata[ ii ].speed );
+         if ( irSpeed > 0 )
+         {
+            ftx               = ii;
+            stgoff            = 1 - tSydata[ ii ].stageNum;
+            break;
+         }
+      }
+
+      ftx               = ( ftx > 0 ) ? ( ftx - 1 ) : 0;
+      etimoff           = -tSydata[ ftx ].exptime;   // Experiment time offset
+DbgLv(1) << "XpDa:scn: ftx" << ftx << "etimoff" << etimoff;
    }
 
    return rows;
@@ -1466,10 +1488,11 @@ DbgLv(1) << "expA:   nf" << nfiles << "fname" << fname
 
    QStringList fkeys;
    QStringList ffmts;
-   fkeys << "Scan"     << "Stage"   << "Time"        << "RawSpeed"
-         << "SetSpeed" << "Omega2T" << "Temperature";
-   ffmts << "I2"       << "I2"      << "F4"          << "I4"
-         << "I4"       << "F4"      << "F4";
+   fkeys << "Time"        << "RawSpeed" << "SetSpeed" << "Omega2T"
+         << "Temperature" << "Step"     << "Scan";
+   ffmts << "I4"          << "F4"       << "I4"       << "F4"
+         << "F4"          << "I2"       << "I2";
+
    US_TimeState tsobj;
 
    QString tspath    = cur_dir + runID + ".time_state.tmst";
@@ -1505,7 +1528,7 @@ int jt1=0;
 int jt2=0;
 for ( int jj = 0; jj<ntssda; jj++ )
 {
- int jtime=tSydata[jj].exptime;
+ int jtime=tSydata[jj].exptime+etimoff;
  if ( jtime < jutime1 ) continue;
  if ( jtime >= jutime2 )
  {
@@ -1517,15 +1540,15 @@ for ( int jj = 0; jj<ntssda; jj++ )
   jt1 = jj;
  }
 }
-double stime1=tSydata[jt1].exptime;
-double stime2=tSydata[jt2].exptime;
+double stime1=tSydata[jt1].exptime+etimoff;
+double stime2=tSydata[jt2].exptime+etimoff;
 double somgt1=tSydata[jt1].omgSqT;
 double somgt2=tSydata[jt2].omgSqT;
 avgrpm=0.0;
 for (int jj=jt1; jj<=jt2; jj++)
 {
  avgrpm += tSydata[jj].speed;
- xv_tms << tSydata[jj].exptime;
+ xv_tms << tSydata[jj].exptime+etimoff;
  yv_tms << tSydata[jj].omgSqT;
 }
 avgrpm /= (double)(jt2-jt1+1);
@@ -1597,19 +1620,18 @@ DbgLv(1) << "expA: ntimes" << ntimes << "tspath" << tspath;
 
          int istagen       = jstage + 1;
          setSpeed          = speedsteps[ jstage ].set_speed;
-         int irSpeed       = (int)qRound( rawSpeed );
          int isSpeed       = (int)qRound( setSpeed );
 DbgLv(1) << "expA:   ii" << ii << "scan" << scannbr << "stage" << istagen
- << "speed" << irSpeed << isSpeed << "time" << time;
+ << "speed" << rawSpeed << isSpeed << "time" << time;
 
          // Set values for this scan
-         tsobj.set_value( fkeys[ 0 ], scannbr );       // Scan
-         tsobj.set_value( fkeys[ 1 ], istagen );       // Stage (speed step)
-         tsobj.set_value( fkeys[ 2 ], time    );       // Time in seconds
-         tsobj.set_value( fkeys[ 3 ], irSpeed );       // Raw speed
-         tsobj.set_value( fkeys[ 4 ], isSpeed );       // Set (stage) speed
-         tsobj.set_value( fkeys[ 5 ], omega2t );       // Omega-Squared-T
-         tsobj.set_value( fkeys[ 6 ], tempera );       // Temperature
+         tsobj.set_value( fkeys[ 0 ], time     );      // Time in seconds
+         tsobj.set_value( fkeys[ 1 ], rawSpeed );      // Raw speed
+         tsobj.set_value( fkeys[ 2 ], isSpeed  );      // Set (stage) speed
+         tsobj.set_value( fkeys[ 3 ], omega2t  );      // Omega-Squared-T
+         tsobj.set_value( fkeys[ 4 ], tempera  );      // Temperature
+         tsobj.set_value( fkeys[ 5 ], istagen  );      // Stage (speed step)
+         tsobj.set_value( fkeys[ 6 ], scannbr  );      // Scan
 
          // Write the scan record
          tsobj.flush_record();
@@ -1632,7 +1654,8 @@ DbgLv(1) << "expA:   ii" << ii << "scan" << scannbr << "stage" << istagen
       }
 
       ftx               = ( ftx > 0 ) ? ( ftx - 1 ) : 0;
-DbgLv(1) << "expA: ftx" << ftx;
+      etimoff           = -tSydata[ ftx ].exptime;   // Experiment time offset
+DbgLv(1) << "expA: ftx" << ftx << "etimoff" << etimoff;
       QList< int > sctimes;
 
       for ( int ii = 0; ii < ntimes; ii++ )
@@ -1644,7 +1667,7 @@ DbgLv(1) << "expA:  ii" << ii << "sctime" << time;
       }
 
       ntimes            = ntssda;
-      int time_n        = 0;                        // Initial values
+      int time_n        = -1;                       // Initial values
       double speed_n    = 0.0;
       double omg2t_n    = 0.0;
       double tempe_n    = tSydata[ ftx ].tempera;
@@ -1656,7 +1679,7 @@ DbgLv(1) << "expA:  ii" << ii << "sctime" << time;
          double speed_p    = speed_n;
          double omg2t_p    = omg2t_n;
          double tempe_p    = tempe_n;
-         time_n            = tSydata[ ii ].exptime; // Next values
+         time_n            = tSydata[ ii ].exptime + etimoff;
          speed_n           = tSydata[ ii ].speed;
          omg2t_n           = tSydata[ ii ].omgSqT;
          tempe_n           = tSydata[ ii ].tempera;
@@ -1684,7 +1707,6 @@ DbgLv(1) << "expA:   ii" << ii << "stage" << stage << "time_n" << time_n
             omg2t_sm         += omg2t_d;
             double setSpeed   = qRound( rawSpeed * 0.01 ) * 100.0;
             double exptime    = (double)time_c;
-            int irSpeed       = (int)qRound( rawSpeed );
             int isSpeed       = (int)qRound( setSpeed );
 
             // Set scan number to matching-time scan or 0
@@ -1693,18 +1715,18 @@ DbgLv(1) << "expA:   ii" << ii << "stage" << stage << "time_n" << time_n
             scannbr           = ( scannbr >= 0 ) ? ( scannbr + 1 ) : 0;
  
 DbgLv(1) << "expA:      jj" << jj << "scan" << scannbr
- << "time_c" << time_c << "speed" << irSpeed << isSpeed
+ << "time_c" << time_c << "speed" << rawSpeed << isSpeed
  << "omg2t(rec)" << omega2t << "omg2t(sum)" << omg2t_sm;
             omega2t           = omg2t_sm;
 
             // Set values for this time
-            tsobj.set_value( fkeys[ 0 ], scannbr );  // Scan
-            tsobj.set_value( fkeys[ 1 ], stage   );  // Stage (speed step)
-            tsobj.set_value( fkeys[ 2 ], exptime );  // Time in seconds
-            tsobj.set_value( fkeys[ 3 ], irSpeed );  // Raw speed
-            tsobj.set_value( fkeys[ 4 ], isSpeed );  // Set (stage) speed
-            tsobj.set_value( fkeys[ 5 ], omega2t );  // Omega-Squared-T
-            tsobj.set_value( fkeys[ 6 ], tempera );  // Temperature
+            tsobj.set_value( fkeys[ 0 ], exptime  );  // Time in seconds
+            tsobj.set_value( fkeys[ 1 ], rawSpeed );  // Raw speed
+            tsobj.set_value( fkeys[ 2 ], isSpeed  );  // Set (stage) speed
+            tsobj.set_value( fkeys[ 3 ], omega2t  );  // Omega-Squared-T
+            tsobj.set_value( fkeys[ 4 ], tempera  );  // Temperature
+            tsobj.set_value( fkeys[ 5 ], stage    );  // Stage (speed step)
+            tsobj.set_value( fkeys[ 6 ], scannbr  );  // Scan
 
             // Write the scan record
             tsobj.flush_record();
@@ -2130,17 +2152,25 @@ void US_XpnData::interp_rvalues( QVector< double >& rads,
 
       for ( int jj = jjs; jj < radknt; jj++ )
       {
-         double radv1   = rads[ jj - 1];
+         double radv1   = rads[ jj - 1 ];
          double radv2   = rads[ jj ];
+         double drad    = radv2 - radv1;
+         if ( drad == 0.0 )
+            continue;
          valout         = vals[ jj ];
+//if(valout<(-1e+66))
+//DbgLv(1) << "XpDa:irv: ii jj" << ii << jj << "radv2" << radv2 << "valout" << valout;
 
          if ( radv < radv2  ||  jj == lstrx )
          {
-            double drad    = radv2 - radv1;
             double val1    = vals[ jj - 1 ];
             double dval    = valout - val1;
             valout         = val1 + ( radv - radv1 ) * dval / drad;
             jjs            = jj;
+//if(valout<(-1e+66))
+//DbgLv(1) << "XpDa:irv: ii jj" << ii << jj << "valout" << valout
+// << "dr r1 r2 rv" << drad << radv1 << radv2 << radv
+// << "v1 v2" << val1 << vals[jj];
             break;
          }
 
@@ -2321,8 +2351,8 @@ QString US_XpnData::runDetails( void )
    msg += tr( "    Count of Data Records:    %1\n" ).arg( ssknt );
    int stage1     = tSydata[  0 ].stageNum;
    int stage2     = tSydata[ kk ].stageNum;
-   int time1      = tSydata[  0 ].exptime;
-   int time2      = tSydata[ kk ].exptime;
+   int time1      = tSydata[  0 ].exptime + etimoff;
+   int time2      = tSydata[ kk ].exptime + etimoff;
    double temp1   = tSydata[  0 ].tempera;
    double temp2   = tSydata[ kk ].tempera;
    double speed1  = tSydata[  0 ].speed;
@@ -2419,7 +2449,8 @@ DbgLv(1) << "XpDa:b_i:   csdrec count" << sdknt;
       QString darec = tnode + "."
                     + QString().sprintf( "%05i.%05i", stage, scnnbr );
 DbgLv(1) << "XpDa:b_i: ii" << ii << "schan cechn"
- << schan << cechn << "darec" << darec;
+ << schan << cechn << "darec" << darec
+ << "rad0 rad1" << csdrec.rads->at(0) << csdrec.rads->at(1);
 
       if ( !triples.contains( tripl ) )
       {
@@ -2812,7 +2843,7 @@ void US_XpnData::update_ATable( QSqlQuery& sqry, QList< int >& cxs )
    asdrow.dataId    = sqry.value( cxs[  0 ] ).toInt();
    asdrow.runId     = sqry.value( cxs[  1 ] ).toInt();
    asdrow.expstart  = sqry.value( cxs[  2 ] ).toDateTime();
-   asdrow.exptime   = sqry.value( cxs[  3 ] ).toInt();
+   asdrow.exptime   = sqry.value( cxs[  3 ] ).toInt() + etimoff;
    asdrow.tempera   = sqry.value( cxs[  4 ] ).toDouble();
    asdrow.speed     = sqry.value( cxs[  5 ] ).toDouble();
    asdrow.omgSqT    = sqry.value( cxs[  6 ] ).toDouble();
@@ -2830,6 +2861,8 @@ void US_XpnData::update_ATable( QSqlQuery& sqry, QList< int >& cxs )
    QString sVals    = sqry.value( cxs[ 18 ] ).toString();
    parse_doubles( sPoss, asdrow.rads );
    parse_doubles( sVals, asdrow.vals );
+//DbgLv(1) << "XpDa:updA: sPoss" << QString(sPoss).left(20) << "exptime scanSeqN"
+// << asdrow.exptime << asdrow.exptime-etimoff << asdrow.scanSeqN;
    int mdx1         = -1;
    int mdx2         = -1;
    int strow        = tAsdata.count() - 1;
@@ -2884,7 +2917,7 @@ void US_XpnData::update_FTable( QSqlQuery& sqry, QList< int >& cxs )
    fsdrow.dataId    = sqry.value( cxs[  0 ] ).toInt();
    fsdrow.runId     = sqry.value( cxs[  1 ] ).toInt();
    fsdrow.expstart  = sqry.value( cxs[  2 ] ).toDateTime();
-   fsdrow.exptime   = sqry.value( cxs[  3 ] ).toInt();
+   fsdrow.exptime   = sqry.value( cxs[  3 ] ).toInt() + etimoff;
    fsdrow.tempera   = sqry.value( cxs[  4 ] ).toDouble();
    fsdrow.speed     = sqry.value( cxs[  5 ] ).toDouble();
    fsdrow.omgSqT    = sqry.value( cxs[  6 ] ).toDouble();
@@ -2956,7 +2989,7 @@ void US_XpnData::update_ITable( QSqlQuery& sqry, QList< int >& cxs )
    isdrow.dataId    = sqry.value( cxs[  0 ] ).toInt();
    isdrow.runId     = sqry.value( cxs[  1 ] ).toInt();
    isdrow.expstart  = sqry.value( cxs[  2 ] ).toDateTime();
-   isdrow.exptime   = sqry.value( cxs[  3 ] ).toInt();
+   isdrow.exptime   = sqry.value( cxs[  3 ] ).toInt() + etimoff;
    isdrow.tempera   = sqry.value( cxs[  4 ] ).toDouble();
    isdrow.speed     = sqry.value( cxs[  5 ] ).toDouble();
    isdrow.omgSqT    = sqry.value( cxs[  6 ] ).toDouble();
@@ -3005,7 +3038,7 @@ void US_XpnData::update_WTable( QSqlQuery& sqry, QList< int >& cxs )
    wsdrow.dataId    = sqry.value( cxs[  0 ] ).toInt();
    wsdrow.runId     = sqry.value( cxs[  1 ] ).toInt();
    wsdrow.expstart  = sqry.value( cxs[  2 ] ).toDateTime();
-   wsdrow.exptime   = sqry.value( cxs[  3 ] ).toInt();
+   wsdrow.exptime   = sqry.value( cxs[  3 ] ).toInt() + etimoff;
    wsdrow.tempera   = sqry.value( cxs[  4 ] ).toDouble();
    wsdrow.speed     = sqry.value( cxs[  5 ] ).toDouble();
    wsdrow.omgSqT    = sqry.value( cxs[  6 ] ).toDouble();
