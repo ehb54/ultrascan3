@@ -187,6 +187,7 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
   //addMenu(  P_GLOBFITSP, tr( "Global &Spectrum Fit" ),        fit );
   
   QMenu* utilities   = new QMenu( tr( "&Utilities" ),   this );
+  QMenu* multiwave   = new QMenu( tr( "&Multiwavelength" ),   this );
   QMenu* spectrum    = new QMenu( tr( "Spectral &Analysis" ),   this );
   addMenu(  P_SPECFIT  , tr( "&Spectrum Fitter"                  ), spectrum);
   addMenu(  P_SPECDEC  , tr( "Spectrum &Decomposition"           ), spectrum);
@@ -205,10 +206,13 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
   addMenu(  P_VHWCOMB ,  tr( "Combine Distribution &Plots (vHW)" ), utilities );
   addMenu(  P_DDCOMB   , tr( "Combine &Discrete Distributions"   ), utilities );
   addMenu(  P_GLOMODL ,  tr( "Create Global &Model"              ), utilities );
-  addMenu(  P_VIEWMWL ,  tr( "&View Multiwavelength Data"        ), utilities );
-  addMenu(  P_VIEWMSS ,  tr( "View Multiwavelength &S-Spectra"   ), utilities );
   addMenu(  P_VIEWCFA ,  tr( "View Raw C&FA Data"                ), utilities );
   addMenu(  P_VIEWXPN ,  tr( "View Raw &Optima Data"             ), utilities );
+
+  addMenu(  P_VIEWMWL ,  tr( "&View Multiwavelength Data"        ), multiwave );
+  addMenu(  P_VIEWMSS ,  tr( "View MWL &S-Spectra"               ), multiwave );
+  addMenu(  P_MWSPECF ,  tr( "MWL Species Fit"                   ), multiwave );
+  addMenu(  P_MWFSIMU ,  tr( "Optima MWL Fit Simulation"         ), multiwave );
 
   QMenu* simulation  = new QMenu( tr( "S&imulation" ),  this );
   addMenu(  P_ASTFEM, tr( "&Finite Element Simulation (ASTFEM)" ), simulation );
@@ -259,6 +263,7 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
 //  menuBar()->addMenu( fit         );
 #endif
   menuBar()->addMenu( utilities   );
+  menuBar()->addMenu( multiwave   );
   menuBar()->addMenu( simulation  );
   menuBar()->addMenu( database    );
   menuBar()->addMenu( help        );
@@ -275,6 +280,7 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
 //  fit        ->setFont( mfont );
 #endif
   utilities  ->setFont( mfont );
+  multiwave  ->setFont( mfont );
   simulation ->setFont( mfont );
   database   ->setFont( mfont );
   help       ->setFont( mfont );
