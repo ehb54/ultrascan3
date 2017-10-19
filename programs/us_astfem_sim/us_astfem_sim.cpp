@@ -237,6 +237,7 @@ qDebug() << "ASim:InSP:  bottom" << bottom << simparams.bottom;
 
 void US_Astfem_Sim::new_model( void )
 {
+   system = US_Model();
    US_ModelGui* dialog = new US_ModelGui( system );
    connect( dialog, SIGNAL( valueChanged( US_Model ) ), 
                     SLOT  ( change_model( US_Model ) ) );
