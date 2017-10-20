@@ -545,8 +545,10 @@ void US_MwlSpeciesFit::load( void )
       directory = directory.left( directory.lastIndexOf( "/" ) );
    }
 
+DbgLv(1) << "ldnois: done";
    int nscans  = dataList[ 0 ].scanCount();
    int ntrips  = dataList.count();
+DbgLv(1) << "ldnois:  nscans" << nscans << "ntrips" << ntrips;
 
    // Save original readings values for each scan of the 1st data set
    for ( int ii = 0; ii < nscans; ii++ )
@@ -582,6 +584,7 @@ void US_MwlSpeciesFit::load( void )
    qApp->processEvents();
    qApp->processEvents();
 
+DbgLv(1) << "ldnois:  calling count_noise()";
    int nrnois    = ldnois.count_noise( dbload, runID, NULL, NULL, &ntedit );
 DbgLv(1) << "ldnois  ntedit nrnois" << ntedit << nrnois;
 
@@ -1118,7 +1121,7 @@ DbgLv(1) << "   ApNoi:    noiflag" << noiflags[tripx];
       if ( ntinois > 0   &&  ntinois < npoints )
       {  // Pad out ti noise values to radius count
          int jj       = ntinois;
-         while ( jj++ << npoints )
+         while ( jj++ < npoints )
             ti_noise.values << 0.0;
          ti_noise.count = ti_noise.values.size();
          npadded++;
@@ -1127,7 +1130,7 @@ DbgLv(1) << "   ApNoi:    noiflag" << noiflags[tripx];
       if ( nrinois > 0   &&  nrinois < nscans )
       {  // Pad out ri noise values to scan count
          int jj       = nrinois;
-         while ( jj++ << nscans )
+         while ( jj++ < nscans )
             ri_noise.values << 0.0;
          ri_noise.count = ri_noise.values.size();
          npadded++;

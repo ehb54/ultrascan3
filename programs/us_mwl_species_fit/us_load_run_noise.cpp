@@ -214,8 +214,10 @@ DbgLv(1) << "LRNoi:scdb:   vEedtGIs count" << vEedtGIs.count()
       vNntimes << ntime;
       vNdescrs << descr;
    }
-DbgLv(1) << "LRNoi:scdb:   vNedtGIs count" << vNedtGIs.count()
- << "nG0 nGn" << vNedtGIs[0] << vNedtGIs[vNedtGIs.count()-1];
+int eknt=vNedtGIs.count();
+if(eknt>0)
+ DbgLv(1) << "LRNoi:scdb:   vNedtGIs count" << eknt
+  << "nG0 nGn" << vNedtGIs[0] << vNedtGIs[eknt-1];
 
    const QString dlm( "^" );
 
