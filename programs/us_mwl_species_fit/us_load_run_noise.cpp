@@ -182,8 +182,11 @@ DbgLv(1) << "LRNoi:scdb:     aucID" << aucID << "aucx" << aucx
    {  // Build the list of latest-edit GUIDs for the run
       edGUIDs << vEedtGIs[ ii ];
    }
-DbgLv(1) << "LRNoi:scdb:   vEedtGIs count" << vEedtGIs.count()
- << "eG0 eGn" << edGUIDs[0] << edGUIDs[vEedtGIs.count()-1];
+int eeknt=edGUIDs.count();
+QString eg0 = (eeknt>0) ? edGUIDs[0]       : "";
+QString egn = (eeknt>0) ? edGUIDs[eeknt-1] : "";
+DbgLv(1) << "LRNoi:scdb:   edGUIDS count" << eeknt
+ << "eG0 eGn" << eg0 << egn;
 
    query.clear();
    query << "get_noise_desc" << invID;
@@ -214,19 +217,22 @@ DbgLv(1) << "LRNoi:scdb:   vEedtGIs count" << vEedtGIs.count()
       vNntimes << ntime;
       vNdescrs << descr;
    }
-int eknt=vNedtGIs.count();
-if(eknt>0)
- DbgLv(1) << "LRNoi:scdb:   vNedtGIs count" << eknt
-  << "nG0 nGn" << vNedtGIs[0] << vNedtGIs[eknt-1];
 
+   int nnoie        = vNedtGIs.count();
+QString ng0=(nnoie>0)?vNedtGIs[0]:"";
+QString ngn=(nnoie>0)?vNedtGIs[nnoie-1]:"";
+ DbgLv(1) << "LRNoi:scdb:   vNedtGIs count" << nnoie
+  << "nG0 nGn" << ng0 << ngn  << "edGUIDS k" << edGUIDs.count();
    const QString dlm( "^" );
+   QDateTime ntime  = ( nnoie > 0 ) ? vNntimes[ 0 ]
+                                    : QDateTime::currentDateTime();
 
    // Build noise information list corresponding to each edit
    for ( int ii = 0; ii < edGUIDs.count(); ii++ )
    {
       QString edtGI    = edGUIDs[ ii ];
-      int fendx        = vNedtGIs.indexOf( edtGI );
-      int lendx        = vNedtGIs.lastIndexOf( edtGI );
+      int fendx        = ( nnoie > 0 ) ? vNedtGIs.indexOf( edtGI ) : -1;
+      int lendx        = ( nnoie > 0 ) ? vNedtGIs.lastIndexOf( edtGI ) : -1;
       int noiflag      = 0;
       QString noiIt( "" );
       QString noiIr( "" );
@@ -234,12 +240,11 @@ if(eknt>0)
       QString noiGI( "" );
       QString modID( "" );
       QString noTyp( "" );
-      QDateTime ntime  = vNntimes[ 0 ];
       QString descr( "" );
       QString ninfo( "" );
       QString nflag( "" );
-//DbgLv(1) << "LRNoi:scdb: ii" << ii << "fx lx" << fendx << lendx
-// << "edtGI" << edtGI;
+DbgLv(1) << "LRNoi:scdb: ii" << ii << "fx lx" << fendx << lendx
+ << "edtGI" << edtGI;
 
       if ( fendx < 0 )
       {  // Create a single entry for edit with no-noise type
@@ -351,6 +356,7 @@ if(eknt>0)
       krnois          += noiflag < 1  ? 0 : ( noiflag < 3 ? 1 : 2 );
    }
 
+DbgLv(1) << "LRNoi:scdb: krnois" << krnois;
    return krnois;
 }
 
