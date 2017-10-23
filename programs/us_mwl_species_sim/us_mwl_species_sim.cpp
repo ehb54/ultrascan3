@@ -417,37 +417,43 @@ void US_MwlSpeciesSim::set_parameters( void )
                        + simparams.speed_step[ 0 ].duration_minutes * 60.0;
    double rspeed       = (double)simparams.speed_step[ 0 ].rotorspeed;
    double scn_rng      = (double)( simparams.speed_step[ 0 ].scans - 1 );
+   delay               = qRound( delay );
+   duration            = qRound( duration );
+   double pi_fac       = sq( M_PI / 30.0 );
    double tim_rng      = duration - delay;
    double tim_inc      = tim_rng / scn_rng;
-   double w2t_fac      = sq( simparams.speed_step[ 0 ].rotorspeed * M_PI / 30.0 );
+   double w2t_fac      = sq( rspeed ) * pi_fac;
    double accel        = simparams.speed_step[ 0 ].acceleration;
    double w2t_inc      = tim_inc * w2t_fac;
    double tim_val      = 0.0;
    double w2t_val      = 0.0;
    double aspeed       = 0.0;
+   double rpm_inc      = rspeed / qCeil( rspeed / accel );
+
    while ( aspeed < rspeed )
-   {
-      aspeed             += accel;
+   {  // Walk time and omega2t through acceleration zone
+      aspeed             += rpm_inc;
       tim_val            += 1.0;
-      w2t_val            += sq( aspeed * M_PI / 30.0 );
+      w2t_val            += sq( aspeed ) * pi_fac;
    }
 
    while( tim_val < delay )
-   {
+   {  // Walk time and omega2t up to the first scan
       tim_val            += 1.0;
-      w2t_val            += tim_inc * sq( rspeed * M_PI / 30.0 );
+      w2t_val            += w2t_fac;
    }
+
+   simparams.speed_step[ 0 ].time_first  = tim_val;
    simparams.speed_step[ 0 ].w2t_first   = w2t_val;
 
    while( tim_val < duration )
-   {
+   {  // Walk time and omega2t up to the last scan
       tim_val            += tim_inc;
       w2t_val            += w2t_inc;
    }
-   simparams.speed_step[ 0 ].w2t_last    = w2t_val;
 
-   simparams.speed_step[ 0 ].time_first  = delay;
    simparams.speed_step[ 0 ].time_last   = duration;
+   simparams.speed_step[ 0 ].w2t_last    = w2t_val;
    simparams.speed_step[ 0 ].set_speed   = (int)rspeed;
    simparams.speed_step[ 0 ].avg_speed   = rspeed;
 
@@ -579,17 +585,18 @@ DbgLv(1) << " svsim: jm" << jm << "fname" << fname;
    }
 
    QString smsga      = tr( "All %1 AUC files created\nand saved "
-                            "to directory\n   %2" ).arg( nmodels ).arg( impdir );
+                            "to directory\n%2" ).arg( nmodels ).arg( impdir );
    te_status->setText( smsga );
    qApp->processEvents();
 
    // Build and save time state
    QString tfname     = orunid + ".time_state.tmst";
    QString tfpath     = impdir + tfname;
+DbgLv(1) << " svsim: sc0 time" << synData[0].scanData[0].seconds;
 
    writeTimeState( tfpath, simparams, synData[ 0 ] );
 
-   smsga             += tr( "\nTime State file\n%1\nhas been written" )
+   smsga             += tr( "\n\nTime State file\n%1\nhas been written" )
                         .arg( tfname );
    te_status->setText( smsga );
    qApp->processEvents();
@@ -814,18 +821,22 @@ DbgLv(1) << "rdata:  dltr sc1" << rdata.scanData[1].delta_r;
    QString waveln     = QString( triple ).mid( 2, 3 );
    double mwavelen    = waveln.toDouble();
    rdata.cell         = triple.left( 1 ).toInt();
+   for ( int js = 0; js < nscan; js++ )
+      rdata.scanData[ js ].wavelength = mwavelen;
 
 DbgLv(1) << "bldraw:  tripx" << tripx;
    US_Astfem_RSA* astfem = new US_Astfem_RSA( models[ tripx ], simparams );
 
    astfem->set_debug_flag( dbg_level );
 astfem->set_debug_flag( 0 );
-   astfem->setTimeInterpolation( true );
+   astfem->setTimeInterpolation( true  );
+   astfem->setTimeCorrection   ( false );
 
    astfem->calculate( rdata );
 int hs=nscan/2;
 int hp=npoint/2;
-DbgLv(1) << "bldraw:   hs,hp" << hs << hp << "datamm" << rdata.scanData[hs].rvalues[hp];
+DbgLv(1) << "bldraw:   hs,hp" << hs << hp << "data0m" << rdata.value(0,hp)
+ << "datamm" << rdata.value(hs,hp);
 
    // Clip maximum value to 3 times total concentration of model
    double tot_conc    = mtconcs[ tripx ];
@@ -834,12 +845,10 @@ DbgLv(1) << "bldraw:  " << tripx << "tot_conc max_od" << tot_conc << max_od;
 
    for ( int js = 0; js < nscan; js++ )
    {
-      rdata.scanData[ js ].wavelength = mwavelen;
-
       for ( int jr = 0; jr < npoint; jr++ )
       {
          if ( rdata.value( js, jr ) > max_od )
-            rdata.setValue( js, jr, max_od );
+            rdata.setValue( js, jr, max_od );    // Limit value to max. OD
       }
 DbgLv(1) << "bldraw:   js" << js << "valmm" << rdata.value(js,npoint/2);
    }
@@ -852,22 +861,24 @@ DbgLv(1) << "bldraw:   js" << js << "valmm" << rdata.value(js,npoint/2);
    double radinc      = rdata.xvalues[ 1 ] - radv0;
    double radval      = radv0;
 
-   for ( int js = 0; js < nscan; js++ )
+   for ( int js = 0; js < nscan; js++ )                // Resize for pad
       rdata.scanData[ js ].rvalues.resize( npoint );
 
    for ( int jr = npoint - 1; jr >= 0; jr-- )
-   {
-      int kr             = jr - npad;
+   {  // Set shifted values, starting at data end
+      int kr             = jr - npad;                  // Old value index
+
       if ( kr > 0 )
-      {
+      {  // Move old values down by pad amount
          rdata.xvalues[ jr ] = rdata.xvalues[ kr ];
          for ( int js = 0; js < nscan; js++ )
          {
             rdata.setValue( js, jr, rdata.value( js, kr ) );
          }
       }
+
       else if ( kr == 0 )
-      {
+      {  // Set the meniscus spike value for each scan
          rdata.xvalues[ jr ] = radval;
          radval             -= radinc;
          for ( int js = 0; js < nscan; js++ )
@@ -877,7 +888,7 @@ DbgLv(1) << "bldraw:   js" << js << "valmm" << rdata.value(js,npoint/2);
       }
 
       else
-      {
+      {  // Set values to zero that are below the meniscus
          rdata.xvalues[ jr ] = radval;
          radval             -= radinc;
          for ( int js = 0; js < nscan; js++ )
@@ -888,6 +899,9 @@ DbgLv(1) << "bldraw:   js" << js << "valmm" << rdata.value(js,npoint/2);
    }
 
    // Save the simulated data and plot it
+   QString guid       = US_Util::new_guid();
+   US_Util::uuid_parse( guid, (uchar*)rdata.rawGUID );
+
    synData << rdata;
    have_p1 << true;
 
@@ -935,14 +949,11 @@ DbgLv(1) << "AMATH: wrts: Unable to open" << tmst_fpath;
    double rate, speed;
    US_SimulationParameters::SpeedProfile* sp;
    US_SimulationParameters::SpeedProfile* sp_prev;
-//DbgLv(1) << " writetimestate : no of scans" << nscans;
    QList< int > scantimes;
 
    for ( int ii = 0; ii < nscans; ii++ )
    {  // Accumulate the times at scans
       scantimes << sim_data.scanData[ ii ].seconds;
-//DbgLv(1) << "scantimes" << scantimes[ii] << sim_data.scanData[ii].omega2t
-// << ii << sim_data.scanData[ii].rpm;
    }
 //DbgLv(1) << " writetimestate : no of scans" << nscans ;
 
@@ -1025,7 +1036,9 @@ DbgLv(1) << "AMATH: wrts: Unable to open" << tmst_fpath;
          itime       = ii;
          int step    = stepx + 1;
          int scanx   = scantimes.indexOf( itime );
-         scan_nbr    = ( scanx < 0 ) ? 0 : (scanx + 1);
+         scan_nbr    = ( scanx < 0 ) ? 0 : ( scanx + 1 );
+if(scan_nbr>0)
+DbgLv(1) << "wrTS:   scan_nbr" << scan_nbr << "itime" << itime;
 
          timestate.set_value( "Time",        itime       );
          timestate.set_value( "RawSpeed",    rpm         );
