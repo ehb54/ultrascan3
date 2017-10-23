@@ -590,8 +590,7 @@ void US_SimParamsGui::check_delay( void )
       
       hours  [ i ] = lower_limit / 3600;
       int secs     = lower_limit - hours[ i ] * 3600;
-      int mins     = qRound( (double)secs / 60.0 );
-      minutes[ i ] = (double)mins;
+      minutes[ i ] = (double)secs / 60.0;
    }
 
    //cnt_delay_mins ->setMinimum( minutes[ current_speed_step ] );
@@ -659,7 +658,7 @@ void US_SimParamsGui::update_delay_hours( double hours )
 void US_SimParamsGui::update_delay_mins( double minutes )
 {
    US_SimulationParameters::SpeedProfile* sp = &simparams.speed_step[ current_speed_step ];
-   sp->delay_minutes = (int) minutes;
+   sp->delay_minutes = minutes;
    check_delay();
 }
 
