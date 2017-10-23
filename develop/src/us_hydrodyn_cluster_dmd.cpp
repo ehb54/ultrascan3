@@ -95,7 +95,7 @@ US_Hydrodyn_Cluster_Dmd::~US_Hydrodyn_Cluster_Dmd()
 void US_Hydrodyn_Cluster_Dmd::setupGUI()
 {
    int minHeight1 = 30;
-#if !defined(QT4) || !defined(Q_WS_MAC)
+#if QT_VERSION < 0x040000 || !defined(Q_WS_MAC)
    int minHeight3 = 30;
 #endif
 
@@ -146,8 +146,8 @@ void US_Hydrodyn_Cluster_Dmd::setupGUI()
    }
 
    t_csv->setSortingEnabled(false);
-    t_csv->verticalHeader()->setMovable(true);
-    t_csv->horizontalHeader()->setMovable(false);
+    t_csv->verticalHeader()->setSectionsMovable(true);
+    t_csv->horizontalHeader()->setSectionsMovable(false);
    //  t_csv->setReadOnly(false);
 
    { for ( int i = 0; i < t_csv->rowCount(); ++i ) { t_csv->item( i,  0 )->setFlags( t_csv->item( i,  0 )->flags() ^ Qt::ItemIsEditable ); } };
@@ -167,7 +167,7 @@ void US_Hydrodyn_Cluster_Dmd::setupGUI()
    //   pb_select_all = new QPushButton(us_tr("Select all"), this);
    //   pb_select_all->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    //   pb_select_all->setMinimumHeight(minHeight1);
-   //   pb_select_all->setPalette( USglobal->global_colors.cg_pushb );
+   //   pb_select_all->setPalette( PALET_PUSHB );
    //   connect(pb_select_all, SIGNAL(clicked()), SLOT(select_all()));
 
    pb_copy = new QPushButton(us_tr("Copy values"), this);
@@ -224,12 +224,12 @@ void US_Hydrodyn_Cluster_Dmd::setupGUI()
    editor->setReadOnly(true);
 
 #if QT_VERSION < 0x040000
-# if defined(QT4) && defined(Q_WS_MAC)
+# if QT_VERSION >= 0x040000 && defined(Q_WS_MAC)
    {
  //      Q3PopupMenu * file = new Q3PopupMenu;
-      file->insertItem( us_tr("&Font"),  this, SLOT(update_font( )),    Qt::ALT+Qt::Key_F );
-      file->insertItem( us_tr("&Save"),  this, SLOT(save( )),    Qt::ALT+Qt::Key_S );
-      file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display( )),   Qt::ALT+Qt::Key_X );
+      file->insertItem( us_tr("&Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
+      file->insertItem( us_tr("&Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
+      file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
 
       QMenuBar *menu = new QMenuBar( this );
       AUTFBACK( menu );
@@ -247,9 +247,9 @@ void US_Hydrodyn_Cluster_Dmd::setupGUI()
    AUTFBACK( m );
  //   Q3PopupMenu * file = new Q3PopupMenu(editor);
    m->insertItem( us_tr("&File"), file );
-   file->insertItem( us_tr("Font"),  this, SLOT(update_font( )),    Qt::ALT+Qt::Key_F );
-   file->insertItem( us_tr("Save"),  this, SLOT(save( )),    Qt::ALT+Qt::Key_S );
-   file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display( )),   Qt::ALT+Qt::Key_X );
+   file->insertItem( us_tr("Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
+   file->insertItem( us_tr("Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
+   file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
 # endif
 #else
    QFrame *frame;
@@ -327,7 +327,7 @@ void US_Hydrodyn_Cluster_Dmd::setupGUI()
    hbl_load_save->addSpacing( 4 );
 
    QBoxLayout * vbl_editor_group = new QVBoxLayout(0); vbl_editor_group->setContentsMargins( 0, 0, 0, 0 ); vbl_editor_group->setSpacing( 0 );
-#if !defined(QT4) || !defined(Q_WS_MAC)
+#if QT_VERSION < 0x040000 || !defined(Q_WS_MAC)
    vbl_editor_group->addWidget( frame );
 #endif
    vbl_editor_group->addWidget( editor );
@@ -409,7 +409,7 @@ void US_Hydrodyn_Cluster_Dmd::table_value( int row, int col )
 
 void US_Hydrodyn_Cluster_Dmd::clear_display()
 {
-   editor->clear();
+   editor->clear( );
    editor->append("\n\n");
 }
 
@@ -517,11 +517,11 @@ void US_Hydrodyn_Cluster_Dmd::init_csv()
 {
    csv1.name = "Cluster DMD setup";
 
-   csv1.header.clear();
-   csv1.header_map.clear();
-   csv1.data.clear();
-   csv1.num_data.clear();
-   csv1.prepended_names.clear();
+   csv1.header.clear( );
+   csv1.header_map.clear( );
+   csv1.data.clear( );
+   csv1.num_data.clear( );
+   csv1.prepended_names.clear( );
 
    csv1.header.push_back("PDB file");                         // 0
    csv1.header.push_back("Active");                           // 1
@@ -541,14 +541,14 @@ void US_Hydrodyn_Cluster_Dmd::reset_csv()
 {
    init_csv();
 
-   full_filenames.clear();
-   residues_chain          .clear();
-   residues_chain_map      .clear();
-   residues_number         .clear();
-   residues_range_start    .clear();
-   residues_range_end      .clear();
-   residues_range_chain    .clear();
-   residues_range_chain_pos.clear();
+   full_filenames.clear( );
+   residues_chain          .clear( );
+   residues_chain_map      .clear( );
+   residues_number         .clear( );
+   residues_range_start    .clear( );
+   residues_range_end      .clear( );
+   residues_range_chain    .clear( );
+   residues_range_chain_pos.clear( );
 
    for ( unsigned int i = 0; i < (unsigned int)((US_Hydrodyn_Cluster *)cluster_window)->selected_files.size(); i++ )
    {
@@ -613,9 +613,9 @@ void US_Hydrodyn_Cluster_Dmd::copy()
 {
    csv1 = current_csv();
    csv_copy = current_csv();
-   csv_copy.data.clear();
-   csv_copy.num_data.clear();
-   csv_copy.prepended_names.clear();
+   csv_copy.data.clear( );
+   csv_copy.num_data.clear( );
+   csv_copy.prepended_names.clear( );
 
    for ( int i = 0; i < t_csv->rowCount(); i++ )
    {
@@ -780,7 +780,7 @@ void US_Hydrodyn_Cluster_Dmd::load()
                                           , 
                                           qsl_our_files,
                                           0,
-                                          FALSE, 
+                                          false, 
                                           &ok,
                                           this );
       if ( ok ) {
@@ -938,9 +938,9 @@ void US_Hydrodyn_Cluster_Dmd::reload_csv()
 void US_Hydrodyn_Cluster_Dmd::delete_rows()
 {
    csv csv_new = current_csv();
-   csv_new.data.clear();
-   csv_new.num_data.clear();
-   csv_new.prepended_names.clear();
+   csv_new.data.clear( );
+   csv_new.num_data.clear( );
+   csv_new.prepended_names.clear( );
    
    for ( int i = 0; i < t_csv->rowCount(); i++ )
    {
@@ -1027,21 +1027,21 @@ void US_Hydrodyn_Cluster_Dmd::sync_csv_with_selected()
 {
    csv1 = current_csv();
    csv csv_new = csv1;
-   csv_new.data.clear();
-   csv_new.num_data.clear();
-   csv_new.prepended_names.clear();
+   csv_new.data.clear( );
+   csv_new.num_data.clear( );
+   csv_new.prepended_names.clear( );
 
    map < QString, bool > selected_map;
    map < QString, bool > present_map;
    
-   full_filenames.clear();
-   residues_chain          .clear();
-   residues_chain_map      .clear();
-   residues_number         .clear();
-   residues_range_start    .clear();
-   residues_range_end      .clear();
-   residues_range_chain    .clear();
-   residues_range_chain_pos.clear();
+   full_filenames.clear( );
+   residues_chain          .clear( );
+   residues_chain_map      .clear( );
+   residues_number         .clear( );
+   residues_range_start    .clear( );
+   residues_range_end      .clear( );
+   residues_range_chain    .clear( );
+   residues_range_chain_pos.clear( );
 
    for ( unsigned int i = 0; i < (unsigned int)((US_Hydrodyn_Cluster *)cluster_window)->selected_files.size(); i++ )
    {
@@ -1212,11 +1212,11 @@ bool US_Hydrodyn_Cluster_Dmd::setup_residues( QString filename )
 
    QString last_key = "";
    
-   residues_chain          [ filename ].clear();
-   residues_chain_map      [ filename ].clear();
-   residues_number         [ filename ].clear();
-   residues_range_chain    [ filename ].clear();
-   residues_range_chain_pos[ filename ].clear();
+   residues_chain          [ filename ].clear( );
+   residues_chain_map      [ filename ].clear( );
+   residues_number         [ filename ].clear( );
+   residues_range_chain    [ filename ].clear( );
+   residues_range_chain_pos[ filename ].clear( );
 
    for ( map < QString, vector < unsigned int > >::iterator it = residues_range_start.begin();
          it != residues_range_start.end();
@@ -1224,7 +1224,7 @@ bool US_Hydrodyn_Cluster_Dmd::setup_residues( QString filename )
    {
       if ( it->first.contains( QRegExp( QString( "^%1:" ).arg( filename ) ) ) )
       {
-         it->second.clear();
+         it->second.clear( );
       }
    }
 
@@ -1293,8 +1293,8 @@ bool US_Hydrodyn_Cluster_Dmd::setup_residues( QString filename )
       if ( last_chain != residues_chain[ filename ][ i ] )
       {
          pos = this_pos;
-         // residues_range_start[ key      ].clear();
-         // residues_range_end  [ key      ].clear();
+         // residues_range_start[ key      ].clear( );
+         // residues_range_end  [ key      ].clear( );
          residues_range_start[ key      ].push_back( this_pos );
          residues_range_end  [ key      ].push_back( this_pos );
          residues_range_chain    [ filename ].push_back( key );

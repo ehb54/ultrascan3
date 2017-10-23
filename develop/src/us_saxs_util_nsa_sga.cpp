@@ -215,7 +215,7 @@ vector < PDB_atom > nsa_sga_individual::bead_model()
       tmp_atom.bead_color              = 1;
       tmp_atom.serial                  = i + 1;
       tmp_atom.exposed_code            = 1;
-      tmp_atom.all_beads               .clear();
+      tmp_atom.all_beads               .clear( );
       tmp_atom.name                    = "SGP";
       tmp_atom.resName                 = "SGP";
       tmp_atom.iCode                   = "";
@@ -379,7 +379,7 @@ bool US_Saxs_Util::nsa_sga( double & nrmsd )
          .arg( last_pop.size() )
          .arg( avg_pop_beads_size );
 
-      nsa_pop.clear();
+      nsa_pop.clear( );
 
       for ( unsigned int i = 0; i < control_parameters[ "nsapopulation" ].toUInt(); i++ )
       {

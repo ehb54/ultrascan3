@@ -261,7 +261,7 @@ QString US_Encryption::md5( QString& string )
    unsigned char md5sum[16];
 
    md5_starts( &ctx );
-   md5_update( &ctx, (unsigned char*) string.toAscii().data(), string.length() );
+   md5_update( &ctx, (unsigned char*) string.toLatin1().data(), string.length() );
    md5_finish( &ctx, md5sum );
 
    char output[33];

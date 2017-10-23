@@ -267,41 +267,41 @@ void US_Hydrodyn_Saxs::calc_iqq_nnls_fit( QString /* title */, QString csv_filen
       if ( of )
       {
          fprintf(of, "\"Name\",\"Type; q:\",%s,%s\n", 
-                 vector_double_to_csv(nnls_r).toAscii().data(),
-                 QString("NNLS fit residual %1 : %2").arg(nnls_rmsd).arg(nnls_header_tag).toAscii().data());
+                 vector_double_to_csv(nnls_r).toLatin1().data(),
+                 QString("NNLS fit residual %1 : %2").arg(nnls_rmsd).arg(nnls_header_tag).toLatin1().data());
          // original models
          for ( unsigned int i = 0; i < use_x.size(); i++ )
          {
             fprintf(of, "\"%s\",\"%s\",%s\n", 
-                    QString("%1 %2").arg(model_names[i]).arg(rescaled_x[i]).toAscii().data(),
+                    QString("%1 %2").arg(model_names[i]).arg(rescaled_x[i]).toLatin1().data(),
                     "I(q)",
-                    vector_double_to_csv(nnls_A[model_names[i]]).toAscii().data());
+                    vector_double_to_csv(nnls_A[model_names[i]]).toLatin1().data());
          }
          // target
          fprintf(of, "\"%s\",\"%s\",%s\n", 
-                 QString("Target %1").arg(nnls_B_name).toAscii().data(),
+                 QString("Target %1").arg(nnls_B_name).toLatin1().data(),
                  "I(q)",
-                 vector_double_to_csv(nnls_B).toAscii().data());
+                 vector_double_to_csv(nnls_B).toLatin1().data());
          
          // are there errors?
          if ( is_nonzero_vector( nnls_errors ) )
          {
             fprintf(of, "\"%s\",\"%s\",%s\n", 
-                    QString("Target %1").arg(nnls_B_name).toAscii().data(),
+                    QString("Target %1").arg(nnls_B_name).toLatin1().data(),
                     "I(q) sd",
-                    vector_double_to_csv(nnls_errors).toAscii().data());
+                    vector_double_to_csv(nnls_errors).toLatin1().data());
          }
 
          // best fit model
          fprintf(of, "\"%s\",\"%s\",%s\n", 
                  "Model",
                  "I(q)",
-                 vector_double_to_csv(model).toAscii().data());
+                 vector_double_to_csv(model).toLatin1().data());
          
          fprintf(of, "\"%s\",\"%s\",%s\n", 
                  "Residual",
                  "I(q)",
-                 vector_double_to_csv(residual).toAscii().data());
+                 vector_double_to_csv(residual).toLatin1().data());
          
          fclose(of);
          if ( plotted )
@@ -505,40 +505,40 @@ void US_Hydrodyn_Saxs::calc_iqq_best_fit( QString /* title */, QString csv_filen
       {
          //  header: "name","type",r1,r2,...,rn, header info
          fprintf(of, "\"Name\",\"Type; q:\",%s,%s\n", 
-                 vector_double_to_csv(nnls_r).toAscii().data(),
+                 vector_double_to_csv(nnls_r).toLatin1().data(),
                  QString("Best fit NRMSD %1% Chi^2 %2 : %3")
                  .arg(use_errors ? "nchi" : "RMSD" )
                  .arg(chi2s[lowest_chi2_pos])
-                 .arg(nnls_header_tag).toAscii().data()
+                 .arg(nnls_header_tag).toLatin1().data()
                  );
          // original models
          for ( unsigned int i = 0; i < best_fit_models.size(); i++ )
          {
             fprintf(of, "\"%s\",\"%s\",%s\n", 
-                    QString("%1 %2").arg(model_names[i]).arg(chi2s[i]).toAscii().data(),
+                    QString("%1 %2").arg(model_names[i]).arg(chi2s[i]).toLatin1().data(),
                     "I(q)",
-                    vector_double_to_csv(best_fit_models[model_names[i]]).toAscii().data());
+                    vector_double_to_csv(best_fit_models[model_names[i]]).toLatin1().data());
          }
          // target
          fprintf(of, "\"%s\",\"%s\",%s\n", 
-                 QString("Target %1").arg(nnls_B_name).toAscii().data(),
+                 QString("Target %1").arg(nnls_B_name).toLatin1().data(),
                  "I(q)",
-                 vector_double_to_csv(best_fit_target).toAscii().data());
+                 vector_double_to_csv(best_fit_target).toLatin1().data());
 
          // are there errors?
          if ( is_nonzero_vector( nnls_errors ) )
          {
             fprintf(of, "\"%s\",\"%s\",%s\n", 
-                    QString("Target %1").arg(nnls_B_name).toAscii().data(),
+                    QString("Target %1").arg(nnls_B_name).toLatin1().data(),
                     "I(q) sd",
-                    vector_double_to_csv(nnls_errors).toAscii().data());
+                    vector_double_to_csv(nnls_errors).toLatin1().data());
          }
          
          // best fit model
          fprintf(of, "\"%s\",\"%s\",%s\n", 
-                 QString("Best Fit Model " + model_names[lowest_chi2_pos]).toAscii().data(),
+                 QString("Best Fit Model " + model_names[lowest_chi2_pos]).toLatin1().data(),
                  "I(q)",
-                 vector_double_to_csv(model).toAscii().data());
+                 vector_double_to_csv(model).toLatin1().data());
          fclose(of);
          if ( plotted )
          {
@@ -570,7 +570,7 @@ void US_Hydrodyn_Saxs::calc_nnls_fit( QString title, QString csv_filename )
 
    // #define DEBUG_NNLS
 #if defined(DEBUG_NNLS)
-   nnls_A.clear();
+   nnls_A.clear( );
    nnls_A["one"].push_back(1e0);
    nnls_A["one"].push_back(1e0);
    nnls_A["one"].push_back(1e0);
@@ -586,7 +586,7 @@ void US_Hydrodyn_Saxs::calc_nnls_fit( QString title, QString csv_filename )
    nnls_A["three"].push_back(3e0);
    nnls_A["three"].push_back(3e0);
    
-   nnls_B.clear();
+   nnls_B.clear( );
    // ideal conc .5 1 2
    nnls_B.push_back(3.5e0);
    nnls_B.push_back(4.5e0);
@@ -790,25 +790,25 @@ void US_Hydrodyn_Saxs::calc_nnls_fit( QString title, QString csv_filename )
       {
          //  header: "name","type",r1,r2,...,rn, header info
          fprintf(of, "\"Name\",\"MW (Daltons)\",\"Area\",\"Type; r:\",%s,%s\n", 
-                 vector_double_to_csv(nnls_r).toAscii().data(),
-                 QString("NNLS fit residual %1 : %2").arg(nnls_rmsd).arg(nnls_header_tag).toAscii().data());
+                 vector_double_to_csv(nnls_r).toLatin1().data(),
+                 QString("NNLS fit residual %1 : %2").arg(nnls_rmsd).arg(nnls_header_tag).toLatin1().data());
          // original models
          for ( unsigned int i = 0; i < use_x.size(); i++ )
          {
             fprintf(of, "\"%s\",%.2f,%.2f,\"%s\",%s\n", 
-                    QString("%1 %2").arg(model_names[i]).arg(rescaled_x[i]).toAscii().data(),
+                    QString("%1 %2").arg(model_names[i]).arg(rescaled_x[i]).toLatin1().data(),
                     get_mw(model_names[i], false),
                     compute_pr_area(nnls_A[model_names[i]], nnls_r),
                     "P(r)",
-                    vector_double_to_csv(nnls_A[model_names[i]]).toAscii().data());
+                    vector_double_to_csv(nnls_A[model_names[i]]).toLatin1().data());
          }
          // target
          fprintf(of, "\"%s\",%.2f,%.2f,\"%s\",%s\n", 
-                 QString("Target %1").arg(nnls_B_name).toAscii().data(),
+                 QString("Target %1").arg(nnls_B_name).toLatin1().data(),
                  get_mw(model_names[0], false),
                  compute_pr_area(nnls_B, nnls_r),
                  "P(r)",
-                 vector_double_to_csv(nnls_B).toAscii().data());
+                 vector_double_to_csv(nnls_B).toLatin1().data());
          
          // best fit model
          fprintf(of, "\"%s\",%.2f,%.2f,\"%s\",%s\n", 
@@ -816,14 +816,14 @@ void US_Hydrodyn_Saxs::calc_nnls_fit( QString title, QString csv_filename )
                  get_mw(model_names[0], false),
                  compute_pr_area(model, nnls_r),
                  "P(r)",
-                 vector_double_to_csv(model).toAscii().data());
+                 vector_double_to_csv(model).toLatin1().data());
          
          fprintf(of, "\"%s\",%.2f,%.2f,\"%s\",%s\n", 
                  "Residual",
                  get_mw(model_names[0], false),
                  compute_pr_area(residual, nnls_r),
                  "P(r)",
-                 vector_double_to_csv(residual).toAscii().data());
+                 vector_double_to_csv(residual).toLatin1().data());
          
          fclose(of);
          if ( plotted )
@@ -1048,44 +1048,44 @@ void US_Hydrodyn_Saxs::calc_best_fit( QString title, QString csv_filename )
       {
          //  header: "name","type",r1,r2,...,rn, header info
          fprintf(of, "\"Name\",\"MW (Daltons)\",\"Area\",\"Type; r:\",%s,%s\n", 
-                 vector_double_to_csv(nnls_r).toAscii().data(),
+                 vector_double_to_csv(nnls_r).toLatin1().data(),
                  QString("Best fit NRMSD %1% Chi^2 %2 : %3")
                  .arg(rmsds[lowest_rmsd_pos])
                  .arg(chi2[lowest_rmsd_pos])
-                 .arg(nnls_header_tag).toAscii().data()
+                 .arg(nnls_header_tag).toLatin1().data()
                  );
          // original models
          for ( unsigned int i = 0; i < best_fit_models.size(); i++ )
          {
             fprintf(of, "\"%s\",%.2f,%.2f,\"%s\",%s\n", 
-                    QString("%1 %2").arg(model_names[i]).arg(rmsds[i]).toAscii().data(),
+                    QString("%1 %2").arg(model_names[i]).arg(rmsds[i]).toLatin1().data(),
                     get_mw(model_names[i], false),
                     compute_pr_area(best_fit_models[model_names[i]], nnls_r),
                     "P(r)",
-                    vector_double_to_csv(best_fit_models[model_names[i]]).toAscii().data());
+                    vector_double_to_csv(best_fit_models[model_names[i]]).toLatin1().data());
          }
          // target
          fprintf(of, "\"%s\",%.2f,%.2f,\"%s\",%s\n", 
-                 QString("Target %1").arg(nnls_B_name).toAscii().data(),
+                 QString("Target %1").arg(nnls_B_name).toLatin1().data(),
                  model_mw,
                  compute_pr_area(best_fit_target, nnls_r),
                  "P(r)",
-                 vector_double_to_csv(best_fit_target).toAscii().data());
+                 vector_double_to_csv(best_fit_target).toLatin1().data());
          
          // best fit model
          fprintf(of, "\"%s\",%.2f,%.2f,\"%s\",%s\n", 
-                 QString("Best Fit Model " + model_names[lowest_rmsd_pos]).toAscii().data(),
+                 QString("Best Fit Model " + model_names[lowest_rmsd_pos]).toLatin1().data(),
                  model_mw,
                  compute_pr_area(model, nnls_r),
                  "P(r)",
-                 vector_double_to_csv(model).toAscii().data());
+                 vector_double_to_csv(model).toLatin1().data());
          
          fprintf(of, "\"%s\",%.2f,%.2f,\"%s\",%s\n", 
                  "Residual",
                  model_mw,
                  compute_pr_area(residual, nnls_r),
                  "P(r)",
-                 vector_double_to_csv(residual).toAscii().data());
+                 vector_double_to_csv(residual).toLatin1().data());
          
          fclose(of);
          if ( plotted )

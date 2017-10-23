@@ -83,7 +83,7 @@ void US_Hydrodyn_Saxs_Hplc_Scale_Trend::setupGUI()
    connect( pb_close, SIGNAL( clicked() ), SLOT( cancel() ) );
 
    plot = new QwtPlot(this);
-#ifndef QT4
+#if QT_VERSION < 0x040000
    plot->enableOutline(true);
    plot->setOutlinePen(Qt::white);
    plot->setOutlineStyle(Qwt::VLine);
@@ -99,27 +99,27 @@ void US_Hydrodyn_Saxs_Hplc_Scale_Trend::setupGUI()
    grid->enableYMin( true );
    plot->setPalette( PALET_NORMAL );
    AUTFBACK( plot );
-   grid->setMajPen( QPen( USglobal->global_colors.major_ticks, 0, Qt::DotLine ) );
-   grid->setMinPen( QPen( USglobal->global_colors.minor_ticks, 0, Qt::DotLine ) );
+   grid->setMajorPen( QPen( USglobal->global_colors.major_ticks, 0, Qt::DotLine ) );
+   grid->setMinorPen( QPen( USglobal->global_colors.minor_ticks, 0, Qt::DotLine ) );
    grid->attach( plot );
 #endif
    plot->setAxisTitle(QwtPlot::xBottom, parameters[ "xbottom" ] );
    plot->setAxisTitle(QwtPlot::yLeft  , parameters[ "yleft"   ] );
 
-#ifndef QT4
+#if QT_VERSION < 0x040000
    plot->setTitleFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
    plot->setAxisTitleFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 #endif
    plot->setAxisFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-#ifndef QT4
+#if QT_VERSION < 0x040000
    plot->setAxisTitleFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 #endif
    plot->setAxisFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-#ifndef QT4
+#if QT_VERSION < 0x040000
    plot->setAxisTitleFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 #endif
    plot->setAxisFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-   plot->setMargin(USglobal->config_list.margin);
+//    plot->setMargin(USglobal->config_list.margin);
    plot->setTitle( parameters[ "title" ] );
    plot->setCanvasBackground(USglobal->global_colors.plot);
 
@@ -196,11 +196,11 @@ void US_Hydrodyn_Saxs_Hplc_Scale_Trend::update_plot()
       QString this_name = QString( "slope of fits" );
 
       QPen use_pen = QPen( Qt::cyan, use_line_width, Qt::SolidLine );
-#ifdef QT4
+#if QT_VERSION >= 0x040000
       QwtPlotCurve *curve = new QwtPlotCurve( this_name );
       curve->setStyle ( QwtPlotCurve::NoCurve );
-      curve->setSymbol( sym );
-      curve->setData  ( & (slopes_x[ 0 ]), &(slopes[ 0 ]), slopes_x.size() );
+      curve->setSymbol( new QwtSymbol( sym.style(), sym.brush(), sym.pen(), sym.size() ) );
+      curve->setSamples  ( & (slopes_x[ 0 ]), &(slopes[ 0 ]), slopes_x.size() );
       curve->attach   ( plot );
 #else
       long curve = plot->insertCurve( this_name );
@@ -230,11 +230,11 @@ void US_Hydrodyn_Saxs_Hplc_Scale_Trend::update_plot()
       }
 
       QPen use_pen = QPen( Qt::darkRed, use_line_width, Qt::SolidLine );
-#ifdef QT4
+#if QT_VERSION >= 0x040000
       QwtPlotCurve *curve = new QwtPlotCurve( this_name + "_errorbar" );
       curve->setStyle ( QwtPlotCurve::Lines );
       curve->setPen   ( use_pen );
-      curve->setData  ( x, y, 2 );
+      curve->setSamples  ( x, y, 2 );
       curve->attach   ( plot );
 #else
       long curve = plot->insertCurve( this_name + "_errorbar" );
@@ -257,11 +257,11 @@ void US_Hydrodyn_Saxs_Hplc_Scale_Trend::update_plot()
       y[ 1 ] = fit_a + fit_b * x[ 1 ];
 
       QPen use_pen = QPen( Qt::green, use_line_width, Qt::SolidLine );
-#ifdef QT4
+#if QT_VERSION >= 0x040000
       QwtPlotCurve *curve = new QwtPlotCurve( this_name + "_fitline" );
       curve->setStyle ( QwtPlotCurve::Lines );
       curve->setPen   ( use_pen );
-      curve->setData  ( x, y, 2 );
+      curve->setSamples  ( x, y, 2 );
       curve->attach   ( plot );
 #else
       long curve = plot->insertCurve( this_name + "_errorbar" );
@@ -275,7 +275,7 @@ void US_Hydrodyn_Saxs_Hplc_Scale_Trend::update_plot()
    {
       QPen use_pen = QPen( Qt::red, use_line_width, Qt::DashDotLine );
       QFont use_font = QFont("Helvetica", 11, QFont::Bold );
-#ifdef QT4
+#if QT_VERSION >= 0x040000
       Qt::Alignment align;
 #else
       int align;
@@ -285,7 +285,7 @@ void US_Hydrodyn_Saxs_Hplc_Scale_Trend::update_plot()
          align = Qt::AlignRight | Qt::AlignTop;
          double pos = qmin;
          QString text = "Start";
-#ifdef QT4
+#if QT_VERSION >= 0x040000
          QwtPlotMarker * marker = new QwtPlotMarker;
          marker->setLineStyle       ( QwtPlotMarker::VLine );
          marker->setLinePen         ( use_pen );
@@ -312,7 +312,7 @@ void US_Hydrodyn_Saxs_Hplc_Scale_Trend::update_plot()
          align = Qt::AlignLeft | Qt::AlignTop;
          double pos = qmax;
          QString text = "End";
-#ifdef QT4
+#if QT_VERSION >= 0x040000
          QwtPlotMarker * marker = new QwtPlotMarker;
          marker->setLineStyle       ( QwtPlotMarker::VLine );
          marker->setLinePen         ( use_pen );
@@ -346,7 +346,7 @@ void US_Hydrodyn_Saxs_Hplc_Scale_Trend::update_plot()
    {
       plot_zoomer = new ScrollZoomer(plot->canvas());
       plot_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
-#ifndef QT4
+#if QT_VERSION < 0x040000
       plot_zoomer->setCursorLabelPen(QPen(Qt::yellow));
 #endif
    }
@@ -429,9 +429,9 @@ void US_Hydrodyn_Saxs_Hplc_Scale_Trend::analysis()
 
    // setup a linear fit and plot slopes per q value
 
-   slopes_x.clear();
-   slopes  .clear();
-   slopes_e.clear();
+   slopes_x.clear( );
+   slopes  .clear( );
+   slopes_e.clear( );
 
 
    for ( int i = 0; i < q_size; ++i ) {

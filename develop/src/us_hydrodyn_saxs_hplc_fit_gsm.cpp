@@ -1593,9 +1593,9 @@ void US_Hydrodyn_Saxs_Hplc_Fit::gsm_setup()
    double start = hplc_win->le_gauss_fit_start->text().toDouble();
    double end   = hplc_win->le_gauss_fit_end  ->text().toDouble();
 
-   gsm_t.clear();
-   gsm_y.clear();
-   gsm_yp.clear();
+   gsm_t.clear( );
+   gsm_y.clear( );
+   gsm_yp.clear( );
 
    for ( unsigned int j = 0; j < x.size(); j++ )
    {

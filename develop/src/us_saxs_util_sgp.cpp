@@ -209,7 +209,7 @@ bool US_Saxs_Util::sgp_run()
          // now really remove them:
          cout << QString( "Duplicates found %1\n" ).arg( dup_nodes.size() );
          
-         new_population.clear();
+         new_population.clear( );
          for ( unsigned int i = 0; i < population.size(); i++ )
          {
             if ( !dup_nodes.count( population[ i ] ) )
@@ -342,7 +342,7 @@ bool US_Saxs_Util::sgp_init()
       return false;
    }
 
-   population.clear();
+   population.clear( );
 
    for ( unsigned int i = 0; i < control_parameters[ "sgppopulation" ].toUInt(); i++ )
    {
@@ -453,7 +453,7 @@ double US_Saxs_Util::sgp_fitness( sgp_node *node )
    // take node & run current bead model iq on its bead model and compute chi2 (if errors present) or rmsd & return
       
    vector < PDB_atom > bm = node->bead_model();
-   bead_models.clear();
+   bead_models.clear( );
    bead_models.push_back( bm );
 
    // compute iq:

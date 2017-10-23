@@ -353,7 +353,7 @@ void US_Hydrodyn_SasOptionsBeadModel::update_dummy_saxs_name( const QString & )
                                  us_tr( "Select a defined dummy atom name" ),
                                  (*saxs_options).dummy_saxs_names, 
                                  0, 
-                                 FALSE, 
+                                 false, 
                                  &ok,
                                  this );
    }

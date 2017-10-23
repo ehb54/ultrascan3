@@ -4,12 +4,12 @@
 #include <QFrame>
 
 void US_Hydrodyn_Saxs::plot_saxs_clicked( long 
-#ifndef QT4
+#if QT_VERSION < 0x040000
                                           key
 #endif
                                           )
 {
-#ifndef QT4
+#if QT_VERSION < 0x040000
    int pos = -1;
 
    for ( int i = 0; i < (int)plotted_Iq.size(); i++ )
@@ -77,12 +77,12 @@ void US_Hydrodyn_Saxs::plot_saxs_clicked( long
 #endif
 }
 void US_Hydrodyn_Saxs::plot_saxs_item_clicked( QwtPlotItem* 
-#ifdef QT4
+#if QT_VERSION >= 0x040000
                                                pitem
 #endif
                                                )
 {
-#ifdef QT4
+#if QT_VERSION >= 0x040000
    QwtPlotCurve* pcurve = (QwtPlotCurve*)pitem;
    int csize = pcurve->dataSize();
 
@@ -104,22 +104,22 @@ void US_Hydrodyn_Saxs::plot_saxs_item_clicked( QwtPlotItem*
 }
 
 void US_Hydrodyn_Saxs::plot_pr_clicked( long
-#ifndef QT4
+#if QT_VERSION < 0x040000
                                         key
 #endif
                                         )
 {
-#ifndef QT4
+#if QT_VERSION < 0x040000
    cout << QString( "plot_pr_clicked %1\n" ).arg( key );
 #endif
 }
 void US_Hydrodyn_Saxs::plot_pr_item_clicked( QwtPlotItem* 
-#ifdef QT4
+#if QT_VERSION >= 0x040000
                                              pitem
 #endif
                                              )
 {
-#ifdef QT4
+#if QT_VERSION >= 0x040000
    QwtPlotCurve* pcurve = (QwtPlotCurve*)pitem;
    int csize = pcurve->dataSize();
 
@@ -142,7 +142,7 @@ void US_Hydrodyn_Saxs::plot_pr_item_clicked( QwtPlotItem*
 
 void US_Hydrodyn_Saxs::saxs_legend()
 {
-#ifndef QT4
+#if QT_VERSION < 0x040000
    if ( plot_saxs->autoLegend() )
    {
       plot_saxs->setAutoLegend( false );
@@ -159,11 +159,11 @@ void US_Hydrodyn_Saxs::saxs_legend()
 
 void US_Hydrodyn_Saxs::set_saxs_legend()
 {
-#if defined( QT4 )
+#if QT_VERSION >= 0x040000
    if ( saxs_legend_vis )
    {
       QwtLegend* legend_saxs = new QwtLegend;
-      legend_saxs->setItemMode( QwtLegend::ClickableItem );
+      legend_saxs->setDefaultItemMode( QwtLegendData::Clickable );
       legend_saxs->setFrameStyle( QFrame::Box | QFrame::Sunken );
       plot_saxs->insertLegend( legend_saxs, QwtPlot::BottomLegend );
       connect( plot_saxs, SIGNAL( legendClicked( QwtPlotItem* ) ),
@@ -176,7 +176,7 @@ void US_Hydrodyn_Saxs::set_saxs_legend()
 
 void US_Hydrodyn_Saxs::pr_legend()
 {
-#ifndef QT4
+#if QT_VERSION < 0x040000
    if ( plot_pr->autoLegend() )
    {
       plot_pr->setAutoLegend( false );
@@ -193,11 +193,11 @@ void US_Hydrodyn_Saxs::pr_legend()
 
 void US_Hydrodyn_Saxs::set_pr_legend()
 {
-#if defined( QT4 )
+#if QT_VERSION >= 0x040000
    if ( pr_legend_vis )
    {
       QwtLegend* legend_pr = new QwtLegend;
-      legend_pr->setItemMode( QwtLegend::ClickableItem );
+      legend_pr->setDefaultItemMode( QwtLegendData::Clickable );
       legend_pr->setFrameStyle( QFrame::Box | QFrame::Sunken );
       plot_pr->insertLegend( legend_pr, QwtPlot::BottomLegend );
       connect( plot_pr, SIGNAL( legendClicked( QwtPlotItem* ) ),

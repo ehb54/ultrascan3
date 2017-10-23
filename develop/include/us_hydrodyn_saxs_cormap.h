@@ -22,7 +22,7 @@
 #include <qwt_plot.h>
 #include <qwt_thermo.h>
 
-#ifdef QT4
+#if QT_VERSION >= 0x040000
 #include "qwt_plot_grid.h"
 #include "qwt_plot_curve.h"
 #include "qwt/scrollbar.h"
@@ -37,7 +37,7 @@
 using namespace std;
 
 #ifdef WIN32
-# if !defined( QT4 )
+# if QT_VERSION < 0x040000
      #pragma warning ( disable: 4251 )
 # endif
 #endif      
@@ -160,13 +160,13 @@ class US_EXTERN US_Hydrodyn_Saxs_Cormap : public QFrame
 
       QwtPlot       *plot;
       ScrollZoomer  *plot_zoomer;
-#ifdef QT4
+#if QT_VERSION >= 0x040000
       QwtPlotGrid   *plot_grid;
 #endif
 
       QwtPlot       *plot_cluster;
       ScrollZoomer  *plot_cluster_zoomer;
-#ifdef QT4
+#if QT_VERSION >= 0x040000
       QwtPlotGrid   *plot_cluster_grid;
 #endif
 
@@ -222,7 +222,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Cormap : public QFrame
 };
 
 #ifdef WIN32
-# if !defined( QT4 )
+# if QT_VERSION < 0x040000
   #pragma warning ( default: 4251 )
 # endif
 #endif

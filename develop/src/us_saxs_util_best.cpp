@@ -149,7 +149,7 @@ bool US_Saxs_Util::run_best()
 
       cout << "Starting " + progs[ p ] + "\n";
       cout << cmd << endl;
-      system( cmd.toAscii().data() );
+      system( cmd.toLatin1().data() );
       cout << "Finished " + progs[ p ] + "\n";
 
       QStringList expected;
@@ -319,7 +319,7 @@ bool US_Saxs_Util::run_best()
       // us_qdebug( QString( "best cmd = %1" ).arg( cmd ) );
       cout << "Starting " + progs[ p ] + "\n";
       cout << cmd << endl;
-      system( cmd.toAscii().data() );
+      system( cmd.toLatin1().data() );
       cout << "Finished " + progs[ p ] + "\n";
 
       // run & check output
@@ -523,7 +523,7 @@ bool US_Saxs_Util::run_best()
       // us_qdebug( QString( "best cmd = %1" ).arg( cmd ) );
       cout << "Starting " + progs[ p ] + "\n";
       cout << cmd << endl;
-      system( cmd.toAscii().data() );
+      system( cmd.toLatin1().data() );
       cout << "Finished " + progs[ p ] + "\n";
 
       QStringList expected;

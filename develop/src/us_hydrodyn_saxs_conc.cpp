@@ -22,7 +22,7 @@ US_Hydrodyn_Saxs_Conc::US_Hydrodyn_Saxs_Conc(
    this->saxs_window = saxs_window;
    us_hydrodyn = ((US_Hydrodyn_Saxs *)saxs_window)->us_hydrodyn;
    USglobal = new US_Config();
-   setPalette( USglobal->global_colors.cg_frame );
+   setPalette( PALET_FRAME );
    setWindowTitle( us_tr( "US-SOMO: Guinier: Set Curve Concentration, PSV and I0 standard experimental"));
    order_ascending = false;
    disable_updates = false;
@@ -125,14 +125,14 @@ void US_Hydrodyn_Saxs_Conc::setupGUI()
    lbl_title->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_title->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_title->setMinimumHeight(minHeight1);
-   lbl_title->setPalette( USglobal->global_colors.cg_frame );
+   lbl_title->setPalette( PALET_FRAME );
    lbl_title->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
 
    t_csv = new QTableWidget(csv1.data.size(), csv1.header.size(), this);
    t_csv->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    // t_csv->setMinimumHeight(minHeight1 * 3);
    // t_csv->setMinimumWidth(minWidth1);
-   t_csv->setPalette( USglobal->global_colors.cg_edit );
+   t_csv->setPalette( PALET_EDIT );
    t_csv->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
    t_csv->setEnabled(true);
    t_csv->setSelectionMode( QAbstractItemView::SingleSelection );t_csv->setSelectionBehavior( QAbstractItemView::SelectRows );
@@ -151,8 +151,8 @@ void US_Hydrodyn_Saxs_Conc::setupGUI()
    }
 
    t_csv->setSortingEnabled(false);
-    t_csv->verticalHeader()->setMovable(false);
-    t_csv->horizontalHeader()->setMovable(false);
+    t_csv->verticalHeader()->setSectionsMovable(false);
+    t_csv->horizontalHeader()->setSectionsMovable(false);
    { for ( int i = 0; i < t_csv->rowCount(); ++i ) { t_csv->item( i,  0 )->setFlags( t_csv->item( i,  0 )->flags() ^ Qt::ItemIsEditable ); } };
    { for ( int i = 0; i < t_csv->rowCount(); ++i ) { t_csv->item( i,  1 )->setFlags( t_csv->item( i,  1 )->flags() | Qt::ItemIsEditable ); } };
    t_csv->setColumnWidth(0, 330);
@@ -160,7 +160,7 @@ void US_Hydrodyn_Saxs_Conc::setupGUI()
    t_csv->setColumnWidth(2, 120);
    t_csv->setColumnWidth(3, 170);
    
-    t_csv->horizontalHeader()->setClickable( true );
+    t_csv->horizontalHeader()->setSectionsClickable( true );
 #if QT_VERSION < 0x040000   
    connect(t_csv->horizontalHeader(), SIGNAL(clicked(int)), SLOT(sort_column(int)));
 #else
@@ -180,55 +180,55 @@ void US_Hydrodyn_Saxs_Conc::setupGUI()
    pb_load = new QPushButton(us_tr("Load"), this);
    pb_load->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_load->setMinimumHeight(minHeight1);
-   pb_load->setPalette( USglobal->global_colors.cg_pushb );
+   pb_load->setPalette( PALET_PUSHB );
    connect(pb_load, SIGNAL(clicked()), SLOT(load()));
 
    pb_save = new QPushButton(us_tr("Save to file"), this);
    pb_save->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_save->setMinimumHeight(minHeight1);
-   pb_save->setPalette( USglobal->global_colors.cg_pushb );
+   pb_save->setPalette( PALET_PUSHB );
    connect(pb_save, SIGNAL(clicked()), SLOT(save()));
 
    pb_copy = new QPushButton(us_tr("Copy values"), this);
    pb_copy->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_copy->setMinimumHeight(minHeight1);
-   pb_copy->setPalette( USglobal->global_colors.cg_pushb );
+   pb_copy->setPalette( PALET_PUSHB );
    connect(pb_copy, SIGNAL(clicked()), SLOT(copy()));
 
    pb_paste = new QPushButton(us_tr("Paste values to selected"), this);
    pb_paste->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_paste->setMinimumHeight(minHeight1);
-   pb_paste->setPalette( USglobal->global_colors.cg_pushb );
+   pb_paste->setPalette( PALET_PUSHB );
    connect(pb_paste, SIGNAL(clicked()), SLOT(paste()));
 
    pb_paste_all = new QPushButton(us_tr("Paste values to all"), this);
    pb_paste_all->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_paste_all->setMinimumHeight(minHeight1);
-   pb_paste_all->setPalette( USglobal->global_colors.cg_pushb );
+   pb_paste_all->setPalette( PALET_PUSHB );
    connect(pb_paste_all, SIGNAL(clicked()), SLOT(paste_all()));
 
    pb_reset_to_defaults = new QPushButton(us_tr("Reset to defaults values"), this);
    pb_reset_to_defaults->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_reset_to_defaults->setMinimumHeight(minHeight1);
-   pb_reset_to_defaults->setPalette( USglobal->global_colors.cg_pushb );
+   pb_reset_to_defaults->setPalette( PALET_PUSHB );
    connect(pb_reset_to_defaults, SIGNAL(clicked()), SLOT(reset_to_defaults()));
 
    pb_cancel = new QPushButton(us_tr("Cancel"), this);
    pb_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_cancel->setMinimumHeight(minHeight1);
-   pb_cancel->setPalette( USglobal->global_colors.cg_pushb );
+   pb_cancel->setPalette( PALET_PUSHB );
    connect(pb_cancel, SIGNAL(clicked()), SLOT(cancel()));
 
    pb_help = new QPushButton(us_tr("Help"), this);
    pb_help->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_help->setMinimumHeight(minHeight1);
-   pb_help->setPalette( USglobal->global_colors.cg_pushb );
+   pb_help->setPalette( PALET_PUSHB );
    connect(pb_help, SIGNAL(clicked()), SLOT(help()));
 
    pb_set_ok = new QPushButton(us_tr("Save values"), this);
    pb_set_ok->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_set_ok->setMinimumHeight(minHeight1);
-   pb_set_ok->setPalette( USglobal->global_colors.cg_pushb );
+   pb_set_ok->setPalette( PALET_PUSHB );
    connect(pb_set_ok, SIGNAL(clicked()), SLOT(set_ok()));
 
    // build layout
@@ -324,9 +324,9 @@ void US_Hydrodyn_Saxs_Conc::copy()
 {
    csv1 = current_csv();
    csv_copy = current_csv();
-   csv_copy.data.clear();
-   csv_copy.num_data.clear();
-   csv_copy.prepended_names.clear();
+   csv_copy.data.clear( );
+   csv_copy.num_data.clear( );
+   csv_copy.prepended_names.clear( );
 
    for ( int i = 0; i < t_csv->rowCount(); i++ )
    {

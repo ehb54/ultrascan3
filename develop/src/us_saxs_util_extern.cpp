@@ -77,7 +77,7 @@ bool US_Saxs_Util::run_saxs_iq_foxs()
    iqq_timers.init_timer ( "iqq foxs" );
    iqq_timers.start_timer( "iqq foxs" );
 #endif
-   system( cmd.toAscii().data() );
+   system( cmd.toLatin1().data() );
 #if defined(IQQ_TIMER)
    {
       iqq_timers.end_timer  ( "iqq foxs" );
@@ -297,7 +297,7 @@ bool US_Saxs_Util::run_saxs_iq_crysol()
    iqq_timers.init_timer ( "iqq crysol" );
    iqq_timers.start_timer( "iqq crysol" );
 #endif
-   system( cmd.toAscii().data() );
+   system( cmd.toLatin1().data() );
 #if defined(IQQ_TIMER)
    {
       iqq_timers.end_timer  ( "iqq crysol" );

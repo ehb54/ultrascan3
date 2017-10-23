@@ -74,7 +74,7 @@ QString US_PM::test( QString name, QString oname )
 
       cout << "testpm" << endl;
 
-      params.clear();
+      params.clear( );
 
       params.push_back( 0e0 );  // sphere 0
       params.push_back( 8e0 / gcf );  // radius in grid coordinates
@@ -313,7 +313,7 @@ QString US_PM::test( QString name, QString oname )
                        0 );
 
 
-      params.clear();
+      params.clear( );
 
       params.push_back( 1e0 );  // cylinder 0
       params.push_back( 1e-1 );  // radius in grid coordinates
@@ -369,7 +369,7 @@ QString US_PM::test( QString name, QString oname )
 
       if ( BEST_CYLINDER )
       {
-         // sphere_pm.clear();
+         // sphere_pm.clear( );
          cout << "starting best cylinder\n";
          sphere_pm.best_cylinder( model );
          us_timers.stop_all();
@@ -384,7 +384,7 @@ QString US_PM::test( QString name, QString oname )
 
       if ( BEST_SPHEROID )
       {
-         // sphere_pm.clear();
+         // sphere_pm.clear( );
          cout << "starting best spheroid\n";
          sphere_pm.best_spheroid( model );
          us_timers.stop_all();
@@ -399,7 +399,7 @@ QString US_PM::test( QString name, QString oname )
 
       if ( BEST_TORUS )
       {
-         // sphere_pm.clear();
+         // sphere_pm.clear( );
          cout << "starting best torus\n";
          sphere_pm.best_torus( model );
          us_timers.stop_all();
@@ -610,7 +610,7 @@ QString US_PM::test( QString name, QString oname )
 
       if ( BEST_MD0_GA_CYLINDER )
       {
-         // sphere_pm.clear();
+         // sphere_pm.clear( );
          cout << "starting best cylinder\n";
          params[ 0 ] = 1e0;
          sphere_pm.best_md0_ga( params, model, steps, pts_max, grid_conversion_factor, coarse, ref_pct, conv_div );
@@ -626,7 +626,7 @@ QString US_PM::test( QString name, QString oname )
 
       if ( BEST_MD0_GA_SPHEROID )
       {
-         // sphere_pm.clear();
+         // sphere_pm.clear( );
          cout << "starting best spheroid\n";
          params[ 0 ] = 2e0;
          sphere_pm.best_md0_ga( params, model, steps, pts_max, grid_conversion_factor, coarse, ref_pct, conv_div );
@@ -643,7 +643,7 @@ QString US_PM::test( QString name, QString oname )
 
       if ( BEST_MD0_GA_TORUS )
       {
-         // sphere_pm.clear();
+         // sphere_pm.clear( );
          cout << "starting best torus\n";
          params[ 0 ] = 4e0;
          sphere_pm.best_md0_ga( params, model, steps, pts_max, grid_conversion_factor, coarse, ref_pct, conv_div );
@@ -700,7 +700,7 @@ QString US_PM::test( QString name, QString oname )
             for ( params[ 1 ] = spheretest_min; params[ 1 ] <= spheretest_max; ++params[ 1 ] )
             {
                sphere_pm.msg_log = "";
-               model.clear();
+               model.clear( );
                sphere_pm.create_model( params, model );
                sphere_pm.compute_CA_I( model, I_result );
             }
@@ -745,7 +745,7 @@ QString US_PM::test( QString name, QString oname )
             for ( params[ 1 ] = spheretest_min; params[ 1 ] <= spheretest_max; ++params[ 1 ] )
             {
                sphere_pm.msg_log = "";
-               model.clear();
+               model.clear( );
                sphere_pm.create_model( params, model );
                sphere_pm.compute_delta_I( model, prev_model, Av, I_result );
                prev_model = model;
@@ -789,7 +789,7 @@ QString US_PM::test( QString name, QString oname )
             for ( params[ 1 ] = spheretest_min; params[ 1 ] <= spheretest_max; ++params[ 1 ] )
             {
                sphere_pm.msg_log = "";
-               model.clear();
+               model.clear( );
                sphere_pm.create_model( params, model );
                sphere_pm.compute_CYJ_I( model, I_result );
             }
@@ -843,7 +843,7 @@ QString US_PM::test( QString name, QString oname )
          {
             for ( int d = 0; d < dups; d++ )
             {
-               cout << QString( "---------- fully cached Sphere radius %1 -----------\n" ).arg( params[ 1 ] ).toAscii().data();
+               cout << QString( "---------- fully cached Sphere radius %1 -----------\n" ).arg( params[ 1 ] ).toLatin1().data();
                /*
                  US_PM sphere_pm( grid_conversion_factor, 
                  max_dimension, 
@@ -858,7 +858,7 @@ QString US_PM::test( QString name, QString oname )
                  e, 
                  5 );
                */
-               model.clear();
+               model.clear( );
                sphere_pm.create_model( params, model );
                puts( "test:ccI call" );
                sphere_pm.compute_CA_I( model, I_result );
@@ -904,8 +904,8 @@ QString US_PM::test( QString name, QString oname )
 
          for ( params[ 1 ] = spheretest_min; params[ 1 ] <= spheretest_max; ++params[ 1 ] )
          {
-            cout << QString( "---------- delta Sphere radius %1 -----------\n" ).arg( params[ 1 ] ).toAscii().data();
-            model.clear();
+            cout << QString( "---------- delta Sphere radius %1 -----------\n" ).arg( params[ 1 ] ).toLatin1().data();
+            model.clear( );
             sphere_pm.create_model( params, model );
             sphere_pm.compute_delta_I( model, prev_model, Av, I_result );
             prev_model = model;
@@ -949,8 +949,8 @@ QString US_PM::test( QString name, QString oname )
          {
             for ( int d = 0; d < dups; d++ )
             {
-               cout << QString( "---------- standard Sphere radius %1 -----------\n" ).arg( params[ 1 ] ).toAscii().data();
-               model.clear();
+               cout << QString( "---------- standard Sphere radius %1 -----------\n" ).arg( params[ 1 ] ).toLatin1().data();
+               model.clear( );
                sphere_pm.create_model( params, model );
                sphere_pm.compute_CYJ_I( model, I_result );
 
@@ -992,8 +992,8 @@ QString US_PM::test( QString name, QString oname )
 
          for ( params[ 1 ] = spheretest_max; params[ 1 ] >= spheretest_min; --params[ 1 ] )
          {
-            cout << QString( "---------- delta descending Sphere radius %1 -----------\n" ).arg( params[ 1 ] ).toAscii().data();
-            model.clear();
+            cout << QString( "---------- delta descending Sphere radius %1 -----------\n" ).arg( params[ 1 ] ).toLatin1().data();
+            model.clear( );
             sphere_pm.create_model( params, model );
             sphere_pm.compute_delta_I( model, prev_model, Av, I_result );
             prev_model = model;
@@ -1007,7 +1007,7 @@ QString US_PM::test( QString name, QString oname )
          us_timers.end_timer( "deeesc sphere delta" );
          log += sphere_pm.msg_log;
       }
-      cout << log.toAscii().data();
+      cout << log.toLatin1().data();
       cout << us_timers.list_times();
    }
 
@@ -1083,7 +1083,7 @@ QString US_PM::test( QString name, QString oname )
 
       if ( !test_pm.create_model( params, model, only_last_model ) )
       {
-         cout << test_pm.error_msg.toAscii().data() << endl;
+         cout << test_pm.error_msg.toLatin1().data() << endl;
       }
 
       vector < int    > types;
@@ -1091,7 +1091,7 @@ QString US_PM::test( QString name, QString oname )
       US_Vector::printvector( "before split: params", params ); 
       if ( !test_pm.split( params, types, fparams ) )
       {
-         cout << test_pm.error_msg.toAscii().data() << endl;
+         cout << test_pm.error_msg.toLatin1().data() << endl;
       }
       US_Vector::printvector( "split: types", types ); 
       US_Vector::printvector( "split: fparams", fparams ); 
@@ -1099,7 +1099,7 @@ QString US_PM::test( QString name, QString oname )
       vector < double > new_params;
       if ( !test_pm.join( new_params, types, fparams ) )
       {
-         cout << test_pm.error_msg.toAscii().data() << endl;
+         cout << test_pm.error_msg.toLatin1().data() << endl;
       }
       US_Vector::printvector( "after join: new_params", new_params ); 
       if ( new_params != params )

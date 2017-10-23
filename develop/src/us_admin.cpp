@@ -156,7 +156,7 @@ void US_Admin::save()
     return;
   }
 
-  QString pdfile = QDir::convertSeparators(
+  QString pdfile = QDir::toNativeSeparators(
      USglobal->config_list.system_dir + "/etc/db_admin.pd" );
 
   FILE* fh;

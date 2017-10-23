@@ -21,8 +21,10 @@
 #include "us_hydrodyn_pdbdefs.h"
 #include "us_hydrodyn_batch.h"
 
-#include <qhttp.h>
-#include <qftp.h>
+#if QT_VERSION < 0x050000
+# include <qhttp.h>
+# include <qftp.h>
+#endif
 
 //standard C and C++ defs:
 
@@ -107,10 +109,13 @@ class US_EXTERN US_Hydrodyn_Cluster_Submit : public QDialog
 
       bool          submit_active;
       bool          comm_active;
+
+#if QT_VERSION < 0x050000
       QHttp         submit_http;
 
       QFtp          ftp;
-
+#endif
+      
       QString       current_xml;
       QString       current_xml_response;
 
@@ -123,7 +128,7 @@ class US_EXTERN US_Hydrodyn_Cluster_Submit : public QDialog
       // any_to_process checks the map and updates status
       // system() commands run with signals, using emit()
 #ifdef WIN32
-# if !defined( QT4 )
+# if QT_VERSION < 0x040000
   #pragma warning ( disable: 4251 )
 # endif
 #endif
@@ -131,7 +136,7 @@ class US_EXTERN US_Hydrodyn_Cluster_Submit : public QDialog
 
       map < QString, QString >         selected_system;
 #ifdef WIN32
-# if !defined( QT4 )
+# if QT_VERSION < 0x040000
   #pragma warning ( default: 4251 )
 # endif
 #endif
@@ -174,8 +179,10 @@ class US_EXTERN US_Hydrodyn_Cluster_Submit : public QDialog
       void help();
 
       void http_stateChanged ( int state );
+#if QT_VERSION < 0x050000
       void http_responseHeaderReceived ( const QHttpResponseHeader & resp );
       void http_readyRead ( const QHttpResponseHeader & resp );
+#endif
       void http_dataSendProgress ( int done, int total );
       void http_dataReadProgress ( int done, int total );
       void http_requestStarted ( int id );

@@ -10,9 +10,11 @@
 //#include <q3frame.h>
 #include <qcheckbox.h>
 #include <qlistwidget.h>
-#include <qhttp.h>
 //Added by qt3to4:
 #include <QCloseEvent>
+#if QT_VERSION < 0x050000
+# include <qhttp.h>
+#endif
 
 #include "us_hydrodyn_cluster.h"
 
@@ -77,20 +79,22 @@ class US_EXTERN US_Hydrodyn_Cluster_Config : public QDialog
       void          *cluster_window;
 
 #ifdef WIN32
-# if !defined( QT4 )
+# if QT_VERSION < 0x040000
   #pragma warning ( disable: 4251 )
 # endif
 #endif
       map < QString, map < QString, QString > > cluster_systems;
 #ifdef WIN32
-# if !defined( QT4 )
+# if QT_VERSION < 0x040000
   #pragma warning ( default: 4251 )
 # endif
 #endif
 
       bool          comm_active;
       QString       comm_mode;
+#if QT_VERSION < 0x050000
       QHttp         submit_http;
+#endif
       QString       current_http;
       QString       current_http_response;
       QString       current_http_error;
@@ -129,8 +133,10 @@ class US_EXTERN US_Hydrodyn_Cluster_Config : public QDialog
       void help();
 
       void http_stateChanged ( int state );
+#if QT_VERSION < 0x050000
       void http_responseHeaderReceived ( const QHttpResponseHeader & resp );
       void http_readyRead ( const QHttpResponseHeader & resp );
+#endif
       void http_dataSendProgress ( int done, int total );
       void http_dataReadProgress ( int done, int total );
       void http_requestStarted ( int id );

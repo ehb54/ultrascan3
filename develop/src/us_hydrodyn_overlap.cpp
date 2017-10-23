@@ -81,7 +81,7 @@ void US_Hydrodyn_Overlap::setupGUI()
    
    if (show_grid_only)
    {
-      other_ORs.clear();
+      other_ORs.clear( );
       grid_exposed_OR = new US_Hydrodyn_OR(grid_exposed_overlap, 
                                            replicate_o_r_method_grid, 
                                            &other_ORs,
@@ -104,7 +104,7 @@ void US_Hydrodyn_Overlap::setupGUI()
    }
    else
    {
-      other_ORs.clear();
+      other_ORs.clear( );
       sidechain_OR = new US_Hydrodyn_OR(sidechain_overlap,
                                         replicate_o_r_method_somo, 
                                         &other_ORs,
@@ -147,7 +147,7 @@ void US_Hydrodyn_Overlap::setupGUI()
    cnt_overlap_tolerance= new QwtCounter(this);
    US_Hydrodyn::sizeArrows( cnt_overlap_tolerance );
    Q_CHECK_PTR(cnt_overlap_tolerance);
-   cnt_overlap_tolerance->setRange(0, 1, 0.0001);
+   cnt_overlap_tolerance->setRange(0, 1); cnt_overlap_tolerance->setSingleStep( 0.0001);
    cnt_overlap_tolerance->setValue(*overlap_tolerance);
    cnt_overlap_tolerance->setMinimumHeight(minHeight1);
    cnt_overlap_tolerance->setEnabled(true);

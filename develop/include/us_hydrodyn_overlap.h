@@ -79,7 +79,7 @@ class US_EXTERN US_Hydrodyn_Overlap : public QFrame
       US_Hydrodyn_OR *grid_buried_OR;
 
 #ifdef WIN32
-# if !defined( QT4 )
+# if QT_VERSION < 0x040000
 #  pragma warning ( disable: 4251 )
 # endif
 #endif
@@ -87,7 +87,7 @@ class US_EXTERN US_Hydrodyn_Overlap : public QFrame
       vector < void *> other_ORs;
 
 #ifdef WIN32
-# if !defined( QT4 )
+# if QT_VERSION < 0x040000
 #  pragma warning ( default: 4251 )
 # endif
 #endif

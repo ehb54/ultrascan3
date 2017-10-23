@@ -276,12 +276,12 @@ bool US_Saxs_Util::pdb_hydrate()
 
 void US_Saxs_Util::build_to_hydrate()
 {
-   to_hydrate.clear();
-   to_hydrate_pointmaps.clear();
+   to_hydrate.clear( );
+   to_hydrate_pointmaps.clear( );
 
-   residue_asa.clear();
-   residue_asa_sc.clear();
-   residue_asa_mc.clear();
+   residue_asa.clear( );
+   residue_asa_sc.clear( );
+   residue_asa_mc.clear( );
 
    unsigned int i = current_model;
 
@@ -404,7 +404,7 @@ void US_Saxs_Util::build_to_hydrate()
 bool US_Saxs_Util::compute_to_hydrate_dihedrals()
 {
    puts("computing to hydrate dihedrals");
-   to_hydrate_dihedrals.clear();
+   to_hydrate_dihedrals.clear( );
 
    vector < point > p(4);
    float dihedral;
@@ -615,12 +615,12 @@ QString US_Saxs_Util::list_exposed()
 
 bool US_Saxs_Util::load_rotamer( QString filename )
 {
-   rotamers.clear();
-   dihedral_atoms.clear();
+   rotamers.clear( );
+   dihedral_atoms.clear( );
 
-   pointmap_atoms.clear();
-   pointmap_atoms_dest.clear();
-   pointmap_atoms_ref_residue.clear();
+   pointmap_atoms.clear( );
+   pointmap_atoms_dest.clear( );
+   pointmap_atoms_ref_residue.clear( );
 
    QFile f( filename );
    if ( !f.exists() )
@@ -667,7 +667,7 @@ bool US_Saxs_Util::load_rotamer( QString filename )
       }
       if ( qsl[ i ].length() > 30 && qsl[ i ].contains( rx_atom ) )
       {
-#ifdef QT4
+#if QT_VERSION >= 0x040000
          qsl[ i ].data()[ 22 ] = ' ';
 #else
          qsl[ i ].at( 22 ) = ' ';
@@ -1029,8 +1029,8 @@ bool US_Saxs_Util::load_rotamer( QString filename )
                      .sprintf(     
                               "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
                               ++apos,
-                              rotated_rotamers[ name ][ jj ][ j ].side_chain[ k ].name.toAscii().data(),
-                              name.left( 3 ).toAscii().data(),
+                              rotated_rotamers[ name ][ jj ][ j ].side_chain[ k ].name.toLatin1().data(),
+                              name.left( 3 ).toLatin1().data(),
                               "A",
                               1,
                               rotated_rotamers[ name ][ jj ][ j ].side_chain[ k ].coordinate.axis[ 0 ],
@@ -1048,7 +1048,7 @@ bool US_Saxs_Util::load_rotamer( QString filename )
                      .sprintf(     
                               "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
                               ++apos,
-                              rotated_rotamers[ name ][ jj ][ j ].waters[ k ].name.toAscii().data(),
+                              rotated_rotamers[ name ][ jj ][ j ].waters[ k ].name.toLatin1().data(),
                               "WAT",
                               "B",
                               2,
@@ -1153,7 +1153,7 @@ bool US_Saxs_Util::load_rotamer( QString filename )
             if ( four_atoms.size() == 4 )
             {
                dihedral_atoms[ res ].push_back( four_atoms );
-               four_atoms.clear();
+               four_atoms.clear( );
             }
          }
          if ( four_atoms.size() )
@@ -1189,9 +1189,9 @@ bool US_Saxs_Util::load_rotamer( QString filename )
          tmp_rotamer.name = qsl_line[ 1 ];
          tmp_rotamer.residue = tmp_rotamer.name.left( 3 );
          tmp_rotamer.extension = tmp_rotamer.name.right( 7 );
-         tmp_rotamer.side_chain.clear();
-         tmp_rotamer.waters.clear();
-         tmp_rotamer.atom_map.clear();
+         tmp_rotamer.side_chain.clear( );
+         tmp_rotamer.waters.clear( );
+         tmp_rotamer.atom_map.clear( );
          in_rotamer = true;
          in_rotamer_waters = false;
          continue;
@@ -1305,7 +1305,7 @@ bool US_Saxs_Util::load_rotamer( QString filename )
    // cout << list_water_positioning_atoms();
 
    // compute totals
-   hydrate_count.clear();
+   hydrate_count.clear( );
    for ( map < QString, vector < vector < QString > > >::iterator it = pointmap_atoms.begin();
          it != pointmap_atoms.end();
          it++ )
@@ -1365,7 +1365,7 @@ bool US_Saxs_Util::compute_rotamer_dihedrals()
             .arg( it->first )
             .arg( it->second[ i ].extension );
 #endif
-         it->second[ i ].dihedral_angles.clear();
+         it->second[ i ].dihedral_angles.clear( );
          // process each dihedral chain, giving 4 points
          for ( unsigned int j = 0; j < dihedral_atoms[ it->first ].size(); j++ )
          {
@@ -1563,7 +1563,7 @@ QString US_Saxs_Util::list_rotamers( bool coords )
 
 bool US_Saxs_Util::compute_best_fit_rotamer()
 {
-   best_fit_rotamer.clear();
+   best_fit_rotamer.clear( );
 
    QRegExp rx_expand_mapkey("^(.+)~(.+)~(.*)$");
 
@@ -1639,7 +1639,7 @@ QString US_Saxs_Util::list_best_fit_rotamer()
 
 bool US_Saxs_Util::setup_pointmap_rotamers()
 {
-   pointmap_rotamers.clear();
+   pointmap_rotamers.clear( );
 
    QRegExp rx_expand_mapkey("^(.+)~(.+)~(.*)$");
 
@@ -1712,14 +1712,14 @@ bool US_Saxs_Util::compute_water_positioning_atoms()
    {
       for ( unsigned int i = 0; i < it->second.size(); i++ )
       {
-         it->second[ i ].water_positioning_atoms.clear();
+         it->second[ i ].water_positioning_atoms.clear( );
 
          // for each water
 
          for ( unsigned int j = 0; j < it->second[ i ].waters.size(); j++ )
          {
-            lsf.clear();
-            wpa.clear();
+            lsf.clear( );
+            wpa.clear( );
             
             // find the distance to each side chain atom
             for ( unsigned int k = 0; k < it->second[ i ].side_chain.size(); k++ )
@@ -1838,7 +1838,7 @@ bool US_Saxs_Util::compute_waters_to_add()
 {
    puts("Transforming waters to add to pdb coordinates");
 
-   steric_clash_summary.clear();
+   steric_clash_summary.clear( );
 
    count_waters           = 0;
    count_waters_added     = 0;
@@ -1846,8 +1846,8 @@ bool US_Saxs_Util::compute_waters_to_add()
 
    vector < point > p1;
    vector < point > p2;
-   waters_to_add.clear();
-   waters_source.clear();
+   waters_to_add.clear( );
+   waters_source.clear( );
 
    QRegExp rx_expand_mapkey("^(.+)~(.+)~(.*)$");
 
@@ -2307,16 +2307,16 @@ bool US_Saxs_Util::buffer_pdb_with_waters()
             .sprintf(     
                      "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
                      this_atom->serial,
-                     this_atom->orgName.toAscii().data(),
-                     this_atom->resName.toAscii().data(),
-                     this_atom->chainID.toAscii().data(),
+                     this_atom->orgName.toLatin1().data(),
+                     this_atom->resName.toLatin1().data(),
+                     this_atom->chainID.toLatin1().data(),
                      this_atom->resSeq.toUInt(),
                      this_atom->coordinate.axis[ 0 ],
                      this_atom->coordinate.axis[ 1 ],
                      this_atom->coordinate.axis[ 2 ],
                      this_atom->occupancy,
                      this_atom->tempFactor,
-                     this_atom->element.toAscii().data()
+                     this_atom->element.toLatin1().data()
                      );
          chains_used[ this_atom->chainID ] = true;
 
@@ -2383,7 +2383,7 @@ bool US_Saxs_Util::buffer_pdb_with_waters()
             .sprintf(     
                      "ATOM  %5d  OW  WAT %1s%4d    %8.3f%8.3f%8.3f  1.00  0.00           O  \n",
                      ++atom_number,
-                     chainID.toAscii().data(),
+                     chainID.toLatin1().data(),
                      ++residue_number,
                      it->second[ i ].axis[ 0 ],
                      it->second[ i ].axis[ 1 ],
@@ -2778,8 +2778,8 @@ bool US_Saxs_Util::pdb_asa_for_saxs_hydrate()
                      if (last_main_bead->bead_positioner &&
                          this_atom->placing_method == 1) {
                         fprintf(stderr, "warning: 2 positioners in bead %s %s %d\n",
-                                last_main_bead->name.toAscii().data(),
-                                last_main_bead->resName.toAscii().data(),
+                                last_main_bead->name.toLatin1().data(),
+                                last_main_bead->resName.toLatin1().data(),
                                 last_main_bead->serial);
                      }
                      last_main_bead->bead_positioner = true;
@@ -2830,8 +2830,8 @@ bool US_Saxs_Util::pdb_asa_for_saxs_hydrate()
                   if (use_atom->bead_positioner &&
                       this_atom->placing_method == 1) {
                      fprintf(stderr, "warning: 2 or more positioners in bead %s %s %d\n",
-                             use_atom->name.toAscii().data(),
-                             use_atom->resName.toAscii().data(),
+                             use_atom->name.toLatin1().data(),
+                             use_atom->resName.toLatin1().data(),
                              use_atom->serial);
                   }
                   use_atom->bead_positioner = true;
@@ -3114,8 +3114,8 @@ bool US_Saxs_Util::pdb_asa_for_saxs_hydrate()
                      this_atom->bead_coordinate = this_atom->bead_cog_coordinate;
                      // if (this_atom->bead_positioner) {
                      // fprintf(stderr, "warning: this bead had a atom claiming position & a bead placing method of cog! %s %s %d\n",
-                     //   this_atom->name.toAscii().data(),
-                     //   this_atom->resName.toAscii().data(),
+                     //   this_atom->name.toLatin1().data(),
+                     //   this_atom->resName.toLatin1().data(),
                      //   this_atom->serial);
                      // }
                      break;
@@ -3129,8 +3129,8 @@ bool US_Saxs_Util::pdb_asa_for_saxs_hydrate()
                      this_atom->bead_coordinate = this_atom->bead_cog_coordinate;
                      fprintf(stderr, "warning: unknown bead placing method %d %s %s %d <using cog!>\n",
                              this_atom->placing_method,
-                             this_atom->name.toAscii().data(),
-                             this_atom->resName.toAscii().data(),
+                             this_atom->name.toLatin1().data(),
+                             this_atom->resName.toLatin1().data(),
                              this_atom->serial);
                      break;
                   }
@@ -3138,8 +3138,8 @@ bool US_Saxs_Util::pdb_asa_for_saxs_hydrate()
                else 
                {
                   errormsg = QString("").sprintf( "serious internal error 1 on %s %s %d, quitting\n",
-                                                  this_atom->name.toAscii().data(),
-                                                  this_atom->resName.toAscii().data(),
+                                                  this_atom->name.toLatin1().data(),
+                                                  this_atom->resName.toLatin1().data(),
                                                   this_atom->serial );
                   return false;
                   break;
@@ -3209,7 +3209,7 @@ bool US_Saxs_Util::create_beads()
 {
    create_beads_normally = true;
 
-   active_atoms.clear();
+   active_atoms.clear( );
 
    // #define DEBUG_MM
    get_atom_map(&model_vector[current_model]);
@@ -3310,8 +3310,8 @@ bool US_Saxs_Util::create_beads()
                  && this_atom->resName != "HOH" && (this_atom->altLoc == "A" || this_atom->altLoc == " ")))
             {
                errormsg.append(QString("").sprintf("unknown residue molecule %d atom %d name %s resname %s coord [%f,%f,%f]\n",
-                                                        j + 1, k, this_atom->name.toAscii().data(),
-                                                        this_atom->resName.toAscii().data(),
+                                                        j + 1, k, this_atom->name.toLatin1().data(),
+                                                        this_atom->resName.toLatin1().data(),
                                                         this_atom->coordinate.axis[0], this_atom->coordinate.axis[1], this_atom->coordinate.axis[2]));
                return false;
             }
@@ -3325,7 +3325,7 @@ bool US_Saxs_Util::create_beads()
          {
             // clear tmp_used if new resSeq
 #if defined(DEBUG)
-            printf("respos %d != -1 last used %s %s\n", respos, this_atom->resSeq.toAscii().data(), last_resSeq.toAscii().data());
+            printf("respos %d != -1 last used %s %s\n", respos, this_atom->resSeq.toLatin1().data(), last_resSeq.toLatin1().data());
 #endif
             if (this_atom->resSeq != last_resSeq ||
                 this_atom->resName != last_resName ||
@@ -3334,7 +3334,7 @@ bool US_Saxs_Util::create_beads()
                 residue_list[respos].name == "N1")
             {
 #if defined(DEBUG)
-               printf("clear last used %s %s\n", this_atom->resSeq.toAscii().data(), last_resSeq.toAscii().data());
+               printf("clear last used %s %s\n", this_atom->resSeq.toLatin1().data(), last_resSeq.toLatin1().data());
 #endif
                for (unsigned int m = 0; m < residue_list[respos].r_atom.size(); m++)
                {
@@ -3362,7 +3362,7 @@ bool US_Saxs_Util::create_beads()
 #if defined(DEBUG)
                if(this_atom->name == "N" && !k && misc_pb_rule_on) {
                   printf("this_atom->name == N/N1 this residue_list[%d].r_atom[%d].name == %s\n",
-                         respos, m, residue_list[respos].r_atom[m].name.toAscii().data());
+                         respos, m, residue_list[respos].r_atom[m].name.toLatin1().data());
                }
 #endif
                if (!residue_list[respos].r_atom[m].tmp_used &&
@@ -3390,8 +3390,8 @@ bool US_Saxs_Util::create_beads()
             if (atompos == -1)
             {
                errormsg.append(QString("").sprintf("unknown atom molecule %d atom %d name %s resname %s coord [%f,%f,%f]\n",
-                                                    j + 1, k, this_atom->name.toAscii().data(),
-                                                    this_atom->resName.toAscii().data(),
+                                                    j + 1, k, this_atom->name.toLatin1().data(),
+                                                    this_atom->resName.toLatin1().data(),
                                                     this_atom->coordinate.axis[0], this_atom->coordinate.axis[1], this_atom->coordinate.axis[2]));
             } 
             else 
@@ -3520,7 +3520,7 @@ bool US_Saxs_Util::create_beads()
 #if defined(DEBUG)
                printf
                   ("skipped bound waters & H %s %s rad %f resseq %s\n",
-                   this_atom->name.toAscii().data(), this_atom->resName.toAscii().data(), this_atom->radius, this_atom->resSeq.toAscii().data());
+                   this_atom->name.toLatin1().data(), this_atom->resName.toLatin1().data(), this_atom->radius, this_atom->resSeq.toLatin1().data());
                fflush(stdout);
 #endif
             }
@@ -3601,8 +3601,8 @@ bool US_Saxs_Util::create_beads()
 
 void US_Saxs_Util::get_atom_map( PDB_model *model )
 {
-   atom_counts.clear();
-   has_OXT.clear();
+   atom_counts.clear( );
+   has_OXT.clear( );
 
    for ( unsigned int j = 0; j < model->molecule.size(); j++ )
    {
@@ -3646,8 +3646,8 @@ void US_Saxs_Util::get_atom_map( PDB_model *model )
 
    // pass for broken chains
    // later add distance check for CA-N ?
-   broken_chain_end.clear();
-   broken_chain_head.clear();
+   broken_chain_end.clear( );
+   broken_chain_head.clear( );
    int breaks = 0;
    int total_aa = 0;
    for (unsigned int j = 0; j < model->molecule.size(); j++)
@@ -3832,8 +3832,8 @@ void US_Saxs_Util::get_atom_map( PDB_model *model )
    // should be chain based
    if ( !total_aa ) // || !advanced_config.pbr_broken_logic )
    {
-      broken_chain_end.clear();
-      broken_chain_head.clear();
+      broken_chain_end.clear( );
+      broken_chain_head.clear( );
    }
 
    // end of atom_counts & has_OXT map create
@@ -3843,19 +3843,19 @@ void US_Saxs_Util::build_molecule_maps( PDB_model *model )
 {
    // creates molecules_residues_atoms map
    // molecules_residues_atoms maps molecule #|resSeq to vector of atom names
-   molecules_residues_atoms.clear();
+   molecules_residues_atoms.clear( );
    // molecules_residue_name maps molecule #|resSeq to residue name
-   molecules_residue_name.clear();
+   molecules_residue_name.clear( );
    // molecules_idx_seq is a vector of the idx's
-   molecules_idx_seq.clear();
-   molecules_residue_errors.clear();
-   molecules_residue_missing_counts.clear();
-   molecules_residue_min_missing.clear();
-   molecules_residue_missing_atoms.clear();
-   molecules_residue_missing_atoms_beads.clear();
-   molecules_residue_missing_atoms_skip.clear();
-   use_residue.clear();
-   skip_residue.clear();
+   molecules_idx_seq.clear( );
+   molecules_residue_errors.clear( );
+   molecules_residue_missing_counts.clear( );
+   molecules_residue_min_missing.clear( );
+   molecules_residue_missing_atoms.clear( );
+   molecules_residue_missing_atoms_beads.clear( );
+   molecules_residue_missing_atoms_skip.clear( );
+   use_residue.clear( );
+   skip_residue.clear( );
 
    map < QString, QString > chains;
    map < QString, QString > resseqs;
@@ -3997,10 +3997,10 @@ void US_Saxs_Util::build_molecule_maps( PDB_model *model )
                   skip_residue[QString("%1|%2").arg(idx).arg(multi_residue_map[resName][j])] = true;
                }
             }
-            molecules_residue_errors[idx].clear();
-            molecules_residue_missing_counts[idx].clear();
-            molecules_residue_missing_atoms[idx].clear();
-            molecules_residue_missing_atoms_beads[idx].clear();
+            molecules_residue_errors[idx].clear( );
+            molecules_residue_missing_counts[idx].clear( );
+            molecules_residue_missing_atoms[idx].clear( );
+            molecules_residue_missing_atoms_beads[idx].clear( );
          } else {
             use_residue[idx] = -1;
          }
@@ -4019,7 +4019,7 @@ bool US_Saxs_Util::check_for_missing_atoms( PDB_model *model, QStringList &qsl )
    // go through molecules, build vector of residues
    // expand vector of residues to atom list from residue file
    // compare expanded list of residues to model ... list missing atoms missing
-   residue_errors.clear();
+   residue_errors.clear( );
    int errors_found = 0;
    get_atom_map(model);
 
@@ -4044,7 +4044,7 @@ bool US_Saxs_Util::check_for_missing_atoms( PDB_model *model, QStringList &qsl )
    }
          
    int failure_errors = 0;
-   bead_exceptions.clear();
+   bead_exceptions.clear( );
 
    // residue types are for automatic build builder to determine
    // if we have a protein, so that a special 'temporary' residue can
@@ -4149,7 +4149,7 @@ bool US_Saxs_Util::check_for_missing_atoms( PDB_model *model, QStringList &qsl )
                if (lastResSeq != this_atom->resSeq)
                {
                   // new residue
-                  // printf("new residue %s\n", this_atom->resSeq.toAscii().data());
+                  // printf("new residue %s\n", this_atom->resSeq.toLatin1().data());
                   residues_found++;
                   if (lastResPos != -1)
                   {
@@ -4282,7 +4282,7 @@ bool US_Saxs_Util::check_for_missing_atoms( PDB_model *model, QStringList &qsl )
                         .arg(this_atom->resName)
                         .arg(this_atom->name)
                         .arg(0); 
-                     printf("cases residue found: idx %s\n", idx.toAscii().data());
+                     printf("cases residue found: idx %s\n", idx.toLatin1().data());
                      if (valid_atom_map[idx].size()) 
                      {
                         puts("case 2.1");
@@ -4590,9 +4590,9 @@ bool US_Saxs_Util::check_for_missing_atoms( PDB_model *model, QStringList &qsl )
          errormsg = "";
          // repair model...
          PDB_model org_model = *model;
-         model->molecule.clear();
+         model->molecule.clear( );
          // we may need to redo the residues also
-         model->residue.clear();
+         model->residue.clear( );
          printf("vbar before: %g\n", model->vbar);
          QString new_residue_name = "";
          map < QString, bool > abb_msg_done;  // keep 1 message for the residue
@@ -4670,7 +4670,7 @@ bool US_Saxs_Util::check_for_missing_atoms( PDB_model *model, QStringList &qsl )
                         if (auto_bb_aa) 
                         {
                            // reset the main chain counts
-                           aa_main_chain.clear();
+                           aa_main_chain.clear( );
                            aa_main_chain["N"] = 0;
                            aa_main_chain["CA"] = 0;
                            aa_main_chain["C"] = 0;
@@ -4706,8 +4706,8 @@ bool US_Saxs_Util::check_for_missing_atoms( PDB_model *model, QStringList &qsl )
                         // new_residue.asa = misc.avg_asa * atom_counts[count_idx];
                         new_residue.asa = 0;
                         new_residue.vbar = misc_avg_vbar;
-                        new_residue.r_atom.clear();
-                        new_residue.r_bead.clear();
+                        new_residue.r_atom.clear( );
+                        new_residue.r_bead.clear( );
                         new_bead.hydration = (unsigned int)(misc_avg_hydration * atom_counts[count_idx] + .5);
                         new_bead.color = 10;         // light green
                         new_bead.placing_method = 0; // cog
@@ -4981,8 +4981,8 @@ bool US_Saxs_Util::check_for_missing_atoms( PDB_model *model, QStringList &qsl )
                         new_residue.molvol = residue_list[orgrespos].molvol;
                         new_residue.asa = residue_list[orgrespos].asa;
                         new_residue.vbar = residue_list[orgrespos].vbar;
-                        new_residue.r_atom.clear();
-                        new_residue.r_bead.clear();
+                        new_residue.r_atom.clear( );
+                        new_residue.r_bead.clear( );
 
                         // create the beads
                         if ( one_bead )
@@ -5191,7 +5191,7 @@ bool US_Saxs_Util::check_for_missing_atoms( PDB_model *model, QStringList &qsl )
                  residue_list[respos].r_atom.size() > 4 ) 
             {
                map < QString, int > aa_main_chain;  // to make sure we have a good main chain
-               aa_main_chain.clear();
+               aa_main_chain.clear( );
                aa_main_chain["N"] = 0;
                aa_main_chain["CA"] = 0;
                aa_main_chain["C"] = 0;
@@ -5296,7 +5296,7 @@ bool US_Saxs_Util::compute_waters_to_add_alt()
 
    // editor_msg( "blue", "NOTICE: only main chain CA-C-N currenly implemented" );
 
-   steric_clash_summary.clear();
+   steric_clash_summary.clear( );
 
    count_waters           = 0;
    count_waters_added     = 0;
@@ -5304,8 +5304,8 @@ bool US_Saxs_Util::compute_waters_to_add_alt()
 
    vector < point > p1;
    vector < point > p2;
-   waters_to_add.clear();
-   waters_source.clear();
+   waters_to_add.clear( );
+   waters_source.clear( );
 
    QRegExp rx_expand_mapkey("^(.+)~(.+)~(.*)$");
 
@@ -5925,16 +5925,16 @@ bool US_Saxs_Util::list_steric_clash_recheck()
       residue_list[ multi_residue_map[ "WAT" ][ 0 ] ].r_atom[ 0 ].hybrid.radius : 1.401;
 
    map < QString, unsigned int > steric_clash_recheck_summary;
-   hydrate_clash_log.clear();
+   hydrate_clash_log.clear( );
    QString hydrate_clash_detail;
    // cout << "steric clash recheck:\n";
 
    hydrate_clash_detail +=
       "Water,clash,radius water,radius clash,sum radii,distance,overlap,percent overlap,water x,clash x, water y, clash y, water z, clash z, source, source2\n";
 
-   hydrate_clash_map_structure .clear();
-   hydrate_clash_map_rtmr_water.clear();
-   hydrate_clash_map_pm_water  .clear();
+   hydrate_clash_map_structure .clear( );
+   hydrate_clash_map_rtmr_water.clear( );
+   hydrate_clash_map_pm_water  .clear( );
 
    map < QString, bool > counted;
 
@@ -6223,7 +6223,7 @@ bool US_Saxs_Util::list_steric_clash_recheck()
    //                .arg( QString( "" ).sprintf( "%.2f", ( double ) count_waters_added * 18e0 / model_vector[ current_model ].mw ) )
    //                );
 
-   last_steric_clash_log.clear();
+   last_steric_clash_log.clear( );
    last_steric_clash_log <<
       QString( "REMARK MW %1 Daltons\n" ).arg( model_vector[ current_model ].mw );
 
@@ -6324,7 +6324,7 @@ bool US_Saxs_Util::list_steric_clash_recheck()
       }
    }
 
-   hydrate_clash_log.clear();
+   hydrate_clash_log.clear( );
    return true;
 }
 

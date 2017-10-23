@@ -430,10 +430,10 @@
 
 #include <stdio.h>
 #ifndef TRUE
-#define TRUE   1
+#define true   1
 #endif
 #ifndef FALSE
-#define FALSE 0
+#define false 0
 #endif
 #define EPSILON_FUZZ 1.0e-35      /* Epsilon fuzz value */
 #define LMADDR   unsigned int     /* Type of indexes into long memory */
@@ -1447,7 +1447,7 @@
    void    fiofdata(int option,void* str,int ns);
 #else
    extern LONG    fifidint();        /* FORTRAN intrinsic function IDINT */
-   extern int     fifindex( );        /* FORTRAN intrinsic function INDEX */
+   extern int     fifindex();        /* FORTRAN intrinsic function INDEX */
    extern LONG    fifipow();         /* Compute long integer power */
    extern int     fioclose();
    extern char*(* FioConvertName)();
@@ -5950,7 +5950,7 @@
             /*                                                                  */
             /* Step 4: If free-field input is being performed, read the next    */
             /* character from the input stream using free-form conventions. If  */
-            /* it is a 'T' or 't' then set the value to TRUE, else set it to    */
+            /* it is a 'T' or 't' then set the value to true, else set it to    */
             /* FALSE. Then loop back to step 1.                                 */
             /*                                                                  */
             /********************************************************************/
@@ -5984,7 +5984,7 @@
             /*                                                                  */
             /* Step 6: If an "L" format specification is encountered, determine */
             /* the field width and read the first nonblank character. If it is  */
-            /* a 'T' or 't' then set the value to TRUE, else set it to FALSE.   */
+            /* a 'T' or 't' then set the value to true, else set it to FALSE.   */
             /* Then loop back to step 1.                                        */
             /*                                                                  */
             /********************************************************************/
@@ -7052,7 +7052,7 @@
             /*                                                                  */
             /* Step 4: If free-field input is being performed, read the next    */
             /* character from the input stream using free-form conventions. If  */
-            /* it is a 'T' or 't' then  set the value to TRUE, else set it to   */
+            /* it is a 'T' or 't' then  set the value to true, else set it to   */
             /* FALSE. Then loop back to step 1.                                 */
             /*                                                                  */
             /*------------------------------------------------------------------*/
@@ -7090,7 +7090,7 @@
             /*                                                                  */
             /* Step 6: If an "L" format specification is encountered, determine */
             /* the field width and read the first nonblank character. If it is  */
-            /* a 'T' or 't' then set the value to TRUE, else set it to FALSE.   */
+            /* a 'T' or 't' then set the value to true, else set it to FALSE.   */
             /* Then loop back to step 1.                                        */
             /*                                                                  */
             /*------------------------------------------------------------------*/
@@ -11002,10 +11002,10 @@
      for the C and FORTRAN user biases.
    */
 #ifndef TRUE
-#define TRUE          1
+#define true          1
 #endif
 #ifndef FALSE
-#define FALSE         0
+#define false         0
 #endif
 #define OPEN          ftnopen
 #define PAUSE         ftnpause
@@ -12575,7 +12575,7 @@
    extern char* (*FioLocalName)();
    extern void  (*FioCloseOperation)(); 
    extern int  fiogetname();         /* Get name of file from OS */
-   extern int  fifindex( );           /* FORTRAN intrinsic function INDEX */
+   extern int  fifindex();           /* FORTRAN intrinsic function INDEX */
    extern void fiortxt();            /* Read next text record */
 #endif
 
@@ -21477,7 +21477,7 @@ char* FioStorage(Length)
 ; display. If this width is too small for the number, then the output will
 ; be a string of asterisks filling the field. Valid characters for the
 ; string are 
-|    6 9 +  -  $  ,  *  Z  #  .  CR  DB B  0 / ( )
+|    6 9 +  -  $  ,  *  Z  #  .  CR  DB B  0 / ()
 ; The use of these valid characters is explained below:
 ;
 ; Char  Use

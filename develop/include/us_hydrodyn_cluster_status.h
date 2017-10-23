@@ -19,11 +19,13 @@
 #include "us_hydrodyn_pdbdefs.h"
 #include "us_hydrodyn_batch.h"
 
-#include <qhttp.h>
-#include <qftp.h>
+#if QT_VERSION < 0x050000
+# include <qhttp.h>
+# include <qftp.h>
+#endif
 
 #ifdef WIN32
-# if !defined( QT4 )
+# if QT_VERSION < 0x040000
   #pragma warning ( disable: 4251 )
 # endif
 #endif
@@ -94,9 +96,10 @@ class US_EXTERN US_Hydrodyn_Cluster_Status : public QDialog
 
       bool          comm_active;
       QString       comm_mode;
+#if QT_VERSION < 0x050000
       QHttp         submit_http;
-
       QFtp          ftp;
+#endif
 
       QFile         *ftp_file;
       QString       ftp_url;
@@ -148,8 +151,11 @@ class US_EXTERN US_Hydrodyn_Cluster_Status : public QDialog
       void get_next_retrieve();
 
       void http_stateChanged ( int state );
+
+#if QT_VERSION < 0x050000
       void http_responseHeaderReceived ( const QHttpResponseHeader & resp );
       void http_readyRead ( const QHttpResponseHeader & resp );
+#endif
       void http_dataSendProgress ( int done, int total );
       void http_dataReadProgress ( int done, int total );
       void http_requestStarted ( int id );
@@ -177,7 +183,7 @@ class US_EXTERN US_Hydrodyn_Cluster_Status : public QDialog
 };
 
 #ifdef WIN32
-# if !defined( QT4 )
+# if QT_VERSION < 0x040000
   #pragma warning ( default: 4251 )
 # endif
 #endif

@@ -34,7 +34,7 @@ double US_Hydrodyn_Saxs::get_mw( QString filename, bool display_mw_msg )
               it != (*match_remember_mw).end();
               it++)
          {
-            // printf("iterator first %s\n", it->first.toAscii().data());
+            // printf("iterator first %s\n", it->first.toLatin1().data());
             // printf("iterator second %f\n", it->second);
             
             if ( filename.contains(it->first) )
@@ -88,7 +88,7 @@ double US_Hydrodyn_Saxs::get_mw( QString filename, bool display_mw_msg )
          (*match_remember_mw)[partial] = mw;
       }
    }
-   //   printf( "%s is %g\n",  QString( "get mw filename %1" ).arg( filename ).toAscii().data(), mw );
+   //   printf( "%s is %g\n",  QString( "get mw filename %1" ).arg( filename ).toLatin1().data(), mw );
    return mw;
 }
 
@@ -613,11 +613,11 @@ void US_Hydrodyn_Saxs::sync_conc_csv() // removes deleted curves, adds non-extan
       // setup & add all
       conc_csv.name = "Set Curve Concentration, PSV and I0 standard experimental";
 
-      conc_csv.header.clear();
-      conc_csv.header_map.clear();
-      conc_csv.data.clear();
-      conc_csv.num_data.clear();
-      conc_csv.prepended_names.clear();
+      conc_csv.header.clear( );
+      conc_csv.header_map.clear( );
+      conc_csv.data.clear( );
+      conc_csv.num_data.clear( );
+      conc_csv.prepended_names.clear( );
       
       conc_csv.header.push_back("File");
       conc_csv.header.push_back("Concentration (mg/ml)");
@@ -637,9 +637,9 @@ void US_Hydrodyn_Saxs::sync_conc_csv() // removes deleted curves, adds non-extan
       current_files[ qsl_plotted_iq_names[ i ] ] = true;
    }
    csv new_csv = conc_csv;
-   new_csv.data.clear();
-   new_csv.num_data.clear();
-   new_csv.prepended_names.clear();
+   new_csv.data.clear( );
+   new_csv.num_data.clear( );
+   new_csv.prepended_names.clear( );
    for ( unsigned int i = 0; i < conc_csv.data.size(); i++ )
    {
       csv_files[ conc_csv.data[ i ][ 0 ] ] = true;

@@ -734,15 +734,15 @@ void US_Hydrodyn_Batch::setupGUI()
    editor->setMinimumWidth(350);
 
 #if QT_VERSION < 0x040000
-# if defined(QT4) && defined(Q_WS_MAC)
+# if QT_VERSION >= 0x040000 && defined(Q_WS_MAC)
    {
  //      Q3PopupMenu * file = new Q3PopupMenu;
-      file->insertItem( us_tr("&Font"),  this, SLOT(update_font( )),    Qt::ALT+Qt::Key_F );
-      file->insertItem( us_tr("&Save"),  this, SLOT(save( )),    Qt::ALT+Qt::Key_S );
+      file->insertItem( us_tr("&Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
+      file->insertItem( us_tr("&Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
 #  ifndef NO_EDITOR_PRINT
-      file->insertItem( us_tr("&Print"), this, SLOT(print( )),   Qt::ALT+Qt::Key_P );
+      file->insertItem( us_tr("&Print"), this, SLOT(print()),   Qt::ALT+Qt::Key_P );
 #  endif
-      file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display( )),   Qt::ALT+Qt::Key_X );
+      file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
 
       QMenuBar * menu = new QMenuBar( this );
       AUTFBACK( menu );
@@ -756,15 +756,15 @@ void US_Hydrodyn_Batch::setupGUI()
    AUTFBACK( m );
  //   Q3PopupMenu * file = new Q3PopupMenu(editor);
    m->insertItem( us_tr("&File"), file );
-   file->insertItem( us_tr("Font"),  this, SLOT(update_font( )),    Qt::ALT+Qt::Key_F );
-   file->insertItem( us_tr("Save"),  this, SLOT(save( )),    Qt::ALT+Qt::Key_S );
+   file->insertItem( us_tr("Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
+   file->insertItem( us_tr("Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
 #  ifndef NO_EDITOR_PRINT
-   file->insertItem( us_tr("Print"), this, SLOT(print( )),   Qt::ALT+Qt::Key_P );
+   file->insertItem( us_tr("Print"), this, SLOT(print()),   Qt::ALT+Qt::Key_P );
 #  endif
-   file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display( )),   Qt::ALT+Qt::Key_X );
+   file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
 # endif
 #else
-# if defined( Q_WS_MAC )
+# if defined( Q_OS_MAC )
    m = new QMenuBar(  this );    m->setObjectName( "menu" );
 # else
    m = new QMenuBar(  editor );    m->setObjectName( "menu" );
@@ -911,7 +911,7 @@ void US_Hydrodyn_Batch::setupGUI()
 
    stopFlag = false;
 
-   status_color.clear();
+   status_color.clear( );
    status_color.resize(8);
 #if defined(BW_LISTBOX)
    status_color[0] = "";
@@ -1110,15 +1110,15 @@ void US_Hydrodyn_Batch::select_all()
 
 void US_Hydrodyn_Batch::remove_files()
 {
-   if ( lbl_selected->text() == QString("Selected: %1").arg(lb_files->count( )) ) 
+   if ( lbl_selected->text() == QString("Selected: %1").arg(lb_files->count()) ) 
    {
-      status.clear();
-      batch->file.clear();
-      lb_files->clear();
+      status.clear( );
+      batch->file.clear( );
+      lb_files->clear( );
       return;
    }
    disable_updates = true;
-   batch->file.clear();
+   batch->file.clear( );
    for ( int i = 0; i < lb_files->count(); i++ )
    {
       if ( !lb_files->item(i)->isSelected() )
@@ -1662,7 +1662,7 @@ void US_Hydrodyn_Batch::set_issue_info( bool as_batch )
 {
    set < QString > *issue_info = &(((US_Hydrodyn *)us_hydrodyn)->issue_info);
 
-   issue_info->clear();
+   issue_info->clear( );
 
    if ( as_batch ) {
       switch( batch->missing_atoms ) {
@@ -2099,21 +2099,21 @@ void US_Hydrodyn_Batch::start( bool quiet )
    if ( cb_avg_hydro->isChecked() )
    {
       save_batch_active = true;
-      ((US_Hydrodyn *)us_hydrodyn)->save_params.data_vector.clear();
+      ((US_Hydrodyn *)us_hydrodyn)->save_params.data_vector.clear( );
    }
 
    if ( batch->csv_saxs )
    {
-      csv_source_name_iqq.clear();
-      saxs_q.clear();
-      saxs_iqq.clear();
-      saxs_iqqa.clear();
-      saxs_iqqc.clear();
-      csv_source_name_prr.clear();
-      saxs_r.clear();
-      saxs_prr.clear();
-      saxs_prr_norm.clear();
-      saxs_prr_mw.clear();
+      csv_source_name_iqq.clear( );
+      saxs_q.clear( );
+      saxs_iqq.clear( );
+      saxs_iqqa.clear( );
+      saxs_iqqc.clear( );
+      csv_source_name_prr.clear( );
+      saxs_r.clear( );
+      saxs_prr.clear( );
+      saxs_prr_norm.clear( );
+      saxs_prr_mw.clear( );
    }
 
    bool proceed_anyway = 
@@ -2146,7 +2146,7 @@ void US_Hydrodyn_Batch::start( bool quiet )
             editor->setTextColor(save_color);
             disable_updates = false;
             save_batch_active = false;
-            ((US_Hydrodyn *)us_hydrodyn)->save_params.data_vector.clear();
+            ((US_Hydrodyn *)us_hydrodyn)->save_params.data_vector.clear( );
             if ( overwriteForcedOn )
             {
                ((US_Hydrodyn *)us_hydrodyn)->overwrite = false;
@@ -2188,7 +2188,7 @@ void US_Hydrodyn_Batch::start( bool quiet )
                editor->setTextColor(save_color);
                disable_updates = false;
                save_batch_active = false;
-               ((US_Hydrodyn *)us_hydrodyn)->save_params.data_vector.clear();
+               ((US_Hydrodyn *)us_hydrodyn)->save_params.data_vector.clear( );
                if ( overwriteForcedOn )
                {
                   ((US_Hydrodyn *)us_hydrodyn)->overwrite = false;
@@ -2237,7 +2237,7 @@ void US_Hydrodyn_Batch::start( bool quiet )
                editor->setTextColor(save_color);
                disable_updates = false;
                save_batch_active = false;
-               ((US_Hydrodyn *)us_hydrodyn)->save_params.data_vector.clear();
+               ((US_Hydrodyn *)us_hydrodyn)->save_params.data_vector.clear( );
                if ( overwriteForcedOn )
                {
                   ((US_Hydrodyn *)us_hydrodyn)->overwrite = false;
@@ -2377,7 +2377,7 @@ void US_Hydrodyn_Batch::start( bool quiet )
                               } else {
 #endif                              
                                  csv_source_name_iqq.push_back( file + " " + 
-                                                                lb_model->item( ii )->text( ) );
+                                                                lb_model->item( ii )->text() );
 #if defined(USE_H)
                               }
 #endif
@@ -2499,12 +2499,12 @@ void US_Hydrodyn_Batch::start( bool quiet )
                            if ( batch->hydrate )
                            {
                               csv_source_name_iqq.push_back( file + " hydrated " + 
-                                                             lb_model->item(0)->text( )
+                                                             lb_model->item(0)->text()
                                                              );
                            } else {
 #endif
                               csv_source_name_iqq.push_back( file + " " + 
-                                                             lb_model->item(0)->text( )
+                                                             lb_model->item(0)->text()
                                                              );
 #if defined(USE_H)
                            }
@@ -2542,7 +2542,7 @@ void US_Hydrodyn_Batch::start( bool quiet )
                editor->setTextColor(save_color);
                disable_updates = false;
                save_batch_active = false;
-               ((US_Hydrodyn *)us_hydrodyn)->save_params.data_vector.clear();
+               ((US_Hydrodyn *)us_hydrodyn)->save_params.data_vector.clear( );
                if ( overwriteForcedOn )
                {
                   ((US_Hydrodyn *)us_hydrodyn)->overwrite = false;
@@ -2615,9 +2615,9 @@ void US_Hydrodyn_Batch::start( bool quiet )
 #endif
                         if ( !pdb_mode && batch->equi_grid )
                         {
-                           ((US_Hydrodyn *)us_hydrodyn)->dammix_remember_mw.clear();
-                           ((US_Hydrodyn *)us_hydrodyn)->dammix_remember_mw_source.clear();
-                           ((US_Hydrodyn *)us_hydrodyn)->dammix_match_remember_mw.clear();
+                           ((US_Hydrodyn *)us_hydrodyn)->dammix_remember_mw.clear( );
+                           ((US_Hydrodyn *)us_hydrodyn)->dammix_remember_mw_source.clear( );
+                           ((US_Hydrodyn *)us_hydrodyn)->dammix_match_remember_mw.clear( );
                            ((US_Hydrodyn *)us_hydrodyn)->equi_grid_bead_model( -1e0 );
                         }
                         job_timer.init_timer ( QString( "%1 calc_prr" ).arg( get_file_name( i ) ) );
@@ -2637,7 +2637,7 @@ void US_Hydrodyn_Batch::start( bool quiet )
                            } else {
 #endif                              
                               csv_source_name_prr.push_back( file + " " + 
-                                                             lb_model->item( ii )->text( ) );
+                                                             lb_model->item( ii )->text() );
 #if defined(USE_H)
                            }
 #endif
@@ -2703,9 +2703,9 @@ void US_Hydrodyn_Batch::start( bool quiet )
 #endif
                      if ( !pdb_mode && batch->equi_grid )
                      {
-                        ((US_Hydrodyn *)us_hydrodyn)->dammix_remember_mw.clear();
-                        ((US_Hydrodyn *)us_hydrodyn)->dammix_remember_mw_source.clear();
-                        ((US_Hydrodyn *)us_hydrodyn)->dammix_match_remember_mw.clear();
+                        ((US_Hydrodyn *)us_hydrodyn)->dammix_remember_mw.clear( );
+                        ((US_Hydrodyn *)us_hydrodyn)->dammix_remember_mw_source.clear( );
+                        ((US_Hydrodyn *)us_hydrodyn)->dammix_match_remember_mw.clear( );
                         ((US_Hydrodyn *)us_hydrodyn)->equi_grid_bead_model( -1e0 );
                      }
                      job_timer.init_timer ( QString( "%1 calc_prr" ).arg( get_file_name( i ) ) );
@@ -2721,12 +2721,12 @@ void US_Hydrodyn_Batch::start( bool quiet )
                         if ( batch->hydrate )
                         {
                            csv_source_name_prr.push_back( file + " hydrated " + 
-                                                          lb_model->item(0)->text( )
+                                                          lb_model->item(0)->text()
                                                           );
                         } else {
 #endif
                            csv_source_name_prr.push_back( file + " " + 
-                                                          lb_model->item(0)->text( )
+                                                          lb_model->item(0)->text()
                                                           );
 #if defined(USE_H)
                         }
@@ -2764,7 +2764,7 @@ void US_Hydrodyn_Batch::start( bool quiet )
                editor->setTextColor(save_color);
                disable_updates = false;
                save_batch_active = false;
-               ((US_Hydrodyn *)us_hydrodyn)->save_params.data_vector.clear();
+               ((US_Hydrodyn *)us_hydrodyn)->save_params.data_vector.clear( );
                if ( overwriteForcedOn )
                {
                   ((US_Hydrodyn *)us_hydrodyn)->overwrite = false;
@@ -2825,16 +2825,16 @@ void US_Hydrodyn_Batch::start( bool quiet )
       {
          save_csv_saxs_prr();
       }
-      csv_source_name_iqq.clear();
-      saxs_q.clear();
-      saxs_iqq.clear();
-      saxs_iqqa.clear();
-      saxs_iqqc.clear();
-      csv_source_name_prr.clear();
-      saxs_r.clear();
-      saxs_prr.clear();
-      saxs_prr_norm.clear();
-      saxs_prr_mw.clear();
+      csv_source_name_iqq.clear( );
+      saxs_q.clear( );
+      saxs_iqq.clear( );
+      saxs_iqqa.clear( );
+      saxs_iqqc.clear( );
+      csv_source_name_prr.clear( );
+      saxs_r.clear( );
+      saxs_prr.clear( );
+      saxs_prr_norm.clear( );
+      saxs_prr_mw.clear( );
    }
    if ( save_batch_active )
    {
@@ -2859,11 +2859,11 @@ void US_Hydrodyn_Batch::start( bool quiet )
       {
          for ( unsigned int i = 0; i < ((US_Hydrodyn *)us_hydrodyn)->save_params.data_vector.size(); i++ )
          {
-            fprintf(of, "%s", ((US_Hydrodyn *)us_hydrodyn)->save_params.data_vector[i].hydro_res.toAscii().data());
+            fprintf(of, "%s", ((US_Hydrodyn *)us_hydrodyn)->save_params.data_vector[i].hydro_res.toLatin1().data());
          }
          if ( stats.size() == 2 )
          {
-            fprintf(of, "%s", ((US_Hydrodyn *)us_hydrodyn)->save_util->hydroFormatStats(stats).toAscii().data());
+            fprintf(of, "%s", ((US_Hydrodyn *)us_hydrodyn)->save_util->hydroFormatStats(stats).toLatin1().data());
          }
          fclose(of);
       }
@@ -2877,21 +2877,21 @@ void US_Hydrodyn_Batch::start( bool quiet )
          FILE *of = us_fopen(fname, "wb");
          if ( of )
          {
-            fprintf(of, "%s", ((US_Hydrodyn *)us_hydrodyn)->save_util->header().toAscii().data());
+            fprintf(of, "%s", ((US_Hydrodyn *)us_hydrodyn)->save_util->header().toLatin1().data());
             for ( unsigned int i = 0; i < ((US_Hydrodyn *)us_hydrodyn)->save_params.data_vector.size(); i++ )
             {
-               fprintf(of, "%s", ((US_Hydrodyn *)us_hydrodyn)->save_util->dataString(&(((US_Hydrodyn *)us_hydrodyn)->save_params.data_vector[i])).toAscii().data());
+               fprintf(of, "%s", ((US_Hydrodyn *)us_hydrodyn)->save_util->dataString(&(((US_Hydrodyn *)us_hydrodyn)->save_params.data_vector[i])).toLatin1().data());
             }
             if ( stats.size() == 2 ) 
             {
-               fprintf(of, "%s", ((US_Hydrodyn *)us_hydrodyn)->save_util->dataString(&stats[0]).toAscii().data());
-               fprintf(of, "%s", ((US_Hydrodyn *)us_hydrodyn)->save_util->dataString(&stats[1]).toAscii().data());
+               fprintf(of, "%s", ((US_Hydrodyn *)us_hydrodyn)->save_util->dataString(&stats[0]).toLatin1().data());
+               fprintf(of, "%s", ((US_Hydrodyn *)us_hydrodyn)->save_util->dataString(&stats[1]).toLatin1().data());
             }
             fclose(of);
          }
       }  
    }
-   ((US_Hydrodyn *)us_hydrodyn)->save_params.data_vector.clear();
+   ((US_Hydrodyn *)us_hydrodyn)->save_params.data_vector.clear( );
    progress->setValue( 1 ); progress->setMaximum( 1 );
    disable_updates = false;
    enable_after_stop();
@@ -2977,7 +2977,7 @@ void US_Hydrodyn_Batch::print()
 
 void US_Hydrodyn_Batch::clear_display()
 {
-   editor->clear();
+   editor->clear( );
    editor->append(QString(us_tr("\n\nWelcome to SOMO UltraScan batch control %1 %2\n"))
 		  .arg(US_Version)
 		  .arg(REVISION)
@@ -3087,7 +3087,7 @@ void US_Hydrodyn_Batch::check_for_missing_files(bool display_messages)
    QColor save_color = editor->textColor();
    bool is_selected;
    int item = lb_files->currentRow();
-   bool item_selected = item >= 0 ? lb_files->item(item)->isSelected( ) : false;
+   bool item_selected = item >= 0 ? lb_files->item(item)->isSelected() : false;
    unsigned int count = 0;
    for ( int i = 0; i < lb_files->count(); i++ )
    {
@@ -3096,7 +3096,7 @@ void US_Hydrodyn_Batch::check_for_missing_files(bool display_messages)
          qApp->processEvents();
       }
       f = get_file_name(i);
-      is_selected = lb_files->item(i)->isSelected( );
+      is_selected = lb_files->item(i)->isSelected();
       if ( QFile::exists(f) )
       {
          if ( !status.count(f) ||
@@ -3129,7 +3129,7 @@ void US_Hydrodyn_Batch::check_for_missing_files(bool display_messages)
 
 void US_Hydrodyn_Batch::set_counts()
 {
-   lbl_total_files->setText(QString("Total files: %1").arg(lb_files->count( )));
+   lbl_total_files->setText(QString("Total files: %1").arg(lb_files->count()));
    unsigned int count = 0;
    for ( int i = 0; i < lb_files->count(); i++ )
    {
@@ -3148,9 +3148,9 @@ int US_Hydrodyn_Batch::count_files()
 
 void US_Hydrodyn_Batch::clear_files()
 {
-   batch->file.clear();
-   status.clear();
-   lb_files->clear();
+   batch->file.clear( );
+   status.clear( );
+   lb_files->clear( );
    update_enables();
 }
 
@@ -3158,7 +3158,7 @@ void US_Hydrodyn_Batch::make_movie()
 {
 #if !defined(WIN32)
    // puts("make movie");
-   ((US_Hydrodyn *)us_hydrodyn)->movie_text.clear();   
+   ((US_Hydrodyn *)us_hydrodyn)->movie_text.clear( );   
    disable_updates = true;
    QString cmds = "";
 
@@ -3352,21 +3352,21 @@ void US_Hydrodyn_Batch::make_movie()
          tc_start += tc_delta;
       }
       cout << "cmdlog [" << cmdlog << "]\n";
-      system(cmdlog.toAscii().data());
+      system(cmdlog.toLatin1().data());
       cout << "cmd0 [" << cmd0 << "]\ncmd2 [" << cmd2 << "]\n";
-      system(cmd0.toAscii().data());
+      system(cmd0.toLatin1().data());
       for ( unsigned int i = 0; i < cmd1.size(); i++ )
       {
          cout << QString("cmd1:%1 [%2]\n").arg(i).arg(cmd1[i]);
-         system(cmd1[i].toAscii().data());
+         system(cmd1[i].toLatin1().data());
       }
-      system(cmd2.toAscii().data());
+      system(cmd2.toLatin1().data());
       if ( clean_up ) 
       {
          for ( unsigned int i = 0; i < cmd3.size(); i++ )
          {
             cout << QString("cmd3:%1 [%2]\n").arg(i).arg(cmd3[i]);
-            system(cmd3[i].toAscii().data());
+            system(cmd3[i].toLatin1().data());
          }
       }
    } else {
@@ -3501,16 +3501,16 @@ void US_Hydrodyn_Batch::save_csv_saxs_iqq( bool quiet )
 
       //  header: "name","type",q1,q2,...,qn, header info
       fprintf(of, "\"Name\",\"Type; q:\",%s,\"%s\"\n", 
-              vector_double_to_csv(saxs_q).toAscii().data(),
-              saxs_header_iqq.remove("\n").toAscii().data());
+              vector_double_to_csv(saxs_q).toLatin1().data(),
+              saxs_header_iqq.remove("\n").toLatin1().data());
       if ( !cb_compute_iq_only_avg->isChecked() )
       {
          for ( unsigned int i = 0; i < csv_source_name_iqq.size(); i++ )
          {
             fprintf(of, "\"%s\",\"%s\",%s\n", 
-                    csv_source_name_iqq[i].toAscii().data(),
+                    csv_source_name_iqq[i].toLatin1().data(),
                     "I(q)",
-                    vector_double_to_csv(saxs_iqq[i]).toAscii().data());
+                    vector_double_to_csv(saxs_iqq[i]).toLatin1().data());
          }
       }
       fprintf(of, "\n");
@@ -3523,9 +3523,9 @@ void US_Hydrodyn_Batch::save_csv_saxs_iqq( bool quiet )
             {
                any_printed = true;
                fprintf(of, "\"%s\",\"%s\",%s\n", 
-                       csv_source_name_iqq[i].toAscii().data(),
+                       csv_source_name_iqq[i].toLatin1().data(),
                        "Ia(q)",
-                       vector_double_to_csv(saxs_iqqa[i]).toAscii().data());
+                       vector_double_to_csv(saxs_iqqa[i]).toLatin1().data());
             }
          }
       }
@@ -3540,9 +3540,9 @@ void US_Hydrodyn_Batch::save_csv_saxs_iqq( bool quiet )
             if ( saxs_iqqc[i].size() )
             {
                fprintf(of, "\"%s\",\"%s\",%s\n", 
-                       csv_source_name_iqq[i].toAscii().data(),
+                       csv_source_name_iqq[i].toLatin1().data(),
                        "Ic(q)",
-                       vector_double_to_csv(saxs_iqqc[i]).toAscii().data());
+                       vector_double_to_csv(saxs_iqqc[i]).toLatin1().data());
             }
          }
       }
@@ -3552,25 +3552,25 @@ void US_Hydrodyn_Batch::save_csv_saxs_iqq( bool quiet )
          fprintf(of, "\n\"%s\",\"%s\",%s\n", 
                  "Average",
                  "I(q)",
-                 vector_double_to_csv(iq_avg).toAscii().data());
+                 vector_double_to_csv(iq_avg).toLatin1().data());
          if ( batch->compute_iq_std_dev && sum_count > 2 )
          {
             fprintf(of, "\"%s\",\"%s\",%s\n", 
                     "Average",
                     "I(q) sd",
-                    vector_double_to_csv(iq_std_dev).toAscii().data());
+                    vector_double_to_csv(iq_std_dev).toLatin1().data());
             fprintf(of, "\"%s\",\"%s\",%s\n", 
                     "Standard deviation",
                     "I(q)",
-                    vector_double_to_csv(iq_std_dev).toAscii().data());
+                    vector_double_to_csv(iq_std_dev).toLatin1().data());
             fprintf(of, "\"%s\",\"%s\",%s\n", 
                     "Average minus 1 standard deviation",
                     "I(q)",
-                    vector_double_to_csv(iq_avg_minus_std_dev).toAscii().data());
+                    vector_double_to_csv(iq_avg_minus_std_dev).toLatin1().data());
             fprintf(of, "\"%s\",\"%s\",%s\n", 
                     "Average plus 1 standard deviation",
                     "I(q)",
-                    vector_double_to_csv(iq_avg_plus_std_dev).toAscii().data());
+                    vector_double_to_csv(iq_avg_plus_std_dev).toLatin1().data());
          }
       }
 
@@ -3716,19 +3716,19 @@ void US_Hydrodyn_Batch::save_csv_saxs_prr()
 
       //  header: "name","type",r1,r2,...,rn, header info
       fprintf(of, "\"Name\",\"MW (Daltons)\",\"Area\",\"Type; r:\",%s,\"%s\"\n", 
-              vector_double_to_csv(saxs_r).toAscii().data(),
-              saxs_header_prr.remove("\n").toAscii().data()
+              vector_double_to_csv(saxs_r).toLatin1().data(),
+              saxs_header_prr.remove("\n").toLatin1().data()
               );
       float sum_mw = 0.0;
       for ( unsigned int i = 0; i < csv_source_name_prr.size(); i++ )
       {
          sum_mw += saxs_prr_mw[i];
          fprintf(of, "\"%s\",%.2f,%.2f,\"%s\",%s\n", 
-                 csv_source_name_prr[i].toAscii().data(),
+                 csv_source_name_prr[i].toLatin1().data(),
                  saxs_prr_mw[i],
                  compute_pr_area(saxs_prr[i], saxs_r),
                  "P(r)",
-                 vector_double_to_csv(saxs_prr[i]).toAscii().data());
+                 vector_double_to_csv(saxs_prr[i]).toLatin1().data());
       }
       fprintf(of, "\n");
       if ( csv_source_name_prr.size() )
@@ -3738,11 +3738,11 @@ void US_Hydrodyn_Batch::save_csv_saxs_prr()
       for ( unsigned int i = 0; i < csv_source_name_prr.size(); i++ )
       {
          fprintf(of, "\"%s\",%.2f,%.2f,\"%s\",%s\n", 
-                 csv_source_name_prr[i].toAscii().data(),
+                 csv_source_name_prr[i].toLatin1().data(),
                  saxs_prr_mw[i],
                  compute_pr_area(saxs_prr_norm[i], saxs_r),
                  "P(r) normed",
-                 vector_double_to_csv(saxs_prr_norm[i]).toAscii().data());
+                 vector_double_to_csv(saxs_prr_norm[i]).toLatin1().data());
       }
       if ( batch->compute_prr_avg && sum_count > 1 )
       {
@@ -3751,7 +3751,7 @@ void US_Hydrodyn_Batch::save_csv_saxs_prr()
                  pr_mw_avg,
                  compute_pr_area(pr_avg, saxs_r),
                  "P(r)",
-                 vector_double_to_csv(pr_avg).toAscii().data());
+                 vector_double_to_csv(pr_avg).toLatin1().data());
          if ( batch->compute_prr_std_dev && sum_count > 2 )
          {
             fprintf(of, "\"%s\",%.2f,%.2f,\"%s\",%s\n", 
@@ -3759,19 +3759,19 @@ void US_Hydrodyn_Batch::save_csv_saxs_prr()
                     pr_mw_std_dev,
                     compute_pr_area(pr_std_dev, saxs_r),
                     "P(r)",
-                    vector_double_to_csv(pr_std_dev).toAscii().data());
+                    vector_double_to_csv(pr_std_dev).toLatin1().data());
             fprintf(of, "\"%s\",%.2f,%.2f,\"%s\",%s\n", 
                     "Average minus 1 standard deviation",
                     pr_mw_avg - pr_mw_std_dev,
                     compute_pr_area(pr_avg_minus_std_dev, saxs_r),
                     "P(r)",
-                    vector_double_to_csv(pr_avg_minus_std_dev).toAscii().data());
+                    vector_double_to_csv(pr_avg_minus_std_dev).toLatin1().data());
             fprintf(of, "\"%s\",%.2f,%.2f,\"%s\",%s\n", 
                     "Average plus 1 standard deviation",
                     pr_mw_avg + pr_mw_std_dev,
                     compute_pr_area(pr_avg_plus_std_dev, saxs_r),
                     "P(r)",
-                    vector_double_to_csv(pr_avg_plus_std_dev).toAscii().data());
+                    vector_double_to_csv(pr_avg_plus_std_dev).toLatin1().data());
          }
       }
       fclose(of);

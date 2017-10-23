@@ -56,7 +56,7 @@ void US_Hydrodyn_SasOptionsSaxs::setupGUI()
 
    cnt_water_e_density = new QwtCounter(this);
    US_Hydrodyn::sizeArrows( cnt_water_e_density );
-   cnt_water_e_density->setRange(0, 10, 0.001);
+   cnt_water_e_density->setRange(0, 10); cnt_water_e_density->setSingleStep( 0.001);
    cnt_water_e_density->setValue((*saxs_options).water_e_density);
    cnt_water_e_density->setMinimumHeight(minHeight1);
    cnt_water_e_density->setEnabled(true);
@@ -190,7 +190,7 @@ void US_Hydrodyn_SasOptionsSaxs::setupGUI()
 
    cnt_fast_bin_size = new QwtCounter(this);
    US_Hydrodyn::sizeArrows( cnt_fast_bin_size );
-   cnt_fast_bin_size->setRange(0.01, 100, 0.01);
+   cnt_fast_bin_size->setRange(0.01, 100); cnt_fast_bin_size->setSingleStep( 0.01);
    cnt_fast_bin_size->setValue((*saxs_options).fast_bin_size);
    cnt_fast_bin_size->setMinimumHeight(minHeight1);
    cnt_fast_bin_size->setEnabled(true);
@@ -209,7 +209,7 @@ void US_Hydrodyn_SasOptionsSaxs::setupGUI()
 
    cnt_fast_modulation = new QwtCounter(this);
    US_Hydrodyn::sizeArrows( cnt_fast_modulation );
-   cnt_fast_modulation->setRange(0.1, 0.5, 0.001);
+   cnt_fast_modulation->setRange(0.1, 0.5); cnt_fast_modulation->setSingleStep( 0.001);
    cnt_fast_modulation->setValue((*saxs_options).fast_modulation);
    cnt_fast_modulation->setMinimumHeight(minHeight1);
    cnt_fast_modulation->setEnabled(true);
@@ -228,7 +228,7 @@ void US_Hydrodyn_SasOptionsSaxs::setupGUI()
 
    cnt_hybrid2_q_points = new QwtCounter(this);
    US_Hydrodyn::sizeArrows( cnt_hybrid2_q_points );
-   cnt_hybrid2_q_points->setRange(3, 100, 1);
+   cnt_hybrid2_q_points->setRange(3, 100); cnt_hybrid2_q_points->setSingleStep( 1);
    cnt_hybrid2_q_points->setValue((*saxs_options).hybrid2_q_points);
    cnt_hybrid2_q_points->setMinimumHeight(minHeight1);
    cnt_hybrid2_q_points->setEnabled(true);
@@ -251,7 +251,7 @@ void US_Hydrodyn_SasOptionsSaxs::setupGUI()
 
    cnt_sh_max_harmonics = new QwtCounter(this);
    US_Hydrodyn::sizeArrows( cnt_sh_max_harmonics );
-   cnt_sh_max_harmonics->setRange(1, 75, 1);
+   cnt_sh_max_harmonics->setRange(1, 75); cnt_sh_max_harmonics->setSingleStep( 1);
    cnt_sh_max_harmonics->setValue((*saxs_options).sh_max_harmonics);
    cnt_sh_max_harmonics->setMinimumHeight(minHeight1);
    cnt_sh_max_harmonics->setEnabled(true);
@@ -274,7 +274,7 @@ void US_Hydrodyn_SasOptionsSaxs::setupGUI()
 
    cnt_sh_fibonacci_grid_order = new QwtCounter(this);
    US_Hydrodyn::sizeArrows( cnt_sh_fibonacci_grid_order );
-   cnt_sh_fibonacci_grid_order->setRange(2, 75, 1);
+   cnt_sh_fibonacci_grid_order->setRange(2, 75); cnt_sh_fibonacci_grid_order->setSingleStep( 1);
    cnt_sh_fibonacci_grid_order->setValue((*saxs_options).sh_fibonacci_grid_order);
    cnt_sh_fibonacci_grid_order->setMinimumHeight(minHeight1);
    cnt_sh_fibonacci_grid_order->setEnabled(true);
@@ -297,7 +297,7 @@ void US_Hydrodyn_SasOptionsSaxs::setupGUI()
 
    cnt_crysol_hydration_shell_contrast = new QwtCounter(this);
    US_Hydrodyn::sizeArrows( cnt_crysol_hydration_shell_contrast );
-   cnt_crysol_hydration_shell_contrast->setRange(-1, 1, 0.001);
+   cnt_crysol_hydration_shell_contrast->setRange(-1, 1); cnt_crysol_hydration_shell_contrast->setSingleStep( 0.001);
    cnt_crysol_hydration_shell_contrast->setValue((*saxs_options).crysol_hydration_shell_contrast);
    cnt_crysol_hydration_shell_contrast->setMinimumHeight(minHeight1);
    cnt_crysol_hydration_shell_contrast->setEnabled(true);

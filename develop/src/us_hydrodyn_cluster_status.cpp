@@ -103,7 +103,7 @@ US_Hydrodyn_Cluster_Status::~US_Hydrodyn_Cluster_Status()
 unsigned int US_Hydrodyn_Cluster_Status::update_files( bool set_lv_files )
 {
    disable_updates = true;
-   files.clear();
+   files.clear( );
 
    // traverse directory and build up files
    QDir::setCurrent( submitted_dir );
@@ -136,7 +136,7 @@ unsigned int US_Hydrodyn_Cluster_Status::update_files( bool set_lv_files )
    
    if ( set_lv_files )
    {
-      lv_files->clear();
+      lv_files->clear( );
       for ( unsigned int i = 0; i < (unsigned int)files.size(); i++ )
       {
 #if QT_VERSION < 0x040000
@@ -224,11 +224,13 @@ void US_Hydrodyn_Cluster_Status::setupGUI()
    AUTFBACK( progress );
    progress->reset();
 
+#if QT_VERSION < 0x050000
    connect( &ftp, SIGNAL( dataTransferProgress ( int, int  ) ), progress, SLOT( setValue        ( int, int  ) ) );
    connect( &ftp, SIGNAL( stateChanged         ( int       ) ), this    , SLOT( ftp_stateChanged   ( int       ) ) );
    connect( &ftp, SIGNAL( commandStarted       ( int       ) ), this    , SLOT( ftp_commandStarted ( int       ) ) );
    connect( &ftp, SIGNAL( commandFinished      ( int, bool ) ), this    , SLOT( ftp_commandFinished( int, bool ) ) );
    connect( &ftp, SIGNAL( done                 ( bool      ) ), this    , SLOT( ftp_done           ( bool      ) ) );
+#endif
 
    editor = new QTextEdit(this);
    editor->setPalette( PALET_NORMAL );
@@ -236,12 +238,12 @@ void US_Hydrodyn_Cluster_Status::setupGUI()
    editor->setReadOnly(true);
 
 #if QT_VERSION < 0x040000
-# if defined(QT4) && defined(Q_WS_MAC)
+# if QT_VERSION >= 0x040000 && defined(Q_WS_MAC)
    {
  //      Q3PopupMenu * file = new Q3PopupMenu;
-      file->insertItem( us_tr("&Font"),  this, SLOT(update_font( )),    Qt::ALT+Qt::Key_F );
-      file->insertItem( us_tr("&Save"),  this, SLOT(save( )),    Qt::ALT+Qt::Key_S );
-      file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display( )),   Qt::ALT+Qt::Key_X );
+      file->insertItem( us_tr("&Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
+      file->insertItem( us_tr("&Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
+      file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
 
       QMenuBar *menu = new QMenuBar( this );
       AUTFBACK( menu );
@@ -259,9 +261,9 @@ void US_Hydrodyn_Cluster_Status::setupGUI()
    AUTFBACK( m );
  //   Q3PopupMenu * file = new Q3PopupMenu(editor);
    m->insertItem( us_tr("&File"), file );
-   file->insertItem( us_tr("Font"),  this, SLOT(update_font( )),    Qt::ALT+Qt::Key_F );
-   file->insertItem( us_tr("Save"),  this, SLOT(save( )),    Qt::ALT+Qt::Key_S );
-   file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display( )),   Qt::ALT+Qt::Key_X );
+   file->insertItem( us_tr("Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
+   file->insertItem( us_tr("Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
+   file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
 # endif
 #else
    QFrame *frame;
@@ -336,7 +338,7 @@ void US_Hydrodyn_Cluster_Status::setupGUI()
    hbl_bottom->addSpacing( 4 );
 
    QBoxLayout * vbl_editor_group = new QVBoxLayout(0); vbl_editor_group->setContentsMargins( 0, 0, 0, 0 ); vbl_editor_group->setSpacing( 0 );
-#if !defined(QT4) || !defined(Q_WS_MAC)
+#if QT_VERSION < 0x040000 || !defined(Q_WS_MAC)
    vbl_editor_group->addWidget(frame);
 #endif
    vbl_editor_group->addWidget(editor);
@@ -361,7 +363,9 @@ void US_Hydrodyn_Cluster_Status::cancel()
 {
    if ( comm_active )
    {
+#if QT_VERSION < 0x050000
       submit_http.abort();
+#endif
    }
    if ( system_proc_active )
    {
@@ -382,7 +386,9 @@ void US_Hydrodyn_Cluster_Status::closeEvent(QCloseEvent *e)
 {
    if ( comm_active )
    {
+#if QT_VERSION < 0x050000
       submit_http.abort();
+#endif
    }
    if ( system_proc_active )
    {
@@ -397,7 +403,7 @@ void US_Hydrodyn_Cluster_Status::closeEvent(QCloseEvent *e)
 
 void US_Hydrodyn_Cluster_Status::clear_display()
 {
-   editor->clear();
+   editor->clear( );
    editor->append("\n\n");
 }
 
@@ -516,7 +522,9 @@ void US_Hydrodyn_Cluster_Status::refresh()
 {
    if ( comm_active )
    {
+#if QT_VERSION < 0x050000
       submit_http.abort();
+#endif
    }
    if ( system_proc_active )
    {
@@ -538,7 +546,7 @@ void US_Hydrodyn_Cluster_Status::retrieve()
 {
    //   update_files();
    comm_mode = "retrieve";
-   jobs.clear();
+   jobs.clear( );
    
    QStringList qsl_submit;
 
@@ -592,7 +600,7 @@ void US_Hydrodyn_Cluster_Status::retrieve_selected()
 {
    //   update_files();
    comm_mode = "retrieve";
-   jobs.clear();
+   jobs.clear( );
    
    QStringList qsl_submit;
 #if QT_VERSION < 0x040000
@@ -645,7 +653,7 @@ void US_Hydrodyn_Cluster_Status::cancel_selected()
 {
    update_enables();
    comm_mode = "cancel";
-   jobs.clear();
+   jobs.clear( );
    
    QStringList qsl_submit;
 #if QT_VERSION < 0x040000
@@ -679,7 +687,7 @@ void US_Hydrodyn_Cluster_Status::get_status()
 {
    // update_enables();
    comm_mode = "status";
-   jobs.clear();
+   jobs.clear( );
    
    QStringList qsl_submit;
 #if QT_VERSION < 0x040000
@@ -1104,11 +1112,13 @@ bool US_Hydrodyn_Cluster_Status::schedule_retrieve( QString file )
    
    comm_active = true;
 
+#if QT_VERSION < 0x050000
    ftp.connectToHost( ftp_url_host, ftp_url_port.toUInt() );
    ftp.login        ( cluster_id  , cluster_pw   );
    ftp.cd           ( target_dir );
    ftp.get          ( get_file    , ftp_file       );
    ftp.close        ();
+#endif
    
    return true;
 
@@ -1156,6 +1166,7 @@ void US_Hydrodyn_Cluster_Status::get_next_status()
 
 bool US_Hydrodyn_Cluster_Status::send_http_get( QString file )
 {
+#if QT_VERSION < 0x050000
    // need to do a post & get to submit_url slash stuff
    // its going to require opening a socket etc
    // 
@@ -1189,6 +1200,7 @@ bool US_Hydrodyn_Cluster_Status::send_http_get( QString file )
                        .arg( file ) );
    }
 
+#endif
    return true;
 }
 
@@ -1197,6 +1209,7 @@ void US_Hydrodyn_Cluster_Status::http_stateChanged ( int /* state */ )
    // editor_msg( "blue", QString( "http state %1" ).arg( state ) );
 }
 
+#if QT_VERSION < 0x050000
 void US_Hydrodyn_Cluster_Status::http_responseHeaderReceived ( const QHttpResponseHeader & resp )
 {
    cout << resp.reasonPhrase() << endl;
@@ -1242,6 +1255,7 @@ void US_Hydrodyn_Cluster_Status::http_readyRead( const QHttpResponseHeader & res
       next_to_process->setText( 2, message );
    }
 }
+#endif
 
 void US_Hydrodyn_Cluster_Status::http_dataSendProgress ( int done, int total )
 {
@@ -1264,6 +1278,7 @@ void US_Hydrodyn_Cluster_Status::http_requestFinished ( int id, bool error  )
 
 void US_Hydrodyn_Cluster_Status::http_done ( bool error )
 {
+#if QT_VERSION < 0x050000
    disconnect( &submit_http, SIGNAL( stateChanged ( int ) ), 0, 0 );
    disconnect( &submit_http, SIGNAL( responseHeaderReceived ( const QHttpResponseHeader & ) ), 0, 0 );
    disconnect( &submit_http, SIGNAL( readyRead ( const QHttpResponseHeader & ) ), 0, 0 );
@@ -1324,6 +1339,7 @@ void US_Hydrodyn_Cluster_Status::http_done ( bool error )
       return;
    }
    emit next_status();
+#endif
 }
 
 bool US_Hydrodyn_Cluster_Status::system_cmd( QStringList cmd )
@@ -1432,8 +1448,10 @@ void US_Hydrodyn_Cluster_Status::stop()
    pb_stop->setEnabled( false );
    if ( comm_active )
    {
+#if QT_VERSION < 0x050000
       submit_http.abort();
       ftp.abort();
+#endif
    }
    if ( system_proc_active )
    {
@@ -1446,6 +1464,7 @@ void US_Hydrodyn_Cluster_Status::stop()
 void US_Hydrodyn_Cluster_Status::ftp_stateChanged ( int state )
 {
    cout << "ftp state changed: " << state << endl;
+#if QT_VERSION < 0x050000
    if ( state == QFtp::Unconnected )
    {
       cout << "- There is no connection to the host. \n";
@@ -1470,6 +1489,7 @@ void US_Hydrodyn_Cluster_Status::ftp_stateChanged ( int state )
    {
       cout << "- The connection is closing down, but it is not yet closed.\n";
    }
+#endif
 }
 
 void US_Hydrodyn_Cluster_Status::ftp_commandStarted ( int id )
@@ -1479,14 +1499,18 @@ void US_Hydrodyn_Cluster_Status::ftp_commandStarted ( int id )
 
 void US_Hydrodyn_Cluster_Status::ftp_commandFinished ( int id, bool error )
 {
+#if QT_VERSION < 0x050000
    cout << "ftp command finished" << id 
         << QString( " %1\n" ).arg( error ? QString( "error %1" ).arg( ftp.errorString() ) : "" );
+#endif
 }
 
 void US_Hydrodyn_Cluster_Status::ftp_done ( bool error )
 {
+#if QT_VERSION < 0x050000
    cout << "ftp done" 
         << QString( " %1\n" ).arg( error ? QString( "error %1" ).arg( ftp.errorString() ) : "" );
+   
    if ( error &&
         jobs[ next_to_process ] == "completed" )
    {
@@ -1502,4 +1526,5 @@ void US_Hydrodyn_Cluster_Status::ftp_done ( bool error )
 
    comm_active = false;
    emit next_status();
+#endif
 }

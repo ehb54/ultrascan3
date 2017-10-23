@@ -972,11 +972,11 @@ int US_Hydrodyn::write_pdb( QString fname, vector < PDB_atom > *model )
 
 int US_Hydrodyn::compute_bd_connections()
 {
-   connection_active.clear();
-   connection_dists.clear();
-   connection_dist_stats.clear();
-   connection_pair_type.clear();
-   connection_forced.clear();
+   connection_active.clear( );
+   connection_dists.clear( );
+   connection_dist_stats.clear( );
+   connection_pair_type.clear( );
+   connection_forced.clear( );
 
    vector < unsigned int > models_to_proc;
 
@@ -1437,9 +1437,9 @@ int US_Hydrodyn::build_pb_structures( PDB_model *model )
 
    // create vector of possibilities
 
-   pb_list.clear();
+   pb_list.clear( );
    pb_list.resize(model->molecule.size());
-   pb_base_list.clear();
+   pb_base_list.clear( );
    pb_base_list.resize(model->molecule.size());
 
    for (unsigned int j = 0; j < model->molecule.size(); j++)
@@ -1478,7 +1478,7 @@ int US_Hydrodyn::build_pb_structures( PDB_model *model )
             pb_list[j].push_back(pb_atoms["C"]);
             pb_list[j].push_back(pb_atoms["O"]);
             pb_list[j].push_back(pb_atoms["N"]);
-            pb_atoms.clear();
+            pb_atoms.clear( );
             lastResSeq = this_atom->resSeq;
          }
       }
@@ -2459,7 +2459,7 @@ void US_Hydrodyn::bd_load_results()
 
       // beads radii
       float tmp_float;
-      bd_load_results_bead_radius.clear();
+      bd_load_results_bead_radius.clear( );
       for ( unsigned int i = 0; i < bd_load_results_beads; i++ )
       {
          line++;
@@ -2725,7 +2725,7 @@ void US_Hydrodyn::bd_load_results_after_anaflex()
    {
       for ( unsigned int j = 0; j < nconf; j++ )
       {
-         bead_model.clear();
+         bead_model.clear( );
          for ( unsigned int k = 0; k < beads; k++ )
          {
             line++;
@@ -2754,7 +2754,7 @@ void US_Hydrodyn::bd_load_results_after_anaflex()
             tmp_atom.bead_color = 1;
 
             tmp_atom.exposed_code = 1;
-            tmp_atom.all_beads.clear();
+            tmp_atom.all_beads.clear( );
             tmp_atom.active = true;
             tmp_atom.chain = 1;
             tmp_atom.normalized_ot_is_valid = false;

@@ -39,13 +39,13 @@ using namespace std;
 struct ush2d_data
 {
 #ifdef WIN32
-# if !defined( QT4 )
+# if QT_VERSION < 0x040000
   #pragma warning ( disable: 4251 )
 # endif
 #endif
       vector < vector < complex < double > > >   data;
 #ifdef WIN32
-# if !defined( QT4 )
+# if QT_VERSION < 0x040000
   #pragma warning ( default: 4251 )
 # endif
 #endif
@@ -159,7 +159,7 @@ class US_EXTERN US_Hydrodyn_Saxs_2d : public QFrame
       int           unit;
 
 #ifdef WIN32
-# if !defined( QT4 )
+# if QT_VERSION < 0x040000
   #pragma warning ( disable: 4251 )
 # endif
 #endif
@@ -181,7 +181,7 @@ class US_EXTERN US_Hydrodyn_Saxs_2d : public QFrame
       vector < ush2d_data >                           data_stack;
 
 #ifdef WIN32
-# if !defined( QT4 )
+# if QT_VERSION < 0x040000
   #pragma warning ( default: 4251 )
 # endif
 #endif

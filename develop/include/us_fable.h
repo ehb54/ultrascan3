@@ -5922,7 +5922,7 @@ namespace fem {
             /* f77_std 12.10.1: SCRATCH must not be specified with a named file. */
             /* ifort compile-time warning; file name simply ignored in this
                implementation. */
-            file_name.clear();
+            file_name.clear( );
          }
          if (access == ac_undef) {
             access = ac_sequential; // f77_std 12.10.1
@@ -8213,7 +8213,7 @@ namespace fem { namespace utils { namespace equivalence {
                      c0.push_back(ssize_t_2(c1e[0], c1e[1]+d));
                      cluster_indices[c1e[0]] = ci0;
                   }
-                  clusters[ci1].clear();
+                  clusters[ci1].clear( );
                }
             }
          }
@@ -8225,7 +8225,7 @@ namespace fem { namespace utils { namespace equivalence {
          }
          std::vector<ssize_t_2>& c0 = clusters[0];
          TBXX_ASSERT(c0.size() == n-1);
-         diffs0.clear();
+         diffs0.clear( );
          diffs0.resize(n, ssize_t_max);
          diffs0[0] = 0;
          for(size_t i=0;i!=c0.size();i++) {

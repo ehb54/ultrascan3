@@ -28,7 +28,7 @@
 #include <qwt_plot.h>
 //Added by qt3to4:
 #include <QCloseEvent>
-#ifdef QT4
+#if QT_VERSION >= 0x040000
 # include "qwt_legend.h"
 # include "qwt_plot_grid.h"
 # include "qwt_plot_curve.h"
@@ -96,7 +96,7 @@ struct shd_data
 #include "us_mqt.h"
 
 #ifdef WIN32
-# if !defined( QT4 )
+# if QT_VERSION < 0x040000
      #pragma warning ( disable: 4251 )
 # endif
 #endif      
@@ -327,7 +327,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       ScrollZoomer  *plot_saxs_zoomer;
       QwtPlot       *plot_resid;
       ScrollZoomer  *plot_resid_zoomer;
-#ifdef QT4
+#if QT_VERSION >= 0x040000
       QwtPlotGrid  *grid_pr;
       QwtPlotGrid  *grid_saxs;
       QwtPlotGrid  *grid_resid;
@@ -364,7 +364,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       vector < vector <PDB_atom> >                    bead_models;
       vector < unsigned int >                         selected_models;
       vector < QColor >                               plot_colors;
-#ifndef QT4
+#if QT_VERSION < 0x040000
       vector < long >                                 plotted_Iq;  // curve keys
 #else
       vector < QwtPlotCurve * >                       plotted_Iq;
@@ -375,7 +375,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       vector < vector < double > >                    plotted_I;
       vector < vector < double > >                    plotted_I_error; 
 
-#ifndef QT4
+#if QT_VERSION < 0x040000
       map    < unsigned int, long >                   plotted_Gp;  // guinier points
       map    < unsigned int, long >                   plotted_cs_Gp;  // cs guinier points
       map    < unsigned int, long >                   plotted_Rt_Gp;  // Rt guinier points
@@ -470,7 +470,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
 
    private:
 
-#if defined( QT4 )
+#if QT_VERSION >= 0x040000
       bool saxs_legend_vis;
       bool pr_legend_vis;
 #endif
@@ -1057,7 +1057,7 @@ class saxs_pr_thr_t : public QThread
 };
 
 #ifdef WIN32
-# if !defined( QT4 )
+# if QT_VERSION < 0x040000
   #pragma warning ( default: 4251 )
 # endif
 #endif

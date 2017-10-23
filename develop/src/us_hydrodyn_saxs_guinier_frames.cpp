@@ -23,7 +23,7 @@ US_Hydrodyn_Saxs_Guinier_Frames::US_Hydrodyn_Saxs_Guinier_Frames(
    this->plots                                = plots;
 
    USglobal = new US_Config();
-   setPalette( USglobal->global_colors.cg_frame );
+   setPalette( PALET_FRAME );
    setWindowTitle( us_tr( "US-SOMO: SAS Guinier frames" ) );
 
    plot_zoomer = (ScrollZoomer *) 0;
@@ -65,20 +65,20 @@ void US_Hydrodyn_Saxs_Guinier_Frames::setupGUI()
    // lbl_title -> setFrameStyle   ( QFrame::WinPanel | QFrame::Raised );
    // lbl_title -> setAlignment    ( Qt::AlignCenter | Qt::AlignVCenter );
    // lbl_title -> setMinimumHeight( minHeight1 );
-   // lbl_title -> setPalette      ( USglobal->global_colors.cg_frame );
+   // lbl_title -> setPalette      ( PALET_FRAME );
    // lbl_title -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold ) );
 
    // lbl_credits_1 =  new QLabel      ( "Cite: US-SOMO", this );
    // lbl_credits_1 -> setAlignment    ( Qt::AlignCenter | Qt::AlignVCenter );
    // lbl_credits_1 -> setMinimumHeight( minHeight1 );
-   // lbl_credits_1 -> setPalette      ( USglobal->global_colors.cg_label );
+   // lbl_credits_1 -> setPalette      ( PALET_LABEL );
    // lbl_credits_1 -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1, QFont::Bold ) );
 
    cb_yright1 = new QCheckBox(this);
    cb_yright1->setEnabled( true );
    cb_yright1->setChecked( false );
    cb_yright1->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_yright1->setPalette( USglobal->global_colors.cg_normal );
+   cb_yright1->setPalette( PALET_NORMAL );
    connect(cb_yright1, SIGNAL(clicked()), this, SLOT(set_yright1()));
    cb_yright1->hide();
 
@@ -86,20 +86,20 @@ void US_Hydrodyn_Saxs_Guinier_Frames::setupGUI()
    cb_yright2->setEnabled(true);
    cb_yright2->setChecked( false );
    cb_yright2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_yright2->setPalette( USglobal->global_colors.cg_normal );
+   cb_yright2->setPalette( PALET_NORMAL );
    connect(cb_yright2, SIGNAL(clicked()), this, SLOT(set_yright2()));
    cb_yright2->hide();
 
    pb_reffile =  new QPushButton ( us_tr( "Load reference" ), this );
    pb_reffile -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1) );
    pb_reffile -> setMinimumHeight( minHeight1 );
-   pb_reffile -> setPalette      ( USglobal->global_colors.cg_pushb );
+   pb_reffile -> setPalette      ( PALET_PUSHB );
    connect( pb_reffile, SIGNAL( clicked() ), SLOT( set_reffile() ) );
 
    le_reffile = new QLineEdit     (  this );    le_reffile->setObjectName( "reffile Line Edit" );
    le_reffile ->setText           ( parameters.count( "reffile" ) ? parameters[ "reffile" ] : "" );
    le_reffile ->setAlignment      ( Qt::AlignCenter | Qt::AlignVCenter );
-   le_reffile ->setPalette        ( USglobal->global_colors.cg_normal );
+   le_reffile ->setPalette        ( PALET_NORMAL );
    le_reffile ->setFont           ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    le_reffile ->setMinimumHeight  ( minHeight1 );
    le_reffile ->setMinimumWidth   ( 150 );
@@ -108,14 +108,14 @@ void US_Hydrodyn_Saxs_Guinier_Frames::setupGUI()
    lbl_xbottom = new QLabel      ( us_tr( "X axis" ), this );
    lbl_xbottom ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_xbottom ->setMinimumHeight( minHeight1 );
-   lbl_xbottom ->setPalette      ( USglobal->global_colors.cg_label );
+   lbl_xbottom ->setPalette      ( PALET_LABEL );
    lbl_xbottom ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
 
    le_xbottom_min = new QLineEdit( this );    le_xbottom_min->setObjectName( "xbottom_min Line Edit" );
    le_xbottom_min->setText("");
    le_xbottom_min->setMinimumHeight(minHeight1);
    le_xbottom_min->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
-   le_xbottom_min->setPalette( USglobal->global_colors.cg_normal );
+   le_xbottom_min->setPalette( PALET_NORMAL );
    le_xbottom_min->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_xbottom_min, SIGNAL(textChanged(const QString &)), SLOT(update_xbottom_min(const QString &)));
 
@@ -123,21 +123,21 @@ void US_Hydrodyn_Saxs_Guinier_Frames::setupGUI()
    le_xbottom_max->setText("");
    le_xbottom_max->setMinimumHeight(minHeight1);
    le_xbottom_max->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
-   le_xbottom_max->setPalette( USglobal->global_colors.cg_normal );
+   le_xbottom_max->setPalette( PALET_NORMAL );
    le_xbottom_max->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_xbottom_max, SIGNAL(textChanged(const QString &)), SLOT(update_xbottom_max(const QString &)));
 
    lbl_yleft = new QLabel      ( us_tr( "Left Y axis" ), this );
    lbl_yleft ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_yleft ->setMinimumHeight( minHeight1 );
-   lbl_yleft ->setPalette      ( USglobal->global_colors.cg_label );
+   lbl_yleft ->setPalette      ( PALET_LABEL );
    lbl_yleft ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
 
    le_yleft_min = new QLineEdit( this );    le_yleft_min->setObjectName( "yleft_min Line Edit" );
    le_yleft_min->setText("");
    le_yleft_min->setMinimumHeight(minHeight1);
    le_yleft_min->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
-   le_yleft_min->setPalette( USglobal->global_colors.cg_normal );
+   le_yleft_min->setPalette( PALET_NORMAL );
    le_yleft_min->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_yleft_min, SIGNAL(textChanged(const QString &)), SLOT(update_yleft_min(const QString &)));
 
@@ -145,14 +145,14 @@ void US_Hydrodyn_Saxs_Guinier_Frames::setupGUI()
    le_yleft_max->setText("");
    le_yleft_max->setMinimumHeight(minHeight1);
    le_yleft_max->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
-   le_yleft_max->setPalette( USglobal->global_colors.cg_normal );
+   le_yleft_max->setPalette( PALET_NORMAL );
    le_yleft_max->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_yleft_max, SIGNAL(textChanged(const QString &)), SLOT(update_yleft_max(const QString &)));
 
    lbl_yright = new QLabel      ( us_tr( "Right Y axis" ), this );
    lbl_yright ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_yright ->setMinimumHeight( minHeight1 );
-   lbl_yright ->setPalette      ( USglobal->global_colors.cg_label );
+   lbl_yright ->setPalette      ( PALET_LABEL );
    lbl_yright ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
    lbl_yright ->hide();
 
@@ -160,7 +160,7 @@ void US_Hydrodyn_Saxs_Guinier_Frames::setupGUI()
    le_yright_min->setText("");
    le_yright_min->setMinimumHeight(minHeight1);
    le_yright_min->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
-   le_yright_min->setPalette( USglobal->global_colors.cg_normal );
+   le_yright_min->setPalette( PALET_NORMAL );
    le_yright_min->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_yright_min, SIGNAL(textChanged(const QString &)), SLOT(update_yright_min(const QString &)));
    le_yright_min ->hide();
@@ -169,7 +169,7 @@ void US_Hydrodyn_Saxs_Guinier_Frames::setupGUI()
    le_yright_max->setText("");
    le_yright_max->setMinimumHeight(minHeight1);
    le_yright_max->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
-   le_yright_max->setPalette( USglobal->global_colors.cg_normal );
+   le_yright_max->setPalette( PALET_NORMAL );
    le_yright_max->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_yright_max, SIGNAL(textChanged(const QString &)), SLOT(update_yright_max(const QString &)));
    le_yright_max ->hide();
@@ -177,17 +177,17 @@ void US_Hydrodyn_Saxs_Guinier_Frames::setupGUI()
    pb_help =  new QPushButton ( us_tr( "Help" ), this );
    pb_help -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1) );
    pb_help -> setMinimumHeight( minHeight1 );
-   pb_help -> setPalette      ( USglobal->global_colors.cg_pushb );
+   pb_help -> setPalette      ( PALET_PUSHB );
    connect( pb_help, SIGNAL( clicked() ), SLOT( help() ) );
 
    pb_close =  new QPushButton ( us_tr( "Close" ), this );
    pb_close -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1) );
    pb_close -> setMinimumHeight( minHeight1 );
-   pb_close -> setPalette      ( USglobal->global_colors.cg_pushb );
+   pb_close -> setPalette      ( PALET_PUSHB );
    connect( pb_close, SIGNAL( clicked() ), SLOT( cancel() ) );
 
    plot = new QwtPlot(this);
-#ifndef QT4
+#if QT_VERSION < 0x040000
    plot->enableOutline(true);
    plot->setOutlinePen(Qt::white);
    plot->setOutlineStyle(Qwt::VLine);
@@ -200,9 +200,9 @@ void US_Hydrodyn_Saxs_Guinier_Frames::setupGUI()
    grid = new QwtPlotGrid;
    grid->enableXMin( true );
    grid->enableYMin( true );
-   plot->setPalette( USglobal->global_colors.cg_normal );
-   grid->setMajPen( QPen( USglobal->global_colors.major_ticks, 0, Qt::DotLine ) );
-   grid->setMinPen( QPen( USglobal->global_colors.minor_ticks, 0, Qt::DotLine ) );
+   plot->setPalette( PALET_NORMAL );
+   grid->setMajorPen( QPen( USglobal->global_colors.major_ticks, 0, Qt::DotLine ) );
+   grid->setMinorPen( QPen( USglobal->global_colors.minor_ticks, 0, Qt::DotLine ) );
    grid->attach( plot );
 #endif
    plot->setAxisTitle(QwtPlot::xBottom, parameters[ "xbottom" ] );
@@ -217,20 +217,20 @@ void US_Hydrodyn_Saxs_Guinier_Frames::setupGUI()
       cb_yright2->show();
    }      
 
-#ifndef QT4
+#if QT_VERSION < 0x040000
    plot->setTitleFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
    plot->setAxisTitleFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 #endif
    plot->setAxisFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-#ifndef QT4
+#if QT_VERSION < 0x040000
    plot->setAxisTitleFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 #endif
    plot->setAxisFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-#ifndef QT4
+#if QT_VERSION < 0x040000
    plot->setAxisTitleFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 #endif
    plot->setAxisFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-   plot->setMargin(USglobal->config_list.margin);
+//    plot->setMargin(USglobal->config_list.margin);
    plot->setTitle( parameters[ "title" ] );
    plot->setCanvasBackground(USglobal->global_colors.plot);
 
@@ -322,7 +322,7 @@ void US_Hydrodyn_Saxs_Guinier_Frames::update_plot()
    //                                   it->second[ 3 ] ) );
    // }
 
-   plot->clear();
+   plot->detachItems( QwtPlotItem::Rtti_PlotCurve ); plot->detachItems( QwtPlotItem::Rtti_PlotMarker );;
 
    int use_line_width = 1;
 
@@ -383,11 +383,11 @@ void US_Hydrodyn_Saxs_Guinier_Frames::update_plot()
          // us_qdebug( QString( "%1 rgb %2 %3 %4" ).arg( rgb ).arg( red ).arg( green ).arg( blue ) );
          
          {
-#ifdef QT4
+#if QT_VERSION >= 0x040000
             QwtPlotCurve *curve = new QwtPlotCurve( this_name );
             curve->setStyle ( QwtPlotCurve::NoCurve );
-            curve->setSymbol( sym );
-            curve->setData  ( & (*this_plot)[ 1 ][ i ], & (*this_plot)[ 2 ][ i ], 1 );
+            curve->setSymbol( new QwtSymbol( sym.style(), sym.brush(), sym.pen(), sym.size() ) );
+            curve->setSamples  ( & (*this_plot)[ 1 ][ i ], & (*this_plot)[ 2 ][ i ], 1 );
             curve->attach   ( plot );
 #else
             long curve = plot->insertCurve( this_name );
@@ -404,11 +404,11 @@ void US_Hydrodyn_Saxs_Guinier_Frames::update_plot()
             x[ 0 ] = x[ 1 ] = (*this_plot)[ 1 ][ i ];
             y[ 0 ] = (*this_plot)[ 2 ][ i ] - (*this_plot)[ 3 ][ i ];
             y[ 1 ] = (*this_plot)[ 2 ][ i ] + (*this_plot)[ 3 ][ i ];
-#ifdef QT4
+#if QT_VERSION >= 0x040000
             QwtPlotCurve *curve = new QwtPlotCurve( this_name + "_errorbar" );
             curve->setStyle ( QwtPlotCurve::Lines );
             curve->setPen   ( use_pen );
-            curve->setData  ( x, y, 2 );
+            curve->setSamples  ( x, y, 2 );
             curve->attach   ( plot );
 #else
             long curve = plot->insertCurve( this_name + "_errorbar" );
@@ -424,11 +424,11 @@ void US_Hydrodyn_Saxs_Guinier_Frames::update_plot()
             .arg( parameters[ "yleft" ] );
 
          QPen use_pen = QPen( Qt::cyan, use_line_width, Qt::DotLine );
-#ifdef QT4
+#if QT_VERSION >= 0x040000
          QwtPlotCurve *curve = new QwtPlotCurve( this_name );
          curve->setStyle ( QwtPlotCurve::Lines );
          curve->setPen   ( use_pen );
-         curve->setData  ( & (*this_plot)[ 1 ][ 0 ], & (*this_plot)[ 2 ][ 0 ], (*this_plot)[ 1 ].size() );
+         curve->setSamples  ( & (*this_plot)[ 1 ][ 0 ], & (*this_plot)[ 2 ][ 0 ], (*this_plot)[ 1 ].size() );
          curve->attach   ( plot );
 #else
          long curve = plot->insertCurve( this_name );
@@ -486,12 +486,12 @@ void US_Hydrodyn_Saxs_Guinier_Frames::update_plot()
             // us_qdebug( QString( "%1 rgb %2 %3 %4" ).arg( rgb ).arg( red ).arg( green ).arg( blue ) );
          
             {
-#ifdef QT4
+#if QT_VERSION >= 0x040000
                QwtPlotCurve *curve = new QwtPlotCurve( this_name );
                curve->setStyle ( QwtPlotCurve::NoCurve );
-               curve->setSymbol( sym );
-               curve->setData  ( & (*this_plot)[ 1 ][ i ], & (*this_plot)[ 2 ][ i ], 1 );
-               curve->setAxis  ( QwtPlot::xBottom , QwtPlot::yRight );
+               curve->setSymbol( new QwtSymbol( sym.style(), sym.brush(), sym.pen(), sym.size() ) );
+               curve->setSamples  ( & (*this_plot)[ 1 ][ i ], & (*this_plot)[ 2 ][ i ], 1 );
+               curve->setAxes( QwtPlot::xBottom , QwtPlot::yRight );
                curve->attach   ( plot );
 #else
                long curve = plot->insertCurve( this_name, QwtPlot::xBottom , QwtPlot::yRight );
@@ -507,12 +507,12 @@ void US_Hydrodyn_Saxs_Guinier_Frames::update_plot()
                x[ 0 ] = x[ 1 ] = (*this_plot)[ 1 ][ i ];
                y[ 0 ] = (*this_plot)[ 2 ][ i ] - (*this_plot)[ 3 ][ i ];
                y[ 1 ] = (*this_plot)[ 2 ][ i ] + (*this_plot)[ 3 ][ i ];
-#ifdef QT4
+#if QT_VERSION >= 0x040000
                QwtPlotCurve *curve = new QwtPlotCurve( this_name + "_errorbar" );
                curve->setStyle ( QwtPlotCurve::Lines );
                curve->setPen   ( use_pen );
-               curve->setData  ( x, y, 2 );
-               curve->setAxis  ( QwtPlot::xBottom , QwtPlot::yRight );
+               curve->setSamples  ( x, y, 2 );
+               curve->setAxes( QwtPlot::xBottom , QwtPlot::yRight );
                curve->attach   ( plot );
 #else
                long curve = plot->insertCurve( this_name + "_errorbar", QwtPlot::xBottom , QwtPlot::yRight );
@@ -529,12 +529,12 @@ void US_Hydrodyn_Saxs_Guinier_Frames::update_plot()
                .arg( parameters[ use_right ] );
 
             QPen use_pen = QPen( Qt::red, use_line_width, Qt::DotLine );
-#ifdef QT4
+#if QT_VERSION >= 0x040000
             QwtPlotCurve *curve = new QwtPlotCurve( this_name );
             curve->setStyle ( QwtPlotCurve::Lines );
             curve->setPen   ( use_pen );
-            curve->setData  ( & (*this_plot)[ 1 ][ 0 ], & (*this_plot)[ 2 ][ 0 ], (*this_plot)[ 1 ].size() );
-            curve->setAxis  ( QwtPlot::xBottom , QwtPlot::yRight );
+            curve->setSamples  ( & (*this_plot)[ 1 ][ 0 ], & (*this_plot)[ 2 ][ 0 ], (*this_plot)[ 1 ].size() );
+            curve->setAxes( QwtPlot::xBottom , QwtPlot::yRight );
             curve->attach   ( plot );
 #else
             long curve = plot->insertCurve( this_name, QwtPlot::xBottom, QwtPlot::yRight );
@@ -585,12 +585,12 @@ void US_Hydrodyn_Saxs_Guinier_Frames::update_plot()
             QString this_name = QString( "reference curve" );
 
             QPen use_pen = QPen( Qt::green, use_line_width, Qt::SolidLine );
-#ifdef QT4
+#if QT_VERSION >= 0x040000
             QwtPlotCurve *curve = new QwtPlotCurve( this_name );
             curve->setStyle ( QwtPlotCurve::Lines );
             curve->setPen   ( use_pen );
-            curve->setData  ( & ref_t[ 0 ], & y[ 0 ], y.size() );
-            curve->setAxis  ( QwtPlot::xBottom , QwtPlot::yLeft );
+            curve->setSamples  ( & ref_t[ 0 ], & y[ 0 ], y.size() );
+            curve->setAxes( QwtPlot::xBottom , QwtPlot::yLeft );
             curve->attach   ( plot );
 #else
             long curve = plot->insertCurve( this_name, QwtPlot::xBottom, QwtPlot::yLeft );
@@ -664,7 +664,7 @@ void US_Hydrodyn_Saxs_Guinier_Frames::update_plot()
    {
       plot_zoomer = new ScrollZoomer(plot->canvas());
       plot_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
-#ifndef QT4
+#if QT_VERSION < 0x040000
       plot_zoomer->setCursorLabelPen(QPen(Qt::yellow));
 #endif
    }
@@ -741,9 +741,9 @@ void US_Hydrodyn_Saxs_Guinier_Frames::update_reffile( const QString & )
       US_Saxs_Util::read_sas_data( filename, ref_t, ref_I, ref_e, error_msg );
       // us_qdebug( US_Vector::qs_vector3( filename + " " + error_msg, ref_t, ref_I, ref_e ) );
    } else {
-      ref_t.clear();
-      ref_I.clear();
-      ref_e.clear();
+      ref_t.clear( );
+      ref_I.clear( );
+      ref_e.clear( );
    }
    parameters[ "reffile" ] = le_reffile->text();
    update_plot();

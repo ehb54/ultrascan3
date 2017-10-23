@@ -97,11 +97,11 @@ void US_Hydrodyn_Saxs_Residuals::setupGUI()
    // lbl_title->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    // lbl_title->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    // lbl_title->setMinimumHeight(minHeight1);
-   // lbl_title->setPalette( USglobal->global_colors.cg_frame );
+   // lbl_title->setPalette( PALET_FRAME );
    // lbl_title->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
 
    plot = new QwtPlot(this);
-#ifndef QT4
+#if QT_VERSION < 0x040000
    plot->enableOutline(true);
    plot->setOutlinePen(Qt::white);
    plot->setOutlineStyle(Qwt::VLine);
@@ -117,26 +117,26 @@ void US_Hydrodyn_Saxs_Residuals::setupGUI()
    grid->enableYMin( true );
    plot->setPalette( PALET_NORMAL );
    AUTFBACK( plot );
-   grid->setMajPen( QPen( USglobal->global_colors.major_ticks, 0, Qt::DotLine ) );
-   grid->setMinPen( QPen( USglobal->global_colors.minor_ticks, 0, Qt::DotLine ) );
+   grid->setMajorPen( QPen( USglobal->global_colors.major_ticks, 0, Qt::DotLine ) );
+   grid->setMinorPen( QPen( USglobal->global_colors.minor_ticks, 0, Qt::DotLine ) );
    grid->attach( plot );
 #endif
    plot->setAxisTitle(QwtPlot::xBottom, us_tr("Distance (Angstrom)"));
    plot->setAxisTitle(QwtPlot::yLeft, us_tr("Frequency"));
-#ifndef QT4
+#if QT_VERSION < 0x040000
    plot->setTitleFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
    plot->setAxisTitleFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 #endif
    plot->setAxisFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-#ifndef QT4
+#if QT_VERSION < 0x040000
    plot->setAxisTitleFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 #endif
    plot->setAxisFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-#ifndef QT4
+#if QT_VERSION < 0x040000
    plot->setAxisTitleFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 #endif
    plot->setAxisFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-   plot->setMargin(USglobal->config_list.margin);
+//    plot->setMargin(USglobal->config_list.margin);
    plot->setTitle(title);
    plot->setCanvasBackground(USglobal->global_colors.plot);
 
@@ -296,7 +296,7 @@ void US_Hydrodyn_Saxs_Residuals::set_plot_as_percent()
 
 void US_Hydrodyn_Saxs_Residuals::update_plot()
 {
-   plot->clear();
+   plot->detachItems( QwtPlotItem::Rtti_PlotCurve ); plot->detachItems( QwtPlotItem::Rtti_PlotMarker );;
    plot->setAxisTitle(QwtPlot::yLeft, plot_as_percent ? us_tr("Percent") : us_tr("Frequency"));
 
    double minx;
@@ -310,7 +310,7 @@ void US_Hydrodyn_Saxs_Residuals::update_plot()
 
    if ( plot_residuals ) 
    {
-#ifndef QT4
+#if QT_VERSION < 0x040000
       long prr = plot->insertCurve("P(r) vs r");
       plot->setCurveStyle(prr, QwtCurve::Lines);
       plot->setCurveData(prr, 
@@ -321,7 +321,7 @@ void US_Hydrodyn_Saxs_Residuals::update_plot()
 #else
       QwtPlotCurve *curve = new QwtPlotCurve( "P(r) vs r" );
       curve->setStyle( QwtPlotCurve::Lines );
-      curve->setData(
+      curve->setSamples(
                      (double *)&(r[0]), 
                      plot_as_percent ? (double *)&(residuals_pct[0]) : (double *)&(residuals[0]), 
                      (int)r.size()
@@ -362,7 +362,7 @@ void US_Hydrodyn_Saxs_Residuals::update_plot()
    }
    if ( plot_difference ) 
    {
-#ifndef QT4
+#if QT_VERSION < 0x040000
       long prr = plot->insertCurve("P(r) vs r");
       plot->setCurveStyle(prr, QwtCurve::Lines);
       plot->setCurveData(prr, 
@@ -373,7 +373,7 @@ void US_Hydrodyn_Saxs_Residuals::update_plot()
 #else
       QwtPlotCurve *curve = new QwtPlotCurve( "P(r) vs r" );
       curve->setStyle( QwtPlotCurve::Lines );
-      curve->setData(
+      curve->setSamples(
                      (double *)&(r[0]), 
                      plot_as_percent ? (double *)&(difference_pct[0]) : (double *)&(difference[0]),
                      (int)r.size()
@@ -424,7 +424,7 @@ void US_Hydrodyn_Saxs_Residuals::update_plot()
    plot->setAxisScale( QwtPlot::yLeft,   miny, maxy );
    
    plot_zoomer = new ScrollZoomer(plot->canvas());
-#ifndef QT4
+#if QT_VERSION < 0x040000
    plot_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
    plot_zoomer->setCursorLabelPen(QPen(Qt::yellow));
 #else

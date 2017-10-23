@@ -30,14 +30,14 @@ static std::basic_ostream<char>& operator<<(std::basic_ostream<char>& os, const 
    return os << qPrintable(str);
 }
 
-void US_Saxs_Scan::clear()
+void US_Saxs_Scan::clear( )
 {
    filename = "";
    header = "";
-   header_cols.clear();
-   q.clear();
-   r.clear();
-   s.clear();
+   header_cols.clear( );
+   q.clear( );
+   r.clear( );
+   s.clear( );
 }
 
 US_Saxs_Util::US_Saxs_Util()
@@ -63,9 +63,9 @@ US_Saxs_Util::~US_Saxs_Util()
    }
 }
 
-void US_Saxs_Util::clear()
+void US_Saxs_Util::clear( )
 {
-   wave.clear();
+   wave.clear( );
 }
 
 QString US_Saxs_Util::list_waves()
@@ -84,7 +84,7 @@ QString US_Saxs_Util::list_waves()
 bool US_Saxs_Util::read( QString filename, QString tag )
 {
    // read filename into wave[tag]
-   wave[tag].clear();
+   wave[tag].clear( );
    wave[tag].filename = filename;
 
    errormsg = "";
@@ -296,7 +296,7 @@ bool US_Saxs_Util::crop(QString outtag, QString fromtag, double low, double high
 {
    errormsg = "";
 
-   wave[outtag].clear();
+   wave[outtag].clear( );
    wave[outtag].filename = QString("crop_%1_%2_%3").arg(fromtag).arg(low).arg(high);
    wave[outtag].header = wave[fromtag].header;
    wave[outtag].header_cols = wave[fromtag].header_cols;
@@ -319,7 +319,7 @@ bool US_Saxs_Util::interpolate(QString outtag, QString totag, QString fromtag)
    // linearly interpolates the "from" q grid to the "to" qgrid returning in outtag
    // important note: "from" grid must cover "to" grid
 
-   wave[outtag].clear();
+   wave[outtag].clear( );
    wave[outtag].filename = QString("interpolate_%1_%2").arg(totag).arg(fromtag);
    wave[outtag].header = wave[fromtag].header;
    wave[outtag].header_cols = wave[fromtag].header_cols;
@@ -430,7 +430,7 @@ double US_Saxs_Util::rmsd(QString tag1, QString tag2)
 bool US_Saxs_Util::join(QString outtag, QString tag1, QString tag2, double pt)
 {
    errormsg = "";
-   wave[outtag].clear();
+   wave[outtag].clear( );
    wave[outtag].filename = QString("join_%1_%2_%3").arg(tag1).arg(tag2).arg(pt);
    wave[outtag].header = wave[tag1].header;
    
@@ -489,7 +489,7 @@ bool US_Saxs_Util::subbackground(QString outtag, QString solutiontag, QString bu
 {
    errormsg = "";
 
-   wave[outtag].clear();
+   wave[outtag].clear( );
    wave[outtag].filename = QString("sbg_%1_%2_%3")
       .arg(solutiontag).arg(buffertag).arg(alpha);
    wave[outtag].header = wave[solutiontag].header;
@@ -514,7 +514,7 @@ bool US_Saxs_Util::subcellwave(QString outtag, QString solutiontag, QString buff
 {
    errormsg = "";
 
-   wave[outtag].clear();
+   wave[outtag].clear( );
    wave[outtag].filename = QString("scw_%1_%2_%3").arg(solutiontag).arg(buffertag).arg(alpha);
    wave[outtag].header = wave[solutiontag].header;
    wave[outtag].header_cols = wave[solutiontag].header_cols;
@@ -556,7 +556,7 @@ bool US_Saxs_Util::waxsguidedsaxsbuffersub(double &nrmsd,
 
    // make outtag 
 
-   wave[outtag].clear();
+   wave[outtag].clear( );
    wave[outtag].filename = 
       QString("wgsbs_%1_%2_%3_%4_%5")
       .arg(solutiontag)
@@ -801,7 +801,7 @@ bool US_Saxs_Util::setup_wgsbs_gsm_f_df(
       return false;
    }
 
-   wave[outcrop].clear();
+   wave[outcrop].clear( );
 
    gsm_outtag = outtag;
    gsm_solutiontag = solutiontag;
@@ -2481,7 +2481,7 @@ long US_Saxs_Util::min_hessian_bfgs(our_vector *ip, double epsilon, long max_ite
 
 void US_Saxs_Util::clear_project()
 {
-   wave.clear();
+   wave.clear( );
    p_project = "";
    p_wiki = "";
    p_wiki_prefix = "";
@@ -2511,33 +2511,33 @@ void US_Saxs_Util::clear_project()
    p_crop_low = 0;
    p_crop_high = 1e6;
    p_iterations_gsm = 50;
-   wave_names_vector.clear();
-   wave_names.clear();
-   wave_file_names.clear();
-   wave_types.clear();
-   wave_concs.clear();
-   wave_alphas.clear();
-   wave_betas.clear();
-   wave_consts.clear();
-   wave_exposure_times.clear();
-   wave_buffer_names.clear();
-   wave_empty_names.clear();
-   wave_comments.clear();
-   wave_Rgs.clear();
-   wave_I0s.clear();
-   wave_smins.clear();
-   wave_smaxs.clear();
-   wave_sRgmins.clear();
-   wave_sRgmaxs.clear();
-   wave_chi2s.clear();
-   wave_alpha_starts.clear();
-   wave_alpha_ends.clear();
-   wave_alpha_incs.clear();
+   wave_names_vector.clear( );
+   wave_names.clear( );
+   wave_file_names.clear( );
+   wave_types.clear( );
+   wave_concs.clear( );
+   wave_alphas.clear( );
+   wave_betas.clear( );
+   wave_consts.clear( );
+   wave_exposure_times.clear( );
+   wave_buffer_names.clear( );
+   wave_empty_names.clear( );
+   wave_comments.clear( );
+   wave_Rgs.clear( );
+   wave_I0s.clear( );
+   wave_smins.clear( );
+   wave_smaxs.clear( );
+   wave_sRgmins.clear( );
+   wave_sRgmaxs.clear( );
+   wave_chi2s.clear( );
+   wave_alpha_starts.clear( );
+   wave_alpha_ends.clear( );
+   wave_alpha_incs.clear( );
    any_saxs = false;
    any_waxs = false;
-   wave_sb.clear();
-   wave_wgsbs.clear();
-   wave_join.clear();
+   wave_sb.clear( );
+   wave_wgsbs.clear( );
+   wave_join.clear( );
 }   
 
 bool US_Saxs_Util::check_project_files()
@@ -3608,7 +3608,7 @@ bool US_Saxs_Util::wiki(QString &result)
       result += QString("[[Image(htdocs:pngs%1%2)]]\n").arg(QDir::separator()).arg(pngfile);
       cmd += "\n";
       cout << cmd;
-      system(cmd.toAscii().data());
+      system(cmd.toLatin1().data());
    }
 
    for ( unsigned int i = 0; i < wave_names_vector.size(); i++ )
@@ -3675,7 +3675,7 @@ bool US_Saxs_Util::wiki(QString &result)
             .arg(get_file_name(wave_names_vector[i],"bsub"))
             ;
          cout << cmd;
-         system(cmd.toAscii().data());
+         system(cmd.toLatin1().data());
       }
    }
 
@@ -3831,7 +3831,7 @@ bool US_Saxs_Util::wiki(QString &result)
    }
    result += QString("[[Image(htdocs:%1)]]\n").arg(pngfile);
    cout << cmd << endl;
-   system(cmd.toAscii().data());
+   system(cmd.toLatin1().data());
 
    if ( exposure_times.size() > 1 )
    {
@@ -3875,7 +3875,7 @@ bool US_Saxs_Util::wiki(QString &result)
          }
          result += QString("[[Image(htdocs:%1)]]\n").arg(pngfile);
          cout << cmd << endl;
-         system(cmd.toAscii().data());
+         system(cmd.toLatin1().data());
       }
    }
 
@@ -3921,7 +3921,7 @@ bool US_Saxs_Util::wiki(QString &result)
       }
       result += QString("[[Image(htdocs:%1)]]\n").arg(pngfile);
       cout << cmd << endl;
-      system(cmd.toAscii().data());
+      system(cmd.toLatin1().data());
 
       if ( concs.size() > 1 )
       {
@@ -3965,7 +3965,7 @@ bool US_Saxs_Util::wiki(QString &result)
             }
             result += QString("[[Image(htdocs:%1)]]\n").arg(pngfile);
             cout << cmd << endl;
-            system(cmd.toAscii().data());
+            system(cmd.toLatin1().data());
          }
       }
    }
@@ -4060,12 +4060,12 @@ bool US_Saxs_Util::wiki(QString &result)
          .arg(smax)
          .arg(pngfile)
          .arg(guinier);
-      cout << cmd.toAscii().data();
-      system(cmd.toAscii().data());
+      cout << cmd.toLatin1().data();
+      system(cmd.toLatin1().data());
 
       QString this_data_line = 
          QString(
-#ifndef QT4
+#if QT_VERSION < 0x040000
                  "|| %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 ||\n"
 #else
                  "|| %1 || %2 || %3 || %4 || %5 || %6 || %7 || %8 || %9 || %10 || %11 || %12 || %13 || %14 || %15 || %16 || %17 || %18 ||\n"
@@ -4160,7 +4160,7 @@ bool US_Saxs_Util::wiki(QString &result)
       result += QString("[[Image(htdocs:pngs%1%2)]]\n").arg(QDir::separator()).arg(pngfile);
       cmd += "\n";
       cout << cmd;
-      system(cmd.toAscii().data());
+      system(cmd.toLatin1().data());
    }
       
    // for each waxs sample with nonzero concentration
@@ -4375,18 +4375,18 @@ bool US_Saxs_Util::wiki(QString &result)
 
          cmd += "\n";
          cout << cmd;
-         system(cmd.toAscii().data());
+         system(cmd.toLatin1().data());
          cmdz += "\n";
          cout << cmdz;
-         system(cmdz.toAscii().data());
+         system(cmdz.toLatin1().data());
          if ( hasPresetAlpha )
          {
             cmda += "\n";
             cout << cmda;
-            system(cmda.toAscii().data());
+            system(cmda.toLatin1().data());
             cmdaz += "\n";
             cout << cmdaz;
-            system(cmdaz.toAscii().data());
+            system(cmdaz.toLatin1().data());
          }
       }
    }
@@ -4524,7 +4524,7 @@ bool US_Saxs_Util::wiki(QString &result)
 
                   result += 
                      QString(
-#ifndef QT4
+#if QT_VERSION < 0x040000
                              "=== Sample SAXS %1 WAXS %1 ===\n"
                              "|| name || saxs or waxs || conc (mg/ml) || exposure time (s) || alpha || source file || comments || alpha || beta || constant || nrmsd || fit comments ||\n"
                              "|| %1 || %1 || %1 || %1 || %1 || %1 || %1 || || || || || ||\n"
@@ -4596,10 +4596,10 @@ bool US_Saxs_Util::wiki(QString &result)
 
                   cmd += "\n";
                   cout << cmd;
-                  system(cmd.toAscii().data());
+                  system(cmd.toLatin1().data());
                   cmdz += "\n";
                   cout << cmdz;
-                  system(cmdz.toAscii().data());
+                  system(cmdz.toLatin1().data());
 
                   // join waves
                   cout << "joining waves\n";
@@ -4679,11 +4679,11 @@ bool US_Saxs_Util::wiki(QString &result)
       }
       result += QString("[[Image(htdocs:%1)]]\n").arg(pngfile);
       cout << cmd << endl;
-      system(cmd.toAscii().data());
+      system(cmd.toLatin1().data());
 
       result += QString("[[Image(htdocs:%1)]]\n").arg(pngfilez);
       cout << cmdz << endl;
-      system(cmdz.toAscii().data());
+      system(cmdz.toLatin1().data());
       
       // wgsbs Rg/I0 series
       
@@ -4780,12 +4780,12 @@ bool US_Saxs_Util::wiki(QString &result)
                .arg(smax)
                .arg(pngfile)
                .arg(guinier);
-            cout << cmd.toAscii().data();
-            system(cmd.toAscii().data());
+            cout << cmd.toLatin1().data();
+            system(cmd.toLatin1().data());
             
             QString this_data_line = 
                QString(
-#ifndef QT4
+#if QT_VERSION < 0x040000
                        "|| %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 ||\n"
 #else
                        "|| %1 || %2 || %3 || %4 || %5 || %6 || %7 || %8 || %9 || %10 || %11 || %12 || %13 || %14 || %15 || %16 || %17 || %18 ||\n"
@@ -4869,7 +4869,7 @@ bool US_Saxs_Util::wiki(QString &result)
       }
       result += QString("[[Image(htdocs:%1)]]\n").arg(pngfile);
       cout << cmd << endl;
-      system(cmd.toAscii().data());
+      system(cmd.toLatin1().data());
       
       // wgsbs Rg/I0 series
       
@@ -4966,12 +4966,12 @@ bool US_Saxs_Util::wiki(QString &result)
                .arg(smax)
                .arg(pngfile)
                .arg(guinier);
-            cout << cmd.toAscii().data();
-            system(cmd.toAscii().data());
+            cout << cmd.toLatin1().data();
+            system(cmd.toLatin1().data());
             
             QString this_data_line = 
                QString(
-#ifndef QT4
+#if QT_VERSION < 0x040000
                        "|| %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 || %1 ||\n"
 #else
                        "|| %1 || %2 || %3 || %4 || %5 || %6 || %7 || %8 || %9 || %10 || %11 || %12 || %13 || %14 || %15 || %16 || %17 || %18 ||\n"
@@ -5495,7 +5495,7 @@ bool US_Saxs_Util::project_1d(
             filegroups_base_name.push_back(last_base_name);
             last_base_name = base_name;
             
-            filegroup.clear();
+            filegroup.clear( );
          } 
       }
       filegroup.push_back(files[i]);
@@ -5598,16 +5598,16 @@ bool US_Saxs_Util::project_1d(
       result += QString("[[Image(htdocs:%1)]]\n").arg(pngfile);
 
       cmd += "\n";
-      cout << cmd.toAscii().data();
-      system(cmd.toAscii().data());
+      cout << cmd.toLatin1().data();
+      system(cmd.toLatin1().data());
       if ( pngsplits > 1 )
       {
          for ( unsigned int k = 0; k < pngsplits; k++ )
          {
             result += QString("[[Image(htdocs:%1)]]\n").arg(pngfiles[k]);
             cmds[k] += "\n";
-            cout << cmds[k].toAscii().data();
-            system(cmds[k].toAscii().data());
+            cout << cmds[k].toLatin1().data();
+            system(cmds[k].toLatin1().data());
          }
       }
    }
@@ -5691,7 +5691,7 @@ bool US_Saxs_Util::run_gnom(
 
       QString cmd = 
          QString(
-#ifndef QT4
+#if QT_VERSION < 0x040000
                  "mkgnom.pl %1 %1%1_gnom_ %1 %1 %1 %1 %1 %1\n"
                  "mv %1%1%1*.png %1%1\n"
 #else
@@ -5716,7 +5716,7 @@ bool US_Saxs_Util::run_gnom(
          .arg(QDir::separator())
          ;
       cout << cmd;
-      system(cmd.toAscii().data());
+      system(cmd.toLatin1().data());
    }
    return true;
 }
@@ -6167,7 +6167,7 @@ bool US_Saxs_Util::iqq_sphere(
       return false;
    }
 
-   wave[ tag ].clear();
+   wave[ tag ].clear( );
    wave[ tag ].filename = tag;
    wave[ tag ].header   = 
       QString( 
@@ -6226,7 +6226,7 @@ bool US_Saxs_Util::iqq_sphere_grid(
       return false;
    }
 
-   wave[ outtag ].clear();
+   wave[ outtag ].clear( );
    wave[ outtag ].filename = outtag;
    wave[ outtag ].header   = 
       QString( 
@@ -6548,7 +6548,7 @@ bool US_Saxs_Util::iqq_sphere_fit(
    errormsg = "";
    noticemsg = "";
 
-   wave[ tag ].clear();
+   wave[ tag ].clear( );
    wave[ tag ].q = q;
    wave[ tag ].r = I;
    wave[ tag ].s = I_errors;
@@ -6736,12 +6736,12 @@ bool US_Saxs_Util::iqq_sphere_fit(
 
    // build output
    
-   by_radius      .clear();
-   by_delta_rho   .clear();
-   val_radius     .clear();
-   val_delta_rho  .clear();
-   index_radius   .clear();
-   index_delta_rho.clear();
+   by_radius      .clear( );
+   by_delta_rho   .clear( );
+   val_radius     .clear( );
+   val_delta_rho  .clear( );
+   index_radius   .clear( );
+   index_delta_rho.clear( );
 
    for ( double radius = min_radius; 
          radius <= max_radius; 
@@ -6779,7 +6779,7 @@ bool US_Saxs_Util::merge(
 {
    errormsg = "";
 
-   wave[outtag].clear();
+   wave[outtag].clear( );
    wave[outtag].filename = QString("merge_%1_%2_%3_%4").arg(tag1).arg(w1).arg(tag2).arg(w2);
    wave[outtag].header = wave[tag1].header;
 
@@ -7723,7 +7723,7 @@ bool US_Saxs_Util::create_adaptive_grid(
 
    // find fluctuation points
 
-   r.clear();
+   r.clear( );
    r.push_back(0); // add 1st point
 
    bool order = y2[ 1 ] > y2[ 0 ];
@@ -8113,8 +8113,8 @@ bool US_Saxs_Util::crop( vector < double > from_grid,
 {
    errormsg = "";
    noticemsg = "";
-   to_data.clear();
-   to_errors.clear();
+   to_data.clear( );
+   to_errors.clear( );
 
    if ( from_grid.size() != from_data.size() )
    {

@@ -74,7 +74,7 @@ int US_Tar::create( const QString& archive, const QStringList& files,
    
    QStringList all;
 
-   if ( list ) list->clear();
+   if ( list ) list->clear( );
 
    for ( unsigned int i = 0; i < (unsigned int) files.size(); i++ )
    {
@@ -512,7 +512,7 @@ int US_Tar::extract( const QString& archive, QStringList* list )
    ifd = open( archive.toLatin1().data(), O_RDONLY | O_BINARY );
    if ( ifd < 0 ) return TAR_NOTFOUND;
 
-   if ( list ) list->clear();
+   if ( list ) list->clear( );
 
    blocks_read = 0;
    QStringList files;
@@ -671,7 +671,7 @@ int US_Tar::extract( const QString& archive, QStringList* list )
 
          // Update owner/group
          if ( geteuid() != 0 ) uid = (uid_t) -1;
-         chown( filename.toAscii().data(), uid, gid );
+         chown( filename.toLatin1().data(), uid, gid );
 #endif
       }  // while ( true )
    }

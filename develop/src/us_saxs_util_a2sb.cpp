@@ -150,12 +150,12 @@ bool US_Saxs_Util::a2sb_run()
 
       // select one model at a time
 
-      model_vector.clear();
+      model_vector.clear( );
       model_vector.push_back( model_vector_as_loaded[ 0 ] );
 
       // build map
 
-      a2sb_map.clear();
+      a2sb_map.clear( );
 
       unsigned int tot_atoms = 0;
 
@@ -175,7 +175,7 @@ bool US_Saxs_Util::a2sb_run()
             it != a2sb_map.end();
             it++ )
       {
-         model_vector.clear();
+         model_vector.clear( );
 
          // make it->second into a PDB_model:
 
@@ -198,8 +198,8 @@ bool US_Saxs_Util::a2sb_run()
             
          sgp_exp_q       = sgp_last_q;
          sgp_exp_I       = sgp_last_I;
-         sgp_exp_e       .clear();
-         sgp_exp_q_index .clear();
+         sgp_exp_e       .clear( );
+         sgp_exp_q_index .clear( );
          sgp_use_e       = false;
          for ( unsigned int i = 0; i < sgp_exp_q.size(); i++ )
          {
@@ -243,7 +243,7 @@ bool US_Saxs_Util::a2sb_run()
 
       // write out 1sa model ( ? with difference to saxs curve of original model )
 
-      a2sb_map.clear();
+      a2sb_map.clear( );
 
       bead_models[ 0 ] = a2sb_model;
 
@@ -314,7 +314,7 @@ bool US_Saxs_Util::a2sb_run()
 
    // clean up, restore state:
 
-   a2sb_map.clear();
+   a2sb_map.clear( );
 
    model_vector                      = model_vector_as_loaded;
 

@@ -412,7 +412,7 @@ set < QTreeWidgetItem * > US_Hydrodyn_Pdb_Tool::get_exposed_set( QTreeWidget * l
                   if (last_residue != "") {
                      printf(
                             " [ %-6d %s ]\t%.0f\t%.0f\t%.2f\n",
-                            seqno, last_residue.toAscii().data(), residue_asa, residue_ref_asa, 100.0 * residue_asa / residue_ref_asa);
+                            seqno, last_residue.toLatin1().data(), residue_asa, residue_ref_asa, 100.0 * residue_asa / residue_ref_asa);
                      if ( 100.0 * residue_asa / residue_ref_asa >= max_asa )
                      {
                         exposed.insert( last_residue );
@@ -431,7 +431,7 @@ set < QTreeWidgetItem * > US_Hydrodyn_Pdb_Tool::get_exposed_set( QTreeWidget * l
          if (last_residue != "") {
             printf( 
                    " [ %-6d %s ]\t%.0f\t%.0f\t%.2f\n",
-                   seqno, last_residue.toAscii().data(), residue_asa, residue_ref_asa, 100.0 * residue_asa / residue_ref_asa);
+                   seqno, last_residue.toLatin1().data(), residue_asa, residue_ref_asa, 100.0 * residue_asa / residue_ref_asa);
             if ( 100.0 * residue_asa / residue_ref_asa >= max_asa )
             {
                exposed.insert( last_residue );
@@ -500,7 +500,7 @@ bool US_Hydrodyn_Pdb_Tool::naccess_run( QString pdb )
 #if QT_VERSION < 0x040000
    naccess_running = false;
    naccess_last_pdb = pdb;
-   naccess_result_data.clear();
+   naccess_result_data.clear( );
    QString prog = 
       USglobal->config_list.system_dir + SLASH + "bin"
 #if defined(BIN64)
@@ -670,7 +670,7 @@ vector < vector < QTreeWidgetItem * > > US_Hydrodyn_Pdb_Tool::separate_models( Q
             vvlvi.push_back( vlvi );
          }
          last_model = this_model;
-         vlvi.clear();
+         vlvi.clear( );
       }
       vlvi.push_back( item );
       ++it;
@@ -707,7 +707,7 @@ vector < QStringList > US_Hydrodyn_Pdb_Tool::separate_models( csv &ref_csv )
                qsl_model << "END\n";
             }
             result.push_back( qsl_model );
-            qsl_model.clear();
+            qsl_model.clear( );
          }
       }
       if ( rx_skip.indexIn( qsl_pdb[ i ] ) == -1 )

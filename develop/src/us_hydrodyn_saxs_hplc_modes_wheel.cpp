@@ -3,21 +3,21 @@
 
 void US_Hydrodyn_Saxs_Hplc::wheel_dec() 
 {
-   pb_wheel_dec->setEnabled( qwtw_wheel->value() > qwtw_wheel->minValue() );
-   qwtw_wheel->incValue( -1 );
+   pb_wheel_dec->setEnabled( qwtw_wheel->value() > qwtw_wheel->minimum() );
+   qwtw_wheel->setValue( qwtw_wheel->value() - qwtw_wheel->singleStep() );
 }
 
 void US_Hydrodyn_Saxs_Hplc::wheel_inc() 
 {
-   pb_wheel_inc->setEnabled( qwtw_wheel->value() < qwtw_wheel->maxValue() );
-   qwtw_wheel->incValue( 1 );
+   pb_wheel_inc->setEnabled( qwtw_wheel->value() < qwtw_wheel->maximum() );
+   qwtw_wheel->setValue( qwtw_wheel->value() + qwtw_wheel->singleStep() );
 }
 
 void US_Hydrodyn_Saxs_Hplc::wheel_enables( bool enable )
 {
    qwtw_wheel    ->setEnabled( enable );   
-   pb_wheel_dec  ->setEnabled( enable && qwtw_wheel->value() > qwtw_wheel->minValue() );
-   pb_wheel_inc  ->setEnabled( enable && qwtw_wheel->value() < qwtw_wheel->maxValue() );
+   pb_wheel_dec  ->setEnabled( enable && qwtw_wheel->value() > qwtw_wheel->minimum() );
+   pb_wheel_inc  ->setEnabled( enable && qwtw_wheel->value() < qwtw_wheel->maximum() );
 }
 
 void US_Hydrodyn_Saxs_Hplc::adjust_wheel( double pos )
@@ -234,9 +234,7 @@ void US_Hydrodyn_Saxs_Hplc::adjust_wheel( double pos )
             le_last_focus = le_gauss_pos;
             // cout << "aw: pos focus, since no last\n";
             disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
-            qwtw_wheel->setRange( f_qs[ wheel_file ][ 0 ], 
-                                  f_qs[ wheel_file ].back(), 
-                                  ( f_qs[ wheel_file ].back() - f_qs[ wheel_file ][ 0 ] ) / UHSH_WHEEL_RES );
+            qwtw_wheel->setRange( f_qs[ wheel_file ][ 0 ], f_qs[ wheel_file ].back()); qwtw_wheel->setSingleStep( ( f_qs[ wheel_file ].back() - f_qs[ wheel_file ][ 0 ] ) / UHSH_WHEEL_RES );
             connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
             return;
          }
@@ -385,31 +383,31 @@ void US_Hydrodyn_Saxs_Hplc::adjust_wheel( double pos )
             }
             // us_qdebug( QString( "gg adjust_wheel value %1" ).arg( pos ) );
             lbl_gauss_fit ->setText( "?" );
-            ggaussian_last_pfit_P    .clear();
-            ggaussian_last_pfit_N    .clear();
-            ggaussian_last_pfit_C    .clear();
-            ggaussian_last_pfit_S    .clear();
-            ggaussian_last_gg        .clear();
-            ggaussian_last_gg_t      .clear();
-            ggaussian_last_ggig      .clear();
-            ggaussian_last_I         .clear();
-            ggaussian_last_e         .clear();
-            ggaussian_pts_chi2       .clear();
-            ggaussian_pts_pfit       .clear();
-            ggaussian_pts_chi2_marked.clear();
-            ggaussian_pts_pfit_marked.clear();
+            ggaussian_last_pfit_P    .clear( );
+            ggaussian_last_pfit_N    .clear( );
+            ggaussian_last_pfit_C    .clear( );
+            ggaussian_last_pfit_S    .clear( );
+            ggaussian_last_gg        .clear( );
+            ggaussian_last_gg_t      .clear( );
+            ggaussian_last_ggig      .clear( );
+            ggaussian_last_I         .clear( );
+            ggaussian_last_e         .clear( );
+            ggaussian_pts_chi2       .clear( );
+            ggaussian_pts_pfit       .clear( );
+            ggaussian_pts_chi2_marked.clear( );
+            ggaussian_pts_pfit_marked.clear( );
 
-            ggqfit_plot   ->clear();
+            ggqfit_plot->detachItems( QwtPlotItem::Rtti_PlotCurve ); ggqfit_plot->detachItems( QwtPlotItem::Rtti_PlotMarker );;
             ggqfit_plot   ->replot();
-            plot_errors   ->clear();
+            plot_errors->detachItems( QwtPlotItem::Rtti_PlotCurve ); plot_errors->detachItems( QwtPlotItem::Rtti_PlotMarker );;
             if ( !suppress_replot )
             {
                plot_errors      ->replot();
             }
-            plot_errors_grid  .clear();
-            plot_errors_target.clear();
-            plot_errors_fit   .clear();
-            plot_errors_errors.clear();
+            plot_errors_grid  .clear( );
+            plot_errors_target.clear( );
+            plot_errors_fit   .clear( );
+            plot_errors_errors.clear( );
             pb_ggauss_rmsd->setEnabled( true );
 
             if ( le_gauss_pos->hasFocus() )
@@ -451,9 +449,7 @@ void US_Hydrodyn_Saxs_Hplc::adjust_wheel( double pos )
                // cout << "aw: pos focus, since no last\n";
                le_last_focus = le_gauss_pos;
                disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
-               qwtw_wheel->setRange( f_qs[ wheel_file ][ 0 ], 
-                                     f_qs[ wheel_file ].back(), 
-                                     ( f_qs[ wheel_file ].back() - f_qs[ wheel_file ][ 0 ] ) / UHSH_WHEEL_RES );
+               qwtw_wheel->setRange( f_qs[ wheel_file ][ 0 ], f_qs[ wheel_file ].back()); qwtw_wheel->setSingleStep( ( f_qs[ wheel_file ].back() - f_qs[ wheel_file ][ 0 ] ) / UHSH_WHEEL_RES );
                qwtw_wheel->setValue( le_gauss_pos->text().toDouble() );
                connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
                return;
@@ -480,7 +476,7 @@ void US_Hydrodyn_Saxs_Hplc::adjust_wheel( double pos )
          {
             offset_q[ i ] += pos;
          }
-#ifndef QT4
+#if QT_VERSION < 0x040000
          plot_dist->setCurveData( wheel_curve, 
                                   /* cb_guinier->isChecked() ? (double *)&(plotted_q2[p][0]) : */
                                   (double *)&( offset_q[ 0 ] ),
@@ -488,7 +484,7 @@ void US_Hydrodyn_Saxs_Hplc::adjust_wheel( double pos )
                                   offset_q.size()
                                   );
 #else
-         wheel_curve->setData(
+         wheel_curve->setSamples(
                               /* cb_guinier->isChecked() ?
                                  (double *)&(plotted_q2[p][0]) : */
                               (double *)&( offset_q[ 0 ] ),
@@ -543,12 +539,12 @@ void US_Hydrodyn_Saxs_Hplc::wheel_cancel( bool from_wheel_save )
          gaussians = org_gaussians;
          gauss_delete_markers();
          gauss_delete_gaussians();
-         plotted_gaussians.clear();
-         plotted_gaussian_sum.clear();
+         plotted_gaussians.clear( );
+         plotted_gaussian_sum.clear( );
          if ( plotted_curves.count( wheel_file ) &&
               f_pos.count( wheel_file ) )
          {
-#ifndef QT4
+#if QT_VERSION < 0x040000
             plot_dist->setCurvePen( plotted_curves[ wheel_file ], QPen( plot_colors[ f_pos[ wheel_file ] % plot_colors.size()], use_line_width, SolidLine));
 #else
             plotted_curves[ wheel_file ]->setPen( QPen( plot_colors[ f_pos[ wheel_file ] % plot_colors.size() ], use_line_width, Qt::SolidLine ) );
@@ -567,7 +563,7 @@ void US_Hydrodyn_Saxs_Hplc::wheel_cancel( bool from_wheel_save )
          gauss_delete_markers();
          for ( unsigned int i = 0; i < ( unsigned int ) plotted_wyatt.size(); i++ )
          {
-#ifndef QT4
+#if QT_VERSION < 0x040000
             plot_dist->removeCurve( plotted_wyatt[ i ] );
 #else
             plotted_wyatt[ i ]->detach();
@@ -579,12 +575,12 @@ void US_Hydrodyn_Saxs_Hplc::wheel_cancel( bool from_wheel_save )
          //             QwtSymbol symbol;
          //             symbol.setStyle( QwtSymbol::None );
 
-         // #ifndef QT4
+         // #if QT_VERSION < 0x040000
          //             plot_dist->setCurvePen( plotted_curves[ wheel_file ], QPen( plot_colors[ f_pos[ wheel_file ] % plot_colors.size()], use_line_width, Qt::SolidLine));
          //             plot_dist->setCurveSymbol( plotted_curves[ wheel_file ], symbol );
          // #else
          //             plotted_curves[ wheel_file ]->setPen( QPen( plot_colors[ f_pos[ wheel_file ] % plot_colors.size() ], use_line_width, Qt::SolidLine ) );
-         //             plotted_curves[ wheel_file ]->setSymbol( symbol );
+         //             plotted_curves[ wheel_file ]->setSymbol( new QwtSymbol( symbol.style(), symbol.brush(), symbol.pen(), symbol.size() ) );
          // #endif
          //          }
          plot_files();
@@ -659,7 +655,7 @@ void US_Hydrodyn_Saxs_Hplc::wheel_cancel( bool from_wheel_save )
          if ( plotted_curves.count( wheel_file ) &&
               f_pos.count( wheel_file ) )
          {
-#ifndef QT4
+#if QT_VERSION < 0x040000
             plot_dist->setCurvePen( plotted_curves[ wheel_file ], QPen( plot_colors[ f_pos[ wheel_file ] % plot_colors.size()], use_line_width, SolidLine));
 #else
             plotted_curves[ wheel_file ]->setPen( QPen( plot_colors[ f_pos[ wheel_file ] % plot_colors.size() ], use_line_width, Qt::SolidLine ) );
@@ -671,7 +667,7 @@ void US_Hydrodyn_Saxs_Hplc::wheel_cancel( bool from_wheel_save )
    case MODE_TIMESHIFT :
       {
          lbl_wheel_pos->setText( QString( "%1" ).arg( 0 ) );
-#ifndef QT4
+#if QT_VERSION < 0x040000
          plot_dist->setCurveData( wheel_curve, 
                                   /* cb_guinier->isChecked() ? (double *)&(plotted_q2[p][0]) : */
                                   (double *)&( f_qs[ wheel_file ][ 0 ] ),
@@ -679,7 +675,7 @@ void US_Hydrodyn_Saxs_Hplc::wheel_cancel( bool from_wheel_save )
                                   f_qs[ wheel_file ].size()
                                   );
 #else
-         wheel_curve->setData(
+         wheel_curve->setSamples(
                               /* cb_guinier->isChecked() ?
                                  (double *)&(plotted_q2[p][0]) : */
                               (double *)&( f_qs[ wheel_file ][ 0 ] ),
@@ -692,10 +688,10 @@ void US_Hydrodyn_Saxs_Hplc::wheel_cancel( bool from_wheel_save )
 
    case MODE_SCALE :
       {
-         scale_selected_names.clear();
-         scale_q.clear();
-         scale_I.clear();
-         scale_e.clear();
+         scale_selected_names.clear( );
+         scale_q.clear( );
+         scale_I.clear( );
+         scale_e.clear( );
          gauss_delete_markers();
          if ( scale_last_created.size() )
          {
@@ -707,8 +703,8 @@ void US_Hydrodyn_Saxs_Hplc::wheel_cancel( bool from_wheel_save )
          {
             remove_files( testiq_created_scale_names );
             set_selected( testiq_original_selection );
-            testiq_created_scale_names.clear();
-            testiq_original_selection.clear();
+            testiq_created_scale_names.clear( );
+            testiq_original_selection.clear( );
             mode_select( MODE_TESTIQ );
             return wheel_cancel();
          }
@@ -719,10 +715,10 @@ void US_Hydrodyn_Saxs_Hplc::wheel_cancel( bool from_wheel_save )
 
    case MODE_TESTIQ :
       {
-         testiq_created_names.clear();
-         testiq_created_q    .clear();
-         testiq_created_I    .clear();
-         testiq_created_e    .clear();
+         testiq_created_names.clear( );
+         testiq_created_q    .clear( );
+         testiq_created_I    .clear( );
+         testiq_created_e    .clear( );
 
          for ( int i = 0; i < (int) rb_testiq_gaussians.size(); ++i )
          {
@@ -733,7 +729,7 @@ void US_Hydrodyn_Saxs_Hplc::wheel_cancel( bool from_wheel_save )
 #endif
             delete rb_testiq_gaussians[ i ];
          }
-         rb_testiq_gaussians.clear();
+         rb_testiq_gaussians.clear( );
 
          gauss_delete_markers();
          mode_select( MODE_NORMAL );
@@ -745,21 +741,21 @@ void US_Hydrodyn_Saxs_Hplc::wheel_cancel( bool from_wheel_save )
 
    case MODE_GUINIER :
       {
-         guinier_q           .clear();
-         guinier_q2          .clear();
-         guinier_I           .clear();
-         guinier_e           .clear();
-         guinier_x           .clear();
-         guinier_y           .clear();
-         guinier_a           .clear();
-         guinier_b           .clear();
-         guinier_colors      .clear();
+         guinier_q           .clear( );
+         guinier_q2          .clear( );
+         guinier_I           .clear( );
+         guinier_e           .clear( );
+         guinier_x           .clear( );
+         guinier_y           .clear( );
+         guinier_a           .clear( );
+         guinier_b           .clear( );
+         guinier_colors      .clear( );
 
-         guinier_report      .clear();
+         guinier_report      .clear( );
          guinier_delete_markers();
-         guinier_markers.clear();
-         guinier_curves.clear();
-         guinier_errorbar_curves.clear();
+         guinier_markers.clear( );
+         guinier_curves.clear( );
+         guinier_errorbar_curves.clear( );
          plot_dist->show();
          if ( testiq_active )
          {
@@ -946,11 +942,11 @@ void US_Hydrodyn_Saxs_Hplc::wheel_save()
          blanks_end_e  = le_baseline_end_e  ->text().toDouble();
          default_blanks     = blanks_selected;
          default_blanks_set = blanks_selected_set;
-         default_blanks_files.clear();
+         default_blanks_files.clear( );
          blanks_cormap_parameters  = blanks_last_cormap_parameters;
          blanks_cormap_pvaluepairs = blanks_last_cormap_pvaluepairs;
          // do sliding window analysis
-         blanks_brookesmap_sliding_results.clear();
+         blanks_brookesmap_sliding_results.clear( );
          if ( blanks_cormap_parameters.size() &&
               blanks_cormap_pvaluepairs.size() ) {
             US_Hydrodyn_Saxs_Cormap_Cluster_Analysis ca;
@@ -974,9 +970,9 @@ void US_Hydrodyn_Saxs_Hplc::wheel_save()
                default_blanks_files.push_back( f_name[ blanks_selected[ i ] ] );
             } else {
                editor_msg( "red", us_tr( "Internal error: mode_blanks closing, missing blanks selected" ) );
-               default_blanks      .clear();
-               default_blanks_set  .clear();
-               default_blanks_files.clear();
+               default_blanks      .clear( );
+               default_blanks_set  .clear( );
+               default_blanks_files.clear( );
                break;
             }
          }
@@ -1004,7 +1000,7 @@ void US_Hydrodyn_Saxs_Hplc::wheel_save()
          wheel_enables( false );
          pb_wheel_save         ->setEnabled( false );
          pb_wheel_cancel       ->setEnabled( false );
-         lbl_wheel_pos->setText( QString( "%1" ).arg( qwtw_wheel->value( ) ) );
+         lbl_wheel_pos->setText( QString( "%1" ).arg( qwtw_wheel->value() ) );
 
          // save time adjusted selected as new
          map < QString, bool > current_files;
@@ -1013,7 +1009,7 @@ void US_Hydrodyn_Saxs_Hplc::wheel_save()
 
          for ( int i = 0; i < (int)lb_files->count(); i++ )
          {
-            current_files[ lb_files->item( i )->text( ) ] = true;
+            current_files[ lb_files->item( i )->text() ] = true;
             if ( lb_files->item( i )->text() == wheel_file )
             {
                wheel_pos = i;

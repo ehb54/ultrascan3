@@ -12,7 +12,7 @@ bool US_Plot_Util::printtofile( QString basename,
 
    bool any_plotted = false;
 
-#ifdef QT4
+#if QT_VERSION >= 0x040000
    for ( map < QString, QwtPlot * >::iterator it = plots.begin();
          it != plots.end();
          ++it )
@@ -49,8 +49,13 @@ bool US_Plot_Util::printtofile( QString basename,
             //    .arg( it->second->curve( ck )->x( i ) )
             //    .arg( it->second->curve( ck )->y( i ) )
             //    ;
+#if QT_VERSION >= 0x050000
+               tmp_x.push_back( curve->sample( i ).x() );
+               tmp_y.push_back( curve->sample( i ).y() );
+#else
                tmp_x.push_back( curve->x( i ) );
                tmp_y.push_back( curve->y( i ) );
+#endif
             }
 
             titles.push_back( curve->title().text() );

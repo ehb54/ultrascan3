@@ -3,7 +3,7 @@
 #include <QtCore>
 #include <QTextStream>
 
-#ifdef Q_WS_X11
+#ifndef Q_OS_WIN
 #include <unistd.h>
 #endif
 
@@ -12,7 +12,7 @@ US3i_Global::US3i_Global()
   valid      = false;
   deleteFlag = false;
 
-#ifndef WIN32
+#ifndef Q_OS_WIN
   // Make the key specific to the uid
   QString key = QString( "UltraScan%1" ).arg( getuid() );
 #else
@@ -68,7 +68,7 @@ QPoint US3i_Global::global_position( void )
 void US3i_Global::setPasswd( const QString& pw )
 {
   read_global();
-  strncpy( global.passwd, pw.toLatin1(), sizeof global.passwd );
+  strncpy( global.passwd, pw.toLatin1().constData(), sizeof global.passwd );
   write_global();
 }
 

@@ -72,21 +72,21 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    USglobal = new US_Config();
    this->batch_file = batch_file;
    numThreads = USglobal->config_list.numThreads;
-   extra_saxs_coefficients.clear();
+   extra_saxs_coefficients.clear( );
 
    last_pdb_filename = "";
-   last_pdb_title.clear();
-   last_pdb_header.clear();
+   last_pdb_title.clear( );
+   last_pdb_header.clear( );
 
    // no_rr = false;
 
    // int r_stdout = __open(QString(somo_tmp_dir +
-   //           SLASH + "last_stdout.txt").toAscii().data(),
+   //           SLASH + "last_stdout.txt").toLatin1().data(),
    //        O_WRONLY | O_CREAT | O_TRUNC, 0666);
    // dup2(r_stdout, STDOUT_FILENO);
 
    // int r_stderr = __open(QString(somo_tmp_dir +
-   //           SLASH + "last_stderr.txt").toAscii().data(),
+   //           SLASH + "last_stderr.txt").toLatin1().data(),
    //        O_WRONLY | O_CREAT | O_TRUNC, 0666);
    // dup2(r_stderr, STDERR_FILENO);
 
@@ -246,7 +246,7 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    QDir::setCurrent(somo_tmp_dir);
    if ( advanced_config.debug_5 )
    {
-      printf("%s\n", QString(somo_tmp_dir).toAscii().data());
+      printf("%s\n", QString(somo_tmp_dir).toLatin1().data());
    }
    results.total_beads = 0;
    results.used_beads = 0;
@@ -346,7 +346,7 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
       char* rmp = (char*) malloc (n + 1);
       if ( rmp )
       {
-         strncpy( rmp, RMP.toAscii().data(), n );
+         strncpy( rmp, RMP.toLatin1().data(), n );
          *( rmp + n ) = 0;
          putenv( rmp );
       }
@@ -504,44 +504,44 @@ void US_Hydrodyn::setupGUI()
 
 #if QT_VERSION < 0x040000
  //   lookup_tables = new Q3PopupMenu;
-   lookup_tables->insertItem(us_tr("Add/Edit &Hybridization"), this, SLOT(hybrid( )));
-   lookup_tables->insertItem(us_tr("Add/Edit &Atom"), this, SLOT(edit_atom( )));
-   lookup_tables->insertItem(us_tr("Add/Edit &Residue"), this, SLOT(residue( )));
-   lookup_tables->insertItem(us_tr("Add/Edit &SAXS coefficients"), this, SLOT(do_saxs( )));
+   lookup_tables->insertItem(us_tr("Add/Edit &Hybridization"), this, SLOT(hybrid()));
+   lookup_tables->insertItem(us_tr("Add/Edit &Atom"), this, SLOT(edit_atom()));
+   lookup_tables->insertItem(us_tr("Add/Edit &Residue"), this, SLOT(residue()));
+   lookup_tables->insertItem(us_tr("Add/Edit &SAXS coefficients"), this, SLOT(do_saxs()));
 
  //   somo_options = new Q3PopupMenu;
-   somo_options->insertItem(us_tr("&ASA Calculation"), this, SLOT(show_asa( )));
-   somo_options->insertItem(us_tr("&SoMo Overlap Reduction"), this, SLOT(show_overlap( )));
-   somo_options->insertItem(us_tr("AtoB (Grid) &Overlap Reduction"), this, SLOT(show_grid_overlap( )));
-   somo_options->insertItem(us_tr("&Hydrodynamic Calculations"), this, SLOT(show_hydro( )));
-   somo_options->insertItem(us_tr("Hydrodynamic Calculations &Zeno"), this, SLOT(show_zeno_options( )));
-   somo_options->insertItem(us_tr("&Miscellaneous Options"), this, SLOT(show_misc( )));
-   somo_options->insertItem(us_tr("&Bead Model Output"), this, SLOT(show_bead_output( )));
-   somo_options->insertItem(us_tr("&Grid Functions (AtoB)"), this, SLOT(show_grid( )));
-   somo_options->insertItem(us_tr("SA&XS/SANS Options"), this, SLOT(show_saxs_options( )));
+   somo_options->insertItem(us_tr("&ASA Calculation"), this, SLOT(show_asa()));
+   somo_options->insertItem(us_tr("&SoMo Overlap Reduction"), this, SLOT(show_overlap()));
+   somo_options->insertItem(us_tr("AtoB (Grid) &Overlap Reduction"), this, SLOT(show_grid_overlap()));
+   somo_options->insertItem(us_tr("&Hydrodynamic Calculations"), this, SLOT(show_hydro()));
+   somo_options->insertItem(us_tr("Hydrodynamic Calculations &Zeno"), this, SLOT(show_zeno_options()));
+   somo_options->insertItem(us_tr("&Miscellaneous Options"), this, SLOT(show_misc()));
+   somo_options->insertItem(us_tr("&Bead Model Output"), this, SLOT(show_bead_output()));
+   somo_options->insertItem(us_tr("&Grid Functions (AtoB)"), this, SLOT(show_grid()));
+   somo_options->insertItem(us_tr("SA&XS/SANS Options"), this, SLOT(show_saxs_options()));
 
  //   md_options = new Q3PopupMenu;
-   // md_options->insertItem(us_tr("&DMD Options"), this, SLOT(show_dmd_options( )));
-   md_options->insertItem(us_tr("&Browflex Options"), this, SLOT(show_bd_options( )));
-   md_options->insertItem(us_tr("&Anaflex Options"), this, SLOT(show_anaflex_options( )));
+   // md_options->insertItem(us_tr("&DMD Options"), this, SLOT(show_dmd_options()));
+   md_options->insertItem(us_tr("&Browflex Options"), this, SLOT(show_bd_options()));
+   md_options->insertItem(us_tr("&Anaflex Options"), this, SLOT(show_anaflex_options()));
 
  //   pdb_options = new Q3PopupMenu;
-   pdb_options->insertItem(us_tr("&Parsing"), this, SLOT(pdb_parsing( )));
-   pdb_options->insertItem(us_tr("&Visualization"), this, SLOT(pdb_visualization( )));
+   pdb_options->insertItem(us_tr("&Parsing"), this, SLOT(pdb_parsing()));
+   pdb_options->insertItem(us_tr("&Visualization"), this, SLOT(pdb_visualization()));
 
  //   configuration = new Q3PopupMenu;
-   configuration->insertItem(us_tr("&Load Configuration"), this, SLOT(load_config( )));
-   configuration->insertItem(us_tr("&Save Current Configuration"), this, SLOT(write_config( )));
-   configuration->insertItem(us_tr("&Reset to Default Configuration"), this, SLOT(reset( )));
-   configuration->insertItem(us_tr("&Advanced Configuration"), this, SLOT(show_advanced_config( )));
-   configuration->insertItem(us_tr("S&ystem Configuration"), this, SLOT(run_us_config( )));
-   configuration->insertItem(us_tr("A&dministrator"), this, SLOT(run_us_admin( )));
+   configuration->insertItem(us_tr("&Load Configuration"), this, SLOT(load_config()));
+   configuration->insertItem(us_tr("&Save Current Configuration"), this, SLOT(write_config()));
+   configuration->insertItem(us_tr("&Reset to Default Configuration"), this, SLOT(reset()));
+   configuration->insertItem(us_tr("&Advanced Configuration"), this, SLOT(show_advanced_config()));
+   configuration->insertItem(us_tr("S&ystem Configuration"), this, SLOT(run_us_config()));
+   configuration->insertItem(us_tr("A&dministrator"), this, SLOT(run_us_admin()));
 
    QFrame *frame;
    frame = new QFrame(this);
    frame->setMinimumHeight(minHeight1);
 
-# if !defined(QT4) || !defined(Q_WS_MAC)
+# if QT_VERSION < 0x040000 || !defined(Q_WS_MAC)
    menu = new QMenuBar(frame);
 # else
    menu = new QMenuBar( this );
@@ -554,15 +554,15 @@ void US_Hydrodyn::setupGUI()
    menu->insertItem(us_tr("&PDB"), pdb_options);
    menu->insertItem(us_tr("&Configuration"), configuration);
 
-# if defined(QT4) && defined(Q_WS_MAC)
+# if QT_VERSION >= 0x040000 && defined(Q_WS_MAC)
    {
  //      Q3PopupMenu * file = new Q3PopupMenu;
-      file->insertItem( us_tr("&Font"),  this, SLOT(update_font( )),    Qt::ALT+Qt::Key_F );
-      file->insertItem( us_tr("&Save"),  this, SLOT(save( )),    Qt::ALT+Qt::Key_S );
+      file->insertItem( us_tr("&Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
+      file->insertItem( us_tr("&Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
 #  ifndef NO_EDITOR_PRINT
-      file->insertItem( us_tr("&Print"), this, SLOT(print( )),   Qt::ALT+Qt::Key_P );
+      file->insertItem( us_tr("&Print"), this, SLOT(print()),   Qt::ALT+Qt::Key_P );
 #  endif
-      file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display( )),   Qt::ALT+Qt::Key_X );
+      file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
       menu->insertItem(us_tr("&Messages"), file );
    }
 # endif
@@ -747,7 +747,7 @@ void US_Hydrodyn::setupGUI()
    pb_select_residue_file->setPalette( PALET_PUSHB );
    connect(pb_select_residue_file, SIGNAL(clicked()), SLOT(select_residue_file()));
 
-   lbl_table = new QLabel( QDir::convertSeparators( residue_filename ), this );
+   lbl_table = new QLabel( QDir::toNativeSeparators( residue_filename ), this );
    lbl_table->setMinimumHeight(minHeight1);
    lbl_table->setFrameStyle(QFrame::WinPanel|Sunken);
    lbl_table->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
@@ -1068,35 +1068,35 @@ void US_Hydrodyn::setupGUI()
    //   pb_bd_prepare->setMinimumHeight(minHeight1);
    //   pb_bd_prepare->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    //   pb_bd_prepare->setEnabled(false);
-   //   pb_bd_prepare->setPalette( USglobal->global_colors.cg_pushb );
+   //   pb_bd_prepare->setPalette( PALET_PUSHB );
    //   connect(pb_bd_prepare, SIGNAL(clicked()), SLOT(bd_prepare()));
 
    //   pb_bd_load = new QPushButton(us_tr("Load Browflex files"), this);
    //   pb_bd_load->setMinimumHeight(minHeight1);
    //   pb_bd_load->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    //   pb_bd_load->setEnabled(false);
-   //   pb_bd_load->setPalette( USglobal->global_colors.cg_pushb );
+   //   pb_bd_load->setPalette( PALET_PUSHB );
    //   connect(pb_bd_load, SIGNAL(clicked()), SLOT(bd_load()));
 
    //   pb_bd_edit = new QPushButton(us_tr("View/Edit Browflex files"), this);
    //   pb_bd_edit->setMinimumHeight(minHeight1);
    //   pb_bd_edit->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    //   pb_bd_edit->setEnabled(false);
-   //   pb_bd_edit->setPalette( USglobal->global_colors.cg_pushb );
+   //   pb_bd_edit->setPalette( PALET_PUSHB );
    //   connect(pb_bd_edit, SIGNAL(clicked()), SLOT(bd_edit()));
 
    //   pb_bd_run = new QPushButton(us_tr("Run Browflex"), this);
    //   pb_bd_run->setMinimumHeight(minHeight1);
    //   pb_bd_run->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    //   pb_bd_run->setEnabled(false);
-   //   pb_bd_run->setPalette( USglobal->global_colors.cg_pushb );
+   //   pb_bd_run->setPalette( PALET_PUSHB );
    //   connect(pb_bd_run, SIGNAL(clicked()), SLOT(bd_run()));
 
    //   pb_bd_load_results = new QPushButton(us_tr("Load/Process Browflex results"), this);
    //   pb_bd_load_results->setMinimumHeight(minHeight1);
    //   pb_bd_load_results->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    //   pb_bd_load_results->setEnabled(false);
-   //   pb_bd_load_results->setPalette( USglobal->global_colors.cg_pushb );
+   //   pb_bd_load_results->setPalette( PALET_PUSHB );
    //   connect(pb_bd_load_results, SIGNAL(clicked()), SLOT(bd_load_results()));
 
    // ***** anaflex *******
@@ -1104,35 +1104,35 @@ void US_Hydrodyn::setupGUI()
    //   pb_anaflex_prepare->setMinimumHeight(minHeight1);
    //   pb_anaflex_prepare->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    //   pb_anaflex_prepare->setEnabled(false);
-   //   pb_anaflex_prepare->setPalette( USglobal->global_colors.cg_pushb );
+   //   pb_anaflex_prepare->setPalette( PALET_PUSHB );
    //   connect(pb_anaflex_prepare, SIGNAL(clicked()), SLOT(anaflex_prepare()));
 
    //   pb_anaflex_load = new QPushButton(us_tr("Load Anaflex files"), this);
    //   pb_anaflex_load->setMinimumHeight(minHeight1);
    //   pb_anaflex_load->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    //   pb_anaflex_load->setEnabled(false);
-   //   pb_anaflex_load->setPalette( USglobal->global_colors.cg_pushb );
+   //   pb_anaflex_load->setPalette( PALET_PUSHB );
    //   connect(pb_anaflex_load, SIGNAL(clicked()), SLOT(anaflex_load()));
 
    //   pb_anaflex_edit = new QPushButton(us_tr("View/Edit Anaflex files"), this);
    //   pb_anaflex_edit->setMinimumHeight(minHeight1);
    //   pb_anaflex_edit->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    //   pb_anaflex_edit->setEnabled(false);
-   //   pb_anaflex_edit->setPalette( USglobal->global_colors.cg_pushb );
+   //   pb_anaflex_edit->setPalette( PALET_PUSHB );
    //   connect(pb_anaflex_edit, SIGNAL(clicked()), SLOT(anaflex_edit()));
 
    //   pb_anaflex_run = new QPushButton(us_tr("Run Anaflex"), this);
    //   pb_anaflex_run->setMinimumHeight(minHeight1);
    //   pb_anaflex_run->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    //   pb_anaflex_run->setEnabled(false);
-   //   pb_anaflex_run->setPalette( USglobal->global_colors.cg_pushb );
+   //   pb_anaflex_run->setPalette( PALET_PUSHB );
    //   connect(pb_anaflex_run, SIGNAL(clicked()), SLOT(anaflex_run()));
 
    //   pb_anaflex_load_results = new QPushButton(us_tr("Load Anaflex results"), this);
    //   pb_anaflex_load_results->setMinimumHeight(minHeight1);
    //   pb_anaflex_load_results->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    //   pb_anaflex_load_results->setEnabled(false);
-   //   pb_anaflex_load_results->setPalette( USglobal->global_colors.cg_pushb );
+   //   pb_anaflex_load_results->setPalette( PALET_PUSHB );
    //   connect(pb_anaflex_load_results, SIGNAL(clicked()), SLOT(anaflex_load_results()));
 
    pb_help = new QPushButton(us_tr("Help"), this);
@@ -1175,20 +1175,20 @@ void US_Hydrodyn::setupGUI()
    editor->setMinimumWidth(550);
 
 #if QT_VERSION < 0x040000
-# if !defined(QT4) || !defined(Q_WS_MAC)
+# if QT_VERSION < 0x040000 || !defined(Q_WS_MAC)
    m = new QMenuBar( editor );    m->setObjectName( "menu" );
    m->setMinimumHeight(minHeight1);
    m->setPalette( PALET_NORMAL );
    AUTFBACK( m );
  //   Q3PopupMenu * file = new Q3PopupMenu(editor);
    m->insertItem( us_tr("&File"), file );
-   file->insertItem( us_tr("Font"),  this, SLOT(update_font( )),    Qt::ALT+Qt::Key_F );
-   file->insertItem( us_tr("Save"),  this, SLOT(save( )),    Qt::ALT+Qt::Key_S );
+   file->insertItem( us_tr("Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
+   file->insertItem( us_tr("Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
 
 #  ifndef NO_EDITOR_PRINT
-   file->insertItem( us_tr("Print"), this, SLOT(print( )),   Qt::ALT+Qt::Key_P );
+   file->insertItem( us_tr("Print"), this, SLOT(print()),   Qt::ALT+Qt::Key_P );
 #  endif
-   file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display( )),   Qt::ALT+Qt::Key_X );
+   file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
 # endif
 #else
 # if !defined(Q_WS_MAC)
@@ -1362,7 +1362,7 @@ void US_Hydrodyn::set_expert( bool expert )
    {
       //      pb_best->show();
 #if QT_VERSION < 0x040000
-      lookup_tables->insertItem(us_tr("Make test set"), this, SLOT( make_test_set( ) ) );
+      lookup_tables->insertItem(us_tr("Make test set"), this, SLOT( make_test_set() ) );
 #endif
    }
    expert ? pb_equi_grid_bead_model->show() : pb_equi_grid_bead_model->hide();
@@ -1935,7 +1935,7 @@ void US_Hydrodyn::select_residue_file()
    }
    read_residue_file();
    set_disabled();
-   lbl_table->setText( QDir::convertSeparators( residue_filename ) );
+   lbl_table->setText( QDir::toNativeSeparators( residue_filename ) );
 }
 
 void US_Hydrodyn::reload_pdb()
@@ -2009,7 +2009,7 @@ void US_Hydrodyn::reload_pdb()
 
 void US_Hydrodyn::clear_pdb_info( QString /* msg */ ) {
    // us_qdebug( QString( "clear_pdb_info() %1" ). arg( msg ) );
-   pdb_info.clear();
+   pdb_info.clear( );
 }
 
 void US_Hydrodyn::set_pdb_info( QString /* msg */ ) {
@@ -2310,7 +2310,7 @@ int US_Hydrodyn::issue_missing_atom( bool quiet ) {
 
 void US_Hydrodyn::load_pdb()
 {
-   issue_info.clear();
+   issue_info.clear( );
    clear_pdb_info( "load_pdb" );
    if ( misc.restore_pb_rule ) {
       us_qdebug( "load_pdb() restoring pb rule" );
@@ -2440,8 +2440,8 @@ void US_Hydrodyn::load_pdb()
       options_log = "";
       last_abb_msgs = "";
       bead_model_from_file = false;
-      le_pdb_file_save_text = QDir::convertSeparators( filename );
-      le_pdb_file->setText( QDir::convertSeparators( filename ) );
+      le_pdb_file_save_text = QDir::toNativeSeparators( filename );
+      le_pdb_file->setText( QDir::toNativeSeparators( filename ) );
       clear_display();
 
 #if defined(START_RASMOL)
@@ -2451,7 +2451,7 @@ void US_Hydrodyn::load_pdb()
 #endif
       QFileInfo fi(filename);
       project = fi.baseName();
-      new_residues.clear();
+      new_residues.clear( );
       if ( misc.pb_rule_on )
       {
          residue_list = save_residue_list;
@@ -2482,8 +2482,8 @@ void US_Hydrodyn::load_pdb()
          
 
       editor->append(QString("Loaded pdb file : %1\n").arg(errors_found ? "ERRORS PRESENT" : "ok"));
-      bead_models.clear();
-      somo_processed.clear();
+      bead_models.clear( );
+      somo_processed.clear( );
       state = PDB_LOADED;
    }
    else
@@ -2539,7 +2539,7 @@ void US_Hydrodyn::load_pdb()
 bool US_Hydrodyn::screen_pdb(QString filename, bool display_pdb, bool skipclearissue )
 {
    if ( !skipclearissue ) {
-      issue_info.clear();
+      issue_info.clear( );
    }
    clear_pdb_info( "screen_pdb" );
 
@@ -2573,8 +2573,8 @@ bool US_Hydrodyn::screen_pdb(QString filename, bool display_pdb, bool skipcleari
    last_abb_msgs = "";
    bead_model_from_file = false;
    int errors_found = 0;
-   le_pdb_file_save_text = QDir::convertSeparators( filename );
-   le_pdb_file->setText( QDir::convertSeparators( filename ) );
+   le_pdb_file_save_text = QDir::toNativeSeparators( filename );
+   le_pdb_file->setText( QDir::toNativeSeparators( filename ) );
 
    bead_model_suffix = "";
    le_bead_model_suffix->setText( bead_model_suffix );
@@ -2587,7 +2587,7 @@ bool US_Hydrodyn::screen_pdb(QString filename, bool display_pdb, bool skipcleari
 
    QFileInfo fi(filename);
    project = fi.baseName();
-   new_residues.clear();
+   new_residues.clear( );
    if ( misc.pb_rule_on )
    {
       residue_list = save_residue_list;
@@ -2646,8 +2646,8 @@ bool US_Hydrodyn::screen_pdb(QString filename, bool display_pdb, bool skipcleari
    }
 
    editor->append(QString("Loaded pdb file : %1\n").arg(errors_found ? "ERRORS PRESENT" : "ok"));
-   bead_models.clear();
-   somo_processed.clear();
+   bead_models.clear( );
+   somo_processed.clear( );
    update_vbar();
    if (results_widget)
    {
@@ -2707,7 +2707,7 @@ bool US_Hydrodyn::screen_bead_model( QString filename )
    }
 
    bead_model_file = filename;
-   le_bead_model_file->setText( QDir::convertSeparators( filename ) );
+   le_bead_model_file->setText( QDir::toNativeSeparators( filename ) );
    bool only_overlap = false;
    if ( !read_bead_model(filename, only_overlap ))
    {
@@ -2813,7 +2813,7 @@ void US_Hydrodyn::select_model( int val )
 void US_Hydrodyn::write_bead_ebf(QString fname, vector<PDB_atom> *model)
 {
    {
-      FILE *f = us_fopen(fname.toAscii().data(), "w");
+      FILE *f = us_fopen(fname.toLatin1().data(), "w");
       for (unsigned int i = 0; i < model->size(); i++)
       {
          if ((*model)[i].active)
@@ -2827,7 +2827,7 @@ void US_Hydrodyn::write_bead_ebf(QString fname, vector<PDB_atom> *model)
       fclose(f);
    }
    {
-      FILE *f = us_fopen(QString("%1-info").arg(fname).toAscii().data(), "w");
+      FILE *f = us_fopen(QString("%1-info").arg(fname).toLatin1().data(), "w");
       for (unsigned int i = 0; i < model->size(); i++)
       {
          if ((*model)[i].active)
@@ -2898,7 +2898,7 @@ void US_Hydrodyn::load_bead_model()
       }
 
       bead_model_file = filename;
-      le_bead_model_file->setText( QDir::convertSeparators( filename ) );
+      le_bead_model_file->setText( QDir::toNativeSeparators( filename ) );
 
       if ( is_dammin_dammif(filename) &&
            advanced_config.auto_view_pdb ) 
@@ -3331,7 +3331,7 @@ int US_Hydrodyn::calc_grid_pdb()
                {
                   // ok, we have the basic "bead" info loaded...
                   unsigned int i = current_model;
-                  bead_model.clear();
+                  bead_model.clear( );
                   bool any_zero_si = false;
                   for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++) {
                      for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++) {
@@ -3349,9 +3349,9 @@ int US_Hydrodyn::calc_grid_pdb()
                               this_atom->bead_computed_radius += additional_radius;
 #if defined(GRID_HYDRATE_DEBUG)
                               printf("hydrating atom %s %s %s hydration %f radius %f + %f -> %f\n"
-                                     , this_atom->name.toAscii().data()
-                                     , this_atom->resName.toAscii().data()
-                                     , this_atom->resSeq.toAscii().data()
+                                     , this_atom->name.toLatin1().data()
+                                     , this_atom->resName.toLatin1().data()
+                                     , this_atom->resSeq.toLatin1().data()
                                      , this_atom->atom_hydration
                                      , this_atom->radius
                                      , additional_radius
@@ -4371,11 +4371,11 @@ int US_Hydrodyn::do_calc_hydro()
                                               // (bead_model_from_file ? "" : (models_to_proc == 1 ? "_1" : "_%1")) +
                                               (bead_model_from_file ? "" : "_%1") +
                                               QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "") +
-                                              DOTSOMO + ".beams").toAscii().data(),
+                                              DOTSOMO + ".beams").toLatin1().data(),
                                       QString(project +
                                               (bead_model_from_file ? "" : QString("_%1").arg( model_name( first_model_no - 1 ) ) ) +
                                               QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "") +
-                                              DOTSOMO + ".beams").toAscii().data(),
+                                              DOTSOMO + ".beams").toLatin1().data(),
                                       model_names,
                                       progress,
                                       editor,
@@ -4752,7 +4752,7 @@ void US_Hydrodyn::print()
 
 void US_Hydrodyn::clear_display()
 {
-   editor->clear();
+   editor->clear( );
    editor->setText("\n");
    display_default_differences();
 }
@@ -5204,8 +5204,8 @@ void US_Hydrodyn::setSomoGridFile(bool somo)
                   le_bead_model_suffix->setText(bead_model_suffix);
                   any_changes = true;
                }
-               // frmc = us_fopen(QString("%1.rmc").arg(fname).toAscii().data(), "w");
-               // frmc1 = us_fopen(QString("%1.rmc1").arg(fname).toAscii().data(), "w");
+               // frmc = us_fopen(QString("%1.rmc").arg(fname).toLatin1().data(), "w");
+               // frmc1 = us_fopen(QString("%1.rmc1").arg(fname).toLatin1().data(), "w");
             }
             
             if (bead_output.output & US_HYDRODYN_OUTPUT_HYDRO) {
@@ -5411,7 +5411,7 @@ void US_Hydrodyn::dmd_run()
       
    // save current batch_files
    batch_info save_batch_info = batch;
-   batch.file.clear();
+   batch.file.clear( );
    batch.file.push_back( pdb_file );
    batch.mm_all = true;
    batch.dmd = true;
@@ -5428,7 +5428,7 @@ void US_Hydrodyn::dmd_run()
       fixWinButtons( batch_window );
       batch_window->lb_files->item( 0)->setSelected( true );
    } else {
-      batch_window->lb_files->clear();
+      batch_window->lb_files->clear( );
       batch_window->lb_files->addItem(batch.file[0]);
       batch_window->lb_files->item( 0)->setSelected( true );
    }
@@ -5453,7 +5453,7 @@ void US_Hydrodyn::dmd_run()
    {
       batch_window->close();
    } else {
-      batch_window->lb_files->clear();
+      batch_window->lb_files->clear( );
       QString load_errors;
       for ( unsigned int i = 0; i < batch.file.size(); i++ ) 
       {
@@ -5506,7 +5506,7 @@ void US_Hydrodyn::run_us_config()
    QString config_prog = "us_config";
    
    process->setCommunication( 0 );
-# ifndef Q_WS_MAC
+# ifndef Q_OS_MAC
    process->addArgument( config_prog );
 # else
    QString procbin = USglobal->config_list.system_dir + "/bin/" + config_prog;
@@ -5530,7 +5530,7 @@ void US_Hydrodyn::run_us_config()
 #else
    QString prog = "us3_config";
    QStringList args;
-# if defined( Q_WS_MAC )
+# if defined( Q_OS_MAC )
    prog = "open";
 
    QString procbin = USglobal->config_list.system_dir + "/bin/" + prog;
@@ -5560,7 +5560,7 @@ void US_Hydrodyn::run_us_admin()
    QProcess* process = new QProcess( this );
 #if QT_VERSION < 0x040000
    process->setCommunication( 0 );
-# ifndef Q_WS_MAC
+# ifndef Q_OS_MAC
    process->addArgument( "us_admin" );
 # else
    QString procbin = USglobal->config_list.system_dir + "/bin/" + "us_admin";
@@ -5584,7 +5584,7 @@ void US_Hydrodyn::run_us_admin()
 #else
    QString prog = "us_admin";
    QStringList args;
-# if defined( Q_WS_MAC )
+# if defined( Q_OS_MAC )
    prog = "open";
 
    QString procbin = USglobal->config_list.system_dir + "/bin/" + config_prog;
@@ -5614,14 +5614,14 @@ void US_Hydrodyn::update_enables()
 }
 
 void US_Hydrodyn::sizeArrows( QwtCounter* 
-#if defined(QT4) && ( defined(Q_WS_MAC) || defined(Q_WS_WIN) )
+#if QT_VERSION >= 0x040000 && ( defined(Q_WS_MAC) || defined(Q_WS_WIN) )
                               counter 
 #endif
 )
 {
-#if defined(QT4) && ( defined(Q_WS_MAC) || defined(Q_WS_WIN) )
+#if QT_VERSION >= 0x040000 && ( defined(Q_WS_MAC) || defined(Q_WS_WIN) )
    QList< QObject* > children = counter->children();
-   QStyle* btnstyle = new QPlastiqueStyle();
+   QStyle* btnstyle = QStyleFactory::create("fusion");
    for ( int jj = 0; jj < children.size(); jj++ )
    {
       QWidget* cwidg = (QWidget*)children.at( jj );
@@ -5633,14 +5633,14 @@ void US_Hydrodyn::sizeArrows( QwtCounter*
 }
 
 void US_Hydrodyn::fixWinButtons( QWidget* 
-#if defined(QT4)
+#if QT_VERSION >= 0x040000
                                  widg 
 #endif
                                  )
 {
-#if defined(QT4)
+#if QT_VERSION >= 0x040000
    QList< QObject* > children = widg->children();
-   QStyle* btnstyle = new QPlastiqueStyle();
+   QStyle* btnstyle = QStyleFactory::create("fusion");
    for ( int jj = 0; jj < children.size(); jj++ )
    {
       QObject* cobj  = children.at( jj );

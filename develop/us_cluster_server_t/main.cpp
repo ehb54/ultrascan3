@@ -15,7 +15,7 @@ int main( int argc, char** argv )
    ucsc = new US_Cluster_Server_Config();
    if ( !ucsc->init( argv[ 1 ] ) )
    {
-      printf( "%s\n", ucsc->errormsg.toAscii().data() );
+      printf( "%s\n", ucsc->errormsg.toLatin1().data() );
       exit( -2 );
    }
 

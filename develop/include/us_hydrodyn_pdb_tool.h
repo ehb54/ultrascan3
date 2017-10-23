@@ -41,7 +41,7 @@
 using namespace std;
 
 #ifdef WIN32
-# if !defined( QT4 )
+# if QT_VERSION < 0x040000
   #pragma warning ( disable: 4251 )
 # endif
 #endif
@@ -308,7 +308,7 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
       void csv_save();
       void csv_cut();
       void csv_undo();
-      void csv_clear();
+      void csv_clear( );
       void csv_copy();
       void csv_paste();
       void csv_paste_new();
@@ -322,7 +322,7 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
       void csv_clash_report();
       void csv_visualize();
       void csv_sel();
-      void csv_sel_clear();
+      void csv_sel_clear( );
       void csv_sel_clean();
       void csv_sel_invert();
       void csv_sel_chain();
@@ -337,7 +337,7 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
       void csv2_dup();
       void csv2_save();
       void csv2_undo();
-      void csv2_clear();
+      void csv2_clear( );
       void csv2_cut();
       void csv2_copy();
       void csv2_paste();
@@ -352,7 +352,7 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
       void csv2_clash_report();
       void csv2_visualize();
       void csv2_sel();
-      void csv2_sel_clear();
+      void csv2_sel_clear( );
       void csv2_sel_clean();
       void csv2_sel_invert();
       void csv2_sel_chain();
@@ -375,7 +375,7 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool : public QFrame
 };
 
 #ifdef WIN32
-# if !defined( QT4 )
+# if QT_VERSION < 0x040000
   #pragma warning ( default: 4251 )
 # endif
 #endif

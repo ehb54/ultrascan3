@@ -73,7 +73,7 @@ US_Hydrodyn_Cluster::US_Hydrodyn_Cluster(
    cluster_config[ "userid" ] = "";
    cluster_config[ "server" ] = "";
 
-   selected_files.clear();
+   selected_files.clear( );
    for ( int i = 0; i < batch_window->lb_files->count(); i++ )
    {
       if ( batch_window->lb_files->item(i)->isSelected() )
@@ -133,14 +133,14 @@ US_Hydrodyn_Cluster::US_Hydrodyn_Cluster(
       le_no_of_jobs->setText( batch_window->cluster_no_of_jobs );
    }
    lb_target_files->addItems( batch_window->cluster_target_datafiles );
-   le_output_name    ->setText           ( batch_window->cluster_output_name.isEmpty( ) ?
+   le_output_name    ->setText           ( batch_window->cluster_output_name.isEmpty() ?
                                            "job" : batch_window->cluster_output_name );
    cb_for_mpi        ->setChecked        ( batch_window->cluster_for_mpi );
    csv_advanced = batch_window->cluster_csv_advanced;
    csv_dmd      = batch_window->cluster_csv_dmd;
    if ( cb_for_mpi->isChecked() )
    {
-      le_no_of_jobs->setText( QString( "%1" ).arg( selected_files.size( ) ) );
+      le_no_of_jobs->setText( QString( "%1" ).arg( selected_files.size() ) );
    }
    
    le_output_name->setEnabled( create_enabled );
@@ -430,12 +430,12 @@ void US_Hydrodyn_Cluster::setupGUI()
    editor->setReadOnly(true);
 
 #if QT_VERSION < 0x040000
-# if defined(QT4) && defined(Q_WS_MAC)
+# if QT_VERSION >= 0x040000 && defined(Q_WS_MAC)
    {
  //      Q3PopupMenu * file = new Q3PopupMenu;
-      file->insertItem( us_tr("&Font"),  this, SLOT(update_font( )),    Qt::ALT+Qt::Key_F );
-      file->insertItem( us_tr("&Save"),  this, SLOT(save( )),    Qt::ALT+Qt::Key_S );
-      file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display( )),   Qt::ALT+Qt::Key_X );
+      file->insertItem( us_tr("&Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
+      file->insertItem( us_tr("&Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
+      file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
 
       QMenuBar *menu = new QMenuBar( this );
       AUTFBACK( menu );
@@ -453,9 +453,9 @@ void US_Hydrodyn_Cluster::setupGUI()
    AUTFBACK( m );
  //   Q3PopupMenu * file = new Q3PopupMenu(editor);
    m->insertItem( us_tr("&File"), file );
-   file->insertItem( us_tr("Font"),  this, SLOT(update_font( )),    Qt::ALT+Qt::Key_F );
-   file->insertItem( us_tr("Save"),  this, SLOT(save( )),    Qt::ALT+Qt::Key_S );
-   file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display( )),   Qt::ALT+Qt::Key_X );
+   file->insertItem( us_tr("Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
+   file->insertItem( us_tr("Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
+   file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
 # endif
 #else
    QFrame *frame;
@@ -566,7 +566,7 @@ void US_Hydrodyn_Cluster::setupGUI()
    hbl_bottom->addSpacing( 4 );
 
    QBoxLayout * vbl_editor_group = new QVBoxLayout(0); vbl_editor_group->setContentsMargins( 0, 0, 0, 0 ); vbl_editor_group->setSpacing( 0 );
-#if !defined(QT4) || !defined(Q_WS_MAC)
+#if QT_VERSION < 0x040000 || !defined(Q_WS_MAC)
    vbl_editor_group->addWidget(frame);
 #endif
    vbl_editor_group->addWidget(editor);
@@ -609,7 +609,7 @@ void US_Hydrodyn_Cluster::closeEvent(QCloseEvent *e)
    QStringList target_files;
    for ( int i = 0; i < lb_target_files->count(); i++ )
    {
-      target_files << lb_target_files->item( i )->text( );
+      target_files << lb_target_files->item( i )->text();
    }
    batch_window->cluster_target_datafiles = target_files;
    batch_window->cluster_output_name      = le_output_name->text();
@@ -625,7 +625,7 @@ void US_Hydrodyn_Cluster::closeEvent(QCloseEvent *e)
 
 void US_Hydrodyn_Cluster::clear_target()
 {
-   lb_target_files->clear();
+   lb_target_files->clear( );
    update_validator();
 }
 
@@ -634,7 +634,7 @@ void US_Hydrodyn_Cluster::add_target()
    map < QString, bool > existing_items;
    for ( int i = 0; i < lb_target_files->count(); i++ )
    {
-      existing_items[ lb_target_files->item( i )->text( ) ] = true;
+      existing_items[ lb_target_files->item( i )->text() ] = true;
    }
 
    QString use_dir = ((US_Hydrodyn *)us_hydrodyn)->somo_dir + QDir::separator() + "saxs";
@@ -701,8 +701,8 @@ void US_Hydrodyn_Cluster::create_pkg()
          tar_filename = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( tar_filename, 0, this );
          filename = tar_filename;
          filename.replace( QRegExp( "\\.tar$" ), "" );
-         le_output_name->setText( QDir::convertSeparators( QFileInfo( filename ).path() ) == 
-                                  QDir::convertSeparators( pkg_dir ) ?
+         le_output_name->setText( QDir::toNativeSeparators( QFileInfo( filename ).path() ) == 
+                                  QDir::toNativeSeparators( pkg_dir ) ?
                                   QFileInfo( filename ).fileName() : 
                                   filename );
       }
@@ -719,8 +719,8 @@ void US_Hydrodyn_Cluster::create_pkg()
                                                                          &path, &name, &ext, 0, this );
             filename = targz_filename;
             filename.replace( QRegExp( "\\_p1.tgz$" ), "" );
-            le_output_name->setText( QDir::convertSeparators( QFileInfo( filename ).path() ) == 
-                                     QDir::convertSeparators( pkg_dir ) ?
+            le_output_name->setText( QDir::toNativeSeparators( QFileInfo( filename ).path() ) == 
+                                     QDir::toNativeSeparators( pkg_dir ) ?
                                      QFileInfo( filename ).fileName() : 
                                      filename );
          }
@@ -731,8 +731,8 @@ void US_Hydrodyn_Cluster::create_pkg()
             targz_filename = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( targz_filename, 0, this );
             filename = targz_filename;
             filename.replace( QRegExp( "\\.tgz$" ), "" );
-            le_output_name->setText( QDir::convertSeparators( QFileInfo( filename ).path() ) == 
-                                     QDir::convertSeparators( pkg_dir ) ?
+            le_output_name->setText( QDir::toNativeSeparators( QFileInfo( filename ).path() ) == 
+                                     QDir::toNativeSeparators( pkg_dir ) ?
                                      QFileInfo( filename ).fileName() : 
                                      filename );
          }
@@ -975,13 +975,13 @@ void US_Hydrodyn_Cluster::create_pkg()
       if ( lb_target_files->count() == 1 || !cb_split_grid->isChecked() )
       {
          base += 
-            QString( "ExperimentGrid  %1\n" ).arg( common_prefix + QFileInfo( lb_target_files->item( 0 )->text( ) ).fileName() );
-         base_source_files << lb_target_files->item( 0 )->text( );
+            QString( "ExperimentGrid  %1\n" ).arg( common_prefix + QFileInfo( lb_target_files->item( 0 )->text() ).fileName() );
+         base_source_files << lb_target_files->item( 0 )->text();
          for ( int i = 1; i < lb_target_files->count(); i++ )
          {
             base += 
-               QString( "AdditionalExperimentGrid  %1\n" ).arg( common_prefix + QFileInfo( lb_target_files->item( i )->text( ) ).fileName() );
-            base_source_files << lb_target_files->item( i )->text( );
+               QString( "AdditionalExperimentGrid  %1\n" ).arg( common_prefix + QFileInfo( lb_target_files->item( i )->text() ).fileName() );
+            base_source_files << lb_target_files->item( i )->text();
          }
       }
    } else {
@@ -1115,15 +1115,15 @@ void US_Hydrodyn_Cluster::create_pkg()
       if ( multi_grid_multiplier > 1 )
       {
          unsigned int grid = ( this_i / (unsigned int)use_selected_files.size() ) % multi_grid_multiplier;
-         out += QString( "ExperimentGrid  %1\n" ).arg( common_prefix + QFileInfo( lb_target_files->item( grid )->text( ) ).fileName() );
-         if ( !already_added.count( lb_target_files->item( grid )->text( ) ) )
+         out += QString( "ExperimentGrid  %1\n" ).arg( common_prefix + QFileInfo( lb_target_files->item( grid )->text() ).fileName() );
+         if ( !already_added.count( lb_target_files->item( grid )->text() ) )
          {
-            already_added[ lb_target_files->item( grid )->text( ) ] = true;
+            already_added[ lb_target_files->item( grid )->text() ] = true;
             if ( !cb_for_mpi->isChecked() )
             {
-               source_files << lb_target_files->item( grid )->text( );
+               source_files << lb_target_files->item( grid )->text();
             } else {
-               base_source_files << lb_target_files->item( grid )->text( );
+               base_source_files << lb_target_files->item( grid )->text();
             }
          }
       }
@@ -1280,8 +1280,8 @@ void US_Hydrodyn_Cluster::create_pkg()
          
          if ( !cb_for_mpi->isChecked() )
          {
-            source_files .clear();
-            already_added.clear();
+            source_files .clear( );
+            already_added.clear( );
          }
          
          out = base;
@@ -1382,7 +1382,7 @@ void US_Hydrodyn_Cluster::create_pkg()
          return;
       }
       
-      source_files.clear();
+      source_files.clear( );
       
       out = base;
    }
@@ -1482,7 +1482,7 @@ void US_Hydrodyn_Cluster::create_pkg()
 
 void US_Hydrodyn_Cluster::clear_display()
 {
-   editor->clear();
+   editor->clear( );
    editor->append("\n\n");
 }
 
@@ -1774,7 +1774,7 @@ void US_Hydrodyn_Cluster::split_grid()
    update_validator();
    if ( cb_for_mpi->isChecked() && cb_split_grid->isChecked() && lb_target_files->count() )
    {
-      le_no_of_jobs->setText( QString( "%1" ).arg( selected_files.size( ) * lb_target_files->count( ) ) );
+      le_no_of_jobs->setText( QString( "%1" ).arg( selected_files.size() * lb_target_files->count() ) );
    }
 }
 
@@ -2424,7 +2424,7 @@ void US_Hydrodyn_Cluster::update_enables()
       }
       if ( cb_for_mpi->isChecked() )
       {
-         le_no_of_jobs->setText( QString( "%1" ).arg( selected_files.size( ) ) );
+         le_no_of_jobs->setText( QString( "%1" ).arg( selected_files.size() ) );
       }
       le_output_name->setEnabled( create_enabled );
       pb_create_pkg ->setEnabled( create_enabled );
@@ -2634,9 +2634,9 @@ bool US_Hydrodyn_Cluster::read_config()
       return false;
    }
 
-   cluster_config.clear();
-   cluster_systems.clear();
-   cluster_stage_to_system.clear();
+   cluster_config.clear( );
+   cluster_systems.clear( );
+   cluster_stage_to_system.clear( );
    QRegExp rx_blank  ( "^\\s*$" );
    QRegExp rx_comment( "#.*$" );
    QRegExp rx_valid  ( 
@@ -3464,10 +3464,10 @@ void US_Hydrodyn_Cluster::create_additional_methods_pkg( QString base_dir,
          
          if ( !cb_for_mpi->isChecked() )
          {
-            source_files .clear();
-            already_added.clear();
+            source_files .clear( );
+            already_added.clear( );
          }
-         source_files_to_clear.clear();
+         source_files_to_clear.clear( );
 
          out = base;
          // out += QString( "sleep\t%!\n" ).arg( i );
@@ -3577,8 +3577,8 @@ void US_Hydrodyn_Cluster::create_additional_methods_pkg( QString base_dir,
          return;
       }
       
-      source_files         .clear();
-      source_files_to_clear.clear();
+      source_files         .clear( );
+      source_files_to_clear.clear( );
       
       out = base;
    }
@@ -3910,10 +3910,10 @@ void US_Hydrodyn_Cluster::create_additional_methods_parallel_pkg( QString /* bas
    {
       if ( lb_target_files->count() )
       {
-         out += QString( "ExperimentGrid     %1\n" ).arg( QFileInfo( lb_target_files->item( i )->text( ) ).fileName() );
+         out += QString( "ExperimentGrid     %1\n" ).arg( QFileInfo( lb_target_files->item( i )->text() ).fileName() );
          if ( !already_added.count( QFileInfo( lb_target_files->item( i )->text() ).fileName() ) )
          {
-            source_files << lb_target_files->item( i )->text( );
+            source_files << lb_target_files->item( i )->text();
          }
       }
 
@@ -4401,7 +4401,7 @@ void US_Hydrodyn_Cluster::create_additional_methods_parallel_pkg_bfnb( QString f
 
    for ( int i = 0; i < lb_target_files->count(); i++ )
    {
-      QString target_file      = lb_target_files->item( i )->text( );
+      QString target_file      = lb_target_files->item( i )->text();
       QString target_file_name = QFileInfo( target_file ).completeBaseName().replace( ".", "_" );
 
       // read file and extract q,I,e... add  pmq, pmi, and possibly pme with 0, 'g', 8

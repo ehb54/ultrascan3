@@ -32,7 +32,7 @@ using namespace std;
 
 
 #ifdef WIN32
-# if !defined( QT4 )
+# if QT_VERSION < 0x040000
   #pragma warning ( disable: 4251 )
 # endif
 #endif
@@ -81,7 +81,7 @@ class US_EXTERN US_Dirhist : public QDialog
 
    private slots:
 
-      void t_selectionChanged();
+      void update_enables();
       void t_sort_column  ( int col );
       void t_doubleClicked( int row, int col, int button, const QPoint & mousePos );
       void t_doubleClicked( int row, int col );
@@ -98,7 +98,7 @@ class US_EXTERN US_Dirhist : public QDialog
 };
 
 #ifdef WIN32
-# if !defined( QT4 )
+# if QT_VERSION < 0x040000
   #pragma warning ( default: 4251 )
 # endif
 #endif

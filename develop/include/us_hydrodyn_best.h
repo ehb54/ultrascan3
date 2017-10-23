@@ -13,7 +13,7 @@
 using namespace std;
 
 #ifdef WIN32
-# if !defined( QT4 )
+# if QT_VERSION < 0x040000
   #pragma warning ( disable: 4251 )
 # endif
 #endif
@@ -67,7 +67,7 @@ class US_EXTERN US_Hydrodyn_Best : public QFrame
       // ------ plot section
       QwtPlot               *                 plot_data;
       ScrollZoomer          *                 plot_data_zoomer;
-#ifdef QT4
+#if QT_VERSION >= 0x040000
       QwtPlotGrid           *                 grid_data;
 #endif
       QHBoxLayout           *                 hbl_points;
@@ -106,7 +106,7 @@ class US_EXTERN US_Hydrodyn_Best : public QFrame
 
       void                                    setupGUI();
 
-      void                                    clear();
+      void                                    clear( );
 
       int                                     points; // how many different triangle points plotted
       vector < double >                       one_over_triangles;
@@ -201,7 +201,7 @@ class US_EXTERN US_Hydrodyn_Best : public QFrame
 };
 
 #ifdef WIN32
-# if !defined( QT4 )
+# if QT_VERSION < 0x040000
   #pragma warning ( default: 4251 )
 # endif
 #endif

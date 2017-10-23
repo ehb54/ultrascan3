@@ -2,7 +2,7 @@
 #include "../include/us_hydrodyn_saxs_hplc_svd.h"
 #include "../include/us_svd.h"
 
-#ifdef QT4
+#if QT_VERSION >= 0x040000
 #include <qwt_scale_engine.h>
 #endif
 #include <qpalette.h>
@@ -136,7 +136,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
    AUTFBACK( lv_data );
    lv_data->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
    lv_data->setEnabled(true);
-   // lv_data->setMinimumWidth(  );
+   // lv_data->setMinimumWidth();
 
 #if QT_VERSION < 0x040000
    lv_data->addColumn( "Source" );
@@ -188,7 +188,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
    pb_clear->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    pb_clear->setMinimumHeight(minHeight3);
    pb_clear->setPalette( PALET_PUSHB );
-   connect(pb_clear, SIGNAL(clicked()), SLOT(clear()));
+   connect(pb_clear, SIGNAL(clicked( )), SLOT(clear( )));
    data_widgets.push_back( pb_clear );
 
    pb_to_hplc = new QPushButton(us_tr("To HPLC window"), this);
@@ -229,12 +229,12 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
    editor->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 2 ));
 
 #if QT_VERSION < 0x040000
-# if defined(QT4) && defined(Q_WS_MAC)
+# if QT_VERSION >= 0x040000 && defined(Q_WS_MAC)
    {
  //      Q3PopupMenu * file = new Q3PopupMenu;
-      file->insertItem( us_tr("&Font"),  this, SLOT(update_font( )),    Qt::ALT+Qt::Key_F );
-      file->insertItem( us_tr("&Save"),  this, SLOT(save( )),    Qt::ALT+Qt::Key_S );
-      file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display( )),   Qt::ALT+Qt::Key_X );
+      file->insertItem( us_tr("&Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
+      file->insertItem( us_tr("&Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
+      file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
 
       mb_editor = new QMenuBar( this );
       AUTFBACK( mb_editor );
@@ -254,9 +254,9 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
 
  //   Q3PopupMenu * file = new Q3PopupMenu(editor);
    mb_editor->insertItem( us_tr("&File"), file );
-   file->insertItem( us_tr("Font"),  this, SLOT(update_font( )),    Qt::ALT+Qt::Key_F );
-   file->insertItem( us_tr("Save"),  this, SLOT(save( )),    Qt::ALT+Qt::Key_S );
-   file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display( )),   Qt::ALT+Qt::Key_X );
+   file->insertItem( us_tr("Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
+   file->insertItem( us_tr("Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
+   file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
 # endif
 #else
    QFrame *frame;
@@ -293,7 +293,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
    // ------ plot section
 
    plot_data = new QwtPlot(this);
-#ifndef QT4
+#if QT_VERSION < 0x040000
    // plot_data->enableOutline(true);
    // plot_data->setOutlinePen(Qt::white);
    // plot_data->setOutlineStyle(Qwt::VLine);
@@ -306,42 +306,42 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
 #endif
    plot_data->setPalette( PALET_NORMAL );
    AUTFBACK( plot_data );
-#ifndef QT4
+#if QT_VERSION < 0x040000
    plot_data->setGridMajPen(QPen(USglobal->global_colors.major_ticks, 0, DotLine));
    plot_data->setGridMinPen(QPen(USglobal->global_colors.minor_ticks, 0, DotLine));
 #else
-   grid_data->setMajPen( QPen( USglobal->global_colors.major_ticks, 0, Qt::DotLine ) );
-   grid_data->setMinPen( QPen( USglobal->global_colors.minor_ticks, 0, Qt::DotLine ) );
+   grid_data->setMajorPen( QPen( USglobal->global_colors.major_ticks, 0, Qt::DotLine ) );
+   grid_data->setMinorPen( QPen( USglobal->global_colors.minor_ticks, 0, Qt::DotLine ) );
    grid_data->attach( plot_data );
 #endif
    plot_data->setAxisTitle(QwtPlot::xBottom, /* cb_guinier->isChecked() ? us_tr("q^2 (1/Angstrom^2)") : */  us_tr("q [1/Angstrom]" )); // or Time or Frame"));
    plot_data->setAxisTitle(QwtPlot::yLeft, us_tr("Intensity [a.u.] (log scale)"));
-#ifndef QT4
+#if QT_VERSION < 0x040000
    plot_data->setTitleFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 3, QFont::Bold));
    plot_data->setAxisTitleFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 #endif
    plot_data->setAxisFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-#ifndef QT4
+#if QT_VERSION < 0x040000
    plot_data->setAxisTitleFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 #endif
    plot_data->setAxisFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-#ifndef QT4
+#if QT_VERSION < 0x040000
    plot_data->setAxisTitleFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 #endif
    plot_data->setAxisFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-   plot_data->setMargin(USglobal->config_list.margin);
+//    plot_data->setMargin(USglobal->config_list.margin);
    plot_data->setTitle("");
-#ifndef QT4
+#if QT_VERSION < 0x040000
    plot_data->setAxisOptions(QwtPlot::yLeft, QwtAutoScale::None);
 #else
    plot_data->setAxisScaleEngine(QwtPlot::yLeft, new QwtLinearScaleEngine );
 #endif
    plot_data->setCanvasBackground(USglobal->global_colors.plot);
 
-   // connect( plot_data_zoomer, SIGNAL( zoomed( const QwtDoubleRect & ) ), SLOT( plot_data_zoomed( const QwtDoubleRect & ) ) );
+   // connect( plot_data_zoomer, SIGNAL( zoomed( const QRectF & ) ), SLOT( plot_data_zoomed( const QRectF & ) ) );
 
    plot_errors = new QwtPlot(this);
-#ifndef QT4
+#if QT_VERSION < 0x040000
    // plot_errors->enableOutline(true);
    // plot_errors->setOutlinePen(Qt::white);
    // plot_errors->setOutlineStyle(Qwt::VLine);
@@ -354,39 +354,39 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
 #endif
    plot_errors->setPalette( PALET_NORMAL );
    AUTFBACK( plot_errors );
-#ifndef QT4
+#if QT_VERSION < 0x040000
    plot_errors->setGridMajPen(QPen(USglobal->global_colors.major_ticks, 0, DotLine));
    plot_errors->setGridMinPen(QPen(USglobal->global_colors.minor_ticks, 0, DotLine));
 #else
-   grid_errors->setMajPen( QPen( USglobal->global_colors.major_ticks, 0, Qt::DotLine ) );
-   grid_errors->setMinPen( QPen( USglobal->global_colors.minor_ticks, 0, Qt::DotLine ) );
+   grid_errors->setMajorPen( QPen( USglobal->global_colors.major_ticks, 0, Qt::DotLine ) );
+   grid_errors->setMinorPen( QPen( USglobal->global_colors.minor_ticks, 0, Qt::DotLine ) );
    grid_errors->attach( plot_errors );
 #endif
    // plot_errors->setAxisTitle(QwtPlot::xBottom, /* cb_guinier->isChecked() ? us_tr("q^2 (1/Angstrom^2)") : */  us_tr("q [1/Angstrom]" )); // or Time or Frame"));
    plot_errors->setAxisTitle(QwtPlot::yLeft, us_tr("Delta Intensity [a.u.]"));
-#ifndef QT4
+#if QT_VERSION < 0x040000
    plot_errors->setTitleFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 3, QFont::Bold));
    plot_errors->setAxisTitleFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 #endif
    plot_errors->setAxisFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-#ifndef QT4
+#if QT_VERSION < 0x040000
    plot_errors->setAxisTitleFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 #endif
    plot_errors->setAxisFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-#ifndef QT4
+#if QT_VERSION < 0x040000
    plot_errors->setAxisTitleFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 #endif
    plot_errors->setAxisFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-   plot_errors->setMargin(USglobal->config_list.margin);
+//    plot_errors->setMargin(USglobal->config_list.margin);
    plot_errors->setTitle("");
-#ifndef QT4
+#if QT_VERSION < 0x040000
    plot_errors->setAxisOptions(QwtPlot::yLeft, QwtAutoScale::None);
 #else
    plot_errors->setAxisScaleEngine(QwtPlot::yLeft, new QwtLinearScaleEngine );
 #endif
    plot_errors->setCanvasBackground(USglobal->global_colors.plot);
 
-   // connect( plot_errors_zoomer, SIGNAL( zoomed( const QwtDoubleRect & ) ), SLOT( plot_errors_zoomed( const QwtDoubleRect & ) ) );
+   // connect( plot_errors_zoomer, SIGNAL( zoomed( const QRectF & ) ), SLOT( plot_errors_zoomed( const QRectF & ) ) );
    errors_widgets.push_back( plot_errors );
 
    cb_plot_errors = new QCheckBox(this);
@@ -513,14 +513,14 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
 
    //    lbl_t_range = new QLabel( us_tr( "Active Time range:" ), this );
    //    lbl_t_range->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
-   //    lbl_t_range->setPalette( USglobal->global_colors.cg_normal );
+   //    lbl_t_range->setPalette( PALET_NORMAL );
    //    lbl_t_range->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    //    process_widgets.push_back( lbl_t_range );
 
    //    le_t_start = new mQLineEdit( this );     le_t_start->setObjectName( "le_t_start Line Edit" );
    //    le_t_start->setText( "" );
    //    le_t_start->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
-   //    le_t_start->setPalette( USglobal->global_colors.cg_normal );
+   //    le_t_start->setPalette( PALET_NORMAL );
    //    le_t_start->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    //    le_t_start->setEnabled( false );
    //    le_t_start->setValidator( new QDoubleValidator( le_t_start ) );
@@ -530,7 +530,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
    //    le_t_end = new mQLineEdit( this );     le_t_end->setObjectName( "le_t_end Line Edit" );
    //    le_t_end->setText( "" );
    //    le_t_end->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
-   //    le_t_end->setPalette( USglobal->global_colors.cg_normal );
+   //    le_t_end->setPalette( PALET_NORMAL );
    //    le_t_end->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    //    le_t_end->setEnabled( false );
    //    le_t_end->setValidator( new QDoubleValidator( le_t_end ) );
@@ -723,7 +723,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
       }
 
       bl->addWidget( lbl_editor );
-#if !defined(QT4) || !defined(Q_WS_MAC)
+#if QT_VERSION < 0x040000 || !defined(Q_WS_MAC)
       bl->addWidget( frame );
 #endif
       bl->addWidget( editor );
@@ -816,7 +816,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::closeEvent(QCloseEvent *e)
 
 void US_Hydrodyn_Saxs_Hplc_Svd::clear_display()
 {
-   editor->clear();
+   editor->clear( );
    editor->append("\n\n");
 }
 
@@ -868,7 +868,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::editor_msg( QString color, QString msg )
 void US_Hydrodyn_Saxs_Hplc_Svd::plot_files()
 {
    // puts( "plot_files" );
-   plot_data->clear();
+   plot_data->detachItems( QwtPlotItem::Rtti_PlotCurve ); plot_data->detachItems( QwtPlotItem::Rtti_PlotMarker );;
    //bool any_selected = false;
    double minx = 0e0;
    double maxx = 1e0;
@@ -882,7 +882,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::plot_files()
    
    bool first = true;
 
-   plotted_curves.clear();
+   plotted_curves.clear( );
 
    QStringList files = selected_files();
 
@@ -929,10 +929,10 @@ void US_Hydrodyn_Saxs_Hplc_Svd::plot_files()
       plot_data->setAxisScale( QwtPlot::yLeft  , miny * 0.9e0 , maxy * 1.1e0 );
       plot_data_zoomer = new ScrollZoomer(plot_data->canvas());
       plot_data_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
-#ifndef QT4
+#if QT_VERSION < 0x040000
       plot_data_zoomer->setCursorLabelPen(QPen(Qt::yellow));
 #endif
-      // connect( plot_data_zoomer, SIGNAL( zoomed( const QwtDoubleRect & ) ), SLOT( plot_data_zoomed( const QwtDoubleRect & ) ) );
+      // connect( plot_data_zoomer, SIGNAL( zoomed( const QRectF & ) ), SLOT( plot_data_zoomed( const QRectF & ) ) );
    }
    
    // plot_data->replot();
@@ -943,7 +943,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::plot_files()
 void US_Hydrodyn_Saxs_Hplc_Svd::plot_files( QStringList add_files )
 {
    // puts( "plot_files" );
-   plot_data->clear();
+   plot_data->detachItems( QwtPlotItem::Rtti_PlotCurve ); plot_data->detachItems( QwtPlotItem::Rtti_PlotMarker );;
    //bool any_selected = false;
    double minx = 0e0;
    double maxx = 1e0;
@@ -957,7 +957,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::plot_files( QStringList add_files )
    
    bool first = true;
 
-   plotted_curves.clear();
+   plotted_curves.clear( );
 
    QStringList files = selected_files();
 
@@ -1036,10 +1036,10 @@ void US_Hydrodyn_Saxs_Hplc_Svd::plot_files( QStringList add_files )
       plot_data->setAxisScale( QwtPlot::yLeft  , miny * 0.9e0 , maxy * 1.1e0 );
       plot_data_zoomer = new ScrollZoomer(plot_data->canvas());
       plot_data_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
-#ifndef QT4
+#if QT_VERSION < 0x040000
       plot_data_zoomer->setCursorLabelPen(QPen(Qt::yellow));
 #endif
-      // connect( plot_data_zoomer, SIGNAL( zoomed( const QwtDoubleRect & ) ), SLOT( plot_data_zoomed( const QwtDoubleRect & ) ) );
+      // connect( plot_data_zoomer, SIGNAL( zoomed( const QRectF & ) ), SLOT( plot_data_zoomed( const QRectF & ) ) );
    }
    
    // plot_data->replot();
@@ -1064,7 +1064,7 @@ bool US_Hydrodyn_Saxs_Hplc_Svd::plot_file( QString file,
 
    get_min_max( file, minx, maxx, miny, maxy );
 
-#ifndef QT4
+#if QT_VERSION < 0x040000
    long Iq = plot_data->insertCurve( file );
    plotted_curves[ file ] = Iq;
    plot_data->setCurveStyle( Iq, QwtCurve::Lines );
@@ -1078,7 +1078,7 @@ bool US_Hydrodyn_Saxs_Hplc_Svd::plot_file( QString file,
 
    if ( !axis_y_log )
    {
-#ifndef QT4
+#if QT_VERSION < 0x040000
       plot_data->setCurveData( Iq, 
                                (double *)&( f_qs[ file ][ 0 ] ),
                                (double *)&( f_Is[ file ][ 0 ] ),
@@ -1086,7 +1086,7 @@ bool US_Hydrodyn_Saxs_Hplc_Svd::plot_file( QString file,
                                );
       plot_data->setCurvePen( Iq, QPen( plot_colors[ f_pos[ file ] % plot_colors.size() ], use_line_width, SolidLine));
 #else
-      curve->setData(
+      curve->setSamples(
                      (double *)&( f_qs[ file ][ 0 ] ),
                      (double *)&( f_Is[ file ][ 0 ] ),
                      q_points
@@ -1107,7 +1107,7 @@ bool US_Hydrodyn_Saxs_Hplc_Svd::plot_file( QString file,
          }
       }
       q_points = ( unsigned int )q.size();
-#ifndef QT4
+#if QT_VERSION < 0x040000
       plot_data->setCurveData( Iq, 
                                /* cb_guinier->isChecked() ? (double *)&(plotted_q2[p][0]) : */
                                (double *)&( q[ 0 ] ),
@@ -1116,7 +1116,7 @@ bool US_Hydrodyn_Saxs_Hplc_Svd::plot_file( QString file,
                                );
       plot_data->setCurvePen( Iq, QPen( plot_colors[ f_pos[ file ] % plot_colors.size()], use_line_width, SolidLine));
 #else
-      curve->setData(
+      curve->setSamples(
                      /* cb_guinier->isChecked() ?
                         (double *)&(plotted_q2[p][0]) : */
                      (double *)&( q[ 0 ] ),
@@ -1198,7 +1198,7 @@ bool US_Hydrodyn_Saxs_Hplc_Svd::get_min_max( QString file,
    return true;
 }
 
-// void US_Hydrodyn_Saxs_Hplc_Svd::plot_data_zoomed( const QwtDoubleRect & /* rect */ )
+// void US_Hydrodyn_Saxs_Hplc_Svd::plot_data_zoomed( const QRectF & /* rect */ )
 // {
 //    //   cout << QString( "zoomed: %1 %2 %3 %4\n" )
 //    // .arg( rect.x1() )
@@ -1207,7 +1207,7 @@ bool US_Hydrodyn_Saxs_Hplc_Svd::get_min_max( QString file,
 //    // .arg( rect.y2() );
 // }
 
-// void US_Hydrodyn_Saxs_Hplc_Svd::plot_errors_zoomed( const QwtDoubleRect & /* rect */ )
+// void US_Hydrodyn_Saxs_Hplc_Svd::plot_errors_zoomed( const QRectF & /* rect */ )
 // {
 //    //   cout << QString( "zoomed: %1 %2 %3 %4\n" )
 //    // .arg( rect.x1() )
@@ -1529,7 +1529,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::sv_selection_changed()
    update_enables();
 }
 
-void US_Hydrodyn_Saxs_Hplc_Svd::clear()
+void US_Hydrodyn_Saxs_Hplc_Svd::clear( )
 {
    lv_data->clearSelection();
    update_enables();
@@ -1756,14 +1756,14 @@ void US_Hydrodyn_Saxs_Hplc_Svd::axis_x_title()
    if ( axis_x_log )
    {
       plot_data->setAxisTitle(QwtPlot::xBottom,  title + us_tr(" (log scale)") );
-#ifndef QT4
+#if QT_VERSION < 0x040000
       plot_data->setAxisOptions(QwtPlot::xBottom, QwtAutoScale::Logarithmic);
 #else
-      plot_data->setAxisScaleEngine(QwtPlot::xBottom, new QwtLog10ScaleEngine);
+      plot_data->setAxisScaleEngine(QwtPlot::xBottom, new QwtLogScaleEngine(10));
 #endif
    } else {
       plot_data->setAxisTitle(QwtPlot::xBottom,  title );
-#ifndef QT4
+#if QT_VERSION < 0x040000
       plot_data->setAxisOptions(QwtPlot::xBottom, QwtAutoScale::None);
 #else
       // actually need to test this, not sure what the correct version is
@@ -1793,14 +1793,14 @@ void US_Hydrodyn_Saxs_Hplc_Svd::axis_y_title()
    if ( axis_y_log )
    {
       plot_data->setAxisTitle(QwtPlot::yLeft, title + us_tr( " (log scale)") );
-#ifndef QT4
+#if QT_VERSION < 0x040000
       plot_data->setAxisOptions(QwtPlot::yLeft, QwtAutoScale::Logarithmic);
 #else
-      plot_data->setAxisScaleEngine(QwtPlot::yLeft, new QwtLog10ScaleEngine);
+      plot_data->setAxisScaleEngine(QwtPlot::yLeft, new QwtLogScaleEngine(10));
 #endif
    } else {
       plot_data->setAxisTitle(QwtPlot::yLeft, title );
-#ifndef QT4
+#if QT_VERSION < 0x040000
       plot_data->setAxisOptions(QwtPlot::yLeft, QwtAutoScale::None);
 #else
       // actually need to test this, not sure what the correct version is
@@ -1821,7 +1821,7 @@ bool US_Hydrodyn_Saxs_Hplc_Svd::plotted_matches_selected()
    }
 
    for ( 
-#ifdef QT4
+#if QT_VERSION >= 0x040000
         map < QString, QwtPlotCurve * >::iterator it = plotted_curves.begin();
 #else
         map < QString, long >          ::iterator it = plotted_curves.begin();
@@ -2143,10 +2143,10 @@ void US_Hydrodyn_Saxs_Hplc_Svd::rescale( bool do_update_enables )
       plot_data->setAxisScale( QwtPlot::yLeft  , miny * 0.9e0 , maxy * 1.1e0 );
       plot_data_zoomer = new ScrollZoomer(plot_data->canvas());
       plot_data_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
-#ifndef QT4
+#if QT_VERSION < 0x040000
       plot_data_zoomer->setCursorLabelPen(QPen(Qt::yellow));
 #endif
-      // connect( plot_data_zoomer, SIGNAL( zoomed( const QwtDoubleRect & ) ), SLOT( plot_data_zoomed( const QwtDoubleRect & ) ) );
+      // connect( plot_data_zoomer, SIGNAL( zoomed( const QRectF & ) ), SLOT( plot_data_zoomed( const QRectF & ) ) );
    }
    
    plot_data->replot();
@@ -2168,8 +2168,8 @@ public:
 
 void US_Hydrodyn_Saxs_Hplc_Svd::svd_plot( bool axis_change )
 {
-   plot_data->clear();
-   plotted_curves.clear();
+   plot_data->detachItems( QwtPlotItem::Rtti_PlotCurve ); plot_data->detachItems( QwtPlotItem::Rtti_PlotMarker );;
+   plotted_curves.clear( );
    if ( plot_data_zoomer )
    {
       plot_data_zoomer->zoom ( 0 );
@@ -2194,7 +2194,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::svd_plot( bool axis_change )
    }
 
 
-#ifndef QT4
+#if QT_VERSION < 0x040000
    long Iq = plot_data->insertCurve( "svd" );
    plotted_curves[ "svd" ] = Iq;
    plot_data->setCurveStyle( Iq, QwtCurve::Lines );
@@ -2204,7 +2204,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::svd_plot( bool axis_change )
    curve->setStyle( QwtPlotCurve::Lines );
 #endif
 
-#ifndef QT4
+#if QT_VERSION < 0x040000
    plot_data->setCurveData( Iq, 
                             (double *)&( svd_x[ 0 ] ),
                             (double *)&( svd_y[ 0 ] ),
@@ -2212,7 +2212,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::svd_plot( bool axis_change )
                             );
    plot_data->setCurvePen( Iq, QPen( plot_colors[ 0 ], use_line_width, SolidLine));
 #else
-   curve->setData(
+   curve->setSamples(
                   (double *)&( svd_x[ 0 ] ),
                   (double *)&( svd_y[ 0 ] ),
                   svd_x.size()
@@ -2227,10 +2227,10 @@ void US_Hydrodyn_Saxs_Hplc_Svd::svd_plot( bool axis_change )
 
    plot_data_zoomer = new ScrollZoomer(plot_data->canvas());
    plot_data_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
-#ifndef QT4
+#if QT_VERSION < 0x040000
    plot_data_zoomer->setCursorLabelPen(QPen(Qt::yellow));
 #endif
-   // connect( plot_data_zoomer, SIGNAL( zoomed( const QwtDoubleRect & ) ), SLOT( plot_data_zoomed( const QwtDoubleRect & ) ) );
+   // connect( plot_data_zoomer, SIGNAL( zoomed( const QRectF & ) ), SLOT( plot_data_zoomed( const QRectF & ) ) );
 
    plot_data->replot();
    update_enables();
@@ -2242,7 +2242,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::svd()
 
    QStringList files = selected_files();
 
-   lb_ev->clear();
+   lb_ev->clear( );
 
    last_svd_data = files;
    if ( !subset_data.count( files.join( "\n" ) ) )
@@ -2308,8 +2308,8 @@ void US_Hydrodyn_Saxs_Hplc_Svd::svd()
    svals.sort();
    svals.reverse();
 
-   svd_x.clear();
-   svd_y.clear();
+   svd_x.clear( );
+   svd_y.clear( );
 
    svd_U = F;
    svd_D = W;
@@ -2375,8 +2375,8 @@ void US_Hydrodyn_Saxs_Hplc_Svd::color_rotate()
 
 void US_Hydrodyn_Saxs_Hplc_Svd::inc_rmsd_plot( bool axis_change )
 {
-   plot_data->clear();
-   plotted_curves.clear();
+   plot_data->detachItems( QwtPlotItem::Rtti_PlotCurve ); plot_data->detachItems( QwtPlotItem::Rtti_PlotMarker );;
+   plotted_curves.clear( );
    if ( plot_data_zoomer )
    {
       plot_data_zoomer->zoom ( 0 );
@@ -2400,7 +2400,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::inc_rmsd_plot( bool axis_change )
       axis_y_title();
    }
 
-#ifndef QT4
+#if QT_VERSION < 0x040000
    long Iq = plot_data->insertCurve( "rmsd" );
    plotted_curves[ "rmsd" ] = Iq;
    plot_data->setCurveStyle( Iq, QwtCurve::Lines );
@@ -2410,7 +2410,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::inc_rmsd_plot( bool axis_change )
    curve->setStyle( QwtPlotCurve::Lines );
 #endif
 
-#ifndef QT4
+#if QT_VERSION < 0x040000
    plot_data->setCurveData( Iq, 
                             (double *)&( rmsd_x[ 0 ] ),
                             (double *)&( rmsd_y[ 0 ] ),
@@ -2418,7 +2418,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::inc_rmsd_plot( bool axis_change )
                             );
    plot_data->setCurvePen( Iq, QPen( plot_colors[ 0 ], use_line_width, SolidLine));
 #else
-   curve->setData(
+   curve->setSamples(
                   (double *)&( rmsd_x[ 0 ] ),
                   (double *)&( rmsd_y[ 0 ] ),
                   rmsd_x.size()
@@ -2433,10 +2433,10 @@ void US_Hydrodyn_Saxs_Hplc_Svd::inc_rmsd_plot( bool axis_change )
 
    plot_data_zoomer = new ScrollZoomer(plot_data->canvas());
    plot_data_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
-#ifndef QT4
+#if QT_VERSION < 0x040000
    plot_data_zoomer->setCursorLabelPen(QPen(Qt::yellow));
 #endif
-   // connect( plot_data_zoomer, SIGNAL( zoomed( const QwtDoubleRect & ) ), SLOT( plot_data_zoomed( const QwtDoubleRect & ) ) );
+   // connect( plot_data_zoomer, SIGNAL( zoomed( const QRectF & ) ), SLOT( plot_data_zoomed( const QRectF & ) ) );
 
    plot_data->replot();
    update_enables();
@@ -2444,8 +2444,8 @@ void US_Hydrodyn_Saxs_Hplc_Svd::inc_rmsd_plot( bool axis_change )
 
 void US_Hydrodyn_Saxs_Hplc_Svd::inc_chi_plot( bool axis_change )
 {
-   plot_data->clear();
-   plotted_curves.clear();
+   plot_data->detachItems( QwtPlotItem::Rtti_PlotCurve ); plot_data->detachItems( QwtPlotItem::Rtti_PlotMarker );;
+   plotted_curves.clear( );
    if ( plot_data_zoomer )
    {
       plot_data_zoomer->zoom ( 0 );
@@ -2469,7 +2469,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::inc_chi_plot( bool axis_change )
       axis_y_title();
    }
 
-#ifndef QT4
+#if QT_VERSION < 0x040000
    long Iq = plot_data->insertCurve( "chi" );
    plotted_curves[ "chi" ] = Iq;
    plot_data->setCurveStyle( Iq, QwtCurve::Lines );
@@ -2479,7 +2479,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::inc_chi_plot( bool axis_change )
    curve->setStyle( QwtPlotCurve::Lines );
 #endif
 
-#ifndef QT4
+#if QT_VERSION < 0x040000
    plot_data->setCurveData( Iq, 
                             (double *)&( chi_x[ 0 ] ),
                             (double *)&( chi_y[ 0 ] ),
@@ -2487,7 +2487,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::inc_chi_plot( bool axis_change )
                             );
    plot_data->setCurvePen( Iq, QPen( plot_colors[ 0 ], use_line_width, SolidLine));
 #else
-   curve->setData(
+   curve->setSamples(
                   (double *)&( chi_x[ 0 ] ),
                   (double *)&( chi_y[ 0 ] ),
                   chi_x.size()
@@ -2502,10 +2502,10 @@ void US_Hydrodyn_Saxs_Hplc_Svd::inc_chi_plot( bool axis_change )
 
    plot_data_zoomer = new ScrollZoomer(plot_data->canvas());
    plot_data_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
-#ifndef QT4
+#if QT_VERSION < 0x040000
    plot_data_zoomer->setCursorLabelPen(QPen(Qt::yellow));
 #endif
-   // connect( plot_data_zoomer, SIGNAL( zoomed( const QwtDoubleRect & ) ), SLOT( plot_data_zoomed( const QwtDoubleRect & ) ) );
+   // connect( plot_data_zoomer, SIGNAL( zoomed( const QRectF & ) ), SLOT( plot_data_zoomed( const QRectF & ) ) );
 
    plot_data->replot();
    update_enables();
@@ -2520,13 +2520,13 @@ void US_Hydrodyn_Saxs_Hplc_Svd::inc_recon()
    running = true;
 
    last_recon_tag = QString( us_tr( "\"Incremental TSVD on SVD of %1\",\"RMSD of fit\",\"Singular values\"" ) ).arg( last_svd_name );
-   last_recon_evs.clear();
+   last_recon_evs.clear( );
 
-   rmsd_x.clear();
-   rmsd_y.clear();
+   rmsd_x.clear( );
+   rmsd_y.clear( );
 
-   chi_x.clear();
-   chi_y.clear();
+   chi_x.clear( );
+   chi_y.clear( );
    
    vector < int > evs_selected;
 
@@ -2604,7 +2604,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::do_recon()
          D[ svd_index[ i ] ] = 0e0;
       } else {
          sv_count++;
-         last_ev = lb_ev->item( i )->text( );
+         last_ev = lb_ev->item( i )->text();
       }
    }
    
@@ -2833,14 +2833,14 @@ void US_Hydrodyn_Saxs_Hplc_Svd::indiv_recon()
    running = true;
 
    last_recon_tag = QString( us_tr( "\"Individual TSVD on SVD of %1\",\"RMSD of fit\",\"Singular value\"" ) ).arg( last_svd_name );
-   last_recon_evs.clear();
+   last_recon_evs.clear( );
                             
 
-   rmsd_x.clear();
-   rmsd_y.clear();
+   rmsd_x.clear( );
+   rmsd_y.clear( );
 
-   chi_x.clear();
-   chi_y.clear();
+   chi_x.clear( );
+   chi_y.clear( );
    
    vector < int > evs_selected;
 
@@ -3163,8 +3163,8 @@ bool US_Hydrodyn_Saxs_Hplc_Svd::get_plot_files( QStringList &use_list, QStringLi
       selected.insert( files[ i ] );
    }
 
-   use_list.clear();
-   use_ref_list.clear();
+   use_list.clear( );
+   use_ref_list.clear( );
 
    for ( int i = 0; i < (int) full_list.size(); ++i )
    {
@@ -3189,8 +3189,8 @@ void US_Hydrodyn_Saxs_Hplc_Svd::do_plot_errors()
       return;
    }
    
-   plot_errors->clear();
-   plot_errors_reference.clear();
+   plot_errors->detachItems( QwtPlotItem::Rtti_PlotCurve ); plot_errors->detachItems( QwtPlotItem::Rtti_PlotMarker );;
+   plot_errors_reference.clear( );
 
    vector < double > grid;
    vector < double > target;
@@ -3198,7 +3198,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::do_plot_errors()
    vector < double > fit;
 
    double grid_ofs = f_qs[ use_list[ 0 ] ][ 0 ];
-   plot_errors_jumps.clear();
+   plot_errors_jumps.clear( );
    plot_errors_jumps.push_back( grid_ofs );
 
    bool use_errors = true;
@@ -3327,7 +3327,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::do_plot_errors()
    for ( int j = 0; j < (int) x.size(); ++j )
    {
       {
-#ifndef QT4
+#if QT_VERSION < 0x040000
          long curve;
          curve = plot_errors->insertCurve( "base" );
          plot_errors->setCurveStyle( curve, QwtCurve::Lines );
@@ -3336,7 +3336,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::do_plot_errors()
          curve->setStyle( QwtPlotCurve::Lines );
 #endif
 
-#ifndef QT4
+#if QT_VERSION < 0x040000
          plot_errors->setCurvePen( curve, QPen( Qt::green, use_line_width, Qt::SolidLine ) );
          plot_errors->setCurveData( curve,
                                     (double *)&x[ j ][ 0 ],
@@ -3345,7 +3345,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::do_plot_errors()
                                     );
 #else
          curve->setPen( QPen( Qt::green, use_line_width, Qt::SolidLine ) );
-         curve->setData(
+         curve->setSamples(
                         (double *)&x[ j ][ 0 ],
                         (double *)&y[ j ][ 0 ],
                         x[ j ].size()
@@ -3355,7 +3355,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::do_plot_errors()
       }
 
       {
-#ifndef QT4
+#if QT_VERSION < 0x040000
          long curve;
          curve = plot_errors->insertCurve( "errors" );
          plot_errors->setCurveStyle( curve, QwtCurve::Lines );
@@ -3364,7 +3364,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::do_plot_errors()
          curve->setStyle( QwtPlotCurve::Lines );
 #endif
 
-#ifndef QT4
+#if QT_VERSION < 0x040000
          plot_errors->setCurvePen( curve, QPen( use_color[ j ], use_line_width, Qt::SolidLine ) );
          plot_errors->setCurveData( curve,
                                     (double *)&x[ j ][ 0 ],
@@ -3374,7 +3374,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::do_plot_errors()
          plot_errors->curve( curve )->setStyle( QwtCurve::Sticks );
 #else
          curve->setPen( QPen( use_color[ j ], use_line_width, Qt::SolidLine ) );
-         curve->setData(
+         curve->setSamples(
                         (double *)&x[ j ][ 0 ],
                         (double *)&e[ j ][ 0 ],
                         x[ j ].size()
@@ -3412,10 +3412,10 @@ void US_Hydrodyn_Saxs_Hplc_Svd::do_plot_errors()
 
       plot_errors_zoomer = new ScrollZoomer(plot_errors->canvas());
       plot_errors_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
-#ifndef QT4
+#if QT_VERSION < 0x040000
       plot_errors_zoomer->setCursorLabelPen(QPen(Qt::yellow));
 #endif
-      // connect( plot_errors_zoomer, SIGNAL( zoomed( const QwtDoubleRect & ) ), SLOT( plot_errors_zoomed( const QwtDoubleRect & ) ) );
+      // connect( plot_errors_zoomer, SIGNAL( zoomed( const QRectF & ) ), SLOT( plot_errors_zoomed( const QRectF & ) ) );
    }
 
    plot_errors_jump_markers();
@@ -3442,7 +3442,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::plot_errors_jump_markers()
 
    for ( int i = 0; i < (int) plot_errors_jumps.size(); i++ )
    {
-#ifndef QT4
+#if QT_VERSION < 0x040000
       long marker = plot_errors->insertMarker();
       plot_errors->setMarkerLineStyle ( marker, QwtMarker::VLine );
       plot_errors->setMarkerPos       ( marker, plot_errors_jumps[ i ], 0e0 );
@@ -3479,8 +3479,8 @@ void US_Hydrodyn_Saxs_Hplc_Svd::do_plot_errors_group()
       return;
    }
 
-   plot_errors->clear();
-   plot_errors_reference.clear();
+   plot_errors->detachItems( QwtPlotItem::Rtti_PlotCurve ); plot_errors->detachItems( QwtPlotItem::Rtti_PlotMarker );;
+   plot_errors_reference.clear( );
 
    bool use_errors = true;
 
@@ -3590,7 +3590,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::do_plot_errors_group()
 
       if ( !j ) 
       {
-#ifndef QT4
+#if QT_VERSION < 0x040000
          long curve;
          curve = plot_errors->insertCurve( "base" );
          plot_errors->setCurveStyle( curve, QwtCurve::Lines );
@@ -3599,7 +3599,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::do_plot_errors_group()
          curve->setStyle( QwtPlotCurve::Lines );
 #endif
 
-#ifndef QT4
+#if QT_VERSION < 0x040000
          plot_errors->setCurvePen( curve, QPen( Qt::green, use_line_width, Qt::SolidLine ) );
          plot_errors->setCurveData( curve,
                                     (double *)&x[ 0 ],
@@ -3608,7 +3608,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::do_plot_errors_group()
                                     );
 #else
          curve->setPen( QPen( Qt::green, use_line_width, Qt::SolidLine ) );
-         curve->setData(
+         curve->setSamples(
                         (double *)&x[ 0 ],
                         (double *)&y[ 0 ],
                         x.size()
@@ -3618,7 +3618,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::do_plot_errors_group()
       }
 
       {
-#ifndef QT4
+#if QT_VERSION < 0x040000
          long curve;
          curve = plot_errors->insertCurve( "errors" );
          plot_errors->setCurveStyle( curve, QwtCurve::Lines );
@@ -3627,7 +3627,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::do_plot_errors_group()
          curve->setStyle( QwtPlotCurve::Lines );
 #endif
 
-#ifndef QT4
+#if QT_VERSION < 0x040000
          plot_errors->setCurvePen( curve, QPen( plot_colors[ f_pos[ this_color_file ] % plot_colors.size() ], use_line_width, Qt::SolidLine ) );
          plot_errors->setCurveData( curve,
                                     (double *)&x[ 0 ],
@@ -3637,7 +3637,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::do_plot_errors_group()
          plot_errors->curve( curve )->setStyle( QwtCurve::Sticks );
 #else
          curve->setPen( QPen( plot_colors[ f_pos[ this_color_file ] % plot_colors.size() ], use_line_width, Qt::SolidLine ) );
-         curve->setData(
+         curve->setSamples(
                         (double *)&x[ 0 ],
                         (double *)&e[ 0 ],
                         x.size()
@@ -3686,10 +3686,10 @@ void US_Hydrodyn_Saxs_Hplc_Svd::do_plot_errors_group()
 
       plot_errors_zoomer = new ScrollZoomer(plot_errors->canvas());
       plot_errors_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
-#ifndef QT4
+#if QT_VERSION < 0x040000
       plot_errors_zoomer->setCursorLabelPen(QPen(Qt::yellow));
 #endif
-      // connect( plot_errors_zoomer, SIGNAL( zoomed( const QwtDoubleRect & ) ), SLOT( plot_zoomed( const QwtDoubleRect & ) ) );
+      // connect( plot_errors_zoomer, SIGNAL( zoomed( const QRectF & ) ), SLOT( plot_zoomed( const QRectF & ) ) );
    }
 
    plot_errors->replot();

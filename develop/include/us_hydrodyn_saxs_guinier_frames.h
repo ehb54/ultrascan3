@@ -18,7 +18,7 @@
 
 #include <qwt_plot.h>
 
-#ifdef QT4
+#if QT_VERSION >= 0x040000
 #include "qwt_plot_grid.h"
 #include "qwt_plot_curve.h"
 #include "qwt/scrollbar.h"
@@ -31,7 +31,7 @@
 using namespace std;
 
 #ifdef WIN32
-# if !defined( QT4 )
+# if QT_VERSION < 0x040000
      #pragma warning ( disable: 4251 )
 # endif
 #endif      
@@ -84,7 +84,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Guinier_Frames : public QFrame
 
       QwtPlot *                               plot;
       ScrollZoomer *                          plot_zoomer;
-#ifdef QT4
+#if QT_VERSION >= 0x040000
       QwtPlotGrid *                           grid;
 #endif
 
@@ -120,7 +120,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Guinier_Frames : public QFrame
 };
 
 #ifdef WIN32
-# if !defined( QT4 )
+# if QT_VERSION < 0x040000
   #pragma warning ( default: 4251 )
 # endif
 #endif

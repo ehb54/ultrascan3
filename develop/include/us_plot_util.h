@@ -7,13 +7,13 @@
 #include "us_file_util.h"
 #include "us_vector.h"
 #include <qwt_plot.h>
-#ifdef QT4
+#if QT_VERSION >= 0x040000
 # include <qwt_plot_curve.h>
 #endif
 
 using namespace std;
 #ifdef WIN32
-# if !defined( QT4 )
+# if QT_VERSION < 0x040000
   #pragma warning ( disable: 4251 )
 # endif
 #endif
@@ -30,7 +30,7 @@ class US_EXTERN US_Plot_Util
 };
 
 #ifdef WIN32
-# if !defined( QT4 )
+# if QT_VERSION < 0x040000
   #pragma warning ( default: 4251 )
 # endif
 #endif

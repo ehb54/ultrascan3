@@ -53,7 +53,7 @@ void US_Hydrodyn_Misc::setupGUI()
    cnt_hydrovol= new QwtCounter(this);
    US_Hydrodyn::sizeArrows( cnt_hydrovol );
    Q_CHECK_PTR(cnt_hydrovol);
-   cnt_hydrovol->setRange(0, 100, 0.001);
+   cnt_hydrovol->setRange(0, 100); cnt_hydrovol->setSingleStep( 0.001);
    cnt_hydrovol->setValue((*misc).hydrovol);
    cnt_hydrovol->setMinimumHeight(minHeight1);
    cnt_hydrovol->setMinimumWidth(200);
@@ -146,7 +146,7 @@ void US_Hydrodyn_Misc::setupGUI()
    cnt_avg_radius = new QwtCounter(this);
    US_Hydrodyn::sizeArrows( cnt_avg_radius );
    Q_CHECK_PTR(cnt_avg_radius);
-   cnt_avg_radius->setRange(0.5, 5.0, 0.001);
+   cnt_avg_radius->setRange(0.5, 5.0); cnt_avg_radius->setSingleStep( 0.001);
    cnt_avg_radius->setValue((*misc).avg_radius);
    cnt_avg_radius->setMinimumHeight(minHeight1);
    cnt_avg_radius->setMinimumWidth(200);
@@ -169,7 +169,7 @@ void US_Hydrodyn_Misc::setupGUI()
    cnt_avg_mass = new QwtCounter(this);
    US_Hydrodyn::sizeArrows( cnt_avg_mass );
    Q_CHECK_PTR(cnt_avg_mass);
-   cnt_avg_mass->setRange(0.0, 200.0, 0.01);
+   cnt_avg_mass->setRange(0.0, 200.0); cnt_avg_mass->setSingleStep( 0.01);
    cnt_avg_mass->setValue((*misc).avg_mass);
    cnt_avg_mass->setMinimumHeight(minHeight1);
    cnt_avg_mass->setMinimumWidth(200);
@@ -192,7 +192,7 @@ void US_Hydrodyn_Misc::setupGUI()
    cnt_avg_hydration = new QwtCounter(this);
    US_Hydrodyn::sizeArrows( cnt_avg_hydration );
    Q_CHECK_PTR(cnt_avg_hydration);
-   cnt_avg_hydration->setRange(0.0, 10.0, 0.001);
+   cnt_avg_hydration->setRange(0.0, 10.0); cnt_avg_hydration->setSingleStep( 0.001);
    cnt_avg_hydration->setValue((*misc).avg_hydration);
    cnt_avg_hydration->setMinimumHeight(minHeight1);
    cnt_avg_hydration->setMinimumWidth(200);
@@ -215,7 +215,7 @@ void US_Hydrodyn_Misc::setupGUI()
    cnt_avg_volume = new QwtCounter(this);
    US_Hydrodyn::sizeArrows( cnt_avg_volume );
    Q_CHECK_PTR(cnt_avg_volume);
-   cnt_avg_volume->setRange(1.0, 50.0, 0.01);
+   cnt_avg_volume->setRange(1.0, 50.0); cnt_avg_volume->setSingleStep( 0.01);
    cnt_avg_volume->setValue((*misc).avg_volume);
    cnt_avg_volume->setMinimumHeight(minHeight1);
    cnt_avg_volume->setMinimumWidth(200);
@@ -238,7 +238,7 @@ void US_Hydrodyn_Misc::setupGUI()
    cnt_avg_vbar = new QwtCounter(this);
    US_Hydrodyn::sizeArrows( cnt_avg_vbar );
    Q_CHECK_PTR(cnt_avg_vbar);
-   cnt_avg_vbar->setRange(0.01, 2.0, 0.001);
+   cnt_avg_vbar->setRange(0.01, 2.0); cnt_avg_vbar->setSingleStep( 0.001);
    cnt_avg_vbar->setValue((*misc).avg_vbar);
    cnt_avg_vbar->setMinimumHeight(minHeight1);
    cnt_avg_vbar->setMinimumWidth(200);
@@ -313,7 +313,7 @@ void US_Hydrodyn_Misc::setupGUI()
    // lbl_hydro_method->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    // lbl_hydro_method->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    // lbl_hydro_method->setMinimumHeight(minHeight1);
-   // lbl_hydro_method->setPalette( USglobal->global_colors.cg_frame );
+   // lbl_hydro_method->setPalette( PALET_FRAME );
    // lbl_hydro_method->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
 
    // cb_hydro_supc = new QCheckBox(this);
@@ -321,7 +321,7 @@ void US_Hydrodyn_Misc::setupGUI()
    // cb_hydro_supc->setChecked((*misc).hydro_supc);
    // cb_hydro_supc->setMinimumHeight(minHeight1);
    // cb_hydro_supc->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   // cb_hydro_supc->setPalette( USglobal->global_colors.cg_normal );
+   // cb_hydro_supc->setPalette( PALET_NORMAL );
    // connect(cb_hydro_supc, SIGNAL(clicked()), SLOT(set_hydro_supc()));
 
    // cb_hydro_zeno = new QCheckBox(this);
@@ -329,7 +329,7 @@ void US_Hydrodyn_Misc::setupGUI()
    // cb_hydro_zeno->setChecked((*misc).hydro_zeno);
    // cb_hydro_zeno->setMinimumHeight(minHeight1);
    // cb_hydro_zeno->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   // cb_hydro_zeno->setPalette( USglobal->global_colors.cg_normal );
+   // cb_hydro_zeno->setPalette( PALET_NORMAL );
    // connect(cb_hydro_zeno, SIGNAL(clicked()), SLOT(set_hydro_zeno()));
 
    lbl_other = new QLabel(us_tr("Other options:"), this);

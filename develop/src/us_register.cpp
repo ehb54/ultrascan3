@@ -33,7 +33,7 @@ void US_Register::us_license()
 {
 #if QT_VERSION < 0x040000
   proc = new QProcess(this);
-# ifndef Q_WS_MAC
+# ifndef Q_OS_MAC
   proc->addArgument("us_license");
 # else
   US_Config* USglobal = new US_Config();
@@ -66,7 +66,7 @@ void US_Register::us_license()
      QProcess * process = new QProcess( this );
      QString prog = "us_license";
      QStringList args;
-# ifdef Q_WS_MAC
+# ifdef Q_OS_MAC
      US_Config* USglobal = new US_Config();
      QString basedir = USglobal->config_list.system_dir;
      if ( basedir == ""  ||  ! QFile( basedir ).exists() )
@@ -364,7 +364,7 @@ void US_Register::license_info( const QString& str )
     // Enter == button 0, Escape == button 1
   {
     case 0:
-      us_license( );
+      us_license();
       break;
 
     case 1:

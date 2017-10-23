@@ -314,6 +314,22 @@ void US3i_Settings::set_threads( int threads )
     settings.setValue( "threads", threads );
 }
 
+// Noise Dialog:  0 -> Auto, 1 -> Dialog
+int US3i_Settings::noise_dialog( void )
+{
+  QSettings settings( US3, "UltraScan" );
+  return settings.value( "noise_dialog", 0 ).toInt();
+}
+
+void US3i_Settings::set_noise_dialog( int diagflag )
+{
+  QSettings settings( US3, "UltraScan" );
+  if ( diagflag == 0 )
+    settings.remove( "noise_dialog" );
+  else
+    settings.setValue( "noise_dialog", diagflag );
+}
+
 // Database Entries
 
 QList<QStringList> US3i_Settings::databases( void )
@@ -371,3 +387,61 @@ void US3i_Settings::set_defaultDB( const QStringList& defaultDB )
   else
     settings.setValue( "defaultDB", defaultDB );
 }
+
+// Optima Database Host Entries
+QList<QStringList> US3i_Settings::xpn_db_hosts( void )
+{
+  QSettings settings( US3, "UltraScan" );
+  QList<QStringList> xhlist; 
+  int xhCount = settings.value( "xhCount", 0 ).toInt();
+
+  for ( int ii = 0; ii < xhCount; ii++ )
+  {
+    QString key = QString( "xhlist%1" ).arg( ii );
+    xhlist << settings.value( key ).toStringList();
+  }
+
+  return xhlist;
+}
+
+void US3i_Settings::set_xpn_db_hosts( const QList<QStringList>& xhlist )
+{
+  QSettings settings( US3, "UltraScan" );
+
+  // First remove any existing database entries
+  if ( settings.contains( "xhCount" ) )
+  {
+    int count = settings.value( "xhCount" ).toInt();
+    for ( int ii = 0; ii < count; ii++ )
+    {
+      QString key = QString( "xhlist%1" ).arg( ii );
+      settings.remove( key );
+    }
+  }
+
+  int xhCount = xhlist.size();
+
+  for ( int ii = 0; ii < xhCount; ii++ )
+  {
+    QString key = QString( "xhlist%1" ).arg( ii );
+    settings.setValue( key, xhlist.at( ii ) );
+  }
+
+  settings.setValue( "xhCount", xhCount );
+}
+
+QStringList US3i_Settings::defaultXpnHost( void )
+{
+  QSettings settings( US3, "UltraScan" );
+  return settings.value( "defXpnHost", QStringList() ).toStringList();
+}
+
+void US3i_Settings::set_def_xpn_host( const QStringList& defXpnHost )
+{
+  QSettings settings( US3, "UltraScan" );
+  if ( defXpnHost.isEmpty() )
+    settings.remove( "defXpnHost" );
+  else
+    settings.setValue( "defXpnHost", defXpnHost );
+}
+

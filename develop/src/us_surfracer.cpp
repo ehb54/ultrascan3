@@ -1460,8 +1460,8 @@ surfracer_main(float prober,
    {
       printf("active atom %d %s %s rad %f resseq %d\n",
              i,
-             active_atoms[i]->name.toAscii().data(),
-             active_atoms[i]->resName.toAscii().data(), active_atoms[i]->radius, active_atoms[i]->resSeq); fflush(stdout);
+             active_atoms[i]->name.toLatin1().data(),
+             active_atoms[i]->resName.toLatin1().data(), active_atoms[i]->radius, active_atoms[i]->resSeq); fflush(stdout);
    }
 #endif
 
@@ -1592,7 +1592,7 @@ surfracer_main(float prober,
                 QString("Group %1 contains %2 %3%4").
                 arg(i).arg(atom_groups[i].size()).
                 arg(recheck ? "beads" : "atoms").
-                arg((recheck && any_buried[i]) ? " with buried beads" : " no buried beads").toAscii().data());
+                arg((recheck && any_buried[i]) ? " with buried beads" : " no buried beads").toLatin1().data());
          fflush(stdout);
       }
    }
@@ -1603,7 +1603,7 @@ surfracer_main(float prober,
           (!recheck || any_buried[atom_group])) {
          editor->append(QString("Computing ASA for group %1\n").arg(atom_group));
          qApp->processEvents();
-         printf("%s",QString("Computing ASA for group %1\n").arg(atom_group).toAscii().data());
+         printf("%s",QString("Computing ASA for group %1\n").arg(atom_group).toLatin1().data());
          fflush(stdout);
     
          memset(cycles, 0, MAXCYCLES * MAXCYCLES * sizeof(int));
@@ -1688,22 +1688,22 @@ surfracer_main(float prober,
                .arg(atom_group)
                .arg(recheck ? "bead" : "atom");
 
-            FILE *fout = us_fopen(outfile.toAscii().data(), "w");
+            FILE *fout = us_fopen(outfile.toLatin1().data(), "w");
             fprintf(fout, "\tatomnumber = %d;\n", atomnumber);
             fprintf(fout, "\tint apos = 0;\n");
 
             QString bmsfile = QString("group_%1_%2.bms")
                .arg(atom_group)
                .arg(recheck ? "bead" : "atom");
-            FILE *fbms = us_fopen(bmsfile.toAscii().data(), "w");
+            FILE *fbms = us_fopen(bmsfile.toLatin1().data(), "w");
             fprintf(fbms, "%d\nmodel\n",atomnumber);
 
             QString sptfile = QString("group_%1_%2.spt")
                .arg(atom_group)
                .arg(recheck ? "bead" : "atom");
-            FILE *fspt = us_fopen(sptfile.toAscii().data(), "w");
+            FILE *fspt = us_fopen(sptfile.toLatin1().data(), "w");
             fprintf(fspt, "load xyz %s\nselect all\nwireframe off\nset background white\n",
-                    bmsfile.toAscii().data());
+                    bmsfile.toLatin1().data());
 
             if (!recheck) 
             {

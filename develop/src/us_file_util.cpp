@@ -34,7 +34,7 @@ bool US_File_Util::copy( QString from, QString to, bool overwrite )
    // this caused US_Gzip::extract() to fail
    // I didn't try QFile::readBlock, ::writeBlock, so that may make the difference
 
-#if defined ( Q_WS_WIN )
+#if defined ( Q_OS_WIN )
    FILE *fin = us_fopen( from, "rb" );
 #else 
    FILE *fin = us_fopen( from, "r" );
@@ -45,7 +45,7 @@ bool US_File_Util::copy( QString from, QString to, bool overwrite )
       return false;
    }
 
-#if defined ( Q_WS_WIN )
+#if defined ( Q_OS_WIN )
    FILE *fout = us_fopen( to, "wb" );
 #else
    FILE *fout = us_fopen( to, "w" );
@@ -156,7 +156,7 @@ bool US_File_Util::move( QStringList from, QString toDir, bool overwrite )
 bool US_File_Util::read( QString from, QStringList &qsl )
 {
    errormsg = "";
-   qsl.clear();
+   qsl.clear( );
    QFile f( from );
    if ( !f.open(  QIODevice::ReadOnly | QIODevice::Text ) )
    {

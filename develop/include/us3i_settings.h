@@ -128,6 +128,11 @@ class US_UTIL_EXTERN US3i_Settings
     //!        the local computer.
     static void        set_threads( int );
 
+    //! \brief Get the noise dialog flag (0==Auto [def], 1==Dialog)
+    static int         noise_dialog( void );
+    //! \brief Set the noise dialog flag
+    static void        set_noise_dialog( int );
+
     // Database info
 
     //! \brief Get a list of stored database connection descriptions
@@ -139,5 +144,15 @@ class US_UTIL_EXTERN US3i_Settings
     static QStringList defaultDB( void );
     //! \brief Set the current stored database connection description
     static void        set_defaultDB( const QStringList& );
+
+    //! \brief Get a list of stored database connection descriptions
+    static QList<QStringList> xpn_db_hosts( void );
+    //! \brief Set a list of stored database connection descriptions
+    static void        set_xpn_db_hosts( const QList<QStringList>& );
+
+    //! \brief Get the current stored database connection description
+    static QStringList defaultXpnHost( void );
+    //! \brief Set the current stored database connection description
+    static void        set_def_xpn_host( const QStringList& );
 };
 #endif

@@ -1,7 +1,7 @@
 #ifndef US_VERSION_H
 #define US_VERSION_H
 
-#ifndef QT4
+#if QT_VERSION < 0x040000
 # define US_Version_string "9.9"
 # define WIN32Version      "-WIN32-9.9"
 #else

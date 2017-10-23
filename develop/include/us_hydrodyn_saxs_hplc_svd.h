@@ -13,7 +13,7 @@
 using namespace std;
 
 #ifdef WIN32
-# if !defined( QT4 )
+# if QT_VERSION < 0x040000
   #pragma warning ( disable: 4251 )
 # endif
 #endif
@@ -58,13 +58,13 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Svd : public QFrame
 
       QwtPlot               * plot_data;
       ScrollZoomer          * plot_data_zoomer;
-#ifdef QT4
+#if QT_VERSION >= 0x040000
       QwtPlotGrid           * grid_data;
 #endif
 
       QwtPlot               * plot_errors;
       ScrollZoomer          * plot_errors_zoomer;
-#ifdef QT4
+#if QT_VERSION >= 0x040000
       QwtPlotGrid           * grid_errors;
 #endif
 
@@ -183,7 +183,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Svd : public QFrame
       void                         axis_x_title();
       void                         axis_y_title();
 
-#ifdef QT4
+#if QT_VERSION >= 0x040000
       map < QString, QwtPlotCurve * >     plotted_curves;
 #else
       map < QString, long >               plotted_curves;
@@ -253,7 +253,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Svd : public QFrame
       // ------ data section 
 
       void data_selection_changed();
-      void clear();
+      void clear( );
       void to_hplc();
       void color_rotate();
       void replot();
@@ -270,8 +270,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Svd : public QFrame
 
       // ------ plot section 
 
-      // void plot_data_zoomed( const QwtDoubleRect &rect );
-      // void plot_errors_zoomed( const QwtDoubleRect &rect );
+      // void plot_data_zoomed( const QRectF &rect );
+      // void plot_errors_zoomed( const QRectF &rect );
 
       void set_plot_errors();
       void set_plot_errors_rev();
@@ -330,7 +330,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Svd : public QFrame
 };
 
 #ifdef WIN32
-# if !defined( QT4 )
+# if QT_VERSION < 0x040000
   #pragma warning ( default: 4251 )
 # endif
 #endif

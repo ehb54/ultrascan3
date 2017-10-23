@@ -36,8 +36,8 @@ bool US_Saxs_Util::bspline_prepare( unsigned int knots, unsigned int degree )
       return false;
    }
 
-   bspline_net             .clear();
-   bspline_omega           .clear();
+   bspline_net             .clear( );
+   bspline_omega           .clear( );
    bspline_degree          = degree;
    bspline_basis_functions = knots - degree - 1;
 
@@ -143,7 +143,7 @@ bool US_Saxs_Util::bspline_basis( unsigned int basis, double q, double &value )
 
 bool US_Saxs_Util::bspline_test()
 {
-   sgp_exp_q.clear();
+   sgp_exp_q.clear( );
    for ( double q = 0e0; q < 7e0; q += .1 )
    {
       sgp_exp_q.push_back( q );

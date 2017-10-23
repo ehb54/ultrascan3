@@ -4,7 +4,7 @@
 # It provides boilerplate for all the UltraScan main programs.
 
 # Messages
-!include ( local.pri ) error( "local.pri missing or corrupt.  Aborting..." )
+include ( local.pri )
 
 TEMPLATE        = app
 DEPENDPATH     += $$US3SOMOPATH/src $$US3SOMOPATH/include
@@ -25,7 +25,7 @@ contains( DEFINES, "OSX" ) {
      QMAKE_CXXFLAGS_WARN_ON = -Wno-non-virtual-dtor
     
      contains(UNAME,x86_64) {
-        LIBS    += -L$$QWTPATH/lib64 -lqwt
+        LIBS    += -L$$QWTPATH/lib -lqwt
         DESTDIR  = $$US3SOMOPATH/bin64
      } else {
         LIBS    += -L$$QWTPATH/lib -lqwt

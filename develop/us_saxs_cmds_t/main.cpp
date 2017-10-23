@@ -2375,7 +2375,7 @@ int main (int argc, char **argv)
       QString      outfile         = cmds[ p++ ];
       QString      infile          = cmds[ p++ ];
 
-      cout << US_PM::test( infile, outfile ).toAscii().data() << endl;
+      cout << US_PM::test( infile, outfile ).toLatin1().data() << endl;
       
       exit( 0 );
    }
@@ -2460,7 +2460,7 @@ int main (int argc, char **argv)
       QString      json         = cmds[ p++ ];
 
       US_Saxs_Util usu;
-      cout << usu.run_json( json ).toAscii().data() << endl;
+      cout << usu.run_json( json ).toLatin1().data() << endl;
       exit( 0 );
    }
    errorbase -= 1000;

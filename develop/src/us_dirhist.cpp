@@ -25,7 +25,7 @@ US_Dirhist::US_Dirhist(
 
    USglobal = new US_Config();
 
-   setPalette( USglobal->global_colors.cg_frame );
+   setPalette( PALET_FRAME );
 
    setWindowTitle( us_tr("US-SOMO: Previously used directories") );
 
@@ -52,15 +52,15 @@ void US_Dirhist::setupGUI()
    lbl_info->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_info->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_info->setMinimumHeight(minHeight1);
-   lbl_info->setPalette( USglobal->global_colors.cg_frame );
+   lbl_info->setPalette( PALET_FRAME );
    lbl_info->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 
    t_hist = new QTableWidget( history->size(), 5, this);
    t_hist->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
-   t_hist->setPalette( USglobal->global_colors.cg_edit );
+   t_hist->setPalette( PALET_EDIT );
    t_hist->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
    t_hist->setEnabled(true);
-   t_hist->setSelectionMode( QAbstractItemView::SingleSelection );t_hist->setSelectionBehavior( QAbstractItemView::SelectRows );
+   // t_hist->setSelectionMode( QTable::SingleRow );
 
    t_hist->setShowGrid( false );
 
@@ -119,8 +119,8 @@ void US_Dirhist::setupGUI()
    t_hist->setColumnWidth( 3, 120 );
    t_hist->hideColumn( 2 );
    t_hist->hideColumn( 4 );
-    t_hist->horizontalHeader()->setClickable( true );
-    t_hist->horizontalHeader()->setMovable( false );
+    t_hist->horizontalHeader()->setSectionsClickable( true );
+    t_hist->horizontalHeader()->setSectionsMovable( false );
 
    t_hist->sortByColumn( 2,  false ? Qt::AscendingOrder : Qt::DescendingOrder );
    t_hist->clearSelection();
@@ -152,30 +152,30 @@ void US_Dirhist::setupGUI()
    connect( t_hist->horizontalHeader(), SIGNAL( sectionClicked(int) ), SLOT( t_sort_column(int) ) );
    connect( t_hist, SIGNAL( cellDoubleClicked( int, int) ), SLOT( t_doubleClicked( int, int ) ) );
 #endif
-   connect( t_hist, SIGNAL( itemSelectionChanged() ), SLOT( t_selectionChanged() ) );
+   connect( t_hist, SIGNAL( itemSelectionChanged() ), SLOT( update_enables() ) );
 
    pb_del = new QPushButton(us_tr("Delete directory from history"), this);
    pb_del->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_del->setMinimumHeight(minHeight1);
-   pb_del->setPalette( USglobal->global_colors.cg_pushb );
+   pb_del->setPalette( PALET_PUSHB );
    connect(pb_del, SIGNAL(clicked()), SLOT(del()));
 
    pb_ok = new QPushButton(us_tr("OK"), this);
    pb_ok->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_ok->setMinimumHeight(minHeight1);
-   pb_ok->setPalette( USglobal->global_colors.cg_pushb );
+   pb_ok->setPalette( PALET_PUSHB );
    connect(pb_ok, SIGNAL(clicked()), SLOT(ok()));
 
    pb_help = new QPushButton(us_tr("Help"), this);
    pb_help->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_help->setMinimumHeight(minHeight1);
-   pb_help->setPalette( USglobal->global_colors.cg_pushb );
+   pb_help->setPalette( PALET_PUSHB );
    connect(pb_help, SIGNAL(clicked()), SLOT(help()));
 
    pb_cancel = new QPushButton(us_tr("Cancel"), this);
    pb_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_cancel->setMinimumHeight(minHeight1);
-   pb_cancel->setPalette( USglobal->global_colors.cg_pushb );
+   pb_cancel->setPalette( PALET_PUSHB );
    connect(pb_cancel, SIGNAL(clicked()), SLOT(cancel()));
 
    int j = 0;
@@ -196,7 +196,7 @@ void US_Dirhist::setupGUI()
    background->addWidget( pb_help  , j, 0 );
    background->addWidget( pb_cancel, j, 1 );
 
-   t_selectionChanged();
+   update_enables();
 }
 
 void US_Dirhist::cancel()
@@ -248,19 +248,19 @@ void US_Dirhist::t_sort_column( int col )
          t_hist->setCurrentCell( i, 0 );
       }
    }
-   connect( t_hist, SIGNAL( itemSelectionChanged() ), SLOT( t_selectionChanged() ) );
-   t_selectionChanged();
+   connect( t_hist, SIGNAL( itemSelectionChanged() ), SLOT( update_enables() ) );
+   update_enables();
 
    order_ascending = !order_ascending;
 }
 
-void US_Dirhist::t_doubleClicked( int, int col )
+void US_Dirhist::t_doubleClicked( int row, int )
 {
    *is_ok = true;
-   *selected = t_hist->item( col, 0 )->text();
+   *selected = t_hist->item( row, 0 )->text();
    //   (*last_access)[ *selected ] = QDateTime::currentDateTime();
-   ok();
-   history->clear();
+   // ok();
+   history->clear( );
    for ( int i = 0; i < t_hist->rowCount(); ++i )
    {
       history->push_back( t_hist->item( i, 0 )->text() );
@@ -276,7 +276,7 @@ void US_Dirhist::t_doubleClicked( int row, int col, int, const QPoint &  )
 void US_Dirhist::ok()
 {
    *is_ok = true;
-   history->clear();
+   history->clear( );
    for ( int i = 0; i < t_hist->rowCount(); ++i )
    {
       history->push_back( t_hist->item( i, 0 )->text() );
@@ -305,8 +305,8 @@ void US_Dirhist::del()
       t_hist->selectRow( 0 );
       t_hist->setCurrentCell( 0, 0 );
    }      
-   connect( t_hist, SIGNAL( itemSelectionChanged() ), SLOT( t_selectionChanged() ) );
-   t_selectionChanged();
+   connect( t_hist, SIGNAL( itemSelectionChanged() ), SLOT( update_enables() ) );
+   update_enables();
 }
 
 #if QT_VERSION >= 0x040000   
@@ -314,27 +314,14 @@ void US_Dirhist::del()
 # include <QTableWidgetSelectionRange>
 #endif
 
-void US_Dirhist::t_selectionChanged()
+void US_Dirhist::update_enables()
 {
-   // do all the table stuff
-   // us_qdebug( QString( "num selections %1" ).arg( t_hist->numSelections() ) );
-   // us_qdebug( QString( "current sel    %1" ).arg( t_hist->currentSelection() ) );
    int num_selections = 0;
-#if QT_VERSION < 0x040000
-   num_selections = t_hist->numSelections();
-#else
-   QList < QTableWidgetSelectionRange > ranges = t_hist->selectedRanges();
-   for ( int i =0; i != ranges.size(); ++i ) {
-      QTableWidgetSelectionRange range = ranges.at(i);
-      int top = range.topRow();
-      int bottom = range.bottomRow();
-      for ( int i = top; i <= bottom; ++i ) {
-         if ( t_hist->item( i, 0 )->isSelected() ) {
-            num_selections++;
-         }
+   for ( int i = 0; i < t_hist->rowCount(); ++i ) {
+      if ( t_hist->item( i , 0 )->isSelected() ) {
+         num_selections++;
       }
    }
-#endif
    pb_ok ->setEnabled( num_selections == 1 );
    pb_del->setEnabled( num_selections );
 }

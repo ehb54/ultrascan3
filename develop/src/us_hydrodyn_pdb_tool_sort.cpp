@@ -23,7 +23,7 @@ US_Hydrodyn_Pdb_Tool_Sort::US_Hydrodyn_Pdb_Tool_Sort(
    this->parameters                           = parameters;
 
    USglobal = new US_Config();
-   setPalette( USglobal->global_colors.cg_frame );
+   setPalette( PALET_FRAME );
    setWindowTitle( us_tr( "US-SOMO: PDB Editor: Sort by residue aggregate distance" ) );
 
    setupGUI();
@@ -46,26 +46,26 @@ void US_Hydrodyn_Pdb_Tool_Sort::setupGUI()
    lbl_title -> setFrameStyle   ( QFrame::WinPanel | QFrame::Raised );
    lbl_title -> setAlignment    ( Qt::AlignCenter | Qt::AlignVCenter );
    lbl_title -> setMinimumHeight( minHeight1 );
-   lbl_title -> setPalette      ( USglobal->global_colors.cg_frame );
+   lbl_title -> setPalette      ( PALET_FRAME );
    lbl_title -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold ) );
 
    lbl_credits_1 =  new QLabel      ( "Cite: US-SOMO", this );
    lbl_credits_1 -> setAlignment    ( Qt::AlignCenter | Qt::AlignVCenter );
    lbl_credits_1 -> setMinimumHeight( minHeight1 );
-   lbl_credits_1 -> setPalette      ( USglobal->global_colors.cg_label );
+   lbl_credits_1 -> setPalette      ( PALET_LABEL );
    lbl_credits_1 -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1, QFont::Bold ) );
 
    lbl_residuesa = new QLabel      ( us_tr( "Residue list A (chain:residue{-residue}{,..}" ), this );
    lbl_residuesa ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_residuesa ->setMinimumHeight( minHeight1 );
-   lbl_residuesa ->setPalette      ( USglobal->global_colors.cg_label );
+   lbl_residuesa ->setPalette      ( PALET_LABEL );
    lbl_residuesa ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
    lbl_residuesa ->setMinimumWidth ( QFontMetrics( lbl_residuesa->font() ).maxWidth() * 15 );
 
    le_residuesa = new QLineEdit     (  this );    le_residuesa->setObjectName( "residuesa Line Edit" );
    le_residuesa ->setText           ( parameters->count( "residuesa" ) ? ( *parameters )[ "residuesa" ] : "" );
    le_residuesa ->setAlignment      ( Qt::AlignCenter | Qt::AlignVCenter );
-   le_residuesa ->setPalette        ( USglobal->global_colors.cg_normal );
+   le_residuesa ->setPalette        ( PALET_NORMAL );
    le_residuesa ->setFont           ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    le_residuesa ->setMinimumHeight  ( minHeight1 );
    le_residuesa ->setMinimumWidth   ( 150 );
@@ -74,14 +74,14 @@ void US_Hydrodyn_Pdb_Tool_Sort::setupGUI()
    lbl_residuesb = new QLabel      ( us_tr( "Residue list B (chain:residue{-residue}{,..}" ), this );
    lbl_residuesb ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_residuesb ->setMinimumHeight( minHeight1 );
-   lbl_residuesb ->setPalette      ( USglobal->global_colors.cg_label );
+   lbl_residuesb ->setPalette      ( PALET_LABEL );
    lbl_residuesb ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
    lbl_residuesb ->setMinimumWidth ( QFontMetrics( lbl_residuesb->font() ).maxWidth() * 15 );
 
    le_residuesb = new QLineEdit     (  this );    le_residuesb->setObjectName( "residuesb Line Edit" );
    le_residuesb ->setText           ( parameters->count( "residuesb" ) ? ( *parameters )[ "residuesb" ] : "" );
    le_residuesb ->setAlignment      ( Qt::AlignCenter | Qt::AlignVCenter );
-   le_residuesb ->setPalette        ( USglobal->global_colors.cg_normal );
+   le_residuesb ->setPalette        ( PALET_NORMAL );
    le_residuesb ->setFont           ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    le_residuesb ->setMinimumHeight  ( minHeight1 );
    le_residuesb ->setMinimumWidth   ( 150 );
@@ -90,14 +90,14 @@ void US_Hydrodyn_Pdb_Tool_Sort::setupGUI()
    lbl_reportcount = new QLabel      ( us_tr( "Number to list (default:blank=""All"")" ), this );
    lbl_reportcount ->setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
    lbl_reportcount ->setMinimumHeight( minHeight1 );
-   lbl_reportcount ->setPalette      ( USglobal->global_colors.cg_label );
+   lbl_reportcount ->setPalette      ( PALET_LABEL );
    lbl_reportcount ->setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
    lbl_reportcount ->setMinimumWidth ( QFontMetrics( lbl_reportcount->font() ).maxWidth() * 15 );
 
    le_reportcount = new QLineEdit     (  this );    le_reportcount->setObjectName( "reportcount Line Edit" );
    le_reportcount ->setText           ( parameters->count( "reportcount" ) ? ( *parameters )[ "reportcount" ] : "" );
    le_reportcount ->setAlignment      ( Qt::AlignCenter | Qt::AlignVCenter );
-   le_reportcount ->setPalette        ( USglobal->global_colors.cg_normal );
+   le_reportcount ->setPalette        ( PALET_NORMAL );
    le_reportcount ->setFont           ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    le_reportcount ->setMinimumHeight  ( minHeight1 );
    le_reportcount ->setMinimumWidth   ( 150 );
@@ -105,7 +105,7 @@ void US_Hydrodyn_Pdb_Tool_Sort::setupGUI()
 
    cb_order = new QCheckBox    ( us_tr( "Sort by maximum aggregate distance first" ), this );
    cb_order ->setMinimumHeight ( minHeight1 );
-   cb_order ->setPalette       ( USglobal->global_colors.cg_normal );
+   cb_order ->setPalette       ( PALET_NORMAL );
    cb_order ->setFont          ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
    cb_order ->setMinimumWidth  ( QFontMetrics( cb_order->font() ).maxWidth() * 15 );
 
@@ -114,7 +114,7 @@ void US_Hydrodyn_Pdb_Tool_Sort::setupGUI()
 
    cb_caonly = new QCheckBox    ( us_tr( "Only use CA for distances" ), this );
    cb_caonly ->setMinimumHeight ( minHeight1 );
-   cb_caonly ->setPalette       ( USglobal->global_colors.cg_normal );
+   cb_caonly ->setPalette       ( PALET_NORMAL );
    cb_caonly ->setFont          ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold ) );
    cb_caonly ->setMinimumWidth  ( QFontMetrics( cb_caonly->font() ).maxWidth() * 15 );
 
@@ -124,13 +124,13 @@ void US_Hydrodyn_Pdb_Tool_Sort::setupGUI()
    pb_help =  new QPushButton ( us_tr( "Help" ), this );
    pb_help -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1) );
    pb_help -> setMinimumHeight( minHeight1 );
-   pb_help -> setPalette      ( USglobal->global_colors.cg_pushb );
+   pb_help -> setPalette      ( PALET_PUSHB );
    connect( pb_help, SIGNAL( clicked() ), SLOT( help() ) );
 
    pb_close =  new QPushButton ( us_tr( "Close" ), this );
    pb_close -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1) );
    pb_close -> setMinimumHeight( minHeight1 );
-   pb_close -> setPalette      ( USglobal->global_colors.cg_pushb );
+   pb_close -> setPalette      ( PALET_PUSHB );
    connect( pb_close, SIGNAL( clicked() ), SLOT( cancel() ) );
 
    QVBoxLayout * background = new QVBoxLayout( this ); background->setContentsMargins( 0, 0, 0, 0 ); background->setSpacing( 0 );

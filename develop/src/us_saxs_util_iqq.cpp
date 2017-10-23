@@ -18,14 +18,14 @@ static std::basic_ostream<char>& operator<<(std::basic_ostream<char>& os, const 
 
 bool US_Saxs_Util::read_control( QString controlfile )
 {
-   output_files          .clear();
-   job_output_files      .clear();
-   saxs_inputfile_for_csv.clear();
-   saxs_model_for_csv    .clear();
-   saxs_method_for_csv   .clear();
-   saxs_q_for_csv        .clear();
-   saxs_I_for_csv        .clear();
-   file_write_count      .clear();
+   output_files          .clear( );
+   job_output_files      .clear( );
+   saxs_inputfile_for_csv.clear( );
+   saxs_model_for_csv    .clear( );
+   saxs_method_for_csv   .clear( );
+   saxs_q_for_csv        .clear( );
+   saxs_I_for_csv        .clear( );
+   file_write_count      .clear( );
    write_output_count    = 0;
    timings               = "";
    
@@ -643,7 +643,7 @@ bool US_Saxs_Util::read_control( QString controlfile )
 
       if ( option == "sleep" )
       {
-#if !defined( Q_WS_WIN ) || defined( MINGW )
+#if !defined( Q_OS_WIN ) || defined( MINGW )
 # if __GNUC__ == 5
          unsigned int usec = (unsigned int)( qsl[ 0 ].toDouble() * 1000 );
          us_usleep( usec );
@@ -652,13 +652,13 @@ bool US_Saxs_Util::read_control( QString controlfile )
          double secs = qsl[ 0 ].toDouble();
          secs *= 2e0;
          // secs *= 1e-1; // finer resolution if nanosleep available
-         cout << QString( "sleep %1\n" ).arg( secs ).toAscii().data();
+         cout << QString( "sleep %1\n" ).arg( secs ).toLatin1().data();
          timespec ns;
          timespec ns_ret;
          ns.tv_sec  = ( long ) secs;
          ns.tv_nsec = ( long ) ( 1e9 * ( secs - ns.tv_sec ) );
-         cout << QString( "sleep s %1\n" ).arg( ns.tv_sec ).toAscii().data();
-         cout << QString( "sleep ns %1\n" ).arg( ns.tv_nsec ).toAscii().data();
+         cout << QString( "sleep s %1\n" ).arg( ns.tv_sec ).toLatin1().data();
+         cout << QString( "sleep ns %1\n" ).arg( ns.tv_nsec ).toLatin1().data();
          nanosleep(&ns, &ns_ret);
 # endif
 #else
@@ -859,7 +859,7 @@ bool US_Saxs_Util::read_control( QString controlfile )
 
       if ( option == "experimentgrid" )
       {
-         experimental_grids.clear();
+         experimental_grids.clear( );
          experimental_grids << qsl[ 0 ];
          if ( !set_control_parameters_from_experiment_file( qsl[ 0 ] ) )
          {
@@ -876,7 +876,7 @@ bool US_Saxs_Util::read_control( QString controlfile )
       {
          cout << "inputfile\n" << flush;
          // restating inputfile clears the previous dmd run files
-         output_dmd_pdbs.clear();
+         output_dmd_pdbs.clear( );
          // read pdb, needs residue file
          QString ext = QFileInfo( qsl[ 0 ] ).suffix().toLower();
 
@@ -1350,10 +1350,10 @@ bool US_Saxs_Util::set_control_parameters_from_experiment_file( QString filename
 {
    errormsg = "";
 
-   sgp_exp_q      .clear();
-   sgp_exp_q_index.clear();
-   sgp_exp_I      .clear();
-   sgp_exp_e      .clear();
+   sgp_exp_q      .clear( );
+   sgp_exp_q_index.clear( );
+   sgp_exp_I      .clear( );
+   sgp_exp_e      .clear( );
 
    QFile f( filename );
    if ( !f.exists() )
@@ -1648,8 +1648,8 @@ void US_Saxs_Util::validate_control_parameters_set_one( QStringList &checks,
       }
    }
 
-   checks.clear();
-   vals  .clear();
+   checks.clear( );
+   vals  .clear( );
 }
 
 
@@ -1917,15 +1917,15 @@ bool US_Saxs_Util::write_output( QString model, vector < double > &q, vector < d
             QString("")
             .sprintf(
                      "Simulated SAXS data generated from %s by US_SOMO %s %s q(%f:%f) step %f\n"
-                     , control_parameters[ "inputfile" ].toAscii().data()
-                     , US_Version.toAscii().data()
+                     , control_parameters[ "inputfile" ].toLatin1().data()
+                     , US_Version.toLatin1().data()
                      , REVISION
                      , our_saxs_options.start_q
                      , our_saxs_options.end_q
                      , our_saxs_options.delta_q
                      );
          fprintf(fsaxs, "%s",
-                 last_saxs_header.toAscii().data() );
+                 last_saxs_header.toLatin1().data() );
          for ( unsigned int i = 0; i < q.size(); i++ )
          {
             fprintf(fsaxs, "%.6e\t%.6e\n", q[i], I[i]);
@@ -1950,14 +1950,14 @@ bool US_Saxs_Util::flush_output()
       {
          return false;
       }
-      saxs_inputfile_for_csv.clear();
-      saxs_model_for_csv    .clear();
-      saxs_tag_for_csv      .clear();
-      saxs_grid_tag_for_csv .clear();
-      saxs_cuda_tag_for_csv .clear();
-      saxs_method_for_csv   .clear();
-      saxs_q_for_csv        .clear();
-      saxs_I_for_csv        .clear();
+      saxs_inputfile_for_csv.clear( );
+      saxs_model_for_csv    .clear( );
+      saxs_tag_for_csv      .clear( );
+      saxs_grid_tag_for_csv .clear( );
+      saxs_cuda_tag_for_csv .clear( );
+      saxs_method_for_csv   .clear( );
+      saxs_q_for_csv        .clear( );
+      saxs_I_for_csv        .clear( );
    }
    map < QString, bool > tag_names;
    for ( unsigned int i = 0; i < saxs_grid_tag_for_csv.size(); i++ )
@@ -1975,14 +1975,14 @@ bool US_Saxs_Util::flush_output()
          return false;
       }
    }
-   saxs_inputfile_for_csv.clear();
-   saxs_model_for_csv    .clear();
-   saxs_tag_for_csv      .clear();
-   saxs_grid_tag_for_csv .clear();
-   saxs_cuda_tag_for_csv .clear();
-   saxs_method_for_csv   .clear();
-   saxs_q_for_csv        .clear();
-   saxs_I_for_csv        .clear();
+   saxs_inputfile_for_csv.clear( );
+   saxs_model_for_csv    .clear( );
+   saxs_tag_for_csv      .clear( );
+   saxs_grid_tag_for_csv .clear( );
+   saxs_cuda_tag_for_csv .clear( );
+   saxs_method_for_csv   .clear( );
+   saxs_q_for_csv        .clear( );
+   saxs_I_for_csv        .clear( );
    control_parameters.erase( "this_grid_tag" );
    return true;
 }
@@ -2025,7 +2025,7 @@ bool US_Saxs_Util::flush_output_one()
            !external_programs_included && 
            methods_used.size() > 1 )
       {
-         methods_used.clear();
+         methods_used.clear( );
          methods_used[ "mm" ] = true;
       }
 
@@ -2157,7 +2157,7 @@ bool US_Saxs_Util::flush_output_one()
                   QString header = QString("")
                      .sprintf(
                               "Simulated SAXS data generated by US_SOMO %s"
-                              , US_Version.toAscii().data()
+                              , US_Version.toLatin1().data()
                               );
                   
                   bool q_data_added = false;
@@ -2176,8 +2176,8 @@ bool US_Saxs_Util::flush_output_one()
                         if ( !q_data_added )
                         {
                            fprintf(of, "\"Name\",\"Type; q:\",%s,\"%s\"\n", 
-                                   vector_double_to_csv( saxs_q_for_csv[ i ] ).toAscii().data(),
-                                   header.toAscii().data());
+                                   vector_double_to_csv( saxs_q_for_csv[ i ] ).toLatin1().data(),
+                                   header.toLatin1().data());
                            q_data_added = true;
                         }
                         QString name = QString("%1 Model %2 %3 %4")
@@ -2187,9 +2187,9 @@ bool US_Saxs_Util::flush_output_one()
                            .arg( saxs_method_for_csv[ i ] );
                         
                         fprintf(of, "\"%s\",\"%s\",%s\n", 
-                                name.toAscii().data(),
+                                name.toLatin1().data(),
                                 "I(q)",
-                                vector_double_to_csv(saxs_I_for_csv[i]).toAscii().data());
+                                vector_double_to_csv(saxs_I_for_csv[i]).toLatin1().data());
                      }
                   }            
                   fclose( of );
@@ -2755,9 +2755,9 @@ bool US_Saxs_Util::bin(
       return false;
    }
 
-   new_q.clear();
-   new_I.clear();
-   new_e.clear();
+   new_q.clear( );
+   new_I.clear( );
+   new_e.clear( );
 
    for ( int i = 0; i < (int) q.size(); i += points ) {
       vector < double > this_q;

@@ -134,7 +134,7 @@ bool US_Saxs_Util::run_json_mpi( QString & json )
          if ( !myrank )
          {
             results[ "errors" ] = "no supported runtype found in input json";
-            cout << MPI_JSON_SNIP_START << US_Json::compose( results ).toAscii().data() << endl << MPI_JSON_SNIP_END << flush;
+            cout << MPI_JSON_SNIP_START << US_Json::compose( results ).toLatin1().data() << endl << MPI_JSON_SNIP_END << flush;
          }
          return true;
       }
@@ -143,7 +143,7 @@ bool US_Saxs_Util::run_json_mpi( QString & json )
          if ( !myrank )
          {
             results[ "errors" ] = "only one run type currently allowed per input json";
-            cout << MPI_JSON_SNIP_START << US_Json::compose( results ).toAscii().data() << endl << MPI_JSON_SNIP_END << flush;
+            cout << MPI_JSON_SNIP_START << US_Json::compose( results ).toLatin1().data() << endl << MPI_JSON_SNIP_END << flush;
          }
          return true;
       }
@@ -205,7 +205,7 @@ bool US_Saxs_Util::run_json_mpi( QString & json )
       }
    }
 
-   cout << MPI_JSON_SNIP_START << US_Json::compose( results ).toAscii().data() << endl << MPI_JSON_SNIP_END << flush;
+   cout << MPI_JSON_SNIP_START << US_Json::compose( results ).toLatin1().data() << endl << MPI_JSON_SNIP_END << flush;
    return true;
 }
 

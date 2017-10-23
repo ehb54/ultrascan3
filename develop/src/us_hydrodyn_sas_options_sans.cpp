@@ -56,7 +56,7 @@ void US_Hydrodyn_SasOptionsSans::setupGUI()
 
    cnt_h_scat_len = new QwtCounter(this);
    US_Hydrodyn::sizeArrows( cnt_h_scat_len );
-   cnt_h_scat_len->setRange(-0.5, 0.5, 0.0001);
+   cnt_h_scat_len->setRange(-0.5, 0.5); cnt_h_scat_len->setSingleStep( 0.0001);
    cnt_h_scat_len->setValue((*saxs_options).h_scat_len);
    cnt_h_scat_len->setMinimumHeight(minHeight1);
    cnt_h_scat_len->setEnabled(true);
@@ -75,7 +75,7 @@ void US_Hydrodyn_SasOptionsSans::setupGUI()
 
    cnt_d_scat_len = new QwtCounter(this);
    US_Hydrodyn::sizeArrows( cnt_d_scat_len );
-   cnt_d_scat_len->setRange(0.1, 1.0, 0.0001);
+   cnt_d_scat_len->setRange(0.1, 1.0); cnt_d_scat_len->setSingleStep( 0.0001);
    cnt_d_scat_len->setValue((*saxs_options).d_scat_len);
    cnt_d_scat_len->setMinimumHeight(minHeight1);
    cnt_d_scat_len->setEnabled(true);
@@ -94,7 +94,7 @@ void US_Hydrodyn_SasOptionsSans::setupGUI()
 
    cnt_h2o_scat_len_dens = new QwtCounter(this);
    US_Hydrodyn::sizeArrows( cnt_h2o_scat_len_dens );
-   cnt_h2o_scat_len_dens->setRange(-0.9, 0.0, 0.001);
+   cnt_h2o_scat_len_dens->setRange(-0.9, 0.0); cnt_h2o_scat_len_dens->setSingleStep( 0.001);
    cnt_h2o_scat_len_dens->setValue((*saxs_options).h2o_scat_len_dens);
    cnt_h2o_scat_len_dens->setMinimumHeight(minHeight1);
    cnt_h2o_scat_len_dens->setEnabled(true);
@@ -113,7 +113,7 @@ void US_Hydrodyn_SasOptionsSans::setupGUI()
 
    cnt_d2o_scat_len_dens = new QwtCounter(this);
    US_Hydrodyn::sizeArrows( cnt_d2o_scat_len_dens );
-   cnt_d2o_scat_len_dens->setRange(0.0, 10.0, 0.001);
+   cnt_d2o_scat_len_dens->setRange(0.0, 10.0); cnt_d2o_scat_len_dens->setSingleStep( 0.001);
    cnt_d2o_scat_len_dens->setValue((*saxs_options).d2o_scat_len_dens);
    cnt_d2o_scat_len_dens->setMinimumHeight(minHeight1);
    cnt_d2o_scat_len_dens->setEnabled(true);
@@ -132,7 +132,7 @@ void US_Hydrodyn_SasOptionsSans::setupGUI()
 
    cnt_d2o_conc = new QwtCounter(this);
    US_Hydrodyn::sizeArrows( cnt_d2o_conc );
-   cnt_d2o_conc->setRange(0.0, 1.0, 0.01);
+   cnt_d2o_conc->setRange(0.0, 1.0); cnt_d2o_conc->setSingleStep( 0.01);
    cnt_d2o_conc->setValue((*saxs_options).d2o_conc);
    cnt_d2o_conc->setMinimumHeight(minHeight1);
    cnt_d2o_conc->setEnabled(true);
@@ -151,7 +151,7 @@ void US_Hydrodyn_SasOptionsSans::setupGUI()
 
    cnt_frac_of_exch_pep = new QwtCounter(this);
    US_Hydrodyn::sizeArrows( cnt_frac_of_exch_pep );
-   cnt_frac_of_exch_pep->setRange(0.0, 1.0, 0.001);
+   cnt_frac_of_exch_pep->setRange(0.0, 1.0); cnt_frac_of_exch_pep->setSingleStep( 0.001);
    cnt_frac_of_exch_pep->setValue((*saxs_options).frac_of_exch_pep);
    cnt_frac_of_exch_pep->setMinimumHeight(minHeight1);
    cnt_frac_of_exch_pep->setEnabled(true);
@@ -170,7 +170,7 @@ void US_Hydrodyn_SasOptionsSans::setupGUI()
 
    cnt_perdeuteration = new QwtCounter(this);
    US_Hydrodyn::sizeArrows( cnt_perdeuteration );
-   cnt_perdeuteration->setRange(0.0, 1.0, 0.001);
+   cnt_perdeuteration->setRange(0.0, 1.0); cnt_perdeuteration->setSingleStep( 0.001);
    cnt_perdeuteration->setValue( ((US_Hydrodyn *)us_hydrodyn)->gparams.count( "perdeuteration" ) ? 
                                  ((US_Hydrodyn *)us_hydrodyn)->gparams[ "perdeuteration" ].toDouble() : 0e0 );
    cnt_perdeuteration->setMinimumHeight(minHeight1);
@@ -276,7 +276,7 @@ void US_Hydrodyn_SasOptionsSans::setupGUI()
 
    cnt_cryson_sh_max_harmonics = new QwtCounter(this);
    US_Hydrodyn::sizeArrows( cnt_cryson_sh_max_harmonics );
-   cnt_cryson_sh_max_harmonics->setRange(1, 75, 1);
+   cnt_cryson_sh_max_harmonics->setRange(1, 75); cnt_cryson_sh_max_harmonics->setSingleStep( 1);
    cnt_cryson_sh_max_harmonics->setValue((*saxs_options).sh_max_harmonics);
    cnt_cryson_sh_max_harmonics->setMinimumHeight(minHeight1);
    cnt_cryson_sh_max_harmonics->setEnabled(true);
@@ -299,7 +299,7 @@ void US_Hydrodyn_SasOptionsSans::setupGUI()
 
    cnt_cryson_sh_fibonacci_grid_order = new QwtCounter(this);
    US_Hydrodyn::sizeArrows( cnt_cryson_sh_fibonacci_grid_order );
-   cnt_cryson_sh_fibonacci_grid_order->setRange(2, 75, 1);
+   cnt_cryson_sh_fibonacci_grid_order->setRange(2, 75); cnt_cryson_sh_fibonacci_grid_order->setSingleStep( 1);
    cnt_cryson_sh_fibonacci_grid_order->setValue((*saxs_options).sh_fibonacci_grid_order);
    cnt_cryson_sh_fibonacci_grid_order->setMinimumHeight(minHeight1);
    cnt_cryson_sh_fibonacci_grid_order->setEnabled(true);
@@ -325,12 +325,12 @@ void US_Hydrodyn_SasOptionsSans::setupGUI()
    //                                                      , this);
    //    lbl_cryson_hydration_shell_contrast->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    //    lbl_cryson_hydration_shell_contrast->setMinimumHeight(minHeight1);
-   //    lbl_cryson_hydration_shell_contrast->setPalette( USglobal->global_colors.cg_label );
+   //    lbl_cryson_hydration_shell_contrast->setPalette( PALET_LABEL );
    //    lbl_cryson_hydration_shell_contrast->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    cnt_cryson_hydration_shell_contrast = new QwtCounter(this);
    US_Hydrodyn::sizeArrows( cnt_cryson_hydration_shell_contrast );
-   cnt_cryson_hydration_shell_contrast->setRange(-1, 8, 0.0001);
+   cnt_cryson_hydration_shell_contrast->setRange(-1, 8); cnt_cryson_hydration_shell_contrast->setSingleStep( 0.0001);
    cnt_cryson_hydration_shell_contrast->setValue((*saxs_options).cryson_hydration_shell_contrast);
    cnt_cryson_hydration_shell_contrast->setMinimumHeight(minHeight1);
    cnt_cryson_hydration_shell_contrast->setEnabled(true);

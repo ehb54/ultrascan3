@@ -314,7 +314,7 @@ class US_EXTERN US_Hydrodyn_Comparative : public QFrame
 
 
 #ifdef WIN32
-# if !defined( QT4 )
+# if QT_VERSION < 0x040000
   #pragma warning ( disable: 4251 )
 # endif
 #endif
@@ -402,7 +402,7 @@ class US_EXTERN US_Hydrodyn_Comparative : public QFrame
       map < QString, comparative_entry * >  ce_map;
 
 #ifdef WIN32
-# if !defined( QT4 )
+# if QT_VERSION < 0x040000
   #pragma warning ( default: 4251 )
 # endif
 #endif

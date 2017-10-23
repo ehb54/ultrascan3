@@ -77,7 +77,7 @@ bool US_Saxs_Util::dmd_findSS()
 
    cout << "Starting " + prog + "\n";
    cout << cmd << endl;
-   system( cmd.toAscii().data() );
+   system( cmd.toLatin1().data() );
    cout << "Finished " + prog + "\n";
 
    // findSS creates 1 file: constraints_file
@@ -233,7 +233,7 @@ bool US_Saxs_Util::dmd_prepare()
    
    cout << "Starting " + prog + "\n";
    cout << cmd << endl;
-   system( cmd.toAscii().data() );
+   system( cmd.toLatin1().data() );
    cout << "Finished " + prog + "\n";
 
    if ( !QFile::exists( param_file ) )
@@ -791,7 +791,7 @@ bool US_Saxs_Util::dmd_run( QString run_description )
    
    cout << "Starting " + prog + "\n";
    cout << cmd << endl;
-   system( cmd.toAscii().data() );
+   system( cmd.toLatin1().data() );
    cout << "Finished " + prog + "\n";
 
    if ( !QFile::exists( restart_file ) )
@@ -866,7 +866,7 @@ bool US_Saxs_Util::dmd_run( QString run_description )
       
       cout << "Starting " + prog + "\n";
       cout << cmd << endl;
-      system( cmd.toAscii().data() );
+      system( cmd.toLatin1().data() );
       cout << "Finished " + prog + "\n";
       
       if ( !QFile::exists( pdb_out_to_fix_file ) )

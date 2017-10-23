@@ -196,7 +196,7 @@ class US_EXTERN US_Hydrodyn_Batch : public QFrame
 
       bool          any_pdb_in_list;
 #ifdef WIN32
-# if !defined( QT4 )
+# if QT_VERSION < 0x040000
   #pragma warning ( disable: 4251 )
 # endif
 #endif
@@ -228,7 +228,7 @@ class US_EXTERN US_Hydrodyn_Batch : public QFrame
       vector < float > saxs_prr_mw;
 
 #ifdef WIN32
-# if !defined( QT4 )
+# if QT_VERSION < 0x040000
   #pragma warning ( default: 4251 )
 # endif
 #endif

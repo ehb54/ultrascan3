@@ -184,7 +184,7 @@ point sgp_node::scale( point p, float m )
 sgp_node::sgp_node()
 {
    sgp_creates++;
-   children         .clear();
+   children         .clear( );
    parent           = ( sgp_node * ) 0;
    normal.axis[ 0 ] = 0.0;
    normal.axis[ 1 ] = 0.0;
@@ -198,7 +198,7 @@ sgp_node::sgp_node()
 sgp_node::sgp_node( point normal, unsigned int distance, unsigned int radius )
 {
    sgp_creates++;
-   children         .clear();
+   children         .clear( );
    parent           = ( sgp_node * ) 0;
    this->normal     = normal;
    this->distance   = distance;
@@ -515,7 +515,7 @@ vector < PDB_atom > sgp_node::bead_model()
       tmp_atom.bead_color              = 1;
       tmp_atom.serial                  = i + 1;
       tmp_atom.exposed_code            = 1;
-      tmp_atom.all_beads               .clear();
+      tmp_atom.all_beads               .clear( );
       tmp_atom.name                    = "SGP";
       tmp_atom.resName                 = "SGP";
       tmp_atom.iCode                   = "";

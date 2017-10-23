@@ -12,12 +12,12 @@ US_Help::~US_Help()
 
 void US_Help::show_help( QString helpFile )
 {
-  QString help = QDir::convertSeparators( 
+  QString help = QDir::toNativeSeparators( 
       USglobal->config_list.help_dir + "/" + helpFile );
 
   if ( !QFileInfo( help ).exists() ) {
      help =
-        QDir::convertSeparators( 
+        QDir::toNativeSeparators( 
                                 USglobal->config_list.help_dir 
                                 + "/manual/somo/underconstruction.html"
                                  );
@@ -42,7 +42,7 @@ void US_Help::openBrowser()
 {
 #if QT_VERSION < 0x040000
   proc = new QProcess( this );
-# ifdef Q_WS_MAC
+# ifdef Q_OS_MAC
   proc->addArgument( "open" );
   proc->addArgument( "-a" );
 # endif
@@ -62,7 +62,7 @@ void US_Help::openBrowser()
      QProcess * process = new QProcess( this );
      QString prog = USglobal->config_list.browser;
      QStringList args;
-# ifdef Q_WS_MAC
+# ifdef Q_OS_MAC
      args
         << "-a"
         ;
@@ -148,7 +148,7 @@ void US_Help::endProcess()
 
 void US_Help::captureStdout()
 {
-  cout << "std: " << proc->readLineStdout().toAscii().data() << endl;
+  cout << "std: " << proc->readLineStdout().toLatin1().data() << endl;
 }
 
 void US_Help::captureStderr()

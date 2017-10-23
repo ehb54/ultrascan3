@@ -745,16 +745,16 @@ vector < PDB_atom > us_hydrodyn_grid_atob_hydro(vector < PDB_atom > *bead_model,
 #if defined(DEBUG)
          puts("grid_atob 1 b"); fflush(stdout);
 #endif
-         strncpy(tmp_pdb.atnam, (*bead_model)[i].name.toAscii().data(), 7);
+         strncpy(tmp_pdb.atnam, (*bead_model)[i].name.toLatin1().data(), 7);
          tmp_pdb.atnam[7] = 0;
 
-         strncpy(tmp_pdb.resnam, (*bead_model)[i].resName.toAscii().data(), 7);
+         strncpy(tmp_pdb.resnam, (*bead_model)[i].resName.toLatin1().data(), 7);
          tmp_pdb.resnam[7] = 0;
 
-         strncpy(tmp_pdb.insert, (*bead_model)[i].iCode.toAscii().data(), 7);
+         strncpy(tmp_pdb.insert, (*bead_model)[i].iCode.toLatin1().data(), 7);
          tmp_pdb.insert[7] = 0;
 
-         strncpy(tmp_pdb.chain, (*bead_model)[i].chainID.toAscii().data(), 7);
+         strncpy(tmp_pdb.chain, (*bead_model)[i].chainID.toLatin1().data(), 7);
          tmp_pdb.chain[7] = 0;
          pdb.push_back(tmp_pdb);
 
@@ -986,7 +986,7 @@ vector < PDB_atom > us_hydrodyn_grid_atob_hydro(vector < PDB_atom > *bead_model,
                           );
 
    // us_hydrodyn->sf_factors.saxs_name = "undefined";
-   // us_hydrodyn->sf_bead_factors.clear();
+   // us_hydrodyn->sf_bead_factors.clear( );
 
    // if ( nmr_created )
    // {
@@ -1064,7 +1064,7 @@ vector < PDB_atom > us_hydrodyn_grid_atob_hydro(vector < PDB_atom > *bead_model,
       tmp_atom.bead_color = 1;
       tmp_atom.serial = this_pdb->atnum;
       tmp_atom.exposed_code = 1;
-      tmp_atom.all_beads.clear();
+      tmp_atom.all_beads.clear( );
       tmp_atom.name = QString(this_pdb->atnam);
       tmp_atom.resName = QString(this_pdb->resnam);
       tmp_atom.iCode = QString(this_pdb->insert);
@@ -1167,7 +1167,7 @@ vector < PDB_atom > us_hydrodyn_grid_atob_hydro(vector < PDB_atom > *bead_model,
 
 //    // bool created_batch = false;
 //    batch_info save_batch_info = batch;
-//    batch.file.clear();
+//    batch.file.clear( );
 //    batch.file.push_back( filename );
 //    if ( !batch_widget )
 //    {
@@ -1176,7 +1176,7 @@ vector < PDB_atom > us_hydrodyn_grid_atob_hydro(vector < PDB_atom > *bead_model,
 //       fixWinButtons( batch_window );
 //       batch_window->lb_files->item( 0)->setSelected( true );
 //    } else {
-//       batch_window->lb_files->clear();
+//       batch_window->lb_files->clear( );
 //       batch_window->lb_files->addItem(batch.file[0]);
 //       batch_window->lb_files->item( 0)->setSelected( true );
 //    }

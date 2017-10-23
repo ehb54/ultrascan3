@@ -34,7 +34,7 @@ US_Hydrodyn_File2::US_Hydrodyn_File2(QString *dir,
    ok_to_close = false;
    *result = -1;
    USglobal = new US_Config();
-   setPalette( USglobal->global_colors.cg_frame );
+   setPalette( PALET_FRAME );
    setWindowTitle("File will be overwritten");
    setupGUI();
    global_Xpos = 200;
@@ -54,19 +54,19 @@ void US_Hydrodyn_File2::setupGUI()
    lbl_info = new QLabel(" WARNING: The following file exists:", this);
    lbl_info->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_info->setMinimumHeight(minHeight2);
-   lbl_info->setPalette( USglobal->global_colors.cg_label );
+   lbl_info->setPalette( PALET_LABEL );
    lbl_info->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1, QFont::Bold));
 
    lbl_filename = new QLabel(*dir + *base + *ext, this);
    lbl_filename->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_filename->setMinimumHeight(minHeight2);
-   lbl_filename->setPalette( USglobal->global_colors.cg_normal );
+   lbl_filename->setPalette( PALET_NORMAL );
    lbl_filename->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1, QFont::Bold));
 
    lbl_dir = new QLabel(" Path and project fixed base: ", this);
    lbl_dir->setAlignment(Qt::AlignRight|Qt::AlignVCenter);
    lbl_dir->setMinimumHeight(minHeight2);
-   lbl_dir->setPalette( USglobal->global_colors.cg_label );
+   lbl_dir->setPalette( PALET_LABEL );
    lbl_dir->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1, QFont::Bold));
 
    le_dir = new QLineEdit( this );    le_dir->setObjectName( "dir Line Edit" );
@@ -75,14 +75,14 @@ void US_Hydrodyn_File2::setupGUI()
    le_dir->setMinimumWidth(100);
    le_dir->setMinimumHeight(minHeight2);
    le_dir->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
-   le_dir->setPalette( USglobal->global_colors.cg_normal );
+   le_dir->setPalette( PALET_NORMAL );
    le_dir->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1));
    le_dir->setDisabled(true);
 
    lbl_update = new QLabel(" Update the filename: ", this);
    lbl_update->setAlignment(Qt::AlignRight|Qt::AlignVCenter);
    lbl_update->setMinimumHeight(minHeight2);
-   lbl_update->setPalette( USglobal->global_colors.cg_label );
+   lbl_update->setPalette( PALET_LABEL );
    lbl_update->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1, QFont::Bold));
 
    le_base = new QLineEdit( this );    le_base->setObjectName( "base Line Edit" );
@@ -91,7 +91,7 @@ void US_Hydrodyn_File2::setupGUI()
    le_base->setMinimumWidth(200);
    le_base->setMinimumHeight(minHeight2);
    le_base->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
-   le_base->setPalette( USglobal->global_colors.cg_normal );
+   le_base->setPalette( PALET_NORMAL );
    le_base->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1));
    connect(le_base, SIGNAL(textChanged(const QString &)), SLOT(update_base(const QString &)));
 
@@ -100,7 +100,7 @@ void US_Hydrodyn_File2::setupGUI()
       lbl_ext = new QLabel(" Fixed extension: ", this);
       lbl_ext->setAlignment(Qt::AlignRight|Qt::AlignVCenter);
       lbl_ext->setMinimumHeight(minHeight2);
-      lbl_ext->setPalette( USglobal->global_colors.cg_label );
+      lbl_ext->setPalette( PALET_LABEL );
       lbl_ext->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1, QFont::Bold));
 
       le_ext = new QLineEdit( this );       le_ext->setObjectName( "ext Line Edit" );
@@ -109,7 +109,7 @@ void US_Hydrodyn_File2::setupGUI()
       le_ext->setMinimumWidth(200);
       le_ext->setMinimumHeight(minHeight2);
       le_ext->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
-      le_ext->setPalette( USglobal->global_colors.cg_normal );
+      le_ext->setPalette( PALET_NORMAL );
       le_ext->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1));
       le_ext->setDisabled(true);
    }
@@ -117,37 +117,37 @@ void US_Hydrodyn_File2::setupGUI()
    pb_overwrite = new QPushButton("Overwrite existing file", this);
    pb_overwrite->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_overwrite->setMinimumHeight(minHeight2);
-   pb_overwrite->setPalette( USglobal->global_colors.cg_pushb );
+   pb_overwrite->setPalette( PALET_PUSHB );
    connect(pb_overwrite, SIGNAL(clicked()), SLOT(overwrite()));
 
    pb_auto_inc = new QPushButton("Use next sequential integer", this);
    pb_auto_inc->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_auto_inc->setMinimumHeight(minHeight2);
-   pb_auto_inc->setPalette( USglobal->global_colors.cg_pushb );
+   pb_auto_inc->setPalette( PALET_PUSHB );
    connect(pb_auto_inc, SIGNAL(clicked()), SLOT(auto_inc()));
 
    pb_try_again = new QPushButton("Try again", this);
    pb_try_again->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_try_again->setMinimumHeight(minHeight2);
-   pb_try_again->setPalette( USglobal->global_colors.cg_pushb );
+   pb_try_again->setPalette( PALET_PUSHB );
    connect(pb_try_again, SIGNAL(clicked()), SLOT(try_again()));
 
    pb_overwrite_all = new QPushButton("Overwrite all", this);
    pb_overwrite_all->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_overwrite_all->setMinimumHeight(minHeight2);
-   pb_overwrite_all->setPalette( USglobal->global_colors.cg_pushb );
+   pb_overwrite_all->setPalette( PALET_PUSHB );
    connect(pb_overwrite_all, SIGNAL(clicked()), SLOT(do_overwrite_all()));
 
    pb_cancel = new QPushButton("Cancel saving", this);
    pb_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_cancel->setMinimumHeight(minHeight2);
-   pb_cancel->setPalette( USglobal->global_colors.cg_pushb );
+   pb_cancel->setPalette( PALET_PUSHB );
    connect(pb_cancel, SIGNAL(clicked()), SLOT(do_cancel()));
 
    pb_help = new QPushButton("Help", this);
    pb_help->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_help->setMinimumHeight(minHeight2);
-   pb_help->setPalette( USglobal->global_colors.cg_pushb );
+   pb_help->setPalette( PALET_PUSHB );
    connect(pb_help, SIGNAL(clicked()), SLOT(help()));
 
    int j = 0;

@@ -18,7 +18,7 @@
 
 #include "us_util.h"
 
-#ifdef QT4
+#if QT_VERSION >= 0x040000
 #include "qwt_plot_grid.h"
 #include "qwt_plot_curve.h"
 #include "qwt/scrollbar.h"
@@ -61,7 +61,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Residuals : public QFrame
       bool *saxs_residuals_widget;
 
 #ifdef WIN32
-# if !defined( QT4 )
+# if QT_VERSION < 0x040000
   #pragma warning ( disable: 4251 )
 # endif
 #endif
@@ -74,7 +74,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Residuals : public QFrame
       vector < double > residuals_pct;
 
 #ifdef WIN32
-# if !defined( QT4 )
+# if QT_VERSION < 0x040000
   #pragma warning ( default: 4251 )
 # endif
 #endif
@@ -89,7 +89,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Residuals : public QFrame
 
       QwtPlot           *plot;
       ScrollZoomer      *plot_zoomer;
-#ifdef QT4
+#if QT_VERSION >= 0x040000
       QwtPlotGrid       *grid;
 #endif
 
@@ -98,7 +98,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Residuals : public QFrame
       QCheckBox         *cb_plot_as_percent;
 
 #ifdef WIN32
-# if !defined( QT4 )
+# if QT_VERSION < 0x040000
   #pragma warning ( disable: 4251 )
 # endif
 #endif

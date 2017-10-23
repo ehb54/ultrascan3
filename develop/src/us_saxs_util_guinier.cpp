@@ -192,7 +192,7 @@ bool US_Saxs_Util::guinier_fit(
       .arg( sigb )
       .arg( x.size() - 2 )
       .arg( chi2 )
-      .toAscii().data()
+      .toLatin1().data()
       ;
    */
 
@@ -225,7 +225,7 @@ bool US_Saxs_Util::guinier_fit(
                               sigb,
                               chi2);
    log += QString(
-#ifndef QT4
+#if QT_VERSION < 0x040000
                   "pnggnuplot.pl -p 1.5 -g -l points -c %1 %1 -m %1 %1 %1 %1 %1g%1_%1.png %1g.dat\n"
 #else
                   "pnggnuplot.pl -p 1.5 -g -l points -c %1 %2 -m %3 %4 %5 %6 %7g%8_%9.png %10g.dat\n"
@@ -369,7 +369,7 @@ bool US_Saxs_Util::guinier_fit2(
 bool US_Saxs_Util::guinier_plot(QString outtag, QString tag)
 {
    errormsg = "";
-   wave[outtag].clear();
+   wave[outtag].clear( );
    wave[outtag].filename = QString("guinier_%1").arg(tag);
    wave[outtag].header = wave[tag].header;
    
@@ -427,7 +427,7 @@ bool US_Saxs_Util::guinier_remove_points(
       return false;
    }
       
-   wave[outtag].clear();
+   wave[outtag].clear( );
    wave[outtag].filename = QString("guinier_removed_%1").arg(tag);
    wave[outtag].header = wave[tag].header;
 
@@ -509,7 +509,7 @@ bool US_Saxs_Util::guinier_fit_with_removal(
                                             )
 {
    // puts( "su: guinier_fit_with_removal" );
-   removed.clear();
+   removed.clear( );
    pts_removed = 0;
 
    QString outtag = "removed_" + tag;

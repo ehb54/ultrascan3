@@ -56,7 +56,7 @@ void US_Hydrodyn_Saxs_Hplc_Ciq::setupGUI()
    lbl_title -> setMinimumHeight( minHeight1 );
    lbl_title ->setPalette( PALET_LABEL );
    AUTFBACK( lbl_title );
-   // lbl_title -> setPalette      ( USglobal->global_colors.cg_frame );
+   // lbl_title -> setPalette      ( PALET_FRAME );
    lbl_title -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold ) );
    // lbl_title -> hide();
 

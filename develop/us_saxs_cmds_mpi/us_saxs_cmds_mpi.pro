@@ -1,4 +1,4 @@
-!include ( ../cmdline.pri ) error( "../cmdline.pri missing.  Aborting..." )
+include ( ../cmdline.pri )
 
 DEFINES         += USE_MPI
 SOURCES		+= ../src/us_saxs_gp.cpp

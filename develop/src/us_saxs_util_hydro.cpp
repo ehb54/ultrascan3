@@ -504,19 +504,19 @@ void US_Saxs_Util::read_residue_file()
   //     cout << "residue file name: " << residue_filename << endl;
   //  }
 
-   residue_list.clear();
-   residue_list_no_pbr.clear();
-   multi_residue_map.clear();
-   residue_atom_hybrid_map.clear();
-   residue_atom_abb_hybrid_map.clear();
-   new_residues.clear();
+   residue_list.clear( );
+   residue_list_no_pbr.clear( );
+   multi_residue_map.clear( );
+   residue_atom_hybrid_map.clear( );
+   residue_atom_abb_hybrid_map.clear( );
+   new_residues.clear( );
 
    map < QString, int > dup_residue_map;
    map < QString, bool > pbr_override_map; // maps positioner for overwrite
-   unknown_residues.clear(); // keep track of unknown residues
+   unknown_residues.clear( ); // keep track of unknown residues
 
-   msroll_radii.clear();
-   msroll_names.clear();
+   msroll_radii.clear( );
+   msroll_names.clear( );
 
    // i=1;
    if (f.open(QIODevice::ReadOnly|QIODevice::Text))
@@ -535,8 +535,8 @@ void US_Saxs_Util::read_residue_file()
          ts >> new_residue.vbar;
          ts.readLine(); // read rest of line
          line_count++;
-         new_residue.r_atom.clear();
-         new_residue.r_bead.clear();
+         new_residue.r_atom.clear( );
+         new_residue.r_bead.clear( );
          vector < vector < atom > > new_atoms;
          new_atoms.resize(numbeads);
          vector < atom > alt_atoms;
@@ -682,7 +682,7 @@ void US_Saxs_Util::read_residue_file()
             // if ( advanced_config.debug_1 )
             // {
             //    printf("residue name %s loading bead %d placing method %d\n",
-            //           new_residue.name.toAscii().data(),
+            //           new_residue.name.toLatin1().data(),
             //           j, new_bead.placing_method); fflush(stdout);
             // }
             new_residue.r_bead.push_back(new_bead);
@@ -700,8 +700,8 @@ void US_Saxs_Util::read_residue_file()
             // if ( advanced_config.debug_1 )
             // {
             //    printf("residue name %s unique name %s atom size %u alt size %u pos %u\n"
-            //           ,new_residue.name.toAscii().data()
-            //           ,new_residue.unique_name.toAscii().data()
+            //           ,new_residue.name.toLatin1().data()
+            //           ,new_residue.unique_name.toLatin1().data()
             //           ,(unsigned int) new_residue.r_atom.size()
             //           ,(unsigned int) alt_atoms.size()
             //           ,(unsigned int) residue_list.size()
@@ -738,7 +738,7 @@ void US_Saxs_Util::read_residue_file()
       for (unsigned int i = 0; i < it->second.size(); i++)
       {
          printf("residue %s map pos %u\n",
-                it->first.toAscii().data(), it->second[i]);
+                it->first.toLatin1().data(), it->second[i]);
       }
    }
 #endif
@@ -858,7 +858,7 @@ void US_Saxs_Util::read_residue_file()
 bool US_Saxs_Util::screen_pdb(QString filename, bool parameters_set_first_model ) //, bool display_pdb, bool skipclearissue )
 {
    // if ( !skipclearissue ) {
-  issue_info.clear();
+  issue_info.clear( );
    // }
    // clear_pdb_info( "screen_pdb" );
 
@@ -893,8 +893,8 @@ bool US_Saxs_Util::screen_pdb(QString filename, bool parameters_set_first_model 
    // last_abb_msgs = "";
    bead_model_from_file = false;
    int errors_found = 0;
-   // le_pdb_file_save_text = QDir::convertSeparators( filename );
-   // le_pdb_file->setText( QDir::convertSeparators( filename ) );
+   // le_pdb_file_save_text = QDir::toNativeSeparators( filename );
+   // le_pdb_file->setText( QDir::toNativeSeparators( filename ) );
 
    // bead_model_suffix = "";
    // le_bead_model_suffix->setText( bead_model_suffix );
@@ -928,7 +928,7 @@ bool US_Saxs_Util::screen_pdb(QString filename, bool parameters_set_first_model 
    QFileInfo fi(filename);
    project = fi.baseName();
 
-   new_residues.clear();
+   new_residues.clear( );
 
    if ( misc.pb_rule_on )
    {
@@ -1044,8 +1044,8 @@ bool US_Saxs_Util::screen_pdb(QString filename, bool parameters_set_first_model 
      }
    accumulated_msgs += QString("\\nLoaded pdb file : %1\\n").arg(errors_found ? "ERRORS PRESENT" : "ok\\n");
 
-   bead_models.clear();
-   somo_processed.clear();
+   bead_models.clear( );
+   somo_processed.clear( );
    update_vbar();
    // cout << "Check: model#: " << " 0 " << model_vector[0].vbar << endl;
    // cout << "Check: model#: "  << " 1 " << model_vector[1].vbar << endl;
@@ -1084,7 +1084,7 @@ int US_Saxs_Util::check_for_missing_atoms_hydro(QString *error_string, PDB_model
    // go through molecules, build vector of residues
    // expand vector of residues to atom list from residue file
    // compare expanded list of residues to model ... list missing atoms missing
-  residue_errors.clear();
+  residue_errors.clear( );
    int errors_found = 0;
    get_atom_map(model);
 
@@ -1124,7 +1124,7 @@ int US_Saxs_Util::check_for_missing_atoms_hydro(QString *error_string, PDB_model
      }
 
    int failure_errors = 0;
-   bead_exceptions.clear();
+   bead_exceptions.clear( );
 
    // residue types are for automatic build builder to determine
    // if we have a protein, so that a special 'temporary' residue can
@@ -1182,8 +1182,8 @@ int US_Saxs_Util::check_for_missing_atoms_hydro(QString *error_string, PDB_model
          // if ( advanced_config.debug_1 )
          // {
          //    printf("check_for_missing_atoms search name %s resName %s\n",
-         //           this_atom->name.toAscii().data(),
-         //           this_atom->resName.toAscii().data());
+         //           this_atom->name.toLatin1().data(),
+         //           this_atom->resName.toLatin1().data());
          // }
          int respos = -1;
          int restype = 99;
@@ -1246,9 +1246,9 @@ int US_Saxs_Util::check_for_missing_atoms_hydro(QString *error_string, PDB_model
                // if ( advanced_config.debug_1 )
                // {
                   
-               //    printf("residue match %d resName %s \n", m, residue_list[m].name.toAscii().data());
+               //    printf("residue match %d resName %s \n", m, residue_list[m].name.toLatin1().data());
                //    printf("resname %s respos %d mappos %d mapsize %u\n"
-               //           ,this_atom->resName.toAscii().data()
+               //           ,this_atom->resName.toLatin1().data()
                //           ,m
                //           ,multi_residue_map[this_atom->resName][0]
                //           ,(unsigned int)multi_residue_map[this_atom->resName].size()
@@ -1258,7 +1258,7 @@ int US_Saxs_Util::check_for_missing_atoms_hydro(QString *error_string, PDB_model
 	       {
 		 //cout << "Inside missing atom 1 " << endl;
                   // new residue
-                  // printf("new residue %s\n", this_atom->resSeq.toAscii().data());
+                  // printf("new residue %s\n", this_atom->resSeq.toLatin1().data());
                   residues_found++;
                   if (lastResPos != -1)
                   {
@@ -1339,11 +1339,11 @@ int US_Saxs_Util::check_for_missing_atoms_hydro(QString *error_string, PDB_model
                            // error_string->
                            // append(QString("").
                            //     sprintf("Missing atom: chain %s molecule %d atom %s residue %s %s\n",
-                           //        lastChainID.toAscii().data(),
+                           //        lastChainID.toLatin1().data(),
                            //        j + 1,
-                           //        residue_list[lastResPos].r_atom[l].name.toAscii().data(),
-                           //        lastResSeq.toAscii().data(),
-                           //        residue_list[lastResPos].name.toAscii().data()));
+                           //        residue_list[lastResPos].r_atom[l].name.toLatin1().data(),
+                           //        lastResSeq.toLatin1().data(),
+                           //        residue_list[lastResPos].name.toLatin1().data()));
                         }
 			//cout << "not inside" << endl;
                      }
@@ -1410,7 +1410,7 @@ int US_Saxs_Util::check_for_missing_atoms_hydro(QString *error_string, PDB_model
                         .arg(this_atom->resName)
                         .arg(this_atom->name)
                         .arg(0); 
-                     printf("cases residue found: idx %s\n", idx.toAscii().data());
+                     printf("cases residue found: idx %s\n", idx.toLatin1().data());
                      if (valid_atom_map[idx].size()) 
                      {
                         puts("case 2.1");
@@ -1566,12 +1566,12 @@ int US_Saxs_Util::check_for_missing_atoms_hydro(QString *error_string, PDB_model
                   }
         
                   // error_string->append(QString("").sprintf("%s: chain %s molecule %d atom %s residue %s %s\n",
-                  //               msg_tag.toAscii().data(),
-                  //               this_atom->chainID.toAscii().data(),
+                  //               msg_tag.toLatin1().data(),
+                  //               this_atom->chainID.toLatin1().data(),
                   //               j + 1,
-                  //               this_atom->name.toAscii().data(),
-                  //               this_atom->resSeq.toAscii().data(),
-                  //               this_atom->resName.toAscii().data()
+                  //               this_atom->name.toLatin1().data(),
+                  //               this_atom->resSeq.toLatin1().data(),
+                  //               this_atom->resName.toLatin1().data()
                   //               ));
                }
             }
@@ -1689,11 +1689,11 @@ int US_Saxs_Util::check_for_missing_atoms_hydro(QString *error_string, PDB_model
         
 
                // error_string->append(QString("").sprintf("unknown atom chain %s molecule %d atom %s residue %s %s\n",
-               //            this_atom->chainID.toAscii().data(),
+               //            this_atom->chainID.toLatin1().data(),
                //            j + 1,
-               //            this_atom->name.toAscii().data(),
-               //            this_atom->resSeq.toAscii().data(),
-               //            this_atom->resName.toAscii().data()
+               //            this_atom->name.toLatin1().data(),
+               //            this_atom->resSeq.toLatin1().data(),
+               //            this_atom->resName.toLatin1().data()
                //            ));
             }
          }
@@ -1722,7 +1722,7 @@ int US_Saxs_Util::check_for_missing_atoms_hydro(QString *error_string, PDB_model
                // {
                //    printf("dbg x pdb_parse.missing_atoms %d bead_exceptions[%s] %d residue_list[%d].r_atom[%d].tmp_flag %d\n"
                //           , pdb_parse.missing_atoms
-               //           , count_idx.toAscii().data()
+               //           , count_idx.toLatin1().data()
                //           , bead_exceptions[count_idx]
                //           , lastResPos
                //           , l
@@ -1786,11 +1786,11 @@ int US_Saxs_Util::check_for_missing_atoms_hydro(QString *error_string, PDB_model
                // error_string->
                //  append(QString("").
                // sprintf("missing atom chain %s molecule %d atom %s residue %s %s\n",
-               //    lastChainID.toAscii().data(),
+               //    lastChainID.toLatin1().data(),
                //    j + 1,
-               //    residue_list[lastResPos].r_atom[l].name.toAscii().data(),
-               //    lastResSeq.toAscii().data(),
-               //    residue_list[lastResPos].name.toAscii().data()));
+               //    residue_list[lastResPos].r_atom[l].name.toLatin1().data(),
+               //    lastResSeq.toLatin1().data(),
+               //    residue_list[lastResPos].name.toLatin1().data()));
             }
          }
       }
@@ -1832,9 +1832,9 @@ int US_Saxs_Util::check_for_missing_atoms_hydro(QString *error_string, PDB_model
          *error_string = "";
          // repair model...
          PDB_model org_model = *model;
-         model->molecule.clear();
+         model->molecule.clear( );
          // we may need to redo the residues also
-         model->residue.clear();
+         model->residue.clear( );
          //printf("vbar before: %g\n", model->vbar);
          QString new_residue_name = "";
          map < QString, bool > abb_msg_done;  // keep 1 message for the residue
@@ -1924,7 +1924,7 @@ int US_Saxs_Util::check_for_missing_atoms_hydro(QString *error_string, PDB_model
                      // if ( advanced_config.debug_2  )
                      // {
                      //    printf("1.0 <%s> residue types %u, last_type %u\n", 
-                     //           new_residue_idx.toAscii().data(),
+                     //           new_residue_idx.toLatin1().data(),
                      //           (unsigned int)residue_types[j].size(),
                      //           last_residue_type[j]
                      //           );
@@ -1936,7 +1936,7 @@ int US_Saxs_Util::check_for_missing_atoms_hydro(QString *error_string, PDB_model
                         if (auto_bb_aa) 
                         {
                            // reset the main chain counts
-                           aa_main_chain.clear();
+                           aa_main_chain.clear( );
                            aa_main_chain["N"] = 0;
                            aa_main_chain["CA"] = 0;
                            aa_main_chain["C"] = 0;
@@ -1970,7 +1970,7 @@ int US_Saxs_Util::check_for_missing_atoms_hydro(QString *error_string, PDB_model
                         
 			// if ( advanced_config.debug_2  )
                         // {
-                        //    printf("1.1 <%s>\n", new_residue_name.toAscii().data());
+                        //    printf("1.1 <%s>\n", new_residue_name.toLatin1().data());
                         // }
                         atom_counts[QString("%1|%2|%3")
                                     .arg(j)
@@ -1985,8 +1985,8 @@ int US_Saxs_Util::check_for_missing_atoms_hydro(QString *error_string, PDB_model
                         // new_residue.asa = misc.avg_asa * atom_counts[count_idx];
                         new_residue.asa = 0;
                         new_residue.vbar = misc.avg_vbar;
-                        new_residue.r_atom.clear();
-                        new_residue.r_bead.clear();
+                        new_residue.r_atom.clear( );
+                        new_residue.r_bead.clear( );
                         new_bead.hydration = (unsigned int)(misc.avg_hydration * atom_counts[count_idx] + .5);
                         new_bead.color = 10;         // light green
                         new_bead.placing_method = 0; // cog
@@ -2000,7 +2000,7 @@ int US_Saxs_Util::check_for_missing_atoms_hydro(QString *error_string, PDB_model
                         lastResName = org_model.molecule[j].atom[k].resName;
                         // if ( advanced_config.debug_2  )
                         // {
-                        //    printf("1.1b <%s>\n", new_residue.name.toAscii().data());
+                        //    printf("1.1b <%s>\n", new_residue.name.toLatin1().data());
                         // }
                         model->residue.push_back(residue_list[multi_residue_map[new_residue.name][0]]);
 			lastOrgResSeq  = org_model.molecule[j].atom[k].orgResSeq;
@@ -2013,7 +2013,7 @@ int US_Saxs_Util::check_for_missing_atoms_hydro(QString *error_string, PDB_model
                         unknown_residues[new_residue_name] = true;
                         // if ( advanced_config.debug_2  )
                         // {
-                        //    printf("1.2 <%s>\n", new_residue_name.toAscii().data());
+                        //    printf("1.2 <%s>\n", new_residue_name.toLatin1().data());
                         // }
                         if (new_residue_name != new_residue.name)
                         {
@@ -2116,7 +2116,7 @@ int US_Saxs_Util::check_for_missing_atoms_hydro(QString *error_string, PDB_model
                      }
                      // if ( advanced_config.debug_2  )
                      // {
-                     //    printf("1.3 <%s> adding <%s> respos %u\n", new_residue.name.toAscii().data(), atom_to_add.name.toAscii().data(), respos);
+                     //    printf("1.3 <%s> adding <%s> respos %u\n", new_residue.name.toLatin1().data(), atom_to_add.name.toLatin1().data(), respos);
                      // }
                      tmp_chain.atom.push_back(atom_to_add);
                      model->residue[model->residue.size() - 1] = residue_list[residue_list.size() - 1];
@@ -2296,7 +2296,7 @@ int US_Saxs_Util::check_for_missing_atoms_hydro(QString *error_string, PDB_model
 
                         // if ( advanced_config.debug_2  )
                         // {
-                        //    printf("a1.1 <%s>\n", new_residue_name.toAscii().data());
+                        //    printf("a1.1 <%s>\n", new_residue_name.toLatin1().data());
                         // }
                         atom_counts[QString("%1|%2|%3")
                                     .arg(j)
@@ -2309,8 +2309,8 @@ int US_Saxs_Util::check_for_missing_atoms_hydro(QString *error_string, PDB_model
                         new_residue.molvol = residue_list[orgrespos].molvol;
                         new_residue.asa = residue_list[orgrespos].asa;
                         new_residue.vbar = residue_list[orgrespos].vbar;
-                        new_residue.r_atom.clear();
-                        new_residue.r_bead.clear();
+                        new_residue.r_atom.clear( );
+                        new_residue.r_bead.clear( );
 
                         // create the beads
                         if ( one_bead )
@@ -2456,7 +2456,7 @@ int US_Saxs_Util::check_for_missing_atoms_hydro(QString *error_string, PDB_model
                         lastResName = org_model.molecule[j].atom[k].resName;
                         // if ( advanced_config.debug_2  )
                         // {
-                        //    printf("a1.1b <%s>\n", new_residue.name.toAscii().data());
+                        //    printf("a1.1b <%s>\n", new_residue.name.toLatin1().data());
                         // }
                         model->residue.push_back(residue_list[multi_residue_map[new_residue.name][0]]);
 			lastOrgResSeq  = org_model.molecule[j].atom[k].orgResSeq;
@@ -2469,7 +2469,7 @@ int US_Saxs_Util::check_for_missing_atoms_hydro(QString *error_string, PDB_model
                         unknown_residues[new_residue_name] = true;
                         // if ( advanced_config.debug_2  )
                         // {
-                        //    printf("a1.2 <%s>\n", new_residue_name.toAscii().data());
+                        //    printf("a1.2 <%s>\n", new_residue_name.toLatin1().data());
                         // }
                         if (new_residue_name != new_residue.name)
                         {
@@ -2496,7 +2496,7 @@ int US_Saxs_Util::check_for_missing_atoms_hydro(QString *error_string, PDB_model
                      }
                      // if ( advanced_config.debug_2  )
                      // {
-                     //    printf("a1.3 <%s>\n", new_residue.name.toAscii().data());
+                     //    printf("a1.3 <%s>\n", new_residue.name.toLatin1().data());
                      // }
                      tmp_chain.atom.push_back(atom_to_add);
                      model->residue[model->residue.size() - 1] = residue_list[residue_list.size() - 1];
@@ -2566,14 +2566,14 @@ int US_Saxs_Util::check_for_missing_atoms_hydro(QString *error_string, PDB_model
             // if ( advanced_config.debug_2  )
             // {
             //    printf("unknown residue %s checking for removal from broken\n",
-            //           unknown_aa_residues_to_check[i].toAscii().data());
+            //           unknown_aa_residues_to_check[i].toLatin1().data());
             // }
             unsigned int respos = multi_residue_map[unknown_aa_residues_to_check[i]][0];
             if ( residue_list[respos].r_bead.size() == 2 &&
                  residue_list[respos].r_atom.size() > 4 ) 
             {
                map < QString, int > aa_main_chain;  // to make sure we have a good main chain
-               aa_main_chain.clear();
+               aa_main_chain.clear( );
                aa_main_chain["N"] = 0;
                aa_main_chain["CA"] = 0;
                aa_main_chain["C"] = 0;
@@ -2590,7 +2590,7 @@ int US_Saxs_Util::check_for_missing_atoms_hydro(QString *error_string, PDB_model
                   // if ( advanced_config.debug_2  )
                   // {
                   //    printf("unknown residue %s removed from broken override\n",
-                  //           unknown_aa_residues_to_check[i].toAscii().data());
+                  //           unknown_aa_residues_to_check[i].toLatin1().data());
                   // }
                   unknown_residues.erase(unknown_aa_residues_to_check[i]);
                }
@@ -2985,7 +2985,7 @@ bool US_Saxs_Util::hard_coded_defaults( map < QString, QString > &results, map <
    batch.avg_hydro_name = "results";
    batch.height = 0;
    batch.width = 0;
-   batch.file.clear();
+   batch.file.clear( );
 
    path_load_pdb = "";
    path_view_pdb = "";
@@ -2997,7 +2997,7 @@ bool US_Saxs_Util::hard_coded_defaults( map < QString, QString > &results, map <
    saxs_options_hydro.path_load_gnom = "";
    saxs_options_hydro.path_load_prr = "";
 
-   save_params.field.clear();
+   save_params.field.clear( );
 
    asa_hydro.hydrate_probe_radius = 1.4f;
    asa_hydro.hydrate_threshold = 10.0f;
@@ -3126,7 +3126,7 @@ bool US_Saxs_Util::hard_coded_defaults( map < QString, QString > &results, map <
    saxs_options_hydro.compute_exponentials               = false;
    saxs_options_hydro.compute_exponential_terms          = 5;
    saxs_options_hydro.dummy_saxs_name                    = "DAM";
-   saxs_options_hydro.dummy_saxs_names                   .clear();
+   saxs_options_hydro.dummy_saxs_names                   .clear( );
    saxs_options_hydro.dummy_saxs_names                   .push_back( saxs_options_hydro.dummy_saxs_name );
    saxs_options_hydro.multiply_iq_by_atomic_volume       = false;
    saxs_options_hydro.dummy_atom_pdbs_in_nm              = false;
@@ -3183,7 +3183,7 @@ bool US_Saxs_Util::hard_coded_defaults( map < QString, QString > &results, map <
       ( 1e0 - saxs_options_hydro.d2o_conc ) * ( saxs_options_hydro.h2o_scat_len_dens );
    saxs_options_hydro.cryson_manual_hs                   = false;
 
-   gparams                                         .clear();
+   gparams                                         .clear( );
    gparams[ "guinier_auto_fit" ]                   = "1";
    gparams[ "perdeuteration" ]                     = "0";
    gparams[ "guinier_qRtmax" ]                     = "1";
@@ -3485,7 +3485,7 @@ bool US_Saxs_Util::calc_mw_hydro()
    unsigned int save_current_model = current_model;
    // QString error_string;
 
-   last_pdb_load_calc_mw_msg.clear();
+   last_pdb_load_calc_mw_msg.clear( );
 
    US_Saxs_Util usu;
    bool do_excl_vol = true;
@@ -4072,7 +4072,7 @@ bool US_Saxs_Util::calc_grid_pdb(bool parameters_set_first_model)
 		 // ok, we have the basic "bead" info loaded...
 		 
 		  unsigned int i = curr_m;
-                  bead_model.clear();
+                  bead_model.clear( );
                   bool any_zero_si = false;
                   for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++) {
                      for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++) {
@@ -4090,9 +4090,9 @@ bool US_Saxs_Util::calc_grid_pdb(bool parameters_set_first_model)
                               this_atom->bead_computed_radius += additional_radius;
 // #if defined(GRID_HYDRATE_DEBUG)
 //                               printf("hydrating atom %s %s %s hydration %f radius %f + %f -> %f\n"
-//                                      , this_atom->name.toAscii().data()
-//                                      , this_atom->resName.toAscii().data()
-//                                      , this_atom->resSeq.toAscii().data()
+//                                      , this_atom->name.toLatin1().data()
+//                                      , this_atom->resName.toLatin1().data()
+//                                      , this_atom->resSeq.toLatin1().data()
 //                                      , this_atom->atom_hydration
 //                                      , this_atom->radius
 //                                      , additional_radius
@@ -4851,7 +4851,7 @@ void US_Saxs_Util::bead_check( bool use_threshold, bool message_type )
    // recheck beads here
 
    //printf("bead recheck use threshold%s\n", use_threshold ? "" : " percent");
-   active_atoms.clear();
+   active_atoms.clear( );
    for(unsigned int i = 0; i < bead_model.size(); i++) {
       active_atoms.push_back(&bead_model[i]);
    }
@@ -4944,7 +4944,7 @@ void US_Saxs_Util::bead_check( bool use_threshold, bool message_type )
               ( bead_model[i].bead_recheck_asa > (asa_hydro.threshold_percent / 100.0) * surface_area )
               ) ?
              "exposed" : "buried",
-             msg.toAscii().data(),
+             msg.toLatin1().data(),
              bead_model[i].bead_mw,
              bead_model[i].bead_ref_mw
              );
@@ -5727,7 +5727,7 @@ int US_Saxs_Util::radial_reduction( bool from_grid, int use_ppos, int mppos )
             // qApp->processEvents();
 
             max_intersection_length = 0;
-            pairs.clear();
+            pairs.clear( );
             count = 0;
             // build list of intersecting pairs
             for (unsigned int i = 0; i < bead_model.size() - 1; i++) {
@@ -5828,7 +5828,7 @@ int US_Saxs_Util::radial_reduction( bool from_grid, int use_ppos, int mppos )
                printf("processing hierarchical radial reduction iteration %d\n", iter);
 #endif
 
-               // lbl_core_progress->setText(QString("Stage %1 hierarch. red. it. %2 with %3 couples").arg(k+1).arg(iter).arg(pairs.size( )));
+               // lbl_core_progress->setText(QString("Stage %1 hierarch. red. it. %2 with %3 couples").arg(k+1).arg(iter).arg(pairs.size()));
                // qApp->processEvents();
 
                max_intersection_length = 0;
@@ -6267,7 +6267,7 @@ int US_Saxs_Util::radial_reduction( bool from_grid, int use_ppos, int mppos )
                   exit(-1);
                }
                max_intersection_length = 0;
-               pairs.clear();
+               pairs.clear( );
                count = 0;
                reduced[bead_model.size() - 1] = false;
 
@@ -6397,7 +6397,7 @@ int US_Saxs_Util::radial_reduction( bool from_grid, int use_ppos, int mppos )
                printf("processing radial reduction sync iteration %d pairs to process %d max int len %f\n", iter, count, max_intersection_length);
 #endif
                
-	       // lbl_core_progress->setText(QString("Stage %1 synchron. red. it. %2 with %3 couples").arg(k+1).arg(iter).arg(pairs.size( )));
+	       // lbl_core_progress->setText(QString("Stage %1 synchron. red. it. %2 with %3 couples").arg(k+1).arg(iter).arg(pairs.size()));
                // qApp->processEvents();
  
 	       if (max_intersection_length > TOLERANCE) {
@@ -7054,12 +7054,12 @@ int US_Saxs_Util::do_calc_hydro()
 						    //(bead_model_from_file ? "" : "_%1") +
 						    "_%1" +
 						    QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "") +
-						    DOTSOMO + ".beams").toAscii().data(),
+						    DOTSOMO + ".beams").toLatin1().data(),
 					    QString(project +
 						    //(bead_model_from_file ? "" : QString("_%1").arg( model_name( first_model_no - 1 ) ) ) +
 						    (QString("_%1").arg( first_model_no ) ) +
 						    QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "") +
-						    DOTSOMO + ".beams").toAscii().data(),
+						    DOTSOMO + ".beams").toLatin1().data(),
 					    model_names,
 					    // progress,
 					    // editor,
@@ -7425,7 +7425,7 @@ void US_Saxs_Util::write_bead_model( QString fname,
       arg(decpts);
 
 #if defined(DEBUG)
-   printf("write bead model %s\n", fname.toAscii().data()); fflush(stdout);
+   printf("write bead model %s\n", fname.toLatin1().data()); fflush(stdout);
    printf("decimal points to use: %d\n", decpts);
 #endif
 
@@ -7487,15 +7487,15 @@ void US_Saxs_Util::write_bead_model( QString fname,
    FILE *fhydro = (FILE *)0;
 
    if (bead_output.output & US_HYDRODYN_OUTPUT_SOMO) {
-      fsomo = us_fopen(QString("%1.bead_model").arg(fname).toAscii().data(), "w");
+      fsomo = us_fopen(QString("%1.bead_model").arg(fname).toLatin1().data(), "w");
    }
    if (bead_output.output & US_HYDRODYN_OUTPUT_BEAMS) {
-      fbeams = us_fopen(QString("%1.beams").arg(fname).toAscii().data(), "w");
-      frmc = us_fopen(QString("%1.rmc").arg(fname).toAscii().data(), "w");
-      frmc1 = us_fopen(QString("%1.rmc1").arg(fname).toAscii().data(), "w");
+      fbeams = us_fopen(QString("%1.beams").arg(fname).toLatin1().data(), "w");
+      frmc = us_fopen(QString("%1.rmc").arg(fname).toLatin1().data(), "w");
+      frmc1 = us_fopen(QString("%1.rmc1").arg(fname).toLatin1().data(), "w");
    }
    if (bead_output.output & US_HYDRODYN_OUTPUT_HYDRO) {
-      fhydro = us_fopen(QString("%1.dat").arg(fname).toAscii().data(), "w");
+      fhydro = us_fopen(QString("%1.dat").arg(fname).toLatin1().data(), "w");
    }
 
    int beads = 0;
@@ -7518,7 +7518,7 @@ void US_Saxs_Util::write_bead_model( QString fname,
       fprintf(fbeams,
               "%d\t-2.000000\t%s.rmc\t%.3f\n",
               beads,
-              QFileInfo(fname).fileName().toAscii().data(),
+              QFileInfo(fname).fileName().toLatin1().data(),
               results_hydro.vbar
               );
    }
@@ -7567,40 +7567,40 @@ void US_Saxs_Util::write_bead_model( QString fname,
          }
          if (fsomo) {
             fprintf(fsomo,
-                    fstring_somo.toAscii().data(),
+                    fstring_somo.toLatin1().data(),
                     use_model[i]->bead_coordinate.axis[0],
                     use_model[i]->bead_coordinate.axis[1],
                     use_model[i]->bead_coordinate.axis[2],
                     use_model[i]->bead_computed_radius,
                     use_model[i]->bead_ref_mw,
                     get_color_util_saxs(use_model[i]),
-                    residues.toAscii().data(),
+                    residues.toLatin1().data(),
                     use_model[i]->bead_recheck_asa
                     );
          }
          if (fbeams) {
             fprintf(fbeams,
-                    fstring_beams.toAscii().data(),
+                    fstring_beams.toLatin1().data(),
                     use_model[i]->bead_coordinate.axis[0],
                     use_model[i]->bead_coordinate.axis[1],
                     use_model[i]->bead_coordinate.axis[2]
                     );
             fprintf(frmc,
-                    fstring_rmc.toAscii().data(),
+                    fstring_rmc.toLatin1().data(),
                     use_model[i]->bead_computed_radius,
                     use_model[i]->bead_ref_mw,
                     get_color_util_saxs(use_model[i]));
             fprintf(frmc1,
-                    fstring_rmc1.toAscii().data(),
+                    fstring_rmc1.toLatin1().data(),
                     use_model[i]->bead_computed_radius,
                     use_model[i]->bead_ref_mw,
                     get_color_util_saxs(use_model[i]),
-                    residues.toAscii().data()
+                    residues.toLatin1().data()
                     );
          }
          if (fhydro) {
             fprintf(fhydro,
-                    fstring_hydro.toAscii().data(),
+                    fstring_hydro.toLatin1().data(),
                     use_model[i]->bead_coordinate.axis[0],
                     use_model[i]->bead_coordinate.axis[1],
                     use_model[i]->bead_coordinate.axis[2],
@@ -7629,12 +7629,12 @@ void US_Saxs_Util::write_bead_model( QString fname,
               "as in original PDB file"
               ,-hydro.unit
               );
-      fprintf(fsomo, ( options_log.isNull() ? "" : options_log.toAscii().data() ) );
-      fprintf(fsomo, ( last_abb_msgs.isNull() ? "" : last_abb_msgs.toAscii().data() ) );
+      fprintf(fsomo, ( options_log.isNull() ? "" : options_log.toLatin1().data() ) );
+      fprintf(fsomo, ( last_abb_msgs.isNull() ? "" : last_abb_msgs.toLatin1().data() ) );
 
       if ( !extra_text.isEmpty() )
       {
-         fprintf(fsomo, extra_text.toAscii().data() );
+         fprintf(fsomo, extra_text.toLatin1().data() );
       }
 
       fclose(fsomo);
@@ -8252,7 +8252,7 @@ int US_Saxs_Util::calc_somo( bool no_ovlp_removal, bool parameters_set_first_mod
    bool  use_parameters_set_first_model =  parameters_set_first_model;
    for (current_model = 0; current_model < model_vector.size(); current_model++)
    {
-     if (!any_errors) //&& lb_model->item(current_model)->isSelected( ))
+     if (!any_errors) //&& lb_model->item(current_model)->isSelected())
        {
 	 any_models = true;
 	 if(!compute_asa( false, no_ovlp_removal,  use_parameters_set_first_model))
@@ -8796,9 +8796,9 @@ int US_Saxs_Util::compute_asa( bool bd_mode, bool no_ovlp_removal, bool paramete
             // this_atom->bead_positioner = false;
             this_atom->normalized_ot_is_valid = false;
             fprintf(asaf, "%s\t%s\t%s\t%.2f\n",
-                    this_atom->name.toAscii().data(),
-                    this_atom->resName.toAscii().data(),
-                    this_atom->resSeq.toAscii().data(),
+                    this_atom->name.toLatin1().data(),
+                    this_atom->resName.toLatin1().data(),
+                    this_atom->resSeq.toLatin1().data(),
                     this_atom->asa);
 
             for (unsigned int m = 0; m < 3; m++) {
@@ -8860,8 +8860,8 @@ int US_Saxs_Util::compute_asa( bool bd_mode, bool no_ovlp_removal, bool paramete
                // if ( advanced_config.debug_1 )
                // {
                //    printf("pass 2 active %s %s %d pm %d %d\n",
-               //           this_atom->name.toAscii().data(),
-               //           this_atom->resName.toAscii().data(),
+               //           this_atom->name.toLatin1().data(),
+               //           this_atom->resName.toLatin1().data(),
                //           this_atom->serial,
                //           this_atom->placing_method,
                //           this_atom->bead_assignment); fflush(stdout);
@@ -8898,8 +8898,8 @@ int US_Saxs_Util::compute_asa( bool bd_mode, bool no_ovlp_removal, bool paramete
                   //      advanced_config.debug_2 )
                   // {
                   //    printf("pass 2 active %s %s %d new bead chain %d\n",
-                  //           this_atom->name.toAscii().data(),
-                  //           this_atom->resName.toAscii().data(),
+                  //           this_atom->name.toLatin1().data(),
+                  //           this_atom->resName.toLatin1().data(),
                   //           this_atom->serial,
                   //           this_atom->chain); fflush(stdout);
                   // }
@@ -8946,8 +8946,8 @@ int US_Saxs_Util::compute_asa( bool bd_mode, bool no_ovlp_removal, bool paramete
                   // if ( advanced_config.debug_1 )
                   // {
                   //    printf("pass 2 active %s %s %d not a new bead\n",
-                  //           this_atom->name.toAscii().data(),
-                  //           this_atom->resName.toAscii().data(),
+                  //           this_atom->name.toLatin1().data(),
+                  //           this_atom->resName.toLatin1().data(),
                   //           this_atom->serial); fflush(stdout);
                   // }
                   if (this_atom->bead_positioner) {
@@ -8955,8 +8955,8 @@ int US_Saxs_Util::compute_asa( bool bd_mode, bool no_ovlp_removal, bool paramete
                      if (last_main_bead->bead_positioner &&
                          this_atom->placing_method == 1) {
                         fprintf(stderr, "warning: 2 positioners in bead %s %s %d\n",
-                                last_main_bead->name.toAscii().data(),
-                                last_main_bead->resName.toAscii().data(),
+                                last_main_bead->name.toLatin1().data(),
+                                last_main_bead->resName.toLatin1().data(),
                                 last_main_bead->serial);
                      }
                      last_main_bead->bead_positioner = true;
@@ -8991,8 +8991,8 @@ int US_Saxs_Util::compute_asa( bool bd_mode, bool no_ovlp_removal, bool paramete
                // if ( advanced_config.debug_1 )
                // {
                //    printf("atom %s %s p_atom.hybrid.mw %f atom.mw %f\n",
-               //           this_atom->name.toAscii().data(),
-               //           this_atom->resName.toAscii().data(),
+               //           this_atom->name.toLatin1().data(),
+               //           this_atom->resName.toLatin1().data(),
                //           this_atom->p_atom->hybrid.mw,
                //           this_atom->mw
                //           );
@@ -9036,11 +9036,11 @@ int US_Saxs_Util::compute_asa( bool bd_mode, bool no_ovlp_removal, bool paramete
                //    if ( advanced_config.debug_3 )
                //    {
                //       printf("notice: atom %s %s %d excluded from cog calculation in bead %s %s %d\n",
-               //              this_atom->name.toAscii().data(),
-               //              this_atom->resName.toAscii().data(),
+               //              this_atom->name.toLatin1().data(),
+               //              this_atom->resName.toLatin1().data(),
                //              this_atom->serial,
-               //              use_atom->name.toAscii().data(),
-               //              use_atom->resName.toAscii().data(),
+               //              use_atom->name.toLatin1().data(),
+               //              use_atom->resName.toLatin1().data(),
                //              use_atom->serial);
                //    }
                // }
@@ -9050,8 +9050,8 @@ int US_Saxs_Util::compute_asa( bool bd_mode, bool no_ovlp_removal, bool paramete
                   if (use_atom->bead_positioner &&
                       this_atom->placing_method == 1) {
                      fprintf(stderr, "warning: 2 or more positioners in bead %s %s %d\n",
-                             use_atom->name.toAscii().data(),
-                             use_atom->resName.toAscii().data(),
+                             use_atom->name.toLatin1().data(),
+                             use_atom->resName.toLatin1().data(),
                              use_atom->serial);
                   }
                   use_atom->bead_positioner = true;
@@ -9146,8 +9146,8 @@ int US_Saxs_Util::compute_asa( bool bd_mode, bool no_ovlp_removal, bool paramete
             //           this_atom->active,
             //           this_atom->is_bead,
             //           this_atom->chain,
-            //           this_atom->name.toAscii().data(),
-            //           this_atom->resName.toAscii().data(),
+            //           this_atom->name.toLatin1().data(),
+            //           this_atom->resName.toLatin1().data(),
             //           this_atom->serial,
             //           this_atom->placing_method); fflush(stdout);
             // }
@@ -9179,8 +9179,8 @@ int US_Saxs_Util::compute_asa( bool bd_mode, bool no_ovlp_removal, bool paramete
                // if ( advanced_config.debug_1 )
                // {
                //    printf("placed N1, found break, turned off placed N1 %s %s\n", 
-               //           this_atom->resName.toAscii().data(),
-               //           this_atom->resSeq.toAscii().data()
+               //           this_atom->resName.toLatin1().data(),
+               //           this_atom->resSeq.toLatin1().data()
                //           );
                // }
             }
@@ -9223,11 +9223,11 @@ int US_Saxs_Util::compute_asa( bool bd_mode, bool no_ovlp_removal, bool paramete
                // if ( advanced_config.debug_1 )
                // {
                //    printf("pass 2b active OXT %s %s %d last %s %s %d mw org %f mw new %f\n",
-               //           this_atom->name.toAscii().data(),
-               //           this_atom->resName.toAscii().data(),
+               //           this_atom->name.toLatin1().data(),
+               //           this_atom->resName.toLatin1().data(),
                //           this_atom->serial,
-               //           last_main_chain_bead->name.toAscii().data(),
-               //           last_main_chain_bead->resName.toAscii().data(),
+               //           last_main_chain_bead->name.toLatin1().data(),
+               //           last_main_chain_bead->resName.toLatin1().data(),
                //           last_main_chain_bead->serial,
                //           last_main_chain_bead->bead_ref_mw,
                //           this_atom->bead_ref_mw
@@ -9281,8 +9281,8 @@ int US_Saxs_Util::compute_asa( bool bd_mode, bool no_ovlp_removal, bool paramete
                // if ( advanced_config.debug_1 )
                // {
                //    printf("pass 2b active, bead, chain == 0 %s %s %d pm %d\n",
-               //           this_atom->name.toAscii().data(),
-               //           this_atom->resName.toAscii().data(),
+               //           this_atom->name.toLatin1().data(),
+               //           this_atom->resName.toLatin1().data(),
                //           this_atom->serial,
                //           this_atom->placing_method); fflush(stdout);
                // }
@@ -9299,8 +9299,8 @@ int US_Saxs_Util::compute_asa( bool bd_mode, bool no_ovlp_removal, bool paramete
                   // if ( advanced_config.debug_1 )
                   // {
                   //    printf("pass 2b active PRO %s %s %d pm %d\n",
-                  //           this_atom->name.toAscii().data(),
-                  //           this_atom->resName.toAscii().data(),
+                  //           this_atom->name.toLatin1().data(),
+                  //           this_atom->resName.toLatin1().data(),
                   //           this_atom->serial,
                   //           this_atom->placing_method); fflush(stdout);
                   // }
@@ -9344,9 +9344,9 @@ int US_Saxs_Util::compute_asa( bool bd_mode, bool no_ovlp_removal, bool paramete
                // if ( advanced_config.debug_1 )
                // {
                //    printf("pass 2b broken end adjustment %s %s %s org mw %.4f vol %.4f\n",
-               //           this_atom->name.toAscii().data(),
-               //           this_atom->resName.toAscii().data(),
-               //           this_atom->resSeq.toAscii().data(),
+               //           this_atom->name.toLatin1().data(),
+               //           this_atom->resName.toLatin1().data(),
+               //           this_atom->resSeq.toLatin1().data(),
                //           this_atom->bead_ref_mw,
                //           this_atom->bead_ref_volume);
                // }
@@ -9366,9 +9366,9 @@ int US_Saxs_Util::compute_asa( bool bd_mode, bool no_ovlp_removal, bool paramete
                   // if ( advanced_config.debug_1 )
                   // {
                   //    printf("pass 2b broken end adjustment %s %s %s new mw %.4f vol %.4f\n",
-                  //           this_atom->name.toAscii().data(),
-                  //           this_atom->resName.toAscii().data(),
-                  //           this_atom->resSeq.toAscii().data(),
+                  //           this_atom->name.toLatin1().data(),
+                  //           this_atom->resName.toLatin1().data(),
+                  //           this_atom->resSeq.toLatin1().data(),
                   //           this_atom->bead_ref_mw,
                   //           this_atom->bead_ref_volume);
                   // }
@@ -9473,8 +9473,8 @@ int US_Saxs_Util::compute_asa( bool bd_mode, bool no_ovlp_removal, bool paramete
                 this_atom->is_bead) {
 #if defined(DEBUG)
                printf("pass 2c hydration %s %s %d pm %d\n",
-                      this_atom->name.toAscii().data(),
-                      this_atom->resName.toAscii().data(),
+                      this_atom->name.toLatin1().data(),
+                      this_atom->resName.toLatin1().data(),
                       this_atom->serial,
                       this_atom->placing_method); fflush(stdout);
 #endif
@@ -9526,8 +9526,8 @@ int US_Saxs_Util::compute_asa( bool bd_mode, bool no_ovlp_removal, bool paramete
                 this_atom->chain == 0) {
 # if defined(DEBUG)
                printf("pass 2d mc_asa %s %s %d pm %d\n",
-                      this_atom->name.toAscii().data(),
-                      this_atom->resName.toAscii().data(),
+                      this_atom->name.toLatin1().data(),
+                      this_atom->resName.toLatin1().data(),
                       this_atom->serial,
                       this_atom->placing_method); fflush(stdout);
 # endif
@@ -9569,8 +9569,8 @@ int US_Saxs_Util::compute_asa( bool bd_mode, bool no_ovlp_removal, bool paramete
 
 #if defined(DEBUG)
                printf("pass 3 active is bead %s %s %d\n",
-                      this_atom->name.toAscii().data(),
-                      this_atom->resName.toAscii().data(),
+                      this_atom->name.toLatin1().data(),
+                      this_atom->resName.toLatin1().data(),
                       this_atom->serial); fflush(stdout);
 #endif
                for (unsigned int m = 0; m < 3; m++) {
@@ -9587,8 +9587,8 @@ int US_Saxs_Util::compute_asa( bool bd_mode, bool no_ovlp_removal, bool paramete
 
 #if defined(DEBUG)
                   printf("pass 3 active is bead %s %s %d bead assignment %d placing method %d\n",
-                         this_atom->name.toAscii().data(),
-                         this_atom->resName.toAscii().data(),
+                         this_atom->name.toLatin1().data(),
+                         this_atom->resName.toLatin1().data(),
                          this_atom->serial,
                          this_atom->bead_assignment,
                          this_atom->placing_method
@@ -9600,8 +9600,8 @@ int US_Saxs_Util::compute_asa( bool bd_mode, bool no_ovlp_removal, bool paramete
                      this_atom->bead_coordinate = this_atom->bead_cog_coordinate;
                      // if (this_atom->bead_positioner) {
                      // fprintf(stderr, "warning: this bead had a atom claiming position & a bead placing method of cog! %s %s %d\n",
-                     //   this_atom->name.toAscii().data(),
-                     //   this_atom->resName.toAscii().data(),
+                     //   this_atom->name.toLatin1().data(),
+                     //   this_atom->resName.toLatin1().data(),
                      //   this_atom->serial);
                      // }
                      break;
@@ -9615,8 +9615,8 @@ int US_Saxs_Util::compute_asa( bool bd_mode, bool no_ovlp_removal, bool paramete
                      this_atom->bead_coordinate = this_atom->bead_cog_coordinate;
                      fprintf(stderr, "warning: unknown bead placing method %d %s %s %d <using cog!>\n",
                              this_atom->placing_method,
-                             this_atom->name.toAscii().data(),
-                             this_atom->resName.toAscii().data(),
+                             this_atom->name.toLatin1().data(),
+                             this_atom->resName.toLatin1().data(),
                              this_atom->serial);
                      break;
                   }
@@ -9624,17 +9624,17 @@ int US_Saxs_Util::compute_asa( bool bd_mode, bool no_ovlp_removal, bool paramete
                else 
                {
                   fprintf(stderr, "serious internal error 1 on %s %s %d, quitting\n",
-                          this_atom->name.toAscii().data(),
-                          this_atom->resName.toAscii().data(),
+                          this_atom->name.toLatin1().data(),
+                          this_atom->resName.toLatin1().data(),
                           this_atom->serial);
                   exit(-1);
                   break;
                }
 #if defined(DEBUG) || defined(OLD_ASAB1_SC_COMPUTE)
                printf("pass 3 active is bead %s %s %s checkpoint 1\n",
-                      this_atom->name.toAscii().data(),
-                      this_atom->resName.toAscii().data(),
-                      this_atom->resSeq.toAscii().data()); fflush(stdout);
+                      this_atom->name.toLatin1().data(),
+                      this_atom->resName.toLatin1().data(),
+                      this_atom->resSeq.toLatin1().data()); fflush(stdout);
 #endif
                this_atom->visibility = (this_atom->bead_asa >= asa_hydro.threshold);
 #if defined(OLD_ASAB1_SC_COMPUTE)
@@ -9647,8 +9647,8 @@ int US_Saxs_Util::compute_asa( bool bd_mode, bool no_ovlp_removal, bool paramete
 
 #if defined(DEBUG)
                printf("pass 3 active is bead %s %s %d checkpoint 2\n",
-                      this_atom->name.toAscii().data(),
-                      this_atom->resName.toAscii().data(),
+                      this_atom->name.toLatin1().data(),
+                      this_atom->resName.toLatin1().data(),
                       this_atom->serial); fflush(stdout);
 #endif
                if (!create_beads_normally ||
@@ -9667,8 +9667,8 @@ int US_Saxs_Util::compute_asa( bool bd_mode, bool no_ovlp_removal, bool paramete
                }
 #if defined(DEBUG)
                printf("pass 3 active is bead %s %s %d checkpoint 3\n",
-                      this_atom->name.toAscii().data(),
-                      this_atom->resName.toAscii().data(),
+                      this_atom->name.toLatin1().data(),
+                      this_atom->resName.toLatin1().data(),
                       this_atom->serial); fflush(stdout);
 #endif
 
@@ -9732,9 +9732,9 @@ int US_Saxs_Util::compute_asa( bool bd_mode, bool no_ovlp_removal, bool paramete
                    "[%f,%f,%f]~[%f,%f,%f]~[%f, %f, %f]\n",
 
                    i, j, k,
-                   this_atom->name.toAscii().data(),
-                   this_atom->resName.toAscii().data(),
-                   this_atom->chainID.toAscii().data(),
+                   this_atom->name.toLatin1().data(),
+                   this_atom->resName.toLatin1().data(),
+                   this_atom->chainID.toLatin1().data(),
 
                    this_atom->coordinate.axis[0],
                    this_atom->coordinate.axis[1],
@@ -9779,7 +9779,7 @@ int US_Saxs_Util::compute_asa( bool bd_mode, bool no_ovlp_removal, bool paramete
    }
 #endif
    // build vector of beads
-   bead_model.clear();
+   bead_model.clear( );
    // #define DEBUG_MOD
 #if defined(DEBUG_MOD)
    vector<PDB_atom> dbg_model;
@@ -9812,8 +9812,8 @@ int US_Saxs_Util::compute_asa( bool bd_mode, bool no_ovlp_removal, bool paramete
 #if defined(DEBUG_MW)
                if(bead_count) {
                   printf("res %s %s bead %d bead_mw %f sum atom mw %f diff %f\n",
-                         last_res.toAscii().data(),
-                         last_resName.toAscii().data(),
+                         last_res.toLatin1().data(),
+                         last_resName.toLatin1().data(),
                          last_asgn,
                          prev_bead_mw,
                          prev_atom_mw,
@@ -9845,7 +9845,7 @@ int US_Saxs_Util::compute_asa( bool bd_mode, bool no_ovlp_removal, bool paramete
 #if defined(DEBUG_MW)
    printf("res %d %s bead %d bead_mw %f sum atom mw %f diff %f\n",
           last_res,
-          last_resName.toAscii().data(),
+          last_resName.toLatin1().data(),
           last_asgn,
           prev_bead_mw,
           prev_atom_mw,
@@ -10445,7 +10445,7 @@ int US_Saxs_Util::compute_asa( bool bd_mode, bool no_ovlp_removal, bool paramete
             // lbl_core_progress->setText(QString("Stage %1 hierarchical radial reduction").arg(k+1));
             // qApp->processEvents();
             max_intersection_length = 0;
-            pairs.clear();
+            pairs.clear( );
             count = 0;
             // build list of intersecting pairs
             for (unsigned int i = 0; i < bead_model.size() - 1; i++) {
@@ -10537,7 +10537,7 @@ int US_Saxs_Util::compute_asa( bool bd_mode, bool no_ovlp_removal, bool paramete
 #if defined(DEBUG1) || defined(DEBUG)
                printf("processing hierarchical radial reduction iteration %d\n", iter);
 #endif
-               // lbl_core_progress->setText(QString("Stage %1 hierarch. red. it. %2 with %3 couples").arg(k+1).arg(iter).arg(pairs.size( )));
+               // lbl_core_progress->setText(QString("Stage %1 hierarch. red. it. %2 with %3 couples").arg(k+1).arg(iter).arg(pairs.size()));
                // qApp->processEvents();
                max_intersection_length = 0;
                int max_pair = -1;
@@ -10931,7 +10931,7 @@ int US_Saxs_Util::compute_asa( bool bd_mode, bool no_ovlp_removal, bool paramete
                   exit(-1);
                }
                max_intersection_length = 0;
-               pairs.clear();
+               pairs.clear( );
                count = 0;
                reduced[bead_model.size() - 1] = false;
 
@@ -11062,7 +11062,7 @@ int US_Saxs_Util::compute_asa( bool bd_mode, bool no_ovlp_removal, bool paramete
 #if defined(DEBUG1) || defined(DEBUG)
                   printf("processing radial reduction sync iteration %d pairs to process %d\n", iter, count);
 #endif
-                  // lbl_core_progress->setText(QString("Stage %1 synchron. red. it. %2 with %3 couples").arg(k+1).arg(iter).arg(pairs.size( )));
+                  // lbl_core_progress->setText(QString("Stage %1 synchron. red. it. %2 with %3 couples").arg(k+1).arg(iter).arg(pairs.size()));
                   // qApp->processEvents();
                   for (unsigned int i = 0; i < pairs.size(); i++) {
                      if (
@@ -11430,24 +11430,24 @@ bool US_Saxs_Util::read_pdb_hydro( QString filename, bool parameters_set_first_m
    QString str1;
    QString str2;
    QString temp;
-   model_vector.clear();
-   bead_model.clear();
+   model_vector.clear( );
+   bead_model.clear( );
    QString last_resSeq = ""; // keeps track of residue sequence number, initialize to zero, first real one will be "1"
    PDB_chain temp_chain;
    QFile f(filename);
    struct PDB_model temp_model;
    bool chain_flag = false;
    bool model_flag = false;
-   temp_model.molecule.clear();
-   temp_model.residue.clear();
+   temp_model.molecule.clear( );
+   temp_model.residue.clear( );
    clear_temp_chain(&temp_chain);
    bool currently_aa_chain = false; // do we have an amino acid chain (pbr)
    bool last_was_ENDMDL = false;    // to fix pdbs with missing MODEL tag
 
    if ( f.open(QIODevice::ReadOnly) )
    {
-      last_pdb_header.clear();
-      last_pdb_title .clear();
+      last_pdb_header.clear( );
+      last_pdb_title .clear( );
       last_pdb_filename = f.fileName();
       QTextStream ts(&f);
       while (!ts.atEnd())
@@ -11502,8 +11502,8 @@ bool US_Saxs_Util::read_pdb_hydro( QString filename, bool parameters_set_first_m
                temp_model.model_id = str1.mid( 6, 15 );
             }
             chain_flag = false; // we are starting a new molecule
-            temp_model.molecule.clear();
-            temp_model.residue.clear();
+            temp_model.molecule.clear( );
+            temp_model.residue.clear( );
             clear_temp_chain(&temp_chain);
          }
          if (str1.left(6) == "ENDMDL") // we need to save the previously recorded molecule
@@ -11665,8 +11665,8 @@ bool US_Saxs_Util::read_pdb_hydro( QString filename, bool parameters_set_first_m
       }
       f.close();
    } else {
-      model_vector.clear();
-      bead_model.clear();
+      model_vector.clear( );
+      bead_model.clear( );
       errormsg = QString("Error reading file %1").arg(filename);
       return false;
    }
@@ -12047,7 +12047,7 @@ int US_Saxs_Util::create_beads_hydro(QString *error_string, bool quiet)
       accumulated_msgs += "Creating beads from atomic model\\n";
       //qApp->processEvents();
    }
-   active_atoms.clear();
+   active_atoms.clear( );
 
    // #define DEBUG_MM
 #if defined(DEBUG_MM)
@@ -12110,8 +12110,8 @@ int US_Saxs_Util::create_beads_hydro(QString *error_string, bool quiet)
          //      advanced_config.debug_2 )
          // {
          //    printf("residue search name %s resName %s\n",
-         //           this_atom->name.toAscii().data(),
-         //           this_atom->resName.toAscii().data());
+         //           this_atom->name.toLatin1().data(),
+         //           this_atom->resName.toLatin1().data());
          // }
 
          int restype = 99;
@@ -12174,7 +12174,7 @@ int US_Saxs_Util::create_beads_hydro(QString *error_string, bool quiet)
                // if ( advanced_config.debug_1 ||
                //      advanced_config.debug_2 )
                // {
-               //    printf("residue match %d resName %s \n", m, residue_list[m].name.toAscii().data());
+               //    printf("residue match %d resName %s \n", m, residue_list[m].name.toLatin1().data());
                // }
                break;
             }
@@ -12186,8 +12186,8 @@ int US_Saxs_Util::create_beads_hydro(QString *error_string, bool quiet)
                  && this_atom->resName != "HOH" && (this_atom->altLoc == "A" || this_atom->altLoc == " ")))
             {
                error_string->append(QString("").sprintf("unknown residue molecule %d atom %d name %s resname %s coord [%f,%f,%f]\n",
-                                                        j + 1, k, this_atom->name.toAscii().data(),
-                                                        this_atom->resName.toAscii().data(),
+                                                        j + 1, k, this_atom->name.toLatin1().data(),
+                                                        this_atom->resName.toLatin1().data(),
                                                         this_atom->coordinate.axis[0], this_atom->coordinate.axis[1], this_atom->coordinate.axis[2]));
                return (US_SURFRACER_ERR_MISSING_RESIDUE);
             }
@@ -12208,7 +12208,7 @@ int US_Saxs_Util::create_beads_hydro(QString *error_string, bool quiet)
          {
             // clear tmp_used if new resSeq
 #if defined(DEBUG)
-            printf("respos %d != -1 last used %s %s\n", respos, this_atom->resSeq.toAscii().data(), last_resSeq.toAscii().data());
+            printf("respos %d != -1 last used %s %s\n", respos, this_atom->resSeq.toLatin1().data(), last_resSeq.toLatin1().data());
 #endif
             if (this_atom->resSeq != last_resSeq ||
                 this_atom->resName != last_resName ||
@@ -12217,7 +12217,7 @@ int US_Saxs_Util::create_beads_hydro(QString *error_string, bool quiet)
                 residue_list[respos].name == "N1")
             {
 #if defined(DEBUG)
-               printf("clear last used %s %s\n", this_atom->resSeq.toAscii().data(), last_resSeq.toAscii().data());
+               printf("clear last used %s %s\n", this_atom->resSeq.toLatin1().data(), last_resSeq.toLatin1().data());
 #endif
                for (unsigned int m = 0; m < residue_list[respos].r_atom.size(); m++)
                {
@@ -12245,7 +12245,7 @@ int US_Saxs_Util::create_beads_hydro(QString *error_string, bool quiet)
 #if defined(DEBUG)
                if(this_atom->name == "N" && !k && misc.pb_rule_on) {
                   printf("this_atom->name == N/N1 this residue_list[%d].r_atom[%d].name == %s\n",
-                         respos, m, residue_list[respos].r_atom[m].name.toAscii().data());
+                         respos, m, residue_list[respos].r_atom[m].name.toLatin1().data());
                }
 #endif
                if (!residue_list[respos].r_atom[m].tmp_used &&
@@ -12273,8 +12273,8 @@ int US_Saxs_Util::create_beads_hydro(QString *error_string, bool quiet)
             if (atompos == -1)
             {
                error_string->append(QString("").sprintf("unknown atom molecule %d atom %d name %s resname %s coord [%f,%f,%f]\n",
-                                                        j + 1, k, this_atom->name.toAscii().data(),
-                                                        this_atom->resName.toAscii().data(),
+                                                        j + 1, k, this_atom->name.toLatin1().data(),
+                                                        this_atom->resName.toLatin1().data(),
                                                         this_atom->coordinate.axis[0], this_atom->coordinate.axis[1], this_atom->coordinate.axis[2]));
             } 
             else 
@@ -12431,14 +12431,14 @@ int US_Saxs_Util::create_beads_hydro(QString *error_string, bool quiet)
                //      advanced_config.debug_2 )
                // {
                //    printf("found atom %s %s in residue %d pos %d bead asgn %d %d placing info %d mw %f bead_ref_mw %f hybrid name %s %s ba %d chain %d\n",
-               //           this_atom->name.toAscii().data(), this_atom->resName.toAscii().data(), respos, atompos,
+               //           this_atom->name.toLatin1().data(), this_atom->resName.toLatin1().data(), respos, atompos,
                //           this_atom->p_atom->bead_assignment,
                //           this_atom->bead_assignment,
                //           this_atom->p_residue->r_bead[this_atom->p_atom->bead_assignment].placing_method,
                //           this_atom->mw,
                //           this_atom->bead_ref_mw,
-               //           residue_list[respos].r_atom[atompos].hybrid.name.toAscii().data(),
-               //           this_atom->p_atom->hybrid.name.toAscii().data(),
+               //           residue_list[respos].r_atom[atompos].hybrid.name.toLatin1().data(),
+               //           this_atom->p_atom->hybrid.name.toLatin1().data(),
                //           this_atom->p_atom->bead_assignment,
                //           this_atom->chain
                //           );
@@ -12467,7 +12467,7 @@ int US_Saxs_Util::create_beads_hydro(QString *error_string, bool quiet)
 #if defined(DEBUG)
                printf
                   ("skipped bound waters & H %s %s rad %f resseq %s\n",
-                   this_atom->name.toAscii().data(), this_atom->resName.toAscii().data(), this_atom->radius, this_atom->resSeq.toAscii().data());
+                   this_atom->name.toLatin1().data(), this_atom->resName.toLatin1().data(), this_atom->radius, this_atom->resSeq.toLatin1().data());
                fflush(stdout);
 #endif
             }
@@ -12483,7 +12483,7 @@ int US_Saxs_Util::create_beads_hydro(QString *error_string, bool quiet)
             //      advanced_config.debug_2 )
             // {
             //    printf("p1 %s j k %d %d %lx %s %d chain %d\n", 
-            //           this_atom->name.toAscii().data(),
+            //           this_atom->name.toLatin1().data(),
             //           j, k,
             //           (long unsigned int)this_atom->p_atom,
             //           this_atom->active ? "active" : "not active",
@@ -12566,7 +12566,7 @@ int US_Saxs_Util::create_beads_hydro(QString *error_string, bool quiet)
    //             PDB_atom *this_atom = &model_vector[current_model].molecule[j].atom[k];
                
    //             printf("p1 %s j k %d %d %lx %s %d %d\n", 
-   //                    this_atom->name.toAscii().data(),
+   //                    this_atom->name.toLatin1().data(),
    //                    j, k,
    //                    (long unsigned int)this_atom->p_atom,
    //                    this_atom->active ? "active" : "not active",
@@ -12599,8 +12599,8 @@ int US_Saxs_Util::create_beads_hydro(QString *error_string, bool quiet)
    //                   last_res != this_atom->resSeq) {
    //                   if(bead_count) {
    //                      printf("res %s %s bead %d bead_mw %f sum atom mw %f diff %f\n",
-   //                             last_res.toAscii().data(),
-   //                             last_resName.toAscii().data(),
+   //                             last_res.toLatin1().data(),
+   //                             last_resName.toLatin1().data(),
    //                             last_asgn,
    //                             prev_bead_mw,
    //                             prev_atom_mw,
@@ -12625,8 +12625,8 @@ int US_Saxs_Util::create_beads_hydro(QString *error_string, bool quiet)
    //          }
    //       }
    //       printf("res %s %s bead %d bead_mw %f sum atom mw %f diff %f\n",
-   //              last_res.toAscii().data(),
-   //              last_resName.toAscii().data(),
+   //              last_res.toLatin1().data(),
+   //              last_resName.toLatin1().data(),
    //              last_asgn,
    //              prev_bead_mw,
    //              prev_atom_mw,

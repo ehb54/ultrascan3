@@ -91,7 +91,7 @@ US_Hydrodyn_Saxs_Hplc_Movie::US_Hydrodyn_Saxs_Hplc_Movie(
    //    cout << "doin it\n";
    //    QLabel lb( "hithere" , 0 );
    QPainter paint( this );
-   //    paint.drawPixmap( 10, 10, QPixmap::grabWidget( &lb ) );
+   //    paint.drawPixmap( 10, 10, &lb->grab() );
    paint.drawText( 0, 0, "HELLO THERE!" );
 }
 
@@ -386,11 +386,11 @@ void US_Hydrodyn_Saxs_Hplc_Movie::start()
    {
       timer->stop();
       pb_start->setText( "[]" );
-      lbl_state  -> setText( QString( us_tr( "%1: %2 of %3" ).arg( us_tr( timer->isActive( ) ? "Running" : "Stopped" ) ).arg( pos + 1 ).arg( hplc_selected_files.size() ) ) );
+      lbl_state  -> setText( QString( us_tr( "%1: %2 of %3" ).arg( us_tr( timer->isActive() ? "Running" : "Stopped" ) ).arg( pos + 1 ).arg( hplc_selected_files.size() ) ) );
    } else {
       timer->start( timer_msec );
       pb_start->setText( "||" );
-      lbl_state  -> setText( QString( us_tr( "%1: %2 of %3" ).arg( us_tr( timer->isActive( ) ? "Running" : "Stopped" ) ).arg( pos + 1 ).arg( hplc_selected_files.size() ) ) );
+      lbl_state  -> setText( QString( us_tr( "%1: %2 of %3" ).arg( us_tr( timer->isActive() ? "Running" : "Stopped" ) ).arg( pos + 1 ).arg( hplc_selected_files.size() ) ) );
       if ( cb_save->isChecked() )
       {
          save_plot();
@@ -452,7 +452,7 @@ void US_Hydrodyn_Saxs_Hplc_Movie::set_mono()
 {
    if ( cb_mono->isChecked() )
    {
-      hplc_win->plot_colors.clear();
+      hplc_win->plot_colors.clear( );
       hplc_win->plot_colors.push_back( plot_colors[ 0 ] );
    } else {
       hplc_win->plot_colors = plot_colors;
@@ -490,7 +490,7 @@ void US_Hydrodyn_Saxs_Hplc_Movie::update_plot()
       }
       if ( cb_show_gauss->isChecked() &&
            hplc_win->f_is_time.count( hplc_win->lb_files->item( hplc_selected_files[ pos ] )->text() ) &&
-           hplc_win->f_is_time[ hplc_win->lb_files->item( hplc_selected_files[ pos ] )->text( ) ] )
+           hplc_win->f_is_time[ hplc_win->lb_files->item( hplc_selected_files[ pos ] )->text() ] )
       {
          hplc_win->gauss_start();
       }
@@ -501,7 +501,7 @@ void US_Hydrodyn_Saxs_Hplc_Movie::update_plot()
       hplc_win->plot_dist  ->replot();
       hplc_win->plot_ref   ->replot();
       hplc_win->plot_errors->replot();
-      lbl_state  -> setText( QString( us_tr( "%1: %2 of %3" ).arg( us_tr( timer->isActive( ) ? "Running" : "Stopped" ) ).arg( pos + 1 ).arg( hplc_selected_files.size() ) ) );
+      lbl_state  -> setText( QString( us_tr( "%1: %2 of %3" ).arg( us_tr( timer->isActive() ? "Running" : "Stopped" ) ).arg( pos + 1 ).arg( hplc_selected_files.size() ) ) );
       lbl_current-> setText( hplc_win->lb_files->item( hplc_selected_files[ pos ] )->text() );
 
       if ( cb_save->isChecked() )
@@ -534,7 +534,7 @@ void US_Hydrodyn_Saxs_Hplc_Movie::save_plot()
 void US_Hydrodyn_Saxs_Hplc_Movie::save_plot( QWidget *plot, QString tag )
 {
    int mypos = pos;
-   QPixmap qPix = QPixmap::grabWidget( plot );
+   QPixmap qPix = plot->grab();
    if( qPix.isNull() )
    {
       // us_qdebug( "Failed to capture the plot for saving\n" );
@@ -560,9 +560,9 @@ void US_Hydrodyn_Saxs_Hplc_Movie::join_maps( QPixmap & m1, QPixmap & m2 )
 void US_Hydrodyn_Saxs_Hplc_Movie::save_plot( QWidget *plot, QWidget *plot2, QWidget *plot3, QString tag )
 {
    int mypos = pos;
-   QPixmap qPix  = QPixmap::grabWidget( plot );
-   QPixmap qPix2 = QPixmap::grabWidget( plot2 );
-   QPixmap qPix3 = QPixmap::grabWidget( plot3 );
+   QPixmap qPix  = plot->grab();
+   QPixmap qPix2 = plot2->grab();
+   QPixmap qPix3 = plot3->grab();
    if( qPix.isNull() || qPix2.isNull() || qPix3.isNull() )
    {
       // us_qdebug( "Failed to capture the plot for saving\n" );
@@ -576,8 +576,8 @@ void US_Hydrodyn_Saxs_Hplc_Movie::save_plot( QWidget *plot, QWidget *plot2, QWid
 void US_Hydrodyn_Saxs_Hplc_Movie::save_plot( QWidget *plot, QWidget *plot2, QString tag )
 {
    int mypos = pos;
-   QPixmap qPix  = QPixmap::grabWidget( plot );
-   QPixmap qPix2 = QPixmap::grabWidget( plot2 );
+   QPixmap qPix  = plot->grab();
+   QPixmap qPix2 = plot2->grab();
    if( qPix.isNull() || qPix2.isNull() )
    {
       // us_qdebug( "Failed to capture the plot for saving\n" );

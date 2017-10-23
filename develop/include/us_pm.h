@@ -46,7 +46,7 @@ typedef unsigned _int32 uint32_t;
 // typedef double us_pm_real;
 
 #ifdef WIN32
-# if !defined( QT4 )
+# if QT_VERSION < 0x040000
   #pragma warning ( disable: 4251 )
 # endif
 #endif
@@ -512,7 +512,7 @@ class US_PM
 
    QString             tmp_name          ( QString basename, vector < double > & params );
 
-   void                clear             ();
+   void                clear             ( );
 
    void                random_md0_params ( vector < double > & params, double max_d = 0e0 );
    bool                zero_md0_params   ( vector < double > & params, double max_d = 0e0 );
@@ -588,7 +588,7 @@ class US_PM
 };
 
 #ifdef WIN32
-# if !defined( QT4 )
+# if QT_VERSION < 0x040000
   #pragma warning ( default: 4251 )
 # endif
 #endif

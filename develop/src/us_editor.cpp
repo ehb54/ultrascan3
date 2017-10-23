@@ -18,12 +18,12 @@ US_Editor::US_Editor( int flag, QWidget * parent, const char *name ) : QFrame(  
    if ( flag == 0 )
    {
       m = new QMenuBar(  this );       m->setObjectName( "menu" );
- //      Q3PopupMenu *file = new Q3PopupMenu(  );
+ //      Q3PopupMenu *file = new Q3PopupMenu();
 
       m->insertItem( us_tr( "&File" ), file );
 # ifndef NO_EDITOR_PRINT
       file->insertItem( us_tr( "Print" ), this, SLOT( print() ), Qt::ALT + Qt::Key_P );
-      file->insertSeparator(  );
+      file->insertSeparator();
 # endif
       file->insertItem( us_tr( "Close" ), this, SLOT( closeDoc() ),
                         Qt::ALT + Qt::Key_W );
@@ -31,7 +31,7 @@ US_Editor::US_Editor( int flag, QWidget * parent, const char *name ) : QFrame(  
    else
    {
       m = new QMenuBar(  this );       m->setObjectName( "menu" );
- //      Q3PopupMenu *file = new Q3PopupMenu(  );
+ //      Q3PopupMenu *file = new Q3PopupMenu();
 
       m->insertItem( us_tr( "&File" ), file );
       file->insertItem( us_tr( "New" ), this, SLOT( newDoc() ), Qt::ALT + Qt::Key_N );
@@ -41,11 +41,11 @@ US_Editor::US_Editor( int flag, QWidget * parent, const char *name ) : QFrame(  
       file->insertItem( us_tr( "Save" ), this, SLOT( save() ), Qt::ALT + Qt::Key_S );
       file->insertItem( us_tr( "Save As" ), this, SLOT( saveAs() ),
                         Qt::ALT + Qt::Key_A );
-      file->insertSeparator(  );
+      file->insertSeparator();
 # ifndef NO_EDITOR_PRINT
       file->insertItem( us_tr( "Print" ), this, SLOT( print() ), Qt::ALT + Qt::Key_P );
 # endif
-      file->insertSeparator(  );
+      file->insertSeparator();
       file->insertItem( us_tr( "Close" ), this, SLOT( closeDoc() ),
                         Qt::ALT + Qt::Key_W );
       file->insertItem( us_tr( "Quit" ), qApp, SLOT( quit() ), Qt::ALT + Qt::Key_Q );
@@ -122,7 +122,7 @@ US_Editor::US_Editor( int flag, QWidget * parent, const char *name ) : QFrame(  
    
    e = new QTextEdit(  this );    e->setObjectName( "editor" );
    // e->setMaxLineLength(1000);
-   e->setFocus(  );
+   e->setFocus();
    ft.setFamily( "Courier" );
    ft.setPointSize( 11 );
    ft.setBold( true );
@@ -131,31 +131,31 @@ US_Editor::US_Editor( int flag, QWidget * parent, const char *name ) : QFrame(  
    e->setWordWrapMode( QTextOption::WordWrap );
    if ( flag == 0 )
    {
-      e->setReadOnly( TRUE );
+      e->setReadOnly( true );
    }
    else
    {
-      e->setReadOnly( FALSE );
+      e->setReadOnly( false );
    }
    fileName = "";
 }
 
-US_Editor::~US_Editor(  )
+US_Editor::~US_Editor()
 {
 }
 
-void US_Editor::newDoc(  )
+void US_Editor::newDoc()
 {
-   e->clear(  );
+   e->clear( );
    setWindowTitle( "Unnamed Document" );
 }
 
-void US_Editor::load(  )
+void US_Editor::load()
 {
-   QString fn = QFileDialog::getOpenFileName(  );
+   QString fn = QFileDialog::getOpenFileName();
 
    fileName = fn;
-   if ( !fn.isEmpty(  ) )
+   if ( !fn.isEmpty() )
       load( fn );
 }
 
@@ -163,16 +163,16 @@ void US_Editor::load( const QString & fName )
 {
    QFile f( fName );
 
-   e->clear(  );
+   e->clear( );
    if ( f.open( QIODevice::ReadOnly ) )
    {
       QString s;
       QTextStream ts( &f );
 
-      s = ts.read(  );
+      s = ts.read();
       e->append( s );
-      f.close(  );
-      e->repaint(  );
+      f.close();
+      e->repaint();
 #if QT_VERSION < 0x040000
       e->setCursorPosition( 0, 0 );
 #endif
@@ -184,14 +184,14 @@ void US_Editor::load( const QString & fName )
    setWindowTitle( fName );
 }
 
-void US_Editor::saveAs(  )
+void US_Editor::saveAs()
 {
    QString fn;
 
    fn = QFileDialog::getSaveFileName( this , windowTitle() , QString::null , QString::null );
-   if ( !fn.isEmpty(  ) )
+   if ( !fn.isEmpty() )
    {
-      QString text = e->toPlainText( );
+      QString text = e->toPlainText();
       QFile f( fn );
 
       if ( !f.open( QIODevice::WriteOnly | QIODevice::Text ) )
@@ -201,24 +201,24 @@ void US_Editor::saveAs(  )
       QTextStream t( &f );
 
       t << text;
-      f.close(  );
+      f.close();
  //      e->setModified( false );
       setWindowTitle( fn );
       fileName = fn;
    }
 }
 
-void US_Editor::save(  )
+void US_Editor::save()
 {
    QString fn;
 
-   if ( fileName.isEmpty(  ) )
+   if ( fileName.isEmpty() )
    {
-      saveAs(  );
+      saveAs();
    }
    else
    {
-      QString text = e->toPlainText( );
+      QString text = e->toPlainText();
       QFile f( fileName );
 
       if ( !f.open( QIODevice::WriteOnly | QIODevice::Text ) )
@@ -228,13 +228,13 @@ void US_Editor::save(  )
       QTextStream t( &f );
 
       t << text;
-      f.close(  );
+      f.close();
  //      e->setModified( false );
       setWindowTitle( fileName );
    }
 }
 
-void US_Editor::update_font(  )
+void US_Editor::update_font()
 {
    bool ok;
    QFont newFont;
@@ -248,7 +248,7 @@ void US_Editor::update_font(  )
 }
 
 
-void US_Editor::print(  )
+void US_Editor::print()
 {
 #ifndef NO_EDITOR_PRINT
    const int MARGIN = 10;
@@ -260,38 +260,38 @@ void US_Editor::print(  )
       QPainter p;
 
       p.begin( &printer );      // paint on printer
-      p.setFont( e->font(  ) );
+      p.setFont( e->font() );
       int yPos = 0;             // y position for each line
-      QFontMetrics fm = p.fontMetrics(  );
+      QFontMetrics fm = p.fontMetrics();
       //  QPaintDeviceMetrics metrics( &printer );  // need width/height
 
       // of printer surface
-      for ( int i = 0; i < e->lines(  ); i++ )
+      for ( int i = 0; i < e->lines(); i++ )
       {
-         if ( MARGIN + yPos > printer.height(  ) - MARGIN )
+         if ( MARGIN + yPos > printer.height() - MARGIN )
          {
-            printer.newPage(  ); // no more room on this page
+            printer.newPage(); // no more room on this page
             yPos = 0;           // back to top of page
          }
          p.drawText( MARGIN, MARGIN + yPos,
-                     metrics.width(  ), fm.lineSpacing(  ),
+                     metrics.width(), fm.lineSpacing(),
                      ExpandTabs | DontClip, e->toPlainText( i ) );
-         yPos = yPos + fm.lineSpacing(  );
+         yPos = yPos + fm.lineSpacing();
       }
-      p.end(  );                // send job to printer
+      p.end();                // send job to printer
    }
 #endif
 }
 
-void US_Editor::closeDoc(  )
+void US_Editor::closeDoc()
 {
-   close(  );                   // will call closeEvent()
+   close();                   // will call closeEvent()
 }
 
 void US_Editor::resizeEvent( QResizeEvent * )
 {
    if ( e && m )
-      e->setGeometry( 0, m->height(  ), width(  ), height(  ) - m->height(  ) );
+      e->setGeometry( 0, m->height(), width(), height() - m->height() );
 }
 
 void US_Editor::append( const QString & str )
@@ -313,9 +313,9 @@ TextEdit::TextEdit( QWidget *parent ):Q3MainWindow( parent,
                                                                       name )
 {
    tableID = 0;
-   setupFileActions(  );
-   setupEditActions(  );
-   setupTextActions(  );
+   setupFileActions();
+   setupEditActions();
+   setupTextActions();
 
    tabWidget = new QTabWidget( this );
    connect( tabWidget, SIGNAL( currentChanged( QWidget * ) ),
@@ -326,9 +326,9 @@ TextEdit::TextEdit( int id, QWidget * parent,
                     const char *name ):Q3MainWindow( parent, name )
 {
    tableID = id;
-   setupFileActions(  );
-   setupEditActions(  );
-   setupTextActions(  );
+   setupFileActions();
+   setupEditActions();
+   setupTextActions();
 
    tabWidget = new QTabWidget( this );
    connect( tabWidget, SIGNAL( currentChanged( QWidget * ) ),
@@ -336,7 +336,7 @@ TextEdit::TextEdit( int id, QWidget * parent,
    setCentralWidget( tabWidget );
 }
 
-void TextEdit::setupFileActions(  )
+void TextEdit::setupFileActions()
 {
 #if QT_VERSION < 0x040000
    Q3ToolBar *tb = new Q3ToolBar( this );
@@ -350,45 +350,45 @@ void TextEdit::setupFileActions(  )
 
    a = new QAction( qPixmapFromMimeSource( "filenew.xpm" ), us_tr( "&New..." ),
                     Qt::CTRL + Qt::Key_N, this, "fileNew" );
-   connect( a, SIGNAL( activated(  ) ), this, SLOT( fileNew(  ) ) );
+   connect( a, SIGNAL( activated() ), this, SLOT( fileNew() ) );
    a->addTo( tb );
    a->addTo( menu );
    a = new QAction( qPixmapFromMimeSource( "fileopen.xpm" ), us_tr( "&Open..." ),
                     Qt::CTRL + Qt::Key_O, this, "fileOpen" );
-   connect( a, SIGNAL( activated(  ) ), this, SLOT( fileOpen(  ) ) );
+   connect( a, SIGNAL( activated() ), this, SLOT( fileOpen() ) );
    a->addTo( tb );
    a->addTo( menu );
-   menu->insertSeparator(  );
+   menu->insertSeparator();
    a = new QAction( qPixmapFromMimeSource( "filesave.xpm" ), us_tr( "&Save..." ),
                     Qt::CTRL + Qt::Key_S, this, "fileSave" );
-   connect( a, SIGNAL( activated(  ) ), this, SLOT( fileSave(  ) ) );
+   connect( a, SIGNAL( activated() ), this, SLOT( fileSave() ) );
    a->addTo( tb );
    a->addTo( menu );
    a = new QAction( us_tr( "Save &As..." ), 0, this, "fileSaveAs" );
-   connect( a, SIGNAL( activated(  ) ), this, SLOT( fileSaveAs(  ) ) );
+   connect( a, SIGNAL( activated() ), this, SLOT( fileSaveAs() ) );
    a->addTo( menu );
    if ( tableID )
    {
       a = new QAction( us_tr( "Save &DB..." ), 0, this, "fileSaveDB" );
-      connect( a, SIGNAL( activated(  ) ), this, SLOT( fileSaveDB(  ) ) );
+      connect( a, SIGNAL( activated() ), this, SLOT( fileSaveDB() ) );
       a->addTo( menu );
    }
-   menu->insertSeparator(  );
+   menu->insertSeparator();
    a = new QAction( qPixmapFromMimeSource( "fileprint.xpm" ),
                     us_tr( "&Print..." ), Qt::CTRL + Qt::Key_P, this, "filePrint" );
-   connect( a, SIGNAL( activated(  ) ), this, SLOT( filePrint(  ) ) );
+   connect( a, SIGNAL( activated() ), this, SLOT( filePrint() ) );
    a->addTo( tb );
    a->addTo( menu );
    a = new QAction( us_tr( "&Close" ), 0, this, "fileClose" );
-   connect( a, SIGNAL( activated(  ) ), this, SLOT( fileClose(  ) ) );
+   connect( a, SIGNAL( activated() ), this, SLOT( fileClose() ) );
    a->addTo( menu );
    a = new QAction( us_tr( "E&xit" ), 0, this, "fileExit" );
-   connect( a, SIGNAL( activated(  ) ), this, SLOT( fileExit(  ) ) );
+   connect( a, SIGNAL( activated() ), this, SLOT( fileExit() ) );
    a->addTo( menu );
 #endif
 }
 
-void TextEdit::setupEditActions(  )
+void TextEdit::setupEditActions()
 {
 #if QT_VERSION < 0x040000
    Q3ToolBar *tb = new Q3ToolBar( this );
@@ -402,34 +402,34 @@ void TextEdit::setupEditActions(  )
 
    a = new QAction( qPixmapFromMimeSource( "editundo.xpm" ), us_tr( "&Undo" ),
                     Qt::CTRL + Qt::Key_Z, this, "editUndo" );
-   connect( a, SIGNAL( activated(  ) ), this, SLOT( editUndo(  ) ) );
+   connect( a, SIGNAL( activated() ), this, SLOT( editUndo() ) );
    a->addTo( tb );
    a->addTo( menu );
    a = new QAction( qPixmapFromMimeSource( "editredo.xpm" ), us_tr( "&Redo" ),
                     Qt::CTRL + Qt::Key_Y, this, "editRedo" );
-   connect( a, SIGNAL( activated(  ) ), this, SLOT( editRedo(  ) ) );
+   connect( a, SIGNAL( activated() ), this, SLOT( editRedo() ) );
    a->addTo( tb );
    a->addTo( menu );
-   menu->insertSeparator(  );
+   menu->insertSeparator();
    a = new QAction( qPixmapFromMimeSource( "editcopy.xpm" ), us_tr( "&Copy" ),
                     Qt::CTRL + Qt::Key_C, this, "editCopy" );
-   connect( a, SIGNAL( activated(  ) ), this, SLOT( editCopy(  ) ) );
+   connect( a, SIGNAL( activated() ), this, SLOT( editCopy() ) );
    a->addTo( tb );
    a->addTo( menu );
    a = new QAction( qPixmapFromMimeSource( "editcut.xpm" ), us_tr( "Cu&t" ),
                     Qt::CTRL + Qt::Key_X, this, "editCut" );
-   connect( a, SIGNAL( activated(  ) ), this, SLOT( editCut(  ) ) );
+   connect( a, SIGNAL( activated() ), this, SLOT( editCut() ) );
    a->addTo( tb );
    a->addTo( menu );
    a = new QAction( qPixmapFromMimeSource( "editpaste.xpm" ), us_tr( "&Paste" ),
                     Qt::CTRL + Qt::Key_V, this, "editPaste" );
-   connect( a, SIGNAL( activated(  ) ), this, SLOT( editPaste(  ) ) );
+   connect( a, SIGNAL( activated() ), this, SLOT( editPaste() ) );
    a->addTo( tb );
    a->addTo( menu );
 #endif
 }
 
-void TextEdit::setupTextActions(  )
+void TextEdit::setupTextActions()
 {
 #if QT_VERSION < 0x040000
    Q3ToolBar *tb = new Q3ToolBar( this );
@@ -439,7 +439,7 @@ void TextEdit::setupTextActions(  )
 
    menuBar()->insertItem( us_tr( "F&ormat" ), menu );
 
-   comboFont = new QComboBox( TRUE, tb );
+   comboFont = new QComboBox( true, tb );
    QFontDatabase db;
 
    comboFont->insertStringList( db.families() );
@@ -447,17 +447,17 @@ void TextEdit::setupTextActions(  )
             this, SLOT( textFamily( const QString & ) ) );
    comboFont->lineEdit()->setText( QApplication::font().family() );
 
-   comboSize = new QComboBox( TRUE, tb );
+   comboSize = new QComboBox( true, tb );
 
    {
 #if QT_VERSION < 0x040000      
- //      Q3ValueList < int >sizes = db.standardSizes(  );
- //      Q3ValueList < int >::Iterator it = sizes.begin(  );
+ //      Q3ValueList < int >sizes = db.standardSizes();
+ //      Q3ValueList < int >::Iterator it = sizes.begin();
 
-      for ( ; it != sizes.end(  ); ++it )
+      for ( ; it != sizes.end(); ++it )
          comboSize->insertItem( QString::number( *it ) );
 #else
-      QList < int >sizes = db.standardSizes(  );
+      QList < int >sizes = db.standardSizes();
       for ( int i = 0; i < sizes.size(); ++i ) {
          comboSize->insertItem( QString::number( sizes[ i ] ) );
       }
@@ -466,34 +466,34 @@ void TextEdit::setupTextActions(  )
 
    connect( comboSize, SIGNAL( activated( const QString & ) ),
             this, SLOT( textSize( const QString & ) ) );
-   comboSize->lineEdit(  )->
+   comboSize->lineEdit()->
       setText( QString::number( QApplication::font().pointSize() ) );
 
    actionTextBold =
       new QAction( qPixmapFromMimeSource( "textbold.xpm" ), us_tr( "&Bold" ),
                    Qt::CTRL + Qt::Key_B, this, "textBold" );
-   connect( actionTextBold, SIGNAL( activated(  ) ), this,
-            SLOT( textBold(  ) ) );
+   connect( actionTextBold, SIGNAL( activated() ), this,
+            SLOT( textBold() ) );
    actionTextBold->addTo( tb );
    actionTextBold->addTo( menu );
-   actionTextBold->setToggleAction( TRUE );
+   actionTextBold->setToggleAction( true );
    actionTextItalic =
       new QAction( qPixmapFromMimeSource( "textitalic.xpm" ), us_tr( "&Italic" ),
                    Qt::CTRL + Qt::Key_I, this, "textItalic" );
-   connect( actionTextItalic, SIGNAL( activated(  ) ), this,
-            SLOT( textItalic(  ) ) );
+   connect( actionTextItalic, SIGNAL( activated() ), this,
+            SLOT( textItalic() ) );
    actionTextItalic->addTo( tb );
    actionTextItalic->addTo( menu );
-   actionTextItalic->setToggleAction( TRUE );
+   actionTextItalic->setToggleAction( true );
    actionTextUnderline =
       new QAction( qPixmapFromMimeSource( "textunder.xpm" ),
                    us_tr( "&Underline" ), Qt::CTRL + Qt::Key_U, this, "textUnderline" );
-   connect( actionTextUnderline, SIGNAL( activated(  ) ), this,
-            SLOT( textUnderline(  ) ) );
+   connect( actionTextUnderline, SIGNAL( activated() ), this,
+            SLOT( textUnderline() ) );
    actionTextUnderline->addTo( tb );
    actionTextUnderline->addTo( menu );
-   actionTextUnderline->setToggleAction( TRUE );
-   menu->insertSeparator(  );
+   actionTextUnderline->setToggleAction( true );
+   menu->insertSeparator();
 
  //   Q3ActionGroup *grp = new Q3ActionGroup( this );
 
@@ -503,32 +503,32 @@ void TextEdit::setupTextActions(  )
    actionAlignLeft =
       new QAction( qPixmapFromMimeSource( "textleft.xpm" ), us_tr( "&Left" ),
                    Qt::CTRL + Qt::Key_L, grp, "textLeft" );
-   actionAlignLeft->setToggleAction( TRUE );
+   actionAlignLeft->setToggleAction( true );
    actionAlignCenter =
       new QAction( qPixmapFromMimeSource( "textcenter.xpm" ), us_tr( "C&enter" ),
                    Qt::CTRL + Qt::Key_E, grp, "textCenter" );
-   actionAlignCenter->setToggleAction( TRUE );
+   actionAlignCenter->setToggleAction( true );
    actionAlignRight =
       new QAction( qPixmapFromMimeSource( "textright.xpm" ), us_tr( "&Right" ),
                    Qt::CTRL + Qt::Key_R, grp, "textRight" );
-   actionAlignRight->setToggleAction( TRUE );
+   actionAlignRight->setToggleAction( true );
    actionAlignJustify =
       new QAction( qPixmapFromMimeSource( "textjustify.xpm" ),
                    us_tr( "&Justify" ), Qt::CTRL + Qt::Key_J, grp, "textjustify" );
-   actionAlignJustify->setToggleAction( TRUE );
+   actionAlignJustify->setToggleAction( true );
 
    grp->addTo( tb );
    grp->addTo( menu );
 
-   menu->insertSeparator(  );
+   menu->insertSeparator();
 
    QPixmap pix( 16, 16 );
 
    pix.fill( Qt::black );
    actionTextColor =
       new QAction( pix, us_tr( "&Color..." ), 0, this, "textColor" );
-   connect( actionTextColor, SIGNAL( activated(  ) ), this,
-            SLOT( textColor(  ) ) );
+   connect( actionTextColor, SIGNAL( activated() ), this,
+            SLOT( textColor() ) );
    actionTextColor->addTo( tb );
    actionTextColor->addTo( menu );
 #endif
@@ -549,13 +549,13 @@ void TextEdit::load( const QString & f, QString title, bool ourfmt, Qt::TextForm
    // edit->setTextFormat( RichText );
    edit->setWordWrapMode( QTextOption::WordWrap );
    doConnections( edit );
-   tabWidget->addTab( edit, QFileInfo( f ).fileName(  ) );
+   tabWidget->addTab( edit, QFileInfo( f ).fileName() );
    QFile file( f );
 
    if ( !file.open( QIODevice::ReadOnly ) )
       return;
    QTextStream ts( &file );
-   QString txt = ts.read(  );
+   QString txt = ts.read();
 
 #if QT_VERSION < 0x040000
    if ( ourfmt ) 
@@ -574,7 +574,7 @@ void TextEdit::load( const QString & f, QString title, bool ourfmt, Qt::TextForm
 #endif
    edit->setText( txt );
    tabWidget->showPage( edit );
-   edit->viewport(  )->setFocus(  );
+   edit->viewport()->setFocus();
    filenames.replace( edit, f );
 }
 
@@ -592,16 +592,16 @@ void TextEdit::load_text( QString text, QString title )
    doConnections( edit );
    edit->setText( text );
    tabWidget->showPage( edit );
-   edit->viewport(  )->setFocus(  );
+   edit->viewport()->setFocus();
    filenames.replace( edit, text );
 }
 
-QTextEdit *TextEdit::currentEditor(  ) const
+QTextEdit *TextEdit::currentEditor() const
 {
-   if ( tabWidget->currentPage(  ) &&
-        tabWidget->currentPage(  )->inherits( "QTextEdit" ) )
+   if ( tabWidget->currentPage() &&
+        tabWidget->currentPage()->inherits( "QTextEdit" ) )
    {
-      return ( QTextEdit * ) tabWidget->currentPage(  );
+      return ( QTextEdit * ) tabWidget->currentPage();
    }
    return 0;
 }
@@ -616,7 +616,7 @@ void TextEdit::doConnections( QTextEdit * e )
             this, SLOT( alignmentChanged( int ) ) );
 }
 
-void TextEdit::fileNew(  )
+void TextEdit::fileNew()
 {
    QTextEdit *edit = new QTextEdit( tabWidget );
 
@@ -625,66 +625,66 @@ void TextEdit::fileNew(  )
    doConnections( edit );
    tabWidget->addTab( edit, us_tr( "noname" ) );
    tabWidget->showPage( edit );
-   edit->viewport(  )->setFocus(  );
+   edit->viewport()->setFocus();
 }
 
-void TextEdit::fileOpen(  )
+void TextEdit::fileOpen()
 {
    QString fn =
       QFileDialog::getOpenFileName( this , windowTitle() , QString::null , us_tr( "All Files (*)" ) );
 
-   if ( !fn.isEmpty(  ) )
+   if ( !fn.isEmpty() )
       load( fn );
 }
 
-void TextEdit::fileSave(  )
+void TextEdit::fileSave()
 {
-   if ( !currentEditor(  ) )
+   if ( !currentEditor() )
       return;
    QString fn;
 
-   if ( filenames.find( currentEditor(  ) ) == filenames.end(  ) )
+   if ( filenames.find( currentEditor() ) == filenames.end() )
    {
-      fileSaveAs(  );
+      fileSaveAs();
    }
    else
    {
-      QFile file( *filenames.find( currentEditor(  ) ) );
+      QFile file( *filenames.find( currentEditor() ) );
 
       if ( !file.open( QIODevice::WriteOnly | QIODevice::Text ) )
          return;
       QTextStream ts( &file );
 
-      ts << currentEditor( )->text( );
+      ts << currentEditor()->text();
    }
 }
 
-void TextEdit::fileSaveAs(  )
+void TextEdit::fileSaveAs()
 {
-   if ( !currentEditor(  ) )
+   if ( !currentEditor() )
       return;
    QString fn =
       QFileDialog::getSaveFileName( this , windowTitle() , QString::null , us_tr( "All Files (*)" ) );
 
-   if ( !fn.isEmpty(  ) )
+   if ( !fn.isEmpty() )
    {
-      filenames.replace( currentEditor(  ), fn );
-      fileSave(  );
-      tabWidget->setTabLabel( currentEditor(  ), QFileInfo( fn ).fileName(  ) );
+      filenames.replace( currentEditor(), fn );
+      fileSave();
+      tabWidget->setTabLabel( currentEditor(), QFileInfo( fn ).fileName() );
    }
 }
 
-void TextEdit::fileSaveDB(  )
+void TextEdit::fileSaveDB()
 {
 #ifndef NO_DB
    QString str, notes;
 
-   if ( !currentEditor(  ) )
+   if ( !currentEditor() )
       return;
-   notes = currentEditor( )->text( );
+   notes = currentEditor()->text();
    notes = notes.replace( "\'", "\\\'" );
-   currentDB = new US_DB(  );
-   currentDB->db_connect(  );
+   currentDB = new US_DB();
+   currentDB->db_connect();
 //    QSqlQuery query;
 
    str =
@@ -710,188 +710,188 @@ void TextEdit::fileSaveDB(  )
 }
 
 
-void TextEdit::filePrint(  )
+void TextEdit::filePrint()
 {
-   if ( !currentEditor(  ) )
+   if ( !currentEditor() )
       return;
 #if QT_VERSION < 0x040000
 # ifndef QT_NO_PRINTER
    QPrinter printer( QPrinter::HighResolution );
 
-   printer.setFullPage( TRUE );
+   printer.setFullPage( true );
    if ( printer.setup( this ) )
    {
       QPainter p( &printer );
 
       // Check that there is a valid device to print to.
-      if ( !p.device(  ) )
+      if ( !p.device() )
          return;
-      //  QPaintDeviceMetrics metrics( p.device(  ) );
-      int dpiy = metrics.logicalDpiY(  );
+      //  QPaintDeviceMetrics metrics( p.device() );
+      int dpiy = metrics.logicalDpiY();
       int margin = ( int ) ( ( 2 / 2.54 ) * dpiy );   // 2 cm margins
-      QRect body( margin, margin, metrics.width(  ) - 2 * margin,
-                  printer.height(  ) - 2 * margin );
-      QFont font( currentEditor(  )->QWidget::font(  ) );
+      QRect body( margin, margin, metrics.width() - 2 * margin,
+                  printer.height() - 2 * margin );
+      QFont font( currentEditor()->QWidget::font() );
 
       font.setPointSize( 10 );  // we define 10pt to be a nice base size for
                                 // printing
 
       Q3SimpleRichText richText( currentEditor()->text(), font,
                                 currentEditor()->context(),
-                                currentEditor(  )->styleSheet(  ),
-                                currentEditor(  )->mimeSourceFactory(  ),
-                                body.height(  ) );
-      richText.setWidth( &p, body.width(  ) );
+                                currentEditor()->styleSheet(),
+                                currentEditor()->mimeSourceFactory(),
+                                body.height() );
+      richText.setWidth( &p, body.width() );
       QRect view( body );
       int page = 1;
 
       do
       {
-         richText.draw( &p, body.left(  ), body.top(  ), view, colorGroup(  ) );
-         view.moveBy( 0, body.height(  ) );
-         p.translate( 0, -body.height(  ) );
+         richText.draw( &p, body.left(), body.top(), view, colorGroup() );
+         view.moveBy( 0, body.height() );
+         p.translate( 0, -body.height() );
          p.setFont( font );
-         p.drawText( view.right(  ) -
-                     p.fontMetrics(  ).width( QString::number( page ) ),
-                     view.bottom(  ) + p.fontMetrics(  ).ascent(  ) + 5,
+         p.drawText( view.right() -
+                     p.fontMetrics().width( QString::number( page ) ),
+                     view.bottom() + p.fontMetrics().ascent() + 5,
                      QString::number( page ) );
-         if ( view.top(  ) >= richText.height(  ) )
+         if ( view.top() >= richText.height() )
             break;
-         printer.newPage(  );
+         printer.newPage();
          page++;
       }
-      while ( TRUE );
+      while ( true );
    }
 # endif
 #endif
 }
 
-void TextEdit::fileClose(  )
+void TextEdit::fileClose()
 {
-   delete currentEditor(  );
+   delete currentEditor();
 
-   if ( currentEditor(  ) )
-      currentEditor(  )->viewport(  )->setFocus(  );
+   if ( currentEditor() )
+      currentEditor()->viewport()->setFocus();
 }
 
-void TextEdit::fileExit(  )
+void TextEdit::fileExit()
 {
-   qApp->quit(  );
+   qApp->quit();
 }
 
-void TextEdit::editUndo(  )
+void TextEdit::editUndo()
 {
-   if ( !currentEditor(  ) )
+   if ( !currentEditor() )
       return;
-   currentEditor(  )->undo(  );
+   currentEditor()->undo();
 }
 
-void TextEdit::editRedo(  )
+void TextEdit::editRedo()
 {
-   if ( !currentEditor(  ) )
+   if ( !currentEditor() )
       return;
-   currentEditor(  )->redo(  );
+   currentEditor()->redo();
 }
 
-void TextEdit::editCut(  )
+void TextEdit::editCut()
 {
-   if ( !currentEditor(  ) )
+   if ( !currentEditor() )
       return;
-   currentEditor(  )->cut(  );
+   currentEditor()->cut();
 }
 
-void TextEdit::editCopy(  )
+void TextEdit::editCopy()
 {
-   if ( !currentEditor(  ) )
+   if ( !currentEditor() )
       return;
-   currentEditor(  )->copy(  );
+   currentEditor()->copy();
 }
 
-void TextEdit::editPaste(  )
+void TextEdit::editPaste()
 {
-   if ( !currentEditor(  ) )
+   if ( !currentEditor() )
       return;
-   currentEditor(  )->paste(  );
+   currentEditor()->paste();
 }
 
-void TextEdit::textBold(  )
+void TextEdit::textBold()
 {
-   if ( !currentEditor(  ) )
+   if ( !currentEditor() )
       return;
-   currentEditor(  )->setBold( actionTextBold->isOn(  ) );
+   currentEditor()->setBold( actionTextBold->isOn() );
 }
 
-void TextEdit::textUnderline(  )
+void TextEdit::textUnderline()
 {
-   if ( !currentEditor(  ) )
+   if ( !currentEditor() )
       return;
-   currentEditor(  )->setUnderline( actionTextUnderline->isOn(  ) );
+   currentEditor()->setUnderline( actionTextUnderline->isOn() );
 }
 
-void TextEdit::textItalic(  )
+void TextEdit::textItalic()
 {
-   if ( !currentEditor(  ) )
+   if ( !currentEditor() )
       return;
-   currentEditor(  )->setItalic( actionTextItalic->isOn(  ) );
+   currentEditor()->setItalic( actionTextItalic->isOn() );
 }
 
 void TextEdit::textFamily( const QString & f )
 {
-   if ( !currentEditor(  ) )
+   if ( !currentEditor() )
       return;
-   currentEditor(  )->setFamily( f );
-   currentEditor(  )->viewport(  )->setFocus(  );
+   currentEditor()->setFamily( f );
+   currentEditor()->viewport()->setFocus();
 }
 
 void TextEdit::textSize( const QString & p )
 {
-   if ( !currentEditor(  ) )
+   if ( !currentEditor() )
       return;
-   currentEditor(  )->setPointSize( p.toInt(  ) );
-   currentEditor(  )->viewport(  )->setFocus(  );
+   currentEditor()->setPointSize( p.toInt() );
+   currentEditor()->viewport()->setFocus();
 }
 
 void TextEdit::textStyle( int i )
 {
 #if QT_VERSION < 0x040000
-   if ( !currentEditor(  ) )
+   if ( !currentEditor() )
       return;
    if ( i == 0 )
-      currentEditor(  )->setParagType( Q3StyleSheetItem::DisplayBlock,
+      currentEditor()->setParagType( Q3StyleSheetItem::DisplayBlock,
                                        Q3StyleSheetItem::ListDisc );
    else if ( i == 1 )
-      currentEditor(  )->setParagType( Q3StyleSheetItem::DisplayListItem,
+      currentEditor()->setParagType( Q3StyleSheetItem::DisplayListItem,
                                        Q3StyleSheetItem::ListDisc );
    else if ( i == 2 )
-      currentEditor(  )->setParagType( Q3StyleSheetItem::DisplayListItem,
+      currentEditor()->setParagType( Q3StyleSheetItem::DisplayListItem,
                                        Q3StyleSheetItem::ListCircle );
    else if ( i == 3 )
-      currentEditor(  )->setParagType( Q3StyleSheetItem::DisplayListItem,
+      currentEditor()->setParagType( Q3StyleSheetItem::DisplayListItem,
                                        Q3StyleSheetItem::ListSquare );
    else if ( i == 4 )
-      currentEditor(  )->setParagType( Q3StyleSheetItem::DisplayListItem,
+      currentEditor()->setParagType( Q3StyleSheetItem::DisplayListItem,
                                        Q3StyleSheetItem::ListDecimal );
    else if ( i == 5 )
-      currentEditor(  )->setParagType( Q3StyleSheetItem::DisplayListItem,
+      currentEditor()->setParagType( Q3StyleSheetItem::DisplayListItem,
                                        Q3StyleSheetItem::ListLowerAlpha );
    else if ( i == 6 )
-      currentEditor(  )->setParagType( Q3StyleSheetItem::DisplayListItem,
+      currentEditor()->setParagType( Q3StyleSheetItem::DisplayListItem,
                                        Q3StyleSheetItem::ListUpperAlpha );
-   currentEditor(  )->viewport(  )->setFocus(  );
+   currentEditor()->viewport()->setFocus();
 #else
    return;
 #endif
 }
 
-void TextEdit::textColor(  )
+void TextEdit::textColor()
 {
-   if ( !currentEditor(  ) )
+   if ( !currentEditor() )
       return;
-   QColor col = QColorDialog::getColor( currentEditor(  )->color(  ), this );
+   QColor col = QColorDialog::getColor( currentEditor()->color(), this );
 
-   if ( !col.isValid(  ) )
+   if ( !col.isValid() )
       return;
-   currentEditor(  )->setColor( col );
+   currentEditor()->setColor( col );
    QPixmap pix( 16, 16 );
 
    pix.fill( Qt::black );
@@ -900,25 +900,25 @@ void TextEdit::textColor(  )
 
 void TextEdit::textAlign( QAction * a )
 {
-   if ( !currentEditor(  ) )
+   if ( !currentEditor() )
       return;
    if ( a == actionAlignLeft )
-      currentEditor(  )->setAlignment( Qt::AlignLeft );
+      currentEditor()->setAlignment( Qt::AlignLeft );
    else if ( a == actionAlignCenter )
-      currentEditor(  )->setAlignment( Qt::AlignHCenter );
+      currentEditor()->setAlignment( Qt::AlignHCenter );
    else if ( a == actionAlignRight )
-      currentEditor(  )->setAlignment( Qt::AlignRight );
+      currentEditor()->setAlignment( Qt::AlignRight );
    else if ( a == actionAlignJustify )
-      currentEditor(  )->setAlignment( Qt::AlignJustify );
+      currentEditor()->setAlignment( Qt::AlignJustify );
 }
 
 void TextEdit::fontChanged( const QFont & f )
 {
    comboFont->lineEdit()->setText( f.family() );
    comboSize->lineEdit()->setText( QString::number( f.pointSize() ) );
-   actionTextBold->setOn( f.bold(  ) );
-   actionTextItalic->setOn( f.italic(  ) );
-   actionTextUnderline->setOn( f.underline(  ) );
+   actionTextBold->setOn( f.bold() );
+   actionTextItalic->setOn( f.italic() );
+   actionTextUnderline->setOn( f.underline() );
 }
 
 void TextEdit::colorChanged( const QColor & c )
@@ -932,22 +932,22 @@ void TextEdit::colorChanged( const QColor & c )
 void TextEdit::alignmentChanged( int a )
 {
    if ( ( a == Qt::AlignLeft ) || ( a & Qt::AlignLeft ) )
-      actionAlignLeft->setOn( TRUE );
+      actionAlignLeft->setOn( true );
    else if ( ( a & Qt::AlignHCenter ) )
-      actionAlignCenter->setOn( TRUE );
+      actionAlignCenter->setOn( true );
    else if ( ( a & Qt::AlignRight ) )
-      actionAlignRight->setOn( TRUE );
+      actionAlignRight->setOn( true );
    else if ( ( a & Qt::AlignJustify ) )
-      actionAlignJustify->setOn( TRUE );
+      actionAlignJustify->setOn( true );
 }
 
 void TextEdit::editorChanged( QWidget * )
 {
-   if ( !currentEditor(  ) )
+   if ( !currentEditor() )
       return;
-   fontChanged( currentEditor(  )->font(  ) );
-   colorChanged( currentEditor(  )->color(  ) );
-   alignmentChanged( currentEditor(  )->alignment(  ) );
+   fontChanged( currentEditor()->font() );
+   colorChanged( currentEditor()->color() );
+   alignmentChanged( currentEditor()->alignment() );
 }
 #else
 TextEdit::TextEdit( QWidget * p, const char *name ) : QFrame( p )

@@ -22,7 +22,7 @@
 #define USPM_MIN_VAL_D ( ( double ) USPM_MIN_VAL )
 
 #ifdef WIN32
-# if !defined( QT4 )
+# if QT_VERSION < 0x040000
   #pragma warning ( disable: 4251 )
 # endif
 #endif
@@ -120,7 +120,7 @@ struct ga_ctl_param
 
 
 #ifdef WIN32
-# if !defined( QT4 )
+# if QT_VERSION < 0x040000
   #pragma warning ( default: 4251 )
 # endif
 #endif

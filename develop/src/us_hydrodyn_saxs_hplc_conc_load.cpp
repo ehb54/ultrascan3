@@ -131,8 +131,8 @@ void US_Hydrodyn_Saxs_Hplc_Conc_Load::setupGUI()
    }
 
    t_csv->setSortingEnabled            ( false );
-    t_csv->verticalHeader()->setMovable( true );
-    t_csv->horizontalHeader()->setMovable( false );
+    t_csv->verticalHeader()->setSectionsMovable( true );
+    t_csv->horizontalHeader()->setSectionsMovable( false );
    
    t_csv->adjustSize();
    connect( t_csv, SIGNAL( itemSelectionChanged() ), SLOT( update_enables() ) );
@@ -339,10 +339,10 @@ void US_Hydrodyn_Saxs_Hplc_Conc_Load::update_enables()
 void US_Hydrodyn_Saxs_Hplc_Conc_Load::del_row()
 {
    csv csv_new = current_csv();
-   csv_new.header.clear();
-   csv_new.data.clear();
-   csv_new.num_data.clear();
-   csv_new.prepended_names.clear();
+   csv_new.header.clear( );
+   csv_new.data.clear( );
+   csv_new.num_data.clear( );
+   csv_new.prepended_names.clear( );
    
    for ( int i = 0; i < t_csv->rowCount(); i++ )
    {
@@ -537,7 +537,7 @@ void US_Hydrodyn_Saxs_Hplc_Conc_Load::adjust()
       // user entered something and pressed OK
       for ( int i = 0; i < t_csv->rowCount(); i++ )
       {
-         t_csv->setItem( i, 0, new QTableWidgetItem( QString( "%1" ).arg( t_csv->item( i, 0 )->text( ).toInt( ) + res ) ) );
+         t_csv->setItem( i, 0, new QTableWidgetItem( QString( "%1" ).arg( t_csv->item( i, 0 )->text().toInt() + res ) ) );
       }
    }
 }

@@ -70,8 +70,8 @@ bool US_PM::best_vary_one_param(
       double last_fitness_3_pos = -1e99;
       prev_fit = 1e99;
 
-      prev_model.clear();
-      Av.clear();
+      prev_model.clear( );
+      Av.clear( );
 
       if ( us_log )
       {
@@ -109,7 +109,7 @@ bool US_PM::best_vary_one_param(
             //             {
             //                qs += QString( " %1" ).arg( params[ i ] );
             //             }
-            //             cout << qs.toAscii().data() << endl;
+            //             cout << qs.toLatin1().data() << endl;
             if ( us_log )
             {
                us_log->log( US_Vector::qs_vector( QString( "best_vary_one_param: %1beads %2 fitness %3, params:" )
@@ -148,7 +148,7 @@ bool US_PM::best_vary_one_param(
             //             {
             //                qs += QString( " %1" ).arg( params[ i ] );
             //             }
-            //             cout << qs.toAscii().data() << endl;
+            //             cout << qs.toLatin1().data() << endl;
             if ( steps_without_change > 100 )
             {
                if ( us_log )
@@ -558,7 +558,7 @@ bool US_PM::best_vary_one_param(
             //             {
             //                qs += QString( " %1" ).arg( params[ i ] );
             //             }
-            //             cout << qs.toAscii().data() << endl;
+            //             cout << qs.toLatin1().data() << endl;
             if ( us_log )
             {
                us_log->log( US_Vector::qs_vector( QString( "best_vary_one_param: %1beads %2 fitness %3, params:" )
@@ -597,7 +597,7 @@ bool US_PM::best_vary_one_param(
             //             {
             //                qs += QString( " %1" ).arg( params[ i ] );
             //             }
-            //             cout << qs.toAscii().data() << endl;
+            //             cout << qs.toLatin1().data() << endl;
             if ( steps_without_change > 100 )
             {
                if ( us_log )
@@ -645,8 +645,8 @@ bool US_PM::best_vary_one_param(
          low_limit = best_size;
          high_limit += 20e0 * delta;
       } else {
-         prev_model.clear();
-         Av.clear();
+         prev_model.clear( );
+         Av.clear( );
          delta /= best_delta_divisor;
       }
    }

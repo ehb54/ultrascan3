@@ -454,7 +454,7 @@ void US_License::save()
       US_Static::us_message(
                            us_tr( "Thanks!" ), 
                            us_tr( "Your license information was saved to the following file:\n\n"
-                               + QDir::convertSeparators( lcfile ) ) );
+                               + QDir::toNativeSeparators( lcfile ) ) );
       pb_cancel->setText("Close");
    }
    else
@@ -711,7 +711,7 @@ bool US_License::start_browser( const QString& browser,
 {
 #if QT_VERSION < 0x040000
    proc->clearArguments();
-# ifdef Q_WS_MAC
+# ifdef Q_OS_MAC
    proc->addArgument( "open" );
    proc->addArgument( "-a" );
 # endif
@@ -724,7 +724,7 @@ bool US_License::start_browser( const QString& browser,
    QStringList args;
    QString prog = browser;
    
-# ifdef Q_WS_MAC
+# ifdef Q_OS_MAC
    args
       << "-a"
       << prog

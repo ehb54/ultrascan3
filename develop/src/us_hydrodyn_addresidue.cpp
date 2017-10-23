@@ -64,8 +64,8 @@ US_AddResidue::US_AddResidue(bool *widget_flag, const double hydrovol, QWidget *
    new_bead.visibility = 0;
    new_bead.volume = 0;
    setGeometry(global_Xpos, global_Ypos, 0, 0);
-   hybrids.clear();
-   atoms.clear();
+   hybrids.clear( );
+   atoms.clear( );
 }
 
 US_AddResidue::~US_AddResidue()
@@ -175,7 +175,7 @@ void US_AddResidue::setupGUI()
    cnt_numatoms= new QwtCounter(this);
    US_Hydrodyn::sizeArrows( cnt_numatoms );
    Q_CHECK_PTR(cnt_numatoms);
-   cnt_numatoms->setRange(0, 1000, 1);
+   cnt_numatoms->setRange(0, 1000); cnt_numatoms->setSingleStep( 1);
    cnt_numatoms->setValue(0);
    cnt_numatoms->setMinimumWidth( minWidth1 );
    cnt_numatoms->setEnabled(false);
@@ -195,7 +195,7 @@ void US_AddResidue::setupGUI()
    cnt_numbeads= new QwtCounter(this);
    US_Hydrodyn::sizeArrows( cnt_numbeads );
    Q_CHECK_PTR(cnt_numbeads);
-   cnt_numbeads->setRange(0, 1000, 1);
+   cnt_numbeads->setRange(0, 1000); cnt_numbeads->setSingleStep( 1);
    cnt_numbeads->setValue(0);
    cnt_numbeads->setEnabled(false);
    cnt_numbeads->setNumButtons(3);
@@ -372,7 +372,7 @@ void US_AddResidue::setupGUI()
    cnt_atom_hydration = new QwtCounter(this);
    US_Hydrodyn::sizeArrows( cnt_atom_hydration );
    Q_CHECK_PTR(cnt_atom_hydration);
-   cnt_atom_hydration->setRange(0, 100, 1);
+   cnt_atom_hydration->setRange(0, 100); cnt_atom_hydration->setSingleStep( 1);
    cnt_atom_hydration->setValue(0);
    cnt_atom_hydration->setMinimumWidth( minWidth1 );
    cnt_atom_hydration->setEnabled(true);
@@ -472,7 +472,7 @@ void US_AddResidue::setupGUI()
    cnt_hydration= new QwtCounter(this);
    US_Hydrodyn::sizeArrows( cnt_hydration );
    Q_CHECK_PTR(cnt_hydration);
-   cnt_hydration->setRange(0, 100, 1);
+   cnt_hydration->setRange(0, 100); cnt_hydration->setSingleStep( 1);
    cnt_hydration->setValue(0);
    cnt_hydration->setMinimumWidth( minWidth1 );
    cnt_hydration->setEnabled(true);
@@ -901,8 +901,8 @@ void US_AddResidue::add()
          residue_list[i].molvol = new_residue.molvol;
          residue_list[i].vbar = new_residue.vbar;
          residue_list[i].asa = new_residue.asa;
-         residue_list[i].r_atom.clear();
-         residue_list[i].r_bead.clear();
+         residue_list[i].r_atom.clear( );
+         residue_list[i].r_bead.clear( );
          for (j=0; j<new_residue.r_atom.size(); j++)
          {
             residue_list[i].r_atom.push_back(new_residue.r_atom[j]);
@@ -931,8 +931,8 @@ void US_AddResidue::read_residue_file(const QString & filename)
    QString str1, str2;
    unsigned int numatoms, numbeads, i, j, positioner;
    QFile f(filename);
-   residue_list.clear();
-   lb_residues->clear();
+   residue_list.clear( );
+   lb_residues->clear( );
    i=1;
    if (f.open(QIODevice::ReadOnly))
    {
@@ -951,8 +951,8 @@ void US_AddResidue::read_residue_file(const QString & filename)
          //                  << ", molvol: " << new_residue.molvol << ", asa: " << new_residue.asa <<
          //                  ", numatoms: " << numatoms << ", beads: " << numbeads << ", vbar: " << new_residue.vbar << endl;
          ts.readLine(); // read rest of line
-         new_residue.r_atom.clear();
-         new_residue.r_bead.clear();
+         new_residue.r_atom.clear( );
+         new_residue.r_bead.clear( );
          for (j=0; j<numatoms; j++)
          {
             ts >> new_atom.name;
@@ -1099,8 +1099,8 @@ void US_AddResidue::select_residue_file()
    {
       lbl_residue_file->setText(residue_filename);
       QFile f(residue_filename);
-      residue_list.clear();
-      lb_residues->clear();
+      residue_list.clear( );
+      lb_residues->clear( );
       if (f.open(QIODevice::ReadWrite|QIODevice::Text))
       {
          f.close();
@@ -1173,8 +1173,8 @@ void US_AddResidue::select_atom_file()
    {
       lbl_atom_file->setText(atom_filename);
       QFile f(atom_filename);
-      atom_list.clear();
-      cmb_atoms->clear();
+      atom_list.clear( );
+      cmb_atoms->clear( );
       unsigned int i, j;
       if (f.open(QIODevice::ReadOnly|QIODevice::Text))
       {
@@ -1193,7 +1193,7 @@ void US_AddResidue::select_atom_file()
          }
          f.close();
          bool flag;
-         atoms.clear();
+         atoms.clear( );
          for (i=0; i<atom_list.size(); i++)
          {
             flag = false;
@@ -1232,9 +1232,9 @@ void US_AddResidue::update_comment(const QString &str)
 void US_AddResidue::update_numatoms(double val)
 {
    QString str;
-   new_residue.r_atom.clear();
+   new_residue.r_atom.clear( );
    new_residue.r_atom.resize((unsigned int) val);
-   cmb_r_atoms->clear();
+   cmb_r_atoms->clear( );
    for (unsigned int i=0; i<(unsigned int) val; i++)
    {
       str.sprintf("Atom %d: (undefined)", i+1);
@@ -1245,9 +1245,9 @@ void US_AddResidue::update_numatoms(double val)
 void US_AddResidue::update_numbeads(double val)
 {
    QString str;
-   new_residue.r_bead.clear();
+   new_residue.r_bead.clear( );
    new_residue.r_bead.resize((unsigned int) val);
-   cmb_r_beads->clear();
+   cmb_r_beads->clear( );
    for (unsigned int i=0; i<(unsigned int) val; i++)
    {
       str.sprintf("Bead %d: (undefined)", i+1);
@@ -1281,7 +1281,7 @@ void US_AddResidue::select_type(int val)
 
 void US_AddResidue::update_hybrid(int val)
 {
-   cmb_hybrids->clear();
+   cmb_hybrids->clear( );
 #if defined(DEBUG_RESIDUE)
    cout << "update hybrid val " << val << endl;
 #endif
@@ -1302,7 +1302,7 @@ void US_AddResidue::select_beadatom()
 {
    unsigned int i;
    QString str;
-   lb_list_beadatom->clear();
+   lb_list_beadatom->clear( );
    for (i=0; i<lb_select_beadatom->count(); i++)
    {
       if (new_residue.r_atom[i].bead_assignment == current_bead)
@@ -1411,7 +1411,7 @@ void US_AddResidue::select_r_bead(int val)
       set_chain(0); // default is backbone for a new bead
    }
    unsigned int i;
-   lb_list_beadatom->clear();
+   lb_list_beadatom->clear( );
    //   cout << "Current bead 2: " << current_bead << endl;
    for (i=0; i<new_residue.r_atom.size(); i++)
    {
@@ -1470,8 +1470,8 @@ void US_AddResidue::select_residue(int val)
    reset();
    existing_residue = true;
    QString str;
-   new_residue.r_atom.clear();
-   new_residue.r_bead.clear();
+   new_residue.r_atom.clear( );
+   new_residue.r_bead.clear( );
    le_residue_name->setText(residue_list[val].name);
    le_residue_comment->setText(residue_list[val].comment);
    cnt_numatoms->setValue(residue_list[val].r_atom.size());
@@ -1559,13 +1559,13 @@ void US_AddResidue::reset()
    pb_accept_atom->setEnabled(false);
    pb_atom_continue->setEnabled(false);
    pb_accept_atom->setEnabled(false);
-   cmb_r_atoms->clear();
+   cmb_r_atoms->clear( );
    //   cmb_atoms->setCurrentIndex(0);
    cmb_r_atoms->setEnabled(false);
    cmb_hybrids->setEnabled(false);
 
    cmb_r_beads->setEnabled(false);
-   cmb_r_beads->clear();
+   cmb_r_beads->clear( );
    cmb_bead_color->setEnabled(false);
    cmb_bead_color->setCurrentIndex(0);
    cb_hydration->setEnabled(false);
@@ -1589,9 +1589,9 @@ void US_AddResidue::reset()
    rb_backbone->setChecked( true );
 #endif
    lb_select_beadatom->setEnabled(false);
-   lb_select_beadatom->clear();
+   lb_select_beadatom->clear( );
    lb_list_beadatom->setEnabled(false);
-   lb_list_beadatom->clear();
+   lb_list_beadatom->clear( );
    cb_positioning->setEnabled(false);
    cb_positioning->setChecked(false);
    existing_residue = false;
@@ -1637,7 +1637,7 @@ void US_AddResidue::accept_residue()
    if(existing_residue)
    {
       QString str;
-      cmb_r_atoms->clear();
+      cmb_r_atoms->clear( );
       for (unsigned int i=0; i<new_residue.r_atom.size(); i++)
       {
          str.sprintf("Atom %d: ", i + 1);
@@ -1734,10 +1734,10 @@ void US_AddResidue::atom_continue()
    rb_backbone->setChecked( true );
 #endif
    lb_list_beadatom->setEnabled(true);
-   lb_list_beadatom->clear();
+   lb_list_beadatom->clear( );
    lb_select_beadatom->setEnabled(true);
-   lb_select_beadatom->clear();
-   cmb_r_beads->clear();
+   lb_select_beadatom->clear( );
+   cmb_r_beads->clear( );
    if(existing_residue)
    {
       for (unsigned int i=0; i<new_residue.r_bead.size(); i++)
@@ -1769,7 +1769,7 @@ void US_AddResidue::atom_continue()
    /*
      lb_select_beadatom->setCurrentItem( lb_select_beadatom->item(0) );
 
-     cmb_r_beads->clear();
+     cmb_r_beads->clear( );
      for (unsigned int i=0; i<new_residue.r_bead.size(); i++)
      {
      str.sprintf("Bead %d: defined", i + 1);
@@ -1850,7 +1850,7 @@ void US_AddResidue::accept_atom()
    int current_item1, current_item2=0;
    if (existing_residue)
    {
-         position_flag = new_residue.r_atom[cmb_r_atoms->currentIndex( )].positioner;
+         position_flag = new_residue.r_atom[cmb_r_atoms->currentIndex()].positioner;
    }
 #if defined(DEBUG_RESIDUE)
    cout << "Residue print accept_atom() - 1: \n";
@@ -1858,7 +1858,7 @@ void US_AddResidue::accept_atom()
 #endif
    QString str;
    // find current hybridization in atom_list:
-   current_item1 = cmb_r_atoms->currentIndex( );
+   current_item1 = cmb_r_atoms->currentIndex();
    for (unsigned int i=0; i<atom_list.size(); i++)
    {
       if (cmb_atoms->currentText() == atom_list[i].name && cmb_hybrids->currentText() == atom_list[i].hybrid.name)
@@ -2000,7 +2000,7 @@ void US_AddResidue::write_residue_file()
    QFile f(residue_filename);
    if (f.open(QIODevice::WriteOnly|QIODevice::Text))
    {
-      lb_residues->clear();
+      lb_residues->clear( );
       QTextStream ts(&f);
       for (unsigned int i=0; i<residue_list.size(); i++)
       {

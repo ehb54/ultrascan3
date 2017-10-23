@@ -22,7 +22,7 @@
 #include <QMouseEvent>
 #include <QCloseEvent>
 
-#ifdef QT4
+#if QT_VERSION >= 0x040000
 #include "qwt_plot_marker.h"
 #include "qwt_symbol.h"
 #endif
@@ -44,7 +44,7 @@
 #include "qwt/scrollzoomer.h"
 
 #ifdef WIN32
-# if !defined( QT4 )
+# if QT_VERSION < 0x040000
   #pragma warning ( disable: 4251 )
 # endif
 #endif
@@ -188,7 +188,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
 
       QwtPlot       *plot_dist;
       ScrollZoomer  *plot_dist_zoomer;
-#ifdef QT4
+#if QT_VERSION >= 0x040000
       QwtPlotGrid   *grid_saxs;
       bool          legend_vis;
 #endif
@@ -330,7 +330,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       double                       join_mult_end;
       double                       join_mult_delta;
 
-#ifdef QT4
+#if QT_VERSION >= 0x040000
       map < QString, QwtPlotCurve * >     plotted_curves;
       vector < QwtPlotMarker * >          plotted_markers;
       QwtPlotCurve *                      wheel_curve;
@@ -348,7 +348,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       void                         join_add_marker( double pos, 
                                                     QColor color, 
                                                     QString text, 
-#ifndef QT4
+#if QT_VERSION < 0x040000
                                                     int 
 #else
                                                     Qt::Alignment
@@ -427,7 +427,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       void cancel();
       void help();
 
-      void plot_zoomed( const QwtDoubleRect &rect );
+      void plot_zoomed( const QRectF &rect );
       void plot_mouse ( const QMouseEvent &me );
 
       void adjust_wheel ( double );
@@ -474,7 +474,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
    
 };
 #ifdef WIN32
-# if !defined( QT4 )
+# if QT_VERSION < 0x040000
   #pragma warning ( default: 4251 )
 # endif
 #endif

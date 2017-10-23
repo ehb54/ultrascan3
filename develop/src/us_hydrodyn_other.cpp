@@ -26,6 +26,8 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <qsound.h>
+#include <QAudio>
+#include <QAudioDeviceInfo>
 
 #undef DEBUG
 #ifndef WIN32
@@ -65,18 +67,18 @@ void US_Hydrodyn::read_residue_file()
    {
       cout << "residue file name: " << residue_filename << endl;
    }
-   residue_list.clear();
-   residue_list_no_pbr.clear();
-   multi_residue_map.clear();
-   residue_atom_hybrid_map.clear();
-   residue_atom_abb_hybrid_map.clear();
-   new_residues.clear();
+   residue_list.clear( );
+   residue_list_no_pbr.clear( );
+   multi_residue_map.clear( );
+   residue_atom_hybrid_map.clear( );
+   residue_atom_abb_hybrid_map.clear( );
+   new_residues.clear( );
    map < QString, int > dup_residue_map;
    map < QString, bool > pbr_override_map; // maps positioner for overwrite
-   unknown_residues.clear(); // keep track of unknown residues
+   unknown_residues.clear( ); // keep track of unknown residues
 
-   msroll_radii.clear();
-   msroll_names.clear();
+   msroll_radii.clear( );
+   msroll_names.clear( );
 
    // i=1;
    if (f.open(QIODevice::ReadOnly|QIODevice::Text))
@@ -95,8 +97,8 @@ void US_Hydrodyn::read_residue_file()
          ts >> new_residue.vbar;
          ts.readLine(); // read rest of line
          line_count++;
-         new_residue.r_atom.clear();
-         new_residue.r_bead.clear();
+         new_residue.r_atom.clear( );
+         new_residue.r_bead.clear( );
          vector < vector < atom > > new_atoms;
          new_atoms.resize(numbeads);
          vector < atom > alt_atoms;
@@ -241,7 +243,7 @@ void US_Hydrodyn::read_residue_file()
             if ( advanced_config.debug_1 )
             {
                printf("residue name %s loading bead %d placing method %d\n",
-                      new_residue.name.toAscii().data(),
+                      new_residue.name.toLatin1().data(),
                       j, new_bead.placing_method); fflush(stdout);
             }
             new_residue.r_bead.push_back(new_bead);
@@ -259,8 +261,8 @@ void US_Hydrodyn::read_residue_file()
             if ( advanced_config.debug_1 )
             {
                printf("residue name %s unique name %s atom size %u alt size %u pos %u\n"
-                      ,new_residue.name.toAscii().data()
-                      ,new_residue.unique_name.toAscii().data()
+                      ,new_residue.name.toLatin1().data()
+                      ,new_residue.unique_name.toLatin1().data()
                       ,(unsigned int) new_residue.r_atom.size()
                       ,(unsigned int) alt_atoms.size()
                       ,(unsigned int) residue_list.size()
@@ -297,7 +299,7 @@ void US_Hydrodyn::read_residue_file()
       for (unsigned int i = 0; i < it->second.size(); i++)
       {
          printf("residue %s map pos %u\n",
-                it->first.toAscii().data(), it->second[i]);
+                it->first.toLatin1().data(), it->second[i]);
       }
    }
 #endif
@@ -453,7 +455,7 @@ void US_Hydrodyn::calc_bead_mw(struct residue *res)
 
 void US_Hydrodyn::clear_temp_chain(struct PDB_chain *temp_chain) // clear all the memory from the vectors in temp_chain
 {
-   (*temp_chain).atom.clear();
+   (*temp_chain).atom.clear( );
    (*temp_chain).chainID = "";
    (*temp_chain).segID = "";
 }
@@ -584,18 +586,18 @@ bool US_Hydrodyn::assign_atom(const QString &str1, struct PDB_chain *temp_chain,
 
 int US_Hydrodyn::read_pdb( const QString &filename )
 {
-   lb_model->clear();
+   lb_model->clear( );
    QString str, str1, str2, temp;
-   model_vector.clear();
-   bead_model.clear();
+   model_vector.clear( );
+   bead_model.clear( );
    QString last_resSeq = ""; // keeps track of residue sequence number, initialize to zero, first real one will be "1"
    struct PDB_chain temp_chain;
    QFile f(filename);
    struct PDB_model temp_model;
    bool chain_flag = false;
    bool model_flag = false;
-   temp_model.molecule.clear();
-   temp_model.residue.clear();
+   temp_model.molecule.clear( );
+   temp_model.residue.clear( );
    clear_temp_chain(&temp_chain);
    bool currently_aa_chain = false; // do we have an amino acid chain (pbr)
    bool last_was_ENDMDL = false;    // to fix pdbs with missing MODEL tag
@@ -629,8 +631,8 @@ int US_Hydrodyn::read_pdb( const QString &filename )
    if ( f.open( QIODevice::ReadOnly ) )
    {
       multiply_iq_by_atomic_volume_last_water_multiplier = 0;      
-      last_pdb_header.clear();
-      last_pdb_title .clear();
+      last_pdb_header.clear( );
+      last_pdb_title .clear( );
       last_pdb_filename = f.fileName();
       QTextStream ts(&f);
       while ( !ts.atEnd() )
@@ -650,7 +652,7 @@ int US_Hydrodyn::read_pdb( const QString &filename )
             {
                if ( advanced_config.debug_2 )
                {
-                  printf("ter break <%s>\n", str1.toAscii().data());
+                  printf("ter break <%s>\n", str1.toLatin1().data());
                }
                temp_model.molecule.push_back(temp_chain);
                clear_temp_chain(&temp_chain);
@@ -690,8 +692,8 @@ int US_Hydrodyn::read_pdb( const QString &filename )
                temp_model.model_id = str1.mid( 6, 15 );
             }
             chain_flag = false; // we are starting a new molecule
-            temp_model.molecule.clear();
-            temp_model.residue.clear();
+            temp_model.molecule.clear( );
+            temp_model.residue.clear( );
             clear_temp_chain(&temp_chain);
          }
          if (str1.left(6) == "ENDMDL") // we need to save the previously recorded molecule
@@ -789,7 +791,7 @@ int US_Hydrodyn::read_pdb( const QString &filename )
                      {
                         if ( advanced_config.debug_2 )
                         {
-                           printf("chain break <%s>\n", str1.toAscii().data());
+                           printf("chain break <%s>\n", str1.toLatin1().data());
                         }
                         if ( temp_chain.atom.size() ) 
                         {
@@ -813,9 +815,9 @@ int US_Hydrodyn::read_pdb( const QString &filename )
       }
       f.close();
    } else {
-      lb_model->clear();
-      model_vector.clear();
-      bead_model.clear();
+      lb_model->clear( );
+      model_vector.clear( );
+      bead_model.clear( );
       QColor save_color = editor->textColor();
       editor->setTextColor("red");
       editor->append(QString("Error reading file %1").arg(filename));
@@ -991,7 +993,7 @@ void US_Hydrodyn::dna_rna_resolve()
 int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
 {
    last_read_bead_model = filename;
-   lb_model->clear();
+   lb_model->clear( );
    le_pdb_file_save_text = "not selected";
    le_pdb_file->setText(us_tr( "not selected" ));
    project = filename;
@@ -1000,7 +1002,7 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
    project = QFileInfo(QFileInfo(filename).fileName()).baseName();
    QString ftype = QFileInfo(filename).suffix().toLower();
    editor->setText("\n\nLoading bead model " + project + " of type " + ftype + "\n");
-   bead_model.clear();
+   bead_model.clear( );
    PDB_atom tmp_atom;
    QFile f(filename);
    int bead_count;
@@ -1106,7 +1108,7 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
                return linepos;
             }
             tmp_atom.exposed_code = 1;
-            tmp_atom.all_beads.clear();
+            tmp_atom.all_beads.clear( );
             tmp_atom.active = true;
             tmp_atom.name = "ATOM";
             tmp_atom.resName = "RESIDUE";
@@ -1356,7 +1358,7 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
                      bead_model     [ j / 2 ].saxs_name     = tmp_saxs.saxs_name;
                      bead_model     [ j / 2 ].saxs_data     = tmp_saxs;
                      bead_model     [ j / 2 ].saxs_excl_vol = tmp_saxs.volume;
-                     tmp_saxs.vcoeff.clear();
+                     tmp_saxs.vcoeff.clear( );
                      if ( do_bsaxsv )
                      {
                         qsl = (bsaxsv[ j / 2 ] ).split( QRegExp( "\\s+" ) , QString::SkipEmptyParts );
@@ -1407,7 +1409,7 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
          // write_bead_spt(somo_dir + SLASH + project +
          //          QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "") +
          //          DOTSOMO, &bead_model, true);
-         lb_model->clear();
+         lb_model->clear( );
          lb_model->addItem("Model 1 from bead_model file");
          lb_model->item(0)->setSelected( true);
          lb_model->setEnabled(false);
@@ -1533,7 +1535,7 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
                }
                tmp_atom.serial = linepos;
                tmp_atom.exposed_code = 1;
-               tmp_atom.all_beads.clear();
+               tmp_atom.all_beads.clear( );
                tmp_atom.active = true;
                tmp_atom.name = "ATOM";
                tmp_atom.resName = "RESIDUE";
@@ -1566,7 +1568,7 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
          //          QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "") +
          //          DOTSOMO, &bead_model, true);
 
-         lb_model->clear();
+         lb_model->clear( );
          lb_model->addItem("Model 1 from beams file");
          lb_model->item(0)->setSelected( true);
          lb_model->setEnabled(false);
@@ -1605,7 +1607,7 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
 
       QRegExp rx_model( "^MODEL\\s+(\\S+)" );
       model_count = 0;
-      model_names.clear();
+      model_names.clear( );
 
       unsigned int unit_mult = 1;
 
@@ -1917,7 +1919,7 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
                     it != dammix_match_remember_psv.end();
                     it++)
                {
-                  printf("iterator first %s\n", it->first.toAscii().data());
+                  printf("iterator first %s\n", it->first.toLatin1().data());
                   printf("iterator second %f\n", it->second);
 
                   if ( filename.contains(it->first) )
@@ -2011,7 +2013,7 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
          {
             editor_msg( "gray", QString( us_tr( "Loading from model %1" ) ).arg( model_names[ i ] ) );
             int beads_loaded = 0;
-            bead_model.clear();
+            bead_model.clear( );
             while (!ts.atEnd() && beads_loaded < bead_count)
             {
                ++linepos;
@@ -2061,7 +2063,7 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
                tmp_atom.bead_color = 8;
 
                tmp_atom.exposed_code = 1;
-               tmp_atom.all_beads.clear();
+               tmp_atom.all_beads.clear( );
                tmp_atom.active = true;
                tmp_atom.name = "ATOM";
                tmp_atom.resName = "RESIDUE";
@@ -2116,7 +2118,7 @@ int US_Hydrodyn::read_bead_model( QString filename, bool &only_overlap )
          // write_bead_spt(somo_dir + SLASH + project +
          //          QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "") +
          //          DOTSOMO, &bead_model, true);
-         lb_model->clear();
+         lb_model->clear( );
          model_vector.resize( model_count );
          somo_processed.resize( model_count );
          bead_models.resize( model_count );
@@ -3137,7 +3139,7 @@ int US_Hydrodyn::read_config(QFile& f)
    if ( ts.readLine() == QString::null ) return -11008;
    batch.width = str.toInt();
 
-   batch.file.clear();
+   batch.file.clear( );
    ts >> str; // batch file list
    if ( ts.readLine() == QString::null ) return -11010;
    {
@@ -3149,7 +3151,7 @@ int US_Hydrodyn::read_config(QFile& f)
       }
    }
 
-   save_params.field.clear();
+   save_params.field.clear( );
    ts >> str; // save field list
    if ( ts.readLine() == QString::null ) return -11500;
    {
@@ -4410,7 +4412,7 @@ bool US_Hydrodyn::load_config_json ( QString &json )
 
    // vectors to read:
 
-   saxs_options.dummy_saxs_names.clear();
+   saxs_options.dummy_saxs_names.clear( );
    if ( parameters.count( "saxs_options.dummy_saxs_names" ) )
    {
       QStringList qsl_tmp = (parameters[ "saxs_options.dummy_saxs_names" ] ).split( "\n" , QString::SkipEmptyParts );
@@ -4420,7 +4422,7 @@ bool US_Hydrodyn::load_config_json ( QString &json )
       }
    }
 
-   batch.file.clear();
+   batch.file.clear( );
    if ( parameters.count( "batch.file" ) )
    {
       QStringList qsl_tmp = (parameters[ "batch.file" ] ).split( "\n" , QString::SkipEmptyParts );
@@ -4430,7 +4432,7 @@ bool US_Hydrodyn::load_config_json ( QString &json )
       }
    }
 
-   save_params.field.clear();
+   save_params.field.clear( );
    if ( parameters.count( "save_params.field" ) )
    {
       QStringList qsl_tmp = (parameters[ "save_params.field" ] ).split( "\n" , QString::SkipEmptyParts );
@@ -4441,7 +4443,7 @@ bool US_Hydrodyn::load_config_json ( QString &json )
    }
 
    {
-      gparams.clear();
+      gparams.clear( );
       QRegExp rx_gparam( "^gparam:(.*)$" );
       
       for ( map < QString, QString >::iterator it = parameters.begin();
@@ -4458,9 +4460,9 @@ bool US_Hydrodyn::load_config_json ( QString &json )
    if ( parameters.count( "directory_history" ) &&
         parameters.count( "directory_last_access" ) )
    {
-      directory_history      .clear();
-      directory_last_access  .clear();
-      directory_last_filetype.clear();
+      directory_history      .clear( );
+      directory_last_access  .clear( );
+      directory_last_filetype.clear( );
       QStringList qsl_tmp1 = (parameters[ "directory_history"     ] ).split( "\n" , QString::SkipEmptyParts );
       QStringList qsl_tmp2 = (parameters[ "directory_last_access" ] ).split( "\n" , QString::SkipEmptyParts );
       QStringList qsl_tmp3;
@@ -4470,7 +4472,7 @@ bool US_Hydrodyn::load_config_json ( QString &json )
          if ( qsl_tmp3.size() != qsl_tmp2.size() )
          {
             // us_qdebug( QString( "tmp3 cleared %1 %2" ).arg( qsl_tmp3.size() ).arg( qsl_tmp2.size() ) );
-            qsl_tmp3.clear();
+            qsl_tmp3.clear( );
          }
       }
 
@@ -5219,7 +5221,7 @@ void US_Hydrodyn::hard_coded_defaults()
    batch.avg_hydro_name = "results";
    batch.height = 0;
    batch.width = 0;
-   batch.file.clear();
+   batch.file.clear( );
 
    path_load_pdb = "";
    path_view_pdb = "";
@@ -5231,7 +5233,7 @@ void US_Hydrodyn::hard_coded_defaults()
    saxs_options.path_load_gnom = "";
    saxs_options.path_load_prr = "";
 
-   save_params.field.clear();
+   save_params.field.clear( );
 
    asa.hydrate_probe_radius = 1.4f;
    asa.hydrate_threshold = 10.0f;
@@ -5359,7 +5361,7 @@ void US_Hydrodyn::hard_coded_defaults()
    saxs_options.compute_exponentials               = false;
    saxs_options.compute_exponential_terms          = 5;
    saxs_options.dummy_saxs_name                    = "DAM";
-   saxs_options.dummy_saxs_names                   .clear();
+   saxs_options.dummy_saxs_names                   .clear( );
    saxs_options.dummy_saxs_names                   .push_back( saxs_options.dummy_saxs_name );
    saxs_options.multiply_iq_by_atomic_volume       = false;
    saxs_options.dummy_atom_pdbs_in_nm              = false;
@@ -5416,7 +5418,7 @@ void US_Hydrodyn::hard_coded_defaults()
       ( 1e0 - saxs_options.d2o_conc ) * ( saxs_options.h2o_scat_len_dens );
    saxs_options.cryson_manual_hs                   = false;
 
-   gparams                                         .clear();
+   gparams                                         .clear( );
    gparams[ "guinier_auto_fit" ]                   = "1";
    gparams[ "perdeuteration" ]                     = "0";
    gparams[ "guinier_qRtmax" ]                     = "1";
@@ -5704,11 +5706,11 @@ void US_Hydrodyn::write_bead_spt(QString fname,
       };
 
 #if defined(DEBUG)
-   printf("write bead spt %s\n", fname.toAscii().data()); fflush(stdout);
+   printf("write bead spt %s\n", fname.toLatin1().data()); fflush(stdout);
 #endif
 
-   FILE *fspt = us_fopen(QString("%1.spt").arg(fname).toAscii().data(), "w");
-   FILE *fbms = us_fopen(QString("%1.bms").arg(fname).toAscii().data(), "w");
+   FILE *fspt = us_fopen(QString("%1.spt").arg(fname).toLatin1().data(), "w");
+   FILE *fbms = us_fopen(QString("%1.bms").arg(fname).toLatin1().data(), "w");
 
    int beads = 0;
    if(!(fspt) ||
@@ -5735,16 +5737,16 @@ void US_Hydrodyn::write_bead_spt(QString fname,
    fprintf(fbms,
            "%d\n%s\n",
            beads + 1,
-           QFileInfo(fname).fileName().toAscii().data()
+           QFileInfo(fname).fileName().toLatin1().data()
            );
    //   fprintf(fspt,
    //           "load xyz %s\nselect all\nwireframe off\nset background white\n",
-   //           QString("%1.bms").arg(QFileInfo(fname).fileName()).toAscii().data()
+   //           QString("%1.bms").arg(QFileInfo(fname).fileName()).toLatin1().data()
    //           );
 
    last_spt_text = 
       QString("").sprintf("load xyz %s\nselect all\nwireframe off\nset background %s\n",
-                          QString("%1.bms").arg(QFileInfo(fname).fileName()).toAscii().data(),
+                          QString("%1.bms").arg(QFileInfo(fname).fileName()).toLatin1().data(),
                           black_background ? "black" : "white"
                           );
 
@@ -5788,17 +5790,17 @@ void US_Hydrodyn::write_bead_spt(QString fname,
          .sprintf(
                   "write ppm %s.ppm\n"
                   "exit\n",
-                  fname.toAscii().data()
+                  fname.toLatin1().data()
                   );
       movie_text.push_back(fname);
    }
-   fprintf(fspt, ( last_spt_text.isNull() ? "" : last_spt_text.toAscii().data() ) );
+   fprintf(fspt, ( last_spt_text.isNull() ? "" : last_spt_text.toLatin1().data() ) );
    fclose(fspt);
    fclose(fbms);
 }
 
 void US_Hydrodyn::write_bead_tsv(QString fname, vector<PDB_atom> *model) {
-   FILE *f = us_fopen(fname.toAscii().data(), "w");
+   FILE *f = us_fopen(fname.toLatin1().data(), "w");
    fprintf(f, "name~residue~chainID~"
            "position~active~radius~asa~mw~"
            "bead #~chain~serial~is_bead~bead_asa~visible~code/color~"
@@ -5831,9 +5833,9 @@ void US_Hydrodyn::write_bead_tsv(QString fname, vector<PDB_atom> *model) {
                  "%f~%f~%f~"
                  "[%f,%f,%f]~[%f,%f,%f]~[%f, %f, %f]~%u~%s\n",
 
-                 (*model)[i].name.toAscii().data(),
-                 (*model)[i].resName.toAscii().data(),
-                 (*model)[i].chainID.toAscii().data(),
+                 (*model)[i].name.toLatin1().data(),
+                 (*model)[i].resName.toLatin1().data(),
+                 (*model)[i].chainID.toLatin1().data(),
 
                  (*model)[i].coordinate.axis[0],
                  (*model)[i].coordinate.axis[1],
@@ -5872,7 +5874,7 @@ void US_Hydrodyn::write_bead_tsv(QString fname, vector<PDB_atom> *model) {
                  (*model)[i].bead_coordinate.axis[1],
                  (*model)[i].bead_coordinate.axis[2],
                  (unsigned int)(*model)[i].all_beads.size(),
-                 beads_referenced.toAscii().data()
+                 beads_referenced.toLatin1().data()
                  );
       }
    }
@@ -5880,7 +5882,7 @@ void US_Hydrodyn::write_bead_tsv(QString fname, vector<PDB_atom> *model) {
 }
 
 void US_Hydrodyn::write_bead_asa(QString fname, vector<PDB_atom> *model) {
-   FILE *f = us_fopen(fname.toAscii().data(), "w");
+   FILE *f = us_fopen(fname.toLatin1().data(), "w");
    fprintf(f, " N.      Res.       ASA        MAX ASA         %%\n");
 
    float total_asa = 0.0;
@@ -5910,7 +5912,7 @@ void US_Hydrodyn::write_bead_asa(QString fname, vector<PDB_atom> *model) {
             if (last_residue != "") {
                fprintf(f,
                        " [ %-6d %s ]\t%.0f\t%.0f\t%.2f\n",
-                       seqno, last_residue.toAscii().data(), residue_asa, residue_ref_asa, 100.0 * residue_asa / residue_ref_asa);
+                       seqno, last_residue.toLatin1().data(), residue_asa, residue_ref_asa, 100.0 * residue_asa / residue_ref_asa);
             }
             residue_asa = 0;
             residue_ref_asa = 0;
@@ -5924,7 +5926,7 @@ void US_Hydrodyn::write_bead_asa(QString fname, vector<PDB_atom> *model) {
    if (last_residue != "") {
       fprintf(f,
               " [ %-6d %s ]\t%.0f\t%.0f\t%.2f\n",
-              seqno, last_residue.toAscii().data(), residue_asa, residue_ref_asa, 100.0 * residue_asa / residue_ref_asa);
+              seqno, last_residue.toLatin1().data(), residue_asa, residue_ref_asa, 100.0 * residue_asa / residue_ref_asa);
    }
 
    fprintf(f,
@@ -5953,7 +5955,7 @@ void US_Hydrodyn::write_bead_asa(QString fname, vector<PDB_atom> *model) {
 void US_Hydrodyn::write_corr( QString fname, vector<PDB_atom> *model ) 
 {
    FILE *fcorr = (FILE *)0;
-   fcorr = us_fopen(QString("%1.corr").arg(fname).toAscii().data(), "w");
+   fcorr = us_fopen(QString("%1.corr").arg(fname).toLatin1().data(), "w");
    vector <PDB_atom *> use_model;
    for (unsigned int i = 0; i < model->size(); i++) {
       use_model.push_back(&(*model)[i]);
@@ -6000,11 +6002,11 @@ void US_Hydrodyn::write_corr( QString fname, vector<PDB_atom> *model )
          if (fcorr) {
             fprintf(fcorr,
                     "%s\n%s\n%s\n%s\n%s\n%f\n%f\n%f\n%d\n%u\n%d\n%u\n",
-                    use_model[i]->name.toAscii().data(),
-                    use_model[i]->resName.toAscii().data(),
-                    use_model[i]->chainID.toAscii().data(),
-                    use_model[i]->resSeq.toAscii().data(),
-                    use_model[i]->iCode.toAscii().data(),
+                    use_model[i]->name.toLatin1().data(),
+                    use_model[i]->resName.toLatin1().data(),
+                    use_model[i]->chainID.toLatin1().data(),
+                    use_model[i]->resSeq.toLatin1().data(),
+                    use_model[i]->iCode.toLatin1().data(),
                     use_model[i]->bead_ref_mw,
                     use_model[i]->bead_ref_volume,
                     use_model[i]->bead_recheck_asa,
@@ -6121,7 +6123,7 @@ void US_Hydrodyn::write_bead_model( QString fname,
       arg(decpts);
 
 #if defined(DEBUG)
-   printf("write bead model %s\n", fname.toAscii().data()); fflush(stdout);
+   printf("write bead model %s\n", fname.toLatin1().data()); fflush(stdout);
    printf("decimal points to use: %d\n", decpts);
 #endif
 
@@ -6183,15 +6185,15 @@ void US_Hydrodyn::write_bead_model( QString fname,
    FILE *fhydro = (FILE *)0;
 
    if (bead_output.output & US_HYDRODYN_OUTPUT_SOMO) {
-      fsomo = us_fopen(QString("%1.bead_model").arg(fname).toAscii().data(), "w");
+      fsomo = us_fopen(QString("%1.bead_model").arg(fname).toLatin1().data(), "w");
    }
    if (bead_output.output & US_HYDRODYN_OUTPUT_BEAMS) {
-      fbeams = us_fopen(QString("%1.beams").arg(fname).toAscii().data(), "w");
-      frmc = us_fopen(QString("%1.rmc").arg(fname).toAscii().data(), "w");
-      frmc1 = us_fopen(QString("%1.rmc1").arg(fname).toAscii().data(), "w");
+      fbeams = us_fopen(QString("%1.beams").arg(fname).toLatin1().data(), "w");
+      frmc = us_fopen(QString("%1.rmc").arg(fname).toLatin1().data(), "w");
+      frmc1 = us_fopen(QString("%1.rmc1").arg(fname).toLatin1().data(), "w");
    }
    if (bead_output.output & US_HYDRODYN_OUTPUT_HYDRO) {
-      fhydro = us_fopen(QString("%1.dat").arg(fname).toAscii().data(), "w");
+      fhydro = us_fopen(QString("%1.dat").arg(fname).toLatin1().data(), "w");
    }
 
    int beads = 0;
@@ -6214,7 +6216,7 @@ void US_Hydrodyn::write_bead_model( QString fname,
       fprintf(fbeams,
               "%d\t-2.000000\t%s.rmc\t%.3f\n",
               beads,
-              QFileInfo(fname).fileName().toAscii().data(),
+              QFileInfo(fname).fileName().toLatin1().data(),
               results.vbar
               );
    }
@@ -6263,40 +6265,40 @@ void US_Hydrodyn::write_bead_model( QString fname,
          }
          if (fsomo) {
             fprintf(fsomo,
-                    fstring_somo.toAscii().data(),
+                    fstring_somo.toLatin1().data(),
                     use_model[i]->bead_coordinate.axis[0],
                     use_model[i]->bead_coordinate.axis[1],
                     use_model[i]->bead_coordinate.axis[2],
                     use_model[i]->bead_computed_radius,
                     use_model[i]->bead_ref_mw,
                     get_color(use_model[i]),
-                    residues.toAscii().data(),
+                    residues.toLatin1().data(),
                     use_model[i]->bead_recheck_asa
                     );
          }
          if (fbeams) {
             fprintf(fbeams,
-                    fstring_beams.toAscii().data(),
+                    fstring_beams.toLatin1().data(),
                     use_model[i]->bead_coordinate.axis[0],
                     use_model[i]->bead_coordinate.axis[1],
                     use_model[i]->bead_coordinate.axis[2]
                     );
             fprintf(frmc,
-                    fstring_rmc.toAscii().data(),
+                    fstring_rmc.toLatin1().data(),
                     use_model[i]->bead_computed_radius,
                     use_model[i]->bead_ref_mw,
                     get_color(use_model[i]));
             fprintf(frmc1,
-                    fstring_rmc1.toAscii().data(),
+                    fstring_rmc1.toLatin1().data(),
                     use_model[i]->bead_computed_radius,
                     use_model[i]->bead_ref_mw,
                     get_color(use_model[i]),
-                    residues.toAscii().data()
+                    residues.toLatin1().data()
                     );
          }
          if (fhydro) {
             fprintf(fhydro,
-                    fstring_hydro.toAscii().data(),
+                    fstring_hydro.toLatin1().data(),
                     use_model[i]->bead_coordinate.axis[0],
                     use_model[i]->bead_coordinate.axis[1],
                     use_model[i]->bead_coordinate.axis[2],
@@ -6325,12 +6327,12 @@ void US_Hydrodyn::write_bead_model( QString fname,
               "as in original PDB file"
               ,-hydro.unit
               );
-      fprintf(fsomo, ( options_log.isNull() ? "" : options_log.toAscii().data() ) );
-      fprintf(fsomo, ( last_abb_msgs.isNull() ? "" : last_abb_msgs.toAscii().data() ) );
+      fprintf(fsomo, ( options_log.isNull() ? "" : options_log.toLatin1().data() ) );
+      fprintf(fsomo, ( last_abb_msgs.isNull() ? "" : last_abb_msgs.toLatin1().data() ) );
 
       if ( !extra_text.isEmpty() )
       {
-         fprintf(fsomo, extra_text.toAscii().data() );
+         fprintf(fsomo, extra_text.toLatin1().data() );
       }
 
       fclose(fsomo);
@@ -7363,7 +7365,7 @@ void US_Hydrodyn::display_default_differences()
 void US_Hydrodyn::play_sounds(int type)
 {
    if ( advanced_config.use_sounds &&
-        QSound::isAvailable() )
+        !QAudioDeviceInfo::availableDevices(QAudio::AudioOutput).isEmpty() )
    {
       QString sound_base = USglobal->config_list.root_dir + "sounds/";
       switch (type)
@@ -7374,7 +7376,7 @@ void US_Hydrodyn::play_sounds(int type)
             if ( QFileInfo(sf).exists() )
             {
 #if defined(USE_MPLAYER)
-	      QString cmd = QString("mplayer %1&").arg(sf).toAscii().data();
+	      QString cmd = QString("mplayer %1&").arg(sf).toLatin1().data();
 	      cout << cmd << endl;
 	      system( qPrintable( cmd ) );
 #else
@@ -7410,11 +7412,11 @@ void US_Hydrodyn::list_model_vector(vector < PDB_model > *mv)
          {
             printf("model %u chain %u atom %u atom %s seq %u resName %s chainId %s resSeq %s\n",
                    i, j, k, 
-                   (*mv)[i].molecule[j].atom[k].name.toAscii().data(),
+                   (*mv)[i].molecule[j].atom[k].name.toLatin1().data(),
                    (*mv)[i].molecule[j].atom[k].serial,
-                   (*mv)[i].molecule[j].atom[k].resName.toAscii().data(),
-                   (*mv)[i].molecule[j].atom[k].chainID.toAscii().data(),
-                   (*mv)[i].molecule[j].atom[k].resSeq.toAscii().data()
+                   (*mv)[i].molecule[j].atom[k].resName.toLatin1().data(),
+                   (*mv)[i].molecule[j].atom[k].chainID.toLatin1().data(),
+                   (*mv)[i].molecule[j].atom[k].resSeq.toLatin1().data()
                    );
          }
       }
@@ -7540,7 +7542,7 @@ bool US_Hydrodyn::install_new_version()
          {
             if ( backup[i] )
             {
-               printf("backing up %u (<%s> to <%s>\n", i, fcur[i].toAscii().data(), fprev[i].toAscii().data());
+               printf("backing up %u (<%s> to <%s>\n", i, fcur[i].toLatin1().data(), fprev[i].toLatin1().data());
                if (!qd.rename(fcur[i], fprev[i]) )
                {
                   QMessageBox::critical( 0, 
@@ -7556,7 +7558,7 @@ bool US_Hydrodyn::install_new_version()
             }
             if ( install[i] )
             {
-               printf("installing %u (<%s> to <%s>\n", i, fnew[i].toAscii().data(), fcur[i].toAscii().data());
+               printf("installing %u (<%s> to <%s>\n", i, fnew[i].toLatin1().data(), fcur[i].toLatin1().data());
                if (!qd.rename(fnew[i], fcur[i]) )
                {
                   QMessageBox::critical( 0, 
@@ -7759,7 +7761,7 @@ void US_Hydrodyn::save_state()
 
    state_lbl_pdb_file = le_pdb_file->text();
 
-   state_lb_model_rows.clear();
+   state_lb_model_rows.clear( );
    for ( unsigned int i = 0; i < (unsigned int)lb_model->count(); i++ )
    {
       state_lb_model_rows.push_back(lb_model->item(i)->text());
@@ -7813,7 +7815,7 @@ void US_Hydrodyn::restore_state()
    le_pdb_file_save_text = state_lbl_pdb_file;
    le_pdb_file->setText( state_lbl_pdb_file );
 
-   lb_model->clear();
+   lb_model->clear( );
    for ( unsigned int i = 0; i < state_lb_model_rows.size(); i++ )
    {
       lb_model->addItem(state_lb_model_rows[i]);
@@ -7827,41 +7829,41 @@ void US_Hydrodyn::restore_state()
 
 void US_Hydrodyn::clear_state()
 {
-   state_bead_model.clear();
-   state_bead_models.clear();
-   state_bead_models_as_loaded.clear();
-   state_active_atoms.clear();
-   state_residue_list.clear();
-   state_residue_list_no_pbr.clear();
-   state_multi_residue_map.clear();
-   state_valid_atom_map.clear();
-   state_residue_atom_hybrid_map.clear();
-   state_residue_atom_abb_hybrid_map.clear();
-   state_atom_counts.clear();
-   state_has_OXT.clear();
-   state_bead_exceptions.clear();
-   state_save_residue_list.clear();
-   state_save_residue_list_no_pbr.clear();
-   state_save_multi_residue_map.clear();
-   state_new_residues.clear();
-   state_molecules_residues_atoms.clear();
-   state_molecules_residue_name.clear();
-   state_molecules_idx_seq.clear();
-   state_molecules_residue_errors.clear();
-   state_molecules_residue_missing_counts.clear();
-   state_molecules_residue_missing_atoms.clear();
-   state_molecules_residue_missing_atoms_beads.clear();
-   state_molecules_residue_missing_atoms_skip.clear();
-   state_molecules_residue_min_missing.clear();
-   state_broken_chain_end.clear();
-   state_broken_chain_head.clear();
-   state_unknown_residues.clear();
-   state_use_residue.clear();
-   state_skip_residue.clear();
-   state_model_vector.clear();
-   state_model_vector_as_loaded.clear();
-   state_somo_processed.clear();
-   state_lb_model_rows.clear();
+   state_bead_model.clear( );
+   state_bead_models.clear( );
+   state_bead_models_as_loaded.clear( );
+   state_active_atoms.clear( );
+   state_residue_list.clear( );
+   state_residue_list_no_pbr.clear( );
+   state_multi_residue_map.clear( );
+   state_valid_atom_map.clear( );
+   state_residue_atom_hybrid_map.clear( );
+   state_residue_atom_abb_hybrid_map.clear( );
+   state_atom_counts.clear( );
+   state_has_OXT.clear( );
+   state_bead_exceptions.clear( );
+   state_save_residue_list.clear( );
+   state_save_residue_list_no_pbr.clear( );
+   state_save_multi_residue_map.clear( );
+   state_new_residues.clear( );
+   state_molecules_residues_atoms.clear( );
+   state_molecules_residue_name.clear( );
+   state_molecules_idx_seq.clear( );
+   state_molecules_residue_errors.clear( );
+   state_molecules_residue_missing_counts.clear( );
+   state_molecules_residue_missing_atoms.clear( );
+   state_molecules_residue_missing_atoms_beads.clear( );
+   state_molecules_residue_missing_atoms_skip.clear( );
+   state_molecules_residue_min_missing.clear( );
+   state_broken_chain_end.clear( );
+   state_broken_chain_head.clear( );
+   state_unknown_residues.clear( );
+   state_use_residue.clear( );
+   state_skip_residue.clear( );
+   state_model_vector.clear( );
+   state_model_vector_as_loaded.clear( );
+   state_somo_processed.clear( );
+   state_lb_model_rows.clear( );
 
    state_last_abb_msgs = "";
    state_options_log = "";
@@ -7878,7 +7880,7 @@ void US_Hydrodyn::rescale_bead_model()
 {
    for ( current_model = 0; current_model < (unsigned int)lb_model->count(); current_model++ ) 
    {
-      if ( lb_model->item(current_model)->isSelected( ) &&
+      if ( lb_model->item(current_model)->isSelected() &&
            somo_processed[current_model] ) 
       {
          bead_model = bead_models[current_model];
@@ -8116,7 +8118,7 @@ void US_Hydrodyn::config()
                                        us_tr( "Make a selection or press CANCEL" ),
                                        menu_opts, 
                                        last_menu, 
-                                       TRUE, 
+                                       true, 
                                        &ok,
                                        this );
 
@@ -8400,18 +8402,18 @@ void US_Hydrodyn::make_test_set()
                         QString( "" )
                         .sprintf(     
                                  "ATOM      1  %-3s %3s     1       0.000   0.000   0.000  1.00 14.00           %1s\n"
-                                 , atom_name.toAscii().data()
-                                 , residue_name.toAscii().data()
-                                 , atom_name_1.toAscii().data() );
+                                 , atom_name.toLatin1().data()
+                                 , residue_name.toLatin1().data()
+                                 , atom_name_1.toLatin1().data() );
 
                      ts << 
                         QString( "" )
                         .sprintf(     
                                  "ATOM      2  %-3s %3s     2      %2s.000   0.000   0.000  1.00 14.00           %1s\n"
-                                 , atom_name.toAscii().data()
-                                 , residue_name.toAscii().data()
-                                 , ds[ d ].toAscii().data()
-                                 , atom_name_1.toAscii().data() );
+                                 , atom_name.toLatin1().data()
+                                 , residue_name.toLatin1().data()
+                                 , ds[ d ].toLatin1().data()
+                                 , atom_name_1.toLatin1().data() );
                      f.close();
                   }
                   if ( !d )
@@ -8552,7 +8554,7 @@ bool US_Hydrodyn::select_from_directory_history( QString &dir, QWidget *parent, 
    //                                     , 
    //                                     use_history,
    //                                     current, 
-   //                                     FALSE, 
+   //                                     false, 
    //                                     &ok,
    //                                     parent ? parent : this );
    // if ( ok ) {

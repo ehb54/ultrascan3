@@ -16,8 +16,8 @@
 
 #undef DEBUG
 
-#define   FALSE   0
-#define   TRUE   1
+#define   false   0
+#define   true   1
 
 #define US_SAXS_UTIL_ASAB1_ERR_MEMORY_ALLOC -1
 
@@ -1666,8 +1666,8 @@ init2()
    for(int i = 0; i < nat; i++) {
       printf("%d %s %s %.4f %.4f %.4f %.4f %d %d\n", 
              i,
-             active_atoms[i]->name.toAscii().data(),
-             active_atoms[i]->resName.toAscii().data(),
+             active_atoms[i]->name.toLatin1().data(),
+             active_atoms[i]->resName.toLatin1().data(),
              dt[i].r, 
              dt[i].x, 
              dt[i].y, 

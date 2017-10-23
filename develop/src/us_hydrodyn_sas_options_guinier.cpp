@@ -65,7 +65,7 @@ void US_Hydrodyn_SasOptionsGuinier::setupGUI()
    //    lbl_cs_guinier = new QLabel(us_tr("CS and TV Guinier Options:"), this);
    //    lbl_cs_guinier->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    //    lbl_cs_guinier->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
-   //    lbl_cs_guinier->setPalette( USglobal->global_colors.cg_frame );
+   //    lbl_cs_guinier->setPalette( PALET_FRAME );
    //    lbl_cs_guinier->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
 
    lbl_cs_qRgmax = new QLabel(us_tr(" CS Guinier: Maximum q * Rc : "), this);

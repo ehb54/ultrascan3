@@ -6,7 +6,7 @@
 map < QString, QString > US_Json::split( QString qs )
 {
 #if defined( US_JSON_DEBUG )
-   cout << "call json with <" << qs.toAscii().data() << ">\n";
+   cout << "call json with <" << qs.toLatin1().data() << ">\n";
 #endif
 
    map < QString, QString > result;
@@ -29,13 +29,13 @@ map < QString, QString > US_Json::split( QString qs )
    {
       QChar qc = qs.at( i );
 #if defined( USJ_DEBUG )
-      cout << QString( "pos %1 char %2\n" ).arg( i ).arg( qc ).toAscii().data();
+      cout << QString( "pos %1 char %2\n" ).arg( i ).arg( qc ).toLatin1().data();
 #endif
 
       if ( qc == '{' && !in_json )
       {
 #if defined( USJ_DEBUG )
-         cout << QString( "start json toks %1 %2\n" ).arg( tok1 ).arg( tok2 ).toAscii().data();
+         cout << QString( "start json toks %1 %2\n" ).arg( tok1 ).arg( tok2 ).toLatin1().data();
 #endif
          in_json = true;
          in_tok1 = true;
@@ -45,7 +45,7 @@ map < QString, QString > US_Json::split( QString qs )
       if ( qc == '}' && in_json && !in_quote && !in_bracket && !in_brace )
       {
 #if defined( USJ_DEBUG )
-         cout << QString( "end json toks %1 %2\n" ).arg( tok1 ).arg( tok2 ).toAscii().data();
+         cout << QString( "end json toks %1 %2\n" ).arg( tok1 ).arg( tok2 ).toLatin1().data();
 #endif
          result[ tok1.trimmed() ] = tok2.trimmed();
          tok1 = "";
@@ -59,7 +59,7 @@ map < QString, QString > US_Json::split( QString qs )
       if ( qc == ':' && in_json && !in_quote && !in_bracket && !in_brace )
       {
 #if defined( USJ_DEBUG )
-         cout << QString( "colon found %1 %2\n" ).arg( tok1 ).arg( tok2 ).toAscii().data();
+         cout << QString( "colon found %1 %2\n" ).arg( tok1 ).arg( tok2 ).toLatin1().data();
 #endif
          if ( !in_tok1 )
          {
@@ -74,7 +74,7 @@ map < QString, QString > US_Json::split( QString qs )
       if ( qc == '[' && in_json && !in_quote && in_tok2 && !in_bracket && !in_brace && !tok2.length() )
       {
 #if defined( USJ_DEBUG )
-         cout << QString( "open bracket found %1 %2\n" ).arg( tok1 ).arg( tok2 ).toAscii().data();
+         cout << QString( "open bracket found %1 %2\n" ).arg( tok1 ).arg( tok2 ).toLatin1().data();
 #endif
          in_bracket = true;
          continue;
@@ -83,7 +83,7 @@ map < QString, QString > US_Json::split( QString qs )
       if ( qc == ']' && in_json && !in_quote && in_tok2 && in_bracket && !in_brace )
       {
 #if defined( USJ_DEBUG )
-         cout << QString( "close bracket found %1 %2\n" ).arg( tok1 ).arg( tok2 ).toAscii().data();
+         cout << QString( "close bracket found %1 %2\n" ).arg( tok1 ).arg( tok2 ).toLatin1().data();
 #endif
          in_bracket = false;
          continue;
@@ -119,7 +119,7 @@ map < QString, QString > US_Json::split( QString qs )
       if ( qc == '{' && in_json && !in_quote && in_tok2 && !in_bracket && !in_brace && !tok2.length() )
       {
 #if defined( USJ_DEBUG )
-         cout << QString( "open bracket found %1 %2\n" ).arg( tok1 ).arg( tok2 ).toAscii().data();
+         cout << QString( "open bracket found %1 %2\n" ).arg( tok1 ).arg( tok2 ).toLatin1().data();
 #endif
          in_brace = true;
          continue;
@@ -128,7 +128,7 @@ map < QString, QString > US_Json::split( QString qs )
       if ( qc == '}' && in_json && !in_quote && in_tok2 && in_brace && !in_bracket )
       {
 #if defined( USJ_DEBUG )
-         cout << QString( "close bracket found %1 %2\n" ).arg( tok1 ).arg( tok2 ).toAscii().data();
+         cout << QString( "close bracket found %1 %2\n" ).arg( tok1 ).arg( tok2 ).toLatin1().data();
 #endif
          in_brace = false;
          continue;
@@ -137,7 +137,7 @@ map < QString, QString > US_Json::split( QString qs )
       if ( qc == ',' && in_json && !in_quote && !in_bracket && !in_brace )
       {
 #if defined( USJ_DEBUG )
-         cout << QString( "comma found %1 %2\n" ).arg( tok1 ).arg( tok2 ).toAscii().data();
+         cout << QString( "comma found %1 %2\n" ).arg( tok1 ).arg( tok2 ).toLatin1().data();
 #endif
          if ( !in_tok2 )
          {
@@ -155,7 +155,7 @@ map < QString, QString > US_Json::split( QString qs )
       if ( qc == '"' && in_json && !in_bracket && !in_brace )
       {
 #if defined( USJ_DEBUG )
-         cout << QString( "quote found %1 %2\n" ).arg( tok1 ).arg( tok2 ).toAscii().data();
+         cout << QString( "quote found %1 %2\n" ).arg( tok1 ).arg( tok2 ).toLatin1().data();
 #endif
          if ( in_quote )
          {
@@ -172,7 +172,7 @@ map < QString, QString > US_Json::split( QString qs )
       if ( in_json )
       {
 #if defined( USJ_DEBUG )
-         cout << QString( "appending %1 %2\n" ).arg( tok1 ).arg( tok2 ).toAscii().data();
+         cout << QString( "appending %1 %2\n" ).arg( tok1 ).arg( tok2 ).toLatin1().data();
 #endif
          if ( in_tok1 )
          {
@@ -193,7 +193,7 @@ map < QString, QString > US_Json::split( QString qs )
          it != result.end();
          it++ )
    {
-      cout << QString( "Json <%1>:<%2>\n" ).arg( it->first ).arg( it->second ).toAscii().data();
+      cout << QString( "Json <%1>:<%2>\n" ).arg( it->first ).arg( it->second ).toLatin1().data();
    }
 #endif
 
@@ -223,7 +223,7 @@ QString US_Json::compose( map < QString, QString > &mqq )
          + "," 
          ;
    }
-#ifdef QT4
+#if QT_VERSION >= 0x040000
    result.chop( 1 );
    result += "}";
 #else
@@ -231,7 +231,7 @@ QString US_Json::compose( map < QString, QString > &mqq )
 #endif
 
 #if defined( USJ_DEBUG ) || defined (USJ_DEBUG_SUMMARY )
-   cout << QString( "compose summary:\n%1\n" ).arg( result ).toAscii().data();
+   cout << QString( "compose summary:\n%1\n" ).arg( result ).toLatin1().data();
 #endif
    return result;
 }

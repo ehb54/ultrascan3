@@ -83,8 +83,8 @@ US_ImageViewer::US_ImageViewer( QWidget *parent, const char *name, int wFlags )
    ss = options->insertItem( "Smooth scaling" );
    cc = options->insertItem( "Use color context" );
    if ( QApplication::colorSpec() == QApplication::ManyColor )
-      options->setItemEnabled( cc, FALSE );
-   options->setCheckable( TRUE );
+      options->setItemEnabled( cc, false );
+   options->setCheckable( true );
    setMenuItemFlags();
 
    menubar->insertSeparator();
@@ -99,7 +99,7 @@ US_ImageViewer::US_ImageViewer( QWidget *parent, const char *name, int wFlags )
    status->setFrameStyle( Q3Frame::WinPanel | Q3Frame::Sunken );
    status->setFixedHeight( fontMetrics().height() + 4 );
 
-   setMouseTracking( TRUE );
+   setMouseTracking( true );
 }
 
 US_ImageViewer::~US_ImageViewer()
@@ -251,12 +251,12 @@ void US_ImageViewer::updateStatus()
             int nalpha=0;
 
             for (i=0; i<256; i++)
-               alpha[i] = FALSE;
+               alpha[i] = false;
 
             for (i=0; i<image.numColors(); i++) {
                int alevel = image.color(i) >> 24;
                if (!alpha[alevel]) {
-                  alpha[alevel] = TRUE;
+                  alpha[alevel] = true;
                   nalpha++;
                }
             }
@@ -335,13 +335,13 @@ void US_ImageViewer::openFile(QString filename)
   format was unknown it will resize the widget to fit the errorText
   message (see above) displayed in the current font.
 
-  Returns TRUE if the image was successfully loaded.
+  Returns true if the image was successfully loaded.
 */
 
 bool US_ImageViewer::loadImage( const QString& fileName )
 {
    filename = fileName;
-   bool ok = FALSE;
+   bool ok = false;
    if ( !filename.isEmpty() ) 
    {
       QApplication::setOverrideCursor( Qt::waitCursor ); // this might take time
@@ -381,9 +381,9 @@ bool US_ImageViewer::loadImage( const QString& fileName )
 
 bool US_ImageViewer::reconvertImage()
 {
-   bool success = FALSE;
+   bool success = false;
 
-   if ( image.isNull() ) return FALSE;
+   if ( image.isNull() ) return false;
 
    if ( alloc_context ) {
       QColor::destroyAllocContext( alloc_context );
@@ -402,7 +402,7 @@ bool US_ImageViewer::reconvertImage()
       pmScaled = QPixmap();
       scale();
       resize( width(), height() );
-      success = TRUE;                         // load successful
+      success = true;                         // load successful
    } else {
       pm.resize(0,0);                         // couldn't load image
    }
@@ -413,7 +413,7 @@ bool US_ImageViewer::reconvertImage()
    if ( useColorContext() )
       QColor::leaveAllocContext();
 
-   return success;                             // TRUE if loaded OK
+   return success;                             // true if loaded OK
 }
 
 bool US_ImageViewer::smooth() const
@@ -488,10 +488,10 @@ bool US_ImageViewer::convertEvent( QMouseEvent* e, int& x, int& y)
          x = nx;
          y = ny;
          updateStatus();
-         return TRUE;
+         return true;
       }
    }
-   return FALSE;
+   return false;
 }
 
 void US_ImageViewer::mousePressEvent( QMouseEvent *e )
@@ -513,7 +513,7 @@ void US_ImageViewer::mouseMoveEvent( QMouseEvent *e )
    if (convertEvent(e,pickx,picky)) {
       updateStatus();
       if ((e->state()&Qt::LeftButton)) {
-         may_be_other = FALSE;
+         may_be_other = false;
          if ( clickx >= 0 && other) {
             copyFrom(other);
          }
@@ -547,7 +547,7 @@ void US_ImageViewer::giveHelp()
       helptext += "</blockquote>";
 
       helpmsg = new QMessageBox( "Help", helptext,
-                                 QMessageBox::Information, QMessageBox::Ok, 0, 0, 0, 0, FALSE );
+                                 QMessageBox::Information, QMessageBox::Ok, 0, 0, 0, 0, false );
    }
    helpmsg->show();
    helpmsg->raise();

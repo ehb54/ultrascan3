@@ -1,7 +1,7 @@
 #ifndef US_GUI_SETTINGS_H
 #define US_GUI_SETTINGS_H
 
-#include <QtGui>
+#include <QtWidgets>
 
 #include "../include/us3_extern.h"
 

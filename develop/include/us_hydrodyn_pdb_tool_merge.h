@@ -151,7 +151,7 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool_Merge : public QFrame
                                          bool just_selected = true );
 
 #ifdef WIN32
-# if !defined( QT4 )
+# if QT_VERSION < 0x040000
   #pragma warning ( disable: 4251 )
 # endif
 #endif
@@ -166,7 +166,7 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool_Merge : public QFrame
       map < QString, bool >         cache_use_start;
 
 #ifdef WIN32
-# if !defined( QT4 )
+# if QT_VERSION < 0x040000
   #pragma warning ( default: 4251 )
 # endif
 #endif
@@ -222,7 +222,7 @@ class US_EXTERN US_Hydrodyn_Pdb_Tool_Merge : public QFrame
       void only_closest();
       void delete_row();
 
-      void clear();
+      void clear( );
       void load();
       void validate();
       void csv_save();

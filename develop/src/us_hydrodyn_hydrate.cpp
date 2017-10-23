@@ -535,9 +535,9 @@ int US_Hydrodyn::pdb_asa_for_saxs_hydrate()
             // this_atom->bead_positioner = false;
             this_atom->normalized_ot_is_valid = false;
             fprintf(asaf, "%s\t%s\t%s\t%.2f\n",
-                    this_atom->name.toAscii().data(),
-                    this_atom->resName.toAscii().data(),
-                    this_atom->resSeq.toAscii().data(),
+                    this_atom->name.toLatin1().data(),
+                    this_atom->resName.toLatin1().data(),
+                    this_atom->resSeq.toLatin1().data(),
                     this_atom->asa);
 
             for (unsigned int m = 0; m < 3; m++) {
@@ -596,8 +596,8 @@ int US_Hydrodyn::pdb_asa_for_saxs_hydrate()
                if ( advanced_config.debug_1 )
                {
                   printf("pass 2 active %s %s %d pm %d %d\n",
-                         this_atom->name.toAscii().data(),
-                         this_atom->resName.toAscii().data(),
+                         this_atom->name.toLatin1().data(),
+                         this_atom->resName.toLatin1().data(),
                          this_atom->serial,
                          this_atom->placing_method,
                          this_atom->bead_assignment); fflush(stdout);
@@ -634,8 +634,8 @@ int US_Hydrodyn::pdb_asa_for_saxs_hydrate()
                        advanced_config.debug_2 )
                   {
                      printf("pass 2 active %s %s %d new bead chain %d\n",
-                            this_atom->name.toAscii().data(),
-                            this_atom->resName.toAscii().data(),
+                            this_atom->name.toLatin1().data(),
+                            this_atom->resName.toLatin1().data(),
                             this_atom->serial,
                             this_atom->chain); fflush(stdout);
                   }
@@ -681,8 +681,8 @@ int US_Hydrodyn::pdb_asa_for_saxs_hydrate()
                   if ( advanced_config.debug_1 )
                   {
                      printf("pass 2 active %s %s %d not a new bead\n",
-                            this_atom->name.toAscii().data(),
-                            this_atom->resName.toAscii().data(),
+                            this_atom->name.toLatin1().data(),
+                            this_atom->resName.toLatin1().data(),
                             this_atom->serial); fflush(stdout);
                   }
                   if (this_atom->bead_positioner) {
@@ -690,8 +690,8 @@ int US_Hydrodyn::pdb_asa_for_saxs_hydrate()
                      if (last_main_bead->bead_positioner &&
                          this_atom->placing_method == 1) {
                         fprintf(stderr, "warning: 2 positioners in bead %s %s %d\n",
-                                last_main_bead->name.toAscii().data(),
-                                last_main_bead->resName.toAscii().data(),
+                                last_main_bead->name.toLatin1().data(),
+                                last_main_bead->resName.toLatin1().data(),
                                 last_main_bead->serial);
                      }
                      last_main_bead->bead_positioner = true;
@@ -726,8 +726,8 @@ int US_Hydrodyn::pdb_asa_for_saxs_hydrate()
                if ( advanced_config.debug_1 )
                {
                   printf("atom %s %s p_atom.hybrid.mw %f atom.mw %f\n",
-                         this_atom->name.toAscii().data(),
-                         this_atom->resName.toAscii().data(),
+                         this_atom->name.toLatin1().data(),
+                         this_atom->resName.toLatin1().data(),
                          this_atom->p_atom->hybrid.mw,
                          this_atom->mw
                          );
@@ -770,11 +770,11 @@ int US_Hydrodyn::pdb_asa_for_saxs_hydrate()
                   if ( advanced_config.debug_3 )
                   {
                      printf("notice: atom %s %s %d excluded from cog calculation in bead %s %s %d\n",
-                            this_atom->name.toAscii().data(),
-                            this_atom->resName.toAscii().data(),
+                            this_atom->name.toLatin1().data(),
+                            this_atom->resName.toLatin1().data(),
                             this_atom->serial,
-                            use_atom->name.toAscii().data(),
-                            use_atom->resName.toAscii().data(),
+                            use_atom->name.toLatin1().data(),
+                            use_atom->resName.toLatin1().data(),
                             use_atom->serial);
                   }
                }
@@ -784,8 +784,8 @@ int US_Hydrodyn::pdb_asa_for_saxs_hydrate()
                   if (use_atom->bead_positioner &&
                       this_atom->placing_method == 1) {
                      fprintf(stderr, "warning: 2 or more positioners in bead %s %s %d\n",
-                             use_atom->name.toAscii().data(),
-                             use_atom->resName.toAscii().data(),
+                             use_atom->name.toLatin1().data(),
+                             use_atom->resName.toLatin1().data(),
                              use_atom->serial);
                   }
                   use_atom->bead_positioner = true;
@@ -869,8 +869,8 @@ int US_Hydrodyn::pdb_asa_for_saxs_hydrate()
                       this_atom->active,
                       this_atom->is_bead,
                       this_atom->chain,
-                      this_atom->name.toAscii().data(),
-                      this_atom->resName.toAscii().data(),
+                      this_atom->name.toLatin1().data(),
+                      this_atom->resName.toLatin1().data(),
                       this_atom->serial,
                       this_atom->placing_method); fflush(stdout);
             }
@@ -902,8 +902,8 @@ int US_Hydrodyn::pdb_asa_for_saxs_hydrate()
                if ( advanced_config.debug_1 )
                {
                   printf("placed N1, found break, turned off placed N1 %s %s\n", 
-                         this_atom->resName.toAscii().data(),
-                         this_atom->resSeq.toAscii().data()
+                         this_atom->resName.toLatin1().data(),
+                         this_atom->resSeq.toLatin1().data()
                          );
                }
             }
@@ -946,11 +946,11 @@ int US_Hydrodyn::pdb_asa_for_saxs_hydrate()
                if ( advanced_config.debug_1 )
                {
                   printf("pass 2b active OXT %s %s %d last %s %s %d mw org %f mw new %f\n",
-                         this_atom->name.toAscii().data(),
-                         this_atom->resName.toAscii().data(),
+                         this_atom->name.toLatin1().data(),
+                         this_atom->resName.toLatin1().data(),
                          this_atom->serial,
-                         last_main_chain_bead->name.toAscii().data(),
-                         last_main_chain_bead->resName.toAscii().data(),
+                         last_main_chain_bead->name.toLatin1().data(),
+                         last_main_chain_bead->resName.toLatin1().data(),
                          last_main_chain_bead->serial,
                          last_main_chain_bead->bead_ref_mw,
                          this_atom->bead_ref_mw
@@ -1004,8 +1004,8 @@ int US_Hydrodyn::pdb_asa_for_saxs_hydrate()
                if ( advanced_config.debug_1 )
                {
                   printf("pass 2b active, bead, chain == 0 %s %s %d pm %d\n",
-                         this_atom->name.toAscii().data(),
-                         this_atom->resName.toAscii().data(),
+                         this_atom->name.toLatin1().data(),
+                         this_atom->resName.toLatin1().data(),
                          this_atom->serial,
                          this_atom->placing_method); fflush(stdout);
                }
@@ -1022,8 +1022,8 @@ int US_Hydrodyn::pdb_asa_for_saxs_hydrate()
                   if ( advanced_config.debug_1 )
                   {
                      printf("pass 2b active PRO %s %s %d pm %d\n",
-                            this_atom->name.toAscii().data(),
-                            this_atom->resName.toAscii().data(),
+                            this_atom->name.toLatin1().data(),
+                            this_atom->resName.toLatin1().data(),
                             this_atom->serial,
                             this_atom->placing_method); fflush(stdout);
                   }
@@ -1067,9 +1067,9 @@ int US_Hydrodyn::pdb_asa_for_saxs_hydrate()
                if ( advanced_config.debug_1 )
                {
                   printf("pass 2b broken end adjustment %s %s %s org mw %.4f vol %.4f\n",
-                         this_atom->name.toAscii().data(),
-                         this_atom->resName.toAscii().data(),
-                         this_atom->resSeq.toAscii().data(),
+                         this_atom->name.toLatin1().data(),
+                         this_atom->resName.toLatin1().data(),
+                         this_atom->resSeq.toLatin1().data(),
                          this_atom->bead_ref_mw,
                          this_atom->bead_ref_volume);
                }
@@ -1089,9 +1089,9 @@ int US_Hydrodyn::pdb_asa_for_saxs_hydrate()
                   if ( advanced_config.debug_1 )
                   {
                      printf("pass 2b broken end adjustment %s %s %s new mw %.4f vol %.4f\n",
-                            this_atom->name.toAscii().data(),
-                            this_atom->resName.toAscii().data(),
-                            this_atom->resSeq.toAscii().data(),
+                            this_atom->name.toLatin1().data(),
+                            this_atom->resName.toLatin1().data(),
+                            this_atom->resSeq.toLatin1().data(),
                             this_atom->bead_ref_mw,
                             this_atom->bead_ref_volume);
                   }
@@ -1167,8 +1167,8 @@ int US_Hydrodyn::pdb_asa_for_saxs_hydrate()
                 this_atom->is_bead) {
 #if defined(DEBUG)
                printf("pass 2c hydration %s %s %d pm %d\n",
-                      this_atom->name.toAscii().data(),
-                      this_atom->resName.toAscii().data(),
+                      this_atom->name.toLatin1().data(),
+                      this_atom->resName.toLatin1().data(),
                       this_atom->serial,
                       this_atom->placing_method); fflush(stdout);
 #endif
@@ -1206,8 +1206,8 @@ int US_Hydrodyn::pdb_asa_for_saxs_hydrate()
                 this_atom->chain == 0) {
 # if defined(DEBUG)
                printf("pass 2d mc_asa %s %s %d pm %d\n",
-                      this_atom->name.toAscii().data(),
-                      this_atom->resName.toAscii().data(),
+                      this_atom->name.toLatin1().data(),
+                      this_atom->resName.toLatin1().data(),
                       this_atom->serial,
                       this_atom->placing_method); fflush(stdout);
 # endif
@@ -1249,8 +1249,8 @@ int US_Hydrodyn::pdb_asa_for_saxs_hydrate()
 
 #if defined(DEBUG)
                printf("pass 3 active is bead %s %s %d\n",
-                      this_atom->name.toAscii().data(),
-                      this_atom->resName.toAscii().data(),
+                      this_atom->name.toLatin1().data(),
+                      this_atom->resName.toLatin1().data(),
                       this_atom->serial); fflush(stdout);
 #endif
                for (unsigned int m = 0; m < 3; m++) {
@@ -1267,8 +1267,8 @@ int US_Hydrodyn::pdb_asa_for_saxs_hydrate()
 
 #if defined(DEBUG)
                   printf("pass 3 active is bead %s %s %d bead assignment %d placing method %d\n",
-                         this_atom->name.toAscii().data(),
-                         this_atom->resName.toAscii().data(),
+                         this_atom->name.toLatin1().data(),
+                         this_atom->resName.toLatin1().data(),
                          this_atom->serial,
                          this_atom->bead_assignment,
                          this_atom->placing_method
@@ -1280,8 +1280,8 @@ int US_Hydrodyn::pdb_asa_for_saxs_hydrate()
                      this_atom->bead_coordinate = this_atom->bead_cog_coordinate;
                      // if (this_atom->bead_positioner) {
                      // fprintf(stderr, "warning: this bead had a atom claiming position & a bead placing method of cog! %s %s %d\n",
-                     //   this_atom->name.toAscii().data(),
-                     //   this_atom->resName.toAscii().data(),
+                     //   this_atom->name.toLatin1().data(),
+                     //   this_atom->resName.toLatin1().data(),
                      //   this_atom->serial);
                      // }
                      break;
@@ -1295,8 +1295,8 @@ int US_Hydrodyn::pdb_asa_for_saxs_hydrate()
                      this_atom->bead_coordinate = this_atom->bead_cog_coordinate;
                      fprintf(stderr, "warning: unknown bead placing method %d %s %s %d <using cog!>\n",
                              this_atom->placing_method,
-                             this_atom->name.toAscii().data(),
-                             this_atom->resName.toAscii().data(),
+                             this_atom->name.toLatin1().data(),
+                             this_atom->resName.toLatin1().data(),
                              this_atom->serial);
                      break;
                   }
@@ -1304,17 +1304,17 @@ int US_Hydrodyn::pdb_asa_for_saxs_hydrate()
                else 
                {
                   fprintf(stderr, "serious internal error 1 on %s %s %d, quitting\n",
-                          this_atom->name.toAscii().data(),
-                          this_atom->resName.toAscii().data(),
+                          this_atom->name.toLatin1().data(),
+                          this_atom->resName.toLatin1().data(),
                           this_atom->serial);
                   exit(-1);
                   break;
                }
 #if defined(DEBUG) || defined(OLD_ASAB1_SC_COMPUTE)
                printf("pass 3 active is bead %s %s %s checkpoint 1\n",
-                      this_atom->name.toAscii().data(),
-                      this_atom->resName.toAscii().data(),
-                      this_atom->resSeq.toAscii().data()); fflush(stdout);
+                      this_atom->name.toLatin1().data(),
+                      this_atom->resName.toLatin1().data(),
+                      this_atom->resSeq.toLatin1().data()); fflush(stdout);
 #endif
                this_atom->visibility = (this_atom->bead_asa >= asa.hydrate_threshold);
 
@@ -1332,8 +1332,8 @@ int US_Hydrodyn::pdb_asa_for_saxs_hydrate()
 
 #if defined(DEBUG)
                printf("pass 3 active is bead %s %s %d checkpoint 2\n",
-                      this_atom->name.toAscii().data(),
-                      this_atom->resName.toAscii().data(),
+                      this_atom->name.toLatin1().data(),
+                      this_atom->resName.toLatin1().data(),
                       this_atom->serial); fflush(stdout);
 #endif
                if (!create_beads_normally ||
@@ -1352,8 +1352,8 @@ int US_Hydrodyn::pdb_asa_for_saxs_hydrate()
                }
 #if defined(DEBUG)
                printf("pass 3 active is bead %s %s %d checkpoint 3\n",
-                      this_atom->name.toAscii().data(),
-                      this_atom->resName.toAscii().data(),
+                      this_atom->name.toLatin1().data(),
+                      this_atom->resName.toLatin1().data(),
                       this_atom->serial); fflush(stdout);
 #endif
 
@@ -1406,9 +1406,9 @@ int US_Hydrodyn::pdb_asa_for_saxs_hydrate()
                    "[%f,%f,%f]~[%f,%f,%f]~[%f, %f, %f]\n",
 
                    i, j, k,
-                   this_atom->name.toAscii().data(),
-                   this_atom->resName.toAscii().data(),
-                   this_atom->chainID.toAscii().data(),
+                   this_atom->name.toLatin1().data(),
+                   this_atom->resName.toLatin1().data(),
+                   this_atom->chainID.toLatin1().data(),
 
                    this_atom->coordinate.axis[0],
                    this_atom->coordinate.axis[1],
@@ -1464,12 +1464,12 @@ int US_Hydrodyn::pdb_asa_for_saxs_hydrate()
 
 void US_Hydrodyn::build_to_hydrate()
 {
-   to_hydrate.clear();
-   to_hydrate_pointmaps.clear();
+   to_hydrate.clear( );
+   to_hydrate_pointmaps.clear( );
 
-   residue_asa.clear();
-   residue_asa_sc.clear();
-   residue_asa_mc.clear();
+   residue_asa.clear( );
+   residue_asa_sc.clear( );
+   residue_asa_mc.clear( );
 
    unsigned int i = current_model;
 
@@ -1592,7 +1592,7 @@ void US_Hydrodyn::build_to_hydrate()
 bool US_Hydrodyn::compute_to_hydrate_dihedrals( QString &error_msg )
 {
    puts("computing to hydrate dihedrals");
-   to_hydrate_dihedrals.clear();
+   to_hydrate_dihedrals.clear( );
 
    vector < point > p(4);
    float dihedral;
@@ -1879,13 +1879,13 @@ bool US_Hydrodyn::load_rotamer( QString &error_msg )
 
    editor->append( us_tr("Reading hydrated rotamer file\n") );
    qApp->processEvents();
-   rotamers.clear();
-   rotated_rotamers.clear();
-   dihedral_atoms.clear();
+   rotamers.clear( );
+   rotated_rotamers.clear( );
+   dihedral_atoms.clear( );
 
-   pointmap_atoms.clear();
-   pointmap_atoms_dest.clear();
-   pointmap_atoms_ref_residue.clear();
+   pointmap_atoms.clear( );
+   pointmap_atoms_dest.clear( );
+   pointmap_atoms_ref_residue.clear( );
 
    QFile f( saxs_options.default_rotamer_filename );
    if ( !f.exists() )
@@ -1934,7 +1934,7 @@ bool US_Hydrodyn::load_rotamer( QString &error_msg )
       }
       if ( qsl[ i ].length() > 30 && qsl[ i ].contains( rx_atom ) )
       {
-#ifdef QT4
+#if QT_VERSION >= 0x040000
          qsl[ i ].data()[ 22 ] = ' ';
 #else
          qsl[ i ].at( 22 ) = ' ';
@@ -2296,8 +2296,8 @@ bool US_Hydrodyn::load_rotamer( QString &error_msg )
                      .sprintf(     
                               "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
                               ++apos,
-                              rotated_rotamers[ name ][ jj ][ j ].side_chain[ k ].name.toAscii().data(),
-                              name.left( 3 ).toAscii().data(),
+                              rotated_rotamers[ name ][ jj ][ j ].side_chain[ k ].name.toLatin1().data(),
+                              name.left( 3 ).toLatin1().data(),
                               "A",
                               1,
                               rotated_rotamers[ name ][ jj ][ j ].side_chain[ k ].coordinate.axis[ 0 ],
@@ -2315,7 +2315,7 @@ bool US_Hydrodyn::load_rotamer( QString &error_msg )
                      .sprintf(     
                               "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
                               ++apos,
-                              rotated_rotamers[ name ][ jj ][ j ].waters[ k ].name.toAscii().data(),
+                              rotated_rotamers[ name ][ jj ][ j ].waters[ k ].name.toLatin1().data(),
                               "WAT",
                               "B",
                               2,
@@ -2462,7 +2462,7 @@ bool US_Hydrodyn::load_rotamer( QString &error_msg )
             if ( four_atoms.size() == 4 )
             {
                dihedral_atoms[ res ].push_back( four_atoms );
-               four_atoms.clear();
+               four_atoms.clear( );
             }
          }
          if ( four_atoms.size() )
@@ -2498,9 +2498,9 @@ bool US_Hydrodyn::load_rotamer( QString &error_msg )
          tmp_rotamer.name = qsl_line[ 1 ];
          tmp_rotamer.residue = tmp_rotamer.name.left( 3 );
          tmp_rotamer.extension = tmp_rotamer.name.right( 7 );
-         tmp_rotamer.side_chain.clear();
-         tmp_rotamer.waters.clear();
-         tmp_rotamer.atom_map.clear();
+         tmp_rotamer.side_chain.clear( );
+         tmp_rotamer.waters.clear( );
+         tmp_rotamer.atom_map.clear( );
          in_rotamer = true;
          in_rotamer_waters = false;
          continue;
@@ -2615,7 +2615,7 @@ bool US_Hydrodyn::load_rotamer( QString &error_msg )
 
 
    // compute totals
-   hydrate_count.clear();
+   hydrate_count.clear( );
    for ( map < QString, vector < vector < QString > > >::iterator it = pointmap_atoms.begin();
          it != pointmap_atoms.end();
          it++ )
@@ -2677,7 +2677,7 @@ bool US_Hydrodyn::compute_rotamer_dihedrals( QString &error_msg )
             .arg( it->first )
             .arg( it->second[ i ].extension );
 #endif
-         it->second[ i ].dihedral_angles.clear();
+         it->second[ i ].dihedral_angles.clear( );
          // process each dihedral chain, giving 4 points
          for ( unsigned int j = 0; j < (unsigned int) dihedral_atoms[ it->first ].size(); j++ )
          {
@@ -2913,7 +2913,7 @@ QString US_Hydrodyn::list_rotamers( bool coords )
 
 bool US_Hydrodyn::compute_best_fit_rotamer( QString &error_msg )
 {
-   best_fit_rotamer.clear();
+   best_fit_rotamer.clear( );
 
    QRegExp rx_expand_mapkey("^(.+)~(.+)~(.*)$");
 
@@ -2989,7 +2989,7 @@ QString US_Hydrodyn::list_best_fit_rotamer()
 
 bool US_Hydrodyn::setup_pointmap_rotamers( QString &error_msg )
 {
-   pointmap_rotamers.clear();
+   pointmap_rotamers.clear( );
 
    QRegExp rx_expand_mapkey("^(.+)~(.+)~(.*)$");
 
@@ -3064,14 +3064,14 @@ bool US_Hydrodyn::compute_water_positioning_atoms( QString & error_msg )
    {
       for ( unsigned int i = 0; i < (unsigned int) it->second.size(); i++ )
       {
-         it->second[ i ].water_positioning_atoms.clear();
+         it->second[ i ].water_positioning_atoms.clear( );
 
          // for each water
 
          for ( unsigned int j = 0; j < (unsigned int) it->second[ i ].waters.size(); j++ )
          {
-            lsf.clear();
-            wpa.clear();
+            lsf.clear( );
+            wpa.clear( );
             
             // find the distance to each side chain atom
             for ( unsigned int k = 0; k < (unsigned int) it->second[ i ].side_chain.size(); k++ )
@@ -3197,7 +3197,7 @@ bool US_Hydrodyn::compute_waters_to_add( QString &error_msg, bool quiet )
    qApp->processEvents();
    puts("Transforming waters to add to pdb coordinates");
 
-   steric_clash_summary.clear();
+   steric_clash_summary.clear( );
 
    count_waters           = 0;
    count_waters_added     = 0;
@@ -3205,10 +3205,10 @@ bool US_Hydrodyn::compute_waters_to_add( QString &error_msg, bool quiet )
 
    vector < point > p1;
    vector < point > p2;
-   waters_to_add.clear();
-   waters_source.clear();
-   alt_waters_to_add.clear();
-   alt_waters_source.clear();
+   waters_to_add.clear( );
+   waters_source.clear( );
+   alt_waters_to_add.clear( );
+   alt_waters_source.clear( );
 
    QRegExp rx_expand_mapkey("^(.+)~(.+)~(.*)$");
 
@@ -3677,16 +3677,16 @@ QString US_Hydrodyn::list_steric_clash_recheck( bool quiet )
       residue_list[ multi_residue_map[ "WAT" ][ 0 ] ].r_atom[ 0 ].hybrid.radius : 1.401;
 
    map < QString, unsigned int > steric_clash_recheck_summary;
-   hydrate_clash_log.clear();
+   hydrate_clash_log.clear( );
    QString hydrate_clash_detail;
    // cout << "steric clash recheck:\n";
 
    hydrate_clash_detail +=
       "Water,clash,radius water,radius clash,sum radii,distance,overlap,percent overlap,water x,clash x, water y, clash y, water z, clash z, source, source2\n";
 
-   hydrate_clash_map_structure .clear();
-   hydrate_clash_map_rtmr_water.clear();
-   hydrate_clash_map_pm_water  .clear();
+   hydrate_clash_map_structure .clear( );
+   hydrate_clash_map_rtmr_water.clear( );
+   hydrate_clash_map_pm_water  .clear( );
 
    map < QString, bool > counted;
 
@@ -3956,7 +3956,7 @@ QString US_Hydrodyn::list_steric_clash_recheck( bool quiet )
                .arg( QString( "" ).sprintf( "%.2f", ( double ) count_waters_added * 18e0 / model_vector[ current_model ].mw ) )
                );
 
-   last_steric_clash_log.clear();
+   last_steric_clash_log.clear( );
    last_steric_clash_log <<
       QString( "REMARK MW %1 Daltons\n" ).arg( model_vector[ current_model ].mw );
 
@@ -4047,7 +4047,7 @@ QString US_Hydrodyn::list_steric_clash_recheck( bool quiet )
       }
    }
 
-   hydrate_clash_log.clear();
+   hydrate_clash_log.clear( );
    return qs;
 }
 
@@ -4103,16 +4103,16 @@ bool US_Hydrodyn::write_pdb_with_waters( QString &error_msg, bool quiet )
             .sprintf(     
                      "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
                      this_atom->serial,
-                     this_atom->orgName.toAscii().data(),
-                     this_atom->resName.toAscii().data(),
-                     this_atom->chainID.toAscii().data(),
+                     this_atom->orgName.toLatin1().data(),
+                     this_atom->resName.toLatin1().data(),
+                     this_atom->chainID.toLatin1().data(),
                      this_atom->resSeq.toUInt(),
                      this_atom->coordinate.axis[ 0 ],
                      this_atom->coordinate.axis[ 1 ],
                      this_atom->coordinate.axis[ 2 ],
                      this_atom->occupancy,
                      this_atom->tempFactor,
-                     this_atom->element.toAscii().data()
+                     this_atom->element.toLatin1().data()
                      );
          chains_used[ this_atom->chainID ] = true;
 
@@ -4180,7 +4180,7 @@ bool US_Hydrodyn::write_pdb_with_waters( QString &error_msg, bool quiet )
             .sprintf(     
                      "ATOM  %5d  OW  WAT %1s%4d    %8.3f%8.3f%8.3f  1.00  0.00           O  \n",
                      ++atom_number,
-                     chainID.toAscii().data(),
+                     chainID.toLatin1().data(),
                      ++residue_number,
                      it->second[ i ].axis[ 0 ],
                      it->second[ i ].axis[ 1 ],
@@ -4247,9 +4247,9 @@ bool US_Hydrodyn::write_pdb_with_waters( QString &error_msg, bool quiet )
          
          model_viewer( fname, "-script" );
       }
-      hydrate_clash_map_structure .clear();
-      hydrate_clash_map_rtmr_water.clear();
-      hydrate_clash_map_pm_water  .clear();
+      hydrate_clash_map_structure .clear( );
+      hydrate_clash_map_rtmr_water.clear( );
+      hydrate_clash_map_pm_water  .clear( );
    }
 
    return true;
@@ -4366,7 +4366,7 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
 
    editor_msg( "blue", us_tr( "NOTICE: only main chain CA-C-N currenly implemented" ) );
 
-   steric_clash_summary.clear();
+   steric_clash_summary.clear( );
 
    count_waters           = 0;
    count_waters_added     = 0;
@@ -4374,10 +4374,10 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
 
    vector < point > p1;
    vector < point > p2;
-   waters_to_add.clear();
-   waters_source.clear();
-   alt_waters_to_add.clear();
-   alt_waters_source.clear();
+   waters_to_add.clear( );
+   waters_source.clear( );
+   alt_waters_to_add.clear( );
+   alt_waters_source.clear( );
 
    QRegExp rx_expand_mapkey("^(.+)~(.+)~(.*)$");
 
@@ -4895,11 +4895,11 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
    map < QString, vector < point > >  base_waters_to_add        = waters_to_add;
    map < QString, unsigned int >      base_steric_clash_summary = steric_clash_summary;
 
-   alt_waters_to_add                  .clear();
-   alt_steric_clash_summary           .clear();
-   alt_hydrate_clash_map_structure    .clear();
-   alt_hydrate_clash_map_rtmr_water   .clear();
-   alt_hydrate_clash_map_pm_water     .clear();
+   alt_waters_to_add                  .clear( );
+   alt_steric_clash_summary           .clear( );
+   alt_hydrate_clash_map_structure    .clear( );
+   alt_hydrate_clash_map_rtmr_water   .clear( );
+   alt_hydrate_clash_map_pm_water     .clear( );
 
    unsigned int base_count_waters           = count_waters;
    unsigned int base_count_waters_added     = count_waters_added;
@@ -5156,16 +5156,16 @@ bool US_Hydrodyn::alt_write_pdb_with_waters( QString &error_msg, bool /* quiet *
                .sprintf(     
                         "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
                         this_atom->serial,
-                        this_atom->orgName.toAscii().data(),
-                        this_atom->resName.toAscii().data(),
-                        this_atom->chainID.toAscii().data(),
+                        this_atom->orgName.toLatin1().data(),
+                        this_atom->resName.toLatin1().data(),
+                        this_atom->chainID.toLatin1().data(),
                         this_atom->resSeq.toUInt(),
                         this_atom->coordinate.axis[ 0 ],
                         this_atom->coordinate.axis[ 1 ],
                         this_atom->coordinate.axis[ 2 ],
                         this_atom->occupancy,
                         this_atom->tempFactor,
-                        this_atom->element.toAscii().data()
+                        this_atom->element.toLatin1().data()
                         );
             chains_used[ this_atom->chainID ] = true;
 
@@ -5233,7 +5233,7 @@ bool US_Hydrodyn::alt_write_pdb_with_waters( QString &error_msg, bool /* quiet *
                .sprintf(     
                         "ATOM  %5d  OW  WAT %1s%4d    %8.3f%8.3f%8.3f  1.00  0.00           O  \n",
                         ++atom_number,
-                        chainID.toAscii().data(),
+                        chainID.toLatin1().data(),
                         ++residue_number,
                         it->second[ i ].axis[ 0 ],
                         it->second[ i ].axis[ 1 ],
@@ -5298,9 +5298,9 @@ bool US_Hydrodyn::alt_write_pdb_with_waters( QString &error_msg, bool /* quiet *
          
          model_viewer( fname, "-script" );
       }
-      hydrate_clash_map_structure .clear();
-      hydrate_clash_map_rtmr_water.clear();
-      hydrate_clash_map_pm_water  .clear();
+      hydrate_clash_map_structure .clear( );
+      hydrate_clash_map_rtmr_water.clear( );
+      hydrate_clash_map_pm_water  .clear( );
    }
    */
 
@@ -5329,7 +5329,7 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
 
    // editor_msg( "blue", us_tr( "NOTICE: only main chain CA-C-N currenly implemented" ) );
 
-   steric_clash_summary.clear();
+   steric_clash_summary.clear( );
 
    count_waters           = 0;
    count_waters_added     = 0;
@@ -5337,10 +5337,10 @@ bool US_Hydrodyn::compute_waters_to_add_alt( QString &error_msg, bool quiet )
 
    vector < point > p1;
    vector < point > p2;
-   waters_to_add.clear();
-   waters_source.clear();
-   alt_waters_to_add.clear();
-   alt_waters_source.clear();
+   waters_to_add.clear( );
+   waters_source.clear( );
+   alt_waters_to_add.clear( );
+   alt_waters_source.clear( );
 
    QRegExp rx_expand_mapkey("^(.+)~(.+)~(.*)$");
 

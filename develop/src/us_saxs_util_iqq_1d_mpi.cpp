@@ -258,7 +258,7 @@ bool US_Saxs_Util::run_1d_mpi( QString controlfile )
       usui1m_timer.start_timer ( "1d closeout" );
 
       QStringList org_output_files = output_files;
-      output_files.clear();
+      output_files.clear( );
       QString errors;
 
       for ( int i = 0; i < ( int ) org_output_files.size(); i++ )
@@ -952,7 +952,7 @@ bool US_Saxs_Util::compute_1d_mpi()
          }
 
          excluded_volume = result;
-         result.clear();
+         result.clear( );
       }
 
       for ( int t = 0; t < axis_rotations; t++ )
@@ -1164,7 +1164,7 @@ void US_Saxs_Util::hypercube_rejection_drand_rotations(
       // generate rotations for the other processes
       for ( int i = 1; i < npes; i++ )
       {
-         send_recv_rotations.clear();
+         send_recv_rotations.clear( );
          double x;
          double y;
          double z;
@@ -1199,7 +1199,7 @@ void US_Saxs_Util::hypercube_rejection_drand_rotations(
          }         
       }
       // and make up ours:
-      rotations.clear();
+      rotations.clear( );
       vector < double > p( 3 );
       while ( ( int ) rotations.size() < proc_rots )
       {
@@ -1231,7 +1231,7 @@ void US_Saxs_Util::hypercube_rejection_drand_rotations(
          MPI_Abort( MPI_COMM_WORLD, -10000 - myrank );
          exit( -10000 - myrank );
       } 
-      rotations.clear();
+      rotations.clear( );
       vector < double > p( 3 );
       for ( int i = 0; i < proc_rots3; i+=3 )
       {
@@ -1267,7 +1267,7 @@ bool US_Saxs_Util::load_rotations_mpi( unsigned int number, vector < vector < do
    unsigned int line = 0;
 
    vector < double > p(3);
-   rotations.clear();
+   rotations.clear( );
 
    while ( !ts.atEnd() && line < number )
    {
@@ -1304,7 +1304,7 @@ bool US_Saxs_Util::load_rotations_mpi( unsigned int number, vector < vector < do
          .arg( number )
          .arg( rotations.size() )
          ;
-      rotations.clear();
+      rotations.clear( );
       return false;
    }
    // cout << QString( "%1: load_rotations: rotation.size() %2\n" ).arg( myrank).arg( rotations.size() );

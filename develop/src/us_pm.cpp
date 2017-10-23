@@ -21,7 +21,7 @@ bool US_PM::set_grid_size( double grid_conversion_factor, bool quiet )
 
    // be careful with this routine!
    // have to clear because any rtp data is now invalid
-   clear();
+   clear( );
    this->grid_conversion_factor = grid_conversion_factor;
    one_over_grid_conversion_factor = 1e0 / grid_conversion_factor;
    cube_size   = grid_conversion_factor * grid_conversion_factor * grid_conversion_factor;
@@ -150,7 +150,7 @@ US_PM::US_PM(
 
    Y_points = max_harmonics + 1 + ( max_harmonics ) * ( max_harmonics + 1 );
    J_points = ( 1 + max_harmonics ) * q_points;
-   i_k.clear();
+   i_k.clear( );
    for ( unsigned int l = 0; l <= max_harmonics; ++l )
    {
       for ( int m = - (int) l ; m <= (int) l; m++ )
@@ -225,7 +225,7 @@ US_PM::US_PM(
          oneoversd2[ i ] = 1e0 / ( e[ i ] * e[ i ] );
       }
    } else {
-      oneoversd2.clear();
+      oneoversd2.clear( );
    }
 
    // memory computations
@@ -246,13 +246,13 @@ US_PM::US_PM(
 
    if ( !quiet && us_log )
    {
-      us_log->log( QString( "bytes per pm_data %1\n" ).arg( bytes_per_pm_data ).toAscii().data() );
-      us_log->log( QString( "bytes per pmc data %1\n" ).arg( bytes_per_pmc_data ).toAscii().data() );
+      us_log->log( QString( "bytes per pm_data %1\n" ).arg( bytes_per_pm_data ).toLatin1().data() );
+      us_log->log( QString( "bytes per pmc data %1\n" ).arg( bytes_per_pmc_data ).toLatin1().data() );
 
-      us_log->log( QString( "Memory max %1 MB\n" ).arg( max_mem_in_MB ).toAscii().data() );
-      us_log->log( QString( "Memory available %1 MB\n" ).arg( max_mem_in_MB - base_mem ).toAscii().data() );
-      us_log->log( QString( "max beads CYJ %1\n" ).arg( max_beads_CYJ ).toAscii().data() );
-      us_log->log( QString( "max beads CA %1\n" ).arg( max_beads_CA ).toAscii().data() );
+      us_log->log( QString( "Memory max %1 MB\n" ).arg( max_mem_in_MB ).toLatin1().data() );
+      us_log->log( QString( "Memory available %1 MB\n" ).arg( max_mem_in_MB - base_mem ).toLatin1().data() );
+      us_log->log( QString( "max beads CYJ %1\n" ).arg( max_beads_CYJ ).toLatin1().data() );
+      us_log->log( QString( "max beads CA %1\n" ).arg( max_beads_CA ).toLatin1().data() );
    }
 
    use_CYJ = false;
@@ -290,10 +290,10 @@ US_PM::~US_PM()
    }
 }
 
-void US_PM::clear()
+void US_PM::clear( )
 {
-   pcdata.clear();
-   pdata.clear();
+   pcdata.clear( );
+   pdata.clear( );
 }
 
 QString US_PM::qs_bead_model( set < pm_point > & model )
@@ -354,7 +354,7 @@ vector < PDB_atom > US_PM::bead_model( set < pm_point > & model )
       tmp_atom.bead_color              = 1;
       tmp_atom.serial                  = ++i;
       tmp_atom.exposed_code            = 1;
-      tmp_atom.all_beads               .clear();
+      tmp_atom.all_beads               .clear( );
       tmp_atom.name                    = "PM";
       tmp_atom.resName                 = "PM";
       tmp_atom.iCode                   = "";
@@ -390,7 +390,7 @@ vector < point > US_PM::point_model( set < pm_point > & model )
 bool US_PM::create_model( vector < double > params, set < pm_point > & model, bool only_last_model )
 {
    debug( 1, QString( "create_model%1" ).arg( only_last_model ? ". Note: only last model saved" : "" ) );
-   model.clear();
+   model.clear( );
 
    vector < double > params_left;
 
@@ -400,7 +400,7 @@ bool US_PM::create_model( vector < double > params, set < pm_point > & model, bo
    {
       if ( only_last_model )
       {
-         model.clear();
+         model.clear( );
       }
       debug( 2, QString( "create_model, params size %1" ).arg( params.size() ) );
       if ( !create_1_model( model_pos, params, params_left, model ) )
@@ -417,7 +417,7 @@ void US_PM::debug( int level, QString qs )
 {
    if ( us_log && level <= debug_level )
    {
-      us_log->log( qs.toAscii().data() );
+      us_log->log( qs.toLatin1().data() );
    }
 }
 
@@ -461,7 +461,7 @@ set < pm_point > US_PM::recenter( set < pm_point > & model )
    us_timers.end_timer( "recenter" );
    if ( us_log )
    {
-      us_log->log( us_timers.list_time( "recenter" ).toAscii().data() );
+      us_log->log( us_timers.list_time( "recenter" ).toLatin1().data() );
    }
    us_timers.clear_timer( "recenter" );
    return result;
@@ -469,7 +469,7 @@ set < pm_point > US_PM::recenter( set < pm_point > & model )
 
 bool US_PM::rotation_matrix( double l, double m, double n, double theta, vector < vector < double > > &rm )
 {
-   rm.clear();
+   rm.clear( );
    rm.resize( 3 );
    rm[ 0 ].resize( 3 );
    rm[ 1 ].resize( 3 );
@@ -852,7 +852,7 @@ QString US_PM::physical_stats( set < pm_point > & model )
    //    }
 
 
-   last_physical_stats.clear();
+   last_physical_stats.clear( );
 
    last_physical_stats[ "result total volume"                ] = QString( "%1" ).arg( volume );
    // last_physical_stats[ "result intersection volume"         ] = QString( "%1" ).arg( volume_intersection );
@@ -1135,7 +1135,7 @@ bool US_PM::rescale_params( vector < double > & params,
 
 bool US_PM::zero_params( vector < double > & params, vector < int > & types )
 {
-   params.clear();
+   params.clear( );
    for ( int i = 0; i < (int)types.size(); ++i )
    {
       params.push_back( types[ i ] );
@@ -1172,7 +1172,7 @@ bool US_PM::zero_params( vector < double > & params, vector < int > & types )
 
 bool US_PM::random_params( vector < double > & params, vector < int > & types, double max_d )
 {
-   params.clear();
+   params.clear( );
    if ( !max_d )
    {
       max_d = max_dimension_d;
@@ -1277,8 +1277,8 @@ bool US_PM::set_limits( vector < double > & params,
       max_d = max_dimension_d;
    }
 
-   low_fparams.clear();
-   high_fparams.clear();
+   low_fparams.clear( );
+   high_fparams.clear( );
 
    for ( int i = 0; i < (int)types.size(); ++i )
    {
@@ -1318,8 +1318,8 @@ bool US_PM::set_limits( vector < double > & params,
 
 bool US_PM::split( vector < double > & params, vector < int > & types, vector < double > & fparams )
 {
-   types  .clear();
-   fparams.clear();
+   types  .clear( );
+   fparams.clear( );
 
    for ( int i = 0; i < (int) params.size(); )
    {
@@ -1350,7 +1350,7 @@ bool US_PM::split( vector < double > & params, vector < int > & types, vector < 
 
 bool US_PM::join( vector < double > & params, vector < int > & types, vector < double > & fparams )
 {
-   params.clear();
+   params.clear( );
 
    int fpos = 0;
    for ( int i = 0; i < (int)types.size(); ++i )
@@ -1410,7 +1410,7 @@ bool  US_PM::expand_types(
                           bool                           allcombinations 
                           )
 {
-   types_vector.clear();
+   types_vector.clear( );
    vector < vector < int > > types_vector_int;
    bool result = expand_types( types_vector_int, types, incrementally, allcombinations );
    for ( int i = 0; i < (int) types_vector_int.size(); ++i )
@@ -1432,7 +1432,7 @@ bool  US_PM::expand_types(
                           bool                        allcombinations 
                           )
 {
-   types_vector.clear();
+   types_vector.clear( );
 
    error_msg = "";
 

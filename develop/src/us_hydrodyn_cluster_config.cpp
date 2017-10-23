@@ -314,7 +314,9 @@ void US_Hydrodyn_Cluster_Config::cancel()
 {
    if ( comm_active )
    {
+#if QT_VERSION < 0x050000
       submit_http.abort();
+#endif
    }
    close();
 }
@@ -330,7 +332,9 @@ void US_Hydrodyn_Cluster_Config::closeEvent(QCloseEvent *e)
 {
    if ( comm_active )
    {
+#if QT_VERSION < 0x050000
       submit_http.abort();
+#endif
    }
    global_Xpos -= 30;
    global_Ypos -= 30;
@@ -379,7 +383,7 @@ void US_Hydrodyn_Cluster_Config::save_config()
    ((US_Hydrodyn_Cluster *)cluster_window)->cluster_config[ "manage"     ] = le_manage_url->text();
    ((US_Hydrodyn_Cluster *)cluster_window)->cluster_systems = cluster_systems;
 
-   ((US_Hydrodyn_Cluster *)cluster_window)->cluster_stage_to_system.clear();
+   ((US_Hydrodyn_Cluster *)cluster_window)->cluster_stage_to_system.clear( );
 
    for ( map < QString, map < QString, QString > >::iterator it = cluster_systems.begin();
          it != cluster_systems.end();
@@ -466,7 +470,7 @@ void US_Hydrodyn_Cluster_Config::add_new()
                                      us_tr( "US-SOMO: Cluster config: Add new" ),
                                      QString(
                                              us_tr( "Do you want to copy system data from the selected system '%1?'" )
-                                             ).arg( lb_systems->item( pos )->text( ) ),
+                                             ).arg( lb_systems->item( pos )->text() ),
                                      us_tr( "&Yes" ),
                                      us_tr( "&No" ),
                                      QString::null,
@@ -475,7 +479,7 @@ void US_Hydrodyn_Cluster_Config::add_new()
                                      ) )
       {
       case 0 : 
-         cluster_systems[ text ] = cluster_systems[ lb_systems->item( pos )->text( ) ];
+         cluster_systems[ text ] = cluster_systems[ lb_systems->item( pos )->text() ];
          do_blank = false;
          break;
 
@@ -508,7 +512,7 @@ void US_Hydrodyn_Cluster_Config::add_new()
       cluster_systems[ text ] = tmp_system;
    }
 
-   lb_systems->clear();
+   lb_systems->clear( );
    
    for ( map < QString, map < QString, QString > >::iterator it = cluster_systems.begin();
          it != cluster_systems.end();
@@ -524,10 +528,10 @@ void US_Hydrodyn_Cluster_Config::delete_system()
    {
       if ( lb_systems->item(i)->isSelected() )
       {
-         if ( cluster_systems.count( lb_systems->item( i )->text( ) ) )
+         if ( cluster_systems.count( lb_systems->item( i )->text() ) )
          {
             cluster_systems.erase( lb_systems->item( i )->text() );
-            lb_systems->clear();
+            lb_systems->clear( );
             
             for ( map < QString, map < QString, QString > >::iterator it = cluster_systems.begin();
                   it != cluster_systems.end();
@@ -551,8 +555,8 @@ void US_Hydrodyn_Cluster_Config::edit()
    {
       if ( lb_systems->item(i)->isSelected() )
       {
-         cout << "run config systems for " << lb_systems->item( i )->text( ) << "\n";
-         if ( cluster_systems.count( lb_systems->item( i )->text( ) ) )
+         cout << "run config systems for " << lb_systems->item( i )->text() << "\n";
+         if ( cluster_systems.count( lb_systems->item( i )->text() ) )
          {
             US_Hydrodyn_Cluster_Config_Server *hccs = 
                new US_Hydrodyn_Cluster_Config_Server(
@@ -577,6 +581,7 @@ void US_Hydrodyn_Cluster_Config::http_stateChanged ( int /* state */ )
    // editor_msg( "blue", QString( "http state %1" ).arg( state ) );
 }
 
+#if QT_VERSION < 0x050000
 void US_Hydrodyn_Cluster_Config::http_responseHeaderReceived ( const QHttpResponseHeader & resp )
 {
    cout << resp.reasonPhrase() << endl;
@@ -619,6 +624,7 @@ void US_Hydrodyn_Cluster_Config::http_readyRead( const QHttpResponseHeader & res
       current_response_status.replace( QRegExp( "</status>.*$" ), "" );
    }
 }
+#endif
 
 void US_Hydrodyn_Cluster_Config::http_dataSendProgress ( int done, int total )
 {
@@ -643,6 +649,7 @@ void US_Hydrodyn_Cluster_Config::http_requestFinished ( int id, bool error  )
 
 void US_Hydrodyn_Cluster_Config::http_done ( bool error )
 {
+#if QT_VERSION < 0x050000
    cout << "http_done error " << error << endl;
    if ( error )
    {
@@ -780,6 +787,7 @@ void US_Hydrodyn_Cluster_Config::http_done ( bool error )
    }         
 
    update_enables();
+#endif
 }
 
 void US_Hydrodyn_Cluster_Config::update_enables()
@@ -933,6 +941,7 @@ void US_Hydrodyn_Cluster_Config::check_user()
    current_response_status = "";
    update_enables();
 
+#if QT_VERSION < 0x050000
    connect( &submit_http, SIGNAL( stateChanged ( int ) ), this, SLOT( http_stateChanged ( int ) ) );
    connect( &submit_http, SIGNAL( responseHeaderReceived ( const QHttpResponseHeader & ) ), this, SLOT( http_responseHeaderReceived ( const QHttpResponseHeader & ) ) );
    connect( &submit_http, SIGNAL( readyRead ( const QHttpResponseHeader & ) ), this, SLOT( http_readyRead ( const QHttpResponseHeader & ) ) );
@@ -944,7 +953,7 @@ void US_Hydrodyn_Cluster_Config::check_user()
 
    submit_http.setHost( manage_url_host, manage_url_port.toUInt() );
    submit_http.get( msg_request );
-
+#endif
    return;
 
    // QHttpRequestHeader header("POST", "/" );
@@ -997,6 +1006,7 @@ void US_Hydrodyn_Cluster_Config::add_user()
    cout << "manage_url_port is " << manage_url_port << endl;
    cout << "post data is "   << post_data << endl; 
 
+#if QT_VERSION < 0x050000
    connect( &submit_http, SIGNAL( stateChanged ( int ) ), this, SLOT( http_stateChanged ( int ) ) );
    connect( &submit_http, SIGNAL( responseHeaderReceived ( const QHttpResponseHeader & ) ), this, SLOT( http_responseHeaderReceived ( const QHttpResponseHeader & ) ) );
    connect( &submit_http, SIGNAL( readyRead ( const QHttpResponseHeader & ) ), this, SLOT( http_readyRead ( const QHttpResponseHeader & ) ) );
@@ -1014,6 +1024,7 @@ void US_Hydrodyn_Cluster_Config::add_user()
    QByteArray qba = post_data.toUtf8();
    qba.resize( qba.size() - 1 );
    submit_http.request( header, qba );
+#endif
 }
 
 void US_Hydrodyn_Cluster_Config::update_cluster_id( const QString & )
@@ -1076,6 +1087,7 @@ void US_Hydrodyn_Cluster_Config::socket_connected ()
 
 void US_Hydrodyn_Cluster_Config::socket_connectionClosed ()
 {
+#if QT_VERSION < 0x050000
    cout << "socket_connectionClosed\n";
    comm_active = false;
    disconnect( &submit_http, SIGNAL( stateChanged ( int ) ), 0, 0 );
@@ -1087,6 +1099,7 @@ void US_Hydrodyn_Cluster_Config::socket_connectionClosed ()
    disconnect( &test_socket, SIGNAL( socket_bytesWritten ( int nbytes ) ), 0, 0 );
    disconnect( &test_socket, SIGNAL( socket_error ( int ) ), 0, 0 );
    update_enables();
+#endif
 }
 
 void US_Hydrodyn_Cluster_Config::socket_delayedCloseFinished ()

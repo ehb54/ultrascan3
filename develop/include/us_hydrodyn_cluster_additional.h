@@ -69,15 +69,15 @@ class US_EXTERN US_Hydrodyn_Cluster_Additional : public QDialog
       QPushButton   *pb_help;
       QPushButton   *pb_cancel;
 
-#ifdef Q_WS_WIN
-# if !defined( QT4 )
+#ifdef Q_OS_WIN
+# if QT_VERSION < 0x040000
   #pragma warning ( disable: 4251 )
 # endif
 #endif
       map < QString, bool >                     options_active;
       map < QString, map < QString, QString > > options_selected;
-#ifdef Q_WS_WIN
-# if !defined( QT4 )
+#ifdef Q_OS_WIN
+# if QT_VERSION < 0x040000
   #pragma warning ( default: 4251 )
 # endif
 #endif

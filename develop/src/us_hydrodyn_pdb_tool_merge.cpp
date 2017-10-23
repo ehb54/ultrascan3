@@ -85,7 +85,7 @@ US_Hydrodyn_Pdb_Tool_Merge::US_Hydrodyn_Pdb_Tool_Merge(
    cache_range_ok      = false;
    extra_chains_done   = false;
 
-   extra_chains_list.clear();
+   extra_chains_list.clear( );
 
    update_enables();
 
@@ -125,11 +125,11 @@ void US_Hydrodyn_Pdb_Tool_Merge::reset_csv_commands()
 {
    csv_commands.name = "PDB Editor Cut/Splice Control";
 
-   csv_commands.header.clear();
-   csv_commands.header_map.clear();
-   csv_commands.data.clear();
-   csv_commands.num_data.clear();
-   csv_commands.prepended_names.clear();
+   csv_commands.header.clear( );
+   csv_commands.header_map.clear( );
+   csv_commands.data.clear( );
+   csv_commands.num_data.clear( );
+   csv_commands.prepended_names.clear( );
 
    csv_commands.header.push_back("Chain");
    csv_commands.header.push_back("Merge start");
@@ -143,7 +143,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::reset_csv_commands()
 void US_Hydrodyn_Pdb_Tool_Merge::setupGUI()
 {
    int minHeight1 = 22;
-#if !defined(QT4) || !defined(Q_WS_MAC)
+#if QT_VERSION < 0x040000 || !defined(Q_WS_MAC)
    int minHeight3 = 30;
 #endif
 
@@ -172,8 +172,8 @@ void US_Hydrodyn_Pdb_Tool_Merge::setupGUI()
    update_t_csv_data();
 
    t_csv->setSortingEnabled(false);
-    t_csv->verticalHeader()->setMovable(true);
-    t_csv->horizontalHeader()->setMovable(false);
+    t_csv->verticalHeader()->setSectionsMovable(true);
+    t_csv->horizontalHeader()->setSectionsMovable(false);
    //{ for ( int i = 0; i < t_csv->rowCount(); ++i ) { for ( int j = 0; j < t_csv->columnCount(); ++j ) { t_csv->item( i, j )->setFlags( t_csv->item( i, j )->flags() ^ Qt::ItemIsEditable ); } } };
 
    //   t_csv->setColumnWidth(0, ?? );
@@ -237,7 +237,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::setupGUI()
    pb_clear->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_clear->setMinimumHeight(minHeight1);
    pb_clear->setPalette( PALET_PUSHB );
-   connect(pb_clear, SIGNAL(clicked()), SLOT(clear()));
+   connect(pb_clear, SIGNAL(clicked( )), SLOT(clear( )));
 
    pb_load = new QPushButton(us_tr("Load"), this);
    pb_load->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
@@ -338,12 +338,12 @@ void US_Hydrodyn_Pdb_Tool_Merge::setupGUI()
    editor->setReadOnly(true);
 
 #if QT_VERSION < 0x040000
-# if defined(QT4) && defined(Q_WS_MAC)
+# if QT_VERSION >= 0x040000 && defined(Q_WS_MAC)
    {
  //      Q3PopupMenu * file = new Q3PopupMenu;
-      file->insertItem( us_tr("&Font"),  this, SLOT(update_font( )),    Qt::ALT+Qt::Key_F );
-      file->insertItem( us_tr("&Save"),  this, SLOT(save( )),    Qt::ALT+Qt::Key_S );
-      file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display( )),   Qt::ALT+Qt::Key_X );
+      file->insertItem( us_tr("&Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
+      file->insertItem( us_tr("&Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
+      file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
 
       QMenuBar *menu = new QMenuBar( this );
       AUTFBACK( menu );
@@ -361,9 +361,9 @@ void US_Hydrodyn_Pdb_Tool_Merge::setupGUI()
    AUTFBACK( m );
  //   Q3PopupMenu * file = new Q3PopupMenu(editor);
    m->insertItem( us_tr("&File"), file );
-   file->insertItem( us_tr("Font"),  this, SLOT(update_font( )),    Qt::ALT+Qt::Key_F );
-   file->insertItem( us_tr("Save"),  this, SLOT(save( )),    Qt::ALT+Qt::Key_S );
-   file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display( )),   Qt::ALT+Qt::Key_X );
+   file->insertItem( us_tr("Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
+   file->insertItem( us_tr("Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
+   file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
 # endif
 #else
    QFrame *frame;
@@ -463,7 +463,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::setupGUI()
    hbl_bottom->addSpacing( 2 );
 
    QBoxLayout * vbl_editor_group = new QVBoxLayout(0); vbl_editor_group->setContentsMargins( 0, 0, 0, 0 ); vbl_editor_group->setSpacing( 0 );
-#if !defined(QT4) || !defined(Q_WS_MAC)
+#if QT_VERSION < 0x040000 || !defined(Q_WS_MAC)
    vbl_editor_group->addWidget( frame );
 #endif
    vbl_editor_group->addWidget( editor );
@@ -515,7 +515,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::closeEvent(QCloseEvent *e)
 
 void US_Hydrodyn_Pdb_Tool_Merge::clear_display()
 {
-   editor->clear();
+   editor->clear( );
    editor->append("\n\n");
 }
 
@@ -556,7 +556,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::start()
    running = true;
    update_enables();
 
-   ((US_Hydrodyn_Pdb_Tool *)pdb_tool_window)->csv2_clear();
+   ((US_Hydrodyn_Pdb_Tool *)pdb_tool_window)->csv2_clear( );
    QString filename = le_chains_to->text();
    ((US_Hydrodyn_Pdb_Tool *)pdb_tool_window)->load( lv_csv_to,
                                                     filename,
@@ -782,7 +782,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::start()
                   editor_msg( "dark blue", QString( "Processing model %1\n" ).arg( model_name_vector[ pos ] ) );
                }
                qApp->processEvents();
-               ((US_Hydrodyn_Pdb_Tool *)pdb_tool_window)->csv2_clear();
+               ((US_Hydrodyn_Pdb_Tool *)pdb_tool_window)->csv2_clear( );
                ((US_Hydrodyn_Pdb_Tool *)pdb_tool_window)->load_from_qsl( lv_csv_to, model_lines, QString( "model %1\n" ).arg( no_model ? "1" : model_name_vector[ pos ] ) );
                qApp->processEvents();
                run_one();
@@ -797,7 +797,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::start()
                   if ( cb_filter->isChecked() ) {
                      if ( !no_model )
                      {
-                        tsof << QString("").sprintf("MODEL  %7s\n", model_name_vector[ pos ].toAscii().data() );
+                        tsof << QString("").sprintf("MODEL  %7s\n", model_name_vector[ pos ].toLatin1().data() );
                         tsof << model_remarks[ model_name_vector[ pos ] ];
                      }
                      tsof << ((US_Hydrodyn_Pdb_Tool *)pdb_tool_window)->csv_to_pdb( csv_to, true );
@@ -809,7 +809,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::start()
                } else {
                   if ( !no_model )
                   {
-                     tso << QString("").sprintf("MODEL  %7s\n", model_name_vector[ pos ].toAscii().data() );
+                     tso << QString("").sprintf("MODEL  %7s\n", model_name_vector[ pos ].toLatin1().data() );
                      tso << model_remarks[ model_name_vector[ pos ] ];
                   }
                   tso << ((US_Hydrodyn_Pdb_Tool *)pdb_tool_window)->csv_to_pdb( csv_to, true );
@@ -819,7 +819,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::start()
                   }
                }
                in_model = false;
-               model_lines.clear();
+               model_lines.clear( );
                if ( !no_model )
                {
                   editor_msg( "dark blue", QString( "Processing model %1 done\n" ).arg( model_name_vector[ pos ] ) );
@@ -829,7 +829,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::start()
             if ( qs.contains( rx_model ) )
             {
                in_model = true;
-               model_lines.clear();
+               model_lines.clear( );
             }
          } else {
             if ( in_model )
@@ -861,7 +861,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::trial()
    running = true;
    update_enables();
 
-   ((US_Hydrodyn_Pdb_Tool *)pdb_tool_window)->csv2_clear();
+   ((US_Hydrodyn_Pdb_Tool *)pdb_tool_window)->csv2_clear( );
    QString filename = le_chains_to->text();
    ((US_Hydrodyn_Pdb_Tool *)pdb_tool_window)->load( lv_csv_to,
                                                     filename,
@@ -1027,9 +1027,9 @@ void US_Hydrodyn_Pdb_Tool_Merge::trial()
    // extract the merge & fit bits
    {
       csv_merge = csv_from;
-      csv_merge.data.clear();
+      csv_merge.data.clear( );
       csv_fit = csv_from;
-      csv_fit.data.clear();
+      csv_fit.data.clear( );
 
       for ( unsigned int i = 0; i < (unsigned int) csv_from.data.size(); i++ )
       {
@@ -1142,7 +1142,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::trial()
    if ( any_cuts )
    {
       csv new_csv = csv_to;
-      new_csv.data.clear();
+      new_csv.data.clear( );
 
       for ( unsigned int i = 0; i < (unsigned int) csv_to.data.size(); i++ )
       {
@@ -1216,7 +1216,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::trial()
    }
 
    // extract to fit points
-   extra_chain_reported.clear();
+   extra_chain_reported.clear( );
 
    for ( unsigned int i = 0; i < (unsigned int) csv_to.data.size(); i++ )
    {
@@ -1310,7 +1310,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::trial()
 
    {
       csv new_csv = csv_to;
-      new_csv.data.clear();
+      new_csv.data.clear( );
 
       for ( unsigned int i = 0; i < (unsigned int) csv_to.data.size(); i++ )
       {
@@ -1646,7 +1646,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::target()
 
 void US_Hydrodyn_Pdb_Tool_Merge::sel_auto()
 {
-   clear();
+   clear( );
 
    vector < range_entry > from_ranges;
    vector < range_entry > to_ranges;
@@ -1658,7 +1658,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::sel_auto()
    sel_to_range( lv_csv_to  , to_ranges  , false );
 
    // setup extra chains
-   extra_chains_list.clear();
+   extra_chains_list.clear( );
    map < QString, bool > chains_in_to;
    for ( unsigned int i = 0; i < (unsigned int) to_ranges.size(); i++ )
    {
@@ -1889,7 +1889,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::sel_to_range( QTreeWidget *lv, vector < range_e
                                                                  ((US_Hydrodyn_Pdb_Tool *)pdb_tool_window)->csv1 :
                                                                  ((US_Hydrodyn_Pdb_Tool *)pdb_tool_window)->csv2[ ((US_Hydrodyn_Pdb_Tool *)pdb_tool_window)->csv2_pos ],
                                                                  just_selected );
-   ranges.clear();
+   ranges.clear( );
 
    range_entry range;
 
@@ -1919,8 +1919,8 @@ void US_Hydrodyn_Pdb_Tool_Merge::sel_to_range( QTreeWidget *lv, vector < range_e
       } else {
          range.end   = pos;
          range.start = pos;
-         range.gaps.clear();
-         range.residues.clear();
+         range.gaps.clear( );
+         range.residues.clear( );
          range.residues[ pos ] = true;
          range_pos[ range.chain ] = ranges.size();
          ranges.push_back( range );
@@ -1934,7 +1934,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::sel_to_range( QTreeWidget *lv, vector < range_e
    for ( unsigned int i = 0; i < (unsigned int) ranges.size(); i++ )
    {
       list < uhptm_sortable_uint > lusui;
-      lusui.clear();
+      lusui.clear( );
       for ( map  < unsigned int, bool >::iterator it = ranges[ i ].residues.begin();
             it  != ranges[ i ].residues.end();
             it++ )
@@ -1969,7 +1969,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::sel_to_range( QTreeWidget *lv, vector < range_e
 
 void US_Hydrodyn_Pdb_Tool_Merge::make_csv_chain_map()
 {
-   csv_chain_map.clear();
+   csv_chain_map.clear( );
    for (int i = 0; i < t_csv->rowCount(); i++ )
    {
       csv_chain_map[ t_csv->item( i, 0 )->text() ] = i;
@@ -2065,18 +2065,18 @@ void US_Hydrodyn_Pdb_Tool_Merge::sel_to_to_cut()
    update_enables();
 }
 
-void US_Hydrodyn_Pdb_Tool_Merge::clear()
+void US_Hydrodyn_Pdb_Tool_Merge::clear( )
 {
    for ( int i = t_csv->rowCount() - 1; i >= 0; i-- )
    {
       t_csv->removeRow( i );
    }
-   extra_chains_list   .clear();
-   cache_from_ranges   .clear();
-   cache_to_ranges     .clear();
-   cache_from_range_pos.clear();
-   cache_to_range_pos  .clear();
-   cache_use_start     .clear();
+   extra_chains_list   .clear( );
+   cache_from_ranges   .clear( );
+   cache_to_ranges     .clear( );
+   cache_from_range_pos.clear( );
+   cache_to_range_pos  .clear( );
+   cache_use_start     .clear( );
    extra_chains_done   = false;
 
    cache_range_ok = false;
@@ -2089,7 +2089,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::validate()
    running = true;
    update_enables();
 
-   ((US_Hydrodyn_Pdb_Tool *)pdb_tool_window)->csv2_clear();
+   ((US_Hydrodyn_Pdb_Tool *)pdb_tool_window)->csv2_clear( );
    QString filename = le_chains_to->text();
    ((US_Hydrodyn_Pdb_Tool *)pdb_tool_window)->load( lv_csv_to,
                                                     filename,
@@ -2431,7 +2431,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::load()
 
    csv new_csv = csv_commands;
 
-   new_csv.data.clear();
+   new_csv.data.clear( );
 
    QStringList qsl_h = csv_parse_line(qsl[0]);
 
@@ -2526,8 +2526,8 @@ void US_Hydrodyn_Pdb_Tool_Merge::pdb_tool()
 
 void US_Hydrodyn_Pdb_Tool_Merge::update_csv_commands_from_table()
 {
-   csv_commands.data.clear();
-   csv_commands.num_data.clear();
+   csv_commands.data.clear( );
+   csv_commands.num_data.clear( );
 
    vector < QString > data    ( t_csv->columnCount() );
    vector < double  > num_data( t_csv->columnCount() );
@@ -2772,9 +2772,9 @@ void US_Hydrodyn_Pdb_Tool_Merge::run_one()
    // extract the merge & fit bits
    {
       csv_merge = csv_from;
-      csv_merge.data.clear();
+      csv_merge.data.clear( );
       csv_fit = csv_from;
-      csv_fit.data.clear();
+      csv_fit.data.clear( );
 
       for ( unsigned int i = 0; i < (unsigned int) csv_from.data.size(); i++ )
       {
@@ -2881,7 +2881,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::run_one()
    if ( any_cuts )
    {
       csv new_csv = csv_to;
-      new_csv.data.clear();
+      new_csv.data.clear( );
 
       for ( unsigned int i = 0; i < (unsigned int) csv_to.data.size(); i++ )
       {
@@ -3038,7 +3038,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::run_one()
 
    {
       csv new_csv = csv_to;
-      new_csv.data.clear();
+      new_csv.data.clear( );
 
       map < unsigned int, int    > pos_type;  // for filter
       map < unsigned int, point  > pos_coord; // for filter
@@ -3429,16 +3429,16 @@ void US_Hydrodyn_Pdb_Tool_Merge::run_one()
                                               "type 4 info:\n"
                                               "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
                                               new_csv.data[ i ][ 5  ].toUInt(),
-                                              new_csv.data[ i ][ 4  ].toAscii().data(),
-                                              new_csv.data[ i ][ 2  ].toAscii().data(),
-                                              new_csv.data[ i ][ 1  ].toAscii().data(),
+                                              new_csv.data[ i ][ 4  ].toLatin1().data(),
+                                              new_csv.data[ i ][ 2  ].toLatin1().data(),
+                                              new_csv.data[ i ][ 1  ].toLatin1().data(),
                                               new_csv.data[ i ][ 3  ].toUInt(),
                                               new_csv.data[ i ][ 8  ].toFloat(),
                                               new_csv.data[ i ][ 9  ].toFloat(),
                                               new_csv.data[ i ][ 10 ].toFloat(),
                                               new_csv.data[ i ][ 11 ].toFloat(),
                                               new_csv.data[ i ][ 12 ].toFloat(),
-                                              new_csv.data[ i ][ 13 ].toAscii().data()
+                                              new_csv.data[ i ][ 13 ].toLatin1().data()
                                                    )
                                       );
                            }
@@ -3451,16 +3451,16 @@ void US_Hydrodyn_Pdb_Tool_Merge::run_one()
                                               "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
                                               it->first,
                                               new_csv.data[ i ][ 5  ].toUInt(),
-                                              new_csv.data[ i ][ 4  ].toAscii().data(),
-                                              new_csv.data[ i ][ 2  ].toAscii().data(),
-                                              new_csv.data[ i ][ 1  ].toAscii().data(),
+                                              new_csv.data[ i ][ 4  ].toLatin1().data(),
+                                              new_csv.data[ i ][ 2  ].toLatin1().data(),
+                                              new_csv.data[ i ][ 1  ].toLatin1().data(),
                                               new_csv.data[ i ][ 3  ].toUInt(),
                                               new_csv.data[ i ][ 8  ].toFloat(),
                                               new_csv.data[ i ][ 9  ].toFloat(),
                                               new_csv.data[ i ][ 10 ].toFloat(),
                                               new_csv.data[ i ][ 11 ].toFloat(),
                                               new_csv.data[ i ][ 12 ].toFloat(),
-                                              new_csv.data[ i ][ 13 ].toAscii().data()
+                                              new_csv.data[ i ][ 13 ].toLatin1().data()
                                                    )
                                       );
                            }

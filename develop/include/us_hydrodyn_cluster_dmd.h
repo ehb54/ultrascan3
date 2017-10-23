@@ -100,7 +100,7 @@ class US_EXTERN US_Hydrodyn_Cluster_Dmd : public QDialog
 
 
 #ifdef WIN32
-# if !defined( QT4 )
+# if QT_VERSION < 0x040000
   #pragma warning ( disable: 4251 )
 # endif
 #endif
@@ -115,7 +115,7 @@ class US_EXTERN US_Hydrodyn_Cluster_Dmd : public QDialog
       map < QString, vector < unsigned int > > residues_range_chain_pos;
 
 #ifdef WIN32
-# if !defined( QT4 )
+# if QT_VERSION < 0x040000
   #pragma warning ( default: 4251 )
 # endif
 #endif

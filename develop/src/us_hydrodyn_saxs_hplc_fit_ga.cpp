@@ -131,7 +131,7 @@ bool US_Hydrodyn_Saxs_Hplc_Fit::ga_run( double & nrmsd )
       cout << QString( "start: pop.size() %1\n" ).arg( last_pop.size() );
 #endif
 
-      pop.clear();
+      pop.clear( );
 
       for ( unsigned int i = 0; i < control_parameters[ "population" ].toUInt(); i++ )
       {

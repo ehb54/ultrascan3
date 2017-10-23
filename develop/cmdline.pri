@@ -16,7 +16,7 @@
 ##########################################################################################
 
 # Messages -- sets UNAME
-!include ( local.pri ) error( "local.pri missing or corrupt.  Aborting..." )
+include ( local.pri )
 
 TEMPLATE        = app
 DEPENDPATH     += $$US3SOMOPATH/src $$US3SOMOPATH/include

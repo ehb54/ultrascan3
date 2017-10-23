@@ -124,7 +124,7 @@ QStringList MQT::get_lb_qsl( QListWidget * lb, bool only_selected )
    {
       if ( !only_selected || lb->item( i )->isSelected() )
       {
-         qsl << lb->item( i )->text( );
+         qsl << lb->item( i )->text();
       }
    }
    return qsl;

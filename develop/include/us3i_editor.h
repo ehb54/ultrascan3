@@ -1,7 +1,12 @@
 #ifndef US3I_EDITOR_H
 #define US3I_EDITOR_H
 
+#include <QtCore>
+#if QT_VERSION > 0x050000
+#include <QtWidgets>
+#else
 #include <QtGui>
+#endif
 #include "us3i_extern.h"
 
 /*! Class for edit and/or display of text in a main window. The text may be

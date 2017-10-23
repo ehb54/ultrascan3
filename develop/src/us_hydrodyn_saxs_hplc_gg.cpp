@@ -123,21 +123,21 @@ bool US_Hydrodyn_Saxs_Hplc::gg_fit_vector(
       return false;
    }
 
-   fit.clear();
-   pfit.clear();
-   ggaussian_last_pfit_N    .clear();
-   ggaussian_last_pfit_C    .clear();
-   ggaussian_last_pfit_S    .clear();
-   ggaussian_last_gg        .clear();
-   ggaussian_last_ggig      .clear();
-   ggaussian_last_gg_t      .clear();
-   ggaussian_last_I         .clear();
-   ggaussian_last_e         .clear();
-   ggaussian_pts_chi2       .clear();
-   ggaussian_pts_pfit       .clear();
-   ggaussian_pts_chi2_marked.clear();
-   ggaussian_pts_pfit_marked.clear();
-   ggaussian_last_pfit_map  .clear();
+   fit.clear( );
+   pfit.clear( );
+   ggaussian_last_pfit_N    .clear( );
+   ggaussian_last_pfit_C    .clear( );
+   ggaussian_last_pfit_S    .clear( );
+   ggaussian_last_gg        .clear( );
+   ggaussian_last_ggig      .clear( );
+   ggaussian_last_gg_t      .clear( );
+   ggaussian_last_I         .clear( );
+   ggaussian_last_e         .clear( );
+   ggaussian_pts_chi2       .clear( );
+   ggaussian_pts_pfit       .clear( );
+   ggaussian_pts_chi2_marked.clear( );
+   ggaussian_pts_pfit_marked.clear( );
+   ggaussian_last_pfit_map  .clear( );
 
    bool use_errors = unified_ggaussian_use_errors && cb_sd_weight->isChecked();
 
@@ -331,7 +331,7 @@ bool US_Hydrodyn_Saxs_Hplc::gg_fit_vector(
 
    // us_qdebug( US_Vector::qs_vector2( "q rmsd", unified_ggaussian_qvals, fit ) );
    
-   ggqfit_plot->clear();
+   ggqfit_plot->detachItems( QwtPlotItem::Rtti_PlotCurve ); ggqfit_plot->detachItems( QwtPlotItem::Rtti_PlotMarker );;
 
    ggqfit_plot->enableAxis  ( QwtPlot::yLeft , false );
    ggqfit_plot->enableAxis  ( QwtPlot::yRight , false );
@@ -344,10 +344,10 @@ bool US_Hydrodyn_Saxs_Hplc::gg_fit_vector(
       {
          QPen use_pen = QPen( Qt::green, use_line_width, Qt::DotLine );
 
-#ifdef QT4
+#if QT_VERSION >= 0x040000
          QwtPlotCurve * curve = new QwtPlotCurve( "ggqfit" );
          curve->setStyle( QwtPlotCurve::Lines );
-         curve->setData(
+         curve->setSamples(
                         (double *)&(unified_ggaussian_qvals[0]),
                         (double *)&(fit[0]),
                         unified_ggaussian_qvals.size() );
@@ -376,9 +376,9 @@ bool US_Hydrodyn_Saxs_Hplc::gg_fit_vector(
             sym.setPen  ( qc );
             sym.setBrush( qc );
 
-#ifdef QT4
+#if QT_VERSION >= 0x040000
             QwtPlotMarker* marker = new QwtPlotMarker;
-            marker->setSymbol( sym );
+            marker->setSymbol( new QwtSymbol( sym.style(), sym.brush(), sym.pen(), sym.size() ) );
             marker->setValue( unified_ggaussian_qvals[ i ], fit[ i ] );
             marker->attach( ggqfit_plot );
 #else
@@ -400,15 +400,15 @@ bool US_Hydrodyn_Saxs_Hplc::gg_fit_vector(
 //    {
 //       QPen use_pen = QPen( Qt::yellow, use_line_width, Qt::DotLine );
 
-// #ifdef QT4
+// #if QT_VERSION >= 0x040000
 //       QwtPlotCurve * curve = new QwtPlotCurve( "ggqfit_p_value" );
 //       curve->setStyle( QwtPlotCurve::Lines );
-//       curve->setData(
+//       curve->setSamples(
 //                      (double *)&(unified_ggaussian_qvals[0]),
 //                      (double *)&(pfit[0]),
 //                      unified_ggaussian_qvals.size() );
 //       curve->setPen( use_pen );
-//       curve->setAxis  ( QwtPlot::xBottom , QwtPlot::yRight );
+//       curve->setAxes( QwtPlot::xBottom , QwtPlot::yRight );
 //       curve->attach( ggqfit_plot  );
 // #else
 //       long curve = ggqfit_plot->insertCurve( "ggqfit_p_values", QwtPlot::xBottom, QwtPlot::yRight );
@@ -438,15 +438,15 @@ bool US_Hydrodyn_Saxs_Hplc::gg_fit_vector(
          
             QPen use_pen = QPen( Qt::green, use_line_width, Qt::DashDotLine );
 
-#ifdef QT4
+#if QT_VERSION >= 0x040000
             QwtPlotCurve * curve = new QwtPlotCurve( "ggqfit_p_alpha_green" );
             curve->setStyle( QwtPlotCurve::Lines );
-            curve->setData(
+            curve->setSamples(
                            (double *)&(x[0]),
                            (double *)&(y[0]),
                            2 );
             curve->setPen( use_pen );
-            curve->setAxis  ( QwtPlot::xBottom , QwtPlot::yRight );
+            curve->setAxes( QwtPlot::xBottom , QwtPlot::yRight );
             curve->attach( ggqfit_plot  );
 #else
             long curve = ggqfit_plot->insertCurve( "ggqfit_p_alpha_green", QwtPlot::xBottom, QwtPlot::yRight );
@@ -465,15 +465,15 @@ bool US_Hydrodyn_Saxs_Hplc::gg_fit_vector(
          
             QPen use_pen = QPen( Qt::yellow, use_line_width, Qt::DashDotLine );
 
-#ifdef QT4
+#if QT_VERSION >= 0x040000
             QwtPlotCurve * curve = new QwtPlotCurve( "ggqfit_p_alpha_green" );
             curve->setStyle( QwtPlotCurve::Lines );
-            curve->setData(
+            curve->setSamples(
             (double *)&(x[0]),
                (double *)&(y[0]),
                2 );
             curve->setPen( use_pen );
-            curve->setAxis  ( QwtPlot::xBottom , QwtPlot::yRight );
+            curve->setAxes( QwtPlot::xBottom , QwtPlot::yRight );
             curve->attach( ggqfit_plot  );
 #else
             long curve = ggqfit_plot->insertCurve( "ggqfit_p_alpha_green", QwtPlot::xBottom, QwtPlot::yRight );
@@ -504,11 +504,11 @@ bool US_Hydrodyn_Saxs_Hplc::gg_fit_vector(
                P = 1e-10;
             }
 
-#ifdef QT4
+#if QT_VERSION >= 0x040000
             QwtPlotMarker* marker = new QwtPlotMarker;
-            marker->setSymbol( sym );
+            marker->setSymbol( new QwtSymbol( sym.style(), sym.brush(), sym.pen(), sym.size() ) );
             marker->setValue( unified_ggaussian_qvals[ i ], P );
-            marker->setAxis  ( QwtPlot::xBottom , QwtPlot::yRight );
+            marker->setAxes( QwtPlot::xBottom , QwtPlot::yRight );
             marker->attach( ggqfit_plot );
 #else
             long marker = ggqfit_plot->insertMarker( "", QwtPlot::xBottom , QwtPlot::yRight );
@@ -532,7 +532,7 @@ bool US_Hydrodyn_Saxs_Hplc::gg_fit_vector(
    }
    ggqfit_plot_zoomer = new ScrollZoomer(ggqfit_plot->canvas());
    ggqfit_plot_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
-#ifndef QT4
+#if QT_VERSION < 0x040000
    ggqfit_plot_zoomer->setCursorLabelPen(QPen(Qt::yellow));
 #endif
 

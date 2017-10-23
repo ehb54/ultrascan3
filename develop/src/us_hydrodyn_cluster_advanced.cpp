@@ -72,7 +72,7 @@ US_Hydrodyn_Cluster_Advanced::~US_Hydrodyn_Cluster_Advanced()
 void US_Hydrodyn_Cluster_Advanced::setupGUI()
 {
    int minHeight1 = 30;
-#if !defined(QT4) || !defined(Q_WS_MAC)
+#if QT_VERSION < 0x040000 || !defined(Q_WS_MAC)
    int minHeight3 = 30;
 #endif
 
@@ -124,8 +124,8 @@ void US_Hydrodyn_Cluster_Advanced::setupGUI()
       t_csv->setHorizontalHeaderItem(i, new QTableWidgetItem( csv1.header[i]));
    }
    t_csv->setSortingEnabled(false);
-    t_csv->verticalHeader()->setMovable(false);
-    t_csv->horizontalHeader()->setMovable(false);
+    t_csv->verticalHeader()->setSectionsMovable(false);
+    t_csv->horizontalHeader()->setSectionsMovable(false);
    //  t_csv->setReadOnly(false);
 
    t_csv->setColumnWidth( 0, 350 );
@@ -145,12 +145,12 @@ void US_Hydrodyn_Cluster_Advanced::setupGUI()
    editor->setReadOnly(true);
 
 #if QT_VERSION < 0x040000
-# if defined(QT4) && defined(Q_WS_MAC)
+# if QT_VERSION >= 0x040000 && defined(Q_WS_MAC)
    {
  //      Q3PopupMenu * file = new Q3PopupMenu;
-      file->insertItem( us_tr("&Font"),  this, SLOT(update_font( )),    Qt::ALT+Qt::Key_F );
-      file->insertItem( us_tr("&Save"),  this, SLOT(save( )),    Qt::ALT+Qt::Key_S );
-      file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display( )),   Qt::ALT+Qt::Key_X );
+      file->insertItem( us_tr("&Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
+      file->insertItem( us_tr("&Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
+      file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
 
       QMenuBar *menu = new QMenuBar( this );
       AUTFBACK( menu );
@@ -168,9 +168,9 @@ void US_Hydrodyn_Cluster_Advanced::setupGUI()
    AUTFBACK( m );
  //   Q3PopupMenu * file = new Q3PopupMenu(editor);
    m->insertItem( us_tr("&File"), file );
-   file->insertItem( us_tr("Font"),  this, SLOT(update_font( )),    Qt::ALT+Qt::Key_F );
-   file->insertItem( us_tr("Save"),  this, SLOT(save( )),    Qt::ALT+Qt::Key_S );
-   file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display( )),   Qt::ALT+Qt::Key_X );
+   file->insertItem( us_tr("Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
+   file->insertItem( us_tr("Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
+   file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
 # endif
 #else
    QFrame *frame;
@@ -224,7 +224,7 @@ void US_Hydrodyn_Cluster_Advanced::setupGUI()
    // build layout
 
    QBoxLayout * vbl_editor_group = new QVBoxLayout(0); vbl_editor_group->setContentsMargins( 0, 0, 0, 0 ); vbl_editor_group->setSpacing( 0 );
-#if !defined(QT4) || !defined(Q_WS_MAC)
+#if QT_VERSION < 0x040000 || !defined(Q_WS_MAC)
    vbl_editor_group->addWidget( frame );
 #endif
    vbl_editor_group->addWidget( editor );
@@ -296,7 +296,7 @@ void US_Hydrodyn_Cluster_Advanced::table_value( int row, int col )
 
 void US_Hydrodyn_Cluster_Advanced::clear_display()
 {
-   editor->clear();
+   editor->clear( );
    editor->append("\n\n");
 }
 
@@ -400,11 +400,11 @@ void US_Hydrodyn_Cluster_Advanced::reset_csv()
 {
    csv1.name = "Advanced cluster options";
 
-   csv1.header.clear();
-   csv1.header_map.clear();
-   csv1.data.clear();
-   csv1.num_data.clear();
-   csv1.prepended_names.clear();
+   csv1.header.clear( );
+   csv1.header_map.clear( );
+   csv1.data.clear( );
+   csv1.num_data.clear( );
+   csv1.prepended_names.clear( );
 
    csv1.header.push_back("Parameter");
    csv1.header.push_back("Active");
@@ -424,7 +424,7 @@ void US_Hydrodyn_Cluster_Advanced::reset_csv()
    csv1.prepended_names.push_back(tmp_data[0]);
    csv1.data.push_back(tmp_data);
 
-   tmp_data.clear();
+   tmp_data.clear( );
    tmp_data.push_back("I(q) Full Debye");
    tmp_data.push_back("N");
    tmp_data.push_back("");
@@ -434,7 +434,7 @@ void US_Hydrodyn_Cluster_Advanced::reset_csv()
    csv1.prepended_names.push_back(tmp_data[0]);
    csv1.data.push_back(tmp_data);
 
-   tmp_data.clear();
+   tmp_data.clear( );
    tmp_data.push_back("I(q) Hybrid");
    tmp_data.push_back("N");
    tmp_data.push_back("");
@@ -444,7 +444,7 @@ void US_Hydrodyn_Cluster_Advanced::reset_csv()
    csv1.prepended_names.push_back(tmp_data[0]);
    csv1.data.push_back(tmp_data);
 
-   tmp_data.clear();
+   tmp_data.clear( );
    tmp_data.push_back("I(q) Hybrid2");
    tmp_data.push_back("N");
    tmp_data.push_back("");
@@ -454,7 +454,7 @@ void US_Hydrodyn_Cluster_Advanced::reset_csv()
    csv1.prepended_names.push_back(tmp_data[0]);
    csv1.data.push_back(tmp_data);
 
-   tmp_data.clear();
+   tmp_data.clear( );
    tmp_data.push_back("I(q) Hybrid3");
    tmp_data.push_back("N");
    tmp_data.push_back("");
@@ -464,7 +464,7 @@ void US_Hydrodyn_Cluster_Advanced::reset_csv()
    csv1.prepended_names.push_back(tmp_data[0]);
    csv1.data.push_back(tmp_data);
 
-   tmp_data.clear();
+   tmp_data.clear( );
    tmp_data.push_back("I(q) Fast");
    tmp_data.push_back("N");
    tmp_data.push_back("");
@@ -474,7 +474,7 @@ void US_Hydrodyn_Cluster_Advanced::reset_csv()
    csv1.prepended_names.push_back(tmp_data[0]);
    csv1.data.push_back(tmp_data);
 
-   tmp_data.clear();
+   tmp_data.clear( );
    tmp_data.push_back("I(q) FoXS");
    tmp_data.push_back("N");
    tmp_data.push_back("");
@@ -484,7 +484,7 @@ void US_Hydrodyn_Cluster_Advanced::reset_csv()
    csv1.prepended_names.push_back(tmp_data[0]);
    csv1.data.push_back(tmp_data);
 
-   tmp_data.clear();
+   tmp_data.clear( );
    tmp_data.push_back("I(q) Crysol");
    tmp_data.push_back("N");
    tmp_data.push_back("");
@@ -494,7 +494,7 @@ void US_Hydrodyn_Cluster_Advanced::reset_csv()
    csv1.prepended_names.push_back(tmp_data[0]);
    csv1.data.push_back(tmp_data);
 
-   tmp_data.clear();
+   tmp_data.clear( );
    tmp_data.push_back( us_tr( "--- Parameter sweeps ---" ) );
    tmp_data.push_back("");
    tmp_data.push_back("");
@@ -504,7 +504,7 @@ void US_Hydrodyn_Cluster_Advanced::reset_csv()
    csv1.prepended_names.push_back(tmp_data[0]);
    csv1.data.push_back(tmp_data);
 
-   tmp_data.clear();
+   tmp_data.clear( );
    tmp_data.push_back("Buffer electron density");
    tmp_data.push_back("N");
    tmp_data.push_back("0.1");
@@ -514,7 +514,7 @@ void US_Hydrodyn_Cluster_Advanced::reset_csv()
    csv1.prepended_names.push_back(tmp_data[0]);
    csv1.data.push_back(tmp_data);
 
-   tmp_data.clear();
+   tmp_data.clear( );
    tmp_data.push_back("Scaling excluded volume");
    tmp_data.push_back("N");
    tmp_data.push_back(".95");
@@ -524,7 +524,7 @@ void US_Hydrodyn_Cluster_Advanced::reset_csv()
    csv1.prepended_names.push_back(tmp_data[0]);
    csv1.data.push_back(tmp_data);
 
-   tmp_data.clear();
+   tmp_data.clear( );
    tmp_data.push_back("WAT excluded volume");
    tmp_data.push_back("N");
    tmp_data.push_back("15");
@@ -534,7 +534,7 @@ void US_Hydrodyn_Cluster_Advanced::reset_csv()
    csv1.prepended_names.push_back(tmp_data[0]);
    csv1.data.push_back(tmp_data);
 
-   tmp_data.clear();
+   tmp_data.clear( );
    tmp_data.push_back("Crysol: average atomic radius");
    tmp_data.push_back("N");
    tmp_data.push_back("1.5");
@@ -544,7 +544,7 @@ void US_Hydrodyn_Cluster_Advanced::reset_csv()
    csv1.prepended_names.push_back(tmp_data[0]);
    csv1.data.push_back(tmp_data);
 
-   tmp_data.clear();
+   tmp_data.clear( );
    tmp_data.push_back("Crysol: Excluded volume");
    tmp_data.push_back("N");
    tmp_data.push_back("10000");
@@ -554,7 +554,7 @@ void US_Hydrodyn_Cluster_Advanced::reset_csv()
    csv1.prepended_names.push_back(tmp_data[0]);
    csv1.data.push_back(tmp_data);
 
-   tmp_data.clear();
+   tmp_data.clear( );
    tmp_data.push_back("Crysol: contrast of hydration shell");
    tmp_data.push_back("N");
    tmp_data.push_back("0.01");

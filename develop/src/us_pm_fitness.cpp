@@ -24,9 +24,9 @@ bool US_PM::compute_I( set < pm_point > & model, vector < double > & I_result )
       {
          if ( us_log )
          {
-            us_log->log( QString( "switching to CYJ mode\n" ).toAscii().data() );
+            us_log->log( QString( "switching to CYJ mode\n" ).toLatin1().data() );
          }
-         pcdata.clear();
+         pcdata.clear( );
          use_CYJ = true;
          return compute_CYJ_I( model, I_result );
       } else {
@@ -160,7 +160,7 @@ us_log->log( QString( "point %1 r %2 t %3 p %4\n" )
 .arg( tmp_pm_data->rtp[ 0 ] )
 .arg( tmp_pm_data->rtp[ 1 ] )
 .arg( tmp_pm_data->rtp[ 2 ] )
-.toAscii().data() );
+.toLatin1().data() );
 }
          */
          complex < float > *Yp = &( tmp_pm_data->Y[ 0 ] );
@@ -315,7 +315,7 @@ bool US_PM::compute_delta_I(
    if ( !Av.size() || model.size() < 100 )
    {
       Av = Av0;
-      prev_model.clear();
+      prev_model.clear( );
    }
 
    // find elements that are in model not in new model and vice versa
@@ -468,7 +468,7 @@ us_log->log( QString( "xyz %1 %2 %3 rtp %4 %5 %6\n" )
          //                 .arg( tmp_pm_data->rtp[ 0 ] )
          //                 .arg( tmp_pm_data->rtp[ 1 ] )
          //                 .arg( tmp_pm_data->rtp[ 2 ] )
-         //                 .toAscii().data() );
+         //                 .toLatin1().data() );
          // }
 
          complex < float > *Yp = &( tmp_pm_data->Y[ 0 ] );

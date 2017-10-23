@@ -192,7 +192,7 @@ void US_Hydrodyn_Anaflex_Options::setupGUI()
    // cb_run_mode_1_20->setChecked((*anaflex_options).run_mode_1_20);
    // cb_run_mode_1_20->setEnabled(true);
    // cb_run_mode_1_20->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   // cb_run_mode_1_20->setPalette( USglobal->global_colors.cg_normal );
+   // cb_run_mode_1_20->setPalette( PALET_NORMAL );
    // connect(cb_run_mode_1_20, SIGNAL(clicked()), SLOT(set_run_mode_1_20()));
 
    // cb_run_mode_1_24 = new QCheckBox(this);
@@ -200,7 +200,7 @@ void US_Hydrodyn_Anaflex_Options::setupGUI()
    // cb_run_mode_1_24->setChecked((*anaflex_options).run_mode_1_24);
    // cb_run_mode_1_24->setEnabled(true);
    // cb_run_mode_1_24->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   // cb_run_mode_1_24->setPalette( USglobal->global_colors.cg_normal );
+   // cb_run_mode_1_24->setPalette( PALET_NORMAL );
    // connect(cb_run_mode_1_24, SIGNAL(clicked()), SLOT(set_run_mode_1_24()));
 
    cb_run_mode_2 = new QCheckBox(this);
@@ -317,7 +317,7 @@ void US_Hydrodyn_Anaflex_Options::setupGUI()
    // cb_run_mode_2_20->setChecked((*anaflex_options).run_mode_2_20);
    // cb_run_mode_2_20->setEnabled(true);
    // cb_run_mode_2_20->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   // cb_run_mode_2_20->setPalette( USglobal->global_colors.cg_normal );
+   // cb_run_mode_2_20->setPalette( PALET_NORMAL );
    // connect(cb_run_mode_2_20, SIGNAL(clicked()), SLOT(set_run_mode_2_20()));
 
    // cb_run_mode_2_24 = new QCheckBox(this);
@@ -325,7 +325,7 @@ void US_Hydrodyn_Anaflex_Options::setupGUI()
    // cb_run_mode_2_24->setChecked((*anaflex_options).run_mode_2_24);
    // cb_run_mode_2_24->setEnabled(true);
    // cb_run_mode_2_24->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   // cb_run_mode_2_24->setPalette( USglobal->global_colors.cg_normal );
+   // cb_run_mode_2_24->setPalette( PALET_NORMAL );
    // connect(cb_run_mode_2_24, SIGNAL(clicked()), SLOT(set_run_mode_2_24()));
 
    cb_run_mode_3 = new QCheckBox(this);

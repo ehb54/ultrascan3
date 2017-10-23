@@ -492,7 +492,7 @@ bool US_Saxs_Util::compute_1d()
          }
 
          excluded_volume = result;
-         result.clear();
+         result.clear( );
       }
 
       for ( int t = 0; t < axis_rotations; t++ )
@@ -700,7 +700,7 @@ bool US_Saxs_Util::load_rotations( unsigned int number, vector < vector < double
    unsigned int line = 0;
 
    vector < double > p(3);
-   rotations.clear();
+   rotations.clear( );
 
    while ( !ts.atEnd() && rotations.size() < number )
    {
@@ -733,7 +733,7 @@ bool US_Saxs_Util::load_rotations( unsigned int number, vector < vector < double
          .arg( number )
          .arg( rotations.size() )
          ;
-      rotations.clear();
+      rotations.clear( );
       return false;
    }
    return true;
@@ -829,7 +829,7 @@ bool US_Saxs_Util::setup_excluded_volume_map()
 bool US_Saxs_Util::get_excluded_volume_map()
 {
    errormsg = "";
-   excluded_volume.clear();
+   excluded_volume.clear( );
 
    if ( !rho0 )
    {

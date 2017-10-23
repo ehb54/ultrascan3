@@ -1,6 +1,9 @@
 #include "us3i_editor.h"
 #include "us3i_settings.h"
 #include "us3i_gui_settings.h"
+#if QT_VERSION > 0x050000
+#include <QtPrintSupport>
+#endif
 
 US3i_Editor::US3i_Editor( int menu, bool readonly, const QString& extension, 
       QWidget* parent,  Qt::WindowFlags flags ) : QMainWindow( parent, flags )                                                             
@@ -28,10 +31,14 @@ US3i_Editor::US3i_Editor( int menu, bool readonly, const QString& extension,
 
    filename = "";
 
-#ifndef Q_WS_MAC
+#ifndef Q_OS_MAC
+   edMenuBar       = menuBar();
+#else
+#if QT_VERSION > 0x050000
    edMenuBar       = menuBar();
 #else
    edMenuBar       = new QMenuBar( 0 );
+#endif
 #endif
    QMenu* fileMenu = edMenuBar->addMenu( tr( "&File" ) );
    fileMenu->setFont  ( QFont( US3i_GuiSettings::fontFamily(),
@@ -82,8 +89,8 @@ US3i_Editor::US3i_Editor( int menu, bool readonly, const QString& extension,
    menuBar()->setFont   ( QFont( US3i_GuiSettings::fontFamily(),
                           US3i_GuiSettings::fontSize() ) );
 
-   currentFont = QFont( "Courier", US3i_GuiSettings::fontSize() - 1, 
-         QFont::Bold );
+   currentFont = QFont( "monospace", US3i_GuiSettings::fontSize() - 1, 
+                        QFont::Bold );
    
    e = new QTextEdit( this );
    e->setFont          ( currentFont );
@@ -170,6 +177,7 @@ void US3i_Editor::saveFile( void )
 void US3i_Editor::update_font(  )
 {
    bool  ok;
+   currentFont   = e->font();
    QFont newFont = QFontDialog::getFont( &ok, currentFont, this );
    
    if ( ok )

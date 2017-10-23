@@ -306,14 +306,14 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
          };
 
       
-      field.clear();
-      descriptive_name.clear();
-      short_name.clear();
-      field_to_pos.clear();
-      descriptive_name_to_pos.clear();
-      section_name.clear();
-      row_break.clear();
-      descriptive_name_to_section.clear();
+      field.clear( );
+      descriptive_name.clear( );
+      short_name.clear( );
+      field_to_pos.clear( );
+      descriptive_name_to_pos.clear( );
+      section_name.clear( );
+      row_break.clear( );
+      descriptive_name_to_section.clear( );
 
       QString this_section;
       unsigned int pos;
@@ -326,7 +326,7 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
       {
          if ( ((US_Hydrodyn *)us_hydrodyn)->advanced_config.debug_4 )
          {
-            printf("in while, data[%u] is <%s>\n", i, data[i].toAscii().data());
+            printf("in while, data[%u] is <%s>\n", i, data[i].toLatin1().data());
          }
          if ( data[i].length() == 0 ) 
          {
@@ -341,7 +341,7 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             this_section = data[++i];
             if ( ((US_Hydrodyn *)us_hydrodyn)->advanced_config.debug_4 )
             {
-               printf("in while, section is <%s>\n", this_section.toAscii().data());
+               printf("in while, section is <%s>\n", this_section.toLatin1().data());
             }
             i++;
             is_section = true;
@@ -354,7 +354,7 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
          pos = field.size();
          if ( ((US_Hydrodyn *)us_hydrodyn)->advanced_config.debug_4 )
          {
-            printf("in while, field[%u] is <%s>\n", i, data[i].toAscii().data());
+            printf("in while, field[%u] is <%s>\n", i, data[i].toLatin1().data());
          }
          field.push_back(data[i++]);
          descriptive_name.push_back(data[i++]);
@@ -910,8 +910,8 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
    setPalette( PALET_FRAME );
    setWindowTitle(us_tr("Hydrodynamic Parameters to be Saved"));
    // for now:  until we save/restore
-   //   save->field.clear();
-   save->field_flag.clear();
+   //   save->field.clear( );
+   save->field_flag.clear( );
    for ( unsigned int i = 0; i < save->field.size(); i++ )
    {
       save->field_flag[save->field[i]] = true;
@@ -920,7 +920,7 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
 
    for ( unsigned int i = 0; i < field.size(); i++ )
    {
-      printf("read field %u <%s>\n", i, field[i].toAscii().data());
+      printf("read field %u <%s>\n", i, field[i].toLatin1().data());
    }
 
    if ( !save->field_flag.count("Model name") )
@@ -1166,10 +1166,10 @@ void US_Hydrodyn_Save::remove()
 {
    for ( int i = 0; i < lb_selected->count(); i++ )
    {
-      if ( lb_selected->item(i)->isSelected( ) &&
-           lb_selected->item(i)->text( ) != "Model name" )
+      if ( lb_selected->item(i)->isSelected() &&
+           lb_selected->item(i)->text() != "Model name" )
       {
-         unsigned int pos = descriptive_name_to_section[ lb_selected->item(i)->text( ) ];
+         unsigned int pos = descriptive_name_to_section[ lb_selected->item(i)->text() ];
          lb_possible[pos]->addItem(lb_selected->item(i)->text());
          delete lb_selected->takeItem(i);
          i--;
@@ -1183,15 +1183,15 @@ void US_Hydrodyn_Save::rebuild()
    map < QString, bool > possible_selected;
    map < QString, bool > selected;
 
-   possible_selected.clear();
-   selected.clear();
+   possible_selected.clear( );
+   selected.clear( );
 
    // save possible selection status
    for ( unsigned int t = 0; t < lb_possible.size(); t++ )
    {
       for ( int i = 0; i < lb_possible[t]->count(); i++ )
       {
-         possible_selected[ lb_possible[t]->item(i)->text() ] = lb_possible[t]->item(i)->isSelected( );
+         possible_selected[ lb_possible[t]->item(i)->text() ] = lb_possible[t]->item(i)->isSelected();
       }
    }
 
@@ -1199,14 +1199,14 @@ void US_Hydrodyn_Save::rebuild()
 
    for ( int i = 0; i < lb_selected->count(); i++ )
    {
-      selected[ lb_selected->item(i)->text() ] = lb_selected->item(i)->isSelected( );
+      selected[ lb_selected->item(i)->text() ] = lb_selected->item(i)->isSelected();
    }
 
    // clear tab lists
 
    for ( unsigned int t = 0; t < lb_possible.size(); t++ )
    {
-      lb_possible[t]->clear();
+      lb_possible[t]->clear( );
    }
 
    for ( unsigned int i = 0; i < field.size(); i++ )
@@ -1228,14 +1228,14 @@ void US_Hydrodyn_Save::rebuild()
    }
 
    // recreate the save info
-   save->field.clear();
-   save->field_flag.clear();
+   save->field.clear( );
+   save->field_flag.clear( );
    printf("save field list:\n");
    for ( int i = 0; i < lb_selected->count(); i++ )
    {
-      save->field_flag[field[descriptive_name_to_pos[ lb_selected->item(i)->text( ) ]]] = true;
+      save->field_flag[field[descriptive_name_to_pos[ lb_selected->item(i)->text() ]]] = true;
       save->field.push_back(field[descriptive_name_to_pos[ lb_selected->item(i)->text() ]]);
-      printf("%s\n", field[descriptive_name_to_pos[ lb_selected->item(i)->text() ]].toAscii().data());
+      printf("%s\n", field[descriptive_name_to_pos[ lb_selected->item(i)->text() ]].toLatin1().data());
    }
    header();
 }
@@ -1270,12 +1270,12 @@ QString US_Hydrodyn_Save::header()
             .arg(this_field);
       }
    }
-   printf("header() <%s>\n", result.toAscii().data());
+   printf("header() <%s>\n", result.toLatin1().data());
    return result + "\n";
 }
 
 // #define ZARG(s) arg(s,0,field_to_format[save->field[i]],field_to_precision[save->field[i]]).replace(QRegExp("\\.0+$"),"")
-// #define DBFARG(s) printf("i = %u _field <%s> _format <%c> _precision <%d>\n",i,save->field[i].toAscii().data(), field_to_format[save->field[i]],field_to_precision[save->field[i]]);fflush(stdout)
+// #define DBFARG(s) printf("i = %u _field <%s> _format <%c> _precision <%d>\n",i,save->field[i].toLatin1().data(), field_to_format[save->field[i]],field_to_precision[save->field[i]]);fflush(stdout)
 #define FARG(s) arg(s,0,field_to_format[save->field[i]],field_to_precision[save->field[i]])
 
 QString US_Hydrodyn_Save::dataString(save_data *data)
@@ -1346,7 +1346,7 @@ QString US_Hydrodyn_Save::dataString(save_data *data)
          break;
       }
    }
-   printf("data() <%s>\n", result.toAscii().data());
+   printf("data() <%s>\n", result.toLatin1().data());
    return result + "\n";
 }
 
@@ -1357,8 +1357,8 @@ vector < save_data > US_Hydrodyn_Save::stats(vector < save_data > *data)
    for ( unsigned int i = 0; i < field.size(); i++ )
    {
       //      printf("stats field %u of %u\n", i, field.size()); fflush(stdout);
-      //      printf("field[i] %s type %d\n",field[i].toAscii().data(), field_to_save_data_type[field[i]]); fflush(stdout);
-      //      printf("save->field[i] %s\n",save->field[i].toAscii().data()); fflush(stdout);
+      //      printf("field[i] %s type %d\n",field[i].toLatin1().data(), field_to_save_data_type[field[i]]); fflush(stdout);
+      //      printf("save->field[i] %s\n",save->field[i].toLatin1().data()); fflush(stdout);
 
       switch(field_to_save_data_type[field[i]]) 
       {
@@ -1742,7 +1742,7 @@ QString US_Hydrodyn_Save::hydroFormatStats(vector < save_data > stats)
    //   if ((raflag == -2.0) || (raflag == -5.0) || (raflag == -3.0))
    //   {
    result += QString("").sprintf("- SED. COEFF. (psv %s) \t%.2f\t\t%.2f\t\t[S]\n", 
-                                 bead_model_source.toAscii().data(),
+                                 bead_model_source.toLatin1().data(),
                                  stats[0].results.s20w,
                                  stats[1].results.s20w);
    //   }

@@ -1,7 +1,7 @@
 #include "../include/us_util.h"
 #include "../include/us_write_config.h"
 #include "../include/us_version.h"
-#ifdef QT4
+#if QT_VERSION >= 0x040000
 #include <QtCore>
 #endif
 #include <qregexp.h>
@@ -17,12 +17,12 @@ static std::basic_ostream<char>& operator<<(std::basic_ostream<char>& os, const 
 US_Config::US_Config( QObject* parent, const char* name)
    : QObject ( parent )
 {
-#ifdef QT4
+#if QT_VERSION >= 0x040000
    const QString RevSvn( SOMO_Revision );
 #endif
    US_Version = US_Version_string; // Defined in us_util.h
    
-   if ( ! read( ) )
+   if ( ! read() )
    {
       // This should never happen.  Created in us main program.
       setDefault();
@@ -113,7 +113,7 @@ void US_Config::setModelString()
 {
    vector <QString>& m = modelString; // convenience
 
-   m.clear(  );
+   m.clear( );
    m.push_back( us_tr( "1-Component, Ideal" ) );                        // model 0
    m.push_back( us_tr( "2-Component, Ideal, Noninteracting" ) );        // model 1
    m.push_back( us_tr( "3-Component, Ideal, Noninteracting" ) );        // model 2
@@ -192,10 +192,10 @@ bool US_Config::col_exists()
       ds >> global_colors.cg_lcd;
       ds >> global_colors.cg_bunt;
 
-      if ( ! f.atEnd(  ) )
+      if ( ! f.atEnd() )
       {
          ds >> version;
-         if ( version.toFloat(  ) > 7.0 )
+         if ( version.toFloat() > 7.0 )
          {
             flag = true;
          }
@@ -204,7 +204,7 @@ bool US_Config::col_exists()
 
    if ( ! flag )
    {
-      if ( write_default_colors(  ) )
+      if ( write_default_colors() )
       {
          flag = true;
       }
@@ -461,12 +461,12 @@ void US_Config::setDefault()
 
 #ifdef MAC
    config_list.browser = "/Applications/Safari.app";
-#ifndef QT4
+#if QT_VERSION < 0x040000
    config_list.system_dir = "/Applications/UltraScanII";
 #else
    QString ultrascan = getenv( "ULTRASCAN" );
    if ( ultrascan != "" )
-      config_list.system_dir = QDir::convertSeparators( ultrascan );
+      config_list.system_dir = QDir::toNativeSeparators( ultrascan );
    else
    {
       QString base = qApp->applicationDirPath().remove( QRegExp( "/bin(|64)$" ) );
@@ -495,31 +495,31 @@ void US_Config::setDefault()
    }
 
    us_qdebug( QString( "ultrascan %1\n" ).arg( ultrascan ) );
-   config_list.system_dir = QDir::convertSeparators( ultrascan );
+   config_list.system_dir = QDir::toNativeSeparators( ultrascan );
 #endif
 
    // Doc Directory
-#ifndef QT4
+#if QT_VERSION < 0x040000
    config_list.help_dir =
-      QDir::convertSeparators( config_list.system_dir + "/doc" );
+      QDir::toNativeSeparators( config_list.system_dir + "/doc" );
 #else
    config_list.help_dir =
-      QDir::convertSeparators( config_list.system_dir + "/somo/doc" );
+      QDir::toNativeSeparators( config_list.system_dir + "/somo/doc" );
 #endif
 
    // Set the per user directory and subdirectories
-   config_list.root_dir = get_home_dir(  );
+   config_list.root_dir = get_home_dir();
 
    config_list.data_dir =
-      QDir::convertSeparators( config_list.root_dir + "data" );
+      QDir::toNativeSeparators( config_list.root_dir + "data" );
    config_list.archive_dir =
-      QDir::convertSeparators( config_list.root_dir + "archive" );
+      QDir::toNativeSeparators( config_list.root_dir + "archive" );
    config_list.result_dir =
-      QDir::convertSeparators( config_list.root_dir + "results" );
+      QDir::toNativeSeparators( config_list.root_dir + "results" );
    config_list.html_dir =
-      QDir::convertSeparators( config_list.root_dir + "reports" );
+      QDir::toNativeSeparators( config_list.root_dir + "reports" );
    config_list.tmp_dir =
-      QDir::convertSeparators( config_list.root_dir + "tmp" );
+      QDir::toNativeSeparators( config_list.root_dir + "tmp" );
 
    config_list.temperature_tol = 0.5;  // Allow a max of 0.5 degrees variation
    // over course of run
@@ -541,39 +541,39 @@ bool US_Config::read()
 
       f.open( QIODevice::ReadOnly );
       QTextStream ts( &f );
-      config_list.version = ts.readLine(  );
+      config_list.version = ts.readLine();
 
-      if ( config_list.version.toFloat(  ) < 6.0 )
+      if ( config_list.version.toFloat() < 6.0 )
       {
-         f.close(  );
-         f.remove(  );
+         f.close();
+         f.remove();
          return ( false );
       }
 
       QString dummy;
-      config_list.browser     = ts.readLine(  );
-      dummy                   = ts.readLine(  );
-      dummy                   = ts.readLine(  );
-      config_list.help_dir    = ts.readLine(  );
-      config_list.data_dir    = ts.readLine(  );
-      config_list.root_dir    = ts.readLine(  );
-      config_list.archive_dir = ts.readLine(  );
-      config_list.result_dir  = ts.readLine(  );
+      config_list.browser     = ts.readLine();
+      dummy                   = ts.readLine();
+      dummy                   = ts.readLine();
+      config_list.help_dir    = ts.readLine();
+      config_list.data_dir    = ts.readLine();
+      config_list.root_dir    = ts.readLine();
+      config_list.archive_dir = ts.readLine();
+      config_list.result_dir  = ts.readLine();
 
-      str = ts.readLine(  );
-      config_list.beckman_bug = str.toInt(  );
+      str = ts.readLine();
+      config_list.beckman_bug = str.toInt();
 
-      str = ts.readLine(  );
-      config_list.temperature_tol = str.toFloat(  );
+      str = ts.readLine();
+      config_list.temperature_tol = str.toFloat();
 
       // If we have an old version of the config file, file caps and/or aren't
       // present, we need to initialize this variable and write out a new
       // version that incorporates the new USglobal variable for filecaps:
 
-      if ( ! ts.atEnd(  ) )
+      if ( ! ts.atEnd() )
       {
-         str = ts.readLine(  );
-         if ( ! str.isNull(  ) && ! str.isEmpty(  ) )
+         str = ts.readLine();
+         if ( ! str.isNull() && ! str.isEmpty() )
          {
             config_list.html_dir = str;
          }
@@ -583,10 +583,10 @@ bool US_Config::read()
          }
       }
 
-      if ( ! ts.atEnd(  ) )
+      if ( ! ts.atEnd() )
       {
-         str = ts.readLine(  );
-         if ( ! str.isNull(  ) && ! str.isEmpty(  ) )
+         str = ts.readLine();
+         if ( ! str.isNull() && ! str.isEmpty() )
          {
             config_list.system_dir = str;
          }
@@ -596,10 +596,10 @@ bool US_Config::read()
          }
       }
 
-      if ( ! ts.atEnd(  ) )
+      if ( ! ts.atEnd() )
       {
-         str = ts.readLine(  );
-         if ( ! str.isNull(  ) && ! str.isEmpty(  ) )
+         str = ts.readLine();
+         if ( ! str.isNull() && ! str.isEmpty() )
          {
             config_list.fontFamily = str;
          }
@@ -609,12 +609,12 @@ bool US_Config::read()
          }
       }
 
-      if ( ! ts.atEnd(  ) )
+      if ( ! ts.atEnd() )
       {
-         str = ts.readLine(  );
-         if ( ! str.isNull(  ) && ! str.isEmpty(  ) )
+         str = ts.readLine();
+         if ( ! str.isNull() && ! str.isEmpty() )
          {
-            config_list.fontSize = str.toInt(  );
+            config_list.fontSize = str.toInt();
          }
          else
          {
@@ -622,12 +622,12 @@ bool US_Config::read()
          }
       }
 
-      if ( ! ts.atEnd(  ) )
+      if ( ! ts.atEnd() )
       {
-         str = ts.readLine(  );
-         if ( ! str.isNull(  ) && ! str.isEmpty(  ) )
+         str = ts.readLine();
+         if ( ! str.isNull() && ! str.isEmpty() )
          {
-            config_list.margin = str.toInt(  );
+            config_list.margin = str.toInt();
          }
          else
          {
@@ -635,22 +635,22 @@ bool US_Config::read()
          }
       }
 
-      if ( ! ts.atEnd(  ) )
+      if ( ! ts.atEnd() )
       {
-         str = ts.readLine(  );
-         if ( ! str.isNull(  ) && ! str.isEmpty(  ) )
+         str = ts.readLine();
+         if ( ! str.isNull() && ! str.isEmpty() )
          {
-            config_list.numThreads = str.toUInt(  );
+            config_list.numThreads = str.toUInt();
          }
          else
          {
             return ( false );  // Bad numThreads
          }
       }
-      if ( ! ts.atEnd(  ) )
+      if ( ! ts.atEnd() )
       {
-         str = ts.readLine(  );
-         if ( ! str.isNull(  ) && ! str.isEmpty(  ) )
+         str = ts.readLine();
+         if ( ! str.isNull() && ! str.isEmpty() )
          {
             config_list.tmp_dir = str;
          }
@@ -665,14 +665,14 @@ bool US_Config::read()
       }
       f.close();
    }
-   else // ! f.exists(  )
+   else // ! f.exists()
    {
       return ( false );
    }
 
    // compare config_list.system_dir with applicationdirpath()
 #ifndef MAC
-   QString real_ultrascan = QDir::convertSeparators( qApp->applicationDirPath().remove( QRegExp( "/bin(|64)$" ) ) );
+   QString real_ultrascan = QDir::toNativeSeparators( qApp->applicationDirPath().remove( QRegExp( "/bin(|64)$" ) ) );
    QString match = config_list.system_dir != real_ultrascan ? "different" : "the same";
    
    // QMessageBox::information( 0
@@ -684,12 +684,12 @@ bool US_Config::read()
 
    if ( config_list.system_dir != real_ultrascan ) {
       config_list.system_dir = real_ultrascan;
-#ifndef QT4
+#if QT_VERSION < 0x040000
       config_list.help_dir =
-         QDir::convertSeparators( config_list.system_dir + "/doc" );
+         QDir::toNativeSeparators( config_list.system_dir + "/doc" );
 #else
       config_list.help_dir =
-         QDir::convertSeparators( config_list.system_dir + "/somo/doc" );
+         QDir::toNativeSeparators( config_list.system_dir + "/somo/doc" );
 #endif
       US_Write_Config *w_config;
       w_config = new US_Write_Config(this);
@@ -705,19 +705,19 @@ bool US_Config::read()
    return ( true );
 }
 
-QString US_Config::get_home_dir(  )
+QString US_Config::get_home_dir()
 {
-   QString home = QDir::homePath(  ) + USER_DIR;
-   return ( QDir::convertSeparators( home ) );
+   QString home = QDir::homePath() + USER_DIR;
+   return ( QDir::toNativeSeparators( home ) );
 }
 
 // Move files from old locations to new if necessary
 // At some time in the future, when all users have updated,
 // theis function can be removed
-void  US_Config::move_files(  )
+void  US_Config::move_files()
 {
    QString home    = get_home_dir();
-   QString oldhome = QDir::homePath(  );
+   QString oldhome = QDir::homePath();
 
    //   create new $HOME/ultrascan directory, if it doesn't exist
    if ( ! QDir(home).exists() )

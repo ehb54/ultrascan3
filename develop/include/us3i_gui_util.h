@@ -2,8 +2,16 @@
 #ifndef US_GUIUTIL_H
 #define US_GUIUTIL_H
 
+#if QT_VERSION > 0x050000
+#include <QtWidgets>
+#define dataPlotClear(a) a->detachItems(QwtPlotItem::Rtti_PlotItem,false)
+#else
 #include <QtGui>
-
+#define setSingleStep(a) setStep(a)
+#define setMinorPen(a) setMinPen(a)
+#define setMajorPen(a) setMajPen(a)
+#define dataPlotClear(a) a->clear()
+#endif
 #include "qwt_plot.h"
 #include "us3i_extern.h"
 

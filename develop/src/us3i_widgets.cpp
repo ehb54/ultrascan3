@@ -90,7 +90,7 @@ QLabel* US3i_widgets::us_banner( const QString& labelString, int fontAdjust,
 QPushButton* US3i_widgets::us_pushbutton( const QString& labelString, bool enabled,
                                         int fontAdjust )
 {
-  QPushButton* button =  new QPushButton( tr( labelString.toAscii() ), this );
+  QPushButton* button =  new QPushButton( tr( labelString.toLatin1() ), this );
 
   button->setFont( QFont( US3i_GuiSettings::fontFamily(), 
                           US3i_GuiSettings::fontSize  () + fontAdjust ) );
@@ -199,7 +199,7 @@ QGridLayout* US3i_widgets::us_checkbox(
   lb_spacer->setAutoFillBackground( true );
   lb_spacer->setPalette           ( p );
 
-  cb = new QCheckBox( text.toAscii(), this );
+  cb = new QCheckBox( text.toLatin1(), this );
   cb->setFont              ( font  ); 
   cb->setPalette           ( p     );
   cb->setChecked           ( state );
@@ -231,7 +231,7 @@ QGridLayout* US3i_widgets::us_radiobutton(
   lb_spacer->setAutoFillBackground( true );
   lb_spacer->setPalette           ( p );
 
-  rb = new QRadioButton( text.toAscii(), this );
+  rb = new QRadioButton( text.toLatin1(), this );
   rb->setAutoFillBackground( true  );
   rb->setFont              ( font  );
   rb->setPalette           ( p     );
@@ -299,9 +299,17 @@ QwtCounter* US3i_widgets::us_counter( int buttons, double low, double high,
                                     double value )
 {
   QwtCounter* counter = new QwtCounter;
-#ifdef Q_WS_MAC
+  counter->setNumButtons( buttons );
+  counter->setRange     ( low, high );
+  counter->setValue     ( value );
   QList< QObject* > children = counter->children();
+  int totwid          = 0;
+#ifdef Q_OS_MAC
+#if QT_VERSION < 0x050000
   QStyle *btnstyle = new QPlastiqueStyle();
+#else
+  QStyle *btnstyle = QApplication::setStyle( "fusion" );
+#endif
 
   for ( int jj = 0; jj < children.size(); jj++ )
   {
@@ -313,28 +321,33 @@ QwtCounter* US3i_widgets::us_counter( int buttons, double low, double high,
         cwidg->setStyle( btnstyle );
      }
   }
-#endif
+#endif    // END: special button treatment for Mac
+
+  for ( int jj = 0; jj < children.size(); jj++ )
+  {  // Accumulate total width of button widgets
+     QWidget* cwidg = (QWidget*)children.at( jj );
+     QString clname = cwidg->metaObject()->className();
+     if ( clname.contains( "Button" ) )
+     {
+        cwidg->adjustSize();
+        totwid        += cwidg->width();
+     }
+  }
+
   QFont vfont( US3i_GuiSettings::fontFamily(), US3i_GuiSettings::fontSize() );
   QFontMetrics fm( vfont );
-  counter->setNumButtons( buttons );
-  counter->setRange     ( low, high );
-  counter->setValue     ( value );
   counter->setPalette   ( US3i_GuiSettings::normalColor() );
   counter->setFont      ( vfont );
   counter->setAutoFillBackground( true );
 
-  // Set minimum width based on current (value) size and range
+  // Set min,curr width based on current value and high-value sizes
   int ncv    = int( log10( value ) ) + 1;
-  int nch    = int( log10( high  ) ) + 1;
   ncv        = ( ncv > 0 ) ? ncv : ( 4 - ncv );
-  nch        = ( nch > 0 ) ? nch : ( 4 - nch );
-  nch        = qMax( nch, ncv );
   int widv   = fm.width( QString( "12345678901234" ).left( ncv ) );
-  int widh   = fm.width( QString( "12345678901234" ).left( nch ) );
   counter->adjustSize();
-  int mwidth = counter->width() + widh - widv;
-  counter->resize         ( mwidth, counter->height() );
-  counter->setMinimumWidth( mwidth - fm.width( "A" ) );
+  int mwidth = widv * 2 + totwid;
+  counter->setMinimumWidth( mwidth );
+  counter->resize(          mwidth + widv, counter->height() );
 
   return counter;
 }
@@ -360,10 +373,10 @@ QwtPlot* US3i_widgets::us_plot( const QString& title, const QString& x_axis,
 QwtPlotGrid* US3i_widgets::us_grid( QwtPlot* plot )
 {
   QwtPlotGrid* grid = new QwtPlotGrid;
-  grid->enableXMin    ( true );
-  grid->setMajPen(QPen( US3i_GuiSettings::plotMajGrid(), 0, Qt::DotLine ) );
-  grid->setMinPen(QPen( US3i_GuiSettings::plotMinGrid(), 0, Qt::DotLine ) );
-  grid->attach        ( plot );
+  grid->enableXMin ( true );
+  grid->setMajorPen( QPen( US3i_GuiSettings::plotMajGrid(), 0, Qt::DotLine ) );
+  grid->setMinorPen( QPen( US3i_GuiSettings::plotMinGrid(), 0, Qt::DotLine ) );
+  grid->attach     ( plot );
 
   return grid;
 }
@@ -384,7 +397,11 @@ QwtPlotPicker* US3i_widgets::us_picker( QwtPlot* plot )
   QwtPlotPicker* pick = new QwtPlotPicker( QwtPlot::xBottom, QwtPlot::yLeft,
                                            plot->canvas() ); 
 
+#if QT_VERSION < 0x050000
   pick->setSelectionFlags( QwtPicker::PointSelection );
+#else
+  pick->setStateMachine( new QwtPickerClickPointMachine() );
+#endif
   pick->setTrackerMode   ( QwtPicker::AlwaysOn );
   pick->setRubberBand    ( QwtPicker::CrossRubberBand );
 
@@ -420,13 +437,13 @@ QFont US3i_widgets::fixedFont()
    bool          fmatch;
    bool          ffixed;
    const char*   preffam[] = {
+      "DejaVu Sans Mono",
+      "Nimbus Mono L",
       "Liberation Mono",
       "FreeMono",
-      "DejaVu Sans Mono",
-      "DejaVu LGC San Mono",
+      "DejaVu LGC Sans Mono",
       "Andale Mono",
       "Menlo", 
-      "Nimbus Mono L",
       "Luxi Mono",
       "Lucida Console",
       "Fixedsys",
@@ -435,7 +452,8 @@ QFont US3i_widgets::fixedFont()
       "Monaco",
       "Courier New",
       "Courier 10 Pitch",
-      "Courier"
+      "Courier",
+      "Monospace"
    };
    const int     pfsize = sizeof( preffam ) / sizeof( preffam[ 0 ] );
 
@@ -446,6 +464,8 @@ QFont US3i_widgets::fixedFont()
       finfo    = QFontInfo( tfont );
       fmatch   = finfo.exactMatch();
       ffixed   = finfo.fixedPitch();
+qDebug() << "fixf:   ii" << ii << "family" << family
+ << "fmatch" << fmatch << "ffixed" << ffixed;
       if ( fmatch  &&  ffixed )
       {
          ffont    = tfont;
@@ -457,6 +477,7 @@ QFont US3i_widgets::fixedFont()
          break;
       }
    }
+qDebug() << "fixf:   ffont.family()" << ffont.family();
    return ffont;
 }
 
@@ -476,6 +497,49 @@ QTabWidget* US3i_widgets::us_tabwidget(  int fontAdjust,
   newtw->setPalette( US3i_GuiSettings::normalColor() );
 
   return newtw;
+}
+
+// TimeEdit
+QHBoxLayout* US3i_widgets::us_timeedit( 
+      QTimeEdit*& tedt, const int fontAdjust, QSpinBox** sbox )
+{
+   QPalette   pal    = US3i_GuiSettings::normalColor();
+   QFont      font   = QFont( US3i_GuiSettings::fontFamily(),
+                              US3i_GuiSettings::fontSize  () + fontAdjust );
+   tedt              = new QTimeEdit( QTime( 0, 0 ), this );
+   tedt->setPalette( pal );
+   tedt->setAutoFillBackground( true );
+   tedt->setFont( font );
+
+   QHBoxLayout* layo = new QHBoxLayout;
+   layo->setContentsMargins( 0, 0, 0, 0 );
+   layo->setSpacing        ( 0 );
+
+   if ( sbox != NULL )
+   {
+      *sbox             = new QSpinBox( this );
+      (*sbox)->setPalette( pal );
+      (*sbox)->setAutoFillBackground( true );
+      (*sbox)->setFont( font );
+
+      layo->addWidget( *sbox );
+   }
+
+   layo->addWidget( tedt );
+
+   return layo;
+}
+
+// SpinBox
+QSpinBox* US3i_widgets::us_spinbox( const int fontAdjust )
+{
+   QSpinBox* sbox   = new QSpinBox( this );
+   sbox->setPalette( US3i_GuiSettings::normalColor() );
+   sbox->setAutoFillBackground( true );
+   sbox->setFont( QFont( US3i_GuiSettings::fontFamily(),
+                         US3i_GuiSettings::fontSize() + fontAdjust ) );
+
+   return sbox;
 }
 
 void US3i_widgets::write_plot( const QString& fname, const QwtPlot* plot )
@@ -750,7 +814,7 @@ QGridLayout* US_Disk_DB_Controls::us_radiobutton(
   lb_spacer->setAutoFillBackground( true );
   lb_spacer->setPalette           ( p );
 
-  rb = new QRadioButton( text.toAscii() );
+  rb = new QRadioButton( text.toLatin1() );
   rb->setAutoFillBackground( true  );
   rb->setFont              ( font  );
   rb->setPalette           ( p     );

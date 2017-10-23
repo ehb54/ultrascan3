@@ -536,7 +536,7 @@ void ScannerBase::reset__()
     d_return = true;
 
     if (!d_more)
-        d_matched.clear();
+        d_matched.clear( );
 
     d_more = false;
 }

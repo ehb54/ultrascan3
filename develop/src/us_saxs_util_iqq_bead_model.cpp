@@ -987,7 +987,7 @@ bool US_Saxs_Util::compute_exponential(
       unsigned int n_par = 1 + 2 * terms;
       unsigned int m_dat = ( unsigned int ) q.size();
       cout << QString( "compute exponential terms %1 n_par %2 m_dat %3\n" )
-         .arg( terms ).arg( n_par ).arg( m_dat ).toAscii().data();
+         .arg( terms ).arg( n_par ).arg( m_dat ).toLatin1().data();
 
       minusoneoverfourpisq  = -1e0 / ( 16e0 * M_PI * M_PI );
 
@@ -1521,7 +1521,7 @@ bool US_Saxs_Util::grid(
       return false;
    }
       
-   result.clear();
+   result.clear( );
 
    // determine max extents
 

@@ -14,7 +14,7 @@
 using namespace std;
 
 #ifdef WIN32
-# if !defined( QT4 )
+# if QT_VERSION < 0x040000
   #pragma warning ( disable: 4251 )
 # endif
 #endif
@@ -88,10 +88,10 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer_Nth : public QDialog
       PC *                                    pc;
       QwtPlot *                               plot_data;
       ScrollZoomer *                          plot_data_zoomer;
-#ifdef QT4
+#if QT_VERSION >= 0x040000
       QwtPlotGrid *                           grid_data;
 #endif
-#ifdef QT4
+#if QT_VERSION >= 0x040000
       vector < QwtPlotCurve * >               plotted_curves;
       QwtPlotMarker *                         plot_marker;
 #else
@@ -188,7 +188,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer_Nth : public QDialog
 };
 
 #ifdef WIN32
-# if !defined( QT4 )
+# if QT_VERSION < 0x040000
   #pragma warning ( default: 4251 )
 # endif
 #endif

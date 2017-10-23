@@ -348,9 +348,9 @@ bool US_Saxs_Util::flush_pm_csv(
 
    of.close();
    output_files << filename;
-   csv_name.clear();
-   csv_q   .clear();
-   csv_I   .clear();
+   csv_name.clear( );
+   csv_q   .clear( );
+   csv_I   .clear( );
    return true;
 }
 
@@ -616,8 +616,8 @@ bool US_Saxs_Util::run_pm( QString controlfile )
 
 bool US_Saxs_Util::run_pm( QStringList qsl_commands )
 {
-   output_files          .clear();
-   job_output_files      .clear();
+   output_files          .clear( );
+   job_output_files      .clear( );
    write_output_count    = 0;
    timings               = "";
    bool srand48_done     = false;
@@ -790,7 +790,7 @@ bool US_Saxs_Util::run_pm( QStringList qsl_commands )
 
       if ( rx_vector.indexIn( option ) != -1 )
       {
-         control_vectors[ option ].clear();
+         control_vectors[ option ].clear( );
          if ( us_log )
          {
             us_log->log( QString( "qsl currently: %1\n" ).arg( qsl.join( "~" ) ) );
@@ -968,9 +968,9 @@ bool US_Saxs_Util::run_pm( QStringList qsl_commands )
 #if defined( USE_MPI )
          {
 
-            pm.pm_workers_registered.clear();
-            pm.pm_workers_busy      .clear();
-            pm.pm_workers_waiting   .clear();
+            pm.pm_workers_registered.clear( );
+            pm.pm_workers_busy      .clear( );
+            pm.pm_workers_waiting   .clear( );
    
             for ( int i = 1; i < npes; ++i )
             {
@@ -1164,9 +1164,9 @@ bool US_Saxs_Util::run_pm( QStringList qsl_commands )
 #if defined( USE_MPI )
          {
 
-            pm.pm_workers_registered.clear();
-            pm.pm_workers_busy      .clear();
-            pm.pm_workers_waiting   .clear();
+            pm.pm_workers_registered.clear( );
+            pm.pm_workers_busy      .clear( );
+            pm.pm_workers_waiting   .clear( );
    
             for ( int i = 1; i < npes; ++i )
             {
@@ -1558,8 +1558,8 @@ bool US_Saxs_Util::run_pm(
                           bool quiet
                            )
 {
-   output_files          .clear();
-   job_output_files      .clear();
+   output_files          .clear( );
+   job_output_files      .clear( );
    write_output_count    = 0;
    timings               = "";
    bool srand48_done     = false;
@@ -1736,9 +1736,9 @@ bool US_Saxs_Util::run_pm(
 #if defined( USE_MPI )
          {
 
-            pm.pm_workers_registered.clear();
-            pm.pm_workers_busy      .clear();
-            pm.pm_workers_waiting   .clear();
+            pm.pm_workers_registered.clear( );
+            pm.pm_workers_busy      .clear( );
+            pm.pm_workers_waiting   .clear( );
    
             for ( int i = 1; i < npes; ++i )
             {
@@ -1953,9 +1953,9 @@ bool US_Saxs_Util::run_pm(
 #if defined( USE_MPI )
          {
 
-            pm.pm_workers_registered.clear();
-            pm.pm_workers_busy      .clear();
-            pm.pm_workers_waiting   .clear();
+            pm.pm_workers_registered.clear( );
+            pm.pm_workers_busy      .clear( );
+            pm.pm_workers_waiting   .clear( );
    
             for ( int i = 1; i < npes; ++i )
             {

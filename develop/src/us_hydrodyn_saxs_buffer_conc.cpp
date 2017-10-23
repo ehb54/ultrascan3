@@ -154,14 +154,14 @@ void US_Hydrodyn_Saxs_Buffer_Conc::setupGUI()
    }
 
    t_csv->setSortingEnabled(false);
-    t_csv->verticalHeader()->setMovable(false);
-    t_csv->horizontalHeader()->setMovable(false);
+    t_csv->verticalHeader()->setSectionsMovable(false);
+    t_csv->horizontalHeader()->setSectionsMovable(false);
    { for ( int i = 0; i < t_csv->rowCount(); ++i ) { t_csv->item( i,  0 )->setFlags( t_csv->item( i,  0 )->flags() ^ Qt::ItemIsEditable ); } };
    { for ( int i = 0; i < t_csv->rowCount(); ++i ) { t_csv->item( i,  1 )->setFlags( t_csv->item( i,  1 )->flags() | Qt::ItemIsEditable ); } };
    t_csv->setColumnWidth(0, 330);
    t_csv->setColumnWidth(1, 150);
    
-    t_csv->horizontalHeader()->setClickable( true );
+    t_csv->horizontalHeader()->setSectionsClickable( true );
 #if QT_VERSION < 0x040000   
    connect(t_csv->horizontalHeader(), SIGNAL(clicked(int)), SLOT(sort_column(int)));
 #else
@@ -314,9 +314,9 @@ void US_Hydrodyn_Saxs_Buffer_Conc::copy()
 {
    csv1 = current_csv();
    csv_copy = current_csv();
-   csv_copy.data.clear();
-   csv_copy.num_data.clear();
-   csv_copy.prepended_names.clear();
+   csv_copy.data.clear( );
+   csv_copy.num_data.clear( );
+   csv_copy.prepended_names.clear( );
 
    for ( int i = 0; i < t_csv->rowCount(); i++ )
    {

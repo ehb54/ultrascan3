@@ -3,7 +3,7 @@
 
 // QT defs:
 
-#include <qwindowsstyle.h>
+// #include <qwindowsstyle.h>
 #include <qcheckbox.h>
 #include <qfile.h>
 //#include <q3textstream.h>
@@ -25,8 +25,13 @@
 
 #include "us.h"
 #include "us_extern.h"
-#ifndef QT4
+#if QT_VERSION < 0x040000
 # include "us_imgviewer.h"
+#endif
+
+#if QT_VERSION >= 0x050000
+# include <QtWidgets>
+# include <QDebug>
 #endif
 
 //standard C and C++ defs:

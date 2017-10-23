@@ -302,8 +302,8 @@ int US_Hydrodyn_Saxs::run_saxs_iq_crysol( QString pdb )
 #endif      
       ;
 
-   crysol_stdout.clear();
-   crysol_stderr.clear();
+   crysol_stdout.clear( );
+   crysol_stderr.clear( );
 
    {
       QFileInfo qfi(prog);
@@ -480,7 +480,7 @@ int US_Hydrodyn_Saxs::run_saxs_iq_crysol( QString pdb )
 #endif
    
    crysol_manual_mode = false;
-   crysol_manual_input.clear();
+   crysol_manual_input.clear( );
 
    if ( U_EXPT &&
         ( ( US_Hydrodyn * ) us_hydrodyn )->gparams.count( "saxs_crysol_target" ) &&
@@ -506,8 +506,8 @@ int US_Hydrodyn_Saxs::run_saxs_iq_crysol( QString pdb )
    {
       editor_msg( "dark red", QString( us_tr( "Note: crysol running in interactive mode" ) ) );
 #if defined( UHSE_APP_RESPONSE_WAY )
-      crysol_app_text .clear();
-      crysol_response .clear();
+      crysol_app_text .clear( );
+      crysol_response .clear( );
 
       crysol_app_text << "Enter your option ...................... <";
       crysol_response << "0";
@@ -646,11 +646,11 @@ int US_Hydrodyn_Saxs::run_saxs_iq_crysol( QString pdb )
 //             startupInfo.cb                         = sizeof(startupInfo);
  
 //             wchar_t wtext[ 2048 ];
-//             mbstowcs( wtext, cmd.toAscii().data(), strlen( cmd.toAscii().data() ) + 1 ); //Plus null
+//             mbstowcs( wtext, cmd.toLatin1().data(), strlen( cmd.toLatin1().data() ) + 1 ); //Plus null
 
 //             // Create the process
 //             BOOL result = CreateProcess(NULL, wtext,
-//                                         NULL, NULL, FALSE, 
+//                                         NULL, NULL, false, 
 //                                         NORMAL_PRIORITY_CLASS | CREATE_NO_WINDOW, 
 //                                         NULL, NULL, &startupInfo, &processInformation);
 
@@ -665,9 +665,9 @@ int US_Hydrodyn_Saxs::run_saxs_iq_crysol( QString pdb )
 //             // ZeroMemory(&pi, sizeof(pi));
 
 //             // wchar_t wtext[ 1024 ];
-//             // mbstowcs(wtext, cmd.toAscii().data(), strlen(cmd.toAscii().data())+1);//Plus null
+//             // mbstowcs(wtext, cmd.toLatin1().data(), strlen(cmd.toLatin1().data())+1);//Plus null
 
-//             // if (CreateProcessW( NULL, wtext, NULL, NULL, FALSE, CREATE_NO_WINDOW, NULL, NULL, &si, &pi))
+//             // if (CreateProcessW( NULL, wtext, NULL, NULL, false, CREATE_NO_WINDOW, NULL, NULL, &si, &pi))
 //             // {
 //             //    WaitForSingleObject(pi.hProcess, INFINITE);
 //             //    CloseHandle(pi.hProcess);

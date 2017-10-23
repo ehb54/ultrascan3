@@ -1714,8 +1714,8 @@ void ata_d_thr_t::run() {
                double sum=0;
                k=0;
                l=0;
-               m.clear();
-               n.clear();
+               m.clear( );
+               n.clear( );
                m=(*dataarray)[i];
                n=(*dataarray)[j];
                while((k<m.size()) && (l<n.size())) {
@@ -1751,10 +1751,10 @@ void calc_A_transpose_A(double ***A, double ***product, unsigned int rows, unsig
    vector <dpairs> data_pairs, m, n;
    vector <vector <dpairs> > dataarray;
    dpairs temp_pair;
-   dataarray.clear();
-   data_pairs.clear();
-   m.clear();
-   n.clear();
+   dataarray.clear( );
+   data_pairs.clear( );
+   m.clear( );
+   n.clear( );
    for (unsigned int i=0; i<columns; i++)
    {
       for (unsigned int j=0; j<rows; j++)
@@ -1767,7 +1767,7 @@ void calc_A_transpose_A(double ***A, double ***product, unsigned int rows, unsig
          }
       }
       dataarray.push_back(data_pairs);
-      data_pairs.clear();
+      data_pairs.clear( );
    }
    //   unsigned int threads = 4; // USglobal->config_list.numThreads
    //   printf("calc ata threads %d\n", threads);
@@ -1836,8 +1836,8 @@ void calc_A_transpose_A(double ***A, double ***product, unsigned int rows, unsig
                double sum=0;
                unsigned int k=0;
                unsigned int l=0;
-               m.clear();
-               n.clear();
+               m.clear( );
+               n.clear( );
                m=dataarray[i];
                n=dataarray[j];
                while((k<m.size()) && (l<n.size()))
@@ -1960,10 +1960,10 @@ void calc_A_transpose_A(float ***A, float ***product, unsigned int rows, unsigne
    vector <dpairs> data_pairs, m, n;
    vector <vector <dpairs> > dataarray;
    dpairs temp_pair;
-   dataarray.clear();
-   data_pairs.clear();
-   m.clear();
-   n.clear();
+   dataarray.clear( );
+   data_pairs.clear( );
+   m.clear( );
+   n.clear( );
    for (unsigned int i=0; i<columns; i++)
    {
       for (unsigned int j=0; j<rows; j++)
@@ -1976,7 +1976,7 @@ void calc_A_transpose_A(float ***A, float ***product, unsigned int rows, unsigne
          }
       }
       dataarray.push_back(data_pairs);
-      data_pairs.clear();
+      data_pairs.clear( );
    }
    for (unsigned int i=0; i<columns; i++)
    {
@@ -1987,8 +1987,8 @@ void calc_A_transpose_A(float ***A, float ***product, unsigned int rows, unsigne
             double sum=0;
             unsigned int k=0;
             unsigned int l=0;
-            m.clear();
-            n.clear();
+            m.clear( );
+            n.clear( );
             m=dataarray[i];
             n=dataarray[j];
             while((k<m.size()) && (l<n.size()))

@@ -14,7 +14,7 @@
 #include "../include/us_hydrodyn_saxs_hplc_simulate.h"
 #include "../include/us_lm.h"
 #include "../include/us_svd.h"
-#ifdef QT4
+#if QT_VERSION >= 0x040000
 #include <qwt_scale_engine.h>
 #endif
 
@@ -56,7 +56,7 @@ void US_Hydrodyn_Saxs_Hplc::remove_created()
    {
       if ( lb_created_files->item( i )->isSelected() )
       {
-         files << lb_created_files->item( i )->text( );
+         files << lb_created_files->item( i )->text();
       }
    }
    clear_files( files );
@@ -698,7 +698,7 @@ void US_Hydrodyn_Saxs_Hplc::adjacent()
    {
       if ( lb_files->item( i )->isSelected() )
       {
-         match_name = lb_files->item( i )->text( );
+         match_name = lb_files->item( i )->text();
          turn_on << match_name;
          match_pos = i;
          break;
@@ -802,7 +802,7 @@ void US_Hydrodyn_Saxs_Hplc::adjacent_created()
    {
       if ( lb_created_files->item( i )->isSelected() )
       {
-         match_name = lb_created_files->item( i )->text( );
+         match_name = lb_created_files->item( i )->text();
          turn_on << match_name;
          match_pos = i;
          break;
@@ -1005,7 +1005,7 @@ QString US_Hydrodyn_Saxs_Hplc::select_conc_file( QString tag )
                                         us_tr("Select the concentration file to " + tag + ":\n" ),
                                         files, 
                                         0, 
-                                        FALSE, 
+                                        false, 
                                         &ok,
                                         this );
 
@@ -1048,7 +1048,7 @@ void US_Hydrodyn_Saxs_Hplc::repeak( QStringList files )
    //                                             us_tr("Select the peak target file:\n" ),
    //                                             files, 
    //                                             0, 
-   //                                             FALSE, 
+   //                                             false, 
    //                                             &ok,
    //                                             this );
    // if ( !ok ) {
@@ -1058,7 +1058,7 @@ void US_Hydrodyn_Saxs_Hplc::repeak( QStringList files )
    map < QString, bool > current_files;
    for ( int i = 0; i < (int)lb_files->count(); i++ )
    {
-      current_files[ lb_files->item( i )->text( ) ] = true;
+      current_files[ lb_files->item( i )->text() ] = true;
    }
 
    map < QString, bool > select_files;
@@ -1246,7 +1246,7 @@ void US_Hydrodyn_Saxs_Hplc::repeak( QStringList files )
    lb_files->clearSelection();
    for ( int i = 0; i < (int)lb_files->count(); i++ )
    {
-      if ( select_files.count( lb_files->item( i )->text( ) ) )
+      if ( select_files.count( lb_files->item( i )->text() ) )
       {
          lb_files->item( i)->setSelected( true );
       }
@@ -1276,7 +1276,7 @@ void US_Hydrodyn_Saxs_Hplc::crop_common()
    {
       if ( lb_files->item( i )->isSelected() )
       {
-         QString this_file = lb_files->item( i )->text( );
+         QString this_file = lb_files->item( i )->text();
          if ( f_qs.count( this_file ) &&
               f_Is.count( this_file ) &&
               f_qs[ this_file ].size() &&
@@ -1393,7 +1393,7 @@ void US_Hydrodyn_Saxs_Hplc::to_saxs()
    {
       if ( lb_files->item( i )->isSelected() )
       {
-         QString this_file = lb_files->item( i )->text( );
+         QString this_file = lb_files->item( i )->text();
          if ( f_qs.count( this_file ) &&
               f_Is.count( this_file ) )
          {
@@ -1725,7 +1725,7 @@ void US_Hydrodyn_Saxs_Hplc::avg( QStringList files, QString suffix )
    map < QString, bool > current_files;
    for ( int i = 0; i < (int)lb_files->count(); i++ )
    {
-      current_files[ lb_files->item( i )->text( ) ] = true;
+      current_files[ lb_files->item( i )->text() ] = true;
    }
 
    while ( current_files.count( avg_name ) )
@@ -2047,7 +2047,7 @@ void US_Hydrodyn_Saxs_Hplc::conc_avg( QStringList files )
    map < QString, bool > current_files;
    for ( int i = 0; i < lb_files->count(); i++ )
    {
-      current_files[ lb_files->item( i )->text( ) ] = true;
+      current_files[ lb_files->item( i )->text() ] = true;
    }
 
    while ( current_files.count( avg_name ) )
@@ -2147,7 +2147,7 @@ void US_Hydrodyn_Saxs_Hplc::axis_y( bool nochange, bool no_replot )
    {
       if ( lb_files->item( i )->isSelected() )
       {
-         selected_files << lb_files->item( i )->text( );
+         selected_files << lb_files->item( i )->text();
       }
    }
 
@@ -2175,14 +2175,14 @@ void US_Hydrodyn_Saxs_Hplc::axis_y( bool nochange, bool no_replot )
    if ( axis_y_log )
    {
       plot_dist->setAxisTitle(QwtPlot::yLeft, title + us_tr( " (log scale)") );
-#ifndef QT4
+#if QT_VERSION < 0x040000
       plot_dist->setAxisOptions(QwtPlot::yLeft, QwtAutoScale::Logarithmic);
 #else
-      plot_dist->setAxisScaleEngine(QwtPlot::yLeft, new QwtLog10ScaleEngine);
+      plot_dist->setAxisScaleEngine(QwtPlot::yLeft, new QwtLogScaleEngine(10));
 #endif
    } else {
       plot_dist->setAxisTitle(QwtPlot::yLeft, title );
-#ifndef QT4
+#if QT_VERSION < 0x040000
       plot_dist->setAxisOptions(QwtPlot::yLeft, QwtAutoScale::None);
 #else
       // actually need to test this, not sure what the correct version is
@@ -2260,7 +2260,7 @@ void US_Hydrodyn_Saxs_Hplc::axis_x( bool nochange, bool no_replot )
    {
       if ( lb_files->item( i )->isSelected() )
       {
-         selected_files << lb_files->item( i )->text( );
+         selected_files << lb_files->item( i )->text();
       }
    }
 
@@ -2288,16 +2288,16 @@ void US_Hydrodyn_Saxs_Hplc::axis_x( bool nochange, bool no_replot )
    if ( axis_x_log )
    {
       plot_dist->setAxisTitle(QwtPlot::xBottom,  title + us_tr(" (log scale)") );
-#ifndef QT4
+#if QT_VERSION < 0x040000
       plot_dist  ->setAxisOptions(QwtPlot::xBottom, QwtAutoScale::Logarithmic);
       plot_errors->setAxisOptions(QwtPlot::xBottom, QwtAutoScale::Logarithmic);
 #else
-      plot_dist  ->setAxisScaleEngine(QwtPlot::xBottom, new QwtLog10ScaleEngine);
-      plot_errors->setAxisScaleEngine(QwtPlot::xBottom, new QwtLog10ScaleEngine);
+      plot_dist  ->setAxisScaleEngine(QwtPlot::xBottom, new QwtLogScaleEngine(10));
+      plot_errors->setAxisScaleEngine(QwtPlot::xBottom, new QwtLogScaleEngine(10));
 #endif
    } else {
       plot_dist->setAxisTitle(QwtPlot::xBottom,  title );
-#ifndef QT4
+#if QT_VERSION < 0x040000
       plot_dist  ->setAxisOptions(QwtPlot::xBottom, QwtAutoScale::None);
       plot_errors->setAxisOptions(QwtPlot::xBottom, QwtAutoScale::None);
 #else
@@ -2419,10 +2419,10 @@ void US_Hydrodyn_Saxs_Hplc::options()
    {
       gaussian_type = (gaussian_types)( parameters[ "gaussian_type" ].toInt() );
       unified_ggaussian_ok = false;
-      f_gaussians.clear();
-      gaussians.clear();
-      org_gaussians.clear();
-      org_f_gaussians.clear();
+      f_gaussians.clear( );
+      gaussians.clear( );
+      org_gaussians.clear( );
+      org_f_gaussians.clear( );
       update_gauss_mode();
       ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_gaussian_type" ] = QString( "%1" ).arg( gaussian_type );
    }
@@ -2443,10 +2443,10 @@ void US_Hydrodyn_Saxs_Hplc::options()
 void US_Hydrodyn_Saxs_Hplc::clear_gaussians()
 {
    unified_ggaussian_ok = false;
-   f_gaussians.clear();
-   gaussians.clear();
-   org_gaussians.clear();
-   org_f_gaussians.clear();
+   f_gaussians.clear( );
+   gaussians.clear( );
+   org_gaussians.clear( );
+   org_f_gaussians.clear( );
 }
 
 bool US_Hydrodyn_Saxs_Hplc::any_gaussians()
@@ -2510,7 +2510,7 @@ void US_Hydrodyn_Saxs_Hplc::svd()
       {
          if ( lb_files->item( i )->isSelected() )
          {
-            QString this_file = lb_files->item( i )->text( );
+            QString this_file = lb_files->item( i )->text();
             if ( f_qs.count( this_file ) &&
                  f_Is.count( this_file ) &&
                  f_qs[ this_file ].size() &&
@@ -2651,7 +2651,7 @@ void US_Hydrodyn_Saxs_Hplc::update_ref()
       return;
    }
 
-#ifndef QT4
+#if QT_VERSION < 0x040000
    plot_ref->removeMarkers();
 #else
    plot_ref->detachItems( QwtPlotItem::Rtti_PlotMarker );
@@ -2659,7 +2659,7 @@ void US_Hydrodyn_Saxs_Hplc::update_ref()
    
    QColor color( "red" );
 
-#ifndef QT4
+#if QT_VERSION < 0x040000
    ref_marker = plot_ref->insertMarker();
    plot_ref->setMarkerLineStyle ( ref_marker, QwtMarker::VLine );
    plot_ref->setMarkerPos       ( ref_marker, f_time[ last_selected_file ], 0e0 );
@@ -2718,7 +2718,7 @@ void US_Hydrodyn_Saxs_Hplc::set_selected( set < QString > & to_select, bool do_r
    lb_files->clearSelection();
    for ( int i = 0; i < (int)lb_files->count(); i++ )
    {
-      if ( to_select.count( lb_files->item( i )->text( ) ) )
+      if ( to_select.count( lb_files->item( i )->text() ) )
       {
          lb_files->item( i)->setSelected( true );
       }
@@ -2737,7 +2737,7 @@ void US_Hydrodyn_Saxs_Hplc::set_created_selected( set < QString > & to_select, b
    lb_created_files->clearSelection();
    for ( int i = 0; i < (int)lb_created_files->count(); i++ )
    {
-      if ( to_select.count( lb_created_files->item( i )->text( ) ) )
+      if ( to_select.count( lb_created_files->item( i )->text() ) )
       {
          lb_created_files->item( i)->setSelected( true );
       }
@@ -2761,7 +2761,7 @@ void US_Hydrodyn_Saxs_Hplc::artificial_gaussians()
       {
          if ( !any_selected )
          {
-            wheel_file = lb_files->item( i )->text( );
+            wheel_file = lb_files->item( i )->text();
             any_selected = true;
             break;
          }
@@ -2889,8 +2889,8 @@ int US_Hydrodyn_Saxs_Hplc::slice( const vector < double > & q,
                                   vector < double > & new_q,
                                   vector < double > & new_I )
 {
-   new_q.clear();
-   new_I.clear();
+   new_q.clear( );
+   new_I.clear( );
    if ( q.size() != I.size() )
    {
       return 0;
@@ -3740,9 +3740,9 @@ void US_Hydrodyn_Saxs_Hplc::cormap( map < QString, QString > & parameters )
 
    case MODE_BLANKS :
       {
-         blanks_last_cormap_parameters.clear();
-         blanks_last_cormap_pvaluepairs.clear();
-         blanks_last_brookesmap_sliding_results.clear();
+         blanks_last_cormap_parameters.clear( );
+         blanks_last_cormap_pvaluepairs.clear( );
+         blanks_last_brookesmap_sliding_results.clear( );
 
          {
             vector < vector < double > > grids;
@@ -4079,9 +4079,9 @@ void US_Hydrodyn_Saxs_Hplc::cormap( map < QString, QString > & parameters )
 
    case MODE_BASELINE :
       {
-         baseline_last_cormap_parameters.clear();
-         baseline_last_cormap_pvaluepairs.clear();
-         // baseline_last_brookesmap_sliding_results.clear();
+         baseline_last_cormap_parameters.clear( );
+         baseline_last_cormap_pvaluepairs.clear( );
+         // baseline_last_brookesmap_sliding_results.clear( );
 
          if ( !baseline_multi ) {
             editor_msg( "red", us_tr( "CorMap in baseline mode has no files" ) );
@@ -4529,7 +4529,7 @@ void US_Hydrodyn_Saxs_Hplc::cormap( map < QString, QString > & parameters )
             {
                if ( lb_files->item( i )->isSelected() )
                {
-                  QString this_file = lb_files->item( i )->text( );
+                  QString this_file = lb_files->item( i )->text();
                   if ( f_qs.count( this_file ) &&
                        f_Is.count( this_file ) &&
                        f_qs[ this_file ].size() &&
@@ -4846,7 +4846,7 @@ void US_Hydrodyn_Saxs_Hplc::bin( QStringList files )
    map < QString, bool > current_files;
    for ( int i = 0; i < (int)lb_files->count(); i++ )
    {
-      current_files[ lb_files->item( i )->text( ) ] = true;
+      current_files[ lb_files->item( i )->text() ] = true;
    }
 
    map < QString, bool > select_files;
@@ -4913,7 +4913,7 @@ void US_Hydrodyn_Saxs_Hplc::bin( QStringList files )
    lb_files->clearSelection();
    for ( int i = 0; i < (int)lb_files->count(); i++ )
    {
-      if ( select_files.count( lb_files->item( i )->text( ) ) )
+      if ( select_files.count( lb_files->item( i )->text() ) )
       {
          lb_files->item( i)->setSelected( true );
       }

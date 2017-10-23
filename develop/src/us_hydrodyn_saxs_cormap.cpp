@@ -95,6 +95,8 @@ void US_Hydrodyn_Saxs_Cormap::setupGUI()
    {
       f_brookesmap = new QFrame( 0 );
       QGridLayout *gl = new QGridLayout( f_brookesmap );
+      gl->setMargin( 0 );
+      gl->setSpacing( 0 );
    
       lbl_f_title = new QLabel( "", f_brookesmap ); 
       lbl_f_title->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
@@ -116,16 +118,19 @@ void US_Hydrodyn_Saxs_Cormap::setupGUI()
 
       if ( parameters.count( "as_pairs" ) ) {
          f_thermo_top = new QwtThermo( f_brookesmap );
-#ifdef QT4
-         f_thermo_top->setScalePosition( QwtThermo::TopScale );
+#if QT_VERSION >= 0x040000
+         f_thermo_top->setScalePosition( QwtThermo::TrailingScale );
+# if QT_VERSION >= 0x050000
+         f_thermo_top->setOrientation( Qt::Horizontal );
+# endif
 #else
          f_thermo_top->setScalePosition( QwtThermo::Top );
 #endif
-         f_thermo_top->setRange( 1, pvaluepairs.size() ? pvaluepairs[ 0 ].size() : 1 );
+         f_thermo_top->setScale( 1, pvaluepairs.size() ? pvaluepairs[ 0 ].size() : 1 );
          f_thermo_top->setPipeWidth( 1 );
          f_thermo_top->setBorderWidth( 0 );
-         f_thermo_top->setMargin( 0 );
-         f_thermo_top->setFillColor( QColor( Qt::black ) );
+//          f_thermo_top->setMargin( 0 );
+         f_thermo_top->setFillBrush( QColor( Qt::black ) );
          f_thermo_top->setPalette( PALET_LABEL );
          AUTFBACK( f_thermo_top );
          f_thermo_top->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 2 ) );
@@ -139,32 +144,35 @@ void US_Hydrodyn_Saxs_Cormap::setupGUI()
 
       } else {
          f_thermo_top = new QwtThermo( f_brookesmap );
-#ifdef QT4
-         f_thermo_top->setScalePosition( QwtThermo::TopScale );
+#if QT_VERSION >= 0x040000
+         f_thermo_top->setScalePosition( QwtThermo::TrailingScale );
+# if QT_VERSION >= 0x050000
+         f_thermo_top->setOrientation( Qt::Horizontal );
+# endif
 #else
          f_thermo_top->setScalePosition( QwtThermo::Top );
 #endif
-         f_thermo_top->setRange( 1, pvaluepairs.size() );
+         f_thermo_top->setScale( 1, pvaluepairs.size() );
          f_thermo_top->setPipeWidth( 1 );
          f_thermo_top->setBorderWidth( 0 );
-         f_thermo_top->setMargin( 0 );
-         f_thermo_top->setFillColor( QColor( Qt::black ) );
+//          f_thermo_top->setMargin( 0 );
+         f_thermo_top->setFillBrush( QColor( Qt::black ) );
          f_thermo_top->setPalette( PALET_LABEL );
          AUTFBACK( f_thermo_top );
          f_thermo_top->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 2 ) );
          f_thermo_top->setScaleMaxMinor( 0 );
          
          f_thermo_left = new QwtThermo( f_brookesmap );
-#ifdef QT4
-         f_thermo_left->setScalePosition( QwtThermo::LeftScale );
+#if QT_VERSION >= 0x040000
+         f_thermo_left->setScalePosition( QwtThermo::TrailingScale );
 #else
          f_thermo_left->setScalePosition( QwtThermo::Left );
 #endif
-         f_thermo_left->setRange( pvaluepairs.size(), 1 );
+         f_thermo_left->setScale( pvaluepairs.size(), 1 );
          f_thermo_left->setPipeWidth( 1 );
          f_thermo_left->setBorderWidth( 0 );
-         f_thermo_left->setMargin( 0 );
-         f_thermo_left->setFillColor( QColor( Qt::black ) );
+//          f_thermo_left->setMargin( 0 );
+         f_thermo_left->setFillBrush( QColor( Qt::black ) );
          f_thermo_left->setPalette( PALET_LABEL );
          AUTFBACK( f_thermo_left );
          f_thermo_left->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 2 ) );
@@ -179,7 +187,7 @@ void US_Hydrodyn_Saxs_Cormap::setupGUI()
    }
 
    plot = new QwtPlot( qs2 );
-#ifndef QT4
+#if QT_VERSION < 0x040000
    plot->enableGridXMin();
    plot->enableGridYMin();
 #else
@@ -189,32 +197,32 @@ void US_Hydrodyn_Saxs_Cormap::setupGUI()
 #endif
    plot->setPalette( PALET_NORMAL );
    AUTFBACK( plot );
-#ifndef QT4
+#if QT_VERSION < 0x040000
    plot->setGridMajPen(QPen(USglobal->global_colors.major_ticks, 0, DotLine));
    plot->setGridMinPen(QPen(USglobal->global_colors.minor_ticks, 0, DotLine));
 #else
-   plot_grid->setMajPen( QPen( USglobal->global_colors.major_ticks, 0, Qt::DotLine ) );
-   plot_grid->setMinPen( QPen( USglobal->global_colors.minor_ticks, 0, Qt::DotLine ) );
+   plot_grid->setMajorPen( QPen( USglobal->global_colors.major_ticks, 0, Qt::DotLine ) );
+   plot_grid->setMinorPen( QPen( USglobal->global_colors.minor_ticks, 0, Qt::DotLine ) );
    plot_grid->attach( plot );
 #endif
    plot->setAxisTitle(QwtPlot::xBottom, us_tr( "Ref."));
    plot->setAxisTitle(QwtPlot::yLeft  , us_tr( "Red %" ) );
-#ifndef QT4
+#if QT_VERSION < 0x040000
    plot->setTitleFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 3, QFont::Bold));
    plot->setAxisTitleFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 #endif
    plot->setAxisFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-#ifndef QT4
+#if QT_VERSION < 0x040000
    plot->setAxisTitleFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 #endif
    plot->setAxisFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-#ifndef QT4
+#if QT_VERSION < 0x040000
    plot->setAxisTitleFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 #endif
    plot->setAxisFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-   plot->setMargin(USglobal->config_list.margin);
+//    plot->setMargin(USglobal->config_list.margin);
    plot->setTitle( us_tr( "Red pair % histogram\n(Lines represent average, ±1 SD)" ) );
-#ifndef QT4
+#if QT_VERSION < 0x040000
    plot->setAxisOptions(QwtPlot::yLeft, QwtAutoScale::None);
 #else
    plot->setAxisScaleEngine(QwtPlot::yLeft, new QwtLinearScaleEngine );
@@ -222,7 +230,7 @@ void US_Hydrodyn_Saxs_Cormap::setupGUI()
    plot->setCanvasBackground(USglobal->global_colors.plot);
 
    plot_cluster = new QwtPlot( qs2 );
-#ifndef QT4
+#if QT_VERSION < 0x040000
    plot_cluster->enableGridXMin();
    plot_cluster->enableGridYMin();
 #else
@@ -232,32 +240,32 @@ void US_Hydrodyn_Saxs_Cormap::setupGUI()
 #endif
    plot_cluster->setPalette( PALET_NORMAL );
    AUTFBACK( plot_cluster );
-#ifndef QT4
+#if QT_VERSION < 0x040000
    plot_cluster->setGridMajPen(QPen(USglobal->global_colors.major_ticks, 0, DotLine));
    plot_cluster->setGridMinPen(QPen(USglobal->global_colors.minor_ticks, 0, DotLine));
 #else
-   plot_cluster_grid->setMajPen( QPen( USglobal->global_colors.major_ticks, 0, Qt::DotLine ) );
-   plot_cluster_grid->setMinPen( QPen( USglobal->global_colors.minor_ticks, 0, Qt::DotLine ) );
+   plot_cluster_grid->setMajorPen( QPen( USglobal->global_colors.major_ticks, 0, Qt::DotLine ) );
+   plot_cluster_grid->setMinorPen( QPen( USglobal->global_colors.minor_ticks, 0, Qt::DotLine ) );
    plot_cluster_grid->attach( plot );
 #endif
    plot_cluster->setAxisTitle(QwtPlot::xBottom, us_tr( "Red cluster size"));
    plot_cluster->setAxisTitle(QwtPlot::yLeft  , us_tr( "Count" ) );
-#ifndef QT4
+#if QT_VERSION < 0x040000
    plot_cluster->setTitleFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 3, QFont::Bold));
    plot_cluster->setAxisTitleFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 #endif
    plot_cluster->setAxisFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-#ifndef QT4
+#if QT_VERSION < 0x040000
    plot_cluster->setAxisTitleFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 #endif
    plot_cluster->setAxisFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-#ifndef QT4
+#if QT_VERSION < 0x040000
    plot_cluster->setAxisTitleFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 #endif
    plot_cluster->setAxisFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-   plot_cluster->setMargin(USglobal->config_list.margin);
+//    plot_cluster->setMargin(USglobal->config_list.margin);
    plot_cluster->setTitle( us_tr( "\nRed cluster size histogram" ) );
-#ifndef QT4
+#if QT_VERSION < 0x040000
    plot_cluster->setAxisOptions(QwtPlot::yLeft, QwtAutoScale::None);
 #else
    plot_cluster->setAxisScaleEngine(QwtPlot::yLeft, new QwtLinearScaleEngine );
@@ -287,12 +295,12 @@ void US_Hydrodyn_Saxs_Cormap::setupGUI()
    editor->setFont( QFont( "Courier", USglobal->config_list.fontSize ) );
 
 #if QT_VERSION < 0x040000
-# if defined(QT4) && defined(Q_WS_MAC)
+# if QT_VERSION >= 0x040000 && defined(Q_WS_MAC)
    {
  //      Q3PopupMenu * file = new Q3PopupMenu;
-      file->insertItem( us_tr("&Font"),  this, SLOT(update_font( )),    Qt::ALT+Qt::Key_F );
-      file->insertItem( us_tr("&Save"),  this, SLOT(save( )),    Qt::ALT+Qt::Key_S );
-      file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display( )),   Qt::ALT+Qt::Key_X );
+      file->insertItem( us_tr("&Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
+      file->insertItem( us_tr("&Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
+      file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
 
       QMenuBar *menu = new QMenuBar( this );
       AUTFBACK( menu );
@@ -306,13 +314,13 @@ void US_Hydrodyn_Saxs_Cormap::setupGUI()
 
    // m = new QMenuBar( frame );  m->setObjectName( "menu" );
    // m->setMinimumHeight(minHeight1 - 5);
-   // m->setPalette( USglobal->global_colors.cg_normal );
+   // m->setPalette( PALET_NORMAL );
 
    // QPopupMenu * file = new QPopupMenu(editor);
    // m->insertItem( us_tr("&File"), file );
-   // file->insertItem( us_tr("Font"),  this, SLOT(update_font( )),    ALT+Key_F );
-   // file->insertItem( us_tr("Save"),  this, SLOT(save( )),    ALT+Key_S );
-   // file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display( )),   ALT+Key_X );
+   // file->insertItem( us_tr("Font"),  this, SLOT(update_font()),    ALT+Key_F );
+   // file->insertItem( us_tr("Save"),  this, SLOT(save()),    ALT+Key_S );
+   // file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display()),   ALT+Key_X );
 # endif
 #endif
 
@@ -357,7 +365,7 @@ void US_Hydrodyn_Saxs_Cormap::setupGUI()
    // background->addWidget( lbl_image );
 
    //    QBoxLayout *vbl_editor_group = new QVBoxLayout(qs);
-   // #if !defined(QT4) || !defined(Q_WS_MAC)
+   // #if QT_VERSION < 0x040000 || !defined(Q_WS_MAC)
    //    vbl_editor_group->addWidget ( frame );
    // #endif
    //    vbl_editor_group->addWidget ( editor );
@@ -407,7 +415,7 @@ void US_Hydrodyn_Saxs_Cormap::editor_msg( QString color, QString msg )
 
 void US_Hydrodyn_Saxs_Cormap::clear_display()
 {
-   editor->clear();
+   editor->clear( );
    editor->append("\n\n");
 }
 
@@ -570,7 +578,7 @@ bool US_Hydrodyn_Saxs_Cormap::cluster_analysis() {
             int use_line_width = parameters.count( "linewidth" ) ? parameters[ "linewidth" ].toInt() : 1;
 
             {
-#ifndef QT4
+#if QT_VERSION < 0x040000
                long curve;
                curve = plot_cluster->insertCurve( "pctred" );
                plot_cluster->setCurveStyle( curve, QwtCurve::Sticks );
@@ -579,7 +587,7 @@ bool US_Hydrodyn_Saxs_Cormap::cluster_analysis() {
                curve->setStyle( QwtPlotCurve::Sticks );
 #endif
 
-#ifndef QT4
+#if QT_VERSION < 0x040000
                plot_cluster->setCurvePen( curve, QPen( Qt::red, 2 * use_line_width, Qt::SolidLine ) );
                plot_cluster->setCurveData( curve,
                                            (double *)&cluster_hist_x[ 0 ],
@@ -588,7 +596,7 @@ bool US_Hydrodyn_Saxs_Cormap::cluster_analysis() {
                                            );
 #else
                curve->setPen( QPen( Qt::red, 2 * use_line_width, Qt::SolidLine ) );
-               curve->setData(
+               curve->setSamples(
                               (double *)&cluster_hist_x[ 0 ],
                               (double *)&cluster_hist_y[ 0 ],
                               cluster_hist_x.size()
@@ -603,10 +611,10 @@ bool US_Hydrodyn_Saxs_Cormap::cluster_analysis() {
                plot_cluster->setAxisScale( QwtPlot::yLeft  , 0, max_y * 1.1 );
                plot_cluster_zoomer = new ScrollZoomer(plot_cluster->canvas());
                plot_cluster_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
-#ifndef QT4
+#if QT_VERSION < 0x040000
                plot_cluster_zoomer->setCursorLabelPen(QPen(Qt::yellow));
 #endif
-               // connect( plot_cluster_zoomer, SIGNAL( zoomed( const QwtDoubleRect & ) ), SLOT( plot_cluster_zoomed( const QwtDoubleRect & ) ) );
+               // connect( plot_cluster_zoomer, SIGNAL( zoomed( const QRectF & ) ), SLOT( plot_cluster_zoomed( const QRectF & ) ) );
             }
 
          }
@@ -617,10 +625,10 @@ bool US_Hydrodyn_Saxs_Cormap::cluster_analysis() {
             plot_cluster->setAxisScale( QwtPlot::yLeft  , 0, 1 );
             plot_cluster_zoomer = new ScrollZoomer(plot_cluster->canvas());
             plot_cluster_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
-#ifndef QT4
+#if QT_VERSION < 0x040000
             plot_cluster_zoomer->setCursorLabelPen(QPen(Qt::yellow));
 #endif
-            // connect( plot_cluster_zoomer, SIGNAL( zoomed( const QwtDoubleRect & ) ), SLOT( plot_cluster_zoomed( const QwtDoubleRect & ) ) );
+            // connect( plot_cluster_zoomer, SIGNAL( zoomed( const QRectF & ) ), SLOT( plot_cluster_zoomed( const QRectF & ) ) );
          }
 
       }
@@ -701,7 +709,7 @@ bool US_Hydrodyn_Saxs_Cormap_Cluster_Analysis::sliding(
 
    // us_qdebug( QString( "sliding alpha %1 over5 %2" ).arg( alpha ).arg( alpha_over_5 ) );
 
-   sliding_results.clear();
+   sliding_results.clear( );
 
    int pc = (int) pvaluepairs.size();
 
@@ -766,7 +774,7 @@ bool US_Hydrodyn_Saxs_Cormap_Cluster_Analysis::sliding(
             }
          }
          
-         csv_report.clear();
+         csv_report.clear( );
 
          if ( parameters.count( "hb" ) ) {
             vector < double > P;
@@ -897,8 +905,8 @@ bool US_Hydrodyn_Saxs_Cormap_Cluster_Analysis::run(
 
    // cout << QString( "cluster analysis pc = %1\n" ).arg( pc );
 
-   cluster_data  .clear();
-   cluster_marked.clear();
+   cluster_data  .clear( );
+   cluster_marked.clear( );
 
    // build above diagonal of rows
 
@@ -923,7 +931,7 @@ bool US_Hydrodyn_Saxs_Cormap_Cluster_Analysis::run(
    csv_report[ "% red pairs" ] = QString( "" ).sprintf( "%.2f", hb_count_points ? 100.0 * ( (double) hb_count_red / (double) hb_count_points ) : 0e0 );
 
    // map < int, int >            cluster_size_histogram;
-   cluster_size_histogram.clear();
+   cluster_size_histogram.clear( );
    map < uhs_index_pair, int > cluster_sizes;
    map < int, uhs_index_pair > cluster_size_to_pos;
 
@@ -943,7 +951,7 @@ bool US_Hydrodyn_Saxs_Cormap_Cluster_Analysis::run(
          // cout << QString( "loop checking point [%1,%2]\n" ).arg( x.r ).arg( x.c );
 
          if ( !cluster_marked.count( x ) && cluster_data[ x ] == -1 ) {
-            cluster_red   .clear();
+            cluster_red   .clear( );
             cluster_red   .insert( x );
             cluster_marked.insert( x );
             cluster_expand( x );
@@ -1398,9 +1406,9 @@ void US_Hydrodyn_Saxs_Cormap::displayData() {
    cb_adj -> setChecked( parameters.count( "adjusted" ) && !parameters.count( "hide_adjpvalues" ) );
    cb_hb  -> setChecked( parameters.count( "hb" )       && !parameters.count( "hide_hb_pvalues" ) );
 
-   editor      ->clear();
-   plot        ->clear();
-   plot_cluster->clear();
+   editor      ->clear( );
+   plot->detachItems( QwtPlotItem::Rtti_PlotCurve ); plot->detachItems( QwtPlotItem::Rtti_PlotMarker );;
+   plot_cluster->detachItems( QwtPlotItem::Rtti_PlotCurve ); plot_cluster->detachItems( QwtPlotItem::Rtti_PlotMarker );;
 
    QString msg;
    QString msg_headers;
@@ -2036,7 +2044,7 @@ void US_Hydrodyn_Saxs_Cormap::displayData() {
             int use_line_width = parameters.count( "linewidth" ) ? parameters[ "linewidth" ].toInt() : 1;
 
             {
-#ifndef QT4
+#if QT_VERSION < 0x040000
                long curve;
                curve = plot->insertCurve( "pctred" );
                plot->setCurveStyle( curve, QwtCurve::Sticks );
@@ -2045,7 +2053,7 @@ void US_Hydrodyn_Saxs_Cormap::displayData() {
                curve->setStyle( QwtPlotCurve::Sticks );
 #endif
 
-#ifndef QT4
+#if QT_VERSION < 0x040000
                plot->setCurvePen( curve, QPen( Qt::red, 2 * use_line_width, Qt::SolidLine ) );
                plot->setCurveData( curve,
                                    (double *)&plot_pos[ 0 ],
@@ -2054,7 +2062,7 @@ void US_Hydrodyn_Saxs_Cormap::displayData() {
                                    );
 #else
                curve->setPen( QPen( Qt::red, 2 * use_line_width, Qt::SolidLine ) );
-               curve->setData(
+               curve->setSamples(
                               (double *)&plot_pos[ 0 ],
                               (double *)&plot_redpct[ 0 ],
                               plot_pos.size()
@@ -2074,7 +2082,7 @@ void US_Hydrodyn_Saxs_Cormap::displayData() {
                {
                   y[0] = y[1] = avg_pct_red;
 
-#ifndef QT4
+#if QT_VERSION < 0x040000
                   long curve;
                   curve = plot->insertCurve( "avgred" );
                   plot->setCurveStyle( curve, QwtCurve::Lines );
@@ -2083,12 +2091,12 @@ void US_Hydrodyn_Saxs_Cormap::displayData() {
                   curve->setStyle( QwtPlotCurve::Lines );
 #endif
 
-#ifndef QT4
+#if QT_VERSION < 0x040000
                   plot->setCurvePen( curve, QPen( Qt::green, use_line_width, Qt::DotLine ) );
                   plot->setCurveData( curve, x, y, 2 );
 #else
                   curve->setPen( QPen( Qt::green, use_line_width, Qt::DotLine ) );
-                  curve->setData( x, y, 2 );
+                  curve->setSamples( x, y, 2 );
                   curve->attach( plot );
 #endif
                }
@@ -2097,7 +2105,7 @@ void US_Hydrodyn_Saxs_Cormap::displayData() {
                   {
                      y[0] = y[1] = avg_pct_red + pct_red_sd;;
 
-#ifndef QT4
+#if QT_VERSION < 0x040000
                      long curve;
                      curve = plot->insertCurve( "sdredplus" );
                      plot->setCurveStyle( curve, QwtCurve::Lines );
@@ -2106,19 +2114,19 @@ void US_Hydrodyn_Saxs_Cormap::displayData() {
                      curve->setStyle( QwtPlotCurve::Lines );
 #endif
 
-#ifndef QT4
+#if QT_VERSION < 0x040000
                      plot->setCurvePen( curve, QPen( Qt::yellow, use_line_width, Qt::DotLine ) );
                      plot->setCurveData( curve, x, y, 2 );
 #else
                      curve->setPen( QPen( Qt::yellow, use_line_width, Qt::DotLine ) );
-                     curve->setData( x, y, 2 );
+                     curve->setSamples( x, y, 2 );
                      curve->attach( plot );
 #endif
                   }
                   {
                      y[0] = y[1] = avg_pct_red - pct_red_sd;
 
-#ifndef QT4
+#if QT_VERSION < 0x040000
                      long curve;
                      curve = plot->insertCurve( "sdredminus" );
                      plot->setCurveStyle( curve, QwtCurve::Lines );
@@ -2127,12 +2135,12 @@ void US_Hydrodyn_Saxs_Cormap::displayData() {
                      curve->setStyle( QwtPlotCurve::Lines );
 #endif
 
-#ifndef QT4
+#if QT_VERSION < 0x040000
                      plot->setCurvePen( curve, QPen( Qt::yellow, use_line_width, Qt::DotLine ) );
                      plot->setCurveData( curve, x, y, 2 );
 #else
                      curve->setPen( QPen( Qt::yellow, use_line_width, Qt::DotLine ) );
-                     curve->setData( x, y, 2 );
+                     curve->setSamples( x, y, 2 );
                      curve->attach( plot );
 #endif
                   }
@@ -2145,10 +2153,10 @@ void US_Hydrodyn_Saxs_Cormap::displayData() {
                plot->setAxisScale( QwtPlot::yLeft  , 0, max_pct_red * 1.1 );
                plot_zoomer = new ScrollZoomer(plot->canvas());
                plot_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
-#ifndef QT4
+#if QT_VERSION < 0x040000
                plot_zoomer->setCursorLabelPen(QPen(Qt::yellow));
 #endif
-               // connect( plot_zoomer, SIGNAL( zoomed( const QwtDoubleRect & ) ), SLOT( plot_zoomed( const QwtDoubleRect & ) ) );
+               // connect( plot_zoomer, SIGNAL( zoomed( const QRectF & ) ), SLOT( plot_zoomed( const QRectF & ) ) );
             }
 
             plot->replot();
@@ -2197,7 +2205,7 @@ void US_Hydrodyn_Saxs_Cormap::displayData() {
    if ( parameters.count( "data_csv" ) ) {
       if ( !parameters.count( "csv_skip_report_header" ) ) {
          ((US_Hydrodyn *) us_hydrodyn)->data_csv_headers = csv_headers;         
-         ((US_Hydrodyn *) us_hydrodyn)->data_csv.clear();
+         ((US_Hydrodyn *) us_hydrodyn)->data_csv.clear( );
       }
 
       for ( int i = 0; i < (int) csv_headers.size(); ++i ) {
@@ -2263,7 +2271,7 @@ void US_Hydrodyn_Saxs_Cormap::displayData() {
    if ( parameters.count( "save_png" ) ) {
       qApp->processEvents();
       // this->repaint();
-      QPixmap qm = QPixmap::grabWidget( this );
+      QPixmap qm = this->grab();
       qm.save( parameters[ "save_png" ], "PNG" );
    }
    if ( parameters.count( "close" ) ) {
@@ -2294,7 +2302,7 @@ void US_Hydrodyn_Saxs_Cormap::imageResized() {
    int max_width  = lbl_image->width();
    int max_height = lbl_image->height();
    f_brookesmap->repaint();
-#ifdef QT4
+#if QT_VERSION >= 0x040000
    qApp->processEvents( QEventLoop::AllEvents, 1000 );
 #else
    qApp->processEvents( 1000 );
@@ -2321,7 +2329,7 @@ void US_Hydrodyn_Saxs_Cormap::imageResized() {
          QPixmap pm;
          lbl_f_image->setPixmap( pm );
          f_brookesmap->repaint();
-#ifdef QT4
+#if QT_VERSION >= 0x040000
          qApp->processEvents( QEventLoop::AllEvents, 1000 );
 #else
          qApp->processEvents( 1000 );
@@ -2334,7 +2342,7 @@ void US_Hydrodyn_Saxs_Cormap::imageResized() {
       f_brookesmap->setMaximumHeight( use_i_height );
 
       f_brookesmap->repaint();
-#ifdef QT4
+#if QT_VERSION >= 0x040000
       qApp->processEvents( QEventLoop::AllEvents, 1000 );
 #else
       qApp->processEvents( 1000 );
@@ -2348,7 +2356,7 @@ void US_Hydrodyn_Saxs_Cormap::imageResized() {
                               us_tr( "Pairwise P value map" ) 
                                );
          pm.convertFromImage( 
-#ifdef QT4
+#if QT_VERSION >= 0x040000
                              qi->scaled( 
                                         QSize( use_i_width, avail_i_height )
                                         // ,  Qt::KeepAspectRatio 
@@ -2363,13 +2371,13 @@ void US_Hydrodyn_Saxs_Cormap::imageResized() {
          lbl_f_image->setPixmap( pm );
       }
       f_brookesmap->repaint();
-#ifdef QT4
+#if QT_VERSION >= 0x040000
       qApp->processEvents( QEventLoop::AllEvents, 1000 );
 #else
       qApp->processEvents( 1000 );
 #endif
       {
-         QPixmap pm = QPixmap::grabWidget( f_brookesmap );
+         QPixmap pm = f_brookesmap->grab();
 
          if ( org_geom != geometry() ) {
             // us_qdebug( "geometry changed" );
@@ -2438,7 +2446,7 @@ void US_Hydrodyn_Saxs_Cormap::imageResized() {
    f_brookesmap->setMaximumHeight( use_i_height );
 
    f_brookesmap->repaint();
-#ifdef QT4
+#if QT_VERSION >= 0x040000
    qApp->processEvents( QEventLoop::AllEvents, 1000 );
 #else
    qApp->processEvents( 1000 );
@@ -2457,7 +2465,7 @@ void US_Hydrodyn_Saxs_Cormap::imageResized() {
                               us_tr( "Pairwise P value map" ) 
                                );
          pm.convertFromImage( 
-#ifdef QT4
+#if QT_VERSION >= 0x040000
                                 qi->scaled( 
                                            QSize( lbl_f_image->width(), lbl_f_image->height() )
                                            // ,  Qt::KeepAspectRatio 
@@ -2477,7 +2485,7 @@ void US_Hydrodyn_Saxs_Cormap::imageResized() {
                                  us_tr( "Pairwise adjusted P value map" ) 
                                   );
             pm.convertFromImage( 
-#ifdef QT4
+#if QT_VERSION >= 0x040000
                                 qi_adj->scaled( 
                                                QSize( avail_i, avail_i ),  Qt::KeepAspectRatio
                                                 )
@@ -2503,7 +2511,7 @@ void US_Hydrodyn_Saxs_Cormap::imageResized() {
                                      );
 
                pm.convertFromImage( 
-#ifdef QT4
+#if QT_VERSION >= 0x040000
                                    qi_hb->scaled( 
                                                  QSize( avail_i, avail_i ),  Qt::KeepAspectRatio
                                                   )
@@ -2525,7 +2533,7 @@ void US_Hydrodyn_Saxs_Cormap::imageResized() {
                                      );
 
                pm.convertFromImage( 
-#ifdef QT4
+#if QT_VERSION >= 0x040000
                                    qi->scaled( 
                                               QSize( avail_i, avail_i ),  Qt::KeepAspectRatio
                                                )
@@ -2546,16 +2554,16 @@ void US_Hydrodyn_Saxs_Cormap::imageResized() {
    }
 
    f_brookesmap->repaint();
-#ifdef QT4
+#if QT_VERSION >= 0x040000
    qApp->processEvents( QEventLoop::AllEvents, 1000 );
 #else
    qApp->processEvents( 1000 );
 #endif
    {
-      QPixmap pm = QPixmap::grabWidget( f_brookesmap );
+      QPixmap pm = f_brookesmap->grab();
       QImage qi = pm.toImage();
       pm.convertFromImage( 
-#ifdef QT4
+#if QT_VERSION >= 0x040000
                           qi.scaled( 
                                      QSize( use_i_width, use_i_height ),  Qt::KeepAspectRatio
                                       )

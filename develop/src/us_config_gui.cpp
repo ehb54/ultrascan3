@@ -226,7 +226,7 @@ US_Config_GUI::US_Config_GUI(QWidget *parent, const char *name) : QFrame( parent
 
    cnt_numThreads= new QwtCounter(this);
    US_Hydrodyn::sizeArrows( cnt_numThreads );
-   cnt_numThreads->setRange(1, MAX_THREADS, 1);
+   cnt_numThreads->setRange(1, MAX_THREADS); cnt_numThreads->setSingleStep( 1);
    cnt_numThreads->setValue(USglobal->config_list.numThreads);
    cnt_numThreads->setEnabled(true);
    cnt_numThreads->setNumButtons(2);

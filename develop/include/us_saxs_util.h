@@ -83,7 +83,7 @@ typedef unsigned _int32 uint32_t;
 #endif
 
 #ifdef WIN32
-# if !defined( QT4 )
+# if QT_VERSION < 0x040000
   #pragma warning ( disable: 4251 )
 # endif
 #endif
@@ -124,7 +124,7 @@ class US_Saxs_Scan
    vector < double > q;
    vector < double > r;
    vector < double > s;
-   void clear();
+   void clear( );
 };
 
 class US_EXTERN US_Saxs_Util
@@ -138,7 +138,7 @@ class US_EXTERN US_Saxs_Util
       US_Saxs_Util();
       ~US_Saxs_Util();
 
-      void   clear      ();
+      void   clear      ( );
       bool   read       ( QString filename, QString tag );
       bool   write      ( QString filename, QString tag );
       bool   compat     ( QString tag1,     QString tag2 );
@@ -1815,7 +1815,7 @@ FILE * us_fopen( QString f, const char *mode );
 # endif
 
 #ifdef WIN32
-# if !defined( QT4 )
+# if QT_VERSION < 0x040000
   #pragma warning ( default: 4251 )
 # endif
 #endif

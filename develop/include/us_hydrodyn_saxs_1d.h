@@ -33,7 +33,7 @@
 #include "us_hydrodyn_saxs.h"
 
 #include <qwt_plot.h>
-#ifdef QT4
+#if QT_VERSION >= 0x040000
 # include "qwt_legend.h"
 # include "qwt_plot_grid.h"
 # include "qwt_plot_curve.h"
@@ -123,7 +123,7 @@ class US_EXTERN US_Hydrodyn_Saxs_1d : public QFrame
 
       QwtPlot       *plot_saxs;
       ScrollZoomer  *plot_saxs_zoomer;
-#ifdef QT4
+#if QT_VERSION >= 0x040000
       QwtPlotGrid   *grid_pr;
       QwtPlotGrid   *grid_saxs;
 #endif
@@ -152,7 +152,7 @@ class US_EXTERN US_Hydrodyn_Saxs_1d : public QFrame
       int           unit;
 
 #ifdef WIN32
-# if !defined( QT4 )
+# if QT_VERSION < 0x040000
   #pragma warning ( disable: 4251 )
 # endif
 #endif
@@ -180,7 +180,7 @@ class US_EXTERN US_Hydrodyn_Saxs_1d : public QFrame
       bool                                            load_rotations( int number, 
                                                                       vector < vector < double > > &rotations );
 #ifdef WIN32
-# if !defined( QT4 )
+# if QT_VERSION < 0x040000
   #pragma warning ( default: 4251 )
 # endif
 #endif

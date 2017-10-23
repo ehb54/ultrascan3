@@ -72,7 +72,7 @@ QLabel* US3i_widgetsDialog::us_banner( const QString& labelString, int fontAdjus
 QPushButton* US3i_widgetsDialog::us_pushbutton( const QString& labelString, bool enabled,
                                         int fontAdjust )
 {
-  QPushButton* button =  new QPushButton( tr( labelString.toAscii() ), this );
+  QPushButton* button =  new QPushButton( tr( labelString.toLatin1() ), this );
 
   button->setFont( QFont( US3i_GuiSettings::fontFamily(), 
                           US3i_GuiSettings::fontSize() + fontAdjust ) );
@@ -179,7 +179,7 @@ QGridLayout* US3i_widgetsDialog::us_checkbox(
   lb_spacer->setAutoFillBackground( true );
   lb_spacer->setPalette           ( p );
   
-  cb = new QCheckBox( text.toAscii(), this );
+  cb = new QCheckBox( text.toLatin1(), this );
   cb->setFont              ( font );
   cb->setPalette           ( p );
   cb->setAutoFillBackground( true );
@@ -211,7 +211,7 @@ QGridLayout* US3i_widgetsDialog::us_radiobutton(
   lb_spacer->setAutoFillBackground( true );
   lb_spacer->setPalette           ( p );
 
-  rb = new QRadioButton( text.toAscii(), this );
+  rb = new QRadioButton( text.toLatin1(), this );
   rb->setAutoFillBackground( true );
   rb->setFont              ( font );
   rb->setPalette           ( p );
@@ -279,9 +279,17 @@ QwtCounter* US3i_widgetsDialog::us_counter( int buttons, double low, double high
                                     double value )
 {
   QwtCounter* counter = new QwtCounter;
-#ifdef Q_WS_MAC
+  counter->setNumButtons( buttons );
+  counter->setRange     ( low, high );
+  counter->setValue     ( value );
   QList< QObject* > children = counter->children();
+  int totwid          = 0;
+#ifdef Q_OS_MAC
+#if QT_VERSION < 0x050000
   QStyle *btnstyle = new QPlastiqueStyle();
+#else
+  QStyle *btnstyle = QApplication::setStyle( "fusion" );
+#endif
 
   for ( int jj = 0; jj < children.size(); jj++ )
   {
@@ -293,28 +301,33 @@ QwtCounter* US3i_widgetsDialog::us_counter( int buttons, double low, double high
         cwidg->setStyle( btnstyle );
      }
   }
-#endif
+#endif    // END: special button treatment for Mac
+
+  for ( int jj = 0; jj < children.size(); jj++ )
+  {  // Accumulate total width of button widgets
+     QWidget* cwidg = (QWidget*)children.at( jj );
+     QString clname = cwidg->metaObject()->className();
+     if ( clname.contains( "Button" ) )
+     {
+        cwidg->adjustSize();
+        totwid        += cwidg->width();
+     }
+  }
+
   QFont vfont( US3i_GuiSettings::fontFamily(), US3i_GuiSettings::fontSize() );
   QFontMetrics fm( vfont );
-  counter->setNumButtons( buttons );
-  counter->setRange     ( low, high );
-  counter->setValue     ( value );
   counter->setPalette   ( US3i_GuiSettings::normalColor() );
   counter->setFont      ( vfont );
   counter->setAutoFillBackground( true );
 
-  // Set width based on current value and high-value sizes
+  // Set min,curr width based on current value and high-value sizes
   int ncv    = int( log10( value ) ) + 1;
-  int nch    = int( log10( high  ) ) + 1;
   ncv        = ( ncv > 0 ) ? ncv : ( 4 - ncv );
-  nch        = ( nch > 0 ) ? nch : ( 4 - nch );
-  nch        = qMax( nch, ncv );
   int widv   = fm.width( QString( "12345678901234" ).left( ncv ) );
-  int widh   = fm.width( QString( "12345678901234" ).left( nch ) );
   counter->adjustSize();
-  int mwidth = counter->width() + widh - widv;
-  counter->resize         ( mwidth, counter->height() );
-  counter->setMinimumWidth( mwidth - fm.width( "A" ) );
+  int mwidth = widv * 2 + totwid;
+  counter->setMinimumWidth( mwidth );
+  counter->resize(          mwidth + widv, counter->height() );
 
   return counter;
 }
@@ -340,10 +353,10 @@ QwtPlot* US3i_widgetsDialog::us_plot( const QString& title, const QString& x_axi
 QwtPlotGrid* US3i_widgetsDialog::us_grid( QwtPlot* plot )
 {
   QwtPlotGrid* grid = new QwtPlotGrid;
-  grid->enableXMin    ( true );
-  grid->setMajPen(QPen( US3i_GuiSettings::plotMajGrid(), 0, Qt::DotLine ) );
-  grid->setMinPen(QPen( US3i_GuiSettings::plotMinGrid(), 0, Qt::DotLine ) );
-  grid->attach        ( plot );
+  grid->enableXMin ( true );
+  grid->setMajorPen( QPen( US3i_GuiSettings::plotMajGrid(), 0, Qt::DotLine ) );
+  grid->setMinorPen( QPen( US3i_GuiSettings::plotMinGrid(), 0, Qt::DotLine ) );
+  grid->attach     ( plot );
 
   return grid;
 }
@@ -364,7 +377,11 @@ QwtPlotPicker* US3i_widgetsDialog::us_picker( QwtPlot* plot )
   QwtPlotPicker* pick = new QwtPlotPicker( QwtPlot::xBottom, QwtPlot::yLeft,
                                            plot->canvas() ); 
 
+#if QT_VERSION > 0x050000
+  pick->setStateMachine( new QwtPickerClickPointMachine() );
+#else
   pick->setSelectionFlags( QwtPicker::PointSelection );
+#endif
   pick->setTrackerMode   ( QwtPicker::AlwaysOn );
   pick->setRubberBand    ( QwtPicker::CrossRubberBand );
 
@@ -393,4 +410,46 @@ QTabWidget* US3i_widgetsDialog::us_tabwidget(  int fontAdjust,
   return newtw;
 }
 
+// TimeEdit
+QHBoxLayout* US3i_widgetsDialog::us_timeedit( 
+      QTimeEdit*& tedt, const int fontAdjust, QSpinBox** sbox )
+{
+   QPalette   pal    = US3i_GuiSettings::normalColor();
+   QFont      font   = QFont( US3i_GuiSettings::fontFamily(),
+                              US3i_GuiSettings::fontSize  () + fontAdjust );
+   tedt              = new QTimeEdit( QTime( 0, 0 ), this );
+   tedt->setPalette( pal );
+   tedt->setAutoFillBackground( true );
+   tedt->setFont( font );
+
+   QHBoxLayout* layo = new QHBoxLayout;
+   layo->setContentsMargins( 0, 0, 0, 0 );
+   layo->setSpacing        ( 0 );
+
+   if ( sbox != NULL )
+   {
+      *sbox             = new QSpinBox( this );
+      (*sbox)->setPalette( pal );
+      (*sbox)->setAutoFillBackground( true );
+      (*sbox)->setFont( font );
+
+      layo->addWidget( *sbox );
+   }
+
+   layo->addWidget( tedt );
+
+   return layo;
+}
+
+// SpinBox
+QSpinBox* US3i_widgetsDialog::us_spinbox( const int fontAdjust )
+{
+   QSpinBox* sbox   = new QSpinBox( this );
+   sbox->setPalette( US3i_GuiSettings::normalColor() );
+   sbox->setAutoFillBackground( true );
+   sbox->setFont( QFont( US3i_GuiSettings::fontFamily(),
+                         US3i_GuiSettings::fontSize() + fontAdjust ) );
+
+   return sbox;
+}
 

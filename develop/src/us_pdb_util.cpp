@@ -176,7 +176,7 @@ bool US_Pdb_Util::range_to_set( set < QString > & result, const QString & s )
    QRegExp rx_1( "(.?):(\\d+)" );
    QRegExp rx_2( "(.?):(\\d+)-(\\d+)" );
 
-   result.clear();
+   result.clear( );
 
    for ( int i = 0; i < (int) qsl.size(); i++ )
    {

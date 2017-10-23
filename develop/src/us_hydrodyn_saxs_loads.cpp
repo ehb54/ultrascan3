@@ -116,7 +116,7 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
                                                 , 
                                                 qsl_plotted_iq_names, 
                                                 0, 
-                                                FALSE, 
+                                                false, 
                                                 &ok,
                                                 this );
          if ( ok ) {
@@ -888,10 +888,10 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
       {
          editor->append("Best fit target: " + nnls_target + "\n");
       }
-      nnls_A.clear();
-      nnls_x.clear();
-      nnls_mw.clear();
-      nnls_B.clear();
+      nnls_A.clear( );
+      nnls_x.clear( );
+      nnls_mw.clear( );
+      nnls_B.clear( );
       nnls_B_name = nnls_target;
       nnls_rmsd = 0e0;
    }
@@ -914,8 +914,8 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
       {
          // cout << "loading: " << qsl_tmp[0] << endl;
          
-         I.clear();
-         I_errors.clear();
+         I.clear( );
+         I_errors.clear( );
          
          // get the Iq values
          
@@ -1197,39 +1197,39 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
          {
             //  header: "name","type",r1,r2,...,rn, header info
             fprintf(of, "\"Name\",\"Type; q:\",%s,%s\n", 
-                    vector_double_to_csv(q).toAscii().data(),
-                    header_tag.toAscii().data());
+                    vector_double_to_csv(q).toLatin1().data(),
+                    header_tag.toLatin1().data());
             if ( save_original_data )
             {
-               fprintf(of, "%s\n", qsl_data_lines_plotted.join("\n").toAscii().data());
+               fprintf(of, "%s\n", qsl_data_lines_plotted.join("\n").toLatin1().data());
             }
             fprintf(of, "\"%s\",\"%s\",%s\n", 
                     "Average",
                     "I(q)",
-                    vector_double_to_csv(iq_avg).toAscii().data());
+                    vector_double_to_csv(iq_avg).toLatin1().data());
             if ( iq_std_dev.size() )
             {
                fprintf(of, "\"%s\",\"%s\",%s\n", 
                        "Average",
                        "I(q) sd",
-                       vector_double_to_csv(iq_std_dev).toAscii().data());
+                       vector_double_to_csv(iq_std_dev).toLatin1().data());
                fprintf(of, "\"%s\",\"%s\",%s\n", 
                        "Standard deviation",
                        "I(q)",
-                       vector_double_to_csv(iq_std_dev).toAscii().data());
+                       vector_double_to_csv(iq_std_dev).toLatin1().data());
                fprintf(of, "\"%s\",\"%s\",%s\n", 
                        "Average minus 1 standard deviation",
                        "I(q)",
-                       vector_double_to_csv(iq_avg_minus_std_dev).toAscii().data());
+                       vector_double_to_csv(iq_avg_minus_std_dev).toLatin1().data());
                fprintf(of, "\"%s\",\"%s\",%s\n", 
                        "Average plus 1 standard deviation",
                        "I(q)",
-                       vector_double_to_csv(iq_avg_plus_std_dev).toAscii().data());
+                       vector_double_to_csv(iq_avg_plus_std_dev).toLatin1().data());
             }
             if ( !save_original_data )
             {
                fprintf(of, "\n\n\"%s\"\n", 
-                       QString(" Average of : " + qsl_sel_names.join(";").replace("\"","")).toAscii().data()
+                       QString(" Average of : " + qsl_sel_names.join(";").replace("\"","")).toLatin1().data()
                        );
             }
             fclose(of);
@@ -1404,7 +1404,7 @@ void US_Hydrodyn_Saxs::load_saxs( QString filename, bool just_plotted_curves )
          {
             res = US_Static::getItem(
                                         "Crysol's .int format has four available datasets", 
-                                        "Select the set you wish to plot::", lst, 0, FALSE, &ok,
+                                        "Select the set you wish to plot::", lst, 0, false, &ok,
                                         this );
             if ( ok ) {
                // user selected an item and pressed OK
@@ -1504,7 +1504,7 @@ void US_Hydrodyn_Saxs::load_saxs( QString filename, bool just_plotted_curves )
             bool ok;
             res = US_Static::getItem(
                                         "There are three available datasets", 
-                                        "Select the set you wish to plot::", lst, 0, FALSE, &ok,
+                                        "Select the set you wish to plot::", lst, 0, false, &ok,
                                         this );
             if ( ok ) {
                // user selected an item and pressed OK
@@ -1673,15 +1673,15 @@ void US_Hydrodyn_Saxs::load_saxs( QString filename, bool just_plotted_curves )
          } else {
             plot_one_iqq(q, I, QFileInfo(filename).fileName() + tag1);
          }
-         ((US_Hydrodyn *)us_hydrodyn)->last_saxs_q.clear();
-         ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqq.clear();
-         ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqa.clear();
-         ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqc.clear();
+         ((US_Hydrodyn *)us_hydrodyn)->last_saxs_q.clear( );
+         ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqq.clear( );
+         ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqa.clear( );
+         ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqc.clear( );
          ((US_Hydrodyn *)us_hydrodyn)->last_saxs_header =
             QString("")
             .sprintf(
                      "Saxs curves from %s"
-                     , filename.toAscii().data()
+                     , filename.toLatin1().data()
                      );
          for ( unsigned int i = 0; i < q.size(); i++ )
          {
@@ -2418,10 +2418,10 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves )
             {
                editor->append("Best fit target: " + nnls_target + "\n");
             }
-            nnls_A.clear();
-            nnls_x.clear();
-            nnls_mw.clear();
-            nnls_B.clear();
+            nnls_A.clear( );
+            nnls_x.clear( );
+            nnls_mw.clear( );
+            nnls_B.clear( );
             nnls_B_name = nnls_target;
             nnls_rmsd = 0e0;
          }
@@ -2443,7 +2443,7 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves )
             {
                // cout << "loading: " << qsl_tmp[0] << endl;
 
-               pr.clear();
+               pr.clear( );
 
                // setup for avg mw's
                // 1st check the line to see if we have a mw
@@ -2765,18 +2765,18 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves )
                {
                   //  header: "name","type",r1,r2,...,rn, header info
                   fprintf(of, "\"Name\",\"MW (Daltons)\",\"Area\",\"Type; r:\",%s,%s\n", 
-                          vector_double_to_csv(r).toAscii().data(),
-                          header_tag.toAscii().data());
+                          vector_double_to_csv(r).toLatin1().data(),
+                          header_tag.toLatin1().data());
                   if ( save_original_data )
                   {
-                     fprintf(of, "%s\n", qsl_data_lines_plotted.join("\n").toAscii().data());
+                     fprintf(of, "%s\n", qsl_data_lines_plotted.join("\n").toLatin1().data());
                   }
                   fprintf(of, "\"%s\",%.2f,%.2f,\"%s\",%s\n", 
                           "Average",
                           pr_mw_avg,
                           compute_pr_area(pr_avg, r),
                           "P(r)",
-                          vector_double_to_csv(pr_avg).toAscii().data());
+                          vector_double_to_csv(pr_avg).toLatin1().data());
                   if ( pr_std_dev.size() )
                   {
                      fprintf(of, "\"%s\",%.2f,%.2f,\"%s\",%s\n", 
@@ -2784,24 +2784,24 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves )
                              pr_mw_std_dev,
                              compute_pr_area(pr_std_dev, r),
                              "P(r)",
-                             vector_double_to_csv(pr_std_dev).toAscii().data());
+                             vector_double_to_csv(pr_std_dev).toLatin1().data());
                      fprintf(of, "\"%s\",%.2f,%.2f,\"%s\",%s\n", 
                              "Average minus 1 standard deviation",
                              pr_mw_avg - pr_mw_std_dev,
                              compute_pr_area(pr_avg_minus_std_dev, r),
                              "P(r)",
-                             vector_double_to_csv(pr_avg_minus_std_dev).toAscii().data());
+                             vector_double_to_csv(pr_avg_minus_std_dev).toLatin1().data());
                      fprintf(of, "\"%s\",%.2f,%.2f,\"%s\",%s\n", 
                              "Average plus 1 standard deviation",
                              pr_mw_avg + pr_mw_std_dev,
                              compute_pr_area(pr_avg_plus_std_dev, r),
                              "P(r)",
-                             vector_double_to_csv(pr_avg_plus_std_dev).toAscii().data());
+                             vector_double_to_csv(pr_avg_plus_std_dev).toLatin1().data());
                   }
                   if ( !save_original_data )
                   {
                      fprintf(of, "\n\n\"%s\"\n", 
-                             QString(" Average of : " + qsl_sel_names.join(";").replace("\"","")).toAscii().data()
+                             QString(" Average of : " + qsl_sel_names.join(";").replace("\"","")).toLatin1().data()
                              );
                   }
                   fclose(of);
@@ -3423,7 +3423,7 @@ void US_Hydrodyn_Saxs::load_sans( QString filename, bool just_plotted_curves )
          {
             res = US_Static::getItem(
                                         "Crysol's .int format has four available datasets", 
-                                        "Select the set you wish to plot::", lst, 0, FALSE, &ok,
+                                        "Select the set you wish to plot::", lst, 0, false, &ok,
                                         this );
             if ( ok ) {
                // user selected an item and pressed OK
@@ -3523,7 +3523,7 @@ void US_Hydrodyn_Saxs::load_sans( QString filename, bool just_plotted_curves )
             bool ok;
             res = US_Static::getItem(
                                         "There are three available datasets", 
-                                        "Select the set you wish to plot::", lst, 0, FALSE, &ok,
+                                        "Select the set you wish to plot::", lst, 0, false, &ok,
                                         this );
             if ( ok ) {
                // user selected an item and pressed OK
@@ -3692,15 +3692,15 @@ void US_Hydrodyn_Saxs::load_sans( QString filename, bool just_plotted_curves )
          } else {
             plot_one_iqq(q, I, QFileInfo(filename).fileName() + tag1);
          }
-         ((US_Hydrodyn *)us_hydrodyn)->last_saxs_q.clear();
-         ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqq.clear();
-         ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqa.clear();
-         ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqc.clear();
+         ((US_Hydrodyn *)us_hydrodyn)->last_saxs_q.clear( );
+         ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqq.clear( );
+         ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqa.clear( );
+         ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqc.clear( );
          ((US_Hydrodyn *)us_hydrodyn)->last_saxs_header =
             QString("")
             .sprintf(
                      "Saxs curves from %s"
-                     , filename.toAscii().data()
+                     , filename.toLatin1().data()
                      );
          for ( unsigned int i = 0; i < q.size(); i++ )
          {

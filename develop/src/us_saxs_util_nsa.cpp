@@ -372,7 +372,7 @@ bool US_Saxs_Util::nsa_fitness_setup( unsigned int size )
    nsa_gsm_delta2_r = 1e0 / ( 2e0 * nsa_gsm_delta );
 
    bead_models.resize( 1 );
-   bead_models[ 0 ].clear();
+   bead_models[ 0 ].clear( );
 
    // essential for iqq:
    // bead_coordinate
@@ -391,7 +391,7 @@ bool US_Saxs_Util::nsa_fitness_setup( unsigned int size )
    tmp_atom.bead_ref_volume         = 0;
    tmp_atom.bead_color              = 1;
    tmp_atom.exposed_code            = 1;
-   tmp_atom.all_beads               .clear();
+   tmp_atom.all_beads               .clear( );
    tmp_atom.name                    = "SGP";
    tmp_atom.resName                 = "SGP";
    tmp_atom.iCode                   = "";
@@ -408,7 +408,7 @@ bool US_Saxs_Util::nsa_fitness_setup( unsigned int size )
 
    // size dependent variable setup:
 
-   nsa_var_ref.clear();
+   nsa_var_ref.clear( );
 
    nsa_var_ref.push_back( & ( bead_models[ 0 ][ 0 ].bead_computed_radius ) );
    nsa_var_min.push_back( sgp_params[ "radiusmin" ] * sgp_params[ "distancequantum" ] );
@@ -794,7 +794,7 @@ QString US_Saxs_Util::nsa_physical_stats()
       }
    }
 
-   nsa_physical_stats_map.clear();
+   nsa_physical_stats_map.clear( );
 
    nsa_physical_stats_map[ "result total volume"                ] = QString( "%1" ).arg( volume );
    nsa_physical_stats_map[ "result intersection volume"         ] = QString( "%1" ).arg( volume_intersection );

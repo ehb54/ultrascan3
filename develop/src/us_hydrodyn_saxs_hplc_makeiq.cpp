@@ -7,7 +7,7 @@
 #include "../include/us_hydrodyn_saxs_hplc_fit.h"
 #include "../include/us_hydrodyn_saxs_hplc_fit_global.h"
 #include "../include/us_lm.h"
-#ifdef QT4
+#if QT_VERSION >= 0x040000
 #include <qwt_scale_engine.h>
 //Added by qt3to4:
 #include <QTextStream>
@@ -243,7 +243,7 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q_ng( QStringList files, double t_min, d
    {
       for ( int i = 0; i < (int)lb_files->count(); i++ )
       {
-         current_files[ lb_files->item( i )->text( ) ] = true;
+         current_files[ lb_files->item( i )->text() ] = true;
       }
    }
 
@@ -487,7 +487,7 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files, double t_min, doub
          // cout << QString( "bl_cap 2 <%1>\n" ).arg( rx_bl.cap( 3 ) );
          bl_slope    .push_back( rx_bl.cap( 1 ).replace( "_", "." ).toDouble() );
          bl_intercept.push_back( rx_bl.cap( 3 ).replace( "_", "." ).toDouble() );
-         // cout << QString( "bl for file %1 slope %2 intercept %3\n" ).arg( i ).arg( bl_slope.back(), 0, 'g', 8 ).arg( bl_intercept.back(), 0, 'g', 8 ).toAscii().data();
+         // cout << QString( "bl for file %1 slope %2 intercept %3\n" ).arg( i ).arg( bl_slope.back(), 0, 'g', 8 ).arg( bl_intercept.back(), 0, 'g', 8 ).toLatin1().data();
          bl_count++;
          any_bl = true;
       }
@@ -501,7 +501,7 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files, double t_min, doub
          // cout << QString( "bi_cap 2 <%1>\n" ).arg( rx_bi.cap( 3 ) );
          // bi_delta .push_back( rx_bi.cap( 1 ).replace( "_", "." ).toDouble() );
          // bi_alpha .push_back( rx_bi.cap( 3 ).replace( "_", "." ).toDouble() );
-         // cout << QString( "bi for file %1 delta  %2 alpha %3\n" ).arg( i ).arg( bi_delta.back(), 0, 'g', 8 ).arg( bi_alpha.back(), 0, 'g', 8 ).toAscii().data();
+         // cout << QString( "bi for file %1 delta  %2 alpha %3\n" ).arg( i ).arg( bi_delta.back(), 0, 'g', 8 ).arg( bi_alpha.back(), 0, 'g', 8 ).toLatin1().data();
          bi_delta[ ql.back() ] = rx_bi.cap( 1 ).replace( "_", "." ).toDouble();
          bi_alpha[ ql.back() ] = rx_bi.cap( 3 ).replace( "_", "." ).toDouble();
          bi_count++;
@@ -1177,7 +1177,7 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files, double t_min, doub
    {
       for ( int i = 0; i < (int)lb_files->count(); i++ )
       {
-         current_files[ lb_files->item( i )->text( ) ] = true;
+         current_files[ lb_files->item( i )->text() ] = true;
       }
    }
 
@@ -1910,12 +1910,12 @@ bool US_Hydrodyn_Saxs_Hplc::create_i_of_q( QStringList files, double t_min, doub
             avg( all_selected_files(), QString( peak_tag ) );
             if ( conc_ok ) {
                set < QString > last_selected;
-               last_selected.insert( lb_files->item( lb_files->count( ) - 1 )->text() );
+               last_selected.insert( lb_files->item( lb_files->count() - 1 )->text() );
                set_selected( last_selected );
                normalize();
-               final_files_set.insert( lb_files->item( lb_files->count( ) - 1 )->text() );
+               final_files_set.insert( lb_files->item( lb_files->count() - 1 )->text() );
             } else {
-               final_files_set.insert( lb_files->item( lb_files->count( ) - 1 )->text() );
+               final_files_set.insert( lb_files->item( lb_files->count() - 1 )->text() );
             }
          }
       }
@@ -1954,11 +1954,11 @@ bool US_Hydrodyn_Saxs_Hplc::create_unified_ggaussian_target( QStringList & files
    org_gaussians = gaussians;
    // US_Vector::printvector( "cugt: org_gauss", org_gaussians );
 
-   unified_ggaussian_params          .clear();
+   unified_ggaussian_params          .clear( );
 
    unified_ggaussian_files           = files;
    unified_ggaussian_curves          = files.size();
-   unified_ggaussian_qvals           .clear();
+   unified_ggaussian_qvals           .clear( );
 
    unified_ggaussian_use_errors      = true;
 
@@ -1981,8 +1981,8 @@ bool US_Hydrodyn_Saxs_Hplc::create_unified_ggaussian_target( QStringList & files
 
    common_size   = 0;
    per_file_size = 0;
-   is_common.clear();
-   offset.clear();
+   is_common.clear( );
+   offset.clear( );
    describe_unified_common   = "";
    describe_unified_per_file = "";
 
@@ -2232,14 +2232,14 @@ bool US_Hydrodyn_Saxs_Hplc::create_unified_ggaussian_target( QStringList & files
 
 bool US_Hydrodyn_Saxs_Hplc::ggauss_recompute()
 {
-   unified_ggaussian_q               .clear();
-   unified_ggaussian_jumps           .clear();
-   unified_ggaussian_I               .clear();
-   unified_ggaussian_e               .clear();
-   unified_ggaussian_t               .clear();
-   unified_ggaussian_param_index     .clear();
-   unified_ggaussian_q_start         .clear();
-   unified_ggaussian_q_end           .clear();
+   unified_ggaussian_q               .clear( );
+   unified_ggaussian_jumps           .clear( );
+   unified_ggaussian_I               .clear( );
+   unified_ggaussian_e               .clear( );
+   unified_ggaussian_t               .clear( );
+   unified_ggaussian_param_index     .clear( );
+   unified_ggaussian_q_start         .clear( );
+   unified_ggaussian_q_end           .clear( );
    
    double q_start = le_gauss_fit_start->text().toDouble();
    double q_end   = le_gauss_fit_end  ->text().toDouble();
@@ -2286,7 +2286,7 @@ bool US_Hydrodyn_Saxs_Hplc::ggauss_recompute()
          editor_msg( "dark red", QString( us_tr( "WARNING: %1 has no errors so global errors are off for computing RMSD and global fitting" ) ).arg( unified_ggaussian_files[ i ] ) );
          error_msg = true;
          unified_ggaussian_use_errors = false;
-         unified_ggaussian_e.clear();
+         unified_ggaussian_e.clear( );
       }
 
       unified_ggaussian_q_start.push_back( unified_ggaussian_t.size() );
@@ -2369,9 +2369,9 @@ bool US_Hydrodyn_Saxs_Hplc::compute_f_gaussians( QString file, QWidget *hplc_fit
       save_I = f_Is[ file ];
       save_e = f_errors[ file ];
 
-      f_qs[ file ].clear();
-      f_Is[ file ].clear();
-      f_errors[ file ].clear();
+      f_qs[ file ].clear( );
+      f_Is[ file ].clear( );
+      f_errors[ file ].clear( );
 
       for ( unsigned int i = 0; i < ( unsigned int ) save_e.size(); i++ )
       {
@@ -2444,7 +2444,7 @@ bool US_Hydrodyn_Saxs_Hplc::compute_f_gaussians( QString file, QWidget *hplc_fit
    // vector < double > tmp_gs = gaussians;
 
    fit->redo_settings();
-   fit->gaussians_undo.clear();
+   fit->gaussians_undo.clear( );
    fit->gaussians_undo.push_back( gaussians );
    fit->le_epsilon->setText( QString( "%1" ).arg( peak / 1e6 < 0.001 ? peak / 1e6 : 0.001 ) );
 

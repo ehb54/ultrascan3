@@ -370,7 +370,7 @@ void US_AddAtom::sort_atoms()
       atoms_to_sort.push_back(tmp_atom);
    }
    atoms_to_sort.sort();
-   atom_list.clear();
+   atom_list.clear( );
    while(atoms_to_sort.size())
    {
       atom_list.push_back((atoms_to_sort.front()).our_atom);
@@ -385,7 +385,7 @@ void US_AddAtom::write_atom_file()
    QFile f(atom_filename);
    if (f.open(QIODevice::WriteOnly|QIODevice::Text))
    {
-      cmb_atom->clear();
+      cmb_atom->clear( );
       str1.sprintf(us_trp(" Number of Atoms in File: %d"), atom_list.size());
       QTextStream ts(&f);
       for (unsigned int i=0; i<atom_list.size(); i++)
@@ -420,8 +420,8 @@ void US_AddAtom::select_atom_file()
    {
       lbl_atom_table->setText(atom_filename);
       QFile f(atom_filename);
-      atom_list.clear();
-      cmb_atom->clear();
+      atom_list.clear( );
+      cmb_atom->clear( );
       unsigned int i=1;
       if (f.open(QIODevice::ReadOnly|QIODevice::Text))
       {
@@ -472,8 +472,8 @@ void US_AddAtom::select_hybrid_file()
    {
       lbl_hybrid_table->setText(hybrid_filename);
       QFile f(hybrid_filename);
-      hybrid_list.clear();
-      cmb_hybrid->clear();
+      hybrid_list.clear( );
+      cmb_hybrid->clear( );
       unsigned int i=1;
       if (f.open(QIODevice::ReadOnly|QIODevice::Text))
       {
@@ -522,7 +522,7 @@ void US_AddAtom::select_saxs_file()
       map < QString, saxs > saxs_map;
       lbl_saxs_table->setText(saxs_filename);
       QFile f(saxs_filename);
-      saxs_list.clear();
+      saxs_list.clear( );
       if (f.open(QIODevice::ReadOnly|QIODevice::Text))
       {
          int line = 0;
@@ -677,7 +677,7 @@ void US_AddAtom::select_atom(int val)
    {
       if (hybrid_list.size() > 0)
       {
-         j = cmb_atom->currentIndex( );
+         j = cmb_atom->currentIndex();
          for (i=0; i<hybrid_list.size(); i++)
          {
             if (hybrid_list[i].name == atom_list[j].hybrid.name)

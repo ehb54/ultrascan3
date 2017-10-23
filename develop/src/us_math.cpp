@@ -774,8 +774,8 @@ float calc_bottom(int rotor, int centerpiece, int channel, unsigned int rpm)
 #endif
    vector <struct rotorInfo> rotor_list;
    vector <struct centerpieceInfo> cp_list;
-   cp_list.clear();
-   rotor_list.clear();
+   cp_list.clear( );
+   rotor_list.clear( );
    if (!readCenterpieceInfo(&cp_list))
    {
 #if !defined(USE_MPI)
@@ -817,7 +817,7 @@ float calc_bottom(int rotor, int centerpiece, int channel, unsigned int rpm)
 double stretch(int rotor, unsigned int rpm)
 {
    vector <struct rotorInfo> rotor_list;
-   rotor_list.clear();
+   rotor_list.clear( );
    double stretch = 0.0;
    if( readRotorInfo(&rotor_list) )
    {
@@ -830,7 +830,7 @@ double stretch(int rotor, unsigned int rpm)
    {
       fprintf(stderr,"ERROR reading rotor info in us_math ... no stretch!\n");
    }
-   rotor_list.clear();
+   rotor_list.clear( );
    return (stretch);
 }
 #else

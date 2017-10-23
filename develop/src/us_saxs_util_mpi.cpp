@@ -325,7 +325,7 @@ bool US_Saxs_Util::run_iq_mpi( QString controlfile )
          cout << QString("%1: done with common files\n" ).arg( myrank ) << flush;
       }
 
-      QString qs_files = qslt.join( "\n" ).toAscii().data();
+      QString qs_files = qslt.join( "\n" ).toLatin1().data();
       sizeoflist = qs_files.length();
       char char_files[ sizeoflist + 1 ];
       strncpy( char_files, qs_files, sizeoflist + 1 );
@@ -484,7 +484,7 @@ bool US_Saxs_Util::run_iq_mpi( QString controlfile )
 
    // now collect results
 
-   QString qs_files = full_output_list.join( "\n" ).toAscii().data();
+   QString qs_files = full_output_list.join( "\n" ).toLatin1().data();
    sizeoflist = qs_files.length();
 
    unsigned int max_individual_size;

@@ -116,8 +116,8 @@ US_Hydrodyn_Comparative::US_Hydrodyn_Comparative(
    setPalette( PALET_FRAME );
    setWindowTitle(us_tr("Model classifier"));
    updates_enabled = true;
-   loaded_csv_names.clear();
-   loaded_csv_row_prepended_names.clear();
+   loaded_csv_names.clear( );
+   loaded_csv_row_prepended_names.clear( );
    build_ce_names_map();
    setupGUI();
    global_Xpos += 30;
@@ -135,8 +135,8 @@ US_Hydrodyn_Comparative::~US_Hydrodyn_Comparative()
 
 void US_Hydrodyn_Comparative::build_ce_names_map()
 {
-   ce_names.clear();
-   ce_map.clear();
+   ce_names.clear( );
+   ce_map.clear( );
    ce_names.push_back( comparative->ce_s.name );
    ce_names.push_back( comparative->ce_D.name );
    ce_names.push_back( comparative->ce_sr.name );
@@ -228,7 +228,7 @@ QString US_Hydrodyn_Comparative::serialize_comparative_entry( comparative_entry 
 {
    return 
       QString(
-#ifndef QT4
+#if QT_VERSION < 0x040000
               "%1|%1|%1|%1|%1|%1|%1|%1|%1|%1|%1|%1\n"
 #else
               "%1|%2|%3|%4|%5|%6|%7|%8|%9|%10|%11|%12\n"
@@ -1328,7 +1328,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    // lbl_loaded->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    // lbl_loaded->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    // lbl_loaded->setMinimumHeight(minHeight1);
-   // lbl_loaded->setPalette( USglobal->global_colors.cg_frame );
+   // lbl_loaded->setPalette( PALET_FRAME );
    // lbl_loaded->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
 
    lb_loaded = new QListWidget(this);
@@ -1382,7 +1382,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    // lbl_selected->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    // lbl_selected->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    // lbl_selected->setMinimumHeight(minHeight1);
-   // lbl_selected->setPalette( USglobal->global_colors.cg_frame );
+   // lbl_selected->setPalette( PALET_FRAME );
    // lbl_selected->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
 
    lb_selected = new QListWidget(this);
@@ -1433,15 +1433,15 @@ void US_Hydrodyn_Comparative::setupGUI()
    // editor->setMinimumHeight(minHeight1 * 7);
 
 #if QT_VERSION < 0x040000
-# if defined(QT4) && defined(Q_WS_MAC)
+# if QT_VERSION >= 0x040000 && defined(Q_WS_MAC)
    {
  //      Q3PopupMenu * file = new Q3PopupMenu;
-      file->insertItem( us_tr("&Font"),  this, SLOT(update_font( )),    Qt::ALT+Qt::Key_F );
-      file->insertItem( us_tr("&Save"),  this, SLOT(save( )),    Qt::ALT+Qt::Key_S );
+      file->insertItem( us_tr("&Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
+      file->insertItem( us_tr("&Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
 #  ifndef NO_EDITOR_PRINT
-      file->insertItem( us_tr("&Print"), this, SLOT(print( )),   Qt::ALT+Qt::Key_P );
+      file->insertItem( us_tr("&Print"), this, SLOT(print()),   Qt::ALT+Qt::Key_P );
 #  endif
-      file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display( )),   Qt::ALT+Qt::Key_X );
+      file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
 
       QMenuBar *menu = new QMenuBar( this );
       AUTFBACK( menu );
@@ -1459,12 +1459,12 @@ void US_Hydrodyn_Comparative::setupGUI()
    AUTFBACK( m );
  //   Q3PopupMenu * file = new Q3PopupMenu(editor);
    m->insertItem( us_tr("&File"), file );
-   file->insertItem( us_tr("Font"),  this, SLOT(update_font( )),    Qt::ALT+Qt::Key_F );
-   file->insertItem( us_tr("Save"),  this, SLOT(save( )),    Qt::ALT+Qt::Key_S );
+   file->insertItem( us_tr("Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
+   file->insertItem( us_tr("Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
 #  ifndef NO_EDITOR_PRINT
-   file->insertItem( us_tr("Print"), this, SLOT(print( )),   Qt::ALT+Qt::Key_P );
+   file->insertItem( us_tr("Print"), this, SLOT(print()),   Qt::ALT+Qt::Key_P );
 #  endif
-   file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display( )),   Qt::ALT+Qt::Key_X );
+   file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
 # endif
 #else
    QFrame *frame;
@@ -1681,7 +1681,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    gl_loaded_selected_editor->addLayout(hbl_selected_buttons2, 3, 1);
 
    QBoxLayout * vbl_editor_group = new QVBoxLayout(0); vbl_editor_group->setContentsMargins( 0, 0, 0, 0 ); vbl_editor_group->setSpacing( 0 );
-#if !defined(QT4) || !defined(Q_WS_MAC)
+#if QT_VERSION < 0x040000 || !defined(Q_WS_MAC)
    vbl_editor_group->addWidget(frame);
 #endif
    vbl_editor_group->addWidget(editor);
@@ -2770,18 +2770,18 @@ void US_Hydrodyn_Comparative::update_loaded()
    // clear lb_selected entries
    // maybe we want to be a bit more sophisticated with this
    //  i.e. doing a "delta" to only update the changes
-   lb_selected->clear();
+   lb_selected->clear( );
    
    // add selected loaded entries to selected
    for ( int i = 0; i < lb_loaded->count(); i++ )
    {
       if ( lb_loaded->item(i)->isSelected() )
       {
-         if ( csvs.count(lb_loaded->item(i)->text( )) )
+         if ( csvs.count(lb_loaded->item(i)->text()) )
          {
             lb_selected->addItems(csv_model_names(csvs[ lb_loaded->item(i)->text() ]));
          } else {
-            editor_msg("red", QString(us_tr("internal error: could not find %1 csv data")).arg(lb_loaded->item(i)->text( )));
+            editor_msg("red", QString(us_tr("internal error: could not find %1 csv data")).arg(lb_loaded->item(i)->text()));
          }
       }
    }
@@ -2903,9 +2903,9 @@ void US_Hydrodyn_Comparative::loaded_view()
    {
       if ( lb_loaded->item(i)->isSelected() ) 
       {
-         if ( !csvs.count(lb_loaded->item(i)->text( )) )
+         if ( !csvs.count(lb_loaded->item(i)->text()) )
          {
-            editor_msg("red", QString(us_tr("internal error: could not find %1 csv data")).arg(lb_loaded->item(i)->text( )));
+            editor_msg("red", QString(us_tr("internal error: could not find %1 csv data")).arg(lb_loaded->item(i)->text()));
          } else {
             US_Hydrodyn_Csv_Viewer 
                *csv_viewer_window =
@@ -3348,7 +3348,7 @@ void US_Hydrodyn_Comparative::print()
 
 void US_Hydrodyn_Comparative::clear_display()
 {
-   editor->clear();
+   editor->clear( );
    editor->append("\n\n");
 }
 
@@ -3787,7 +3787,7 @@ bool US_Hydrodyn_Comparative::all_selected_csv_contain( comparative_entry ce )
    {
       if ( lb_loaded->item(i)->isSelected() )
       {
-         if ( csvs.count(lb_loaded->item(i)->text( )) )
+         if ( csvs.count(lb_loaded->item(i)->text()) )
          {
             if ( !csvs[ lb_loaded->item(i)->text() ].header_map.count(ce.name) )
             {
@@ -3838,7 +3838,7 @@ QString US_Hydrodyn_Comparative::first_loaded_selected()
    {
       if ( lb_loaded->item(i)->isSelected() )
       {
-         qs = lb_loaded->item(i)->text( );
+         qs = lb_loaded->item(i)->text();
          break;
       }
    }
@@ -3933,9 +3933,9 @@ void US_Hydrodyn_Comparative::csv_merge_loaded_selected()
    {
       if ( !skip_first && lb_loaded->item(i)->isSelected() ) 
       {
-         if ( !csvs.count(lb_loaded->item(i)->text( )) )
+         if ( !csvs.count(lb_loaded->item(i)->text()) )
          {
-            editor_msg("red", QString(us_tr("internal error: could not find %1 csv data")).arg(lb_loaded->item(i)->text( )));
+            editor_msg("red", QString(us_tr("internal error: could not find %1 csv data")).arg(lb_loaded->item(i)->text()));
             enable_updates();
             return;
          }
@@ -3997,7 +3997,7 @@ bool US_Hydrodyn_Comparative::csv_merge_selected_selected( csv &csv_merged )
    {
       if ( lb_selected->item(i)->isSelected() ) 
       {
-         selected_names[ lb_selected->item(i)->text( ) ] = true;
+         selected_names[ lb_selected->item(i)->text() ] = true;
       }
    }
    
@@ -4012,7 +4012,7 @@ bool US_Hydrodyn_Comparative::csv_merge_selected_selected( csv &csv_merged )
    {
       if ( lb_loaded->item(i)->isSelected() ) 
       {
-         if ( !csvs.count(lb_loaded->item(i)->text( )) )
+         if ( !csvs.count(lb_loaded->item(i)->text()) )
          {
             editor_msg("red", QString(us_tr("internal error: could not find %1 csv data")).arg(first_loaded_selected()));
             enable_updates();
@@ -4020,16 +4020,16 @@ bool US_Hydrodyn_Comparative::csv_merge_selected_selected( csv &csv_merged )
          }
          for ( unsigned int j = 0; j < csvs[ lb_loaded->item(i)->text() ].prepended_names.size(); j++ )
          {
-            if ( selected_names.count(csvs[ lb_loaded->item(i)->text( ) ].prepended_names[j]) )
+            if ( selected_names.count(csvs[ lb_loaded->item(i)->text() ].prepended_names[j]) )
             {
-               if ( !csv_used.count(lb_loaded->item(i)->text( )) )
+               if ( !csv_used.count(lb_loaded->item(i)->text()) )
                {
-                  last_csv = lb_loaded->item(i)->text( );
-                  csv_used[ lb_loaded->item(i)->text( ) ] = true;
+                  last_csv = lb_loaded->item(i)->text();
+                  csv_used[ lb_loaded->item(i)->text() ] = true;
                   csv_used_vector.push_back(lb_loaded->item(i)->text());
                }
-               csv_used_models[ lb_loaded->item(i)->text( ) ]++;
-               selected_models[csvs[ lb_loaded->item(i)->text( ) ].prepended_names[j]] = true;
+               csv_used_models[ lb_loaded->item(i)->text() ]++;
+               selected_models[csvs[ lb_loaded->item(i)->text() ].prepended_names[j]] = true;
             }
          }
       }
@@ -4061,8 +4061,8 @@ bool US_Hydrodyn_Comparative::csv_merge_selected_selected( csv &csv_merged )
    // ok, we have one selected models worth in csv_merged
 
    // merge any other csvs
-   csv_premerge_missing_header_map.clear();
-   csv_premerge_missing_header_qsl.clear();
+   csv_premerge_missing_header_map.clear( );
+   csv_premerge_missing_header_qsl.clear( );
    bool is_ok = true;
 
    for ( unsigned int i = 1; i < csv_used_vector.size(); i++ )
@@ -4441,12 +4441,12 @@ bool US_Hydrodyn_Comparative::any_params_enabled()
 
 void US_Hydrodyn_Comparative::update_selected_map() 
 {
-   selected_map.clear();
+   selected_map.clear( );
    for ( unsigned int i = 0; i < lb_selected->count(); i++ )
    {
       if ( lb_selected->item(i)->isSelected() )
       {
-         selected_map[ lb_selected->item(i)->text( ) ] = true;
+         selected_map[ lb_selected->item(i)->text() ] = true;
       }
    }
 }
@@ -4520,19 +4520,19 @@ bool US_Hydrodyn_Comparative::csv_get_loaded_min_max(
    {
       if ( lb_loaded->item(i)->isSelected() )
       {
-         if ( !csvs.count(lb_loaded->item(i)->text( )) )
+         if ( !csvs.count(lb_loaded->item(i)->text()) )
          {
-            editor_msg("red", QString(us_tr("internal error: could not find %1 csv data")).arg(lb_loaded->item(i)->text( )));
+            editor_msg("red", QString(us_tr("internal error: could not find %1 csv data")).arg(lb_loaded->item(i)->text()));
             return false;
          }
          if ( !csv_get_min_max(tmp_min, tmp_max, rows_used_count, ce, csvs[ lb_loaded->item(i)->text() ]) )
          {
-            editor_msg("red", QString(us_tr("internal error: could not find %1 in csv %2")).arg(ce.name).arg(lb_loaded->item(i)->text( )));
+            editor_msg("red", QString(us_tr("internal error: could not find %1 in csv %2")).arg(ce.name).arg(lb_loaded->item(i)->text()));
             return false;
          }
          if ( !rows_used_count )
          {
-            editor_msg("red", QString(us_tr("internal error: could not find any rows for %1 in csv %2")).arg(ce.name).arg(lb_loaded->item(i)->text( )));
+            editor_msg("red", QString(us_tr("internal error: could not find any rows for %1 in csv %2")).arg(ce.name).arg(lb_loaded->item(i)->text()));
             return false;
          }
          total_rows_used_count += rows_used_count;
@@ -4580,14 +4580,14 @@ bool US_Hydrodyn_Comparative::csv_get_selected_min_max(
    {
       if ( lb_loaded->item(i)->isSelected() )
       {
-         if ( !csvs.count(lb_loaded->item(i)->text( )) )
+         if ( !csvs.count(lb_loaded->item(i)->text()) )
          {
-            editor_msg("red", QString(us_tr("internal error: could not find %1 csv data")).arg(lb_loaded->item(i)->text( )));
+            editor_msg("red", QString(us_tr("internal error: could not find %1 csv data")).arg(lb_loaded->item(i)->text()));
             return false;
          }
          if ( !csv_get_min_max(tmp_min, tmp_max, rows_used_count, ce, csvs[ lb_loaded->item(i)->text() ], false) )
          {
-            editor_msg("red", QString(us_tr("internal error: could not find %1 in csv %2")).arg(ce.name).arg(lb_loaded->item(i)->text( )));
+            editor_msg("red", QString(us_tr("internal error: could not find %1 in csv %2")).arg(ce.name).arg(lb_loaded->item(i)->text()));
             return false;
          }
          if ( rows_used_count )
@@ -4719,8 +4719,8 @@ bool US_Hydrodyn_Comparative::csv_premerge_column_warning( csv &csv1, csv &csv2 
 
 bool US_Hydrodyn_Comparative::csv_premerge_column_warning_all_loaded_selected()
 {
-   csv_premerge_missing_header_map.clear();
-   csv_premerge_missing_header_qsl.clear();
+   csv_premerge_missing_header_map.clear( );
+   csv_premerge_missing_header_qsl.clear( );
    
    if ( !any_loaded_selected() || one_loaded_selected() )
    {
@@ -4741,9 +4741,9 @@ bool US_Hydrodyn_Comparative::csv_premerge_column_warning_all_loaded_selected()
    {
       if ( !skip_first && lb_loaded->item(i)->isSelected() ) 
       {
-         if ( !csvs.count(lb_loaded->item(i)->text( )) )
+         if ( !csvs.count(lb_loaded->item(i)->text()) )
          {
-            editor_msg("red", QString(us_tr("internal error: could not find %1 csv data")).arg(lb_loaded->item(i)->text( )));
+            editor_msg("red", QString(us_tr("internal error: could not find %1 csv data")).arg(lb_loaded->item(i)->text()));
             return true;
          }
          if (

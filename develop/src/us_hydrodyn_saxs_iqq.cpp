@@ -542,7 +542,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
          for ( unsigned int i = 0; i < atoms.size(); i++ )
          {
             fprintf(fsaxs_atoms, "%s %.3f %.3f %.3f %.2f\n"
-                    , atoms[i].saxs_name.toAscii().data()
+                    , atoms[i].saxs_name.toLatin1().data()
                     , atoms[i].pos[0]
                     , atoms[i].pos[1]
                     , atoms[i].pos[2]
@@ -734,7 +734,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
       unsigned int pos_pr;
       vector < float > hist;
       vector < float > hist_pr;
-      contrib_array.clear();
+      contrib_array.clear( );
       contrib_file = ((US_Hydrodyn *)us_hydrodyn)->pdb_file;
       // cout << "contrib_file " << contrib_file << endl;
       
@@ -997,14 +997,14 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
                if ( fpr ) 
                {
                   editor->append(us_tr("P(r) curve file: ") + fpr_name + us_tr(" created.\n"));
-                  ((US_Hydrodyn *)us_hydrodyn)->last_saxs_r.clear();
-                  ((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr.clear();
-                  ((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr_norm.clear();
+                  ((US_Hydrodyn *)us_hydrodyn)->last_saxs_r.clear( );
+                  ((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr.clear( );
+                  ((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr_norm.clear( );
                   ((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr_mw = get_mw(te_filename2->text(), false);
-                  ((US_Hydrodyn *)us_hydrodyn)->last_saxs_q.clear();
-                  ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqq.clear();
-                  ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqa.clear();
-                  ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqc.clear();
+                  ((US_Hydrodyn *)us_hydrodyn)->last_saxs_q.clear( );
+                  ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqq.clear( );
+                  ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqa.clear( );
+                  ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqc.clear( );
                   vector < double > r;
                   vector < double > pr;
                   vector < double > pr_n;
@@ -1022,15 +1022,15 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
                      QString("")
                      .sprintf(
                               "SOMO p(r) vs r data generated from %s by US_SOMO %s %s bin size %f mw %.2f Daltons area %.2f\n"
-                              , model_filename.toAscii().data()
-                              , US_Version.toAscii().data()
+                              , model_filename.toLatin1().data()
+                              , US_Version.toLatin1().data()
                               , REVISION
                               , delta
 , get_mw(te_filename2->text(), false)
                               , compute_pr_area(pr, r)
                               );
                   fprintf(fpr, "%s",
-                          ((US_Hydrodyn *)us_hydrodyn)->last_saxs_header.toAscii().data() );
+                          ((US_Hydrodyn *)us_hydrodyn)->last_saxs_header.toLatin1().data() );
                   fprintf(fpr, "r\tp(r)\tnorm. p(r)\n");
                   for ( unsigned int i = 0; i < hist_pr.size(); i++ )
                   {
@@ -1061,14 +1061,14 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
                }
             }
          } else {
-            ((US_Hydrodyn *)us_hydrodyn)->last_saxs_r.clear();
-            ((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr.clear();
-            ((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr_norm.clear();
+            ((US_Hydrodyn *)us_hydrodyn)->last_saxs_r.clear( );
+            ((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr.clear( );
+            ((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr_norm.clear( );
             ((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr_mw = get_mw(te_filename2->text(), false);
-            ((US_Hydrodyn *)us_hydrodyn)->last_saxs_q.clear();
-            ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqq.clear();
-            ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqa.clear();
-            ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqc.clear();
+            ((US_Hydrodyn *)us_hydrodyn)->last_saxs_q.clear( );
+            ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqq.clear( );
+            ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqa.clear( );
+            ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqc.clear( );
             vector < double > r;
             vector < double > pr;
             vector < double > pr_n;
@@ -1086,8 +1086,8 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
                QString("")
                .sprintf(
                         "SOMO p(r) vs r data generated from %s by US_SOMO %s %s bin size %f mw %.2f Daltons area %.2f\n"
-                        , model_filename.toAscii().data()
-                        , US_Version.toAscii().data()
+                        , model_filename.toLatin1().data()
+                        , US_Version.toLatin1().data()
                         , REVISION
                         , delta
 , get_mw(te_filename2->text(), false)
@@ -1228,7 +1228,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
       qsl_plotted_iq_names << plot_name;
       dup_plotted_iq_name_check[plot_name] = true;
 
-#ifndef QT4
+#if QT_VERSION < 0x040000
       long Iq = plot_saxs->insertCurve( plot_name );
 #else
       QwtPlotCurve *curve = new QwtPlotCurve( plot_name );
@@ -1236,7 +1236,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
 
       plotted_iq_names_to_pos[plot_name] = plotted_Iq.size();
 
-#ifndef QT4
+#if QT_VERSION < 0x040000
       plotted_Iq.push_back(Iq);
       plot_saxs->setCurveStyle(Iq, QwtCurve::Lines);
 #else
@@ -1277,7 +1277,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
          }
       }
 
-#ifndef QT4
+#if QT_VERSION < 0x040000
       plot_saxs->setCurveData(Iq, 
                               cb_guinier->isChecked() ?
                               (double *)&(plotted_q2[p][0]) : (double *)&(plotted_q[p][0]), 
@@ -1286,7 +1286,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
                               q_points );
       plot_saxs->setCurvePen(Iq, QPen(plot_colors[p % plot_colors.size()], pen_width, SolidLine));
 #else
-      curve->setData(
+      curve->setSamples(
                      cb_guinier->isChecked() ?
                      (double *)&(plotted_q2[p][0]) : (double *)&(plotted_q[p][0]), 
                      cb_kratky ->isChecked() ?
@@ -1357,26 +1357,26 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
                cout << "writing " << fsaxs_name << endl;
 #endif
                editor->append(us_tr("SAXS curve file: ") + fsaxs_name + us_tr(" created.\n"));
-               ((US_Hydrodyn *)us_hydrodyn)->last_saxs_r.clear();
-               ((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr.clear();
-               ((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr_norm.clear();
-               ((US_Hydrodyn *)us_hydrodyn)->last_saxs_q.clear();
-               ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqq.clear();
-               ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqa.clear();
-               ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqc.clear();
+               ((US_Hydrodyn *)us_hydrodyn)->last_saxs_r.clear( );
+               ((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr.clear( );
+               ((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr_norm.clear( );
+               ((US_Hydrodyn *)us_hydrodyn)->last_saxs_q.clear( );
+               ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqq.clear( );
+               ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqa.clear( );
+               ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqc.clear( );
                ((US_Hydrodyn *)us_hydrodyn)->last_saxs_header =
                   QString("")
                   .sprintf(
                            "Simulated SAXS data generated from %s by US_SOMO %s %s q(%f:%f) step %f\n"
-                           , model_filename.toAscii().data()
-                           , US_Version.toAscii().data()
+                           , model_filename.toLatin1().data()
+                           , US_Version.toLatin1().data()
                            , REVISION
                            , our_saxs_options->start_q
                            , our_saxs_options->end_q
                            , our_saxs_options->delta_q
                            );
                fprintf(fsaxs, "%s",
-                       ((US_Hydrodyn *)us_hydrodyn)->last_saxs_header.toAscii().data() );
+                       ((US_Hydrodyn *)us_hydrodyn)->last_saxs_header.toLatin1().data() );
                for ( unsigned int i = 0; i < q.size(); i++ )
                {
                   fprintf(fsaxs, "%.6e\t%.6e\n", q[i], I[i]);
@@ -1403,19 +1403,19 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_fast()
             }
          }
       } else {
-         ((US_Hydrodyn *)us_hydrodyn)->last_saxs_r.clear();
-         ((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr.clear();
-         ((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr_norm.clear();
-         ((US_Hydrodyn *)us_hydrodyn)->last_saxs_q.clear();
-         ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqq.clear();
-         ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqa.clear();
-         ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqc.clear();
+         ((US_Hydrodyn *)us_hydrodyn)->last_saxs_r.clear( );
+         ((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr.clear( );
+         ((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr_norm.clear( );
+         ((US_Hydrodyn *)us_hydrodyn)->last_saxs_q.clear( );
+         ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqq.clear( );
+         ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqa.clear( );
+         ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqc.clear( );
          ((US_Hydrodyn *)us_hydrodyn)->last_saxs_header =
             QString("")
             .sprintf(
                      "Simulated SAXS data generated from %s by US_SOMO %s %s q(%f:%f) step %f\n"
-                     , model_filename.toAscii().data()
-                     , US_Version.toAscii().data()
+                     , model_filename.toLatin1().data()
+                     , US_Version.toLatin1().data()
                      , REVISION
                      , our_saxs_options->start_q
                      , our_saxs_options->end_q
@@ -1724,7 +1724,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye()
          for ( unsigned int i = 0; i < atoms.size(); i++ )
          {
             fprintf(fsaxs_atoms, "%s %.3f %.3f %.3f %.2f\n"
-                    , atoms[i].saxs_name.toAscii().data()
+                    , atoms[i].saxs_name.toLatin1().data()
                     , atoms[i].pos[0]
                     , atoms[i].pos[1]
                     , atoms[i].pos[2]
@@ -2284,7 +2284,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye()
       qsl_plotted_iq_names << plot_name;
       dup_plotted_iq_name_check[plot_name] = true;
 
-#ifndef QT4
+#if QT_VERSION < 0x040000
       long Iq = plot_saxs->insertCurve( plot_name );
 #else
       QwtPlotCurve *curve = new QwtPlotCurve( plot_name );
@@ -2292,7 +2292,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye()
 
       plotted_iq_names_to_pos[plot_name] = plotted_Iq.size();
 
-#ifndef QT4
+#if QT_VERSION < 0x040000
       plotted_Iq.push_back(Iq);
       plot_saxs->setCurveStyle(Iq, QwtCurve::Lines);
 #else
@@ -2328,7 +2328,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye()
          }
       }
 
-#ifndef QT4
+#if QT_VERSION < 0x040000
       plot_saxs->setCurveData(Iq, 
                               cb_guinier->isChecked() ?
                               (double *)&(plotted_q2[p][0]) : (double *)&(plotted_q[p][0]), 
@@ -2337,7 +2337,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye()
                               q_points );
       plot_saxs->setCurvePen(Iq, QPen(plot_colors[p % plot_colors.size()], pen_width, SolidLine));
 #else
-      curve->setData(
+      curve->setSamples(
                      cb_guinier->isChecked() ?
                      (double *)&(plotted_q2[p][0]) : (double *)&(plotted_q[p][0]), 
                      cb_kratky ->isChecked() ?
@@ -2401,26 +2401,26 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye()
                cout << "writing " << fsaxs_name << endl;
 #endif
                editor->append(us_tr("SAXS curve file: ") + fsaxs_name + us_tr(" created.\n"));
-               ((US_Hydrodyn *)us_hydrodyn)->last_saxs_r.clear();
-               ((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr.clear();
-               ((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr_norm.clear();
-               ((US_Hydrodyn *)us_hydrodyn)->last_saxs_q.clear();
-               ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqq.clear();
-               ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqa.clear();
-               ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqc.clear();
+               ((US_Hydrodyn *)us_hydrodyn)->last_saxs_r.clear( );
+               ((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr.clear( );
+               ((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr_norm.clear( );
+               ((US_Hydrodyn *)us_hydrodyn)->last_saxs_q.clear( );
+               ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqq.clear( );
+               ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqa.clear( );
+               ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqc.clear( );
                ((US_Hydrodyn *)us_hydrodyn)->last_saxs_header =
                   QString("")
                   .sprintf(
                            "Simulated SAXS data generated from %s by US_SOMO %s %s q(%f:%f) step %f\n"
-                           , model_filename.toAscii().data()
-                           , US_Version.toAscii().data()
+                           , model_filename.toLatin1().data()
+                           , US_Version.toLatin1().data()
                            , REVISION
                            , our_saxs_options->start_q
                            , our_saxs_options->end_q
                            , our_saxs_options->delta_q
                            );
                fprintf(fsaxs, "%s",
-                       ((US_Hydrodyn *)us_hydrodyn)->last_saxs_header.toAscii().data() );
+                       ((US_Hydrodyn *)us_hydrodyn)->last_saxs_header.toLatin1().data() );
                for ( unsigned int i = 0; i < q.size(); i++ )
                {
                   fprintf(fsaxs, "%.6e\t%.6e\t%.6e\t%.6e\n", q[i], I[i], Ia[i], Ic[i]);
@@ -2449,19 +2449,19 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_debye()
             }
          }
       } else {
-         ((US_Hydrodyn *)us_hydrodyn)->last_saxs_r.clear();
-         ((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr.clear();
-         ((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr_norm.clear();
-         ((US_Hydrodyn *)us_hydrodyn)->last_saxs_q.clear();
-         ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqq.clear();
-         ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqa.clear();
-         ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqc.clear();
+         ((US_Hydrodyn *)us_hydrodyn)->last_saxs_r.clear( );
+         ((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr.clear( );
+         ((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr_norm.clear( );
+         ((US_Hydrodyn *)us_hydrodyn)->last_saxs_q.clear( );
+         ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqq.clear( );
+         ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqa.clear( );
+         ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqc.clear( );
          ((US_Hydrodyn *)us_hydrodyn)->last_saxs_header =
             QString("")
             .sprintf(
                      "Simulated SAXS data generated from %s by US_SOMO %s %s q(%f:%f) step %f\n"
-                     , model_filename.toAscii().data()
-                     , US_Version.toAscii().data()
+                     , model_filename.toLatin1().data()
+                     , US_Version.toLatin1().data()
                      , REVISION
                      , our_saxs_options->start_q
                      , our_saxs_options->end_q
@@ -2741,7 +2741,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2()
          for ( unsigned int i = 0; i < atoms.size(); i++ )
          {
             fprintf(fsaxs_atoms, "%s %.3f %.3f %.3f %.2f\n"
-                    , atoms[i].saxs_name.toAscii().data()
+                    , atoms[i].saxs_name.toLatin1().data()
                     , atoms[i].pos[0]
                     , atoms[i].pos[1]
                     , atoms[i].pos[2]
@@ -3306,7 +3306,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2()
       qsl_plotted_iq_names << plot_name;
       dup_plotted_iq_name_check[plot_name] = true;
 
-#ifndef QT4
+#if QT_VERSION < 0x040000
       long Iq = plot_saxs->insertCurve( plot_name );
 #else
       QwtPlotCurve *curve = new QwtPlotCurve( plot_name );
@@ -3314,7 +3314,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2()
 
       plotted_iq_names_to_pos[plot_name] = plotted_Iq.size();
 
-#ifndef QT4
+#if QT_VERSION < 0x040000
       plotted_Iq.push_back(Iq);
       plot_saxs->setCurveStyle(Iq, QwtCurve::Lines);
 #else
@@ -3350,7 +3350,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2()
          }
       }
 
-#ifndef QT4
+#if QT_VERSION < 0x040000
       plot_saxs->setCurveData(Iq, 
                               cb_guinier->isChecked() ?
                               (double *)&(plotted_q2[p][0]) : (double *)&(plotted_q[p][0]), 
@@ -3359,7 +3359,7 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2()
                               q_points );
       plot_saxs->setCurvePen(Iq, QPen(plot_colors[p % plot_colors.size()], pen_width, SolidLine));
 #else
-      curve->setData(
+      curve->setSamples(
                      cb_guinier->isChecked() ?
                      (double *)&(plotted_q2[p][0]) : (double *)&(plotted_q[p][0]), 
                      cb_kratky ->isChecked() ?
@@ -3423,26 +3423,26 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2()
                cout << "writing " << fsaxs_name << endl;
 #endif
                editor->append(us_tr("SAXS curve file: ") + fsaxs_name + us_tr(" created.\n"));
-               ((US_Hydrodyn *)us_hydrodyn)->last_saxs_r.clear();
-               ((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr.clear();
-               ((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr_norm.clear();
-               ((US_Hydrodyn *)us_hydrodyn)->last_saxs_q.clear();
-               ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqq.clear();
-               ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqa.clear();
-               ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqc.clear();
+               ((US_Hydrodyn *)us_hydrodyn)->last_saxs_r.clear( );
+               ((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr.clear( );
+               ((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr_norm.clear( );
+               ((US_Hydrodyn *)us_hydrodyn)->last_saxs_q.clear( );
+               ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqq.clear( );
+               ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqa.clear( );
+               ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqc.clear( );
                ((US_Hydrodyn *)us_hydrodyn)->last_saxs_header =
                   QString("")
                   .sprintf(
                            "Simulated SAXS data generated from %s by US_SOMO %s %s q(%f:%f) step %f\n"
-                           , model_filename.toAscii().data()
-                           , US_Version.toAscii().data()
+                           , model_filename.toLatin1().data()
+                           , US_Version.toLatin1().data()
                            , REVISION
                            , our_saxs_options->start_q
                            , our_saxs_options->end_q
                            , our_saxs_options->delta_q
                            );
                fprintf(fsaxs, "%s",
-                       ((US_Hydrodyn *)us_hydrodyn)->last_saxs_header.toAscii().data() );
+                       ((US_Hydrodyn *)us_hydrodyn)->last_saxs_header.toLatin1().data() );
                for ( unsigned int i = 0; i < q.size(); i++ )
                {
                   fprintf(fsaxs, "%.6e\t%.6e\n", q[i], I[i]);
@@ -3469,19 +3469,19 @@ void US_Hydrodyn_Saxs::calc_saxs_iq_native_hybrid2()
             }
          }
       } else {
-         ((US_Hydrodyn *)us_hydrodyn)->last_saxs_r.clear();
-         ((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr.clear();
-         ((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr_norm.clear();
-         ((US_Hydrodyn *)us_hydrodyn)->last_saxs_q.clear();
-         ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqq.clear();
-         ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqa.clear();
-         ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqc.clear();
+         ((US_Hydrodyn *)us_hydrodyn)->last_saxs_r.clear( );
+         ((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr.clear( );
+         ((US_Hydrodyn *)us_hydrodyn)->last_saxs_prr_norm.clear( );
+         ((US_Hydrodyn *)us_hydrodyn)->last_saxs_q.clear( );
+         ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqq.clear( );
+         ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqa.clear( );
+         ((US_Hydrodyn *)us_hydrodyn)->last_saxs_iqqc.clear( );
          ((US_Hydrodyn *)us_hydrodyn)->last_saxs_header =
             QString("")
             .sprintf(
                      "Simulated SAXS data generated from %s by US_SOMO %s %s q(%f:%f) step %f\n"
-                     , model_filename.toAscii().data()
-                     , US_Version.toAscii().data()
+                     , model_filename.toLatin1().data()
+                     , US_Version.toLatin1().data()
                      , REVISION
                      , our_saxs_options->start_q
                      , our_saxs_options->end_q
@@ -3516,7 +3516,7 @@ void US_Hydrodyn_Saxs::set_scaling_target( QString &scaling_target )
                                                 , 
                                                 qsl_plotted_iq_names, 
                                                 0, 
-                                                FALSE, 
+                                                false, 
                                                 &ok,
                                                 this );
          if ( ok ) {
@@ -3738,11 +3738,11 @@ bool US_Hydrodyn_Saxs::load_ff_table( QString filename )
 
    ff_table_loaded = false;
 
-   ff_table.clear();
-   ff_q    .clear();
-   ff_ff   .clear();
-   ff_y2   .clear();
-   ff_ev   .clear();
+   ff_table.clear( );
+   ff_q    .clear( );
+   ff_ff   .clear( );
+   ff_y2   .clear( );
+   ff_ev   .clear( );
 
    QTextStream ts( &f );
    
@@ -4109,7 +4109,7 @@ void US_Hydrodyn_Saxs::create_shd( vector < saxs_atom > & org_atoms,
    {
       QString fname =  ((US_Hydrodyn *)us_hydrodyn)->somo_dir + SLASH + "saxs" + SLASH + "tmp" + SLASH + "shd.dat";
       fname.replace( "//", "/" );
-      ofstream ofs( fname.toAscii().data(), ios::out | ios::binary );
+      ofstream ofs( fname.toLatin1().data(), ios::out | ios::binary );
 
       if ( !ofs.is_open() )
       {
@@ -4166,7 +4166,7 @@ void US_Hydrodyn_Saxs::create_shd( vector < saxs_atom > & org_atoms,
    {
       QString fname =  ((US_Hydrodyn *)us_hydrodyn)->somo_dir + SLASH + "saxs" + SLASH + "tmp" + SLASH + "shd_f.dat";
       fname.replace( "//", "/" );
-      ofstream ofs( fname.toAscii().data(), ios::out | ios::binary );
+      ofstream ofs( fname.toLatin1().data(), ios::out | ios::binary );
 
       vector < vector < float > > F_f( F.size() );
       vector < float >            q_f( q.size() );

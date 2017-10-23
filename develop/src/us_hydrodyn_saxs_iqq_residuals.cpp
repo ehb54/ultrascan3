@@ -201,7 +201,7 @@ void US_Hydrodyn_Saxs_Iqq_Residuals::setupGUI()
 {
 
    plot = new QwtPlot(this);
-#ifndef QT4
+#if QT_VERSION < 0x040000
    plot->enableGridXMin();
    plot->enableGridYMin();
    plot->setPalette( PALET_NORMAL );
@@ -214,26 +214,26 @@ void US_Hydrodyn_Saxs_Iqq_Residuals::setupGUI()
    grid->enableYMin( true );
    plot->setPalette( PALET_NORMAL );
    AUTFBACK( plot );
-   grid->setMajPen( QPen( USglobal->global_colors.major_ticks, 0, Qt::DotLine ) );
-   grid->setMinPen( QPen( USglobal->global_colors.minor_ticks, 0, Qt::DotLine ) );
+   grid->setMajorPen( QPen( USglobal->global_colors.major_ticks, 0, Qt::DotLine ) );
+   grid->setMinorPen( QPen( USglobal->global_colors.minor_ticks, 0, Qt::DotLine ) );
    grid->attach( plot );
 #endif
    plot->setAxisTitle(QwtPlot::xBottom, us_tr("q (1/Angstrom)"));
    plot->setAxisTitle(QwtPlot::yLeft, us_tr(""));
-#ifndef QT4
+#if QT_VERSION < 0x040000
    plot->setTitleFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
    plot->setAxisTitleFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 #endif
    plot->setAxisFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-#ifndef QT4
+#if QT_VERSION < 0x040000
    plot->setAxisTitleFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 #endif
    plot->setAxisFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-#ifndef QT4
+#if QT_VERSION < 0x040000
    plot->setAxisTitleFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 #endif
    plot->setAxisFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-   plot->setMargin(USglobal->config_list.margin);
+//    plot->setMargin(USglobal->config_list.margin);
    plot->setTitle(title);
    plot->setCanvasBackground(USglobal->global_colors.plot);
 
@@ -402,7 +402,7 @@ void US_Hydrodyn_Saxs_Iqq_Residuals::set_plot_mult_sd_frac()
 
 void US_Hydrodyn_Saxs_Iqq_Residuals::update_plot()
 {
-   plot->clear();
+   plot->detachItems( QwtPlotItem::Rtti_PlotCurve ); plot->detachItems( QwtPlotItem::Rtti_PlotMarker );;
 
    QString left_axis_title = "";
 
@@ -482,7 +482,7 @@ void US_Hydrodyn_Saxs_Iqq_Residuals::update_plot()
          
       if ( plot_log ) 
       {
-#ifndef QT4
+#if QT_VERSION < 0x040000
          long iqq = plot->insertCurve("Log10 I(q) vs q"); 
          plot->setCurveStyle(iqq, QwtCurve::Lines);
          plot->setCurveData(iqq, 
@@ -493,7 +493,7 @@ void US_Hydrodyn_Saxs_Iqq_Residuals::update_plot()
 #else
          QwtPlotCurve *curve = new QwtPlotCurve( "Log10 I(q) vs q" );
          curve->setStyle( QwtPlotCurve::Lines );
-         curve->setData(
+         curve->setSamples(
                         (double *)&(qs[pos][0]), 
                         plot_as_percent ? (double *)&(log_difference_pcts[pos][0]) : (double *)&(log_differences[pos][0]), 
                         (int)qs[pos].size()
@@ -536,7 +536,7 @@ void US_Hydrodyn_Saxs_Iqq_Residuals::update_plot()
          bool use_mult_avg_sd_frac = false; // avg_std_dev_frac ? cb_plot_mult_avg_sd_frac->isChecked() : false;
          bool use_mult_sd_frac     = false; // avg_std_dev_frac ? cb_plot_mult_sd_frac->isChecked()     : false;
 
-#ifndef QT4
+#if QT_VERSION < 0x040000
          long iqq = plot->insertCurve("Log10 I(q) vs q"); 
          plot->setCurveStyle(iqq, QwtCurve::Lines);
          plot->setCurveData(iqq, 
@@ -563,7 +563,7 @@ void US_Hydrodyn_Saxs_Iqq_Residuals::update_plot()
 #else
          QwtPlotCurve *curve = new QwtPlotCurve( "Log10 I(q) vs q" );
          curve->setStyle( QwtPlotCurve::Lines );
-         curve->setData(
+         curve->setSamples(
                         (double *)&(qs[pos][0]), 
                         plot_as_percent 
                         ? 
@@ -663,7 +663,7 @@ void US_Hydrodyn_Saxs_Iqq_Residuals::update_plot()
       x[1] = qs[0][qs[0].size() - 1];
       y[0] = linepos;
       y[1] = linepos;
-#ifndef QT4
+#if QT_VERSION < 0x040000
       long iqq = plot->insertCurve("+10 %"); 
       plot->setCurveStyle(iqq, QwtCurve::Lines);
       plot->setCurveData(iqq, 
@@ -675,7 +675,7 @@ void US_Hydrodyn_Saxs_Iqq_Residuals::update_plot()
       {
          QwtPlotCurve *curve = new QwtPlotCurve( "+10 %" );
          curve->setStyle( QwtPlotCurve::Lines );
-         curve->setData(
+         curve->setSamples(
                         (double *)&(x[0]), 
                         (double *)&(y[0]), 
                         2
@@ -686,7 +686,7 @@ void US_Hydrodyn_Saxs_Iqq_Residuals::update_plot()
 #endif
       y[0] = - linepos;
       y[1] = - linepos;
-#ifndef QT4
+#if QT_VERSION < 0x040000
       iqq = plot->insertCurve("-10 %"); 
       plot->setCurveStyle(iqq, QwtCurve::Lines);
       plot->setCurveData(iqq, 
@@ -698,7 +698,7 @@ void US_Hydrodyn_Saxs_Iqq_Residuals::update_plot()
       {
          QwtPlotCurve *curve = new QwtPlotCurve( "-10 %" );
          curve->setStyle( QwtPlotCurve::Lines );
-         curve->setData(
+         curve->setSamples(
                         (double *)&(x[0]), 
                         (double *)&(y[0]), 
                         2
@@ -746,7 +746,7 @@ void US_Hydrodyn_Saxs_Iqq_Residuals::update_plot()
       x[1] = qs[0][qs[0].size() - 1];
       y[0] = linepos;
       y[1] = linepos;
-#ifndef QT4
+#if QT_VERSION < 0x040000
       long iqq = plot->insertCurve("+2 sd"); 
       plot->setCurveStyle(iqq, QwtCurve::Lines);
       plot->setCurveData(iqq, 
@@ -758,7 +758,7 @@ void US_Hydrodyn_Saxs_Iqq_Residuals::update_plot()
       {
          QwtPlotCurve *curve = new QwtPlotCurve( "+2 sd" );
          curve->setStyle( QwtPlotCurve::Lines );
-         curve->setData(
+         curve->setSamples(
                         (double *)&(x[0]), 
                         (double *)&(y[0]), 
                         2
@@ -769,7 +769,7 @@ void US_Hydrodyn_Saxs_Iqq_Residuals::update_plot()
 #endif
       y[0] = - linepos;
       y[1] = - linepos;
-#ifndef QT4
+#if QT_VERSION < 0x040000
       iqq = plot->insertCurve("-2 sd"); 
       plot->setCurveStyle(iqq, QwtCurve::Lines);
       plot->setCurveData(iqq, 
@@ -781,7 +781,7 @@ void US_Hydrodyn_Saxs_Iqq_Residuals::update_plot()
       {
          QwtPlotCurve *curve = new QwtPlotCurve( "-2 sd" );
          curve->setStyle( QwtPlotCurve::Lines );
-         curve->setData(
+         curve->setSamples(
                         (double *)&(x[0]), 
                         (double *)&(y[0]), 
                         2
@@ -818,7 +818,7 @@ void US_Hydrodyn_Saxs_Iqq_Residuals::update_plot()
    plot->setAxisScale( QwtPlot::yLeft,   miny, maxy );
    
    plot_zoomer = new ScrollZoomer(plot->canvas());
-#ifndef QT4
+#if QT_VERSION < 0x040000
    plot_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
    plot_zoomer->setCursorLabelPen(QPen(Qt::yellow));
 #else

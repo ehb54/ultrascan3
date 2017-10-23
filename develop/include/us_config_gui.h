@@ -17,7 +17,7 @@
 
 //#include <qwindowsstyle.h>
 #include <qradiobutton.h>
-#include <qmotifstyle.h>
+// #include <qmotifstyle.h>
 #include <qdir.h>
 #include <qmessagebox.h>
 #include <qpushbutton.h>

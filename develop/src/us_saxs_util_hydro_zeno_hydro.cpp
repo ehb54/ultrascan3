@@ -2444,7 +2444,7 @@ namespace zeno {
         that are valid entries in the body file
         -------------------------------------   Execution starts here
       */
-      Tshush->silent = FALSE;        /*  Use to suppress output to */
+      Tshush->silent = false;        /*  Use to suppress output to */
       /*
         terminal
       */
@@ -2452,12 +2452,12 @@ namespace zeno {
       Tcubit->ncube = 0;
       Tsell->nell = 0;
       // nerr = 0;
-      launch_done = FALSE;
-      zeno_done = FALSE;
-      kirk_done = FALSE;
-      rg_done = FALSE;
-      span_done = FALSE;
-      shadow_done = FALSE;
+      launch_done = false;
+      zeno_done = false;
+      kirk_done = false;
+      rg_done = false;
+      span_done = false;
+      shadow_done = false;
       /*
         Parse the invocation string:
       */
@@ -2553,7 +2553,7 @@ namespace zeno {
       }
       else {
          rlaunch = rlaunch1;
-         launch_done = TRUE;
+         launch_done = true;
       }
       /*
         At this point, rlaunch contains the launch radius which will be
@@ -3032,76 +3032,76 @@ namespace zeno {
         123456789012345678901234567890123456789012
       */
       for(i=0; i<4; i++) {
-         do_something = FALSE;
+         do_something = false;
          if(*(actions+i) == 'z') {
             *b1 = 'z';
             *b2 = ' ';
             if(*zeno_done) *b2 = '*';
             nzip = m1[i];
-            do_something = TRUE;
+            do_something = true;
          }
          else if(*(actions+i) == 'Z') {
             *b1 = 'Z';
             *b2 = ' ';
             if(*zeno_done) *b2 = '*';
             nzip = m1[i];
-            do_something = TRUE;
+            do_something = true;
          }
          else if(*(actions+i) == 'i') {
             *b1 = 'i';
             *b2 = ' ';
             if(*rg_done) *b2 = '*';
             nzip = m1[i];
-            do_something = TRUE;
+            do_something = true;
          }
          else if(*(actions+i) == 'I') {
             *b1 = 'I';
             *b2 = ' ';
             if(*rg_done) *b2 = '*';
             nzip = m1[i];
-            do_something = TRUE;
+            do_something = true;
          }
          else if(*(actions+i) == 'c') {
             *b1 = 'c';
             *b2 = ' ';
             if(*rg_done) *b2 = '*';
             nzip = m1[i];
-            do_something = TRUE;
+            do_something = true;
          }
          else if(*(actions+i) == 'C') {
             *b1 = 'C';
             *b2 = ' ';
             if(*rg_done) *b2 = '*';
             nzip = m1[i];
-            do_something = TRUE;
+            do_something = true;
          }
          else if(*(actions+i) == 's') {
             *b1 = 's';
             *b2 = ' ';
             if(*kirk_done) *b2 = '*';
             nzip = m1[i];
-            do_something = TRUE;
+            do_something = true;
          }
          else if(*(actions+i) == 'S') {
             *b1 = 'S';
             *b2 = ' ';
             if(*kirk_done) *b2 = '*';
             nzip = m1[i];
-            do_something = TRUE;
+            do_something = true;
          }
          else if(*(actions+i) == 'p') {
             *b1 = 'p';
             *b2 = ' ';
             if(*span_done) *b2 = '*';
             nzip = m1[i];
-            do_something = TRUE;
+            do_something = true;
          }
          else if(*(actions+i) == 'P') {
             *b1 = 'P';
             *b2 = ' ';
             if(*span_done) *b2 = '*';
             nzip = m1[i];
-            do_something = TRUE;
+            do_something = true;
          }
          if(do_something) WRITE(Tfilenumbers->nzno,FMT,F206,1,STRG,b1,1,STRG,b2,1,INT4,nzip,0);
       }
@@ -3535,15 +3535,15 @@ namespace zeno {
          ftnscopy(name,30,"mass@",5,NULL);
          writeyes(mass,name,munit,30,6);
       }
-      bv = FALSE;
+      bv = false;
       if(*bc) {
          ftnscopy(name,30,"solvent viscosity (supplied)@",29,NULL);
          writeyes(eta,name,vunit,30,6);
-         bv = TRUE;
+         bv = true;
       }
       if(!*bc && *bt && *bw) {
          compvisc(temp,eta,vunit,6);
-         bv = TRUE;
+         bv = true;
          ftnscopy(name,30,"solvent viscosity (computed)@",29,NULL);
          writeyes(eta,name,vunit,30,6);
       }
@@ -5320,10 +5320,10 @@ namespace zeno {
       /*
 *************************************************
 */
-      *savehits_z = FALSE;
-      *savehits_i = FALSE;
-      *savehits_s = FALSE;
-      *savehits_p = FALSE;
+      *savehits_z = false;
+      *savehits_i = false;
+      *savehits_s = false;
+      *savehits_p = false;
       /*
         Get the body ID:
       */
@@ -5345,7 +5345,7 @@ namespace zeno {
          else if(*ac == 'Z') {
             nac = nac+1;
             *(actions+nac-1) = 'Z';
-            *savehits_z = TRUE;
+            *savehits_z = true;
             nfo = 1;
          }
          else if(*ac == 'i') {
@@ -5356,7 +5356,7 @@ namespace zeno {
          else if(*ac == 'I') {
             nac = nac+1;
             *(actions+nac-1) = 'I';
-            *savehits_i = TRUE;
+            *savehits_i = true;
             nfo = 1;
          }
          else if(*ac == 's') {
@@ -5367,7 +5367,7 @@ namespace zeno {
          else if(*ac == 'S') {
             nac = nac+1;
             *(actions+nac-1) = 'S';
-            *savehits_s = TRUE;
+            *savehits_s = true;
             nfo = 1;
          }
          else if(*ac == 'p') {
@@ -5379,7 +5379,7 @@ namespace zeno {
             nac = nac+1;
             *(actions+nac-1) = 'P';
             nfo = 1;
-            *savehits_p = TRUE;
+            *savehits_p = true;
          }
          else if(*ac == 'c') {
             nac = nac+1;
@@ -5390,7 +5390,7 @@ namespace zeno {
             nac = nac+1;
             *(actions+nac-1) = 'C';
             nfo = 1;
-            *savehits_i = TRUE;
+            *savehits_i = true;
          }
          else {
             Stop("bad action code -- expecting:  zisp or ZISP");
@@ -5634,7 +5634,7 @@ namespace zeno {
       static const char* F980[] = {
          "(a80)"
       };
-      *atend = FALSE;
+      *atend = false;
    S1:
       if(*nobuffer) {
          if(READ(Tfilenumbers->nbod,IOSTAT,NULL,1,FMT,F980,1,STRG,buffer,80,0)) goto S20;
@@ -5642,15 +5642,15 @@ namespace zeno {
          /*
            if (.not.silent) print 980,buffer
          */
-         *nobuffer = FALSE;
+         *nobuffer = false;
       }
       if(*buffer == '*') {
-         *nobuffer = TRUE;
+         *nobuffer = true;
          goto S1;
       }
       packspaces(buffer,&next,80);
       if(next == 0) {
-         *nobuffer = TRUE;
+         *nobuffer = true;
          goto S1;
       }
       for(i=0; i<80; i++) {
@@ -5664,7 +5664,7 @@ namespace zeno {
       }
       return;
    S20:
-      *atend = TRUE;
+      *atend = true;
       return;
    }
 
@@ -6271,21 +6271,21 @@ namespace zeno {
         ------------------------------------------------------
       */
       OPEN(Tfilenumbers->nbod,FILEN,Tfilenames->fbod,USZ_MAX_ID_SIZE,STATUS,"unknown",0);
-      *launch_done = FALSE;
+      *launch_done = false;
       *nelts = 0;
-      *tolset = FALSE;
+      *tolset = false;
       ftnscopy(unitcode,2,"L ",2,NULL);
-      *bt = FALSE;
-      *bm = FALSE;
-      *bw = FALSE;
-      *bc = FALSE;
-      *bbf = FALSE;
+      *bt = false;
+      *bm = false;
+      *bw = false;
+      *bc = false;
+      *bbf = false;
       *hscale = 1.0F;                /*  Stays unity throughout, unless modified */
       /*
         !   by the HUNITS   command
       */
       webster(dictionary,map,nwords,maxwords,10);
-      nobuffer = TRUE;
+      nobuffer = true;
       nextstring(&nobuffer,buffer,String,&atend,80,80);
       while(!atend) {                /*  GRANDDADDY loop goes through all */
          /*
@@ -6529,7 +6529,7 @@ namespace zeno {
                       13,
                       10);
             *tol = (float)download[0][0];
-            *tolset = TRUE;
+            *tolset = true;
          }
          else if(ntype == Tmorse->bf_code) {
             ftnscopy(down,13,"d@",2,NULL);
@@ -6549,7 +6549,7 @@ namespace zeno {
                       10);
             buoy[0] = download[0][0];
             buoy[1] = download[1][0];
-            *bbf = TRUE;
+            *bbf = true;
          }
          else if(ntype == Tmorse->rlaunch_code) {
             ftnscopy(down,13,"r@",2,NULL);
@@ -6568,7 +6568,7 @@ namespace zeno {
                       13,
                       10);
             *rlaunch = (float)download[0][0];
-            *launch_done = TRUE;
+            *launch_done = true;
          }
          else if(ntype == Tmorse->units_code) {
             ftnscopy(down,13,"n@",2,NULL);
@@ -6671,7 +6671,7 @@ namespace zeno {
                WRITE(Tfilenumbers->nzno,FMT,F904,1,0);
                Stop("bad modifier to TEMP command");
             }
-            *bt = TRUE;
+            *bt = true;
          }
          else if(ntype == Tmorse->mass_code) {
             ftnscopy(down,13,"dn@",3,NULL);
@@ -6708,7 +6708,7 @@ namespace zeno {
                WRITE(Tfilenumbers->nzno,FMT,F905,1,0);
                Stop("bad modifier to MASS command");
             }
-            *bm = TRUE;
+            *bm = true;
          }
          else if(ntype == Tmorse->visc_code) {
             ftnscopy(down,13,"dn@",3,NULL);
@@ -6740,7 +6740,7 @@ namespace zeno {
                   WRITE(Tfilenumbers->nzno,FMT,F906,1,0);
                   Stop("bad modifier to VISCOSITY command");
                }
-               *bc = TRUE;
+               *bc = true;
             }
             else {
                WRITE(Tfilenumbers->nzno,FMT,F711,1,0);
@@ -6772,7 +6772,7 @@ namespace zeno {
                   WRITE(Tfilenumbers->nzno,FMT,F907,1,0);
                   Stop("bad modifier to SOLVENT command");
                }
-               *bw = TRUE;
+               *bw = true;
             }
             else {
                WRITE(Tfilenumbers->nzno,FMT,F711,1,0);
@@ -6981,15 +6981,15 @@ namespace zeno {
       alpha[0] = (s[0]*b2[1]-b2[0]*s[1])/zoom;
       alpha[1] = (b1[0]*s[1]-s[0]*b1[1])/zoom;
       if(alpha[0] < 0.0F) {
-         *inside = FALSE;
+         *inside = false;
          return;
       }
       if(alpha[1] < 0.0F) {
-         *inside = FALSE;
+         *inside = false;
          return;
       }
       if(alpha[0]+alpha[1] > 1.0F) {
-         *inside = FALSE;
+         *inside = false;
          return;
       }
       /*
@@ -7763,10 +7763,10 @@ namespace zeno {
       rotate(q,t,pmc);
       ro = fifsqrt(fifpow(q[0],2.0F)+fifpow(q[1],2.0F));
       // dp = fifabs(ro-*r);
-      *inside = FALSE;
+      *inside = false;
       if(fifabs(q[2]) < *l/2.0F) {
          if(ro <= *r) {
-            *inside = TRUE;
+            *inside = true;
          }
       }
       return;
@@ -7985,16 +7985,16 @@ namespace zeno {
       d1 = fifpow(qq-*r1,2.0F)+fifpow(q[2],2.0F);
       d1 = fifsqrt(d1);
       if(d1 < *r2) {
-         *inside = TRUE;
+         *inside = true;
          return;
       }
       d1 = fifpow(qq+*r1,2.0F)+fifpow(q[2],2.0F);
       d1 = fifsqrt(d1);
       if(d1 < *r2) {
-         *inside = TRUE;
+         *inside = true;
          return;
       }
-      *inside = FALSE;
+      *inside = false;
       return;
    }
 
@@ -8993,17 +8993,17 @@ namespace zeno {
          "(' ')"
       };
       if(*savehits) OPEN(Tfilenumbers->nph,FILEN,Tfilenames->fph,USZ_MAX_ID_SIZE,STATUS,"unknown",0);
-      *span_done = FALSE;
-      *shadow_done = FALSE;
+      *span_done = false;
+      *shadow_done = false;
       rlsh = 3.14159265F**rlaunch**rlaunch;
       /*
         Attempt to calculate planar projection only if the
         body is composed completely of spheres
       */
-      do_shadow = TRUE;
+      do_shadow = true;
       for(i=0; i<*nelts; i++) {
          if(eltype[i] != Tmorse->sphere_code) {
-            do_shadow = FALSE;
+            do_shadow = false;
             goto S1;
          }
       }
@@ -9079,13 +9079,13 @@ namespace zeno {
          x[i] = (float)(acd[i]/sum[i]);
       }
       mean20(x,span,delta_span);
-      *span_done = TRUE;
+      *span_done = true;
       if(do_shadow) {
          for(i=0; i<20; i++) {
             x[i] = (float)(shoo[i]/sum[i]);
          }
          mean20(x,shadow,delta_shadow);
-         *shadow_done = TRUE;
+         *shadow_done = true;
          *shadow = *shadow*rlsh;
          *delta_shadow = *delta_shadow*rlsh;
       }
@@ -9286,10 +9286,10 @@ namespace zeno {
          "('Grand total:  ',f20.0)"
       };
       if(*savehits) OPEN(Tfilenumbers->nzh,FILEN,Tfilenames->fzh,USZ_MAX_ID_SIZE,STATUS,"unknown",0);
-      *zeno_done = FALSE;
+      *zeno_done = false;
       if(!*tol_given) {
          *tol = *rlaunch/1.0e6F;
-         *tol_given = TRUE;
+         *tol_given = true;
       }
       r = *rlaunch;
       r2 = fifpow(r,2.0F);
@@ -9443,7 +9443,7 @@ namespace zeno {
             *(delta_bongo+ii+jj*3) = daa[jj][ii];
          }
       }
-      *zeno_done = TRUE;
+      *zeno_done = true;
       *mz = mtdo;
       OPEN(Tfilenumbers->nstk,FILEN,Tfilenames->fstk,USZ_MAX_ID_SIZE,STATUS,"unknown",0);
       grand = 0.0e0;
@@ -10481,7 +10481,7 @@ namespace zeno {
         3.  Loop back to step 1.
         --------------------------------------------------------
       */
-      firstpass = TRUE;
+      firstpass = true;
       *bubble_rad = -1.0F;           /*  On the first time, a new bubble */
       /*
         is always needed.
@@ -10499,7 +10499,7 @@ namespace zeno {
               due to round-off that
               we are here.
             */
-            gone = FALSE;
+            gone = false;
          }
          else {
             r0 = fifsqrt(r0);
@@ -10511,7 +10511,7 @@ namespace zeno {
             */
          }
          if(gone) {
-            *hit = FALSE;
+            *hit = false;
             return;
          }
       }
@@ -10520,7 +10520,7 @@ namespace zeno {
       */
       distance(maxelts,eltype,bv,nelts,rotations,p,&ds,bubble,bubble_rad,nebtab,nneb,ninn,rlist,&nearto);
       if(ds < *tol) {
-         *hit = TRUE;
+         *hit = true;
          *hitelt = nearto;
          return;
       }
@@ -10531,7 +10531,7 @@ namespace zeno {
       /*
         STEP 3:
       */
-      firstpass = FALSE;
+      firstpass = false;
       goto S1;
    }
 
@@ -10794,7 +10794,7 @@ namespace zeno {
 //       ftnscopy((start+5),2,(datest),2,NULL);
 //       ftnscopy((start+2),2,(datest+6),2,NULL);
       QString time = QDateTime::currentDateTime().toString( "ddd MMM dd hh:mm:ss.zzz yyyy" );
-      strncpy( start, time.toAscii().data(), 28 );
+      strncpy( start, time.toLatin1().data(), 28 );
       start[28] = 0;
       return;
    }
@@ -11042,7 +11042,7 @@ that is less than 1.
          }
       }
       if(*savehits) OPEN(Tfilenumbers->nih,FILEN,Tfilenames->fih,USZ_MAX_ID_SIZE,STATUS,"unknown",0);
-      *rg_done = FALSE;
+      *rg_done = false;
       q[0] = 0.0F;
       for(i=1; i<=81; i++) {
          ox = (float)(i-41)/20.0F;
@@ -11200,7 +11200,7 @@ that is less than 1.
          sq[j] = tn0/an0;
          dsq[j] = tn1/an0;
       }
-      *rg_done = TRUE;
+      *rg_done = true;
       *mi = *m1;
       if(*savehits) CLOSE(Tfilenumbers->nih,0);
       return;
@@ -11514,7 +11514,7 @@ that is less than 1.
          side = pass_vec[3];
          *result = fifpow(side,3.0F);
          ftnscopy(mess,10,"CUBE      ",10,NULL);
-         *early = FALSE;
+         *early = false;
       }
       else if(*myelt == Tmorse->pillar_code) {
          x[0] = pass_vec[0];
@@ -11531,38 +11531,38 @@ that is less than 1.
          zh[2] = pass_vec[11];
          pillarvol(x,y,zl,zh,result);
          ftnscopy(mess,10,"PILLAR    ",10,NULL);
-         *early = FALSE;
+         *early = false;
       }
       else if(*myelt == Tmorse->sphere_code) {
          r = pass_vec[3];
          *result = 4.0F*pi/3.0F*(r*r*r);
          ftnscopy(mess,10,"SPHERE    ",10,NULL);
-         *early = FALSE;
+         *early = false;
       }
       else if(*myelt == Tmorse->triangle_code) {
-         *early = TRUE;
+         *early = true;
          ftnscopy(mess,10,"TRIANGLE  ",10,NULL);
       }
       else if(*myelt == Tmorse->disk_code) {
-         *early = TRUE;
+         *early = true;
          ftnscopy(mess,10,"DISK      ",10,NULL);
       }
       else if(*myelt == Tmorse->open_cylinder_code) {
-         *early = TRUE;
+         *early = true;
          ftnscopy(mess,10,"O_CYLINDER",10,NULL);
       }
       else if(*myelt == Tmorse->solid_cylinder_code) {
          r = pass_vec[6];
          al = pass_vec[7];
          *result = 4.0F*pi*r*r*al;
-         *early = FALSE;
+         *early = false;
          ftnscopy(mess,10,"S_CYLINDER",10,NULL);
       }
       else if(*myelt == Tmorse->donut_code) {
          r1 = pass_vec[6];
          r2 = pass_vec[7];
          *result = 2.0F*pi*pi*r1*r2*r2;
-         *early = FALSE;
+         *early = false;
          ftnscopy(mess,10,"TORUS     ",10,NULL);
       }
       else if(*myelt == Tmorse->ellipsoid_code) {
@@ -11570,7 +11570,7 @@ that is less than 1.
          bb = pass_vec[10];
          cc = pass_vec[11];
          *result = 4.0F*pi/3.0F*aa*bb*cc;
-         *early = FALSE;
+         *early = false;
          ftnscopy(mess,10,"ELLIPSOID ",10,NULL);
       }
       else {
@@ -11696,7 +11696,7 @@ that is less than 1.
 //          "(' ')"
 //       };
       if(*savehits) OPEN(Tfilenumbers->nih,FILEN,Tfilenames->fih,USZ_MAX_ID_SIZE,STATUS,"unknown",0);
-      *rg_done = FALSE;
+      *rg_done = false;
       q[0] = 0.0F;
       for(i=1; i<=81; i++) {
          ox = (float)(i-41)/20.0F;
@@ -11877,7 +11877,7 @@ that is less than 1.
          sq[j] = tn0/an0;
          dsq[j] = tn1/an0;
       }
-      *rg_done = TRUE;
+      *rg_done = true;
       *mi = *m1;
       if(*savehits) CLOSE(Tfilenumbers->nih,0);
       return;
@@ -11941,8 +11941,8 @@ that is less than 1.
       /*
 *************************************************
 */
-      *inside = FALSE;
-      *early = FALSE;
+      *inside = false;
+      *early = false;
       for(i=0; i<*nelts; i++) {
          if(eltype[i] == Tmorse->pillar_code) {
             x[0] = *(bv+i+0**maxelts);
@@ -11978,17 +11978,17 @@ that is less than 1.
          }
          if(eltype[i] == Tmorse->triangle_code) {
             ftnscopy(mess,10,"TRIANGLE  ",10,NULL);
-            *early = TRUE;
+            *early = true;
             return;
          }
          if(eltype[i] == Tmorse->disk_code) {
             ftnscopy(mess,10,"DISK      ",10,NULL);
-            *early = TRUE;
+            *early = true;
             return;
          }
          if(eltype[i] == Tmorse->open_cylinder_code) {
             ftnscopy(mess,10,"O-CYLINDER",10,NULL);
-            *early = TRUE;
+            *early = true;
             return;
          }
          if(eltype[i] == Tmorse->donut_code) {
@@ -12171,7 +12171,7 @@ that is less than 1.
 //          "(' ')"
 //       };
       if(*savehits) OPEN(Tfilenumbers->nsh,FILEN,Tfilenames->fsh,USZ_MAX_ID_SIZE,STATUS,"unknown",0);
-      *kirk_done = FALSE;
+      *kirk_done = false;
       npil = 0;
       ncub = 0;
       for(i=0; i<*nelts; i++) {
@@ -12297,7 +12297,7 @@ that is less than 1.
       mean20(rad,&rho,&delta_rho);
       *kirk = 1.0F/rho;
       *delta_kirk = delta_rho/fifpow(rho,2.0F);
-      *kirk_done = TRUE;
+      *kirk_done = true;
       *ms = *m1do;
       if(*savehits) CLOSE(Tfilenumbers->nsh,0);
       return;
@@ -13628,7 +13628,7 @@ bool US_Hydrodyn_Zeno::test()
       // cout << 
       //    QString( "error: %1 %2 does not exist" )
       //    .arg( QDir::current().path() )
-      //    .arg( QString( "%1.bod" ).arg( argv1 ) ).toAscii().data();
+      //    .arg( QString( "%1.bod" ).arg( argv1 ) ).toLatin1().data();
       return false;
    }
    //zeno_progress->setMaximum( 108 * 3 );
@@ -13659,7 +13659,7 @@ bool US_Hydrodyn_Zeno::run(
    //    // return false;
    // }
 
-   // cout << QString( "current dir is %1\n" ).arg( QDir::current().path() ).toAscii().data();
+   // cout << QString( "current dir is %1\n" ).arg( QDir::current().path() ).toLatin1().data();
 
    if ( options->unit != -9 &&
         options->unit != -10 )
@@ -13724,7 +13724,7 @@ bool US_Hydrodyn_Zeno::run(
    }
 
    fout.close();
-   //cout<<QString( "created: %1\n" ).arg( outname ).toAscii().data();
+   //cout<<QString( "created: %1\n" ).arg( outname ).toLatin1().data();
 
    if ( zeno_cxx ) {
       int argc = 0;
@@ -13733,17 +13733,17 @@ bool US_Hydrodyn_Zeno::run(
       argv[ argc++ ] = strdup( "us_zeno_cxx" );
 
       argv[ argc++ ] = strdup( "-i" );
-      argv[ argc++ ] = strdup( outname.toAscii().data() );
+      argv[ argc++ ] = strdup( outname.toLatin1().data() );
       
       argv[ argc++ ] = strdup( "-n" );
-      argv[ argc++ ] = strdup( QString( "%1" ).arg(options->zeno_zeno_steps * 1000 ).toAscii().data() );
+      argv[ argc++ ] = strdup( QString( "%1" ).arg(options->zeno_zeno_steps * 1000 ).toLatin1().data() );
       
       //us_qdebug( QString( "zeno steps %1" ).arg( options->zeno_zeno_steps * 1000 ) );
 
       argv[ argc++ ] = strdup( "-t" );
-      argv[ argc++ ] = strdup( QString( "%1" ).arg( threads ).toAscii().data() );
+      argv[ argc++ ] = strdup( QString( "%1" ).arg( threads ).toLatin1().data() );
 
-      argv[ argc++ ] = strdup( QString( "--seed=%1" ).arg( QDateTime::currentDateTime().toTime_t() ).toAscii().data() );
+      argv[ argc++ ] = strdup( QString( "--seed=%1" ).arg( QDateTime::currentDateTime().toTime_t() ).toLatin1().data() );
       //us_qdebug( QString( "current datetime %1" ).arg( argv[ argc - 1 ] ) );
 
       int progress_steps = 100;
@@ -13763,7 +13763,7 @@ bool US_Hydrodyn_Zeno::run(
          //sleep(1);
        }         
 #if __cplusplus >= 201103L
-     zeno_cxx_main( argc, argv, QString( "%1.zno" ).arg( filename ).toAscii().data(), true, zeno_us_udp_msg );
+     zeno_cxx_main( argc, argv, QString( "%1.zno" ).arg( filename ).toLatin1().data(), true, zeno_us_udp_msg );
 #endif
 
    if ( zeno_us_udp_msg )
@@ -13791,12 +13791,12 @@ bool US_Hydrodyn_Zeno::run(
    argv[ argc++ ] = "us_zeno";
 
    QString cmdfile = QFileInfo( filename ).fileName();
-   argv[ argc++ ] = cmdfile.toAscii().data();
+   argv[ argc++ ] = cmdfile.toLatin1().data();
 
    // cout<<QString ( " zeno <%1> <%2> <%3>\n" )
    //    .arg( options->zeno_zeno_steps )
    //    .arg( options->zeno_interior_steps )
-   //    .arg( options->zeno_surface_steps ).toAscii().data();
+   //    .arg( options->zeno_surface_steps ).toLatin1().data();
 
 
    QString qs_zeno     = QString( "" ).sprintf( "z%ut", options->zeno_zeno_steps     );
@@ -13808,17 +13808,17 @@ bool US_Hydrodyn_Zeno::run(
    if ( options->zeno_zeno )
    {
       progress_steps += 108;
-      argv[ argc++ ] = qs_zeno.toAscii().data();
+      argv[ argc++ ] = qs_zeno.toLatin1().data();
    }
    if ( options->zeno_interior )
    {
       progress_steps += 108;
-      argv[ argc++ ] = qs_interior.toAscii().data();
+      argv[ argc++ ] = qs_interior.toLatin1().data();
    }
    if ( options->zeno_surface )
    {
       progress_steps += 108;
-      argv[ argc++ ] = qs_surface.toAscii().data();
+      argv[ argc++ ] = qs_surface.toLatin1().data();
    }
 
    //  zeno_progress->setValue( 0 ); zeno_progress->setMaximum( progress_steps );
@@ -14084,7 +14084,7 @@ bool US_Saxs_Util::calc_zeno_hydro()
                // setup save data
                // add text output also
                save_data this_data;
-               // should be put in (static?) save_data.clear()
+               // should be put in (static?) save_data.clear( )
                // initialize unset (as of yet) values
 
                this_data.tot_surf_area                 = 0e0;
@@ -14589,9 +14589,9 @@ bool US_Saxs_Util::calc_zeno_hydro()
                //    FILE *of = us_fopen(fname, "wb");
                //    if ( of )
                //    {
-               //       fprintf(of, "%s", save_util->header().toAscii().data());
+               //       fprintf(of, "%s", save_util->header().toLatin1().data());
 
-               //       fprintf(of, "%s", save_util->dataString(&this_data).toAscii().data());
+               //       fprintf(of, "%s", save_util->dataString(&this_data).toLatin1().data());
                //       fclose(of);
                //    }
                // }

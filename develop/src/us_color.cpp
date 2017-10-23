@@ -23,7 +23,7 @@ US_Color::US_Color(QWidget *p, const char* name) : QFrame( p )
   y[0] = 1;
   y[1] = 2;
 
-#ifndef QT4
+#if QT_VERSION < 0x040000
   uint c1;
 #endif
 
@@ -43,7 +43,7 @@ US_Color::US_Color(QWidget *p, const char* name) : QFrame( p )
 
 
   plot = new QwtPlot(this);
-#ifndef QT4
+#if QT_VERSION < 0x040000
   plot->enableOutline(true);
   plot->setOutlinePen(Qt::white);
   plot->setOutlineStyle(Qwt::Cross);
@@ -57,20 +57,20 @@ US_Color::US_Color(QWidget *p, const char* name) : QFrame( p )
   plot->setTitle(us_tr("Sample Plot"));
   plot->setPalette( PALET_NORMAL );
   AUTFBACK( plot );
-#ifndef QT4
+#if QT_VERSION < 0x040000
   plot->setGridMajPen(QPen(temp_colors.major_ticks, 0, DotLine));
   plot->setGridMinPen(QPen(temp_colors.minor_ticks, 0, DotLine));
 #else
-  grid->setMajPen( QPen( temp_colors.major_ticks, 0, Qt::DotLine ) );
-  grid->setMinPen( QPen( temp_colors.minor_ticks, 0, Qt::DotLine ) );
+  grid->setMajorPen( QPen( temp_colors.major_ticks, 0, Qt::DotLine ) );
+  grid->setMinorPen( QPen( temp_colors.minor_ticks, 0, Qt::DotLine ) );
   grid->attach( plot );
 #endif
   plot->setCanvasBackground(temp_colors.plot);    //new version
   plot->setAxisTitle(QwtPlot::xBottom, us_tr("X-axis"));
   plot->setAxisTitle(QwtPlot::yLeft, us_tr("Y-axis"));
-  plot->setMargin(USglobal->config_list.margin);
+//   plot->setMargin(USglobal->config_list.margin);
   plot->setMinimumSize(width*2-10, height*9);
-#ifndef QT4
+#if QT_VERSION < 0x040000
   c1 = plot->insertCurve("Sample 1");
   plot->setCurveStyle(c1, QwtCurve::Lines);
   plot->setCurvePen(c1, Qt::yellow);
@@ -79,7 +79,7 @@ US_Color::US_Color(QWidget *p, const char* name) : QFrame( p )
   curve = new QwtPlotCurve( "Sample 1" );
   curve->setStyle( QwtPlotCurve::Lines );
   curve->setPen( QPen( Qt::yellow ) );
-  curve->setData( x, y, 2 );
+  curve->setSamples( x, y, 2 );
   curve->attach( plot );
   plot->replot();
 #endif
@@ -200,7 +200,7 @@ US_Color::US_Color(QWidget *p, const char* name) : QFrame( p )
   US_Hydrodyn::sizeArrows( cnt );
   Q_CHECK_PTR(cnt);
   cnt->setNumButtons(2);
-  cnt->setRange(0, 100, 1);
+  cnt->setRange(0, 100); cnt->setSingleStep( 1);
   cnt->setPalette( PALET_NORMAL );
   AUTFBACK( cnt );
   cnt->setValue(35);
@@ -476,7 +476,7 @@ US_Color::US_Color(QWidget *p, const char* name) : QFrame( p )
   QString str, filter = "*.col";
   QStringList entries1, entries2;
 
-  QString etc = QDir::convertSeparators( USglobal->config_list.system_dir + "/etc");
+  QString etc = QDir::toNativeSeparators( USglobal->config_list.system_dir + "/etc");
 
   scheme_dir1.setPath( etc ); // Look for system wide color defs
   scheme_dir2.setPath(USglobal->config_list.root_dir);      // personal color defs
@@ -728,7 +728,7 @@ void US_Color::selected_scheme(int scheme)
   QString colfile, selected_scheme;
   QFile f;
   current_scheme = scheme;
-  selected_scheme = lb_scheme->item(scheme)->text( );
+  selected_scheme = lb_scheme->item(scheme)->text();
 
   if (selected_scheme == "UltraScan Default")
   {
@@ -740,13 +740,13 @@ void US_Color::selected_scheme(int scheme)
   
   if ( scheme == 0 )
   {
-    QString colfile = US_Config::get_home_dir(  ) + USCOLORS;
+    QString colfile = US_Config::get_home_dir() + USCOLORS;
     f.setFileName(colfile);
   }
   else
   {
     colfile = USglobal->config_list.system_dir + "/etc/" + selected_scheme + ".col";
-    colfile = QDir::convertSeparators( colfile);
+    colfile = QDir::toNativeSeparators( colfile);
 
     f.setFileName(colfile);
     
@@ -754,7 +754,7 @@ void US_Color::selected_scheme(int scheme)
                          // shared directory, check the home directory
     {
       colfile = USglobal->config_list.root_dir + "/" + selected_scheme + ".col";
-      colfile = QDir::convertSeparators( colfile);
+      colfile = QDir::toNativeSeparators( colfile);
       f.setFileName(colfile);
     }
   }
@@ -812,12 +812,12 @@ void US_Color::selected_scheme(int scheme)
       AUTFBACK( cmbb_margin );
       progress->setPalette( PALET_NORMAL );
       AUTFBACK( progress );
-#ifndef QT4
+#if QT_VERSION < 0x040000
       plot->setGridMinPen(QPen(temp_colors.minor_ticks, 0, DotLine));
       plot->setGridMajPen(QPen(temp_colors.major_ticks, 0, DotLine));
 #else
-      grid->setMajPen( QPen( temp_colors.major_ticks, 0, Qt::DotLine ) );
-      grid->setMinPen( QPen( temp_colors.minor_ticks, 0, Qt::DotLine ) );
+      grid->setMajorPen( QPen( temp_colors.major_ticks, 0, Qt::DotLine ) );
+      grid->setMinorPen( QPen( temp_colors.minor_ticks, 0, Qt::DotLine ) );
 #endif
       //plot->setPlotBackground(temp_colors.plot);    //old version
       plot->setCanvasBackground(temp_colors.plot);    //new version
@@ -1199,10 +1199,10 @@ void US_Color::pick_color1()
     case 5:
     {
       temp_colors.major_ticks = color1;
-#ifndef QT4
+#if QT_VERSION < 0x040000
       plot->setGridMajPen(QPen(temp_colors.major_ticks, 0, DotLine));
 #else
-      grid->setMajPen( QPen( temp_colors.major_ticks, 0, Qt::DotLine ) );
+      grid->setMajorPen( QPen( temp_colors.major_ticks, 0, Qt::DotLine ) );
 #endif
       plot->replot();
       break;
@@ -1210,10 +1210,10 @@ void US_Color::pick_color1()
     case 6:
     {
       temp_colors.minor_ticks = color1;
-#ifndef QT4
+#if QT_VERSION < 0x040000
       plot->setGridMinPen(QPen(temp_colors.minor_ticks, 0, DotLine));
 #else
-      grid->setMinPen( QPen( temp_colors.minor_ticks, 0, Qt::DotLine ) );
+      grid->setMinorPen( QPen( temp_colors.minor_ticks, 0, Qt::DotLine ) );
 #endif
       plot->replot();
       break;
@@ -1558,7 +1558,7 @@ void US_Color::reset()
 void US_Color::delete_scheme()
 {
   QString str = us_tr("Do you really want to delete the\n \"") + 
-               lb_scheme->item(current_scheme)->text( ) + us_tr("\" color scheme?");
+               lb_scheme->item(current_scheme)->text() + us_tr("\" color scheme?");
   int result = QMessageBox::warning(0, 
         us_tr("Attention:"), str, us_tr("Yes"), us_tr("No"), QString::null, 1, 1);
   if (result == 0)
@@ -1583,7 +1583,7 @@ void US_Color::delete_scheme()
     QDir scheme_dir1;
     QString filter = "*.col";
     QStringList entries1;
-    QString path = QDir::convertSeparators( USglobal->config_list.system_dir + "/etc" );
+    QString path = QDir::toNativeSeparators( USglobal->config_list.system_dir + "/etc" );
 
     scheme_dir1.setPath( path ); // system wide color defs
     scheme_dir1.setNameFilters( QStringList() << filter );
@@ -1606,8 +1606,8 @@ void US_Color::delete_scheme()
       }
     }
     
-    QString colfile = QDir::convertSeparators( USglobal->config_list.root_dir + 
-                      "/" + lb_scheme->item(current_scheme)->text( ) + ".col" );
+    QString colfile = QDir::toNativeSeparators( USglobal->config_list.root_dir + 
+                      "/" + lb_scheme->item(current_scheme)->text() + ".col" );
     QFile f( colfile);
     if (! f.remove() )
     {
@@ -1650,15 +1650,15 @@ void US_Color::apply()
   pb_color6->setPalette( PALET_PUSHB );
   plot->setPalette( PALET_NORMAL );
   AUTFBACK( plot );
-#ifndef QT4
+#if QT_VERSION < 0x040000
   plot->setGridMajPen(QPen(USglobal->global_colors.major_ticks, 0, DotLine));
   plot->setGridMinPen(QPen(USglobal->global_colors.minor_ticks, 0, DotLine));
 #else
-  grid->setMajPen( QPen( temp_colors.major_ticks, 0, Qt::DotLine ) );
-  grid->setMinPen( QPen( temp_colors.minor_ticks, 0, Qt::DotLine ) );
+  grid->setMajorPen( QPen( temp_colors.major_ticks, 0, Qt::DotLine ) );
+  grid->setMinorPen( QPen( temp_colors.minor_ticks, 0, Qt::DotLine ) );
 #endif
   plot->setCanvasBackground(temp_colors.plot);
-  plot->setMargin(USglobal->config_list.margin);
+//   plot->setMargin(USglobal->config_list.margin);
   cnt->setPalette( PALET_NORMAL );
   AUTFBACK( cnt );
   cmbb_margin->setPalette( PALET_NORMAL );
@@ -1716,7 +1716,7 @@ void US_Color::apply()
 
   QFile f;
 
-  QString colfile = US_Config::get_home_dir(  ) + USCOLORS;
+  QString colfile = US_Config::get_home_dir() + USCOLORS;
 
   f.setFileName( colfile );
 
@@ -1780,7 +1780,7 @@ void US_Color::save_as()
   QString str1, filter = "*.col";
   QStringList entries;
   
-  QString dir = QDir::convertSeparators( USglobal->config_list.system_dir + "/etc");
+  QString dir = QDir::toNativeSeparators( USglobal->config_list.system_dir + "/etc");
   system_dir.setPath( dir );  // system wide color defs
   
   
@@ -1826,7 +1826,7 @@ void US_Color::save_as()
     lb_scheme->addItem(save_str);
   }
   QString filename;
-  filename = QDir::convertSeparators(USglobal->config_list.root_dir + "/" + save_str );
+  filename = QDir::toNativeSeparators(USglobal->config_list.root_dir + "/" + save_str );
   
   if (filename.right(4) != ".col")
   {
@@ -1904,6 +1904,6 @@ void US_Color::update_save_str(const QString &temp_str)
 void US_Color:: sel_margin(int newval)
 {
   temp_margin = (newval+1)*2;
-  plot->setMargin(temp_margin); 
+//   plot->setMargin(temp_margin); 
 }
 

@@ -114,7 +114,7 @@ void US_Hydrodyn_SasOptionsMisc::setupGUI()
    // cb_iq_ask->setEnabled(true);
    // cb_iq_ask->setChecked((*saxs_options).iq_ask);
    // cb_iq_ask->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   // cb_iq_ask->setPalette( USglobal->global_colors.cg_normal );
+   // cb_iq_ask->setPalette( PALET_NORMAL );
    // connect(cb_iq_ask, SIGNAL(clicked()), this, SLOT(set_iq_ask()));
 
    cb_iq_scale_ask = new QCheckBox(this);
@@ -225,7 +225,7 @@ void US_Hydrodyn_SasOptionsMisc::setupGUI()
 
    cnt_scale_excl_vol = new QwtCounter(this);
    US_Hydrodyn::sizeArrows( cnt_scale_excl_vol );
-   cnt_scale_excl_vol->setRange(.1, 2, 0.001);
+   cnt_scale_excl_vol->setRange(.1, 2); cnt_scale_excl_vol->setSingleStep( 0.001);
    cnt_scale_excl_vol->setValue((*saxs_options).scale_excl_vol);
    cnt_scale_excl_vol->setMinimumHeight(minHeight1);
    cnt_scale_excl_vol->setEnabled(true);
@@ -449,9 +449,9 @@ void US_Hydrodyn_SasOptionsMisc::clear_mw_cache()
                                 us_tr("The molecular weight cache is already empty") );
    }      
           
-   ((US_Hydrodyn *)us_hydrodyn)->dammix_remember_mw.clear();
-   ((US_Hydrodyn *)us_hydrodyn)->dammix_remember_mw_source.clear();
-   ((US_Hydrodyn *)us_hydrodyn)->dammix_match_remember_mw.clear();
+   ((US_Hydrodyn *)us_hydrodyn)->dammix_remember_mw.clear( );
+   ((US_Hydrodyn *)us_hydrodyn)->dammix_remember_mw_source.clear( );
+   ((US_Hydrodyn *)us_hydrodyn)->dammix_match_remember_mw.clear( );
 }
 
 void US_Hydrodyn_SasOptionsMisc::help()

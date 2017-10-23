@@ -173,12 +173,12 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    editor->setReadOnly(true);
 
 #if QT_VERSION < 0x040000
-# if defined(QT4) && defined(Q_WS_MAC)
+# if QT_VERSION >= 0x040000 && defined(Q_WS_MAC)
    {
  //      Q3PopupMenu * file = new Q3PopupMenu;
-      file->insertItem( us_tr("&Font"),  this, SLOT(update_font( )),    Qt::ALT+Qt::Key_F );
-      file->insertItem( us_tr("&Save"),  this, SLOT(save( )),    Qt::ALT+Qt::Key_S );
-      file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display( )),   Qt::ALT+Qt::Key_X );
+      file->insertItem( us_tr("&Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
+      file->insertItem( us_tr("&Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
+      file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
 
       QMenuBar *menu = new QMenuBar( this );
       AUTFBACK( menu );
@@ -195,9 +195,9 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    AUTFBACK( m );
  //   Q3PopupMenu * file = new Q3PopupMenu(editor);
    m->insertItem( us_tr("&File"), file );
-   file->insertItem( us_tr("Font"),  this, SLOT(update_font( )),    Qt::ALT+Qt::Key_F );
-   file->insertItem( us_tr("Save"),  this, SLOT(save( )),    Qt::ALT+Qt::Key_S );
-   file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display( )),   Qt::ALT+Qt::Key_X );
+   file->insertItem( us_tr("Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
+   file->insertItem( us_tr("Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
+   file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
 # endif
 #else
    QFrame *frame;
@@ -379,7 +379,7 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    pb_csv_clear->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_csv_clear->setMinimumHeight(minHeight1);
    pb_csv_clear->setPalette( PALET_PUSHB );
-   connect(pb_csv_clear, SIGNAL(clicked()), SLOT(csv_clear()));
+   connect(pb_csv_clear, SIGNAL(clicked( )), SLOT(csv_clear( )));
 
    panel1_widgets.push_back( pb_csv_clear );
 
@@ -491,7 +491,7 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    pb_csv_sel_clear->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_csv_sel_clear->setMinimumHeight(minHeight1);
    pb_csv_sel_clear->setPalette( PALET_PUSHB );
-   connect(pb_csv_sel_clear, SIGNAL(clicked()), SLOT(csv_sel_clear()));
+   connect(pb_csv_sel_clear, SIGNAL(clicked( )), SLOT(csv_sel_clear( )));
 
    panel1_widgets.push_back( pb_csv_sel_clear );
 
@@ -648,7 +648,7 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    pb_csv2_clear->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_csv2_clear->setMinimumHeight(minHeight1);
    pb_csv2_clear->setPalette( PALET_PUSHB );
-   connect(pb_csv2_clear, SIGNAL(clicked()), SLOT(csv2_clear()));
+   connect(pb_csv2_clear, SIGNAL(clicked( )), SLOT(csv2_clear( )));
 
    panel2_widgets.push_back( pb_csv2_clear );
 
@@ -760,7 +760,7 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    pb_csv2_sel_clear->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    pb_csv2_sel_clear->setMinimumHeight(minHeight1);
    pb_csv2_sel_clear->setPalette( PALET_PUSHB );
-   connect(pb_csv2_sel_clear, SIGNAL(clicked()), SLOT(csv2_sel_clear()));
+   connect(pb_csv2_sel_clear, SIGNAL(clicked( )), SLOT(csv2_sel_clear( )));
 
    panel2_widgets.push_back( pb_csv2_sel_clear );
 
@@ -816,7 +816,7 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
    qwtw_wheel = new QwtWheel( this );
    qwtw_wheel->setOrientation  ( Qt::Vertical );
    qwtw_wheel->setMass         ( 1.0 );
-   qwtw_wheel->setRange        ( 0.0, 0.0, 1 );
+   qwtw_wheel->setRange( 0.0, 0.0); qwtw_wheel->setSingleStep( 1 );
    // qwtw_wheel->setMinimumHeight( minHeight1 );
    connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
 
@@ -836,7 +836,7 @@ void US_Hydrodyn_Pdb_Tool::setupGUI()
 
    // left pane
    QBoxLayout * vbl_editor_group = new QVBoxLayout; vbl_editor_group->setContentsMargins( 0, 0, 0, 0 ); vbl_editor_group->setSpacing( 0 );
-#if !defined(QT4) || !defined(Q_WS_MAC)
+#if QT_VERSION < 0x040000 || !defined(Q_WS_MAC)
    vbl_editor_group->addWidget(frame);
 #endif
    vbl_editor_group->addWidget(editor);
@@ -1058,7 +1058,7 @@ void US_Hydrodyn_Pdb_Tool::closeEvent(QCloseEvent *e)
 
 void US_Hydrodyn_Pdb_Tool::clear_display()
 {
-   editor->clear();
+   editor->clear( );
    editor->append("\n\n");
 }
 
@@ -1497,17 +1497,20 @@ void US_Hydrodyn_Pdb_Tool::csv2_push( bool save_current )
    csv2_pos = csv2.size();
    csv2.resize( csv2_pos + 1 );
    csv2_undos.resize( csv2_pos + 1 );
-   lv_csv2->clear();
+   lv_csv2->clear( );
    update_enables_csv2();
 
-   qwtw_wheel->setRange ( csv2.size() - 0.5,
-                          -0.5,
-                          csv2.size() * csv2.size() * 0.1  < 1.0
-                          ? 
-                          csv2.size() * csv2.size() * 0.05
-                          :
-                          1.0 );
-   lbl_pos_range->setText( QString( "%1\nof\n%2" ).arg( csv2_pos + 1 ).arg( csv2.size( ) ) );
+   {
+      double rs =
+         ( csv2.size() * csv2.size() * 0.1 < 1.0 )
+         ? 
+         csv2.size() * csv2.size() * 0.05
+         :
+         1.0
+         ;
+      qwtw_wheel->setRange( csv2.size() - 0.5, -0.5); qwtw_wheel->setSingleStep( rs );
+   }
+   lbl_pos_range->setText( QString( "%1\nof\n%2" ).arg( csv2_pos + 1 ).arg( csv2.size() ) );
 }
 
 void US_Hydrodyn_Pdb_Tool::csv2_redisplay( unsigned int pos )
@@ -1523,7 +1526,7 @@ void US_Hydrodyn_Pdb_Tool::csv2_redisplay( unsigned int pos )
    csv2_pos = pos;
    // update new csv
    csv_to_lv( csv2[ csv2_pos ], lv_csv2 );
-   lbl_pos_range->setText( QString( "%1\nof\n%2" ).arg( csv2_pos + 1 ).arg( csv2.size( ) ) );
+   lbl_pos_range->setText( QString( "%1\nof\n%2" ).arg( csv2_pos + 1 ).arg( csv2.size() ) );
    update_enables_csv2();
 }
 
@@ -1541,9 +1544,9 @@ pdb_sel_count US_Hydrodyn_Pdb_Tool::count_selected( QTreeWidget *lv )
    }
    if ( lv_is_csv )
    {
-      csv_selected_element_counts.clear();
+      csv_selected_element_counts.clear( );
    } else {
-      csv2_selected_element_counts.clear();
+      csv2_selected_element_counts.clear( );
    }
    
    pdb_sel_count counts;
@@ -1855,7 +1858,7 @@ QString US_Hydrodyn_Pdb_Tool::data_to_key( vector < QString > &data )
 
 void US_Hydrodyn_Pdb_Tool::csv_setup_keys( csv &csv1 )
 {
-   csv1.key.clear();
+   csv1.key.clear( );
 
    for ( unsigned int i = 0; i < (unsigned int)csv1.data.size(); i++ )
    {
@@ -1886,7 +1889,7 @@ void US_Hydrodyn_Pdb_Tool::csv_to_lv( csv &csv1, QTreeWidget *lv )
       disconnect( lv_csv2, SIGNAL(itemSelectionChanged()), 0, 0 );
    }
 
-   lv->clear();
+   lv->clear( );
 
 #if QT_VERSION >= 0x040000
    vector < QString > to_select;
@@ -2202,16 +2205,16 @@ QString US_Hydrodyn_Pdb_Tool::csv_to_pdb( csv &csv1, bool only_atoms )
          .sprintf(     
                   "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
                   csv1.data[ i ][ 5  ].toUInt(),
-                  csv1.data[ i ][ 4  ].toAscii().data(),
-                  csv1.data[ i ][ 2  ].toAscii().data(),
-                  csv1.data[ i ][ 1  ].toAscii().data(),
+                  csv1.data[ i ][ 4  ].toLatin1().data(),
+                  csv1.data[ i ][ 2  ].toLatin1().data(),
+                  csv1.data[ i ][ 1  ].toLatin1().data(),
                   csv1.data[ i ][ 3  ].toUInt(),
                   csv1.data[ i ][ 8  ].toFloat(),
                   csv1.data[ i ][ 9  ].toFloat(),
                   csv1.data[ i ][ 10 ].toFloat(),
                   csv1.data[ i ][ 11 ].toFloat(),
                   csv1.data[ i ][ 12 ].toFloat(),
-                  csv1.data[ i ][ 13 ].toAscii().data()
+                  csv1.data[ i ][ 13 ].toLatin1().data()
                   );
    }
    if ( !only_atoms )
@@ -2265,16 +2268,16 @@ QStringList US_Hydrodyn_Pdb_Tool::csv_to_pdb_qsl( csv &csv1, bool only_atoms )
          .sprintf(     
                   "ATOM  %5d%5s%4s %1s%4d    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
                   csv1.data[ i ][ 5  ].toUInt(),
-                  csv1.data[ i ][ 4  ].toAscii().data(),
-                  csv1.data[ i ][ 2  ].toAscii().data(),
-                  csv1.data[ i ][ 1  ].toAscii().data(),
+                  csv1.data[ i ][ 4  ].toLatin1().data(),
+                  csv1.data[ i ][ 2  ].toLatin1().data(),
+                  csv1.data[ i ][ 1  ].toLatin1().data(),
                   csv1.data[ i ][ 3  ].toUInt(),
                   csv1.data[ i ][ 8  ].toFloat(),
                   csv1.data[ i ][ 9  ].toFloat(),
                   csv1.data[ i ][ 10 ].toFloat(),
                   csv1.data[ i ][ 11 ].toFloat(),
                   csv1.data[ i ][ 12 ].toFloat(),
-                  csv1.data[ i ][ 13 ].toAscii().data()
+                  csv1.data[ i ][ 13 ].toLatin1().data()
                   );
    }
    if ( !only_atoms )
@@ -2714,7 +2717,7 @@ void US_Hydrodyn_Pdb_Tool::csv_sel()
    update_enables_csv();
 }
 
-void US_Hydrodyn_Pdb_Tool::csv_sel_clear()
+void US_Hydrodyn_Pdb_Tool::csv_sel_clear( )
 {
    lv_csv->clearSelection();
    update_enables_csv();
@@ -2810,7 +2813,7 @@ void US_Hydrodyn_Pdb_Tool::sel_nearest_atoms( QTreeWidget *lv )
    editor_msg("blue", QString( "size of list <%1>" ).arg( lsqd.size() ) );
    lsqd.sort();
 
-   distmap.clear();
+   distmap.clear( );
 
    unsigned int pos = 0;
    for ( list < sortable_qli_double >::iterator it = lsqd.begin();
@@ -2944,7 +2947,7 @@ void US_Hydrodyn_Pdb_Tool::select_chain( QTreeWidget *lv )
                                             us_tr( "Select a chain or CANCEL when done" ),
                                             chains, 
                                             0, 
-                                            FALSE, 
+                                            false, 
                                             &ok,
                                             this );
       if ( ok )
@@ -3073,7 +3076,7 @@ void US_Hydrodyn_Pdb_Tool::distances( QTreeWidget *lv )
                                             us_tr( "Restrict search to pairs with selected atom or CANCEL to compare all" ),
                                             qsl, 
                                             use_pos, 
-                                            FALSE, 
+                                            false, 
                                             &ok,
                                             this );
       if ( !ok )
@@ -3236,7 +3239,7 @@ void US_Hydrodyn_Pdb_Tool::distances( QTreeWidget *lv )
          // editor_msg("blue", QString( "size of list <%1>" ).arg( lsqd.size() ) );
          lsqd.sort();
          
-         distmap.clear();
+         distmap.clear( );
          
          unsigned int pos = 0;
          for ( list < sortable_qlipair_double >::iterator it = lsqd.begin();
@@ -3434,7 +3437,7 @@ void US_Hydrodyn_Pdb_Tool::distances( QTreeWidget *lv )
    editor_msg("blue", QString( "size of list <%1>" ).arg( lsqd.size() ) );
    lsqd.sort();
 
-   distmap.clear();
+   distmap.clear( );
 
    map < QTreeWidgetItem *, bool > selected_items;
 
@@ -3758,7 +3761,7 @@ void US_Hydrodyn_Pdb_Tool::csv2_sel()
    update_enables_csv();
 }
 
-void US_Hydrodyn_Pdb_Tool::csv2_sel_clear()
+void US_Hydrodyn_Pdb_Tool::csv2_sel_clear( )
 {
    lv_csv2->clearSelection();
    update_enables_csv2();
@@ -4390,7 +4393,7 @@ void US_Hydrodyn_Pdb_Tool::split_pdb()
                
                   tso << QString("HEADER    split from %1: Model %2 of %3\n").arg( f.fileName() ).arg( pos + 1 ).arg( model_count );
                   tso << model_header;
-                  tso << QString("").sprintf("MODEL  %7s\n", model_name_vector[ pos ].toAscii().data() );
+                  tso << QString("").sprintf("MODEL  %7s\n", model_name_vector[ pos ].toLatin1().data() );
                   tso << model_lines;
                   tso << "ENDMDL\nEND\n";
                   
@@ -4564,8 +4567,8 @@ void US_Hydrodyn_Pdb_Tool::hybrid_split()
                   .arg( it->second );
                atoms_with_hydrogens[ atom_hybrid ].push_back( this_residue[ it->first ] );
             }
-            this_residue          .clear();
-            this_residue_hydrogens.clear();
+            this_residue          .clear( );
+            this_residue_hydrogens.clear( );
          }
          last_residue          = residue;
          last_residue_seq      = residue_seq;
@@ -4621,8 +4624,8 @@ void US_Hydrodyn_Pdb_Tool::hybrid_split()
             .arg( it->second );
          atoms_with_hydrogens[ atom_hybrid ].push_back( this_residue[ it->first ] );
       }
-      this_residue          .clear();
-      this_residue_hydrogens.clear();
+      this_residue          .clear( );
+      this_residue_hydrogens.clear( );
    }
    
    f.close();
@@ -4945,7 +4948,7 @@ void US_Hydrodyn_Pdb_Tool::h_to_chainX()
                out += hydrogens[ i ] + "\n";
             }
             out += "TER\n";
-            hydrogens.clear();
+            hydrogens.clear( );
          }
          out += qs + "\n";
       }
@@ -4966,7 +4969,7 @@ void US_Hydrodyn_Pdb_Tool::h_to_chainX()
          out += hydrogens[ i ] + "\n";
             }
       out += "TER\n";
-      hydrogens.clear();
+      hydrogens.clear( );
    }
 
    QString fbase = QFileInfo( filename ).path() + SLASH + QFileInfo( filename ).baseName();
@@ -5476,30 +5479,30 @@ ATOM   2005  CA  GLY     5      29.121 -25.194   8.602  133 ARG
    return;
 }
 
-void US_Hydrodyn_Pdb_Tool::csv_clear()
+void US_Hydrodyn_Pdb_Tool::csv_clear( )
 {
-   lv_csv->clear();
+   lv_csv->clear( );
    csv new_csv;
    csv1 = new_csv;
    csv_to_lv( csv1, lv_csv );
-   csv_undos.clear();
-   te_csv->clear();
+   csv_undos.clear( );
+   te_csv->clear( );
    update_enables_csv();
 }
 
-void US_Hydrodyn_Pdb_Tool::csv2_clear()
+void US_Hydrodyn_Pdb_Tool::csv2_clear( )
 {
-   lv_csv2->clear();
+   lv_csv2->clear( );
    csv new_csv;
    csv2.resize( 1 );
    csv2[ 0 ] = new_csv;
    csv_to_lv( csv2[ 0 ], lv_csv2 );
-   csv2_undos.clear();
+   csv2_undos.clear( );
    csv2_pos = 0;
-   qwtw_wheel->setRange( 0.0, 0.0, 1 );
+   qwtw_wheel->setRange( 0.0, 0.0); qwtw_wheel->setSingleStep( 1 );
    lbl_pos_range->setText("1\nof\n1");
    csv2_redisplay( 0 );
-   te_csv2->clear();
+   te_csv2->clear( );
    update_enables_csv2();
 }
 
@@ -5701,8 +5704,8 @@ void US_Hydrodyn_Pdb_Tool::do_sort( QTreeWidget *lv )
                }
             }
             model_distances.push_back( sdn );
-            pointsa.clear();
-            pointsb.clear();
+            pointsa.clear( );
+            pointsb.clear( );
          }
          last_model = model;
       }
@@ -5898,7 +5901,7 @@ void US_Hydrodyn_Pdb_Tool::csv_find_alt()
                                            "or press Cancel\n" ),
                                        alt_residues_no_self, 
                                        0, 
-                                       TRUE,
+                                       true,
                                        &ok,
                                        this );
    if ( ok ) {
@@ -6002,7 +6005,7 @@ void US_Hydrodyn_Pdb_Tool::csv2_find_alt()
                                            "or press Cancel\n" ),
                                        alt_residues_no_self, 
                                        0, 
-                                       TRUE,
+                                       true,
                                        &ok,
                                        this );
    if ( ok ) {
@@ -6135,7 +6138,7 @@ void US_Hydrodyn_Pdb_Tool::replace_selected_residues( QTreeWidget *lv, csv &csv_
 
 QString US_Hydrodyn_Pdb_Tool::check_csv_for_alt( csv &csv1, QStringList &alt_residues )
 {
-   alt_residues.clear();
+   alt_residues.clear( );
    if ( !usu->select_residue_file( ((US_Hydrodyn *)us_hydrodyn)->residue_filename ) )
    {
       errormsg = usu->errormsg;
@@ -6206,7 +6209,7 @@ QString US_Hydrodyn_Pdb_Tool::check_csv_for_alt( csv &csv1, QStringList &alt_res
       // cout << usu->noticemsg << endl;
       // cout << QString( "model vector size %1\n" ).arg( usu->model_vector.size() );
 
-      error_keys.clear();
+      error_keys.clear( );
       
       for ( unsigned int i = 0; i < (unsigned int)usu->model_vector.size(); i++ )
       {
@@ -6265,7 +6268,7 @@ QString US_Hydrodyn_Pdb_Tool::check_csv( csv & csv1, vector < QString > &error_k
    usu->control_parameters[ "pdbmissingatoms" ] = QString( "%1" ).arg( ((US_Hydrodyn *)us_hydrodyn)->pdb_parse.missing_atoms );
    usu->control_parameters[ "pdbmissingresidues" ] = QString( "%1" ).arg( ((US_Hydrodyn *)us_hydrodyn)->pdb_parse.missing_residues );
 
-   error_keys.clear();
+   error_keys.clear( );
 
    for ( unsigned int i = 0; i < (unsigned int)usu->model_vector.size(); i++ )
    {
@@ -6302,7 +6305,7 @@ QString US_Hydrodyn_Pdb_Tool::check_csv( csv & csv1, vector < QString > &error_k
                                   QString::null, 0, 1 ) )
       {
          // cout << "clearing error keys\n";
-         error_keys.clear();
+         error_keys.clear( );
       }
    }
       
@@ -6491,7 +6494,7 @@ void US_Hydrodyn_Pdb_Tool::split_pdb_by_residue( QFile &f )
                   if ( residue_atoms.size() )
                   {
                      residues.push_back( residue_atoms );
-                     residue_atoms.clear();
+                     residue_atoms.clear( );
                   }
                   last_resSeq = resSeq;
                
@@ -6504,7 +6507,7 @@ void US_Hydrodyn_Pdb_Tool::split_pdb_by_residue( QFile &f )
                         {
                            max_chain_length = (unsigned int)residues.size();
                         }
-                        residues.clear();
+                        residues.clear( );
                      }
                      last_chainId = chainId;
                   }
@@ -6521,8 +6524,8 @@ void US_Hydrodyn_Pdb_Tool::split_pdb_by_residue( QFile &f )
          {
             max_chain_length = (unsigned int)residues.size();
          }
-         residues.clear();
-         residue_atoms.clear();
+         residues.clear( );
+         residue_atoms.clear( );
       }
    }
    f.close();

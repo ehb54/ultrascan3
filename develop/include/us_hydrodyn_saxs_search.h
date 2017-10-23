@@ -32,7 +32,7 @@
 #include "us_hydrodyn_saxs.h"
 
 #ifdef WIN32
-# if !defined( QT4 )
+# if QT_VERSION < 0x040000
   #pragma warning ( disable: 4251 )
 # endif
 #endif
@@ -161,7 +161,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Search : public QFrame
 };
 
 #ifdef WIN32
-# if !defined( QT4 )
+# if QT_VERSION < 0x040000
   #pragma warning ( default: 4251 )
 # endif
 #endif

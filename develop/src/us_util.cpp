@@ -518,12 +518,12 @@ int copy(const QString &sourcefile, const QString &destfile)
 */
 void view_image(
                 const QString 
-#ifndef QT4
+#if QT_VERSION < 0x040000
                 &filename
 #endif
                 )
 {
-#ifndef QT4
+#if QT_VERSION < 0x040000
    US_ImageViewer *us_imgviewer;
    us_imgviewer = new US_ImageViewer(0, "new window", Qt::WDestructiveClose | Qt::WResizeNoErase);
    us_imgviewer->openFile(filename);
@@ -693,7 +693,11 @@ double US_Static::getDouble(const QString & title, const QString & label, double
 }
 
 int US_Static::getInteger(const QString & title, const QString & label, int value, int min, int max, int step, bool * ok, QWidget * parent, const char * name, Qt::WindowFlags flags) {
+#if QT_VERSION >= 0x050000
+   return QInputDialog::getInt(parent, title, label, value, min, max, step, ok, flags);
+#else
    return QInputDialog::getInteger(parent, title, label, value, min, max, step, ok, flags);
+#endif
 }
 
 QString US_Static::getItem(const QString & title, const QString & label, const QStringList & list, int current, bool editable, bool * ok, QWidget * parent, const char * name, Qt::WindowFlags flags) {

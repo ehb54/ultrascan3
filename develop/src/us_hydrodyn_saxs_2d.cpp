@@ -241,7 +241,7 @@ US_Hydrodyn_Saxs_2d::~US_Hydrodyn_Saxs_2d()
 void US_Hydrodyn_Saxs_2d::setupGUI()
 {
    int minHeight1 = 30;
-#if !defined(QT4) || !defined(Q_WS_MAC)
+#if QT_VERSION < 0x040000 || !defined(Q_WS_MAC)
    int minHeight3 = 30;
 #endif
 
@@ -436,7 +436,7 @@ void US_Hydrodyn_Saxs_2d::setupGUI()
 
    qwtw_wheel = new QwtWheel( this );
    qwtw_wheel->setMass         ( 1.0 );
-   qwtw_wheel->setRange        ( 0.0, 0.0, 1 );
+   qwtw_wheel->setRange( 0.0, 0.0); qwtw_wheel->setSingleStep( 1 );
    qwtw_wheel->setMinimumWidth ( 2 * minHeight1 );
    connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
 
@@ -446,12 +446,12 @@ void US_Hydrodyn_Saxs_2d::setupGUI()
    editor->setReadOnly(true);
 
 #if QT_VERSION < 0x040000
-# if defined(QT4) && defined(Q_WS_MAC)
+# if QT_VERSION >= 0x040000 && defined(Q_WS_MAC)
    {
  //      Q3PopupMenu * file = new Q3PopupMenu;
-      file->insertItem( us_tr("&Font"),  this, SLOT(update_font( )),    Qt::ALT+Qt::Key_F );
-      file->insertItem( us_tr("&Save"),  this, SLOT(save( )),    Qt::ALT+Qt::Key_S );
-      file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display( )),   Qt::ALT+Qt::Key_X );
+      file->insertItem( us_tr("&Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
+      file->insertItem( us_tr("&Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
+      file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
 
       QMenuBar *menu = new QMenuBar( this );
       AUTFBACK( menu );
@@ -469,9 +469,9 @@ void US_Hydrodyn_Saxs_2d::setupGUI()
    AUTFBACK( m );
  //   Q3PopupMenu * file = new Q3PopupMenu(editor);
    m->insertItem( us_tr("&File"), file );
-   file->insertItem( us_tr("Font"),  this, SLOT(update_font( )),    Qt::ALT+Qt::Key_F );
-   file->insertItem( us_tr("Save"),  this, SLOT(save( )),    Qt::ALT+Qt::Key_S );
-   file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display( )),   Qt::ALT+Qt::Key_X );
+   file->insertItem( us_tr("Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
+   file->insertItem( us_tr("Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
+   file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
 # endif
 #else
    QFrame *frame;
@@ -556,7 +556,7 @@ void US_Hydrodyn_Saxs_2d::setupGUI()
 
    QBoxLayout * vbl_editor_group = new QVBoxLayout( 0 ); vbl_editor_group->setContentsMargins( 0, 0, 0, 0 ); vbl_editor_group->setSpacing( 0 );
    vbl_editor_group->addLayout( gl_options );
-#if !defined(QT4) || !defined(Q_WS_MAC)
+#if QT_VERSION < 0x040000 || !defined(Q_WS_MAC)
    vbl_editor_group->addWidget( frame      );
 #endif
    vbl_editor_group->addWidget( editor     );
@@ -628,7 +628,7 @@ void US_Hydrodyn_Saxs_2d::closeEvent( QCloseEvent *e )
 
 void US_Hydrodyn_Saxs_2d::clear_display()
 {
-   editor->clear();
+   editor->clear( );
    editor->append("\n\n");
 }
 
@@ -831,7 +831,7 @@ void US_Hydrodyn_Saxs_2d::start()
         le_sample_rotations->text().toUInt() == 93 ||
         le_sample_rotations->text().toUInt() == 99 )
    {
-      rotations.clear();
+      rotations.clear( );
       vector < double > this_rotation( 3 );
 
       if ( le_sample_rotations->text().toUInt() == 93 ||
@@ -891,7 +891,7 @@ void US_Hydrodyn_Saxs_2d::start()
    cout << QString( "atomic scaler %1\n"
                     "atomic scaler inv %2\n" )
       .arg( atomic_scaler )
-      .arg( atomic_scaler_inv ).toAscii().data();
+      .arg( atomic_scaler_inv ).toLatin1().data();
 
    for ( unsigned int i = 0; i < selected_models.size(); i++ )
    {
@@ -1421,7 +1421,7 @@ void US_Hydrodyn_Saxs_2d::start()
                   .arg( pixpos[ 0 ] ).arg( pixpos[ 1 ] )
                   .arg( pix_dist_from_beam_center )
                   .arg( q )
-                  .toAscii().data();
+                  .toLatin1().data();
                
                cout << expiQdotR << endl;
 #endif
@@ -1823,11 +1823,13 @@ void US_Hydrodyn_Saxs_2d::push()
 
    data_stack.push_back( this_data );
 
-   qwtw_wheel->setRange( 0.5, 
-                         ( double ) data_stack.size() + 0.5, 
-                         data_stack.size() < 10 ? 
-                         data_stack.size() * 0.2 : 1.0 
-                         );
+   {
+      double rs = ( data_stack.size() < 10 ) ? 
+         data_stack.size() * 0.2 : 1.0;
+
+      qwtw_wheel->setRange( 0.5, ( double ) data_stack.size() + 0.5); qwtw_wheel->setSingleStep( rs );
+   }
+
    qwtw_wheel->setValue( (double) data_stack.size() );
 
    last_wheel_pos = data_stack.size();
@@ -1884,7 +1886,7 @@ void US_Hydrodyn_Saxs_2d::set_pos( unsigned int i )
 
 void US_Hydrodyn_Saxs_2d::adjust_wheel( double pos )
 {
-   // cout << QString( "adjust wheel to %1\n" ).arg( pos ).toAscii().data();
+   // cout << QString( "adjust wheel to %1\n" ).arg( pos ).toLatin1().data();
    if ( pos < 1e0 )
    {
       pos = 1e0;

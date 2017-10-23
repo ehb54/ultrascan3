@@ -89,12 +89,12 @@ void US_Hydrodyn_Csv_Viewer::setupGUI()
    }
 
    t_csv->setSortingEnabled(false);
-    t_csv->verticalHeader()->setMovable(true);
-    t_csv->horizontalHeader()->setMovable(true);
+    t_csv->verticalHeader()->setSectionsMovable(true);
+    t_csv->horizontalHeader()->setSectionsMovable(true);
   { for ( int i = 0; i < t_csv->rowCount(); ++i ) { for ( int j = 0; j < t_csv->columnCount(); ++j ) { t_csv->item( i, j )->setFlags( t_csv->item( i, j )->flags() ^ Qt::ItemIsEditable ); } } };
 
    
-    t_csv->horizontalHeader()->setClickable( true );
+    t_csv->horizontalHeader()->setSectionsClickable( true );
 #if QT_VERSION < 0x040000   
    connect(t_csv->horizontalHeader(), SIGNAL(clicked(int)), SLOT(sort_column(int)));
 #else

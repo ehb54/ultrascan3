@@ -75,10 +75,10 @@ bool US_PM::best_md0(
 
 void US_PM::init_objects()
 {
-   object_names          .clear();
-   object_m0_parameters  .clear();
-   object_parameter_types.clear();
-   object_name_map       .clear();
+   object_names          .clear( );
+   object_m0_parameters  .clear( );
+   object_parameter_types.clear( );
+   object_name_map       .clear( );
 
    vector < vector < parameter_type > > tmp_ptv;
    vector < parameter_type >            tmp_pt;
@@ -88,8 +88,8 @@ void US_PM::init_objects()
    object_names        .push_back( "sphere" );
    object_m0_parameters.push_back( 1 ); // radius
    {
-      tmp_pt .clear();
-      tmp_ptv.clear();
+      tmp_pt .clear( );
+      tmp_ptv.clear( );
       {
          // model 0
          tmp_pt .push_back( RADIUS );
@@ -112,8 +112,8 @@ void US_PM::init_objects()
    object_names        .push_back( "cylinder" );
    object_m0_parameters.push_back( 2 ); // height length
    {
-      tmp_pt .clear();
-      tmp_ptv.clear();
+      tmp_pt .clear( );
+      tmp_ptv.clear( );
       {
          // model 0
          tmp_pt .push_back( RADIUS );
@@ -136,8 +136,8 @@ void US_PM::init_objects()
    object_names        .push_back( "spheroid" );
    object_m0_parameters.push_back( 2 ); // a, b
    {
-      tmp_pt .clear();
-      tmp_ptv.clear();
+      tmp_pt .clear( );
+      tmp_ptv.clear( );
       {
          // model 0
          tmp_pt .push_back( RADIUS );
@@ -160,8 +160,8 @@ void US_PM::init_objects()
    object_names        .push_back( "ellipsoid" );
    object_m0_parameters.push_back( 3 ); // a, b, c
    {
-      tmp_pt .clear();
-      tmp_ptv.clear();
+      tmp_pt .clear( );
+      tmp_ptv.clear( );
       {
          // model 0
          tmp_pt .push_back( RADIUS );
@@ -185,8 +185,8 @@ void US_PM::init_objects()
    object_names        .push_back( "torus" );
    object_m0_parameters.push_back( 2 ); // radius1, radius2
    {
-      tmp_pt .clear();
-      tmp_ptv.clear();
+      tmp_pt .clear( );
+      tmp_ptv.clear( );
       {
          // model 0
          tmp_pt .push_back( RADIUS );
@@ -211,8 +211,8 @@ void US_PM::init_objects()
    object_m0_parameters.push_back( 3 ); // radius1, radius2, end theta
    object_best_f       .push_back( &US_PM::best_torus_segment );
    {
-      tmp_pt .clear();
-      tmp_ptv.clear();
+      tmp_pt .clear( );
+      tmp_ptv.clear( );
       {
          // model 0
          tmp_pt .push_back( RADIUS );
@@ -233,7 +233,7 @@ void US_PM::init_objects()
    }
    */
 
-   object_type_name.clear();
+   object_type_name.clear( );
    object_type_name[ COORD  ] = "Coord";
    object_type_name[ NORM   ] = "Norm";
    object_type_name[ RADIUS ] = "Radius";
@@ -333,7 +333,7 @@ bool US_PM::sphere( int model_pos, vector < double > & params, vector < double >
       break;
    }
 
-   params_left.clear();
+   params_left.clear( );
    for ( int i = ofs; i < ( int ) params.size(); i++ )
    {
       params_left.push_back( params[ i ] );
@@ -455,7 +455,7 @@ bool US_PM::cylinder( int model_pos, vector < double > & params, vector < double
       break;
    }
 
-   params_left.clear();
+   params_left.clear( );
    for ( int i = ofs; i < ( int ) params.size(); i++ )
    {
       params_left.push_back( params[ i ] );
@@ -640,7 +640,7 @@ bool US_PM::ellipsoid( int model_pos, vector < double > & params, vector < doubl
       break;
    }
 
-   params_left.clear();
+   params_left.clear( );
    for ( int i = ofs; i < ( int ) params.size(); i++ )
    {
       params_left.push_back( params[ i ] );
@@ -801,7 +801,7 @@ bool US_PM::spheroid( int model_pos, vector < double > & params, vector < double
       break;
    }
 
-   params_left.clear();
+   params_left.clear( );
    for ( int i = ofs; i < ( int ) params.size(); i++ )
    {
       params_left.push_back( params[ i ] );
@@ -951,7 +951,7 @@ bool US_PM::torus_segment( int model_pos, vector < double > & params, vector < d
       break;
    }
 
-   params_left.clear();
+   params_left.clear( );
    for ( int i = ofs; i < ( int ) params.size(); i++ )
    {
       params_left.push_back( params[ i ] );
@@ -1061,7 +1061,7 @@ bool US_PM::torus( int model_pos, vector < double > & params, vector < double > 
       break;
    }
 
-   params_left.clear();
+   params_left.clear( );
    for ( int i = ofs; i < ( int ) params.size(); i++ )
    {
       params_left.push_back( params[ i ] );

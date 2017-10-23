@@ -407,7 +407,7 @@ void US_GuiSettings::set_plotColor( const QPalette& palette )
 QColor US_GuiSettings::plotCurve( void )
 {
   QSettings settings( US3, "UltraScan" );
-  return settings.value( "palettes/plotCurve", Qt::yellow ).value<QColor>();
+  return QColor( settings.value( "palettes/plotCurve", QColor( Qt::yellow ) ).toString() );
 }
 
 void US_GuiSettings::set_plotCurve( const QColor& color )
@@ -423,7 +423,7 @@ void US_GuiSettings::set_plotCurve( const QColor& color )
 QColor US_GuiSettings::plotCanvasBG( void )
 {
   QSettings settings( US3, "UltraScan" );
-  return settings.value( "palettes/normalColor", Qt::darkBlue ).value<QColor>();
+  return QColor( settings.value( "palettes/normalColor", QColor( Qt::darkBlue ) ).toString() );
 }
 
 void US_GuiSettings::set_plotCanvasBG( const QColor& color )
@@ -439,7 +439,7 @@ void US_GuiSettings::set_plotCanvasBG( const QColor& color )
 QColor US_GuiSettings::plotMajGrid( void )
 {
   QSettings settings( US3, "UltraScan" );
-  return settings.value( "palettes/plotMajGrid", Qt::white ).value<QColor>();
+  return QColor( settings.value( "palettes/plotMajGrid", QColor( Qt::white ) ).toString() );
 }
 
 void US_GuiSettings::set_plotMajGrid( const QColor& color )
@@ -455,7 +455,7 @@ void US_GuiSettings::set_plotMajGrid( const QColor& color )
 QColor US_GuiSettings::plotMinGrid( void )
 {
   QSettings settings( US3, "UltraScan" );
-  return settings.value( "palettes/plotMinGrid", Qt::lightGray ).value<QColor>();
+  return QColor( settings.value( "palettes/plotMinGrid", QColor( Qt::lightGray ) ).toString() );
 }
 
 void US_GuiSettings::set_plotMinGrid( const QColor& color )
@@ -471,7 +471,7 @@ void US_GuiSettings::set_plotMinGrid( const QColor& color )
 QColor US_GuiSettings::plotPicker( void )
 {
   QSettings settings( US3, "UltraScan" );
-  return settings.value( "palettes/plotPicker", Qt::white ).value<QColor>();
+  return QColor( settings.value( "palettes/plotPicker", QColor( Qt::white ) ).toString() );
 }
 
 void US_GuiSettings::set_plotPicker( const QColor& color )

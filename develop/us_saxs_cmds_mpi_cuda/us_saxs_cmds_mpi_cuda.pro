@@ -1,4 +1,4 @@
-!include ( ../cmdline.pri ) error( "../cmdline.pri missing.  Aborting..." )
+include ( ../cmdline.pri )
 LIBS += -L$(TACC_CUDA_LIB) -lcudart us_cuda.o
 
 DEFINES         += USE_MPI

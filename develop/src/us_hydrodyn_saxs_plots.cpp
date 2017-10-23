@@ -42,7 +42,7 @@ void US_Hydrodyn_Saxs::plot_one_pr(vector < double > r, vector < double > pr, QS
    dup_plotted_pr_name_check[plot_name] = true;
    unsigned int p = plotted_r.size() - 1;
                   
-#ifndef QT4
+#if QT_VERSION < 0x040000
    long ppr = plot_pr->insertCurve( plot_name );
    plot_saxs->setCurveStyle(ppr, QwtCurve::Lines);
 #else
@@ -50,11 +50,11 @@ void US_Hydrodyn_Saxs::plot_one_pr(vector < double > r, vector < double > pr, QS
    curve->setStyle( QwtPlotCurve::Lines );
 #endif
 
-#ifndef QT4
+#if QT_VERSION < 0x040000
    plot_pr->setCurveData(ppr, (double *)&(r[0]), (double *)&(pr[0]), (int)pr.size());
    plot_pr->setCurvePen(ppr, QPen(plot_colors[p % plot_colors.size()], pen_width, SolidLine));
 #else
-   curve->setData(
+   curve->setSamples(
                   (double *)&( r[ 0 ] ), 
                   (double *)&( pr[ 0 ] ),
                   (int)r.size()
@@ -76,7 +76,7 @@ void US_Hydrodyn_Saxs::plot_one_pr(vector < double > r, vector < double > pr, QS
    plot_pr->setAxisScale( QwtPlot::yLeft  , miny, maxy );
 
    plot_pr_zoomer = new ScrollZoomer(plot_pr->canvas());
-#ifndef QT4
+#if QT_VERSION < 0x040000
    plot_pr_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
    plot_pr_zoomer->setCursorLabelPen(QPen(Qt::yellow));
 #else
@@ -92,7 +92,7 @@ void US_Hydrodyn_Saxs::plot_one_pr(vector < double > r, vector < double > pr, QS
       editor->append("P(r) plot legend:\n");
    }
 
-   editor_msg( plot_colors[p % plot_colors.size()], plot_saxs->canvasBackground(), name );
+   editor_msg( plot_colors[p % plot_colors.size()], plot_saxs->canvasBackground().color(), name );
 
    // to save to csv, write just contributing models?, target, model & residual
    // don't forget to make target part of it even if it isn't selected.
@@ -631,7 +631,7 @@ void US_Hydrodyn_Saxs::plot_one_iqq( vector < double > q,
       
    plotted_iq_names_to_pos[plot_name] = plotted_Iq.size();
 
-#ifndef QT4
+#if QT_VERSION < 0x040000
    long Iq = plot_saxs->insertCurve( name );
    plot_saxs->setCurveStyle(Iq, QwtCurve::Lines);
 #else
@@ -641,7 +641,7 @@ void US_Hydrodyn_Saxs::plot_one_iqq( vector < double > q,
 #endif
 
    plotted_q.push_back(q);
-#ifndef QT4
+#if QT_VERSION < 0x040000
    plotted_Iq.push_back(Iq);
 #else
    plotted_Iq.push_back( curve );
@@ -681,7 +681,7 @@ void US_Hydrodyn_Saxs::plot_one_iqq( vector < double > q,
          }
       }
          
-#ifndef QT4
+#if QT_VERSION < 0x040000
       plot_saxs->setCurveData(Iq, 
                               cb_guinier->isChecked() ? (double *)&(q2[0]) : (double *)&(q[0]), 
                               (double *)&(I[0]),
@@ -689,7 +689,7 @@ void US_Hydrodyn_Saxs::plot_one_iqq( vector < double > q,
                               );
       plot_saxs->setCurvePen(Iq, QPen(plot_colors[p % plot_colors.size()], pen_width, SolidLine));
 #else
-      curve->setData(
+      curve->setSamples(
                      cb_guinier->isChecked() ? (double *)&(q2[0]) : (double *)&(q[0]), 
                      (double *)&(I[0]),
                      q.size() 
@@ -704,7 +704,7 @@ void US_Hydrodyn_Saxs::plot_one_iqq( vector < double > q,
       delete plot_saxs_zoomer;
    }
    plot_saxs_zoomer = new ScrollZoomer(plot_saxs->canvas());
-#ifndef QT4
+#if QT_VERSION < 0x040000
    plot_saxs_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
    plot_saxs_zoomer->setCursorLabelPen(QPen(Qt::yellow));
 #else
@@ -720,7 +720,7 @@ void US_Hydrodyn_Saxs::plot_one_iqq( vector < double > q,
       editor->append("I(q) vs q plot legend:\n");
    }
 
-   editor_msg( plot_colors[p % plot_colors.size()], plot_saxs->canvasBackground(), name );
+   editor_msg( plot_colors[p % plot_colors.size()], plot_saxs->canvasBackground().color(), name );
 
    saxs_search_update_enables();
 }
@@ -830,7 +830,7 @@ void US_Hydrodyn_Saxs::do_plot_resid()
       return;
    }
 
-   plot_resid->clear();
+   plot_resid->detachItems( QwtPlotItem::Rtti_PlotCurve ); plot_resid->detachItems( QwtPlotItem::Rtti_PlotMarker );;
    if ( plot_resid_zoomer )
    {
       delete plot_resid_zoomer;
@@ -1381,7 +1381,7 @@ void US_Hydrodyn_Saxs::do_plot_resid()
          y_d[ 0 ] = 0e0;
          y_d[ 1 ] = 0e0;
 
-#ifndef QT4
+#if QT_VERSION < 0x040000
          long curve;
          curve = plot_resid->insertCurve( "base" );
          plot_resid->setCurveStyle( curve, QwtCurve::Lines );
@@ -1390,7 +1390,7 @@ void US_Hydrodyn_Saxs::do_plot_resid()
          curve->setStyle( QwtPlotCurve::Lines );
 #endif
 
-#ifndef QT4
+#if QT_VERSION < 0x040000
          plot_resid->setCurvePen( curve, QPen( Qt::darkRed, 1, Qt::DotLine ) );
          plot_resid->setCurveData( curve,
                                    (double *)&x_d2[ 0 ],
@@ -1399,7 +1399,7 @@ void US_Hydrodyn_Saxs::do_plot_resid()
                                    );
 #else
          curve->setPen( QPen( Qt::red, 1, Qt::DotLine ) );
-         curve->setData(
+         curve->setSamples(
                         (double *)&x_d2[ 0 ],
                         (double *)&y_d[ 0 ],
                         2
@@ -1413,10 +1413,10 @@ void US_Hydrodyn_Saxs::do_plot_resid()
       
       plot_resid_zoomer = new ScrollZoomer(plot_resid->canvas());
       plot_resid_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
-#ifndef QT4
+#if QT_VERSION < 0x040000
          plot_resid_zoomer->setCursorLabelPen(QPen(Qt::yellow));
 #endif
-         // connect( plot_resid_zoomer, SIGNAL( zoomed( const QwtDoubleRect & ) ), SLOT( plot_zoomed( const QwtDoubleRect & ) ) );
+         // connect( plot_resid_zoomer, SIGNAL( zoomed( const QRectF & ) ), SLOT( plot_zoomed( const QRectF & ) ) );
 
       plot_resid->replot();
       set_resid_show();
@@ -1506,7 +1506,7 @@ void US_Hydrodyn_Saxs::do_plot_resid( vector < double > & x,
                                       QColor qc )
 {
    {
-#ifndef QT4
+#if QT_VERSION < 0x040000
       long curve;
       curve = plot_resid->insertCurve( "base" );
       plot_resid->setCurveStyle( curve, QwtCurve::Lines );
@@ -1515,7 +1515,7 @@ void US_Hydrodyn_Saxs::do_plot_resid( vector < double > & x,
       curve->setStyle( QwtPlotCurve::Lines );
 #endif
 
-#ifndef QT4
+#if QT_VERSION < 0x040000
       plot_resid->setCurvePen( curve, QPen( Qt::darkRed, 1, Qt::SolidLine ) );
       plot_resid->setCurveData( curve,
                                  (double *)&x[ 0 ],
@@ -1524,7 +1524,7 @@ void US_Hydrodyn_Saxs::do_plot_resid( vector < double > & x,
                                  );
 #else
       curve->setPen( QPen( Qt::red, 1, Qt::SolidLine ) );
-      curve->setData(
+      curve->setSamples(
                      (double *)&x[ 0 ],
                      (double *)&y[ 0 ],
                      x.size()
@@ -1534,7 +1534,7 @@ void US_Hydrodyn_Saxs::do_plot_resid( vector < double > & x,
    }
 
    {
-#ifndef QT4
+#if QT_VERSION < 0x040000
       long curve;
       curve = plot_resid->insertCurve( "errors" );
       plot_resid->setCurveStyle( curve, QwtCurve::Lines );
@@ -1543,7 +1543,7 @@ void US_Hydrodyn_Saxs::do_plot_resid( vector < double > & x,
       curve->setStyle( QwtPlotCurve::Lines );
 #endif
 
-#ifndef QT4
+#if QT_VERSION < 0x040000
       plot_resid->setCurvePen( curve, QPen( qc, 1, Qt::SolidLine ) );
       plot_resid->setCurveData( curve,
                                  (double *)&x[ 0 ],
@@ -1553,7 +1553,7 @@ void US_Hydrodyn_Saxs::do_plot_resid( vector < double > & x,
       plot_resid->curve( curve )->setStyle( QwtCurve::Sticks );
 #else
       curve->setPen( QPen( qc, 1, Qt::SolidLine ) );
-      curve->setData(
+      curve->setSamples(
                      (double *)&x[ 0 ],
                      (double *)&e[ 0 ],
                      x.size()
@@ -1569,7 +1569,7 @@ void US_Hydrodyn_Saxs::do_plot_resid( vector < double > & x_d,
                                       QColor qc )
 {
    {
-#ifndef QT4
+#if QT_VERSION < 0x040000
       long curve;
       curve = plot_resid->insertCurve( "errors" );
       plot_resid->setCurveStyle( curve, QwtCurve::Lines );
@@ -1578,7 +1578,7 @@ void US_Hydrodyn_Saxs::do_plot_resid( vector < double > & x_d,
       curve->setStyle( QwtPlotCurve::Lines );
 #endif
 
-#ifndef QT4
+#if QT_VERSION < 0x040000
       plot_resid->setCurvePen( curve, QPen( qc, 1, Qt::DotLine ) );
       plot_resid->setCurveData( curve,
                                  (double *)&x_d[ 0 ],
@@ -1588,7 +1588,7 @@ void US_Hydrodyn_Saxs::do_plot_resid( vector < double > & x_d,
       plot_resid->curve( curve )->setStyle( QwtCurve::Sticks );
 #else
       curve->setPen( QPen( qc, 1, Qt::DotLine ) );
-      curve->setData(
+      curve->setSamples(
                      (double *)&x_d[ 0 ],
                      (double *)&e_d[ 0 ],
                      x_d.size()
@@ -1621,13 +1621,13 @@ void US_Hydrodyn_Saxs::do_plot_resid( vector < double > & x,
       if ( pts_removed.count( x[ i ] ) )
       {
          // cout << QString( "do plot resid errs: %1 %2\n"  ).arg( x[ i ] ).arg( e[ i ] );
-#ifndef QT4
+#if QT_VERSION < 0x040000
          long marker = plot_resid->insertMarker();
          plot_resid->setMarkerSymbol( marker, sym );
          plot_resid->setMarkerPos   ( marker, x[ i ], e[ i ] );
 #else
          QwtPlotMarker* marker = new QwtPlotMarker;
-         marker->setSymbol( sym );
+         marker->setSymbol( new QwtSymbol( sym.style(), sym.brush(), sym.pen(), sym.size() ) );
          marker->setValue( x[ i ], e[ i ] );
          marker->attach( plot_resid );
 #endif

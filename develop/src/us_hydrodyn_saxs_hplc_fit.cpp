@@ -72,7 +72,7 @@ US_Hydrodyn_Saxs_Hplc_Fit::US_Hydrodyn_Saxs_Hplc_Fit(
    global_Ypos += 30;
 
    // us_qdebug( "hf2" );
-   gaussians_undo.clear();
+   gaussians_undo.clear( );
    gaussians_undo.push_back( hplc_win->gaussians );
 
    redo_settings();
@@ -1432,19 +1432,19 @@ namespace HFIT
 bool US_Hydrodyn_Saxs_Hplc_Fit::setup_run()
 {
    us_qdebug( "setup_run()" );
-   HFIT::init_params .clear();
-   HFIT::base_params .clear();
-   HFIT::fixed_params.clear();
-   HFIT::comm_backref.clear();
-   HFIT::param_pos   .clear();
-   HFIT::param_fixed .clear();
-   HFIT::param_min   .clear();
-   HFIT::param_max   .clear();
+   HFIT::init_params .clear( );
+   HFIT::base_params .clear( );
+   HFIT::fixed_params.clear( );
+   HFIT::comm_backref.clear( );
+   HFIT::param_pos   .clear( );
+   HFIT::param_fixed .clear( );
+   HFIT::param_min   .clear( );
+   HFIT::param_max   .clear( );
 
    map < unsigned int, bool > fixed_curves;
 
    HFIT::conc_test        = false;
-   HFIT::conc_ratios_map .clear();
+   HFIT::conc_ratios_map .clear( );
 
    switch ( gaussian_type )
    {
@@ -1987,7 +1987,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit::lm( bool max_free_peak_delta_run, double prev_rm
    vector < double > t;
    vector < double > y;
    HFIT::errors        = hplc_win->f_errors[ hplc_win->wheel_file ];
-   HFIT::errors_index  .clear();
+   HFIT::errors_index  .clear( );
 
    double start = hplc_win->le_gauss_fit_start->text().toDouble();
    double end   = hplc_win->le_gauss_fit_end  ->text().toDouble();

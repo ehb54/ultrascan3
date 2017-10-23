@@ -26,7 +26,7 @@
 #include <qwt_counter.h>
 //Added by qt3to4:
 #include <QCloseEvent>
-#ifdef QT4
+#if QT_VERSION >= 0x040000
 # include "qwt_plot_grid.h"
 # include "qwt_plot_curve.h"
 #endif
@@ -111,7 +111,7 @@ class US_EXTERN US_Color : public QFrame
       QPalette temp_cg6;
       QwtPlot *plot;
       QwtCounter *cnt;
-#ifdef QT4
+#if QT_VERSION >= 0x040000
       QwtPlotGrid  *grid;
       QwtPlotCurve *curve;
 #endif

@@ -55,7 +55,7 @@ void US_Hydrodyn_SasOptionsCurve::setupGUI()
 
    cnt_wavelength= new QwtCounter(this);
    US_Hydrodyn::sizeArrows( cnt_wavelength );
-   cnt_wavelength->setRange(0, 10, 0.01);
+   cnt_wavelength->setRange(0, 10); cnt_wavelength->setSingleStep( 0.01);
    cnt_wavelength->setValue((*saxs_options).wavelength);
    cnt_wavelength->setMinimumHeight(minHeight1);
    cnt_wavelength->setEnabled(true);
@@ -74,7 +74,7 @@ void US_Hydrodyn_SasOptionsCurve::setupGUI()
 
    cnt_start_angle= new QwtCounter(this);
    US_Hydrodyn::sizeArrows( cnt_start_angle );
-   cnt_start_angle->setRange(0, 90, 1.0f/SAXS_Q_ROUNDING);
+   cnt_start_angle->setRange(0, 90); cnt_start_angle->setSingleStep( 1.0f/SAXS_Q_ROUNDING);
    cnt_start_angle->setValue((*saxs_options).start_angle);
    cnt_start_angle->setMinimumHeight(minHeight1);
    cnt_start_angle->setEnabled(true);
@@ -93,7 +93,7 @@ void US_Hydrodyn_SasOptionsCurve::setupGUI()
 
    cnt_end_angle= new QwtCounter(this);
    US_Hydrodyn::sizeArrows( cnt_end_angle );
-   cnt_end_angle->setRange(0, 90, 1.0f/SAXS_Q_ROUNDING);
+   cnt_end_angle->setRange(0, 90); cnt_end_angle->setSingleStep( 1.0f/SAXS_Q_ROUNDING);
    cnt_end_angle->setValue((*saxs_options).end_angle);
    cnt_end_angle->setMinimumHeight(minHeight1);
    cnt_end_angle->setEnabled(true);
@@ -112,7 +112,7 @@ void US_Hydrodyn_SasOptionsCurve::setupGUI()
 
    cnt_delta_angle= new QwtCounter(this);
    US_Hydrodyn::sizeArrows( cnt_delta_angle );
-   cnt_delta_angle->setRange(0.0001, 90, 1.0f/SAXS_Q_ROUNDING);
+   cnt_delta_angle->setRange(0.0001, 90); cnt_delta_angle->setSingleStep( 1.0f/SAXS_Q_ROUNDING);
    cnt_delta_angle->setValue((*saxs_options).delta_angle);
    cnt_delta_angle->setMinimumHeight(minHeight1);
    cnt_delta_angle->setEnabled(true);
@@ -131,7 +131,7 @@ void US_Hydrodyn_SasOptionsCurve::setupGUI()
 
    cnt_start_q = new QwtCounter(this);
    US_Hydrodyn::sizeArrows( cnt_start_q );
-   cnt_start_q->setRange(0, 90, 1.0f/SAXS_Q_ROUNDING);
+   cnt_start_q->setRange(0, 90); cnt_start_q->setSingleStep( 1.0f/SAXS_Q_ROUNDING);
    cnt_start_q->setValue((*saxs_options).start_q);
    cnt_start_q->setMinimumHeight(minHeight1);
    cnt_start_q->setEnabled(true);
@@ -150,7 +150,7 @@ void US_Hydrodyn_SasOptionsCurve::setupGUI()
 
    cnt_end_q = new QwtCounter(this);
    US_Hydrodyn::sizeArrows( cnt_end_q );
-   cnt_end_q->setRange(0, 90, 1.0f/SAXS_Q_ROUNDING);
+   cnt_end_q->setRange(0, 90); cnt_end_q->setSingleStep( 1.0f/SAXS_Q_ROUNDING);
    cnt_end_q->setValue((*saxs_options).end_q);
    cnt_end_q->setMinimumHeight(minHeight1);
    cnt_end_q->setEnabled(true);
@@ -169,7 +169,7 @@ void US_Hydrodyn_SasOptionsCurve::setupGUI()
 
    cnt_delta_q = new QwtCounter(this);
    US_Hydrodyn::sizeArrows( cnt_delta_q );
-   cnt_delta_q->setRange(0.0001, 90, 1.0f/SAXS_Q_ROUNDING);
+   cnt_delta_q->setRange(0.0001, 90); cnt_delta_q->setSingleStep( 1.0f/SAXS_Q_ROUNDING);
    cnt_delta_q->setValue((*saxs_options).delta_q);
    cnt_delta_q->setMinimumHeight(minHeight1);
    cnt_delta_q->setEnabled(true);

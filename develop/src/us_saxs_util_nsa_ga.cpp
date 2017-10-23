@@ -164,7 +164,7 @@ bool US_Saxs_Util::nsa_ga( double & nrmsd )
 
       cout << QString( "start: nsa_pop.size() %1\n" ).arg( last_pop.size() );
 
-      nsa_pop.clear();
+      nsa_pop.clear( );
 
       for ( unsigned int i = 0; i < control_parameters[ "nsapopulation" ].toUInt(); i++ )
       {

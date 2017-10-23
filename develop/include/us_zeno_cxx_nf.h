@@ -158,8 +158,8 @@ namespace nanoflann
 
 		inline ~RadiusResultSet() { }
 
-		inline void init() { clear(); }
-		inline void clear() { m_indices_dists.clear(); }
+		inline void init( ) { clear( ); }
+		inline void clear( ) { m_indices_dists.clear( ); }
 
 		inline size_t size() const { return m_indices_dists.size(); }
 
@@ -177,7 +177,7 @@ namespace nanoflann
 		inline void set_radius_and_clear( const DistanceType r )
 		{
 			radius = r;
-			clear();
+			clear( );
 		}
 
 		/**
@@ -2263,7 +2263,7 @@ QuasiRandomSpherePointsRegularCube<T>::
 	   int minNumPoints,
 	   std::vector<Vector3<T> > & points) {
 
-  points.clear();
+  points.clear( );
 
   //generate points on unit cube centered at origin
 

@@ -174,13 +174,13 @@ void US_Hydrodyn_SasOptionsExperimental::setupGUI()
 
    //    cnt_compute_exponential_terms = new QwtCounter(this);
    //    US_Hydrodyn::sizeArrows( cnt_compute_exponential_terms );
-   //    cnt_compute_exponential_terms->setRange( 0, 20, 1 );
+   //    cnt_compute_exponential_terms->setRange( 0, 20); cnt_compute_exponential_terms->setSingleStep( 1 );
    //    cnt_compute_exponential_terms->setValue((*saxs_options).compute_exponential_terms);
    //    cnt_compute_exponential_terms->setMinimumHeight(minHeight1);
    //    cnt_compute_exponential_terms->setEnabled(true);
    //    cnt_compute_exponential_terms->setNumButtons(1);
    //    cnt_compute_exponential_terms->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   //    cnt_compute_exponential_terms->setPalette( USglobal->global_colors.cg_normal );
+   //    cnt_compute_exponential_terms->setPalette( PALET_NORMAL );
    //    connect(cnt_compute_exponential_terms, SIGNAL(valueChanged(double)), SLOT(update_compute_exponential_terms(double)));
 
    cb_multiply_iq_by_atomic_volume = new QCheckBox(this);

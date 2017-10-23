@@ -492,7 +492,7 @@ void US_Hydrodyn_Saxs_Hplc_Options::setupGUI()
    // le_maxfpk_restart_tries = new QLineEdit( this );  le_maxfpk_restart_tries->setObjectName( "le_maxfpk_restart_tries Line Edit" );
    // le_maxfpk_restart_tries->setText( (*parameters)[ "hplc_maxfpk_restart_tries" ] );
    // le_maxfpk_restart_tries->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
-   // le_maxfpk_restart_tries->setPalette( USglobal->global_colors.cg_normal );
+   // le_maxfpk_restart_tries->setPalette( PALET_NORMAL );
    // le_maxfpk_restart_tries->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
    // {
    //    QIntValidator *qiv = new QIntValidator( 1, 10, le_maxfpk_restart_tries );
@@ -825,7 +825,7 @@ void US_Hydrodyn_Saxs_Hplc_Options::update_enables()
    if ( cb_makeiq_cutmax_pct->isEnabled() &&
         cb_makeiq_cutmax_pct->isChecked() &&
         le_makeiq_avg_peaks->text().toDouble() > 100.0 - le_makeiq_cutmax_pct->text().toDouble() ) {
-      le_makeiq_avg_peaks->setText( QString( "%1" ).arg( 100.0 - le_makeiq_cutmax_pct->text( ).toDouble( ) ) );
+      le_makeiq_avg_peaks->setText( QString( "%1" ).arg( 100.0 - le_makeiq_cutmax_pct->text().toDouble() ) );
    }
 }
 

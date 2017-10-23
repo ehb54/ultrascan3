@@ -67,7 +67,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
 
    // lbl_dir = new mQLabel( QDir::currentPath(), this );
    // lbl_dir->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
-   // lbl_dir->setPalette( USglobal->global_colors.cg_normal );
+   // lbl_dir->setPalette( PALET_NORMAL );
    // lbl_dir->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 2));
    // connect( lbl_dir, SIGNAL(pressed()), SLOT( dir_pressed() ));
 
@@ -183,13 +183,13 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    //    pb_join->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    //    pb_join->setMinimumHeight( minHeight1 );
    //    pb_join->setMaximumWidth ( minHeight1 * 2 );
-   //    pb_join->setPalette( USglobal->global_colors.cg_pushb );
+   //    pb_join->setPalette( PALET_PUSHB );
    //    connect(pb_join, SIGNAL(clicked()), SLOT(join()));
 
    //    pb_adjacent = new QPushButton(us_tr("Similar"), this);
    //    pb_adjacent->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    //    pb_adjacent->setMinimumHeight(minHeight1);
-   //    pb_adjacent->setPalette( USglobal->global_colors.cg_pushb );
+   //    pb_adjacent->setPalette( PALET_PUSHB );
    //    connect(pb_adjacent, SIGNAL(clicked()), SLOT(adjacent()));
 
    pb_to_saxs = new QPushButton(us_tr("To SOMO/SAS"), this);
@@ -303,7 +303,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    // pb_plot_files = new QPushButton(us_tr("Plot"), this);
    // pb_plot_files->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    // pb_plot_files->setMinimumHeight(minHeight1);
-   // pb_plot_files->setPalette( USglobal->global_colors.cg_pushb );
+   // pb_plot_files->setPalette( PALET_PUSHB );
    // connect(pb_plot_files, SIGNAL(clicked()), SLOT(plot_files()));
 
    pb_conc_avg = new QPushButton(us_tr("Conc. norm. avg."), this);
@@ -400,37 +400,37 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    //    pb_set_hplc = new QPushButton(us_tr("Set buffer"), this);
    //    pb_set_hplc->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    //    pb_set_hplc->setMinimumHeight(minHeight1);
-   //    pb_set_hplc->setPalette( USglobal->global_colors.cg_pushb );
+   //    pb_set_hplc->setPalette( PALET_PUSHB );
    //    connect(pb_set_hplc, SIGNAL(clicked()), SLOT(set_hplc()));
    
    //    lbl_hplc = new QLabel("", this );
    //    lbl_hplc->setMinimumHeight(minHeight1);
    //    lbl_hplc->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
-   //    lbl_hplc->setPalette( USglobal->global_colors.cg_normal );
+   //    lbl_hplc->setPalette( PALET_NORMAL );
    //    lbl_hplc->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
 
    //    pb_set_empty = new QPushButton(us_tr("Set blank"), this);
    //    pb_set_empty->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    //    pb_set_empty->setMinimumHeight(minHeight1);
-   //    pb_set_empty->setPalette( USglobal->global_colors.cg_pushb );
+   //    pb_set_empty->setPalette( PALET_PUSHB );
    //    connect(pb_set_empty, SIGNAL(clicked()), SLOT(set_empty()));
 
    //    lbl_empty = new QLabel("", this );
    //    lbl_empty->setMinimumHeight(minHeight1);
    //    lbl_empty->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
-   //    lbl_empty->setPalette( USglobal->global_colors.cg_normal );
+   //    lbl_empty->setPalette( PALET_NORMAL );
    //    lbl_empty->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
 
    //    pb_set_signal = new QPushButton(us_tr("Set solution"), this);
    //    pb_set_signal->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    //    pb_set_signal->setMinimumHeight(minHeight1);
-   //    pb_set_signal->setPalette( USglobal->global_colors.cg_pushb );
+   //    pb_set_signal->setPalette( PALET_PUSHB );
    //    connect(pb_set_signal, SIGNAL(clicked()), SLOT(set_signal()));
 
    //    lbl_signal = new QLabel("", this );
    //    lbl_signal->setMinimumHeight(minHeight1);
    //    lbl_signal->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
-   //    lbl_signal->setPalette( USglobal->global_colors.cg_normal );
+   //    lbl_signal->setPalette( PALET_NORMAL );
    //    lbl_signal->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
 
    lbl_created_files = new mQLabel("Produced Data", this);
@@ -443,7 +443,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
 
    // lbl_created_dir = new mQLabel( QDir::currentPath(), this );
    // lbl_created_dir->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
-   // lbl_created_dir->setPalette( USglobal->global_colors.cg_normal );
+   // lbl_created_dir->setPalette( PALET_NORMAL );
    // lbl_created_dir->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 2));
    // connect( lbl_created_dir, SIGNAL(pressed()), SLOT( created_dir_pressed() ));
 
@@ -623,12 +623,12 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
 
 
 #if QT_VERSION < 0x040000
-# if defined(QT4) && defined(Q_WS_MAC)
+# if QT_VERSION >= 0x040000 && defined(Q_WS_MAC)
    {
  //      Q3PopupMenu * file = new Q3PopupMenu;
-      file->insertItem( us_tr("&Font"),  this, SLOT(update_font( )),    Qt::ALT+Qt::Key_F );
-      file->insertItem( us_tr("&Save"),  this, SLOT(save( )),    Qt::ALT+Qt::Key_S );
-      file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display( )),   Qt::ALT+Qt::Key_X );
+      file->insertItem( us_tr("&Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
+      file->insertItem( us_tr("&Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
+      file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
 
       QMenuBar *menu = new QMenuBar( this );
       AUTFBACK( menu );
@@ -647,9 +647,9 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    AUTFBACK( m );
  //   Q3PopupMenu * file = new Q3PopupMenu(editor);
    m->insertItem( us_tr("&File"), file );
-   file->insertItem( us_tr("Font"),  this, SLOT(update_font( )),    Qt::ALT+Qt::Key_F );
-   file->insertItem( us_tr("Save"),  this, SLOT(save( )),    Qt::ALT+Qt::Key_S );
-   file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display( )),   Qt::ALT+Qt::Key_X );
+   file->insertItem( us_tr("Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
+   file->insertItem( us_tr("Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
+   file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
 # endif
 #else
    QFrame *frame;
@@ -686,7 +686,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
 
    plot_dist = new QwtPlot( qs );
    plot_info[ "HPLC SAXS Main" ] = plot_dist;
-#ifndef QT4
+#if QT_VERSION < 0x040000
    // plot_dist->enableOutline(true);
    // plot_dist->setOutlinePen(Qt::white);
    // plot_dist->setOutlineStyle(Qwt::VLine);
@@ -699,39 +699,39 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
 #endif
    plot_dist->setPalette( PALET_NORMAL );
    AUTFBACK( plot_dist );
-#ifndef QT4
+#if QT_VERSION < 0x040000
    plot_dist->setGridMajPen(QPen(USglobal->global_colors.major_ticks, 0, DotLine));
    plot_dist->setGridMinPen(QPen(USglobal->global_colors.minor_ticks, 0, DotLine));
 #else
-   grid_saxs->setMajPen( QPen( USglobal->global_colors.major_ticks, 0, Qt::DotLine ) );
-   grid_saxs->setMinPen( QPen( USglobal->global_colors.minor_ticks, 0, Qt::DotLine ) );
+   grid_saxs->setMajorPen( QPen( USglobal->global_colors.major_ticks, 0, Qt::DotLine ) );
+   grid_saxs->setMinorPen( QPen( USglobal->global_colors.minor_ticks, 0, Qt::DotLine ) );
    grid_saxs->attach( plot_dist );
 #endif
    plot_dist->setAxisTitle(QwtPlot::xBottom, /* cb_guinier->isChecked() ? us_tr("q^2 (1/Angstrom^2)") : */  us_tr("q [1/Angstrom]" )); // or Time or Frame"));
    plot_dist->setAxisTitle(QwtPlot::yLeft, us_tr("Intensity [a.u.] (log scale)"));
-#ifndef QT4
+#if QT_VERSION < 0x040000
    plot_dist->setTitleFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 3, QFont::Bold));
    plot_dist->setAxisTitleFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 #endif
    plot_dist->setAxisFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-#ifndef QT4
+#if QT_VERSION < 0x040000
    plot_dist->setAxisTitleFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 #endif
    plot_dist->setAxisFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-#ifndef QT4
+#if QT_VERSION < 0x040000
    plot_dist->setAxisTitleFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 #endif
    plot_dist->setAxisFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-   plot_dist->setMargin(USglobal->config_list.margin);
+//    plot_dist->setMargin(USglobal->config_list.margin);
    plot_dist->setTitle("");
-#ifndef QT4
+#if QT_VERSION < 0x040000
    plot_dist->setAxisOptions(QwtPlot::yLeft, QwtAutoScale::Logarithmic);
 #else
-   plot_dist->setAxisScaleEngine(QwtPlot::yLeft, new QwtLog10ScaleEngine);
+   plot_dist->setAxisScaleEngine(QwtPlot::yLeft, new QwtLogScaleEngine(10));
 #endif
    plot_dist->setCanvasBackground(USglobal->global_colors.plot);
 
-#ifndef QT4
+#if QT_VERSION < 0x040000
    plot_dist->setAutoLegend( false );
    plot_dist->setLegendFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 2 ) );
 #else
@@ -748,7 +748,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    plot_ref = new QwtPlot( qs );
    plot_info[ "HPLC SAXS Reference" ] = plot_ref;
 
-#ifndef QT4
+#if QT_VERSION < 0x040000
    // plot_ref->enableOutline(true);
    // plot_ref->setOutlinePen(Qt::white);
    // plot_ref->setOutlineStyle(Qwt::VLine);
@@ -761,42 +761,42 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
 #endif
    plot_ref->setPalette( PALET_NORMAL );
    AUTFBACK( plot_ref );
-#ifndef QT4
+#if QT_VERSION < 0x040000
    plot_ref->setGridMajPen(QPen(USglobal->global_colors.major_ticks, 0, DotLine));
    plot_ref->setGridMinPen(QPen(USglobal->global_colors.minor_ticks, 0, DotLine));
 #else
-   grid_ref->setMajPen( QPen( USglobal->global_colors.major_ticks, 0, Qt::DotLine ) );
-   grid_ref->setMinPen( QPen( USglobal->global_colors.minor_ticks, 0, Qt::DotLine ) );
+   grid_ref->setMajorPen( QPen( USglobal->global_colors.major_ticks, 0, Qt::DotLine ) );
+   grid_ref->setMinorPen( QPen( USglobal->global_colors.minor_ticks, 0, Qt::DotLine ) );
    grid_ref->attach( plot_ref );
 #endif
    plot_ref->setAxisTitle(QwtPlot::xBottom, us_tr( "Time [a.u.]" ) );
    plot_ref->setAxisTitle(QwtPlot::yLeft, us_tr("Intensity [a.u.]"));
-#ifndef QT4
+#if QT_VERSION < 0x040000
    plot_ref->setTitleFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 3, QFont::Bold));
    plot_ref->setAxisTitleFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 #endif
    plot_ref->setAxisFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-#ifndef QT4
+#if QT_VERSION < 0x040000
    plot_ref->setAxisTitleFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 #endif
    plot_ref->setAxisFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-#ifndef QT4
+#if QT_VERSION < 0x040000
    plot_ref->setAxisTitleFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 #endif
    plot_ref->setAxisFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-   plot_ref->setMargin(USglobal->config_list.margin);
+//    plot_ref->setMargin(USglobal->config_list.margin);
    plot_ref->setTitle("");
-#ifndef QT4
+#if QT_VERSION < 0x040000
    // plot_ref->setAxisOptions(QwtPlot::yLeft, QwtAutoScale::Logarithmic);
 #else
-   // plot_ref->setAxisScaleEngine(QwtPlot::yLeft, new QwtLog10ScaleEngine);
+   // plot_ref->setAxisScaleEngine(QwtPlot::yLeft, new QwtLogScaleEngine(10));
 #endif
    plot_ref->setCanvasBackground(USglobal->global_colors.plot);
    plot_ref->hide();
    plot_ref->setSizePolicy(QSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding)); 
    plot_errors = new QwtPlot( this );
    plot_info[ "HPLC SAXS Errors" ] = plot_errors;
-#ifndef QT4
+#if QT_VERSION < 0x040000
    // plot_errors->enableOutline(true);
    // plot_errors->setOutlinePen(Qt::white);
    // plot_errors->setOutlineStyle(Qwt::VLine);
@@ -809,39 +809,39 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
 #endif
    plot_errors->setPalette( PALET_NORMAL );
    AUTFBACK( plot_errors );
-#ifndef QT4
+#if QT_VERSION < 0x040000
    plot_errors->setGridMajPen(QPen(USglobal->global_colors.major_ticks, 0, DotLine));
    plot_errors->setGridMinPen(QPen(USglobal->global_colors.minor_ticks, 0, DotLine));
 #else
-   grid_errors->setMajPen( QPen( USglobal->global_colors.major_ticks, 0, Qt::DotLine ) );
-   grid_errors->setMinPen( QPen( USglobal->global_colors.minor_ticks, 0, Qt::DotLine ) );
+   grid_errors->setMajorPen( QPen( USglobal->global_colors.major_ticks, 0, Qt::DotLine ) );
+   grid_errors->setMinorPen( QPen( USglobal->global_colors.minor_ticks, 0, Qt::DotLine ) );
    grid_errors->attach( plot_errors );
 #endif
    // plot_errors->setAxisTitle(QwtPlot::xBottom, /* cb_guinier->isChecked() ? us_tr("q^2 (1/Angstrom^2)") : */  us_tr("q (1/Angstrom) or Frame"));
    // plot_errors->setAxisTitle(QwtPlot::yLeft, us_tr("I(q) (log scale)"));
-#ifndef QT4
+#if QT_VERSION < 0x040000
    // plot_errors->setTitleFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 3, QFont::Bold));
    // plot_errors->setAxisTitleFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 #endif
    plot_errors->setAxisFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-#ifndef QT4
+#if QT_VERSION < 0x040000
    // plot_errors->setAxisTitleFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 #endif
    plot_errors->setAxisFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-#ifndef QT4
+#if QT_VERSION < 0x040000
    // plot_errors->setAxisTitleFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 #endif
    // plot_errors->setAxisFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-   plot_errors->setMargin(USglobal->config_list.margin);
+//    plot_errors->setMargin(USglobal->config_list.margin);
    plot_errors->setTitle("");
    plot_errors->setCanvasBackground(USglobal->global_colors.plot);
 
    plot_errors_zoomer = new ScrollZoomer(plot_errors->canvas());
    plot_errors_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
-#ifndef QT4
+#if QT_VERSION < 0x040000
    plot_errors_zoomer->setCursorLabelPen(QPen(Qt::yellow));
 #endif
-   connect( plot_errors_zoomer, SIGNAL( zoomed( const QwtDoubleRect & ) ), SLOT( plot_errors_zoomed( const QwtDoubleRect & ) ) );
+   connect( plot_errors_zoomer, SIGNAL( zoomed( const QRectF & ) ), SLOT( plot_errors_zoomed( const QRectF & ) ) );
 
    cb_plot_errors_rev = new QCheckBox(this);
    cb_plot_errors_rev->setText(us_tr("Reverse"));
@@ -966,7 +966,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    
    qwtw_wheel = new QwtWheel( this );
    // qwtw_wheel->setMass         ( 0.5 );
-   // qwtw_wheel->setRange        ( -1000, 1000, 1 );
+   // qwtw_wheel->setRange( -1000, 1000); qwtw_wheel->setSingleStep( 1 );
    qwtw_wheel->setMinimumHeight( minHeight1 );
    // qwtw_wheel->setTotalAngle( 3600.0 );
    qwtw_wheel->setEnabled      ( false );
@@ -1039,7 +1039,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    pb_gauss_clear->setMinimumHeight(minHeight1);
    pb_gauss_clear->setPalette( PALET_PUSHB );
    pb_gauss_clear->setEnabled( false );
-   connect(pb_gauss_clear, SIGNAL(clicked()), SLOT(gauss_clear()));
+   connect(pb_gauss_clear, SIGNAL(clicked( )), SLOT(gauss_clear( )));
 
    pb_gauss_new = new QPushButton(us_tr("New"), this);
    pb_gauss_new->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
@@ -1558,7 +1558,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
 
    ggqfit_plot = new QwtPlot( this );
    plot_info[ "HPLC SAXS Global Gaussian Fit By q" ] = ggqfit_plot;
-#ifndef QT4
+#if QT_VERSION < 0x040000
    ggqfit_plot->enableGridXMin();
    ggqfit_plot->enableGridYMin();
 #else
@@ -1568,39 +1568,39 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
 #endif
    ggqfit_plot->setPalette( PALET_NORMAL );
    AUTFBACK( ggqfit_plot );
-#ifndef QT4
+#if QT_VERSION < 0x040000
    ggqfit_plot->setGridMajPen(QPen(USglobal->global_colors.major_ticks, 0, DotLine));
    ggqfit_plot->setGridMinPen(QPen(USglobal->global_colors.minor_ticks, 0, DotLine));
 #else
-   ggqfit_plot_grid->setMajPen( QPen( USglobal->global_colors.major_ticks, 0, Qt::DotLine ) );
-   ggqfit_plot_grid->setMinPen( QPen( USglobal->global_colors.minor_ticks, 0, Qt::DotLine ) );
+   ggqfit_plot_grid->setMajorPen( QPen( USglobal->global_colors.major_ticks, 0, Qt::DotLine ) );
+   ggqfit_plot_grid->setMinorPen( QPen( USglobal->global_colors.minor_ticks, 0, Qt::DotLine ) );
    ggqfit_plot_grid->attach( ggqfit_plot );
 #endif
    ggqfit_plot->setAxisTitle(QwtPlot::xBottom, us_tr("q (1/Angstrom)"));
    ggqfit_plot->setAxisTitle(QwtPlot::yLeft, us_tr( "Chi^2 or RMSD" ) );
-#ifndef QT4
+#if QT_VERSION < 0x040000
    ggqfit_plot->setTitleFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 3, QFont::Bold));
    ggqfit_plot->setAxisTitleFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 #endif
    ggqfit_plot->setAxisFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-#ifndef QT4
+#if QT_VERSION < 0x040000
    ggqfit_plot->setAxisTitleFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 #endif
    ggqfit_plot->setAxisFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-#ifndef QT4
+#if QT_VERSION < 0x040000
    ggqfit_plot->setAxisTitleFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 #endif
    ggqfit_plot->setAxisFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-   ggqfit_plot->setMargin(USglobal->config_list.margin);
+//    ggqfit_plot->setMargin(USglobal->config_list.margin);
    ggqfit_plot->setTitle("");
-#ifndef QT4
+#if QT_VERSION < 0x040000
    ggqfit_plot->setAxisOptions(QwtPlot::yLeft, QwtAutoScale::None);
 #else
    ggqfit_plot->setAxisScaleEngine(QwtPlot::yLeft, new QwtLinearScaleEngine );
 #endif
    ggqfit_plot->setCanvasBackground(USglobal->global_colors.plot);
 
-#ifndef QT4
+#if QT_VERSION < 0x040000
    ggqfit_plot->setAutoLegend( false );
    ggqfit_plot->setLegendFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 2 ) );
 #else
@@ -1613,10 +1613,10 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    //   connect( ggqfit_plot->canvas(), SIGNAL( mouseReleased( const QMouseEvent & ) ), SLOT( plot_mouse(  const QMouseEvent & ) ) );
 
    ggqfit_plot->enableAxis    ( QwtPlot::yRight , true );
-#ifndef QT4
+#if QT_VERSION < 0x040000
    ggqfit_plot->setAxisOptions( QwtPlot::yRight, QwtAutoScale::Logarithmic );
 #else
-   ggqfit_plot->setAxisScaleEngine( QwtPlot::yRight, new QwtLog10ScaleEngine );
+   ggqfit_plot->setAxisScaleEngine( QwtPlot::yRight, new QwtLogScaleEngine(10) );
 #endif
 
    cb_ggq_plot_chi2 = new QCheckBox(this);
@@ -2078,12 +2078,12 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    lbl_guinier_stats->setAlignment(Qt::AlignCenter | Qt::AlignVCenter);
    lbl_guinier_stats->setPalette( PALET_NORMAL );
    AUTFBACK( lbl_guinier_stats );
-   // lbl_guinier_stats->setPalette( USglobal->global_colors.cg_label );
+   // lbl_guinier_stats->setPalette( PALET_LABEL );
    lbl_guinier_stats->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold ) );
 
    guinier_plot = new QwtPlot( qs );
    plot_info[ "HPLC SAXS Guinier" ] = guinier_plot;
-#ifndef QT4
+#if QT_VERSION < 0x040000
    guinier_plot->enableGridXMin();
    guinier_plot->enableGridYMin();
 #else
@@ -2093,39 +2093,39 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
 #endif
    guinier_plot->setPalette( PALET_NORMAL );
    AUTFBACK( guinier_plot );
-#ifndef QT4
+#if QT_VERSION < 0x040000
    guinier_plot->setGridMajPen(QPen(USglobal->global_colors.major_ticks, 0, DotLine));
    guinier_plot->setGridMinPen(QPen(USglobal->global_colors.minor_ticks, 0, DotLine));
 #else
-   guinier_plot_grid->setMajPen( QPen( USglobal->global_colors.major_ticks, 0, Qt::DotLine ) );
-   guinier_plot_grid->setMinPen( QPen( USglobal->global_colors.minor_ticks, 0, Qt::DotLine ) );
+   guinier_plot_grid->setMajorPen( QPen( USglobal->global_colors.major_ticks, 0, Qt::DotLine ) );
+   guinier_plot_grid->setMinorPen( QPen( USglobal->global_colors.minor_ticks, 0, Qt::DotLine ) );
    guinier_plot_grid->attach( guinier_plot );
 #endif
    guinier_plot->setAxisTitle(QwtPlot::xBottom, us_tr( "q^2 [1/Angstrom^2]" ) );
    guinier_plot->setAxisTitle(QwtPlot::yLeft, us_tr("Intensity [a.u.] (log scale)"));
-#ifndef QT4
+#if QT_VERSION < 0x040000
    guinier_plot->setTitleFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 3, QFont::Bold));
    guinier_plot->setAxisTitleFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 #endif
    guinier_plot->setAxisFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-#ifndef QT4
+#if QT_VERSION < 0x040000
    guinier_plot->setAxisTitleFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 #endif
    guinier_plot->setAxisFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-#ifndef QT4
+#if QT_VERSION < 0x040000
    guinier_plot->setAxisTitleFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 #endif
    guinier_plot->setAxisFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-   guinier_plot->setMargin(USglobal->config_list.margin);
+//    guinier_plot->setMargin(USglobal->config_list.margin);
    guinier_plot->setTitle("");
-#ifndef QT4
+#if QT_VERSION < 0x040000
    guinier_plot->setAxisOptions(QwtPlot::yLeft, QwtAutoScale::Logarithmic);
 #else
-   guinier_plot->setAxisScaleEngine(QwtPlot::yLeft, new QwtLog10ScaleEngine);
+   guinier_plot->setAxisScaleEngine(QwtPlot::yLeft, new QwtLogScaleEngine(10));
 #endif
    guinier_plot->setCanvasBackground(USglobal->global_colors.plot);
 
-#ifndef QT4
+#if QT_VERSION < 0x040000
    guinier_plot->setAutoLegend( false );
    guinier_plot->setLegendFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 2 ) );
 #else
@@ -2141,7 +2141,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
 
    guinier_plot_rg = new QwtPlot( qs );
    plot_info[ "HPLC SAXS Guinier Rg" ] = guinier_plot_rg;
-#ifndef QT4
+#if QT_VERSION < 0x040000
    guinier_plot_rg->enableGridXMin();
    guinier_plot_rg->enableGridYMin();
 #else
@@ -2151,39 +2151,39 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
 #endif
    guinier_plot_rg->setPalette( PALET_NORMAL );
    AUTFBACK( guinier_plot_rg );
-#ifndef QT4
+#if QT_VERSION < 0x040000
    guinier_plot_rg->setGridMajPen(QPen(USglobal->global_colors.major_ticks, 0, DotLine));
    guinier_plot_rg->setGridMinPen(QPen(USglobal->global_colors.minor_ticks, 0, DotLine));
 #else
-   guinier_plot_rg_grid->setMajPen( QPen( USglobal->global_colors.major_ticks, 0, Qt::DotLine ) );
-   guinier_plot_rg_grid->setMinPen( QPen( USglobal->global_colors.minor_ticks, 0, Qt::DotLine ) );
+   guinier_plot_rg_grid->setMajorPen( QPen( USglobal->global_colors.major_ticks, 0, Qt::DotLine ) );
+   guinier_plot_rg_grid->setMinorPen( QPen( USglobal->global_colors.minor_ticks, 0, Qt::DotLine ) );
    guinier_plot_rg_grid->attach( guinier_plot_rg );
 #endif
    guinier_plot_rg->setAxisTitle(QwtPlot::xBottom, us_tr( "Time [a.u.]" ) );
    guinier_plot_rg->setAxisTitle(QwtPlot::yLeft, us_tr("Rg [Angstrom]"));
-#ifndef QT4
+#if QT_VERSION < 0x040000
    guinier_plot_rg->setTitleFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 3, QFont::Bold));
    guinier_plot_rg->setAxisTitleFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 #endif
    guinier_plot_rg->setAxisFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-#ifndef QT4
+#if QT_VERSION < 0x040000
    guinier_plot_rg->setAxisTitleFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 #endif
    guinier_plot_rg->setAxisFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-#ifndef QT4
+#if QT_VERSION < 0x040000
    guinier_plot_rg->setAxisTitleFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 #endif
    guinier_plot_rg->setAxisFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-   guinier_plot_rg->setMargin(USglobal->config_list.margin);
+//    guinier_plot_rg->setMargin(USglobal->config_list.margin);
    guinier_plot_rg->setTitle("");
-#ifndef QT4
+#if QT_VERSION < 0x040000
    guinier_plot_rg->setAxisOptions(QwtPlot::yLeft, QwtAutoScale::None);
 #else
    guinier_plot_rg->setAxisScaleEngine(QwtPlot::yLeft, new QwtLinearScaleEngine );
 #endif
    guinier_plot_rg->setCanvasBackground(USglobal->global_colors.plot);
 
-#ifndef QT4
+#if QT_VERSION < 0x040000
    guinier_plot_rg->setAutoLegend( false );
    guinier_plot_rg->setLegendFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 2 ) );
 #else
@@ -2200,7 +2200,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
 
    guinier_plot_mw = new QwtPlot( qs );
    plot_info[ "HPLC SAXS Guinier MW" ] = guinier_plot_mw;
-#ifndef QT4
+#if QT_VERSION < 0x040000
    guinier_plot_mw->enableGridXMin();
    guinier_plot_mw->enableGridYMin();
 #else
@@ -2210,39 +2210,39 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
 #endif
    guinier_plot_mw->setPalette( PALET_NORMAL );
    AUTFBACK( guinier_plot_mw );
-#ifndef QT4
+#if QT_VERSION < 0x040000
    guinier_plot_mw->setGridMajPen(QPen(USglobal->global_colors.major_ticks, 0, DotLine));
    guinier_plot_mw->setGridMinPen(QPen(USglobal->global_colors.minor_ticks, 0, DotLine));
 #else
-   guinier_plot_mw_grid->setMajPen( QPen( USglobal->global_colors.major_ticks, 0, Qt::DotLine ) );
-   guinier_plot_mw_grid->setMinPen( QPen( USglobal->global_colors.minor_ticks, 0, Qt::DotLine ) );
+   guinier_plot_mw_grid->setMajorPen( QPen( USglobal->global_colors.major_ticks, 0, Qt::DotLine ) );
+   guinier_plot_mw_grid->setMinorPen( QPen( USglobal->global_colors.minor_ticks, 0, Qt::DotLine ) );
    guinier_plot_mw_grid->attach( guinier_plot_mw );
 #endif
    guinier_plot_mw->setAxisTitle(QwtPlot::xBottom, us_tr( "Time [a.u.]" ) );
    guinier_plot_mw->setAxisTitle(QwtPlot::yLeft, us_tr( started_in_expert_mode ? "Approx. MW [Daltons]" : "MW[RT] [Daltons]" ));
-#ifndef QT4
+#if QT_VERSION < 0x040000
    guinier_plot_mw->setTitleFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 3, QFont::Bold));
    guinier_plot_mw->setAxisTitleFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 #endif
    guinier_plot_mw->setAxisFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-#ifndef QT4
+#if QT_VERSION < 0x040000
    guinier_plot_mw->setAxisTitleFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 #endif
    guinier_plot_mw->setAxisFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-#ifndef QT4
+#if QT_VERSION < 0x040000
    guinier_plot_mw->setAxisTitleFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 #endif
    guinier_plot_mw->setAxisFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-   guinier_plot_mw->setMargin(USglobal->config_list.margin);
+//    guinier_plot_mw->setMargin(USglobal->config_list.margin);
    guinier_plot_mw->setTitle("");
-#ifndef QT4
+#if QT_VERSION < 0x040000
    guinier_plot_mw->setAxisOptions(QwtPlot::yLeft, QwtAutoScale::None);
 #else
    guinier_plot_mw->setAxisScaleEngine(QwtPlot::yLeft, new QwtLinearScaleEngine );
 #endif
    guinier_plot_mw->setCanvasBackground(USglobal->global_colors.plot);
 
-#ifndef QT4
+#if QT_VERSION < 0x040000
    guinier_plot_mw->setAutoLegend( started_in_expert_mode );
    guinier_plot_mw->setLegendFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 2 ) );
 #else
@@ -2402,7 +2402,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
 
    guinier_plot_errors = new QwtPlot( qs );
    plot_info[ "HPLC SAXS Guinier Errors" ] = guinier_plot_errors;
-#ifndef QT4
+#if QT_VERSION < 0x040000
    guinier_plot_errors->enableGridXMin();
    guinier_plot_errors->enableGridYMin();
 #else
@@ -2412,39 +2412,39 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
 #endif
    guinier_plot_errors->setPalette( PALET_NORMAL );
    AUTFBACK( guinier_plot_errors );
-#ifndef QT4
+#if QT_VERSION < 0x040000
    guinier_plot_errors->setGridMajPen(QPen(USglobal->global_colors.major_ticks, 0, DotLine));
    guinier_plot_errors->setGridMinPen(QPen(USglobal->global_colors.minor_ticks, 0, DotLine));
 #else
-   guinier_plot_errors_grid->setMajPen( QPen( USglobal->global_colors.major_ticks, 0, Qt::DotLine ) );
-   guinier_plot_errors_grid->setMinPen( QPen( USglobal->global_colors.minor_ticks, 0, Qt::DotLine ) );
+   guinier_plot_errors_grid->setMajorPen( QPen( USglobal->global_colors.major_ticks, 0, Qt::DotLine ) );
+   guinier_plot_errors_grid->setMinorPen( QPen( USglobal->global_colors.minor_ticks, 0, Qt::DotLine ) );
    guinier_plot_errors_grid->attach( guinier_plot_errors );
 #endif
    guinier_plot_errors->setAxisTitle(QwtPlot::xBottom, us_tr( "q^2 [1/Angstrom^2]" ) );
    guinier_plot_errors->setAxisTitle(QwtPlot::yLeft, us_tr("Intensity [a.u.] (log scale)"));
-#ifndef QT4
+#if QT_VERSION < 0x040000
    guinier_plot_errors->setTitleFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 3, QFont::Bold));
    guinier_plot_errors->setAxisTitleFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 #endif
    guinier_plot_errors->setAxisFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-#ifndef QT4
+#if QT_VERSION < 0x040000
    guinier_plot_errors->setAxisTitleFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 #endif
    guinier_plot_errors->setAxisFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-#ifndef QT4
+#if QT_VERSION < 0x040000
    guinier_plot_errors->setAxisTitleFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 #endif
    guinier_plot_errors->setAxisFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-   guinier_plot_errors->setMargin(USglobal->config_list.margin);
+//    guinier_plot_errors->setMargin(USglobal->config_list.margin);
    guinier_plot_errors->setTitle("");
-#ifndef QT4
+#if QT_VERSION < 0x040000
    guinier_plot_errors->setAxisOptions(QwtPlot::yLeft, QwtAutoScale::None);
 #else
    guinier_plot_errors->setAxisScaleEngine(QwtPlot::yLeft, new QwtLinearScaleEngine );
 #endif
    guinier_plot_errors->setCanvasBackground(USglobal->global_colors.plot);
 
-#ifndef QT4
+#if QT_VERSION < 0x040000
    guinier_plot_errors->setAutoLegend( false );
    guinier_plot_errors->setLegendFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 2 ) );
 #else
@@ -3050,7 +3050,7 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
 
    QBoxLayout * vbl_editor_group = new QVBoxLayout(0); vbl_editor_group->setContentsMargins( 0, 0, 0, 0 ); vbl_editor_group->setSpacing( 0 );
    vbl_editor_group->addWidget ( lbl_editor );
-#if !defined(QT4) || !defined(Q_WS_MAC)
+#if QT_VERSION < 0x040000 || !defined(Q_WS_MAC)
    vbl_editor_group->addWidget ( frame );
 #endif
    vbl_editor_group->addWidget ( editor );
@@ -4014,17 +4014,17 @@ void US_Hydrodyn_Saxs_Hplc::update_enables()
    {
       if ( lb_files->item( i )->isSelected() )
       {
-         selected_files << lb_files->item( i )->text( );
-         selected_map[ lb_files->item( i )->text( ) ] = true;
+         selected_files << lb_files->item( i )->text();
+         selected_map[ lb_files->item( i )->text() ] = true;
          // last_selected_pos = i;
-         last_selected_file = lb_files->item( i )->text( );
+         last_selected_file = lb_files->item( i )->text();
          files_selected_count++;
-         if ( conc_files.count( lb_files->item( i )->text( ) ) )
+         if ( conc_files.count( lb_files->item( i )->text() ) )
          {
             conc_selected_count++;
          }
-         //          if ( lb_files->item( i )->text( ) != lbl_hplc->text() &&
-         //               lb_files->item( i )->text( ) != lbl_empty->text() )
+         //          if ( lb_files->item( i )->text() != lbl_hplc->text() &&
+         //               lb_files->item( i )->text() != lbl_empty->text() )
          //          {
          //             non_hplc_non_empty_files_selected_count++;
          //          }
@@ -4061,14 +4061,14 @@ void US_Hydrodyn_Saxs_Hplc::update_enables()
    {
       if ( lb_created_files->item( i )->isSelected() )
       {
-         last_created_selected_file = lb_created_files->item( i )->text( );
-         created_selected_map[ lb_created_files->item( i )->text( ) ] = true;
+         last_created_selected_file = lb_created_files->item( i )->text();
+         created_selected_map[ lb_created_files->item( i )->text() ] = true;
          files_created_selected_count++;
-         if ( !selected_map.count( lb_created_files->item( i )->text( ) ) )
+         if ( !selected_map.count( lb_created_files->item( i )->text() ) )
          {
             files_created_selected_not_shown_count++;
          } 
-         if ( created_files_not_saved.count( lb_created_files->item( i )->text( ) ) )
+         if ( created_files_not_saved.count( lb_created_files->item( i )->text() ) )
          {
             files_created_selected_not_saved_count++;
          }
@@ -4139,18 +4139,18 @@ void US_Hydrodyn_Saxs_Hplc::update_enables()
 
    //                                        );
    //    pb_set_hplc           ->setEnabled( files_selected_count == 1 && 
-   //                                        lb_files->item( last_selected_pos )->text( ) != lbl_hplc->text() &&
-   //                                        lb_files->item( last_selected_pos )->text( ) != lbl_empty ->text() &&
-   //                                        lb_files->item( last_selected_pos )->text( ) != lbl_signal->text()
+   //                                        lb_files->item( last_selected_pos )->text() != lbl_hplc->text() &&
+   //                                        lb_files->item( last_selected_pos )->text() != lbl_empty ->text() &&
+   //                                        lb_files->item( last_selected_pos )->text() != lbl_signal->text()
    //                                        );
    //    pb_set_signal         ->setEnabled( files_selected_count == 1 && 
-   //                                        lb_files->item( last_selected_pos )->text( ) != lbl_hplc->text() &&
-   //                                        lb_files->item( last_selected_pos )->text( ) != lbl_empty ->text() &&
-   //                                        lb_files->item( last_selected_pos )->text( ) != lbl_signal->text() );
+   //                                        lb_files->item( last_selected_pos )->text() != lbl_hplc->text() &&
+   //                                        lb_files->item( last_selected_pos )->text() != lbl_empty ->text() &&
+   //                                        lb_files->item( last_selected_pos )->text() != lbl_signal->text() );
    //    pb_set_empty          ->setEnabled( files_selected_count == 1 && 
-   //                                        lb_files->item( last_selected_pos )->text( ) != lbl_hplc->text() &&
-   //                                        lb_files->item( last_selected_pos )->text( ) != lbl_empty ->text() &&
-   //                                        lb_files->item( last_selected_pos )->text( ) != lbl_signal->text() );
+   //                                        lb_files->item( last_selected_pos )->text() != lbl_hplc->text() &&
+   //                                        lb_files->item( last_selected_pos )->text() != lbl_empty ->text() &&
+   //                                        lb_files->item( last_selected_pos )->text() != lbl_signal->text() );
    pb_select_all         ->setEnabled( lb_files->count() > 0 );
    pb_select_nth         ->setEnabled( lb_files->count() > 2 );
    pb_invert             ->setEnabled( lb_files->count() > 0 );
@@ -4329,7 +4329,7 @@ void US_Hydrodyn_Saxs_Hplc::model_enables()
          if ( lb_model_files->item( i )->isSelected() )
          {
             any_model_selected = true;
-            if ( models_not_saved.count( lb_model_files->item( i )->text( ) ) )
+            if ( models_not_saved.count( lb_model_files->item( i )->text() ) )
             {
                any_model_selected_not_saved = true;
                break;
@@ -4659,7 +4659,7 @@ void US_Hydrodyn_Saxs_Hplc::model_remove( QStringList files )
    // remove them now
    for ( int i = lb_model_files->count(); i >= 0; i-- )
    {
-      if ( selected_map.count( lb_model_files->item( i )->text( ) ) )
+      if ( selected_map.count( lb_model_files->item( i )->text() ) )
       {
          models_not_saved.erase( lb_model_files->item( i )->text() );
          delete lb_model_files->takeItem( i );
@@ -4668,9 +4668,9 @@ void US_Hydrodyn_Saxs_Hplc::model_remove( QStringList files )
 
    for ( int i = lb_model_files->count() - 1; i >= 0; i-- )
    {
-      if ( selected_map.count( lb_model_files->item( i )->text( ) ) )
+      if ( selected_map.count( lb_model_files->item( i )->text() ) )
       {
-         editor_msg( "black", QString( us_tr( "Removed model %1" ) ).arg( lb_model_files->item( i )->text( ) ) );
+         editor_msg( "black", QString( us_tr( "Removed model %1" ) ).arg( lb_model_files->item( i )->text() ) );
          models.erase( lb_model_files->item( i )->text() );
          delete lb_model_files->takeItem( i );
       }

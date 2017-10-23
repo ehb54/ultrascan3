@@ -82,7 +82,7 @@ void US_Hydrodyn_BD_Options::setupGUI()
 
    cnt_bd_threshold_pb_pb= new QwtCounter(this);
    US_Hydrodyn::sizeArrows( cnt_bd_threshold_pb_pb );
-   cnt_bd_threshold_pb_pb->setRange(0, 100, 0.1);
+   cnt_bd_threshold_pb_pb->setRange(0, 100); cnt_bd_threshold_pb_pb->setSingleStep( 0.1);
    cnt_bd_threshold_pb_pb->setValue((*bd_options).threshold_pb_pb);
    cnt_bd_threshold_pb_pb->setMinimumHeight(minHeight1);
    cnt_bd_threshold_pb_pb->setMinimumWidth(150);
@@ -102,7 +102,7 @@ void US_Hydrodyn_BD_Options::setupGUI()
 
    cnt_bd_threshold_pb_sc = new QwtCounter(this);
    US_Hydrodyn::sizeArrows( cnt_bd_threshold_pb_sc );
-   cnt_bd_threshold_pb_sc->setRange(0, 100, 0.1);
+   cnt_bd_threshold_pb_sc->setRange(0, 100); cnt_bd_threshold_pb_sc->setSingleStep( 0.1);
    cnt_bd_threshold_pb_sc->setValue((*bd_options).threshold_pb_sc);
    cnt_bd_threshold_pb_sc->setMinimumHeight(minHeight1);
    cnt_bd_threshold_pb_sc->setMinimumWidth(150);
@@ -122,7 +122,7 @@ void US_Hydrodyn_BD_Options::setupGUI()
 
    cnt_bd_threshold_sc_sc= new QwtCounter(this);
    US_Hydrodyn::sizeArrows( cnt_bd_threshold_sc_sc );
-   cnt_bd_threshold_sc_sc->setRange(0, 100, 0.1);
+   cnt_bd_threshold_sc_sc->setRange(0, 100); cnt_bd_threshold_sc_sc->setSingleStep( 0.1);
    cnt_bd_threshold_sc_sc->setValue((*bd_options).threshold_sc_sc);
    cnt_bd_threshold_sc_sc->setMinimumHeight(minHeight1);
    cnt_bd_threshold_sc_sc->setMinimumWidth(150);
@@ -223,7 +223,7 @@ void US_Hydrodyn_BD_Options::setupGUI()
 
    cnt_npadif = new QwtCounter(this);
    US_Hydrodyn::sizeArrows( cnt_npadif );
-   cnt_npadif->setRange(1, 999, 1);
+   cnt_npadif->setRange(1, 999); cnt_npadif->setSingleStep( 1);
    cnt_npadif->setValue((*bd_options).npadif);
    cnt_npadif->setMinimumHeight(minHeight1);
    cnt_npadif->setMinimumWidth(150);

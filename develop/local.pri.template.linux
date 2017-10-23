@@ -46,8 +46,8 @@ INCLUDEPATH  += $$QWTPATH/include $$QWTPATH/src
 INCLUDEPATH  += $$QWT3DPATH/include
 
 # ---- system specific definitions
-!include ( uname.pri ) error( "uname.pri missing or corrupt.  Aborting..." )
-DEFINES         += QT4
+include ( uname.pri )
+
 
 # OSX also reports UNIX
 contains( DEFINES, "OSX" ) {

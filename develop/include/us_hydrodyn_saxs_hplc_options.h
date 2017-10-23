@@ -25,13 +25,13 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Options : public QDialog
       void         * hplc_win;
 
 #ifdef WIN32
-# if !defined( QT4 )
+# if QT_VERSION < 0x040000
   #pragma warning ( disable: 4251 )
 # endif
 #endif
       map < QString, QString > *              parameters;
 #ifdef WIN32
-# if !defined( QT4 )
+# if QT_VERSION < 0x040000
   #pragma warning ( default: 4251 )
 # endif
 #endif

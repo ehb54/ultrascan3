@@ -1,6 +1,8 @@
 #ifndef US_H
 #define US_H
 
+#include "us3_defines.h"
+
 #ifdef WIN32
 #include "Windows.h"
 #endif

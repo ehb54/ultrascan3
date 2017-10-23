@@ -30,7 +30,7 @@ public:
    struct Config config;
 
    // Public method
-   bool        check_config( );
+   bool        check_config();
    static void debug       ( const QString& );
 
 protected:
@@ -80,7 +80,7 @@ int main ( int argc, char **argv )
       configuration->show();
  //      a.setMainWidget(configuration);
       a.setDesktopSettingsAware(false);
-#ifdef QT4
+#if QT_VERSION >= 0x040000
       {
          QString icon = 
             configuration->USglobal->config_list.system_dir + "/etc/" + "somo3_config_128x128.ico";
@@ -208,18 +208,18 @@ void USconfig_check::set_default( const QString& system_dir )
 #endif
 
    // Set up system directories
-   config.system_dir      = QDir::convertSeparators( system_dir );
-   config.help_dir        = QDir::convertSeparators( system_dir + "/doc" );
+   config.system_dir      = QDir::toNativeSeparators( system_dir );
+   config.help_dir        = QDir::toNativeSeparators( system_dir + "/doc" );
 
    // Set the per user directory and subdirectories
    QString root_dir       = US_Config::get_home_dir();
 
    config.root_dir        = root_dir;
-   config.data_dir        = QDir::convertSeparators( root_dir + "data" );
-   config.archive_dir     = QDir::convertSeparators( root_dir + "archive" );
-   config.result_dir      = QDir::convertSeparators( root_dir + "results" );
-   config.html_dir        = QDir::convertSeparators( root_dir + "reports" );
-   config.tmp_dir         = QDir::convertSeparators( root_dir + "tmp" );
+   config.data_dir        = QDir::toNativeSeparators( root_dir + "data" );
+   config.archive_dir     = QDir::toNativeSeparators( root_dir + "archive" );
+   config.result_dir      = QDir::toNativeSeparators( root_dir + "results" );
+   config.html_dir        = QDir::toNativeSeparators( root_dir + "reports" );
+   config.tmp_dir         = QDir::toNativeSeparators( root_dir + "tmp" );
 
    config.temperature_tol = 0.5;  // Allow a max of 0.5 degrees variation
                                   // over course of run

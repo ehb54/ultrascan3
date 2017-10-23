@@ -286,7 +286,7 @@ void US_AddHybridization::add()
    QFile f(hybrid_filename);
    if (f.open(QIODevice::WriteOnly|QIODevice::Text))
    {
-      cmb_hybrid->clear();
+      cmb_hybrid->clear( );
       str1.sprintf(us_trp(" Number of Hybridizations in File: %d"), hybrid_list.size());
       QTextStream ts(&f);
       for (unsigned int i=0; i<hybrid_list.size(); i++)
@@ -324,8 +324,8 @@ void US_AddHybridization::select_file()
    {
       lbl_table->setText(hybrid_filename);
       QFile f(hybrid_filename);
-      hybrid_list.clear();
-      cmb_hybrid->clear();
+      hybrid_list.clear( );
+      cmb_hybrid->clear( );
       unsigned int i=1;
       if (f.open(QIODevice::ReadOnly|QIODevice::Text))
       {
@@ -374,8 +374,8 @@ void US_AddHybridization::select_saxs_file()
    {
       lbl_table_saxs->setText(saxs_filename);
       QFile f(saxs_filename);
-      saxs_list.clear();
-      cmb_saxs->clear();
+      saxs_list.clear( );
+      cmb_saxs->clear( );
       unsigned int i=1;
       if (f.open(QIODevice::ReadOnly|QIODevice::Text))
       {

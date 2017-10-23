@@ -2,8 +2,16 @@
 #ifndef US_WIDGETS_H
 #define US_WIDGETS_H
 
+#include <QtCore>
+#if QT_VERSION > 0x050000
+#include <QtWidgets>
+#include "qwt_picker_machine.h"
+#else
 #include <QtGui>
-
+#define setSingleStep(a) setStep(a)
+#define setMinorPen(a) setMinPen(a)
+#define setMajorPen(a) setMajPen(a)
+#endif
 #include "qwt_counter.h"
 #include "qwt_plot.h"
 #include "qwt_plot_grid.h"
@@ -161,6 +169,17 @@ class US_GUI_EXTERN US3i_widgets : public QFrame
     //! * Color is set to US3i_GuiSettings::normalColor()
     QTabWidget* us_tabwidget( int = 0,
                               int = QFont::Bold );
+
+    //! \param tedt       - Pointer to QTimeEdit
+    //! \param fontAdjust - Adjustment to default font size
+    //! \param sbox       - Optional pointer to days QSpinBox
+    //! * Color is set to US3i_GuiSettings::normalColor()
+    QHBoxLayout* us_timeedit( QTimeEdit*&, const int = 0,
+                              QSpinBox** = (QSpinBox**)NULL );
+
+    //! \param fontAdjust -  adjustment to default font size\n
+    //! * Color is set to US3i_GuiSettings::normalEdit()
+    QSpinBox* us_spinbox( int = 0 );
 
     //! \brief Write a plot file (PNG or SVG+PNG) from a plot
     //! \param fname Full path name of the plot file to create

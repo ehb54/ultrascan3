@@ -83,7 +83,7 @@ US_Hydrodyn_Saxs_Search::~US_Hydrodyn_Saxs_Search()
 void US_Hydrodyn_Saxs_Search::setupGUI()
 {
    int minHeight1 = 30;
-#if !defined(QT4) || !defined(Q_WS_MAC)
+#if QT_VERSION < 0x040000 || !defined(Q_WS_MAC)
    int minHeight3 = 30;
 #endif
 
@@ -123,8 +123,8 @@ void US_Hydrodyn_Saxs_Search::setupGUI()
    }
 
    t_csv->setSortingEnabled(false);
-    t_csv->verticalHeader()->setMovable(false);
-    t_csv->horizontalHeader()->setMovable(false);
+    t_csv->verticalHeader()->setSectionsMovable(false);
+    t_csv->horizontalHeader()->setSectionsMovable(false);
    //  t_csv->setReadOnly(false);
 
    t_csv->setColumnWidth(0, 200);
@@ -225,12 +225,12 @@ void US_Hydrodyn_Saxs_Search::setupGUI()
    editor->setReadOnly(true);
 
 #if QT_VERSION < 0x040000
-# if defined(QT4) && defined(Q_WS_MAC)
+# if QT_VERSION >= 0x040000 && defined(Q_WS_MAC)
    {
  //      Q3PopupMenu * file = new Q3PopupMenu;
-      file->insertItem( us_tr("&Font"),  this, SLOT(update_font( )),    Qt::ALT+Qt::Key_F );
-      file->insertItem( us_tr("&Save"),  this, SLOT(save( )),    Qt::ALT+Qt::Key_S );
-      file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display( )),   Qt::ALT+Qt::Key_X );
+      file->insertItem( us_tr("&Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
+      file->insertItem( us_tr("&Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
+      file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
 
       QMenuBar *menu = new QMenuBar( this );
       AUTFBACK( menu );
@@ -248,9 +248,9 @@ void US_Hydrodyn_Saxs_Search::setupGUI()
    AUTFBACK( m );
  //   Q3PopupMenu * file = new Q3PopupMenu(editor);
    m->insertItem( us_tr("&File"), file );
-   file->insertItem( us_tr("Font"),  this, SLOT(update_font( )),    Qt::ALT+Qt::Key_F );
-   file->insertItem( us_tr("Save"),  this, SLOT(save( )),    Qt::ALT+Qt::Key_S );
-   file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display( )),   Qt::ALT+Qt::Key_X );
+   file->insertItem( us_tr("Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
+   file->insertItem( us_tr("Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
+   file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
 # endif
 #else
    QFrame *frame;
@@ -335,7 +335,7 @@ void US_Hydrodyn_Saxs_Search::setupGUI()
    hbl_bottom->addSpacing(4);
 
    QBoxLayout * vbl_editor_group = new QVBoxLayout(0); vbl_editor_group->setContentsMargins( 0, 0, 0, 0 ); vbl_editor_group->setSpacing( 0 );
-#if !defined(QT4) || !defined(Q_WS_MAC)
+#if QT_VERSION < 0x040000 || !defined(Q_WS_MAC)
    vbl_editor_group->addWidget(frame);
 #endif
    vbl_editor_group->addWidget(editor);
@@ -396,7 +396,7 @@ void US_Hydrodyn_Saxs_Search::table_value( int /* row */, int col )
 
 void US_Hydrodyn_Saxs_Search::clear_display()
 {
-   editor->clear();
+   editor->clear( );
    editor->append("\n\n");
 }
 
@@ -486,9 +486,9 @@ void US_Hydrodyn_Saxs_Search::start()
 
    unsigned int current_offset = 0;
 
-   csv_source_name_iqq.clear();
-   saxs_q.clear();
-   saxs_iqq.clear();
+   csv_source_name_iqq.clear( );
+   saxs_q.clear( );
+   saxs_iqq.clear( );
 
    for ( unsigned int i = 0; i < (unsigned int)t_csv->rowCount(); i++ )
    {
@@ -1113,10 +1113,10 @@ void US_Hydrodyn_Saxs_Search::save_saxs_plot()
       }
    }
 
-   qs      .clear();
-   Is      .clear();
-   I_errors.clear();
-   names   .clear();
+   qs      .clear( );
+   Is      .clear( );
+   I_errors.clear( );
+   names   .clear( );
 
    if ( add_target )
    {
@@ -1153,14 +1153,14 @@ void US_Hydrodyn_Saxs_Search::save_csv_saxs_iqq()
    {
       //  header: "name","type",q1,q2,...,qn, header info
       fprintf(of, "\"Name\",\"Type; q:\",%s,\"%s\"\n", 
-              saxs_window->vector_double_to_csv(saxs_q).toAscii().data(),
-              saxs_header_iqq.remove("\n").toAscii().data());
+              saxs_window->vector_double_to_csv(saxs_q).toLatin1().data(),
+              saxs_header_iqq.remove("\n").toLatin1().data());
       for ( unsigned int i = 0; i < csv_source_name_iqq.size(); i++ )
       {
          fprintf(of, "\"%s\",\"%s\",%s\n", 
-                 csv_source_name_iqq[i].toAscii().data(),
+                 csv_source_name_iqq[i].toLatin1().data(),
                  "I(q)",
-                 saxs_window->vector_double_to_csv(saxs_iqq[i]).toAscii().data());
+                 saxs_window->vector_double_to_csv(saxs_iqq[i]).toLatin1().data());
       }
       fprintf(of, "\n");
 

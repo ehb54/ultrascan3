@@ -1,3 +1,3 @@
-!include ( ../generic.pri ) error( "../generic.pri missing.  Aborting..." )
+include ( ../generic.pri )
 
 TARGET  = us_admin

@@ -67,8 +67,8 @@ US_Hydrodyn_Saxs_Hplc_Fit_Global::US_Hydrodyn_Saxs_Hplc_Fit_Global(
    common_size   = 0;
    per_file_size = 0;
 
-   is_common.clear(); // is common maps the offsets to layout of the regular file specific gaussians
-   offset.clear();
+   is_common.clear( ); // is common maps the offsets to layout of the regular file specific gaussians
+   offset.clear( );
 
    // height:
    is_common.push_back( false           );  // height always variable
@@ -117,7 +117,7 @@ US_Hydrodyn_Saxs_Hplc_Fit_Global::US_Hydrodyn_Saxs_Hplc_Fit_Global(
    global_Xpos += 30;
    global_Ypos += 30;
 
-   gaussians_undo.clear();
+   gaussians_undo.clear( );
    gaussians_undo.push_back( hplc_win->unified_ggaussian_params );
 
    setGeometry(global_Xpos, global_Ypos, 0, 0 );
@@ -173,7 +173,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::restore()
       hplc_win->update_gauss_pos();
       hplc_win->lbl_gauss_fit->setText( "?" );
       hplc_win->pb_ggauss_rmsd->setEnabled( true );
-      hplc_win->ggqfit_plot->clear();
+      hplc_win->ggqfit_plot->detachItems( QwtPlotItem::Rtti_PlotCurve ); hplc_win->ggqfit_plot->detachItems( QwtPlotItem::Rtti_PlotMarker );;
       hplc_win->ggqfit_plot->replot();
       double new_rmsd = hplc_win->ggaussian_rmsd();
       hplc_win->lbl_gauss_fit->setText( QString( "%1" ).arg( new_rmsd, 0, 'g', 5 ) );
@@ -196,7 +196,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::undo()
       hplc_win->update_gauss_pos();
       hplc_win->lbl_gauss_fit->setText( "?" );
       hplc_win->pb_ggauss_rmsd->setEnabled( true );
-      hplc_win->ggqfit_plot->clear();
+      hplc_win->ggqfit_plot->detachItems( QwtPlotItem::Rtti_PlotCurve ); hplc_win->ggqfit_plot->detachItems( QwtPlotItem::Rtti_PlotMarker );;
       hplc_win->ggqfit_plot->replot();
       double new_rmsd = hplc_win->ggaussian_rmsd();
       hplc_win->lbl_gauss_fit->setText( QString( "%1" ).arg( new_rmsd, 0, 'g', 5 ) );
@@ -649,7 +649,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::setupGUI()
    // ------ plot section
 
    plot_test = new QwtPlot(this);
-#ifndef QT4
+#if QT_VERSION < 0x040000
    // plot_test->enableOutline(true);
    // plot_test->setOutlinePen(Qt::white);
    // plot_test->setOutlineStyle(Qwt::VLine);
@@ -662,32 +662,32 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::setupGUI()
 #endif
    plot_test->setPalette( PALET_NORMAL );
    AUTFBACK( plot_test );
-#ifndef QT4
+#if QT_VERSION < 0x040000
    plot_test->setGridMajPen(QPen(USglobal->global_colors.major_ticks, 0, DotLine));
    plot_test->setGridMinPen(QPen(USglobal->global_colors.minor_ticks, 0, DotLine));
 #else
-   grid_test->setMajPen( QPen( USglobal->global_colors.major_ticks, 0, Qt::DotLine ) );
-   grid_test->setMinPen( QPen( USglobal->global_colors.minor_ticks, 0, Qt::DotLine ) );
+   grid_test->setMajorPen( QPen( USglobal->global_colors.major_ticks, 0, Qt::DotLine ) );
+   grid_test->setMinorPen( QPen( USglobal->global_colors.minor_ticks, 0, Qt::DotLine ) );
    grid_test->attach( plot_test );
 #endif
    plot_test->setAxisTitle(QwtPlot::xBottom, /* cb_guinier->isChecked() ? us_tr("q^2 (1/Angstrom^2)") : */  us_tr("q [1/Angstrom]" )); // or Time or Frame"));
    plot_test->setAxisTitle(QwtPlot::yLeft, us_tr("Intensity [a.u.] (log scale)"));
-#ifndef QT4
+#if QT_VERSION < 0x040000
    plot_test->setTitleFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 3, QFont::Bold));
    plot_test->setAxisTitleFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 #endif
    plot_test->setAxisFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-#ifndef QT4
+#if QT_VERSION < 0x040000
    plot_test->setAxisTitleFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 #endif
    plot_test->setAxisFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-#ifndef QT4
+#if QT_VERSION < 0x040000
    plot_test->setAxisTitleFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 #endif
    plot_test->setAxisFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-   plot_test->setMargin(USglobal->config_list.margin);
+//    plot_test->setMargin(USglobal->config_list.margin);
    plot_test->setTitle("");
-#ifndef QT4
+#if QT_VERSION < 0x040000
    plot_test->setAxisOptions(QwtPlot::yLeft, QwtAutoScale::None);
 #else
    plot_test->setAxisScaleEngine(QwtPlot::yLeft, new QwtLinearScaleEngine );
@@ -940,7 +940,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::update_common()
    if ( save_unified_ggaussians != hplc_win->unified_ggaussian_params )
    {
       hplc_win->lbl_gauss_fit->setText( "?" );
-      hplc_win->ggqfit_plot->clear();
+      hplc_win->ggqfit_plot->detachItems( QwtPlotItem::Rtti_PlotCurve ); hplc_win->ggqfit_plot->detachItems( QwtPlotItem::Rtti_PlotMarker );;
       hplc_win->ggqfit_plot->replot();
       hplc_win->pb_ggauss_rmsd->setEnabled( true );
       gaussians_undo.push_back( hplc_win->unified_ggaussian_params );
@@ -1986,14 +1986,14 @@ namespace HFIT_GLOBAL
 
 bool US_Hydrodyn_Saxs_Hplc_Fit_Global::setup_run()
 {
-   HFIT_GLOBAL::init_params                       .clear();
-   HFIT_GLOBAL::base_params                       .clear();
-   HFIT_GLOBAL::fixed_params                      .clear();
-   HFIT_GLOBAL::comm_backref                      .clear();
-   HFIT_GLOBAL::param_pos                         .clear();
-   HFIT_GLOBAL::param_fixed                       .clear();
-   HFIT_GLOBAL::param_min                         .clear();
-   HFIT_GLOBAL::param_max                         .clear();
+   HFIT_GLOBAL::init_params                       .clear( );
+   HFIT_GLOBAL::base_params                       .clear( );
+   HFIT_GLOBAL::fixed_params                      .clear( );
+   HFIT_GLOBAL::comm_backref                      .clear( );
+   HFIT_GLOBAL::param_pos                         .clear( );
+   HFIT_GLOBAL::param_fixed                       .clear( );
+   HFIT_GLOBAL::param_min                         .clear( );
+   HFIT_GLOBAL::param_max                         .clear( );
    HFIT_GLOBAL::unified_q                         = hplc_win->unified_ggaussian_q;
    HFIT_GLOBAL::unified_ggaussian_param_index     = hplc_win->unified_ggaussian_param_index;
    HFIT_GLOBAL::unified_ggaussian_gaussians_size  = hplc_win->unified_ggaussian_gaussians_size;
@@ -2944,7 +2944,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::test_mode()
          hbl_test->removeWidget( test_widgets[ i ] );
          delete test_widgets[ i ];
       }
-      test_widgets.clear();
+      test_widgets.clear( );
       pb_test->hide();
       lbl_test_info->hide();
       plot_test->hide();
@@ -2961,7 +2961,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::test_mode()
 
    pb_test->show();
    lbl_test_info->show();
-   plot_test->clear();
+   plot_test->detachItems( QwtPlotItem::Rtti_PlotCurve ); plot_test->detachItems( QwtPlotItem::Rtti_PlotMarker );;
    plot_test->replot();
    if ( plot_test_zoomer )
    {
@@ -2969,7 +2969,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::test_mode()
       plot_test_zoomer      = (ScrollZoomer *) 0;
    }
 
-#ifdef QT4
+#if QT_VERSION >= 0x040000
    test_curve = new QwtPlotCurve( "test" );
    test_curve->setStyle( QwtPlotCurve::Lines );
    test_curve->attach( plot_test );
@@ -2980,7 +2980,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::test_mode()
 
    plot_test->show();
 
-   test_widgets.clear();
+   test_widgets.clear( );
    for ( int i = 0; i < (int) HFIT_GLOBAL::init_params.size(); ++i )
    {
       QLineEdit *le = new QLineEdit( this );
@@ -3035,7 +3035,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::test()
    vector < double > gsum  = hplc_win->compute_ggaussian_gaussian_sum();
    vector < double > t = hplc_win->unified_ggaussian_t;
 
-#ifndef QT4
+#if QT_VERSION < 0x040000
    plot_test->setCurveData( test_curve, 
                             (double *)&( t[ 0 ] ),
                             (double *)&( gsum[ 0 ] ),
@@ -3043,7 +3043,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::test()
                             );
    plot_test->setCurvePen( test_curve, QPen( Qt::green, 1, Qt::SolidLine ) );
 #else
-   test_curve->setData(
+   test_curve->setSamples(
                        (double *)&( t[ 0 ] ),
                        (double *)&( gsum[ 0 ] ),
                        t.size()
@@ -3075,10 +3075,10 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::test()
       plot_test->setAxisScale( QwtPlot::xBottom, t[0], t.back() );
       plot_test_zoomer = new ScrollZoomer(plot_test->canvas());
       plot_test_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
-#ifndef QT4
+#if QT_VERSION < 0x040000
       plot_test_zoomer->setCursorLabelPen(QPen(Qt::yellow));
 #endif
-      // connect( plot_test_zoomer, SIGNAL( zoomed( const QwtDoubleRect & ) ), SLOT( plot_test_zoomed( const QwtDoubleRect & ) ) );
+      // connect( plot_test_zoomer, SIGNAL( zoomed( const QRectF & ) ), SLOT( plot_test_zoomed( const QRectF & ) ) );
    }
    
    plot_test->replot();
@@ -3086,7 +3086,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::test()
    update_test_info();
 
    hplc_win->lbl_gauss_fit->setText( "?" );
-   hplc_win->ggqfit_plot->clear();
+   hplc_win->ggqfit_plot->detachItems( QwtPlotItem::Rtti_PlotCurve ); hplc_win->ggqfit_plot->detachItems( QwtPlotItem::Rtti_PlotMarker );;
    hplc_win->ggqfit_plot->replot();
    hplc_win->pb_ggauss_rmsd->setEnabled( true );
    hplc_win->gauss_init_markers();
@@ -3116,7 +3116,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::lm()
    vector < double >    org_params = HFIT_GLOBAL::init_params;
 
    HFIT_GLOBAL::errors        = hplc_win->unified_ggaussian_e;
-   HFIT_GLOBAL::errors_index  .clear();
+   HFIT_GLOBAL::errors_index  .clear( );
 
    if ( use_errors )
    {
@@ -3201,7 +3201,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::lm()
 
    vector < double > par = HFIT_GLOBAL::init_params;
    // US_Vector::printvector( QString( "par start (rmsd %1)" ).arg( org_rmsd ), par );
-   cout << QString( "par start (rmsd %1)\n" ).arg( org_rmsd ).toAscii().data();
+   cout << QString( "par start (rmsd %1)\n" ).arg( org_rmsd ).toLatin1().data();
 
    progress->setValue( 1 ); progress->setMaximum( 2 );
    qApp->processEvents();
@@ -3226,7 +3226,7 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::lm()
    }
 
    // US_Vector::printvector( QString( "par after fit (norm %1)" ).arg( status.fnorm ), par );
-   cout << QString( "par fit (rmsd %1)\n" ).arg( status.fnorm ).toAscii().data();
+   cout << QString( "par fit (rmsd %1)\n" ).arg( status.fnorm ).toLatin1().data();
 
    if ( org_rmsd > status.fnorm )
    {

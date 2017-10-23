@@ -45,9 +45,9 @@ bool US_Saxs_Util::read_sas_data(
       return false;
    }
 
-   q.clear();
-   I.clear();
-   e.clear();
+   q.clear( );
+   I.clear( );
+   e.clear( );
    
    QTextStream ts(&f);
    vector < QString > qv;
@@ -130,7 +130,7 @@ bool US_Saxs_Util::read_sas_data(
 
    if ( e.size() != q.size() )
    {
-      e.clear();
+      e.clear( );
    };
 
    return true;

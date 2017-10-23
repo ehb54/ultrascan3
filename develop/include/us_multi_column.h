@@ -2,7 +2,7 @@
 #define US_MULTI_COLUMN_H
 
 #include "us_saxs_util.h"
-#ifdef QT4
+#if QT_VERSION >= 0x040000
 # include "qdebug.h"
 #endif
 #include "us_vector.h"
@@ -10,7 +10,7 @@
 #include <QTextStream>
 
 #ifdef WIN32
-# if !defined( QT4 )
+# if QT_VERSION < 0x040000
   #pragma warning ( disable: 4251 )
 # endif
 #endif
@@ -33,12 +33,12 @@ class US_Multi_Column
 
    US_Multi_Column() 
       {
-         clear();
+         clear( );
       }
 
    US_Multi_Column( QString filename ) 
       {
-         clear();
+         clear( );
          this->filename = filename;
          is_csv = filename.right( 4 ).contains( ".csv", Qt::CaseInsensitive );
       }
@@ -106,12 +106,12 @@ class US_Multi_Column
          return qs;
       }
 
-   void    clear() 
+   void    clear( ) 
       {
          filename = "";
          is_csv   = false;
-         header   .clear();
-         data     .clear();
+         header   .clear( );
+         data     .clear( );
       }
 
    QString errormsg;
@@ -224,8 +224,8 @@ class US_Multi_Column
             return false;
          }
             
-         asc.clear();
-         des.clear();
+         asc.clear( );
+         des.clear( );
          asc.filename = filename + "-asc";
          asc.header   = header;
          des.filename = filename + "-des";
@@ -270,7 +270,7 @@ class US_Multi_Column
          bool ascending = ( data[ 0 ][ dep ] < data.back()[ dep ] );
          // cout << QString( "curve %1 is %2\n" ).arg( filename ).arg( ascending ? "ascending" : "descending" );
 
-         mono.clear();
+         mono.clear( );
          mono.filename = filename + "-mono";
          mono.header   = header;
          mono.data.push_back( data[ 0 ] );
@@ -390,7 +390,7 @@ class US_Multi_Column
             return false;
          }
             
-         clear();
+         clear( );
 
          if ( use_filename.isEmpty() )
          {
@@ -560,7 +560,7 @@ class US_Multi_Column
          }
          mcx.write( "", true );
          
-         mcx.clear();
+         mcx.clear( );
          mcx.filename = filename + "-xyspline";
          for ( double pos = part2_min_dep; pos <= part2_max_dep; pos += ( part2_max_dep - part2_min_dep ) / 256 )
          {
@@ -737,7 +737,7 @@ class US_Multi_Column
             return false;
          }
 
-         mcx.clear();
+         mcx.clear( );
          mcx.filename = filename + "-qxyquadratic";
          for ( unsigned int i = 0; i < x2.size(); i++ )
          {
@@ -748,7 +748,7 @@ class US_Multi_Column
          }
          mcx.write( "", true );
 
-         x2.clear();
+         x2.clear( );
 
          // end debug stuff -----------
               
@@ -921,7 +921,7 @@ class US_Multi_Column
             return false;
          }
 
-         mcx.clear();
+         mcx.clear( );
          mcx.filename = filename + "-lxylinear";
          for ( unsigned int i = 0; i < x2.size(); i++ )
          {
@@ -932,7 +932,7 @@ class US_Multi_Column
          }
          mcx.write( "", true );
 
-         x2.clear();
+         x2.clear( );
 
          // end debug stuff -----------
               
@@ -1504,7 +1504,7 @@ class US_Multi_Column
 };
 
 #ifdef WIN32
-# if !defined( QT4 )
+# if QT_VERSION < 0x040000
   #pragma warning ( default: 4251 )
 # endif
 #endif

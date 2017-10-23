@@ -155,7 +155,7 @@ void US_Hydrodyn_Saxs_Hplc_Nth::setupGUI()
    lbl_end -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold ) );
 
    le_end = new QLineEdit( this );    le_end->setObjectName( "le_end Line Edit" );
-   le_end->setText( QString( "%1" ).arg( ((US_Hydrodyn_Saxs_Hplc*)us_hydrodyn_saxs_hplc)->lb_files->count( ) ) );
+   le_end->setText( QString( "%1" ).arg( ((US_Hydrodyn_Saxs_Hplc*)us_hydrodyn_saxs_hplc)->lb_files->count() ) );
    le_end->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_end->setPalette( PALET_NORMAL );
    AUTFBACK( le_end );
@@ -408,8 +408,8 @@ void US_Hydrodyn_Saxs_Hplc_Nth::closeEvent( QCloseEvent *e )
 
 void US_Hydrodyn_Saxs_Hplc_Nth::update_enables()
 {
-   lbl_start_name->setText( ( (US_Hydrodyn_Saxs_Hplc*)us_hydrodyn_saxs_hplc)->lb_files->item( le_start->text( ).toInt( ) - 1 )->text() );
-   lbl_end_name  ->setText( ( (US_Hydrodyn_Saxs_Hplc*)us_hydrodyn_saxs_hplc)->lb_files->item( le_end  ->text( ).toInt( ) - 1 )->text() );
+   lbl_start_name->setText( ( (US_Hydrodyn_Saxs_Hplc*)us_hydrodyn_saxs_hplc)->lb_files->item( le_start->text().toInt() - 1 )->text() );
+   lbl_end_name  ->setText( ( (US_Hydrodyn_Saxs_Hplc*)us_hydrodyn_saxs_hplc)->lb_files->item( le_end  ->text().toInt() - 1 )->text() );
 
    int n   = le_n->text().toInt();
    int ofs = le_start->text().toInt();
@@ -430,7 +430,7 @@ void US_Hydrodyn_Saxs_Hplc_Nth::update_enables()
          contains.insert( i );
       }
       {
-         QString qs = ((US_Hydrodyn_Saxs_Hplc*)us_hydrodyn_saxs_hplc)->lb_files->item( i )->text( );
+         QString qs = ((US_Hydrodyn_Saxs_Hplc*)us_hydrodyn_saxs_hplc)->lb_files->item( i )->text();
          if ( ggaussian_last_pfit_map->count( qs ) ) {
             double pv = (*ggaussian_last_pfit_map)[ qs ];
             if ( ( cb_pvalues_green ->isChecked() && pv >= alpha ) ||
@@ -534,7 +534,7 @@ void US_Hydrodyn_Saxs_Hplc_Nth::update_enables()
    pb_pvalues_only->setEnabled( any_pvalues_not_selected || any_selected_not_pvalues );
    pb_pvalues_add ->setEnabled( any_pvalues_not_selected && any_selected_not_pvalues );
 
-   lbl_files_selected->setText( QString( "%1 of %2 selected" ).arg( files_selected ).arg( lb_files->count( ) ) );
+   lbl_files_selected->setText( QString( "%1 of %2 selected" ).arg( files_selected ).arg( lb_files->count() ) );
 }
 
 void US_Hydrodyn_Saxs_Hplc_Nth::nth_only()
@@ -607,7 +607,7 @@ void US_Hydrodyn_Saxs_Hplc_Nth::pvalues_only()
    lb_files->clearSelection();
    for ( int i = 0; i < lb_files->count(); ++i )
    {
-      QString qs = ((US_Hydrodyn_Saxs_Hplc*)us_hydrodyn_saxs_hplc)->lb_files->item( i )->text( );
+      QString qs = ((US_Hydrodyn_Saxs_Hplc*)us_hydrodyn_saxs_hplc)->lb_files->item( i )->text();
       if ( ggaussian_last_pfit_map->count( qs ) ) {
          double pv = (*ggaussian_last_pfit_map)[ qs ];
          if ( ( cb_pvalues_green ->isChecked() && pv >= alpha ) ||
@@ -627,7 +627,7 @@ void US_Hydrodyn_Saxs_Hplc_Nth::pvalues_add()
    disconnect( lb_files, SIGNAL( itemSelectionChanged() ), 0, 0 );
    for ( int i = 0; i < lb_files->count(); ++i )
    {
-      QString qs = ((US_Hydrodyn_Saxs_Hplc*)us_hydrodyn_saxs_hplc)->lb_files->item( i )->text( );
+      QString qs = ((US_Hydrodyn_Saxs_Hplc*)us_hydrodyn_saxs_hplc)->lb_files->item( i )->text();
       if ( ggaussian_last_pfit_map->count( qs ) ) {
          double pv = (*ggaussian_last_pfit_map)[ qs ];
          if ( ( cb_pvalues_green ->isChecked() && pv >= alpha ) ||
@@ -644,7 +644,7 @@ void US_Hydrodyn_Saxs_Hplc_Nth::pvalues_add()
 
 void US_Hydrodyn_Saxs_Hplc_Nth::update_files_selected()
 {
-   lb_files_sel->clear();
+   lb_files_sel->clear( );
    for ( int i = 0; i < lb_files->count(); ++i )
    {
       if ( lb_files->item( i )->isSelected() )

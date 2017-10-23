@@ -1,8 +1,14 @@
 #ifndef US3I_GUI_SETTINGS_H
 #define US3I_GUI_SETTINGS_H
 
+#if QT_VERSION > 0x050000
+#include <QtWidgets>
+#else
 #include <QtGui>
-
+#define setSingleStep(a) setStep(a)
+#define setMinorPen(a) setMinPen(a)
+#define setMajorPen(a) setMajPen(a)
+#endif
 #include "us3i_extern.h"
 
 //! \brief Fetch and set Gui values via QSettings.  All functions are static.

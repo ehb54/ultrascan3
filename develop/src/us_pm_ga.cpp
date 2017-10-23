@@ -202,7 +202,7 @@ void US_PM::ga_compute_fitness()
       }         
 
       (*worker_pop[ mpi_status.MPI_SOURCE ]).fitness = msg_receive.model_fitness;
-      (*worker_pop[ mpi_status.MPI_SOURCE ]).model.clear();
+      (*worker_pop[ mpi_status.MPI_SOURCE ]).model.clear( );
 
       pm_point tmp_pmp;
 
@@ -430,7 +430,7 @@ bool US_PM::ga( pm_ga_individual & best_individual )
             us_log->log( QString( "start: ga_pop.size() %1\n" ).arg( last_pop.size() ) );
          }
 
-         ga_pop.clear();
+         ga_pop.clear( );
 
          for ( unsigned int i = 0; i < ga_p.population; i++ )
          {
@@ -781,7 +781,7 @@ bool US_PM::ga_refine_limits( unsigned int top_count,
       us_log->log( US_Vector::qs_vector2( "ga_refine_limits: limits after clipping", ga_low_fparams, ga_high_fparams ) );
    }
 
-   ga_pop.clear(); // or recompute deltas for those that fall within (?)
+   ga_pop.clear( ); // or recompute deltas for those that fall within (?)
 
    return ga_compute_delta( ga_points_max );
 }
@@ -847,7 +847,7 @@ bool US_PM::ga_run(
       return false;
    }
 
-   ga_pop.clear();
+   ga_pop.clear( );
 
    // possibly seed with best individual (from previous grid) matched to delta
 
@@ -875,7 +875,7 @@ bool US_PM::ga_run(
       }
    }
    ga_p = ga_p_save;
-   ga_seed_params.clear();
+   ga_seed_params.clear( );
 
    return ret_stat;
 }

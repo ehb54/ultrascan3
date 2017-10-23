@@ -335,7 +335,7 @@ void US_AddSaxs::add()
    QFile f(saxs_filename);
    if (f.open(QIODevice::WriteOnly|QIODevice::Text))
    {
-      cmb_saxs->clear();
+      cmb_saxs->clear( );
       str1.sprintf(us_trp(" Number of SAXS Entries in File: %d"), saxs_list.size());
       QTextStream ts(&f);
       for (unsigned int i=0; i<saxs_list.size(); i++)
@@ -375,8 +375,8 @@ void US_AddSaxs::select_file()
    {
       lbl_table->setText(saxs_filename);
       QFile f(saxs_filename);
-      saxs_list.clear();
-      cmb_saxs->clear();
+      saxs_list.clear( );
+      cmb_saxs->clear( );
       unsigned int i=1;
       if (f.open(QIODevice::ReadOnly|QIODevice::Text))
       {

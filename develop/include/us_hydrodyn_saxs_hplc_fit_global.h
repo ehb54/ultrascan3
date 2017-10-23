@@ -33,7 +33,7 @@
 #include "../include/us_saxs_util.h"
 
 #ifdef WIN32
-# if !defined( QT4 )
+# if QT_VERSION < 0x040000
   #pragma warning ( disable: 4251 )
 # endif
 #endif
@@ -120,7 +120,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Fit_Global : public QDialog
       QPushButton   *pb_test;
       QwtPlot       * plot_test;
       ScrollZoomer  * plot_test_zoomer;
-#ifdef QT4
+#if QT_VERSION >= 0x040000
       QwtPlotGrid   * grid_test;
       QwtPlotCurve  * test_curve;
 #else
@@ -267,7 +267,7 @@ namespace HFIT_GLOBAL
 };
 
 #ifdef WIN32
-# if !defined( QT4 )
+# if QT_VERSION < 0x040000
   #pragma warning ( default: 4251 )
 # endif
 #endif

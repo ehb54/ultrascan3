@@ -24,14 +24,14 @@ bool US_Saxs_Util::select_residue_file( QString filename )
    QFile f( filename );
    int line_count = 1;
 
-   residue_list.clear();
-   residue_list_no_pbr.clear();
-   multi_residue_map.clear();
-   residue_atom_hybrid_map.clear();
-   new_residues.clear();
+   residue_list.clear( );
+   residue_list_no_pbr.clear( );
+   multi_residue_map.clear( );
+   residue_atom_hybrid_map.clear( );
+   new_residues.clear( );
    map < QString, int > dup_residue_map;
    map < QString, bool > pbr_override_map; // maps positioner for overwrite
-   unknown_residues.clear(); // keep track of unknown residues
+   unknown_residues.clear( ); // keep track of unknown residues
    // i = 1;
 
    residue new_residue;
@@ -54,8 +54,8 @@ bool US_Saxs_Util::select_residue_file( QString filename )
          ts >> new_residue.vbar;
          ts.readLine(); // read rest of line
          line_count++;
-         new_residue.r_atom.clear();
-         new_residue.r_bead.clear();
+         new_residue.r_atom.clear( );
+         new_residue.r_bead.clear( );
          vector < vector < atom > > new_atoms;
          new_atoms.resize(numbeads);
          vector < atom > alt_atoms;
@@ -281,8 +281,8 @@ bool US_Saxs_Util::select_atom_file( QString filename )
    errormsg = "";
    QString str1;
    QFileInfo fi(filename);
-   atom_list.clear();
-   atom_map.clear();
+   atom_list.clear( );
+   atom_map.clear( );
    QFile f(filename);
    if ( f.open(QIODevice::ReadOnly ) )
    {
@@ -315,8 +315,8 @@ bool US_Saxs_Util::select_hybrid_file( QString filename )
    QString str1;
    QFileInfo fi(filename);
    QFile f(filename);
-   hybrid_list.clear();
-   hybrid_map.clear();
+   hybrid_list.clear( );
+   hybrid_map.clear( );
    if ( f.open(QIODevice::ReadOnly) )
    {
       QTextStream ts(&f);
@@ -350,8 +350,8 @@ bool US_Saxs_Util::select_saxs_file( QString filename )
    QString str1;
    QFileInfo fi(filename);
    QFile f(filename);
-   saxs_list.clear();
-   saxs_map.clear();
+   saxs_list.clear( );
+   saxs_map.clear( );
    if (f.open(QIODevice::ReadOnly|QIODevice::Text))
    {
       QTextStream ts(&f);
@@ -448,21 +448,21 @@ bool US_Saxs_Util::read_pdb( QStringList &qsl )
    QString str1;
    QString str2;
    QString temp;
-   model_vector.clear();
-   bead_model.clear();
+   model_vector.clear( );
+   bead_model.clear( );
    QString last_resSeq = ""; // keeps track of residue sequence number, initialize to zero, first real one will be "1"
    PDB_chain temp_chain;
    struct PDB_model temp_model;
    bool chain_flag = false;
    bool model_flag = false;
-   temp_model.molecule.clear();
-   temp_model.residue.clear();
+   temp_model.molecule.clear( );
+   temp_model.residue.clear( );
    clear_temp_chain(&temp_chain);
    bool currently_aa_chain = false; // do we have an amino acid chain (pbr)
    bool last_was_ENDMDL = false;    // to fix pdbs with missing MODEL tag
 
-   last_pdb_header.clear();
-   last_pdb_title .clear();
+   last_pdb_header.clear( );
+   last_pdb_title .clear( );
    last_pdb_filename = "FromQStringList";
 
    for ( unsigned int i = 0; i < (unsigned int) qsl.size(); i++ )
@@ -506,8 +506,8 @@ bool US_Saxs_Util::read_pdb( QStringList &qsl )
             temp_model.model_id = str1.mid( 6, 15 );
          }
          chain_flag = false; // we are starting a new molecule
-         temp_model.molecule.clear();
-         temp_model.residue.clear();
+         temp_model.molecule.clear( );
+         temp_model.residue.clear( );
          clear_temp_chain(&temp_chain);
       }
       if (str1.left(6) == "ENDMDL") // we need to save the previously recorded molecule
@@ -659,24 +659,24 @@ bool US_Saxs_Util::read_pdb( QString filename )
    QString str1;
    QString str2;
    QString temp;
-   model_vector.clear();
-   bead_model.clear();
+   model_vector.clear( );
+   bead_model.clear( );
    QString last_resSeq = ""; // keeps track of residue sequence number, initialize to zero, first real one will be "1"
    PDB_chain temp_chain;
    QFile f(filename);
    struct PDB_model temp_model;
    bool chain_flag = false;
    bool model_flag = false;
-   temp_model.molecule.clear();
-   temp_model.residue.clear();
+   temp_model.molecule.clear( );
+   temp_model.residue.clear( );
    clear_temp_chain(&temp_chain);
    bool currently_aa_chain = false; // do we have an amino acid chain (pbr)
    bool last_was_ENDMDL = false;    // to fix pdbs with missing MODEL tag
 
    if ( f.open(QIODevice::ReadOnly) )
    {
-      last_pdb_header.clear();
-      last_pdb_title .clear();
+      last_pdb_header.clear( );
+      last_pdb_title .clear( );
       last_pdb_filename = f.fileName();
       QTextStream ts(&f);
       while (!ts.atEnd())
@@ -720,8 +720,8 @@ bool US_Saxs_Util::read_pdb( QString filename )
                temp_model.model_id = str1.mid( 6, 15 );
             }
             chain_flag = false; // we are starting a new molecule
-            temp_model.molecule.clear();
-            temp_model.residue.clear();
+            temp_model.molecule.clear( );
+            temp_model.residue.clear( );
             clear_temp_chain(&temp_chain);
          }
          if (str1.left(6) == "ENDMDL") // we need to save the previously recorded molecule
@@ -813,8 +813,8 @@ bool US_Saxs_Util::read_pdb( QString filename )
       }
       f.close();
    } else {
-      model_vector.clear();
-      bead_model.clear();
+      model_vector.clear( );
+      bead_model.clear( );
       errormsg = QString("Error reading file %1").arg(filename);
       return false;
    }
@@ -1067,7 +1067,7 @@ bool US_Saxs_Util::assign_atom(const QString &str1, struct PDB_chain *temp_chain
 
 void US_Saxs_Util::clear_temp_chain( PDB_chain *temp_chain ) // clear all the memory from the vectors in temp_chain
 {
-   (*temp_chain).atom.clear();
+   (*temp_chain).atom.clear( );
    (*temp_chain).chainID = "";
    (*temp_chain).segID = "";
 }
@@ -1086,7 +1086,7 @@ bool US_Saxs_Util::calc_mw()
    unsigned int save_current_model = current_model;
    // QString error_string;
 
-   last_pdb_load_calc_mw_msg.clear();
+   last_pdb_load_calc_mw_msg.clear( );
 
    US_Saxs_Util usu;
    bool do_excl_vol = true;
@@ -1311,7 +1311,7 @@ bool US_Saxs_Util::load_mw_json( QString filename )
       qs += ts.readLine();
    }
    f.close();
-   atom_mw.clear();
+   atom_mw.clear( );
    map < QString, QString > parameters = US_Json::split( qs );
    for ( map < QString, QString >::iterator it = parameters.begin();
          it != parameters.end();
@@ -1338,7 +1338,7 @@ bool US_Saxs_Util::load_vdw_json( QString filename )
       qs += ts.readLine();
    }
    f.close();
-   atom_vdw.clear();
+   atom_vdw.clear( );
    map < QString, QString > parameters = US_Json::split( qs );
    for ( map < QString, QString >::iterator it = parameters.begin();
          it != parameters.end();
@@ -1379,7 +1379,7 @@ bool US_Saxs_Util::load_vcm_json( QString filename )
       QStringList qsl = (it->second ).split( "," , QString::SkipEmptyParts );
       if ( vcm.count( it->first ) )
       {
-         vcm[ it->first ].clear();
+         vcm[ it->first ].clear( );
       }
       for ( int i = 0; i < (int) qsl.size(); ++i )
       {

@@ -17,7 +17,7 @@ US_Hydrodyn_Saxs_Hplc_Bl::US_Hydrodyn_Saxs_Hplc_Bl(
    this->parameters                           = parameters;
 
    USglobal = new US_Config();
-   setPalette( USglobal->global_colors.cg_frame );
+   setPalette( PALET_FRAME );
    setWindowTitle( us_tr( "US-SOMO: SAXS HPLC : Subtract Baseline" ) );
 
    setupGUI();
@@ -40,21 +40,21 @@ void US_Hydrodyn_Saxs_Hplc_Bl::setupGUI()
    lbl_title =  new QLabel      ( windowTitle(), this );
    lbl_title -> setAlignment    ( Qt::AlignCenter | Qt::AlignVCenter );
    lbl_title -> setMinimumHeight( minHeight1 );
-   lbl_title -> setPalette( USglobal->global_colors.cg_label );
+   lbl_title -> setPalette( PALET_LABEL );
    lbl_title -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold ) );
 
    rb_linear = new QRadioButton( us_tr("Linear baseline removal"), this);
    rb_linear->setEnabled(true);
    rb_linear->setChecked(true);
    rb_linear->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   rb_linear->setPalette( USglobal->global_colors.cg_normal );
+   rb_linear->setPalette( PALET_NORMAL );
    connect( rb_linear, SIGNAL( clicked() ), SLOT( update_enables() ) );
 
    rb_integral = new QRadioButton( us_tr("Integral of I(t) baseline removal"), this);
    rb_integral->setEnabled(true);
    rb_integral->setChecked(false);
    rb_integral->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   rb_integral->setPalette( USglobal->global_colors.cg_normal );
+   rb_integral->setPalette( PALET_NORMAL );
    connect( rb_integral, SIGNAL( clicked() ), SLOT( update_enables() ) );
 
 #if 1 // QT_VERSION < 0x040000
@@ -81,17 +81,17 @@ void US_Hydrodyn_Saxs_Hplc_Bl::setupGUI()
    cb_save_bl->setEnabled( true );
    cb_save_bl->setChecked( false );
    cb_save_bl->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
-   cb_save_bl->setPalette( USglobal->global_colors.cg_normal );
+   cb_save_bl->setPalette( PALET_NORMAL );
 
    lbl_smooth =  new QLabel      ( us_tr( "Smoothing:" ), this );
    lbl_smooth -> setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
-   lbl_smooth -> setPalette( USglobal->global_colors.cg_label );
+   lbl_smooth -> setPalette( PALET_LABEL );
    lbl_smooth -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold ) );
 
    le_smooth = new QLineEdit( this );    le_smooth->setObjectName( "le_smooth Line Edit" );
    le_smooth->setText( "10" );
    le_smooth->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
-   le_smooth->setPalette( USglobal->global_colors.cg_normal );
+   le_smooth->setPalette( PALET_NORMAL );
    le_smooth->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
    {
       QIntValidator *qdv = new QIntValidator( 0, 99, le_smooth );
@@ -102,13 +102,13 @@ void US_Hydrodyn_Saxs_Hplc_Bl::setupGUI()
 
    lbl_reps =  new QLabel      ( us_tr( "Maximum iterations:" ), this );
    lbl_reps -> setAlignment    ( Qt::AlignLeft | Qt::AlignVCenter );
-   lbl_reps -> setPalette( USglobal->global_colors.cg_label );
+   lbl_reps -> setPalette( PALET_LABEL );
    lbl_reps -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold ) );
 
    le_reps = new QLineEdit( this );    le_reps->setObjectName( "le_reps Line Edit" );
    le_reps->setText( "1" );
    le_reps->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
-   le_reps->setPalette( USglobal->global_colors.cg_normal );
+   le_reps->setPalette( PALET_NORMAL );
    le_reps->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ));
    {
       QIntValidator *qdv = new QIntValidator( 1, 20, le_reps );
@@ -120,19 +120,19 @@ void US_Hydrodyn_Saxs_Hplc_Bl::setupGUI()
    pb_help =  new QPushButton ( us_tr( "Help" ), this );
    pb_help -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1) );
    pb_help -> setMinimumHeight( minHeight1 );
-   pb_help -> setPalette      ( USglobal->global_colors.cg_pushb );
+   pb_help -> setPalette      ( PALET_PUSHB );
    connect( pb_help, SIGNAL( clicked() ), SLOT( help() ) );
 
    pb_quit =  new QPushButton ( us_tr( "Quit" ), this );
    pb_quit -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1) );
    pb_quit -> setMinimumHeight( minHeight1 );
-   pb_quit -> setPalette      ( USglobal->global_colors.cg_pushb );
+   pb_quit -> setPalette      ( PALET_PUSHB );
    connect( pb_quit, SIGNAL( clicked() ), SLOT( quit() ) );
 
    pb_go =  new QPushButton ( us_tr( "Subtract baselines" ), this );
    pb_go -> setFont         ( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1) );
    pb_go -> setMinimumHeight( minHeight1 );
-   pb_go -> setPalette      ( USglobal->global_colors.cg_pushb );
+   pb_go -> setPalette      ( PALET_PUSHB );
    connect( pb_go, SIGNAL( clicked() ), SLOT( go() ) );
 
    QVBoxLayout * background = new QVBoxLayout( this ); background->setContentsMargins( 0, 0, 0, 0 ); background->setSpacing( 0 );

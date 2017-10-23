@@ -8,7 +8,7 @@
 #ifndef WIN32
 # include <sys/time.h>
 #endif
-#ifdef QT4
+#if QT_VERSION >= 0x040000
 # include <qwt_scale_engine.h>
 //Added by qt3to4:
 #include <QBoxLayout>
@@ -61,7 +61,7 @@ US_Hydrodyn_Saxs_1d::US_Hydrodyn_Saxs_1d(
    ((US_Hydrodyn *) us_hydrodyn)->saxs_1d_widget = true;
    unit = ((US_Hydrodyn *) us_hydrodyn)->hydro.unit;
    filepathname = saxs_window->model_filepathname;
-   plot_colors.clear();
+   plot_colors.clear( );
    plot_colors.push_back(Qt::yellow);
    plot_colors.push_back(Qt::green);
    plot_colors.push_back(Qt::cyan);
@@ -109,7 +109,7 @@ US_Hydrodyn_Saxs_1d::US_Hydrodyn_Saxs_1d(
    if ( our_saxs_options->use_somo_ff )
    {
       editor_msg( "blue", "Use somo ff on\n" );
-      saxs_window->ff_sent_msg1.clear();
+      saxs_window->ff_sent_msg1.clear( );
       saxs_window->load_ff_table( our_saxs_options->default_ff_filename );
    }
 
@@ -127,7 +127,7 @@ US_Hydrodyn_Saxs_1d::~US_Hydrodyn_Saxs_1d()
 void US_Hydrodyn_Saxs_1d::setupGUI()
 {
    int minHeight1 = 30;
-#if !defined(QT4) || !defined(Q_WS_MAC)
+#if QT_VERSION < 0x040000 || !defined(Q_WS_MAC)
    int minHeight3 = 30;
 #endif
 
@@ -424,12 +424,12 @@ void US_Hydrodyn_Saxs_1d::setupGUI()
    editor->setReadOnly(true);
 
 #if QT_VERSION < 0x040000
-# if defined(QT4) && defined(Q_WS_MAC)
+# if QT_VERSION >= 0x040000 && defined(Q_WS_MAC)
    {
  //      Q3PopupMenu * file = new Q3PopupMenu;
-      file->insertItem( us_tr("&Font"),  this, SLOT(update_font( )),    Qt::ALT+Qt::Key_F );
-      file->insertItem( us_tr("&Save"),  this, SLOT(save( )),    Qt::ALT+Qt::Key_S );
-      file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display( )),   Qt::ALT+Qt::Key_X );
+      file->insertItem( us_tr("&Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
+      file->insertItem( us_tr("&Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
+      file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
 
       QMenuBar *menu = new QMenuBar( this );
       AUTFBACK( menu );
@@ -447,9 +447,9 @@ void US_Hydrodyn_Saxs_1d::setupGUI()
    AUTFBACK( m );
  //   Q3PopupMenu * file = new Q3PopupMenu(editor);
    m->insertItem( us_tr("&File"), file );
-   file->insertItem( us_tr("Font"),  this, SLOT(update_font( )),    Qt::ALT+Qt::Key_F );
-   file->insertItem( us_tr("Save"),  this, SLOT(save( )),    Qt::ALT+Qt::Key_S );
-   file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display( )),   Qt::ALT+Qt::Key_X );
+   file->insertItem( us_tr("Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
+   file->insertItem( us_tr("Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
+   file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
 # endif
 #else
    QFrame *frame;
@@ -494,7 +494,7 @@ void US_Hydrodyn_Saxs_1d::setupGUI()
    connect(pb_cancel, SIGNAL(clicked()), SLOT(cancel()));
 
    plot_saxs = new QwtPlot(this);
-#ifndef QT4
+#if QT_VERSION < 0x040000
    // plot_saxs->enableOutline(true);
    plot_saxs->setOutlinePen(Qt::white);
    plot_saxs->setOutlineStyle(Qwt::VLine);
@@ -507,32 +507,32 @@ void US_Hydrodyn_Saxs_1d::setupGUI()
 #endif
    plot_saxs->setPalette( PALET_NORMAL );
    AUTFBACK( plot_saxs );
-#ifndef QT4
+#if QT_VERSION < 0x040000
    plot_saxs->setGridMajPen(QPen(USglobal->global_colors.major_ticks, 0, DotLine));
    plot_saxs->setGridMinPen(QPen(USglobal->global_colors.minor_ticks, 0, DotLine));
 #else
-   grid_saxs->setMajPen( QPen( USglobal->global_colors.major_ticks, 0, Qt::DotLine ) );
-   grid_saxs->setMinPen( QPen( USglobal->global_colors.minor_ticks, 0, Qt::DotLine ) );
+   grid_saxs->setMajorPen( QPen( USglobal->global_colors.major_ticks, 0, Qt::DotLine ) );
+   grid_saxs->setMinorPen( QPen( USglobal->global_colors.minor_ticks, 0, Qt::DotLine ) );
    grid_saxs->attach( plot_saxs );
 #endif
    plot_saxs->setAxisTitle( QwtPlot::xBottom, false /* cb_guinier->isChecked() */ ? us_tr( "q^2 (1/Angstrom^2)" ) : us_tr( "q (1/Angstrom)" ) );
    plot_saxs->setAxisTitle( QwtPlot::yLeft,   false /* cb_kratky ->isChecked() */ ? us_tr( " q^2 * I(q)"        ) : us_tr( "Log10 I(q)"     ) );
-#ifndef QT4
+#if QT_VERSION < 0x040000
    plot_saxs->setTitleFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 3, QFont::Bold));
    plot_saxs->setAxisTitleFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 #endif
    plot_saxs->setAxisFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-#ifndef QT4
+#if QT_VERSION < 0x040000
    plot_saxs->setAxisTitleFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 #endif
    plot_saxs->setAxisFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-#ifndef QT4
+#if QT_VERSION < 0x040000
    plot_saxs->setAxisTitleFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 #endif
    plot_saxs->setAxisFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-   plot_saxs->setMargin(USglobal->config_list.margin);
+//    plot_saxs->setMargin(USglobal->config_list.margin);
    plot_saxs->setTitle("");
-#ifndef QT4
+#if QT_VERSION < 0x040000
    plot_saxs->setAxisOptions(QwtPlot::yLeft, 
                              false ? // kratky option
                              QwtAutoScale::None :
@@ -541,8 +541,8 @@ void US_Hydrodyn_Saxs_1d::setupGUI()
 #else
    plot_saxs->setAxisScaleEngine(QwtPlot::yLeft, 
                                  false ?  // kratky option
-                                 new QwtLog10ScaleEngine :  
-                                 new QwtLog10ScaleEngine);
+                                 new QwtLogScaleEngine(10) :  
+                                 new QwtLogScaleEngine(10));
 #endif
    plot_saxs->setCanvasBackground(USglobal->global_colors.plot);
 
@@ -611,7 +611,7 @@ void US_Hydrodyn_Saxs_1d::setupGUI()
 
    QBoxLayout * vbl_editor_group = new QVBoxLayout( 0 ); vbl_editor_group->setContentsMargins( 0, 0, 0, 0 ); vbl_editor_group->setSpacing( 0 );
    vbl_editor_group->addLayout( gl_options );
-#if !defined(QT4) || !defined(Q_WS_MAC)
+#if QT_VERSION < 0x040000 || !defined(Q_WS_MAC)
    vbl_editor_group->addWidget( frame      );
 #endif
    vbl_editor_group->addWidget( editor     );
@@ -686,7 +686,7 @@ void US_Hydrodyn_Saxs_1d::closeEvent( QCloseEvent *e )
 
 void US_Hydrodyn_Saxs_1d::clear_display()
 {
-   editor->clear();
+   editor->clear( );
    editor->append("\n\n");
 }
 
@@ -771,7 +771,7 @@ bool US_Hydrodyn_Saxs_1d::update_image()
 
    QString name = "saxs data";
 
-#ifndef QT4
+#if QT_VERSION < 0x040000
    long Iq = plot_saxs->insertCurve( name );
    plot_saxs->setCurveStyle(Iq, QwtCurve::Lines);
 #else
@@ -787,14 +787,14 @@ bool US_Hydrodyn_Saxs_1d::update_image()
 
    if ( !cb_memory_conserve->isChecked() )
    {
-#ifndef QT4
+#if QT_VERSION < 0x040000
       plot_saxs->setCurveData(Iq, 
                               ( double *)& q      [0],
                               ( double *)& modulii[0],
                               detector_pixels_width );
       plot_saxs->setCurvePen(Iq, QPen(plot_colors[plot_count % plot_colors.size()], 2, SolidLine));
 #else
-      curve->setData(
+      curve->setSamples(
                      ( double *)& q      [0],
                      ( double *)& modulii[0],
                      detector_pixels_width
@@ -808,7 +808,7 @@ bool US_Hydrodyn_Saxs_1d::update_image()
          delete plot_saxs_zoomer;
       }
       plot_saxs_zoomer = new ScrollZoomer(plot_saxs->canvas());
-#ifndef QT4
+#if QT_VERSION < 0x040000
       plot_saxs_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
       plot_saxs_zoomer->setCursorLabelPen(QPen(Qt::yellow));
 #else
@@ -839,7 +839,7 @@ void US_Hydrodyn_Saxs_1d::start()
       return;
    }
 
-   plot_saxs->clear();
+   plot_saxs->detachItems( QwtPlotItem::Rtti_PlotCurve ); plot_saxs->detachItems( QwtPlotItem::Rtti_PlotMarker );;
    plot_count = 0;
 
    compute_variables();
@@ -899,7 +899,7 @@ void US_Hydrodyn_Saxs_1d::start()
         le_sample_rotations->text().toUInt() == 93 ||
         le_sample_rotations->text().toUInt() == 99 )
    {
-      rotations.clear();
+      rotations.clear( );
       vector < double > this_rotation( 3 );
 
       if ( le_sample_rotations->text().toUInt() == 93 ||
@@ -961,7 +961,7 @@ void US_Hydrodyn_Saxs_1d::start()
    cout << QString( "atomic scaler %1\n"
                     "atomic scaler inv %2\n" )
       .arg( atomic_scaler )
-      .arg( atomic_scaler_inv ).toAscii().data();
+      .arg( atomic_scaler_inv ).toLatin1().data();
 
    for ( unsigned int i = 0; i < selected_models.size(); i++ )
    {
@@ -1430,7 +1430,7 @@ void US_Hydrodyn_Saxs_1d::start()
                qApp->processEvents();
             } 
             excluded_volume = result;
-            result.clear();
+            result.clear( );
 
             if ( cb_save_pdbs->isChecked() )
             {
@@ -1659,16 +1659,16 @@ void US_Hydrodyn_Saxs_1d::start()
                            .sprintf(     
                                     "ATOM  %5d%5s%4s %1s%4s    %8.3f%8.3f%8.3f%6.2f%6.2f          %2s\n",
                                     model[ a ].serial,
-                                    model[ a ].orgName.toAscii().data(),
-                                    model[ a ].resName.toAscii().data(),
-                                    model[ a ].chainID == " " ? "a" : model[ a ].chainID.toAscii().data(),
-                                    model[ a ].resSeq.toAscii().data(),
+                                    model[ a ].orgName.toLatin1().data(),
+                                    model[ a ].resName.toLatin1().data(),
+                                    model[ a ].chainID == " " ? "a" : model[ a ].chainID.toLatin1().data(),
+                                    model[ a ].resSeq.toLatin1().data(),
                                     atoms[ a ].pos[ 0 ] * atomic_scaler_inv,
                                     atoms[ a ].pos[ 1 ] * atomic_scaler_inv,
                                     atoms[ a ].pos[ 2 ] * atomic_scaler_inv,
                                     0.0f,
                                     0.0f,
-                                    model[ a ].element.toAscii().data()
+                                    model[ a ].element.toLatin1().data()
                                     );
                      }
                      ts << "ENDMDL\n";
@@ -2087,7 +2087,7 @@ void US_Hydrodyn_Saxs_1d::start()
                         .arg( pixpos[ 0 ] ).arg( pixpos[ 1 ] )
                         .arg( pix_dist_from_beam_center )
                         .arg( q )
-                        .toAscii().data();
+                        .toLatin1().data();
                
                      cout << expiQdotR << endl;
 #endif
@@ -2422,7 +2422,7 @@ void US_Hydrodyn_Saxs_1d::update_axis_rotations( const QString & /* str */ )
 
 void US_Hydrodyn_Saxs_1d::set_planar_method()
 {
-   lbl_sample_rotations->setText( cb_planar_method->isChecked( ) ?
+   lbl_sample_rotations->setText( cb_planar_method->isChecked() ?
                                   us_tr( " Sphere horizontal slices: " ) :
                                   us_tr( " Sample rotations (best equalized over sphere):" ) );
    if ( cb_planar_method->isChecked() )
@@ -2685,7 +2685,7 @@ bool US_Hydrodyn_Saxs_1d::setup_excluded_volume_map()
       vvv_file.close();
       double volume;
       double surf;
-      if ( !vvv::setup_vol_surf( vvv_file.fileName().toAscii().data(),
+      if ( !vvv::setup_vol_surf( vvv_file.fileName().toLatin1().data(),
                                  ( float ) probe_radius,
                                  ( float ) deltaR,
                                  volume,
@@ -2836,7 +2836,7 @@ bool US_Hydrodyn_Saxs_1d::setup_excluded_volume_map()
    cout << cmd;
    editor_msg( "gray", "starting RasMol to compute excluded volume\n" );
    qApp->processEvents();
-   system( cmd.toAscii().data() );
+   system( cmd.toLatin1().data() );
    editor_msg( "gray", "RasMol done\n" );
    qApp->processEvents();
    return true;
@@ -2846,7 +2846,7 @@ bool US_Hydrodyn_Saxs_1d::setup_excluded_volume_map()
 bool US_Hydrodyn_Saxs_1d::get_excluded_volume_map()
 {
    errormsg = "";
-   excluded_volume.clear();
+   excluded_volume.clear( );
 
    if ( !rho0 )
    {
@@ -2856,7 +2856,7 @@ bool US_Hydrodyn_Saxs_1d::get_excluded_volume_map()
    // compute volume using VVV
    if ( cb_vvv->isChecked() )
    {
-      excluded_volume.clear();
+      excluded_volume.clear( );
       point p;
       for( unsigned int pt = 0; pt < vvv::NUMBINS; pt++ ) 
       {
@@ -2897,7 +2897,7 @@ bool US_Hydrodyn_Saxs_1d::get_excluded_volume_map()
       
       int line = 0;
       point tmp_point;
-      excluded_volume.clear();
+      excluded_volume.clear( );
       QString qs = ts.readLine();
       line++;
       float tmp_float = qs.toFloat();
@@ -2946,7 +2946,7 @@ bool US_Hydrodyn_Saxs_1d::get_excluded_volume_map()
       qApp->processEvents();
    }
 
-   FILE *fp = us_fopen( mapname.toAscii().data(), "rb");
+   FILE *fp = us_fopen( mapname.toLatin1().data(), "rb");
    if (  (FILE *)NULL == fp )
    {
       errormsg = QString( "Error: could not open file %1\n" ).arg( mapname );
@@ -3343,7 +3343,7 @@ bool US_Hydrodyn_Saxs_1d::load_rotations( int number,
    unsigned int line = 0;
 
    vector < double > p(3);
-   rotations.clear();
+   rotations.clear( );
 
    while ( !ts.atEnd() )
    {
@@ -3376,7 +3376,7 @@ bool US_Hydrodyn_Saxs_1d::load_rotations( int number,
                   .arg( number )
                   .arg( rotations.size() )
                   );
-      rotations.clear();
+      rotations.clear( );
       return false;
    }
    editor_msg( "blue", 
@@ -3455,7 +3455,7 @@ bool US_Hydrodyn_Saxs_1d::save_copy_excluded_volume_map( QString
       return false;
    }
 
-   FILE *fp = us_fopen( name.toAscii().data(), "rb+");
+   FILE *fp = us_fopen( name.toLatin1().data(), "rb+");
    if (  (FILE *)NULL == fp )
    {
       errormsg = QString( "Error: could not open file %1\n" ).arg( name );

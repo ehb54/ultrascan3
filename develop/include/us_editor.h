@@ -24,7 +24,7 @@
 #include <qmessagebox.h>
 //#include <q3paintdevicemetrics.h>
 #include <qpainter.h>
-#ifndef QT4
+#if QT_VERSION < 0x040000
 # include <qpdevmet.h>
 #endif
 //#include <q3popupmenu.h>
@@ -157,7 +157,7 @@ private:
 
 };
 #else
-#include <QtGui>
+#include <QtWidgets>
 #include "us_extern.h"
 
 class US_EXTERN TextEdit : public QFrame

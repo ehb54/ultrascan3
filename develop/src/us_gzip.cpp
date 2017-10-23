@@ -207,13 +207,13 @@ US_Gzip::US_Gzip()
 int US_Gzip::gzip( const QString& filename )
 {
    bytes_out = 0;
-  return treat_file( filename, FALSE );
+  return treat_file( filename, false );
 }
 
 int US_Gzip::gunzip( const QString& filename )
 {
    bytes_out = 0;
-  return treat_file( filename, TRUE );
+  return treat_file( filename, true );
 }
 
 int US_Gzip::treat_file( const QString& iname, bool decompress )
@@ -234,7 +234,7 @@ int US_Gzip::treat_file( const QString& iname, bool decompress )
   
   filetime = lastMod.toTime_t();
 
-  ifd = open( iname.toAscii().data(), O_RDONLY | O_BINARY );
+  ifd = open( iname.toLatin1().data(), O_RDONLY | O_BINARY );
   if ( ifd < 0 ) return GZIP_READERROR;
 
   // Generate output file name. 
@@ -339,7 +339,7 @@ int US_Gzip::treat_file( const QString& iname, bool decompress )
 
     if ( flags & 0x08 ) // Filename present
     {
-      while ( TRUE )
+      while ( true )
       {
         count = read( ifd, &c, 1 );
         
@@ -364,7 +364,7 @@ int US_Gzip::treat_file( const QString& iname, bool decompress )
     
     if ( output_file.exists() ) return GZIP_OUTFILEEXISTS;
 
-    ofd    = open( oname.toAscii().data(), O_CREAT | O_WRONLY | O_BINARY , 0664 );
+    ofd    = open( oname.toLatin1().data(), O_CREAT | O_WRONLY | O_BINARY , 0664 );
     outcnt = 0;
 
     updcrc( NULL, 0 );           /* initialize crc */
@@ -378,7 +378,7 @@ int US_Gzip::treat_file( const QString& iname, bool decompress )
     {
       close( ifd );
       close( ofd );
-      QFile::remove( oname.toAscii().data() );
+      QFile::remove( oname.toLatin1().data() );
       return inflate_error;
     }
 
@@ -398,7 +398,7 @@ int US_Gzip::treat_file( const QString& iname, bool decompress )
     {
       close( ifd );
       close( ofd );
-      QFile::remove( oname.toAscii().data() );
+      QFile::remove( oname.toLatin1().data() );
       return GZIP_CRCERROR;
     }
 
@@ -412,7 +412,7 @@ int US_Gzip::treat_file( const QString& iname, bool decompress )
     {
       close( ifd );
       close( ofd );
-      QFile::remove( oname.toAscii().data() );
+      QFile::remove( oname.toLatin1().data() );
       return GZIP_LENGTHERROR;
     }
   }
@@ -424,7 +424,7 @@ int US_Gzip::treat_file( const QString& iname, bool decompress )
 ////    if ( filename.exists() ) return GZIP_OUTFILEEXISTS;
     last_written_name = oname;
 
-    ofd = open( oname.toAscii().data(), O_CREAT | O_WRONLY | O_BINARY, 0664 );
+    ofd = open( oname.toLatin1().data(), O_CREAT | O_WRONLY | O_BINARY, 0664 );
     if ( ofd < 0 ) return GZIP_WRITEERROR;
 
     outcnt   = 0;
@@ -492,9 +492,9 @@ int US_Gzip::treat_file( const QString& iname, bool decompress )
 
       put_byte( OS_CODE );                  /* OS identifier */
 
-      if ( strlen( iname.toAscii().data() ) > 255 ) return GZIP_FILENAMEERROR;
+      if ( strlen( iname.toLatin1().data() ) > 255 ) return GZIP_FILENAMEERROR;
       char f[256];
-      strcpy( f, iname.toAscii().data() );
+      strcpy( f, iname.toLatin1().data() );
       char* p = base_name( f ); /* Don't save the directory part. */
       do { put_byte( *p ); } while ( *p++ );
                         
@@ -528,11 +528,11 @@ int US_Gzip::treat_file( const QString& iname, bool decompress )
   close( ofd );
 
   // Set the permissions 
-  chmod( oname.toAscii().data(), ifstat.st_mode & 07777 );
+  chmod( oname.toLatin1().data(), ifstat.st_mode & 07777 );
 
 #ifndef WIN32
   // Change the ownership (may fail if not root)
-  chown( oname.toAscii().data(), ifstat.st_uid, ifstat.st_gid );
+  chown( oname.toLatin1().data(), ifstat.st_uid, ifstat.st_gid );
 #endif
 
   // Reset oname metadata to ifile metadata
@@ -541,9 +541,9 @@ int US_Gzip::treat_file( const QString& iname, bool decompress )
 
   timep.actime  = ifstat.st_atime;
   timep.modtime = filetime;
-  utime( oname.toAscii().data(), &timep );
+  utime( oname.toLatin1().data(), &timep );
   // Now delete the input file
-  QFile::remove( iname.toAscii().data() );
+  QFile::remove( iname.toLatin1().data() );
 
   return GZIP_OK;
 }
@@ -1518,7 +1518,7 @@ int US_Gzip::inflate_block( int* e )
 
 
 
-int US_Gzip::inflate( )
+int US_Gzip::inflate()
 /* decompress an inflated entry */
 {
   int      e;           /* last block flag */

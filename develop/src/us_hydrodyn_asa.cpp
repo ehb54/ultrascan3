@@ -105,7 +105,7 @@ void US_Hydrodyn_ASA::setupGUI()
    cnt_probe_radius= new QwtCounter(this);
    US_Hydrodyn::sizeArrows( cnt_probe_radius );
    Q_CHECK_PTR(cnt_probe_radius);
-   cnt_probe_radius->setRange(0, 10, 0.01);
+   cnt_probe_radius->setRange(0, 10); cnt_probe_radius->setSingleStep( 0.01);
    cnt_probe_radius->setValue((*asa).probe_radius);
    cnt_probe_radius->setMinimumHeight(minHeight1);
    cnt_probe_radius->setEnabled(true);
@@ -126,7 +126,7 @@ void US_Hydrodyn_ASA::setupGUI()
    cnt_probe_recheck_radius= new QwtCounter(this);
    US_Hydrodyn::sizeArrows( cnt_probe_recheck_radius );
    Q_CHECK_PTR(cnt_probe_recheck_radius);
-   cnt_probe_recheck_radius->setRange(0, 10, 0.01);
+   cnt_probe_recheck_radius->setRange(0, 10); cnt_probe_recheck_radius->setSingleStep( 0.01);
    cnt_probe_recheck_radius->setValue((*asa).probe_recheck_radius);
    cnt_probe_recheck_radius->setMinimumHeight(minHeight1);
    cnt_probe_recheck_radius->setEnabled(true);
@@ -147,7 +147,7 @@ void US_Hydrodyn_ASA::setupGUI()
    cnt_asa_threshold= new QwtCounter(this);
    US_Hydrodyn::sizeArrows( cnt_asa_threshold );
    Q_CHECK_PTR(cnt_asa_threshold);
-   cnt_asa_threshold->setRange(0, 100, 0.1);
+   cnt_asa_threshold->setRange(0, 100); cnt_asa_threshold->setSingleStep( 0.1);
    cnt_asa_threshold->setValue((*asa).threshold);
    cnt_asa_threshold->setMinimumHeight(minHeight1);
    cnt_asa_threshold->setEnabled(true);
@@ -168,7 +168,7 @@ void US_Hydrodyn_ASA::setupGUI()
    cnt_asa_threshold_percent= new QwtCounter(this);
    US_Hydrodyn::sizeArrows( cnt_asa_threshold_percent );
    Q_CHECK_PTR(cnt_asa_threshold_percent);
-   cnt_asa_threshold_percent->setRange(0, 100, 0.1);
+   cnt_asa_threshold_percent->setRange(0, 100); cnt_asa_threshold_percent->setSingleStep( 0.1);
    cnt_asa_threshold_percent->setValue((*asa).threshold_percent);
    cnt_asa_threshold_percent->setMinimumHeight(minHeight1);
    cnt_asa_threshold_percent->setEnabled(true);
@@ -189,7 +189,7 @@ void US_Hydrodyn_ASA::setupGUI()
    cnt_asa_grid_threshold= new QwtCounter(this);
    US_Hydrodyn::sizeArrows( cnt_asa_grid_threshold );
    Q_CHECK_PTR(cnt_asa_grid_threshold);
-   cnt_asa_grid_threshold->setRange(0, 100, 0.1);
+   cnt_asa_grid_threshold->setRange(0, 100); cnt_asa_grid_threshold->setSingleStep( 0.1);
    cnt_asa_grid_threshold->setValue((*asa).grid_threshold);
    cnt_asa_grid_threshold->setMinimumHeight(minHeight1);
    cnt_asa_grid_threshold->setEnabled(true);
@@ -210,7 +210,7 @@ void US_Hydrodyn_ASA::setupGUI()
    cnt_asa_grid_threshold_percent= new QwtCounter(this);
    US_Hydrodyn::sizeArrows( cnt_asa_grid_threshold_percent );
    Q_CHECK_PTR(cnt_asa_grid_threshold_percent);
-   cnt_asa_grid_threshold_percent->setRange(0, 100, 0.1);
+   cnt_asa_grid_threshold_percent->setRange(0, 100); cnt_asa_grid_threshold_percent->setSingleStep( 0.1);
    cnt_asa_grid_threshold_percent->setValue((*asa).grid_threshold_percent);
    cnt_asa_grid_threshold_percent->setMinimumHeight(minHeight1);
    cnt_asa_grid_threshold_percent->setEnabled(true);
@@ -229,7 +229,7 @@ void US_Hydrodyn_ASA::setupGUI()
 
    cnt_hydrate_probe_radius = new QwtCounter(this);
    US_Hydrodyn::sizeArrows( cnt_hydrate_probe_radius );
-   cnt_hydrate_probe_radius->setRange(0, 10, 0.01);
+   cnt_hydrate_probe_radius->setRange(0, 10); cnt_hydrate_probe_radius->setSingleStep( 0.01);
    cnt_hydrate_probe_radius->setValue((*asa).hydrate_probe_radius);
    cnt_hydrate_probe_radius->setMinimumHeight(minHeight1);
    cnt_hydrate_probe_radius->setEnabled(true);
@@ -248,7 +248,7 @@ void US_Hydrodyn_ASA::setupGUI()
 
    cnt_hydrate_threshold= new QwtCounter(this);
    US_Hydrodyn::sizeArrows( cnt_hydrate_threshold );
-   cnt_hydrate_threshold->setRange(0, 100, 0.1);
+   cnt_hydrate_threshold->setRange(0, 100); cnt_hydrate_threshold->setSingleStep( 0.1);
    cnt_hydrate_threshold->setValue((*asa).hydrate_threshold);
    cnt_hydrate_threshold->setMinimumHeight(minHeight1);
    cnt_hydrate_threshold->setEnabled(true);
@@ -269,7 +269,7 @@ void US_Hydrodyn_ASA::setupGUI()
    cnt_asab1_step= new QwtCounter(this);
    US_Hydrodyn::sizeArrows( cnt_asab1_step );
    Q_CHECK_PTR(cnt_asab1_step);
-   cnt_asab1_step->setRange(0.1, 100, 0.1);
+   cnt_asab1_step->setRange(0.1, 100); cnt_asab1_step->setSingleStep( 0.1);
    cnt_asab1_step->setValue((*asa).asab1_step);
    cnt_asab1_step->setMinimumHeight(minHeight1);
    cnt_asab1_step->setEnabled(true);
@@ -298,7 +298,7 @@ void US_Hydrodyn_ASA::setupGUI()
 
    cnt_vvv_probe_radius= new QwtCounter(this);
    US_Hydrodyn::sizeArrows( cnt_vvv_probe_radius );
-   cnt_vvv_probe_radius->setRange(0.0, 20.0, 0.1);
+   cnt_vvv_probe_radius->setRange(0.0, 20.0); cnt_vvv_probe_radius->setSingleStep( 0.1);
    cnt_vvv_probe_radius->setValue((*asa).vvv_probe_radius);
    cnt_vvv_probe_radius->setMinimumHeight(minHeight1);
    cnt_vvv_probe_radius->setEnabled(true);
@@ -317,7 +317,7 @@ void US_Hydrodyn_ASA::setupGUI()
 
    cnt_vvv_grid_dR= new QwtCounter(this);
    US_Hydrodyn::sizeArrows( cnt_vvv_grid_dR );
-   cnt_vvv_grid_dR->setRange(0.1, 20.0, 0.01);
+   cnt_vvv_grid_dR->setRange(0.1, 20.0); cnt_vvv_grid_dR->setSingleStep( 0.01);
    cnt_vvv_grid_dR->setValue((*asa).vvv_grid_dR);
    cnt_vvv_grid_dR->setMinimumHeight(minHeight1);
    cnt_vvv_grid_dR->setEnabled(true);

@@ -392,9 +392,9 @@ void US_Hydrodyn_Saxs_Iqq_Load_Csv::transpose()
                // cout <<  QString("array2d_to_save[%1].size() == %2\n")
                // .arg(j)
                // .arg(array2d_to_save[j].size());
-               fprintf(of, comma.toAscii().data());
+               fprintf(of, comma.toLatin1().data());
             } else {
-               fprintf(of, "%s%s", comma.toAscii().data(), array2d_to_save[j][i].toAscii().data());
+               fprintf(of, "%s%s", comma.toLatin1().data(), array2d_to_save[j][i].toLatin1().data());
             }
             comma = ",";
          }
@@ -452,7 +452,7 @@ void US_Hydrodyn_Saxs_Iqq_Load_Csv::save_selected()
          {
             if ( map_sel_names.count(qsl_tmp[0]) || it == qsl->begin() )
             {
-               fprintf(of, "%s\n", (*it).toAscii().data());
+               fprintf(of, "%s\n", (*it).toLatin1().data());
             }
          }
       }
@@ -468,7 +468,7 @@ void US_Hydrodyn_Saxs_Iqq_Load_Csv::save_selected()
 
 void US_Hydrodyn_Saxs_Iqq_Load_Csv::cancel()
 {
-   qsl_sel_names->clear();
+   qsl_sel_names->clear( );
    close();
 }
 
@@ -481,12 +481,12 @@ void US_Hydrodyn_Saxs_Iqq_Load_Csv::help()
 
 void US_Hydrodyn_Saxs_Iqq_Load_Csv::update_selected()
 {
-   qsl_sel_names->clear();
+   qsl_sel_names->clear( );
    for ( int i = 0; i < lb_names->count(); i++ )
    {
       if ( lb_names->item(i)->isSelected() )
       {
-         *qsl_sel_names << lb_names->item(i)->text( );
+         *qsl_sel_names << lb_names->item(i)->text();
       }
    }
    update_enables();
@@ -734,9 +734,9 @@ void US_Hydrodyn_Saxs_Iqq_Load_Csv::save_as_dat()
                // cout <<  QString("array2d_to_save[%1].size() == %2\n")
                // .arg(j)
                // .arg(array2d_to_save[j].size());
-               fprintf(of, tab.toAscii().data());
+               fprintf(of, tab.toLatin1().data());
             } else {
-               fprintf(of, "%s%s", tab.toAscii().data(), QString( "%1" ).arg( array2d_to_save[j][i] ).replace( "\"", "'" ).toAscii().data() );
+               fprintf(of, "%s%s", tab.toLatin1().data(), QString( "%1" ).arg( array2d_to_save[j][i] ).replace( "\"", "'" ).toLatin1().data() );
             }
             tab = "\t";
          }

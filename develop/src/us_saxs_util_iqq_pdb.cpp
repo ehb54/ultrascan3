@@ -318,7 +318,7 @@ bool US_Saxs_Util::calc_saxs_iq_native_fast()
       unsigned int pos_pr;
       float one_over_delta_pr = 1.0 / delta_pr;
       float delta_pr = our_saxs_options.bin_size;
-      contrib_array.clear();
+      contrib_array.clear( );
       contrib_file = control_parameters[ "inputfile" ];
       // cout << "contrib_file " << contrib_file << endl;
 
@@ -543,15 +543,15 @@ bool US_Saxs_Util::calc_saxs_iq_native_fast()
                      QString("")
                      .sprintf(
                               "SOMO p(r) vs r data generated from %s by US_SOMO %s %s bin size %f mw %.2f Daltons area %.2f\n"
-                              , control_parameters[ "inputfile" ].toAscii().data()
-                              , US_Version.toAscii().data()
+                              , control_parameters[ "inputfile" ].toLatin1().data()
+                              , US_Version.toLatin1().data()
                               , REVISION
                               , delta
                               , get_mw(control_parameters[ "inputfile" ], false)
                               , compute_pr_area(pr, r)
                               );
                   fprintf(fpr, "%s",
-                          last_saxs_header.toAscii().data() );
+                          last_saxs_header.toLatin1().data() );
                   fprintf(fpr, "r\tp(r)\tnorm. p(r)\n");
                   for ( unsigned int i = 0; i < hist_pr.size(); i++ )
                   {
@@ -584,8 +584,8 @@ bool US_Saxs_Util::calc_saxs_iq_native_fast()
                QString("")
                .sprintf(
                         "SOMO p(r) vs r data generated from %s by US_SOMO %s %s bin size %f mw %.2f Daltons area %.2f\n"
-                        , control_parameters[ "inputfile" ].toAscii().data()
-                        , US_Version.toAscii().data()
+                        , control_parameters[ "inputfile" ].toLatin1().data()
+                        , US_Version.toLatin1().data()
                         , REVISION
                         , delta
                         , get_mw(control_parameters[ "inputfile" ], false)
@@ -1753,7 +1753,7 @@ void US_Saxs_Util::setup_saxs_options()
 {
   //cout << "setup saxs options\n";
 
-   hybrid_coords.clear();
+   hybrid_coords.clear( );
    point p;
 
    // #define UHS_ALEXANDROS_POINTS
@@ -1887,7 +1887,7 @@ void US_Saxs_Util::setup_saxs_options()
 #endif
    // compute pairwise distances
 
-   hybrid_r.clear();
+   hybrid_r.clear( );
 
    for ( map < QString, vector < point > >::iterator it = hybrid_coords.begin();
          it != hybrid_coords.end();
@@ -2428,11 +2428,11 @@ bool US_Saxs_Util::load_ff_table( QString filename )
 
    ff_table_loaded = false;
 
-   ff_table.clear();
-   ff_q    .clear();
-   ff_ff   .clear();
-   ff_y2   .clear();
-   ff_ev   .clear();
+   ff_table.clear( );
+   ff_q    .clear( );
+   ff_ff   .clear( );
+   ff_y2   .clear( );
+   ff_ev   .clear( );
 
    QTextStream ts( &f );
    

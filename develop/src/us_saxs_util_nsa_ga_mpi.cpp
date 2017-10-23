@@ -454,7 +454,7 @@ bool US_Saxs_Util::nsa_ga_close_workers()
 #if defined( USUNGM_DEBUG )
    debug_mpi( QString( "%1: finished closing workers\n" ).arg( myrank ) );
 #endif
-   waiting_workers.clear();
+   waiting_workers.clear( );
 #if defined( USUNGM_DEBUG )
    debug_mpi( QString( "%1: after finished closing workers\n" 
                        " : busy_workers       %2\n"
@@ -703,8 +703,8 @@ bool US_Saxs_Util::nsa_ga_master_test( double & nrmsd )
    nsa_ga_individual individual;
    individual.v.resize( nsa_var_ref.size() );
 
-   queued_requests.clear();
-   received_results.clear();
+   queued_requests.clear( );
+   received_results.clear( );
 
    cout << QString( "%1: queuing requests\n" ).arg( myrank ) << flush;
 
@@ -731,7 +731,7 @@ bool US_Saxs_Util::nsa_ga_master_test( double & nrmsd )
       .arg( queued_requests.size() ) 
       .arg( received_results.size() ) 
         << flush;
-   received_results.clear();
+   received_results.clear( );
 
    for ( unsigned int i = 0; i < 4; i++ )
    {
@@ -780,8 +780,8 @@ bool US_Saxs_Util::nsa_ga_master( double & nrmsd )
    nsa_ga_individual individual;
    individual.v.resize( nsa_var_ref.size() );
 
-   queued_requests.clear();
-   received_results.clear();
+   queued_requests.clear( );
+   received_results.clear( );
 
    list < nsa_ga_individual > nsa_pop;
 
@@ -847,7 +847,7 @@ bool US_Saxs_Util::nsa_ga_master( double & nrmsd )
            << flush;
 
       nsa_pop = received_results;
-      received_results.clear();
+      received_results.clear( );
 
       nsa_pop.sort();
       nsa_pop.unique();
@@ -901,7 +901,7 @@ bool US_Saxs_Util::nsa_ga_master( double & nrmsd )
 #if defined( USUNGM_DEBUG )
       debug_mpi( QString( "%1: start: nsa_pop.size() %2\n" ).arg( myrank ).arg( last_pop.size() ) );
 #endif
-      nsa_pop.clear();
+      nsa_pop.clear( );
 
       for ( unsigned int i = 0; i < control_parameters[ "nsapopulation" ].toUInt(); i++ )
       {
@@ -1016,7 +1016,7 @@ bool US_Saxs_Util::nsa_ga_master( double & nrmsd )
 #endif
       
       nsa_pop = received_results;
-      received_results.clear();
+      received_results.clear( );
    }
    
    nsa_pop.sort();

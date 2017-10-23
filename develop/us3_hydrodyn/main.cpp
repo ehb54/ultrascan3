@@ -28,13 +28,13 @@ int main (int argc, char **argv)
    US_Hydrodyn *hydrodyn;
    vector < QString > batch_file;
    int argcbase = 1;
-#ifdef Q_WS_MAC
+#ifdef Q_OS_MAC
    argcbase     = 2;
 #endif
-   while ( a.argc() >= argcbase &&
-      	  QString(a.argv()[argcbase]).contains(QRegExp("^-")) )
+   while ( a.arguments().size() > argcbase &&
+      	  QString(a.arguments()[argcbase]).contains(QRegExp("^-")) )
    {
-      if ( QString(a.argv()[argcbase]).contains(QRegExp("^-e")) )
+      if ( QString(a.arguments()[argcbase]).contains(QRegExp("^-e")) )
       {
          if ( debug )
          {
@@ -43,13 +43,13 @@ int main (int argc, char **argv)
          argcbase++;
          expert = true;
       }
-      if ( QString(a.argv()[argcbase]).contains(QRegExp("^-d")) )
+      if ( QString(a.arguments()[argcbase]).contains(QRegExp("^-d")) )
       {
          puts("debug mode");
          argcbase++;
          debug = true;
       }
-      if ( QString(a.argv()[argcbase]).contains(QRegExp("^-r")) )
+      if ( QString(a.arguments()[argcbase]).contains(QRegExp("^-r")) )
       {
          if ( debug )
          {
@@ -57,10 +57,10 @@ int main (int argc, char **argv)
          }
          argcbase++;
          residue_file = true;
-         residue_filename = a.argv()[argcbase];
+         residue_filename = a.arguments()[argcbase];
          argcbase++;
       }
-      if ( QString(a.argv()[argcbase]).contains(QRegExp("^-c")) )
+      if ( QString(a.arguments()[argcbase]).contains(QRegExp("^-c")) )
       {
          if ( debug )
          {
@@ -68,13 +68,13 @@ int main (int argc, char **argv)
          }
          argcbase++;
          script = true;
-         script_filename = a.argv()[argcbase];
+         script_filename = a.arguments()[argcbase];
          argcbase++;
       }
    }
-   for ( int i = argcbase; i < a.argc(); i++ ) 
+   for ( int i = argcbase; i < a.arguments().size(); i++ ) 
    {
-      batch_file.push_back( dir->filePath(a.argv()[i]) );      
+      batch_file.push_back( dir->filePath(a.arguments()[i]) );      
    }
    hydrodyn = new US_Hydrodyn(batch_file);
    hydrodyn->setWindowTitle("SOMO Solution Modeler");
@@ -82,7 +82,7 @@ int main (int argc, char **argv)
    {
       hydrodyn->residue_filename = residue_filename;
       hydrodyn->read_residue_file();
-      hydrodyn->lbl_table->setText( QDir::convertSeparators( residue_filename ) );
+      hydrodyn->lbl_table->setText( QDir::toNativeSeparators( residue_filename ) );
    }
    if ( expert )
    {
@@ -110,7 +110,7 @@ int main (int argc, char **argv)
    hydrodyn->show();
  //   a.setMainWidget(hydrodyn);
    a.setDesktopSettingsAware(false);
-#ifdef QT4
+#if QT_VERSION >= 0x040000
    {
       QString icon = 
          hydrodyn->USglobal->config_list.system_dir + "/etc/" + "somo3_icon_128x128.ico";
@@ -151,9 +151,9 @@ void process_script(QString script_filename, US_Hydrodyn *h)
          rx2.indexIn(c);
          rx3.indexIn(c);
          //         printf("rx0.cap(1) <%s> rx1.cap(1) <%s> rx2.cap(1) <%s>\n"
-         //                ,rx0.cap(1).toAscii().data()
-         //                ,rx1.cap(1).toAscii().data()
-         //                ,rx2.cap(1).toAscii().data()
+         //                ,rx0.cap(1).toLatin1().data()
+         //                ,rx1.cap(1).toLatin1().data()
+         //                ,rx2.cap(1).toLatin1().data()
          //                );
          if ( rx0.cap(1) == "exit" )
          {
@@ -179,7 +179,7 @@ void process_script(QString script_filename, US_Hydrodyn *h)
                ok = true;
                h->residue_filename = rx2.cap(2);
                h->read_residue_file();
-               h->lbl_table->setText( QDir::convertSeparators( rx2.cap(2) ) );
+               h->lbl_table->setText( QDir::toNativeSeparators( rx2.cap(2) ) );
             }
             if ( rx2.cap(2).toLower().contains(QRegExp(".pdb$")) ) 
             {

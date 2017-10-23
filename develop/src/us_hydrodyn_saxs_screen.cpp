@@ -78,7 +78,7 @@ US_Hydrodyn_Saxs_Screen::US_Hydrodyn_Saxs_Screen(
    }
 
    t_csv->setMaximumHeight( t_csv->height() );
-#ifndef QT4
+#if QT_VERSION < 0x040000
    editor->setMaximumWidth( editor->width() + editor->width() / 20 );
 #else
    editor->setMaximumWidth( ( (int)csv_width * 35 ) / 100 );
@@ -101,7 +101,7 @@ void US_Hydrodyn_Saxs_Screen::setupGUI()
    int minHeight1  = 30;
    int minHeight1b = 75;
    int minHeight2  = 45;
-#if !defined(QT4) || !defined(Q_WS_MAC)
+#if QT_VERSION < 0x040000 || !defined(Q_WS_MAC)
    int minHeight3  = 30;
 #endif
 
@@ -142,8 +142,8 @@ void US_Hydrodyn_Saxs_Screen::setupGUI()
    }
 
    t_csv->setSortingEnabled(false);
-    t_csv->verticalHeader()->setMovable(false);
-    t_csv->horizontalHeader()->setMovable(false);
+    t_csv->verticalHeader()->setSectionsMovable(false);
+    t_csv->horizontalHeader()->setSectionsMovable(false);
    //  t_csv->setReadOnly(false);
 
    t_csv->setColumnWidth(0, 200);
@@ -288,12 +288,12 @@ void US_Hydrodyn_Saxs_Screen::setupGUI()
    editor->setReadOnly(true);
 
 #if QT_VERSION < 0x040000
-# if defined(QT4) && defined(Q_WS_MAC)
+# if QT_VERSION >= 0x040000 && defined(Q_WS_MAC)
    {
  //      Q3PopupMenu * file = new Q3PopupMenu;
-      file->insertItem( us_tr("&Font"),  this, SLOT(update_font( )),    Qt::ALT+Qt::Key_F );
-      file->insertItem( us_tr("&Save"),  this, SLOT(save( )),    Qt::ALT+Qt::Key_S );
-      file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display( )),   Qt::ALT+Qt::Key_X );
+      file->insertItem( us_tr("&Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
+      file->insertItem( us_tr("&Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
+      file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
 
       QMenuBar *menu = new QMenuBar( this );
       AUTFBACK( menu );
@@ -311,9 +311,9 @@ void US_Hydrodyn_Saxs_Screen::setupGUI()
    AUTFBACK( m );
  //   Q3PopupMenu * file = new Q3PopupMenu(editor);
    m->insertItem( us_tr("&File"), file );
-   file->insertItem( us_tr("Font"),  this, SLOT(update_font( )),    Qt::ALT+Qt::Key_F );
-   file->insertItem( us_tr("Save"),  this, SLOT(save( )),    Qt::ALT+Qt::Key_S );
-   file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display( )),   Qt::ALT+Qt::Key_X );
+   file->insertItem( us_tr("Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
+   file->insertItem( us_tr("Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
+   file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
 # endif
 #else
    QFrame *frame;
@@ -350,7 +350,7 @@ void US_Hydrodyn_Saxs_Screen::setupGUI()
    // plot_dist->enableOutline(true);
    // plot_dist->setOutlinePen(Qt::white);
    // plot_dist->setOutlineStyle(Qwt::VLine);
-#ifndef QT4
+#if QT_VERSION < 0x040000
    plot_dist->enableGridXMin();
    plot_dist->enableGridYMin();
    plot_dist->setGridMajPen(QPen(USglobal->global_colors.major_ticks, 0, DotLine));
@@ -359,8 +359,8 @@ void US_Hydrodyn_Saxs_Screen::setupGUI()
    QwtPlotGrid* grid = new QwtPlotGrid;
    grid->enableXMin( true );
    grid->enableYMin( true );
-   grid->setMajPen( QPen( USglobal->global_colors.major_ticks, 0, Qt::DotLine));
-   grid->setMinPen( QPen( USglobal->global_colors.minor_ticks, 0, Qt::DotLine));
+   grid->setMajorPen( QPen( USglobal->global_colors.major_ticks, 0, Qt::DotLine));
+   grid->setMinorPen( QPen( USglobal->global_colors.minor_ticks, 0, Qt::DotLine));
    grid->attach( plot_dist );
 #endif
    plot_dist->setPalette( PALET_NORMAL );
@@ -370,13 +370,13 @@ void US_Hydrodyn_Saxs_Screen::setupGUI()
    plot_dist->setAxisFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    plot_dist->setAxisFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    plot_dist->setAxisFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-#ifndef QT4
+#if QT_VERSION < 0x040000
    plot_dist->setTitleFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 3, QFont::Bold));
    plot_dist->setAxisTitleFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
    plot_dist->setAxisTitleFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
    plot_dist->setAxisTitleFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 #endif
-   plot_dist->setMargin(USglobal->config_list.margin);
+//    plot_dist->setMargin(USglobal->config_list.margin);
    plot_dist->setTitle("");
    plot_dist->setCanvasBackground(USglobal->global_colors.plot);
    
@@ -419,7 +419,7 @@ void US_Hydrodyn_Saxs_Screen::setupGUI()
 
    qwtw_wheel = new QwtWheel( this );
    qwtw_wheel->setMass         ( 1.0 );
-   qwtw_wheel->setRange        ( 0.0, 0.0, 1 );
+   qwtw_wheel->setRange( 0.0, 0.0); qwtw_wheel->setSingleStep( 1 );
    qwtw_wheel->setMinimumHeight( minHeight2 );
    // qwtw_wheel->setTotalAngle( 3600.0 );
    connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
@@ -427,7 +427,7 @@ void US_Hydrodyn_Saxs_Screen::setupGUI()
    qwtw_wheel2 = new QwtWheel( this );
    qwtw_wheel2->setOrientation  ( Qt::Vertical );
    qwtw_wheel2->setMass         ( 1.0 );
-   qwtw_wheel2->setRange        ( 1.0, 1.0, 1 );
+   qwtw_wheel2->setRange( 1.0, 1.0); qwtw_wheel2->setSingleStep( 1 );
    qwtw_wheel2->setMinimumWidth ( minHeight2 );
    // qwtw_wheel->setTotalAngle( 3600.0 );
    connect( qwtw_wheel2, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel2( double ) ) );
@@ -495,7 +495,7 @@ void US_Hydrodyn_Saxs_Screen::setupGUI()
    hbl_bottom->addSpacing(4);
 
    QBoxLayout * vbl_editor_group = new QVBoxLayout(0); vbl_editor_group->setContentsMargins( 0, 0, 0, 0 ); vbl_editor_group->setSpacing( 0 );
-#if !defined(QT4) || !defined(Q_WS_MAC)
+#if QT_VERSION < 0x040000 || !defined(Q_WS_MAC)
    vbl_editor_group->addWidget(frame);
 #endif
    vbl_editor_group->addWidget(editor);
@@ -594,7 +594,7 @@ void US_Hydrodyn_Saxs_Screen::table_value( int /* row */, int col )
 
 void US_Hydrodyn_Saxs_Screen::clear_display()
 {
-   editor->clear();
+   editor->clear( );
    editor->append("\n\n");
 }
 
@@ -669,7 +669,7 @@ void US_Hydrodyn_Saxs_Screen::set_target( QString scaling_target )
          if ( t_csv->item( i, 0 )->text().contains("Ending q (A^-1)") )
          {
             t_csv->setItem( i, 2, new QTableWidgetItem( QString("%1").arg( qs[ target_pos ][ 0 ]) ) );
-            t_csv->setItem( i, 3, new QTableWidgetItem( QString("%1").arg( qs[ target_pos ][ qs[ target_pos ].size( ) - 1 ] ) ) );
+            t_csv->setItem( i, 3, new QTableWidgetItem( QString("%1").arg( qs[ target_pos ][ qs[ target_pos ].size() - 1 ] ) ) );
             recompute_interval_from_points();
             break;
          }
@@ -759,9 +759,9 @@ void US_Hydrodyn_Saxs_Screen::start( bool already_running )
 
    unsigned int current_offset = 0;
 
-   csv_source_name_iqq.clear();
-   saxs_q.clear();
-   saxs_iqq.clear();
+   csv_source_name_iqq.clear( );
+   saxs_q.clear( );
+   saxs_iqq.clear( );
 
    double min_radius             = 0e0;
    double max_radius             = 0e0;
@@ -1122,15 +1122,18 @@ void US_Hydrodyn_Saxs_Screen::update_wheel_range()
    if ( messages_size )
    {
       messages_size--;
-      qwtw_wheel->setRange( -0.5, 
-                            (double) messages_size + 0.5, 
-                            messages_size * messages_size * 0.1 < 1.0
-                            ? 
-                            messages_size * messages_size * 0.1 
-                            :
-                            1.0 );
+      {
+         double rs = 
+            ( messages_size * messages_size * 0.1 < 1.0 )
+            ? 
+            messages_size * messages_size * 0.1 
+            :
+            1.0
+            ;
+         qwtw_wheel->setRange( -0.5, (double) messages_size + 0.5); qwtw_wheel->setSingleStep( rs );
+      }
    } else {
-      qwtw_wheel->setRange( 0.0, 0.0, 1.0 );
+      qwtw_wheel->setRange( 0.0, 0.0); qwtw_wheel->setSingleStep( 1.0 );
    }
 }
 
@@ -1141,7 +1144,7 @@ void US_Hydrodyn_Saxs_Screen::plot_row( unsigned int i )
       return;
    }
 
-   lbl_pos_range2->setText( QString( "%1\nof\n%2" ).arg( i + 1 ).arg( messages.size( ) ) );
+   lbl_pos_range2->setText( QString( "%1\nof\n%2" ).arg( i + 1 ).arg( messages.size() ) );
 
    current_row = i;
    if ( last_plotted_pos >= messages[ current_row ].size() )
@@ -1177,10 +1180,10 @@ void US_Hydrodyn_Saxs_Screen::plot_pos( unsigned int i )
    }
 
    last_plotted_pos = i;
-   lbl_pos_range->setText( QString( "%1 of %2" ).arg( i + 1 ).arg( messages[ current_row ].size( ) ) );
+   lbl_pos_range->setText( QString( "%1 of %2" ).arg( i + 1 ).arg( messages[ current_row ].size() ) );
    
-   plot_dist->clear();
-#ifndef QT4
+   plot_dist->detachItems( QwtPlotItem::Rtti_PlotCurve ); plot_dist->detachItems( QwtPlotItem::Rtti_PlotMarker );;
+#if QT_VERSION < 0x040000
    long curvekey = plot_dist->insertCurve("Radii histogram");
    plot_dist->setCurveStyle( curvekey, QwtCurve::Sticks);
    plot_dist->setCurveData ( curvekey, 
@@ -1191,7 +1194,7 @@ void US_Hydrodyn_Saxs_Screen::plot_pos( unsigned int i )
 #else
    QwtPlotCurve *curve = new QwtPlotCurve( us_tr( "Radii histogram" ) );
    curve->setStyle( QwtPlotCurve::Sticks );
-   curve->setData( (double *)&( radiis    [ current_row ][ i ][ 0 ] ),
+   curve->setSamples( (double *)&( radiis    [ current_row ][ i ][ 0 ] ),
                    (double *)&( intensitys[ current_row ][ i ][ 0 ] ),
                    radiis[ current_row ][ i ].size() );
    curve->setPen( QPen( Qt::yellow, pen_width, Qt::SolidLine ) );
@@ -1202,7 +1205,7 @@ void US_Hydrodyn_Saxs_Screen::plot_pos( unsigned int i )
 
    if ( cb_plot_best->isChecked() )
    {
-#ifndef QT4
+#if QT_VERSION < 0x040000
       long qpmkey = plot_dist->insertMarker();
       plot_dist->setMarkerLineStyle ( qpmkey, QwtMarker::VLine);
       plot_dist->setMarkerPos       ( qpmkey, best_fit_radiuss[ current_row ][ i ], 0e0 );
@@ -1220,7 +1223,7 @@ void US_Hydrodyn_Saxs_Screen::plot_pos( unsigned int i )
                                       );
 #else
       QwtPlotMarker* marker1 = new QwtPlotMarker;
-      marker1->setSymbol( QwtSymbol( QwtSymbol::VLine,
+      marker1->setSymbol( new QwtSymbol( QwtSymbol::VLine,
          QBrush( Qt::white ), QPen( Qt::green, 2, Qt::DashLine ),
          QSize( 8, sizeym ) ) );
       marker1->setValue( best_fit_radiuss[ current_row ][ i ], ymark );
@@ -1237,7 +1240,7 @@ void US_Hydrodyn_Saxs_Screen::plot_pos( unsigned int i )
 
    if ( cb_plot_average->isChecked() )
    {
-#ifndef QT4
+#if QT_VERSION < 0x040000
       long qpmkey2 = plot_dist->insertMarker();
       plot_dist->setMarkerLineStyle ( qpmkey2, QwtMarker::VLine);
       plot_dist->setMarkerPos       ( qpmkey2, average_radiuss[ current_row ][ i ], 0e0 );
@@ -1255,7 +1258,7 @@ void US_Hydrodyn_Saxs_Screen::plot_pos( unsigned int i )
                                       );
 #else
       QwtPlotMarker* marker2 = new QwtPlotMarker;
-      marker2->setSymbol( QwtSymbol( QwtSymbol::VLine,
+      marker2->setSymbol( new QwtSymbol( QwtSymbol::VLine,
          QBrush( Qt::white ), QPen( QColor( 255, 141, 0 ), 2, Qt::DashLine ),
          QSize( 8, sizeym ) ) );
       marker2->setValue( average_radiuss[ current_row ][ i ], ymark );
@@ -1274,7 +1277,7 @@ void US_Hydrodyn_Saxs_Screen::plot_pos( unsigned int i )
    if ( cb_plot_rg->isChecked() &&
         target_rgs[ current_row ][ i ] != 0e0 )
    {
-#ifndef QT4
+#if QT_VERSION < 0x040000
       long qpmkey3 = plot_dist->insertMarker();
       plot_dist->setMarkerLineStyle ( qpmkey3, QwtMarker::VLine);
       plot_dist->setMarkerPos       ( qpmkey3, target_rgs[ current_row ][ i ], 0e0 );
@@ -1284,7 +1287,7 @@ void US_Hydrodyn_Saxs_Screen::plot_pos( unsigned int i )
       plot_dist->setMarkerLabelText ( qpmkey3, QString("Guinier Rg\n%1").arg( target_rgs[ current_row ][ i ] ) );
 #else
       QwtPlotMarker* marker3 = new QwtPlotMarker;
-      marker3->setSymbol( QwtSymbol( QwtSymbol::VLine,
+      marker3->setSymbol( new QwtSymbol( QwtSymbol::VLine,
          QBrush( Qt::white ), QPen( Qt::cyan, 2, Qt::DashLine ),
          QSize( 8, sizeym ) ) );
       marker3->setValue( target_rgs[ current_row ][ i ], ymark );
@@ -1303,7 +1306,7 @@ void US_Hydrodyn_Saxs_Screen::plot_pos( unsigned int i )
    if ( !plot_dist_zoomer )
    {
       plot_dist_zoomer = new ScrollZoomer(plot_dist->canvas());
-#ifndef QT4
+#if QT_VERSION < 0x040000
       plot_dist_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
       plot_dist_zoomer->setCursorLabelPen(QPen(Qt::yellow));
 #else
@@ -1554,10 +1557,10 @@ void US_Hydrodyn_Saxs_Screen::save_saxs_plot()
       }
    }
 
-   qs      .clear();
-   Is      .clear();
-   I_errors.clear();
-   names   .clear();
+   qs      .clear( );
+   Is      .clear( );
+   I_errors.clear( );
+   names   .clear( );
 
    if ( add_target )
    {
@@ -1670,23 +1673,24 @@ void US_Hydrodyn_Saxs_Screen::push()
    chi2_bests         .resize( current_row + 1 );
    chi2_nnlss         .resize( current_row + 1 );
    
-   qwtw_wheel->setRange( 0.0, 0.0, 1 );
-   qwtw_wheel2->setRange(
-                          (double) current_row + 0.5, 
-                          -0.5, 
-                          current_row * current_row * 0.1 < 1.0
-                          ? 
-                          current_row * current_row * 0.1 
-                          :
-                          1.0 );
+   qwtw_wheel->setRange( 0.0, 0.0); qwtw_wheel->setSingleStep( 1 );
+   {
+      double rs = ( current_row * current_row * 0.1 < 1.0 )
+         ? 
+         current_row * current_row * 0.1 
+         :
+         1.0
+         ;
+      qwtw_wheel2->setRange( (double) current_row + 0.5, 0.5); qwtw_wheel2->setSingleStep( rs );
+   }
    plot_row( current_row );
 }
 
 void US_Hydrodyn_Saxs_Screen::clear_plot()
 {
-   plot_dist->clear();
+   plot_dist->detachItems( QwtPlotItem::Rtti_PlotCurve ); plot_dist->detachItems( QwtPlotItem::Rtti_PlotMarker );;
    plot_dist->replot();
-#ifndef QT4
+#if QT_VERSION < 0x040000
    if ( plot_dist_zoomer )
    {
       delete plot_dist_zoomer;
@@ -1737,20 +1741,20 @@ void US_Hydrodyn_Saxs_Screen::clear_plot_row()
       chi2_bests         .pop_back();
       chi2_nnlss         .pop_back();
    } else {
-      messages           [ 0 ].clear();
-      messages2          [ 0 ].clear();
-      messages3          [ 0 ].clear();
-      messages4          [ 0 ].clear();
-      radiis             [ 0 ].clear();
-      intensitys         [ 0 ].clear();
-      best_fit_radiuss   [ 0 ].clear();
-      best_fit_delta_rhos[ 0 ].clear();
-      average_radiuss    [ 0 ].clear();
-      average_delta_rhos [ 0 ].clear();
-      target_rgs         [ 0 ].clear();
-      use_chi2s          [ 0 ].clear();
-      chi2_bests         [ 0 ].clear();
-      chi2_nnlss         [ 0 ].clear();
+      messages           [ 0 ].clear( );
+      messages2          [ 0 ].clear( );
+      messages3          [ 0 ].clear( );
+      messages4          [ 0 ].clear( );
+      radiis             [ 0 ].clear( );
+      intensitys         [ 0 ].clear( );
+      best_fit_radiuss   [ 0 ].clear( );
+      best_fit_delta_rhos[ 0 ].clear( );
+      average_radiuss    [ 0 ].clear( );
+      average_delta_rhos [ 0 ].clear( );
+      target_rgs         [ 0 ].clear( );
+      use_chi2s          [ 0 ].clear( );
+      chi2_bests         [ 0 ].clear( );
+      chi2_nnlss         [ 0 ].clear( );
    }      
 
    if ( current_row >= messages.size() )
@@ -1783,23 +1787,23 @@ void US_Hydrodyn_Saxs_Screen::clear_plot_all()
    chi2_bests         .resize(1);
    chi2_nnlss         .resize(1);
 
-   messages           [ 0 ].clear();
-   messages2          [ 0 ].clear();
-   messages3          [ 0 ].clear();
-   messages4          [ 0 ].clear();
-   radiis             [ 0 ].clear();
-   intensitys         [ 0 ].clear();
-   best_fit_radiuss   [ 0 ].clear();
-   best_fit_delta_rhos[ 0 ].clear();
-   average_radiuss    [ 0 ].clear();
-   average_delta_rhos [ 0 ].clear();
-   target_rgs         [ 0 ].clear();
-   use_chi2s          [ 0 ].clear();
-   chi2_bests         [ 0 ].clear();
-   chi2_nnlss         [ 0 ].clear();
+   messages           [ 0 ].clear( );
+   messages2          [ 0 ].clear( );
+   messages3          [ 0 ].clear( );
+   messages4          [ 0 ].clear( );
+   radiis             [ 0 ].clear( );
+   intensitys         [ 0 ].clear( );
+   best_fit_radiuss   [ 0 ].clear( );
+   best_fit_delta_rhos[ 0 ].clear( );
+   average_radiuss    [ 0 ].clear( );
+   average_delta_rhos [ 0 ].clear( );
+   target_rgs         [ 0 ].clear( );
+   use_chi2s          [ 0 ].clear( );
+   chi2_bests         [ 0 ].clear( );
+   chi2_nnlss         [ 0 ].clear( );
 
-   qwtw_wheel ->setRange( 0.0, 0.0, 1 );
-   qwtw_wheel2->setRange( 1.0, 1.0, 1 );
+   qwtw_wheel->setRange( 0.0, 0.0); qwtw_wheel->setSingleStep( 1 );
+   qwtw_wheel2->setRange( 1.0, 1.0); qwtw_wheel2->setSingleStep( 1 );
 
    lbl_pos_range2->setText("1\nof\n1");
 }
@@ -2300,7 +2304,7 @@ bool US_Hydrodyn_Saxs_Screen::get_guinier_rg( QString name, double &Rg )
                              "Guinier analysis of %s:\n"
                              "Rg %.1f (%.1f) (A) I(0) %.2e (%.2e) qRgmin %.3f qRgmax %.3f points used %u chi^2 %.2e\n"
                              
-                             , name.toAscii().data()
+                             , name.toLatin1().data()
                              , Rg
                              , sqrt(3e0) * 5e-1 * (1e0/sqrt(-b)) * sigb 
                              , Io

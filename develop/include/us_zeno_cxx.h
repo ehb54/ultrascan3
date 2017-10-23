@@ -157,8 +157,8 @@ namespace nanoflann
 
 		inline ~RadiusResultSet() { }
 
-		inline void init() { clear(); }
-		inline void clear() { m_indices_dists.clear(); }
+		inline void init( ) { clear( ); }
+		inline void clear( ) { m_indices_dists.clear( ); }
 
 		inline size_t size() const { return m_indices_dists.size(); }
 
@@ -176,7 +176,7 @@ namespace nanoflann
 		inline void set_radius_and_clear( const DistanceType r )
 		{
 			radius = r;
-			clear();
+			clear( );
 		}
 
 		/**
@@ -4186,9 +4186,9 @@ reduceHitPoints() {
 		 arrayLengths, combinedArrayOffsets, MPI_BYTE,
 		 MPI_COMM_WORLD);
 
-  reducedPoints.clear();
-  reducedNormals.clear();
-  reducedCharges.clear();
+  reducedPoints.clear( );
+  reducedNormals.clear( );
+  reducedCharges.clear( );
 
   reducedPoints.reserve(combinedArrayLength / 3);
   reducedNormals.reserve(combinedArrayLength / 3);
@@ -4763,8 +4763,8 @@ template <class T>
 void 
 Voxels<T>::sampleSurface() {
 
-  points.clear();
-  normals.clear();
+  points.clear( );
+  normals.clear( );
 
   discRadius = voxelDims.getMin() * sqrt(2);
 
@@ -4902,7 +4902,7 @@ Voxels<T>::sampleSurface() {
 		    voxelPoints.begin(),
 		    voxelPoints.end());
 
-      voxelPoints.clear();
+      voxelPoints.clear( );
     }
   }
   }

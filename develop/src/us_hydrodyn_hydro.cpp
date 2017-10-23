@@ -55,7 +55,7 @@ void US_Hydrodyn_Hydro::setupGUI()
    cnt_unit= new QwtCounter(this);
    US_Hydrodyn::sizeArrows( cnt_unit );
    Q_CHECK_PTR(cnt_unit);
-   cnt_unit->setRange(5, 10, 1);
+   cnt_unit->setRange(5, 10); cnt_unit->setSingleStep( 1);
    cnt_unit->setValue(-(*hydro).unit);
    cnt_unit->setMinimumHeight(minHeight1);
    cnt_unit->setEnabled(true);
@@ -87,7 +87,7 @@ void US_Hydrodyn_Hydro::setupGUI()
    //   lbl_solvent_defaults = new QLabel(us_tr(" Set defaults:"), bg_solvent_conditions);
    //   Q_CHECK_PTR(lbl_solvent_defaults);
    //   lbl_solvent_defaults->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
-   //   lbl_solvent_defaults->setPalette( USglobal->global_colors.cg_label );
+   //   lbl_solvent_defaults->setPalette( PALET_LABEL );
    //   lbl_solvent_defaults->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
    bg_solvent_conditions->addSpace(0);
 
@@ -186,7 +186,7 @@ void US_Hydrodyn_Hydro::setupGUI()
    //   lbl_solvent_defaults = new QLabel(us_tr(" Set defaults:"), bg_solvent_conditions);
    //   Q_CHECK_PTR(lbl_solvent_defaults);
    //   lbl_solvent_defaults->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
-   //   lbl_solvent_defaults->setPalette( USglobal->global_colors.cg_label );
+   //   lbl_solvent_defaults->setPalette( PALET_LABEL );
    //   lbl_solvent_defaults->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
    //   bg_solvent_conditions->addSpace(0);
 

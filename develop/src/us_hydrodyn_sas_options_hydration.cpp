@@ -80,7 +80,7 @@ void US_Hydrodyn_SasOptionsHydration::setupGUI()
 
    cnt_steric_clash_distance = new QwtCounter(this);
    US_Hydrodyn::sizeArrows( cnt_steric_clash_distance );
-   cnt_steric_clash_distance->setRange(0, 100, 1);
+   cnt_steric_clash_distance->setRange(0, 100); cnt_steric_clash_distance->setSingleStep( 1);
    cnt_steric_clash_distance->setValue((*saxs_options).steric_clash_distance);
    cnt_steric_clash_distance->setMinimumHeight(minHeight1);
    cnt_steric_clash_distance->setEnabled(true);
@@ -99,7 +99,7 @@ void US_Hydrodyn_SasOptionsHydration::setupGUI()
 
    cnt_steric_clash_recheck_distance = new QwtCounter(this);
    US_Hydrodyn::sizeArrows( cnt_steric_clash_recheck_distance );
-   cnt_steric_clash_recheck_distance->setRange(0, 100, 1);
+   cnt_steric_clash_recheck_distance->setRange(0, 100); cnt_steric_clash_recheck_distance->setSingleStep( 1);
    cnt_steric_clash_recheck_distance->setValue((*saxs_options).steric_clash_recheck_distance);
    cnt_steric_clash_recheck_distance->setMinimumHeight(minHeight1);
    cnt_steric_clash_recheck_distance->setEnabled(true);

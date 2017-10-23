@@ -3,17 +3,17 @@
 
 US_Timer::US_Timer()
 {
-   timers.clear();
-   counts.clear();
-   times.clear();
+   timers.clear( );
+   counts.clear( );
+   times.clear( );
 }
 
 US_Timer::~US_Timer()
 {
-   timers.clear();
-   counts.clear();
-   times.clear();
-   times2.clear();
+   timers.clear( );
+   counts.clear( );
+   times.clear( );
+   times2.clear( );
 }
 
 void US_Timer::clear_timers()

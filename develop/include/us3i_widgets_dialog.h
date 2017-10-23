@@ -2,8 +2,16 @@
 #ifndef US_WIDGETS_DIALOG_H
 #define US_WIDGETS_DIALOG_H
 
+#include <QtCore>
+#if QT_VERSION > 0x050000
+#include <QtWidgets>
+#include "qwt_picker_machine.h"
+#else
 #include <QtGui>
-
+#define setSingleStep(a) setStep(a)
+#define setMinorPen(a) setMinPen(a)
+#define setMajorPen(a) setMajPen(a)
+#endif
 #include "qwt_counter.h"
 #include "qwt_plot.h"
 #include "qwt_plot_grid.h"
@@ -25,7 +33,7 @@ class US_GUI_EXTERN US3i_widgetsDialog : public QDialog
   public: 
     //! \param w - Parent widget, normally not specified
     //! \param f - Window flags, normally not specified
-    US3i_widgetsDialog( QWidget*, Qt::WindowFlags );
+    US3i_widgetsDialog( QWidget*, Qt::WindowFlags = 0 );
     
     //! Connect to global memory and make the values accessible.
     US3i_Global g;
@@ -152,7 +160,18 @@ class US_GUI_EXTERN US3i_widgetsDialog : public QDialog
     //! \param fontAdjust -  adjustment to default font size\n
     //! \param weight      - QFont::{Light,Normal,DemiBold,Bold,Black}\n
     //! * Color is set to US3i_GuiSettings::normalColor()
-    QTabWidget* us_tabwidget( int = 0,
-                              int = QFont::Bold );
+    QTabWidget* us_tabwidget( int = 0, int = QFont::Bold );
+
+    //! \param tedt       - Pointer to QTimeEdit
+    //! \param fontAdjust - Adjustment to default font size
+    //! \param sbox       - Optional pointer to days QSpinBox
+    //! * Color is set to US3i_GuiSettings::normalColor()
+    QHBoxLayout* us_timeedit( QTimeEdit*&, const int = 0,
+                              QSpinBox** = (QSpinBox**)NULL );
+
+    //! \param fontAdjust -  adjustment to default font size\n
+    //! * Color is set to US3i_GuiSettings::normalEdit()
+    QSpinBox*    us_spinbox( int = 0 );
+
 };
 #endif

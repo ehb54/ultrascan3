@@ -3,7 +3,7 @@
 #include "../include/us_revision.h"
 #include "../include/us_hydrodyn_saxs_buffer.h"
 #include "../include/us_hydrodyn_saxs_buffer_nth.h"
-#ifdef QT4
+#if QT_VERSION >= 0x040000
 #include <qwt_scale_engine.h>
 //Added by qt3to4:
 #include <QBoxLayout>
@@ -42,7 +42,7 @@ US_Hydrodyn_Saxs_Buffer::US_Hydrodyn_Saxs_Buffer(
    setWindowTitle( title );
    order_ascending = false;
    conc_widget     = false;
-#ifdef QT4
+#if QT_VERSION >= 0x040000
    legend_vis      = false;
 #endif
 
@@ -161,9 +161,9 @@ US_Hydrodyn_Saxs_Buffer::US_Hydrodyn_Saxs_Buffer(
    pb_set_buffer->setMaximumWidth ( pb_select_all->width() + 10 );
    pb_set_empty ->setMaximumWidth ( pb_select_all->width() + 10 );
    pb_set_signal->setMaximumWidth ( pb_select_all->width() + 10 );
-   plot_colors.clear();
+   plot_colors.clear( );
 
-   QColor bgc = plot_dist->canvasBackground();
+   QColor bgc = plot_dist->canvasBackground().color();
 
    push_back_color_if_ok( bgc, Qt::yellow );
    push_back_color_if_ok( bgc, Qt::green );
@@ -335,7 +335,7 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    // lbl_title->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    // lbl_title->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    // lbl_title->setMinimumHeight(minHeight1);
-   // lbl_title->setPalette( USglobal->global_colors.cg_frame );
+   // lbl_title->setPalette( PALET_FRAME );
    // lbl_title->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 
    lbl_files = new QLabel("Data files", this);
@@ -442,7 +442,7 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    //    pb_join->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    //    pb_join->setMinimumHeight( minHeight1 );
    //    pb_join->setMaximumWidth ( minHeight1 * 2 );
-   //    pb_join->setPalette( USglobal->global_colors.cg_pushb );
+   //    pb_join->setPalette( PALET_PUSHB );
    //    connect(pb_join, SIGNAL(clicked()), SLOT(join()));
 
    pb_select_nth = new QPushButton(us_tr("Select"), this);
@@ -454,7 +454,7 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    // pb_adjacent = new QPushButton(us_tr("Similar"), this);
    // pb_adjacent->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    // pb_adjacent->setMinimumHeight(minHeight1);
-   // pb_adjacent->setPalette( USglobal->global_colors.cg_pushb );
+   // pb_adjacent->setPalette( PALET_PUSHB );
    // connect(pb_adjacent, SIGNAL(clicked()), SLOT(adjacent()));
 
    pb_to_saxs = new QPushButton(us_tr("S"), this);
@@ -480,7 +480,7 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    // pb_plot_files = new QPushButton(us_tr("Plot"), this);
    // pb_plot_files->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
    // pb_plot_files->setMinimumHeight(minHeight1);
-   // pb_plot_files->setPalette( USglobal->global_colors.cg_pushb );
+   // pb_plot_files->setPalette( PALET_PUSHB );
    // connect(pb_plot_files, SIGNAL(clicked()), SLOT(plot_files()));
 
    pb_asum = new QPushButton(us_tr("WS"), this);
@@ -666,12 +666,12 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    editor->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 2 ));
 
 #if QT_VERSION < 0x040000
-# if defined(QT4) && defined(Q_WS_MAC)
+# if QT_VERSION >= 0x040000 && defined(Q_WS_MAC)
    {
  //      Q3PopupMenu * file = new Q3PopupMenu;
-      file->insertItem( us_tr("&Font"),  this, SLOT(update_font( )),    Qt::ALT+Qt::Key_F );
-      file->insertItem( us_tr("&Save"),  this, SLOT(save( )),    Qt::ALT+Qt::Key_S );
-      file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display( )),   Qt::ALT+Qt::Key_X );
+      file->insertItem( us_tr("&Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
+      file->insertItem( us_tr("&Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
+      file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
 
       QMenuBar *menu = new QMenuBar( this );
       AUTFBACK( menu );
@@ -689,9 +689,9 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    AUTFBACK( m );
  //   Q3PopupMenu * file = new Q3PopupMenu(editor);
    m->insertItem( us_tr("&File"), file );
-   file->insertItem( us_tr("Font"),  this, SLOT(update_font( )),    Qt::ALT+Qt::Key_F );
-   file->insertItem( us_tr("Save"),  this, SLOT(save( )),    Qt::ALT+Qt::Key_S );
-   file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display( )),   Qt::ALT+Qt::Key_X );
+   file->insertItem( us_tr("Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
+   file->insertItem( us_tr("Save"),  this, SLOT(save()),    Qt::ALT+Qt::Key_S );
+   file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
 # endif
 #else
    QFrame *frame;
@@ -724,7 +724,7 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    editor->setMinimumHeight( minHeight1 * 3 );
 
    plot_dist = new QwtPlot(this);
-#ifndef QT4
+#if QT_VERSION < 0x040000
    // plot_dist->enableOutline(true);
    // plot_dist->setOutlinePen(Qt::white);
    // plot_dist->setOutlineStyle(Qwt::VLine);
@@ -737,39 +737,39 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
 #endif
    plot_dist->setPalette( PALET_NORMAL );
    AUTFBACK( plot_dist );
-#ifndef QT4
+#if QT_VERSION < 0x040000
    plot_dist->setGridMajPen(QPen(USglobal->global_colors.major_ticks, 0, DotLine));
    plot_dist->setGridMinPen(QPen(USglobal->global_colors.minor_ticks, 0, DotLine));
 #else
-   grid_saxs->setMajPen( QPen( USglobal->global_colors.major_ticks, 0, Qt::DotLine ) );
-   grid_saxs->setMinPen( QPen( USglobal->global_colors.minor_ticks, 0, Qt::DotLine ) );
+   grid_saxs->setMajorPen( QPen( USglobal->global_colors.major_ticks, 0, Qt::DotLine ) );
+   grid_saxs->setMinorPen( QPen( USglobal->global_colors.minor_ticks, 0, Qt::DotLine ) );
    grid_saxs->attach( plot_dist );
 #endif
    plot_dist->setAxisTitle(QwtPlot::xBottom, /* cb_guinier->isChecked() ? us_tr("q^2 (1/Angstrom^2)") : */  us_tr("q (1/Angstrom)"));
    plot_dist->setAxisTitle(QwtPlot::yLeft, us_tr("I(q) (log scale)"));
-#ifndef QT4
+#if QT_VERSION < 0x040000
    plot_dist->setTitleFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 3, QFont::Bold));
    plot_dist->setAxisTitleFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 #endif
    plot_dist->setAxisFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-#ifndef QT4
+#if QT_VERSION < 0x040000
    plot_dist->setAxisTitleFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 #endif
    plot_dist->setAxisFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-#ifndef QT4
+#if QT_VERSION < 0x040000
    plot_dist->setAxisTitleFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 #endif
    plot_dist->setAxisFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-   plot_dist->setMargin(USglobal->config_list.margin);
+//    plot_dist->setMargin(USglobal->config_list.margin);
    plot_dist->setTitle("");
-#ifndef QT4
+#if QT_VERSION < 0x040000
    plot_dist->setAxisOptions(QwtPlot::yLeft, QwtAutoScale::Logarithmic);
 #else
-   plot_dist->setAxisScaleEngine(QwtPlot::yLeft, new QwtLog10ScaleEngine);
+   plot_dist->setAxisScaleEngine(QwtPlot::yLeft, new QwtLogScaleEngine(10));
 #endif
    plot_dist->setCanvasBackground(USglobal->global_colors.plot);
 
-#ifndef QT4
+#if QT_VERSION < 0x040000
    plot_dist->setAutoLegend( false );
    plot_dist->setLegendFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 2 ) );
 #else
@@ -811,8 +811,8 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    }
 
    t_csv->setSortingEnabled(false);
-    t_csv->verticalHeader()->setMovable(false);
-    t_csv->horizontalHeader()->setMovable(false);
+    t_csv->verticalHeader()->setSectionsMovable(false);
+    t_csv->horizontalHeader()->setSectionsMovable(false);
    //  t_csv->setReadOnly(false);
 
    t_csv->setColumnWidth(0, 330);
@@ -835,7 +835,7 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
 
    qwtw_wheel = new QwtWheel( this );
    qwtw_wheel->setMass         ( 0.5 );
-   // qwtw_wheel->setRange        ( -1000, 1000, 1 );
+   // qwtw_wheel->setRange( -1000, 1000); qwtw_wheel->setSingleStep( 1 );
    qwtw_wheel->setMinimumHeight( minHeight1 );
    // qwtw_wheel->setTotalAngle( 3600.0 );
    qwtw_wheel->setEnabled      ( false );
@@ -1192,7 +1192,7 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    hbl_created_2->addWidget ( pb_show_only_created );
 
    QBoxLayout * vbl_editor_group = new QVBoxLayout(0); vbl_editor_group->setContentsMargins( 0, 0, 0, 0 ); vbl_editor_group->setSpacing( 0 );
-#if !defined(QT4) || !defined(Q_WS_MAC)
+#if QT_VERSION < 0x040000 || !defined(Q_WS_MAC)
    vbl_editor_group->addWidget (frame);
 #endif
    vbl_editor_group->addWidget (editor);
@@ -1347,9 +1347,9 @@ void US_Hydrodyn_Saxs_Buffer::closeEvent(QCloseEvent *e)
 
    for ( int i = 0; i < lb_files->count(); i++ )
    {
-      if ( created_files_not_saved.count( lb_files->item( i )->text( ) ) )
+      if ( created_files_not_saved.count( lb_files->item( i )->text() ) )
       {
-         created_not_saved_list << lb_files->item( i )->text( );
+         created_not_saved_list << lb_files->item( i )->text();
       }
    }
 
@@ -1417,7 +1417,7 @@ void US_Hydrodyn_Saxs_Buffer::table_value( int row, int col )
           t_csv->item( row, col )->text() != QString( "%1" ).arg(  t_csv->item( row, col )->text().toDouble() )
           )
       {
-         t_csv->setItem( row, col , new QTableWidgetItem( QString( "%1" ).arg(  t_csv->item( row, col )->text( ).toDouble( ) ) ) );
+         t_csv->setItem( row, col , new QTableWidgetItem( QString( "%1" ).arg(  t_csv->item( row, col )->text().toDouble() ) ) );
       }
    }
    if ( col == 4 )
@@ -1427,7 +1427,7 @@ void US_Hydrodyn_Saxs_Buffer::table_value( int row, int col )
           t_csv->item( row, col )->text() != QString( "%1" ).arg(  t_csv->item( row, col )->text().toUInt() )
           )
       {
-         t_csv->setItem( row, col , new QTableWidgetItem( QString( "%1" ).arg(  t_csv->item( row, col )->text( ).toUInt( ) ) ) );
+         t_csv->setItem( row, col , new QTableWidgetItem( QString( "%1" ).arg(  t_csv->item( row, col )->text().toUInt() ) ) );
       }
    }
 
@@ -1464,7 +1464,7 @@ void US_Hydrodyn_Saxs_Buffer::table_value( int row, int col )
 
 void US_Hydrodyn_Saxs_Buffer::clear_display()
 {
-   editor->clear();
+   editor->clear( );
    editor->append("\n\n");
 }
 
@@ -1598,11 +1598,11 @@ void US_Hydrodyn_Saxs_Buffer::run_current()
       
       for ( int i = 0; i < lb_files->count(); i++ )
       {
-         if ( lb_files->item( i )->isSelected( ) && 
-              lb_files->item( i )->text( ) != lbl_buffer->text() &&
-              lb_files->item( i )->text( ) != lbl_empty->text() )
+         if ( lb_files->item( i )->isSelected() && 
+              lb_files->item( i )->text() != lbl_buffer->text() &&
+              lb_files->item( i )->text() != lbl_empty->text() )
          {
-            selected_non_buffer_non_empty[ lb_files->item( i )->text( ) ] = true;
+            selected_non_buffer_non_empty[ lb_files->item( i )->text() ] = true;
          }
       }
       unsigned int total_points = selected_non_buffer_non_empty.size() + 1;
@@ -1673,11 +1673,11 @@ void US_Hydrodyn_Saxs_Buffer::run_divide()
       
       for ( int i = 0; i < lb_files->count(); i++ )
       {
-         if ( lb_files->item( i )->isSelected( ) && 
-              lb_files->item( i )->text( ) != lbl_buffer->text() &&
-              lb_files->item( i )->text( ) != lbl_empty->text() )
+         if ( lb_files->item( i )->isSelected() && 
+              lb_files->item( i )->text() != lbl_buffer->text() &&
+              lb_files->item( i )->text() != lbl_empty->text() )
          {
-            selected_non_buffer_non_empty[ lb_files->item( i )->text( ) ] = true;
+            selected_non_buffer_non_empty[ lb_files->item( i )->text() ] = true;
          }
       }
       unsigned int total_points = selected_non_buffer_non_empty.size() + 1;
@@ -1735,7 +1735,7 @@ void US_Hydrodyn_Saxs_Buffer::run_one( bool do_plot )
 
    for ( int i = 0; i < lb_files->count(); i++ )
    {
-      QString this_file = lb_files->item( i )->text( );
+      QString this_file = lb_files->item( i )->text();
       current_files[ this_file ] = true;
    }
 
@@ -2055,12 +2055,12 @@ void US_Hydrodyn_Saxs_Buffer::update_enables()
    {
       if ( lb_files->item( i )->isSelected() )
       {
-         selected_map[ lb_files->item( i )->text( ) ] = true;
+         selected_map[ lb_files->item( i )->text() ] = true;
          last_selected_pos = i;
-         last_selected_file = lb_files->item( i )->text( );
+         last_selected_file = lb_files->item( i )->text();
          files_selected_count++;
-         if ( lb_files->item( i )->text( ) != lbl_buffer->text() &&
-              lb_files->item( i )->text( ) != lbl_empty->text() )
+         if ( lb_files->item( i )->text() != lbl_buffer->text() &&
+              lb_files->item( i )->text() != lbl_empty->text() )
          {
             non_buffer_non_empty_files_selected_count++;
          }
@@ -2082,14 +2082,14 @@ void US_Hydrodyn_Saxs_Buffer::update_enables()
    {
       if ( lb_created_files->item( i )->isSelected() )
       {
-         last_created_selected_file = lb_created_files->item( i )->text( );
-         created_selected_map[ lb_created_files->item( i )->text( ) ] = true;
+         last_created_selected_file = lb_created_files->item( i )->text();
+         created_selected_map[ lb_created_files->item( i )->text() ] = true;
          files_created_selected_count++;
-         if ( !selected_map.count( lb_created_files->item( i )->text( ) ) )
+         if ( !selected_map.count( lb_created_files->item( i )->text() ) )
          {
             files_created_selected_not_shown_count++;
          } 
-         if ( created_files_not_saved.count( lb_created_files->item( i )->text( ) ) )
+         if ( created_files_not_saved.count( lb_created_files->item( i )->text() ) )
          {
             files_created_selected_not_saved_count++;
          }
@@ -2119,18 +2119,18 @@ void US_Hydrodyn_Saxs_Buffer::update_enables()
    pb_normalize          ->setEnabled( all_selected_have_nonzero_conc() );
    pb_conc_avg           ->setEnabled( all_selected_have_nonzero_conc() );
    pb_set_buffer         ->setEnabled( files_selected_count == 1 && 
-                                       lb_files->item( last_selected_pos )->text( ) != lbl_buffer->text() &&
-                                       lb_files->item( last_selected_pos )->text( ) != lbl_empty ->text() &&
-                                       lb_files->item( last_selected_pos )->text( ) != lbl_signal->text()
+                                       lb_files->item( last_selected_pos )->text() != lbl_buffer->text() &&
+                                       lb_files->item( last_selected_pos )->text() != lbl_empty ->text() &&
+                                       lb_files->item( last_selected_pos )->text() != lbl_signal->text()
                                        );
    pb_set_signal         ->setEnabled( files_selected_count == 1 && 
-                                       lb_files->item( last_selected_pos )->text( ) != lbl_buffer->text() &&
-                                       lb_files->item( last_selected_pos )->text( ) != lbl_empty ->text() &&
-                                       lb_files->item( last_selected_pos )->text( ) != lbl_signal->text() );
+                                       lb_files->item( last_selected_pos )->text() != lbl_buffer->text() &&
+                                       lb_files->item( last_selected_pos )->text() != lbl_empty ->text() &&
+                                       lb_files->item( last_selected_pos )->text() != lbl_signal->text() );
    pb_set_empty          ->setEnabled( files_selected_count == 1 && 
-                                       lb_files->item( last_selected_pos )->text( ) != lbl_buffer->text() &&
-                                       lb_files->item( last_selected_pos )->text( ) != lbl_empty ->text() &&
-                                       lb_files->item( last_selected_pos )->text( ) != lbl_signal->text() );
+                                       lb_files->item( last_selected_pos )->text() != lbl_buffer->text() &&
+                                       lb_files->item( last_selected_pos )->text() != lbl_empty ->text() &&
+                                       lb_files->item( last_selected_pos )->text() != lbl_signal->text() );
    pb_select_all         ->setEnabled( lb_files->count() > 0 );
    pb_invert             ->setEnabled( lb_files->count() > 0 );
    pb_color_rotate       ->setEnabled( files_selected_count );
@@ -2388,7 +2388,7 @@ void US_Hydrodyn_Saxs_Buffer::clear_files()
    {
       if ( lb_files->item( i )->isSelected() )
       {
-         files << lb_files->item( i )->text( );
+         files << lb_files->item( i )->text();
       }
    }
    clear_files( files );
@@ -2459,7 +2459,7 @@ void US_Hydrodyn_Saxs_Buffer::clear_files( QStringList files )
    // remove them now
    for ( int i = lb_created_files->count() - 1; i >= 0; i-- )
    {
-      if ( selected_map.count( lb_created_files->item( i )->text( ) ) )
+      if ( selected_map.count( lb_created_files->item( i )->text() ) )
       {
          created_files_not_saved.erase( lb_created_files->item( i )->text() );
          delete lb_created_files->takeItem( i );
@@ -2468,9 +2468,9 @@ void US_Hydrodyn_Saxs_Buffer::clear_files( QStringList files )
 
    for ( int i = lb_files->count() - 1; i >= 0; i-- )
    {
-      if ( selected_map.count( lb_files->item( i )->text( ) ) )
+      if ( selected_map.count( lb_files->item( i )->text() ) )
       {
-         editor_msg( "black", QString( us_tr( "Removed %1" ) ).arg( lb_files->item( i )->text( ) ) );
+         editor_msg( "black", QString( us_tr( "Removed %1" ) ).arg( lb_files->item( i )->text() ) );
          if ( lbl_buffer->text() == lb_files->item( i )->text() )
          {
             lbl_buffer->setText( "" );
@@ -2532,7 +2532,7 @@ void US_Hydrodyn_Saxs_Buffer::add_files()
    map < QString, bool > existing_items;
    for ( int i = 0; i < lb_files->count(); i++ )
    {
-      existing_items[ lb_files->item( i )->text( ) ] = true;
+      existing_items[ lb_files->item( i )->text() ] = true;
    }
 
    if ( cb_lock_dir->isChecked() )
@@ -2657,7 +2657,7 @@ void US_Hydrodyn_Saxs_Buffer::add_files()
 #endif
          svals.sort();
 
-         filenames.clear();
+         filenames.clear( );
          for ( list < hplc_sortable_qstring >::iterator it = svals.begin();
                it != svals.end();
                ++it )
@@ -2729,7 +2729,7 @@ void US_Hydrodyn_Saxs_Buffer::add_files( QStringList filenames )
    map < QString, bool > existing_items;
    for ( int i = 0; i < lb_files->count(); i++ )
    {
-      existing_items[ lb_files->item( i )->text( ) ] = true;
+      existing_items[ lb_files->item( i )->text() ] = true;
    }
 
    QString use_dir = QDir::currentPath();
@@ -2806,7 +2806,7 @@ void US_Hydrodyn_Saxs_Buffer::add_files( QStringList filenames )
 
 void US_Hydrodyn_Saxs_Buffer::plot_files()
 {
-   plot_dist->clear();
+   plot_dist->detachItems( QwtPlotItem::Rtti_PlotCurve ); plot_dist->detachItems( QwtPlotItem::Rtti_PlotMarker );;
    //bool any_selected = false;
    double minx = 0e0;
    double maxx = 1e0;
@@ -2820,10 +2820,10 @@ void US_Hydrodyn_Saxs_Buffer::plot_files()
    
    bool first = true;
 
-   plotted_curves.clear();
+   plotted_curves.clear( );
 
    if ( all_selected_files().size() > 20 &&
-#ifndef QT4
+#if QT_VERSION < 0x040000
         plot_dist->autoLegend() 
 #else
         legend_vis
@@ -2908,10 +2908,10 @@ void US_Hydrodyn_Saxs_Buffer::plot_files()
       plot_dist->setAxisScale( QwtPlot::yLeft  , miny * 0.9e0 , maxy * 1.1e0 );
       plot_dist_zoomer = new ScrollZoomer(plot_dist->canvas());
       plot_dist_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
-#ifndef QT4
+#if QT_VERSION < 0x040000
       plot_dist_zoomer->setCursorLabelPen(QPen(Qt::yellow));
 #endif
-      connect( plot_dist_zoomer, SIGNAL( zoomed( const QwtDoubleRect & ) ), SLOT( plot_zoomed( const QwtDoubleRect & ) ) );
+      connect( plot_dist_zoomer, SIGNAL( zoomed( const QRectF & ) ), SLOT( plot_zoomed( const QRectF & ) ) );
    }
    
    legend_set();
@@ -2935,7 +2935,7 @@ bool US_Hydrodyn_Saxs_Buffer::plot_file( QString file,
 
    get_min_max( file, minx, maxx, miny, maxy );
 
-#ifndef QT4
+#if QT_VERSION < 0x040000
    long Iq = plot_dist->insertCurve( file );
    plotted_curves[ file ] = Iq;
    plot_dist->setCurveStyle( Iq, QwtCurve::Lines );
@@ -2949,7 +2949,7 @@ bool US_Hydrodyn_Saxs_Buffer::plot_file( QString file,
 
    if ( !axis_y_log )
    {
-#ifndef QT4
+#if QT_VERSION < 0x040000
       plot_dist->setCurveData( Iq, 
                                /* cb_guinier->isChecked() ? (double *)&(plotted_q2[p][0]) : */
                                (double *)&( f_qs[ file ][ 0 ] ),
@@ -2958,7 +2958,7 @@ bool US_Hydrodyn_Saxs_Buffer::plot_file( QString file,
                                );
       plot_dist->setCurvePen( Iq, QPen( plot_colors[ f_pos[ file ] % plot_colors.size()], 1, SolidLine));
 #else
-      curve->setData(
+      curve->setSamples(
                      /* cb_guinier->isChecked() ?
                         (double *)&(plotted_q2[p][0]) : */
                      (double *)&( f_qs[ file ][ 0 ] ),
@@ -2981,7 +2981,7 @@ bool US_Hydrodyn_Saxs_Buffer::plot_file( QString file,
          }
       }
       q_points = ( unsigned int )q.size();
-#ifndef QT4
+#if QT_VERSION < 0x040000
       plot_dist->setCurveData( Iq, 
                                /* cb_guinier->isChecked() ? (double *)&(plotted_q2[p][0]) : */
                                (double *)&( q[ 0 ] ),
@@ -2990,7 +2990,7 @@ bool US_Hydrodyn_Saxs_Buffer::plot_file( QString file,
                                );
       plot_dist->setCurvePen( Iq, QPen( plot_colors[ f_pos[ file ] % plot_colors.size()], 1, SolidLine));
 #else
-      curve->setData(
+      curve->setSamples(
                      /* cb_guinier->isChecked() ?
                         (double *)&(plotted_q2[p][0]) : */
                      (double *)&( q[ 0 ] ),
@@ -3384,11 +3384,11 @@ void US_Hydrodyn_Saxs_Buffer::avg()
    QStringList files;
    for ( int i = 0; i < lb_files->count(); i++ )
    {
-      if ( lb_files->item( i )->isSelected( ) && 
-           lb_files->item( i )->text( ) != lbl_buffer->text() &&
-           lb_files->item( i )->text( ) != lbl_empty->text() )
+      if ( lb_files->item( i )->isSelected() && 
+           lb_files->item( i )->text() != lbl_buffer->text() &&
+           lb_files->item( i )->text() != lbl_empty->text() )
       {
-         files << lb_files->item( i )->text( );
+         files << lb_files->item( i )->text();
       }
    }
    avg( files );
@@ -3401,7 +3401,7 @@ void US_Hydrodyn_Saxs_Buffer::asum()
    {
       if ( lb_files->item( i )->isSelected() )
       {
-         files << lb_files->item( i )->text( );
+         files << lb_files->item( i )->text();
       }
    }
    asum( files );
@@ -3639,7 +3639,7 @@ void US_Hydrodyn_Saxs_Buffer::avg( QStringList files )
    map < QString, bool > current_files;
    for ( int i = 0; i < (int)lb_files->count(); i++ )
    {
-      current_files[ lb_files->item( i )->text( ) ] = true;
+      current_files[ lb_files->item( i )->text() ] = true;
    }
 
    while ( current_files.count( avg_name ) )
@@ -3793,10 +3793,10 @@ void US_Hydrodyn_Saxs_Buffer::save_created()
 
    for ( int i = 0; i < lb_created_files->count(); i++ )
    {
-      if ( lb_created_files->item( i )->isSelected( ) && 
+      if ( lb_created_files->item( i )->isSelected() && 
            created_files_not_saved.count( lb_created_files->item( i )->text() ) )
       {
-         created_not_saved_list << lb_created_files->item( i )->text( );
+         created_not_saved_list << lb_created_files->item( i )->text();
       }
    }
    save_files( created_not_saved_list );
@@ -3811,7 +3811,7 @@ void US_Hydrodyn_Saxs_Buffer::save_created_csv()
       if ( lb_created_files->item( i )->isSelected() ) // &&
            // created_files_not_saved.count( lb_created_files->item( i )->text() ) )
       {
-         created_not_saved_list << lb_created_files->item( i )->text( );
+         created_not_saved_list << lb_created_files->item( i )->text();
       }
    }
    save_files_csv( created_not_saved_list );
@@ -4121,12 +4121,12 @@ bool US_Hydrodyn_Saxs_Buffer::save_file( QString file, bool &cancel, bool &overw
            (int)f_errors[ file ].size() > i )
       {
          ts << QString("").sprintf( "%-18s\t%.6e\t%.6e\n",
-                                    f_qs_string[ file ][ i ].toAscii().data(),
+                                    f_qs_string[ file ][ i ].toLatin1().data(),
                                     f_Is       [ file ][ i ],
                                     f_errors   [ file ][ i ] );
       } else {
          ts << QString("").sprintf( "%-18s\t%.6e\n",
-                                    f_qs_string[ file ][ i ].toAscii().data(),
+                                    f_qs_string[ file ][ i ].toLatin1().data(),
                                     f_Is       [ file ][ i ] );
       }
    }
@@ -4156,18 +4156,18 @@ void US_Hydrodyn_Saxs_Buffer::update_csv_conc()
       // setup & add all
       csv_conc.name = "Solution Concentrations ";
 
-      csv_conc.header.clear();
-      csv_conc.header_map.clear();
-      csv_conc.data.clear();
-      csv_conc.num_data.clear();
-      csv_conc.prepended_names.clear();
+      csv_conc.header.clear( );
+      csv_conc.header_map.clear( );
+      csv_conc.data.clear( );
+      csv_conc.num_data.clear( );
+      csv_conc.prepended_names.clear( );
       
       csv_conc.header.push_back("File");
       csv_conc.header.push_back("Concentration\nmg/ml");
       
       for ( int i = 0; i < lb_files->count(); i++ )
       {
-         if ( !skip.count( lb_files->item( i )->text( ) ) )
+         if ( !skip.count( lb_files->item( i )->text() ) )
          {
             vector < QString > tmp_data;
             tmp_data.push_back( lb_files->item( i )->text() );
@@ -4182,15 +4182,15 @@ void US_Hydrodyn_Saxs_Buffer::update_csv_conc()
       map < QString, bool > csv_files;
       for ( int i = 0; i < lb_files->count(); i++ )
       {
-         if ( !skip.count( lb_files->item( i )->text( ) ) )
+         if ( !skip.count( lb_files->item( i )->text() ) )
          {
-            current_files[ lb_files->item( i )->text( ) ] = true;
+            current_files[ lb_files->item( i )->text() ] = true;
          }
       }
       csv new_csv = csv_conc;
-      new_csv.data.clear();
-      new_csv.num_data.clear();
-      new_csv.prepended_names.clear();
+      new_csv.data.clear( );
+      new_csv.num_data.clear( );
+      new_csv.prepended_names.clear( );
       for ( unsigned int i = 0; i < csv_conc.data.size(); i++ )
       {
          csv_files[ csv_conc.data[ i ][ 0 ] ] = true;
@@ -4309,11 +4309,11 @@ void US_Hydrodyn_Saxs_Buffer::conc_avg()
    QStringList files;
    for ( int i = 0; i < lb_files->count(); i++ )
    {
-      if ( lb_files->item( i )->isSelected( ) && 
-           lb_files->item( i )->text( ) != lbl_buffer->text() &&
-           lb_files->item( i )->text( ) != lbl_empty->text() )
+      if ( lb_files->item( i )->isSelected() && 
+           lb_files->item( i )->text() != lbl_buffer->text() &&
+           lb_files->item( i )->text() != lbl_empty->text() )
       {
-         files << lb_files->item( i )->text( );
+         files << lb_files->item( i )->text();
       }
    }
    conc_avg( files );
@@ -4581,7 +4581,7 @@ void US_Hydrodyn_Saxs_Buffer::conc_avg( QStringList files )
    map < QString, bool > current_files;
    for ( int i = 0; i < lb_files->count(); i++ )
    {
-      current_files[ lb_files->item( i )->text( ) ] = true;
+      current_files[ lb_files->item( i )->text() ] = true;
    }
 
    while ( current_files.count( avg_name ) )
@@ -4644,12 +4644,12 @@ bool US_Hydrodyn_Saxs_Buffer::all_selected_have_nonzero_conc()
    unsigned int selected_count = 0;
    for ( int i = 0; i < lb_files->count(); i++ )
    {
-      if ( lb_files->item( i )->isSelected( )  && 
-           lb_files->item( i )->text( ) != lbl_buffer->text() &&
-           lb_files->item( i )->text( ) != lbl_empty->text() )
+      if ( lb_files->item( i )->isSelected()  && 
+           lb_files->item( i )->text() != lbl_buffer->text() &&
+           lb_files->item( i )->text() != lbl_empty->text() )
       {
          selected_count++;
-         if ( !nonzero_concs.count( lb_files->item( i )->text( ) ) )
+         if ( !nonzero_concs.count( lb_files->item( i )->text() ) )
          {
             return false;
          }
@@ -4671,14 +4671,14 @@ void US_Hydrodyn_Saxs_Buffer::show_created()
    {
       if ( lb_created_files->item( i )->isSelected() )
       {
-         created_selected[ lb_created_files->item( i )->text( ) ] = true;
+         created_selected[ lb_created_files->item( i )->text() ] = true;
       }
    }
 
    disable_updates = true;
    for ( int i = 0; i < lb_files->count(); i++ )
    {
-      if ( !lb_files->item( i )->isSelected( ) && 
+      if ( !lb_files->item( i )->isSelected() && 
            created_selected.count( lb_files->item( i )->text() ) )
       {
          lb_files->item( i)->setSelected( true );
@@ -4768,10 +4768,10 @@ void US_Hydrodyn_Saxs_Buffer::rescale()
    plot_dist->setAxisScale( QwtPlot::yLeft  , miny * 0.9e0 , maxy * 1.1e0 );
    plot_dist_zoomer = new ScrollZoomer(plot_dist->canvas());
    plot_dist_zoomer->setRubberBandPen(QPen(Qt::yellow, 0, Qt::DotLine));
-#ifndef QT4
+#if QT_VERSION < 0x040000
    plot_dist_zoomer->setCursorLabelPen(QPen(Qt::yellow));
 #endif
-   connect( plot_dist_zoomer, SIGNAL( zoomed( const QwtDoubleRect & ) ), SLOT( plot_zoomed( const QwtDoubleRect & ) ) );
+   connect( plot_dist_zoomer, SIGNAL( zoomed( const QRectF & ) ), SLOT( plot_zoomed( const QRectF & ) ) );
    
    legend_set();
    plot_dist->replot();
@@ -4803,7 +4803,7 @@ bool US_Hydrodyn_Saxs_Buffer::adjacent_ok( QString name )
 //    {
 //       if ( lb_files->item( i )->isSelected() )
 //       {
-//          match_name = lb_files->item( i )->text( );
+//          match_name = lb_files->item( i )->text();
 //          turn_on << match_name;
 //          match_pos = i;
 //          break;
@@ -4911,7 +4911,7 @@ void US_Hydrodyn_Saxs_Buffer::adjacent_created()
    {
       if ( lb_created_files->item( i )->isSelected() )
       {
-         match_name = lb_created_files->item( i )->text( );
+         match_name = lb_created_files->item( i )->text();
          turn_on << match_name;
          match_pos = i;
          break;
@@ -5272,7 +5272,7 @@ void US_Hydrodyn_Saxs_Buffer::to_saxs()
    {
       if ( lb_files->item( i )->isSelected() )
       {
-         QString this_file = lb_files->item( i )->text( );
+         QString this_file = lb_files->item( i )->text();
          if ( f_qs.count( this_file ) &&
               f_Is.count( this_file ) )
          {
@@ -5303,7 +5303,7 @@ void US_Hydrodyn_Saxs_Buffer::to_saxs()
    saxs_window->rescale_plot();
 }
 
-void US_Hydrodyn_Saxs_Buffer::plot_zoomed( const QwtDoubleRect & /* rect */ )
+void US_Hydrodyn_Saxs_Buffer::plot_zoomed( const QRectF & /* rect */ )
 {
    //   cout << QString( "zoomed: %1 %2 %3 %4\n" )
    // .arg( rect.x1() )
@@ -5318,7 +5318,7 @@ void US_Hydrodyn_Saxs_Buffer::zoom_info()
 {
    if ( plot_dist_zoomer )
    {
-#ifndef QT4
+#if QT_VERSION < 0x040000
       cout << QString( "zoomrect: %1 %2 %3 %4\n" )
          .arg( plot_dist_zoomer->zoomRect().x1() )
          .arg( plot_dist_zoomer->zoomRect().x2() )
@@ -5360,7 +5360,7 @@ void US_Hydrodyn_Saxs_Buffer::plot_mouse( const QMouseEvent & /* me */ )
 
 void US_Hydrodyn_Saxs_Buffer::select_vis()
 {
-#ifndef QT4
+#if QT_VERSION < 0x040000
    double zrx1  = plot_dist_zoomer->zoomRect().x1();
    double zrx2  = plot_dist_zoomer->zoomRect().x2();
    double zry1  = plot_dist_zoomer->zoomRect().y1();
@@ -5377,7 +5377,7 @@ void US_Hydrodyn_Saxs_Buffer::select_vis()
    {
       if ( lb_files->item( i )->isSelected() )
       {
-         QString this_file = lb_files->item( i )->text( );
+         QString this_file = lb_files->item( i )->text();
          if ( f_qs.count( this_file ) &&
               f_Is.count( this_file ) )
          {
@@ -5400,7 +5400,7 @@ void US_Hydrodyn_Saxs_Buffer::select_vis()
    lb_files->clearSelection();
    for ( int i = 0; i < lb_files->count(); i++ )
    {
-      if ( selected_files.count( lb_files->item( i )->text( ) ) )
+      if ( selected_files.count( lb_files->item( i )->text() ) )
       {
          lb_files->item( i)->setSelected( true );
       }
@@ -5411,7 +5411,7 @@ void US_Hydrodyn_Saxs_Buffer::select_vis()
 
 void US_Hydrodyn_Saxs_Buffer::remove_vis()
 {
-#ifndef QT4
+#if QT_VERSION < 0x040000
    double zrx1  = plot_dist_zoomer->zoomRect().x1();
    double zrx2  = plot_dist_zoomer->zoomRect().x2();
    double zry1  = plot_dist_zoomer->zoomRect().y1();
@@ -5429,7 +5429,7 @@ void US_Hydrodyn_Saxs_Buffer::remove_vis()
    {
       if ( lb_files->item( i )->isSelected() )
       {
-         QString this_file = lb_files->item( i )->text( );
+         QString this_file = lb_files->item( i )->text();
          if ( f_qs.count( this_file ) &&
               f_Is.count( this_file ) )
          {
@@ -5480,7 +5480,7 @@ void US_Hydrodyn_Saxs_Buffer::crop_left()
    {
       if ( lb_files->item( i )->isSelected() )
       {
-         QString this_file = lb_files->item( i )->text( );
+         QString this_file = lb_files->item( i )->text();
          if ( f_qs.count( this_file ) &&
               f_Is.count( this_file ) &&
               f_qs[ this_file ].size() > show_pts - 1 &&
@@ -5538,7 +5538,7 @@ void US_Hydrodyn_Saxs_Buffer::crop_left()
 
    // is the rectangle contained?
    if ( 
-#ifndef QT4
+#if QT_VERSION < 0x040000
        minx < plot_dist_zoomer->zoomRect().x1() ||
        maxx > plot_dist_zoomer->zoomRect().x2() ||
        miny < plot_dist_zoomer->zoomRect().y1() ||
@@ -5562,7 +5562,7 @@ void US_Hydrodyn_Saxs_Buffer::crop_left()
       double dx = maxx - minx;
       double dy = maxy - miny;
 
-#ifndef QT4
+#if QT_VERSION < 0x040000
       double zdx = plot_dist_zoomer->zoomRect().x2() - plot_dist_zoomer->zoomRect().x1();
       double zdy = plot_dist_zoomer->zoomRect().y2() - plot_dist_zoomer->zoomRect().y1();
 #else
@@ -5583,12 +5583,12 @@ void US_Hydrodyn_Saxs_Buffer::crop_left()
             newy = 0e0;
          }
          cout << QString( "just move to %1 %2\n" ).arg( newx ).arg( newy );
-         plot_dist_zoomer->move( newx, newy );
+         plot_dist_zoomer->moveTo( QPointF( newx, newy ) );
          return;
       }
 
       // ok, we are going to have to make a rectangle
-      QwtDoubleRect dr = plot_dist_zoomer->zoomRect();
+      QRectF dr = plot_dist_zoomer->zoomRect();
 
       double newminx = minx - .05 * dx;
       double newminy = miny - .05 * dy;
@@ -5600,7 +5600,7 @@ void US_Hydrodyn_Saxs_Buffer::crop_left()
       {
          newminy = 0e0;
       }
-#ifndef QT4
+#if QT_VERSION < 0x040000
       dr.setX1( newminx );
       dr.setY1( newminy );
 
@@ -5711,7 +5711,7 @@ void US_Hydrodyn_Saxs_Buffer::crop_right()
    {
       if ( lb_files->item( i )->isSelected() )
       {
-         QString this_file = lb_files->item( i )->text( );
+         QString this_file = lb_files->item( i )->text();
          if ( f_qs.count( this_file ) &&
               f_Is.count( this_file ) &&
               f_qs[ this_file ].size() > show_pts - 1 &&
@@ -5770,7 +5770,7 @@ void US_Hydrodyn_Saxs_Buffer::crop_right()
 
    // is the rectangle contained?
    if ( 
-#ifndef QT4
+#if QT_VERSION < 0x040000
        minx < plot_dist_zoomer->zoomRect().x1() ||
        maxx > plot_dist_zoomer->zoomRect().x2() ||
        miny < plot_dist_zoomer->zoomRect().y1() ||
@@ -5793,7 +5793,7 @@ void US_Hydrodyn_Saxs_Buffer::crop_right()
       double dx = maxx - minx;
       double dy = maxy - miny;
 
-#ifndef QT4
+#if QT_VERSION < 0x040000
       double zdx = plot_dist_zoomer->zoomRect().x2() - plot_dist_zoomer->zoomRect().x1();
       double zdy = plot_dist_zoomer->zoomRect().y2() - plot_dist_zoomer->zoomRect().y1();
 #else
@@ -5814,12 +5814,12 @@ void US_Hydrodyn_Saxs_Buffer::crop_right()
             newy = 0e0;
          }
          cout << QString( "just move to %1 %2\n" ).arg( newx ).arg( newy );
-         plot_dist_zoomer->move( newx, newy );
+         plot_dist_zoomer->moveTo( QPointF( newx, newy ) );
          return;
       }
 
       // ok, we are going to have to make a rectangle
-      QwtDoubleRect dr = plot_dist_zoomer->zoomRect();
+      QRectF dr = plot_dist_zoomer->zoomRect();
 
       double newminx = minx - .05 * dx;
       double newminy = miny - .05 * dy;
@@ -5831,7 +5831,7 @@ void US_Hydrodyn_Saxs_Buffer::crop_right()
       {
          newminy = 0e0;
       }
-#ifndef QT4
+#if QT_VERSION < 0x040000
       dr.setX1( newminx );
       dr.setY1( newminy );
 
@@ -5920,7 +5920,7 @@ void US_Hydrodyn_Saxs_Buffer::crop_undo()
 
    for ( int i = 0; i < lb_files->count(); i++ )
    {
-      current_files[ lb_files->item( i )->text( ) ] = true;
+      current_files[ lb_files->item( i )->text() ] = true;
    }
 
    crop_undo_data cud = crop_undos.back();
@@ -6022,7 +6022,7 @@ void US_Hydrodyn_Saxs_Buffer::crop_common()
    {
       if ( lb_files->item( i )->isSelected() )
       {
-         QString this_file = lb_files->item( i )->text( );
+         QString this_file = lb_files->item( i )->text();
          if ( f_qs.count( this_file ) &&
               f_Is.count( this_file ) &&
               f_qs[ this_file ].size() &&
@@ -6133,7 +6133,7 @@ void US_Hydrodyn_Saxs_Buffer::view()
    {
       if ( lb_files->item( i )->isSelected() )
       {
-         QString file = lb_files->item( i )->text( );
+         QString file = lb_files->item( i )->text();
 
          QString text;
 
@@ -6155,12 +6155,12 @@ void US_Hydrodyn_Saxs_Buffer::view()
                  (int)f_errors[ file ].size() > i )
             {
                text += QString("").sprintf( "%-18s\t%.6e\t%.6e\n",
-                                          f_qs_string[ file ][ i ].toAscii().data(),
+                                          f_qs_string[ file ][ i ].toLatin1().data(),
                                           f_Is       [ file ][ i ],
                                           f_errors   [ file ][ i ] );
             } else {
                text += QString("").sprintf( "%-18s\t%.6e\n",
-                                          f_qs_string[ file ][ i ].toAscii().data(),
+                                          f_qs_string[ file ][ i ].toLatin1().data(),
                                           f_Is       [ file ][ i ] );
             }
          }
@@ -6235,7 +6235,7 @@ void US_Hydrodyn_Saxs_Buffer::to_created( QString file )
 void US_Hydrodyn_Saxs_Buffer::crop_vis()
 {
    // find curves within zoomRect & select only them
-#ifndef QT4
+#if QT_VERSION < 0x040000
    double minx = plot_dist_zoomer->zoomRect().x1();
    double maxx = plot_dist_zoomer->zoomRect().x2();
    double miny = plot_dist_zoomer->zoomRect().y1();
@@ -6253,7 +6253,7 @@ void US_Hydrodyn_Saxs_Buffer::crop_vis()
    {
       if ( lb_files->item( i )->isSelected() )
       {
-         QString this_file = lb_files->item( i )->text( );
+         QString this_file = lb_files->item( i )->text();
          if ( f_qs.count( this_file ) &&
               f_Is.count( this_file ) )
          {
@@ -6387,7 +6387,7 @@ void US_Hydrodyn_Saxs_Buffer::crop_vis()
 
 void US_Hydrodyn_Saxs_Buffer::legend()
 {
-#ifndef QT4
+#if QT_VERSION < 0x040000
    if ( plot_dist->autoLegend() )
    {
       plot_dist->setAutoLegend( false );
@@ -6409,14 +6409,14 @@ void US_Hydrodyn_Saxs_Buffer::axis_y()
    if ( axis_y_log )
    {
       plot_dist->setAxisTitle(QwtPlot::yLeft, us_tr("I(q) (log scale)") );
-#ifndef QT4
+#if QT_VERSION < 0x040000
       plot_dist->setAxisOptions(QwtPlot::yLeft, QwtAutoScale::Logarithmic);
 #else
-      plot_dist->setAxisScaleEngine(QwtPlot::yLeft, new QwtLog10ScaleEngine);
+      plot_dist->setAxisScaleEngine(QwtPlot::yLeft, new QwtLogScaleEngine(10));
 #endif
    } else {
       plot_dist->setAxisTitle(QwtPlot::yLeft, us_tr("I(q)") );
-#ifndef QT4
+#if QT_VERSION < 0x040000
       plot_dist->setAxisOptions(QwtPlot::yLeft, QwtAutoScale::None);
 #else
       // actually need to test this, not sure what the correct version is
@@ -6439,14 +6439,14 @@ void US_Hydrodyn_Saxs_Buffer::axis_x()
    if ( axis_x_log )
    {
       plot_dist->setAxisTitle(QwtPlot::xBottom,  us_tr("q (1/Angstrom) (log scale)") );
-#ifndef QT4
+#if QT_VERSION < 0x040000
       plot_dist->setAxisOptions(QwtPlot::xBottom, QwtAutoScale::Logarithmic);
 #else
-      plot_dist->setAxisScaleEngine(QwtPlot::xBottom, new QwtLog10ScaleEngine);
+      plot_dist->setAxisScaleEngine(QwtPlot::xBottom, new QwtLogScaleEngine(10));
 #endif
    } else {
       plot_dist->setAxisTitle(QwtPlot::xBottom,  us_tr("q (1/Angstrom)") );
-#ifndef QT4
+#if QT_VERSION < 0x040000
       plot_dist->setAxisOptions(QwtPlot::xBottom, QwtAutoScale::None);
 #else
       // actually need to test this, not sure what the correct version is
@@ -6458,7 +6458,16 @@ void US_Hydrodyn_Saxs_Buffer::axis_x()
 
 void US_Hydrodyn_Saxs_Buffer::legend_set()
 {
-#ifdef QT4
+#if QT_VERSION >= 0x040000
+# if QT_VERSION >= 0x050000
+   if ( legend_vis ) {
+      QwtLegend* legend_saxs = new QwtLegend;
+      // legend_saxs->setFrameStyle( QFrame::Box | QFrame::Sunken );
+      plot_dist->insertLegend( legend_saxs, QwtPlot::BottomLegend );
+   } else {      
+      plot_dist->insertLegend( NULL );
+   }
+# else
    QwtPlotItemList ilist = plot_dist->itemList();
    for ( int ii = 0; ii < ilist.size(); ii++ )
    {
@@ -6468,6 +6477,7 @@ void US_Hydrodyn_Saxs_Buffer::legend_set()
       plitem->setItemAttribute( QwtPlotItem::Legend, legend_vis );
    }
    plot_dist->legend()->setVisible( legend_vis );
+# endif
 #endif
 }
 
@@ -6505,7 +6515,7 @@ void US_Hydrodyn_Saxs_Buffer::similar_files()
       .arg( similar )
       .arg( dir )
       .arg( match )
-      .toAscii().data();
+      .toLatin1().data();
    // go to that directory and get file list
    // turn basename into regexp \\d{2,} into \\d+
    // load unloaded files found with match
@@ -6567,7 +6577,7 @@ void US_Hydrodyn_Saxs_Buffer::rename_created( QListWidgetItem *lbi, const QPoint
    map < QString, bool > existing_items;
    for ( int i = 0; i < (int)lb_files->count(); i++ )
    {
-      existing_items[ lb_files->item( i )->text( ) ] = true;
+      existing_items[ lb_files->item( i )->text() ] = true;
    }
 
    QString dupmsg;
@@ -6649,11 +6659,11 @@ void US_Hydrodyn_Saxs_Buffer::normalize()
    QStringList files;
    for ( int i = 0; i < lb_files->count(); i++ )
    {
-      if ( lb_files->item( i )->isSelected( ) && 
-           lb_files->item( i )->text( ) != lbl_buffer->text() &&
-           lb_files->item( i )->text( ) != lbl_empty->text() )
+      if ( lb_files->item( i )->isSelected() && 
+           lb_files->item( i )->text() != lbl_buffer->text() &&
+           lb_files->item( i )->text() != lbl_empty->text() )
       {
-         files << lb_files->item( i )->text( );
+         files << lb_files->item( i )->text();
       }
    }
 
@@ -6674,7 +6684,7 @@ void US_Hydrodyn_Saxs_Buffer::normalize()
    map < QString, bool > existing_items;
    for ( int i = 0; i < lb_files->count(); i++ )
    {
-      existing_items[ lb_files->item( i )->text( ) ] = true;
+      existing_items[ lb_files->item( i )->text() ] = true;
    }
 
    for ( int i = 0; i < (int)files.size(); i++ )
@@ -6756,7 +6766,7 @@ void US_Hydrodyn_Saxs_Buffer::add_plot( QString           name,
 
    for ( int i = 0; i < lb_files->count(); i++ )
    {
-      QString this_file = lb_files->item( i )->text( );
+      QString this_file = lb_files->item( i )->text();
       current_files[ this_file ] = true;
    }
 
@@ -6806,7 +6816,7 @@ void US_Hydrodyn_Saxs_Buffer::run_one_divide()
 
    for ( int i = 0; i < lb_files->count(); i++ )
    {
-      QString this_file = lb_files->item( i )->text( );
+      QString this_file = lb_files->item( i )->text();
       current_files[ this_file ] = true;
    }
 
@@ -7114,7 +7124,7 @@ void US_Hydrodyn_Saxs_Buffer::crop_zero()
    {
       if ( lb_files->item( i )->isSelected() )
       {
-         QString this_file = lb_files->item( i )->text( );
+         QString this_file = lb_files->item( i )->text();
 
          vector < double > new_q;
          vector < double > new_I;
@@ -7200,7 +7210,7 @@ void US_Hydrodyn_Saxs_Buffer::join_offset_focus( bool hasFocus )
    if ( hasFocus )
    {
       disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
-      qwtw_wheel->setRange( join_offset_start, join_offset_end, join_offset_delta );
+      qwtw_wheel->setRange( join_offset_start, join_offset_end); qwtw_wheel->setSingleStep( join_offset_delta );
       connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
       qwtw_wheel->setValue( le_join_offset->text().toDouble() );
       qwtw_wheel->setEnabled( true );
@@ -7213,7 +7223,7 @@ void US_Hydrodyn_Saxs_Buffer::join_mult_focus( bool hasFocus )
    if ( hasFocus )
    {
       disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
-      qwtw_wheel->setRange( join_mult_start, join_mult_end, join_mult_delta );
+      qwtw_wheel->setRange( join_mult_start, join_mult_end); qwtw_wheel->setSingleStep( join_mult_delta );
       connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
       qwtw_wheel->setValue( le_join_mult->text().toDouble() );
       qwtw_wheel->setEnabled( true );
@@ -7226,7 +7236,7 @@ void US_Hydrodyn_Saxs_Buffer::join_start_focus( bool hasFocus )
    if ( hasFocus )
    {
       disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
-      qwtw_wheel->setRange( join_low_q, join_high_q, 0.00005 );
+      qwtw_wheel->setRange( join_low_q, join_high_q); qwtw_wheel->setSingleStep( 0.00005 );
       connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
       qwtw_wheel->setValue( le_join_start->text().toDouble() );
       qwtw_wheel->setEnabled( true );
@@ -7239,7 +7249,7 @@ void US_Hydrodyn_Saxs_Buffer::join_point_focus( bool hasFocus )
    if ( hasFocus )
    {
       disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
-      qwtw_wheel->setRange( join_low_q, join_high_q, 0.00005 );
+      qwtw_wheel->setRange( join_low_q, join_high_q); qwtw_wheel->setSingleStep( 0.00005 );
       connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
       qwtw_wheel->setValue( le_join_point->text().toDouble() );
       qwtw_wheel->setEnabled( true );
@@ -7252,7 +7262,7 @@ void US_Hydrodyn_Saxs_Buffer::join_end_focus( bool hasFocus )
    if ( hasFocus )
    {
       disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
-      qwtw_wheel->setRange( join_low_q, join_high_q, 0.00005 );
+      qwtw_wheel->setRange( join_low_q, join_high_q); qwtw_wheel->setSingleStep( 0.00005 );
       connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
       qwtw_wheel->setValue( le_join_end->text().toDouble() );
       qwtw_wheel->setEnabled( true );
@@ -7263,7 +7273,7 @@ void US_Hydrodyn_Saxs_Buffer::join_end_focus( bool hasFocus )
 void US_Hydrodyn_Saxs_Buffer::wheel_cancel()
 {
    lbl_wheel_pos->setText( QString( "%1" ).arg( 0 ) );
-#ifndef QT4
+#if QT_VERSION < 0x040000
    plot_dist->setCurveData( wheel_curve, 
                             /* cb_guinier->isChecked() ? (double *)&(plotted_q2[p][0]) : */
                             (double *)&( f_qs[ wheel_file ][ 0 ] ),
@@ -7277,14 +7287,14 @@ void US_Hydrodyn_Saxs_Buffer::wheel_cancel()
                             f_qs[ join_file ].size()
                             );
 #else
-   wheel_curve->setData(
+   wheel_curve->setSamples(
                         /* cb_guinier->isChecked() ?
                            (double *)&(plotted_q2[p][0]) : */
                         (double *)&( f_qs[ wheel_file ][ 0 ] ),
                         (double *)&( f_Is[ wheel_file ][ 0 ] ),
                         f_qs[ wheel_file ].size()
                         );
-   join_curve->setData(
+   join_curve->setSamples(
                        /* cb_guinier->isChecked() ?
                           (double *)&(plotted_q2[p][0]) : */
                        (double *)&( f_qs[ join_file ][ 0 ] ),
@@ -7298,7 +7308,7 @@ void US_Hydrodyn_Saxs_Buffer::wheel_cancel()
    if ( plotted_curves.count( wheel_file ) &&
         f_pos.count( wheel_file ) )
    {
-#ifndef QT4
+#if QT_VERSION < 0x040000
       plot_dist->setCurvePen( plotted_curves[ wheel_file ], QPen( plot_colors[ f_pos[ wheel_file ] % plot_colors.size()], 1, SolidLine));
 #else
       plotted_curves[ wheel_file ]->setPen( QPen( plot_colors[ f_pos[ wheel_file ] % plot_colors.size() ], 1, Qt::SolidLine ) );
@@ -7308,7 +7318,7 @@ void US_Hydrodyn_Saxs_Buffer::wheel_cancel()
    if ( plotted_curves.count( join_file ) &&
         f_pos.count( join_file ) )
    {
-#ifndef QT4
+#if QT_VERSION < 0x040000
       plot_dist->setCurvePen( plotted_curves[ join_file ], QPen( plot_colors[ f_pos[ join_file ] % plot_colors.size()], 1, SolidLine));
 #else
       plotted_curves[ join_file ]->setPen( QPen( plot_colors[ f_pos[ join_file ] % plot_colors.size() ], 1, Qt::SolidLine ) );
@@ -7351,7 +7361,7 @@ void US_Hydrodyn_Saxs_Buffer::join_do_replot()
    {
       offset_I[ i ] = mult * offset_I[ i ] + pos;
    }
-#ifndef QT4
+#if QT_VERSION < 0x040000
    plot_dist->setCurveData( join_adjust_lowq ? wheel_curve : join_curve, 
                             /* cb_guinier->isChecked() ? (double *)&(plotted_q2[p][0]) : */
                             (double *)&( f_qs[ wheel_file ][ 0 ] ),
@@ -7359,7 +7369,7 @@ void US_Hydrodyn_Saxs_Buffer::join_do_replot()
                             offset_I.size()
                             );
 #else
-   ( join_adjust_lowq ? wheel_curve : join_curve )->setData(
+   ( join_adjust_lowq ? wheel_curve : join_curve )->setSamples(
                                                             /* cb_guinier->isChecked() ?
                                                                (double *)&(plotted_q2[p][0]) : */
                                                             (double *)&( f_qs[ wheel_file ][ 0 ] ),
@@ -7382,7 +7392,7 @@ void US_Hydrodyn_Saxs_Buffer::join_mult_text( const QString & text )
 
 void US_Hydrodyn_Saxs_Buffer::join_start_text( const QString & text )
 {
-#ifndef QT4
+#if QT_VERSION < 0x040000
    plot_dist->setMarkerPos( plotted_markers[ 0 ], text.toDouble(), 0e0 );
 #else
    plotted_markers[ 0 ]->setXValue( text.toDouble() );
@@ -7397,7 +7407,7 @@ void US_Hydrodyn_Saxs_Buffer::join_start_text( const QString & text )
 
 void US_Hydrodyn_Saxs_Buffer::join_point_text( const QString & text )
 {
-#ifndef QT4
+#if QT_VERSION < 0x040000
    plot_dist->setMarkerPos( plotted_markers[ 1 ], text.toDouble(), 0e0 );
 #else
    plotted_markers[ 1 ]->setXValue( text.toDouble() );
@@ -7412,7 +7422,7 @@ void US_Hydrodyn_Saxs_Buffer::join_point_text( const QString & text )
 
 void US_Hydrodyn_Saxs_Buffer::join_end_text( const QString & text )
 {
-#ifndef QT4
+#if QT_VERSION < 0x040000
    plot_dist->setMarkerPos( plotted_markers[ 2 ], text.toDouble(), 0e0 );
 #else
    plotted_markers[ 2 ]->setXValue( text.toDouble() );
@@ -7680,7 +7690,7 @@ void US_Hydrodyn_Saxs_Buffer::join_fit_scaling()
 void US_Hydrodyn_Saxs_Buffer::join_swap()
 {
 
-#ifndef QT4
+#if QT_VERSION < 0x040000
    plot_dist->setCurveData( wheel_curve, 
                             /* cb_guinier->isChecked() ? (double *)&(plotted_q2[p][0]) : */
                             (double *)&( f_qs[ wheel_file ][ 0 ] ),
@@ -7694,14 +7704,14 @@ void US_Hydrodyn_Saxs_Buffer::join_swap()
                             f_qs[ join_file ].size()
                             );
 #else
-   wheel_curve->setData(
+   wheel_curve->setSamples(
                         /* cb_guinier->isChecked() ?
                            (double *)&(plotted_q2[p][0]) : */
                         (double *)&( f_qs[ wheel_file ][ 0 ] ),
                         (double *)&( f_Is[ wheel_file ][ 0 ] ),
                         f_qs[ wheel_file ].size()
                         );
-   join_curve->setData(
+   join_curve->setSamples(
                        /* cb_guinier->isChecked() ?
                           (double *)&(plotted_q2[p][0]) : */
                        (double *)&( f_qs[ join_file ][ 0 ] ),
@@ -7714,8 +7724,8 @@ void US_Hydrodyn_Saxs_Buffer::join_swap()
    pb_join_swap->setText( join_adjust_lowq ? us_tr("Scale high-q") : us_tr("Scale low-q") );
    // disconnect( le_join_offset, SIGNAL( textChanged( const QString & ) ) );
    // disconnect( le_join_mult  , SIGNAL( textChanged( const QString & ) ) );
-   le_join_offset->setText( QString( "%1" ).arg( -le_join_offset->text( ).toDouble( ) ) );
-   le_join_mult  ->setText( QString( "%1" ).arg( 1e0 / le_join_mult->text( ).toDouble( ) ) );
+   le_join_offset->setText( QString( "%1" ).arg( -le_join_offset->text().toDouble() ) );
+   le_join_mult  ->setText( QString( "%1" ).arg( 1e0 / le_join_mult->text().toDouble() ) );
    // connect( le_join_offset, SIGNAL( textChanged( const QString & ) ), SLOT( join_offset_text( const QString & ) ) );
    // connect( le_join_mult  , SIGNAL( textChanged( const QString & ) ), SLOT( join_mult_text  ( const QString & ) ) );
    // replot_join();
@@ -7851,7 +7861,7 @@ void US_Hydrodyn_Saxs_Buffer::join_start()
    {
       if ( lb_files->item( i )->isSelected() )
       {
-         selected_files << lb_files->item( i )->text( );
+         selected_files << lb_files->item( i )->text();
       }
    }
 
@@ -7868,7 +7878,7 @@ void US_Hydrodyn_Saxs_Buffer::join_start()
                                       us_tr("Select the low-q valued curve:\n" ),
                                       selected_files, 
                                       0, 
-                                      FALSE, 
+                                      false, 
                                       &ok,
                                       this );
    if ( !ok ) {
@@ -7915,7 +7925,7 @@ void US_Hydrodyn_Saxs_Buffer::join_start()
    wheel_curve           = plotted_curves[ wheel_file ];
    join_curve            = plotted_curves[ join_file ];
 
-#ifndef QT4
+#if QT_VERSION < 0x040000
    plot_dist->setCurvePen( plotted_curves[ wheel_file ], QPen( Qt::cyan  , 1, SolidLine));
    plot_dist->setCurvePen( plotted_curves[ join_file  ], QPen( Qt::yellow, 1, SolidLine));
 #else
@@ -7950,7 +7960,7 @@ void US_Hydrodyn_Saxs_Buffer::join_start()
 
 void US_Hydrodyn_Saxs_Buffer::join_delete_markers()
 {
-#ifndef QT4
+#if QT_VERSION < 0x040000
    plot_dist->removeMarkers();
 #else
    plot_dist->detachItems( QwtPlotItem::Rtti_PlotMarker );
@@ -7961,7 +7971,7 @@ void US_Hydrodyn_Saxs_Buffer::join_init_markers()
 {
    join_delete_markers();
 
-   plotted_markers.clear();
+   plotted_markers.clear( );
 
    join_add_marker( le_join_start->text().toDouble(), Qt::red, us_tr( "Start" ) );
    join_add_marker( le_join_point->text().toDouble(), Qt::magenta, us_tr( "Join point" ) );
@@ -7973,14 +7983,14 @@ void US_Hydrodyn_Saxs_Buffer::join_init_markers()
 void US_Hydrodyn_Saxs_Buffer::join_add_marker( double pos, 
                                                QColor color, 
                                                QString text, 
-#ifndef QT4
+#if QT_VERSION < 0x040000
                                                int 
 #else
                                                Qt::Alignment
 #endif
                                                align )
 {
-#ifndef QT4
+#if QT_VERSION < 0x040000
    long marker = plot_dist->insertMarker();
    plot_dist->setMarkerLineStyle ( marker, QwtMarker::VLine );
    plot_dist->setMarkerPos       ( marker, pos, 0e0 );
@@ -8111,7 +8121,7 @@ void US_Hydrodyn_Saxs_Buffer::wheel_save()
                                 );
    }
 
-   lbl_wheel_pos->setText( QString( "%1" ).arg( qwtw_wheel->value( ) ) );
+   lbl_wheel_pos->setText( QString( "%1" ).arg( qwtw_wheel->value() ) );
 
    // join the adjusted curves and save
 
@@ -8122,7 +8132,7 @@ void US_Hydrodyn_Saxs_Buffer::wheel_save()
 
    for ( int i = 0; i < (int)lb_files->count(); i++ )
    {
-      current_files[ lb_files->item( i )->text( ) ] = true;
+      current_files[ lb_files->item( i )->text() ] = true;
       if ( lb_files->item( i )->text() == wheel_file )
       {
          wheel_pos = i;
@@ -8349,7 +8359,7 @@ QStringList US_Hydrodyn_Saxs_Buffer::all_selected_files()
    {
       if ( lb_files->item( i )->isSelected() )
       {
-         files << lb_files->item( i )->text( );
+         files << lb_files->item( i )->text();
       }
    }
    return files;
@@ -8604,7 +8614,7 @@ void US_Hydrodyn_Saxs_Buffer::asum( QStringList files )
    map < QString, bool > current_files;
    for ( int i = 0; i < (int)lb_files->count(); i++ )
    {
-      current_files[ lb_files->item( i )->text( ) ] = true;
+      current_files[ lb_files->item( i )->text() ] = true;
    }
 
    while ( current_files.count( wsum_name ) )

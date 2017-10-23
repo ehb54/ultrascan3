@@ -71,7 +71,7 @@ void US_Hydrodyn_OR::setupGUI()
    cnt_fuse= new QwtCounter(this);
    US_Hydrodyn::sizeArrows( cnt_fuse );
    Q_CHECK_PTR(cnt_fuse);
-   cnt_fuse->setRange(0, 100, 0.1);
+   cnt_fuse->setRange(0, 100); cnt_fuse->setSingleStep( 0.1);
    cnt_fuse->setValue((*o_r).fuse_beads_percent);
    cnt_fuse->setMinimumHeight(minHeight1);
    cnt_fuse->setNumButtons(3);
@@ -101,7 +101,7 @@ void US_Hydrodyn_OR::setupGUI()
    cnt_hierarch = new QwtCounter(this);
    US_Hydrodyn::sizeArrows( cnt_hierarch );
    Q_CHECK_PTR(cnt_hierarch);
-   cnt_hierarch->setRange(0, 100, 0.1);
+   cnt_hierarch->setRange(0, 100); cnt_hierarch->setSingleStep( 0.1);
    cnt_hierarch->setValue((*o_r).remove_hierarch_percent);
    cnt_hierarch->setMinimumHeight(minHeight1);
    cnt_hierarch->setEnabled((*o_r).remove_overlap);
@@ -124,7 +124,7 @@ void US_Hydrodyn_OR::setupGUI()
    cnt_sync = new QwtCounter(this);
    US_Hydrodyn::sizeArrows( cnt_sync );
    Q_CHECK_PTR(cnt_sync);
-   cnt_sync->setRange(0, 100, 0.1);
+   cnt_sync->setRange(0, 100); cnt_sync->setSingleStep( 0.1);
    cnt_sync->setValue((*o_r).remove_sync_percent);
    cnt_sync->setMinimumHeight(minHeight1);
    cnt_sync->setEnabled((*o_r).remove_overlap);

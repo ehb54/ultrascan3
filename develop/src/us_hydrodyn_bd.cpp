@@ -46,7 +46,7 @@ US_Hydrodyn_BD::US_Hydrodyn_BD(
    global_Xpos += 30;
    global_Ypos += 30;
    setGeometry(global_Xpos, global_Ypos, 0, 0);
-#ifdef QT4
+#if QT_VERSION >= 0x040000
    setWindowFlags(windowFlags() | Qt::WindowStaysOnTopHint );
 #else
    setWFlags(getWFlags() | Qt::WStyle_StaysOnTop);
@@ -181,7 +181,7 @@ void US_Hydrodyn_BD::setupGUI()
    //   Q_CHECK_PTR(pb_stop);
    //   pb_stop->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    //   pb_stop->setMinimumHeight(minHeight1);
-   //   pb_stop->setPalette( USglobal->global_colors.cg_pushb );
+   //   pb_stop->setPalette( PALET_PUSHB );
    //   connect(pb_stop, SIGNAL(clicked()), SLOT(stop()));
 
    pb_bd_options = new QPushButton(us_tr("Browflex Options"), this);
@@ -206,23 +206,23 @@ void US_Hydrodyn_BD::setupGUI()
    connect(pb_help, SIGNAL(clicked()), SLOT(help()));
 
    // progress = new QProgressBar(this, "Progress");
-   // progress->setPalette( USglobal->global_colors.cg_normal );
+   // progress->setPalette( PALET_NORMAL );
    // progress->reset();
 
    // editor = new QTextEdit(this);
-   // editor->setPalette( USglobal->global_colors.cg_normal );
+   // editor->setPalette( PALET_NORMAL );
    // editor->setReadOnly(true);
    // editor->setMinimumWidth(300);
    // editor->setMinimumHeight(minHeight1 * 6);
    // m = new QMenuBar( editor );  m->setObjectName( "menu" );
    // m->setMinimumHeight(minHeight1);
-   // m->setPalette( USglobal->global_colors.cg_normal );
+   // m->setPalette( PALET_NORMAL );
    // QPopupMenu * file = new QPopupMenu(editor);
    // m->insertItem( us_tr("&File"), file );
-   // file->insertItem( us_tr("Font"),  this, SLOT(update_font( )),    ALT+Key_F );
-   // file->insertItem( us_tr("Save"),  this, SLOT(save( )),    ALT+Key_S );
-   // file->insertItem( us_tr("Print"), this, SLOT(print( )),   ALT+Key_P );
-   // file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display( )),   ALT+Key_X );
+   // file->insertItem( us_tr("Font"),  this, SLOT(update_font()),    ALT+Key_F );
+   // file->insertItem( us_tr("Save"),  this, SLOT(save()),    ALT+Key_S );
+   // file->insertItem( us_tr("Print"), this, SLOT(print()),   ALT+Key_P );
+   // file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display()),   ALT+Key_X );
    // editor->setWordWrapMode (QTextOption::WordWrap);
    // // editor->setWordWrapMode (QTextOption::NoWrap);
 
@@ -363,7 +363,7 @@ void US_Hydrodyn_BD::closeEvent(QCloseEvent *e)
 
 // void US_Hydrodyn_BD::clear_display()
 // {
-//    editor->clear();
+//    editor->clear( );
 // }
 
 // void US_Hydrodyn_BD::update_font()
