@@ -255,7 +255,7 @@ namespace US_WinData
       QObject::tr( "Multiwavelength Species Fit Program" )
     },
 
-    { P_MWFSIMU,   0, 0, "us_mwl_fit_sim",
+    { P_MWFSIMU,   0, 0, "us_mwl_species_sim",
       QObject::tr( "Loading MWL Species Fit Simulator"      ),
       QObject::tr( "Multiwavelength Species Fit Simulation" )
     },
