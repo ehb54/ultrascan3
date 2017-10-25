@@ -1777,6 +1777,8 @@ void US_Hydrodyn_Saxs::setupGUI()
    QFrame *frame;
    frame = new QFrame(this);
    frame->setMinimumHeight(minHeight0);
+   frame->setPalette( PALET_NORMAL );
+   AUTFBACK( frame );
 
    m = new QMenuBar( frame );    m->setObjectName( "menu" );
    m->setMinimumHeight(minHeight1 - 5);

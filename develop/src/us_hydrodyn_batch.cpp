@@ -133,6 +133,9 @@ void US_Hydrodyn_Batch::setupGUI()
    // qcg_cb_disabled.setColor( QPalette::ButtonText, Qt::magenta );
 
    QPalette qp_cb = USglobal->global_colors.cg_normal;
+#if QT_VERSION >= 0x050000   
+   qp_cb.setColor( QPalette::Disabled, QPalette::WindowText, Qt::darkRed );
+#endif
 
    lbl_selection = new QLabel(us_tr("Select files:"), this);
    Q_CHECK_PTR(lbl_selection);
@@ -280,24 +283,21 @@ void US_Hydrodyn_Batch::setupGUI()
    cb_residue_stop->setEnabled(true);
    //   cb_residue_stop->setMinimumHeight(minHeight1);
    cb_residue_stop->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_residue_stop->setPalette( PALET_NORMAL );
-   AUTFBACK( cb_residue_stop );
+   cb_residue_stop->setPalette( qp_cb ); AUTFBACK( cb_residue_stop );
 
    cb_residue_skip = new QCheckBox(bg_residues);
    cb_residue_skip->setText(us_tr(" List them, skip residue and proceed"));
    cb_residue_skip->setEnabled(true);
    //   cb_residue_skip->setMinimumHeight(minHeight1);
    cb_residue_skip->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_residue_skip->setPalette( PALET_NORMAL );
-   AUTFBACK( cb_residue_skip );
+   cb_residue_skip->setPalette( qp_cb ); AUTFBACK( cb_residue_skip );
 
    cb_residue_auto = new QCheckBox(bg_residues);
    cb_residue_auto->setText(us_tr(" Use automatic bead builder (approximate method)"));
    cb_residue_auto->setEnabled(true);
    //   cb_residue_auto->setMinimumHeight(minHeight1);
    cb_residue_auto->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_residue_auto->setPalette( PALET_NORMAL );
-   AUTFBACK( cb_residue_auto );
+   cb_residue_auto->setPalette( qp_cb ); AUTFBACK( cb_residue_auto );
 
    bg_residues->setButton(batch->missing_residues);
 #else
@@ -316,7 +316,7 @@ void US_Hydrodyn_Batch::setupGUI()
    rb_residue_stop->setEnabled(true);
    //   rb_residue_stop->setMinimumHeight(minHeight1);
    rb_residue_stop->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   rb_residue_stop->setPalette( PALET_NORMAL );
+   rb_residue_stop->setPalette( qp_cb ); AUTFBACK( rb_residue_stop );
    AUTFBACK( rb_residue_stop );
    connect( rb_residue_stop, SIGNAL( clicked() ), this, SLOT( residue() ) );
 
@@ -325,7 +325,7 @@ void US_Hydrodyn_Batch::setupGUI()
    rb_residue_skip->setEnabled(true);
    //   rb_residue_skip->setMinimumHeight(minHeight1);
    rb_residue_skip->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   rb_residue_skip->setPalette( PALET_NORMAL );
+   rb_residue_skip->setPalette( qp_cb ); AUTFBACK( rb_residue_skip );
    AUTFBACK( rb_residue_skip );
    connect( rb_residue_skip, SIGNAL( clicked() ), this, SLOT( residue() ) );
 
@@ -334,7 +334,7 @@ void US_Hydrodyn_Batch::setupGUI()
    rb_residue_auto->setEnabled(true);
    //   rb_residue_auto->setMinimumHeight(minHeight1);
    rb_residue_auto->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   rb_residue_auto->setPalette( PALET_NORMAL );
+   rb_residue_auto->setPalette( qp_cb ); AUTFBACK( rb_residue_auto );
    AUTFBACK( rb_residue_auto );
    connect( rb_residue_auto, SIGNAL( clicked() ), this, SLOT( residue() ) );
 
@@ -372,24 +372,21 @@ void US_Hydrodyn_Batch::setupGUI()
    cb_atom_stop->setEnabled(true);
    //   cb_atom_stop->setMinimumHeight(minHeight1);
    cb_atom_stop->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_atom_stop->setPalette( PALET_NORMAL );
-   AUTFBACK( cb_atom_stop );
+   cb_atom_stop->setPalette( qp_cb ); AUTFBACK( cb_atom_stop );
 
    cb_atom_skip = new QCheckBox(bg_atoms);
    cb_atom_skip->setText(us_tr(" List them, skip entire residue and proceed"));
    cb_atom_skip->setEnabled(true);
    //   cb_atom_skip->setMinimumHeight(minHeight1);
    cb_atom_skip->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_atom_skip->setPalette( PALET_NORMAL );
-   AUTFBACK( cb_atom_skip );
+   cb_atom_skip->setPalette( qp_cb ); AUTFBACK( cb_atom_skip );
 
    cb_atom_auto = new QCheckBox(bg_atoms);
    cb_atom_auto->setText(us_tr(" Use approximate method to generate bead"));
    cb_atom_auto->setEnabled(true);
    //   cb_atom_auto->setMinimumHeight(minHeight1);
    cb_atom_auto->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_atom_auto->setPalette( PALET_NORMAL );
-   AUTFBACK( cb_atom_auto );
+   cb_atom_auto->setPalette( qp_cb ); AUTFBACK( cb_atom_auto );
 
    bg_atoms->setButton(batch->missing_atoms);
 #else
@@ -408,7 +405,7 @@ void US_Hydrodyn_Batch::setupGUI()
    rb_atom_stop->setEnabled(true);
    //   rb_atom_stop->setMinimumHeight(minHeight1);
    rb_atom_stop->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   rb_atom_stop->setPalette( PALET_NORMAL );
+   rb_atom_stop->setPalette( qp_cb ); AUTFBACK( rb_atom_stop );
    AUTFBACK( rb_atom_stop );
    connect( rb_atom_stop, SIGNAL( clicked() ), this, SLOT( atom() ) );
 
@@ -417,7 +414,7 @@ void US_Hydrodyn_Batch::setupGUI()
    rb_atom_skip->setEnabled(true);
    //   rb_atom_skip->setMinimumHeight(minHeight1);
    rb_atom_skip->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   rb_atom_skip->setPalette( PALET_NORMAL );
+   rb_atom_skip->setPalette( qp_cb ); AUTFBACK( rb_atom_skip );
    AUTFBACK( rb_atom_skip );
    connect( rb_atom_skip, SIGNAL( clicked() ), this, SLOT( atom() ) );
 
@@ -426,7 +423,7 @@ void US_Hydrodyn_Batch::setupGUI()
    rb_atom_auto->setEnabled(true);
    //   rb_atom_auto->setMinimumHeight(minHeight1);
    rb_atom_auto->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   rb_atom_auto->setPalette( PALET_NORMAL );
+   rb_atom_auto->setPalette( qp_cb ); AUTFBACK( rb_atom_auto );
    AUTFBACK( rb_atom_auto );
    connect( rb_atom_auto, SIGNAL( clicked() ), this, SLOT( atom() ) );
 
@@ -467,56 +464,49 @@ void US_Hydrodyn_Batch::setupGUI()
    cb_mm_first->setText(us_tr(" Process Only First Model in PDB's with Multiple Models "));
    cb_mm_first->setChecked(batch->mm_first);
    cb_mm_first->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_mm_first->setPalette( PALET_NORMAL );
-   AUTFBACK( cb_mm_first );
+   cb_mm_first->setPalette( qp_cb ); AUTFBACK( cb_mm_first );
    connect(cb_mm_first, SIGNAL(clicked()), this, SLOT(set_mm_first()));
 
    cb_mm_all = new QCheckBox(this);
    cb_mm_all->setText(us_tr(" Process All Models in PDB's with Multiple Models "));
    cb_mm_all->setChecked(batch->mm_all);
    cb_mm_all->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_mm_all->setPalette( PALET_NORMAL );
-   AUTFBACK( cb_mm_all );
+   cb_mm_all->setPalette( qp_cb ); AUTFBACK( cb_mm_all );
    connect(cb_mm_all, SIGNAL(clicked()), this, SLOT(set_mm_all()));
 
    cb_dmd = new QCheckBox(this);
    cb_dmd->setText(us_tr(" Run DMD "));
    cb_dmd->setChecked(batch->dmd);
    cb_dmd->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_dmd->setPalette( PALET_NORMAL );
-   AUTFBACK( cb_dmd );
+   cb_dmd->setPalette( qp_cb ); AUTFBACK( cb_dmd );
    connect(cb_dmd, SIGNAL(clicked()), this, SLOT(set_dmd()));
 
    cb_somo = new QCheckBox(this);
    cb_somo->setText(us_tr(" Build SoMo Bead Model "));
    cb_somo->setChecked(batch->somo);
    cb_somo->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_somo->setPalette( PALET_NORMAL );
-   AUTFBACK( cb_somo );
+   cb_somo->setPalette( qp_cb ); AUTFBACK( cb_somo );
    connect(cb_somo, SIGNAL(clicked()), this, SLOT(set_somo()));
 
    cb_somo_o = new QCheckBox(this);
    cb_somo_o->setText(us_tr(" Build SoMo Overlap Bead Model "));
    cb_somo_o->setChecked(batch->somo_o);
    cb_somo_o->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_somo_o->setPalette( PALET_NORMAL );
-   AUTFBACK( cb_somo_o );
+   cb_somo_o->setPalette( qp_cb ); AUTFBACK( cb_somo_o );
    connect(cb_somo_o, SIGNAL(clicked()), this, SLOT(set_somo_o()));
 
    cb_grid = new QCheckBox(this);
    cb_grid->setText(us_tr(" Build AtoB (Grid) Bead Model"));
    cb_grid->setChecked(batch->grid);
    cb_grid->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_grid->setPalette( PALET_NORMAL );
-   AUTFBACK( cb_grid );
+   cb_grid->setPalette( qp_cb ); AUTFBACK( cb_grid );
    connect(cb_grid, SIGNAL(clicked()), this, SLOT(set_grid()));
 
    cb_equi_grid = new QCheckBox(this);
    cb_equi_grid->setText(us_tr(" Grid bead models for P(r)"));
    cb_equi_grid->setChecked(batch->equi_grid);
    cb_equi_grid->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_equi_grid->setPalette( PALET_NORMAL );
-   AUTFBACK( cb_equi_grid );
+   cb_equi_grid->setPalette( qp_cb ); AUTFBACK( cb_equi_grid );
    connect(cb_equi_grid, SIGNAL(clicked()), this, SLOT(set_equi_grid()));
 
    if ( !U_EXPT )
@@ -528,24 +518,21 @@ void US_Hydrodyn_Batch::setupGUI()
    cb_iqq->setText(us_tr("Compute SAXS I(q) "));
    cb_iqq->setChecked(batch->iqq);
    cb_iqq->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_iqq->setPalette( PALET_NORMAL );
-   AUTFBACK( cb_iqq );
+   cb_iqq->setPalette( qp_cb ); AUTFBACK( cb_iqq );
    connect(cb_iqq, SIGNAL(clicked()), this, SLOT(set_iqq()));
 
    cb_saxs_search = new QCheckBox(this);
    cb_saxs_search->setText(us_tr("I(q) search "));
    cb_saxs_search->setChecked(batch->saxs_search);
    cb_saxs_search->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_saxs_search->setPalette( PALET_NORMAL );
-   AUTFBACK( cb_saxs_search );
+   cb_saxs_search->setPalette( qp_cb ); AUTFBACK( cb_saxs_search );
    connect(cb_saxs_search, SIGNAL(clicked()), this, SLOT(set_saxs_search()));
 
    cb_prr = new QCheckBox(this);
    cb_prr->setText(us_tr("Compute SAXS P(r) "));
    cb_prr->setChecked(batch->prr);
    cb_prr->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_prr->setPalette( PALET_NORMAL );
-   AUTFBACK( cb_prr );
+   cb_prr->setPalette( qp_cb ); AUTFBACK( cb_prr );
    connect(cb_prr, SIGNAL(clicked()), this, SLOT(set_prr()));
 
 #if defined(USE_H)
@@ -553,8 +540,7 @@ void US_Hydrodyn_Batch::setupGUI()
    cb_hydrate->setText(us_tr("Hydrate "));
    cb_hydrate->setChecked(batch->hydrate);
    cb_hydrate->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_hydrate->setPalette( PALET_NORMAL );
-   AUTFBACK( cb_hydrate );
+   cb_hydrate->setPalette( qp_cb ); AUTFBACK( cb_hydrate );
    connect(cb_hydrate, SIGNAL(clicked()), this, SLOT(set_hydrate()));
 #endif
 
@@ -562,16 +548,14 @@ void US_Hydrodyn_Batch::setupGUI()
    cb_csv_saxs->setText(us_tr(" Combined SAXS Results File:"));
    cb_csv_saxs->setChecked(batch->csv_saxs);
    cb_csv_saxs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_csv_saxs->setPalette( PALET_NORMAL );
-   AUTFBACK( cb_csv_saxs );
+   cb_csv_saxs->setPalette( qp_cb ); AUTFBACK( cb_csv_saxs );
    connect(cb_csv_saxs, SIGNAL(clicked()), this, SLOT(set_csv_saxs()));
 
    le_csv_saxs_name = new QLineEdit( this );    le_csv_saxs_name->setObjectName( "csv_saxs_name Line Edit" );
    le_csv_saxs_name->setText(batch->csv_saxs_name);
    le_csv_saxs_name->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_csv_saxs_name->setMinimumWidth(150);
-   le_csv_saxs_name->setPalette( PALET_EDIT );
-   AUTFBACK( le_csv_saxs_name );
+   le_csv_saxs_name->setPalette( qp_cb ); AUTFBACK( le_csv_saxs_name );
    le_csv_saxs_name->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    connect(le_csv_saxs_name, SIGNAL(textChanged(const QString &)), SLOT(update_csv_saxs_name(const QString &)));
 
@@ -579,80 +563,70 @@ void US_Hydrodyn_Batch::setupGUI()
    cb_create_native_saxs->setText(us_tr(" Create Individual SAXS Results Files"));
    cb_create_native_saxs->setChecked(batch->create_native_saxs);
    cb_create_native_saxs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_create_native_saxs->setPalette( PALET_NORMAL );
-   AUTFBACK( cb_create_native_saxs );
+   cb_create_native_saxs->setPalette( qp_cb ); AUTFBACK( cb_create_native_saxs );
    connect(cb_create_native_saxs, SIGNAL(clicked()), this, SLOT(set_create_native_saxs()));
 
    cb_compute_iq_avg = new QCheckBox(this);
    cb_compute_iq_avg->setText(us_tr(" Compute I(q) average curves"));
    cb_compute_iq_avg->setChecked(batch->compute_iq_avg);
    cb_compute_iq_avg->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_compute_iq_avg->setPalette( PALET_NORMAL );
-   AUTFBACK( cb_compute_iq_avg );
+   cb_compute_iq_avg->setPalette( qp_cb ); AUTFBACK( cb_compute_iq_avg );
    connect(cb_compute_iq_avg, SIGNAL(clicked()), this, SLOT(set_compute_iq_avg()));
 
    cb_compute_iq_only_avg = new QCheckBox(this);
    cb_compute_iq_only_avg->setText(us_tr(" Only save average"));
    cb_compute_iq_only_avg->setChecked( batch->compute_iq_only_avg );
    cb_compute_iq_only_avg->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_compute_iq_only_avg->setPalette( PALET_NORMAL );
-   AUTFBACK( cb_compute_iq_only_avg );
+   cb_compute_iq_only_avg->setPalette( qp_cb ); AUTFBACK( cb_compute_iq_only_avg );
    connect(cb_compute_iq_only_avg, SIGNAL(clicked()), this, SLOT(set_compute_iq_only_avg()));
 
    cb_compute_iq_std_dev = new QCheckBox(this);
    cb_compute_iq_std_dev->setText(us_tr(" Compute I(q) std deviation curves"));
    cb_compute_iq_std_dev->setChecked(batch->compute_iq_std_dev);
    cb_compute_iq_std_dev->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_compute_iq_std_dev->setPalette( PALET_NORMAL );
-   AUTFBACK( cb_compute_iq_std_dev );
+   cb_compute_iq_std_dev->setPalette( qp_cb ); AUTFBACK( cb_compute_iq_std_dev );
    connect(cb_compute_iq_std_dev, SIGNAL(clicked()), this, SLOT(set_compute_iq_std_dev()));
 
    cb_compute_prr_avg = new QCheckBox(this);
    cb_compute_prr_avg->setText(us_tr(" Compute P(r) average curves"));
    cb_compute_prr_avg->setChecked(batch->compute_prr_avg);
    cb_compute_prr_avg->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_compute_prr_avg->setPalette( PALET_NORMAL );
-   AUTFBACK( cb_compute_prr_avg );
+   cb_compute_prr_avg->setPalette( qp_cb ); AUTFBACK( cb_compute_prr_avg );
    connect(cb_compute_prr_avg, SIGNAL(clicked()), this, SLOT(set_compute_prr_avg()));
 
    cb_compute_prr_std_dev = new QCheckBox(this);
    cb_compute_prr_std_dev->setText(us_tr(" Compute P(r) std deviation curves"));
    cb_compute_prr_std_dev->setChecked(batch->compute_prr_std_dev);
    cb_compute_prr_std_dev->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_compute_prr_std_dev->setPalette( PALET_NORMAL );
-   AUTFBACK( cb_compute_prr_std_dev );
+   cb_compute_prr_std_dev->setPalette( qp_cb ); AUTFBACK( cb_compute_prr_std_dev );
    connect(cb_compute_prr_std_dev, SIGNAL(clicked()), this, SLOT(set_compute_prr_std_dev()));
 
    cb_hydro = new QCheckBox(this);
    cb_hydro->setText(us_tr(" Calculate RB Hydrodynamics SMI"));
    cb_hydro->setChecked(batch->hydro);
    cb_hydro->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_hydro->setPalette( PALET_NORMAL );
-   AUTFBACK( cb_hydro );
+   cb_hydro->setPalette( qp_cb ); AUTFBACK( cb_hydro );
    connect(cb_hydro, SIGNAL(clicked()), this, SLOT(set_hydro()));
 
    cb_zeno = new QCheckBox(this);
    cb_zeno->setText( " Calculate RB Hydrodynamics Zeno" );
    cb_zeno->setChecked(batch->zeno);
    cb_zeno->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_zeno->setPalette( PALET_NORMAL );
-   AUTFBACK( cb_zeno );
+   cb_zeno->setPalette( qp_cb ); AUTFBACK( cb_zeno );
    connect(cb_zeno, SIGNAL(clicked()), this, SLOT(set_zeno()));
 
    cb_avg_hydro = new QCheckBox(this);
    cb_avg_hydro->setText(us_tr(" Combined Hydro Results File:"));
    cb_avg_hydro->setChecked(batch->avg_hydro);
    cb_avg_hydro->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_avg_hydro->setPalette( PALET_NORMAL );
-   AUTFBACK( cb_avg_hydro );
+   cb_avg_hydro->setPalette( qp_cb ); AUTFBACK( cb_avg_hydro );
    connect(cb_avg_hydro, SIGNAL(clicked()), this, SLOT(set_avg_hydro()));
 
    le_avg_hydro_name = new QLineEdit( this );    le_avg_hydro_name->setObjectName( "avg_hydro_name Line Edit" );
    le_avg_hydro_name->setText(batch->avg_hydro_name);
    le_avg_hydro_name->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    le_avg_hydro_name->setMinimumWidth(100);
-   le_avg_hydro_name->setPalette( PALET_EDIT );
-   AUTFBACK( le_avg_hydro_name );
+   le_avg_hydro_name->setPalette( qp_cb ); AUTFBACK( le_avg_hydro_name );
    le_avg_hydro_name->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    connect(le_avg_hydro_name, SIGNAL(textChanged(const QString &)), SLOT(update_avg_hydro_name(const QString &)));
 
@@ -668,8 +642,7 @@ void US_Hydrodyn_Batch::setupGUI()
    cb_saveParams->setText(us_tr(" Save parameters to file "));
    cb_saveParams->setChecked(((US_Hydrodyn *)us_hydrodyn)->saveParams);
    cb_saveParams->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cb_saveParams->setPalette( PALET_NORMAL );
-   AUTFBACK( cb_saveParams );
+   cb_saveParams->setPalette( qp_cb ); AUTFBACK( cb_saveParams );
    connect(cb_saveParams, SIGNAL(clicked()), this, SLOT(set_saveParams()));
 
    pb_start = new QPushButton(us_tr("Start"), this);

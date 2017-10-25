@@ -353,6 +353,8 @@ void US_Hydrodyn_Best::setupGUI()
    QFrame *frame;
    frame = new QFrame(this);
    frame->setMinimumHeight(minHeight3);
+   frame->setPalette( PALET_NORMAL );
+   AUTFBACK( frame );
 
    editor_widgets.push_back( frame );
 

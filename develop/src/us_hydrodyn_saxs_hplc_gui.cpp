@@ -655,6 +655,9 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    QFrame *frame;
    frame = new QFrame(this);
    frame->setMinimumHeight(minHeight3);
+   frame->setPalette( PALET_NORMAL );
+   AUTFBACK( frame );
+   editor_widgets.push_back( frame );
 
    m = new QMenuBar( frame );    m->setObjectName( "menu" );
    m->setMinimumHeight(minHeight1 - 5);

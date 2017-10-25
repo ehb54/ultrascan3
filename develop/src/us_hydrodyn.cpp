@@ -570,6 +570,8 @@ void US_Hydrodyn::setupGUI()
    QFrame *frame;
    frame = new QFrame(this);
    frame->setMinimumHeight(minHeight1);
+   frame->setPalette( PALET_NORMAL );
+   AUTFBACK( frame );
 
 # if !defined(Q_WS_MAC)
    menu = new QMenuBar(frame);
