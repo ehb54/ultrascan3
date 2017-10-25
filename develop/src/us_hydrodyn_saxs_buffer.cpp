@@ -1386,12 +1386,14 @@ void US_Hydrodyn_Saxs_Buffer::closeEvent(QCloseEvent *e)
          // set the ones listed to selected
          if ( !save_files( created_not_saved_list ) )
          {
+            e->ignore();
             return;
          }
          break;
       case 1 : // just ignore them
          break;
       case 2 : // quit
+         e->ignore();
          return;
          break;
       }

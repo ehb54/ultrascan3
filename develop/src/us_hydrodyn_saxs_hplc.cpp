@@ -612,6 +612,7 @@ void US_Hydrodyn_Saxs_Hplc::closeEvent(QCloseEvent *e)
    {
    case QMessageBox::Cancel:
       {
+         e->ignore();
          return;
       }
    }
@@ -657,12 +658,14 @@ void US_Hydrodyn_Saxs_Hplc::closeEvent(QCloseEvent *e)
          // set the ones listed to selected
          if ( !save_files( created_not_saved_list ) )
          {
+            e->ignore();
             return;
          }
          break;
       case 1 : // just ignore them
          break;
       case 2 : // quit
+         e->ignore();
          return;
          break;
       }
@@ -712,16 +715,17 @@ void US_Hydrodyn_Saxs_Hplc::closeEvent(QCloseEvent *e)
             // set the ones listed to selected
             if ( !model_save( model_not_saved_list ) )
             {
+               e->ignore();
                return;
             }
          case 1 : // just remove them
             break;
          case 2 : // quit
             disable_updates = false;
+            e->ignore();
             return;
             break;
          }
-
       }
    }
 

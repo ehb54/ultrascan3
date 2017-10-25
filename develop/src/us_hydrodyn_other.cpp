@@ -5583,6 +5583,7 @@ void US_Hydrodyn::closeEvent(QCloseEvent *e)
    {
    case QMessageBox::Cancel:
       {
+         e->ignore();
          return;
       }
    }
@@ -5600,6 +5601,7 @@ void US_Hydrodyn::closeEvent(QCloseEvent *e)
       }
    }
    e->accept();
+   qApp->quit();
 }
 
 
