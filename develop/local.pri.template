@@ -22,14 +22,14 @@ QWTPATH       =
 MINGWPATH     =
 
 # ---- these below might need to be modified in unusual circumstances ----
-QWT3DPATH     = $$US3PATH/qwtplot3d-qt4
-# define this if you are not using qwtplot3d-qt4 as the qwtplot3d lib for linux & osx
+QWT3DPATH     = $$US3PATH/qwtplot3d
+# define this if you are not using qwtplot3d as the qwtplot3d lib for linux & osx
 QWT3DLIBNAME  = 
 
 # ---- probably should not be changed
 
 count( QWT3DLIBNAME, 0 ) {
-   QWT3DLIBNAME = qwtplot3d-qt4
+   QWT3DLIBNAME = qwtplot3d
 }
 
 CONFIG     += qt thread warn
@@ -39,7 +39,7 @@ contains( DEBUGORRELEASE, debug ) {
    CONFIG    += release
 }
 
-INCLUDEPATH  += $$US3SOMOPATH/develop/src
+INCLUDEPATH  += $$US3SOMOPATH/develop/include
 INCLUDEPATH  += $$QTPATH/include
 # some qwt5 have libraries in src/ some in include/; having extra (possibly non-existant) include paths is not a problem
 INCLUDEPATH  += $$QWTPATH/include $$QWTPATH/src
@@ -104,3 +104,7 @@ macx {
 
 QT += network
 QT += svg
+QT += widgets
+QT += printsupport
+QT += multimedia
+LIBS *= -lz
