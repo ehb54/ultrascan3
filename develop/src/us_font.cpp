@@ -203,7 +203,7 @@ US_Font::~US_Font()
 }
 void US_Font::setup_GUI()
 {
-   QBoxLayout * topbox = new QVBoxLayout; topbox->setContentsMargins( 0, 0, 0, 0 ); topbox->setSpacing( 0 ); topbox->setSpacing( 2 );
+   QBoxLayout * topbox = new QVBoxLayout( this ); topbox->setContentsMargins( 0, 0, 0, 0 ); topbox->setSpacing( 0 ); topbox->setSpacing( 2 );
    topbox->addWidget(lbl_info);
    topbox->addWidget(pb_font);
    QGridLayout * lineGrid = new QGridLayout; lineGrid->setContentsMargins( 0, 0, 0, 0 ); lineGrid->setSpacing( 0 ); topbox->addLayout( lineGrid );;

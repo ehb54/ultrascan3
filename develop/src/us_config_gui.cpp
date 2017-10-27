@@ -296,9 +296,9 @@ void US_Config_GUI::setup_GUI()
 
    w = fm->width( USglobal->config_list.html_dir );
    w = ( cwidth > w ) ? cwidth : w;
+   w += 75;
 
-
-   QBoxLayout * topbox = new QVBoxLayout; topbox->setContentsMargins( 0, 0, 0, 0 ); topbox->setSpacing( 0 ); topbox->setSpacing( 2 );
+   QBoxLayout * topbox = new QVBoxLayout( this ); topbox->setContentsMargins( 0, 0, 0, 0 ); topbox->setSpacing( 0 ); topbox->setSpacing( 2 );
    
    topbox->addWidget(lbl_directions);
    topbox->addWidget(lbl_paths);
@@ -368,6 +368,27 @@ void US_Config_GUI::setup_GUI()
    topbox->activate();
 
    US_Hydrodyn::fixWinButtons( this );
+#if QT_VERSION >= 0x040000
+   topbox->setSizeConstraint(QLayout::SetFixedSize);
+   setWindowTitle("UltraScan SOMO Configuration");
+   lbl_database->hide();
+   pb_database->hide();
+   lbl_beckman_bug->hide();
+   bt_on->hide();
+   bt_off->hide();
+   lbl_temperature_tol->hide();
+   le_temperature_tol->hide();
+   le_result_dir->hide();
+   pb_result_dir->hide();
+   le_data_dir->hide();
+   pb_data_dir->hide();
+   le_html_dir->hide();
+   pb_html_dir->hide();
+   le_archive_dir->hide();
+   pb_archive_dir->hide();
+   le_tmp_dir->hide();
+   pb_tmp_dir->hide();
+#endif
 }
 
 void US_Config_GUI::closeEvent(QCloseEvent *e)
