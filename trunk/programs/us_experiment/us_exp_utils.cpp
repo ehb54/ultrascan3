@@ -580,6 +580,7 @@ void US_ExperGuiSpeeds::savePanel()
    rpSpeed->radial_calib = ck_radcal->isChecked();
 DbgLv(1) << "EGSp:svP: nspeed" << nspeed;
 
+   rpSpeed->ssteps.resize( nspeed );  //ALEXEY BUG FIX
    for ( int ii = 0; ii < nspeed; ii++ )
    {
       rpSpeed->ssteps[ ii ].speed    = ssvals[ ii ][ "speed"    ];
