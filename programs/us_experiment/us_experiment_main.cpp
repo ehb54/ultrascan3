@@ -745,6 +745,8 @@ US_ExperGuiSpeeds::US_ExperGuiSpeeds( QWidget* topw )
 
    // ComboBox, counters, time-edits, spinbox
    sb_count            = us_spinbox();
+   sb_count            ->setMinimum(1); //ALEXEY BUG FIX
+
    cb_prof             = new QComboBox( this );
    ct_speed            = us_counter( 2, 1000,  80000, 100 );
    ct_accel            = us_counter( 2,   50,   1000,  50 );
@@ -2747,6 +2749,9 @@ DbgLv(1) << "EGUp:bj: ck: run proj cent solu epro"
    jo_rotor.insert( "calibration", v_calib );
    jo_exper.insert( "rotor", QJsonValue( jo_rotor ) );
 
+
+   DbgLv(1) << "JSON_1: ";
+	   
    int jj            = 0;
    for ( int ii = 0; ii < nspeed; ii++, jj+= 6 )
    {
@@ -2762,6 +2767,8 @@ DbgLv(1) << "EGUp:bj: ck: run proj cent solu epro"
       ja_speed.append( jo_sstep );
    }
    jo_exper.insert( "speeds", ja_speed );
+
+    DbgLv(1) << "JSON_2: ";
 
    for ( int ii = 0; ii < scentp.count(); ii++ )
    {
@@ -2787,6 +2794,8 @@ DbgLv(1) << "EGUp:bj: ck: run proj cent solu epro"
       ja_centp.append( jo_centp );
    }
    jo_exper.insert( "centerpieces", ja_centp );
+   
+   DbgLv(1) << "JSON_3: ";
 
    for ( int ii = 0; ii < ssolut.count(); ii++ )
    {
@@ -2803,8 +2812,9 @@ DbgLv(1) << "EGUp:bj: ck: run proj cent solu epro"
       ja_solut.append( jo_solut );
    }
    jo_exper.insert( "solutions", ja_solut );
-
-
+   
+   DbgLv(1) << "JSON_4: ";
+   
    // Format the byte array and string form of Json
    QJsonDocument jd_exper( jo_exper );
    QByteArray    jb_exper;
