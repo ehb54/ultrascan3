@@ -407,6 +407,7 @@ US_DDistr_Combine::US_DDistr_Combine() : US_Widgets()
    data_plot1->setMinimumSize( 560, 400 );
    data_plot1->setAxisScale( QwtPlot::xBottom, 1.0,  10.0 );
    data_plot1->setAxisScale( QwtPlot::yLeft,   0.0, 100.0 );
+	data_plot1->setCanvasBackground( QBrush(Qt::white) );
    data_grid = us_grid( data_plot1 );
    data_grid->enableXMin( true );
    data_grid->enableYMin( true );
@@ -795,6 +796,7 @@ DbgLv(1) << "main size" << size();
 // Reset plot:  Clear plots and lists of plotted data
 void US_DDistr_Combine::reset_plot( void )
 {
+	data_plot1->setCanvasBackground( QBrush(Qt::white) );
    dataPlotClear( data_plot1 );
    data_plot1->replot();
    pdistrs.clear();
@@ -820,6 +822,7 @@ void US_DDistr_Combine::plot_data( void )
 {
 DbgLv(1) << "pDa:  xtype" << xtype;
    dataPlotClear( data_plot1 );
+	data_plot1->setCanvasBackground( QBrush(Qt::white) );
    QString titleY = tr( "Signal Concentration" );
 DbgLv(1) << "pDa:  titleY" << titleY;
    QString titleP;
@@ -900,7 +903,7 @@ DbgLv(1) << "pDi:  ndispt" << ndispt << "ID" << distrID.left(20);
 
    if ( ct_sigma->value() > 0.0 )
    {
-      data_curv->setPen  ( QPen( QBrush( ddesc.color ), 2.0, Qt::SolidLine ) );
+      data_curv->setPen  ( QPen( QBrush( ddesc.color ), 3.0, Qt::SolidLine ) );
       data_curv->setStyle( QwtPlotCurve::Lines );
 
       ndispt    = envel_data( ddesc.xvals, ddesc.yvals, xenv, yenv );
@@ -946,6 +949,7 @@ DbgLv(1) << "pDi:  ndispt" << ndispt << "ID" << distrID.left(20);
    data_plot1->setAxisAutoScale( QwtPlot::yLeft );
    data_plot1->enableAxis      ( QwtPlot::xBottom, true );
    data_plot1->enableAxis      ( QwtPlot::yLeft,   true );
+	data_plot1->setCanvasBackground( QBrush(Qt::white) );
    data_plot1->replot();
 
 }
