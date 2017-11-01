@@ -32,8 +32,8 @@ DbgLv(1) << "AMATH: wrts: Unable to open" << tmst_fpath;
       return 0;
    }
 
-//DbgLv(1)<< "AMATH:wrts: number of speeds=" << nspeed
-// << "Time state file path=" << tmst_fpath;
+DbgLv(1)<< "AMATH:wrts: number of speeds=" << nspeed
+ << "Time state file path=" << tmst_fpath;
    timestate.set_key( "Time",        "I4" );
    timestate.set_key( "RawSpeed",    "F4" );
    timestate.set_key( "SetSpeed",    "I4" );
@@ -48,20 +48,21 @@ DbgLv(1) << "AMATH: wrts: Unable to open" << tmst_fpath;
    double omega2t       = 0.0;
    double prvs_speed    = 0.0 ;
    int    scan_nbr      = 0;
+   int    step_nbr      = 0;
    double temperature   = sim_data.scanData[ 0 ].temperature;
    int nscans           = sim_data.scanData.size() ;// Used for number of scans
    int t_acc;    // Used for time when accelerated up to the specified rotor speed
    double rate, speed;
    US_SimulationParameters::SpeedProfile* sp;
    US_SimulationParameters::SpeedProfile* sp_prev;
-//DbgLv(1) << " writetimestate : no of scans" << nscans;
+DbgLv(1) << " writetimestate : no of scans" << nscans;
    QList< int > scantimes;
 
    for ( int ii = 0; ii < nscans; ii++ )
    {  // Accumulate the times at scans
       scantimes << sim_data.scanData[ ii ].seconds;
-//DbgLv(1) << "scantimes" << scantimes[ii] << sim_data.scanData[ii].omega2t
-// << ii << sim_data.scanData[ii].rpm;
+DbgLv(1) << "scantimes" << scantimes[ii] << sim_data.scanData[ii].omega2t
+ << ii << sim_data.scanData[ii].rpm;
    }
 //DbgLv(1) << " writetimestate : no of scans" << nscans ;
 
@@ -152,14 +153,17 @@ DbgLv(1) << "AMATH: wrts: Unable to open" << tmst_fpath;
 
          itime       = ii;
          int scanx   = scantimes.indexOf( itime );
-         scan_nbr    = ( scanx < 0 ) ? 0 : (scanx + 1);
+         scan_nbr    = ( scanx < 0 ) ? 0 : ( scanx + 1 );
+         step_nbr    = step + 1;
+if(scan_nbr>0)
+ DbgLv(1) << "wrTS: ii scanx scan_nbr time" << ii << scanx << scan_nbr;
 
          timestate.set_value( "Time",        itime       );
          timestate.set_value( "RawSpeed",    rpm         );
          timestate.set_value( "SetSpeed",    set_speed   );
          timestate.set_value( "Omega2T",     omega2t     );
          timestate.set_value( "Temperature", temperature );
-         timestate.set_value( "Step",        step        );
+         timestate.set_value( "Step",        step_nbr    );
          timestate.set_value( "Scan",        scan_nbr    );
 #ifndef NO_DB
 //qDebug() << "Timestate:" << "time=" << itime

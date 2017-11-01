@@ -7,6 +7,7 @@
 #include "us_model.h"
 #include "us_simparms.h"
 #include "us_help.h"
+#include "us_rotor_gui.h"
 #include "us_astfem_rsa.h"
 #include "us_lamm_astfvm.h"
 #include "us_buffer.h"
@@ -32,7 +33,7 @@ class US_Astfem_Sim : public US_Widgets
       US_Astfem_Sim( QWidget* = 0, Qt::WindowFlags = 0 );
       
       // Write a timestate file based on auc data
-      int  writetimestate( const QString&,  US_DataIO::RawData&);
+      int  writetimestate( const QString&,  US_DataIO::RawData& );
 
     signals:
        void new_time         ( double );
@@ -43,6 +44,7 @@ class US_Astfem_Sim : public US_Widgets
       bool           save_movie;
       bool           time_correctionFlag;
       double         total_conc;
+      double         meniscus_ar;
       int            curve_count;
       int            image_count;
       int            dbg_level;
@@ -56,10 +58,13 @@ class US_Astfem_Sim : public US_Widgets
       QCheckBox*     ck_savemovie;
       QCheckBox*     ck_timeCorr;
                     
+//      QListWidget*       pb_rotors;
+
       QPushButton*   pb_saveExp;
       QPushButton*   pb_saveSim;
       QPushButton*   pb_buffer;
       QPushButton*   pb_simParms;
+      QPushButton*   pb_rotor;
       QPushButton*   pb_changeModel;
       QPushButton*   pb_start;
       QPushButton*   pb_stop;
@@ -91,17 +96,21 @@ class US_Astfem_Sim : public US_Widgets
       US_Model                system;
       US_Buffer               buffer;
       US_SimulationParameters simparams;
+      US_AstfemMath::AstFemParameters af_params;
       US_SimulationParameters working_simparams;
-      US_DataIO::RawData      sim_data;
-
+      QVector<US_DataIO::RawData>      sim_data;
+      US_DataIO::RawData      sim_data_all;
       void init_simparams  ( void );
-      void save_xla        ( const QString& );  
+      void adjust_limits   ( double ) ;
+      double stretch        ( double*, double ) ;
+      void save_xla        ( const QString& , US_DataIO::RawData , int );  
       void save_ultrascan  ( const QString& );  
       void finish          ( void );
       void ri_noise        ( void );
       void random_noise    ( void );
       void ti_noise        ( void );
-      void plot            ( void );
+      //void plot            ( void );
+      void plot            ( int  );
 // debug
       void dump_system     ( void );
       void dump_simparms   ( void );
@@ -121,6 +130,8 @@ class US_Astfem_Sim : public US_Widgets
       void change_status   ( void );
       void set_parameters  ( void );
       void sim_parameters  ( void );
+      void selectrotor    ( void );
+      void assignRotor     ( US_Rotor::Rotor&, US_Rotor::RotorCalibration& );
       void start_simulation( void );
       void stop_simulation ( void );
       void save_scans      ( void );
@@ -134,7 +145,7 @@ class US_Astfem_Sim : public US_Widgets
       void update_save_movie( bool );
 
       void update_time     ( double time )        
-         { lcd_time ->display( (int)time  ); };
+         { lcd_time ->display( (double)time  ); };
       
       void update_speed    ( int speed )
          { lcd_speed->display( (int) speed ); };

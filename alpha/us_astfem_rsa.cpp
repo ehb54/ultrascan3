@@ -99,17 +99,40 @@ static int totT7=0;
 static int totT8=0;
 #endif
 
+   // Find the speed step index for the current dataset
+   int cdsx              = 0;                       // Current dataset's step index
+   int lsx               = exp_data.scanCount() - 1;          // Last scan index
+   double fstime         = exp_data.scanData[   0 ].seconds;  // First scan time
+   double lstime         = exp_data.scanData[ lsx ].seconds;  // Last scan time
+DbgLv(0)<< "RSA:calc:  lsx fstime lstime" << lsx << fstime << lstime;
+
+   for ( int step = 0; step < simparams.speed_step.count(); step++ )
+   {
+      cdsx                  = step;
+      if ( fstime >=  simparams.speed_step[ step ].time_first  &&
+           lstime <=  simparams.speed_step[ step ].time_last )
+      {  // Found step that this dataset fits inside:  break out
+DbgLv(0)<< "RSA:calc:   cdsx" << cdsx << "time_first time_last"
+ << simparams.speed_step[ step ].time_first << simparams.speed_step[ step ].time_last;
+         break;
+      }
+   }
+
    // Initialization of different parameters for simulation begins here-
    af_params.simpoints   = simparams.simpoints;     // Number of simulation i.e. radial grid points
    af_params.pathlength  = simparams.cp_pathlen;    // Pathlength
    af_params.dt          = 1.0;                     // Time gap between two time steps
    af_params.time_steps  = simparams.simpoints;     // Number of time steps
-   af_params.first_speed = simparams.speed_step[ 0 ].rotorspeed ; // Rotor speed for first speed
-   af_params.omega_s     = sq( (double)af_params.first_speed * M_PI / 30.0 ); // omega_square
+   af_params.cdset_speed = simparams.speed_step[ cdsx ].rotorspeed; // Rotor speed of current dataset
+DbgLv(0)<< "RSA:calc: cdset_speed" << af_params.cdset_speed;
+//   af_params.omega_s     = sq( (double)af_params.cdset_speed * M_PI / 30.0 ); // omega_square
+   double s0speed        = simparams.speed_step[ 0 ].rotorspeed;
+   af_params.omega_s     = sq( s0speed * M_PI / 30.0 ); // omega_square
    af_params.start_om2t  = af_params.omega_s;       // Starting omega square t
    af_params.start_time  = 0.0;                     // Starting time
    af_params.current_meniscus = simparams.meniscus; // Meniscus from simparams structure
-   af_params.current_bottom   = simparams.bottom;   //  Bottom from simparams structure
+   af_params.current_bottom   = simparams.bottom;   // Bottom from simparams structure
+DbgLv(0)<< "RSA:calc: meniscus bottom" << simparams.meniscus << simparams.bottom;
 
    // Loads the experimental data exp_data of 'RawData'type
    // to af_data of 'MfemData' type and 'af_data' is used for
@@ -258,23 +281,113 @@ DbgLv(1) << "SS1: ss size" << simparams.speed_step.size()
          accel_times << simparams.sim_speed_prof[ istep ].time_e_accel;
          accel_w2ts  << simparams.sim_speed_prof[ istep ].w2t_e_accel;
 
+//*DEBUG*
 if(dbg_level>0) {
- DbgLv(1) << "rsa1 readings:from timestate file (st tea te wea ns)"
-  << istep << accel_times[istep] << time_end[istep] << accel_w2ts [istep]
-  << simparams.sim_speed_prof.count();
- for ( int i = 0; i< simparams.sim_speed_prof[ istep ].duration ; i++ ) {
-  if(i<4 || (i+4)>simparams.sim_speed_prof[istep].duration)
-   DbgLv(1) << "rsa1: rpm_from_timestate" << simparams.sim_speed_prof[ istep ].rpm_timestate [i]
-    << "w2t_from_timestate" << simparams.sim_speed_prof[ istep ].w2t_timestate [i]
-    << "duration" << simparams.sim_speed_prof[ istep ].duration; }
+ DbgLv(1) << "rsa1 readings:from timestate file: istep" << istep
+  << "duration" << simparams.sim_speed_prof[istep].duration
+  << "time_ea" << accel_times[istep] << "time_e" << time_end[istep]
+  << "w2t_ea" << accel_w2ts[istep] << "w2t_e" << w2t_end[istep];
+ for ( int jt=0; jt<simparams.sim_speed_prof[istep].duration; jt++ ) {
+  if(jt<4 || (jt+4)>simparams.sim_speed_prof[istep].duration)
+   DbgLv(1) << "rsa1: from_timestate:  rpm" << simparams.sim_speed_prof[istep].rpm_timestate[jt]
+    << "time" << simparams.sim_speed_prof[istep].time_b_accel+jt
+    << "w2t" << simparams.sim_speed_prof[istep].w2t_timestate[jt];
 }
+}
+//*DEBUG*
+      }
+
+      int nstep    = simparams.speed_step.size();     // Number of speed steps
+      int nspstep  = simparams.sim_speed_prof.size(); // Number of speed profiles
+
+      if ( nstep > 0  &&  nstep < nspstep )
+      {  // There are missing speed steps
+         US_SimulationParameters::SpeedProfile sp0 = simparams.speed_step[ 0 ];
+         QVector< US_SimulationParameters::SpeedProfile > ss_old = simparams.speed_step;
+         QList< int > speeds;
+DbgLv(1) << "SSS:  nstep nspstep" << nstep << nspstep << "cdsx" << cdsx;
+
+         for ( int ss = 0; ss < nstep; ss++ )
+         {
+            speeds << ss_old[ ss ].set_speed;
+         }
+
+         simparams.speed_step.resize( nspstep );
+
+         int kscan    = sp0.scans;
+         // Create the new full speed step vector by copy or create-from-sim_speed_prof
+         for ( int ss = 0; ss < nspstep; ss++ )
+         {
+            US_SimulationParameters::SimSpeedProf* ipp = &simparams.sim_speed_prof[ ss ];
+            int ispeed        = ipp->rotorspeed;
+            int ssox          = speeds.indexOf( ispeed );
+DbgLv(1) << "SSS:   ss" << ss << "ispeed" << ispeed << "ssox" << ssox;
+
+            if ( ssox >= 0 )
+            {  // If speed in old speed step vector, just copy it
+               simparams.speed_step[ ss ] = ss_old[ ssox ];
+               if ( ssox == cdsx )  // Adjust pointer to dataset speed
+                  cdsx           = ss;
+DbgLv(1) << "SSS:     cdsx" << cdsx;
+            }
+
+            else
+            {  // Speed not in old speed step:  build from sim_speed_prof
+               US_SimulationParameters::SpeedProfile* opp = &simparams.speed_step[ ss ];
+               // Get values from SimSpeedProf
+               double accel      = ipp->acceleration;
+               double w2t_eacc   = ipp->w2t_e_accel;
+               double w2t_estep  = ipp->w2t_e_step;
+               double avg_speed  = ipp->avg_speed;
+               int rspeed        = ipp->rotorspeed;
+               int duration      = ipp->duration;
+               int time_first    = ipp->time_f_scan;
+               int time_last     = ipp->time_l_scan;
+               int time_eacc     = ipp->time_e_accel;
+               int time_estep    = ipp->time_b_accel + duration;
+               // Compute values needed by SpeedProfile
+               int delay         = time_first - ipp->time_b_accel;
+               double dur_mins   = (double)duration / 60.0;
+               double dly_mins   = (double)delay / 60.0;
+               int dur_hrs       = (int)dur_mins / 60;
+               int dly_hrs       = (int)dly_mins / 60;
+               dur_mins          = dur_mins - (double)dur_hrs * 60.0;
+               dly_mins          = dly_mins - (double)dly_hrs * 60.0;
+               double delta_w    = w2t_estep - w2t_eacc;
+               double delta_t    = (double)( time_estep - time_eacc );
+               double w2t_first  = w2t_eacc + ( time_first - time_eacc )
+                                   * delta_w / delta_t;
+               double w2t_last   = w2t_eacc + ( time_last  - time_eacc )
+                                   * delta_w / delta_t;
+            
+               // Set the values of the SpeedProfile
+               opp->duration_minutes  = dur_mins;
+               opp->delay_minutes     = dly_mins;
+               opp->w2t_first         = w2t_first;
+               opp->w2t_last          = w2t_last;
+               opp->avg_speed         = avg_speed;
+               opp->speed_stddev      = 0.0;
+               opp->duration_hours    = dur_hrs;
+               opp->delay_hours       = dly_hrs;
+               opp->time_first        = time_first;
+               opp->time_last         = time_last;
+               opp->scans             = kscan;
+               opp->rotorspeed        = rspeed;
+               opp->acceleration      = accel;
+               opp->set_speed         = (int)qRound( (double)rspeed * 0.01 ) * 100;
+               opp->acceleration_flag = true;
+DbgLv(1) << "SSS:    tf tl wf wl" << time_first << time_last << w2t_first << w2t_last;
+            }
+         }
+
+         nstep        = nspstep;
       }
 
       // Non-reacting case for the components starts here
 
       if ( ! reacting[ cc ] ) // noninteracting
       {
-         initialize_conc( cc, CT0, true );// Initialize the concentration vector on initial grid
+         initialize_conc( cc, CT0, true ); // Initialize the concentration vector on initial grid
 
          // Resizes for the s and D values
          af_params.s   .resize( 1 );
@@ -292,7 +405,6 @@ totT1+=(clcSt1.msecsTo(QDateTime::currentDateTime()));
          // of speed steps
          int    lscan = 0;    // Used for last scan
          int    fscan = 0;    // Used for first scan
-         int    nstep = simparams.speed_step.size(); // Number of speed steps
          double time0 = 0.0;  // Last time of the previous speed step
          double time1 = 0.0;  // First time of the current speed step
          double time2 = 0.0;  // Last time of the current speed step
@@ -441,6 +553,8 @@ DbgLv(1) << "simulation_rsa:  dt" << af_params.dt << "rat omgf simp"
  << lg_bm_rat << s_omg_fac << simparams.simpoints
  << "b m omgs s" << af_params.current_bottom << af_params.current_meniscus
  << af_params.omega_s << sc->s; 
+            if ( af_params.dt < 0.0 )
+               break;
 
             if ( af_params.dt > duration)
             {
@@ -1026,8 +1140,6 @@ DbgLv(2) << "AFRSA:  ncomp st1 st2" << ncomp << stoich1 << stoich2;
       {
          as->stoichs[ 1 ] = stoich2 < 0 ? stoich2 : -stoich2;
          as->stoichs[ 0 ] = stoich1 > 0 ? stoich1 : -stoich1;
-         //as->rcomps[  0 ] = 0;
-         //as->rcomps[  1 ] = 1;
       }
 
       else if ( ncomp == 3 )
@@ -1036,9 +1148,6 @@ DbgLv(2) << "AFRSA:  ncomp st1 st2" << ncomp << stoich1 << stoich2;
          as->stoichs[ 0 ] = stoich1 > 0 ? stoich1 : -stoich1;
          as->stoichs[ 1 ] = stoich2 > 0 ? stoich2 : -stoich2;
          as->stoichs[ 2 ] = stoich3 < 0 ? stoich3 : -stoich3;
-         //as->rcomps[ 0 ] = 1;
-         //as->rcomps[ 1 ] = 1;
-         //as->rcomps[ 2 ] = 0;
       }
    }
 }
@@ -1048,19 +1157,20 @@ void US_Astfem_RSA::adjust_limits( int speed )
 {
    // First correct meniscus to theoretical position at rest:
    double stretch_value        = stretch( simparams.rotorcoeffs,
-                                          af_params.first_speed );
+                                          (int)af_params.cdset_speed );
+DbgLv(0)<< "RSA:adjlim stretch1" << stretch_value << "speed" << af_params.cdset_speed;
 
    // This is the meniscus at rest
    af_params.current_meniscus  = simparams.meniscus - stretch_value;
 
    // Calculate rotor stretch at current speed
    stretch_value               = stretch( simparams.rotorcoeffs, speed );
+DbgLv(0)<< "RSA:adjlim  stretch2" << stretch_value << "speed" << speed;
 
    // Add current stretch to meniscus at rest
    af_params.current_meniscus += stretch_value;
 
    // Add current stretch to bottom at rest
-   // af_params.current_bottom    = simparams.bottom + stretch_value;
    af_params.current_bottom    = simparams.bottom_position + stretch_value;
 }
 
@@ -1699,7 +1809,7 @@ ttT3+=(clcSt3.msecsTo(clcSt4));
          w2t_integral      = simscan.omega_s_t;         // Omega_2_t
       }
 
-      last_time            = simscan.time; // Time of the scan used to update
+      last_time            = simscan.time;  // Time of the scan used to update
                                             //  omega_2_t for next scan
 
       simscan.temperature  = af_data.scan[ 0 ].temperature;

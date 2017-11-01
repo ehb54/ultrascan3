@@ -409,7 +409,7 @@ class US_UTIL_EXTERN US_AstfemMath
          double start_om2t;       //!< start omega^2t of simulation
          double current_meniscus; //!< actual meniscus for current speed
          double current_bottom;   //!< actual bottom for current speed
-         int    first_speed;      //!< constant speed at first speed step
+         int    cdset_speed;      //!< constant speed for current dataset
          int    rg_index;         //!< reaction group index
 
          //! Local index of each GroupComponent involved in a reaction group
