@@ -893,7 +893,7 @@ void US_ConvertGui::importAUC( void )
    for ( int trx = 0; trx < files.size(); trx++ )
    {
       QString fname = files[ trx ];
-      QString fpath = importDir + "/" + fname;
+      QString fpath = importDir + fname;
       US_DataIO::RawData     rdata;
       US_Convert::TripleInfo tripinfo;
 
@@ -4060,9 +4060,10 @@ void US_ConvertGui::plot_all( void )
          {
             // For some reason vv[jj] is going off the scale
             // Don't know why, but filter out for now
-            qDebug() << "(rr, vv) = ( " << rr[jj] << ", " << vv[jj] << ")"
-                     << " (minR, maxR) = ( " << minR << ", " << maxR << ")" << endl
-                     << " (minV, maxV) = ( " << minV << ", " << maxV << ")" << endl;
+            if ( jj < 5  ||  ( jj + 5 ) > kcpoint )
+               qDebug() << "(rr, vv) = ( " << rr[jj] << ", " << vv[jj] << ")"
+                        << " (minR, maxR) = ( " << minR << ", " << maxR << ")" << endl
+                        << " (minV, maxV) = ( " << minV << ", " << maxV << ")" << endl;
             continue;
          }
 

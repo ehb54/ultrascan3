@@ -1223,6 +1223,7 @@ DbgLv(1) << "Sim parms:ssProf: nrec" << nrec;
    {  // Skipping until set speed is non-zero
       tsx1++;
       naintvs++;
+      tm_p             = tm_c;
       tsobj->read_record();                // Read the second record
       tm_c             = tmfm == "F4" ?                    // Current time
             (int)qRound( tsobj->time_dvalue( "Time" ) ) :
@@ -1238,7 +1239,7 @@ DbgLv(1) << "Sim parms:ssProf: nrec" << nrec;
       sum_accel        = accel_c;          // Initial acceleration sum
    }
    naintvs          = qMin( naintvs, 1 );  // Number accel zone intervals
-   ssp.time_b_accel = tm_c;                // Accel begin time
+   ssp.time_b_accel = tm_p;                // Accel begin time
 DbgLv(1) << "Sim parms:ssProf: initial tm_c" << tm_c << "naintvs" << naintvs
  << "tsx1" << tsx1 << "w2 rs ss" << w2_c << rs_c << ss_c;
 int tm_ci=tm_c;

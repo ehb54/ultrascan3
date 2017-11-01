@@ -67,6 +67,7 @@ HEADERS      = \
                us_select_edits.h        \
                us_select_item.h         \
                us_select_runs.h         \
+               us_sim_params_gui.h      \
                us_solution_gui.h        \
                us_spectrodata.h         \
                us_table.h               \
@@ -117,6 +118,7 @@ SOURCES      = \
                us_select_item.cpp         \
                us_select_edits.cpp        \
                us_select_runs.cpp         \
+               us_sim_params_gui.cpp      \
                us_solution_gui.cpp        \
                us_spectrodata.cpp         \
                us_table.cpp               \
