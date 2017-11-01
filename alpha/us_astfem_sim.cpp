@@ -8,13 +8,11 @@
 #include "us_gui_settings.h"
 #include "us_gui_util.h"
 #include "us_astfem_sim.h"
-#include "us_simulationparameters.h"
+#include "us_sim_params_gui.h"
 #include "us_math2.h"
 #include "us_astfem_math.h"
 #include "us_defines.h"
 #include "us_clipdata.h"
-//#include "us_experiment_gui.h"
-//#include "us_experiment.h"
 #include "us_rotor_gui.h"
 #include "us_db2.h"
 #include "us_gui_util.h"
@@ -95,14 +93,14 @@ US_Astfem_Sim::US_Astfem_Sim( QWidget* p, Qt::WindowFlags f )
                           SLOT(   update_save_movie( bool ) ) );
    buttonbox->addLayout( lo_svmovie );
 
-   
+
 //-------------------add checkbox for rotor----------------------------------
 //   QGridLayout* lo_srotor = us_checkbox( "Select Rotor", ck_selectrotor, false );
 //   connect( ck_savemovie, SIGNAL( toggled          ( bool ) ),
 //                          SLOT(   update_save_movie( bool ) ) );
 //   buttonbox->addLayout( lo_srotor );
 //-----------------------------------------------------------------
- 
+
    QGridLayout* timeCorr = us_checkbox( "Use Time Correction", ck_timeCorr,
          time_correctionFlag );
    connect( ck_timeCorr, SIGNAL( clicked() ), SLOT( update_time_corr() ) );
@@ -340,41 +338,42 @@ void US_Astfem_Sim::change_status()
 //}
 
 void US_Astfem_Sim::selectrotor(void)
-{ 
-     US_Rotor::Rotor rotor;
-     US_Rotor::RotorCalibration calibration;
+{
+   US_Rotor::Rotor rotor;
+   US_Rotor::RotorCalibration calibration;
 
-     US_Disk_DB_Controls*    disk_controls;
-     disk_controls     = new US_Disk_DB_Controls( US_Disk_DB_Controls::Default );
-     int dbdisk = ( disk_controls->db() ) ? US_Disk_DB_Controls::DB
+   US_Disk_DB_Controls*    disk_controls;
+   disk_controls     = new US_Disk_DB_Controls( US_Disk_DB_Controls::Default );
+   int dbdisk = ( disk_controls->db() ) ? US_Disk_DB_Controls::DB
                                         : US_Disk_DB_Controls::Disk;
-    
-     qDebug()<<"dbdisk_from_us_astfem_sim"<< dbdisk;
-     //--------------------------------------------------------------
-     US_RotorGui* rotorInfo = new US_RotorGui( true,    // signal_wanted
+DbgLv(1) << "dbdisk_from_us_astfem_sim" << dbdisk;
+
+   US_RotorGui* rotorInfo = new US_RotorGui( true,    // signal_wanted
                                              dbdisk,
                                              rotor, calibration );
-     //--------------------------------------------------------------
-   
-    connect( rotorInfo, SIGNAL( RotorCalibrationSelected( US_Rotor::Rotor&, US_Rotor::RotorCalibration& ) ),
+
+   connect( rotorInfo, SIGNAL( RotorCalibrationSelected( US_Rotor::Rotor&, US_Rotor::RotorCalibration& ) ),
                        SLOT  ( assignRotor             ( US_Rotor::Rotor&, US_Rotor::RotorCalibration& ) ) );
-    rotorInfo->exec();
-    qDebug()<<"simparams_rotorcoeffs"<< simparams.rotorcoeffs[0]<< simparams.rotorcoeffs[1];  
+   rotorInfo->exec();
+DbgLv(1) << "simparams_rotorcoeffs" << simparams.rotorcoeffs[0] << simparams.rotorcoeffs[1];
 }
+
 void US_Astfem_Sim::assignRotor( US_Rotor::Rotor& /*rotor*/, US_Rotor::RotorCalibration& calibration )
 {
-   qDebug()<<"assignrotor is called"<<calibration.coeff1 << calibration.coeff2 ;
+DbgLv(1) << "assignrotor is called" << calibration.coeff1 << calibration.coeff2;
    simparams.rotorcoeffs[0]   = calibration.coeff1;
    simparams.rotorcoeffs[1]   = calibration.coeff2;
-   qDebug()<<"simparams_assign"<< simparams.rotorcoeffs[0]  << simparams.rotorcoeffs[1] ;
+DbgLv(1) << "simparams_assign" << simparams.rotorcoeffs[0] << simparams.rotorcoeffs[1];
 }
 
 void US_Astfem_Sim::sim_parameters( void )
 {
-   working_simparams = simparams;
+   working_simparams          = simparams;
+   working_simparams.meniscus = meniscus_ar;
+   working_simparams.bottom   = simparams.bottom_position;
 
-   US_SimulationParametersGui* dialog =
-      new US_SimulationParametersGui( working_simparams );
+   US_SimParamsGui* dialog =
+      new US_SimParamsGui( working_simparams );
 
    connect( dialog, SIGNAL( complete() ), SLOT( set_parameters() ) );
 
@@ -415,18 +414,18 @@ void US_Astfem_Sim::adjust_limits( double speed )
        }
    }
 
-   af_params.cdset_speed = simparams.speed_step[ cdsx ].rotorspeed; // 
+   af_params.cdset_speed = simparams.speed_step[ cdsx ].rotorspeed; //
    // First correct meniscus to theoretical position at rest:
    double stretch_value        = stretch( simparams.rotorcoeffs,
                                           (int)af_params.cdset_speed );
-qDebug()<< "RSA:adjlim stretch1" << stretch_value << "speed" << af_params.cdset_speed;
+DbgLv(1)<< "RSA:adjlim stretch1" << stretch_value << "speed" << af_params.cdset_speed;
 
    // This is the meniscus at rest
    af_params.current_meniscus  = simparams.meniscus - stretch_value;
 
    // Calculate rotor stretch at current speed
    stretch_value               = stretch( simparams.rotorcoeffs, speed );
-qDebug()<< "RSA:adjlim  stretch2" << stretch_value << "speed" << speed;
+DbgLv(1)<< "RSA:adjlim  stretch2" << stretch_value << "speed" << speed;
 
    // Add current stretch to meniscus at rest
    af_params.current_meniscus += stretch_value;
@@ -434,12 +433,12 @@ qDebug()<< "RSA:adjlim  stretch2" << stretch_value << "speed" << speed;
    // Add current stretch to bottom at rest
    af_params.current_bottom    = simparams.bottom_position + stretch_value;
 
-qDebug()<< "astfem_adjust_limits_meniscus_bottom" << af_params.current_meniscus
+DbgLv(1)<< "astfem_adjust_limits_meniscus_bottom" << af_params.current_meniscus
         << af_params.current_bottom << stretch_value << "speed" << speed;
 #endif
 #if 1
    double stretch_value        = stretch( simparams.rotorcoeffs, speed );
-   af_params.current_meniscus  = simparams.meniscus + stretch_value;
+   af_params.current_meniscus  = simparams.meniscus        + stretch_value;
    af_params.current_bottom    = simparams.bottom_position + stretch_value;
 #endif
 }
@@ -459,7 +458,7 @@ double US_Astfem_Sim::stretch( double* rotorcoeffs, double speed )
 
 void US_Astfem_Sim::start_simulation( void )
 {
-   //qDebug()<<"start_simulation is called" ;
+//DbgLv(1) << "start_simulation is called";
    double current_time;  // Used for current time
    double delay;         // Acceleration time of the rotor from one speed to other
    double increment;     // Used to update omega_2_t in experimental grid
@@ -474,7 +473,7 @@ void US_Astfem_Sim::start_simulation( void )
    curve_count = 0;
    image_count = 0;
    double rpm  = simparams.speed_step[ 0 ].rotorspeed; // Rotor speed for first speed step
-   qDebug()<<"start_simulation is called"<< simparams.speed_step.size();
+DbgLv(1) << "start_simulation is called" << simparams.speed_step.size();
    dataPlotClear( scanPlot );
    scanPlot->setAxisAutoScale( QwtPlot::xBottom );
    //scanPlot->replot();
@@ -482,28 +481,28 @@ void US_Astfem_Sim::start_simulation( void )
    pb_stop   ->setEnabled( true  );
    pb_start  ->setEnabled( false );
    pb_saveSim->setEnabled( false );
-   qDebug()<<"start_simulation is called"<< simparams.speed_step.size();
+DbgLv(1) << "start_simulation is called" << simparams.speed_step.size();
    // The astfem/astfvm simulation routines expects a dataset structure that
    // is initialized with a time and radius grid, and all concentration points
    // need to be set to zero. Each speed is a separate mfem_data set.
-   sim_data.resize(simparams.speed_step.size());
+   sim_datas.resize( simparams.speed_step.size() );
    //------------------------------------------------
    //Experimental grid setting starts from here
    //------------------------------------------------
-qDebug()<<"start_simulation is called"<< simparams.speed_step.size();
-   for ( int i = 0; i < simparams.speed_step.size(); i++ )
-   { 
-      sim_data[i].xvalues .clear();
-      sim_data[i].scanData.clear();
-      sim_data[i].type[0]    = 'R';
-      sim_data[i].type[1]    = 'A';
-     
-      QString guid = US_Util::new_guid();
-      US_Util::uuid_parse( guid, (uchar*)sim_data[i].rawGUID );
+DbgLv(1) << "start_simulation is called" << simparams.speed_step.size();
+   for ( int jd = 0; jd < simparams.speed_step.size(); jd++ )
+   {
+      sim_datas[ jd ].xvalues .clear();
+      sim_datas[ jd ].scanData.clear();
+      sim_datas[ jd ].type[0]    = 'R';
+      sim_datas[ jd ].type[1]    = 'A';
 
-      sim_data[i].cell        = 1;
-      sim_data[i].channel     = 'S';
-      sim_data[i].description = "Simulation" ;
+      QString guid = US_Util::new_guid();
+      US_Util::uuid_parse( guid, (uchar*)sim_datas[ jd ].rawGUID );
+
+      sim_datas[ jd ].cell        = 1;
+      sim_datas[ jd ].channel     = 'S';
+      sim_datas[ jd ].description = "Simulation" ;
 
 //      simparams.meniscus      = meniscus_ar
 //                                + stretch( simparams.rotorcoeffs,
@@ -512,44 +511,45 @@ qDebug()<<"start_simulation is called"<< simparams.speed_step.size();
       simparams.bottom        = simparams.bottom_position;
 
 #if 1
-     //Update meniscus and bottom
-     adjust_limits( (double)simparams.speed_step[ i ].rotorspeed );
-qDebug()<<"start_simulation is called"<< af_params.current_meniscus <<  af_params.current_bottom << "step=" << i << simparams.speed_step[i].rotorspeed ;
+     // Update meniscus and bottom
+     adjust_limits( (double)simparams.speed_step[ jd ].rotorspeed );
+DbgLv(1) << "start_simulation is called" << af_params.current_meniscus << af_params.current_bottom
+ << "step=" << jd << simparams.speed_step[jd].rotorspeed;
 #endif
 
      // Number of radial grid points on the experimental grid
      int points = qRound( ( af_params.current_bottom - af_params.current_meniscus ) /
                           simparams.radial_resolution ) + 1;
-   
-     sim_data[i].xvalues.resize( points ); // Sets the size of radial grid points array
-     //sim_data[i].value.resize(simparams.speed_step[i].scans*points);
+
+     sim_datas[ jd ].xvalues.resize( points ); // Sets the size of radial grid points array
+     //sim_datas[ jd ].value.resize(simparams.speed_step[i].scans*points);
      for ( int ii = 0; ii < points; ii++ )
      {   // Calculate the radial grid points
-         sim_data[i].xvalues[ ii ] = af_params.current_meniscus
+         sim_datas[ jd ].xvalues[ ii ] = af_params.current_meniscus
                               + ii * simparams.radial_resolution;
-//qDebug()<< "radial_values" << sim_data[i].xvalues[ ii ] << i;
+//DbgLv(1) << "radial_values" << sim_datas[jd].xvalues[ii] << jd;
      }
-     qDebug()<< "astfem_radial_ends" << sim_data[i].xvalues[ points-1 ] << af_params.current_bottom << i ;
-     sim_data[i].xvalues[ points-1 ] = af_params.current_bottom ;
+DbgLv(1) << "astfem_radial_ends" << sim_datas[jd].xvalues[points-1] << af_params.current_bottom << jd;
+     sim_datas[ jd ].xvalues[ points - 1 ] = af_params.current_bottom ;
 
      // Set the total size of scans for simulation
-     sim_data[i].scanData.resize( simparams.speed_step[i].scans );
-   
+     sim_datas[ jd ].scanData.resize( simparams.speed_step[ jd ].scans );
+
      int terpsize    = ( points + 7 ) / 8;
 
      // For each scan set the informations for each scan on
      // the experimental grid.
-   for ( int ii = 0; ii < simparams.speed_step[i].scans; ii++ )
+   for ( int ii = 0; ii < simparams.speed_step[ jd ].scans; ii++ )
    {
-      //US_DataIO::Scan* scan = &sim_data[i].scanData[ ii ];
-      sim_data[i].scanData[ ii ].temperature = simparams.temperature;
-      sim_data[i].scanData[ ii ].rpm         = rpm;
-      sim_data[i].scanData[ ii ].omega2t     = 0.0;
-      sim_data[i].scanData[ ii ].wavelength  = system.wavelength;
-      sim_data[i].scanData[ ii ].plateau     = 0.0;
-      sim_data[i].scanData[ ii ].delta_r     = simparams.radial_resolution;
-      sim_data[i].scanData[ ii ].rvalues     .fill( 0.0, points   );
-      sim_data[i].scanData[ ii ].interpolated.fill( 0,   terpsize );
+      //US_DataIO::Scan* scan = &sim_datas[ jd ].scanData[ ii ];
+      sim_datas[ jd ].scanData[ ii ].temperature = simparams.temperature;
+      sim_datas[ jd ].scanData[ ii ].rpm         = rpm;
+      sim_datas[ jd ].scanData[ ii ].omega2t     = 0.0;
+      sim_datas[ jd ].scanData[ ii ].wavelength  = system.wavelength;
+      sim_datas[ jd ].scanData[ ii ].plateau     = 0.0;
+      sim_datas[ jd ].scanData[ ii ].delta_r     = simparams.radial_resolution;
+      sim_datas[ jd ].scanData[ ii ].rvalues     .fill( 0.0, points   );
+      sim_datas[ jd ].scanData[ ii ].interpolated.fill( 0,   terpsize );
    }
   }
 
@@ -587,12 +587,12 @@ qDebug()<<"start_simulation is called"<< af_params.current_meniscus <<  af_param
 
       delay          = (qCeil) (sp->delay_hours    * 3600. + sp->delay_minutes    * 60.);
 
-//qDebug()<<"Delay_astfem_sim is: "<<  delay  << "step= " << ii ;
+//DbgLv(1) << "Delay_astfem_sim is: "<< delay << "step= " << ii;
 
       acc_time = ( sp-> rotorspeed - rs_prev )/(double)(sp->acceleration) ;
       acc_steps  = (qCeil) ( acc_time ) ;
 
-//qDebug()<<"Delay_astfem_sim is: "<<  delay  << "step= " << ii << acc_time << acc_steps;
+//DbgLv(1) << "Delay_astfem_sim is: " << delay << "step= " << ii << acc_time << acc_steps;
 
       rpm_inc        = (double) (sp->rotorspeed - rs_prev) /(double) acc_steps;
       duration       = sp->duration_hours * 3600. + sp->duration_minutes * 60.;
@@ -629,7 +629,7 @@ qDebug()<<"start_simulation is called"<< af_params.current_meniscus <<  af_param
       // to each scan on the experimental grid.
       for ( int jj = 0; jj < sp->scans; jj++ )
       {
-         //US_DataIO::Scan* scan = &sim_data[ii].scanData[ scan_number ];
+         //US_DataIO::Scan* scan = &sim_datas[ii].scanData[ scan_number ];
 
          if ( jj == 0 )
          {
@@ -643,31 +643,31 @@ qDebug()<<"start_simulation is called"<< af_params.current_meniscus <<  af_param
          }
 
 //         w2t_sum      += w2t_inc;
-//          qDebug()<<"Scans w2t and increment on expwerimental grid "<<         w2t_sum <<         w2t_inc;
+//DbgLv(1) << "Scans w2t and increment on expwerimental grid " << w2t_sum << w2t_inc;
 
          //Assign time to each scan on the experimental grid
         // if ( jj == 0)
             //scan->seconds = ( int) current_time +1  ; // Round up to next integer in any case
           //   scan->seconds =  current_time;
          //else
-         sim_data[ii].scanData[jj].seconds = (qRound)( current_time );
-         sim_data[ii].scanData[jj].rpm     = sp->rotorspeed;
-         sim_data[ii].scanData[jj].omega2t = w2t_sum;
-qDebug() << "scans_w2t_and time on expwerimental grid "<< sim_data[ii].scanData[jj].seconds << sim_data[ii].scanData[jj].rpm 
-         << sim_data[ii].scanData[jj].omega2t;
+         sim_datas[ ii ].scanData[ jj ].seconds = (qRound)( current_time );
+         sim_datas[ ii ].scanData[ jj ].rpm     = sp->rotorspeed;
+         sim_datas[ ii ].scanData[ jj ].omega2t = w2t_sum;
+DbgLv(1) << "scans_w2t_and time on experimental grid " << sim_datas[ii].scanData[jj].seconds
+ << sim_datas[ii].scanData[jj].rpm << sim_datas[ii].scanData[jj].omega2t;
       }
 
       int j1           = 0; // Counter for first scan
       int j2           = sp->scans - 1; // Counter for last scan
-      sp->w2t_first    = sim_data[ii].scanData[ j1 ].omega2t;// omega_2_t for first scan on experimental grid
-      sp->w2t_last     = sim_data[ii].scanData[ j2 ].omega2t;// omega_2_t for last scan on experimental grid
-      sp->time_first   = sim_data[ii].scanData[ j1 ].seconds;// Time for first scan on experimental grid
-      sp->time_last    = sim_data[ii].scanData[ j2 ].seconds;// Time for last scan on experimental grid
-qDebug() << "first_last_data for the step" << sp->time_first << sp->time_last
+      sp->w2t_first    = sim_datas[ ii ].scanData[ j1 ].omega2t;// omega_2_t for first scan on experimental grid
+      sp->w2t_last     = sim_datas[ ii ].scanData[ j2 ].omega2t;// omega_2_t for last scan on experimental grid
+      sp->time_first   = sim_datas[ ii ].scanData[ j1 ].seconds;// Time for first scan on experimental grid
+      sp->time_last    = sim_datas[ ii ].scanData[ j2 ].seconds;// Time for last scan on experimental grid
+DbgLv(1) << "first_last_data for the step" << sp->time_first << sp->time_last
  << sp->w2t_first << sp->w2t_last << simparams.speed_step[ii].rotorspeed;
   }
-  //for ( int i =0; i< sim_data.scanData.size();i++ )
-//qDebug()<<"time="<<sim_data.scanData[i].seconds<<"omega2t="<< sim_data.scanData[i].omega2t;
+//for ( int i =0; i< sim_datas.scanData.size();i++ )
+// DbgLv(1)<<"time="<<sim_datas.scanData[i].seconds<<"omega2t="<< sim_datas.scanData[i].omega2t;
 
    lb_progress->setText( tr( "% Completed:" ) );
    progress->setRange( 1, system.components.size() );
@@ -711,33 +711,36 @@ qDebug() << "first_last_data for the step" << sp->time_first << sp->time_last
 
 //      astfem->set_debug_flag( dbg_level ) ;
         //for ( int i = 0 ; i < simparams.speed_step.size(); i++ )
-        //astfem->calculate( sim_data );
-qDebug()<<"after_calculate"<< sim_data.size();
-      for ( int i = 0; i< simparams.speed_step.size(); i++ )
+        //astfem->calculate( sim_datas );
+DbgLv(1) << "after_calculate" << sim_datas.size();
+      for ( int jd = 0; jd < simparams.speed_step.size(); jd++ )
       {
          double stretch_fac      = stretch( simparams.rotorcoeffs,
-                                            simparams.speed_step[ i ].rotorspeed );
+                                            simparams.speed_step[ jd ].rotorspeed );
          simparams.meniscus      = meniscus_ar + stretch_fac;
          simparams.bottom        = simparams.bottom_position + stretch_fac;
 
-         astfem->calculate( sim_data [i] );
+         astfem->calculate( sim_datas[ jd ] );
 
-         int   scan_count = sim_data[i].scanCount();
-         int   points     = sim_data[i].pointCount();
-qDebug()<<"meniscus_and_bottom_after_calculate"<< sim_data[i].xvalues[0] << sim_data[i].xvalues[ points-1 ] << simparams.speed_step[i].rotorspeed;
-            //qDebug()<<"after_calculate_scans_points"<< scan_count <<  points ;
+         int   scan_count = sim_datas[ jd ].scanCount();
+         int   points     = sim_datas[ jd ].pointCount();
+DbgLv(1) << "meniscus_and_bottom_after_calculate" << sim_datas[jd].xvalues[0]
+ << sim_datas[jd].xvalues[points-1] << simparams.speed_step[jd].rotorspeed;
+//DbgLv(1) << "after_calculate_scans_points"<< scan_count << points;
          for ( int j = 0; j < scan_count; j++ )
          {
             for ( int k = 0; k < points; k++ )
             {   //y[ j ][ k ] = exp_data[speed_step].value( j, k );
-qDebug()<<"after_calculate"<< sim_data[i].scanData[j].rvalues[k]<< sim_data[i].xvalues[k]<<"scan="<< j <<"point"<< k ;
+DbgLv(1) << "after_calculate" << sim_datas[jd].scanData[j].rvalues[k] << sim_datas[jd].xvalues[k]
+ << "scan=" << j << "point" << k;
             }
          }
       }
-/*        for ( int i = 0; i < simparams.speed_step.size(); i++ )
+#if 0
+        for ( int jd = 0; jd < simparams.speed_step.size(); jd++ )
         {
-            int   scan_count = sim_data[i].scanCount();
-            int   points     = sim_data[i].pointCount();
+            int   scan_count = sim_datas[jd].scanCount();
+            int   points     = sim_datas[jd].pointCount();
             int*  curve      = new int[ scan_count ];
 
             double*  x;
@@ -747,22 +750,25 @@ qDebug()<<"after_calculate"<< sim_data[i].scanData[j].rvalues[k]<< sim_data[i].x
             y = new double* [ scan_count ];
 
            for ( int j = 0; j < points; j++ )
-           {   x[ j ] = sim_data[i].xvalues[ j ];
-               qDebug()<<"after_calculate_radial_grid"<<x[j];
+           {
+              x[ j ] = sim_datas[jd].xvalues[ j ];
+DbgLv(1) << "after_calculate_radial_grid" << x[j];
            }
            for ( int j = 0; j < scan_count; j++ )
-               y[ j ] = new double [ points ];
+              y[ j ] = new double [ points ];
 
            for ( int j = 0; j < scan_count; j++ )
            {
-               for ( int k = 0; k < points; k++ )
-               {   y[ j ][ k ] = sim_data[i].value( j, k );
-                   qDebug()<<"after_calculate__conc_value"<< sim_data[i].value( j, k );
-               }
+              for ( int k = 0; k < points; k++ )
+              {
+                 y[ j ][ k ] = sim_datas[jd].value( j, k );
+DbgLv(1) << "after_calculate__conc_value" << sim_datas[jd].value( j, k );
+              }
            }
-       }*/
+       }
+#endif
    }
-/*   else
+   else
    {
       astfvm = new US_LammAstfvm( system, simparams );
 
@@ -778,11 +784,10 @@ qDebug()<<"after_calculate"<< sim_data[i].scanData[j].rvalues[k]<< sim_data[i].x
                            SLOT  ( show_progress( int ) ) );
       connect( astfvm, SIGNAL( calc_done( void ) ),
                            SLOT  ( calc_over( void ) ) );
-      astfvm->calculate( sim_data );
+      astfvm->calculate( sim_datas[ 0 ] );
+   }
 
-   }*/
-
- finish();
+   finish();
 }
 
 void US_Astfem_Sim::finish( void )
@@ -832,17 +837,17 @@ void US_Astfem_Sim::finish( void )
 void US_Astfem_Sim::ri_noise( void )
 {
    if ( simparams.rinoise == 0.0 ) return;
-   
+
    // Add radially invariant noise
-   for ( int i = 0; i < simparams.speed_step.size(); i++ )
-   {   
-       for ( int j = 0; j < sim_data[i].scanData.size(); j++ )
+   for ( int jd = 0; jd < simparams.speed_step.size(); jd++ )
+   {
+       for ( int ks = 0; ks < sim_datas[ jd ].scanData.size(); ks++ )
        {
            double rinoise =
            US_Math2::box_muller( 0, total_conc * simparams.rinoise / 100 );
 
-           for ( int k = 0; k < sim_data[i].pointCount(); k++ )
-           sim_data[i].scanData[ j ].rvalues[ k ] += rinoise;
+           for ( int mp = 0; mp < sim_datas[ jd ].pointCount(); mp++ )
+              sim_datas[ jd ].scanData[ ks ].rvalues[ mp ] += rinoise;
        }
    }
 }
@@ -852,42 +857,42 @@ void US_Astfem_Sim::random_noise( void )
    if ( simparams.rnoise == 0.0 && simparams.lrnoise == 0.0) return;
    // Add random noise
    if ( simparams.rnoise != 0.0 && simparams.lrnoise != 0.0)
-   {  for ( int i = 0; i < simparams.speed_step.size(); i++ )
-      {   
-          for ( int j = 0; j < sim_data[i].scanData.size(); j++ )
+   {  for ( int jd = 0; jd < simparams.speed_step.size(); jd++ )
+      {
+          for ( int j = 0; j < sim_datas[ jd ].scanData.size(); j++ )
           {
-              for ( int k = 0; k < sim_data[i].pointCount(); k++ )
+              for ( int k = 0; k < sim_datas[ jd ].pointCount(); k++ )
               {
-                  sim_data[i].scanData[ j ].rvalues[ k ] +=
+                  sim_datas[ jd ].scanData[ j ].rvalues[ k ] +=
                   US_Math2::box_muller( 0, total_conc * simparams.rnoise / 100 ) + // based on total concentration
-                  US_Math2::box_muller( 0, sim_data[i].scanData[ j ].rvalues[ k ] * simparams.lrnoise / 100 ); // based on local concentration
+                  US_Math2::box_muller( 0, sim_datas[ jd ].scanData[ j ].rvalues[ k ] * simparams.lrnoise / 100 ); // based on local concentration
               }//'k' loop
           }//'j' loop
        }//'i' loop
    }
-   if ( simparams.rnoise != 0.0 && simparams.lrnoise == 0.0)
+   if ( simparams.rnoise != 0.0  &&  simparams.lrnoise == 0.0 )
    {
-      for ( int i = 0; i < simparams.speed_step.size(); i++)
-      {   
-          for ( int j = 0; j < sim_data[i].scanData.size(); j++ )
+      for ( int jd = 0; jd < simparams.speed_step.size(); jd++)
+      {
+          for ( int ks = 0; ks < sim_datas[ jd ].scanData.size(); ks++ )
           {
-              for ( int k = 0; k < sim_data[i].pointCount(); k++ )
+              for ( int mp = 0; mp < sim_datas[ jd ].pointCount(); mp++ )
               {
-                  sim_data[i].scanData[ j ].rvalues[ k ] +=
+                  sim_datas[ jd ].scanData[ ks ].rvalues[ mp ] +=
                   US_Math2::box_muller( 0, total_conc * simparams.rnoise / 100 ); // based on total concentration
               }
           }
        }
    }
    if ( simparams.rnoise == 0.0 && simparams.lrnoise != 0.0)
-   {  for ( int i = 0; i < simparams.speed_step.size(); i++ )
-      {   
-          for ( int j = 0; j < sim_data[i].scanData.size(); j++ )
+   {  for ( int jd = 0; jd < simparams.speed_step.size(); jd++ )
+      {
+          for ( int ks = 0; ks < sim_datas[ jd ].scanData.size(); ks++ )
           {
-              for ( int k = 0; k < sim_data[i].pointCount(); k++ )
+              for ( int mp = 0; mp < sim_datas[ jd ].pointCount(); mp++ )
               {
-                  sim_data[i].scanData[ j ].rvalues[ k ] +=
-                  US_Math2::box_muller( 0, sim_data[i].scanData[ j ].rvalues[ k ] * simparams.lrnoise / 100 ); // based on local concentration
+                  sim_datas[ jd ].scanData[ ks ].rvalues[ mp ] +=
+                  US_Math2::box_muller( 0, sim_datas[ jd ].scanData[ ks ].rvalues[ mp ] * simparams.lrnoise / 100 ); // based on local concentration
               }
           }
       }
@@ -899,30 +904,32 @@ void US_Astfem_Sim::ti_noise( void )
    if ( simparams.tinoise == 0.0 ) return;
 
    // Add time invariant noise
-   for ( int i = 0; i < simparams.speed_step.size(); i++ )
-   {   int points = sim_data[i].pointCount();
-       QVector< double > tinoise;
-       tinoise.resize( points );
-       double val = US_Math2::box_muller( 0, total_conc * simparams.tinoise / 100 );
-       for ( int k = 0; k < points; k++ )
-       {
-           val += US_Math2::box_muller( 0, total_conc * simparams.tinoise / 100 );
-           tinoise[ k ] = val;
-       }
-       for ( int j = 0; j < sim_data[i].scanData.size(); j++ )
-       {
-           for ( int k = 0; k < points; k++ )
-               sim_data[i].scanData[ j ].rvalues[ k ] += tinoise[ k ];
-       }
+   for ( int jd = 0; jd < simparams.speed_step.size(); jd++ )
+   {
+      int points = sim_datas[ jd ].pointCount();
+      QVector< double > tinoise;
+      tinoise.resize( points );
+      double val = US_Math2::box_muller( 0, total_conc * simparams.tinoise / 100 );
+
+      for ( int mp = 0; mp < points; mp++ )
+      {
+         val += US_Math2::box_muller( 0, total_conc * simparams.tinoise / 100 );
+         tinoise[ mp ] = val;
+      }
+      for ( int ks = 0; ks < sim_datas[ jd ].scanData.size(); ks++ )
+      {
+         for ( int mp = 0; mp < points; mp++ )
+            sim_datas[ jd ].scanData[ ks ].rvalues[ mp ] += tinoise[ mp ];
+      }
    }
 }
 
 #if 0
 void US_Astfem_Sim::plot(void)
 {
-   qDebug()<<"plot_is_called" ;
+DbgLv(1) << "plot_is_called";
    dataPlotClear( scanPlot );
-   
+
    // Set plot scale
    if ( simparams.band_forming )
       scanPlot->setAxisScale( QwtPlot::yLeft, 0, total_conc );
@@ -945,74 +952,74 @@ void US_Astfem_Sim::plot(void)
    // Plot the simulation
    if ( ! stopFlag )
    {
-      for ( int i = 0; i < simparams.speed_step.size(); i++ )
+      for ( int jd = 0; jd < simparams.speed_step.size(); jd++ )
       {
-          int   scan_count = sim_data[i].scanCount();
-          int   points     = sim_data[i].pointCount();
-          int*  curve      = new int[ scan_count ];
+         int   scan_count = sim_datas[jd].scanCount();
+         int   points     = sim_datas[jd].pointCount();
+         int*  curve      = new int[ scan_count ];
 
-          double*  x;
-          double** y;
+         double*  x;
+         double** y;
 
-          x = new double  [ points ];
-          y = new double* [ scan_count ];
+         x = new double  [ points ];
+         y = new double* [ scan_count ];
 
-          for ( int j = 0; j < points; j++ )
-          {     x[ j ] = sim_data[i].xvalues[ j ];
-                qDebug()<<"plot_radial_grid"<<x[j];
-          }
-          for ( int j = 0; j < scan_count; j++ )
-              y[ j ] = new double [ points ];
+         for ( int j = 0; j < points; j++ )
+         {
+            x[ j ] = sim_datas[jd].xvalues[ j ];
+         }
+         for ( int j = 0; j < scan_count; j++ )
+            y[ j ] = new double [ points ];
 
-          for ( int j = 0; j < scan_count; j++ )
-          {
-              for ( int k = 0; k < points; k++ )
-              {    y[ j ][ k ] = sim_data[i].value( j, k );
-                  qDebug()<<"plot_conc_value"<<y[ j ][ k ];
-              }
-          }
+         for ( int j = 0; j < scan_count; j++ )
+         {
+            for ( int k = 0; k < points; k++ )
+             {
+                y[ j ][ k ] = sim_datas[jd].value( j, k );
+             }
+         }
 
-          for ( int j = 0; j < scan_count; j++ )
-          {
-              QString title = "Concentration" + QString::number( j );
-              QwtPlotCurve* plotCurve = new QwtPlotCurve( title );
+         for ( int j = 0; j < scan_count; j++ )
+         {
+            QString title = "Concentration" + QString::number( j );
+            QwtPlotCurve* plotCurve = new QwtPlotCurve( title );
 
-              plotCurve->setPen    ( QPen( Qt::yellow ) );
-              plotCurve->attach    ( scanPlot );
-              plotCurve->setSamples( x, y[ j ], points );
-          }
-     }//speed_step loop
-   }//stop_flag loop
+            plotCurve->setPen    ( QPen( Qt::yellow ) );
+            plotCurve->attach    ( scanPlot );
+            plotCurve->setSamples( x, y[ j ], points );
+         }
+      }  //speed_step loop
+   }  //stop_flag loop
 }
 #endif
 
 void US_Astfem_Sim::save_scans( void )
 {
-   qDebug()<<"save_scans_is_called" ;
+DbgLv(1) << "save_scans_is_called" ;
    QString fn         = QFileDialog::getExistingDirectory( this,
          tr( "Select a directory for the simulated data:" ),
          US_Settings::importDir() );
    int nstep =  simparams.speed_step.size();
-   
+
    if ( ! fn.isEmpty() )
    {  // The user gave a directory name, save in openAUC format
       fn                 = fn.replace( "\\", "/" );
       simparams.sim      = true;
-      
+
       if ( nstep == 1 ) // single_speed_case
       {
-         save_xla( fn , sim_data[0], 0 );
+         save_xla( fn , sim_datas[ 0 ], 0 );
          // Create a timestate in the same directory
          QString run_id     = fn.section( "/", -1, -1 );
          QString tmst_fbase = run_id  + ".time_state.tmst";
          QString tmst_fpath = fn + "/" + tmst_fbase;
-         DbgLv(1)<< "filenamefrom us_astfem_sim"<<  fn << tmst_fpath ;
-         US_AstfemMath::writetimestate( tmst_fpath, simparams, sim_data[ 0 ] );
+DbgLv(1) << "filenamefrom us_astfem_sim" << fn << tmst_fpath ;
+         US_AstfemMath::writetimestate( tmst_fpath, simparams, sim_datas[ 0 ] );
       }
       else      //multi_speed_case
       {
-qDebug()<<"entering_multi_speed_case";
-         US_DataIO::RawData      sim_data_all = sim_data[ 0 ];
+DbgLv(1) << "entering_multi_speed_case";
+         US_DataIO::RawData      sim_data_all = sim_datas[ 0 ];
 
          QString run_id      = fn.section( "/", -1, -1 );
          int ispeed          = simparams.speed_step[ 0 ].rotorspeed;
@@ -1021,9 +1028,9 @@ qDebug()<<"entering_multi_speed_case";
          QString tmst_fpath1 = fn + "-" + spsufx + "/" + tmst_fbase1;
          QString xdef_fpath1 = QString( tmst_fpath1 ).replace( ".tmst", ".xml" );
 
-         for ( int step = 1; step < nstep; step++ )
+         for ( int jd = 1; jd < nstep; jd++ )
          {
-            sim_data_all.scanData << sim_data[ step ].scanData;
+            sim_data_all.scanData << sim_datas[ jd ].scanData;
          }
 //*DEBUG*
 int kscn=sim_data_all.scanCount();
@@ -1034,9 +1041,9 @@ for(int ss=0; ss<kscn; ss++ )
 
          US_AstfemMath::writetimestate( tmst_fpath1, simparams, sim_data_all );
 
-         for ( int step = 1; step < nstep; step++ )
+         for ( int jd = 1; jd < nstep; jd++ )
          {
-            ispeed              = simparams.speed_step[ step ].rotorspeed;
+            ispeed              = simparams.speed_step[ jd ].rotorspeed;
             spsufx              = QString().sprintf( "%05d", ispeed );
             QString tmst_fbase2 =  run_id + "-" + spsufx + ".time_state.tmst";
             QString tmst_fdir2  = fn + "-" + spsufx + "/";
@@ -1053,45 +1060,45 @@ DbgLv(1) << "TScopy:   to:" << tmst_fpath2;
 //*DEBUG*
          }
 
-         for ( int i = 0; i < nstep; i++ )
+         for ( int jd = 0; jd < nstep; jd++ )
          {
-             QString fn1 = fn + "-" + QString().sprintf("%05d", 
-                               simparams.speed_step[i].rotorspeed );      
+             QString fn1 = fn + "-" + QString().sprintf( "%05d",
+                              simparams.speed_step[ jd ].rotorspeed );
              QDir().mkpath(fn1);
 
-             save_xla( fn1, sim_data[i], i );
+             save_xla( fn1, sim_datas[ jd ], jd );
 #if 0
              QString runIDbase      = fn.section( "/", -1, -1 );
-             if ( i == 0 )
-             for ( int j = 0; j < sim_data[i].pointCount(); j++ )
-             qDebug()<< "after_save_xla_radial_values" << sim_data[i].xvalues[j] ;
+             if ( jd == 0 )
+             for ( int j = 0; j < sim_datas[jd].pointCount(); j++ )
+DbgLv(1)<< "after_save_xla_radial_values" << sim_datas[jd].xvalues[j] ;
 
              QString tmst_fbase = run_id+ "-" + QString().sprintf("%05d",
-                               simparams.speed_step[i].rotorspeed )  + ".time_state.tmst";
+                               simparams.speed_step[jd].rotorspeed )  + ".time_state.tmst";
              QString tmst_fpath = fn + "-" + QString().sprintf("%05d",
-                               simparams.speed_step[i].rotorspeed )+"/" + tmst_fbase ;
+                               simparams.speed_step[jd].rotorspeed )+"/" + tmst_fbase ;
              QString tmst_fxml1 = run_id+ "-" + QString().sprintf("%05d",
-                               simparams.speed_step[i].rotorspeed )  + ".time_state.xml";
+                               simparams.speed_step[jd].rotorspeed )  + ".time_state.xml";
              QString tmst_fxml = fn + "-" + QString().sprintf("%05d",
-                               simparams.speed_step[i].rotorspeed )+"/" + tmst_fxml1 ;
- 
+                               simparams.speed_step[jd].rotorspeed )+"/" + tmst_fxml1 ;
+
              QString sim_fxml1 = run_id + "-" + QString().sprintf("%05d",
-                               simparams.speed_step[i].rotorspeed ) + ".xml";
+                               simparams.speed_step[jd].rotorspeed ) + ".xml";
              QString sim_fxml = fn + "-" + QString().sprintf("%05d",
-                               simparams.speed_step[i].rotorspeed ) +"/" + sim_fxml1 ;
-             
+                               simparams.speed_step[jd].rotorspeed ) +"/" + sim_fxml1 ;
+
              simparams.sim      = true;
              simparams.save_simparms(sim_fxml);
 
              if ( i == 0 )
                 US_AstfemMath::writetimestate( tmst_fpath_1, simparams, sim_data_all );
              else
-                { 
+                {
                   QFile::copy(  tmst_fpath_1,    tmst_fpath );
                   QFile::copy(  tmst_fbase1_xml, tmst_fxml );
                 }
 #endif
-         }   
+         }
       }
    }
 }
@@ -1101,7 +1108,7 @@ DbgLv(1) << "TScopy:   to:" << tmst_fpath2;
 #if 0
 void US_Astfem_Sim::save_xla( const QString& dirname )
 {
-   qDebug()<<"save_xla_is_called_with_dir_name" << dirname  ;
+DbgLv(1) << "save_xla_is_called_with_dir_name" << dirname;
    double brad      = simparams.bottom;
    double mrad      = simparams.meniscus;
    double grid_res  = simparams.radial_resolution;
@@ -1115,18 +1122,18 @@ void US_Astfem_Sim::save_xla( const QString& dirname )
        adjust_limits(simparams.speed_step[i].rotorspeed);
        mncs[i] = af_params.current_meniscus ;
        bottom[i] = af_params.current_bottom ;
-qDebug ()<<"save_xla_meniscus_bottom"<< mncs[i] << bottom[i] ;
+DbgLv(1) << "save_xla_meniscus_bottom" << mncs[i] << bottom[i];
        // Add 30 points in front of meniscus
        int    points      = (int)( ( brad - mrad ) / grid_res ) + 31;
 
        double maxc        = 0.0;
-       int    total_scans = sim_data[i].scanCount();
-       int    old_points  = sim_data[i].pointCount();
-qDebug ()<<"scans_and_points"<< total_scans<< old_points ;
+       int    total_scans = sim_datas[i].scanCount();
+       int    old_points  = sim_datas[i].pointCount();
+DbgLv(1) << "scans_and_points" << total_scans<< old_points;
        for ( int ii = 0; ii < total_scans; ii++ )
        {   // Accumulate the maximum computed OD value
            for ( int kk = 0; kk < old_points; kk++ )
-           maxc = qMax( maxc, sim_data[i].value( ii, kk ) );
+           maxc = qMax( maxc, sim_datas[i].value( ii, kk ) );
        }
        // Compute a data threshold that is scan 1's plateau reading times 3
        QVector< double > xtmpVec( total_scans );
@@ -1140,8 +1147,8 @@ qDebug ()<<"scans_and_points"<< total_scans<< old_points ;
 
        for ( int ii = 0; ii < total_scans; ii++ )
        {   // Build time,omega2t points
-           xtmp[ ii ]      = sim_data[i].scanData[ ii ].seconds;
-           ytmp[ ii ]      = sim_data[i].scanData[ ii ].omega2t;
+           xtmp[ ii ]      = sim_datas[i].scanData[ ii ].seconds;
+           ytmp[ ii ]      = sim_datas[i].scanData[ ii ].omega2t;
        }
        // Fit to time,omega2t and use fit to compute the time correction
        US_Math2::linefit( &xtmp, &ytmp, &slope, &intercept, &sigma,
@@ -1149,8 +1156,8 @@ qDebug ()<<"scans_and_points"<< total_scans<< old_points ;
 
        double timecorr = -intercept / slope;
        double s20wcorr = -2.0;
-       double omega    = sim_data[i].scanData[ 0 ].rpm * M_PI / 30.0;
-       double oterm    = ( sim_data[i].scanData[ 0 ].seconds - timecorr )
+       double omega    = sim_datas[i].scanData[ 0 ].rpm * M_PI / 30.0;
+       double oterm    = ( sim_datas[i].scanData[ 0 ].seconds - timecorr )
                      * omega * omega * s20wcorr;
        double s1plat   = 0.0;
 
@@ -1192,9 +1199,9 @@ DbgLv(1) << "Sim:SV: reset s1plat" << s1plat;
          for ( int jj = 0; jj < old_points; jj++ )
          {  // Examine each reading point in a scan
 
-            if ( sim_data[i].value( ii, jj ) > dthresh )
+            if ( sim_datas[i].value( ii, jj ) > dthresh )
             {  // Set a high value to the threshold and bump counts
-               sim_data[i].setValue( ii, jj, dthresh );
+               sim_datas[i].setValue( ii, jj, dthresh );
                nchange++;   // Bump the count of total threshold changes
                kchange++;   // Bump the count of threshold changes in this scan
             }
@@ -1226,22 +1233,22 @@ DbgLv(1) << "Sim:SV: OD-Limit nchange nmodscn" << nchange << nmodscn
    QVector< double > tconc_v( points );
    double* temp_conc  = tconc_v.data();
    double  rad        = mrad - 30.0 * grid_res;
-   sim_data[i].xvalues.resize( points );
+   sim_datas[i].xvalues.resize( points );
    lb_progress->setText( "Writing..." );
 
    for ( int jj = 0; jj < points; jj++ )
    {
-      sim_data[i].xvalues[ jj ] = rad;
+      sim_datas[i].xvalues[ jj ] = rad;
       rad  += grid_res;
    }
 
    for ( int ii = 0; ii < total_scans; ii++ )
    {
-      //US_DataIO::Scan* scan = &sim_data.scanData[ ii ];
+      //US_DataIO::Scan* scan = &sim_datas.scanData[ ii ];
 
       for ( int jj = 30; jj < points; jj++ )
       {  // Position the computed concentration values after the first 30
-         temp_conc[ jj ] = sim_data[i].scanData[ ii ].rvalues[ jj - 30 ];
+         temp_conc[ jj ] = sim_datas[i].scanData[ ii ].rvalues[ jj - 30 ];
       }
 
       for ( int jj = 0; jj < 30; jj++ )
@@ -1251,11 +1258,11 @@ DbgLv(1) << "Sim:SV: OD-Limit nchange nmodscn" << nchange << nmodscn
 
       temp_conc[ 30 ] = s1plat * 2.0;   // Put a spike at the meniscus
 
-      sim_data[i].scanData[ ii ].rvalues.resize( points );
+      sim_datas[i].scanData[ ii ].rvalues.resize( points );
 
       for ( int jj = 0; jj < points; jj++ )
       {   // Store the values: first 30 then computed values
-          sim_data[i].scanData[ ii ].rvalues[ jj ] = temp_conc[ jj ];
+          sim_datas[i].scanData[ ii ].rvalues[ jj ] = temp_conc[ jj ];
       }
 
       progress->setValue( ( ii + 1 ) );
@@ -1269,17 +1276,17 @@ DbgLv(1) << "Sim:SV: OD-Limit nchange nmodscn" << nchange << nmodscn
    }
 
    QString run_id    = dirname.section( "/", -1, -1 );
-   QString stype     = QString( QChar( sim_data[i].type[ 0 ] ) )
-                     + QString( QChar( sim_data[i].type[ 1 ] ) );
-   QString schann    = QString( QChar( sim_data[i].channel ) );
-   int     cell      = sim_data[i].cell;
-   int     wvlen     = qRound( sim_data[i].scanData[ 0 ].wavelength );
+   QString stype     = QString( QChar( sim_datas[i].type[ 0 ] ) )
+                     + QString( QChar( sim_datas[i].type[ 1 ] ) );
+   QString schann    = QString( QChar( sim_datas[i].channel ) );
+   int     cell      = sim_datas[i].cell;
+   int     wvlen     = qRound( sim_datas[i].scanData[ 0 ].wavelength );
            wvlen     = ( wvlen < 99 ) ? 123 : wvlen;
    QString ofname    = QString( "%1/%2.%3.%4.%5.%6.auc" )
       .arg( dirname ).arg( run_id ).arg( stype ).arg( cell )
       .arg( schann  ).arg( wvlen  );
 
-   US_DataIO::writeRawData( ofname, sim_data[i] );
+   US_DataIO::writeRawData( ofname, sim_datas[i] );
 
    progress->setValue( total_scans );
    lb_progress->setText( tr( "Completed" ) );
@@ -1314,36 +1321,36 @@ void US_Astfem_Sim::update_progress( int component )
    }
 }
 
-void US_Astfem_Sim::save_xla( const QString& dirname , US_DataIO::RawData sim_datas, int i1 )
+void US_Astfem_Sim::save_xla( const QString& dirname, US_DataIO::RawData sim_data, int i1 )
 {
 
-qDebug()<<"save_xla_is_called" ;
+DbgLv(1) << "save_xla_is_called";
 //   double mrad      = simparams.meniscus;
 //   double brad      = simparams.bottom;
    simparams.meniscus = meniscus_ar;
    simparams.bottom   = simparams.bottom_position;
- 
-   adjust_limits( (double)simparams.speed_step[ i1 ].rotorspeed ); 
-//   double mrad      = sim_datas.xvalues[ 0 ];
-//   double brad      = sim_datas.xvalues[ sim_datas.xvalues.size()-1 ];
+
+   adjust_limits( (double)simparams.speed_step[ i1 ].rotorspeed );
+//   double mrad      = sim_data.xvalues[ 0 ];
+//   double brad      = sim_data.xvalues[ sim_data.xvalues.size()-1 ];
 
    double mrad      = af_params.current_meniscus;
    double brad      = af_params.current_bottom;
    double grid_res  = simparams.radial_resolution;
 
-qDebug()<<"save_xla_meniscus_bottom" <<  mrad << brad;
+DbgLv(1) << "save_xla_meniscus_bottom" <<  mrad << brad;
 
    // Add 30 points in front of meniscus
    int    points      = (int)( ( brad - mrad ) / grid_res ) + 31;
 
    double maxc        = 0.0;
-   int    total_scans = sim_datas.scanCount();
-   int    old_points  = sim_datas.pointCount();
+   int    total_scans = sim_data.scanCount();
+   int    old_points  = sim_data.pointCount();
 
    for ( int ii = 0; ii < total_scans; ii++ )
    {  // Accumulate the maximum computed OD value
       for ( int kk = 0; kk < old_points; kk++ )
-         maxc = qMax( maxc, sim_datas.value( ii, kk ) );
+         maxc = qMax( maxc, sim_data.value( ii, kk ) );
    }
 
    // Compute a data threshold that is scan 1's plateau reading times 3
@@ -1358,8 +1365,8 @@ qDebug()<<"save_xla_meniscus_bottom" <<  mrad << brad;
 
    for ( int ii = 0; ii < total_scans; ii++ )
    {  // Build time,omega2t points
-      xtmp[ ii ]      = sim_datas.scanData[ ii ].seconds;
-      ytmp[ ii ]      = sim_datas.scanData[ ii ].omega2t;
+      xtmp[ ii ]      = sim_data.scanData[ ii ].seconds;
+      ytmp[ ii ]      = sim_data.scanData[ ii ].omega2t;
    }
 
    // Fit to time,omega2t and use fit to compute the time correction
@@ -1368,8 +1375,8 @@ qDebug()<<"save_xla_meniscus_bottom" <<  mrad << brad;
 
    double timecorr = -intercept / slope;
    double s20wcorr = -2.0;
-   double omega    = sim_datas.scanData[ 0 ].rpm * M_PI / 30.0;
-   double oterm    = ( sim_datas.scanData[ 0 ].seconds - timecorr )
+   double omega    = sim_data.scanData[ 0 ].rpm * M_PI / 30.0;
+   double oterm    = ( sim_data.scanData[ 0 ].seconds - timecorr )
                      * omega * omega * s20wcorr;
    double s1plat   = 0.0;
 
@@ -1411,9 +1418,9 @@ DbgLv(1) << "Sim:SV: reset s1plat" << s1plat;
          for ( int jj = 0; jj < old_points; jj++ )
          {  // Examine each reading point in a scan
 
-            if ( sim_datas.value( ii, jj ) > dthresh )
+            if ( sim_data.value( ii, jj ) > dthresh )
             {  // Set a high value to the threshold and bump counts
-               sim_datas.setValue( ii, jj, dthresh );
+               sim_data.setValue( ii, jj, dthresh );
                nchange++;   // Bump the count of total threshold changes
                kchange++;   // Bump the count of threshold changes in this scan
             }
@@ -1445,18 +1452,18 @@ DbgLv(1) << "Sim:SV: OD-Limit nchange nmodscn" << nchange << nmodscn
    QVector< double > tconc_v( points );
    double* temp_conc  = tconc_v.data();
    double  rad        = mrad - 30.0 * grid_res;
-   sim_datas.xvalues.resize( points );
+   sim_data.xvalues.resize( points );
    lb_progress->setText( "Writing..." );
 
    for ( int jj = 0; jj < points; jj++ )
    {
-      sim_datas.xvalues[ jj ] = rad;
+      sim_data.xvalues[ jj ] = rad;
       rad  += grid_res;
    }
 
    for ( int ii = 0; ii < total_scans; ii++ )
    {
-      US_DataIO::Scan* scan = &sim_datas.scanData[ ii ];
+      US_DataIO::Scan* scan = &sim_data.scanData[ ii ];
 
       for ( int jj = 30; jj < points; jj++ )
       {  // Position the computed concentration values after the first 30
@@ -1488,19 +1495,19 @@ DbgLv(1) << "Sim:SV: OD-Limit nchange nmodscn" << nchange << nmodscn
    }
 
    QString run_id    = dirname.section( "/", -1, -1 );
-qDebug() << "run_id_from_save_xla" << run_id;
-   QString stype     = QString( QChar( sim_datas.type[ 0 ] ) )
-                     + QString( QChar( sim_datas.type[ 1 ] ) );
-   QString schann    = QString( QChar( sim_datas.channel ) );
-   int     cell      = sim_datas.cell;
-   int     wvlen     = qRound( sim_datas.scanData[ 0 ].wavelength );
+DbgLv(1) << "run_id_from_save_xla" << run_id;
+   QString stype     = QString( QChar( sim_data.type[ 0 ] ) )
+                     + QString( QChar( sim_data.type[ 1 ] ) );
+   QString schann    = QString( QChar( sim_data.channel ) );
+   int     cell      = sim_data.cell;
+   int     wvlen     = qRound( sim_data.scanData[ 0 ].wavelength );
            wvlen     = ( wvlen < 99 ) ? 123 : wvlen;
    QString ofname    = QString( "%1/%2.%3.%4.%5.%6.auc" )
       .arg( dirname ).arg( run_id ).arg( stype ).arg( cell )
       .arg( schann  ).arg( wvlen  );
 
-   US_DataIO::writeRawData( ofname, sim_datas );
-qDebug() << "after_write_rawdata" << ofname;
+   US_DataIO::writeRawData( ofname, sim_data );
+DbgLv(1) << "after_write_rawdata" << ofname;
    progress->setValue( total_scans );
    lb_progress->setText( tr( "Completed" ) );
 
@@ -1535,9 +1542,9 @@ void US_Astfem_Sim::plot( int step )
 
    // Plot the simulation
    if ( ! stopFlag )
-   {
-      int   scan_count = sim_data[step].scanCount();
-      int   points     = sim_data[step].pointCount();
+    {
+      int   scan_count = sim_datas[ step ].scanCount();
+      int   points     = sim_datas[ step ].pointCount();
       int*  curve      = new int[ scan_count ];
 
       double*  x;
@@ -1547,7 +1554,7 @@ void US_Astfem_Sim::plot( int step )
       y = new double* [ scan_count ];
 
       for ( int j = 0; j < points; j++ )
-         x[ j ] = sim_data[step].xvalues[ j ];
+         x[ j ] = sim_datas[ step ].xvalues[ j ];
 
       for ( int j = 0; j < scan_count; j++ )
          y[ j ] = new double [ points ];
@@ -1555,7 +1562,7 @@ void US_Astfem_Sim::plot( int step )
       for ( int j = 0; j < scan_count; j++ )
       {
          for ( int k = 0; k < points; k++ )
-            y[ j ][ k ] = sim_data[step].value( j, k );
+            y[ j ][ k ] = sim_datas[ step ].value( j, k );
       }
 
       for ( int j = 0; j < scan_count; j++ )
@@ -1567,7 +1574,7 @@ void US_Astfem_Sim::plot( int step )
          plotCurve->attach    ( scanPlot );
          plotCurve->setSamples( x, y[ j ], points );
       }
-    
+
       delete [] x;
 
       for ( int j = 0; j < scan_count; j++ ) delete [] y[ j ];
@@ -1598,7 +1605,7 @@ void US_Astfem_Sim::save_scans( void )
       simparams.sim      = true;
 DbgLv(1)<< "filenamefrom us_astfem_sim"<<  fn << tmst_fpath ;
 
-      US_AstfemMath::writetimestate( tmst_fpath, simparams, sim_data );
+      US_AstfemMath::writetimestate( tmst_fpath, simparams, sim_datas );
    }
 }
 #endif
