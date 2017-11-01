@@ -944,6 +944,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       void                                plot_gaussian_sum();
       void                                replot_gaussian_sum();
 
+#if QT_VERSION >= 0x050000
+      bool                                wheel_is_pressed;
+#endif
       bool                                wheel_errors_ok;
 
       bool                                opt_repeak_gaussians( QString file );
@@ -1647,6 +1650,11 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
 
       void wheel_inc                ();
       void wheel_dec                ();
+
+#if QT_VERSION >= 0x050000
+      void wheel_pressed            ();
+      void wheel_released           ();
+#endif
 
    protected slots:
 

@@ -842,6 +842,10 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    // qwtw_wheel->setTotalAngle( 3600.0 );
    qwtw_wheel->setEnabled      ( false );
    connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
+#if QT_VERSION >= 0x050000
+   connect( qwtw_wheel, SIGNAL( wheelPressed() ), SLOT( wheel_pressed() ) );
+   connect( qwtw_wheel, SIGNAL( wheelReleased() ), SLOT( wheel_released() ) );
+#endif
 
    pb_wheel_cancel = new QPushButton(us_tr("Cancel"), this);
    pb_wheel_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));
@@ -7213,6 +7217,7 @@ void US_Hydrodyn_Saxs_Buffer::join_offset_focus( bool hasFocus )
    cout << QString( "join_offset_focus %1\n" ).arg( hasFocus ? "true" : "false" );
    if ( hasFocus )
    {
+      le_last_focus = le_join_offset;
       disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
       qwtw_wheel->setRange( join_offset_start, join_offset_end); qwtw_wheel->setSingleStep( join_offset_delta );
       connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
@@ -7226,6 +7231,7 @@ void US_Hydrodyn_Saxs_Buffer::join_mult_focus( bool hasFocus )
    cout << QString( "join_mult_focus %1\n" ).arg( hasFocus ? "true" : "false" );
    if ( hasFocus )
    {
+      le_last_focus = le_join_mult;
       disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
       qwtw_wheel->setRange( join_mult_start, join_mult_end); qwtw_wheel->setSingleStep( join_mult_delta );
       connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
@@ -7239,6 +7245,7 @@ void US_Hydrodyn_Saxs_Buffer::join_start_focus( bool hasFocus )
    cout << QString( "join_start_focus %1\n" ).arg( hasFocus ? "true" : "false" );
    if ( hasFocus )
    {
+      le_last_focus = le_join_start;
       disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
       qwtw_wheel->setRange( join_low_q, join_high_q); qwtw_wheel->setSingleStep( 0.00005 );
       connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
@@ -7252,6 +7259,7 @@ void US_Hydrodyn_Saxs_Buffer::join_point_focus( bool hasFocus )
    cout << QString( "join_point_focus %1\n" ).arg( hasFocus ? "true" : "false" );
    if ( hasFocus )
    {
+      le_last_focus = le_join_point;
       disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
       qwtw_wheel->setRange( join_low_q, join_high_q); qwtw_wheel->setSingleStep( 0.00005 );
       connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
@@ -7265,6 +7273,7 @@ void US_Hydrodyn_Saxs_Buffer::join_end_focus( bool hasFocus )
    cout << QString( "join_end_focus %1\n" ).arg( hasFocus ? "true" : "false" );
    if ( hasFocus )
    {
+      le_last_focus = le_join_end;
       disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
       qwtw_wheel->setRange( join_low_q, join_high_q); qwtw_wheel->setSingleStep( 0.00005 );
       connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
@@ -7349,7 +7358,7 @@ void US_Hydrodyn_Saxs_Buffer::wheel_cancel()
 
 void US_Hydrodyn_Saxs_Buffer::join_offset_text( const QString & text )
 {
-   if ( qwtw_wheel->value() != text.toDouble() )
+   if ( !wheel_is_pressed && qwtw_wheel->value() != text.toDouble() )
    {
       qwtw_wheel->setValue( text.toDouble() );
    }
@@ -7387,7 +7396,7 @@ void US_Hydrodyn_Saxs_Buffer::join_do_replot()
 
 void US_Hydrodyn_Saxs_Buffer::join_mult_text( const QString & text )
 {
-   if ( qwtw_wheel->value() != text.toDouble() )
+   if ( !wheel_is_pressed && qwtw_wheel->value() != text.toDouble() )
    {
       qwtw_wheel->setValue( text.toDouble() );
    }
@@ -7401,7 +7410,7 @@ void US_Hydrodyn_Saxs_Buffer::join_start_text( const QString & text )
 #else
    plotted_markers[ 0 ]->setXValue( text.toDouble() );
 #endif
-   if ( qwtw_wheel->value() != text.toDouble() )
+   if ( !wheel_is_pressed && qwtw_wheel->value() != text.toDouble() )
    {
       qwtw_wheel->setValue( text.toDouble() );
    }
@@ -7416,7 +7425,7 @@ void US_Hydrodyn_Saxs_Buffer::join_point_text( const QString & text )
 #else
    plotted_markers[ 1 ]->setXValue( text.toDouble() );
 #endif
-   if ( qwtw_wheel->value() != text.toDouble() )
+   if ( !wheel_is_pressed && qwtw_wheel->value() != text.toDouble() )
    {
       qwtw_wheel->setValue( text.toDouble() );
    }
@@ -7431,7 +7440,7 @@ void US_Hydrodyn_Saxs_Buffer::join_end_text( const QString & text )
 #else
    plotted_markers[ 2 ]->setXValue( text.toDouble() );
 #endif
-   if ( qwtw_wheel->value() != text.toDouble() )
+   if ( !wheel_is_pressed && qwtw_wheel->value() != text.toDouble() )
    {
       qwtw_wheel->setValue( text.toDouble() );
    }
@@ -8748,3 +8757,18 @@ double US_Hydrodyn_Saxs_Buffer::tot_intensity( QString &file, double q_min, doub
    }
    return tot_i;
 }
+
+
+#if QT_VERSION >= 0x050000
+
+void US_Hydrodyn_Saxs_Buffer::wheel_pressed() {
+   // qDebug() << "wheel_pressed()";
+   wheel_is_pressed = true;
+}
+
+void US_Hydrodyn_Saxs_Buffer::wheel_released() {
+   // qDebug() << "wheel_released()";
+   wheel_is_pressed = false;
+}
+
+#endif

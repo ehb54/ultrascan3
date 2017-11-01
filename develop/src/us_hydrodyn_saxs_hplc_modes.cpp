@@ -298,7 +298,7 @@ void US_Hydrodyn_Saxs_Hplc::pm_q_start_text( const QString & text )
 #else
    plotted_markers[ 0 ]->setXValue( text.toDouble() );
 #endif
-   if ( qwtw_wheel->value() != text.toDouble() )
+   if ( !wheel_is_pressed && qwtw_wheel->value() != text.toDouble() )
    {
       qwtw_wheel->setValue( text.toDouble() );
    }
@@ -313,7 +313,7 @@ void US_Hydrodyn_Saxs_Hplc::pm_q_end_text( const QString & text )
 #else
    plotted_markers[ 1 ]->setXValue( text.toDouble() );
 #endif
-   if ( qwtw_wheel->value() != text.toDouble() )
+   if ( !wheel_is_pressed && qwtw_wheel->value() != text.toDouble() )
    {
       qwtw_wheel->setValue( text.toDouble() );
    }
@@ -325,6 +325,7 @@ void US_Hydrodyn_Saxs_Hplc::pm_q_start_focus( bool hasFocus )
 {
    if ( hasFocus )
    {
+      le_last_focus = le_pm_q_start;
       disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
       qwtw_wheel->setRange( f_qs[ wheel_file ][ 0 ], f_qs[ wheel_file ].back()); qwtw_wheel->setSingleStep( ( f_qs[ wheel_file ].back() - f_qs[ wheel_file ][ 0 ] ) / UHSH_WHEEL_RES );
       connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
@@ -337,6 +338,7 @@ void US_Hydrodyn_Saxs_Hplc::pm_q_end_focus( bool hasFocus )
 {
    if ( hasFocus )
    {
+      le_last_focus = le_pm_q_end;
       disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
       qwtw_wheel->setRange( f_qs[ wheel_file ][ 0 ], f_qs[ wheel_file ].back()); qwtw_wheel->setSingleStep( ( f_qs[ wheel_file ].back() - f_qs[ wheel_file ][ 0 ] ) / UHSH_WHEEL_RES );
       connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
@@ -906,7 +908,7 @@ void US_Hydrodyn_Saxs_Hplc::testiq_q_start_text( const QString & text )
 #else
    plotted_markers[ 0 ]->setXValue( text.toDouble() );
 #endif
-   if ( qwtw_wheel->value() != text.toDouble() )
+   if ( !wheel_is_pressed && qwtw_wheel->value() != text.toDouble() )
    {
       qwtw_wheel->setValue( text.toDouble() );
    }
@@ -925,7 +927,7 @@ void US_Hydrodyn_Saxs_Hplc::testiq_q_end_text( const QString & text )
 #else
    plotted_markers[ 1 ]->setXValue( text.toDouble() );
 #endif
-   if ( qwtw_wheel->value() != text.toDouble() )
+   if ( !wheel_is_pressed && qwtw_wheel->value() != text.toDouble() )
    {
       qwtw_wheel->setValue( text.toDouble() );
    }
@@ -941,6 +943,7 @@ void US_Hydrodyn_Saxs_Hplc::testiq_q_start_focus( bool hasFocus )
    }
    if ( hasFocus )
    {
+      le_last_focus = le_testiq_q_start;
       disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
       qwtw_wheel->setRange( f_qs[ wheel_file ][ 0 ], f_qs[ wheel_file ].back()); qwtw_wheel->setSingleStep( ( f_qs[ wheel_file ].back() - f_qs[ wheel_file ][ 0 ] ) / UHSH_WHEEL_RES );
       connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
@@ -957,6 +960,7 @@ void US_Hydrodyn_Saxs_Hplc::testiq_q_end_focus( bool hasFocus )
    }
    if ( hasFocus )
    {
+      le_last_focus = le_testiq_q_end;
       disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
       qwtw_wheel->setRange( f_qs[ wheel_file ][ 0 ], f_qs[ wheel_file ].back()); qwtw_wheel->setSingleStep( ( f_qs[ wheel_file ].back() - f_qs[ wheel_file ][ 0 ] ) / UHSH_WHEEL_RES );
       connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
@@ -3873,7 +3877,7 @@ void US_Hydrodyn_Saxs_Hplc::guinier_q_start_text( const QString & text )
    guinier_markers[ 0 ]->setXValue( text.toDouble() * text.toDouble() );
    guinier_markers[ 2 ]->setXValue( text.toDouble() * text.toDouble() );
 #endif
-   if ( qwtw_wheel->value() != text.toDouble() )
+   if ( !wheel_is_pressed && qwtw_wheel->value() != text.toDouble() )
    {
       qwtw_wheel->setValue( text.toDouble() );
       disconnect( le_guinier_q2_start, SIGNAL( textChanged( const QString & ) ), 0, 0 );
@@ -3913,7 +3917,7 @@ void US_Hydrodyn_Saxs_Hplc::guinier_q_end_text( const QString & text )
    guinier_markers[ 1 ]->setXValue( text.toDouble() * text.toDouble() );
    guinier_markers[ 3 ]->setXValue( text.toDouble() * text.toDouble() );
 #endif
-   if ( qwtw_wheel->value() != text.toDouble() )
+   if ( !wheel_is_pressed && qwtw_wheel->value() != text.toDouble() )
    {
       qwtw_wheel->setValue( text.toDouble() );
       disconnect( le_guinier_q2_end, SIGNAL( textChanged( const QString & ) ), 0, 0 );
@@ -3985,7 +3989,7 @@ void US_Hydrodyn_Saxs_Hplc::guinier_q2_start_text( const QString & text )
    guinier_markers[ 0 ]->setXValue( text.toDouble() );
    guinier_markers[ 2 ]->setXValue( text.toDouble() );
 #endif
-   if ( qwtw_wheel->value() != text.toDouble() )
+   if ( !wheel_is_pressed && qwtw_wheel->value() != text.toDouble() )
    {
       qwtw_wheel->setValue( text.toDouble() );
       disconnect( le_guinier_q_start, SIGNAL( textChanged( const QString & ) ), 0, 0 );
@@ -4018,7 +4022,7 @@ void US_Hydrodyn_Saxs_Hplc::guinier_q2_end_text( const QString & text )
    guinier_markers[ 1 ]->setXValue( text.toDouble() );
    guinier_markers[ 3 ]->setXValue( text.toDouble() );
 #endif
-   if ( qwtw_wheel->value() != text.toDouble() )
+   if ( !wheel_is_pressed && qwtw_wheel->value() != text.toDouble() )
    {
       qwtw_wheel->setValue( text.toDouble() );
       disconnect( le_guinier_q_end, SIGNAL( textChanged( const QString & ) ), 0, 0 );
@@ -4073,7 +4077,7 @@ void US_Hydrodyn_Saxs_Hplc::guinier_delta_start_text( const QString & text )
    {
       return;
    }
-   if ( qwtw_wheel->value() != text.toDouble() )
+   if ( !wheel_is_pressed && qwtw_wheel->value() != text.toDouble() )
    {
       qwtw_wheel->setValue( text.toDouble() );
    }
@@ -4091,7 +4095,7 @@ void US_Hydrodyn_Saxs_Hplc::guinier_delta_end_text( const QString & text )
    {
       return;
    }
-   if ( qwtw_wheel->value() != text.toDouble() )
+   if ( !wheel_is_pressed && qwtw_wheel->value() != text.toDouble() )
    {
       qwtw_wheel->setValue( text.toDouble() );
    }
@@ -4577,10 +4581,17 @@ void US_Hydrodyn_Saxs_Hplc::wyatt_enables()
    le_wyatt_start2        ->setEnabled( cb_wyatt_2->isChecked() );
    le_wyatt_end2          ->setEnabled( cb_wyatt_2->isChecked() );
    wheel_enables          (
+#if QT_VERSION > 0x050000
+                           le_last_focus == le_wyatt_start   || 
+                           le_last_focus == le_wyatt_end     ||
+                           le_last_focus == le_wyatt_start2  || 
+                           le_last_focus == le_wyatt_end2   
+#else
                            le_wyatt_start  ->hasFocus() || 
                            le_wyatt_end    ->hasFocus() ||
                            le_wyatt_start2 ->hasFocus() || 
                            le_wyatt_end2   ->hasFocus()
+#endif
                            );
    pb_rescale             ->setEnabled( true );
    pb_view                ->setEnabled( true );
@@ -4696,7 +4707,7 @@ void US_Hydrodyn_Saxs_Hplc::wyatt_start_text( const QString & text )
 #else
    plotted_markers[ pos ]->setXValue( text.toDouble() );
 #endif
-   if ( qwtw_wheel->value() != text.toDouble() )
+   if ( !wheel_is_pressed && qwtw_wheel->value() != text.toDouble() )
    {
       qwtw_wheel->setValue( text.toDouble() );
    }
@@ -4716,7 +4727,7 @@ void US_Hydrodyn_Saxs_Hplc::wyatt_end_text( const QString & text )
 #else
    plotted_markers[ pos ]->setXValue( text.toDouble() );
 #endif
-   if ( qwtw_wheel->value() != text.toDouble() )
+   if ( !wheel_is_pressed && qwtw_wheel->value() != text.toDouble() )
    {
       qwtw_wheel->setValue( text.toDouble() );
    }
@@ -4733,6 +4744,7 @@ void US_Hydrodyn_Saxs_Hplc::wyatt_start_focus( bool hasFocus )
    // cout << QString( "wyatt_start_focus %1\n" ).arg( hasFocus ? "true" : "false" );
    if ( hasFocus )
    {
+      le_last_focus = le_wyatt_start;
       disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
       qwtw_wheel->setRange( f_qs[ wheel_file ][ 0 ], f_qs[ wheel_file ].back()); qwtw_wheel->setSingleStep( ( f_qs[ wheel_file ].back() - f_qs[ wheel_file ][ 0 ] ) / UHSH_WHEEL_RES );
       connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
@@ -4746,6 +4758,7 @@ void US_Hydrodyn_Saxs_Hplc::wyatt_end_focus( bool hasFocus )
    // cout << QString( "wyatt_end_focus %1\n" ).arg( hasFocus ? "true" : "false" );
    if ( hasFocus )
    {
+      le_last_focus = le_wyatt_end;
       disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
       qwtw_wheel->setRange( f_qs[ wheel_file ][ 0 ], f_qs[ wheel_file ].back()); qwtw_wheel->setSingleStep( ( f_qs[ wheel_file ].back() - f_qs[ wheel_file ][ 0 ] ) / UHSH_WHEEL_RES );
       connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
@@ -4762,7 +4775,7 @@ void US_Hydrodyn_Saxs_Hplc::wyatt_start2_text( const QString & text )
 #else
    plotted_markers[ pos ]->setXValue( text.toDouble() );
 #endif
-   if ( qwtw_wheel->value() != text.toDouble() )
+   if ( !wheel_is_pressed && qwtw_wheel->value() != text.toDouble() )
    {
       qwtw_wheel->setValue( text.toDouble() );
    }
@@ -4782,7 +4795,7 @@ void US_Hydrodyn_Saxs_Hplc::wyatt_end2_text( const QString & text )
 #else
    plotted_markers[ pos ]->setXValue( text.toDouble() );
 #endif
-   if ( qwtw_wheel->value() != text.toDouble() )
+   if ( !wheel_is_pressed && qwtw_wheel->value() != text.toDouble() )
    {
       qwtw_wheel->setValue( text.toDouble() );
    }
@@ -4799,6 +4812,7 @@ void US_Hydrodyn_Saxs_Hplc::wyatt_start2_focus( bool hasFocus )
    // us_qdebug( QString( "wyatt_start2_focus %1\n" ).arg( hasFocus ? "true" : "false" ) );
    if ( hasFocus )
    {
+      le_last_focus = le_wyatt_start2;
       disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
       qwtw_wheel->setRange( f_qs[ wheel_file ][ 0 ], f_qs[ wheel_file ].back()); qwtw_wheel->setSingleStep( ( f_qs[ wheel_file ].back() - f_qs[ wheel_file ][ 0 ] ) / UHSH_WHEEL_RES );
       connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
@@ -4812,6 +4826,7 @@ void US_Hydrodyn_Saxs_Hplc::wyatt_end2_focus( bool hasFocus )
    // us_qdebug(  QString( "wyatt_end2_focus %1\n" ).arg( hasFocus ? "true" : "false" ) );
    if ( hasFocus )
    {
+      le_last_focus = le_wyatt_end2;
       disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
       qwtw_wheel->setRange( f_qs[ wheel_file ][ 0 ], f_qs[ wheel_file ].back()); qwtw_wheel->setSingleStep( ( f_qs[ wheel_file ].back() - f_qs[ wheel_file ][ 0 ] ) / UHSH_WHEEL_RES );
       connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
@@ -5991,7 +6006,7 @@ void US_Hydrodyn_Saxs_Hplc::scale_q_start_text( const QString & text )
 #else
    plotted_markers[ 0 ]->setXValue( text.toDouble() );
 #endif
-   if ( qwtw_wheel->value() != text.toDouble() )
+   if ( !wheel_is_pressed && qwtw_wheel->value() != text.toDouble() )
    {
       qwtw_wheel->setValue( text.toDouble() );
    }
@@ -6010,7 +6025,7 @@ void US_Hydrodyn_Saxs_Hplc::scale_q_end_text( const QString & text )
 #else
    plotted_markers[ 1 ]->setXValue( text.toDouble() );
 #endif
-   if ( qwtw_wheel->value() != text.toDouble() )
+   if ( !wheel_is_pressed && qwtw_wheel->value() != text.toDouble() )
    {
       qwtw_wheel->setValue( text.toDouble() );
    }

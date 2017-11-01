@@ -296,7 +296,10 @@ void US_Config_GUI::setup_GUI()
 
    w = fm->width( USglobal->config_list.html_dir );
    w = ( cwidth > w ) ? cwidth : w;
+
+#if QT_VERSION > 0x040000
    w += 75;
+#endif
 
    QBoxLayout * topbox = new QVBoxLayout( this ); topbox->setContentsMargins( 0, 0, 0, 0 ); topbox->setSpacing( 0 ); topbox->setSpacing( 2 );
    

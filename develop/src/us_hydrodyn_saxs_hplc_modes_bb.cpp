@@ -446,8 +446,13 @@ void US_Hydrodyn_Saxs_Hplc::blanks_enables()
    le_baseline_end_e      ->setEnabled( true );
 
    wheel_enables(
+#if QT_VERSION > 0x050000
+                 le_last_focus == le_baseline_end_s ||
+                 le_last_focus == le_baseline_end_e
+#else
                  le_baseline_end_s  ->hasFocus() ||
                  le_baseline_end_e  ->hasFocus()
+#endif
                  );
    pb_rescale             ->setEnabled( true );
    pb_view                ->setEnabled( true );
@@ -1063,6 +1068,15 @@ void US_Hydrodyn_Saxs_Hplc::baseline_enables()
    le_baseline_end        ->setEnabled( true );
    le_baseline_end_e      ->setEnabled( true );
    wheel_enables(
+#if QT_VERSION > 0x050000
+                 le_last_focus == le_baseline_start_s || 
+                 le_last_focus == le_baseline_start   || 
+                 le_last_focus == le_baseline_start_e || 
+                 le_last_focus == le_baseline_end_s   ||
+                 le_last_focus == le_baseline_end     ||
+                 le_last_focus == le_baseline_end_e   ||
+                 le_last_focus == le_baseline_width  
+#else
                  le_baseline_start_s->hasFocus() || 
                  le_baseline_start  ->hasFocus() || 
                  le_baseline_start_e->hasFocus() || 
@@ -1070,6 +1084,7 @@ void US_Hydrodyn_Saxs_Hplc::baseline_enables()
                  le_baseline_end    ->hasFocus() ||
                  le_baseline_end_e  ->hasFocus() ||
                  le_baseline_width  ->hasFocus()
+#endif
                  );
    pb_rescale             ->setEnabled( true );
    pb_view                ->setEnabled( true );
@@ -2489,12 +2504,12 @@ void US_Hydrodyn_Saxs_Hplc::baseline_start_s_text( const QString & text )
 #else
    plotted_markers[ 0 ]->setXValue( text.toDouble() );
 #endif
-   // if ( qwtw_wheel->value() != text.toDouble() )
+   // if ( !wheel_is_pressed && qwtw_wheel->value() != text.toDouble() )
    // {
    //    qwtw_wheel->setValue( text.toDouble() );
    // }
    double dpos = (double) input_double_to_pos( text.toDouble() );
-   if ( qwtw_wheel->value() != dpos ) {
+   if ( !wheel_is_pressed && qwtw_wheel->value() != dpos ) {
       qwtw_wheel->setValue( dpos );
    }
    replot_baseline( "baseline_start_s_text" );
@@ -2512,12 +2527,12 @@ void US_Hydrodyn_Saxs_Hplc::baseline_start_text( const QString & text )
 #else
    plotted_markers[ 1 ]->setXValue( text.toDouble() );
 #endif
-   // if ( qwtw_wheel->value() != text.toDouble() )
+   // if ( !wheel_is_pressed && qwtw_wheel->value() != text.toDouble() )
    // {
    //    qwtw_wheel->setValue( text.toDouble() );
    // }
    double dpos = (double) input_double_to_pos( text.toDouble() );
-   if ( qwtw_wheel->value() != dpos ) {
+   if ( !wheel_is_pressed && qwtw_wheel->value() != dpos ) {
       qwtw_wheel->setValue( dpos );
    }
    replot_baseline( "baseline_start_text" );
@@ -2535,12 +2550,12 @@ void US_Hydrodyn_Saxs_Hplc::baseline_start_e_text( const QString & text )
 #else
    plotted_markers[ 2 ]->setXValue( text.toDouble() );
 #endif
-   // if ( qwtw_wheel->value() != text.toDouble() )
+   // if ( !wheel_is_pressed && qwtw_wheel->value() != text.toDouble() )
    // {
    //    qwtw_wheel->setValue( text.toDouble() );
    // }
    double dpos = (double) input_double_to_pos( text.toDouble() );
-   if ( qwtw_wheel->value() != dpos ) {
+   if ( !wheel_is_pressed && qwtw_wheel->value() != dpos ) {
       qwtw_wheel->setValue( dpos );
    }
    replot_baseline( "baseline_start_e_text" );
@@ -2570,13 +2585,13 @@ void US_Hydrodyn_Saxs_Hplc::baseline_end_s_text( const QString & text )
 #endif
    }
 
-   // if ( qwtw_wheel->value() != text.toDouble() )
+   // if ( !wheel_is_pressed && qwtw_wheel->value() != text.toDouble() )
    // {
    //    qwtw_wheel->setValue( text.toDouble() );
    // }
    double dpos = (double) input_double_to_pos( text.toDouble() );
    if ( le_baseline_end_s->hasFocus() ) {
-      if ( qwtw_wheel->value() != dpos ) {
+      if ( !wheel_is_pressed && qwtw_wheel->value() != dpos ) {
          qwtw_wheel->setValue( dpos );
       }
    }
@@ -2611,7 +2626,7 @@ void US_Hydrodyn_Saxs_Hplc::baseline_end_s_text( const QString & text )
             // disconnect( le_baseline_end_s, SIGNAL( textChanged( const QString & ) ), 0, 0 );
             // le_baseline_end_s->setText( QString( "%1" ).arg( f_qs[ wheel_file ][ new_pos_s ] ) );
             // connect( le_baseline_end_s, SIGNAL( textChanged( const QString & ) ), SLOT( baseline_end_s_text( const QString & ) ) );
-            if ( qwtw_wheel->value() != new_pos_s ) {
+            if ( !wheel_is_pressed && qwtw_wheel->value() != new_pos_s ) {
                qwtw_wheel->setValue( new_pos_s );
             }
 #if QT_VERSION < 0x040000
@@ -2669,13 +2684,13 @@ void US_Hydrodyn_Saxs_Hplc::baseline_end_text( const QString & text )
 #else
    plotted_markers[ pos ]->setXValue( text.toDouble() );
 #endif
-   // if ( qwtw_wheel->value() != text.toDouble() )
+   // if ( !wheel_is_pressed && qwtw_wheel->value() != text.toDouble() )
    // {
    //    qwtw_wheel->setValue( text.toDouble() );
    // }
    double dpos = (double) input_double_to_pos( text.toDouble() );
    if ( le_baseline_end->hasFocus() ) {
-      if ( qwtw_wheel->value() != dpos ) {
+      if ( !wheel_is_pressed && qwtw_wheel->value() != dpos ) {
          qwtw_wheel->setValue( dpos );
       }
    }
@@ -2702,13 +2717,13 @@ void US_Hydrodyn_Saxs_Hplc::baseline_end_e_text( const QString & text )
 #else
    plotted_markers[ pos ]->setXValue( text.toDouble() );
 #endif
-   // if ( qwtw_wheel->value() != text.toDouble() )
+   // if ( !wheel_is_pressed && qwtw_wheel->value() != text.toDouble() )
    // {
    //    qwtw_wheel->setValue( text.toDouble() );
    // }
    double dpos = (double) input_double_to_pos( text.toDouble() );
    if ( le_baseline_end_e->hasFocus() ) {
-      if ( qwtw_wheel->value() != dpos ) {
+      if ( !wheel_is_pressed && qwtw_wheel->value() != dpos ) {
          qwtw_wheel->setValue( dpos );
       }
    }
@@ -2744,7 +2759,7 @@ void US_Hydrodyn_Saxs_Hplc::baseline_end_e_text( const QString & text )
             // disconnect( le_baseline_end_e, SIGNAL( textChanged( const QString & ) ), 0, 0 );
             // le_baseline_end_e->setText( QString( "%1" ).arg( f_qs[ wheel_file ][ new_pos_e ] ) );
             // connect( le_baseline_end_e, SIGNAL( textChanged( const QString & ) ), SLOT( baseline_end_s_text( const QString & ) ) );
-            if ( qwtw_wheel->value() != new_pos_e ) {
+            if ( !wheel_is_pressed && qwtw_wheel->value() != new_pos_e ) {
                qwtw_wheel->setValue( new_pos_e );
             }
 #if QT_VERSION < 0x040000
@@ -2798,6 +2813,7 @@ void US_Hydrodyn_Saxs_Hplc::baseline_start_s_focus( bool hasFocus )
    // cout << QString( "baseline_start_s_focus %1\n" ).arg( hasFocus ? "true" : "false" );
    if ( hasFocus )
    {
+      le_last_focus = le_baseline_start_s;
       disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
       // qwtw_wheel->setRange( f_qs[ wheel_file ][ 0 ], f_qs[ wheel_file ].back(),
       //                       ( f_qs[ wheel_file ].back() - f_qs[ wheel_file ][ 0 ] ) / UHSH_WHEEL_RES );
@@ -2814,6 +2830,7 @@ void US_Hydrodyn_Saxs_Hplc::baseline_start_focus( bool hasFocus )
    // cout << QString( "baseline_start_focus %1\n" ).arg( hasFocus ? "true" : "false" );
    if ( hasFocus )
    {
+      le_last_focus = le_baseline_start;
       disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
       // qwtw_wheel->setRange( f_qs[ wheel_file ][ 0 ], f_qs[ wheel_file ].back(),
       //                       ( f_qs[ wheel_file ].back() - f_qs[ wheel_file ][ 0 ] ) / UHSH_WHEEL_RES );
@@ -2830,6 +2847,7 @@ void US_Hydrodyn_Saxs_Hplc::baseline_start_e_focus( bool hasFocus )
    // cout << QString( "baseline_start_e_focus %1\n" ).arg( hasFocus ? "true" : "false" );
    if ( hasFocus )
    {
+      le_last_focus = le_baseline_start_e;
       disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
       // qwtw_wheel->setRange( f_qs[ wheel_file ][ 0 ], f_qs[ wheel_file ].back(),
       //                       ( f_qs[ wheel_file ].back() - f_qs[ wheel_file ][ 0 ] ) / UHSH_WHEEL_RES );
@@ -2846,6 +2864,7 @@ void US_Hydrodyn_Saxs_Hplc::baseline_end_s_focus( bool hasFocus )
    // cout << QString( "baseline_end_s_focus %1\n" ).arg( hasFocus ? "true" : "false" );
    if ( hasFocus )
    {
+      le_last_focus = le_baseline_end_s;
       disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
       // qwtw_wheel->setRange( f_qs[ wheel_file ][ 0 ],
       //                       f_qs[ wheel_file ].back(), 
@@ -2863,6 +2882,7 @@ void US_Hydrodyn_Saxs_Hplc::baseline_end_focus( bool hasFocus )
    // cout << QString( "baseline_end_focus %1\n" ).arg( hasFocus ? "true" : "false" );
    if ( hasFocus )
    {
+      le_last_focus = le_baseline_end;
       disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
       // qwtw_wheel->setRange( f_qs[ wheel_file ][ 0 ],
       //                       f_qs[ wheel_file ].back(), 
@@ -2880,6 +2900,7 @@ void US_Hydrodyn_Saxs_Hplc::baseline_end_e_focus( bool hasFocus )
    // cout << QString( "baseline_end_e_focus %1\n" ).arg( hasFocus ? "true" : "false" );
    if ( hasFocus )
    {
+      le_last_focus = le_baseline_end_e;
       disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
       // qwtw_wheel->setRange( f_qs[ wheel_file ][ 0 ],
       //                       f_qs[ wheel_file ].back(), 
@@ -2902,7 +2923,7 @@ void US_Hydrodyn_Saxs_Hplc::baseline_width_text( const QString & text )
    }
 
    if ( le_baseline_width->hasFocus() ) {
-      if ( qwtw_wheel->value() != (double) blw ) {
+      if ( !wheel_is_pressed && qwtw_wheel->value() != (double) blw ) {
          qwtw_wheel->setValue( (double) blw );
       }
 
@@ -2956,6 +2977,7 @@ void US_Hydrodyn_Saxs_Hplc::baseline_width_text( const QString & text )
 void US_Hydrodyn_Saxs_Hplc::baseline_width_focus( bool hasFocus )
 {
    if ( hasFocus ) {
+      le_last_focus = le_baseline_width;
       // us_qdebug( QString( "baseline_width focus blw currently %1" ).arg( le_baseline_width->text() ) );
       disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
       qwtw_wheel->setRange( IB_MIN_RANGE, baseline_max_window_size - 1); qwtw_wheel->setSingleStep( 1 );

@@ -974,6 +974,10 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    // qwtw_wheel->setTotalAngle( 3600.0 );
    qwtw_wheel->setEnabled      ( false );
    connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
+#if QT_VERSION > 0x050000
+   connect( qwtw_wheel, SIGNAL( wheelPressed() ), SLOT( wheel_pressed() ) );
+   connect( qwtw_wheel, SIGNAL( wheelReleased() ), SLOT( wheel_released() ) );
+#endif
 
    pb_wheel_inc = new QPushButton(us_tr(">"), this);
    pb_wheel_inc->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1 ));

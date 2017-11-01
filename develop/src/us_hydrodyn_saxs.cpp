@@ -1706,6 +1706,10 @@ void US_Hydrodyn_Saxs::setupGUI()
    // qwtw_wheel->setTotalAngle( 3600.0 );
    qwtw_wheel->setEnabled      ( false );
    connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
+#if QT_VERSION >= 0x050000
+   connect( qwtw_wheel, SIGNAL( wheelPressed() ), SLOT( wheel_pressed() ) );
+   connect( qwtw_wheel, SIGNAL( wheelReleased() ), SLOT( wheel_released() ) );
+#endif
    manual_guinier_widgets.push_back( qwtw_wheel );
    qwtw_wheel->setMinimumWidth ( 350 );
    
@@ -8004,3 +8008,17 @@ void US_Hydrodyn_Saxs::check_mwt_constants( bool force )
       }
    }
 }
+
+#if QT_VERSION >= 0x050000
+
+void US_Hydrodyn_Saxs::wheel_pressed() {
+   // qDebug() << "wheel_pressed()";
+   wheel_is_pressed = true;
+}
+
+void US_Hydrodyn_Saxs::wheel_released() {
+   // qDebug() << "wheel_released()";
+   wheel_is_pressed = false;
+}
+
+#endif

@@ -1093,3 +1093,17 @@ void US_Hydrodyn_Saxs_Hplc::wheel_save()
    default : us_qdebug( "wheel save called in invalid mode" ); break;
    }
 }
+
+#if QT_VERSION >= 0x050000
+
+void US_Hydrodyn_Saxs_Hplc::wheel_pressed() {
+   // qDebug() << "wheel_pressed()";
+   wheel_is_pressed = true;
+}
+
+void US_Hydrodyn_Saxs_Hplc::wheel_released() {
+   // qDebug() << "wheel_released()";
+   wheel_is_pressed = false;
+}
+
+#endif

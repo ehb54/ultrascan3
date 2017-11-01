@@ -447,6 +447,10 @@ void US_Hydrodyn_Saxs_Buffer_Nth::setupGUI()
    qwtw_wheel->setMinimumHeight( minHeight1 );
    qwtw_wheel->setEnabled      ( false );
    connect( qwtw_wheel, SIGNAL( valueChanged( double ) ), SLOT( adjust_wheel( double ) ) );
+#if QT_VERSION >= 0x050000
+   connect( qwtw_wheel, SIGNAL( wheelPressed() ), SLOT( wheel_pressed() ) );
+   connect( qwtw_wheel, SIGNAL( wheelReleased() ), SLOT( wheel_released() ) );
+#endif
 
    intensity_widgets.push_back( qwtw_wheel );
 
@@ -1283,7 +1287,7 @@ void US_Hydrodyn_Saxs_Buffer_Nth::update_i_level()
 #endif
    plot_data->replot();
 
-   if ( qwtw_wheel->value() != le_i_level->text().toDouble() )
+   if ( !wheel_is_pressed && qwtw_wheel->value() != le_i_level->text().toDouble() )
    {
       qwtw_wheel->setValue( le_i_level->text().toDouble() );
    }
@@ -1295,3 +1299,17 @@ void US_Hydrodyn_Saxs_Buffer_Nth::adjust_wheel( double pos )
 {
    le_i_level->setText( QString( "%1" ).arg( pos ) );
 }
+
+#if QT_VERSION >= 0x050000
+
+void US_Hydrodyn_Saxs_Buffer_Nth::wheel_pressed() {
+   // qDebug() << "wheel_pressed()";
+   wheel_is_pressed = true;
+}
+
+void US_Hydrodyn_Saxs_Buffer_Nth::wheel_released() {
+   // qDebug() << "wheel_released()";
+   wheel_is_pressed = false;
+}
+
+#endif

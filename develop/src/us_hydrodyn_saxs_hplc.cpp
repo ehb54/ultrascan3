@@ -6417,7 +6417,7 @@ void US_Hydrodyn_Saxs_Hplc::gauss_pos_text( const QString & text )
 #else
       plotted_markers[ 2 + gaussian_pos ]->setXValue( text.toDouble() );
 #endif
-      if ( qwtw_wheel->value() != text.toDouble() )
+      if ( !wheel_is_pressed && qwtw_wheel->value() != text.toDouble() )
       {
          disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
          qwtw_wheel->setValue( text.toDouble() );
@@ -6511,7 +6511,7 @@ void US_Hydrodyn_Saxs_Hplc::gauss_pos_width_text( const QString & text )
          }
       }
 
-      if ( qwtw_wheel->value() != text.toDouble() )
+      if ( !wheel_is_pressed && qwtw_wheel->value() != text.toDouble() )
       {
          disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
          qwtw_wheel->setValue( text.toDouble() );
@@ -6534,7 +6534,7 @@ void US_Hydrodyn_Saxs_Hplc::gauss_pos_height_text( const QString & text )
    if ( gaussians.size() )
    {
       gaussians[ 0 + gaussian_type_size * gaussian_pos ] = text.toDouble();
-      if ( qwtw_wheel->value() != text.toDouble() )
+      if ( !wheel_is_pressed && qwtw_wheel->value() != text.toDouble() )
       {
          disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
          qwtw_wheel->setValue( text.toDouble() );
@@ -6555,7 +6555,7 @@ void US_Hydrodyn_Saxs_Hplc::gauss_pos_dist1_text( const QString & text )
       if ( current_mode == MODE_GAUSSIAN )
       {
          gaussians[ 3 + gaussian_type_size * gaussian_pos ] = text.toDouble();
-         if ( qwtw_wheel->value() != text.toDouble() )
+         if ( !wheel_is_pressed && qwtw_wheel->value() != text.toDouble() )
          {
             disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
             qwtw_wheel->setValue( text.toDouble() );
@@ -6598,7 +6598,7 @@ void US_Hydrodyn_Saxs_Hplc::gauss_pos_dist2_text( const QString & text )
       if ( current_mode == MODE_GAUSSIAN )
       {
          gaussians[ 4 + gaussian_type_size * gaussian_pos ] = text.toDouble();
-         if ( qwtw_wheel->value() != text.toDouble() )
+         if ( !wheel_is_pressed && qwtw_wheel->value() != text.toDouble() )
          {
             disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
             qwtw_wheel->setValue( text.toDouble() );
@@ -6642,7 +6642,7 @@ void US_Hydrodyn_Saxs_Hplc::gauss_fit_start_text( const QString & text )
 #else
    plotted_markers[ 0 ]->setXValue( text.toDouble() );
 #endif
-   if ( qwtw_wheel->value() != text.toDouble() )
+   if ( !wheel_is_pressed && qwtw_wheel->value() != text.toDouble() )
    {
       qwtw_wheel->setValue( text.toDouble() );
    }
@@ -6671,7 +6671,7 @@ void US_Hydrodyn_Saxs_Hplc::gauss_fit_end_text( const QString & text )
 #else
    plotted_markers[ 1 ]->setXValue( text.toDouble() );
 #endif
-   if ( qwtw_wheel->value() != text.toDouble() )
+   if ( !wheel_is_pressed && qwtw_wheel->value() != text.toDouble() )
    {
       qwtw_wheel->setValue( text.toDouble() );
    }
@@ -7034,6 +7034,7 @@ void US_Hydrodyn_Saxs_Hplc::gauss_pos_focus( bool hasFocus )
    cout << QString( "gauss_pos_focus %1\n" ).arg( hasFocus ? "true" : "false" );
    if ( hasFocus && !cb_ggauss_scroll->isChecked() )
    {
+      le_last_focus = le_gauss_pos;
       disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
       update_gauss_pos();
       double range = f_qs[ wheel_file ].back() - f_qs[ wheel_file ][ 0 ];
@@ -7050,6 +7051,7 @@ void US_Hydrodyn_Saxs_Hplc::gauss_pos_width_focus( bool hasFocus )
    cout << QString( "gauss_pos_width_focus %1\n" ).arg( hasFocus ? "true" : "false" );
    if ( hasFocus && !cb_ggauss_scroll->isChecked() )
    {
+      le_last_focus = le_gauss_pos_width;
       disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
       update_gauss_pos();
       qwtw_wheel->setRange( 0, f_qs[ wheel_file ].back() / 3); qwtw_wheel->setSingleStep( ( f_qs[ wheel_file ].back() / 3 ) / UHSH_WHEEL_RES );
@@ -7064,6 +7066,7 @@ void US_Hydrodyn_Saxs_Hplc::gauss_pos_height_focus( bool hasFocus )
    cout << QString( "gauss_pos_height_focus %1\n" ).arg( hasFocus ? "true" : "false" );
    if ( hasFocus && !cb_ggauss_scroll->isChecked() )
    {
+      le_last_focus = le_gauss_pos_height;
       disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
       update_gauss_pos();
       qwtw_wheel->setRange( 0, gauss_max_height); qwtw_wheel->setSingleStep( gauss_max_height / UHSH_WHEEL_RES );
@@ -7078,6 +7081,7 @@ void US_Hydrodyn_Saxs_Hplc::gauss_pos_dist1_focus( bool hasFocus )
    cout << QString( "gauss_pos_dist1_focus %1\n" ).arg( hasFocus ? "true" : "false" );
    if ( hasFocus && !cb_ggauss_scroll->isChecked() )
    {
+      le_last_focus = le_gauss_pos_dist1;
       disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
       update_gauss_pos();
       double dist = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_dist_max" ].toDouble();
@@ -7093,6 +7097,7 @@ void US_Hydrodyn_Saxs_Hplc::gauss_pos_dist2_focus( bool hasFocus )
    cout << QString( "gauss_pos_dist2_focus %1\n" ).arg( hasFocus ? "true" : "false" );
    if ( hasFocus && !cb_ggauss_scroll->isChecked() )
    {
+      le_last_focus = le_gauss_pos_dist2;
       disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
       update_gauss_pos();
       double dist = ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "hplc_dist_max" ].toDouble();
@@ -7108,6 +7113,7 @@ void US_Hydrodyn_Saxs_Hplc::gauss_fit_start_focus( bool hasFocus )
    cout << QString( "gauss_fit_start_focus %1\n" ).arg( hasFocus ? "true" : "false" );
    if ( hasFocus && !cb_ggauss_scroll->isChecked() )
    {
+      le_last_focus = le_gauss_fit_start;
       disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
       update_gauss_pos();
       qwtw_wheel->setRange( f_qs[ wheel_file ][ 0 ], f_qs[ wheel_file ].back()); qwtw_wheel->setSingleStep( ( f_qs[ wheel_file ].back() - f_qs[ wheel_file ][ 0 ] ) / UHSH_WHEEL_RES );
@@ -7122,6 +7128,7 @@ void US_Hydrodyn_Saxs_Hplc::gauss_fit_end_focus( bool hasFocus )
    cout << QString( "gauss_fit_end_focus %1\n" ).arg( hasFocus ? "true" : "false" );
    if ( hasFocus && !cb_ggauss_scroll->isChecked() )
    {
+      le_last_focus = le_gauss_fit_end;
       disconnect( qwtw_wheel, SIGNAL( valueChanged( double ) ), 0, 0 );
       update_gauss_pos();
       qwtw_wheel->setRange( f_qs[ wheel_file ][ 0 ], f_qs[ wheel_file ].back()); qwtw_wheel->setSingleStep( ( f_qs[ wheel_file ].back() - f_qs[ wheel_file ][ 0 ] ) / UHSH_WHEEL_RES );

@@ -3879,7 +3879,7 @@ void US_Hydrodyn_Saxs::adjust_wheel( double pos )
 
 void US_Hydrodyn_Saxs::manual_guinier_fit_start_text( const QString & text )
 {
-   if ( qwtw_wheel->value() != text.toDouble() )
+   if ( !wheel_is_pressed && qwtw_wheel->value() != text.toDouble() )
    {
       qwtw_wheel->setValue( text.toDouble() );
    }
@@ -3887,7 +3887,7 @@ void US_Hydrodyn_Saxs::manual_guinier_fit_start_text( const QString & text )
 
 void US_Hydrodyn_Saxs::manual_guinier_fit_end_text( const QString & text )
 {
-   if ( qwtw_wheel->value() != text.toDouble() )
+   if ( !wheel_is_pressed && qwtw_wheel->value() != text.toDouble() )
    {
       qwtw_wheel->setValue( text.toDouble() );
    }
