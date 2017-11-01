@@ -10,7 +10,7 @@ if [ $# -lt 1 ]; then
    echo "    '-d'  -> set up for development mode"
    echo "    '-p'  -> set up for production mode"
    echo "    '-t'  -> test state of current directory"
-   echo " <files> == current directory files to process"
+   echo " <files> == current directory files to process or 'all'"
    exit 0
 fi
  
@@ -27,10 +27,10 @@ case $OPT in
      # Do actions for setting development mode
      echo "Set up for development"
      if [ -z "${FILES}" ]; then
-        echo "*** ERROR *** -d option requires a list of files"
+        echo "*** ERROR *** -d option requires a list of files or 'all'"
         exit 1
      fi
-
+     # Determine relative path of alpha subdirectory
      ADIR="../../alpha"
      if [ ${SUBDIR} = "gui"  -o  ${SUBDIR} = "utils" ]; then
         ADIR="../alpha"
@@ -42,6 +42,18 @@ case $OPT in
         ADIR="./alpha"
      fi
 
+     # If 'all', files list is .cpp/.h/.pro in current also in alpha
+     if [ "${FILES}" = "all" ]; then
+        CFILES=`ls *.cpp *.h *.pro`
+        FILES=""
+        for F in ${CFILES}; do
+           if [ -f ${ADIR}/${F} ]; then
+              FILES="${FILES} ${F}"
+           fi
+        done
+     fi
+
+     # Execute '-d' by creating soft links to alpha
      echo "  Linking to development source ..."
      for F in ${FILES}; do 
         if [ -f ${ADIR}/${F} ]; then
@@ -60,10 +72,13 @@ case $OPT in
      # Do actions for setting production mode
      echo "Set up for production"
      if [ -z "${FILES}" ]; then
-        echo "*** ERROR *** -p option requires a list of files"
+        echo "*** ERROR *** -p option requires a list of files or 'all'"
         exit 3
      fi
      if [ ! -z "${LNKFS}" ]; then
+        if [ "${FILES}" = "all" ]; then
+           FILES=${LNKFS}  # 'all' files list is all links
+        fi
         echo "  Removing links: ..."
         for F in ${FILES}; do 
            if [ -h ${F} ]; then

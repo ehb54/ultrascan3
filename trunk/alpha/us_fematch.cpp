@@ -540,32 +540,7 @@ DbgLv(0) << "FEM:LD: newfile" << newfile << "idExp" << idExp
 
    int nssp       = speed_steps.count();
    int ntriples   = triples.size();
-   //------------------------------------------
-   qDebug()<< "Hi:Load:no of speed step"    << nssp;
-   //------------------------------------------
-#if 0
-   if ( nssp > 0 )
-   {
-      int stm1   = speed_steps[ nssp - 1 ].time_first;
-      int stm2   = speed_steps[ nssp - 1 ].time_last;
-      qDebug()<<"Load: ntriples=	"<< ntriples<< "no of speed step"    << nssp;
-      for ( int ds = 0; ds < ntriples; ds++ )
-      {  // Scan data time ranges and compare to experiment speed steps
-         edata      = &dataList[ ds ];
-         int lesc   = edata->scanCount() - 1;
-         int etm1   = edata->scanData[    0 ].seconds;
-         int etm2   = edata->scanData[ lesc ].seconds;
-         qDebug()<< "Time limit for current speed"<< etm1<< etm2;
-         if ( etm1 < stm1  ||  etm2 > stm2 )
-         {  // Data times beyond speed step ranges, so flag use of data ranges
-            nssp       = 0;
-            qDebug()<<"Data is beyond range";
-            speed_steps.clear();
-            break;
-         }
-      }
-   }
-#endif
+DbgLv(1) << "Hi:Load:no of speed step" << nssp;
 
    if ( nssp > 0 )
    {
@@ -577,12 +552,13 @@ DbgLv(0) << "FEM:LD: newfile" << newfile << "idExp" << idExp
          {   // Scan data time ranges and compare to experiment speed steps
             edata      = &dataList[ ds ];
             int lesc   = edata->scanCount() - 1;
-            int etm1 = edata->scanData[ 0 ].seconds;
+            int etm1   = edata->scanData[    0 ].seconds;
             int etm2   = edata->scanData[ lesc ].seconds;
+
             if ( etm1 < stm1  ||  etm2 > stm2 )
             {  // Data times beyond speed step ranges, so flag use of data ranges
                //nssp       = 0;
-               qDebug() << "Data is beyond range" << etm1 << etm2 << stm1 << stm2;
+               qDebug() << "Data is beyond range ex:" << etm1 << etm2 << "ss:" << stm1 << stm2;
                //speed_steps.clear();
                break;
             }
@@ -2154,7 +2130,8 @@ DbgLv(1) << "timestate file does not exist";
            model.components[ 0 ].delta == 0.0  &&
            model.coSedSolute           <  0.0  &&
            compress                    == 0.0 )
-      {    qDebug()<<"Finite Element Solver is called";
+      {
+DbgLv(1) << "(fematch:)Finite Element Solver is called";
            US_Astfem_RSA* astfem_rsa = new US_Astfem_RSA( model, simparams );
            connect( astfem_rsa, SIGNAL( current_component( int ) ),
                   this,       SLOT(   update_progress(   int ) ) );
@@ -2166,7 +2143,7 @@ DbgLv(1) << "timestate file does not exist";
       }
       else
       {
-           qDebug()<<"Finite Volume Solver is called";
+DbgLv(1) << "(fematch:)Finite Volume Solver is called";
            US_LammAstfvm *astfvm     = new US_LammAstfvm( model, simparams );
            //connect( astfvm,  SIGNAL( comp_progress( int ) ), this,  SLOT(   update_progress(   int ) ) );
            //solution_rec.buffer.compressibility = compress;

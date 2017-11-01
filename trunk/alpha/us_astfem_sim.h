@@ -20,7 +20,7 @@
 #define DbgLv(a) if(dbg_level>=a)qDebug()
 #endif
 
-//! \brief Main window to control and display an ultracentrifugation 
+//! \brief Main window to control and display an ultracentrifugation
 //!        simulation
 
 class US_Astfem_Sim : public US_Widgets
@@ -29,9 +29,9 @@ class US_Astfem_Sim : public US_Widgets
 
    public:
       //! \param p - Parent widget, normally not specified
-      //! \param f - Window flags, normally not specified  
+      //! \param f - Window flags, normally not specified
       US_Astfem_Sim( QWidget* = 0, Qt::WindowFlags = 0 );
-      
+
       // Write a timestate file based on auc data
       int  writetimestate( const QString&,  US_DataIO::RawData& );
 
@@ -53,11 +53,11 @@ class US_Astfem_Sim : public US_Widgets
 
       QString        tmst_fnamei;
       QString        currentDir;
-      
+
       QCheckBox*     ck_movie;
       QCheckBox*     ck_savemovie;
       QCheckBox*     ck_timeCorr;
-                    
+
 //      QListWidget*       pb_rotors;
 
       QPushButton*   pb_saveExp;
@@ -73,15 +73,15 @@ class US_Astfem_Sim : public US_Widgets
 
       QLabel*        lb_component;
       QLabel*        lb_progress;
-                    
+
       QLCDNumber*    lcd_time;
       QLCDNumber*    lcd_speed;
       QLCDNumber*    lcd_component;
       QProgressBar*  progress;
-                    
+
       QwtPlot*       moviePlot;
       QwtPlot*       scanPlot;
-      
+
       US_Plot*       plot1;
       US_Plot*       plot2;
 
@@ -95,26 +95,27 @@ class US_Astfem_Sim : public US_Widgets
       US_LammAstfvm*          astfvm;
       US_Model                system;
       US_Buffer               buffer;
-      US_SimulationParameters simparams;
-      US_AstfemMath::AstFemParameters af_params;
-      US_SimulationParameters working_simparams;
-      QVector<US_DataIO::RawData>      sim_data;
-      US_DataIO::RawData      sim_data_all;
-      void init_simparams  ( void );
-      void adjust_limits   ( double ) ;
-      double stretch        ( double*, double ) ;
-      void save_xla        ( const QString& , US_DataIO::RawData , int );  
-      void save_ultrascan  ( const QString& );  
-      void finish          ( void );
-      void ri_noise        ( void );
-      void random_noise    ( void );
-      void ti_noise        ( void );
-      //void plot            ( void );
-      void plot            ( int  );
-// debug
-      void dump_system     ( void );
-      void dump_simparms   ( void );
-      void dump_astfem_data( void );
+
+      US_SimulationParameters          simparams;
+      US_AstfemMath::AstFemParameters  af_params;
+      US_SimulationParameters          working_simparams;
+      QVector<US_DataIO::RawData>      sim_datas;
+      US_DataIO::RawData               sim_data_all;
+
+      void   init_simparams ( void );
+      void   adjust_limits  ( double );
+      double stretch        ( double*, double );
+      void   save_xla       ( const QString&, US_DataIO::RawData, int );
+      void   save_ultrascan ( const QString& );
+      void   finish         ( void );
+      void   ri_noise       ( void );
+      void   random_noise   ( void );
+      void   ti_noise       ( void );
+      void   plot           ( int  );
+      // debug
+      void dump_system      ( void );
+      void dump_simparms    ( void );
+      void dump_astfem_data ( void );
       void dump_simComponent( US_Model::SimulationComponent& );
       void dump_association ( US_Model::Association& );
       void dump_mfem_initial( US_Model::MfemInitial& );
@@ -122,7 +123,7 @@ class US_Astfem_Sim : public US_Widgets
       void dump_mfem_scan   ( US_DataIO::Scan& );
 
    private slots:
-      
+
       void new_model       ( void );
       void change_model    ( US_Model );
       void new_buffer      ( void );
@@ -140,21 +141,21 @@ class US_Astfem_Sim : public US_Widgets
       void start_calc      ( int );
       void show_progress   ( int );
       void calc_over       ( void );
-      
+
       void update_movie_plot( QVector< double >*, double* );
       void update_save_movie( bool );
 
-      void update_time     ( double time )        
+      void update_time     ( double time )
          { lcd_time ->display( (double)time  ); };
-      
+
       void update_speed    ( int speed )
          { lcd_speed->display( (int) speed ); };
 
       void help            ( void )
-         { showhelp.show_help( "manual/astfem_sim.html" ); }; 
+         { showhelp.show_help( "manual/astfem_sim.html" ); };
 
       void update_time_corr( void )
          { time_correctionFlag = ck_timeCorr->isChecked(); };
-};                                                                   
-#endif                                                               
-                                                                     
+};
+#endif
+
