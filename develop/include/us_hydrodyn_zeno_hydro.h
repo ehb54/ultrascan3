@@ -16,7 +16,7 @@ zeno_main(
 #include "../include/us_file_util.h"
 #include "../include/us_json.h"
 
-#if __cplusplus >= 201103L
+#if !defined(USE_OLD_ZENO) && __cplusplus >= 201103L
 int zeno_cxx_main(int argc, char **argv, const char * fname, bool cmdline_temp, US_Udp_Msg * zeno_us_udp_msg );
 #endif
 

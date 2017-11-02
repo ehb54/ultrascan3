@@ -13577,7 +13577,7 @@ bool US_Hydrodyn_Zeno::run(
       int progress_steps = 100;
 
       zeno_progress->setValue( 0 ); zeno_progress->setMaximum( progress_steps );
-#if __cplusplus >= 201103L
+#if !defined(USE_OLD_ZENO) && __cplusplus >= 201103L
       zeno_cxx_main( argc, argv, QString( "%1.zno" ).arg( filename ).toLatin1().data(), false, zeno_us_udp_msg );
 #endif
       zeno_progress->reset();
@@ -13594,8 +13594,11 @@ bool US_Hydrodyn_Zeno::run(
 
       argv[ argc++ ] = "us_zeno";
 
+      char *data_cmdfile = 0;
       QString cmdfile = QFileInfo( filename ).fileName();
-      argv[ argc++ ] = cmdfile.toLatin1().data();
+      data_cmdfile = new char[cmdfile.size() + 1];
+      strcpy(data_cmdfile, cmdfile.toLatin1().data());
+      argv[ argc++ ] = data_cmdfile;
 
       cout << QString ( " zeno <%1> <%2> <%3>\n" )
          .arg( options->zeno_zeno_steps )
@@ -13609,25 +13612,51 @@ bool US_Hydrodyn_Zeno::run(
 
       int progress_steps = 0;
 
+      char *data_zeno = 0;
+      char *data_interior = 0;
+      char *data_surface = 0;
+
       if ( options->zeno_zeno )
       {
          progress_steps += 108;
-         argv[ argc++ ] = qs_zeno.toLatin1().data();
+         data_zeno = new char[qs_zeno.size() + 1];
+         strcpy(data_zeno, qs_zeno.toLatin1().data());
+         argv[ argc++ ] = data_zeno;
       }
+
       if ( options->zeno_interior )
       {
          progress_steps += 108;
-         argv[ argc++ ] = qs_interior.toLatin1().data();
+         data_interior = new char[qs_interior.size() + 1];
+         strcpy(data_interior, qs_interior.toLatin1().data());
+         argv[ argc++ ] = data_interior;
       }
       if ( options->zeno_surface )
       {
          progress_steps += 108;
-         argv[ argc++ ] = qs_surface.toLatin1().data();
+         data_surface = new char[qs_surface.size() + 1];
+         strcpy(data_surface, qs_surface.toLatin1().data());
+         argv[ argc++ ] = data_surface;
+      }
+
+      for ( int i = 0; i < argc; i++ ) {
+         printf( "argc[%d] = %s\n", i, argv[i]);
       }
 
       zeno_progress->setValue( 0 ); zeno_progress->setMaximum( progress_steps );
       zeno_main( argc, argv );
       zeno_progress->reset();
+
+      delete[] data_cmdfile;
+      if ( data_zeno ) {
+         delete[] data_zeno;
+      }
+      if ( data_interior ) {
+         delete[] data_interior;
+      }
+      if ( data_surface ) {
+         delete[] data_surface;
+      }
 
       if ( !us_hydrodyn->stopFlag )
       {
@@ -13769,7 +13798,11 @@ bool US_Hydrodyn::calc_zeno()
 #endif
                  ;
    
-#if __cplusplus < 201103L
+#if defined(USE_OLD_ZENO)
+   zeno_cxx = false;
+#endif
+
+#if !defined(USE_OLD_ZENO) &&__cplusplus < 201103L
    if ( zeno_cxx ) {
       editor_msg( "darkRed", "Notice: ZENO method is not currently not available for this platform" );
       qApp->processEvents();
@@ -13780,7 +13813,7 @@ bool US_Hydrodyn::calc_zeno()
 # endif
 #endif
    
-# if QT_VERSION < 0x040000
+# if !defined(USE_OLD_ZENO) && QT_VERSION < 0x040000
    if ( zeno_cxx ) {
       editor_msg( "darkRed", "Notice: the new ZENO method is active" );
       qApp->processEvents();

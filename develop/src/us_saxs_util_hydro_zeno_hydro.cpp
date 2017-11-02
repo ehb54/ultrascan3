@@ -13762,7 +13762,7 @@ bool US_Hydrodyn_Zeno::run(
          zeno_us_udp_msg->send_json( msging );
          //sleep(1);
        }         
-#if __cplusplus >= 201103L
+#if !defined(USE_OLD_ZENO) && __cplusplus >= 201103L
      zeno_cxx_main( argc, argv, QString( "%1.zno" ).arg( filename ).toLatin1().data(), true, zeno_us_udp_msg );
 #endif
 

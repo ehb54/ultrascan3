@@ -1,4 +1,4 @@
-#if __cplusplus >= 201103L
+#if !defined(USE_OLD_ZENO) && __cplusplus >= 201103L
 #define USE_RAND_RNG
 #define USE_SPHERE_CENTERS_MODEL 
 #define USE_NANOFLANN_SORT_SCM
