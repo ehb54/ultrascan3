@@ -13776,7 +13776,7 @@ bool US_Hydrodyn::calc_zeno()
       zeno_cxx = false;
    }
 # if QT_VERSION >= 0x040000
-   return;
+   return false;
 # endif
 #endif
    
