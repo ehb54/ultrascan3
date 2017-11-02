@@ -13,7 +13,7 @@
 
 //! \brief Fetch and set Gui values via QSettings.  All functions are static.
 
-class US_GUI_EXTERN US3i_GuiSettings
+class US_EXTERN US3i_GuiSettings
 {
   public:
 

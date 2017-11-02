@@ -29,7 +29,7 @@
     palette and font acording to the user's settings (or the UltraScan default).
     Depending on the widget, other parameters may be set.
 */
-class US_GUI_EXTERN US3i_widgets : public QFrame
+class US_EXTERN US3i_widgets : public QFrame
 {
   public: 
     //! The constructor connects to global memory and moves the screen to 
@@ -194,7 +194,7 @@ class US_GUI_EXTERN US3i_widgets : public QFrame
 
 //! \brief Set a custom list widget that can override the default size
 
-class US_GUI_EXTERN US_ListWidget : public QListWidget
+class US_EXTERN US_ListWidget : public QListWidget
 {
    Q_OBJECT
 
@@ -229,7 +229,7 @@ class US_GUI_EXTERN US_ListWidget : public QListWidget
 
 //! Create a Lyaout with radio buttons for selection of disk or DB selection
 
-class US_GUI_EXTERN US_Disk_DB_Controls : public QHBoxLayout
+class US_EXTERN US_Disk_DB_Controls : public QHBoxLayout
 {
    Q_OBJECT
 

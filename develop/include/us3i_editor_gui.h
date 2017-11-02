@@ -6,7 +6,7 @@
 #include "us3i_widgets_dialog.h"
 
 /*! Class to display US_Edit in a dialog type screen */
-class US_GUI_EXTERN US3i_EditorGui : public US3i_widgetsDialog
+class US_EXTERN US3i_EditorGui : public US3i_widgetsDialog
 {
 	Q_OBJECT
 

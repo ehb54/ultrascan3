@@ -40,7 +40,7 @@
 //! Note: the last variation addresses the need to both get an image and
 //! determine its width.
 
-class US_GUI_EXTERN US3i_Images
+class US_EXTERN US3i_Images
 {
    public:
       //! \brief Type values for images available
