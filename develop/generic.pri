@@ -36,46 +36,6 @@ contains( DEFINES, "OSX" ) {
     LIBS += -L$$US3PATH/lib -l$$QWT3DLIBNAME
 }
 
-win32 {
-
-  VER = 10
-  DEFINES      += MINGW
-
-  # QWT3D is right for libraries, but gui apps need ../$$QWT3D
-  # due to us3 directory structure
-
-  QWT3D       = ../qwtplot3d
-  ##OPENSSL     = C:/openssl
-  ##OPENSSL     = C:/mingw64/opt
-  OPENSSL     = C:/utils/openssl
-  MYSQLPATH   = C:/utils/mysql
-  MYSQLDIR    = $$MYSQLPATH/lib
-  QTMYSQLPATH = C:/utils/Qt/5.4.1/plugins/sqldrivers
-  QTPATH      = C:/utils/Qt/5.4.1
-  QMAKESPEC   = $$QTPATH/mkspecs/win32-g++
-  QTMAKESPEC  = $$QMAKESPEC
-  QWTPATH     = C:/utils/Qwt/6.1.2
-  SINGLEDIR   = C:/utils/Qt/5.4.1/addons/qtsingleapplication-2.6_1-opensource/src/
-  MINGWDIR    = C:/mingw64/x86_64-w64-mingw32
-  
-  contains( DEBUGORRELEASE, debug ) {
-    QWTLIB      = $$QWTPATH/lib/libqwtd.a
-    MYSQLLIB    = $$MYSQLDIR/libmysqld.lib
-  } else {
-    QWTLIB      = $$QWTPATH/lib/libqwt.a
-    MYSQLLIB    = $$MYSQLDIR/libmysql.lib
-    INCLUDEPATH += c:/mingw64/opt/include
-  }
-  ##LIBS        += $$MYSQLLIB
-  LIBS        += -L$$MYSQLDIR -lmysql
-  LIBS        += -lpsapi
-
-  #  __LCC__ is needed on W32 to make mysql headers include the right W32 includes
-  ##DEFINES    += __LCC__
-  DEFINES    += __WIN64__
-  LIBS         += $$US3SOMOPATH/bin/libus_somo$${VER}.a
-}
-
 macx {
   DESTDIR      = $$US3SOMOPATH/bin
   LIBS        += -L$$US3SOMOPATH/lib -lus_somo
