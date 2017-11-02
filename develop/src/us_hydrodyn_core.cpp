@@ -2736,10 +2736,10 @@ int US_Hydrodyn::create_beads(QString *error_string, bool quiet)
             if ( advanced_config.debug_1 ||
                  advanced_config.debug_2 )
             {
-               printf("p1 %s j k %d %d %lx %s %d chain %d\n", 
+               printf("p1 %s j k %d %d %p %s %d chain %d\n", 
                       this_atom->name.toLatin1().data(),
                       j, k,
-                      (long unsigned int)this_atom->p_atom,
+                      this_atom->p_atom,
                       this_atom->active ? "active" : "not active",
                       this_atom->bead_assignment,
                       this_atom->chain
@@ -2819,10 +2819,10 @@ int US_Hydrodyn::create_beads(QString *error_string, bool quiet)
             for (unsigned int k = 0; k < model_vector[current_model].molecule[j].atom.size (); k++) {
                PDB_atom *this_atom = &model_vector[current_model].molecule[j].atom[k];
                
-               printf("p1 %s j k %d %d %lx %s %d %d\n", 
+               printf("p1 %s j k %d %d %p %s %d %d\n", 
                       this_atom->name.toLatin1().data(),
                       j, k,
-                      (long unsigned int)this_atom->p_atom,
+                      this_atom->p_atom,
                       this_atom->active ? "active" : "not active",
                       this_atom->bead_assignment,
                       this_atom->atom_assignment
@@ -4728,7 +4728,7 @@ int US_Hydrodyn::compute_asa( bool bd_mode, bool no_ovlp_removal )
       for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++) {
          for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++) {
             PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
-            // printf("p1 i j k %d %d %d %lx %s\n", i, j, k, (long unsigned int)this_atom->p_atom, this_atom->active ? "active" : "not active"); fflush(stdout);
+            // printf("p1 i j k %d %d %d %p %s\n", i, j, k, this_atom->p_atom, this_atom->active ? "active" : "not active"); fflush(stdout);
 
             //   this_atom->bead_assignment =
             //     (this_atom->p_atom ? (int) this_atom->p_atom->bead_assignment : -1);
@@ -4787,7 +4787,7 @@ int US_Hydrodyn::compute_asa( bool bd_mode, bool no_ovlp_removal )
          count_actives = 0;
          for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++) {
             PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
-            // printf("p2 i j k %d %d %d %lx\n", i, j, k, this_atom->p_atom); fflush(stdout);
+            // printf("p2 i j k %d %d %d %p\n", i, j, k, this_atom->p_atom); fflush(stdout);
             // this_atom->bead_positioner = false;
             if (this_atom->active) {
                if ( advanced_config.debug_1 )
@@ -5440,7 +5440,7 @@ int US_Hydrodyn::compute_asa( bool bd_mode, bool no_ovlp_removal )
 
 
             PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
-            // printf("p3 i j k %d %d %d %lx\n", i, j, k, this_atom->p_atom); fflush(stdout);
+            // printf("p3 i j k %d %d %d %p\n", i, j, k, this_atom->p_atom); fflush(stdout);
             this_atom->exposed_code = -1;
             if (this_atom->active &&
                 this_atom->is_bead) {
@@ -5588,7 +5588,7 @@ int US_Hydrodyn::compute_asa( bool bd_mode, bool no_ovlp_removal )
       for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++) {
          for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++) {
             PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
-            // printf("p4 i j k %d %d %d %lx\n", i, j, k, this_atom->p_atom); fflush(stdout);
+            // printf("p4 i j k %d %d %d %p\n", i, j, k, this_atom->p_atom); fflush(stdout);
 
             // printf("model %d mol %d atm %d nam %s res %s xyz [%f,%f,%f] act %s rads %f asa %f bead # %d chain %d serl %d is_bead %s bead_asa %f vis %s code %d pos? %s pos_co [%f,%f,%f] cog [%f,%f,%f] use [%f, %f, %f]\n",
             printf("%d~%d~%d~%s~%s~%s~"
