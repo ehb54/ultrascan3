@@ -73,7 +73,7 @@ contains( DEFINES, "OSX" ) {
 
 win32 {
 
-  QMAKESPEC   = win32-g++-4.6
+#   QMAKESPEC   = win32-g++-4.6
   
   DEFINES      += MINGW
 

@@ -43,7 +43,7 @@ win32 {
   DESTDIR         = $$US3SOMOPATH/bin
 
   QMAKE_CXXFLAGS += $$QMAKE_CFLAGS_STL
-  QMAKESPEC       = win32-g++-4.6
+#   QMAKESPEC       = win32-g++-4.6
 
   CONFIG         += qt warn_on opengl thread zlib
   CONFIG         += dll exceptions
