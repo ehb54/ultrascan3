@@ -11377,19 +11377,19 @@ double US_Saxs_Util::holm_bonferroni( vector < double > P, double alpha ) {
    return 1e0;
 }
 #if QT_VERSION >= 0x040000
-QString us_tr( QString qs ) {
+US_EXPORT QString us_tr( QString qs ) {
    return QObject::tr( qPrintable( qs ) );
 }
 
-const char * us_trp( QString qs ) {
+US_EXPORT const char * us_trp( QString qs ) {
    return qPrintable( us_tr( qPrintable( qs ) ) );
 }
 
-void us_qdebug( QString qs ) {
+US_EXPORT void us_qdebug( QString qs ) {
    qDebug() << qPrintable( qs );
 }
 
-FILE * us_fopen( QString f, const char *mode ) {
+US_EXPORT FILE * us_fopen( QString f, const char *mode ) {
    return fopen( qPrintable( f ), mode );
 }
 #endif
