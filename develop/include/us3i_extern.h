@@ -52,5 +52,9 @@
   #define US_GUI_EXTERN
 #endif
  
+#if !defined(US_EXTERN)
+#  define US_EXTERN
+#endif
+
 #endif
 
