@@ -13594,11 +13594,15 @@ bool US_Hydrodyn_Zeno::run(
 
       argv[ argc++ ] = "us_zeno";
 
-      char *data_cmdfile = 0;
       QString cmdfile = QFileInfo( filename ).fileName();
+#if QT_VERSION >= 0x050000
+      char *data_cmdfile = 0;
       data_cmdfile = new char[cmdfile.size() + 1];
       strcpy(data_cmdfile, cmdfile.toLatin1().data());
       argv[ argc++ ] = data_cmdfile;
+#else
+      argv[ argc++ ] = cmdfile.toLatin1().data();
+#endif
 
       cout << QString ( " zeno <%1> <%2> <%3>\n" )
          .arg( options->zeno_zeno_steps )
@@ -13612,6 +13616,7 @@ bool US_Hydrodyn_Zeno::run(
 
       int progress_steps = 0;
 
+#if QT_VERSION >= 0x050000
       char *data_zeno = 0;
       char *data_interior = 0;
       char *data_surface = 0;
@@ -13638,15 +13643,29 @@ bool US_Hydrodyn_Zeno::run(
          strcpy(data_surface, qs_surface.toLatin1().data());
          argv[ argc++ ] = data_surface;
       }
-
-      for ( int i = 0; i < argc; i++ ) {
-         printf( "argc[%d] = %s\n", i, argv[i]);
+#else
+      if ( options->zeno_zeno )
+      {
+         progress_steps += 108;
+         argv[ argc++ ] = qs_zeno.toLatin1().data();
       }
+      if ( options->zeno_interior )
+      {
+         progress_steps += 108;
+         argv[ argc++ ] = qs_interior.toLatin1().data();
+      }
+      if ( options->zeno_surface )
+      {
+         progress_steps += 108;
+         argv[ argc++ ] = qs_surface.toLatin1().data();
+      }
+#endif
 
       zeno_progress->setValue( 0 ); zeno_progress->setMaximum( progress_steps );
       zeno_main( argc, argv );
       zeno_progress->reset();
 
+#if QT_VERSION >= 0x050000
       delete[] data_cmdfile;
       if ( data_zeno ) {
          delete[] data_zeno;
@@ -13657,6 +13676,7 @@ bool US_Hydrodyn_Zeno::run(
       if ( data_surface ) {
          delete[] data_surface;
       }
+#endif
 
       if ( !us_hydrodyn->stopFlag )
       {
@@ -13813,6 +13833,7 @@ bool US_Hydrodyn::calc_zeno()
 # endif
 #endif
    
+
 # if !defined(USE_OLD_ZENO) && QT_VERSION < 0x040000
    if ( zeno_cxx ) {
       editor_msg( "darkRed", "Notice: the new ZENO method is active" );

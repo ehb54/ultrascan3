@@ -1775,8 +1775,10 @@ int zeno_cxx_main(int argc, char **argv, const char * fname, bool cmdline_temp, 
 
   printTime("Start time:\n", mpiRank);
 
+#if !defined( NO_POSIX_RUSAGE )
   sampleRAM("RAM after initialization", printBenchmarks,
 	    memMonitor, mpiRank);
+#endif
 
   double readTime      = 0;
   double broadcastTime = 0;
@@ -1845,9 +1847,11 @@ int zeno_cxx_main(int argc, char **argv, const char * fname, bool cmdline_temp, 
     assert(0);
   }
 
+#if !defined( NO_POSIX_RUSAGE )
   sampleRAM("RAM after loading input data", printBenchmarks,
 	    memMonitor, mpiRank);
-
+#endif
+  
   //us_qdebug("Insidezeno1");
 
   //one stream for each thread plus one for the results
@@ -1864,9 +1868,11 @@ int zeno_cxx_main(int argc, char **argv, const char * fname, bool cmdline_temp, 
 
   ResultsVolume resultsVolume(numThreads);
 
+#if !defined( NO_POSIX_RUSAGE )
   sampleRAM("RAM after building spatial data structure", printBenchmarks,
 	    memMonitor, mpiRank);
-
+#endif
+  
   //us_qdebug("Insidezeno2");
 
   RandomNumberGenerator * * threadRNGs = 
@@ -1924,9 +1930,10 @@ int zeno_cxx_main(int argc, char **argv, const char * fname, bool cmdline_temp, 
     assert(0);
   }
 
+#if !defined( NO_POSIX_RUSAGE )
   sampleRAM("RAM after walk on spheres", printBenchmarks,
 	    memMonitor, mpiRank);
-
+#endif
   Timer reduceTimer;
   reduceTimer.start();
 
@@ -1986,9 +1993,11 @@ int zeno_cxx_main(int argc, char **argv, const char * fname, bool cmdline_temp, 
     assert(0);
   }
 
+#if !defined( NO_POSIX_RUSAGE )
   sampleRAM("RAM after interior samples", printBenchmarks,
 	    memMonitor, mpiRank);
-
+#endif
+  
   Timer volumeReduceTimer;
   volumeReduceTimer.start();
 
@@ -2577,7 +2586,7 @@ printTime(char const * label, int mpiRank) {
 void
 sampleRAM(char const * label, bool print, 
 	  MemMonitor * memMonitor, int mpiRank) {
-
+#if !defined( NO_POSIX_RUSAGE )
   if (mpiRank == 0) {
     memMonitor->sample();
 
@@ -2588,6 +2597,7 @@ sampleRAM(char const * label, bool print,
 		<< " MB" << std::endl;
     }
   }
+#endif
 }
 
 void
@@ -2714,7 +2724,9 @@ void Parser::addSphere(double x, double y, double z, double r) {
 // #include <fstream>
 // #include <unistd.h>
 
-#include <sys/resource.h>
+#if !defined( NO_POSIX_RUSAGE )
+# include <sys/resource.h>
+#endif
 
 #include <cassert>
 
@@ -2750,6 +2762,7 @@ MemMonitor::~MemMonitor() {
 
 void 
 MemMonitor::sample() {
+#if !defined( NO_POSIX_RUSAGE )
   int who = RUSAGE_SELF;
   struct rusage usage;
 
@@ -2762,6 +2775,7 @@ MemMonitor::sample() {
   if (currentUsage > peakUsage) {
     peakUsage = currentUsage;
   }
+#endif
 }
 
 float
