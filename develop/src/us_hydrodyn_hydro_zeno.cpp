@@ -191,7 +191,6 @@ void US_Hydrodyn_Hydro_Zeno::setupGUI()
    hbl_help_cancel->addWidget( pb_cancel );
    background->addLayout( hbl_help_cancel , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 2  ) - ( 0 ) );
 
-
 #if !defined(USE_OLD_ZENO) && QT_VERSION >= 0x040000
    cb_zeno_interior->hide();
    lbl_zeno_interior_steps->hide();
