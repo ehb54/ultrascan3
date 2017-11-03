@@ -93,14 +93,6 @@ US_Astfem_Sim::US_Astfem_Sim( QWidget* p, Qt::WindowFlags f )
                           SLOT(   update_save_movie( bool ) ) );
    buttonbox->addLayout( lo_svmovie );
 
-
-//-------------------add checkbox for rotor----------------------------------
-//   QGridLayout* lo_srotor = us_checkbox( "Select Rotor", ck_selectrotor, false );
-//   connect( ck_savemovie, SIGNAL( toggled          ( bool ) ),
-//                          SLOT(   update_save_movie( bool ) ) );
-//   buttonbox->addLayout( lo_srotor );
-//-----------------------------------------------------------------
-
    QGridLayout* timeCorr = us_checkbox( "Use Time Correction", ck_timeCorr,
          time_correctionFlag );
    connect( ck_timeCorr, SIGNAL( clicked() ), SLOT( update_time_corr() ) );
@@ -246,10 +238,12 @@ void US_Astfem_Sim::init_simparams( void )
    simparams.band_volume       = 0.015;
    simparams.rotorCalID        = rotor_calibr;
    simparams.band_forming      = false;
+   meniscus_ar                 = simparams.meniscus;
 }
 
 void US_Astfem_Sim::new_model( void )
 {
+   system = US_Model();
    US_ModelGui* dialog = new US_ModelGui( system );
    connect( dialog, SIGNAL( valueChanged( US_Model ) ),
                     SLOT  ( change_model( US_Model ) ) );
@@ -279,7 +273,7 @@ void US_Astfem_Sim::new_buffer( void )
 {
    US_BufferGui* dialog = new US_BufferGui( true, buffer );
 
-   connect( dialog, SIGNAL( valueChanged( US_Buffer ) ),
+   connect( dialog, SIGNAL( valueChanged ( US_Buffer ) ),
                     SLOT  ( change_buffer( US_Buffer ) ) );
 
    dialog->exec();
@@ -332,11 +326,6 @@ void US_Astfem_Sim::change_status()
       .arg( simparams.speed_step[ 0 ].scans ) );
 }
 
-//void US_Astfem_Sim::select_rotor(void)
-//{
-// int i;
-//}
-
 void US_Astfem_Sim::selectrotor(void)
 {
    US_Rotor::Rotor rotor;
@@ -371,6 +360,8 @@ void US_Astfem_Sim::sim_parameters( void )
    working_simparams          = simparams;
    working_simparams.meniscus = meniscus_ar;
    working_simparams.bottom   = simparams.bottom_position;
+DbgLv(1) << "SimPar:MAIN: nspeed" << working_simparams.speed_step.count()
+ << "speed0" << working_simparams.speed_step[0].rotorspeed;
 
    US_SimParamsGui* dialog =
       new US_SimParamsGui( working_simparams );
@@ -386,6 +377,8 @@ void US_Astfem_Sim::set_parameters( void )
    meniscus_ar  = simparams.meniscus;
 
    pb_start  ->setEnabled( true );
+DbgLv(1) << "SimPar:MAIN:SP: nspeed" << simparams.speed_step.count()
+ << "speed0" << simparams.speed_step[0].rotorspeed;
 
    change_status();
 }
@@ -693,17 +686,17 @@ DbgLv(1) << "first_last_data for the step" << sp->time_first << sp->time_last
       astfem = new US_Astfem_RSA( system, simparams );
 
       connect( astfem, SIGNAL( new_scan( QVector< double >*, double* ) ),
-                    SLOT( update_movie_plot( QVector< double >*, double* ) ) );
+                       SLOT( update_movie_plot( QVector< double >*, double* ) ) );
       connect( astfem, SIGNAL( current_component( int ) ),
-                           SLOT  ( update_progress  ( int ) ) );
+                       SLOT  ( update_progress  ( int ) ) );
       connect( astfem, SIGNAL( new_time   ( double ) ),
-                           SLOT  ( update_time( double ) ) );
+                       SLOT  ( update_time( double ) ) );
       connect( astfem, SIGNAL( current_speed( int ) ),
-                           SLOT  ( update_speed ( int ) ) );
+                       SLOT  ( update_speed ( int ) ) );
       connect( astfem, SIGNAL( calc_progress( int ) ),
-                           SLOT  ( show_progress( int ) ) );
+                       SLOT  ( show_progress( int ) ) );
       connect( astfem, SIGNAL( calc_done( void ) ),
-                           SLOT  ( calc_over( void ) ) );
+                       SLOT  ( calc_over( void ) ) );
 
       astfem->set_movie_flag( ck_movie->isChecked() );
 //      astfem->setStopFlag( stopFlag );
