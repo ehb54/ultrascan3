@@ -36,6 +36,11 @@ contains( DEFINES, "OSX" ) {
     LIBS += -L$$US3PATH/lib -l$$QWT3DLIBNAME
 }
 
+win32 {
+  VER = 10
+  LIBS += $$US3SOMOPATH/bin/libus_somo$${VER}.a
+}
+
 macx {
   DESTDIR      = $$US3SOMOPATH/bin
   LIBS        += -L$$US3SOMOPATH/lib -lus_somo

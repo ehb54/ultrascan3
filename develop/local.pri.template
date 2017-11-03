@@ -104,7 +104,6 @@ win32 {
   ##DEFINES    += __LCC__
   DEFINES    += __WIN64__
   LIBS        += -L$$QWTPATH/lib -lqwt
-  LIBS         += $$US3SOMOPATH/bin/libus_somo$${VER}.a
 }
 
 macx {
