@@ -165,8 +165,8 @@ bool US_Write_Config::write_config( struct Config config_list )
    }
    else
    {
-      message = us_tr( "Could not open Configuration File for update.\n\n"
-                    "$HOME/ultrascan/etc/usrc.conf\nPlease check your write permissions!" );
+      message = us_tr( QString( "Could not open Configuration File for update.\n\n"
+                             "$HOME/ultrascan/%1\nPlease check your write permissions!" ).arg( USRC ) );
       errorMessage( warning, message );
       cerr << warning << ":\n" << message << endl;
       return false;

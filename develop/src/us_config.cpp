@@ -543,13 +543,15 @@ bool US_Config::read()
       QTextStream ts( &f );
       config_list.version = ts.readLine();
 
+#if QT_VERSION <= 0x050000
       if ( config_list.version.toFloat() < 6.0 )
       {
          f.close();
          f.remove();
          return ( false );
       }
-
+#endif
+      
       QString dummy;
       config_list.browser     = ts.readLine();
       dummy                   = ts.readLine();

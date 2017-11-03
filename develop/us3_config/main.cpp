@@ -107,17 +107,16 @@ void USconfig_check::debug( const QString& str )
 
 bool USconfig_check::check_config()
 {
-	// If the $HOME/ultrascan/etc directory doesn't exist, create it:
-	if ( !exists( US_Config::get_home_dir() + "ultrascan/etc"))
-		{
-			QDir etcdir;
-		   QString path = US_Config::get_home_dir() + "ultrascan/etc";
-			cout <<  path << endl;
-			etcdir.mkdir(path );
-		}
+   // If the $HOME/ultrascan/etc directory doesn't exist, create it:
+   if ( !exists( US_Config::get_home_dir() + "ultrascan/etc"))
+   {
+      QDir etcdir;
+      QString path = US_Config::get_home_dir() + "ultrascan/etc";
+      cout <<  path << endl;
+      etcdir.mkdir(path );
+   }
    // If we have a config file, return true
-   if ( exists( US_Config::get_home_dir() + ETC_DIR + "/usrc.conf" ) ||
-        exists( QDir::homePath() + "/.usrc" ) )
+   if ( exists( US_Config::get_home_dir() + USRC ) )
    {
       US_Config* config = new US_Config( "dummy" );
       if ( config->read() )
@@ -136,7 +135,7 @@ bool USconfig_check::check_config()
          if ( result == QMessageBox::Cancel ) exit( 0 );
 
          // Delete the configuration file
-         QFile::remove( US_Config::get_home_dir() + ETC_DIR + "/usrc.conf" );
+         QFile::remove( US_Config::get_home_dir() + USRC );
          QFile::remove( QDir::homePath() + "/.usrc" );
       }
    }
@@ -158,7 +157,7 @@ bool USconfig_check::check_config()
    if ( exists ( dir + "/etc" ) )
    {
       // If we got here,  ETC_DIR + "/usrc.conf" does not yet exist
-      debug( "Writing usrc.conf with system dir=" + dir );
+      debug( "Writing " + dir + "/" + QString( USRC ) + " with system dir=" + dir );
       write_default( dir );
 
       debug( "UltraScan is installed in the default location: " + dir );
