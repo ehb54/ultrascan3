@@ -1813,6 +1813,7 @@ ttT3+=(clcSt3.msecsTo(clcSt4));
                                             //  omega_2_t for next scan
 
       simscan.temperature  = af_data.scan[ 0 ].temperature;
+/*
 if (ii<10 || (ii%500)==0 || (ii+10)>ntsteps) {
 int jt=(int)qRound(simscan.time) - simparams.sim_speed_prof[step].time_b_accel-1;
 DbgLv(1) << "simulation_rsa: ii" << ii << jt << "scan_time=" << simscan.time
@@ -1821,6 +1822,7 @@ DbgLv(1) << "simulation_rsa: ii" << ii << jt << "scan_time=" << simscan.time
  << "tmst: rpm w2t" << simparams.sim_speed_prof[step].rpm_timestate[jt]
  << simparams.sim_speed_prof[step].w2t_timestate[jt];
 }
+*/
 #ifdef TIMING_NI
 clcSt5 = QDateTime::currentDateTime();
 ttT4+=(clcSt4.msecsTo(clcSt5));
