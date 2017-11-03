@@ -2748,7 +2748,7 @@ typedef double STYPE__;
 
         void ABORT() const;
         void ACCEPT() const;
-        void ERROR() const;
+        void ERROR_() const;
         void clearin();
         bool debug() const;
         void pop__(size_t count = 1);
@@ -2783,7 +2783,7 @@ inline void ParserBase::ACCEPT() const
     throw PARSE_ACCEPT__;
 }
 
-inline void ParserBase::ERROR() const
+inline void ParserBase::ERROR_() const
 {
     throw UNEXPECTED_TOKEN__;
 }
