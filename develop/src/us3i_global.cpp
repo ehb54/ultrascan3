@@ -19,6 +19,7 @@ US3i_Global::US3i_Global()
   QString key = QString( "UltraScan" );
 #endif
 
+#if !defined( NO_SHARED_MEMORY )
   sharedMemory.setKey( key );
 
   if ( sharedMemory.attach() )
@@ -44,12 +45,15 @@ US3i_Global::US3i_Global()
     qDebug( "Failure to create shared memory" );
     qDebug() << sharedMemory.errorString();
   }
+#endif
 }
 
 US3i_Global::~US3i_Global()
 {
+#if !defined( NO_SHARED_MEMORY )
   sharedMemory.detach();
   if ( deleteFlag ) sharedMemory.deleteLater();
+#endif
 }
 
 void US3i_Global::set_global_position( const QPoint& p )
@@ -82,17 +86,21 @@ QString US3i_Global::passwd( void )
 
 void  US3i_Global::read_global( void )
 {
+#if !defined( NO_SHARED_MEMORY )
   sharedMemory.lock();
   char* from = (char*)sharedMemory.data();
   memcpy( (char*)&global, from, qMin( sharedMemory.size(), (int)sizeof global ) );
   sharedMemory.unlock();
+#endif
 }
 
 void  US3i_Global::write_global( void )
 {
+#if !defined( NO_SHARED_MEMORY )
   sharedMemory.lock();
   char* to = (char*)sharedMemory.data();
   memcpy( to, (char*)&global, qMin( sharedMemory.size(), (int)sizeof global ) );
   sharedMemory.unlock();
+#endif
 }
 

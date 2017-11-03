@@ -7,6 +7,8 @@
 
 #include "us3i_extern.h"
 
+#define NO_SHARED_MEMORY
+
 //!  \brief Manage shared memory
 
 /*! \class US3i_Global 
@@ -113,10 +115,13 @@ class US_EXTERN US3i_Global
     Global        global;
     bool          valid;
     bool          deleteFlag;
+#if !defined( NO_SHARED_MEMORY )
     QSharedMemory sharedMemory;
-
+#endif
+    
     void read_global ( void );
     void write_global( void );
+
 };
 
 #endif
