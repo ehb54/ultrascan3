@@ -806,6 +806,9 @@ void US_Astfem_Sim::finish( void )
 //DbgLv(1) << "FIN:  progress maxsize" << progress->maximum();
    }
 
+   int jex  = simparams.speed_step.count() - 1; 
+   update_speed( (int)simparams.speed_step[ jex ].rotorspeed );
+
    stopFlag = false;
    for ( int  i = 0 ; i < simparams.speed_step.size() ; i++ )
    plot(i);
