@@ -878,16 +878,16 @@ if (dbg_level>0) for (int mm=0; mm<wresult.csolutes.size(); mm++ ) {
 
 //DBG-DATA
 if ( dbg_level>0 ) {
- double dtot=0.0;
- double ntot=0.0;
- int    nnoi=wresult.ti_noise.count();
- for ( int ii=0; ii<nscans; ii++ )
-  for (int jj=0; jj<npoints; jj++ )
-   dtot += edata->value(ii,jj);
-  for ( int jj=0; jj<nnoi; jj++ )
-   ntot += wresult.ti_noise[jj];
+   double dtot=0.0;
+   double ntot=0.0;
+   int    nnoi=wresult.ti_noise.count();
+   for ( int ii=0; ii<nscans; ii++ )
+	{
+      for (int jj=0; jj<npoints; jj++ ) dtot += edata->value(ii,jj);
+      for ( int jj=0; jj<nnoi; jj++ ) ntot += wresult.ti_noise[jj];
 DbgLv(1) << "PJ:DA DTOT" << dtot << "thr,tsk,ncso" << thrn << taskx << nrcso
  << "edata" << edata << "nti,NTOT" << nnoi << ntot;
+	}
 }
 //DBG-DATA
 //
