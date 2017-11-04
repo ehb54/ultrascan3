@@ -2521,6 +2521,8 @@ void US_Hydrodyn::load_pdb()
    pb_equi_grid_bead_model->setEnabled(false);
    le_bead_model_file->setText(" not selected ");
    bead_models_as_loaded = bead_models;
+
+   qApp->processEvents();
    if ( lb_model->count() )
    {
       select_model(0);
@@ -2964,6 +2966,19 @@ void US_Hydrodyn::update_bead_model_prefix(const QString &str)
 
 int US_Hydrodyn::calc_somo( bool no_ovlp_removal )
 {
+   {
+      int models_selected = 0;
+      for(int i = 0; i < lb_model->count(); i++) {
+         if (lb_model->item(i)->isSelected()) {
+            models_selected++;
+         }
+      }
+      if ( !models_selected ) {
+         editor_msg( "black", "No models selected!\n" );
+         return -1;
+      }
+   }
+
    if ( selected_models_contain( "WAT" ) )
    {
       QMessageBox::warning( this,
@@ -3135,6 +3150,20 @@ int US_Hydrodyn::calc_somo( bool no_ovlp_removal )
 
 int US_Hydrodyn::calc_grid_pdb()
 {
+   {
+      int models_selected = 0;
+      for(int i = 0; i < lb_model->count(); i++) {
+         if (lb_model->item(i)->isSelected()) {
+            models_selected++;
+         }
+      }
+      if ( !models_selected ) {
+         editor_msg( "black", "No models selected!\n" );
+         progress->reset();
+         return -1;
+      }
+   }
+
    //    if ( selected_models_contain( "WAT" ) )
    //    {
    //       QMessageBox::warning( this,
@@ -3799,6 +3828,19 @@ int US_Hydrodyn::calc_grid_pdb()
 
 int US_Hydrodyn::calc_grid()
 {
+   {
+      int models_selected = 0;
+      for(int i = 0; i < lb_model->count(); i++) {
+         if (lb_model->item(i)->isSelected()) {
+            models_selected++;
+         }
+      }
+      if ( !models_selected ) {
+         editor_msg( "black", "No models selected!\n" );
+         return -1;
+      }
+   }
+
    stopFlag = false;
    pb_stop_calc->setEnabled(true);
    append_options_log_atob();
