@@ -347,6 +347,8 @@ void US_AssociationsGui::complete( void )
 
             moles_right += count * koligo;
          }
+         if ( koligo == 1 )
+            moles_right  = moles_left;   // Skip test for product ogilomer=1
       }
 
       if ( moles_right != moles_left )
