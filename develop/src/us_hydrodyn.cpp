@@ -2521,7 +2521,7 @@ void US_Hydrodyn::load_pdb()
    pb_equi_grid_bead_model->setEnabled(false);
    le_bead_model_file->setText(" not selected ");
    bead_models_as_loaded = bead_models;
-   if ( lb_model->count() == 1 )
+   if ( lb_model->count() )
    {
       select_model(0);
    }
