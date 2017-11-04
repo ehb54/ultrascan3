@@ -77,6 +77,7 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    last_pdb_filename = "";
    last_pdb_title.clear( );
    last_pdb_header.clear( );
+   last_no_model_selected = false;
 
    // no_rr = false;
 
@@ -823,7 +824,8 @@ void US_Hydrodyn::setupGUI()
    lb_model->setSelectionMode(QAbstractItemView::ExtendedSelection);
  //   lb_model->setHScrollBarMode(QScrollView::Auto);
  //   lb_model->setVScrollBarMode(QScrollView::Auto);
-   connect(lb_model, SIGNAL(currentRowChanged(int)), this, SLOT(select_model(int)));
+   // connect(lb_model, SIGNAL(currentRowChanged(int)), this, SLOT(select_model(int)));
+   connect(lb_model, SIGNAL(itemSelectionChanged()), this, SLOT(model_selection_changed()));
 
    pb_load_bead_model = new QPushButton(us_tr("Load Single Bead Model File"), this);
    Q_CHECK_PTR(pb_load_bead_model);
@@ -2522,11 +2524,10 @@ void US_Hydrodyn::load_pdb()
    le_bead_model_file->setText(" not selected ");
    bead_models_as_loaded = bead_models;
 
-   qApp->processEvents();
-   if ( lb_model->count() )
-   {
-      select_model(0);
-   }
+   // if ( lb_model->count() )
+   // {
+   //    select_model(0);
+   // }
 
    if ( dmd_options.pdb_static_pairs )
    {
@@ -2673,10 +2674,10 @@ bool US_Hydrodyn::screen_pdb(QString filename, bool display_pdb, bool skipcleari
    pb_equi_grid_bead_model->setEnabled(false);
    le_bead_model_file->setText(" not selected ");
    bead_models_as_loaded = bead_models;
-   if ( lb_model->count() == 1 )
-   {
-      select_model(0);
-   }
+   // if ( lb_model->count() == 1 )
+   // {
+   //    select_model(0);
+   // }
    return errors_found ? false : true;
 }   
 
@@ -2779,21 +2780,48 @@ QString US_Hydrodyn::model_name( int val )
    return QString( "%1" ).arg( lb_model->item( val )->text() ).replace( "Model: ", "" );
 }
 
-void US_Hydrodyn::select_model( int val )
+void US_Hydrodyn::model_selection_changed()
 {
-   current_model = val;
+   select_model();
+   // QString msg = QString( "\n%1 models selected:" ).arg( project );
+   // for( int i = 0; i < lb_model->count(); i++ )
+   // {
+   //    if ( lb_model->item( i )->isSelected() )
+   //    {
+   //       current_model = i;
+   //       // msg += QString( " %1" ).arg( i + 1 );
+   //       msg += " " + model_name( i );
+   //    }
+   // }
+   // msg += "\n";
+   // editor->append( msg );
+}
+
+void US_Hydrodyn::select_model( int )
+{
+   // current_model = val;
    QString msg = QString( "\n%1 models selected:" ).arg( project );
+   int selected_count = 0;
    for( int i = 0; i < lb_model->count(); i++ )
    {
       if ( lb_model->item( i )->isSelected() )
       {
+         selected_count++;
          current_model = i;
          // msg += QString( " %1" ).arg( i + 1 );
          msg += " " + model_name( i );
       }
    }
-   msg += "\n";
-   editor->append( msg );
+   if ( selected_count ) {
+      last_no_model_selected = false;
+      msg += "\n";
+      editor->append( msg );
+   } else {
+      if ( !last_no_model_selected ) {
+         editor_msg( "black", "\nNo models selected." );
+      }
+      last_no_model_selected = true;
+   }
 
    // check integrity of PDB file and confirm that all residues are correctly defined in residue table
    if (results_widget)
@@ -2802,8 +2830,9 @@ void US_Hydrodyn::select_model( int val )
       delete results_window;
       results_widget = false;
    }
-   pb_somo->setEnabled(true);
-   pb_somo_o->setEnabled(true);
+   pb_somo->setEnabled( selected_count );
+   pb_grid_pdb->setEnabled( selected_count );
+   pb_somo_o->setEnabled( selected_count );
    pb_show_hydro_results->setEnabled(false);
    pb_calc_hydro->setEnabled(false);
    pb_calc_zeno->setEnabled(false);
@@ -3159,7 +3188,6 @@ int US_Hydrodyn::calc_grid_pdb()
       }
       if ( !models_selected ) {
          editor_msg( "black", "No models selected!\n" );
-         progress->reset();
          return -1;
       }
    }
@@ -5575,9 +5603,10 @@ void US_Hydrodyn::run_us_config()
    QString prog = "us3_config";
    QStringList args;
 # if defined( Q_OS_MAC )
+   QString config_prog = "us3_config";
    prog = "open";
 
-   QString procbin = USglobal->config_list.system_dir + "/bin/" + prog;
+   QString procbin = USglobal->config_list.system_dir + "/bin/" + config_prog;
    QString procapp = procbin + ".app";
 
    if ( !QFile( procapp ).exists()  &&  QFile( procbin ).exists() )
@@ -5629,9 +5658,10 @@ void US_Hydrodyn::run_us_admin()
    QString prog = "us_admin";
    QStringList args;
 # if defined( Q_OS_MAC )
+   QString admin_prog = "us_admin";
    prog = "open";
 
-   QString procbin = USglobal->config_list.system_dir + "/bin/" + config_prog;
+   QString procbin = USglobal->config_list.system_dir + "/bin/" + admin_prog;
    QString procapp = procbin + ".app";
 
    if ( !QFile( procapp ).exists()  &&  QFile( procbin ).exists() )

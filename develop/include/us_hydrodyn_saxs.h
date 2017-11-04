@@ -799,9 +799,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       void check_mwt_constants      ( bool force = false );
       map < QString, QString >      ldata;
 
-#if QT_VERSION >= 0x050000
       bool                         wheel_is_pressed;
-#endif
 
    private slots:
 
@@ -958,10 +956,8 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       void saxs_legend();
       void pr_legend();
 
-#if QT_VERSION >= 0x050000
       void wheel_pressed            ();
       void wheel_released           ();
-#endif
 
    protected slots:
 

@@ -8758,9 +8758,6 @@ double US_Hydrodyn_Saxs_Buffer::tot_intensity( QString &file, double q_min, doub
    return tot_i;
 }
 
-
-#if QT_VERSION >= 0x050000
-
 void US_Hydrodyn_Saxs_Buffer::wheel_pressed() {
    // qDebug() << "wheel_pressed()";
    wheel_is_pressed = true;
@@ -8770,5 +8767,3 @@ void US_Hydrodyn_Saxs_Buffer::wheel_released() {
    // qDebug() << "wheel_released()";
    wheel_is_pressed = false;
 }
-
-#endif

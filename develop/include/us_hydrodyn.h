@@ -248,6 +248,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
 
    private:
 
+      bool last_no_model_selected;
+
       bool residue_widget;
       bool atom_widget;
       bool hybrid_widget;
@@ -927,7 +929,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void hybrid();
       void residue();
       void do_saxs();
-      void select_model(int);
+      void select_model( int val = 0 );
+      void model_selection_changed();
       int create_beads(QString *error_string, bool quiet = false); // turn pdb/atom model into bead_model
       void get_atom_map(PDB_model *);
       int check_for_missing_atoms(QString *error_string, PDB_model *);

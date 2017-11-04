@@ -373,9 +373,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
 
       double                       tot_intensity( QString &file, double q_min = 0e0, double q_max = 6e0 );
 
-#if QT_VERSION >= 0x050000
       bool                         wheel_is_pressed;
-#endif
 
    private slots:
 
@@ -472,10 +470,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       void rename_created              ( QListWidgetItem *, const QPoint & );
       void rename_from_context         ( const QPoint & pos );
 
-#if QT_VERSION >= 0x050000
       void wheel_pressed            ();
       void wheel_released           ();
-#endif
 
    protected slots:
 

@@ -145,9 +145,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer_Nth : public QDialog
 
       set < int >                             get_intensity_selected();
 
-#if QT_VERSION >= 0x050000
-      bool                         wheel_is_pressed;
-#endif
+      bool                                    wheel_is_pressed;
 
    private slots:
 
@@ -186,10 +184,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer_Nth : public QDialog
 
       void                                    update_enables();
 
-#if QT_VERSION >= 0x050000
       void wheel_pressed            ();
       void wheel_released           ();
-#endif
 
    protected slots:
 

@@ -8009,8 +8009,6 @@ void US_Hydrodyn_Saxs::check_mwt_constants( bool force )
    }
 }
 
-#if QT_VERSION >= 0x050000
-
 void US_Hydrodyn_Saxs::wheel_pressed() {
    // qDebug() << "wheel_pressed()";
    wheel_is_pressed = true;
@@ -8020,5 +8018,3 @@ void US_Hydrodyn_Saxs::wheel_released() {
    // qDebug() << "wheel_released()";
    wheel_is_pressed = false;
 }
-
-#endif
