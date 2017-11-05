@@ -917,17 +917,17 @@ DbgLv(1) << "sfd:    excls 0 1 m n" << excludedScans[0]
    << excludedScans[1] << excludedScans[kexcl/2] << excludedScans[kexcl-1];
 
       // Store radius values for pre-data/meniscus padding
-      double rad1      = edata->xvalues[ radxs     ];
-      double rad2      = edata->xvalues[ radxs + 1 ];
-      double radinc    = rad2 - rad1;
-      rad1             = rad1 - radinc * krpad;
+      double rad1v     = edata->xvalues[ radxs     ];
+      double rad2v     = edata->xvalues[ radxs + 1 ];
+      double radinc    = rad2v - rad1v;
+      rad1v            = rad1v - radinc * krpad;
 
-      for ( int jj = 0; jj < krpad; jj++, rad1 += radinc )
+      for ( int jj = 0; jj < krpad; jj++, rad1v += radinc )
       {
-         synData[ kd ].xvalues[ jj ] = rad1;
+         synData[ kd ].xvalues[ jj ] = rad1v;
       }
 
-DbgLv(1) << "sfd: rad1 radinc" << rad1 << radinc;
+DbgLv(1) << "sfd: rad1 radinc" << rad1v << radinc;
 DbgLv(1) << "sfd:  xv 0 1 p n" 
  << synData[kd].xvalues[0] << synData[kd].xvalues[1]
  << synData[kd].xvalues[krpad] << synData[kd].xvalues[kradp-1];

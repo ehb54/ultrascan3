@@ -939,7 +939,8 @@ QString US_Tar::explain( const int error )
       break;
 
    default:
-      explanation = "Unknown return code: " + error;
+      explanation = "Unknown return code: "
+                    + QString::number( error );
    }
 
    return explanation;

@@ -37,7 +37,7 @@ win32 {
 
   LIBS       += $$QWTLIB
   LIBS       += $$MYSQLLIB
-  LIBS       += -L$$OPENSSL -lssl -lcrypto
+  LIBS       += -L$$OPENSSL/lib -lssl -lcrypto
   LIBS       += $$MINGWDIR/lib/libws2_32.a $$MINGWDIR/lib/libadvapi32.a
   LIBS       += $$MINGWDIR/lib/libgdi32.a $$MINGWDIR/lib/libuser32.a
   LIBS       += -L../../lib -lus_gui$${VER} -lus_utils$${VER}

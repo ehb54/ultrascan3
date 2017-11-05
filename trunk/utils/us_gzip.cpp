@@ -3191,7 +3191,7 @@ QString US_Gzip::explain( const int error )
    switch ( error )
    {
     case GZIP_OK:
-      explanation = "The g(un)zip operation was succesful.";
+      explanation = "The g(un)zip operation was successful.";
       break;
 
     case GZIP_NOEXIST:
@@ -3239,7 +3239,8 @@ QString US_Gzip::explain( const int error )
       break;
 
     default:
-      explanation = "Unknown return code: " + error;
+      explanation = "Unknown return code: "
+                    + QString::number( error );
   }
 
    return explanation;

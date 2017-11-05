@@ -4,7 +4,7 @@
 SRCDIR=$us3
 HOMEQ=`cd $SRCDIR/../;pwd`
 DSTDIR=$HOMEQ/us3pkg
-SOMOBASE=$HOME/us3_somo
+SOMOBASE=$HOMEQ/us3_somo
 SOMORHDR=${SOMOBASE}/develop/include/us_revision.h
 ME=`whoami`
 SYSTYPE=`uname -s`
@@ -104,7 +104,8 @@ if [ ${QTVER} = "4" ];then
   SREV="-s${SREV}"
 else
   QTLIBS=${QTLIBS5}
-  SREV=""
+  ##SREV=""
+  SREV="-s${SREV}"
 fi
 ##         echo "QTLIBS=${QTLIBS}"
 ##         exit 1
