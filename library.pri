@@ -34,15 +34,11 @@ win32 {
   INCLUDEPATH            += $$QWTPATH/src 
   INCLUDEPATH            += $$MYSQLPATH/include
   INCLUDEPATH            += $$OPENSSL/include
-  ##INCLUDEPATH            += ../qwtplot3d-qt4/include
   INCLUDEPATH            += ../qwtplot3d/include
 
   LIBS                   += $$QWTLIB
-  ##LIBS                   += $$QTMYSQLPATH/libqsqlmysql.a
   LIBS                   += $$MYSQLLIB
-  LIBS                   += -L$$OPENSSL -lssl -lcrypto
-  ##LIBS                   += $${OPENSSL}/lib/libeay32.a
-  ##LIBS                   += $${OPENSSL}/lib/libcrypto.a
+  LIBS                   += -L$$OPENSSL/lib -lssl -lcrypto
   LIBS                   += $$MINGWDIR/lib/libws2_32.a $$MINGWDIR/lib/libadvapi32.a
   LIBS                   += $$MINGWDIR/lib/libgdi32.a $$MINGWDIR/lib/libuser32.a
   LIBS                   += $$MINGWDIR/lib/libkernel32.a $$MINGWDIR/lib/libpsapi.a

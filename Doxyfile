@@ -716,6 +716,7 @@ RECURSIVE              = YES
 EXCLUDE                = ./doc/ \
                          ./alpha/ \
                          ./testing/ \
+                         ./test/ \
                          ./gui/moc/ \
                          ./gui/hold-dev/ \
                          ./gui/qrc_images.cpp \

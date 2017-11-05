@@ -20,7 +20,7 @@
 //!  database that match a run ID. Once internally loaded, the noises can be
 //!  fetched for each editedData in the run.
 
-class US_GUI_EXTERN US_LoadRunNoise : public QObject
+class US_LoadRunNoise : public QObject
 {
   Q_OBJECT
 
