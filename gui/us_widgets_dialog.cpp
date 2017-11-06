@@ -441,6 +441,74 @@ QHBoxLayout* US_WidgetsDialog::us_timeedit(
    return layo;
 }
 
+// day-hh-mm-ss layout
+QHBoxLayout* US_WidgetsDialog::us_ddhhmmsslay( 
+	     const int fontAdjust, QSpinBox** dd, QSpinBox** hh, QSpinBox** mm, QSpinBox** ss)
+{
+   QPalette   pal    = US_GuiSettings::normalColor();
+   QFont      font   = QFont( US_GuiSettings::fontFamily(),
+                              US_GuiSettings::fontSize  () + fontAdjust );
+
+   QHBoxLayout* layout = new QHBoxLayout;
+   layout->setContentsMargins( 0, 0, 0, 0 );
+   layout->setSpacing        ( 0 );
+   
+   if ( dd != NULL )
+   {
+      *dd              = new QSpinBox( this );
+      (*dd)->setRange(0, 20);
+      (*dd)->setPalette( pal );
+      (*dd)->setAutoFillBackground( true );
+      (*dd)->setFont( font );
+      QLabel*  lb_d   = us_label( tr( "D:" ) );
+      layout->addWidget( lb_d );
+      
+      layout->addWidget( *dd );
+      
+   }
+   
+   if ( hh != NULL )
+   {
+      *hh              = new QSpinBox( this );
+      (*hh)->setRange(0, 24);
+      (*hh)->setPalette( pal );
+      (*hh)->setAutoFillBackground( true );
+      (*hh)->setFont( font );
+      QLabel*  lb_h   = us_label( tr( "H:" ) );
+      layout->addWidget( lb_h );
+      
+      layout->addWidget( *hh );
+   }   
+   
+   if ( mm != NULL )
+   {
+      *mm              = new QSpinBox( this );
+      (*mm)->setRange(0, 60);
+      (*mm)->setPalette( pal );
+      (*mm)->setAutoFillBackground( true );
+      (*mm)->setFont( font );
+      QLabel*  lb_m   = us_label( tr( "M:" ) );
+      layout->addWidget( lb_m );
+      
+      layout->addWidget( *mm );
+   }
+   
+   if ( ss != NULL )
+   {
+      *ss              = new QSpinBox( this );
+      (*ss)->setRange(0, 60);
+      (*ss)->setPalette( pal );
+      (*ss)->setAutoFillBackground( true );
+      (*ss)->setFont( font );
+      QLabel*  lb_s   = us_label( tr( "S:" ) );
+      layout->addWidget( lb_s );
+
+      layout->addWidget( *ss );
+   }   
+
+   return layout;
+}
+
 // SpinBox
 QSpinBox* US_WidgetsDialog::us_spinbox( const int fontAdjust )
 {

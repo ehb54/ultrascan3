@@ -177,6 +177,14 @@ class US_GUI_EXTERN US_Widgets : public QFrame
     QHBoxLayout* us_timeedit( QTimeEdit*&, const int = 0,
                               QSpinBox** = (QSpinBox**)NULL );
 
+    //! \param fontAdjust - Adjustment to default font size
+    //! \param sbox(es)   - Optional pointer to days/hh/min/sec QSpinBox    
+    QHBoxLayout* us_ddhhmmss( const int = 0, 
+			      QSpinBox** = (QSpinBox**)NULL,
+			      QSpinBox** = (QSpinBox**)NULL, 
+			      QSpinBox** = (QSpinBox**)NULL, 
+			      QSpinBox** = (QSpinBox**)NULL);
+
     //! \param fontAdjust -  adjustment to default font size\n
     //! * Color is set to US_GuiSettings::normalEdit()
     QSpinBox* us_spinbox( int = 0 );
