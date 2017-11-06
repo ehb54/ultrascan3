@@ -530,6 +530,62 @@ QHBoxLayout* US_Widgets::us_timeedit(
    return layo;
 }
 
+// day-hh-mm-ss box
+QHBoxLayout* US_Widgets::us_ddhhmmss( 
+	     const int fontAdjust, QSpinBox** dd, QSpinBox** hh, QSpinBox** mm, QSpinBox** ss)
+{
+
+   QPalette   pal    = US_GuiSettings::normalColor();
+   QFont      font   = QFont( US_GuiSettings::fontFamily(),
+                              US_GuiSettings::fontSize  () + fontAdjust );
+
+   QHBoxLayout* layo = new QHBoxLayout;
+   layo->setContentsMargins( 0, 0, 0, 0 );
+   layo->setSpacing        ( 0 );
+   
+   if ( dd != NULL )
+   {
+      *dd              = new QSpinBox( this );
+      (*dd)->setPalette( pal );
+      (*dd)->setAutoFillBackground( true );
+      (*dd)->setFont( font );
+
+      layo->addWidget( *dd );
+   }
+   
+   if ( hh != NULL )
+   {
+      *hh              = new QSpinBox( this );
+      (*hh)->setPalette( pal );
+      (*hh)->setAutoFillBackground( true );
+      (*hh)->setFont( font );
+
+      layo->addWidget( *hh );
+   }   
+   
+   if ( mm != NULL )
+   {
+      *mm              = new QSpinBox( this );
+      (*mm)->setPalette( pal );
+      (*mm)->setAutoFillBackground( true );
+      (*mm)->setFont( font );
+
+      layo->addWidget( *mm );
+   }
+   
+   if ( ss != NULL )
+   {
+      *ss              = new QSpinBox( this );
+      (*ss)->setPalette( pal );
+      (*ss)->setAutoFillBackground( true );
+      (*ss)->setFont( font );
+
+      layo->addWidget( *ss );
+   }   
+
+   return layo;
+}
+
 // SpinBox
 QSpinBox* US_Widgets::us_spinbox( const int fontAdjust )
 {
