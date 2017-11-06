@@ -729,33 +729,39 @@ US_ExperGuiSpeeds::US_ExperGuiSpeeds( QWidget* topw )
    QLabel* lb_panel    = us_banner( tr( "3: Specify speed steps" ) );
    panel->addWidget( lb_panel );
    QGridLayout* genL   = new QGridLayout();
-
+   
    // Labels
    QLabel*  lb_count   = us_label( tr( "Number of Speed Profiles:" ) );
    QLabel*  lb_speed   = us_label( tr( "Rotor Speed (rpm):" ) );
    QLabel*  lb_accel   = us_label( tr( "Acceleration (rpm/sec):" ) );
-   QLabel*  lb_durat   = us_label( tr( "Duration of Experiment (days hh:mm:ss):" ) );
-   QLabel*  lb_delay   = us_label( tr( "Delay to First Scan (days hh:mm:ss):" ) );
+   QLabel*  lb_durat   = us_label( tr( "Duration of Experiment (days[D] hh[H] mm[M] ss[S]):" ) );
+   QLabel*  lb_delay   = us_label( tr( "Delay to First Scan (days[D] hh[H] mm[M] ss[S]):" ) );
    QLayout* lo_endoff  = us_checkbox( tr( "Spin down centrifuge at job end" ),
                                       ck_endoff, true );
    QLayout* lo_radcal  = us_checkbox( tr( "Perform radial calibration" ),
                                       ck_radcal, false );
-   QLabel*  lb_scnint  = us_label( tr( "Scan Interval (days hh:mm:ss;"
+   QLabel*  lb_scnint  = us_label( tr( "Scan Interval (days[D] hh[H] mm[M] ss[S];"
                                        " 0 => fast-as-possible)" ) );
 
    // ComboBox, counters, time-edits, spinbox
    sb_count            = us_spinbox();
-   sb_count            ->setMinimum(1); //ALEXEY BUG FIX
+   sb_count            ->setMinimum(1);  //ALEXEY BUG FIX
 
    cb_prof             = new QComboBox( this );
    ct_speed            = us_counter( 2, 1000,  80000, 100 );
    ct_accel            = us_counter( 2,   50,   1000,  50 );
-   QHBoxLayout* lo_durat
-                       = us_timeedit( tm_durat,  0, &sb_durat  );
-   QHBoxLayout* lo_delay
-                       = us_timeedit( tm_delay,  0, &sb_delay  );
-   QHBoxLayout* lo_scnint
-                       = us_timeedit( tm_scnint, 0, &sb_scnint );
+    // QHBoxLayout* lo_durat                                             // ALEXEY
+    //                       = us_timeedit( tm_durat,  0, &sb_durat  );
+    // QHBoxLayout* lo_delay
+    //                       = us_timeedit( tm_delay,  0, &sb_delay  );
+    // QHBoxLayout* lo_scnint
+    //                       = us_timeedit( tm_scnint, 0, &sb_scnint );
+   
+   
+   QHBoxLayout* lo_duratlay  = us_ddhhmmsslay( 0, &sb_durat_dd, &sb_durat_hh, &sb_durat_mm,  &sb_durat_ss);
+   QHBoxLayout* lo_delaylay  = us_ddhhmmsslay( 0, &sb_delay_dd, &sb_delay_hh, &sb_delay_mm,  &sb_delay_ss);
+   QHBoxLayout* lo_scnintlay = us_ddhhmmsslay( 0, &sb_scnint_dd, &sb_scnint_hh, &sb_scnint_mm,  &sb_scnint_ss);
+
    le_maxrpm           = us_lineedit( tr( "Maximum speed for AN50 rotor:"
                                           "  50000 rpm" ), 0, true );
 
@@ -791,16 +797,31 @@ DbgLv(1) << "EGSp:   def  d h m s " << dhms_dly;
    ct_speed ->setValue( df_speed  );
    ct_accel ->setValue( df_accel  );
 DbgLv(1) << "EGSp: init sb/de components";
-   sb_durat ->setValue( (int)dhms_dur[ 0 ] );
-   tm_durat ->setTime ( QTime( dhms_dur[ 1 ],
-                               dhms_dur[ 2 ],
-                               dhms_dur[ 3 ] ) );
-   sb_delay ->setValue( (int)dhms_dly[ 0 ] );
-   tm_delay ->setTime ( QTime( dhms_dly[ 1 ],
-                               dhms_dly[ 2 ],
-                               dhms_dly[ 3 ] ) );
-   sb_scnint->setValue( 0 );
-   tm_scnint->setTime ( QTime( 0, 0 ) );
+   // sb_durat ->setValue( (int)dhms_dur[ 0 ] );   // sb_durat_dd ::ALEXEY USE dhms_dur[0..3] for duration: [0]=>day, [1]=>hh, [2]=>mm, [3]=>ss
+   // tm_durat ->setTime ( QTime( dhms_dur[ 1 ],   // sb_durat_hh
+   //                             dhms_dur[ 2 ],   // sb_durat_mm
+   //                             dhms_dur[ 3 ] ) ); //sb_durat_ss
+   sb_durat_dd ->setValue( (int)dhms_dur[ 0 ] );
+   sb_durat_hh ->setValue( (int)dhms_dur[ 1 ] );
+   sb_durat_mm ->setValue( (int)dhms_dur[ 2 ] );
+   sb_durat_ss ->setValue( (int)dhms_dur[ 3 ] );
+
+   // sb_delay ->setValue( (int)dhms_dly[ 0 ] );   //ALEXEY USE dhms_dly[0..3] for duration: [0]=>day, [1]=>hh, [2]=>mm, [3]=>ss
+   // tm_delay ->setTime ( QTime( dhms_dly[ 1 ],
+   //                             dhms_dly[ 2 ],
+   //                             dhms_dly[ 3 ] ) );
+   sb_delay_dd ->setValue( (int)dhms_dly[ 0 ] );
+   sb_delay_hh ->setValue( (int)dhms_dly[ 1 ] );
+   sb_delay_mm ->setValue( (int)dhms_dly[ 2 ] );
+   sb_delay_ss ->setValue( (int)dhms_dly[ 3 ] );
+
+   // sb_scnint->setValue( 0 );                    //ALEXEY  
+   // tm_scnint->setTime ( QTime( 0, 0 ) );
+   sb_scnint_dd ->setValue( 0 );
+   sb_scnint_hh ->setValue( 0 );
+   sb_scnint_mm ->setValue( 0 );
+   sb_scnint_ss ->setValue( 0 );
+   
 DbgLv(1) << "EGSp: DONE init sb/de components";
 
    // Speed profile 1 description;
@@ -813,35 +834,43 @@ DbgLv(1) << "EGSp: DONE init sb/de components";
 
    // Create main layout rows
    int row = 0;
-   genL->addWidget( lb_count,   row,    0, 1,  7 );
-   genL->addWidget( sb_count,   row++,  7, 1,  1 );
+   genL->addWidget( lb_count,   row,    0, 1,  6 );
+   genL->addWidget( sb_count,   row++,  6, 1,  2 );
 DbgLv(1) << "EGSp: addWidg/Layo row" << row;
    genL->addWidget( cb_prof,    row++,  0, 1,  8 );
 DbgLv(1) << "EGSp: addWidg/Layo row" << row;
-   genL->addWidget( lb_speed,   row,    0, 1,  7 );
-   genL->addWidget( ct_speed,   row++,  7, 1,  1 );
+   genL->addWidget( lb_speed,   row,    0, 1,  6 );
+   genL->addWidget( ct_speed,   row++,  6, 1,  2 );
 DbgLv(1) << "EGSp: addWidg/Layo row" << row;
-   genL->addWidget( lb_accel,   row,    0, 1,  7 );
-   genL->addWidget( ct_accel,   row++,  7, 1,  1 );
+   genL->addWidget( lb_accel,   row,    0, 1,  6 );
+   genL->addWidget( ct_accel,   row++,  6, 1,  2 );
 DbgLv(1) << "EGSp: addWidg/Layo row" << row;
 DbgLv(1) << "EGSp: addWidg/Layo AA";
-   genL->addWidget( lb_durat,   row,    0, 1,  7 );
+
+  genL->addWidget( lb_durat,   row,    0, 1,  6 );
 DbgLv(1) << "EGSp: addWidg/Layo BB";
-   genL->addLayout( lo_durat,   row++,  7, 1,  1 );
+//genL->addLayout( lo_durat,   row++,  6, 1,  2);
+  genL->addLayout( lo_duratlay,   row++,  6, 1,  2);
+
 DbgLv(1) << "EGSp: addWidg/Layo CC";
-   genL->addWidget( lb_delay,   row,    0, 1,  7 );
+  genL->addWidget( lb_delay,   row,    0, 1,  6 );
 DbgLv(1) << "EGSp: addWidg/Layo DD";
-   genL->addLayout( lo_delay,   row++,  7, 1,  1 );
+// genL->addLayout( lo_delay,   row++,  6, 1,  2 );
+  genL->addLayout( lo_delaylay,   row++,  6, 1,  2 );
+
 DbgLv(1) << "EGSp: addWidg/Layo EE";
-   genL->addWidget( lb_scnint,  row,    0, 1,  7 );
+  genL->addWidget( lb_scnint,  row,    0, 1,  6 );
 DbgLv(1) << "EGSp: addWidg/Layo FF";
-   genL->addLayout( lo_scnint,  row++,  7, 1,  1 );
+// genL->addLayout( lo_scnint,  row++,  6, 1,  2 );
+  genL->addLayout( lo_scnintlay,  row++,  6, 1,  2 );
+
 DbgLv(1) << "EGSp: addWidg/Layo GG";
    genL->addWidget( le_maxrpm,  row++,  0, 1,  4 );
 DbgLv(1) << "EGSp: addWidg/Layo HH";
    genL->addLayout( lo_endoff,  row,    0, 1,  4 );
 DbgLv(1) << "EGSp: addWidg/Layo II";
    genL->addLayout( lo_radcal,  row++,  4, 1,  4 );
+   
    genL->setColumnStretch(  0, 4 );
    genL->setColumnStretch(  1, 4 );
    genL->setColumnStretch(  2, 4 );
@@ -860,14 +889,34 @@ DbgLv(1) << "EGSp: addWidg/Layo II";
             this,      SLOT  ( ssChangeSpeed ( double ) ) );
    connect( ct_accel,  SIGNAL( valueChanged  ( double ) ),
             this,      SLOT  ( ssChangeAccel ( double ) ) );
-   connect( sb_durat,  SIGNAL( valueChanged   ( int ) ),
-            this,      SLOT  ( ssChgDuratDay  ( int ) ) );
-   connect( tm_durat,  SIGNAL( timeChanged    ( const QTime& ) ),
-            this,      SLOT  ( ssChgDuratTime ( const QTime& ) ) );
-   connect( sb_delay,  SIGNAL( valueChanged   ( int ) ),
-            this,      SLOT  ( ssChgDelayDay  ( int ) ) );
-   connect( tm_delay,  SIGNAL( timeChanged    ( const QTime& ) ),
-            this,      SLOT  ( ssChgDelayTime ( const QTime& ) ) );
+
+   // connect( sb_durat,  SIGNAL( valueChanged   ( int ) ),               \\ALEXEY
+   //          this,      SLOT  ( ssChgDuratDay  ( int ) ) );
+   // connect( tm_durat,  SIGNAL( timeChanged    ( const QTime& ) ),
+   //          this,      SLOT  ( ssChgDuratTime ( const QTime& ) ) );
+   // connect( sb_delay,  SIGNAL( valueChanged   ( int ) ),
+   //          this,      SLOT  ( ssChgDelayDay  ( int ) ) );
+   // connect( tm_delay,  SIGNAL( timeChanged    ( const QTime& ) ),
+   //          this,      SLOT  ( ssChgDelayTime ( const QTime& ) ) );
+
+   connect( sb_durat_dd,  SIGNAL( valueChanged   ( int ) ),               
+            this,         SLOT  ( ssChgDuratDay  ( int ) ) );
+   connect( sb_durat_hh,  SIGNAL( valueChanged   ( int ) ),
+            this,         SLOT  ( ssChgDuratTime_hh ( int ) ) );
+   connect( sb_durat_mm,  SIGNAL( valueChanged   ( int ) ),
+            this,         SLOT  ( ssChgDuratTime_mm ( int ) ) );
+   connect( sb_durat_ss,  SIGNAL( valueChanged   ( int ) ),
+            this,         SLOT  ( ssChgDuratTime_ss ( int ) ) );
+
+   connect( sb_delay_dd,  SIGNAL( valueChanged   ( int ) ),
+            this,         SLOT  ( ssChgDelayDay  ( int ) ) );
+   connect( sb_delay_hh,  SIGNAL( valueChanged   ( int ) ),
+            this,         SLOT  ( ssChgDelayTime_hh ( int ) ) );
+   connect( sb_delay_mm,  SIGNAL( valueChanged   ( int ) ),
+            this,         SLOT  ( ssChgDelayTime_mm ( int ) ) );
+   connect( sb_delay_ss,  SIGNAL( valueChanged   ( int ) ),
+            this,         SLOT  ( ssChgDelayTime_ss ( int ) ) ); 
+
 DbgLv(1) << "EGSp: addWidg/Layo II";
 
    // Complete overall layout
@@ -885,14 +934,19 @@ DbgLv(1) << "EGSp: addWidg/Layo II";
 QString US_ExperGuiSpeeds::speedp_description( int ssx )
 {
    // For example: "Speed Profile 1: 30000 rpm for 5 hr 30 min"
-   double durtim  = ssvals[ ssx ][ "duration" ]; // Duration total minutes
-   double durhr   = qFloor( durtim / 60.0 );     // Duration hours
-   double durmin  = durtim - ( durhr * 60.0 );   // Duration residual minutes
-   int    escans  = qRound( durtim * 6.0 );      // Estimated step scans
+   double durtim  = ssvals[ ssx ][ "duration" ]; // Duration total minutes   //ALEXEY - no, in seconds
+   //double durhr   = qFloor( durtim / 60.0 );     // Duration hours
+   double durhr   = qFloor( durtim / 3600.0 );     // Duration hours          //ALEXEY (seconds/3600)
+   // double durmin  = durtim - ( durhr * 60.0 );   // Duration residual minutes
+   double durmin  = (durtim / 60.0) - ( durhr * 60.0 );   // Duration residual minutes
+
+   //int    escans  = qRound( durtim * 6.0 );      // Estimated step scans             //ALEXEY: 6 scans per minute ??? 
+   int    escans  = qRound( (durtim / 60.0) * 6.0 );      // Estimated step scans             //ALEXEY: 6 scans per minute ??? 
    double durtot  = 0.0;
    for ( int ii = 0; ii < ssvals.size(); ii++ )
-      durtot        += ssvals[ ii ][ "duration" ];
-   int    tscans  = qRound( durtot * 6.0 );      // Estimated total scans
+     durtot        += ssvals[ ii ][ "duration" ];  //ALEXEY durtot IS in seconds - NOT minutes
+   //int    tscans  = qRound( durtot * 6.0 );      // Estimated total scans     
+   int    tscans  = qRound( (durtot / 60.0) * 6.0 );      // Estimated total scans            //ALEXEY: SECS (NOT MINS) times 6
   
 DbgLv(1) << "EGSp: spDesc: ssx" << ssx
  << "dur tim,hr,min" << durtim << durhr << durmin;
@@ -909,6 +963,8 @@ void US_ExperGuiSpeeds::ssChangeCount( int val )
    changed          = true;
    int new_nsp      = val;
 DbgLv(1) << "EGSp: chgKnt: nsp nnsp" << nspeed << new_nsp;
+  
+  double speedmax  = sibDValue( "rotor",   "maxrpm" ); 
    if ( new_nsp > nspeed )
    {  // Number of speed steps increases
       profdesc.resize( new_nsp );
@@ -916,26 +972,37 @@ DbgLv(1) << "EGSp: chgKnt: nsp nnsp" << nspeed << new_nsp;
       int kk           = nspeed - 1;
       double ssspeed   = ssvals[ kk ][ "speed" ];
       double ssaccel   = ssvals[ kk ][ "accel" ];
-      double ssdurtim  = ssvals[ kk ][ "duration" ];
-      double ssdurhr   = qFloor( ssdurtim / 60.0 );
-      double ssdurmin  = ssdurtim - ( ssdurhr * 60.0 );
-      double ssdlytim  = ssvals[ kk ][ "delay" ];
+
+      double ssdurtim  = ssvals[ kk ][ "duration" ];        //ALEXEY - minutes ??? should be seconds ...
+      // double ssdurhr   = qFloor( ssdurtim / 60.0 );
+      // double ssdurmin  = ssdurtim - ( ssdurhr * 60.0 );
+       double ssdurmin  = qFloor( ssdurtim / 60.0 );         //ALEXEY redone in secons for duration
+       double ssdurhr   = qFloor( ssdurmin / 60.0 );
+       ssdurmin        -= ( ssdurhr * 60.0 );
+       double ssdursec  = ssdurtim - ( ssdurhr * 3600.0 )
+                                   - ( ssdurmin * 60.0 );
+
+      double ssdlytim  = ssvals[ kk ][ "delay" ];           //ALEXEY - seconds (correct..)
       double ssdlymin  = qFloor( ssdlytim / 60.0 );
       double ssdlyhr   = qFloor( ssdlymin / 60.0 );
       ssdlymin        -= ( ssdlyhr * 60.0 );
       double ssdlysec  = ssdlytim - ( ssdlyhr * 3600.0 )
                                   - ( ssdlymin * 60.0 );
-      ssdurtim         = ( ssdurhr * 60.0 ) + ssdurmin;
-      ssdlytim         = ( ssdlyhr * 3600.0 ) + ( ssdlymin * 60.0 ) + ssdlysec;
-DbgLv(1) << "EGSp: chgKnt:  kk" << kk << "spd acc dur dly"
+
+      //ssdurtim         = ( ssdurhr * 60.0 ) + ssdurmin;                        //ALEXEY in minutes [duration]
+      ssdurtim         = ( ssdurhr * 3600.0 ) + ( ssdurmin * 60.0 ) + ssdursec;  //ALEXEY in seconds [duration]
+      ssdlytim         = ( ssdlyhr * 3600.0 ) + ( ssdlymin * 60.0 ) + ssdlysec;  //ALEXEY in seconds [delay]
+DbgLv(1) << "EGSp: chgKnt:  kk" << kk << "spd acc dur dly" 
  << ssspeed << ssaccel << ssdurtim << ssdlytim;
 
       for ( kk = nspeed; kk < new_nsp; kk++ )
       {  // Fill in new speed step description and values
          ssspeed         += 5000.0;
+	 if (ssspeed > speedmax)                    //ALEXEY
+	   ssspeed = speedmax;
          ssvals[ kk ][ "speed"    ] = ssspeed;   // Speed
          ssvals[ kk ][ "accel"    ] = ssaccel;   // Acceleration
-         ssvals[ kk ][ "duration" ] = ssdurtim;  // Duration in minutes
+         ssvals[ kk ][ "duration" ] = ssdurtim;  // Duration in minutes  // No, in seconds
          ssvals[ kk ][ "delay"    ] = ssdlytim;  // Delay in seconds
          profdesc[ kk ]             = speedp_description( kk );
 DbgLv(1) << "EGSp: chgKnt:    kk" << kk << "pdesc" << profdesc[kk];
@@ -990,14 +1057,24 @@ DbgLv(1) << "EGSp: chgPfx:    speedmax" << speedmax;
    ct_speed ->setMaximum( speedmax );      // Set speed max based on rotor max
    ct_speed ->setValue( ssspeed  );        // Set counter values
    ct_accel ->setValue( ssaccel  );
-   sb_durat ->setValue( (int)dhms_dur[ 0 ] );
-   tm_durat ->setTime ( QTime( dhms_dur[ 1 ],
-                               dhms_dur[ 2 ],
-                               dhms_dur[ 3 ] ) );
-   sb_delay ->setValue( (int)dhms_dly[ 0 ] );
-   tm_delay ->setTime ( QTime( dhms_dly[ 1 ],
-                               dhms_dly[ 2 ],
-                               dhms_dly[ 3 ] ) );
+
+   // sb_durat ->setValue( (int)dhms_dur[ 0 ] );            //ALEXEY
+   // tm_durat ->setTime ( QTime( dhms_dur[ 1 ],
+   //                             dhms_dur[ 2 ],
+   //                             dhms_dur[ 3 ] ) );
+   // sb_delay ->setValue( (int)dhms_dly[ 0 ] );
+   // tm_delay ->setTime ( QTime( dhms_dly[ 1 ],
+   //                             dhms_dly[ 2 ],
+   //                             dhms_dly[ 3 ] ) );
+
+   sb_durat_dd ->setValue( (int)dhms_dur[ 0 ] );
+   sb_durat_hh ->setValue( (int)dhms_dur[ 1 ] );
+   sb_durat_mm ->setValue( (int)dhms_dur[ 2 ] );
+   sb_durat_ss ->setValue( (int)dhms_dur[ 3 ] );
+   sb_delay_dd ->setValue( (int)dhms_dly[ 0 ] );
+   sb_delay_hh ->setValue( (int)dhms_dly[ 1 ] );
+   sb_delay_mm ->setValue( (int)dhms_dly[ 2 ] );
+   sb_delay_ss ->setValue( (int)dhms_dly[ 3 ] );
 }
 
 // Slot for change in speed value
@@ -1026,39 +1103,130 @@ DbgLv(1) << "EGSp: chgAcc: val" << val << "ssx" << curssx;
    changed          = true;              // Flag this as a user change
 }
 
-// Slot for change in duration time (hour/minute/second)
-void US_ExperGuiSpeeds::ssChgDuratTime( const QTime& tval )
+// // Slot for change in duration time (hour/minute/second)           //ALEXEY
+// void US_ExperGuiSpeeds::ssChgDuratTime( const QTime& tval )
+// {
+// DbgLv(1) << "EGSp: chgDlyT: tval" << tval;
+//    double ssdurhr   = tval.hour();
+//    double ssdurmin  = tval.minute();
+//    double ssdursec  = tval.second();
+//    double ssdurtim  = ( ssdurhr * 3600.0 ) + ( ssdurmin * 60.0 ) + ssdursec;
+// DbgLv(1) << "EGSp: chgDlyT:  ssdly h m s" << ssdurhr << ssdurmin << ssdursec
+//  << "t" << ssdurtim;
+//    ssvals[ curssx ][ "duration" ] = ssdurtim;  // Set Duration in step vals vector
+// }
+
+// Slot for change in duration time (hours)
+void US_ExperGuiSpeeds::ssChgDuratTime_hh( int val )
 {
-DbgLv(1) << "EGSp: chgDlyT: tval" << tval;
-   double ssdurhr   = tval.hour();
-   double ssdurmin  = tval.minute();
-   double ssdursec  = tval.second();
+   double ssdurhr   = val;
+   double ssdurmin  = (double)sb_durat_mm->value();
+   double ssdursec  = (double)sb_durat_ss->value();
    double ssdurtim  = ( ssdurhr * 3600.0 ) + ( ssdurmin * 60.0 ) + ssdursec;
 DbgLv(1) << "EGSp: chgDlyT:  ssdly h m s" << ssdurhr << ssdurmin << ssdursec
  << "t" << ssdurtim;
    ssvals[ curssx ][ "duration" ] = ssdurtim;  // Set Duration in step vals vector
+
+   profdesc[ curssx ] = speedp_description( curssx );
+   cb_prof->setItemText( curssx, profdesc[ curssx ] );
+}
+
+// Slot for change in duration time (mins)
+void US_ExperGuiSpeeds::ssChgDuratTime_mm( int val )
+{
+   double ssdurhr   = (double)sb_durat_hh->value();
+   double ssdurmin  = val;
+   double ssdursec  = (double)sb_durat_ss->value();
+   double ssdurtim  = ( ssdurhr * 3600.0 ) + ( ssdurmin * 60.0 ) + ssdursec;
+DbgLv(1) << "EGSp: chgDlyT:  ssdly h m s" << ssdurhr << ssdurmin << ssdursec
+ << "t" << ssdurtim;
+   ssvals[ curssx ][ "duration" ] = ssdurtim;  // Set Duration in step vals vector
+
+   profdesc[ curssx ] = speedp_description( curssx );
+   cb_prof->setItemText( curssx, profdesc[ curssx ] );
+}
+
+// Slot for change in duration time (sec)
+void US_ExperGuiSpeeds::ssChgDuratTime_ss( int val )
+{
+   double ssdurhr   = (double)sb_durat_hh->value();
+   double ssdurmin  = (double)sb_durat_mm->value();
+   double ssdursec  = val;
+   double ssdurtim  = ( ssdurhr * 3600.0 ) + ( ssdurmin * 60.0 ) + ssdursec;
+DbgLv(1) << "EGSp: chgDlyT:  ssdly h m s" << ssdurhr << ssdurmin << ssdursec
+ << "t" << ssdurtim;
+   ssvals[ curssx ][ "duration" ] = ssdurtim;  // Set Duration in step vals vector
+
+   profdesc[ curssx ] = speedp_description( curssx );
+   cb_prof->setItemText( curssx, profdesc[ curssx ] );
 }
 
 // Slot for change in duration day
 void US_ExperGuiSpeeds::ssChgDuratDay( int val )
 {
    double ssdurday  = val;
-   double ssdurhr   = tm_durat->sectionText( QDateTimeEdit::HourSection ).toDouble();
+//  double ssdurhr   = tm_durat->sectionText( QDateTimeEdit::HourSection ).toDouble(); //ALEXEY
+   
+   double ssdurhr   = (double)sb_durat_hh->value();
+   double ssdurmin  = (double)sb_durat_mm->value();
+   double ssdursec  = (double)sb_durat_ss->value();
 DbgLv(1) << "EGSp: chgDlyD: val" << val << "ssdly d h"
- << ssdurday << ssdurhr;
+  << ssdurday << ssdurhr;
 // << ssdurhr << ssdurmin << ssdursec << "t" << ssdurtim;
+ 
+   double ssdurtim  = ( val * 3600.0 * 24 ) + ( ssdurhr * 3600.0 ) + ( ssdurmin * 60.0 ) + ssdursec;
+   ssvals[ curssx ][ "duration" ] = ssdurtim;  // Set Duration in step vals vector
+
+   profdesc[ curssx ] = speedp_description( curssx );
+   cb_prof->setItemText( curssx, profdesc[ curssx ] );
+}
+
+// // Slot for change in delay time (hour/minute/second)                     \\ALEXEY
+// void US_ExperGuiSpeeds::ssChgDelayTime( const QTime& tval )
+// {
+// DbgLv(1) << "EGSp: chgDlyT: tval" << tval;
+//    double ssdlyhr   = tval.hour();
+//    double ssdlymin  = tval.minute();
+//    double ssdlysec  = tval.second();
+//    double ssdlytim  = ( ssdlyhr * 3600.0 ) + ( ssdlymin * 60.0 ) + ssdlysec;
+// DbgLv(1) << "EGSp: chgDlyT:  ssdly h m s" << ssdlyhr << ssdlymin << ssdlysec
+// << "t" << ssdlytim;
+//    ssvals[ curssx ][ "delay" ] = ssdlytim;  // Set Delay in step vals vector
+// }
+
+// Slot for change in delay time (hours)
+void US_ExperGuiSpeeds::ssChgDelayTime_hh( int val )
+{
+   double ssdlyhr   = val;
+   double ssdlymin  = (double)sb_delay_mm->value();
+   double ssdlysec  = (double)sb_delay_ss->value();
+   double ssdlytim  = ( ssdlyhr * 3600.0 ) + ( ssdlymin * 60.0 ) + ssdlysec;
+DbgLv(1) << "EGSp: chgDlyT:  ssdly h m s" << ssdlyhr << ssdlymin << ssdlysec
+<< "t" << ssdlytim;
+   ssvals[ curssx ][ "delay" ] = ssdlytim;  // Set Delay in step vals vector
+}
+
+// Slot for change in delay time (mins)
+void US_ExperGuiSpeeds::ssChgDelayTime_mm( int val )
+{
+   double ssdlyhr   = (double)sb_delay_hh->value();
+   double ssdlymin  = val;
+   double ssdlysec  = (double)sb_delay_ss->value();
+   double ssdlytim  = ( ssdlyhr * 3600.0 ) + ( ssdlymin * 60.0 ) + ssdlysec;
+DbgLv(1) << "EGSp: chgDlyT:  ssdly h m s" << ssdlyhr << ssdlymin << ssdlysec
+<< "t" << ssdlytim;
+   ssvals[ curssx ][ "delay" ] = ssdlytim;  // Set Delay in step vals vector
 }
 
 // Slot for change in delay time (hour/minute/second)
-void US_ExperGuiSpeeds::ssChgDelayTime( const QTime& tval )
+void US_ExperGuiSpeeds::ssChgDelayTime_ss( int val )
 {
-DbgLv(1) << "EGSp: chgDlyT: tval" << tval;
-   double ssdlyhr   = tval.hour();
-   double ssdlymin  = tval.minute();
-   double ssdlysec  = tval.second();
+   double ssdlyhr   = (double)sb_delay_hh->value();
+   double ssdlymin  = (double)sb_delay_mm->value();
+   double ssdlysec  = val;
    double ssdlytim  = ( ssdlyhr * 3600.0 ) + ( ssdlymin * 60.0 ) + ssdlysec;
 DbgLv(1) << "EGSp: chgDlyT:  ssdly h m s" << ssdlyhr << ssdlymin << ssdlysec
- << "t" << ssdlytim;
+<< "t" << ssdlytim;
    ssvals[ curssx ][ "delay" ] = ssdlytim;  // Set Delay in step vals vector
 }
 
@@ -1066,10 +1234,18 @@ DbgLv(1) << "EGSp: chgDlyT:  ssdly h m s" << ssdlyhr << ssdlymin << ssdlysec
 void US_ExperGuiSpeeds::ssChgDelayDay( int val )
 {
    double ssdlyday  = (double)val;
-   double ssdlyhr   = tm_delay->sectionText( QDateTimeEdit::HourSection ).toDouble();
+//    double ssdlyhr   = tm_delay->sectionText( QDateTimeEdit::HourSection ).toDouble();  //ALEXEY
+   
+   double ssdlyhr   = (double)sb_delay_hh->value();
+   double ssdlymin  = (double)sb_delay_mm->value();
+   double ssdlysec  = (double)sb_delay_ss->value();
+
 DbgLv(1) << "EGSp: chgDlyD: val" << val << "ssdly d h"
- << ssdlyday << ssdlyhr;
+<< ssdlyday << ssdlyhr;
 // << ssdlyhr << ssdlymin << ssdlysec << "t" << ssdlytim;
+
+   double ssdlytim  = ( val * 3600.0 * 24 ) + ( ssdlyhr * 3600.0 ) + ( ssdlymin * 60.0 ) + ssdlysec;
+   ssvals[ curssx ][ "delay" ] = ssdlytim;  // Set Delay in step vals vector
 }
 
 
@@ -1082,9 +1258,15 @@ void US_ExperGuiSpeeds::adjustDelay( void )
    double spdelta   = cspeed - pspeed;               // Speed delta
    double accel     = ssvals[ curssx ][ "accel" ];   // Acceleration
    double delaylow  = qCeil( spdelta / accel );      // Low seconds delay
+
    QList< int > dhms;
    US_RunProtocol::timeToList( delaylow, dhms );
-   tm_delay->setMinimumTime( QTime( dhms[ 1 ], dhms[ 2 ], dhms[ 3 ] ) );
+   //tm_delay->setMinimumTime( QTime( dhms[ 1 ], dhms[ 2 ], dhms[ 3 ] ) ); //ALEXEY
+   //sb_delay_dd ->setValue( (int)dhms[ 0 ] );                             //ALEXEY - No days ??
+   sb_delay_hh ->setValue( (int)dhms[ 1 ] );
+   sb_delay_mm ->setValue( (int)dhms[ 2 ] );
+   sb_delay_ss ->setValue( (int)dhms[ 3 ] );
+
 //DbgLv(1) << "EGSp: adjDelay:   setdlymin delaynmin" << setdlymin << delaynmin;
 //DbgLv(1) << "EGSp: adjDelay:   setdlysec delaynsec" << setdlysec << delaynsec;
 }
@@ -2728,7 +2910,7 @@ DbgLv(1) << "EGUp:bj: ck: run proj cent solu epro"
    bool chk_sub_enab = ( chk_vars_set  &&  connected );
 
    if ( ! chk_sub_enab )
-      return js_exper; 		// Parameterization incomplete: empty return
+     return js_exper; 		// Parameterization incomplete: empty return
 
    // Start building Json of experiment controls
    QJsonObject   jo_exper;
@@ -2750,8 +2932,7 @@ DbgLv(1) << "EGUp:bj: ck: run proj cent solu epro"
    jo_exper.insert( "rotor", QJsonValue( jo_rotor ) );
 
 
-   DbgLv(1) << "JSON_1: ";
-	   
+DbgLv(1) << "JSON_1";  
    int jj            = 0;
    for ( int ii = 0; ii < nspeed; ii++, jj+= 6 )
    {
@@ -2768,8 +2949,8 @@ DbgLv(1) << "EGUp:bj: ck: run proj cent solu epro"
    }
    jo_exper.insert( "speeds", ja_speed );
 
-    DbgLv(1) << "JSON_2: ";
 
+DbgLv(1) << "JSON_2";  
    for ( int ii = 0; ii < scentp.count(); ii++ )
    {
       QJsonObject   jo_centp;
@@ -2794,9 +2975,9 @@ DbgLv(1) << "EGUp:bj: ck: run proj cent solu epro"
       ja_centp.append( jo_centp );
    }
    jo_exper.insert( "centerpieces", ja_centp );
-   
-   DbgLv(1) << "JSON_3: ";
 
+
+DbgLv(1) << "JSON_3";  
    for ( int ii = 0; ii < ssolut.count(); ii++ )
    {
       QJsonObject   jo_solut;
@@ -2812,9 +2993,9 @@ DbgLv(1) << "EGUp:bj: ck: run proj cent solu epro"
       ja_solut.append( jo_solut );
    }
    jo_exper.insert( "solutions", ja_solut );
-   
-   DbgLv(1) << "JSON_4: ";
-   
+
+DbgLv(1) << "JSON_4";  
+
    // Format the byte array and string form of Json
    QJsonDocument jd_exper( jo_exper );
    QByteArray    jb_exper;

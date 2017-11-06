@@ -184,6 +184,21 @@ class US_ExperGuiSpeeds : public US_WidgetsDialog
       QSpinBox*    sb_durat;
       QSpinBox*    sb_scnint;
 
+      QSpinBox*    sb_durat_dd;
+      QSpinBox*    sb_durat_hh;
+      QSpinBox*    sb_durat_mm;
+      QSpinBox*    sb_durat_ss;
+
+      QSpinBox*    sb_delay_dd;
+      QSpinBox*    sb_delay_hh;
+      QSpinBox*    sb_delay_mm;
+      QSpinBox*    sb_delay_ss;
+
+      QSpinBox*    sb_scnint_dd;
+      QSpinBox*    sb_scnint_hh;
+      QSpinBox*    sb_scnint_mm;
+      QSpinBox*    sb_scnint_ss;
+
       QCheckBox*   ck_endoff;
       QCheckBox*   ck_radcal;
 
@@ -209,12 +224,22 @@ class US_ExperGuiSpeeds : public US_WidgetsDialog
       void    ssChangeAccel ( double );
       //! \brief Slot for SS change in duration day
       void    ssChgDuratDay ( int );
+      
       //! \brief Slot for SS change in duration time
-      void    ssChgDuratTime( const QTime& );
+      //void    ssChgDuratTime( const QTime& );
+      void    ssChgDuratTime_hh( int );
+      void    ssChgDuratTime_mm( int );
+      void    ssChgDuratTime_ss( int );
+
       //! \brief Slot for SS change in delay day
       void    ssChgDelayDay ( int );
+
       //! \brief Slot for SS change in delay time
-      void    ssChgDelayTime( const QTime& );
+      //void    ssChgDelayTime( const QTime& );
+      void    ssChgDelayTime_hh( int );
+      void    ssChgDelayTime_mm( int );
+      void    ssChgDelayTime_ss( int );
+
       //! \brief Function to adjust delay based on speed,accel,delay-hrs
       void    adjustDelay   ( void   );
 #if 0

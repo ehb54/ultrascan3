@@ -540,12 +540,28 @@ void US_ExperGuiSpeeds::initPanel()
    ct_speed ->setMaximum( speedmax );    // Set speed max based on rotor max
    ct_speed ->setValue  ( rpSpeed->ssteps[ curssx ].speed );
    ct_accel ->setValue  ( rpSpeed->ssteps[ curssx ].accel );
-   sb_durat ->setValue  ( dhms1[ 0 ] );
-   tm_durat ->setTime   ( QTime( dhms1[ 1 ], dhms1[ 2 ], dhms1[ 3 ] ) );
-   sb_delay ->setValue  ( dhms2[ 0 ] );
-   tm_delay ->setTime   ( QTime( dhms2[ 1 ], dhms2[ 2 ], dhms2[ 3 ] ) );
-   sb_scnint->setValue  ( dhms3[ 0 ] );
-   tm_scnint->setTime   ( QTime( dhms3[ 1 ], dhms3[ 2 ], dhms3[ 3 ] ) );
+   
+   //ALEXEY Comment for now -> transform "Speeds" panel: seperate spinBoxes...
+   // sb_durat ->setValue  ( dhms1[ 0 ] );
+   // tm_durat ->setTime   ( QTime( dhms1[ 1 ], dhms1[ 2 ], dhms1[ 3 ] ) );
+   // sb_delay ->setValue  ( dhms2[ 0 ] );
+   // tm_delay ->setTime   ( QTime( dhms2[ 1 ], dhms2[ 2 ], dhms2[ 3 ] ) );
+   // sb_scnint->setValue  ( dhms3[ 0 ] );
+   // tm_scnint->setTime   ( QTime( dhms3[ 1 ], dhms3[ 2 ], dhms3[ 3 ] ) );
+
+   sb_durat_dd ->setValue( (int)dhms1[ 0 ] );
+   sb_durat_hh ->setValue( (int)dhms1[ 1 ] );
+   sb_durat_mm ->setValue( (int)dhms1[ 2 ] );
+   sb_durat_ss ->setValue( (int)dhms1[ 3 ] );
+   sb_delay_dd ->setValue( (int)dhms2[ 0 ] );
+   sb_delay_hh ->setValue( (int)dhms2[ 1 ] );
+   sb_delay_mm ->setValue( (int)dhms2[ 2 ] );
+   sb_delay_ss ->setValue( (int)dhms2[ 3 ] );
+   sb_scnint_dd ->setValue( (int)dhms3[ 0 ] );
+   sb_scnint_hh ->setValue( (int)dhms3[ 1 ] );
+   sb_scnint_mm ->setValue( (int)dhms3[ 2 ] );
+   sb_scnint_ss ->setValue( (int)dhms3[ 3 ] );
+
    ck_endoff->setChecked( rpSpeed->spin_down );
    ck_radcal->setChecked( rpSpeed->radial_calib );
    changed              = was_changed;   // Restore changed state
