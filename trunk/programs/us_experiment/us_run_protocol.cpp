@@ -397,7 +397,8 @@ US_RunProtocol::RunProtoSpeed::SpeedStep::SpeedStep()
 {
    speed       = 45000.0;
    accel       = 400.0;
-   duration    = 330.0;
+   //duration    = 330.0;
+   duration    = 5*3600 + 30*60;  // 5h 30 min - total in seconds
    delay       = 120.0;
    scanintv    = 0.0;
 }
