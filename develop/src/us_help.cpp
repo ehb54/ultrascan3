@@ -65,6 +65,7 @@ void US_Help::openBrowser()
 # ifdef Q_OS_MAC
      args
         << "-a"
+        << prog
         ;
      prog = "open";
 # endif
