@@ -152,7 +152,7 @@ void US_ExperGuiRanges::rebuild_Ranges( void )
    int nrange_sv       = rpRange->nranges;
    nrnchan             = rchans.count();
 DbgLv(1) << "EGRn: rbR: nuvvis" << nuvvis << "nrange_sv" << nrange_sv
- << "nrnchan" << nrnchan;
+	 << "nrnchan" << nrnchan << " rpRanges->nranges " << rpRange->nranges;
 
 //   if ( nrange_sv == nuvvis  &&  nuvvis != 0 )
 //      return;                           // No optical change means no rebuild
@@ -162,23 +162,51 @@ DbgLv(1) << "EGRn: rbR:  nrnchan" << nrnchan;
    {  // No existing Ranges protocol, so init with rudimentary one
       rpRange->nranges    = nuvvis;
       rpRange->chrngs.resize( nuvvis );
+      nrnchan = nuvvis;                      //ALEXEY bug fixed
       QString uvvis       = tr( "UV/visible" );
       QStringList oprof   = sibLValue( "optical", "profiles" );
       int kuv             = 0;
+
+      //ALEXEY BUG fixed missed resizing/filling out following arrays: rchans, swvlens, locrads, hicrads 
+      rchans .resize( nrnchan );
+      swvlens.resize( nrnchan );
+      locrads.resize( nrnchan );
+      hicrads.resize( nrnchan );
+
       for ( int ii = 0; ii < oprof.count(); ii++ )
       {
+DbgLv(1) << "Rn:CONTENT " << oprof[ ii ];	
          if ( oprof[ ii ].contains( uvvis ) )
          {
-            rpRange->chrngs[ kuv ].channel  = oprof[ ii ].section( ":", 0, 0 );
+	    rpRange->chrngs[ kuv ].channel  = oprof[ ii ].section( ":", 0, 0 );
             rpRange->chrngs[ kuv ].wvlens.clear();
             rpRange->chrngs[ kuv ].wvlens <<  280.0;
-            if ( ++kuv >= nuvvis )  break;
+DbgLv(1) << "Rn:CONTENT 11 inside: channel, wavelength: " << rpRange->chrngs[ kuv ].channel << rpRange->chrngs[ kuv ].wvlens ;	   
+
+           //ALEXEY wokr with rchans, swvlens, locrads, hicrads 
+           rchans [ kuv ]       = rpRange->chrngs[ kuv ].channel;
+	   int nwavl           = rpRange->chrngs[ kuv ].wvlens.count();
+	   swvlens[ kuv ].clear();
+	   
+	   for ( int jj = 0; jj < nwavl; jj++ )
+	     {
+	       double wavelen      = rpRange->chrngs[ kuv ].wvlens[ jj ];
+	       swvlens[ kuv ] << wavelen;
+	       DbgLv(1) << "EGRn: rbR:   kuv jj " << kuv << jj << "wavelen" << wavelen;
+	     }
+	   
+	   locrads[ kuv ]       = rpRange->chrngs[ kuv ].lo_rad;
+	   hicrads[ kuv ]       = rpRange->chrngs[ kuv ].hi_rad;
+	   
+	   if ( ++kuv >= nuvvis )  break;
          }
       }
-DbgLv(1) << "EGRn: rbR:  dummy proto  oprof count" << oprof.count() << "nuvvis" << nuvvis;
+ DbgLv(1) << "EGRn: rbR:  dummy proto  oprof count" << oprof.count() << "nuvvis" << nuvvis << " rpRanges->nranges " << rpRange->nranges;
       return;
    }
 
+DbgLv(1) << "RANGE_1";
+   
    QString cur_pname   = sibSValue( "general", "protocol" );
 DbgLv(1) << "EGRn: rbR:  protname" << protname << "cur_pname" << cur_pname;
 

@@ -1634,7 +1634,7 @@ DbgLv(1) << "EGwS:inP:    ii" << ii << "channel" << channel;
 void US_ExperGuiRanges::savePanel()
 {
 DbgLv(1) << "EGwS:svP: nrnchan" << nrnchan << "nranges" << rpRange->nranges;
-   rpRange->nranges  = nrnchan;            // Protocol channels
+   rpRange->nranges  = nrnchan;            // Protocol channels               //ALEXEY not correct BUG-BUG
    rpRange->chrngs.resize( nrnchan );    // Expand or contract?
 
    for ( int ii = 0; ii < nrnchan; ii++ )

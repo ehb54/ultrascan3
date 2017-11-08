@@ -2198,7 +2198,7 @@ DbgLv(1) << "EGOp rbO: rp.nochan" << rpOptic->nochan;
       nuchan              = 0;
       nuvvis              = 0;
       QString notinst     = tr( "(not installed)" );
-
+ 
       for ( int ii = 0; ii < nochan; ii++ )
       {
          rpOptic->chopts[ ii ].channel = ochans[ ii ];
@@ -2228,21 +2228,33 @@ DbgLv(1) << "EGOp rbO:  nochan" << nochan << "nochan_sv" << nochan_sv;
    QStringList solentrs = sibLValue( "solutions", "channel_solutions" );
    int kechan          = solentrs.count(); 
    rpOptic->chopts.clear();
-DbgLv(1) << "EGOp rbO:   solentrs count" << kechan;
+DbgLv(1) << "EGOp rbO:   solentrs count" << solentrs << kechan;
+
+   rpOptic->chopts.resize( kechan );   //ALEXEY bug fixed
 
    for ( int ii = 0; ii < kechan; ii++ )
    {
       QString channel     = solentrs[ ii ].section( ":", 0, 0 )
                             .simplified();
+
       for ( int jj = 0; jj < nochan_sv; jj++ )
       {
 DbgLv(1) << "EGOp rbO:    ii" << ii << "jj" << jj
  << "chsv.channel" << chopts_sv[jj].channel << "channel" << channel;
          if ( chopts_sv[ jj ].channel == channel )
          {
-            rpOptic->chopts << chopts_sv[ jj ];
-            break;
+	   //rpOptic->chopts << chopts_sv[ jj ];
+           rpOptic->chopts[ ii ] = chopts_sv[ jj ]; //ALEXEY bug fixed
+	   break;
          }
+	 else                                       //ALEXEY bug fixed  
+	 { 
+	   rpOptic->chopts[ ii ].channel = channel;  
+	   rpOptic->chopts[ ii ].scan1   = cc_osyss[ ii ]->button( 1 )->text();
+	   rpOptic->chopts[ ii ].scan2   = cc_osyss[ ii ]->button( 2 )->text();
+ 	   rpOptic->chopts[ ii ].scan3   = cc_osyss[ ii ]->button( 3 )->text();
+	   break;
+	 }
       }
    }
    rpOptic->nochan     = rpOptic->chopts.count();
