@@ -5,7 +5,7 @@
 #ifndef US_HYDRODYN_XSR
 #define US_HYDRODYN_XSR
 
-# if QT_VERSION < 0x040000 && defined(Q_WS_WIN)
+# if QT_VERSION < 0x040000 && defined(Q_OS_WIN)
 #  if !defined( Q_OS_WIN )
 
 /****************************************************************** 

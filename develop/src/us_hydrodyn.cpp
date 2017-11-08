@@ -542,7 +542,7 @@ void US_Hydrodyn::setupGUI()
    frame = new QFrame(this);
    frame->setMinimumHeight(minHeight1);
 
-# if QT_VERSION < 0x040000 || !defined(Q_WS_MAC)
+# if QT_VERSION < 0x040000 || !defined(Q_OS_MAC)
    menu = new QMenuBar(frame);
 # else
    menu = new QMenuBar( this );
@@ -555,7 +555,7 @@ void US_Hydrodyn::setupGUI()
    menu->insertItem(us_tr("&PDB"), pdb_options);
    menu->insertItem(us_tr("&Configuration"), configuration);
 
-# if QT_VERSION >= 0x040000 && defined(Q_WS_MAC)
+# if QT_VERSION >= 0x040000 && defined(Q_OS_MAC)
    {
  //      Q3PopupMenu * file = new Q3PopupMenu;
       file->insertItem( us_tr("&Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
@@ -574,7 +574,7 @@ void US_Hydrodyn::setupGUI()
    frame->setPalette( PALET_NORMAL );
    AUTFBACK( frame );
 
-# if !defined(Q_WS_MAC)
+# if !defined(Q_OS_MAC) || QT_VERSION > 0x050000
    menu = new QMenuBar(frame);
 # else
    menu = new QMenuBar( this );
@@ -695,9 +695,13 @@ void US_Hydrodyn::setupGUI()
       }
       menu->addMenu( submenu );
    }
-# if defined(Q_WS_MAC)
+# if defined(Q_OS_MAC)
    {
+#  if QT_VERSION >= 0x050000
+      QMenu * submenu = new QMenu( us_tr( "&File" ) );
+#  else
       QMenu * submenu = m->addMenu( us_tr( "&File" ) );
+#  endif
 
       QAction *qa1 = submenu->addAction( us_tr( "Font" ) );
       qa1->setShortcut( Qt::ALT+Qt::Key_F );
@@ -1179,7 +1183,7 @@ void US_Hydrodyn::setupGUI()
    editor->setMinimumWidth(550);
 
 #if QT_VERSION < 0x040000
-# if QT_VERSION < 0x040000 || !defined(Q_WS_MAC)
+# if QT_VERSION < 0x040000 || !defined(Q_OS_MAC)
    m = new QMenuBar( editor );    m->setObjectName( "menu" );
    m->setMinimumHeight(minHeight1);
    m->setPalette( PALET_NORMAL );
@@ -1195,7 +1199,7 @@ void US_Hydrodyn::setupGUI()
    file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
 # endif
 #else
-# if !defined(Q_WS_MAC)
+# if !defined(Q_OS_MAC)
    m = new QMenuBar( editor );    m->setObjectName( "menu" );
    m->setMinimumHeight(minHeight1);
    {
@@ -5688,12 +5692,12 @@ void US_Hydrodyn::update_enables()
 }
 
 void US_Hydrodyn::sizeArrows( QwtCounter* 
-#if QT_VERSION >= 0x040000 && ( defined(Q_WS_MAC) || defined(Q_WS_WIN) )
+#if QT_VERSION >= 0x040000 && ( defined(Q_OS_MAC) || defined(Q_OS_WIN) )
                               counter 
 #endif
 )
 {
-#if QT_VERSION >= 0x040000 && ( defined(Q_WS_MAC) || defined(Q_WS_WIN) )
+#if QT_VERSION >= 0x040000 && ( defined(Q_OS_MAC) || defined(Q_OS_WIN) )
    QList< QObject* > children = counter->children();
    QStyle* btnstyle = QStyleFactory::create("fusion");
    for ( int jj = 0; jj < children.size(); jj++ )

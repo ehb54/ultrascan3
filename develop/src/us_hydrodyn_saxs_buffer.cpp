@@ -666,7 +666,7 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    editor->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 2 ));
 
 #if QT_VERSION < 0x040000
-# if QT_VERSION >= 0x040000 && defined(Q_WS_MAC)
+# if QT_VERSION >= 0x040000 && defined(Q_OS_MAC)
    {
  //      Q3PopupMenu * file = new Q3PopupMenu;
       file->insertItem( us_tr("&Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
@@ -694,6 +694,10 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
 # endif
 #else
+# if defined(Q_OS_MAC)
+   m = new QMenuBar( this );
+   m->setObjectName( "menu" );
+# else
    QFrame *frame;
    frame = new QFrame(this);
    frame->setMinimumHeight(minHeight3);
@@ -701,6 +705,7 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    AUTFBACK( frame );
 
    m = new QMenuBar( frame );    m->setObjectName( "menu" );
+# endif
    m->setMinimumHeight(minHeight1 - 5);
    m->setPalette( PALET_NORMAL );
    AUTFBACK( m );
@@ -1198,7 +1203,7 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    hbl_created_2->addWidget ( pb_show_only_created );
 
    QBoxLayout * vbl_editor_group = new QVBoxLayout(0); vbl_editor_group->setContentsMargins( 0, 0, 0, 0 ); vbl_editor_group->setSpacing( 0 );
-#if QT_VERSION < 0x040000 || !defined(Q_WS_MAC)
+#if QT_VERSION < 0x040000 || !defined(Q_OS_MAC)
    vbl_editor_group->addWidget (frame);
 #endif
    vbl_editor_group->addWidget (editor);

@@ -1433,7 +1433,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    // editor->setMinimumHeight(minHeight1 * 7);
 
 #if QT_VERSION < 0x040000
-# if QT_VERSION >= 0x040000 && defined(Q_WS_MAC)
+# if QT_VERSION >= 0x040000 && defined(Q_OS_MAC)
    {
  //      Q3PopupMenu * file = new Q3PopupMenu;
       file->insertItem( us_tr("&Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
@@ -1683,7 +1683,7 @@ void US_Hydrodyn_Comparative::setupGUI()
    gl_loaded_selected_editor->addLayout(hbl_selected_buttons2, 3, 1);
 
    QBoxLayout * vbl_editor_group = new QVBoxLayout(0); vbl_editor_group->setContentsMargins( 0, 0, 0, 0 ); vbl_editor_group->setSpacing( 0 );
-#if QT_VERSION < 0x040000 || !defined(Q_WS_MAC)
+#if QT_VERSION < 0x040000 || !defined(Q_OS_MAC)
    vbl_editor_group->addWidget(frame);
 #endif
    vbl_editor_group->addWidget(editor);

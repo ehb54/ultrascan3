@@ -229,7 +229,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
    editor->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 2 ));
 
 #if QT_VERSION < 0x040000
-# if QT_VERSION >= 0x040000 && defined(Q_WS_MAC)
+# if QT_VERSION >= 0x040000 && defined(Q_OS_MAC)
    {
  //      Q3PopupMenu * file = new Q3PopupMenu;
       file->insertItem( us_tr("&Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
@@ -723,7 +723,7 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
       }
 
       bl->addWidget( lbl_editor );
-#if QT_VERSION < 0x040000 || !defined(Q_WS_MAC)
+#if QT_VERSION < 0x040000 || !defined(Q_OS_MAC)
       bl->addWidget( frame );
 #endif
       bl->addWidget( editor );

@@ -150,7 +150,7 @@ void US_Hydrodyn_Cluster_Results::setupGUI()
    editor->setReadOnly(true);
 
 #if QT_VERSION < 0x040000
-# if QT_VERSION >= 0x040000 && defined(Q_WS_MAC)
+# if QT_VERSION >= 0x040000 && defined(Q_OS_MAC)
    {
  //      Q3PopupMenu * file = new Q3PopupMenu;
       file->insertItem( us_tr("&Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
@@ -240,7 +240,7 @@ void US_Hydrodyn_Cluster_Results::setupGUI()
    hbl_bottom->addSpacing( 4 );
 
    QBoxLayout * vbl_editor_group = new QVBoxLayout(0); vbl_editor_group->setContentsMargins( 0, 0, 0, 0 ); vbl_editor_group->setSpacing( 0 );
-#if QT_VERSION < 0x040000 || !defined(Q_WS_MAC)
+#if QT_VERSION < 0x040000 || !defined(Q_OS_MAC)
    vbl_editor_group->addWidget(frame);
 #endif
    vbl_editor_group->addWidget(editor);

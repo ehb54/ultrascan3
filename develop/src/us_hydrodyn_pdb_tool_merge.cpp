@@ -143,7 +143,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::reset_csv_commands()
 void US_Hydrodyn_Pdb_Tool_Merge::setupGUI()
 {
    int minHeight1 = 22;
-#if QT_VERSION < 0x040000 || !defined(Q_WS_MAC)
+#if QT_VERSION < 0x040000 || !defined(Q_OS_MAC)
    int minHeight3 = 30;
 #endif
 
@@ -338,7 +338,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::setupGUI()
    editor->setReadOnly(true);
 
 #if QT_VERSION < 0x040000
-# if QT_VERSION >= 0x040000 && defined(Q_WS_MAC)
+# if QT_VERSION >= 0x040000 && defined(Q_OS_MAC)
    {
  //      Q3PopupMenu * file = new Q3PopupMenu;
       file->insertItem( us_tr("&Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
@@ -366,11 +366,17 @@ void US_Hydrodyn_Pdb_Tool_Merge::setupGUI()
    file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
 # endif
 #else
+# if defined(Q_OS_MAC)
+   m = new QMenuBar( this );
+   m->setObjectName( "menu" );
+# else
    QFrame *frame;
    frame = new QFrame(this);
    frame->setMinimumHeight(minHeight3);
-
+   frame->setPalette( PALET_NORMAL );
+   AUTFBACK( frame );
    m = new QMenuBar( frame );    m->setObjectName( "menu" );
+# endif
    m->setMinimumHeight(minHeight1 - 5);
    m->setPalette( PALET_NORMAL );
    AUTFBACK( m );
@@ -463,7 +469,7 @@ void US_Hydrodyn_Pdb_Tool_Merge::setupGUI()
    hbl_bottom->addSpacing( 2 );
 
    QBoxLayout * vbl_editor_group = new QVBoxLayout(0); vbl_editor_group->setContentsMargins( 0, 0, 0, 0 ); vbl_editor_group->setSpacing( 0 );
-#if QT_VERSION < 0x040000 || !defined(Q_WS_MAC)
+#if QT_VERSION < 0x040000 || !defined(Q_OS_MAC)
    vbl_editor_group->addWidget( frame );
 #endif
    vbl_editor_group->addWidget( editor );

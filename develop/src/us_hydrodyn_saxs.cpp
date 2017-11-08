@@ -1744,7 +1744,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    editor->setMinimumHeight(minHeight1 * 6);
 
 #if QT_VERSION < 0x040000
-# if QT_VERSION >= 0x040000 && defined(Q_WS_MAC)
+# if QT_VERSION >= 0x040000 && defined(Q_OS_MAC)
    {
  //      Q3PopupMenu * file = new Q3PopupMenu;
       file->insertItem( us_tr("&Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
@@ -1778,13 +1778,19 @@ void US_Hydrodyn_Saxs::setupGUI()
    file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
 # endif
 #else
+
+# if defined(Q_OS_MAC)
+   m = new QMenuBar( this );
+   m->setObjectName( "menu" );
+# else
    QFrame *frame;
    frame = new QFrame(this);
    frame->setMinimumHeight(minHeight0);
    frame->setPalette( PALET_NORMAL );
    AUTFBACK( frame );
-
    m = new QMenuBar( frame );    m->setObjectName( "menu" );
+# endif
+
    m->setMinimumHeight(minHeight1 - 5);
    m->setPalette( PALET_NORMAL );
    AUTFBACK( m );
@@ -2008,7 +2014,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    //   background->addWidget(pb_load_pr, j, 0);
    // background->addWidget(pb_clear_plot_pr, j, 1);
    
-#if QT_VERSION < 0x040000 || !defined(Q_WS_MAC)
+#if QT_VERSION < 0x040000 || !defined(Q_OS_MAC)
    background->addWidget( frame , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
    j++;
 #endif

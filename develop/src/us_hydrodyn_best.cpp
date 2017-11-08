@@ -126,7 +126,7 @@ US_Hydrodyn_Best::~US_Hydrodyn_Best()
 void US_Hydrodyn_Best::setupGUI()
 {
    int minHeight1 = 24;
-#if QT_VERSION < 0x040000 || !defined(Q_WS_MAC)
+#if QT_VERSION < 0x040000 || !defined(Q_OS_MAC)
    int minHeight3 = 25;
 #endif
 
@@ -317,7 +317,7 @@ void US_Hydrodyn_Best::setupGUI()
    editor->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 2 ));
 
 #if QT_VERSION < 0x040000
-# if QT_VERSION >= 0x040000 && defined(Q_WS_MAC)
+# if QT_VERSION >= 0x040000 && defined(Q_OS_MAC)
    {
  //      Q3PopupMenu * file = new Q3PopupMenu;
       file->insertItem( us_tr("&Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
@@ -350,6 +350,10 @@ void US_Hydrodyn_Best::setupGUI()
    file->insertItem( us_tr("Clear Display"), this, SLOT(clear_display()),   Qt::ALT+Qt::Key_X );
 # endif
 #else
+# if defined(Q_OS_MAC)
+   mb_editor = new QMenuBar( this );
+   mb_editor->setObjectName( "menu" );
+# else
    QFrame *frame;
    frame = new QFrame(this);
    frame->setMinimumHeight(minHeight3);
@@ -359,6 +363,7 @@ void US_Hydrodyn_Best::setupGUI()
    editor_widgets.push_back( frame );
 
    mb_editor = new QMenuBar( frame );    mb_editor->setObjectName( "menu" );
+#endif
    mb_editor->setMinimumHeight(minHeight1 - 5);
    mb_editor->setPalette( PALET_NORMAL );
    AUTFBACK( mb_editor );
@@ -502,7 +507,7 @@ void US_Hydrodyn_Best::setupGUI()
       }
       bl->addWidget( lbl_editor );
 
-#if QT_VERSION < 0x040000 || !defined(Q_WS_MAC)
+#if QT_VERSION < 0x040000 || !defined(Q_OS_MAC)
       bl->addWidget( frame );
 #endif
       bl->addWidget( editor );

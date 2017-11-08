@@ -295,7 +295,7 @@ void US_Hydrodyn_Saxs_Cormap::setupGUI()
    editor->setFont( QFont( "Courier", USglobal->config_list.fontSize ) );
 
 #if QT_VERSION < 0x040000
-# if QT_VERSION >= 0x040000 && defined(Q_WS_MAC)
+# if QT_VERSION >= 0x040000 && defined(Q_OS_MAC)
    {
  //      Q3PopupMenu * file = new Q3PopupMenu;
       file->insertItem( us_tr("&Font"),  this, SLOT(update_font()),    Qt::ALT+Qt::Key_F );
@@ -365,7 +365,7 @@ void US_Hydrodyn_Saxs_Cormap::setupGUI()
    // background->addWidget( lbl_image );
 
    //    QBoxLayout *vbl_editor_group = new QVBoxLayout(qs);
-   // #if QT_VERSION < 0x040000 || !defined(Q_WS_MAC)
+   // #if QT_VERSION < 0x040000 || !defined(Q_OS_MAC)
    //    vbl_editor_group->addWidget ( frame );
    // #endif
    //    vbl_editor_group->addWidget ( editor );
