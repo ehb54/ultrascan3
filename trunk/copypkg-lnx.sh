@@ -144,10 +144,11 @@ done
 # Remove any somo*prev* files in etc/
 rm -f ${PKGDIR}/etc/somo*prev*
 
-if [ ${QTVER} = "4" ];then
+##if [ ${QTVER} = "4" ];then
+  SOMODIR=$SOMOBASE/somo
   # Copy the SOMO directories
-  cd ${PKGDIR};mkdir somo somo/doc somo/demo;
-  SDIR=${SOMOBASE}/doc
+  cd ${PKGDIR};mkdir somo somo/demo somo/doc somo/doc/manual;
+  SDIR=${SOMODIR}/doc
   DDIR=${PKGDIR}/somo
   echo "${RSYNC} ${SDIR} ${DDIR}"
   ${RSYNC} ${SDIR} ${DDIR}
@@ -155,7 +156,6 @@ if [ ${QTVER} = "4" ];then
   # Remove the somo/doc/manual/attic directory
   rm -rf ${PKGDIR}/somo/doc/manual/attic
 
-  SOMODIR=$SOMOBASE/somo
   if [ -d ${SOMODIR} -a -d ${SOMODIR}/demo ]; then
     # Clear out somo/demo so only present contents are copied
     /bin/rm -rf ${PKGDIR}/somo/demo/*
@@ -165,7 +165,7 @@ if [ ${QTVER} = "4" ];then
     echo "${RSYNC} ${SDIR} ${DDIR}"
     ${RSYNC} ${SDIR} ${DDIR}
   fi
-fi
+##fi
 
 # Copy special library files
 CPYCMD='cp -d --preserve=timestamps'
