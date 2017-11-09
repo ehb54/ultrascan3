@@ -22,7 +22,7 @@
 #include "us_extern.h"
 
 /*! \brief Set up widgets the UltraScan way.
- 
+
     This class is designed to be the parent class to almost all UltraScan
     windows.  It allows easy creation of widgets and applies the appropriate
     palette and font acording to the user's settings (or the UltraScan default).
@@ -30,11 +30,11 @@
 */
 class US_GUI_EXTERN US_WidgetsDialog : public QDialog
 {
-  public: 
+  public:
     //! \param w - Parent widget, normally not specified
     //! \param f - Window flags, normally not specified
     US_WidgetsDialog( QWidget*, Qt::WindowFlags = 0 );
-    
+
     //! Connect to global memory and make the values accessible.
     US_Global g;
 
@@ -42,7 +42,7 @@ class US_GUI_EXTERN US_WidgetsDialog : public QDialog
     QPalette vlgray;
 
     //! \param labelString - contents of label
-    //! \param fontAdjust  - adjustment to default point size 
+    //! \param fontAdjust  - adjustment to default point size
     //! \param weight      - QFont::{Light,Normal,DemiBold,Bold,Black}\n
     //! * Alignment is set to Qt::AlignVCenter | Qt::AlignLeft\n
     //! * Margin is set to 5\n
@@ -69,8 +69,8 @@ class US_GUI_EXTERN US_WidgetsDialog : public QDialog
     //! * color set to US_GuiSettings::pushbColor()\n
     //! * button is enabled\n
     //! * AutoDefault is set false
-    QPushButton* us_pushbutton( const QString&, bool = true, int = 0 ); 
-    
+    QPushButton* us_pushbutton( const QString&, bool = true, int = 0 );
+
     //! * Font size is set to default - 1\n
     //! * Color is set to US_GuiSettings::normalColor()\n
     //! * Style is WinPanel | Sunken\n
@@ -126,7 +126,7 @@ class US_GUI_EXTERN US_WidgetsDialog : public QDialog
     //! \param value  - Initial value to set\n
     //! * Color is set to US_GuiSettings::lcdColor()
     QLCDNumber*   us_lcd( int, int = 0 );
-                  
+
     //! \param buttons - Number of buttons to use ( 1 to 3 )
     //! \param low     - Lower bound of progress
     //! \param high    - Upper bound of progress
@@ -139,7 +139,7 @@ class US_GUI_EXTERN US_WidgetsDialog : public QDialog
     //! \param y_axis - Left Axis Title\n
     //! * Color is set to US_GuiSettings::plotColor()\n
     //! * Convas background is set to US_GuiSettings::plotConvasBG()
-    QwtPlot*      us_plot( const QString&, const QString& = QString(), 
+    QwtPlot*      us_plot( const QString&, const QString& = QString(),
                            const QString& = QString() );
 
     //! \param plot*   - Pointer to plot\n
@@ -170,12 +170,15 @@ class US_GUI_EXTERN US_WidgetsDialog : public QDialog
                               QSpinBox** = (QSpinBox**)NULL );
 
     //! \param fontAdjust - Adjustment to default font size
-    //! \param sbox(es)   - Optional pointer to days/hh/min/sec QSpinBox    
+    //! \param dd         - Optional pointer to days QSpinBox pointer
+    //! \param hh         - Optional pointer to hrs  QSpinBox pointer
+    //! \param mm         - Optional pointer to min  QSpinBox pointer
+    //! \param ss         - Optional pointer to sec  QSpinBox pointer
     QHBoxLayout* us_ddhhmmsslay( const int = 0,
-			      QSpinBox** = (QSpinBox**)NULL,
-			      QSpinBox** = (QSpinBox**)NULL, 
-			      QSpinBox** = (QSpinBox**)NULL, 
-			      QSpinBox** = (QSpinBox**)NULL);
+                                 QSpinBox** = (QSpinBox**)NULL,
+                                 QSpinBox** = (QSpinBox**)NULL,
+                                 QSpinBox** = (QSpinBox**)NULL,
+                                 QSpinBox** = (QSpinBox**)NULL );
 
     //! \param fontAdjust -  adjustment to default font size\n
     //! * Color is set to US_GuiSettings::normalEdit()
