@@ -56,6 +56,7 @@ struct batch_info
    bool somo;
    bool somo_o;
    bool grid;
+   bool grid_o;
    bool iqq;
    bool prr;
    bool csv_saxs;
@@ -145,6 +146,7 @@ class US_EXTERN US_Hydrodyn_Batch : public QFrame
       QCheckBox     *cb_mm_all;
       QCheckBox     *cb_dmd;
       QCheckBox     *cb_grid;
+      QCheckBox     *cb_grid_o;
       QCheckBox     *cb_equi_grid;
       QCheckBox     *cb_somo;
       QCheckBox     *cb_somo_o;
@@ -282,6 +284,7 @@ class US_EXTERN US_Hydrodyn_Batch : public QFrame
       void set_somo();
       void set_somo_o();
       void set_grid();
+      void set_grid_o();
       void set_equi_grid();
       void set_hydro();
       void set_zeno();

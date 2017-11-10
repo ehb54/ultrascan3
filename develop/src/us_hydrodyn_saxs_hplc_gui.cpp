@@ -42,7 +42,11 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    QPalette cg_red = cg_magenta;
    cg_red.setBrush( QPalette::Base, QBrush( QColor( "red" ), Qt::SolidPattern ) );
 
-   lbl_title = new QLabel("Developed by Emre Brookes, Javier Pérez, Patrice Vachette and Mattia Rocco (see J. App. Cryst. 46:1823-1833, 2013; J. App. Cryst. 2016 In press)", this);
+#if QT_VERSION < 0x050000
+   lbl_title = new QLabel("Developed by Emre Brookes, Javier Pérez, Patrice Vachette and Mattia Rocco (see J. App. Cryst. 46:1823-1833, 2013; J. App. Cryst. 49:1827-1841, 2016 )", this);
+#else
+   lbl_title = new QLabel("Developed by Emre Brookes, Javier P\u00e9rez, Patrice Vachette and Mattia Rocco (see J. App. Cryst. 46:1823-1833, 2013; J. App. Cryst. 49:1827-1841, 2016 )", this);
+#endif
    lbl_title->setAlignment(Qt::AlignCenter|Qt::AlignVCenter);
    lbl_title->setMinimumHeight(minHeight1);
    lbl_title->setPalette( PALET_LABEL );

@@ -13473,6 +13473,7 @@ bool US_Hydrodyn_Zeno::run(
                            int                     threads
                            )
 {
+   us_qdebug( QString( "zeno run start\n" ) );
    this->filename    = filename;
    this->bead_model  = bead_model;
    this->keep_files  = keep_files;
@@ -13577,9 +13578,11 @@ bool US_Hydrodyn_Zeno::run(
       int progress_steps = 100;
 
       zeno_progress->setValue( 0 ); zeno_progress->setMaximum( progress_steps );
+      us_qdebug( QString( "zeno run start zeno_cxx_main\n" ) );
 #if !defined(USE_OLD_ZENO) && __cplusplus >= 201103L
       zeno_cxx_main( argc, argv, QString( "%1.zno" ).arg( filename ).toLatin1().data(), false, zeno_us_udp_msg );
 #endif
+      us_qdebug( QString( "zeno run return zeno_cxx_main\n" ) );
       zeno_progress->reset();
 
       if ( !us_hydrodyn->stopFlag )

@@ -536,7 +536,7 @@ void US_Hydrodyn::setupGUI()
    configuration->insertItem(us_tr("&Reset to Default Configuration"), this, SLOT(reset()));
    configuration->insertItem(us_tr("&Advanced Configuration"), this, SLOT(show_advanced_config()));
    configuration->insertItem(us_tr("S&ystem Configuration"), this, SLOT(run_us_config()));
-   configuration->insertItem(us_tr("A&dministrator"), this, SLOT(run_us_admin()));
+   // configuration->insertItem(us_tr("A&dministrator"), this, SLOT(run_us_admin()));
 
    QFrame *frame;
    frame = new QFrame(this);
@@ -689,10 +689,10 @@ void US_Hydrodyn::setupGUI()
          QAction *qa = submenu->addAction( us_tr("S&ystem Configuration") );
          connect( qa, SIGNAL( triggered() ), this, SLOT(run_us_config()));
       }
-      {
-         QAction *qa = submenu->addAction( us_tr("A&dministrator") );
-         connect( qa, SIGNAL( triggered() ), this, SLOT(run_us_admin()));
-      }
+      // {
+      //    QAction *qa = submenu->addAction( us_tr("A&dministrator") );
+      //    connect( qa, SIGNAL( triggered() ), this, SLOT(run_us_admin()));
+      // }
       menu->addMenu( submenu );
    }
 # if defined(Q_OS_MAC)
@@ -951,6 +951,13 @@ void US_Hydrodyn::setupGUI()
    pb_grid_pdb->setEnabled(false);
    pb_grid_pdb->setPalette( PALET_PUSHB );
    connect(pb_grid_pdb, SIGNAL(clicked()), SLOT(calc_grid_pdb()));
+
+   pb_grid_pdb_o = new QPushButton(us_tr("Build AtoB (Grid) Overlap Bead Model"), this);
+   pb_grid_pdb_o->setMinimumHeight(minHeight1);
+   pb_grid_pdb_o->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   pb_grid_pdb_o->setEnabled(false);
+   pb_grid_pdb_o->setPalette( PALET_PUSHB );
+   connect(pb_grid_pdb_o, SIGNAL(clicked()), SLOT(calc_grid_pdb_o()));
 
    pb_grid = new QPushButton(us_tr("Grid Existing Bead Model"), this);
    Q_CHECK_PTR(pb_grid);
@@ -1289,7 +1296,7 @@ void US_Hydrodyn::setupGUI()
    j++;
 
    background->addWidget(pb_somo_o, j, 0);
-   background->addWidget(pb_grid, j, 1);
+   background->addWidget(pb_grid_pdb_o, j, 1);
    j++;
 
 
@@ -1303,7 +1310,12 @@ void US_Hydrodyn::setupGUI()
    //   background->addWidget(pb_bd_load_results, j, 1);
    //   j++;
    background->addWidget(pb_view_asa, j, 0);
-   background->addWidget(pb_visualize, j, 1);
+   {
+      QBoxLayout * hbl = new QHBoxLayout(); hbl->setContentsMargins( 0, 0, 0, 0 ); hbl->setSpacing( 0 );
+      hbl->addWidget( pb_grid );
+      hbl->addWidget( pb_visualize );
+      background->addLayout( hbl, j, 1 );
+   }
    j++;
 
    background->addWidget(pb_batch2, j, 0);
@@ -1382,6 +1394,7 @@ void US_Hydrodyn::set_disabled()
    pb_somo->setEnabled(false);
    pb_somo_o->setEnabled(false);
    pb_grid_pdb->setEnabled(false);
+   pb_grid_pdb_o->setEnabled(false);
    pb_grid->setEnabled(false);
    pb_show_hydro_results->setEnabled(false);
    pb_calc_hydro->setEnabled(false);
@@ -2002,6 +2015,7 @@ void US_Hydrodyn::reload_pdb()
    pb_somo->setEnabled(true);
    pb_somo_o->setEnabled(true);
    pb_grid_pdb->setEnabled(true);
+   pb_grid_pdb_o->setEnabled(true);
    pb_grid->setEnabled(false);
    pb_show_hydro_results->setEnabled(false);
    pb_calc_hydro->setEnabled(false);
@@ -2515,6 +2529,7 @@ void US_Hydrodyn::load_pdb()
    pb_somo->setEnabled(true);
    pb_somo_o->setEnabled(true);
    pb_grid_pdb->setEnabled(true);
+   pb_grid_pdb_o->setEnabled(true);
    pb_grid->setEnabled(false);
    bd_anaflex_enables(true);
    pb_show_hydro_results->setEnabled(false);
@@ -2668,6 +2683,7 @@ bool US_Hydrodyn::screen_pdb(QString filename, bool display_pdb, bool skipcleari
    pb_somo->setEnabled(errors_found ? false : true);
    pb_somo_o->setEnabled(errors_found ? false : true);
    pb_grid_pdb->setEnabled(errors_found ? false : true);
+   pb_grid_pdb_o->setEnabled(errors_found ? false : true);
    pb_grid->setEnabled(false);
    pb_show_hydro_results->setEnabled(false);
    pb_calc_hydro->setEnabled(false);
@@ -2702,6 +2718,7 @@ bool US_Hydrodyn::screen_bead_model( QString filename )
    pb_calc_zeno->setEnabled(false);
    pb_show_hydro_results->setEnabled(false);
    pb_grid_pdb->setEnabled(false);
+   pb_grid_pdb_o->setEnabled(false);
    pb_grid->setEnabled(false);
    bead_model_prefix = "";
    le_bead_model_prefix->setText( bead_model_prefix );
@@ -2836,6 +2853,7 @@ void US_Hydrodyn::select_model( int )
    }
    pb_somo->setEnabled( selected_count );
    pb_grid_pdb->setEnabled( selected_count );
+   pb_grid_pdb_o->setEnabled( selected_count );
    pb_somo_o->setEnabled( selected_count );
    pb_show_hydro_results->setEnabled(false);
    pb_calc_hydro->setEnabled(false);
@@ -2923,6 +2941,7 @@ void US_Hydrodyn::load_bead_model()
       pb_calc_zeno->setEnabled(false);
       pb_show_hydro_results->setEnabled(false);
       pb_grid_pdb->setEnabled(false);
+      pb_grid_pdb_o->setEnabled(false);
       pb_grid->setEnabled(false);
       bead_model_prefix = "";
       le_bead_model_prefix->setText(bead_model_prefix);
@@ -3044,6 +3063,7 @@ int US_Hydrodyn::calc_somo( bool no_ovlp_removal )
    bd_anaflex_enables(false);
 
    pb_grid_pdb->setEnabled(false);
+   pb_grid_pdb_o->setEnabled(false);
    pb_grid->setEnabled(false);
    model_vector = model_vector_as_loaded;
    sync_pdb_info( "calc_somo" );
@@ -3066,6 +3086,7 @@ int US_Hydrodyn::calc_somo( bool no_ovlp_removal )
       pb_somo->setEnabled(true);
       pb_somo_o->setEnabled(true);
       pb_grid_pdb->setEnabled(true);
+      pb_grid_pdb_o->setEnabled(true);
       progress->reset();
       return -1;
    }
@@ -3142,6 +3163,7 @@ int US_Hydrodyn::calc_somo( bool no_ovlp_removal )
          bd_anaflex_enables( ( ( browflex && browflex->state() == QProcess::Running ) ||
                                ( anaflex && anaflex->state() == QProcess::Running ) ) ? false : true );
          pb_grid_pdb->setEnabled(true);
+         pb_grid_pdb_o->setEnabled(true);
          progress->reset();
          return -1;
       }
@@ -3168,6 +3190,7 @@ int US_Hydrodyn::calc_somo( bool no_ovlp_removal )
    pb_somo->setEnabled(true);
    pb_somo_o->setEnabled(true);
    pb_grid_pdb->setEnabled(true);
+   pb_grid_pdb_o->setEnabled(true);
    pb_grid->setEnabled(true);
    pb_stop_calc->setEnabled(false);
    if (calcAutoHydro)
@@ -3181,7 +3204,7 @@ int US_Hydrodyn::calc_somo( bool no_ovlp_removal )
    return 0;
 }
 
-int US_Hydrodyn::calc_grid_pdb()
+int US_Hydrodyn::calc_grid_pdb( bool no_ovlp_removal )
 {
    {
       int models_selected = 0;
@@ -3264,13 +3287,14 @@ int US_Hydrodyn::calc_grid_pdb()
    sync_pdb_info( "calc_grid_pdb" );
    editor_msg( "dark blue", QString( us_tr( "Peptide Bond Rule is %1 for this PDB" ) ).arg( misc.pb_rule_on ? "on" : "off" ) );
    options_log = "";
-   append_options_log_atob();
+   no_ovlp_removal ? append_options_log_atob_ovlp() : append_options_log_atob();
    display_default_differences();
    int flag = 0;
    bool any_errors = false;
    bool any_models = false;
    pb_grid->setEnabled(false);
    pb_grid_pdb->setEnabled(false);
+   pb_grid_pdb_o->setEnabled(false);
    pb_somo->setEnabled(false);
    pb_somo_o->setEnabled(false);
    pb_visualize->setEnabled(false);
@@ -3286,7 +3310,7 @@ int US_Hydrodyn::calc_grid_pdb()
       results_widget = false;
    }
 
-   bead_model_suffix = getExtendedSuffix(false, false);
+   bead_model_suffix = getExtendedSuffix(false, false, no_ovlp_removal);
    le_bead_model_suffix->setText(bead_model_suffix);
    if ( !overwrite )
    {
@@ -3306,6 +3330,7 @@ int US_Hydrodyn::calc_grid_pdb()
             {
                editor->append("Stopped by user\n\n");
                pb_grid_pdb->setEnabled(true);
+               pb_grid_pdb_o->setEnabled(true);
                pb_somo->setEnabled(true);
                pb_somo_o->setEnabled(true);
                progress->reset();
@@ -3342,6 +3367,7 @@ int US_Hydrodyn::calc_grid_pdb()
             {
                editor->append("Stopped by user\n\n");
                pb_grid_pdb->setEnabled(true);
+               pb_grid_pdb_o->setEnabled(true);
                pb_somo->setEnabled(true);
                pb_somo_o->setEnabled(true);
                progress->reset();
@@ -3444,6 +3470,7 @@ int US_Hydrodyn::calc_grid_pdb()
                   {
                      editor_msg( "red", "Center of scattering requested, but zero scattering intensities are present" );
                      pb_grid_pdb->setEnabled(true);
+                     pb_grid_pdb_o->setEnabled(true);
                      pb_somo->setEnabled(true);
                      pb_somo_o->setEnabled(true);
                      progress->reset();
@@ -3466,6 +3493,7 @@ int US_Hydrodyn::calc_grid_pdb()
                   {
                      editor->append("Stopped by user\n\n");
                      pb_grid_pdb->setEnabled(true);
+                     pb_grid_pdb_o->setEnabled(true);
                      pb_somo->setEnabled(true);
                      pb_somo_o->setEnabled(true);
                      progress->reset();
@@ -3479,6 +3507,7 @@ int US_Hydrodyn::calc_grid_pdb()
                   {
                      editor->append("Error occured\n\n");
                      pb_grid_pdb->setEnabled(true);
+                     pb_grid_pdb_o->setEnabled(true);
                      pb_somo->setEnabled(true);
                      pb_somo_o->setEnabled(true);
                      progress->reset();
@@ -3539,61 +3568,66 @@ int US_Hydrodyn::calc_grid_pdb()
 #endif
                      // now apply radial reduction with outward translation using
 
-                     // grid_exposed/buried_overlap
-                     overlap_reduction save_sidechain_overlap = sidechain_overlap;
-                     overlap_reduction save_mainchain_overlap = mainchain_overlap;
-                     overlap_reduction save_buried_overlap = buried_overlap;
-                     sidechain_overlap = grid_exposed_overlap;
-                     mainchain_overlap = grid_exposed_overlap;
-                     buried_overlap = grid_buried_overlap;
-                     progress->setValue(progress->value() + 1);
-
-                     radial_reduction( true );
-                     sidechain_overlap = save_sidechain_overlap;
-                     mainchain_overlap = save_mainchain_overlap;
-                     buried_overlap = save_buried_overlap;
-
-                     bead_models[current_model] = bead_model;
-                     // grid_buried_overlap
-
-                     if (asa.recheck_beads)
-                     {
-                        editor->append("Rechecking beads\n");
-                        qApp->processEvents();
-                        double save_threshold = asa.threshold;
-                        double save_threshold_percent = asa.threshold_percent;
-                        asa.threshold = asa.grid_threshold;
-                        asa.threshold_percent = asa.grid_threshold_percent;
+                     if ( !no_ovlp_removal ) {
+                        // grid_exposed/buried_overlap
+                        overlap_reduction save_sidechain_overlap = sidechain_overlap;
+                        overlap_reduction save_mainchain_overlap = mainchain_overlap;
+                        overlap_reduction save_buried_overlap = buried_overlap;
+                        sidechain_overlap = grid_exposed_overlap;
+                        mainchain_overlap = grid_exposed_overlap;
+                        buried_overlap = grid_buried_overlap;
                         progress->setValue(progress->value() + 1);
-                        bead_check(false, false);
-                        progress->setValue(progress->value() + 1);
-                        asa.threshold = save_threshold;
-                        asa.threshold_percent = save_threshold_percent;
+
+                        radial_reduction( true );
+                        sidechain_overlap = save_sidechain_overlap;
+                        mainchain_overlap = save_mainchain_overlap;
+                        buried_overlap = save_buried_overlap;
+
                         bead_models[current_model] = bead_model;
-                     }
+                        // grid_buried_overlap
 
+                        if (asa.recheck_beads)
+                        {
+                           editor->append("Rechecking beads\n");
+                           qApp->processEvents();
+                           double save_threshold = asa.threshold;
+                           double save_threshold_percent = asa.threshold_percent;
+                           asa.threshold = asa.grid_threshold;
+                           asa.threshold_percent = asa.grid_threshold_percent;
+                           progress->setValue(progress->value() + 1);
+                           bead_check(false, false);
+                           progress->setValue(progress->value() + 1);
+                           asa.threshold = save_threshold;
+                           asa.threshold_percent = save_threshold_percent;
+                           bead_models[current_model] = bead_model;
+                        }
+                     }
                   }
                   else
                   {
-                     if (grid_overlap.remove_overlap)
-                     {
-                        progress->setValue(progress->value() + 1);
-                        radial_reduction( true );
-                        progress->setValue(progress->value() + 1);
-                        bead_models[current_model] = bead_model;
-                     }
-                     if (stopFlag)
-                     {
-                        editor->append("Stopped by user\n\n");
-                        pb_grid_pdb->setEnabled(true);
-                        pb_somo->setEnabled(true);
-                        pb_somo_o->setEnabled(true);
-                        progress->reset();
-                        grid_exposed_overlap = org_grid_exposed_overlap;
-                        grid_overlap         = org_grid_overlap;
-                        grid_buried_overlap  = org_grid_buried_overlap;
-                        grid                 = org_grid;
-                        return -1;
+
+                     if ( !no_ovlp_removal ) {
+                        if (grid_overlap.remove_overlap)
+                        {
+                           progress->setValue(progress->value() + 1);
+                           radial_reduction( true );
+                           progress->setValue(progress->value() + 1);
+                           bead_models[current_model] = bead_model;
+                        }
+                        if (stopFlag)
+                        {
+                           editor->append("Stopped by user\n\n");
+                           pb_grid_pdb->setEnabled(true);
+                           pb_grid_pdb_o->setEnabled(true);
+                           pb_somo->setEnabled(true);
+                           pb_somo_o->setEnabled(true);
+                           progress->reset();
+                           grid_exposed_overlap = org_grid_exposed_overlap;
+                           grid_overlap         = org_grid_overlap;
+                           grid_buried_overlap  = org_grid_buried_overlap;
+                           grid                 = org_grid;
+                           return -1;
+                        }
                      }
                      if (asa.recheck_beads)
                      {
@@ -3628,6 +3662,7 @@ int US_Hydrodyn::calc_grid_pdb()
                      {
                         editor->append("Stopped by user\n\n");
                         pb_grid_pdb->setEnabled(true);
+                        pb_grid_pdb_o->setEnabled(true);
                         pb_somo->setEnabled(true);
                         pb_somo_o->setEnabled(true);
                         progress->reset();
@@ -3819,6 +3854,7 @@ int US_Hydrodyn::calc_grid_pdb()
    {
       editor->append("Stopped by user\n\n");
       pb_grid_pdb->setEnabled(true);
+      pb_grid_pdb_o->setEnabled(true);
       pb_somo->setEnabled(true);
       pb_somo_o->setEnabled(true);
       progress->reset();
@@ -3831,7 +3867,7 @@ int US_Hydrodyn::calc_grid_pdb()
       qApp->processEvents();
       pb_visualize->setEnabled(true);
       pb_equi_grid_bead_model->setEnabled(true);
-      pb_calc_hydro->setEnabled(true);
+      pb_calc_hydro->setEnabled( !no_ovlp_removal );
       pb_calc_zeno->setEnabled(true);
       pb_bead_saxs->setEnabled(true);
       pb_rescale_bead_model->setEnabled( misc.target_volume != 0e0 || misc.equalize_radii );
@@ -3842,6 +3878,7 @@ int US_Hydrodyn::calc_grid_pdb()
    }
 
    pb_grid_pdb->setEnabled(true);
+   pb_grid_pdb_o->setEnabled(true);
    pb_grid->setEnabled(true);
    pb_somo->setEnabled(true);
    pb_somo_o->setEnabled(true);
@@ -3883,6 +3920,7 @@ int US_Hydrodyn::calc_grid()
    bool grid_pdb_state = pb_grid_pdb->isEnabled();
    bool somo_state = pb_grid_pdb->isEnabled();
    pb_grid_pdb->setEnabled(false);
+   pb_grid_pdb_o->setEnabled(false);
    pb_grid->setEnabled(false);
    pb_somo->setEnabled(false);
    pb_somo_o->setEnabled(false);
@@ -3948,6 +3986,7 @@ int US_Hydrodyn::calc_grid()
                {
                   editor_msg( "red", "Center of scattering requested, but zero scattering intensities are present" );
                   pb_grid_pdb->setEnabled(true);
+                  pb_grid_pdb_o->setEnabled(true);
                   pb_somo->setEnabled(true);
                   pb_somo_o->setEnabled(true);
                   progress->reset();
@@ -3967,6 +4006,7 @@ int US_Hydrodyn::calc_grid()
             {
                editor->append("Stopped by user\n\n");
                pb_grid_pdb->setEnabled(true);
+               pb_grid_pdb_o->setEnabled(true);
                pb_somo->setEnabled(true);
                pb_somo_o->setEnabled(true);
                progress->reset();
@@ -3976,6 +4016,7 @@ int US_Hydrodyn::calc_grid()
             {
                editor->append("Error occured\n\n");
                pb_grid_pdb->setEnabled(true);
+               pb_grid_pdb_o->setEnabled(true);
                pb_somo->setEnabled(true);
                pb_somo_o->setEnabled(true);
                progress->reset();
@@ -4071,6 +4112,7 @@ int US_Hydrodyn::calc_grid()
                   {
                      editor->append("Stopped by user\n\n");
                      pb_grid_pdb->setEnabled(true);
+                     pb_grid_pdb_o->setEnabled(true);
                      pb_somo->setEnabled(true);
                      pb_somo_o->setEnabled(true);
                      progress->reset();
@@ -4086,6 +4128,7 @@ int US_Hydrodyn::calc_grid()
                   {
                      editor->append("Stopped by user\n\n");
                      pb_grid_pdb->setEnabled(true);
+                     pb_grid_pdb_o->setEnabled(true);
                      pb_somo->setEnabled(true);
                      pb_somo_o->setEnabled(true);
                      progress->reset();
@@ -4109,6 +4152,7 @@ int US_Hydrodyn::calc_grid()
                   {
                      editor->append("Stopped by user\n\n");
                      pb_grid_pdb->setEnabled(true);
+                     pb_grid_pdb_o->setEnabled(true);
                      pb_somo->setEnabled(true);
                      pb_somo_o->setEnabled(true);
                      progress->reset();
@@ -4152,6 +4196,7 @@ int US_Hydrodyn::calc_grid()
    {
       editor->append("Stopped by user\n\n");
       pb_grid_pdb->setEnabled(true);
+      pb_grid_pdb_o->setEnabled(true);
       pb_somo->setEnabled(true);
       pb_somo_o->setEnabled(true);
       progress->reset();
@@ -4175,6 +4220,7 @@ int US_Hydrodyn::calc_grid()
    }
 
    pb_grid_pdb->setEnabled(grid_pdb_state);
+   pb_grid_pdb_o->setEnabled(grid_pdb_state);
    pb_grid->setEnabled(true);
    pb_somo->setEnabled(somo_state);
    pb_somo_o->setEnabled(somo_state);
@@ -5150,27 +5196,30 @@ QString US_Hydrodyn::getExtendedSuffix(bool prerun, bool somo, bool no_ovlp_remo
       }
       if ( !somo ) 
       {
-         if ( grid_exposed_overlap.remove_overlap &&
-              grid_buried_overlap.remove_overlap &&
-              grid_overlap.remove_overlap &&
-              (grid_exposed_overlap.remove_sync == 
-               grid_buried_overlap.remove_sync) &&
-              (grid_buried_overlap.remove_sync ==
-               grid_overlap.remove_sync ) &&
-              (grid_exposed_overlap.remove_hierarch == 
-               grid_buried_overlap.remove_hierarch) &&
-              (grid_buried_overlap.remove_hierarch == 
-               grid_overlap.remove_hierarch ) )
+         if ( !no_ovlp_removal ) 
          {
-            result += QString("%1").arg(grid_exposed_overlap.remove_sync ? "sy" : "hi");
-         }
+            if ( grid_exposed_overlap.remove_overlap &&
+                 grid_buried_overlap.remove_overlap &&
+                 grid_overlap.remove_overlap &&
+                 (grid_exposed_overlap.remove_sync == 
+                  grid_buried_overlap.remove_sync) &&
+                 (grid_buried_overlap.remove_sync ==
+                  grid_overlap.remove_sync ) &&
+                 (grid_exposed_overlap.remove_hierarch == 
+                  grid_buried_overlap.remove_hierarch) &&
+                 (grid_buried_overlap.remove_hierarch == 
+                  grid_overlap.remove_hierarch ) )
+            {
+               result += QString("%1").arg(grid_exposed_overlap.remove_sync ? "sy" : "hi");
+            }
          
-         if ( grid_exposed_overlap.remove_overlap &&
-              grid_exposed_overlap.translate_out )
-         {
-            result += "OT";
+            if ( grid_exposed_overlap.remove_overlap &&
+                 grid_exposed_overlap.translate_out )
+            {
+               result += "OT";
+            }
          }
-         
+
          if ( grid.hydrate )
          {
             result += "hy";
@@ -5742,6 +5791,7 @@ bool US_Hydrodyn::equi_grid_bead_model( double dR )
    bool grid_pdb_state = pb_grid_pdb->isEnabled();
    bool somo_state = pb_grid_pdb->isEnabled();
    pb_grid_pdb->setEnabled(false);
+   pb_grid_pdb_o->setEnabled(false);
    pb_grid->setEnabled(false);
    pb_somo->setEnabled(false);
    pb_somo_o->setEnabled(false);
@@ -5778,6 +5828,7 @@ bool US_Hydrodyn::equi_grid_bead_model( double dR )
          {
             editor->append("Stopped by user\n\n");
             pb_grid_pdb->setEnabled(true);
+            pb_grid_pdb_o->setEnabled(true);
             pb_equi_grid_bead_model->setEnabled(true);
             pb_somo->setEnabled(true);
             pb_somo_o->setEnabled(true);
@@ -5811,6 +5862,7 @@ bool US_Hydrodyn::equi_grid_bead_model( double dR )
             {
                editor_msg( "red", saxs_util->errormsg );
                pb_grid_pdb->setEnabled(true);
+               pb_grid_pdb_o->setEnabled(true);
                pb_equi_grid_bead_model->setEnabled(true);
                pb_somo->setEnabled(true);
                pb_somo_o->setEnabled(true);
@@ -5822,6 +5874,7 @@ bool US_Hydrodyn::equi_grid_bead_model( double dR )
             {
                editor->append("Stopped by user\n\n");
                pb_grid_pdb->setEnabled(true);
+               pb_grid_pdb_o->setEnabled(true);
                pb_equi_grid_bead_model->setEnabled(true);
                pb_somo->setEnabled(true);
                pb_somo_o->setEnabled(true);
@@ -5863,6 +5916,7 @@ bool US_Hydrodyn::equi_grid_bead_model( double dR )
    {
       editor->append("Stopped by user\n\n");
       pb_grid_pdb->setEnabled(true);
+      pb_grid_pdb_o->setEnabled(true);
       pb_somo->setEnabled(true);
       pb_somo_o->setEnabled(true);
       progress->reset();
@@ -5887,6 +5941,7 @@ bool US_Hydrodyn::equi_grid_bead_model( double dR )
 
    pb_equi_grid_bead_model->setEnabled(true);
    pb_grid_pdb->setEnabled(grid_pdb_state);
+   pb_grid_pdb_o->setEnabled(grid_pdb_state);
    pb_grid->setEnabled(true);
    pb_somo->setEnabled(somo_state);
    pb_somo_o->setEnabled(somo_state);
@@ -5903,9 +5958,14 @@ bool US_Hydrodyn::equi_grid_bead_model( double dR )
    return true;
 }
 
-bool US_Hydrodyn::calc_somo_o()
+int US_Hydrodyn::calc_somo_o()
 {
    return calc_somo( true );
+}
+
+int US_Hydrodyn::calc_grid_pdb_o()
+{
+   return calc_grid_pdb( true );
 }
 
 bool US_Hydrodyn::calc_zeno_hydro()

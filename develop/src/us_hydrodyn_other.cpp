@@ -749,7 +749,7 @@ int US_Hydrodyn::read_pdb( const QString &filename )
          }
          if (str1.left(4) == "ATOM" || str1.left(6) == "HETATM") // need to add TER
          {
-            if(str1.mid(12,1) != "H" && str1.mid(13,1) != "H" &&
+            if(str1.mid(12,1) != "H" && str1.mid(13,1) != "H" && !str1.mid(12,5).trimmed().startsWith( "H" ) &&
                str1.mid(17,3) != "HOH")
             {                  
                if (str1.mid(16,1) == " " || str1.mid(16,1) == "A")
@@ -6519,7 +6519,6 @@ void US_Hydrodyn::append_options_log_somo_ovlp()
    options_log += s;
 }
 
-
 void US_Hydrodyn::append_options_log_atob()
 {
    QString s;
@@ -6627,6 +6626,75 @@ void US_Hydrodyn::append_options_log_atob()
              ,grid_overlap.remove_sync_percent
              ,grid_overlap.remove_hierarch ? "On" : "Off"
              ,grid_overlap.remove_hierarch_percent
+             );
+
+   options_log += s;
+
+   s.sprintf(
+             "Miscellaneous options:\n"
+             "  Calculate vbar                 %s\n"
+             ,misc.compute_vbar ? "On" : "Off"
+             );
+   options_log += s;
+
+   if ( !misc.compute_vbar )
+   {
+      s.sprintf(
+                "  Entered vbar value             %.3f\n"
+                "  Vbar measured/computed at T=   %.2f\n"
+                ,misc.vbar
+                ,misc.vbar_temperature
+                );
+      options_log += s;
+   }
+}
+
+void US_Hydrodyn::append_options_log_atob_ovlp()
+{
+   QString s;
+
+   s.sprintf("Grid model built with the following options:\n");
+   options_log += s;
+
+   s.sprintf(
+             "ASA Calculation:\n"
+             "  Perform ASA Calculation:    %s\n"
+             "  Recheck Bead ASA:           %s\n"
+             "  ASA Method:                 %s\n"
+             "  ASA Probe Radius (A):       %.2f\n"
+             "  Probe Recheck Radius (A):   %.2f\n"
+             "  Grid ASA Threshold (A^2):   %.1f\n"
+             "  Grid Bead ASA Threshold %%:  %.1f\n"
+             "  ASAB1 Step Size (A):        %.1f\n"
+             "\n"
+
+             ,asa.calculation ? "On" : "Off"
+             ,asa.recheck_beads ? "On" : "Off"
+             ,asa.method ? "Rolling Sphere" : "Voronoi Tesselation"
+             ,asa.probe_radius
+             ,asa.probe_recheck_radius
+             ,asa.grid_threshold
+             ,asa.grid_threshold_percent
+             ,asa.asab1_step
+             );
+   options_log += s;
+
+   s.sprintf(
+             "Grid Functions (AtoB):\n"
+             "  Computations Relative to:             %s\n"
+             "  Cube Side (Angstrom):                 %.1f\n"
+             "  Apply Cubic Grid:                     %s\n"
+             "  Add theoretical hydration (PDB only): %s\n"
+             "  Expand Beads to Tangency:             %s\n"
+             "  Enable ASA options:                   %s\n"
+             "\n"
+
+             ,grid.center ? "Center of Mass" : ( grid.center == 2 ? "Center of Scattering Intensity" : "Center of Cubelet" )
+             ,grid.cube_side
+             ,grid.cubic ? "On" : "Off"
+             ,grid.hydrate ? "On" : "Off"
+             ,grid.tangency ? "On" : "Off"
+             ,grid.enable_asa ? "On" : "Off"
              );
 
    options_log += s;
@@ -8111,7 +8179,7 @@ void US_Hydrodyn::config()
       << us_tr( "Configuration -> Reset to Default Configuration" ) // reset()
       << us_tr( "Configuration -> Advanced Configuration" ) // show_advanced_config()
       << us_tr( "Configuration -> System Configuration" ) // run_us_config()
-      << us_tr( "Configuration -> Administrator" ) // run us_admin()
+      // << us_tr( "Configuration -> Administrator" ) // run us_admin()
       ;
 
    bool ok;
@@ -8264,11 +8332,11 @@ void US_Hydrodyn::config()
          run_us_config();
       }
       pos++;
-      if ( res == us_tr( "Configuration -> Administrator" ) )
-      {
-         last_menu = pos;
-         run_us_admin();
-      }
+      // if ( res == us_tr( "Configuration -> Administrator" ) )
+      // {
+      //    last_menu = pos;
+      //    run_us_admin();
+      // }
    }
 }
 

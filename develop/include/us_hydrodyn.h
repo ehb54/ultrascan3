@@ -377,6 +377,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       QPushButton *pb_open_hydro_results;
       QPushButton *pb_select_save_params;
       QPushButton *pb_grid_pdb;
+      QPushButton *pb_grid_pdb_o;
       QPushButton *pb_grid;
       QPushButton *pb_view_asa;
       QPushButton *pb_view_bead_model;
@@ -849,8 +850,9 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void clear_display();
       void reload_pdb();
       int  calc_somo( bool no_ovlp_removal = false );     // compute asa and then refine bead_model
-      bool calc_somo_o();   // somo model with overlaps
-      int  calc_grid_pdb(); // compute grid model from pdb
+      int  calc_somo_o();   // somo model with overlaps
+      int  calc_grid_pdb( bool no_ovlp_removal = false ); // compute grid model from pdb
+      int  calc_grid_pdb_o(); // compute grid model from pdb
       int  calc_grid();     // compute grid model from bead model
       int  calc_hydro();
       bool calc_zeno_hydro();
@@ -977,6 +979,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void append_options_log_somo(); // append somo options to options_log
       void append_options_log_somo_ovlp(); // append somo options to options_log
       void append_options_log_atob(); // append atob options to options_log
+      void append_options_log_atob_ovlp(); // append atob options to options_log
       void list_model_vector(vector < PDB_model > *);
       QString default_differences_load_pdb();
       QString default_differences_somo();

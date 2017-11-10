@@ -502,6 +502,13 @@ void US_Hydrodyn_Batch::setupGUI()
    cb_grid->setPalette( qp_cb ); AUTFBACK( cb_grid );
    connect(cb_grid, SIGNAL(clicked()), this, SLOT(set_grid()));
 
+   cb_grid_o = new QCheckBox(this);
+   cb_grid_o->setText(us_tr(" Build AtoB (Grid) Overlap Bead Model"));
+   cb_grid_o->setChecked(batch->grid_o);
+   cb_grid_o->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_grid_o->setPalette( qp_cb ); AUTFBACK( cb_grid_o );
+   connect(cb_grid_o, SIGNAL(clicked()), this, SLOT(set_grid_o()));
+
    cb_equi_grid = new QCheckBox(this);
    cb_equi_grid->setText(us_tr(" Grid bead models for P(r)"));
    cb_equi_grid->setChecked(batch->equi_grid);
@@ -803,8 +810,9 @@ void US_Hydrodyn_Batch::setupGUI()
 
    QHBoxLayout * hbl_somo_grid = new QHBoxLayout; hbl_somo_grid->setContentsMargins( 0, 0, 0, 0 ); hbl_somo_grid->setSpacing( 0 );
    hbl_somo_grid->addWidget(cb_somo);
-   hbl_somo_grid->addWidget(cb_grid);
    hbl_somo_grid->addWidget(cb_somo_o);
+   hbl_somo_grid->addWidget(cb_grid);
+   hbl_somo_grid->addWidget(cb_grid_o);
 
    QHBoxLayout * hbl_iqq_prr = new QHBoxLayout; hbl_iqq_prr->setContentsMargins( 0, 0, 0, 0 ); hbl_iqq_prr->setSpacing( 0 );
    hbl_iqq_prr->addWidget(cb_iqq);
@@ -1278,6 +1286,7 @@ void US_Hydrodyn_Batch::update_enables()
       cb_somo                  ->setChecked( false );
       cb_somo_o                ->setChecked( false );
       cb_grid                  ->setChecked( false );
+      cb_grid_o                ->setChecked( false );
       cb_equi_grid             ->setChecked( false );
       cb_hydro                 ->setChecked( false );
       cb_zeno                  ->setChecked( false );
@@ -1297,6 +1306,7 @@ void US_Hydrodyn_Batch::update_enables()
       cb_somo                  ->setEnabled( false );
       cb_somo_o                ->setEnabled( false );
       cb_grid                  ->setEnabled( false );
+      cb_grid_o                ->setEnabled( false );
       cb_equi_grid             ->setEnabled( false );
       cb_hydro                 ->setEnabled( false );
       cb_zeno                  ->setEnabled( false );
@@ -1318,6 +1328,7 @@ void US_Hydrodyn_Batch::update_enables()
       batch->somo                  = false;
       batch->somo_o                = false;
       batch->grid                  = false;
+      batch->grid_o                = false;
       batch->equi_grid             = false;
       batch->hydro                 = false;
       batch->zeno                  = false;
@@ -1340,8 +1351,9 @@ void US_Hydrodyn_Batch::update_enables()
          bg_residues ->setEnabled( true );
          cb_mm_first ->setEnabled( true );
          cb_somo     ->setEnabled( true );
-         cb_grid     ->setEnabled( true );
          cb_somo_o   ->setEnabled( true );
+         cb_grid     ->setEnabled( true );
+         cb_grid_o   ->setEnabled( true );
 
          if ( !any_bead_model_selected ) {
             cb_dmd    ->setEnabled( true );
@@ -1487,8 +1499,8 @@ void US_Hydrodyn_Batch::update_enables()
             batch->compute_prr_std_dev   = false;
          }
       }
-      if ( any_bead_model_selected ||  batch->somo || batch->grid || batch->somo_o ) {
-         if ( !any_so_ovlp_selected && !batch->somo_o ) {
+      if ( any_bead_model_selected ||  batch->somo || batch->grid || batch->somo_o || batch->grid_o ) {
+         if ( !any_so_ovlp_selected && !batch->somo_o && !batch->grid_o ) {
             cb_hydro             ->setEnabled( true );
          } else {
             cb_hydro             ->setEnabled( false );
@@ -1527,8 +1539,9 @@ void US_Hydrodyn_Batch::update_enables()
    bool 
       anything_to_do =
       cb_somo              ->isChecked() || 
-      cb_grid              ->isChecked() || 
       cb_somo_o            ->isChecked() || 
+      cb_grid              ->isChecked() || 
+      cb_grid_o            ->isChecked() || 
       cb_iqq               ->isChecked() || 
       cb_prr               ->isChecked() || 
       cb_hydro             ->isChecked() || 
@@ -1760,6 +1773,11 @@ void US_Hydrodyn_Batch::set_somo()
          cb_somo_o->setChecked( false );
          batch->somo_o = cb_somo_o->isChecked();
       }
+      if ( cb_grid_o->isChecked() )
+      {
+         cb_grid_o->setChecked( false );
+         batch->grid_o = cb_grid_o->isChecked();
+      }
    }
    update_enables();
 }
@@ -1782,6 +1800,11 @@ void US_Hydrodyn_Batch::set_somo_o()
          cb_zeno->setChecked( true );
          set_zeno();
       }
+      if ( cb_grid_o->isChecked() )
+      {
+         cb_grid_o->setChecked( false );
+         batch->grid_o = cb_grid_o->isChecked();
+      }
    }
    update_enables();
 }
@@ -1800,9 +1823,43 @@ void US_Hydrodyn_Batch::set_grid()
          cb_somo_o->setChecked( false );
          batch->somo_o = cb_somo_o->isChecked();
       }
+      if ( cb_grid_o->isChecked() )
+      {
+         cb_grid_o->setChecked( false );
+         batch->grid_o = cb_grid_o->isChecked();
+      }
    }
    update_enables();
 }
+
+
+void US_Hydrodyn_Batch::set_grid_o()
+{
+   batch->grid_o = cb_grid_o->isChecked();
+   if ( batch->grid_o ) {
+      if ( cb_grid->isChecked() )
+      {
+         cb_grid->setChecked( false );
+         batch->grid = cb_grid->isChecked();
+      }
+      if ( cb_somo->isChecked() )
+      {
+         cb_somo->setChecked( false );
+         batch->somo = cb_somo->isChecked();
+      }
+      if ( cb_hydro->isChecked() ) {
+         cb_zeno->setChecked( true );
+         set_zeno();
+      }
+      if ( cb_somo_o->isChecked() )
+      {
+         cb_somo_o->setChecked( false );
+         batch->somo_o = cb_somo_o->isChecked();
+      }
+   }
+   update_enables();
+}
+
 
 void US_Hydrodyn_Batch::set_equi_grid()
 {
@@ -1959,11 +2016,15 @@ void US_Hydrodyn_Batch::disable_after_start()
    cb_mm_first->setEnabled(false);
    cb_mm_all->setEnabled(false);
    cb_somo->setEnabled(false);
+   cb_somo_o->setEnabled(false);
    cb_grid->setEnabled(false);
+   cb_grid_o->setEnabled(false);
    cb_equi_grid->setEnabled(false);
    cb_iqq->setEnabled(false);
+   cb_dmd->setEnabled( false );
    cb_prr->setEnabled(false);
    cb_hydro->setEnabled(false);
+   cb_zeno->setEnabled(false);
    cb_avg_hydro->setEnabled(false);
    le_avg_hydro_name->setEnabled(false);
    pb_select_save_params->setEnabled(false);
@@ -1993,8 +2054,10 @@ void US_Hydrodyn_Batch::enable_after_stop()
    cb_iqq->setEnabled(true);
    cb_prr->setEnabled(true);
    cb_hydro->setEnabled(true);
+   cb_zeno->setEnabled(true);
    pb_select_save_params->setEnabled(true);
    cb_saveParams->setEnabled(true);
+   cb_dmd->setEnabled( true );
    pb_start->setEnabled(true);
    pb_stop->setEnabled(false);
    update_enables();
@@ -2094,6 +2157,7 @@ void US_Hydrodyn_Batch::start( bool quiet )
       !batch->somo &&
       !batch->grid &&
       !batch->somo_o &&
+      !batch->grid_o &&
       !batch->hydro &&
       !batch->zeno
       ;
@@ -2198,6 +2262,13 @@ void US_Hydrodyn_Batch::start( bool quiet )
                   job_timer.init_timer ( QString( "%1 atob" ).arg( get_file_name( i ) ) );
                   job_timer.start_timer( QString( "%1 atob" ).arg( get_file_name( i ) ) );
                   result = ((US_Hydrodyn *)us_hydrodyn)->calc_somo_o() ? false : true;
+                  job_timer.end_timer  ( QString( "%1 atob" ).arg( get_file_name( i ) ) );
+               }
+               if ( batch->grid_o )
+               {
+                  job_timer.init_timer ( QString( "%1 atob" ).arg( get_file_name( i ) ) );
+                  job_timer.start_timer( QString( "%1 atob" ).arg( get_file_name( i ) ) );
+                  result = ((US_Hydrodyn *)us_hydrodyn)->calc_grid_pdb_o() ? false : true;
                   job_timer.end_timer  ( QString( "%1 atob" ).arg( get_file_name( i ) ) );
                }
                restore_us_hydrodyn_settings();
@@ -2746,7 +2817,7 @@ void US_Hydrodyn_Batch::start( bool quiet )
                return;
             }
             if ( result && ( batch->hydro || batch->zeno ) &&
-                 ( !pdb_mode || batch->somo || batch->grid || batch->somo_o) )
+                 ( !pdb_mode || batch->somo || batch->grid || batch->somo_o || batch->grid_o ) )
             {
                save_us_hydrodyn_settings();
                job_timer.init_timer  ( QString( "%1 hydrodynamics" ).arg( get_file_name( i ) ) );
