@@ -14,7 +14,7 @@ US_XpnRunRaw::US_XpnRunRaw( QString& runDesc, QStringList& rdLists )
    setPalette( US_GuiSettings::frameColor() );
 
    runID             = "";
-   runDesc           = rdLists[ 0 ];
+   runDesc           = rdLists.count() > 0 ? rdLists[ 0 ] : "";
    QVBoxLayout* main = new QVBoxLayout( this );
    main->setSpacing        ( 2 );
    main->setContentsMargins( 2, 2, 2, 2 );
@@ -62,11 +62,14 @@ qDebug() << "XRR: size" << size();
 void US_XpnRunRaw::load_runs( void )
 {
    // Get the description fields delimiter from first character
-   QString delim       = QString( rdLists[ 0 ] ).left( 1 );
+   int nruns           = rdLists.count();
+   QString delim       = ( nruns > 0 ) ?
+                         QString( rdLists[ 0 ] ).left( 1 ) :
+                         "";
 qDebug() << "XRR:l_r: delim" << delim;
 
    // Populate the list of RunInfo objects
-   for ( int ii = 0; ii < rdLists.count(); ii++ )
+   for ( int ii = 0; ii < nruns; ii++ )
    {
       QString rDesc       = rdLists[ ii ];
       QStringList lDesc   = QString( rDesc ).mid( 1 ).split( delim );
@@ -94,7 +97,9 @@ qDebug() << "XRR:l_r:    runID" << rirec.runID;
    {
       QMessageBox::information( this,
              tr( "Error" ),
-             tr( "There are no US3 runs in the PostgreSQL database.\n" ) );
+             tr( "There are no US3 runs in the PostgreSQL database\n"
+                 "or connection to the database failed.\n\n"
+                 "Verify that the Optima is on and connected." ) );
    }
 
    return;

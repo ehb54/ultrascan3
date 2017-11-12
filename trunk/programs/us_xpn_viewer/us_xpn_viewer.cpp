@@ -84,6 +84,7 @@ US_XpnDataViewer::US_XpnDataViewer() : US_Widgets()
    runType      = "RI";
    rlt_id       = 0;
    currentDir   = "";
+   in_reload    = false;
    QStringList xpnentr = US_Settings::defaultXpnHost();
 DbgLv(1) << "xpnentr count" << xpnentr.count();
 
@@ -567,11 +568,18 @@ void US_XpnDataViewer::load_xpn_raw( )
    int     dbport    = xpnport.toInt();
 DbgLv(1) << "RDr: call connect_data  dbname h p u w"
  << xpnname << dbhost << dbport << xpnuser << xpnpasw;
-   xpn_data->connect_data( dbhost, dbport, xpnname, xpnuser, xpnpasw );
-   if ( dbg_level > 0 )  xpn_data->dump_tables();
-   xpn_data->scan_runs( runInfo );
-   xpn_data->filter_runs( runInfo );
+   if ( xpn_data->connect_data( dbhost, dbport, xpnname, xpnuser, xpnpasw ) )
+   {
+if ( dbg_level > 0 ) xpn_data->dump_tables();
+      xpn_data->scan_runs( runInfo );
+      xpn_data->filter_runs( runInfo );
 DbgLv(1) << "RDr:  rtn fr import_data";
+   }
+   else
+   {
+DbgLv(1) << "RDr:  connection failed";
+      runInfo.clear();
+   }
 
    QString drDesc    = "";
    US_XpnRunRaw* lddiag = new US_XpnRunRaw( drDesc, runInfo );
@@ -1644,6 +1652,10 @@ void US_XpnDataViewer::status_report( QString stat_text )
 // Slot to reload data
 void US_XpnDataViewer::reloadData()
 {
+   if ( in_reload )             // If already doing a reload,
+      return;                   //  skip starting a new one
+
+   in_reload   = true;          // Flag in the midst of a reload
    int runix          = runID.lastIndexOf( "-run" ) + 4;
    QString fRunId     = runID.mid( runix );
    int iRunId         = fRunId.toInt();
@@ -1705,6 +1717,7 @@ DbgLv(1) << "RLd:      build-raw done: tm1 tm2" << tm1 << tm2
 
    // Do resets and re-plot the current triple
    changeCellCh();
+   in_reload   = false;         // Flag no longer in the midst of reload
 }
 
 // Slot to respond to a timer event (auto-reload)
@@ -1720,7 +1733,7 @@ DbgLv(1) << "            timerEvent:   tim_id" << tim_id << "    "
       return;
    }
 
-   // Do a reload of data
+   // Do a reload of data (if none currently underway)
    reloadData();
 }
 
