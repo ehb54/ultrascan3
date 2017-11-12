@@ -262,7 +262,7 @@ pb_plateau->setVisible(false);
 //QLineEdit* 
    le_dataStart   = us_lineedit( "", 1, true );
 //QPushButton* 
-   pb_dataEnd     = us_pushbutton( tr( "Specify Data End:" ), false );
+   pb_dataEnd     = us_pushbutton( tr( "Specify Range/End:" ), false );
 //QLineEdit* 
    le_dataEnd     = us_lineedit( "", 1, false );
 //QLabel* 
@@ -380,8 +380,8 @@ pb_plateau->setVisible(false);
 //   specs->addWidget( pb_meniscus,     s_row,   0, 1, 3 );
 //   specs->addWidget( le_meniscus,     s_row++, 3, 1, 3 );
    specs->addWidget( lb_meniscus,     s_row,   0, 1, 1 );
-   specs->addWidget( le_meniscus,     s_row,   1, 1, 1 );
-   specs->addWidget( pb_meniscus,     s_row++, 2, 1, 4 );
+   specs->addWidget( le_meniscus,     s_row,   1, 1, 2 );
+   specs->addWidget( pb_meniscus,     s_row++, 3, 1, 3 );
    specs->addWidget( pb_airGap,       s_row,   0, 1, 3 );
    specs->addWidget( le_airGap,       s_row++, 3, 1, 3 );
 //   specs->addWidget( pb_dataRange,    s_row,   0, 1, 3 );
@@ -392,8 +392,8 @@ pb_plateau->setVisible(false);
 //   specs->addWidget( le_baseline,     s_row++, 3, 1, 3 );
 //*NEW STUFF
    specs->addWidget( lb_dataStart,    s_row,   0, 1, 1 );
-   specs->addWidget( le_dataStart,    s_row,   1, 1, 1 );
-   specs->addWidget( pb_dataEnd,      s_row,   2, 1, 3 );
+   specs->addWidget( le_dataStart,    s_row,   1, 1, 2 );
+   specs->addWidget( pb_dataEnd,      s_row,   3, 1, 2 );
    specs->addWidget( le_dataEnd,      s_row++, 5, 1, 1 );
    specs->addWidget( lb_baseline,     s_row,   0, 1, 1 );
    specs->addWidget( le_baseline,     s_row,   1, 1, 3 );
@@ -402,8 +402,8 @@ pb_plateau->setVisible(false);
 //*NEW STUFF
 //   specs->addWidget( lb_odlim,        s_row,   0, 1, 3 );
 //   specs->addWidget( ct_odlim,        s_row++, 3, 1, 3 );
-   specs->addWidget( lb_odlim,        s_row,   0, 1, 2 );
-   specs->addWidget( ct_odlim,        s_row++, 2, 1, 4 );
+   specs->addWidget( lb_odlim,        s_row,   0, 1, 3 );
+   specs->addWidget( ct_odlim,        s_row++, 3, 1, 3 );
    specs->addWidget( pb_noise,        s_row,   0, 1, 3 );
    specs->addWidget( pb_residuals,    s_row++, 3, 1, 3 );
    specs->addWidget( pb_invert,       s_row,   0, 1, 3 );
