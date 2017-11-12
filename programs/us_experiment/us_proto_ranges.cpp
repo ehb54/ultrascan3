@@ -102,8 +102,11 @@ US_ExperGuiRanges::US_ExperGuiRanges( QWidget* topw )
       lablto ->setVisible( is_vis );
       ctradto->setVisible( is_vis );
 
-      connect( pbwavln, SIGNAL( clicked()           ),
-               this,    SLOT  ( selectWavelengths() ) );
+      // connect( pbwavln, SIGNAL( clicked()           ),
+      //          this,    SLOT  ( selectWavelengths() ) );
+
+      connect( pbwavln, SIGNAL( clicked()           ),           //ALEXEY
+	       this,    SLOT  ( Wavelengths_class() ) );      
       connect( ctradfr, SIGNAL( valueChanged     ( double ) ),
                this,    SLOT  ( changedLowRadius ( double ) ) );
       connect( ctradto, SIGNAL( valueChanged     ( double ) ),
@@ -441,6 +444,88 @@ void US_ExperGuiRanges::detailRanges()
 }
 
 // Slot to select wavelengths using a dialog
+void US_ExperGuiRanges::Wavelengths_class()
+{
+    QMessageBox msgBox;
+    msgBox.setText(tr("How do you want to specify wavelengths?"));
+    msgBox.setInformativeText("Wavelength(s) can be specified manually, or with the use of wavelength selector");
+    msgBox.setWindowTitle(tr("Select Wavelength(s)"));
+    QPushButton *Manual    = msgBox.addButton(tr("Manually"),   QMessageBox::YesRole);
+    QPushButton *Selector  = msgBox.addButton(tr("Use Selector"), QMessageBox::YesRole);
+    QPushButton *Cancel    = msgBox.addButton(tr("Cancel"), QMessageBox::RejectRole);
+    
+    msgBox.setIcon(QMessageBox::Question);
+    msgBox.exec();
+    
+    if (msgBox.clickedButton() == Manual) {
+      selectWavelengths_manual();
+    } 
+    else if (msgBox.clickedButton() == Selector) {
+      selectWavelengths();
+    }
+    else if (msgBox.clickedButton() == Cancel){
+      return;
+    }
+
+}
+
+// Slot to select wavelengths using a dialog
+void US_ExperGuiRanges::selectWavelengths_manual()
+{
+   QObject* sobj       = sender();      // Sender object
+   QString sname       = sobj->objectName();
+   chrow               = sname.section( ":", 0, 0 ).toInt();
+   QString cclabl      = cc_labls[ chrow ]->text();
+   QStringList wlpoten;                 // Potential wavelength list
+   QStringList wlselec;                 // Selected wavelength list
+
+   int nswavl          = swvlens[ chrow ].count();
+
+   // Build the list of currently selected wavelengths, this row
+   for ( int jj = 0; jj < nswavl; jj++ )
+      wlselec << QString::number( swvlens[ chrow ][ jj ] );
+
+   // Build the list of potential wavelengths, using all wavelengths
+   //  selected on any rows other than this one
+   for ( int ii = 0; ii < nrnchan; ii++ )
+   {  // Show information for each channel
+      int kswavl          = swvlens[ ii ].count();
+      for ( int jj = 0; jj < kswavl; jj++ )
+      {
+         QString swavl       = QString::number( swvlens[ ii ][ jj ] );
+         if ( ! wlpoten.contains( swavl ) )
+            wlpoten << swavl;
+      }
+   }
+   wlpoten.sort();
+
+   // Open a wavelengths_MANUAL choice dialog and use to update selected wavelengths
+
+   US_SelectWavelengths_manual* swdiag = new US_SelectWavelengths_manual( wlpoten, wlselec );
+
+   swdiag->exec();
+
+   swvlens[ chrow ].clear();
+   int kswavl          = wlselec.count();
+   int lswx            = qMax( 0, kswavl - 1 );
+   QString labwlr;
+
+   for ( int ii = 0; ii < kswavl; ii++ )
+      swvlens[ chrow ] << wlselec[ ii ].toDouble();
+
+   if ( kswavl == 0 )
+      labwlr              = tr( "0 selected" );
+   else if ( kswavl == 1 )
+      labwlr              = "1,  " + wlselec[ 0 ];
+   else
+      labwlr              = QString::number( kswavl ) + ",  " + wlselec[ 0 ]
+                            + tr( " to " ) + wlselec[ lswx ];
+
+   cc_lrngs[ chrow ]->setText( labwlr );
+   
+}
+
+// Slot to select wavelengths using a dialog
 void US_ExperGuiRanges::selectWavelengths()
 {
    QObject* sobj       = sender();      // Sender object
@@ -766,6 +851,215 @@ DbgLv(1) << "SelWl:    k_pot k_sel" << potential.count() << selected.count();
 DbgLv(1) << "SelWl: layout complete";
    resize( 150, 700 );
 }
+
+
+// Class dialog object for selecting wavelengths manually
+
+US_SelectWavelengths_manual::US_SelectWavelengths_manual(
+   QStringList& orig_wavls, QStringList& select_wavls )
+   : US_WidgetsDialog( 0, 0 ), orig_wavls( orig_wavls ),
+   select_wavls ( select_wavls )
+{
+   nbr_poten   = orig_wavls  .count();
+   nbr_selec   = select_wavls.count();
+DbgLv(1) << "SelWl: IN k_ori k_sel" << nbr_poten << nbr_selec;
+   dbg_level   = US_Settings::us_debug();
+
+   setWindowTitle( tr( "Wavelengths Selector" ) );
+   setPalette( US_GuiSettings::frameColor() );
+
+   QVBoxLayout* main    = new QVBoxLayout( this );
+   main->setSpacing        ( 2 );
+   main->setContentsMargins( 2, 2, 2, 2 );
+
+   QGridLayout* genL   = new QGridLayout();
+
+   QHBoxLayout* buttons = new QHBoxLayout;
+   le_info = us_textedit();
+   le_info->setText(tr( "NOTES ON SYNTAX: \n The following wavelength(s) specification examples are accepted: \n   * 230-550:N (take every Nth wavelength, starting with 230 nm and go up to 550 nm);  \n   * 220,230,250 (measure at 220 nm, 230 nm, and at 250 nm); \n   * 220-230 (measure at 220, 221, 222, 223... in 1 nm increments when ':N' is not specified); \n   * 230-550:2,560,570 (like above, but also measure 560 and 570 nm) " ));
+
+   // Range rows
+   QLabel* bn_range       = us_banner( tr( "Enter Wavelength(s)" ) );
+   QLabel* lb_wrange      = us_label(  tr( "Wavelength Range" ) );
+   le_wrange              = us_lineedit();
+   le_wrange->setPlaceholderText("Enter wavelength specification and press ENTER");
+
+   // Button Row
+   QPushButton* pb_reset  = us_pushbutton( tr( "Reset" ) );
+   QPushButton* pb_help   = us_pushbutton( tr( "Help" ) );
+   QPushButton* pb_cancel = us_pushbutton( tr( "Cancel" ) );
+   pb_accept              = us_pushbutton( tr( "Accept" ) );
+
+   pb_accept->setEnabled(false);
+
+   // Complete layouts
+   buttons->addWidget( pb_reset  );
+   buttons->addWidget( pb_help   );
+   buttons->addWidget( pb_cancel );
+   buttons->addWidget( pb_accept );
+   
+   int row     = 0;
+   genL->addWidget( le_info,   row++,   0, 1, 8 );
+   genL->addWidget( bn_range,  row++,   0, 1, 8 );
+   genL->addWidget( lb_wrange, row,     0, 1, 3 );
+   genL->addWidget( le_wrange, row++,   3, 1, 5 );
+   genL->addLayout( buttons,   row,     0, 1, 8 );
+   
+  // Connections
+   connect( pb_reset,  SIGNAL( clicked() ), SLOT( reset()  ) );
+   connect( pb_help,   SIGNAL( clicked() ), SLOT( help()   ) );
+   connect( pb_cancel, SIGNAL( clicked() ), SLOT( cancel() ) );
+   connect( pb_accept, SIGNAL( clicked() ), SLOT( done()   ) );
+
+   connect( le_wrange, SIGNAL( textChanged(QString) ),
+            this,      SLOT  ( wln_changed(QString) ) );
+   connect( le_wrange, SIGNAL( editingFinished() ),
+            this,      SLOT  ( wln_entered() ) );
+
+   main ->addLayout( genL );
+   resize( 550, 230 );
+}
+
+// Reset the lists and buttons to their original state
+void US_SelectWavelengths_manual::reset( void )
+{
+  le_wrange->setText("");
+  pb_accept->setEnabled( false );
+  QPalette *palette = new QPalette();
+  palette->setColor(QPalette::Text,Qt::black);
+  palette->setColor(QPalette::Base,Qt::white);
+  le_wrange->setPalette(*palette);
+}
+
+// Cancel button clicked:  returned delete-selections is empty
+void US_SelectWavelengths_manual::cancel( void )
+{
+   reset();
+
+   reject();
+   close();
+}
+
+// Entered wavelength(s):  check for syntax
+void US_SelectWavelengths_manual::wln_changed( QString text )
+{
+  QPalette *palette = new QPalette();
+  palette->setColor(QPalette::Text,Qt::black);
+  palette->setColor(QPalette::Base,Qt::white);
+  le_wrange->setPalette(*palette);
+  le_wrange->setText(text);
+
+  pb_accept->setEnabled( false );
+}
+
+// Entered wavelength(s):  check for syntax
+void US_SelectWavelengths_manual::wln_entered( void )
+{
+  // CHECK for syntax
+  QString text = le_wrange->text();
+
+  QRegExp rx1("[(\\d{3}),]+");
+  QRegExp rx2("[(\\d{3}),]*(\\d{3})-(\\d{3})[,(\\d{3})]*");
+  QRegExp rx3("[(\\d{3}),]*(\\d{3})-(\\d{3}):(\\d+)[,(\\d{3})]*");
+  QRegExp rx4("[(\\d{3}),]*(\\d{3})-(\\d{3})[,(\\d{3})]*(\\d{3})-(\\d{3})[,(\\d{3})]*");
+  QRegExp rx5("[(\\d{3}),]*(\\d{3})-(\\d{3}):(\\d+)[,(\\d{3})]*(\\d{3})-(\\d{3}):(\\d+)[,(\\d{3})]*");
+  QRegExp rx6("[(\\d{3}),]*(\\d{3})-(\\d{3}):(\\d+)[,(\\d{3})]*(\\d{3})-(\\d{3})[,(\\d{3})]*");
+  QRegExp rx7("[(\\d{3}),]*(\\d{3})-(\\d{3})[,(\\d{3})]*(\\d{3})-(\\d{3}):(\\d+)[,(\\d{3})]*");
+
+  //QRegExp rx_new("[\\d{3},]*[\\d{3}-\\d{3}]*[(:\\d+)]*[,(\\d{3})]*"); //working partially
+  
+  if ( rx1.exactMatch(text)  ||  rx2.exactMatch(text) || rx3.exactMatch(text) 
+       || rx4.exactMatch(text) || rx5.exactMatch(text) || rx6.exactMatch(text) ||  rx7.exactMatch(text) ){
+    pb_accept->setEnabled( true );
+  }    
+  else {
+    
+    QPalette *palette = new QPalette();
+    palette->setColor(QPalette::Text,Qt::red);
+    palette->setColor(QPalette::Base,Qt::white);
+    le_wrange->setPalette(*palette);
+  }
+}
+
+
+// Accept button clicked:  returned delete-selections list is the excluded list
+void US_SelectWavelengths_manual::done( void )
+{
+  // TRANSFORM numbers to arrays
+  QString  waveln_raw  = le_wrange->text();
+DbgLv(1) << "WAVELENGTHS: " << waveln_raw;  
+  
+ if ( waveln_raw.contains(",") ){
+   
+   QStringList wvllist = waveln_raw.split( "," );
+   for (QStringList::iterator it = wvllist.begin(); it != wvllist.end(); ++it){            
+     QString current = *it; 
+     
+     if ( current == "" )
+       continue;
+     
+     if ( current.contains(":") ){
+       QStringList wvllist_semicolon      = current.split( ":" );
+       QStringList wvllist_semicolon_dash = wvllist_semicolon[0].split( "-" );
+       
+       int wvl_iter = wvllist_semicolon[1].toInt();
+       int wvl_min  = wvllist_semicolon_dash[0].toInt();
+       int wvl_max  = wvllist_semicolon_dash[1].toInt();
+       
+       for (int i = wvl_min; i <= wvl_max; i += wvl_iter){
+	 selected << QString::number(i);
+       }
+     }
+     else if ( current.contains("-") && !current.contains(":") ){
+       QStringList wvllist_dash = current.split( "-" );
+       int wvl_min_dash  = wvllist_dash[0].toInt();
+       int wvl_max_dash  = wvllist_dash[1].toInt();
+       
+       for (int i = wvl_min_dash; i <= wvl_max_dash; i++){
+	 selected << QString::number(i);
+       }
+     }
+     else {
+       selected << current;
+     }
+   }
+ }
+ else if ( waveln_raw.contains(":") && !waveln_raw.contains(",") ){
+   
+   QStringList wvllist_semicolon_nocoma      = waveln_raw.split( ":" );
+   QStringList wvllist_semicolon_nocoma_dash = wvllist_semicolon_nocoma[0].split( "-" );
+   
+   int wvl_iter = wvllist_semicolon_nocoma[1].toInt(); 
+   int wvl_min  = wvllist_semicolon_nocoma_dash[0].toInt();
+   int wvl_max  = wvllist_semicolon_nocoma_dash[1].toInt();
+   
+   for (int i = wvl_min; i <= wvl_max; i += wvl_iter){
+     selected << QString::number(i);
+   }
+ }
+ else if ( waveln_raw.contains("-") && !waveln_raw.contains(":") ){
+   QStringList wvllist_nocoma_dash = waveln_raw.split( "-" );
+   int wvl_min_nocoma_dash  = wvllist_nocoma_dash[0].toInt();
+   int wvl_max_nocoma_dash  = wvllist_nocoma_dash[1].toInt();
+ 
+   for (int i = wvl_min_nocoma_dash; i <= wvl_max_nocoma_dash; i++){
+     selected << QString::number(i);
+   }
+ }
+ else if ( !waveln_raw.contains("-") && !waveln_raw.contains(":") && !waveln_raw.contains(".") ){
+   selected << waveln_raw;
+ }
+
+ selected.removeDuplicates();
+ selected.sort();
+ DbgLv(1) << "WVL_ARRAY " << selected;  
+  //selected << waveln;
+  select_wavls = selected;
+
+   accept();
+   close();
+}
+
 
 // Slot to add selections to the excluded list
 void US_SelectWavelengths::add_selections()
