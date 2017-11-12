@@ -104,7 +104,7 @@ static int totT8=0;
    int lsx               = exp_data.scanCount() - 1;          // Last scan index
    double fstime         = exp_data.scanData[   0 ].seconds;  // First scan time
    double lstime         = exp_data.scanData[ lsx ].seconds;  // Last scan time
-DbgLv(0)<< "RSA:calc:  lsx fstime lstime" << lsx << fstime << lstime;
+DbgLv(1)<< "RSA:calc:  lsx fstime lstime" << lsx << fstime << lstime;
 
    for ( int step = 0; step < simparams.speed_step.count(); step++ )
    {
@@ -112,7 +112,7 @@ DbgLv(0)<< "RSA:calc:  lsx fstime lstime" << lsx << fstime << lstime;
       if ( fstime >=  simparams.speed_step[ step ].time_first  &&
            lstime <=  simparams.speed_step[ step ].time_last )
       {  // Found step that this dataset fits inside:  break out
-DbgLv(0)<< "RSA:calc:   cdsx" << cdsx << "time_first time_last"
+DbgLv(1)<< "RSA:calc:   cdsx" << cdsx << "time_first time_last"
  << simparams.speed_step[ step ].time_first << simparams.speed_step[ step ].time_last;
          break;
       }
@@ -124,7 +124,7 @@ DbgLv(0)<< "RSA:calc:   cdsx" << cdsx << "time_first time_last"
    af_params.dt          = 1.0;                     // Time gap between two time steps
    af_params.time_steps  = simparams.simpoints;     // Number of time steps
    af_params.cdset_speed = simparams.speed_step[ cdsx ].rotorspeed; // Rotor speed of current dataset
-DbgLv(0)<< "RSA:calc: cdset_speed" << af_params.cdset_speed;
+DbgLv(1)<< "RSA:calc: cdset_speed" << af_params.cdset_speed;
 //   af_params.omega_s     = sq( (double)af_params.cdset_speed * M_PI / 30.0 ); // omega_square
    double s0speed        = simparams.speed_step[ 0 ].rotorspeed;
    af_params.omega_s     = sq( s0speed * M_PI / 30.0 ); // omega_square
@@ -132,7 +132,7 @@ DbgLv(0)<< "RSA:calc: cdset_speed" << af_params.cdset_speed;
    af_params.start_time  = 0.0;                     // Starting time
    af_params.current_meniscus = simparams.meniscus; // Meniscus from simparams structure
    af_params.current_bottom   = simparams.bottom;   // Bottom from simparams structure
-DbgLv(0)<< "RSA:calc: meniscus bottom" << simparams.meniscus << simparams.bottom;
+DbgLv(1)<< "RSA:calc: meniscus bottom" << simparams.meniscus << simparams.bottom;
 
    // Loads the experimental data exp_data of 'RawData'type
    // to af_data of 'MfemData' type and 'af_data' is used for
@@ -997,7 +997,7 @@ DbgLv(2) << "RSA:    current_time" << current_time << "fscan lscan"
          current_speed = step_speed;
 
 #ifndef NO_DB
-           qApp->processEvents();
+         qApp->processEvents();
 #endif
          if ( stopFlag ) return 1;
       } // Speed step loop
@@ -1113,8 +1113,8 @@ int elapsedCalc = calcStart.msecsTo( clcSt9 );
 ncalls++;
 totTC+=elapsedCalc;
 if((ncalls%TIMING_RA_INC)<1) {
- DbgLv(0) << "  Elapsed fem-calc ms" << elapsedCalc << "nc totC" << ncalls << totTC << "  size_cv" << size_cv;
- DbgLv(0) << "   t1 t2 t3 t4 t5 t6 t7 t8"
+ DbgLv(1) << "  Elapsed fem-calc ms" << elapsedCalc << "nc totC" << ncalls << totTC << "  size_cv" << size_cv;
+ DbgLv(1) << "   t1 t2 t3 t4 t5 t6 t7 t8"
   << totT1 << totT2 << totT3 << totT4 << totT5 << totT6 << totT7 << totT8;
 }
 #endif
@@ -1158,14 +1158,14 @@ void US_Astfem_RSA::adjust_limits( int speed )
    // First correct meniscus to theoretical position at rest:
    double stretch_value        = stretch( simparams.rotorcoeffs,
                                           (int)af_params.cdset_speed );
-DbgLv(0)<< "RSA:adjlim stretch1" << stretch_value << "speed" << af_params.cdset_speed;
+DbgLv(1)<< "RSA:adjlim stretch1" << stretch_value << "speed" << af_params.cdset_speed;
 
    // This is the meniscus at rest
    af_params.current_meniscus  = simparams.meniscus - stretch_value;
 
    // Calculate rotor stretch at current speed
    stretch_value               = stretch( simparams.rotorcoeffs, speed );
-DbgLv(0)<< "RSA:adjlim  stretch2" << stretch_value << "speed" << speed;
+DbgLv(1)<< "RSA:adjlim  stretch2" << stretch_value << "speed" << speed;
 
    // Add current stretch to meniscus at rest
    af_params.current_meniscus += stretch_value;
@@ -1759,7 +1759,9 @@ ttT3+=(clcSt3.msecsTo(clcSt4));
       rpm_current   += rpm_inc; // Update rotor speed
 
 #ifndef NO_DB
-      emit current_speed( (int) rpm_current );// Update current rotor speed in GUI window
+DbgLv(1) << "RSA: EMIT0 rpm_current" << rpm_current << "rpm inc" << rpm_inc;
+      emit current_speed( (int)rpm_current );// Update current rotor speed in GUI window
+      qApp->processEvents();
 #endif
 
       // Last time for the simulation grid i.e. time for last scan
@@ -2823,6 +2825,7 @@ DbgLv(1)<<"extinction_coefficient" << ext_M;
 
 #ifndef NO_DB
       emit current_component( -Npts );
+      qApp->processEvents();
 #endif
 
       for ( int j = 0; j < Npts; j++ )
@@ -2878,7 +2881,7 @@ DbgLv(1)<<"reactant_case" << C0[0].concentration[j] << C0[1].concentration[j]
             //qDebug()<<"product_case" ;
          }
 #ifndef NO_DB
-          emit current_component( j + 1 );
+         emit current_component( j + 1 );
 #endif
          qApp->processEvents();
          if ( stopFlag )  break;
@@ -2927,50 +2930,52 @@ DbgLv(2) << "RSA:  decompose k_min time_max timeStepSize"
 
    // time loop
 #ifndef NO_DB
-     emit calc_start( time_max );
-     emit current_component( -time_max );
+   emit calc_start( time_max );
+   emit current_component( -time_max );
+   qApp->processEvents();
 #endif
 
    for ( int ti = 0; ti < time_max; ti++ )
    {
 #ifndef NO_DB
-       if ( show_movie  &&  (ti%8) == 0 )
-       {
-          //DbgLv(2) << "AR: calc_progr ti" << ti;
-          emit calc_progress( ti );
-          qApp->processEvents();
-          //US_Sleep::msleep( 10 );
-       }
+      if ( show_movie  &&  (ti%8) == 0 )
+      {
+         //DbgLv(2) << "AR: calc_progr ti" << ti;
+         emit calc_progress( ti );
+         qApp->processEvents();
+         //US_Sleep::msleep( 10 );
+      }
 #endif
 
-       ReactionOneStep_Euler_imp( Npts, C1, timeStepSize );
+      ReactionOneStep_Euler_imp( Npts, C1, timeStepSize );
 
-       if ( stopFlag )  break;
+      if ( stopFlag )  break;
 
-       double diff = 0.0;
-       double ct   = 0.0;
+      double diff = 0.0;
+      double ct   = 0.0;
 
-       for ( int i = 0; i < num_comp; i++ )
-       {
-           for ( int j = 0; j < Npts; j++ )
-           {
-               diff        += qAbs( C2[ i ][ j ] - C1[ i ][ j ] );
-               ct          += qAbs( C1[ i ][ j ] );
-               C2[ i ][ j ] = C1[ i ][ j ];
-           }
-       }
+      for ( int i = 0; i < num_comp; i++ )
+      {
+         for ( int j = 0; j < Npts; j++ )
+         {
+            diff        += qAbs( C2[ i ][ j ] - C1[ i ][ j ] );
+            ct          += qAbs( C1[ i ][ j ] );
+            C2[ i ][ j ] = C1[ i ][ j ];
+         }
+      }
 
 #ifndef NO_DB
-        emit current_component( ti + 1 );
-        qApp->processEvents();
+      emit current_component( ti + 1 );
+      qApp->processEvents();
 #endif
 
       if ( diff < 1.0e-5 * ct )
       {
 #ifndef NO_DB
-          int step = ti + 1;
-          emit current_component( -step );
-          emit current_component( step );
+         int step = ti + 1;
+         emit current_component( -step );
+         emit current_component( step );
+         qApp->processEvents();
 #endif
 
          break;
@@ -2978,11 +2983,11 @@ DbgLv(2) << "RSA:  decompose k_min time_max timeStepSize"
    } // end time steps
 
 #ifndef NO_DB
-    if ( show_movie )
-    {
-       emit calc_done();
-       qApp->processEvents();
-    }
+   if ( show_movie )
+   {
+      emit calc_done();
+      qApp->processEvents();
+   }
 #endif
 
    for ( int i = 0; i < num_comp; i++ )
@@ -3547,15 +3552,16 @@ DbgLv(1) << "RSA: newX3  CT0 CTn" << CT1[0] << CT1[Nx-1];
    // Time evolution
    double* right_hand_side = rhVec.data();
 #ifndef NO_DB
-    int     stepinc = 1000;
-    int     stepmax = ( Nt + 2 ) / stepinc + 1;
-    bool    repprog = stepmax > 1;
+   int     stepinc = 1000;
+   int     stepmax = ( Nt + 2 ) / stepinc + 1;
+   bool    repprog = stepmax > 1;
 
-    if ( repprog )
-    {
-       emit current_component( -stepmax );
-       emit current_component( 0 );
-    }
+   if ( repprog )
+   {
+      emit current_component( -stepmax );
+      emit current_component( 0 );
+      qApp->processEvents();
+   }
 #endif
 
 DbgLv(1) << "RSA: (5)AP.start_om2t" << af_params.start_om2t;
@@ -3566,7 +3572,9 @@ DbgLv(1) << "RSA: (5)AP.start_om2t" << af_params.start_om2t;
       double rpm_current = rpm_start + ( rpm_stop - rpm_start ) * ( kkk + 0.5 ) / Nt;
 
 #ifndef NO_DB
-       emit current_speed( (int) rpm_current);
+DbgLv(1) << "RSA: EMIT rpm_current" << rpm_current << "rpm start/stop" << rpm_start << rpm_stop;
+      emit current_speed( (int)rpm_current );
+      qApp->processEvents();
 #endif
 
       simscan.time      = af_params.start_time + kkk * af_params.dt;
@@ -3831,6 +3839,7 @@ DbgLv(2) << "TMS:RSA:ra(2):   C1[10] C1[11] C1[1k] C1[1n]"
       if ( repprog  &&  ( ( kkk + 1 ) & stepinc ) == 0 )
       {
          emit current_component( ( kkk + 1 ) / stepinc );
+         qApp->processEvents();
       }
 #endif
 

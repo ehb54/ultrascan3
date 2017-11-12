@@ -34,6 +34,7 @@ US_SimParamsGui::US_SimParamsGui(
 
    cnt_speeds = us_counter( 2, 1, 100, 1 );
    cnt_speeds->setSingleStep  ( 1 );
+   cnt_speeds->setValue( simparams.speed_step.count() );
    
    main->addWidget( cnt_speeds, row++, 3, 1, 1 );
    connect( cnt_speeds, SIGNAL( valueChanged ( double ) ), 
@@ -477,20 +478,23 @@ void US_SimParamsGui::revert( void )
 
 void US_SimParamsGui::update_speeds( double value )
 {
-   int                 old_size = simparams.speed_step.size();
+   int old_size          = simparams.speed_step.size();
+   int lx                = old_size - 1;
+   int new_size          = (int)value;
    US_SimulationParameters::SpeedProfile sp;
+   simparams.speed_step.resize( new_size );
    
-   for ( int i = old_size; i < (int) value; i++ )
+   for ( int ii = old_size; ii < new_size; ii++ )
    {
-      simparams.speed_step << sp;
+      simparams.speed_step[ ii ] = sp;
 
-      // Only initialize the new elements, leave the previously assigned
-      // elements alone.  New elements simply get copies of the last old
-      // element if old_size > new_size then we won't go through this loop and
-      // simply truncate the list
+      // Only initialize the new elements, leave the previously assigned elements
+      // alone. New elements simply get copies of the last old element.
+      // If old_size > new_size then we won't go through this loop and
+      // we simply truncate the list.
 
-      US_SimulationParameters::SpeedProfile* ss     = &simparams.speed_step[ i ];
-      US_SimulationParameters::SpeedProfile* ss_old = &simparams.speed_step[ old_size - 1 ];
+      US_SimulationParameters::SpeedProfile* ss     = &simparams.speed_step[ ii ];
+      US_SimulationParameters::SpeedProfile* ss_old = &simparams.speed_step[ lx ];
       
       ss->duration_hours    = ss_old->duration_hours;
       ss->duration_minutes  = ss_old->duration_minutes;
@@ -502,7 +506,7 @@ void US_SimParamsGui::update_speeds( double value )
       ss->acceleration_flag = ss_old->acceleration_flag;
    }
 
-   cnt_selected_speed->setMaximum( simparams.speed_step.size() );
+   cnt_selected_speed->setMaximum( new_size );
    update_combobox();
 }
 
@@ -536,7 +540,7 @@ void US_SimParamsGui::update_speed_profile( double profile )
 void US_SimParamsGui::select_speed_profile( int index )
 {
    current_speed_step = index;
-   cnt_speeds->setValue( index + 1 );
+//   cnt_speeds->setValue( index + 1 );
    
    if ( cb_acceleration_flag->isChecked() )
    {

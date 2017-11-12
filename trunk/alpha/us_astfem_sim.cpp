@@ -683,6 +683,11 @@ DbgLv(1) << "first_last_data for the step" << sp->time_first << sp->time_last
       else
          lb_component->setText( tr( "Component:" ) );
 
+      if ( ! astfem )
+      {
+         astfem->disconnect();
+         free( astfem );
+      }
       astfem = new US_Astfem_RSA( system, simparams );
 
       connect( astfem, SIGNAL( new_scan( QVector< double >*, double* ) ),
@@ -766,17 +771,17 @@ DbgLv(1) << "after_calculate__conc_value" << sim_datas[jd].value( j, k );
       astfvm = new US_LammAstfvm( system, simparams );
 
       connect( astfvm, SIGNAL( new_scan( QVector< double >*, double* ) ),
-                    SLOT( update_movie_plot( QVector< double >*, double* ) ) );
+                       SLOT( update_movie_plot( QVector< double >*, double* ) ) );
       connect( astfvm, SIGNAL( current_component( int ) ),
-                           SLOT  ( update_progress  ( int ) ) );
+                       SLOT  ( update_progress  ( int ) ) );
       connect( astfvm, SIGNAL( new_time   ( double ) ),
-                           SLOT  ( update_time( double ) ) );
+                       SLOT  ( update_time( double ) ) );
       connect( astfvm, SIGNAL( current_speed( int ) ),
-                           SLOT  ( update_speed ( int ) ) );
+                       SLOT  ( update_speed ( int ) ) );
       connect( astfvm, SIGNAL( calc_progress( int ) ),
-                           SLOT  ( show_progress( int ) ) );
+                       SLOT  ( show_progress( int ) ) );
       connect( astfvm, SIGNAL( calc_done( void ) ),
-                           SLOT  ( calc_over( void ) ) );
+                       SLOT  ( calc_over( void ) ) );
       astfvm->calculate( sim_datas[ 0 ] );
    }
 
