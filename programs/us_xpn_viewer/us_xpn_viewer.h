@@ -132,6 +132,7 @@ class US_XpnDataViewer : public US_Widgets
      bool           isRaw;
      bool           haveData;
      bool           haveTmst;
+     bool           in_reload;
 
      double         last_xmin;
      double         last_xmax;
