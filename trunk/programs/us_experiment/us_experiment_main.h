@@ -460,6 +460,9 @@ class US_ExperGuiRanges : public US_WidgetsDialog
       void detailRanges     ( void );
       // \brief Select the wavelengths to scan for a channel
       void selectWavelengths( void );
+
+      void selectWavelengths_manual( void );
+      void Wavelengths_class( void );
       // \brief Handle (un)check of Auto in Optima box
 //      void checkOptima      ( bool );
       // \brief Load an extinction spectrum
@@ -529,6 +532,58 @@ class US_SelectWavelengths : public US_WidgetsDialog
       void reset          ( void );
       void help           ( void )
       { showHelp.show_help( "manual/convert-seltrip.html" ); };
+};
+
+
+// Dialog class for selecting wavelengths MANUALLY
+class US_SelectWavelengths_manual : public US_WidgetsDialog
+{
+   Q_OBJECT
+
+   public:
+      US_SelectWavelengths_manual( QStringList&, QStringList& );
+
+   private:
+      QStringList&   orig_wavls;
+      QStringList&   select_wavls;
+
+      QTextEdit*     le_info;
+      QLineEdit*     le_wrange;
+      QLineEdit*     le_original;
+      QLineEdit*     le_selected;
+
+      QListWidget*   lw_original;
+      QListWidget*   lw_selected;
+
+      QPushButton*   pb_add;
+      QPushButton*   pb_remove;
+      QPushButton*   pb_addall;
+      QPushButton*   pb_rmvall;
+      QPushButton*   pb_accept;
+
+      QwtCounter*    ct_strwln;
+      QwtCounter*    ct_endwln;
+      QwtCounter*    ct_incwln;
+
+      int            dbg_level;
+      int            nbr_poten;
+      int            nbr_selec;
+      int            nbr_range;
+
+      QStringList    original;
+      QStringList    potential;
+      QStringList    selected;
+      
+      US_Help        showHelp;
+
+   private slots:
+      void wln_entered    ( void );
+      void wln_changed    ( QString );
+      void done           ( void ); 
+      void reset          ( void );
+      void cancel         ( void );
+      void help           ( void ) 
+      { showHelp.show_help( "manual/convert-seltrip.html" ); }; 
 };
 
 
