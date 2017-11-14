@@ -44,13 +44,13 @@ fi
 # Copy somo demo
 SBASE=${SOMOBASE}/somo
 SDIR=${SBASE}/demo
-DDIR=${PKGDIR}/somo
+DDIR=${PKGDIR}/ultrascan3/somo
 echo "${RSYNC} ${SDIR} ${DDIR}"
 ${RSYNC} ${SDIR} ${DDIR}
 # Copy somo doc
-##SDIR=${SOMOBASE}/doc
-##echo "${RSYNC} ${SDIR} ${DDIR}"
-##${RSYNC} ${SDIR} ${DDIR}
+SDIR=${SBASE}/doc
+echo "${RSYNC} ${SDIR} ${DDIR}"
+${RSYNC} ${SDIR} ${DDIR}
 /bin/rm -rf ${PKGDIR}/somo/doc/manual/attic
 
 SDIR=${SRCDIR}/Frameworks
@@ -58,9 +58,9 @@ DDIR=${PKGDIR}
 echo "${RSYNC} ${SDIR} ${DDIR}"
 ${RSYNC} ${SDIR} ${DDIR}
 
-FRLIST=`(cd ${SRCDIR}/Frameworks;ls|grep framework)`
-cd ${PKGDIR}/ultrascan3/lib
-for F in ${FRLIST}; do ln -s ../Frameworks/$F .;done
+##FRLIST=`(cd ${SRCDIR}/Frameworks;ls|grep framework)`
+##cd ${PKGDIR}/ultrascan3/lib
+##for F in ${FRLIST}; do ln -s ../Frameworks/$F .;done
 
 cd ${PKGDIR}
 /bin/rm -rf ultrascan3/somo/develop ultrascan3/somo/*.pl

@@ -19,7 +19,7 @@ for BUND in `ls -d *.app|grep -v 'us3_'`;do
 
 #		get list of library names to change
   LIBL=`otool -L ${APPP} \
-    | egrep '_utils|us_gui|qwt|qca|mysql' \
+    | egrep '_utils|us_gui|qwt|qca|mysql|framework' \
     | grep -v executable \
     | grep -v Library \
     | awk '{print $1}'`
@@ -35,7 +35,8 @@ for BUND in `ls -d *.app|grep -v 'us3_'`;do
         NAMO=@executable_path/../../../../lib/${NAMI}
       else
         #		use relative path to Qt framework
-        NAMO=@executable_path/../../../../lib/Framework/${NAMI}
+        NAMJ=`echo ${NAMI} | sed -e 's#@rpath/##'`
+        NAMO=@executable_path/../../../../Frameworks/${NAMJ}
       fi
     fi
 

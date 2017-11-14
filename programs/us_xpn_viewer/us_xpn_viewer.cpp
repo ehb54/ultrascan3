@@ -176,7 +176,7 @@ else
    ct_rinterv->resize( rhgt, swid );
    ct_rinterv->setMinimum   (   10 );
    ct_rinterv->setMaximum   ( 3600 );
-   ct_rinterv->setValue     (   20 );
+   ct_rinterv->setValue     (   60 );
    ct_rinterv->setSingleStep(    1 );
 
    // Scan controls     
