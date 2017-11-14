@@ -106,7 +106,7 @@ else
 fi
 
 if [ $ISMAC -ne 0 ]; then
-  echo "Running libnames and appnames ..."
+  echo "Running libnames and appnames ..." |tee -a $DIR/build.log
   $DIR/libnames.sh >> $DIR/build.log
   $DIR/appnames.sh >> $DIR/build.log
 fi

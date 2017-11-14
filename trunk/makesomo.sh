@@ -8,20 +8,23 @@ if [ "`uname -s`" = "Darwin" ]; then
 fi
 
 ISWIN=0
+if [ `uname -s|grep -ci "msys"` -ne 0 ]; then
+  ISWIN=1
+fi
 if [ `uname -s|grep -ci "mingw"` -ne 0 ]; then
   ISWIN=1
 fi
-
 if [ `uname -s|grep -ci "cygwin"` -ne 0 ]; then
   ISWIN=2
 fi
 
 DIR=$(pwd)
 NBERR=0
+SOMO3=`(cd $us3/../us3_somo;pwd)`
 
 if [ $ISWIN -eq 2 ]; then
   # Run revision and qmake in Cygwin window
-  cd $us3/../us3_somo/develop
+  cd $SOMO3/develop
   pwd
   ./version.sh
   qmake us_somo.pro
@@ -32,7 +35,7 @@ if [ $ISWIN -eq 2 ]; then
   cp Makefile Makefile-lib
   cp Makefile.Release Makefile.R-lib
   cp Makefile.Debug Makefile.D-lib
-  cd $us3/../us3_somo
+  cd $SOMO3
   cp -rp etc $us3/
   ls -l Make*
   echo "QMAKE complete. Rerun $0 in MSYS (MINGW32) window"
@@ -41,7 +44,7 @@ fi
 
 if [ $ISWIN -eq 1 ]; then
   # Run makes for lib,all in MSYS window
-  cd /c/Users/Admin/Documents/us3_somo/develop
+  cd $SOMO3/develop
   pwd
   cp Makefile-lib Makefile
   cp Makefile.R-lib Makefile.Release
@@ -60,8 +63,7 @@ if [ $ISWIN -eq 1 ]; then
 fi
 
 # Do makes for Linux,Mac
-cd $us3/../us3_somo
-SOMO3=`pwd`
+cd $SOMO3
 echo "cp -rp $SOMO3/etc  $us3/"
 cp -rp $SOMO3/etc  $us3/
 cd develop
