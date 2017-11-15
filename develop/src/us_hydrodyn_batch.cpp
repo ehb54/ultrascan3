@@ -1622,7 +1622,7 @@ void US_Hydrodyn_Batch::save_us_hydrodyn_settings()
       // {
       //    ((US_Hydrodyn *)us_hydrodyn)->misc.pb_rule_on = false;
       // }      
-   } else {
+      ((US_Hydrodyn *)us_hydrodyn)->misc.pb_rule_on = save_pb_rule_on;
       puts("bg atoms is NOT enabled");
    }
    ((US_Hydrodyn *)us_hydrodyn)->calcAutoHydro = false;
