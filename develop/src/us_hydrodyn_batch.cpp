@@ -1618,10 +1618,10 @@ void US_Hydrodyn_Batch::save_us_hydrodyn_settings()
       puts("bg atoms is enabled");
       ((US_Hydrodyn *)us_hydrodyn)->pdb_parse.missing_residues = batch->missing_residues;
       ((US_Hydrodyn *)us_hydrodyn)->pdb_parse.missing_atoms = batch->missing_atoms;
-      if ( batch->missing_residues || batch->missing_atoms )
-      {
-         ((US_Hydrodyn *)us_hydrodyn)->misc.pb_rule_on = false;
-      }      
+      // if ( batch->missing_residues || batch->missing_atoms )
+      // {
+      //    ((US_Hydrodyn *)us_hydrodyn)->misc.pb_rule_on = false;
+      // }      
    } else {
       puts("bg atoms is NOT enabled");
    }
