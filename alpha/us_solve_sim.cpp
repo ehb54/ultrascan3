@@ -632,8 +632,8 @@ DbgLv(1) << "CR: NNLS A filled cc" << cc << nsolutes;
       }   // Each solute of constant vbar
 //DebugTime("END:clcr-NA");
 // x  x  x  x  x  x  x  x
-DbgLv(1) << "CR: NNLS A filled nsol ksol cutsol[n]"
- << nsolutes << ksolutes << cutsols[cutsols.size()-1];
+//DbgLv(1) << "CR: NNLS A filled nsol ksol cutsol[n]"
+// << nsolutes << ksolutes << cutsols[cutsols.size()-1];
    }   // Constant vbar
 
    else if ( stype == 1  ||  stype > 9 )

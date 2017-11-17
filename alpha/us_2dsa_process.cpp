@@ -529,7 +529,7 @@ DbgLv(1) << "solute_process_value" << dset->solute_type<< nsolutes;
          // Complete other coefficients in standard-space
          model.calc_coefficients( mcomp );
 DbgLv(1) << " Bcc comp D" << mcomp.D << "comp ff0" << mcomp.f_f0;
-DbgLv(1) << "norms_process_value"<< wthrd->norms [cc];
+//DbgLv(1) << "norms_process_value"<< wthrd->norms [cc];
 
          // Convert to experiment-space for simulation below
          mcomp.s     *= sfactor;
