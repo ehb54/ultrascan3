@@ -2089,7 +2089,8 @@ void US_ConvertGui::changeTriple()
    pb_dropChan    ->setText( tr( "Drop All Channel '%1's" ).arg( chann ) );
 
    triple_index( );
-DbgLv(1) << "chgTrp: trDx trLx" << tripDatax << tripListx;
+DbgLv(1) << "chgTrp: trDx trLx" << tripDatax << tripListx
+ << "outDsz chinfsz" << outData.size() << out_chaninfo.size();
 
    le_dir         ->setText( currentDir );
    le_description ->setText( outData[ tripDatax ]->description );
@@ -4651,6 +4652,7 @@ DbgLv(1) << "CGui:IOD: RETURN";
 // Build output data pointers and lists after new exclusions
 void US_ConvertGui::build_output_data()
 {
+DbgLv(1) << "CGui: BOD: allsz" << allData.size() << "outsz" << outData.size();
    outData     .clear();   // Pointers to output data
    out_tripinfo.clear();   // Output triple information objects
    out_triples .clear();   // Output triple strings ("1 / A / 250")
@@ -4674,15 +4676,18 @@ void US_ConvertGui::build_output_data()
       out_tripinfo << *tripinfo;
       out_triples  << triple;
 
-      if ( ! out_channels.contains( celchn ) )
+//      if ( ! out_channels.contains( celchn ) )
+      if ( ! isMwl  ||  ! out_channels.contains( celchn ) )
       {
          out_channels << celchn;
          out_chaninfo << *tripinfo;
          out_chandatx << outx;
       }
+DbgLv(1) << "CGui: BOD:   trx" << trx << "add to out" << outx << triple;
 
       outx++;
    }
+DbgLv(1) << "CGui: BOD: outsz" << outData.size();
 }
 
 // Turn ct_tolerance connection on or off
