@@ -1827,7 +1827,7 @@ void US_XpnDataViewer::correct_radii()
    int npoint        = allData[ 0 ].pointCount();
 
    // If coefficient values are in an */etc file, use them
-   QString cofname   = US_Settings::etcDir() + "/chromo-abberation-coeffs.dat";
+   QString cofname   = US_Settings::etcDir() + "/chromo-aberration-coeffs.dat";
    QFile cofile( cofname );
 
    if ( cofile.open( QIODevice::ReadOnly | QIODevice::Text ) )
