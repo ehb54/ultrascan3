@@ -1238,8 +1238,11 @@ DbgLv(1) << "Sim parms:ssProf: nrec" << nrec;
       accel_c          = rs_c;             // First acceleration value
       sum_accel        = accel_c;          // Initial acceleration sum
    }
+
    naintvs          = qMin( naintvs, 1 );  // Number accel zone intervals
-   ssp.time_b_accel = tm_p;                // Accel begin time
+   double tm_off    = tm_p;                // Time offset: last speed=0 time
+   ssp.time_b_accel = 0.0;                 // Accel begin time
+   tm_c            -= tm_off;              // Second speed in step (=1.0)
 DbgLv(1) << "Sim parms:ssProf: initial tm_c" << tm_c << "naintvs" << naintvs
  << "tsx1" << tsx1 << "w2 rs ss" << w2_c << rs_c << ss_c;
 int tm_ci=tm_c;
@@ -1260,6 +1263,7 @@ int tm_cep=tm_ci+150;
       tm_c             = tmfm == "F4" ?
             (int)qRound( tsobj->time_dvalue( "Time" ) ) :
                          tsobj->time_ivalue( "Time" );
+      tm_c            -= tm_off;
       w2_c             = tsobj->time_dvalue( "Omega2T" );
       rs_c             = rsfm == "F4" ?
                          tsobj->time_dvalue( "RawSpeed" ) :
@@ -1360,7 +1364,7 @@ DbgLv(1) << "Sim parms:ssProf: const-end ss_p ss_c" << ss_p << ss_c
    //-----------------------------------------------------------------
    // update simspeedprofile structure with timestate rpms and w2ts
    //-----------------------------------------------------------------
-   int rtimex          = qMax( 0, tsx1 - 1 );
+   int rtimex          = qMax( 0, tsx1 - 1 );  // Position at first accel
 
 DbgLv(1) << "Sim parms:ssProf: ssps.count" << ssps.count();
    for ( int i1 = 0; i1 < ssps.count(); i1++ )
@@ -1380,7 +1384,7 @@ if(i2<4 || (i2+5)>ssps[i1].duration)
  DbgLv(1) << "Sim parms:ssProf:    i2" << i2 << "rtimex" << rtimex
   << "rpm" << ssps[ i1 ].rpm_timestate[ i2 ]
   << "w2t" << ssps[ i1 ].w2t_timestate[ i2 ] << "rd_stat" << rst;
-         rtimex              = -1;
+         rtimex              = -1;             // Flag "read-next"
       }
    }
 

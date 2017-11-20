@@ -1816,15 +1816,49 @@ DbgLv(1) << "sCM: mcolors count" << mcknt;
 // Apply a chromatic aberration correction to auc data radius values
 void US_XpnDataViewer::correct_radii()
 {
-   const double a_coef  = -0.62876;     // 4th order polynomial values
-   const double b1_coef = 0.00525;
-   const double b2_coef = -9.87461e-6;
-   const double b3_coef = 4.7588e-9;
-   const double b4_coef = 8.83565e-13;
-   const double wl_max  = 750.0;
-   const double rad_inc = 1e-5;         // Radius precision
-   int ntripl           = allData.count();
-   int npoint           = allData[ 0 ].pointCount();
+   const double wl_max  = 750.0;    // Max wavelength for computed correction
+   const double rad_inc = 1e-5;     // Radius precision
+   double a_coef     = -0.62876;    // Default 4th order polynomial coefficents
+   double b1_coef    = 0.00525;
+   double b2_coef    = -9.87461e-6;
+   double b3_coef    = 4.7588e-9;
+   double b4_coef    = 8.83565e-13;
+   int ntripl        = allData.count();
+   int npoint        = allData[ 0 ].pointCount();
+
+   // If coefficient values are in an */etc file, use them
+   QString cofname   = US_Settings::etcDir() + "/chromo-abberation-coeffs.dat";
+   QFile cofile( cofname );
+
+   if ( cofile.open( QIODevice::ReadOnly | QIODevice::Text ) )
+   {
+      QTextStream cotxti( &cofile );
+      QString fline;
+      while ( ! cotxti.atEnd() )
+      {
+         fline             = cotxti.readLine().simplified();
+         if ( ! fline.isEmpty()  &&  ! fline.startsWith( "#" )  &&
+              fline.length() > 9 )
+         {  // Get values from first non-empty, non-comment line
+DbgLv(1) << "c_r: file-read line" << fline;
+            a_coef            = QString( fline ).section( " ", 0, 0 )
+                                   .simplified().toDouble();
+            b1_coef           = QString( fline ).section( " ", 1, 1 )
+                                   .simplified().toDouble();
+            b2_coef           = QString( fline ).section( " ", 2, 2 )
+                                   .simplified().toDouble();
+            b3_coef           = QString( fline ).section( " ", 3, 3 )
+                                   .simplified().toDouble();
+            b4_coef           = QString( fline ).section( " ", 4, 4 )
+                                   .simplified().toDouble();
+            break;
+         }
+      }
+
+      cofile.close();
+DbgLv(1) << "c_r: file-read ca coeffs:" << a_coef << b1_coef << b2_coef
+ << b3_coef << b4_coef;
+   }
 
    // For each triple, get the wavelength; then compute and apply a correction
    for ( int jd = 0; jd < ntripl; jd++ )

@@ -131,7 +131,7 @@ class US_Astfem_Sim : public US_Widgets
       void change_status   ( void );
       void set_parameters  ( void );
       void sim_parameters  ( void );
-      void selectrotor    ( void );
+      void select_rotor    ( void );
       void assignRotor     ( US_Rotor::Rotor&, US_Rotor::RotorCalibration& );
       void start_simulation( void );
       void stop_simulation ( void );

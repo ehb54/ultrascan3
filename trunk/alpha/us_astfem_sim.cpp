@@ -82,7 +82,7 @@ US_Astfem_Sim::US_Astfem_Sim( QWidget* p, Qt::WindowFlags f )
    buttonbox->addWidget( pb_simParms );
 //-------------------------------------------
    pb_rotor = us_pushbutton( tr( "Select rotor"), false );
-   connect ( pb_rotor, SIGNAL( clicked() ), SLOT( selectrotor() ) );
+   connect ( pb_rotor, SIGNAL( clicked() ), SLOT( select_rotor() ) );
    buttonbox->addWidget( pb_rotor );
 //------------------------------------------
    QGridLayout* movie = us_checkbox( "Show Movie", ck_movie, movieFlag );
@@ -124,7 +124,7 @@ US_Astfem_Sim::US_Astfem_Sim( QWidget* p, Qt::WindowFlags f )
    te_status->setTextBackgroundColor( pa.color( QPalette::Window ) );
    te_status->setTextColor(           pa.color( QPalette::WindowText ) );
    QFontMetrics fm( te_status->font() );
-   te_status->setMaximumHeight( fm.lineSpacing() * 17 / 2 );
+   te_status->setMaximumHeight( fm.lineSpacing() * 25 / 2 );
 
    change_status();
 
@@ -299,12 +299,15 @@ void US_Astfem_Sim::change_status()
    int    dhrs  = simparams.speed_step[ 0 ].duration_hours;
    double dmns  = simparams.speed_step[ 0 ].duration_minutes;
    int    scns  = simparams.speed_step[ 0 ].scans;
+   double spdls = simparams.speed_step[ 0 ].rotorspeed;
+   int    nspd  = simparams.speed_step.count();
 
-   for ( int ii = 1; ii < simparams.speed_step.size(); ii++ )
+   for ( int ii = 1; ii < nspd; ii++ )
    {
       dhrs     += simparams.speed_step[ ii ].duration_hours;
       dmns     += simparams.speed_step[ ii ].duration_minutes;
       scns     += simparams.speed_step[ ii ].scans;
+      spdls     = simparams.speed_step[ ii ].rotorspeed;
    }
 
    if ( dmns > 59 )
@@ -318,15 +321,15 @@ void US_Astfem_Sim::change_status()
       "Model:\n  %1\n"
 
       "Buffer (density/viscosity/compress.):\n  %2 / %3 / %4\n"
-      "SimParams (type/duration/scans):\n  %5 / %6 h %7 m / %8" )
+      "SimParams (type/duration/scans):\n  %5 / %6 h %7 m / %8\n"
+      "Speeds:  %9    Last speed:  %10" )
       .arg( system.description ).arg( buffer.density ).arg( buffer.viscosity )
       .arg( buffer.compressibility ).arg( simtype )
-      .arg( simparams.speed_step[ 0 ].duration_hours )
-      .arg( simparams.speed_step[ 0 ].duration_minutes )
-      .arg( simparams.speed_step[ 0 ].scans ) );
+      .arg( dhrs ).arg( dmns ).arg( scns )
+      .arg( nspd ).arg( spdls ) ); 
 }
 
-void US_Astfem_Sim::selectrotor(void)
+void US_Astfem_Sim::select_rotor(void)
 {
    US_Rotor::Rotor rotor;
    US_Rotor::RotorCalibration calibration;
@@ -360,7 +363,8 @@ void US_Astfem_Sim::sim_parameters( void )
    working_simparams          = simparams;
    working_simparams.meniscus = meniscus_ar;
    working_simparams.bottom   = simparams.bottom_position;
-DbgLv(1) << "SimPar:MAIN: nspeed" << working_simparams.speed_step.count()
+DbgLv(1) << "SimPar:MAIN:simp: nspeed" << working_simparams.speed_step.count()
+
  << "speed0" << working_simparams.speed_step[0].rotorspeed;
 
    US_SimParamsGui* dialog =
@@ -377,7 +381,7 @@ void US_Astfem_Sim::set_parameters( void )
    meniscus_ar  = simparams.meniscus;
 
    pb_start  ->setEnabled( true );
-DbgLv(1) << "SimPar:MAIN:SP: nspeed" << simparams.speed_step.count()
+DbgLv(1) << "SimPar:MAIN:SetP:  nspeed" << simparams.speed_step.count()
  << "speed0" << simparams.speed_step[0].rotorspeed;
 
    change_status();
