@@ -410,7 +410,6 @@ void US_SimParamsGui::accepted( void )
 
 void US_SimParamsGui::backup_parms( void )
 {
-   /*
    US_SimulationParameters::SpeedProfile sp;
    simparams_backup.speed_step.clear();
 
@@ -438,7 +437,6 @@ void US_SimParamsGui::backup_parms( void )
    simparams_backup.rnoise            = simparams.rnoise;
    simparams_backup.tinoise           = simparams.tinoise;
    simparams_backup.rinoise           = simparams.rinoise;
-   */
 }
 
 void US_SimParamsGui::revert( void )

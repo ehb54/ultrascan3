@@ -1759,7 +1759,7 @@ ttT3+=(clcSt3.msecsTo(clcSt4));
       rpm_current   += rpm_inc; // Update rotor speed
 
 #ifndef NO_DB
-DbgLv(1) << "RSA: EMIT0 rpm_current" << rpm_current << "rpm inc" << rpm_inc;
+//DbgLv(1) << "RSA: EMIT0 rpm_current" << rpm_current << "rpm inc" << rpm_inc;
       emit current_speed( (int)rpm_current );// Update current rotor speed in GUI window
       qApp->processEvents();
 #endif
