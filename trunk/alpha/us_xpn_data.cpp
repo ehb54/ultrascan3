@@ -289,6 +289,27 @@ bool US_XpnData::import_data( const int runId, const int scanMask )
    int irows     = 0;
    int wrows     = 0;
 
+   // Scan and build data for System Status Data
+   int srows     = scan_xpndata( runId, 'S' );
+
+   // Determine the experimental time offset
+   int ftx       = 0;
+   etimoff       = 0;
+
+   for ( int ii = 0; ii < srows; ii++ )
+   {  // Find the index to the first non-zero speed
+      int irSpeed   = (int)qRound( tSydata[ ii ].speed );
+      if ( irSpeed > 0 )
+      {
+         ftx           = ii;
+         break;
+      }
+   }
+
+   ftx           = ( ftx > 0 ) ? ( ftx - 1 ) : 0;
+   etimoff       = -tSydata[ ftx ].exptime;
+DbgLv(1) << "XpDa:i_d: ftx" << ftx << "etimoff" << etimoff;
+
    if ( ascnf )
    {  // Scan and build data for Absorbance Scan Data
       arows      = scan_xpndata( runId, 'A' );
@@ -308,9 +329,6 @@ bool US_XpnData::import_data( const int runId, const int scanMask )
    {  // Scan and build data for Wavelength Scan Data
       wrows      = scan_xpndata( runId, 'W' );
    }
-
-   // Scan and build data for System Status Data
-   int srows  = scan_xpndata( runId, 'S' );
 
    // Scan and build data for Centrifuge Run Profile
    int crows  = scan_xpndata( runId, 'C' );
@@ -1053,6 +1071,7 @@ DbgLv(1) << "BldRawD IN";
    // Set up the interpolated byte array (all one bits)
    int    nbytei   = ( npoint + 7 ) / 8;
    QByteArray interpo( nbytei, '\255' );
+
 
    // Build a raw data set for each triple
    char   dtype0   = QString( runType ).toLatin1().constData()[ 0 ];
@@ -3138,7 +3157,7 @@ void US_XpnData::update_ATable( QSqlQuery& sqry, QList< int >& cxs )
    asdrow.dataId    = sqry.value( cxs[  0 ] ).toInt();
    asdrow.runId     = sqry.value( cxs[  1 ] ).toInt();
    asdrow.expstart  = sqry.value( cxs[  2 ] ).toDateTime();
-   asdrow.exptime   = sqry.value( cxs[  3 ] ).toInt();
+   asdrow.exptime   = sqry.value( cxs[  3 ] ).toInt() + etimoff;
    asdrow.tempera   = sqry.value( cxs[  4 ] ).toDouble();
    asdrow.speed     = sqry.value( cxs[  5 ] ).toDouble();
    asdrow.omgSqT    = sqry.value( cxs[  6 ] ).toDouble();
@@ -3219,7 +3238,7 @@ void US_XpnData::update_FTable( QSqlQuery& sqry, QList< int >& cxs )
    fsdrow.dataId    = sqry.value( cxs[  0 ] ).toInt();
    fsdrow.runId     = sqry.value( cxs[  1 ] ).toInt();
    fsdrow.expstart  = sqry.value( cxs[  2 ] ).toDateTime();
-   fsdrow.exptime   = sqry.value( cxs[  3 ] ).toInt();
+   fsdrow.exptime   = sqry.value( cxs[  3 ] ).toInt() + etimoff;
    fsdrow.tempera   = sqry.value( cxs[  4 ] ).toDouble();
    fsdrow.speed     = sqry.value( cxs[  5 ] ).toDouble();
    fsdrow.omgSqT    = sqry.value( cxs[  6 ] ).toDouble();
@@ -3291,7 +3310,7 @@ void US_XpnData::update_ITable( QSqlQuery& sqry, QList< int >& cxs )
    isdrow.dataId    = sqry.value( cxs[  0 ] ).toInt();
    isdrow.runId     = sqry.value( cxs[  1 ] ).toInt();
    isdrow.expstart  = sqry.value( cxs[  2 ] ).toDateTime();
-   isdrow.exptime   = sqry.value( cxs[  3 ] ).toInt();
+   isdrow.exptime   = sqry.value( cxs[  3 ] ).toInt() + etimoff;
    isdrow.tempera   = sqry.value( cxs[  4 ] ).toDouble();
    isdrow.speed     = sqry.value( cxs[  5 ] ).toDouble();
    isdrow.omgSqT    = sqry.value( cxs[  6 ] ).toDouble();
@@ -3340,7 +3359,7 @@ void US_XpnData::update_WTable( QSqlQuery& sqry, QList< int >& cxs )
    wsdrow.dataId    = sqry.value( cxs[  0 ] ).toInt();
    wsdrow.runId     = sqry.value( cxs[  1 ] ).toInt();
    wsdrow.expstart  = sqry.value( cxs[  2 ] ).toDateTime();
-   wsdrow.exptime   = sqry.value( cxs[  3 ] ).toInt();
+   wsdrow.exptime   = sqry.value( cxs[  3 ] ).toInt() + etimoff;
    wsdrow.tempera   = sqry.value( cxs[  4 ] ).toDouble();
    wsdrow.speed     = sqry.value( cxs[  5 ] ).toDouble();
    wsdrow.omgSqT    = sqry.value( cxs[  6 ] ).toDouble();
