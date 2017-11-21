@@ -1818,11 +1818,11 @@ void US_XpnDataViewer::correct_radii()
 {
    const double wl_max  = 750.0;    // Max wavelength for computed correction
    const double rad_inc = 1e-5;     // Radius precision
-   double a_coef     = -0.62876;    // Default 4th order polynomial coefficents
-   double b1_coef    = 0.00525;
-   double b2_coef    = -9.87461e-6;
-   double b3_coef    = 4.7588e-9;
-   double b4_coef    = 8.83565e-13;
+   double a_coef     = 0.0;         // Default 4th order polynomial coefficents
+   double b1_coef    = 0.0;     
+   double b2_coef    = 0.0;
+   double b3_coef    = 0.0;
+   double b4_coef    = 0.0;
    int ntripl        = allData.count();
    int npoint        = allData[ 0 ].pointCount();
 
@@ -1837,8 +1837,7 @@ void US_XpnDataViewer::correct_radii()
       while ( ! cotxti.atEnd() )
       {
          fline             = cotxti.readLine().simplified();
-         if ( ! fline.isEmpty()  &&  ! fline.startsWith( "#" )  &&
-              fline.length() > 9 )
+         if ( ! fline.isEmpty()  &&  ! fline.startsWith( "#" ) )
          {  // Get values from first non-empty, non-comment line
 DbgLv(1) << "c_r: file-read line" << fline;
             a_coef            = QString( fline ).section( " ", 0, 0 )
@@ -1877,11 +1876,14 @@ DbgLv(1) << "c_r: file-read ca coeffs:" << a_coef << b1_coef << b2_coef
 if (jd<3 || (jd+4)>ntripl )
 DbgLv(1) << "c_r: jd" << jd << "wavelen" << wavelen << "wl_corr" << wl_corr;
 
-      for ( int jr = 0; jr < npoint; jr++ )
-      {  // Correct each radial point
-         double radval     = r_radii[ jr ] + wl_corr;   // Corrected radius
-         radval            = qRound( radval / rad_inc ) * rad_inc;  // Rounded
-         allData[ jd ].xvalues[ jr ] = radval;          // Replace radius
+      if ( wl_corr != 0.0 )
+      {
+         for ( int jr = 0; jr < npoint; jr++ )
+         {  // Correct each radial point
+            double radval     = r_radii[ jr ] + wl_corr;   // Corrected radius
+            radval            = qRound( radval / rad_inc ) * rad_inc; // Rounded
+            allData[ jd ].xvalues[ jr ] = radval;          // Replace radius
+         }
       }
 if (jd<3 || (jd+4)>ntripl )
 DbgLv(1) << "c_r:  ri0 ro0" << r_radii[0] << allData[jd].xvalues[0]
