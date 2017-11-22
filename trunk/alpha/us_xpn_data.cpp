@@ -1547,15 +1547,15 @@ for ( int jj = 0; jj<ntssda; jj++ )
   jt1 = jj;
  }
 }
-double stime1=tSydata[jt1].exptime;
-double stime2=tSydata[jt2].exptime;
+double stime1=tSydata[jt1].exptime+etimoff;
+double stime2=tSydata[jt2].exptime+etimoff;
 double somgt1=tSydata[jt1].omgSqT;
 double somgt2=tSydata[jt2].omgSqT;
 avgrpm=0.0;
 for (int jj=jt1; jj<=jt2; jj++)
 {
  avgrpm += tSydata[jj].speed;
- xv_tms << tSydata[jj].exptime;
+ xv_tms << tSydata[jj].exptime+etimoff;
  yv_tms << tSydata[jj].omgSqT;
 }
 avgrpm /= (double)(jt2-jt1+1);
@@ -2666,8 +2666,8 @@ QString US_XpnData::runDetails( void )
    msg += tr( "    Count of Data Records:    %1\n" ).arg( ssknt );
    int stage1     = tSydata[  0 ].stageNum;
    int stage2     = tSydata[ kk ].stageNum;
-   int time1      = tSydata[  0 ].exptime;
-   int time2      = tSydata[ kk ].exptime;
+   int time1      = tSydata[  0 ].exptime + etimoff;
+   int time2      = tSydata[ kk ].exptime + etimoff;
    double temp1   = tSydata[  0 ].tempera;
    double temp2   = tSydata[ kk ].tempera;
    double speed1  = tSydata[  0 ].speed;

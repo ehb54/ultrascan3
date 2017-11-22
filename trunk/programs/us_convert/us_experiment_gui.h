@@ -34,9 +34,9 @@ class US_ExperimentGui : public US_WidgetsDialog
           \param select_db_disk Indicates whether the default search is on
                          the local disk or in the DB
       */
-      US_ExperimentGui( bool = false,
-                        const US_Experiment& = US_Experiment(),
-                        int  = US_Disk_DB_Controls::Default );
+      US_ExperimentGui( bool,
+                        US_Experiment&,
+                        int );
 
       //! A null destructor. 
       ~US_ExperimentGui() {};
@@ -64,7 +64,7 @@ class US_ExperimentGui : public US_WidgetsDialog
       void use_db( bool DB );
 
    private:
-      US_Experiment          expInfo;
+      US_Experiment&         expInfo;
       QVector< US_Rotor::Lab > labList;
       int                    currentLab;
       int                    currentInstrument;

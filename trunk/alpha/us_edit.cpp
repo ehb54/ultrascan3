@@ -424,7 +424,8 @@ pb_plateau->setVisible(false);
 
    connect( pb_reset,  SIGNAL( clicked() ), SLOT( reset() ) );
    connect( pb_help,   SIGNAL( clicked() ), SLOT( help()  ) );
-   connect( pb_accept, SIGNAL( clicked() ), SLOT( close() ) );
+   connect( pb_accept, SIGNAL( clicked()    ),
+            this,      SLOT  ( close_edit() ) );
 
    buttons->addWidget( pb_reset );
    buttons->addWidget( pb_help );
@@ -1367,6 +1368,7 @@ else
 }
 //*DEBUG* Print times,omega^ts
 
+   // Set up OD limit and any MWL controls
    ct_odlim->disconnect();
    ct_odlim->setValue( odlimit );
    connect( ct_odlim,  SIGNAL( valueChanged       ( double ) ),
@@ -1712,8 +1714,8 @@ DbgLv(1) << "AGap:  plot_range()";
             }
 
             draw_vline( range_right );
-            plateau      = range_right - _PLATEAU_OFFSET_;
             le_dataEnd  ->setText( QString::number( range_right, 'f', 3 ) );
+            plateau      = range_right - _PLATEAU_OFFSET_;
             le_plateau  ->setText( QString::number( plateau,     'f', 3 ) );
 
 
@@ -1755,9 +1757,12 @@ DbgLv(1) << "AGap:  plot_range()";
 //                     range_left, range_right ) );
             le_dataStart->setText( QString::number( range_left,  'f', 3 ) );
             le_dataEnd  ->setText( QString::number( range_right, 'f', 3 ) );
+            plateau      = range_right - _PLATEAU_OFFSET_;
+            le_plateau  ->setText( QString::number( plateau,     'f', 3 ) );
 
             step = PLATEAU;
             plot_range();
+            pb_report  ->setEnabled( true );
 
             qApp->processEvents();
 
@@ -1869,19 +1874,17 @@ DbgLv(1) << "AGap:  plot_range()";
 
          plateau = radius_indexed( p.x() );
 #endif
-         plateau = range_right - 0.1;
+         plateau      = range_right - _PLATEAU_OFFSET_;
 
          // Display the data (localize str)
-         {
-            le_plateau  ->setText( QString::number( plateau,     'f', 3 ) );
-         }
+         le_plateau ->setText( QString::number( plateau,     'f', 3 ) );
 
          plot_range();
          pb_plateau ->setIcon( check );
          ct_to->setValue( 0.0 );  // Uncolor all scans
-         pb_report     ->setEnabled( true );
-         pb_write      ->setEnabled( true );
-         ck_writemwl   ->setEnabled( isMwl );
+         pb_report  ->setEnabled( true );
+         pb_write   ->setEnabled( true );
+         ck_writemwl->setEnabled( isMwl );
          changes_made = true;
          next_step();
          break;
@@ -3296,6 +3299,7 @@ DbgLv(1) << "EDT:NewTr:   sw tri dx" << swavl << triple << idax;
       bool    app_edit = ( fname != "none" );
 DbgLv(1) << "EDT:NewTr:   app_edit" << app_edit << "fname" << fname;
 
+#if 0
       if ( app_edit )
       {  // This data has editing,  ask if it should be applied
          QStringList editfiles;
@@ -3350,6 +3354,7 @@ DbgLv(1) << "EDT:NewTr:   tr type,valu" << trtype << trvalu;
          app_edit         = ( mbox.clickedButton() == pb_appl );
       }
 
+#endif
       if ( app_edit )
       {  // If editing chosen, apply it
          US_DataIO::EditValues parameters;
@@ -4060,6 +4065,8 @@ void US_Edit::prior_equil( void )
       le_dataEnd  ->setText( QString::number( range_right, 'f', 3 ) );
       pb_dataEnd  ->setIcon( check );
       pb_dataEnd  ->setEnabled( true );
+      plateau      = range_right - _PLATEAU_OFFSET_;
+      le_plateau  ->setText( QString::number( plateau,     'f', 3 ) );
    
       // Invert
       invert = parameters.invert;
@@ -4190,8 +4197,11 @@ void US_Edit::next_triple( void )
       cb_rpms  ->setCurrentIndex( 0 );
    }
 
-   data    = *outData[ index_data() ];
-   plot_range();
+   int dax = index_data();
+   data    = *outData[ dax ];
+
+//   plot_range();
+   new_triple( dax );
 }
 
 // Evaluate whether all edits are complete
@@ -5377,6 +5387,7 @@ int US_Edit::apply_edits( US_DataIO::EditValues parameters )
    pb_dataEnd  ->setIcon( check );
    pb_dataEnd  ->setEnabled( true );
    
+   plateau      = range_right - _PLATEAU_OFFSET_;
    le_plateau  ->setText( QString::number( plateau,     'f', 3 ) );
 //   pb_plateau  ->setIcon( check );
 //   pb_plateau  ->setEnabled( true );
@@ -5816,3 +5827,37 @@ QString US_Edit::scan_info( void )
    return ss;
 }
 
+// Close edit after review of saved edits
+void US_Edit::close_edit( void )
+{
+   int ntripls    = allData.size();
+   int nunedit    = editFnames.count( QString( "none" ) );
+
+   if ( nunedit > 0 )
+   {  // Some triples unedited:  give option to cancel close
+      QMessageBox mbox;
+      QPushButton* pb_cancel;
+      QPushButton* pb_doclose;
+      QString msg      = tr( "Edits have not been saved for<br/>"
+                             "%1 of %2 total triples.<br/></br/>"
+                             "Do you wish to<br/>"
+                             "&nbsp;&nbsp;"
+                             "return to edit more (<b>Cancel</b>) or<br/>"
+                             "&nbsp;&nbsp;"
+                             "close with current state (<b>Close</b>)<br/>?" )
+                         .arg( nunedit ).arg( ntripls );
+      mbox.setIcon      ( QMessageBox::Question );
+      mbox.setTextFormat( Qt::RichText );
+      mbox.setText      ( msg );
+      pb_cancel        = mbox.addButton( tr( "Cancel"   ),
+                                         QMessageBox::RejectRole );
+      pb_doclose       = mbox.addButton( tr( "Close" ),
+                                         QMessageBox::AcceptRole );
+      mbox.setDefaultButton( pb_doclose );
+      mbox.exec();
+      if ( mbox.clickedButton() == pb_cancel )
+         return;
+   }
+
+   close();
+}

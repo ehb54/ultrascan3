@@ -330,6 +330,7 @@ class US_Edit : public US_Widgets
       void reset             ( void );
       void reset_triple      ( void );
       void reset_outData     ( void );
+      void close_edit        ( void );
       void help              ( void )
       { showHelp.show_help( "manual/us_edit.html" ); };
 };

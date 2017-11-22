@@ -36,7 +36,6 @@ if [ $ISWIN -eq 2 ]; then
   cp Makefile.Release Makefile.R-lib
   cp Makefile.Debug Makefile.D-lib
   cd $SOMO3
-  cp -rp etc $us3/
   ls -l Make*
   echo "QMAKE complete. Rerun $0 in MSYS (MINGW32) window"
   exit 0
@@ -63,10 +62,10 @@ if [ $ISWIN -eq 1 ]; then
 fi
 
 # Do makes for Linux,Mac
-cd $SOMO3
-echo "cp -rp $SOMO3/etc  $us3/"
-cp -rp $SOMO3/etc  $us3/
-cd develop
+echo "rsync -av --exclude .svn $SOMO3/etc $us3"
+rsync -av --exclude .svn $SOMO3/etc $us3
+
+cd $SOMO3/develop
 sh version.sh
 qmake us_somo.pro
 cp -p Makefile  Makefile-all

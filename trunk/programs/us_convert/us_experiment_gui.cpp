@@ -10,13 +10,13 @@
 #include "us_rotor_gui.h"
 #include "us_convertio.h"
 
-US_ExperimentGui::US_ExperimentGui( 
+US_ExperimentGui::US_ExperimentGui(
       bool  signal_wanted,
-      const US_Experiment& dataIn,
+      US_Experiment& dataIn,
       int   select_db_disk ) :
    US_WidgetsDialog( 0, 0 ), expInfo( dataIn )
 {
-   signal = signal_wanted;
+   signal  = signal_wanted;
 
    setPalette( US_GuiSettings::frameColor() );
    setWindowTitle( tr( "Experiment Information" ) );
@@ -36,11 +36,11 @@ US_ExperimentGui::US_ExperimentGui(
    le_runID = us_lineedit( "", 0, true );
 
    experiment->addWidget( le_runID, row++, 0, 1, 2 );
- 
+
    // Experiment label
    QLabel* lb_label = us_label( tr( "Label:" ) );
    experiment->addWidget( lb_label, row++, 0, 1, 2 );
-   le_label = us_lineedit();
+   le_label         = us_lineedit();
    connect( le_label, SIGNAL( editingFinished () ),
                       SLOT  ( saveLabel       () ) );
    experiment->addWidget( le_label, row++, 0, 1, 2 );
@@ -59,7 +59,7 @@ US_ExperimentGui::US_ExperimentGui(
    // Experiment type
    QLabel* lb_expType = us_label( tr( "Experiment Type:" ) );
    experiment->addWidget( lb_expType, row, 0 );
-   cb_expType = us_expTypeComboBox();
+   cb_expType         = us_expTypeComboBox();
    experiment->addWidget( cb_expType, row++, 1 );
 
    // Optical system
@@ -99,7 +99,7 @@ US_ExperimentGui::US_ExperimentGui(
    pb_rotor->setEnabled( true );
    hardware->addWidget( pb_rotor, row++, 0, 1, 2 );
 
-   le_rotorDesc = us_lineedit( "", 0, true ); 
+   le_rotorDesc = us_lineedit( "", 0, true );
    hardware->addWidget( le_rotorDesc, row++, 0, 1, 2 );
 
    // Rotor speeds
@@ -178,7 +178,7 @@ US_ExperimentGui::US_ExperimentGui(
       QLabel* lb_investigator = us_label( tr( "Investigator:" ) );
       main->addWidget( lb_investigator, row, 0 );
    }
-      
+
    le_investigator = us_lineedit( tr( "Not Selected" ) );
    le_investigator->setReadOnly( true );
    main->addWidget( le_investigator, row++, 1 );
@@ -231,26 +231,30 @@ void US_ExperimentGui::reset( void )
    cb_operator     ->setLogicalIndex( expInfo.operatorID   );
 
    le_label        ->setText( expInfo.label                );
-   le_project      ->setText( expInfo.project.projectDesc          );
+   le_project      ->setText( expInfo.project.projectDesc  );
    te_comment      ->setText( expInfo.comments             );
-         
+
    // Experiment types combo
-   cb_expType->setCurrentIndex( 0 );  // default is "velocity"
-   for ( int i = 0; i < experimentTypes.size(); i++ )
+   QString expiType = expInfo.expType.toLower();
+   int etndx        = -1;
+
+   for ( int ii = 0; ii < experimentTypes.size(); ii++ )
    {
-      if ( experimentTypes[ i ].toUpper() == expInfo.expType.toUpper() )
+      if ( experimentTypes[ ii ].toLower() == expiType )
       {
-         cb_expType->setCurrentIndex( i );
+         etndx            = ii;
          break;
       }
    }
-   
+   if ( etndx >= 0 )
+      cb_expType->setCurrentIndex( etndx );
+
    // Display investigator
    expInfo.invID = US_Settings::us_inv_ID();
 
    if ( expInfo.invID > 0  ||  ! disk_controls->db() )
    {
-      le_investigator->setText( QString::number( expInfo.invID ) + ": " 
+      le_investigator->setText( QString::number( expInfo.invID ) + ": "
          + US_Settings::us_inv_name() );
 
       if ( disk_controls->db() )
@@ -258,17 +262,17 @@ void US_ExperimentGui::reset( void )
          US_Passwd pw;
          QString masterPW = pw.getPasswd();
          US_DB2 db( masterPW );
-         
+
          int runIDStatus = US_DB2::NO_EXPERIMENT;
          if ( db.lastErrno() == US_DB2::OK )
             runIDStatus = expInfo.checkRunID( &db );
-        
+
          if ( expInfo.expID > 0 )
             pb_accept       ->setEnabled( true );
-        
+
          else if ( runIDStatus != US_DB2::OK )
          {
-            // Then an investigator has been chosen, and 
+            // Then an investigator has been chosen, and
             //  the current runID doesn't exist in the db
             pb_accept       ->setEnabled( true );
          }
@@ -281,7 +285,7 @@ void US_ExperimentGui::reset( void )
       }
 
       // However, project needs to be selected, either from db or disk
-      if ( expInfo.project.projectID == 0 && expInfo.project.projectGUID.isEmpty() ) 
+      if ( expInfo.project.projectID == 0 && expInfo.project.projectGUID.isEmpty() )
          pb_accept       ->setEnabled( false );
 
       // The label can't be empty either
@@ -294,10 +298,12 @@ void US_ExperimentGui::reset( void )
 
 }
 
-// function to load what we can initially
-// returns true if successful
+// Function to load what we can initially
+//  returns true if successful
 bool US_ExperimentGui::load( void )
 {
+   lab_changed = true; // so boxes will go through all the reload code 1st time
+
    if ( expInfo.invID == 0 )
    {
       // Try to get info from settings
@@ -328,7 +334,7 @@ bool US_ExperimentGui::load( void )
       US_Passwd pw;
       QString masterPW = pw.getPasswd();
       US_DB2 db( masterPW );
-   
+
       if ( db.lastErrno() == US_DB2::OK )
          US_Rotor::readLabsDB( labList, &db );
 
@@ -362,8 +368,6 @@ bool US_ExperimentGui::load( void )
    else
       US_Rotor::readLabsDisk( labList );
 
-   lab_changed = true; // so boxes will go through all the reload code 1st time
-
    return( true );
 }
 
@@ -384,7 +388,7 @@ qDebug() << "ExpG:reload: IN labList size" << labList.size();
              break;
           }
       }
-   
+
       if ( ! found )
       {
          // replace with the first one on the list
@@ -416,7 +420,7 @@ void US_ExperimentGui::selectInvestigator( void )
 {
    US_Investigator* inv_dialog = new US_Investigator( true, expInfo.invID );
 
-   connect( inv_dialog, 
+   connect( inv_dialog,
       SIGNAL( investigator_accepted( int ) ),
       SLOT  ( assignInvestigator   ( int ) ) );
 
@@ -441,13 +445,13 @@ void US_ExperimentGui::getInvestigatorInfo( void )
       US_Passwd pw;
       QString masterPW = pw.getPasswd();
       US_DB2 db( masterPW );
-   
+
       if ( db.lastErrno() == US_DB2::OK )
       {
          QStringList q( "get_person_info" );
          q << QString::number( expInfo.invID );
          db.query( q );
-         
+
          if ( db.next() )
             expInfo.invGUID   = db.value( 9 ).toString();
       }
@@ -483,7 +487,7 @@ void US_ExperimentGui::update_disk_db( bool db )
 void US_ExperimentGui::selectProject( void )
 {
    // Save other elements on the page first
-   expInfo.label         = le_label   ->text(); 
+   expInfo.label         = le_label   ->text();
    expInfo.comments      = te_comment ->toPlainText();
    expInfo.expType       = cb_expType ->currentText().toLower();
 
@@ -494,11 +498,11 @@ void US_ExperimentGui::selectProject( void )
 
    US_ProjectGui* projInfo = new US_ProjectGui( true, dbdisk, project );
 
-   connect( projInfo, 
+   connect( projInfo,
       SIGNAL( updateProjectGuiSelection( US_Project& ) ),
       SLOT  ( assignProject            ( US_Project& ) ) );
 
-   connect( projInfo, 
+   connect( projInfo,
       SIGNAL( cancelProjectGuiSelection( ) ),
       SLOT  ( cancelProject            ( ) ) );
 
@@ -521,17 +525,18 @@ void US_ExperimentGui::cancelProject( void )
    reset();
 }
 
-// Function to update the labe associated with the current experiment
+// Function to update the label associated with the current experiment
 void US_ExperimentGui::saveLabel( void )
 {
-   expInfo.label = le_label->text();
-   expInfo.label = expInfo.label.trimmed();
+   expInfo.label    = QString( le_label->text() ).trimmed();
 
    // Save other elements on the page before reset
-   expInfo.comments      = te_comment ->toPlainText();
-   expInfo.expType       = cb_expType ->currentText().toLower();
+   expInfo.comments = te_comment ->toPlainText();
+   expInfo.expType  = cb_expType ->currentText().toLower();
 
+#ifndef Q_OS_MAC // Skip reset code for Mac (undetermined Mac bug)
    reset();         // To get the pb_accept enable code
+#endif
 }
 
 QComboBox* US_ExperimentGui::us_expTypeComboBox( void )
@@ -625,7 +630,7 @@ void US_ExperimentGui::setOperatorList( void )
       else
       {
          cb_operator->addOptions( options );
-        
+
          // is the operator ID in the list?
          for ( int i = 0; i < options.size(); i++ )
          {
@@ -653,9 +658,9 @@ void US_ExperimentGui::change_instrument( int )
                           : cb_instrument->getLogicalID();
 
    // Save other elements on the page too
-   expInfo.label         = le_label   ->text(); 
+   expInfo.label         = le_label   ->text();
    expInfo.comments      = te_comment ->toPlainText();
-   expInfo.expType       = cb_expType ->currentText();
+   expInfo.expType       = cb_expType ->currentText().toLower();
 
    lab_changed = true;
    reset();
@@ -664,7 +669,7 @@ void US_ExperimentGui::change_instrument( int )
 void US_ExperimentGui::selectRotor( void )
 {
    // Save other elements on the page first
-   expInfo.label         = le_label   ->text(); 
+   expInfo.label         = le_label   ->text();
    expInfo.comments      = te_comment ->toPlainText();
    expInfo.expType       = cb_expType ->currentText().toLower();
 
@@ -737,8 +742,8 @@ void US_ExperimentGui::accept( void )
    expInfo.instrumentID  = cb_instrument    ->getLogicalID();
    expInfo.operatorID    = cb_operator      ->getLogicalID();
    expInfo.expType       = cb_expType       ->currentText().toLower();
-   expInfo.runTemp       = le_runTemp       ->text(); 
-   expInfo.label         = le_label         ->text(); 
+   expInfo.runTemp       = le_runTemp       ->text();
+   expInfo.label         = le_label         ->text();
    expInfo.comments      = te_comment       ->toPlainText();
 
    // Update items from the DB after getting values from the form, if we can
@@ -747,7 +752,7 @@ void US_ExperimentGui::accept( void )
       US_Passwd pw;
       QString masterPW = pw.getPasswd();
       US_DB2 db( masterPW );
-      
+
       if ( db.lastErrno() == US_DB2::OK )
       {
          QStringList q( "get_instrument_info" );
@@ -755,7 +760,7 @@ void US_ExperimentGui::accept( void )
          db.query( q );
          db.next();
          expInfo.instrumentSerial = db.value( 1 ).toString();
-         
+
          q.clear();
          q  << "get_person_info"
             << QString::number( expInfo.operatorID );
