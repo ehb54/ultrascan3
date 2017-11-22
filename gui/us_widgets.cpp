@@ -18,12 +18,14 @@ US_Widgets::US_Widgets( bool set_position, QWidget* w, Qt::WindowFlags f ) : QFr
    qDebug( "us_win: invalid global memory" );
   }
 
+#ifndef Q_OS_WIN
   if ( set_position )
   {
     QPoint p = g.global_position();
     g.set_global_position( p + QPoint( 30, 30 ) );
     move( p );
   }
+#endif
 
   vlgray = US_GuiSettings::editColor();
   vlgray.setColor( QPalette::Base, QColor( 0xe0, 0xe0, 0xe0 ) );
@@ -34,8 +36,10 @@ US_Widgets::US_Widgets( bool set_position, QWidget* w, Qt::WindowFlags f ) : QFr
 
 US_Widgets::~US_Widgets()
 {
+#ifndef Q_OS_WIN
   QPoint p = g.global_position();
   g.set_global_position( p - QPoint( 30, 30 ) );
+#endif
 }
 
 // label
