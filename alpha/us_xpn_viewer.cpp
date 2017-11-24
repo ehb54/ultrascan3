@@ -1888,7 +1888,7 @@ DbgLv(1) << "c_r: jd" << jd << "wavelen" << wavelen << "wl_corr" << wl_corr;
       {
          for ( int jr = 0; jr < npoint; jr++ )
          {  // Correct each radial point
-            double radval     = r_radii[ jr ] + wl_corr;   // Corrected radius
+            double radval     = r_radii[ jr ] - wl_corr;   // Corrected radius
             radval            = qRound( radval / rad_inc ) * rad_inc; // Rounded
             allData[ jd ].xvalues[ jr ] = radval;          // Replace radius
          }
