@@ -80,6 +80,7 @@ class US_XpnDataViewer : public US_Widgets
 
      QwtPlot*       data_plot;
      QwtPlotGrid*   grid;
+     US_Plot*       plot;
 
      QString        currentDir;
      QString        runID;
@@ -173,6 +174,7 @@ class US_XpnDataViewer : public US_Widgets
      void   timerEvent     ( QTimerEvent *e );
      void   selectColorMap ( void );
      void   correct_radii  ( void );
+     void   currentRectf   ( QRectF );
      void   help           ( void )
      { showHelp.show_help( "xpn_viewer.html" ); };
 };
