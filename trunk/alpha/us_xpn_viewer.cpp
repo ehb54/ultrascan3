@@ -317,7 +317,8 @@ if(mcknt>0)
    settings->addWidget( pb_close,      row++, 4, 1, 4 );
 
    // Plot layout for the right side of window
-   QBoxLayout* plot = new US_Plot( data_plot,
+//   QBoxLayout* plot = new US_Plot( data_plot,
+   plot             = new US_Plot( data_plot,
                                    tr( "Intensity Data" ),
                                    tr( "Radius (in cm)" ), 
                                    tr( "Intensity" ) );
@@ -334,6 +335,9 @@ if(mcknt>0)
    picker->setRubberBand     ( QwtPicker::VLineRubberBand );
    picker->setMousePattern   ( QwtEventPattern::MouseSelect1,
                                Qt::LeftButton, Qt::ControlModifier );
+
+   connect( plot, SIGNAL( zoomedCorners( QRectF ) ),
+            this, SLOT  ( currentRectf ( QRectF ) ) );
 
    // Now let's assemble the page
    
@@ -412,6 +416,8 @@ void US_XpnDataViewer::reset( void )
    data_plot->replot();
    connect( cb_cellchn,   SIGNAL( currentIndexChanged( int ) ),
             this,         SLOT  ( changeCellCh(            ) ) );
+//   connect( plot, SIGNAL( zoomedCorners( QRectF ) ),
+//            this, SLOT  ( currentRectf ( QRectF ) ) );
 
    last_xmin     = -1.0;
    last_xmax     = -1.0;
@@ -1104,6 +1110,8 @@ DbgLv(1) << "PltA: last_xmin" << last_xmin;
    }
 
    // Draw the plot
+//   connect( plot, SIGNAL( zoomedCorners( QRectF ) ),
+//            this, SLOT  ( currentRectf ( QRectF ) ) );
    data_plot->replot();
 
    // Pick up the actual bounds plotted (including any Config changes)
@@ -1889,5 +1897,100 @@ if (jd<3 || (jd+4)>ntripl )
 DbgLv(1) << "c_r:  ri0 ro0" << r_radii[0] << allData[jd].xvalues[0]
  << "rin ron" << r_radii[npoint-1] << allData[jd].xvalues[npoint-1];
    }
+}
+
+// Capture X range of latest Zoom
+void US_XpnDataViewer::currentRectf( QRectF rectf )
+{
+   QVector< double >  ascdat;
+   double rad1      = qRound( rectf.left()  * 10000.0 ) * 0.0001;
+   double rad2      = qRound( rectf.right() * 10000.0 ) * 0.0001;
+   if ( rad2 > 7.0 )
+      return;           // Skip further processing if not reasonable zoom
+   int irx1         = 0;
+   int irx2         = 0;
+   double kpoint    = 0;
+   QString cellch   = cb_cellchn ->currentText();
+   QString cech     = QString( cellch ).replace( " / ", "" );
+
+   QString impath   = US_Settings::importDir() + "/" + runID;
+   QDir dir;
+   if ( ! dir.exists( impath ) )
+      dir.mkpath( impath );
+   QString dapath   = impath + "/" + cech + ".wavelen.radpos.dat";
+   QFile dafile( dapath );
+   if ( !dafile.open( QIODevice::WriteOnly | QIODevice::Text ) )
+   {
+      return;
+   }
+   QTextStream datxto( &dafile );
+
+   QString msg      = tr( "%1, %2-to-%3 Radial adjustment scan..." )
+                      .arg( cellch ).arg( rad1 ).arg( rad2 );
+   le_status->setText( msg );
+   QApplication::setOverrideCursor( QCursor( Qt::WaitCursor) );
+   qApp->processEvents();
+DbgLv(1) << "cRect" << msg;
+
+   // Determine meniscus position for each wavelength of this channel
+   for ( int jd = 0; jd < allData.count(); jd++ )
+   {
+      US_DataIO::RawData *rdata = &allData[ jd ];
+
+      QString dchann    = QString::number( rdata->cell )
+                          + QString( rdata->channel );
+      if ( dchann != cech )
+         continue;
+
+      if ( irx2 == 0 )
+      {
+         irx1             = US_DataIO::index( rdata, rad1 );
+         irx2             = US_DataIO::index( rdata, rad2 );
+         kpoint           = irx2 - irx1 + 1;
+      }
+
+      double wavelen    = rdata->scanData[ 0 ].wavelength; // Wavelength
+
+      // Create an average scan value vector for the search range
+      int nscan         = rdata->scanCount();
+      double afact      = 1.0 / (double)nscan;
+      ascdat.fill( 0.0, kpoint );
+      for ( int js = 0; js < nscan; js++ )
+      {
+         US_DataIO::Scan* dscan = &rdata->scanData[ js ];
+
+         for ( int jr = 0; jr < kpoint; jr++ )
+         {
+            ascdat[ jr ] += dscan->rvalues[ jr + irx1 ] * afact;
+         }
+      }
+
+      // Find the position of the minimum value in the range
+      double rvmin      = 1.0e+99;
+      int irpos         = -1;
+      for ( int jr = 0; jr < kpoint; jr++ )
+      {
+         double rval       = ascdat[ jr ];
+         if ( rval < rvmin )
+         {
+            rvmin             = rval;
+            irpos             = jr;
+         }
+      }
+
+      double radiusw    = rdata->xvalues[ irpos + irx1 ];
+DbgLv(1) << "  wavelen/radpos:  " << wavelen << " / " << radiusw;
+
+      QString outline   = QString::number( wavelen ) + ","
+                        + QString::number( radiusw ) + "\n";
+      datxto << outline;
+   }
+
+   dafile.close();
+
+   le_status->setText( tr( "%1  Radial adjustment scan complete." )
+                      .arg( cech ) );
+   QApplication::restoreOverrideCursor();
+   qApp->processEvents();
 }
 
