@@ -2316,8 +2316,8 @@ DbgLv(1) << "RSA:  msg_pos: IndL>0  y sz" << y.size() << "Mp" << Mp << "Nm" << N
    xA      = x.data();
 int mm=x.size()/2;
 int ee=x.size()-1;
-DbgLv(1) << "RSA:  mgs_pos: xA sme" << x[0] << x[1] << x[2]
- << x[mm-1] << x[mm] << x[mm+1] << x[mm+2] << x[ee-2] << x[ee-1] << x[ee];
+//DbgLv(1) << "RSA:  mgs_pos: xA sme" << x[0] << x[1] << x[2]
+// << x[mm-1] << x[mm] << x[mm+1] << x[mm+2] << x[ee-2] << x[ee-1] << x[ee];
 }
 
 // Generate exponential mesh and refine cell meniscus (for  s<0)
