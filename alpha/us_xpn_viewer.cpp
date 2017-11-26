@@ -1824,13 +1824,14 @@ DbgLv(1) << "sCM: mcolors count" << mcknt;
 // Apply a chromatic aberration correction to auc data radius values
 void US_XpnDataViewer::correct_radii()
 {
-   const double wl_max  = 750.0;    // Max wavelength for computed correction
+   const double wl_max  = 800.0;    // Max wavelength for computed correction
    const double rad_inc = 1e-5;     // Radius precision
    double a_coef     = 0.0;         // Default 4th order polynomial coefficents
    double b1_coef    = 0.0;     
    double b2_coef    = 0.0;
    double b3_coef    = 0.0;
    double b4_coef    = 0.0;
+   double b5_coef    = 0.0;
    int ntripl        = allData.count();
    int npoint        = allData[ 0 ].pointCount();
 
@@ -1858,29 +1859,38 @@ DbgLv(1) << "c_r: file-read line" << fline;
                                    .simplified().toDouble();
             b4_coef           = QString( fline ).section( " ", 4, 4 )
                                    .simplified().toDouble();
+            b5_coef           = QString( fline ).section( " ", 5, 5 )
+                                   .simplified().toDouble();
             break;
          }
       }
 
       cofile.close();
 DbgLv(1) << "c_r: file-read ca coeffs:" << a_coef << b1_coef << b2_coef
- << b3_coef << b4_coef;
+ << b3_coef << b4_coef << b5_coef;
    }
+	else
+	{
+DbgLv(1) << US_Settings::etcDir() + "/chromo-aberration-coeffs.dat not found";
+	}
+
 
    // For each triple, get the wavelength; then compute and apply a correction
    for ( int jd = 0; jd < ntripl; jd++ )
    {
       double wavelen    = allData[ jd ].scanData[ 0 ].wavelength; // Wavelength
-      double wl_used    = qMin( wavelen, wl_max );  // WL used (same after 750)
+      double wl_used    = qMin( wavelen, wl_max );  // WL used
       double wl_p2      = sq( wl_used );            // Squared
       double wl_p3      = wl_p2 * wl_used;          // Cubed
       double wl_p4      = wl_p2 * wl_p2;            // To 4th power
+      double wl_p5      = wl_p4 * wl_used;          // To 5th power
 
       // Wavelength-dependent correction
       double wl_corr    = a_coef + wl_used * b1_coef
                                  + wl_p2   * b2_coef
                                  + wl_p3   * b3_coef
-                                 + wl_p4   * b4_coef;
+                                 + wl_p4   * b4_coef
+											+ wl_p5   * b5_coef;
 if (jd<3 || (jd+4)>ntripl )
 DbgLv(1) << "c_r: jd" << jd << "wavelen" << wavelen << "wl_corr" << wl_corr;
 
