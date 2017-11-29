@@ -1,14 +1,18 @@
 #include "us_mpi_analysis.h"
 #include "us_math2.h"
+#include "us_astfem_math.h"
 #include "us_tar.h"
 #include "us_memory.h"
 #include "us_sleep.h"
 #include "us_util.h"
+#include "us_settings.h"
 #include "us_revision.h"
 
 #include <mpi.h>
 #include <sys/user.h>
 #include <cstdio>
+
+#define ELAPSED_SECS (startTime.msecsTo(QDateTime::currentDateTime())/1000.0)
 
 int main( int argc, char* argv[] )
 {
@@ -316,6 +320,15 @@ DbgLv(0) << "BAD DATA. ioError" << error << "rank" << my_rank << proc_count;
 
    if ( is_global_fit )
    {
+      if ( data_sets[ 0 ]->simparams.speed_step.count() > 1 )
+      {  // Change concentrations back to 1.0 if multi-speed/global-fit
+         concentrations.resize( count_datasets );
+         for ( int ee = 0; ee < count_datasets; ee++ )
+         {
+            concentrations[ ee ] = 1.0;
+         }
+      }
+
       if ( meniscus_points > 1 )
       {
          abort( "Meniscus fit is not compatible with global fit" );
@@ -338,6 +351,7 @@ DbgLv(0) << "BAD DATA. ioError" << error << "rank" << my_rank << proc_count;
             abort( "Unable to obtain all total_concentrations with global fit" );
          }
       }
+
    }
 
    if ( meniscus_points > 1  &&  mc_iterations > 1 )
@@ -358,7 +372,6 @@ DbgLv(0) << "BAD DATA. ioError" << error << "rank" << my_rank << proc_count;
    {
       abort( "Global fit is not compatible with noise computation" );
    }
-
 
    // Calculate meniscus values
    meniscus_values.resize( meniscus_points );
@@ -411,7 +424,11 @@ DbgLv(0) << "BAD DATA. ioError" << error << "rank" << my_rank << proc_count;
 minimize_opt=(minimize_opt==0?2:minimize_opt);
    total_points            = 0;
    bool redo_ss            = false;     // By default, accept speed step as is
+   bool redo_tstate        = false;     // By default, accept timestate as is
    double ds_concen        = 1.0;
+   int ntmsf_ne            = 0;         // Number timestate files non-empty
+   int ntmsf_ex            = 0;         // Number timestate files that exist
+   int ntmsf_1s            = 0;         // Nbr tstate files at 1-sec interval
 
    // Calculate s, D corrections for calc_residuals; simulation parameters
    for ( int ee = 0; ee < data_sets.size(); ee++ )
@@ -469,6 +486,36 @@ if ( my_rank == 0 )
       ds->simparams.bottom_position   = ds->centerpiece_bottom;
       ds->simparams.bottom            = ds->centerpiece_bottom;
       ds->simparams.band_forming      = ds->simparams.band_volume != 0.0;
+      US_SolveSim::DataSet*  ds0      = data_sets[ 0 ];
+
+      // If we have a timestate file set, add to simparams
+      if ( ! ds->tmst_file.isEmpty() )
+      {  // Dataset has non-empty timestate file string
+         ntmsf_ne++;
+         QString tmst_fpath = "../" + ds->tmst_file;
+         QFileInfo check_file( tmst_fpath );
+
+         if ( ( check_file.exists() )  &&  ( check_file.isFile() ) )
+         {  // Dataset timestate file exists
+            ntmsf_ex++;
+            US_DataIO::RawData simdat;
+            US_AstfemMath::initSimData( simdat, *edata, 0.0 );
+            if ( US_AstfemMath::timestate_onesec( tmst_fpath, simdat ) )
+            {  // Timestate file is at 1-second-interval
+               ntmsf_1s++;
+            }
+            else
+            {  // Existing timestate file is not at 1-second-interval
+            }
+         }
+      }
+      else
+      {  // Dataset's timestate file string is empty
+         if ( ee > 0  &&  ! ds0->tmst_file.isEmpty() )
+         {  // Dataset 0's timestate file is not empty:  copy
+            ds->tmst_file      = ds0->tmst_file;
+         }
+      }
 
       // Accumulate total points and set dataset index,points
       int npoints         = edata->scanCount() * edata->pointCount();
@@ -500,8 +547,148 @@ DbgLv(2) << "ee" << ee << "odlim odmax" << odlim << odmax;
       maxods << odmax;
    }
 
+   // Determine whether we need to re-do timestate files
+   if ( ( ntmsf_ne == 0 )  ||          // No non-empty tmst_files
+        ( ntmsf_ex < ntmsf_ne )  ||    //  or not all given exist
+        ( ntmsf_1s < ntmsf_ex ) )      //  or not all at 1-second,
+      redo_tstate             = true;  // Then need to re-do
+
+   // Sync up after all processes have evaluated timestates
+//DbgLv(0) << "rank" << my_rank << ": pre-barrier2 :TM:" << ELAPSED_SECS;
+   MPI_Barrier( MPI_COMM_WORLD );
+DbgLv(0) << "rank" << my_rank << ": redo_tstate" << redo_tstate
+ << "ntmsf_ne ntmsf_ex ntmsf_1s" << ntmsf_ne << ntmsf_ex << ntmsf_1s;
+//DbgLv(0) << "rank" << my_rank << ": barrier2 :TM:" << ELAPSED_SECS;
+
+   if ( redo_tstate )
+   {  // We need to re-do the timestate files
+
+      if ( my_rank == 0 )
+      { // Do any writing or re-writing of timestates in master process
+         QStringList tmsf_fs;
+
+         bool is_sim             = ( data_sets[ 0 ]->run_data.channel == "S" );
+DbgLv(0) << "rank" << my_rank << ": is_sim" << is_sim << "chan"
+ << data_sets[0]->run_data.channel;
+
+         for ( int ee = 0; ee < count_datasets; ee++ )
+         {  // Examine each data set for associated timestate
+            US_SolveSim::DataSet*  ds    = data_sets[ ee ];
+            ds->simparams.sim  = is_sim;
+            QString tmst_fpath = "../" + ds->tmst_file;
+            QString tmst_fdefs = QString( tmst_fpath ).replace( ".tmst", ".xml" );
+            QString tmst_fpsav = tmst_fpath + "-orig";
+            QString tmst_fdsav = tmst_fdefs + "-orig";
+
+            if ( ntmsf_ne == 0 )
+            {  // No tmst_file given:  create one
+               tmst_fpath         = "../" + ds->run_data.runID + ".time_state.tmst";
+               tmst_fdefs         = QString( tmst_fpath ).replace( ".tmst", ".xml" );
+
+               if ( ee == 0 )
+               {  // First (only) dataset:  create a tmst file set
+                  US_DataIO::RawData simdat;
+                  US_AstfemMath::initSimData( simdat, ds->run_data, 0.0 );
+                  US_AstfemMath::writetimestate( tmst_fpath, ds->simparams, simdat );
+                  tmsf_fs << tmst_fpath;
+               }
+
+               else if ( ! tmsf_fs.contains( tmst_fpath ) )
+               {  // Not-first dataset, but unique file:  create another file set
+                  US_DataIO::RawData simdat;
+                  US_AstfemMath::initSimData( simdat, ds->run_data, 0.0 );
+                  US_AstfemMath::writetimestate( tmst_fpath, ds->simparams, simdat );
+                  tmsf_fs << tmst_fpath;
+               }
+
+               ds->tmst_file      = tmst_fpath;   // Save the used timestate file set
+DbgLv(0) << "rank" << my_rank << ": ee" << ee << "(NE)tmst_file" << ds->tmst_file;
+            }
+
+            else if ( ntmsf_ex == 1  &&  ntmsf_1s == 0 )
+            {  // Existing tmst_file given, but not at 1-second interval
+               tmst_fpsav         = tmst_fpath + "-orig";
+               tmst_fdsav         = tmst_fdefs + "-orig";
+               QString tmst_fpold = tmst_fpath;
+               QString tmst_fdold = tmst_fdefs;
+               tmst_fpath         = "../" + ds->run_data.runID + ".time_state.tmst";
+               tmst_fdefs         = QString( tmst_fpath ).replace( ".tmst", ".xml" );
+
+               if ( ee == 0 )
+               {
+                  // Rename existing (non-1sec-intv) files
+                  QFile::rename( tmst_fpold, tmst_fpsav );
+                  QFile::rename( tmst_fdold, tmst_fdsav );
+                  // Create a new 1-second-interval file set
+                  US_DataIO::RawData simdat;
+                  US_AstfemMath::initSimData( simdat, ds->run_data, 0.0 );
+                  US_AstfemMath::writetimestate( tmst_fpath, ds->simparams, simdat );
+                  tmsf_fs << tmst_fpath;
+               }
+
+               ds->tmst_file      = tmst_fpath;   // Save the used timestate file set
+DbgLv(0) << "rank" << my_rank << ": ee" << ee << "(E1)tmst_file" << ds->tmst_file;
+            }
+
+            else if ( ntmsf_ex > 1  &&  ntmsf_1s < ntmsf_ex )
+            {  // Existing tmst_files given, but not all at 1-second interval
+               tmst_fpsav         = tmst_fpath + "-orig";
+               tmst_fdsav         = tmst_fdefs + "-orig";
+               QString tmst_fpold = tmst_fpath;
+               QString tmst_fdold = tmst_fdefs;
+               tmst_fpath         = "../" + ds->run_data.runID + ".time_state.tmst";
+               tmst_fdefs         = QString( tmst_fpath ).replace( ".tmst", ".xml" );
+
+               if ( ! tmsf_fs.contains( tmst_fpath )  &&
+                    ! QFile( tmst_fpath ).exists() )
+               {  // Unique data set timestate file that does not yet exist
+                  QFile::rename( tmst_fpold, tmst_fpsav );
+                  QFile::rename( tmst_fdold, tmst_fdsav );
+                  // Create a new 1-second-interval file set
+                  US_DataIO::RawData simdat;
+                  US_AstfemMath::initSimData( simdat, ds->run_data, 0.0 );
+                  US_AstfemMath::writetimestate( tmst_fpath, ds->simparams, simdat );
+                  tmsf_fs << tmst_fpath;
+               }
+
+               ds->tmst_file      = tmst_fpath;   // Save the used timestate file set
+DbgLv(0) << "rank" << my_rank << ": ee" << ee << "(EX)tmst_file" << ds->tmst_file;
+            }
+
+            ds->simparams.simSpeedsFromTimeState( tmst_fpath );
+         }
+      }
+//DbgLv(0) << "rank" << my_rank << ": pre-barrier3 :TM:" << ELAPSED_SECS;
+
+//      // Get all processes synched up, then fix non-master processes
+      // Get all processes synched up, then build timestate objects
+      MPI_Barrier( MPI_COMM_WORLD );
+//DbgLv(0) << "rank" << my_rank << ": barrier3 :TM:" << ELAPSED_SECS;
+   }  // END:  Re-do timestate files
+
+   // Load dataset timestate(s)
+
+   for ( int ee = 0; ee < count_datasets; ee++ )
+   {
+      US_SolveSim::DataSet*  ds    = data_sets[ ee ];
+      ds->tmst_file      = ds->tmst_file.isEmpty() ?
+                           "../" + ds->run_data.runID + ".time_state.tmst" :
+                           ( ds->tmst_file.startsWith( "../" ) ?
+                             ds->tmst_file : "../" + ds->tmst_file );
+
+      if ( QFile( ds->tmst_file ).exists() )
+      {
+DbgLv(0) << "rank" << my_rank << ": ee" << ee << "   tmst UPLOADED";
+         ds->simparams.simSpeedsFromTimeState( ds->tmst_file );
+      }
+DbgLv(0) << "rank" << my_rank << ": ee" << ee << "tmst_file" << ds->tmst_file
+ << "ssp count" << ds->simparams.sim_speed_prof.count();
+   }  // END: datasets loop to upload timestate
+//DbgLv(0) << "rank" << my_rank << ": simSpeed :TM:" << ELAPSED_SECS;
+//   }
 if ( my_rank == 0 )
- DbgLv(0) << "rank" << my_rank << "redo_ss" << redo_ss;
+ DbgLv(0) << "rank" << my_rank << ": redo_ss" << redo_ss;
+
    if ( redo_ss )
    {  // If speed step re-do flagged, set all speed steps from data
       for ( int ee = 0; ee < data_sets.size(); ee++ )
@@ -511,14 +698,13 @@ if ( my_rank == 0 )
          ds->simparams.computeSpeedSteps( &ds->run_data.scanData,
                                           ds->simparams.speed_step );
 if ( my_rank == 0 )
- DbgLv(0) << "rank" << my_rank << "ee" << ee << "speed_step RE-DONE from data";
+ DbgLv(0) << "rank" << my_rank << ": ee" << ee << "speed_step RE-DONE from data";
 int nssp= ds->simparams.speed_step.count();
 int stm1= ds->simparams.speed_step[     0].time_first;
 int stm2= ds->simparams.speed_step[nssp-1].time_last;
-if ( my_rank == 0 )
+if ( my_rank == 0 ) {
  DbgLv(0) << my_rank << ": stm1" << stm1 << "stm2" << stm2;
-if ( my_rank == 0 )
- ds->simparams.debug();
+ ds->simparams.debug(); }
       }
    }
 
@@ -645,7 +831,10 @@ if (my_rank==0) DbgLv(0) << "ckGrSz: s_max" << s_max << "attr_x,y,z"
    if ( US_SolveSim::checkGridSize( data_sets, s_max, smsg ) )
    {
       if ( my_rank == 0 )
+      {
          qDebug() << smsg;
+         printf( smsg.toLatin1().data() );
+      }
       abort( "Implied Grid Size is Too Large!" );
    }
 //else
@@ -993,31 +1182,75 @@ void US_MPI_Analysis::limitBucket( Bucket& buk )
 }
 
 // Get the A,b matrices for a data set
-void US_MPI_Analysis::dset_matrices( int dsx, int nsolutes,
-      QVector< double >& nnls_a, QVector< double >& nnls_b )
+void US_MPI_Analysis::dset_matrices( int dsx, int* nsolutesP,
+      QVector< double >& nnls_a, QVector< double >& nnls_b,
+      QVector< int >& c_used )
 {
-   int colx        = ds_startx[ dsx ];
-   int ndspts      = ds_points[ dsx ];
-   double concen   = concentrations[ dsx ];
-   int kk          = 0;
-   int jj          = colx;
-   int inccx       = total_points - ndspts;
+   double norm_cut = 1.0;
+
+   // If debug text modifies norm_cut value, apply it
+   QStringList dbgtxt = US_Settings::debug_text();
+   for ( int ii = 0; ii < dbgtxt.count(); ii++ )
+   {
+      if ( dbgtxt[ ii ].startsWith( "normCutoff=" ) )
+      {
+         norm_cut        = QString( dbgtxt[ ii ] ).section( "=", 1, 1 ).toDouble();
+DbgLv(0) << "DSM: NORM_CUT:    norm_cut" << norm_cut;
+      }
+   }
+
+   int nsolutes    = *nsolutesP;            // Solutes (columns)
+   int ksolutes    = nsolutes;              // Output solutes count
+   int rowx        = ds_startx[ dsx ];      // Initial dataset row index
+   int ndspts      = ds_points[ dsx ];      // Number dataset points (rows)
+   double concen   = concentrations[ dsx ]; // Dataset concentration
+   int ka          = 0;                     // Output A index
+   int kc          = 0;                     // Column-used index
+   int jj          = rowx;                  // Global matrix index
+   int inccx       = total_points - ndspts; // Next-column increment
+DbgLv(0) << "DSM: dsx" << dsx << "rowx ndspts" << rowx << ndspts
+ << "nsolutes" << nsolutes << "concen" << concen << "inccx" << inccx;
 
    // Copy the data set portion of the global A matrix
    for ( int cc = 0; cc < nsolutes; cc++ )
    {
-      for ( int pp = 0; pp < ndspts; pp++, kk++, jj++ )
-      {
-         nnls_a[ kk ]    = gl_nnls_a[ jj ];
+      int kas         = ka;      // Save column start index
+      double norm_a   = 0.0;
+
+      for ( int pp = 0; pp < ndspts; pp++, ka++, jj++ )
+      {  // Copy A column and accumulate column norm
+         nnls_a[ ka ]    = gl_nnls_a[ jj ];
+         norm_a         += sq( nnls_a[ ka ] );
       }
 
-      jj             += inccx;
+      norm_a          = sqrt( norm_a );  // Complete norm calculation
+
+      if ( norm_a < norm_cut )           // Test norm tolerance
+      {  // This column should be excluded
+         ksolutes--;             // Decrement column count
+         ka              = kas;  // Set to overwrite this column
+DbgLv(0) << "DSM: NORM_CUT:  norm_a" << norm_a << "ksol" << ksolutes;
+      }
+
+      else
+      {  // This column is used
+         c_used[ kc++ ]  = cc;   // Save original column index
+      }
+
+      jj             += inccx;   // Bump to start of next column`
+   }
+
+   if ( ksolutes < nsolutes )
+   {  // Norm tolerance has excluded some columns
+      nnls_a.resize( ksolutes * ndspts ); // Resize A matrix
+      *nsolutesP      = ksolutes;         // Save new solutes count
+DbgLv(0) << "DSM:   ASIZE" << nnls_a.size() << "c_used[n]" << c_used[kc-1];
    }
 
    // Copy and restore scaling for data set portion of the global b matrix
-   jj              = colx;
+   jj              = rowx;
 
-   for ( kk = 0; kk < ndspts; kk++, jj++ )
+   for ( int kk = 0; kk < ndspts; kk++, jj++ )
    {
       nnls_b[ kk ]    = gl_nnls_b[ jj ] * concen;
    }
@@ -1030,7 +1263,7 @@ void US_MPI_Analysis::calc_residuals( int         offset,
                                       SIMULATION& simu_values )
 {
    count_calc_residuals++;
-bool do_dbg=( dbg_level > 0 && ( group_rank < 2 || group_rank == 11 ) );
+bool do_dbg=( dbg_level > 0 && ( group_rank < 2 || group_rank == (proc_count/2) ) );
 if ( do_dbg )
  DbgLv(1) << "w:" << my_rank << ": CALC_RES : count" << count_calc_residuals
   << "offs dsknt" << offset << dataset_count;
@@ -1057,7 +1290,12 @@ if ( do_dbg ) simu_values.dbg_level = qMax( simu_values.dbg_level, 1 );
 
 //*DEBUG*
 simu_values.dbg_level=dbglvsv;
-if ( do_dbg )
+bool hicee = false;
+for (int jj=0;jj<simu_values.solutes.size();jj++ )
+ if ( simu_values.solutes[jj].c > 1.0 ) hicee = true;
+
+//if ( do_dbg )
+if ( do_dbg || hicee )
 {
  DbgLv(1) << "w:" << my_rank << ": ss.ca_re completed";
  int nsolo=simu_values.solutes.size();
@@ -1136,8 +1374,10 @@ if ( do_dbg )
  int nn = isols.size() - 1;
  int mm = nn/2;
  if ( nn > mm )
- DbgLv(1) << "w:" << my_rank << ": sol0 solm soln" << isols[0].s << isols[0].k
-  << isols[mm].s << isols[mm].k << isols[nn].s << isols[nn].k;
+ DbgLv(1) << "w:" << my_rank << ": sol0 solm soln"
+  << isols[0].s << isols[0].k << isols[0].c
+  << isols[mm].s << isols[mm].k << isols[mm].c
+  << isols[nn].s << isols[nn].k << isols[nn].c;
 }
 //*DEBUG*
  
@@ -1266,7 +1506,7 @@ void US_MPI_Analysis::write_global( void )
    int nsolutes = ( mdl_type != US_Model::DMGA ) ? sim.solutes.size() : -1;
    nsolutes     = ( mdl_type != US_Model::PCSA ) ? nsolutes : sim.zsolutes.size();
 
-DbgLv(1) << "WrGlob: mciter mxdepth" << mc_iteration+1 << max_depth
+DbgLv(0) << "WrGlob: mciter mxdepth" << mc_iteration+1 << max_depth
  << "simvsols size" << nsolutes;
    if ( nsolutes == 0 )
    { // Handle the case of a zero-solute final model
@@ -1280,28 +1520,30 @@ DbgLv(1) << "WrGlob: mciter mxdepth" << mc_iteration+1 << max_depth
       US_SolveSim solvesim( data_sets, my_rank, false );
       solvesim.calc_residuals( 0, data_sets.size(), wksim_vals, false,
                                &gl_nnls_a, &gl_nnls_b );
-DbgLv(1) << "WrGlob:  glob recompute nsols" << wksim_vals.solutes.size()
+DbgLv(0) << "WrGlob:  glob recompute nsols" << wksim_vals.solutes.size()
  << "globrec A,b sizes" << gl_nnls_a.size() << gl_nnls_b.size();
       nsolutes             = gsim->solutes.size();
+      sim.variance         = wksim_vals.variance;
 
       // Compute the average concentration and output superglobal model
       double avg_conc      = 0.0;
       for ( int ee = 0; ee < data_sets.size(); ee++ )
       {
          avg_conc            += concentrations[ ee ];
+         sim.variances[ ee ]  = wksim_vals.variances[ ee ];
       }
       avg_conc            /= (double)( data_sets.size() );
 
       for ( int cc = 0; cc < nsolutes; cc++ )
       {
          sim.solutes[ cc ].c   = gsim->solutes[ cc ].c * avg_conc;
-DbgLv(1) << "WrGlob:     cc" << cc << "conc-in" << gsim->solutes[cc].c
+DbgLv(0) << "WrGlob:     cc" << cc << "conc-in" << gsim->solutes[cc].c
  << "SGconc-out" << sim.solutes[cc].c;
       }
 
       write_superg( sim, mdl_type );
 
-DbgLv(1) << "WrGlob: dssize" << data_sets.size() << "concsize" << concentrations.size()
+DbgLv(0) << "WrGlob: dssize" << data_sets.size() << "concsize" << concentrations.size()
  << "simsolssz" << sim.solutes.size() << "gsimsolssz" << gsim->solutes.size() << nsolutes;
       // Build and write scaled global models
       for ( int ee = 0; ee < data_sets.size(); ee++ )
@@ -1311,17 +1553,18 @@ DbgLv(1) << "WrGlob: dssize" << data_sets.size() << "concsize" << concentrations
          meniscus_value       = edata->meniscus;
          sim.variance         = sim.variances[ ee ];
          double concentration = concentrations[ ee ];
-DbgLv(1) << "WrGlob:   currds" << ee << "concen" << concentration;
+         nsolutes             = gsim->solutes.size();
+DbgLv(0) << "WrGlob:   currds" << ee << "concen" << concentration;
 
          for ( int cc = 0; cc < nsolutes; cc++ )
          {
             sim.solutes[ cc ].c   = gsim->solutes[ cc ].c * concentration;
-DbgLv(1) << "WrGlob:     cc" << cc << "conc-in" << gsim->solutes[cc].c
+DbgLv(0) << "WrGlob:     cc" << cc << "conc-in" << gsim->solutes[cc].c
  << "conc-out" << sim.solutes[cc].c;
          }
 
 
-DbgLv(1) << "WrGlob:    call write_model(1)";
+DbgLv(0) << "WrGlob:    call write_model(1)";
          // Output the model from global solute points
          write_model( sim, mdl_type, true );
 
@@ -1336,27 +1579,51 @@ DbgLv(1) << "WrGlob:    call write_model(1)";
          QVector< double > nnls_a( navals,   0.0 );
          QVector< double > nnls_b( narows,   0.0 );
          QVector< double > nnls_x( nsolutes, 0.0 );
-DbgLv(1) << "WrGlob:    ks kp nar nav" << kscans << kpoints << narows << navals;
+         QVector< int >    c_used( nsolutes, 0   );
+DbgLv(0) << "WrGlob:    ks kp nar nav" << kscans << kpoints << narows << navals;
 
-         dset_matrices( ee, nsolutes, nnls_a, nnls_b );
+         dset_matrices( ee, &nsolutes, nnls_a, nnls_b, c_used );
 
-DbgLv(1) << "WrGlob:    mats built; calling NNLS";
+DbgLv(0) << "WrGlob:    mats built; calling NNLS";
          US_Math2::nnls( nnls_a.data(), narows, narows, nsolutes,
                          nnls_b.data(), nnls_x.data() );
 
-DbgLv(1) << "WrGlob:     building solutes from nnls_x";
+DbgLv(0) << "WrGlob:     building solutes from nnls_x";
          for ( int cc = 0; cc < nsolutes; cc++ )
          {
             double soluval       = nnls_x[ cc ];
             if ( soluval > 0.0 )
             {
-               US_Solute solu       = sim.solutes[ cc ];
+               int jcu              = c_used[ cc ];
+               US_Solute solu       = sim.solutes[ jcu ];
                solu.c               = soluval;
                wksim_vals.solutes << solu;
                ksolutes++;
+if(soluval>1.0) {
+ DbgLv(0) << "WrGlob:     SOLUVAL" << soluval << "ee cc" << ee << cc << "ksol" << ksolutes;
+ double avlo=1e+100;
+ double avhi=0.0;
+ double avav=0.0;
+ double bvlo=1e+100;
+ double bvhi=0.0;
+ double bvav=0.0;
+ int ja=cc*narows;
+ for (int jb=0; jb<narows;jb++ ) {
+  double aval=nnls_a[ja++];
+  avlo=qMin(avlo,aval);
+  avhi=qMax(avhi,aval);
+  avav+=aval;
+  double bval=nnls_b[jb];
+  bvlo=qMin(bvlo,bval);
+  bvhi=qMax(bvhi,bval);
+  bvav+=bval;
+ }
+ DbgLv(0) << "WrGlob:      A lo,hi,av" << avlo << avhi << avav
+  << "B lo,hi,av" << bvlo << bvhi << bvav;
+}
             }
          }
-DbgLv(1) << "WrGlob:    currds" << ee << "nsol ksol" << nsolutes << ksolutes;
+DbgLv(0) << "WrGlob:    currds" << ee << "nsol ksol" << nsolutes << ksolutes;
 
          // Output the model refitted to individual dataset
          write_model( wksim_vals, mdl_type, false );
@@ -1426,8 +1693,9 @@ DbgLv(1) << "WrGlob:     cc" << cc << "conc-in" << gsim->solutes[cc].c
          QVector< double > nnls_a( navals,   0.0 );
          QVector< double > nnls_b( narows,   0.0 );
          QVector< double > nnls_x( nsolutes, 0.0 );
+         QVector< int >    c_used( nsolutes, 0   );
 
-         dset_matrices( ee, nsolutes, nnls_a, nnls_b );
+         dset_matrices( ee, &nsolutes, nnls_a, nnls_b, c_used );
 
          US_Math2::nnls( nnls_a.data(), narows, narows, nsolutes,
                          nnls_b.data(), nnls_x.data() );
@@ -1437,7 +1705,8 @@ DbgLv(1) << "WrGlob:     cc" << cc << "conc-in" << gsim->solutes[cc].c
             double soluval       = nnls_x[ cc ];
             if ( soluval > 0.0 )
             {
-               US_Solute solu       = sim.solutes[ cc ];
+               int jcu              = c_used[ cc ];
+               US_Solute solu       = sim.solutes[ jcu ];
                solu.c               = soluval;
                wksim_vals.solutes << solu;
                ksolutes++;
@@ -1518,9 +1787,10 @@ DbgLv(1) << "WrGlob:    call write_model(1)";
          QVector< double > nnls_a( navals,   0.0 );
          QVector< double > nnls_b( narows,   0.0 );
          QVector< double > nnls_x( nsolutes, 0.0 );
+         QVector< int >    c_used( nsolutes, 0   );
 DbgLv(1) << "WrGlob:    ks kp nar nav" << kscans << kpoints << narows << navals;
 
-         dset_matrices( ee, nsolutes, nnls_a, nnls_b );
+         dset_matrices( ee, &nsolutes, nnls_a, nnls_b, c_used );
 double dsum_b=0.0;
 for (int ii=0;ii<narows;ii++) dsum_b += nnls_b[ii];
 DbgLv(1) << "WrGlob:      ee" << ee << "dsum_b" << dsum_b
@@ -1538,7 +1808,8 @@ double sum_sol=0.0;
             double soluval       = nnls_x[ cc ];
             if ( soluval > 0.0 )
             {
-               US_ZSolute solu      = sim.zsolutes[ cc ];
+               int jcu              = c_used[ cc ];
+               US_ZSolute solu      = sim.zsolutes[ jcu ];
                solu.c               = soluval;
                wksim_vals.zsolutes << solu;
                ksolutes++;

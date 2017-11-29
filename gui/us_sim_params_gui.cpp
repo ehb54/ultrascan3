@@ -1,4 +1,4 @@
-#include "us_simparams.h"
+#include "us_sim_params_gui.h"
 #include "us_constants.h"
 #include "us_gui_settings.h"
 #include "us_settings.h"
@@ -23,7 +23,7 @@ US_SimParamsGui::US_SimParamsGui(
 
    int row = 0;
 
-   QLabel* lb_info = us_banner( tr( "Simulation Run Parameter Setup" ) );
+   QLabel* lb_info = us_banner( tr( "Simulation Run Parameters Setup" ) );
    main->addWidget( lb_info, row++, 0, 1, 8 );
 
    // Left column
@@ -34,6 +34,7 @@ US_SimParamsGui::US_SimParamsGui(
 
    cnt_speeds = us_counter( 2, 1, 100, 1 );
    cnt_speeds->setSingleStep  ( 1 );
+   cnt_speeds->setValue( simparams.speed_step.count() );
    
    main->addWidget( cnt_speeds, row++, 3, 1, 1 );
    connect( cnt_speeds, SIGNAL( valueChanged ( double ) ), 
@@ -377,24 +378,25 @@ US_SimParamsGui::US_SimParamsGui(
    // Button bar
    QBoxLayout* buttons = new QHBoxLayout();
 
-   QPushButton* pb_load = us_pushbutton( tr( "Load Profile" ) );
-   connect( pb_load, SIGNAL( clicked() ), SLOT( load() ) );
-   buttons ->addWidget( pb_load );
-
-   QPushButton* pb_save = us_pushbutton( tr( "Save Profile" ) );
-   connect( pb_save, SIGNAL( clicked() ), SLOT( save() ) );
-   buttons ->addWidget( pb_save );
-
-   QPushButton* pb_help = us_pushbutton( tr( "Help" ) );
-   connect( pb_help, SIGNAL( clicked() ), SLOT( help() ) );
-   buttons ->addWidget( pb_help );
-
+   QPushButton* pb_load   = us_pushbutton( tr( "Load Profile" ) );
+   QPushButton* pb_save   = us_pushbutton( tr( "Save Profile" ) );
+   QPushButton* pb_help   = us_pushbutton( tr( "Help" ) );
    QPushButton* pb_cancel = us_pushbutton( tr( "Cancel" ) );
-   connect( pb_cancel, SIGNAL( clicked() ), SLOT( revert() ) );
-   buttons ->addWidget( pb_cancel );
-
    QPushButton* pb_accept = us_pushbutton( tr( "Accept" ) );
-   connect( pb_accept, SIGNAL( clicked() ), SLOT( accepted() ) );
+   connect( pb_load,   SIGNAL( clicked()  ),
+            this,      SLOT  ( load()     ) );
+   connect( pb_save,   SIGNAL( clicked()  ),
+            this,      SLOT  ( save()     ) );
+   connect( pb_help,   SIGNAL( clicked()  ),
+            this,      SLOT  ( help()     ) );
+   connect( pb_cancel, SIGNAL( clicked()  ),
+            this,      SLOT  ( revert()   ) );
+   connect( pb_accept, SIGNAL( clicked()  ),
+            this,      SLOT  ( accepted() ) );
+   buttons ->addWidget( pb_load );
+   buttons ->addWidget( pb_save );
+   buttons ->addWidget( pb_help );
+   buttons ->addWidget( pb_cancel );
    buttons ->addWidget( pb_accept );
 
    main->addLayout( buttons, row++, 0, 1, 8 );
@@ -408,13 +410,12 @@ void US_SimParamsGui::accepted( void )
 
 void US_SimParamsGui::backup_parms( void )
 {
-   /*
    US_SimulationParameters::SpeedProfile sp;
    simparams_backup.speed_step.clear();
 
    for ( int i = 0; i < simparams.speed_step.size(); i ++ )
    {
-      simparams_backup.speed_step .push_back( sp );
+      simparams_backup.speed_step << sp;
 
       US_SimulationParameters::SpeedProfile* ss   = &simparams       .speed_step[ i ];
       US_SimulationParameters::SpeedProfile* ssbu = &simparams_backup.speed_step[ i ];
@@ -436,7 +437,6 @@ void US_SimParamsGui::backup_parms( void )
    simparams_backup.rnoise            = simparams.rnoise;
    simparams_backup.tinoise           = simparams.tinoise;
    simparams_backup.rinoise           = simparams.rinoise;
-   */
 }
 
 void US_SimParamsGui::revert( void )
@@ -446,7 +446,7 @@ void US_SimParamsGui::revert( void )
 
    for ( int i = 0; i < simparams_backup.speed_step.size(); i ++ )
    {
-      simparams.speed_step .push_back( sp );
+      simparams.speed_step << sp;
 
       US_SimulationParameters::SpeedProfile* ss   = &simparams       .speed_step[ i ];
       US_SimulationParameters::SpeedProfile* ssbu = &simparams_backup.speed_step[ i ];
@@ -476,20 +476,23 @@ void US_SimParamsGui::revert( void )
 
 void US_SimParamsGui::update_speeds( double value )
 {
-   int                 old_size = simparams.speed_step.size();
+   int old_size          = simparams.speed_step.size();
+   int lx                = old_size - 1;
+   int new_size          = (int)value;
    US_SimulationParameters::SpeedProfile sp;
+   simparams.speed_step.resize( new_size );
    
-   for ( int i = old_size; i < (int) value; i++ )
+   for ( int ii = old_size; ii < new_size; ii++ )
    {
-      simparams.speed_step .push_back( sp );
+      simparams.speed_step[ ii ] = sp;
 
-      // Only initialize the new elements, leave the previously assigned
-      // elements alone.  New elements simply get copies of the last old
-      // element if old_size > new_size then we won't go through this loop and
-      // simply truncate the list
+      // Only initialize the new elements, leave the previously assigned elements
+      // alone. New elements simply get copies of the last old element.
+      // If old_size > new_size then we won't go through this loop and
+      // we simply truncate the list.
 
-      US_SimulationParameters::SpeedProfile* ss     = &simparams.speed_step[ i ];
-      US_SimulationParameters::SpeedProfile* ss_old = &simparams.speed_step[ old_size - 1 ];
+      US_SimulationParameters::SpeedProfile* ss     = &simparams.speed_step[ ii ];
+      US_SimulationParameters::SpeedProfile* ss_old = &simparams.speed_step[ lx ];
       
       ss->duration_hours    = ss_old->duration_hours;
       ss->duration_minutes  = ss_old->duration_minutes;
@@ -501,7 +504,7 @@ void US_SimParamsGui::update_speeds( double value )
       ss->acceleration_flag = ss_old->acceleration_flag;
    }
 
-   cnt_selected_speed->setMaximum( simparams.speed_step.size() );
+   cnt_selected_speed->setMaximum( new_size );
    update_combobox();
 }
 
@@ -535,7 +538,7 @@ void US_SimParamsGui::update_speed_profile( double profile )
 void US_SimParamsGui::select_speed_profile( int index )
 {
    current_speed_step = index;
-   cnt_speeds->setValue( index + 1 );
+//   cnt_speeds->setValue( index + 1 );
    
    if ( cb_acceleration_flag->isChecked() )
    {
@@ -573,17 +576,17 @@ void US_SimParamsGui::check_delay( void )
    QVector< int >    speed;
    
    speed.clear();
-   speed .push_back( 0 );
+   speed << 0;
 
    int steps = simparams.speed_step.size();
 
    for ( int i = 0; i < steps; i++ )
    {
-      hours  .push_back( 0 );
-      minutes.push_back( 0.0 );
+      hours   << 0;
+      minutes << 0.0;
 
       US_SimulationParameters::SpeedProfile* ss = &simparams.speed_step[ i ];
-      speed .push_back( ss->rotorspeed );
+      speed << ss->rotorspeed;
       
       int lower_limit = 1 + 
          ( abs( (speed[ i + 1 ] - speed[ i ] ) ) + 1 ) / ss->acceleration;
@@ -907,13 +910,13 @@ void US_SimParamsGui::update_mesh( int mesh )
                {
                   if ( value > simparams.meniscus )
                   {
-                     simparams.mesh_radius .push_back( simparams.meniscus );
+                     simparams.mesh_radius << simparams.meniscus;
                   }
 
                   first = false;
                }
 
-               simparams.mesh_radius .push_back( value );
+               simparams.mesh_radius << value;
             }
          }
 
@@ -923,7 +926,7 @@ void US_SimParamsGui::update_mesh( int mesh )
 
          if ( simparams.mesh_radius[ mesh_size - 1 ] < simparams.bottom )
          {
-            simparams.mesh_radius .push_back( simparams.bottom );
+            simparams.mesh_radius << simparams.bottom;
          }
 
          

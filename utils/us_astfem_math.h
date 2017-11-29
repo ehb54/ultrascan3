@@ -11,7 +11,7 @@
 //! \brief A group of static mathematical functions to support finite element 
 //!        calculations
 class US_UTIL_EXTERN US_AstfemMath
-{ 
+{
    public:
 
       class MfemInitial;
@@ -28,6 +28,20 @@ class US_UTIL_EXTERN US_AstfemMath
       //! \param C1    First scan with interpolated concentrations
       //! \param xvec  Start x (radius) values for each scan
       static void interpolate_C0( MfemInitial&, double*, QVector< double >& );
+
+      //! \brief Create a timestate file from speed_step and scan information
+      //! \param tmst_fpath  Full path to timestate file to examine
+      //! \param simparams   Simulation parameters, including speed steps info
+      //! \param sim_data    Raw data with scans to examine
+      //! \returns Flag:  0 if the file write succeeded
+      static int  writetimestate( const QString&, US_SimulationParameters&,
+                                  US_DataIO::RawData& );
+
+      //! \brief Determine if a timestate file holds one-second-interval records
+      //! \param tmst_fpath  Full path to timestate file to examine
+      //! \param sim_data    Raw data with scans to examine
+      //! \returns Flag:  true iff timestate holds values at one-second interval
+      static bool timestate_onesec( const QString&, US_DataIO::RawData& );
 
       //! \brief Initialize a 2d matrix in memory to all zeros.
       //! \param val1   First dimension
@@ -395,7 +409,7 @@ class US_UTIL_EXTERN US_AstfemMath
          double start_om2t;       //!< start omega^2t of simulation
          double current_meniscus; //!< actual meniscus for current speed
          double current_bottom;   //!< actual bottom for current speed
-         int    first_speed;      //!< constant speed at first speed step
+         int    cdset_speed;      //!< constant speed for current dataset
          int    rg_index;         //!< reaction group index
 
          //! Local index of each GroupComponent involved in a reaction group

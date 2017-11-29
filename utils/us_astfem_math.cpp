@@ -2,13 +2,249 @@
 #include "us_astfem_math.h"
 #include "us_math2.h"
 #include "us_hardware.h"
+#include "us_settings.h"
+#ifndef DbgLv
+#define DbgLv(a) if(dbg_level>=a)qDebug() //!< debug-level-conditioned qDebug()
+#endif
+
+
 #if 0
 #ifdef NO_DB
 #include <mpi.h>
 #endif
 #endif
 
-void US_AstfemMath::interpolate_C0( MfemInitial& C0, double* C1, 
+//----------------------------------------------------------------------
+// Write time state
+//----------------------------------------------------------------------
+int US_AstfemMath::writetimestate( const QString&           tmst_fpath,
+                                   US_SimulationParameters& simparams,
+                                   US_DataIO::RawData&      sim_data )
+{
+   int dbg_level        = US_Settings::us_debug();
+   US_TimeState timestate;
+   int nspeed           = simparams.speed_step.size();
+//DbgLv(1) << "AMATH:wrts::writetimestate : tmst_fpath=" << tmst_fpath;
+
+   if ( timestate.open_write_data( tmst_fpath, 1.0, 0.0 ) != 0 )
+   {
+DbgLv(1) << "AMATH: wrts: Unable to open" << tmst_fpath;
+      return 0;
+   }
+
+DbgLv(1)<< "AMATH:wrts: number of speeds=" << nspeed
+ << "Time state file path=" << tmst_fpath;
+   timestate.set_key( "Time",        "I4" );
+   timestate.set_key( "RawSpeed",    "F4" );
+   timestate.set_key( "SetSpeed",    "I4" );
+   timestate.set_key( "Omega2T",     "F4" );
+   timestate.set_key( "Temperature", "F4" );
+   timestate.set_key( "Step",        "I2" );
+   timestate.set_key( "Scan",        "I2" );
+
+   double duration      = 0.0;
+   double duration_prev = 0.0;
+   double rpm           = 0.0;
+   double omega2t       = 0.0;
+   double prvs_speed    = 0.0 ;
+   int    scan_nbr      = 0;
+   int    step_nbr      = 0;
+   double temperature   = sim_data.scanData[ 0 ].temperature;
+   int nscans           = sim_data.scanData.size() ;// Used for number of scans
+   int t_acc;    // Used for time when accelerated up to the specified rotor speed
+   double rate, speed;
+   US_SimulationParameters::SpeedProfile* sp;
+   US_SimulationParameters::SpeedProfile* sp_prev;
+DbgLv(1) << " writetimestate : no of scans" << nscans;
+   QList< int > scantimes;
+
+   for ( int ii = 0; ii < nscans; ii++ )
+   {  // Accumulate the times at scans
+      scantimes << sim_data.scanData[ ii ].seconds;
+DbgLv(1) << "scantimes" << scantimes[ii] << sim_data.scanData[ii].omega2t
+ << ii << sim_data.scanData[ii].rpm;
+   }
+//DbgLv(1) << " writetimestate : no of scans" << nscans ;
+
+   if ( simparams.sim == false )
+   {
+      double d   = -2.0/3.0;
+
+      double t2  = simparams.speed_step[0].time_first;
+      double w2t = simparams.speed_step[0].w2t_first;
+      double c   = pow((simparams.speed_step[0].rotorspeed*M_PI/30.0),2.0);
+      double t1  = ( w2t - ( t2 * c ) ) / ( d * c );
+//      t_acc      = qCeil( t1 );
+      t_acc      = (int)qRound( t1 );
+      rate       = (double)( simparams.speed_step[ 0 ].rotorspeed ) / (double)t_acc;
+//DbgLv(1)<<  "from speed profile"
+// << "t_acc=" << t_acc << "rate=" << rate << "first_time:" << simparams.speed_step[0].time_first
+// << "first_w2t" << simparams.speed_step[0].w2t_first
+// << "rpm=" << simparams.speed_step[0].rotorspeed ;
+//DbgLv(1) << " from sim_data"
+// << "t_acc=" << t_acc1 << "rate= " << rate1 << "first_time: " << sim_data.scanData[0].seconds
+// << "first_w2t" << sim_data.scanData[0].omega2t << "rpm=" << sim_data.scanData[0].rpm ;
+   }
+   else
+   {
+      sp         = &simparams.speed_step[ 0 ];
+      rate       = (double) sp->acceleration ;
+//rate = 400.0 ;
+      t_acc      = (int)qRound( sp->rotorspeed / rate );
+      rate       = (double)sp->rotorspeed / (double)t_acc;
+//DbgLv(1)<< " rate is given by user : t_acc from timestate" << t_acc << rate;
+   }
+
+   int d1     = 0;
+   int itime  = 0;
+
+   for ( int step = 0; step < nspeed; step++ )
+   {
+      sp         = &simparams.speed_step[ step ];
+      speed      = (double) (sp->rotorspeed) ;
+
+      if ( step > 0 )
+      {
+         sp_prev      = &simparams.speed_step[ step-1 ];
+         prvs_speed   = (double) (sp_prev->rotorspeed) ;
+      }
+      else
+         prvs_speed   = 0.0 ;
+
+      if ( step == 0 )
+      {
+         d1           = 0 ;
+         rpm         -= rate ;
+      }
+      else
+      {
+//         duration_prev += ( simparams.speed_step[ step-1 ].duration_hours * 3600.0 )
+//                        + ( simparams.speed_step[ step-1 ].duration_minutes * 60.0 );
+         duration_prev = duration;
+
+         d1          = (int)duration_prev + 1;
+
+         if ( simparams.sim == false )
+            // Use calculated rate when user doesn't know it
+            t_acc = ( int)qRound( double( qAbs( speed - prvs_speed ) ) / rate );
+         else
+            // When user knows acceleration rate
+            t_acc = ( int)qRound( double( qAbs( speed - prvs_speed  ) ) / sp->acceleration );
+
+         rate        = (double)( speed - prvs_speed ) / (double)t_acc;
+      }
+
+      duration    += ( sp->duration_hours * 3600.0 )
+                   + ( sp->duration_minutes * 60.0 );
+//DbgLv(1) << "duration from timestate = "<<  duration ;
+
+      for ( int ii = d1; ii <= int(duration); ii++ )
+      {
+         int tacc = d1 + t_acc  ;
+
+         if ( ii < tacc )
+            rpm     += rate ;
+         else
+            rpm     =  speed ;
+
+         int    set_speed  = qRound( rpm / 100.0 ) * 100;
+
+         omega2t  += pow((rpm*M_PI/30.0),2.0);
+
+         itime       = ii;
+         int scanx   = scantimes.indexOf( itime );
+         scan_nbr    = ( scanx < 0 ) ? 0 : ( scanx + 1 );
+         step_nbr    = step + 1;
+if(scan_nbr>0)
+ DbgLv(1) << "wrTS: ii scanx scan_nbr time" << ii << scanx << scan_nbr;
+
+         timestate.set_value( "Time",        itime       );
+         timestate.set_value( "RawSpeed",    rpm         );
+         timestate.set_value( "SetSpeed",    set_speed   );
+         timestate.set_value( "Omega2T",     omega2t     );
+         timestate.set_value( "Temperature", temperature );
+         timestate.set_value( "Step",        step_nbr    );
+         timestate.set_value( "Scan",        scan_nbr    );
+#ifndef NO_DB
+//qDebug() << "Timestate:" << "time=" << itime
+// << "w2t=" << omega2t << "rpm=" << rpm << " t_acc=" << t_acc
+// << "scan_nbr=" << scan_nbr << "step=" << step;
+#endif
+         timestate.flush_record();
+      }
+   }
+
+   // Pad out TimeState for some seconds beyond last scan time
+   duration      += 10;
+   d1             = itime + 1;
+   int step       = nspeed - 1;
+   int set_speed  = qRound( rpm / 100.0 ) * 100;
+   scan_nbr       = 0;
+   double omg2ti  = pow( ( rpm * M_PI / 30.0 ), 2.0 );
+
+   for ( int ii = d1; ii <= int(duration); ii++ )
+   {
+      omega2t       += omg2ti;
+      itime          = ii ;
+
+      timestate.set_value( "Time",        itime       );
+      timestate.set_value( "RawSpeed",    rpm         );
+      timestate.set_value( "SetSpeed",    set_speed   );
+      timestate.set_value( "Omega2T",     omega2t     );
+      timestate.set_value( "Temperature", temperature );
+      timestate.set_value( "Step",        step        );
+      timestate.set_value( "Scan",        scan_nbr    );
+#ifndef NO_DB
+//qDebug() <<"Timestate:" << "time= " << itime
+// << "w2t= " << omega2t << "rpm= " << rpm << "  t_acc=" << t_acc
+// << "scan_nbr= " << scan_nbr << "step= " << step;
+#endif
+
+      timestate.flush_record();
+   }
+
+   timestate.close_write_data();
+   timestate.write_defs( 1.0 );
+
+   return timestate.time_count();
+}
+
+// Determine if a timestate file holds one-second-interval records
+bool US_AstfemMath::timestate_onesec( const QString& tmst_fpath,
+                                      US_DataIO::RawData& sim_data )
+{
+   bool onesec_intv = false;
+   bool constti     = false;
+   double timeinc   = 0.0;
+   US_TimeState timestate;
+
+   if ( timestate.open_read_data( tmst_fpath, false ) != 0 )
+      return onesec_intv;
+
+   int ntimes       = timestate.time_count();
+   timestate.time_range( &constti, &timeinc, NULL );
+   timestate.close_read_data();
+
+   if ( constti  &&  timeinc == 1.0 )
+   {  // If constant increment and it is 1.0, one-second-interval
+      onesec_intv      = true;
+   }
+
+   else
+   {  // Otherwise, compare timestate times count to last scan time
+      int nscan        = sim_data.scanCount();
+      int lsctime      = (int)sim_data.scanData[ nscan - 1 ].seconds;
+      // If number of times is greater than or equal to the last scan time,
+      //  then one-second-interval
+      if ( ntimes >= lsctime )
+         onesec_intv      = true;
+   }
+
+   return onesec_intv;
+}
+
+// Interpolate the C1 array from the C0 grid
+void US_AstfemMath::interpolate_C0( MfemInitial& C0, double* C1,
       QVector< double >& xvec )
 {
    int ja = 0;
@@ -16,23 +252,23 @@ void US_AstfemMath::interpolate_C0( MfemInitial& C0, double* C1,
    double* radi = C0.radius       .data();
    double* conc = C0.concentration.data();
    int     rsiz = C0.radius       .size();
-   
+
    for ( int j = 0; j < xvec.size(); j++ )
    {
       int    i;
       double xs = x[ j ];
       double xc = xs + 1.e-12;
-      
+
       for ( i = ja; i < rsiz; i++ )
-         if ( radi[ i ] > xc ) break; 
-      
+         if ( radi[ i ] > xc ) break;
+
 
       if ( i == 0 )                  // x[j] < C0.radius[0]
          C1[ j ] = conc[ 0 ];        // Use the first value
-      
+
       else if ( i == rsiz )          // x[j] > last point in C0.radius[]
          C1[ j ] = conc[ i - 1 ];
-      
+
       else
       {
          double a = radi[ i - 1 ];
@@ -42,15 +278,15 @@ void US_AstfemMath::interpolate_C0( MfemInitial& C0, double* C1,
 
          ja      = i - 1;
 
-         C1[ j ] = conc[ ja ] * ( 1.0 - tmp ) + 
+         C1[ j ] = conc[ ja ] * ( 1.0 - tmp ) +
                    conc[ i  ] * tmp;
-         
+
       }
    }
 }
 
 // Original grid: C0, final grid: C1
-void US_AstfemMath::interpolate_C0( MfemInitial& C0, MfemInitial& C1 ) 
+void US_AstfemMath::interpolate_C0( MfemInitial& C0, MfemInitial& C1 )
 {
    int ja = 0;
    double* C0radi = C0.radius       .data();
@@ -65,14 +301,14 @@ void US_AstfemMath::interpolate_C0( MfemInitial& C0, MfemInitial& C1 )
       int   i;
       double xs = C1radi[ j ];
       double xc = xs + 1.e-12;
-      
+
       for ( i = ja; i < r0size; i++ )
-         if ( C0.radius[ i ] > xc )  break; 
-      
+         if ( C0.radius[ i ] > xc )  break;
+
 
       if ( i == 0 )                     // x[j] < C0.radius[0]
          C1conc[ j ] = C0conc[ 0 ];     // Use the first value
-      
+
       else if ( i == r0size )           // x[j] > last point in C0.radius[]
          C1conc[ j ] = C0conc[ i - 1 ];
 
@@ -82,9 +318,9 @@ void US_AstfemMath::interpolate_C0( MfemInitial& C0, MfemInitial& C1 )
 
          double a   = C0radi[ ja ];
          double b   = C0radi[ i  ];
-         
+
          double tmp = ( xs - a ) / ( b - a );
-         
+
          C1conc[ j ] = C0conc[ ja ] * ( 1.0 - tmp ) + C0conc[ i ] * tmp;
       }
    }
@@ -104,17 +340,17 @@ void US_AstfemMath::initialize_2d( int val1, int val2, double*** matrix )
    for ( int i = 0; i < val1; i++ )
    {
       (*matrix)[ i ] = new double [ val2 ];
-      
+
       for ( int j = 0; j < val2; j++ )
          (*matrix)[ i ][ j ] = 0.0;
-      
+
    }
 }
 
 void US_AstfemMath::clear_2d( int val1, double** matrix )
 {
    for ( int i = 0; i < val1; i++ ) delete [] matrix[i];
-   
+
    delete [] matrix;
 }
 
@@ -122,7 +358,7 @@ double US_AstfemMath::minval( const QVector< double >& value )
 {
    const double* avalue = value.data();
    double minimum = 1.0e300;
-   
+
    for ( int i = 0; i < value.size(); i++ )
       minimum = qMin( minimum, avalue[ i ] );
 
@@ -132,10 +368,10 @@ double US_AstfemMath::minval( const QVector< double >& value )
 double US_AstfemMath::minval( const QVector< US_Model::SimulationComponent >& value )
 {
    double minimum = 1.0e300;
-   
+
    for ( int i = 0; i < value.size(); i++ )
       minimum = min( minimum, value[ i ].s );
-   
+
    return minimum;
 }
 
@@ -143,10 +379,10 @@ double US_AstfemMath::maxval( const QVector< double >& value )
 {
    const double* avalue = value.data();
    double maximum = -1.0e300;
-   
+
    for ( int i = 0; i < value.size(); i++ )
       maximum = qMax( maximum, avalue[ i ]);
-  
+
    return maximum;
 }
 
@@ -156,11 +392,11 @@ double US_AstfemMath::maxval( const QVector< US_Model::SimulationComponent >& va
 
    for ( int i = 0; i < value.size(); i++ )
       maximum = max( maximum, value[ i ].s );
-   
+
    return maximum;
 }
 
-void US_AstfemMath::initialize_3d( 
+void US_AstfemMath::initialize_3d(
       int val1, int val2, int val3, double**** matrix )
 {
    *matrix = new double** [ val1 ];
@@ -168,11 +404,11 @@ void US_AstfemMath::initialize_3d(
    for ( int i = 0; i < val1; i++ )
    {
       (*matrix)[ i ] = new double *[ val2 ];
-      
+
       for ( int j = 0; j < val2; j++ )
       {
          (*matrix)[ i ][ j ] = new double [ val3 ];
-         
+
          for ( int k = 0; k < val3; k++ )
          {
             (*matrix)[ i ][ j ][ k ] = 0.0;
@@ -196,42 +432,46 @@ void US_AstfemMath::clear_3d( int val1, int val2, double*** matrix )
    delete [] matrix;
 }
 
-void US_AstfemMath::tridiag( double* a, double* b, double* c, 
+void US_AstfemMath::tridiag( double* a, double* b, double* c,
                              double* r, double* u, int N )
 {
    double bet = b[ 0 ];
 #ifdef NO_DB
+   // If used within mpi_analysis, avoid reallocating gamvec at each
+   //  call. Just reallocate if N has grown larger.
    static QVector< double > gamvec;
    static int Nsave = 0;
 
    if ( N > Nsave )
    {
-      Nsave = N;
-      gamvec.resize( N );
+      Nsave = ( N * 3 ) / 2;
+      gamvec.resize( Nsave );
    }
 #else
+   // If used by a desktop application, simply reallocate gamvec
+   //  at each call.
    QVector< double > gamvec( N );
 #endif
    double* gam = gamvec.data();
-   
-   if ( bet == 0.0 ) qDebug() << "Error 1 in tridiag";
+
+   if ( bet == 0.0 )  { qDebug() << "Error 1 in tridiag"; return; }
 
    u[ 0 ] = r[ 0 ] / bet;
-   
-   for ( int j = 1; j < N; j++ )
-   {
-      gam[ j ] = c[ j - 1 ] / bet;
-      bet = b[ j ] - a[ j ] * gam[ j ];
-      
-      if ( bet == 0.0 ) qDebug() << "Error 2 in tridiag";
 
-      u[ j ] = ( r[ j ] - a[ j ] * u[ j - 1 ] ) / bet;
+   for ( int jj = 1; jj < N; jj++ )
+   {
+      gam[ jj ] = c[ jj - 1 ] / bet;
+      bet       = b[ jj ] - a[ jj ] * gam[ jj ];
+
+      if ( bet == 0.0 )  { qDebug() << "Error 2 in tridiag"; return; }
+
+      u[ jj ]   = ( r[ jj ] - a[ jj ] * u[ jj - 1 ] ) / bet;
    }
 
    gam[ 0 ] = gam[ 1 ];
 
-   for ( int j = N - 2; j >= 0; j-- )
-      u[ j ] -= gam[ j + 1 ] * u[ j + 1 ];
+   for ( int jj = N - 1; jj >= 1; jj-- )
+      u[ jj - 1 ]  -= gam[ jj ] * u[ jj ];
 }
 
 //////////////////////////////////////////////////////////////////
@@ -242,6 +482,48 @@ void US_AstfemMath::tridiag( double* a, double* b, double* c,
 // with: a0<=0,  and  a1, a2>=0;
 //
 //////////////////////////////////////////////////////////////////
+
+double US_AstfemMath::cube_root( double a0, double a1, double a2 )
+{
+   double x;
+
+   long double Q = ( 3.0 * a1 - sq( a2 ) ) / 9.0;
+   long double S = ( 9.0 * a1 * a2 - 27.0 * a0 - 2.0 * pow( a2, 3.0 ) ) / 54.0;
+   long double D = pow( Q, 3.0 ) + sq( S );
+
+   if ( D < 0 )
+   {
+      double theta = acos( S / sqrt( pow( -Q, 3.0 ) ) );
+      x = 2.0 * sqrt( -Q ) * cos( theta / 3.0) ;
+   }
+   else
+   {
+      long double B;
+      long double Dc = sqrt( D );
+
+      if ( S + Dc < 0 )
+         B = - pow( - ( S + Dc ), 1.0 / 3.0 ) - pow( Dc - S, 1.0 / 3.0 );
+
+      else if (S - Dc < 0)
+         B = pow( S + Dc, 1.0 / 3.0) - pow( Dc - S, 1.0 / 3.0);
+
+      else
+         B = pow( S + Dc, 1.0 / 3.0 ) + pow( S - Dc, 1.0 / 3.0 );
+
+      long double Dc2 = -3.0 * (pow(B, 2.0) + 4 * Q);
+
+      if ( Dc2 > 0 )
+         x = max( B, 0.5 * ( -B + sqrt( Dc2 ) ) );
+      else
+         x = B;
+   }
+
+   x = x - a2 / 3.0;
+
+   return x;
+}
+
+#if 0
 double US_AstfemMath::cube_root( double a0, double a1, double a2 )
 {
    double x;
@@ -249,7 +531,7 @@ double US_AstfemMath::cube_root( double a0, double a1, double a2 )
    double Q = ( 3.0 * a1 - sq( a2 ) ) / 9.0;
    double S = ( 9.0 * a1 * a2 - 27.0 * a0 - 2.0 * pow( a2, 3.0 ) ) / 54.0;
    double D = pow( Q, 3.0 ) + sq( S );
-   
+
    if ( D < 0 )
    {
       double theta = acos( S / sqrt( pow( -Q, 3.0 ) ) );
@@ -259,28 +541,29 @@ double US_AstfemMath::cube_root( double a0, double a1, double a2 )
    {
       double B;
       double Dc = sqrt( D );
-      
+
       if ( S + Dc < 0 )
          B = - pow( - ( S + Dc ), 1.0 / 3.0 ) - pow( Dc - S, 1.0 / 3.0 );
-      
+
       else if (S - Dc < 0)
          B = pow( S + Dc, 1.0 / 3.0) - pow( Dc - S, 1.0 / 3.0);
-      
+
       else
          B = pow( S + Dc, 1.0 / 3.0 ) + pow( S - Dc, 1.0 / 3.0 );
-      
+
       double Dc2 = -3.0 * (pow(B, 2.0) + 4 * Q);
-      
+
       if ( Dc2 > 0 )
          x = max( B, 0.5 * ( -B + sqrt( Dc2 ) ) );
       else
          x = B;
    }
-   
+
    x = x - a2 / 3.0;
-   
+
    return x;
 }
+#endif
 
 //////////////////////////////////////////////////////////////////
 //
@@ -303,7 +586,7 @@ double US_AstfemMath::find_C1_mono_Nmer( int n, double K, double CT )
 
    for ( i = 1; i < MaxNumIt; i++ )
    {
-      x1 = ( K * ( n - 1.0 ) * pow( x0, (double)n ) + CT ) / 
+      x1 = ( K * ( n - 1.0 ) * pow( x0, (double)n ) + CT ) /
            ( 1.0 + K * n * pow( x0, n - 1.0 ) );
 
       if ( fabs( x1 - x0 ) / ( 1.0 + fabs( x1 ) ) < 1.e-12 ) break;
@@ -329,7 +612,7 @@ double US_AstfemMath::find_C1_mono_Nmer( int n, double K, double CT )
 
    for ( ii = 1; ii < MaxNumIt; ii++ )
    {
-      x1 = ( CT  + zKn1 * pow( x0, zn  ) ) / 
+      x1 = ( CT  + zKn1 * pow( x0, zn  ) ) /
            ( 1.0 + zKn  * pow( x0, zn1 ) );
 
       if ( ( qAbs( x1 - x0 ) / ( 1.0 + qAbs( x1 ) ) ) < 1.e-12 )
@@ -361,22 +644,22 @@ double US_AstfemMath::find_C1_mono_Nmer( int n, double K, double CT )
 int US_AstfemMath::GaussElim( int n, double** a, double* b )
 {
     // Elimination
-    for ( int i = 0; i < n; i++ ) 
+    for ( int i = 0; i < n; i++ )
     {
       // find the pivot
       double amax = fabs( a[ i ][ i ] );
       int    Imx  = i;
-      
-      for ( int ip = i + 1; ip < n; ip++ ) 
+
+      for ( int ip = i + 1; ip < n; ip++ )
       {
-        if ( fabs( a[ ip ][ i ] ) > amax ) 
+        if ( fabs( a[ ip ][ i ] ) > amax )
         {
           amax = fabs( a[ ip ][ i ]);
           Imx  = ip;
         }
       }
 
-      if ( amax == 0 ) 
+      if ( amax == 0 )
       {
         qDebug() << "Singular matrix in routine GaussElim";
         return -1;
@@ -385,29 +668,29 @@ int US_AstfemMath::GaussElim( int n, double** a, double* b )
       double tmp;
 
       // interchange i-th and Imx-th row
-      if ( Imx != i ) 
+      if ( Imx != i )
       {
-        double* ptmp = a[ i ]; 
-        a[ i ]       = a[ Imx ]; 
+        double* ptmp = a[ i ];
+        a[ i ]       = a[ Imx ];
         a[ Imx ]     = ptmp;
 
-        tmp          = b[ i ]; 
-        b[ i ]       = b[ Imx ]; 
+        tmp          = b[ i ];
+        b[ i ]       = b[ Imx ];
         b[ Imx ]     = tmp;
       }
 
       // Elimination
       tmp = a[ i ][ i ];
-      
+
       for ( int j = i; j < n; j++ ) a[ i ][ j ] /= tmp;
-      
+
       b[ i ] /= tmp;
-      
-      for ( int ip = i + 1; ip < n; ip++ ) 
+
+      for ( int ip = i + 1; ip < n; ip++ )
       {
         tmp = a[ ip ][ i ];
-        
-        for ( int j = i + 1; j < n; j++ ) 
+
+        for ( int j = i + 1; j < n; j++ )
            a[ ip ][ j ] -= tmp * a[ i ][ j ];
 
         b[ ip ] -= tmp * b[ i ];
@@ -415,14 +698,14 @@ int US_AstfemMath::GaussElim( int n, double** a, double* b )
     }
 
     // Backward substitution
-    for ( int i = n - 2; i >= 0; i-- ) 
+    for ( int i = n - 2; i >= 0; i-- )
       for ( int j = i + 1; j < n; j++ ) b[ i ] -= a[ i ][ j ] * b[ j ];
 
     return 1;
 }
 
 // Interpolation routine By B. Demeler 041708
-int US_AstfemMath::interpolate( MfemData& expdata, MfemData& simdata, 
+int US_AstfemMath::interpolate( MfemData& expdata, MfemData& simdata,
                                 bool      use_time )
 {
    // NOTE: *expdata has to be initialized to have the proper size
@@ -435,7 +718,7 @@ int US_AstfemMath::interpolate( MfemData& expdata, MfemData& simdata,
 
    // Iterate through all experimental data scans and find the first time point
    // in simdata that is higher or equal to each time point in expdata:
-
+//   int debug_level      = US_Settings::us_debug();
    int    fscan   = -1;
    int    lscan   = -1;
    int    escans  = expdata.scan.size();
@@ -454,16 +737,18 @@ int US_AstfemMath::interpolate( MfemData& expdata, MfemData& simdata,
          if ( fscan < 0  &&  e_time >= s_time )
             fscan      = expscan;
          if ( e_time > l_time  )
-         {
-            lscan      = expscan;
+         {  // Save scan upper limit (use scan count if close)
+//DbgLv(1) << "MATHi: l_time e_time" << l_time << e_time << "expscan" << expscan;
+            lscan      = ( expscan > ( escans - 5 ) ) ? escans : expscan;
             break;
          }
       }
-
-qDebug() << "MATHi: s_time e_time" << s_time << e_time
- << "fscan lscan" << fscan << lscan;
+//DbgLv(1) << "MATHi: s_time e_time" << s_time << e_time
+//         << "fscan lscan" << fscan << lscan <<"expscansize=" <<  escans << "simscansize="<< sscans;
       fscan         = ( fscan < 0 ) ?      0 : fscan;
-      lscan         = ( lscan < 0 ) ? escans : qMin( lscan, escans );
+      lscan         = ( lscan < 0 ) ? escans : lscan;
+//DbgLv(1) << "MATHi: s_time e_time" << s_time << e_time
+// << "fscan lscan" << fscan << lscan << "escans=" <<  escans << "sscans=" << sscans;
    }
    else // Use omega^2t integral for interpolation
    {
@@ -477,14 +762,14 @@ qDebug() << "MATHi: s_time e_time" << s_time << e_time
             fscan      = expscan;
          if ( e_omega > l_omega )
          {
-            lscan      = expscan;
+            lscan      = ( expscan > ( escans - 5 ) ) ? escans : expscan;
             break;
          }
       }
 
       fscan         = ( fscan < 0 ) ?      0 : fscan;
-      lscan         = ( lscan < 0 ) ? escans : qMin( lscan, escans );
-//qDebug() << "MATHi: s_omega l_omega" << s_omega << e_omega
+      lscan         = ( lscan < 0 ) ? escans : lscan;
+//DbgLv(1) << "MATHi: s_omega l_omega" << s_omega << e_omega
 // << "fscan lscan" << fscan << lscan;
    }
 
@@ -498,7 +783,7 @@ qDebug() << "MATHi: s_time e_time" << s_time << e_time
 }
 
 // Interpolation routine By B. Demeler 041708
-int US_AstfemMath::interpolate( MfemData& expdata, MfemData& simdata, 
+int US_AstfemMath::interpolate( MfemData& expdata, MfemData& simdata,
                                 bool      use_time, int fscan, int lscan )
 {
 //*TIMING*
@@ -524,12 +809,12 @@ int US_AstfemMath::interpolate( MfemData& expdata, MfemData& simdata,
 
    MfemData tmp_data;
    MfemScan tmp_scan;
-   
+
    tmp_data.scan  .clear();
    tmp_data.radius.clear();
    tmp_data.scan  .reserve( nescan );
    tmp_data.radius.reserve( nsconc );
-   
+
    // Fill tmp_data.radius with radius positions from the simdata array:
 
    for ( int ii = 0; ii < nsconc; ii++ )
@@ -570,9 +855,9 @@ int US_AstfemMath::interpolate( MfemData& expdata, MfemData& simdata,
             {  // Sim scan count has exceeded limit
                if ( sltime >= eftime )
                {  // Output a message if time ranges overlap
-                  qDebug() << "simulation time scan[" << simscan << "]: " 
+                  qDebug() << "simulation time scan[" << simscan << "]: "
                            << simdata.scan[ simscan - 1 ].time
-                           << ", expdata scan time[" << expscan << "]: " 
+                           << ", expdata scan time[" << expscan << "]: "
                            << expdata.scan[ expscan ].time;
 
                   qDebug() << "The simulated data does not cover the entire "
@@ -605,18 +890,20 @@ int US_AstfemMath::interpolate( MfemData& expdata, MfemData& simdata,
          {
             double a;
             double b;
-            tmp_scan.conc.clear();
-            tmp_scan.conc.reserve( nsconc );
-            
+            tmp_scan.conc.fill( 0.0, nsconc );
+            double* tsco  = tmp_scan.conc.data();
+            double* s1co  = sscan1->conc.data();
+            double* s2co  = sscan2->conc.data();
+
             // interpolate the concentration points:
             for ( int ii = 0; ii < nsconc; ii++ )
             {
-               a = ( sscan2->conc[ ii ] - sscan1->conc[ ii ] ) /
+               a = ( s2co[ ii ] - s1co[ ii ] ) /
                   ( s_time2 - s_time1 );
 
-               b = sscan2->conc[ ii ] - a * s_time2;
+               b = s2co[ ii ] - a * s_time2;
 
-               tmp_scan.conc << ( a * e_time + b );
+               tsco[ ii ] = ( a * e_time + b );
             }
 
             // interpolate the omega_square_t integral data:
@@ -625,7 +912,9 @@ int US_AstfemMath::interpolate( MfemData& expdata, MfemData& simdata,
 
             b = s_omega2 - a * s_time2;
 
-            escan->omega_s_t = a * e_time + b;
+            //escan->omega_s_t = a * e_time + b;
+            tmp_scan.time      = e_time;
+            tmp_scan.omega_s_t = a * e_time + b;
 
             tmp_data.scan << tmp_scan;
          }
@@ -641,7 +930,7 @@ int US_AstfemMath::interpolate( MfemData& expdata, MfemData& simdata,
 
          e_omega    = escan->omega_s_t;
          e_time     = escan->time;
-//qDebug() << "MATHi: somg eomg" << simdata.scan[simscan].omega_s_t << e_omega
+//DbgLv(1) << "MATHi: somg eomg" << simdata.scan[simscan].omega_s_t << e_omega
 // << " escn sscn" << expscan << simscan;
 
          while ( simdata.scan[ simscan ].omega_s_t < e_omega )
@@ -650,19 +939,19 @@ int US_AstfemMath::interpolate( MfemData& expdata, MfemData& simdata,
             // Make sure we don't overrun bounds:
             if ( simscan == (int) simdata.scan.size() )
             {
-               qDebug() << "simulation omega^2t scan[" << simscan << "]: " 
+               qDebug() << "simulation omega^2t scan[" << simscan << "]: "
                         << simdata.scan[ simscan - 1 ].omega_s_t
                         << ", expdata scan omega^2t[" << expscan << "]: "
                         << expdata.scan[ expscan ].omega_s_t;
-//qDebug() << "e_omega e_time" << e_omega << e_time;
+//DbgLv(1) << "e_omega e_time" << e_omega << e_time;
 //int lsc=expdata.scan.size()-1;
 //e_omega=expdata.scan[lsc].omega_s_t;
 //e_time=expdata.scan[lsc].time;
-//qDebug() << "e-lsc e_omega e_time" << lsc << e_omega << e_time;
+//DbgLv(1) << "e-lsc e_omega e_time" << lsc << e_omega << e_time;
 //lsc=simdata.scan.size()-1;
 //e_omega=simdata.scan[lsc].omega_s_t;
 //e_time=simdata.scan[lsc].time;
-//qDebug() << "s-lsc e_omega e_time" << lsc << e_omega << e_time;
+//DbgLv(1) << "s-lsc e_omega e_time" << lsc << e_omega << e_time;
                qDebug() << "The simulated data does not cover the entire "
                            "experimental time range and ends too early!\n"
                            "exiting...";
@@ -725,15 +1014,15 @@ int US_AstfemMath::interpolate( MfemData& expdata, MfemData& simdata,
 
    if ( tmp_data.radius[ 0 ] > expdata.radius[ 0 ] )
    {
-      qDebug() << "Radius comparison: " << tmp_data.radius[ 0 ] 
-               << " (simulated), " << expdata.radius[ 0 ] 
+      qDebug() << "Radius comparison: " << tmp_data.radius[ 0 ]
+               << " (simulated), " << expdata.radius[ 0 ]
                << " (experimental)";
 
-      qDebug() << "jj = " << 0 << ", simdata radius: " 
-               << tmp_data.radius[ 0 ] << ", expdata radius: " 
+      qDebug() << "jj = " << 0 << ", simdata radius: "
+               << tmp_data.radius[ 0 ] << ", expdata radius: "
                << expdata.radius[ 0 ];  // Changed from radius[ ii ]
                                          // ii out of scope
- 
+
       qDebug() << "The simulated data radial range does not include the "
                   "beginning of the experimental data's radii!\n"
                   "exiting...";
@@ -744,20 +1033,23 @@ int US_AstfemMath::interpolate( MfemData& expdata, MfemData& simdata,
       exit( -3 );
    }
 
-   int jj = 0;
+   int jj           = 0;
+   double* tdrad    = tmp_data.radius.data();
+   double* exrad    = expdata .radius.data();
+   int tdradsz      = tmp_data.radius.size();
 
    for ( int ii = 0; ii < neconc; ii++ )
    {
-      while ( tmp_data.radius[ jj ] < expdata.radius[ ii ] )
+      while ( tdrad[ jj ] < exrad[ ii ] )
       {
          jj++;
          // make sure we don't overrun bounds:
-         if ( jj == tmp_data.radius.size() )
+         if ( jj == tdradsz )
          {
             qDebug() << "The simulated data does not have enough "
                         "radial points and ends too early!\n"
                         "exiting...";
-//qDebug() << "jj ii szerad trad erad" << jj << ii << expdata.radius.size()
+//DbgLv(1) << "jj ii szerad trad erad" << jj << ii << expdata.radius.size()
 // << tmp_data.radius[jj-1] << expdata.radius[ii];
 #ifdef NO_DB
             //MPI_Abort( MPI_COMM_WORLD, -2 );
@@ -767,23 +1059,23 @@ int US_AstfemMath::interpolate( MfemData& expdata, MfemData& simdata,
       }
 
       // check to see if the radius is equal or larger:
-      if ( tmp_data.radius[ jj ] == expdata.radius[ ii ] )
+      if ( tdrad[ jj ] == exrad[ ii ] )
       { // they are the same, so simply update the concentration value:
          int    ee        = 0;
          for ( int expscan = fscan; expscan < lscan; expscan++ )
-            expdata.scan[ expscan ].conc[ ii ] += 
+            expdata.scan[ expscan ].conc[ ii ] +=
                              tmp_data.scan[ ee++ ].conc[ jj ];
       }
       else // interpolation is needed
       {
          int    ee        = 0;
          int    mm        = jj - 1;
-         double radius1   = tmp_data.radius[ mm ];
-         double radius2   = tmp_data.radius[ jj ];
-         double eradius   = expdata .radius[ ii ];
+         double radius1   = tdrad[ mm ];
+         double radius2   = tdrad[ jj ];
+         double eradius   = exrad[ ii ];
          double radrange  = radius2 - radius1;
-//qDebug() << "MATHi:  esize jj" << expdata.scan.size() << jj;
-//qDebug() << "MATHi:   r1 r2 er rr" << radius1 << radius2 << eradius << radrange
+//DbgLv(1) << "MATHi:  esize jj" << expdata.scan.size() << jj;
+//DbgLv(1) << "MATHi:   r1 r2 er rr" << radius1 << radius2 << eradius << radrange
 // << "fscan lscan" << fscan << lscan;
 
          for ( int expscan = fscan; expscan < lscan; expscan++ )
@@ -791,9 +1083,9 @@ int US_AstfemMath::interpolate( MfemData& expdata, MfemData& simdata,
             MfemScan* tscan = &tmp_data.scan[ ee++ ];
 
             double a = ( tscan->conc[ jj ] - tscan->conc[ mm ] ) / radrange;
-            
+
             double b = tscan->conc[ jj ] - a * radius2;
-            
+
             expdata.scan[ expscan ].conc[ ii ] += ( a * eradius + b );
          }
       }
@@ -802,7 +1094,7 @@ int US_AstfemMath::interpolate( MfemData& expdata, MfemData& simdata,
 //QDateTime tEnd=QDateTime::currentDateTime();
 //ncall++;
 //totMs+=tStart.msecsTo(tEnd);
-//if ((ncall%100)==1) qDebug() << "interpolate() calls time-ms" << ncall << totMs;
+//if ((ncall%100)==1) DbgLv(1) << "interpolate() calls time-ms" << ncall << totMs;
 //*TIMING*
    return 0;
 }
@@ -843,41 +1135,41 @@ void US_AstfemMath::QuadSolver( double* ai, double* bi, double* ci,
    for ( int i = 1; i <= N - 2; i++ )
    {
       double tmp = ca[ i ] / cb[ i - 1 ];
-      
+
       cb[ i ] = cb[ i ] -cc [ i - 1] * tmp;
       cc[ i ] = cc[ i ] -cd [ i - 1] * tmp;
       cr[ i ] = cr[ i ] -cr [ i - 1] * tmp;
    }
-   
+
    int   i   = N - 1;
    double tmp = ca[ i ] / cb[ i - 1 ];
-      
+
    cb[ i]  = cb[ i ] - cc[ i - 1 ] * tmp;
    cr[ i ] = cr[ i ] - cr[ i - 1 ] * tmp;
 
    solu[ N - 1 ] =   cr[ N - 1 ]                                / cb[ N - 1 ];
    solu[ N - 2 ] = ( cr[ N - 2 ] - cc[ N - 2 ] * solu[ N - 1] ) / cb[ N - 2 ];
-   
+
    i = N - 2;
    do
    {
       i--;
-      solu[ i ] = (   cr[ i ] 
-                    - cc[ i ] * solu[ i + 1 ] 
-                    - cd[ i ] * solu[ i + 2 ] ) / 
+      solu[ i ] = (   cr[ i ]
+                    - cc[ i ] * solu[ i + 1 ]
+                    - cd[ i ] * solu[ i + 2 ] ) /
                   cb[ i ];
-   
+
    } while ( i != 0 );
 }
 
-// old version: perform integration on supp(test function) separately 
+// old version: perform integration on supp(test function) separately
 // on left Q and right T
 
-void US_AstfemMath::IntQT1( double* vx, double D, double sw2, 
+void US_AstfemMath::IntQT1( double* vx, double D, double sw2,
                             double** Stif, double dt )
 {
    // element to define basis functions
-  
+
    int npts, i, k;
    double x_gauss, y_gauss, dval;
    double hh, slope, xn1, phiC, phiCx;
@@ -1017,7 +1309,7 @@ void US_AstfemMath::IntQT1( double* vx, double D, double sw2,
    clear_2d( 4, StifR );
 }
 
-void US_AstfemMath::IntQTm( double* vx, double D, double sw2, 
+void US_AstfemMath::IntQTm( double* vx, double D, double sw2,
                             double** Stif, double dt )
 {
    // element to define basis functions
@@ -1053,7 +1345,7 @@ void US_AstfemMath::IntQTm( double* vx, double D, double sw2,
    Cx[ 1 ] = vx[ 7 ];
    Cx[ 2 ] = vx[ 4 ];
    Cx[ 3 ] = vx[ 3 ];
- 
+
    Rx[ 0 ] = vx[ 1 ];      // vertices of Q on right
    Rx[ 1 ] = vx[ 2 ];
    Rx[ 2 ] = vx[ 5 ];
@@ -1188,7 +1480,7 @@ void US_AstfemMath::IntQTm( double* vx, double D, double sw2,
 }
 
 
-void US_AstfemMath::IntQTn2( double* vx, double D, double sw2, 
+void US_AstfemMath::IntQTn2( double* vx, double D, double sw2,
                              double** Stif, double dt )
 {
    // element to define basis functions
@@ -1359,7 +1651,7 @@ void US_AstfemMath::IntQTn2( double* vx, double D, double sw2,
    clear_2d( 4, StifR );
 }
 
-void US_AstfemMath::IntQTn1( double* vx, double D, double sw2, 
+void US_AstfemMath::IntQTn1( double* vx, double D, double sw2,
                              double** Stif, double dt )
 {
    // element to define basis functions
@@ -1409,9 +1701,9 @@ void US_AstfemMath::IntQTn1( double* vx, double D, double sw2,
       DJac    = 2.0 * AreaT( Tx, Ty );
 
       if ( DJac < 1.e-22 ) break;
-      
+
       // find phi, phi_x, phi_y on R and C at (x,y)
-      
+
 
       BasisTR( Lx, Ly, x_gauss, y_gauss, phiL, phiLx, phiLy );
 
@@ -1438,7 +1730,7 @@ void US_AstfemMath::DefineFkp( int npts, double** Lam )
 {
    // source: http://people.scs.fsu.edu/~burkardt/datasets/
    //                   quadrature_rules_tri/quadrature_rules_tri.html
-   
+
    switch ( npts )
    {
       case 12:
@@ -1485,7 +1777,7 @@ void US_AstfemMath::DefineFkp( int npts, double** Lam )
          break;
       }
       case 28:
-      // TOMS612_28, order 28, degree of precision 11, 
+      // TOMS612_28, order 28, degree of precision 11,
       // a rule from ACM TOMS algorithm #612
       {
          Lam[  0 ][ 0 ] = 0.33333333333333333;
@@ -1705,7 +1997,7 @@ void US_AstfemMath::DefineFkp( int npts, double** Lam )
    {
       Lam[ i ][ 2 ]  = 1. - Lam[ i ][ 0 ] - Lam[ i ][ 1 ];
       // To make the sum( wt ) = 0.5 = area of standard elem
-      Lam[ i ][ 3 ] /= 2.;   
+      Lam[ i ][ 3 ] /= 2.;
    }
 }
 
@@ -1719,7 +2011,7 @@ double US_AstfemMath::AreaT( double* xv, double* yv )
 
 // Computer basis on standard element
 
-void US_AstfemMath::BasisTS( double xi, double et, double* phi, 
+void US_AstfemMath::BasisTS( double xi, double et, double* phi,
                              double* phi1, double* phi2 )
 {
    //function [phi, phi1, phi2] = BasisTS(xi,et)
@@ -1739,7 +2031,7 @@ void US_AstfemMath::BasisTS( double xi, double et, double* phi,
 
 // Computer basis on standard element
 
-void US_AstfemMath::BasisQS( double xi, double et, double* phi, 
+void US_AstfemMath::BasisQS( double xi, double et, double* phi,
                              double* phi1, double* phi2 )
 {
 
@@ -1768,7 +2060,7 @@ void US_AstfemMath::BasisTR( double* vx, double* vy,
       double xs, double ys, double* phi, double* phix, double* phiy )
 {
    // find (xi,et) corresponding to (xs, ts)
-   
+
    int i;
    double tempv1[ 3 ], tempv2[ 3 ];
 
@@ -2096,13 +2388,13 @@ struct _created_matrices {
 
 static list <_created_matrices> created_matrices;
 
-void init_matrices_alloc() 
+void init_matrices_alloc()
 {
   created_matrices.clear();
   puts( "init_matrices_alloc()" );
 }
 
-void list_matrices_alloc() 
+void list_matrices_alloc()
 {
   if ( created_matrices.size() )
   {
@@ -2121,9 +2413,9 @@ static list<_created_matrices>::iterator find_matrices_alloc( long addr )
 {
    list<_created_matrices>::iterator Li;
 
-   for ( Li = created_matrices.begin(); Li != created_matrices.end(); Li++ ) 
+   for ( Li = created_matrices.begin(); Li != created_matrices.end(); Li++ )
    {
-      if ( Li->addr == addr ) 
+      if ( Li->addr == addr )
       {
          return Li;
       }

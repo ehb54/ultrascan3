@@ -345,8 +345,9 @@ class US_MPI_Analysis : public QObject
     int      low_working_depth ( void );
     void     cache_result      ( Result& );
     void     process_solutes   ( int&, int&, QVector< US_Solute >& );
-    void     dset_matrices     ( int, int,
-                                 QVector< double >&, QVector< double >& );
+    void     dset_matrices     ( int, int*,
+                                 QVector< double >&, QVector< double >&,
+                                 QVector< int >& );
     void     update_outputs    ( bool = false );
     US_Model::AnalysisType model_type( const QString );
 

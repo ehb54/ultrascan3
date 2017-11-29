@@ -3,7 +3,7 @@
 
 #include "us_extern.h"
 #include "us_simparms.h"
-#include "us_simparams.h"
+#include "us_sim_params_gui.h"
 #include "us_widgets.h"
 #include "us_help.h"
 #include "us_simparms.h"

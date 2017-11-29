@@ -106,12 +106,17 @@ class US_Edit : public US_Widgets
       QLabel*            lb_rpms;
       QLabel*            lb_triple;
       QLabel*            lb_baseline;
+      QLabel*            lb_plateau;
+      QLabel*            lb_dataStart;
+      QLabel*            lb_meniscus;
 
       QLineEdit*         le_investigator;
       QLineEdit*         le_info;
       QLineEdit*         le_meniscus;
       QLineEdit*         le_airGap;
       QLineEdit*         le_dataRange;
+      QLineEdit*         le_dataStart;
+      QLineEdit*         le_dataEnd;
       QLineEdit*         le_plateau;
       QLineEdit*         le_baseline;
       QLineEdit*         le_edtrsp;
@@ -126,6 +131,7 @@ class US_Edit : public US_Widgets
       QPushButton*       pb_meniscus;
       QPushButton*       pb_airGap;
       QPushButton*       pb_dataRange;
+      QPushButton*       pb_dataEnd;
       QPushButton*       pb_plateau;
       QPushButton*       pb_noise;
       QPushButton*       pb_spikes;
@@ -134,7 +140,8 @@ class US_Edit : public US_Widgets
       QPushButton*       pb_residuals;
       QPushButton*       pb_priorEdits;
       QPushButton*       pb_reviewep;
-      QPushButton*       pb_nexttrip;
+      QPushButton*       pb_nexteqtr;
+      QPushButton*       pb_nextChan;
       QPushButton*       pb_float;
       QPushButton*       pb_undo;
 
@@ -323,6 +330,7 @@ class US_Edit : public US_Widgets
       void reset             ( void );
       void reset_triple      ( void );
       void reset_outData     ( void );
+      void close_edit        ( void );
       void help              ( void )
       { showHelp.show_help( "manual/us_edit.html" ); };
 };

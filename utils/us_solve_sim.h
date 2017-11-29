@@ -110,8 +110,10 @@ class US_UTIL_EXTERN US_SolveSim : public QObject
     //! \param padAB          Optional flag to pad saved A and B
     //! \param ASave          Optional pointer for saving A matrix
     //! \param BSave          Optional pointer for saving B matrix
+    //! \param NSave          Optional pointer for saving norm vector
     void calc_residuals( int, int, Simulation&, bool = false,
-                         QVector< double >* = 0, QVector< double >*  = 0 );
+                         QVector< double >* = 0, QVector< double >*  = 0,
+                         QVector< double >* = 0 );
 
     //! \brief Set a flag so that the worker aborts at the earliest opportunity
     void abort_work    ( void );
@@ -206,6 +208,11 @@ class US_UTIL_EXTERN US_SolveSim : public QObject
 
     // Output a debug print of time for a labelled event
     void DebugTime         ( QString );
+
+    double angle_vectors( QVector<double>&, QVector<double>&, int );
+    double angle_vectors( double*, double*, int );
+
+
 };
 #endif
 

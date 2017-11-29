@@ -38,6 +38,7 @@ void US_MPI_Analysis::parse( const QString& xmlfile )
          if ( xml.name() == "dataset" )
          {
             US_SolveSim::DataSet* d = new US_SolveSim::DataSet;
+            d->tmst_file   = QString("");
             parse_dataset( xml, d );
 
             if ( parameters.contains( "CG_model" ) )
@@ -434,9 +435,10 @@ void US_MPI_Analysis::parse_files( QXmlStreamReader& xml, DATASET* dataset )
          QString              type     = xml.name().toString();
          QString              filename = a.value( "filename" ).toString();
 
-         if ( type == "auc"   ) dataset->auc_file   = filename;
-         if ( type == "edit"  ) dataset->edit_file  = filename;
-         if ( type == "noise" ) dataset->noise_files << filename;
+         if ( type == "auc"   )      dataset->auc_file   = filename;
+         if ( type == "edit"  )      dataset->edit_file  = filename;
+         if ( type == "noise" )      dataset->noise_files << filename;
+         if ( type == "timestate" )  dataset->tmst_file  = filename;
       }
    }
 

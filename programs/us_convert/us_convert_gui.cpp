@@ -26,6 +26,8 @@
 #include "us_util.h"
 #include "us_images.h"
 #include "us_tmst_plot.h"
+#include "us_astfem_math.h"
+
 #if QT_VERSION < 0x050000
 #define setSamples(a,b,c)  setData(a,b,c)
 #define setMinimum(a)      setMinValue(a)
@@ -772,7 +774,7 @@ DbgLv(1) << "CGui:iM: import_data";
                 "All duplicate triples were skipped." ) );
       isMwl       = true;
    }
-         
+
    if ( !isMwl )
    {  // Return immediately if there were MWL import problems
       qApp->processEvents();
@@ -979,14 +981,10 @@ DbgLv(1) << "rTS: NON_EXIST:" << tmst_fnamei;
 void US_ConvertGui::enableControls( void )
 {
    if ( allData.size() == 0 )
-     {
-       qDebug() << "In enableControls: just RESET" ;
-       reset();
-     }
+      reset();
 
    else
    {
-      qDebug() << "In enableControls: DO IT" ;
 DbgLv(1) << "CGui: enabCtl: have-data" << allData.size() << all_tripinfo.size();
       // Ok to enable some buttons now
       pb_showTmst    ->setEnabled( ! tmst_fnamei.isEmpty() );
@@ -1609,7 +1607,7 @@ DbgLv(1) << "CGui: ldUS3Dk: fromIOD: sz(trinfo)" << all_tripinfo.count()
       all_chaninfo[ ii ].centerpiece  = cCenterpiece;
       all_chaninfo[ ii ].solution     = cSolution;
 DbgLv(1) << "CGui:     chan trip" << ii << idax
-   << "centp sol" << cCenterpiece << cSolution.solutionGUID;
+ << "centp sol" << cCenterpiece << cSolution.solutionGUID;
    }
 
    if ( isMwl )
@@ -1972,7 +1970,6 @@ DbgLv(0) << "CGui: updSol: dax" << idax
    QApplication::restoreOverrideCursor();
 
    enableControls();
-   qDebug() << "Inside Solution Info Update in us_convert: ";
 }
 
 void US_ConvertGui::cancelSolutionInfo( void )
@@ -2022,7 +2019,7 @@ void US_ConvertGui::tripleApplyAll( void )
 // Slot to handle click of Show TimeState
 void US_ConvertGui::showTimeState( void )
 {
-DbgLv(1) << "shTmSt: TS fpath" << tmst_fnamei;
+DbgLv(1) << "showTimeState: Time State file path" << tmst_fnamei;
    US_TmstPlot* tsdiag = new US_TmstPlot( this, tmst_fnamei );
 
    tsdiag->exec();
@@ -2795,8 +2792,8 @@ void US_ConvertGui::cancel_reference( void )
 
          if ( wvoff < 0 )
          {
-            qDebug() << "Triple " << out_triples[ ii ]
-               << "has NO CORRESPONDING RI PROFILE POINT!!!";
+DbgLv(1) << "Triple " << out_triples[ ii ]
+ << "has NO CORRESPONDING RI PROFILE POINT!!!";
             wvoff        = 0;
             QMessageBox::information( this,
               tr( "Error" ),
@@ -3001,16 +2998,21 @@ void US_ConvertGui::saveUS3( void )
 DbgLv(1) << "SV: ExpData.expType" << ExpData.expType << "is_buoy" << is_buoy
  << "is_cali" << is_cali;
 DbgLv(1) << "SV: nspeeds,itrips,otrips" << nspeeds << nitrips << notrips;
-DbgLv(1) << "SV:  speeds" << speeds;
 
    if ( nspeeds < 2  ||  notrips != kotrips  ||  is_buoy  ||  is_cali )
    {  // For single-speed data, save current triples
       //  and also save single run if Buoyancy or Calibration experiment type
       if ( disk_controls->db() )
+      {
          saveUS3DB();          // Save AUCs to disk then DB
-
+         writeTimeStateDisk(); // Get TimeState in results
+         writeTimeStateDB();   // Save TimeState to database
+      }
       else
+      {
          saveUS3Disk();        // Save AUCs to disk
+         writeTimeStateDisk(); // Save TimeState to disk
+      }
    }
 
    else
@@ -3028,14 +3030,16 @@ DbgLv(1) << "SV:  speeds" << speeds;
       QVector< US_DataIO::RawData > oriData = allData;  // Save original data
       QVector< double > oriRIPro = ExpData.RIProfile;   // Save original RI Pro
       int     nripro    = ExpData.RIProfile.count();
-if(nripro>(-2)) return;
+DbgLv(1) << "nspeeds=" << nspeeds << "nripro=" << nripro;
+//if(nripro>(-2)) return;
       uchar uuid[ 16 ];
 //      saveStatus        = NOT_SAVED;
 
       for ( int spx = 0; spx < nspeeds; spx++ )
       {
          int ispeed        = speeds[ spx ];
-         runID             = runIDbase + QString::number( ispeed );
+DbgLv(1) << "us_convert: ispeed=" << ispeed << "spx=" << spx << "nspeeds=" << nspeeds;
+         runID             = runIDbase + QString().sprintf( "%05d", ispeed );
          double speed      = (double)ispeed;
          ExpData.runID     = runID;
          ExpData.expGUID.clear();
@@ -3072,17 +3076,26 @@ DbgLv(1) << "SV:    trx" << trx << "scans" << allData[ trx ].scanData.count();
             memcpy( (unsigned char*)out_tripinfo[ trx ].tripleGUID, uuid, 16 );
             memcpy( (unsigned char*)allData     [ trx ].rawGUID   , uuid, 16 );
             outData[ trx ]    = &allData[ trx ];
-         }
+         }// End of 'trx' loop
 
          // Save the triples of the current speed-run
          if ( disk_controls->db() )
-            saveUS3DB();       // Save AUCs to disk then DB
-
+         {
+            saveUS3DB();          // Save AUCs to disk then DB
+            writeTimeStateDisk(); // Get TimeState in results
+            writeTimeStateDB();   // Save TimeState to database
+DbgLv(1) << "Writing to database";
+         }
          else
-            saveUS3Disk();     // Save AUCs to disk
-      }
-   }
+         {
+            saveUS3Disk();        // Save AUCs to disk
+            writeTimeStateDisk(); // Save TimeState to disk
+DbgLv(1) << "Writing to disk";
+         }
+      } // End of 'spx' for loop (counts for each speed step)
+   } // End of 'else' loop for multispeed case
 
+// x  x  x  x  x
    QMessageBox::information( this,
        tr( "Save is Complete" ),
        tr( "The save of all data and reports is complete." ) );
@@ -3136,7 +3149,7 @@ int US_ConvertGui::saveUS3Disk( void )
    // Write the data
    le_status->setText( tr( "Saving data to disk ..." ) );
    qApp->processEvents();
-   bool saveGUIDs = saveStatus != NOT_SAVED ;
+   bool saveGUIDs = saveStatus != NOT_SAVED;
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor ) );
 
    status = US_Convert::saveToDisk( outData, out_tripinfo, allExcludes,
@@ -3284,7 +3297,7 @@ DbgLv(1) << "SV:   NO saveRIDisk : runType" << runType;
 
    for ( int ii = 0; ii < rmvfiles.size(); ii++ )
       if ( ! d.remove( rmvfiles[ ii ] ) )
-         qDebug() << "Unable to remove file" << rmvfiles[ ii ];
+DbgLv(1) << "Unable to remove file" << rmvfiles[ ii ];
 
    for ( int ii = 0; ii < out_tripinfo.size(); ii++ )
    {
@@ -3385,7 +3398,7 @@ DbgLv(1) << "DBSv:     tripleGUID       "
    qApp->processEvents();
 
    int status = US_ConvertIO::checkDiskData( ExpData, out_tripinfo, &db );
-
+DbgLv(1) << "Status from SaveUs3DB" << status;
    // Save a flag for need to repeat the disk write later
    bool repeat_disk = ( status == US_DB2::NO_RAWDATA );
 
@@ -3437,6 +3450,8 @@ DbgLv(1) << "DBSv:     dset tripleID    " << out_tripinfo[0].tripleID;
 DbgLv(1) << "DBSv:  (2)dset tripleID    " << out_tripinfo[0].tripleID;
 
    status = saveUS3Disk();
+DbgLv(1) << "DBSv: Status after saveUS3Disk()" << status;
+
    if ( status != US_Convert::OK )
       return;
 DbgLv(1) << "DBSv:  local files saved";
@@ -4046,10 +4061,10 @@ void US_ConvertGui::plot_all( void )
          {
             // For some reason vv[jj] is going off the scale
             // Don't know why, but filter out for now
-//if(jj<5 || (jj+5)>kcpoint)
-            qDebug() << "(rr, vv) = ( " << rr[jj] << ", " << vv[jj] << ")"
-               << " (minR, maxR) = ( " << minR << ", " << maxR << ")" << endl
-               << " (minV, maxV) = ( " << minV << ", " << maxV << ")" << endl;
+            if ( jj < 5  ||  ( jj + 5 ) > kcpoint )
+               qDebug() << "(rr, vv) = ( " << rr[jj] << ", " << vv[jj] << ")"
+                        << " (minR, maxR) = ( " << minR << ", " << maxR << ")" << endl
+                        << " (minV, maxV) = ( " << minV << ", " << maxV << ")" << endl;
             continue;
          }
 
@@ -4676,14 +4691,13 @@ DbgLv(1) << "CGui: BOD: allsz" << allData.size() << "outsz" << outData.size();
       out_tripinfo << *tripinfo;
       out_triples  << triple;
 
-//      if ( ! out_channels.contains( celchn ) )
-      if ( ! isMwl  ||  ! out_channels.contains( celchn ) )
+      if ( !isMwl  ||  ! out_channels.contains( celchn ) )
       {
          out_channels << celchn;
          out_chaninfo << *tripinfo;
          out_chandatx << outx;
       }
-DbgLv(1) << "CGui: BOD:   trx" << trx << "add to out" << outx << triple;
+DbgLv(1) << "CGui: BOD:  trx" << trx << "add to out" << outx << triple;
 
       outx++;
    }
@@ -4745,24 +4759,37 @@ DbgLv(1) << "cS: trx nspeed notrips" << nspeed << notrips;
       *pNotrips      = notrips;         // Return number of output triples
 
    return nspeed;                       // Return number of unique speeds
+DbgLv(1) << "No of speeds from US_CONVERT=" << nspeed;
 }
-
+//------------------------------------------------
 // Function to write TimeState files to local disk
+//------------------------------------------------
 int US_ConvertGui::writeTimeStateDisk()
 {
    US_TimeState timestate;
    QString tmst_fbase   = runID + ".time_state.tmst";
    QString defs_fbase   = runID + ".time_state.xml";
-   QString tmst_fdir    = currentDir;
+   QDir     writeDir( US_Settings::resultDir() ); // Writes timestate to results directory
+   QString  dirname     = writeDir.absolutePath() + "/" + runID + "/";
+
+   //QString tmst_fdir    = currentDir;
+   QString tmst_fdir    = dirname;
+
+
    if ( tmst_fdir.right( 1 ) != "/" )   tmst_fdir + "/";
    QString tmst_fname   = tmst_fdir + tmst_fbase;
    QString defs_fname   = tmst_fdir + defs_fbase;
    QString defs_fnamei  = QString( tmst_fnamei ).section( ".", 0, -2 ) + ".xml";
    int     nspeed       = speedsteps.size();
-   int     ssx          = 0;
    QVector< double > rrpms;
    int     nmscans      = isMwl ? mwl_data.raw_speeds( rrpms ) : 0;
-DbgLv(1) << "wTS: nspeed" << nspeed << "tmst_fname" << tmst_fname;
+
+//   QDir     writeDir( US_Settings::resultDir() );
+//   QString  dirname = writeDir.absolutePath() + "/" + runID + "/";
+
+DbgLv(1) << "wTS: runid=" << runID << " Current directory=" << currentDir
+ << "Time state file name=" << tmst_fname
+ << "tmst_fnamei" << tmst_fnamei << "nspeed" << nspeed;
 
    // Determine if TimeState of right character already exists
    if ( ! tmst_fnamei.isEmpty() )
@@ -4781,7 +4808,7 @@ DbgLv(1) << "wTS: TMST file exists:" << tmst_fnamei;
       if ( tmst_fnamei == tmst_fname  &&  defs_fnamei == defs_fname )
       {  // Same paths,  so we are done
 DbgLv(1) << "wTS: existing TMST in run directory - NO UPDATE.";
-         return ntimes;
+         //return ntimes;
       }
 
       // See if all file characteristics match what is now needed
@@ -4843,64 +4870,19 @@ DbgLv(1) << "wTS:  DELETE from RESULTS";
    }
 else
 DbgLv(1) << "wTS: EMPTY: tmst_fnamei";
- 
-   // Create a new TMST
-   if ( timestate.open_write_data( tmst_fname, 0.0, 0.0 ) != 0 )
-   {
-      QMessageBox::critical( this,
-         tr( "Unwritable TimeState File" ),
-         tr( "   Unable to write the Time State file\n\"%1\"\n"
-             "   in directory\n\"%2\".\n\nCheck directory permissions." )
-         .arg( tmst_fbase ).arg( tmst_fdir ) );
-      resetAll();
-      return 0;
-   }
-
-   timestate.set_key( "Time",        "F4" );
-   timestate.set_key( "RawSpeed",    "I4" );
-   timestate.set_key( "SetSpeed",    "I4" );
-   timestate.set_key( "Omega2T",     "F4" );
-   timestate.set_key( "Temperature", "F4" );
-   timestate.set_key( "Scan",        "I2" );
 
    US_DataIO::RawData* rdata    = outData[ 0 ];
-DbgLv(1) << "wTS:   nscan" << rdata->scanData.size();
 
-   for ( int sc = 0; sc < rdata->scanData.size(); sc++ )
-   {
-      US_DataIO::Scan* scan = &rdata->scanData[ sc ];
-      int    scan_nbr   = sc + 1;
-      double sctime     = scan->seconds;
-      double raw_speed  = ( sc < nmscans ) ? rrpms[ sc ] : scan->rpm;
-      int    set_speed  = qRound( raw_speed / 100.0 ) * 100;
-      if ( nspeed > 0 )
-      {
-         while( sctime > speedsteps[ ssx ].time_last  &&  ssx < (nspeed - 1) )
-            ssx++;
-         set_speed      = speedsteps[ ssx ].set_speed <= 0 ? set_speed
-                        : speedsteps[ ssx ].set_speed;
-      }
-DbgLv(1) << "wTS:    sc snbr" << sc << scan_nbr << "set_speed" << set_speed
- << "raw_speed" << raw_speed;
+   simparams.speed_step        = speedsteps;
 
-      timestate.set_value( "Time",        sctime            );
-      timestate.set_value( "RawSpeed",    raw_speed         );
-      timestate.set_value( "SetSpeed",    set_speed         );
-      timestate.set_value( "Omega2T",     scan->omega2t     );
-      timestate.set_value( "Temperature", scan->temperature );
-      timestate.set_value( "Scan",        scan_nbr          );
+   simparams.sim  = ( rdata->channel == 'S' );
+   int n_times    = US_AstfemMath::writetimestate( tmst_fname, simparams, *rdata );
 
-      timestate.flush_record();
-   }
-
-   // Complete write of TMST and DEFS files
-   timestate.close_write_data();
-   timestate.write_defs();
+DbgLv(1) << "number of times in file" << n_times;
    // Flag destination file as the input file (in case we re-enter)
+   QFile::copy( tmst_fnamei, tmst_fname );
    tmst_fnamei  = tmst_fname;
-DbgLv(1) << "wTS: ntimes" << timestate.time_count();
-
-   return timestate.time_count();
+   return n_times;
 }
 
 // Function to write TimeState files to the database
@@ -4915,14 +4897,14 @@ int US_ConvertGui::writeTimeStateDB()
 DbgLv(1) << "wTSdb: connect" << db.lastErrno() << db.lastError();
       return -99;
    }
-DbgLv(1) << "wTSdb: connect" << db.lastErrno() << db.lastError();
+//DbgLv(1) << "wTSdb: connect" << db.lastErrno() << db.lastError();
 
    QString tmst_fbase   = runID + ".time_state.tmst";
    QString tmst_fdir    = ( QString( currentDir ).right( 1 ) == "/" )
                         ? currentDir : currentDir + "/";
    QString tmst_fname   = tmst_fdir + tmst_fbase;
    QString tmst_cksm    = US_Util::md5sum_file( tmst_fname );
-DbgLv(1) << "wTSdb: fname " << tmst_fname << "cksm" << tmst_cksm;
+DbgLv(1) << "wTSdb: fname " << tmst_fname << "cksm" << tmst_cksm<< "fbase" << tmst_fbase;
 
    // Create a new TimeState DB record, if need be. If one already exists,
    //  it may be updated or it may be deleted and recreated.
@@ -4945,7 +4927,7 @@ DbgLv(1) << "wTSdb:  examine status" << status << "cksum-db" << cksum;
 DbgLv(1) << "wTSdb:   upload status" << status;
       }
    }
-
+DbgLv(1) << "wTSdb:  Timestate from DB is used";
    return status;
 }
 

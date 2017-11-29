@@ -652,10 +652,13 @@ void US_ExperimentGui::setOperatorList( void )
 // Function to change the current instrument
 void US_ExperimentGui::change_instrument( int )
 {
-   // First time through here the combo box might not be displayed yet
-   expInfo.instrumentID = ( cb_instrument->getLogicalID() == -1 )
-                          ? expInfo.instrumentID
-                          : cb_instrument->getLogicalID();
+   // First time through here the combo boxes might not be displayed yet
+   expInfo.instrumentID  = ( cb_instrument->getLogicalID() == -1 )
+                           ? expInfo.instrumentID
+                           : cb_instrument->getLogicalID();
+   expInfo.operatorID    = ( cb_operator->getLogicalID() == -1 )
+                           ? expInfo.operatorID
+                           : cb_operator->getLogicalID();
 
    // Save other elements on the page too
    expInfo.label         = le_label   ->text();
