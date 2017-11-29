@@ -18,6 +18,7 @@
 #include "us_analyte.h"
 #include "qwt_plot_marker.h"
 #include "us_analysis_base2.h"
+#include "us_show_norm.h"
 
 #ifndef DbgLv
 #define DbgLv(a) if(dbg_level>=a)qDebug()
@@ -47,9 +48,10 @@ class US_2dsa : public US_AnalysisBase2
       US_Model*                   mw_model();
       US_Noise*                   mw_ti_noise();
       US_Noise*                   mw_ri_noise();
+      QVector<double>*            mw_Anorm() ;
       QPointer< QTextEdit >       mw_status_text();
       int*                        mw_base_rss();
-
+      QString temp_Id_name() ;
    private:
       QGridLayout*         progressLayout;
 
@@ -57,17 +59,19 @@ class US_2dsa : public US_AnalysisBase2
 
       SS_DATASET           dset;
 
-      QList< SS_DATASET* >            dsets;
+      QList< SS_DATASET* >       dsets;
 
-      QVector< SP_SPEEDPROFILE >      speed_steps;
+      QVector< SP_SPEEDPROFILE > speed_steps;
+      QVector< double >          normvA  ;
 
-      US_DataIO::EditedData*          edata;
-      US_DataIO::RawData              sdata;
-      US_DataIO::RawData              rdata;
+      US_DataIO::EditedData*     edata;
+      US_DataIO::RawData         sdata;
+      US_DataIO::RawData         rdata;
 
-      QPointer< US_ResidPlot2D >      resplotd;
-      QPointer< US_PlotControl2D >    eplotcd;
+      QPointer< US_ResidPlot2D >        resplotd;
+      QPointer< US_PlotControl2D >      eplotcd;
       QPointer< US_AnalysisControl2D >  analcd;
+      QPointer< US_show_norm >          analcd1;
 
       US_Model             model;
       US_Noise             ri_noise_in;
@@ -89,6 +93,7 @@ class US_2dsa : public US_AnalysisBase2
       QPushButton*         pb_fitcntl;
       QPushButton*         pb_plt3d;
       QPushButton*         pb_pltres;
+      QPushButton*         pb_shownorm;
 
       bool                 loadDB;
       bool                 exp_steps;

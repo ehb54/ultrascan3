@@ -44,11 +44,11 @@ void US_MPI_Analysis::_2dsa_master( void )
       }
 
       // All done with the pass if no jobs are ready or running
-      if ( job_queue.isEmpty()  &&  ! worker_status.contains( WORKING ) ) 
+      if ( job_queue.isEmpty()  &&  ! worker_status.contains( WORKING ) )
       {
          US_DataIO::EditedData* edata = &data_sets[ current_dataset ]->run_data;
          QString tripleID = edata->cell + edata->channel + edata->wavelength;
-         QString progress = 
+         QString progress =
             "Iteration: "    + QString::number( iterations );
 
          if ( datasets_to_process > 1 )
@@ -120,10 +120,10 @@ DbgLv(1) << " master loop-BOT: GF job_queue empty" << job_queue.isEmpty();
          else
             write_output();
 
-         // Fit meniscus 
+         // Fit meniscus
          if ( ( meniscus_run + 1 ) < meniscus_values.size() )
          {
-            set_meniscus(); 
+            set_meniscus();
          }
 
          if ( ! job_queue.isEmpty() ) continue;
@@ -133,7 +133,7 @@ DbgLv(1) << " master loop-BOT: GF job_queue empty" << job_queue.isEmpty();
          {  // Recompute final fit to get simulation and residual
             mc_iteration++;
             wksim_vals           = simulation_values;
-            wksim_vals.solutes   = calculated_solutes[ max_depth ]; 
+            wksim_vals.solutes   = calculated_solutes[ max_depth ];
 
             calc_residuals( 0, data_sets.size(), wksim_vals );
 
@@ -227,8 +227,8 @@ DbgLv(1) << " master loop-BOT:      wkst1 wkstn" << worker_status[1]
       int        sizes[ 4 ];
       MPI_Status status;
 
-      MPI_Recv( sizes, 
-                4, 
+      MPI_Recv( sizes,
+                4,
                 MPI_INT,
                 MPI_ANY_SOURCE,
                 MPI_ANY_TAG,
@@ -293,13 +293,13 @@ DbgLv(0) << "DEBUG_LEVEL" << simulation_values.dbg_level;
 
       if ( parameters.contains( "s_grid_points"   ) )
          s_pts   = parameters[ "s_grid_points"   ].toDouble();
- 
+
       else if ( parameters.contains( "s_resolution"    ) )
          s_pts   = parameters[ "s_resolution"    ].toDouble() * grid_reps;
- 
+
       if ( parameters.contains( "ff0_grid_points" ) )
          ff0_pts = parameters[ "ff0_grid_points" ].toDouble();
- 
+
       else if ( parameters.contains( "ff0_resolution"  ) )
          ff0_pts = parameters[ "ff0_resolution"  ].toDouble() * grid_reps;
 
@@ -393,7 +393,7 @@ void US_MPI_Analysis::global_fit( void )
    //  5. Do an additional run against the combined datasets for the baseline
    // Any additional Monte Carlo iterations will use the adjusted data for
    // all data sets.
-   
+
    double concentration = 0.0;
    US_Model::AnalysisType mdl_type = model_type( analysis_type );
 
@@ -487,7 +487,7 @@ DbgLv(0) << "ScaledData sum" << dsum << "iSum" << isum << "concen" << concentrat
    if ( mdl_type != US_Model::PCSA )
       dset_calc_solutes << calculated_solutes[ max_depth ];
    current_dataset++;
-   
+
    if ( current_dataset >= count_datasets )
    {  // If all datasets have been scaled, do all datasets from now on
       datasets_to_process = count_datasets;
@@ -644,10 +644,10 @@ DbgLv(1) << "sMC:   variation  sum min max" << varisum << varimin << varimax
 DbgLv(1) << "sMC: MPI send   my_workers" << my_workers;
    for ( int worker = 1; worker <= my_workers; worker++ )
    {
-      MPI_Send( &newdata, 
-          sizeof( MPI_Job ), 
+      MPI_Send( &newdata,
+          sizeof( MPI_Job ),
           MPI_BYTE,
-          worker,   
+          worker,
           MPI_Job::MASTER,
           my_communicator );
    }
@@ -657,10 +657,10 @@ DbgLv(1) << "sMC: MPI Barrier";
    MPI_Barrier( my_communicator );
 
 DbgLv(1) << "sMC: MPI Bcast";
-   MPI_Bcast( mc_data.data(), 
-              ds_points, 
-              MPI_DOUBLE, 
-              MPI_Job::MASTER, 
+   MPI_Bcast( mc_data.data(),
+              ds_points,
+              MPI_DOUBLE,
+              MPI_Job::MASTER,
               my_communicator );
 
    fill_queue();
@@ -730,37 +730,82 @@ void US_MPI_Analysis::iterate( void )
 {
    // Just return if the number of iterations exceeds the max
    // or if the last two iterations converged and are essentially identical
-   if ( ++iterations > max_iterations ) return;
+   if ( ++iterations > max_iterations )
+   {
+      qDebug() << "++ Maximum refinement iterations has been reached:" << max_iterations;
+      return;
+   }
 
-   double diff  = qAbs( simulation_values.variance - previous_values.variance );
+   double diff  = simulation_values.variance - previous_values.variance;
+   double adiff = qAbs( diff );
    bool   ssame = false;
+   int hiters   = max_iterations / 2;
 
    if ( iterations > 2 )
    {
-      if ( diff < min_variance_improvement )  return;
+      if ( diff > 0.0   &&  iterations > hiters )
+      {  // Variance is getting worse
+         iterations  -= 2;
+         simulation_values = previous_values;
+         simulation_values.solutes   = previous_values.solutes;
+         simulation_values.variances = previous_values.variances;
+         simulation_values.ti_noise  = previous_values.ti_noise;
+         simulation_values.ri_noise  = previous_values.ri_noise;
+         qDebug() << "++ Refinement iteration degrading" << diff
+                  << ". Reverting to iteration" << iterations;
+         return;
+      }
+
+      if ( adiff < min_variance_improvement )
+      {
+         qDebug() << "++ Refinement iteration improvement near-zero:" << adiff;
+         return;
+      }
 
       int    nsols = previous_values.solutes.size();
 
       if ( nsols == simulation_values.solutes.size() )
       {
-         ssame   = true;
+         ssame        = true;
 
          for ( int jj = 0; jj < nsols; jj++ )
          {
             if ( previous_values.solutes[ jj ] != simulation_values.solutes[ jj ] )
             {  // Mismatch:  may need to iterate
-               ssame    = false;
+               ssame        = false;
                break;
+            }
+
+            else
+            {  // Test if concentrations are almost the same
+               double pconc = previous_values.solutes[ jj ].c;
+               double cconc = simulation_values.solutes[ jj ].c;
+               double cdiff = qAbs( ( pconc - cconc ) / pconc );
+
+               if ( cdiff > 1.0e-1 )  // Greater than 10% concentration diff?
+               {  // Significant concentration mismatch:  may need to iterate
+                  ssame        = false;
+                  break;
+               }
             }
          }
       }
    }
 
-   if ( ssame )  return;  // Solutes same as previous:  no more iterations
+   if ( ssame )
+   { // Solutes same as previous:  no more iterations
+      qDebug() << "++ Refinement iteration solutes same as previous:"
+               << previous_values.solutes.size()
+               << simulation_values.solutes.size();
+      return;
+   }
 
-   // Save the most recent variance for the next time
-   previous_values.variance = simulation_values.variance;
-   previous_values.solutes  = simulation_values.solutes;
+   // Save the most recent simulation values for the next time
+   previous_values.variance  = simulation_values.variance;
+   previous_values.solutes   = simulation_values.solutes;
+   previous_values.variances = simulation_values.variances;
+   previous_values.ti_noise  = simulation_values.ti_noise;
+   previous_values.ri_noise  = simulation_values.ri_noise;
 
    // Set up for another round at depth 0
    Sa_Job job;
@@ -805,7 +850,7 @@ void US_MPI_Analysis::iterate( void )
 void US_MPI_Analysis::submit( Sa_Job& job, int worker )
 {
    job.mpi_job.command        = MPI_Job::PROCESS;
-   job.mpi_job.length         = job.solutes.size(); 
+   job.mpi_job.length         = job.solutes.size();
    job.mpi_job.meniscus_value = meniscus_value;
    job.mpi_job.solution       = mc_iteration;
    job.mpi_job.dataset_offset = current_dataset;
@@ -815,15 +860,15 @@ if (dd==0) { DbgLv(1) << "Mast: submit: worker" << worker << "  sols"
  << job.mpi_job.length << "mciter cds" << mc_iteration << current_dataset << " depth" << dd; }
 else { DbgLv(1) << "Mast: submit:     worker" << worker << "  sols"
  << job.mpi_job.length << "mciter cds" << mc_iteration << current_dataset << " depth" << dd; }
-DbgLv(1) << "Mast: submit: len sol offs cnt" 
+DbgLv(1) << "Mast: submit: len sol offs cnt"
  << job.mpi_job.length
  << job.mpi_job.solution
  << job.mpi_job.dataset_offset
  << job.mpi_job.dataset_count;
 
    // Tell worker that solutes are coming
-   MPI_Send( &job.mpi_job, 
-       sizeof( MPI_Job ), 
+   MPI_Send( &job.mpi_job,
+       sizeof( MPI_Job ),
        MPI_BYTE,
        worker,      // Send to system that needs work
        MPI_Job::MASTER,
@@ -831,8 +876,8 @@ DbgLv(1) << "Mast: submit: len sol offs cnt"
 DbgLv(1) << "Mast: submit: send #1";
 
    // Send solutes
-   MPI_Send( job.solutes.data(), 
-       job.mpi_job.length * solute_doubles, 
+   MPI_Send( job.solutes.data(),
+       job.mpi_job.length * solute_doubles,
        MPI_DOUBLE,   // Pass solute vector as hw independent values
        worker,       // to worker
        MPI_Job::MASTER,
@@ -849,7 +894,7 @@ void US_MPI_Analysis::add_to_queue( Sa_Job& job )
    {
       if ( jdepth < job_queue[ qq ].mpi_job.depth )
       { // Insert this job before any with a greater depth
-         job_queue.insert( qq, job ); 
+         job_queue.insert( qq, job );
          return;
       }
    }
@@ -860,7 +905,7 @@ void US_MPI_Analysis::add_to_queue( Sa_Job& job )
 }
 
 // Process the results from a just-completed worker task
-void US_MPI_Analysis::process_results( int        worker, 
+void US_MPI_Analysis::process_results( int        worker,
                                        const int* size )
 {
    simulation_values.solutes.resize( size[ 0 ] );
@@ -888,7 +933,7 @@ void US_MPI_Analysis::process_results( int        worker,
              MPI_Job::TAG0,
              my_communicator,
              &status );
-   
+
    MPI_Recv( simulation_values.variances.data(),
              datasets_to_process,
              MPI_DOUBLE,
@@ -914,7 +959,7 @@ void US_MPI_Analysis::process_results( int        worker,
              &status );
 
    worker_status[ worker ] = INIT;
-   int depth       = worker_depth[ worker ];   
+   int depth       = worker_depth[ worker ];
 
 if (depth == 0) { DbgLv(1) << "Mast:  process_results: worker" << worker
  << " solsize" << size[0] << "depth" << depth; }
@@ -957,7 +1002,7 @@ else { DbgLv(1) << "Mast:  process_results:      worker" << worker
        process_solutes( depth, worker, result.solutes );
     }
 }
- 
+
 // Process the calculated solute vector from a job result
 void US_MPI_Analysis::process_solutes( int& depth, int& worker,
                                        QVector< US_Solute >& result_solutes )
@@ -1009,7 +1054,7 @@ DbgLv(1) << "Mast:    NEW max_exp_size" << max_experiment_size
    // below the current one, if there is nothing in the queue or working
    // for that depth or below and there are calculated solutes left, those
    // tasks need to be submitted.
- 
+
    int dcheck = depth;
    if ( depth == 0  &&  max_depth > 0 )  dcheck = 1;
 

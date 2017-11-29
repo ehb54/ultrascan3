@@ -121,7 +121,7 @@ private:
       QVector< int >             tkdepths;   // task packet depths
 
       QVector< double >          sigmas;     // monte carlo sigma variations
-
+      QVector< double >          normv;      // norm values for A columns
       QList< double >            itvaris;    // iteration variances
 
       QList< QVector< US_Solute > > c_solutes;  // calculated solutes
@@ -141,7 +141,7 @@ private:
 
       US_Noise                   ti_noise;   // time-invariant noise
       US_Noise                   ri_noise;   // radially-invariant noise
-
+      
       US_SimulationParameters*   simparms;   // simulation parameters
 
       QObject*   parentw;      // parent object

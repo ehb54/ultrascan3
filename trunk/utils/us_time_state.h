@@ -120,7 +120,7 @@ class US_UTIL_EXTERN US_TimeState : public QObject
       //! \brief Read the next or a specified data record.
       //! \param rtimex Time index of record to read (or -1 for "next").
       //! \return       Status flag (0->OK).
-      int read_record( int = -1 );
+      int read_record( const int = -1 );
 
       //! \brief Get a time integer value for a given key from the current
       //!        record.
@@ -194,6 +194,13 @@ class US_UTIL_EXTERN US_TimeState : public QObject
       //! \param fpath   Full path to local file from which to upload
       //! \return        Status of action (US_DB2::OK,...)
       static int dbUpload  ( US_DB2*, const int, const QString );
+
+      //! \brief Static function to sync TMST from DB to local file
+      //! \param dbP     Pointer to opened DB connection
+      //! \param fpath   Full path to local file to possibly create
+      //! \param expID   The experiment ID of timestate to examine
+      //! \return        Flag if new file was created
+      static bool dbSyncToLF( US_DB2*, const QString, const int );
 
    private:
 
@@ -271,4 +278,5 @@ class US_UTIL_EXTERN US_TimeState : public QObject
       int    key_parameters( const QString, int*, int*, int* );
 };
 #endif
+
 

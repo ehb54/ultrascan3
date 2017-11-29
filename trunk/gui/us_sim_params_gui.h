@@ -1,28 +1,29 @@
-//! \file us_simulationparameters.h
-#ifndef US_SIMULATIONPARAMETERS_GUI_H
-#define US_SIMULATIONPARAMETERS_GUI_H
+//! \file us_sim_params_gui.h
+#ifndef US_SIMPARAMS_GUI_H
+#define US_SIMPARAMS_GUI_H
 
 #include "us_widgets_dialog.h"
+#include "us_extern.h"
 #include "us_simparms.h"
 #include "us_help.h"
 
 #include <qwt_counter.h>
 
 //! \brief A window for editing simulation parameters
-class US_SimulationParametersGui : public US_WidgetsDialog
+class US_GUI_EXTERN US_SimParamsGui : public US_WidgetsDialog
 {
 	Q_OBJECT
 	public:
       //! \param params Location for simulation parameters to be updated
-		US_SimulationParametersGui( US_SimulationParameters& );
+		US_SimParamsGui( US_SimulationParameters& );
 
    signals:
       void complete( void );
 
-	private:
+   private:
 
-		US_SimulationParameters& simparams;
-		US_SimulationParameters  simparams_backup;
+      US_SimulationParameters& simparams;
+      US_SimulationParameters  simparams_backup;
       
       US_Help       showhelp;
                    
@@ -85,10 +86,14 @@ class US_SimulationParametersGui : public US_WidgetsDialog
          { simparams.band_volume = lamella / 1000.0; };
 
       void update_meniscus      ( double meniscus )
-         { simparams.meniscus    = meniscus; };
+         { double rad_precis  = simparams.radial_resolution * 0.1;
+           simparams.meniscus = qRound( meniscus / rad_precis )
+                                * rad_precis; };
 
       void update_bottom        ( double bottom )
-         { simparams.bottom      = bottom;
+         { double rad_precis  = simparams.radial_resolution * 0.1;
+           simparams.bottom   = qRound( bottom / rad_precis )
+                                * rad_precis;
            simparams.bottom_position = bottom; };
 
       void update_simpoints     ( double simpoints )

@@ -819,6 +819,10 @@ qDebug() << "US:NOTE: mrev(2)" << mrev;
       {
         msg              = msg.replace( "revision 3.3", "revision 3.5" );
       }
+      if ( type == "warn"  &&  msg.contains( "revision 3.5" ) )
+      {
+        msg              = msg.replace( "revision 3.5", "revision 4.0" );
+      }
 #endif
       types << type;
       revs  << mrev;

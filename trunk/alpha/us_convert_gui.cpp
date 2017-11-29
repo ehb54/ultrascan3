@@ -4871,72 +4871,15 @@ DbgLv(1) << "wTS:  DELETE from RESULTS";
 else
 DbgLv(1) << "wTS: EMPTY: tmst_fnamei";
 
-#if 0
-   // Create a new TMST
-   if ( timestate.open_write_data( tmst_fname, 0.0, 0.0 ) != 0 )
-   {
-      QMessageBox::critical( this,
-         tr( "Unwritable TimeState File" ),
-         tr( "   Unable to write the Time State file\n\"%1\"\n"
-             "   in directory\n\"%2\".\n\nCheck directory permissions." )
-         .arg( tmst_fbase ).arg( tmst_fdir ) );
-      resetAll();
-      return 0;
-   }
-
-   timestate.set_key( "Time",        "F4" );
-   timestate.set_key( "Step",    "I2" );
-   timestate.set_key( "RawSpeed",    "I4" );
-   timestate.set_key( "SetSpeed",    "I4" );
-   timestate.set_key( "Omega2T",     "F4" );
-   timestate.set_key( "Temperature", "F4" );
-   timestate.set_key( "Scan",        "I2" );
-#endif
    US_DataIO::RawData* rdata    = outData[ 0 ];
-#if 0
-   int nssp       = speedsteps.count();
-   if ( nssp > 0 )
-   {  for ( int i = 0; i < nssp; i++ )
-      {   int stm1   = speedsteps[ i ].time_first;
-          int stm2   = speedsteps[ i ].time_last;
-           edata      = &dataList[ 0 ];
-           int lesc   = edata->scanCount() - 1;
-           int etm1 = edata->scanData[ 0 ].seconds;
-           int etm2   = edata->scanData[ lesc ].seconds;
-           for ( int ds = 0; ds < ntriples; ds++ )
-           {   // Scan data time ranges and compare to experiment speed steps
-              edata      = &dataList[ ds ];
-              int lesc   = edata->scanCount() - 1;
-              int etm1 = edata->scanData[ 0 ].seconds;
-              int etm2   = edata->scanData[ lesc ].seconds;
-              if ( etm1 < stm1  ||  etm2 > stm2 )
-              {
-DbgLv(1) << "Data is beyond range";
-                    break;
-              }
-           }
-      }
-   }
-#endif
 
    simparams.speed_step        = speedsteps;
 
-
-   //simparams.initFromData( disk_controls->db(), *rdata, dat_s );
-
    simparams.sim  = ( rdata->channel == 'S' );
    int n_times    = US_AstfemMath::writetimestate( tmst_fname, simparams, *rdata );
-   //timestate.flush_record();
-   //timestate.close_write_data();
-   //timestate.write_defs();
-   //simparams.simSpeedsFromTimeState( tmst_fname);
-//DbgLv(1) << "Timestate from us_Astfem_sim: ntimes" << timestate.time_count();
-   // return timestate.time_count();
 
 DbgLv(1) << "number of times in file" << n_times;
-//--------------------------------------------------------
    // Flag destination file as the input file (in case we re-enter)
-   //tmst_fnamei  = tmst_fname;
    QFile::copy( tmst_fnamei, tmst_fname );
    tmst_fnamei  = tmst_fname;
    return n_times;

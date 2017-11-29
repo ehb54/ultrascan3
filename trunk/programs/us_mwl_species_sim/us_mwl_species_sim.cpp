@@ -20,11 +20,9 @@
 #define setMinimum(a)      setMinValue(a)
 #define setMaximum(a)      setMaxValue(a)
 #define setSymbol(a)       setSymbol(*a)
-#define AXISSCALEDIV(a)    data_plot->axisScaleDiv(a)
 #define dPlotClearAll(a) a->clear()
 #else
 #include "qwt_picker_machine.h"
-#define AXISSCALEDIV(a)    (QwtScaleDiv*)&data_plot->axisScaleDiv(a)
 #define dPlotClearAll(a) a->detachItems(QwtPlotItem::Rtti_PlotItem,true)
 #endif
 
@@ -201,7 +199,6 @@ DbgLv(1) << "PlotData1:  tripx" << tripx;
    data_plot1->setTitle( header );
    data_plot1->setAxisTitle( QwtPlot::yLeft,   tr( "Optical Density" ) );
    data_plot1->setAxisTitle( QwtPlot::xBottom, tr( "Radius (cm) "    ) );
-//   data_plot1->setAxisAutoScale( QwtPlot::yLeft   );
    data_plot1->setAxisScale    ( QwtPlot::yLeft, 0.0, mtconcs[ tripx ] * 2.0 );
    data_plot1->setAxisAutoScale( QwtPlot::xBottom );
 
@@ -402,13 +399,12 @@ DbgLv(1) << "SLOT: sim_params";
 // Set simulation parameter as selected in the simparams dialog
 void US_MwlSpeciesSim::set_parameters( void )
 {
+   double rad_precis          = simparams.radial_resolution * 0.1;
    simparams                  = working_simparams;
    simparams.meniscus         = qRound( simparams.meniscus
-                                / simparams.radial_resolution )
-                                * simparams.radial_resolution;
+                                / rad_precis ) * rad_precis;
    simparams.bottom_position  = qRound( simparams.bottom_position
-                                / simparams.radial_resolution )
-                                * simparams.radial_resolution;
+                                / rad_precis ) * rad_precis;
    simparams.bottom           = simparams.bottom_position;
 
    double delay        = simparams.speed_step[ 0 ].delay_hours * 3600.0

@@ -2,18 +2,33 @@
 #ifndef US_ANALYSIS_CTL_H
 #define US_ANALYSIS_CTL_H
 
+#include <QApplication>
 #include "us_extern.h"
 #include "us_widgets_dialog.h"
 #include "us_2dsa_process.h"
+#include "us_worker_calcnorm.h"
 #include "us_plot.h"
 #include "us_help.h"
+#include "us_plot.h"
+#include "us_colorgradIO.h"
+#include "us_spectrodata.h"
+#include "qwt_plot_marker.h"
+#include "qwt_plot_spectrogram.h"
+#include "qwt_plot_layout.h"
+#include "qwt_plot_zoomer.h"
+#include "qwt_plot_panner.h"
+#include "qwt_scale_widget.h"
+#include "qwt_scale_draw.h"
+#include "qwt_color_map.h"
+#include "us_show_norm.h"
+
+#define PA_TMDIS_MS 0
 
 #ifndef SS_DATASET
 #define SS_DATASET US_SolveSim::DataSet
 #endif
 
 //! \brief A class to provide a window with 2DSA analysis controls
-
 class US_AnalysisControl2D : public US_WidgetsDialog
 {
    Q_OBJECT
@@ -24,15 +39,23 @@ class US_AnalysisControl2D : public US_WidgetsDialog
       //! \param loadDB  Flag for whether loads are from DB
       //! \param p       Pointer to the parent of this widget
       US_AnalysisControl2D( QList< SS_DATASET* >&, bool&, QWidget* p = 0 );
+      enum attr_type { ATTR_S, ATTR_K, ATTR_W, ATTR_V, ATTR_D, ATTR_F };
+      US_Model  model2 ;
+      //void calculate_norms( US_Model& ) ;
+      void set_comp_attr     ( US_Model::SimulationComponent&,
+                             US_Solute&, int );
 
    public slots:
       void update_progress (  int  );
       void completed_process( int  );
       void progress_message(  QString, bool = true );
       void reset_steps(       int,     int );
+      void norm_progress(     int  );
+      void norm_complete( WorkerThreadCalcNorm* );
 
    private:
       QList< SS_DATASET* >&            dsets;
+      US_Model                         cusmodel;
 
       bool&         loadDB;
 
@@ -42,6 +65,9 @@ class US_AnalysisControl2D : public US_WidgetsDialog
       int           grtype;
       int           baserss;
       int           memneed;
+      int           normstep;
+      int           kthrdr;
+      int           nsolutes;
 
       QHBoxLayout*  mainLayout;
       QGridLayout*  controlsLayout;
@@ -53,9 +79,11 @@ class US_AnalysisControl2D : public US_WidgetsDialog
       US_Model*                        model;
       US_Noise*                        ri_noise;
       US_Noise*                        ti_noise;
+      QVector< double >                normvA;
       US_SimulationParameters*         sparms;
       QPointer< QTextEdit    >         mw_stattext;
       int*                             mw_baserss;
+      QPointer< US_show_norm >         analcd1;
 
       QWidget*                         parentw;
       US_2dsaProcess*                  processor;
@@ -83,6 +111,7 @@ class US_AnalysisControl2D : public US_WidgetsDialog
       QwtCounter*   ct_nbrclips;
       QwtCounter*   ct_mciters;
       QwtCounter*   ct_iters;
+      QwtCounter*   ct_tol;
       QwtCounter*   ct_constff0;
 
       QCheckBox*    ck_tinoise;
@@ -97,6 +126,8 @@ class US_AnalysisControl2D : public US_WidgetsDialog
       QCheckBox*    ck_mcarlo;
       QCheckBox*    ck_iters;
       QCheckBox*    ck_varvbar;
+      QCheckBox*    ck_norm;
+
 
       QLineEdit*    le_estmemory;
       QLineEdit*    le_iteration;
@@ -119,6 +150,7 @@ class US_AnalysisControl2D : public US_WidgetsDialog
 
    private slots:
       void optimize_options( void );
+      void calculate_norms ( void );
       void uncheck_optimize( int  );
       void checkUniGrid (    bool );
       void checkCusGrid (    bool );
@@ -143,7 +175,6 @@ class US_AnalysisControl2D : public US_WidgetsDialog
       void advanced(         void );
       void load_model(       void );
       int  memory_check(     void );
-
       void help     ( void )
       { showHelp.show_help( "2dsa_analys.html" ); };
 };

@@ -35,6 +35,9 @@
 #define DbgLv(a) if(dbg_level>=a)qDebug()
 #endif
 
+#define _RNGLEFT_OFFSET_ 0.03
+#define _PLATEAU_OFFSET_ 0.1
+
 //! \brief Main program for US_Edit. Loads translators and starts
 //!        the class US_FitMeniscus.
 
@@ -232,6 +235,7 @@ lambdas << "250" << "350" << "450" << "550" << "580" << "583" << "650";
    // Meniscus
    pb_meniscus    = us_pushbutton( tr( "Specify Meniscus" ), false );
    le_meniscus    = us_lineedit( "", 1 );
+   lb_meniscus    = us_label(      tr( "Meniscus:" ), -1 );
 
    // Air Gap (hidden by default)
    pb_airGap = us_pushbutton( tr( "Specify Air Gap" ), false );
@@ -242,13 +246,30 @@ lambdas << "250" << "350" << "450" << "550" << "580" << "583" << "650";
    // Data range
    pb_dataRange   = us_pushbutton( tr( "Specify Data Range" ), false );
    le_dataRange   = us_lineedit( "", 1, true );
+pb_dataRange->setVisible(false);
+le_dataRange->setVisible(false);
    // Plateau
    pb_plateau     = us_pushbutton( tr( "Specify Plateau" ), false );
+pb_plateau->setVisible(false);
    le_plateau     = us_lineedit( "", 1, true );
    // Baseline
    lb_baseline    = us_label(      tr( "Baseline:" ), -1 );
    le_baseline    = us_lineedit( "", 1, true );
 
+//*NEW STUFF
+//QLabel* 
+   lb_dataStart   = us_label(      tr( "Data Start:" ), -1 );
+//QLineEdit* 
+   le_dataStart   = us_lineedit( "", 1, true );
+//QPushButton* 
+   pb_dataEnd     = us_pushbutton( tr( "Specify Range/End:" ), false );
+//QLineEdit* 
+   le_dataEnd     = us_lineedit( "", 1, false );
+//QLabel* 
+   lb_plateau     = us_label(      tr( "Plateau:" ), -1 );
+//QPushButton* 
+   pb_nextChan    = us_pushbutton( tr( "Next Channel" ), false );
+//*NEW STUFF
    // OD Limit
    lb_odlim       = us_label( tr( "OD Limit:" ), -1 );
    odlimit        = 1.8;
@@ -268,9 +289,9 @@ lambdas << "250" << "350" << "450" << "550" << "580" << "583" << "650";
 
    // Review, Next Triple, Float, Save, Save-all
    pb_reviewep    = us_pushbutton( tr( "Review Edit Profile" ),       false );
-   pb_nexttrip    = us_pushbutton( tr( "Next Triple" ),               false );
+   pb_nexteqtr    = us_pushbutton( tr( "Next Eq. Triple" ),           false );
    pb_reviewep->setVisible( false );
-   pb_nexttrip->setVisible( false );
+   pb_nexteqtr->setVisible( false );
    pb_float       = us_pushbutton( tr( "Mark Data as Floating" ),     false );
    pb_write       = us_pushbutton( tr( "Save Current Edit Profile" ), false );
    lo_writemwl    = us_checkbox  ( tr( "Save to all Wavelengths" ),
@@ -289,8 +310,9 @@ lambdas << "250" << "350" << "450" << "550" << "580" << "583" << "650";
    connect( pb_include,      SIGNAL( clicked() ), SLOT( include()       ) );
    connect( pb_meniscus,     SIGNAL( clicked() ), SLOT( set_meniscus()  ) );
    connect( pb_airGap,       SIGNAL( clicked() ), SLOT( set_airGap()    ) );
-   connect( pb_dataRange,    SIGNAL( clicked() ), SLOT( set_dataRange() ) );
-   connect( pb_plateau,      SIGNAL( clicked() ), SLOT( set_plateau()   ) );
+//   connect( pb_dataRange,    SIGNAL( clicked() ), SLOT( set_dataRange() ) );
+//   connect( pb_plateau,      SIGNAL( clicked() ), SLOT( set_plateau()   ) );
+   connect( pb_dataEnd,      SIGNAL( clicked() ), SLOT( set_dataRange() ) );
    connect( ct_odlim,        SIGNAL( valueChanged   ( double ) ),
                              SLOT  ( od_radius_limit( double ) ) );
    connect( pb_noise,        SIGNAL( clicked() ), SLOT( noise() ) );
@@ -301,7 +323,8 @@ lambdas << "250" << "350" << "450" << "550" << "580" << "583" << "650";
    connect( pb_priorEdits,   SIGNAL( clicked() ), SLOT( apply_prior()   ) );
    connect( pb_undo,         SIGNAL( clicked() ), SLOT( undo()      ) );
    connect( pb_reviewep,     SIGNAL( clicked() ), SLOT( review_edits()  ) );
-   connect( pb_nexttrip,     SIGNAL( clicked() ), SLOT( next_triple()   ) );
+   connect( pb_nexteqtr,     SIGNAL( clicked() ), SLOT( next_triple()   ) );
+   connect( pb_nextChan,     SIGNAL( clicked() ), SLOT( next_triple()   ) );
    connect( pb_float,        SIGNAL( clicked() ), SLOT( floating()  ) );
    connect( pb_write,        SIGNAL( clicked() ), SLOT( write()     ) );
 
@@ -314,7 +337,11 @@ lambdas << "250" << "350" << "450" << "550" << "580" << "583" << "650";
    specs->addWidget( pb_details,      s_row,   2, 1, 2 );
    specs->addWidget( pb_report,       s_row++, 4, 1, 2 );
    specs->addWidget( lb_triple,       s_row,   0, 1, 3 );
-   specs->addWidget( cb_triple,       s_row++, 3, 1, 3 );
+//   specs->addWidget( cb_triple,       s_row++, 3, 1, 3 );
+//*NEW STUFF
+   specs->addWidget( cb_triple,       s_row,   3, 1, 2 );
+   specs->addWidget( pb_nextChan,     s_row++, 5, 1, 1 );
+//*NEW STUFF
    specs->addWidget( lb_rpms,         s_row,   0, 1, 3 );
    specs->addWidget( cb_rpms,         s_row++, 3, 1, 3 );
    specs->addWidget( lb_gaps,         s_row,   0, 1, 3 );
@@ -350,16 +377,31 @@ lambdas << "250" << "350" << "450" << "550" << "580" << "583" << "650";
    specs->addWidget( lb_edit,         s_row++, 0, 1, 6 );
    specs->addWidget( lb_edtrsp,       s_row,   0, 1, 3 );
    specs->addWidget( le_edtrsp,       s_row++, 3, 1, 3 );
-   specs->addWidget( pb_meniscus,     s_row,   0, 1, 3 );
-   specs->addWidget( le_meniscus,     s_row++, 3, 1, 3 );
+//   specs->addWidget( pb_meniscus,     s_row,   0, 1, 3 );
+//   specs->addWidget( le_meniscus,     s_row++, 3, 1, 3 );
+   specs->addWidget( lb_meniscus,     s_row,   0, 1, 1 );
+   specs->addWidget( le_meniscus,     s_row,   1, 1, 2 );
+   specs->addWidget( pb_meniscus,     s_row++, 3, 1, 3 );
    specs->addWidget( pb_airGap,       s_row,   0, 1, 3 );
    specs->addWidget( le_airGap,       s_row++, 3, 1, 3 );
-   specs->addWidget( pb_dataRange,    s_row,   0, 1, 3 );
-   specs->addWidget( le_dataRange,    s_row++, 3, 1, 3 );
-   specs->addWidget( pb_plateau,      s_row,   0, 1, 3 );
-   specs->addWidget( le_plateau,      s_row++, 3, 1, 3 );
-   specs->addWidget( lb_baseline,     s_row,   0, 1, 3 );
-   specs->addWidget( le_baseline,     s_row++, 3, 1, 3 );
+//   specs->addWidget( pb_dataRange,    s_row,   0, 1, 3 );
+//   specs->addWidget( le_dataRange,    s_row++, 3, 1, 3 );
+//   specs->addWidget( pb_plateau,      s_row,   0, 1, 3 );
+//   specs->addWidget( le_plateau,      s_row++, 3, 1, 3 );
+//   specs->addWidget( lb_baseline,     s_row,   0, 1, 3 );
+//   specs->addWidget( le_baseline,     s_row++, 3, 1, 3 );
+//*NEW STUFF
+   specs->addWidget( lb_dataStart,    s_row,   0, 1, 1 );
+   specs->addWidget( le_dataStart,    s_row,   1, 1, 2 );
+   specs->addWidget( pb_dataEnd,      s_row,   3, 1, 2 );
+   specs->addWidget( le_dataEnd,      s_row++, 5, 1, 1 );
+   specs->addWidget( lb_baseline,     s_row,   0, 1, 1 );
+   specs->addWidget( le_baseline,     s_row,   1, 1, 3 );
+   specs->addWidget( lb_plateau,      s_row,   4, 1, 1 );
+   specs->addWidget( le_plateau,      s_row++, 5, 1, 1 );
+//*NEW STUFF
+//   specs->addWidget( lb_odlim,        s_row,   0, 1, 3 );
+//   specs->addWidget( ct_odlim,        s_row++, 3, 1, 3 );
    specs->addWidget( lb_odlim,        s_row,   0, 1, 3 );
    specs->addWidget( ct_odlim,        s_row++, 3, 1, 3 );
    specs->addWidget( pb_noise,        s_row,   0, 1, 3 );
@@ -369,7 +411,7 @@ lambdas << "250" << "350" << "450" << "550" << "580" << "583" << "650";
    specs->addWidget( pb_priorEdits,   s_row,   0, 1, 3 );
    specs->addWidget( pb_undo,         s_row++, 3, 1, 3 );
    specs->addWidget( pb_reviewep,     s_row,   0, 1, 3 );
-   specs->addWidget( pb_nexttrip,     s_row++, 3, 1, 3 );
+   specs->addWidget( pb_nexteqtr,     s_row++, 3, 1, 3 );
    specs->addWidget( pb_float,        s_row,   0, 1, 3 );
    specs->addWidget( pb_write,        s_row++, 3, 1, 3 );
    specs->addLayout( lo_writemwl,     s_row++, 3, 1, 3 );
@@ -382,7 +424,8 @@ lambdas << "250" << "350" << "450" << "550" << "580" << "583" << "650";
 
    connect( pb_reset,  SIGNAL( clicked() ), SLOT( reset() ) );
    connect( pb_help,   SIGNAL( clicked() ), SLOT( help()  ) );
-   connect( pb_accept, SIGNAL( clicked() ), SLOT( close() ) );
+   connect( pb_accept, SIGNAL( clicked()    ),
+            this,      SLOT  ( close_edit() ) );
 
    buttons->addWidget( pb_reset );
    buttons->addWidget( pb_help );
@@ -459,7 +502,9 @@ void US_Edit::reset( void )
    le_info     ->setText( "" );
    le_meniscus ->setText( "" );
    le_airGap   ->setText( "" );
-   le_dataRange->setText( "" );
+//   le_dataRange->setText( "" );
+   le_dataStart->setText( "" );
+   le_dataEnd  ->setText( "" );
    le_plateau  ->setText( "" );
    le_baseline ->setText( "" );
 
@@ -498,8 +543,8 @@ void US_Edit::reset( void )
    
    pb_meniscus    ->setEnabled( false );
    pb_airGap      ->setEnabled( false );
-   pb_dataRange   ->setEnabled( false );
-   pb_plateau     ->setEnabled( false );
+//   pb_dataRange   ->setEnabled( false );
+//   pb_plateau     ->setEnabled( false );
    
    pb_noise       ->setEnabled( false );
    pb_residuals   ->setEnabled( false );
@@ -507,7 +552,7 @@ void US_Edit::reset( void )
    pb_invert      ->setEnabled( false );
    pb_priorEdits  ->setEnabled( false );
    pb_reviewep    ->setEnabled( false );
-   pb_nexttrip    ->setEnabled( false );
+   pb_nexteqtr    ->setEnabled( false );
    pb_undo        ->setEnabled( false );
    
    pb_report      ->setEnabled( false );
@@ -518,8 +563,8 @@ void US_Edit::reset( void )
    // Remove icons
    pb_meniscus    ->setIcon( QIcon() );
    pb_airGap      ->setIcon( QIcon() );
-   pb_dataRange   ->setIcon( QIcon() );
-   pb_plateau     ->setIcon( QIcon() );
+//   pb_dataRange   ->setIcon( QIcon() );
+//   pb_plateau     ->setIcon( QIcon() );
    pb_noise       ->setIcon( QIcon() );
    pb_residuals   ->setIcon( QIcon() );
    pb_spikes      ->setIcon( QIcon() );
@@ -584,7 +629,9 @@ void US_Edit::reset_triple( void )
    le_info     ->setText( "" );
    le_meniscus ->setText( "" );
    le_airGap   ->setText( "" );
-   le_dataRange->setText( "" );
+//   le_dataRange->setText( "" );
+   le_dataStart->setText( "" );
+   le_dataEnd  ->setText( "" );
    le_plateau  ->setText( "" );
    le_baseline ->setText( "" );
 
@@ -823,6 +870,7 @@ DbgLv(1) << "Ld: runID" << runID << "wdir" << workingDir;
                        SLOT  ( new_triple         ( int ) ) );
    triple_index = 0;
    data_index   = 0;
+   pb_nextChan->setEnabled( triples.size() > 1 );
    
    le_info->setText( runID );
 
@@ -978,7 +1026,7 @@ DbgLv(1) << " celchns    size" << celchns.size() << ncelchn;
       lb_edtrsp  ->setVisible( true  );
       le_edtrsp  ->setVisible( true  );
       pb_reviewep->setVisible( true  );
-      pb_nexttrip->setVisible( true  );
+      pb_nexteqtr->setVisible( true  );
       pb_write   ->setText( tr( "Save Edit Profiles" ) );
 
       sData.clear();
@@ -1061,14 +1109,14 @@ DbgLv(1) << " celchns    size" << celchns.size() << ncelchn;
       bool notMwl  = ( nwaveln < 3 );
       lb_rpms    ->setVisible( false );
       cb_rpms    ->setVisible( false );
-      pb_plateau ->setVisible( true  );
+//      pb_plateau ->setVisible( true  );
       le_plateau ->setVisible( true  ); 
       lb_baseline->setVisible( notMwl );
       le_baseline->setVisible( notMwl ); 
       lb_edtrsp  ->setVisible( false );
       le_edtrsp  ->setVisible( false );
       pb_reviewep->setVisible( false );
-      pb_nexttrip->setVisible( false );
+      pb_nexteqtr->setVisible( false );
 
       pb_write   ->setText( tr( "Save Current Edit Profile" ) );
 
@@ -1085,8 +1133,8 @@ DbgLv(1) << "LD():  triples size" << triples.size();
    pb_exclusion ->setEnabled( true );
    pb_meniscus  ->setEnabled( true );
    pb_airGap    ->setEnabled( false );
-   pb_dataRange ->setEnabled( false );
-   pb_plateau   ->setEnabled( false );
+//   pb_dataRange ->setEnabled( false );
+//   pb_plateau   ->setEnabled( false );
    pb_noise     ->setEnabled( false );
    pb_spikes    ->setEnabled( false );
    pb_invert    ->setEnabled( true );
@@ -1215,19 +1263,10 @@ DbgLv(1) << "IS-MWL:  expi_wvlns size" << expi_wvlns.size() << nwaveln;
       edata         = &allData[ 0 ];
       nrpoint       = edata->pointCount();
       int nscan     = edata->scanCount();
-      int mxscan    = 0;
-      int mxrval    = 0;
-
-      for ( int ii = 0; ii < allData.size(); ii++ )
-      {  // Get maximum scan and point counts over all triples
-         mxscan        = qMax( mxscan, allData[ ii ].scanCount()  );
-         mxrval        = qMax( mxrval, allData[ ii ].pointCount() );
-      }
-
-      int ndset     = ncelchn * mxrval;
-      int ndpoint   = maxwavl * mxscan;
+      int ndset     = ncelchn * nrpoint;
+      int ndpoint   = nscan * maxwavl;
 DbgLv(1) << "IS-MWL:   nrpoint nscan ndset ndpoint" << nrpoint << nscan
- << ndset << ndpoint << "mxrval mxscan" << mxrval << mxscan;
+ << ndset << ndpoint;
 
       for ( int ii = 0; ii < nrpoint; ii++ )
       {  // Update the list of radii that may be plotted
@@ -1236,8 +1275,6 @@ DbgLv(1) << "IS-MWL:   nrpoint nscan ndset ndpoint" << nrpoint << nscan
       }
 DbgLv(1) << "IS-MWL:  expd_radii size" << expd_radii.size() << nrpoint;
 
-      nrpoint       = mxrval;
-      nscan         = mxscan;
       QVector< double > wrdata;
       wrdata.fill( 0.0, ndpoint );
       rdata .clear();
@@ -1265,18 +1302,15 @@ DbgLv(1) << "IS-MWL:  rdata size" << rdata.size() << ndset;
             edata         = &allData[ trx ];               // Triple data
             int iwavl     = rawi_wvlns[ jwx ];             // Wavelength value
             int wvx       = toti_wvlns.indexOf( iwavl );   // Wavelength index
-            int kscan     = edata->scanCount();
-            int krpoint   = edata->pointCount();
-DbgLv(1) << "IS-MWL:   trx ccx wvx jwx" << trx << ccx << wvx << jwx
- << "nscan szscan" << nscan << kscan << "nrpoint szrval" << nrpoint << krpoint;
+DbgLv(1) << "IS-MWL:   trx ccx wvx" << trx << ccx << wvx;
 
-            for ( int scx = 0; scx < kscan; scx++ )
+            for ( int scx = 0; scx < nscan; scx++ )
             {  // Each scan of a triple
                US_DataIO::Scan* scan  = &edata->scanData[ scx ];
                int odx       = ccx * nrpoint;         // Output dataset index
                int opx       = scx * maxwavl + wvx;   // Output point index
-DbgLv(2) << "IS-MWL:     scx odx opx" << scx << odx << opx;
-               for ( int rax = 0; rax < krpoint; rax++ )
+DbgLv(2) << "IS-MWL:    scx odx opx" << scx << odx << opx;
+               for ( int rax = 0; rax < nrpoint; rax++ )
                {  // Store ea. radius data point as a wavelength point in a scan
                   rdata[ odx++ ][ opx ]  = scan->rvalues[ rax ];
                } // END: radius points loop
@@ -1294,6 +1328,7 @@ DbgLv(1) << "IS-MWL: celchns size" << celchns.size();
       cb_triple->addItems( celchns );
       connect( cb_triple, SIGNAL( currentIndexChanged( int ) ), 
                           SLOT  ( new_triple         ( int ) ) );
+      pb_nextChan->setEnabled( celchns.size() > 1 );
 
       odlimit   = 1.8;
 
@@ -1333,6 +1368,7 @@ else
 }
 //*DEBUG* Print times,omega^ts
 
+   // Set up OD limit and any MWL controls
    ct_odlim->disconnect();
    ct_odlim->setValue( odlimit );
    connect( ct_odlim,  SIGNAL( valueChanged       ( double ) ),
@@ -1348,7 +1384,8 @@ void US_Edit::set_pbColors( QPushButton* pb )
    
    pb_meniscus ->setPalette( p );
    pb_airGap   ->setPalette( p );
-   pb_dataRange->setPalette( p );
+//   pb_dataRange->setPalette( p );
+   pb_dataEnd  ->setPalette( p );
    pb_plateau  ->setPalette( p );
 
    if ( pb != NULL )
@@ -1486,13 +1523,15 @@ void US_Edit::mouse( const QwtDoublePoint& p )
             int ii        = data.xindex( meniscus_left );
             draw_vline( meniscus_left );
             meniscus      = data.radius( ii );
-            le_meniscus->setText( QString::number( meniscus, 'f', 3 ) );
+            range_left    = meniscus + _RNGLEFT_OFFSET_;
+            le_meniscus ->setText( QString::number( meniscus,   'f', 3 ) );
+            le_dataStart->setText( QString::number( range_left, 'f', 3 ) );
 
             data_plot->replot();
 
             pb_meniscus->setIcon( check );
          
-            pb_dataRange->setEnabled( true );
+//            pb_dataRange->setEnabled( true );
         
             next_step();
             break;
@@ -1546,8 +1585,10 @@ void US_Edit::mouse( const QwtDoublePoint& p )
             }
          }
 
-         // Display the value
-         le_meniscus->setText( QString::number( meniscus, 'f', 3 ) );
+         // Display the values
+         range_left    = meniscus + _RNGLEFT_OFFSET_;
+         le_meniscus ->setText( QString::number( meniscus,   'f', 3 ) );
+         le_dataStart->setText( QString::number( range_left, 'f', 3 ) );
 
          // Create a marker
          if ( dataType != "IP" )
@@ -1569,7 +1610,7 @@ void US_Edit::mouse( const QwtDoublePoint& p )
          if ( dataType == "IP" )
             pb_airGap->setEnabled( true );
          else
-            pb_dataRange->setEnabled( true );
+//            pb_dataRange->setEnabled( true );
         
          next_step();
          break;
@@ -1618,7 +1659,7 @@ DbgLv(1) << "AGap:  plot_range()";
             qApp->processEvents();
             
             pb_airGap   ->setIcon( check );
-            pb_dataRange->setEnabled( true );
+//            pb_dataRange->setEnabled( true );
 
             next_step();
          }
@@ -1645,6 +1686,46 @@ DbgLv(1) << "AGap:  plot_range()";
             draw_vline( range_left );
             break;
          }
+
+         else if ( range_right == 0.0 )
+         {
+            if ( v_line != NULL )
+            {
+               v_line->detach();
+               delete v_line;
+               v_line = NULL;
+            }
+
+            range_right  = radius_indexed( p.x() );
+
+            if ( ( range_right - meniscus ) < 0.4 )
+            {
+               range_right  = 9.0;
+               QMessageBox::critical( this,
+                  tr( "Range Right Error" ),
+                  tr( "The newest Edit does away with the need to\n"
+                      "select Range Left and Right or Plateau.\n"
+                      "Besides Meniscus, only Range Right need be\n"
+                      "selected by ctrl-click.\n\n"
+                      "Please ctrl-click to select the data end." ) );
+//               qApp->processEvents();
+               next_step();
+               return;
+            }
+
+            draw_vline( range_right );
+            le_dataEnd  ->setText( QString::number( range_right, 'f', 3 ) );
+            plateau      = range_right - _PLATEAU_OFFSET_;
+            le_plateau  ->setText( QString::number( plateau,     'f', 3 ) );
+
+
+            step = PLATEAU;
+            plot_range();
+
+            qApp->processEvents();
+            break;
+         }
+
          else
          {
             // Sometime we get two clicks
@@ -1672,19 +1753,26 @@ DbgLv(1) << "AGap:  plot_range()";
             
             // Display the data
             QString wkstr;
-            le_dataRange->setText( wkstr.sprintf( "%.3f - %.3f", 
-                     range_left, range_right ) );
+//            le_dataRange->setText( wkstr.sprintf( "%.3f - %.3f", 
+//                     range_left, range_right ) );
+            le_dataStart->setText( QString::number( range_left,  'f', 3 ) );
+            le_dataEnd  ->setText( QString::number( range_right, 'f', 3 ) );
+            plateau      = range_right - _PLATEAU_OFFSET_;
+            le_plateau  ->setText( QString::number( plateau,     'f', 3 ) );
 
             step = PLATEAU;
             plot_range();
+            pb_report  ->setEnabled( true );
 
             qApp->processEvents();
 
             // Skip the gap check for interference data
             if ( dataType != "IP" ) gap_check();
             
-            pb_dataRange->setIcon( check );
-            pb_plateau  ->setEnabled( true );
+//            pb_dataRange->setIcon( check );
+//            pb_plateau  ->setEnabled( true );
+            pb_dataEnd  ->setIcon( check );
+            pb_dataEnd  ->setEnabled( true );
             pb_noise    ->setEnabled( true );
             pb_spikes   ->setEnabled( true );
 
@@ -1743,7 +1831,7 @@ DbgLv(1) << "AGap:  plot_range()";
                      pb_write   ->setEnabled( true );
                      ck_writemwl->setEnabled( true );
                      pb_reviewep->setEnabled( true );
-                     pb_nexttrip->setEnabled( true );
+                     pb_nexteqtr->setEnabled( true );
                      step         = FINISHED;
                      next_step();
 
@@ -1777,6 +1865,7 @@ DbgLv(1) << "AGap:  plot_range()";
 
       case PLATEAU:
 
+#if 0
          if ( p.x() > range_right )
          {
             le_plateau->setText( tr( "**beyond data end**" ) );
@@ -1784,19 +1873,18 @@ DbgLv(1) << "AGap:  plot_range()";
          }
 
          plateau = radius_indexed( p.x() );
+#endif
+         plateau      = range_right - _PLATEAU_OFFSET_;
 
          // Display the data (localize str)
-         {
-            QString wkstr;
-            le_plateau->setText( wkstr.sprintf( "%.3f", plateau ) );
-         }
+         le_plateau ->setText( QString::number( plateau,     'f', 3 ) );
 
          plot_range();
          pb_plateau ->setIcon( check );
          ct_to->setValue( 0.0 );  // Uncolor all scans
-         pb_report     ->setEnabled( true );
-         pb_write      ->setEnabled( true );
-         ck_writemwl   ->setEnabled( isMwl );
+         pb_report  ->setEnabled( true );
+         pb_write   ->setEnabled( true );
+         ck_writemwl->setEnabled( isMwl );
          changes_made = true;
          next_step();
          break;
@@ -1826,9 +1914,13 @@ DbgLv(1) << "AGap:  plot_range()";
 
             double bl = sum / 11.0;
             baseline  = p.x();
+            plateau   = ( plateau > 0.0 ) ? plateau 
+                                          : ( range_right - _PLATEAU_OFFSET_ );
 
             QString wkstr;
-            le_baseline->setText( wkstr.sprintf( "%.3f (%.3e)", p.x(), bl ) );
+            le_baseline->setText( wkstr.sprintf( "%.3f (%.3e)", baseline, bl ) );
+DbgLv(1) << "BL: AA : baseline bl" << baseline << bl;
+            le_plateau ->setText( QString::number( plateau,     'f', 3 ) );
             plot_range();
          }
 
@@ -1883,29 +1975,38 @@ void US_Edit::next_step( void )
       step = MENISCUS;
       pb   = pb_meniscus;
    }
+
    else if ( airGap_right == 9.0  &&  dataType == "IP" )
    {
       step = AIRGAP;
       pb   = pb_airGap;
    }
+
    else if ( range_right == 9.0 ) 
    {
       step = RANGE;
-      pb   = pb_dataRange;
+//      pb   = pb_dataRange;
+      pb   = pb_dataEnd;
    }
+
+#if 0
    else if ( plateau == 0.0 ) 
    {
       step = PLATEAU;
       pb   = pb_plateau;
    }
+#endif
 
    else
    {  // All values up to Plateau have been entered:  Finished
       step = FINISHED;
       pb   = NULL;
+//      pb   = pb_dataEnd;
       double sum = 0.0;
       int    pt  = data.xindex( range_left );
       baseline   = data.xvalues[ pt + 5 ];
+      plateau    = ( plateau > 0.0 ) ? plateau 
+                                     : ( range_right - _PLATEAU_OFFSET_ );
 
       if ( !isMwl )
       {
@@ -1917,6 +2018,8 @@ void US_Edit::next_step( void )
 
          QString str;
          le_baseline->setText( str.sprintf( "%.3f (%.3e)", baseline, bl ) );
+DbgLv(1) << "BL: BB : baseline bl" << baseline << bl;
+         le_plateau ->setText( QString::number( plateau, 'f', 3 ) );
       }
    }
 
@@ -1928,7 +2031,9 @@ void US_Edit::set_meniscus( void )
 {
    le_meniscus ->setText( "" );
    le_airGap   ->setText( "" );
-   le_dataRange->setText( "" );
+//   le_dataRange->setText( "" );
+   le_dataStart->setText( "" );
+   le_dataEnd  ->setText( "" );
    le_plateau  ->setText( "" );
    le_baseline ->setText( "" );
    
@@ -1949,10 +2054,10 @@ void US_Edit::set_meniscus( void )
    pb_report   ->setEnabled( false );
    pb_airGap   ->setEnabled( false );
    pb_airGap   ->setIcon( QIcon() );
-   pb_dataRange->setEnabled( false );
-   pb_dataRange->setIcon( QIcon() );
-   pb_plateau  ->setEnabled( false );
-   pb_plateau  ->setIcon( QIcon() );
+//   pb_dataRange->setEnabled( false );
+//   pb_dataRange->setIcon( QIcon() );
+//   pb_plateau  ->setEnabled( false );
+//   pb_plateau  ->setIcon( QIcon() );
    pb_write    ->setEnabled( all_edits );
    ck_writemwl ->setEnabled( all_edits && isMwl );
 
@@ -1979,7 +2084,9 @@ DbgLv(1) << "set_meniscus -- changes_made" << changes_made;
 void US_Edit::set_airGap( void )
 {
    le_airGap   ->setText( "" );
-   le_dataRange->setText( "" );
+//   le_dataRange->setText( "" );
+   le_dataStart->setText( "" );
+   le_dataEnd  ->setText( "" );
    le_plateau  ->setText( "" );
    le_baseline ->setText( "" );
    
@@ -1995,9 +2102,9 @@ void US_Edit::set_airGap( void )
    pb_airGap   ->setIcon( QIcon() );
 
    pb_report   ->setEnabled( all_edits );
-   pb_dataRange->setIcon( QIcon() );
-   pb_plateau  ->setEnabled( false );
-   pb_plateau  ->setIcon( QIcon() );
+//   pb_dataRange->setIcon( QIcon() );
+//   pb_plateau  ->setEnabled( false );
+//   pb_plateau  ->setIcon( QIcon() );
    pb_write    ->setEnabled( all_edits );
    ck_writemwl ->setEnabled( all_edits && isMwl );
    changes_made = all_edits;
@@ -2013,7 +2120,9 @@ void US_Edit::set_airGap( void )
 // Set up for a data range pick
 void US_Edit::set_dataRange( void )
 {
-   le_dataRange->setText( "" );
+//   le_dataRange->setText( "" );
+   le_dataStart->setText( "" );
+   le_dataEnd  ->setText( "" );
    le_plateau  ->setText( "" );
    le_baseline ->setText( "" );
    
@@ -2023,12 +2132,14 @@ void US_Edit::set_dataRange( void )
    baseline      = 0.0;
    
    step        = RANGE;
-   set_pbColors( pb_dataRange );
+//   set_pbColors( pb_dataRange );
 
    pb_report   ->setEnabled( all_edits );
-   pb_dataRange->setIcon( QIcon() );
-   pb_plateau  ->setEnabled( false );
-   pb_plateau  ->setIcon( QIcon() );
+//   pb_dataRange->setIcon( QIcon() );
+//   pb_plateau  ->setEnabled( false );
+//   pb_plateau  ->setIcon( QIcon() );
+   pb_dataEnd  ->setIcon( QIcon() );
+   pb_dataEnd  ->setEnabled( true );
    pb_write    ->setEnabled( all_edits );
    ck_writemwl ->setEnabled( all_edits && isMwl );
    changes_made = all_edits;
@@ -2059,7 +2170,7 @@ void US_Edit::set_plateau( void )
    set_pbColors( pb_plateau );
 
    pb_report   ->setEnabled( false );
-   pb_plateau  ->setIcon( QIcon() );
+//   pb_plateau  ->setIcon( QIcon() );
    pb_write    ->setEnabled( all_edits );
    ck_writemwl ->setEnabled( all_edits && isMwl );
    changes_made = all_edits;
@@ -3133,9 +3244,9 @@ DbgLv(1) << "EDT:NewTr:   sw tri dx" << swavl << triple << idax;
    pb_exclusion->setEnabled( true );
    pb_meniscus ->setEnabled( true );
    pb_airGap   ->setEnabled( true );
-   pb_dataRange->setEnabled( true );
+//   pb_dataRange->setEnabled( true );
    pb_noise    ->setEnabled( true );
-   pb_plateau  ->setEnabled( true );
+//   pb_plateau  ->setEnabled( true );
    pb_spikes   ->setEnabled( true );
    pb_invert   ->setEnabled( true );
    pb_undo     ->setEnabled( true );
@@ -3188,6 +3299,7 @@ DbgLv(1) << "EDT:NewTr:   sw tri dx" << swavl << triple << idax;
       bool    app_edit = ( fname != "none" );
 DbgLv(1) << "EDT:NewTr:   app_edit" << app_edit << "fname" << fname;
 
+#if 0
       if ( app_edit )
       {  // This data has editing,  ask if it should be applied
          QStringList editfiles;
@@ -3242,6 +3354,7 @@ DbgLv(1) << "EDT:NewTr:   tr type,valu" << trtype << trvalu;
          app_edit         = ( mbox.clickedButton() == pb_appl );
       }
 
+#endif
       if ( app_edit )
       {  // If editing chosen, apply it
          US_DataIO::EditValues parameters;
@@ -3334,6 +3447,8 @@ void US_Edit::write_triple( void )
    baseline       = data.xvalues[ data.xindex( range_left ) + 5 ];
    int     odax   = cb_triple->currentIndex();
    int     idax   = odax;
+double bl= data.xindex( range_left ) + 5;
+DbgLv(1) << "BL: CC : baseline bl" << baseline << bl;
 
    if ( isMwl )
    {  // For MultiWavelength, data index needs to be recomputed
@@ -3944,8 +4059,14 @@ void US_Edit::prior_equil( void )
 
       le_dataRange->setText( wkstr.sprintf( "%.3f - %.3f",
               range_left, range_right ) );
-      pb_dataRange->setIcon( check );
-      pb_dataRange->setEnabled( true );
+//      pb_dataRange->setIcon( check );
+//      pb_dataRange->setEnabled( true );
+      le_dataStart->setText( QString::number( range_left,  'f', 3 ) );
+      le_dataEnd  ->setText( QString::number( range_right, 'f', 3 ) );
+      pb_dataEnd  ->setIcon( check );
+      pb_dataEnd  ->setEnabled( true );
+      plateau      = range_right - _PLATEAU_OFFSET_;
+      le_plateau  ->setText( QString::number( plateau,     'f', 3 ) );
    
       // Invert
       invert = parameters.invert;
@@ -4029,7 +4150,7 @@ void US_Edit::prior_equil( void )
    //plot_range();
 
    pb_reviewep->setEnabled( true );
-   pb_nexttrip->setEnabled( true );
+   pb_nexteqtr->setEnabled( true );
 
    all_edits    = all_edits_done();
    pb_report  ->setEnabled( all_edits );
@@ -4047,9 +4168,11 @@ void US_Edit::review_edits( void )
    cb_triple->setCurrentIndex( cb_triple->count() - 1 );
 
    le_meniscus ->setText( "" );
-   le_dataRange->setText( "" );
-   pb_plateau  ->setIcon( QIcon() );
-   pb_dataRange->setIcon( QIcon() );
+//   le_dataRange->setText( "" );
+   le_dataStart->setText( "" );
+   le_dataEnd  ->setText( "" );
+//   pb_plateau  ->setIcon( QIcon() );
+//   pb_dataRange->setIcon( QIcon() );
    pb_meniscus ->setIcon( QIcon() );
 
    step    = FINISHED;
@@ -4074,8 +4197,11 @@ void US_Edit::next_triple( void )
       cb_rpms  ->setCurrentIndex( 0 );
    }
 
-   data    = *outData[ index_data() ];
-   plot_range();
+   int dax = index_data();
+   data    = *outData[ dax ];
+
+//   plot_range();
+   new_triple( dax );
 }
 
 // Evaluate whether all edits are complete
@@ -5252,14 +5378,19 @@ int US_Edit::apply_edits( US_DataIO::EditValues parameters )
       pb_airGap->setEnabled( true );
    }
 
-   le_dataRange->setText( wkstr.sprintf( "%.3f - %.3f",
-           range_left, range_right ) );
-   pb_dataRange->setIcon( check );
-   pb_dataRange->setEnabled( true );
+//   le_dataRange->setText( wkstr.sprintf( "%.3f - %.3f",
+//           range_left, range_right ) );
+//   pb_dataRange->setIcon( check );
+//   pb_dataRange->setEnabled( true );
+   le_dataStart->setText( QString::number( range_left,  'f', 3 ) );
+   le_dataEnd  ->setText( QString::number( range_right, 'f', 3 ) );
+   pb_dataEnd  ->setIcon( check );
+   pb_dataEnd  ->setEnabled( true );
    
-   le_plateau  ->setText( wkstr.sprintf( "%.3f", plateau ) );
-   pb_plateau  ->setIcon( check );
-   pb_plateau  ->setEnabled( true );
+   plateau      = range_right - _PLATEAU_OFFSET_;
+   le_plateau  ->setText( QString::number( plateau,     'f', 3 ) );
+//   pb_plateau  ->setIcon( check );
+//   pb_plateau  ->setEnabled( true );
 
    US_DataIO::Scan  scan  = data.scanData.last();
    int              pt    = data.xindex( baseline );
@@ -5268,6 +5399,8 @@ int US_Edit::apply_edits( US_DataIO::EditValues parameters )
    // Average the value for +/- 5 points
    for ( int jj = pt - 5; jj <= pt + 5; jj++ )
       sum += scan.rvalues[ jj ];
+double bl=sum/11.0;
+DbgLv(1) << "BL: DD : baseline bl" << baseline << bl;
 
    le_baseline->setText( wkstr.sprintf( "%.3f (%.3e)", baseline, sum / 11.0 ) );
 
@@ -5632,8 +5765,10 @@ QString US_Edit::run_details( void )
    int    iwvln    = qRound( dd->scanData.last().wavelength );
    QString bln_od  = QString( le_baseline->text() ).section( "(", 1, 1 )
                      .section( ")", 0, 0 ) + " OD";
-   QString left    = QString( le_dataRange->text() ).section( " ", 0, 0 );
-   QString right   = QString( le_dataRange->text() ).section( " ", 2, 2 );
+//   QString left    = QString( le_dataRange->text() ).section( " ", 0, 0 );
+//   QString right   = QString( le_dataRange->text() ).section( " ", 2, 2 );
+   QString left    = le_dataStart->text();
+   QString right   = le_dataEnd  ->text();
    QString plat    = le_plateau->text();
 
    ss += table_row( tr( "Wavelength:" ),
@@ -5692,3 +5827,37 @@ QString US_Edit::scan_info( void )
    return ss;
 }
 
+// Close edit after review of saved edits
+void US_Edit::close_edit( void )
+{
+   int ntripls    = allData.size();
+   int nunedit    = editFnames.count( QString( "none" ) );
+
+   if ( nunedit > 0 )
+   {  // Some triples unedited:  give option to cancel close
+      QMessageBox mbox;
+      QPushButton* pb_cancel;
+      QPushButton* pb_doclose;
+      QString msg      = tr( "Edits have not been saved for<br/>"
+                             "%1 of %2 total triples.<br/></br/>"
+                             "Do you wish to<br/>"
+                             "&nbsp;&nbsp;"
+                             "return to edit more (<b>Cancel</b>) or<br/>"
+                             "&nbsp;&nbsp;"
+                             "close with current state (<b>Close</b>)<br/>?" )
+                         .arg( nunedit ).arg( ntripls );
+      mbox.setIcon      ( QMessageBox::Question );
+      mbox.setTextFormat( Qt::RichText );
+      mbox.setText      ( msg );
+      pb_cancel        = mbox.addButton( tr( "Cancel"   ),
+                                         QMessageBox::RejectRole );
+      pb_doclose       = mbox.addButton( tr( "Close" ),
+                                         QMessageBox::AcceptRole );
+      mbox.setDefaultButton( pb_doclose );
+      mbox.exec();
+      if ( mbox.clickedButton() == pb_cancel )
+         return;
+   }
+
+   close();
+}

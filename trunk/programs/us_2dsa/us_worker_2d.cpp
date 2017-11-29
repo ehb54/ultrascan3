@@ -10,7 +10,6 @@
 #include "us_constants.h"
 #include "us_memory.h"
 
-
 // construct worker thread
 WorkerThread2D::WorkerThread2D( QObject* parent )
    : QThread( parent )
@@ -62,6 +61,11 @@ void WorkerThread2D::define_work( WorkPacket2D& workin )
    dset_wk.solution_rec = workin.dsets[ 0 ]->solution_rec;
    dsets.clear();
    dsets << &dset_wk;                        // save its pointer
+DbgLv(1) << "WT:DWk: " 
+ << "dsi:tsobj" << workin.dsets[0]->simparams.tsobj
+ << "dsw:tsobj" << dset_wk.simparams.tsobj
+ << "dsi:sspk" << workin.dsets[0]->simparams.sim_speed_prof.count()
+ << "dsw:sspk" << dset_wk.simparams.sim_speed_prof.count();
 
    sim_vals             = workin.sim_vals;
    sim_vals.variances   = workin.sim_vals.variances;
@@ -81,7 +85,8 @@ void WorkerThread2D::get_result( WorkPacket2D& workout )
    workout.iter     = iter;
    workout.menmcx   = menmcx;
    workout.noisf    = noisflag;
-
+   workout.Anorm    = norms ;
+DbgLv(1) << "norm_size_from_get_result_worker_2d"<< workout.Anorm.size() ;
    workout.csolutes = solutes_c;
    workout.ti_noise = ti_noise.values;
    workout.ri_noise = ri_noise.values;

@@ -317,7 +317,8 @@ if(mcknt>0)
    settings->addWidget( pb_close,      row++, 4, 1, 4 );
 
    // Plot layout for the right side of window
-   QBoxLayout* plot = new US_Plot( data_plot,
+//   QBoxLayout* plot = new US_Plot( data_plot,
+   plot             = new US_Plot( data_plot,
                                    tr( "Intensity Data" ),
                                    tr( "Radius (in cm)" ), 
                                    tr( "Intensity" ) );
@@ -334,6 +335,9 @@ if(mcknt>0)
    picker->setRubberBand     ( QwtPicker::VLineRubberBand );
    picker->setMousePattern   ( QwtEventPattern::MouseSelect1,
                                Qt::LeftButton, Qt::ControlModifier );
+
+   connect( plot, SIGNAL( zoomedCorners( QRectF ) ),
+            this, SLOT  ( currentRectf ( QRectF ) ) );
 
    // Now let's assemble the page
    
@@ -397,7 +401,7 @@ void US_XpnDataViewer::reset( void )
    // Clear any data structures
    allData   .clear();
    lambdas   .clear();
-   radii     .clear();
+   r_radii   .clear();
    excludes  .clear();
    runInfo   .clear();
    cellchans .clear();
@@ -412,6 +416,8 @@ void US_XpnDataViewer::reset( void )
    data_plot->replot();
    connect( cb_cellchn,   SIGNAL( currentIndexChanged( int ) ),
             this,         SLOT  ( changeCellCh(            ) ) );
+//   connect( plot, SIGNAL( zoomedCorners( QRectF ) ),
+//            this, SLOT  ( currentRectf ( QRectF ) ) );
 
    last_xmin     = -1.0;
    last_xmax     = -1.0;
@@ -503,12 +509,12 @@ DbgLv(1) << "ec: ncc nwl nsc npt ntpt" << ncellch << nlambda << nscan
    QStringList slrads;
    QStringList sllmbs;
    QStringList plrecs;
-DbgLv(1) << "ec: npoint" << npoint << "radsize" << radii.count();
+DbgLv(1) << "ec: npoint" << npoint << "radsize" << r_radii.count();
 DbgLv(1) << "ec: nlambda" << nlambda << "lmbsize" << lambdas.count();
 DbgLv(1) << "ec: ntriple" << ntriple << "trpsize" << triples.count();
 
    for ( int jj = 0; jj < npoint; jj++ )
-      slrads << QString().sprintf( "%.3f", radii[ jj ] );
+      slrads << QString().sprintf( "%.3f", r_radii[ jj ] );
 
    for ( int jj = 0; jj < nlambda; jj++ )
       sllmbs << QString::number( lambdas[ jj ] );
@@ -727,15 +733,15 @@ DbgLv(1) << "RDr:      build-raw done: tm1 tm2" << tm1 << tm2;
    isRaw         = true;
    haveData      = true;
    ncellch       = xpn_data->cellchannels( cellchans );
-   radii.clear();
-   radii << allData[ 0 ].xvalues;
+   r_radii.clear();
+   r_radii << allData[ 0 ].xvalues;
    nscan         = allData[ 0 ].scanCount();
    npoint        = allData[ 0 ].pointCount();
 
 DbgLv(1) << "RDr: mwr ntriple" << ntriple;
 DbgLv(1) << "RDr: ncellch" << ncellch << cellchans.count();
 DbgLv(1) << "RDr: nscan" << nscan << "npoint" << npoint;
-DbgLv(1) << "RDr:   rvS rvE" << radii[0] << radii[npoint-1];
+DbgLv(1) << "RDr:   rvS rvE" << r_radii[0] << r_radii[npoint-1];
    cb_cellchn->disconnect();
    cb_cellchn->clear();
    cb_cellchn->addItems( cellchans );
@@ -904,8 +910,8 @@ DbgLv(1) << "RDa:   **F/D MISMATCH** " << celchn << celchnf << ii;
                .arg( missm ) );
    }
 
-   radii.clear();
-   radii << allData[ 0 ].xvalues;
+   r_radii.clear();
+   r_radii << allData[ 0 ].xvalues;
 
    isRaw        = false;
    haveData     = true;
@@ -916,7 +922,7 @@ DbgLv(1) << "RDa:   **F/D MISMATCH** " << celchn << celchnf << ii;
    ntpoint      = nscan * npoint;
 DbgLv(1) << "RDa: mwr ncellch nlambda nscan npoint"
  << ncellch << nlambda << nscan << npoint;
-DbgLv(1) << "RDa:   rvS rvE" << radii[0] << radii[npoint-1];
+DbgLv(1) << "RDa:   rvS rvE" << r_radii[0] << r_radii[npoint-1];
    le_status->setText( tr( "All %1 raw AUCs have been loaded." )
                        .arg( ntriple ) );
    QApplication::restoreOverrideCursor();
@@ -1104,6 +1110,8 @@ DbgLv(1) << "PltA: last_xmin" << last_xmin;
    }
 
    // Draw the plot
+//   connect( plot, SIGNAL( zoomedCorners( QRectF ) ),
+//            this, SLOT  ( currentRectf ( QRectF ) ) );
    data_plot->replot();
 
    // Pick up the actual bounds plotted (including any Config changes)
@@ -1323,15 +1331,15 @@ DbgLv(1) << "chgOpt:   build-raw done: tm2" << tm2;
    isRaw         = true;
    haveData      = true;
    ncellch       = xpn_data->cellchannels( cellchans );
-   radii.clear();
-   radii << allData[ 0 ].xvalues;
+   r_radii.clear();
+   r_radii << allData[ 0 ].xvalues;
    nscan         = allData[ 0 ].scanCount();
    npoint        = allData[ 0 ].pointCount();
 
 DbgLv(1) << "chgOpt: mwr ntriple" << ntriple;
 DbgLv(1) << "chgOpt: ncellch" << ncellch << cellchans.count();
 DbgLv(1) << "chgOpt: nscan" << nscan << "npoint" << npoint;
-DbgLv(1) << "chgOpt:   rvS rvE" << radii[0] << radii[npoint-1];
+DbgLv(1) << "chgOpt:   rvS rvE" << r_radii[0] << r_radii[npoint-1];
    cb_cellchn->disconnect();
    cb_cellchn->clear();
    cb_cellchn->addItems( cellchans );
@@ -1412,10 +1420,10 @@ void US_XpnDataViewer::compute_ranges()
    recx       = cb_pltrec ->currentIndex();         // Plot record index
    lmbxs      = lambdas.indexOf( lmb_start );       // Lambda start index
    lmbxe      = lambdas.indexOf( lmb_end   ) + 1;   // Lambda end index
-   radxs      = dvec_index( radii, rad_start );     // Radius start index
-   radxe      = dvec_index( radii, rad_end   ) + 1; // Radius end index
+   radxs      = dvec_index( r_radii, rad_start );     // Radius start index
+   radxe      = dvec_index( r_radii, rad_end   ) + 1; // Radius end index
 DbgLv(1) << "cmpR:  rS rE rxS rxE" << rad_start << rad_end << radxs << radxe;
-DbgLv(1) << "cmpR:   rvS rvE" << radii[radxs] << radii[radxe-1];
+DbgLv(1) << "cmpR:   rvS rvE" << r_radii[radxs] << r_radii[radxe-1];
    klambda    = lmbxe - lmbxs;                      // Count of plot lambdas
    kradii     = radxe - radxs;                      // Count of plot radii
    kscan      = nscan - excludes.size();            // Count included scans
@@ -1495,7 +1503,10 @@ void US_XpnDataViewer::export_auc()
 
    // Export the AUC data to a local directory and build TMST
 
+   correct_radii();      // Perform chromatic aberration radius corrections
+
    int nfiles     = xpn_data->export_auc( allData );
+
    QString tspath = currentDir + "/" + runID + ".time_state.tmst";
    haveTmst       = QFile( tspath ).exists();
 
@@ -1808,5 +1819,178 @@ DbgLv(1) << "sCM: mcolors count" << mcknt;
 
    if ( allData.size() > 0 )
       plot_all();
+}
+
+// Apply a chromatic aberration correction to auc data radius values
+void US_XpnDataViewer::correct_radii()
+{
+   const double wl_max  = 750.0;    // Max wavelength for computed correction
+   const double rad_inc = 1e-5;     // Radius precision
+   double a_coef     = 0.0;         // Default 4th order polynomial coefficents
+   double b1_coef    = 0.0;     
+   double b2_coef    = 0.0;
+   double b3_coef    = 0.0;
+   double b4_coef    = 0.0;
+   int ntripl        = allData.count();
+   int npoint        = allData[ 0 ].pointCount();
+
+   // If coefficient values are in an */etc file, use them
+   QString cofname   = US_Settings::etcDir() + "/chromo-aberration-coeffs.dat";
+   QFile cofile( cofname );
+
+   if ( cofile.open( QIODevice::ReadOnly | QIODevice::Text ) )
+   {
+      QTextStream cotxti( &cofile );
+      QString fline;
+      while ( ! cotxti.atEnd() )
+      {
+         fline             = cotxti.readLine().simplified();
+         if ( ! fline.isEmpty()  &&  ! fline.startsWith( "#" ) )
+         {  // Get values from first non-empty, non-comment line
+DbgLv(1) << "c_r: file-read line" << fline;
+            a_coef            = QString( fline ).section( " ", 0, 0 )
+                                   .simplified().toDouble();
+            b1_coef           = QString( fline ).section( " ", 1, 1 )
+                                   .simplified().toDouble();
+            b2_coef           = QString( fline ).section( " ", 2, 2 )
+                                   .simplified().toDouble();
+            b3_coef           = QString( fline ).section( " ", 3, 3 )
+                                   .simplified().toDouble();
+            b4_coef           = QString( fline ).section( " ", 4, 4 )
+                                   .simplified().toDouble();
+            break;
+         }
+      }
+
+      cofile.close();
+DbgLv(1) << "c_r: file-read ca coeffs:" << a_coef << b1_coef << b2_coef
+ << b3_coef << b4_coef;
+   }
+
+   // For each triple, get the wavelength; then compute and apply a correction
+   for ( int jd = 0; jd < ntripl; jd++ )
+   {
+      double wavelen    = allData[ jd ].scanData[ 0 ].wavelength; // Wavelength
+      double wl_used    = qMin( wavelen, wl_max );  // WL used (same after 750)
+      double wl_p2      = sq( wl_used );            // Squared
+      double wl_p3      = wl_p2 * wl_used;          // Cubed
+      double wl_p4      = wl_p2 * wl_p2;            // To 4th power
+
+      // Wavelength-dependent correction
+      double wl_corr    = a_coef + wl_used * b1_coef
+                                 + wl_p2   * b2_coef
+                                 + wl_p3   * b3_coef
+                                 + wl_p4   * b4_coef;
+if (jd<3 || (jd+4)>ntripl )
+DbgLv(1) << "c_r: jd" << jd << "wavelen" << wavelen << "wl_corr" << wl_corr;
+
+      if ( wl_corr != 0.0 )
+      {
+         for ( int jr = 0; jr < npoint; jr++ )
+         {  // Correct each radial point
+            double radval     = r_radii[ jr ] + wl_corr;   // Corrected radius
+            radval            = qRound( radval / rad_inc ) * rad_inc; // Rounded
+            allData[ jd ].xvalues[ jr ] = radval;          // Replace radius
+         }
+      }
+if (jd<3 || (jd+4)>ntripl )
+DbgLv(1) << "c_r:  ri0 ro0" << r_radii[0] << allData[jd].xvalues[0]
+ << "rin ron" << r_radii[npoint-1] << allData[jd].xvalues[npoint-1];
+   }
+}
+
+// Capture X range of latest Zoom
+void US_XpnDataViewer::currentRectf( QRectF rectf )
+{
+   QVector< double >  ascdat;
+   double rad1      = qRound( rectf.left()  * 10000.0 ) * 0.0001;
+   double rad2      = qRound( rectf.right() * 10000.0 ) * 0.0001;
+   if ( rad2 > 7.0 )
+      return;           // Skip further processing if not reasonable zoom
+   int irx1         = 0;
+   int irx2         = 0;
+   double kpoint    = 0;
+   QString cellch   = cb_cellchn ->currentText();
+   QString cech     = QString( cellch ).replace( " / ", "" );
+
+   QString impath   = US_Settings::importDir() + "/" + runID;
+   QDir dir;
+   if ( ! dir.exists( impath ) )
+      dir.mkpath( impath );
+   QString dapath   = impath + "/" + cech + ".wavelen.radpos.dat";
+   QFile dafile( dapath );
+   if ( !dafile.open( QIODevice::WriteOnly | QIODevice::Text ) )
+   {
+      return;
+   }
+   QTextStream datxto( &dafile );
+
+   QString msg      = tr( "%1, %2-to-%3 Radial adjustment scan..." )
+                      .arg( cellch ).arg( rad1 ).arg( rad2 );
+   le_status->setText( msg );
+   QApplication::setOverrideCursor( QCursor( Qt::WaitCursor) );
+   qApp->processEvents();
+DbgLv(1) << "cRect" << msg;
+
+   // Determine meniscus position for each wavelength of this channel
+   for ( int jd = 0; jd < allData.count(); jd++ )
+   {
+      US_DataIO::RawData *rdata = &allData[ jd ];
+
+      QString dchann    = QString::number( rdata->cell )
+                          + QString( rdata->channel );
+      if ( dchann != cech )
+         continue;
+
+      if ( irx2 == 0 )
+      {
+         irx1             = US_DataIO::index( rdata, rad1 );
+         irx2             = US_DataIO::index( rdata, rad2 );
+         kpoint           = irx2 - irx1 + 1;
+      }
+
+      double wavelen    = rdata->scanData[ 0 ].wavelength; // Wavelength
+
+      // Create an average scan value vector for the search range
+      int nscan         = rdata->scanCount();
+      double afact      = 1.0 / (double)nscan;
+      ascdat.fill( 0.0, kpoint );
+      for ( int js = 0; js < nscan; js++ )
+      {
+         US_DataIO::Scan* dscan = &rdata->scanData[ js ];
+
+         for ( int jr = 0; jr < kpoint; jr++ )
+         {
+            ascdat[ jr ] += dscan->rvalues[ jr + irx1 ] * afact;
+         }
+      }
+
+      // Find the position of the minimum value in the range
+      double rvmin      = 1.0e+99;
+      int irpos         = -1;
+      for ( int jr = 0; jr < kpoint; jr++ )
+      {
+         double rval       = ascdat[ jr ];
+         if ( rval < rvmin )
+         {
+            rvmin             = rval;
+            irpos             = jr;
+         }
+      }
+
+      double radiusw    = rdata->xvalues[ irpos + irx1 ];
+DbgLv(1) << "  wavelen/radpos:  " << wavelen << " / " << radiusw;
+
+      QString outline   = QString::number( wavelen ) + ","
+                        + QString::number( radiusw ) + "\n";
+      datxto << outline;
+   }
+
+   dafile.close();
+
+   le_status->setText( tr( "%1  Radial adjustment scan complete." )
+                      .arg( cech ) );
+   QApplication::restoreOverrideCursor();
+   qApp->processEvents();
 }
 

@@ -23,7 +23,7 @@ class US_XpnDataViewer : public US_Widgets
   private:
      QVector< US_DataIO::RawData >   allData;    //!< All AUC raw data
 
-     QVector< double > radii;       //!< Loaded radii
+     QVector< double > r_radii;     //!< Loaded radii
      QVector< int >    lambdas;     //!< Loaded wavelengths
 
      QList< int >      excludes;    //!< List of scans to exclude
@@ -80,6 +80,7 @@ class US_XpnDataViewer : public US_Widgets
 
      QwtPlot*       data_plot;
      QwtPlotGrid*   grid;
+     US_Plot*       plot;
 
      QString        currentDir;
      QString        runID;
@@ -172,6 +173,8 @@ class US_XpnDataViewer : public US_Widgets
      void   reloadData     ( void );
      void   timerEvent     ( QTimerEvent *e );
      void   selectColorMap ( void );
+     void   correct_radii  ( void );
+     void   currentRectf   ( QRectF );
      void   help           ( void )
      { showHelp.show_help( "xpn_viewer.html" ); };
 };

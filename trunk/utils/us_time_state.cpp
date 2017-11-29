@@ -103,7 +103,7 @@ int US_TimeState::set_key( QString key, QString format )
       status      = 101;
       set_error( status );
       error_msg += format;
-DbgLv(1) << "TS: key format" << key << format << "stat errm" << status << error_msg;
+//DbgLv(1) << "TS: key format" << key << format << "stat errm" << status << error_msg;
       return status;
    }
 
@@ -114,8 +114,8 @@ DbgLv(1) << "TS: key format" << key << format << "stat errm" << status << error_
    offs << offset;
    nvalues++;
    rec_size     = offset + flen;
-DbgLv(1) << "TS: nval" << nvalues << "key format" << key << format
- << "offs flen" << offset << flen << "rsize" << rec_size;
+//DbgLv(1) << "TS: nval" << nvalues << "key format" << key << format
+// << "offs flen" << offset << flen << "rsize" << rec_size;
 
    return status;
 }
@@ -165,7 +165,7 @@ int US_TimeState::set_keys( QStringList& fkeys )
 int US_TimeState::set_value( QString key, int ivalue )
 {
    int status  = 0;
-DbgLv(1) << "DtsF: sival: key ival" << key << ivalue;
+//DbgLv(1) << "DtsF: sival: key ival" << key << ivalue;
    int rfmt    = 0;
    int rlen    = 4;
    int roff    = 0;
@@ -217,7 +217,7 @@ DbgLv(1) << "DtsF: sival: key ival" << key << ivalue;
 int US_TimeState::set_value( QString key, double dvalue )
 {
    int status  = 0;
-DbgLv(1) << "DtsF: sdval: key dval" << key << dvalue;
+//DbgLv(1) << "DtsF: sdval: key dval" << key << dvalue;
    int rfmt    = 0;
    int rlen    = 4;
    int roff    = 0;
@@ -270,7 +270,7 @@ DbgLv(1) << "DtsF: sdval: key dval" << key << dvalue;
 int US_TimeState::set_value( QString key, QString svalue )
 {
    int status  = 0;
-DbgLv(1) << "DtsF: ssval: key sval" << key << svalue;
+//DbgLv(1) << "DtsF: ssval: key sval" << key << svalue;
    int rfmt    = 0;
    int rlen    = 4;
    int roff    = 0;
@@ -410,6 +410,7 @@ int US_TimeState::open_read_data( QString fpath, const bool pfetch )
 {
    int status  = 0;
    file_size   = (qint64)0;
+
    filei       = new QFile( fpath );
    pre_fetch   = pfetch;
 
@@ -546,7 +547,7 @@ int US_TimeState::open_read_data( QString fpath, const bool pfetch )
    xfi.close();
 
    rec_size   = koff;                                  // Record size in bytes
-   int ktimes = ( file_size - fhdr_size ) / rec_size;  // Implied number times
+   int ktimes = (int)( ( file_size - fhdr_size ) / rec_size ); // Number times
    ntimes     = ( ntimes == 0 ) ? ktimes : ntimes;     // Counted/given times
 
    return status;
@@ -603,15 +604,15 @@ int US_TimeState::field_keys( QStringList* keysP, QStringList* fmtsP )
 }
 
 // Read in the next or a specified data record
-int US_TimeState::read_record( int rtimex )
+int US_TimeState::read_record( const int rtimex )
 {
-   int status  = 0;
+   int status   = 0;
 
    if ( timex < 0 )
    {  // If current index indicates still in header, complete header calcs
-      int lstv    = nvalues - 1;
-      QString fm  = fmts[ lstv ];
-      rec_size    = offs[ lstv ] + fm.mid( 1 ).toInt();
+      int lstv     = nvalues - 1;
+      QString fm   = fmts[ lstv ];
+      rec_size     = offs[ lstv ] + fm.mid( 1 ).toInt();
    }
 
    if ( rtimex < 0  ||  ( rtimex - timex ) == 1 )
@@ -629,9 +630,19 @@ int US_TimeState::read_record( int rtimex )
       }
    }
 
+   else if ( pre_fetch )  // Check if rewindable
+   {  // For designated record before current, reposition first
+      qint64 fpos  = (qint64)rtimex * rec_size + fhdr_size;
+      dsi->device()->seek( fpos );
+      timex        = rtimex;
+      // Then read the record
+      dsi->readRawData( cdata, rec_size );
+   }
+
    else
    {  // Error if designated time index is less than current
-      status     = 510;
+      //  and stream is from a disk device (non-rewindable)
+      status       = 510;
       return set_error( status );
    }
 
@@ -850,7 +861,7 @@ QString US_TimeState::error_message( int status )
       }
    }
 
-DbgLv(1) << "DtsF: egmsg: status" << status << "message" << errmsg;
+//DbgLv(1) << "DtsF: egmsg: status" << status << "message" << errmsg;
    return errmsg;
 }
 
@@ -864,6 +875,7 @@ QString US_TimeState::last_error_message( )
 int US_TimeState::dbCreate( US_DB2* dbP,
                             const int expID, const QString fpath )
 {
+int dbg_level=US_Settings::us_debug();
    QStringList query;
    int tmstID   = -1;
    if ( dbP == NULL  ||  fpath.isEmpty()  ||  expID < 1 )
@@ -874,6 +886,8 @@ int US_TimeState::dbCreate( US_DB2* dbP,
 
    QFile dfi( tmst_fpath );
    QFile xfi( defs_fpath );
+DbgLv(1) << "dbCreate: tmst_fpath" << tmst_fpath << "exists" << dfi.exists();
+DbgLv(1) << "dbCreate: defs_fpath" << defs_fpath << "exists" << xfi.exists();
    if ( !dfi.exists()  ||  !xfi.exists() )
       return -2;       // Local files do not both exist
 
@@ -884,7 +898,6 @@ int US_TimeState::dbCreate( US_DB2* dbP,
    QString tmst_cksm  = US_Util::md5sum_file( tmst_fpath );
    QString defs_cksm  = US_Util::md5sum_file( defs_fpath );
    QString tmst_fname = QString( fpath ).section( "/", -1, -1 );
-int dbg_level=US_Settings::us_debug();
 DbgLv(1) << "dbCreate: dbP fn ck" << dbP << tmst_fname << tmst_cksm;
 
    QByteArray defs_da = xfi.readAll();
@@ -900,8 +913,8 @@ DbgLv(1) << "dbCreate: dbP fn ck" << dbP << tmst_fname << tmst_cksm;
  
    int stat           = dbExamine( dbP, &tmstID, &expIDdb, &fnamedb,
                                    &xdefs, &cksumdb );
-DbgLv(1) << "dbCreate:  dbExam stat" << stat << "tmstID expID"
- << tmstID << expIDdb << "cksumdb" << cksumdb;
+//DbgLv(1) << "dbCreate:  dbExam stat" << stat << "tmstID expID"
+// << tmstID << expIDdb << "cksumdb" << cksumdb;
    if ( stat == US_DB2::OK )
    {  // We have an already existing DB record, so check how it matches local
       if ( cksumdb == tmst_cksm )
@@ -941,8 +954,8 @@ DbgLv(1) << "dbCreate:  dbExam stat" << stat << "tmstID expID"
    int nsrtID   = dbP->lastInsertID();
    tmstID       = ( stat == US_DB2::OK  ||  stat == US_DB2::NOROWS )
                 ? nsrtID : -4;
-DbgLv(1) << "dbCreate:  new_timestate status" << stat
- << "idExp tmstID nsrtID dsiz" << idExp << tmstID << nsrtID << defs_da.size();
+//DbgLv(1) << "dbCreate:  new_timestate status" << stat
+// << "idExp tmstID nsrtID dsiz" << idExp << tmstID << nsrtID << defs_da.size();
 
    return tmstID;
 }
@@ -982,10 +995,10 @@ DbgLv(1) << "dbExamine:  get_timestate tmstID" << tmstID << "status" << status;
       if ( status != US_DB2::OK )
          return status;
 
-      int nrows     = dbP->numRows();
+//int nrows=dbP->numRows();
       dbP->next();
       expID         = dbP->value( 0 ).toString().toInt();
-DbgLv(1) << "dbExamine:  get_timestate expID" << expID << "nrows" << nrows;
+//DbgLv(1) << "dbExamine:  get_timestate expID" << expID << "nrows" << nrows;
       if ( expIdP != NULL )
          *expIdP       = expID;
    }
@@ -1005,13 +1018,13 @@ DbgLv(1) << "dbExamine:  get_experiment_timestate expID status" << expID << stat
       if ( status != US_DB2::OK )
          return status;
 
-      int nrows     = dbP->numRows();
-DbgLv(1) << "dbExamine:  get_experiment_timestate  nrows" << nrows;
-//      dbP->next();
-bool havenx=dbP->next();
+//int nrows=dbP->numRows();
+//DbgLv(1) << "dbExamine:  get_experiment_timestate  nrows" << nrows;
+      dbP->next();
+//bool havenx=dbP->next();
       status        = dbP->lastErrno();
-DbgLv(1) << "dbExamine:  get_experiment_timestate  next status" << status
- << "have_next" << havenx;
+//DbgLv(1) << "dbExamine:  get_experiment_timestate  next status" << status
+// << "have_next" << havenx;
       tmstID        = dbP->value( 0 ).toString().toInt();
 DbgLv(1) << "dbExamine:  get_experiment_timestate   tmstID" << tmstID
  << dbP->value(0).toString() << dbP->value(1).toString();
@@ -1033,8 +1046,8 @@ DbgLv(1) << "dbExamine:  get_experiment_timestate   tmstID" << tmstID
    if ( cksumP != NULL )    // Return cksum+size string if requested
       *cksumP       = dbP->value( 3 ).toString() + " " +
                       dbP->value( 4 ).toString();
-if(cksumP!=NULL)
-DbgLv(1) << "dbExamine:  cksum-db" << *cksumP;
+//if(cksumP!=NULL)
+//DbgLv(1) << "dbExamine:  cksum-db" << *cksumP;
 
    if ( lastupdP != NULL )  // Return last-updated datetime if requested
       *lastupdP     = QDateTime::fromString( dbP->value( 5 ).toString(),
@@ -1063,6 +1076,90 @@ DbgLv(1) << "dbUpload: dbP tmstID fpath" << dbP << tmstID << fpath;
    int status = dbP->writeBlobToDB( fpath, QString( "upload_timestate" ),
                                     tmstID );
    return status;
+}
+
+// Static function to synchronze a TMST in the DB to a local file
+bool US_TimeState::dbSyncToLF( US_DB2* dbP, const QString fpath,
+                              const int expID )
+{
+int dbg_level=US_Settings::us_debug();
+DbgLv(1) << "dbSyncToLF: dbP fpath expID" << dbP << fpath << expID;
+   bool newfile   = false;
+
+   // Not possible to create a new file unless we are using DB
+   if ( dbP == NULL )
+      return newfile;
+
+   // Get the state and size of the DB record
+   int tmstID     = 0;
+   int expID1     = expID;
+   QString fpath1 = fpath;
+   QString xdefs;
+   QString cksumD;
+   QString cksumF;
+   QDateTime drecUpd;
+   QDateTime frecUpd;
+
+DbgLv(1) << "dbSTLF: call dbExamine";
+   int statD  = dbExamine( dbP, &tmstID, &expID1, &fpath1, &xdefs, &cksumD,
+                           &drecUpd );
+DbgLv(1) << "dbSTLF: dbExamine return";
+DbgLv(1) << "dbSTLF: dbExamine statD=" << statD << "tmstID=" << tmstID
+ << "cksumD" << cksumD << "drecUpd" << drecUpd.toString();
+   
+   // Not possible to create a new file if DB record is bad or missing
+   if ( statD != US_DB2::OK  )
+      return newfile;
+
+   // Now check any existing TimeState file
+   bool needF = false;
+
+   if ( QFile( fpath ).exists() )
+   {  // The file exists, so we need to check its cksum and size
+      cksumF     = US_Util::md5sum_file( fpath );
+DbgLv(1) << "dbSTLF: LF exists : cksumF" << cksumF;
+
+      if ( cksumF == cksumD )
+      {  // DB,Local records match in checksum and size, so no download
+         return newfile;
+      }
+
+      
+      // We need to bring Db,Local in sync
+      int sizeD   = QString( cksumD ).section( " ", -1, -1 ).toInt();
+      int sizeF   = QString( cksumF ).section( " ", -1, -1 ).toInt();
+      frecUpd     = QFileInfo( fpath ).lastModified().toUTC();
+DbgLv(1) << "dbSTLF: sizeD sizeF" << sizeD << sizeF << "frecUpd"
+ << frecUpd.toString();
+      // Flag file update if DB record newer than local or larger
+      needF       = ( drecUpd > frecUpd   ||  sizeD > sizeF );
+   }
+
+   else
+   {  // The local file does not exist, so we need to create it
+      needF       = true;
+   }
+DbgLv(1) << "dbSTLF:  NEEDF=" << needF;
+
+   if ( needF )
+   {  // We need a (new) local file copy
+      int stat    = dbDownload( dbP, tmstID, fpath );
+      newfile     = ( stat == US_DB2::OK );
+      QString xfpath = QString( fpath ).replace( ".tmst", ".xml" );
+
+      // Write the xdefs xml sibling file
+      QFile fileo( xfpath );
+
+      if ( fileo.open( QIODevice::WriteOnly | QIODevice::Text) )
+      {     
+         QTextStream tso( &fileo );
+         tso << xdefs;
+         tso.flush();
+         fileo.close();
+      }
+   }
+
+   return newfile;
 }
 
 
