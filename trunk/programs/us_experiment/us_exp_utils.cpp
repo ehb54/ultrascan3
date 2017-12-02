@@ -999,7 +999,14 @@ DbgLv(1) << "EGCe:getSL:     ii" << ii << " Entry" << centry;
                                              .simplified().toInt();
             for ( int jj = 0; jj < ncchn; jj++ )
             {  // Save channel strings (e.g., "1 / A", "1 / B", "2 / A", ...)
-               value << channel + rchans.mid( jj, 1 );
+               //value << channel + rchans.mid( jj, 1 );
+	      if ( (rchans.mid( jj, 1 )).contains( "A" ) )                   //ALEXEY: channel lables
+		value << channel + rchans.mid( jj, 1 ) + ", sample [right]";
+	      else if ( (rchans.mid( jj, 1 )).contains( "B" ) )
+		value << channel + rchans.mid( jj, 1 ) + ", reference [left]";
+	      else
+		value << channel + rchans.mid( jj, 1 );
+	      
             }
          }
       }

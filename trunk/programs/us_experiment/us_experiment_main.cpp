@@ -464,7 +464,8 @@ void US_ExperGuiGeneral::centerpieceInfo( void )
    // Populate the list of centerpiece names
    for ( int ii = 0; ii < acp_list.count(); ii++ )
    {
-      cp_names << acp_list[ ii ].name;
+     if ( !(acp_list[ ii ].name).contains("1-channel") )  //ALEXEY: remove 1-channel Simulaiton centerpiece from the list
+       cp_names << acp_list[ ii ].name;
    }
 }
 
@@ -1452,18 +1453,24 @@ US_ExperGuiSolutions::US_ExperGuiSolutions( QWidget* topw )
    QLabel* lb_panel    = us_banner(
                             tr( "5: Specify a solution for each cell/channel" ) );
    panel->addWidget( lb_panel );
-   QGridLayout* genL   = new QGridLayout();
-
+   
    QPushButton* pb_manage   = us_pushbutton( tr( "Manage Solutions" ) );
    QPushButton* pb_details  = us_pushbutton( tr( "View Solution Details" ) );
+   QLabel* lb_hdr1          = us_banner( tr( "Cell / Channel" ) );
+   QLabel* lb_hdr2          = us_banner( tr( "Solution" ) );
 
+   QGridLayout* banners = new QGridLayout();
    int row             = 1;
-   genL->addWidget( pb_manage,       row,   0, 1, 3 );
-   genL->addWidget( pb_details,      row++, 3, 1, 3 );
-   QLabel* lb_hdr1     = us_banner( tr( "Cell / Channel" ) );
-   QLabel* lb_hdr2     = us_banner( tr( "Solution" ) );
-   genL->addWidget( lb_hdr1,         row,   0, 1, 1 );
-   genL->addWidget( lb_hdr2,         row++, 1, 1, 5 );
+   banners->addWidget( pb_manage,       row,   0, 1, 3 );
+   banners->addWidget( pb_details,      row++, 3, 1, 3 );
+   banners->addWidget( lb_hdr1,         row,   0, 1, 2 );
+   banners->addWidget( lb_hdr2,         row++, 2, 1, 4 );
+
+   QGridLayout* genL   = new QGridLayout();
+   genL->setSpacing        ( 2 );
+   genL->setContentsMargins( 2, 2, 2, 2 );
+
+   row = 1;
 
    QStringList cpnames = sibLValue( "cells", "centerpieces" );
    int nholes          = sibIValue( "rotor", "nholes" );
@@ -1498,8 +1505,8 @@ DbgLv(1) << "EGSo:  nholes mxrow" << nholes << mxrow;
       cb_solu->setObjectName( strow + ": solution" );
       pb_comm->setObjectName( strow + ": addcomm" );
 
-      genL->addWidget( cclabl,  row,    0, 1, 1 );
-      genL->addWidget( cb_solu, row,    1, 1, 4 );
+      genL->addWidget( cclabl,  row,    0, 1, 2 );
+      genL->addWidget( cb_solu, row,    2, 1, 3 );
       genL->addWidget( pb_comm, row++,  5, 1, 1 );
 
       cb_solu->addItems( sonames );
@@ -1523,8 +1530,19 @@ DbgLv(1) << "EGSo:  nholes mxrow" << nholes << mxrow;
    connect( pb_details,   SIGNAL( clicked()         ),
             this,         SLOT  ( detailSolutions() ) );
 
-   panel->addLayout( genL );
-   panel->addStretch();
+
+   panel->addLayout(banners);
+   genL->setAlignment(Qt::AlignTop);
+
+   QScrollArea *scrollArea = new QScrollArea(this);
+   QWidget *containerWidget = new QWidget;
+   containerWidget->setLayout(genL);
+   scrollArea->setWidgetResizable(true);
+   scrollArea->setWidget(containerWidget);
+
+   panel->addWidget(scrollArea);
+
+   //panel->addStretch();
 
 DbgLv(1) << "EGSo:main: call initPanel()";
    initPanel();
@@ -1560,7 +1578,12 @@ DbgLv(1) << "EGSo: rbS: nchans nchant" << nchans << nchant
 	       for ( int jj = 0; jj < nchan_check; jj++ )
 		 {
 		   QString channel_check     = scell_check + " / " + QString( schans_check ).mid( jj, 1 );
-		   srchans_check << channel_check;
+		   if ( (QString( schans_check ).mid( jj, 1 )).contains( "A" ) )                   //ALEXEY: channel lables
+		     srchans_check << channel_check + ", sample [right]";
+		   else if ( (QString( schans_check ).mid( jj, 1 )).contains( "B" ) )
+		     srchans_check << channel_check + ", reference [left]";
+		   else
+		     srchans_check << channel_check;
 		 }
 	     }
 	 }
@@ -1626,8 +1649,14 @@ DbgLv(1) << "EGSo: rbS: nchan_s nuniq_s" << nchan_s << nuniq_s;
             for ( int jj = 0; jj < nchan; jj++ )
             {
                QString channel     = scell + " / " + QString( schans ).mid( jj, 1 );
-               srchans << channel;
-            }
+	       
+	       if ( (QString( schans ).mid( jj, 1 )).contains( "A" ) )                   //ALEXEY: channel lables
+		 srchans << channel + ", sample [right]";
+	       else if ( (QString( schans ).mid( jj, 1 )).contains( "B" ) )
+		 srchans << channel  + ", reference [left]";
+	       else
+		 srchans << channel;
+	    }
          }
       }
       nchans              = srchans.count();
