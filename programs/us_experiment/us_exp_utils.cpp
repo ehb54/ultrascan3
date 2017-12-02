@@ -985,7 +985,10 @@ DbgLv(1) << "EGCe:getSL:     ii" << ii << " Entry" << centry;
       for ( int ii = 0; ii < rpCells->nused; ii++ )
       {  // Examine the used cells
          int icell        = rpCells->used[ ii ].cell;
-         if ( icell >= icbal )   continue;                   // Skip counterbal.
+ DbgLv(1) << "USED CELL: " << icell;	 
+
+ //if ( icell >= icbal )   continue;                   // Skip counterbal.      //ALEXEY bug
+	 if ( icell > icbal )   continue;                   // Skip counterbal.
          QString channel  = QString( "%1 / " ).arg( icell ); // Start channel
          QString centp    = rpCells->used[ ii ].centerpiece; // Centerpiece
          int chx          = centp.indexOf( "-channel" );     // Index chan count
