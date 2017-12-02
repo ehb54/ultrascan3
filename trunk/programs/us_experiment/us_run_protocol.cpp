@@ -484,18 +484,24 @@ bool US_RunProtocol::RunProtoCells::toXml( QXmlStreamWriter& xmlo )
    xmlo.writeAttribute   ( "total_holes", QString::number( ncell ) );
    xmlo.writeAttribute   ( "used_holes",  QString::number( nused ) );
 
+  
    for ( int ii = 0; ii < nused; ii++ )
    {
       xmlo.writeStartElement( "cell" );
       xmlo.writeAttribute   ( "id", QString::number( used[ ii ].cell ) );
-      if ( ( ii + 1 ) < nused )
-      {
-         xmlo.writeAttribute( "centerpiece",    used[ ii ].centerpiece );
-         xmlo.writeAttribute( "windows",        used[ ii ].windows     );
-      }
+      // if ( ( ii + 1 ) < nused )                                         //ALEXEY bug
+      // {
+      //    xmlo.writeAttribute( "centerpiece",    used[ ii ].centerpiece );
+      //    xmlo.writeAttribute( "windows",        used[ ii ].windows     );
+      // }
+      if ( used[ ii ].cell != ncell )
+       {
+          xmlo.writeAttribute( "centerpiece",    used[ ii ].centerpiece );
+          xmlo.writeAttribute( "windows",        used[ ii ].windows     );
+       }           
       else
       {
-         xmlo.writeAttribute( "counterbalance", used[ ii ].cbalance    );
+	xmlo.writeAttribute( "counterbalance", used[ ii ].cbalance    );   // ALEXEY: Potential BUG: WHY last cell is always counterbalance ?? 
       }
       xmlo.writeEndElement(); // cell
    }

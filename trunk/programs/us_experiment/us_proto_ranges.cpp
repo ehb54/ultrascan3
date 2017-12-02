@@ -347,7 +347,7 @@ DbgLv(1) << "EGRn: rbR:     sizes: rch swv lor hir"
    {  // Create first shot at panel parameters
       for ( int ii = 0; ii < nrnchan; ii++ )
       {
-DbgLv(1) << "EGRn: rbR:    ii" << ii << "channel" << rpRange->chrngs[ii].channel;
+	DbgLv(1) << "EGRn: rbR:    ii" << ii << "channel" << rpRange->chrngs[ii].channel;  //ALEXEY potential bug here # RANGES
          rchans [ ii ]       = rpRange->chrngs[ ii ].channel;
          swvlens[ ii ]       = rpRange->chrngs[ ii ].wvlens;
          locrads[ ii ]       = rpRange->chrngs[ ii ].lo_rad;

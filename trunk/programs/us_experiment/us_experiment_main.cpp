@@ -1536,9 +1536,42 @@ void US_ExperGuiSolutions::rebuild_Solut( void )
    int nchans          = sibIValue( "cells", "nchans" );
 DbgLv(1) << "EGSo: rbS: nchans nchant" << nchans << nchant
  << "rpS.nschan" << rpSolut->nschan;
-   if ( nchans == nchant )
-      return;                          // No cells change means no rebuild
-
+   if ( nchans == nchant )     // No cells change means no rebuild //ALEXEY: wrong condition !!! have to also compare content of channels vs cells
+     {
+      
+       //ALEXEY: need to compare srchans QStringLists from Solutions && Cells:
+       QStringList srchans_check;
+       srchans_check.clear();
+       
+       QStringList centps_check  = sibLValue( "cells", "centerpieces" );
+       int ncused_check          = centps_check.count();
+              
+       for ( int ii = 0; ii < ncused_check; ii++ )
+	 {
+	   QString centry_check      = centps_check[ ii ];
+	   int chx_check             = centry_check.indexOf( "-channel" );
+	   if ( chx_check > 0 )
+	     {
+	       QString scell_check       = centry_check.section( ":", 0, 0 )
+		 .section( " ", 1, 1 );
+	       QString schans_check( "ABCDEF" );
+	       int nchan_check           = centry_check.left( chx_check ).section( " ", -1, -1 )
+		 .simplified().toInt();
+	       for ( int jj = 0; jj < nchan_check; jj++ )
+		 {
+		   QString channel_check     = scell_check + " / " + QString( schans_check ).mid( jj, 1 );
+		   srchans_check << channel_check;
+		 }
+	     }
+	 }
+       
+       DbgLv(1) << "SRCHANS from (Solutions):         " << srchans;
+       DbgLv(1) << "SRCHANS (from actual Cells):      " << srchans_check;
+       
+       if (srchans_check == srchans)
+	 return;                                 //ALEXEY: only now we can return        
+     }
+       
    if ( rpSolut->nschan == 0 )
    {  // No existing Solutions protocol, so initialize a rudimentary one
       rpSolut->nuniqs     = 0;
