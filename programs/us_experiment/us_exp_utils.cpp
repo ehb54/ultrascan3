@@ -210,7 +210,7 @@ void US_ExperimentMain::unable_tabs_buttons( void )
   
 }
 
-//Slot to ENABLE tabs and Next/Prev buttons
+//Slot to ENABLE tabs and Next/Prev buttons, but make all Widgets read-only
 void US_ExperimentMain::enable_tabs_buttons( void )
 {
   DbgLv(1) << "ENABLING!!!";
@@ -232,9 +232,23 @@ void US_ExperimentMain::enable_tabs_buttons( void )
       // and so on ..
       
       for (int i=0; i < allPButtons.count(); i++)
-	allPButtons[i]->setEnabled(false);
+	{
+	  if ( (allPButtons[i]->text()).contains("View Solution Details") || 
+	       (allPButtons[i]->text()).contains("View Current Range Settings") ||
+	       (allPButtons[i]->text()).contains("View Experiment Details") ||
+	       (allPButtons[i]->text()).contains("Test Connection") )
+	    allPButtons[i]->setEnabled(true);
+	  else
+	    allPButtons[i]->setEnabled(false);
+	}
+      
       for (int i=0; i < allCBoxes.count(); i++)
-	allCBoxes[i]->setEnabled(false);
+	{
+	  if ( (allCBoxes[i]->currentText()).contains("Speed Profile") )
+	    allCBoxes[i]->setEnabled(true);
+	  else
+	    allCBoxes[i]->setEnabled(false);
+	}
       for (int i=0; i < allSBoxes.count(); i++)
 	allSBoxes[i]->setEnabled(false);
       for (int i=0; i < allCounters.count(); i++)
@@ -324,7 +338,7 @@ DbgLv(1) << "EGGe: inP: prn,prd counts" << protdata.count() << pr_names.count();
 //IF USER cannot edit anything (low-level user)
 void US_ExperGuiGeneral::check_user_level()
 {
-  if ( US_Settings::us_inv_level() < 3 )
+  if ( US_Settings::us_inv_level() < 4 )
     {
       pb_investigator->setEnabled( false );
       pb_project     ->setEnabled( false );

@@ -2863,7 +2863,7 @@ DbgLv(1) << "EGUp:svRP:  call getProtos()";
 DbgLv(1) << "EGUp:svRP:   prnames" << prnames;
 
    QString protname    = sibSValue( "general", "protocol" );
-DbgLv(1) << "EGUp:svRP:  protname" << protname << "prdats0" << prdats[0];
+//DbgLv(1) << "EGUp:svRP:  protname" << protname << "prdats0" << prdats[0];  //ALEXEY: important: this statement caused bug when no protocols existed in the DB
 
    if ( prnames.contains( protname ) )
    {  // Cannot save until a new protocol name is given
@@ -2956,7 +2956,8 @@ DbgLv(1) << "EGUp:svRP:   dbP" << dbP;
    mainw->updateProtos( prentry );            // Update existing protocols list
    proto_svd           = true;
    ck_prot_svd->setChecked( true );
-DbgLv(1) << "EGUp:svRP:  new protname" << protname << "prdats0" << prdats[0];
+   DbgLv(1) << "BEFORE!!!"; 
+   //DbgLv(1) << "EGUp:svRP:  new protname" << protname << "prdats0" << prdats[0]; //ALEXEY: this statement caused issues when no protocol existed
 }
 
 // Slot to submit the experiment to the Optima DB
