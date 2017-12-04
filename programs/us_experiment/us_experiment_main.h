@@ -52,10 +52,16 @@ class US_ExperGuiGeneral : public US_WidgetsDialog
       // Append to the names,summary-data protocol lists
       bool        updateProtos( const QStringList );
 
+      void check_user_level( void );
+      int loaded_proto;
+
    private:
       US_ExperimentMain*    mainw;      // Parent to all panels
       US_RunProtocol*       currProto;  // Current RunProtocol controls pointer
       US_Help  showHelp;
+
+      QPushButton* pb_investigator;     // Button to select investigator
+      QPushButton* pb_project;          // Button to select project
 
       QLineEdit*   le_runid;            // Run name line edit
       QLineEdit*   le_protocol;         // Protocol name line edit
@@ -73,7 +79,7 @@ class US_ExperGuiGeneral : public US_WidgetsDialog
       QStringList           pr_names;   // List of protocol names
 
       QList< US_AbstractCenterpiece >  acp_list; // Full Centerpiece information
-
+      
    private slots:
       void sel_project     ( void );        // Slot for project button clicked
       void project_info    ( US_Project& ); // Slot for project diag results
@@ -82,7 +88,10 @@ class US_ExperGuiGeneral : public US_WidgetsDialog
       void load_protocol   ( void );        // Slot for protocol loaded
       void changed_protocol( void );        // Slot for change in protocol name
       void centerpieceInfo ( void );        // Function for all centerpieces
-
+            
+   signals:
+      void  set_tabs_buttons_inactive ( void );
+      void  set_tabs_buttons_active   ( void ); 
 };
 
 //! \brief Experiment Rotor panel
@@ -696,7 +705,8 @@ class US_ExperimentMain : public US_Widgets
       US_RunProtocol  loadProto;   // Controls as loaded from an RP record
       US_RunProtocol  currProto;   // Current RunProtocol controls
 
-
+      QPushButton* pb_next;
+      QPushButton* pb_prev;
    private:
 
       QTabWidget*           tabWidget;      // Tab Widget holding the panels
@@ -714,6 +724,8 @@ class US_ExperimentMain : public US_Widgets
       int         dbg_level;       // Debug print flag
       int         curr_panx;       // Current panel index (0-7)
 
+      
+
    private slots:
 
       void reset     ( void );
@@ -722,6 +734,9 @@ class US_ExperimentMain : public US_Widgets
       void panelUp   ( void );     // Move to next panel
       void panelDown ( void );     // Move to previous panel
       void help      ( void );     // Show documentation window
+
+      void unable_tabs_buttons( void);  // Slot to unable Tabs and Buttons when user level is low
+      void enable_tabs_buttons( void);  // Slot to enable Tabs and Buttons after protocol is loaded
 };
 #endif
 

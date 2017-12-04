@@ -195,6 +195,59 @@ void US_ExperimentMain::help( void )
    else if ( curr_panx == 7 ) epanUpload   ->help();
 }
 
+//Slot to DISABLE tabs and Next/Prev buttons
+void US_ExperimentMain::unable_tabs_buttons( void )
+{
+  DbgLv(1) << "UNABLING!!!";
+  pb_next   ->setEnabled(false);
+  pb_prev   ->setEnabled(false);
+  
+  for (int i=1; i<tabWidget->count(); i++)
+    {
+      tabWidget ->setTabEnabled( i, false );
+      //tabWidget -> removeTab( i );
+    }
+  
+}
+
+//Slot to ENABLE tabs and Next/Prev buttons
+void US_ExperimentMain::enable_tabs_buttons( void )
+{
+  DbgLv(1) << "ENABLING!!!";
+  pb_next   ->setEnabled(true);
+  pb_prev   ->setEnabled(true);
+  
+  for (int i=1; i<tabWidget->count(); i++)
+    {
+      tabWidget ->setTabEnabled( i, true );
+      QWidget* pWidget= tabWidget->widget(i);
+      
+      //Find all children of each Tab in QTabWidget [children of all types...]
+      QList<QPushButton *> allPButtons = pWidget->findChildren<QPushButton *>();
+      QList<QComboBox *>   allCBoxes   = pWidget->findChildren<QComboBox *>();
+      QList<QSpinBox *>    allSBoxes   = pWidget->findChildren<QSpinBox *>();
+      QList<QwtCounter *>  allCounters = pWidget->findChildren<QwtCounter *>();
+      QList<QCheckBox *>   allChBoxes  = pWidget->findChildren<QCheckBox *>();
+
+      // and so on ..
+      
+      for (int i=0; i < allPButtons.count(); i++)
+	allPButtons[i]->setEnabled(false);
+      for (int i=0; i < allCBoxes.count(); i++)
+	allCBoxes[i]->setEnabled(false);
+      for (int i=0; i < allSBoxes.count(); i++)
+	allSBoxes[i]->setEnabled(false);
+      for (int i=0; i < allCounters.count(); i++)
+	allCounters[i]->setEnabled(false); 
+      for (int i=0; i < allChBoxes.count(); i++)
+	allChBoxes[i]->setEnabled(false);
+      // and so on ..
+      
+    }
+  
+}
+
+
 // Use main interface to call general utility functions
 bool US_ExperimentMain::centpInfo( const QString par1,
                                    US_AbstractCenterpiece& par2 )
@@ -236,6 +289,7 @@ QString llstring2;
 QStringList ii1;
 QStringList ii2;
 QStringList ii3;
+
 ii1 << "1AA" << "1BB" << "1CC";
 ii2 << "2AA" << "2BB";
 ii3 << "3AA" << "3BB" << "3CC" << "3DD";
@@ -262,6 +316,26 @@ DbgLv(1) << "EGGe: inP: prn,prd counts" << protdata.count() << pr_names.count();
    le_project     ->setText ( currProto->project );
    ct_tempera     ->setValue( currProto->temperature );
    ct_tedelay     ->setValue( currProto->temeq_delay );
+   
+   check_user_level();
+
+}
+
+//IF USER cannot edit anything (low-level user)
+void US_ExperGuiGeneral::check_user_level()
+{
+  if ( US_Settings::us_inv_level() < 3 )
+    {
+      pb_investigator->setEnabled( false );
+      pb_project     ->setEnabled( false );
+   
+      if ( !loaded_proto )
+	emit set_tabs_buttons_inactive();
+      else
+	emit set_tabs_buttons_active();
+   
+      DbgLv(1) << "SIGNAL!!!!" ; 
+    }
 }
 
 // Save panel controls when about to leave the panel

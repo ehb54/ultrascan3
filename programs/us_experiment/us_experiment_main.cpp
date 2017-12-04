@@ -83,8 +83,10 @@ US_ExperimentMain::US_ExperimentMain() : US_Widgets()
    // Add bottom buttons
    QPushButton* pb_close  = us_pushbutton( tr( "Close" ) );
    QPushButton* pb_help   = us_pushbutton( tr( "Help" ) );
-   QPushButton* pb_next   = us_pushbutton( tr( "Next Panel" ) );
-   QPushButton* pb_prev   = us_pushbutton( tr( "Previous Panel" ) );
+   // QPushButton* pb_next   = us_pushbutton( tr( "Next Panel" ) );
+   // QPushButton* pb_prev   = us_pushbutton( tr( "Previous Panel" ) );
+   pb_next   = us_pushbutton( tr( "Next Panel" ) );
+   pb_prev   = us_pushbutton( tr( "Previous Panel" ) );
    buttL->addWidget( pb_help  );
    buttL->addWidget( pb_prev  );
    buttL->addWidget( pb_next  );
@@ -102,13 +104,21 @@ US_ExperimentMain::US_ExperimentMain() : US_Widgets()
    connect( pb_help,   SIGNAL( clicked()    ),
             this,      SLOT  ( help()       ) );
 
+   
+
    main->addWidget( tabWidget );
    main->addLayout( statL );
    main->addLayout( buttL );
 
+   connect( epanGeneral, SIGNAL( set_tabs_buttons_inactive( void )), this, SLOT( unable_tabs_buttons( void ) ));
+   connect( epanGeneral, SIGNAL( set_tabs_buttons_active( void )),   this, SLOT( enable_tabs_buttons( void ) ));
+
    setMinimumSize( QSize( 800, 400 ) );
    adjustSize();
 
+   //epanGeneral->initPanel();
+   epanGeneral->loaded_proto = 0;
+   epanGeneral->check_user_level();
    reset();
 }
 
@@ -137,8 +147,10 @@ US_ExperGuiGeneral::US_ExperGuiGeneral( QWidget* topw )
    QLabel*      lb_tempera      = us_label( tr( "Run Temperature " ) + DEGC + ":" );
    QLabel*      lb_tedelay      = us_label( tr( "Temperature-Equilibration Delay" ) );
    QLabel*      lb_tedmins      = us_label( tr( "Minutes" ) );
-   QPushButton* pb_investigator = us_pushbutton( tr( "Select Investigator" ) );
-   QPushButton* pb_project      = us_pushbutton( tr( "Select Project" ) );
+   //QPushButton* pb_investigator = us_pushbutton( tr( "Select Investigator" ) );
+   pb_investigator = us_pushbutton( tr( "Select Investigator" ) );
+   //QPushButton* pb_project      = us_pushbutton( tr( "Select Project" ) );
+   pb_project      = us_pushbutton( tr( "Select Project" ) );
    QPushButton* pb_protocol     = us_pushbutton( tr( "Load Protocol" ) );
                 le_runid        = us_lineedit( "", 0, false );
                 le_protocol     = us_lineedit( "", 0, false );
@@ -166,6 +178,8 @@ US_ExperGuiGeneral::US_ExperGuiGeneral( QWidget* topw )
       : "";
    QString invtxt  = invnbr + US_Settings::us_inv_name();
    le_investigator = us_lineedit( invtxt, 0, true );
+
+
 
    // Set defaults
    currProto       = &mainw->currProto;
@@ -343,7 +357,11 @@ void US_ExperGuiGeneral::sel_investigator( void )
 
    currProto->investigator  = inv_text;
    le_investigator->setText( inv_text );
+   
+   DbgLv(1) << "User Level: " << US_Settings::us_inv_level();
+
 }
+
 
 // Load Protocol
 void US_ExperGuiGeneral::load_protocol( void )
@@ -413,6 +431,7 @@ DbgLv(1) << "EGGe:ldPro:    cOhost" << mainw->currProto.optimahost
 DbgLv(1) << "EGGe:ldPro:    cTempe" << mainw->currProto.temperature
  << "lTempe" << mainw->loadProto.temperature;
 
+ loaded_proto = 1;
    // Initialize all other panels using the new protocol
    mainw->initPanels();
 }
@@ -2116,14 +2135,21 @@ US_ExperGuiOptical::US_ExperGuiOptical( QWidget* topw )
    panel->setContentsMargins( 2, 2, 2, 2 );
    QLabel* lb_panel    = us_banner( tr( "6: Specify optical system scans for each channel" ) );
    panel->addWidget( lb_panel );
-   QGridLayout* genL   = new QGridLayout();
+ 
 
    QLabel* lb_hdr1     = us_banner( tr( "Cell / Channel" ) );
    QLabel* lb_hdr2     = us_banner( tr( "Optical System Scans to Perform" ) );
-   int row             = 1;
-   genL->addWidget( lb_hdr1, row,   0, 1, 1 );
-   genL->addWidget( lb_hdr2, row++, 1, 1, 3 );
 
+   QGridLayout* banners = new QGridLayout();
+   int row             = 1;
+   banners->addWidget( lb_hdr1, row,   0, 1, 1 );
+   banners->addWidget( lb_hdr2, row++, 1, 1, 3 );
+
+   QGridLayout* genL   = new QGridLayout();
+   genL->setSpacing        ( 2 );
+   genL->setContentsMargins( 2, 2, 2, 2 );
+   
+   row = 1;
    const int mxcels    = 8;
    int nholes          = sibIValue( "rotor", "nholes" );
 DbgLv(1) << "EGOp:  nholes mxcels" << nholes << mxcels;
@@ -2219,8 +2245,18 @@ DbgLv(1) << "EGOp:main:    ii" << ii << "is_vis nckopt" << is_vis << nckopt;
       cc_osyss << bg_osyss;
    }
 
-   panel->addLayout( genL );
-   panel->addStretch();
+   panel->addLayout(banners);
+   genL->setAlignment(Qt::AlignTop);
+
+   QScrollArea *scrollArea = new QScrollArea(this);
+   QWidget *containerWidget = new QWidget;
+   containerWidget->setLayout(genL);
+   scrollArea->setWidgetResizable(true);
+   scrollArea->setWidget(containerWidget);
+
+   panel->addWidget(scrollArea);
+
+   // panel->addStretch();
 
 DbgLv(1) << "EGOp:main: call initPanel";
    initPanel();
