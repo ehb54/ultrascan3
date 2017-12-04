@@ -35,8 +35,7 @@ US_ExperGuiRanges::US_ExperGuiRanges( QWidget* topw )
    panel->setContentsMargins( 2, 2, 2, 2 );
    QLabel* lb_panel    = us_banner( tr( "7: Specify wavelength and radius ranges" ) );
    panel->addWidget( lb_panel );
-   QGridLayout* genL   = new QGridLayout();
-
+ 
    QPushButton* pb_details  = us_pushbutton( tr( "View Current Range Settings" ) );
    connect( pb_details,   SIGNAL( clicked()       ),
             this,         SLOT  ( detailRanges()  ) );
@@ -45,11 +44,24 @@ US_ExperGuiRanges::US_ExperGuiRanges( QWidget* topw )
    QLabel* lb_hdr2     = us_banner( tr( "Wavelengths" ) );
    QLabel* lb_hdr3     = us_banner( tr( "Radius Ranges" ) );
 
+   QGridLayout* banners = new QGridLayout();
+   // banners->setContentsMargins( 2, 2, 2, 2 );
+   // banners->setHorizontalSpacing( 2 );
    int row             = 0;
-   genL->addWidget( pb_details,      row++, 8, 1, 8 );
-   genL->addWidget( lb_hdr1,         row,   0, 1, 3 );
-   genL->addWidget( lb_hdr2,         row,   3, 1, 6 );
-   genL->addWidget( lb_hdr3,         row++, 9, 1, 7 );
+   banners->addWidget( pb_details,      row++, 8, 1, 8 );
+   banners->addWidget( lb_hdr1,         row,   0, 1, 3 );
+   banners->addWidget( lb_hdr2,         row,   3, 1, 6 );
+   banners->addWidget( lb_hdr3,         row++, 9, 1, 7 );
+
+   // banners->addWidget( lb_hdr1,         row,   0,  1, 8 );
+   // banners->addWidget( lb_hdr2,         row,   8,  1, 13 );
+   // banners->addWidget( lb_hdr3,         row++, 21, 1, 21 );
+
+   QGridLayout* genL   = new QGridLayout();
+   genL->setSpacing        ( 2 );
+   genL->setContentsMargins( 2, 2, 2, 2 );
+   
+   row             = 0;
 
    QLabel*      cclabl;
    QPushButton* pbwavln;
@@ -142,8 +154,19 @@ US_ExperGuiRanges::US_ExperGuiRanges( QWidget* topw )
 #endif
    chrow            = 0;
 
-   panel->addLayout( genL );
-   panel->addStretch();
+   panel->addLayout(banners);
+   genL->setAlignment(Qt::AlignTop);
+
+   QScrollArea *scrollArea = new QScrollArea(this);
+   QWidget *containerWidget = new QWidget;
+   containerWidget->setLayout(genL);
+   scrollArea->setWidgetResizable(true);
+   scrollArea->setWidget(containerWidget);
+   scrollArea->verticalScrollBar()->setFixedWidth(50);
+   
+   panel->addWidget(scrollArea);  
+
+   //panel->addStretch();
 
    initPanel();
 }
