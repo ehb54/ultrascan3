@@ -870,7 +870,6 @@ DbgLv(1) << "Ld: runID" << runID << "wdir" << workingDir;
                        SLOT  ( new_triple         ( int ) ) );
    triple_index = 0;
    data_index   = 0;
-   pb_nextChan->setEnabled( triples.size() > 1 );
    
    le_info->setText( runID );
 
@@ -3068,6 +3067,7 @@ void US_Edit::remove_spikes( void )
 
    pb_spikes->setIcon   ( check );
    pb_spikes->setEnabled( false );
+   pb_write ->setEnabled( true );
    replot();
 }
 
@@ -3432,6 +3432,7 @@ void US_Edit::write( void )
    changes_made = false;
    pb_write    ->setEnabled( false );
    ck_writemwl ->setEnabled( false );
+   pb_nextChan ->setEnabled( triples.size() > 1 );
 }
 
 // Save edits for a triple
@@ -4202,6 +4203,7 @@ void US_Edit::next_triple( void )
 
 //   plot_range();
    new_triple( dax );
+	pb_nextChan ->setEnabled( false );
 }
 
 // Evaluate whether all edits are complete
