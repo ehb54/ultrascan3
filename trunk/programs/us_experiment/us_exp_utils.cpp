@@ -205,7 +205,8 @@ void US_ExperimentMain::unable_tabs_buttons( void )
   for (int i=1; i<tabWidget->count(); i++)
     {
       tabWidget ->setTabEnabled( i, false );
-      //tabWidget -> removeTab( i );
+      tabWidget ->tabBar()->setTabTextColor( i, Qt::darkGray);
+     
     }
   
 }
@@ -217,9 +218,14 @@ void US_ExperimentMain::enable_tabs_buttons( void )
   pb_next   ->setEnabled(true);
   pb_prev   ->setEnabled(true);
   
+ 
   for (int i=1; i<tabWidget->count(); i++)
     {
       tabWidget ->setTabEnabled( i, true );
+      QPalette pal = tabWidget ->tabBar()->palette();
+      //DbgLv(1) << "PALETTE: " << pal.color(QPalette::WindowText);
+      tabWidget ->tabBar()->setTabTextColor( i, pal.color(QPalette::WindowText) ); // Qt::black
+      
       QWidget* pWidget= tabWidget->widget(i);
       
       //Find all children of each Tab in QTabWidget [children of all types...]
@@ -338,7 +344,7 @@ DbgLv(1) << "EGGe: inP: prn,prd counts" << protdata.count() << pr_names.count();
 //IF USER cannot edit anything (low-level user)
 void US_ExperGuiGeneral::check_user_level()
 {
-  if ( US_Settings::us_inv_level() < 4 )
+  if ( US_Settings::us_inv_level() < 3 )
     {
       pb_investigator->setEnabled( false );
       pb_project     ->setEnabled( false );
