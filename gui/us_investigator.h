@@ -29,7 +29,8 @@ class US_GUI_EXTERN US_Investigator : public US_WidgetsDialog
       class US_InvestigatorData
       {
          public:
-         int     invID;        //!< The uniqe ID in the DB for the entry.
+         int     invID;        //!< The unique ID in the DB for the entry.
+         int     invLevel;     //!< Investigator's user level
          QString invGuid;      //!< Investigator's global ID
          QString lastName;     //!< Last Name
          QString firstName;    //!< First Name   
@@ -51,6 +52,7 @@ class US_GUI_EXTERN US_Investigator : public US_WidgetsDialog
       bool                         signal_wanted;
       US_InvestigatorData          info;
       QList< US_InvestigatorData > investigators;
+      QList< int >                 invids;
 
       QLineEdit*   le_search;
       QLineEdit*   le_invID;

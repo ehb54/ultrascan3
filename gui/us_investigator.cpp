@@ -224,17 +224,41 @@ void US_Investigator::queryDB( void )
    US_InvestigatorData data;
 
    while ( db.next() )
-   {
+   {  // Fill investigator data list
       data.invID     = db.value( 0 ).toInt();
       data.lastName  = db.value( 1 ).toString();
       data.firstName = db.value( 2 ).toString();
+      data.invLevel  = db.value( 4 ).toInt();
 
       investigators << data;
+      invids        << data.invID;
+qDebug() << "invID last first level" << data.invID << data.lastName
+ << data.firstName << data.invLevel;
 
       lw_names->addItem( new QListWidgetItem( 
          "InvID: (" + QString::number( data.invID ) + "), " + 
          data.lastName + ", " + data.firstName ) );
    }
+
+#if 0
+   QString qrystr( "SELECT userlevel, personID "
+                   "FROM people "
+                   "ORDER BY personID;" );
+   db.rawQuery( qrystr );
+qDebug() << " numrows" << db.numRows() << "query:" << qrystr;
+qDebug() << "  db error:" << db.lastErrno() << db.lastError();
+   while ( db.next() )
+   {  // Update investigators data with user levels
+      int ulevel     = db.value( 0 ).toInt();
+      int invID      = db.value( 1 ).toInt();
+      int lstx       = invids.indexOf( invID );
+qDebug() << " ulevel invID" << ulevel << invID << "lstx" << lstx;
+      if ( lstx >= 0 )
+      {
+         investigators[ lstx ].invGuid = QString::number( ulevel );
+      }
+   }
+#endif
 }
 
 void US_Investigator::update( void )
@@ -390,9 +414,11 @@ void US_Investigator::get_inv_data( QListWidgetItem* item )
 
 void US_Investigator::close( void )
 {
+   QString invID = le_invID->text();
+   int idInv     = invID.toInt();
    if ( signal_wanted )
    {
-      if ( le_invID->text() == "" )
+      if ( invID.isEmpty() )
       {
          QMessageBox::information( this,
             tr( "Attention" ),
@@ -402,12 +428,19 @@ void US_Investigator::close( void )
       }
    }
 
-   if ( le_invID->text().toInt() > 0 )
-   {
-      QString s = le_lname->text() + ", " + le_fname->text();
+qDebug() << " close invID idInv" << invID << idInv;
+   if ( idInv > 0 )
+   {  // Get and store user setting
+      QString sname = le_lname->text() + ", " + le_fname->text();
+      int lstx      = invids.indexOf( idInv );
+      int ulev      = ( lstx >= 0 ) ? investigators[ lstx ].invLevel : 0;
+qDebug() << " sname idInv lstx" << sname << idInv << lstx
+ << "   ulev" << ulev;
 
-      US_Settings::set_us_inv_name( s );
-      US_Settings::set_us_inv_ID( le_invID->text().toInt() );
+      US_Settings::set_us_inv_name( sname );
+      US_Settings::set_us_inv_ID( idInv );
+      if ( ulev > 0 )
+         US_Settings::set_us_inv_level( ulev );
    }
 
    // Send signal *after* updating settings.
@@ -433,6 +466,7 @@ void US_Investigator::reset( void )
 
    lw_names    ->clear();
    investigators.clear();
+   invids       .clear();
 
    //pb_delete ->setEnabled( false );
    pb_update ->setEnabled( false );

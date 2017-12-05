@@ -544,7 +544,7 @@ totT2+=(clcSt2.msecsTo(clcSt3));
             // grid on simulation grid
             double omega        = next_speed * M_PI / 30.0;
             af_params.omega_s   = sq( omega );
-            double lg_bm_rat    = log(af_params.current_bottom / af_params.current_meniscus );
+            double lg_bm_rat    = log( af_params.current_bottom / af_params.current_meniscus );
             double s_omg_fac    = qAbs( sc->s ) * af_params.omega_s;
 
             // Length of time grid on simulation grid for constant speed zone
@@ -1732,7 +1732,7 @@ clcSt3 = QDateTime::currentDateTime();
    // Calculate all time steps
    for ( int ii = 0; ii < ntsteps; ii++ )
    {
-      if (( ii == 0)&&( accel == false ))
+      if ( ( ii == 0 )  && ( accel == false ) )
       {
          simscan.rpm         = (int) rpm_start;
          simscan.time        = last_time;
