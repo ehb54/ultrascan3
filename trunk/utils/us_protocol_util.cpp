@@ -22,7 +22,8 @@ int US_ProtocolUtil::list_all( QList< QStringList >& protdata,
 qDebug() << "PU:l_all: dbP" << dbP;
    if ( dbP != NULL )
    {  // Read protocol records from the database
-      QString inv_id      = QString::number( US_Settings::us_inv_ID() );
+//      QString inv_id      = QString::number( US_Settings::us_inv_ID() );
+      QString inv_id      = 0;  // From all users
       QStringList qry;
       qry << "get_protocol_desc" << inv_id;
       dbP->query( qry );
