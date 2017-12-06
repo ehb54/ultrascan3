@@ -1591,19 +1591,20 @@ US_SolutionGui::US_SolutionGui(
       int   chID,
       bool  signal_wanted,
       int   select_db_disk,
-      const US_Solution& dataIn,
+      const US_Solution dataIn,
       bool  auto_save
       ) : US_WidgetsDialog( 0, 0 ), experimentID( expID ), channelID( chID ),
-        signal( signal_wanted ), solution( dataIn ), autosave( auto_save )
+        signal( signal_wanted )
 
 {
-   personID     = US_Settings::us_inv_ID();
+   personID      = US_Settings::us_inv_ID();
    solution      = dataIn;
    orig_solution = dataIn;
-   disk_or_db  = ( select_db_disk == US_Disk_DB_Controls::Default )
-                 ?  US_Settings::default_data_location()
-                 : select_db_disk;
-   dbg_level    = US_Settings::us_debug();
+   autosave      = auto_save;
+   disk_or_db    = ( select_db_disk == US_Disk_DB_Controls::Default )
+                   ?  US_Settings::default_data_location()
+                   : select_db_disk;
+   dbg_level     = US_Settings::us_debug();
 
    
    setWindowTitle( tr( "Solution Management" ) );

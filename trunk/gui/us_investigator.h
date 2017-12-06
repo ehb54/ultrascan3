@@ -2,6 +2,8 @@
 #ifndef US_INVESTIGATOR_H
 #define US_INVESTIGATOR_H
 
+#include <QtGui>
+
 #include "us_extern.h"
 #include "us_widgets_dialog.h"
 #include "us_help.h"
@@ -29,8 +31,7 @@ class US_GUI_EXTERN US_Investigator : public US_WidgetsDialog
       class US_InvestigatorData
       {
          public:
-         int     invID;        //!< The unique ID in the DB for the entry.
-         int     invLevel;     //!< Investigator's user level
+         int     invID;        //!< The uniqe ID in the DB for the entry.
          QString invGuid;      //!< Investigator's global ID
          QString lastName;     //!< Last Name
          QString firstName;    //!< First Name   
@@ -52,7 +53,6 @@ class US_GUI_EXTERN US_Investigator : public US_WidgetsDialog
       bool                         signal_wanted;
       US_InvestigatorData          info;
       QList< US_InvestigatorData > investigators;
-      QList< int >                 invids;
 
       QLineEdit*   le_search;
       QLineEdit*   le_invID;
