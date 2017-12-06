@@ -382,7 +382,7 @@ class US_GUI_EXTERN US_SolutionGui : public US_WidgetsDialog
                       int  = 1,
                       bool = false,
                       int  = US_Disk_DB_Controls::Default,
-                      const US_Solution& = US_Solution(),
+                      const US_Solution = US_Solution(),
                       bool = true );
 
       //! A null destructor. 
