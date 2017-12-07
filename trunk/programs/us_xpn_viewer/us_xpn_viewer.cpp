@@ -1903,9 +1903,9 @@ DbgLv(1) << "c_r:  ri0 ro0" << r_radii[0] << allData[jd].xvalues[0]
 void US_XpnDataViewer::currentRectf( QRectF rectf )
 {
    QVector< double >  ascdat;
-   double rad1      = qRound( rectf.left()  * 10000.0 ) * 0.0001;
-   double rad2      = qRound( rectf.right() * 10000.0 ) * 0.0001;
-   if ( rad2 > 7.0 )
+   double radv1     = qRound( rectf.left()  * 10000.0 ) * 0.0001;
+   double radv2     = qRound( rectf.right() * 10000.0 ) * 0.0001;
+   if ( radv2 > 7.0 )
       return;           // Skip further processing if not reasonable zoom
    int irx1         = 0;
    int irx2         = 0;
@@ -1926,7 +1926,7 @@ void US_XpnDataViewer::currentRectf( QRectF rectf )
    QTextStream datxto( &dafile );
 
    QString msg      = tr( "%1, %2-to-%3 Radial adjustment scan..." )
-                      .arg( cellch ).arg( rad1 ).arg( rad2 );
+                      .arg( cellch ).arg( radv1 ).arg( radv2 );
    le_status->setText( msg );
    QApplication::setOverrideCursor( QCursor( Qt::WaitCursor) );
    qApp->processEvents();
@@ -1944,8 +1944,8 @@ DbgLv(1) << "cRect" << msg;
 
       if ( irx2 == 0 )
       {
-         irx1             = US_DataIO::index( rdata, rad1 );
-         irx2             = US_DataIO::index( rdata, rad2 );
+         irx1             = US_DataIO::index( rdata, radv1 );
+         irx2             = US_DataIO::index( rdata, radv2 );
          kpoint           = irx2 - irx1 + 1;
       }
 
