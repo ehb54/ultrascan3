@@ -112,8 +112,7 @@ BEGIN
       SELECT   personID,
                lname AS lastName,
                fname AS firstName,
-               organization,
-               userlevel
+               organization
       FROM     people
       WHERE    lname LIKE template
       OR       fname LIKE template
