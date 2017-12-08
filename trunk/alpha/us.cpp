@@ -651,7 +651,7 @@ void US_Win::help( int index )
         tr( "About UltraScan..." ),
         tr( "UltraScan III version %1  (DEVELOPMENT)\n"
             "%2\n"
-            "Copyright 1989 - 2017\n"
+            "Copyright 1989 - 2018\n"
             "Borries Demeler and the University of Texas System\n\n"
             "For more information, please visit:\n"
             "http://www.ultrascan.uthscsa.edu/\n\n"
@@ -818,6 +818,10 @@ qDebug() << "US:NOTE: mrev(2)" << mrev;
       if ( type == "warn"  &&  msg.contains( "revision 3.3" ) )
       {
         msg              = msg.replace( "revision 3.3", "revision 3.5" );
+      }
+      if ( type == "warn"  &&  msg.contains( "revision 3.5" ) )
+      {
+        msg              = msg.replace( "revision 3.5", "revision 4.0" );
       }
 #endif
       types << type;
