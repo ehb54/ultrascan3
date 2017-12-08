@@ -187,7 +187,7 @@ US_DDistr_Combine::US_DDistr_Combine() : US_Widgets()
    ct_sigma      = us_counter( 3,  0,  5, 1 );
    ct_sigma->setSingleStep( 0.001 );
    ct_sigma->setFont( sfont );
-   ct_sigma->setValue( 0.05 );
+   ct_sigma->setValue( 0.01 );
    int rhgt      = ct_sigma ->height();
    int csizw     = fwid * 5;
    ct_sigma->setMinimumWidth( fwid );
