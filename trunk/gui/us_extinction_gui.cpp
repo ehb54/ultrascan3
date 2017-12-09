@@ -807,6 +807,8 @@ void US_Extinction::perform_global_buffer(void)
   
   fitting_widget = false;
   parameters = order * 3 + v_wavelength.size();
+	
+  delete[] fitparameters;
   fitparameters = new double [parameters];
   for (int i=0; i<v_wavelength.size(); i++)
     {
@@ -1026,6 +1028,7 @@ void US_Extinction::calc_extinction()
          od += exp(fitparameters[v_wavelength.size() + (3 * j)]
                    - (pow((lambda[i] - fitparameters[v_wavelength.size() + (3 * j) + 1]), 2)
                       / ( 2 * pow(fitparameters[v_wavelength.size() + (3 * j) + 2], 2))));
+qDebug() << "J:" << j << fitparameters[v_wavelength.size() + (3 * j)] << fitparameters[v_wavelength.size() + (3 * j) + 1] <<fitparameters[v_wavelength.size() + (3 * j) + 2] ;
       }
       extinction.push_back(od);
       if((unsigned int) lambda[i] == selected_wavelength)
@@ -1054,7 +1057,6 @@ void US_Extinction::calc_extinction()
           }
        }
    }
-   delete[] fitparameters;
 }
 
 void US_Extinction::process_yfit(QVector <QVector<double> > &x, QVector <QVector<double> > &y)
