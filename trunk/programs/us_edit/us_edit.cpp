@@ -268,7 +268,7 @@ pb_plateau->setVisible(false);
 //QLabel* 
    lb_plateau     = us_label(      tr( "Plateau:" ), -1 );
 //QPushButton* 
-   pb_nextChan    = us_pushbutton( tr( "Next Channel" ), false );
+   pb_nextChan    = us_pushbutton( tr( "Next Triple" ), false );
 //*NEW STUFF
    // OD Limit
    lb_odlim       = us_label( tr( "OD Limit:" ), -1 );
@@ -3432,7 +3432,7 @@ void US_Edit::write( void )
    changes_made = false;
    pb_write    ->setEnabled( false );
    ck_writemwl ->setEnabled( false );
-   pb_nextChan ->setEnabled( triples.size() > 1 );
+   pb_nextChan ->setEnabled( triples.size() > 1 && cb_triple->currentIndex() < triples.size()-1 );
 }
 
 // Save edits for a triple
