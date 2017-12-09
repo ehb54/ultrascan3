@@ -478,7 +478,7 @@ void US_XpnDataViewer::enableControls( void )
    pb_prev    ->setEnabled( true );
    pb_next    ->setEnabled( true );
    pb_plot2d  ->setEnabled( true );
-   pb_saveauc ->setEnabled( isRaw );
+   pb_saveauc ->setEnabled( true );
    pb_showtmst->setEnabled( haveTmst );
 //   pb_movie2d->setEnabled( true );
    ct_from    ->setEnabled( true );
@@ -937,7 +937,6 @@ DbgLv(1) << "RDa:   rvS rvE" << r_radii[0] << r_radii[npoint-1];
    QString tspath = currentDir + "/" + runID + ".time_state.tmst";
    haveTmst       = QFile( tspath ).exists();
 DbgLv(1) << "RDa: load_auc complete";
-
    // Ok to enable some buttons now
    enableControls();
 DbgLv(1) << "RDa: enableControls complete";
@@ -1470,9 +1469,15 @@ void US_XpnDataViewer::connect_ranges( bool conn )
 // Slot to export to openAUC
 void US_XpnDataViewer::export_auc()
 {
-   if ( ! isRaw  ||  allData.size() == 0 )
-      return;
-
+   if ( !isRaw )
+   {
+      int status = QMessageBox::information( this, tr( "Data Overwrite Warning..." ),
+               tr( "This operation will overwrite all data currently in"
+                   "the same directory where these data were loaded from. Proceed? " ),
+               tr( "&OK" ), tr( "&Cancel" ),
+               0, 0, 1 );
+      if ( status != 0 ) return;
+   }
    QString runIDt = le_runID->text();              // User given run ID text
 
    if ( runIDt != runID )
@@ -1840,35 +1845,44 @@ void US_XpnDataViewer::correct_radii()
 
    if ( cofile.open( QIODevice::ReadOnly | QIODevice::Text ) )
    {
-		int i=190;
+      int i=190;
       QTextStream cotxti( &cofile );
       while ( ! cotxti.atEnd() )
       {
          fline = cotxti.readLine().simplified();
          if ( ! fline.isEmpty()  &&  ! fline.startsWith( "#" ) )
          {  // Get values from first non-empty, non-comment line
-				// make sure there is one entry for each wavelength
-            if (i == QString( fline ).section( " ", 0, 0 ).simplified().toInt())
-				{
-					lambda.push_back((double) i);
-            	correction.push_back(QString( fline ).section( " ", 1, 1 ).simplified().toDouble());
-				}
-				i++;
+            // make sure there is one entry for each wavelength
+            if (i == fline.section( " ", 0, 0 ).simplified().toInt())
+            {
+               lambda.push_back((double) i);
+               correction.push_back(fline.section( " ", 1, 1 ).simplified().toDouble());
+            }
+            i++;
          }
       }
       cofile.close();
-		if (i != 801)
-		{
-			correction.clear(); // delete any entries, invalid interpolation.
-			lambda.clear();
-			QMessageBox::warning( this,
+      if (i != 801)
+      {
+         correction.clear(); // delete any entries, invalid interpolation.
+         lambda.clear();
+         QMessageBox::warning( this,
             tr( "Incorrect File Format..." ),
             tr( "The wavelength correction file:\n") +
-					 US_Settings::etcDir() + "/chromo-aberration-array.dat\n" +
+                US_Settings::etcDir() + "/chromo-aberration-array.dat\n" +
             tr( "is incorrectly formatted or contains invalid data.\n"
                 "Exported data will not be corrected for any chromatic\n"
-					 "aberration." ) );
-		}
+                "aberration." ) );
+      }
+      else
+      {
+         QMessageBox::warning( this,
+            tr( "Chromatic Aberration Correction:" ),
+            tr( "The wavelength correction file:\n") +
+                US_Settings::etcDir() + "/chromo-aberration-array.dat\n" +
+            tr( "is found and will be used to correct your data for chromatic\n"
+                "aberration between 190 nm and 800 nm. Exported data will be modified.\n") );
+      }
    }
    else
    {
@@ -1890,7 +1904,6 @@ void US_XpnDataViewer::correct_radii()
             fline = cotxti.readLine().simplified();
             if ( ! fline.isEmpty()  &&  ! fline.startsWith( "#" ) )
             {  // Get values from first non-empty, non-comment line
-DbgLv(1) << "c_r: file-read line" << fline;
                a_coef  = QString( fline ).section( " ", 0, 0 )
                          .simplified().toDouble();
                b1_coef = QString( fline ).section( " ", 1, 1 )
@@ -1924,6 +1937,12 @@ DbgLv(1) << "c_r: file-read line" << fline;
                           + wl_p5      * b5_coef;
             correction.push_back(corr);
          }
+            QMessageBox::warning( this,
+            tr( "Chromatic Aberration Correction:" ),
+            tr( "The wavelength correction file:\n") +
+                US_Settings::etcDir() + "/chromo-aberration-coeffs.dat\n" +
+            tr( "is found and will be used to correct your data for chromatic aberration\n"
+                "between 190 nm and 800 nm. Exported data will be modified.\n") );
       }
    }
    // a correction was found

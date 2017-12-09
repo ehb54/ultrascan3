@@ -120,9 +120,8 @@ void US_XpnRunRaw::select( void )
       return;
    }
 
-   runID          = tw ->item( ndx, 1 )->text().simplified();
+   runID          = tw ->item( ndx, 2 )->text().simplified();
    QString delim  = QString( rdLists[ 0 ] ).left( 1 );
-qDebug() << "XRR:l_r: delim" << delim << "match runID" << runID;
 
    // Search description list and choose the item with matching runID
    for ( int ii = 0; ii < rdLists.count(); ii++ )
@@ -153,8 +152,8 @@ void US_XpnRunRaw::populate_list()
    tw->setRowCount( runInfo.count() );
 
    QStringList headers;
-   headers << tr( "Run" ) << tr( "RunId" ) << tr( "ExpId" ) << tr( "DataCount" )
-           << tr( "Date" ) << tr( "Experiment" ) << tr( "Researcher" )
+   headers << tr( "Run" ) << tr( "Date" ) << tr( "RunId" ) << tr( "ExpId" ) 
+           << tr( "DataCount" ) << tr( "Experiment" ) << tr( "Researcher" )
            << tr( "A?" ) << tr( "F?" ) << tr( "I?" ) << tr( "W?" );
 
    tw->setHorizontalHeaderLabels( headers );
@@ -182,19 +181,19 @@ void US_XpnRunRaw::populate_list()
       item->setFlags( item->flags() ^ Qt::ItemIsEditable );
       tw  ->setItem(  ii, 0, item );
 
-      item           = new QTableWidgetItem( sRunId );
+      item           = new QTableWidgetItem( rr.date );
       item->setFlags( item->flags() ^ Qt::ItemIsEditable );
       tw  ->setItem(  ii, 1, item );
 
-      item           = new QTableWidgetItem( sExpId );
+      item           = new QTableWidgetItem( sRunId );
       item->setFlags( item->flags() ^ Qt::ItemIsEditable );
       tw  ->setItem(  ii, 2, item );
 
-      item           = new QTableWidgetItem( sDknt );
+      item           = new QTableWidgetItem( sExpId );
       item->setFlags( item->flags() ^ Qt::ItemIsEditable );
       tw  ->setItem(  ii, 3, item );
 
-      item           = new QTableWidgetItem( rr.date );
+      item           = new QTableWidgetItem( sDknt );
       item->setFlags( item->flags() ^ Qt::ItemIsEditable );
       tw  ->setItem(  ii, 4, item );
 
