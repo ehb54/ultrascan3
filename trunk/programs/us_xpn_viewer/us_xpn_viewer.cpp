@@ -1824,78 +1824,133 @@ DbgLv(1) << "sCM: mcolors count" << mcknt;
 // Apply a chromatic aberration correction to auc data radius values
 void US_XpnDataViewer::correct_radii()
 {
-   const double wl_max  = 750.0;    // Max wavelength for computed correction
    const double rad_inc = 1e-5;     // Radius precision
-   double a_coef     = 0.0;         // Default 4th order polynomial coefficents
-   double b1_coef    = 0.0;     
-   double b2_coef    = 0.0;
-   double b3_coef    = 0.0;
-   double b4_coef    = 0.0;
-   int ntripl        = allData.count();
-   int npoint        = allData[ 0 ].pointCount();
+   int ntripl = allData.count();
+   int npoint = allData[ 0 ].pointCount();
+   double radval;
+   QString fline;
+   QVector <double> lambda;
+   QVector <double> correction;
+   lambda.clear();
+   correction.clear();
 
    // If coefficient values are in an */etc file, use them
-   QString cofname   = US_Settings::etcDir() + "/chromo-aberration-coeffs.dat";
+   QString cofname = US_Settings::etcDir() + "/chromo-aberration-array.dat";
    QFile cofile( cofname );
 
    if ( cofile.open( QIODevice::ReadOnly | QIODevice::Text ) )
    {
+		int i=190;
       QTextStream cotxti( &cofile );
-      QString fline;
       while ( ! cotxti.atEnd() )
       {
-         fline             = cotxti.readLine().simplified();
+         fline = cotxti.readLine().simplified();
          if ( ! fline.isEmpty()  &&  ! fline.startsWith( "#" ) )
          {  // Get values from first non-empty, non-comment line
-DbgLv(1) << "c_r: file-read line" << fline;
-            a_coef            = QString( fline ).section( " ", 0, 0 )
-                                   .simplified().toDouble();
-            b1_coef           = QString( fline ).section( " ", 1, 1 )
-                                   .simplified().toDouble();
-            b2_coef           = QString( fline ).section( " ", 2, 2 )
-                                   .simplified().toDouble();
-            b3_coef           = QString( fline ).section( " ", 3, 3 )
-                                   .simplified().toDouble();
-            b4_coef           = QString( fline ).section( " ", 4, 4 )
-                                   .simplified().toDouble();
-            break;
+				// make sure there is one entry for each wavelength
+            if (i == QString( fline ).section( " ", 0, 0 ).simplified().toInt())
+				{
+					lambda.push_back((double) i);
+            	correction.push_back(QString( fline ).section( " ", 1, 1 ).simplified().toDouble());
+				}
+				i++;
          }
       }
-
       cofile.close();
-DbgLv(1) << "c_r: file-read ca coeffs:" << a_coef << b1_coef << b2_coef
- << b3_coef << b4_coef;
+		if (i != 801)
+		{
+			correction.clear(); // delete any entries, invalid interpolation.
+			lambda.clear();
+			QMessageBox::warning( this,
+            tr( "Incorrect File Format..." ),
+            tr( "The wavelength correction file:\n") +
+					 US_Settings::etcDir() + "/chromo-aberration-array.dat\n" +
+            tr( "is incorrectly formatted or contains invalid data.\n"
+                "Exported data will not be corrected for any chromatic\n"
+					 "aberration." ) );
+		}
    }
-
-   // For each triple, get the wavelength; then compute and apply a correction
-   for ( int jd = 0; jd < ntripl; jd++ )
+   else
    {
-      double wavelen    = allData[ jd ].scanData[ 0 ].wavelength; // Wavelength
-      double wl_used    = qMin( wavelen, wl_max );  // WL used (same after 750)
-      double wl_p2      = sq( wl_used );            // Squared
-      double wl_p3      = wl_p2 * wl_used;          // Cubed
-      double wl_p4      = wl_p2 * wl_p2;            // To 4th power
+      // only use chromo-aberration-coeffs.dat if chromo-aberration-array.dat isn't available
+      cofname = US_Settings::etcDir() + "/chromo-aberration-coeffs.dat";
+      cofile.setFileName( cofname );
 
-      // Wavelength-dependent correction
-      double wl_corr    = a_coef + wl_used * b1_coef
-                                 + wl_p2   * b2_coef
-                                 + wl_p3   * b3_coef
-                                 + wl_p4   * b4_coef;
-if (jd<3 || (jd+4)>ntripl )
-DbgLv(1) << "c_r: jd" << jd << "wavelen" << wavelen << "wl_corr" << wl_corr;
-
-      if ( wl_corr != 0.0 )
+      if ( cofile.open( QIODevice::ReadOnly | QIODevice::Text ) )
       {
-         for ( int jr = 0; jr < npoint; jr++ )
-         {  // Correct each radial point
-            double radval     = r_radii[ jr ] + wl_corr;   // Corrected radius
-            radval            = qRound( radval / rad_inc ) * rad_inc; // Rounded
-            allData[ jd ].xvalues[ jr ] = radval;          // Replace radius
+         double a_coef  = 0.0;         // Default 5th order polynomial coefficents
+         double b1_coef = 0.0;     
+         double b2_coef = 0.0;
+         double b3_coef = 0.0;
+         double b4_coef = 0.0;
+         double b5_coef = 0.0;
+         QTextStream cotxti( &cofile );
+         while ( ! cotxti.atEnd() )
+         {
+            fline = cotxti.readLine().simplified();
+            if ( ! fline.isEmpty()  &&  ! fline.startsWith( "#" ) )
+            {  // Get values from first non-empty, non-comment line
+DbgLv(1) << "c_r: file-read line" << fline;
+               a_coef  = QString( fline ).section( " ", 0, 0 )
+                         .simplified().toDouble();
+               b1_coef = QString( fline ).section( " ", 1, 1 )
+                         .simplified().toDouble();
+               b2_coef = QString( fline ).section( " ", 2, 2 )
+                         .simplified().toDouble();
+               b3_coef = QString( fline ).section( " ", 3, 3 )
+                         .simplified().toDouble();
+               b4_coef = QString( fline ).section( " ", 4, 4 )
+                         .simplified().toDouble();
+               b5_coef = QString( fline ).section( " ", 5, 5 )
+                         .simplified().toDouble();
+               break;
+            }
+         }
+         cofile.close();
+         double wl_p2, wl_p3, wl_p4, wl_p5, corr;
+         for (int i=190; i<801; i++)
+         {
+            lambda.push_back((double) i);
+            wl_p2  =      sq((double) i);      // Squared
+            wl_p3  = wl_p2 * (double) i;       // Cubed
+            wl_p4  = wl_p2 * wl_p2;            // To 4th power
+            wl_p5  = wl_p3 * wl_p2;            // To 5th power
+
+            // Wavelength-dependent correction
+            corr = a_coef + (double) i * b1_coef
+                          + wl_p2      * b2_coef
+                          + wl_p3      * b3_coef
+                          + wl_p4      * b4_coef
+                          + wl_p5      * b5_coef;
+            correction.push_back(corr);
          }
       }
+   }
+   // a correction was found
+   if (correction.size() > 0)
+   {
+      // For each triple, get the wavelength; then compute and apply a correction
+      for ( int jd = 0; jd < ntripl; jd++ )
+      {
+         int i=0;
+         while ((int) lambda.at(i) != (int) allData[ jd ].scanData[ 0 ].wavelength)
+         {
+            i++; // Wavelength index
+            if (i > 610) break;
+            if (correction.at(i)  != 0.0 )
+            {
+               for ( int jr = 0; jr < npoint; jr++ )
+               {  // Correct each radial point
+                  radval = r_radii[ jr ] - correction.at(i);     // Corrected radius
+                  radval = qRound( radval / rad_inc ) * rad_inc; // Rounded
+                  allData[ jd ].xvalues[ jr ] = radval;          // Replace radius
+               }
+            }
+         }
 if (jd<3 || (jd+4)>ntripl )
 DbgLv(1) << "c_r:  ri0 ro0" << r_radii[0] << allData[jd].xvalues[0]
  << "rin ron" << r_radii[npoint-1] << allData[jd].xvalues[npoint-1];
+      }
    }
 }
 
