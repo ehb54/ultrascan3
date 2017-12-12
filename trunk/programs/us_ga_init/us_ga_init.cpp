@@ -424,7 +424,7 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
    data_plot->setAxisScale( QwtPlot::xBottom, 1.0, 40.0 );
    data_plot->setAxisScale( QwtPlot::yLeft,   1.0,  4.0 );
 
-   data_plot->setCanvasBackground( Qt::darkBlue );
+   data_plot->setCanvasBackground( Qt::white );
 
    // put layouts together for overall layout
    left->addLayout( spec );
