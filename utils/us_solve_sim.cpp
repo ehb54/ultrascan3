@@ -1419,7 +1419,7 @@ if( lim_offs>1&&(thrnrank==1||thrnrank==11) )
          int scnx    = 0;
          int sim_ix  = usesols[ cc ] * dataset_count;
 if(soluval>1.0)
- DbgLv(0) << thrnrank << ": SOLUVAL" << soluval << "cc" << cc << "sim_ix" << sim_ix
+ DbgLv(1) << thrnrank << ": SOLUVAL" << soluval << "cc" << cc << "sim_ix" << sim_ix
   << "ksol nsol" << ksolutes << nsolutes;
 
          for ( int ee = offset; ee < lim_offs; ee++, sim_ix++ )
@@ -1433,7 +1433,7 @@ if(soluval>1.0)
 if(lim_offs>1&&(thrnrank==1||thrnrank==11))
  DbgLv(1) << "CR:    ee sim_ix np ns scnx" << ee << sim_ix << npoints << nscans << scnx;
 if(soluval>1.0)
- DbgLv(0) << thrnrank << ":  SOLUVAL>1  ee nscans npoints" << ee << nscans << npoints
+ DbgLv(1) << thrnrank << ":  SOLUVAL>1  ee nscans npoints" << ee << nscans << npoints
   << "idatamm" << idata->value(nscans/2,npoints/2);
 
             for ( int ss = 0; ss < nscans; ss++, scnx++ )
