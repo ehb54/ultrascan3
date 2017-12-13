@@ -2013,6 +2013,7 @@ void US_ExperGuiSolutions::addComments()
 DbgLv(1) << "EGSo:addComm: IN";
    bool ok;
    QString chcomm( "" );
+  
    QStringList comms;
    QString sufx        = "";
    QObject* sobj       = sender();   // Sender object
@@ -2022,6 +2023,7 @@ DbgLv(1) << "EGSo:addComm: sname irow" << sname << irow;
    QString cclabl      = cc_labls[ irow ]->text();
 DbgLv(1) << "EGSo:addComm:  cclabl" << cclabl;
    QString sdescr      = cc_solus[ irow ]->currentText();
+   manual_comment[ sdescr ] = "";  // Initialize manual comment for solution
 
    // Get list of channel comment component strings
    //  and compose default channel comment string
@@ -2083,6 +2085,7 @@ DbgLv(1) << "EGSo:addComm:  cclabl" << cclabl;
    if ( ok )
    {  // OK:  append suffix to channel comment
       chcomm     += ", " + sufx;
+      manual_comment[ sdescr ]     += sufx;   //QMap of manual comments per solution
    }
 DbgLv(1) << "EGSo:addComm:  sufx" << sufx;
 DbgLv(1) << "EGSo:addComm:   chcomm" << chcomm;
@@ -2116,6 +2119,16 @@ void US_ExperGuiSolutions::commentStrings( const QString solname,
       else
          comment       += ana;         // Append last analyte
    }
+   //ALEXEY - add manual comment per solution here
+   if ( manual_comment.keys().contains( solname ) )
+     {
+       QString mancmt =  manual_comment[solname];
+       if ( !mancmt.trimmed().isEmpty() )
+	 {
+	   comment       += ", " + mancmt;
+	   //comstrngs    <<  "," + mancmt;
+	 }
+     }
 }
 
 
