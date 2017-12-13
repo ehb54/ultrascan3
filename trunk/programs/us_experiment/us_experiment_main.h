@@ -350,6 +350,8 @@ class US_ExperGuiSolutions : public US_WidgetsDialog
       QMap< QString, QString >      pro_comms;  // Map protocol channel comments
       QMap< QString, QString >      run_comms;  // Map run channel comments
 
+      QMap< QString, QString >      manual_comment;  //Map for manual comment for solution
+
    private slots:
       // \brief Open a solution dialog and return selected solution
       void manageSolutions( void );

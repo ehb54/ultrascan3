@@ -1219,7 +1219,7 @@ DbgLv(1) << "EGSo: svP:    nchant" << nchant << "solution" << solution;
       QStringList cs;
 DbgLv(1) << "EGSo: svP:    nchanf" << nchanf << "sol_id" << sol_id;
 
-      if ( pro_comms.keys().contains( solution ) )
+   if ( pro_comms.keys().contains( solution ) )
       {
          ch_comment          = pro_comms[ solution ];
       }
