@@ -2327,7 +2327,7 @@ void US_Astfem_RSA::mesh_gen_s_neg( const QVector< double >& nu )
    const double PIhalf   = M_PI / 2.0;
    const double PIquar   = M_PI / 4.0;
    const double k2log    = log( 2.0 );
-   int               j, Js, Nf, Nm;
+   int               jj, Js, Nf, Nm;
    double            xc, xa, Hstar;
    QVector< double > yr, ys, yt;
 
@@ -2369,12 +2369,10 @@ void US_Astfem_RSA::mesh_gen_s_neg( const QVector< double >& nu )
 
    // Is there a difference between simparams.meniscus and
    // af_params.current_meniscus??
-   for( j = 1; j < Np; j++ )    // Add one more point to Schuck's grids
-      yr .append( b * pow( simparams.meniscus / b, ( j - 0.5 ) / Npm1 ) );
+   for( jj = 1; jj < ( Np - 1 ); jj++ )  // Add one more point to Schuck's grids
+      yr .append( b * pow( simparams.meniscus / b, ( jj - 0.5 ) / Npm1 ) );
 
    yr .append( m );
-   Np++;
-   Npm1        += 1.0;
 
    if ( b * ( pow( mbratio, ( Np - 3.5 ) / Npm1 )
             - pow( mbratio, ( Np - 2.5 ) / Npm1 ) ) < Hstar || Nf <= 2 )
@@ -2382,9 +2380,9 @@ void US_Astfem_RSA::mesh_gen_s_neg( const QVector< double >& nu )
       double* yrA = yr.data();
 
       // No need for steep region
-      for ( j = Np - 1; j >= 0; j-- )
+      for ( jj = Np - 1; jj >= 0; jj-- )
       {
-         x .append( yrA[ j ] );
+         x .append( yrA[ jj ] );
       }
 
       xA           = x.data();
@@ -2398,32 +2396,32 @@ DbgLv(1) << "RSA:mgNeg:  Nf<3: x0" << xA[0] << "Np" << Np << "Nf" << Nf;
       // Nf > 2
       double xcm  = xc - m;
       double Nfm1 = (double)( Nf - 1 );
-      for ( j = 0; j < Nf - 1; j++ )
-         ys .append( xc - xcm * sin( (double)j / Nfm1 * PIhalf ) );
+      for ( jj = 0; jj < Nf - 1; jj++ )
+         ys .append( xc - xcm * sin( (double)jj / Nfm1 * PIhalf ) );
 
       ys .append( m );
 
-      for ( j = 0; j < Nm; j++ )
-         yt .append( xc + ( pow( 2.0, (double) j ) - 1.0 ) * Hstar );
+      for ( jj = 0; jj < Nm; jj++ )
+         yt .append( xc + ( pow( 2.0, (double) jj ) - 1.0 ) * Hstar );
 
       double* ysA = ys.data();
       double* ytA = yt.data();
       double* yrA = yr.data();
 
       // set x:
-      for ( j = Nf - 1; j >= 0; j-- )
-         x .append( ysA[ j ] );
+      for ( jj = Nf - 1; jj >= 0; jj-- )
+         x .append( ysA[ jj ] );
 
-      for ( j = 1; j < Nm; j++ )
-         x .append( ytA[ j ] );
+      for ( jj = 1; jj < Nm; jj++ )
+         x .append( ytA[ jj ] );
 
-      for ( j = Js; j >= 0; j-- )
-         x .append( yrA[ j ] );
+      for ( jj = Js; jj >= 0; jj-- )
+         x .append( yrA[ jj ] );
 
 DbgLv(1) << "RSA:mgNeg:  Nf>2: x0" << xA[0] << "Np" << Np << "Nf" << Nf;
       // Smooth out
       xA           = x.data();
-      int jj       = Nf + Nm;
+      jj           = Nf + Nm;
       xA[ jj     ] = ( xA[ jj - 1 ] + xA[ jj + 1 ] ) / 2.0;
       xA[ jj + 1 ] = ( xA[ jj     ] + xA[ jj + 2 ] ) / 2.0;
    } // if
