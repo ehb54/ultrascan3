@@ -711,7 +711,7 @@ DbgLv(1) << "first_last_data for the step" << sp->time_first << sp->time_last
 //      astfem->setStopFlag( stopFlag );
 //      astfem->set_buffer( buffer );
 
-//      astfem->set_debug_flag( dbg_level ) ;
+      astfem->set_debug_flag( dbg_level ) ;
         //for ( int i = 0 ; i < simparams.speed_step.size(); i++ )
         //astfem->calculate( sim_datas );
 DbgLv(1) << "after_calculate" << sim_datas.size();

@@ -2373,6 +2373,8 @@ void US_Astfem_RSA::mesh_gen_s_neg( const QVector< double >& nu )
       yr .append( b * pow( simparams.meniscus / b, ( j - 0.5 ) / Npm1 ) );
 
    yr .append( m );
+   Np++;
+   Npm1        += 1.0;
 
    if ( b * ( pow( mbratio, ( Np - 3.5 ) / Npm1 )
             - pow( mbratio, ( Np - 2.5 ) / Npm1 ) ) < Hstar || Nf <= 2 )
@@ -2386,6 +2388,7 @@ void US_Astfem_RSA::mesh_gen_s_neg( const QVector< double >& nu )
       }
 
       xA           = x.data();
+DbgLv(1) << "RSA:mgNeg:  Nf<3: x0" << xA[0] << "Np" << Np << "Nf" << Nf;
 
       DbgErr() << "Use exponential grid only!(1/10000 reported):  Np Nf b m nu0"
          << Np << Nf << b << m << nu0;
@@ -2417,12 +2420,17 @@ void US_Astfem_RSA::mesh_gen_s_neg( const QVector< double >& nu )
       for ( j = Js; j >= 0; j-- )
          x .append( yrA[ j ] );
 
+DbgLv(1) << "RSA:mgNeg:  Nf>2: x0" << xA[0] << "Np" << Np << "Nf" << Nf;
       // Smooth out
       xA           = x.data();
       int jj       = Nf + Nm;
       xA[ jj     ] = ( xA[ jj - 1 ] + xA[ jj + 1 ] ) / 2.0;
       xA[ jj + 1 ] = ( xA[ jj     ] + xA[ jj + 2 ] ) / 2.0;
    } // if
+int k2=x.count()-1;
+int k1=k2-1;
+DbgLv(1) << "RSA:mgNeg: x0 x1 xk xn" << xA[0] << xA[1] << xA[k1] << xA[k2]
+ << "m" << m;
 }
 
 // Refine mesh near meniscus (for s>0) or near bottom (for s<0)
