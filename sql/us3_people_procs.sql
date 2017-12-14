@@ -228,7 +228,7 @@ BEGIN
            activated    = true,
            signup       = NOW(),
            lastLogin    = NOW(),
-           clusterAuthorizations = 'bcf:alamo:laredo:lonestar:bigred:steele:queenbee',
+           clusterAuthorizations = 'lonestar5:stampede2:comet:alamo:jetstream',
            userlevel    = 0;
 
     IF ( duplicate_key = 1 ) THEN
