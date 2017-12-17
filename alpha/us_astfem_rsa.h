@@ -342,6 +342,17 @@ class US_UTIL_EXTERN US_Astfem_RSA : public QObject
       //!< Output : Updated experimental data ( RawData ) 
       void   store_mfem_data( US_DataIO::RawData&, US_AstfemMath::MfemData& );         
 
+      //! \brief Determines if computed scan concentration vector virtually zero
+      //! \param s         Sedimentation coefficient, current component 
+      //! \param D         Diffusion coefficient, current component
+      //! \param rpm       Speed, current step
+      //! \param t         Current time (or first of step)
+      //! \param meniscus  Meniscus, current step
+      //! \param bottom    Bottom, current step
+      //! \returns         Pre-bottom-scan-vector-is-zero flag
+      bool   iszero( const double, const double, const double,
+                     const double, const double, const double );
+
       //---------------------------Not used-------------------------------
       #ifdef NEVER
         void GlobalStiff_ellam( QVector <double> *, double **, double **,
