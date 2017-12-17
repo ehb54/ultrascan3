@@ -635,9 +635,6 @@ DbgLv(1) << "SV: non-MC model ncomp" << model.components.size();
          model.write( dbP );
       else
          model.write( mname );
-
-DbgLv(1) << "SV: Post-wrdb tno tni"
- << ti_noise.values[0] << ti_noise_in.values[0];
    }
 
    else
@@ -1247,12 +1244,6 @@ void US_pcsa::new_triple( int index )
    ri_noise.values.clear();
    ti_noise.count     = 0;
    ri_noise.count     = 0;
-DbgLv(1) << "NTr: ti noise in n0,type,count,size" << ti_noise_in.values[0]
- << ti_noise_in.type << ti_noise_in.count << ti_noise_in.values.size();
-DbgLv(1) << "NTr: ti noise in  minr,maxr"
- << ti_noise_in.minradius << ti_noise_in.maxradius;
-DbgLv(1) << "NTr: ri noise in n0,type,count,size" << ri_noise_in.values[0]
- << ri_noise_in.type << ri_noise_in.count << ri_noise_in.values.size();
 }
 
 // Remove any temporary plot file and close all opened windows

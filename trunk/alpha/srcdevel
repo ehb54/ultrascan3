@@ -1,5 +1,11 @@
 #!/bin/bash
 #	srcdevel  - source directory changes development to/from production
+# example:
+# cd ~/ultrascan3/gui
+# srcdevel -d us_analyte_gui.cpp us_analyte_gui.h libus_gui.pro
+# cd ../
+# ./makeall.sh
+
 
 if [ $# -lt 1 ]; then
    echo "srcdevel  - source directory changes for development to/from production"

@@ -1555,14 +1555,14 @@ void US_RotorCalibration::calc_6channel(void)
    QwtSymbol* sym2 = new QwtSymbol;
    
    sym1->setStyle(QwtSymbol::Ellipse);
-   sym1->setBrush(QColor(Qt::cyan));
-   sym1->setPen  (QColor(Qt::white));
-   sym1->setSize(10);
+   sym1->setBrush(QColor(Qt::blue));
+   sym1->setPen  (QColor(Qt::black));
+   sym1->setSize(15);
    
    sym2->setStyle(QwtSymbol::Cross);
-   sym2->setBrush(QColor(Qt::white));
-   sym2->setPen  (QColor(Qt::white));
-   sym2->setSize(10);
+   sym2->setBrush(QColor(Qt::black));
+   sym2->setPen  (QColor(Qt::black));
+   sym2->setSize(15);
    
    c1  = us_curve(data_plot, "Rotor Stretch");
    c1->setSymbol (sym1);
@@ -1581,7 +1581,7 @@ void US_RotorCalibration::calc_6channel(void)
    
    c4  = us_curve(data_plot, "fit");
    c4->setStyle  (QwtPlotCurve::Lines);
-   c4->setPen    (QColor(Qt::yellow));
+   c4->setPen    (QColor(Qt::blue));
    c4->setSamples(xfit.data(), yfit.data(), 501);
 
    data_plot->setTitle(tr("Rotor Stretch\n"
