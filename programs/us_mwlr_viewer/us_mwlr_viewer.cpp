@@ -460,6 +460,8 @@ void US_MwlRawViewer::enableControls( void )
    ct_from   ->setMaximum( nscan );
    ct_to     ->setMaximum( nscan );
    cb_cellchn->setCurrentIndex( 0 );
+	DbgLv(1) << "EnableControls: nlambda" << nlambda;
+
    cb_pltrec ->setCurrentIndex( nlambda / 2 );
    qApp->processEvents();
 

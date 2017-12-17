@@ -855,9 +855,6 @@ DbgLv(1) << "CR: cc" << cc << " (PRE-tikreg)";
                nnls_a[ ka++ ] = ( aa == colx ) ? alphad : 0.0;
             }
          }
-DbgLv(1) << "CR:  cc" << cc << " ka" << ka << "nnls_a sz"
- << nnls_a.count() << "  sz-kd" << (nnls_a.count()-ka);
-
          norm_a         = norm_a > 0.0 ? sqrt( norm_a ) : 0.0;
 
          if ( norm_a < norm_cut )
@@ -870,8 +867,6 @@ DbgLv(1)<< " norm is becoming zero -- norm_a" << norm_a << "count_cut" << count_
          }
          else
             usesols << cc;
-DbgLv(1)<< " norm_of_the_vector" << norm_a  << "s k"
- << sim_vals.solutes[cc].s << sim_vals.solutes[cc].k;
          if ( signal_wanted  &&  ++kstep == increp )
          {  // If asked for and step at increment, signal progress
             emit work_progress( increp );
