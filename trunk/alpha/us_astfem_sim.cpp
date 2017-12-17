@@ -132,8 +132,6 @@ US_Astfem_Sim::US_Astfem_Sim( QWidget* p, Qt::WindowFlags f )
    connect( pb_close,     SIGNAL( clicked()    ),
             this,         SLOT(   close()      ) );
 
-   change_status();
-
    main->addLayout( buttonbox, 0, 0 );
 
 
@@ -194,6 +192,8 @@ US_Astfem_Sim::US_Astfem_Sim( QWidget* p, Qt::WindowFlags f )
    plot->addLayout( completion );
 
    main->addLayout( plot, 0, 1 );
+
+   change_status();
 }
 
 // Initialize simulation parameters
@@ -252,7 +252,7 @@ void US_Astfem_Sim::new_model( void )
 
 void US_Astfem_Sim::change_model( US_Model m )
 {
-   system = m;
+   system      = m;
    pb_buffer  ->setEnabled( true );
    pb_simParms->setEnabled( true );
    pb_rotor->setEnabled(true);
@@ -267,6 +267,9 @@ void US_Astfem_Sim::change_model( US_Model m )
       simparams.meshType = US_SimulationParameters::ASTFEM;
 
    change_status();
+
+   ncomponent  = system.components.size();
+   icomponent  = 1;
 }
 
 void US_Astfem_Sim::new_buffer( void )
@@ -317,6 +320,16 @@ void US_Astfem_Sim::change_status()
       dmns    -= ( khrs * 60.0 );
       dhrs    += khrs;
    }
+
+   times_comp   = dhrs * 3600.0 + dmns * 60.0;
+   ncomponent   = system.components.size();
+DbgLv(1) << "ASIM: chg_stat: ncomponent" << ncomponent << "times_comp" << times_comp;
+   times_comp   = qMax( 100.0, times_comp );
+   ncomponent   = qMax( 1, ncomponent );
+   int maxts    = ncomponent * 100;
+DbgLv(1) << "ASIM: chg_stat:  times_comp" << times_comp << "maxts" << maxts;
+   progress->setRange( 1, maxts );
+DbgLv(1) << "ASIM: chg_stat:  times_comp" << times_comp << "maxts" << maxts;
 
    te_status->setText( tr(
       "Model:\n  %1\n"
@@ -753,7 +766,7 @@ DbgLv(1) << "first_last_data for the step" << sp->time_first << sp->time_last
 // DbgLv(1)<<"time="<<sim_datas.scanData[i].seconds<<"omega2t="<< sim_datas.scanData[i].omega2t;
 
    lb_progress->setText( tr( "% Completed:" ) );
-   progress->setRange( 1, system.components.size() );
+//   progress->setRange( 1, system.components.size() );
    progress->reset();
    lcd_component->display( 0 );
 
@@ -799,7 +812,30 @@ DbgLv(1) << "first_last_data for the step" << sp->time_first << sp->time_last
       astfem->set_buffer( buffer );
       astfem->set_debug_flag( dbg_level );
 //DbgLv(1) << "after_calculate" << sim_datas.size();
+#if 0
+      double stretch_fac  = stretch( simparams.rotorcoeffs,
+                                     simparams.speed_step[ 0 ].rotorspeed );
+      double bottom_ar    = simparams.bottom_position;
+      simparams.meniscus  = meniscus_ar + stretch_fac;
+      simparams.bottom    = bottom_ar   + stretch_fac;
+
+      astfem->calculate( sim_data_all );
+
+#endif
 #if 1
+      double bottom_ar    = simparams.bottom_position;
+      simparams.meniscus  = meniscus_ar;
+      simparams.bottom    = bottom_ar;
+      int kscan           = sim_data_all.scanCount();
+      int kpoint          = sim_data_all.pointCount();
+
+      for ( int js = 0; js < kscan; js++ )
+         sim_data_all.scanData[ js ].rvalues.fill( 0.0, kpoint );
+
+      astfem->calculate( sim_data_all );
+      calc_over();
+#endif
+#if 0
       double stretch_fac  = stretch( simparams.rotorcoeffs,
                                      simparams.speed_step[ 0 ].rotorspeed );
       double bottom_ar    = simparams.bottom_position;
@@ -821,7 +857,7 @@ simparams.rotorcoeffs[1] = coeff2;
       int ks              = 0;
       for ( int jd = 0; jd < nstep; jd++ )
       {
-         stretch_fac         = stretch( simparams.rotorcoeffs,
+         double stretch_fac  = stretch( simparams.rotorcoeffs,
                                         simparams.speed_step[ jd ].rotorspeed );
          simparams.meniscus  = meniscus_ar + stretch_fac;
          simparams.bottom    = bottom_ar   + stretch_fac;
@@ -839,6 +875,8 @@ simparams.rotorcoeffs[1] = coeff2;
 DbgLv(1) << "out:astfem_radial_ranges" << sim_datas[jd].xvalues[0] << sim_datas[jd].xvalues[points-1]
  << af_params.current_meniscus << af_params.current_bottom << jd;
       }
+      simparams.meniscus  = meniscus_ar;
+      simparams.bottom    = bottom_ar;
    }
    else
    {
@@ -881,8 +919,9 @@ void US_Astfem_Sim::finish( void )
    // If we didn't interrupt, we need to set to 100 % complete at end of run
    if ( ! stopFlag )
    {
-      update_progress( progress->maximum() );
-//DbgLv(1) << "FIN:  progress maxsize" << progress->maximum();
+      //update_progress( progress->maximum() );
+      update_progress( ncomponent );
+DbgLv(1) << "FIN:  progress maxsize" << progress->maximum();
    }
 
    int jex  = simparams.speed_step.count() - 1;
@@ -1118,23 +1157,24 @@ void US_Astfem_Sim::update_progress( int component )
 {
    if ( component == -1 )
    {  // -1 component flags reset to maximum
-      progress->setValue( progress->maximum() );
+//      progress->setValue( progress->maximum() );
       lcd_component->setMode( QLCDNumber::Hex );
       lcd_component->display( "rA " );
    }
 
    else if ( component < 0 )
    {  // other negative component flags set maximum
-      progress->setRange( 1, -component );
+//      progress->setRange( 1, -component );
       lcd_component->setMode( QLCDNumber::Dec );
       lcd_component->display( 0 );
    }
 
    else
    {  // normal call sets progress value
-      progress->setValue( component );
+//      progress->setValue( component );
+      icomponent         = component;
       lcd_component->setMode( QLCDNumber::Dec );
-      lcd_component->display( component );
+      lcd_component->display( icomponent );
    }
 }
 
@@ -1434,9 +1474,13 @@ void US_Astfem_Sim::start_calc( int steps )
 // slot to set progress to maximum
 void US_Astfem_Sim::calc_over( void )
 {
-   progress   ->setRange( 1, progress_maximum );
+//   progress   ->setRange( 1, progress_maximum );
+//   progress   ->setValue  ( progress_value );
+   progress_value   = progress->maximum();
+   //progress_value   = ncomponent * 100;
    progress   ->setValue  ( progress_value );
    lb_progress->setText( progress_text );
+DbgLv(1) << "ASIM: over: progmax" << progress_value << "progress_text" << progress_text;
 }
 
 // slot to update movie plot
@@ -1525,8 +1569,19 @@ void US_Astfem_Sim::update_save_movie( bool ckd )
 
 void US_Astfem_Sim::update_time( double time )
 {
+   static int kstep = 0;
    double dtime = qRound( time );
    lcd_time ->display( dtime );
+
+   int tstep    = (int)qRound( dtime * 100.0 / times_comp );
+   tstep        = ( icomponent - 1 ) * 100 + tstep;
+   if ( tstep != kstep )
+   {
+      show_progress( tstep );
+DbgLv(1) << "ASIM: upd_tm: tstep" << tstep << "dtime" << dtime << "icomponent" << icomponent
+ << "times_comp" << times_comp;
+   }
+   kstep        = tstep;
 }
 
 void US_Astfem_Sim::dump_system( void )

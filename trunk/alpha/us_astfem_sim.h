@@ -45,6 +45,9 @@ class US_Astfem_Sim : public US_Widgets
       bool           time_correctionFlag;
       double         total_conc;
       double         meniscus_ar;
+      double         times_comp;
+      int            icomponent;
+      int            ncomponent;
       int            curve_count;
       int            image_count;
       int            dbg_level;
