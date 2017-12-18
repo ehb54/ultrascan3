@@ -1762,10 +1762,10 @@ DbgLv(1) << "C_ni:  Nx" << Nx << "rA0 rAn" << rA[0] << rA[Nx-1];
    //  for current speed and the component s,D
 //   bool is_zero        = iszero( const double s, const double D, const double rpm,
 //                           const double t, const double meniscus, const double bottom );
-   bool is_zero        = iszero( af_params.s[ 0 ], af_params.D[ 0 ], rpm_stop, last_time,
+   bool is_zero        = iszero( af_params.s[ 0 ], af_params.D[ 0 ], rpm_start, last_time,
                                  af_params.current_meniscus, af_params.current_bottom );
-DbgLv(1) << "C_ni: s D" << af_params.s[ 0 ] << af_params.D[ 0 ] << "rpm t" << rpm_stop
- << last_time << "menis bott" << af_params.current_meniscus << af_params.current_bottom
+DbgLv(1) << "C_ni: s D" << af_params.s[ 0 ] << af_params.D[ 0 ] << "rpm" << rpm_start
+ << "t" << last_time << "menis bott" << af_params.current_meniscus << af_params.current_bottom
  << "  IS_ZERO:" << is_zero;
 //*DEBUG*
 //if(is_zero) return 1;
