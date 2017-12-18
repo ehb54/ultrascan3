@@ -149,6 +149,8 @@ class US_UTIL_EXTERN US_Astfem_RSA : public QObject
 
       QVector< double >                       x;  //<! Radii of grid points
 
+      QVector< int >                  step_scans; //<! Count of scan interps, each speed step
+
       QVector< US_AstfemMath::ReactionGroup > rg; //<! Used for reacting system
 
       US_Model&                               system; //<! Defined model

@@ -289,6 +289,8 @@ DbgLv(1) << "RSA:calc: SSS:    tf tl wf wl" << time_first << time_last << w2t_fi
       nstep        = nspstep;
    }
 
+   step_scans.fill( 0, nstep );
+
    // Flag: any stretch?
    bool strch_rot  = ( simparams.rotorcoeffs[ 0 ] > 0.0  ||
                        simparams.rotorcoeffs[ 1 ] > 0.0 );
@@ -617,7 +619,9 @@ totT4+=(clcSt4.msecsTo(clcSt5));
             if  ( in_step )
             {
                US_AstfemMath::interpolate( af_data, simdata, use_time );
-DbgLv(1) << "RSA:calc: in_step interp complete " << speed_step << simout_flag;
+               step_scans[ speed_step ] += 1;
+DbgLv(1) << "RSA:calc: in_step interp complete " << speed_step << simout_flag
+ << "sscans" << step_scans[speed_step];
             }
 
             if ( !simout_flag )
@@ -1766,7 +1770,7 @@ DbgLv(1) << "C_ni: s D" << af_params.s[ 0 ] << af_params.D[ 0 ] << "rpm t" << rp
 //*DEBUG*
 //if(is_zero) return 1;
 //*DEBUG*
-   if ( is_zero )
+   if ( is_zero  &&  step_scans[ step ] > 0 )
    {  // All sim scans will be zero: skip time loop and set last scan time
       ntsteps             = 0;
       simscan.time        = last_time;
