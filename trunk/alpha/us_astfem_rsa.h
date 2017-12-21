@@ -131,7 +131,6 @@ class US_UTIL_EXTERN US_Astfem_RSA : public QObject
       US_AstfemMath::MfemInitial      af_c0 ;     //!< Initial concentration conditions
       double*                         xA;         //<! x values array
       QVector< double >               x;          //<! Radii of grid points
-      QVector< int >                  step_scans; //<! Count of scan interps, ea. speed step
 
       QVector< US_AstfemMath::ReactionGroup > rg; //<! Used for reacting system
       US_Model&                       system;     //<! Defined model
