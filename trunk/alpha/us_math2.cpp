@@ -1552,7 +1552,7 @@ double US_Math2::norm_value( double* datary, const int nval )
 
    for ( int ii = 0; ii < nval; ii++ )
    {
-      normval         = ( datary[ ii ] * datary[ ii ] );
+      normval        += ( datary[ ii ] * datary[ ii ] );
    }
 
    normval         = ( normval > 0.0 ) ? sqrt( normval ) : normval;

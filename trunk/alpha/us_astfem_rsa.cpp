@@ -62,10 +62,10 @@ US_Astfem_RSA::US_Astfem_RSA( US_Model&                model,
 //!< variable used to choose grid, true refers to simulation grid and false
 //!< refers to experimental grid.
 
-//!< If user wants solution on experimental grid, the simulated solution is inter-
-//!< polated from simulation grid onto experimental grid.
+//!< If user wants solution on experimental grid, the simulated solution is
+//!< interpolated from simulation grid onto experimental grid.
 
-//!< Both reacting and non-reacting systems are handeled here. calculate_ni takes
+//!< Both reacting and non-reacting systems are handled here. calculate_ni takes
 //!< care for non-reacting systems and calculate_ra2 takes care for reacting systems.
 int US_Astfem_RSA::calculate( US_DataIO::RawData& exp_data )
 {
@@ -105,16 +105,24 @@ static int totT7=0;
 static int totT8=0;
 #endif
 
+   // Compute the total concentration for the model
+   tot_conc           = 0.0;
+   for ( int cc = 0; cc < size_cv; cc++ )
+   {
+      tot_conc          += system.components[ cc ].signal_concentration;
+DbgLv(1)<< "RSA:calc: cc" << cc << "tot_conc" << tot_conc;
+   }
+
    // Find the speed step index for the current dataset
-   int cdsx              = 0;                       // Current dataset's step index
-   int lsx               = exp_data.scanCount() - 1;          // Last scan index
-   double fstime         = exp_data.scanData[   0 ].seconds;  // First scan time
-   double lstime         = exp_data.scanData[ lsx ].seconds;  // Last scan time
+   int cdsx           = 0;                       // Current dataset's step index
+   int lsx            = exp_data.scanCount() - 1;          // Last scan index
+   double fstime      = exp_data.scanData[   0 ].seconds;  // First scan time
+   double lstime      = exp_data.scanData[ lsx ].seconds;  // Last scan time
 DbgLv(1)<< "RSA:calc:  lsx fstime lstime" << lsx << fstime << lstime;
 
    for ( int step = 0; step < simparams.speed_step.count(); step++ )
    {
-      cdsx                  = step;
+      cdsx               = step;
       if ( fstime >=  simparams.speed_step[ step ].time_first  &&
            lstime <=  simparams.speed_step[ step ].time_last )
       {  // Found step that this dataset fits inside:  break out
@@ -245,6 +253,7 @@ DbgLv(1) << "RSA:calc: SSS:     cdsx" << cdsx;
             double w2t_eacc   = ipp->w2t_e_accel;
             double w2t_estep  = ipp->w2t_e_step;
             double avg_speed  = ipp->avg_speed;
+            
             int rspeed        = ipp->rotorspeed;
             int duration      = ipp->duration;
             int time_first    = ipp->time_f_scan;
@@ -287,9 +296,10 @@ DbgLv(1) << "RSA:calc: SSS:    tf tl wf wl" << time_first << time_last << w2t_fi
       }
 
       nstep        = nspstep;
-   }
+      af_params.cdset_speed = simparams.speed_step[ cdsx ].rotorspeed;
+   }  // END:  code to handle speed_step/sim_speed_prof mismatch
 
-   step_scans.fill( 0, nstep );
+//   step_scans.fill( 0, nstep );  // Init counts of interpolated scans per step
 
    // Flag: any stretch?
    bool strch_rot  = ( simparams.rotorcoeffs[ 0 ] > 0.0  ||
@@ -619,9 +629,9 @@ totT4+=(clcSt4.msecsTo(clcSt5));
             if  ( in_step )
             {
                US_AstfemMath::interpolate( af_data, simdata, use_time );
-               step_scans[ speed_step ] += 1;
-DbgLv(1) << "RSA:calc: in_step interp complete " << speed_step << simout_flag
- << "sscans" << step_scans[speed_step];
+//               step_scans[ speed_step ] += 1;
+//DbgLv(1) << "RSA:calc: in_step interp complete " << speed_step << simout_flag
+// << "sscans" << step_scans[speed_step];
             }
 
             if ( !simout_flag )
@@ -1758,25 +1768,64 @@ DbgLv(1) << "C_ni:  Nx" << Nx << "rA0 rAn" << rA[0] << rA[Nx-1];
    // Interpolate initial concentration vector onto C0 grid-
    US_AstfemMath::interpolate_C0( C_init, C0, x );
 
+   int radsz      = qMin( C_init.radius.count(), Nx );
+   int radx       = ( radsz * 2 ) / 100;
+   int nrad       = radsz - radx * 5;
+   double t_rpm   = ( last_time > 0.0 ) ? rpm_start : rpm_inc;
+   double t_time  = ( last_time > 0.0 ) ? last_time : 1.0;
+   
+   double norm_v  = US_Math2::norm_value( C_init.concentration.data() + radx, nrad );
+
+#if 0
    // Evaluate "cleared" flag for first time of time step
    //  for current speed and the component s,D
 //   bool is_zero        = iszero( const double s, const double D, const double rpm,
 //                           const double t, const double meniscus, const double bottom );
-   bool is_zero        = iszero( af_params.s[ 0 ], af_params.D[ 0 ], rpm_start, last_time,
-                                 af_params.current_meniscus, af_params.current_bottom );
-DbgLv(1) << "C_ni: s D" << af_params.s[ 0 ] << af_params.D[ 0 ] << "rpm" << rpm_start
- << "t" << last_time << "menis bott" << af_params.current_meniscus << af_params.current_bottom
- << "  IS_ZERO:" << is_zero;
+   bool is_zero   = iszero( af_params.s[ 0 ], af_params.D[ 0 ], t_rpm, t_time,
+                            af_params.current_meniscus, af_params.current_bottom );
+DbgLv(1) << "C_ni: s D" << af_params.s[ 0 ] << af_params.D[ 0 ] << "rpm" << t_rpm
+ << "t" << t_time << "menis bott" << af_params.current_meniscus << af_params.current_bottom
+ << "  IS_ZERO:" << is_zero << "norm_v" << norm_v;
+DbgLv(1) << "C_ni:   norm_v" << norm_v  << "tconc" << tot_conc << "radx nrad" << radx << nrad
+ << "radsz" << C_init.radius.count() << Nx << radsz;
+#endif
+#if 1
+   bool is_zero    = false;
+   const double z_tolerance = 1.0e-5;
+   double rad_last = af_params.current_bottom - 0.04; 
+   for ( int jr = 1; jr < C_init.radius.size(); jr++ )
+   {
+      if ( C_init.radius[ jr ] > rad_last )
+      {
+DbgLv(1) << "jr, C_init, rpm, radius:" << jr << C_init.concentration[jr]
+ << rpm_current << C_init.radius[jr] << "is_zero" << is_zero;
+         if ( C_init.concentration[ jr - 1 ] < z_tolerance )
+         {
+            is_zero         = true;
+         }
+         break;
+      }
+   }
+
+#endif
+
 //*DEBUG*
-//if(is_zero) return 1;
+//is_zero=false;
 //*DEBUG*
-   if ( is_zero  &&  step_scans[ step ] > 0 )
+   //if ( is_zero  &&  step_scans[ step ] > 0 )
+   if ( is_zero )
    {  // All sim scans will be zero: skip time loop and set last scan time
       ntsteps             = 0;
+      //ntsteps             = accel ? ntsteps : qMin( ntsteps, 3 );
       simscan.time        = last_time;
-DbgLv(1) << "C_ni:  IS_ZERO !!  1st step time" << last_time << "rpm_stop" << rpm_stop;
+double ss0=qRound(af_params.s[0]*1.e+15)*0.01;
+double dd0=qRound(af_params.D[0]*1.e+8)*0.01;
+DbgLv(1) << "C_ni:  IS_ZERO !!  1st step time" << last_time << "rpm_stop" << rpm_stop
+ << "s D" << ss0 << dd0 << "ntsteps" << ntsteps;
    }
+
    int jti             = ( ntsteps > 100 ) ? ( ntsteps / 100 ) : 1;
+   int ltsteps         = ntsteps - 1;
 
    // Calculate all time steps
    for ( int jt = 0; jt < ntsteps; jt++ )
@@ -1792,7 +1841,6 @@ DbgLv(1) << "C_ni:  IS_ZERO !!  1st step time" << last_time << "rpm_stop" << rpm
             simscan.conc[ jx ] = C0[ jx ];
 
          simdata.scan.append( simscan );
-
       }
 
       //if ( accel== true )
@@ -1819,7 +1867,7 @@ ttT3+=(clcSt3.msecsTo(clcSt4));
       // Increment = last time of the speed step - time of the
       //             previous scan.
 
-      if ( ( jt == ntsteps - 1 )  &&  ( accel == false ) )
+      if ( ( jt == ltsteps )  &&  ( accel == false ) )
       {
          af_params.dt =  simparams.speed_step[step].time_last -  last_time;
       }
@@ -1855,8 +1903,8 @@ ttT3+=(clcSt3.msecsTo(clcSt4));
       else if ( accel == true ) // Reads timestate recordings for rpm and
       {                         //  omega_2t during acceleration zone
          simscan.time      = last_time + af_params.dt ; // Time of the scan
-         simscan.rpm       = simparams.sim_speed_prof[step].rpm_timestate[jt];
-         simscan.omega_s_t = simparams.sim_speed_prof[step].w2t_timestate[jt];
+         simscan.rpm       = simparams.sim_speed_prof[ step ].rpm_timestate[ jt ];
+         simscan.omega_s_t = simparams.sim_speed_prof[ step ].w2t_timestate[ jt ];
          w2t_integral      = simscan.omega_s_t;         // Omega_2_t
       }
 
@@ -1955,6 +2003,11 @@ ttT6+=(clcSt6.msecsTo(clcSt7));
          cA[ jx ] = C0[ jx ];
 
       simdata.scan.append( simscan );
+      if ( ( jt % jti ) == 0 )
+      {
+         double norm_v  = US_Math2::norm_value( C0 + radx, nrad );
+DbgLv(1) << "C_ni:    jt" << jt << "norm_v" << norm_v << "Nx" << Nx << "time" << simscan.time;
+      }
 
 #ifndef NO_DB
       // Show the movie if movie_flag is true
@@ -1986,7 +2039,8 @@ ttT7+=(clcSt7.msecsTo(clcSt3));
       // either at end of acceleration zone or end of one speed
       // step in case of multiple speed cases.
 
-      if ( jt == ( ntsteps - 1 ) )
+#if 0
+      if ( jt == ltsteps )
       { // Update the initial concentration vector
          C_init.radius       .resize( Nx );
          C_init.concentration.resize( Nx );
@@ -1997,9 +2051,26 @@ ttT7+=(clcSt7.msecsTo(clcSt3));
             C_init.concentration[ jx ] = C0[ jx ];
          }
       }
+#endif
 
    } // 'jt', i.e. 'time step', loop ends here
 
+#if 1
+   // Last concentration vector goes as initial concentration
+   // vector for the next speed case i.e. whenever speed changes,
+   // either at end of acceleration zone or end of one speed
+   // step in case of multiple speed cases.
+
+   // Update the initial concentration vector
+   C_init.radius       .resize( Nx );
+   C_init.concentration.resize( Nx );
+
+   for ( int jx = 0; jx < Nx; jx++ )
+   {
+      C_init.radius       [ jx ] = xA[ jx ];
+      C_init.concentration[ jx ] = C0[ jx ];
+   }
+#endif
 #ifdef TIMING_NI
 clcSt8 = QDateTime::currentDateTime();
 #endif
@@ -4232,7 +4303,8 @@ bool US_Astfem_RSA::iszero( const double s, const double D,        const double 
    double tolerance      = 0.001;
    double sqr_D          = sqrt( D );
    double sqr_t          = ( t > 0.0 ) ? sqrt( t ) : 1.0;
-   double omega_sq       = sq( rpm * M_PI / 30.0 );
+   double rpm_u          = ( rpm > 0.0 ) ? rpm     : 400.0;
+   double omega_sq       = sq( rpm_u * M_PI / 30.0 );
    double s_distance     = meniscus * exp( s * omega_sq * t );
    double back_diffusion = tolerance * sqr_D
                            / ( s * omega_sq * ( bottom + meniscus ) * sqr_t );
@@ -4245,7 +4317,9 @@ bool US_Astfem_RSA::iszero( const double s, const double D,        const double 
    bool is_zero          = ( cleared > bottom );
 DbgLv(1) << "IS_Z: radD" << radD << "s_dist" << s_distance
  << "back_diffus" << back_diffusion << "xval" << xval << "cleared" << cleared
- << "is_zero" << is_zero; 
+ << "is_zero" << is_zero;
+DbgLv(1) << "IS_Z:    s D rpm t men bot" << s << D << rpm << t << meniscus << bottom
+ << "   omega_sq  sqr_t" << omega_sq << sqr_t;
 
    return is_zero;
 }

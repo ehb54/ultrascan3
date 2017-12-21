@@ -33,7 +33,7 @@ class US_UTIL_EXTERN US_Astfem_RSA : public QObject
 
       //! \brief Set a flag for whether to perform time correction.
       //! \param flag  Flag for whether or not to perform correction.
-      void setTimeCorrection   ( bool flag ){ time_correction = flag; }; 
+      void setTimeCorrection   ( bool flag ){ time_correction = flag; };
 
       //! \brief Set a flag for whether to perform time interpolation.
       //! \param flag  Flag for whether or not to perform interpolation.
@@ -100,72 +100,52 @@ class US_UTIL_EXTERN US_Astfem_RSA : public QObject
 
    private:
       US_TimeState timestate; //!< Keeps information for each second of the experiment
-   
       bool stopFlag;          //!< Stop calculation, interpolate, and return
-
-      bool time_correction;   //!< Decides if output data is time corrected 
+      bool time_correction;   //!< Decides if output data is time corrected
                               //!< for acceleration (true=yes, false=no)
-      
-      bool use_time;          //!< Decides if output data is interpolated 
-                              //!< based on time (=true) or 
+      bool use_time;          //!< Decides if output data is interpolated
+                              //!< based on time (=true) or
                               //!< based on omega-square-t integral (=false)
-      
-      bool show_movie;        //!< Decides if a movie of scans will be shown 
+      bool show_movie;        //!< Decides if a movie of scans will be shown
                               //!< on window or not
-
       bool simout_flag;       //!< Decides whether simulated data should be stored
                               //!< or cleared
-
-      US_StiffBase stfb0;     //!< Structure used for numerical integration 
+      US_StiffBase stfb0;     //!< Structure used for numerical integration
                               //   on a quadrilateral
-
-      double density;         //!< Density of the buffer 
-
-      double compressib;      //!< Compressibility of the buffer  
-
-      double  d_coeff[ 6 ];   // SD Adjust buffer density coefficients
-
-      double  v_coeff[ 6 ];   // SD Adjust buffer viscosity coefficients
+      double density;         //!< Density of the buffer
+      double compressib;      //!< Compressibility of the buffer
+      double d_coeff[ 6 ];    //!< SD Adjust buffer density coefficients
+      double v_coeff[ 6 ];    //!< SD Adjust buffer viscosity coefficients
 
       //! Keep track of time globally for w2t_integral calculation
-
-      double last_time;       //!< Time used for last scan or last speed zone 
-
+      double last_time;       //!< Time used for last scan or last speed zone
       double w2t_integral;    //!< Keep track of w2t_integral value globally
-
+      double tot_conc;        //!< Total concentration in model
       int    Nx;              //!< Number of points used in radial direction
-
       int    dbg_level;       //!< Debug level
-      
-      US_AstfemMath::AstFemParameters af_params; //!< Parameters used for adaptive space time 
-                                                 //!< finite element solution
 
-      US_AstfemMath::MfemData         af_data;   //!< A data set comprised of scans from one sample
-                                                 //!<        taken at constant speed 
-
-      US_AstfemMath::MfemInitial      af_c0 ;    //!< Initial concentration conditions
-
-      double*                                 xA; //<! x values array
-
-      QVector< double >                       x;  //<! Radii of grid points
-
-      QVector< int >                  step_scans; //<! Count of scan interps, each speed step
+      US_AstfemMath::AstFemParameters af_params;  //!< Parameters used for adaptive
+                                                  //!<  space time finite element solution
+      US_AstfemMath::MfemData         af_data;    //!< A data set comprised of scans from
+                                                  //!<   one sample taken at constant speed
+      US_AstfemMath::MfemInitial      af_c0 ;     //!< Initial concentration conditions
+      double*                         xA;         //<! x values array
+      QVector< double >               x;          //<! Radii of grid points
+      QVector< int >                  step_scans; //<! Count of scan interps, ea. speed step
 
       QVector< US_AstfemMath::ReactionGroup > rg; //<! Used for reacting system
-
-      US_Model&                               system; //<! Defined model
-
-      US_SimulationParameters&                simparams; //<! Simulation parameters
+      US_Model&                       system;     //<! Defined model
+      US_SimulationParameters&        simparams;  //<! Simulation parameters
 
       // Functions:
 
-      //!< Updates association vector in case of reacting 
+      //!< Updates association vector in case of reacting
       //   case based on stoichiometry values
       void   update_assocv  ( void );
 
       //<! Gives meniscus and bottom after rotor stretch
       //!< Input  :  rotorspeed
-      //!< Output :  updates current meniscus and bottom 
+      //!< Output :  updates current meniscus and bottom
       //             position
       void   adjust_limits  ( int );
 
@@ -179,8 +159,8 @@ class US_UTIL_EXTERN US_Astfem_RSA : public QObject
       //!< Input  : Default reaction group
       //!< Output : Updated reaction group
       //!< Starts with default reaction
-      //   group structure and updates 
-      //   components based on association 
+      //   group structure and updates
+      //   components based on association
       //   vector
       void   initialize_rg  ( void );
 
@@ -199,7 +179,7 @@ class US_UTIL_EXTERN US_Astfem_RSA : public QObject
       //         : 4. Initial concentration vector ( MfemInitial )
       //!< Output: 5. Simulated  data ( MfemData )
       //!< Input : 6. Acceleration flag ( bool ), true : if in acceleration zone
-      //                                          false: if in constant speed zone       
+      //                                          false: if in constant speed zone
       int    calculate_ni   ( double, double, int, US_AstfemMath::MfemInitial&,
                               US_AstfemMath::MfemData&, bool );
 
@@ -207,7 +187,7 @@ class US_UTIL_EXTERN US_Astfem_RSA : public QObject
       //!< Input  : 1. Qvector containing ( omega )^s/D values
       //            2. mesh type ( int )
       //!< Output : x: Qvector containing radial points
-      void   mesh_gen       ( QVector< double >&, int ); 
+      void   mesh_gen       ( QVector< double >&, int );
 
       //!< Generate exponential mesh and refine cell bottom (for s>0)
       //   Called inside mesh_gen.
@@ -223,24 +203,24 @@ class US_UTIL_EXTERN US_Astfem_RSA : public QObject
       //            refinement )
       void   mesh_gen_s_neg ( const QVector< double >& );
 
-      //!< refine mesh near meniscus (for s>0) or 
-      //!< near bottom (for s<0) to be used for the 
+      //!< refine mesh near meniscus (for s>0) or
+      //!< near bottom (for s<0) to be used for the
       //!< acceleration stage
       // Parameters:
-      //!< Input  : Number of elements near meniscus 
+      //!< Input  : Number of elements near meniscus
       //              (or bottom) to be refined (int)
-      //          : Number of elements to be used for 
+      //          : Number of elements to be used for
       //            the refined region
-      //!< Output : x: Qvector containing radial points 
-      //            ( updated after refinement )            
+      //!< Output : x: Qvector containing radial points
+      //            ( updated after refinement )
 
       void   mesh_gen_RefL  ( int, int );
-      
+
       //!< Computes coefficient matrix for fixed mesh case
 
       //!< Parameters :
       //!< Input : D value     ( double )
-      //         : s*omega^2/D ( double )  
+      //         : s*omega^2/D ( double )
       //         : Null double 2D array
       //         : Null double 2D array
       //!< Output: Stiffness matrix on the left ( double 2D array )
@@ -248,36 +228,36 @@ class US_UTIL_EXTERN US_Astfem_RSA : public QObject
       //
       void   ComputeCoefMatrixFixedMesh( double, double, double**, double** );
 
-      //!< An initial concentration vector is decomposed into components of 
+      //!< An initial concentration vector is decomposed into components of
       //!< the reaction group
       //!< Input  : Initial concentration vector
       //!< Output : Concentration of different components
       void   decompose      ( US_AstfemMath::MfemInitial* );
 
-      //!< Computes coefficient matrix for moving mesh method (right ) if 
+      //!< Computes coefficient matrix for moving mesh method (right ) if
       //!< s value is greater than zero
       //!< Parameters :
       //!< Input : 1. D value     ( double )
-      //         : 2. s*omega^2/D ( double )  
+      //         : 2. s*omega^2/D ( double )
       //         : 3. Null double 2D array
       //         : 4. Null double 2D array
       //!< Output: 3. Stiffness matrix on the left ( double 2D array )
       //         : 4. Stiffness matrix on the right( double 2D array )
       void   ComputeCoefMatrixMovingMeshR( double, double, double**, double** );
 
-      //!< Computes coefficient matrix for moving mesh method (less ) if 
+      //!< Computes coefficient matrix for moving mesh method (less ) if
       //!< s value is less than zero
       //!< Parameters :
       //!< Input : 1. D value     ( double )
-      //         : 2. s*omega^2/D ( double )  
+      //         : 2. s*omega^2/D ( double )
       //         : 3. Null double 2D array
       //         : 4. Null double 2D array
       //!< Output: 3. Stiffness matrix on the left ( double 2D array )
       //         : 4. Stiffness matrix on the right( double 2D array )
       void   ComputeCoefMatrixMovingMeshL( double, double, double**, double** );
 
-      //!< Solves ode using implicit-mid point-Euler's method for 
-      //   reacting system case             
+      //!< Solves ode using implicit-mid point-Euler's method for
+      //   reacting system case
       //!< Input : 1. Number of radial points
       //!< Output: 2. Next Concentration vector
       //!< Input : 3. Step of the time interval
@@ -285,10 +265,10 @@ class US_UTIL_EXTERN US_Astfem_RSA : public QObject
 
       //!<  Prints simulation parameters
       //!<  Input : simparams structure
-      //!<  Output: Prints the values 
+      //!<  Output: Prints the values
       //            in simparams structure
       void   printsimparams (void);
-      
+
       //!< Prints  simulation components of the model
       //!< Input : Given simulation components
       //!< Output: Prints the values in simulation components
@@ -299,7 +279,7 @@ class US_UTIL_EXTERN US_Astfem_RSA : public QObject
       //!< Output: Prints the values in SpeedProfile structure
       void   printspeedprofile (US_SimulationParameters::SpeedProfile&);
 
-      //!< These two following functions are used in 
+      //!< These two following functions are used in
       //!< implicit-mid point-Euler's method ( ReactionOneStep_
       //!< Euler_imp )
       void   Reaction_dydt    ( double*, double*  );
@@ -311,14 +291,14 @@ class US_UTIL_EXTERN US_Astfem_RSA : public QObject
       //         : 3. Initial concentration vector ( MfemInitial )
       //!< Output: 4. Simulated  data ( MfemData )
       //!< Input : 5. Acceleration flag ( bool ), true : if in acceleration zone
-      //                                          false: if in constant speed zone      
+      //                                          false: if in constant speed zone
       int    calculate_ra2    ( double, double, US_AstfemMath::MfemInitial*,
-                                US_AstfemMath::MfemData&, bool );   
+                                US_AstfemMath::MfemData&, bool );
 
       //!< Constructs global stiffness matrix
       void   GlobalStiff      ( double*, double**, double**,
                                 double, double );
- 
+
       //!< Used for naming the temporary timestate file
       //!< if needed in us_astfem_rsa
       //!< Input : Current time in date+hrs+mins+seconds
@@ -334,18 +314,18 @@ class US_UTIL_EXTERN US_Astfem_RSA : public QObject
 
       //!< Loads the experimental data and converts into "MfemData" type
       //!< Input  : experimental data ( RawData )
-      //!< Output : simulated data (MfemData ) and used for getting scans 
+      //!< Output : simulated data (MfemData ) and used for getting scans
       //            on experimental grid
-      void   load_mfem_data ( US_DataIO::RawData&, US_AstfemMath::MfemData& );     
+      void   load_mfem_data ( US_DataIO::RawData&, US_AstfemMath::MfemData& );
 
       //!< Stores the computed data on the grid depending on simout_flag i.e.
       //!< either experimental grid or simulation grid
       //!< Input  : Simulated data ( MfemData )
-      //!< Output : Updated experimental data ( RawData ) 
-      void   store_mfem_data( US_DataIO::RawData&, US_AstfemMath::MfemData& );         
+      //!< Output : Updated experimental data ( RawData )
+      void   store_mfem_data( US_DataIO::RawData&, US_AstfemMath::MfemData& );
 
       //! \brief Determines if computed scan concentration vector virtually zero
-      //! \param s         Sedimentation coefficient, current component 
+      //! \param s         Sedimentation coefficient, current component
       //! \param D         Diffusion coefficient, current component
       //! \param rpm       Speed, current step
       //! \param t         Current time (or first of step)
