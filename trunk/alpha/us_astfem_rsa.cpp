@@ -1799,7 +1799,9 @@ DbgLv(1) << "C_ni:  IS_ZERO !!  1st step time" << last_time << "rpm_stop" << rpm
  << "s D" << ss0 << dd0 << "ntsteps" << ntsteps;
    }
 
+#ifndef NO_DB
    int jti             = ( ntsteps > 100 ) ? ( ntsteps / 100 ) : 1;
+#endif
    int ltsteps         = ntsteps - 1;
 
    // Calculate all time steps
