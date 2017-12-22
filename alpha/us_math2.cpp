@@ -650,7 +650,7 @@ void US_Math2::data_correction( double t, SolutionData& d )
 
    double K          = t + K0;
 
-   d.D20w_correction = ( K20 / K ) * ( d.viscosity / VISC_20W );
+   d.D20w_correction = ( K20 / K ) * ( d.viscosity_tb / VISC_20W );
 //if ( qAbs(d.vbar-0.72) > 0.001 ) {
 //qDebug() << "M2:dacor:  denstb denswt" << d.density_tb << d.density_wt << "manual" << d.manual;
 //qDebug() << "M2:dacor:  visctb viscwt" << d.viscosity_tb << d.viscosity_wt;
