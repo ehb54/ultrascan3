@@ -276,12 +276,14 @@ class US_UTIL_EXTERN US_Math2
       //! \return The common temperature-corrected vbar
       static double calcCommonVbar( US_Solution&, double );
 
+#ifdef WIN32
       //! \brief An approximation of the Complimentary Gauss
-      //! Error Fiunction, erfc().  Use for WIN32 only as Linux already 
+      //! Error Function, erfc().  Use for WIN32 only as Linux already 
       //! has it implemented in <math.h>
       //! \param x  The input value
       //! \return Approximation of erfc(x)
       static double erfc( double );
+#endif
 
       //! \brief Compute best uniform grid repetitions for 2DSA
       //!        and possibly modify grid point counts in each dimension
@@ -313,6 +315,10 @@ class US_UTIL_EXTERN US_Math2
       //! \return        The norm value of the vector
       static double norm_value( QVector< double >* );
 
+      //! \brief Find root X where evaluated Y is virtually equal to a goal.
+      //! \param goal    Goal value to approach
+      //! \return        The root X for Y virtually equal to goal
+      static double find_root ( const double goal );
       private:
 
       static void _nnls_g1 ( double a, double b, double*, double*, double* );
