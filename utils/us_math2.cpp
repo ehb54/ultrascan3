@@ -650,7 +650,7 @@ void US_Math2::data_correction( double t, SolutionData& d )
 
    double K          = t + K0;
 
-   d.D20w_correction = ( K20 / K ) * ( d.viscosity / VISC_20W );
+   d.D20w_correction = ( K20 / K ) * ( d.viscosity_tb / VISC_20W );
 //if ( qAbs(d.vbar-0.72) > 0.001 ) {
 //qDebug() << "M2:dacor:  denstb denswt" << d.density_tb << d.density_wt << "manual" << d.manual;
 //qDebug() << "M2:dacor:  visctb viscwt" << d.viscosity_tb << d.viscosity_wt;
@@ -763,10 +763,11 @@ uint US_Math2::randomize( uint seed )
    return seed;
 }
 
+#ifdef WIN32
+// Complementary Error Function erfc(x) with fractional error everywhere less
+//  than 1.2 e 10 7.
 double US_Math2::erfc( double x )
 {
-   // error function erfc(x) with fractional error everywhere less
-   // than 1.2 × 10 7.
 
    double z = fabs( x );
    double t = 1.0 / ( 1.0 + 0.5 * z );
@@ -793,8 +794,9 @@ double US_Math2::erfc( double x )
 
    return x >= 0.0 ? ans : 2.0 - ans;
 }
+#endif
 
-
+// Non-negative least-squares matrix solution
 int US_Math2::nnls( double* a, int a_dim1, int m, int n,
                     double* b,
                     double* x,
@@ -1550,7 +1552,7 @@ double US_Math2::norm_value( double* datary, const int nval )
 
    for ( int ii = 0; ii < nval; ii++ )
    {
-      normval         = ( datary[ ii ] * datary[ ii ] );
+      normval        += ( datary[ ii ] * datary[ ii ] );
    }
 
    normval         = ( normval > 0.0 ) ? sqrt( normval ) : normval;
@@ -1561,5 +1563,52 @@ double US_Math2::norm_value( double* datary, const int nval )
 double US_Math2::norm_value( QVector< double >* datvec )
 {
    return norm_value( datvec->data(), datvec->count() );
+}
+
+// Find root X where evaluated Y is virtually equal to a goal, using a
+//  calculation including the inverse complementary error function (erfc).
+double US_Math2::find_root( const double goal )
+{
+#define _FR_MXKNT 100            // Max find-root iteration count
+   double  tolerance = 1.0e-7;   // Min difference tolerance
+   double  x1        = 0.0;
+   double  x2        = 10.0;
+   double  xv        = 5.0;
+   double  xdiff     = 2.5;
+   double  xsqr      = xv * xv;
+   double  rsqr_pi   = 1.0 / sqrt( M_PI );
+   double  test      = exp( -xsqr ) * rsqr_pi - ( xv * erfc( xv ) );
+           test      = ( goal != 0.0 ) ? test : 0.0;
+   int     count     = 0;
+
+   // Iterate until the difference between subsequent x value evaluations
+   //  is too small to be relevant (or max count reached);
+
+   while ( qAbs( test - goal ) > tolerance )
+   {
+      xdiff  = ( x2 - x1 ) / 2.0;
+
+      if ( test < goal )
+      { // At less than goal, adjust top (x2) limit
+         x2     = xv;
+         xv    -= xdiff;
+      }
+
+      else
+      { // At greater than goal, adjust bottom (x1) limit
+         x1     = xv;
+         xv    += xdiff;
+      }
+
+      // Then update the test y-value
+      xsqr   = xv * xv;
+      test   = ( 1.0 + 2.0 * xsqr ) * erfc( xv ) 
+         - ( 2.0 * xv * exp( -xsqr ) ) * rsqr_pi;
+
+      if ( (++count) > _FR_MXKNT )
+         break;
+   }
+
+   return xv;
 }
 
