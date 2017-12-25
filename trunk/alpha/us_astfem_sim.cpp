@@ -58,6 +58,10 @@ US_Astfem_Sim::US_Astfem_Sim( QWidget* p, Qt::WindowFlags f )
    time_correctionFlag = false;
    imagedir            = US_Settings::tmpDir() + "/movies";
 
+// initialize buffer density to default water @ 20C:
+	buffer.density      = DENS_20W;
+	buffer.viscosity    = VISC_20W;
+
    astfem              = NULL;
    astfvm              = NULL;
 
@@ -792,7 +796,28 @@ DbgLv(1) << "first_last_data for the step" << sp->time_first << sp->time_last
          free( astfem );
       }
 
-      astfem = new US_Astfem_RSA( system, simparams );
+      // make sure the selected model is adjusted for the selected temperature
+      // and buffer conditions:
+      US_Math2::SolutionData sol_data;
+      sol_data.density   = buffer.density;
+      sol_data.viscosity = buffer.viscosity;
+      sol_data.vbar20    = 0.72; //The assumption here is that vbar does not change with
+      sol_data.vbar      = 0.72; //temp, so vbar correction will cancel in s correction
+      sol_data.manual    = buffer.manual; 
+      US_Math2::data_correction( simparams.temperature, sol_data );
+ 
+      // make a copy of the original system to correct s and D for visc and dens.
+      // save original model unmodified, pass the density/viscosity corrected data
+      // to astfem_rsa for simulating experimental space:
+      //
+      US_Model system_corrected = system;
+      for (int i=0; i<system_corrected.components.size(); i++)
+      {
+         system_corrected.components[i].s /= sol_data.s20w_correction;
+         system_corrected.components[i].D /= sol_data.D20w_correction;
+      }
+
+      astfem = new US_Astfem_RSA( system_corrected, simparams );
 
       connect( astfem, SIGNAL( new_scan( QVector< double >*, double* ) ),
                        SLOT( update_movie_plot( QVector< double >*, double* ) ) );
