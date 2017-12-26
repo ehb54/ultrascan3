@@ -811,10 +811,10 @@ DbgLv(1) << "first_last_data for the step" << sp->time_first << sp->time_last
       // to astfem_rsa for simulating experimental space:
       //
       US_Model system_corrected = system;
-      for (int i=0; i<system_corrected.components.size(); i++)
+      for ( int jc = 0; jc < system_corrected.components.size(); jc++ )
       {
-         system_corrected.components[i].s /= sol_data.s20w_correction;
-         system_corrected.components[i].D /= sol_data.D20w_correction;
+         system_corrected.components[ jc ].s /= sol_data.s20w_correction;
+         system_corrected.components[ jc ].D /= sol_data.D20w_correction;
       }
 
       astfem = new US_Astfem_RSA( system_corrected, simparams );
@@ -837,69 +837,60 @@ DbgLv(1) << "first_last_data for the step" << sp->time_first << sp->time_last
       astfem->set_buffer( buffer );
       astfem->set_debug_flag( dbg_level );
 //DbgLv(1) << "after_calculate" << sim_datas.size();
-#if 0
-      double stretch_fac  = stretch( simparams.rotorcoeffs,
-                                     simparams.speed_step[ 0 ].rotorspeed );
-      double bottom_ar    = simparams.bottom_position;
-      simparams.meniscus  = meniscus_ar + stretch_fac;
-      simparams.bottom    = bottom_ar   + stretch_fac;
 
-      astfem->calculate( sim_data_all );
-
-#endif
-#if 1
       double bottom_ar    = simparams.bottom_position;
       simparams.meniscus  = meniscus_ar;
       simparams.bottom    = bottom_ar;
       int kscan           = sim_data_all.scanCount();
       int kpoint          = sim_data_all.pointCount();
 
+      // Initialize reading values to zero for all scans (all speeds)
       for ( int js = 0; js < kscan; js++ )
          sim_data_all.scanData[ js ].rvalues.fill( 0.0, kpoint );
 
-      astfem->calculate( sim_data_all );
-      calc_over();
-#endif
-#if 0
-      double stretch_fac  = stretch( simparams.rotorcoeffs,
-                                     simparams.speed_step[ 0 ].rotorspeed );
-      double bottom_ar    = simparams.bottom_position;
-stretch_fac=0.0;
-double coeff1 = simparams.rotorcoeffs[ 0 ];
-double coeff2 = simparams.rotorcoeffs[ 1 ];
-simparams.rotorcoeffs[0] = 0.0;
-simparams.rotorcoeffs[1] = 0.0;
-      simparams.meniscus  = meniscus_ar + stretch_fac;
-      simparams.bottom    = bottom_ar   + stretch_fac;
-
-      astfem->calculate( sim_data_all );
-
-simparams.rotorcoeffs[0] = coeff1;
-simparams.rotorcoeffs[1] = coeff2;
-#endif
+      // Set the radius values in data sets
       int points          = qRound( ( simparams.bottom - simparams.meniscus ) /
                                   simparams.radial_resolution ) + 1;
-      int ks              = 0;
       for ( int jd = 0; jd < nstep; jd++ )
-      {
+      {  // Set radius values for current speed's dataset
          double stretch_fac  = stretch( simparams.rotorcoeffs,
                                         simparams.speed_step[ jd ].rotorspeed );
          simparams.meniscus  = meniscus_ar + stretch_fac;
          simparams.bottom    = bottom_ar   + stretch_fac;
          double radval       = simparams.meniscus;
-         int nscans          = sim_datas[ jd ].scanCount();
          for ( int jp = 0; jp < points; jp++ )
          {
             sim_datas[ jd ].xvalues[ jp ] = radval;
+            // Set radius value in composite dataset (for multi-speed)
+            if ( jd == 0 )
+               sim_data_all.xvalues[ jp ] = radval;
             radval                       += simparams.radial_resolution;
-         }
-         for ( int js = 0; js < nscans; js++, ks++ )
-         {
-            sim_datas[ jd ].scanData[ js ] = sim_data_all.scanData[ ks ];
          }
 DbgLv(1) << "out:astfem_radial_ranges" << sim_datas[jd].xvalues[0] << sim_datas[jd].xvalues[points-1]
  << af_params.current_meniscus << af_params.current_bottom << jd;
       }
+
+      // Set meniscus and bottom for dataset
+      simparams.meniscus  = sim_data_all.xvalues[ 0 ];
+      simparams.bottom    = sim_data_all.xvalues[ points - 1 ];
+
+      // Compute the simulation dataset
+      astfem->calculate( sim_data_all );
+      calc_over();
+
+      int ks              = 0;
+
+      // Copy generated simulation dataset to any separate speed datasets
+      for ( int jd = 0; jd < nstep; jd++ )
+      {
+         int nscans          = sim_datas[ jd ].scanCount();
+         for ( int js = 0; js < nscans; js++, ks++ )
+         {
+            sim_datas[ jd ].scanData[ js ] = sim_data_all.scanData[ ks ];
+         }
+      }
+
+      // Reset meniscus and bottom to at-rest values
       simparams.meniscus  = meniscus_ar;
       simparams.bottom    = bottom_ar;
    }

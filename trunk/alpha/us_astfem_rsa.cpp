@@ -143,8 +143,13 @@ DbgLv(1)<< "RSA:calc:    cdset_speed" << af_params.cdset_speed;
    af_params.omega_s     = sq( s0speed * M_PI / 30.0 ); // omega_square
    af_params.start_om2t  = af_params.omega_s;       // Starting omega square t
    af_params.start_time  = 0.0;                     // Starting time
+#if 0
+   adjust_limits( af_params.cdset_speed );          // Does rotor stretch
+#endif
+#if 1
    af_params.current_meniscus = simparams.meniscus; // Meniscus from simparams structure
    af_params.current_bottom   = simparams.bottom;   // Bottom from simparams structure
+#endif
 //DbgLv(1)<< "RSA:calc: meniscus bottom" << simparams.meniscus << simparams.bottom;
 
    // Loads the experimental data exp_data of 'RawData'type
@@ -853,25 +858,28 @@ DbgLv(1)<< "subha: rsa readings: " << accel_times[step] << accel_w2ts[step];
          step_speed   = (double)sp->rotorspeed;
 
          adjust_limits( sp->rotorspeed );
-         ed->meniscus = af_params.current_meniscus;
-         ed->bottom   = af_params.current_bottom;
+
          accel_time   = 0.0;
          fscan        = 0;
          lscan        = fscan + af_data.scan.count() - 1;
 
-         time0        = time2;           // First time of the current speed step
-         omeg0        = omeg2;           // First omega_square_t of the current speed step
+         // First time and omega_square_t of the current speed step
+         time0        = time2;
+         omeg0        = omeg2;
 
-         time2        = ( double )( time_end[ step ] );// Last time of the current speed step
-         omeg2        = w2t_end [ step ] ; // Last omega_square_t of the current speed step
+         // Last time and omega_square_t of the current speed step
+         time2        = ( double )( time_end[ step ] );
+         omeg2        = w2t_end [ step ] ;
 
-         ed->meniscus = af_params.current_meniscus; // Update meniscus for experimental grid
-         ed->bottom   = af_params.current_bottom; // Update bottom for experimental grid
+         // Update meniscus and bottom for experimental grid
+         ed->meniscus = af_params.current_meniscus;
+         ed->bottom   = af_params.current_bottom;
 
          if ( mspd_data  &&  strch_rot )
          {  // For multi-speed data, reset speed-appropriate radii
             int points         = ed->radius.count();
-            double radinc      = ( ed->bottom - ed->meniscus ) / (double)( points - 1 );
+            double radinc      = ( ed->bottom - ed->meniscus )
+                                 / (double)( points - 1 );
             double radval      = ed->meniscus;
             for ( int jr = 0; jr < points; jr++ )
             {
@@ -881,7 +889,8 @@ DbgLv(1)<< "subha: rsa readings: " << accel_times[step] << accel_w2ts[step];
          }
 
          // For multi-speed, break out once speed step is beyond data
-         if ( step > 0  &&  ed->scan[ lscan ].time < sp->time_first  &&  !mspd_data )
+         if ( step > 0  &&  ed->scan[ lscan ].time < sp->time_first  &&
+              !mspd_data )
             break;
 
          // We need to simulate acceleration
