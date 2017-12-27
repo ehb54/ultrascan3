@@ -211,21 +211,21 @@ void US_Astfem_Sim::init_simparams( void )
    simparams.setHardware( NULL, rotor_calibr, 0, 0 );
 
    // calculate bottom from rpm, channel bottom pos., rotor coefficients
-   double bottom = US_AstfemMath::calc_bottom( rpm, simparams.bottom_position,
+   double bottom        = US_AstfemMath::calc_bottom( rpm, simparams.bottom_position,
                                                     simparams.rotorcoeffs );
-   bottom        = (double)( qRound( bottom * 1000.0 ) ) * 0.001;
+   double menisc_curr   = 5.8 + bottom - simparams.bottom_position;
 
    simparams.mesh_radius.clear();
    simparams.speed_step .clear();
 
-   sp.duration_hours    = 2; // Initialized experiment duration hours
-   sp.duration_minutes  = 30.0; //Initialized experiment duration minutes
-   sp.delay_hours       = 0;    //Initialized time for accelerating from current rotor speed to next rotor speed in hours
-   sp.delay_minutes     = 20.0; //Initialized time for accelerating from current rotor speed to next rotor speed in minutes
-   sp.rotorspeed        = (int)rpm; // Initialized rotor speed
-   sp.scans             = 30;  // Initialized number of scans
-   sp.acceleration      = 400; // Acceleration speed of the rotor
-   sp.acceleration_flag = true; // Flag used for acceleration zone
+   sp.duration_hours    = 2;         // Initialized experiment duration hours
+   sp.duration_minutes  = 30.0;      // Initialized experiment duration minutes
+   sp.delay_hours       = 0;    // Initialized time for accelerating from current rotor speed to next rotor speed in hours
+   sp.delay_minutes     = 20.0; // Initialized time for accelerating from current rotor speed to next rotor speed in minutes
+   sp.rotorspeed        = (int)rpm;  // Initialized rotor speed
+   sp.scans             = 30;        // Initialized number of scans
+   sp.acceleration      = 400;       // Acceleration speed of the rotor
+   sp.acceleration_flag = true;      // Flag used for acceleration zone
    sp.delay_minutes     =( double)(sp.rotorspeed/(60.0*sp.acceleration));// Minimum delay ie. time to accelerate the rotor
    simparams.speed_step << sp;
 
@@ -233,8 +233,8 @@ void US_Astfem_Sim::init_simparams( void )
    simparams.radial_resolution = 0.001;  // Increment in radial experimental grid
    simparams.meshType          = US_SimulationParameters::ASTFEM; // Used for solver option
    simparams.gridType          = US_SimulationParameters::MOVING; // Used for grid option
-   simparams.meniscus          = 5.8;    // Meniscus for simulation
-   simparams.bottom            = bottom; // Bottom for simulation
+   simparams.meniscus          = menisc_curr;    // Meniscus for simulation
+   simparams.bottom            = bottom;         // Bottom for simulation
    simparams.rnoise            = 0.0;
    simparams.lrnoise           = 0.0;
    simparams.tinoise           = 0.0;
@@ -242,7 +242,7 @@ void US_Astfem_Sim::init_simparams( void )
    simparams.band_volume       = 0.015;
    simparams.rotorCalID        = rotor_calibr;
    simparams.band_forming      = false;
-   meniscus_ar                 = simparams.meniscus;
+   meniscus_ar                 = 5.8 + simparams.bottom_position - 7.2;
 }
 
 void US_Astfem_Sim::new_model( void )
@@ -381,7 +381,6 @@ void US_Astfem_Sim::sim_parameters( void )
    working_simparams.meniscus = meniscus_ar;
    working_simparams.bottom   = simparams.bottom_position;
 DbgLv(1) << "SimPar:MAIN:simp: nspeed" << working_simparams.speed_step.count()
-
  << "speed0" << working_simparams.speed_step[0].rotorspeed;
 
    US_SimParamsGui* dialog =
@@ -399,7 +398,7 @@ void US_Astfem_Sim::set_parameters( void )
 
    pb_start  ->setEnabled( true );
 DbgLv(1) << "SimPar:MAIN:SetP:  nspeed" << simparams.speed_step.count()
- << "speed0" << simparams.speed_step[0].rotorspeed;
+ << "speed0" << simparams.speed_step[0].rotorspeed << "meniscus_ar" << meniscus_ar;
 
    // Initialize all-speed raw data
    sim_data_all.xvalues .clear();
@@ -556,8 +555,10 @@ void US_Astfem_Sim::stop_simulation( void )
 void US_Astfem_Sim::adjust_limits( double speed )
 {
    double stretch_value        = stretch( simparams.rotorcoeffs, speed );
-   af_params.current_meniscus  = simparams.meniscus        + stretch_value;
+   af_params.current_meniscus  = meniscus_ar               + stretch_value;
    af_params.current_bottom    = simparams.bottom_position + stretch_value;
+DbgLv(1) << "ASIM: adjlim: stretch currmen currbott"
+ << stretch_value << af_params.current_meniscus << af_params.current_bottom;
 }
 
 // Calculates stretch for rotor coefficients array and rpm
@@ -870,7 +871,7 @@ DbgLv(1) << "out:astfem_radial_ranges" << sim_datas[jd].xvalues[0] << sim_datas[
  << af_params.current_meniscus << af_params.current_bottom << jd;
       }
 
-      // Set meniscus and bottom for dataset
+      // Set meniscus and bottom for (composite?) dataset to 1st speed range
       simparams.meniscus  = sim_data_all.xvalues[ 0 ];
       simparams.bottom    = sim_data_all.xvalues[ points - 1 ];
 
@@ -889,10 +890,6 @@ DbgLv(1) << "out:astfem_radial_ranges" << sim_datas[jd].xvalues[0] << sim_datas[
             sim_datas[ jd ].scanData[ js ] = sim_data_all.scanData[ ks ];
          }
       }
-
-      // Reset meniscus and bottom to at-rest values
-      simparams.meniscus  = meniscus_ar;
-      simparams.bottom    = bottom_ar;
    }
    else
    {
