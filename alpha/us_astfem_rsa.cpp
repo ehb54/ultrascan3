@@ -122,10 +122,10 @@ DbgLv(1)<< "RSA:calc:  lsx fstime lstime" << lsx << fstime << lstime;
 
    for ( int step = 0; step < simparams.speed_step.count(); step++ )
    {
-      cdsx               = step;
       if ( fstime >=  simparams.speed_step[ step ].time_first  &&
            lstime <=  simparams.speed_step[ step ].time_last )
       {  // Found step that this dataset fits inside:  break out
+         cdsx               = step;
 DbgLv(1)<< "RSA:calc:   cdsx" << cdsx << "time_first time_last"
  << simparams.speed_step[ step ].time_first << simparams.speed_step[ step ].time_last;
          break;
@@ -320,7 +320,6 @@ DbgLv(1) << "RSA:calc: SSS:    tf tl wf wl" << time_first << time_last << w2t_fi
       if ( exp_data.scanData[ js ].rpm != srpm )
       {  // Flag at least one speed change within the raw data
          mspd_data       = true;
-         af_params.cdset_speed  = 0.0;
          break;
       }
    }
@@ -613,10 +612,13 @@ totT3+=(clcSt3.msecsTo(clcSt4));
 
             // Calculate the average of rpms from timestate readings
             //  and use it for constant speed zone
-            double avg_speed = simparams.sim_speed_prof[speed_step].avg_speed ;
-DbgLv(2) <<" avg_speed= " << avg_speed ;
+            double avg_speed = simparams.sim_speed_prof[ speed_step ].avg_speed ;
 
             // Calculate the simulation for constant speed zone
+DbgLv(2) <<" CALC:_ni: speed" << avg_speed << "step" << speed_step
+ << "sp-men,bot" << simparams.meniscus << simparams.bottom
+ << "af-men,bot" << af_params.current_meniscus << af_params.current_bottom
+ << "cdset_speed" << af_params.cdset_speed;
             calculate_ni( avg_speed, avg_speed, speed_step, CT0, simdata, false );
 
             qApp->processEvents();
