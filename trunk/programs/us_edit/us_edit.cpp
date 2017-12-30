@@ -1523,8 +1523,8 @@ void US_Edit::mouse( const QwtDoublePoint& p )
             draw_vline( meniscus_left );
             meniscus      = data.radius( ii );
             range_left    = meniscus + _RNGLEFT_OFFSET_;
-            le_meniscus ->setText( QString::number( meniscus,   'f', 3 ) );
-            le_dataStart->setText( QString::number( range_left, 'f', 3 ) );
+            le_meniscus ->setText( QString::number( meniscus,   'f', 8 ) );
+            le_dataStart->setText( QString::number( range_left, 'f', 8 ) );
 
             data_plot->replot();
 
@@ -1586,8 +1586,8 @@ void US_Edit::mouse( const QwtDoublePoint& p )
 
          // Display the values
          range_left    = meniscus + _RNGLEFT_OFFSET_;
-         le_meniscus ->setText( QString::number( meniscus,   'f', 3 ) );
-         le_dataStart->setText( QString::number( range_left, 'f', 3 ) );
+         le_meniscus ->setText( QString::number( meniscus,   'f', 8 ) );
+         le_dataStart->setText( QString::number( range_left, 'f', 8 ) );
 
          // Create a marker
          if ( dataType != "IP" )
@@ -1713,9 +1713,9 @@ DbgLv(1) << "AGap:  plot_range()";
             }
 
             draw_vline( range_right );
-            le_dataEnd  ->setText( QString::number( range_right, 'f', 3 ) );
+            le_dataEnd  ->setText( QString::number( range_right, 'f', 8 ) );
             plateau      = range_right - _PLATEAU_OFFSET_;
-            le_plateau  ->setText( QString::number( plateau,     'f', 3 ) );
+            le_plateau  ->setText( QString::number( plateau,     'f', 8 ) );
 
 
             step = PLATEAU;
@@ -1754,8 +1754,8 @@ DbgLv(1) << "AGap:  plot_range()";
             QString wkstr;
 //            le_dataRange->setText( wkstr.sprintf( "%.3f - %.3f", 
 //                     range_left, range_right ) );
-            le_dataStart->setText( QString::number( range_left,  'f', 3 ) );
-            le_dataEnd  ->setText( QString::number( range_right, 'f', 3 ) );
+            le_dataStart->setText( QString::number( range_left,  'f', 8 ) );
+            le_dataEnd  ->setText( QString::number( range_right, 'f', 8 ) );
             plateau      = range_right - _PLATEAU_OFFSET_;
             le_plateau  ->setText( QString::number( plateau,     'f', 3 ) );
 
@@ -1876,7 +1876,7 @@ DbgLv(1) << "AGap:  plot_range()";
          plateau      = range_right - _PLATEAU_OFFSET_;
 
          // Display the data (localize str)
-         le_plateau ->setText( QString::number( plateau,     'f', 3 ) );
+         le_plateau ->setText( QString::number( plateau,     'f', 8 ) );
 
          plot_range();
          pb_plateau ->setIcon( check );
@@ -1919,7 +1919,7 @@ DbgLv(1) << "AGap:  plot_range()";
             QString wkstr;
             le_baseline->setText( wkstr.sprintf( "%.3f (%.3e)", baseline, bl ) );
 DbgLv(1) << "BL: AA : baseline bl" << baseline << bl;
-            le_plateau ->setText( QString::number( plateau,     'f', 3 ) );
+            le_plateau ->setText( QString::number( plateau,     'f', 8 ) );
             plot_range();
          }
 
@@ -2018,7 +2018,7 @@ void US_Edit::next_step( void )
          QString str;
          le_baseline->setText( str.sprintf( "%.3f (%.3e)", baseline, bl ) );
 DbgLv(1) << "BL: BB : baseline bl" << baseline << bl;
-         le_plateau ->setText( QString::number( plateau, 'f', 3 ) );
+         le_plateau ->setText( QString::number( plateau, 'f', 8 ) );
       }
    }
 
@@ -4062,12 +4062,12 @@ void US_Edit::prior_equil( void )
               range_left, range_right ) );
 //      pb_dataRange->setIcon( check );
 //      pb_dataRange->setEnabled( true );
-      le_dataStart->setText( QString::number( range_left,  'f', 3 ) );
-      le_dataEnd  ->setText( QString::number( range_right, 'f', 3 ) );
+      le_dataStart->setText( QString::number( range_left,  'f', 8 ) );
+      le_dataEnd  ->setText( QString::number( range_right, 'f', 8 ) );
       pb_dataEnd  ->setIcon( check );
       pb_dataEnd  ->setEnabled( true );
       plateau      = range_right - _PLATEAU_OFFSET_;
-      le_plateau  ->setText( QString::number( plateau,     'f', 3 ) );
+      le_plateau  ->setText( QString::number( plateau,     'f', 8 ) );
    
       // Invert
       invert = parameters.invert;
@@ -4977,9 +4977,9 @@ DbgLv(1) << "EDT:WrXml:  waveln" << waveln;
             xml.writeStartElement( "edit" );
             xml.writeAttribute   ( "scan",   QString::number( e->scan ) );
             xml.writeAttribute   ( "radius",
-               QString::number( e->changes[ jj ].x(), 'f', 4 ) );
+               QString::number( e->changes[ jj ].x(), 'f', 8 ) );
             xml.writeAttribute   ( "value",
-               QString::number( e->changes[ jj ].y(), 'f', 4 ) );
+               QString::number( e->changes[ jj ].y(), 'f', 8 ) );
             xml.writeEndElement  ();
          }
       }
@@ -4994,41 +4994,41 @@ DbgLv(1) << "EDT:WrXml:  waveln" << waveln;
    {  // non-Equilibrium
       xml.writeStartElement( "meniscus" );
       xml.writeAttribute   ( "radius",
-         QString::number( meniscus, 'f', 4 ) );
+         QString::number( meniscus, 'f', 8 ) );
       xml.writeEndElement  ();
 
       if ( dataType == "IP" )
       {
          xml.writeStartElement( "air_gap" );
          xml.writeAttribute   ( "left",
-            QString::number( airGap_left,      'f', 4 ) );
+            QString::number( airGap_left,      'f', 8 ) );
          xml.writeAttribute   ( "right",
-            QString::number( airGap_right,     'f', 4 ) );
+            QString::number( airGap_right,     'f', 8 ) );
          xml.writeAttribute   ( "tolerance",
-            QString::number( ct_gaps->value(), 'f', 4 ) );
+            QString::number( ct_gaps->value(), 'f', 8 ) );
          xml.writeEndElement  ();
       }
 
       xml.writeStartElement( "data_range" );
       xml.writeAttribute   ( "left",
-         QString::number( range_left,  'f', 4 ) );
+         QString::number( range_left,  'f', 8 ) );
       xml.writeAttribute   ( "right",
-         QString::number( range_right, 'f', 4 ) );
+         QString::number( range_right, 'f', 8 ) );
       xml.writeEndElement  ();
 
       xml.writeStartElement( "plateau" );
       xml.writeAttribute   ( "radius",
-         QString::number( plateau,  'f', 4 ) );
+         QString::number( plateau,  'f', 8 ) );
       xml.writeEndElement  ();
 
       xml.writeStartElement( "baseline" );
       xml.writeAttribute   ( "radius",
-         QString::number( baseline, 'f', 4 ) );
+         QString::number( baseline, 'f', 8 ) );
       xml.writeEndElement  ();
 
       xml.writeStartElement( "od_limit" );
       xml.writeAttribute   ( "value",
-         QString::number( odlimit, 'f', 4 ) );
+         QString::number( odlimit,  'f', 8 ) );
       xml.writeEndElement  ();
    }
 
@@ -5038,11 +5038,11 @@ DbgLv(1) << "EDT:WrXml:  waveln" << waveln;
       {
          xml.writeStartElement( "air_gap" );
          xml.writeAttribute   ( "left",
-            QString::number( airGap_left,      'f', 4 ) );
+            QString::number( airGap_left,      'f', 8 ) );
          xml.writeAttribute   ( "right",
-            QString::number( airGap_right,     'f', 4 ) );
+            QString::number( airGap_right,     'f', 8 ) );
          xml.writeAttribute   ( "tolerance",
-            QString::number( ct_gaps->value(), 'f', 4 ) );
+            QString::number( ct_gaps->value(), 'f', 8 ) );
          xml.writeEndElement  ();
       }
 
@@ -5064,12 +5064,12 @@ DbgLv(1) << "EDT:WrXml:  waveln" << waveln;
          xml.writeAttribute   ( "scanCount", QString::number( sCount ) );
 
          xml.writeStartElement( "meniscus" );
-         xml.writeAttribute   ( "radius", QString::number( meniscus, 'f', 4 ) );
+         xml.writeAttribute   ( "radius", QString::number( meniscus, 'f', 8 ) );
          xml.writeEndElement  ();  // meniscus
 
          xml.writeStartElement( "data_range" );
-         xml.writeAttribute   ( "left",  QString::number( dataLeft,  'f', 4 ) );
-         xml.writeAttribute   ( "right", QString::number( dataRight, 'f', 4 ) );
+         xml.writeAttribute   ( "left",  QString::number( dataLeft,  'f', 8 ) );
+         xml.writeAttribute   ( "right", QString::number( dataRight, 'f', 8 ) );
          xml.writeEndElement  ();  // data_range
 
          xml.writeEndElement  ();  // speed
@@ -5384,13 +5384,13 @@ int US_Edit::apply_edits( US_DataIO::EditValues parameters )
 //           range_left, range_right ) );
 //   pb_dataRange->setIcon( check );
 //   pb_dataRange->setEnabled( true );
-   le_dataStart->setText( QString::number( range_left,  'f', 3 ) );
-   le_dataEnd  ->setText( QString::number( range_right, 'f', 3 ) );
+   le_dataStart->setText( QString::number( range_left,  'f', 8 ) );
+   le_dataEnd  ->setText( QString::number( range_right, 'f', 8 ) );
    pb_dataEnd  ->setIcon( check );
    pb_dataEnd  ->setEnabled( true );
    
    plateau      = range_right - _PLATEAU_OFFSET_;
-   le_plateau  ->setText( QString::number( plateau,     'f', 3 ) );
+   le_plateau  ->setText( QString::number( plateau,     'f', 8 ) );
 //   pb_plateau  ->setIcon( check );
 //   pb_plateau  ->setEnabled( true );
 

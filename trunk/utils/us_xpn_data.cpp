@@ -646,7 +646,6 @@ DbgLv(1) << "XpDa:scn:    FugId" << iFugId << "sstInterval" << sstintv;
    {  // Determine experiment time offset (time at last rms=0 point)
       int ntssda        = tSydata.count();
       int ftx           = 1;
-      int stgoff        = 0;
 
       for ( int ii = 0; ii < ntssda; ii++ )
       {  // Find the index to the first non-zero speed
@@ -654,7 +653,6 @@ DbgLv(1) << "XpDa:scn:    FugId" << iFugId << "sstInterval" << sstintv;
          if ( irSpeed > 0 )
          {
             ftx               = ii;
-            stgoff            = 1 - tSydata[ ii ].stageNum;
             break;
          }
       }
@@ -1703,11 +1701,8 @@ DbgLv(1) << "expA:   ii" << ii << "stage" << stage << "time_n" << time_n
             omega2t          += omg2t_i;
             tempera          += tempe_i;
 
-            double omg2t_d    = sq( rawSpeed * M_PI / 30.0 );
-            omg2t_sm         += omg2t_d;
-            double setSpeed   = qRound( rawSpeed * 0.01 ) * 100.0;
-            double exptime    = (double)time_c;
-            int isSpeed       = (int)qRound( setSpeed );
+            omg2t_sm         += sq( rawSpeed * M_PI / 30.0 );
+            int isSpeed       = (int)qRound( rawSpeed * 0.01 ) * 100;
 
             // Set scan number to matching-time scan or 0
             int scannbr       = sctimes.indexOf( time_c );
@@ -1720,7 +1715,7 @@ DbgLv(1) << "expA:      jj" << jj << "scan" << scannbr
             omega2t           = omg2t_sm;
 
             // Set values for this time
-            tsobj.set_value( fkeys[ 0 ], exptime  );  // Time in seconds
+            tsobj.set_value( fkeys[ 0 ], time_c   );  // Time in seconds
             tsobj.set_value( fkeys[ 1 ], rawSpeed );  // Raw speed
             tsobj.set_value( fkeys[ 2 ], isSpeed  );  // Set (stage) speed
             tsobj.set_value( fkeys[ 3 ], omega2t  );  // Omega-Squared-T
