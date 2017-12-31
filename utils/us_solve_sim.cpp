@@ -96,7 +96,8 @@ US_SolveSim::Simulation::Simulation()
 bool US_SolveSim::checkGridSize( QList< DataSet* >& data_sets,
                                  double s_max, QString& smsg )
 {
-   const long tstep_max = 500000L;
+   const long tstep_max = 600000L;  // Grid time steps maximum
+                                    //  (e.g., handles s=100 for rpm=60000)
    bool   too_large = false;
    double s_show    = s_max * 1.0e13;
    smsg             = QString( "" );
