@@ -427,7 +427,7 @@ void US_MwlRawViewer::enableControls( void )
    QStringList sllmbs;
 
    for ( int jj = 0; jj < npoint; jj++ )
-      slrads << QString().sprintf( "%.3f", radii[ jj ] );
+      slrads << QString().sprintf( "%.5f", radii[ jj ] );
 
    for ( int jj = 0; jj < nlambda; jj++ )
       sllmbs << QString::number( lambdas[ jj ] );
@@ -2051,7 +2051,7 @@ DbgLv(1) << "Save 3-D Movie";
 // Utility to find an index in a QVector<double> to a value epsilon match
 int US_MwlRawViewer::dvec_index( QVector< double >& dvec, const double dval )
 {
-   const double eps   = 1.e-4;
+   const double eps   = 1.e-3;
 
    int indx    = dvec.indexOf( dval );   // Try to find an exact match
 
