@@ -131,14 +131,14 @@ qDebug() << "LdDk:   ii" << ii << "run" << rdirs[ii] << "nwaveln"
 
       runInfo << rr;
    }
-
+/*
    if ( runInfo.size() < 1 )
    {
       QMessageBox::information( this,
              tr( "Error" ),
              tr( "There are no US3 runs on the local Disk to load.\n" ) );
    }
-
+*/
    return;
 }
 
