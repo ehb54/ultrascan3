@@ -1463,6 +1463,8 @@ int US_Math2::best_grid_reps( int& ngrid_s, int& ngrid_k )
    // Insure grid points are within reasonable limits
    ngrid_s         = qMin( max_grid, qMax( min_grid, ngrid_s ) );
    ngrid_k         = qMin( max_grid, qMax( min_grid, ngrid_k ) );
+   int ngrid_s_i   = ngrid_s;
+   int ngrid_k_i   = ngrid_k;
 
    // Compute the initial best grid-repetitions value
    int    nreps_g  = qRound( pow( (double)( ngrid_s * ngrid_k ), 0.25 ) );
@@ -1502,6 +1504,16 @@ int US_Math2::best_grid_reps( int& ngrid_s, int& ngrid_k )
    //  to be multiples of the grid repetitions
    ngrid_s         = nsubg_s * nreps_g;
    ngrid_k         = nsubg_k * nreps_g;
+
+   if ( ngrid_s < ngrid_s_i )
+   { // If S subgrid points less than user-given, bump by grid reps
+      ngrid_s        += nreps_g;
+   }
+
+   if ( ngrid_k < ngrid_k_i )
+   { // If K subgrid points less than user-given, bump by grid reps
+      ngrid_k        += nreps_g;
+   }
 
    // Return the computed number of grid repetitions
    return nreps_g;

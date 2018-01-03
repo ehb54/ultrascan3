@@ -18,32 +18,33 @@ void US_Solute::init_solutes( double s_min,   double s_max,   int s_res,
                               int    grid_reps, double cnstff0,
                               QList< QVector< US_Solute > >& solute_list )
 {
-   if ( grid_reps < 1 ) grid_reps = 1;
-
-   int    nprs     = qMax( 1, ( ( s_res   / grid_reps ) - 1 ) );
-   int    nprk     = qMax( 1, ( ( ff0_res / grid_reps ) - 1 ) );
-   double s_step   = fabs( s_max   - s_min   ) / (double)nprs;
-   double ff0_step = fabs( ff0_max - ff0_min ) / (double)nprk;
-          s_step   = ( s_step    > 0.0 ) ? s_step   : ( s_min   * 1.001 );
-          ff0_step = ( ff0_step  > 0.0 ) ? ff0_step : ( ff0_min * 1.001 );
-   double s_grid   = s_step   / grid_reps;  
-   double ff0_grid = ff0_step / grid_reps;
+   grid_reps       = qMax( grid_reps, 1 );
+   int nprs        = qMax( 1, ( s_res   - 1 ) );
+   int nprk        = qMax( 1, ( ff0_res - 1 ) );
+   double s_grid   = qAbs( s_max   - s_min   ) / (double)nprs;
+   double ff0_grid = qAbs( ff0_max - ff0_min ) / (double)nprk;
+   double s_step   = s_grid   * grid_reps;
+   double ff0_step = ff0_grid * grid_reps;
+qDebug() << "InSo: nprs nprk" << nprs << nprk
+ << "s_step k_step" << s_step << ff0_step
+ << "s_grid k_grid" << s_grid << ff0_grid;
 
    // Allow a 1% overscan
-   s_max   += 0.01 * s_step;
-   ff0_max += 0.01 * ff0_step;
+   s_max          += 0.01 * s_step;
+   ff0_max        += 0.01 * ff0_step;
 
    solute_list.reserve( sq( grid_reps ) );
 
    // Generate solutes for each grid repetition
-   for ( int i = 0; i < grid_reps; i++ )
+   for ( int js = 0; js < grid_reps; js++ )
    {
-      for ( int j = 0; j < grid_reps; j++ )
+      double s_min_g  = s_min + s_grid * js;
+      for ( int jk = 0; jk < grid_reps; jk++ )
       {
-         solute_list << create_solutes(
-               s_min   + s_grid   * i,   s_max,   s_step,
-               ff0_min + ff0_grid * j, ff0_max, ff0_step,
-               cnstff0 );
+         double k_min_g  = ff0_min + ff0_grid * jk;
+         solute_list << create_solutes( s_min_g,   s_max,   s_step,
+                                        k_min_g, ff0_max, ff0_step,
+                                        cnstff0 );
       }
    }
 }
@@ -64,12 +65,12 @@ QVector< US_Solute > US_Solute::create_solutes(
       else
          off0  = ff0;
 
-      for ( double s = s_min; s <= s_max; s += s_step )
+      for ( double svl = s_min; svl <= s_max; svl += s_step )
       {
          // Omit s values close to zero.
-         if ( s >= -1.0e-14  &&  s <= 1.0e-14 ) continue;
+         if ( svl >= -1.0e-14  &&  svl <= 1.0e-14 ) continue;
 
-         solute_vector << US_Solute( s, off0, 0.0, ovbar );
+         solute_vector << US_Solute( svl, off0, 0.0, ovbar );
       }
    }
 

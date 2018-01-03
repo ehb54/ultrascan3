@@ -45,20 +45,21 @@ class US_Astfem_Sim : public US_Widgets
       bool           time_correctionFlag;
       double         total_conc;
       double         meniscus_ar;
+      double         times_comp;
+      int            icomponent;
+      int            ncomponent;
       int            curve_count;
       int            image_count;
       int            dbg_level;
       QString        imagedir;
       QString        imageName;
 
-      QString        tmst_fnamei;
+      QString        tmst_tfpath;
       QString        currentDir;
 
       QCheckBox*     ck_movie;
       QCheckBox*     ck_savemovie;
       QCheckBox*     ck_timeCorr;
-
-//      QListWidget*       pb_rotors;
 
       QPushButton*   pb_saveExp;
       QPushButton*   pb_saveSim;
@@ -144,9 +145,7 @@ class US_Astfem_Sim : public US_Widgets
 
       void update_movie_plot( QVector< double >*, double* );
       void update_save_movie( bool );
-
-      void update_time     ( double time )
-         { lcd_time ->display( (double)time  ); };
+      void update_time      ( double time );
 
       void update_speed    ( int speed )
          { lcd_speed->display( (int) speed ); };

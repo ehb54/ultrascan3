@@ -162,7 +162,6 @@ class US_vHW_Enhanced : public US_AnalysisBase2
       int  first_gteq( double, QVector< double >&, int );
       double sed_coeff( double, double, double* = NULL, int* = NULL );
       double avg_plateau(  void );
-      double find_root( double );
       double sedcoeff_intercept( void );
       double back_diff_coeff( double );
       void groupClick( const QwtDoublePoint& );

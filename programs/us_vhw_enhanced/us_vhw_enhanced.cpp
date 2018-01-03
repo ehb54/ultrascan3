@@ -989,7 +989,7 @@ DbgLv(1) << "  ii nscnu" << ii << nscnu << " js lscnCount" << js << lscnCount;
 //left=tolerance*pow(diff,0.5)/(2*intercept[0]*omega_s*
 //  (bottom+run_inf.meniscus[selected_cell])/2
 //  *pow(run_inf.time[selected_cell][selected_lambda][i],0.5);
-//radD=bottom-(2*find_root(left)
+//radD=bottom-(2*US_Math2::find_root(left)
 //  *pow((diff*run_inf.time[selected_cell][selected_lambda][i]),0.5));
 
       // left = tolerance * sqrt( diff )
@@ -998,9 +998,9 @@ DbgLv(1) << "  ii nscnu" << ii << nscnu << " js lscnCount" << js << lscnCount;
 
       bdleft      = bdtoler * bdifcsqr
          / ( bdiff_sedc * omegasq * ( bottom + edata->meniscus ) * timesqr );
-      xbdleft     = find_root( bdleft );
+      xbdleft     = US_Math2::find_root( bdleft );
 
-      // radD = bottom - ( 2 * find_root(left) * sqrt( diff * time ) )
+      // radD = bottom - ( 2 * US_Math2::find_root(left) * sqrt( diff * time ) )
 
       radD        = bottom - ( 2.0 * xbdleft * bdifcsqr * timesqr );
       radD        = qMax( edata->xvalues[ 0 ], qMin( bottom, radD ) );
@@ -1189,68 +1189,6 @@ kmsecs[12]+=sttim2.msecsTo(QDateTime::currentDateTime());
 kmsecs[1]+=sttime.msecsTo(QDateTime::currentDateTime());
 //*TIMING
    return;
-}
-
-// Find root X where evaluated Y is virtually equal to a goal, using a
-//  calculation including the inverse complementary error function (erfc).
-double US_vHW_Enhanced::find_root( double goal )
-{
-//*TIMING
-kcalls[17]+=1;QDateTime sttime=QDateTime::currentDateTime();
-//*TIMING
-#ifdef WIN32
-#define erfc(x) US_Math2::erfc(x)
-#endif
-
-#define _FR_MXKNT 100            // Max find-root iteration count
-   double  tolerance = 1.0e-7;   // Min difference tolerance
-   double  x1        = 0.0;
-   double  x2        = 10.0;
-   double  xv        = 5.0;
-   double  xdiff     = 2.5;
-   double  xsqr      = xv * xv;
-   double  rsqr_pi   = 1.0 / sqrt( M_PI );
-   double  test      = exp( -xsqr ) * rsqr_pi - ( xv * erfc( xv ) );
-           test      = ( goal != 0.0 ) ? test : 0.0;
-DbgLv(2) << "      find_root: goal test" << goal << test << " xv" << xv;
-//DbgLv(2) << "        erfc(x)" << erfc(xv);
-   int     count     = 0;
-
-   // Iterate until the difference between subsequent x value evaluations
-   //  is too small to be relevant (or max count reached);
-
-   while ( fabs( test - goal ) > tolerance )
-   {
-      xdiff  = ( x2 - x1 ) / 2.0;
-
-      if ( test < goal )
-      { // At less than goal, adjust top (x2) limit
-         x2     = xv;
-         xv    -= xdiff;
-      }
-
-      else
-      { // At greater than goal, adjust bottom (x1) limit
-         x1     = xv;
-         xv    += xdiff;
-      }
-
-      // Then update the test y-value
-      xsqr   = xv * xv;
-      test   = ( 1.0 + 2.0 * xsqr ) * erfc( xv ) 
-         - ( 2.0 * xv * exp( -xsqr ) ) * rsqr_pi;
-//DbgLv(2) << "      find_root:  goal test" << goal << test << " x" << xv;
-
-      if ( (++count) > _FR_MXKNT )
-         break;
-   }
-DbgLv(2) << "      find_root:  goal test" << goal << test
-   << " xv" << xv << "  count" << count;
-
-//*TIMING
-kmsecs[17]+=sttime.msecsTo(QDateTime::currentDateTime());
-//*TIMING
-   return xv;
 }
 
 // Calculate back diffusion coefficient

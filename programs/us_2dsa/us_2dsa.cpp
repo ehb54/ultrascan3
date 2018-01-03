@@ -352,7 +352,7 @@ DbgLv(1) << "2dsa: Data is beyond range" << "limits from speed_profs " << stm1 <
 
    exp_steps     = ( nssp > 0 );      // Flag use of experiment speed steps
    edata         = &dataList[ 0 ];    // Point to first loaded data
-DbgLv(1) << " 2dsa: exp_steps & nssp" << exp_steps << nssp ;
+DbgLv(1) << " 2dsa: exp_steps" << exp_steps << "nssp" << nssp ;
 }
 
 // plot the data
@@ -1035,6 +1035,11 @@ DbgLv(1) << "2dsa : timestate file exists" << tmst_fpath
 DbgLv(1)<<"2dsa : timestate newly created.  timestateobject = "
  << dset.simparams.tsobj << "exp_steps=" << exp_steps
  << "sspknt" << dset.simparams.sim_speed_prof.count();
+     }
+
+     if ( dset.simparams.sim_speed_prof.count() > 1 )
+     {  // If from multi-speed, compute speed steps from sim speed profile
+        dset.simparams.speedstepsFromSSprof();
      }
 
      dset.run_data           = dataList[ drow ];
