@@ -307,9 +307,20 @@ DbgLv(0) << "DEBUG_LEVEL" << simulation_values.dbg_level;
       int    nkstep   = (int)( ff0_pts );
       grid_reps       = US_Math2::best_grid_reps( nsstep, nkstep );
 
+DbgLv(0) << "InSol: nss nks" << s_pts << ff0_pts << nsstep << nkstep << "grid_reps" << grid_reps;
       US_Solute::init_solutes( s_min,   s_max,   nsstep,
                                ff0_min, ff0_max, nkstep,
                                grid_reps, cnstff0, orig_solutes );
+DbgLv(0) << "Insol:  s range" << s_min << s_max << "k range"
+ << ff0_min << ff0_max;
+int j0=orig_solutes.count()-1;
+int j1=orig_solutes[0].count()-1;
+int j2=orig_solutes[j0].count()-1;
+DbgLv(0) << "orig_solutes:"
+ << orig_solutes[ 0][ 0].s*1.e+13 << orig_solutes[ 0][ 0].k << "  "
+ << orig_solutes[ 0][j1].s*1.e+13 << orig_solutes[ 0][j1].k << "  "
+ << orig_solutes[j0][ 0].s*1.e+13 << orig_solutes[j0][ 0].k << "  "
+ << orig_solutes[j0][j2].s*1.e+13 << orig_solutes[j0][j2].k;
    }
 
    else
