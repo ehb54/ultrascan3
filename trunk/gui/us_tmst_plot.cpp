@@ -401,6 +401,58 @@ void US_TmstPlot::details()
       dtext += tr( "  Last:      %1\n" ).arg( dvals[ jk ][ jl ] );
    }
 
+   // Build a list of start,end scans,times for each step
+   int lostep     = dmins[ "Step" ];
+   int histep     = dmaxs[ "Step" ];
+   int nstep      = histep - lostep + 1;
+   int tmdx       = dkeys.indexOf( "Time" );          // Time data index
+   int scdx       = dkeys.indexOf( "Scan" );          // Scan number index
+   int stpx       = dkeys.indexOf( "Step" );          // Step index
+   int spdx       = dkeys.indexOf( "SetSpeed" );      // Speed index
+DbgLv(1) << "TP: det: lostep histep nstep" << lostep << histep << nstep
+ << "tmdx scdx stpx" << tmdx << scdx << stpx;
+   QVector< double >  ststimes;
+   QVector< double >  stetimes;
+   QVector< int >     stsscans;
+   QVector< int >     stescans;
+   QVector< int >     stspeeds;
+   ststimes.fill( 0.0, nstep );
+   stetimes.fill( 0.0, nstep );
+   stsscans.fill(   0, nstep );
+   stescans.fill(   0, nstep );
+   stspeeds.fill(   0, nstep );
+   for ( int jt = 0; jt < ntimes; jt++ )
+   {
+      int scan_v     = dvals[ scdx ][ jt ];
+      if ( scan_v > 0 )
+      {
+         double time_v  = dvals[ tmdx ][ jt ];
+         int step_v     = dvals[ stpx ][ jt ];
+         int step_x     = step_v - lostep;
+         if ( ststimes[ step_x ] == 0.0 )
+         {
+            ststimes[ step_x ] = time_v;
+            stsscans[ step_x ] = scan_v;
+            stspeeds[ step_x ] = dvals[ spdx ][ jt ];
+         }
+         stetimes[ step_x ] = time_v;
+         stescans[ step_x ] = scan_v;
+      }
+   }
+   dtext += tr( "\nStep Scans and Times in minutes:\n" );
+   dtext += tr( "  Step  Speed  Scan range      Time range\n" );
+   for ( int js = 0; js < nstep; js++ )
+   {
+      int stepnum    = lostep + js;
+      int ispeed     = stspeeds[ js ];
+      dtext += QString().sprintf( "%5d   %5d %5d to %5d  %9.3f to %9.3f\n",
+                  stepnum, ispeed, stsscans[ js ], stescans[js],
+                  ststimes[ js ], stetimes[ js ] );
+DbgLv(1) << "TP: det: step speed" << stepnum << ispeed
+ << "scan_0 time_0 scan_n time_n"
+ << stsscans[js] << ststimes[js] << stescans[js] << stetimes[js];
+   }
+
    // Pop up a text dialog with the details content
 
    US_Editor* ediag = new US_Editor( US_Editor::LOAD, true, "", this );
@@ -511,13 +563,14 @@ DbgLv(1) << "TP:rdda:  dvals[dtdx]size" << dvals[dtdx].size() << "ntimes" << nti
    for ( int jk = 0; jk < ndkeys; jk++ )
    {
       QString dkey   = dkeys[ jk ];
-      double dmin    = dvals[ jk ][ 0 ];
-      double dmax    = dmin;
+      double dmin    = 1e+99;
+      double dmax    = -1e+99;
       double davg    = 0.0;
 
       for ( int jt = 0; jt < ntimes; jt++ )
       {  // Accumulate min, max, and sum
          double dval    = dvals[ jk ][ jt ];
+         if ( dval == 0.0 )  continue;
          dmin           = qMin( dmin, dval );
          dmax           = qMax( dmax, dval );
          davg          += dval;

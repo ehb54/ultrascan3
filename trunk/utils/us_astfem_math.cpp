@@ -1042,6 +1042,12 @@ int US_AstfemMath::interpolate( MfemData& expdata, MfemData& simdata,
    {
       while ( tdrad[ jj ] < exrad[ ii ] )
       {
+         double rrdif     = qAbs( tdrad[ jj ] - exrad[ ii ] );
+if(rrdif<1.0e-4)
+ qDebug() << "    jj ii" << jj << ii << "  trad erad diff"
+  << tmp_data.radius[jj-1] << expdata.radius[ii] << qAbs(tdrad[jj]-exrad[ii]);
+         if ( rrdif  < 1.0e-8 )
+            break;
          jj++;
          // make sure we don't overrun bounds:
          if ( jj == tdradsz )
@@ -1049,8 +1055,8 @@ int US_AstfemMath::interpolate( MfemData& expdata, MfemData& simdata,
             qDebug() << "The simulated data does not have enough "
                         "radial points and ends too early!\n"
                         "exiting...";
-//DbgLv(1) << "jj ii szerad trad erad" << jj << ii << expdata.radius.size()
-// << tmp_data.radius[jj-1] << expdata.radius[ii];
+qDebug() << "jj ii sztrad szerad" << jj << ii << tdradsz << expdata.radius.size()
+ <<  "trad erad" << tmp_data.radius[jj-1] << expdata.radius[ii] << rrdif;
 #ifdef NO_DB
             //MPI_Abort( MPI_COMM_WORLD, -2 );
 #endif
@@ -1059,8 +1065,8 @@ int US_AstfemMath::interpolate( MfemData& expdata, MfemData& simdata,
       }
 
       // check to see if the radius is equal or larger:
-      if ( tdrad[ jj ] == exrad[ ii ] )
-      { // they are the same, so simply update the concentration value:
+      if ( qAbs( tdrad[ jj ] - exrad[ ii ] ) < 1.0e-8 )
+      { // they are virtually the same, so simply update the concentration value:
          int    ee        = 0;
          for ( int expscan = fscan; expscan < lscan; expscan++ )
             expdata.scan[ expscan ].conc[ ii ] +=

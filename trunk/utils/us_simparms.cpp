@@ -1299,6 +1299,11 @@ DbgLv(1) << "Sim parms:ssProf: accel-end ss_p ss_c" << ss_p << ss_c
             sum_speed        = rs_c;       // Initialize raw speed sum
             ndtimes          = 1;          // Initial duration times count
             in_accel         = false;      // No longer in acceleration
+
+            if ( iscan > 0 )
+            {  // On a scan as we enter constant zone:  save 1st scan time
+               ssp.time_f_scan  = tm_c;
+            }
          }
          else
          {  // We remain in acceleration
@@ -1389,6 +1394,88 @@ if(i2<4 || (i2+5)>ssps[i1].duration)
    }
 
    return ssps.count();
+}
+
+// Create the internal speed steps vector from the internal
+//  simulation speed profile.
+int US_SimulationParameters::speedstepsFromSSprof()
+{
+   int dbg_level     = US_Settings::us_debug();
+   int nstep         = 0;
+   int nspstep       = sim_speed_prof.count();
+
+   if ( nspstep < 1 )
+      return nspstep;
+
+   int kscan         = ( nstep > 0 ) ? speed_step[ 0 ].scans : 50;
+   nstep             = nspstep;
+   speed_step.resize( nstep );
+
+   // Create the new full speed step vector by copy from sim_speed_prof
+   for ( int ss = 0; ss < nspstep; ss++ )
+   {
+      SimSpeedProf* ipp = &sim_speed_prof[ ss ];
+      SpeedProfile* opp = &speed_step[ ss ];
+      int ispeed        = ipp->rotorspeed;
+DbgLv(1) << "SP: ssFssp: ss" << ss << "ispeed" << ispeed;
+DbgLv(1) << "SP: ssFssp:  ssp:" << ipp->acceleration
+ << ipp->w2t_b_accel << ipp->w2t_e_accel << ipp->w2t_e_step
+ << ipp->avg_speed << ipp->rotorspeed << ipp->duration
+ << ipp->time_b_accel << ipp->time_e_accel << ipp->time_f_scan
+ << ipp->time_l_scan << ipp->time_e_step;
+
+      // Get values from SimSpeedProf
+      double accel      = ipp->acceleration;
+      double w2t_eacc   = ipp->w2t_e_accel;
+      double w2t_estep  = ipp->w2t_e_step;
+      double avg_speed  = ipp->avg_speed;
+          
+      int rspeed        = ipp->rotorspeed;
+      int duration      = ipp->duration;
+      int time_first    = ipp->time_f_scan;
+      int time_last     = ipp->time_l_scan;
+      int time_eacc     = ipp->time_e_accel;
+      int time_estep    = ipp->time_b_accel + duration;
+      // Compute values needed by SpeedStep
+      int delay         = time_first - ipp->time_b_accel;
+      double dur_mins   = (double)duration / 60.0;
+      double dly_mins   = (double)delay / 60.0;
+      int dur_hrs       = (int)dur_mins / 60;
+      int dly_hrs       = (int)dly_mins / 60;
+      dur_mins          = dur_mins - (double)dur_hrs * 60.0;
+      dly_mins          = dly_mins - (double)dly_hrs * 60.0;
+      double delta_w    = w2t_estep - w2t_eacc;
+      double delta_t    = (double)( time_estep - time_eacc );
+      double w2t_first  = w2t_eacc + ( time_first - time_eacc )
+                          * delta_w / delta_t;
+      double w2t_last   = w2t_eacc + ( time_last  - time_eacc )
+                          * delta_w / delta_t;
+         
+      // Set the values of the SpeedStep
+      opp->duration_minutes  = dur_mins;
+      opp->delay_minutes     = dly_mins;
+      opp->w2t_first         = w2t_first;
+      opp->w2t_last          = w2t_last;
+      opp->avg_speed         = avg_speed;
+      opp->speed_stddev      = 0.0;
+      opp->duration_hours    = dur_hrs;
+      opp->delay_hours       = dly_hrs;
+      opp->time_first        = time_first;
+      opp->time_last         = time_last;
+      opp->scans             = kscan;
+      opp->rotorspeed        = rspeed;
+      opp->acceleration      = accel;
+      opp->set_speed         = (int)qRound( (double)rspeed * 0.01 ) * 100;
+      opp->acceleration_flag = true;
+DbgLv(1) << "SP: ssFssp:   tf tl wf wl" << time_first << time_last << w2t_first << w2t_last;
+DbgLv(1) << "SP: ssFssp:   ss:" << opp->duration_minutes << opp->delay_minutes
+ << opp->w2t_first << opp->w2t_last << opp->avg_speed << opp->speed_stddev
+ << opp->duration_hours << opp->delay_hours << opp->time_first << opp->time_last
+ << opp->scans << opp->rotorspeed << opp->acceleration << opp->set_speed
+ << opp->acceleration_flag;
+   }
+
+   return nstep;                                 // Return number steps
 }
 
 // Debug print

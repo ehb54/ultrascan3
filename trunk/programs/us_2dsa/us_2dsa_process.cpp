@@ -104,9 +104,9 @@ void US_2dsaProcess::start_fit( double sll, double sul,  int nss,
    itvaris  .clear();
    ical_sols.clear();
 
-   DbgLv(1) << "2P: sll sul nss" << slolim << suplim << nssteps
-            << " kll kul nks" << klolim << kuplim << nksteps
-            << " ngref nthr noif" << ngrefine << nthreads << noisflag;
+DbgLv(1) << "2P: sll sul nss" << slolim << suplim << nssteps
+ << " kll kul nks" << klolim << kuplim << nksteps
+ << " ngref nthr noif" << ngrefine << nthreads << noisflag;
 
    timer.start();              // start a timer to measure run time
 
@@ -127,19 +127,18 @@ void US_2dsaProcess::start_fit( double sll, double sul,  int nss,
       }
    }
 
-   // experiment data dimensions
+   // Experiment data dimensions
    nscans      = edata->scanCount();
    npoints     = edata->pointCount();
 
-   // SubGrid deltas  (increments between subgrid points)
+   // Determine subgrid counts and deltas
    int nsubp_s = ( nssteps + ngrefine - 1 ) / ngrefine;
    int nsubp_k = ( nksteps + ngrefine - 1 ) / ngrefine;
-   sdelta_s    = ( suplim - slolim ) / (double)( qMax( nsubp_s - 1, 1 ) );
-   sdelta_k    = ( kuplim - klolim ) / (double)( qMax( nsubp_k - 1, 1 ) );
+   gdelta_s    = ( suplim - slolim ) / (double)( nssteps - 1 );
+   gdelta_k    = ( kuplim - klolim ) / (double)( nksteps - 1 );
+   sdelta_s    = gdelta_s * ngrefine;
+   sdelta_k    = gdelta_k * ngrefine;
 
-   // Grid deltas     (overall increment between grid points)
-   gdelta_s    = sdelta_s / (double)ngrefine;
-   gdelta_k    = sdelta_k / (double)ngrefine;
    if ( jgrefine > 0 )
    {
       nsubgrid    = sq( ngrefine );
@@ -150,11 +149,12 @@ void US_2dsaProcess::start_fit( double sll, double sul,  int nss,
       nsubgrid    = model.subGrids;
       maxtsols    = model.components.size() / nsubgrid;
    }
+
    int kgref   = ngrefine - 1;
    int kgrefsq = sq( kgref );
    int kksubg  = nksteps * nssteps
                  - ( kgref + kgrefsq ) * ( nsubp_s + nsubp_k ) + kgrefsq;
-   DbgLv(1) << "2P:    kgref kgrefsq kksubg" << kgref << kgrefsq << kksubg;
+DbgLv(1) << "2P:    kgref kgrefsq kksubg" << kgref << kgrefsq << kksubg;
    maxtsols    = qMax( maxtsols, mintsols );
 
    int ktcsol  = maxtsols - 5;
@@ -262,6 +262,14 @@ void US_2dsaProcess::start_fit( double sll, double sul,  int nss,
 
       orig_sols << solvec;
    }
+int k0=orig_sols.count() - 1;
+int k1=orig_sols[0].count() - 1;
+int k2=orig_sols[k0].count() - 1;
+DbgLv(1) << "2P: orig_sols: "
+ << orig_sols[0][0].s*1.e+13 << orig_sols[0][0].k << "  "
+ << orig_sols[0][k1].s*1.e+13 << orig_sols[0][k1].k << "  "
+ << orig_sols[k0][0].s*1.e+13 << orig_sols[k0][0].k << "  "
+ << orig_sols[k0][k2].s*1.e+13 << orig_sols[k0][k2].k;
 
    // Queue all the depth-0 tasks
    for ( int ktask = 0; ktask < nsubgrid; ktask++ )

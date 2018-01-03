@@ -592,12 +592,30 @@ DbgLv(1) << "AnaC:St:MEM (2)rssnow" << US_Memory::rss_now();
    int    nthr   = (int)ct_thrdcnt->value();
    int    noif   = ( ck_tinoise->isChecked() ? 1 : 0 ) +
                    ( ck_rinoise->isChecked() ? 2 : 0 );
+   double srng   = sup - slo;
+   double krng   = kup - klo;
+   double sdelt  = srng / (double)( nss - 1 );
+   double kdelt  = krng / (double)( nks - 1 );
 
    int    ngrr   = ( grtype < 0 ) ? grtype
                  : US_Math2::best_grid_reps( nss, nks );
 
    ct_nstepss->setValue( nss );
    ct_nstepsk->setValue( nks );
+
+   // Adjust upper limits if need be so deltas work out
+   double sup_u  = slo + ( sdelt * (double)( nss - 1 ) );
+   double kup_u  = klo + ( kdelt * (double)( nks - 1 ) );
+DbgLv(1) << "AnaC:St: sdelt kdelt" << sdelt << kdelt
+ << "srng krng" << srng << krng << "sup_u kup_u" << sup_u << kup_u;
+
+   if ( sup_u != sup  ||  kup_u != kup )
+   {
+      ct_uplimits->setValue( sup_u );
+      ct_uplimitk->setValue( kup_u );
+      sup           = sup_u;
+      kup           = kup_u;
+   }
 
    ti_noise->values.clear();
    ri_noise->values.clear();

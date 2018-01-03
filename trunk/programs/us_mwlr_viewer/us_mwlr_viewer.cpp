@@ -460,7 +460,7 @@ void US_MwlRawViewer::enableControls( void )
    ct_from   ->setMaximum( nscan );
    ct_to     ->setMaximum( nscan );
    cb_cellchn->setCurrentIndex( 0 );
-	DbgLv(1) << "EnableControls: nlambda" << nlambda;
+DbgLv(1) << "EnableControls: nlambda" << nlambda;
 
    cb_pltrec ->setCurrentIndex( nlambda / 2 );
    qApp->processEvents();
@@ -1544,7 +1544,8 @@ DbgLv(1) << "cmpR:   rvS rvE" << radii[radxs] << radii[radxe-1];
       kpoint     = kradii;                             // Count of plot points
       for ( int jj = radxs; jj < radxe; jj++ )
          pltxvals << radii[ jj ];                      // Plot X values
-DbgLv(1) << "cmpR:  pxS pxE" << pltxvals[0] << pltxvals[kpoint-1];
+int jx=pltxvals.count()-1;
+DbgLv(1) << "cmpR:  pxS pxE" << pltxvals[0] << pltxvals[jx];
    }
    else
    {
@@ -2179,15 +2180,17 @@ int k=j+1;
 int h=i/2;
 int m=k3dtot-2;
 int n=m+1;
+if(k>=k3dtot) return k3dtot;
 DbgLv(1) << "Bxyz: k3dtot" << k3dtot << "k3l k3r" << k3dlamb << k3drads;
 DbgLv(1) << "Bxyz:  xyz0" << xyzd[0] << 0;
 DbgLv(1) << "Bxyz:  xyz1" << xyzd[1] << 1;
 DbgLv(1) << "Bxyz:  xyzh" << xyzd[h] << h;
 DbgLv(1) << "Bxyz:  xyzi" << xyzd[i] << i;
 DbgLv(1) << "Bxyz:  xyzj" << xyzd[j] << j;
-DbgLv(1) << "Bxyz:  xyzj" << xyzd[k] << k;
+DbgLv(1) << "Bxyz:  xyzk" << xyzd[k] << k;
 DbgLv(1) << "Bxyz:  xyzm" << xyzd[m] << m;
 DbgLv(1) << "Bxyz:  xyzn" << xyzd[n] << n;
+DbgLv(1) << "cmpR:  pxS pxE" << pltxvals[0] << pltxvals[pltxvals.count()-1];
 
    return k3dtot;
 }

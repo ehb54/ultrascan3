@@ -137,6 +137,11 @@ class US_UTIL_EXTERN US_SimulationParameters
    //! \returns           The number of speed steps created internally
    int simSpeedsFromTimeState( const QString );
 
+   //! \brief Function to build internal speed steps from the internal
+   //!        simulation speed step profile
+   //! \returns           The number of speed steps created internally
+   int speedstepsFromSSprof  ( void );
+
    //! \brief Dump class contents to stderr
    void debug( void );
 
