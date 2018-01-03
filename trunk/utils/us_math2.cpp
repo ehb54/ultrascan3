@@ -1450,13 +1450,13 @@ double US_Math2::calcCommonVbar( US_Solution& solution, double temperature )
 // Compute the best number of uniform grid repetitions for 2DSA,
 // given specified initial total grid points in the 's' and 'k'
 // (f/f0 or vbar) dimensions. Modify grid points slightly to insure
-// they are multiples of grid repetitions and are with reasonable limits.
+// they are multiples of grid repetitions and are within reasonable limits.
 int US_Math2::best_grid_reps( int& ngrid_s, int& ngrid_k )
 {
    const int min_grid = 10;   // Grid points at least 10
-   const int max_grid = 800;  // Grid points at most 800
+   const int max_grid = 2100; // Grid points at most 2100
    const int min_subg = 10;   // Sub-grid size at least 10
-   const int max_subg = 800;  // Sub-grid size at most 800
+   const int max_subg = 2100; // Sub-grid size at most 2100
    const int min_reps = 1;    // Repetitions at least 1
    const int max_reps = 160;  // Repetitions at most 160
 
@@ -1484,7 +1484,7 @@ int US_Math2::best_grid_reps( int& ngrid_s, int& ngrid_k )
    int nsubg_s     = ( ngrid_s + nreps_g - 1 ) / nreps_g;
    int nsubg_k     = ( ngrid_k + nreps_g - 1 ) / nreps_g;
 
-   // Adjust values until the product yields no more than 800 sub-grid points
+   // Adjust values until the product yields no more than 2100 sub-grid points
    while ( ( nsubg_s * nsubg_k ) > max_subg  &&  nreps_g < max_reps )
    {  // Increase grid-reps and recompute sub-grid points
       nreps_g++;

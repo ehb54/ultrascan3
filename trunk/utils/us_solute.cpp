@@ -26,8 +26,8 @@ void US_Solute::init_solutes( double s_min,   double s_max,   int s_res,
    double s_step   = s_grid   * grid_reps;
    double ff0_step = ff0_grid * grid_reps;
 qDebug() << "InSo: nprs nprk" << nprs << nprk
- << "s_step k_step" << s_step << ff0_step
- << "s_grid k_grid" << s_grid << ff0_grid;
+ << "s_step k_step" << s_step*1.e+13 << ff0_step
+ << "s_grid k_grid" << s_grid*1.e+13 << ff0_grid;
 
    // Allow a 1% overscan
    s_max          += 0.01 * s_step;
