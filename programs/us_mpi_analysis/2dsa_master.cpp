@@ -305,7 +305,7 @@ DbgLv(0) << "DEBUG_LEVEL" << simulation_values.dbg_level;
 
       int    nsstep   = (int)( s_pts );
       int    nkstep   = (int)( ff0_pts );
-      grid_reps       = US_Math2::best_grid_reps( nsstep, nkstep );
+      //grid_reps       = US_Math2::best_grid_reps( nsstep, nkstep );
 
 DbgLv(0) << "InSol: nss nks" << s_pts << ff0_pts << nsstep << nkstep << "grid_reps" << grid_reps;
       US_Solute::init_solutes( s_min,   s_max,   nsstep,

@@ -166,7 +166,7 @@ if(scan_nbr>0)
          timestate.set_value( "Step",        step_nbr    );
          timestate.set_value( "Scan",        scan_nbr    );
 #ifndef NO_DB
-//qDebug() << "Timestate:" << "time=" << itime
+//DbgLv(1) << "Timestate:" << "time=" << itime
 // << "w2t=" << omega2t << "rpm=" << rpm << " t_acc=" << t_acc
 // << "scan_nbr=" << scan_nbr << "step=" << step;
 #endif
@@ -195,7 +195,7 @@ if(scan_nbr>0)
       timestate.set_value( "Step",        step        );
       timestate.set_value( "Scan",        scan_nbr    );
 #ifndef NO_DB
-//qDebug() <<"Timestate:" << "time= " << itime
+//DbgLv(1) <<"Timestate:" << "time= " << itime
 // << "w2t= " << omega2t << "rpm= " << rpm << "  t_acc=" << t_acc
 // << "scan_nbr= " << scan_nbr << "step= " << step;
 #endif
@@ -786,6 +786,8 @@ int US_AstfemMath::interpolate( MfemData& expdata, MfemData& simdata,
 int US_AstfemMath::interpolate( MfemData& expdata, MfemData& simdata,
                                 bool      use_time, int fscan, int lscan )
 {
+   static int rrdk      = 0;
+   int dbg_level        = US_Settings::us_debug();
 //*TIMING*
 //static int ncall=0;
 //static int totMs=0;
@@ -1044,8 +1046,12 @@ int US_AstfemMath::interpolate( MfemData& expdata, MfemData& simdata,
       {
          double rrdif     = qAbs( tdrad[ jj ] - exrad[ ii ] );
 if(rrdif<1.0e-4)
- qDebug() << "    jj ii" << jj << ii << "  trad erad diff"
-  << tmp_data.radius[jj-1] << expdata.radius[ii] << qAbs(tdrad[jj]-exrad[ii]);
+{
+ rrdk++;
+ if ( rrdk < 101 )
+  DbgLv(0) << "    jj ii" << jj << ii << "  trad erad diff"
+   << tdrad[jj] << exrad[ii] << rrdif;
+}
          if ( rrdif  < 1.0e-8 )
             break;
          jj++;
@@ -1055,7 +1061,7 @@ if(rrdif<1.0e-4)
             qDebug() << "The simulated data does not have enough "
                         "radial points and ends too early!\n"
                         "exiting...";
-qDebug() << "jj ii sztrad szerad" << jj << ii << tdradsz << expdata.radius.size()
+DbgLv(1) << "jj ii sztrad szerad" << jj << ii << tdradsz << expdata.radius.size()
  <<  "trad erad" << tmp_data.radius[jj-1] << expdata.radius[ii] << rrdif;
 #ifdef NO_DB
             //MPI_Abort( MPI_COMM_WORLD, -2 );
