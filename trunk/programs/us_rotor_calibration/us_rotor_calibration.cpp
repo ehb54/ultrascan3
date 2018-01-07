@@ -162,6 +162,8 @@ US_RotorCalibration::US_RotorCalibration() : US_Widgets()
    data_plot->enableAxis(QwtPlot::yLeft  , true);
    data_plot->setAxisScale(QwtPlot::xBottom, 5.7, 7.3);
    data_plot->setAxisAutoScale(QwtPlot::yLeft);
+   data_plot->setCanvasBackground( QBrush(Qt::white) );
+
    
 #if QT_VERSION < 0x050000
    connect (plot, SIGNAL (zoomed(QwtDoubleRect)),
@@ -744,7 +746,7 @@ void US_RotorCalibration::mouse (const QwtDoublePoint& p)
    v_line = us_curve(data_plot, "V-Line");
    v_line->setSamples(r, v, 2);
 
-   QPen pen = QPen(QBrush(Qt::white), 2.0);
+   QPen pen = QPen(QBrush(Qt::blue), 2.0);
    v_line->setPen(pen);
 
    data_plot->replot();
