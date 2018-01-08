@@ -311,7 +311,7 @@ DbgLv(0) << "InSol: nss nks" << s_pts << ff0_pts << nsstep << nkstep << "grid_re
       US_Solute::init_solutes( s_min,   s_max,   nsstep,
                                ff0_min, ff0_max, nkstep,
                                grid_reps, cnstff0, orig_solutes );
-DbgLv(0) << "Insol:  s range" << s_min << s_max << "k range"
+DbgLv(0) << "InSol:  s range" << s_min*1.e+13 << s_max*1.e+13 << "k range"
  << ff0_min << ff0_max;
 int j0=orig_solutes.count()-1;
 int j1=orig_solutes[0].count()-1;
@@ -331,7 +331,7 @@ DbgLv(0) << "orig_solutes:"
       int    nsubgrid = model.subGrids;
       int    ncomps   = model.components.size();
 DbgLv(0) << "InSol: fn" << fn;
-DbgLv(0) << "Insol:  nsubgrid ncomps" << nsubgrid << ncomps;
+DbgLv(0) << "InSol:  nsubgrid ncomps" << nsubgrid << ncomps;
 
       if ( nsubgrid < 1 )
          abort( "Custom grid model file has no subgrids", -1 );
@@ -340,7 +340,7 @@ DbgLv(0) << "Insol:  nsubgrid ncomps" << nsubgrid << ncomps;
       {  // Subgrids too large:  adjust subgrid count and size
          nsubgrid       = ( ncomps / 100 + 1 ) | 1;
          model.subGrids = nsubgrid;
-DbgLv(0) << "Insol:  nsubgrid sbsize" << nsubgrid << ( ncomps / nsubgrid );
+DbgLv(0) << "InSol:  nsubgrid sbsize" << nsubgrid << ( ncomps / nsubgrid );
       }
 
       QVector< US_Solute > solvec;

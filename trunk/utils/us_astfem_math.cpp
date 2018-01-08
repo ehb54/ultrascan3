@@ -1048,7 +1048,7 @@ int US_AstfemMath::interpolate( MfemData& expdata, MfemData& simdata,
 if(rrdif<1.0e-4)
 {
  rrdk++;
- if ( rrdk < 101 )
+ if ( rrdk < 11 )
   DbgLv(0) << "    jj ii" << jj << ii << "  trad erad diff"
    << tdrad[jj] << exrad[ii] << rrdif;
 }
