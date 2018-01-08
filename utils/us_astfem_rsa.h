@@ -110,6 +110,7 @@ class US_UTIL_EXTERN US_Astfem_RSA : public QObject
                               //!< on window or not
       bool simout_flag;       //!< Decides whether simulated data should be stored
                               //!< or cleared
+      bool is_zero;           //!< Set and tested for each solute point
       US_StiffBase stfb0;     //!< Structure used for numerical integration
                               //   on a quadrilateral
       double density;         //!< Density of the buffer

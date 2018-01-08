@@ -1455,8 +1455,8 @@ int US_Math2::best_grid_reps( int& ngrid_s, int& ngrid_k )
 {
    const int min_grid = 10;   // Grid points at least 10
    const int max_grid = 2100; // Grid points at most 2100
-   const int min_subg = 10;   // Sub-grid size at least 10
-   const int max_subg = 2100; // Sub-grid size at most 2100
+   const int min_subg = 40;   // Sub-grid size at least 40
+   const int max_subg = 200;  // Sub-grid size at most 200
    const int min_reps = 1;    // Repetitions at least 1
    const int max_reps = 160;  // Repetitions at most 160
 
@@ -1484,7 +1484,7 @@ int US_Math2::best_grid_reps( int& ngrid_s, int& ngrid_k )
    int nsubg_s     = ( ngrid_s + nreps_g - 1 ) / nreps_g;
    int nsubg_k     = ( ngrid_k + nreps_g - 1 ) / nreps_g;
 
-   // Adjust values until the product yields no more than 2100 sub-grid points
+   // Adjust values until the product yields no more than 200 sub-grid points
    while ( ( nsubg_s * nsubg_k ) > max_subg  &&  nreps_g < max_reps )
    {  // Increase grid-reps and recompute sub-grid points
       nreps_g++;
@@ -1492,7 +1492,7 @@ int US_Math2::best_grid_reps( int& ngrid_s, int& ngrid_k )
       nsubg_k         = ( ngrid_k + nreps_g - 1 ) / nreps_g;
    }
 
-   // Adjust values until the product yields no less than 10 sub-grid points
+   // Adjust values until the product yields no less than 40 sub-grid points
    while ( ( nsubg_s * nsubg_k ) < min_subg  &&  nreps_g > min_reps )
    {  // Decrease grid-reps and recompute sub-grid points
       nreps_g--;
@@ -1506,12 +1506,12 @@ int US_Math2::best_grid_reps( int& ngrid_s, int& ngrid_k )
    ngrid_k         = nsubg_k * nreps_g;
 
    if ( ngrid_s < ngrid_s_i )
-   { // If S subgrid points less than user-given, bump by grid reps
+   { // If S grid points less than user-given, bump by grid reps
       ngrid_s        += nreps_g;
    }
 
    if ( ngrid_k < ngrid_k_i )
-   { // If K subgrid points less than user-given, bump by grid reps
+   { // If K grid points less than user-given, bump by grid reps
       ngrid_k        += nreps_g;
    }
 

@@ -614,8 +614,8 @@ DbgLv(0)<< " norm_s norm_a norm_b" << norm_s << norm_a << norm_b
             nsolutes--;              // Decrement solutes count
             count_cut++;             // Bump count of cut columns
             cutsols << cc;           // Save original index of cut solute
-DbgLv(0)<< " norm is becoming zero -- norm_a" << norm_a
- << "count_cut" << count_cut << "cc" << cc;
+//DbgLv(0)<< " norm is becoming zero -- norm_a" << norm_a
+// << "count_cut" << count_cut << "cc" << cc;
          }
          else
          {
@@ -864,7 +864,7 @@ DbgLv(1) << "CR: cc" << cc << " (PRE-tikreg)";
             nsolutes--;
             count_cut++;
             cutsols << cc;
-DbgLv(1)<< " norm is becoming zero -- norm_a" << norm_a << "count_cut" << count_cut;
+//DbgLv(1)<< " norm is becoming zero -- norm_a" << norm_a << "count_cut" << count_cut;
          }
          else
             usesols << cc;
@@ -1058,7 +1058,7 @@ DbgLv(1) << "CR: ks ka" << ks << ka
             nsolutes--;
             count_cut++;
             cutsols << cc;
-DbgLv(1)<< " norm is becoming zero -- norm_a" << norm_a << "count_cut" << count_cut;
+//DbgLv(1)<< " norm is becoming zero -- norm_a" << norm_a << "count_cut" << count_cut;
          }
          else
             usesols << cc;
@@ -1112,6 +1112,7 @@ for ( int ii = 0; ii< sv_norm.size(); ii++ )
                   << "ksolutes" << ksolutes
                   << "count_cut" << count_cut << cutsols.count();
       }
+DbgLv(0)<< " norm cuts for #solutes=" << ksolutes << ":  count_cut" << count_cut;
    }
 
    if ( tikreg  &&  ( nsolutes != ksolutes ) )

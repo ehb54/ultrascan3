@@ -457,6 +457,7 @@ totT1+=(clcSt1.msecsTo(QDateTime::currentDateTime()));
          double omeg2 = 0.0;  // Last omega_square_t of the current speed step
          double next_speed;   // Rotor speed in next speed step
          US_AstfemMath::MfemData* ed;      // Pointer used for af_data i.e. on experimental grid
+         is_zero      = false;
 
          // Calculation for each speed step starts here
          //   'nstep' is the total number of speed_steps in the speed profile
@@ -1779,20 +1780,25 @@ DbgLv(1) << "C_ni:  Nx" << Nx << "rA0 rAn" << rA[0] << rA[Nx-1];
    // Interpolate initial concentration vector onto C0 grid-
    US_AstfemMath::interpolate_C0( C_init, C0, x );
 
-   bool is_zero    = false;
-   const double z_tolerance = 1.0e-5;
-   double rad_last = af_params.current_bottom - 0.04;
-   for ( int jr = 1; jr < C_init.radius.size(); jr++ )
-   {
-      if ( C_init.radius[ jr ] > rad_last )
+//   bool is_zero    = false;
+//   const double z_tolerance = 1.0e-5;
+   const double z_tolerance = 1.0e-3;
+   if ( ! is_zero )
+   {  // If not already into virtual-zero scans, test this one
+      double rad_last = af_params.current_bottom - 0.04;
+
+      for ( int jr =  C_init.radius.size() - 1; jr > 1; jr-- )
       {
-DbgLv(1) << "jr, C_init, rpm, radius:" << jr << C_init.concentration[jr]
- << rpm_current << C_init.radius[jr] << "is_zero" << is_zero;
-         if ( C_init.concentration[ jr - 1 ] < z_tolerance )
+         if ( C_init.radius[ jr ] < rad_last )
          {
-            is_zero         = true;
+            if ( C_init.concentration[ jr ] < z_tolerance )
+            {
+               is_zero         = true;
+            }
+DbgLv(1) << "jr" << jr << "C_init.conc" << C_init.concentration[jr]
+ << "rpm" << rpm_current << "radius" << C_init.radius[jr] << "is_zero" << is_zero;
+            break;
          }
-         break;
       }
    }
 

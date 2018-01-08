@@ -828,7 +828,12 @@ if (my_rank==0) DbgLv(0) << "ckGrSz:  buck" << jj << "xv yv zv"
 if (my_rank==0) DbgLv(0) << "ckGrSz: s_max" << s_max << "attr_x,y,z"
  << attr_x << attr_y << attr_z;
 
-   if ( US_SolveSim::checkGridSize( data_sets, s_max, smsg ) )
+   bool g_too_big  = false;
+   if ( data_sets[ 0 ]->simparams.sim_speed_prof.count() < 2 )
+        g_too_big  = US_SolveSim::checkGridSize( data_sets, s_max, smsg );
+if (my_rank==0) DbgLv(0) << "ckGrSz: ssp count"
+ << data_sets[0]->simparams.sim_speed_prof.count() << "g_too_big" << g_too_big;
+   if ( g_too_big )
    {
       if ( my_rank == 0 )
       {
