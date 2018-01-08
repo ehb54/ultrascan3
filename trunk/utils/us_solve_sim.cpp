@@ -1112,7 +1112,7 @@ for ( int ii = 0; ii< sv_norm.size(); ii++ )
                   << "ksolutes" << ksolutes
                   << "count_cut" << count_cut << cutsols.count();
       }
-DbgLv(0)<< " norm cuts for #solutes=" << ksolutes << ":  count_cut" << count_cut;
+DbgLv(1)<< " norm cuts for #solutes=" << ksolutes << ":  count_cut" << count_cut;
    }
 
    if ( tikreg  &&  ( nsolutes != ksolutes ) )
