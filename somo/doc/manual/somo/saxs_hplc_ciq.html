@@ -22,7 +22,7 @@
 <center>
 <h2>
 SOMO HPLC-SAXS Module Make I(q):</h2></center>
-<h3><center>Last updated: April 2016 </center></h3><p>
+<h3><center>Last updated: January 2018 </center></h3><p>
 
 <p><center>
 <img SRC="somo-HPLC-SAXS_Make_Iq.png" ALT="SOMO HPLC-SAXS Make I(q) panel">
@@ -31,7 +31,7 @@ SOMO HPLC-SAXS Module Make I(q):</h2></center>
 
 This pop-up panel will appear when the <b><i>Make I(q)</i></b> button is pressed in the main <b><i>HPLC-SAXS</i></b> module. <p>
 
-Two main options are present in this panel:<p>
+Three main options are present in this panel:<p>
 
 <ul>
 
@@ -54,6 +54,15 @@ The extra line reads <i>If zeros are produced when computing SDs:</i> and then o
 <li>
 <i>Set to 0.1% of peak's I(q)</i>. The corresponding <i>I(q)</i> points will have 0.1% SD.<p>
 </ul>
+<p>
+
+The third option was recently added (January 2018):
+<ul>
+<li>
+The checkbox <i>Average and normalize resulting I(q) curves by Gaussian, using top % of max. intensity"</i>, allow to automatically select a number of frames whose intensity (as defined by the associated Gaussian) is within a % value of the top frame intensity, as defined in its associated field (default: <b>unchecked</b>, with <b>5%</b> as the limiting value). All frames selected according to this criterion for each Gaussian-defined peak are first normalized (if an associated concentration file is present; see below), and then averaged. This feature, introduced for the January 2018 release, makes it quite simple to automatically generate averaged datasets after a Gaussian decomposition, without the need to manually check the resulting chromatograms to decide which frames to include in the averages.
+</ul>
+<p>
+
 
 If a concentration chromatogram has been associated to the SAXS data, an additional series of options are presented:
 
@@ -69,7 +78,7 @@ However, the apparent average mass for each peak should be a closer approximatio
 <i>I0 standard experimental value (a.u.):</i>. A normalization factor from a standard sample to be associated with the data can be also entered here. If this checkbox is checked, its value will be associated in each resulting <i>I(q)</i> vs. <i>q</i> curve (default: <b>unchecked</b>).<p>
 
 <li>
-Finally, a calculated concentration can be assigned to each of the resulting <i>I(q)</i> vs. <i>q</i> curves. This is done by entering an extinction coefficient (or a <i>dn/dc</i>) for each Gaussian. In addition, a partial specific volume (<i>psv</i>) value, needed for the computation of the &lt;<i>M</i>><i><sub>w</sub></i>, &lt;<i>M</i>&#47;<i>L</i>><i><sub>w/z</sub></i>, and &lt;<i>M</i>&#47;<i>A</i>><i><sub>w/z</sub></i> by Guinier analysis in the main <b>US-SOMO <i>SAS module</i></b>, can be also entered here. The module will present as many fields as the Gaussians used to decomposed the data. If all the Gaussians represent a species with the same extinction coefficient (or <i>dn/dc</i>) and <i>psv</i>, the values need to be entered only once in the 1st Gaussian fields, and then they can be propagated to all the other fields by pressing the <b><i>Duplicate Gaussian 1 values globally</i></b> button. The concentration value will be used when the <b><i>Normalize</b></i> button in the main <b>HPLC-SAXS</b> module is pressed after dataset selection.<p>
+Finally, a calculated concentration can be associated to each of the resulting <i>I(q)</i> vs. <i>q</i> curves. This is done by entering an extinction coefficient (or a <i>dn/dc</i>) for each Gaussian. In addition, a partial specific volume (<i>psv</i>) value, needed for the computation of the &lt;<i>M</i>><i><sub>w</sub></i>, &lt;<i>M</i>&#47;<i>L</i>><i><sub>w/z</sub></i>, and &lt;<i>M</i>&#47;<i>A</i>><i><sub>w/z</sub></i> by Guinier analysis in the main <b>US-SOMO <i>SAS module</i></b>, can be also entered here. The module will present as many fields as the Gaussians used to decomposed the data. If all the Gaussians represent a species with the same extinction coefficient (or <i>dn/dc</i>) and <i>psv</i>, the values need to be entered only once in the 1st Gaussian fields, and then they can be propagated to all the other fields by pressing the <b><i>Duplicate Gaussian 1 values globally</i></b> button. The concentration value will be used either by the automatic frames-to-be-averaged selector described above, or when the <b><i>Normalize</b></i> button in the main <b>HPLC-SAXS</b> module is pressed after dataset selection.<p>
 </ul>
 
 It is also possible to back-generate an <i>I(q)</i> vs. <i>q</i> set without using the Gaussian decomposition by pressing the <b><i>Make I(q) without Gaussians</i></b> button.<p>
@@ -95,7 +104,7 @@ distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> Th
 </font>
 <p>
 <font face="helvetica" size="-1">
-Last modified on April 18, 2016.
+Last modified on January 5, 2018.
 </font>
 </body>
 </html>
