@@ -730,7 +730,14 @@ void US_Hydrodyn_Saxs_Buffer::setupGUI()
    editor->setWordWrapMode (QTextOption::WordWrap);
    editor->setMinimumHeight( minHeight1 * 3 );
 
-   plot_dist = new QwtPlot(this);
+//   plot_dist = new QwtPlot(this);
+   usp_plot_dist = new US_Plot( plot_dist, "", "", "", this );
+   connect( (QWidget *)plot_dist->titleLabel(), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_plot_dist( const QPoint & ) ) );
+   ((QWidget *)plot_dist->titleLabel())->setContextMenuPolicy( Qt::CustomContextMenu );
+   connect( (QWidget *)plot_dist->axisWidget( QwtPlot::yLeft ), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_plot_dist( const QPoint & ) ) );
+   ((QWidget *)plot_dist->axisWidget( QwtPlot::yLeft ))->setContextMenuPolicy( Qt::CustomContextMenu );
+   connect( (QWidget *)plot_dist->axisWidget( QwtPlot::xBottom ), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_plot_dist( const QPoint & ) ) );
+   ((QWidget *)plot_dist->axisWidget( QwtPlot::xBottom ))->setContextMenuPolicy( Qt::CustomContextMenu );
 #if QT_VERSION < 0x040000
    // plot_dist->enableOutline(true);
    // plot_dist->setOutlinePen(Qt::white);
@@ -8771,4 +8778,10 @@ void US_Hydrodyn_Saxs_Buffer::wheel_pressed() {
 void US_Hydrodyn_Saxs_Buffer::wheel_released() {
    // qDebug() << "wheel_released()";
    wheel_is_pressed = false;
+}
+
+void US_Hydrodyn_Saxs_Buffer::usp_config_plot_dist( const QPoint & ) {
+   US_PlotChoices *uspc = new US_PlotChoices( usp_plot_dist );
+   uspc->exec();
+   delete uspc;
 }

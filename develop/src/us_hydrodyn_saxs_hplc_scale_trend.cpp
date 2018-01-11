@@ -82,7 +82,14 @@ void US_Hydrodyn_Saxs_Hplc_Scale_Trend::setupGUI()
    pb_close -> setPalette      ( PALET_PUSHB );
    connect( pb_close, SIGNAL( clicked() ), SLOT( cancel() ) );
 
-   plot = new QwtPlot(this);
+//   plot = new QwtPlot(this);
+   usp_plot = new US_Plot( plot, "", "", "", this );
+   connect( (QWidget *)plot->titleLabel(), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_plot( const QPoint & ) ) );
+   ((QWidget *)plot->titleLabel())->setContextMenuPolicy( Qt::CustomContextMenu );
+   connect( (QWidget *)plot->axisWidget( QwtPlot::yLeft ), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_plot( const QPoint & ) ) );
+   ((QWidget *)plot->axisWidget( QwtPlot::yLeft ))->setContextMenuPolicy( Qt::CustomContextMenu );
+   connect( (QWidget *)plot->axisWidget( QwtPlot::xBottom ), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_plot( const QPoint & ) ) );
+   ((QWidget *)plot->axisWidget( QwtPlot::xBottom ))->setContextMenuPolicy( Qt::CustomContextMenu );
 #if QT_VERSION < 0x040000
    plot->enableOutline(true);
    plot->setOutlinePen(Qt::white);
@@ -504,4 +511,10 @@ void US_Hydrodyn_Saxs_Hplc_Scale_Trend::analysis()
    }
 
    // us_qdebug( US_Vector::qs_vector3( "slopes", slopes_x, slopes, slopes_e ) );
+}
+
+void US_Hydrodyn_Saxs_Hplc_Scale_Trend::usp_config_plot( const QPoint & ) {
+   US_PlotChoices *uspc = new US_PlotChoices( usp_plot );
+   uspc->exec();
+   delete uspc;
 }

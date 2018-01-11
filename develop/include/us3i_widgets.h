@@ -23,7 +23,7 @@
 #include "us3i_gui_settings.h"
 
 /*! \brief Set up widgets the UltraScan way.
- 
+
     This class is designed to be the parent class to almost all UltraScan
     windows.  It allows easy creation of widgets and applies the appropriate
     palette and font acording to the user's settings (or the UltraScan default).
@@ -31,12 +31,12 @@
 */
 class US_EXTERN US3i_widgets : public QFrame
 {
-  public: 
-    //! The constructor connects to global memory and moves the screen to 
+  public:
+    //! The constructor connects to global memory and moves the screen to
     //! the point saved there. It adjusts the location point by QPoint( 30, 30).
     US3i_widgets( bool = true, QWidget* p = 0, Qt::WindowFlags f = 0 );
 
-    //! The destructor readjusts the location point in global memory to 
+    //! The destructor readjusts the location point in global memory to
     //! a value of QPoint( -30, -30 )
     ~US3i_widgets( void );
 
@@ -47,7 +47,7 @@ class US_EXTERN US3i_widgets : public QFrame
     QPalette vlgray;
 
     //! \param labelString - contents of label
-    //! \param fontAdjust  - adjustment to default point size 
+    //! \param fontAdjust  - adjustment to default point size
     //! \param weight      - QFont::{Light,Normal,DemiBold,Bold,Black}\n
     //! * Alignment is set to Qt::AlignVCenter | Qt::AlignLeft\n
     //! * Margin is set to 5\n
@@ -73,8 +73,8 @@ class US_EXTERN US3i_widgets : public QFrame
     //! * color set to US3i_GuiSettings::pushbColor()\n
     //! * button is enabled\n
     //! * AutoDefault is set false
-    QPushButton* us_pushbutton( const QString&, bool = true, int = 0 ); 
-    
+    QPushButton* us_pushbutton( const QString&, bool = true, int = 0 );
+
     //! * Font size is set to default - 1\n
     //! * Color is set to US3i_GuiSettings::normalColor()\n
     //! * Style is WinPanel | Sunken\n
@@ -106,14 +106,14 @@ class US_EXTERN US3i_widgets : public QFrame
     //! * Color is set to US3i_GuiSettings::normalColor()
     QGridLayout* us_checkbox  ( const QString&, QCheckBox*&, bool = false );
 
-    //! Create a radiobutton with a specifice palette (normal) and 
+    //! Create a radiobutton with a specifice palette (normal) and
     //! indentation of the button
     //! \param text - Text to set with radiobutton
     //! \param rb - pointer to the radio button
     //! \param state - Checked ( true or false )
     //! * Color is set to US3i_GuiSettings::editColor()
     //QRadioButton* us_radiobutton( const QString&, bool = false );
-    QGridLayout* us_radiobutton( 
+    QGridLayout* us_radiobutton(
           const QString& text, QRadioButton*& rb, bool state = false );
     //! \param low   - Lower bound of progress
     //! \param high  - Upper bound of progress
@@ -130,7 +130,7 @@ class US_EXTERN US3i_widgets : public QFrame
     //! \param value  - Initial value to set\n
     //! * Color is set to US3i_GuiSettings::lcdColor()
     QLCDNumber*   us_lcd( int, int = 0 );
-                  
+
     //! \param buttons - Number of buttons to use ( 1 to 3 )
     //! \param low     - Lower bound of progress
     //! \param high    - Upper bound of progress
@@ -143,7 +143,7 @@ class US_EXTERN US3i_widgets : public QFrame
     //! \param y_axis - Left Axis Title\n
     //! * Color is set to US3i_GuiSettings::plotColor()\n
     //! * Convas background is set to US3i_GuiSettings::plotConvasBG()
-    QwtPlot*      us_plot( const QString&, const QString& = QString(), 
+    QwtPlot*      us3i_plot( const QString&, const QString& = QString(),
                            const QString& = QString() );
 
     //! \param plot*   - Pointer to plot\n
@@ -162,7 +162,7 @@ class US_EXTERN US3i_widgets : public QFrame
     QwtPlotPicker* us_picker( QwtPlot* );
 
     //! * returns a good match for a fixed font
-	 static QFont fixedFont(void);
+    static QFont fixedFont( void );
 
     //! \param fontAdjust -  adjustment to default font size\n
     //! \param weight      - QFont::{Light,Normal,DemiBold,Bold,Black}\n
@@ -175,6 +175,17 @@ class US_EXTERN US3i_widgets : public QFrame
     //! \param sbox       - Optional pointer to days QSpinBox
     //! * Color is set to US3i_GuiSettings::normalColor()
     QHBoxLayout* us_timeedit( QTimeEdit*&, const int = 0,
+                              QSpinBox** = (QSpinBox**)NULL );
+
+    //! \param fontAdjust - Adjustment to default font size
+    //! \param dd         - Optional pointer to days QSpinBox pointer
+    //! \param hh         - Optional pointer to hrs  QSpinBox pointer
+    //! \param mm         - Optional pointer to min  QSpinBox pointer
+    //! \param ss         - Optional pointer to sec  QSpinBox pointer
+    QHBoxLayout* us_ddhhmmss( const int = 0,
+                              QSpinBox** = (QSpinBox**)NULL,
+                              QSpinBox** = (QSpinBox**)NULL,
+                              QSpinBox** = (QSpinBox**)NULL,
                               QSpinBox** = (QSpinBox**)NULL );
 
     //! \param fontAdjust -  adjustment to default font size\n
@@ -216,7 +227,7 @@ class US_EXTERN US_ListWidget : public QListWidget
          return QSize( -1, -1 );  // Allow default in the class
       };
 
-      //!  An override of the base function to allow passing a custom 
+      //!  An override of the base function to allow passing a custom
       //!  signal for the parent widget.
       void mousePressEvent( QMouseEvent* );
 
@@ -239,7 +250,7 @@ class US_EXTERN US_Disk_DB_Controls : public QHBoxLayout
 
       //! \brief Build a widget with radio buttons for selection of disk or
       //!        database access
-      //! \param state Indicates the button to be initially set.  The 
+      //! \param state Indicates the button to be initially set.  The
       //               Default set gets the setting from US3i_Settings
       US_Disk_DB_Controls( int= Default );
 
@@ -261,10 +272,10 @@ class US_EXTERN US_Disk_DB_Controls : public QHBoxLayout
       QRadioButton* rb_disk;
       QRadioButton* rb_db;
 
-      QGridLayout* us_radiobutton( 
+      QGridLayout* us_radiobutton(
             const QString& text, QRadioButton*& rb, bool state = false );
 
-   private slots:
+   public slots:
       void rb_changed( bool );
 };
 

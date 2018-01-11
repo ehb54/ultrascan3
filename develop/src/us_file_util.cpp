@@ -3,8 +3,15 @@
 //Added by qt3to4:
 #include <QTextStream>
 
-bool US_File_Util::copy( QString from, QString to, bool overwrite )
+bool US_File_Util::copy( QString from, QString to, bool overwrite, QString qsheader )
 {
+   char header[ qsheader.length() + 1 ];
+   header[ 0 ] = 0;
+
+   if ( !qsheader.isEmpty() ) {
+      strcpy( header, qsheader.toLatin1().data() );
+         ;
+   }
    errormsg = "";
    if ( !QFile( from ).exists() )
    {
@@ -60,6 +67,30 @@ bool US_File_Util::copy( QString from, QString to, bool overwrite )
    char buf[ 2048 ];
    size_t bytes_read;
    size_t bytes_written;
+
+   if ( strlen( header ) ) {
+      const char * buf = header;
+      size_t bytes_read = strlen( header );
+      size_t pos = 0;
+      size_t bytes_left = bytes_read;
+      while ( bytes_left && 
+              ( bytes_written = fwrite( buf + pos, 1, bytes_left, fout ) ) )
+      {
+         if ( bytes_left >= bytes_written )
+         {
+            bytes_left -= bytes_written;
+         } else {
+            bytes_left = 0;
+            errormsg = QString( "Copy: Error reading file %1 read overrun" ).arg( from );
+            fclose( fin );
+            fclose( fout );
+            QFile::remove( to );
+            return false;
+         }
+         pos += bytes_written;
+      }
+   }      
+      
    while ( ( bytes_read = fread( buf, 1, 2048, fin ) ) )
    {
       size_t pos = 0;

@@ -32,6 +32,11 @@
 // #  define isnan _isnan
 #endif
 
+#define POINT_PEN_WIDTH ( 6 + pen_width * 0 )
+#define POINT_PEN_WIDTH2 ( 12 + pen_width * 0 )
+#define POINT_SYMBOL_WIDTH ( 1 )
+#define ERRORBAR_WIDTH ( 1 )
+
 // note: this program uses cout and/or cerr and this should be replaced
 
 static std::basic_ostream<char>& operator<<(std::basic_ostream<char>& os, const QString& str) { 
@@ -2786,7 +2791,7 @@ void US_Hydrodyn_Saxs::set_guinier()
 
             QwtSymbol sym;
             sym.setStyle(QwtSymbol::Diamond);
-            sym.setSize(6);
+            sym.setSize( POINT_PEN_WIDTH );
             sym.setPen(QPen(plot_colors[i % plot_colors.size()]));
             sym.setBrush(Qt::white);
 #if QT_VERSION < 0x040000
@@ -2861,7 +2866,7 @@ void US_Hydrodyn_Saxs::set_guinier()
 
                QwtSymbol sym;
                sym.setStyle(QwtSymbol::Diamond);
-               sym.setSize(6);
+               sym.setSize( POINT_PEN_WIDTH );
                sym.setPen(QPen(plot_colors[i % plot_colors.size()]));
                sym.setBrush(Qt::white);
 #if QT_VERSION < 0x040000
@@ -2934,7 +2939,7 @@ void US_Hydrodyn_Saxs::set_guinier()
 
                QwtSymbol sym;
                sym.setStyle(QwtSymbol::Diamond);
-               sym.setSize(6);
+               sym.setSize( POINT_PEN_WIDTH );
                sym.setPen(QPen(plot_colors[i % plot_colors.size()]));
                sym.setBrush(Qt::white);
 #if QT_VERSION < 0x040000
@@ -3253,16 +3258,20 @@ void US_Hydrodyn_Saxs::set_guinier_eb()
 #endif
    }
 
-   int use_line_width = 1;
+   int use_line_width = pen_width;
 
    QwtSymbol symbol;
    symbol.setStyle( QwtSymbol::Diamond );
-   symbol.setSize( 1 + use_line_width * 5 );
+   symbol.setSize( POINT_PEN_WIDTH );
    symbol.setBrush( Qt::NoBrush ); // plot_colors[ f_pos[ file ] % plot_colors.size() ] );
 
 
    for ( int i = 0; i < niqsize; i++ )
    {
+      bool useable_errors =
+         plotted_I[ i ].size() == plotted_I_error[ i ].size() &&
+         !std::all_of(plotted_I_error[ i ].begin(), plotted_I_error[ i ].end(), [](double i) { return i==0; });
+           
       if ( cb_guinier->isChecked() )
       {
          if ( cb_cs_guinier->isChecked() )
@@ -3328,7 +3337,7 @@ void US_Hydrodyn_Saxs::set_guinier_eb()
 
             QwtSymbol sym;
             sym.setStyle(QwtSymbol::Diamond);
-            sym.setSize(6);
+            sym.setSize( POINT_PEN_WIDTH );
             sym.setPen(QPen(plot_colors[i % plot_colors.size()]));
             sym.setBrush(Qt::white);
 #if QT_VERSION < 0x040000
@@ -3403,7 +3412,7 @@ void US_Hydrodyn_Saxs::set_guinier_eb()
 
                QwtSymbol sym;
                sym.setStyle(QwtSymbol::Diamond);
-               sym.setSize(6);
+               sym.setSize( POINT_PEN_WIDTH );
                sym.setPen(QPen(plot_colors[i % plot_colors.size()]));
                sym.setBrush(Qt::white);
 #if QT_VERSION < 0x040000
@@ -3476,7 +3485,7 @@ void US_Hydrodyn_Saxs::set_guinier_eb()
 
                QwtSymbol sym;
                sym.setStyle(QwtSymbol::Diamond);
-               sym.setSize(6);
+               sym.setSize( POINT_PEN_WIDTH );
                sym.setPen(QPen(plot_colors[i % plot_colors.size()]));
                sym.setBrush(Qt::white);
 #if QT_VERSION < 0x040000
@@ -3637,11 +3646,12 @@ void US_Hydrodyn_Saxs::set_guinier_eb()
             }
          }
 
-         symbol.setPen  ( QPen( plot_colors[ i % plot_colors.size() ], use_line_width, Qt::SolidLine ) );
+         symbol.setPen  ( QPen( plot_colors[ i % plot_colors.size() ], useable_errors ? POINT_SYMBOL_WIDTH : use_line_width, Qt::SolidLine ) );
 
 #if QT_VERSION < 0x040000
+         symbol.setStyle( useable_errors ? QwtSymbol::Diamond : QwtSymbol::None );
          plot_saxs->setCurveSymbol( plotted_Iq[ i ], symbol );
-         plot_saxs->setCurveStyle ( plotted_Iq[ i ], QwtCurve::NoCurve);
+         plot_saxs->setCurveStyle ( plotted_Iq[ i ], useable_errors ? QwtCurve::NoCurve : QwtCurve::Lines );
          plot_saxs->setCurveData(
                                  plotted_Iq[ i ], 
                                  cb_guinier->isChecked() ? (double *)&(q2[0]) : (double *)&(q[0]), 
@@ -3649,7 +3659,8 @@ void US_Hydrodyn_Saxs::set_guinier_eb()
                                  q.size()
                                  );
 #else
-         plotted_Iq[ i ]->setStyle( QwtPlotCurve::NoCurve );
+         symbol.setStyle( useable_errors ? QwtSymbol::Diamond : QwtSymbol::NoSymbol );
+         plotted_Iq[ i ]->setStyle( useable_errors ? QwtPlotCurve::NoCurve : QwtPlotCurve::Lines );
          plotted_Iq[ i ]->setSymbol( new QwtSymbol( symbol.style(), symbol.brush(), symbol.pen(), symbol.size() ) );
          plotted_Iq[ i ]->setSamples(
                                   cb_guinier->isChecked() ? (double *)&(q2[0]) : (double *)&(q[0]), 
@@ -3668,13 +3679,15 @@ void US_Hydrodyn_Saxs::set_guinier_eb()
 #if QT_VERSION >= 0x040000
                QwtPlotCurve * curve = new QwtPlotCurve( "eb." + qsl_plotted_iq_names[ i ] );
                curve->setStyle( QwtPlotCurve::Lines );
-               curve->setPen  ( QPen( plot_colors[ i % plot_colors.size() ], pen_width, Qt::SolidLine ) );
+               curve->setPen  ( QPen( plot_colors[ i % plot_colors.size() ], ERRORBAR_WIDTH, Qt::SolidLine ) );
                curve->setSamples ( x, y, 2 );
+               curve->setItemAttribute( QwtPlotItem::Legend, false );
+               curve->setZ    (-1);
                curve->attach  ( plot_saxs );
 #else 
                long curve = plot_saxs->insertCurve( "eb." + qsl_plotted_iq_names[ i ] );
                plot_saxs->setCurveStyle( curve, QwtCurve::Lines);
-               plot_saxs->setCurvePen  ( curve, QPen(plot_colors[i % plot_colors.size()], pen_width, SolidLine));
+               plot_saxs->setCurvePen  ( curve, QPen(plot_colors[i % plot_colors.size()], ERRORBAR_WIDTH, SolidLine));
                plot_saxs->setCurveData ( curve, x, y, 2 );
 #endif
             }
@@ -3933,7 +3946,7 @@ void US_Hydrodyn_Saxs::plot_guinier_pts_removed( int i, bool cs, bool Rt )
       }
       QwtSymbol sym;
       sym.setStyle(QwtSymbol::XCross);
-      sym.setSize(12);
+      sym.setSize( POINT_PEN_WIDTH2 );
       sym.setBrush(Qt::red);
       sym.setPen  ( QPen( Qt::red) );
       for ( map < double, double >::iterator it = plotted_cs_guinier_pts_removed[ i ].begin();
@@ -3964,7 +3977,7 @@ void US_Hydrodyn_Saxs::plot_guinier_pts_removed( int i, bool cs, bool Rt )
          }
          QwtSymbol sym;
          sym.setStyle(QwtSymbol::XCross);
-         sym.setSize(12);
+         sym.setSize( POINT_PEN_WIDTH2 );
          sym.setBrush(Qt::red);
          sym.setPen  ( QPen( Qt::red) );
          for ( map < double, double >::iterator it = plotted_Rt_guinier_pts_removed[ i ].begin();
@@ -3994,7 +4007,7 @@ void US_Hydrodyn_Saxs::plot_guinier_pts_removed( int i, bool cs, bool Rt )
          // plot red X's 
          QwtSymbol sym;
          sym.setStyle(QwtSymbol::XCross);
-         sym.setSize(12);
+         sym.setSize( POINT_PEN_WIDTH2 );
          sym.setBrush(Qt::red);
          sym.setPen  (QPen( Qt::red) );
 

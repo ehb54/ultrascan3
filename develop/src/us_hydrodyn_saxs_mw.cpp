@@ -12,6 +12,9 @@ US_Hydrodyn_Saxs_Mw::US_Hydrodyn_Saxs_Mw(
                                          bool *remember,
                                          bool *use_partial,
                                          QString *partial,
+                                         map < QString, float > * remember_mw,
+                                         map < QString, QString > * remember_mw_source,
+                                         bool allow_none,
                                          QWidget *p,
                                          const char *name
                                          ) : QDialog( p )
@@ -22,10 +25,13 @@ US_Hydrodyn_Saxs_Mw::US_Hydrodyn_Saxs_Mw(
    this->remember = remember;
    this->use_partial = use_partial;
    this->partial = partial;
+   this->remember_mw = remember_mw;
+   this->remember_mw_source = remember_mw_source;
+   this->allow_none = allow_none;
 
    USglobal = new US_Config();
    setPalette( PALET_FRAME );
-   setWindowTitle("Set MW");
+   setWindowTitle( us_tr( "US-SOMO SAS: Set MW for P(r) calculation" ) );
    setupGUI();
    global_Xpos = 200;
    global_Ypos = 150;
@@ -65,6 +71,22 @@ void US_Hydrodyn_Saxs_Mw::setupGUI()
    AUTFBACK( le_mw );
    le_mw->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1));
    connect(le_mw, SIGNAL(textChanged(const QString &)), SLOT(update_mw(const QString &)));
+
+   pb_known_mw = new QPushButton(us_tr("Previously recorded MWs"), this);
+   pb_known_mw->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_known_mw->setMinimumHeight(minHeight1);
+   pb_known_mw->setPalette( PALET_PUSHB );
+   pb_known_mw->setEnabled( remember_mw->size() );
+   connect(pb_known_mw, SIGNAL(clicked()), SLOT(set_known_mw()));
+
+   if ( allow_none ) {
+      pb_do_not_normalize = new QPushButton(us_tr("Do not normalize"), this);
+      pb_do_not_normalize->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+      pb_do_not_normalize->setMinimumHeight(minHeight1);
+      pb_do_not_normalize->setPalette( PALET_PUSHB );
+      pb_do_not_normalize->setEnabled( true );
+      connect(pb_do_not_normalize, SIGNAL(clicked()), SLOT(set_do_not_normalize()));
+   }
 
    pb_set_to_last_used_mw = new QPushButton(us_tr("Set to last used weight:"), this);
    pb_set_to_last_used_mw->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
@@ -128,6 +150,13 @@ void US_Hydrodyn_Saxs_Mw::setupGUI()
    background->addWidget(lbl_mw, j, 0);
    background->addWidget(le_mw, j, 1);
    j++;
+   if ( allow_none ) {
+      background->addWidget( pb_known_mw, j, 0 );
+      background->addWidget( pb_do_not_normalize, j, 1 );
+   } else {
+      background->addWidget( pb_known_mw , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1  ) - ( 0 ) );
+   }
+   j++;
    background->addWidget(pb_set_to_last_used_mw, j, 0);
    background->addWidget(lbl_last_used_mw, j, 1);
    j++;
@@ -178,4 +207,92 @@ void US_Hydrodyn_Saxs_Mw::set_remember()
 void US_Hydrodyn_Saxs_Mw::set_use_partial()
 {
    *use_partial = cb_use_partial->isChecked();
+}
+
+void US_Hydrodyn_Saxs_Mw::set_do_not_normalize()
+{
+   le_mw->setText( "-1" );
+   close();
+}
+
+void US_Hydrodyn_Saxs_Mw::set_known_mw()
+{
+   // for ( map < QString, float >::iterator it = remember_mw->begin();
+   //       it != remember_mw->end();
+   //       ++it ) {
+   //    us_qdebug( QString( "%1 -> %2\n" ).arg( it->first ).arg( it->second ) );
+   // }
+   QStringList qsl;
+   map < QString, float > good_mw;
+   map < QString, QString > good_mw_source;
+   set < QString > skip_mws;
+
+   // pass 1 get "left" mw's
+
+   QRegExp rx( "^(\\S+)\\s*( Model \\d+|)\\s*$" );
+
+   for ( map < QString, float >::iterator it = remember_mw->begin();
+         it != remember_mw->end();
+         ++it ) {
+      if ( rx.indexIn( it->first ) != -1 &&
+           !rx.cap(1).isEmpty() ) {
+         if ( !good_mw.count( rx.cap( 1 ) ) ) {
+            good_mw[ rx.cap( 1 ) ] = it->second;
+            if ( remember_mw_source->count( it->first ) ) {
+               good_mw_source[ rx.cap( 1 ) ] = (*remember_mw_source)[ it->first ];
+            }
+         } else {
+            if ( good_mw[ rx.cap( 1 ) ] != it->second ) {
+               good_mw[ it->first ] = it->second;
+               if ( remember_mw_source->count( it->first ) ) {
+                  good_mw_source[ it->first ] = (*remember_mw_source)[ it->first ];
+               }
+            }
+         }
+      } else {
+         good_mw[ it->first ] = it->second;
+         if ( remember_mw_source->count( it->first ) ) {
+            good_mw_source[ it->first ] = (*remember_mw_source)[ it->first ];
+         }
+      }
+   }
+
+   {
+      map < QString, float > mw_as_displayed;
+      for ( map < QString, float >::iterator it = good_mw.begin();
+            it != good_mw.end();
+            ++it ) {
+         qsl <<
+            QString( "%1 [%2] %3" )
+            .arg( it->first )
+            .arg( good_mw_source.count( it->first )
+                  ? good_mw_source[ it->first ]
+                  : QString( "" ) )
+            .arg( it->second )
+            ;
+         mw_as_displayed[ qsl.back() ] = it->second;
+      }
+
+      {
+         bool ok;
+         QString choice = US_Static::getItem(
+                                                us_tr( "US-SOMO SAS: previously recorded MWs" )
+                                                ,us_tr( "Select from a previously recorded MWs or Cancel" )
+                                                ,qsl
+                                                ,0
+                                                ,false
+                                                ,&ok
+                                                ,this
+                                                );
+         if ( !ok ) {
+            return;
+         }
+         if ( !mw_as_displayed.count( choice ) ) {
+            US_Static::us_message( us_tr("US-SOMO SAS: MW for P(r)"), 
+                                  QString( us_tr("Internal error: choice not found in choices" ) ) );
+            return;
+         }
+         le_mw->setText( QString("").sprintf("%5.3f", mw_as_displayed[ choice ] ) );
+      }
+   }
 }

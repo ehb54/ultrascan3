@@ -402,6 +402,18 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    save_util = new US_Hydrodyn_Save(&save_params, this);
    fixWinButtons( save_util );
  
+   if ( !gparams.count( "zeno_repeats" ) )
+   {
+      gparams[ "zeno_repeats" ] = "1";
+   }
+   if ( !gparams.count( "zeno_max_cap" ) )
+   {
+      gparams[ "zeno_max_cap" ] = "false";
+   }
+   if ( !gparams.count( "zeno_max_cap_pct" ) )
+   {
+      gparams[ "zeno_max_cap_pct" ] = "0.5";
+   }
 
    saxs_util = new US_Saxs_Util();
    if ( 
@@ -450,6 +462,14 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
                                   QDir::separator() + "vcm.json" ) )
    {
       editor_msg( "red", us_tr( "Warning: vcm.json not read" ) );
+   }
+
+   if ( 
+       load_vdwf_json( USglobal->config_list.system_dir + 
+                       QDir::separator() + "etc" +
+                       QDir::separator() + "vdwf.json" ) )
+   {
+      editor_msg( "red", us_tr( "Warning: vdwf.json not read" ) );
    }
 
    if ( saxs_options.wavelength == 0 )
@@ -952,12 +972,19 @@ void US_Hydrodyn::setupGUI()
    pb_grid_pdb->setPalette( PALET_PUSHB );
    connect(pb_grid_pdb, SIGNAL(clicked()), SLOT(calc_grid_pdb()));
 
-   pb_grid_pdb_o = new QPushButton(us_tr("Build AtoB (Grid) Overlap Bead Model"), this);
-   pb_grid_pdb_o->setMinimumHeight(minHeight1);
-   pb_grid_pdb_o->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   pb_grid_pdb_o->setEnabled(false);
-   pb_grid_pdb_o->setPalette( PALET_PUSHB );
-   connect(pb_grid_pdb_o, SIGNAL(clicked()), SLOT(calc_grid_pdb_o()));
+   // pb_grid_pdb_o = new QPushButton(us_tr("Build AtoB (Grid) Overlap Bead Model"), this);
+   // pb_grid_pdb_o->setMinimumHeight(minHeight1);
+   // pb_grid_pdb_o->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   // pb_grid_pdb_o->setEnabled(false);
+   // pb_grid_pdb_o->setPalette( PALET_PUSHB );
+   // connect(pb_grid_pdb_o, SIGNAL(clicked()), SLOT(calc_grid_pdb_o()));
+
+   pb_vdw_beads = new QPushButton(us_tr("Build vdW Overlap Bead Model"), this);
+   pb_vdw_beads->setMinimumHeight(minHeight1);
+   pb_vdw_beads->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   pb_vdw_beads->setEnabled(false);
+   pb_vdw_beads->setPalette( PALET_PUSHB );
+   connect(pb_vdw_beads, SIGNAL(clicked()), SLOT(calc_vdw_beads()));
 
    pb_grid = new QPushButton(us_tr("Grid Existing Bead Model"), this);
    Q_CHECK_PTR(pb_grid);
@@ -1296,7 +1323,8 @@ void US_Hydrodyn::setupGUI()
    j++;
 
    background->addWidget(pb_somo_o, j, 0);
-   background->addWidget(pb_grid_pdb_o, j, 1);
+   // background->addWidget(pb_grid_pdb_o, j, 1);
+   background->addWidget(pb_vdw_beads, j, 1);
    j++;
 
 
@@ -1394,7 +1422,7 @@ void US_Hydrodyn::set_disabled()
    pb_somo->setEnabled(false);
    pb_somo_o->setEnabled(false);
    pb_grid_pdb->setEnabled(false);
-   pb_grid_pdb_o->setEnabled(false);
+   pb_vdw_beads->setEnabled(false);
    pb_grid->setEnabled(false);
    pb_show_hydro_results->setEnabled(false);
    pb_calc_hydro->setEnabled(false);
@@ -2015,7 +2043,7 @@ void US_Hydrodyn::reload_pdb()
    pb_somo->setEnabled(true);
    pb_somo_o->setEnabled(true);
    pb_grid_pdb->setEnabled(true);
-   pb_grid_pdb_o->setEnabled(true);
+   pb_vdw_beads->setEnabled(true);
    pb_grid->setEnabled(false);
    pb_show_hydro_results->setEnabled(false);
    pb_calc_hydro->setEnabled(false);
@@ -2529,7 +2557,7 @@ void US_Hydrodyn::load_pdb()
    pb_somo->setEnabled(true);
    pb_somo_o->setEnabled(true);
    pb_grid_pdb->setEnabled(true);
-   pb_grid_pdb_o->setEnabled(true);
+   pb_vdw_beads->setEnabled(true);
    pb_grid->setEnabled(false);
    bd_anaflex_enables(true);
    pb_show_hydro_results->setEnabled(false);
@@ -2683,7 +2711,7 @@ bool US_Hydrodyn::screen_pdb(QString filename, bool display_pdb, bool skipcleari
    pb_somo->setEnabled(errors_found ? false : true);
    pb_somo_o->setEnabled(errors_found ? false : true);
    pb_grid_pdb->setEnabled(errors_found ? false : true);
-   pb_grid_pdb_o->setEnabled(errors_found ? false : true);
+   pb_vdw_beads->setEnabled(errors_found ? false : true);
    pb_grid->setEnabled(false);
    pb_show_hydro_results->setEnabled(false);
    pb_calc_hydro->setEnabled(false);
@@ -2718,7 +2746,7 @@ bool US_Hydrodyn::screen_bead_model( QString filename )
    pb_calc_zeno->setEnabled(false);
    pb_show_hydro_results->setEnabled(false);
    pb_grid_pdb->setEnabled(false);
-   pb_grid_pdb_o->setEnabled(false);
+   pb_vdw_beads->setEnabled(false);
    pb_grid->setEnabled(false);
    bead_model_prefix = "";
    le_bead_model_prefix->setText( bead_model_prefix );
@@ -2853,7 +2881,7 @@ void US_Hydrodyn::select_model( int )
    }
    pb_somo->setEnabled( selected_count );
    pb_grid_pdb->setEnabled( selected_count );
-   pb_grid_pdb_o->setEnabled( selected_count );
+   pb_vdw_beads->setEnabled( selected_count );
    pb_somo_o->setEnabled( selected_count );
    pb_show_hydro_results->setEnabled(false);
    pb_calc_hydro->setEnabled(false);
@@ -2941,10 +2969,11 @@ void US_Hydrodyn::load_bead_model()
       pb_calc_zeno->setEnabled(false);
       pb_show_hydro_results->setEnabled(false);
       pb_grid_pdb->setEnabled(false);
-      pb_grid_pdb_o->setEnabled(false);
+      pb_vdw_beads->setEnabled(false);
       pb_grid->setEnabled(false);
       bead_model_prefix = "";
       le_bead_model_prefix->setText(bead_model_prefix);
+      bead_model_suffix = "";
 
       if (results_widget)
       {
@@ -3063,7 +3092,7 @@ int US_Hydrodyn::calc_somo( bool no_ovlp_removal )
    bd_anaflex_enables(false);
 
    pb_grid_pdb->setEnabled(false);
-   pb_grid_pdb_o->setEnabled(false);
+   pb_vdw_beads->setEnabled(false);
    pb_grid->setEnabled(false);
    model_vector = model_vector_as_loaded;
    sync_pdb_info( "calc_somo" );
@@ -3086,7 +3115,7 @@ int US_Hydrodyn::calc_somo( bool no_ovlp_removal )
       pb_somo->setEnabled(true);
       pb_somo_o->setEnabled(true);
       pb_grid_pdb->setEnabled(true);
-      pb_grid_pdb_o->setEnabled(true);
+      pb_vdw_beads->setEnabled(true);
       progress->reset();
       return -1;
    }
@@ -3163,7 +3192,7 @@ int US_Hydrodyn::calc_somo( bool no_ovlp_removal )
          bd_anaflex_enables( ( ( browflex && browflex->state() == QProcess::Running ) ||
                                ( anaflex && anaflex->state() == QProcess::Running ) ) ? false : true );
          pb_grid_pdb->setEnabled(true);
-         pb_grid_pdb_o->setEnabled(true);
+         pb_vdw_beads->setEnabled(true);
          progress->reset();
          return -1;
       }
@@ -3190,7 +3219,7 @@ int US_Hydrodyn::calc_somo( bool no_ovlp_removal )
    pb_somo->setEnabled(true);
    pb_somo_o->setEnabled(true);
    pb_grid_pdb->setEnabled(true);
-   pb_grid_pdb_o->setEnabled(true);
+   pb_vdw_beads->setEnabled(true);
    pb_grid->setEnabled(true);
    pb_stop_calc->setEnabled(false);
    if (calcAutoHydro)
@@ -3294,7 +3323,7 @@ int US_Hydrodyn::calc_grid_pdb( bool no_ovlp_removal )
    bool any_models = false;
    pb_grid->setEnabled(false);
    pb_grid_pdb->setEnabled(false);
-   pb_grid_pdb_o->setEnabled(false);
+   pb_vdw_beads->setEnabled(false);
    pb_somo->setEnabled(false);
    pb_somo_o->setEnabled(false);
    pb_visualize->setEnabled(false);
@@ -3330,7 +3359,7 @@ int US_Hydrodyn::calc_grid_pdb( bool no_ovlp_removal )
             {
                editor->append("Stopped by user\n\n");
                pb_grid_pdb->setEnabled(true);
-               pb_grid_pdb_o->setEnabled(true);
+               pb_vdw_beads->setEnabled(true);
                pb_somo->setEnabled(true);
                pb_somo_o->setEnabled(true);
                progress->reset();
@@ -3367,7 +3396,7 @@ int US_Hydrodyn::calc_grid_pdb( bool no_ovlp_removal )
             {
                editor->append("Stopped by user\n\n");
                pb_grid_pdb->setEnabled(true);
-               pb_grid_pdb_o->setEnabled(true);
+               pb_vdw_beads->setEnabled(true);
                pb_somo->setEnabled(true);
                pb_somo_o->setEnabled(true);
                progress->reset();
@@ -3470,7 +3499,7 @@ int US_Hydrodyn::calc_grid_pdb( bool no_ovlp_removal )
                   {
                      editor_msg( "red", "Center of scattering requested, but zero scattering intensities are present" );
                      pb_grid_pdb->setEnabled(true);
-                     pb_grid_pdb_o->setEnabled(true);
+                     pb_vdw_beads->setEnabled(true);
                      pb_somo->setEnabled(true);
                      pb_somo_o->setEnabled(true);
                      progress->reset();
@@ -3493,7 +3522,7 @@ int US_Hydrodyn::calc_grid_pdb( bool no_ovlp_removal )
                   {
                      editor->append("Stopped by user\n\n");
                      pb_grid_pdb->setEnabled(true);
-                     pb_grid_pdb_o->setEnabled(true);
+                     pb_vdw_beads->setEnabled(true);
                      pb_somo->setEnabled(true);
                      pb_somo_o->setEnabled(true);
                      progress->reset();
@@ -3507,7 +3536,7 @@ int US_Hydrodyn::calc_grid_pdb( bool no_ovlp_removal )
                   {
                      editor->append("Error occured\n\n");
                      pb_grid_pdb->setEnabled(true);
-                     pb_grid_pdb_o->setEnabled(true);
+                     pb_vdw_beads->setEnabled(true);
                      pb_somo->setEnabled(true);
                      pb_somo_o->setEnabled(true);
                      progress->reset();
@@ -3618,7 +3647,7 @@ int US_Hydrodyn::calc_grid_pdb( bool no_ovlp_removal )
                         {
                            editor->append("Stopped by user\n\n");
                            pb_grid_pdb->setEnabled(true);
-                           pb_grid_pdb_o->setEnabled(true);
+                           pb_vdw_beads->setEnabled(true);
                            pb_somo->setEnabled(true);
                            pb_somo_o->setEnabled(true);
                            progress->reset();
@@ -3662,7 +3691,7 @@ int US_Hydrodyn::calc_grid_pdb( bool no_ovlp_removal )
                      {
                         editor->append("Stopped by user\n\n");
                         pb_grid_pdb->setEnabled(true);
-                        pb_grid_pdb_o->setEnabled(true);
+                        pb_vdw_beads->setEnabled(true);
                         pb_somo->setEnabled(true);
                         pb_somo_o->setEnabled(true);
                         progress->reset();
@@ -3854,7 +3883,7 @@ int US_Hydrodyn::calc_grid_pdb( bool no_ovlp_removal )
    {
       editor->append("Stopped by user\n\n");
       pb_grid_pdb->setEnabled(true);
-      pb_grid_pdb_o->setEnabled(true);
+      pb_vdw_beads->setEnabled(true);
       pb_somo->setEnabled(true);
       pb_somo_o->setEnabled(true);
       progress->reset();
@@ -3878,7 +3907,7 @@ int US_Hydrodyn::calc_grid_pdb( bool no_ovlp_removal )
    }
 
    pb_grid_pdb->setEnabled(true);
-   pb_grid_pdb_o->setEnabled(true);
+   pb_vdw_beads->setEnabled(true);
    pb_grid->setEnabled(true);
    pb_somo->setEnabled(true);
    pb_somo_o->setEnabled(true);
@@ -3920,7 +3949,7 @@ int US_Hydrodyn::calc_grid()
    bool grid_pdb_state = pb_grid_pdb->isEnabled();
    bool somo_state = pb_grid_pdb->isEnabled();
    pb_grid_pdb->setEnabled(false);
-   pb_grid_pdb_o->setEnabled(false);
+   pb_vdw_beads->setEnabled(false);
    pb_grid->setEnabled(false);
    pb_somo->setEnabled(false);
    pb_somo_o->setEnabled(false);
@@ -3986,7 +4015,7 @@ int US_Hydrodyn::calc_grid()
                {
                   editor_msg( "red", "Center of scattering requested, but zero scattering intensities are present" );
                   pb_grid_pdb->setEnabled(true);
-                  pb_grid_pdb_o->setEnabled(true);
+                  pb_vdw_beads->setEnabled(true);
                   pb_somo->setEnabled(true);
                   pb_somo_o->setEnabled(true);
                   progress->reset();
@@ -4006,7 +4035,7 @@ int US_Hydrodyn::calc_grid()
             {
                editor->append("Stopped by user\n\n");
                pb_grid_pdb->setEnabled(true);
-               pb_grid_pdb_o->setEnabled(true);
+               pb_vdw_beads->setEnabled(true);
                pb_somo->setEnabled(true);
                pb_somo_o->setEnabled(true);
                progress->reset();
@@ -4016,7 +4045,7 @@ int US_Hydrodyn::calc_grid()
             {
                editor->append("Error occured\n\n");
                pb_grid_pdb->setEnabled(true);
-               pb_grid_pdb_o->setEnabled(true);
+               pb_vdw_beads->setEnabled(true);
                pb_somo->setEnabled(true);
                pb_somo_o->setEnabled(true);
                progress->reset();
@@ -4112,7 +4141,7 @@ int US_Hydrodyn::calc_grid()
                   {
                      editor->append("Stopped by user\n\n");
                      pb_grid_pdb->setEnabled(true);
-                     pb_grid_pdb_o->setEnabled(true);
+                     pb_vdw_beads->setEnabled(true);
                      pb_somo->setEnabled(true);
                      pb_somo_o->setEnabled(true);
                      progress->reset();
@@ -4128,7 +4157,7 @@ int US_Hydrodyn::calc_grid()
                   {
                      editor->append("Stopped by user\n\n");
                      pb_grid_pdb->setEnabled(true);
-                     pb_grid_pdb_o->setEnabled(true);
+                     pb_vdw_beads->setEnabled(true);
                      pb_somo->setEnabled(true);
                      pb_somo_o->setEnabled(true);
                      progress->reset();
@@ -4152,7 +4181,7 @@ int US_Hydrodyn::calc_grid()
                   {
                      editor->append("Stopped by user\n\n");
                      pb_grid_pdb->setEnabled(true);
-                     pb_grid_pdb_o->setEnabled(true);
+                     pb_vdw_beads->setEnabled(true);
                      pb_somo->setEnabled(true);
                      pb_somo_o->setEnabled(true);
                      progress->reset();
@@ -4196,7 +4225,7 @@ int US_Hydrodyn::calc_grid()
    {
       editor->append("Stopped by user\n\n");
       pb_grid_pdb->setEnabled(true);
-      pb_grid_pdb_o->setEnabled(true);
+      pb_vdw_beads->setEnabled(true);
       pb_somo->setEnabled(true);
       pb_somo_o->setEnabled(true);
       progress->reset();
@@ -4220,7 +4249,7 @@ int US_Hydrodyn::calc_grid()
    }
 
    pb_grid_pdb->setEnabled(grid_pdb_state);
-   pb_grid_pdb_o->setEnabled(grid_pdb_state);
+   pb_vdw_beads->setEnabled(grid_pdb_state);
    pb_grid->setEnabled(true);
    pb_somo->setEnabled(somo_state);
    pb_somo_o->setEnabled(somo_state);
@@ -5791,7 +5820,7 @@ bool US_Hydrodyn::equi_grid_bead_model( double dR )
    bool grid_pdb_state = pb_grid_pdb->isEnabled();
    bool somo_state = pb_grid_pdb->isEnabled();
    pb_grid_pdb->setEnabled(false);
-   pb_grid_pdb_o->setEnabled(false);
+   pb_vdw_beads->setEnabled(false);
    pb_grid->setEnabled(false);
    pb_somo->setEnabled(false);
    pb_somo_o->setEnabled(false);
@@ -5828,7 +5857,7 @@ bool US_Hydrodyn::equi_grid_bead_model( double dR )
          {
             editor->append("Stopped by user\n\n");
             pb_grid_pdb->setEnabled(true);
-            pb_grid_pdb_o->setEnabled(true);
+            pb_vdw_beads->setEnabled(true);
             pb_equi_grid_bead_model->setEnabled(true);
             pb_somo->setEnabled(true);
             pb_somo_o->setEnabled(true);
@@ -5862,7 +5891,7 @@ bool US_Hydrodyn::equi_grid_bead_model( double dR )
             {
                editor_msg( "red", saxs_util->errormsg );
                pb_grid_pdb->setEnabled(true);
-               pb_grid_pdb_o->setEnabled(true);
+               pb_vdw_beads->setEnabled(true);
                pb_equi_grid_bead_model->setEnabled(true);
                pb_somo->setEnabled(true);
                pb_somo_o->setEnabled(true);
@@ -5874,7 +5903,7 @@ bool US_Hydrodyn::equi_grid_bead_model( double dR )
             {
                editor->append("Stopped by user\n\n");
                pb_grid_pdb->setEnabled(true);
-               pb_grid_pdb_o->setEnabled(true);
+               pb_vdw_beads->setEnabled(true);
                pb_equi_grid_bead_model->setEnabled(true);
                pb_somo->setEnabled(true);
                pb_somo_o->setEnabled(true);
@@ -5916,7 +5945,7 @@ bool US_Hydrodyn::equi_grid_bead_model( double dR )
    {
       editor->append("Stopped by user\n\n");
       pb_grid_pdb->setEnabled(true);
-      pb_grid_pdb_o->setEnabled(true);
+      pb_vdw_beads->setEnabled(true);
       pb_somo->setEnabled(true);
       pb_somo_o->setEnabled(true);
       progress->reset();
@@ -5941,7 +5970,7 @@ bool US_Hydrodyn::equi_grid_bead_model( double dR )
 
    pb_equi_grid_bead_model->setEnabled(true);
    pb_grid_pdb->setEnabled(grid_pdb_state);
-   pb_grid_pdb_o->setEnabled(grid_pdb_state);
+   pb_vdw_beads->setEnabled(grid_pdb_state);
    pb_grid->setEnabled(true);
    pb_somo->setEnabled(somo_state);
    pb_somo_o->setEnabled(somo_state);
@@ -5961,11 +5990,6 @@ bool US_Hydrodyn::equi_grid_bead_model( double dR )
 int US_Hydrodyn::calc_somo_o()
 {
    return calc_somo( true );
-}
-
-int US_Hydrodyn::calc_grid_pdb_o()
-{
-   return calc_grid_pdb( true );
 }
 
 bool US_Hydrodyn::calc_zeno_hydro()
@@ -6001,5 +6025,227 @@ void US_Hydrodyn::process_events() {
    //   qApp->processEvents();
 }
 
+int US_Hydrodyn::calc_vdw_beads()
+{
+   {
+      int models_selected = 0;
+      for(int i = 0; i < lb_model->count(); i++) {
+         if (lb_model->item(i)->isSelected()) {
+            models_selected++;
+         }
+      }
+      if ( !models_selected ) {
+         editor_msg( "black", "No models selected!\n" );
+         return -1;
+      }
+   }
+
+   if ( selected_models_contain( "XHY" ) )
+   {
+      QMessageBox::warning( this,
+                            us_tr( "Selected model contains XHY residue" ),
+                            us_tr( 
+                               "Can not process models that contain the XHY residue.\n"
+                               "These are currently generated only for SAXS/SANS computations\n"
+                               )
+                            );
+      return -1;
+   }
+
+   stopFlag = false;
+   pb_stop_calc->setEnabled(true);
+   model_vector = model_vector_as_loaded;
+   options_log = "";
+   bool any_errors = false;
+   bool any_models = false;
+   pb_grid->setEnabled(false);
+   pb_grid_pdb->setEnabled(false);
+   pb_vdw_beads->setEnabled(false);
+   pb_somo->setEnabled(false);
+   pb_somo_o->setEnabled(false);
+   pb_visualize->setEnabled(false);
+   pb_equi_grid_bead_model->setEnabled(false);
+   pb_show_hydro_results->setEnabled(false);
+   pb_calc_hydro->setEnabled(false);
+   pb_calc_zeno->setEnabled(false);
+   if (results_widget)
+   {
+      results_window->close();
+      delete results_window;
+      results_widget = false;
+   }
+
+   bead_model_suffix = "vdw";
+   le_bead_model_suffix->setText("vdw");
+
+   if ( !overwrite )
+   {
+      setSomoGridFile(false);
+   }
+
+   somo_processed.resize(lb_model->count());
+   bead_models.resize(lb_model->count());
+
+   for ( current_model = 0; current_model < (unsigned int)lb_model->count(); current_model++ ) {
+      if ( lb_model->item( current_model )->isSelected() ) {
+         us_qdebug( QString( "in calc_vdw_beads: is selected current model %1" ).arg( current_model ) );
+         {
+            QString error_string;
+            // create bead model from atoms
+            editor->append( QString( "Building VdW beads for model %1\n" ).arg( current_model + 1 ) );
+            qApp->processEvents();
+            // somo_processed[current_model] = 0;
+            if (stopFlag)
+            {
+               editor->append("Stopped by user\n\n");
+               pb_grid_pdb->setEnabled(true);
+               pb_vdw_beads->setEnabled(true);
+               pb_somo->setEnabled(true);
+               pb_somo_o->setEnabled(true);
+               progress->reset();
+               return -1;
+            }
+            // compute maximum position for progress
+            somo_processed[ current_model ] = 0;
+            bead_models[ current_model ].clear( );
+            progress->reset();
+            progress->setMaximum( model_vector[current_model].molecule.size() );
+            progress->setValue( 0 );
+
+            int retval = create_vdw_beads( error_string );
+
+            if ( retval ) {
+               editor_msg( "red", "Errors found during the initial creation of beads\n" );
+               qApp->processEvents();
+               any_errors = true;
+            }
+         }
+      }
+   }
+   if ( !any_errors )
+   {
+      editor_msg( "blue", "Build VdW bead model completed\n" );
+      qApp->processEvents();
+      pb_visualize->setEnabled(true);
+      pb_equi_grid_bead_model->setEnabled(true);
+      pb_calc_hydro->setEnabled( false );
+      pb_calc_zeno->setEnabled(true);
+      pb_bead_saxs->setEnabled(true);
+      pb_rescale_bead_model->setEnabled( misc.target_volume != 0e0 || misc.equalize_radii );
+   } else {
+      editor_msg( "red", "Errors encountered\n" );
+   }
 
 
+   pb_grid_pdb->setEnabled(true);
+   pb_vdw_beads->setEnabled(true);
+   pb_grid->setEnabled(true);
+   pb_somo->setEnabled(true);
+   pb_somo_o->setEnabled(true);
+   pb_stop_calc->setEnabled(false);
+   if ( calcAutoHydro )
+   {
+      calc_hydro();
+   } else {
+      play_sounds(1);
+   }
+
+
+   return ( any_errors ? -1 : 0 );
+}
+
+int US_Hydrodyn::create_vdw_beads( QString & error_string, bool quiet ) {
+   error_string = "";
+
+   if ( !quiet ) 
+   {
+      editor->append("Creating VdW beads from atomic model\n");
+      qApp->processEvents();
+   }
+
+   bead_model.clear( );
+
+   for (unsigned int j = 0; j < model_vector[current_model].molecule.size(); j++) {
+      for (unsigned int k = 0; k < model_vector[current_model].molecule[j].atom.size(); k++) {
+         PDB_atom *this_atom = &(model_vector[current_model].molecule[j].atom[k]);
+
+         QString res_idx =
+            QString("%1|%2")
+            .arg(this_atom->name != "OXT" ? this_atom->resName : "OXT" )
+            .arg(this_atom->name);
+         if ( vdwf.count( res_idx ) ) {
+            PDB_atom tmp_atom;
+            _vdwf this_vdwf = vdwf[ res_idx ];
+            tmp_atom.bead_coordinate = this_atom->coordinate;
+            if ( this_vdwf.w ) {
+               double tmp_vol = M_PI * ( 4e0 / 3e0 ) * this_vdwf.r * this_vdwf.r * this_vdwf.r + ( this_vdwf.w * misc.hydrovol );
+               tmp_atom.bead_computed_radius = pow( tmp_vol * 3e0 / ( 4e0 * M_PI ), 1e0 / 3e0 );
+            } else {
+               tmp_atom.bead_computed_radius = this_vdwf.r;
+            }
+            tmp_atom.bead_ref_mw = this_vdwf.mw;
+            tmp_atom.mw = this_vdwf.mw;
+            tmp_atom.bead_mw = this_vdwf.mw;
+            tmp_atom.bead_color = 8;
+            tmp_atom.exposed_code = 1;
+            tmp_atom.all_beads.clear( );
+            tmp_atom.active = true;
+            tmp_atom.name = this_atom->name;
+            tmp_atom.resName = this_atom->resName;
+            tmp_atom.iCode = this_atom->iCode;
+            tmp_atom.chainID = this_atom->chainID;
+            tmp_atom.saxs_data.saxs_name = "";
+            
+            bead_model.push_back(tmp_atom);
+         } else {
+            us_qdebug( QString( "not found %1 in vdwf" ).arg( res_idx ) );
+         }
+      }
+   }      
+
+   bead_models[ current_model ] = bead_model;
+   somo_processed[ current_model ] = 1;
+   
+   write_bead_model( somo_dir + SLASH + project + fix_file_name( QString("_%1").arg( model_name( current_model ) ) ) +
+                     QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "")
+                     , &bead_model);
+   
+   editor->append( QString( "Volume of bead model %1\n" ).arg( total_volume_of_bead_model( bead_model ) ) );
+   return 0;
+}
+
+bool US_Hydrodyn::load_vdwf_json( QString filename ) {
+   QFile f( filename );
+   if ( !f.open( QIODevice::ReadOnly ) )
+   {
+      return false;
+   }
+   QString qs;
+   QTextStream ts( &f );
+   while ( !ts.atEnd() )
+   {
+      qs += ts.readLine();
+   }
+   f.close();
+   vdwf.clear( );
+   map < QString, QString > parameters = US_Json::split( qs );
+   _vdwf this_vdwf;
+   for ( map < QString, QString >::iterator it = parameters.begin();
+         it != parameters.end();
+         it++ )
+   {
+      // us_qdebug( QString( "vdwf read %1 %2" ).arg( it->first ).arg( it->second ) );
+      map < QString, QString > tmp_param = US_Json::split( "{" + it->second + "}" );
+      if ( !tmp_param.count( "mw" ) ||
+           !tmp_param.count( "r" ) ||
+           !tmp_param.count( "w" ) ) {
+         us_qdebug( QString( "vdwf missing mw r or w %1 %2" ).arg( it->first ).arg( it->second ) );
+      } else {
+         this_vdwf.mw = tmp_param[ "mw" ].toDouble();
+         this_vdwf.r  = tmp_param[ "r" ].toDouble();
+         this_vdwf.w  = tmp_param[ "w" ].toDouble();
+         vdwf[ it->first ] = this_vdwf;
+      }
+   }
+   return false;
+}

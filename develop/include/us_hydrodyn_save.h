@@ -97,6 +97,7 @@ struct save_data
    double        axi_ratios_xz;     // "Axial ratios [ X:Z ] "
    double        axi_ratios_xy;     // "Axial ratios [ X:Y ] "
    double        axi_ratios_yz;     // "Axial ratios [ Y:Z ] "
+   double        proc_time;         // "Processing time [ s ] "
 };
 
 struct save_info 

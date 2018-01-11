@@ -7,6 +7,7 @@
 #include "us_file_util.h"
 #include "us_vector.h"
 #include <qwt_plot.h>
+#include "us3i_plot.h"
 #if QT_VERSION >= 0x040000
 # include <qwt_plot_curve.h>
 #endif

@@ -264,6 +264,10 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             "Axial ratios [ X:Z, X:Y, Y:Z ] ",
             "Axial ratios [ X:Z, X:Y, Y:Z ] ",
 
+            "proc_time",
+            "Processing time [s] ",
+            "Processing time [s] ",
+
             "__SECTION__",
             "Solvent conditions:",
 
@@ -835,6 +839,15 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
       {
          field_to_save_data[field[i]] = (void *)&(save->data.axi_ratios_xz);
          field_to_save_data_type[field[i]] = DT_TRIPLE_DOUBLE;
+         field_to_precision[field[i]] = 2;
+         field_to_format[field[i]] = 'f';
+         continue;
+      }
+
+      if ( field[i] == "proc_time" )
+      {
+         field_to_save_data[field[i]] = (void *)&(save->data.proc_time);
+         field_to_save_data_type[field[i]] = DT_DOUBLE;
          field_to_precision[field[i]] = 2;
          field_to_format[field[i]] = 'f';
          continue;
@@ -1982,5 +1995,6 @@ QString US_Hydrodyn_Save::hydroFormatStats(vector < save_data > stats)
                                  stats[1].rel_times_tau_h);
    
    result += QString("").sprintf("\n****************************************************************\n");
+
    return result;
 }

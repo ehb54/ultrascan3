@@ -87,6 +87,11 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer_Nth : public QDialog
 
       PC *                                    pc;
       QwtPlot *                               plot_data;
+      US_Plot *                               usp_plot_data;
+   private slots:
+      void usp_config_plot_data( const QPoint & );
+
+   private:
       ScrollZoomer *                          plot_data_zoomer;
 #if QT_VERSION >= 0x040000
       QwtPlotGrid *                           grid_data;

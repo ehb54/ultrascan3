@@ -187,6 +187,11 @@ class US_EXTERN US_Hydrodyn_Saxs_Buffer : public QFrame
       QLabel        *lbl_join_rmsd;
 
       QwtPlot       *plot_dist;
+      US_Plot       *usp_plot_dist;
+   private slots:
+      void usp_config_plot_dist( const QPoint & );
+
+   private:
       ScrollZoomer  *plot_dist_zoomer;
 #if QT_VERSION >= 0x040000
       QwtPlotGrid   *grid_saxs;

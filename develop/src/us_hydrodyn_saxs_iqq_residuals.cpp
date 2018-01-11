@@ -30,6 +30,7 @@ US_Hydrodyn_Saxs_Iqq_Residuals::US_Hydrodyn_Saxs_Iqq_Residuals(
                                                              bool plot_as_percent,
                                                              double avg_std_dev_frac,
                                                              vector < double > std_dev_frac,
+                                                             unsigned int pen_width,
                                                              QWidget *p, 
                                                              const char *name
                                                              ) : QFrame( p )
@@ -43,10 +44,9 @@ US_Hydrodyn_Saxs_Iqq_Residuals::US_Hydrodyn_Saxs_Iqq_Residuals(
    this->plot_as_percent  = plot_as_percent;
    this->avg_std_dev_frac = avg_std_dev_frac;
    this->std_dev_frac     = std_dev_frac;
+   this->pen_width        = pen_width;
 
    plot_zoomer = (ScrollZoomer *)0;
-
-   pen_width = 1;
 
    USglobal = new US_Config();
    setPalette( PALET_FRAME );
@@ -200,7 +200,14 @@ void US_Hydrodyn_Saxs_Iqq_Residuals::add(
 void US_Hydrodyn_Saxs_Iqq_Residuals::setupGUI()
 {
 
-   plot = new QwtPlot(this);
+//   plot = new QwtPlot(this);
+   usp_plot = new US_Plot( plot, "", "", "", this );
+   connect( (QWidget *)plot->titleLabel(), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_plot( const QPoint & ) ) );
+   ((QWidget *)plot->titleLabel())->setContextMenuPolicy( Qt::CustomContextMenu );
+   connect( (QWidget *)plot->axisWidget( QwtPlot::yLeft ), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_plot( const QPoint & ) ) );
+   ((QWidget *)plot->axisWidget( QwtPlot::yLeft ))->setContextMenuPolicy( Qt::CustomContextMenu );
+   connect( (QWidget *)plot->axisWidget( QwtPlot::xBottom ), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_plot( const QPoint & ) ) );
+   ((QWidget *)plot->axisWidget( QwtPlot::xBottom ))->setContextMenuPolicy( Qt::CustomContextMenu );
 #if QT_VERSION < 0x040000
    plot->enableGridXMin();
    plot->enableGridYMin();
@@ -753,7 +760,7 @@ void US_Hydrodyn_Saxs_Iqq_Residuals::update_plot()
                          (double *)&(x[0]), 
                          (double *)&(y[0]), 
                          2);
-      plot->setCurvePen(iqq, QPen(Qt::white, 2, SolidLine));
+      plot->setCurvePen(iqq, QPen(Qt::white, pen_width, SolidLine));
 #else
       {
          QwtPlotCurve *curve = new QwtPlotCurve( "+2 sd" );
@@ -776,7 +783,7 @@ void US_Hydrodyn_Saxs_Iqq_Residuals::update_plot()
                          (double *)&(x[0]), 
                          (double *)&(y[0]), 
                          2);
-      plot->setCurvePen(iqq, QPen(Qt::white, 2, SolidLine));
+      plot->setCurvePen(iqq, QPen(Qt::white, pen_width, SolidLine));
 #else
       {
          QwtPlotCurve *curve = new QwtPlotCurve( "-2 sd" );
@@ -827,4 +834,10 @@ void US_Hydrodyn_Saxs_Iqq_Residuals::update_plot()
 #endif
 
    plot->replot();
+}
+
+void US_Hydrodyn_Saxs_Iqq_Residuals::usp_config_plot( const QPoint & ) {
+   US_PlotChoices *uspc = new US_PlotChoices( usp_plot );
+   uspc->exec();
+   delete uspc;
 }

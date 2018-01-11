@@ -407,9 +407,12 @@ static vector < float > used_s_a;
 static vector < float > total_vol;
 static vector < float > used_vol;
 
+static US_Timer           supc_timers;
+
 static void
 supc_free_alloced()
 {
+   supc_timers.clear_timers();
    if (dt)
    {
       free(dt);
@@ -635,6 +638,7 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
                       QTextEdit *use_editor,
                       US_Hydrodyn *use_us_hydrodyn)
 {
+   supc_timers.clear_timers();
    dt = 0;
    dtn = 0;
    rRi = 0;
@@ -1281,6 +1285,9 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
 
    for (k = 0; k < num; k++)
    {
+      supc_timers.init_timer( "compute smi" );
+      supc_timers.start_timer( "compute smi" );
+
       active_model = k;
 
       QColor save_color = editor->textColor();
@@ -1949,6 +1956,8 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
       }
 
       maxest();
+
+      supc_timers.end_timer( "compute smi" );
 
       stampa_ris();
 
@@ -2686,6 +2695,7 @@ mem_ris(int model)
    this_data.results.asa_rg_pos = supc_results->asa_rg_pos;
    this_data.results.asa_rg_neg = supc_results->asa_rg_neg;
    this_data.hydro_res = "";
+   this_data.proc_time = (double)(supc_timers.times[ "compute smi" ]) / 1e3;
 
    QString hydro_res;
    QString hydro_format_string;

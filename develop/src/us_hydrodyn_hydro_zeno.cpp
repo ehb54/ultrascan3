@@ -3,12 +3,12 @@
 #include "../include/us_hydrodyn.h"
 #include "../include/us_math.h"
 //Added by qt3to4:
-#include <QGridLayout>
-#include <QBoxLayout>
 #include <QHBoxLayout>
-#include <QLabel>
-#include <QFrame>
 #include <QCloseEvent>
+#include <QBoxLayout>
+#include <QGridLayout>
+#include <QFrame>
+#include <QLabel>
 
 US_Hydrodyn_Hydro_Zeno::US_Hydrodyn_Hydro_Zeno(struct hydro_options *hydro,
                                                bool *hydro_zeno_widget, 
@@ -71,6 +71,34 @@ void US_Hydrodyn_Hydro_Zeno::setupGUI()
    AUTFBACK( le_zeno_zeno_steps );
    le_zeno_zeno_steps->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_zeno_zeno_steps, SIGNAL(textChanged(const QString &)), SLOT(update_zeno_zeno_steps(const QString &)));
+
+   cb_zeno_max_cap = new QCheckBox( this );
+   cb_zeno_max_cap->setText( us_tr( "Early termination:") );
+   cb_zeno_max_cap->setEnabled( true );
+   cb_zeno_max_cap->setChecked( ((US_Hydrodyn *)us_hydrodyn)->gparams.count( "zeno_max_cap" ) &&
+                                ((US_Hydrodyn *)us_hydrodyn)->gparams[ "zeno_max_cap" ] == "true"  );
+   cb_zeno_max_cap->setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize ) );
+   cb_zeno_max_cap->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_zeno_max_cap );
+   connect( cb_zeno_max_cap, SIGNAL( clicked() ), this, SLOT( set_zeno_max_cap() ) );
+
+   lbl_zeno_max_cap = new QLabel(us_tr(" Stokes Radius S.D./Mean in percent:"), this );
+   lbl_zeno_max_cap->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   lbl_zeno_max_cap->setPalette( PALET_LABEL );
+   AUTFBACK( lbl_zeno_max_cap );
+   lbl_zeno_max_cap->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   le_zeno_max_cap = new QLineEdit(  this );    le_zeno_max_cap->setObjectName( "Zeno_Max_Cap Line Edit" );
+   le_zeno_max_cap->setText(((US_Hydrodyn *)us_hydrodyn)->gparams[ "zeno_max_cap_pct" ] );
+   le_zeno_max_cap->setAlignment(Qt::AlignVCenter);
+   le_zeno_max_cap->setPalette( PALET_NORMAL );
+   AUTFBACK( le_zeno_max_cap );
+   le_zeno_max_cap->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   {
+      QDoubleValidator *qdv = new QDoubleValidator( 0.01, 10, 2, le_zeno_max_cap );
+      le_zeno_max_cap->setValidator( qdv );
+   }
+   connect(le_zeno_max_cap, SIGNAL(textChanged(const QString &)), SLOT(update_zeno_max_cap(const QString &)));
 
    cb_zeno_interior = new QCheckBox( this );
    cb_zeno_interior->setText( us_tr( "Compute Interior:") );
@@ -145,6 +173,20 @@ void US_Hydrodyn_Hydro_Zeno::setupGUI()
       cb_zeno_cxx->hide();
    }
 
+   lbl_zeno_repeats = new QLabel(us_tr(" Zeno repetitions:"), this );
+   lbl_zeno_repeats->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
+   lbl_zeno_repeats->setPalette( PALET_LABEL );
+   AUTFBACK( lbl_zeno_repeats );
+   lbl_zeno_repeats->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   le_zeno_repeats = new QLineEdit(  this );    le_zeno_repeats->setObjectName( "Zeno_Repeats Line Edit" );
+   le_zeno_repeats->setText( ((US_Hydrodyn *)us_hydrodyn)->gparams["zeno_repeats" ] );
+   le_zeno_repeats->setAlignment(Qt::AlignVCenter);
+   le_zeno_repeats->setPalette( PALET_NORMAL );
+   AUTFBACK( le_zeno_repeats );
+   le_zeno_repeats->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   connect(le_zeno_repeats, SIGNAL(textChanged(const QString &)), SLOT(update_zeno_repeats(const QString &)));
+
    pb_cancel = new QPushButton(us_tr("Close"), this);
    pb_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_cancel->setMinimumHeight(minHeight1);
@@ -168,6 +210,11 @@ void US_Hydrodyn_Hydro_Zeno::setupGUI()
    background->addWidget( le_zeno_zeno_steps , j, 2 );
    j++;
 
+   background->addWidget( cb_zeno_max_cap     , j, 0 );
+   background->addWidget( lbl_zeno_max_cap    , j, 1 );
+   background->addWidget( le_zeno_max_cap     , j, 2 );
+   j++;
+
    background->addWidget( cb_zeno_interior       , j, 0 );
    background->addWidget( lbl_zeno_interior_steps, j, 1 );
    background->addWidget( le_zeno_interior_steps , j, 2 );
@@ -183,6 +230,10 @@ void US_Hydrodyn_Hydro_Zeno::setupGUI()
    j++;
 
    background->addWidget( cb_zeno_cxx , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 2  ) - ( 0 ) );
+   j++;
+
+   background->addWidget( lbl_zeno_repeats, j, 1 );
+   background->addWidget( le_zeno_repeats , j, 2 );
    j++;
 
    QBoxLayout * hbl_help_cancel = new QHBoxLayout(); hbl_help_cancel->setContentsMargins( 0, 0, 0, 0 ); hbl_help_cancel->setSpacing( 0 );
@@ -217,6 +268,33 @@ void US_Hydrodyn_Hydro_Zeno::update_zeno_zeno_steps(const QString &str)
    // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
+void US_Hydrodyn_Hydro_Zeno::set_zeno_max_cap()
+{
+   ((US_Hydrodyn *)us_hydrodyn)->gparams[ "zeno_max_cap" ] = ( cb_zeno_max_cap->isChecked() ? "true" : "false" );
+   // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+   update_enables();
+}
+
+void US_Hydrodyn_Hydro_Zeno::update_zeno_max_cap(const QString &str)
+{
+   double val = str.toDouble();
+   // bool changed = false;
+   // if ( val >= 25 ) {
+   //    val = 25;
+   //    changed = true;
+   // }
+   // if ( val < 0.01 ) {
+   //    val = 0.01;
+   //    changed = true;
+   // }
+   
+   // if ( changed ) {
+   //    le_zeno_max_cap->setText( QString( "%1" ).arg( val ) );
+   // }
+
+   ((US_Hydrodyn *)us_hydrodyn)->gparams[ "zeno_max_cap_pct" ] = QString( "%1" ).arg( val );
+   // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
 
 void US_Hydrodyn_Hydro_Zeno::set_zeno_interior()
 {
@@ -256,6 +334,12 @@ void US_Hydrodyn_Hydro_Zeno::update_zeno_surface_thickness(const QString &str)
    // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
+void US_Hydrodyn_Hydro_Zeno::update_zeno_repeats(const QString &str)
+{
+   ((US_Hydrodyn *)us_hydrodyn)->gparams[ "zeno_repeats" ] = QString( "%1" ).arg( str.toUInt() );
+   // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
 void US_Hydrodyn_Hydro_Zeno::set_zeno_cxx()
 {
    ((US_Hydrodyn *)us_hydrodyn)->gparams[ "zeno_cxx" ] = cb_zeno_cxx->isChecked() ? "true" : "false";
@@ -290,6 +374,7 @@ void US_Hydrodyn_Hydro_Zeno::closeEvent(QCloseEvent *e)
 void US_Hydrodyn_Hydro_Zeno:: update_enables()
 {
    le_zeno_zeno_steps    ->setEnabled( cb_zeno_zeno    ->isChecked() );
+   le_zeno_max_cap       ->setEnabled( cb_zeno_max_cap ->isChecked() );
    le_zeno_surface_steps ->setEnabled( cb_zeno_surface ->isChecked() );
    le_zeno_interior_steps->setEnabled( cb_zeno_interior->isChecked() );
 }

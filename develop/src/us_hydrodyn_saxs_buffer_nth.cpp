@@ -394,7 +394,14 @@ void US_Hydrodyn_Saxs_Buffer_Nth::setupGUI()
 
    intensity_widgets.push_back( pb_i_add );
 
-   plot_data = new QwtPlot(this);
+//   plot_data = new QwtPlot(this);
+   usp_plot_data = new US_Plot( plot_data, "", "", "", this );
+   connect( (QWidget *)plot_data->titleLabel(), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_plot_data( const QPoint & ) ) );
+   ((QWidget *)plot_data->titleLabel())->setContextMenuPolicy( Qt::CustomContextMenu );
+   connect( (QWidget *)plot_data->axisWidget( QwtPlot::yLeft ), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_plot_data( const QPoint & ) ) );
+   ((QWidget *)plot_data->axisWidget( QwtPlot::yLeft ))->setContextMenuPolicy( Qt::CustomContextMenu );
+   connect( (QWidget *)plot_data->axisWidget( QwtPlot::xBottom ), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_plot_data( const QPoint & ) ) );
+   ((QWidget *)plot_data->axisWidget( QwtPlot::xBottom ))->setContextMenuPolicy( Qt::CustomContextMenu );
 #if QT_VERSION < 0x040000
    // plot_data->enableOutline(true);
    // plot_data->setOutlinePen(Qt::white);
@@ -1308,4 +1315,10 @@ void US_Hydrodyn_Saxs_Buffer_Nth::wheel_pressed() {
 void US_Hydrodyn_Saxs_Buffer_Nth::wheel_released() {
    // qDebug() << "wheel_released()";
    wheel_is_pressed = false;
+}
+
+void US_Hydrodyn_Saxs_Buffer_Nth::usp_config_plot_data( const QPoint & ) {
+   US_PlotChoices *uspc = new US_PlotChoices( usp_plot_data );
+   uspc->exec();
+   delete uspc;
 }

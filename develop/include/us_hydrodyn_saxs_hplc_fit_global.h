@@ -119,6 +119,11 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Fit_Global : public QDialog
       vector < QWidget * > test_widgets;
       QPushButton   *pb_test;
       QwtPlot       * plot_test;
+      US_Plot       * usp_plot_test;
+   private slots:
+      void usp_config_plot_test( const QPoint & );
+
+   private:
       ScrollZoomer  * plot_test_zoomer;
 #if QT_VERSION >= 0x040000
       QwtPlotGrid   * grid_test;

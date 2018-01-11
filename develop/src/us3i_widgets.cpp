@@ -18,12 +18,14 @@ US3i_widgets::US3i_widgets( bool set_position, QWidget* w, Qt::WindowFlags f ) :
    qDebug( "us_win: invalid global memory" );
   }
 
+#ifndef Q_OS_WIN
   if ( set_position )
   {
     QPoint p = g.global_position();
     g.set_global_position( p + QPoint( 30, 30 ) );
     move( p );
   }
+#endif
 
   vlgray = US3i_GuiSettings::editColor();
   vlgray.setColor( QPalette::Base, QColor( 0xe0, 0xe0, 0xe0 ) );
@@ -34,8 +36,10 @@ US3i_widgets::US3i_widgets( bool set_position, QWidget* w, Qt::WindowFlags f ) :
 
 US3i_widgets::~US3i_widgets()
 {
+#ifndef Q_OS_WIN
   QPoint p = g.global_position();
   g.set_global_position( p - QPoint( 30, 30 ) );
+#endif
 }
 
 // label
@@ -352,7 +356,7 @@ QwtCounter* US3i_widgets::us_counter( int buttons, double low, double high,
   return counter;
 }
 
-QwtPlot* US3i_widgets::us_plot( const QString& title, const QString& x_axis,
+QwtPlot* US3i_widgets::us3i_plot( const QString& title, const QString& x_axis,
                               const QString& y_axis )
 {
   QwtPlot* plot = new QwtPlot;  
@@ -526,6 +530,62 @@ QHBoxLayout* US3i_widgets::us_timeedit(
    }
 
    layo->addWidget( tedt );
+
+   return layo;
+}
+
+// day-hh-mm-ss box
+QHBoxLayout* US3i_widgets::us_ddhhmmss( 
+	     const int fontAdjust, QSpinBox** dd, QSpinBox** hh, QSpinBox** mm, QSpinBox** ss)
+{
+
+   QPalette   pal    = US3i_GuiSettings::normalColor();
+   QFont      font   = QFont( US3i_GuiSettings::fontFamily(),
+                              US3i_GuiSettings::fontSize  () + fontAdjust );
+
+   QHBoxLayout* layo = new QHBoxLayout;
+   layo->setContentsMargins( 0, 0, 0, 0 );
+   layo->setSpacing        ( 0 );
+   
+   if ( dd != NULL )
+   {
+      *dd              = new QSpinBox( this );
+      (*dd)->setPalette( pal );
+      (*dd)->setAutoFillBackground( true );
+      (*dd)->setFont( font );
+
+      layo->addWidget( *dd );
+   }
+   
+   if ( hh != NULL )
+   {
+      *hh              = new QSpinBox( this );
+      (*hh)->setPalette( pal );
+      (*hh)->setAutoFillBackground( true );
+      (*hh)->setFont( font );
+
+      layo->addWidget( *hh );
+   }   
+   
+   if ( mm != NULL )
+   {
+      *mm              = new QSpinBox( this );
+      (*mm)->setPalette( pal );
+      (*mm)->setAutoFillBackground( true );
+      (*mm)->setFont( font );
+
+      layo->addWidget( *mm );
+   }
+   
+   if ( ss != NULL )
+   {
+      *ss              = new QSpinBox( this );
+      (*ss)->setPalette( pal );
+      (*ss)->setAutoFillBackground( true );
+      (*ss)->setFont( font );
+
+      layo->addWidget( *ss );
+   }   
 
    return layo;
 }

@@ -2,10 +2,10 @@
 #include "../include/us_hydrodyn_bead_output.h"
 #include "../include/us_hydrodyn.h"
 //Added by qt3to4:
-#include <QGridLayout>
-#include <QLabel>
-#include <QFrame>
 #include <QCloseEvent>
+#include <QGridLayout>
+#include <QFrame>
+#include <QLabel>
 
 US_Hydrodyn_Bead_Output::US_Hydrodyn_Bead_Output(struct bead_output_options *bead_output,
                                                  bool *bead_output_widget, void *us_hydrodyn, QWidget *p, const char *name) : QFrame( p )
@@ -42,7 +42,7 @@ void US_Hydrodyn_Bead_Output::setupGUI()
    lbl_info->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
 
 #if QT_VERSION < 0x040000
-   bg_output = new QGroupBox(3, Qt::Horizontal, "Output Format:", this);
+   bg_output = new QGroupBox(4, Qt::Horizontal, "Output Format:", this);
    bg_output->setExclusive(false);
    connect(bg_output, SIGNAL(clicked(int)), this, SLOT(select_output(int)));
 
@@ -72,6 +72,15 @@ void US_Hydrodyn_Bead_Output::setupGUI()
    cb_hydro_output->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_hydro_output->setPalette( PALET_NORMAL );
    AUTFBACK( cb_hydro_output );
+
+   cb_grpy_output = new QCheckBox(bg_output);
+   cb_grpy_output->setText(us_tr(" GRPY "));
+   cb_grpy_output->setEnabled(true);
+   cb_grpy_output->setChecked((*bead_output).output & US_HYDRODYN_OUTPUT_GRPY);
+   cb_grpy_output->setMinimumHeight(minHeight1);
+   cb_grpy_output->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_grpy_output->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_grpy_output );
 
    // bg_output->setButton((*bead_output).output);
 #else
@@ -107,11 +116,22 @@ void US_Hydrodyn_Bead_Output::setupGUI()
    AUTFBACK( cb_hydro_output );
    connect(cb_hydro_output, SIGNAL(clicked()), this, SLOT(select_output_hydro()));
 
+   cb_grpy_output = new QCheckBox();
+   cb_grpy_output->setText(us_tr(" GRPY "));
+   cb_grpy_output->setEnabled(true);
+   cb_grpy_output->setChecked((*bead_output).output & US_HYDRODYN_OUTPUT_GRPY);
+   cb_grpy_output->setMinimumHeight(minHeight1);
+   cb_grpy_output->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_grpy_output->setPalette( PALET_NORMAL );
+   AUTFBACK( cb_grpy_output );
+   connect(cb_grpy_output, SIGNAL(clicked()), this, SLOT(select_output_grpy()));
+
    {
       QHBoxLayout * bl = new QHBoxLayout; bl->setContentsMargins( 0, 0, 0, 0 ); bl->setSpacing( 0 );
       bl->addWidget( cb_somo_output );
       bl->addWidget( cb_beams_output );
       bl->addWidget( cb_hydro_output );
+      bl->addWidget( cb_grpy_output );
       bg_output->setLayout( bl );
    }
       
@@ -261,6 +281,10 @@ void US_Hydrodyn_Bead_Output::select_output_beams() {
 
 void US_Hydrodyn_Bead_Output::select_output_hydro() {
    select_output( 2 );
+}
+
+void US_Hydrodyn_Bead_Output::select_output_grpy() {
+   select_output( 3 );
 }
 
 void US_Hydrodyn_Bead_Output::select_output(int val)

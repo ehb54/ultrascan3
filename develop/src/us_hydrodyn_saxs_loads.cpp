@@ -1287,7 +1287,7 @@ void US_Hydrodyn_Saxs::load_iqq_csv( QString filename, bool just_plotted_curves 
 }
 
 
-void US_Hydrodyn_Saxs::load_saxs( QString filename, bool just_plotted_curves )
+void US_Hydrodyn_Saxs::load_saxs( QString filename, bool just_plotted_curves, QString scaleto )
 {
    if ( just_plotted_curves )
    {
@@ -1388,7 +1388,13 @@ void US_Hydrodyn_Saxs::load_saxs( QString filename, bool just_plotted_curves )
          cout << "number of fields: " << number_of_fields << endl;
       }
 
-      set_scaling_target( scaling_target );
+      if ( scaleto.isEmpty() ) {
+         set_scaling_target( scaling_target );
+      } else {
+         scaling_target = scaleto;
+      }
+
+      // us_qdebug( QString( "scaling target is %1" ).arg( scaling_target ) );
 
       if ( ext == "int" ) 
       {
@@ -1705,7 +1711,7 @@ void US_Hydrodyn_Saxs::load_saxs( QString filename, bool just_plotted_curves )
    }
 }
 
-void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves )
+void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves, QString load_this, bool skip_mw )
 {
    if ( just_plotted_curves &&
         !qsl_plotted_pr_names.size() )
@@ -1720,19 +1726,23 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves )
       USglobal->config_list.root_dir + SLASH + "somo" + SLASH + "saxs" :
       our_saxs_options->path_load_prr;
 
-   if ( !just_plotted_curves ) {
-      select_from_directory_history( use_dir, this );
-   }
-
    QStringList filenames;
    QString filename;
-   if ( !just_plotted_curves )
-   {
-      filenames = QFileDialog::getOpenFileNames( this , "Open" , use_dir , "All files (*);;"
-                                                "sprr files (*.sprr_?);;"
-                                                "csv files (*.csv)" , &load_pr_selected_filter );
+   if ( load_this.isEmpty() ) {
+      if ( !just_plotted_curves ) {
+         select_from_directory_history( use_dir, this );
+      }
 
+      if ( !just_plotted_curves ) {
+         filenames = QFileDialog::getOpenFileNames( this , "Open" , use_dir , "All files (*);;"
+                                                   "sprr files (*.sprr_?);;"
+                                                   "csv files (*.csv)" , &load_pr_selected_filter );
+
+      }
+   } else {
+      filenames << load_this;
    }
+
    if ( filenames.empty() && !just_plotted_curves )
    {
       return;
@@ -2553,7 +2563,7 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves )
                {
                   (*remember_mw)[QFileInfo(filename).fileName() + " " + qsl_tmp[0]] = tmp_mw;
                   (*remember_mw_source)[QFileInfo(filename).fileName() + " " + qsl_tmp[0]] = "loaded from csv";
-                  plot_one_pr(this_r, pr, QFileInfo(filename).fileName() + " " + qsl_tmp[0]);
+                  plot_one_pr( this_r, pr, QFileInfo(filename).fileName() + " " + qsl_tmp[0], skip_mw );
                }
             }
          }
@@ -2606,7 +2616,7 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves )
 
             double pr_avg_area = compute_pr_area(pr_avg, r);
 
-            plot_one_pr(this_r, pr, QFileInfo(filename).fileName() + " Average");
+            plot_one_pr( this_r, pr, QFileInfo(filename).fileName() + " Average", skip_mw );
 
             vector < double > pr_std_dev;
             vector < double > pr_avg_minus_std_dev;
@@ -2723,7 +2733,7 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves )
                }
                pr_avg_minus_std_dev = pr;
 
-               plot_one_pr(this_r, pr, QFileInfo(filename).fileName() + " Average minus 1 std dev");
+               plot_one_pr( this_r, pr, QFileInfo(filename).fileName() + " Average minus 1 std dev", skip_mw );
                
                pr = sum_pr;
                for ( unsigned int i = 0; i < sum_pr.size(); i++ )
@@ -2742,7 +2752,7 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves )
                }
                pr_avg_plus_std_dev = pr;
 
-               plot_one_pr(this_r, pr, QFileInfo(filename).fileName() + " Average plus 1 std dev");
+               plot_one_pr(this_r, pr, QFileInfo(filename).fileName() + " Average plus 1 std dev", skip_mw );
             }
             if ( plotted )
             {
@@ -2876,6 +2886,7 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves )
          (*remember_mw)[QFileInfo(filename).fileName()] = mw;
          (*remember_mw_source)[QFileInfo(filename).fileName()] = "loaded from sprr file";
       }
+      
       editor->append(firstLine);
       while ( startline > 0 )
       {
@@ -2905,7 +2916,7 @@ void US_Hydrodyn_Saxs::load_pr( bool just_plotted_curves )
          (*remember_mw_source)[use_filename] = "loaded from sprr file";
       }         
       check_pr_grid( r, pr );
-      plot_one_pr(r, pr, use_filename);
+      plot_one_pr(r, pr, use_filename, skip_mw );
    }
 }
 

@@ -48,7 +48,7 @@ class US_EXTERN US3i_Editor : public QMainWindow
    
       void saveFile   ( void );
 
-   private slots:
+   public slots:
       void load       ( void );
       void save       ( void );
       void saveAs     ( void );

@@ -833,7 +833,7 @@ QString US_Saxs_Util::nsa_physical_stats()
       .arg( volume - volume_intersection );
 
    qs += QString( 
-                  "centers bounding box size (A) %1 %2 %2\n" 
+                  "centers bounding box size (A) %1 %2 %3\n" 
                   )
       .arg( pmax.axis[ 0 ] - pmin.axis[ 0 ] )
       .arg( pmax.axis[ 1 ] - pmin.axis[ 1 ] )
@@ -847,7 +847,7 @@ QString US_Saxs_Util::nsa_physical_stats()
       .arg( ( pmax.axis[ 1 ] - pmin.axis[ 1 ] ) / ( pmax.axis[ 2 ] - pmin.axis[ 2 ] ) );
 
    qs += QString( 
-                  "radial extent bounding box size (A) %1 %2 %2\n" 
+                  "radial extent bounding box size (A) %1 %2 %3\n" 
                   )
       .arg( prmax.axis[ 0 ] - prmin.axis[ 0 ] )
       .arg( prmax.axis[ 1 ] - prmin.axis[ 1 ] )

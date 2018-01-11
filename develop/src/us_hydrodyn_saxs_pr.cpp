@@ -7,7 +7,7 @@
 #include <qregexp.h>
 
 #define SLASH QDir::separator()
-double US_Hydrodyn_Saxs::get_mw( QString filename, bool display_mw_msg )
+double US_Hydrodyn_Saxs::get_mw( QString filename, bool display_mw_msg, bool allow_none )
 {
    // enter MW and PSV
    filename = QFileInfo(filename).fileName();
@@ -67,25 +67,35 @@ double US_Hydrodyn_Saxs::get_mw( QString filename, bool display_mw_msg )
                                                          &remember,
                                                          &use_partial,
                                                          &partial,
+                                                         remember_mw,
+                                                         remember_mw_source,
+                                                         allow_none,
                                                          this
                                                          );
       US_Hydrodyn::fixWinButtons( smw );
       do {
          smw->exec();
+         if ( allow_none && mw == -1e0 ) {
+            break;
+         }
       } while ( mw <= 0.0 );
-      last_used_mw = mw;
+      if ( mw > 0e0 ) {
+         last_used_mw = mw;
       
-      delete smw;
-      this->isVisible() ? this->raise() : this->show();
+         delete smw;
+         this->isVisible() ? this->raise() : this->show();
       
-      if ( remember ) 
-      {
-         (*remember_mw)[filename] = mw;
-         (*remember_mw_source)[filename] = "manually entered value";
-      }
-      if ( use_partial ) 
-      {
-         (*match_remember_mw)[partial] = mw;
+         if ( remember ) 
+         {
+            (*remember_mw)[filename] = mw;
+            (*remember_mw_source)[filename] = "manually entered value";
+         }
+         if ( use_partial ) 
+         {
+            (*match_remember_mw)[partial] = mw;
+         }
+      } else {
+         return mw;
       }
    }
    //   printf( "%s is %g\n",  QString( "get mw filename %1" ).arg( filename ).toLatin1().data(), mw );
@@ -600,11 +610,6 @@ void US_Hydrodyn_Saxs::guinier_window()
       ((US_Hydrodyn *)us_hydrodyn)->sas_options_guinier_window->show();
    }
 }
-
-void US_Hydrodyn_Saxs::ift()
-{
-}
-
 
 void US_Hydrodyn_Saxs::sync_conc_csv() // removes deleted curves, adds non-extant curves with default
 {

@@ -99,7 +99,11 @@ void US_Hydrodyn_Misc::setupGUI()
    le_vbar->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_vbar, SIGNAL(textChanged(const QString &)), SLOT(update_vbar(const QString &)));
 
+#if QT_VERSION < 0x050000
    lbl_vbar_temperature = new QLabel(us_tr(" Vbar measured/computed at T=(ºC): "), this);
+#else
+   lbl_vbar_temperature = new QLabel(us_tr(" Vbar measured/computed at T=(\u00b0C): "), this);
+#endif
    Q_CHECK_PTR(lbl_vbar_temperature);
    lbl_vbar_temperature->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_vbar_temperature->setMinimumHeight(minHeight1);

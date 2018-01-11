@@ -108,6 +108,12 @@ using namespace std;
 # endif
 #endif
 
+struct _vdwf {
+   double mw;
+   double r;
+   double w;
+};
+
 class US_EXTERN US_Hydrodyn : public QFrame
 {
    Q_OBJECT
@@ -248,6 +254,9 @@ class US_EXTERN US_Hydrodyn : public QFrame
 
    private:
 
+      bool load_vdwf_json( QString filename );
+      map < QString, _vdwf > vdwf;
+
       bool last_no_model_selected;
 
       bool residue_widget;
@@ -377,7 +386,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       QPushButton *pb_open_hydro_results;
       QPushButton *pb_select_save_params;
       QPushButton *pb_grid_pdb;
-      QPushButton *pb_grid_pdb_o;
+      QPushButton *pb_vdw_beads;
       QPushButton *pb_grid;
       QPushButton *pb_view_asa;
       QPushButton *pb_view_bead_model;
@@ -852,7 +861,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       int  calc_somo( bool no_ovlp_removal = false );     // compute asa and then refine bead_model
       int  calc_somo_o();   // somo model with overlaps
       int  calc_grid_pdb( bool no_ovlp_removal = false ); // compute grid model from pdb
-      int  calc_grid_pdb_o(); // compute grid model from pdb
+      int  calc_vdw_beads(); // compute grid model from pdb
       int  calc_grid();     // compute grid model from bead model
       int  calc_hydro();
       bool calc_zeno_hydro();
@@ -934,6 +943,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void select_model( int val = 0 );
       void model_selection_changed();
       int create_beads(QString *error_string, bool quiet = false); // turn pdb/atom model into bead_model
+      int create_vdw_beads(QString & error_string, bool quiet = false); // turn pdb/atom model into bead_model
       void get_atom_map(PDB_model *);
       int check_for_missing_atoms(QString *error_string, PDB_model *);
       void build_molecule_maps(PDB_model *model); // sets up maps for molecule

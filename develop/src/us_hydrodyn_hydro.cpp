@@ -216,7 +216,7 @@ void US_Hydrodyn_Hydro::setupGUI()
    le_solvent_acronym->setEnabled(true);
    connect(le_solvent_acronym, SIGNAL(textChanged(const QString &)), SLOT(update_solvent_acronym(const QString &)));
 
-   lbl_temperature = new QLabel(us_tr(" Temperature (ºC):"));
+   lbl_temperature = new QLabel(us_tr(" Temperature (\u00b0C):"), bg_solvent_conditions);
    Q_CHECK_PTR(lbl_temperature);
    lbl_temperature->setAlignment(Qt::AlignLeft|Qt::AlignVCenter);
    lbl_temperature->setPalette( PALET_LABEL );

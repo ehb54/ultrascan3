@@ -42,7 +42,7 @@ int nnls(double *a, int a_dim1, int m, int n, double *b, double *x,
 
 
 #ifndef AVOGADRO
-#define AVOGADRO 6.022045e+23
+#define AVOGADRO 6.022140857e+23
 #endif
 
 #ifndef R

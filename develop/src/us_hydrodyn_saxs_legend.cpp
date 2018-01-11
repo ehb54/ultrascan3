@@ -76,14 +76,25 @@ void US_Hydrodyn_Saxs::plot_saxs_clicked( long
    }
 #endif
 }
-void US_Hydrodyn_Saxs::plot_saxs_item_clicked( QwtPlotItem* 
-#if QT_VERSION >= 0x040000
-                                               pitem
+
+void US_Hydrodyn_Saxs::plot_saxs_item_clicked(
+#if QT_VERSION >= 0x050000 || QT_VERSION < 0x040000
+                                              const QVariant & iteminfo,
+                                              int index
+#else
+                                              QwtPlotItem*
+# if QT_VERSION >= 0x040000
+                                              pitem
+# endif
 #endif
                                                )
 {
 #if QT_VERSION >= 0x040000
+# if QT_VERSION >= 0x050000
+   QwtPlotCurve* pcurve = (QwtPlotCurve *)plot_saxs->infoToItem( iteminfo );
+# else
    QwtPlotCurve* pcurve = (QwtPlotCurve*)pitem;
+# endif
    int csize = pcurve->dataSize();
 
    if ( csize < 1 )
@@ -113,14 +124,24 @@ void US_Hydrodyn_Saxs::plot_pr_clicked( long
    cout << QString( "plot_pr_clicked %1\n" ).arg( key );
 #endif
 }
-void US_Hydrodyn_Saxs::plot_pr_item_clicked( QwtPlotItem* 
-#if QT_VERSION >= 0x040000
-                                             pitem
+void US_Hydrodyn_Saxs::plot_pr_item_clicked( 
+#if QT_VERSION >= 0x050000 || QT_VERSION < 0x040000
+                                            const QVariant & iteminfo,
+                                            int index
+#else
+                                            QwtPlotItem*
+# if QT_VERSION >= 0x040000
+                                            pitem
+# endif
 #endif
                                              )
 {
 #if QT_VERSION >= 0x040000
+# if QT_VERSION >= 0x050000
+   QwtPlotCurve* pcurve = (QwtPlotCurve *)plot_pr->infoToItem( iteminfo );
+# else
    QwtPlotCurve* pcurve = (QwtPlotCurve*)pitem;
+# endif
    int csize = pcurve->dataSize();
 
    if ( csize < 1 )
@@ -166,8 +187,14 @@ void US_Hydrodyn_Saxs::set_saxs_legend()
       legend_saxs->setDefaultItemMode( QwtLegendData::Clickable );
       legend_saxs->setFrameStyle( QFrame::Box | QFrame::Sunken );
       plot_saxs->insertLegend( legend_saxs, QwtPlot::BottomLegend );
+# if QT_VERSION >= 0x050000
+      ((QwtLegend *)plot_saxs->legend())->setDefaultItemMode( QwtLegendData::Clickable );
+      connect( (QwtLegend *)plot_saxs->legend(), SIGNAL( clicked( const QVariant &, int ) ),
+               SLOT( plot_pr_item_clicked( const QVariant &, int ) ) );
+# else
       connect( plot_saxs, SIGNAL( legendClicked( QwtPlotItem* ) ),
                SLOT( plot_saxs_item_clicked( QwtPlotItem* ) ) );
+# endif
    } else {
       plot_saxs->insertLegend( NULL );
    }
@@ -200,8 +227,14 @@ void US_Hydrodyn_Saxs::set_pr_legend()
       legend_pr->setDefaultItemMode( QwtLegendData::Clickable );
       legend_pr->setFrameStyle( QFrame::Box | QFrame::Sunken );
       plot_pr->insertLegend( legend_pr, QwtPlot::BottomLegend );
+# if QT_VERSION >= 0x050000
+      ((QwtLegend *)plot_pr->legend())->setDefaultItemMode( QwtLegendData::Clickable );
+      connect( (QwtLegend *)plot_pr->legend(), SIGNAL( clicked( const QVariant &, int ) ),
+               SLOT( plot_pr_item_clicked( const QVariant &, int ) ) );
+# else
       connect( plot_pr, SIGNAL( legendClicked( QwtPlotItem* ) ),
                SLOT( plot_pr_item_clicked( QwtPlotItem* ) ) );
+# endif
    } else {
       plot_pr->insertLegend( NULL );
    }

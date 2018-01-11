@@ -54,6 +54,10 @@ class US_EXTERN US_Hydrodyn_Hydro_Zeno : public QFrame
       QLabel    *lbl_zeno_zeno_steps;
       QLineEdit *le_zeno_zeno_steps;
 
+      QCheckBox *cb_zeno_max_cap;
+      QLabel    *lbl_zeno_max_cap;
+      QLineEdit *le_zeno_max_cap;
+
       QCheckBox *cb_zeno_interior;
       QLabel    *lbl_zeno_interior_steps;
       QLineEdit *le_zeno_interior_steps;
@@ -65,6 +69,9 @@ class US_EXTERN US_Hydrodyn_Hydro_Zeno : public QFrame
       QLabel    *lbl_zeno_surface_thickness;
       QLineEdit *le_zeno_surface_thickness;
 
+      QLabel    *lbl_zeno_repeats;
+      QLineEdit *le_zeno_repeats;
+      
       QCheckBox *cb_zeno_cxx;
 
       QPushButton *pb_help;
@@ -79,6 +86,9 @@ class US_EXTERN US_Hydrodyn_Hydro_Zeno : public QFrame
       void set_zeno_zeno();
       void update_zeno_zeno_steps    ( const QString &str );
 
+      void set_zeno_max_cap();
+      void update_zeno_max_cap       ( const QString &str );
+
       void set_zeno_interior();
       void update_zeno_interior_steps( const QString &str );
 
@@ -88,6 +98,8 @@ class US_EXTERN US_Hydrodyn_Hydro_Zeno : public QFrame
       void update_zeno_surface_thickness ( const QString &str );
 
       void set_zeno_cxx();
+
+      void update_zeno_repeats ( const QString &str );
 
       void cancel();
       void help();

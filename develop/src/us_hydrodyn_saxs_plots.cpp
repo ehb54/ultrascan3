@@ -10,7 +10,7 @@ static std::basic_ostream<char>& operator<<(std::basic_ostream<char>& os, const 
    return os << qPrintable(str);
 }
 
-void US_Hydrodyn_Saxs::plot_one_pr(vector < double > r, vector < double > pr, QString name)
+void US_Hydrodyn_Saxs::plot_one_pr(vector < double > r, vector < double > pr, QString name, bool skip_mw )
 {
    if ( r.size() < pr.size() )
    {
@@ -24,7 +24,12 @@ void US_Hydrodyn_Saxs::plot_one_pr(vector < double > r, vector < double > pr, QS
    plotted_r.push_back(r);
 
    plotted_pr_not_normalized.push_back(pr);
-   plotted_pr_mw.push_back(get_mw(name,false));
+   plotted_pr_mw.push_back( skip_mw ? -1e0 : get_mw( name, false, true ) );
+
+   if ( plotted_pr_mw.back() == -1 ) {
+      plotted_pr_mw.back() = 1;
+      cb_normalize->setChecked( false );
+   }
 
    if ( cb_normalize->isChecked() )
    {
@@ -1679,3 +1684,43 @@ void US_Hydrodyn_Saxs::set_eb()
    set_guinier();
 }
 
+void US_Hydrodyn_Saxs::set_width() 
+{
+   pen_width++;
+   if ( pen_width > 5 )
+   {
+      pen_width = 1;
+   }
+   set_guinier();
+
+   replot_pr();
+}
+
+void US_Hydrodyn_Saxs::replot_pr()
+{
+#if QT_VERSION >= 0x040000
+   QwtPlotItemList ilist = plot_pr->itemList();
+   for ( int ii = 0; ii < ilist.size(); ii++ )
+   {
+      QwtPlotItem* plitem = ilist[ ii ];
+      if ( plitem->rtti() != QwtPlotItem::Rtti_PlotCurve ) {
+         continue;
+      }
+
+      QwtPlotCurve* curve = (QwtPlotCurve*) plitem;
+      QPen qp = curve->pen();
+      qp.setWidth( pen_width );
+      curve->setPen( qp );
+   }
+#else
+   QwtPlotCurveIterator itc = plot_pr->curveIterator();
+   for ( const QwtPlotCurve *c = itc.toFirst(); c != 0; c = ++itc )
+   {
+      long ck = itc.currentKey();
+      QPen qp = plot_pr->curvePen( ck );
+      qp.setWidth( pen_width );
+      plot_pr->setCurvePen( ck, qp );
+   }
+#endif
+   plot_pr->replot();
+}

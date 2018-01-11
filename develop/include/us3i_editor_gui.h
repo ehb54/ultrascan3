@@ -20,6 +20,6 @@ class US_EXTERN US3i_EditorGui : public US3i_widgetsDialog
 
    private:
 
-   private slots:
+   public slots:
 };
 #endif

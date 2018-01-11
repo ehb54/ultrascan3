@@ -295,6 +295,11 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       QPushButton   *pb_cancel;
 
       QwtPlot       *plot_dist;
+      US_Plot       *usp_plot_dist;
+   private slots:
+      void usp_config_plot_dist( const QPoint & );
+
+   private:
       ScrollZoomer  *plot_dist_zoomer;
 #if QT_VERSION >= 0x040000
       QwtPlotGrid   *grid_saxs;
@@ -302,11 +307,21 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
 #endif
 
       QwtPlot       *plot_errors;
+      US_Plot       *usp_plot_errors;
+   private slots:
+      void usp_config_plot_errors( const QPoint & );
+
+   private:
       ScrollZoomer  *plot_errors_zoomer;
 #if QT_VERSION >= 0x040000
       QwtPlotGrid   *grid_errors;
 #endif
       QwtPlot       *plot_ref;
+      US_Plot       *usp_plot_ref;
+   private slots:
+      void usp_config_plot_ref( const QPoint & );
+
+   private:
 #if QT_VERSION >= 0x040000
       QwtPlotGrid   *grid_ref;
 #endif
@@ -556,30 +571,55 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       // QCheckBox    * cb_guinier_search;
 
       QwtPlot      * guinier_plot;
+      US_Plot      * usp_guinier_plot;
+   private slots:
+      void usp_config_guinier_plot( const QPoint & );
+
+   private:
       ScrollZoomer * guinier_plot_zoomer;
 #if QT_VERSION >= 0x040000
       QwtPlotGrid  * guinier_plot_grid;
 #endif
 
       QwtPlot      * guinier_plot_errors;
+      US_Plot      * usp_guinier_plot_errors;
+   private slots:
+      void usp_config_guinier_plot_errors( const QPoint & );
+
+   private:
       ScrollZoomer * guinier_plot_errors_zoomer;
 #if QT_VERSION >= 0x040000
       QwtPlotGrid  * guinier_plot_errors_grid;
 #endif
 
       QwtPlot      * guinier_plot_rg;
+      US_Plot      * usp_guinier_plot_rg;
+   private slots:
+      void usp_config_guinier_plot_rg( const QPoint & );
+
+   private:
       ScrollZoomer * guinier_plot_rg_zoomer;
 #if QT_VERSION >= 0x040000
       QwtPlotGrid  * guinier_plot_rg_grid;
 #endif
 
       QwtPlot      * guinier_plot_mw;
+      US_Plot      * usp_guinier_plot_mw;
+   private slots:
+      void usp_config_guinier_plot_mw( const QPoint & );
+
+   private:
       ScrollZoomer * guinier_plot_mw_zoomer;
 #if QT_VERSION >= 0x040000
       QwtPlotGrid  * guinier_plot_mw_grid;
 #endif
 
       QwtPlot      * guinier_plot_summary;
+      US_Plot      * usp_guinier_plot_summary;
+   private slots:
+      void usp_config_guinier_plot_summary( const QPoint & );
+
+   private:
 
       int                                 guinier_scroll_pos;
       void                                guinier_scroll_highlight( int pos );
@@ -867,6 +907,11 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc : public QFrame
       vector < QWidget * >                model_widgets;
 
       QwtPlot                           * ggqfit_plot;
+      US_Plot                           * usp_ggqfit_plot;
+   private slots:
+      void usp_config_ggqfit_plot( const QPoint & );
+
+   private:
       ScrollZoomer                      * ggqfit_plot_zoomer;
 #if QT_VERSION >= 0x040000
       QwtPlotGrid                       * ggqfit_plot_grid;

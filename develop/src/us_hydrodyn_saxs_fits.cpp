@@ -767,7 +767,8 @@ void US_Hydrodyn_Saxs::calc_nnls_fit( QString title, QString csv_filename )
                                      nnls_B,
                                      true,
                                      true,
-                                     true
+                                     true,
+                                     pen_width
                                      );
    saxs_residuals_window->show();
    
@@ -1025,7 +1026,8 @@ void US_Hydrodyn_Saxs::calc_best_fit( QString title, QString csv_filename )
                                      best_fit_target,
                                      true,
                                      true,
-                                     true
+                                     true,
+                                     pen_width
                                      );
    saxs_residuals_window->show();
    

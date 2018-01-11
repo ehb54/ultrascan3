@@ -11,6 +11,7 @@
 //#include <q3frame.h>
 #include <qcheckbox.h>
 #include <qwt_plot.h>
+#include "us3i_plot.h"
 #include <qwt_counter.h>
 #include <qtextedit.h>
 #include <qpen.h>
@@ -56,6 +57,7 @@ class US_EXTERN US_Hydrodyn_Saxs_Iqq_Residuals : public QFrame
                                      bool plot_as_percent,
                                      double avg_std_dev_frac,
                                      vector < double > std_dev_frac,
+                                     unsigned int pen_width,
                                      QWidget *p = 0, 
                                      const char *name = 0
                                      );
@@ -121,6 +123,11 @@ class US_EXTERN US_Hydrodyn_Saxs_Iqq_Residuals : public QFrame
       QLabel            *lbl_title;
 
       QwtPlot           *plot;
+      US_Plot           *usp_plot;
+   private slots:
+      void usp_config_plot( const QPoint & );
+
+   private:
       ScrollZoomer      *plot_zoomer;
 #if QT_VERSION >= 0x040000
       QwtPlotGrid       *grid;

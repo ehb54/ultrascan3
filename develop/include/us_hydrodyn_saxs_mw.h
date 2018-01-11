@@ -9,6 +9,8 @@
 
 #include "us_util.h"
 
+#include <map>
+
 using namespace std;
 
 // set mw for saxs normalized p(r) computations
@@ -26,6 +28,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Mw : public QDialog
                           bool *remember,
                           bool *use_partial,
                           QString *partial,
+                          map < QString, float > * remember_mw,
+                          map < QString, QString > * remember_mw_source,
+                          bool allow_none,
                           QWidget *p = 0, 
                           const char *name = 0
                           );
@@ -39,6 +44,9 @@ class US_EXTERN US_Hydrodyn_Saxs_Mw : public QDialog
 
       QLineEdit *le_mw;
       QLineEdit *le_partial;
+
+      QPushButton *pb_known_mw;
+      QPushButton *pb_do_not_normalize;
 
       QPushButton *pb_set_to_last_used_mw;
 
@@ -61,6 +69,11 @@ class US_EXTERN US_Hydrodyn_Saxs_Mw : public QDialog
       bool *use_partial;
       QString *partial;
 
+      map < QString, float > * remember_mw;
+      map < QString, QString > * remember_mw_source;
+
+      bool allow_none;
+
    public slots:
 
    private slots:
@@ -68,6 +81,8 @@ class US_EXTERN US_Hydrodyn_Saxs_Mw : public QDialog
       void update_mw(const QString &);
       void update_partial(const QString &);
 
+      void set_known_mw();
+      void set_do_not_normalize();
       void set_to_last_used_mw();
       void set_remember();
       void set_use_partial();

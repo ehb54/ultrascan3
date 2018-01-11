@@ -498,7 +498,14 @@ void US_Hydrodyn_Saxs_1d::setupGUI()
    pb_cancel->setPalette( PALET_PUSHB );
    connect(pb_cancel, SIGNAL(clicked()), SLOT(cancel()));
 
-   plot_saxs = new QwtPlot(this);
+//   plot_saxs = new QwtPlot(this);
+   usp_plot_saxs = new US_Plot( plot_saxs, "", "", "", this );
+   connect( (QWidget *)plot_saxs->titleLabel(), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_plot_saxs( const QPoint & ) ) );
+   ((QWidget *)plot_saxs->titleLabel())->setContextMenuPolicy( Qt::CustomContextMenu );
+   connect( (QWidget *)plot_saxs->axisWidget( QwtPlot::yLeft ), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_plot_saxs( const QPoint & ) ) );
+   ((QWidget *)plot_saxs->axisWidget( QwtPlot::yLeft ))->setContextMenuPolicy( Qt::CustomContextMenu );
+   connect( (QWidget *)plot_saxs->axisWidget( QwtPlot::xBottom ), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_plot_saxs( const QPoint & ) ) );
+   ((QWidget *)plot_saxs->axisWidget( QwtPlot::xBottom ))->setContextMenuPolicy( Qt::CustomContextMenu );
 #if QT_VERSION < 0x040000
    // plot_saxs->enableOutline(true);
    plot_saxs->setOutlinePen(Qt::white);
@@ -4115,4 +4122,10 @@ bool US_Hydrodyn_Saxs_1d::find_target_ev_thresh()
    }
 
 #endif
+}
+
+void US_Hydrodyn_Saxs_1d::usp_config_plot_saxs( const QPoint & ) {
+   US_PlotChoices *uspc = new US_PlotChoices( usp_plot_saxs );
+   uspc->exec();
+   delete uspc;
 }

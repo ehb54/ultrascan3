@@ -20,6 +20,7 @@
 #include <vector>
 
 #include <qwt_plot.h>
+#include "us3i_plot.h"
 #include <qwt_thermo.h>
 
 #if QT_VERSION >= 0x040000
@@ -159,12 +160,22 @@ class US_EXTERN US_Hydrodyn_Saxs_Cormap : public QFrame
 
 
       QwtPlot       *plot;
+      US_Plot       *usp_plot;
+   private slots:
+      void usp_config_plot( const QPoint & );
+
+   private:
       ScrollZoomer  *plot_zoomer;
 #if QT_VERSION >= 0x040000
       QwtPlotGrid   *plot_grid;
 #endif
 
       QwtPlot       *plot_cluster;
+      US_Plot       *usp_plot_cluster;
+   private slots:
+      void usp_config_plot_cluster( const QPoint & );
+
+   private:
       ScrollZoomer  *plot_cluster_zoomer;
 #if QT_VERSION >= 0x040000
       QwtPlotGrid   *plot_cluster_grid;

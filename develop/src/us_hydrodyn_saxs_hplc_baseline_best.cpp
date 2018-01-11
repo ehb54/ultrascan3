@@ -80,7 +80,14 @@ void US_Hydrodyn_Saxs_Hplc_Baseline_Best::setupGUI()
    AUTFBACK( lbl_hb_title );
    lbl_hb_title->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 
-   plot = new QwtPlot( qs_left );
+//   plot = new QwtPlot( qs_left );
+   usp_plot = new US_Plot( plot, "", "", "", qs_left );
+   connect( (QWidget *)plot->titleLabel(), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_plot( const QPoint & ) ) );
+   ((QWidget *)plot->titleLabel())->setContextMenuPolicy( Qt::CustomContextMenu );
+   connect( (QWidget *)plot->axisWidget( QwtPlot::yLeft ), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_plot( const QPoint & ) ) );
+   ((QWidget *)plot->axisWidget( QwtPlot::yLeft ))->setContextMenuPolicy( Qt::CustomContextMenu );
+   connect( (QWidget *)plot->axisWidget( QwtPlot::xBottom ), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_plot( const QPoint & ) ) );
+   ((QWidget *)plot->axisWidget( QwtPlot::xBottom ))->setContextMenuPolicy( Qt::CustomContextMenu );
 #if QT_VERSION < 0x040000
    plot->enableGridXMin();
    plot->enableGridYMin();
@@ -142,7 +149,14 @@ void US_Hydrodyn_Saxs_Hplc_Baseline_Best::setupGUI()
       hplc_win->plot_info[ plot_name ] = plot;
    }
 
-   hb_plot = new QwtPlot( qs_right );
+//   hb_plot = new QwtPlot( qs_right );
+   usp_hb_plot = new US_Plot( hb_plot, "", "", "", qs_right );
+   connect( (QWidget *)hb_plot->titleLabel(), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_hb_plot( const QPoint & ) ) );
+   ((QWidget *)hb_plot->titleLabel())->setContextMenuPolicy( Qt::CustomContextMenu );
+   connect( (QWidget *)hb_plot->axisWidget( QwtPlot::yLeft ), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_hb_plot( const QPoint & ) ) );
+   ((QWidget *)hb_plot->axisWidget( QwtPlot::yLeft ))->setContextMenuPolicy( Qt::CustomContextMenu );
+   connect( (QWidget *)hb_plot->axisWidget( QwtPlot::xBottom ), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_hb_plot( const QPoint & ) ) );
+   ((QWidget *)hb_plot->axisWidget( QwtPlot::xBottom ))->setContextMenuPolicy( Qt::CustomContextMenu );
 #if QT_VERSION < 0x040000
    hb_plot->enableGridXMin();
    hb_plot->enableGridYMin();
@@ -1537,3 +1551,15 @@ void US_Hydrodyn_Saxs_Hplc_Baseline_Best::update_enables() {
    }
 }
          
+
+void US_Hydrodyn_Saxs_Hplc_Baseline_Best::usp_config_plot( const QPoint & ) {
+   US_PlotChoices *uspc = new US_PlotChoices( usp_plot );
+   uspc->exec();
+   delete uspc;
+}
+
+void US_Hydrodyn_Saxs_Hplc_Baseline_Best::usp_config_hb_plot( const QPoint & ) {
+   US_PlotChoices *uspc = new US_PlotChoices( usp_hb_plot );
+   uspc->exec();
+   delete uspc;
+}

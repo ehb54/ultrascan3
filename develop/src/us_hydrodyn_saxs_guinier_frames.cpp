@@ -186,7 +186,14 @@ void US_Hydrodyn_Saxs_Guinier_Frames::setupGUI()
    pb_close -> setPalette      ( PALET_PUSHB );
    connect( pb_close, SIGNAL( clicked() ), SLOT( cancel() ) );
 
-   plot = new QwtPlot(this);
+//   plot = new QwtPlot(this);
+   usp_plot = new US_Plot( plot, "", "", "", this );
+   connect( (QWidget *)plot->titleLabel(), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_plot( const QPoint & ) ) );
+   ((QWidget *)plot->titleLabel())->setContextMenuPolicy( Qt::CustomContextMenu );
+   connect( (QWidget *)plot->axisWidget( QwtPlot::yLeft ), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_plot( const QPoint & ) ) );
+   ((QWidget *)plot->axisWidget( QwtPlot::yLeft ))->setContextMenuPolicy( Qt::CustomContextMenu );
+   connect( (QWidget *)plot->axisWidget( QwtPlot::xBottom ), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_plot( const QPoint & ) ) );
+   ((QWidget *)plot->axisWidget( QwtPlot::xBottom ))->setContextMenuPolicy( Qt::CustomContextMenu );
 #if QT_VERSION < 0x040000
    plot->enableOutline(true);
    plot->setOutlinePen(Qt::white);
@@ -749,3 +756,9 @@ void US_Hydrodyn_Saxs_Guinier_Frames::update_reffile( const QString & )
    update_plot();
 }
 
+
+void US_Hydrodyn_Saxs_Guinier_Frames::usp_config_plot( const QPoint & ) {
+   US_PlotChoices *uspc = new US_PlotChoices( usp_plot );
+   uspc->exec();
+   delete uspc;
+}

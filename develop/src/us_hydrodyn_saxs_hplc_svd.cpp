@@ -292,7 +292,14 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
 
    // ------ plot section
 
-   plot_data = new QwtPlot(this);
+//   plot_data = new QwtPlot(this);
+   usp_plot_data = new US_Plot( plot_data, "", "", "", this );
+   connect( (QWidget *)plot_data->titleLabel(), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_plot_data( const QPoint & ) ) );
+   ((QWidget *)plot_data->titleLabel())->setContextMenuPolicy( Qt::CustomContextMenu );
+   connect( (QWidget *)plot_data->axisWidget( QwtPlot::yLeft ), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_plot_data( const QPoint & ) ) );
+   ((QWidget *)plot_data->axisWidget( QwtPlot::yLeft ))->setContextMenuPolicy( Qt::CustomContextMenu );
+   connect( (QWidget *)plot_data->axisWidget( QwtPlot::xBottom ), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_plot_data( const QPoint & ) ) );
+   ((QWidget *)plot_data->axisWidget( QwtPlot::xBottom ))->setContextMenuPolicy( Qt::CustomContextMenu );
 #if QT_VERSION < 0x040000
    // plot_data->enableOutline(true);
    // plot_data->setOutlinePen(Qt::white);
@@ -340,7 +347,14 @@ void US_Hydrodyn_Saxs_Hplc_Svd::setupGUI()
 
    // connect( plot_data_zoomer, SIGNAL( zoomed( const QRectF & ) ), SLOT( plot_data_zoomed( const QRectF & ) ) );
 
-   plot_errors = new QwtPlot(this);
+//   plot_errors = new QwtPlot(this);
+   usp_plot_errors = new US_Plot( plot_errors, "", "", "", this );
+   connect( (QWidget *)plot_errors->titleLabel(), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_plot_errors( const QPoint & ) ) );
+   ((QWidget *)plot_errors->titleLabel())->setContextMenuPolicy( Qt::CustomContextMenu );
+   connect( (QWidget *)plot_errors->axisWidget( QwtPlot::yLeft ), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_plot_errors( const QPoint & ) ) );
+   ((QWidget *)plot_errors->axisWidget( QwtPlot::yLeft ))->setContextMenuPolicy( Qt::CustomContextMenu );
+   connect( (QWidget *)plot_errors->axisWidget( QwtPlot::xBottom ), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_plot_errors( const QPoint & ) ) );
+   ((QWidget *)plot_errors->axisWidget( QwtPlot::xBottom ))->setContextMenuPolicy( Qt::CustomContextMenu );
 #if QT_VERSION < 0x040000
    // plot_errors->enableOutline(true);
    // plot_errors->setOutlinePen(Qt::white);
@@ -3794,4 +3808,16 @@ void US_Hydrodyn_Saxs_Hplc_Svd::svd_save()
    ts << out;
    f.close();
    editor_msg( "blue", QString( us_tr( "RMSDs saved in %1" ) ).arg( fname ) );
+}
+
+void US_Hydrodyn_Saxs_Hplc_Svd::usp_config_plot_data( const QPoint & ) {
+   US_PlotChoices *uspc = new US_PlotChoices( usp_plot_data );
+   uspc->exec();
+   delete uspc;
+}
+
+void US_Hydrodyn_Saxs_Hplc_Svd::usp_config_plot_errors( const QPoint & ) {
+   US_PlotChoices *uspc = new US_PlotChoices( usp_plot_errors );
+   uspc->exec();
+   delete uspc;
 }

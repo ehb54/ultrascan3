@@ -186,7 +186,14 @@ void US_Hydrodyn_Saxs_Cormap::setupGUI()
       }
    }
 
-   plot = new QwtPlot( qs2 );
+//   plot = new QwtPlot( qs2 );
+   usp_plot = new US_Plot( plot, "", "", "", qs2 );
+   connect( (QWidget *)plot->titleLabel(), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_plot( const QPoint & ) ) );
+   ((QWidget *)plot->titleLabel())->setContextMenuPolicy( Qt::CustomContextMenu );
+   connect( (QWidget *)plot->axisWidget( QwtPlot::yLeft ), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_plot( const QPoint & ) ) );
+   ((QWidget *)plot->axisWidget( QwtPlot::yLeft ))->setContextMenuPolicy( Qt::CustomContextMenu );
+   connect( (QWidget *)plot->axisWidget( QwtPlot::xBottom ), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_plot( const QPoint & ) ) );
+   ((QWidget *)plot->axisWidget( QwtPlot::xBottom ))->setContextMenuPolicy( Qt::CustomContextMenu );
 #if QT_VERSION < 0x040000
    plot->enableGridXMin();
    plot->enableGridYMin();
@@ -229,7 +236,14 @@ void US_Hydrodyn_Saxs_Cormap::setupGUI()
 #endif
    plot->setCanvasBackground(USglobal->global_colors.plot);
 
-   plot_cluster = new QwtPlot( qs2 );
+//   plot_cluster = new QwtPlot( qs2 );
+   usp_plot_cluster = new US_Plot( plot_cluster, "", "", "", qs2 );
+   connect( (QWidget *)plot_cluster->titleLabel(), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_plot_cluster( const QPoint & ) ) );
+   ((QWidget *)plot_cluster->titleLabel())->setContextMenuPolicy( Qt::CustomContextMenu );
+   connect( (QWidget *)plot_cluster->axisWidget( QwtPlot::yLeft ), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_plot_cluster( const QPoint & ) ) );
+   ((QWidget *)plot_cluster->axisWidget( QwtPlot::yLeft ))->setContextMenuPolicy( Qt::CustomContextMenu );
+   connect( (QWidget *)plot_cluster->axisWidget( QwtPlot::xBottom ), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_plot_cluster( const QPoint & ) ) );
+   ((QWidget *)plot_cluster->axisWidget( QwtPlot::xBottom ))->setContextMenuPolicy( Qt::CustomContextMenu );
 #if QT_VERSION < 0x040000
    plot_cluster->enableGridXMin();
    plot_cluster->enableGridYMin();
@@ -2591,4 +2605,16 @@ void US_Hydrodyn_Saxs_Cormap::imageResized() {
    }
    // update();
    // repaint();
+}
+
+void US_Hydrodyn_Saxs_Cormap::usp_config_plot( const QPoint & ) {
+   US_PlotChoices *uspc = new US_PlotChoices( usp_plot );
+   uspc->exec();
+   delete uspc;
+}
+
+void US_Hydrodyn_Saxs_Cormap::usp_config_plot_cluster( const QPoint & ) {
+   US_PlotChoices *uspc = new US_PlotChoices( usp_plot_cluster );
+   uspc->exec();
+   delete uspc;
 }

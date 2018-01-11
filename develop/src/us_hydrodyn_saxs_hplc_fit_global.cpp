@@ -648,7 +648,14 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::setupGUI()
 
    // ------ plot section
 
-   plot_test = new QwtPlot(this);
+//   plot_test = new QwtPlot(this);
+   usp_plot_test = new US_Plot( plot_test, "", "", "", this );
+   connect( (QWidget *)plot_test->titleLabel(), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_plot_test( const QPoint & ) ) );
+   ((QWidget *)plot_test->titleLabel())->setContextMenuPolicy( Qt::CustomContextMenu );
+   connect( (QWidget *)plot_test->axisWidget( QwtPlot::yLeft ), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_plot_test( const QPoint & ) ) );
+   ((QWidget *)plot_test->axisWidget( QwtPlot::yLeft ))->setContextMenuPolicy( Qt::CustomContextMenu );
+   connect( (QWidget *)plot_test->axisWidget( QwtPlot::xBottom ), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_plot_test( const QPoint & ) ) );
+   ((QWidget *)plot_test->axisWidget( QwtPlot::xBottom ))->setContextMenuPolicy( Qt::CustomContextMenu );
 #if QT_VERSION < 0x040000
    // plot_test->enableOutline(true);
    // plot_test->setOutlinePen(Qt::white);
@@ -3653,4 +3660,10 @@ void US_Hydrodyn_Saxs_Hplc_Fit_Global::grid()
    }
    progress->reset();
    update_enables();
+}
+
+void US_Hydrodyn_Saxs_Hplc_Fit_Global::usp_config_plot_test( const QPoint & ) {
+   US_PlotChoices *uspc = new US_PlotChoices( usp_plot_test );
+   uspc->exec();
+   delete uspc;
 }

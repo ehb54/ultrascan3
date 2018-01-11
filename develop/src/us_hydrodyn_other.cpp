@@ -5444,6 +5444,9 @@ void US_Hydrodyn::hard_coded_defaults()
    gparams[ "hplc_makeiq_cutmax_pct"     ]         = "1";
    gparams[ "hplc_cb_makeiq_avg_peaks"   ]         = "false";
    gparams[ "hplc_makeiq_avg_peaks"      ]         = "5";
+   gparams[ "zeno_repeats"               ]         = "1";
+   gparams[ "zeno_max_cap"               ]         = "false";
+   gparams[ "zeno_max_cap_pct"           ]         = "0.5";
 }
 
 void US_Hydrodyn::set_default()
@@ -6185,6 +6188,7 @@ void US_Hydrodyn::write_bead_model( QString fname,
    FILE *frmc = (FILE *)0;
    FILE *frmc1 = (FILE *)0;
    FILE *fhydro = (FILE *)0;
+   FILE *fgrpy = (FILE *)0;
 
    if (bead_output.output & US_HYDRODYN_OUTPUT_SOMO) {
       fsomo = us_fopen(QString("%1.bead_model").arg(fname).toLatin1().data(), "w");
@@ -6196,6 +6200,9 @@ void US_Hydrodyn::write_bead_model( QString fname,
    }
    if (bead_output.output & US_HYDRODYN_OUTPUT_HYDRO) {
       fhydro = us_fopen(QString("%1.dat").arg(fname).toLatin1().data(), "w");
+   }
+   if (bead_output.output & US_HYDRODYN_OUTPUT_GRPY) {
+      fgrpy = us_fopen(QString("%1.grpy").arg(fname).toLatin1().data(), "w");
    }
 
    int beads = 0;
@@ -6231,6 +6238,39 @@ void US_Hydrodyn::write_bead_model( QString fname,
               beads
               );
    }
+
+   if (fgrpy) {
+      double tot_mw = 0e0;
+
+      for (unsigned int i = 0; i < use_model.size(); i++) {
+         if (use_model[i]->active ) {
+            tot_mw += use_model[i]->bead_ref_mw;
+         }
+      }
+
+
+      fprintf(fgrpy,
+              "%-30s\tTitle\n"
+              "%-30g\tTemperature\n"
+              "%-30g\tSolvent viscosity\n"
+              "%-30g\tMolecular weight\n"
+              "%-30g\tSpecific volume of macromolecule\n"
+              "%-30g\tSolution Density\n"
+              "1.E%d\t\t\t\tUnit of length for coordinates and radii, cm\n"
+              "%-30d\tNumber of beads\n"
+
+              ,QFileInfo(fname).fileName().toLatin1().data()
+              ,hydro.temperature
+              ,hydro.solvent_viscosity * 0.01
+              ,tot_mw
+              ,results.vbar
+              ,hydro.solvent_density
+              ,hydro.unit + 2
+              ,beads
+              
+              );
+   }
+
 
    for (unsigned int i = 0; i < use_model.size(); i++) {
       if (use_model[i]->active) {
@@ -6306,6 +6346,14 @@ void US_Hydrodyn::write_bead_model( QString fname,
                     use_model[i]->bead_coordinate.axis[2],
                     use_model[i]->bead_computed_radius);
          }
+         if (fgrpy) {
+            fprintf(fgrpy,
+                    fstring_hydro.toLatin1().data(),
+                    use_model[i]->bead_coordinate.axis[0],
+                    use_model[i]->bead_coordinate.axis[1],
+                    use_model[i]->bead_coordinate.axis[2],
+                    use_model[i]->bead_computed_radius);
+         }
       }
    }
    if (fsomo) {
@@ -6347,6 +6395,9 @@ void US_Hydrodyn::write_bead_model( QString fname,
    }
    if (fhydro) {
       fclose(fhydro);
+   }
+   if (fgrpy) {
+      fclose(fgrpy);
    }
 }
 

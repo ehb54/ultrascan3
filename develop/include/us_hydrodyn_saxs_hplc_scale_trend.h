@@ -17,6 +17,7 @@
 #include <vector>
 
 #include <qwt_plot.h>
+#include "us3i_plot.h"
 
 #if QT_VERSION >= 0x040000
 #include "qwt_plot_grid.h"
@@ -65,6 +66,11 @@ class US_EXTERN US_Hydrodyn_Saxs_Hplc_Scale_Trend : public QFrame
       map < QString, vector < vector < double > > > plots;
 
       QwtPlot *                               plot;
+      US_Plot *                               usp_plot;
+   private slots:
+      void usp_config_plot( const QPoint & );
+
+   private:
       ScrollZoomer *                          plot_zoomer;
 #if QT_VERSION >= 0x040000
       QwtPlotGrid *                           grid;

@@ -33,6 +33,7 @@
 #include "us_hydrodyn_saxs.h"
 
 #include <qwt_plot.h>
+#include "us3i_plot.h"
 #if QT_VERSION >= 0x040000
 # include "qwt_legend.h"
 # include "qwt_plot_grid.h"
@@ -122,6 +123,11 @@ class US_EXTERN US_Hydrodyn_Saxs_1d : public QFrame
       QMenuBar      *m;
 
       QwtPlot       *plot_saxs;
+      US_Plot       *usp_plot_saxs;
+   private slots:
+      void usp_config_plot_saxs( const QPoint & );
+
+   private:
       ScrollZoomer  *plot_saxs_zoomer;
 #if QT_VERSION >= 0x040000
       QwtPlotGrid   *grid_pr;

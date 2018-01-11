@@ -26,6 +26,7 @@
 #include "qwt/scrollzoomer.h"
 
 #include <qwt_plot.h>
+#include "us3i_plot.h"
 //Added by qt3to4:
 #include <QCloseEvent>
 #if QT_VERSION >= 0x040000
@@ -276,6 +277,8 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       QPushButton *pb_help;
       QPushButton *pb_cancel;
       QPushButton *pb_pp;
+      QPushButton *pb_width;
+      QPushButton *pb_width2;
 
       QwtCounter *cnt_bin_size;
       QwtCounter *cnt_smooth;
@@ -322,10 +325,25 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       QMenuBar *m;
 
       QwtPlot       *plot_pr;
+      US_Plot       *usp_plot_pr;
+   private slots:
+      void usp_config_plot_pr( const QPoint & );
+
+   public:
       ScrollZoomer  *plot_pr_zoomer;
       QwtPlot       *plot_saxs;
+      US_Plot       *usp_plot_saxs;
+   private slots:
+      void usp_config_plot_saxs( const QPoint & );
+
+   public:
       ScrollZoomer  *plot_saxs_zoomer;
       QwtPlot       *plot_resid;
+      US_Plot       *usp_plot_resid;
+   private slots:
+      void usp_config_plot_resid( const QPoint & );
+
+   public:
       ScrollZoomer  *plot_resid_zoomer;
 #if QT_VERSION >= 0x040000
       QwtPlotGrid  *grid_pr;
@@ -470,6 +488,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
 
    private:
 
+      void replot_pr();
 #if QT_VERSION >= 0x040000
       bool saxs_legend_vis;
       bool pr_legend_vis;
@@ -569,7 +588,8 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       void plot_one_pr(
                        vector < double > r, 
                        vector < double > pr, 
-                       QString name
+                       QString name,
+                       bool skip_mw = false
                        );
 
       void calc_iqq_nnls_fit( 
@@ -613,7 +633,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       double pr_contrib_low;
       double pr_contrib_high;
 
-      double get_mw(QString filename, bool display_mw_msg = true);
+      double get_mw(QString filename, bool display_mw_msg = true, bool allow_none = false );
       float last_used_mw;
 
       QString load_pr_selected_filter;
@@ -672,6 +692,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       QProcess *crysol;
       QProcess *cryson;
       QProcess *sastbx;
+      QProcess *ift;
 
       QStringList crysol_stdout;
       QStringList crysol_stderr;
@@ -683,6 +704,14 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       QString cryson_last_pdb_base;
       bool crysol_manual_mode;
       QStringList crysol_manual_input;
+
+      QString ift_prog;
+      QString ift_tmp_path;
+      QString ift_last_processed;
+      QStringList ift_to_process;
+      QString ift_stdout;
+      map < QString, QString > ift_parameters;
+      void ift_process_next();
 
       void calc_saxs_iq_native_debye();
       void calc_saxs_iq_native_sh();
@@ -842,6 +871,11 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       void sastbx_started();
       void sastbx_finished( int, QProcess::ExitStatus );
 
+      void ift_readFromStdout();
+      void ift_readFromStderr();
+      void ift_started();
+      void ift_finished( int, QProcess::ExitStatus );
+
       double compute_ff(
                         saxs     &sa,     // gaussian decomposition for the main atom
                         saxs     &sh,     // gaussian decomposition for hydrogen
@@ -872,6 +906,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
 
    private slots:
 
+      void set_width();
       void setupGUI();
       void set_saxs_sans();
       void set_saxs_sans(int);
@@ -883,7 +918,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       void load_plot_saxs();
       void set_grid();
       void show_plot_saxs();
-      void load_saxs( QString filename = "", bool just_plotted_curves = false );
+      void load_saxs( QString filename = "", bool just_plotted_curves = false, QString scaleto = "" );
       void clear_plot_saxs( bool quiet = false );
       void show_plot_sans();
       void load_sans( QString filename = "", bool just_plotted_curves = false );
@@ -895,7 +930,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       void update_pr_contrib_high(const QString &);
       void set_curve();
       void set_curve(int);
-      void load_pr( bool just_plotted_curves = false );
+      void load_pr( bool just_plotted_curves = false, QString load_this = "", bool skip_mw = false );
       void load_plot_pr();
       void clear_plot_pr();
       void cancel();
@@ -939,7 +974,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       void update_user_lowI(const QString &);
       void update_user_highI(const QString &);
       void load_gnom();
-      void ift();
+      void call_ift();
       void saxs_search();
       void saxs_screen();
       void saxs_buffer();
@@ -950,9 +985,14 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
 
       void plot_saxs_clicked( long );
       void plot_pr_clicked  ( long );
-      void plot_saxs_item_clicked( QwtPlotItem* );
-      void plot_pr_item_clicked  ( QwtPlotItem* );
-
+      void plot_saxs_item_clicked(
+                                  const QVariant & iteminfo,
+                                  int index
+                                  );
+      void plot_pr_item_clicked  (
+                                  const QVariant & iteminfo,
+                                  int index
+                                  );
       void saxs_legend();
       void pr_legend();
 

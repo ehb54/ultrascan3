@@ -697,7 +697,14 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
 
    QSplitter *qs = new QSplitter( Qt::Vertical, this );
 
-   plot_dist = new QwtPlot( qs );
+//   plot_dist = new QwtPlot( qs );
+   usp_plot_dist = new US_Plot( plot_dist, "", "", "", qs );
+   connect( (QWidget *)plot_dist->titleLabel(), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_plot_dist( const QPoint & ) ) );
+   ((QWidget *)plot_dist->titleLabel())->setContextMenuPolicy( Qt::CustomContextMenu );
+   connect( (QWidget *)plot_dist->axisWidget( QwtPlot::yLeft ), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_plot_dist( const QPoint & ) ) );
+   ((QWidget *)plot_dist->axisWidget( QwtPlot::yLeft ))->setContextMenuPolicy( Qt::CustomContextMenu );
+   connect( (QWidget *)plot_dist->axisWidget( QwtPlot::xBottom ), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_plot_dist( const QPoint & ) ) );
+   ((QWidget *)plot_dist->axisWidget( QwtPlot::xBottom ))->setContextMenuPolicy( Qt::CustomContextMenu );
    plot_info[ "HPLC SAXS Main" ] = plot_dist;
 #if QT_VERSION < 0x040000
    // plot_dist->enableOutline(true);
@@ -758,7 +765,14 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    connect( plot_dist->canvas(), SIGNAL( mouseReleased( const QMouseEvent & ) ), SLOT( plot_mouse(  const QMouseEvent & ) ) );
 #endif
 
-   plot_ref = new QwtPlot( qs );
+//   plot_ref = new QwtPlot( qs );
+   usp_plot_ref = new US_Plot( plot_ref, "", "", "", qs );
+   connect( (QWidget *)plot_ref->titleLabel(), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_plot_ref( const QPoint & ) ) );
+   ((QWidget *)plot_ref->titleLabel())->setContextMenuPolicy( Qt::CustomContextMenu );
+   connect( (QWidget *)plot_ref->axisWidget( QwtPlot::yLeft ), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_plot_ref( const QPoint & ) ) );
+   ((QWidget *)plot_ref->axisWidget( QwtPlot::yLeft ))->setContextMenuPolicy( Qt::CustomContextMenu );
+   connect( (QWidget *)plot_ref->axisWidget( QwtPlot::xBottom ), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_plot_ref( const QPoint & ) ) );
+   ((QWidget *)plot_ref->axisWidget( QwtPlot::xBottom ))->setContextMenuPolicy( Qt::CustomContextMenu );
    plot_info[ "HPLC SAXS Reference" ] = plot_ref;
 
 #if QT_VERSION < 0x040000
@@ -807,7 +821,14 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    plot_ref->setCanvasBackground(USglobal->global_colors.plot);
    plot_ref->hide();
    plot_ref->setSizePolicy(QSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding)); 
-   plot_errors = new QwtPlot( this );
+//   plot_errors = new QwtPlot( this );
+   usp_plot_errors = new US_Plot( plot_errors, "", "", "", this );
+   connect( (QWidget *)plot_errors->titleLabel(), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_plot_errors( const QPoint & ) ) );
+   ((QWidget *)plot_errors->titleLabel())->setContextMenuPolicy( Qt::CustomContextMenu );
+   connect( (QWidget *)plot_errors->axisWidget( QwtPlot::yLeft ), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_plot_errors( const QPoint & ) ) );
+   ((QWidget *)plot_errors->axisWidget( QwtPlot::yLeft ))->setContextMenuPolicy( Qt::CustomContextMenu );
+   connect( (QWidget *)plot_errors->axisWidget( QwtPlot::xBottom ), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_plot_errors( const QPoint & ) ) );
+   ((QWidget *)plot_errors->axisWidget( QwtPlot::xBottom ))->setContextMenuPolicy( Qt::CustomContextMenu );
    plot_info[ "HPLC SAXS Errors" ] = plot_errors;
 #if QT_VERSION < 0x040000
    // plot_errors->enableOutline(true);
@@ -1573,7 +1594,14 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    lbl_mode_title->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold ));
    lbl_mode_title->hide();
 
-   ggqfit_plot = new QwtPlot( this );
+//   ggqfit_plot = new QwtPlot( this );
+   usp_ggqfit_plot = new US_Plot( ggqfit_plot, "", "", "", this );
+   connect( (QWidget *)ggqfit_plot->titleLabel(), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_ggqfit_plot( const QPoint & ) ) );
+   ((QWidget *)ggqfit_plot->titleLabel())->setContextMenuPolicy( Qt::CustomContextMenu );
+   connect( (QWidget *)ggqfit_plot->axisWidget( QwtPlot::yLeft ), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_ggqfit_plot( const QPoint & ) ) );
+   ((QWidget *)ggqfit_plot->axisWidget( QwtPlot::yLeft ))->setContextMenuPolicy( Qt::CustomContextMenu );
+   connect( (QWidget *)ggqfit_plot->axisWidget( QwtPlot::xBottom ), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_ggqfit_plot( const QPoint & ) ) );
+   ((QWidget *)ggqfit_plot->axisWidget( QwtPlot::xBottom ))->setContextMenuPolicy( Qt::CustomContextMenu );
    plot_info[ "HPLC SAXS Global Gaussian Fit By q" ] = ggqfit_plot;
 #if QT_VERSION < 0x040000
    ggqfit_plot->enableGridXMin();
@@ -2098,7 +2126,14 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    // lbl_guinier_stats->setPalette( PALET_LABEL );
    lbl_guinier_stats->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold ) );
 
-   guinier_plot = new QwtPlot( qs );
+//   guinier_plot = new QwtPlot( qs );
+   usp_guinier_plot = new US_Plot( guinier_plot, "", "", "", qs );
+   connect( (QWidget *)guinier_plot->titleLabel(), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_guinier_plot( const QPoint & ) ) );
+   ((QWidget *)guinier_plot->titleLabel())->setContextMenuPolicy( Qt::CustomContextMenu );
+   connect( (QWidget *)guinier_plot->axisWidget( QwtPlot::yLeft ), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_guinier_plot( const QPoint & ) ) );
+   ((QWidget *)guinier_plot->axisWidget( QwtPlot::yLeft ))->setContextMenuPolicy( Qt::CustomContextMenu );
+   connect( (QWidget *)guinier_plot->axisWidget( QwtPlot::xBottom ), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_guinier_plot( const QPoint & ) ) );
+   ((QWidget *)guinier_plot->axisWidget( QwtPlot::xBottom ))->setContextMenuPolicy( Qt::CustomContextMenu );
    plot_info[ "HPLC SAXS Guinier" ] = guinier_plot;
 #if QT_VERSION < 0x040000
    guinier_plot->enableGridXMin();
@@ -2156,7 +2191,14 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    connect( guinier_plot->canvas(), SIGNAL( mouseReleased( const QMouseEvent & ) ), SLOT( plot_mouse(  const QMouseEvent & ) ) );
 #endif
 
-   guinier_plot_rg = new QwtPlot( qs );
+//   guinier_plot_rg = new QwtPlot( qs );
+   usp_guinier_plot_rg = new US_Plot( guinier_plot_rg, "", "", "", qs );
+   connect( (QWidget *)guinier_plot_rg->titleLabel(), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_guinier_plot_rg( const QPoint & ) ) );
+   ((QWidget *)guinier_plot_rg->titleLabel())->setContextMenuPolicy( Qt::CustomContextMenu );
+   connect( (QWidget *)guinier_plot_rg->axisWidget( QwtPlot::yLeft ), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_guinier_plot_rg( const QPoint & ) ) );
+   ((QWidget *)guinier_plot_rg->axisWidget( QwtPlot::yLeft ))->setContextMenuPolicy( Qt::CustomContextMenu );
+   connect( (QWidget *)guinier_plot_rg->axisWidget( QwtPlot::xBottom ), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_guinier_plot_rg( const QPoint & ) ) );
+   ((QWidget *)guinier_plot_rg->axisWidget( QwtPlot::xBottom ))->setContextMenuPolicy( Qt::CustomContextMenu );
    plot_info[ "HPLC SAXS Guinier Rg" ] = guinier_plot_rg;
 #if QT_VERSION < 0x040000
    guinier_plot_rg->enableGridXMin();
@@ -2215,7 +2257,14 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
 #endif
 
 
-   guinier_plot_mw = new QwtPlot( qs );
+//   guinier_plot_mw = new QwtPlot( qs );
+   usp_guinier_plot_mw = new US_Plot( guinier_plot_mw, "", "", "", qs );
+   connect( (QWidget *)guinier_plot_mw->titleLabel(), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_guinier_plot_mw( const QPoint & ) ) );
+   ((QWidget *)guinier_plot_mw->titleLabel())->setContextMenuPolicy( Qt::CustomContextMenu );
+   connect( (QWidget *)guinier_plot_mw->axisWidget( QwtPlot::yLeft ), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_guinier_plot_mw( const QPoint & ) ) );
+   ((QWidget *)guinier_plot_mw->axisWidget( QwtPlot::yLeft ))->setContextMenuPolicy( Qt::CustomContextMenu );
+   connect( (QWidget *)guinier_plot_mw->axisWidget( QwtPlot::xBottom ), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_guinier_plot_mw( const QPoint & ) ) );
+   ((QWidget *)guinier_plot_mw->axisWidget( QwtPlot::xBottom ))->setContextMenuPolicy( Qt::CustomContextMenu );
    plot_info[ "HPLC SAXS Guinier MW" ] = guinier_plot_mw;
 #if QT_VERSION < 0x040000
    guinier_plot_mw->enableGridXMin();
@@ -2273,7 +2322,14 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    connect( guinier_plot_mw->canvas(), SIGNAL( mouseReleased( const QMouseEvent & ) ), SLOT( plot_mouse(  const QMouseEvent & ) ) );
 #endif
 
-   guinier_plot_summary = new QwtPlot( 0 );
+//   guinier_plot_summary = new QwtPlot( 0 );
+   usp_guinier_plot_summary = new US_Plot( guinier_plot_summary, "", "", "", 0 );
+   connect( (QWidget *)guinier_plot_summary->titleLabel(), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_guinier_plot_summary( const QPoint & ) ) );
+   ((QWidget *)guinier_plot_summary->titleLabel())->setContextMenuPolicy( Qt::CustomContextMenu );
+   connect( (QWidget *)guinier_plot_summary->axisWidget( QwtPlot::yLeft ), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_guinier_plot_summary( const QPoint & ) ) );
+   ((QWidget *)guinier_plot_summary->axisWidget( QwtPlot::yLeft ))->setContextMenuPolicy( Qt::CustomContextMenu );
+   connect( (QWidget *)guinier_plot_summary->axisWidget( QwtPlot::xBottom ), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_guinier_plot_summary( const QPoint & ) ) );
+   ((QWidget *)guinier_plot_summary->axisWidget( QwtPlot::xBottom ))->setContextMenuPolicy( Qt::CustomContextMenu );
    guinier_plot_summary->hide();
    plot_info[ "HPLC SAXS Guinier Summary" ] = guinier_plot_summary;
 
@@ -2417,7 +2473,14 @@ void US_Hydrodyn_Saxs_Hplc::setupGUI()
    pb_guinier_mw_replot->setEnabled( true );
    connect(pb_guinier_mw_replot, SIGNAL(clicked()), SLOT(guinier_replot()));
 
-   guinier_plot_errors = new QwtPlot( qs );
+//   guinier_plot_errors = new QwtPlot( qs );
+   usp_guinier_plot_errors = new US_Plot( guinier_plot_errors, "", "", "", qs );
+   connect( (QWidget *)guinier_plot_errors->titleLabel(), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_guinier_plot_errors( const QPoint & ) ) );
+   ((QWidget *)guinier_plot_errors->titleLabel())->setContextMenuPolicy( Qt::CustomContextMenu );
+   connect( (QWidget *)guinier_plot_errors->axisWidget( QwtPlot::yLeft ), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_guinier_plot_errors( const QPoint & ) ) );
+   ((QWidget *)guinier_plot_errors->axisWidget( QwtPlot::yLeft ))->setContextMenuPolicy( Qt::CustomContextMenu );
+   connect( (QWidget *)guinier_plot_errors->axisWidget( QwtPlot::xBottom ), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_guinier_plot_errors( const QPoint & ) ) );
+   ((QWidget *)guinier_plot_errors->axisWidget( QwtPlot::xBottom ))->setContextMenuPolicy( Qt::CustomContextMenu );
    plot_info[ "HPLC SAXS Guinier Errors" ] = guinier_plot_errors;
 #if QT_VERSION < 0x040000
    guinier_plot_errors->enableGridXMin();
@@ -4924,4 +4987,58 @@ bool US_Hydrodyn_Saxs_Hplc::model_save( QString file, bool & cancel, bool & over
                .arg( use_filename ) );
    models_not_saved.erase( file );
    return true;
+}
+
+void US_Hydrodyn_Saxs_Hplc::usp_config_plot_dist( const QPoint & ) {
+   US_PlotChoices *uspc = new US_PlotChoices( usp_plot_dist );
+   uspc->exec();
+   delete uspc;
+}
+
+void US_Hydrodyn_Saxs_Hplc::usp_config_plot_ref( const QPoint & ) {
+   US_PlotChoices *uspc = new US_PlotChoices( usp_plot_ref );
+   uspc->exec();
+   delete uspc;
+}
+
+void US_Hydrodyn_Saxs_Hplc::usp_config_plot_errors( const QPoint & ) {
+   US_PlotChoices *uspc = new US_PlotChoices( usp_plot_errors );
+   uspc->exec();
+   delete uspc;
+}
+
+void US_Hydrodyn_Saxs_Hplc::usp_config_ggqfit_plot( const QPoint & ) {
+   US_PlotChoices *uspc = new US_PlotChoices( usp_ggqfit_plot );
+   uspc->exec();
+   delete uspc;
+}
+
+void US_Hydrodyn_Saxs_Hplc::usp_config_guinier_plot( const QPoint & ) {
+   US_PlotChoices *uspc = new US_PlotChoices( usp_guinier_plot );
+   uspc->exec();
+   delete uspc;
+}
+
+void US_Hydrodyn_Saxs_Hplc::usp_config_guinier_plot_rg( const QPoint & ) {
+   US_PlotChoices *uspc = new US_PlotChoices( usp_guinier_plot_rg );
+   uspc->exec();
+   delete uspc;
+}
+
+void US_Hydrodyn_Saxs_Hplc::usp_config_guinier_plot_mw( const QPoint & ) {
+   US_PlotChoices *uspc = new US_PlotChoices( usp_guinier_plot_mw );
+   uspc->exec();
+   delete uspc;
+}
+
+void US_Hydrodyn_Saxs_Hplc::usp_config_guinier_plot_summary( const QPoint & ) {
+   US_PlotChoices *uspc = new US_PlotChoices( usp_guinier_plot_summary );
+   uspc->exec();
+   delete uspc;
+}
+
+void US_Hydrodyn_Saxs_Hplc::usp_config_guinier_plot_errors( const QPoint & ) {
+   US_PlotChoices *uspc = new US_PlotChoices( usp_guinier_plot_errors );
+   uspc->exec();
+   delete uspc;
 }

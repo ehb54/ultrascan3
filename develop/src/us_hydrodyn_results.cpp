@@ -199,11 +199,11 @@ void US_Hydrodyn_Results::setupGUI()
    le_D20w = new QLineEdit( this );    le_D20w->setObjectName( "D20w Line Edit" );
    if (fabs((*results).D20w_sd) <= 1e-100)
    {
-      le_D20w->setText(str.sprintf("%4.2e cm/sec^2", (*results).D20w));
+      le_D20w->setText(str.sprintf("%4.2e cm^2/sec", (*results).D20w));
    }
    else
    {
-      le_D20w->setText(str.sprintf("%4.2e cm/sec^2 (%4.2e)", (*results).D20w, (*results).D20w_sd));
+      le_D20w->setText(str.sprintf("%4.2e cm^2/sec (%4.2e)", (*results).D20w, (*results).D20w_sd));
    }
    le_D20w->setReadOnly(true);
    le_D20w->setAlignment(Qt::AlignVCenter);

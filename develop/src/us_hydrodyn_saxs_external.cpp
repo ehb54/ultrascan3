@@ -1,6 +1,7 @@
 #include "../include/us_hydrodyn_saxs.h"
 #include "../include/us_hydrodyn.h"
 #include "../include/us_cmdline_app.h"
+#include "../include/us_hydrodyn_saxs_ift.h"
 #include <qregexp.h>
 //Added by qt3to4:
 #include <QTextStream>
@@ -79,6 +80,504 @@ void US_Hydrodyn_Saxs::editor_msg( const char * color, const char * bgcolor, QSt
    editor_msg( QColor( color ), QColor( bgcolor ), msg );
 }
 
+// -------------------- IFT ------------------------------
+
+void US_Hydrodyn_Saxs::call_ift()
+{
+   us_qdebug( "ift()" );
+
+   if ( external_running ) {
+      US_Static::us_message( us_tr("US-SOMO SAXS IFT"), 
+                            QString( us_tr("Please wait until the running job completes" ) ) );
+      return;
+   }
+
+   if ( !qsl_plotted_iq_names.size() ) {
+      US_Static::us_message( us_tr("US-SOMO SAXS IFT"), 
+                            QString( us_tr("No I(q) curves loaded to process!" ) ) );
+      return;
+   }
+
+   // check for zero error data, only add non-zero
+   ift_to_process.clear( );
+   for ( int i = 0; i < (int) qsl_plotted_iq_names.size(); ++i ) {
+      if ( !plotted_iq_names_to_pos.count( qsl_plotted_iq_names[ i ] ) ) {
+         editor_msg( "red", QString( "internal error: no plotted position info for curve %1" ).arg( qsl_plotted_iq_names[ i ] ) );
+         return;
+      }
+
+      int ift_pos = plotted_iq_names_to_pos[ qsl_plotted_iq_names[ i ] ];
+
+      if ( (int) plotted_q.size() <= ift_pos ||
+           (int) plotted_I.size() <= ift_pos ||
+           (int) plotted_I_error.size() <= ift_pos ) {
+         editor_msg( "red", QString( "internal error: no plotted data for curve %1" ).arg( qsl_plotted_iq_names[ i ] ) );
+         return;
+      }
+
+      if ( plotted_I_error[ ift_pos ].size() != plotted_I[ ift_pos ].size() ) {
+         editor_msg( "dark red", QString( us_tr( "Notice: curve %1 skipped as it has no errors" ) ).arg( qsl_plotted_iq_names[ i ] ) );
+         continue;
+      }
+      if ( !US_Saxs_Util::is_nonzero_vector( plotted_I_error[ ift_pos ] ) ) {
+         editor_msg( "dark red", QString( us_tr( "Notice: curve %1 skipped as it has some zero value errors" ) ).arg( qsl_plotted_iq_names[ i ] ) );
+         continue;
+      }
+      ift_to_process << qsl_plotted_iq_names[ i ];
+   }
+
+   if ( !ift_to_process.size() ) {
+      US_Static::us_message( us_tr("US-SOMO SAXS IFT"), 
+                            QString( us_tr("No I(q) curves with full errors available to process.\nCheck text area for details." ) ) );
+      return;
+   }
+
+   if ( ift_to_process.size() > 1) {
+      bool ok;
+      QString res = US_Static::getItem(
+                                          us_tr("US-SOMO SAXS IFT")
+                                          ,us_tr( "Select the curve you wish to process:" )
+                                          ,ift_to_process
+                                          ,0
+                                          ,false
+                                          ,&ok
+                                          ,this
+                                          );
+                                  
+      if ( !ok ) {
+         return;
+      }
+      ift_to_process.clear( );
+      ift_to_process << res;
+   }
+
+   // make sure program exists
+
+   ift_prog = 
+      USglobal->config_list.system_dir + SLASH +
+#if defined(BIN64)
+      "bin64"
+#else
+      "bin"
+#endif
+      + SLASH
+      + "iftci" 
+#if defined(Q_OS_WIN)
+      + "_win64.exe"
+#else
+# if defined(Q_WS_OSX)
+      + "_osx10.8"
+# else
+      + "_linux64"
+# endif      
+#endif      
+         ;
+
+   {
+      QFileInfo qfi(ift_prog);
+      if ( !qfi.exists() && ift_prog.contains( "bin64" ) ) {
+         ift_prog = 
+            USglobal->config_list.system_dir + SLASH +
+            "bin"
+            + SLASH
+            + "iftci" 
+#if defined(Q_WS_WIN)
+            + "_win64.exe"
+#else
+# if defined(Q_WS_OSX)
+            + "_osx10.8"
+# else
+            + "_linux64"
+# endif      
+#endif      
+            ;
+      }
+   }
+
+   {
+      QFileInfo qfi(ift_prog);
+      if ( !qfi.exists() )
+      {
+         editor_msg( (QString) "red", QString("IFT program '%1' does not exist\n").arg(ift_prog));
+         return;
+      }
+      if ( !qfi.isExecutable() )
+      {
+         editor_msg( "red", QString("IFT program '%1' is not executable\n").arg(ift_prog));
+         return;
+      }
+   }
+
+   ift_parameters.clear( );
+   ift_last_processed = ift_to_process[ 0 ];
+   if ( !plotted_iq_names_to_pos.count( ift_last_processed ) ) {
+      editor_msg( "red", QString( "internal error: no plotted position info for curve %1" ).arg( ift_last_processed ) );
+      return;
+   }
+
+   int ift_pos = plotted_iq_names_to_pos[ ift_last_processed ];
+
+   if ( (int) plotted_q.size() <= ift_pos ||
+        (int) plotted_I.size() <= ift_pos ) {
+      editor_msg( "red", QString( "internal error: no plotted data for curve %1" ).arg( ift_last_processed ) );
+      return;
+   }
+
+   if ( !plotted_q[ ift_pos ].size() ) {
+      editor_msg( "red", QString( "internal error: empty plotted data for curve %1" ).arg( ift_last_processed ) );
+      return;
+   }
+      
+   ift_parameters[ "qmin" ] = QString( "%1" ).arg( plotted_q[ ift_pos ].front() );
+   ift_parameters[ "qmax" ] = QString( "%1" ).arg( plotted_q[ ift_pos ].back() );
+   ift_parameters[ "prpoints" ] = "50";
+
+   // setup any preliminary params
+
+   US_Hydrodyn_Saxs_Ift * ift_instance = 
+      new US_Hydrodyn_Saxs_Ift( us_hydrodyn, & ift_parameters, this );
+   US_Hydrodyn::fixWinButtons( ift_instance );
+   ift_instance->exec();
+   delete ift_instance;
+
+   ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "buffer_nth_shown" ] =
+      ift_parameters.count( "buffer_nth_shown" ) ? ift_parameters[ "buffer_nth_shown" ] : "";
+
+   if ( !ift_parameters.count( "button" ) ||
+        ift_parameters[ "button" ] != "go" )
+   {
+      return;
+   }
+
+   ift_process_next();
+}
+   
+#define IFT_SHORTEN 25
+
+void US_Hydrodyn_Saxs::ift_process_next() {
+   
+   if ( !ift_to_process.size() ) {
+      return;
+   }
+
+   // setup temporary directory
+
+   ift_tmp_path = ((US_Hydrodyn *)us_hydrodyn)->somo_dir + "/tmp/" + QDateTime::currentDateTime().toString( "yyMMddhhmmsszzz" );
+   while ( QDir( ift_tmp_path ).exists() ) {
+      US_Saxs_Util::us_usleep( 1000 );
+      ift_tmp_path = ((US_Hydrodyn *)us_hydrodyn)->somo_dir + "/tmp/" + QDateTime::currentDateTime().toString( "yyMMddhhmmsszzz" );
+   }
+
+   {
+      QDir qd;
+      if ( !qd.mkdir( ift_tmp_path ) ) {
+         US_Static::us_message( us_tr("US-SOMO SAXS IFT"), 
+                               QString( us_tr("Could not create directory %1, check permissions" ) ).arg( ift_tmp_path ) );
+         return;
+      }
+   }
+
+   QDir::setCurrent( ift_tmp_path );
+   us_qdebug( QString( "ift_tmpdir %1\n" ).arg( ift_tmp_path ) );
+   
+   ift_last_processed = ift_to_process[ 0 ];
+   ift_to_process.pop_front();
+
+   // create data file
+
+   if ( !plotted_iq_names_to_pos.count( ift_last_processed ) ) {
+      editor_msg( "red", QString( "internal error: no plotted position info for curve %1" ).arg( ift_last_processed ) );
+      return;
+   }
+
+   int ift_pos = plotted_iq_names_to_pos[ ift_last_processed ];
+
+   if ( (int) plotted_q.size() <= ift_pos ||
+        (int) plotted_I.size() <= ift_pos ) {
+      editor_msg( "red", QString( "internal error: no plotted data for curve %1" ).arg( ift_last_processed ) );
+      return;
+   }
+   
+   {
+      US_Saxs_Util usu;
+      usu.wave["data"].filename = ift_last_processed;
+      usu.wave["data"].q = plotted_q[ ift_pos ];
+      usu.wave["data"].r = plotted_I[ ift_pos ];
+      if ( plotted_I_error.size() ) {
+         usu.wave["data"].s = plotted_I_error[ ift_pos ];
+      }
+      if ( !usu.write( ift_last_processed.left( IFT_SHORTEN ), "data" ) ) {
+         editor_msg( "red", QString( "Error: Could not write file %1. Disk space issue?" ).arg( ift_last_processed ) );
+         return;
+      }
+         
+   }
+
+   us_qdebug( ift_last_processed );
+      
+   // setup inputfile.d (see bayesapp wrapper.pl)
+   QFile f( "inputfile.d" );
+   
+   if ( !f.open( QIODevice::WriteOnly ) ) {
+      editor_msg( "red", QString( "Error: Could not write file %1. Disk space issue?" ).arg( f.fileName() ) );
+      return;
+   }
+   
+   QTextStream ts( &f );
+   ts
+      //    # l1
+      << ift_last_processed.left( IFT_SHORTEN ) << "\n"
+      //    # l2
+      << ( ift_parameters.count( "qmin" ) ? ift_parameters[ "qmin" ] : "" ) << "\n"
+      //    # l3
+      << ( ift_parameters.count( "qmax" ) ? ift_parameters[ "qmax" ] : "" ) << "\n"
+      //    # l4
+      << ( ( ift_parameters.count( "dmaxfixed" ) && ift_parameters[ "dmaxfixed" ] == "true" ) ? "f" : "" ) << ift_parameters[ "dmax" ] << "\n"
+      //    # l5
+      << ( ift_parameters.count( "eta" ) ? ift_parameters[ "eta" ] : "" ) << "\n"
+      //    # l6
+      << ( ( ift_parameters.count( "alphafixed" ) && ift_parameters[ "alphafixed" ] == "true" ) ? "f" : "" ) << ift_parameters[ "alpha" ] << "\n"
+      //    # l7
+      << ( ift_parameters.count( "smearing" ) ? ift_parameters[ "smearing" ] : "" ) << "\n"
+      //    # l8
+      << ( ( ift_parameters.count( "estimateratiofixed" ) && ift_parameters[ "estimateratiofixed" ] == "true" ) ? "f" : "" ) << ift_parameters[ "estimateratio" ] << "\n"
+      //    # l9
+      << ( ift_parameters.count( "fitratio" ) ? ift_parameters[ "fitratio" ] : "" ) << "\n"
+      //    # l10
+      << ( ift_parameters.count( "prpoints" ) ? ift_parameters[ "prpoints" ] : "" ) << "\n"
+      //    # l11
+      << ( ift_parameters.count( "noextracalc" ) ? ift_parameters[ "noextracalc" ] : "" ) << "\n"
+      //    # l12
+      << ( ift_parameters.count( "transform" ) ? ift_parameters[ "transform" ] : "" ) << "\n"
+      //    # l13
+      << ( ( ift_parameters.count( "fitbackground" ) && ift_parameters[ "fitbackground" ] == "true" )  ? "y" : "n" )  << "\n"
+      //    # l14
+      << ( ( ift_parameters.count( "smallplot" ) && ift_parameters[ "smallplot" ] == "true" ) ? "S" : "L" ) << "\n"
+      ;
+
+   f.close();
+   
+   // bayesapp perl version:
+   // {
+   //    # l1
+   //    $files{'data'} = $$ref{ 'datafile' }[0];
+   //    $files{'data'} =~ s/^.*\/([^\/]+)$/$1/;
+   //    $inputfile .= $files{'data'} . "\n";
+   //    # l2
+   //    $inputfile .= $$ref{ 'qmin' } . "\n";
+   //    # l3
+   //    $inputfile .= $$ref{ 'qmax' } . "\n";
+   //    # l4
+   //    $inputfile .= ( $$ref{ 'dmaxfixed' } ? "f" : "" ) . $$ref{ 'dmax' } . "\n";
+   //    # l5
+   //    $inputfile .= $$ref{ 'eta' } . "\n";
+   //    # l6
+   //    $inputfile .= ( $$ref{ 'alphafixed' } ? "f" : "" ) . $$ref{ 'alpha' } . "\n";
+   //    # l7
+   //    $inputfile .= $$ref{ 'smearing' } . "\n";
+   //    # l8
+   //    $inputfile .= ( $$ref{ 'estimateratiofixed' } ? "f" : "" ) . $$ref{ 'estimateratio' } . "\n";
+   //    # l9
+   //    $inputfile .= $$ref{ 'fitratio' } . "\n";
+   //    # l10
+   //    $inputfile .= $$ref{ 'prpoints' } . "\n";
+   //    # l11
+   //    $inputfile .= $$ref{ 'noextracalc' } . "\n";
+   //    # l12
+   //    $inputfile .= $$ref{ 'transform' } . "\n";
+   //    # l13
+   //    $inputfile .= ( $$ref{ 'fitbackground' } ? "y" : "n" ) . "\n";
+   //    # l14
+   //    $inputfile .= ( $$ref{ 'smallplot' } ? "S" : "L" ) . "\n";
+   // }
+
+   // open OUT, ">inputfile.d";
+   // print OUT $inputfile;
+   // close OUT;
+
+   ift_stdout = "";
+
+   ift = new QProcess( this );
+   //   ift->setWorkingDirectory( dir );
+   us_qdebug( "prog is " + ift_prog );
+#if QT_VERSION < 0x040000
+   ift->addArgument( ift_prog );
+
+   connect( ift, SIGNAL(readyReadStandardOutput()), this, SLOT(ift_readFromStdout()) );
+   connect( ift, SIGNAL(readyReadStandardError()), this, SLOT(ift_readFromStderr()) );
+   connect( ift, SIGNAL(finished( int, QProcess::ExitStatus )), this, SLOT(ift_finished( int, QProcess::ExitStatus )) );
+   connect( ift, SIGNAL(started()), this, SLOT(ift_started()) );
+
+   editor_msg( "black", "\nStarting IFT\n");
+   ift->start();
+   external_running = true;
+#else
+   {
+      QStringList args;
+
+      connect( ift, SIGNAL(readyReadStandardOutput()), this, SLOT(ift_readFromStdout()) );
+      connect( ift, SIGNAL(readyReadStandardError()), this, SLOT(ift_readFromStderr()) );
+      connect( ift, SIGNAL(finished( int, QProcess::ExitStatus )), this, SLOT(ift_finished( int, QProcess::ExitStatus )) );
+      connect( ift, SIGNAL(started()), this, SLOT(ift_started()) );
+
+      editor_msg( "black", "\nStarting IFT\n");
+      ift->start( ift_prog, args, QIODevice::ReadOnly );
+      external_running = true;
+   }
+#endif
+   
+   return;
+}
+
+void US_Hydrodyn_Saxs::ift_readFromStdout()
+{
+#if QT_VERSION < 0x040000
+   while ( ift->canReadLineStdout() )
+   {
+      QString qs = ift->readLineStdout() + "\n";
+      ift_stdout += qs;
+      editor_msg("brown", qs );
+   }
+#else
+   QString qs = QString( ift->readAllStandardOutput() );
+   ift_stdout += qs;
+   editor_msg( "brown", qs );
+#endif   
+   //  qApp->processEvents();
+}
+   
+void US_Hydrodyn_Saxs::ift_readFromStderr()
+{
+#if QT_VERSION < 0x040000
+   while ( ift->canReadLineStderr() )
+   {
+      editor_msg("red", ift->readLineStderr() + "\n");
+   }
+#else
+   editor_msg( "red", QString( ift->readAllStandardError() ) );
+#endif   
+   //  qApp->processEvents();
+}
+   
+void US_Hydrodyn_Saxs::ift_finished( int, QProcess::ExitStatus )
+{
+   //   for ( int i = 0; i < 10000; i++ )
+   //   {
+   ift_readFromStderr();
+   ift_readFromStdout();
+      //   }
+   disconnect( ift, SIGNAL(readyReadStandardOutput()), 0, 0);
+   disconnect( ift, SIGNAL(readyReadStandardError()), 0, 0);
+   disconnect( ift, SIGNAL(finished( int, QProcess::ExitStatus )), 0, 0);
+   editor->append("IFT finished.\n");
+
+   // post process the files
+
+   external_running = false;
+
+   QStringList caps;
+   caps
+      << "Rg, I\\(0\\) and Dmax"
+      << "Parameters"
+      << "p_1\\(r\\)"
+      << "Data used"
+      << "Fit of data"
+      ;
+
+   map < QString, QString > files;
+
+   for ( int i = 0; i < (int) caps.size(); ++i ) {
+      QRegExp rx( caps[ i ] + " in\\s+:\\s*(\\S+)" );
+
+      if ( rx.indexIn( ift_stdout ) == -1 ) {
+         editor_msg( "red", QString( us_tr( "Could not find %1 file in IFT output" ) ).arg( caps[ i ].replace( "\\", "" ) ) );
+      } else {
+         files[ caps[ i ] ] = rx.cap( 1 );
+         us_qdebug( QString( "%1 : '%2'\n" ).arg( caps[ i ] ).arg( files[ caps[ i ] ] ) );
+      }
+   }
+
+   // show parameters in textarea
+      
+   if ( files.count( caps[ 1 ] ) ) {
+      QFile f( files[ caps[ 1 ] ] );
+      if ( !f.open( QIODevice::ReadOnly ) ) {
+         editor_msg( "red", QString( "Error: Could not open file %1 for reading." ).arg( files[ caps[ 1 ] ] ) );
+      } else {
+         QTextStream ts( &f );
+#if QT_VERSION < 0x040000
+         editor_msg( "black", ts.read() );
+#else
+         editor_msg( "black", ts.readAll() );
+#endif
+      }
+   }
+
+   QStringList created_files;
+
+   // p(r) file
+   if ( files.count( caps[ 2 ] ) ) {
+      // copy this to our created files
+      QString dest = USglobal->config_list.root_dir + "/somo/saxs/" + QString( "%1" ).arg( ift_last_processed ).replace( QRegExp( "\\..*$" ), "_ift.sprr" );
+      dest = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( dest, 0, this );
+      double mw = get_mw( QString( "%1" ).arg( ift_last_processed ).replace( QRegExp( "\\..*$" ), "_ift P(r)" ), false, true );
+      QString header =
+         QString( "# IFT P(r) from " + ift_last_processed + "%1\nR\tP(r)\tSD\n" )
+         .arg(
+              mw == -1e0
+              ? QString( "" )
+              : QString( " mw %1 Daltons" ).arg( mw )
+              )
+         ;
+
+      US_File_Util ufu;
+      if ( !ufu.copy( files[ caps[ 2 ] ], dest, true, header ) ) {
+         editor_msg( "red", ufu.errormsg );
+      } else {
+         created_files << dest;
+         load_pr( false, dest, mw == -1e0 );
+      }
+   }
+
+   // "out" file
+   if ( files.count( caps[ 0 ] ) ) {
+      // copy this to our created files
+      QString dest = USglobal->config_list.root_dir + "/somo/saxs/" + QString( "%1" ).arg( ift_last_processed ).replace( QRegExp( "\\..*$" ), "_ift_summary.txt" );
+      dest = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( dest, 0, this );
+      US_File_Util ufu;
+      if ( !ufu.copy( files[ caps[ 0 ] ], dest, true ) ) {
+         editor_msg( "red", ufu.errormsg );
+      } else {
+         created_files << dest;
+      }
+   }
+
+   // fit file
+   if ( files.count( caps[ 4 ] ) ) {
+      // copy this to our created files
+      QString dest = USglobal->config_list.root_dir + "/somo/saxs/" + QString( "%1" ).arg( ift_last_processed ).replace( QRegExp( "\\..*$" ), "_fit.ssaxs" );
+      dest = ((US_Hydrodyn *)us_hydrodyn)->fileNameCheck( dest, 0, this );
+      US_File_Util ufu;
+      if ( !ufu.copy( files[ caps[ 4 ] ], dest, true, "# IFT I(q) fitting from " + ift_last_processed + "\nq\tI(q)\tSD\n" ) ) {
+         editor_msg( "red", ufu.errormsg );
+      } else {
+         created_files << dest;
+         load_saxs( dest, false, ift_last_processed );
+      }
+   }
+
+   if ( created_files.size() ) {
+      editor_msg( "dark blue", QString( "Created files:\n%1\n" ).arg( created_files.join( "\n" ) ) );
+   }
+
+   ift_process_next();
+}
+   
+void US_Hydrodyn_Saxs::ift_started()
+{
+   editor_msg("brown", "IFT launch exited\n");
+   disconnect( ift, SIGNAL(started()), 0, 0);
+}
 
 // -------------------- FoXS ------------------------------
 

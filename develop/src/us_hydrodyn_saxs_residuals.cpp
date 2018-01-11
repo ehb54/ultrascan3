@@ -18,6 +18,7 @@ US_Hydrodyn_Saxs_Residuals::US_Hydrodyn_Saxs_Residuals(
                                                        bool plot_residuals,
                                                        bool plot_difference,
                                                        bool plot_as_percent,
+                                                       unsigned pen_width,
                                                        QWidget *p, 
                                                        const char *name
                                                        ) : QFrame( p )
@@ -31,8 +32,8 @@ US_Hydrodyn_Saxs_Residuals::US_Hydrodyn_Saxs_Residuals(
    this->plot_residuals = plot_residuals;
    this->plot_difference = plot_difference;
    this->plot_as_percent = plot_as_percent;
+   this->pen_width = pen_width;
 
-   pen_width = 1;
    plot_zoomer = (ScrollZoomer *)0;
 
    // make sure things aren't to big
@@ -100,7 +101,14 @@ void US_Hydrodyn_Saxs_Residuals::setupGUI()
    // lbl_title->setPalette( PALET_FRAME );
    // lbl_title->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
 
-   plot = new QwtPlot(this);
+//   plot = new QwtPlot(this);
+   usp_plot = new US_Plot( plot, "", "", "", this );
+   connect( (QWidget *)plot->titleLabel(), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_plot( const QPoint & ) ) );
+   ((QWidget *)plot->titleLabel())->setContextMenuPolicy( Qt::CustomContextMenu );
+   connect( (QWidget *)plot->axisWidget( QwtPlot::yLeft ), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_plot( const QPoint & ) ) );
+   ((QWidget *)plot->axisWidget( QwtPlot::yLeft ))->setContextMenuPolicy( Qt::CustomContextMenu );
+   connect( (QWidget *)plot->axisWidget( QwtPlot::xBottom ), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_plot( const QPoint & ) ) );
+   ((QWidget *)plot->axisWidget( QwtPlot::xBottom ))->setContextMenuPolicy( Qt::CustomContextMenu );
 #if QT_VERSION < 0x040000
    plot->enableOutline(true);
    plot->setOutlinePen(Qt::white);
@@ -433,4 +441,10 @@ void US_Hydrodyn_Saxs_Residuals::update_plot()
 #endif
 
    plot->replot();
+}
+
+void US_Hydrodyn_Saxs_Residuals::usp_config_plot( const QPoint & ) {
+   US_PlotChoices *uspc = new US_PlotChoices( usp_plot );
+   uspc->exec();
+   delete uspc;
 }

@@ -187,7 +187,22 @@ void US3i_Settings::set_default_data_location( int location )
 }
 
 // us_debug
-#ifdef NO_DB
+#ifndef NO_DB
+int US3i_Settings::us_debug( void )
+{
+   QSettings settings( US3, "UltraScan" );
+   return settings.value( "us_debug", 0 ).toInt();
+}
+
+void US3i_Settings::set_us_debug( int level )
+{
+   QSettings settings( US3, "UltraScan" );
+   if ( level == 0 )
+      settings.remove( "us_debug" );
+   else
+      settings.setValue( "us_debug", level );
+}
+#else
 static int us3i_settings_debug = 0;
 int US3i_Settings::us_debug( void )
 {
@@ -198,43 +213,46 @@ void US3i_Settings::set_us_debug( int level )
 {
    us3i_settings_debug = level;
 }
-#else
-int US3i_Settings::us_debug( void )
-{
-  QSettings settings( US3, "UltraScan" );
-  return settings.value( "us_debug", 0 ).toInt();
-}
-
-void US3i_Settings::set_us_debug( int level )
-{
-  QSettings settings( US3, "UltraScan" );
-  if ( level == 0 )
-    settings.remove( "us_debug" );
-  else
-    settings.setValue( "us_debug", level );
-}
 #endif
 
 // debug text
+#ifndef NO_DB
+void US3i_Settings::set_debug_text( QStringList debuglist )
+{
+   QSettings settings( US3, "UltraScan" );
+   if ( debuglist.count() == 0 )
+      settings.remove( "debug_text" );
+   else
+      settings.setValue( "debug_text", debuglist );
+}
+
 QStringList US3i_Settings::debug_text( void )
 {
-  QSettings settings( US3, "UltraScan" );
-  return settings.value( "debug_text", "" ).toStringList();
+   QSettings settings( US3, "UltraScan" );
+   return settings.value( "debug_text", "" ).toStringList();
 }
+
+#else
+static QStringList us_sett_debug_text;
+void US3i_Settings::set_debug_text( QStringList debuglist )
+{
+   if ( debuglist.count() == 0 )
+      us_sett_debug_text.clear();
+   else
+      us_sett_debug_text  = debuglist;
+}
+
+QStringList US3i_Settings::debug_text( void )
+{
+   return us_sett_debug_text;
+}
+#endif
 
 bool US3i_Settings::debug_match( QString match )
 {
-  return debug_text().contains( match, Qt::CaseInsensitive );
+   return debug_text().contains( match, Qt::CaseInsensitive );
 }
 
-void US3i_Settings::set_debug_text( QStringList debuglist )
-{
-  QSettings settings( US3, "UltraScan" );
-  if ( debuglist.count() == 0 )
-    settings.remove( "debug_text" );
-  else
-    settings.setValue( "debug_text", debuglist );
-}
 
 // Investigator
 QString US3i_Settings::us_inv_name( void )

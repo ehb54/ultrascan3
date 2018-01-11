@@ -7533,6 +7533,8 @@ void US_Hydrodyn::calc_mw()
          model_vector_as_loaded[ i ].volume = model_vector[i].volume;
       }
       {
+         dammix_remember_mw_source[ QString( "%1 Model %2" ).arg( project ).arg( i + 1 ) ] = "computed from pdb";
+         dammix_remember_mw[ QString( "%1 Model %2" ).arg( project ).arg( i + 1 ) ] = model_vector[i].mw;
          QString qs = 
             QString( us_tr( "\nModel: %1 Molecular weight %2 Daltons, Volume (from vbar) %3 A^3%4" ) )
             .arg(model_vector[i].model_id)

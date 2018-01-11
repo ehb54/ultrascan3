@@ -100,6 +100,11 @@ class US_EXTERN US_Hydrodyn_Saxs_Screen : public QFrame
       QPushButton   *pb_cancel;
 
       QwtPlot       *plot_dist;
+      US_Plot       *usp_plot_dist;
+   private slots:
+      void usp_config_plot_dist( const QPoint & );
+
+   private:
       ScrollZoomer  *plot_dist_zoomer;
 
       QwtWheel      *qwtw_wheel;

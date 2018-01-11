@@ -277,6 +277,7 @@ SOURCES *= \
         src/us_hydrodyn_saxs_external.cpp \
         src/us_hydrodyn_saxs_guinier.cpp \
         src/us_hydrodyn_saxs_fits.cpp \
+        src/us_hydrodyn_saxs_ift.cpp \
         src/us_hydrodyn_saxs_iqq.cpp \
         src/us_hydrodyn_saxs_iqq_bead_model.cpp \
         src/us_hydrodyn_saxs_iqq_load_csv.cpp \
@@ -453,6 +454,7 @@ SOURCES *= \
         src/us3i_gui_util.cpp \
         src/us3i_util.cpp \
         src/us3i_gzip.cpp \
+        src/us3i_plot.cpp \
         shd_mpi/shs_use.cpp
 #  us_db_rst_channel.cpp \
 #  us_db_rst_equil.cpp \
@@ -638,6 +640,7 @@ HEADERS *= \
         include/us_hydrodyn_saxs_load_csv.h \
         include/us_hydrodyn_saxs_mw.h \
         include/us_hydrodyn_saxs_options.h \
+        include/us_hydrodyn_saxs_ift.h \
         include/us_hydrodyn_saxs_iqq_load_csv.h \
         include/us_hydrodyn_saxs_iqq_residuals.h \
         include/us_hydrodyn_saxs_residuals.h \
@@ -764,6 +767,8 @@ HEADERS *= \
         include/us3i_gui_util.h \
         include/us3i_util.h \
         include/us3i_gzip.h \
+        include/us3i_plot.h \
+        include/us3i_pixmaps.h \
         shd_mpi/shs_data.h
 
 # IMAGES = \

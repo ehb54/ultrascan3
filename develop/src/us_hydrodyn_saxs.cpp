@@ -91,6 +91,7 @@ US_Hydrodyn_Saxs::US_Hydrodyn_Saxs(
       ( ( US_Hydrodyn * ) us_hydrodyn )->gparams[ "guinier_mwc_mw_per_N" ] = "112";
    }
 
+   external_running = false;
    rasmol = NULL;
    this->saxs_widget = saxs_widget;
    *saxs_widget = true;
@@ -967,6 +968,13 @@ void US_Hydrodyn_Saxs::setupGUI()
    connect(pb_clear_plot_saxs, SIGNAL(clicked()), SLOT(clear_plot_saxs()));
    iq_widgets.push_back( pb_clear_plot_saxs );
 
+   pb_width = new QPushButton(us_tr( "Width" ), this);
+   pb_width->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   pb_width->setMinimumHeight(minHeight1);
+   pb_width->setPalette( PALET_PUSHB );
+   connect(pb_width, SIGNAL(clicked()), SLOT(set_width()));
+   iq_widgets.push_back( pb_width );
+
    cb_eb = new QCheckBox(this);
    cb_eb->setText(us_tr("Err "));
    cb_eb->setMaximumWidth ( minHeight1 * 2 );
@@ -1013,8 +1021,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    pb_ift->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_ift->setMinimumHeight(minHeight1);
    pb_ift->setPalette( PALET_PUSHB );
-   connect(pb_ift, SIGNAL(clicked()), SLOT(ift()));
-   pb_ift->setEnabled( false );
+   connect(pb_ift, SIGNAL(clicked()), SLOT(call_ift()));
    iq_widgets.push_back( pb_ift );
 
    pb_saxs_search = new QPushButton("Search", this);
@@ -1421,6 +1428,13 @@ void US_Hydrodyn_Saxs::setupGUI()
    connect(pb_pr_legend, SIGNAL(clicked()), SLOT(pr_legend()));
    pr_widgets.push_back( pb_pr_legend );
 
+   pb_width2 = new QPushButton(us_tr( "Width" ), this);
+   pb_width2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   pb_width2->setMinimumHeight(minHeight1);
+   pb_width2->setPalette( PALET_PUSHB );
+   connect(pb_width2, SIGNAL(clicked()), SLOT(set_width()));
+   pr_widgets.push_back( pb_width2 );
+
    pb_stop = new QPushButton(us_tr("Stop"), this);
    pb_stop->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    pb_stop->setMinimumHeight(minHeight1);
@@ -1445,7 +1459,14 @@ void US_Hydrodyn_Saxs::setupGUI()
    pb_cancel->setPalette( PALET_PUSHB );
    connect(pb_cancel, SIGNAL(clicked()), SLOT(cancel()));
 
-   plot_saxs = new QwtPlot(this);
+//   plot_saxs = new QwtPlot(this);
+   usp_plot_saxs = new US_Plot( plot_saxs, "", "", "", this );
+   connect( (QWidget *)plot_saxs->titleLabel(), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_plot_saxs( const QPoint & ) ) );
+   ((QWidget *)plot_saxs->titleLabel())->setContextMenuPolicy( Qt::CustomContextMenu );
+   connect( (QWidget *)plot_saxs->axisWidget( QwtPlot::yLeft ), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_plot_saxs( const QPoint & ) ) );
+   ((QWidget *)plot_saxs->axisWidget( QwtPlot::yLeft ))->setContextMenuPolicy( Qt::CustomContextMenu );
+   connect( (QWidget *)plot_saxs->axisWidget( QwtPlot::xBottom ), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_plot_saxs( const QPoint & ) ) );
+   ((QWidget *)plot_saxs->axisWidget( QwtPlot::xBottom ))->setContextMenuPolicy( Qt::CustomContextMenu );
    plot_info[ "US-SOMO SAXS Main" ] = plot_saxs;
 
    iq_widgets.push_back( plot_saxs );
@@ -1514,7 +1535,14 @@ void US_Hydrodyn_Saxs::setupGUI()
 #endif
    plot_saxs->setAxisScale( QwtPlot::xBottom, 0e0, 1e0 );
 
-   plot_pr = new QwtPlot(this);
+//   plot_pr = new QwtPlot(this);
+   usp_plot_pr = new US_Plot( plot_pr, "", "", "", this );
+   connect( (QWidget *)plot_pr->titleLabel(), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_plot_pr( const QPoint & ) ) );
+   ((QWidget *)plot_pr->titleLabel())->setContextMenuPolicy( Qt::CustomContextMenu );
+   connect( (QWidget *)plot_pr->axisWidget( QwtPlot::yLeft ), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_plot_pr( const QPoint & ) ) );
+   ((QWidget *)plot_pr->axisWidget( QwtPlot::yLeft ))->setContextMenuPolicy( Qt::CustomContextMenu );
+   connect( (QWidget *)plot_pr->axisWidget( QwtPlot::xBottom ), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_plot_pr( const QPoint & ) ) );
+   ((QWidget *)plot_pr->axisWidget( QwtPlot::xBottom ))->setContextMenuPolicy( Qt::CustomContextMenu );
    plot_info[ "US-SOMO SAXS p(r)" ] = plot_pr;
    pr_widgets.push_back( plot_pr );
 #if QT_VERSION < 0x040000
@@ -1563,7 +1591,14 @@ void US_Hydrodyn_Saxs::setupGUI()
    connect( plot_pr, SIGNAL( legendClicked( long ) ), SLOT( plot_pr_clicked( long ) ) );
 #endif
 
-   plot_resid = new QwtPlot(this);
+//   plot_resid = new QwtPlot(this);
+   usp_plot_resid = new US_Plot( plot_resid, "", "", "", this );
+   connect( (QWidget *)plot_resid->titleLabel(), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_plot_resid( const QPoint & ) ) );
+   ((QWidget *)plot_resid->titleLabel())->setContextMenuPolicy( Qt::CustomContextMenu );
+   connect( (QWidget *)plot_resid->axisWidget( QwtPlot::yLeft ), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_plot_resid( const QPoint & ) ) );
+   ((QWidget *)plot_resid->axisWidget( QwtPlot::yLeft ))->setContextMenuPolicy( Qt::CustomContextMenu );
+   connect( (QWidget *)plot_resid->axisWidget( QwtPlot::xBottom ), SIGNAL( customContextMenuRequested( const QPoint & ) ), SLOT( usp_config_plot_resid( const QPoint & ) ) );
+   ((QWidget *)plot_resid->axisWidget( QwtPlot::xBottom ))->setContextMenuPolicy( Qt::CustomContextMenu );
    plot_info[ "US-SOMO SAXS resid" ] = plot_resid;
 #if QT_VERSION < 0x040000
    // plot_resid->enableOutline(true);
@@ -1852,6 +1887,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    hbl_load_saxs->addWidget(pb_load_plot_saxs);
    hbl_load_saxs->addWidget(pb_set_grid);
    hbl_load_saxs->addWidget(pb_clear_plot_saxs);
+   hbl_load_saxs->addWidget(pb_width);
    hbl_load_saxs->addWidget(cb_eb);
    background->addLayout( hbl_load_saxs , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
    j++;
@@ -1982,6 +2018,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    hbl_plot_pr->addWidget(pb_load_plot_pr);
    hbl_plot_pr->addWidget(pb_clear_plot_pr);
    hbl_plot_pr->addWidget(pb_pr_legend);
+   hbl_plot_pr->addWidget(pb_width2);
    background->addLayout( hbl_plot_pr , j , 0 , 1 + ( j ) - ( j ) , 1 + ( 1 ) - ( 0 ) );
    j++;
    background->addWidget(lbl_bin_size, j, 0);
@@ -5996,8 +6033,7 @@ void US_Hydrodyn_Saxs::load_gnom()
             vector < double > pr;
             // cout << "start of prr\n";
             ts.readLine(); // blank line
-            while ( !ts.atEnd() )
-            {
+            while ( !ts.atEnd() ) {
                tmp = ts.readLine();
                if ( rx3.indexIn(tmp) != -1 )
                {
@@ -6040,12 +6076,29 @@ void US_Hydrodyn_Saxs::load_gnom()
                      normalize_pr(r, &pr, get_mw(filename, false));
                   }
                   plot_one_pr(r, pr, QFileInfo(filename).fileName());
+                  r.clear( );
+                  pr.clear( );
                   if ( plotted )
                   {
                      editor_msg( "black", "P(r) plot done\n" );
                      plotted = false;
                   }
                   break;
+               }
+            }
+            if ( r.size() ) {
+               gnom_mw = get_mw(filename,false);
+               if ( cb_normalize->isChecked() )
+               {
+                  normalize_pr(r, &pr, get_mw(filename, false));
+               }
+               plot_one_pr(r, pr, QFileInfo(filename).fileName());
+               r.clear( );
+               pr.clear( );
+               if ( plotted )
+               {
+                  editor_msg( "black", "P(r) plot done\n" );
+                  plotted = false;
                }
             }
          }
@@ -7250,7 +7303,8 @@ void US_Hydrodyn_Saxs::display_iqq_residuals( QString title,
                                             true,
                                             !use_errors,
                                             avg_std_dev_frac,
-                                            std_dev_frac
+                                            std_dev_frac,
+                                            pen_width
                                             );
       US_Hydrodyn::fixWinButtons( saxs_iqq_residuals_windows[ title ] );
       saxs_iqq_residuals_windows[title]->show();
@@ -8023,4 +8077,22 @@ void US_Hydrodyn_Saxs::wheel_pressed() {
 void US_Hydrodyn_Saxs::wheel_released() {
    // qDebug() << "wheel_released()";
    wheel_is_pressed = false;
+}
+
+void US_Hydrodyn_Saxs::usp_config_plot_saxs( const QPoint & ) {
+   US_PlotChoices *uspc = new US_PlotChoices( usp_plot_saxs );
+   uspc->exec();
+   delete uspc;
+}
+
+void US_Hydrodyn_Saxs::usp_config_plot_pr( const QPoint & ) {
+   US_PlotChoices *uspc = new US_PlotChoices( usp_plot_pr );
+   uspc->exec();
+   delete uspc;
+}
+
+void US_Hydrodyn_Saxs::usp_config_plot_resid( const QPoint & ) {
+   US_PlotChoices *uspc = new US_PlotChoices( usp_plot_resid );
+   uspc->exec();
+   delete uspc;
 }
