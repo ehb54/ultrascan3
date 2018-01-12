@@ -81,6 +81,7 @@ void US_Hydrodyn_Bead_Output::setupGUI()
    cb_grpy_output->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_grpy_output->setPalette( PALET_NORMAL );
    AUTFBACK( cb_grpy_output );
+   cb_grpy_output->hide();
 
    // bg_output->setButton((*bead_output).output);
 #else
@@ -125,6 +126,7 @@ void US_Hydrodyn_Bead_Output::setupGUI()
    cb_grpy_output->setPalette( PALET_NORMAL );
    AUTFBACK( cb_grpy_output );
    connect(cb_grpy_output, SIGNAL(clicked()), this, SLOT(select_output_grpy()));
+   cb_grpy_output->hide();
 
    {
       QHBoxLayout * bl = new QHBoxLayout; bl->setContentsMargins( 0, 0, 0, 0 ); bl->setSpacing( 0 );
