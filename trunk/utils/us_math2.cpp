@@ -549,7 +549,7 @@ void US_Math2::data_correction( double t, SolutionData& d )
   
    /*!
    The density of water.  An empirical equation derived from
-   density vs temperature data. See Krell, J. Chem. & Eng. Data
+   density vs temperature data. See Kell, J. Chem. & Eng. Data
    1975, 20.
 
    \f[  \rho_t = \xi_{max}{{c_0 + c_1 * t + c_2 * t^2 + c_3 * t^3 + c_4 * t^4 + c_5 * t^5}
