@@ -34,6 +34,8 @@ class US_GUI_EXTERN US_Extinction : public US_Widgets
       QVector <QVector<double> > xfit_data;
       QVector <QVector<double> > yfit_data;
 
+      QString current_path;
+
    private:
       QVector <WavelengthScan> v_wavelength;
       QVector <WavelengthScan> v_wavelength_original;

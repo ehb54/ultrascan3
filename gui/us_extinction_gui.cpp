@@ -261,6 +261,8 @@ US_Extinction::US_Extinction() : US_Widgets()
    lambda_max = -1000;
    odCutoff = 3.0;
    
+   current_path = "";
+   
    //length of cuvette
    pathlength = (float) 1.2;
    
@@ -423,11 +425,19 @@ void US_Extinction::add_wavelength(void)
   //dialog.setDirectory("/home/alexsav/ultrascan/data/spectra");
   
   QString work_dir_data  = US_Settings::dataDir();
-  qDebug() << work_dir_data;
-  dialog.setDirectory(work_dir_data);
-  
+  //qDebug() << work_dir_data;
+  //dialog.setDirectory(work_dir_data);
+
+  qDebug() << current_path;
+  current_path = current_path.isEmpty() ? work_dir_data : current_path;
+
+  dialog.setDirectory(current_path);  
+  qDebug() << current_path;
+
   if(dialog.exec())
     {
+      QDir d = dialog.directory();
+      current_path = d.absolutePath();
       files = dialog.selectedFiles();
       reading(files);
     }
@@ -674,6 +684,7 @@ void US_Extinction::reset_scanlist(void)
    dataPlotClear( data_plot );
    data_plot->replot();
 
+   current_path = "";
    
 }
 void US_Extinction::update_data(void)
