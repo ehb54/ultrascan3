@@ -728,6 +728,10 @@ void US_Extinction::update_data(void)
 	}
 
    }
+   
+   //Update lambda_min, lambda_max
+   lambda_min = minimum;
+   lambda_max = maximum;
 
    qDebug() << "Orig., Updated: " << v_wavelength_original.at(0).v_readings.size() << ", " << v_wavelength.at(0).v_readings.size();
    plot();
@@ -979,6 +983,8 @@ void US_Extinction::perform_global(void)
       fitparameters[i] = 0.3;
    }
    float lambda_step = (lambda_max - lambda_min)/(order+1); // create "order" peaks evenly distributed over the range
+
+   qDebug() << "LAMBDAs: min, max, step: " << lambda_min << ", " << lambda_max << ", " << lambda_step;
    for (unsigned int i=0; i<order; i++)
    {
       fitparameters[v_wavelength.size() + (i * 3) ] = 1;
