@@ -165,12 +165,6 @@ void US_Spectrum::load_basis()
    
    current_path = current_path.isEmpty() ? work_dir_data : current_path;
    dialog.setDirectory(current_path);  
-   //dialog.setDirectory(work_dir_data);
-
-   //dialog.setNameFilter(tr("Text (*.res)"));
-   //dialog.setFileMode(QFileDialog::ExistingFiles);
-   //dialog.setViewMode(QFileDialog::Detail);
-   //dialog.setDirectory("/home/minji/ultrascan/results");
 
    if(dialog.exec())
    {
@@ -200,24 +194,14 @@ void US_Spectrum::load_basis()
 void US_Spectrum::plot_basis()
 {
    QStringList names;
-   //QVector  <double> v_x_values;
 
    for(int m = basisIndex; m < v_basis.size(); m++)
    {
-     //qDebug() << "Basis-index: " << basisIndex;
       names.append(v_basis.at(m).filenameBasis);   
-      //v_x_values.clear();
       lw_basis->insertItem(0, v_basis.at(m).filenameBasis);
 
-      // //plot the points for the target spectrum
-      // for(unsigned int k = 0; k < v_basis.at(m).lambda_max - v_basis.at(m).lambda_min; k++)
-      // {
-      //    v_x_values.push_back(v_basis.at(m).lambda_min + k);
-      // }
-      //double* xx = (double*)v_x_values.data();
       double* xx = (double*)v_basis.at(m).wvl.data();
       double* yy = (double*)v_basis.at(m).extinction.data();
-      //int     nn = v_x_values.size();
       int     nn = v_basis.at(m).wvl.size();
       
       QwtPlotCurve* c;
@@ -242,17 +226,11 @@ void US_Spectrum::load_target()
    QString fileName = "";
 
    dialog.setNameFilter(tr("Text files (*.[Tt][Xx][Tt] *.[Cc][Ss][Vv] *.[Dd][Aa][Tt] *.[Ww][Aa]* *.[Dd][Ss][Pp]);;All files (*)"));
-   //dialog.setNameFilter(tr("Text files (*.[Rr][Ee][Ss]);;All files (*)"));
    dialog.setFileMode(QFileDialog::ExistingFiles);
    dialog.setViewMode(QFileDialog::Detail);
    
    QString work_dir_data  = US_Settings::resultDir();
    dialog.setDirectory(work_dir_data);
-   
-   //dialog.setNameFilter(tr("Text (*.res)"));
-   //dialog.setFileMode(QFileDialog::ExistingFiles);
-   //dialog.setViewMode(QFileDialog::Detail);
-   //dialog.setDirectory("/home/minji/ultrascan/results");
    
    us_grid(data_plot);
    
@@ -260,7 +238,6 @@ void US_Spectrum::load_target()
    if(lw_target->count() > 0)
    {
       lw_target->clear();
-      //w_target.gaussians.clear();
       w_target.extinction.clear();
       w_target.wvl.clear();
       w_target.matchingCurve->detach();
@@ -273,28 +250,14 @@ void US_Spectrum::load_target()
       fi.setFile(fileName);
       w_target.filenameBasis = fi.baseName();
    }
-   // if(fileName.contains(".res"))
-   //   {
-       plot_target();
-   //  }
-
+   
+   plot_target();
 }
 
 void US_Spectrum:: plot_target()
 {
-   // QVector<double> v_x_values;
-   // v_x_values.clear();
-   
-   // //plot the points for the target spectrum
-   // for(unsigned int k = 0; k < w_target.lambda_max - w_target.lambda_min; k++)
-   // {
-   //    v_x_values.push_back(w_target.lambda_min + k);
-   // }
-   
-   //double* xx = (double*)v_x_values.data();
    double* xx = (double*)w_target.wvl.data();
    double* yy = (double*)w_target.extinction.data();
-   //int     nn = v_x_values.size();
    int     nn = w_target.wvl.size();
    QwtPlotCurve* c;
    QPen p;
@@ -309,112 +272,38 @@ void US_Spectrum:: plot_target()
    pb_load_basis->setEnabled(true);
 }
 
-//reads in gaussian information for each spectrum
+//read spectrum
 void US_Spectrum:: load_spectra(struct WavelengthProfile &profile, const QString &fileName)
 {
    QString line;
    QString str1;
-   double temp_x, temp_y, lambda_min=10000, lambda_max=-10000;
+   double temp_x, temp_y;
 
    QVector <QString> strList;
-   // struct Gaussian temp_gauss;
-   //number of Gaussians to make the curve
-   //int order;
 
-   //gets information from a file 
    QFile f(fileName);
    QFileInfo fi;
 
-   // fi.setFile(fileName);
-
-   // qDebug() << "LOAD Gauss 1";
-
-   // if(f.open(QIODevice::ReadOnly | QIODevice::Text))
-   // {
-   //    QTextStream ts(&f);
-   //    ts.readLine();
-   //    ts.readLine();   
-   //    line = ts.readLine();
-   //    str1 = line.split(":").last();
-   //    order = str1.toInt();
-   //    ts.readLine();
-   //    line = ts.readLine();
-      
-   //    //receive scaling parameters from the file
-   //    profile.lambda_scale  = line.split(" ")[3].toInt();
-   //    profile.scale = line.split(" ")[10].toFloat();
-   //    ts.readLine();
-   //    ts.readLine();
-   //    for(int k = 0; k < order; k++)
-   //    {
-   //       ts.readLine();
-   //       ts.readLine();
-   //       temp_gauss.mean = ts.readLine().split(" ")[2].toDouble();
-   //       temp_gauss.amplitude = ts.readLine().split(" ")[3].toDouble();
-   //       temp_gauss.sigma = ts.readLine().split(" ")[2].toDouble();
-   //       profile.gaussians.push_back(temp_gauss);
-   //    }
-   //    find_amplitude(profile);
-   //    profile.filename = fileName;
-   //    f.close();
-   // }
-
-   //qDebug() << "LOAD TARGET 2";  
-
-
-   //Find where the maximum and minimum wavelength in the file is
-   // QString fName = fi.dir().path() + "/" + fi.baseName() + ".extinction.dat";
-   // QFile file(fName);
-   // if(file.open(QIODevice::ReadOnly))
-
    strList.clear();
-   strList.resize(0);
+   //   strList.resize(0);
    if(f.open(QIODevice::ReadOnly | QIODevice::Text))
    {
-     //QTextStream ts2(&file);
      QTextStream ts2(&f); 
      ts2.readLine();      // description
      ts2.readLine();
      QRegExp separator("(\\s+|,)");
      
-      // profile.lambda_min = str1.split("\t")[0].toInt();
-      // profile.extinction.push_back(str1.split("\t")[1].toDouble());
-      
-      // profile.lambda_min = str1.split(QRegExp(separator), QString::SkipEmptyParts)[0].toInt();
-      // profile.extinction.push_back(str1.split(QRegExp(separator), QString::SkipEmptyParts)[1].toDouble());    
-
-      // qDebug() << "line: " << str1;
-      while(!ts2.atEnd())
+     while(!ts2.atEnd())
 	{
 	  str1 = ts2.readLine();
 	  str1 = str1.simplified();
 	  
-	  //profile.extinction.push_back(str1.split("\t")[1].toDouble());
-	  // temp_x = str1.split(QRegExp(separator), QString::SkipEmptyParts)[0].toDouble();
-	  // temp_y = str1.split(QRegExp(separator), QString::SkipEmptyParts)[1].toDouble();
-	  
 	  strList.push_back(str1);
-	 
-	  
-	  // profile.extinction.push_back(temp_y);
-	  // profile.wvl.push_back(temp_x);
-	  // lambda_max = max (temp_x, lambda_max);
-	  // lambda_min = min (temp_x, lambda_min);
-	  
-	  /*ALEXEY: 
-	  At this point arrays have to be sorted by wvl, and then properly overlayed...
-	  
-	   */
-
-	  // qDebug() << "line: " << temp_x << " " << temp_y;
 	}
-      //profile.lambda_max = str1.split("\t")[0].toInt(); 
-      //profile.lambda_max = str1.split(QRegExp(separator), QString::SkipEmptyParts)[0].toInt(); 
-      //file.close();
       f.close();
       
       qSort( strList );
-      qDebug() << "strLIST_size: " << strList.size();
+      // qDebug() << "strLIST_size: " << strList.size();
       for ( int i = 0; i < strList.size(); i++)
 	{
 	  //qDebug() << strList[i]; 
@@ -423,41 +312,19 @@ void US_Spectrum:: load_spectra(struct WavelengthProfile &profile, const QString
 	  
 	  profile.extinction.push_back(temp_y);
 	  profile.wvl.push_back(temp_x);
-	  // lambda_max = max (temp_x, lambda_max);
-	  // lambda_min = min (temp_x, lambda_min);
-	  
 	}
-      // profile.lambda_min = lambda_min;
-      // profile.lambda_max = lambda_max;
       profile.lambda_min = profile.wvl[0];
       profile.lambda_max = profile.wvl.last();
 
-      qDebug() << "min/max: " << profile.lambda_min << "/" << profile.lambda_max;
+      //qDebug() << "min/max: " << profile.lambda_min << "/" << profile.lambda_max;
    }
    else
    {
       QMessageBox mb;
       mb.setWindowTitle(tr("Attention:"));
-      //mb.setText("Could not read the wavelength data file:\n" + fName);
       mb.setText("Could not read the wavelength data file:\n" + fileName);
    }
-
-   //qDebug() << "LOAD Gauss 3";
 }
-
-// //Find the appropriate amplitude to scale the spectrum's curve at
-// void US_Spectrum::find_amplitude(struct WavelengthProfile &profile)
-// {
-//    // profile.amplitude = 0;
-//    // for (int j=0; j<profile.gaussians.size(); j++)
-//    // {
-//    //    profile.amplitude += profile.gaussians.at(j).amplitude *
-//    //       exp(-(pow(profile.lambda_scale - profile.gaussians.at(j).mean, 2.0)
-//    //             / (2.0 * pow(profile.gaussians.at(j).sigma, 2.0))));
-//    // }
-//    // profile.amplitude = 1.0/profile.amplitude;
-//    // profile.amplitude *= profile.scale;
-// }
 
 void US_Spectrum::new_value(const QwtDoublePoint& p)
 {
@@ -525,7 +392,6 @@ void US_Spectrum::fit()
 {
    unsigned int min_lambda = w_target.lambda_min;
    unsigned int max_lambda = w_target.lambda_max;
-   //unsigned int points, order, i, j, k, counter=0;
    unsigned int points, order, i, k, counter=0;
    double *nnls_a, *nnls_b, *nnls_x, nnls_rnorm, *nnls_wp, *nnls_zzp, *x, *y;
    float fval = 0.0;
@@ -611,7 +477,6 @@ void US_Spectrum::fit()
 	 
       }
    }
-
    
    US_Math2::nnls(nnls_a, points, points, order, nnls_b, nnls_x, &nnls_rnorm, nnls_wp, nnls_zzp, nnls_indexp);
    
