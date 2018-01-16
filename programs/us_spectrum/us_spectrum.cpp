@@ -187,7 +187,7 @@ void US_Spectrum::load_basis()
    pb_overlap->setEnabled(true);
    pb_fit->setEnabled(true);
    
-   overlap();
+   // overlap();
 }
 
 //Takes the information in the basis vector to plot all of the curves for the basis spectrums 
@@ -203,6 +203,8 @@ void US_Spectrum::plot_basis()
       double* xx = (double*)v_basis.at(m).wvl.data();
       double* yy = (double*)v_basis.at(m).extinction.data();
       int     nn = v_basis.at(m).wvl.size();
+      qDebug() << "Basis " << m << " size: " << nn;
+      qDebug() << "Basis " << m << " x[0]/y[0]: " << xx[0] << "/" << yy[0];
       
       QwtPlotCurve* c;
       QPen p;
@@ -256,9 +258,15 @@ void US_Spectrum::load_target()
 
 void US_Spectrum:: plot_target()
 {
+  //dataPlotClear( data_plot );
+  //us_grid(data_plot);
    double* xx = (double*)w_target.wvl.data();
    double* yy = (double*)w_target.extinction.data();
    int     nn = w_target.wvl.size();
+   
+   qDebug() << "Target " << " size: " << nn;
+   qDebug() << "Target " << " x[0]/y[0]: " << xx[0] << "/" << yy[0];
+   
    QwtPlotCurve* c;
    QPen p;
    p.setColor(Qt::yellow);
@@ -624,42 +632,78 @@ void US_Spectrum::resetBasis()
 
 void US_Spectrum::overlap()
 {
-   unsigned int highest_lambda_min = 0, lowest_lambda_max = 100000;
+   unsigned int highest_lambda_min, lowest_lambda_max;
 
-   //Find the highest minimum wavelength and largest maximum wavelength to
-   //determine where to plot
+   QVector<int> lambdaMins, lambdaMaxs;
+
+   lambdaMins.push_back(w_target.lambda_min);
+   lambdaMaxs.push_back(w_target.lambda_max);
    for(int m = 0; m < v_basis.size(); m++)
-   {
-      if(v_basis.at(m).lambda_min > highest_lambda_min)
-         highest_lambda_min = v_basis.at(m).lambda_min;
-      if(v_basis.at(m).lambda_max < lowest_lambda_max)
-         lowest_lambda_max = v_basis.at(m).lambda_max;
-   }
+     {
+       lambdaMins.push_back(v_basis.at(m).lambda_min);
+       lambdaMaxs.push_back(v_basis.at(m).lambda_max);
+     }
+
+   qSort(lambdaMins);
+   qSort(lambdaMaxs);
    
-   if(highest_lambda_min < w_target.lambda_min)
-      highest_lambda_min = w_target.lambda_min;
-   else
-      w_target.lambda_min = highest_lambda_min;
+   highest_lambda_min = lambdaMins.last();
+   lowest_lambda_max  = lambdaMaxs[0];
    
-   if(lowest_lambda_max > w_target.lambda_max)
-      lowest_lambda_max = w_target.lambda_max;
-   else
-      w_target.lambda_max = lowest_lambda_max;
+   qDebug() << "Mins: " << lambdaMins << ", highest_lambda_min: " << highest_lambda_min;
+   qDebug() << "Maxs: " << lambdaMaxs << ", lowest_lambda_max : " << lowest_lambda_max ; 
+   
+
+   // basis
+   for(int i = 0; i < v_basis.size(); i++)
+     {
+       for(int j = 0; j < v_basis.at(i).wvl.size(); j++)
+	 {
+	   if(v_basis.at(i).wvl.at(j) >= lowest_lambda_max)
+	     {
+	       v_basis[i].wvl.remove(j, v_basis.at(i).wvl.size() - j);
+	       v_basis[i].extinction.remove(j, v_basis.at(i).wvl.size() - j);
+	       break;
+	     }
+	  	   
+	   if(v_basis.at(i).wvl.at(j) < highest_lambda_min)
+	     {
+	       qDebug() << "i wvl: " << i << " " << v_basis.at(i).wvl.at(j);  
+	       v_basis[i].wvl.remove(0, j + 1);
+	       v_basis[i].extinction.remove(0, j + 1);
+	     }
+	 }
+     }
+
+   //target
+   for(int j = 0; j < w_target.wvl.size(); j++)
+     {
+       if(w_target.wvl.at(j) >= lowest_lambda_max)
+	 {
+	   w_target.wvl.remove(j, w_target.wvl.size() - j);
+	   w_target.extinction.remove(j, w_target.wvl.size() - j);
+	   break;
+	 }
+       
+       if(w_target.wvl.at(j) < highest_lambda_min)
+	 {
+	   w_target.wvl.remove(0, j + 1);
+	   w_target.extinction.remove(0, j + 1);  
+	 }
+     }
+
+   w_target.lambda_min = highest_lambda_min;
+   w_target.lambda_max = lowest_lambda_max;
 
    lw_target->clear();
    w_target.matchingCurve->detach();
-   
-   //change lambda_min to match the highest of all the profiles
-   //change lambda_max to match the lowest of all the profiles
    for(int k = 0; k < v_basis.size(); k++)
-   {
-      if(v_basis.at(k).lambda_max >lowest_lambda_max)
-         v_basis[k].lambda_max = lowest_lambda_max;
-      if(v_basis.at(k).lambda_min < highest_lambda_min)
-         v_basis[k].lambda_min = highest_lambda_min;
-      v_basis[k].matchingCurve->detach();
-   }
-
+     {
+       v_basis[k].lambda_min = highest_lambda_min;
+       v_basis[k].lambda_max = lowest_lambda_max;
+       v_basis[k].matchingCurve->detach();
+     }
+   
    //Clear components of the basis so replotting will work properly
    lw_basis->clear();
    basisIndex = 0;
