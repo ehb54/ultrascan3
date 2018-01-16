@@ -463,9 +463,7 @@ void US_Extinction::reading(QStringList sl)
       if(!fileName.isEmpty())
       {
          filenames.push_back(fileName);
-	 qDebug() << "Before LOAD " ;
-         loadScan(fileName);
-	 qDebug() << "After LOAD " ;
+	 loadScan(fileName);
       }
    } 
    le_lambdaLimitLeft->setText(str1.sprintf(" %2.1f", lambda_min));
@@ -587,7 +585,8 @@ bool US_Extinction::loadScan(const QString &fileName)
    }
 
    v_wavelength_original = v_wavelength;
-   
+   qDebug() << "Size of Wvl in LOAD_SCAN: " << v_wavelength.size();
+
    return(true);
    
 }
@@ -612,6 +611,7 @@ void US_Extinction::plot()
       xmax = max(xmax, (double) v_wavelength.at(i).v_readings.at(v_wavelength.at(i).v_readings.size() - 1).lambda);
       xmin = min(xmin, (double) v_wavelength.at(i).v_readings.at(0).lambda);
    }
+   qDebug() << "In PLOT, xmin:  " << xmin;
 
    //Put data into vectors
    for(int j = 0; j < v_wavelength.size(); j++)
@@ -692,6 +692,7 @@ void US_Extinction::update_data(void)
    fitted = false;
    
    v_wavelength =  v_wavelength_original;
+   qDebug() << "Size of Wvl in UPDATE: " << v_wavelength.size();
 
    pathlength = le_pathlength->text().toFloat();
    float minimum = le_lambdaLimitLeft->text().toFloat(), maximum = le_lambdaLimitRight->text().toFloat(), odLimit = le_odCutoff->text().toFloat();
@@ -705,15 +706,19 @@ void US_Extinction::update_data(void)
 	
 	if(v_wavelength.at(i).v_readings.at(j).lambda >= maximum)
 	  {
-	    v_wavelength[i].v_readings.remove(j, v_wavelength.at(i).v_readings.size() - j);
-	    break;
+	    // v_wavelength[i].v_readings.remove(j, v_wavelength.at(i).v_readings.size() - j);
+	    // break;
+	    v_wavelength[i].v_readings.remove(j);
+	    --j;
 	  }
 		         
 
          if(v_wavelength.at(i).v_readings.at(j).lambda < minimum)
 	   {
-	     qDebug() << "Inside MIN: " << v_wavelength.at(i).v_readings.at(j).lambda;
-	     v_wavelength[i].v_readings.remove(0, j + 1);
+	     //qDebug() << "Inside MIN: " << v_wavelength.at(i).v_readings.at(j).lambda;
+	     //v_wavelength[i].v_readings.remove(0, j + 1);
+	     v_wavelength[i].v_readings.remove(j);
+	     --j;
 	   }
       }
       
@@ -721,7 +726,7 @@ void US_Extinction::update_data(void)
 	{
 	  if(v_wavelength.at(i).v_readings.at(j).od >= odLimit)
 	    {
-	      qDebug() << "Inside OD_1: " << v_wavelength.at(i).v_readings.at(j).lambda;
+	      //qDebug() << "Inside OD_1: " << v_wavelength.at(i).v_readings.at(j).lambda;
 	      v_wavelength[i].v_readings.remove(j);
 	      j--;
 	    }
