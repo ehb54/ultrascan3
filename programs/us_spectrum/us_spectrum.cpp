@@ -262,6 +262,7 @@ void US_Spectrum::load_target()
       lw_target->clear();
       //w_target.gaussians.clear();
       w_target.extinction.clear();
+      w_target.wvl.clear();
       w_target.matchingCurve->detach();
    }
    if(dialog.exec())
@@ -314,6 +315,8 @@ void US_Spectrum:: load_spectra(struct WavelengthProfile &profile, const QString
    QString line;
    QString str1;
    double temp_x, temp_y, lambda_min=10000, lambda_max=-10000;
+
+   QVector <QString> strList;
    // struct Gaussian temp_gauss;
    //number of Gaussians to make the curve
    //int order;
@@ -364,6 +367,8 @@ void US_Spectrum:: load_spectra(struct WavelengthProfile &profile, const QString
    // QFile file(fName);
    // if(file.open(QIODevice::ReadOnly))
 
+   strList.clear();
+   strList.resize(0);
    if(f.open(QIODevice::ReadOnly | QIODevice::Text))
    {
      //QTextStream ts2(&file);
@@ -382,16 +387,19 @@ void US_Spectrum:: load_spectra(struct WavelengthProfile &profile, const QString
       while(!ts2.atEnd())
 	{
 	  str1 = ts2.readLine();
-	  	  
 	  str1 = str1.simplified();
-	  //profile.extinction.push_back(str1.split("\t")[1].toDouble());
-	  temp_x = str1.split(QRegExp(separator), QString::SkipEmptyParts)[0].toDouble();
-	  temp_y = str1.split(QRegExp(separator), QString::SkipEmptyParts)[1].toDouble();
 	  
-	  profile.extinction.push_back(temp_y);
-	  profile.wvl.push_back(temp_x);
-	  lambda_max = max (temp_x, lambda_max);
-	  lambda_min = min (temp_x, lambda_min);
+	  //profile.extinction.push_back(str1.split("\t")[1].toDouble());
+	  // temp_x = str1.split(QRegExp(separator), QString::SkipEmptyParts)[0].toDouble();
+	  // temp_y = str1.split(QRegExp(separator), QString::SkipEmptyParts)[1].toDouble();
+	  
+	  strList.push_back(str1);
+	 
+	  
+	  // profile.extinction.push_back(temp_y);
+	  // profile.wvl.push_back(temp_x);
+	  // lambda_max = max (temp_x, lambda_max);
+	  // lambda_min = min (temp_x, lambda_min);
 	  
 	  /*ALEXEY: 
 	  At this point arrays have to be sorted by wvl, and then properly overlayed...
@@ -404,9 +412,27 @@ void US_Spectrum:: load_spectra(struct WavelengthProfile &profile, const QString
       //profile.lambda_max = str1.split(QRegExp(separator), QString::SkipEmptyParts)[0].toInt(); 
       //file.close();
       f.close();
-      profile.lambda_min = lambda_min;
-      profile.lambda_max = lambda_max;
-      //qDebug() << "min/max: " << profile.lambda_min << "/" << profile.lambda_max;
+      
+      qSort( strList );
+      qDebug() << "strLIST_size: " << strList.size();
+      for ( int i = 0; i < strList.size(); i++)
+	{
+	  //qDebug() << strList[i]; 
+	  temp_x = strList[i].split(QRegExp(separator), QString::SkipEmptyParts)[0].toDouble();
+	  temp_y = strList[i].split(QRegExp(separator), QString::SkipEmptyParts)[1].toDouble();
+	  
+	  profile.extinction.push_back(temp_y);
+	  profile.wvl.push_back(temp_x);
+	  // lambda_max = max (temp_x, lambda_max);
+	  // lambda_min = min (temp_x, lambda_min);
+	  
+	}
+      // profile.lambda_min = lambda_min;
+      // profile.lambda_max = lambda_max;
+      profile.lambda_min = profile.wvl[0];
+      profile.lambda_max = profile.wvl.last();
+
+      qDebug() << "min/max: " << profile.lambda_min << "/" << profile.lambda_max;
    }
    else
    {
