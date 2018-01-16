@@ -207,11 +207,20 @@ void US_Spectrum::plot_basis()
       qDebug() << "Basis " << m << " x[0]/y[0]: " << xx[0] << "/" << yy[0];
       
       QwtPlotCurve* c;
-      QPen p;
-      p.setColor(Qt::green);
-      p.setWidth(3);
+      QwtSymbol *s = new QwtSymbol;
+      s->setStyle(QwtSymbol::Ellipse);
+      s->setPen(QPen(Qt::green));
+      s->setBrush(QBrush(Qt::blue));
+      s->setSize(3);
+   
+      // QPen p;
+      // p.setColor(Qt::green);
+      // p.setWidth(3);
       c = us_curve(data_plot, v_basis.at(m).filename);
-      c->setPen(p);
+      c->setSymbol(s);
+      c->setStyle(QwtPlotCurve::NoCurve);
+
+      // c->setPen(p);
       c->setSamples( xx, yy, nn );
       v_basis[basisIndex].matchingCurve = c;
       basisIndex++;
@@ -268,11 +277,20 @@ void US_Spectrum:: plot_target()
    qDebug() << "Target " << " x[0]/y[0]: " << xx[0] << "/" << yy[0];
    
    QwtPlotCurve* c;
-   QPen p;
-   p.setColor(Qt::yellow);
-   p.setWidth(3);
+   
+   QwtSymbol *s = new QwtSymbol;
+   s->setStyle(QwtSymbol::Ellipse);
+   s->setPen(QPen(Qt::yellow));
+   s->setBrush(QBrush(Qt::blue));
+   s->setSize(3);
+   
+   // QPen p;
+   // p.setColor(Qt::yellow);
+   // p.setWidth(3);
    c = us_curve(data_plot, w_target.filename);
-   c->setPen(p);
+   c->setSymbol(s);
+   c->setStyle(QwtPlotCurve::NoCurve);
+   //c->setPen(p);
    c->setSamples( xx, yy, nn );
    w_target.matchingCurve = c;
    data_plot->replot();
@@ -420,7 +438,7 @@ void US_Spectrum::fit()
    
    for (i=0; i< (unsigned int) v_basis.size(); i++)
    {
-      if(v_basis[i].lambda_min != min_lambda || v_basis[i].lambda_max != max_lambda)
+     if(v_basis[i].lambda_min != min_lambda || v_basis[i].lambda_max != max_lambda || v_basis[i].wvl.size() != w_target.wvl.size())
       {
           QMessageBox::warning(this, tr("UltraScan Warning"), str,
           QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
@@ -433,6 +451,7 @@ void US_Spectrum::fit()
    points = w_target.wvl.size();
    x = new double [points];
    y = new double [points];
+
    order = v_basis.size(); // no baseline necessary with gaussians
    nnls_a = new double [points * order]; // contains the model functions, end-to-end
    nnls_b = new double [points]; // contains the experimental data
@@ -441,48 +460,24 @@ void US_Spectrum::fit()
    nnls_wp = new double [order]; // pre-allocated working space for nnls, On exit, wp[] will contain the dual solution vector, wp[i]=0.0 for all i in set p and wp[i]<=0.0 for all i in set z. 
 
    nnls_indexp = new int [order];
-   //find_amplitude(target);
+   //extinction
    for (i=0; i<points; i++)
    {
-     x[i] = w_target.lambda_min + i;
-      // nnls_b[i] = 0.0;
-      // for (j=0; j < (unsigned int)w_target.gaussians.size(); j++)
-      // 	{
-      // 	  nnls_b[i] += w_target.gaussians[j].amplitude *
-      //       exp(-(pow(x[i] - w_target.gaussians[j].mean, 2.0)
-      //             / (2.0 * pow(w_target.gaussians[j].sigma, 2.0))));
-      // 	}
-      // nnls_b[i] *= w_target.amplitude;
-
-      //qDebug() << "Target GAUSS: " << x[i] << " " << nnls_b[i]; 
-
-      nnls_b[i] = w_target.extinction[i];
-      b.push_back((float) nnls_b[i]);
+     x[i] = w_target.wvl[i];
+     
+     nnls_b[i] = w_target.extinction[i];
+     b.push_back((float) nnls_b[i]);
    }
    
   
    counter = 0;
+   //basis
    for (k=0; k<order; k++)
    {
-      //find amplitude(basis[k])
      for(i = 0; i<points; i++)
       {
-	x[i] = v_basis[k].lambda_min + i;
-         
-	 // nnls_a[counter] = 0.0;
-         // for (j=0; j< (unsigned int) v_basis[k].gaussians.size(); j++)
-         // {
-         //    nnls_a[counter] += v_basis[k].gaussians[j].amplitude *
-         //       exp(-(pow(x[i] - v_basis[k].gaussians[j].mean, 2.0)
-         //             / (2.0 * pow(v_basis[k].gaussians[j].sigma, 2.0))));
-         // }
-	 
-	 // nnls_a[counter] *= v_basis[k].amplitude;
-         // //qDebug() << "Basis GAUSS: " << x[i] << " " << nnls_a[counter]; 
-
-	 nnls_a[counter] = v_basis[k].extinction[i];
-	 counter ++;
-	 
+	nnls_a[counter] = v_basis[k].extinction[i];
+	counter ++;
       }
    }
    
@@ -507,24 +502,14 @@ void US_Spectrum::fit()
    for (i=0; i<points; i++)
    {
       solution.push_back(0.0);
-      //solution_1.push_back(0.0);
    }
+
+   // Solution
    for (k=0; k<order; k++)
    {
-      //find_amplitude(basis[k]);
-      for (i=0; i<points; i++)
+     for (i=0; i<points; i++)
       {
-          x[i] = v_basis[k].lambda_min + i;
-      
-         // for (j=0; j< (unsigned int) v_basis[k].gaussians.size(); j++)
-         // {
-         //    solution[i] += ( v_basis[k].gaussians[j].amplitude
-         //                     * exp( -(pow(x[i] - v_basis[k].gaussians[j].mean, 2.0)
-         //                     / (2.0 * pow(v_basis[k].gaussians[j].sigma, 2.0))) ) )
-         //                   *  v_basis[k].amplitude * nnls_x[k];
-         // }
-	
-	solution[i] += v_basis[k].extinction[i] * nnls_x[k];
+      	solution[i] += v_basis[k].extinction[i] * nnls_x[k];
       }
     }
 
@@ -632,7 +617,8 @@ void US_Spectrum::resetBasis()
 
 void US_Spectrum::overlap()
 {
-   unsigned int highest_lambda_min, lowest_lambda_max;
+  unsigned int highest_lambda_min, lowest_lambda_max, largest, smallest;
+  int exists_target, exists_basis;
 
    QVector<int> lambdaMins, lambdaMaxs;
 
@@ -650,46 +636,124 @@ void US_Spectrum::overlap()
    highest_lambda_min = lambdaMins.last();
    lowest_lambda_max  = lambdaMaxs[0];
    
+   smallest = lambdaMins[0];
+   largest  = lambdaMaxs.last();
+   
    qDebug() << "Mins: " << lambdaMins << ", highest_lambda_min: " << highest_lambda_min;
    qDebug() << "Maxs: " << lambdaMaxs << ", lowest_lambda_max : " << lowest_lambda_max ; 
    
+   //we need a vector of all wavelengths which will be decimated based on overlap with target/basis
+   int allpoints = largest - smallest + 1;
+   QVector<int> allRange;
+   for (int i=0; i < allpoints; i++)
+     {
+       allRange.push_back(smallest + i);
+     }
 
+   qDebug() << "AllRange size_0: " << allRange.size();
+   for (int i=0; i < allRange.size(); i++)
+     {
+       //target
+       exists_target = 0;
+       for(int j = 0; j < w_target.wvl.size(); j++)
+	 {
+	   if (allRange[i] == w_target.wvl.at(j))
+	     exists_target = 1;
+	 }
+       if ( !exists_target )
+	 {
+	   allRange.remove(i);
+	   --i;
+	 }
+     }
+   qDebug() << "AllRange size_1: " << allRange.size();
+   
+   for (int i=0; i < allRange.size(); i++)
+     {
+       //basis
+       for(int j = 0; j < v_basis.size(); j++)
+	 {
+	   exists_basis = 0;
+	   for(int m = 0; m < v_basis.at(j).wvl.size(); m++)
+	     {    
+	       if (allRange[i] == v_basis.at(j).wvl.at(m) )
+		 exists_basis = 1;
+	     }
+	   if ( !exists_basis )
+	     {
+	       allRange.remove(i);
+	       --i;
+	     }
+	 }
+     }
+   qDebug() << "AllRange size_2: " << allRange.size();  
+
+   
    // basis
    for(int i = 0; i < v_basis.size(); i++)
      {
        for(int j = 0; j < v_basis.at(i).wvl.size(); j++)
 	 {
-	   if(v_basis.at(i).wvl.at(j) >= lowest_lambda_max)
+           // try decimating basis based on values in updated allRange
+	   exists_basis = 0;
+	   for (int m = 0; m < allRange.size(); m++)
 	     {
-	       v_basis[i].wvl.remove(j, v_basis.at(i).wvl.size() - j);
-	       v_basis[i].extinction.remove(j, v_basis.at(i).wvl.size() - j);
-	       break;
+	       if(v_basis.at(i).wvl.at(j) == allRange[m])
+		 exists_basis = 1;
 	     }
-	  	   
-	   if(v_basis.at(i).wvl.at(j) < highest_lambda_min)
+	   if ( !exists_basis )
 	     {
-	       qDebug() << "i wvl: " << i << " " << v_basis.at(i).wvl.at(j);  
-	       v_basis[i].wvl.remove(0, j + 1);
-	       v_basis[i].extinction.remove(0, j + 1);
+	       v_basis[i].wvl.remove(j);
+	       v_basis[i].extinction.remove(j);
+	       --j;
 	     }
 	 }
+	   
+	   // if(v_basis.at(i).wvl.at(j) >= lowest_lambda_max)
+	   //   {
+	   //     v_basis[i].wvl.remove(j, v_basis.at(i).wvl.size() - j);
+	   //     v_basis[i].extinction.remove(j, v_basis.at(i).wvl.size() - j);
+	   //     break;
+	   //   }
+	  	   
+	   // if(v_basis.at(i).wvl.at(j) < highest_lambda_min)
+	   //   {
+	   //     qDebug() << "i wvl: " << i << " " << v_basis.at(i).wvl.at(j);  
+	   //     v_basis[i].wvl.remove(0, j + 1);
+	   //     v_basis[i].extinction.remove(0, j + 1);
+	   //   }
+           //}
      }
 
    //target
    for(int j = 0; j < w_target.wvl.size(); j++)
      {
-       if(w_target.wvl.at(j) >= lowest_lambda_max)
+       // try decimating target based on values in updated allRange
+       exists_target = 0;
+       for (int m = 0; m < allRange.size(); m++)
 	 {
-	   w_target.wvl.remove(j, w_target.wvl.size() - j);
-	   w_target.extinction.remove(j, w_target.wvl.size() - j);
-	   break;
+	   if(w_target.wvl.at(j) == allRange[m])
+	     exists_target = 1;
 	 }
+       if ( !exists_target )
+	 {
+	   w_target.wvl.remove(j);
+	   w_target.extinction.remove(j);
+	   --j;
+	 }
+
+       // if(w_target.wvl.at(j) >= lowest_lambda_max)
+       // 	 {
+       // 	   w_target.wvl.remove(j, w_target.wvl.size() - j);
+       // 	   w_target.extinction.remove(j, w_target.wvl.size() - j);
+       // 	   break;
+       // 	 }
        
-       if(w_target.wvl.at(j) < highest_lambda_min)
-	 {
-	   w_target.wvl.remove(0, j + 1);
-	   w_target.extinction.remove(0, j + 1);  
-	 }
+       // if(w_target.wvl.at(j) < highest_lambda_min)
+       // 	 {
+       // 	   w_target.wvl.remove(0, j + 1);
+       // 	   w_target.extinction.remove(0, j + 1);  
+       // 	 }
      }
 
    w_target.lambda_min = highest_lambda_min;
