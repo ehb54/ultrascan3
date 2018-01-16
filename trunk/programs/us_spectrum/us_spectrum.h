@@ -6,15 +6,17 @@
 #include "us_math2.h"
 #include <math.h>
 
-struct Gaussian
+/* struct Gaussian
 {
 	double mean, amplitude, sigma;
 };
+*/
 
 struct WavelengthProfile
 {
-	QVector <struct Gaussian> gaussians;
+  //QVector <struct Gaussian> gaussians;
 	QVector <double> extinction;
+        QVector <double> wvl;
 	QwtPlotCurve* matchingCurve;
 	unsigned int lambda_scale, lambda_min, lambda_max;
 	float scale, amplitude;
@@ -29,6 +31,7 @@ class US_Spectrum : public US_Widgets
 	public:
 		US_Spectrum();
 		int basisIndex; 
+		QString current_path;
 
 	private:
 		QwtPlot 		*data_plot, *residuals_plot;
@@ -70,10 +73,10 @@ class US_Spectrum : public US_Widgets
 		void	plot_basis();
 		void	load_target();
 		void	plot_target();
-		void	load_gaussian_profile(struct WavelengthProfile&, const QString&);
+		void	load_spectra(struct WavelengthProfile&, const QString&);
 		void	new_value(const QwtDoublePoint&);
 		void	findExtinction();
-		void 	find_amplitude(struct WavelengthProfile&);
+		//void 	find_amplitude(struct WavelengthProfile&);
 		void	fit();
 		void	deleteCurrent();
 		void	resetBasis();
