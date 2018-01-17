@@ -804,6 +804,7 @@ bool US_Extinction::deleteCurve(void)
       if(selectedName.contains(v_wavelength.at(k).description))
       {
          v_wavelength.remove(k);
+	 v_wavelength_original.remove(k);
       }
    }
    changedCurve = NULL;
